@@ -26,7 +26,6 @@
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
  *	#include "vmath.h"	/_* For vect_t definition *_/
  *	#include "rtlist.h"	/_* OPTIONAL, auto-included by raytrace.h *_/
- *	#include "rtstring.h"	/_* OPTIONAL, auto-included by raytrace.h *_/
  *	#include "db.h"		/_* OPTIONAL, precedes raytrace.h when used *_/
  *	#include "nmg.h"	/_* OPTIONAL, precedes raytrace.h when used *_/
  *	#include "raytrace.h"
@@ -42,38 +41,20 @@
 # include "rtlist.h"
 #endif
 
-#ifndef SEEN_RTSTRING_H
-# include "rtstring.h"
-#endif
-
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
-#include <setjmp.h>
+/*
+ *  Auto-include the BRL-CAD Utilities library, and compatability macros
+ */
+#include "bu.h"
+#include "compat4.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define RAYTRACE_H_VERSION	"@(#)$Header$ (BRL)"
-
-/*
- *  System library routines used by LIBRT.
- *  If header files are to be included, this should happen first,
- *  to prevent accidentally redefining important stuff.
- *
- *  A few non-ANSI systems have (and need) these headers anyway.
- */
-#if HAVE_STDLIB_H || (sgi && mips) || (ultrix && mips)
-/*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
-#	include <stdlib.h>
-#	include <stddef.h>
-#else
-extern char	*malloc();
-extern char	*calloc();
-extern char	*realloc();
-/**extern void	free(); **/
-#endif
 
 /*
  *  It is necessary to have a representation of 1.0/0.0, or "infinity"
@@ -165,6 +146,10 @@ struct rt_tol {
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 /*
+ *			R T _ T E S S _ T O L
+ *
+ *  Tessellation (geometric) tolerances,
+ *  different beasts than the calcuation tolerance in rt_tol.
  */
 struct rt_tess_tol  {
 	long		magic;
@@ -189,32 +174,6 @@ struct rt_tess_tol  {
 #	define	RT_EXTERN(type_and_name,args)	extern type_and_name()
 #	define	RT_ARGS(args)			()
 #endif
-
-/*
- * Handy memory allocator
- */
-
-/* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#if __STDC__ && !alliant && !apollo
-# define GETSTRUCT(_p,_str) \
-	_p = (struct _str *)rt_calloc(1,sizeof(struct _str), #_str " (getstruct)" )
-# define GETUNION(_p,_unn) \
-	_p = (union _unn *)rt_calloc(1,sizeof(union _unn), #_unn " (getstruct)")
-#else
-# define GETSTRUCT(_p,_str) \
-	_p = (struct _str *)rt_calloc(1,sizeof(struct _str), "_str (getstruct)")
-# define GETUNION(_p,_unn) \
-	_p = (union _unn *)rt_calloc(1,sizeof(union _unn), "_unn (getstruct)")
-#endif
-
-/*
- *  Macros to check and validate a structure pointer, given that
- *  the first entry in the structure is a magic number.
- */
-#define RT_CKMAG(_ptr, _magic, _str)	\
-	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
-		rt_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
-	}
 
 /*
  *			R T _ E X T E R N A L
@@ -439,6 +398,7 @@ struct seg {
 
 /*
  *  Macros to operate on Right Rectangular Parallelpipeds (RPPs).
+ * XXX move to vmath.h
  */
 
 /*
@@ -529,7 +489,7 @@ struct mater_info {
 	char	ma_override;		/* non-0 ==> ma_color is valid */
 	char	ma_cinherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
 	char	ma_minherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
-	/* XXX These should become rt_vls structures */
+	/* XXX These should become bu_vls structures */
 	char	ma_matname[32];		/* Material name */
 	char	ma_matparm[60];		/* String Material parms */
 };
@@ -969,8 +929,8 @@ struct anim_mat {
 struct rt_anim_property {
 	/* XXX magic */
 	int		anp_op;			/* RT_ANP_RBOTH, etc */
-	struct rt_vls	anp_matname;		/* Changes for material name */
-	struct rt_vls	anp_matparam;		/* Changes for mat. params */
+	struct bu_vls	anp_matname;		/* Changes for material name */
+	struct bu_vls	anp_matparam;		/* Changes for mat. params */
 };
 #define RT_ANP_RBOTH	1			/* Replace both material & params */
 #define RT_ANP_RMATERIAL 2			/* Replace just material */
@@ -1219,23 +1179,11 @@ struct rt_g {
 	long		res_results;	/* lock on result buffer */
 	long		res_model;	/* lock on model growth (splines) */
 	struct rt_list	rtg_vlfree;	/* head of rt_vlist freelist */
-	int		rtg_logindent;	/* rt_log() indentation level */
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
-	int		rtg_setjmp_valid;/* !0 = rtg_jmpbuf is valid */
-	jmp_buf		rtg_jmpbuf;	/* for RT_SETJMP. */
 	struct rt_list	rtg_mapped_files; /* list of mapped files open */
 	struct rt_list	rtg_resources;	/* list of 'struct resource'es in use */
 };
 extern struct rt_g rt_g;
-
-/*
- *  Macros used for automatic restart capability in rt_bomb().
- * The return from this macro is the return from the setjmp().
- * It is 0 on the first pass through, and non-zero when
- * re-entered via a longjmp().
- */
-#define RT_SETJUMP	setjmp((rt_g.rtg_setjmp_valid=1,rt_g.rtg_jmpbuf))
-#define RT_UNSETJUMP	(rt_g.rtg_setjmp_valid=0)
 
 /*
  *			R T _ I
@@ -1535,7 +1483,7 @@ struct rt_functab {
 			CONST struct rt_db_internal * /*ip*/,
 			double /*local2mm*/));
 	void	(*ft_ifree) RT_ARGS((struct rt_db_internal * /*ip*/));
-	int	(*ft_describe) RT_ARGS((struct rt_vls * /*str*/,
+	int	(*ft_describe) RT_ARGS((struct bu_vls * /*str*/,
 			struct rt_db_internal * /*ip*/,
 			int /*verbose*/,
 			double /*mm2local*/));
@@ -1570,16 +1518,6 @@ extern CONST float rt_rand_table[RT_RAND_TABSIZE];
  *          Applications interface to the RT library             *
  *                                                               *
  *****************************************************************/
-
-RT_EXTERN(void rt_bomb, (char *str) );	/* Fatal error */
-RT_EXTERN(void rt_putchar, (int c) );	/* Log a character, no flushing */
-#if __STDC__
-RT_EXTERN(void rt_log, (char *, ... ) ); /* Log message */
-RT_EXTERN(void rt_flog, (FILE *, char *, ... ) ); /* Log message */
-#else
-RT_EXTERN(void rt_log, () );		/* Log message */
-RT_EXTERN(void rt_flog, () );		/* Log message */
-#endif
 					/* Read named MGED db, build toc */
 RT_EXTERN(struct rt_i *rt_dirbuild, (char *filename, char *buf, int len) );
 					/* Prepare for raytracing */
@@ -1601,31 +1539,29 @@ RT_EXTERN(void rt_pr_seg, (CONST struct seg *segp) );
 RT_EXTERN(void rt_pr_partitions, (CONST struct rt_i *rtip,
 	CONST struct partition *phead, CONST char *title) );
 					/* Find solid by leaf name */
-RT_EXTERN(void rt_printb, (CONST char *s, unsigned long v, CONST char *bits) );
-					/* Print a bit vector */
 RT_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
 	CONST char *name) );
 					/* Parse arbitrary data structure */
-RT_EXTERN(int rt_structparse, (CONST struct rt_vls *vls,
+RT_EXTERN(int rt_structparse, (CONST struct bu_vls *vls,
 	CONST struct structparse *tab, char *base ) );
           /* Print arbitrary data structure for human consumption*/
-RT_EXTERN(void rt_vls_item_print, (struct rt_vls *vp,
+RT_EXTERN(void rt_vls_item_print, (struct bu_vls *vp,
 	CONST struct structparse *sp, CONST char *base ) );
           /* Print single element from data structure */
-RT_EXTERN(void rt_vls_item_print_nc, (struct rt_vls *vp,
+RT_EXTERN(void rt_vls_item_print_nc, (struct bu_vls *vp,
 	CONST struct structparse *sp, CONST char *base ) );
           /* Print single element from data structure, without commas */
-RT_EXTERN(int rt_vls_name_print, (struct rt_vls *vp,
+RT_EXTERN(int rt_vls_name_print, (struct bu_vls *vp,
 	CONST struct structparse *parsetab, CONST char *name,
 				    CONST char *base ) );
-RT_EXTERN(int rt_vls_name_print_nc, (struct rt_vls *vp,
+RT_EXTERN(int rt_vls_name_print_nc, (struct bu_vls *vp,
 	CONST struct structparse *parsetab, CONST char *name,
 				    CONST char *base ) );
           /* Print single element from data structure, chosen by name */
 RT_EXTERN(void rt_structprint, (CONST char *title,
 	CONST struct structparse *tab, CONST char *base ) );
 		/* Print arbitrary data structure to vls for rt_structparse */
-RT_EXTERN(void rt_vls_structprint, (struct rt_vls *vls,
+RT_EXTERN(void rt_vls_structprint, (struct bu_vls *vls,
 	CONST struct structparse *tab, CONST char *base ) );
 RT_EXTERN(char *rt_read_cmd, (FILE *fp) );	/* Read semi-colon terminated line */
 					/* do cmd from string via cmd table */
@@ -1633,7 +1569,7 @@ RT_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) 
 					/* Start the timer */
 RT_EXTERN(void rt_prep_timer, (void) );
 					/* Read timer, return time + str */
-RT_EXTERN(double rt_get_timer, (struct rt_vls *vp, double *elapsed));
+RT_EXTERN(double rt_get_timer, (struct bu_vls *vp, double *elapsed));
 					/* Return CPU time, text, & wall clock time */
 RT_EXTERN(double rt_read_timer, (char *str, int len) );
 					/* Plot a solid */
@@ -1706,17 +1642,6 @@ RT_EXTERN(void quat_log, (quat_t out, quat_t in));
  *                                                               *
  *****************************************************************/
 
-					/* visible malloc() */
-RT_EXTERN(char *rt_malloc, (unsigned int cnt, CONST char *str) );
-					/* visible free() */
-RT_EXTERN(void rt_free, (char *ptr, CONST char *str) );
-					/* visible realloc() */
-RT_EXTERN(char *rt_realloc, (char *ptr, unsigned int cnt, CONST char *str) );
-					/* visible calloc() */
-RT_EXTERN(char *rt_calloc, (unsigned nelem, unsigned elsize, CONST char *str) );
-					/* Duplicate str w/malloc */
-RT_EXTERN(char *rt_strdup, (CONST char *cp) );
-
 					/* Weave segs into partitions */
 RT_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
 	struct partition *PartHeadp, struct application *ap) );
@@ -1753,8 +1678,6 @@ RT_EXTERN(void rt_get_seg, (struct resource *res) );
 RT_EXTERN(void rt_get_pt, (struct rt_i *rtip, struct resource *res) );
 RT_EXTERN(void rt_get_bitv, (struct rt_i *rtip, struct resource *res) );
 					/* malloc rounder */
-RT_EXTERN(int rt_byte_roundup, (int nbytes) );
-					/* logical OR on bit vectors */
 RT_EXTERN(void rt_bitv_or, (bitv_t *out, bitv_t *in, int nbits) );
 					/* space partitioning */
 RT_EXTERN(void rt_cut_it, (struct rt_i *rtip, int ncpu) );
@@ -1908,19 +1831,6 @@ RT_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct directory *dp, mat_t stck, mat_t arc,
 	struct mater_info *materp));
 
-
-/* machine.c */
-					/* change to new "nice" value */
-RT_EXTERN(void rt_pri_set, ( int nval ) );
-					/* get CPU time limit */
-RT_EXTERN(int rt_cpuget, (void) );
-					/* set CPU time limit */
-RT_EXTERN(void rt_cpuset, (int sec) );
-					/* find # of CPUs available */
-RT_EXTERN(int rt_avail_cpus, (void) );
-					/* run func in parallel */
-RT_EXTERN(void rt_parallel, ( void (*func)(), int ncpu ) );
-
 /* memalloc.c -- non PARALLEL routines */
 RT_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
 RT_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
@@ -1995,25 +1905,22 @@ RT_EXTERN(struct rt_mapped_file *rt_open_mapped_file, (CONST char *name,
 RT_EXTERN(void			rt_close_mapped_file, (struct rt_mapped_file *mp));
 
 /* rtassoc.c */
-RT_EXTERN(struct rt_vls *rt_assoc, (char *fname, char *value, int field_sep));
+RT_EXTERN(struct bu_vls *rt_assoc, (char *fname, char *value, int field_sep));
 
 /* pr.c */
-RT_EXTERN(void rt_pr_tree_vls, (struct rt_vls *vls, CONST union tree *tp));
-RT_EXTERN(void rt_pr_hit_vls, (struct rt_vls *v, CONST char *str,
+RT_EXTERN(void rt_pr_tree_vls, (struct bu_vls *vls, CONST union tree *tp));
+RT_EXTERN(void rt_pr_hit_vls, (struct bu_vls *v, CONST char *str,
 	CONST struct hit *hitp));
-RT_EXTERN(void rt_pr_pt_vls, (struct rt_vls *v, CONST struct rt_i *rtip,
+RT_EXTERN(void rt_pr_pt_vls, (struct bu_vls *v, CONST struct rt_i *rtip,
 	CONST struct partition *pp));
-RT_EXTERN(void rt_pr_bitv_vls, (struct rt_vls *v, CONST bitv_t *bv, int len));
-RT_EXTERN(void rt_logindent_vls, (struct rt_vls	*v));
-RT_EXTERN(void rt_pr_fallback_angle, (struct rt_vls *str, CONST char *prefix,
+RT_EXTERN(void rt_pr_bitv_vls, (struct bu_vls *v, CONST bitv_t *bv, int len));
+RT_EXTERN(void rt_logindent_vls, (struct bu_vls	*v));
+RT_EXTERN(void rt_pr_fallback_angle, (struct bu_vls *str, CONST char *prefix,
 	CONST double angles[5]));
 RT_EXTERN(void rt_find_fallback_angle, (double angles[5], CONST vect_t vec));
 
 /* table.c */
 RT_EXTERN(int rt_id_solid, (struct rt_external *ep));
-
-/* magic.c */
-RT_EXTERN(char *rt_identify_magic, (long magic));
 
 /* units.c */
 RT_EXTERN(double rt_units_conversion, (CONST char *str) );
@@ -2023,10 +1930,6 @@ RT_EXTERN(double rt_mm_value, (CONST char *s) );
 /* prep.c */
 RT_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
 RT_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
-
-/* bomb.c */
-RT_EXTERN(void rt_badmagic, (long *ptr, long magic, char *str,
-	char *file, int line));
 
 /* inout.c */
 RT_EXTERN( unsigned char *rt_plong, (unsigned char *msgp, unsigned long l) );
@@ -2046,11 +1949,11 @@ RT_EXTERN(void			rt_vlblock_free, (struct rt_vlblock *vbp) );
 RT_EXTERN(struct rt_list *	rt_vlblock_find, (struct rt_vlblock *vbp,
 				int r, int g, int b) );
 RT_EXTERN(void			rt_vlist_cleanup, () );
-RT_EXTERN(void			rt_vlist_export, (struct rt_vls *vls,
+RT_EXTERN(void			rt_vlist_export, (struct bu_vls *vls,
 				struct rt_list *hp,
 				CONST char *name));
 RT_EXTERN(void			rt_vlist_import, (struct rt_list *hp,
-				struct rt_vls *namevls,
+				struct bu_vls *namevls,
 				CONST unsigned char *buf));
 RT_EXTERN(void			rt_plot_vlblock, (FILE *fp,
 				CONST struct rt_vlblock	*vbp) );
@@ -2491,7 +2394,7 @@ RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST str
 /* From nmg_index.c */
 RT_EXTERN(int			nmg_index_of_struct, (long *p) );
 RT_EXTERN(void			nmg_m_reindex, (struct model *m, long newindex) );
-RT_EXTERN(void			nmg_vls_struct_counts, (struct rt_vls *str,
+RT_EXTERN(void			nmg_vls_struct_counts, (struct bu_vls *str,
 				CONST struct nmg_struct_counts *ctr));
 RT_EXTERN(void			nmg_pr_struct_counts, 
 				(CONST struct nmg_struct_counts *ctr,
