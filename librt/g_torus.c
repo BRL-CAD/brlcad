@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/db.h"
@@ -190,14 +191,14 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_h) ) {
-		fprintf(stderr,"tor(%s):  zero length A, B, or H vector\n",
+		rtlog("tor(%s):  zero length A, B, or H vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that |A| == |B| (for now) */
 	if( fdiff( r1, mag_b ) != 0 ) {
-		fprintf(stderr,"tor(%s):  (|A|=%f) != (|B|=%f) \n",
+		rtlog("tor(%s):  (|A|=%f) != (|B|=%f) \n",
 			stp->st_name, r1, mag_b );
 		return(1);		/* BAD */
 	}
@@ -206,30 +207,27 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	f = VDOT( A, B )/(r1*mag_b);
 
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,
-			"tor(%s):  A not perpendicular to B, f=%f\n",
+		rtlog("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, Hv )/(mag_b*r2);
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,
-			"tor(%s):  B not perpendicular to H, f=%f\n",
+		rtlog("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, Hv )/(r1*r2);
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,
-			"tor(%s):  A not perpendicular to H, f=%f\n",
+		rtlog("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that 0 < r2 <= r1 for alpha computation */
 	if( 0.0 >= r2  || r2 > r1 )  {
-		fprintf(stderr,"r1 = %f, r2 = %f\n", r1, r2 );
-		fprintf(stderr,"tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
+		rtlog("r1 = %f, r2 = %f\n", r1, r2 );
+		rtlog("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -257,10 +255,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	mat_copy( tor->tor_SoR, R );
 	tor->tor_SoR[15] *= tor->tor_r1;
 
-	/* Compute bounding sphere */
 	VMOVE( stp->st_center, tor->tor_V );
-	f = tor->tor_r1 + r2;
-	stp->st_radsq = f * f;
+	stp->st_aradius = stp->st_bradius = tor->tor_r1 + r2;
 
 	/* Compute bounding RPP */
 #define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
@@ -307,8 +303,8 @@ register struct soltab *stp;
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 
-	fprintf(stderr,"r2/r1 (alpha) = %f\n", tor->tor_alpha);
-	fprintf(stderr,"r1 = %f\n", tor->tor_r1);
+	rtlog("r2/r1 (alpha) = %f\n", tor->tor_alpha);
+	rtlog("r1 = %f\n", tor->tor_r1);
 	VPRINT("V", tor->tor_V);
 	mat_print("S o R", tor->tor_SoR );
 	mat_print("invR", tor->tor_invR );
@@ -423,7 +419,7 @@ register struct xray *rp;
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (i = polyRoots( &C, val )) != 4 ){
-		fprintf(stderr,"tor:  polyRoots() 4!=%d\n", i);
+		rtlog("tor:  polyRoots() 4!=%d\n", i);
 		pr_roots( i, val );
 		return(SEG_NULL);		/* MISS */
 	}
@@ -447,7 +443,7 @@ register struct xray *rp;
 	if( i == 0 )
 		return(SEG_NULL);		/* No hit */
 	if( i != 2 && i != 4 )  {
-		fprintf(stderr,"tor_shot: reduced 4 to %d roots\n",i);
+		rtlog("tor_shot: reduced 4 to %d roots\n",i);
 		pr_roots( 4, val );
 		return(SEG_NULL);		/* No hit */
 	}
@@ -462,20 +458,11 @@ register struct xray *rp;
 	/* k[1] is entry point, and k[0] is farthest exit point */
 	GET_SEG(segp);
 	segp->seg_stp = stp;
-
 	segp->seg_in.hit_dist = k[1]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[0]*tor->tor_r1;
-	segp->seg_flag = SEG_IN | SEG_OUT;
-
-	/* Intersection point, entering */
-	VJOIN1( segp->seg_in.hit_point, rp->r_pt, k[1]*tor->tor_r1, rp->r_dir );
-	VJOIN1( work, pprime, k[1], dprime );
-	tornormal( segp->seg_in.hit_normal, work, tor );
-
-	/* Intersection point, exiting */
-	VJOIN1( segp->seg_out.hit_point, rp->r_pt, k[0]*tor->tor_r1, rp->r_dir );
-	VJOIN1( work, pprime, k[0], dprime );
-	tornormal( segp->seg_out.hit_normal, work, tor );
+	/* Set aside vector for tor_norm() later */
+	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
+	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
 
 	if( i == 2 )
 		return(segp);			/* HIT */
@@ -492,26 +479,13 @@ register struct xray *rp;
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[3]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[2]*tor->tor_r1;
-	segp->seg_flag = SEG_IN | SEG_OUT;
-
-	/* Intersection point, entering */
-	VJOIN1( segp->seg_in.hit_point, rp->r_pt, k[3]*tor->tor_r1, rp->r_dir );
-	VJOIN1( work, pprime, k[3], dprime );
-	tornormal( segp->seg_in.hit_normal, work, tor );
-
-	/* Intersection point, exiting */
-	VJOIN1( segp->seg_out.hit_point, rp->r_pt, k[2]*tor->tor_r1, rp->r_dir );
-	VJOIN1( work, pprime, k[2], dprime );
-	tornormal( segp->seg_out.hit_normal, work, tor );
-
+	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[3], dprime );
+	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[2], dprime );
 	return(segp);			/* HIT */
 }
 
-#define X	0
-#define Y	1
-#define Z	2
 /*
- *			T O R N O R M A L
+ *			T O R _ N O R M
  *
  *  Compute the normal to the torus,
  *  given a point on the UNIT TORUS centered at the origin on the X-Y plane.
@@ -534,21 +508,27 @@ register struct xray *rp;
  *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
  *	df/dz = 2 * w * 2 * z		= 4 * w * z
  */
-tornormal( norm, hit, tor )
-register vectp_t norm, hit;
-register struct tor_specific *tor;
+tor_norm( hitp, stp, rp)
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
+	register struct tor_specific *tor =
+		(struct tor_specific *)stp->st_specific;
 	FAST fastf_t w;
 	LOCAL vect_t work;
 
-	w = hit[X]*hit[X] + hit[Y]*hit[Y] + hit[Z]*hit[Z] +
-	    1.0 - tor->tor_alpha*tor->tor_alpha;
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	w = (hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
+	     hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] +
+	     hitp->hit_vpriv[Z]*hitp->hit_vpriv[Z] +
+	     1.0 - tor->tor_alpha*tor->tor_alpha) * 4.0;
 	VSET( work,
-		(4.0 * w - 8.0 ) * hit[X],
-		(4.0 * w - 8.0 ) * hit[Y],
-		4.0 * w * hit[Z] );
+		( w - 8.0 ) * hitp->hit_vpriv[X],
+		( w - 8.0 ) * hitp->hit_vpriv[Y],
+		  w * hitp->hit_vpriv[Z] );
 	VUNITIZE( work );
-	MAT3XVEC( norm, tor->tor_invR, work );
+	MAT3XVEC( hitp->hit_normal, tor->tor_invR, work );
 }
 
 /*	>>>  s o r t ( )  <<<
@@ -583,4 +563,8 @@ register double	t[];
 		}
 	}
 	return;
+}
+
+tor_uv()
+{
 }

@@ -196,19 +196,22 @@ static struct mater default_mater = {
  *  Map one region description into a material description
  *  mater structure.
  */
-char *
+void
 color_map( regp )
 register struct region *regp;
 {
 	register struct mater *mp;
 
-	if( regp == REGION_NULL )
-		return( (char *)&default_mater );
+	if( regp == REGION_NULL )  {
+		fprintf(stderr,"color_map(NULL)\n");
+		return;
+	}
 	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
 		if( regp->reg_regionid <= mp->mt_high &&
 		    regp->reg_regionid >= mp->mt_low ) {
-			return( (char *)mp );
+			regp->reg_materp = (char *)mp;
+			return;
 		}
 	}
-	return( (char *)&default_mater );
+	regp->reg_materp = (char *)&default_mater;
 }

@@ -52,13 +52,22 @@ char *str;
 {
 	long now;
 	double usert;
-	long hep[6];
+	long htime[6];
 
-	(void)stats_(hep);
+	(void)stats_(htime);
 	(void)time(&now);
-	usert = ((double)hep[0]) / 10000000.0;
-	fprintf(stderr,"%s: %f secs\n", str, usert);
-	fprintf(stderr,"HEP %ld clocks, %ld waves, %ld fp, %ld dm, %ld other\n",
-		hep[0], hep[1], hep[2], hep[3], hep[4] );
+	usert = ((double)htime[0]) / 10000000.0;
+	fprintf(stderr,"%s: %f secs, ", str, usert);
+	fprintf(stderr,"%ld waves, %ld fp, %ld dm, %ld other\n",
+		htime[0], htime[1], htime[2], htime[3], htime[4] );
 	return( usert );
+}
+
+bcopy(from, to, count)		/* not efficient */
+register char *from;
+register char *to;
+register int count;
+{
+	while( count-- > 0 )
+		*to++ = *from++;
 }

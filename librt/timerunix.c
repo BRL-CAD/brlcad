@@ -61,3 +61,7 @@ char *str;
 	usert = now-time0;
 	return( usert );
 }
+
+bcopy(from, to, count)  {
+	memcpy( to, from, count );
+}

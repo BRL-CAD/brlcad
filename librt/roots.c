@@ -66,7 +66,7 @@ register complex	roots[];	/* space to put roots found	*/
 #define ALMOST_ZERO	(1.0e-16)
 	while( eqn->cf[0] > -ALMOST_ZERO && eqn->cf[0] < ALMOST_ZERO )  {
 		if( debug & DEBUG_ROOTS )  {
-			fprintf(stderr,"polyRoots:  Leading coeff too small, discarding.");
+			rtlog("polyRoots:  Leading coeff too small, discarding.");
 			pr_poly(eqn);
 		}
 		for ( n=0; n <= eqn->dgr; n++ ){
@@ -226,7 +226,7 @@ register complex	*nxZ;	/* initial guess for root	*/
 	}
 
 	/* If the thing hasn't converged yet, it probably won't. */
-	fprintf(stderr,"findRoot:  didn't converge in 20 iterations\n");
+	rtlog("findRoot:  didn't converge in 20 iterations\n");
 	return(-1);		/* ERROR */
 }
 

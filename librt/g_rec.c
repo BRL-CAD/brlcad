@@ -127,6 +127,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/db.h"
@@ -198,42 +199,12 @@ matp_t mat;
 	mag_d = sqrt( magsq_d = MAGSQ( D ) );
 
 	if( NEAR_ZERO(magsq_h) )  {
-		printf("rec(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
 
-	/* Validate that A.B == 0, C.D == 0 */
+	/* Validate that A.B == 0 */
 	f = VDOT( A, B ) / (mag_a * mag_b);
 	if( ! NEAR_ZERO(f) )  {
-		(void)fprintf(stderr,"rec(%s):  A not perpendicular to B\n",
-			stp->st_name);
-		return(1);		/* BAD */
-	}
-	f = VDOT( C, D ) / (mag_c * mag_d);
-	if( ! NEAR_ZERO(f) )  {
-		(void)fprintf(stderr,"rec(%s):  C not perpendicular to D\n",
-			stp->st_name);
-		return(1);		/* BAD */
-	}
-
-	/* Check for H.A == 0 and H.B == 0 */
-	f = VDOT( Hv, A ) / (mag_h * mag_a);
-	if( ! NEAR_ZERO(f) )  {
-		(void)fprintf(stderr,"rec(%s):  A not perpendicular to H\n",
-			stp->st_name);
-		return(1);		/* BAD */
-	}
-	f = VDOT( Hv, B ) / (mag_h * mag_b);
-	if( ! NEAR_ZERO(f) )  {
-		(void)fprintf(stderr,"rec(%s):  B not perpendicular to H\n",
-			stp->st_name);
-		return(1);		/* BAD */
-	}
-
-	/* Check for |A| > 0, |B| > 0 */
-	if( NEAR_ZERO(mag_a) || NEAR_ZERO(mag_b) )  {
-		(void)fprintf(stderr,"rec(%s):  A or B zero length\n",
-			stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -241,13 +212,26 @@ matp_t mat;
 	VSUB2( work, A, C );
 	f = MAGSQ( work );
 	if( ! NEAR_ZERO(f) )  {
-		(void)fprintf(stderr,"rec(%s):  A != C\n", stp->st_name);
 		return(1);		/* BAD */
 	}
 	VSUB2( work, B, D );
 	f = MAGSQ( work );
 	if( ! NEAR_ZERO(f) )  {
-		(void)fprintf(stderr,"rec(%s):  B != D\n", stp->st_name);
+		return(1);		/* BAD */
+	}
+
+	/* Check for H.A == 0 and H.B == 0 */
+	f = VDOT( Hv, A ) / (mag_h * mag_a);
+	if( ! NEAR_ZERO(f) )  {
+		return(1);		/* BAD */
+	}
+	f = VDOT( Hv, B ) / (mag_h * mag_b);
+	if( ! NEAR_ZERO(f) )  {
+		return(1);		/* BAD */
+	}
+
+	/* Check for |A| > 0, |B| > 0 */
+	if( NEAR_ZERO(mag_a) || NEAR_ZERO(mag_b) )  {
 		return(1);		/* BAD */
 	}
 
@@ -327,9 +311,13 @@ matp_t mat;
 			(stp->st_max[Z] + stp->st_min[Z])/2 );
 
 		dx = (stp->st_max[X] - stp->st_min[X])/2;
+		f = dx;
 		dy = (stp->st_max[Y] - stp->st_min[Y])/2;
+		if( dy > f )  f = dy;
 		dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-		stp->st_radsq = dx*dx + dy*dy + dz*dz;
+		if( dz > f )  f = dz;
+		stp->st_aradius = f;
+		stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 	}
 	return(0);			/* OK */
 }
@@ -368,16 +356,11 @@ register struct xray *rp;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
-	register struct seg *segp;
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static fastf_t	dx2dy2;		/* 1/(D'[x]**2 + D'[y]**2) */
-	static fastf_t	b, c;		/* coeff of polynomial */
-	static fastf_t	root;		/* root of radical */
-	static fastf_t	k1, k2;		/* distance constants of solution */
-	static vect_t	xlated;		/* translated vector */
-	static point_t	point;		/* hit point */
-	static struct hit hits[4];	/* 4 potential hit points */
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL vect_t	pprime;		/* P' */
+	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	LOCAL vect_t	xlated;		/* translated vector */
+	LOCAL struct hit hits[3];	/* 4 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 
 	hitp = &hits[0];
@@ -391,38 +374,41 @@ register struct xray *rp;
 	if( NEAR_ZERO(dprime[X]) && NEAR_ZERO(dprime[Y]) )
 		goto check_plates;
 
-	dx2dy2 = 1.0 / (dprime[X] * dprime[X] + dprime[Y] * dprime[Y]);
-	b = 2 * ( dprime[X] * pprime[X] + dprime[Y] * pprime[Y] ) * dx2dy2;
-	c = ( (pprime[X] * pprime[X] + pprime[Y] * pprime[Y]) - 1.0) * dx2dy2;
+	/* Find roots of the equation, using forumla for quadratic w/ a=1 */
+	{
+		FAST fastf_t	b;		/* coeff of polynomial */
+		FAST fastf_t	root;		/* root of radical */
+		FAST fastf_t	dx2dy2;
 
-	root = b*b - ( 4 * c );			/* a == 1 */
-	if( root < 0 )
-		goto check_plates;
-	root = sqrt(root);
+		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) * 
+		   (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
+		if( (root = b*b - 4 * dx2dy2 *
+		    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1)) <= 0 )
+			goto check_plates;
+		root = sqrt(root);
 
-	k1 = (-b + root) * 0.5;			/* a == 1 */
-	k2 = (-b - root) * 0.5;
+		if( (k1 = (root-b) * 0.5) > (k2 = (root+b) * (-0.5)) )  {
+			root = k2;
+			k2 = k1;
+			k1 = root;
+		}
+	}
 
 	/*
-	 * k1 and k2 are potential solutions to intersection with
-	 * side, in no particular order.
-	 *  Compute exact intersection points, and surface normal.
+	 *  k1 and k2 are potential solutions to intersection with side.
+	 *  See if they fall in range.
 	 */
-	VJOIN1( point, pprime, k1, dprime );		/* hit' */
-	if( point[Z] >= 0.0 && point[Z] <= 1.0 ) {
+	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
+	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 		hitp->hit_dist = k1;
-		VJOIN1( hitp->hit_point, rp->r_pt, k1, rp->r_dir );
-		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS, point );
-		VUNITIZE( hitp->hit_normal );
+		hitp->hit_private = (char *)1;		/* flag */
 		hitp++;
 	}
 
-	VJOIN1( point, pprime, k2, dprime );		/* hit' */
-	if( point[Z] >= 0.0 && point[Z] <= 1.0 )  {
+	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
+	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 		hitp->hit_dist = k2;
-		VJOIN1( hitp->hit_point, rp->r_pt, k2, rp->r_dir );
-		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS, point );
-		VUNITIZE( hitp->hit_normal );
+		hitp->hit_private = (char *)1;		/* flag */
 		hitp++;
 	}
 
@@ -435,46 +421,51 @@ check_plates:
 		k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
 		k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
 
-		VJOIN1( point, pprime, k1, dprime );		/* hit' */
-		if( point[X] * point[X] + point[Y] * point[Y] <= 1.0 )  {
+		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
+		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k1;
-			VJOIN1( hitp->hit_point, rp->r_pt, k1, rp->r_dir );
+			hitp->hit_private = (char *)0;	/* flag */
 			VREVERSE( hitp->hit_normal, rec->rec_Hunit ); /* -H */
 			hitp++;
 		}
 
-		VJOIN1( point, pprime, k2, dprime );		/* hit' */
-		if( point[X] * point[X] + point[Y] * point[Y] <= 1.0 )  {
+		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );	/* hit' */
+		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k2;
-			VJOIN1( hitp->hit_point, rp->r_pt, k2, rp->r_dir );
+			hitp->hit_private = (char *)0;	/* flag */
 			VMOVE( hitp->hit_normal, rec->rec_Hunit ); /* H */
 			hitp++;
 		}
 	}
-	if( hitp == &hits[0] )
+	if( hitp != &hits[2] )
 		return(SEG_NULL);	/* MISS */
 
-	if( hitp != &hits[2] )  {
-		static struct hit *hp;	/* XXX */
-		printf("ERROR: rec(%s):  %d hits??\n", stp->st_name,
-			(&hits[0] - hitp) / sizeof(struct hit)   );
-		for( hp = &hits[0]; hp < hitp; hp++ )
-			hit_print( "?hit?", hp );
-		return(SEG_NULL);	/* MISS */
-	}
-	GET_SEG(segp);
-	segp->seg_stp = stp;
-	segp->seg_flag = SEG_IN|SEG_OUT;
 	if( hits[0].hit_dist < hits[1].hit_dist )  {
 		/* entry is [0], exit is [1] */
+		register struct seg *segp;
+
+		if( hits[1].hit_dist <= 0 )
+			return(SEG_NULL);	/* MISS: behind start pt */
+		GET_SEG(segp);
+		segp->seg_stp = stp;
 		segp->seg_in = hits[0];		/* struct copy */
 		segp->seg_out = hits[1];	/* struct copy */
+		return(segp);			/* HIT */
 	} else {
 		/* entry is [1], exit is [0] */
+		register struct seg *segp;
+
+		if( hits[0].hit_dist <= 0 )
+			return(SEG_NULL);	/* MISS: behind start pt */
+		GET_SEG(segp);
+		segp->seg_stp = stp;
 		segp->seg_in = hits[1];		/* struct copy */
 		segp->seg_out = hits[0];	/* struct copy */
+		return(segp);			/* HIT */
 	}
-	return(segp);			/* HIT */
+	/* NOTREACHED */
 }
 
 #define MINMAX(a,b,c)	{if( (ftemp = (c)) < (a) )  a = ftemp;\
@@ -490,4 +481,83 @@ register vectp_t v;
 	MINMAX( stp->st_min[X], stp->st_max[X], v[X] );
 	MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] );
 	MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] );
+}
+
+
+/*
+ *  			R E C _ N O R M
+ *
+ *  Given ONE ray distance, return the normal and entry/exit point.
+ *  hit_private is a flag indicating if normal needs to be computed or not.
+ */
+rec_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
+{
+	register struct rec_specific *rec =
+		(struct rec_specific *)stp->st_specific;
+
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	if( hitp->hit_private == (char *)1 )  {
+		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS,
+			hitp->hit_vpriv );
+		VUNITIZE( hitp->hit_normal );
+	}
+	/* Otherwise, normal is already filled in */
+}
+
+/*
+ *  			R E C _ U V
+ *  
+ *  For a hit on the surface of an REC, return the (u,v) coordinates
+ *  of the hit point, 0 <= u,v <= 1.
+ *  For now, u,v = 0 on the end plates of the REC.
+ *  On the skin of the cylinder itself,
+ *  u is the rotation around the cylinder, and
+ *  v is the displacement along H.
+ */
+static double inv2pi =  0.15915494309189533619;		/* 1/(pi*2) */
+
+rec_uv( stp, hitp, uvp )
+struct soltab *stp;
+register struct hit *hitp;
+register fastf_t *uvp;
+{
+	register struct rec_specific *rec =
+		(struct rec_specific *)stp->st_specific;
+	LOCAL vect_t work;
+	LOCAL vect_t pprime;
+	FAST fastf_t len;
+
+	/* hit_point is on surface;  project back to unit cylinder,
+	 * creating a vector from vertex to hit point.
+	 */
+	VSUB2( work, hitp->hit_point, rec->rec_V );
+	MAT4X3VEC( pprime, rec->rec_SoR, work );
+
+	/* See if this is top or bottom plate */
+	if( VEQUAL( hitp->hit_normal, rec->rec_Hunit ) )  {
+		/* top plate */
+		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
+		uvp[0] = acos(pprime[Y]/len) * inv2pi;
+		uvp[1] = len;		/* rim v = 1 */
+		goto out;
+	}
+	VREVERSE( work, rec->rec_Hunit );
+	if( VEQUAL( hitp->hit_normal, work ) )  {
+		/* bottom plate */
+		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
+		uvp[0] = acos(pprime[Y]/len) * inv2pi;
+		uvp[1] = 1 - len;	/* rim v = 0 */
+		goto out;
+	}
+
+	/* Skin.  x,y coordinates define rotation.  radius = 1 */
+	uvp[0] = acos(pprime[Y]) * inv2pi;
+	uvp[1] = pprime[Z];		/* height */
+out:
+	/* Handle other half of acos() domain */
+	if( pprime[X] < 0 )
+		uvp[0] = 1.0 - uvp[0];
 }

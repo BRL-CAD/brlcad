@@ -44,7 +44,7 @@ char *str;
 	RES_RELEASE( &res_malloc );		/* unlock */
 
 	if( ptr==(char *)0 || debug&DEBUG_MEM )
-		fprintf(stderr,"%x=malloc(%d) %s\n", ptr, cnt, str);
+		rtlog("%x=malloc(%d) %s\n", ptr, cnt, str);
 	return(ptr);
 }
 
@@ -57,7 +57,7 @@ char *ptr;
 	RES_ACQUIRE( &res_malloc );		/* lock */
 	free(ptr);
 	RES_RELEASE( &res_malloc );		/* unlock */
-	if(debug&DEBUG_MEM) fprintf(stderr,"%x freed %s\n", ptr, str);
+	if(debug&DEBUG_MEM) rtlog("%x freed %s\n", ptr, str);
 	*((int *)ptr) = -1;	/* zappo! */
 }
 
@@ -78,7 +78,7 @@ get_seg()  {
 
 	bytes = 64*sizeof(struct seg);
 	if( (cp = vmalloc(bytes, "get_seg")) == (char *)0 )  {
-		fprintf(stderr,"get_seg: malloc failure\n");
+		rtlog("get_seg: malloc failure\n");
 		exit(17);
 	}
 	sp = (struct seg *)cp;
@@ -97,22 +97,27 @@ get_seg()  {
  *  we get a whole batch, saving overhead.  When this routine is called,
  *  the partition resource must already be locked.
  *  malloc() locking is done in vmalloc.
+ *
+ *  Also note that there is a bit of trickery going on here:
+ *  the *real* size of pt_solhit[] array is determined at runtime, here.
  */
 void
 get_pt()  {
 	register char *cp;
-	register struct partition *pp;
 	register int bytes;
+	register int size;		/* size of structure to really get */
 
-	bytes = 64*sizeof(struct partition);
+	size = PT_BYTES;		/* depends on nsolids */
+	size = (size + sizeof(long) -1) & (~(sizeof(long)-1));
+	bytes = 64*size;
 	if( (cp = vmalloc(bytes, "get_pt")) == (char *)0 )  {
-		fprintf(stderr,"get_pt: malloc failure\n");
+		rtlog("get_pt: malloc failure\n");
 		exit(17);
 	}
-	pp = (struct partition *)cp;
-	while( bytes >= sizeof(struct partition) )  {
-		pp->pt_forw = FreePart;
-		FreePart = pp++;
-		bytes -= sizeof(struct partition);
+	while( bytes >= size )  {
+		((struct partition *)cp)->pt_forw = FreePart;
+		FreePart = (struct partition *)cp;
+		cp += size;
+		bytes -= size;
 	}
 }

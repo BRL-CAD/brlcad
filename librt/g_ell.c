@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/db.h"
@@ -163,7 +164,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	magsq_b = MAGSQ( B );
 	magsq_c = MAGSQ( C );
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_c) ) {
-		fprintf(stderr,"ell(%s):  zero length A, B, or C vector\n",
+		rtlog("ell(%s):  zero length A, B, or C vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
 	}
@@ -171,17 +172,17 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 */
 	f = VDOT( A, B );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
+		rtlog("ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, C );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
+		rtlog("ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, C );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
+		rtlog("ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
@@ -228,7 +229,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		f = magsq_b;
 	if( magsq_c > f )
 		f = magsq_c;
-	stp->st_radsq = f;
+	stp->st_aradius = stp->st_bradius = sqrt(f);
 
 	/* Compute bounding RPP */
 #define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
@@ -293,10 +294,10 @@ register struct xray *rp;
 	register struct seg *segp;
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL vect_t	pprime;		/* P' */
-	LOCAL fastf_t	dp, dd, pp;	/* D' dot P', D' dot D', P' dot P' */
-	LOCAL fastf_t	root;		/* root of radical */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
 	LOCAL vect_t	xlated;		/* translated vector */
+	LOCAL fastf_t	dp, dd;		/* D' dot P', D' dot D' */
+	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	FAST fastf_t	root;		/* root of radical */
 
 	/* out, Mat, vect */
 	MAT4X3VEC( dprime, ell->ell_SoR, rp->r_dir );
@@ -305,60 +306,88 @@ register struct xray *rp;
 
 	dp = VDOT( dprime, pprime );
 	dd = VDOT( dprime, dprime );
-	pp = VDOT( pprime, pprime );
 
-	root = dp*dp - dd * (pp-1.0);
-	if( root < 0 )
+	if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 )
 		return(SEG_NULL);		/* No hit */
 	root = sqrt(root);
 
-	k1 = (-dp + root) / dd;
-	k2 = (-dp - root) / dd;
-
-	if( k1 > k2 )  {
-		FAST fastf_t f;	/*  XXX  */
-		f = k1;
-		k1 = k2;
-		k2 = f;
-	}
-	/*
-	 * Now, k1 is entry point, and k2 is exit point
-	 */
 	GET_SEG(segp);
 	segp->seg_stp = stp;
-
-	/* ASSERT that MAGNITUDE(rp->r_dir) == 1 */
-	segp->seg_in.hit_dist = k1;
-	segp->seg_out.hit_dist = k2;
-
-	/*
-	 *  For each point, if intersect comes "after" start of ray,
-	 *  compute exact intersection point, and surface normal.
-	 */
-	segp->seg_flag = 0;
-	if( k1 >= 0 )  {
-		FAST fastf_t f;		/* XXX */
-		segp->seg_flag |= SEG_IN;
-
-		/* Intersection point */
-		VJOIN1( segp->seg_in.hit_point, rp->r_pt, k1, rp->r_dir );
-
-		/* Normal at that point, pointing out */
-		VSUB2( xlated, segp->seg_in.hit_point, ell->ell_V );
-		MAT4X3VEC( segp->seg_in.hit_normal, ell->ell_invRSSR, xlated );
-		f = 1.0 / MAGNITUDE(segp->seg_in.hit_normal );
-		VSCALE( segp->seg_in.hit_normal, segp->seg_in.hit_normal, f);
-	}
-	if( k2 >= 0 )  {
-		FAST fastf_t f;		/* XXX */
-		segp->seg_flag |= SEG_OUT;
-
-		VJOIN1( segp->seg_out.hit_point, rp->r_pt, k2, rp->r_dir );
-
-		VSUB2( xlated, segp->seg_out.hit_point, ell->ell_V );
-		MAT4X3VEC( segp->seg_out.hit_normal,ell->ell_invRSSR, xlated );
-		f = 1.0 / MAGNITUDE( segp->seg_out.hit_normal );
-		VSCALE(segp->seg_out.hit_normal, segp->seg_out.hit_normal, f);
+	if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
+		/* k1 is entry, k2 is exit */
+		segp->seg_in.hit_dist = k1;
+		segp->seg_out.hit_dist = k2;
+	} else {
+		/* k2 is entry, k1 is exit */
+		segp->seg_in.hit_dist = k2;
+		segp->seg_out.hit_dist = k1;
 	}
 	return(segp);			/* HIT */
+}
+
+/*
+ *  			E L L _ N O R M
+ *  
+ *  Given ONE ray distance, return the normal and entry/exit point.
+ */
+ell_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
+{
+	register struct ell_specific *ell =
+		(struct ell_specific *)stp->st_specific;
+	LOCAL vect_t xlated;
+
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	VSUB2( xlated, hitp->hit_point, ell->ell_V );
+	MAT4X3VEC( hitp->hit_normal, ell->ell_invRSSR, xlated );
+	VUNITIZE( hitp->hit_normal );
+}
+
+/*
+ *  			E L L _ U V
+ *  
+ *  For a hit on the surface of an ELL, return the (u,v) coordinates
+ *  of the hit point, 0 <= u,v <= 1.
+ *  u = angle around skin in X,Y plane.
+ *  v = angle around skin in X,Z plane.
+ */
+static double inv2pi =  0.15915494309189533619;		/* 1/(pi*2) */
+
+ell_uv( stp, hitp, uvp )
+struct soltab *stp;
+register struct hit *hitp;
+register fastf_t *uvp;
+{
+	register struct ell_specific *ell =
+		(struct ell_specific *)stp->st_specific;
+	LOCAL vect_t work;
+	LOCAL vect_t pprime;
+	FAST fastf_t len;
+
+	/* hit_point is on surface;  project back to unit sphere,
+	 * creating a vector from vertex to hit point which always
+	 * has length=1.0
+	 */
+	VSUB2( work, hitp->hit_point, ell->ell_V );
+	MAT4X3VEC( pprime, ell->ell_SoR, work );
+
+	/* project onto X,Y plane */
+	if( (len=sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y])) > EPSILON )  {
+		uvp[0] = acos(pprime[Y]/len) * inv2pi;
+		/* Handle other half of acos() domain */
+		if( pprime[X] < 0 )
+			uvp[0] += 0.5;
+	} else
+		uvp[0] = 0;
+
+	/* project onto X,Z plane */
+	if( (len=sqrt(pprime[X]*pprime[X]+pprime[Z]*pprime[Z])) > EPSILON )  {
+		uvp[1] = acos(pprime[Z]/len) * inv2pi;
+		/* Handle other half of acos() domain */
+		if( pprime[X] < 0 )
+			uvp[1] += 0.5;
+	} else
+		uvp[1] = 0;
 }

@@ -221,3 +221,7 @@ p2dig(i)
 
 	fprintf(stderr,"%d%d", i / 10, i % 10);
 }
+
+bcopy(from, to, count)  {
+	memcpy( to, from, count );
+}

@@ -292,6 +292,8 @@ register complex	root[];
 	register int	i;
 	static int	first_time = 1;
 	
+#ifndef HEP
+	/* abort_buf is NOT parallel! */
 	if( first_time )  {
 		first_time = 0;
 		(void)signal(SIGFPE, cubic_catch);
@@ -299,12 +301,13 @@ register complex	root[];
 	expecting_fpe = 1;
 	if( setjmp( abort_buf ) )  {
 		(void)signal(SIGFPE, cubic_catch);
-		fprintf(stderr,"rt: cubic() Floating Point Error\n");
+		rtlog("rt: cubic() Floating Point Error\n");
 		if( debug & DEBUG_ROOTS )  {
 			pr_poly(eqn);
 		}
 		return(0);	/* FAIL */
 	}
+#endif
 
 	c1 = eqn->cf[1];
 
@@ -339,7 +342,7 @@ register complex	root[];
 		LOCAL fastf_t		cs_phi, sn_phi;
 
 		if( (fact = -THIRD * a) < 0.0 )  {
-			fprintf(stderr,"cubic: sqrt(%f)\n", fact);
+			rtlog("cubic: sqrt(%f)\n", fact);
 			fact = 0.0;
 			phi = 0.0;
 		} else {
@@ -444,9 +447,9 @@ register poly	*eqn;
 {
 	register int	n;
 
-	fprintf(stderr,"\nDegree of polynomial = %d\n",eqn->dgr);
+	rtlog("\nDegree of polynomial = %d\n",eqn->dgr);
 	for ( n=0; n<=eqn->dgr; ++n){
-		fprintf(stderr," %g ",eqn->cf[n]);
+		rtlog(" %g ",eqn->cf[n]);
 	}
-	fprintf(stderr,"\n");
+	rtlog("\n");
 }

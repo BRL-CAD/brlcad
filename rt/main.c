@@ -3,6 +3,8 @@
  *
  *  Demonstration Ray Tracing main program, using RT library.
  *  Invoked by MGED for quick pictures.
+ *  Is linked with each of three "back ends" (view.c, viewpp.c, viewray.c)
+ *  to produce three executable programs:  rt, rtpp, rtray.
  *
  *  Author -
  *	Michael John Muuss
@@ -26,26 +28,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "debug.h"
 
-static char usage[] = "\
-Usage:  rt [options] model.vg object [objects]\n\
-Options:  -f[#] -x# -aAz -eElev -A%Ambient -l# [-o model.pix]\n";
+extern char usage[];
 
-/* Used for autosizing */
-static vect_t base;		/* view position of mdl_min */
-static fastf_t deltas;		/* distance between rays */
 extern double atof();
 
 /***** Variables shared with viewing model *** */
 double AmbientIntensity = 0.1;	/* Ambient light intensity */
-vect_t l0vec;			/* 0th light vector */
-vect_t l1vec;			/* 1st light vector */
-vect_t l2vec;			/* 2st light vector */
-vect_t l0pos;			/* 0th light position */
 double azimuth, elevation;
-int outfd;		/* fd of optional pixel output file */
-FILE *outfp;		/* used to write .PP files */
 int lightmodel;		/* Select lighting model */
-int npts;		/* # of points to shoot: x,y */
+mat_t view2model;
+mat_t model2view;
 /***** end of sharing with viewing model *****/
 
 /*
@@ -56,12 +48,18 @@ int argc;
 char **argv;
 {
 	static struct application ap;
-	static mat_t view2model;
-	static mat_t model2view;
-	static vect_t tempdir;
+	static vect_t temp;
 	static int matflag = 0;		/* read matrix from stdin */
 	static double utime;
 	char *title_file, *title_obj;	/* name of file and first object */
+	int	perspective=0;	/* perspective view -vs- parallel view */
+	float	zoomout=1;	/* >0 zoom out factor, 0..1 zoom in factor */
+	vect_t	dx_model;	/* view delta-X as model-space vector */
+	vect_t	dy_model;	/* view delta-Y as model-space vector */
+	point_t	eye_model;	/* model-space location of eye */
+	point_t	viewbase_model;	/* model-space location of viewplane corner */
+	static int outfd;	/* fd of optional pixel output file */
+	static int npts;	/* # of points to shoot: x,y */
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -114,6 +112,12 @@ char **argv;
 			}
 			argc--; argv++;
 			break;
+		case 'p':
+			perspective = 1;
+			if( argv[0][2] != '\0' )
+				zoomout = atof( &argv[0][2] );
+			if( zoomout <= 0 )  zoomout = 1;
+			break;
 		default:
 			fprintf(stderr,"rt:  Option '%c' unknown\n", argv[0][1]);
 			fprintf(stderr, usage);
@@ -137,110 +141,129 @@ char **argv;
 		rtbomb("Unable to continue");
 	argc--; argv++;
 
+	(void)pr_timer("DB TOC");
+	prep_timer();
+
 	/* Load the desired portion of the model */
 	while( argc > 0 )  {
 		(void)get_tree(argv[0]);
 		argc--; argv++;
 	}
+	(void)pr_timer("DB WALK");
+	prep_timer();
 
-	/* initialize application based upon lightmodel # */
-	view_init( &ap );
-	ap.a_init( &ap, title_file, title_obj );
+	/* Allow library to prepare itself */
+	rt_prep();
+
+	/* initialize application */
+	view_init( &ap, title_file, title_obj, npts, outfd );
 
 	(void)pr_timer("PREP");
 
 	if( HeadSolid == SOLTAB_NULL )  {
-		fprintf(stderr, "No solids remain after prep, exiting.\n");
-		exit(11);
+		rtbomb("No solids remain after prep.\n");
+		/* NOTREACHED */
 	}
 	fprintf(stderr,"shooting at %d solids in %d regions\n",
 		nsolids, nregions );
-
-	/* Set up the online display and/or the display file */
-	dev_setup(npts);
 
 	fprintf(stderr,"model X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
 		mdl_min[X], mdl_max[X],
 		mdl_min[Y], mdl_max[Y],
 		mdl_min[Z], mdl_max[Z] );
 
+do_more:
 	if( !matflag )  {
+		vect_t view_min;		/* view position of mdl_min */
+		vect_t view_max;		/* view position of mdl_max */
+		mat_t Viewrot, toViewcenter;
+		fastf_t f;
+		fastf_t viewsize;
+
 		/*
 		 * Unrotated view is TOP.
 		 * Rotation of 270,0,270 takes us to a front view.
 		 * Standard GIFT view is -35 azimuth, -25 elevation off front.
 		 */
-		mat_idn( model2view );
-		mat_angles( model2view, 270.0-elevation, 0.0, 270.0+azimuth );
+		mat_idn( Viewrot );
+		mat_angles( Viewrot, 270.0-elevation, 0.0, 270.0+azimuth );
 		fprintf(stderr,"Viewing %f azimuth, %f elevation off of front view\n",
 			azimuth, elevation);
-		mat_inv( view2model, model2view );
 
-		autosize( model2view, npts );
-		VSET( tempdir, 0, 0, -1 );
+		viewbounds( view_min, view_max, Viewrot );
+		viewsize = (view_max[X]-view_min[X]);
+		f = (view_max[Y]-view_min[Y]);
+		if( f > viewsize )  viewsize = f;
+		f = (view_max[Z]-view_min[Z]);
+		if( f > viewsize )  viewsize = f;
+
+		mat_idn( toViewcenter );
+		toViewcenter[MDX] = -(view_max[X]+view_min[X])/2;
+		toViewcenter[MDY] = -(view_max[Y]+view_min[Y])/2;
+		toViewcenter[MDZ] = -(view_max[Z]+view_min[Z])/2;
+
+		mat_mul( model2view, Viewrot, toViewcenter );
+		model2view[15] = 0.5*viewsize;	/* Viewscale */
 	}  else  {
-		static int i;
+		register int i;
 
-		/* Visible part is from -1 to +1 */
+		/* Visible part is from -1 to +1 in view space */
 		for( i=0; i < 16; i++ )
-			scanf( "%f", &model2view[i] );
-
-		base[X] = base[Y] = base[Z] = -1;
-		deltas = 2.0 / ((double)npts);
-		mat_inv( view2model, model2view );
-		VSET( tempdir, 0, 0, -1 );
+			if( scanf( "%f", &model2view[i] ) != 1 )
+				exit(0);
 	}
+	mat_inv( view2model, model2view );
 
-	MAT4X3VEC( ap.a_ray.r_dir, view2model, tempdir );
+	fprintf(stderr,"Deltas=%f (model units between rays)\n",
+		model2view[15]*2/npts );
+
+	VSET( temp, 0, 0, -1 );
+	MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
 	VUNITIZE( ap.a_ray.r_dir );
 
-	MAT4X3PNT( ap.a_ray.r_pt, view2model, base );
+	/* Chop -1.0..+1.0 range into npts parts */
+	VSET( temp, 2.0/npts, 0, 0 );
+	MAT4X3VEC( dx_model, view2model, temp );
+	VSET( temp, 0, 2.0/npts, 0 );
+	MAT4X3VEC( dy_model, view2model, temp );
 
-	fprintf(stderr,"Ambient light at %f%%\n", AmbientIntensity * 100.0 );
+	VSET( temp, 0, 0, zoomout );
+	MAT4X3PNT( eye_model, view2model, temp );	/* perspective only */
 
-	if( lightmodel != 0 )  {
-		/* Determine the Light location(s) in view space */
-		/* lightmodel 0 does this in view.c */
-		/* 0:  Blue, at left edge, 1/2 high */
-		tempdir[0] = 2 * (base[X]);
-		tempdir[1] = (2/2) * (base[Y]);
-		tempdir[2] = 2 * (base[Z] + npts*deltas);
-		MAT4X3VEC( l0pos, view2model, tempdir );
-		VMOVE( l0vec, l0pos );
-		VUNITIZE(l0vec);
-
-		/* 1: Red, at right edge, 1/2 high */
-		tempdir[0] = 2 * (base[X] + npts*deltas);
-		tempdir[1] = (2/2) * (base[Y]);
-		tempdir[2] = 2 * (base[Z] + npts*deltas);
-		MAT4X3VEC( l1vec, view2model, tempdir );
-		VUNITIZE(l1vec);
-
-		/* 2:  Grey, behind, and overhead */
-		tempdir[0] = 2 * (base[X] + (npts/2)*deltas);
-		tempdir[1] = 2 * (base[Y] + npts*deltas);
-		tempdir[2] = 2 * (base[Z] + (npts/2)*deltas);
-		MAT4X3VEC( l2vec, view2model, tempdir );
-		VUNITIZE(l2vec);
+	/* "Upper left" corner of viewing plane */
+	if( perspective )  {
+		VSET( temp, -1, -1, 0 );	/* viewing plane */
+	}  else  {
+		VSET( temp, -1, -1, 1 );	/* eye plane */
 	}
+	MAT4X3PNT( viewbase_model, view2model, temp );
 
-	prep_timer();	/* start timing actual run */
+	/* initialize lighting */
+	view_2init( &ap );
 
+	fflush(stdout);
 	fflush(stderr);
+	prep_timer();	/* start timing actual run */
 
 	for( ap.a_y = npts-1; ap.a_y >= 0; ap.a_y--)  {
 		for( ap.a_x = 0; ap.a_x < npts; ap.a_x++)  {
-			VSET( tempdir,
-				base[X] + ap.a_x * deltas,
-				base[Y] + (npts-ap.a_y-1) * deltas,
-				base[Z] +  2*npts*deltas );
-			MAT4X3PNT( ap.a_ray.r_pt, view2model, tempdir );
+			VJOIN2( ap.a_ray.r_pt, viewbase_model,
+				ap.a_x, dx_model, 
+				(npts-ap.a_y-1), dy_model );
+			if( perspective )  {
+				VSUB2( ap.a_ray.r_dir,
+					ap.a_ray.r_pt, eye_model );
+				VUNITIZE( ap.a_ray.r_dir );
+				VMOVE( ap.a_ray.r_pt, eye_model );
+			}
 
+			ap.a_level = 0;		/* recursion level */
 			shootray( &ap );
+			view_pixel( &ap );
 		}
-		ap.a_eol( &ap );	/* End of scan line */
+		view_eol( &ap );	/* End of scan line */
 	}
-	ap.a_end( &ap );		/* End of application */
+	view_end( &ap );		/* End of application */
 
 	/*
 	 *  All done.  Display run statistics.
@@ -254,73 +277,7 @@ char **argv;
 		((double)nhits*100.0)/nshots );
 	fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
 		npts*npts, utime, (double)(npts*npts/utime) );
+
+	if( matflag )  goto do_more;
 	return(0);
-}
-
-/*
- *			A U T O S I Z E
- */
-autosize( m2v, n )
-matp_t m2v;
-int n;
-{
-	register struct soltab *stp;
-	static fastf_t xmin, xmax;
-	static fastf_t ymin, ymax;
-	static fastf_t zmin, zmax;
-	static vect_t xlated;
-	vect_t top;
-	FAST double f;
-
-#ifdef later
-	/* NEW WAY */
-	/* Need to find all 8 corners of (rotated) model bounding RPP */
-	MAT4X3PNT( base, m2v, mdl_min );
-	MAT4X3PNT( top, m2v, mdl_max );
-
-	deltas = (top[X]-base[X])/n;
-	f = (top[Y]-base[Y])/n;
-	if( f > deltas )  deltas = f;
-	fprintf(stderr,"Nview  X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
-		base[X], top[X],
-		base[Y], top[Y],
-		base[Z], top[Z] );
-	fprintf(stderr,"NDeltas=%f (units between rays)\n", deltas );
-#endif
-
-	/* OLD WAY */
-	/* init maxima and minima */
-	xmax = ymax = zmax = -100000000.0;
-	xmin = ymin = zmin =  100000000.0;
-
-	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
-		FAST fastf_t rad;
-
-		rad = sqrt(stp->st_radsq);
-		MAT4X3PNT( xlated, m2v, stp->st_center );
-#define MIN(v,t) {FAST fastf_t rt; rt=(t); if(rt<v) v = rt;}
-#define MAX(v,t) {FAST fastf_t rt; rt=(t); if(rt>v) v = rt;}
-		MIN( xmin, xlated[0]-rad );
-		MAX( xmax, xlated[0]+rad );
-		MIN( ymin, xlated[1]-rad );
-		MAX( ymax, xlated[1]+rad );
-		MIN( zmin, xlated[2]-rad );
-		MAX( zmax, xlated[2]+rad );
-	}
-
-	/* Provide a slight border */
-	xmin -= xmin * 0.03;
-	ymin -= ymin * 0.03;
-	zmin -= zmin * 0.03;
-	xmax *= 1.03;
-	ymax *= 1.03;
-	zmax *= 1.03;
-
-	VSET( base, xmin, ymin, zmin );
-
-	deltas = (xmax-xmin)/n;
-	MAX( deltas, (ymax-ymin)/n );
-	fprintf(stderr,"view X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
-		xmin, xmax, ymin, ymax, zmin, zmax );
-	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
 }
