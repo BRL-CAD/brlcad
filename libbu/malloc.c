@@ -187,6 +187,11 @@ const char	*str;
 		fprintf(stderr,"ERROR: bu_malloc count=0 %s\n", str );
 		bu_bomb("ERROR: bu_malloc(0)\n");
 	}
+
+	if( cnt < sizeof( int ) ) {
+		cnt = sizeof( int );
+	}
+
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
 		/* Pad, plus full int for magic number */
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
