@@ -23,8 +23,8 @@ static char RCSmathtab[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "mathtab.h"
+#include "machine.h"
+#include "./mathtab.h"
 
 #define	PI	3.1415926535898
 #define	TWOPI	6.283185307179

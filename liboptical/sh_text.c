@@ -20,10 +20,10 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
-#include "material.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./material.h"
 
 struct txt_specific {
 	char	tx_file[128];	/* Filename */

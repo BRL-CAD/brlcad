@@ -21,10 +21,10 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
-#include "material.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./material.h"
 
 extern int phong_setup();
 extern int txt_setup();

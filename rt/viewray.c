@@ -29,9 +29,9 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 char usage[] = "\
 Usage:  rtray [options] model.g objects... >file.ray\n\

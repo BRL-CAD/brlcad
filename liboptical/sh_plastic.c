@@ -24,13 +24,13 @@ static char RCSplastic[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/mater.h"
-#include "../h/raytrace.h"
+#include "machine.h"
+#include "vmath.h"
+#include "mater.h"
+#include "raytrace.h"
 #include "../librt/debug.h"
-#include "material.h"
-#include "mathtab.h"
+#include "./material.h"
+#include "./mathtab.h"
 
 extern int colorview();		/* from view.c */
 

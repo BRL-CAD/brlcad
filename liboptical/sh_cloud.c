@@ -22,11 +22,11 @@ static char RCScloud[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
-#include "material.h"
-#include "mathtab.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./material.h"
+#include "./mathtab.h"
 
 struct cloud_specific {
 	float	cl_thresh;

@@ -4,7 +4,7 @@
  *  Merely for the use of RT, a libfb-compatible
  *  interface library that does nothing.  Used for benchmarks, etc.
  */
-#include "../h/fb.h"
+#include "fb.h"
 
 fbsetsize( size )  {}
 

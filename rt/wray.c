@@ -29,9 +29,9 @@ static char RCSwray[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 
 /* /vld/include/ray.h -- ray segment data format (D A Gwyn) */
