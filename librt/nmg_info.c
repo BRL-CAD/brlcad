@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"	/* For librt debug flags, XXX temp */
 
+RT_EXTERN( fastf_t nmg_loop_plane_area, ( CONST struct loopuse *lu, plane_t pl ) );
 
 /************************************************************************
  *									*
@@ -517,15 +518,6 @@ out:
  *  provided normal vector (which may be either the face normal,
  *  or the anti-normal).
  *
- *  XXX Consider using John's loop area calculator instead.
- *
- *  Compute the "winding number" for the loop, by calculating all the angles.
- *  A simple square will have a total of +/- 2*pi.
- *  However, each "jaunt" into the interior will increase this total
- *  by pi.
- *  This information is probably useful, but here the only goal is to
- *  determine cw/ccw, so just make sure the total has reached +/- 2*pi.
- *
  *  Returns -
  *	+1	Loop is CCW, should be exterior loop.
  *	-1	Loop is CW, should be interior loop.
@@ -538,146 +530,59 @@ CONST struct loopuse	*lu;
 CONST plane_t		norm;
 CONST struct rt_tol	*tol;
 {
-	vect_t		edge1, edge2;
-	vect_t		left;
-	struct edgeuse	*eu;
-	struct edgeuse	*next_eu;
-	struct vertexuse *this_vu, *next_vu, *third_vu;
-	fastf_t		theta = 0;
-	fastf_t		x,y;
-	fastf_t		rad;
-	fastf_t		npi = 0;	/* n * pi, hopefully */
-	double		n;		/* integer part of npi */
-	fastf_t		residue;	/* fractional part of npi */
-	int		n_angles=0;	/* number of edge/edge angles measured */
-	int		n_skip=0;	/* number of edges skipped */
-	int		ret;
+	fastf_t area;
+	fastf_t dot;
+	plane_t pl;
+	int ret;
 
-	NMG_CK_LOOPUSE(lu);
-	RT_CK_TOL(tol);
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+	area = nmg_loop_plane_area( lu, pl );
 
-	if( nmg_loop_is_a_crack(lu) )  {
+	if( area <= 0.0 )
+	{
+		if( rt_g.debug & DEBUG_MATH )
+		{
+			rt_log( "nmg_loop_is_ccw: Loop has no area\n" );
+			nmg_pr_lu_briefly( lu, " " );
+		}
 		ret = 0;
 		goto out;
 	}
 
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		next_eu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
-		this_vu = eu->vu_p;
-		next_vu = eu->eumate_p->vu_p;
-		third_vu = next_eu->eumate_p->vu_p;
-
-		/* Skip topological 0-length edges */
-		if( this_vu->v_p == next_vu->v_p  ||
-		    next_vu->v_p == third_vu->v_p )  {
-		    	n_skip++;
-		    	continue;
+	if( NEAR_ZERO( area, tol->dist_sq ) )
+	{
+		if( rt_g.debug & DEBUG_MATH )
+		{
+			rt_log( "nmg_loop_is_ccw: Loop area (%g) is less than tol->dist_sq (%g)\n", area, tol->dist_sq );
+			nmg_pr_lu_briefly( lu, " " );
 		}
-
-		/* Skip edges with calculated edge lengths near 0 */
-		VSUB2( edge1, next_vu->v_p->vg_p->coord, this_vu->v_p->vg_p->coord );
-		if( MAGSQ(edge1) < tol->dist_sq )  {
-			n_skip++;
-			continue;
-		}
-		VSUB2( edge2, third_vu->v_p->vg_p->coord, next_vu->v_p->vg_p->coord );
-		if( MAGSQ(edge2) < tol->dist_sq )  {
-			n_skip++;
-			continue;
-		}
-		/* XXX Should use magsq info from above */
-		VUNITIZE(edge1);
-		VUNITIZE(edge2);
-
-		/* Compute (loop)inward pointing "left" vector */
-		VCROSS( left, norm, edge1 );
-		y = VDOT( edge2, left );
-		x = VDOT( edge2, edge1 );
-		rad = atan2( y, x );
-
-		if( rt_g.debug & DEBUG_MATH )  {
-			nmg_pr_eu_briefly(eu,NULL);
-			VPRINT("vu1", this_vu->v_p->vg_p->coord);
-			VPRINT("vu2", next_vu->v_p->vg_p->coord);
-			VPRINT("edge1", edge1);
-			VPRINT("edge2", edge2);
-			VPRINT("left", left);
-			rt_log(" e1=%g, e2=%g, n=%g, l=%g\n", MAGNITUDE(edge1),
-				MAGNITUDE(edge2), MAGNITUDE(norm), MAGNITUDE(left));
-			rt_log("atan2(%g,%g) = %g\n", y, x, rad);
-		}
-		theta += rad;
-		n_angles++;
-	}
-#if 0
-	rt_log(" theta = %g (%g) n_angles=%d\n", theta, theta / rt_twopi, n_angles );
-	nmg_face_lu_plot( lu, this_vu, this_vu );
-#endif
-
-	if( n_angles < 3 )  {
 		ret = 0;
 		goto out;
 	}
 
-	npi = theta * rt_invpi;		/* n * pi.  n should be >= 2 */
+	dot = VDOT( norm, pl );
 
-	/*  Check that 'npi' is very nearly an integer,
-	 *  otherwise that is an indicator of trouble in the calculation.
-	 */
-	residue = modf( npi, &n );
-	/* Sometimes, residue can be almost +/- 1.0, need to fold that in. */
-	if( NEAR_ZERO( residue-1, 0.05 ) )  {
-		residue -= 1;
-		npi += 1;
-	} else if( NEAR_ZERO( residue+1, 0.05 ) )  {
-		residue += 1;
-		npi -= 1;
+	if( NEAR_ZERO( dot, tol->perp ) )
+	{
+		if( rt_g.debug & DEBUG_MATH )
+		{
+			rt_log( "nmg_loop_is_ccw: normal ( %g %g %g ) is in plane of loop ( %g %g %g %g ), dot = %g\n",
+				V3ARGS( norm ), V4ARGS( pl ), dot );
+			nmg_pr_lu_briefly( lu, " " );
+		}
+		ret = 0;
+		goto out;
 	}
 
-	if( !NEAR_ZERO( residue, 0.05 ) )  {
-		rt_log("nmg_loop_is_ccw(x%x) npi=%g, n=%g, residue=%e, n_skip=%d\n",
-			lu, npi, n, residue, n_skip );
-	}
-
-	/* "npi" value is normalized -1..+1, tolerance here is 1% */
-	if( npi >= 2 - 0.05 )  {
-		/* theta >= two pi, loop is CCW */
+	if( dot < 0.0 )
+		ret = (-1 );
+	else
 		ret = 1;
-		goto out;
-	}
-	if( npi <= -2 + 0.05 )  {
-		/* theta <= -two pi, loop is CW */
-		ret = -1;
-		goto out;
-	}
-	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g, winding=%g*pi (%d angles, %d skip)\n",
-		theta, npi, n_angles, n_skip );
 
-#if 0
-	if( !(rt_g.debug & DEBUG_MATH) )  {
-		int	save = rt_g.debug;
-		/* Do it again, with details exhibited. */
-		rt_g.debug |= DEBUG_MATH;
-		(void)nmg_loop_is_ccw( lu, norm, tol );
-		rt_g.debug = save;
-	}
-	nmg_pr_lu_briefly(lu, NULL);
-	rt_log(" theta = %g, winding=%g*pi\n", theta, npi );
-	
-	rt_g.NMG_debug |= DEBUG_PLOTEM;
-	nmg_face_lu_plot( lu, this_vu, this_vu );
-	rt_bomb("nmg_loop_is_ccw()\n");
-#else
-	/* This can happen with zig-zag "crack" loops, as in Test4.r */
-	ret = 0;
-#endif
 out:
-    	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_loop_is_ccw(lu=x%x) ret=%d (%d angles, %d skip, winding=%g*pi)\n",
-			lu, ret, n_angles, n_skip, npi);
-    	}
-	return ret;
+    	if (rt_g.NMG_debug & DEBUG_BASIC)
+    		rt_log( "nmg_loop_is_ccw(lu=x%x) ret=%d\n" , lu, ret );
+
+	return( ret );
 }
 
 /*
