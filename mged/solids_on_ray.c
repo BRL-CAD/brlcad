@@ -234,7 +234,7 @@ struct seg		*finished_segs;
     int				full_path; /* Get full path, not base? */
     struct partition		*pp;
     struct reg_db_internals	*dbintp;
-    rb_tree			*solids;
+    bu_rb_tree			*solids;
     struct seg			*segh;
     struct seg			*segp;
     struct solid		*sp;
@@ -248,13 +248,13 @@ struct seg		*finished_segs;
     /*
      *	Initialize the solid list
      */
-    if ((solids = rb_create("Solid list", 2, rpt_solids_orders)) == RB_TREE_NULL)
+    if ((solids = bu_rb_create("Solid list", 2, rpt_solids_orders)) == BU_RB_TREE_NULL)
     {
-	bu_log("%s: %d: rb_create() bombed\n", __FILE__, __LINE__);
+	bu_log("%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
 	exit (1);
     }
     solids -> rbt_print = print_solid;
-    rb_uniq_on(solids, ORDER_BY_NAME);
+    bu_rb_uniq_on(solids, ORDER_BY_NAME);
 
     bu_vls_init(&sol_path_name);
 
@@ -351,18 +351,18 @@ struct seg		*finished_segs;
 	 */
 	sol = mk_solid(bu_vls_addr(&sol_path_name),
 		    segp -> seg_in.hit_dist);
-	if (rb_insert(solids, (void *) sol) < 0)
+	if (bu_rb_insert(solids, (void *) sol) < 0)
 	{
 	    old_sol = (struct sol_name_dist *)
-			rb_curr(solids, ORDER_BY_NAME);
+			bu_rb_curr(solids, ORDER_BY_NAME);
 	    BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
 		"sol_name_dist structure");
 	    if (sol -> dist >= old_sol -> dist)
 		free_solid(sol, 1);
 	    else
 	    {
-		rb_delete(solids, ORDER_BY_NAME);
-		rb_insert(solids, sol);
+		bu_rb_delete(solids, ORDER_BY_NAME);
+		bu_rb_insert(solids, sol);
 		free_solid(old_sol, 1);
 	    }
 	}
@@ -376,10 +376,10 @@ struct seg		*finished_segs;
     result = (char **)
 		bu_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
 			  "names of solids on ray");
-    for (sol = (struct sol_name_dist *) rb_min(solids, ORDER_BY_DISTANCE),
+    for (sol = (struct sol_name_dist *) bu_rb_min(solids, ORDER_BY_DISTANCE),
 		i=0;
 	 sol != NULL;
-	 sol = (struct sol_name_dist *) rb_succ(solids, ORDER_BY_DISTANCE),
+	 sol = (struct sol_name_dist *) bu_rb_succ(solids, ORDER_BY_DISTANCE),
 		++i)
     {
 	result[i] = sol -> name;
@@ -388,7 +388,7 @@ struct seg		*finished_segs;
     result[i] = 0;
     ap -> a_uptr = (char *) result;
 
-    rb_free(solids, RB_RETAIN_DATA);
+    bu_rb_free(solids, BU_RB_RETAIN_DATA);
 
     return 1;
     /*
@@ -439,18 +439,18 @@ struct seg		*finished_segs;
 	 *	If it shares its name with a previously recorded solid,
 	 *	then retain the one that appears earlier on the ray.
 	 */
-	if (rb_insert(solids, (void *) sol) < 0)
+	if (bu_rb_insert(solids, (void *) sol) < 0)
 	{
 	    old_sol = (struct sol_name_dist *)
-			rb_curr(solids, ORDER_BY_NAME);
+			bu_rb_curr(solids, ORDER_BY_NAME);
 	    BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
 		"sol_name_dist structure");
 	    if (sol -> dist >= old_sol -> dist)
 		free_solid(sol, 1);
 	    else
 	    {
-		rb_delete(solids, ORDER_BY_NAME);
-		rb_insert(solids, sol);
+		bu_rb_delete(solids, ORDER_BY_NAME);
+		bu_rb_insert(solids, sol);
 		free_solid(old_sol, 1);
 	    }
 	}
@@ -460,10 +460,10 @@ struct seg		*finished_segs;
     result = (char **)
 		bu_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
 			  "names of solids on ray");
-    for (sol = (struct sol_name_dist *) rb_min(solids, ORDER_BY_DISTANCE),
+    for (sol = (struct sol_name_dist *) bu_rb_min(solids, ORDER_BY_DISTANCE),
 		i=0;
 	 sol != NULL;
-	 sol = (struct sol_name_dist *) rb_succ(solids, ORDER_BY_DISTANCE),
+	 sol = (struct sol_name_dist *) bu_rb_succ(solids, ORDER_BY_DISTANCE),
 		++i)
     {
 	result[i] = sol -> name;
@@ -472,7 +472,7 @@ struct seg		*finished_segs;
     result[i] = 0;
     ap -> a_uptr = (char *) result;
 
-    rb_free(solids, RB_RETAIN_DATA);
+    bu_rb_free(solids, RB_RETAIN_DATA);
     return (1);
 #endif
 }
