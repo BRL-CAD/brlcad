@@ -276,9 +276,11 @@ register complex	root[];
  */
 static int expecting_fpe = 0;
 static jmp_buf abort_buf;
-HIDDEN void catch_FPE()  {
+HIDDEN void catch_FPE(sig)
+int	sig;
+{
 	if( !expecting_fpe )
-		rt_bomb("unexpected SIGFPE!\n");
+		rt_bomb("unexpected SIGFPE! sig=%d\n", sig);
 #ifdef SYSV
 	(void)signal(SIGFPE, catch_FPE);	/* Renew handler */
 #endif				
