@@ -28,7 +28,7 @@ static char RCSid[] = "@(#) $Header$";
  *	returns a pointer to the discovered node.  Otherwise, it returns
  *	(tree -> rbt_empty_node).
  */
-struct rb_node *_rb_search (root, order_nm, order, data)
+static struct rb_node *_rb_search (root, order_nm, order, data)
 
 struct rb_node	*root;
 int		order_nm;
