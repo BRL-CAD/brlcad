@@ -991,6 +991,10 @@ int			multi;
 	default:
 	case NMG_ACTION_ERROR:
 	bomb:
+		rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
+			vu, pos,
+			nmg_state_names[old], nmg_v_assessment_names[assessment],
+			nmg_state_names[stp->new_state], action_names[stp->action] );
 		/* First, print this faceuse */
 		lu = nmg_lu_of_vu( vu );
 		/* Drop a plot file */
