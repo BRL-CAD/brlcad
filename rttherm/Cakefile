@@ -7,7 +7,7 @@
 
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
-			rtg3 rtxray rthide rtfrac rtrange \
+			rtg3 rtcell rtxray rthide rtfrac rtrange \
 			rtregis rtscale
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -96,6 +96,13 @@ rtg3:	RTG3_OBJ LIBRT
 	sh ../newvers.sh version "RTG3"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTG3_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtg3
+
+#define RTCELL_OBJ	RTUIF viewcell.o
+
+rtcell:	RTCELL_OBJ LIBRT
+	sh ../newvers.sh version "RTCELL"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTCELL_OBJ vers.o LIB_PRE''LIBRT LIBRT_LIBES LIB_PRE''LIBFB LIBFB_LIBES LIBMALLOC LIBES -o rtcell
 
 #define RTHIDE_OBJ	RTUIF viewhide.o regionfix.o
 
