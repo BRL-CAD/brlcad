@@ -132,9 +132,6 @@ CONST unsigned char	*buf;
 	}
 }
 
-/* XXX move to raytrace.h */
-#define RT_CK_VLIST(_p)		RT_CKMAG(_p, RT_VLIST_MAGIC, "rt_vlist")
-
 /*
  *			R T _ V L I S T _ C L E A N U P
  *
