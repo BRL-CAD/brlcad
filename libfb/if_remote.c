@@ -303,10 +303,16 @@ int	width, height;
 #if BSD >= 43
 	{
 		int	n;
-		int	val = 32767;
+		int	val;
+		val = 32767;
 		n = setsockopt( pc->pkc_fd, SOL_SOCKET,
 			SO_SNDBUF, (char *)&val, sizeof(val) );
 		if( n < 0 )  perror("setsockopt: SO_SNDBUF");
+
+		val = 32767;
+		n = setsockopt( pc->pkc_fd, SOL_SOCKET,
+			SO_RCVBUF, (char *)&val, sizeof(val) );
+		if( n < 0 )  perror("setsockopt: SO_RCVBUF");
 	}
 #endif
 
