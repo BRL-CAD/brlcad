@@ -63,7 +63,7 @@ RELEASE=3.15;	RCS_REVISION=9;		REL_DATE=17-Jul-91	# Beta+3
 # made it into the search path.  Otherwise, nothing will work.
 # For this purpose, specifically exclude "dot" from the check.
 #
-NECESSARY_CMDS="cake cakesub machinetype.sh cakeinclude.sh ranlib5.sh"
+NECESSARY_CMDS="cake cakesub cakeinclude machinetype.sh ranlib5.sh"
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
