@@ -139,6 +139,7 @@ extern int	rateflag_slew;
 extern vect_t	rate_slew;
 extern int	rateflag_rotate;
 extern vect_t	rate_rotate;
+extern vect_t	absolute_rotate;
 extern int	rateflag_zoom;
 extern fastf_t	rate_zoom;
 
@@ -389,6 +390,7 @@ MGED_EXTERN(int f_fracture, (int argc, char **argv));
 MGED_EXTERN(int f_group, (int argc, char **argv));
 MGED_EXTERN(int f_help, (int argc, char **argv));
 MGED_EXTERN(int f_hideline, (int argc, char **argv));
+MGED_EXTERN(int f_history, (int argc, char **argv));
 MGED_EXTERN(int f_ill, (int argc, char **argv));
 MGED_EXTERN(int f_in, (int argc, char **argv));
 MGED_EXTERN(int f_inside, (int argc, char **argv));
