@@ -137,6 +137,12 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /* Compute distance from a point to a plane */
 #define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[H])
 
+/* Compute distance between two points */
+#define DIST_PT_PT(a,b)		sqrt( \
+	((a)[X]-(b)[X])*((a)[X]-(b)[X]) + \
+	((a)[Y]-(b)[Y])*((a)[Y]-(b)[Y]) + \
+	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]) )
+
 /* Element names in homogeneous vector (4-tuple) */
 #define	X	0
 #define	Y	1
