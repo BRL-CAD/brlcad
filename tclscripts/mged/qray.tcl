@@ -29,7 +29,8 @@ proc init_qray_control { id } {
 	return
     }
 
-    set top .$id.qray_control
+    set qray_control($id,top) .$id.qray_control
+    set top $qray_control($id,top)
 
     if [winfo exists $top] {
 	raise $top
@@ -298,10 +299,10 @@ proc qray_apply { id } {
 	    qray echo $qray_control($id,cmd_echo);\
 	    qray effects $qray_control($id,effects);\
 	    qray basename $qray_control($id,basename);\
-	    eval qray oddcolor $qray_control($id,oddcolor);\
-	    eval qray evencolor $qray_control($id,evencolor);\
-	    eval qray voidcolor $qray_control($id,voidcolor);\
-	    eval qray overlapcolor $qray_control($id,overlapcolor)"
+	    eval qray oddcolor [getRGBorReset $qray_control($id,top).oddColorMB qray_control($id,oddcolor) $qray_control($id,oddcolor)];\
+	    eval qray evencolor [getRGBorReset $qray_control($id,top).evenColorMB qray_control($id,evencolor) $qray_control($id,evencolor)];\
+	    eval qray voidcolor [getRGBorReset $qray_control($id,top).voidColorMB qray_control($id,voidcolor) $qray_control($id,voidcolor)];\
+	    eval qray overlapcolor [getRGBorReset $qray_control($id,top).overlapColorMB qray_control($id,overlapcolor) $qray_control($id,overlapcolor)]"
 }
 
 proc qray_reset { id } {

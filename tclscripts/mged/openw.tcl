@@ -798,8 +798,6 @@ menu .$id.menubar.settings -title "Settings" -tearoff $mged_default(tearoff_menu
 	-menu .$id.menubar.settings.grid_spacing
 .$id.menubar.settings add cascade -label "Framebuffer" -underline 0\
 	-menu .$id.menubar.settings.fb
-#.$id.menubar.settings add cascade -label "Pane Background Color" -underline 5\
-#	-menu .$id.menubar.settings.bgColor
 .$id.menubar.settings add cascade -label "View Axes Position" -underline 0\
 	-menu .$id.menubar.settings.vap
 

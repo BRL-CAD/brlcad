@@ -123,7 +123,9 @@ proc color_entry_destroy { top key } {
 }
 
 proc color_entry_update { top key vn icolor } {
-    setWidgetRGBColor $top.$key\MB $vn $icolor
+    if [winfo exists $top.$key\MB] {
+	setWidgetColor $top.$key\MB $vn $icolor
+    }
 }
 
 proc color_entry_chooser { id top key title vn vin } {
@@ -151,15 +153,14 @@ proc color_entry_ok { id top w key vn vin } {
     unset data
 }
 
-# setWidgetRGBColor --
+## -- setWidgetRGBColor
 #
 # Set the widget color given an rgb string.
 #
 proc setWidgetRGBColor { w vn rgb } {
-    upvar #0 $vn varname
 
     if ![winfo exists $w] {
-	return "setWidgetRGBColor: bad Tk window name --> $w"
+	return -code error "setWidgetRGBColor: bad Tk window name --> $w"
     }
 
     if {$rgb != ""} {
@@ -168,11 +169,7 @@ proc setWidgetRGBColor { w vn rgb } {
 	if {!$result} {
 	    # reset varname to properly reflect the current color of the widget
 	    set varname [lindex [$w configure -bg] 4]
-	    cad_dialog $w.colorDialog [winfo screen $w]\
-		    "Improper color specification!"\
-		    "Improper color specification: $rgb"\
-		    "" 0 OK
-	    return
+	    return -code error "Improper color specification - $rgb"
 	}
     } else {
 	return
@@ -181,19 +178,77 @@ proc setWidgetRGBColor { w vn rgb } {
     $w configure -bg [format "#%02x%02x%02x" $red $green $blue]
 }
 
+## -- setWidgetColor
+#
+# Set the widget color given a color string.
+#
 proc setWidgetColor { w vn color } {
+#    upvar #0 $vn varname
+
+#    if ![winfo exists $w] {
+#	return -code error "setWidgetColor: bad Tk window name --> $w"
+#    }
+
+    # convert to RGB
+#    set result [catch {getRGB $w $color} rgb]
+#    if {$result} {
+	# reset varname to properly reflect the current color of the widget
+#	set varname [lindex [$w configure -bg] 4]
+#	return -code error $rgb
+#    } else {
+#	setWidgetRGBColor $w $vn $rgb
+#    }
+
+    set rgb [getRGBorReset $w $vn $color]
+    setWidgetRGBColor $w $vn $rgb
+}
+
+
+## -- getRGBorReset
+#
+# Get the RGB value corresponding to the given color. Failing that
+# reset the variable vn to the value provided by the widget w
+#
+proc getRGBorReset { w vn color } {
+    upvar #0 $vn varname
+
     if ![winfo exists $w] {
-	return "setWidgetColor: bad Tk window name --> $w"
+	return -code error "getRGBorReset: bad Tk window name --> $w"
     }
 
+    # convert to RGB
+    set result [catch {getRGB $w $color} rgb]
+    if {$result} {
+	# reset varname to properly reflect the current color of the widget
+	set varname [lindex [$w configure -bg] 4]
+	return -code error $rgb
+    }
+
+    return $rgb
+}
+
+## -- getRGB
+#
+# Get the RGB value corresponding to the given color.
+#
+proc getRGB { w color } {
     # convert to RGB
     set rgb [cadColorWidget_getRGB $w $color]
 
     # Check to make sure the color is valid
     if {[llength $rgb] == 3} {
-	setWidgetRGBColor $w $vn $rgb
-    } else {
-	# assume already RGB, if not setWidgetRGBColor will catch it 
-	setWidgetRGBColor $w $vn $color
+	return $rgb
     }
+
+    # not a color recognized by cadColorWidget_getRGB
+    set result [regexp "^\[ \]*(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]*$" \
+	    $color cmatch red green blue]
+    if {!$result ||
+        $red < 0 || $red > 255 ||
+        $green < 0 || $green > 255 ||
+        $blue < 0 || $blue > 255 } {
+	return -code error "Improper color specification - $color"
+    }
+
+    return $color
 }

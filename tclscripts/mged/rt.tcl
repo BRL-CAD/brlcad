@@ -429,17 +429,8 @@ proc do_Raytrace { id } {
     }
 
     if {$rt_control($id,color) != ""} {
-	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
-		$rt_control($id,color) cmatch red green blue]
-	if {$result} {
-	    append rt_cmd " -C$red/$green/$blue"
-	} else {
-	    cad_dialog .$id.rtDialog $mged_gui($id,screen)\
-		    "Improper color specification!"\
-		    "Improper color specification: $rt_control($id,color)"\
-		    "" 0 OK
-	    return
-	}
+	set rgb [getRGBorReset $rt_control($id,top).colorMB rt_control($id,color) $rt_control($id,color)]
+	append rt_cmd " -C[lindex $rgb 0]/[lindex $rgb 1]/[lindex $rgb 2]"
     }
 
     if {$rt_control($id,nproc) != ""} {

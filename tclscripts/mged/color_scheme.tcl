@@ -169,7 +169,8 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
     global mged_gui
     global mged_color_scheme
 
-    set top .$id.color_scheme
+    set mged_color_scheme(top) .$id.color_scheme
+    set top $mged_color_scheme(top)
 
     if [winfo exists $top] {
 	raise $top
@@ -375,8 +376,12 @@ proc color_scheme_apply { id } {
 	set key [lindex $key_name_pair 0]
 	set key_a $key\_a
 	set key_ia $key\_ia
-	set color_a $mged_color_scheme($id,$key_a)
-	set color_ia $mged_color_scheme($id,$key_ia)
+	if ![winfo exists $mged_color_scheme(top).$key_a\MB] {
+	    continue
+	}
+
+	set color_a [getRGBorReset $mged_color_scheme(top).$key_a\MB mged_color_scheme($id,$key_a) $mged_color_scheme($id,$key_a)]
+	set color_ia [getRGBorReset $mged_color_scheme(top).$key_ia\MB mged_color_scheme($id,$key_ia) $mged_color_scheme($id,$key_ia)]
 
 	mged_apply_local $id "rset cs $key_a $color_a; rset cs $key_ia $color_ia"
     }
@@ -385,8 +390,13 @@ proc color_scheme_apply { id } {
 	set key [lindex $key_name_pair 0]
 	set key_a $key\_a
 	set key_ia $key\_ia
-	set color_a $mged_color_scheme($id,$key_a)
-	set color_ia $mged_color_scheme($id,$key_ia)
+
+	if ![winfo exists $mged_color_scheme(top).$key_a\MB] {
+	    continue
+	}
+
+	set color_a [getRGBorReset $mged_color_scheme(top).$key_a\MB mged_color_scheme($id,$key_a) $mged_color_scheme($id,$key_a)]
+	set color_ia [getRGBorReset $mged_color_scheme(top).$key_ia\MB mged_color_scheme($id,$key_ia) $mged_color_scheme($id,$key_ia)]
 
 	mged_apply_local $id "rset cs $key_a $color_a; rset cs $key_ia $color_ia"
     }

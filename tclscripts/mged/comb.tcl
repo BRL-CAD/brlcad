@@ -460,9 +460,14 @@ proc comb_apply { id } {
 		    "" 0 OK
 	}
 
+	if {$comb_control($id,color) == ""} {
+	    set color ""
+	} else {
+	    set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
+	}
 	set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion) \
 		$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) \
-		$comb_control($id,los) $comb_control($id,color) $comb_control($id,shader) \
+		$comb_control($id,los) $color $comb_control($id,shader) \
 		$comb_control($id,inherit) $comb_control($id,comb)} comb_error]
 
 	if {$result} {
@@ -472,8 +477,13 @@ proc comb_apply { id } {
 	return
     }
 
+    if {$comb_control($id,color) == ""} {
+	set color ""
+    } else {
+	set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
+    }
     set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
-	    $comb_control($id,color) $comb_control($id,shader) $comb_control($id,inherit)\
+	    $color $comb_control($id,shader) $comb_control($id,inherit)\
 	    $comb_control($id,comb)} comb_error]
 
     if {$result} {
@@ -537,7 +547,14 @@ proc comb_reset { id } {
 	set comb_control($id,comb) [lindex $comb_defs 5]
     }
 
-    color_entry_update $top color comb_control($id,color) $comb_control($id,color)
+    if {$comb_control($id,color) == ""} {
+	set comb_control($id,color) [lindex [$top configure -bg] 4]
+	color_entry_update $top color comb_control($id,color) $comb_control($id,color)
+	set comb_control($id,color) ""
+    } else {
+	color_entry_update $top color comb_control($id,color) $comb_control($id,color)
+    }
+
     $top.combT delete 0.0 end
     $top.combT insert end $comb_control($id,comb)
 
