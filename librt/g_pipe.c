@@ -75,6 +75,7 @@ union pipe_specific {
 		vect_t	bend_ra;
 		vect_t	bend_rb;
 		vect_t	bend_N;
+		fastf_t	bend_R_SQ;	/* bounding sphere */
 	} bend;
 };
 
@@ -141,6 +142,9 @@ union pipe_specific	*head;
 		pipe->bend.bend_angle += 2.0 * M_PI;
 	pipe->bend.bend_alpha_i = pipe->bend.bend_ir/pipe->bend.bend_radius;
 	pipe->bend.bend_alpha_o = pipe->bend.bend_or/pipe->bend.bend_radius;
+
+	pipe->bend.bend_R_SQ = (pipe->bend.bend_radius + pipe->bend.bend_or) *
+				(pipe->bend.bend_radius + pipe->bend.bend_or);
 
 	mat_idn( R );
 	VMOVE( &R[0], pipe->bend.bend_ra );
@@ -346,6 +350,16 @@ int			seg_no;
 	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
 	LOCAL fastf_t	cor_proj;
+	LOCAL fastf_t	dist_to_pca;
+	LOCAL vect_t	to_start;
+
+	VSUB2( to_start, rp->r_pt, pipe->bend.bend_V );
+	dist_to_pca = VDOT( to_start, rp->r_dir );
+	if( (MAGSQ( to_start ) - dist_to_pca*dist_to_pca) > pipe->bend.bend_R_SQ )
+	{
+		*hit_count = 0;
+		return;			/* Miss */
+	}
 
 	/* Convert vector into the space of the unit torus */
 	MAT4X3VEC( dprime, pipe->bend.bend_SoR, rp->r_dir );
@@ -462,6 +476,9 @@ int			seg_no;
 			}
 		}
 	}
+
+	if( pipe->bend.bend_alpha_i <= 0.0 )
+		return;		/* no inner torus */
 
 	/* Now do inner torus */
 	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
