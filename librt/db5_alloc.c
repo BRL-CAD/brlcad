@@ -120,6 +120,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 
 	/* Simple algorithm -- zap old copy, extend file for new copy */
 	if( dp->d_addr != -1L )  {
+		rt_memfree( &(dbip->dbi_freep), dp->d_len, dp->d_addr );
 		db5_write_free( dbip, dp, dp->d_len );
 		dp->d_addr = -1L;	/* sanity */
 	}
