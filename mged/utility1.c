@@ -451,7 +451,7 @@ f_cat( )
 		args += argcnt;
 		/* no prefix is acceptable */
 		if(args == 2)
-			cmd_args[2] = '\0';
+			cmd_args[2][0] = '\0';
 	}
 
 	ncharadd = nskipped = 0;
