@@ -99,6 +99,7 @@ static int wdb_title_tcl();
 static int wdb_tree_tcl();
 static int wdb_color_tcl();
 static int wdb_prcolor_tcl();
+static int wdb_tol_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -149,28 +150,29 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"tree",		wdb_tree_tcl,
 	"color",	wdb_color_tcl,
 	"prcolor",	wdb_prcolor_tcl,
+	"tol",		wdb_tol_tcl,
 #if 0
 	"analyze",	wdb_analyze_tcl,
+	"push",		wdb_push_tcl,
+	"xpush",	wdb_xpush_tcl,
+	"keep",		wdb_keep_tcl,
+	"inside",	wdb_inside_tcl,
 	"cat",		wdb_cat_tcl,
+	"units",	wdb_units_tcl,
+	"i",		wdb_instance_tcl,
 	"comb_color",	wdb_comb_color_tcl,
 	"copymat",	wdb_copymat_tcl,
 	"copyeval",	wdb_copyeval_tcl,
-	"i",		wdb_instance_tcl,
-	"inside",	wdb_inside_tcl,
-	"keep",		wdb_keep_tcl,
 	"pathlist",	wdb_pathlist_tcl,
 	"getmat",	wdb_getmat_tcl,
 	"putmat",	wdb_putmat_tcl,
 	"summary",	wdb_summary_tcl,
-	"units",	wdb_units_tcl,
 	"whatid",	wdb_whatid_tcl,
 	"which_shader",	wdb_which_shader_tcl,
 	"rcodes",	wdb_rcodes_tcl,
 	"wcodes",	wdb_wcodes_tcl,
 	"rmater",	wdb_rmater_tcl,
 	"wmater",	wdb_wmater_tcl,
-	"push",		wdb_push_tcl,
-	"xpush",	wdb_xpush_tcl,
 #endif
 	"close",	wdb_close_tcl,
 	(char *)0,	(int (*)())0
@@ -352,6 +354,23 @@ Usage: wdb_open\n\
 	/* initialize rt_wdb */
 	bu_vls_init(&wdbp->wdb_name);
 	bu_vls_strcpy(&wdbp->wdb_name, argv[1]);
+
+	/* initilize tolerance structures */
+	wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
+	wdbp->wdb_ttol.abs = 0.0;		/* disabled */
+	wdbp->wdb_ttol.rel = 0.01;
+	wdbp->wdb_ttol.norm = 0.0;		/* disabled */
+
+	wdbp->wdb_tol.magic = BN_TOL_MAGIC;
+	wdbp->wdb_tol.dist = 0.005;
+	wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
+	wdbp->wdb_tol.perp = 1e-6;
+	wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
+
+	/* initialize tree state */
+	wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
+	wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
+	wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
 
 	/* default region ident codes */
 	wdbp->wdb_item_default = 1000;
@@ -3212,6 +3231,206 @@ wdb_prcolor_tcl(clientData, interp, argc, argv)
 
 	for (mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw)
 		wdb_pr_mater(mp, interp, &col_count, &col_len);
+
+	return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname tol [abs|rel|norm|dist|perp [#]]
+ *
+ *  abs #	sets absolute tolerance.  # > 0.0
+ *  rel #	sets relative tolerance.  0.0 < # < 1.0
+ *  norm #	sets normal tolerance, in degrees.
+ *  dist #	sets calculational distance tolerance
+ *  perp #	sets calculational normal tolerance.
+ *
+ */
+static int
+wdb_tol_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	struct bu_vls vls;
+	double	f;
+
+	if (argc < 2 || 4 < argc){
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_tol");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* print all tolerance settings */
+	if (argc == 2) {
+		Tcl_AppendResult(interp, "Current tolerance settings are:\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Tesselation tolerances:\n", (char *)NULL );
+
+		if (wdbp->wdb_ttol.abs > 0.0) {
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "\tabs %g mm\n", wdbp->wdb_ttol.abs);
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+		} else {
+			Tcl_AppendResult(interp, "\tabs None\n", (char *)NULL);
+		}
+
+		if (wdbp->wdb_ttol.rel > 0.0) {
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "\trel %g (%g%%)\n",
+				      wdbp->wdb_ttol.rel, wdbp->wdb_ttol.rel * 100.0 );
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+		} else {
+			Tcl_AppendResult(interp, "\trel None\n", (char *)NULL);
+		}
+
+		if (wdbp->wdb_ttol.norm > 0.0) {
+			int	deg, min;
+			double	sec;
+
+			bu_vls_init(&vls);
+			sec = wdbp->wdb_ttol.norm * bn_radtodeg;
+			deg = (int)(sec);
+			sec = (sec - (double)deg) * 60;
+			min = (int)(sec);
+			sec = (sec - (double)min) * 60;
+
+			bu_vls_printf(&vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
+				      wdbp->wdb_ttol.norm * bn_radtodeg, deg, min, sec);
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+		} else {
+			Tcl_AppendResult(interp, "\tnorm None\n", (char *)NULL);
+		}
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls,"Calculational tolerances:\n");
+		bu_vls_printf(&vls,
+			      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)\n",
+			      wdbp->wdb_tol.dist, wdbp->wdb_tol.perp,
+			      acos(wdbp->wdb_tol.perp)*bn_radtodeg);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+
+		return TCL_OK;
+	}
+
+	/* get the specified tolerance */
+	if (argc == 3) {
+		int status = TCL_OK;
+
+		bu_vls_init(&vls);
+
+		switch (argv[2][0]) {
+		case 'a':
+			if (wdbp->wdb_ttol.abs > 0.0)
+				bu_vls_printf(&vls, "%g", wdbp->wdb_ttol.abs);
+			else
+				bu_vls_printf(&vls, "None");
+			break;
+		case 'r':
+			if (wdbp->wdb_ttol.rel > 0.0)
+				bu_vls_printf(&vls, "%g", wdbp->wdb_ttol.rel);
+			else
+				bu_vls_printf(&vls, "None");
+			break;
+		case 'n':
+			if (wdbp->wdb_ttol.norm > 0.0)
+				bu_vls_printf(&vls, "%g", wdbp->wdb_ttol.norm);
+			else
+				bu_vls_printf(&vls, "None");
+			break;
+		case 'd':
+			bu_vls_printf(&vls, "%g", wdbp->wdb_tol.dist);
+			break;
+		case 'p':
+			bu_vls_printf(&vls, "%g", wdbp->wdb_tol.perp);
+			break;
+		default:
+			bu_vls_printf(&vls, "unrecognized tolerance type - %s\n", argv[2]);
+			status = TCL_ERROR;
+			break;
+		}
+
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+		return status;
+	}
+
+	/* set the specified tolerance */
+	if (sscanf(argv[3], "%lf", &f) != 1) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "bad tolerance - %s\n", argv[3]);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	switch (argv[2][0]) {
+	case 'a':
+		/* Absolute tol */
+		if (f <= 0.0)
+			wdbp->wdb_ttol.abs = 0.0;
+		else
+			wdbp->wdb_ttol.abs = f;
+		break;
+	case 'r':
+		if (f < 0.0 || f >= 1.0) {
+			   Tcl_AppendResult(interp,
+					    "relative tolerance must be between 0 and 1, not changed\n",
+					    (char *)NULL);
+			   return TCL_ERROR;
+		}
+		/* Note that a value of 0.0 will disable relative tolerance */
+		wdbp->wdb_ttol.rel = f;
+		break;
+	case 'n':
+		/* Normal tolerance, in degrees */
+		if (f < 0.0 || f > 90.0) {
+			Tcl_AppendResult(interp,
+					 "Normal tolerance must be in positive degrees, < 90.0\n",
+					 (char *)NULL);
+			return TCL_ERROR;
+		}
+		/* Note that a value of 0.0 or 360.0 will disable this tol */
+		wdbp->wdb_ttol.norm = f * bn_degtorad;
+		break;
+	case 'd':
+		/* Calculational distance tolerance */
+		if (f < 0.0) {
+			Tcl_AppendResult(interp,
+					 "Calculational distance tolerance must be positive\n",
+					 (char *)NULL);
+			return TCL_ERROR;
+		}
+		wdbp->wdb_tol.dist = f;
+		wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
+		break;
+	case 'p':
+		/* Calculational perpendicularity tolerance */
+		if (f < 0.0 || f > 1.0) {
+			Tcl_AppendResult(interp,
+					 "Calculational perpendicular tolerance must be from 0 to 1\n",
+					 (char *)NULL);
+			return TCL_ERROR;
+		}
+		wdbp->wdb_tol.perp = f;
+		wdbp->wdb_tol.para = 1.0 - f;
+		break;
+	default:
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "unrecognized tolerance type - %s\n", argv[2]);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
 
 	return TCL_OK;
 }
