@@ -88,55 +88,6 @@ int		order;
     rb_set_color(node, order, RB_BLACK);
 }
 
-/*		    R B _ F R E E _ N O D E ( )
- *
- *	    Relinquish memory occupied by a red-black node
- *
- *	This function has one parameter: a node to free.  rb_free_node()
- *	frees the memory allocated for the various members of the node
- *	and then frees the memory allocated for the node itself.
- */
-static void rb_free_node (node)
-
-struct rb_node	*node;
-
-{
-    rb_tree	*tree;
-
-    RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
-
-    tree = node -> rbn_tree;
-    if (rb_current(tree) == node)
-	rb_current(tree) = rb_null(tree);
-
-    rt_free((char *) node -> rbn_parent, "red-black parents");
-    rt_free((char *) node -> rbn_left, "red-black left children");
-    rt_free((char *) node -> rbn_right, "red-black right children");
-    rt_free((char *) node -> rbn_color, "red-black colors");
-    rt_free((char *) node -> rbn_package, "red-black packages");
-    rt_free((char *) node, "red-black node");
-}
-
-/*		    R B _ F R E E _ P A C K A G E ( )
- *
- *	    Relinquish memory occupied by a red-black package
- *
- *	This function has one parameter: a package to free.
- *	rb_free_package() frees the memory allocated to point to the
- *	nodes that contained the package and then frees the memory
- *	allocated for the package itself.
- */
-static void rb_free_package (package)
-
-struct rb_package	*package;
-
-{
-    RB_CKMAG(package, RB_PKG_MAGIC, "red-black package");
-
-    rt_free((char *) package -> rbp_node, "red-black package nodes");
-    rt_free((char *) package, "red-black package");
-}
-
 /*		        _ R B _ D E L E T E ( )
  *
  *	        Delete a node from one order of a red-black tree
