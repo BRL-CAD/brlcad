@@ -89,6 +89,38 @@ extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 #endif
 
+#ifdef XMGED
+void	slewview();
+
+extern void     (*axis_color_hook)();
+extern int     (*bindkey_hook)();
+extern int      (*editline_hook)();
+extern int	(*fgetc_hook)();
+extern int	(*fputc_hook)();
+extern int	(*fputs_hook)();
+extern char	*(*fgets_hook)();
+extern char	*(*gets_hook)();
+extern void	(*fprintf_hook)();
+extern int	(*button_hook)();
+extern int	(*slider_hook)();
+extern int	(*openw_hook)();
+extern int	(*closew_hook)();
+extern int	(*knob_hook)();
+extern int	(*adc_hook)();
+extern void	(*wait_hook)();
+extern void	(*dotitles_hook)();
+extern int     (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
+extern int     (*light_hook)(), (*perspective_hook)(), (*tran_hook)();
+extern int     (*rot_hook)(), (*set_tran_hook)();
+extern void set_tran();
+extern point_t orig_pos;
+extern int tran_set;
+extern double tran_x;
+extern double tran_y;
+extern double tran_z;
+extern int journal;
+#endif
+
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
@@ -120,6 +152,11 @@ extern char	version[];		/* from vers.c */
 
 struct rt_tol	mged_tol;		/* calculation tolerance */
 
+#ifdef XMGED
+extern int    update_views;
+extern int      already_scandb;
+#endif
+
 static char *units_str[] = {
 	"none",
 	"mm",
@@ -145,6 +182,34 @@ int argc;
 char **argv;
 {
 	int	rateflag = 0;
+
+#ifdef XMGED
+	axis_color_hook = NULL;
+	bindkey_hook = NULL;
+	editline_hook = NULL;
+	fputc_hook = NULL;
+	fputs_hook = NULL;
+	fprintf_hook = NULL;
+	fgets_hook = NULL;
+	gets_hook = NULL;
+	fgetc_hook = NULL;
+	button_hook = NULL;
+	slider_hook = NULL;
+	openw_hook = NULL;
+	closew_hook = NULL;
+	knob_hook = NULL;
+	adc_hook = NULL;
+	dotitles_hook = NULL;
+	wait_hook = NULL;
+	cue_hook = NULL;
+	zclip_hook = NULL;
+	zbuffer_hook = NULL;
+	light_hook = NULL;
+	perspective_hook = NULL;
+	tran_hook = NULL;
+	rot_hook = NULL;
+	set_tran_hook = NULL;
+#endif
 
 	/* Check for proper invocation */
 	if( argc < 2 )  {
@@ -285,12 +350,16 @@ char **argv;
 		/* This test stops optimizers from complaining about an infinite loop */
 		if( (rateflag = event_check( rateflag )) < 0 )  break;
 
+#ifdef XMGED
+		/* now being done in cmd.c/mged_cmd() */
+#else
 		/* apply solid editing changes if necessary */
 		if( sedraw > 0) {
 			sedit();
 			sedraw = 0;
 			dmaflag = 1;
 		}
+#endif
 
 		/*
 		 * Cause the control portion of the displaylist to be
@@ -609,8 +678,45 @@ void
 setview( a1, a2, a3 )
 double a1, a2, a3;		/* DOUBLE angles, in degrees */
 {
+#ifdef XMGED
+  point_t old_pos;
+  point_t new_pos;
+  point_t new_pos2;
+  point_t diff;
+  vect_t view_pos;
+  
+  MAT_DELTAS_GET(old_pos, toViewcenter);
+
+  if(state == ST_S_EDIT || state == ST_O_EDIT){
+    VSET(view_pos, tran_x, tran_y, tran_z);
+    MAT4X3PNT( new_pos2, view2model, view_pos );
+  }
+#endif
+
 	buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
 	new_mats();
+
+#ifdef XMGED
+  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+
+  if(state == ST_S_EDIT || state == ST_O_EDIT){
+    MAT4X3PNT(view_pos, model2view, new_pos2);
+    tran_x = view_pos[X];
+    tran_y = view_pos[Y];
+    tran_z = view_pos[Z];
+  }else{
+    VSUB2(diff, new_pos, orig_pos);
+    VADD2(new_pos, old_pos, diff);
+    VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
+    MAT4X3PNT( new_pos, model2view, view_pos);
+    tran_x = new_pos[X];
+    tran_y = new_pos[Y];
+    tran_z = new_pos[Z];
+  }
+
+  if(tran_hook)
+          (*tran_hook)();
+#endif
 }
 
 /*
@@ -638,6 +744,17 @@ vect_t view_pos;
 	MAT_DELTAS_VEC( delta, diff );
 	mat_mul2( delta, ModelDelta );
 	new_mats();
+
+#ifdef XMGED
+	if(!tran_set){
+	  tran_x -= view_pos[X];
+	  tran_y -= view_pos[Y];
+	  tran_z -= view_pos[Z];
+	}
+
+	if(tran_hook)
+	  (*tran_hook)();
+#endif
 }
 
 /*
@@ -827,6 +944,86 @@ f_opendb( argc, argv )
 int	argc;
 char	**argv;
 {
+#ifdef XMGED
+        struct db_i *o_dbip;
+
+	o_dbip = dbip;  /* save pointer to old database */
+
+	/* Get input file */
+	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
+	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
+		char line[128];
+
+		dbip = o_dbip; /* reinitialize in case of control-C */
+
+		if( isatty(0) ) {
+		    perror( argv[1] );
+		    rt_log("Create new database (y|n)[n]? ");
+		    (void)mged_fgets(line, sizeof(line), stdin);
+		    if( line[0] != 'y' && line[0] != 'Y' ){
+		      if(dbip != DBI_NULL){
+			rt_log( "Still using %s\n", dbip->dbi_title);
+			return(CMD_OK);
+		      }
+
+		      exit(0);		/* NOT finish() */
+		    }
+		} else
+		  rt_log("Creating new database \"%s\"\n", argv[1]);
+
+		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
+			perror( argv[1] );
+			exit(2);		/* NOT finish() */
+		}
+	}
+
+	already_scandb = 0;
+	if( o_dbip )  {
+		/* Clear out anything in the display */
+		f_zap( 0, (char **)NULL );
+
+		/* Close current database.  Releases rt_material_head, etc. too. */
+		db_close(o_dbip);
+
+		log_event( "CEASE", "(close)" );
+	}
+
+	if( dbip->dbi_read_only )
+		(void)rt_log( "%s:  READ ONLY\n", dbip->dbi_filename );
+
+	/* Quick -- before he gets away -- write a logfile entry! */
+	log_event( "START", argv[1] );
+
+	if( interactive && is_dm_null() )  {
+		/*
+		 * This is an interactive mged, with no display yet.
+		 * Ask which DM, and fire up the display manager.
+		 * Ask this question BEFORE the db_scan, because
+		 * that can take a long time for large models.
+		 */
+		get_attached();
+	}
+
+	/* --- Scan geometry database and build in-memory directory --- */
+	if(!already_scandb){	/* need this because the X display manager may
+					scan the database */
+		db_scan( dbip, (int (*)())db_diradd, 1);
+		already_scandb = 1;
+	}
+
+	/* XXX - save local units */
+	localunit = dbip->dbi_localunit;
+	local2base = dbip->dbi_local2base;
+	base2local = dbip->dbi_base2local;
+
+	/* Print title/units information */
+	if( interactive )
+		(void)rt_log( "%s (units=%s)\n", dbip->dbi_title,
+			units_str[dbip->dbi_localunit] );
+
+	update_views = 1;
+	return(CMD_OK);
+#else
 	if( dbip )  {
 		/* Clear out anything in the display */
 		f_zap( 0, (char **)NULL );
@@ -887,8 +1084,67 @@ char	**argv;
 			units_str[dbip->dbi_localunit] );
 	
 	return CMD_OK;
+#endif
 }
 
+#ifdef XMGED
+int
+f_source(argc, argv)
+int	argc;
+char	*argv[];
+{
+	FILE	*fp;
+	char	*path;
+	struct rt_vls	str;
+	char option = 'e';	/* default is to execute only */
+	int save_journal;
+
+	save_journal = journal;
+	journal = 0;	/* temporarily shut off journalling */
+
+	if(argc > 2){
+	  sscanf(argv[1], "%c", &option);
+	  ++argv;
+	}
+
+	if( (path = getenv("MGED_SRC_DIR")) != (char *)NULL )  {
+		rt_vls_init(&str);
+		rt_vls_strcpy( &str, path );
+		rt_vls_strcat( &str, "/" );
+		rt_vls_strcat( &str, argv[1] );
+		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )  {
+			mged_source_file( fp, option );
+			fclose(fp);
+			rt_vls_free(&str);
+			journal = save_journal;
+			return CMD_OK;
+		}
+		rt_vls_free(&str);
+	}
+	if( (fp = fopen( argv[1], "r" )) != NULL )  {
+		mged_source_file( fp, option );
+		fclose(fp);
+		journal = save_journal;
+		return CMD_OK;
+	}
+	if( (path = getenv("HOME")) != (char *)NULL )  {
+		rt_vls_init(&str);
+		rt_vls_strcpy( &str, path );
+		rt_vls_strcat( &str, "/" );
+		rt_vls_strcat( &str, argv[1] );
+		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )  {
+			mged_source_file( fp, option );
+			fclose(fp);
+			rt_vls_free(&str);
+			journal = save_journal;
+			return CMD_OK;
+		}
+		rt_vls_free(&str);
+	}
+	journal = save_journal;
+	return CMD_BAD;
+}
+#else
 /*
  *			F _ S O U R C E
  *
@@ -941,3 +1197,4 @@ char	**argv;
 	(void) fclose(fp);
     return(CMD_OK);
 }
+#endif

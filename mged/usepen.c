@@ -42,6 +42,23 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./menu.h"
 #include "./dm.h"
 
+#ifdef XMGED
+#include <errno.h>
+#include "./sedit.h"
+
+extern int update_views;
+extern int using_dmX;
+extern void (*tran_hook)();
+extern void (*set_tran_hook)();
+extern double tran_x;
+extern double tran_y;
+extern double tran_z;
+
+int ignore_scroll_and_menu = 0;
+
+void f_aip();
+#endif
+
 /*	Degree <-> Radian conversion factors	*/
 double	degtorad =  0.01745329251994329573;
 double	radtodeg = 57.29577951308232098299;
@@ -99,6 +116,9 @@ char	**argv;
 	mousevec[Y] =  ypos / 2047.0;
 	mousevec[Z] = 0;
 
+#ifdef XMGED
+	if(!ignore_scroll_and_menu){
+#endif
 	/*
 	 * If mouse press is in scroll area, see if scrolling, and if so,
 	 * divert this mouse press.
@@ -133,6 +153,10 @@ char	**argv;
 		}
 		/* Otherwise, fall through */
 	}
+
+#ifdef XMGED
+      }
+#endif
 	
 	/*
 	 *  In the best of all possible worlds, nothing should happen
@@ -165,6 +189,10 @@ char	**argv;
 			(ypos+2048L) * (illump->s_last+1) / 4096);
 		if( ipathpos != isave )
 			dmaflag++;
+#ifdef XMGED
+		else
+		  dmaflag = 0;
+#endif
 		return CMD_OK;
 
 	} else switch( state )  {
@@ -191,6 +219,17 @@ char	**argv;
 
 	case ST_S_EDIT:
 		sedit_mouse( mousevec );
+#ifdef XMGED
+		if(es_edflag >= STRANS && es_edflag <= PTARB && tran_hook){
+		  point_t new_pos;
+		  point_t old_pos;
+		  point_t diff;
+
+		  MAT4X3PNT( new_pos, view2model, mousevec);
+		  set_tran(new_pos[X], new_pos[Y], new_pos[Z]);
+/*		  (*tran_hook)();*/
+		}
+#endif
 		return CMD_OK;
 
 	case ST_O_PATH:
@@ -221,6 +260,15 @@ char	**argv;
 
 	case ST_O_EDIT:
 		objedit_mouse( mousevec );
+#ifdef XMGED
+		if(edobj == BE_O_X || edobj == BE_O_Y || edobj == BE_O_XY){
+		  point_t new_pos;
+
+		  MAT4X3PNT( new_pos, view2model, mousevec);
+		  set_tran(new_pos[X], new_pos[Y], new_pos[Z]);
+/*		  (*tran_hook)();*/
+		}
+#endif
 		return CMD_OK;
 
 	default:
@@ -265,9 +313,87 @@ illuminate( y )  {
 			}
 		}
 	}
+#ifdef Xmged
+	if( saveillump != illump ){
+	  update_views = 1;
+	  dmaflag++;
+	}else
+		--dmaflag;	/* illiminates unnecessary redrawing */
+#else
 	if( saveillump != illump )
 		dmaflag++;
+#endif
 }
+
+#ifdef XMGED
+/*
+ *                        A I L L
+ *
+ *   advance illump or ipathpos
+ */
+void
+f_aip(argc, argv)
+int argc;
+char *argv[];
+{
+  register struct solid *sp;
+  static count = -1;
+  int i;
+
+  if(!ndrawn || (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH))
+    return;
+
+  if(state == ST_O_PATH){
+    if(argc == 1 || *argv[1] == 'f'){
+      ++ipathpos;
+      if(ipathpos > illump->s_last)
+	ipathpos = 0;
+    }else if(*argv[1] == 'b'){
+      --ipathpos;
+      if(ipathpos < 0)
+	ipathpos = illump->s_last;
+    }else{
+      rt_log("aill: bad parameter - %s\n", argv[1]);
+      return;
+    }
+  }else{
+
+    if(argc == 1 || *argv[1] == 'f')
+      ++count;
+    else if(*argv[1] == 'b'){
+      --count;
+      if(count < 0)
+	count = ndrawn - 1;
+    }else{
+      rt_log("aill: bad parameter - %s\n", argv[1]);
+      return;
+    }
+
+    for(i = 0, sp = HeadSolid.s_forw; i < count; ++i){
+      sp->s_iflag = DOWN;
+      sp = sp->s_forw;
+      if(sp == &HeadSolid){
+	count = 0;
+	sp = HeadSolid.s_forw;
+      }
+    }
+
+    if(argc == 2 && *argv[1] == 'b'){
+      if(sp->s_forw == &HeadSolid)
+	HeadSolid.s_forw->s_iflag = DOWN;
+      else
+	sp->s_forw->s_iflag = DOWN;
+    }
+
+    sp->s_iflag = UP;
+    dmp->dmr_viewchange( DM_CHGV_ILLUM, sp );
+    illump = sp;
+  }
+
+  update_views = 1;
+  dmaflag = 1;
+}
+#endif
 
 /*
  *			B U I L D H R O T

@@ -55,6 +55,24 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
+#ifdef XMGED
+extern void set_e_axis_pos();
+extern void (*tran_hook)();
+extern void (*rot_hook)();
+extern int irot_set;
+extern double irot_x;
+extern double irot_y;
+extern double irot_z;
+extern int tran_set;
+extern double tran_x;
+extern double tran_y;
+extern double tran_z;
+extern int      update_views;
+extern int      savedit;
+
+void set_tran();
+#endif
+
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
 static void	nmg_ed();
 static void	rpc_ed(), rhc_ed(), epa_ed(), ehy_ed(), eto_ed();
@@ -65,7 +83,12 @@ static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
 void pscale();
 void	calc_planes();
+
+#ifdef XMGED
+short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
+#else
 static short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
+#endif
 
 MGED_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
@@ -481,6 +504,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -498,6 +525,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -520,6 +551,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -537,6 +572,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -549,6 +588,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -565,6 +608,10 @@ int arg;
 		es_edflag = ECMD_TGC_MV_H;
 	if(arg == MENU_TGC_MV_HH)
 		es_edflag = ECMD_TGC_MV_HH;
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 
@@ -574,6 +621,10 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -585,6 +636,10 @@ int arg;
 		es_edflag = ECMD_ETO_ROT_C;
 	else
 		es_edflag = PSCALE;
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -593,6 +648,10 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -601,6 +660,10 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -609,6 +672,10 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -617,6 +684,10 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -625,6 +696,10 @@ int arg;
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -637,6 +712,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -649,6 +728,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }		
 
 static void
@@ -661,6 +744,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -673,6 +760,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -685,6 +776,10 @@ int arg;
 		es_edflag = ECMD_ARB_MAIN_MENU;
 		sedraw = 1;
 	}
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 static void
@@ -784,8 +879,11 @@ int arg;
 	/* For example, this will set es_edflag = ECMD_VTRANS */
 	es_edflag = arg;
 	sedraw = 1;
-}
 
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
+}
 /*
  *			N M G _ E D
  *
@@ -1908,9 +2006,12 @@ sedit()
 						    arb_vertices[type][loc+i]);
 				}
 				rt_log(") [%d]: ",arb_vertices[type][loc]);
-
+#ifdef XMGED
+				(void)mged_gets( line ); /* Null terminated */
+#else
 				(void)fgets( line, sizeof(line), stdin );
 				line[strlen(line)-1] = '\0';		/* remove newline */
+#endif
 				if( feof(stdin) )  quit();
 				if( line[0] == '\0' )
 					fixv = arb_vertices[type][loc]; 	/* default */
@@ -1933,6 +2034,9 @@ sedit()
 		es_edflag = ECMD_ARB_ROTATE_FACE;
 		mat_idn( acc_rot_sol );
 		dmaflag = 1;	/* draw arrow, etc */
+#ifdef XMGED
+		set_e_axis_pos();
+#endif
 		break;
 
 	case ECMD_ARB_ROTATE_FACE:
@@ -2790,6 +2894,9 @@ CONST vect_t	mousevec;
 	vect_t	tr_temp;		/* temp translation vector */
 	vect_t	temp;
 
+#ifdef XMGED
+	update_views = 1;
+#endif
 	mat_idn( incr_change );
 	scale = 1;
 	if( movedir & SARROW )  {
@@ -3516,6 +3623,10 @@ init_objedit()
 
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
+
+#ifdef XMGED
+	set_e_axis_pos();
+#endif
 }
 
 void
@@ -3775,8 +3886,32 @@ char	**argv;
 			es_para[2] *= local2base;
 			/* fall through */
 		default:
+#ifdef XMGED
+			break;
+	}
+
+	if(es_edflag >= SROT && es_edflag <= ECMD_ETO_ROT_C){
+	  if(!irot_set){
+	    irot_x = es_para[0];
+	    irot_y = es_para[1];
+	    irot_z = es_para[2];
+	  }
+
+	  if(rot_hook)
+	    (*rot_hook)();
+	}else if(es_edflag >= STRANS && es_edflag <= PTARB){
+	  if(!tran_set)
+	    set_tran(es_para[0], es_para[1], es_para[2]);
+
+	  if(tran_hook)
+	    (*tran_hook)();
+	}
+
+	return CMD_OK;
+#else
 			return CMD_OK;
 	}
+#endif
 
 	/* XXX I would prefer to see an explicit call to the guts of sedit()
 	 * XXX here, rather than littering the place with global variables

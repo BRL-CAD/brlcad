@@ -59,6 +59,22 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./sedit.h"
 
+#ifdef XMGED
+extern void (*tran_hook)();
+extern void (*rot_hook)();
+extern int irot_set;
+extern double irot_x;
+extern double irot_y;
+extern double irot_z;
+extern int tran_set;
+extern double tran_x;
+extern double tran_y;
+extern double tran_z;
+extern int      update_views;
+
+void set_tran();
+#endif
+
 void	aexists();
 
 int		newedge;		/* new edge for arb editing */
@@ -118,6 +134,9 @@ char	**argv;
 	union record record;
 	int r=0, g=0, b=0;
 	char	*nlp;
+#ifdef XMGED
+	int	num_params = 8;	/* number of parameters */
+#endif
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return CMD_BAD;
@@ -131,6 +150,88 @@ char	**argv;
 		rt_log("%s: not a combination\n", dp->d_namep );
 		return CMD_BAD;
 	}
+
+#ifdef XMGED
+	if( argc >= 3 )  {
+		if( strncmp( argv[2], "del", 3 ) != 0 )  {
+		/* Material */
+			strcpy( record.c.c_matname, argv[2]);
+		}else{
+			(void)rt_log( "Was %s %s\n", record.c.c_matname,
+						record.c.c_matparm);
+			record.c.c_matname[0] = '\0';
+			record.c.c_override = 0;
+			goto out;
+		}
+	}else{
+		/* Material */
+		(void)rt_log( "Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
+		return CMD_MORE;
+	}
+
+	if(argc >= 4){
+		if( strncmp(argv[3],  "del", 3) == 0  )
+			record.c.c_matparm[0] = '\0';
+		else
+			strcpy( record.c.c_matparm, argv[3]);
+	}else{
+		/* Parameters */
+		(void)rt_log( "Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
+		return CMD_MORE;
+	}
+
+	if(argc >= 5){
+		if( strncmp(argv[4], "del", 3) == 0 ){
+			/* leave color as is */
+			record.c.c_override = 0;
+			num_params = 6;
+		}else if(argc < 7){	/* prompt for color */
+			goto color_prompt;
+		}else{	/* change color */
+			sscanf(argv[4], "%d", &r);
+			sscanf(argv[5], "%d", &g);
+			sscanf(argv[6], "%d", &b);
+			record.c.c_rgb[0] = r;
+			record.c.c_rgb[1] = g;
+			record.c.c_rgb[2] = b;
+			record.c.c_override = 1;
+		}
+	}else{
+	/* Color */
+color_prompt:
+	if( record.c.c_override )
+		(void)rt_log( "Color = %d %d %d\n", 
+			record.c.c_rgb[0],
+			record.c.c_rgb[1],
+			record.c.c_rgb[2] );
+	else
+		(void)rt_log( "Color = (No color specified)\n");
+	(void)rt_log( "Color R G B (0..255)? ('del' to delete, CR to skip) ");
+	return CMD_MORE;
+	}
+
+	/* Inherit */
+	switch( record.c.c_inherit )  {
+	default:
+		/* This is necessary to clean up old databases with grunge here */
+		record.c.c_inherit = DB_INH_LOWER;
+		/* Fall through */
+	case DB_INH_LOWER:
+		(void)rt_log( "Inherit = 0:  lower nodes (towards leaves) override\n");
+		break;
+	case DB_INH_HIGHER:
+		(void)rt_log( "Inherit = 1:  higher nodes (towards root) override\n");
+		break;
+	}
+
+	if(argc >= num_params){
+		sscanf(argv[num_params - 1], "%c", &record.c.c_inherit);
+		line[0] = *argv[num_params - 1];
+	}else{
+		(void)rt_log( "Inheritance (0|1)? (CR to skip) ");
+		return CMD_MORE;
+	}
+#else
 	if( argc >= 3 )  {
 		if( strncmp( argv[2], "del", 3 ) != 0 )  {
 			rt_log("Use 'mater name del' to delete\n");
@@ -204,6 +305,7 @@ char	**argv;
 	}
 	rt_log("Inheritance (0|1)? (CR to skip) ");
 	(void)fgets(line,sizeof(line),stdin);
+#endif
 	switch( line[0] )  {
 	case '1':
 		record.c.c_inherit = DB_INH_HIGHER;
@@ -917,6 +1019,16 @@ char	**argv;
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 		return CMD_BAD;
 
+#ifdef XMGED
+	if(!irot_set){
+	  irot_x = atof(argv[1]);
+	  irot_y = atof(argv[2]);
+	  irot_z = atof(argv[3]);
+	}
+
+	update_views = 1;
+#endif
+
 	if(movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
 		dmp->dmr_light( LIGHT_ON, BE_O_ROTATE );
@@ -951,6 +1063,10 @@ char	**argv;
 			atof(argv[2])*degtorad,
 			atof(argv[3])*degtorad );
 
+#ifdef XMGED
+/*XXX*/ mat_copy(acc_rot_sol, temp); /* used to rotate solid/object axis */
+#endif
+
 	/* Record the new rotation matrix into the revised
 	 *	modelchanges matrix wrt "point"
 	 */
@@ -958,6 +1074,11 @@ char	**argv;
 
 	new_mats();
 	dmaflag = 1;
+
+#ifdef XMGED
+	if(rot_hook)
+          (*rot_hook)();
+#endif
 
 	return CMD_OK;
 }
@@ -978,6 +1099,10 @@ char	**argv;
 		rt_log("ERROR: scale factor <=  0\n");
 		return CMD_BAD;
 	}
+
+#ifdef XMGED
+	update_views = 1;
+#endif
 
 	if(movedir != SARROW) {
 		/* Put in global object scale mode */
@@ -1042,6 +1167,10 @@ char	**argv;
 	if( not_state( ST_O_EDIT, "Object Translation") )
 		return CMD_BAD;
 
+#ifdef XMGED
+	update_views = 1;
+#endif
+
 	mat_idn(incr);
 	mat_idn(old);
 
@@ -1063,6 +1192,15 @@ char	**argv;
 	mat_copy(old,modelchanges);
 	mat_mul(modelchanges, incr, old);
 	new_mats();
+
+#ifdef XMGED
+	if(!tran_set) /*   not calling from f_tran()   */
+	  set_tran(new_vertex[0], new_vertex[1], new_vertex[2]);
+
+	if(tran_hook)
+	  (*tran_hook)();
+#endif
+
 	return CMD_OK;
 }
 

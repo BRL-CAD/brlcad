@@ -47,11 +47,21 @@ fastf_t	c_tdist;		/* Cursor tick distance */
 fastf_t	angle1;		/* Angle to solid wiper */
 fastf_t	angle2;		/* Angle to dashed wiper */
 
+#ifdef XMGED
+extern void (*adc_hook)();
+
+int      dv_xadc;                /* A/D cursor -2048 <= adc <= +2047 */
+int      dv_yadc;
+int      dv_1adc;                /* angle 1 for A/D cursor */
+int      dv_2adc;                /* angle 2 for A/D cursor */
+int      dv_distadc;             /* Tick distance */
+#else
 static int	dv_xadc;		/* A/D cursor -2048 <= adc <= +2047 */
 static int	dv_yadc;
 static int	dv_1adc;		/* angle 1 for A/D cursor */
 static int	dv_2adc;		/* angle 2 for A/D cursor */
 static int	dv_distadc;		/* Tick distance */
+#endif
 
 /*
  *			A D C U R S O R
@@ -222,6 +232,10 @@ char	**argv;
 			dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
 			adcflag = 1;
 		}
+#ifdef XMGED
+		 if(adc_hook)
+                        (*adc_hook)(0);
+#endif
 		dmaflag = 1;
 		return CMD_OK;
 	}
@@ -365,8 +379,13 @@ char	**argv;
 			dv_1adc = dv_2adc = 0;
 			dv_distadc = 0;
 			dmaflag = 1;
+#ifdef XMGED
+			if(adc_hook)
+			  (*adc_hook)(1);
+#endif
 			return CMD_OK;
 		}
+
 		rt_log("The 'adc reset' command accepts no arguments\n");
 		return CMD_BAD;
 	}

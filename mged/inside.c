@@ -167,7 +167,11 @@ char **argv;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	(void)signal( SIGINT, sig2);	/* allow interrupts */
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint);	/* allow interrupts */
+#else
+	(void)signal( SIGINT, sig2);    /* allow interupts */
+#endif
 
 	/* SCHEME:
 	 *	if in solid edit, use "edited" solid

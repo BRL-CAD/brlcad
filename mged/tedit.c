@@ -49,6 +49,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define V3BASE2LOCAL( _pt )	(_pt)[X]*base2local , (_pt)[Y]*base2local , (_pt)[Z]*base2local
 #define V4BASE2LOCAL( _pt )	(_pt)[X]*base2local , (_pt)[Y]*base2local , (_pt)[Z]*base2local , (_pt)[W]*base2local
 
+#ifdef XMGED
+extern  int     mged_wait();
+#endif
 extern struct rt_external	es_ext;
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
@@ -224,8 +227,13 @@ FILE *fp;
 	int i;
 	int len;
 
+#ifdef XMGED
+	if( mged_fgets( line , sizeof( line ) , fp ) == NULL )
+                return( (char *)NULL );
+#else
 	if( fgets( line , sizeof( line ) , fp ) == NULL )
 		return( (char *)NULL );
+#endif
 
 	len = strlen( line );
 
@@ -720,6 +728,10 @@ char *file;
 	int stat;
 	void (*s2)(), (*s3)();
 
+#ifdef XMGED
+  alarm((unsigned)0);
+#endif
+
 	s2 = signal( SIGINT, SIG_IGN );
 	s3 = signal( SIGQUIT, SIG_IGN );
 	if ((pid = fork()) < 0) {
@@ -742,9 +754,15 @@ char *file;
 		perror(ed);
 		exit(1);
 	}
+
+#ifdef XMGED
+	while ((xpid = mged_wait(&stat)) >= 0)
+#else
 	while ((xpid = wait(&stat)) >= 0)
+#endif
 		if (xpid == pid)
 			break;
+
 	(void)signal(SIGINT, s2);
 	(void)signal(SIGQUIT, s3);
 #endif

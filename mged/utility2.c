@@ -49,7 +49,11 @@ char **argv;
 	int i, j, k, kk;
 
 	/* interupts */
-	(void)signal( SIGINT, sig2 );
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );
+#else
+	(void)signal( SIGINT, sig2);    /* allow interupts */
+#endif
 
 	for(i=1; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
@@ -160,7 +164,11 @@ char	**argv;
 	prflag = 0;
 
 	/* interupts */
-	(void)signal( SIGINT, sig2 );
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );
+#else
+	(void)signal( SIGINT, sig2);    /* allow interupts */
+#endif
 
 	/* find out which command was entered */
 	if( strcmp( argv[0], "paths" ) == 0 ) {
@@ -239,7 +247,11 @@ char **argv;
 	mat_idn( start_mat );
 
 	/* interupts */
-	(void)signal( SIGINT, sig2 );
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );
+#else
+	(void)signal( SIGINT, sig2);    /* allow interupts */
+#endif
 
 	/* build directory pointer array for desired path */
 	for(i=2; i<argc; i++)

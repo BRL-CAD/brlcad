@@ -55,7 +55,12 @@ struct identt {
 };
 struct identt identt, idbuf;
 
+#ifdef XMGED
+int (*editline_hook)();
+union record record;
+#else
 static union record record;
+#endif
 
 #define ABORTED		-99
 #define MAXSOL 		2000
@@ -91,7 +96,11 @@ char	**argv;
 	static CONST char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
 	static CONST char catcmd[] = "cat /tmp/ord_id >> ";
 
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );		/* allow interrupts */
+#else
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
+#endif
 
 	/* find out which ascii table is desired */
 	if( strcmp(argv[0], "solids") == 0 ) {
@@ -216,7 +225,11 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );		/* allow interrupts */
+#else
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
+#endif
 
 	/* need user interaction for this command */
 	if( isatty(0) == 0 ) {
@@ -614,6 +627,12 @@ struct directory	*dp;
 	int elflag, maxpos[4];
  	lpos = eflag = field = elflag = 0;
 
+#ifdef XMGED
+	if(editline_hook){
+          return((*editline_hook)(dp));
+        }
+#endif
+
 	/* field lengths */
 	maxpos[0] = 6;
 	maxpos[1] = maxpos[2] = 3;
@@ -824,7 +843,11 @@ char	**argv;
 	int		item;
 
 	/* allow interupts */
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );
+#else
 	(void)signal( SIGINT, sig2 );
+#endif
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );

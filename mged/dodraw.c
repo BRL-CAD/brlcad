@@ -108,7 +108,13 @@ long	us;		/* microseconds of extra delay */
 	/* Overlay plot file */
 	rt_vls_init( &str );
 	rt_vls_printf( &str, "overlay %s\n", file );
+
+#ifdef XMGED
+	(void)cmdline( &str, False );
+#else
 	(void)cmdline( &str );
+#endif
+
 	rt_vls_free( &str );
 
 	do {
@@ -866,7 +872,13 @@ int			copy;
 	/* Remove any residue colors from a previous overlay w/same name */
 	rt_vls_init(&str);
 	rt_vls_printf( &str, "kill -f %s*\n", shortname );
+
+#ifdef XMGED
+	(void)cmdline( &str, False );
+#else
 	(void)cmdline(&str);
+#endif
+
 	rt_vls_free(&str);
 
 	for( i=0; i < vbp->nused; i++ )  {

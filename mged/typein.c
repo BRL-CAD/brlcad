@@ -373,7 +373,11 @@ char **argv;
 	argc -= optind-1;
 	argv += optind-1;
 
-	(void)signal( SIGINT, sig2);	/* allow interrupts */
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint);	/* allow interrupts */
+#else
+	(void)signal( SIGINT, sig2);    /* allow interupts */
+#endif
 
 	vals = 0;
 

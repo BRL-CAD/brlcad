@@ -75,7 +75,11 @@ char **argv;
 	int edit_result;
 
 	/* interupts */
-	(void)signal( SIGINT, sig2 );
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );
+#else
+	(void)signal( SIGINT, sig2);    /* allow interupts */
+#endif
 
 	oper[0] = oper[2] = INTERSECT;
 	oper[1] = SUBTRACT;

@@ -74,10 +74,15 @@ struct dm dm_PS = {
 extern struct device_values dm_values;	/* values read from devices */
 
 static vect_t	clipmin, clipmax;	/* for vector clipping */
+#ifdef XMGED
+FILE	*ps_fp;			/* PostScript file pointer */
+char	ps_ttybuf[BUFSIZ];
+int	in_middle;		/* !0 when in middle of image */
+#else
 static FILE	*ps_fp;			/* PostScript file pointer */
 static char	ttybuf[BUFSIZ];
-
 static int	in_middle;		/* !0 when in middle of image */
+#endif
 
 /*
  * Display coordinate conversion:
@@ -109,7 +114,11 @@ PS_open()
 		return(1);		/* BAD */
 	}
 
+#ifdef XMGED
+	setbuf( ps_fp, ps_ttybuf );
+#else
 	setbuf( ps_fp, ttybuf );
+#endif
 
 	fputs( "%!PS-Adobe-1.0\n\
 %begin(plot)\n\

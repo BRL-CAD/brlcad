@@ -179,11 +179,23 @@ predictor_kill()
 
 	rt_vls_init( &str );
 	rt_vls_printf( &str, "d %s\n", PREDICTOR_NAME );
+
+#ifdef XMGED
+	(void)cmdline( &str, False );
+#else
 	(void)cmdline( &str );
+#endif
+
 	rt_vls_trunc( &str, 0 );
 
 	rt_vls_strcat( &str, "d _PREDIC_TRAIL_*\n" );
+
+#ifdef XMGED
+        (void)cmdline( &str, False );
+#else
 	(void)cmdline( &str );
+#endif
+
 	rt_vls_free( &str );
 
 	init_trail( &tA );

@@ -272,7 +272,11 @@ char			*buf;
 
 	rt_vls_strcpy( &str, buf );
 
+#ifdef XMGED
+	(void)cmdline( &str, False );
+#else
 	(void)cmdline( &str );
+#endif
 
 	rt_vls_free( &str );
 	if(buf) (void)free(buf);

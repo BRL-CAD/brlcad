@@ -49,6 +49,13 @@ char		memb_oper;	/* operation for present member of processed region */
 extern int	no_memory;	/* flag indicating memory for drawing is used up */
 extern long	nvectors;	/* from dodraw.c */
 
+#ifdef XMGED
+extern point_t orig_pos;
+extern double tran_x;
+extern double tran_y;
+extern double tran_z;
+#endif
+
 void		Edrawtree();
 void		EdrawHobj();
 int		EdrawHsolid();
@@ -88,6 +95,12 @@ char	**argv;
 	register int	i;
 	time_t		stime, etime;	/* start & end times */
 	static int	first_time = 1;
+#ifdef XMGED
+	vect_t view_pos;
+        point_t new_pos;
+        point_t old_pos;
+        point_t diff;
+#endif
 
 	drawreg = 1;
 	regmemb = -1;
@@ -129,8 +142,24 @@ char	**argv;
 	(void)time( &etime );
 	if( first_time && HeadSolid.s_forw != &HeadSolid)  {
 		first_time = 0;
+#ifdef XMGED
+	  MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
+
+	  size_reset();
+	  new_mats();
+
+	  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+	  VSUB2(diff, new_pos, old_pos);
+	  VADD2(new_pos, orig_pos, diff);
+	  VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
+	  MAT4X3PNT( new_pos, model2view, view_pos);
+	  tran_x = new_pos[X];
+	  tran_y = new_pos[Y];
+	  tran_z = new_pos[Z];
+#else
 		size_reset();
 		new_mats();
+#endif
 	}
 
 	rt_log("E: %ld vectors in %ld sec\n", nvectors, etime - stime );

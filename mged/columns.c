@@ -47,6 +47,32 @@ void
 col_item(cp)
 register char *cp;
 {
+#ifdef XMGED
+	char 	line[133], *lineptr;
+
+	lineptr = line;
+
+	/* Output newline if last column printed. */
+	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
+		/* line now full */
+		sprintf(lineptr, "\n");
+		++lineptr;
+		col_count = 0;
+	} else if ( col_count != 0 ) {
+		/* Space over before starting new column */
+		do {
+			sprintf(lineptr, " ");
+			lineptr++;
+			col_len++;
+		}  while ( (col_len % NAMESIZE) != 0 );
+	}
+	/* Output string and save length for next tab. */
+	sprintf(lineptr, "%s", cp);
+	rt_log( "%s", line);
+	col_len = strlen(cp);
+	
+	col_count++;
+#else
 	/* Output newline if last column printed. */
 	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
 		/* line now full */
@@ -67,6 +93,7 @@ register char *cp;
 		++col_len;
 	}
 	col_count++;
+#endif
 #undef	COLUMNS
 }
 

@@ -54,6 +54,10 @@ char	*state_str[] = {
 	"UNKNOWN",
 };
 
+#ifdef XMGED
+void    (*dotitles_hook)();
+#endif
+
 extern double			frametime;	/* from ged.c */
 extern struct rt_db_internal	es_int;
 
@@ -175,6 +179,14 @@ dotitles()
 	auto char linebuf[512];
 	struct rt_vls	vls;
 	int		scroll_ybot;
+
+#ifdef XMGED
+	if(dotitles_hook){
+	  (*dotitles_hook)();
+
+	  return;
+	}
+#endif
 
 	RT_VLS_INIT( &vls );
 

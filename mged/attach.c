@@ -186,6 +186,41 @@ char *name;
 			continue;
 		dmp = *dp;
 
+#ifdef XMGED
+		FOR_ALL_SOLIDS( sp )  {
+			/* Write vector subs into new display processor */
+			if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+				sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
+				if( sp->s_addr == 0 )  break;
+				sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
+			} else {
+				sp->s_addr = 0;
+				sp->s_bytes = 0;
+			}
+		}
+
+		no_memory = 0;
+		switch( dmp->dmr_open() ){
+		case -1:
+			goto not_okay;
+		case 0:
+			break;
+		case 1:
+			goto okay;	/* just released the X display */
+		}
+
+		(void)rt_log( "ATTACHING %s (%s)\n",
+			     dmp->dmr_name, dmp->dmr_lname);
+
+		dmp->dmr_colorchange();
+		color_soltab();
+		dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
+		dmaflag++;
+		return;
+	}
+not_okay:	(void)rt_log( "attach(%s): BAD\n", name);
+okay:		dmp = &dm_Null;
+#else
 		no_memory = 0;
 		if( dmp->dmr_open() )
 			break;
@@ -212,6 +247,7 @@ char *name;
 	}
 	rt_log("attach(%s): BAD\n", name);
 	dmp = &dm_Null;
+#endif
 }
 
 static int Nu_int0() { return(0); }
@@ -279,8 +315,12 @@ get_attached()
 		for( ; *dp != (struct dm *)0; dp++ )
 			rt_log("|%s", (*dp)->dmr_name);
 		rt_log(")[%s]? ", which_dm[0]->dmr_name);
+#ifdef XMGED
+		(void)mged_gets( line );                /* Null terminated */
+#else
 		(void)fgets(line, sizeof(line), stdin);	/* \n, Null terminated */
 		line[strlen(line)-1] = '\0';		/* remove newline */
+#endif
 		if( feof(stdin) )  quit();
 		if( line[0] == '\0' )  {
 			dp = &which_dm[0];	/* default */
