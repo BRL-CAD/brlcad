@@ -23,14 +23,19 @@
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -219,52 +224,6 @@ struct face		*f1;
 	/* Clear out the 2D vertex array, setting flag in [2] to -1 */
 	for( i = (3*is->maxindex)-1-2; i >= 0; i -= 3 )  {
 		VSET( &is->vert2d[i], 0, 0, -1 );
-	}
-}
-
-/* XXX Move to nmg_pr.c or nmg_misc.c */
-/*
- *			N M G _ P R _ P T B L _ V E R T _ L I S T
- *
- *  Print a ptbl array as a vertex list.
- */
-void
-nmg_pr_ptbl_vert_list( str, tbl )
-CONST char	*str;
-struct nmg_ptbl	*tbl;
-{
-	int			i;
-	struct vertexuse	**vup;
-	struct vertexuse	*vu;
-	struct vertex		*v;
-	struct vertex_g		*vg;
-
-    	rt_log("nmg_pr_ptbl_vert_list(%s):\n", str);
-
-	vup = (struct vertexuse **)tbl->buffer;
-	for (i=0 ; i < tbl->end ; ++i) {
-		vu = vup[i];
-		NMG_CK_VERTEXUSE(vu);
-		v = vu->v_p;
-		NMG_CK_VERTEX(v);
-		vg = v->vg_p;
-		NMG_CK_VERTEX_G(vg);
-		rt_log("%d\t%g, %g, %g\t", i, V3ARGS(vg->coord) );
-		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
-			rt_log("EDGEUSE");
-		} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-			rt_log("LOOPUSE");
-			if ((struct vertexuse *)vu->up.lu_p->down_hd.forw != vu) {
-				rt_log("ERROR vertexuse's parent disowns us!\n");
-				if (((struct vertexuse *)(vu->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
-					rt_bomb("lumate has vertexuse\n");
-				else
-					rt_bomb("lumate has garbage\n");
-			}
-		} else {
-			rt_log("UNKNOWN");
-		}
-		rt_log("\tv=x%x, vu=x%x\n", v , vu);
 	}
 }
 
@@ -692,44 +651,6 @@ rt_log("%%%%%% point is on loop boundary.  Break fu2 loop too?\n");
 	}
 	(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &eu1forw->vu_p->l.magic);
 	return vu2_final;
-}
-
-/* XXX move to nmg_ck.c */
-/*
- *			N M G _ C K _ F A C E _ W O R T H L E S S _ E D G E S
- *
- *  For the moment, a quick hack to see if breaking an edge at a given
- *  vertex results in a null edge being created.
- */
-void
-nmg_ck_face_worthless_edges( fu )
-CONST struct faceuse	*fu;
-{
-	CONST struct loopuse	*lu;
-
-	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-		struct edgeuse	*eu;
-		struct vertexuse *vu2;
-
-		NMG_CK_LOOPUSE(lu);
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
-			continue;
-		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			struct edgeuse		*neu;
-			neu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
-			if( eu->vu_p == neu->vu_p )
-				rt_bomb("edge runs between two copies of vu??\n");
-			if( eu->vu_p->v_p == neu->vu_p->v_p )  {
-#if 0
-				nmg_pr_eu( eu, NULL );
-				nmg_pr_eu( neu, NULL );
-#endif
-				rt_log("eu=x%x, neu=x%x, v=x%x\n", eu, neu, eu->vu_p->v_p);
-				rt_log("eu=x%x, neu=x%x, v=x%x\n", eu->eumate_p, neu->eumate_p, eu->eumate_p->vu_p->v_p);
-				rt_bomb("nmg_ck_face_worthless_edges() edge runs from&to same vertex\n");
-			}
-		}
-	}
 }
 
 /*
@@ -2631,71 +2552,4 @@ CONST struct faceuse	*fu;
 		}
 	}
 	return 0;
-}
-
-/* XXX move to nmg_info.c */
-/*
- *			N M G _ L O O P _ T O U C H E S _ S E L F
- *
- *  Search through all the vertices in a loop.
- *  If there are two distinct uses of one vertex in the loop,
- *  return true.
- *  This is useful for detecting "accordian pleats"
- *  unexpectedly showing up in a loop.
- *  Intended for specific debugging tasks, rather than as a
- *  routine used generally.
- *  Derrived from nmg_split_touchingloops().
- *
- *  Returns -
- *	vu	Yes, the loop touches itself at least once, at this vu.
- *	0	No, the loop does not touch itself.
- */
-CONST struct vertexuse *
-nmg_loop_touches_self( lu )
-CONST struct loopuse	*lu;
-{
-	CONST struct edgeuse	*eu;
-	CONST struct vertexuse	*vu;
-	CONST struct vertex	*v;
-
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-		return (CONST struct vertexuse *)0;
-
-	/* For each edgeuse, get vertexuse and vertex */
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		CONST struct vertexuse	*tvu;
-
-		vu = eu->vu_p;
-		NMG_CK_VERTEXUSE(vu);
-		v = vu->v_p;
-		NMG_CK_VERTEX(v);
-
-		/*
-		 *  For each vertexuse on vertex list,
-		 *  check to see if it points up to the this loop.
-		 *  If so, then there is a duplicated vertex.
-		 *  Ordinarily, the vertex list will be *very* short,
-		 *  so this strategy is likely to be faster than
-		 *  a table-based approach, for most cases.
-		 */
-		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
-			CONST struct edgeuse		*teu;
-			CONST struct loopuse		*tlu;
-			CONST struct loopuse		*newlu;
-
-			if( tvu == vu )  continue;
-			if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
-			teu = tvu->up.eu_p;
-			NMG_CK_EDGEUSE(teu);
-			if( *teu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
-			tlu = teu->up.lu_p;
-			NMG_CK_LOOPUSE(tlu);
-			if( tlu != lu )  continue;
-			/*
-			 *  Repeated vertex exists.
-			 */
-			return vu;
-		}
-	}
-	return (CONST struct vertexuse *)0;
 }
