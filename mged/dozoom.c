@@ -35,6 +35,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+#ifdef DM_X
+extern int X_drawString2D();
+#endif
+
 #define W_AXES 0
 #define V_AXES 1
 #define E_AXES 2
@@ -564,19 +568,19 @@ int axes;
       if(mged_variables.v_axes > 1){
 	switch(mged_variables.v_axes){
 	case 2:     /* lower left */
-	  ox = -0.8;
+	  ox = -0.8 / dmp->dm_aspect;
 	  oy = -0.8;
 	  break;
 	case 3:     /* upper left */
-	  ox = -0.425;
+	  ox = -0.8 / dmp->dm_aspect;
 	  oy = 0.8;
 	  break;
 	case 4:     /* upper right */
-	  ox = 0.8;
+	  ox = 0.8 / dmp->dm_aspect;
 	  oy = 0.8;
 	  break;
 	case 5:     /* lower right */
-	  ox = 0.8;
+	  ox = 0.8 / dmp->dm_aspect;
 	  oy = -0.8;
 	  break;
 	default:    /* center */
@@ -642,9 +646,15 @@ int axes;
       /* convert point m4 from model to view space */
       MAT4X3PNT(v2, model2view, m4);
 
+#ifdef DM_X
       /* label axes */
-      dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
-			   ((int)(2048.0 * v2[Y])) + 15, 1, 0);
+      if(dmp->dm_drawString2D == X_drawString2D)
+	dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			     ((int)(2048.0 * v2[Y])) + 15, 1, 1);
+      else
+#endif
+	dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			     ((int)(2048.0 * v2[Y])) + 15, 1, 0);
     }else{
       VMOVE(vlist.pt[i*2], m1);
       vlist.cmd[i*2] = RT_VLIST_LINE_MOVE;
@@ -655,9 +665,15 @@ int axes;
     /* convert point m2 from model to view space */
     MAT4X3PNT(v2, model2view, m2);
 
+#ifdef DM_X
     /* label axes */
-    dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
-		  ((int)(2048.0 * v2[Y])) + 15, 1, 0);
+    if(dmp->dm_drawString2D == X_drawString2D)
+      dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			   ((int)(2048.0 * v2[Y])) + 15, 1, 1);
+    else
+#endif
+      dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			   ((int)(2048.0 * v2[Y])) + 15, 1, 0);
   }
 
   dmp->dm_newrot(dmp, model2view, 0);
