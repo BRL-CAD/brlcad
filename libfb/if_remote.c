@@ -310,16 +310,22 @@ int	x, y;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
-/* XXX -- need to convert to network shorts! */
 _LOCAL_ int
 rem_cmread( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 {
+	int	i;
 	char	buf[NET_LONG_LEN+1];
+	ColorMap cm;
 
 	pkg_send( MSG_FBRMAP, (char *)0, 0, PCP(ifp) );
-	pkg_waitfor( MSG_DATA, (char *)cmap, sizeof(*cmap), PCP(ifp) );
+	pkg_waitfor( MSG_DATA, (char *)&cm, sizeof(cm), PCP(ifp) );
+	for( i = 0; i < 256; i++ ) {
+		cmap->cm_red[i] = fbgetshort( &cm.cm_red[i] );
+		cmap->cm_green[i] = fbgetshort( &cm.cm_green[i] );
+		cmap->cm_blue[i] = fbgetshort( &cm.cm_blue[i] );
+	}
 	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
@@ -329,12 +335,20 @@ rem_cmwrite( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 {
+	int	i;
 	char	buf[NET_LONG_LEN+1];
+	ColorMap cm;
 
 	if( cmap == COLORMAP_NULL )
 		pkg_send( MSG_FBWMAP, (char *)0, 0, PCP(ifp) );
-	else
-		pkg_send( MSG_FBWMAP, (char *)cmap, sizeof(*cmap), PCP(ifp) );
+	else {
+		for( i = 0; i < 256; i++ ) {
+			(void)fbputshort( cmap->cm_red[i], &cm.cm_red[i] );
+			(void)fbputshort( cmap->cm_green[i], &cm.cm_green[i] );
+			(void)fbputshort( cmap->cm_blue[i], &cm.cm_blue[i] );
+		}
+		pkg_send( MSG_FBWMAP, (char *)&cm, sizeof(cm), PCP(ifp) );
+	}
 	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }

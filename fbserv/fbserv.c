@@ -366,16 +366,21 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
-/* XXX - need to convert from network shorts! */
 rfbrmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
+	int	i;
 	char	rbuf[NET_LONG_LEN+1];
-	ColorMap map;
+	ColorMap map, map2;
 
 	(void)fbputlong( fb_rmap( fbp, &map ), &rbuf[0*NET_LONG_LEN] );
-	pkg_send( MSG_DATA, (char *)&map, sizeof(map), pcp );
+	for( i = 0; i < 256; i++ ) {
+		(void)fbputshort( map.cm_red[i], &map2.cm_red[i] );
+		(void)fbputshort( map.cm_green[i], &map2.cm_green[i] );
+		(void)fbputshort( map.cm_blue[i], &map2.cm_blue[i] );
+	}
+	pkg_send( MSG_DATA, (char *)&map2, sizeof(map2), pcp );
 	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
@@ -384,14 +389,21 @@ rfbwmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
+	int	i;
 	char	rbuf[NET_LONG_LEN+1];
 	long	ret;
+	ColorMap map;
 
 	if( pcp->pkc_len == 0 )
 		ret = fb_wmap( fbp, COLORMAP_NULL );
-	else
-		ret = fb_wmap( fbp, buf );
-
+	else {
+		for( i = 0; i < 256; i++ ) {
+			map.cm_red[i] = fbgetshort( &(((ColorMap *)buf)->cm_red[i]) );
+			map.cm_green[i] = fbgetshort( &(((ColorMap *)buf)->cm_green[i]) );
+			map.cm_blue[i] = fbgetshort( &(((ColorMap *)buf)->cm_blue[i]) );
+		}
+		ret = fb_wmap( fbp, &map );
+	}
 	(void)fbputlong( ret, &rbuf[0] );
 	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
