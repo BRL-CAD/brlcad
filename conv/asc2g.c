@@ -32,6 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtlist.h"
 #include "db.h"
+#include "raytrace.h"
 #include "wdb.h"
 #include "externs.h"
 
@@ -68,19 +69,38 @@ char **argv;
 	ifp = stdin;
 	ofp = stdout;
 
+#if 0
+	/*  Because LIBWDB uses LIBRT routines (esp. rt_log), must init */
+	rt_g.rtg_parallel = 0;
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_model );
+	/* Do not use rt_log() or rt_malloc() before here. */
+#endif
+
+#if 0
+(void)fprintf(stderr, "About to call rt_log\n");
+rt_log("Hello cold cruel world!\n");
+(void)fprintf(stderr, "About to begin\n");
+#endif
+
 	if( argc == 2 || argc == 4 )
 		debug = 1;
 
 	if( argc >= 3 ) {
 		ifp = fopen(argv[1],"r");
+		if( !ifp )  perror(argv[1]);
 		ofp = fopen(argv[2],"w");
+		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
-			fprintf(stderr, "asc2g: can't open files.");
+			(void)fprintf(stderr, "asc2g: can't open files.");
 			exit(1);
 		}
 	}
 	if (isatty(fileno(ofp))) {
-		fprintf(stderr, usage);
+		(void)fprintf(stderr, usage);
 		exit(1);
 	}
 
@@ -93,7 +113,7 @@ after_read:
 
 		/* Check record type */
 		if( debug )
-			(void)fprintf(stderr,"rec %c\n", buf[0] );
+			rt_log("rec %c\n", buf[0] );
 		switch( buf[0] )  {
 		case ID_SOLID:
 			solbld();
@@ -104,7 +124,7 @@ after_read:
 			continue;
 
 		case ID_MEMB:
-			(void)fprintf(stderr,"Warning: unattached Member record, ignored\n");
+			rt_log("Warning: unattached Member record, ignored\n");
 			continue;
 
 		case ID_ARS_A:
@@ -152,8 +172,8 @@ after_read:
 			continue;
 
 		default:
-			(void)fprintf(stderr,"asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
-			(void)fprintf(stderr,"%s\n", buf );
+			rt_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
+			rt_log("%s\n", buf );
 			continue;
 		}
 	}
@@ -269,7 +289,7 @@ solbld()
 			break;
 
 		default:
-			fprintf(stderr, "asc2g: bad solid %s s_type= %d, skipping\n",
+			rt_log("asc2g: bad solid %s s_type= %d, skipping\n",
 				name, s_type);
 	}
 
@@ -587,7 +607,7 @@ identbld()
 	*np = '\0';
 
 	if( strcmp( version, ID_VERSION ) != 0 )  {
-		fprintf(stderr, "WARNING:  input file version (%s) is not %s\n",
+		rt_log("WARNING:  input file version (%s) is not %s\n",
 			version, ID_VERSION);
 	}
 
@@ -620,7 +640,7 @@ identbld()
 	}
 
 	if( mk_id_units(ofp, title, unit_str) < 0 )  {
-		fprintf(stderr, "asc2g: unable to write database ID\n");
+		rt_log("asc2g: unable to write database ID\n");
 		exit(2);
 	}
 }
@@ -825,7 +845,7 @@ bsurfbld()
 	/* Malloc and clear memory for the KNOT DATA and read it */
 	nbytes = record.d.d_nknots * sizeof(union record);
 	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		(void)fprintf(stderr, "asc2g: spline knot malloc error\n");
+		rt_log( "asc2g: spline knot malloc error\n");
 		exit(1);
 	}
 	fp = vp;
@@ -845,7 +865,7 @@ bsurfbld()
 	/* Malloc and clear memory for the CONTROL MESH data and read it */
 	nbytes = record.d.d_nctls * sizeof(union record);
 	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		(void)fprintf(stderr, "asc2g: control mesh malloc error\n");
+		rt_log( "asc2g: control mesh malloc error\n");
 		exit(1);
 	}
 	fp = vp;
@@ -933,7 +953,7 @@ pipebld()
 			sp->ps_type = WDB_PIPESEG_TYPE_BEND;
 			VMOVE(sp->ps_bendcenter, bendcenter);
 		} else  {
-			fprintf(stderr, "asc2g: no pipe type %s\n", type);
+			rt_log("asc2g: no pipe type %s\n", type);
 		}
 
 		RT_LIST_INSERT( &head.l, &sp->l);
@@ -1018,24 +1038,24 @@ arbnbld()
 	cp = nxt_spc(cp);
 
 	neqn = atoi(cp);			/* find number of eqns */
-/*fprintf(stderr, "neqn = %d\n", neqn);
+/*rt_log("neqn = %d\n", neqn);
  */
 	/* Check to make sure plane equations actually came in. */
 	if( neqn <= 0 )  {
-		fprintf(stderr, "asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
+		rt_log("asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
 	}
 
-/*fprintf(stderr, "mallocing space for eqns\n");
+/*rt_log("mallocing space for eqns\n");
  */
 	/* Malloc space for the in-coming plane equations */
 	if( (eqn = (plane_t *)malloc( sizeof( plane_t ) * neqn ) ) == NULL)  {
-		fprintf(stderr, "asc2g: malloc failure for arbn\n");
+		rt_log("asc2g: malloc failure for arbn\n");
 		exit(-1);
 	}
 
 	/* Now, read the plane equations and put in appropriate place */
 
-/*fprintf(stderr, "starting to dump eqns\n");
+/*rt_log("starting to dump eqns\n");
  */
 	for( i = 0; i < neqn; i++ )  {
 		fgets( buf, BUFSIZE, ifp);
@@ -1043,7 +1063,7 @@ arbnbld()
 			&eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
 	}
 
-/*fprintf(stderr, "sending info to mk_arbn\n");
+/*rt_log("sending info to mk_arbn\n");
  */
 	mk_arbn( ofp, name, neqn, eqn);
 }
