@@ -23,7 +23,7 @@
 	shade sh_text sh_cloud mathtab \
 	material refract sh_stack \
 	sh_plastic sh_cook wray sh_spm sh_light \
-	sh_marble sh_wood sh_stxt sh_points sh_toyota
+	turb sh_marble sh_wood sh_stxt sh_points sh_toyota
 
 /*  The "top-half" (user interface) for the RT family of programs */
 #define RTUIF	main.o opt.o do.o worker.o mathtab.o
@@ -32,7 +32,7 @@
 
 #define	RT_OBJ	RTUIF view.o wray.o material.o refract.o \
 		shade.o sh_text.o sh_cloud.o sh_stack.o sh_plastic.o \
-		sh_cook.o sh_spm.o sh_light.o sh_marble.o sh_wood.o \
+		sh_cook.o sh_spm.o sh_light.o turb.o sh_marble.o sh_wood.o \
 		sh_stxt.o sh_points.o sh_toyota.o
 
 rt:	RT_OBJ LIBRT_DEP LIBFB_DEP
