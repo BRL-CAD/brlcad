@@ -58,8 +58,8 @@ FBIO disk_interface =
 		fb_null,		/* cmemory_addr */
 		fb_null,		/* cscreen_addr */
 		"Disk File Interface",
-		8*1024,		/* the sky's really the limit here... */
-		8*1024,
+		16*1024,		/* the sky's really the limit here */
+		16*1024,
 		"*disk*",
 		512,
 		512,
@@ -81,6 +81,12 @@ char	*file;
 int	width, height;
 	{
 	static unsigned char zero = 0;
+
+	/* check for default size */
+	if( width == 0 )
+		width = ifp->if_width;
+	if( height == 0 )
+		height = ifp->if_height;
 
 	if( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1
 	  && (ifp->if_fd = open( file, O_RDONLY, 0 )) == -1 ) {
