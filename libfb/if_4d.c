@@ -149,7 +149,6 @@ FBIO sgi_interface =
 		};
 
 
-_LOCAL_ Colorindex get_Color_Index();
 _LOCAL_ void	sgi_inqueue();
 static int	is_linear_cmap();
 
@@ -393,17 +392,17 @@ FBIO	*ifp;
 
 	/* Move up the existing break, to leave room for later malloc()s */
 	old_brk = sbrk(0);
-	new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024);
+	new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024L);
 	if( new_brk <= old_brk )
 		new_brk = old_brk + (XMAXSCREEN+1) * 1024;
-	new_brk = (char *)((((int)new_brk) + 4096-1) & ~(4096-1));
+	new_brk = (char *)((((long)new_brk) + 4096-1) & ~(4096-1));
 	if( brk( new_brk ) < 0 )  {
 		fb_log("sgi_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
 		goto fail;
 	}
 
 	/* Open the segment Read/Write, near the current break */
-	if( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1) )  {
+	if( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
 		fb_log("sgi_getmem: shmat returned x%x, errno=%d\n", sp, errno );
 		goto fail;
 	}
@@ -793,11 +792,8 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 {
-	int x_pos, y_pos;	/* Lower corner of viewport */
-	register int i;
 	int	f;
 	int	status;
-	int 	g_status;
 	static char	title[128];
 	int		mode;
 	inventory_t	*inv;
@@ -1273,6 +1269,7 @@ FBIO	*ifp;
 {
 	while( qtest() )
 		sgi_inqueue(ifp);
+	return 0;
 }
 
 /*
@@ -1304,9 +1301,8 @@ _LOCAL_ int
 sgi_close( ifp )
 FBIO	*ifp;
 {
-	int menu, menuval, dev, f;
+	int menu, menuval, dev;
 	short val;
-	int k;
 	FILE *fp = NULL;
 
 	winset(ifp->if_fd);
@@ -1545,11 +1541,8 @@ int	count;
 	register short		scan_count;	/* # pix on this scanline */
 	register unsigned char	*cp;
 	int			ret;
-	int			ybase;
 	register unsigned int	n;
 	register struct sgi_pixel	*sgip;
-
-	ybase = y;
 
 	if( x < 0 || x >= ifp->if_width ||
 	    y < 0 || y >= ifp->if_height)

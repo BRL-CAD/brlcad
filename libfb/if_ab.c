@@ -326,7 +326,7 @@ static void ab_log(ifp, str)
 FBIO	*ifp;
 char	*str;
 {
-	long		now;
+	time_t		now;
 	struct tm	*tmp;
 
 	if( (ifp->if_mode & MODE_3MASK) != MODE_3VERBOSE )  return;
