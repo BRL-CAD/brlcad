@@ -1592,8 +1592,11 @@ rt_log("force next eu to ray\n");
 			} else rt_log("About to cut a non-crack\n");
 			prev_lu = nmg_cut_loop( prev_vu, vu );
 			if(is_crack)  {
-				nmg_loop_is_ccw( lu, fu->f_p->fg_p->N, rs->tol );
-				nmg_loop_is_ccw( prev_lu, fu->f_p->fg_p->N, rs->tol );
+				struct face_g	*fg;
+				fg = fu->f_p->fg_p;
+				NMG_CK_FACE_G(fg);
+				nmg_lu_reorient( lu, fg->N, rs->tol );
+				nmg_lu_reorient( prev_lu, fg->N, rs->tol );
 			}
 			if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 				rt_log("After CUT, the final loop:\n");
@@ -1740,10 +1743,18 @@ match:		;
 	return 1;
 }
 
+/*
+ *			N M G _ L O O P _ I S _ C C W
+ *
+ *  Returns -
+ *	+1	Loop is CCW, should be exterior loop.
+ *	-1	Loop is CW, should be interior loop.
+ *	 0	Unable to tell, error.
+ */
 int
 nmg_loop_is_ccw( lu, norm, tol )
 struct loopuse	*lu;
-CONST vect_t	norm;
+CONST plane_t	norm;
 CONST struct rt_tol	*tol;
 {
 	vect_t		edge1, edge2;
@@ -1752,6 +1763,8 @@ CONST struct rt_tol	*tol;
 	struct edgeuse	*next_eu;
 	struct vertexuse *this_vu, *next_vu, *third_vu;
 	fastf_t		theta = 0;
+	fastf_t		x,y;
+	fastf_t		rad;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
@@ -1777,9 +1790,77 @@ CONST struct rt_tol	*tol;
 
 		/* Compute (loop)inward pointing "left" vector */
 		VCROSS( left, norm, edge1 );
-		theta += atan2( VDOT( edge2, edge1 ), VDOT( edge2, left ) );
+		y = VDOT( edge2, left );
+		x = VDOT( edge2, edge1 );
+		rad = atan2( y, x );
+#if 0
+VPRINT("vu1", this_vu->v_p->vg_p->coord);
+VPRINT("vu2", next_vu->v_p->vg_p->coord);
+VPRINT("edge1", edge1);
+VPRINT("edge2", edge2);
+VPRINT("left", left);
+rt_log("atan2(%g,%g) = %g\n", y, x, rad);
+#endif
+		theta += rad;
 	}
+#if 0
 	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
-	return 1;
+#endif
+nmg_face_lu_plot( lu, this_vu, this_vu );
+nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
+
+	rad = theta * rt_inv2pi;
+	x = rad-1;
+	/* Value is in radians, tolerance here is 1% */
+	if( NEAR_ZERO( x, 0.05 ) )  {
+		/* theta = two pi, loop is CCW */
+		return 1;
+	}
+	x = rad + 1;
+	if( NEAR_ZERO( x, 0.05 ) )  {
+		/* theta = -two pi, loop is CW */
+		return -1;
+	}
+	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g (%g)\n",
+		theta, rad );
+	return 0;
+}
+
+/*
+ *			N M G _ L U _ R E O R I E N T
+ *
+ *  Based upon a geometric calculation, reorient a loop and it's mate,
+ *  if the stored orientation differs from the geometric one.
+ */
+void
+nmg_lu_reorient( lu, norm, tol )
+struct loopuse	*lu;
+plane_t		norm;
+CONST struct rt_tol	*tol;
+{
+	int	ccw;
+	int	geom_orient;
+
+	NMG_CK_LOOPUSE(lu);
+
+	ccw = nmg_loop_is_ccw( lu, norm, tol );
+	if( ccw == 0 )  {
+		rt_log("nmg_lu_reorient:  unable to determine orientation from geometry\n");
+		/* rt_bomb("nmg_lu_reorient"); */
+		return;
+	}
+	if( ccw > 0 )  {
+		geom_orient = OT_SAME;	/* same as face */
+	} else {
+		geom_orient = OT_OPPOSITE;
+	}
+
+	if( lu->orientation == geom_orient )  return;
+	rt_log("nmg_lu_reorient(x%x):  changing loop orientation from %s to %s\n",
+		lu, nmg_orientation(lu->orientation), nmg_orientation(geom_orient) );
+
+	/* Something more may need to be done.  Edges? */
+	lu->orientation = geom_orient;
+	lu->lumate_p->orientation = geom_orient;
 }
                                                                                                                                       
