@@ -77,7 +77,7 @@ enum SIZES  {
 	S_UNSPEC,S_Base16,S_Base4,S_Base,S_4Base,S_16Base,S_Over };
 
 /* Default taken when no size parameter given */
-#define S_DEFAULT S_Base16
+#define S_DEFAULT S_Base
 
 struct _implane
 {
@@ -162,19 +162,19 @@ enum ERRORS e;
 		fprintf(stderr,"Internal error.\n"); 
 		break;
 	case E_ARG:    
-		fprintf(stderr,"Error in Arguments !\n\n");
-		fprintf(stderr,"Usage: hpcdtoppm [options] pcd-file [ppm-file]\n\n");
-		fprintf(stderr,"Opts:\n");
+		fprintf(stderr,"Usage: pcd-pix [options] file.pcd\n");
+		fprintf(stderr,"Options:	(file name may be just frame number)\n");
 		fprintf(stderr,"     -x Overskip mode (tries to improve color quality.)\n");
 		fprintf(stderr,"     -i Give some information from fileheader\n");
 		fprintf(stderr,"     -b write .bw file instead of .pix\n");
 		fprintf(stderr,"     -0 Extract thumbnails from Overview file\n");
-		fprintf(stderr,"     -1 Extract  128x192  from Image file\n");
-		fprintf(stderr,"     -2 Extract  256x384  from Image file\n");
-		fprintf(stderr,"     -3 Extract  512x768  from Image file\n");
-		fprintf(stderr,"     -4 Extract 1024x1536 from Image file\n");
-		fprintf(stderr,"     -5 Extract 2048x3072 from Image file\n");
-		fprintf(stderr,"                 -n  -w\n");
+		fprintf(stderr,"     -1 Extract  -n128  -w192 from Image file [Base/16]\n");
+		fprintf(stderr,"     -2 Extract  -n256  -w384 from Image file [Base/4]\n");
+		fprintf(stderr,"     -3 Extract  -n512  -w768 from Image file [Base].  Default size.\n");
+		fprintf(stderr,"     -4 Extract -n1024 -w1536 from Image file [4Base]\n");
+		fprintf(stderr,"     -5 Extract -n2048 -w3072 from Image file [16Base]\n");
+		fprintf(stderr,"     -p Pipe output to pix-fb automaticly\n");
+		fprintf(stderr,"     -h Just print header dimensions\n");
 		fprintf(stderr,"\n");
 		break;
 	case E_OPT:    
@@ -262,6 +262,8 @@ char **argv;
 	dim w,h;
 	long cd_offset,cd_offhelp;
 	int do_info,do_overskip;
+	int	do_pixfb = 0;
+	int	do_headeronly = 0;
 
 	enum SIZES size=S_UNSPEC;
 	enum ERRORS eret;
@@ -276,6 +278,18 @@ char **argv;
 	{
 		opt= (*argv)+1;
 		ASKIP;
+
+		if( strcmp(opt, "p") == 0 )  {
+			if (!do_pixfb) do_pixfb=1;
+			else error(E_ARG);
+			continue;
+		}
+
+		if( strcmp(opt, "h") == 0 )  {
+			if (!do_headeronly) do_headeronly=1;
+			else error(E_ARG);
+			continue;
+		}
 
 		if(!strcmp(opt,"i"))
 		{ 
@@ -357,7 +371,19 @@ char **argv;
 	if(do_info && (size==S_Over)) error(E_OPT);
 	if(do_overskip && (size != S_Base16) && (size != S_Base4) && (size != S_Base) && (size != S_4Base) ) error(E_OVSKIP);
 
-	if(!(fin=fopen(pcdname,"r"))) error(E_READ);
+	if(!(fin=fopen(pcdname,"r")))  {
+		/* If name is frame number only, create name and go again */
+		if( atoi(pcdname) > 0 )  {
+			sprintf(nbuf, "img%4.4d.pcd", atoi(pcdname) );
+			if(!(fin=fopen(nbuf,"r")))  {
+				perror(nbuf);
+				error(E_READ);
+			}
+		} else {
+			perror(pcdname);
+			error(E_READ);
+		}
+	}
 
 	if(do_info)
 	{ 
@@ -365,9 +391,56 @@ char **argv;
 		EREADBUF;
 	}
 
+	switch(size)  {
+	case S_Base16: 
+		w=BaseW/4;
+		h=BaseH/4;
+		break;
+	case S_Base4:  
+		w=BaseW/2;
+		h=BaseH/2;
+		break;
+	case S_Base:   
+		w=BaseW;
+		h=BaseH;
+		break;
+	case S_4Base:  
+		w=BaseW*2;
+		h=BaseH*2;
+	case S_16Base: 
+		w=BaseW*4;
+		h=BaseH*4;
+		break;
+	case S_Over:   
+		w=BaseW/4;
+		h=BaseH/4;
+		break;
+	default: 
+		error(E_INTERN);
+	}
+
+	if( do_headeronly )  {
+		printf("-w%d -n%d\n", w, h);
+		exit(0);
+	}
+
+	if( do_pixfb )  {
+		if( do_bw )
+			sprintf(nbuf, "bw-fb -w%d -n%d", w, h);
+		else
+			sprintf(nbuf, "pix-fb -w%d -n%d", w, h);
+
+		fprintf(stderr, "pcd-pix | %s\n", nbuf);
+		if( (fout = popen( nbuf, "w" )) == NULL )  {
+			perror(nbuf);
+			exit(42);
+		}
+	} else {
+		fout = stdout;
+	}
+
 	if(do_info) druckeid();
 
-	fout = stdout;
 	switch(size)
 	{
 	case S_Base16: 
@@ -590,6 +663,8 @@ char **argv;
 	default: 
 		error(E_INTERN);
 	}
+
+	if( do_pixfb )  pclose(fout);
 
 	exit(0);
 }
