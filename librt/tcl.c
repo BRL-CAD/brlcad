@@ -82,6 +82,7 @@ extern struct bu_structparse rt_eto_parse[];
 /* JOINT -- not supported yet */
 extern struct bu_structparse rt_hf_parse[];
 extern struct bu_structparse rt_dsp_parse[];
+extern struct bu_structparse rt_fgp_parse[];
 /* COMB -- supported below */
 
 static struct db_i *dbip = DBI_NULL;
@@ -116,6 +117,7 @@ struct rt_solid_type_lookup {
 	{ ID_NMG, 0, 0, "nmg", 0 },
 	{ ID_PIPE, 0, 0, "pipe", 0 },
 	{ ID_VOL, 0, 0, "vol", 0 },
+	{ ID_FGP,   sizeof( struct rt_fgp_internal), (long)RT_FGP_INTERNAL_MAGIC, "fgp", rt_fgp_parse },
 	{ 0, 0, 0, 0 }
 };
 

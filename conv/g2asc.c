@@ -54,7 +54,7 @@ void	soldump();
 void	membdump(), arsadump(), arsbdump();
 void	materdump(), bspldump(), bsurfdump();
 void	pipe_dump(), particle_dump(), dump_pipe_segs();
-void	arbn_dump();
+void	arbn_dump(), fgp_dump();
 void	nmg_dump();
 void	strsol_dump();
 
@@ -111,6 +111,9 @@ top:
 	    		continue;
 	    	case DBID_ARBN:
 	    		arbn_dump();
+	    		continue;
+	    	case DBID_FGP:
+	    		fgp_dump();
 	    		continue;
 	    	case ID_BSOLID:
 			bspldump();
@@ -305,6 +308,37 @@ soldump()	/* Print out Solid record information */
 	(void)printf("%d ", record.s.s_cgtype );/* COMGEOM solid type */
 	for( i = 0; i < 24; i++ )
 		(void)printf("%.12e ", record.s.s_values[i] ); /* parameters */
+	(void)printf("\n");			/* Terminate w/ a newline */
+}
+
+void
+fgp_dump()
+{
+	int				ngranules;	/* number of granules, total */
+	char				*name;
+	struct rt_fgp_internal	*plt;
+	struct bu_external		ext;
+	struct rt_db_internal		intern;
+
+	ngranules = 1;
+	name = record.fgp.fgp_name;
+
+	get_ext( &ext, ngranules );
+
+	/* Hand off to librt's import() routine */
+	if( (rt_fgp_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+		fprintf(stderr, "g2asc: fgp import failure\n");
+		exit(-1);
+	}
+
+	plt = (struct rt_fgp_internal *)intern.idb_ptr;
+	RT_FGP_CK_MAGIC(plt);
+
+	(void)printf("%c ", DBID_FGP );	/* f */
+	(void)printf("%.16s ", name );	/* unique name */
+	(void)printf("%.16s ", plt->referenced_solid );	/* name of referenced solid */
+	(void)printf("%.12e ", plt->thickness );	/* fgp thickness */
+	(void)printf("%d ", plt->mode );		/* fgp mode */
 	(void)printf("\n");			/* Terminate w/ a newline */
 }
 

@@ -48,10 +48,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define BUFSIZE			(8*1024)	/* input line buffer size */
 #define TYPELEN			10
-#define NAMELEN			20
+#define NAME_LEN			20
 
 void		identbld(), polyhbld(), polydbld(), pipebld(), particlebld();
-void		solbld(), arbnbld();
+void		solbld(), arbnbld(), fgpbld();
 int		combbld();
 void		membbld(), arsabld(), arsbbld();
 void		materbld(), bsplbld(), bsurfbld(), zap_nl();
@@ -178,6 +178,10 @@ after_read:
 			arbnbld();
 			continue;
 
+		case DBID_FGP:
+			fgpbld();
+			continue;
+
 		default:
 			bu_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
 			bu_log("%s\n", buf );
@@ -196,7 +200,7 @@ strsolbld()
 	register char *cp;
 	register char *np;
 	char keyword[10];
-	char name[NAMELEN+1];
+	char name[NAME_LEN+1];
 
 	cp = buf;
 
@@ -1057,6 +1061,46 @@ bsurfbld()
 	(void)free( (char *)fp );
 }
 
+/*		F G P B L D
+ *
+ */
+void
+fgpbld()
+{
+	char			my_name[NAME_LEN];
+	char			ref_name[NAME_LEN];
+	fastf_t			thickness;
+	int			mode;
+	register char		*cp;
+	register char		*np;
+
+	cp = buf;
+	cp++;
+	cp = nxt_spc( cp );
+
+	np = my_name;
+	while( *cp != ' ' && *cp != '\n' )
+		*np++ = *cp++;
+	*np = '\0';
+
+	cp = nxt_spc( cp );
+
+	np = ref_name;
+	while( *cp != ' ' && *cp != '\n' )
+		*np++ = *cp++;
+	*np = '\0';
+
+	cp = nxt_spc( cp );
+
+	thickness = atof( cp );
+
+	cp = nxt_spc( cp );
+
+	mode = atoi( cp );
+
+	mk_fgp( ofp, my_name, ref_name, thickness, mode );
+}
+
 /*		P I P E B L D
  *
  *  This routine reads pipe data from standard in, constructs a doublely
@@ -1067,7 +1111,7 @@ void
 pipebld()
 {
 
-	char			name[NAMELEN];
+	char			name[NAME_LEN];
 	register char		*cp;
 	register char		*np;
 	struct wdb_pipept	*sp;
@@ -1129,7 +1173,7 @@ void
 particlebld()
 {
 
-	char		name[NAMELEN];
+	char		name[NAME_LEN];
 	char		ident;
 	point_t		vertex;
 	vect_t		height;
@@ -1165,7 +1209,7 @@ void
 arbnbld()
 {
 
-	char		name[NAMELEN];
+	char		name[NAME_LEN];
 	char		type[TYPELEN];
 	int		i;
 	int		neqn;			/* number of eqn expected */

@@ -279,6 +279,10 @@ int			do_old_matter;
 			handler( dbip, record.extr.ex_name, addr, nrec,
 				DIR_SOLID );
 			break;
+		case DBID_FGP:
+			handler( dbip, record.s.s_name, addr, nrec,
+				DIR_SOLID );
+			break;
 		case ID_MEMB:
 			bu_log("db_scan ERROR: Unattached combination MEMBER record\n");
 			break;

@@ -41,6 +41,8 @@
 
 #undef r_a /* defined on alliant in <machine/reg.h> included in signal.h */
 
+#define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */
+
 /*
  *	ID_TOR
  */
@@ -417,5 +419,27 @@ struct rt_extrude_internal
 #define RT_EXTRUDE_INTERNAL_MAGIC	0x65787472	/* extr */
 #define RT_EXTRUDE_CK_MAGIC(_p)	BU_CKMAG(_p,RT_EXTRUDE_INTERNAL_MAGIC,"rt_extrude_internal")
 
+/*
+ *	ID_FGP
+ */
+
+struct rt_fgp_internal
+{
+	long		magic;
+	fastf_t		thickness;
+	int		mode;
+	char		referenced_solid[NAMELEN];
+
+	/* the following is used by import, ignored by export */
+	mat_t		xform;
+	struct directory *ref_dp;
+	struct db_i	*dbip;
+};
+
+#define	RT_FGP_CENTER_MODE	1	/* thickness is centered about hit point */
+#define RT_FGP_FRONT_MODE	2	/* thickness is appended to hit point in ray direction */
+
+#define	RT_FGP_INTERNAL_MAGIC		0x706c6174	/* plat */
+#define RT_FGP_CK_MAGIC(_p)	BU_CKMAG(_p,RT_FGP_INTERNAL_MAGIC,"rt_fgp_internal")
 
 #endif /* SEEN_RTGEOM_H */

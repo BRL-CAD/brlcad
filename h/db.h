@@ -98,6 +98,7 @@ union record  {
 #define DBID_NMG	'N'	/* NMG solid */
 #define	DBID_SKETCH	'd'	/* 2D sketch */
 #define	DBID_EXTR	'e'	/* solid of extrusion */
+#define DBID_FGP	'f'	/* FASTGEN4 plate mode solid */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -379,6 +380,18 @@ union record  {
 		unsigned char	skt_seg_count[4];	/* number of segments in sketch */
 		unsigned char	skt_count[4];		/* number of additional granules */
 	} skt;
+
+	/* FASTGEN4 plate mode solid */
+	struct fgp_rec {
+		char	fgp_id;			/* DBID_FGP */
+		char	fgp_pad;
+		char	fgp_name[NAMESIZE];		/* name of this solid */
+		char	fgp_ref_sol[NAMESIZE];		/* referenced solid name */
+		unsigned char	fgp_thickness[8];	/* thickness of plate */
+		unsigned char	fgp_mode[4];		/* mode: 1 -> thickness is centered no hit point
+							 *       2 -> thickness extends in ray direction from hit point
+							 */
+	} fgp;
 };
 #endif /* !RECORD_DEFINED || !__STDC__ */
 #define DB_RECORD_NULL	((union record *)0)
