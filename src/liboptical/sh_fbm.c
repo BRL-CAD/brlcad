@@ -79,11 +79,11 @@ HIDDEN int	fbm_setup(register struct region *rp, struct bu_vls *matparm, char **
 HIDDEN void	fbm_print(register struct region *rp, char *dp), fbm_free(char *cp);
 
 struct mfuncs fbm_mfuncs[] = {
-	{"bump_fbm",	0,		0,		MFI_NORMAL|MFI_HIT|MFI_UV,
-	fbm_setup,	fbm_render,	fbm_print,	fbm_free },
+  {MF_MAGIC,	"bump_fbm",		0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+   fbm_setup,	 fbm_render,	fbm_print,	fbm_free },
 
-	{(char *)0,	0,		0,		0,
-	0,		0,		0,		0 }
+  {0,		(char*)0,		0,				0,	0,
+   0,		0,			0,				0}
 };
 
 
