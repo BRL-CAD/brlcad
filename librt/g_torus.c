@@ -494,6 +494,7 @@ struct seg		*seghead;
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[1]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[0]*tor->tor_r1;
+	segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
 	/* Set aside vector for rt_tor_norm() later */
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
@@ -508,6 +509,7 @@ struct seg		*seghead;
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[3]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[2]*tor->tor_r1;
+	segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 1;
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[3], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[2], dprime );
 	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
