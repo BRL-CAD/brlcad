@@ -367,7 +367,7 @@ struct application	*ap;
 		hp->hit_dist = k;
 		hp->hit_private = (char *)trip;
 		hp->hit_vpriv[X] = dn;
-
+		
 		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 		if( nhits++ >= MAXHITS )  {
 			rt_log("ars(%s): too many hits\n", stp->st_name);
@@ -431,8 +431,17 @@ struct application	*ap;
 			newseg->seg_next = segp;
 			segp = newseg;
 			segp->seg_stp = stp;
+#if defined( alliant ) && ! defined( STRUCT_COPY_WORKS )
+			segp->seg_in.hit_dist = hits[i-2].hit_dist;
+			segp->seg_in.hit_vpriv[X] = hits[i-2].hit_vpriv[X];
+			segp->seg_in.hit_private = hits[i-2].hit_private;
+			segp->seg_out.hit_dist = hits[i-1].hit_dist;
+			segp->seg_out.hit_vpriv[X] = hits[i-1].hit_vpriv[X];
+			segp->seg_out.hit_private = hits[i-1].hit_private;
+#else
 			segp->seg_in = hits[i-2];	/* struct copy */
 			segp->seg_out = hits[i-1];	/* struct copy */
+#endif
 		}
 		return(segp);			/* HIT */
 	}
