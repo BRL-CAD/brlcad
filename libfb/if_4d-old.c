@@ -506,8 +506,8 @@ register FBIO	*ifp;
 				while( --amount != -1 )
 				{
 					im_outshort( CMR(ifp)[*ip++] );
-					im_outshort( CMR(ifp)[*ip++] );
-					im_outshort( CMR(ifp)[*ip++] );
+					im_outshort( CMG(ifp)[*ip++] );
+					im_outshort( CMB(ifp)[*ip++] );
 				}
 				amount = amount;
 			}
@@ -1109,8 +1109,8 @@ int	count;
 				while( --amount != -1 )
 				{
 					im_outshort(CMR(ifp)[*op++ = *cp++] );
-					im_outshort(CMR(ifp)[*op++ = *cp++] );
-					im_outshort(CMR(ifp)[*op++ = *cp++] );
+					im_outshort(CMG(ifp)[*op++ = *cp++] );
+					im_outshort(CMB(ifp)[*op++ = *cp++] );
 				}
 				amount = amount;
 			}
