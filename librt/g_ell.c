@@ -32,6 +32,8 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+extern int sph_prep();
+
 /*
  *  Algorithm:
  *  
@@ -157,7 +159,7 @@ struct rt_i		*rtip;
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is an ELL.
 	 */
-	if( sph_prep( vec, stp, mat ) == 0 )
+	if( sph_prep( vec, stp, mat, rtip ) == 0 )
 		return(0);		/* OK */
 
 #define ELL_V	&vec[0*ELEMENTS_PER_VECT]
@@ -455,7 +457,7 @@ struct soltab *stp;
 		(struct ell_specific *)stp->st_specific;
 	vect_t	u, v;			/* basis vectors (with normal) */
 	vect_t	vec1, vec2;		/* eigen vectors */
-	vect_t	x, tmp;
+	vect_t	tmp;
 	fastf_t	a, b, c, scale;
 
 	/*
