@@ -6,7 +6,6 @@ SHELL=/bin/sh
 # -DATT for SystemV, -DBSD for Berkeley, done by machinetype.sh
 #
 # For Apollo, may need to add -Tbsd4.3
-# For SunOS 5 (Solaris 2), need to add -Xc
 COPTS = -DCAKEDEBUG `machinetype.sh -d`
 
 # Some systems (such as NetBSD 0.9a), need to add -l to get yylineno.
@@ -45,7 +44,7 @@ install:	cake
 		mv cake $(BINDIR)/cake
 		rm -f $(BINDIR)/fake
 		ln $(BINDIR)/cake $(BINDIR)/fake
-		rm -f $(MANDIR)/cake.1
+		rm -f $(MANDIR)/cake.1 $(MANDIR)/fake.1
 		cp cake.1 $(MANDIR)
 		ln $(MANDIR)/cake.1 $(MANDIR)/fake.1
 
