@@ -236,10 +236,11 @@ int	num;
 	(void)fbputlong( x, &buf[0] );
 	(void)fbputlong( y, &buf[4] );
 	(void)fbputlong( num, &buf[8] );
-	pkg_stream( MSG_FBWRITE+MSG_NORETURN, buf, 3*4, PCP(ifp) );
+	pkg_2send( MSG_FBWRITE+MSG_NORETURN,
+		buf, 3*4,
+		(char *)pixelp, num*4,
+		PCP(ifp) );
 
-	/* Send DATA */
-	pkg_stream( MSG_DATA, (char *)pixelp, num*4, PCP(ifp) );
 #ifdef NEVER
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
 	ret = fbgetlong( buf );
@@ -304,6 +305,7 @@ int	x, y;
 	return( fbgetlong( buf ) );
 }
 
+/* XXX -- need to convert to network shorts! */
 _LOCAL_ int
 rem_cmread( ifp, cmap )
 FBIO	*ifp;

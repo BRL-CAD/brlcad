@@ -298,11 +298,7 @@ char *buf;
 	y = fbgetlong( &buf[1*4] );
 	num = fbgetlong( &buf[2*4] );
 	type = pcp->pkc_type;
-
-	/* Get space, fetch data into it, do write, free space. */
-	datap = malloc( num*4 );
-	pkg_waitfor( MSG_DATA, datap, num*4, pcp );
-	ret = fb_write( fbp, x, y, datap, num );
+	ret = fb_write( fbp, x, y, &buf[3*4], num );
 
 	if( type < MSG_NORETURN ) {
 		(void)fbputlong( ret, &rbuf[0] );
@@ -358,6 +354,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+/* XXX - need to convert from network shorts! */
 rfbrmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
