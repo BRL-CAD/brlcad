@@ -26,7 +26,6 @@ struct dm dm_Null = {
   Nu_int0,
   Nu_int0,
   Nu_int0,
-  Nu_int0,
   Nu_unsign,
   Nu_unsign,
   Nu_int0,
@@ -35,6 +34,7 @@ struct dm dm_Null = {
   0,			/* no displaylist */
   0.0,
   "nu", "Null Display",
+  0,
   0,
   0,
   0,
