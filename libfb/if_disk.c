@@ -82,7 +82,7 @@ int	width, height;
 	  && (ifp->if_fd = open( file, O_RDONLY, 0 )) == -1 ) {
 		if( (ifp->if_fd = open( file, O_RDWR|O_CREAT, 0664 )) > 0 ) {
 			/* New file, write byte at end */
-			if( lseek( ifp->if_fd, height*width*4-1, 0 ) == -1 )
+			if( lseek( ifp->if_fd, height*width*sizeof(Pixel)-1, 0 ) == -1 )
 				{
 				fb_log( "disk_device_open : can not seek to end of new file.\n" );
 				return	-1;
@@ -117,6 +117,11 @@ disk_dclear( ifp, bgpp )
 FBIO	*ifp;
 Pixel	*bgpp;
 	{
+	static Pixel	black = { 0, 0, 0, 0 };
+
+	if( bgpp == (Pixel *)NULL )
+		return fb_fast_dma_bg( ifp, &black );
+
 	return	fb_fast_dma_bg( ifp, bgpp );
 	}
 
@@ -126,8 +131,9 @@ FBIO	*ifp;
 int		x,  y;
 Pixel		*pixelp;
 int		count;
-	{	register long bytes = count * (long) sizeof(Pixel);
-		register long todo;
+{	register long bytes = count * (long) sizeof(Pixel);
+	register long todo;
+
 	if( lseek(	ifp->if_fd,
 			(((long) y * (long) ifp->if_width) + (long) x)
 			* (long) sizeof(Pixel),
