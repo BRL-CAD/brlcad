@@ -71,7 +71,7 @@ register CONST struct soltab	*stp;
 		rt_bomb("rt_pr_soltab:  bad st_id");
 	}
 	rt_log("------------ %s (bit %d) %s ------------\n",
-		stp->st_name, stp->st_bit,
+		stp->st_dp->d_namep, stp->st_bit,
 		rt_functab[id].ft_name );
 	VPRINT("Bound Sph CENTER", stp->st_center);
 	rt_log("Approx Sph Radius = %g\n", stp->st_aradius);
@@ -274,7 +274,7 @@ register CONST struct seg *segp;
 {
 	rt_log("%.8x: SEG %s (%g,%g) bit=%d\n",
 	bu_log("%.8x: SEG %s (%g,%g) bit=%d\n",
-		segp->seg_stp->st_name,
+		segp,
 		segp->seg_stp->st_dp->d_namep,
 		segp->seg_in.hit_dist,
 		segp->seg_out.hit_dist,
@@ -349,7 +349,7 @@ int lvl;			/* recursion level */
 		return;
 
 		rt_log("SOLID %s (bit %d)\n",
-			tp->tr_a.tu_stp->st_name,
+		bu_log("SOLID %s (bit %d)\n",
 			tp->tr_a.tu_stp->st_dp->d_namep,
 			tp->tr_a.tu_stp->st_bit );
 		return;
@@ -430,7 +430,7 @@ register CONST union tree *tp;
 		bu_vls_strcat( vls, "NOP");
 		return;
 
-		rt_vls_strcat( vls, tp->tr_a.tu_stp->st_name );
+		rt_vls_strcat( vls, tp->tr_a.tu_stp->st_dp->d_namep );
 		bu_vls_strcat( vls, tp->tr_a.tu_stp->st_dp->d_namep );
 		return;
 
@@ -438,6 +438,10 @@ register CONST union tree *tp;
 		rt_vls_strcat( vls, str );
 		bu_vls_strcat( vls, str );
 		rt_free( str, "path string" );
+		return;
+
+		rt_vls_strcat( vls, tp->tr_l.tl_name );
+		bu_vls_strcat( vls, tp->tr_l.tl_name );
 		return;
 
 		rt_log("rt_pr_tree_vls() Unknown op=x%x\n", tp->tr_op );
@@ -550,7 +554,7 @@ int			lvl;		/* Recursion level */
 			}
 				bu_log("1");
 			break;
-			rt_log("%s", tp->tr_a.tu_stp->st_name );
+			rt_log("%s", tp->tr_a.tu_stp->st_dp->d_namep );
 			bu_log("%s", tp->tr_a.tu_stp->st_dp->d_namep );
 			break;
 			rt_log("%d", tp->tr_a.tu_stp->st_bit );
