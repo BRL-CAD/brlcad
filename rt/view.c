@@ -942,10 +942,11 @@ char	*framename;
 		break;
 #endif
 	case BUFMODE_INCR:
-		rt_log("Incremental resolution\n");
 		{
 			register int j = 1<<incr_level;
 			register int w = 1<<(incr_nlevel-incr_level);
+
+			rt_log("Incremental resolution %d\n", j);
 
 			/* Diminish buffer expectations on work-saved lines */
 			for( i=0; i<j; i++ )  {
