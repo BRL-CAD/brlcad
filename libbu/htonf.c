@@ -48,6 +48,7 @@ int			count;
 	return;
 #	define	HTONF	yes1
 #endif
+
 #if	defined(REVERSED_IEEE)
 	/* This machine uses IEEE, but in little-endian byte order */
 	register int	i;
@@ -58,6 +59,7 @@ int			count;
 		*out++ = in[0];
 		in += SIZEOF_NETWORK_FLOAT;
 	}
+	return;
 #	define	HTONF	yes2
 #endif
 
@@ -104,6 +106,7 @@ int			count;
 		*out++ = in[0];
 		in += SIZEOF_NETWORK_FLOAT;
 	}
+	return;
 #	define	NTOHD	yes2
 #endif
 
