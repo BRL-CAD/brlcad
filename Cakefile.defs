@@ -72,6 +72,7 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
+#define NFS 1
 
 /****************************************************************
  *								*
@@ -334,14 +335,16 @@ set -S2 "/bin/sh"
 /*	Select correct floating point flag, -fswitch if unsure */
 #	if 1
 /*		Using the Sun Compiler (the default) */
-#		if 1
+#		if 0
 /*			Generic unoptimized Sun configuration */
 #			define	CC_OPTS	-fswitch
 #		else
 /*			Model-specific floating point options */
 /*#			define	CC_OPTS	-ffpa */
+/*#			define	CC_OPTS	-ffpa /usr/lib/ffpa.il*/
 /*#			define	CC_OPTS	-f68881 -g*/
-#			define	CC_OPTS	-f68881
+#			define	CC_OPTS	-f68881 /usr/lib/f68881.il
+#			define	LD_OPTS	-f68881
 #		endif
 #	else
 /*		Using the Gnu C Compiler */
@@ -454,7 +457,7 @@ set -S2 "/bin/sh"
 #	define	LIBMALLOC	/* use vendor library */
 #	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
-#	define	RT_LIBES	-L/lib/multi -lu
+#	define	RT_LIBES	-L/lib/multi -lu -lio
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
 #	if 1
@@ -786,7 +789,7 @@ set -S2 "/bin/sh"
  */
 /**GAK, no string compares in #if */
 
-#if !defined(NFS)
+#if !NFS
 /*	Local style, binaries in source directories */
 #	define	LIBFB	../libfb/libfb.ARCH_SUF
 #	define	LIBRT	../librt/librt.ARCH_SUF
