@@ -395,7 +395,7 @@ struct rt_wdb *wdb1, *wdb2;
 			/* try to get the TCL version of this object */
 			argv[2] = dp1->d_namep;
 /* XXX Dangerous downcall.  Should invoke Tcl_Eval("db1 get name") */
-			if( wdb_get_tcl( (ClientData)(&wdb1), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
+			if( wdb_get_tcl( (ClientData)(wdb1), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 			{
 				/* cannot get TCL version, use bu_external */
 				Tcl_ResetResult( interp );
@@ -415,7 +415,7 @@ struct rt_wdb *wdb1, *wdb2;
 
 			/* try to get TCL version of object from the other database */				
 /* XXX Dangerous downcall.  Should invoke Tcl_Eval("db1 get name") */
-			if( wdb_get_tcl( (ClientData)(&wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
+			if( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 			{
 				Tcl_ResetResult( interp );
 
@@ -477,7 +477,7 @@ struct rt_wdb *wdb1, *wdb2;
 			{
 				/* need to add this object */
 				argv[2] = dp2->d_namep;
-				if( wdb_get_tcl( (ClientData)(&wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
+				if( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 				{
 					/* could not get TCL version */
 					if( mode == HUMAN )
