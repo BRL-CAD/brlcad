@@ -36,6 +36,22 @@ struct ntab {
 	char	nm[64];
 } ntab[64];
 
+struct mtab {
+	char	mt_name[64];
+	char	mt_param[96];
+} mtab[] = {
+	"plastic",	"",
+	"glass",	"",
+	"plastic",	"",
+	"mirror",	"",
+	"plastic",	"",
+	"testmap",	"",
+	"plastic",	""
+};
+int	nmtab = sizeof(mtab)/sizeof(struct mtab);
+
+#define PICK_MAT	((rand() % nmtab) )
+
 double	ball_stack(), prim_stack(), crystal_stack(), crystal_layer();
 
 main(argc, argv)
@@ -70,20 +86,23 @@ char	**argv;
 
 	/* Create the detail cells */
 	size = 1000;	/* mm */
-	quant = 1;	/* XXXX 5 */
+	quant = 7;	/* XXXX 5 */
 	base = -size*(quant/2);
 	maxheight = size/2;		/* keep lights off the floor */
 	for( ix=quant-1; ix>=0; ix-- )  {
 		x = base + ix*size;
 		for( iy=quant-1; iy>=0; iy-- )  {
 			y = base + iy*size;
+			sprintf( name, "Bx%dy%d", ix, iy );
+			do_plate( name, x, y, size );
 			sprintf( name, "x%dy%d", ix, iy );
-maxheight = height = crystal_stack( name, x, y, size );
-continue;
 			n = rand() & 03;
 			switch(n)  {
 			case 0:
 				height = ball_stack( name, x, y, size );
+				break;
+			case 1:
+				height = crystal_stack( name, x, y, size );
 				break;
 			default:
 				height = prim_stack( name, x, y, size );
@@ -96,7 +115,7 @@ continue;
 	/* Enclose in some rings */
 	minheight = size/2;
 	VSET( pos, 0, 0, size/4 );
-	do_rings( "rings", pos, 1.414*size, size/4, size, 4 );
+	do_rings( "rings", pos, 2*size*quant/2, size/4, size, 4 );
 
 	if( maxheight < minheight ) maxheight = minheight;
 
@@ -114,10 +133,12 @@ continue;
 	do_light( "l4", pos, aim, 1, 100.0, white );
 
 	/* Build the overall combination */
-	mk_comb( stdout, "clut", quant*quant+1+4+1, 0 );
+	mk_comb( stdout, "clut", 2*quant*quant+1+4+1, 0 );
 	mk_memb( stdout, "plane.r", identity, UNION );
 	for( ix=quant-1; ix>=0; ix-- )  {
 		for( iy=quant-1; iy>=0; iy-- )  {
+			sprintf( name, "Bx%dy%d", ix, iy );
+			mk_memb( stdout, name, identity, UNION );
 			sprintf( name, "x%dy%d", ix, iy );
 			mk_memb( stdout, name, identity, UNION );
 		}
@@ -145,17 +166,9 @@ double	size;
 	double	high;
 	double	height = 0;
 	double	esz;
-	vect_t	minpt, maxpt;
-	char	basename[64];
 	char	rppname[64];
 	char	crystalname[64];
-
-	/* Make the base */
-	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
-	VSET( minpt, xc-esz, yc-esz, 0 );
-	VSET( maxpt, xc+esz, yc+esz, 10 );
-	sprintf( basename, "%sbase", name );
-	mk_rpp( stdout, basename, minpt, maxpt );
+	vect_t	minpt, maxpt;
 
 	/* These should change somewhat for each layer, and be done by rots */
 	VSET( maj, 1, 0, .2 );
@@ -192,11 +205,10 @@ double	size;
 
 	/* Build the combination */
 	get_rgb(rgb);
-	/* XXX should be mirror or glass */
-	mk_mcomb( stdout, name, 3, 1, "", "", 1, rgb );
+	i = PICK_MAT;
+	mk_mcomb( stdout, name, 2, 1, mtab[i].mt_name, mtab[i].mt_param, 1, rgb );
 	mk_memb( stdout, crystalname, identity, UNION );
 	mk_memb( stdout, rppname, identity, INTERSECT );
-	mk_memb( stdout, basename, identity, UNION );
 	return(height);
 }
 
@@ -287,6 +299,31 @@ int	nsolids;	/* number of solids for this layer */
 	return(height);
 }
 
+do_plate( name, xc, yc, size )
+char	*name;
+double	xc, yc;		/* center coordinates, z=0+ */
+double	size;
+{
+	double	esz;
+	vect_t	minpt, maxpt;
+	char	sname[64];
+	char	rgb[4];		/* needs all 4 */
+	int	i;
+
+	sprintf(sname, "%s.s", name);
+	/* Make the base */
+	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
+	VSET( minpt, xc-esz, yc-esz, -9 );
+	VSET( maxpt, xc+esz, yc+esz, -1 );
+	mk_rpp( stdout, sname, minpt, maxpt );
+
+	/* Needs to be in a region, with color!  */
+	get_rgb(rgb);
+	i = PICK_MAT;
+	mk_mcomb( stdout, name, 1, 1, mtab[i].mt_name, mtab[i].mt_param, 1, rgb );
+	mk_memb( stdout, sname, identity, UNION );
+}
+
 double
 ball_stack( name, xc, yc, size )
 char	*name;
@@ -303,20 +340,13 @@ double	size;
 
 	len = 0;
 
-	/* Make the base */
-	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
-	VSET( min, xc-esz, yc-esz, 0 );
-	VSET( max, xc+esz, yc+esz, 10 );
-	sprintf( ntab[len].nm, "%s%c", name, 'A'+len );
-	mk_rpp( stdout, ntab[len++].nm, min, max );
-
 	/* Make some objects */
+	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
 	n = rand()&7;
 	for( i=0; i<n; i++ )  {
 		sprintf( ntab[len].nm, "%s%c", name, 'A'+len );
 		VSET( center, xc, yc, size/2+i*size );
-		mk_sph( stdout, ntab[len].nm, center, esz/2 );
-		len++;
+		mk_sph( stdout, ntab[len++].nm, center, esz/2 );
 	}
 
 	/* Build the combination */
@@ -346,17 +376,8 @@ double	size;
 	double	vpos = 0.0;
 	double	height;
 	double	xbase, ybase;
-	double	esz;
 
 	len = 0;
-
-	/* Make the base */
-	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
-	height = 10;
-	VSET( min, xc-esz, yc-esz, 0 );
-	VSET( max, xc+esz, yc+esz, height );
-	sprintf( ntab[len].nm, "%s%c", name, 'A'+len );
-	mk_rpp( stdout, ntab[len++].nm, min, max );
 
 	size *= 0.3;		/* Don't occupy full cell */
 	xbase = xc - size/2;
@@ -408,7 +429,8 @@ double	size;
 
 	/* Build the combination */
 	get_rgb( rgb );
-	mk_mcomb( stdout, name, len, 1, "", "", 1, rgb );
+	i = PICK_MAT;
+	mk_mcomb( stdout, name, len, 1, mtab[i].mt_name, mtab[i].mt_param, 1, rgb );
 	for( i=0; i<len; i++ )  {
 		mk_memb( stdout, ntab[i].nm, identity, UNION );
 	}
