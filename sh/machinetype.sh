@@ -151,7 +151,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_SYMLINKS=0;
 #endif
 
-#ifdef pyramid
+#ifdef pyr
 #	undef	pyr
 	MACHINE=pyr;
 	UNIXTYPE=BSD;	# Pyramid can be dual-environment, assume BSD
@@ -174,6 +174,7 @@ then
 	MACHINE=//error//
 	UNIXTYPE=--error--
 	HAS_TCP=0
+	HAS_SYMLINKS=0
 	# Performing an "exit 1" here does not help any if this script
 	# is being invoked by, eg, grave accents (which is a typical use).
 	# So, simply return the error strings invented above,
