@@ -149,6 +149,8 @@ extern int cmd_read_center();
 extern int cmd_read_scale();
 #endif
 
+extern Tcl_CmdProc	cmd_fhelp;
+
 extern void sync();
 int	inpara;			/* parameter input from keyboard */
 
@@ -213,7 +215,7 @@ static struct funtab funtab[] = {
 "", "", "Primary command Table.",
         0, 0, 0, FALSE,
 "?", "", "summary of available commands",
-        f_fhelp,0,MAXARGS,FALSE,
+        cmd_fhelp,0,MAXARGS,TRUE,
 "%", "", "escape to interactive shell",
 	f_comm,1,1,FALSE,
 "3ptarb", "", "makes arb given 3 pts, 2 coord of 4th pt, and thickness",
@@ -413,8 +415,8 @@ static struct funtab funtab[] = {
 #endif
 "listeval", "", "lists 'evaluated' path solids",
 	f_pathsum, 1, MAXARGS, FALSE,
-"loadtk", "", "Initializes Tk",
-        cmd_tk, 1, 1, TRUE,
+"loadtk", "[DISPLAY]", "Initializes Tk window library",
+        cmd_tk, 1, 2, TRUE,
 "ls", "", "table of contents",
 	dir_print,1,MAXARGS, FALSE,
 "M", "1|0 xpos ypos", "handle a middle mouse event",
@@ -976,8 +978,9 @@ char *str;
  *                     C M D _ T K
  *
  *  Command for initializing the Tk window and defaults.
+ *
+ *  Usage:  loadtk [displayname[.screennum]]
  */
-
 int
 cmd_tk(clientData, interp, argc, argv)
 ClientData clientData;
@@ -988,15 +991,21 @@ char **argv;
     /* XXX Screen name should be same as attachment, or should ask, or
        should be settable from "-display" option. */
 
-    if (tkwin != NULL)
-	return TCL_OK;
+    if (tkwin != NULL)  {
+	Tcl_SetResult(interp, "loadtk: already attached to display", TCL_STATIC);
+	return TCL_ERROR;
+    }
 
-    tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "TkMGED", "tkMGED");
+    if( argc != 2 )  {
+	tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "TkMGED", "tkMGED");
+    } else {
+	tkwin = Tk_CreateMainWindow(interp, argv[1], "TkMGED", "tkMGED");
+    }
     if (tkwin == NULL)
 	return TCL_ERROR;
 
     if (tkwin != NULL) {
-	Tk_GeometryRequest(tkwin, 200, 200);
+	Tk_GeometryRequest(tkwin, 100, 20);
 
 	/* This runs the tk.tcl script */
 	if (Tk_Init(interp) == TCL_ERROR)
@@ -1723,16 +1732,28 @@ struct funtab *functions;
  *			F _ F H E L P
  *
  *  Print a fast help message;  just tabulate the commands available.
- *  Or, help with the indicated commands.
  */
-int f_fhelp2();
-
 int
-f_fhelp( argc, argv )
+cmd_fhelp( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	return f_fhelp2(argc, argv, &funtab[0]);
+	register struct funtab *ftp;
+	struct rt_vls		str;
+
+	rt_vls_init(&str);
+	for( ftp = &funtab[1]; ftp->ft_name; ftp++ )  {
+		vls_col_item( &str, ftp->ft_name);
+	}
+	vls_col_eol( &str );
+
+	/* XXX should be rt_vls_strgrab() */
+	Tcl_SetResult(interp, rt_vls_strdup( &str), TCL_DYNAMIC);
+
+	rt_vls_free(&str);
+	return TCL_OK;
 }
 
 int
@@ -1742,14 +1763,18 @@ char	**argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
+	struct rt_vls		str;
 
 	if( argc <= 1 )  {
+		rt_vls_init(&str);
 		rt_log("The following %scommands are available:\n",
 		    functions->ft_name);
 		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
-			col_item(ftp->ft_name);
+			vls_col_item( &str, ftp->ft_name);
 		}
-		col_eol();
+		vls_col_eol( &str );
+		rt_log("%s", rt_vls_addr( &str ) );
+		rt_vls_free(&str);
 		return CMD_OK;
 	}
 	return helpcomm( argc, argv, functions );
