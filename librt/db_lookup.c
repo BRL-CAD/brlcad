@@ -233,7 +233,10 @@ register struct directory	*dp;
 	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
 
 	if( dp->d_flags & RT_DIR_INMEM )
-		bu_free( dp->d_un.ptr, "db_dirdelete() inmem ptr" );
+	{
+		if( dp->d_un.ptr != NULL )
+			bu_free( dp->d_un.ptr, "db_dirdelete() inmem ptr" );
+	}
 
 	if( *headp == dp )  {
 		bu_free( dp->d_namep, "dir name" );
