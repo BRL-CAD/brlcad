@@ -3342,7 +3342,7 @@ char *output_file;
 	if( debug )
 		bu_log( "Calling db_functree\n" );
 
-	db_functree( dbip, dp, fix_regions, 0, NULL );
+	db_functree( dbip, dp, fix_regions, 0, &rt_uniresource, NULL );
 
 	if( debug )
 		bu_log( "Post-processing complete\n" );

@@ -536,7 +536,7 @@ char	*argv[];
 			bu_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
-		db_functree( dbip , dp , csg_comb_func , 0 , NULL );
+		db_functree( dbip , dp , csg_comb_func , 0 , &rt_uniresource , NULL );
 	}
 
 	rt_vlist_cleanup();

@@ -923,7 +923,7 @@ genptr_t		client_data;
 
 	/* FASTGEN plate mode region, just spew the bot triangles */
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
-	db_functree( tsp->ts_dbip, dp, NULL, is_leaf_bot, (genptr_t)&bot );
+	db_functree( tsp->ts_dbip, dp, NULL, is_leaf_bot, &rt_uniresource, (genptr_t)&bot );
 	if( !bot )
 		return( nmg_region_end(tsp, pathp, curtree, client_data) );
 	else
