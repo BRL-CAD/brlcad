@@ -37,29 +37,39 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 struct chan {
+	/* INPUTS */
 	int	c_ilen;		/* length of input array */
 	char	*c_itag;	/* description of input source */
 	fastf_t	*c_itime;	/* input time array */
 	fastf_t	*c_ival;	/* input value array */
+	/* OUTPUTS */
 	fastf_t	*c_oval;	/* output value array */
+	/* FLAGS */
 	int	c_interp;	/* linear or spline? */
-#define	INTERP_LINEAR	0
-#define	INTERP_SPLINE	1
-	int	c_cyclic;	/* cyclic end conditions? */
+#define	INTERP_LINEAR	1
+#define	INTERP_SPLINE	2
+	int	c_periodic;	/* cyclic end conditions? */
 };
 
 int		o_len;		/* length of all output arrays */
 fastf_t		*o_time;	/* pointer to output time array */
+int		fps;		/* frames/sec of output */
 
 int		nchans;		/* number of chan[] elements in use */
 int		max_chans;	/* current size of chan[] array */
 struct chan	*chan;		/* ptr to array of chan structs */
 
 extern int	cm_file();
+extern int	cm_times();
+extern int	cm_interp();
 
 struct command_tab cmdtab[] = {
 	"file", "filename chan_num(s)", "load channels from file",
 		cm_file,	3, 999,
+	"times", "start stop fps", "specify time range and fps rate",
+		cm_times,	4, 4,
+	"interp", "{linear|spline|cspline} chan_num(s)", "set interpolation type",
+		cm_interp,	3, 999,
 	(char *)0, (char *)0, (char *)0,
 		0,		0, 0	/* END */
 };
@@ -86,7 +96,11 @@ char	**argv;
 			break;
 	}
 
-	pr_chans();
+	pr_ichans();
+
+	go();
+
+	output();
 
 	exit(0);	
 }
@@ -110,6 +124,7 @@ char	**argv;
 	int	nwords;		/* number of words on each input line */
 	fastf_t	*times;
 	auto double	d;
+	int	errors = 0;
 
 	file = argv[1];
 	if( (fp = fopen( file, "r" )) == NULL )  {
@@ -151,18 +166,21 @@ char	**argv;
 		(void)fgets( buf, sizeof(buf), fp );
 		i = rt_split_cmd( iwords, nwords+1, buf );
 		if( i != nwords )  {
-			printf("File '%s', Line %d:  expected %d columns, got %d\n",
+			fprintf(stderr,"File '%s', Line %d:  expected %d columns, got %d\n",
 				file, line, nwords, i );
-			while( i < nwords )
+			while( i < nwords )  {
 				iwords[i++] = "0.123456789";
+				errors++;
+			}
 		}
 
 		/* Obtain the time from the first column */
 		sscanf( iwords[0], "%lf", &d );
 		times[line] = d;
 		if( line > 0 && times[line-1] > times[line] )  {
-		    	printf("File '%s', Line %d:  time sequence error %g > %g\n",
+		    	fprintf(stderr,"File '%s', Line %d:  time sequence error %g > %g\n",
 		    		file, line, times[line-1], times[line] );
+			errors++;
 		}
 
 		/* Obtain the desired values from the remaining columns,
@@ -170,9 +188,10 @@ char	**argv;
 		 */
 		for( i=1; i < nwords; i++ )  {
 			if( sscanf( iwords[i], "%lf", &d ) != 1 )  {
-			    	printf("File '%s', Line %d:  scanf failure on '%s'\n",
+			    	fprintf(stderr,"File '%s', Line %d:  scanf failure on '%s'\n",
 			    		file, line, iwords[i] );
 				d = 0.0;
+				errors++;
 			}
 		    	chan[cnum[i]].c_ival[line] = d;
 		}
@@ -183,9 +202,14 @@ char	**argv;
 	rt_free( (char *)cnum, "cnum[]");
 	rt_free( (char *)iwords, "iwords[]");
 
+	if(errors)
+		return(-1);	/* abort */
 	return(0);
 }
 
+/*
+ *			C R E A T E _ C H A N
+ */
 int
 create_chan( num, len, itag )
 char	*num;
@@ -197,7 +221,7 @@ char	*itag;
 	n = atoi(num);
 	if( n < 0 )  return(-1);
 
-	if( n > max_chans )  {
+	if( n >= max_chans )  {
 		if( max_chans <= 0 )  {
 			max_chans = 32;
 			chan = (struct chan *)rt_malloc(
@@ -220,7 +244,12 @@ char	*itag;
 	return(n);
 }
 
-pr_chans()
+/*
+ *			P R _ I C H A N S
+ *
+ *  Print input channel values.
+ */
+pr_ichans()
 {
 	register int		ch;
 	register struct chan	*cp;
@@ -228,11 +257,305 @@ pr_chans()
 
 	for( ch=0; ch < nchans; ch++ )  {
 		cp = &chan[ch];
-		printf("--- Channel %d, ilen=%d (%s):\n",
+		fprintf(stderr,"--- Channel %d, ilen=%d (%s):\n",
 			ch, cp->c_ilen, cp->c_itag );
 		for( i=0; i < cp->c_ilen; i++ )  {
-			printf(" %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
+			fprintf(stderr," %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
 		}
-		/* Later, c_oval's */
 	}
+}
+
+/*
+ *			O U T P U T
+ */
+output()
+{
+	register int		ch;
+	register struct chan	*cp;
+	register int		t;
+
+	for( t=0; t < o_len; t++ )  {
+		printf("%g", o_time[t]);
+
+		for( ch=0; ch < nchans; ch++ )  {
+			cp = &chan[ch];
+			if( cp->c_ilen <= 0 )  {
+				printf("\t.");
+				continue;
+			}
+			printf("\t%g", cp->c_oval[t] );
+		}
+		printf("\n");
+	}
+}
+
+/*
+ *			C M _ T I M E S
+ */
+cm_times( argc, argv )
+int	argc;
+char	**argv;
+{
+	double		a, b;
+	register int	i;
+	int		ch;
+
+	a = atof(argv[1]);
+	b = atof(argv[2]);
+	fps = atoi(argv[3]);
+
+	if( a >= b )  {
+		fprintf(stderr,"times:  %g >= %g\n", a, b );
+		return(0);
+	}
+	if( o_len > 0 )  {
+		fprintf(stderr,"times:  already specified\n");
+		return(0);	/* ignore */
+	}
+	o_len = ((b-a) * fps) + 0.999;
+	o_len++;	/* one final step to reach endpoint */
+	o_time = (fastf_t *)rt_malloc( o_len * sizeof(fastf_t), "o_time[]");
+
+	/*
+	 *  Don't use an incremental algorithm, to avoid acrueing error
+	 */
+	for( i=0; i<o_len; i++ )
+		o_time[i] = a + ((double)i)/fps;
+
+	/* Allocate memory for all the output values */
+	for( ch = 0; ch < nchans; ch++ )  {
+		if( chan[ch].c_ilen <= 0 )
+			continue;
+		chan[ch].c_oval = (fastf_t *)rt_malloc(
+			o_len * sizeof(fastf_t), "c_oval[]");
+	}
+
+	return(0);
+}
+
+/*
+ *			C M _ I N T E R P
+ */
+cm_interp( argc, argv )
+int	argc;
+char	**argv;
+{
+	int	interp = 0;
+	int	periodic = 0;
+	int	i;
+	int	ch;
+	struct chan	*chp;
+
+	if( strcmp( argv[1], "linear" ) == 0 )  {
+		interp = INTERP_LINEAR;
+	} else if( strcmp( argv[1], "spline" ) == 0 )  {
+		interp = INTERP_SPLINE;
+		periodic = 0;
+	} else if( strcmp( argv[1], "cspline" ) == 0 )  {
+		interp = INTERP_SPLINE;
+		periodic = 1;
+	} else {
+		fprintf( stderr, "interpolation type '%s' unknown\n", argv[1] );
+		interp = INTERP_LINEAR;
+	}
+
+	for( i = 2; i < argc; i++ )  {
+		ch = atoi( argv[i] );
+		chp = &chan[ch];
+		if( chp->c_ilen <= 0 )  {
+			fprintf(stderr,"error: attempt to set interpolation type on unallocated channel %d\n", ch);
+			continue;
+		}
+		chp->c_interp = interp;
+		chp->c_periodic = periodic;
+	}
+	return(0);
+}
+
+
+/* Perform linear interpolation on each channel */
+go()
+{
+	int	ch;
+	struct chan	*chp;
+
+	for( ch=0; ch < nchans; ch++ )  {
+		chp = &chan[ch];
+		if( chp->c_ilen <= 0 )
+			continue;
+again:
+		switch( chp->c_interp )  {
+		default:
+			fprintf(stderr,"unknown interpolation type %d\n", chp->c_interp);
+			/* FALL THROUGH */
+		case INTERP_LINEAR:
+			linear_interpolate( chp );
+			break;
+		case INTERP_SPLINE:
+			if( spline( chp ) <= 0 )  {
+				fprintf(stderr, "spline failure, switching to linear\n");
+				chp->c_interp = INTERP_LINEAR;
+				goto again;
+			}
+			break;
+		}
+	}
+}
+
+/*
+ *			L I N E A R _ I N T E R P O L A T E
+ *
+ *  This routine takes advantage of (and depends on) the fact that
+ *  the input and output is sorted in increasing time values.
+ */
+linear_interpolate( chp )
+register struct chan	*chp;
+{
+	register int	t;		/* output time index */
+	register int	i;		/* input time index */
+
+	i = 0;
+	for( t=0; t<o_len; t++ )  {
+		/* Check for below initial time */
+		if( o_time[t] < chp->c_itime[0] )  {
+			chp->c_oval[t] = chp->c_ival[0];
+			continue;
+		}
+		/* Check for above final time */
+		if( o_time[t] > chp->c_itime[chp->c_ilen-1] )  {
+			chp->c_oval[t] = chp->c_ival[chp->c_ilen-1];
+			continue;
+		}
+		/* Find time range in input data.  Could range check? */
+		while( i < chp->c_ilen-1 )  {
+			if( o_time[t] >= chp->c_itime[i] && 
+			    o_time[t] <= chp->c_itime[i+1] )
+				break;
+			i++;
+		}
+		/* Perform actual interpolation */
+		chp->c_oval[t] = chp->c_ival[i] +
+			(o_time[t] - chp->c_itime[i]) *
+			(chp->c_ival[i+1] - chp->c_ival[i]) /
+			(chp->c_itime[i+1] - chp->c_itime[i]);
+	}
+}
+
+/* Spline fit technique, derrived from /usr/src/usr.bin/spline.c */
+
+double
+rhs(i, chp)
+register int		i;
+register struct chan	*chp;
+{
+	register int i_;
+	double zz;
+
+	i_ = (i==chp->c_ilen-1) ? 0 : i;
+	zz = (chp->c_ival[i] - chp->c_ival[i-1])/
+		(chp->c_itime[i] - chp->c_itime[i-1]);
+	return( 6 * ((chp->c_ival[i_+1]-chp->c_ival[i_])/
+		(chp->c_itime[i+1]-chp->c_itime[i]) - zz));
+}
+
+spline( chp )
+register struct chan	*chp;
+{
+	float d,s,u,v,hi,hi1;
+	float h;
+	float D2yi,D2yi1,D2yn1,x0,x1,yy,a;
+	int end;
+	float corr;
+	register int i,j,m;
+	float konst = 0.0;		/* ?? */
+	float *diag, *rrr;
+
+	if(chp->c_ilen<3) {
+		printf("need at least 3 points to spline\n");
+		goto bad;
+	}
+
+	i = (chp->c_ilen+1)*sizeof(float);
+	if( !diag )
+		diag = (float *)rt_malloc((unsigned)i, "diag");
+	if( !rrr )
+		rrr = (float *)rt_malloc((unsigned)i, "rrr");
+	if( !rrr || !diag )  {
+		printf("malloc failure\n");
+		goto bad;
+	}
+
+	if(chp->c_periodic) konst = 0;
+	d = 1;
+	rrr[0] = 0;
+	s = chp->c_periodic?-1:0;
+	for(i=0;++i<chp->c_ilen-!chp->c_periodic;){	/* triangularize */
+		hi = chp->c_itime[i]-chp->c_itime[i-1];
+		hi1 = i==chp->c_ilen-1?chp->c_itime[1]-chp->c_itime[0]:
+			chp->c_itime[i+1]-chp->c_itime[i];
+		if(hi1*hi<=0) {
+			printf("spline: ??\n");
+			goto bad;
+		}
+		u = i==1?0.0:u-s*s/d;
+		v = i==1?0.0:v-s*rrr[i-1]/d;
+		rrr[i] = rhs(i,chp)-hi*rrr[i-1]/d;
+		s = -hi*s/d;
+		a = 2*(hi+hi1);
+		if(i==1) a += konst*hi;
+		if(i==chp->c_ilen-2) a += konst*hi1;
+		diag[i] = d = i==1? a:
+		    a - hi*hi/d; 
+	}
+	D2yi = D2yn1 = 0;
+	for(i=chp->c_ilen-!chp->c_periodic;--i>=0;){	/* back substitute */
+		end = i==chp->c_ilen-1;
+		hi1 = end?chp->c_itime[1]-chp->c_itime[0]:
+			chp->c_itime[i+1]-chp->c_itime[i];
+		D2yi1 = D2yi;
+		if(i>0){
+			hi = chp->c_itime[i]-chp->c_itime[i-1];
+			corr = end?2*s+u:0.0;
+			D2yi = (end*v+rrr[i]-hi1*D2yi1-s*D2yn1)/
+				(diag[i]+corr);
+			if(end) D2yn1 = D2yi;
+			if(i>1){
+				a = 2*(hi+hi1);
+				if(i==1) a += konst*hi;
+				if(i==chp->c_ilen-2) a += konst*hi1;
+				d = diag[i-1];
+				s = -s*d/hi; 
+			}
+		}
+		else D2yi = D2yn1;
+		if(!chp->c_periodic) {
+			if(i==0) D2yi = konst*D2yi1;
+			if(i==chp->c_ilen-2) D2yi1 = konst*D2yi;
+		}
+		if(end) continue;
+
+		/* hi1 is range of time covered in this interval */
+		/* m will be number of samples in this interval */
+		m = hi1 * fps;
+		if(m<=0) m = 1;
+		h = hi1/m;
+
+		/* interpolate, high to low */
+		for(j=m;j>0||i==0&&j==0;j--) {
+			register int sub;
+			x0 = (m-j)*h/hi1;
+			x1 = j*h/hi1;
+			yy = D2yi*(x0-x0*x0*x0)+D2yi1*(x1-x1*x1*x1);
+			yy = chp->c_ival[i]*x0+chp->c_ival[i+1]*x1 -hi1*hi1*yy/6;
+			sub = (int)((chp->c_itime[i]+j*h)*fps);
+			chp->c_oval[sub] = yy;
+		}
+	}
+	rt_free( (char *)diag, "diag");
+	rt_free( (char *)rrr, "rrr" );
+	return(1);
+bad:
+	rt_free( (char *)diag, "diag");
+	rt_free( (char *)rrr, "rrr" );
+	return(0);
 }
