@@ -2684,18 +2684,21 @@ rt_dsp_vshot( stp, rp, segp, n, ap )
     (void)rt_vstub( stp, rp, segp, n, ap );
 }
 
+
+
 /***********************************************************************
  *
  * Compute the model-space normal at a gridpoint
  *
  */
 static void
-compute_normal_at_gridpoint(N, dsp, x, y, fd, boolean)
-     vect_t N;
-     struct dsp_specific *dsp;
-     int x, y;
-     FILE *fd;
-     int boolean;
+compute_normal_at_gridpoint(vect_t N,
+			    struct dsp_specific *dsp,
+			    int x,
+			    int y,
+			    FILE *fd,
+			    int boolean,
+			    double len)
 {
     /*  Gridpoint specified is "B" we compute normal by taking the
      *  cross product of the vectors  A->C, D->E
@@ -2711,71 +2714,74 @@ compute_normal_at_gridpoint(N, dsp, x, y, fd, boolean)
      *		D
      */
 	
-    point_t A, C, D, E, tmp;
+    point_t A, C, D, E, tmp, pt, endpt;
     vect_t Vac, Vde;
 
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("normal at %d %d\n", x, y);
+	mat_print("\tstom", dsp->dsp_i.dsp_stom);
+    }
+    VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y));
 
-    if (fd && boolean) {
+    if (x == 0) {	VMOVE(A, tmp); }
+    else {		VSET(A, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
 
-	/* the debugging/plot version, with more matrix operations */
-	if (x == 0) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) );	}
-	else {		VSET(tmp, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
-	MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+    if (x >= XSIZ(dsp)) { VMOVE(C, tmp); }
+    else {		  VSET(C, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );}
 
-	if (x >= XSIZ(dsp)) { VSET(tmp, x, y,  DSP(&dsp->dsp_i, x, y) );    } 
-	else {		  VSET(tmp, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );}
-	MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+    if (y == 0) {	VMOVE(D, tmp); }
+    else {		VSET(D, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
+
+    if (y >= YSIZ(dsp)) { VMOVE(E, tmp); }
+    else {		 VSET(E, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
+
+    MAT4X3PNT(pt, dsp->dsp_i.dsp_stom, tmp);
 
 
-	if (y == 0) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) );       }
-	else {		VSET(tmp, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
-	MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+    /* Computing in world coordinates */
+    VMOVE(tmp, A);
+    MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
 
-	if (y >= YSIZ(dsp)) { VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) );     }
-	else {		 VSET(tmp, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
-	MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
+    VMOVE(tmp, C);
+    MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+
+    VMOVE(tmp, D);
+    MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+
+    VMOVE(tmp, E);
+    MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
+
+    VSUB2(Vac, C, A);
+    VSUB2(Vde, E, D);
+
+    VUNITIZE(Vac);
+    VUNITIZE(Vde);
+    VCROSS(N, Vac, Vde);
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	VPRINT("\tA", A);
+	VPRINT("\tC", C);
+	VPRINT("\tD", D);
+	VPRINT("\tE", E);
+	VPRINT("\tVac", Vac);
+	VPRINT("\tVde", Vde);
+	VPRINT("\tModel Cross N", N);
+    }
+    VUNITIZE(N);
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	VPRINT("\tModel Unit N", N);
+    }
+    if (fd) {
+	VJOIN1(endpt, pt, len, N);
 
 	pl_color(fd, 220, 220, 90);
 	pdv_3line(fd, A, C);
 	pdv_3line(fd, D, E);
 
-	VSUB2(Vac, C, A);
-	VSUB2(Vde, E, D);
-
-	VCROSS(N, Vac, Vde);
-
-	VUNITIZE(N);
-
-    } else {
-
-	/* the leaner, faster, production version */
-	if (x == 0) {	VSET(A, x, y, DSP(&dsp->dsp_i, x, y) );	}
-	else {		VSET(A, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
-
-
-	if (x >= XSIZ(dsp)) { VSET(C, x, y,  DSP(&dsp->dsp_i, x, y) );    } 
-	else {		  VSET(C, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );}
-
-
-
-	if (y == 0) {	VSET(D, x, y, DSP(&dsp->dsp_i, x, y) );       }
-	else {		VSET(D, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
-
-
-	if (y >= YSIZ(dsp)) { VSET(E, x, y, DSP(&dsp->dsp_i, x, y) );     }
-	else {		 VSET(E, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
-
-
-	VSUB2(Vac, C, A);
-	VSUB2(Vde, E, D);
-
-	VCROSS(tmp, Vac, Vde);
-
-	MAT4X3VEC(N, dsp->dsp_i.dsp_stom, tmp);
-
-	VUNITIZE(N);
-
+	pdv_3line(fd, pt, endpt);
     }
+
 
 }
 
@@ -2790,7 +2796,7 @@ rt_dsp_norm( hitp, stp, rp )
      struct soltab		*stp;
      register struct xray	*rp;
 {
-    vect_t N, t, tmp, A, B, C, D;
+    vect_t N, t, tmp, A;
     struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
     vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
     double Xfrac, Yfrac;
@@ -2864,21 +2870,7 @@ rt_dsp_norm( hitp, stp, rp )
     if (RT_G_DEBUG & DEBUG_HF) {
 	fd = bu_fopen_uniq("plotting normals in %s", 
 		      "dsp_gourand%02d.pl", plot_file_num++);
-    }
 
-    /* get the cell we hit
-     * XXX Does this still get kept????
-     */
-    x = hitp->hit_vpriv[X];
-    y = hitp->hit_vpriv[Y];
-
-    compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, 1);
-    compute_normal_at_gridpoint(Bnorm, dsp, x+1, y, fd, 0);
-    compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1, fd, 0);
-    compute_normal_at_gridpoint(Cnorm, dsp, x, y+1, fd, 0);
-
-    if (RT_G_DEBUG & DEBUG_HF) {
-	
 	/* plot the ray */
 	pl_color(fd, 255, 0, 0);
 	pdv_3line(fd, rp->r_pt, hitp->hit_point);
@@ -2888,31 +2880,17 @@ rt_dsp_norm( hitp, stp, rp )
 	VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
 	pdv_3line(fd, hitp->hit_point, tmp);
 
-
-	/* Plot the normals we just got */
-	pl_color(fd, 220, 220, 90);
-
-	VSET(tmp, x,   y,   DSP(&dsp->dsp_i, x,   y));
-	MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
-	VJOIN1(tmp, A, len, Anorm);
-	pdv_3line(fd, A, tmp);
-
-	VSET(tmp, x+1, y,   DSP(&dsp->dsp_i, x+1, y));
-	MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
-	VJOIN1(tmp, B, len, Bnorm);
-	pdv_3line(fd, B, tmp);
-
-	VSET(tmp, x+1, y+1, DSP(&dsp->dsp_i, x+1, y+1));
-	MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
-	VJOIN1(tmp, D, len, Dnorm);
-	pdv_3line(fd, D, tmp);
-
-	VSET(tmp, x,   y+1, DSP(&dsp->dsp_i, x,   y+1));
-	MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
-	VJOIN1(tmp, C, len, Cnorm);
-	pdv_3line(fd, C, tmp);
-
     }
+
+    /* get the cell we hit */
+    x = hitp->hit_vpriv[X];
+    y = hitp->hit_vpriv[Y];
+
+    compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, 1, len);
+    compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, 0, len);
+    compute_normal_at_gridpoint(Bnorm, dsp, x+1, y, fd, 0, len);
+    compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1, fd, 0, len);
+    compute_normal_at_gridpoint(Cnorm, dsp, x, y+1, fd, 0, len);
 
     /* transform the hit point into DSP space for determining interpolation */
     MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
@@ -2968,6 +2946,7 @@ rt_dsp_norm( hitp, stp, rp )
 	 */
 	VCROSS(A, rp->r_dir, N);
 	VCROSS(N, A, rp->r_dir);
+
 	VUNITIZE(N);
 
 	dot = VDOT(N, rp->r_dir);
