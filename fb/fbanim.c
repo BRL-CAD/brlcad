@@ -26,7 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 #ifdef BSD
-#include <time.h>		/* for struct timeval */
+#include <sys/time.h>		/* for struct timeval */
 struct timeval tv;
 #endif
 
