@@ -1,5 +1,5 @@
 These are the available Berkeley fonts which are found in /usr/lib/vfont
-and accessible with 'ikpaint'.
+and accessible with FBED.
 
 B.10		S.10r		countdown.22	otimes.r.10r	times.b.9
 B.10r		S.11		countdown.22r	otimes.s.10	times.b.9r
