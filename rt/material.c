@@ -34,7 +34,6 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "./rdebug.h"

@@ -26,7 +26,6 @@ static char RCScell[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "./ext.h"
 

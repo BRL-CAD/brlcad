@@ -42,7 +42,6 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "./ext.h"
 #include "../librt/debug.h"
