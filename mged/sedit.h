@@ -44,6 +44,7 @@ int	es_menu;		/* item selected from menu */
 #define MENURAB 10
 #define	MENUMH	11
 mat_t	es_mat;			/* accumulated matrix of path */ 
+mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 int	es_nlines;		/* # lines in printed display */
 #define ES_LINELEN	128		/* len of display text lines */
 char	es_display[ES_LINELEN*10];/* buffer for lines of display */
