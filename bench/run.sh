@@ -67,7 +67,7 @@ if test "x${CMP}" = "x" ; then
 	CC=$compiler
 
 	$CC "$path_to_run_sh/pixcmp.c" >& /dev/null
-	if $? = 0 ; then
+	if test "x$?" = "x0" ; then
 	  break
 	fi
 	if test -f "$path_to_run_sh/pixcmp" ; then
