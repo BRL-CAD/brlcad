@@ -11,19 +11,28 @@
  *	sph_in		reads sphere params from keyboard
  *	ell_in		reads params for all ELLs
  *	tor_in		gets params for torus from keyboard
- *	cyl_in		reads params for all cylinders
+ *	tgc_in		reads params for TGC from keyboard
+ *	rcc_in		reads params for RCC from keyboard
+ *	rec_in		reads params for REC from keyboard
+ *	tec_in		reads params for TEC from keyboard
+ *	trc_in		reads params for TRC from keyboard
  *	box_in		gets params for BOX and RAW from keyboard
  *	rpp_in		gets params for RPP from keyboard
  *	ars_in		gets ARS param from keyboard
  *	half_in		gets HALFSPACE params from keyboard
+ *	rpc_in		reads right parabolic cylinder params from keyboard
+ *	rhc_in		reads right hyperbolic cylinder params from keyboard
+ *	epa_in		reads elliptical paraboloid params from keyboard
+ *	ehy_in		reads elliptical hyperboloid params from keyboard
+ *	eto_in		reads elliptical torus params from keyboard
  *	checkv		checks for zero vector from keyboard
  *	getcmd		reads and parses input parameters from keyboard
- *	cvt_ged		converts typed in params to GED database format
  *
  * Authors -
  *	Charles M. Kennedy
  *	Keith A. Applin
  *	Michael J. Muuss
+ *	Michael J. Markowski
  *
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -120,6 +129,26 @@ char *p_sph[] = {
 };
 
 char *p_ell[] = {
+	"Enter X, Y, Z of focus point 1: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of focus point 2: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter axis length L: "
+};
+
+char *p_ell1[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter radius of revolution: "
+};
+
+char *p_ellg[] = {
 	"Enter X, Y, Z of vertex: ",
 	"Enter Y: ",
 	"Enter Z: ",
@@ -131,15 +160,7 @@ char *p_ell[] = {
 	"Enter Z: ",
 	"Enter X, Y, Z of vector C: ",
 	"Enter Y: ",
-	"Enter Z: ",
-	"Enter radius of revolution: ",		/* 12 ELL1 Lookout! */
-	"Enter X, Y, Z of focus point 1: ",	/* 13 ELL  Lookout! */
-	"Enter Y: ",
-	"Enter Z: ",
-	"Enter X, Y, Z of focus point 2: ",
-	"Enter Y: ",
-	"Enter Z: ",
-	"Enter axis length L: "
+	"Enter Z: "
 };
 
 char *p_tor[] = {
@@ -153,6 +174,58 @@ char *p_tor[] = {
 	"Enter radius 2: "
 };
 
+char *p_rcc[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of height (H) vector: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter radius: "
+};
+
+char *p_tec[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of height (H) vector: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector B: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter ratio: "
+};
+
+char *p_rec[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of height (H) vector: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector B: ",
+	"Enter Y: ",
+	"Enter Z: "
+};
+
+char *p_trc[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of height (H) vector: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter radius of base: ",
+	"Enter radius of top: "
+};
+
 char *p_tgc[] = {
 	"Enter X, Y, Z of vertex: ",
 	"Enter Y: ",
@@ -160,18 +233,14 @@ char *p_tgc[] = {
 	"Enter X, Y, Z of height (H) vector: ",
 	"Enter Y: ",
 	"Enter Z: ",
-	"Enter X, Y, Z of vector A: ",		/*  6         REC TEC TGC */
-	"Enter Y: ",				/*  7         REC TEC TGC */
-	"Enter Z: ",				/*  8         REC TEC TGC */
-	"Enter X, Y, Z of vector B: ",		/*  9         REC TEC TGC */
-	"Enter Y: ",				/* 10         REC TEC TGC */
-	"Enter Z: ",				/* 11         REC TEC TGC */
-	"Enter scalar c: ",			/* 12                 TGC */
-	"Enter scalar d: ",			/* 13                 TGC */
-	"Enter radius: ",			/* 14 RCC                 */
-	"Enter radius of base: ",		/* 15     TRC             */
-	"Enter radius of top: ",		/* 16     TRC             */
-	"Enter ratio: "				/* 17             TEC     */
+	"Enter X, Y, Z of vector A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector B: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter scalar c: ",
+	"Enter scalar d: "
 };
 
 char *p_box[] = {
@@ -198,6 +267,74 @@ char *p_rpp[] = {
 	"Enter ZMAX: "
 };
 
+char *p_rpc[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector H: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector B: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter rectangular half-width, r: "
+};
+
+char *p_rhc[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector H: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector B: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter rectangular half-width, r: ",
+	"Enter apex-to-asymptotes distance, c: "
+};
+
+char *p_epa[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector H: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter magnitude of vector B: "
+};
+
+char *p_ehy[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector H: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter magnitude of vector B: ",
+	"Enter apex-to-asymptotes distance, c: "
+};
+
+char *p_eto[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of normal vector: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z, of vector C: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter radius of revolution, r: ",
+	"Enter elliptical semi-minor axis, d: "
+};
+
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
@@ -206,13 +343,18 @@ f_in()
 {
 	register int i;
 	register struct directory *dp;
-	union record record;
 	char			name[NAMESIZE+2];
 	struct rt_db_internal	internal;
 	struct rt_external	external;
-	char			*new_cmd[3];
+	char			*new_cmd[3], **menu;
 	int			ngran;		/* number of db granules */
 	int			id;
+	int			nvals, (*fn_in)();
+	int			arb_in(), box_in(), ehy_in(), ell_in(),
+				epa_in(), eto_in(), half_in(), rec_in(),
+				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
+				sph_in(), tec_in(), tgc_in(), tor_in(),
+				trc_in();
 
 	(void)signal( SIGINT, sig2);	/* allow interrupts */
 
@@ -237,11 +379,7 @@ f_in()
 		return;
 	}
 	/* Save the solid name since cmd_args[] might get bashed */
-	NAMEMOVE( cmd_args[1], record.s.s_name );
-	strncpy( name, cmd_args[1], sizeof(name) );
-
-	/* Make sure to note this is a solid record */
-	record.s.s_id = ID_SOLID;
+	strcpy( name, cmd_args[1] );
 
 	/* Get the solid type to be created and make it */
 	while( args < 3 )  {
@@ -253,161 +391,9 @@ f_in()
 	/*
 	 * Decide which solid to make and get the rest of the args
 	 * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
-			rec|trc|rcc|box|raw|rpp>
+			rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto>
 	 */
-	if( strcmp( cmd_args[2], "half" ) == 0 )  {
-		record.s.s_type = HALFSPACE;
-		record.s.s_cgtype = HALFSPACE;
-		promp = &p_half[0];		/* or promp = p_half */
-		if( half_in() != 0 )  {
-			(void)printf("ERROR, halfspace not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "arb8" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB8;
-		promp = &p_arb[0];		/* or promp = p_arb */
-		if( arb_in( 8 ) != 0 )  {
-			(void)printf("ERROR, arb8 not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "arb7" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB7;
-		promp = &p_arb[0];
-		if( arb_in( 7 ) != 0 )  {
-			(void)printf("ERROR, arb7 not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "arb6" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB6;
-		promp = &p_arb[0];
-		if( arb_in( 6 ) != 0 )  {
-			(void)printf("ERROR, arb6 not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "arb5" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB5;
-		promp = &p_arb[0];
-		if( arb_in( 5 ) != 0 )  {
-			(void)printf("ERROR, arb5 not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "arb4" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB4;
-		promp = &p_arb[0];
-		if( arb_in( 4 ) != 0 )  {
-			(void)printf("ERROR, arb4 not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "sph" ) == 0 )  {
-		record.s.s_type = GENELL;
-		record.s.s_cgtype = SPH;
-		promp = &p_sph[0];
-		if( sph_in() != 0 )  {
-			(void)printf("ERROR, sphere not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "ell" ) == 0 )  {
-		record.s.s_type = GENELL;
-		record.s.s_cgtype = ELL;
-		promp = &p_ell[0];
-		if( ell_in( ELL ) != 0 )  {
-			(void)printf("ERROR, ell not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "ellg" ) == 0 )  {
-		record.s.s_type = GENELL;
-		record.s.s_cgtype = ELLG;
-		promp = &p_ell[0];
-		if( ell_in( ELLG ) != 0 )  {
-			(void)printf("ERROR, ellg not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "ell1" ) == 0 )  {
-		record.s.s_type = GENELL;
-		record.s.s_cgtype = ELL1;
-		promp = &p_ell[0];
-		if( ell_in( ELL1 ) != 0 )  {
-			(void)printf("ERROR, ell1 not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "tor" ) == 0 )  {
-		record.s.s_type = TOR;
-		record.s.s_cgtype = TOR;
-		promp = &p_tor[0];
-		if( tor_in() != 0 )  {
-			(void)printf("ERROR, tor not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "tgc" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = TGC;
-		promp = &p_tgc[0];
-		if( cyl_in( TGC ) != 0 )  {
-			(void)printf("ERROR, tgc not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "tec" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = TEC;
-		promp = &p_tgc[0];
-		if( cyl_in( TEC ) != 0 )  {
-			(void)printf("ERROR, tec not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "rec" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = REC;
-		promp = &p_tgc[0];
-		if( cyl_in( REC ) != 0 )  {
-			(void)printf("ERROR, rec not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "trc" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = TRC;
-		promp = &p_tgc[0];
-		if( cyl_in( TRC ) != 0 )  {
-			(void)printf("ERROR, trc not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "rcc" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = RCC;
-		promp = &p_tgc[0];
-		if( cyl_in( RCC ) != 0 )  {
-			(void)printf("ERROR, rcc not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "box" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = BOX;
-		promp = &p_box[0];
-		if( box_in() != 0 )  {
-			(void)printf("ERROR, box not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "raw" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = RAW;
-		promp = &p_box[0];
-		if( box_in() != 0 )  {
-			(void)printf("ERROR, raw not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "rpp" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = RPP;
-		promp = &p_rpp[0];
-		if( rpp_in() != 0 )  {
-			(void)printf("ERROR, rpp not made!\n");
-			return;
-		}
-	} else if( strcmp( cmd_args[2], "ebm" ) == 0 )  {
+	if( strcmp( cmd_args[2], "ebm" ) == 0 )  {
 		if( strsol_in( &external, "ebm" ) < 0 )  {
 			(void)printf("ERROR, EBM solid not made!\n");
 			return;
@@ -420,50 +406,112 @@ f_in()
 		}
 		goto do_extern_update;
 	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
-		if (ars_in(numargs, cmd_args, &internal) != 0)  {
+		if (ars_in(args, cmd_args, &internal, &p_ars[0]) != 0)  {
 			(void)printf("ERROR, ars not made!\n");
 			if(internal.idb_type) rt_functab[internal.idb_type].
 				ft_ifree( &internal );
 			return;
 		}
 		goto do_new_update;
+	} else if( strcmp( cmd_args[2], "half" ) == 0 )  {
+		nvals = 3*1 + 1;
+		menu = p_half;
+		fn_in = half_in;
+	} else if( strncmp( cmd_args[2], "arb", 3 ) == 0 )  {
+		nvals = atoi(&cmd_args[2][3]);
+		menu = p_arb;
+		fn_in = arb_in;
+	} else if( strcmp( cmd_args[2], "sph" ) == 0 )  {
+		nvals = 3*1 + 1;
+		menu = p_sph;
+		fn_in = sph_in;
+	} else if( strcmp( cmd_args[2], "ell" ) == 0 )  {
+		nvals = 3*2 + 1;
+		menu = p_ell;
+		fn_in = ell_in;
+	} else if( strcmp( cmd_args[2], "ellg" ) == 0 )  {
+		nvals = 3*4;
+		menu = p_ellg;
+		fn_in = ell_in;
+	} else if( strcmp( cmd_args[2], "ell1" ) == 0 )  {
+		nvals = 3*2 + 1;
+		menu = p_ell1;
+		fn_in = ell_in;
+	} else if( strcmp( cmd_args[2], "tor" ) == 0 )  {
+		nvals = 3*2 + 2;
+		menu = p_tor;
+		fn_in = tor_in;
+	} else if( strcmp( cmd_args[2], "tgc" ) == 0 ) {
+		nvals = 3*4 + 2;
+		menu = p_tgc;
+		fn_in = tgc_in;
+	} else if( strcmp( cmd_args[2], "tec" ) == 0 )  {
+		nvals = 3*4 + 1;
+		menu = p_tec;
+		fn_in = tec_in;
+	} else if( strcmp( cmd_args[2], "rec" ) == 0 )  {
+		nvals = 3*4;
+		menu = p_rec;
+		fn_in = rec_in;
+	} else if( strcmp( cmd_args[2], "trc" ) == 0 )  {
+		nvals = 3*2 + 2;
+		menu = p_trc;
+		fn_in = trc_in;
+	} else if( strcmp( cmd_args[2], "rcc" ) == 0 )  {
+		nvals = 3*2 + 1;
+		menu = p_rcc;
+		fn_in = rcc_in;
+	} else if( strcmp( cmd_args[2], "box" ) == 0 
+		|| strcmp( cmd_args[2], "raw" ) == 0 )  {
+		nvals = 3*4;
+		menu = p_box;
+		fn_in = box_in;
+	} else if( strcmp( cmd_args[2], "rpp" ) == 0 )  {
+		nvals = 6*1;
+		menu = p_rpp;
+		fn_in = rpp_in;
+	} else if( strcmp( cmd_args[2], "rpc" ) == 0 )  {
+		nvals = 3*3 + 1;
+		menu = p_rpc;
+		fn_in = rpc_in;
+	} else if( strcmp( cmd_args[2], "rhc" ) == 0 )  {
+		nvals = 3*3 + 2;
+		menu = p_rhc;
+		fn_in = rhc_in;
+	} else if( strcmp( cmd_args[2], "epa" ) == 0 )  {
+		nvals = 3*3 + 1;
+		menu = p_epa;
+		fn_in = epa_in;
+	} else if( strcmp( cmd_args[2], "ehy" ) == 0 )  {
+		nvals = 3*3 + 2;
+		menu = p_ehy;
+		fn_in = ehy_in;
+	} else if( strcmp( cmd_args[2], "eto" ) == 0 )  {
+		nvals = 3*3 + 2;
+		menu = p_eto;
+		fn_in = eto_in;
 	} else {
 		(void)printf("f_in:  %s is not a known primitive\n", cmd_args[2]);
 		return;
 	}
-
-	/* Zero out record.s.s_values[] */
-	for( i = 0; i < 24; i++ )  {
-		record.s.s_values[i] = 0.0;
+	
+	/* Read arguments */
+	while( args < 3+nvals )  {
+		(void)printf("%s", menu[args-3]);
+		if( (argcnt = getcmd(args)) < 0 )  {
+			fprintf(stderr, "in: not enough args!\n");
+			return;	/* failure */
+		}
+		args += argcnt;
 	}
 
-	/* Convert and copy cmd_args[] to record.s.s_values[] */
-	for( i = 0; i < vals; i++ )  {
-		record.s.s_values[i] = atof(cmd_args[3+i])*local2base;
+	RT_INIT_DB_INTERNAL( &internal );
+	if (fn_in(cmd_args, &internal, menu) != 0)  {
+		(void)printf("ERROR, %s not made!\n", cmd_args[2]);
+		if(internal.idb_type) rt_functab[internal.idb_type].
+			ft_ifree( &internal );
+		return;
 	}
-
-	/* Convert to GED notion of database */
-	if( cvt_ged( &record.s ) )  {
-		(void)printf("ERROR, cvt_ged failure, database not updated!\n");
-		return;		/* failure */
-	}
-
-	/* don't allow interrupts while we update the database! */
-	(void)signal( SIGINT, SIG_IGN);
- 
-	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  name, -1L, 0, DIR_SOLID )) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )  {
-	    	ALLOC_ERR_return;
-	}
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
-
-	/* draw the "made" solid */
-	new_cmd[0] = "e";
-	new_cmd[1] = name;
-	new_cmd[2] = (char *)NULL;
-	f_edit( 2, new_cmd );
-	return;
 
 do_new_update:
 	RT_CK_DB_INTERNAL( &internal );
@@ -541,10 +589,11 @@ char			*sol;
  *			A R S _ I N
  */
 int
-ars_in( argc, argv, intern )
+ars_in( argc, argv, intern, promp )
 int			argc;
 char			**argv;
 struct rt_db_internal	*intern;
+char			*promp[];
 {
 	register struct rt_ars_internal	*arip;
 	register int			i;
@@ -554,14 +603,13 @@ struct rt_db_internal	*intern;
 	int			ncurves_minus_one;
 
 	while (args < 5) {
-		(void)printf("%s", p_ars[args-3]);
+		(void)printf("%s", promp[args-3]);
 		if ((argcnt=getcmd(args)) < 0) {
 			return(1);	/* failure */
 		}
 		args += argcnt;
 	}
 
-	RT_INIT_DB_INTERNAL( intern );
 	intern->idb_type = ID_ARS;
 	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ars_internal), "rt_ars_internal");
 	arip = (struct rt_ars_internal *)intern->idb_ptr;
@@ -587,7 +635,7 @@ struct rt_db_internal	*intern;
 	}
 
 	while (args < 8) {
-		(void)printf("%s", p_ars[args-3]);
+		(void)printf("%s", promp[args-3]);
 		if ((argcnt=getcmd(args)) < 0) {
 			return(1);	/* failure */
 		}
@@ -619,10 +667,10 @@ struct rt_db_internal	*intern;
 	while( cv < arip->ncurves )  {
 		if (cv < ncurves_minus_one)
 			(void)printf("%s for Waterline %d, Point %d : ",
-				p_ars[5+axis%3], cv, axis/3 );
+				promp[5+axis%3], cv, axis/3 );
 		else
 			(void)printf("%s for point of last waterline : ",
-				p_ars[5+axis%3] );
+				promp[5+axis%3] );
 
 		/* Get some more input */
 		*cmd_args[0] = '\0';
@@ -649,404 +697,733 @@ struct rt_db_internal	*intern;
 	return(0);
 }
 
-/*	H A L F _ I N ( ) :    	reads halfspace parameters from keyboard
+/*   H A L F _ I N ( ) :   	reads halfspace parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
- *
- *	where's half_out?  This cat named Schrodinger wants to know.
  */
 int
-half_in()
+half_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
 {
-	/* Read outward pointing normal vector and distance from origin */
-	while( args < (3 + (3*1 + 1)) )  {
-		(void)printf("%s", promp[args-3] );
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
+	int			i;
+	struct rt_half_internal	*hip;
+
+	intern->idb_type = ID_HALF;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_half_internal),
+		"rt_half_internal" );
+	hip = (struct rt_half_internal *)intern->idb_ptr;
+	hip->magic = RT_HALF_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PLANE; i++) {
+		hip->eqn[i] = atof(cmd_argvs[3+i]);
 	}
-	/* Check for "very small" normal vector */
-	if( checkv(3) )  {
+	VUNITIZE( hip->eqn );
+	
+	if (MAGNITUDE(hip->eqn) < RT_LEN_TOL) {
 		(void)printf("ERROR, normal vector is too small!\n");
 		return(1);	/* failure */
 	}
-	vals = 4;
+	
 	return(0);	/* success */
 }
 
-/*	A R B _ I N ( ) :    	reads arb parameters from keyboard
+/*   A R B _ I N ( ) :   	reads arb parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
  */
 int
-arb_in( numpts )
-int numpts;
+arb_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
 {
-	if( numpts > 8 || numpts < 4 )  {
-		(void)printf("ERROR arb_in: numpts out of range!\n");
-		return(1);	/* failure */
+	int			argcnt, i, j, n;
+	struct rt_arb_internal	*aip;
+
+	intern->idb_type = ID_ARB8;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal),
+		"rt_arb_internal" );
+	aip = (struct rt_arb_internal *)intern->idb_ptr;
+	aip->magic = RT_ARB_INTERNAL_MAGIC;
+
+	n = atoi(&cmd_argvs[2][3]);	/* get # from "arb#" */
+	for (j = 0; j < n; j++)
+		for (i = 0; i < ELEMENTS_PER_PT; i++)
+			aip->pt[j][i] = atof(cmd_argvs[3+i+3*j]);
+
+	if (!strcmp("arb4", cmd_argvs[2])) {
+		VMOVE( aip->pt[7], aip->pt[3] );
+		VMOVE( aip->pt[6], aip->pt[3] );
+		VMOVE( aip->pt[5], aip->pt[3] );
+		VMOVE( aip->pt[4], aip->pt[3] );
+		VMOVE( aip->pt[3], aip->pt[0] );
+	} else if (!strcmp("arb5", cmd_argvs[2])) {
+		VMOVE( aip->pt[7], aip->pt[4] );
+		VMOVE( aip->pt[6], aip->pt[4] );
+		VMOVE( aip->pt[5], aip->pt[4] );
+	} else if (!strcmp("arb6", cmd_argvs[2])) {
+		VMOVE( aip->pt[7], aip->pt[5] );
+		VMOVE( aip->pt[6], aip->pt[5] );
+		VMOVE( aip->pt[5], aip->pt[4] );
+	} else if (!strcmp("arb7", cmd_argvs[2])) {
+		VMOVE( aip->pt[7], aip->pt[4] );
 	}
 
-	while( args < (3 + (3*numpts)) )  {
-		(void)printf("%s", promp[args-3] );
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
-	}
-	vals = numpts*3;
 	return(0);	/* success */
 }
 
-/*   S P H _ I N ( ) :   	reads sphere parameters from keyboard
+/*   S P H _ I N ( ) :   	reads sph parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
  */
 int
-sph_in()
+sph_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
 {
-	/* Read vertex and radius */
-	while( args < (3 + (3*1 + 1)) )  {
-		(void)printf("%s", promp[args-3]);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
+	fastf_t			r;
+	int			i;
+	struct rt_ell_internal	*sip;
+
+	intern->idb_type = ID_ELL;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ell_internal),
+		"rt_ell_internal" );
+	sip = (struct rt_ell_internal *)intern->idb_ptr;
+	sip->magic = RT_ELL_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		sip->v[i] = atof(cmd_argvs[3+i]);
 	}
-	/* Check for zero radius */
-	if( atof(cmd_args[6]) <= 0.0 )  {
+	r = atof(cmd_argvs[6]);
+	VSET( sip->a, r, 0., 0. );
+	VSET( sip->b, 0., r, 0. );
+	VSET( sip->c, 0., 0., r );
+	
+	if (r < RT_LEN_TOL) {
 		(void)printf("ERROR, radius must be greater than zero!\n");
 		return(1);	/* failure */
 	}
-	vals = 4;
+	
 	return(0);	/* success */
 }
 
-/*	E L L _ I N ( ) :	reads parameters for ells
+/*   E L L _ I N ( ) :   	reads ell parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
  */
 int
-ell_in( type )
-int type;
+ell_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
 {
-	if( type == ELL )  {
-		while( args < (3 + 7) )  {
-			(void)printf("%s", promp[args-3+13]);	/* Lookout! */
-			if( (argcnt = getcmd(args)) < 0 )  {
-				return(1);	/* failure */
-			}
-			args += argcnt;
-		}
-		/* Check for zero axis length */
-		if( atof(cmd_args[9]) <= 0.0 )  {
-			(void)printf("ERROR, axis length must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		vals = 7;
-		return(0);	/* success */
+	fastf_t			len, mag_b, r_rev, vals[12];
+	int			i, n;
+	struct rt_ell_internal	*eip;
+
+	n = 7;				/* ELL and ELL1 have seven params */
+	if (cmd_argvs[2][3] == 'g')	/* ELLG has twelve */
+		n = 12;
+
+	intern->idb_type = ID_ELL;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ell_internal),
+		"rt_ell_internal" );
+	eip = (struct rt_ell_internal *)intern->idb_ptr;
+	eip->magic = RT_ELL_INTERNAL_MAGIC;
+
+	/* convert typed in args to reals */
+	for (i = 0; i < n; i++) {
+		vals[i] = atof(cmd_argvs[3+i]);
 	}
 
-	/* Have ELL1 or ELLG.  Get Vertex(X, Y, Z)  and vector A(X, Y, Z) */
-	while( args < (3 + 6) )  {
-		(void)printf("%s", promp[args-3]);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
+	if (!strcmp("ellg", cmd_argvs[2])) {	/* everything's ok */
+		/* V, A, B, C */
+		VMOVE( eip->v, &vals[0] );
+		VMOVE( eip->a, &vals[3] );
+		VMOVE( eip->b, &vals[6] );
+		VMOVE( eip->c, &vals[9] );
+		return(0);
 	}
-	/* Check for zero length vector A */
-	if( checkv(6) )  {
-		(void)printf("ERROR, vector A length must be greater than zero!\n");
-		return(1);	/* failure */
-	}
-	if( type == ELL1 )  {
-		while( args < (3 + 7) )  {
-			(void)printf("%s", promp[12]);		/* Lookout! */
-			if( (argcnt = getcmd(args)) < 0 )  {
-				return(1);	/* failure */
-			}
-			args += argcnt;
+	
+	if (!strcmp("ell", cmd_argvs[2])) {
+		/* V, f1, f2, len */
+		/* convert ELL format into ELL1 format */
+		len = vals[6];
+		/* V is halfway between the foci */
+		VADD2( eip->v, &vals[0], &vals[3] );
+		VSCALE( eip->v, eip->v, 0.5);
+		VSUB2( eip->b, &vals[3], &vals[0] );
+		mag_b = MAGNITUDE( eip->b );
+		if ( NEAR_ZERO( mag_b, RT_LEN_TOL )) {
+			fprintf(stderr, "ERROR, foci are coincident!\n");
+			return(1);
 		}
-		/* Check for zero radius */
-		if( atof(cmd_args[9]) <= 0.0 )  {
-			(void)printf("ERROR, radius must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		vals = 7;
-		return(0);	/* success */
+		/* calculate A vector */
+		VSCALE( eip->a, eip->b, .5*len/mag_b );
+		/* calculate radius of revolution (for ELL1 format) */
+		r_rev = sqrt( MAGSQ( eip->a ) - (mag_b*.5)*(mag_b*.5) );
+	} else if (!strcmp("ell1", cmd_argvs[2])) {
+		/* V, A, r */
+		VMOVE( eip->v, &vals[0] );
+		VMOVE( eip->a, &vals[3] );
+		r_rev = vals[6];
 	}
+	
+	/* convert ELL1 format into ELLG format */
+	/* calculate B vector */
+	vec_ortho( eip->b, eip->a );
+	VUNITIZE( eip->b );
+	VSCALE( eip->b, eip->b, r_rev);
 
-	/* Should have ELLG.  Get vector B and C */
-	if( type == ELLG )  {
-		while( args < (3 + 12) )  {
-			(void)printf("%s", promp[args-3]);
-			if( (argcnt = getcmd(args)) < 0 )  {
-				return(1);	/* failure */
-			}
-			args += argcnt;
-		}
-		/* Check for zero length vector B */
-		if( checkv(9) )  {
-			(void)printf("ERROR, vector B length must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		/* Check for zero length vector C */
-		if( checkv(12) )  {
-			(void)printf("ERROR, vector C length must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		vals = 12;
-		return(0);	/* success */
-	}
-
-	/* Protect ourselves */
-	(void)printf("ERROR ell_in(): uknown type of GENELL\n");
-	return(1);	/* failure */
+	/* calculate C vector */
+	VCROSS( eip->c, eip->a, eip->b );
+	VUNITIZE( eip->c );
+	VSCALE( eip->c, eip->c, r_rev );
+	return(0);	/* success */
 }
 
-/*	T O R _ I N ( ) :	gets parameters of torus from keyboard
+/*   T O R _ I N ( ) :   	reads tor parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
  */
 int
-tor_in()
+tor_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
 {
-	fastf_t rad1, rad2;
+	fastf_t			r;
+	int			i;
+	struct rt_tor_internal	*tip;
 
-	while( args < (3 + 8) )  {
-		(void)printf("%s", promp[args-3]);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
+	intern->idb_type = ID_TOR;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tor_internal),
+		"rt_tor_internal" );
+	tip = (struct rt_tor_internal *)intern->idb_ptr;
+	tip->magic = RT_TOR_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		tip->v[i] = atof(cmd_argvs[3+i]);
+		tip->h[i] = atof(cmd_argvs[6+i]);
 	}
-	/* Check for zero length normal vector */
-	if( checkv(6) )  {
-		(void)printf("ERROR, normal vector length must be greater than zero!\n");
-		return(1);	/* failure */
-	}
-	/* Check for zero radius 1 */
-	if( (rad1 = atof(cmd_args[9])) <= 0.0 )  {
-		(void)printf("ERROR, radius 1 must be greater than zero!\n");
-		return(1);	/* failure */
-	}
-	/* Check for zero radius 2 */
-	if( (rad2 = atof(cmd_args[10])) <= 0.0 )  {
-		(void)printf("ERROR, radius 2 must be greater than zero!\n");
-		return(1);	/* failure */
-	}
+	tip->r_a = atof(cmd_argvs[9]);
+	tip->r_h = atof(cmd_argvs[10]);
 	/* Check for radius 2 >= radius 1 */
-	if( rad1 <= rad2 )  {
+	if( tip->r_a <= tip->r_h )  {
 		(void)printf("ERROR, radius 2 >= radius 1 ....\n");
 		return(1);	/* failure */
 	}
-	vals = 8;
+	
+	if (MAGNITUDE( tip->h ) < RT_LEN_TOL) {
+		(void)printf("ERROR, normal must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+	
 	return(0);	/* success */
 }
 
-/*   C Y L _ I N ( ) :		reads parameters for all cylinders 
- */
-int
-cyl_in( type )
-int type;
-{
-
-	/* Get vertex and height vectors */
-	while( args < (3 + 6) )  {
-		(void)printf("%s", promp[args-3]);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
-	}
-	/* Check for zero length height vector */
-	if( checkv(6) )  {
-		(void)printf("ERROR, height vector length must be greater than zero!\n");
-		return(1);	/* failure */
-	}
-
-	if( type == RCC )  {
-		/* Get radius */
-		while( args < (3 + 7) )  {
-			(void)printf("%s", promp[14]);		/* Lookout! */
-			if( (argcnt = getcmd(args)) < 0 )  {
-				return(1);	/* failure */
-			}
-			args += argcnt;
-		}
-		/* Check for zero radius */
-		if( atof(cmd_args[9]) <= 0.0 )  {
-			(void)printf("ERROR, radius must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		vals = 7;
-		return(0);	/* success */
-	}
-
-	if( type == TRC )  {
-		/* Get radius of base and top */
-		while( args < (3 + 7) )  {
-			(void)printf("%s", promp[15]);		/* Lookout! */
-			if( (argcnt = getcmd(args)) < 0 )  {
-				return(1);	/* failure */
-			}
-			args += argcnt;
-		}
-		/* Check for zero top radius */
-		if( atof(cmd_args[9]) <= 0.0 )  {
-			(void)printf("ERROR, radius must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		while( args < (3 + 8) )  {
-			(void)printf("%s", promp[16]);		/* Lookout! */
-			if( (argcnt = getcmd(args)) < 0 )  {
-				return(1);	/* failure */
-			}
-			args += argcnt;
-		}
-		/* Check for zero bottom radius (rad2)*/
-		if( atof(cmd_args[10]) <= 0.0 )  {
-			(void)printf("ERROR, radius must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		vals = 8;
-		return(0);	/* success */
-	}
-
-	/*
-	 * Must have REC, TEC, or TGC
-	 * Get A and B vectors
-	 */
-	while( args < (3 + 12) )  {
-		(void)printf("%s", promp[args-3]);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
-	}
-	/* Check for zero length A vector */
-	if( checkv(9) )  {
-		(void)printf("ERROR, A vector length must be greater than zero!\n");
-		return(1);	/* failure */
-	}
-	/* Check for zero length B vector */
-	if( checkv(12) )  {
-		(void)printf("ERROR, B vector length must be greater than zero!\n");
-		return(1);	/* failure */
-	}
-
-	if( type == REC )  {
-		vals = 12;
-		return(0);	/* success */
-	}
-
-	if( type == TEC )  {
-		while( args < (3 + 13) )  {
-			(void)printf("%s", promp[17]);		/* Lookout! */
-			if( (argcnt = getcmd(args)) < 0 )  {
-				return(1);	/* failure */
-			}
-			args += argcnt;
-		}
-		/* Check for ratio greater than 1.0 */
-		if( atof(cmd_args[15]) < 1.0 )  {
-			(void)printf("ERROR, ratio must be greater than one!\n");
-			return(1);	/* failure */
-		}
-		vals = 13;
-		return(0);	/* success */
-	}
-
-	if( type == TGC )  {
-		while( args < (3 + 14) )  {
-			(void)printf("%s", promp[args-3]);	/* Lookout! */
-			if( (argcnt = getcmd(args)) < 0 )  {
-				return(1);	/* failure */
-			}
-			args += argcnt;
-		}
-		/* Check for zero radius */
-		if( atof(cmd_args[15]) <= 0.0 )  {
-			(void)printf("ERROR, must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		/* Check for zero radius (rad1) */
-		if( atof(cmd_args[16]) <= 0.0 )  {
-			(void)printf("ERROR, must be greater than zero!\n");
-			return(1);	/* failure */
-		}
-		vals = 14;
-		return(0);	/* success */
-	}
-
-	/* Protect ourselves */
-	(void)printf("ERROR cyl_in(): uknown type of GENTGC\n");
-	return(1);	/* failure */
-}
-
-/*   B O X _ I N ( ) :		reads parameters for BOX and RAW
+/*   T G C _ I N ( ) :   	reads tgc parameters from keyboard
  *				returns 0 if successful read
- *				        1 if unsuccessful read
+ *					1 if unsuccessful read
  */
 int
-box_in()
+tgc_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
 {
-	while( args < (3 + 12) )  {
-		(void)printf("%s", promp[args-3]);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
+	fastf_t			r1, r2;
+	int			i;
+	struct rt_tgc_internal	*tip;
+
+	intern->idb_type = ID_TGC;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal),
+		"rt_tgc_internal" );
+	tip = (struct rt_tgc_internal *)intern->idb_ptr;
+	tip->magic = RT_TGC_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		tip->v[i] = atof(cmd_argvs[3+i]);
+		tip->h[i] = atof(cmd_argvs[6+i]);
+		tip->a[i] = atof(cmd_argvs[9+i]);
+		tip->b[i] = atof(cmd_argvs[12+i]);
 	}
-	/* Check for zero H vector */
-	if( checkv(6) )  {
-		(void)printf("ERROR, H vector length must be greater than zero!\n");
+	r1 = atof(cmd_argvs[15]);
+	r2 = atof(cmd_argvs[16]);
+	
+	if (MAGNITUDE(tip->h) < RT_LEN_TOL
+		|| MAGNITUDE(tip->a) < RT_LEN_TOL
+		|| MAGNITUDE(tip->b) < RT_LEN_TOL
+		|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
+		(void)printf("ERROR, all dimensions must be greater than zero!\n");
 		return(1);	/* failure */
 	}
-	/* Check for zero W vector */
-	if( checkv(9) )  {
-		(void)printf("ERROR, W vector length must be greater than zero!\n");
-		return(1);	/* failure */
-	}
-	/* Check for zero D vector */
-	if( checkv(12) )  {
-		(void)printf("ERROR, D vector length must be greater than zero!\n");
-		return(1);	/* failure */
-	}
-	vals = 12;
+
+	/* calculate C */
+	VMOVE( tip->c, tip->a );
+	VUNITIZE( tip->c );
+	VSCALE( tip->c, tip->c, r1);
+
+	/* calculate D */
+	VMOVE( tip->d, tip->b );
+	VUNITIZE( tip->d );
+	VSCALE( tip->d, tip->d, r2);
+	
 	return(0);	/* success */
 }
 
-/*   R P P _ I N ( ) :		reads parameters for RPP
+/*   R C C _ I N ( ) :   	reads rcc parameters from keyboard
  *				returns 0 if successful read
- *				        1 if unsuccessful read
+ *					1 if unsuccessful read
  */
 int
-rpp_in()
+rcc_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
 {
-	while( args < (3 + 6) )  {
-		(void)printf("%s", promp[args-3]);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(1);	/* failure */
-		}
-		args += argcnt;
+	fastf_t			r;
+	int			i;
+	struct rt_tgc_internal	*tip;
+	vect_t			work;
+
+	intern->idb_type = ID_TGC;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal),
+		"rt_tgc_internal" );
+	tip = (struct rt_tgc_internal *)intern->idb_ptr;
+	tip->magic = RT_TGC_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		tip->v[i] = atof(cmd_argvs[3+i]);
+		tip->h[i] = atof(cmd_argvs[6+i]);
 	}
-	/* Check input */
-	if( atof(cmd_args[3]) >= atof(cmd_args[4]) )  {
+	r = atof(cmd_argvs[9]);
+	
+	if (MAGNITUDE(tip->h) < RT_LEN_TOL || r < RT_LEN_TOL) {
+		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+
+	vec_ortho( tip->a, tip->h );
+	VUNITIZE( tip->a );
+	VCROSS( tip->b, tip->h, tip->a );
+	VUNITIZE( tip->b );
+
+	VSCALE( tip->a, tip->a, r );
+	VSCALE( tip->b, tip->b, r );
+	VMOVE( tip->c, tip->a );
+	VMOVE( tip->d, tip->b );
+	
+	return(0);	/* success */
+}
+
+/*   T E C _ I N ( ) :   	reads tec parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+tec_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	fastf_t			ratio;
+	int			i;
+	struct rt_tgc_internal	*tip;
+
+	intern->idb_type = ID_TGC;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal),
+		"rt_tgc_internal" );
+	tip = (struct rt_tgc_internal *)intern->idb_ptr;
+	tip->magic = RT_TGC_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		tip->v[i] = atof(cmd_argvs[3+i]);
+		tip->h[i] = atof(cmd_argvs[6+i]);
+		tip->a[i] = atof(cmd_argvs[9+i]);
+		tip->b[i] = atof(cmd_argvs[12+i]);
+	}
+	ratio = atof(cmd_argvs[15]);
+	if (MAGNITUDE(tip->h) < RT_LEN_TOL
+		|| MAGNITUDE(tip->a) < RT_LEN_TOL
+		|| MAGNITUDE(tip->b) < RT_LEN_TOL
+		|| ratio < RT_LEN_TOL) {
+		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+
+	VSCALE( tip->c, tip->a, 1./ratio );	/* C vector */
+	VSCALE( tip->d, tip->b, 1./ratio );	/* D vector */
+	
+	return(0);	/* success */
+}
+
+/*   R E C _ I N ( ) :   	reads rec parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+rec_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_tgc_internal	*tip;
+	vect_t			work;
+
+	intern->idb_type = ID_TGC;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal),
+		"rt_tgc_internal" );
+	tip = (struct rt_tgc_internal *)intern->idb_ptr;
+	tip->magic = RT_TGC_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		tip->v[i] = atof(cmd_argvs[3+i]);
+		tip->h[i] = atof(cmd_argvs[6+i]);
+		tip->a[i] = atof(cmd_argvs[9+i]);
+		tip->b[i] = atof(cmd_argvs[12+i]);
+	}
+	
+	if (MAGNITUDE(tip->h) < RT_LEN_TOL
+		|| MAGNITUDE(tip->a) < RT_LEN_TOL
+		|| MAGNITUDE(tip->b) < RT_LEN_TOL ) {
+		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+
+	VMOVE( tip->c, tip->a );		/* C vector */
+	VMOVE( tip->d, tip->b );		/* D vector */
+	
+	return(0);	/* success */
+}
+
+/*   T R C _ I N ( ) :   	reads trc parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+trc_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	fastf_t			r1, r2;
+	int			i;
+	struct rt_tgc_internal	*tip;
+
+	intern->idb_type = ID_TGC;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal),
+		"rt_tgc_internal" );
+	tip = (struct rt_tgc_internal *)intern->idb_ptr;
+	tip->magic = RT_TGC_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		tip->v[i] = atof(cmd_argvs[3+i]);
+		tip->h[i] = atof(cmd_argvs[6+i]);
+	}
+	r1 = atof(cmd_argvs[9]);
+	r2 = atof(cmd_argvs[10]);
+	
+	if (MAGNITUDE(tip->h) < RT_LEN_TOL
+		|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
+		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+
+	vec_ortho( tip->a, tip->h );
+	VUNITIZE( tip->a );
+	VCROSS( tip->b, tip->h, tip->a );
+	VUNITIZE( tip->b );
+	VMOVE( tip->c, tip->a );
+	VMOVE( tip->d, tip->b );
+
+	VSCALE( tip->a, tip->a, r1 );
+	VSCALE( tip->b, tip->b, r1 );
+	VSCALE( tip->c, tip->c, r2 );
+	VSCALE( tip->d, tip->d, r2 );
+	
+	return(0);	/* success */
+}
+
+/*   B O X _ I N ( ) :   	reads box parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+box_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_arb_internal	*aip;
+	vect_t			Dpth, Hgt, Vrtx, Wdth;
+
+	intern->idb_type = ID_ARB8;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal),
+		"rt_arb_internal" );
+	aip = (struct rt_arb_internal *)intern->idb_ptr;
+	aip->magic = RT_ARB_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		Vrtx[i] = atof(cmd_argvs[3+i]);
+		Hgt[i] = atof(cmd_argvs[6+i]);
+		Wdth[i] = atof(cmd_argvs[9+i]);
+		Dpth[i] = atof(cmd_argvs[12+i]);
+	}
+	
+	if (MAGNITUDE(Dpth) < RT_LEN_TOL || MAGNITUDE(Hgt) < RT_LEN_TOL
+		|| MAGNITUDE(Wdth) < RT_LEN_TOL) {
+		(void)printf("ERROR, dimensions must all be greater than zero!\n");
+		return(1);	/* failure */
+	}
+
+	if (!strcmp("box", cmd_argvs[2])) {
+		VMOVE( aip->pt[0], Vrtx );
+		VADD2( aip->pt[1], Vrtx, Wdth );
+		VADD3( aip->pt[2], Vrtx, Wdth, Hgt );
+		VADD2( aip->pt[3], Vrtx, Hgt );
+		VADD2( aip->pt[4], Vrtx, Dpth );
+		VADD3( aip->pt[5], Vrtx, Dpth, Wdth );
+		VADD4( aip->pt[6], Vrtx, Dpth, Wdth, Hgt );
+		VADD3( aip->pt[7], Vrtx, Dpth, Hgt );
+	} else { /* "raw" */
+		VMOVE( aip->pt[0], Vrtx );
+		VADD2( aip->pt[1], Vrtx, Wdth );
+		VADD2( aip->pt[3], Vrtx, Hgt );	/* next lines fliped for 4d uopt bug */
+		VMOVE( aip->pt[2], aip->pt[1] );
+		VADD2( aip->pt[4], Vrtx, Dpth );
+		VADD3( aip->pt[5], Vrtx, Dpth, Wdth );
+		VMOVE( aip->pt[6], aip->pt[5] );
+		VADD3( aip->pt[7], Vrtx, Dpth, Hgt );
+	}
+
+	return(0);	/* success */
+}
+
+/*   R P P _ I N ( ) :   	reads rpp parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+rpp_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	fastf_t			xmin, xmax, ymin, ymax, zmin, zmax;
+	int			i;
+	struct rt_arb_internal	*aip;
+	vect_t			Dpth, Hgt, Vrtx, Wdth;
+
+	intern->idb_type = ID_ARB8;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal),
+		"rt_arb_internal" );
+	aip = (struct rt_arb_internal *)intern->idb_ptr;
+	aip->magic = RT_ARB_INTERNAL_MAGIC;
+
+	xmin = atof(cmd_argvs[3+0]);
+	xmax = atof(cmd_argvs[3+1]);
+	ymin = atof(cmd_argvs[3+2]);
+	ymax = atof(cmd_argvs[3+3]);
+	zmin = atof(cmd_argvs[3+4]);
+	zmax = atof(cmd_argvs[3+5]);
+
+	if (xmin >= xmax) {
 		(void)printf("ERROR, XMIN greater than XMAX!\n");
 		return(1);	/* failure */
 	}
-	if( atof(cmd_args[5]) >= atof(cmd_args[6]) )  {
+	if (ymin >= ymax) {
 		(void)printf("ERROR, YMIN greater than YMAX!\n");
 		return(1);	/* failure */
 	}
-	if( atof(cmd_args[7]) >= atof(cmd_args[8]) )  {
+	if (zmin >= zmax) {
 		(void)printf("ERROR, ZMIN greater than ZMAX!\n");
 		return(1);	/* failure */
 	}
-	vals = 6;
+
+	VSET( aip->pt[0], xmax, ymin, zmin );
+	VSET( aip->pt[1], xmax, ymax, zmin );
+	VSET( aip->pt[2], xmax, ymax, zmax );
+	VSET( aip->pt[3], xmax, ymin, zmax );
+	VSET( aip->pt[4], xmin, ymin, zmin );
+	VSET( aip->pt[5], xmin, ymax, zmin );
+	VSET( aip->pt[6], xmin, ymax, zmax );
+	VSET( aip->pt[7], xmin, ymin, zmax );
+
+	return(0);	/* success */
+}
+
+/*   R P C _ I N ( ) :   	reads rpc parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+rpc_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_rpc_internal	*rip;
+
+	intern->idb_type = ID_RPC;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_rpc_internal),
+		"rt_rpc_internal" );
+	rip = (struct rt_rpc_internal *)intern->idb_ptr;
+	rip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		rip->rpc_V[i] = atof(cmd_argvs[3+i]);
+		rip->rpc_H[i] = atof(cmd_argvs[6+i]);
+		rip->rpc_B[i] = atof(cmd_argvs[9+i]);
+	}
+	rip->rpc_r = atof(cmd_argvs[12]);
+	
+	if (MAGNITUDE(rip->rpc_H) < RT_LEN_TOL
+		|| MAGNITUDE(rip->rpc_B) < RT_LEN_TOL
+		|| rip->rpc_r <= RT_LEN_TOL) {
+		(void)printf("ERROR, height, breadth, and width must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+	
+	return(0);	/* success */
+}
+
+/*   R H C _ I N ( ) :   	reads rhc parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+rhc_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_rhc_internal	*rip;
+
+	intern->idb_type = ID_RHC;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_rhc_internal),
+		"rt_rhc_internal" );
+	rip = (struct rt_rhc_internal *)intern->idb_ptr;
+	rip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		rip->rhc_V[i] = atof(cmd_argvs[3+i]);
+		rip->rhc_H[i] = atof(cmd_argvs[6+i]);
+		rip->rhc_B[i] = atof(cmd_argvs[9+i]);
+	}
+	rip->rhc_r = atof(cmd_argvs[12]);
+	rip->rhc_c = atof(cmd_argvs[13]);
+	
+	if (MAGNITUDE(rip->rhc_H) < RT_LEN_TOL
+		|| MAGNITUDE(rip->rhc_B) < RT_LEN_TOL
+		|| rip->rhc_r <= RT_LEN_TOL || rip->rhc_c <= RT_LEN_TOL) {
+		(void)printf("ERROR, height, breadth, and width must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+	
+	return(0);	/* success */
+}
+
+/*   E P A _ I N ( ) :   	reads epa parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+epa_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_epa_internal	*rip;
+
+	intern->idb_type = ID_EPA;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_epa_internal),
+		"rt_epa_internal" );
+	rip = (struct rt_epa_internal *)intern->idb_ptr;
+	rip->epa_magic = RT_EPA_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		rip->epa_V[i] = atof(cmd_argvs[3+i]);
+		rip->epa_H[i] = atof(cmd_argvs[6+i]);
+		rip->epa_Au[i] = atof(cmd_argvs[9+i]);
+	}
+	rip->epa_r1 = MAGNITUDE(rip->epa_Au);
+	rip->epa_r2 = atof(cmd_argvs[12]);
+	VUNITIZE(rip->epa_Au);
+	
+	if (MAGNITUDE(rip->epa_H) < RT_LEN_TOL
+		|| rip->epa_r1 <= RT_LEN_TOL || rip->epa_r2 <= RT_LEN_TOL) {
+		(void)printf("ERROR, height and axes must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+	
+	return(0);	/* success */
+}
+
+/*   E H Y _ I N ( ) :   	reads ehy parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+ehy_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_ehy_internal	*rip;
+
+	intern->idb_type = ID_EHY;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ehy_internal),
+		"rt_ehy_internal" );
+	rip = (struct rt_ehy_internal *)intern->idb_ptr;
+	rip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		rip->ehy_V[i] = atof(cmd_argvs[3+i]);
+		rip->ehy_H[i] = atof(cmd_argvs[6+i]);
+		rip->ehy_Au[i] = atof(cmd_argvs[9+i]);
+	}
+	rip->ehy_r1 = MAGNITUDE(rip->ehy_Au);
+	rip->ehy_r2 = atof(cmd_argvs[12]);
+	rip->ehy_c = atof(cmd_argvs[13]);
+	VUNITIZE(rip->ehy_Au);
+	
+	if (MAGNITUDE(rip->ehy_H) < RT_LEN_TOL
+		|| rip->ehy_r1 <= RT_LEN_TOL || rip->ehy_r2 <= RT_LEN_TOL
+		|| rip->ehy_c <= RT_LEN_TOL) {
+		(void)printf("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+	
+	return(0);	/* success */
+}
+
+/*   E T O _ I N ( ) :   	reads eto parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+eto_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_eto_internal	*eip;
+
+	intern->idb_type = ID_ETO;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_eto_internal),
+		"rt_eto_internal" );
+	eip = (struct rt_eto_internal *)intern->idb_ptr;
+	eip->eto_magic = RT_ETO_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		eip->eto_V[i] = atof(cmd_argvs[3+i]);
+		eip->eto_N[i] = atof(cmd_argvs[6+i]);
+		eip->eto_C[i] = atof(cmd_argvs[9+i]);
+	}
+	eip->eto_r = atof(cmd_argvs[12]);
+	eip->eto_rd = atof(cmd_argvs[13]);
+	
+	if (MAGNITUDE(eip->eto_N) < RT_LEN_TOL
+		|| MAGNITUDE(eip->eto_C) < RT_LEN_TOL
+		|| eip->eto_r <= RT_LEN_TOL || eip->eto_rd <= RT_LEN_TOL) {
+		(void)printf("ERROR, normal, axes, and radii must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+	
 	return(0);	/* success */
 }
 
@@ -1134,418 +1511,4 @@ int pos;
 	/* Null terminate pointer array */
 	cmd_args[newargs + pos] = (char *)0;
 	return(newargs);
-}
-
-/*   C V T _ G E D ( ) :	converts solid parameters to GED format
- *				Adapted from convert.c of CVT
- *				returns		-1 if not successful
- *						 0 if successful
- */
-
-#define Xmin	iv[0]
-#define Xmax	iv[1]
-#define Ymin	iv[2]
-#define Ymax	iv[3]
-#define Zmin	iv[4]
-#define Zmax	iv[5]
-
-/*
- * Input Vector Fields
- */
-#define Fi	iv+(i-1)*3
-#define F1	iv+(1-1)*3
-#define F2	iv+(2-1)*3
-#define F3	iv+(3-1)*3
-#define F4	iv+(4-1)*3
-#define F5	iv+(5-1)*3
-#define F6	iv+(6-1)*3
-#define F7	iv+(7-1)*3
-#define F8	iv+(8-1)*3
-/*
- * Output vector fields
- */
-#define Oi	ov+(i-1)*3
-#define O1	ov+(1-1)*3
-#define O2	ov+(2-1)*3
-#define O3	ov+(3-1)*3
-#define O4	ov+(4-1)*3
-#define O5	ov+(5-1)*3
-#define O6	ov+(6-1)*3
-#define O7	ov+(7-1)*3
-#define O8	ov+(8-1)*3
-#define O9	ov+(9-1)*3
-#define O10	ov+(10-1)*3
-#define O11	ov+(11-1)*3
-#define O12	ov+(12-1)*3
-#define O13	ov+(13-1)*3
-#define O14	ov+(14-1)*3
-#define O15	ov+(15-1)*3
-#define O16	ov+(16-1)*3
-
-int
-cvt_ged( in )
-struct solidrec *in;
-{
-	register dbfloat_t *iv;
-	register fastf_t *ov;
-#ifdef mips
-	register fastf_t * o_ptr;
-#endif
-	fastf_t	points[3*8];
-	register int i;
-	fastf_t r1, r2, r3, r4;
-	vect_t	work;
-	fastf_t m1, m2, m3;
-	fastf_t m5, m6;
-	short cgtype;
-	static fastf_t pi = 3.14159265358979323264;
-
-	/* Get positioned at s_values[0] to begin conversion */
-	iv = &in->s_values[0];
-	ov = &points[0];
-	cgtype = in->s_cgtype;
-
-	switch( cgtype )  {
-
-	case HALFSPACE:
-		/* HALFSPACE format is N, d */
-		VUNITIZE( F1 );
-		return(0);	/* Success */
-
-	case RPP:
-#ifndef mips
-		VSET( O1, Xmax, Ymin, Zmin );
-		VSET( O2, Xmax, Ymax, Zmin );
-		VSET( O3, Xmax, Ymax, Zmax );
-		VSET( O4, Xmax, Ymin, Zmax );
-		VSET( O5, Xmin, Ymin, Zmin );
-		VSET( O6, Xmin, Ymax, Zmin );
-		VSET( O7, Xmin, Ymax, Zmax );
-		VSET( O8, Xmin, Ymin, Zmax );
-#else
-		o_ptr = ov;
-		*(o_ptr++)   = in->s_values[1];
-		*(o_ptr++) = in->s_values[2];
-		*(o_ptr++) = in->s_values[4];
-
-		*(o_ptr++) = in->s_values[1];
-		*(o_ptr++) = in->s_values[3];
-		*(o_ptr++) = in->s_values[4];
-
-		*(o_ptr++) = in->s_values[1];
-		*(o_ptr++) = in->s_values[3];
-		*(o_ptr++) = in->s_values[5];
-
-		*(o_ptr++) = in->s_values[1];
-		*(o_ptr++) = in->s_values[2];
-		*(o_ptr++) = in->s_values[5];
-
-		*(o_ptr++) = in->s_values[0];
-		*(o_ptr++) = in->s_values[2];
-		*(o_ptr++) = in->s_values[4];
-
-		*(o_ptr++) = in->s_values[0];
-		*(o_ptr++) = in->s_values[3];
-		*(o_ptr++) = in->s_values[4];
-
-		*(o_ptr++) = in->s_values[0];
-		*(o_ptr++) = in->s_values[3];
-		*(o_ptr++) = in->s_values[5];
-
-		*(o_ptr++) = in->s_values[0];
-		*(o_ptr++) = in->s_values[2];
-		*(o_ptr++) = in->s_values[5];
-#endif
-		goto ccommon;
-
-	case BOX:
-		VMOVE( O1, F1 );
-		VADD2( O2, F1, F3 );
-		VADD3( O3, F1, F3, F2 );
-		VADD2( O4, F1, F2 );
-		VADD2( O5, F1, F4 );
-		VADD3( O6, F1, F4, F3 );
-		VADD4( O7, F1, F4, F3, F2 );
-		VADD3( O8, F1, F4, F2 );
-		goto ccommon;
-
-	case RAW:
-		VMOVE( O1, F1 );
-		VADD2( O2, F1, F3 );
-		VADD2( O4, F1, F2 );	/* next lines fliped for 4d uopt bug */
-		VMOVE( O3, O2 );
-		VADD2( O5, F1, F4 );
-		VADD3( O6, F1, F4, F3 );
-		VMOVE( O7, O6 );
-		VADD3( O8, F1, F4, F2 );
-	ccommon:
-		VMOVE( F1, O1 );
-		for( i=2; i<=8; i++ )  {
-			VSUB2( Fi, Oi, O1 );
-		}
-		return(0);	/* Success */
-
-	case ARB8:
-	arbcommon:
-		for( i=2; i<=8; i++ )  {
-			VSUB2( Fi, Fi, F1 );
-		}
-		return(0);	/* Success */
-
-	case ARB7:
-		VMOVE( F8, F5 );
-		goto arbcommon;
-
-	case ARB6:
-		/* NOTE: the ordering is important, as data is in F5, F6 */
-		VMOVE( F8, F6 );
-		VMOVE( F7, F6 );
-		VMOVE( F6, F5 );
-		goto arbcommon;
-
-	case ARB5:
-		VMOVE( F6, F5 );
-		VMOVE( F7, F5 );
-		VMOVE( F8, F5 );
-		goto arbcommon;
-
-	case ARB4:
-		/* Order is important, data is in F4 */
-		VMOVE( F8, F4 );
-		VMOVE( F7, F4 );
-		VMOVE( F6, F4 );
-		VMOVE( F5, F4 );
-		VMOVE( F4, F1 );
-		goto arbcommon;
-	case RCC:
-		r1 = iv[6];	/* Radius */
-		r2 = iv[6];
-		goto trccommon;		/* sorry */
-
-	case REC:
-		VMOVE( F5, F3 );
-		VMOVE( F6, F4 );
-		return(0);	/* Success */
-
-		/*
-		 * For the TRC, if the V vector (F1) is of zero length,
-		 * a divide by zero will occur when scaling by the magnitude.
-		 * We add the vector [pi, pi, pi] to V to produce a unique
-		 * (and most likely non-zero) resultant vector.  This will
-		 * do nicely for purposes of cross-product.
-		 * THIS DOES NOT GO OUT INTO THE FILE!!
-		 * work[] must NOT be colinear with F2[].  We check for this
-		 * later.
-		 */
-
-	case TRC:
-		r1 = iv[6];	/* Radius 1 */
-		r2 = iv[7];	/* Radius 2 */
-	trccommon:
-		VMOVE( work, F1 );
-		work[0] += pi;
-		work[1] += pi;
-		work[2] += pi;
-		VCROSS( F3, work, F2 );
-		m1 = MAGNITUDE( F3 );
-		if( m1 == 0.0 )  {
-			work[1] = 0.0;		/* Vector is colinear, so */
-			work[2] = 0.0;		/* make it different */
-			VCROSS( F3, work, F2 );
-			m1 = MAGNITUDE( F3 );
-			if( m1 == 0.0 )  {
-				(void)printf("ERROR, magnitude is zero!\n");
-				return(-1);	/* failure */
-			}
-		}
-		VSCALE( F3, F3, r1/m1 );
-
-		VCROSS( F4, F2, F3 );
-		m2 = MAGNITUDE( F4 );
-		if( m2 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-		VSCALE( F4, F4, r1/m2 );
-
-		if( r1 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-		VSCALE( F5, F3, r2/r1 );
-		VSCALE( F6, F4, r2/r1 );
-		return(0);	/* success */
-
-	case TEC:
-		/* r1 is a ratio, hence "unitless".  However, during input
-		 *	it was converted to base units along with the other
-		 *	parameters, so this must be "undone".
-		 */
-		r1 = iv[12] * base2local;
-
-		if( r1 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-		VSCALE( F5, F3, (1.0/r1) );
-		VSCALE( F6, F4, (1.0/r1) );
-		return(0);	/* success */
-
-	case TGC:
-		/* This should have been checked earlier but we'll check */
-		if( (MAGNITUDE( F3 ) == 0.0) || (MAGNITUDE( F4) == 0.0) )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-		r1 = iv[12] / MAGNITUDE( F3 );	/* A/|A| * C */
-		r2 = iv[13] / MAGNITUDE( F4 );	/* B/|B| * D */
-		VSCALE( F5, F3, r1 );
-		VSCALE( F6, F4, r2 );
-		return(0);	/* success */
-
-	case SPH:
-		/* SPH format is V, r */
-		r1 = iv[3];		/* Radius */
-		VSET( F2, r1,  0,  0 );
-		VSET( F3,  0, r1,  0 );
-		VSET( F4,  0,  0, r1 );
-		return(0);	/* success */
-
-	case ELL:
-		/*
-		 * For simplicity, an ELL is converted to an ELL1, then
-		 * falls through to the ELL1 code.
-		 * ELL format is F1, F2, l and ELL1 format is V, A, r
-		 */
-		r1 = iv[6];		/* Length */
-		VADD2( O1, F1, F2 );
-		VSCALE( O1, O1, 0.5 );	/* O1 holds V */
-
-		VSUB2( O3, F2, F1 );	/* O3 holds F2 - F1 */
-		m1 = MAGNITUDE(O3);
-		/* XXX check this later */
-		if( m1 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-		r2 = 0.5 * r1 / m1;
-		VSCALE( O2, O3, r2 );	/* O2 holds A */
-
-		iv[6] = sqrt( MAGSQ( O2 ) - (m1 * 0.5)*(m1 * 0.5) );	/* r */
-		VMOVE( F1, O1 );	/* Move V */
-		VMOVE( F2, O2 );	/* Move A */
-		/* fall through */
-
-	case ELL1:
-		/* GENELL format is V, A, B, C */
-		r1 = iv[6];		/* Radius */
-
-		/*
-		 * To allow for V being (0,0,0), for VCROSS purposes only,
-		 * we add (pi,pi,pi).  THIS DOES NOT GO OUT INTO THE FILE!!
-		 * work[] must NOT be colinear with F2[].  We check for this
-		 * later.
-		 */
-		VMOVE( work, F1 );
-		work[0] += pi;
-		work[1] += pi;
-		work[2] += pi;
-
-		VCROSS( F3, work, F2 );
-		m1 = MAGNITUDE( F3 );
-		if( m1 == 0.0 )  {
-			work[1] = 0.0;		/* Vector is colinear, so */
-			work[2] = 0.0;		/* make it different */
-			VCROSS( F3, work, F2 );
-			m1 = MAGNITUDE( F3 );
-			if( m1 == 0.0 )  {
-				(void)printf("ERROR, magnitude is zero!\n");
-				return(-1);	/* failure */
-			}
-		}
-		VSCALE( F3, F3, r1/m1 );
-
-		VCROSS( F4, F2, F3 );
-		m2 = MAGNITUDE( F4 );
-		if( m2 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-		VSCALE( F4, F4, r1/m2 );
-		return(0);	/* success */
-
-	case ELLG:
-		/* Everything is already okay.  ELLG format is V, A, B, C */
-		return(0);	/* success */
-
-	case TOR:
-		/* TOR format is V, N, r1, r2 */
-		r1=iv[6];	/* Dist from end of V to center of (solid portion) of TORUS */
-		r2=iv[7];	/* Radius of solid portion of TORUS */
-		r3=r1-r2;	/* Radius to inner circular edge */
-		r4=r1+r2;	/* Radius to outer circular edge */
-
-		/*
-		 * To allow for V being (0,0,0), for VCROSS purposes only,
-		 * we add (pi,pi,pi).  THIS DOES NOT GO OUT INTO THE FILE!!
-		 * work[] must NOT be colinear with N[].  We check for this
-		 * later.
-		 */
-		VMOVE(work,F1);
-		work[0] +=pi;
-		work[1] +=pi;
-		work[2] +=pi;
-
-		m2 = MAGNITUDE( F2 );	/* F2 is NORMAL to Torus, with Radius length */
-		if( m2 == 0.0 )  {
-			(void)printf("ERROR, normal magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-		VSCALE( F2, F2, r2/m2 );
-
-		/* F3, F4 are perpendicular, goto center of Torus (solid part), for top/bottom */
-		VCROSS(F3,work,F2);
-		m1=MAGNITUDE(F3);
-		if( m1 == 0.0 )  {
-			work[1] = 0.0;		/* Vector is colinear, so */
-			work[2] = 0.0;		/* make it different */
-			VCROSS(F3,work,F2);
-			m1=MAGNITUDE(F3);
-			if( m1 == 0.0 )  {
-				(void)printf("ERROR, cross product vector is zero!\n");
-				return(-1);	/* failure */
-			}
-		}
-		VSCALE(F3,F3,r1/m1);
-
-		VCROSS(F4,F3,F2);
-		m3=MAGNITUDE(F4);
-		if( m3 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	 /* failure */
-		}
-
-		VSCALE(F4,F4,r1/m3);
-
-		m5 = MAGNITUDE(F3);
-		m6 = MAGNITUDE( F4 );
-		if( m5 == 0.0 || m6 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-
-		/* F5, F6 are perpendicular, goto inner edge of ellipse */
-		VSCALE( F5, F3, r3/m5 );
-		VSCALE( F6, F4, r3/m6 );
-
-		/* F7, F8 are perpendicular, goto outer edge of ellipse */
-		VSCALE( F7, F3, r4/m5 );
-		VSCALE( F8, F4, r4/m6 );
- 
-		return(0);	 /* success finally */
-
-	default:
-		(void)printf("cvt_ged(): unknown solid type\n");
-		return(-1);	/* failure */
-	}
 }
