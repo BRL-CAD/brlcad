@@ -71,9 +71,13 @@ struct uv_hit {
 	fastf_t u, v;
 };
 
-struct nurb_hit * rt_conv_uv();
-struct uv_hit * rt_nurb_intersect();
-struct nurb_hit * rt_return_nurb_hit();
+RT_EXTERN(int rt_nurb_grans, (struct snurb * srf));
+RT_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
+	struct xray *r, struct uv_hit *h));
+RT_EXTERN(struct uv_hit *rt_nurb_intersect, (struct snurb * srf,
+	plane_t plane1, plane_t plane2));
+RT_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
+
 
 /*
  *  			R T _ N U R B _ P R E P
@@ -809,7 +813,8 @@ register CONST mat_t		mat;
 struct uv_hit *
 rt_nurb_intersect( srf, plane1, plane2)
 struct snurb * srf;
-plane_t plane1, plane2;
+plane_t plane1;
+plane_t plane2;
 {
 	struct uv_hit * h;
 	struct snurb 	* psrf,
@@ -1081,7 +1086,6 @@ double				local2mm;
 	int			s;
 	int			grans;
 	int			total_grans;
-	int			rt_nurb_grans();
 	double			* vp;
 	int			n;
 
@@ -1095,14 +1099,14 @@ double				local2mm;
 	 * calculating the number of granuels
 	 * needed for storage and add it to the total
 	 */
-
+	total_grans = 1;	/* First gran for BSOLID record */
 	for( s = 0; s < sip->nsrf; s++)
 	{
 		total_grans += rt_nurb_grans(sip->srfs[s]);
 	}
 
 	RT_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = (1 + grans ) * sizeof(union record);
+	ep->ext_nbytes = total_grans * sizeof(union record);
 	ep->ext_buf = (genptr_t)rt_calloc(1,ep->ext_nbytes,"nurb external");
 	rec = (union record *)ep->ext_buf;
 
@@ -1148,8 +1152,8 @@ double				local2mm;
 		total_grans -= grans;
 	}
 	return(0);
-
 }
+
 int 
 rt_nurb_grans( srf )
 struct snurb * srf;
