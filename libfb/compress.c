@@ -171,6 +171,9 @@ char_type magic_header[] = { "\037\235" };	/* 1F 9D */
  *
  * $Header$
  * $Log$
+ * Revision 1.2  91/10/12  07:02:16  cjohnson
+ * Started stripping to the bones.
+ * 
  * Revision 1.1  1991/10/12  06:48:44  cjohnson
  * Initial revision
  *
