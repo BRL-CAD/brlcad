@@ -211,7 +211,12 @@ register char **argv;
 			/* Specify a single pixel to be done */
 			{
 				int xx, yy;
-				(void)sscanf( optarg, "%d%d", &xx, &yy );
+				register char *cp = optarg;
+
+				xx = atoi(cp);
+				while( *cp >= '0' && *cp <= '9' )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				yy = atoi(cp);
 				fprintf(stderr,"only pixel %d %d\n", xx, yy);
 				if( xx * yy >= 0 )  {
 					pix_start = yy * width + xx;
