@@ -41,6 +41,14 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+int colors[7][3]={
+	{255 , 0 , 0},
+	{0 , 255 , 0},
+	{0 , 0 , 255},
+	{255 , 255 , 0},
+	{0 , 255 , 255 },
+	{255 , 0 , 255},
+	{126 , 126 , 126 }};
 
 /*	N M G _ T B L
  *	maintain a table of pointers (to magic numbers/structs)
@@ -2850,9 +2858,12 @@ CONST struct rt_tol *tol;
 	struct nmg_ptbl int_faces;
 	struct rt_tol tol_tmp;
 	point_t ave_pt;
+	point_t rpp_min;
 	int i,j,done;
 	int unique_verts;
 	int added_faces;
+	int edge_no;
+	static int pl_count=0;
 
 	/* More than 3 faces intersect at vertex (new_v)
 	 * Calculate intersection point along each edge
@@ -2860,6 +2871,8 @@ CONST struct rt_tol *tol;
 
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
+
+	VSET( rpp_min , 0.0 , 0.0 , 0.0 );
 
 	/* A local tolerance structure for times when I don't want tolerancing */
 	tol_tmp.magic = RT_TOL_MAGIC;
@@ -2884,9 +2897,8 @@ CONST struct rt_tol *tol;
 	/* loop through all the edges emanating from new_v */
 	while( !done )
 	{
-		fastf_t max_dist,dist;
+		fastf_t dist;
 		vect_t normal1;
-		point_t rpp_min;
 		point_t start;
 		vect_t dir;
 		vect_t eu_dir;
@@ -2978,11 +2990,33 @@ CONST struct rt_tol *tol;
 		VMOVE( i_fus->start , start );
 		VMOVE( i_fus->dir , dir );
 
-		/* start and dir define the edge between faces fu1 and fu2
-		 * now find the intersection of this line with the other faces
-		 * that is furthest up the new edge
-		 */
+		nmg_tbl( &int_faces , TBL_INS , (long *)i_fus );
+
+		eu = eu->radial_p;
+		eu = RT_LIST_PNEXT_CIRC( edgeuse , eu );
+		if( eu == eu1 )
+			done = 1;
+	}
+
+#if 0
+	/* i_fus->start and i_fus->dir define the edge between faces i_fus->fu[0] and i_fus->fu[1]
+	 * now find the intersection of this line with the other faces
+	 * that is furthest up the new edge
+	 */
+	for( edge_no=0 ; edge_no < NMG_TBL_END( &int_faces ) ; edge_no++ )
+	{
+		struct intersect_fus *i_fus;
+		fastf_t max_dist,dist,edge_dist_sq;
+		vect_t edge_vect;
+
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , edge_no );
+		fu1 = i_fus->fu[0];
+		fu2 = i_fus->fu[1];
+
 		max_dist = (-MAX_FASTF);
+		VSUB2( edge_vect , i_fus->eu->eumate_p->vu_p->v_p->vg_p->coord , i_fus->eu->vu_p->v_p->vg_p->coord );
+		edge_dist_sq = MAGSQ( edge_vect );
+
 		for( i=0 ; i<NMG_TBL_END( faces ) ; i++ )
 		{
 			struct face *fp1;
@@ -2991,26 +3025,39 @@ CONST struct rt_tol *tol;
 			fp1 = (struct face *)NMG_TBL_GET( faces , i );
 			if( fp1 == fu1->f_p || fp1 == fu2->f_p )
 				continue;
-			if( rt_isect_line3_plane( &dist , start , dir , fp1->fg_p->N , &tol_tmp ) < 1 )
+
+			if( rt_isect_line3_plane( &dist , i_fus->start , i_fus->dir , fp1->fg_p->N , &tol_tmp ) < 1 )
 				continue;
-			VJOIN1( tmp_pt , start , dist , dir );
-			if( dist > max_dist )
+
+			VJOIN1( tmp_pt , i_fus->start , dist , i_fus->dir );
+
+			if( (dist > max_dist) && (dist*dist < edge_dist_sq) )
 			{
 				max_dist = dist;
 				VMOVE( i_fus->pt , tmp_pt );
 			}
 		}
-		nmg_tbl( &int_faces , TBL_INS , (long *)i_fus );
+
 		if( max_dist > (-MAX_FASTF) )
 		{
-			unique_verts++;
 			VADD2( ave_pt , ave_pt , i_fus->pt );
 		}
-		eu = eu->radial_p;
-		eu = RT_LIST_PNEXT_CIRC( edgeuse , eu );
-		if( eu == eu1 )
-			done = 1;
+
 	}
+#else
+rt_log( "at (%f %f %f): \n" , V3ARGS( new_v->vg_p->coord ) );
+	for( edge_no=0 ; edge_no < NMG_TBL_END( &int_faces ) ; edge_no++ )
+	{
+		struct intersect_fus *i_fus;
+
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , edge_no );
+		VJOIN1( i_fus->pt , i_fus->start , 25.0 * tol->dist , i_fus->dir );
+rt_log( "\tfor edge ( %f %f %f 0 -> ( %f %f %f ) intersect at ( %f %f %f )\n" ,
+	V3ARGS( i_fus->eu->vu_p->v_p->vg_p->coord ),
+	V3ARGS( i_fus->eu->eumate_p->vu_p->v_p->vg_p->coord ),
+	V3ARGS( i_fus->pt ) );
+	}
+#endif
 	VSCALE( ave_pt , ave_pt , (1.0/(double)(unique_verts)) );
 	VMOVE( new_v->vg_p->coord , ave_pt );
 
@@ -3058,27 +3105,9 @@ CONST struct rt_tol *tol;
 	if( unique_verts > 2 )
 	{
 		struct nmg_ptbl new_faces;
+		struct loopuse *old_lu;
 
 		nmg_tbl( &new_faces , TBL_INIT , (long *)NULL );
-
-for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
-{
-	struct intersect_fus *i_fus;
-
-	i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
-
-	rt_log( "%d intersect_fus: \n" , i );
-	rt_log( "\tfu[0] = x%x\n" , i_fus->fu[0] );
-	rt_log( "\tfu[1] = x%x\n" , i_fus->fu[1] );
-	rt_log( "\teu = x%x\n" , i_fus->eu );
-	rt_log( "\tvp = x%x\n" , i_fus->vp );
-	rt_log( "\tpt = ( %f %f %f )\n" , V3ARGS( i_fus->pt ) );
-	rt_log( "\tstart = ( %f %f %f )\n" , V3ARGS( i_fus->start ) );
-	rt_log( "\tdir = ( %f %f %f )\n" , V3ARGS( i_fus->dir ) );
-
-	nmg_pr_fu_briefly( i_fus->fu[0] , (char *)NULL );
-	nmg_pr_fu_briefly( i_fus->fu[1] , (char *)NULL );
-}
 
 		/* Need to make new faces.
 		 * loop around the vertex again, looking at
@@ -3095,7 +3124,6 @@ for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 			struct loopuse *new_lu;
 			struct loopuse *dup_lu;
 			struct faceuse *new_fu;
-			int orientation;
 			long **trans_tbl;
 
 			i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
@@ -3310,20 +3338,17 @@ for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 				if( vu1 && vu2 )
 					break;
 			}
+			old_lu = lu;
 
-			if( !vu1 || !vu2 )
+			if( vu1 == NULL || vu2 == NULL )
 				continue;
 
 			/* cut the face loop across the two vertices */
-			orientation = lu->orientation;
+rt_log( "Cutting lu (x%x):\n" , old_lu );
+nmg_pr_lu_briefly( old_lu , (char *)NULL );
 			new_lu = nmg_cut_loop( vu1 , vu2 );
-#if 0
-			/* keep the original orientations */
-			lu->orientation = orientation;
-			lu->lumate_p->orientation = orientation;
-			new_lu->orientation = orientation;
-			new_lu->lumate_p->orientation = orientation;
-#else
+
+			/* fix orientations */
 			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 			{
 				if( lu->orientation == OT_UNSPEC )
@@ -3332,30 +3357,42 @@ for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 					lu->lumate_p->orientation = OT_SAME;
 				}
 			}
-#endif
 
 			/* find which loopuse contains new_v
 			 * this will be the one to become a new face
 			 */
-			fu = new_lu->up.fu_p;
-			if( fu->orientation != OT_SAME )
-				fu = fu->fumate_p;
-			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			lu = NULL;
+
+			/* first check old_lu */
+			for( RT_LIST_FOR( eu , edgeuse , &old_lu->down_hd ) )
 			{
-				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				if( eu->vu_p->v_p == new_v )
+				{
+					lu = old_lu;
+					break;
+				}
+			}
+
+			/* if not found check new_lu */
+			if( lu == NULL )
+			{
+				for( RT_LIST_FOR( eu , edgeuse , &new_lu->down_hd ) )
 				{
 					if( eu->vu_p->v_p == new_v )
 					{
-						new_lu = lu;
+						lu = old_lu;
 						break;
 					}
 				}
-				if( new_lu )
-					break;
 			}
 
+			if( lu == NULL )
+				rt_bomb( "nmg_complex_vertex_solve: can't find loop for new face\n" );
+
 			/* make the new face from the new loop */
-			new_fu = nmg_mk_new_face_from_loop( new_lu );
+rt_log( "Make face from lu (x%x):\n" , lu );
+nmg_pr_lu_briefly( lu , (char *)NULL );
+			new_fu = nmg_mk_new_face_from_loop( lu );
 
 			/* calculate a plane equation for the new face */
 			if( nmg_fu_planeeqn( new_fu , &tol_tmp ) )
@@ -3376,25 +3413,6 @@ for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 		}
 	}
 
-rt_log( "After building faces:\n" );
-for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
-{
-	struct intersect_fus *i_fus;
-
-	i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
-
-	rt_log( "%d intersect_fus: \n" , i );
-	rt_log( "\tfu[0] = x%x\n" , i_fus->fu[0] );
-	rt_log( "\tfu[1] = x%x\n" , i_fus->fu[1] );
-	rt_log( "\teu = x%x\n" , i_fus->eu );
-	rt_log( "\tvp = x%x\n" , i_fus->vp );
-	rt_log( "\tpt = ( %f %f %f )\n" , V3ARGS( i_fus->pt ) );
-	rt_log( "\tstart = ( %f %f %f )\n" , V3ARGS( i_fus->start ) );
-	rt_log( "\tdir = ( %f %f %f )\n" , V3ARGS( i_fus->dir ) );
-
-	nmg_pr_fu_briefly( i_fus->fu[0] , (char *)NULL );
-	nmg_pr_fu_briefly( i_fus->fu[1] , (char *)NULL );
-}
 	/* Where faces were not built, cracks have formed */
 	for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 	{
@@ -3462,25 +3480,6 @@ for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 		}
 	}
 
-rt_log( "After killing cracks:\n" );
-for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
-{
-	struct intersect_fus *i_fus;
-
-	i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
-
-	rt_log( "%d intersect_fus: \n" , i );
-	rt_log( "\tfu[0] = x%x\n" , i_fus->fu[0] );
-	rt_log( "\tfu[1] = x%x\n" , i_fus->fu[1] );
-	rt_log( "\teu = x%x\n" , i_fus->eu );
-	rt_log( "\tvp = x%x\n" , i_fus->vp );
-	rt_log( "\tpt = ( %f %f %f )\n" , V3ARGS( i_fus->pt ) );
-	rt_log( "\tstart = ( %f %f %f )\n" , V3ARGS( i_fus->start ) );
-	rt_log( "\tdir = ( %f %f %f )\n" , V3ARGS( i_fus->dir ) );
-
-	nmg_pr_fu_briefly( i_fus->fu[0] , (char *)NULL );
-	nmg_pr_fu_briefly( i_fus->fu[1] , (char *)NULL );
-}
 	/* free some memory */
 	for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 	{
@@ -4649,4 +4648,71 @@ CONST struct rt_tol *tol;
 	/* free memory */
 	rt_free( (char *)flags , "nmg_extrude_shell: flags" );
 	rt_free( (char *)copy_tbl , "nmg_extrude_shell: copy_tbl" );
+}
+
+/*		N M G _ M I R R O R _ M O D E L
+ *
+ *	mirror model across the y-axis
+ *	this does not copy the model, it changes the
+ *	model passed to it
+ */
+
+void
+nmg_mirror_model( m )
+struct model *m;
+{
+	struct nmg_ptbl vertices;
+	struct nmgregion *r;
+	int i;
+	long *flags;
+
+	NMG_CK_MODEL( m );
+
+	/* mirror all vertices across the y axis */
+	nmg_vertex_tabulate( &vertices , &m->magic );
+
+	for( i=0 ; i<NMG_TBL_END( &vertices ) ; i++ )
+	{
+		struct vertex *v;
+
+		v = (struct vertex *)NMG_TBL_GET( &vertices , i );
+		NMG_CK_VERTEX( v );
+
+		v->vg_p->coord[Y] = (-v->vg_p->coord[Y]);
+	}
+	(void)nmg_tbl( &vertices , TBL_FREE , NULL );
+
+	/* adjust the direction of all the faces */
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_mirror_model: flags" );
+	for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
+	{
+		struct shell *s;
+
+		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		{
+			struct faceuse *fu;
+
+			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+			{
+				int orientation;
+
+				if( NMG_INDEX_TEST_AND_SET( flags , fu ) )
+				{
+					/* switch orientations of all faceuses */
+					orientation = fu->orientation;
+					fu->orientation = fu->fumate_p->orientation;
+					fu->fumate_p->orientation = orientation;
+					NMG_INDEX_SET( flags , fu->fumate_p );
+
+					if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p->fg_p ) )
+					{
+						/* correct normal vector */
+						fu->f_p->fg_p->N[Y] = (-fu->f_p->fg_p->N[Y]);
+					}
+				}
+			}
+		}
+	}
+
+	rt_free( (char *)flags , "nmg_mirror_model: flags " );
 }
