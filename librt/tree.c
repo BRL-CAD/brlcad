@@ -789,7 +789,7 @@ register union tree	*tp;
 
 	case OP_SOLID:
 		{
-			register CONST struct soltab	*stp;
+			register struct soltab	*stp;
 
 			stp = tp->tr_a.tu_stp;
 			RT_CK_SOLTAB(stp);
