@@ -163,6 +163,7 @@ struct frame {
 	int		fr_magic;	/* magic number */
 	long		fr_number;	/* frame number */
 	char		*fr_filename;	/* name of output file */
+	int		fr_tempfile;	/* if !0, output file is temporary */
 	/* options */
 	int		fr_width;	/* frame width (pixels) */
 	int		fr_height;	/* frame height (pixels) */
@@ -466,7 +467,7 @@ char	**argv;
 
 	/* Random inits */
 	gethostname( ourname, sizeof(ourname) );
-	fprintf(stderr,"%s: %s\n", ourname, RCSid+13);
+	fprintf(stderr,"%s %s\n", stamp(), RCSid+13);
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */
@@ -502,8 +503,8 @@ char	**argv;
 
 	if( argc <= 1 )  {
 		(void)signal( SIGINT, SIG_IGN );
-		rt_log("%s Interactive REMRT\n", stamp() );
-		rt_log("Listening at port %d\n", pkg_permport);
+		rt_log("%s Interactive REMRT on %s\n", stamp(), ourname );
+		rt_log("%s Listening at port %d\n", stamp(), pkg_permport);
 		clients = (1<<fileno(stdin));
 
 		/* Read .remrtrc file to acquire server info */
@@ -519,9 +520,9 @@ char	**argv;
 		 */
 		rt_log("%s Out of clients\n", stamp());
 	} else {
-		rt_log("%s Automatic REMRT\n", stamp());
-		rt_log("Listening at port %d, reading script on stdin\n",
-			pkg_permport);
+		rt_log("%s Automatic REMRT on %s\n", stamp(), ourname );
+		rt_log("%s Listening at port %d, reading script on stdin\n",
+			stamp(), pkg_permport);
 		clients = 0;
 
 		/* parse command line args for sizes, etc */
@@ -872,6 +873,9 @@ struct timeval	*nowp;
 
 	if( tvdiff( nowp, &last_server_check_time ) < SERVER_CHECK_INTERVAL )
 		return;
+
+	/* Before seeking, note current (brief) status */
+	cd_stat( 0, (char **)0 );
 
 	rt_log("%s Seeking servers to start\n", stamp() );
 	hackers_night = is_hackers_night( nowp );
@@ -1301,8 +1305,10 @@ register struct frame	*fr;
 	/* Always create a file name to write into */
 	if( outputfile )  {
 		sprintf( name, "%s.%d", outputfile, fr->fr_number );
+		fr->fr_tempfile = 0;
 	} else {
 		sprintf( name, "remrt.pix.%d", fr->fr_number );
+		fr->fr_tempfile = 1;
 	}
 	fr->fr_filename = rt_strdup( name );
 
@@ -1407,14 +1413,20 @@ register struct frame *fr;
 		fr->fr_nrays/delta,
 		fr->fr_nrays/fr->fr_cpu );
 
-	/* Write-protect file, to prevent re-computation */
-	if( chmod( fr->fr_filename, 0444 ) < 0 )
-		perror( fr->fr_filename );
-
 	/* Do any after-frame commands */
 	if( rt_vls_strlen( &fr->fr_after_cmd ) > 0 )  {
 		(void)rt_do_cmd( (struct rt_i *)0,
 			RT_VLS_ADDR(&fr->fr_after_cmd), cmd_tab );
+	}
+
+	if( fr->fr_tempfile )  {
+		/* Unlink temp file -- it is in framebuffer */
+		if( unlink( fr->fr_filename ) < 0 )
+			perror( fr->fr_filename );
+	} else {
+		/* Write-protect file, to prevent re-computation */
+		if( chmod( fr->fr_filename, 0444 ) < 0 )
+			perror( fr->fr_filename );
 	}
 
 	destroy_frame( fr );
@@ -1452,6 +1464,10 @@ register struct frame	*fr;
 		FREE_LIST(lp);
 	}
 
+	if( fr->fr_filename )  {
+		rt_free( fr->fr_filename, "filename" );
+		fr->fr_filename = (char *)0;
+	}
 	DEQUEUE_FRAME(fr);
 	FREE_FRAME(fr);
 }
@@ -3373,6 +3389,7 @@ char	**argv;
  *			C D _ F R A M E S
  *
  *  Sumarize frames waiting
+ *	Usage: frames [-v]
  */
 cd_frames( argc, argv )
 int	argc;
@@ -3384,11 +3401,16 @@ char	**argv;
 	rt_log("%s Frames waiting:\n", stamp() );
 	for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
 		CHECK_FRAME(fr);
-		rt_log("%5d\t", fr->fr_number);
-		rt_log("width=%d, height=%d\n",
+		rt_log("%5d\twidth=%d, height=%d\n",
+			fr->fr_number,
 			fr->fr_width, fr->fr_height );
-		if( fr->fr_filename )  rt_log("\tfile=%s\n", fr->fr_filename );
 
+		if( argc <= 1 )  continue;
+		if( fr->fr_filename )  {
+			rt_log("\tfile=%s%s\n",
+				fr->fr_filename,
+				fr->fr_tempfile ? " **TEMPORARY**" : "" );
+		}
 		rt_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
 		pr_list( &(fr->fr_todo) );
 		rt_log("\tcmd=%s\n", RT_VLS_ADDR(&fr->fr_cmd) );
@@ -3753,8 +3775,8 @@ struct command_tab cmd_tab[] = {
 		cd_stop,	1, 1,
 	"reset", "",		"purge frame list of all work",
 		cd_reset,	1, 1,
-	"frames", "",		"summarize waiting frames",
-		cd_frames,	1, 1,
+	"frames", "[-v]",	"summarize waiting frames",
+		cd_frames,	1, 2,
 	"stat", "",		"brief worker status",
 		cd_stat,	1, 1,
 	"status", "",		"full worker status",
