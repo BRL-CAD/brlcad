@@ -116,6 +116,7 @@ body Dm::constructor {_type args} {
     Dm::debug $itk_option(-debug)
     Dm::listen $itk_option(-listen)
     Dm::linewidth $itk_option(-linewidth)
+    Dm::fb_update $itk_option(-fb_update)
 
     # event bindings
     doBindings
@@ -374,38 +375,37 @@ body Dm::get_type {} {
 }
 
 body Dm::fb_active {args} {
-    set len [llength $args]
-
-    if {$len > 1} {
-	return "Usage: $this fb_active \[0|1|2\]"
+    if {$args == ""} {
+	return $itk_option(-fb_active)
     }
 
-    if {$len} {
-	set fba [lindex $args 0]
-	if {$fba < 0 || 2 < $fba} {
-	    return -code error "Usage: $this fb_active \[0|1|2\]"
-	}
-
-	# update saved value
-	set itk_option(-fb_active) $fba
+    if {$args < 0 || 2 < $args} {
+	return -code error "Usage: fb_active \[0|1|2\]"
     }
+
+    # update saved value
+    set itk_option(-fb_active) $args
 }
 
 body Dm::fb_update {args} {
-    set len [llength $args]
-
-    if {$len > 1} {
-	return "Usage: $this fb_update \[0|1\]"
+    if {$args == ""} {
+	return $itk_option(-fb_update)
     }
 
-    if {$len} {
-	set fbu [lindex $args 0]
-	if {$fbu < 0 || 1 < $fbu} {
-	    return -code error "Usage: $this fb_update \[0|1\]"
-	}
+    if {$args < 0 || 1 < $args} {
+	return -code error "Usage: fb_update \[0|1\]"
+    }
 
-	# update saved value
-	set itk_option(-fb_update) $fbu
+    # update saved value
+    set itk_option(-fb_update) $args
+
+    switch $itk_option(-fb_update) {
+	0 {
+	    Dm::observer detach $this
+	}
+	1 {
+	    Dm::observer attach $this
+	}
     }
 }
 
