@@ -1800,6 +1800,16 @@ mat_t		mat;
 			*strp = "V";
 			break;
 		}
+	case ID_SKETCH:
+		{
+			struct rt_sketch_internal *skt = 
+				(struct rt_sketch_internal *)ip->idb_ptr;
+			RT_SKETCH_CK_MAGIC( skt );
+
+			VMOVE( mpt, skt->V );
+			*strp = "V";
+			break;
+		}
 	case ID_NMG:
 		{
 			struct vertex *v;
