@@ -71,7 +71,7 @@ fastf_t		maxangle;	/* value of the cosine of the angle bet. surface normals that
 
 typedef int color[3];
 color	foreground = { 255, 255, 255};
-color	background = { 0, 0, 0};
+color	background = { 0, 0, 1};
 
 /*
  * Flags that set which edges are detected.
@@ -84,6 +84,15 @@ int	detect_ids = 1;
 int	detect_regions = 0;
 int	detect_distance = 1;
 int	detect_normals = 1;
+
+/*
+ * Overlay Mode
+ *
+ * If set, and the fbio points to a readable framebuffer, only
+ * edge pixels are splatted. This allows rtedge to overlay edges
+ * directly rather than having to use pixmerge.
+ */
+int    overlay = 0;
 
 /*
  * Prototypes for the viewedge edge detection functions
@@ -137,6 +146,8 @@ struct bu_structparse view_parse[] = {
 	{"%d", 3, "fg", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
 	{"%d", 3, "background", byteoffset(background),	BU_STRUCTPARSE_FUNC_NULL},
 	{"%d", 3, "bg", byteoffset(background),	BU_STRUCTPARSE_FUNC_NULL},	
+	{"%d", 1, "overlay", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
+	{"%d", 1, "ov", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
 	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -157,7 +168,9 @@ Options:\n\
  -P #               Set number of processors\n\
  -T #/#             Tolerance: distance/angular\n\
  -r                 Report overlaps\n\
- -R                 Do not report overlaps\n";
+ -R                 Do not report overlaps\n\
+ -c                 Auxillary commands\n";
+ 
 
 /*
  *  Called at the start of a run.
@@ -222,6 +235,17 @@ view_2init( struct application *ap )
      */
     max_dist = (cell_width*ARCTAN_87)+2;
 
+    /*
+     * Determine if the framebuffer is readable.
+     */
+    if (overlay == 1) {
+      RGBpixel tmp;
+      
+      if (fb_read(fbp,0,0,tmp,1) < 0) {
+	bu_log ("rt_edge: framebuffer is not readable, cannot overlay.\n");
+	overlay = 0;
+      }
+    }
 }
 
 /* end of each pixel */
@@ -234,11 +258,27 @@ view_eol( struct application *ap )
     int		cpu = ap->a_resource->re_cpu;
 
     bu_semaphore_acquire( BU_SEM_SYSCALL );
-	if( outfp != NULL ) {
-	    fwrite( scanline[cpu], pixsize, per_processor_chunk, outfp );
-	} else if( fbp != FBIO_NULL ) {
-	    fb_write( fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk );
+    if (overlay) {
+      int i;
+      for (i = 0; i < per_processor_chunk; ++i) {
+	if (scanline[cpu][i*3+RED] == foreground[RED] &&
+	    scanline[cpu][i*3+GRN] == foreground[GRN] &&
+	    scanline[cpu][i*3+BLU] == foreground[BLU]) {
+	  /*
+	   * Write this pixel
+	   */
+	  fb_write(fbp, i, ap->a_y, &scanline[cpu][i*3], 1);	  
 	}
+      }
+    } 
+    else {
+      if( outfp != NULL ) {
+	fwrite( scanline[cpu], pixsize, per_processor_chunk, outfp );
+      } 
+      else if( fbp != FBIO_NULL ) {
+	fb_write( fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk );
+      }
+    }
     bu_semaphore_release( BU_SEM_SYSCALL );
 }
 
