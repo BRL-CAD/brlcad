@@ -18,7 +18,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 
 #include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#endif
+#ifdef SYSV
 #include <string.h>
+#endif
 #ifndef cray
 #if defined( VLDSYSV )
 #include <sys/_ioctl.h>
