@@ -591,9 +591,18 @@ vect_t				tree_max;
 
 	case OP_SOLID:
 		{
-			register struct soltab	*stp;
+			register CONST struct soltab	*stp;
 
 			stp = tp->tr_a.tu_stp;
+			RT_CK_SOLTAB(stp);
+			if( stp->st_aradius <= 0 )  {
+				/* Problematic: need to skip this solid.
+				 * XXX Assume origin is within model RPP.
+				 */
+				VSETALL( tree_min, 0 );
+				VSETALL( tree_max, 0 );
+				return(0);
+			}
 
 			if( stp->st_aradius >= INFINITY )  {
 				VSETALL( tree_min, -INFINITY );
