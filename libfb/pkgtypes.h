@@ -22,7 +22,7 @@
 #define	MSG_FBCLEAR	3
 #define	MSG_FBREAD	4
 #define	MSG_FBWRITE	5
-#define	MSG_FBCURSOR	6
+#define	MSG_FBCURSOR	6		/* fb_cursor() */
 #define	MSG_FBWINDOW	7		/* OLD */
 #define	MSG_FBZOOM	8		/* OLD */
 #define	MSG_FBSCURSOR	9		/* OLD */
@@ -37,6 +37,7 @@
 #define	MSG_FBFREE	18
 #define	MSG_FBGETCURSOR	19		/* NEW */
 #define	MSG_FBPOLL	30		/* NEW */
+#define MSG_FBSETCURSOR	31		/* NEW in Release 4.4 */
 
 #define	MSG_DATA	20
 #define	MSG_RETURN	21
