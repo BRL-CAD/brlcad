@@ -79,11 +79,10 @@ RT_EXTERN( union tree *db_mkgift_tree , (struct tree_list *tree_list , int howfa
  *  Import a combination record from a V4 database into internal form.
  */
 int
-rt_comb_v4_import( ip, ep, matrix, tol )
+rt_comb_v4_import( ip, ep, matrix )
 struct rt_db_internal		*ip;
 CONST struct rt_external	*ep;
 CONST matp_t			matrix;		/* NULL if identity */
-CONST struct rt_tol		*tol;
 {
 	union record		*rp;
 	struct tree_list	*tree_list;
@@ -92,7 +91,6 @@ CONST struct rt_tol		*tol;
 	int			i,j;
 	int			node_count;
 
-	RT_CK_TOL( tol );
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 
@@ -151,9 +149,7 @@ CONST struct rt_tol		*tol;
 
 			/* See if disk record is identity matrix */
 			rt_mat_dbmat( diskmat, rp[j+1].M.m_mat );
-			/* XXX There should be rt_mat_is_identity() */
-			/* XXX Could be used in librt/tree.c as well */
-			if( rt_mat_is_equal( diskmat, rt_identity, tol ) )  {
+			if( mat_is_identity( diskmat ) )  {
 				if( matrix == NULL )  {
 					tp->tr_l.tl_mat = NULL;	/* identity */
 				} else {
@@ -405,7 +401,6 @@ char *argv[];
 	struct rt_db_internal	ip;
 	struct rt_comb_internal	*comb;
 	mat_t			identity_mat;
-	struct rt_tol		tol;
 	int			i;
 
 	if( argc < 3 )
@@ -413,12 +408,6 @@ char *argv[];
 		fprintf( stderr , "Usage:\n\t%s db_file object1 object2 ...\n" , argv[0] );
 		exit( 1 );
 	}
-
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
 
 	mat_idn( identity_mat );
 
@@ -444,7 +433,7 @@ char *argv[];
 			rt_log( "db_get_external failed for %s\n" , argv[i] );
 			continue;
 		}
-		if( rt_comb_v4_import( &ip , &ep , NULL, &tol ) < 0 )  {
+		if( rt_comb_v4_import( &ip , &ep , NULL ) < 0 )  {
 			rt_log("import of %s failed\n", dp->d_namep);
 			continue;
 		}
