@@ -655,8 +655,7 @@ int	menux, menuy;
 		default :
 			MvCursor( 1, LI-1 );
 			(void) fflush( stdout );
-			(void) fprintf( stderr,
-					"Type 'd' down, 'u' up, 'h' help, <space> or <return> to select, 'q' no selection." );
+			prnt_Scroll( "Type 'd' down, 'u' up, 'h' help, <space> or <return> to select, 'q' no selection." );
 			break;
 			}
 		(void) fflush( stdout );
