@@ -152,7 +152,7 @@ register struct application *ap;
 	unsigned char	dist[8];	/* pixel distance (in IEEE format) */
 
 	if (rpt_dist)
-	    htond(dist, &(ap->a_dist), 1);
+	    htond(dist, (unsigned char *)&(ap->a_dist), 1);
 
 	if( ap->a_user == 0 )  {
 		/* Shot missed the model, don't dither */
