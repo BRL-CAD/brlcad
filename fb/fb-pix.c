@@ -116,8 +116,13 @@ char **argv;
 	if( (fbp = fb_open( framebuffer, width, height )) == NULL )
 		exit(12);
 
+	if( height > fb_getheight(fbp) )
+		height = fb_getheight(fbp);
+	if( width > fb_getwidth(fbp) )
+		width = fb_getwidth(fbp);
+
 	if( !inverse )  {
-		/*  Regular -- draw bottom to top */
+		/*  Regular -- read bottom to top */
 		for( y=0; y < height; y++ )  {
 			fb_read( fbp, 0, y, scanline, width );
 			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
@@ -126,7 +131,7 @@ char **argv;
 			}
 		}
 	}  else  {
-		/*  Inverse -- draw top to bottom */
+		/*  Inverse -- read top to bottom */
 		for( y = height-1; y >= 0; y-- )  {
 			fb_read( fbp, 0, y, scanline, width );
 			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
