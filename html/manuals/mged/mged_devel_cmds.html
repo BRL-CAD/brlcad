@@ -38,76 +38,63 @@ mouse button or by using the <a href="mged_cmds.html#M">M</a> command.
 </DD>
 <HR>
 
-<DT><a NAME="cmd_close"><B>cmd_close</B> <I>id</I></DT>
-<DD>This command releases <I>id</I>'s internal data structures.
-     The parameter, <I>id</I>, refers to a command window.
+<DT><a NAME="cmd_win"><B>cmd_win</B> <I>open</I> | <I>close</I> | <I>set</I> | <I>get</I></DT>
+<DD>This command is used to create, destroy and/or manipulate internal command
+window structures. <I>Cmd_win</I> accepts four different subcommands to accomplish
+this task.
 
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>cmd_close my_id</b>
-	    <br> -- closes the command window <I>my_id</I>
-       </DD>
-     </DL>
+	<ul>
+	<li><DT><B>open</B> <I>id</I></DT>
+	<DD>This subcommand is used to create the internal data structures
+		for a new command window. If <I>id</I> is already in use,
+		nothing is changed.
+
+	     <DL>
+	       <DT><big>Examples:</big></DT>
+	       <DD>mged> <b>cmd_open my_id</b>
+		    <br> -- create a command window named <I>my_id</I>
+	       </DD>
+	     </DL>
+	</DD>
+	<li><DT><B>close</B> <I>id</I></DT>
+	<DD>This subcommand releases <I>id</I>'s (i.e. <I>id</I> is a
+	command window) internal data structures. If the referenced
+	command window is <a href="#tie">tied</a> to a display
+	manager, then that association is also removed.
+
+	     <DL>
+	       <DT><big>Examples:</big></DT>
+	       <DD>mged> <b>cmd_close my_id</b>
+		    <br> -- closes the command window <I>my_id</I>
+	       </DD>
+	     </DL>
+	</DD>
+	<li><DT><B>set</B> <I>id</I></DT>
+	<DD>This subcommand sets the current command window to <I>id</I>. If this
+	     command window is <a href="#tie">tied</a> to a display manager, that display
+	     manager becomes the current display manager.
+
+	     <DL>
+	       <DT><big>Examples:</big></DT>
+	       <DD>mged> <b>cmd_set my_id</b>
+		    <br> -- <I>my_id</I> becomes the current command window
+	       </DD>
+	     </DL>
+	</DD>
+	<li><DT><B>get</B></DT>
+	<DD>This subcommand returns the id of the current command window.
+	     <DL>
+	       <DT><big>Examples:</big></DT>
+	       <DD>mged> <b>cmd_get</b>
+		<br>me
+		<br> -- the current command window is <I>me</I>.
+	       </DD>
+	     </DL>
+	</DD>
+	</ul>
 </DD>
 <HR>
 
-<DT><a NAME="cmd_get"><B>cmd_get</B></DT>
-<DD>This command returns information about the current command
-     window. More specifically, it returns the following:
-     <UL>
-       <LI>the display manager associated with the current command window
-       <LI>the display manager that is sharing its view state with the above display manager
-       <LI>the id of the command window
-       <LI>a list of command window ids associated with the current command window
-	    (Note: a command window is considered to be associated with another
-	    command window if each is being tied to some
-	    display manager and these display managers are sharing their
-	    view state.)
-     </UL>
-     This command was designed to be used within a Tcl script.
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>cmd_get</b>
-	    <br><b>.my_window .their_window me {{them} {me} }</b>
-	    <br> -- the current command window is <I>me</I> and is
-	    <a href="#tie">tied</a> to <I>.my_window</I>.
-	    The display window <I>.their_window</I> is sharing its
-	    view state with <I>.my_window</I>.
-	    Also, <I>.their_window</I> is sharing its view state with the
-	    display manager window that is tied to <I>them</I>.
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="cmd_init"><B>cmd_init</B> <I>id</I></DT>
-<DD>This command is used to create the internal data structures
-     for a new command window.
-     This command was designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>cmd_init my_id</b>
-	    <br> -- create another command window named <I>my_id</I>
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="cmd_set"><B>cmd_set</B> <I>id</I></DT>
-<DD>This command sets the current command window to <I>id</I>. If this
-     command window is associated with a display manager, that display
-     manager becomes the current display manager. This command was
-     designed to be used within a Tcl script.
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>cmd_set my_id</b>
-	    <br> -- <I>my_id</I> becomes the current command window
-       </DD>
-     </DL>
-</DD>
-<HR>
-     
 <DT><a NAME="get_comb"><B>get_comb</B> <I>comb_name</I></DT>
 
 <DD> The ``get_comb'' command returns a Tcl list of information about
@@ -123,7 +110,6 @@ mouse button or by using the <a href="mged_cmds.html#M">M</a> command.
      <br>
      <I>NAME REGION COLOR SHADER INHERIT BOOLEAN_FORMULA</I>
      </center>
-     <br>This command was designed to be used within a Tcl/Tk interface script.
      
      <DL>
        <DT><big>Examples:</big></DT>
@@ -142,7 +128,7 @@ mouse button or by using the <a href="mged_cmds.html#M">M</a> command.
 
 <DT><a NAME="get_dm_list"><B>get_dm_list</B></DT>
 
-<DD> The ``get_dm_list'' returns a list of all display managers.
+<DD> The ``get_dm_list'' command returns a list of all display managers.
 </DD>
 <HR>
 
@@ -187,6 +173,8 @@ convert it to view coordinates (local units).
 <DT><a NAME="gui_destroy"><B>gui_destroy</B> <I>id</I></DT>
 
 <DD>Destroy the GUI (Graphical User Interface) represented by <I>id</I>.
+Note that this GUI must have been created with the
+<a href="mged_cmds.html#gui">gui</a> command.
 </DD>
 <HR>
 
@@ -452,7 +440,8 @@ command-line alone.
 
 <DT><a NAME="tie"><B>tie</B> [[<I>-u</I>] <I>command_window</I> [<I>display_window</I>]]</DT>
 
-<DD> The ``tie'' command is used to create (or destroy with the <b>-u</b> option) an association between
+<DD> The ``tie'' command is used to create (or untie/destroy with the <b>-u</b> option)
+     an association between
      a command window and a display window. When there exists such an
      association, all commands entered
      from the command window will be directed at the
@@ -461,22 +450,21 @@ command-line alone.
      a Tcl/Tk interface window <a href="mged_cmds.html#gui"> created with <I>gui</I> </a>.
      The <I>display_window</I> is specified with its Tcl/Tk pathname.
      If no parameters are given, a listing of the current
-     <I>command_window</I>/<I>display_window</I> associations is returned.
-     If only the <I>command_window</I> is given, the <I>command_window</I>/<I>display_window</I>
-     association is returned. If both parameters are given, the
+     <I>command_window</I>/<I>display_window</I> pairs is returned.
+     If only the <I>command_window</I> is given, the <I>display_window</I>
+     associated with <I>command_window</I> is returned. If both parameters are given, the
      <I>command_window</I>/<I>display_window</I> association is created.
 
      <DL>
        <DT><big>Examples:</big></DT>
-       <DD>mged> <b>tie my_id .my_window</b>
-	    <br> -- Create the association between my_id and .my_window
-	    <br>mged> <b>tie my_id
-	    <br>my_id ---> .my_window</b>
-	    <br> -- list the command_window/display_window association for my_id
-	    <br>mged> <b>tie
-	    <br>my_id ---> .my_window
-	    <br>mged ---></b>
-	    <br> -- list all of the command_window/display_window associations
+       <DD>mged> <b>tie my_id .my_display_window</b>
+	    <br> -- Create the association between my_id and .my_display_window
+	    <br>mged> <b>tie my_id</b>
+	    <br>.my_display_window
+	    <br> -- returns the display window associated with my_id
+	    <br>mged> <b>tie</b>
+	    <br>{my_id .my_window} {mged {}}
+	    <br> -- list all of the command_window/display_window pairs
 	    <br>
        </DD>
      </DL>
