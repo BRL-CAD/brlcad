@@ -512,6 +512,7 @@ if test "x$CFLAGS" = "x" ; then
 	CFLAGS=" "
 fi
 
+AC_C_CHAR_UNSIGNED
 
 dnl **************************
 dnl *** Check for programs ***
