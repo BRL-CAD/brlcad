@@ -92,6 +92,22 @@ struct rt_ell_internal  {
 #define RT_ELL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_ELL_INTERNAL_MAGIC,"rt_ell_internal")
 
 /*
+ *      ID_SUPERELL
+ */
+struct rt_superell_internal {
+	long    magic;
+	point_t v;
+	vect_t  a;
+	vect_t  b;
+	vect_t  c;
+  double n;
+  double e;
+};
+#define RT_SUPERELL_INTERNAL_MAGIC      0xff93bb23
+#define RT_SUPERELL_CK_MAGIC(_p)        BU_CKMAG(_p,RT_SUPERELL_INTERNAL_MAGIC,"rt_superell_internal")
+
+
+/*
  *	ID_ARB8
  *
  *  The internal (in memory) form of an ARB8 -- 8 points in space.
@@ -158,11 +174,14 @@ struct rt_pg_internal {
 
 /* ID_BSPLINE */
 #ifdef NMG_H				/* Only if we have seen struct face_g_snurb */
+#ifndef SEEN_RT_NURB_INTERNAL
+#define SEEN_RT_NURB_INTERNAL
 struct rt_nurb_internal {
 	long		magic;
 	int	 	nsrf;		/* number of surfaces */
 	struct face_g_snurb **srfs;	/* The surfaces themselves */
 };
+#endif
 
 #define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
 #define RT_NURB_CK_MAGIC( _p) BU_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");

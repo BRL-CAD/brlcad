@@ -133,8 +133,8 @@ struct dm {
   int (*dm_drawLine2D)();	/* formerly dmr_2d_line */
   int (*dm_drawPoint2D)();
   int (*dm_drawVList)();	/* formerly dmr_object */
-  int (*dm_setFGColor)();
-  int (*dm_setBGColor)();
+  int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict);
+  int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
   int (*dm_configureWin)();
   int (*dm_setWinBounds)();

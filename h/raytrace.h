@@ -526,16 +526,24 @@ struct soltab {
 #define ID_SUBMODEL	28	/* Instanced submodel */
 #define	ID_CLINE	29	/* FASTGEN4 CLINE solid */
 #define	ID_BOT		30	/* Bag o' triangles */
-#define	ID_MAX_SOLID	30	/* Maximum defined ID_xxx for solids */
+
+  /* Add a new primitive id above here
+   * XXX must update the non-geometric object id's below XXX 
+   */
+#define	ID_MAX_SOLID	31	/* Maximum defined ID_xxx for solids */
 
 /*
  *	Non-geometric objects
  */
-#define ID_COMBINATION	31	/* Combination Record */
-#define ID_BINEXPM	32	/* Experimental binary */
-#define ID_BINUNIF	33	/* Uniform-array binary */
-#define ID_BINMIME	34	/* MIME-typed binary */
-#define ID_MAXIMUM	35	/* Maximum defined ID_xxx value */
+#define ID_COMBINATION	32	/* Combination Record */
+#define ID_BINEXPM	33	/* Experimental binary */
+#define ID_BINUNIF	34	/* Uniform-array binary */
+#define ID_BINMIME	35	/* MIME-typed binary */
+
+/* XXX - superellipsoid should be 31, but is not v5 compatible */
+#define ID_SUPERELL	36	/* Superquadratic ellipsoid */
+
+#define ID_MAXIMUM	37	/* Maximum defined ID_xxx value */
 
 /*
  *			M A T E R _ I N F O
@@ -1230,7 +1238,7 @@ struct dg_obj {
 	struct dg_qray_color	dgo_qray_even_color;
 	struct dg_qray_color	dgo_qray_void_color;
 	struct dg_qray_color	dgo_qray_overlap_color;
-#if USE_SURVICE_MODS
+#if defined(USE_SURVICE_MODS)
 	int			dgo_shaded_mode;	/* 1 - draw bots shaded by default */
 #endif
 };
@@ -2732,7 +2740,7 @@ struct rt_tree_array *db_flatten_tree(
 	struct rt_tree_array	*rt_tree_array,
 	union tree		*tp,
 	int			op,
-	int			free,
+	int			avail,
 	struct resource		*resp);
 int rt_comb_import4(
 	struct rt_db_internal		*ip,
@@ -3166,7 +3174,7 @@ int rt_generic_xform(
 	struct rt_db_internal	*op,
 	const mat_t		mat,
 	struct rt_db_internal	*ip,
-	int			free,
+	int			avail,
 	struct db_i		*dbip,
 	struct resource		*resp);
 

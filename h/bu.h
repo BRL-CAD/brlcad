@@ -42,6 +42,10 @@
 
 #ifndef SEEN_BU_H
 #define SEEN_BU_H seen
+
+/* Included for Tcl_Interp definition */
+#include "tcl.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -174,13 +178,13 @@ extern char	*realloc();
 #else
 #  define BU_CKMAG(_ptr, _magic, _str)	\
 	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
-	    *((long *)(_ptr)) != (_magic) )  { \
-		bu_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
+	    *((unsigned long *)(_ptr)) != (unsigned long)(_magic) )  { \
+		bu_badmagic( (long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
 	}
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
 	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
 	     *((long *)(_ptr)) != (_magic) )  { \
-		bu_badmagic_tcl( (_interp), (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
+		bu_badmagic_tcl( (_interp), (long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
 		return TCL_ERROR; \
 	}
 #endif
@@ -305,16 +309,16 @@ extern char	*realloc();
 extern int bu_cv_itemlen(int cookie);
 extern int bu_cv_cookie(char *in);
 extern int bu_cv_optimize(int cookie);
-extern int bu_cv_w_cookie(genptr_t, int, int, genptr_t, int, int);
+extern int bu_cv_w_cookie(genptr_t, int, size_t, genptr_t, int, int);
 
-extern int bu_cv_ntohss(signed short *, int, genptr_t, int);
-extern int bu_cv_ntohus(unsigned short *, int, genptr_t, int);
-extern int bu_cv_ntohsl(signed long int *, int, genptr_t, int);
-extern int bu_cv_ntohul(unsigned long int *, int, genptr_t, int);
-extern int bu_cv_htonss(genptr_t, int, signed short *, int);
-extern int bu_cv_htonus(genptr_t, int, unsigned short *, int);
-extern int bu_cv_htonsl(genptr_t, int, long *, int);
-extern int bu_cv_htonul(genptr_t, int, unsigned long *, int);
+extern int bu_cv_ntohss(signed short *, size_t, genptr_t, int);
+extern int bu_cv_ntohus(unsigned short *, size_t, genptr_t, int);
+extern int bu_cv_ntohsl(signed long int *, size_t, genptr_t, int);
+extern int bu_cv_ntohul(unsigned long int *, size_t, genptr_t, int);
+extern int bu_cv_htonss(genptr_t, size_t, signed short *, int);
+extern int bu_cv_htonus(genptr_t, size_t, unsigned short *, int);
+extern int bu_cv_htonsl(genptr_t, size_t, long *, int);
+extern int bu_cv_htonul(genptr_t, size_t, unsigned long *, int);
 
 /*
  * Theses should be moved to a header file soon.
@@ -410,7 +414,7 @@ struct bu_list {
 
 typedef struct bu_list bu_list_t;
 
-struct bu_list *bu_list_new();
+struct bu_list *bu_list_new(void);
 struct bu_list *bu_list_pop( struct bu_list *hp );
 
 #define BU_LIST_CLOSE( hp ) { \
@@ -1478,11 +1482,11 @@ extern void			bu_avs_print( const struct bu_attribute_value_set *avp, const char
 extern void bu_avs_add_nonunique( struct bu_attribute_value_set *avsp, char *attribute, char *value );
 
 /* badmagic.c */
-BU_EXTERN(void			bu_badmagic, (const long *ptr, long magic,
+BU_EXTERN(void			bu_badmagic, (const long *ptr, unsigned long magic,
 				const char *str, const char *file, int line));
 
 /* bitv.c */
-BU_EXTERN(struct bu_bitv *	bu_bitv_new, (int nbits));
+BU_EXTERN(struct bu_bitv *	bu_bitv_new, (unsigned int nbits));
 BU_EXTERN(void			bu_bitv_clear, (struct bu_bitv *bv));
 BU_EXTERN(void			bu_bitv_or, (struct bu_bitv *ov,
 				const struct bu_bitv *iv));
@@ -1524,7 +1528,7 @@ BU_EXTERN(int		bu_color_to_hsv_floats,	(struct bu_color *cp,
 /* convert.c*/
 BU_EXTERN(int bu_cv_cookie, (char *in));
 BU_EXTERN(int bu_cv_optimize, (int cookie));
-BU_EXTERN(int bu_cv_w_cookie, (genptr_t out, int outcookie, int size,
+BU_EXTERN(int bu_cv_w_cookie, (genptr_t out, int outcookie, size_t size,
 			     genptr_t in,  int incookie,  int count));
 
 /* file.c */
@@ -1552,7 +1556,7 @@ BU_EXTERN(int			bu_getopt, (int nargc, char * const nargv[],
 /* hist.c */
 BU_EXTERN(void			bu_hist_free, (struct bu_hist *histp));
 BU_EXTERN(void			bu_hist_init, (struct bu_hist *histp,
-				fastf_t min, fastf_t max, int nbins));
+				fastf_t min, fastf_t max, unsigned int nbins));
 BU_EXTERN(void			bu_hist_range, (struct bu_hist *hp,
 				fastf_t low, fastf_t high));
 BU_EXTERN(void			bu_hist_pr, (const struct bu_hist *histp,
@@ -1667,10 +1671,10 @@ BU_EXTERN(void			bu_struct_wrap_buf,
 				(struct bu_external *ext, genptr_t buf));
 BU_EXTERN(int			bu_struct_parse, (const struct bu_vls *in_vls,
 				const struct bu_structparse *desc, 
-				char *base));
+				const char *base));
 BU_EXTERN(void			bu_struct_print, ( const char *title,
-				const struct bu_structparse	*parsetab,
-				const char			*base));
+				const struct bu_structparse *parsetab,
+				const char *base));
 BU_EXTERN(void			bu_vls_struct_print, (struct bu_vls *vls,
 				const struct bu_structparse *sdp,
 				const char *base));
@@ -1834,7 +1838,7 @@ BU_EXTERN(struct bu_vls *	bu_vls_vlsinit, () );
 BU_EXTERN(char *		bu_vls_addr, (const struct bu_vls *vp) );
 BU_EXTERN(char *		bu_vls_strdup, (const struct bu_vls *vp) );
 BU_EXTERN(char *		bu_vls_strgrab, (struct bu_vls *vp) );
-BU_EXTERN(void			bu_vls_extend, (struct bu_vls *vp, int extra) );
+BU_EXTERN(void			bu_vls_extend, (struct bu_vls *vp, unsigned int extra) );
 BU_EXTERN(void			bu_vls_setlen, (struct bu_vls *vp, int newlen));
 BU_EXTERN(int			bu_vls_strlen, (const struct bu_vls *vp) );
 BU_EXTERN(void			bu_vls_trunc, (struct bu_vls *vp, int len) );
@@ -1921,26 +1925,100 @@ extern void bu_observer_free(struct bu_observer *);
 
 /* bu_tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
-extern void bu_badmagic_tcl();
-extern void bu_structparse_get_terse_form();
-extern int bu_structparse_argv();
-extern int bu_tcl_mem_barriercheck();
-extern int bu_tcl_ck_malloc_ptr();
-extern int bu_tcl_malloc_len_roundup();
-extern int bu_tcl_prmem();
-extern int bu_tcl_printb();
-extern int bu_get_value_by_keyword();
-extern int bu_get_all_keyword_values();
-extern int bu_tcl_rgb_to_hsv();
-extern int bu_tcl_hsv_to_rgb();
-extern int bu_tcl_key_eq_to_key_val();
-extern int bu_tcl_shader_to_key_val();
-extern int bu_tcl_key_val_to_key_eq();
-extern int bu_tcl_shader_to_key_eq();
-extern int bu_tcl_brlcad_path();
-extern int bu_tcl_units_conversion();
-extern void bu_tcl_setup();
-extern int Bu_Init();
+extern void bu_badmagic_tcl(Tcl_Interp	*interp,
+			    const long	*ptr,
+			    unsigned long	magic,
+			    const char	*str,
+			    const char	*file,
+			    int		line);
+
+extern void bu_structparse_get_terse_form(Tcl_Interp	*interp,
+					  register struct bu_structparse *sp);
+
+extern int bu_structparse_argv(Tcl_Interp			*interp,
+			       int				argc,
+			       char				**argv,
+			       const struct bu_structparse	*desc,
+			       char				*base);
+
+extern int bu_tcl_mem_barriercheck(ClientData	clientData,
+				   Tcl_Interp	*interp,
+				   int		argc,
+				   char		**argv);
+
+extern int bu_tcl_ck_malloc_ptr(ClientData		clientData,
+				Tcl_Interp		*interp,
+				int		argc,
+				char		**argv);
+
+extern int bu_tcl_malloc_len_roundup(ClientData	clientData,
+				     Tcl_Interp	*interp,
+				     int		argc,
+				     char		**argv);
+
+extern int bu_tcl_prmem(ClientData	clientData,
+			Tcl_Interp	*interp,
+			int	argc,
+			char	**argv);
+
+extern int bu_tcl_printb(ClientData	clientData,
+			 Tcl_Interp	*interp,
+			 int		argc,
+			 char		**argv);
+
+extern int bu_get_value_by_keyword(ClientData	clientData,
+				   Tcl_Interp	*interp,
+				   int		argc,
+				   char		**argv);
+
+extern int bu_get_all_keyword_values(ClientData	clientData,
+				     Tcl_Interp	*interp,
+				     int		argc,
+				     char		**argv);
+
+extern int bu_tcl_rgb_to_hsv(ClientData	clientData,
+			     Tcl_Interp	*interp,
+			     int		argc,
+			     char		**argv);
+
+extern int bu_tcl_hsv_to_rgb(ClientData	clientData,
+			     Tcl_Interp	*interp,
+			     int		argc,
+			     char		**argv);
+
+extern int bu_tcl_key_eq_to_key_val(ClientData	clientData,
+				    Tcl_Interp	*interp,
+				    int		argc,
+				    char		**argv);
+
+extern int bu_tcl_shader_to_key_val(ClientData	clientData,
+				    Tcl_Interp	*interp,
+				    int		argc,
+				    char		**argv);
+
+extern int bu_tcl_key_val_to_key_eq(ClientData	clientData,
+				    Tcl_Interp	*interp,
+				    int		argc,
+				    char		**argv);
+
+extern int bu_tcl_shader_to_key_eq(ClientData	clientData,
+				   Tcl_Interp	*interp,
+				   int		argc,
+				   char		**argv);
+
+extern int bu_tcl_brlcad_path(ClientData	clientData,
+			      Tcl_Interp	*interp,
+			      int		 argc,
+			      char		**argv);
+
+extern int bu_tcl_units_conversion(ClientData	clientData,
+				   Tcl_Interp	*interp,
+				   int		argc,
+				   char		**argv);
+
+extern void bu_tcl_setup(Tcl_Interp *interp);
+
+extern int Bu_Init(Tcl_Interp *interp);
 
 /* lex.c */
 #define BU_LEX_ANY	0	/* pseudo type */
@@ -1992,6 +2070,7 @@ void bu_mro_set( struct bu_mro *mrop, const char *string );
 void bu_mro_init( struct bu_mro *mrop );
 void bu_mro_free( struct bu_mro *mrop );
 
+
 /* hash.c */
 struct bu_hash_entry {
 	long magic;
@@ -2029,7 +2108,7 @@ struct bu_hash_entry *bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl,
 					  unsigned char *key,
 					  int key_len,
 					  struct bu_hash_entry **prev,
-					  unsigned long *index );
+					  unsigned long *index2 );
 void bu_set_hash_value( struct bu_hash_entry *hsh_entry, unsigned char *value );
 unsigned char *bu_get_hash_value( struct bu_hash_entry *hsh_entry );
 struct bu_hash_entry *bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new_entry );

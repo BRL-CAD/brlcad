@@ -587,7 +587,7 @@ struct vertexuse_a_cnurb {
 #define NMG_GETSTRUCT(p,str)	BU_GETSTRUCT(p,str)
 
 
-#if __STDC__ && !alliant && !apollo
+#if __STDC__ && !defined(alliant) && !defined(apollo)
 # define NMG_FREESTRUCT(ptr, str) \
 	{ bzero((char *)(ptr), sizeof(struct str)); \
 	  bu_free((char *)(ptr), "freestruct " #str); }

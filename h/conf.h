@@ -6,4 +6,3 @@
 #endif
 
 #endif /* CONF_H */
-

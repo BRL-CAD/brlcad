@@ -151,6 +151,7 @@ union record  {
 #define EHY	29	/* Elliptical Hyperboloid */
 #define ETO	30	/* Elliptical Torus */
 #define GRP	31	/* Grip pseudo solid */
+#define SUPERELL 32     /* Superquadtratic Ellipsoid */
 		char	s_name[NAMESIZE];	/* unique name */
 		short	s_cgtype;		/* COMGEOM solid type */
 #define RPP	1	/* axis-aligned rectangular parallelopiped */
@@ -192,6 +193,13 @@ union record  {
 #define s_ell_A s_values[3]
 #define s_ell_B s_values[6]
 #define s_ell_C s_values[9]
+
+#define s_superell_V s_values[0]
+#define s_superell_A s_values[3]
+#define s_superell_B s_values[6]
+#define s_superell_C s_values[9]
+#define s_superell_n s_values[12]
+#define s_superell_e s_values[13]
 
 #define s_half_N s_values[0]
 #define s_half_d s_values[3]
