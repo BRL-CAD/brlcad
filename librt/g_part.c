@@ -437,22 +437,25 @@ struct seg		*seghead;
 #define HRAD_PRIME	(part->part_int.part_hrad / part->part_int.part_vrad)
 		m = HRAD_PRIME - VRAD_PRIME;
 
+		/* This quadratic has had a factor of 2 divided out of "b"
+		 * throughout.  More efficient, but the same answers.
+		 */
 		a = dprime[X]*dprime[X] + dprime[Y]*dprime[Y] -
 			(msq = m*m) * dprime[Z]*dprime[Z];
-		b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y] -
+		b = dprime[X]*pprime[X] + dprime[Y]*pprime[Y] -
 			msq * dprime[Z]*pprime[Z] -
-			m * VRAD_PRIME * dprime[Z] );
+			m * VRAD_PRIME * dprime[Z];
 		c = pprime[X]*pprime[X] + pprime[Y]*pprime[Y] -
 			msq * pprime[Z]*pprime[Z] -
 			2 * m * VRAD_PRIME * pprime[Z] -
 			VRAD_PRIME * VRAD_PRIME;
 
-		if( (root = b*b - 4 * a * c) <= 0 )
+		if( (root = b*b - a * c) <= 0 )
 			goto check_hemispheres;
 		root = sqrt(root);
 
-		k1 = (root-b) * 0.5 / a;
-		k2 = (root+b) * (-0.5 / a);
+		k1 = (root-b) / a;
+		k2 = -(root+b) / a;
 	}
 
 	/*
@@ -509,16 +512,14 @@ check_hemispheres:
 		}
 		root = sqrt(root);
 		t = b - root;
-		/* Check for intersect in desired part of sphere */
-		VJOIN1( hitp->hit_vpriv, pprime, t, dprime );	/* hit' */
-		if( hitp->hit_vpriv[Z] <= 0.0 )  {
+		/* see if hit'[Z] is below end of cylinder */
+		if( pprime[Z] + t * dprime[Z] <= 0.0 )  {
 			hitp->hit_dist = t;
 			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
 		t = b + root;
-		VJOIN1( hitp->hit_vpriv, pprime, t, dprime );	/* hit' */
-		if( hitp->hit_vpriv[Z] <= 0.0 )  {
+		if( pprime[Z] + t * dprime[Z] <= 0.0 )  {
 			hitp->hit_dist = t;
 			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
@@ -558,15 +559,13 @@ check_h:
 		}
 		root = sqrt(root);
 		t = b - root;
-		VJOIN1( hitp->hit_vpriv, pprime, t, dprime );	/* hit' */
-		if( hitp->hit_vpriv[Z] >= 1.0 )  {
+		if( pprime[Z] + t * dprime[Z] >= 1.0 )  {
 			hitp->hit_dist = t;
 			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
 		t = b + root;
-		VJOIN1( hitp->hit_vpriv, pprime, t, dprime );	/* hit' */
-		if( hitp->hit_vpriv[Z] >= 1.0 )  {
+		if( pprime[Z] + t * dprime[Z] >= 1.0 )  {
 			hitp->hit_dist = t;
 			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
