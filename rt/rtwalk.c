@@ -83,7 +83,7 @@ double		max_dist_togo;
 
 extern int hit(), miss();
 
-FILE		*plotfp = stdout;
+FILE		*plotfp;
 FILE		*outfp = NULL;
 
 void		proj_goal();
@@ -201,6 +201,7 @@ char **argv;
 		perror("rtwalk.mats");
 		exit(1);
 	}
+	plotfp = stdout;
 
 	/* Plot all of the solids */
 	if( rdebug > 0 )  {
