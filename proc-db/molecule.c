@@ -140,21 +140,24 @@ int	sph_type;
 	struct sphere * new = (struct sphere *)
 	    malloc( sizeof ( struct sphere) );
 	char nm[128], nm1[128];
-	mat_t m;
 	unsigned char rgb[3];
-
-	bn_mat_idn( m);
+	struct wmember	reg_head;
 
 	rgb[0] = atom_list[sph_type].red;
 	rgb[1] = atom_list[sph_type].green;
 	rgb[2] = atom_list[sph_type].blue;
 
-	sprintf(nm, "SPH.%d", id );
-	(void)mk_addmember( nm, &head, WMOP_UNION );
 	sprintf(nm1, "sph.%d", id );
 	mk_sph( stdout, nm1, center, rad );
-	mk_comb( stdout, nm, 1, 1, matname, matparm, rgb, 0 );
-	mk_memb( stdout, nm1, m, WMOP_UNION);
+
+	/* Create a region nm to contain the solid nm1 */
+	BU_LIST_INIT( &reg_head.l );
+	(void)mk_addmember( nm1, &reg_head, WMOP_UNION );
+	sprintf(nm, "SPH.%d", id );
+	mk_lcomb( stdout, nm, &reg_head, 1, matname, matparm, rgb, 0 );
+
+	/* Include this region in the larger group */
+	(void)mk_addmember( nm, &head, WMOP_UNION );
 
 	new->next = ( struct sphere *)0;
 	new->s_id = id;
@@ -179,11 +182,9 @@ int sp1, sp2;
 	struct sphere * s1, *s2, *s_ptr;
 	point_t base;
 	vect_t height;
-	mat_t m;
 	char nm[128], nm1[128];
 	unsigned char rgb[3];
-
-	bn_mat_idn( m );
+	struct wmember reg_head;
 
 	s1 = s2 = (struct sphere *) 0;
 
@@ -203,8 +204,6 @@ int sp1, sp2;
 	VSUB2( height, s2->s_center, s1->s_center );
 
 	sprintf( nm, "bond.%d.%d", sp1, sp2);
-	sprintf( nm1, "BOND.%d.%d", sp1, sp2);
-	(void)mk_addmember( nm1, &head, WMOP_UNION );
 
 	rgb[0] = 191;
 	rgb[1] = 142;
@@ -218,9 +217,13 @@ int sp1, sp2;
 	mk_rcc( stdout, nm, base, height, s1->s_rad * 0.5 );
 #endif
 
-	mk_comb( stdout, nm1, 3, 1, matname, matparm, rgb, 0 );
-	mk_memb( stdout, nm, m, WMOP_UNION);
-	mk_memb( stdout, s1->s_name, m, WMOP_SUBTRACT);
-	mk_memb( stdout, s2->s_name, m, WMOP_SUBTRACT);
+	BU_LIST_INIT( &reg_head.l );
+	(void)mk_addmember( nm, &reg_head, WMOP_UNION );
+	(void)mk_addmember( s1->s_name, &reg_head, WMOP_SUBTRACT );
+	(void)mk_addmember( s2->s_name, &reg_head, WMOP_SUBTRACT );
+	sprintf( nm1, "BOND.%d.%d", sp1, sp2);
+	mk_lcomb( stdout, nm1, &reg_head, 1, matname, matparm, rgb, 0 );
+	(void)mk_addmember( nm1, &head, WMOP_UNION );
+
 	return(0);		/* OK */
 }
