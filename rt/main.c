@@ -3,8 +3,10 @@
  *
  *  Ray Tracing main program, using RT library.
  *  Invoked by MGED for quick pictures.
- *  Is linked with each of three "back ends" (view.c, viewpp.c, viewray.c)
- *  to produce three executable programs:  rt, rtpp, rtray.
+ *  Is linked with each of several "back ends":
+ *	view.c, viewpp.c, viewray.c, viewcheck.c, etc
+ *  to produce different executable programs:
+ *	rt, rtpp, rtray, rtcheck, etc.
  *
  *  Author -
  *	Michael John Muuss
@@ -53,6 +55,7 @@ double		azimuth, elevation;
 int		lightmodel;		/* Select lighting model */
 mat_t		view2model;
 mat_t		model2view;
+extern int	use_air;		/* Handling of air in librt */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
@@ -105,8 +108,11 @@ register char **argv;
 	register int c;
 	register int i;
 
-	while( (c=getopt( argc, argv, "E:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iI" )) != EOF )  {
+	while( (c=getopt( argc, argv, "E:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:" )) != EOF )  {
 		switch( c )  {
+		case 'U':
+			use_air = atoi( optarg );
+			break;
 		case 'I':
 			interactive = 1;
 			break;
@@ -320,6 +326,7 @@ char **argv;
 	}
 	ap.a_rt_i = rtip;
 	fprintf(stderr, "db title:  %s\n", idbuf);
+	rtip->useair = use_air;
 
 	/* 
 	 *  Initialize application.
