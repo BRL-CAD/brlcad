@@ -32,6 +32,8 @@
  *
  */
 
+#include <sys/time.h>
+#include <time.h>
 #include "conf.h"
 #include "tcl.h"
 
