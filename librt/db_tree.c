@@ -634,6 +634,15 @@ struct combined_tree_state	**region_start_statepp;
 			*tp = *subtree;	/* struct copy */
 			db_free_tree( tmp );
 			RT_CK_TREE(tp);
+		} else {
+			/* Processing of this leaf failed, NOP it out. */
+			if( tp->tr_l.tl_mat )  {
+				rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+				tp->tr_l.tl_mat = NULL;
+			}
+			rt_free( tp->tr_l.tl_name, "tl_name" );
+			tp->tr_l.tl_name = NULL;
+			tp->tr_op = OP_NOP;
 		}
 		DB_FULL_PATH_POP(pathp);
 		break;
