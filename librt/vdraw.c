@@ -106,14 +106,17 @@ Acknowledgements:
 	BU_LIST_NOT_HEAD(p,hp);		\
 	(p)=BU_LIST_PLAST(structure,p)
 
-HIDDEN int vdraw_write_tcl();
-HIDDEN int vdraw_insert_tcl();
-HIDDEN int vdraw_delete_tcl();
-HIDDEN int vdraw_read_tcl();
-HIDDEN int vdraw_send_tcl();
-HIDDEN int vdraw_params_tcl();
-HIDDEN int vdraw_open_tcl();
-HIDDEN int vdraw_vlist_tcl();
+/* defined in librt/dg_obj.c */
+extern int dgo_invent_solid();
+
+static int vdraw_write_tcl();
+static int vdraw_insert_tcl();
+static int vdraw_delete_tcl();
+static int vdraw_read_tcl();
+static int vdraw_send_tcl();
+static int vdraw_params_tcl();
+static int vdraw_open_tcl();
+static int vdraw_vlist_tcl();
 
 struct bu_cmdtab vdraw_cmds[] = {
 	"write",		vdraw_write_tcl,
@@ -131,7 +134,7 @@ struct bu_cmdtab vdraw_cmds[] = {
  * Usage:
  *        procname vdraw write
  */
-int
+static int
 vdraw_write_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -417,7 +420,7 @@ vdraw_delete_tcl(clientData, interp, argc, argv)
  * Usage:
  *        procname vdraw read
  */
-int
+static int
 vdraw_read_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -504,7 +507,7 @@ vdraw_read_tcl(clientData, interp, argc, argv)
  * Usage:
  *        procname vdraw send
  */
-int
+static int
 vdraw_send_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -568,7 +571,7 @@ vdraw_send_tcl(clientData, interp, argc, argv)
  * Usage:
  *        procname vdraw params
  */
-int
+static int
 vdraw_params_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -618,7 +621,7 @@ vdraw_params_tcl(clientData, interp, argc, argv)
  * Usage:
  *        procname vdraw open [name]
  */
-int
+static int
 vdraw_open_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -690,7 +693,7 @@ vdraw_open_tcl(clientData, interp, argc, argv)
  * Usage:
  *        procname vdraw vlist
  */
-int
+static int
 vdraw_vlist_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
