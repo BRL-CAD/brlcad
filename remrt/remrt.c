@@ -1955,19 +1955,19 @@ host_lookup_by_name( name, enter )
 char	*name;
 int	enter;
 {
-	struct sockaddr_in	sin;
+	struct sockaddr_in	sockhim;
 	struct hostent		*addr;
 
 	/* Determine name to be found */
 	if( isdigit( *name ) )  {
 		/* Numeric */
-		sin.sin_family = AF_INET;
+		sockhim.sin_family = AF_INET;
 #ifdef CRAY
-		sin.sin_addr = inet_addr(name);
+		sockhim.sin_addr = inet_addr(name);
 #else
-		sin.sin_addr.s_addr = inet_addr(name);
+		sockhim.sin_addr.s_addr = inet_addr(name);
 #endif
-		return( host_lookup_by_addr( &sin, enter ) );
+		return( host_lookup_by_addr( &sockhim, enter ) );
 	} else {
 		addr = gethostbyname(name);
 	}
