@@ -147,13 +147,15 @@ register BU_FILE	*bfp;
     /*
      *    If it's time to grab a line of input from the file, do so.
      */
-    if (bfp -> file_needline)
+    while (bfp -> file_needline)
     {
 	bu_vls_trunc(&(bfp -> file_buf), 0);
 	if (bu_vls_gets(&(bfp -> file_buf), bfp -> file_ptr) == -1)
 	    return (EOF);
 	bfp -> file_bp = bu_vls_addr(&(bfp -> file_buf));
 	++(bfp -> file_linenm);
+	if (bu_vls_strlen(&(bfp -> file_buf)) == 0)
+	    continue;
 
 	if (strip_comments)
 	{
@@ -163,11 +165,11 @@ register BU_FILE	*bfp;
 		{
 		    bfp -> file_buflen = (bfp -> file_buf).vls_len;
 		    bu_vls_trunc(&(bfp -> file_buf), cp - bfp -> file_bp);
-		    if (cp == bfp -> file_bp)
-			return ('\n');
 		    break;
 		}
 	}
+	if (cp == bfp -> file_bp)
+	    return ('\n');
 	bfp -> file_needline = 0;
     }
     
