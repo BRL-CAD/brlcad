@@ -55,6 +55,9 @@ struct toyota_specific {
 	fastf_t	atmos_trans;	/* Atmospheric transmittance.		*/
 	vect_t	Zenith;		/* Sky zenith.				*/
 	char	material[128];	/* File name of reflectance data.	*/
+	fastf_t	*refl;		/* Data read from 'material'.		*/
+	int	refl_lines;	/* Lines read from 'material' file.	*/
+	int	glass;		/* Boolean, is it glass?		*/
 };
 #define CK_NULL	((struct toyota_specific *)0)
 #define CL_O(m)	offsetof(struct toyota_specific, m)
@@ -68,6 +71,7 @@ struct structparse toyota_parse[] = {
 	{"%f", 1, "atmos_trans",CL_O(atmos_trans),	FUNC_NULL },
 	{"%f", 3, "Zenith",	CL_O(Zenith),		FUNC_NULL },
 	{"%s", 1, "material",	CL_O(material),		FUNC_NULL },
+	{"%d", 1, "glass",	CL_O(glass),		FUNC_NULL },
 	{"",   0, (char *)0,	0,			FUNC_NULL }
 };
 
@@ -129,6 +133,10 @@ register struct region *rp;
 struct rt_vls	*matparm;
 char	**dtp;
 {
+	char	mfile[200];
+	fastf_t	l, a, b;
+	FILE	*fp;
+	int	i, lines;
 	register struct toyota_specific *tp;
 
 	RT_VLS_CHECK(matparm);
@@ -162,7 +170,7 @@ char	**dtp;
 	 * (This term is cancelled out in calculations it turns out.)
 	 */
 	tp->sun_sang = 6.840922996708585e-5;	/* in steradians */
-	tp->index_refrac = 0.5;
+	tp->index_refrac = 1.2;
 	(void)strcpy( tp->material, "junk" );
 	VSET(tp->Zenith, 0., 0., 1.);
 
@@ -170,6 +178,45 @@ char	**dtp;
 		rt_free((char *)tp, "toyota_specific");
 		return(-1);
 	}
+
+	/* Read in reflectance data. */
+	if (tp->material[0] == '/') {
+		/* Do nothing, user has his own reflectance data. */
+		strcpy(mfile, tp->material);
+	} else {
+		/* Look for reflectance data in usual place. */
+		strcpy(mfile, "/m/cad/material/");
+		strcat(mfile, tp->material);
+		strcat(mfile, "/reflectance");
+	}
+	if ((fp = fopen(mfile, "r")) == NULL) {
+		perror(mfile);
+		rt_log("reflectance: cannot open %s for reading.", mfile);
+		rt_bomb("");
+	}
+	if (fscanf(fp, "%d", &lines) != 1) {
+		rt_log("toyota_setup: no data in %s\n", mfile);
+		rt_bomb("");
+	}
+	tp->refl_lines = lines;
+	tp->refl = (fastf_t *)rt_malloc(sizeof(fastf_t)*lines*3, "refl[]");
+	i = 0;
+	while (fscanf(fp, "%lf %lf %lf", &l, &a, &b) == 3 && i < lines*3) {
+		tp->refl[i] = l;
+		tp->refl[i+1] = a;
+		tp->refl[i+2] = b;
+		i += 3;
+	}
+	fclose(fp);
+
+	if (!strncmp("glass", tp->material, 5)
+		|| (tp->material[0] == '/'
+		    && !strncmp("glass",
+				(char *)1+rindex(tp->material, '/'),
+				5)))
+		tp->glass = 1;
+	else
+		tp->glass = 0;
 	return(1);
 }
 
@@ -233,6 +280,7 @@ HIDDEN void
 toyota_free(cp)
 char *cp;
 {
+	/* need to free cp->refl */
 	rt_free(cp, "toyota_specific");
 }
 
@@ -252,7 +300,12 @@ fastf_t	gamma;	/* Solar altitude off horizon (degrees). */
 {
 	fastf_t	m;
 
-	m = 1./(sin(gamma*PI/180.) + 0.1500*pow((gamma + 3.885), -1.253));
+	if (gamma <= 0.) {
+		rt_log("air_mass: sun altitude of %g degrees ignored.\n");
+		m = 0.;
+	} else
+		m = 1./(sin(gamma*PI/180.)
+			+ 0.1500*pow((gamma + 3.885), -1.253));
 	return(m);
 }
 
@@ -271,7 +324,7 @@ zenith_luminance(sun_alt, t_vl)
 fastf_t	sun_alt;	/* Solar altitude off horizon (degrees). */
 fastf_t	t_vl;		/* atmospheric turbidity (aerosol optical depth) */
 {
-	return(4.);	/* swag */
+	return(2000.);	/* swag */
 }
 
 /*
@@ -343,7 +396,9 @@ vect_t	Zenith;		/* vector to zenith */
 		* (0.91 + 10*exp(-3.*gamma) + 0.45*cos_gamma*cos_gamma)
 		* (1. - exp(-0.32/cos_theta))
 		/ 0.27385*(0.91 + 10.*exp(-3.*z0) + 0.45*cos_z0*cos_z0);
+#if 0
 rt_log("clear_sky_lum(lz=%g, ...) = %g\n", lz, lum );
+#endif
 
 	return(lum);
 }
@@ -1470,7 +1525,7 @@ fastf_t	lambda;	/* Wavelength of light.  Units: nm. */
 		coeff = ratio*(table[j+1][1] - table[j][1]) + table[j][1];
 	}
 	/* Convert units from 1/cm to 1/m */
-	return(100. * coeff);
+	return(/* 100. * */ coeff);
 }
 
 /*
@@ -1607,11 +1662,12 @@ fastf_t	t_vl;		/* Turbidity factor. */
 		lum = overcast_sky_lum(lz, Zenith, Sky_elmt);
 		break;
 	}
+/* XXX hack */
+if (lum <= 0.) {/*rt_log("lum = %g\n", lum);*/ return(0.);}
 
 	/* Convert to color temperature.  Expression based on careful */
 	/* measurements by Toyota. */
 	t_cp = 1.1985e8/pow(lum, 1.2) + 6500.;	/* Kelvin */
-if(t_cp > 24000) t_cp = 24000;	/* XXX hack hack hack */
 
 	/* Convert color temperature into spectral distribution */
 	/* using CIE synthesized daylight expression. */
@@ -1632,8 +1688,16 @@ if(t_cp > 24000) t_cp = 24000;	/* XXX hack hack hack */
 			+ 0.24748e3/t_cp
 			+ 0.237040;
 	} else {
-		rt_log("skylight_spectral_dist: color temperature %lf out of range, lum=%lf.", t_cp, lum);
+		rt_log("skylight_spectral_dist: color temperature %lf out of range, lum=%lf.\n", t_cp, lum);
+		t_cp = 25000;
+		x =
+			-2.0064e9/(t_cp*t_cp*t_cp)
+			+ 1.9018e6/(t_cp*t_cp)
+			+ 0.24748e3/t_cp
+			+ 0.237040;
+#if 0
 		rt_bomb("temp");
+#endif
 	}
 	y = 2.870*x - 3.000*x*x - 0.275;
 
@@ -1675,16 +1739,22 @@ fastf_t	lambda,		/* Wavelength of light (nm). */
 		e0,	/* Spectral irradiance out of atmosphere (W/m^2). */
 		em,	/* Spectral irradiance on the ground surface */
 			/* (W/m^2/nm). */
+		lmicro,	/* lambda in um, (10^-6 m). */
 		ls;	/* Spectral radiance of sun on ground (W/m^2/nm/sr). */
 
+	lmicro = lambda/1000;
 	e0 = atmos_irradiance(lambda);
 	cr = 0.00864
-	     * pow(1000*lambda,
-		   -(3.916 + 0.074*1000*lambda + 0.050/(1000*lambda)));
-	cm = beta * pow(1000*lambda, -(alpha*1000*lambda));
+	     * pow(lmicro,
+		   -(3.916 + 0.074*lmicro + 0.050/lmicro));
+	cm = beta * pow(lmicro, -alpha*lmicro);
 	coz = ozone_absorption(lambda);
 	em = e0 * exp(-(cr + cm + coz)*air_mass(sun_alt));
 	ls = em/sun_sang;
+#if 0
+rt_log("e0 = %g\ncr = %g\ncm = %g\ncoz = %g\nem = %g\n", e0,cr,cm,coz,em);
+rt_log("sun radiance = %g\n", ls);
+#endif
 	return(ls);
 }
 
@@ -1809,85 +1879,73 @@ char	*material;
  *	Data files are 3 column ascii: wavelength, angle, reflectance.
  */
 fastf_t
-reflectance(lambda, alpha, material)
-fastf_t	lambda;		/* wavelength (nm) */
-fastf_t	alpha;		/* angle of incident light, in degrees */
-char	*material;
+reflectance(lambda, alpha, refl, lines)
+fastf_t	lambda;		/* Wavelength (nm). */
+fastf_t	alpha;		/* Angle of incident light, in degrees. */
+fastf_t	*refl;		/* Reflectance data. */
+int	lines;		/* How many lines of data in refl[]. */
 {
-	char	mfile[160];
 	fastf_t	alpha_hh, alpha_hl, alpha_lh, alpha_ll,
 		beta_hh,  beta_hl,  beta_lh,  beta_ll,
 		beta_l, beta_h,
 		beta,
 		lambda_h, lambda_l,
 		a, b, l;
-	FILE	*fp;
-	int	n;
+	int	i, j, n;
 
-
-	if (material[0] == '/') {
-		/* Do nothing, user has his own reflectance data. */
-		strcpy(mfile, material);
-	} else {
-		/* Look for reflectance data in usual place. */
-		strcpy(mfile, "/m/cad/material/");
-		strcat(mfile, material);
-		strcat(mfile, "/reflectance");
-	}
-	if ((fp = fopen(mfile, "r")) == NULL) {
-		perror(mfile);
-		rt_log("reflectance: cannot open %s for reading.", mfile);
-		rt_bomb("");
+	/* Find low lambda. */
+	for (l = 0, i = 0; l < lambda && i < lines; i++) {
+		l = refl[i*3];
 	}
 
-	/* Find "nearby" values of lambda, alpha, beta for interpolation. */
-	if ((n = fscanf(fp, "%lf %lf %lf", &l, &a, &b)) != 3
-		|| lambda + MIKE_TOL < l || alpha + MIKE_TOL < a)  {
-			beta = -1;
-			goto out;
-	}
-
-	/* find low lambda */
-	do {
-		lambda_l = l;
-		alpha_ll = a;
-		beta_ll = b;
-		while ((n = fscanf(fp, "%lf %lf %lf", &l, &a, &b)) == 3
-			&& l == lambda_l && a + MIKE_TOL < alpha) {
-			lambda_l = l;
-			alpha_ll = a;
-			beta_ll = b;
-		}
-		if (n != 3 || l != lambda_l)  {
-			beta = -1;
-			goto out;
-		} else {
-			alpha_lh = a;
-			beta_lh = b;
-		}
-		/* Go to next lambda value. */
-		while ((n = fscanf(fp, "%lf %lf %lf", &l, &a, &b)) == 3
-			&& lambda_l == l)
-			;
-		if (n != 3)  {
-			beta = -1;
-			goto out;
-		}
-	} while (l < lambda);
-
-	/* Find high lambda. */
-	lambda_h = l;
-	while ((n = fscanf(fp, "%lf %lf %lf", &l, &a, &b)) == 3
-		&& l == lambda_h && a + MIKE_TOL < alpha) {
-		alpha_hl = a;
-		beta_hl = b;
-	}
-	if (n != 3)  {
+	if (i == 0 || i >= lines)  {
 		beta = -1;
 		goto out;
+	}
+
+	j = --i;
+	i--;
+	lambda_l = refl[i*3];
+	while (i >= 0 && refl[i*3] == lambda_l && refl[i*3+1] > alpha)
+		i--;
+
+	if (i < 0) {
+		beta = -1;
+		goto out;
+	}
+
+	if (refl[(i+1)*3] == lambda_l) {
+		alpha_ll = refl[i*3+1];
+		beta_ll  = refl[i*3+2];
+		alpha_lh = refl[(i+1)*3+1];
+		beta_lh  = refl[(i+1)*3+2];
 	} else {
-		alpha_hh = a;
-		beta_hh = b;
+		alpha_ll = refl[(i-1)*3+1];
+		beta_ll  = refl[(i-1)*3+2];
+		alpha_lh = refl[i*3+1];
+		beta_lh  = refl[i*3+2];
+	}
+
+	lambda_h = refl[j*3];	/* High lambda. */
+	while (j < lines && refl[j*3] == lambda_h && refl[j*3+1] < alpha) {
+		j++;
+	}
+
+	if (j >= lines) {
+		beta = -1;
+		goto out;
+	}
+
+	if (refl[(j-1)*3] == lambda_h) {
+		alpha_hl = refl[(j-1)*3+1];
+		beta_hl  = refl[(j-1)*3+2];
+		alpha_hh = refl[j*3+1];
+		beta_hh  = refl[j*3+2];
+	} else {
+		alpha_hl = refl[j*3+1];
+		beta_hl  = refl[j*3+2];
+		alpha_hh = refl[(j+1)*3+1];
+		beta_hh  = refl[(j+1)*3+2];
 	}
 
 	/* Interpolate beta between alphas of lower lambda. */
@@ -1901,8 +1959,9 @@ char	*material;
 	       + beta_l;
 	
 out:
-	fclose(fp);
-rt_log("reflectance(lambda=%g, alpha=%g, %s)=%g\n", lambda, alpha, material, beta );
+#if 0
+rt_log("reflectance(lambda=%g, alpha=%g)=%g\n", lambda, alpha, beta );
+#endif
 	return(beta);
 }
 
@@ -1926,13 +1985,13 @@ void
 lambda_to_rgb(lambda, irrad, rgb)
 fastf_t	lambda;	/* Input, wavelength of light. */
 fastf_t	irrad;	/* Input, irradiance of light. */
-char	*rgb;	/* Output, RGB approximation of input. */
+fastf_t	*rgb;	/* Output, RGB approximation of input. */
 {
 
 /* Number of entries in color matching table. */
 #define NCOLOR	90
 
-	fastf_t	krx, kry, krz, kgx, kgy, kgz, kb;
+	fastf_t	krx, kry, krz, kgx, kgy, kgz, kbz;
 	fastf_t	ratio, r, g, b, x, y, z;
 	fastf_t	table[NCOLOR][4] = {
 		{380,	0.26899e-2,	0.20000e-3,	0.12260e-1},
@@ -2037,11 +2096,12 @@ char	*rgb;	/* Output, RGB approximation of input. */
 	kgy = 0.4569237;
 	kgz = 0.0296946;
 
-	kb = 0.0073215;
+	kbz = 0.0073215;
 
 	/* Interpolate values of x, y, z. */
 	if (lambda < 380. || lambda > 825.) {
-		rt_bomb("lambda_to_rgb: bad wavelength.");
+		rt_log("lambda_to_rgb: bad wavelength, %g nm.", lambda);
+		rt_bomb("");
 	} else {
 		/* Find index of lower lambda in table. */
 		lo = 0;
@@ -2061,16 +2121,17 @@ char	*rgb;	/* Output, RGB approximation of input. */
 		z = ratio*(table[j+1][3] - table[j][3]) + table[j][3];
 	}
 
-	/* Convert xyz to relative rgb. */
+	/* Convert xyz to rgb. */
 	r = krx*x + kry*y + krz*z;
-	g = kgy*x + kgy*y + kgz*z;
-	b = kb*x  + kb*y  + kb*z;
+	g = kgx*x + kgy*y + kgz*z;
+	b =                 kbz*z;
 
 	/* Convert relative rgb into displayable rgb. */
 /* SOMEHOW NEED TO USE IRRAD, BUT DON'T KNOW ITS VALUES YET */
-	rgb[0] += (int)(r*255*irrad/4.);	/* 4 IS A SWAG */
-	rgb[1] += (int)(g*255*irrad/4.);
-	rgb[2] += (int)(b*255*irrad/4.);
+	rgb[0] += r/(r+g+b) * irrad/1e4;
+	rgb[1] += g/(r+g+b) * irrad/1e4;
+	rgb[2] += b/(r+g+b) * irrad/1e4;
+rt_log("rgb = (%g %g %g), irrad = %g\n",r,g,b,irrad);
 }
 
 /*
@@ -2101,13 +2162,12 @@ struct shadework	*swp;	/* Holds surface normal. */
 		phi,
 		r,
 		refl,
-		rx, ry,
-		theta,
 		x, y;
 	vect_t	Ctr,
 		Horiz,
 		Sky_elmnt,
-		Xaxis, Yaxis;
+		Xaxis, Yaxis,
+		work;
 
 /* Angular spread between vectors used in solid angle integration. */
 #define SPREAD		(10*PI/180)
@@ -2117,17 +2177,17 @@ struct shadework	*swp;	/* Holds surface normal. */
 
 	/* Find limits of solid angle. */
 	alpha0 = 0.0;	/* degrees. */
-	refl = reflectance(lambda, alpha0, ts->material);
+	refl = reflectance(lambda, alpha0, ts->refl, ts->refl_lines);
 	while (refl < MIKE_TOL) {
 		if (refl == -1.)
-			rt_bomb("toyota render: no reflectances.");
+			rt_bomb("toyota render: no reflectance data.");
 		alpha0++;
-		refl = reflectance(lambda, alpha0, ts->material);
+		refl = reflectance(lambda, alpha0, ts->refl, ts->refl_lines);
 	}
 	alpha1 = alpha0;	/* degrees. */
-	while (refl > MIKE_TOL) {
+	while (refl > MIKE_TOL && alpha1 < 90.) {
 		alpha1++;
-		refl = reflectance(lambda, alpha1, ts->material);
+		refl = reflectance(lambda, alpha1, ts->refl, ts->refl_lines);
 	}
 	if (refl == -1.)
 		alpha1--;
@@ -2135,17 +2195,18 @@ struct shadework	*swp;	/* Holds surface normal. */
 	alpha_c *= PI/180;		/* radians. */
 
 	/* Find horizontal component of reflected light. */
-	ry = VDOT(swp->sw_hit.hit_normal, Refl);
-	theta = acos(ry);
-	rx = sin(theta);
-	VSCALE(Horiz, swp->sw_hit.hit_normal, ry);
-	VSUB2(Horiz, Refl, Horiz);
-	VSCALE(Horiz, Horiz, 1/rx);
-	VUNITIZE(Horiz);
+	if (!NEAR_ZERO(VDOT(swp->sw_hit.hit_normal, Refl)-1, MIKE_TOL)) {
+		VCROSS(Yaxis, swp->sw_hit.hit_normal, Refl);
+	} else {	/* R and N are the same vector. */
+	 	vec_ortho(Yaxis, swp->sw_hit.hit_normal);
+	}
+	VCROSS(Horiz, Yaxis, swp->sw_hit.hit_normal);
 
 	/* Get vector which cuts through center of solid angle. */
 	VBLEND2(Ctr, cos(alpha_c), swp->sw_hit.hit_normal,
 		sin(alpha_c), Horiz);
+	VUNITIZE(Xaxis);
+	VUNITIZE(Yaxis);
 	VUNITIZE(Ctr);
 
 	/* Angle between Ctr and edge of solid angle. */
@@ -2153,19 +2214,20 @@ struct shadework	*swp;	/* Holds surface normal. */
 	alpha_c *= PI/180;		/* radians. */
 
 	/* Set up coord axes with Ctr as Z axis. */
-	VCROSS(Yaxis, Horiz, swp->sw_hit.hit_normal);
 	VCROSS(Xaxis, Yaxis, Ctr);
 
 	irradiance = 0.;
 	/* Integrate over solid angle. */
+/* JUST INTEGRATE OVER HEMISPHERE - THIS IS CURRENTLY WRONG */
 	for (ang = SPREAD; ang < alpha_c; ang += SPREAD) {
-		r = cos(ang);
+		r = sin(ang);
 		for (phi = 0.; phi < 2*PI; phi += SPREAD) {
 			x = r*cos(phi);
 			y = r*sin(phi);
 			VJOIN2(Sky_elmnt, Ctr, x, Xaxis, y, Yaxis);
 			VUNITIZE(Sky_elmnt);
-			i_dot_n = -VDOT(swp->sw_hit.hit_normal, Sky_elmnt);
+			i_dot_n = VDOT(swp->sw_hit.hit_normal, Sky_elmnt);
+if (i_dot_n >= 1.) i_dot_n = .9999;
 #if 0
 /*
  *			shoot_ray(Ctr);
@@ -2188,16 +2250,31 @@ struct shadework	*swp;	/* Holds surface normal. */
  *			bg_radiance = return val from hit or miss
  */
 #else
+			if( rdebug&RDEBUG_RAYPLOT )  {
+				VSCALE(work, Sky_elmnt, 200.);
+				VADD2(work,swp->sw_hit.hit_point,work);
+				pl_color( stdout, 0, 255, 0 );
+				pdv_3line( stdout, swp->sw_hit.hit_point, work);
+			}
 			/* XXX hack:  just assume skylight */
 			bg_radiance = skylight_spectral_dist(
 				lambda, ts->Zenith, Sky_elmnt,
 				Sun, ts->weather, t_vl);
 #endif
+/* XXX hack */		if (i_dot_n > 0.) {
 			irradiance +=
-				reflectance(lambda, acos(i_dot_n)*rt_radtodeg, ts->material)
+				reflectance(lambda, acos(i_dot_n)*rt_radtodeg,
+					ts->refl, ts->refl_lines)
 				* bg_radiance
 				* i_dot_n
 				* del_omega;
+#if 0
+rt_log("bg radiance = %g\n", bg_radiance);
+rt_log("I . N = %g\n", i_dot_n);
+rt_log("del_omega = %g\n", del_omega);
+rt_log("irradiance = %g\n", irradiance);
+#endif
+}
 		}
 	}
 	/* Don't forget contribution from luminance at Ctr. */
@@ -2212,16 +2289,24 @@ struct shadework	*swp;	/* Holds surface normal. */
  *				Sun, ts->weather, t_vl);
  */
 #else
-	bg_radiance = skylight_spectral_dist(
-		lambda, ts->Zenith, Ctr,
+	bg_radiance = skylight_spectral_dist(lambda, ts->Zenith, Ctr,
 		Sun, ts->weather, t_vl);
 #endif
+	if( rdebug&RDEBUG_RAYPLOT )  {
+		VSCALE(work, Ctr, 200.);
+		VADD2(work,swp->sw_hit.hit_point,work);
+		pl_color( stdout, 255, 50, 0 );
+		pdv_3line( stdout, swp->sw_hit.hit_point, work);
+	}
 	irradiance +=
-		reflectance(lambda, acos(i_dot_n)*rt_radtodeg, ts->material)
+		reflectance(lambda, acos(i_dot_n)*rt_radtodeg, ts->refl, ts->refl_lines)
 		* bg_radiance
 		* VDOT(Sky_elmnt, swp->sw_hit.hit_normal)
 		* del_omega;
 	irradiance /= PI;
+#if 0
+rt_log("irradiance = %g\n\n", irradiance);
+#endif
 
 	return(irradiance);
 }
@@ -2250,8 +2335,8 @@ char	*dp;
 		i_refl,			/* Radiance of reflected light. */
 		refl_radiance,		/* Radiance of reflected ray. */
 		rx, ry,
+		solar_radiance,
 		specular_light,
-		*Sun,			/* Vector to sun. */
 		sun_alt,		/* Altitude of sun over horizon. */
 		sun_dot_n,		/* Sun, Normal dot product. */
 		t_vl,			/* Atmospheric turbidity. */
@@ -2260,52 +2345,71 @@ char	*dp;
 		trans_radiance;		/* Radiance of transmitted ray. */
 	int	i;
 	register struct	light_specific *lp;
-	vect_t	Horiz,
-		Reflected,
-		Transmitted,
-		work;
 	struct toyota_specific	*ts =
 		(struct toyota_specific *)dp;
 	struct application	refl_ap;
+	vect_t	Horiz,
+		Reflected,
+		Sun,			/* Vector to sun. */
+		Transmitted,
+		work;
 
 	swp->sw_color[0] = swp->sw_color[1] = swp->sw_color[2] = 0;
 
-	ts->lambda = 550;	/* XXX nm */
+	ts->lambda = 450;	/* XXX nm */
 
 	i_refl = 0.;
 	/* Consider effects of light source (>1 doesn't make sense really). */
 	for (i=ap->a_rt_i->rti_nlights-1; i >= 0; i--)  {
 
+/* WHY DOES THIS CAUSE THE BLACK CRESCENT ON THE SPHERE? */
 		if ((lp = (struct light_specific *)swp->sw_visible[i])
 			== LIGHT_NULL)
 			continue;	/* shadowed */
 
 		/* Light is not shadowed -- add this contribution */
 /* UNNECESSARY	intensity = swp->sw_intensity+3*i; */
-		Sun = swp->sw_tolight+3*i;
+/* UNNECESSARY	VMOVE(Sun, swp->sw_tolight+3*i); */
+		VMOVE(Sun, lp->lt_pos);
+		VUNITIZE(Sun);
+/* VPRINT("Sun", Sun); */
+		/* Altitude of sun above horizon (degrees). */
+		sun_alt = 90 - acos(VDOT(Sun, ts->Zenith))*180/PI;
+		/* Solar radiance. */
+		solar_radiance = sun_radiance(ts->lambda, ts->alpha, ts->beta,
+			sun_alt, ts->sun_sang);
 
 		/* Create reflected ray. */
-		i_dot_n = -VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
+		i_dot_n = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
+		if (i_dot_n > 1.) i_dot_n = .9999;
 		VSCALE( work, swp->sw_hit.hit_normal, 2*i_dot_n );
 		VSUB2( Reflected, work, ap->a_ray.r_dir );
 		VUNITIZE(Reflected);
+		VREVERSE(Reflected, Reflected);
 
 		/* Cosine of angle between sun and surface normal. */
 		sun_dot_n = VDOT(swp->sw_hit.hit_normal, Sun);
 
 		f = fresnel_refl(i_dot_n, RI_AIR, ts->index_refrac);
 
-		/* Altitude of sun above horizon (degrees). */
-		sun_alt = 90 - acos(VDOT(Sun, ts->Zenith))*180/PI;
-
 		/* Direct sunlight contribution. */
 		direct_sunlight =
 			1./PI
-			* reflectance(ts->lambda, acos(i_dot_n)*rt_radtodeg, ts->material)
+			* reflectance(ts->lambda, acos(i_dot_n)*rt_radtodeg,
+				ts->refl, ts->refl_lines)
 			* sun_radiance(ts->lambda, ts->alpha, ts->beta,
 				sun_alt, ts->sun_sang)
 			* sun_dot_n
 			* ts->sun_sang;
+#if 0
+rt_log("1/PI = %g\n", 1/PI);
+rt_log("beta = %g\n", reflectance(ts->lambda, acos(i_dot_n)*rt_radtodeg,
+ts->refl, ts->refl_lines));
+rt_log("sun radiance = %g\n",  sun_radiance(ts->lambda, ts->alpha, ts->beta,
+sun_alt, ts->sun_sang));
+rt_log("direct_sunlight = %g\n", direct_sunlight);
+rt_log("S . N = %g\n", sun_dot_n);
+#endif
 
 #if 0
 /*
@@ -2329,12 +2433,18 @@ char	*dp;
 		/* a_return or a_user to hold hit/miss flag? */
 #else
 		/* XXX Hack:  it always misses */
+		if( rdebug&RDEBUG_RAYPLOT )  {
+			VSCALE(work, Reflected, 200.);
+			VADD2(work,swp->sw_hit.hit_point,work);
+			pl_color( stdout, 0, 150, 255 );
+			pdv_3line( stdout, swp->sw_hit.hit_point, work);
+		}
 		refl_radiance = skylight_spectral_dist(ts->lambda,
 			ts->Zenith, Reflected, Sun, ts->weather, t_vl);
-#endif
 
 		/* Regularly reflected light contribution. */
 		specular_light = f * refl_radiance;
+#endif
 
 		i_refl +=
 			direct_sunlight
@@ -2343,11 +2453,7 @@ char	*dp;
 				t_vl, swp);
 
 		/* Regularly transmitted light contribution. */
-		if (!strncmp("glass", ts->material, 5)
-			|| (ts->material[0] == '/'
-			    && !strncmp("glass",
-					(char *)1+rindex(ts->material, '/'),
-					5))) {
+		if (ts->glass) {
 
 			/* Find horizontal component of reflected light. */
 			ry = VDOT(swp->sw_hit.hit_normal, Reflected);
@@ -2388,10 +2494,16 @@ char	*dp;
 		}
 
 		i_refl *= lp->lt_fraction;
+#if 0
+rt_log("i_refl = %g\n", i_refl);
+#endif
 
 /* WHERE DOES THIS GO??  NOT HERE.  SO WHERE DOES i_refl GO THEN. */
 		/* Convert wavelength and radiance into RGB triple. */
 		lambda_to_rgb(ts->lambda, i_refl, swp->sw_color);
+#if 0
+rt_log("rgb = (%g  %g  %g)\n",swp->sw_color[0], swp->sw_color[1], swp->sw_color[2]);
+#endif
 	}
 
 	/* Turn off colorview()'s handling of reflect/refract */
