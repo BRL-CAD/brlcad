@@ -252,19 +252,19 @@ hook_file(
  */
 const struct bu_structparse rt_dsp_parse[] = {
     {"%S",	1, "file", DSP_O(dsp_name), hook_file },
-    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+    {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom },
+    {"%f",     16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom },
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 const struct bu_structparse rt_dsp_ptab[] = {
     {"%S",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
-    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+    {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",     16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -524,7 +524,7 @@ dsp_print_v4(vls, dsp_ip)
     BU_CK_VLS(&dsp_ip->dsp_name);
     BU_CK_VLS(vls);
 
-    bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d ",
+    bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d",
 		   bu_vls_addr(&dsp_ip->dsp_name),
 		   dsp_ip->dsp_xcnt,
 		   dsp_ip->dsp_ycnt,
@@ -597,7 +597,9 @@ dsp_print_v5(struct bu_vls *vls,
     case DSP_CUT_DIR_ULlr:
 	bu_vls_printf( vls, "cut=Lr" ); break;
     default:
-	bu_vls_printf( vls, "cut'%c'/%d",dsp_ip->dsp_cuttype,dsp_ip->dsp_cuttype ); break;
+	bu_vls_printf( vls, "cut bogus('%c'/%d)",
+		       dsp_ip->dsp_cuttype,
+		       dsp_ip->dsp_cuttype ); break;
     }
 
 
@@ -3700,14 +3702,61 @@ rt_dsp_ifree( ip )
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+static void
+hook_verify(const struct bu_structparse	*ip,
+	    const char 			*sp_name,
+	    genptr_t			base,		    
+	    char			*p)
+{
+    struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
+
+    if (!strcmp(sp_name, "src")) {
+	switch (dsp_ip->dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
+	case RT_DSP_SRC_OBJ:
+	    break;
+	default:
+	    bu_log("Error in DSP data source field s/b one of [%c%c%c]\n",
+		   RT_DSP_SRC_V4_FILE,
+		   RT_DSP_SRC_FILE,
+		   RT_DSP_SRC_OBJ);
+	    break;
+	}
+
+    } else if (!strcmp(sp_name, "w")) {
+	if (dsp_ip->dsp_xcnt == 0)
+	    bu_log("Error in DSP width dimension (0)\n");
+    } else if (!strcmp(sp_name, "n")) {
+	if (dsp_ip->dsp_ycnt == 0)
+	    bu_log("Error in DSP width dimension (0)\n");
+    } else if (!strcmp(sp_name, "cut")) {
+	switch (dsp_ip->dsp_cuttype) {
+	case DSP_CUT_DIR_ADAPT:
+	case DSP_CUT_DIR_llUR:
+	case DSP_CUT_DIR_ULlr:
+	    break;
+	default:
+	    bu_log("Error in DSP cut type: %c s/b one of [%c%c%c]\n",
+		   dsp_ip->dsp_cuttype,
+		   DSP_CUT_DIR_ADAPT,
+		   DSP_CUT_DIR_llUR,
+		   DSP_CUT_DIR_ULlr);
+	    break;
+	}
+    }
+}
+
+
+
 const struct bu_structparse fake_dsp_printab[] = {
-    {"%c",  1, "src", DSP_O(dsp_datasrc), BU_STRUCTPARSE_FUNC_NULL },
+    {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify },
     {"%S",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "w",  DSP_O(dsp_xcnt),	 BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "n",  DSP_O(dsp_ycnt),	 BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
-    {"%c",  1, "cut", DSP_O(dsp_cuttype), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",  1, "w",  DSP_O(dsp_xcnt),	 hook_verify },
+    {"%d",  1, "n",  DSP_O(dsp_ycnt),	 hook_verify },
+    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+    {"%c",  1, "cut", DSP_O(dsp_cuttype), hook_verify },
+    {"%f", 16, "stom", DSP_AO(dsp_stom), hook_verify },
     {"",    0, (char *)0, 0,		 BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -3762,10 +3811,11 @@ const char			*attr;
 		sp = fake_dsp_printab;
 		break;
 	    }
+
 	    while( sp && sp->sp_name != NULL ) {
 		Tcl_DStringAppendElement( &ds, sp->sp_name );
 		bu_vls_trunc( &str, 0 );
-		bu_vls_struct_item(&str,sp,(char *)intern->idb_ptr,' ');
+		bu_vls_struct_item(&str,sp,(char *)dsp_ip,' ');
 		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
 		++sp;
 	    }
@@ -3780,8 +3830,9 @@ const char			*attr;
 		sp = fake_dsp_printab;
 		break;
 	    }
+
 	    if( bu_vls_struct_item_named( &str, sp, attr,
-					  (char *)intern->idb_ptr, ' ') < 0 ) {
+					  (char *)dsp_ip, ' ') < 0 ) {
 		bu_vls_printf(&str,
 			      "Objects of type %s do not have a %s attribute.",
 			      "dsp", attr);
@@ -3818,7 +3869,8 @@ char			**argv;
 
 	RT_CK_DB_INTERNAL(intern);
 	dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
-
+	RT_DSP_CK_MAGIC(dsp_ip);
+	BU_CK_VLS(&dsp_ip->dsp_name);
 
 	switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
@@ -3834,7 +3886,6 @@ char			**argv;
 	return bu_structparse_argv(interp, argc, argv, sp,
 				(char *)intern->idb_ptr );
 }
-
 
 /* Important when concatenating source files together */
 #undef dlog
