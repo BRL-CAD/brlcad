@@ -467,10 +467,10 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
 #	ifdef M4I64_USE_64_BIT
-#		define	GFLAG		-64 -mips4 -KPIC -G 7
+#		define	GFLAG		-64 -mips4 -KPIC -multigot
 #		define	XLIBDIR /usr/lib64
 #	else
-#		define	GFLAG		-n32 -mips4 -KPIC -G 7
+#		define	GFLAG		-n32 -mips4 -KPIC -multigot
 #		define	XLIBDIR /usr/lib32
 #	endif
 #	define  XINCDIR /usr/include/X11
