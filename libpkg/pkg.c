@@ -51,6 +51,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <netdb.h>
 #include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
 
+#include "machine.h"		/* Can safely be removed for non-BRLCAD use */
+#include "externs.h"		/* Can safely be removed for non-BRLCAD use */
+
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #  ifndef sgi
 #	define HAS_UNIX_DOMAIN_SOCKETS
@@ -107,7 +110,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
-#if !__STDC__
+#if !__STDC__ && !USE_PROTOTYPES
 extern char	*getenv();
 extern char	*malloc();
 extern char	*realloc();
