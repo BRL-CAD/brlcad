@@ -2032,7 +2032,46 @@ genptr_t	arg;
 /*
  *			D B _ W A L K _ T R E E
  *
- *  This is the top interface to the tree walker.
+ *  This is the top interface to the "tree walker."
+ *
+ * Parameters:
+ *	rtip		rt_i structure to database (open with rt_dirbuild())
+ *	argc		# of tree-tops named
+ *	argv		names of tree-tops to process
+ *	init_state	XXX ????
+ *
+ *	reg_start_func	Func returns 0 if region should be skipped,
+ *			 otherwise non-zero.  DO NOT USE FOR OTHER PURPOSES!
+ *
+ *	reg_end_func	Func to process collected region data.
+ *			returns a pointer to "any unused subtree for freeing"
+ *			  XXX What does that mean???
+ *  
+ *	leaf_func	Function to process a leaf node.
+ *				Unknown significance of returned parameter
+ *
+ * Function Prototypes:
+ *
+ *	int	reg_start_func(
+ *			struct db_tree_state	*nts,
+ *			struct db_full_path	*pathp,
+ *			struct rt_comb_internal	*comb,
+ *			genptr_t		client_data)
+ *
+ *
+ *	union tree *reg_end_func(
+ *			struct db_tree_state	*db_ts,
+ *	                struct db_full_path	*db_fp,
+ *	                union tree		*curtree,
+ *	                genptr_t		client_data)
+ *
+ *	union tree *leaf_func(
+ *			struct db_tree_state	*tsp,
+ *			struct db_full_path	*pathp,
+ *			struct bu_external	*ep,
+ *			int			id, /* rt_id_solid() result */
+ *			genptr_t		client_data)
+ *
  *
  *  This routine will employ multiple CPUs if asked,
  *  but is not multiply-parallel-recursive.
