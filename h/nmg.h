@@ -857,7 +857,7 @@ NMG_EXTERN(void		nmg_evu, (struct edgeuse *eu) );
 NMG_EXTERN(void		nmg_m_reindex, (struct model *m));
 NMG_EXTERN(void		nmg_pr_struct_counts, (struct nmg_struct_counts	*ctr,
 			char *str));
-NMG_EXTERN(void		nmg_m_struct_count, (struct nmg_struct_counts *ctr,
+NMG_EXTERN(long		**nmg_m_struct_count, (struct nmg_struct_counts *ctr,
 			struct model *m));
 
 #endif
