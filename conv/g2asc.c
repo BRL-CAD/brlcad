@@ -156,6 +156,7 @@ combdump()	/* Print out Combination record information */
 {
 	register int i;
 	register int length;	/* Keep track of number of members */
+	int	m1, m2;		/* material property flags */
 
 	(void)printf("%c ", record.c.c_id );		/* C */
 	if( record.c.c_flags == 'R' )			/* set region flag */
@@ -174,18 +175,28 @@ combdump()	/* Print out Combination record information */
 		record.c.c_rgb[0],
 		record.c.c_rgb[1],
 		record.c.c_rgb[2] );
+	m1 = m2 = 0;
 	if( isascii(record.c.c_matname[0]) && isprint(record.c.c_matname[0]) )  {
-		printf("1 ");	/* flag: line 1 follows */
+		m1 = 1;
 		if( record.c.c_matparm[0] )
-			printf("2 ");	/* flag: line 2 follows */
+			m2 = 1;
+	}
+	printf("%d %d ", m1, m2 );
+	switch( record.c.c_inherit )  {
+	case DB_INH_HIGHER:
+		printf("%d ", DB_INH_HIGHER );
+		break;
+	default:
+	case DB_INH_LOWER:
+		printf("%d ", DB_INH_LOWER );
+		break;
 	}
 	(void)printf("\n");			/* Terminate w/ a newline */
 
-	if( isascii(record.c.c_matname[0]) && isprint(record.c.c_matname[0]) )  {
+	if( m1 )
 		(void)printf("%.32s\n", CH(record.c.c_matname) );
-		if( record.c.c_matparm[0] )
-			(void)printf("%.60s\n", CH(record.c.c_matparm) );
-	}
+	if( m2 )
+		(void)printf("%.60s\n", CH(record.c.c_matparm) );
 
 	length = (int)record.c.c_length;	/* Get # of member records */
 
@@ -427,7 +438,7 @@ char *str;
 	ep = &buf[len-1];		/* Leave room for null */
 	while( op < ep )  {
 		if( *ip == '\0' )  break;
-		if( isascii(*ip) && isprint(*ip) )  {
+		if( isascii(*ip) && (isprint(*ip) || isspace(*ip)) )  {
 			*op++ = *ip++;
 		}  else  {
 			*op++ = '@';

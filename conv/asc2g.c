@@ -201,6 +201,9 @@ combbld()	/* Build Combination record */
 	cp = nxt_spc( cp );
 	temp_pflag = atoi( cp );
 
+	cp = nxt_spc( cp );
+	record.c.c_inherit = atoi( cp );
+
 	if( record.c.c_flags == 'Y' )
 		record.c.c_flags = 'R';
 	else
