@@ -221,10 +221,10 @@ plgetframe:	plgetframe.o
 
 /* Gets LIBPLOT from within LIBRT */
 plrot:		plrot.o
-	CC LDFLAGS -o plrot plrot.o LIBRT LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o plrot plrot.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 cv:		cv.o
-	CC LDFLAGS -o cv cv.o LIBRT LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o cv cv.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 op-bw:		op-bw.o
 	CC LDFLAGS -o op-bw op-bw.o LIBES
@@ -254,7 +254,7 @@ pix3filter:	pix3filter.o
 	CC LDFLAGS -o pix3filter pix3filter.o LIBES
 
 pix-spm:	pix-spm.o
-	CC LDFLAGS -o pix-spm pix-spm.o LIBRT LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o pix-spm pix-spm.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 pix-sun:	pix-sun.o
 	CC LDFLAGS -o pix-sun pix-sun.o LIBES
@@ -323,7 +323,7 @@ azel:	azel.o
 	CC LDFLAGS -o azel azel.o LIBES
 
 bary:	bary.o
-	CC LDFLAGS -o bary bary.o LIBRT LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o bary bary.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 bwthresh: bwthresh.o
 	CC LDFLAGS -o bwthresh bwthresh.o LIBES
