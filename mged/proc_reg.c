@@ -48,9 +48,24 @@ static int	memb_count = 0;		/* running count of members */
 static int	param_count = 0; 	/* location in m_param[] array */
 
 static float	reg_min[3], reg_max[3];		/* min,max's for the region */
-static float	sol_min[3], sol_max[3];		/* min,max's for a solid */
 static float	pinf = 1000000.0;
 static float	*sp;			/* pointers to the solid parameter array m_param[] */
+
+#define NPLANES	500
+static float	peq[NPLANES*4];		/* plane equations for EACH region */
+static float	solrpp[NMEMB*6];	/* enclosing RPPs for each member of the region */
+static float	regi[NMEMB], rego[NMEMB];	/* distances along ray where ray enters and leaves the region */
+static float	pcenter[3];		/* center (interior) point of a solid */
+static float	xb[3];			/* starting point of ray */
+static float	wb[3];			/* direction cosines of ray */
+static float	rin, rout;		/* location where ray enters and leaves a solid */
+static float	ri, ro;			/* location where ray enters and leaves a region */
+static float	tol;			/* tolerance */
+static int	mlc[NMEMB];		/* location of last plane for each member */
+static int	la, lb, lc, id, jd, ngaps;
+static int	negpos;
+static char	oper;
+
 
 /*
  *			P R O C _ R E G
@@ -74,6 +89,9 @@ int flag, more;
 	static int length, type;
 	static int uvec[8], svec[11];
 	static int cgtype;
+	static int j;
+	static float	sol_min[3], sol_max[3];
+	static float a,b,c,d,v1,v2,vt,vb;
 
 	input = *recordp;		/* struct copy */
 
@@ -101,6 +119,10 @@ int flag, more;
 		sp = &m_param[0];	/* XXX */
 	}
 
+	/* Find enclosing RPP for the solid */
+	sol_min[0]=sol_min[1]=sol_min[2]=pinf;
+	sol_max[0]=sol_max[1]=sol_max[2] = -pinf;
+
 	switch( cgtype )  {
 
 	case GENARB8:
@@ -117,6 +139,13 @@ int flag, more;
 			VMOVE(&m_param[param_count], op);
 			param_count += 3;
 			op += 3;
+		}
+		for(i=0;i<8;i++){
+			for(j=0;j<3;j++){
+				MIN(sol_min[j],*sp);
+				MAX(sol_max[j],*sp);
+				sp++;
+			}
 		}
 		break;
 
@@ -135,6 +164,20 @@ int flag, more;
 			param_count += 3;
 			op += 3;
 		}
+		for(i=0;i<3;i++,sp++){
+			vt = *sp + *(sp+3);
+			a = *(sp+6);
+			b = *(sp+9);
+			c = *(sp+12);
+			d = *(sp+15);
+			v1=sqrt(a*a+b*b);
+			v2=sqrt(c*c+d*d);
+			MIN(sol_min[i],*(sp)-v1);
+			MIN(sol_min[i],vt-v2);
+			MAX(sol_max[i],*(sp)+v1);
+			MAX(sol_max[i],vt+v2);			
+		}
+		sp+=15;
 		break;
 
 	case GENELL:
@@ -152,6 +195,19 @@ int flag, more;
 			param_count += 3;
 			op += 3;
 		}
+		for(i=0;i<3;i++,sp++){
+			vb = *sp - *(sp+3);
+			vt = *sp + *(sp+3);
+			a = *(sp+6);
+			b = *(sp+9);
+			v1=sqrt(a*a+b*b);
+			v2=sqrt(c*c+d*d);
+			MIN(sol_min[i],vb-v1);
+			MIN(sol_min[i],vt-v2);
+			MAX(sol_max[i],vb+v1);
+			MAX(sol_max[i],vt+v2);
+		}
+		sp+=9;
 		break;
 
 	default:
@@ -162,8 +218,12 @@ int flag, more;
 		return(-1);	/* ERROR */
 	}
 
-	/* Find min and max */
-	solin(memb_count);
+	/* save min,maxs for this solid */
+	for(i=0; i<3; i++) {
+		solrpp[memb_count*6+i] = sol_min[i];
+		solrpp[memb_count*6+i+3] = sol_max[i];
+	}
+
 	if(m_op[memb_count] != '-') {
 		for(i=0;i<3;i++){
 			MAX(reg_min[i],sol_min[i]);
@@ -206,29 +266,9 @@ int flag, more;
  *	  7. arbn_shot()	finds intersection of ray with an arb
  *	  8. tgcin()	converts tgc to arbn
  *	  9. ellin()	converts ellg to arbn
- *	 11. solin()	finds enclosing rpp for solids
  *	 12. solpl()	process solids to arbn's
  *
- *		R E V I S I O N   H I S T O R Y
- *
- *	11/02/83  CMK	Modified to use g3.c module (device independence).
  */
-
-#define NPLANES	500
-static float	peq[NPLANES*4];		/* plane equations for EACH region */
-static float	solrpp[NMEMB*6];	/* enclosing RPPs for each member of the region */
-static float	regi[NMEMB], rego[NMEMB];	/* distances along ray where ray enters and leaves the region */
-static float	pcenter[3];		/* center (interior) point of a solid */
-static float	xb[3];			/* starting point of ray */
-static float	wb[3];			/* direction cosines of ray */
-static float	rin, rout;		/* location where ray enters and leaves a solid */
-static float	ri, ro;			/* location where ray enters and leaves a region */
-static float	tol;			/* tolerance */
-static int	mlc[NMEMB];		/* location of last plane for each member */
-static int	la, lb, lc, id, jd, ngaps;
-static int	negpos;
-static char	oper;
-
 static void
 dwreg()
 {
@@ -833,73 +873,6 @@ ellin()
 		sgn = -sgn;
 	}
 }
-
-/* finds enclosing RPP for a solid using the solid's parameters */
-static void
-solin(num)
-int num;
-{
-	register int i,j;
-	static float a,b,c,d,v1,v2,vt,vb;
-
-	sol_min[0]=sol_min[1]=sol_min[2]=pinf;
-	sol_max[0]=sol_max[1]=sol_max[2] = -pinf;
-
-	switch( m_type[num] )  {
-	case GENARB8:
-		for(i=0;i<8;i++){
-			for(j=0;j<3;j++){
-				MIN(sol_min[j],*sp);
-				MAX(sol_max[j],*sp);
-				sp++;
-			}
-		}
-		break;
-
-	case GENTGC:
-		for(i=0;i<3;i++,sp++){
-			vt = *sp + *(sp+3);
-			a = *(sp+6);
-			b = *(sp+9);
-			c = *(sp+12);
-			d = *(sp+15);
-			v1=sqrt(a*a+b*b);
-			v2=sqrt(c*c+d*d);
-			MIN(sol_min[i],*(sp)-v1);
-			MIN(sol_min[i],vt-v2);
-			MAX(sol_max[i],*(sp)+v1);
-			MAX(sol_max[i],vt+v2);			
-		}
-		sp+=15;
-		break;
-
-	case GENELL:
-		for(i=0;i<3;i++,sp++){
-			vb = *sp - *(sp+3);
-			vt = *sp + *(sp+3);
-			a = *(sp+6);
-			b = *(sp+9);
-			v1=sqrt(a*a+b*b);
-			v2=sqrt(c*c+d*d);
-			MIN(sol_min[i],vb-v1);
-			MIN(sol_min[i],vt-v2);
-			MAX(sol_max[i],vb+v1);
-			MAX(sol_max[i],vt+v2);
-		}
-		sp+=9;
-		break;
-
-	default:
-		printf("solin:  unknown type\n");
-	}
-
-	/* save min,maxs for this solid */
-	for(i=0; i<3; i++) {
-		solrpp[num*6+i] = sol_min[i];
-		solrpp[num*6+i+3] = sol_max[i];
-	}
-}
-
 
 /* converts all solids to ARBNs */
 static void
