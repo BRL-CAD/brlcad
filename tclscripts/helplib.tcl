@@ -40,7 +40,7 @@ set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
          The "get" subcommand retrieves and displays the specified attributes.
          The "rm" subcommand deletes the specified attributes.
          The "show" subcommand does a "get" and displays the results in a user readable format.}   }
-set helplib_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
+set helplib_data(dbbinary)		{{(-i|-o) major_type minor_type dest source}
                 {manipulate opaque objects.
                  Must specify one of -i (for creating or adjusting objects (input))
                  or -o for extracting objects (output).
@@ -58,6 +58,7 @@ set helplib_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
                  For input, source is a file name and dest is an object name.
                  For output source is an object name and dest is a file name.
                  Only uniform array binary objects (major_type=u) are currently supported}}
+set helplib_data(wdb_binary)            $helplib_data(dbbinary)
 set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
 set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}

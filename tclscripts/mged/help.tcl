@@ -55,6 +55,7 @@ set mged_help_data(dall)	$helplib_data(dgo_erase_all)
 set mged_help_data(db)		{{command}	{database manipulation routines}}
 set mged_help_data(db_glob)	{{cmd_string}	{globs cmd_string against the MGED database
          resulting in an expanded command string}}
+set mged_help_data(dbbinary)    $helplib_data(dbbinary)
 set mged_help_data(dbconcat)	$helplib_data(wdb_concat)
 set mged_help_data(dbfind)	$helplib_data(wdb_find)
 set mged_help_data(dbupgrade)	{{[-f|-help]}	{upgrade your database to the current format}}
@@ -240,7 +241,6 @@ set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
 #set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set mged_help_data(vrot)	$helplib_data(vo_vrot)
 set mged_help_data(wcodes)	{{filename object(s)}	{write region ident codes to filename}}
-set mged_help_data(wdb_binary)	$helplib_data(wdb_binary)
 set mged_help_data(whatid)	helplib_data(wdb_whatid)
 set mged_help_data(whichair)	helplib_data(wdb_whichair)
 set mged_help_data(whichid)	helplib_data(wdb_whichid)
