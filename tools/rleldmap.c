@@ -34,11 +34,6 @@
 #include "externs.h"		/* For malloc, calloc, and free */
 #include "rle.h"
 
-/* Check for negative left shift problem (on 68000, at least) */
-#if 2 << -1 == 0
-
-#endif
-
 void get_rle_map(), linmap(), gammap(), filemap(), mfilemap();
 void applymap(), shiftmap();
 
