@@ -2554,45 +2554,49 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 
 			for (j = y2 - y1 + 1; j; j--) {
 				unsigned char *line_irgb;
-				unsigned int *line_opix;
+				unsigned char *p;
 
 				unsigned char *red = xi->xi_redmap;
 				unsigned char *grn = xi->xi_grnmap;
 				unsigned char *blu = xi->xi_blumap;
 
 				line_irgb = irgb;
-				line_opix = opix;
+				p = (unsigned char *)opix;
 
 				/* For each line, convert/copy pixels */
 
 				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
 					for (k = x2 - x1 + 1; k; k--) {
-#if 1
-						*line_opix++ =
-							(line_irgb[RED] << 16) |
-							(line_irgb[GRN] << 8) |
-							 line_irgb[BLU];
-#else
-						*line_opix++ =
-							(line_irgb[BLU] << 16) |
-							(line_irgb[GRN] << 8) |
-							 line_irgb[RED];
-#endif
+if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+{static int before=1; if(before) {write(2,"FB1a\n", 5); before=0;} }
+						*p++ = 0;
+						*p++ = line_irgb[BLU];
+						*p++ = line_irgb[GRN];
+						*p++ = line_irgb[RED];
+} else {
+{static int before=1; if(before) {write(2,"FB1b\n", 5); before=0;} }
+						*p++ = line_irgb[BLU];
+						*p++ = line_irgb[GRN];
+						*p++ = line_irgb[RED];
+						*p++ = 0;
+}
 						line_irgb += sizeof (RGBpixel);
 					}
 				else
 					for (k = x2 - x1 + 1; k; k--) {
-#if 1
-						*line_opix++ =
-							(blu[line_irgb[RED]] << 16) |
-							(grn[line_irgb[GRN]] << 8) |
-							 red[line_irgb[BLU]];
-#else
-						*line_opix++ =
-							(blu[line_irgb[BLU]] << 16) |
-							(grn[line_irgb[GRN]] << 8) |
-							 red[line_irgb[RED]];
-#endif
+if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+{static int before=1; if(before) {write(2,"FB2a\n", 5); before=0;} }
+						*p++ = 0;
+						*p++ = blu[line_irgb[BLU]];
+						*p++ = grn[line_irgb[GRN]];
+						*p++ = red[line_irgb[RED]];
+} else {
+{static int before=1; if(before) {write(2,"FB2b\n", 5); before=0;} }
+						*p++ = blu[line_irgb[BLU]];
+						*p++ = grn[line_irgb[GRN]];
+						*p++ = red[line_irgb[RED]];
+						*p++ = 0;
+}
 						line_irgb += sizeof (RGBpixel);
 					}
 
@@ -2600,13 +2604,14 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				opix -= xi->xi_xwidth;
 			}
 		} else {
-			/* General case */
+			/* General case, zooming in effect */
 
 			for (y = y1; y <= y2; y++) {
 				int pyht;
 				int copied;
 				unsigned char *line_irgb;
-				unsigned int pix, *line_opix, *prev_line;
+				unsigned int  *prev_line;
+				unsigned char *p;
 
 				unsigned char *red = xi->xi_redmap;
 				unsigned char *grn = xi->xi_grnmap;
@@ -2625,7 +2630,8 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				/* Save pointer to start of line */
 
 				line_irgb = irgb;
-				prev_line = line_opix = opix;
+				prev_line = opix;
+				p = (unsigned char *)opix;
 
 				/* For the first line, convert/copy pixels */
 
@@ -2642,23 +2648,25 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						else
 							pxwd = ifp->if_xzoom;
 
-						/* Get/convert pixel */
-#if 1
-						pix = (line_irgb[RED] << 16) |
-							(line_irgb[GRN] << 8) |
-							line_irgb[BLU];
-#else
-						pix = (line_irgb[BLU] << 16) |
-							(line_irgb[GRN] << 8) |
-							line_irgb[RED];
-#endif
-
-						line_irgb += sizeof (RGBpixel);
-
 						/* Make as many copies as needed */
 
-						while (pxwd--)
-							*line_opix++ = pix;
+						while (pxwd--)   {
+							/* Get/convert pixel */
+if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+{static int before=1; if(before) {write(2,"FB3a\n", 5); before=0;} }
+						*p++ = 0;
+						*p++ = line_irgb[BLU];
+						*p++ = line_irgb[GRN];
+						*p++ = line_irgb[RED];
+} else {
+{static int before=1; if(before) {write(2,"FB3b\n", 5); before=0;} }
+						*p++ = line_irgb[BLU];
+						*p++ = line_irgb[GRN];
+						*p++ = line_irgb[RED];
+						*p++ = 0;
+}
+						line_irgb += sizeof (RGBpixel);
+						}
 					}
 				else
 					for (x = x1; x <= x2; x++) {
@@ -2673,26 +2681,30 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						else
 							pxwd = ifp->if_xzoom;
 
-						/* Get/convert pixel */
-#if 1
-						pix = (blu[line_irgb[RED]] << 16) |
-							(grn[line_irgb[GRN]] << 8) |
-							red[line_irgb[BLU]];
-#else
-						pix = (blu[line_irgb[BLU]] << 16) |
-							(grn[line_irgb[GRN]] << 8) |
-							red[line_irgb[RED]];
-#endif
-
-						line_irgb += sizeof (RGBpixel);
 
 						/* Make as many copies as needed */
+						while (pxwd--)  {
 
-						while (pxwd--)
-							*line_opix++ = pix;
+						/* Get/convert pixel */
+if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+{static int before=1; if(before) {write(2,"FB4a\n", 5); before=0;} }
+						*p++ = 0;
+						*p++ = blu[line_irgb[BLU]];
+						*p++ = grn[line_irgb[GRN]];
+						*p++ = red[line_irgb[RED]];
+} else {
+{static int before=1; if(before) {write(2,"FB4b\n", 5); before=0;} }
+						*p++ = blu[line_irgb[BLU]];
+						*p++ = grn[line_irgb[GRN]];
+						*p++ = red[line_irgb[RED]];
+						*p++ = 0;
+}
+
+						line_irgb += sizeof (RGBpixel);
+						}
 					}
 
-				copied = line_opix - opix;
+				copied = p - (unsigned char *)opix;	/* bytes */
 
 				irgb += xi->xi_iwidth * sizeof (RGBpixel);
 				opix -= xi->xi_xwidth;
@@ -2701,7 +2713,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 
 				pyht--;
 				while (pyht--) {
-					memcpy(opix, prev_line, 4 * copied);
+					memcpy(opix, prev_line, copied);
 					opix -= xi->xi_xwidth;
 				}
 			}
