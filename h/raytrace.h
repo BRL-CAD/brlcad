@@ -1057,20 +1057,23 @@ struct rt_imexport  {
  *			H I S T O G R A M
  */
 struct histogram  {
-	int		hg_min;		/* minimum value */
-	int		hg_max;		/* maximum value */
-	int		hg_nbins;	/* # of bins in hg_bins[] */
-	int		hg_clumpsize;	/* (max-min+1)/nbins+1 */
-	long		hg_nsamples;	/* total number of samples */
+	long		magic;
+	fastf_t		hg_min;		/* minimum value */
+	fastf_t		hg_max;		/* maximum value */
+	fastf_t		hg_clumpsize;	/* (max-min+1)/nbins+1 */
+	long		hg_nsamples;	/* total number of samples spread into histogram */
+	long		hg_nbins;	/* # of bins in hg_bins[] */
 	long		*hg_bins;	/* array of counters */
 };
+#define RT_HISTOGRAM_MAGIC	0x48697374	/* Hist */
+#define RT_CK_HISTOGRAM(_p)	RT_CKMAG(_p, RT_HISTOGRAM_MAGIC, "struct histogram")
 #define RT_HISTOGRAM_TALLY( _hp, _val )	{ \
 	if( (_val) <= (_hp)->hg_min )  { \
 		(_hp)->hg_bins[0]++; \
 	} else if( (_val) >= (_hp)->hg_max )  { \
 		(_hp)->hg_bins[(_hp)->hg_nbins]++; \
 	} else { \
-		(_hp)->hg_bins[((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize]++; \
+		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)]++; \
 	} \
 	(_hp)->hg_nsamples++;  }
 
@@ -1650,6 +1653,15 @@ RT_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp) );
 					/* find RPP of one region */
 RT_EXTERN(int rt_rpp_region, (struct rt_i *rtip, char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp) );
+
+/* hist.c */
+RT_EXTERN(void			rt_hist_free, (struct histogram *histp));
+RT_EXTERN(void			rt_hist_init, (struct histogram *histp,
+				fastf_t min, fastf_t max, int nbins));
+RT_EXTERN(void			rt_hist_range, (struct histogram *hp,
+				fastf_t low, fastf_t high));
+RT_EXTERN(void			rt_hist_pr, (struct histogram *histp,
+				CONST char *title));
 
 /* The database library */
 
