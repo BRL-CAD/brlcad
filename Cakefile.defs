@@ -195,7 +195,6 @@ set -S2 "/bin/sh"
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lgl -lGL
 #		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	GFLAG		
@@ -253,7 +252,6 @@ set -S2 "/bin/sh"
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
 					-woff 1203,1048,1110,1209
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
@@ -347,7 +345,6 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -414,7 +411,6 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -494,7 +490,6 @@ set -S2 "/bin/sh"
 #		define	RANLIB	true
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -558,7 +553,6 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -711,15 +705,14 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
 #		define	RANLIB		true
 #		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
-#		define	LIBBU_LIBES	-lthread LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 #		define  ARCH_SUF	a
 #		define	LIBVERS		../sh/newvers.sh
 #		define	RANLIB		ranlib
 #		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl
-#		define	LIBBU_LIBES	-lthread
 #	endif
 
+#	define	LIBBU_LIBES	-lthread LIBTCL LIBTCL_LIBES
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBPKG_LIBES	-lnsl -lsocket
 
@@ -784,7 +777,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 #	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
-#	define	LIBBU_LIBES	-lu
+#	define	LIBBU_LIBES	-lu LIBTCL LIBTCL_LIBES
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
 
@@ -824,7 +817,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	FC	/bin/cf77
 #	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
-#	define	LIBBU_LIBES	-lmt
+#	define	LIBBU_LIBES	-lmt LIBTCL LIBTCL_LIBES
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBPKG_LIBES	-lnet
 #	define	LIBPKG_CONFIG	-DBSD=43
@@ -942,8 +935,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bshareable -o
 #		define	STANDARD_LIBES	-lm -Wl,-R -Wl,LIBDIR
-/*		LIBBU needs LIBTCL, even if it's not used. */
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	CC_DEFS -pipe
@@ -1063,7 +1054,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
 #	define	IRIX	4
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
-#	define	LIBBU_LIBES	-lmpc
+#	define	LIBBU_LIBES	-lmpc LIBTCL LIBTCL_LIBES
 #	define	LGT_CONFIG	GFLAG -lmpc
 #if 1
 #	define	XINCDIR	/usr/X11/include
@@ -1415,7 +1406,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 #	define	LD_OPTS	CC_OPTS
 #	define	FC	/usr/alliant/fortran
-#	define	LIBBU_LIBES	-lcvec -lcommon
+#	define	LIBBU_LIBES	-lcvec -lcommon LIBTCL LIBTCL_LIBES
 #	define	LIBRT_TIMER	timer42
 #endif
 
@@ -1443,7 +1434,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 #	define	FC	/usr/alliant/fortran
 #	define	LIBRT_TIMER	timer42
-#	define	LIBBU_LIBES	-lcommon
+#	define	LIBBU_LIBES	-lcommon LIBTCL LIBTCL_LIBES
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
 #	define	LIBFB_OBJS	if_remote if_ab
 #	define	LIBFB_LIBES	LIBPKG
@@ -1720,7 +1711,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	else
 /*		Parallel version */
 #		define	LD_OPTS	-m -X -z -AE /usr/lib/taskcrt0.o
-#		define	LIBBU_LIBES	-lpp
+#		define	LIBBU_LIBES	-lpp LIBTCL LIBTCL_LIBES
 #	endif
 #	define	LDFLAGS	LD_OPTS
 #	define	STANDARD_LIBES	-lm -lc
@@ -1800,7 +1791,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 /* (potentially null) loader flags needed with the corresponding libraries */
 
 #ifndef LIBBU_LIBES
-#	define	LIBBU_LIBES	/**/
+/*
+ *  NOTE -- here is where we record that LIBBU (and most everything else)
+ *  depends on TCL now.
+ */
+#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #endif
 #define	RT_LIBES	LIBBU_LIBES	/* compat w/old Cakefiles */
 
