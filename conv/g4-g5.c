@@ -54,6 +54,11 @@ char	**argv;
 		return 3;
 	}
 
+	if( dbip->dbi_version != 4 ) {
+		bu_log( "Input database must be a version 4 datbase!!!!\n" );
+		return 4;
+	}
+
 	RT_CK_DBI(dbip);
 	db_dirbuild( dbip );
 
