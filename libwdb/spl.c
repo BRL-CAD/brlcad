@@ -60,7 +60,8 @@ double	res;
 	rec.B.B_nsurf = nsurf;
 	rec.B.B_resolution = res;
 
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -127,9 +128,13 @@ struct b_spline *bp;
 	for( ; i>0; i-- )
 		*dbp++ = *fp++ * mk_conv2mm;
 
-	fwrite( (char *)&rec, sizeof(rec), 1, filep );
-	fwrite( (char *)kp, sizeof(rec), rec.d.d_nknots, filep );
-	fwrite( (char *)mp, sizeof(rec), rec.d.d_nctls, filep );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, filep ) != 1 ||
+	    fwrite( (char *)kp, sizeof(rec), rec.d.d_nknots, filep ) != rec.d.d_nknots ||
+	    fwrite( (char *)mp, sizeof(rec), rec.d.d_nctls, filep ) != rec.d.d_nctls )  {
+		free( (char *)kp );
+		free( (char *)mp );
+	    	return(-1);
+	}
 
 	free( (char *)kp );
 	free( (char *)mp );
