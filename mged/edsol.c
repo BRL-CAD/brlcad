@@ -91,9 +91,9 @@ static short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 #endif
 
 MGED_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
-MGED_EXTERN( struct wdb_pipeseg *find_pipeseg_nearest_pt, (CONST struct rt_list *pipe_hd, CONST point_t pt ) );
-MGED_EXTERN( void split_pipeseg, (struct rt_list *pipe_hd, struct wdb_pipeseg *ps, point_t pt ) );
-MGED_EXTERN( struct wdb_pipeseg *del_pipeseg, (struct wdb_pipeseg *ps ) );
+MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (CONST struct rt_list *pipe_hd, CONST point_t pt ) );
+MGED_EXTERN( void split_pipept, (struct rt_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
+MGED_EXTERN( struct wdb_pipept *del_pipept, (struct wdb_pipept *ps ) );
 
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
@@ -129,7 +129,7 @@ static plane_t		lu_pl;	/* plane equation for loop to be extruded */
 static struct shell	*es_s=(struct shell *)NULL;	/* Shell where extrusion is to end up */
 static point_t		lu_keypoint;	/* keypoint of lu_copy for extrusion */
 
-static struct wdb_pipeseg *es_pipeseg=(struct wdb_pipeseg *)NULL; /* Currently selected PIPE segment */
+static struct wdb_pipept *es_pipept=(struct wdb_pipept *)NULL; /* Currently selected PIPE segment */
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -173,17 +173,17 @@ int	es_menu;		/* item selected from menu */
 #define MENU_ETO_SCALE_C	58
 #define MENU_ETO_ROT_C		59
 #define	MENU_PIPE_SELECT	60
-#define	MENU_PIPE_NEXT_SEG	61
-#define MENU_PIPE_PREV_SEG	62
+#define	MENU_PIPE_NEXT_PT	61
+#define MENU_PIPE_PREV_PT	62
 #define MENU_PIPE_SPLIT		63
-#define MENU_PSEG_OD		64
-#define MENU_PSEG_ID		65
+#define MENU_PIPE_PT_OD		64
+#define MENU_PIPE_PT_ID		65
 #define	MENU_PIPE_SCALE_OD	66
 #define	MENU_PIPE_SCALE_ID	67
-#define	MENU_PIPE_ADD_SEG	68
-#define MENU_PIPE_INS_SEG	69
-#define MENU_PIPE_DEL_SEG	70
-#define	MENU_PIPE_MOV_SEG	71
+#define	MENU_PIPE_ADD_PT	68
+#define MENU_PIPE_INS_PT	69
+#define MENU_PIPE_DEL_PT	70
+#define	MENU_PIPE_MOV_PT	71
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -487,16 +487,15 @@ struct menu_item  ehy_menu[] = {
 
 struct menu_item pipe_menu[] = {
 	{ "PIPE MENU", (void (*)())NULL, 0 },
-	{ "select segment", pipe_ed, MENU_PIPE_SELECT },
-	{ "next segment", pipe_ed, MENU_PIPE_NEXT_SEG },
-	{ "previous segment", pipe_ed, MENU_PIPE_PREV_SEG },
-	{ "split segment", pipe_ed, MENU_PIPE_SPLIT },
-	{ "move segment", pipe_ed, MENU_PIPE_MOV_SEG },
-	{ "delete segment", pipe_ed, MENU_PIPE_DEL_SEG },
-	{ "append segmemt", pipe_ed, MENU_PIPE_ADD_SEG },
-	{ "prepend segment", pipe_ed, MENU_PIPE_INS_SEG },
-	{ "scale segment OD", pipe_ed, MENU_PSEG_OD },
-	{ "scale segment ID", pipe_ed, MENU_PSEG_ID },
+	{ "select point", pipe_ed, MENU_PIPE_SELECT },
+	{ "next point", pipe_ed, MENU_PIPE_NEXT_PT },
+	{ "previous point", pipe_ed, MENU_PIPE_PREV_PT },
+	{ "move point", pipe_ed, MENU_PIPE_MOV_PT },
+	{ "delete point", pipe_ed, MENU_PIPE_DEL_PT },
+	{ "append point", pipe_ed, MENU_PIPE_ADD_PT },
+	{ "prepend point", pipe_ed, MENU_PIPE_INS_PT },
+	{ "scale point OD", pipe_ed, MENU_PIPE_PT_OD },
+	{ "scale point ID", pipe_ed, MENU_PIPE_PT_ID },
 	{ "scale pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
 	{ "scale pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
 	{ "", (void (*)())NULL, 0 }
@@ -632,8 +631,8 @@ static void
 pipe_ed( arg )
 int arg;
 {
-	struct wdb_pipeseg *next;
-	struct wdb_pipeseg *prev;
+	struct wdb_pipept *next;
+	struct wdb_pipept *prev;
 
 	switch( arg )
 	{
@@ -641,71 +640,58 @@ int arg;
 			es_menu = arg;
 			es_edflag = ECMD_PIPE_PICK;
 		break;
-		case MENU_PIPE_NEXT_SEG:
-			if( !es_pipeseg )
+		case MENU_PIPE_NEXT_PT:
+			if( !es_pipept )
 			{
 				rt_log( "No Pipe Segment selected\n" );
 				return;
 			}
-			if( es_pipeseg->ps_type == WDB_PIPESEG_TYPE_END )
+			next = RT_LIST_NEXT( wdb_pipept, &es_pipept->l );
+			if( next->l.magic == RT_LIST_HEAD_MAGIC )
 			{
 				rt_log( "Current segment is the last\n" );
 				return;
 			}
-			next = RT_LIST_NEXT( wdb_pipeseg, &es_pipeseg->l );
-			es_pipeseg = next;
+			es_pipept = next;
 			sedraw = 1;
-			rt_pipeseg_print( es_pipeseg, base2local );
+			rt_pipept_print( es_pipept, base2local );
 			es_menu = arg;
 			es_edflag = IDLE;
 		break;
-		case MENU_PIPE_PREV_SEG:
-			if( !es_pipeseg )
+		case MENU_PIPE_PREV_PT:
+			if( !es_pipept )
 			{
 				rt_log( "No Pipe Segment selected\n" );
 				return;
 			}
-			prev = RT_LIST_PREV( wdb_pipeseg, &es_pipeseg->l );
+			prev = RT_LIST_PREV( wdb_pipept, &es_pipept->l );
 			if( prev->l.magic == RT_LIST_HEAD_MAGIC )
 			{
 				rt_log( "Current segment is the first\n" );
 				return;
 			}
-			es_pipeseg = prev;
+			es_pipept = prev;
 			sedraw = 1;
-			rt_pipeseg_print( es_pipeseg, base2local );
+			rt_pipept_print( es_pipept, base2local );
 			es_menu = arg;
 			es_edflag = IDLE;
 		break;
 		case MENU_PIPE_SPLIT:
-			if( !es_pipeseg )
-			{
-				rt_log( "No Pipe Segment selected\n" );
-				es_edflag = IDLE;
-				return;
-			}
-			if( es_pipeseg->ps_type != WDB_PIPESEG_TYPE_LINEAR )
-			{
-				rt_log( "Can only split linear segements\n" );
-				es_edflag = IDLE;
-				return;
-			}
-			es_menu = arg;
-			es_edflag = ECMD_PIPE_SPLIT;
+			/* not used */
 		break;
-		case MENU_PIPE_MOV_SEG:
-			if( !es_pipeseg )
+		case MENU_PIPE_MOV_PT:
+			if( !es_pipept )
 			{
 				rt_log( "No Pipe Segment selected\n" );
 				es_edflag = IDLE;
 				return;
 			}
 			es_menu = arg;
-			es_edflag = ECMD_PIPE_SEG_MOVE;
+			es_edflag = ECMD_PIPE_PT_MOVE;
 		break;
-		case MENU_PSEG_OD:
-		case MENU_PSEG_ID:
-			if( !es_pipeseg )
+		case MENU_PIPE_PT_OD:
+		case MENU_PIPE_PT_ID:
+			if( !es_pipept )
 			{
 				rt_log( "No Pipe Segment selected\n" );
 				es_edflag = IDLE;
@@ -719,18 +705,18 @@ int arg;
 			es_menu = arg;
 			es_edflag = PSCALE;
 		break;
-		case MENU_PIPE_ADD_SEG:
+		case MENU_PIPE_ADD_PT:
 			es_menu = arg;
-			es_edflag = ECMD_PIPE_SEG_ADD;
+			es_edflag = ECMD_PIPE_PT_ADD;
 		break;
-		case MENU_PIPE_INS_SEG:
+		case MENU_PIPE_INS_PT:
 			es_menu = arg;
-			es_edflag = ECMD_PIPE_SEG_INS;
+			es_edflag = ECMD_PIPE_PT_INS;
 		break;
-		case MENU_PIPE_DEL_SEG:
+		case MENU_PIPE_DEL_PT:
 			sedraw = 1;
 			es_menu = arg;
-			es_edflag = ECMD_PIPE_SEG_DEL;
+			es_edflag = ECMD_PIPE_PT_DEL;
 		break;
 	}
 #ifdef XMGED
@@ -1329,12 +1315,12 @@ mat_t		mat;
 		{
 			struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)ip->idb_ptr;
-			struct wdb_pipeseg *pipe_seg;
+			struct wdb_pipept *pipe_seg;
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			pipe_seg = RT_LIST_FIRST( wdb_pipeseg , &pipe->pipe_segs_head );
-			VMOVE( mpt , pipe_seg->ps_start );
+			pipe_seg = RT_LIST_FIRST( wdb_pipept , &pipe->pipe_segs_head );
+			VMOVE( mpt , pipe_seg->pp_coord );
 			*strp = "V";
 			break;
 		}
@@ -1889,7 +1875,7 @@ init_sedit()
 	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	es_pipeseg = (struct wdb_pipeseg *)NULL; /* Reset es_pipeseg */
+	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 	lu_copy = (struct loopuse *)NULL;
 
 	sedit_menu();		/* put up menu header */
@@ -2288,7 +2274,7 @@ sedit()
 			mat_t	scalemat;
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-			es_pipeseg = (struct wdb_pipeseg *)NULL; /* Reset es_pipeseg */
+			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 			if(inpara) {
 				/* accumulate the scale factor */
 				es_scale = es_para[0] / acc_sc_sol;
@@ -2310,7 +2296,7 @@ sedit()
 			mat_t	xlatemat;
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-			es_pipeseg = (struct wdb_pipeseg *)NULL; /* Reset es_pipeseg */
+			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 			if(inpara) {
 				/* Keyboard parameter.
 				 * Apply inverse of es_mat to these
@@ -2333,7 +2319,7 @@ sedit()
 	case ECMD_VTRANS:
 		/* translate a vertex */
 		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-		es_pipeseg = (struct wdb_pipeseg *)NULL; /* Reset es_pipeseg */
+		es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 		if( es_mvalid )  {
 			/* Mouse parameter:  new position in model space */
 			VMOVE( es_para, es_mparam );
@@ -2442,7 +2428,7 @@ sedit()
 			mat_t	mat;
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-			es_pipeseg = (struct wdb_pipeseg *)NULL; /* Reset es_pipeseg */
+			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 			if(inpara) {
 				static mat_t invsolr;
 				/*
@@ -2829,7 +2815,7 @@ sedit()
 		{
 			struct rt_pipe_internal *pipe=
 				(struct rt_pipe_internal *)es_int.idb_ptr;
-			struct wdb_pipeseg *next;
+			struct wdb_pipept *next;
 			point_t new_pt;
 
 			RT_PIPE_CK_MAGIC( pipe );
@@ -2846,11 +2832,11 @@ sedit()
 			else if( !es_mvalid && !inpara )
 				break;
 
-			es_pipeseg = find_pipeseg_nearest_pt( &pipe->pipe_segs_head, new_pt );
-			if( !es_pipeseg )
+			es_pipept = find_pipept_nearest_pt( &pipe->pipe_segs_head, new_pt );
+			if( !es_pipept )
 				rt_log( "No PIPE segment selected\n" );
 			else
-				rt_pipeseg_print( es_pipeseg, base2local );
+				rt_pipept_print( es_pipept, base2local );
 		}
 		break;
 	case ECMD_PIPE_SPLIT:
@@ -2873,21 +2859,16 @@ sedit()
 			else if( !es_mvalid && !inpara )
 				break;
 
-			if( !es_pipeseg )
+			if( !es_pipept )
 			{
 				rt_log( "No pipe segment selected\n" );
 				break;
 			}
-			if( es_pipeseg->ps_type != WDB_PIPESEG_TYPE_LINEAR )
-			{
-				rt_log( "Can only split linear pipe segments\n" );
-				break;
-			}
 
-			split_pipeseg( &pipe->pipe_segs_head, es_pipeseg, new_pt );
+			split_pipept( &pipe->pipe_segs_head, es_pipept, new_pt );
 		}
 		break;
-	case ECMD_PIPE_SEG_MOVE:
+	case ECMD_PIPE_PT_MOVE:
 		{
 			struct rt_pipe_internal *pipe=
 				(struct rt_pipe_internal *)es_int.idb_ptr;
@@ -2907,16 +2888,16 @@ sedit()
 			else if( !es_mvalid && !inpara )
 				break;
 
-			if( !es_pipeseg )
+			if( !es_pipept )
 			{
 				rt_log( "No pipe segment selected\n" );
 				break;
 			}
 
-			move_pipeseg( pipe, es_pipeseg, new_pt );
+			move_pipept( pipe, es_pipept, new_pt );
 		}
 		break;
-	case ECMD_PIPE_SEG_ADD:
+	case ECMD_PIPE_PT_ADD:
 		{
 			struct rt_pipe_internal *pipe=
 				(struct rt_pipe_internal *)es_int.idb_ptr;
@@ -2936,10 +2917,10 @@ sedit()
 			else if( !es_mvalid && !inpara )
 				break;
 
-			add_pipeseg( pipe, new_pt );
+			add_pipept( pipe, es_pipept, new_pt );
 		}
 		break;
-	case ECMD_PIPE_SEG_INS:
+	case ECMD_PIPE_PT_INS:
 		{
 			struct rt_pipe_internal *pipe=
 				(struct rt_pipe_internal *)es_int.idb_ptr;
@@ -2959,17 +2940,17 @@ sedit()
 			else if( !es_mvalid && !inpara )
 				break;
 
-			ins_pipeseg( pipe, new_pt );
+			ins_pipept( pipe, es_pipept, new_pt );
 		}
 		break;
-	case ECMD_PIPE_SEG_DEL:
+	case ECMD_PIPE_PT_DEL:
 		{
-			if( !es_pipeseg )
+			if( !es_pipept )
 			{
 				rt_log( "No pipe segment selected\n" );
 				break;
 			}
-			es_pipeseg = del_pipeseg( es_pipeseg );
+			es_pipept = del_pipept( es_pipept );
 		}
 		break;
 	default:
@@ -3183,9 +3164,9 @@ CONST vect_t	mousevec;
 	case ECMD_NMG_ESPLIT:
 	case ECMD_PIPE_PICK:
 	case ECMD_PIPE_SPLIT:
-	case ECMD_PIPE_SEG_MOVE:
-	case ECMD_PIPE_SEG_ADD:
-	case ECMD_PIPE_SEG_INS:
+	case ECMD_PIPE_PT_MOVE:
+	case ECMD_PIPE_PT_ADD:
+	case ECMD_PIPE_PT_INS:
 		MAT4X3PNT( temp, view2model, mousevec );
 		/* apply inverse of es_mat */
 		MAT4X3PNT( es_mparam, es_invmat, temp );
@@ -3313,24 +3294,24 @@ CONST mat_t			mat;
 	    base2local ) < 0 )
 		rt_log("vls_solid: describe error\n");
 
-	if( id == ID_PIPE && es_pipeseg )
+	if( id == ID_PIPE && es_pipept )
 	{
 		struct rt_pipe_internal *pipe;
-		struct wdb_pipeseg *ps=(struct wdb_pipeseg *)NULL;
+		struct wdb_pipept *ps=(struct wdb_pipept *)NULL;
 		int seg_no=0;
 
 		pipe = (struct rt_pipe_internal *)ip->idb_ptr;
 		RT_PIPE_CK_MAGIC( pipe );
 
-		for( RT_LIST_FOR( ps, wdb_pipeseg, &pipe->pipe_segs_head ) )
+		for( RT_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 		{
 			seg_no++;
-			if( ps == es_pipeseg )
+			if( ps == es_pipept )
 				break;
 		}
 
-		if( ps == es_pipeseg )
-			vls_pipeseg( vp, seg_no, &intern, base2local );
+		if( ps == es_pipept )
+			vls_pipept( vp, seg_no, &intern, base2local );
 	}
 	rt_functab[id].ft_ifree( &intern );
 }
@@ -3899,9 +3880,9 @@ pscale()
 			VSCALE(ell->c, ell->c, ma/mb);
 		}
 		break;
-	case MENU_PSEG_OD:	/* scale OD of one pipe segment */
+	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
 		{
-			if( !es_pipeseg )
+			if( !es_pipept )
 			{
 				rt_log( "pscale: no pipe segment selected for scaling\n" );
 				return;
@@ -3909,17 +3890,17 @@ pscale()
 			
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
-				if( es_pipeseg->ps_od > 0.0 )
-					es_scale = es_para[0] * es_mat[15]/es_pipeseg->ps_od;
+				if( es_pipept->pp_od > 0.0 )
+					es_scale = es_para[0] * es_mat[15]/es_pipept->pp_od;
 				else
 					es_scale = (-es_para[0] * es_mat[15]);
 			}
-			pipe_seg_scale_od( es_pipeseg, es_scale );
+			pipe_seg_scale_od( es_pipept, es_scale );
 		}
 		break;
-	case MENU_PSEG_ID:	/* scale ID of one pipe segment */
+	case MENU_PIPE_PT_ID:	/* scale ID of one pipe segment */
 		{
-			if( !es_pipeseg )
+			if( !es_pipept )
 			{
 				rt_log( "pscale: no pipe segment selected for scaling\n" );
 				return;
@@ -3927,12 +3908,12 @@ pscale()
 			
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
-				if( es_pipeseg->ps_id > 0.0 )
-					es_scale = es_para[0] * es_mat[15]/es_pipeseg->ps_id;
+				if( es_pipept->pp_id > 0.0 )
+					es_scale = es_para[0] * es_mat[15]/es_pipept->pp_id;
 				else
 					es_scale = (-es_para[0] * es_mat[15]);
 			}
-			pipe_seg_scale_id( es_pipeseg, es_scale );
+			pipe_seg_scale_id( es_pipept, es_scale );
 		}
 		break;
 	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
@@ -3940,19 +3921,19 @@ pscale()
 		{
 			struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)es_int.idb_ptr;
-			struct wdb_pipeseg *ps;
+			struct wdb_pipept *ps;
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			ps = RT_LIST_FIRST( wdb_pipeseg, &pipe->pipe_segs_head );
-			RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipeseg" );
+			ps = RT_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
+			RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
-			if( ps->ps_od > 0.0 )
-				es_scale = es_para[0] * es_mat[15]/ps->ps_od;
+			if( ps->pp_od > 0.0 )
+				es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 			else
 			{
-				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->ps_od <= 0.0 )
-					ps = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->pp_od <= 0.0 )
+					ps = RT_LIST_NEXT( wdb_pipept, &ps->l );
 
 				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
 				{
@@ -3960,7 +3941,7 @@ pscale()
 					return;
 				}
 
-				es_scale = es_para[0] * es_mat[15]/ps->ps_od;
+				es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 			}
 		}
 		pipe_scale_od( &es_int, es_scale );
@@ -3970,25 +3951,25 @@ pscale()
 		{
 			struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)es_int.idb_ptr;
-			struct wdb_pipeseg *ps;
+			struct wdb_pipept *ps;
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			ps = RT_LIST_FIRST( wdb_pipeseg, &pipe->pipe_segs_head );
-			RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipeseg" );
+			ps = RT_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
+			RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
-			if( ps->ps_id > 0.0 )
-				es_scale = es_para[0] * es_mat[15]/ps->ps_id;
+			if( ps->pp_id > 0.0 )
+				es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 			else
 			{
-				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->ps_id <= 0.0 )
-					ps = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->pp_id <= 0.0 )
+					ps = RT_LIST_NEXT( wdb_pipept, &ps->l );
 
 				/* Check if entire pipe has zero ID */
 				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
 					es_scale = (-es_para[0] * es_mat[15]);
 				else
-					es_scale = es_para[0] * es_mat[15]/ps->ps_id;
+					es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 			}
 		}
 		pipe_scale_id( &es_int, es_scale );
@@ -4204,7 +4185,7 @@ sedit_accept()
 	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	es_pipeseg = (struct wdb_pipeseg *)NULL; /* Reset es_pipeseg */
+	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 	if( lu_copy )
 	{
 		struct model *m;
@@ -4247,7 +4228,7 @@ sedit_reject()
 	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	es_pipeseg = (struct wdb_pipeseg *)NULL; /* Reset es_pipeseg */
+	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 	if( lu_copy )
 	{
 		struct model *m;
@@ -4296,7 +4277,7 @@ char	**argv;
 	}
 
 	if( es_edflag == PSCALE || es_edflag == SSCALE )  {
-		if( es_menu == MENU_PSEG_OD || es_menu == MENU_PSEG_ID || MENU_PIPE_SCALE_ID )
+		if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || MENU_PIPE_SCALE_ID )
 		{
 			if( es_para[0] < 0.0 )
 			{
@@ -4333,9 +4314,9 @@ char	**argv;
 		case ECMD_NMG_LEXTRU:
 		case ECMD_PIPE_PICK:
 		case ECMD_PIPE_SPLIT:
-		case ECMD_PIPE_SEG_MOVE:
-		case ECMD_PIPE_SEG_ADD:
-		case ECMD_PIPE_SEG_INS:
+		case ECMD_PIPE_PT_MOVE:
+		case ECMD_PIPE_PT_ADD:
+		case ECMD_PIPE_PT_INS:
 			/* must convert to base units */
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;
@@ -4822,55 +4803,15 @@ struct rt_db_internal	*ip;
 		{
 			register struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)es_int.idb_ptr;
-			struct wdb_pipeseg *next;
+			struct wdb_pipept *next;
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			if( es_pipeseg ) {
-				point_t cent;
-				RT_CKMAG( es_pipeseg, WDB_PIPESEG_MAGIC, "wdb_pipeseg" );
+			if( es_pipept ) {
+				RT_CKMAG( es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
-				switch( es_pipeseg->ps_type )
-				{
-					case WDB_PIPESEG_TYPE_END:
-						VMOVE( cent, es_pipeseg->ps_start );
-						break;
-					case WDB_PIPESEG_TYPE_LINEAR:
-						next = RT_LIST_NEXT( wdb_pipeseg, &es_pipeseg->l );
-						VADD2SCALE( cent, es_pipeseg->ps_start,
-							next->ps_start, 0.5 );
-						break;
-					case WDB_PIPESEG_TYPE_BEND:
-						{
-							vect_t v1, v2;
-							vect_t to_start,to_end;
-							vect_t normal;
-							fastf_t bend_radius;
-							fastf_t angle;
-							fastf_t v1_coeff, v2_coeff;
-
-							next = RT_LIST_NEXT( wdb_pipeseg, &es_pipeseg->l );
-							VSUB2( to_start, es_pipeseg->ps_start,
-								es_pipeseg->ps_bendcenter );
-							VSUB2( to_end, next->ps_start,
-								es_pipeseg->ps_bendcenter );
-							VCROSS( normal, to_start, to_end );
-							VCROSS( v2, normal, to_start );
-							VUNITIZE( v2 );
-							bend_radius = MAGNITUDE( to_start );
-							VSCALE( v1, to_start, 1.0/bend_radius );
-							angle = atan2( VDOT( to_end, v2 ), VDOT( to_end, v1 ) );
-							angle = angle/2.0;
-							v1_coeff = bend_radius*cos(angle);
-							v2_coeff = bend_radius*sin(angle);
-							VJOIN2( cent, es_pipeseg->ps_bendcenter,
-								v1_coeff, v1, v2_coeff, v2 );
-							
-						}
-						break;
-				}
-				MAT4X3PNT(pos_view, xform, cent);
-				POINT_LABEL_STR( pos_view, "seg" );
+				MAT4X3PNT(pos_view, xform, es_pipept->pp_coord);
+				POINT_LABEL_STR( pos_view, "pt" );
 			}
 		}
 	}
