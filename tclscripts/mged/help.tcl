@@ -9,9 +9,7 @@ set help_data(?lib)		{{}	{summary of available library commands}}
 set help_data(%)		{{}	{escape to interactive shell}}
 set help_data(3ptarb)		{{}	{makes arb given 3 pts, 2 coord of 4th pt, and thickness}}
 set help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> value(s)]}	{control the angle/distance cursor}}
-set help_data(add_view)         {{} {add another view to the view ring}}
 set help_data(ae)		{{[-i] azim elev [twist]}	{set view using azim, elev and twist angles}}
-set help_data(aim)		{{[command_window [pathName of display window]]}	{aims command_window at pathName}}
 set help_data(aip)		{{[fb]}		{advance illumination pointer or path position forward or backward}}
 set help_data(analyze)		{{[arbname]}	{analyze faces of ARB}}
 set help_data(apropos)		{{keyword}	{finds commands whose descriptions contain the given keyword}}
@@ -45,7 +43,6 @@ set help_data(debugmem)		{{}	{Print librt memory use map}}
 set help_data(debugnmg)		{{[hex code]}	{Show/set debugging bit vector for NMG}}
 set help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
 set help_data(delay)		{{sec usec}	{Delay for the specified amount of time}}
-set help_data(delete_view)      {{vid} {delete view vid from the view ring}}
 set help_data(dm)		{{set var [val]}	{Do display-manager specific command}}
 set help_data(draw)		{{<objects>}	{draw objects}}
 set help_data(dup)		{{file [prefix]}	{check for dup names in 'file'}}
@@ -75,9 +72,6 @@ set help_data(g)		{{groupname <objects>}	{group objects}}
 set help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set help_data(get_comb)		{{comb_name} {get information about combination}}
 #set help_data(getknob)		{{knobname}	{Gets the current setting of the given knob}}
-set help_data(get_rect)		{{} {Get the rectangle of the current display manager}}
-set help_data(get_view)         {{[-a]} {returns a list of view id numbers that are in the view ring}}
-set help_data(goto_view)        {{vid} {make view vid the current view}}
 set help_data(gui)		{{[-gt gui_type] [options for gui_type]} {create graphical user interface}}
 set help_data(gui_create)	{{[-gt gui_type] [options for gui_type]} {create graphical user interface}}
 set help_data(gui_destroy)	{{[-gt gui_type] [options for gui_type]} {destroy graphical user interface}}
@@ -126,7 +120,6 @@ set help_data(model2view)	{{mx my mz}	{convert point in model coords (mm) to vie
 set help_data(model2view_lu)	{{mx my mz}	{convert point in model coords (local units) to view coords (local units)}}
 set help_data(mv)		{{old new}	{rename object}}
 set help_data(mvall)		{{oldname newname}	{rename object everywhere}}
-set help_data(next_view)        {{} {set the current view to the next view on the view ring}}
 set help_data(nirt)		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
 set help_data(nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set help_data(nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
@@ -150,7 +143,6 @@ set help_data(prcolor)		{{}	{print color&material table}}
 set help_data(prefix)		{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
 set help_data(press)		{{button_label}	{emulate button press}}
 set help_data(preview)		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
-set help_data(prev_view)        {{} {set the current view to the previous view on the view ring}}
 set help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
 set help_data(push)		{{object[s]}	{pushes object's path transformations to solids}}
 set help_data(put_comb)		{{comb_name is_Region id air gift los color shader inherit boolean_expr} {set combination}}
@@ -184,12 +176,9 @@ set help_data(savekey)		{{file [time]}	{save keyframe in file (experimental)}}
 set help_data(saveview)		{{file [args]}	{save view in file for RT}}
 set help_data(sca)              {{sfactor} {scale by sfactor}}
 set help_data(sed)		{{<path>}	{solid-edit named solid}}
-set help_data(set_rect)		{{x y width height} {Set the rectangle of the current display manager}}
 set help_data(setview)		{{x y z}	{set the view given angles x, y, and z in degrees}}
 set help_data(shader)		{{comb material [arg(s)]}	{assign materials (like 'mater')}}
-set help_data(share_menu)	{{pathName1 pathName2}  {pathName1 shares its menu with pathName2}}
-set help_data(share_vars)	{{pathName1 pathName2}	{pathName1 shares its vars with pathName2}}
-set help_data(share_view)	{{pathName1 pathName2}	{pathName1 shares its view with pathName2}}
+set help_data(share)		{{resource dm1 dm2}	{dm1 (display manager 1) shares its resource with dm2}}
 set help_data(shells)		{{nmg_model}	{breaks model into seperate shells}}
 set help_data(showmats)		{{path}	{show xform matrices along path}}
 set help_data(size)		{{size}	{set view size}}
@@ -203,8 +192,8 @@ set help_data(svb)		{{}	{set view reference base}}
 set help_data(sync)		{{}	{forces UNIX sync}}
 set help_data(t)		{{}	{table of contents}}
 set help_data(ted)		{{}	{text edit a solid's parameters}}
+set help_data(tie)		{{[[-u] cw [dm]]}	{ties/associates a command window (cw) with a display manager (dm)}}
 set help_data(title)		{{[string]}	{print or change the title}}
-set help_data(toggle_view)      {{} {toggle the current view to the last view}}
 set help_data(tol)		{{[abs #] [rel #] [norm #] [dist #] [perp #]}	{show/set tessellation and calculation tolerances}}
 set help_data(tops)		{{}	{find all top level objects}}
 set help_data(track)		{{<parameters>}	{adds tracks to database}}
@@ -212,11 +201,7 @@ set help_data(tra)              {{dx dy dz} {translate by (dx,dy,dz)}}
 set help_data(translate)	{{x y z}	{trans object to x,y, z}}
 set help_data(tree)		{{object(s)}	{print out a tree of all members of an object}}
 set help_data(t_muves)		{{}	{list all the known MUVES components/systems}}
-set help_data(unaim)		{{id}	{stop aiming at id}}
 set help_data(units)		{{[mm|cm|m|in|ft|...]}	{change units}}
-set help_date(unshare_menu)	{{pathName}	{pathName no longer shares its menu}}
-set help_data(unshare_vars)	{{pathName}	{pathName no longer shares its vars}}
-set help_data(unshare_view)	{{pathName}	{pathName no longer shares its view}}
 set help_data(vars)		{{[var=opt]}	{assign/display mged variables}}
 set help_data(vdraw)		{{write|insert|delete|read|length|show [args]}	{Expermental drawing (cnuzman)}}
 set help_data(view)		{{center|size|eye|ypr|quat|aet}	{Experimental - get/set view parameters (local units).}}
