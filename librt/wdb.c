@@ -58,7 +58,7 @@ CONST char *filename;
 	if( (fp = fopen( filename, "ab" )) == NULL )
 		return RT_WDB_NULL;
 
-	GETSTRUCT(wdbp, rt_wdb);
+	BU_GETSTRUCT(wdbp, rt_wdb);
 	wdbp->magic = RT_WDB_MAGIC;
 	wdbp->type = RT_WDB_TYPE_FILE;
 	wdbp->fp = fp;
@@ -97,7 +97,7 @@ int		mode;
 			dbip->dbi_filename );
 	}
 
-	GETSTRUCT(wdbp, rt_wdb);
+	BU_GETSTRUCT(wdbp, rt_wdb);
 	wdbp->magic = RT_WDB_MAGIC;
 	wdbp->type = mode;
 	wdbp->dbip = dbip;
@@ -302,11 +302,11 @@ int		id;
 double		local2mm;
 {
 	struct rt_db_internal	intern;
-	struct rt_external	ext;
+	struct bu_external	ext;
 	int			ret;
 
 	if( (id <= 0 || id > ID_MAXIMUM) && id != ID_COMBINATION )  {
-		rt_log("wdb_export(%s): id=%d bad\n",
+		bu_log("wdb_export(%s): id=%d bad\n",
 			name, id );
 		return(-1);
 	}
@@ -321,7 +321,7 @@ double		local2mm;
 		db_free_external( &ext );
 		return(-2);				/* FAIL */
 	}
-	RT_CK_EXTERNAL( &ext );
+	BU_CK_EXTERNAL( &ext );
 
 	ret = wdb_export_external( wdbp, &ext, name, db_flags_internal( &intern ) );
 	db_free_external( &ext );

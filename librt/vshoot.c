@@ -111,7 +111,7 @@ register struct application *ap;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_g.rtg_logindent += 2;
-		rt_log("\n**********mshootray cpu=%d  %d,%d lvl=%d (%s)\n",
+		bu_log("\n**********mshootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			ap->a_resource->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
@@ -126,11 +126,11 @@ register struct application *ap;
 
 	/* Allocate dynamic memory */
 	vlen = nrays * rtip->rti_maxsol_by_type;
-	ary_stp = (struct soltab **)rt_calloc( vlen, sizeof(struct soltab *),
+	ary_stp = (struct soltab **)bu_calloc( vlen, sizeof(struct soltab *),
 		"*ary_stp[]" );
-	ary_rp = (struct xray **)rt_calloc( vlen, sizeof(struct xray *),
+	ary_rp = (struct xray **)bu_calloc( vlen, sizeof(struct xray *),
 		"*ary_rp[]" );
-	ary_seg = (struct seg *)rt_calloc( vlen, sizeof(struct seg),
+	ary_seg = (struct seg *)bu_calloc( vlen, sizeof(struct seg),
 		"ary_seg[]" );
 
 	/**** for each ray, do this ****/
@@ -319,9 +319,9 @@ freeup:
 	}
 
 out:
-	rt_free( (char *)ary_stp, "*ary_stp[]" );
-	rt_free( (char *)ary_rp, "*ary_rp[]" );
-	rt_free( (char *)ary_seg, "ary_seg[]" );
+	bu_free( (char *)ary_stp, "*ary_stp[]" );
+	bu_free( (char *)ary_rp, "*ary_rp[]" );
+	bu_free( (char *)ary_seg, "ary_seg[]" );
 
 	if( solidbits != BITV_NULL)  {
 		FREE_BITV( solidbits, ap->a_resource );
@@ -331,7 +331,7 @@ out:
 			rt_g.rtg_logindent -= 2;
 		else
 			rt_g.rtg_logindent = 0;
-		rt_log("----------mshootray cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
+		bu_log("----------mshootray cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
 			ap->a_resource->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
@@ -517,7 +517,7 @@ int nbits;
  *  is exhausted.  Rather than simply getting one additional structure,
  *  we get a whole batch, saving overhead.  When this routine is called,
  *  the bitv resource must already be locked.
- *  malloc() locking is done in rt_malloc.
+ *  malloc() locking is done in bu_malloc.
  *
  *  Also note that there is a bit of trickery going on here:
  *  the *real* size of be_v[] array is determined at runtime, here.
@@ -533,9 +533,9 @@ register struct resource *res;
 
 	size = rtip->rti_bv_bytes;
 	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
-	bytes = rt_byte_roundup(16*size);
-	if( (cp = rt_malloc(bytes, "rt_get_bitv")) == (char *)0 )  {
-		rt_log("rt_get_bitv: malloc failure\n");
+	bytes = bu_malloc_len_roundup(16*size);
+	if( (cp = bu_malloc(bytes, "rt_get_bitv")) == (char *)0 )  {
+		bu_log("rt_get_bitv: malloc failure\n");
 		exit(17);
 	}
 	while( bytes >= size )  {
