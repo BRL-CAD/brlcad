@@ -693,7 +693,7 @@ extern void		nmg_pl_m(FILE *fp, struct model *m);
 extern struct vertexuse	*nmg_find_vu_in_face(point_t pt, struct faceuse *fu, fastf_t tol);
 extern void		nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2);
 extern void		nmg_isect_faces(struct faceuse *fu1, struct faceuse *fu2);
-extern struct nmgregion	*nmg_do_bool(struct shell *s1, struct shell *s2, int oper, fastf_t tol);
+extern struct nmgregion	*nmg_do_bool(struct nmgregion *s1, struct nmgregion *s2, int oper, fastf_t tol);
 extern int		nmg_ck_closed_surf(struct shell *s);
 extern void		nmg_m_to_g(FILE *fp, struct model *m);
 extern void		nmg_r_to_g(FILE *fp, struct nmgregion *r);
