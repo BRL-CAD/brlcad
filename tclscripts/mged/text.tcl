@@ -35,12 +35,12 @@ proc distribute_text { w cmd str} {
 		$_w mark set insert $_promptBegin
 
 		if {$cmd != ""} {
-		    ia_rtlog_bold $_w "mged:$src_id> "
-		    ia_rtlog_bold $_w $cmd\n
+		    mged_print_tag $_w "mged:$src_id> " prompt
+		    mged_print_tag $_w $cmd\n oldcmd
 		}
 
 		if {$str != ""} {
-		    ia_rtlog_bold $_w $str\n
+		    mged_print_tag $_w $str\n result
 		}
 
 		$_w mark set insert curr
@@ -141,7 +141,7 @@ proc do_ctrl_c { w } {
     set ia_cmd_prefix($id) ""
     set ia_more_default(id) ""
     $w insert insert \n
-    ia_print_prompt $w "mged> "
+    mged_print_prompt $w "mged> "
     $w see insert
 }
 
@@ -256,4 +256,121 @@ proc do_text_highlight { w } {
 proc reset_input_strings {} {
     set id [lindex [cmd_get] 2]
     do_ctrl_c .$id.t
+}
+
+proc do_B1 { w x y } {
+    $w mark set anchor [tkTextClosestGap $w $x $y]
+    $w tag remove sel 0.0 end
+
+    if {[$w cget -state] == "normal"} {
+	focus $w
+    }
+}
+
+proc do_B1_Motion { w x y } {
+    set cur [tkTextClosestGap $w $x $y]
+
+    if [catch {$w index anchor}] {
+	$w mark set anchor $cur
+    }
+
+    if [$w compare $cur < anchor] {
+	set first $cur
+	set last anchor
+    } else {
+	set first anchor
+	set last $cur
+    }
+
+    $w tag remove sel 0.0 $first
+    $w tag add sel $first $last
+    $w tag remove sel $last end
+}
+
+proc do_ButtonRelease2 { w } {
+    global moveView
+
+    if {!$moveView($w)} {
+	catch {$w insert insert [selection get -displayof $w]}
+    }
+
+    if {[$w cget -state] == "normal"} {
+	focus $w
+    }
+}
+
+proc do_B2 { w x y } {
+    global moveView
+
+    set moveView($w) 0
+    $w scan mark $x $y
+}
+
+proc do_B2_Motion { w x y } {
+    global moveView
+
+    set moveView($w) 1
+    $w scan dragto $x $y
+}
+
+proc do_Double1 { w x y } {
+    set cur [tkTextClosestGap $w $x $y]
+
+    if [catch {$w index anchor}] {
+	$w mark set anchor $cur
+    }
+
+    if [$w compare $cur < anchor] {
+	set first [tkTextPrevPos $w "$cur + 1c" tcl_wordBreakBefore]
+	set last [tkTextNextPos $w "anchor" tcl_wordBreakAfter]
+    } else {
+	set first [tkTextPrevPos $w anchor tcl_wordBreakBefore]
+	set last [tkTextNextPos $w "$cur - 1c" tcl_wordBreakAfter]
+    }
+
+    $w tag remove sel 0.0 $first
+    $w tag add sel $first $last
+    $w tag remove sel $last end
+}
+
+proc do_Triple1 { w x y } {
+    set cur [tkTextClosestGap $w $x $y]
+
+    if [catch {$w index anchor}] {
+	$w mark set anchor $cur
+    }
+
+    if [$w compare $cur < anchor] {
+	set first [$w index "$cur linestart"]
+	set last [$w index "anchor - 1c lineend + 1c"]
+    } else {
+	set first [$w index "anchor linestart"]
+	set last [$w index "$cur lineend + 1c"]
+    }
+
+    $w tag remove sel 0.0 $first
+    $w tag add sel $first $last
+    $w tag remove sel $last end
+}
+
+proc do_Shift1 { w x y } {
+    tkTextResetAnchor $w @$x,$y
+    do_B1_Motion $w $x $y
+}
+
+proc mged_print { w str } {
+    $w insert insert $str
+}
+
+proc mged_print_prompt { w str } {
+    mged_print_tag $w $str prompt
+    $w mark set promptEnd insert
+    $w mark gravity promptEnd left
+}
+
+proc mged_print_tag { w str tag } {
+    set first [$w index insert]
+    $w insert insert $str
+    set last [$w index insert]
+    $w tag add $tag $first $last
 }
