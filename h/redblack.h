@@ -206,7 +206,7 @@ RB_EXTERN(void *rb_select,	(rb_tree	*tree,
 				 int		order,
 				 int		k
 				));
-#define		rb_select1(t,k)	rb_select1((t), 0, (k))
+#define		rb_select1(t,k)	rb_select((t), 0, (k))
 RB_EXTERN(int rb_insert,	(rb_tree	*tree,
 				 void		*data
 				));
