@@ -486,14 +486,18 @@ char *buf;
 	if( debug )  fprintf(stderr, "ph_matrix: %s\n", buf );
 
 	/* Start options in a known state */
+	AmbientIntensity = 0.4;
 	hypersample = 0;
 	jitter = 0;
 	rt_perspective = 0;
 	eye_backoff = 1.414;
 	aspect = 1;
 	stereo = 0;
-	width = 0;
-	height = 0;
+	use_air = 0;
+	width = height = 0;
+	cell_width = cell_height = 0;
+	lightmodel = 0;
+	incr_mode = 0;
 
 	process_cmd( buf );
 	free(buf);
