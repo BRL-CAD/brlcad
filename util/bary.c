@@ -41,9 +41,9 @@ struct site
 
 void print_usage (void)
 {
-#define OPT_STRING	"ns:?"
+#define OPT_STRING	"ns:t?"
 
-    rt_log("Usage: 'bary [-n] [-s \"x y z\"] [file]'\n");
+    rt_log("Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
 }
 
 void enqueue_site (sl, x, y, z)
@@ -81,12 +81,13 @@ struct rt_list	*sl;
     }
 }
 
-int read_point (fp, c_p, c_len, normalize)
+int read_point (fp, c_p, c_len, normalize, tail)
 
-FILE	*fp;
-fastf_t	*c_p;
-int	c_len;
-int	normalize;
+FILE		*fp;
+fastf_t		*c_p;
+int		c_len;
+int		normalize;
+struct rt_vls	*tail;
 
 {
     char		*cp;
@@ -139,6 +140,11 @@ int	normalize;
     }
 
     wrap_up:
+	if ((return_code == 1) && (tail != 0))
+	{
+	    rt_vls_trunc(tail, 0);
+	    rt_vls_strcat(tail, cp);
+	}
 	rt_vls_vlsfree(bp);
 	return (return_code);
 }
@@ -158,6 +164,7 @@ char	*argv[];
     fastf_t		x, y, z;
     FILE		*infp;
     struct rt_list	site_list;
+    struct rt_vls	*tail_buf = 0;
     struct site		*sp;
 
     extern int	optind;			/* index from getopt(3C) */
@@ -178,6 +185,10 @@ char	*argv[];
 		    exit (1);
 		}
 		enqueue_site(&site_list, x, y, z);
+		break;
+	    case 't':
+		if (tail_buf == 0)	 /* Only initialize it once */
+		    tail_buf = rt_vls_vlsinit();
 		break;
 	    case '?':
 	    default:
@@ -218,7 +229,7 @@ char	*argv[];
     coeff = (fastf_t *)
 		rt_malloc(nm_sites * sizeof(fastf_t), "coefficient array");
 
-    while (read_point(infp, coeff, nm_sites, normalize) != EOF)
+    while (read_point(infp, coeff, nm_sites, normalize, tail_buf) != EOF)
     {
 	x = y = z = 0.0;
 	i = 0;
@@ -229,6 +240,9 @@ char	*argv[];
 	    z += sp -> s_z * coeff[i];
 	    ++i;
 	}
-	rt_log("%g %g %g\n", x, y, z);
+	rt_log("%g %g %g", x, y, z);
+	if (tail_buf)
+	    rt_log("%s", rt_vls_addr(tail_buf));
+	rt_log("\n");
     }
 }
