@@ -294,6 +294,9 @@ fastf_t		radius;
 	vect_t	cross1, cross2;
 	vect_t	a, b;
 
+	if( MAGSQ(height) <= SQRT_SMALL_FASTF )
+		return -2;
+
 	/* Create two mutually perpendicular vectors, perpendicular to H */
 	mat_vec_ortho( cross1, height );
 	VCROSS( cross2, cross1, height );
@@ -395,6 +398,9 @@ fastf_t		radtop;
 {
 	vect_t	cross1, cross2;
 	vect_t	a, b, c, d;
+
+	if( MAGSQ(height) <= SQRT_SMALL_FASTF )
+		return -2;
 
 	/* Create two mutually perpendicular vectors, perpendicular to H */
 	vec_ortho( cross1, height );
