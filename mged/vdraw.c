@@ -73,7 +73,6 @@ author - Carl Nuzman
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#include "db.h"
 #include "mater.h"
 #include "nmg.h"
 #include "raytrace.h"
