@@ -459,7 +459,7 @@ FILE			*fp;
  *  Any of name, attrib, and body may be null.
  */
 void
-db5_export_object3( out, dli, name, attrib, body, major, minor, zzz )
+db5_export_object3( out, dli, name, attrib, body, major, minor, a_zzz, b_zzz )
 struct bu_external		*out;			/* output */
 int				dli;
 CONST char			*name;
@@ -467,7 +467,8 @@ CONST struct bu_external	*attrib;
 CONST struct bu_external	*body;
 int				major;
 int				minor;
-int				zzz;		/* compression, someday */
+int				a_zzz;		/* compression, someday */
+int				b_zzz;
 {
 	struct db5_ondisk_header *odp;
 	register unsigned char	*cp;
@@ -545,14 +546,14 @@ int				zzz;		/* compression, someday */
 	/* aflags */
 	odp->db5h_aflags = a_width << DB5HDR_AFLAGS_WIDTH_SHIFT;
 	if( attrib )  odp->db5h_aflags |= DB5HDR_AFLAGS_PRESENT;
-	odp->db5h_aflags |= zzz & DB5HDR_AFLAGS_ZZZ_MASK;
+	odp->db5h_aflags |= a_zzz & DB5HDR_AFLAGS_ZZZ_MASK;
 
 	/* bflags */
 	odp->db5h_bflags = b_width << DB5HDR_BFLAGS_WIDTH_SHIFT;
 	if( body )  odp->db5h_bflags |= DB5HDR_BFLAGS_PRESENT;
-	odp->db5h_bflags |= zzz & DB5HDR_BFLAGS_ZZZ_MASK;
+	odp->db5h_bflags |= b_zzz & DB5HDR_BFLAGS_ZZZ_MASK;
 
-	if( zzz )  bu_bomb("db5_export_object3: compression not supported yet\n");
+	if( a_zzz || b_zzz )  bu_bomb("db5_export_object3: compression not supported yet\n");
 
 	/* Object_Type */
 	odp->db5h_major_type = major;
@@ -796,7 +797,7 @@ double		local2mm;
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
 		NULL, NULL, NULL,
 		DB5_MAJORTYPE_RESERVED, 0,
-		DB5_ZZZ_UNCOMPRESSED );
+		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 
@@ -812,7 +813,7 @@ double		local2mm;
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		DB5_GLOBAL_OBJECT_NAME, &attr, NULL,
 		DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
-		DB5_ZZZ_UNCOMPRESSED);
+		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 	bu_free_external( &attr );
@@ -883,12 +884,102 @@ rt_db_cvt_to_external5(
 	db5_export_object3( ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		name, &attributes, &body,
 		major, minor,
-		DB5_ZZZ_UNCOMPRESSED);
+		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 	BU_CK_EXTERNAL( ext );
 	bu_free_external( &body );
 	bu_free_external( &attributes );
 
 	return 0;		/* OK */
+}
+
+/*
+ *
+ *			D B _ P U T _ E X T E R N A L 5
+ *
+ *  Given that caller already has an external representation of
+ *  the database object,  update it to have a new name
+ *  (taken from dp->d_namep) in that external representation,
+ *  and write the new object into the database, obtaining different storage if
+ *  the size has changed.
+ *
+ *  Changing the name on a v5 object is a relatively expensive operation.
+ *
+ *  Caller is responsible for freeing memory of external representation,
+ *  using bu_free_external().
+ *
+ *  This routine is used to efficiently support MGED's "cp" and "keep"
+ *  commands, which don't need to import and decompress
+ *  objects just to rename and copy them.
+ *
+ *  Returns -
+ *	-1	error
+ *	 0	success
+ */
+int
+db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
+{
+	struct db5_raw_internal	raw;
+	struct bu_external	tmp;
+
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
+	BU_CK_EXTERNAL(ep);
+	if(rt_g.debug&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+		dp->d_namep, ep, dbip, dp );
+
+	if( dbip->dbi_read_only )  {
+		bu_log("db_put_external5(%s):  READ-ONLY file\n",
+			dbip->dbi_filename);
+		return -1;
+	}
+
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
+
+	/* First, change the name. */
+
+	/* Crack the external form into parts */
+	if( db5_get_raw_internal_ptr( &raw, (unsigned char *)ep->ext_buf ) == NULL )  {
+		bu_log("db_put_external5(%s) failure in db5_get_raw_internal_ptr()\n",
+			dp->d_namep);
+		return -1;
+	}
+	BU_ASSERT_LONG( raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT );
+
+	/* See if name needs to be changed */
+	if( raw.name.ext_buf == NULL || strcmp( dp->d_namep, raw.name.ext_buf ) != 0 )  {
+		/* Name needs to be changed.  Create new external form. */
+		tmp = *ep;		/* struct copy */
+		BU_INIT_EXTERNAL(ep);
+
+		db5_export_object3( ep,
+			DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+			dp->d_namep,
+			&raw.attributes,
+			&raw.body,
+			raw.major_type, raw.minor_type,
+			raw.a_zzz, raw.b_zzz );
+		bu_free_external( &tmp );
+		/* 'raw' is invalid now, 'ep' has new external form. */
+	}
+
+	/* Second, obtain storage for final object */
+	if( ep->ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+		if( db5_realloc( dbip, dp, ep ) < 0 )  {
+			bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
+			return -5;
+		}
+	}
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, dp->d_len );
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( (char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes );
+		return 0;
+	}
+
+	if( db_write( dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr ) < 0 )  {
+		return -1;
+	}
+	return 0;
 }
 
 /*
