@@ -16,7 +16,8 @@
 
 /* Some useful stuff from Doug Gwyn's std.h. */
 /* Extended data types */
-#if !defined(NCURSES_BOOL) && !defined(bool)
+/* _CURSES_H is SGI header define in curses.h (they define bool as char) */
+#if !defined(NCURSES_BOOL) && !defined(bool) && !defined(_CURSES_H)
 typedef int bool;			/* Boolean data */
 #endif
 
