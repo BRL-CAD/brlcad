@@ -187,6 +187,7 @@ struct dm_obj {
 #ifdef USE_FBSERV
   struct fbserv_obj	dmo_fbs;		/* fbserv object */
 #endif
+  struct bu_observer	dmo_observers;		/* fbserv observers */
   Tcl_Interp		*dmo_interp;		/* Tcl interpreter */
 };
 
