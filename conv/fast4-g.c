@@ -242,8 +242,8 @@ CONST int		simplify;
 	struct faceuse	*fu2;
 	struct face	*f1;
 	struct face	*f2;
-	struct face_g	*fg1;
-	struct face_g	*fg2;
+	struct face_g_plane	*fg1;
+	struct face_g_plane	*fg2;
 
 	NMG_CK_SHELL(s);
 	m = nmg_find_model( &s->l.magic );
@@ -263,8 +263,8 @@ CONST int		simplify;
 		if( NMG_INDEX_TEST(flags1, f1) )  continue;
 		NMG_INDEX_SET(flags1, f1);
 
-		fg1 = f1->fg_p;
-		NMG_CK_FACE_G(fg1);
+		fg1 = f1->g.plane_p;
+		NMG_CK_FACE_G_PLANE(fg1);
 		NMG_GET_FU_PLANE( n1, fu1 );
 
 		/* For this face, visit all remaining faces in the shell. */
@@ -282,8 +282,8 @@ CONST int		simplify;
 			if( NMG_INDEX_TEST(flags2, f2) )  continue;
 			NMG_INDEX_SET(flags2, f2);
 
-			fg2 = f2->fg_p;
-			NMG_CK_FACE_G(fg2);
+			fg2 = f2->g.plane_p;
+			NMG_CK_FACE_G_PLANE(fg2);
 
 			if( fu2->fumate_p == fu1 || fu1->fumate_p == fu2 )
 				rt_bomb("tmp_shell_coplanar_face_merge() mate confusion\n");
@@ -327,9 +327,9 @@ CONST int		simplify;
 					if( debug )
 					{
 						rt_log( "Merging coplanar faces:\n" );
-						rt_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu1->f_p->fg_p->N ) );
+						rt_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu1->f_p->g.plane_p->N ) );
 						nmg_pr_fu_briefly( fu1 , (char *)NULL );
-						rt_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu2->f_p->fg_p->N ) );
+						rt_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu2->f_p->g.plane_p->N ) );
 						nmg_pr_fu_briefly( fu2 , (char *)NULL );
 					}
 					nmg_jf( fu1, fu2 );
@@ -1717,33 +1717,33 @@ Recalc_edge_g( new_s )
 struct shell * new_s;
 {
 	int i;
-	struct nmg_ptbl edges;
+	struct nmg_ptbl list;
 	int *flags;
 
-	nmg_tbl( &edges , TBL_INIT , (long *)NULL );
+	nmg_tbl( &list , TBL_INIT , (long *)NULL );
 
 	flags = (int *)rt_calloc( m->maxindex , sizeof( int ) , "Recalc_edge_g: flags" );
 
-	nmg_edge_tabulate( &edges , &new_s->l.magic );
+	nmg_edgeuse_tabulate( &list , &new_s->l.magic );
 
-	for( i=0 ; i<NMG_TBL_END( &edges ) ; i++ )
+	for( i=0 ; i<NMG_TBL_END( &list ) ; i++ )
 	{
-		struct edge *e;
-		struct edge_g *eg;
+		struct edgeuse		*eu;
+		struct edge_g_lseg	*eg;
 
-		e = (struct edge *)NMG_TBL_GET( &edges , i );
-		NMG_CK_EDGE( e );
+		eu = (struct edgeuse *)NMG_TBL_GET( &list , i );
+		NMG_CK_EDGEUSE( eu );
 
-		eg = e->eg_p;
-		NMG_CK_EDGE_G( eg );
+		eg = eu->g.lseg_p;
+		NMG_CK_EDGE_G_LSEG( eg );
 
 		if( NMG_INDEX_TEST_AND_SET( flags , eg ) )
-			nmg_edge_g( e );
+			nmg_edge_g( eu );
 	}
 
 	rt_free( (char *)flags , "Recalc_edge_g: flags" );
 
-	nmg_tbl( &edges , TBL_FREE , (long *)NULL );
+	nmg_tbl( &list , TBL_FREE , (long *)NULL );
 }
 
 void
@@ -1758,7 +1758,7 @@ struct shell *new_s;
 	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
 	{
 		struct face *f;
-		struct face_g *fg;
+		struct face_g_plane *fg;
 
 		NMG_CK_FACEUSE( fu );
 
@@ -1767,8 +1767,8 @@ struct shell *new_s;
 
 		f = fu->f_p;
 		NMG_CK_FACE( f );
-		fg = f->fg_p;
-		NMG_CK_FACE_G( fg );
+		fg = f->g.plane_p;
+		NMG_CK_FACE_G_PLANE( fg );
 
 		if( NMG_INDEX_TEST_AND_SET( flags , fg ) )
 			(void)nmg_calc_face_g( fu );
@@ -1793,12 +1793,12 @@ CONST fastf_t thick;
 	/* now adjust all the planes, first move them by distance "thick" */
 	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
 	{
-		struct face_g *fg_p;
+		struct face_g_plane *fg_p;
 
 		NMG_CK_FACEUSE( fu );
 		NMG_CK_FACE( fu->f_p );
-		fg_p = fu->f_p->fg_p;
-		NMG_CK_FACE_G( fg_p );
+		fg_p = fu->f_p->g.plane_p;
+		NMG_CK_FACE_G_PLANE( fg_p );
 
 		/* move the faces by the distance "thick" */
 		if( NMG_INDEX_TEST_AND_SET( flags , fg_p ) )
@@ -1806,7 +1806,9 @@ CONST fastf_t thick;
 			if( debug )
 			{
 				rt_log( "Moving face_g x%x ( %f %f %f %f ) from face x%x\n" ,
-					fu->f_p->fg_p, V4ARGS( fu->f_p->fg_p->N ) , fu->f_p );
+					fu->f_p->g.plane_p,
+					V4ARGS( fu->f_p->g.plane_p->N ) ,
+					fu->f_p );
 				rt_log( "\tflip = %d\n" , fu->f_p->flip );
 			}
 			if( fu->f_p->flip )
