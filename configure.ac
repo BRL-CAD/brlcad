@@ -55,7 +55,7 @@ TCLVER=8.4
 TCL=libtcl${TCLVER}
 case "$target" in
 	powerpc-apple-darwin*)
-		TCL_LIBS='-L${top_builddir}/libtcl${TCLVER}/build -ltcl${TCLVER} ${DL} ${SOCKET} -lm -dynamiclib -flat_namespace -undefined suppress -lc -install_name ${libdir}/libtcl${TCLVER}.dylib'
+		TCL_LIBS='-L${top_builddir}/libtcl${TCLVER}/build -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
 dnl -compatibility_version 20 -current_version 20.1
 		;;
 	*)
@@ -144,6 +144,7 @@ dnl AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_L
 AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique), AC_ERROR("Don't know the endian of this machine!"))
 
 AC_DEFINE(USE_PROTOTYPES,1,heh)
+AC_DEFINE(USE_REGCOMP,1,new regex stuff)
 
 dnl === these are things that are defined, but don't seem to be necessary on the 4 supported platforms? ===
 dnl POSIX_REGEXEC

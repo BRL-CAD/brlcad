@@ -21,6 +21,9 @@
 static const char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
+#define HAVE_VAX_GSHORT	/* from libbu/vfont.c */
+
+#ifndef HAVE_VAX_GSHORT
 /*
  *			V A X _ G S H O R T
  *
@@ -38,7 +41,9 @@ char *msgp;
 		return(i | ~0xFFFF);	/* Sign extend */
 	return(i);
 }
+#endif
 
+#ifndef HAVE_VAX_PSHORT
 /*
  *			V A X _ P S H O R T
  */
@@ -52,3 +57,4 @@ register unsigned short s;
 	msgp[1] = s >> 8;
 	return(msgp+2);
 }
+#endif

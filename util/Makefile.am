@@ -90,13 +90,13 @@ pix_orle_SOURCES = pix-orle.c
 pix_orle_LDADD = @FB@ @ORLE@
 
 rle_pix_SOURCES = rle-pix.c strdup.c
-rle_pix_LDADD = @RLE@
+rle_pix_LDADD = @RLE@ @BU@
 
 pix_rle_SOURCES = pix-rle.c strdup.c
-pix_rle_LDADD = @RLE@
+pix_rle_LDADD = @RLE@ @BU@
 
 bw_rle_SOURCES = bw-rle.c strdup.c
-bw_rle_LDADD = @RLE@
+bw_rle_LDADD = @RLE@ @BU@
 
 ap_pix_SOURCES = ap-pix.c
 

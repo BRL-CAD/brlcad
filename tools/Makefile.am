@@ -14,7 +14,7 @@ bin_PROGRAMS = applymap avg4 crop fant into mcut mergechan pyrmask \
 bin_SCRIPTS = font.c
 BUILT_SOURCES = font.c
 
-LDADD = @RLE@
+LDADD = @RLE@ @BU@
 noinst_HEADERS = font.h rletogif.h
 
 applymap_SOURCES = applymap.c

@@ -85,7 +85,7 @@ const char *rhs;
 	lhs = BRLCAD_ROOT;
 #else
 #ifndef WIN32
-	lhs = "/usr/brlcad";		/* Changed by newbindir.sh */
+	lhs = PREFIX;
 #else
 	/* XXX nastiness that will need to be made dynamic
 	lhs = "C:\\brlcad";  /* change as needed*/
