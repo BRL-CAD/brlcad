@@ -9,12 +9,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-#define FILES	xxx
+#define EXTRA_CLEAN	tune.c
 
-/* Don't let this JOVE get installed automatically,
- * as it may be different from the JOVE provided in /usr/brl/bin.
- */
-/* #define DONT_INSTALL	1 */
+#define FILES	xxx
 
 #define JOVE_OBJ	jove_buf.o \
 		jove_c.o \
@@ -33,8 +30,7 @@
 		jove_screen.o \
 		jove_term.o \
 		jove_wind.o \
-		tune.o \
-		version.o
+		tune.o
 
 
 #include "../Cakefile.defs"
@@ -43,9 +39,22 @@
 /* Explicit composition of each product */
 /* Do not use LIBES symbol.  We don't need anything but libc */
 
-jove:	FRC JOVE_OBJ
-	CC LDFLAGS -o jove JOVE_OBJ LIBTERMLIB
-	rm -f version.o
+tune.c:	../SRCDIR/jove_tune.c
+	rm -f tune.c
+	sed -e \'s;BinDir;BINDIR;\' -e \'s;LibDir;LIBDIR;\' < ../SRCDIR/jove_tune.c > tune.c
+
+tune.o:	tune.c
+	CC -c CFLAGS -I../SRCDIR tune.c
+
+jove:	JOVE_OBJ
+	if test ! -f version.number ; then echo 0 > version.number; fi
+	c=`cat version.number`; rm -f version.number; echo $c | \\
+	  awk '{version = \$1 + 1; };END{printf "\%d\\\\n", version > "version.number"; }'
+	c=`cat version.number`; \\
+	echo "char	version[] = \\\\"2.$c\\\\";" > version.c
+	CC -c CFLAGS version.c
+	CC LDFLAGS -o jove JOVE_OBJ version.o LIBTERMLIB
+	rm -f version.c version.o
 
 findcom:	findcom.o tune.o
 	CC LDFLAGS findcom.o tune.o -o findcom
@@ -54,23 +63,11 @@ findcom:	findcom.o tune.o
 teach-jove:	../SRCDIR/teach-jove.sh
 	sed -e \'s;BinDir;BINDIR;\' -e \'s;LibDir;LIBDIR;\' < ../SRCDIR/teach-jove.sh > teach-jove
 
-FRC:
-	rm -f tune.o
-	rm -f version.o
-	sed -e \'s;BinDir;BINDIR;\' -e \'s;LibDir;LIBDIR;\' < ../SRCDIR/jove_tune.c > ../SRCDIR/tune.c
-	if test ! -f version.number ; then echo 0 > version.number; fi
-	c=`cat version.number`; \\
-	rm -f version.number ../SRCDIR/version.c; \\
-	echo $c | \\
-		awk '{version = \$1 + 1; };END{printf "\%d\\\\n", version > "version.number"; }'; \\
-	c=`cat version.number`; \\
-	echo "char	version[] = \\\\"2.$c\\\\";" > ../SRCDIR/version.c
-	touch FRC
-
 #define EXTRA_INSTALL_TARGETS install-library
 
 #include "../Cakefile.rules"
 
+/* These aren't really manual pages, they're text documents */
 install-library&:
-	cp ../SRCDIR/doc/describe.com LIBDIR/.
-	cp ../SRCDIR/doc/teach-jove LIBDIR/.
+	cp ../SRCDIR/describe.com.1 LIBDIR/describe.com
+	cp ../SRCDIR/teach-jove.1 LIBDIR/teach-jove
