@@ -38,11 +38,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *	<0	error
  */
 int
-mk_export_fwrite( fp, gp, id, name )
+mk_export_fwrite( fp, name, gp, id )
 FILE		*fp;
+char		*name;
 genptr_t	gp;
 int		id;
-char		*name;
 {
 	struct rt_db_internal	intern;
 	struct rt_external	ext;
