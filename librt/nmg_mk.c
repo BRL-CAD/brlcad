@@ -2325,38 +2325,38 @@ nmg_eu_to_vlist( vhead, eu_hd )
 struct vlhead	*vhead;
 struct nmg_list	*eu_hd;
 {
-	struct edgeuse	*eu;
-	struct vertexuse *vu;
-	struct vertex	*v;
+	struct edgeuse		*eu;
+	struct edgeuse		*eumate;
+	struct vertexuse	*vu;
+	struct vertexuse	*vumate;
 	register struct vertex_g *vg;
-	struct vertex_g	*first_vg;
+	register struct vertex_g *vgmate;
 
 	/* Consider all the edges in the wire edge list */
-	first_vg = (struct vertex_g *)0;
 	for( NMG_LIST( eu, edgeuse, eu_hd ) )  {
-		/* Consider this edge */
+		/* This wire edge runs from vertex to mate's vertex */
 		NMG_CK_EDGEUSE(eu);
 		vu = eu->vu_p;
 		NMG_CK_VERTEXUSE(vu);
-		v = vu->v_p;
-		NMG_CK_VERTEX(v);
-		vg = v->vg_p;
-		if( !vg ) {
+		NMG_CK_VERTEX(vu->v_p);
+		vg = vu->v_p->vg_p;
+
+		eumate = eu->eumate_p;
+		NMG_CK_EDGEUSE(eumate);
+		vumate = eumate->vu_p;
+		NMG_CK_VERTEXUSE(vumate);
+		NMG_CK_VERTEX(vumate->v_p);
+		vgmate = vumate->v_p->vg_p;
+
+		if( !vg || !vgmate ) {
+			rt_log("nmg_eu_to_vlist() no vg or mate?\n");
 			continue;
 		}
 		NMG_CK_VERTEX_G(vg);
-		if( !first_vg )  {
-			/* move */
-			ADD_VL( vhead, vg->coord, 0 );
-			first_vg = vg;
-		} else {
-			/* Draw */
-			ADD_VL( vhead, vg->coord, 1 );
-		}
-	}
-	if( first_vg )  {
-		/* Draw back to first vertex used */
-		ADD_VL( vhead, first_vg->coord, 1 );	/* draw */
+		NMG_CK_VERTEX_G(vgmate);
+
+		ADD_VL( vhead, vg->coord, 0 );		/* move */
+		ADD_VL( vhead, vgmate->coord, 1 );	/* draw */
 	}
 }
 
