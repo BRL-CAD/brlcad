@@ -13,6 +13,11 @@
 #define HMG_HIT_OUT_ON	64
 #define HMG_HIT_ON_OUT	128
 
+#define	NMG_VERT_ENTER 1
+#define NMG_VERT_ENTER_LEAVE 0
+#define NMG_VERT_LEAVE -1
+#define NMG_VERT_UNKNOWN -2
+
 #define NMG_HITMISS_SEG_IN 0x696e00	/* "in" */
 #define NMG_HITMISS_SEG_OUT 0x6f757400	/* "out" */
 
