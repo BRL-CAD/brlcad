@@ -1334,6 +1334,26 @@ proc set_coords { id } {
     set coords $coord_type($id)
 }
 
+proc set_ecoords { id } {
+    global mged_top
+    global mged_active_dm
+    global ecoords
+    global coord_type
+
+    winset $mged_top($id).ul
+    set ecoords $coord_type($id)
+
+    winset $mged_top($id).ur
+    set ecoords $coord_type($id)
+
+    winset $mged_top($id).ll
+    set ecoords $coord_type($id)
+
+    winset $mged_top($id).lr
+    set ecoords $coord_type($id)
+}
+
+
 proc set_rotate_about { id } {
     global mged_top
     global mged_active_dm
@@ -1351,6 +1371,25 @@ proc set_rotate_about { id } {
 
     winset $mged_top($id).lr
     set rotate_about $rotate_about_what($id)
+}
+
+proc set_erotate_about { id } {
+    global mged_top
+    global mged_active_dm
+    global erotate_about
+    global rotate_about_what
+
+    winset $mged_top($id).ul
+    set erotate_about $rotate_about_what($id)
+
+    winset $mged_top($id).ur
+    set erotate_about $rotate_about_what($id)
+
+    winset $mged_top($id).ll
+    set erotate_about $rotate_about_what($id)
+
+    winset $mged_top($id).lr
+    set erotate_about $rotate_about_what($id)
 }
 
 proc set_rate_type { id } {
