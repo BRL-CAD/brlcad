@@ -207,12 +207,18 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #else
 #		define MGED_OBJS	dm-4d dm-X
-#		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
+#		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_LIBRARY=\\\\"/n/vapor/m/cad/tclscripts\\\\"
 #		define MGED_LIBES	-L''XLIBDIR -lX11 -lgl_s
 #endif
 #	endif
 #	define	HAS_TCP	1
+#if 1
+/*      Experimental     */
+#	define  CC_OPTS		GFLAG -DIRIX=4
+#	define	CC	/usr/gnu/bin/gcc
+#else
 #	define	CC	/usr/bin/cc
+#endif
 #	define	LD_OPTS		GFLAG
 #	define	RANLIB	ranlib5.sh
 #	define	GETHOST	hostname
@@ -287,7 +293,7 @@ set -S2 "/bin/sh"
 # else
 /* 	Carl's test version */
 #	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx dm-pex
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
 # endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
@@ -317,7 +323,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	GFLAG		-64 -KPIC -G 7
 #	define	XLIBDIR		/usr/lib64
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sharedlibvers.sh
