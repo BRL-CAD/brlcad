@@ -15,7 +15,7 @@
 			rtif anal typein predictor \
 			buttons clip menu adc edsol edarb edpipe \
 			proc_reg hideline polyif red \
-			mater plot overlay inside \
+			mater math plot overlay inside \
 			concat utility1 utility2 track arbs \
 			facedef arb set animedit db comb_std \
 			comb_bool_parse bool_rewrite solids_on_ray history \
