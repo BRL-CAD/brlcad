@@ -519,27 +519,51 @@ int			id;
 	struct directory	*dp;
 	struct rt_db_internal	intern;
 	struct rt_vls		sol;
+	register int		i;
+	register matp_t		mat;
 
 	RT_VLS_INIT( &sol );
 
 	RT_CK_EXTERNAL(ep);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
+	/* Determine if this matrix is an identity matrix */
+	for( i=0; i<16; i++ )  {
+		f = tsp->ts_mat[i] - rt_identity[i];
+		if( !NEAR_ZERO(f, 0.0001) )
+			break;
+	}
+	if( i < 16 )  {
+		/* Not identity matrix */
+		mat = tsp->ts_mat;
+	} else {
+		/* Identity matrix */
+		mat = (matp_t)0;
+	}
+
 	/*
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
 	 */
 	for( RT_LIST( stp, soltab, &(sol_hd.l) ) )  {
-		register int i;
-
 		RT_CHECK_SOLTAB(stp);				/* debug */
-		if(	dp->d_namep[0] != stp->st_name[0]  ||	/* speed */
-		dp->d_namep[1] != stp->st_name[1]  ||	/* speed */
-		strcmp( dp->d_namep, stp->st_name ) != 0
-		    )
-			continue;
+
+		/* Leaf solids must be the same */
+		if( dp != stp->st_dp )  continue;
+
+		if( mat == (matp_t)0 )  {
+			if( stp->st_matp == (matp_t)0 )  {
+				if( debug )
+					rt_log("rt_gettree_leaf:  %s re-referenced (ident)\n",
+						dp->d_namep );
+				goto found_it;
+			}
+			goto next_one;
+		}
+		if( stp->st_matp == (matp_t)0 )  goto next_one;
+
 		for( i=0; i<16; i++ )  {
-			f = tsp->ts_mat[i] - stp->st_pathmat[i];
+			f = mat[i] - stp->st_matp[i];
 			if( !NEAR_ZERO(f, 0.0001) )
 				goto next_one;
 		}
@@ -557,7 +581,12 @@ next_one:
 	stp->l.magic = RT_SOLTAB_MAGIC;
 	stp->st_id = id;
 	stp->st_dp = dp;
-	mat_copy( stp->st_pathmat, tsp->ts_mat );
+	if( mat )  {
+		stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
+		mat_copy( stp->st_matp, mat );
+	} else {
+		stp->st_matp = mat;
+	}
 	stp->st_specific = (genptr_t)0;
 
 	/* init solid's maxima and minima */
@@ -565,9 +594,10 @@ next_one:
 	VSETALL( stp->st_min,  INFINITY );
 
 	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, stp->st_pathmat ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, ep, stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
 		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
 		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
 		rt_free( (char *)stp, "struct soltab");
 		return( TREE_NULL );		/* BAD */
 	}
