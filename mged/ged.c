@@ -1536,6 +1536,8 @@ refresh()
      */
     curr_dm_list = p;
     if(mapped && (update_views || view_state->vs_flag || dirty)) {
+      dirty = 0;
+      view_state->vs_flag = 0;
       do_time = 1;
       VMOVE(geometry_default_color,color_scheme->cs_geo_def);
 
@@ -1639,8 +1641,6 @@ refresh()
       }
 
       DM_DRAW_END(dmp);
-
-      dirty = 0;
     }
   }
 
@@ -1652,9 +1652,6 @@ refresh()
       /* Smoothly transition to new speed */
       frametime = 0.9 * frametime + 0.1 * elapsed_time;
     }
-
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l)
-      p->dml_view_state->vs_flag = 0;
   }
 
   curr_dm_list = save_dm_list;
