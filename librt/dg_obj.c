@@ -931,7 +931,7 @@ dgo_autoview_cmd(struct dg_obj		*dgop,
 		 int			argc,
 		 char			**argv)
 {
-	if (argc != 1) {
+	if (argc != 2) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -986,26 +986,31 @@ dgo_autoview_tcl(ClientData	clientData,
 		return TCL_ERROR;
 	}
 
-	return dgo_autoview_cmd(dgop, vop, interp, argc-2, argv+2);
+	return dgo_autoview_cmd(dgop, vop, interp, argc-1, argv+1);
 }
 
-/*
- * Usage:
- *        procname get_autoview
- */
-static int
-dgo_get_autoview_tcl(ClientData	clientData,
-		     Tcl_Interp *interp,
-		     int	argc,
-		     char	**argv)
+int
+dgo_get_autoview_cmd(struct dg_obj	*dgop,
+		     Tcl_Interp		*interp,
+		     int		argc,
+		     char		**argv)
 {
-	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct bu_vls vls;
 	register struct solid	*sp;
 	vect_t		min, max;
 	vect_t		minus, plus;
 	vect_t		center;
 	vect_t		radial;
+
+	if (argc != 1) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias dgo_get_autoview %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
 	DGO_CHECK_WDBP_NULL(dgop,interp);
 
@@ -1041,6 +1046,21 @@ dgo_get_autoview_tcl(ClientData	clientData,
 	bu_vls_free(&vls);
 
 	return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname get_autoview
+ */
+static int
+dgo_get_autoview_tcl(ClientData	clientData,
+		     Tcl_Interp *interp,
+		     int	argc,
+		     char	**argv)
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	return dgo_get_autoview_cmd(dgop, interp, argc-1, argv+1);
 }
 
 int

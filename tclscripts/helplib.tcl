@@ -107,6 +107,7 @@ set helplib_data(vo_view2model)		{{} {get the view2model matrix}}
 set helplib_data(vo_vrot)		{{xdeg ydeg zdeg} {rotate viewpoint}}
 set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 
+set helplib_data(dgo_get_autoview)	{{}	{get view size and center such that all displayed solids would be in view}}
 set helplib_data(dgo_close)		{{} {close/destroy this drawable geometry object}}
 set helplib_data(dgo_open)		{{name wdb_obj} {open/create a new drawable geometry object}}
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}

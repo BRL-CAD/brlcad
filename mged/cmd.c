@@ -233,6 +233,7 @@ static struct cmdtab cmdtab[] = {
 	{"front",	bv_front},
 	{"g", cmd_group},
 	{"get",		cmd_get},
+	{"get_autoview", cmd_get_autoview},
 	{"get_comb", cmd_get_comb},
 	{"get_dbip", cmd_get_ptr},
 	{"get_dm_list", f_get_dm_list},

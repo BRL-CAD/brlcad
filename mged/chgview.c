@@ -532,6 +532,15 @@ cmd_autoview(ClientData clientData,
 	return TCL_OK;
 }
 
+int
+cmd_get_autoview(ClientData	clientData,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char		**argv)
+{
+	return dgo_get_autoview_cmd(dgop, interp, argc, argv);
+}
+
 void
 solid_list_callback()
 {

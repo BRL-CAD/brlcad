@@ -4775,6 +4775,7 @@ BU_EXTERN(int	dgo_draw_cmd,		(struct dg_obj *dgop, Tcl_Interp *interp, int argc,
 BU_EXTERN(int	dgo_E_cmd,		(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	dgo_erase_cmd,		(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	dgo_erase_all_cmd,	(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	dgo_get_autoview_cmd,	(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	dgo_illum_cmd,		(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	dgo_label_cmd,		(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(struct dg_obj	*dgo_open_cmd,	(char *oname, struct rt_wdb *wdbp));
