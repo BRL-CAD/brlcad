@@ -7,6 +7,8 @@
 #
 #  $Header$
 
+SILENT="$1"
+
 cake ${SILENT} \
  adc.o \
  anal.o \
