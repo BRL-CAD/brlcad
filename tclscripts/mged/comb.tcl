@@ -20,6 +20,10 @@ proc init_comb { id } {
 	return
     }
 
+    # set the padding
+    set padx 4
+    set pady 2
+
     set comb_control($id,name) ""
     set comb_control($id,isRegion) "Yes"
     set comb_control($id,id) ""
@@ -141,7 +145,7 @@ proc init_comb { id } {
     grid $top.idL -sticky "ew" -in $top.idF
     grid $top.idE -sticky "ew" -in $top.idFF
     grid $top.idFF -sticky "ew" -in $top.idF
-    grid $top.nameF x $top.idF -sticky "ew" -in $top.gridF -pady 8
+    grid $top.nameF x $top.idF -sticky "ew" -in $top.gridF -pady $pady
     grid columnconfigure $top.nameF 0 -weight 1
     grid columnconfigure $top.nameFF 0 -weight 1
     grid columnconfigure $top.idF 0 -weight 1
@@ -153,7 +157,7 @@ proc init_comb { id } {
     grid $top.airL -sticky "ew" -in $top.airF
     grid $top.airE -sticky "ew" -in $top.airFF
     grid $top.airFF -sticky "ew" -in $top.airF
-    grid $top.colorF x $top.airF -sticky "ew" -in $top.gridF -pady 8
+    grid $top.colorF x $top.airF -sticky "ew" -in $top.gridF -pady $pady
     grid columnconfigure $top.colorF 0 -weight 1
     grid columnconfigure $top.colorFF 0 -weight 1
     grid columnconfigure $top.airF 0 -weight 1
@@ -165,7 +169,7 @@ proc init_comb { id } {
     grid $top.losL -sticky "ew" -in $top.losF
     grid $top.losE -sticky "ew" -in $top.losFF
     grid $top.losFF -sticky "ew" -in $top.losF
-    grid $top.shaderF x $top.losF -sticky "ew" -in $top.gridF -pady 8
+    grid $top.shaderF x $top.losF -sticky "ew" -in $top.gridF -pady $pady
     grid columnconfigure $top.shaderF 0 -weight 1
     grid columnconfigure $top.shaderFF 0 -weight 1
     grid columnconfigure $top.losF 0 -weight 1
@@ -174,8 +178,8 @@ proc init_comb { id } {
     grid $top.giftL -sticky "ew" -in $top.giftF
     grid $top.giftE -sticky "ew" -in $top.giftFF
     grid $top.giftFF -sticky "ew" -in $top.giftF
-    grid $top.giftF x x -sticky "ew" -in $top.gridF -pady 8
-#    grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady 8
+    grid $top.giftF x x -sticky "ew" -in $top.gridF -pady $pady
+#    grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady $pady
     grid columnconfigure $top.giftF 0 -weight 1
     grid columnconfigure $top.giftFF 0 -weight 1
 
@@ -193,14 +197,14 @@ proc init_comb { id } {
     grid columnconfigure $top.gridF3 0 -weight 1
 
     grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew"\
-	    -in $top.gridF4 -pady 8
+	    -in $top.gridF4 -pady $pady
     grid columnconfigure $top.gridF4 1 -weight 1
     grid columnconfigure $top.gridF4 3 -weight 1
 
-    grid $top.gridF -sticky "ew" -padx 8 -pady 8
-    grid $top.gridF2 -sticky "ew" -padx 8 -pady 8
-    grid $top.gridF3 -sticky "nsew" -padx 8 -pady 8
-    grid $top.gridF4 -sticky "ew" -padx 8 -pady 8
+    grid $top.gridF -sticky "ew" -padx $padx -pady $pady
+    grid $top.gridF2 -sticky "ew" -padx $padx -pady $pady
+    grid $top.gridF3 -sticky "nsew" -padx $padx -pady $pady
+    grid $top.gridF4 -sticky "ew" -padx $padx -pady $pady
     grid rowconfigure $top 2 -weight 1
     grid columnconfigure $top 0 -weight 1
 
@@ -329,6 +333,9 @@ proc comb_dismiss { id top } {
 proc comb_toggle_isRegion { id } {
     global comb_control
 
+    set padx 4
+    set pady 2
+
     set top .$id.comb
     grid remove $top.gridF
 
@@ -362,29 +369,29 @@ proc comb_toggle_isRegion { id } {
 	grid $top.idL -sticky "ew" -in $top.idF
 	grid $top.idE -sticky "ew" -in $top.idFF
 	grid $top.idFF -sticky "ew" -in $top.idF
-	grid $top.nameF x $top.idF -sticky "ew" -row 0 -in $top.gridF -pady 8
+	grid $top.nameF x $top.idF -sticky "ew" -row 0 -in $top.gridF -pady $pady
 	grid columnconfigure $top.idF 0 -weight 1
 	grid columnconfigure $top.idFF 0 -weight 1
 
 	grid $top.airL -sticky "ew" -in $top.airF
 	grid $top.airE -sticky "ew" -in $top.airFF
 	grid $top.airFF -sticky "ew" -in $top.airF
-	grid $top.colorF x $top.airF -sticky "ew" -in $top.gridF -pady 8
+	grid $top.colorF x $top.airF -sticky "ew" -in $top.gridF -pady $pady
 	grid columnconfigure $top.airF 0 -weight 1
 	grid columnconfigure $top.airFF 0 -weight 1
 
 	grid $top.losL -sticky "ew" -in $top.losF
 	grid $top.losE -sticky "ew" -in $top.losFF
 	grid $top.losFF -sticky "ew" -in $top.losF
-	grid $top.shaderF x $top.losF -sticky "ew" -in $top.gridF -pady 8
+	grid $top.shaderF x $top.losF -sticky "ew" -in $top.gridF -pady $pady
 	grid columnconfigure $top.losF 0 -weight 1
 	grid columnconfigure $top.losFF 0 -weight 1
 
 	grid $top.giftL -sticky "ew" -in $top.giftF
 	grid $top.giftE -sticky "ew" -in $top.giftFF
 	grid $top.giftFF -sticky "ew" -in $top.giftF
-	grid $top.giftF x x -sticky "ew" -in $top.gridF -pady 8
-#	grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady 8
+	grid $top.giftF x x -sticky "ew" -in $top.gridF -pady $pady
+#	grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady $pady
 	grid columnconfigure $top.giftF 0 -weight 1
 	grid columnconfigure $top.giftFF 0 -weight 1
     } else {
@@ -403,9 +410,9 @@ proc comb_toggle_isRegion { id } {
 	destroy $top.giftF $top.giftFF
 	destroy $top.losF $top.losFF
 
-	grid $top.nameF x x -sticky "ew" -in $top.gridF -pady 8
-	grid $top.colorF x x -sticky "ew" -in $top.gridF -pady 8
-	grid $top.shaderF x x -sticky "ew" -in $top.gridF -pady 8
+	grid $top.nameF x x -sticky "ew" -in $top.gridF -pady $pady
+	grid $top.colorF x x -sticky "ew" -in $top.gridF -pady $pady
+	grid $top.shaderF x x -sticky "ew" -in $top.gridF -pady $pady
     }
 
     grid $top.gridF
@@ -465,6 +472,9 @@ proc comb_shader_gui { id shader_type } {
 #	return
 #    }
 #
+#    set padx 4
+#    set pady 2
+#
 #    toplevel $top -screen $player_screen($id)
 #
 #    frame $top.gridF
@@ -490,10 +500,10 @@ proc comb_shader_gui { id shader_type } {
 #    grid $top.giftE $top.resetB -sticky "nsew" -in $top.gridF2
 #    grid columnconfigure $top.gridF2 0 -weight 1
 #
-#    grid $top.dismissB -in $top.gridF3 -pady 8
+#    grid $top.dismissB -in $top.gridF3 -pady $pady
 #
-#    grid $top.gridF -sticky "nsew" -padx 8 -pady 8
-#    grid $top.gridF2 -sticky "ew" -padx 8 -pady 16
+#    grid $top.gridF -sticky "nsew" -padx $padx -pady $pady
+#    grid $top.gridF2 -sticky "ew" -padx $padx -pady $pady
 #    grid $top.gridF3 -sticky "ew"
 #    grid rowconfigure $top 0 -weight 1
 #    grid columnconfigure $top 0 -weight 1
