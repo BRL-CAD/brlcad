@@ -73,7 +73,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 
 #include "./list.h"
-#include "./remrt.h"
 #include "./inout.h"
 #include "./protocol.h"
 
@@ -153,6 +152,8 @@ char *frame_script = NULL;
 
 struct list *FreeList;
 
+/* -- */
+
 struct frame {
 	struct frame	*fr_forw;
 	struct frame	*fr_back;
@@ -170,6 +171,7 @@ struct frame {
 	double		fr_cpu;		/* CPU seconds used so far */
 	/* Current view */
 	struct rt_vls	fr_cmd;		/* RT options & command string */
+	struct rt_vls	fr_after_cmd;	/* local commands, after frame done */
 };
 struct frame FrameHead;
 struct frame *FreeFrame;
@@ -188,6 +190,47 @@ struct frame *FreeFrame;
 		abort(); \
 	}
 
+
+/*
+ *  Macros to manage lists of frames
+ */
+
+#define GET_FRAME(p)	{ \
+		if( ((p)=FreeFrame) == FRAME_NULL ) {\
+			GETSTRUCT(p, frame); \
+		} else { \
+			FreeFrame = (p)->fr_forw; (p)->fr_forw = FRAME_NULL; \
+		} \
+		bzero( (p), sizeof(struct frame) ); \
+		(p)->fr_magic = FRAME_MAGIC; \
+		RT_VLS_INIT( &(p)->fr_cmd ); \
+		RT_VLS_INIT( &(p)->fr_after_cmd ); \
+	}
+#define FREE_FRAME(p)	{ \
+	rt_vls_free( &(p)->fr_cmd ); \
+	rt_vls_free( &(p)->fr_after_cmd ); \
+	(p)->fr_forw = FreeFrame; FreeFrame = (p); }
+
+/* Insert "new" partition in front of "old" frame element */
+#define INSERT_FRAME(new,old)	{ \
+	(new)->fr_back = (old)->fr_back; \
+	(old)->fr_back = (new); \
+	(new)->fr_forw = (old); \
+	(new)->fr_back->fr_forw = (new);  }
+
+/* Append "new" partition after "old" frame element */
+#define APPEND_FRAME(new,old)	{ \
+	(new)->fr_forw = (old)->fr_forw; \
+	(new)->fr_back = (old); \
+	(old)->fr_forw = (new); \
+	(new)->fr_forw->fr_back = (new);  }
+
+/* Dequeue "cur" frame element from doubly-linked list */
+#define DEQUEUE_FRAME(cur)	{ \
+	(cur)->fr_forw->fr_back = (cur)->fr_back; \
+	(cur)->fr_back->fr_forw = (cur)->fr_forw;  }
+
+/* --- */
 
 struct servers {
 	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
@@ -828,31 +871,58 @@ struct timeval	*tv;
 
 /*
  *			E A T _ S C R I P T
+ *
+ *  The general layout of an RT animation script is:
+ *
+ *	a once-only prelude that may give viewsize, etc.
+ *
+ *	the body between start & end commands
+ *
+ *	a trailer that follows the end command, before the next
+ *	start command.  While this *might* include more changes
+ *	of viewsize, etc, in actual practice, if it exists at all,
+ *	it contains shell escapes, e.g., to compress the frame just
+ *	finished.  As such, it should be performed locally, after
+ *	the frame is done.
+ *
+ *  The caller is responsible for fopen()ing and fclose()ing the file.
  */
 void
 eat_script( fp )
 FILE	*fp;
 {
-	char	*buf;
-	char	*ebuf;
-	int	argc;
-	char	*argv[64];
-	struct rt_vls	body;
+	char		*buf;
+	char		*ebuf;
+	char		*nsbuf;
+	int		argc;
+	char		*argv[64];
 	struct rt_vls	prelude;
-	int	frame;
+	struct rt_vls	body;
+	struct rt_vls	finish;
+	int		frame = 0;
 	struct frame	*fr;
 
 	RT_VLS_INIT( &prelude );
-	while( (buf = rt_read_cmd( fp )) != (char *)0 )  {
-		if( strncmp( buf, "start", 5 ) != 0 )  {
-			rt_vls_strcat( &prelude, buf );
-			rt_vls_strcat( &prelude, ";" );
-			rt_free( buf, "prelude line" );
-			continue;
-		}
+	RT_VLS_INIT( &body );
+	RT_VLS_INIT( &finish );
 
+	/* Once only, collect up any prelude */
+	while( (buf = rt_read_cmd( fp )) != (char *)0 )  {
+		if( strncmp( buf, "start", 5 ) == 0 )  break;
+
+		rt_vls_strcat( &prelude, buf );
+		rt_vls_strcat( &prelude, ";" );
+		rt_free( buf, "prelude line" );
+	}
+	if( buf == (char *)0 )  {
+		rt_log("unexpected EOF while reading script for first frame 'start'\n");
+		rt_vls_free( &prelude );
+		return;
+	}
+
+	/* A "start" command has been seen, and is saved in buf[] */
+	while( !feof(fp) )  {
 		/* Gobble until "end" keyword seen */
-		RT_VLS_INIT( &body );
 		while( (ebuf = rt_read_cmd( fp )) != (char *)0 )  {
 			if( strncmp( ebuf, "end", 3 ) == 0 )  {
 				rt_free( ebuf, "end line" );
@@ -860,10 +930,24 @@ FILE	*fp;
 			}
 			rt_vls_strcat( &body, ebuf );
 			rt_vls_strcat( &body, ";" );
-			rt_free( ebuf, "script line" );
+			rt_free( ebuf, "script body line" );
+		}
+		if( ebuf == (char *)0 )  {
+			rt_log("unexpected EOF while reading script for frame %d\n", frame);
+			break;
 		}
 
-		/* buf has saved "start" line in it */
+		/* Gobble trailer until next "start" keyword seen */
+		while( (nsbuf = rt_read_cmd( fp )) != (char *)0 )  {
+			if( strncmp( nsbuf, "start", 5 ) == 0 )  {
+				break;
+			}
+			rt_vls_strcat( &finish, nsbuf );
+			rt_vls_strcat( &finish, ";" );
+			rt_free( nsbuf, "script trailer line" );
+		}
+
+		/* buf[] has saved "start" line in it */
 		argc = rt_split_cmd( argv, 64, buf );
 		if( argc < 2 )  {
 			rt_log("bad 'start' line\n");
@@ -881,17 +965,20 @@ FILE	*fp;
 		prep_frame(fr);
 		rt_vls_vlscatzap( &fr->fr_cmd, &prelude );
 		rt_vls_vlscatzap( &fr->fr_cmd, &body );
+		rt_vls_vlscatzap( &fr->fr_after_cmd, &finish );
 		if( create_outputfilename( fr ) < 0 )  {
+			rt_log("'%s': unable to create file\n",
+				fr->fr_filename);
 			FREE_FRAME(fr);
 		} else {
 			APPEND_FRAME( fr, FrameHead.fr_back );
 		}
 bad:
 		rt_free( buf, "command line" );
+		buf = nsbuf;
+		nsbuf = (char *)0;
 	}
 out:	;
-	/* Doing an fclose here can result in a server showing up on fd 0 */
-	/* fclose(fp); */
 }
 
 /*
@@ -1096,7 +1183,7 @@ register struct frame	*fr;
 	if( outputfile )  {
 		sprintf( name, "%s.%d", outputfile, fr->fr_number );
 	} else {
-		sprintf( name, "/usr/tmp/remrt%d", getpid() );
+		sprintf( name, "/usr/tmp/remrt%d.pix", getpid() );
 		(void)unlink(name);	/* remove any previous one */
 	}
 	fr->fr_filename = rt_strdup( name );
@@ -1205,6 +1292,10 @@ register struct frame *fr;
 	/* Write-protect file, to prevent re-computation */
 	if( chmod( fr->fr_filename, 0444 ) < 0 )
 		perror( fr->fr_filename );
+
+	/* Do any after-frame commands */
+	(void)rt_do_cmd( (struct rt_i *)0,
+		RT_VLS_ADDR(&fr->fr_after_cmd), cmd_tab );
 
 	destroy_frame( fr );
 
@@ -3075,6 +3166,7 @@ char	**argv;
 		rt_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
 		pr_list( &(fr->fr_todo) );
 		rt_log("\tcmd=%s\n", RT_VLS_ADDR(&fr->fr_cmd) );
+		rt_log("\tafter_cmd=%s\n", RT_VLS_ADDR(&fr->fr_after_cmd) );
 	}
 }
 
