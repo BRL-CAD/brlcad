@@ -453,8 +453,8 @@ AC_SUBST(TK_LIBS)
 
 dnl itcl
 ITCL_VERSION="3.3"
-ITCL_LIBS='${top_builddir}/src/other/libitcl/itcl/libitcl.la'
-ITK_LIBS='${top_builddir}/src/other/libitcl/itk/libitk.la'
+ITCL_LIBS='${top_builddir}/src/other/incrTcl/itcl/libitcl.la'
+ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk.la'
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
@@ -939,6 +939,7 @@ AC_SUBST(WDB)
 AC_CONFIG_SUBDIRS([ \
 	src/other/libtcl/unix \
 	src/other/libtk/unix \
+	src/other/incrTcl \
 ])
 
 AC_CONFIG_FILES([
@@ -1028,15 +1029,6 @@ AC_CONFIG_FILES([
 	src/other/iwidgets/iwidgets.tcl
 	src/other/iwidgets/pkgIndex.tcl
 	src/other/jove/Makefile
-	src/other/libitcl/Makefile
-	src/other/libitcl/itcl/Makefile
-	src/other/libitcl/itcl/doc/Makefile
-	src/other/libitcl/itcl/generic/Makefile
-	src/other/libitcl/itcl/library/Makefile
-	src/other/libitcl/itk/Makefile
-	src/other/libitcl/itk/doc/Makefile
-	src/other/libitcl/itk/generic/Makefile
-	src/other/libitcl/itk/library/Makefile
 	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtcl/Makefile
