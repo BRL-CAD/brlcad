@@ -439,11 +439,8 @@ mat_t *xform;
 	RT_LIST_INIT( &vhead );
 	RT_LIST_INIT( &rt_g.rtg_vlfree );
 
-	if( ang != 0.0 )
-	{
-		sina = sin( ang );
-		cosa - cos( ang );
-	}
+	sina = sin( ang );
+	cosa = cos( ang );
 
 	for( entno=0 ; entno<totentities ; entno++ )
 	{
