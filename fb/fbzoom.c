@@ -27,7 +27,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 /* Zoom rate and limits.	*/
-#define MaxZoom		(16)
 #define MinZoom		(1)
 
 /* Pan limits.	*/
@@ -62,7 +61,7 @@ char **argv;
 
 	do
 		{
-		PanFactor = 40 / zoom;
+		PanFactor = fb_getwidth(fbp)/zoom/16;
 		(void) fb_zoom( fbp, zoom, zoom );
 		fb_window( fbp, xPan, yPan );
 		(void) fprintf( stdout,
@@ -137,12 +136,10 @@ doKeyPad()
 		break;
 	case ctl(v) :
 	case 'b' :				/* zoom BIG binary */
-		if(  (zoom *= 2) > MaxZoom )
-			zoom = MaxZoom;
+		zoom *= 2;
 		break;
 	case '+' :				/* zoom BIG incr */
-		if(  ++zoom > MaxZoom )
-			zoom = MaxZoom;
+		++zoom;
 		break;
 	case 's' :				/* zoom small binary */
 		if(  (zoom /= 2) < MinZoom )
