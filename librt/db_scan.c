@@ -212,6 +212,18 @@ int			(*handler)();
 			handler( dbip, record.n.n_name, addr, nrec,
 				DIR_SOLID );
 			break;
+		case DBID_PARTICLE:
+			handler( dbip, record.part.p_name, addr, nrec,
+				DIR_SOLID );
+			break;
+		case DBID_PIPE:
+			j = record.pw.pw_count-1;
+			nrec += record.pw.pw_count-1;
+			while( j-- > 0 )
+				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+			handler( dbip, record.pw.pw_name, addr, nrec,
+				DIR_SOLID );
+			break;
 		case ID_MEMB:
 			rt_log("db_scan ERROR: Unattached combination MEMBER record\n");
 			break;
