@@ -183,7 +183,7 @@
  *	_XOPEN_SOURCE
  */
 
-#if defined(_POSIX_SOURCE) && !defined(__convex__)		/* XXX */
+#if defined(__bsdi__) || defined(_POSIX_SOURCE) && !defined(__convex__)	/* XXX */
 #	define HAVE_XOPEN	1
 #	define HAVE_TERMIOS_H	1
 #	define HAVE_MEMORY_H	1				/* XXX */
