@@ -1,0 +1,46 @@
+BRL-CAD on Max OS X README
+==========================
+
+Being that this is one of the newest architectures to be added and
+officially supported, there are some issues to keep in mind with the
+installation when building from the sources.  Beyond the notes
+provided here, building on Mac OS X can generally be considered the
+same as the UNIX, BSD, and Linux platforms.
+
+X11 Window Server
+-----------------
+
+You'll need to install an X11 server if you would like to build Tk and
+have a graphical user interface.  Apple's X11 is the recommended X
+Window Server, though XDarwin should work suitably as well.  Be sure
+to install the developer headers and libraries from the X11 Software
+Developers Kit (SDK), which is usually a separate installation
+package.
+
+Supported Versions
+------------------
+
+BRL-CAD is generally extensively tested by the developers on the
+latest released version of Mac OS X only.  That is to say that
+although the package should build on prior versions of the operating
+system, they are generally unmaintained.  Due to a variety of
+significant application programming interface issues in early releases
+of Mac OS X, versions prior to 10.2 are unsupported.
+
+Parallel Builds
+---------------
+
+As many workstation and server systems shipped by Apple are
+multiprocessor systems, you can enjoy the benefits of decreased
+compile times by utilizing the "-j" option to make.  After running
+configure, run "make -j2" to build on a 2-processor system.
+
+Bugs
+----
+
+The only known bugs specific to Mac OS X are limitations of Tk or the
+X11 event handler that our generally outside of BRL-CAD's domain.
+Refer to BUGS for more general details on known bugs and reporting
+mechanisms.
+
+Cheers!
