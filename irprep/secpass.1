@@ -49,17 +49,17 @@ a generic thermal data file
 The following is an example from an interactive session.
 .nf
 
-$ secpass ../simple.g all
-Write output to standard out (0) or a file(1) not at all (2)?  1
-Enter name of output file (15 char max).  all.s.out
+$ secpass test.veh.g vehicle air
+Write output to standard out (0) or a file(1) not at all (2)?  2
 Enter name of file that has second pass information
-in it (15 char max).  ../all.f.2nd
+in it (15 char max).  veh.f.2nd
 Enter type of output file to be generated.
 	 0 - PRISM File
 	 1 - Generic File
 0
 Enter name of file to be created for PRISM conductivity
-information (15 char max).  all.s.con
+information (15 char max).  veh.s.con
+Which release of PRISM is being used, 2.0 (2) or 3.0 (3)?  3
 Which length calculation should be used when
 computing conduction
 between regions?
@@ -67,53 +67,72 @@ between regions?
 	2 - rms length
 	3 - minimum length
 	4 - maximum length
-1
+3
 Enter name of file to be created for conductivity
-table (15 char max).  all.s.tbl
-Enter name of material file (15 char max).  matprop_table
-Enter name of error file to be created (15 char max).  all.s.err
-Database title:  simple object 
-Number of regions in mged file:  5
+table (15 char max).  veh.s.tbl
+Enter name of material file (15 char max).  prp
+Enter name of error file to be created (15 char max).  veh.s.err
+Database title:  test vehicle for use with irprep programs
+Number of regions in mged file:  21
 Mallocing arrays.
 cond malloced
 loop malloced
 All variables zeroed.
 second pass file opened
-The number of regions read was 5
-Center of bounding rpp ( 0.000000, 0.000000, 0.000000 )
-Length of diagonal of bounding rpp:  634.455834
+The number of regions read was 21
+Center of bounding rpp ( 356.500000, 0.000000, 1250.000000 )
+Length of diagonal of bounding rpp:  3829.051456
 Minimums & maximums of grid:
-  -634.455834 - 634.455834
-  -634.455834 - 634.455834
-  -634.455834 - 634.455834
+  -3472.551456 - 4185.551456
+  -3829.051456 - 3829.051456
+  -2579.051456 - 5079.051456
 
 Model minimum & maximum.
-	X:  -630.000000 to 630.000000
-	Y:  -50.000000 to 50.000000
-	Z:  -50.000000 to 50.000000
+	X:  -3001.000000 to 3714.000000
+	Y:  -1350.000000 to 1350.000000
+	Z:  0.000000 to 2500.000000
 
-Enter spacing (mm) between fired rays.  1
+Enter spacing (mm) between fired rays.  10
 
-grid spacing:  1.000000
+grid spacing:  10.000000
 
 Shooting down x-axis.
 
 
 SUMMARY OF FILES USED & CREATED
-	.g file used:  ../simple.g
+	.g file used:  test.veh.g
 	regions used:
-		all
-	file containing second pass information:  ../all.f.2nd
-	material file used:  matprop_table
-	output file created:  all.s.out
-	conductivity file created:  all.s.con
-	conductivity table file created:  all.s.tbl
-	error file created:  all.s.err
+		vehicle
+		air
+	file containing second pass information:  veh.f.2nd
+	material file used:  prp
+	conductivity file created:  veh.s.con
+	  (format is PRISM 3.0)
+	conductivity table file created:  veh.s.tbl
+	error file created:  veh.s.err
 
 
 Freeing memory.
 .fi
+.SH CHANGES SINCE BRL-CAD RELEASE 4.0
+1.  Made the numbering scheme for regions the same throughout all
+irprep programs, i.e. region numbers start at one not zero.  This
+affects the format of the diagnostic and error files.
+.sp
+.sp -1
+2.  Correct the format of the conductivity file for PRISM.  The
+larger region number must come first.
+.sp
+.sp -1
+3.  The user is given a choice of a 2.0 PRISM format or a 3.0 PRISM
+format.
+.sp
+.sp -1
+4.  Some diagnostic information is no longer printed out.
 .SH SEE ALSO
-firpass(1), shapefact(1), User's Manual for IRPREP (in progress)
+firpass(1), shapefact(1), display(1), see(1), see2(1), pictx(1),
+pictsgi(1), User's Manual for IRPREP (BRL-SP-96), Computer Programs
+for Generating an Input File for PRISM and Displaying PRISM Results
+(BRL report in progress)
 .SH AUTHOR
 Susan A. Coates
