@@ -74,7 +74,6 @@ extern int mged_slider_link_vars();
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./titles.h"
@@ -232,6 +231,7 @@ char **argv;
 	BU_GETSTRUCT(dmp, dm);
 	*dmp = dm_Null;
 	bu_vls_init(&pathName);
+	bu_vls_init(&dname);
 	bu_vls_strcpy(&pathName, "nu");
 	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
 	mged_variables = default_mged_variables;
