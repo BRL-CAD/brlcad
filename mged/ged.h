@@ -429,6 +429,7 @@ MGED_EXTERN(int f_press, (int argc, char **argv));
 MGED_EXTERN(int f_preview, (int argc, char **argv));
 MGED_EXTERN(int f_push, (int argc, char **argv));
 MGED_EXTERN(int f_quit, (int argc, char **argv));
+MGED_EXTERN(int f_qorot, (int argc, char **argv));
 MGED_EXTERN(int f_qvrot, (int argc, char **argv));
 MGED_EXTERN(int f_red, (int argc, char **argv));
 MGED_EXTERN(int f_refresh, (int argc, char **argv));
