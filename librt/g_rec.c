@@ -724,8 +724,6 @@ struct soltab *stp;
  *  u is the rotation around the cylinder, and
  *  v is the displacement along H.
  */
-extern double rt_inv2pi;
-
 void
 rec_uv( ap, stp, hitp, uvp )
 struct application *ap;
