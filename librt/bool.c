@@ -248,6 +248,7 @@ equal_start:
 					 * normals or norm private stuff.
 					 */
 					newpp->pt_outseg = segp;
+					newpp->pt_outhit = &segp->seg_out;
 					newpp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
 					VMOVE(newpp->pt_outhit->hit_point, pp->pt_inhit->hit_point);
 					newpp->pt_outflip = 0;
