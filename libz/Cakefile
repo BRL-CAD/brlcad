@@ -32,7 +32,8 @@ Makefile.MTYPE:	Makefile.in	if not exist Makefile.MTYPE
 		\C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -I../SRCDIR\"; \
 		\R\A\N\L\I\B=\"RANLIB\"; \
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
-		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
+		SHAREDVER=[[LIBVERS]]; \
+		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \S\H\A\R\E\D\V\E\R; \
 		../SRCDIR/configure CONFIG_OPTS; \
 		../SRCDIR/fix_makefile.sh FIX_FILE  >  Makefile.MTYPE)
 
