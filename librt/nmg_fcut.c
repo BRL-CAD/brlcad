@@ -12,12 +12,6 @@
  *  list, which points to a loop of a single vertex.  These points
  *  need to be incorporated into the final face.
  *
- *  Warning XXX -
- *	XXX While everybody else has loops travel in the counter-clockwise
- *	XXX direction, for the time being, Lee has NMG loops traveling in
- *	XXX the clockwise direction.  While this will (probably) be
- *	XXX corrected before the release, it is programmed around, here.
- *
  *  Authors -
  *	Michael John Muuss
  *	Lee A. Butler
@@ -336,8 +330,8 @@ rt_log("ON: (no edges)\n");
 		}
 	}
 #else
-	/* Since edges go the wrong way right now (CW rather than CCW),
-	 * just scan the whole vertexuse list.
+	/* 
+	 * For now, just scan the whole vertexuse list.
 	 * There is a slight possibility that loop/face orientation might
 	 * also play a factor in choosing the correct scan direction.
 	 */
@@ -573,15 +567,9 @@ VPRINT("dir", dir);
 VPRINT("left", rs.left);
 	rs.state = NMG_STATE_OUT;
 
-#if 0
 	/* For measuring angle CCW around plane from -dir */
 	VREVERSE( rs.ang_x_dir, dir );
 	VREVERSE( rs.ang_y_dir, rs.left );
-#else
-	/* For measuring angle CW around plane from -dir */
-	VREVERSE( rs.ang_x_dir, dir );
-	VMOVE( rs.ang_y_dir, rs.left );
-#endif
 
 	nmg_face_plot( fu1 );
 
