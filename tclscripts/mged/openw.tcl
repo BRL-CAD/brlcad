@@ -1057,23 +1057,30 @@ hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle A
 	{ { summary "Use the rectangle area for the framebuffer." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add separator
-.$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_overlay)\
+.$id.menubar.settings.fb add radiobutton -value 2 -variable mged_gui($id,fb_overlay)\
 	-label "Overlay" -underline 0\
 	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
 hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
 	{ { summary "Put the framebuffer in overlay mode. In this mode,
-the framebuffer data is placed in the pane after
-the geometry is drawn (i.e. the framebuffer data is
-is drawn on top of the geometry)." }
+the framebuffer data is placed above everything.
+(i.e. above the geometry and faceplate" }
+          { see_also "rset, vars" } }
+.$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_overlay)\
+	-label "Interlay" -underline 0\
+	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+hoc_register_menu_data "Framebuffer" "Interlay" "Framebuffer - Interlay"\
+	{ { summary "Put the framebuffer in interlay mode. In this mode,
+the framebuffer data is placed above the geometry
+and below the faceplate." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_overlay)\
 	-label "Underlay" -underline 0\
 	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
 hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
 	{ { summary "Put the framebuffer in underlay mode. In this mode,
-the framebuffer data is placed in the pane before
-the geometry is drawn (i.e. the geometry is drawn on
-top of the framebuffer data)." }
+the framebuffer data is placed under everything.
+(i.e. faceplate and geometry is drawn on top of
+the framebuffer data)." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add separator
 .$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,fb)\

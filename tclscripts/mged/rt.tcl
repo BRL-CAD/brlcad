@@ -68,18 +68,27 @@ Note - this pertains only to MGED's framebuffers." } }
 sweep rectangle, for the framebuffer. Note - this
 pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
-    $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_overlay)\
+    $top.menubar.fb add radiobutton -value 2 -variable rt_control($id,fb_overlay)\
 	    -label "Overlay" -underline 0\
 	    -command "rt_set_fb_overlay $id"
     hoc_register_menu_data "Framebuffer" "Overlay" "Destination Framebuffer - Overlay"\
-	    { { summary "Draw the framebuffer on top of the geometry.
-Note - this pertains only to MGED's framebuffers." } }
+	    { { summary "Draw the framebuffer above everything (i.e. above the
+geometry and faceplate). Note - this pertains only to
+MGED's framebuffers." } }
+    $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_overlay)\
+	    -label "Interlay" -underline 0\
+	    -command "rt_set_fb_overlay $id"
+    hoc_register_menu_data "Framebuffer" "Interlay" "Destination Framebuffer - Interlay"\
+	    { { summary "Draw the framebuffer above the geometry and below
+the faceplate. Note - this pertains only to MGED's
+framebuffers." } }
     $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_overlay)\
 	    -label "Underlay" -underline 0\
 	    -command "rt_set_fb_overlay $id"
     hoc_register_menu_data "Framebuffer" "Underlay" "Destination Framebuffer - Underlay"\
-	    { { summary "Draw the framebuffer under the geometry.
-Note - this pertains only to MGED's framebuffers." } }
+	    { { summary "Draw the framebuffer below everything (i.e. below the
+geometry and faceplate). Note - this pertains only to
+MGED's framebuffers." } }
 
     menu $top.menubar.obj -title "Objects" -tearoff 0
     $top.menubar.obj add radiobutton -value one -variable rt_control($id,omode)\
