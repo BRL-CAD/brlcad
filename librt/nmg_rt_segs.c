@@ -1265,7 +1265,6 @@ nmg_ray_segs(rd)
 struct ray_data	*rd;
 {
 	struct hitmiss *a_hit;
-	int seg_count=0;
 	static int last_miss=0;
 
 #ifdef DO_LONGJMP
@@ -1289,6 +1288,7 @@ struct ray_data	*rd;
 		last_miss = 1;
 		return(0);			/* MISS */
 	} else if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
+		int seg_count=0;
 
 		print_seg_list(rd->seghead, seg_count, "before");
 
@@ -1314,18 +1314,19 @@ struct ray_data	*rd;
 		pl_ray(rd);
 	}
 
-	seg_count = nmg_bsegs(rd, rd->ap, rd->seghead, rd->stp);
+	{
+		int seg_count = nmg_bsegs(rd, rd->ap, rd->seghead, rd->stp);
 
 
-	NMG_FREE_HITLIST( &rd->rd_hit, rd->ap );
-	NMG_FREE_HITLIST( &rd->rd_miss, rd->ap );
+		NMG_FREE_HITLIST( &rd->rd_hit, rd->ap );
+		NMG_FREE_HITLIST( &rd->rd_miss, rd->ap );
 
 
-	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
-		/* print debugging data before returning */
-		print_seg_list(rd->seghead, seg_count, "after");
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
+			/* print debugging data before returning */
+			print_seg_list(rd->seghead, seg_count, "after");
+		}
+		return(seg_count);
 	}
-
-	return(seg_count);
 }
 
