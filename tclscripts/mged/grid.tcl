@@ -215,7 +215,7 @@ horizontal tick spacing." } }
     $top.hMB.spacing add command -label "millimeter" -underline 2\
 	    -command "set_grid_spacing_htick $id millimeter 0"
     $top.hMB.spacing add command -label "centimeter" -underline 0\
-	    -command "set_grid_spacing_htick $id centimeter"
+	    -command "set_grid_spacing_htick $id centimeter 0"
     $top.hMB.spacing add command -label "decimeter" -underline 0\
 	    -command "set_grid_spacing_htick $id decimeter 0"
     $top.hMB.spacing add command -label "meter" -underline 0\
