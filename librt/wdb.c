@@ -37,19 +37,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "wdb.h"
 
-struct rt_wdb  {
-	long		magic;
-	int		type;
-	FILE		*fp;
-	struct db_i	*dbip;
-};
-#define	WDB_MAGIC	0x5f576462
-#define WDB_NULL	((struct rt_wdb *)NULL)
-#define WDB_TYPE_FILE			1
-#define WDB_TYPE_DB_DISK		2
-#define WDB_TYPE_DB_INMEM		3
-#define WDB_TYPE_DB_INMEM_APPEND_ONLY	4
-
 /*
  *			W D B _ F O P E N
  *
