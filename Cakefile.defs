@@ -1204,9 +1204,11 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g -fno-common
 #	endif
 #	if BUILD_SHARED	
+#		error "ERROR: Building with shared libraries is not supported via cake"
+#		error "       (use ProjectBuilder)"
 /*		Shared library version support.  */
 /*		PowerPC code is position-independant by default (and by design) (i.e. no nee d for -fPIC) */
-#		define	CC_DEFS -pipe -Wall -bsd
+#		define	CC_DEFS -pipe -Wall 
 /* #		define	ARCH_SUF	so */
 #		define	ARCH_SUF	dylib
 /*#		define	LIBVERS ../sh/sharedlibvers.sh*/

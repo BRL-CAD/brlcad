@@ -81,10 +81,10 @@ OBJECTS = $(itk_OBJECTS) $(itkstub_OBJECTS)
 #========================================================================
 
 itk_LIB_FILE = @itk_LIB_FILE@
-$(itk_LIB_FILE)_OBJECTS = $(itk_OBJECTS)
+@itk_LIB_FILE@_OBJECTS = $(itk_OBJECTS)
 
 itkstub_LIB_FILE = @itkstub_LIB_FILE@
-$(itkstub_LIB_FILE)_OBJECTS = $(itkstub_OBJECTS)
+@itkstub_LIB_FILE@_OBJECTS = $(itkstub_OBJECTS)
 
 itclstub_LIB_FILE = @itclstub_LIB_FILE@
 
