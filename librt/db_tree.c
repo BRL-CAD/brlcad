@@ -38,12 +38,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* XXX for raytrace.h */
 #define OP_REGION	MKOP(9)		/* Leaf: tr_stp -> combined_tree_state */
+#define OP_NOP		MKOP(10)	/* Leaf with no effect */
 
 struct full_path {
 	int		fp_len;
 	int		fp_maxlen;
 	struct directory **fp_names;	/* array of dir pointers */
 };
+#define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
+#define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
 
 struct tree_list {
 	union tree *tl_tree;
@@ -80,10 +83,10 @@ struct combined_tree_state {
 };
 
 /*
- *  rt_ or db_ ?
+ *			D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
  */
 void
-rt_add_node_to_full_path( pp, dp )
+db_add_node_to_full_path( pp, dp )
 struct full_path	*pp;
 struct directory	*dp;
 {
@@ -91,19 +94,22 @@ struct directory	*dp;
 		pp->fp_maxlen = 32;
 		pp->fp_names = (struct directory **)rt_malloc(
 			pp->fp_maxlen * sizeof(struct directory *),
-			"initial full path array");
+			"full_path array");
 	} else if( pp->fp_len >= pp->fp_maxlen )  {
 		pp->fp_maxlen *= 4;
 		pp->fp_names = (struct directory **)rt_realloc(
 			(char *)pp->fp_names,
 			pp->fp_maxlen * sizeof(struct directory *),
-			"enlarged full path array");
+			"enlarged full_path array");
 	}
 	pp->fp_names[pp->fp_len++] = dp;
 }
 
+/*
+ *			D B _ D U P _ F U L L _ P A T H
+ */
 void
-rt_dup_full_path( newp, oldp )
+db_dup_full_path( newp, oldp )
 register struct full_path	*newp;
 register struct full_path	*oldp;
 {
@@ -120,11 +126,13 @@ register struct full_path	*oldp;
 }
 
 /*
+ *			D B _ P A T H _ T O _ S T R I N G
+ *
  *  Unlike rt_path_str(), this version can be used in parallel.
  *  Caller is responsible for freeing the returned buffer.
  */
 char *
-rt_path_to_string( pp )
+db_path_to_string( pp )
 struct full_path	*pp;
 {
 	int	len;
@@ -155,6 +163,97 @@ struct full_path	*pp;
 }
 
 /*
+ *			D B _ F R E E _ F U L L _ P A T H
+ */
+void
+db_free_full_path( pp )
+struct full_path	*pp;
+{
+	if( pp->fp_maxlen > 0 )  {
+		rt_free( (char *)pp->fp_names, "full_path array" );
+		pp->fp_maxlen = pp->fp_len = 0;
+		pp->fp_names = (struct directory **)0;
+	}
+}
+
+/*
+ *			D B _ F R E E _ C O M B I N E D _ T R E E _ S T A T E
+ */
+void
+db_free_combined_tree_state( ctsp )
+register struct combined_tree_state	*ctsp;
+{
+	db_free_full_path( &(ctsp->cts_p) );
+	rt_free( (char *)ctsp, "combined_tree_state");
+}
+
+void
+db_pr_tree_state( tsp )
+register struct tree_state	*tsp;
+{
+	rt_log("db_pr_tree_state(x%x):\n", tsp);
+	rt_log(" ts_dbip=x%x\n", tsp->ts_dbip);
+	rt_printb(" ts_sofar", tsp->ts_sofar, "\020\3REGION\2INTER\1MINUS" );
+	rt_log("\n");
+	rt_log(" ts_regionid=%d\n", tsp->ts_regionid);
+	rt_log(" ts_aircode=%d\n", tsp->ts_aircode);
+	rt_log(" ts_gmater=%d\n", tsp->ts_gmater);
+	rt_log(" ts_mater.ma_color=%g,%g,%g\n",
+		tsp->ts_mater.ma_color[0],
+		tsp->ts_mater.ma_color[1],
+		tsp->ts_mater.ma_color[2] );
+	rt_log(" ts_mater.ma_matname=%32.32s\n", tsp->ts_mater.ma_matname );
+	rt_log(" ts_mater.ma_matparam=%60.60s\n", tsp->ts_mater.ma_matparm );
+}
+
+void
+db_pr_combined_tree_state( ctsp )
+register struct combined_tree_state	*ctsp;
+{
+	char	*str;
+
+	rt_log("db_pr_combined_tree_state(x%x):\n", ctsp);
+	db_pr_tree_state( &(ctsp->cts_s) );
+	str = db_path_to_string( &(ctsp->cts_p) );
+	rt_log(" path='%s'\n", str);
+	rt_free( str, "path string" );
+}
+
+/*
+ *			R T _ T R E E _ R E G I O N _ A S S I G N
+ */
+void
+rt_tree_region_assign( tp, regionp )
+register union tree	*tp;
+register struct region	*regionp;
+{
+	switch( tp->tr_op )  {
+	case OP_SOLID:
+		tp->tr_a.tu_regionp = regionp;
+		return;
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		tp->tr_b.tb_regionp = regionp;
+		rt_tree_region_assign( tp->tr_b.tb_left, regionp );
+		return;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		tp->tr_b.tb_regionp = regionp;
+		rt_tree_region_assign( tp->tr_b.tb_left, regionp );
+		rt_tree_region_assign( tp->tr_b.tb_right, regionp );
+		return;
+
+	default:
+		rt_bomb("rt_tree_region_assign: bad op\n");
+	}
+}
+
+/*
  *			D B _ A P P L Y _ S T A T E _ F R O M _ C O M B
  *
  *  Handle inheritance of material property found in combination record.
@@ -172,7 +271,7 @@ struct full_path	*pathp;
 union record		*rp;
 {
 	if( rp->u_id != ID_COMB )  {
-		char	*sofar = rt_path_to_string(pathp);
+		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_apply_state_from_comb() defective record at '%s'\n",
 			sofar );
 		rt_free(sofar, "path string");
@@ -182,7 +281,7 @@ union record		*rp;
 	if( rp->c.c_override == 1 )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
 			/* This combination is within a region */
-			char	*sofar = rt_path_to_string(pathp);
+			char	*sofar = db_path_to_string(pathp);
 
 			rt_log("db_apply_state_from_comb(): WARNING: color override in combination within region '%s', ignored\n",
 				sofar );
@@ -198,7 +297,7 @@ union record		*rp;
 	if( rp->c.c_matname[0] != '\0' )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
 			/* This combination is within a region */
-			char	*sofar = rt_path_to_string(pathp);
+			char	*sofar = db_path_to_string(pathp);
 
 			rt_log("db_apply_state_from_comb(): WARNING: material property spec in combination within region '%s', ignored\n",
 				sofar );
@@ -214,7 +313,7 @@ union record		*rp;
 	if( rp->c.c_flags == 'R' )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
 			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
-				char	*sofar = rt_path_to_string(pathp);
+				char	*sofar = db_path_to_string(pathp);
 				rt_log("Warning:  region unioned into region at '%s', lower region info ignored\n",
 					sofar);
 				rt_free(sofar, "path string");
@@ -256,7 +355,7 @@ struct member		*mp;
 	char			namebuf[NAMESIZE+2];
 
 	if( mp->m_id != ID_MEMB )  {
-		char	*sofar = rt_path_to_string(pathp);
+		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state:  defective member rec in '%s'\n", sofar);
 		rt_free(sofar, "path string");
 		return(-1);
@@ -268,7 +367,7 @@ struct member		*mp;
 	if( (mdp = db_lookup( tsp->ts_dbip, namebuf, LOOKUP_NOISY )) == DIR_NULL )
 		return(-1);
 
-	rt_add_node_to_full_path( pathp, mdp );
+	db_add_node_to_full_path( pathp, mdp );
 
 	mat_copy( old_xlate, tsp->ts_mat );
 
@@ -277,7 +376,7 @@ struct member		*mp;
 
 	/* Check here for animation to apply */
 	if ((mdp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
-		char	*sofar = rt_path_to_string(pathp);
+		char	*sofar = db_path_to_string(pathp);
 		rt_log("Animate %s/%s with...\n", sofar, mp->m_instname);
 		rt_free(sofar, "path string");
 	}
@@ -345,7 +444,7 @@ int			noisy;
 
 	if( tsp->ts_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_follow_path_for_state:  bad dbip\n");
 	if(rt_g.debug&DEBUG_DB)  {
-		char	*sofar = rt_path_to_string(pathp);
+		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
 			sofar, tsp, orig_str, noisy );
 		rt_free(sofar, "path string");
@@ -357,7 +456,7 @@ int			noisy;
 
 	/*  Handle each path element */
 	if( pathp->fp_len > 0 )
-		comb_dp = pathp->fp_names[pathp->fp_len-1];
+		comb_dp = DB_FULL_PATH_CUR_DIR(pathp);
 	else
 		comb_dp = DIR_NULL;
 	do  {
@@ -375,7 +474,7 @@ int			noisy;
 
 		/* If first element, push it, and go on */
 		if( pathp->fp_len <= 0 )  {
-			rt_add_node_to_full_path( pathp, dp );
+			db_add_node_to_full_path( pathp, dp );
 
 #if 0
 			/* XXX should these be dbip->db_anroot ?? */
@@ -404,14 +503,14 @@ int			noisy;
 
 		if( (dp->d_flags & DIR_COMB) == 0 )  {
 			/* Object is a leaf */
-			rt_add_node_to_full_path( pathp, dp );
+			db_add_node_to_full_path( pathp, dp );
 			if( oldc == '\0' )  {
 				/* No more path was given, all is well */
 				goto out;
 			}
 			/* Additional path was given, this is wrong */
 			if( noisy )  {
-				char	*sofar = rt_path_to_string(pathp);
+				char	*sofar = db_path_to_string(pathp);
 				rt_log("db_follow_path_for_state(%s) ERROR: found leaf early at '%s'\n",
 					cp, sofar );
 				rt_free(sofar, "path string");
@@ -478,7 +577,7 @@ out:
 	if( rp )  rt_free( (char *)rp, dp->d_namep );
 	rt_free( str, "dupped path" );
 	if(rt_g.debug&DEBUG_DB)  {
-		char	*sofar = rt_path_to_string(pathp);
+		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state() returns pathp='%s'\n",
 			sofar);
 		rt_free(sofar, "path string");
@@ -570,11 +669,18 @@ static vect_t zaxis = { 0, 0, 1.0 };
 
 /*
  *			D B _ R E C U R S E
+ *
+ *  Recurse down the tree, finding all the leaves
+ *  (or finding just all the regions).
+ *
+ *  ts_region_start_func() is called to permit regions to be skipped.
+ *  It is not intended to be used for collecting state.
  */
 union tree *
-db_recurse( tsp, pathp )
+db_recurse( tsp, pathp, region_start_statepp )
 struct tree_state	*tsp;
 struct full_path	*pathp;
+struct combined_tree_state	**region_start_statepp;
 {
 	struct directory	*dp;
 	register union record	*rp = (union record *)0;
@@ -588,11 +694,12 @@ struct full_path	*pathp;
 		rt_log("db_recurse() null path?\n");
 		return(TREE_NULL);
 	}
-	dp = pathp->fp_names[pathp->fp_len-1];
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
 	if(rt_g.debug&DEBUG_DB)  {
-		char	*sofar = rt_path_to_string(pathp);
-		rt_log("db_recurse() pathp='%s', tsp=x%x\n",
-			sofar, tsp );
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x\n",
+			sofar, tsp,
+			*region_start_statepp );
 		rt_free(sofar, "path string");
 	}
 
@@ -619,6 +726,7 @@ struct full_path	*pathp;
 			goto fail;
 
 		if( is_region > 0 )  {
+			struct combined_tree_state	*ctsp;
 			/*
 			 *  This is the start of a new region.
 			 *  If handler rejects this region, skip on.
@@ -632,6 +740,19 @@ struct full_path	*pathp;
 				curtree = (union tree *)0;
 				goto region_end;
 			}
+
+			/* Take note of full state here at region start */
+			if( *region_start_statepp != (struct combined_tree_state *)0 ) {
+				rt_log("db_recurse() ERROR at start of a region, *region_start_statepp = x%x\n",
+					*region_start_statepp );
+				goto fail;
+			}
+			GETSTRUCT( ctsp, combined_tree_state );
+			ctsp->cts_s = nts;	/* struct copy */
+			db_dup_full_path( &(ctsp->cts_p), pathp );
+			*region_start_statepp = ctsp;
+rt_log("setting *region_start_statepp to x%x\n", ctsp );
+			db_pr_combined_tree_state(ctsp);
 		}
 
 		tlp = trees = (struct tree_list *)rt_malloc(
@@ -671,11 +792,11 @@ struct full_path	*pathp;
 			}
 
 			/* Recursive call */
-			if( (tlp->tl_tree = db_recurse( &memb_state, pathp )) != TREE_NULL )  {
+			if( (tlp->tl_tree = db_recurse( &memb_state, pathp, region_start_statepp )) != TREE_NULL )  {
 				tlp++;
 			}
 
-			pathp->fp_len--;	/* pop member */
+			DB_FULL_PATH_POP(pathp);
 		}
 		if( tlp <= trees )  {
 			/* No subtrees */
@@ -739,18 +860,20 @@ region_end:
 out:
 	if( rp )  rt_free( (char *)rp, dp->d_namep );
 	if(rt_g.debug&DEBUG_DB)  {
-		char	*sofar = rt_path_to_string(pathp);
-		rt_log("db_recurse() return curtree=x%x, pathp='%s'\n",
-			curtree, sofar);
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
+			curtree, sofar,
+			*region_start_statepp );
 		rt_free(sofar, "path string");
 	}
 	return(curtree);		/* SUCCESS */
 fail:
 	if( rp )  rt_free( (char *)rp, dp->d_namep );
 	if(rt_g.debug&DEBUG_DB)  {
-		char	*sofar = rt_path_to_string(pathp);
-		rt_log("db_recurse() return curtree=NULL, pathp='%s'\n",
-			sofar);
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("db_recurse() return curtree=NULL, pathp='%s', *statepp=x%x\n",
+			sofar,
+			*region_start_statepp );
 		rt_free(sofar, "path string");
 	}
 	return( (union tree *)0 );	/* FAIL */
@@ -782,7 +905,7 @@ union tree	*tp;
 				sizeof(struct combined_tree_state),
 				"combined region state");
 			cts->cts_s = ots->cts_s;	/* struct copy */
-			rt_dup_full_path( &(cts->cts_p), &(ots->cts_p) );
+			db_dup_full_path( &(cts->cts_p), &(ots->cts_p) );
 		}
 		return(new);
 
@@ -802,7 +925,7 @@ union tree	*tp;
 		return(new);
 
 	default:
-		rt_bomb("db_dup_subtree: bad op");
+		rt_bomb("db_dup_subtree: bad op\n");
 	}
 	return( TREE_NULL );
 }
@@ -930,7 +1053,7 @@ union tree	*tp;
 		return(1);
 
 	default:
-		rt_bomb("db_count_subtree_regions: bad op");
+		rt_bomb("db_count_subtree_regions: bad op\n");
 	}
 	return( 0 );
 }
@@ -968,7 +1091,7 @@ int		cur;
 		return(cur);
 
 	default:
-		rt_bomb("db_tally_subtree_regions: bad op");
+		rt_bomb("db_tally_subtree_regions: bad op\n");
 	}
 	return( cur );
 }
@@ -1016,7 +1139,7 @@ union tree		*curtree;
 	cts=(struct combined_tree_state *)rt_malloc(
 		sizeof(struct combined_tree_state), "combined region state");
 	cts->cts_s = *tsp;	/* struct copy */
-	rt_dup_full_path( &(cts->cts_p), pathp );
+	db_dup_full_path( &(cts->cts_p), pathp );
 
 	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
 	bzero( (char *)curtree, sizeof(union tree) );
@@ -1041,7 +1164,7 @@ int			id;
 	cts=(struct combined_tree_state *)rt_malloc(
 		sizeof(struct combined_tree_state), "combined region state");
 	cts->cts_s = *tsp;	/* struct copy */
-	rt_dup_full_path( &(cts->cts_p), pathp );
+	db_dup_full_path( &(cts->cts_p), pathp );
 
 	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
 	bzero( (char *)curtree, sizeof(union tree) );
@@ -1078,6 +1201,7 @@ union tree		*curtree;
 {
 	register struct combined_tree_state	*cts;
 	struct region		*rp;
+	struct directory	*dp;
 
 	GETSTRUCT( rp, region );
 	rp->reg_forw = REGION_NULL;
@@ -1085,13 +1209,18 @@ union tree		*curtree;
 	rp->reg_aircode = tsp->ts_aircode;
 	rp->reg_gmater = tsp->ts_gmater;
 	rp->reg_mater = tsp->ts_mater;		/* struct copy */
-	rp->reg_name = rt_path_to_string( pathp );
-#if 0
-	/* XXX how to handle this?? */
+	rp->reg_name = db_path_to_string( pathp );
+
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
+	/* XXX This should be semaphore protected! */
 	rp->reg_instnum = dp->d_uses++;
-#endif
-	/* XXX really should use absolute treetop here?? */
+
 rt_log("rt_gettree_p2_region_end() %s\n", rp->reg_name );
+	rt_pr_tree( curtree, 0 );
+
+	/* Mark all solids & nodes as belonging to this region */
+	rt_tree_region_assign( curtree, rp );
+
 	rt_add_regtree( db_rtip, rp, curtree );
 	return(curtree);
 }
@@ -1108,7 +1237,7 @@ int			id;
 
 	/* Note:  solid may not be contained by a region (yet) */
 
-	dp = pathp->fp_names[pathp->fp_len-1];
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
 	if( (stp = rt_add_solid( db_rtip, rp, dp, tsp->ts_mat )) == SOLTAB_NULL )
 		return(TREE_NULL);
 
@@ -1116,7 +1245,7 @@ int			id;
 	bzero( (char *)curtree, sizeof(union tree) );
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
-	curtree->tr_a.tu_name = rt_path_to_string( pathp );
+	curtree->tr_a.tu_name = db_path_to_string( pathp );
 /**** need regionp! XXXX */
 	curtree->tr_a.tu_regionp = (struct region *)0;
 
@@ -1126,8 +1255,9 @@ rt_log("rt_gettree_p2_leaf() %s\n", curtree->tr_a.tu_name );
 }
 
 void
-db_walk_subtree( tp )
+db_walk_subtree( tp, region_start_statepp )
 union tree	*tp;
+struct combined_tree_state	**region_start_statepp;
 {
 	struct combined_tree_state	*ctsp;
 	union tree	*curtree;
@@ -1140,23 +1270,33 @@ union tree	*tp;
 		ctsp->cts_s.ts_dbip = db_rtip->rti_dbip;
 		ctsp->cts_s.ts_stop_at_regions = 0;
 		ctsp->cts_s.ts_region_start_func = rt_gettree_p2_region_start;
-		ctsp->cts_s.ts_region_end_func = rt_gettree_p2_region_end;
+		/* ts_region_end_func() will be called in db_walk_dispatcher() */
+		ctsp->cts_s.ts_region_end_func = 0;
 		ctsp->cts_s.ts_leaf_func = rt_gettree_p2_leaf;
-		curtree = db_recurse( &ctsp->cts_s, &ctsp->cts_p );
+
+		/* If region already seen, force flag */
+		if( *region_start_statepp )
+			ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
+		else
+			ctsp->cts_s.ts_sofar &= ~TS_SOFAR_REGION;
+
+		curtree = db_recurse( &ctsp->cts_s, &ctsp->cts_p, region_start_statepp );
 		if( curtree == (union tree *)0 )  {
 			rt_log("db_walk_subtree()/db_recurse() FAIL\n");
+			db_free_combined_tree_state( ctsp );
+			tp->tr_op = OP_NOP;
 			return;
 		}
 		/* replace *tp with new subtree */
 		*tp = *curtree;		/* struct copy */
-		rt_free( (char *)ctsp, "combined region state" );
+		db_free_combined_tree_state( ctsp );
 		rt_free( (char *)curtree, "replaced tree node" );
 		return;
 
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-		db_walk_subtree( tp->tr_b.tb_left );
+		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp );
 		return;
 
 	case OP_UNION:
@@ -1164,19 +1304,21 @@ union tree	*tp;
 	case OP_SUBTRACT:
 	case OP_XOR:
 		/* This node is known to be a binary op */
-		db_walk_subtree( tp->tr_b.tb_left );
-		db_walk_subtree( tp->tr_b.tb_right );
+		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp );
+		db_walk_subtree( tp->tr_b.tb_right, region_start_statepp );
 		return;
 
 	default:
-		rt_bomb("db_walk_subtree: bad op");
+		rt_bomb("db_walk_subtree: bad op\n");
 	}
 }
 
 void
 db_walk_dispatcher()
 {
-	int	mine;
+	struct combined_tree_state	*region_start_statep;
+	int		mine;
+	union tree	*curtree;
 
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
@@ -1186,8 +1328,30 @@ db_walk_dispatcher()
 		if( mine > db_reg_count )
 			break;
 
-		/* Doit */
-		db_walk_subtree( db_reg_trees[mine] );
+rt_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
+
+		/* Walk the full subtree now */
+		region_start_statep = (struct combined_tree_state *)0;
+		if( (curtree = db_reg_trees[mine]) == TREE_NULL )
+			continue;
+		db_walk_subtree( curtree, &region_start_statep );
+		if( curtree->tr_op == OP_NOP )  {
+			rt_log("db_walk_dispatcher() Entire subtree vanished?\n");
+			if( region_start_statep )
+				db_free_combined_tree_state( region_start_statep );
+			continue;
+		}
+
+		if( !region_start_statep )
+			rt_bomb("db_walk_dispatcher() region started with no state?\n");
+
+		/* This is a new region */
+		db_pr_combined_tree_state(region_start_statep);
+		rt_gettree_p2_region_end( &(region_start_statep->cts_s),
+			&(region_start_statep->cts_p),
+			curtree );
+
+		db_free_combined_tree_state( region_start_statep );
 	}
 }
 
@@ -1213,11 +1377,12 @@ char		*node;
 	int			new_reg_count;
 	int			i;
 	union tree		**reg_trees;	/* (*reg_trees)[] */
+	struct combined_tree_state	*region_start_statep;
 
 	RT_CHECK_RTI(rtip);
 
 	if(!rtip->needprep)
-		rt_bomb("rt_gettree called again after rt_prep!");
+		rt_bomb("rt_gettree called again after rt_prep!\n");
 
 	ts = rt_initial_tree_state;	/* struct copy */
 	ts.ts_dbip = rtip->rti_dbip;
@@ -1238,7 +1403,10 @@ char		*node;
 	ts.ts_region_start_func = rt_gettree_p1_region_start;
 	ts.ts_region_end_func = rt_gettree_p1_region_end;
 	ts.ts_leaf_func = rt_gettree_p1_leaf;
-	curtree = db_recurse( &ts, &path );
+	region_start_statep = (struct combined_tree_state *)0;
+	curtree = db_recurse( &ts, &path, &region_start_statep );
+	if( region_start_statep )
+		db_free_combined_tree_state( region_start_statep );
 	if( curtree == (union tree *)0 )  return(-1);
 
 	rt_log("tree after db_recurse():\n");
@@ -1282,6 +1450,4 @@ rt_log("new region count=%d\n", new_reg_count);
 	if( rtip->nsolids <= prev_sol_count )
 		rt_log("rt_gettree(%s) warning:  no solids found\n", node);
 	return(0);	/* OK */
-
-	/* XXX need to free path storage */
 }
