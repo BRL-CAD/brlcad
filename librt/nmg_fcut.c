@@ -443,6 +443,8 @@ int			pos;
 	int			ret;
 	register int		i;
 
+	
+
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
 	othereu = eu;
@@ -512,6 +514,8 @@ out:
 			nmg_e_assessment_names[ret] );
 		rt_log(" v(%g,%g,%g) other(%g,%g,%g)\n",
 			V3ARGS(v->vg_p->coord), V3ARGS(otherv->vg_p->coord) );
+		rt_log(" rs->left(%g,%g,%g) heading(%g,%g,%g)\n",
+			V3ARGS(rs->left), V3ARGS(heading) );
 	}
 	return ret;
 }
@@ -1508,11 +1512,53 @@ vect_t		dir;
 		rt_bomb("nmg_face_rs_init: bad orientation\n");
 	}
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
+		struct loopuse *lu;
+		struct edgeuse *eu;
+		struct vertexuse *vu;
+		int i;
+
 		rt_log("\tfu->orientation=%s\n", nmg_orientation(fu1->orientation) );
 		HPRINT("\tfg N", fu1->f_p->fg_p->N);
 		VPRINT("\t  pt", pt);
 		VPRINT("\t dir", dir);
 		VPRINT("\tleft", rs->left);
+		rt_log( "\tvertexuses in fu that are on lintersect line:\n" );
+		for( i=0 ; i<NMG_TBL_END( b ) ; i++ )
+		{
+			vu = (struct vertexuse *)NMG_TBL_GET( b , i );
+			nmg_pr_vu_briefly( vu , "\t  " );
+		}
+		rt_log( "\tLoopuse in fu (x%x):\n" , fu1 );
+		for( RT_LIST_FOR( lu , loopuse , &fu1->lu_hd ) )
+		{
+			rt_log( "\t\tLOOPUSE x%x:\n" , lu );
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+			{
+				nmg_pr_vu_briefly( vu , "\t\tVertex Loop: " );
+			}
+			else
+			{
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					struct edgeuse *eu_next;
+					vect_t eu_dir;
+					fastf_t eu_len;
+					double inv_len;
+
+					nmg_pr_eu_briefly( eu , "\t\t\t" );
+					eu_next = RT_LIST_PNEXT_CIRC( edgeuse , eu );
+					VSUB2( eu_dir , eu_next->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
+					eu_len = MAGNITUDE( eu_dir );
+					if( eu_len < VDIVIDE_TOL )
+						inv_len = 0.0;
+					else
+						inv_len = 1.0/eu_len;
+					for( i=0 ; i<3 ; i++ )
+						eu_dir[i] = eu_dir[i] * inv_len;
+					rt_log( "\t\t\t\teu_dir = ( %g , %g , %g ), length = %g\n", V3ARGS( eu_dir ) , eu_len );
+				}
+			}
+		}
 	}
 	rs->state = NMG_STATE_OUT;
 
@@ -1785,6 +1831,55 @@ CONST struct rt_tol	*tol;
 		}
 	}
 #endif
+
+#if 0
+	/* this block of code checks if the two lists of intersection vertexuses
+	 * contain vertexuses from the appropriate faceuse */
+	{
+		int found1=(-1),found2=(-1); /* -1 => not set, 0 => no vertexuses from faceuse found */
+		int tmp_found;
+		struct faceuse *fu;
+		struct vertexuse *vu;
+
+		/* list b1 should contain vertexuses from faceuse fu1 */
+		for( i=0 ; i<NMG_TBL_END( b1 ) ; i++ )
+		{
+			tmp_found = 0;
+			vu = (struct vertexuse *)NMG_TBL_GET( b1 , i );
+			fu = nmg_find_fu_of_vu(vu);
+			if( fu == fu1 )
+				tmp_found = 1;
+			if( found1 == (-1) )
+				found1 = tmp_found;
+			else if( tmp_found != found1 ) /* some found, some not found!!!!! */
+			{
+				rt_log ("nmg_face_cutjoin: Intersection list is screwy for face 1\n" );
+				break;
+			}
+		}
+
+		/* and list b2 should contain vertexuses from faceuse fu2 */
+		for( i=0 ; i<NMG_TBL_END( b2 ) ; i++ )
+		{
+			tmp_found = 0;
+			vu = (struct vertexuse *)NMG_TBL_GET( b2 , i );
+			fu = nmg_find_fu_of_vu(vu);
+			if( fu == fu2 )
+				tmp_found = 1;
+			if( found2 == (-1) )
+				found2 = tmp_found;
+			else if( tmp_found != found2 ) /* some found, some not found!!!!! */
+			{
+				rt_log ("nmg_face_cutjoin: Intersection list is screwy for face 2\n" );
+				break;
+			}
+		}
+		if( !found1 )
+			rt_log( "nmg_face_cutjoin: intersection list for face 1 doesn't contain vertexuses from face 1!!!\n" );
+		if( !found2 )
+			rt_log( "nmg_face_cutjoin: intersection list for face 2 doesn't contain vertexuses from face 2!!!\n" );
+	}
+#endif
 	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir );
 	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir );
 	rs1.tol = rs2.tol = tol;
@@ -1976,6 +2071,95 @@ static CONST struct state_transitions nmg_state_is_in[17] = {
 	{ NMG_ON_REV_ON_REV,	NMG_STATE_IN,		NMG_ACTION_NONE },
 	{ NMG_LONE,		NMG_STATE_IN,		NMG_ACTION_LONE_V_JAUNT }
 };
+
+/*	This code checks if the vertex from a loop of a single vertex lies on
+ *	an edge containing vu2. If so, the edge is split, vu1 is inserted,
+ *	the loop containing vu1 is killed, and the newly created edgeuse is
+ *	returned in "new_eu".
+ *
+ *		returns:
+ *			0 - did nothing
+ *			1 - inserted vu1 and created a new edge
+ */
+int
+nmg_insert_vu_if_on_edge( vu1 , vu2 , new_eu , tol )
+struct vertexuse *vu1;	/* vertexuse from a loop of a single vertex */
+struct vertexuse *vu2;	/* vertexuse from another loop */
+struct edgeuse *new_eu;	/* use of new edge that may be created (implicit return ) */
+struct rt_tol *tol;	/* tolerance for collinearity check */
+{
+	struct edgeuse *eu_from;	/* edgeuse that starts at end of vu2's eu */
+	struct edgeuse *eu_to;		/* edgeuse that terminates at vu2 */
+	vect_t eu_vect;			/* edge vector starting or terminating at vu2 */
+	vect_t vect_to_loop;		/* vector from start of eu_vect to vu1 */
+	fastf_t eu_len_sq;		/* square of length of edge containing vu2 */
+	fastf_t dist_to_loop_sq;	/* square of distance between vu1 and vu2 */
+
+	NMG_CK_VERTEXUSE( vu1 );
+	if( *vu1->up.magic_p != NMG_LOOPUSE_MAGIC )
+		rt_bomb( "nmg_insert_vu_if_on_edge: vu1 is not from a loop of a single vertex" );
+
+	NMG_CK_VERTEXUSE( vu2 );
+	if( *vu2->up.magic_p != NMG_EDGEUSE_MAGIC )
+		rt_bomb( "nmg_insert_vu_if_on_edge: vu2 is not from an edgeuse" );
+
+	RT_CK_TOL( tol );
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+		rt_log( "nmg_insert_vu_if_on_edge: vu1=x%x, vu2=x%x\n" , vu1 , vu2 );
+
+	eu_from = RT_LIST_PNEXT_CIRC( edgeuse , vu2->up.eu_p );
+	eu_to = RT_LIST_PLAST_CIRC( edgeuse , vu2->up.eu_p );
+	if( rt_3pts_collinear( vu1->v_p->vg_p->coord , vu2->v_p->vg_p->coord , eu_from->vu_p->v_p->vg_p->coord , tol ))
+	{
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\t points are collinear with vu2's eu ( %g , %g , %g ) -> ( %g , %g , %g )\n",
+				V3ARGS( vu2->v_p->vg_p->coord ),
+				V3ARGS( eu_from->vu_p->v_p->vg_p->coord ) );
+		VSUB2( eu_vect , eu_from->vu_p->v_p->vg_p->coord , vu2->v_p->vg_p->coord );
+		VSUB2( vect_to_loop , vu1->v_p->vg_p->coord , vu2->v_p->vg_p->coord );
+		if( VDOT( eu_vect , vect_to_loop ) > 0.0 )
+		{
+			eu_len_sq = MAGSQ( eu_vect );
+			dist_to_loop_sq = MAGSQ( vect_to_loop );
+			if( dist_to_loop_sq < eu_len_sq )
+			{
+				struct edgeuse *new_eu;
+
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					rt_log( "\tvu1 is on vu2's eu, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
+				new_eu = nmg_esplit( vu1->v_p , vu2->up.eu_p );
+				nmg_klu( vu1->up.lu_p );
+				return( 1 );
+			}
+		}
+	}
+	if( rt_3pts_collinear( vu1->v_p->vg_p->coord , vu2->v_p->vg_p->coord , eu_to->vu_p->v_p->vg_p->coord , tol ))
+	{
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "\t points are collinear with eu that ends at vu2 ( %g , %g , %g ) -> ( %g , %g , %g )\n",
+				V3ARGS( eu_to->vu_p->v_p->vg_p->coord ),
+				V3ARGS( vu2->v_p->vg_p->coord ) );
+		VSUB2( eu_vect , vu2->v_p->vg_p->coord , eu_to->vu_p->v_p->vg_p->coord );
+		VSUB2( vect_to_loop , vu1->v_p->vg_p->coord , eu_to->vu_p->v_p->vg_p->coord );
+		if( VDOT( eu_vect , vect_to_loop ) > 0.0 )
+		{
+			eu_len_sq = MAGSQ( eu_vect );
+			dist_to_loop_sq = MAGSQ( vect_to_loop );
+			if( dist_to_loop_sq < eu_len_sq )
+			{
+				struct edgeuse *new_eu;
+
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					rt_log( "\tvu1 is on eu that ends at vu2, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
+				new_eu = nmg_esplit( vu1->v_p , eu_to );
+				nmg_klu( vu1->up.lu_p );
+				return( 1 );
+			}
+		}
+	}
+	return( 0 );
+}
 
 /*
  *			N M G _ F A C E _ S T A T E _ T R A N S I T I O N
@@ -2324,14 +2508,32 @@ rt_log("force next eu to ray\n");
 		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 		    	/* One (or both) is a loop of a single vertex */
 		    	/* This is the special boolean vertex marker */
+		    	struct edgeuse *new_eu;
+
 			if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
-			    	rs->vu[pos-1] = nmg_join_singvu_loop( vu, prev_vu );
+			    	if(rt_g.NMG_debug&DEBUG_FCUT)
+			    		rt_log( "\tprev_vu is a vertex loop\n" );
+			    	/* if prev_vu is geometrically on an edge that goes through vu,
+			    	 * then split that edge at prev_vu */
+			    	if( nmg_insert_vu_if_on_edge( prev_vu , vu , new_eu , rs->tol ) )
+			    		rs->vu[pos-1] = new_eu->vu_p;
+			    	else
+				    	rs->vu[pos-1] = nmg_join_singvu_loop( vu, prev_vu );
 			} else if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *prev_vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
-			    	rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
+			    	if(rt_g.NMG_debug&DEBUG_FCUT)
+			    		rt_log( "\tvu is a vertex loop\n" );
+			    	/* if vu is geometrically on an edge that goes through prev_vu,
+			    	 * then split that edge at vu */
+			    	if( nmg_insert_vu_if_on_edge( vu , prev_vu , new_eu , rs->tol ) )
+			    		rs->vu[pos] = new_eu->vu_p;
+			    	else
+				    	rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
 			} else {
 				/* Both are loops of single vertex */
+			    	if(rt_g.NMG_debug&DEBUG_FCUT)
+			    		rt_log( "\tprev_vu and vu are vertex loops\n" );
 				vu = rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
 			    	/* Set orientation */
 				lu = nmg_lu_of_vu(vu);
