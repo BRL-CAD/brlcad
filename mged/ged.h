@@ -451,7 +451,6 @@ struct _mged_variables {
         int     hot_key;
         int     context;
 	int	dlist;
-	int	nirt_behavior;
 	int	use_air;
 	int	echo_nirt_cmd;
 #ifdef USE_FRAMEBUFFER
@@ -465,10 +464,9 @@ struct _mged_variables {
 	int	rubber_band;
 #endif
 	char	mouse_behavior;
+	char	nirt_behavior;
 	char	coords;
-	char	ecoords;
 	char	rotate_about;
-	char	erotate_about;
         char    transform;
 	int	predictor;
 	double	predictor_advance;
