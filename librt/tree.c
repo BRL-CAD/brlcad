@@ -225,7 +225,7 @@ static CONST mat_t	rt_equal_matrix = {
  */
 HIDDEN struct soltab *rt_find_identical_solid( mat, dp, rtip )
 register CONST matp_t		mat;
-register CONST struct directory	*dp;
+register struct directory	*dp;
 struct rt_i			*rtip;
 {
 	register struct soltab	*stp;
@@ -337,14 +337,14 @@ next_one: ;
  */
 HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ep, id )
 CONST struct db_tree_state	*tsp;
-CONST struct db_full_path	*pathp;
+struct db_full_path		*pathp;
 CONST struct rt_external	*ep;
 int				id;
 {
 	register fastf_t	f;
 	register struct soltab	*stp;
 	union tree		*curtree;
-	CONST struct directory	*dp;
+	struct directory	*dp;
 	struct rt_db_internal	intern;
 	register int		i;
 	register matp_t		mat;
@@ -806,17 +806,16 @@ CONST struct rt_i	*rtip;
 register CONST char	*name;
 {
 	register struct soltab	*stp;
-	register CONST char	*cp;
-	int			c;
+	struct directory	*dp;
 
 	RT_CHECK_RTI(rtip);
-	c = name[0];
+	if( (dp = db_lookup( (struct db_i *)rtip->rti_dbip, (char *)name,
+	    LOOKUP_QUIET )) == DIR_NULL )
+		return(RT_SOLTAB_NULL);
 
-	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
-		if( *(cp = stp->st_dp->d_namep) == c  &&
-		    strcmp( cp, name ) == 0 )  {
+	RT_VISIT_ALL_SOLTABS_START( stp, (struct rt_i *)rtip )  {
+		if( stp->st_dp == dp )
 			return(stp);
-		}
 	} RT_VISIT_ALL_SOLTABS_END
 	return(RT_SOLTAB_NULL);
 }
