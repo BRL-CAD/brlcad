@@ -233,8 +233,6 @@ struct rt_i		*rtip;
 	LOCAL fastf_t			f;
 	int				ntri = 0;
 
-	bu_log("bot_shot()\n");
-
 	RT_CK_DB_INTERNAL(ip);
 	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot_ip);
@@ -2631,8 +2629,8 @@ rt_bot_vertex_fuse( struct rt_bot_internal *bot )
 
 	for( i=0 ; i<bot->num_vertices ; i++ )
 	{
-		for( j=i+1 ; j<bot->num_vertices ; j++ )
-		{
+		j = i + 1;
+		while( j < bot->num_vertices ) {
 			/* specifically not using tolerances here */
 			if( VEQUAL( &bot->vertices[i*3], &bot->vertices[j*3] ) )
 			{
@@ -2649,6 +2647,8 @@ rt_bot_vertex_fuse( struct rt_bot_internal *bot )
 					else if ( bot->faces[k] > j )
 						bot->faces[k]--;
 				}
+			} else {
+				j++;
 			}
 		}
 	}
