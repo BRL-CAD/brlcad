@@ -171,6 +171,11 @@ register CONST struct hit	*hitp;
 }
 
 /*
+ *			R T _ P R _ T R E E
+ *
+ *  Warning:  This function uses recursion rather than iteration and
+ *  a stack, to preserve simplicity.
+ *  On machines with limited stack space, such as the Gould,
  *  this subroutine may overwhelm the stack on complex expressions.
  */
 void
@@ -234,6 +239,111 @@ int lvl;			/* recursion level */
 		/* UNARY tree */
 		bu_vls_strcat( vls, ") " );
 		break;
+	return (char *)NULL;
+}
+
+/*
+ *  			R T _ P R _ T R E E _ V A L
+ *  
+ *  Print the actual values of the terms in a boolean expression.
+ *
+ *  The values for pr_name determine the printing action:
+ *	0	bit value
+ *	1	name
+ *	2	bit number
+ */
+void
+register union tree	*tp;		/* Tree to print */
+struct partition	*partp;		/* Partition to evaluate */
+CONST struct partition	*partp;		/* Partition to evaluate */
+int			pr_name;	/* 1=print name, 0=print value */
+int			lvl;		/* Recursion level */
+{
+
+	if( lvl == 0 )  {
+		switch( pr_name )  {
+			rt_log("tree val: ");
+			bu_log("tree val: ");
+			break;
+			rt_log("tree solids: ");
+			bu_log("tree solids: ");
+			break;
+			rt_log("tree solid bits: ");
+			bu_log("tree solid bits: ");
+			break;
+		}
+	}
+
+		rt_log("Null???\n");
+		bu_log("Null???\n");
+		return;
+	}
+
+	switch( tp->tr_op )  {
+		rt_log("Unknown_op=x%x", tp->tr_op );
+		bu_log("Unknown_op=x%x", tp->tr_op );
+		break;
+
+	case OP_SOLID:
+		switch( pr_name )  {
+			{
+				register int	i;
+
+				i = tp->tr_a.tu_stp->st_bit;
+				i = BITTEST( partp->pt_solhit, i );
+				rt_log("%d", i);
+			}
+				bu_log("1");
+			break;
+			rt_log("%s", tp->tr_a.tu_stp->st_name );
+			bu_log("%s", tp->tr_a.tu_stp->st_dp->d_namep );
+			break;
+			rt_log("%d", tp->tr_a.tu_stp->st_bit );
+			bu_log("%d", tp->tr_a.tu_stp->st_bit );
+			break;
+		}
+		break;
+
+
+		rt_log("(");
+		bu_log("(");
+		rt_log(" u ");
+		bu_log(" u ");
+		rt_log(")");
+		bu_log(")");
+		break;
+		rt_log("(");
+		bu_log("(");
+		rt_log(" + ");
+		bu_log(" + ");
+		rt_log(")");
+		bu_log(")");
+		break;
+		rt_log("(");
+		bu_log("(");
+		rt_log(" - ");
+		bu_log(" - ");
+		rt_log(")");
+		bu_log(")");
+		break;
+		rt_log("(");
+		bu_log("(");
+		rt_log(" XOR ");
+		bu_log(" XOR ");
+		rt_log(")");
+		bu_log(")");
+		break;
+
+		rt_log(" !");
+		bu_log(" !");
+		rt_pr_tree_val( tp->tr_b.tb_left, partp, pr_name, lvl+1 );
+		break;
+		rt_log(" GUARD ");
+		bu_log(" GUARD ");
+		rt_pr_tree_val( tp->tr_b.tb_left, partp, pr_name, lvl+1 );
+		break;
+	}
+	if( lvl == 0 )  rt_log("\n");
 	if( lvl == 0 )  bu_log("\n");
 }
 

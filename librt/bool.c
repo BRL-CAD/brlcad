@@ -584,8 +584,13 @@ struct application *ap;
 					continue;
 			}
 			regp = ap->a_rt_i->Regions[i];
-			if(rt_g.debug&DEBUG_PARTITION)
-				rt_log("%.8x=bit%d, %s: ", regp, i, regp->reg_name );
+			if(rt_g.debug&DEBUG_PARTITION)  {
+				rt_pr_tree_val( regp->reg_treetop, pp, 2, 0 );
+				rt_pr_tree_val( regp->reg_treetop, pp, 1, 0 );
+				rt_pr_tree_val( regp->reg_treetop, pp, 0, 0 );
+				rt_log("%.8x=bit%d, %s: ",
+					regp, i, regp->reg_name );
+			}
 			if( rt_booleval( regp->reg_treetop, pp, TrueRg,
 			    ap->a_resource ) == FALSE )  {
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("FALSE\n");
