@@ -158,23 +158,24 @@ char *argv[];
   av[i+2] = (char *)NULL;
 
   dm_var_init(o_dm_list);
-  Tk_DeleteGenericHandler(Glx_doevent, (ClientData)DM_TYPE_GLX);
-  if((dmp = dm_open(DM_TYPE_GLX, DM_EVENT_HANDLER_NULL, argc+1, av)) == DM_NULL){
+  Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+  if((dmp = dm_open(DM_TYPE_GLX, argc+1, av)) == DM_NULL){
     bu_free(av, "Glx_dm_init: av");
     return TCL_ERROR;
   }
 
   bu_free(av, "Glx_dm_init: av");
-  dmp->dm_eventHandler = Glx_doevent;
+  eventHandler = Glx_doevent;
   curr_dm_list->s_info->opp = &pathName;
-  Tk_CreateGenericHandler(Glx_doevent, (ClientData)DM_TYPE_GLX);
+  Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   glx_configure_window_shape(dmp);
 
   return TCL_OK;
 }
 
 /*
-   This routine does not handle mouse button or key events. The key
+   This routine is being called from doEvent().
+   It does not handle mouse button or key events. The key
    events are being processed via the TCL/TK bind command or are being
    piped to ged.c/stdin_input(). Eventually, I'd also like to have the
    dials+buttons bindable. That would leave this routine to handle only
@@ -188,22 +189,7 @@ XEvent *eventPtr;
   static int button0  = 0;   /*  State of button 0 */
   static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   struct bu_vls cmd;
-  struct glx_vars *p;
-  register struct dm_list *save_dm_list;
-  int status = TCL_OK;
   int save_edflag = -1;
-
-  GET_DM(p, glx_vars, eventPtr->xany.window, &head_glx_vars.l);
-  if(p == (struct glx_vars *)NULL || eventPtr->type == DestroyNotify)
-    return TCL_OK;
-
-  bu_vls_init(&cmd);
-  save_dm_list = curr_dm_list;
-
-  GET_DM_LIST(curr_dm_list, glx_vars, eventPtr->xany.window);
-
-  if(curr_dm_list == DM_LIST_NULL)
-    goto end;
 
   GLXwinset(eventPtr->xany.display, eventPtr->xany.window);
 
@@ -216,33 +202,35 @@ XEvent *eventPtr;
 		  &keysym, (XComposeStatus *)NULL);
 
     if(keysym == mged_variables->hot_key)
-      goto end;
+      return TCL_OK;
 
     write(dm_pipe[1], buffer, 1);
 
     bu_vls_free(&cmd);
-    curr_dm_list = save_dm_list;
 
     /* Use this so that these events won't propagate */
     return TCL_RETURN;
   }
 
+  bu_vls_init(&cmd);
   if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
     glx_clear_to_black(dmp);
-
     dirty = 1;
-    goto end;
+
+    goto handled;
   } else if( eventPtr->type == ConfigureNotify ) {
     glx_configure_window_shape(dmp);
-
     dirty = 1;
-    goto end;
+
+    goto handled;
   } else if( eventPtr->type == MapNotify ){
     mapped = 1;
-    goto end;
+
+    goto handled;
   } else if( eventPtr->type == UnmapNotify ){
     mapped = 0;
-    goto end;
+
+    goto handled;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
     int dx, dy;
@@ -268,7 +256,7 @@ XEvent *eventPtr;
 		       (int)(dm_X2Normal(dmp, mx, 1) * 2047.0),
 		       (int)(dm_Y2Normal(dmp, my) * 2047.0) );
       else /* not doing motion */
-	goto end;
+	goto handled;
 
       break;
     case AMM_ROT:
@@ -306,7 +294,7 @@ XEvent *eventPtr;
 
 	((struct glx_vars *)dmp->dm_vars)->omx = mx;
 	((struct glx_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+	goto handled;
       }
 
       if(mged_variables->rateknobs)
@@ -354,7 +342,7 @@ XEvent *eventPtr;
 
 	((struct glx_vars *)dmp->dm_vars)->omx = mx;
 	((struct glx_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+	goto handled;
       }
 
       /* otherwise, drag to translate the view */
@@ -445,7 +433,7 @@ XEvent *eventPtr;
 
 	((struct glx_vars *)dmp->dm_vars)->omx = mx;
 	((struct glx_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+	goto handled;
       }
 
       break;
@@ -481,7 +469,7 @@ XEvent *eventPtr;
 
 	((struct glx_vars *)dmp->dm_vars)->omx = mx;
 	((struct glx_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+	goto handled;
       }
 
       break;
@@ -517,7 +505,7 @@ XEvent *eventPtr;
 
 	((struct glx_vars *)dmp->dm_vars)->omx = mx;
 	((struct glx_vars *)dmp->dm_vars)->omy = my;
-	goto end;
+	goto handled;
       }
 
       break;
@@ -724,7 +712,7 @@ XEvent *eventPtr;
     if(button0){
       Glx_dbtext(
 		(mged_variables->adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
-      goto end;
+      goto handled;
     }
 
     switch(DIAL0 + M->first_axis){
@@ -1375,7 +1363,7 @@ XEvent *eventPtr;
 
     if(B->button == 1){
       button0 = 1;
-      goto end;
+      goto handled;
     }
 
     if(button0){
@@ -1394,12 +1382,12 @@ XEvent *eventPtr;
     if(B->button == 1)
       button0 = 0;
 
-    goto end;
+    goto handled;
   }
 #endif
-  else {
+  else if(eventPtr->type == KeyPress){
     /*XXX Hack to prevent Tk from choking on certain control sequences */
-    if(eventPtr->type == KeyPress && eventPtr->xkey.state & ControlMask){
+    if(eventPtr->xkey.state & ControlMask){
       char buffer[1];
       KeySym keysym;
 
@@ -1407,29 +1395,36 @@ XEvent *eventPtr;
 		    &keysym, (XComposeStatus *)NULL);
 
       if(keysym == XK_c || keysym == XK_t || keysym == XK_v ||
-	 keysym == XK_w || keysym == XK_x || keysym == XK_y){
-	bu_vls_free(&cmd);
-	curr_dm_list = save_dm_list;
-
-	return TCL_RETURN;
-      }
+	 keysym == XK_w || keysym == XK_x || keysym == XK_y)
+	goto handled;
     }
 
-    goto end;
+    /* let other KeyPress events get processed by Tcl/Tk */
+    goto not_handled;
+  }else{
+    /* allow all other events to be handled by Tcl/Tk */
+    goto not_handled;
   }
 
-  status = Tcl_Eval(interp, bu_vls_addr(&cmd));
+  (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
   if(save_edflag != -1){
     if(SEDIT_TRAN || SEDIT_ROTATE || SEDIT_SCALE)
       es_edflag = save_edflag;
     else if(OEDIT_TRAN || OEDIT_ROTATE || OEDIT_SCALE)
       edobj = save_edflag;
   }
-end:
-  bu_vls_free(&cmd);
-  curr_dm_list = save_dm_list;
 
-  return status;
+handled:
+  bu_vls_free(&cmd);
+
+  /* event handled here; prevent someone else from handling the event */
+  return TCL_RETURN;
+
+not_handled:
+  bu_vls_free(&cmd);
+
+  /* let someone else handle the event */
+  return TCL_OK;
 }
 
 static void
