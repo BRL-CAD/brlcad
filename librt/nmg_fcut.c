@@ -1096,7 +1096,8 @@ int			multi;
 		NMG_CK_VERTEXUSE(prev_vu);
 		eu = prev_vu->up.eu_p;
 		NMG_CK_EDGEUSE(eu);
-		(void)nmg_esplit( vu->v_p, eu->e_p );
+/*		(void)nmg_esplit( vu->v_p, eu->e_p ); */
+		(void)nmg_ebreak( vu->v_p, eu->e_p );
 		/* Update vu table with new value */
 		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
 		/* Kill lone vertex loop */
