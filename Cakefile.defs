@@ -600,7 +600,7 @@ set -S2 "/bin/sh"
 #		define	LIBVERS ../sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -shared -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lc -rpath /usr/lib64:LIBDIR
+#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 /*		-Wl,-S supresses non-fatal LD errors.  LD has gotten chatty. */
 #		define	LD_OPTS		GFLAG
