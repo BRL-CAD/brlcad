@@ -1,9 +1,9 @@
 
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	86/02/12	Gary S. Moss
+#	last edit:	86/04/18	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.17
+#	SCCS ID:	@(#)Makefile	1.18
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -68,7 +68,7 @@ install:	all
 	do	if cmp -s ${BINDIR}/$$i $$i; \
 		then	echo $$i unchanged; \
 		else	${INS} $$i ${BINDIR}; \
-			-chmod ${BINPERM} ${BINDIR}/$$i ; \
+			chmod ${BINPERM} ${BINDIR}/$$i ; \
 			echo $$i installed; \
 		fi \
 	done
@@ -76,7 +76,7 @@ install:	all
 	do	if cmp -s ${MANDIR}/$$i $$i; \
 		then	echo $$i unchanged; \
 		else	${INS} $$i ${MANDIR}; \
-			-chmod ${MANPERM} ${MANDIR}/$$i ; \
+			chmod ${MANPERM} ${MANDIR}/$$i ; \
 			echo $$i installed; \
 		fi \
 	done
