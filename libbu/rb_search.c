@@ -22,7 +22,7 @@
  *	in the discovered node.  Otherwise, it returns NULL.
  */
 static void *_rb_search
-	(struct rb_node *root, int order_nm, int (*order)(), void *datum)
+	(struct rb_node *root, int order_nm, int (*order)(), void *data)
 {
     int	result;
 
@@ -31,7 +31,7 @@ static void *_rb_search
 	if (root == RB_NODE_NULL)
 	    return (NULL);
 	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
-	if ((result = (*order)(datum, root -> rbn_data)) == 0)
+	if ((result = (*order)(data, root -> rbn_data)) == 0)
 	    break;
 	else if (result < 0)
 	    root = rb_left_child(root, order_nm);
@@ -52,7 +52,7 @@ static void *_rb_search
  *	pointer to the data block in the discovered node.  Otherwise,
  *	it returns NULL.
  */
-void *rb_search (rb_tree *tree, int order, void *datum)
+void *rb_search (rb_tree *tree, int order, void *data)
 {
 
     int			(*compare)();
@@ -60,5 +60,5 @@ void *rb_search (rb_tree *tree, int order, void *datum)
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
     compare = rb_order_func(tree, order);
-    return(_rb_search(rb_root(tree, order), order, compare, datum));
+    return(_rb_search(rb_root(tree, order), order, compare, data));
 }
