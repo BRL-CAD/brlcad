@@ -115,7 +115,7 @@ struct rt_i		*rtip;
 	int i, curve_no;
 	int vert_count;
 	int curr_vert;
-	
+
 	eip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC( eip );
 	skt = eip->skt;
@@ -160,9 +160,17 @@ struct rt_i		*rtip;
 	{
 		VCROSS( extr->rot_axis, tmp, extr->unit_h );
 		VUNITIZE( extr->rot_axis );
-		VCROSS( tmp2, tmp, extr->rot_axis );
-		MAT4X3VEC( extr->perp, extr->rot, tmp2 );
-		VUNITIZE( extr->perp );
+		if( MAGNITUDE( extr->rot_axis ) < SQRT_SMALL_FASTF )
+		{
+			VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
+			VSET( extr->perp, 0.0, 1.0, 0.0 );
+		}
+		else
+		{
+			VCROSS( tmp2, tmp, extr->rot_axis );
+			MAT4X3VEC( extr->perp, extr->rot, tmp2 );
+			VUNITIZE( extr->perp );
+		}
 	}
 
 	/* calculate plane equations of top and bottom planes */
@@ -512,7 +520,10 @@ vect_t ray_dir, ra, rb;
 	rb_sq = V2DOT( rb, rb );
 	rb_4 = rb_sq * rb_sq;
 	if( ra_4 < SMALL_FASTF || rb_4 < SMALL_FASTF )
+	{
+		bu_log( "ray (%g %g %g) -> (%g %g %g), semi-axes lengths = %g %g\n", V3ARGS( ray_start ), V3ARGS( ray_dir ), ra, rb );
 		bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
+	}
 
 	dda = V2DOT( ray_dir, ra );
 	ddb = V2DOT( ray_dir, rb );
