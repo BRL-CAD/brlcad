@@ -212,6 +212,9 @@ XMotionEvent *xmotion;
       fastf_t x = dm_Xx2Normal(dmp, mx);
       fastf_t y = dm_Xy2Normal(dmp, my, 1);
 
+      if(mged_variables->grid_snap)
+	snap_to_grid(&x, &y);
+
       rect_width = x - rect_x;
       rect_height = y - rect_y;
 
@@ -380,6 +383,10 @@ XMotionEvent *xmotion;
       point_t view_pt;
 
       VSET(view_pt, dm_Xx2Normal(dmp, mx), dm_Xy2Normal(dmp, my, 1), 0.0);
+
+      if(mged_variables->grid_snap)
+	snap_to_grid(&view_pt[X], &view_pt[Y]);
+
       MAT4X3PNT(model_pt, view2model, view_pt);
       VSCALE(model_pt, model_pt, base2local);
       bu_vls_printf(&cmd, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
