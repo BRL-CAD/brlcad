@@ -11,11 +11,16 @@ those groups and individuals that have helped make BRL-CAD the package
 that it is today here.
 
 Contributions are separated into a few major sections depending on the
-level of involvement that the individual maintained.  Contributors are
-ordered chronologically for each list with the earliest contributors
-named first.  Likewise, the most recent contributors are listed at the
-bottom.  Names are optionally followed by the organizations that
-supported their involvement, also listed in chronological order.
+level and type of involvement that the individual maintained.
+Contributors are roughly ordered chronologically for each section,
+depending upon when involvement with BRL-CAD began.  The earliest
+contributors are named first; likewise, the most recent contributors
+are listed at the bottom.
+
+Names are optionally followed by the organizations that may have
+supported their involvement to some degree, also listed in
+chronological order, though many individuals have supported the
+package of their own accord and on their own time.  
 
 Active developers are denoted with an "**", meaning that they have
 been involved within the past 12 months.
@@ -28,14 +33,15 @@ ORIGINAL ARCHITECT AND AUTHOR
 then in the will, then in reality."
                 - Mike Muuss
 
+
 DEVELOPERS
 ----------
 
-Michael John Muuss
+Muuss, Michael John
 U.S. Army Research Laboratory
 
 Weaver, Earl P
-U.S. Army Research Laboratory
+U.S. Army Ballistic Research Laboratory
 
 Moss, Gary S
 U.S. Army Research Laboratory
@@ -46,7 +52,7 @@ U.S. Army Research Laboratory
 Applin, Keith A
 U.S. Army Research Laboratory
 
-Kennedy, Charles Michael  <kermit@brlcad.org>
+Kennedy, Charles Michael  <kermit@brlcad.org>  **
 U.S. Army Research Laboratory
 
 Gwyn, Douglas A
@@ -58,7 +64,7 @@ U.S. Army Research Laboratory
 Hanes, Jeff
 U.S. Army Research Laboratory
 
-Butler, Lee A  **
+Butler, Lee A  <butler@arl.army.mil>  **
 U.S. Army Research Laboratory
 
 Johnson, Christopher T  <cjohnson@cyberpaladin.com>  **
@@ -67,7 +73,7 @@ JRMTech, Inc.
 Paladin Software, Inc.
 
 Markowski, Michael J
-U.S. Army Research Laboratory
+U.S. Army Research Laboratory (??? brl only)
 
 Anderson, John R  <jra@arl.army.mil>  **
 U.S. Army Research Laboratory
@@ -76,7 +82,7 @@ Tanenbaum, Paul J
 U.S. Army Research Laboratory
 
 Durfee, Glenn
-ARL Student Hire / Stanford University
+ARL Student Hire / Stanford University  (??? carnegie-mellon)
 
 Parker, Robert G  **
 U.S. Army Research Laboratory
@@ -119,10 +125,10 @@ CODE CONTRIBUTIONS
 ------------------
 
 Pistritto, Joseph C
-U.S. Army Research Laboratory
+U.S. Army Ballistic Research Laboratory
 
 Natalie, Ronald B
-U.S. Army Research Laboratory
+U.S. Army Ballistic Research Laboratory
 
 Mermagen, Jr., William
 U.S. Army Research Laboratory
@@ -130,14 +136,12 @@ U.S. Army Research Laboratory
 Barker, Natalie L
 U.S. Army Research Laboratory
 
-Hunt, Jim
+Hunt, Jim  <jhunt@ara.com>
 Applied Research Associates, Inc.
 U.S. Army Research Laboratory
-jhunt@ara.com
-jhunt@arl.army.mil
 
 Coates, Sue
-U.S. Army Research Laboratory
+U.S. Army Research Laboratory (??? only brl)
 
 Fiori, Jim
 Sun Microsystems, Inc.
@@ -146,7 +150,17 @@ Jackson, Chris
 Sun Microsystems, Inc.
 
 Smith, Tim
-Sun Microsystems, Inc.
+Sun Microsystems, Inc. (??? naval academy)
+
+Suckling, Bob
+U.S. Army Ballistic Research Laboratory
+
+Reed, Jr., Harry
+Geometric Solutions, Inc.
+U.S. Army Ballistic Research Laboratory
+
+Reschly, Jr., Robert J
+U.S. Army Ballistic Research Laboratory
 
 Gigante, Mike
 Melbourne Institute of Technology
@@ -206,7 +220,8 @@ Night Vision & Electronic Sensors Directorate
 
 U.S. Naval Academy
 
-U.S. Naval Research Training Center
+Northrup, Inc.
+Norhtrup Research and Technology Center
 
 SGI
   formerly named Silicon Graphics, Inc.
@@ -236,6 +251,7 @@ Bowden, Mark Huston
 Davies, Steve
 
 Dender, Dan
+U.S. Army Research Laboratory (chuck)
 Survice Engineering, Inc.
 
 DiGiacinto, Tom
@@ -248,9 +264,10 @@ Florek, David
 CECOM Night Vision & Electronic Sensors Directorate
 
 Hartwig, George W
-U.S. Army Research Laboratory
+U.S. Army Ballistic Research Laboratory
 
 Henrikson, Bruce
+U.S. Army Ballistic Research Laboratory
 
 Johnson, Joe
 U.S. Naval Academy
@@ -259,11 +276,13 @@ Kekesi, Alex
 CECOM Night Vision & Electronic Sensors Directorate
 
 Laut, Bill
+(??? Sun Microsystems, Inc.) 
 
 Lindemann, William
+(??? Sun Microsystems, Inc.)
 
 Martin, Glenn E
-U.S. Naval Research Training Center
+Northrup Research and Technology Center
 
 McKie, Jim
 
@@ -271,7 +290,7 @@ Merrit, Don
 U.S. Army Research Laboratory
 
 Miles, Robert S
-U.S. Army Ballistic Research Laboratory
+U.S. Army Ballistic Research Laboratory (???NRTC)
 
 Moulton, Jr., Russ
 EOSoft, Inc.
@@ -281,14 +300,8 @@ Musgrave, F Kenton
 Reed, Harry
 U.S. Army Ballistic Research Laboratory
 
-Reed, Jr., Harry
-Geometric Solutions, Inc.
-U.S. Army Ballistic Research Laboratory
-
-Reschly, Jr., Robert J
-U.S. Army Research Laboratory
-
 Ross, Brant A
+General Motors, Inc.
 
 Satterfield, Steve
 U.S. Naval Academy
@@ -300,23 +313,24 @@ Skinner, Robert
 Stoudenmire, Eugene A
 CECOM Night Vision & Electronic Sensors Directorate
 
-Suckling, Bob
-U.S. Army Research Laboratory
-
 Toth, George E
 
 Turkowski, Ken
 
 Willson, Stephen Hunter
-U.S. Naval Research Training Center
+Northrup Research and Technology Center
 
 Wolff, Stephen
+U.S. Army Ballistic Research Laboratory
 
 Woo, Alex
 University of Illinois
 
 zum Brunnen, Rick
 U.S. Army Research Laboratory
+
+Stanley, Charles
+U.S. Army Ballistic Research Laboratory (??? maybe maybe didn't contribute)
 
 --- 
 
