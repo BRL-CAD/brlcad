@@ -33,7 +33,7 @@ struct rt_i rt_i;	/* eventually, malloc'ed by rt_dir_build */
 
 int rt_pure_boolean_expressions = 0;
 
-HIDDEN union tree *rt_draw_obj();
+HIDDEN union tree *rt_drawobj();
 HIDDEN void rt_add_regtree();
 HIDDEN union tree *rt_make_bool_tree();
 
@@ -141,7 +141,7 @@ char *node;
 	if( dp == DIR_NULL )
 		return(-1);		/* ERROR */
 
-	curtree = rt_draw_obj( dp, REGION_NULL, 0, mat, &rt_no_mater );
+	curtree = rt_drawobj( dp, REGION_NULL, 0, mat, &rt_no_mater );
 	if( curtree != TREE_NULL )  {
 		/*  Subtree has not been contained by a region.
 		 *  This should only happen when a top-level solid
@@ -313,7 +313,7 @@ struct tree_list {
  */
 HIDDEN
 union tree *
-rt_draw_obj( dp, argregion, pathpos, old_xlate, materp )
+rt_drawobj( dp, argregion, pathpos, old_xlate, materp )
 struct directory *dp;
 struct region *argregion;
 matp_t old_xlate;
@@ -342,7 +342,7 @@ struct mater_info *materp;
 	 */
 	if( lseek( rt_i.fd, dp->d_addr, 0 ) < 0 ||
 	    read( rt_i.fd, (char *)&rec, sizeof rec ) != sizeof rec )  {
-		rt_log("rt_draw_obj: %s record read error\n",
+		rt_log("rt_drawobj: %s record read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);
 	}
@@ -362,7 +362,7 @@ struct mater_info *materp;
 		/**GETSTRUCT( xtp, union tree ); **/
 		if( (xtp=(union tree *)rt_malloc(sizeof(union tree), "solid tree"))
 		    == TREE_NULL )
-			rt_bomb("rt_draw_obj: solid tree malloc failed\n");
+			rt_bomb("rt_drawobj: solid tree malloc failed\n");
 		bzero( (char *)xtp, sizeof(union tree) );
 		xtp->tr_op = OP_SOLID;
 		xtp->tr_a.tu_stp = stp;
@@ -372,7 +372,7 @@ struct mater_info *materp;
 	}
 
 	if( rec.u_id != ID_COMB )  {
-		rt_log("rt_draw_obj:  defective database record, type '%c'\n",
+		rt_log("rt_drawobj:  defective database record, type '%c'\n",
 			rec.u_id );
 		return(TREE_NULL);			/* ERROR */
 	}
@@ -441,10 +441,10 @@ struct mater_info *materp;
 	    (union record *)0  ||
 	    (trees = (struct tree_list *)rt_malloc( j, "tree_list array" )) ==
 	    (struct tree_list *)0 )
-		rt_bomb("rt_draw_obj:  malloc failure\n");
+		rt_bomb("rt_drawobj:  malloc failure\n");
 
 	if( read( rt_i.fd, (char *)members, i ) != i )  {
-		rt_log("rt_draw_obj:  %s member read error\n",
+		rt_log("rt_drawobj:  %s member read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);
 	}
@@ -472,7 +472,7 @@ struct mater_info *materp;
 		}
 
 		/* Recursive call */
-		if( (tlp->tl_tree = rt_draw_obj(
+		if( (tlp->tl_tree = rt_drawobj(
 		    nextdp, regionp, pathpos+1, new_xlate, &curmater )
 		    ) == TREE_NULL )
 			continue;
