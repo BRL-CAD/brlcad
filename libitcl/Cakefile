@@ -58,15 +58,18 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		 echo ../SRCDIR/fix_makefile.sh '>' Makefile.MTYPE; \
 		 ../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
 
-clean&:
-	make -f Makefile clean
+clean&:	Makefile.MTYPE
+	make -f Makefile.MTYPE clean
 
 noprod&:
 	rm -rf libtcl.*
 
-clobber&: 
+clobber&: Makefile.MTYPE
+	make -f Makefile.MTYPE clean
 	rm -f *.MTYPE *.o config.log config.status Makefile lib* itclsh itkwish
+	#ifdef NFS
 	rm -rf itcl itk iwidgets*
+	#endif
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
