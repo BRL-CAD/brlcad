@@ -13,13 +13,13 @@
 #include <signal.h>
 #include <stdio.h>
 #include <strings.h>
-#include "./machine.h"
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "ged.h"
-#include "objdir.h"
 #include <math.h>
-#include "dm.h"
+#include "./machine.h"
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./objdir.h"
+#include "./dm.h"
 
 extern void aexists();
 extern double atof();

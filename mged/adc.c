@@ -22,9 +22,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <math.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "ged.h"
-#include "dm.h"
+#include "vmath.h"
+#include "./ged.h"
+#include "./dm.h"
 
 /*
  * These variables are global for the benefit of

@@ -23,13 +23,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <stdio.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "sedit.h"
-#include "ged.h"
-#include "objdir.h"
-#include "solid.h"
-#include "dm.h"
+#include "vmath.h"
+#include "db.h"
+#include "./sedit.h"
+#include "./ged.h"
+#include "./objdir.h"
+#include "./solid.h"
+#include "./dm.h"
 
 extern int	atoi();
 

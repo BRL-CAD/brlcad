@@ -23,11 +23,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<math.h>
 #include	<stdio.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "dm.h"
-#include "objdir.h"
-#include "ged.h"
+#include "vmath.h"
+#include "db.h"
+#include "./dm.h"
+#include "./objdir.h"
+#include "./ged.h"
 
 static void	face();
 
