@@ -153,17 +153,6 @@ struct dm *dmp;
 	 ((struct ogl_vars *)dmp->dm_vars)->mvars.fastfog ? GL_FASTEST : GL_NICEST);
 }
 
-/* get rid of when no longer needed */
-#define USE_RAMP (((struct ogl_vars *)dmp->dm_vars)->mvars.cueing_on || \
-		  ((struct ogl_vars *)dmp->dm_vars)->mvars.lighting_on)
-#define CMAP_BASE	32
-#define CMAP_RAMP_WIDTH	16
-#define MAP_ENTRY(x)	( USE_RAMP ? \
-			((x) * CMAP_RAMP_WIDTH + CMAP_BASE) : \
-			((x) + CMAP_BASE) )
-
-/********************************************************************/
-
 /*
  *  Mouse coordinates are in absolute screen space, not relative to
  *  the window they came from.  Convert to window-relative,
@@ -205,7 +194,6 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars)->devbuttonrelease = LASTEvent;
   ((struct ogl_vars *)dmp->dm_vars)->perspective_angle = 3;
   ((struct ogl_vars *)dmp->dm_vars)->aspect = 1.0;
-  ((struct ogl_vars *)dmp->dm_vars)->ovec = -1;
 
   /* initialize the modifiable variables */
   ((struct ogl_vars *)dmp->dm_vars)->mvars.rgb = 1;
@@ -1086,11 +1074,26 @@ Tk_Window tkwin;
 	  }
 	}
 
-	/* make sure Tk handles it */
-	((struct ogl_vars *)dmp->dm_vars)->cmap =
-	  XCreateColormap(((struct ogl_vars *)dmp->dm_vars)->dpy,
-			  RootWindow(((struct ogl_vars *)dmp->dm_vars)->dpy,
-			  maxvip->screen), maxvip->visual, AllocNone);
+	{
+	  Colormap default_cmap;
+	  int default_screen;
+
+	  ((struct ogl_vars *)dmp->dm_vars)->cmap =
+	    XCreateColormap(((struct ogl_vars *)dmp->dm_vars)->dpy,
+			    RootWindow(((struct ogl_vars *)dmp->dm_vars)->dpy,
+				       maxvip->screen), maxvip->visual, AllocNone);
+
+	  /* Copy default colors below CMAP_BASE to private colormap to help
+	     reduce flashing */
+	  default_screen = DefaultScreen(((struct ogl_vars *)dmp->dm_vars)->dpy);
+	  default_cmap = DefaultColormap(((struct ogl_vars *)dmp->dm_vars)->dpy,
+					 default_screen);
+	  dm_copy_cmap(((struct ogl_vars *)dmp->dm_vars)->dpy,
+		       ((struct ogl_vars *)dmp->dm_vars)->cmap, /* destination */
+		       default_cmap,                            /* source */
+		       /* low - 0,  high - CMAP_BASE,  use XAllocColor */
+		       0, CMAP_BASE, 0);
+	}
 
 	if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth,
 			       ((struct ogl_vars *)dmp->dm_vars)->cmap)){

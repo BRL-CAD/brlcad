@@ -52,7 +52,6 @@ static void	draw();
 static void     x_var_init();
 static int X_load_startup();
 static int X_set_visual();
-#define CMAP_BASE 32
 
 /* Display Manager package interface */
 
@@ -68,10 +67,6 @@ static int	X_drawVlist();
 static int      X_setColor(), X_setLineAttr();
 static unsigned X_cvtvecs(), X_load();
 static int	X_setWinBounds(), X_debug();
-
-static unsigned long get_pixel();
-static void get_color_slot();
-static void allocate_color_cube();
 
 struct dm dm_X = {
   X_init,
@@ -225,7 +220,18 @@ struct dm *dmp;
 		 ((struct x_vars *)dmp->dm_vars)->height,
 		 Tk_Depth(((struct x_vars *)dmp->dm_vars)->xtkwin));
 
-  allocate_color_cube(dmp);
+  dm_allocate_color_cube( ((struct x_vars *)dmp->dm_vars)->dpy,
+			  ((struct x_vars *)dmp->dm_vars)->cmap,
+			  ((struct x_vars *)dmp->dm_vars)->pixels,
+			  /* cube dimension, uses XStoreColor */
+			  6, CMAP_BASE, 1 );
+
+  ((struct x_vars *)dmp->dm_vars)->bg = dm_get_pixel(DM_BLACK,
+				     ((struct x_vars *)dmp->dm_vars)->pixels,
+						     CUBE_DIMENSION);
+  ((struct x_vars *)dmp->dm_vars)->fg = dm_get_pixel(DM_RED,
+				     ((struct x_vars *)dmp->dm_vars)->pixels,
+						     CUBE_DIMENSION);
   
   gcv.background = ((struct x_vars *)dmp->dm_vars)->bg;
   gcv.foreground = ((struct x_vars *)dmp->dm_vars)->fg;
@@ -521,7 +527,8 @@ int strict;
 {
   XGCValues gcv;
 
-  gcv.foreground = get_pixel(dmp, r, g, b);
+  gcv.foreground = dm_get_pixel(r, g, b, ((struct x_vars *)dmp->dm_vars)->pixels,
+				CUBE_DIMENSION);
   XChangeGC(((struct x_vars *)dmp->dm_vars)->dpy,
 	    ((struct x_vars *)dmp->dm_vars)->gc,
 	    GCForeground, &gcv);
@@ -771,84 +778,6 @@ struct dm *dmp;
   return TCL_OK;
 }
 
-
-/* Return the allocated pixel value that most closely represents
-the color requested. */
-static unsigned long
-get_pixel(dmp, r, g, b)
-struct dm *dmp;
-short r, g, b;
-{
-  short rr, rg, rb;
-
-  get_color_slot(r, &rr);
-  get_color_slot(g, &rg);
-  get_color_slot(b, &rb);
-
-  return(((struct x_vars *)dmp->dm_vars)->pixel[rr * 36 + rg * 6 + rb]);
-}
-
-/* get color component value */
-static void
-get_color_slot(sc, c)
-short sc;
-short *c;
-{
-  if(sc < 42)
-	*c = 0;
-  else if(sc < 85)
-	*c = 1;
-  else if(sc < 127)
-	*c = 2;
-  else if(sc < 170)
-	*c = 3;
-  else if(sc < 212)
-	*c = 4;
-  else
-	*c = 5;
-}
-
-static void
-allocate_color_cube(dmp)
-struct dm *dmp;
-{
-  XColor color;
-  XColor colors[CMAP_BASE];
-  Colormap cmap;
-  int i;
-  int r, g, b;
-
-  /* store default colors below CMAP_BASE */
-  cmap = DefaultColormap(((struct x_vars *)dmp->dm_vars)->dpy,
-			 DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy));
-  for(i = 0; i < CMAP_BASE; ++i)
-    colors[i].pixel = i;
-  XQueryColors(((struct x_vars *)dmp->dm_vars)->dpy, cmap, colors, CMAP_BASE);
-  for(i = 0; i < CMAP_BASE; ++i)
-    XStoreColor(((struct x_vars *)dmp->dm_vars)->dpy,
-		((struct x_vars *)dmp->dm_vars)->cmap,
-		&colors[i]);
-
-  /* store color cube above CMAP_BASE */
-  for(i = r = 0; r < 65026; r = r + 13005)
-    for(g = 0; g < 65026; g = g + 13005)
-      for(b = 0; b < 65026; b = b + 13005){
-	color.red = (unsigned short)r;
-	color.green = (unsigned short)g;
-	color.blue = (unsigned short)b;
-	((struct x_vars *)dmp->dm_vars)->pixel[i] = color.pixel = i++ + CMAP_BASE;
-	color.flags = DoRed|DoGreen|DoBlue;
-	XStoreColor(((struct x_vars *)dmp->dm_vars)->dpy,
-		    ((struct x_vars *)dmp->dm_vars)->cmap,
-		    &color);
-      }
-
-  /* black */
-  ((struct x_vars *)dmp->dm_vars)->bg = ((struct x_vars *)dmp->dm_vars)->pixel[0];
-
-  /* red */
-  ((struct x_vars *)dmp->dm_vars)->fg = ((struct x_vars *)dmp->dm_vars)->pixel[180];
-}
 
 static int
 X_set_visual(dpy, tkwin, cmap, depth)

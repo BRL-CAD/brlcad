@@ -95,8 +95,6 @@ static unsigned long extract_value();
 
 static int Glx_load_startup();
 static void Glx_var_init();
-static void Glx_colorit();
-static void Glx_gen_color();
 static void Glx_make_materials();
 static void Glx_clear_to_black();
 
@@ -122,19 +120,8 @@ static GLXconfig glx_config_wish_list [] = {
 
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
-static int ovec = -1;		/* Old color map entry number */
-static int kblights();
 static double	xlim_view = 1.0;	/* args for ortho() */
 static double	ylim_view = 1.0;
-#if 0
-/*XXX This looks application specific */
-static unsigned char invbmap[BV_MAXFUNC+1];
-#endif
-
-#ifdef IR_BUTTONS
-/* bit 0 == switchlight 0 */
-static unsigned long lights;
-#endif
 
 struct dm dm_glx = {
   Glx_init,
@@ -185,13 +172,6 @@ register int y;
 {
   return ((0.5 - y/(double)((struct glx_vars *)dmp->dm_vars)->height) * 4095);
 }
-
-#define CMAP_BASE	32
-#define CMAP_RAMP_WIDTH	16
-#define MAP_ENTRY(x)	((((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on) ? \
-			((x) * CMAP_RAMP_WIDTH + CMAP_BASE) : \
-			((x) + CMAP_BASE) )
-
 
 static int
 Glx_init(dmp, argc, argv)
@@ -1021,36 +1001,6 @@ int w[];
   return TCL_OK;
 }
 
-
-static void
-Glx_colorit(dmp)
-struct dm *dmp;
-{
-  register struct solid	*sp;
-  register struct rgbtab *rgb;
-  register int i;
-  register int r,g,b;
-
-  if( ((struct glx_vars *)dmp->dm_vars)->mvars.rgb )
-    return;
-}
-
-/*			G E N _ C O L O R
- *
- *	maps a given color into the appropriate colormap entry
- *	for both depthcued and non-depthcued mode.  In depthcued mode,
- *	glx_gen_color also generates the colormap ramps.  Note that in depthcued
- *	mode, DM_BLACK uses map entry 0, and does not generate a ramp for it.
- *	Non depthcued mode skips the first CMAP_BASE colormap entries.
- *
- *	This routine is not called at all if ((struct glx_vars *)dmp->dm_vars)->mvars.rgb is set.
- */
-static void
-Glx_gen_color(c)
-int c;
-{
-  return;
-}
 
 void
 Glx_establish_perspective(dmp)
