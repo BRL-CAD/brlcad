@@ -31,7 +31,8 @@ double rt_read_timer( buf, len )
 char *buf;
 int len;
 .sp
-void rt_pr_partitions( phead, title )
+void rt_pr_partitions( rtip, phead, title )
+struct rt_i *rtip
 struct partition *phead;
 char *title;
 .sp
