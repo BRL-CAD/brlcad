@@ -109,9 +109,9 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 #if defined(apollo)
 #	undef	apollo
 	MACHINE=apollo;
-	UNIXTYPE=SYSV;
-	HAS_TCP=0;
-	HAS_SYMLINKS=0;
+	UNIXTYPE=BSD;
+	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #if defined(CRAY1)
