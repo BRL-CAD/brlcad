@@ -58,6 +58,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 /* defined in wdb_obj.c */
 extern int Wdb_Init();
 
+/* defined in dg_obj.c */
+extern int Dgo_Init();
+
+/* defined in view_obj.c */
+extern int Vo_Init();
+
 /************************************************************************
  *									*
  *		Tcl interface to Ray-tracing				*
@@ -1377,8 +1383,16 @@ Tcl_Interp		*interp;
  */
 void
 rt_tcl_setup(interp)
-Tcl_Interp *interp;
+     Tcl_Interp *interp;
 {
+	/* initialize database objects */
 	Wdb_Init(interp);
+
+	/* initialize drawable geometry objects */
+	Dgo_Init(interp);
+
+	/* initialize view objects */
+	Vo_Init(interp);
+
 	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
 }
