@@ -867,7 +867,7 @@ OutBuild()				/* returns true if successful */
 	    )	{
 	    	if( overlay )  {
 	    		/* Read in current band */
-		    	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+		    	if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 	    			fprintf(stderr,"fbplot:  band read error\n");
 	    	} else {
 			/* clear pixels in the band */
