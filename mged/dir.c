@@ -243,26 +243,32 @@ dir_build()  {
 		return;
 	}
 
-	addr = 0L;		/* Addr of record read at top of loop */
-	while(
-	    fread( (char *)&record, sizeof(record), 1, fp ) == 1  &&
-	    !feof(fp)
-	)  switch( record.u_id )  {
+	addr = -1;
+	while(1)  {
+		if( (addr = ftell(fp)) == EOF )
+			printf("dir_build:  ftell() failure\n");
+		if( fread( (char *)&record, sizeof record, 1, fp ) != 1
+		    || feof(fp) )
+			break;
+
+	switch( record.u_id )  {
 
 	case ID_COMB:
 		(void)dir_add( record.c.c_name, addr,
 			record.c.c_flags == 'R' ?
 				DIR_COMB|DIR_REGION : DIR_COMB,
 			record.c.c_length+1 );
-		addr += (long)(record.c.c_length+1) * (long)sizeof record;
-		(void)fseek( fp, addr, 0 );
+		continue;
+
+	case ID_MEMB:
 		continue;
 
 	case ID_ARS_A:
 		(void)dir_add( record.a.a_name, addr,
 			DIR_SOLID, record.a.a_totlen+1 );
-		addr += (long)(record.a.a_totlen+1) * (long)(sizeof record);
-		(void)fseek( fp, addr, 0 );
+		continue;
+
+	case ID_ARS_B:
 		continue;
 
 	case ID_BSOLID:
@@ -313,28 +319,26 @@ dir_build()  {
 		(void)printf("%s (units=%s)\n",
 			record.i.i_title,
 			units_str[record.i.i_units] );
-		addr += sizeof(record);
 		continue;
 
 	case ID_FREE:
 		/* Inform db manager of avail. space */
 		memfree( &dbfreep, 1, addr/sizeof(union record) );
-		addr += sizeof(record);
 		continue;
 
 	case ID_SOLID:
 		(void)dir_add( record.s.s_name, addr, DIR_SOLID, 1 );
-		addr += sizeof(record);
 		continue;
 
 	case ID_MATERIAL:
 		color_addrec( &record, addr );
-		addr += sizeof(record);
 		continue;
 
 	default:
-		(void)printf( "dir_build:  unknown record %c (0%o) erased\n",
-			record.u_id, record.u_id );
+		(void)printf( "dir_build:  unknown record %d=%c (0%o) addr=x%x\n",
+			addr/sizeof(union record),
+			record.u_id, record.u_id,
+			addr );
 #ifdef CLEANUP_DB
 		if( !read_only )  {
 			/* zap this record and put in free map */
@@ -344,8 +348,8 @@ dir_build()  {
 		}
 		memfree( &dbfreep, 1, addr/(sizeof(union record)) );
 #endif
-		addr += sizeof(record);
 		continue;
+	}
 	}
 
 	/* Record current end of objects file */
