@@ -325,7 +325,9 @@ struct seg		*segHeadp;
 
 		RT_CK_PT(pp);
 		inseg = pp->pt_inseg;
-		outseg = outseg;
+		outseg = pp->pt_outseg;
+		RT_CK_SEG(inseg);
+		RT_CK_SEG(outseg);
 
 		/*
 		 * Construct a completely new segment
