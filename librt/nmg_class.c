@@ -1048,6 +1048,26 @@ CONST struct rt_tol	*tol;
 		 * since there are no uses of this edge in the shell.
 		 *
 		 * So we classify the midpoint of the line WRT the shell.
+		 *
+		 *  Consider AE as being "eu", with M as the geometric midpoint.
+		 *  Consider AD as being a side view of a perpendicular plane
+		 *  in the other shell, which AE _almost_ lies in.
+		 *  A problem occurs when the angle DAE is very small.
+		 *  Point A is ON because of shared topology.
+		 *  Point E is marked ON because it is within tolerance of
+		 *  the face, even though there is no corresponding vertex.
+		 *  Naturally, point M is also going to be found to be ON
+		 *  because it is also within tolerance.
+		 *
+		 *         D
+		 *        /|
+		 *       / |
+		 *      B  |
+		 *     /   |
+		 *    /    |
+		 *   A--M--E
+		 *   
+		 *  This would seem to be an intersector problem.
 		 */
 		eupt = eu->vu_p->v_p->vg_p->coord;
 		matept = eu->eumate_p->vu_p->v_p->vg_p->coord;
@@ -1065,14 +1085,28 @@ CONST struct rt_tol	*tol;
 			NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
 			status = INSIDE;
 		} else if( class == NMG_CLASS_AonBshared )  {
+			FILE	*fp;
 #if 0
 			/* XXX bug hunt helper */
 			rt_g.NMG_debug |= DEBUG_FINDEU;
-			rt_g.NMG_debug |= DEBUG_MESH;
+		/* 	rt_g.NMG_debug |= DEBUG_MESH;	 */
+			rt_g.NMG_debug |= DEBUG_BASIC;
 			eup = nmg_findeu( eu->vu_p->v_p, eu->eumate_p->vu_p->v_p, s, eu, 0 );
 			if(!eup) rt_log("Unable to find it\n");
-			nmg_mesh_face_shell( eu->up.lu_p->up.fu_p, s );
+			nmg_model_fuse( nmg_find_model((long*)eu), tol );
 #endif
+			nmg_pr_fu_around_eu( eu, tol );
+			VPRINT("class_eu_vs_s: midpoint of edge", pt);
+			if( (fp = fopen("shell1.pl", "w")) )  {
+				nmg_pl_s(fp, s);
+				fclose(fp);
+				rt_log("wrote shell1.pl\n");
+			}
+			if( (fp = fopen("shell2.pl", "w")) )  {
+				nmg_pl_shell(fp, eu->up.lu_p->up.fu_p->s_p, 1 );
+				fclose(fp);
+				rt_log("wrote shell2.pl\n");
+			}
 			rt_bomb("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n");
 		}  else  {
 			rt_log("class=%s\n", nmg_class_name(class) );
