@@ -1106,21 +1106,28 @@ register struct soltab *stp;
 		(struct bot_specific *)stp->st_specific;
 	register struct tri_specific *tri, *ptr;
 
-	if( bot->bot_facearray )
+	if( bot->bot_facearray ) {
 		bu_free( (char *)bot->bot_facearray, "bot_facearray" );
+		bot->bot_facearray = NULL;
+	}
 
-	if( bot->bot_thickness )
+	if( bot->bot_thickness ) {
 		bu_free( (char *)bot->bot_thickness, "bot_thickness" );
-	if( bot->bot_facemode )
+		bot->bot_thickness = NULL;
+	}
+	if( bot->bot_facemode ) {
 		bu_free( (char *)bot->bot_facemode, "bot_facemode" );
+		bot->bot_facemode = NULL;
+	}
 	ptr = bot->bot_facelist;
 	while( ptr )
 	{
 		tri = ptr->tri_forw;
-		if( tri )
-			bu_free( (char *)tri, "bot tri_specific" );
+		if( ptr )
+			bu_free( (char *)ptr, "bot tri_specific" );
 		ptr = tri;
 	}
+	bot->bot_facelist = NULL;
 	bu_free( (char *)bot, "bot_specific" );
 }
 
