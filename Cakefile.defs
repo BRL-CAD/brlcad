@@ -600,7 +600,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a 64-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -643,10 +643,10 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #       define  XMGED_ALLOCA    alloca
-#	define	XMGED_OBJS	dm-4d dm-X Xmgl
+#	define	XMGED_OBJS	dm-X
 #	define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D \
 				-DDM_X -DDMX_SIGNALS -I/usr/include/X11
-#	define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lXm_s \
+#	define	XMGED_LIBES	-L''XLIBDIR -lXm_s \
 				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
 				-lxmalloc -ll
 #	define	HAS_TCP	1
@@ -841,8 +841,10 @@ set -S2 "/bin/sh"
 /***		XXX What about XLIBDIR and XINCDIR here?  */
 #		define  XMGED_ALLOCA
 #		define	XMGED_OBJS	dm-X
-#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS -I/usr/X11/include
-#		define	XMGED_LIBES	-L/usr/X11/lib -lXm -lXt -lXi -lXext -lX11 -ll
+#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS \
+					-I/usr/X11/include
+#		define	XMGED_LIBES	-L/usr/X11/lib -lXm -lXt -lXi \
+					-lXext -lX11 -ll
 #	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
