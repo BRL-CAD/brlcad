@@ -34,7 +34,7 @@ char	**argv;
 	register int	x, y;
 	register int	fb_sz;
 	register int	middle;
-	static Pixel	black, white, red;
+	static RGBpixel	black, white, red;
 	static int	val;
 	static int	mask;
 
@@ -48,9 +48,9 @@ char	**argv;
 		return	1;
 		}
 	fb_sz = fb_getwidth(fbp);
-	white.red = white.green = white.blue = 255;
-	black.red = black.green = black.blue = 0;
-	red.red = 255;
+	white[RED] = white[GRN] = white[BLU] = 255;
+	black[RED] = black[GRN] = black[BLU] = 0;
+	red[RED] = 255;
 	middle = fb_sz/2;
 	fb_ioinit(fbp);
 	if( fb_sz <= 512 )
@@ -62,15 +62,15 @@ char	**argv;
 		for( x = 0; x < fb_sz; x++ )
 			{
 			if( x == y || x == fb_sz - y )
-				(void) fb_wpixel( fbp, &white );
+				(void) fb_wpixel( fbp, white );
 			else
 			if( x == middle || y == middle )
-				(void) fb_wpixel( fbp, &red );
+				(void) fb_wpixel( fbp, red );
 			else
 			if( (x & mask) && (y & mask) )
-				(void) fb_wpixel( fbp, &black );
+				(void) fb_wpixel( fbp, black );
 			else
-				(void) fb_wpixel( fbp, &white );
+				(void) fb_wpixel( fbp, white );
 			}
 		}
 	fb_close( fbp );
