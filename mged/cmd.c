@@ -55,7 +55,7 @@ static void	f_help(), f_fhelp(), f_param(), f_comm();
 void	mged_cmd();
 void	f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj(), f_hideline();
-void	f_debug(), f_regdebug(), f_debuglib();
+void	f_debug(), f_regdebug(), f_debuglib(), f_debugmem();
 void	f_name(), f_copy(), f_instance();
 void	f_copy_inv(), f_killall(), f_killtree();
 void	f_region(), f_itemair(), f_mater(), f_kill(), f_list(), f_cat();
@@ -126,6 +126,8 @@ static struct funtab {
 	f_delobj,2,MAXARGS,
 "debuglib", "[hex_code]", "Show/set debugging bit vector for librt",
 	f_debuglib,1,2,
+"debugmem", "", "Print librt memory use map",
+	f_debugmem, 1, 1,
 "dup", "file [prefix]", "check for dup names in 'file'",
 	f_dup, 1, 27,
 "E", "<objects>", "evaluated edit of objects",

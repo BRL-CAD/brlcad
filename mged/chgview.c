@@ -329,6 +329,14 @@ char	**argv;
 }
 
 void
+f_debugmem( argc, argv )
+int	argc;
+char	**argv;
+{
+	rt_prmem("Invoked via MGED command");
+}
+
+void
 do_list( dp, verbose )
 register struct directory *dp;
 int	verbose;
