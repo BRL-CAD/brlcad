@@ -151,11 +151,8 @@ Makedir()
 			}
 			else
 			{
-				int j;
-
 				dir[entcount]->rot = (mat_t *)rt_malloc( sizeof( mat_t ) , "Makedir:matrix" );
 				Readmatrix( dir[entcount]->param , *dir[entcount]->rot );
-
 			}
 		}
 		else /* set to NULL */

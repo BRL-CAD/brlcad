@@ -87,12 +87,11 @@ Convinst()
 		if( att_de )
 		{
 			/* This is actually a region or a group with just one member */
-			struct wmember head;
-			struct wmember *wmem;
 			unsigned char *rgb;
+			struct wmember head;
 
 			RT_LIST_INIT( &head.l );
-			wmem = mk_addmember( dir[pointer]->name , &head , WMOP_INTERSECT );
+			(void)mk_addmember( dir[pointer]->name , &head , WMOP_INTERSECT );
 
 			/* Make the object */
 			if( dir[i]->colorp != 0 )

@@ -39,7 +39,7 @@ int entityno;
 	int	prop4;	/* !0 if periodic in first direction */
 	int	prop5;	/* !0 if periodic in second direction */
 	int	sol_num; /* IGES solid type number */
-	int	n1, n2, a, b, c;
+	int	n1, n2;
 	int	i, j;
 	int	count=0;
 	fastf_t	min_knot;
@@ -69,9 +69,6 @@ int entityno;
 
 	n1 = k1 - m1 + 1;
 	n2 = k2 - m2 + 1;
-	a = n1 + 2 * m1;
-	b = n2 + 2 * m2;
-	c = (k1 + 1)*(k2 + 1);
 
 	/*  spl_new: Creates a spline surface data structure
 	 *	u_order		(e.g. cubic = order 4)
@@ -147,28 +144,6 @@ int entityno;
 			count++;
 		}
 	}
-
-#if 0
-	/* normalize */
-	if( max_wt > 1.0 )
-	{
-		count = 0;
-		for( i=0 ; i<=k2 ; i++ )
-		{
-			for( j=0 ; j<=k1 ; j++ )
-			{
-				int k;
-
-				if( b_patch->ctl_points[ count*4 + 3 ] == max_wt )
-				{
-					for( k=0 ; k<4 ; k++ )
-						b_patch->ctl_points[ count*4 + k ] = b_patch->ctl_points[ count*4 + k ]/max_wt;
-				}
-				count++;
-			}
-		}
-	}
-#endif
 
 	/* Output the the b_spline through the libwdb interface */
 	mk_bsurf(fdout, b_patch);

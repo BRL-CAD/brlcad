@@ -51,8 +51,6 @@ int entityno;
 	int		num_of_voids;		/* Number of inner void shells */
 	struct model	*m;			/* NMG model */
 	struct nmgregion *r;			/* NMG region */
-	struct shell	*s;			/* NMG shell */
-	struct faceuse	*fu;			/* NMG faceuse */
 	struct shell	**void_shells;		/* List of void shells */
 	struct shell	*s_outer;		/* Outer shell */
 	struct iges_vertex_list *v_list;

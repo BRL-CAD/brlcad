@@ -33,7 +33,6 @@ Get_edge_list( edge )
 struct iges_edge_use *edge;
 {
 	struct iges_edge_list *e_list;
-	struct iges_edge_list *tmp_list;
 
 	if( edge_root == NULL )
 	{

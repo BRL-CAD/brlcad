@@ -25,7 +25,7 @@
 
 struct node *Readtree()
 {
-	int length,i,op,prop_de,att_de;
+	int length,i,op;
 	struct node *ptr,*Pop();
 
 	Readint( &i , "" );

@@ -60,7 +60,7 @@ struct trclist
 revolve( entityno )
 int entityno;
 { 
-
+	struct wmember	head;			/* For region */
 	char		*trcform="rev.%d.%d";	/* Format for creating TRC names */
 	int		sol_num;		/* IGES solid type number */
 	point_t		pt;			/* Point on axis of revolution */
@@ -74,19 +74,13 @@ int entityno;
 	int		ntrcs;			/* number of "TRC" solids used */
 	vect_t		tmp;			/* temporary storage for a vector */
 	struct trclist	*trcs,*trcptr,*ptr2;	/* Pointers to linked list of TRC`s */
-	fastf_t		r1,r2;			/* TRC radius */
-	point_t		base,top;		/* To protect stuff from "mk_trc" */
-	struct reglist	*regptr;		/* Store region for later reference */
-	struct node	*nodeptr,*tmpnode,*tree; /* Pointer to tree structure under regptr */
-	int		oldarraylen;		/* number of elements in "dir" array before realloc */
+	fastf_t		r2;			/* TRC radius */
 	fastf_t		hmax,hmin;		/* Max and Min distances along axis of rotation */
 	fastf_t		rmax;			/* Max radius */
 	int		cutop = Intersect;	/* Operator for cutting solid */
 	char		cutname[NAMELEN];	/* Name for cutting solid */
 	struct subtracts *subp;
-	char		*ch;
 	int		i;
-	struct wmember head,*wmem;
 
 	RT_LIST_INIT( &head.l );
 
@@ -421,19 +415,19 @@ int entityno;
 		/* Union together all the TRC's that are not subtracts */
 		if( trcptr->op != 1 )
 		{
-			wmem = mk_addmember( trcptr->name , &head, operator[Union] );
+			(void)mk_addmember( trcptr->name , &head, operator[Union] );
 
 			if( fract < 1.0 )
 			{
 				/* include cutting solid */
-				wmem = mk_addmember( cutname , &head, operator[cutop] );
+				(void)mk_addmember( cutname , &head, operator[cutop] );
 			}
 
 			subp = trcptr->subtr;
 			/* Subtract the inside TRC's */
 			while( subp != NULL )
 			{
-				wmem = mk_addmember( subp->name , &head, operator[Subtract] );
+				(void)mk_addmember( subp->name , &head, operator[Subtract] );
 				subp = subp->next;
 			}
 		}

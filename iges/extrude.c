@@ -92,10 +92,8 @@ int entityno;
 	{
 		case 100:	/* circular arc */
 			return( Extrudcirc( entityno , curve , evect ) );
-			break;
 		case 104:	/* conic arc */
 			return( Extrudcon( entityno , curve , evect ) );
-			break;
 		case 102:	/* composite curve */
 		case 106:	/* copius data */
 		case 112:	/* parametric spline */
@@ -236,7 +234,6 @@ int entityno;
 					done = 1;
 			}
 			return( 1 );
-			break;
 		}
 		default:
 			i = (-1);

@@ -113,7 +113,6 @@ int skip;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			name_de=0;
-	char			*name;
 
 	if( dir[entityno]->param <= pstart )
 	{
@@ -271,7 +270,6 @@ int entityno;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			name_de=0;
-	char			*name;
 
 	if( dir[entityno]->param <= pstart )
 	{
@@ -356,7 +354,6 @@ int entityno;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			name_de=0;
-	char			*name;
 
 	if( dir[entityno]->param <= pstart )
 	{

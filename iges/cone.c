@@ -29,14 +29,8 @@ int entityno;
 { 
 	fastf_t		rad1=0.0;
 	fastf_t		rad2;
-	fastf_t		*inp, *outp;
 	point_t		base;		/* center point of base */
-	vect_t		height;
 	vect_t		hdir;		/* direction in which to grow height */
-	vect_t		a, avec;	/* one base radius vector */
-	vect_t		b, bvec;	/* another base radius vector */
-	vect_t		c, cvec;	/* one nose radius vector */
-	vect_t		d, dvec;	/* another nose radius vector */
 	fastf_t		scale_height=0.0;
 	fastf_t		x1;
 	fastf_t		y1;

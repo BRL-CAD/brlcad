@@ -49,7 +49,6 @@ Find_inner_loops( fu , lptr )
 struct faceuse *fu;
 struct loop_list *lptr;
 {
-	struct loop_list *lptr1;
 	struct loop_list *inner;
 	struct loopuse *lu;
 

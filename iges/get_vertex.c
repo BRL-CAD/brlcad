@@ -35,7 +35,6 @@ struct iges_edge_use *edge;
 {
 	struct iges_edge_list		*e_list;
 	struct iges_vertex_list		*v_list;
-	struct vertex			*vt;
 	int				edge_index;
 	int				vert_index;
 	int				vert_de;

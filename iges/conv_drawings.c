@@ -37,7 +37,6 @@ struct views_visible
 	int *view_de;
 };
 
-static struct nmg_ptbl view_vis_list;
 static char *default_drawing_name="iges_drawing";
 
 void
@@ -139,7 +138,6 @@ struct rt_list *vhead;
 		fastf_t rot_ang=0.0;
 		int mirror=0;
 		int internal_rot=0;
-		fastf_t x=0.0,y=0.0,z=0.0;
 		double scale;
 		char one_char[2];
 		point_t loc,tmp;
@@ -229,7 +227,7 @@ int entno;
 	}
 }
 
-int
+void
 Curve_to_vlist( vhead , ptlist )
 struct rt_list *vhead;
 struct ptlist *ptlist;
@@ -237,10 +235,10 @@ struct ptlist *ptlist;
 	struct ptlist *ptr;
 
 	if( ptlist == NULL )
-		return( 0 );
+		return;
 
 	if( ptlist->next == NULL )
-		return( 0 );
+		return;
 
 	ptr = ptlist;
 
@@ -261,7 +259,6 @@ struct rt_list *vhead;
 {
 	int entity_type;
 	int npts,i;
-	int nsegs;
 	point_t tmp,tmp2,tmp3,center;
 	vect_t v1,v2,v3;
 	fastf_t a,b,c;
@@ -748,13 +745,11 @@ struct nmg_ptbl *view_vis_list;
 			s = RT_LIST_FIRST( shell , &r->s_hd );
 			if( RT_LIST_NOT_HEAD( &s->l , &r->s_hd ) )
 			{
-				struct wmember *wm;
-
 				if( RT_LIST_NON_EMPTY( &s->eu_hd ) )
 				{
 					nmg_rebound( m , &tol );
 					mk_nmg( fdout , dir[view_entno[i]]->name , m );
-					wm = mk_addmember( dir[view_entno[i]]->name , &headp , WMOP_UNION );
+					(void)mk_addmember( dir[view_entno[i]]->name , &headp , WMOP_UNION );
 				}
 			}
 		}
@@ -861,13 +856,11 @@ Conv_drawings()
 					s = RT_LIST_FIRST( shell , &r->s_hd );
 					if( RT_LIST_NOT_HEAD( &s->l , &r->s_hd ) )
 					{
-						struct wmember *wm;
-
 						if( RT_LIST_NON_EMPTY( &s->eu_hd ) )
 						{
 							nmg_rebound( m , &tol );
 							mk_nmg( fdout , dir[i]->name , m );
-							wm = mk_addmember( dir[i]->name , &headp , WMOP_UNION );
+							(void)mk_addmember( dir[i]->name , &headp , WMOP_UNION );
 						}
 					}
 				}

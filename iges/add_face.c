@@ -51,7 +51,6 @@ int face_orient;
 	int		loop;
 	int		planar=0;
 	struct faceuse	*fu;			/* NMG face use */
-	struct loopuse	*lu;			/* NMG loop use */
 
 	/* Acquiring Data */
 

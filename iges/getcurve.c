@@ -101,7 +101,6 @@ struct ptlist **curv_pts;
 		case 100:	/* circular arc */
 		{
 			point_t center,start,stop,tmp;
-			vect_t r;
 			fastf_t common_z,ang1,ang2,delta;
 			double cosdel,sindel,rx,ry;
 
@@ -134,8 +133,6 @@ struct ptlist **curv_pts;
 			Readcnv( &stop[X] , "" );
 			Readcnv( &stop[Y] , "" );
 			stop[Z] = common_z;
-
-			VSUB2( r , start , center );
 
 			ang1 = atan2( start[Y] - center[Y] , start[X] - center[X] );
 			ang2 = atan2( stop[Y] - center[Y] , stop[X] - center[X] );

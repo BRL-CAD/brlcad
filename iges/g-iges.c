@@ -81,16 +81,12 @@ static char usage[] = "Usage: %s [-f|t] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel
 	The f and t options are mutually exclusive. If neither is specified,\n\
 	the default output is a CSG file to the maximum extent possible\n";
 
+int		verbose=0;
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int	verbose=0;
 static int	scale_error=0;	/* Count indicating how many scaled objects were encountered */
 static int	solid_error=0;	/* Count indicating how many solids were not converted */
 static int	comb_error=0;	/* Count indicating  how many combinations were not converted */
 static int	ncpu = 1;	/* Number of processors */
-static int	dir_seq=0;	/* IGES file directory section sequence number */
-static int	param_seq=0;	/* IGES file parameter section sequence number */
-static int	vert_de;	/* IGES file directory entry for the vertex list */
-static int	edge_de;	/* IGES file directory entry for the edge list */
 static char	*output_file = NULL;	/* output filename */
 static FILE	*fp_dir;	/* IGES start, global, and directory sections */
 static FILE	*fp_param;	/* IGES parameter section */
@@ -590,7 +586,6 @@ struct directory *dp;
 {
 	struct rt_external	ep;
 	struct rt_db_internal	ip;
-	struct rt_arb_internal	*arb;
 	int			id;
 
 	/* if this solid has already been output, don't do it again */
@@ -629,7 +624,6 @@ struct directory *dp;
 {
 	union record *rp;
 	struct directory *dp_M;
-	struct iges_properties props;
 	int comb_len;
 	int i;
 

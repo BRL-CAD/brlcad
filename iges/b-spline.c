@@ -22,10 +22,11 @@
 
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"		/* for declaration of rt_calloc() */
 
 #undef W		/* from vmath.h */
 
-static fastf_t maxknot,*knots=NULL;
+static fastf_t *knots=(fastf_t *)NULL;
 static int numknots=0;
 
 /* Set the knot values */
@@ -52,7 +53,6 @@ fastf_t values[];	/* knot values */
 	for( i=0 ; i<n ; i++ )
 		knots[i] = values[i];
 
-	maxknot = knots[n-1];
 }
 
 Freeknots()
@@ -66,7 +66,7 @@ Freeknots()
 fastf_t
 Basis( i , k , t )
 fastf_t t;	/* parameter value */
-int i;		/* interval number ( 0 through k )
+int i;		/* interval number ( 0 through k ) */
 int k;		/* degree of basis function */
 {
 	fastf_t denom1,denom2,retval=0.0;

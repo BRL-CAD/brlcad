@@ -34,7 +34,6 @@ Get_vertex_list( vert_de )
 int vert_de;
 {
 	struct iges_vertex_list *v_list;
-	struct iges_vertex_list *tmp_list;
 
 	if( vertex_root == NULL )
 	{

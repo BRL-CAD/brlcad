@@ -59,8 +59,8 @@ static char RCSid[] = "$Header$";
 /* define defaulted entry for directory entry array */
 #define	DEFAULT	(-99999)
 
+extern int	verbose;
 static int	solids_to_nmg=0;/* Count of solids that were converted to nmg's in CSG mode */
-static int	verbose=0;
 static int	dir_seq=0;	/* IGES file directory section sequence number */
 static int	param_seq=0;	/* IGES file parameter section sequence number */
 static int	start_len=0;	/* Length of Start Section */
@@ -74,7 +74,6 @@ static struct rt_tess_tol ttol;	/* tolerances */
 static struct db_i *dbip=NULL;
 static char	*unknown="Unknown";
 static int	unknown_count=0;
-static int	brep_count=0;
 extern char	**independent;
 extern int	no_of_indeps;
 extern int	solid_is_brep;
@@ -235,7 +234,7 @@ struct nmgregion *r;
 
 					NMG_CK_EDGEUSE( eu1 );
 					if( eu1->radial_p == eu1->eumate_p )
-						continue;	/* dangling edge (?warning?) *?
+						continue;	/* dangling edge (?warning?) */
 
 					if( eu1->radial_p->eumate_p->radial_p == eu1->eumate_p )
 						continue;	/* winged edge */
@@ -492,7 +491,6 @@ int entry[];
 {
 	int i,j,type_index;
 	char *label;
-	int subscript;
 
 	for( type_index=0; type_index<NO_OF_TYPES ; type_index++ )
 		if( type_count[type_index][0] == entry[1] )
@@ -1351,7 +1349,6 @@ FILE *fp_dir,*fp_param;
 {
 	struct rt_vls str;
 	int dir_entry[21];
-	int edge_de;
 	int i;
 
 	NMG_CK_REGION( r );
@@ -1371,7 +1368,7 @@ FILE *fp_dir,*fp_param;
 	for( i=0 ; i<NMG_TBL_END( etab ) ; i++ )
 	{
 		struct edge			*e;
-		struct edgeuse			*eu,*eum;
+		struct edgeuse			*eu;
 		struct vertexuse		*vu;
 		struct vertex			*start_v,*end_v;
 		struct vertex_g			*start_vg,*end_vg;
@@ -1672,7 +1669,6 @@ FILE *fp_dir,*fp_param;
 	struct vertex		*v;
 	struct rt_vls		str;
 	struct iges_properties	props;
-	struct nmg_ptbl		**shells;
 	int			*shell_list;
 	int			i;
 	int			shell_count=0;
@@ -1973,9 +1969,8 @@ int
 arb_is_rpp( arb )
 struct rt_arb_internal *arb;
 {
-	vect_t v0,v1,v2,v3;
+	vect_t v0,v1,v2;
 	int i;
-	int is_rpp=1;
 
 	RT_ARB_CK_MAGIC( arb );
 
@@ -2743,7 +2738,7 @@ int
 matrix_is_identity( mat )
 dbfloat_t mat[16];
 {
-	int i,j;
+	int i;
 
 	for( i=0 ; i<ELEMENTS_PER_MAT ; i++ )
 	{
@@ -2769,7 +2764,6 @@ FILE *fp_dir,*fp_param;
 	struct rt_vls		str;
 	int			dir_entry[21];
 	int			i;
-	int			j;
 
 	rt_vls_init( &str );
 
@@ -2911,7 +2905,6 @@ FILE *fp_dir,*fp_param;
 	int			name_de;
 	int			props_de;
 	int			color_de=DEFAULT;
-	int			union_count=0;
 	int			status=1;
 	int			i;
 
