@@ -522,8 +522,8 @@ trouble:
 		return 0;
 
 	/* XXX debug */
-	nmg_pr_eg( &eg1->magic, 0 );
-	nmg_pr_eg( &eg2->magic, 0 );
+	nmg_pr_eg( &eg1->l.magic, 0 );
+	nmg_pr_eg( &eg2->l.magic, 0 );
 	rt_log("nmg_2edgeuse_g_coincident() lines colinear, vertex check fails, calling colinear anyway.\n");
 	return 1;
 }
@@ -558,7 +558,7 @@ CONST struct rt_tol	*tol;
 		NMG_CK_EDGE_G_EITHER(eg1);
 
 		/* XXX Need routine to compare two cnurbs geometricly */
-		if( eg1->magic == NMG_EDGE_G_CNURB_MAGIC )  {
+		if( eg1->l.magic == NMG_EDGE_G_CNURB_MAGIC )  {
 			continue;
 		}
 
@@ -572,7 +572,7 @@ CONST struct rt_tol	*tol;
 
 			eg2 = (struct edge_g_lseg *)NMG_TBL_GET(&etab,j);
 			NMG_CK_EDGE_G_EITHER(eg2);
-			if( eg2->magic == NMG_EDGE_G_CNURB_MAGIC )  continue;
+			if( eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC )  continue;
 			NMG_CK_EDGE_G_LSEG(eg2);
 			eu2 = RT_LIST_MAIN_PTR( edgeuse, RT_LIST_FIRST( rt_list, &eg2->eu_hd2 ), l2 );
 			NMG_CK_EDGEUSE(eu2);
@@ -2312,7 +2312,7 @@ CONST struct rt_tol	*tol;
 	/* Ensure that all edgeuses are using the "best_eg" line */
 	for( RT_LIST_FOR( rad, nmg_radial, &list1 ) )  {
 		if( rad->eu->g.lseg_p != best_eg )  {
-			nmg_use_edge_g( rad->eu, &best_eg->magic );
+			nmg_use_edge_g( rad->eu, &best_eg->l.magic );
 		}
 	}
 

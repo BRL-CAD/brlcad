@@ -2881,8 +2881,8 @@ CONST struct rt_tol	*tol;
 		rt_log("eg2: line/ vu dist=%g, hit dist=%g\n",
 			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, v->vg_p->coord ),
 			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_v->vg_p->coord ) );
-		nmg_pr_eg(&eg1->magic, 0);
-		nmg_pr_eg(&eg2->magic, 0);
+		nmg_pr_eg(&eg1->l.magic, 0);
+		nmg_pr_eg(&eg2->l.magic, 0);
 	}
 
 	if( rt_dist_pt3_pt3(v->vg_p->coord,
@@ -2956,7 +2956,7 @@ CONST struct rt_tol		*tol;
 	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir, v->vg_p->coord ) > tol->dist_sq )  {
 		VPRINT("v", v->vg_p->coord);
 		nmg_pr_eu( eu, (char *)NULL );
-		nmg_pr_eg( &eg1->magic, 0 );
+		nmg_pr_eg( &eg1->l.magic, 0 );
 		rt_bomb("nmg_search_v_eg() eu vertex not on eg line\n");
 	}
 
@@ -3186,8 +3186,8 @@ colinear:
 		    (*eg1)->e_pt, (*eg1)->e_dir,
 		    is->on_eg->e_pt, is->on_eg->e_dir, 1e5, &(is->tol) ) )  {
 fixup:
-			nmg_pr_eg(&(*eg1)->magic, 0);
-			nmg_pr_eg(&is->on_eg->magic, 0);
+			nmg_pr_eg(&(*eg1)->l.magic, 0);
+			nmg_pr_eg(&is->on_eg->l.magic, 0);
 			rt_log("nmg_isect_line2_face2pNEW() eg1 colinear to on_eg?\n");
 #if 0
 		    	/* XXX See if this helps. */
@@ -3309,8 +3309,8 @@ rt_bomb("nmg_isect_line2_face2pNEW()\n");
 			if( hit_v )  {
 				rt_log("NOTICE: geom/topo mis-match, enlisting topo vu, hit_v=x%x\n", hit_v);
 				VPRINT("hit_v", hit_v->vg_p->coord);
-				nmg_pr_eg(&(*eg1)->magic, 0);
-				nmg_pr_eg(&is->on_eg->magic, 0);
+				nmg_pr_eg(&(*eg1)->l.magic, 0);
+				nmg_pr_eg(&is->on_eg->l.magic, 0);
 				rt_log(" dist to eg1=%e, dist to on_eg=%e\n",
 					rt_dist_line3_pt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
 					rt_dist_line3_pt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord) );

@@ -468,7 +468,7 @@ insert:
 	eu1 = original_eu1;
 	for(;;)  {
 		if( eu1->g.lseg_p != best_eg )  {
-			nmg_use_edge_g( eu1, &best_eg->magic );
+			nmg_use_edge_g( eu1, &best_eg->l.magic );
 		}
 
 		eu1 = eu1->eumate_p->radial_p;

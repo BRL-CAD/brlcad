@@ -1818,7 +1818,7 @@ struct edgeuse *eu;
 		m = nmg_find_model(&eu->l.magic);
 		GET_EDGE_G_LSEG(eg_p, m);
 		RT_LIST_INIT( &eg_p->eu_hd2 );
-		eg_p->magic = NMG_EDGE_G_LSEG_MAGIC;
+		eg_p->l.magic = NMG_EDGE_G_LSEG_MAGIC;
 
 		/* copy the point from the vertex of one of our edgeuses */
 		pt = eu->vu_p->v_p->vg_p->coord;
@@ -3057,7 +3057,7 @@ struct edge_g_lseg	*src_eg;
 		}
 
 		/* Associate eu and mate with dest_eg. src_eg freed when unused. */
-		if( nmg_use_edge_g( eu, &dest_eg->magic ) )
+		if( nmg_use_edge_g( eu, &dest_eg->l.magic ) )
 			break;		/* src_eg destroyed */
 	}
 }

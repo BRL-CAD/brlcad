@@ -1927,7 +1927,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				{
 					struct edge_g_lseg	*eg;
 					GET_EDGE_G_LSEG( eg, m );
-					eg->magic = NMG_EDGE_G_LSEG_MAGIC;
+					eg->l.magic = NMG_EDGE_G_LSEG_MAGIC;
 					RT_LIST_INIT( &eg->eu_hd2 );
 					ptrs[subscript] = (long *)eg;
 				}
