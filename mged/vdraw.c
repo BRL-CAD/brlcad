@@ -14,6 +14,7 @@ EDITING COMMANDS - no return value
 
 vdraw	write	i	c x y z	- write params into i-th vector
 		next	c x y z	- write params to end of vector list
+		rpp	x y z x y z - write RPP outline at end of vector list
 
 vdraw	insert	i	c x y z	- insert params in front of i-th vector
 
@@ -39,12 +40,13 @@ vdraw	send			- send the current vlist to the display
 
 CURVE COMMANDS
 vdraw	vlist	list		- return list of all existing vlists
-		delete	name	- delete the named vlist
+vdraw	vlist	delete	name	- delete the named vlist
 
 All textual arguments can be replaced by their first letter.
 (e.g. "vdraw d a" instead of "vdraw delete all"
 
 In the above listing:
+
 "i" refers to an integer 
 "c" is an integer representing one of the following rt_vlist commands:
 	 RT_VLIST_LINE_MOVE	0	/ begin new line /
@@ -208,6 +210,25 @@ char **argv;
 			}
 			cp = vp;
 			index = vp->nused;
+		} else if (argv[2][0] == 'r') { /* rpp_append */
+			point_t	minn, maxx;
+			if( argc == 5 )  {
+				/* vdraw write rpp {1 2 3} {4 5 6} */
+				bn_decode_vect( minn, argv[3] );
+				bn_decode_vect( maxx, argv[4] );
+			} else if( argc == 9 )  {
+				VSET( minn, atof(argv[3]), atof(argv[4]), atof(argv[5]) );
+				VSET( maxx, atof(argv[6]), atof(argv[7]), atof(argv[8]) );
+			} else {
+				Tcl_AppendResult(interp,
+					 "vdraw write rpp: wrong # args, 'vdraw write rpp min max'\n",
+					(char *)NULL);
+				return TCL_ERROR;
+			}
+
+			/* Draw outline of the RPP */
+			bn_vlist_rpp( &(curhead->vhd), minn, maxx );
+			return TCL_OK;
 		} else if (sscanf(argv[2], "%d", &uind)<1) {
 			Tcl_AppendResult(interp, "vdraw: write index not an integer\n", (char *)NULL);
 			return TCL_ERROR;
@@ -487,7 +508,7 @@ char **argv;
 			Tcl_AppendResult(interp, "-1", (char *)NULL);
 			return TCL_OK;
 		}
-		{
+		if( !dbip->dbi_read_only ) {
 		  char *av[4];
 
 		  av[0] = "kill";
