@@ -19,7 +19,7 @@ initializeVariable TESTS_DIR "${REGRESS_DIR}/brlcad/regress/tests.d"
 if [ -d $TESTS_DIR ] ; then
     log "Running tests found in $TESTS_DIR"
 
-    SCRIPTS=`ls -B $TESTS_DIR`
+    SCRIPTS=`ls -A $TESTS_DIR`
     for SCRIPT in $SCRIPTS ; do
 	if [ -f ${TESTS_DIR}/$SCRIPT ] && [ -x ${TESTS_DIR}/$SCRIPT ] ; then
 		log "Running [${TESTS_DIR}/$SCRIPT] test" 
