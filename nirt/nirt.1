@@ -5,11 +5,9 @@
 .\"
 .TH NIRT 1
 .SH NAME
-nirt \- interactively ray trace an MGED model
+nirt \- interactively ray trace a BRL-CAD geometric model
 .SH SYNOPSIS
-.BR "nirt  [ -M ] [-sv] [-b] [-f sfile] [ -u " n " ]
-.br
-.BR "      [ -x " v " ] [ -X " v " ] " "model.g objects ..."
+.BR "nirt  [" " options " "] " "model.g objects ..."
 .SH DESCRIPTION
 .I Nirt
 operates on the specified
@@ -31,9 +29,10 @@ Similarly, direction may be input and output either as
 vectors expressed in model coordinates or as
 angles of azimuth and elevation.
 
-The
+.SS Options
+.TP
 .B -M
-option causes
+causes
 .I nirt
 to read the eye point and
 either the orientation quaternion (new format)
@@ -46,9 +45,9 @@ to be called directly from within
 using the
 .BR nirt " and " rrt
 commands.
-The
+.TP
 .B -b
-option causes
+causes
 .I nirt
 to perform a
 .B backout
@@ -58,48 +57,64 @@ command (see the description of these two commands below).
 This is probably only useful with the
 .B -M
 option.
-If the
-.BI -f " sfile"
-option is specified,
+.TP
+.BI -e " script"
+causes
 .I nirt
-runs the script
+to run the
+.I script
+string before reading the standard input.
+Multiple commands in
+.I script
+may be separated with a semicolon ';'.
+This option overrides any
+.BR -e " or " -f
+options earlier on the command line.
+.TP
+.BI -f " sfile"
+causes
+.I nirt
+to run the script file
 .I sfile
 before reading the standard input.
-Given the
+This option overrides any
+.BR -e " or " -f
+options earlier on the command line.
+.TP
 .B -s
-option,
+causes
 .I nirt
-runs in short (that is, non-verbose) mode.
+to run in short (that is, non-verbose) mode.
 In this mode,
 which is useful in a pipeline,
 .I nirt
 does not print its initial lines of output or the prompt.
-The
+.TP
 .B -v
-option, on the other hand, causes
+causes
 .I nirt
 to run in verbose mode.
 The default is verbose mode,
 except if standard input has been redirected,
 in which case the default is short mode.
-The
+.TP
 .BI -u " n"
-option sets the \fIuseair\fR member
+sets the \fIuseair\fR member
 of the \fIrt_i\fR structure to \fIn\fR.
 See the discussion of the
 .I useair
 command below.
-The
+.TP
 .BI -x " v"
-option sets the
+sets the
 .IR librt (3)
 debug flags to the hexadecimal bit vector \fIv\fR.
 See the discussion of the
 .I libdebug
 command below.
-The
+.TP
 .BI -X " v"
-option sets the
+sets
 .IR nirt "'s"
 own debug flags to the hexadecimal bit vector \fIv\fR.
 
