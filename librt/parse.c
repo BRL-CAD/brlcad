@@ -111,7 +111,8 @@ char				*value;		/* string containing value */
 	register char *loc;
 
 	for( ; spp->sp_name != (char *)0; spp++ )  {
-		if( strcmp( spp->sp_name, name ) != 0 )
+		if( strcmp( spp->sp_name, name ) != 0
+		    && spp->sp_fmt[0] != 'i' )
 			continue;
 
 		loc = (char *)(base + ((int)spp->sp_offset));
