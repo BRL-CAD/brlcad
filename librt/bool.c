@@ -133,22 +133,34 @@ struct partition *FinalHdp;	/* Heads final circ list */
 		for( pp=PartHd.pt_forw; pp != &PartHd; pp=pp->pt_forw ) {
 			register int i;		/* XXX */
 
-			if( lasthit->hit_dist >= pp->pt_outdist )  {
+			if( (i=fdiff(lasthit->hit_dist, pp->pt_outdist)) > 0 )  {
 				/* Seg starts beyond the END of the
 				 * current partition.
 				 *	PPPP
 				 *	        SSSS
-				 *
-				 * Or, Seg starts almost "precisely" at the
+				 * Advance to next partition.
+				 */
+				continue;
+			}
+			if( i == 0 )  {
+				/*
+				 * Seg starts almost "precisely" at the
 				 * end of the current partition.
 				 *	PPPP
 				 *	    SSSS
-				 * Advance to next partition.
+				 * Force an exact match of the endpoints,
+				 * advance to next partition.
+				 * Do NOT change lastseg or lastflip!
 				 */
-				 continue;
+				lasthit = pp->pt_outhit;
+				continue;
 			}
+			/*
+			 * i < 0,  Seg starts before current partition ends
+			 *	PPPPPPPPPPP
+			 *	  SSSS...
+			 */
 
-			/* Segment starts before current partition ends */
 			if( (i=fdiff(lasthit->hit_dist, pp->pt_indist)) == 0){
 equal_start:
 				/*
@@ -325,7 +337,11 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 		if(debug&DEBUG_PARTITION)
 			fprintf(stderr,"considering partition %.8x\n", pp );
 
-		/* Sanity check of sorting.  Remove later. */
+		/* Sanity checks on sorting.  Remove later. */
+		if( pp->pt_indist >= pp->pt_outdist )  {
+			fprintf(stderr,"bool_regions: thin inverted partition %.8x\n", pp);
+			pr_partitions( &PartHd, "With problem" );
+		}
 		if( pp->pt_forw != &PartHd && pp->pt_outdist > pp->pt_forw->pt_indist )  {
 			auto struct partition FakeHead;
 			auto odebug;
