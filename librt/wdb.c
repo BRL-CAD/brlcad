@@ -174,6 +174,7 @@ wdb_export_external(
 	unsigned char type)
 {
 	struct directory	*dp;
+	struct bu_attribute_value_set		avs;
 
 	RT_CK_WDB(wdbp);
 	BU_CK_EXTERNAL(ep);
@@ -182,6 +183,7 @@ wdb_export_external(
 	if( wdbp->dbip->dbi_version <= 4 )  {
 		db_wrap_v4_external( ep, name );
 	} else if( wdbp->dbip->dbi_version == 5 )  {
+		bu_avs_init( &avs, 1, "avs" );
 		if( db_wrap_v5_external( ep, name ) < 0 )  {
 			bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",
 				name );
@@ -201,11 +203,24 @@ wdb_export_external(
 			return -5;
 		}
 		/* If name already exists, that object will be updated. */
-		if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL &&
-		    (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&type )) == DIR_NULL )  {
-			bu_log("wdb_export_external(%s): db_diradd error\n",
-				name );
-			return -3;
+		dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET );
+		if( dp == DIR_NULL ) {
+			if( wdbp->dbip->dbi_version <= 4 )  {
+				if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
+						   (genptr_t)&type )) == DIR_NULL )  {
+				bu_log("wdb_export_external(%s): db_diradd error\n",
+				       name );
+				return -3;
+				}
+			} else {
+				if( (dp = db_diradd5( wdbp->dbip, name, -1L,
+						    DB5_MAJORTYPE_BRLCAD, type, 0, 0,
+						    &avs )) == DIR_NULL )  {
+				bu_log("wdb_export_external(%s): db_diradd error\n",
+				       name );
+				return -3;
+				}
+			}
 		}
 		dp->d_flags = (dp->d_flags & ~7) | flags;
 		if( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
@@ -221,10 +236,20 @@ wdb_export_external(
 			return -5;
 		}
 		/* If name already exists, new non-conflicting name will be generated */
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&type )) == DIR_NULL )  {
-			bu_log("wdb_export_external(%s): db_diradd error\n",
-				name );
-			return -3;
+		if( wdbp->dbip->dbi_version <= 4 )  {
+			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
+					    (genptr_t)&type )) == DIR_NULL )  {
+				bu_log("wdb_export_external(%s): db_diradd error\n",
+				       name );
+				return -3;
+			}
+		} else {
+			if( (dp = db_diradd5( wdbp->dbip, name, -1L, DB5_MAJORTYPE_BRLCAD,
+					      type, 0, 0, &avs )) == DIR_NULL )  {
+				bu_log("wdb_export_external(%s): db_diradd error\n",
+				       name );
+				return -3;
+			}
 		}
 		if( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
 			bu_log("wdb_export_external(%s): db_put_external error\n",
@@ -239,10 +264,20 @@ wdb_export_external(
 				name );
 			return -3;
 		}
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&type )) == DIR_NULL )  {
-			bu_log("wdb_export_external(%s): db_diradd error\n",
-				name );
-			return -3;
+		if( wdbp->dbip->dbi_version <= 4 )  {
+			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
+					(genptr_t)&type )) == DIR_NULL )  {
+				bu_log("wdb_export_external(%s): db_diradd error\n",
+				       name );
+				return -3;
+			}
+		} else {
+			if( (dp = db_diradd5( wdbp->dbip, name, -1L, DB5_MAJORTYPE_BRLCAD,
+					      type, 0, 0, &avs )) == DIR_NULL )  {
+				bu_log("wdb_export_external(%s): db_diradd error\n",
+				       name );
+				return -3;
+			}
 		}
 
 		db_inmem( dp, ep, flags );
@@ -251,11 +286,23 @@ wdb_export_external(
 
 	case RT_WDB_TYPE_DB_INMEM:
 		if( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
-			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&type )) == DIR_NULL )  {
-				bu_log("wdb_export_external(%s): db_diradd error\n",
-					name );
-				bu_free_external( ep );
-				return -3;
+			if( wdbp->dbip->dbi_version <= 4 )  {
+				if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags,
+						(genptr_t)&type )) == DIR_NULL )  {
+					bu_log("wdb_export_external(%s): db_diradd error\n",
+					       name );
+					bu_free_external( ep );
+					return -3;
+				}
+			} else {
+				if( (dp = db_diradd5( wdbp->dbip, name, -1L,
+						      DB5_MAJORTYPE_BRLCAD, type, 0, 0,
+						      &avs )) == DIR_NULL )  {
+					bu_log("wdb_export_external(%s): db_diradd error\n",
+					       name );
+					bu_free_external( ep );
+					return -3;
+				}
 			}
 		} else {
 			dp->d_flags = (dp->d_flags & ~7) | flags;
@@ -264,7 +311,12 @@ wdb_export_external(
 		db_inmem( dp, ep, flags );
 		/* ep->buf has been stolen, replaced with null. */
 		break;
+		}
+
+	if( wdbp->dbip->dbi_version > 4 )  {
+		bu_avs_free( &avs );
 	}
+
 	return 0;
 }
 
