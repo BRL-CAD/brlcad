@@ -92,6 +92,10 @@ fastf_t	norms[][3];
 /*
  *			M K _ F P O L Y
  *
+ *  "Fast" version -- will construct surface normal from vertices.
+ *  Vertices must be listed in counter-clockwise (CCW) order,
+ *  to generate a proper outward-pointing normal.
+ *
  *  Must follow a call to mk_polysolid(), mk_poly(), or mk_fpoly().
  */
 int
