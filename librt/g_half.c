@@ -57,14 +57,16 @@ struct half_specific  {
  *  			H L F _ P R E P
  */
 int
-hlf_prep( vec, stp, mat, rtip )
-fastf_t		*vec;
+hlf_prep( stp, rec, rtip )
 struct soltab	*stp;
-matp_t		mat;
+union record	*rec;
 struct rt_i	*rtip;
 {
 	register struct half_specific *halfp;
 	FAST fastf_t f;
+	fastf_t	vec[3*2];
+
+	rt_fastf_float( vec, rec->s.s_values, 2 );	/* 2 floats too many */
 
 	/*
 	 * Process a HALFSPACE, which is represented as a 
@@ -73,7 +75,7 @@ struct rt_i	*rtip;
 	GETSTRUCT( halfp, half_specific );
 	stp->st_specific = (int *)halfp;
 
-	VMOVE( halfp->half_N, &vec[0] );
+	MAT4X3VEC( halfp->half_N, stp->st_pathmat, &vec[0] );
 	f = MAGSQ( halfp->half_N );
 	if( f < 0.001 )  {
 		rt_log("half(%s):  bad normal\n", stp->st_name );

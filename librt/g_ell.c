@@ -137,10 +137,9 @@ struct ell_specific {
  *  	stp->st_specific for use by ell_shot().
  */
 int
-ell_prep( vec, stp, mat, rtip )
-register fastf_t	*vec;
+ell_prep( stp, rec, rtip )
 struct soltab		*stp;
-matp_t			mat;
+union record		*rec;
 struct rt_i		*rtip;
 {
 	register struct ell_specific *ell;
@@ -153,14 +152,17 @@ struct rt_i		*rtip;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
+	fastf_t		vec[3*4];
 
 	/*
 	 *  For a fast way out, hand this solid off to the SPH routine.
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is an ELL.
 	 */
-	if( sph_prep( vec, stp, mat, rtip ) == 0 )
+	if( sph_prep( stp, rec, rtip ) == 0 )
 		return(0);		/* OK */
+
+	rt_fastf_float( (fastf_t *)vec, rec->s.s_values, 4 );
 
 #define ELL_V	&vec[0*ELEMENTS_PER_VECT]
 #define ELL_A	&vec[1*ELEMENTS_PER_VECT]
@@ -170,9 +172,9 @@ struct rt_i		*rtip;
 	/*
 	 * Apply rotation only to A,B,C
 	 */
-	MAT4X3VEC( A, mat, ELL_A );
-	MAT4X3VEC( B, mat, ELL_B );
-	MAT4X3VEC( C, mat, ELL_C );
+	MAT4X3VEC( A, stp->st_pathmat, ELL_A );
+	MAT4X3VEC( B, stp->st_pathmat, ELL_B );
+	MAT4X3VEC( C, stp->st_pathmat, ELL_C );
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
 	magsq_a = MAGSQ( A );
@@ -216,7 +218,7 @@ struct rt_i		*rtip;
 	stp->st_specific = (int *)ell;
 
 	/* Apply full 4x4mat to V */
-	MAT4X3PNT( ell->ell_V, mat, ELL_V );
+	MAT4X3PNT( ell->ell_V, stp->st_pathmat, ELL_V );
 
 	VSET( ell->ell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 	VMOVE( ell->ell_Au, Au );

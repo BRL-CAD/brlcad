@@ -75,17 +75,19 @@ struct sph_specific {
  *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
 int
-sph_prep( vec, stp, mat, rtip )
-register fastf_t	*vec;
+sph_prep( stp, rec, rtip )
 struct soltab		*stp;
-matp_t			mat;
 struct rt_i		*rtip;
+union record		*rec;
 {
 	register struct sph_specific *sph;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
 	LOCAL vect_t	A, B, C;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL fastf_t	f;
+	fastf_t		vec[3*4];
+
+	rt_fastf_float( vec, rec->s.s_values, 4 );
 
 #define ELL_V	&vec[0*ELEMENTS_PER_VECT]
 #define ELL_A	&vec[1*ELEMENTS_PER_VECT]
@@ -95,9 +97,9 @@ struct rt_i		*rtip;
 	/*
 	 * Apply rotation only to A,B,C
 	 */
-	MAT4X3VEC( A, mat, ELL_A );
-	MAT4X3VEC( B, mat, ELL_B );
-	MAT4X3VEC( C, mat, ELL_C );
+	MAT4X3VEC( A, stp->st_pathmat, ELL_A );
+	MAT4X3VEC( B, stp->st_pathmat, ELL_B );
+	MAT4X3VEC( C, stp->st_pathmat, ELL_C );
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
 	magsq_a = MAGSQ( A );
@@ -154,7 +156,7 @@ struct rt_i		*rtip;
 	stp->st_specific = (int *)sph;
 
 	/* Apply full 4x4mat to V */
-	MAT4X3PNT( sph->sph_V, mat, ELL_V );
+	MAT4X3PNT( sph->sph_V, stp->st_pathmat, ELL_V );
 
 	sph->sph_radsq = magsq_a;
 	sph->sph_rad = sqrt(sph->sph_radsq);

@@ -156,10 +156,9 @@ struct tor_specific {
  *  	stp->st_specific for use by tor_shot().
  */
 int
-tor_prep( vec, stp, mat, rtip )
-register fastf_t	*vec;
+tor_prep( stp, rec, rtip )
 struct soltab		*stp;
-matp_t			mat;
+union record		*rec;
 struct rt_i		*rtip;
 {
 	register struct tor_specific *tor;
@@ -170,6 +169,9 @@ struct rt_i		*rtip;
 	FAST fastf_t	f;
 	LOCAL fastf_t	r1, r2;	/* primary and secondary radius */
 	LOCAL fastf_t	mag_b;
+	fastf_t		vec[3*4];
+
+	rt_fastf_float( vec, rec->s.s_values, 4 );
 
 #define TOR_V	&vec[0*ELEMENTS_PER_VECT]
 #define TOR_H	&vec[1*ELEMENTS_PER_VECT]
@@ -179,9 +181,9 @@ struct rt_i		*rtip;
 	/*
 	 * Apply 3x3 rotation mat only to A,B,H
 	 */
-	MAT4X3VEC( A, mat, TOR_A );
-	MAT4X3VEC( B, mat, TOR_B );
-	MAT4X3VEC( Hv, mat, TOR_H );
+	MAT4X3VEC( A, stp->st_pathmat, TOR_A );
+	MAT4X3VEC( B, stp->st_pathmat, TOR_B );
+	MAT4X3VEC( Hv, stp->st_pathmat, TOR_H );
 
 	magsq_a = MAGSQ( A );
 	magsq_b = MAGSQ( B );
@@ -241,7 +243,7 @@ struct rt_i		*rtip;
 	tor->tor_r1 = r1;
 	tor->tor_r2 = r2;
 
-	MAT4X3PNT( tor->tor_V, mat, TOR_V );
+	MAT4X3PNT( tor->tor_V, stp->st_pathmat, TOR_V );
 	tor->tor_alpha = r2/tor->tor_r1;
 
 	/* Compute R and invR matrices */

@@ -112,13 +112,10 @@ matp_t		mat;
  *  database records to obtain all the necessary information.
  */
 int
-ars_prep( vecxx, stp, mat, rp, rtip, dp )
-fastf_t		*vecxx;
+ars_prep( stp, rp, rtip )
 struct soltab	*stp;
-matp_t		mat;
 union record	*rp;
 struct rt_i	*rtip;
-struct directory *dp;
 {
 	LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
 	register int	i, j;
@@ -130,7 +127,7 @@ struct directory *dp;
 	ncurves = rp[0].a.a_m;
 	pts_per_curve = rp[0].a.a_n;
 
-	curves = ars_readin( rp, mat );
+	curves = ars_readin( rp, stp->st_pathmat );
 
 	/*
 	 * Compute bounding sphere.

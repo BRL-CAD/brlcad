@@ -48,20 +48,17 @@ HIDDEN int pgface();
  *  
  */
 int
-pg_prep( vecxx, stp, mat, rp, rtip, dp )
-fastf_t		*vecxx;
+pg_prep( stp, rp, rtip )
 struct soltab	*stp;
-matp_t		mat;
 union record	*rp;
 struct rt_i	*rtip;
-struct directory *dp;
 {
 	LOCAL vect_t	work[3];
 	LOCAL vect_t	norm;
 	register int	i, j;
 
 	/* rp[0] has ID_P_HEAD record */
-	for( j = 1; j < dp->d_len; j++ )  {
+	for( j = 1; j < stp->st_dp->d_len; j++ )  {
 		if( rp[j].u_id != ID_P_DATA )  {
 			rt_log("pg_prep(%s):  bad record 0%o\n",
 				stp->st_name, rp[j].u_id );
@@ -73,17 +70,17 @@ struct directory *dp;
 			return(-1);		/* BAD */
 		}
 		/* Import dbfloat_t normal */
-		MAT4X3PNT( norm, mat, rp[j].q.q_norms[0] );
+		MAT4X3PNT( norm, stp->st_pathmat, rp[j].q.q_norms[0] );
 		VUNITIZE( norm );
 		/* Should worry about importing dbfloat_t here */
-		MAT4X3PNT( work[0], mat, rp[j].q.q_verts[0] );
+		MAT4X3PNT( work[0], stp->st_pathmat, rp[j].q.q_verts[0] );
 		VMINMAX( stp->st_min, stp->st_max, work[0] );
 		/* Should worry about importing dbfloat_t here */
-		MAT4X3PNT( work[1], mat, rp[j].q.q_verts[1] );
+		MAT4X3PNT( work[1], stp->st_pathmat, rp[j].q.q_verts[1] );
 		VMINMAX( stp->st_min, stp->st_max, work[1] );
 		for( i=2; i < rp[j].q.q_count; i++ )  {
 			/* Should worry about importing dbfloat_t here */
-			MAT4X3PNT( work[2], mat, rp[j].q.q_verts[i] );
+			MAT4X3PNT( work[2], stp->st_pathmat, rp[j].q.q_verts[i] );
 			VMINMAX( stp->st_min, stp->st_max, work[2] );
 			/* output a face */
 			(void)pgface( stp, work[0], work[1], work[2], norm );

@@ -172,13 +172,10 @@ matp_t		mat;
  * surface so that the subdivision works.
  */
 int
-spl_prep( vec,  stp,  mat, rp, rtip, dp )
-register fastf_t *vec;
+spl_prep( stp, rp, rtip )
 struct soltab	*stp;
-matp_t		mat;
 union record	*rp;
 struct rt_i	*rtip;
-struct directory *dp;
 {
 	struct b_head  *nlist = (struct b_head *) 0;
 	int		n_srfs;
@@ -192,7 +189,7 @@ struct directory *dp;
 		struct b_spline * new_srf;
 		struct b_spline * s_split;
 
-		if( (new_srf = spl_readin( &rp[currec], mat )) == SPL_NULL )  {
+		if( (new_srf = spl_readin( &rp[currec], stp->st_pathmat )) == SPL_NULL )  {
 			rt_log("spl_prep(%s):  database read error\n",
 				stp->st_name);
 			return( -1 );

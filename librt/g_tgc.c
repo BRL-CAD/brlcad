@@ -79,10 +79,9 @@ struct  tgc_specific {
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
 int
-tgc_prep( vec, stp, mat, rtip )
-register fastf_t	*vec;
+tgc_prep( stp, rec, rtip )
 struct soltab		*stp;
-matp_t			mat;
+union record		*rec;
 struct rt_i		*rtip;
 {
 	register struct tgc_specific *tgc;
@@ -96,14 +95,17 @@ struct rt_i		*rtip;
 	LOCAL vect_t	V, Hv, A, B, C, D;
 	LOCAL vect_t	nH;
 	LOCAL vect_t	work;
+	fastf_t		vec[3*6];
 
 	/*
 	 *  For a fast way out, hand this solid off to the REC routine.
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is a TGC.
 	 */
-	if( rec_prep( vec, stp, mat, rtip ) == 0 )
+	if( rec_prep( stp, rec, rtip ) == 0 )
 		return(0);		/* OK */
+
+	rt_fastf_float( vec, rec->s.s_values, 6 );
 
 #define TGC_V	&vec[0*ELEMENTS_PER_VECT]
 #define TGC_H	&vec[1*ELEMENTS_PER_VECT]
@@ -113,14 +115,14 @@ struct rt_i		*rtip;
 #define TGC_D	&vec[5*ELEMENTS_PER_VECT]
 
 	/* Apply full 4X4mat to V */
-	MAT4X3PNT( V, mat, TGC_V );
+	MAT4X3PNT( V, stp->st_pathmat, TGC_V );
 
 	/* Apply rotation to Hv, A,B,C,D */
-	MAT4X3VEC( Hv, mat, TGC_H );
-	MAT4X3VEC( A, mat, TGC_A );
-	MAT4X3VEC( B, mat, TGC_B );
-	MAT4X3VEC( C, mat, TGC_C );
-	MAT4X3VEC( D, mat, TGC_D );
+	MAT4X3VEC( Hv, stp->st_pathmat, TGC_H );
+	MAT4X3VEC( A, stp->st_pathmat, TGC_A );
+	MAT4X3VEC( B, stp->st_pathmat, TGC_B );
+	MAT4X3VEC( C, stp->st_pathmat, TGC_C );
+	MAT4X3VEC( D, stp->st_pathmat, TGC_D );
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
 	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );

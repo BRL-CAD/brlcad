@@ -243,20 +243,21 @@ next_one: ;
 
 	GETSTRUCT(stp, soltab);
 	stp->st_id = id;
-	if( rec->u_id == ID_SOLID )  {
-		/* Convert from database (float) to fastf_t */
-		rt_fastf_float( (fastf_t *)v, rec->s.s_values, 8 );
-	}
 	stp->st_dp = dp;
 	stp->st_name = dp->d_namep;	/* st_name could be eliminated */
+	mat_copy( stp->st_pathmat, mat );
 	stp->st_specific = (int *)0;
 
 	/* init solid's maxima and minima */
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-	/* "rec" points to array of all relevant records */
-	if( rt_functab[id].ft_prep( v, stp, mat, rec, rtip, dp ) )  {
+	/*
+	 * "rec" points to array of all relevant records, in
+	 *  database format.  xxx_prep() routine is responsible for
+	 *  import/export issues.
+	 */
+	if( rt_functab[id].ft_prep( stp, rec, rtip ) )  {
 		/* Error, solid no good */
 		rt_free( (char *)stp, "struct soltab");
 		return( SOLTAB_NULL );		/* BAD */
@@ -266,8 +267,6 @@ next_one: ;
 	/* For now, just link them all onto the same list */
 	stp->st_forw = rtip->HeadSolid;
 	rtip->HeadSolid = stp;
-
-	mat_copy( stp->st_pathmat, mat );
 
 	/*
 	 * Update the model maxima and minima

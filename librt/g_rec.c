@@ -170,10 +170,9 @@ struct rec_specific {
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
 int
-rec_prep( vec, stp, mat, rtip )
-register fastf_t	*vec;
+rec_prep( stp, rp, rtip )
 struct soltab		*stp;
-matp_t			mat;
+union record		*rp;
 struct rt_i		*rtip;
 {
 	register struct rec_specific *rec;
@@ -186,13 +185,16 @@ struct rt_i		*rtip;
 	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
 	static vect_t	work;
 	static fastf_t	f;
+	fastf_t		vec[3*6];
+
+	rt_fastf_float( vec, rp->s.s_values, 6 );
 
 	/* Apply rotation to Hv, A,B,C,D */
-	MAT4X3VEC( Hv, mat, REC_H );
-	MAT4X3VEC( A, mat, REC_A );
-	MAT4X3VEC( B, mat, REC_B );
-	MAT4X3VEC( C, mat, REC_C );
-	MAT4X3VEC( D, mat, REC_D );
+	MAT4X3VEC( Hv, stp->st_pathmat, REC_H );
+	MAT4X3VEC( A, stp->st_pathmat, REC_A );
+	MAT4X3VEC( B, stp->st_pathmat, REC_B );
+	MAT4X3VEC( C, stp->st_pathmat, REC_C );
+	MAT4X3VEC( D, stp->st_pathmat, REC_D );
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D| */
 	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );
@@ -246,7 +248,7 @@ struct rt_i		*rtip;
 
 	{
 		register fastf_t *p = REC_V;
-		MAT4X3PNT( rec->rec_V, mat, p );
+		MAT4X3PNT( rec->rec_V, stp->st_pathmat, p );
 	}
 	VMOVE( rec->rec_A, REC_A );
 	VMOVE( rec->rec_B, REC_B );
