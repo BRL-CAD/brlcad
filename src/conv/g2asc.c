@@ -204,6 +204,10 @@ main(int argc, char **argv)
 			exit( 1 );
 		}
 
+#ifdef WIN32
+		Tcl_FindExecutable("g2asc");
+#endif
+
 		bu_log("Exporting Release 6 database\n" );
 		bu_log("  Note that the Release 6 binary format is machine independent.\n");
 		bu_log("  Converting to ASCII to move database to a different\n");
