@@ -295,8 +295,8 @@ char			*dp;	/* ptr to the shader-specific struct */
        if(fmod(tt*0.5, 1.0)>0.5)
         ss += 0.5;
       
-       sbrick= ffloor(ss);
-       tbrick= ffloor(tt);
+       sbrick= floor(ss);
+       tbrick= floor(tt);
 
        ss-=sbrick;
        tt-=tbrick;
