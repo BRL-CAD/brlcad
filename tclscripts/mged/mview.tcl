@@ -200,19 +200,19 @@ proc set_default_views { id } {
 
     winset $mged_gui($id,top).ul
     _mged_press reset
-    ae 0 90
+    catch {ae 0 90}
 
     winset $mged_gui($id,top).ur
     _mged_press reset
-    press 35,25
+    catch {press 35,25}
 
     winset $mged_gui($id,top).ll
     _mged_press reset
-    press front
+    catch {press front}
 
     winset $mged_gui($id,top).lr
     _mged_press reset
-    press left
+    catch {press left}
 }
 
 proc setmv { id } {

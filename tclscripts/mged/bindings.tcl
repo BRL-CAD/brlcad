@@ -262,7 +262,11 @@ proc default_mouse_bindings { w } {
     bind $w <KeyRelease-Alt_L> "winset $w; dm idle; break"
     bind $w <KeyRelease-Alt_R> "winset $w; dm idle; break"
 
-    set adcflag [adc draw]
+    if ![catch {adc draw} result] {
+	set adcflag $result
+    } else {
+	set adcflag 0
+    }
 
     if {$adcflag == "1" && $transform == "a"} {
 	bind $w <Shift-ButtonPress-1> "winset $w; dm adc t %x %y; \
