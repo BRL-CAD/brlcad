@@ -5,14 +5,16 @@
 <title>LIBDM's Application Programming Interface</title>
 </HEAD>
 
-<BODY>
-<h1>LIBDM's Application Programming Interface</h1>
+<BODY BGCOLOR="#E0D8c8" Text="#000000">
+<CENTER><h1>LIBDM's Application Programming Interface</h1></CENTER>
 
 <DT><a NAME="open"><I>struct dm *</I> <B>DM_OPEN</B> ( <I>int dtype, int argc, char *argv[]</I> )</a></DT><BR><BR>
 <DD><I>DM_OPEN</I> creates a display manager of type <I>dtype</I> and
      returns a pointer to it's <I>dm</I> structure.
-     <I>argc</I> and <I>argv</I> are passed to <a href="#processOptions">dm_processOptions</a>
-     for interpretation. <I>DM_NULL</I> is returned if the
+     <I>argc</I> and <I>argv</I> are passed to
+     <a href="#processOptions">dm_processOptions</a>
+     for interpretation. <I>DM_NULL</I> is returned if unable to
+     acquire a display manager.
      <DL>
        <DT><big>Example:</big></DT>
        <DD><PRE>
@@ -61,8 +63,8 @@
 <HR>
      
 <DT><a NAME="drawBegin"><I>int</I> <B>DM_DRAW_BEGIN</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
-<DD><I>DM_DRAW_BEGIN</I> prepares the display manager indicated by <I>dmp</I> for another
-     round of drawing.
+<DD><I>DM_DRAW_BEGIN</I> prepares the display manager indicated by
+     <I>dmp</I> for a round of drawing.
      <DL>
        <DT><big>Example:</big></DT>
        <DD><PRE>
@@ -169,7 +171,7 @@
        <DT><big>Example:</big></DT>
        <DD><PRE>
     /* draw a yellow dot in the center of the window */
-    (void)DM_SET_COLOR(dmp, 230, 230, 0);
+    (void)DM_SET_FGCOLOR(dmp, 230, 230, 0, 1);
     (void)DM_DRAW_POINT_2D(dmp, 0, 0);
 	    </PRE>
        </DD>
@@ -191,15 +193,49 @@
 </DD>
 <HR>
      
-<DT><a NAME="setColor"><I>int</I> <B>DM_SET_COLOR</B> ( <I>struct dm *dmp, short r, short g, short b, int strict</I> )</a></DT><BR><BR>
-<DD><I>DM_SET_COLOR</I> sets the color for drawing in the display manager indicated
+<DT><a NAME="setFBColor"><I>int</I> <B>DM_SET_FGCOLOR</B> ( <I>struct dm *dmp, short r, short g, short b, int strict</I> )</a></DT><BR><BR>
+<DD><I>DM_SET_FGCOLOR</I> sets the color for drawing in the
+     display manager indicated by <I>dmp</I>.
+     <I>r</I>, <I>g</I>, and <I>b</I> denote the color and have
+     values in the range [0,255]. <I>Strict</I> specifies to really
+     use this color (i.e. don't allow ogl to do fancy things with
+     the color when depth cueing).
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* set the drawing color to red */
+    (void)DM_SET_FGCOLOR(dmp, 220, 0, 0, 1);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="setBGColor"><I>int</I> <B>DM_SET_BGCOLOR</B> ( <I>struct dm *dmp, short r, short g, short b</I> )</a></DT><BR><BR>
+<DD><I>DM_SET_BGCOLOR</I> sets the background color for the display manager indicated
      by <I>dmp</I>.
      <I>r</I>, <I>g</I>, and <I>b</I> denote the color and have values in the range [0,255].
      <DL>
        <DT><big>Example:</big></DT>
        <DD><PRE>
-    /* set the drawing color to red */
-    (void)DM_SET_COLOR(dmp, 220, 0, 0, 1);
+    /* set the background color to red */
+    (void)DM_SET_BGCOLOR(dmp, 220, 0, 0);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="getBGColor"><I>int</I> <B>DM_GET_BGCOLOR</B>
+     ( <I>struct dm *dmp, Tcl_Interp *interp</I> )</a></DT><BR><BR>
+<DD><I>DM_SET_BGCOLOR</I> gets the background color for the
+     display manager indicated by <I>dmp</I> and places the
+     result in interp.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* get the background color */
+    return DM_GET_BGCOLOR(dmp, interp);
 	    </PRE>
        </DD>
      </DL>
@@ -259,7 +295,7 @@
      in the display manager indicated by <I>dmp</I>.
      The definition continues to build until a call to <a href="#endDList">DM_ENDDLIST</a>
      is made.
-     Currently, only the <I>ogl</I> and <I>glx</I> display managers support display lists.
+     Currently, only the <I>ogl</I> display manager supports display lists.
      <DL>
        <DT><big>Example:</big></DT>
        <DD><PRE>
@@ -325,38 +361,38 @@
 <HR SIZE=10>
 <BR><BR>
 
-<a NAME="dm_specific"></a>
-<h2>Display Manager Specific Routines</h2>
-<DT><a NAME="ogl_fogHint"><I>void</I> <B>ogl_fogHint</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
-<DD><I>ogl_fogHint</I> is used to give a hint to OpenGl about whether to use an efficient
-     fog calculation method or the most accurate.
+<a NAME="dm_other"></a>
+<CENTER><h2>LIBDM's Other Support Routines</h2></CENTER>
+<DT><a NAME="dm_share_dlist"><I>int</I> <B>dm_share_list</B>
+     ( <I>struct dm *dmp1, struct dm *dmp2</I> )</a></DT><BR><BR>
+<DD><I>dm_share_dlist</I> provides a way to (un)share display lists.
+     If dmp1 and dmp2 are not NULL, dmp1 will share it's display
+     lists with dmp2.
+     If dmp2 is NULL, dmp1 will no longer share its display lists.
+</DD>
+<HR>
+<BR>
+<DT><a NAME="dm_fogHint"><I>void</I> <B>dm_fogHint</B>
+     ( <I>struct dm *dmp, int fastfog</I> )</a></DT><BR><BR>
+<DD><I>dm_fogHint</I> is used to give a hint to the display
+     manager about whether to use an efficient fog calculation
+     method or the most accurate. Note - this is currently only
+     implemented by the ogl display manager.
 
      <DL>
        <DT><big>Example:</big></DT>
        <DD><PRE>
     /* use the most efficient method for calculating fog */
-    ((struct ogl_vars *)dmp->dm_vars)->mvars.fastfog = 1;
-    ogl_fogHint(dmp);
+    dm_fogHint(dmp, 1);
 
     /* use the most accurate method for calculating fog */
-    ((struct ogl_vars *)dmp->dm_vars)->mvars.fastfog = 0;
-    ogl_fogHint(dmp);
+    dm_fogHint(dmp, 0);
 	    </PRE>
        </DD>
      </DL>
 </DD>
 <HR>
-
-<DT><a NAME="glx_clearToBlack"><I>void</I> <B>glx_clearToBlack</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
-<DD><I>glx_clearToBlack</I> is used to clear the screen in preparation for drawing.
-</DD>
-
-<BR><BR><BR>
-<HR SIZE=10>
-<BR><BR>
-
-<a NAME="dm_other"></a>
-<h2>Other Support Routines</h2>
+<BR>
 <DT><a NAME="dm_limit"><I>int</I> <B>dm_limit</B> ( <I>val</I> )</a></DT><BR><BR>
 <DD><I>dm_limit</I> takes an integer argument and returns zero if (<I>-NOISE <= val <= NOISE</I> )
      where <I>NOISE</I> is the size of the dead spot around zero. If ( <I>val < -NOISE</I> ),
@@ -441,6 +477,10 @@
 <DT><a NAME="processOptions"><I>int</I> <B>dm_processOptions</B>(<I>struct dm *dmp, struct bu_vls *vls, int argc, char *argv[]</I>)</a></DT><BR><BR>
 <DD><I>dm_processOptions</I> is used primarily by LIBDM's display manager open routines
      to process options. The table below lists the available options.
+     Note - the application would not typically call <I>processOptions</I>.
+     The application would instead build the desired options into the
+     <I>argv</I> list that is supplied to the call to
+     <a href="api.html#open">DM_OPEN</a>.
      <br><br>
      <center>
      <table COLS=2 RULES=all BORDER=1 CELLPADDING=5>
@@ -474,7 +514,8 @@
      </tr>
      <tr>
      <td ALIGN=left>-s</td>
-     <td ALIGN=left>This option turns on stereo mode.</td>
+     <td ALIGN=left>This option turns on stereo mode and is
+     currently only available with the ogl display manager.</td>
      </tr>
      <tr>
      <td ALIGN=left>-t 0|1</td>
@@ -502,62 +543,75 @@
 <BR>
 <HR>
 <BR>     
-<DT><a NAME="dm_zbuffer"><I>void</I> <B>dm_zbuffer</B> ( <I>dmp</I> )</a></DT><BR><BR>
-<DD><I>dm_zbuffer</I> is used to turn Z-buffering on/off. Note: zbuffering
-     is only supported by the <I>ogl</I> and <I>glx</I> display managers.
+<DT><a NAME="dm_zbuffer"><I>void</I> <B>dm_zbuffer</B>
+     ( <I>struct dm *dmp, zbuffer_on</I> )</a></DT><BR><BR>
+<DD><I>dm_zbuffer</I> is used to turn Z-buffering on/off. Note - zbuffering
+     is only supported by the <I>ogl</I> display manager.
 
      <DL>
        <DT><big>Examples:</big></DT>
        <DD><PRE>
-    /* turn zbuffering on in the ogl display manager */
-    ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuffer_on = 1;
-    dm_zbuffer(dmp);
-
-    /* turn zbuffering off in the glx display manager */
-    ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on = 0;
-    dm_zbuffer(dmp);
+    /* turn zbuffering on */
+    dm_zbuffer(dmp, 1);
 	    </PRE>
 	</DD>
      </DL>
 </DD>
 <BR>
 <HR>     
-<DT><a NAME="dm_lighting"><I>void</I> <B>dm_lighting</B> ( <I>dmp</I> )</a></DT><BR><BR>
-<DD><I>dm_lighting</I> is used to turn lighting on/off. Note: lighting
-     is only supported by the <I>ogl</I> and <I>glx</I> display managers.
+<DT><a NAME="dm_lighting"><I>void</I> <B>dm_lighting</B>
+     ( <I>struct dm *dmp, int lighting_on</I> )</a></DT><BR><BR>
+<DD><I>dm_lighting</I> is used to turn lighting on/off. Note - lighting
+     is only supported by the <I>ogl</I> display manager.
 
      <DL>
        <DT><big>Examples:</big></DT>
        <DD><PRE>
-    /* turn lighting on in the ogl display manager */
-    ((struct ogl_vars *)dmp->dm_vars)->mvars.lighting_on = 1;
-    dm_lighting(dmp);
-
-    /* turn lighting off in the glx display manager */
-    ((struct glx_vars *)dmp->dm_vars)->mvars.lighting_on = 0;
-    dm_lighting(dmp);
+    /* turn lighting on */
+    dm_lighting(dmp, 1);
 	    </PRE>
 	</DD>
      </DL>
 </DD>
 <BR>
 <HR>
-<DT><a NAME="dm_X2Normal"><I>fastf_t</I> <B>dm_X2Normal</B> ( <I>struct dm *dmp, int x, int use_aspect</I> )</a></DT><BR><BR>
-<DD><I>dm_X2Normal</I> takes <I>x</I> in screen coordinates and returns a value in the range
-     [-1.0, 1.0]. <I>dmp</I> indicates the display manager of interest. <I>use_aspect</I>
-     specifies whether to use the window's aspect ratio in the calculation.
+<DT><a NAME="dm_Xx2Normal"><I>fastf_t</I> <B>dm_Xx2Normal</B>
+     ( <I>struct dm *dmp, int x</I> )</a></DT><BR><BR>
+<DD><I>dm_Xx2Normal</I> takes <I>x</I> in X screen coordinates
+     and returns a value in the range [-1.0, 1.0].
+     <I>dmp</I> indicates the display manager of interest.
 </DD>
 <BR>
 <HR>
-<DT><a NAME="dm_Y2Normal"><I>fastf_t</I> <B>dm_Y2Normal</B> ( <I>struct dm *dmp, int y</I> )</a></DT><BR><BR>
-<DD><I>dm_Y2Normal</I> takes <I>y</I> in screen coordinates and returns a value in the range
-     [-1.0, 1.0]. <I>dmp</I> indicates the display manager of interest.
+<DT><a NAME="dm_Xy2Normal"><I>fastf_t</I> <B>dm_Xy2Normal</B>
+     ( <I>struct dm *dmp, int y, int use_aspect</I> )</a></DT><BR><BR>
+<DD><I>dm_Xy2Normal</I> takes <I>y</I> in X screen coordinates
+     and returns a value in the range [-1.0, 1.0].
+     <I>dmp</I> indicates the display manager of interest.
+     <I>use_aspect</I> specifies whether to use the window's aspect
+     ratio in the calculation.
 </DD>
 <BR>
 <HR>
-<DT><a NAME="dm_tclInit"><I>int</I> <B>dm_tclInit</B> ( <I>Tcl_Interp *interp</I> ) </a></DT><BR><BR>
-<DD><I>dm_tclInit</I> initializes LIBDM's tcl commands. <I>interp</I> indicates the Tcl
-     interpreter.
+<DT><a NAME="dm_Normal2Xx"><I>int</I> <B>dm_Normal2Xx</B>
+     ( <I>struct dm *dmp, fastf_t x</I> )</a></DT><BR><BR>
+<DD><I>dm_Normal2Xx</I> takes <I>x</I> in normalized coordinates
+     and returns a value in X screen coordinates. <I>dmp</I>
+     indicates the display manager of interest.
+</DD>
+<HR>
+<BR>
+<DT><a NAME="dm_Normal2Xy"><I>int</I> <B>dm_Normal2Xy</B>
+     ( <I>struct dm *dmp, fastf_t y</I> )</a></DT><BR><BR>
+<DD><I>dm_Normal2Xy</I> takes <I>y</I> in normalized coordinates
+     and returns a value in X screen coordinates. <I>dmp</I>
+     indicates the display manager of interest.
+</DD>
+<HR>
+<BR>
+<DT><a NAME="Dm_Init"><I>int</I> <B>Dm_Init</B> ( <I>Tcl_Interp *interp</I> ) </a></DT><BR><BR>
+<DD><I>Dm_Init</I> initializes LIBDM's tcl commands.
+     <I>interp</I> indicates the Tcl interpreter.
 </DD>
 </BODY>
 </HTML>

@@ -1,0 +1,203 @@
+dnl $Id$
+
+AC_INIT()
+AC_CANONICAL_SYSTEM
+AM_CONFIG_HEADER(h/config.h)
+AM_INIT_AUTOMAKE(brlcad, 6.0)
+
+dnl options
+dnl tcl prefix
+dnl itcl prefix
+dnl tk prefix
+
+dnl progs
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+dnl AM_PROG_LEX
+dnl AC_PROG_YACC
+
+AM_C_PROTOTYPES
+
+case "$target" in
+	*-*-linux*)
+		PTHREAD_LIBS="-lpthread"
+		;;
+	*-*-*BSD*)
+		PTHREAD_LIBS="-pthread"
+		;;
+esac
+PTHREAD_CFLAGS=
+AC_SUBST(PTHREAD_CFLAGS)
+AC_SUBST(PTHREAD_LIBS)
+
+AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
+
+dnl libs
+dnl X
+X_LIBS="-L/usr/X11R6/lib -lX11 -lXi"
+AC_SUBST(X_LIBS)
+
+dnl tcl
+dnl try to find a system tcl, otherwise build it?
+case "$target" in
+	*-*-*bsd*)
+		TCL_LIBS="-L/usr/local/lib -ltcl84"
+		;;
+	*)
+		TCL_LIBS="-ltcl8.4"
+		;;
+esac
+dnl TCL_LIBS='$(top_builddir)'/libtcl8.4/libtcl.la
+dnl TCL=libtcl8.4
+TCL=
+AC_SUBST(TCL)
+AC_SUBST(TCL_LIBS)
+
+dnl itcl
+case "$target" in
+	*-*-*bsd*)
+		ITCL_LIBS="-L/usr/local/lib -litcl32"
+		;;
+	*)
+		ITCL_LIBS="-litcl"
+		;;
+esac
+ITCL=
+AC_SUBST(ITCL_LIBS)
+AC_SUBST(ITCL)
+
+dnl tk
+TK_LIBS="-ltk8.4"
+TK=
+AC_SUBST(TK)
+AC_SUBST(TK_LIBS)
+
+dnl itk
+case "$target" in
+	*-*-*bsd*)
+		ITK_LIBS="-L/usr/local/lib -litk3.2"
+		;;
+	*)
+		ITK_LIBS="-litk"
+		;;
+esac
+AC_SUBST(ITK_LIBS)
+
+PNG_LIBS="-lpng -lz"
+AC_SUBST(PNG_LIBS)
+
+dnl headers
+AC_HEADER_STDC
+AC_CHECK_HEADERS(config.h float.h getopt.h sys/ioctl_compat.h limits.h memory.h stdarg.h stdlib.h string.h sys/machd.h sys/mman.h sys/select.h sys/socket.h termcap.h termios.h unistd.h varargs.h xosdefs.h)
+
+X_CFLAGS="-I/usr/X11R6/include"
+AC_SUBST(X_CFLAGS)
+AC_DEFINE(DM_X,,[Display for X])
+
+GL_CFLAGS="-DUSE_MESA_GL"
+AC_SUBST(GL_CFLAGS)
+
+LEX_CFLAGS="-Dyylex=cmd_nop"
+AC_SUBST(LEX_CFLAGS)
+
+TCL_CFLAGS=
+ITCL_CFLAGS=
+TK_CFLAGS=
+ITK_CFLAGS=
+AC_SUBST(TCL_CFLAGS)
+AC_SUBST(ITCL_CFLAGS)
+AC_SUBST(TK_CFLAGS)
+AC_SUBST(ITK_CFLAGS)
+
+dnl typedefs
+dnl functions
+AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex)
+
+dnl POSIX_REGEXEC
+dnl CALTECH_MALLOC
+dnl DRAND
+dnl DLOPEN
+dnl GETHOSTNAME
+dnl SHELL_ESCAPE
+dnl VPRINTF
+dnl SBRK
+dnl VFORK
+dnl SBRK_DECL
+dnl POPEN_DECL
+dnl STRDUP_DECL
+dnl GETOPT_DECL
+dnl SYS_ERRLIST_DECL
+dnl REGEX_DECL
+dnl XOPEN
+dnl UNIX_IO
+dnl BZERO
+dnl STRDUP
+dnl STRCHR
+dnl MATHERR
+dnl UNIX_DOMAIN_SOCKETS
+dnl FLOAT
+dnl GETOPT
+dnl OFF_T
+dnl WRITEV
+dnl REGEX
+dnl BSDGETTIMEOFDAY
+
+AC_OUTPUT([
+	Makefile
+	anim/Makefile
+	bwish/Makefile
+	doc/Makefile
+	fb/Makefile
+	h/Makefile
+	html/Makefile
+	html/ReleaseNotes/Makefile
+	html/ReleaseNotes/Rel5.0/Makefile
+	html/ReleaseNotes/Rel5.0/Summary/Makefile
+	html/ReleaseNotes/Rel6.0/Makefile
+	html/manuals/Anim_Tutorial/Makefile
+	html/manuals/Makefile
+	html/manuals/ReleaseNotes/Makefile
+	html/manuals/cadwidgets/Makefile
+	html/manuals/libbu/Makefile
+	html/manuals/libdm/Makefile
+	html/manuals/librt/Makefile
+	html/manuals/mged/Makefile
+	html/manuals/mged/animmate/Makefile
+	html/manuals/shaders/Makefile
+	libbn/Makefile
+	libbu/Makefile
+	libdm/Makefile
+	libfb/Makefile
+	libfft/Makefile
+	liboptical/Makefile
+	liborle/Makefile
+	libpkg/Makefile
+	librt/Makefile
+	libsysv/Makefile
+	libtermio/Makefile
+	libutahrle/Makefile
+	libwdb/Makefile
+	mged/Makefile
+	rt/Makefile
+	sh/Makefile
+	sig/Makefile
+	tclscripts/Makefile
+	tclscripts/geometree/Makefile
+	tclscripts/lib/Makefile
+	tclscripts/mged/Makefile
+	tclscripts/nirt/Makefile
+	tclscripts/pl-dm/Makefile
+	tclscripts/rtwizard/Makefile
+	tclscripts/rtwizard/examples/Makefile
+	tclscripts/rtwizard/examples/PictureTypeA/Makefile
+	tclscripts/rtwizard/examples/PictureTypeB/Makefile
+	tclscripts/rtwizard/examples/PictureTypeC/Makefile
+	tclscripts/rtwizard/examples/PictureTypeD/Makefile
+	tclscripts/rtwizard/examples/PictureTypeE/Makefile
+	tclscripts/rtwizard/examples/PictureTypeF/Makefile
+	tclscripts/rtwizard/lib/Makefile
+	tclscripts/util/Makefile
+	util/Makefile
+])
+

@@ -1,0 +1,73 @@
+.\" Copyright (c) 1986, University of Utah
+.TH RLEBG 1 "November 12, 1986" 1
+.UC 4 
+.SH NAME
+rlebg \- generate simple backgrounds
+.SH SYNOPSIS
+.B rlebg
+[
+.B \-l
+] [
+.B \-v
+[
+.I top
+[
+.I bottom
+] ] ] [
+.B \-s
+.I "xsize ysize"
+] [ 
+.B \-o
+.I outfile
+]
+.I "red green blue"
+[
+.I alpha
+]
+.SH DESCRIPTION
+.IR rlebg
+generates a simple background.  These are typically used for compositing
+below other images.  The values
+.I "red green blue"
+specify the pixel values (between 0 and 255) the background will have.
+If 
+.I alpha
+is not specified, it defaults to 255 (full coverage).
+.IR rlebg
+generates both constant backgrounds and backgrounds with continuous 
+ramps. 
+.SH OPTIONS
+.TP
+.BI \-s " xsize ysize"
+This is the size of the background image.  The default is 512\(mu480.
+.TP
+.B \-l
+Generate a linear ramp of pixel values.  If no ramp flag is given, 
+.IR rlebg 
+generates a constant background. 
+.TP
+.BI \-v " top bottom"
+Generate a variable ramp, using a quadratic function (this looks best
+with gamma corrected images).
+.I top
+and
+.I bottom
+are the fractions of the full color values at the top and bottom of the image.
+The defaults are 1.0 0.1, respectively.  If both 
+.B \-v
+and
+.B \-l
+are given, then a linear ramp function is used instead of a quadratic ramp.
+.TP
+.BI \-o " outfile"
+If specified, the output will be written to this file.  If 
+.I outfile
+is "\-", or if it is not specified, the output will be written to the
+standard output stream.
+.LP
+.SH SEE ALSO
+.IR rlesetbg (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Rod Bogart

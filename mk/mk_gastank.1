@@ -1,0 +1,83 @@
+.TH MK_GASTANK 1 BRL/CAD
+.SH NAME
+mk_gastank \- creates an mged file containing gas tanks.
+.SH SYNOPSIS
+.B mk_gastank
+[ options... ]
+.SH DESCRIPTION
+Mk_gastank is a program to create an mged data base of gas tanks.
+Up to twenty-six gas tanks of the same size may
+be created.  These gas tanks are solid with rounded corners and
+edges.  They are appropriate for use with millimeter wave
+signature analysis.  They are not appropriate of infra red or
+vulnerability analysis.  Mk_gastank uses libwdb to create an mged data base.
+The gas tanks are composed of three arb8s, eight spheres, and twelve
+cylinders.  This
+program may be run interactively or the user may specify options on
+a command line.  If the user choose to run the program interactively
+he answers the questions as the program prompts him.  Below are the
+options that can be used on the command line.
+.SS Options
+.TP "\w'-G ``n cflag gflag vsize\'\'\     |'u"
+.BI \-fname.g\^
+Mged file name.
+.TP
+.BI \-n#\^
+The number of gas tanks to be created.  This number must be less than or
+equal to 26.
+.TP
+.BI \-h#\^
+Height of gas tank in millimeters.
+.TP
+.BI \-w#\^
+Width of gas tank in millimeters.
+.TP
+.BI \-d#\^
+Depth of gas tank in millimeters.
+.TP
+.BI \-r#\^
+Radius of the corner in millimeters.
+.TP
+.SH EXAMPLE
+The following is an example from an interactive session.
+.sp
+.nf
+$ mk_gastank
+
+This program constructs a solid gas tank with all
+edges and corners rounded.
+
+Enter the name of the mged file to be created (25 char max).
+	gastank.g
+Enter the number of gas tanks to create (26 max).
+	3
+Enter the height, width, and depth of the gas tank.
+	300 200 400
+Enter the radius of the corners.
+	30
+
+mged file name:  gastank.g
+height of gas tank:  300.000000 mm
+width of gas tank:  200.000000 mm
+depth of gas tank:  400.000000 mm
+radius of corner:  30.000000 mm
+number of gas tanks:  3
+
+.fi
+The following is the same example where all dimensions are on the
+command line.
+.nf
+
+	mk_gastank -fgastank.g -n3 -h300 -w200 -d400 -r30
+
+.fi
+In both these examples three gas tanks are created with
+a height of 300mm, a width of 200mm, a depth of 400mm, and
+a radius for the corner of 30mm.  The mged file created in
+each case is gastank.g.
+
+.SH  SEE ALSO
+mk_bolt(1), mk_handle(1), mk_window(1), mk_winfrm(1)
+
+.SH AUTHOR
+Susan A. Coates

@@ -1,0 +1,7 @@
+# ----------------------------------------------------------------------
+#  DEMO: timeentry in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::timeentry .de -labeltext "Time:"
+pack .de -fill x -expand yes -padx 10 -pady 10

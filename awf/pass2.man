@@ -1,0 +1,33 @@
+/^\.\^b/ {			# initialization
+	print nobreak, "fph", 1
+	next
+}
+/^[^.]/ {			# text line -- reached only for input traps
+	if (afternext ~ /,fP/)
+		font = prevfont
+	if (afternext ~ /,tP/)
+		print dobreak, "toindent"
+	afternext = ""
+	next
+}
+/^\.ds/ {			# to catch special strings
+	if ($3 !~ /^"/)
+		v = $3
+	else
+		v = substr($0, index($0, "\"")+1)
+	if ($2 ~ /^[LCR][HF]$/)
+		print nobreak, $2, v
+	# fallthrough to normal .ds processing in macro-independent stuff
+}
+/^\.lF/ {
+	# special footer fiddling
+	if (strings["by"] != "" && strings["nb"] != "")
+		lf = strings["by"] "; " strings["nb"]
+	else
+		lf = strings["by"] strings["nb"]
+	print nobreak, "LF", lf
+	next
+}
+/^\.\^e/ {			# finalization
+	next
+}

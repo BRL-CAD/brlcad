@@ -1,0 +1,3 @@
+This image type consists of a line drawing superimposed on full-color elements that are superimposed over a ghost image. This is the most complicated image type.
+
+To produce this image, you will need to specify the objects you want to render in the ghost image, the objects you want to render in full color, the objects you want to render in the line drawing, and the view information.

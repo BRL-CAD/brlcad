@@ -1,0 +1,15 @@
+# ----------------------------------------------------------------------
+#  DEMO: fileselectiondialog in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::fileselectiondialog .fsd -modality application
+
+button .select -text "Files..." -command {
+    if {[.fsd activate]} {
+        puts "selected: [.fsd get]"
+    } else {
+        puts ""
+    }
+}
+pack .select -side left

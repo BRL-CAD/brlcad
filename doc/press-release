@@ -1,0 +1,120 @@
+			PRESS RELEASE
+			10-Oct-1991
+	For Immediate Release, Distribution Unlimited.
+
+The U. S. Army Ballistic Research Laboratory (BRL) is proud to announce
+the availability of Release 4.0 of the BRL-CAD Package.
+
+The BRL-CAD Package is a powerful Constructive Solid Geometry (CSG)
+based solid modeling system.  BRL-CAD includes an interactive geometry
+editor, a ray tracing library, two ray-tracing based lighting models,
+a generic framebuffer library, a network-distributed image-processing
+and signal-processing capability, and a large collection of related
+tools and utilities. Release 4.0 is the latest version of software which
+has been undergoing continuous development since 1979.
+
+The most significant new feature for Release 4.0 is the addition of
+n-Manifold Geometry (NMG) support based on the work of Kevin Weiler.
+The NMG software converts CSG solid models into approximate
+polygonalized boundary representations, suitable for processing by
+subsequent applications and high-speed hardware display.
+
+BRL-CAD is used at over 800 sites located throughout the world.
+It is provided in source code form only, and totals more than 280,000
+lines of "C" code.
+
+BRL-CAD supports a great variety of geometric representations, including
+an extensive set of traditional CSG primitive solids such as blocks,
+cones and torii, solids made from closed collections of Uniform B-Spline
+Surfaces as well as Non-Uniform Rational B-Spline (NURBS) Surfaces,
+purely faceted geometry, and n-Manifold Geometry (NMG). All geometric
+objects may be combined using boolean set-theoretic operations such as
+union, intersection, and subtraction.
+
+Material properties and other attribute properties can be associated
+with geometry objects. This combining of material properties with
+geometry is a critical part of the link to applications codes. BRL-CAD
+supports a rich object-oriented set of extensible interfaces by means of
+which geometry and attribute data are passed to applications.
+
+A few of the applications linked to BRL-CAD include:
+
+*) Optical Image Generation (including specular/diffuse reflection,
+	refraction, multiple light sources, and articulated animation)
+*) An array of military vehicle design and evaluation V/L Codes
+*) Bistatic laser analysis
+*) Predictive Synthetic Aperture Radar Codes (including codes due to ERIM)
+*) High-Energy Laser Damage
+*) High-Power Microwave Damage
+*) Weights and Moments-of-Inertia
+*) Neutron Transport Code
+*) PATRAN [TM] and hence to ADINA, EPIC-2, NASTRAN, etc.
+	for structural/stress analysis
+*) X-Ray image calculation
+
+BRL-CAD requires the UNIX operating system and is supported on more
+than a dozen product lines from workstations to supercomputers,
+including: Alliant FX/8 and FX/80, Alliant FX/2800, Apple Macintosh II,
+Convex C1, Cray-1, Cray X-MP, Cray Y-MP, Cray-2, Digital Equipment VAX,
+Gould/Encore PN 6000/9000, IBM RS/6000, Pyramid 9820, Silicon Graphics
+3030, Silicon Graphics 4D ``Iris'', Sun Microsystems Sun-3, and the Sun
+Microsystems Sun-4 ``SparcStation''. Porting to other UNIX systems is
+very easy, and generally only takes a day or two.
+
+You may obtain a copy of the BRL-CAD Package distribution materials in
+one of two ways:
+
+1.  FREE distribution with no support privileges:  Those users with
+online access to the DARPA InterNet may obtain the BRL-CAD Package via
+FTP file transfer, at no cost, after completing and returning a signed
+copy of the printed distribution agreement. A blank agreement form is
+available only via anonymous FTP from host ftp.brl.mil (address
+128.63.16.158) from file "brl-cad/agreement". There are encrypted
+FTP-able files in several countries around the world. Directions on how
+to obtain and decrypt the files will be sent to you upon receipt of your
+signed agreement. One printed set of BRL-CAD documentation will be
+mailed to you at no cost. Note that installation assistance or telephone
+support are available only with full service distributions.
+
+2.  FULL SERVICE distribution:  The Survivability/Vulnerability
+Information Analysis Center (SURVIAC) administers the supported BRL-CAD
+distributions and information exchange programs for BRL through the
+SURVIAC Aberdeen Satellite Office. The full service distribution cost is
+US$500.  There is no cost to US Government Agencies. A copy of the
+BRL-CAD package will be provided to you on your choice of magnetic tape
+media. You may also elect to obtain your copy via network FTP. One
+printed set of BRL-CAD documentation will be mailed to you. BRL-CAD
+maintenance releases and errata sheets will be provided at no additional
+charge, and you will have access to full technical assistance by phone,
+FAX, letter, or E-mail.  Complete and return a signed copy of the
+distribution agreement and survey form with a check or purchase order
+payable to "BA&H/SURVIAC" and mail to:
+
+	BRL-CAD Distribution
+	SURVIAC Aberdeen Satellite Office
+	1003 Old Philadelphia Road
+	Suite 103
+	Aberdeen MD  21001  USA
+
+For further details, call Ms. Carla Moyer at USA (410)-273-7794, send
+E-mail to <cad-dist@brl.mil>, FAX your letter to USA (410)-272-6763,
+or write to the above address.
+
+Those sites selecting the free distribution may upgrade to full service
+status at any time.  All users have access to the BRL-CAD Symposia,
+workshops, user's group, and BRL-CAD mailing list via E-mail.
+
+
+Sincerely,
+
+
+
+Lee A. Butler			Glenn M. Gillis
+Advanced Computer Systems		SURVIAC
+Army Research Laboratory Satellite Office
+
+
+
+
+
+$Revision$
