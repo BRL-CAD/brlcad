@@ -138,7 +138,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #	define	MGED_OBJS	dm-mg dm-vg
 #	define	MGED_CONFIG	-DDM_MG -DDM_VG
-#	undef	MGED_LIBES
+#	define	MGED_LIBES	/**/
 #endif
 
 #ifdef alliant
@@ -151,9 +151,10 @@ set -S2 "/bin/sh"
 /***/
 #	define	CC_OPTS	-ce
 /***/
+/*	To get FX/C, use -l option.  Alas, this puts listing on stdout.
 /***
 #	define	CC	/usr/local/fxc2.0.16/fxc
-#	define	CC_OPTS	-ce -DVECTORIZE
+#	define	CC_OPTS	-ce -DVECTORIZE -l
 #	define	OPTIMIZER -Ogiv
 ***/
 #	define	FC	/usr/alliant/fortran
@@ -205,7 +206,7 @@ set -S2 "/bin/sh"
 			AR x /usr/lib/libgl2.a; \
 			AR uv ../libfb.a *; \
 			cd ..; rm -fr tmp)
-#		define	REMRT_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
+#		define	RFBD_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
 #		define	MGED_LIBES	../libfb/sgiselect.o -lgl2
 #	else
 /*		Versions 3.5 and 3.6 */
@@ -221,7 +222,6 @@ set -S2 "/bin/sh"
 			rm -f __.SYMDEF; \
 			AR uv ../libfb.a *; \
 			cd ..; rm -fr tmp)
-#		define	REMRT_CONFIG	-I/usr/include/bsd -DBSD
 #		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD
 #		define	MGED_LIBES	-lbsd -lgl2
 #	endif
@@ -237,31 +237,31 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	OPTIMIZER	-O2
+#	define	GFLAG		-G 16
 #	define	RANLIB	ar ts
 #	define	GETHOST	hostname
 #	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD
-#	define	REMRT_CONFIG	-I/usr/include/bsd -DBSD
 #	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD
 #	define	LIBFB_OBJS	if_remote pkg if_4d
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
 #	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
 		rm -f libfb.a; cd tmp; \
 		AR x /usr/lib/libgl.a; \
+		mv in_addr.o sgi_addr.o;\
 		rm -f select.o *EBEB*; \
 		AR x /usr/lib/libbsd.a; \
 		AR uv ../libfb.a *; \
 		cd ..; rm -fr tmp)
 #	define	LIBRT_TIMER	timerunix
-#	define	RT_CONFIG	-G 64
+#	define	RT_CONFIG	GFLAG
 #	define	RT_LIBES	-lbsd
-#	define	LGT_CONFIG	-G 16
+#	define	LGT_CONFIG	GFLAG
 #	define	MGED_OBJS	dm-4d
-#	define	MGED_CONFIG	-G 16 -DDM_4D
+#	define	MGED_CONFIG	GFLAG -DDM_4D
 #	define	MGED_LIBES	-lbsd -lgl
 #endif
 
-#ifdef sun
-/*	Need some way to discriminate sun3 and sun4/sparc */
+#if defined(sun) && !defined(sparc)
 #	undef	sun
 #	undef	sun3
 #	define	MTYPE	sun3
@@ -271,8 +271,51 @@ set -S2 "/bin/sh"
 /*#	define	CC_OPTS	-fswitch*/
 /*#	define	CC_OPTS	-ffpa */
 #	define	CC_OPTS	-f68881
+/* XXX can we use libmalloc yet? */
 #	define	LIBMALLOC	/* use vendor library */
-/***
+#	define	LIBRT_TIMER	timer42
+#if 0
+/*		Normal Sun configuration */
+#		define	LIBFB_OBJS	if_remote pkg if_sun
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
+#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
+			rm -f libfb.a; cd tmp; \
+			AR x /usr/lib/libsuntool.a; \
+			AR x /usr/lib/libsunwindow.a; \
+			AR x /usr/lib/libpixrect.a; \
+			AR uv ../libfb.a *; \
+			cd ..; rm -fr tmp)
+#		define	MGED_OBJS	dm-sun
+#		define	MGED_CONFIG	-DDM_SUNPW
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
+#else
+/*		Sun with X11 configuration */
+#		define	LIBFB_OBJS	if_remote pkg if_sun if_X
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN -DIF_X
+#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
+			rm -f libfb.a; cd tmp; \
+			AR x /usr/lib/libsuntool.a; \
+			AR x /usr/lib/libsunwindow.a; \
+			AR x /usr/lib/libpixrect.a; \
+			AR x /usr/brl/lib/libX.a; \
+			rm -f __.SYMDEF; \
+			AR uv ../libfb.a *; \
+			cd ..; rm -fr tmp)
+#		define	MGED_OBJS	dm-sun dm-X
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
+			/usr/brl/lib/libX11.a
+#	endif
+#endif
+
+#if defined(sparc)
+#	undef	sun
+#	undef	sun4
+#	define	MTYPE	sun4
+#	define	UNIXTYPE	BSD
+#	define	HAS_TCP	1
+#	define	OPTIMIZER	-O2
+#	define	LIBMALLOC	/* use vendor library */
 #	define	LIBFB_OBJS	if_remote pkg if_sun
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
 #	define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
@@ -282,72 +325,54 @@ set -S2 "/bin/sh"
 		AR x /usr/lib/libsunwindow.a; \
 		AR uv ../libfb.a *; \
 		AR u libfb.a * ); \
-***/
-#	define	LIBFB_OBJS	if_remote pkg if_sun if_X
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN -DIF_X
-#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-		rm -f libfb.a; cd tmp; \
-		AR x /usr/lib/libsuntool.a; \
-		AR x /usr/lib/libsunwindow.a; \
-		AR x /usr/lib/libpixrect.a; \
-		AR x /usr/brl/lib/libX.a; \
-		rm -f __.SYMDEF; \
-		AR uv ../libfb.a *; \
-		cd ..; rm -fr tmp)
 		mv /usr/tmp/libfb/libfb.a . ; \
-/***
 		rm -fr /usr/tmp/libfb )
 #	define	LIBRT_TIMER	timer42
 #	define	MGED_OBJS	dm-sun
-***/
-#	define	MGED_OBJS	dm-sun dm-X
-#	define	MGED_CONFIG	-DDM_SUNPW -DDM_X
-#	define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-		/usr/brl/lib/libX11.a
-/***/
 #	define	MGED_CONFIG
 #	define	MGED_LIBES
-#if defined(CRAY) && !defined(CRAY2)
-/*	Cray X-M/P running UNICOS. */
+#endif
+/*	Cray X-M/P running UNICOS.  Define CRAY_COS for use on COS. */
 #if defined(CRAY1)
 /*	Cray X-M/P running UNICOS 3.  Define CRAY_COS for use on COS. */
 #	undef	xmp
 #	define	UNIXTYPE	SYSV
 #	undef	cray
-#	define	CC_DEFS	-DPARALLEL
-/* olevel_0 definitely needed for UNICOS 2.1 */
-/***#	define	CC_OPTS	-holevel_0*/
+#	define	CC_DEFS	-hvector,olevel_2
 /***#	define	CC_OPTS	-DVECTORIZE**/
 #		define	CC	/bin/ncc
-#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
-#	define	REMRT_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
+#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
+#	define	RFBD_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
 #	define	LIBRT_TIMER	timercray
 #	define	RFBD_LIBES	-lbsd
+#	define	LIBRT_TIMER	timerunix
+#	define	RT_LIBES	-L/lib/multi -lu
+/*	 On XMP UNICOS 3.0, archives still end in .o */
 #	define	ARCH_SUF	o
-#	define	LIBTERMLIB	-lcurses
 #	define	AR	../cray-ar.sh
 #	define	FC	/bin/cft77
 #	endif
 #	define	RANLIB	echo
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
 #	define	LIBFB_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
-#ifdef CRAY2
+#endif
 #if defined(CRAY2)
 /*	Cray-2 running UNICOS 4 */
 #	undef	cr2
 #	define	UNIXTYPE	SYSV
 #	undef	cray
-#	define	CC_DEFS	-DPARALLEL -Dcray
+#	define	CC_DEFS -hvector,olevel_3,vmesg_2
 /**
-#	define	CC_DEFS	-DPARALLEL -Dcray -DVECTORIZE -hvector,olevel_3,vmesg_2
+#	define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
 #	define	CC	/bin/ncc
 **/
 #	define	FC	/bin/cft77
 		AR x /usr/lib/libnet.a select.o socket.o; \
-#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
-#	define	REMRT_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
+#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
+#	define	RFBD_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
 #		define	RFBD_CONFIG	-DBSD=43
 #	endif
+#	define	LIBRT_TIMER	timerunix
 #	define	RT_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
@@ -380,6 +405,41 @@ set -S2 "/bin/sh"
 **/
 #endif
 #	endif
+#endif
+#ifdef ardent
+/* This configuration information is based on a preliminary test */
+#	define	UNIXTYPE	SYSV
+#	undef	ard
+#	define	MTYPE	ard
+/*	The network code is not tested with BRL-CAD yet */
+#	define	HAS_TCP	0
+#	define	LIBRT_TIMER	timerunix
+/*	Note that -O2 causes multiple compiler failures */
+#	define	OPTIMIZER	-O1
+/*	Note that a cc -43 option gives a workable BSD environment */
+/*XXX	Note that this X11 configuration may need tweaking */
+#	define	LIBFB_CONFIG	-DIF_X
+#	define	LIBFB_OBJS	if_X
+#	define	LIBFB_SETUP	cp /usr/lib/libX11.a PRODUCTS
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X
+#	define	MGED_LIBES	/usr/lib/libX11.a
+#endif
+#ifdef stellar
+/* This configuration information is based on a preliminary test */
+#	define	UNIXTYPE	SYSV
+#	undef	stl
+#	define	MTYPE	stl
+/*	The network code is not tested with BRL-CAD yet */
+#	define	HAS_TCP	0
+#	define	LIBRT_TIMER	timerunix
+/*XXX	Note that this X11 configuration may need tweaking */
+#	define	LIBFB_CONFIG	-DIF_X
+#	define	LIBFB_OBJS	if_X
+#	define	LIBFB_SETUP	cp /usr/lib/libX11.a PRODUCTS
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X
+#	define	MGED_LIBES	/usr/lib/libX11.a
 #endif
 #ifdef eta10
 /* This configuration information is based on a preliminary test */
@@ -653,7 +713,7 @@ set -S2 "/bin/sh"
 #define FFLAGS	OPTIMIZER FC_OPTS
 
 #if UNIXTYPE == BSD
-#	define	LFLAGS	-hbvxac -DBSD CC_DEFS CONFIGDEFS
+#	define	LFLAGS	-abchx -DBSD CC_DEFS CONFIGDEFS
 #ifdef BSD
 #	define	LFLAGS	-abchx -DBSD=BSD CC_DEFS CONFIGDEFS
 #else
