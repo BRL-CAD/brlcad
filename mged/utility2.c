@@ -41,7 +41,6 @@ void		push();
 
 extern struct bn_tol	mged_tol;	/* from ged.c */
 
-BU_EXTERN( struct shell *nmg_dup_shell, ( struct shell *s, long ***trans_tbl, struct bn_tol *tol ) );
 BU_EXTERN( struct rt_i *rt_new_rti, (struct db_i *dbip) );
 
 int

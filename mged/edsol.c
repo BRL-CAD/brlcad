@@ -84,7 +84,6 @@ vect_t e_axes_pos;
 vect_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
-MGED_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (CONST struct bu_list *pipe_hd, CONST point_t pt ) );
 MGED_EXTERN( void split_pipept, (struct bu_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
 MGED_EXTERN( struct wdb_pipept *del_pipept, (struct wdb_pipept *ps ) );
