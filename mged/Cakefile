@@ -1,5 +1,7 @@
 /*
  *			mged/Cakefile
+ *
+ *  $Header$
  */
 #define       CONFIGDEFS      MGED_CONFIG "-Dyylex=cmd_nop"
 
