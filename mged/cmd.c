@@ -149,6 +149,7 @@ int output_as_return = 0;
 
 extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo;
 extern Tcl_CmdProc cmd_solids_on_ray;
+extern Tcl_CmdProc cmd_pathlist;
 
 int	mged_cmd();
 int	cmd_gui(), cmd_tk(), cmd_getknob();
@@ -407,6 +408,8 @@ static struct funtab funtab[] = {
 	f_param,2,4,FALSE,
 "paths", "pattern", "lists all paths matching input path",
 	f_pathsum, 1, MAXARGS,FALSE,
+"pathlist", "name(s)", "list all paths from name(s) to leaves",
+	cmd_pathlist, 1, MAXARGS,TRUE,
 "permute", "tuple", "permute vertices of an ARB",
 	f_permute,2,2,FALSE,
 #ifdef XMGED
