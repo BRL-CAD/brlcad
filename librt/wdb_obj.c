@@ -5543,6 +5543,16 @@ wdb_hide_tcl( clientData, interp, argc, argv)
 	struct db5_raw_internal		raw;
 	int				i;
 
+	if( argc < 3 ) {
+		struct bu_vls vls;
+
+		bu_vls_init( &vls );
+		bu_vls_printf(&vls, "helplib wdb_hide");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
 	RT_CK_WDB( wdbp );
 
 	dbip = wdbp->dbip;
@@ -5617,13 +5627,23 @@ wdb_unhide_tcl( clientData, interp, argc, argv)
 	struct db5_raw_internal		raw;
 	int				i;
 
+	if( argc < 3 ) {
+		struct bu_vls vls;
+
+		bu_vls_init( &vls );
+		bu_vls_printf(&vls, "helplib wdb_unhide");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
 	RT_CK_WDB( wdbp );
 
 	dbip = wdbp->dbip;
 
 	RT_CK_DBI( dbip );
 	if( dbip->dbi_version < 5 ) {
-		Tcl_AppendResult(interp, "The \"hide\" command is only valid for version 5 databases and later\n",
+		Tcl_AppendResult(interp, "The \"unhide\" command is only valid for version 5 databases and later\n",
 				 (char *)NULL );
 		return TCL_ERROR;
 	}

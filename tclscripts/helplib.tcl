@@ -31,6 +31,8 @@ set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from lis
 set helplib_data(wdb_close)		{{} {close/destroy this database object}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_dbip)		{{} {get dbip}}
+set helplib_data(wdb_hide)              {{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}
+set helplib_data(wdb_unhide)            {{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
 set helplib_data(wdb_ls)		{{[args]} {list objects in this database object}}
 set helplib_data(wdb_list)		{{[-r] arg(s)} {list object information, verbose}}
 set helplib_data(wdb_kill)		{{object(s)} {kill/delete database object(s)}}

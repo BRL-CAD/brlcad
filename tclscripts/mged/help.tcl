@@ -92,6 +92,7 @@ set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
 set mged_help_data(help)	{{[commands]}	{give usage message for given commands}}
 set mged_help_data(helplib)	{{[library commands]}	{give usage message for given library commands}}
 set mged_help_data(helpdevel)	{{[commands]}	{give usage message for given developer commands}}
+set mged_help_data(hide)        {{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}
 set mged_help_data(history)	{{[-delays]}	{list command history}}
 set mged_help_data(i)		{{obj combination [operation]}	{add instance of obj to comb}}
 set mged_help_data(idents)		{{file object(s)}	{make ascii summary of region idents}}
@@ -204,6 +205,7 @@ set mged_help_data(track)	{{<parameters>}	{adds tracks to database}}
 set mged_help_data(translate)	{{x y z}	{trans object to x,y, z}}
 set mged_help_data(tree)	{{[-c] [-i n] [-o outfile] object(s)}	{print out a tree of all members of an object}}
 set mged_help_data(t_muves)	{{}	{list all the known MUVES components/systems}}
+set mged_help_data(unhide)        {{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
 set mged_help_data(units)	{{[mm|cm|m|in|ft|...]}	{change units}}
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
 set mged_help_data(vdraw)	{{write|insert|delete|read|length|show [args]}	{Expermental drawing (cnuzman)}}
