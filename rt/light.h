@@ -40,3 +40,6 @@ struct light_specific {
 #define RT_CK_LIGHT(_p)	RT_CKMAG((_p), LIGHT_MAGIC, "light_specific")
 
 extern struct light_specific	LightHead;
+
+RT_EXTERN(void light_visibility, (struct application *ap,
+				  struct shadework *swp, int have) );
