@@ -105,7 +105,7 @@ char	**argv;
 	point_t	vert;
 	vect_t	h;
 	int	i;
-	struct wdb_pipept head;
+	struct bu_list head;
 
 	outfp = wdb_fopen("pipetest.g");
 	mk_conversion("meters");
@@ -127,9 +127,9 @@ char	**argv;
 	mk_particle( outfp, "p3", vert, h, 0.5, 1.0 );
 
 	/* Make a piece of pipe */
-	BU_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head );
 	for( i=0; i<pipe1_npts ; i++ )  {
-		BU_LIST_INSERT( &head.l, &pipe1[i].l );
+		BU_LIST_INSERT( &head, &pipe1[i].l );
 	}
 	pr_pipe( "pipe1", &head );
 	if( (i = mk_pipe( outfp, "pipe1", &head )) < 0 )
@@ -148,7 +148,7 @@ int	npts;
 double	bend;
 double	od;
 {
-	struct wdb_pipept	head;
+	struct bu_list	head;
 	int			i;
 
 	mk_pipe_init( &head );
