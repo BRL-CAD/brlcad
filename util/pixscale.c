@@ -187,6 +187,7 @@ int scanlen;
 	if( max > 4096 ) max = 4096;
 
 	buflines = max;
+	buf_start = (-buflines);
 	buffer = malloc( buflines * scanlen );
 }
 
