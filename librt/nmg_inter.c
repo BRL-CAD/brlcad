@@ -635,42 +635,6 @@ struct faceuse	*fu2;
 }
 
 /*
- *			N M G _ P L _ 2 F U
- *
- *  Note that 'str' is expected to contain a %d to place the frame number.
- */
-void
-nmg_pl_2fu( str, num, fu1, fu2, show_mates )
-char		*str;
-int		num;
-struct faceuse	*fu1;
-struct faceuse	*fu2;
-int		show_mates;
-{
-	FILE		*fp;
-	char		name[32];
-	struct nmg_ptbl	b;
-
-	(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-
-	(void)sprintf(name, str, num);
-	rt_log("plotting to %s\n", name);
-	if ((fp=fopen(name, "w")) == (FILE *)NULL)
-		rt_bomb(name);
-
-	(void)nmg_pl_fu(fp, fu1, &b, 100, 100, 180);
-	if( show_mates )
-		(void)nmg_pl_fu(fp, fu1->fumate_p, &b, 100, 100, 180);
-
-	(void)nmg_pl_fu(fp, fu2, &b, 100, 100, 180);
-	if( show_mates )
-		(void)nmg_pl_fu(fp, fu2->fumate_p, &b, 100, 100, 180);
-
-	(void)fclose(fp);
-	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
-}
-
-/*
  *			N M G _ I S E C T _ 2 F A C E S
  *
  *	Intersect a pair of faces
