@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle-fb.c	1.2
-	Last edit: 	3/21/85 at 16:21:52
-	Retrieved: 	8/13/86 at 03:16:43
+	SCCS id:	@(#) rle-fb.c	1.3
+	Last edit: 	3/22/85 at 12:55:19
+	Retrieved: 	8/13/86 at 03:16:50
 	SCCS archive:	/m/cad/fb_utils/RCS/s.rle-fb.c
 
 	Author:		Gary S. Moss
@@ -12,15 +12,28 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) rle-fb.c	1.2	last edit 3/21/85 at 16:21:52";
+char	sccsTag[] = "@(#) rle-fb.c	1.3	last edit 3/22/85 at 12:55:19";
 #endif
 #include <stdio.h>
 #include <fb.h>
-typedef unsigned char	u_char;
+#ifndef pdp11
+#define MAX_DMA	1024*64
+#else
+#define MAX_DMA	1024*16
+#endif
+#define PIXELS_PER_DMA	(MAX_DMA/sizeof(Pixel))
+#define SCANS_PER_DMA	(PIXELS_PER_DMA/fbsz)
+#define DMAS_PER_FB	(fbsz/SCANS_PER_DMA)
+#define PIXEL_OFFSET	((scan_ln%scans_per_dma)*fbsz)
+#define Fbread_Dma( y )\
+		if( y >= 0 &&\
+		    fbread(0,(y)-scans_per_dma,scan_buf,pixels_per_dma)==-1)\
+			return 1;
 
+typedef unsigned char	u_char;
 static char	*usage[] = {
 "",
-"rle-fb (1.2)",
+"rle-fb (1.3)",
 "",
 "Usage: rle-fb [-Odhv][-b (rgbBG)][-pi X Y] [file.rle]",
 "",
@@ -48,10 +61,13 @@ main( argc, argv )
 int	argc;
 char	*argv[];
 	{
-	Pixel		scan_buf[1024];
-	ColorMap	cmap;
 	register int	scan_ln;
 	register int	fbsz;
+	static Pixel	scan_buf[PIXELS_PER_DMA];
+	static ColorMap	cmap;
+	static int	pixels_per_dma;
+	static int	scans_per_dma;
+	static int	dmas_per_fb;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
@@ -64,6 +80,8 @@ char	*argv[];
 		return	1;
 
 	fbsz = getfbsize();
+	pixels_per_dma = PIXELS_PER_DMA;
+	scans_per_dma = SCANS_PER_DMA;
 	if( fbopen( NULL, APPEND ) == -1 )
 		return	1;
 
@@ -105,23 +123,53 @@ char	*argv[];
 		if( fb_wmap( (ColorMap *) NULL ) == -1 )
 			return	1;
 		}
-	for( scan_ln = fbsz-1; scan_ln >= 0; --scan_ln )
+
+	/* Fill output buffer with background.				*/
+	if( ! olflag )
 		{
 		register int	i;
-		register Pixel	*to = scan_buf, *from = &bgpixel;
-		if( debug )
-			(void) fprintf( stderr,
-					"rle_decode_ln( %d )\n",
-					scan_ln
-					);
-		for( i = 0; i < fbsz; ++i )
-			{
+		register Pixel	*to = scan_buf;
+		register Pixel	*from = &bgpixel;
+
+		for( i = 0; i < pixels_per_dma; i++ )
 			*to++ = *from;
+		}
+	else
+		{
+		Fbread_Dma( fbsz - 1 );
+		}
+	for( scan_ln = fbsz - 1; scan_ln >= 0; scan_ln-- )
+		{
+		register Pixel	*scan_ptr = &scan_buf[PIXEL_OFFSET];
+		register int	dirty_flag;
+		static int	touched = 0;
+
+		if( (dirty_flag = rle_decode_ln( fp, scan_ptr )) == -1 )
+			return	1;
+		touched += dirty_flag;
+		if( scan_ptr == scan_buf )
+			{
+			if( fbwrite( 0, scan_ln, scan_buf, pixels_per_dma )
+			    == -1
+				)
+				return	1;
+			/* Fill output buffer with background.		*/
+			if( olflag )
+				{
+				Fbread_Dma( scan_ln );
+				}
+			else
+			if( touched )
+				{
+				register int	i;
+				register Pixel	*to = scan_ptr;
+				register Pixel	*from = &bgpixel;
+
+				for( i = 0; i < pixels_per_dma; i++ )
+					*to++ = *from;
+				touched = 0;
+				}
 			}
-		if( rle_decode_ln( fp, scan_buf ) == -1 )
-			return	1;
-		if( fbwrite( 0, scan_ln, scan_buf, fbsz ) == -1 )
-			return	1;
 		}
 	return	0;
 	}
