@@ -318,10 +318,10 @@ gif-fb:		gif-fb.o LIBFB
 	CC LDFLAGS -o gif-fb gif-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 spm-fb:		spm-fb.o LIBRT LIBFB
-	CC LDFLAGS -o spm-fb spm-fb.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES RT_LIBES LIBES
+	CC LDFLAGS -o spm-fb spm-fb.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBES
 
 pix-spm:	pix-spm.o LIBRT
-	CC LDFLAGS -o pix-spm pix-spm.o LIB_PRE''LIBRT RT_LIBES LIBES
+	CC LDFLAGS -o pix-spm pix-spm.o LIB_PRE''LIBRT LIBRT_LIBES LIBES
 
 pix-sun:	pix-sun.o
 	CC LDFLAGS -o pix-sun pix-sun.o LIBES
