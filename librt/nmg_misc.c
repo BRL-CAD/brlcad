@@ -112,6 +112,7 @@ long *flags;
 	struct faceuse *fu;
 	struct edgeuse *eu,*eu1;
 	struct vertexuse *vu;
+	struct vertex *v1,*v2;
 	int done;
 	int bottommost=0;
 
@@ -170,6 +171,10 @@ long *flags;
 		rt_log( "Find_top_face_in_dir: Could not find extreme vertex" );
 		return( (struct face *)NULL );
 	}
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "top vertex is x%x at ( %g %g %g )\n",
+			vp_top, V3ARGS( vp_top->vg_p->coord ) );
 
 	/* find edge from vp_top with extreme slope in "dir" direction */
 	for( RT_LIST_FOR( vu , vertexuse , &vp_top->vu_hd ) )
@@ -242,81 +247,102 @@ long *flags;
 	if( eu->eumate_p == eu->radial_p )
 		return( (struct face *)NULL );
 
-	/* now find the face containing e_top with "left-pointing vector" having the most extreme slope */
+	v1 = eu->vu_p->v_p;
+	NMG_CK_VERTEX( v1 );
+	v2 = eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX( v2 );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "top EU is x%x (%g %g %g) <-> (%g %g %g)\n",
+			eu, V3ARGS( v1->vg_p->coord ),
+			V3ARGS( v2->vg_p->coord ) );
+
+	/* now find the face containing edge between v1 nad v2
+	 with "left-pointing vector" having the most extreme slope */
 	if( bottommost )
 		extreme_slope = MAX_FASTF;
 	else
 		extreme_slope = (-MAX_FASTF);
 
-	eu = e_top->eu_p;
-	eu1 = eu;
-	done = 0;
-	while( !done )
+	for( RT_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )
 	{
+		vect_t left;
+		vect_t edge_dir;
+
+		NMG_CK_VERTEXUSE( vu );
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		eu1 = vu->up.eu_p;
+		NMG_CK_EDGEUSE( eu1 );
+
 		/* don't bother with anything but faces */
-		if( *eu1->up.magic_p == NMG_LOOPUSE_MAGIC )
+		if( *eu1->up.magic_p != NMG_LOOPUSE_MAGIC )
+			continue;
+
+		/* skip edges not between correct vertices */
+		if( eu1->eumate_p->vu_p->v_p != v2 )
+			continue;
+
+		lu = eu1->up.lu_p;
+		NMG_CK_LOOPUSE( lu );
+		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+			continue;
+
+		/* fu is a faceuse containing "eu1" */
+		fu = lu->up.fu_p;
+		NMG_CK_FACEUSE( fu );
+
+		/* skip faces from other shells and flagged faceuses */
+		if( fu->s_p != s || NMG_INDEX_TEST( flags, fu->f_p ) )
+			continue;
+
+		/* make a vector in the direction of "eu1" */
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "test EU is x%x (%g %g %g) <-> (%g %g %g)\n",
+				eu, V3ARGS( eu->vu_p->v_p->vg_p->coord ),
+				V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+
+		VSUB2( edge_dir , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
+
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "edge_dir is ( %g %g %g )\n", V3ARGS( edge_dir ) );
+
+		/* find the normal for this faceuse */
+		NMG_GET_FU_NORMAL( normal, fu );
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "fu normal is ( %g %g %g )\n" , V3ARGS( normal ) );
+
+		/* normal cross edge direction gives vector in face */
+		VCROSS( left , normal , edge_dir );
+
+		/* unitize to get slope */
+		VUNITIZE( left );
+		if( rt_g.NMG_debug & DEBUG_BASIC )
 		{
-			lu = eu1->up.lu_p;
-			NMG_CK_LOOPUSE( lu );
-			if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )
+			rt_log( "left vector is ( %g %g %g )\n", V3ARGS( left ) );
+			rt_log( "\textreme slope in %d direction is %g\n", dir, extreme_slope );
+		}
+
+		/* check against current most extreme slope */
+		if( bottommost )
+		{
+			if( left[dir] < extreme_slope )
 			{
-				vect_t left;
-				vect_t edge_dir;
-
-				/* fu is a faceuse containing "eu1" */
-				fu = lu->up.fu_p;
-				NMG_CK_FACEUSE( fu );
-
-				/* skip faces from other shells and flagged faceuses */
-				if( fu->s_p != s || NMG_INDEX_TEST( flags, fu->f_p ) )
-				{
-					/* go on to next radial face */
-					eu1 = eu1->eumate_p->radial_p;
-
-					/* check if we are back where we started */
-					if( eu1 == eu )
-						done = 1;
-
-					continue;
-				}
-
-				/* make a vector in the direction of "eu1" */
-				VSUB2( edge_dir , eu1->vu_p->v_p->vg_p->coord , eu1->eumate_p->vu_p->v_p->vg_p->coord );
-
-				/* find the normal for this faceuse */
-				NMG_GET_FU_NORMAL( normal, fu );
-
-				/* edge direction cross normal gives vector in face */
-				VCROSS( left , edge_dir , normal );
-
-				/* unitize to get slope */
-				VUNITIZE( left );
-
-				/* check against current most extreme slope */
-				if( bottommost )
-				{
-					if( left[dir] < extreme_slope )
-					{
-						extreme_slope = left[dir];
-						f_top = fu->f_p;
-					}
-				}
-				else
-				{
-					if( left[dir] > extreme_slope )
-					{
-						extreme_slope = left[dir];
-						f_top = fu->f_p;
-					}
-				}
+				extreme_slope = left[dir];
+				f_top = fu->f_p;
 			}
 		}
-		/* go on to next radial face */
-		eu1 = eu1->eumate_p->radial_p;
-
-		/* check if we are back where we started */
-		if( eu1 == eu )
-			done = 1;
+		else
+		{
+			if( left[dir] > extreme_slope )
+			{
+				if( rt_g.NMG_debug & DEBUG_BASIC )
+					rt_log( "new f_top\n" );
+				extreme_slope = left[dir];
+				f_top = fu->f_p;
+			}
+		}
 	}
 
 	if( f_top == (struct face *)NULL )
