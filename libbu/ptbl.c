@@ -42,7 +42,7 @@ CONST char	*str;
 {
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_init(%8x, len=%d, %s)\n", b, len, str);
-	RT_LIST_INIT(&b->l);
+	BU_LIST_INIT(&b->l);
 	b->l.magic = BU_PTBL_MAGIC;
 	if( len <= 0 )  len = 64;
 	b->blen = len;

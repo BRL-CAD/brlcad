@@ -48,7 +48,7 @@ int	nbits;
 	total_bytes = sizeof(struct bu_bitv) - 2*sizeof(bitv_t) + bv_bytes;
 
 	bv = (struct bu_bitv *)bu_malloc( total_bytes, "struct bu_bitv" );
-	RT_LIST_INIT( &bv->l );
+	BU_LIST_INIT( &bv->l );
 	bv->l.magic = BU_BITV_MAGIC;
 	bv->nbits = bv_bytes * 8;
 	return bv;

@@ -95,8 +95,8 @@ int	(**order_funcs)();
     tree -> rbt_current = bu_rb_null(tree);
     for (order = 0; order < nm_orders; ++order)
 	bu_rb_root(tree, order) = bu_rb_null(tree);
-    RT_LIST_INIT(&(tree -> rbt_nodes.l));
-    RT_LIST_INIT(&(tree -> rbt_packages.l));
+    BU_LIST_INIT(&(tree -> rbt_nodes.l));
+    BU_LIST_INIT(&(tree -> rbt_packages.l));
 
     /*
      *	Initialize the nil sentinel

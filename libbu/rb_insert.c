@@ -221,7 +221,7 @@ void		*data;
 			    "red-black list element");
     rblp -> rbl_magic = BU_RB_LIST_MAGIC;
     rblp -> rbl_package = package;
-    RT_LIST_PUSH(&(tree -> rbt_packages.l), rblp);
+    BU_LIST_PUSH(&(tree -> rbt_packages.l), rblp);
     package -> rbp_list_pos = rblp;
 
     /*
@@ -253,7 +253,7 @@ void		*data;
 			    "red-black list element");
     rblp -> rbl_magic = BU_RB_LIST_MAGIC;
     rblp -> rbl_node = node;
-    RT_LIST_PUSH(&(tree -> rbt_nodes.l), rblp);
+    BU_LIST_PUSH(&(tree -> rbt_nodes.l), rblp);
     node -> rbn_list_pos = rblp;
 
     /*
