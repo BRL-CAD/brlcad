@@ -115,10 +115,6 @@ struct pkg_switch pkgswitch[] = {
 	{ 0,		0,		(char *)0 }
 };
 
-#define MAXARGS 48
-char *cmd_args[MAXARGS];
-int numargs;
-
 struct pkg_conn *pcsrv;		/* PKG connection to server */
 char		*control_host;	/* name of host running controller */
 char		*tcp_port;	/* TCP port on control_host */
@@ -156,6 +152,7 @@ char **argv;
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
 	npsw = rt_avail_cpus();
 #ifdef CRAY
+	/* The Cray does not have any way to know how many CPUs it has */
 	npsw = MAX_PSW;
 #endif
 	if( npsw > 1 )  {
@@ -252,9 +249,10 @@ char **argv;
 	/* Send our version string */
 	if( pkg_send( MSG_VERSION,
 	    PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"MSG_VERSION error\n");
+		fprintf(stderr,"pkg_send MSG_VERSION error\n");
 		exit(1);
 	}
+	if( debug )  fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION );
 
 	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
 
@@ -347,7 +345,7 @@ char *buf;
 {
 	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
 	if( chdir( buf ) < 0 )  {
-		rt_log("chdir(%s) failure\n", buf);
+		rt_log("ph_cd: chdir(%s) failure\n", buf);
 		exit(1);
 	}
 	(void)free(buf);
@@ -372,14 +370,20 @@ ph_start(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
 {
+#define MAXARGS 48
+	char	*cmd_args[MAXARGS+1];
+	int	numargs;
 	struct rt_i *rtip;
 	register int i;
 
 	if( debug )  fprintf(stderr, "ph_start: %s\n", buf );
-	if( parse_cmd( buf ) > 0 )  {
+
+	if( (numargs = rt_split_cmd( cmd_args, MAXARGS, buf )) <= 0 )  {
+		/* No words in input */
 		(void)free(buf);
-		return;	/* was nop */
+		return;
 	}
+
 	if( numargs < 2 )  {
 		rt_log("ph_start:  no objects? %s\n", buf);
 		(void)free(buf);
@@ -398,7 +402,7 @@ char *buf;
 
 	/* Build directory of GED database */
 	if( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )  {
-		rt_log("rt:  rt_dirbuild(%s) failure\n", title_file);
+		rt_log("ph_start:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
@@ -412,7 +416,7 @@ char *buf;
 	/* In case it changed from startup time */
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
-		rt_log("rtsrv:  running with %d processors\n", npsw );
+		rt_log("ph_start:  running with %d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
 
@@ -428,8 +432,7 @@ char *buf;
 }
 
 void
-ph_options( pc, buf )
-register struct pkg_comm *pc;
+process_cmd( buf )
 char	*buf;
 {
 	register char	*cp;
@@ -437,8 +440,6 @@ char	*buf;
 	register char	*ep;
 	int		len;
 	extern struct command_tab rt_cmdtab[];	/* from do.c */
-
-	if( debug )  fprintf(stderr, "ph_options: %s\n", buf );
 
 	/* Parse the string */
 	len = strlen(buf);
@@ -451,11 +452,22 @@ char	*buf;
 		*cp++ = '\0';
 		/* Process this command */
 		if( rt_do_cmd( ap.a_rt_i, sp, rt_cmdtab ) < 0 )  {
-			rt_log("error on '%s'\n", sp );
+			rt_log("process_cmd: error on '%s'\n", sp );
 			exit(1);
 		}
 		sp = cp;
 	}
+}
+
+void
+ph_options( pc, buf )
+register struct pkg_comm *pc;
+char	*buf;
+{
+
+	if( debug )  fprintf(stderr, "ph_options: %s\n", buf );
+
+	process_cmd( buf );
 
 	if( width <= 0 || height <= 0 )  {
 		rt_log("ph_options:  width=%d, height=%d\n", width, height);
@@ -483,9 +495,8 @@ char *buf;
 	width = 0;
 	height = 0;
 
-	/* Simulate arrival of options message */
-	ph_options( pc, buf );
-	buf = (char *)0;
+	process_cmd( buf );
+	free(buf);
 
 	/*
 	 * initialize application -- it will allocate 1 line and
@@ -496,7 +507,7 @@ char *buf;
 	do_prep( rtip );
 
 	if( rtip->HeadSolid == SOLTAB_NULL )  {
-		rt_log("rt: No solids remain after prep.\n");
+		rt_log("ph_matrix: No solids remain after prep.\n");
 		exit(3);
 	}
 
@@ -571,7 +582,7 @@ char *buf;
 	len = 0;
 	cp = struct_export( &len, (char *)&info, desc_line_info );
 	if( cp == (char *)0 )  {
-		rt_log("struct_export failure\n");
+		rt_log("ph_lines: struct_export failure\n");
 		exit(98);
 	}
 
@@ -669,7 +680,7 @@ void
 rt_bomb(str)
 char *str;
 {
-	rt_log("rt:  Fatal Error %s, aborting\n", str);
+	rt_log("rtsrv:  Fatal Error %s, aborting\n", str);
 	abort();	/* should dump */
 	exit(12);
 }
@@ -681,10 +692,12 @@ char *buf;
 {
 	register int i;
 
+	if(debug) fprintf(stderr, "ph_unexp %s\n", buf);
+
 	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 		if( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
 	}
-	rt_log("rtsrv: unable to handle %s message: len %d",
+	rt_log("ph_unexp: unable to handle %s message: len %d",
 		pc->pkc_switch[i].pks_title, pc->pkc_len);
 	*buf = '*';
 	(void)free(buf);
@@ -713,46 +726,4 @@ char *buf;
 {
 	fprintf(stderr,"msg: %s\n", buf);
 	(void)free(buf);
-}
-
-/*
- *			P A R S E _ C M D
- */
-int
-parse_cmd( line )
-char *line;
-{
-	register char *lp;
-	register char *lp1;
-
-	numargs = 0;
-	lp = &line[0];
-	cmd_args[0] = &line[0];
-
-	if( *lp=='\0' || *lp == '\n' )
-		return(1);		/* NOP */
-
-	/* In case first character is not "white space" */
-	if( (*lp != ' ') && (*lp != '\t') && (*lp != '\0') )
-		numargs++;		/* holds # of args */
-
-	for( lp = &line[0]; *lp != '\0'; lp++ )  {
-		if( (*lp == ' ') || (*lp == '\t') || (*lp == '\n') )  {
-			*lp = '\0';
-			lp1 = lp + 1;
-			if( (*lp1 != ' ') && (*lp1 != '\t') &&
-			    (*lp1 != '\n') && (*lp1 != '\0') )  {
-				if( numargs >= MAXARGS )  {
-					rt_log("More than %d args, excess flushed\n", MAXARGS);
-					cmd_args[MAXARGS] = (char *)0;
-					return(0);
-				}
-				cmd_args[numargs++] = lp1;
-			}
-		}
-		/* Finally, a non-space char */
-	}
-	/* Null terminate pointer array */
-	cmd_args[numargs] = (char *)0;
-	return(0);
 }
