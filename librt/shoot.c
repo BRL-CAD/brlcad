@@ -397,8 +397,10 @@ struct shootray_status	*ssp;
 			rt_bomb("rt_advance_to_next_cell(): leaf not boxnode");
 
 		/* Ensure point is located in the indicated cell */
-		if( rt_g.debug && ! RT_POINT_IN_RPP( ssp->newray.r_pt,
+		if( (rt_g.debug & DEBUG_ADVANCE) &&
+		    ! RT_POINT_IN_RPP( ssp->newray.r_pt,
 		    cutp->bn.bn_min, cutp->bn.bn_max ) )  {
+		    	VPRINT( "newray.r_pt", ssp->newray.r_pt );
 		     	rt_pr_cut( cutp, 0 );
 			rt_bomb("rt_advance_to_next_cell(): point not in cell\n");
 		}
