@@ -781,7 +781,7 @@ set -S2 "/bin/sh"
 
 #	define	LIBRT_TIMER	timer42
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lipc
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
