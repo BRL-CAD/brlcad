@@ -2638,6 +2638,7 @@ extern int db5_put_color_table( struct db_i *dbip );
 extern int db5_update_ident( struct db_i *dbip, const char *title, double local2mm );
 extern int db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip);
 extern int db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp, struct db_i *dbip );
+extern int db5_update_attribute( const char *obj_name, const char *aname, const char *value, struct db_i *dbip );
 extern int db5_replace_attributes( struct directory *dp, struct bu_attribute_value_set *avsp, struct db_i *dbip );
 extern int db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs, const struct directory *dp );
 
