@@ -556,7 +556,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_ebm_uv,	rt_ebm_curve,	rt_ebm_class,	rt_ebm_free,
 		rt_ebm_plot,	rt_vstub,	rt_ebm_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_ebm_import5, rt_ebm_export5,
 		rt_ebm_import,	rt_ebm_export,	rt_ebm_ifree,
 		rt_ebm_describe,rt_ebm_xform,	rt_ebm_parse,
 		sizeof(struct rt_ebm_internal), RT_EBM_INTERNAL_MAGIC,

@@ -666,6 +666,152 @@ CONST struct db_i		*dbip;
 	return(0);
 }
 
+
+/*
+ *			R T _ E B M _ I M P O R T 5
+ *
+ *  Read in the information from the string solid record.
+ *  Then, as a service to the application, read in the bitmap
+ *  and set up some of the associated internal variables.
+ */
+int
+rt_ebm_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+CONST mat_t			mat;
+CONST struct db_i		*dbip;
+{
+	register struct rt_ebm_internal *eip;
+	struct bu_vls	str;
+	int		nbytes;
+	mat_t		tmat;
+	struct bu_mapped_file	*mp;
+
+	BU_CK_EXTERNAL( ep );
+	RT_CK_DB_INTERNAL( ip );
+
+	ip->idb_type = ID_EBM;
+	ip->idb_meth = &rt_functab[ID_EBM];
+	ip->idb_ptr = bu_calloc(1, sizeof(struct rt_ebm_internal), "rt_ebm_internal");
+	eip = (struct rt_ebm_internal *)ip->idb_ptr;
+	eip->magic = RT_EBM_INTERNAL_MAGIC;
+
+	/* Provide default orientation info */
+	bn_mat_idn( eip->mat );
+
+	bu_vls_init( &str );
+	bu_vls_strcpy( &str, ep->ext_buf );
+	if( bu_struct_parse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
+		bu_vls_free( &str );
+		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		ip->idb_type = ID_NULL;
+		ip->idb_ptr = (genptr_t)NULL;
+		return -2;
+	}
+	bu_vls_free( &str );
+
+	/* Check for reasonable values */
+	if( eip->file[0] == '\0' || eip->xdim < 1 ||
+	    eip->ydim < 1 || eip->mat[15] <= 0.0 ||
+	    eip->tallness <= 0.0 )  {
+	    	bu_struct_print( "Unreasonable EBM parameters", rt_ebm_parse,
+	    		(char *)eip );
+	    	bu_free( (char *)eip , "rt_ebm_import: eip" );
+	    	ip->idb_type = ID_NULL;
+	    	ip->idb_ptr = (genptr_t)NULL;
+		return -1;
+	}
+
+	/* Apply any modeling transforms to get final matrix */
+	bn_mat_mul( tmat, mat, eip->mat );
+	bn_mat_copy( eip->mat, tmat );
+
+	/* Get bit map from .bw(5) file */
+	if( !(mp = bu_open_mapped_file_with_path( dbip->dbi_filepath, eip->file, "ebm" )) )  {
+		bu_log("rt_ebm_import() unable to open '%s'\n", eip->file);
+		bu_free( (char *)eip , "rt_ebm_import: eip" );
+fail:
+		ip->idb_type = ID_NULL;
+		ip->idb_ptr = (genptr_t)NULL;
+		return -1;
+	}
+	eip->mp = mp;
+	if( mp->buflen < eip->xdim*eip->ydim )  {
+		bu_log("rt_ebm_import() file '%s' is too short %d < %d\n",
+			eip->file, mp->buflen, eip->xdim*eip->ydim );
+		goto fail;
+	}
+
+	nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
+
+	/* If first use of this file, prepare in-memory buffer */
+	if( !mp->apbuf )  {
+		register int	y;
+		unsigned char	*cp;
+
+		/* Prevent a multi-processor race */
+		bu_semaphore_acquire(RT_SEM_MODEL);
+		if( mp->apbuf )  {
+			/* someone else beat us, nothing more to do */
+			bu_semaphore_release(RT_SEM_MODEL);
+			return 0;
+		}
+		mp->apbuf = (genptr_t)bu_calloc(
+			1, nbytes, "rt_ebm_import bitmap" );
+		mp->apbuflen = nbytes;
+
+		bu_semaphore_release(RT_SEM_MODEL);
+
+		/* Because of in-memory padding, read each scanline separately */
+		cp = (unsigned char *)mp->buf;
+		for( y=0; y < eip->ydim; y++ )  {
+			/* BIT() addresses into mp->apbuf */
+			bcopy( cp, &BIT( eip, 0, y), eip->xdim );
+			cp += eip->xdim;
+		}
+	}
+	return( 0 );
+}
+
+/*
+ *			R T _ E B M _ E X P O R T 5
+ *
+ *  The name will be added by the caller.
+ */
+int
+rt_ebm_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_ebm_internal	*eip;
+	struct rt_ebm_internal	ebm;	/* scaled version */
+	struct bu_vls		str;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_EBM )  return(-1);
+	eip = (struct rt_ebm_internal *)ip->idb_ptr;
+	RT_EBM_CK_MAGIC(eip);
+	ebm = *eip;			/* struct copy */
+
+	/* Apply scale factor */
+	ebm.mat[15] /= local2mm;
+
+	BU_CK_EXTERNAL(ep);
+
+	bu_vls_init( &str );
+	bu_vls_struct_print( &str, rt_ebm_parse, (char *)&ebm );
+
+	ep->ext_nbytes = bu_vls_strlen( &str );
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ebm external");
+
+	strcpy( ep->ext_buf , bu_vls_addr(&str) );
+	bu_vls_free( &str );
+
+	return(0);
+}
+
 /*
  *			R T _ E B M _ D E S C R I B E
  *
