@@ -318,6 +318,11 @@ struct bu_mapped_file	*mp;
 	if( bu_debug&BU_DEBUG_MAPPED_FILE )
 		bu_pr_mapped_file("close:uses--", mp);
 
+	if (! mp) {
+	    bu_log("bu_close_mapped_file() called with null pointer\n");
+	    return;
+	}
+
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	--mp->uses;
 	bu_semaphore_release(BU_SEM_MAPPEDFILE);
