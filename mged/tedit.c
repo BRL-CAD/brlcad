@@ -753,7 +753,14 @@ readsolid()
 	return( ret_val );
 }
 
-/* Run $EDITOR on temp file */
+/* Run $EDITOR on temp file 
+ * 
+ * BUGS -- right now we only check at compile time whether or not to pop up an
+ *         X window to display into (for editors that do not open their own
+ *         window like vi or jove).  If we have X support, we automatically use
+ *         xterm (regardless of whether the user is running mged in console
+ *         mode!)
+ */
 int
 editit(const char *file)
 {
@@ -776,23 +783,34 @@ editit(const char *file)
 		register int i;
 		/* Don't call bu_log() here in the child! */
 
-#if 0
-		for( i=3; i < 20; i++ )
-#else
-		for( i=0; i < 20; i++ )
-#endif
+		/* XXX do not want to close all io if we are in console mode
+		 * and the editor needs to use stdout...
+		 */
+#if defined(DM_X) || defined(DM_OGL)
+		/* close all stdout/stderr (XXX except do not close 0==stdin) */
+		for( i=1; i < 20; i++ )
 			(void)close(i);
+#else
+		/* leave stdin/out/err alone */
+		for( i=3; i < 20; i++ )
+			(void)close(i);
+#endif
 
 		(void)signal( SIGINT, SIG_DFL );
 		(void)signal( SIGQUIT, SIG_DFL );
-#if 0
-		(void)execlp(ed, ed, file, 0);
-#else
+
+		/* if we have x support, we pop open the editor in an xterm.
+		 * otherwise, we use whatever the user gave as EDITOR
+		 */
+#if defined(DM_X) || defined(DM_OGL)
 		(void)execlp("xterm", "xterm", "-e", ed, file, (char *)0);
+#else
+		(void)execlp(ed, ed, file, 0);
 #endif
 		perror(ed);
 		exit(1);
 	}
+
 
 	while ((xpid = wait(&stat)) >= 0)
 		if (xpid == pid)
