@@ -49,12 +49,9 @@ PRODUCTS::	EXTRA_OBJ OBJ
 /* Shared library support.  "EXTRA_SETUP" increments version number. */
 /* Can't list SHARED_PRODUCT in 'rm' command, or will get wrong version number.
  * (Cake won't re-run the LIBVERS shell script)
+ * If non-null, LIBVERS will start with a leading dot.
  */
-#if defined(__CAKE__irix5)
-#	define	SHARED_PRODUCT	PRODUCTS
-#else
 #	define	SHARED_PRODUCT	PRODUCTS''LIBVERS
-#endif
 PRODUCTS&::	EXTRA_OBJ OBJ
 	rm -f PRODUCTS*; EXTRA_SETUP
 	BUILD_LIBRARY SHARED_PRODUCT OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY
