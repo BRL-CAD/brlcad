@@ -575,7 +575,7 @@ struct region *regionp;
 		if( inuse++ == 0 )
 			first_tlp = tlp;
 	}
-	if( first_tlp->tl_op != OP_UNION )
+	if( debug & DEBUG_REGIONS && first_tlp->tl_op != OP_UNION )
 		rtlog("Warning: %s: non-union first operation ignored\n",
 			regionp->reg_name);
 
