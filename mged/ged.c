@@ -226,15 +226,7 @@ char **argv;
 
 	/* If this is an argv[] invocation, do it now */
 	if( argc > 2 )  {
-		argc -= 2;
-		argv += 2;
-		numargs = 0;
-		while( argc > 0 )  {
-			cmd_args[numargs++] = argv[0];
-			argc--; argv++;
-		}
-		cmd_args[numargs] = (char *)0;
-		mged_cmd();
+		mged_cmd( argc-2, argv+2 );
 		f_quit();
 		/* NOTREACHED */
 	}
