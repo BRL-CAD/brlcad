@@ -39,12 +39,12 @@ dnl
 dnl Features of the GNU Autotools that would require an increase in
 dnl the minimum version requirement are highly discouraged.  Likewise
 dnl discouraged is rolling back support for versions released prior
-dnl to autoconf 2.50.
+dnl to the AC_PREREQ version shown below.
 dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
-AC_PREREQ(2.50)
+AC_PREREQ(2.57)
 
 AC_INIT(BRL-CAD, 7.0, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
@@ -103,9 +103,9 @@ if test -d $srcdir/CVS ; then
 	AM_INIT_AUTOMAKE
 else
 	AC_MSG_RESULT(it should not)
-	AM_INIT_AUTOMAKE(no-dependencies)
+	AM_INIT_AUTOMAKE([no-dependencies])
 fi
-AM_CONFIG_HEADER(include/config.h)
+AM_CONFIG_HEADER([include/config.h])
 
 # a secondary automated automake may blow away COPYING & INSTALL , so restore them
 for file in COPYING INSTALL ; do
@@ -629,7 +629,9 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_YACC
 # XXX libtool shouldn't be generated until after LD is set
-AC_PROG_LIBTOOL
+# dnl went poof in libtool 1.9 -- AC_PROG_LIBTOOL
+# LT_INIT
+AC_PATH_PROG(LIBTOOL, libtool)
 AC_PROG_RANLIB
 AM_PROG_LEX
 
