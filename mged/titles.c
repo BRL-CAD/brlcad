@@ -243,6 +243,7 @@ struct bu_vls *overlay_vls;
 	struct bu_vls   vls;
 	typedef char    c_buf[80];
 	auto c_buf      cent_x, cent_y, cent_z, size, ang_x, ang_y, ang_z;
+	int             ss_line_not_drawn=1; /* true if the second status line has not been drawn */
 
 	bu_vls_init(&vls);
 	
@@ -276,12 +277,12 @@ struct bu_vls *overlay_vls;
 	sprintf(cent_y, "%.3f", -toViewcenter[MDY]*base2local);
 	sprintf(cent_z, "%.3f", -toViewcenter[MDZ]*base2local);
 	bu_vls_printf(&vls, "%s %s %s", cent_x, cent_y, cent_z);
-	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->center_name),
+	Tcl_SetVar(interp, bu_vls_addr(&center_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 
 	sprintf(size, "%.3f", VIEWSIZE*base2local);
-	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->size_name),
+	Tcl_SetVar(interp, bu_vls_addr(&size_name),
 		    size, TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 
@@ -293,7 +294,7 @@ struct bu_vls *overlay_vls;
 		      curr_dm_list->s_info->azimuth,
 		      curr_dm_list->s_info->elevation,
 		      curr_dm_list->s_info->twist);
-	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->aet_name),
+	Tcl_SetVar(interp, bu_vls_addr(&aet_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 
@@ -302,13 +303,15 @@ struct bu_vls *overlay_vls;
 	sprintf(ang_z, "%.2f", rate_rotate[Z]);
 
 	bu_vls_printf(&vls, "ang(%s %s %s)", ang_x, ang_y, ang_z);
-	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->ang_name),
+	Tcl_SetVar(interp, bu_vls_addr(&ang_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 
+#if 0
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc", "", TCL_GLOBAL_ONLY);
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint", "", TCL_GLOBAL_ONLY);
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps", "", TCL_GLOBAL_ONLY);
+#endif
 
 	dmp->dm_setLineAttr(dmp, 1, 0); /* linewidth - 1, not dashed */
 
@@ -430,6 +433,8 @@ if(mged_variables.faceplate){
 	dmp->dm_setColor(dmp, DM_WHITE, 1);
 	dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1, 0 );
 	bu_vls_trunc(&vls, 0);
+} /* if faceplate !0 */
+
 	/*
 	 * Second status line
 	 */
@@ -441,7 +446,6 @@ if(mged_variables.faceplate){
 	 *
 	 * This way the adc info will be displayed during editing
 	 */
-} /* if faceplate !0 */
 
 	if( mged_variables.adcflag ) {
 		/* Angle/Distance cursor */
@@ -463,12 +467,20 @@ if(mged_variables.faceplate){
 			pt3[X]*base2local, pt3[Y]*base2local,
 			(curs_x / 2047.0) *Viewscale*base2local,
 			(curs_y / 2047.0) *Viewscale*base2local );
-		dmp->dm_setColor(dmp, DM_YELLOW, 1);
-		dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-			      TITLE_YBASE + TEXT1_DY, 1, 0 );
-		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc",
+		if(mged_variables.faceplate){
+		  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+					TITLE_YBASE + TEXT1_DY, 1, 0 );
+		}
+		Tcl_SetVar(interp, bu_vls_addr(&adc_name),
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
-	} else if( state == ST_S_EDIT || state == ST_O_EDIT )  {
+		ss_line_not_drawn = 0;
+		bu_vls_trunc(&vls, 0);
+	}else{
+	  Tcl_SetVar(interp, bu_vls_addr(&adc_name), "", TCL_GLOBAL_ONLY);
+	}
+
+	if( state == ST_S_EDIT || state == ST_O_EDIT )  {
 	        bu_vls_printf( &vls,
 			" Keypoint: %s %s: (%g, %g, %g)",
 			rt_functab[es_int.idb_type].ft_name+3,	/* Skip ID_ */
@@ -476,31 +488,44 @@ if(mged_variables.faceplate){
 			es_keypoint[X] * base2local,
 			es_keypoint[Y] * base2local,
 			es_keypoint[Z] * base2local);
-		dmp->dm_setColor(dmp, DM_YELLOW, 1);
-		dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, 0 );
+		if(mged_variables.faceplate && ss_line_not_drawn){
+		  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+					TITLE_YBASE + TEXT1_DY, 1, 0 );
+		  ss_line_not_drawn = 0;
+		}
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint",
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
-	} else if( illump != SOLID_NULL )  {
-		/* Illuminated path */
-	        bu_vls_strcat(&vls, " Path: ");
-		for( i=0; i <= illump->s_last; i++ )  {
-			if( i == ipathpos  &&
-			    (state == ST_O_PATH || state == ST_O_EDIT) )
-				bu_vls_strcat( &vls, "/__MATRIX__" );
-			bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
-		}
-		dmp->dm_setColor(dmp, DM_YELLOW, 1);
-		dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, 0 );
-	} else {
-		bu_vls_printf(&vls, "%.2f fps", 1/frametime );
-		dmp->dm_setColor(dmp, DM_YELLOW, 1);
-		dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, 0 );
-		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps",
-			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
+		bu_vls_trunc(&vls, 0);
+	}else{
+	  Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint", "", TCL_GLOBAL_ONLY);
 	}
+
+	if( illump != SOLID_NULL )  {
+		if(mged_variables.faceplate && ss_line_not_drawn){
+		  /* Illuminated path */
+		  bu_vls_strcat(&vls, " Path: ");
+		  for( i=0; i <= illump->s_last; i++ )  {
+		    if( i == ipathpos  &&
+			(state == ST_O_PATH || state == ST_O_EDIT) )
+		      bu_vls_strcat( &vls, "/__MATRIX__" );
+		    bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
+		  }
+		  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+					TITLE_YBASE + TEXT1_DY, 1, 0 );
+		  bu_vls_trunc(&vls, 0);
+		}
+	}
+
+	bu_vls_printf(&vls, "%.2f fps", 1/frametime );
+	if(mged_variables.faceplate && ss_line_not_drawn){
+	  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+	  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+				TITLE_YBASE + TEXT1_DY, 1, 0 );
+	}
+	Tcl_SetVar(interp, bu_vls_addr(&fps_name),
+		    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
 	bu_vls_free(&vls);
 }
