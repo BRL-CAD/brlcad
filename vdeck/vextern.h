@@ -69,8 +69,4 @@ extern jmp_buf		env;
 #define EPSILON		0.0001
 #define CONV_EPSILON	0.01
 
-#ifdef BSD
-extern char *index(), *rindex();
-#endif
-
 extern struct db_i	*dbip;		/* Database instance ptr */
