@@ -783,7 +783,7 @@ char	**argv;
 
 	base = basename( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
-	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
+	(void)fprintf(fp, "#!/bin/sh\nrt -M -v60 ");
 	if( mged_variables->mv_perspective > 0 )
 		(void)fprintf(fp, "-p%g", mged_variables->mv_perspective);
 	for( i=2; i < argc; i++ )
