@@ -75,38 +75,45 @@
 #define RT_NURB_IS_PT_RATIONAL(pt)		(pt & 0x1)
 #define RT_NURB_STRIDE(pt)		(RT_NURB_EXTRACT_COORDS(pt) * sizeof( fastf_t))
 
+/* Definition of a knot vector */
+
 struct knot_vector {
-	int	k_size;			/* knot vector size */
-	fastf_t * knots;		/* pointer to knot vector  */
+	int		magic;
+	int		k_size;		/* knot vector size */
+	fastf_t		* knots;	/* pointer to knot vector  */
 };
 
-struct c_mesh {
-	int	c_size;			/* number of ctl points */
-	int	pt_type;		/* curve point type */
-	fastf_t * ctl_points;  		/* array [c_size] */
-};
+#define RT_KNOT_VECTOR_MAGIC	0x6b6e6f74
 
-struct s_mesh {
-	int	s_size[2];		/* mesh size, u,v */
-	int	pt_type;		/* surface point type */
-	fastf_t * ctl_points; 		/* array [size[0]*size[1]] */
-};
+/* ----- The actual data structures for curves and surfaces ----- */
 
 struct cnurb {
+	int		magic;
 	struct cnurb	* next;		/* next curve in list */
 	int		order;		/* Curve Order */
 	struct knot_vector knot;	/* curve knot vector */
-	struct c_mesh	mesh;		/* curve control polygon */
+	/* curve control polygon */
+	int		c_size;		/* number of ctl points */
+	int		pt_type;	/* curve point type */
+	fastf_t		* ctl_points;	/* array [c_size] */
 };
 
+#define RT_CNURB_MAGIC	0x636e7262
+
 struct snurb {
+	int		magic;
 	struct snurb	* next;		/* next surface */
 	int		order[2];	/* surface order [0] = u, [1] = v */
 	int		dir;		/* last direction of refinement */
 	struct knot_vector u_knots;	/* surface knot vectors */
 	struct knot_vector v_knots;	/* surface knot vectors */
-	struct s_mesh	mesh;		/* surface control points */
+	/* surface control points */
+	int		s_size[2];	/* mesh size, u,v */
+	int		pt_type;	/* surface point type */
+	fastf_t		* ctl_points; 	/* array [size[0]*size[1]] */
 };
+
+#define RT_SNURB_MAGIC	0x736e7262
 
 /* ----- Internal structures ----- */
 
@@ -194,6 +201,7 @@ RT_EXTERN(fastf_t *rt_nurb_s_norm, (struct snurb *srf, fastf_t u, fastf_t v));
 RT_EXTERN(struct curvature *rt_nurb_curvature, (struct snurb *srf, fastf_t u, fastf_t v));
 
 /* nurb_plot.c */
+RT_EXTERN(void rt_nurb_s_plot, (struct snurb *srf) );
 
 /* nurb_poly.c */
 RT_EXTERN(struct rt_nurb_poly *rt_nurb_to_poly, (struct snurb *srf));
@@ -239,7 +247,7 @@ RT_EXTERN(void rt_nurb_free_cnurb, (struct cnurb * crv));
 RT_EXTERN(void rt_nurb_c_print, (struct cnurb *crv));
 RT_EXTERN(void rt_nurb_s_print, (char *c, struct snurb *srf));
 RT_EXTERN(void rt_nurb_pr_kv, (struct knot_vector *kv));
-RT_EXTERN(void rt_nurb_pr_mesh, (struct s_mesh *m));
+RT_EXTERN(void rt_nurb_pr_mesh, (struct snurb *m));
 RT_EXTERN(void rt_nurb_print_pt_type, (int c));
 
 /* nurb_xsplit.c */
