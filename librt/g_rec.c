@@ -130,8 +130,8 @@ static char RCSrec[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./debug.h"
 
 struct rec_specific {
@@ -144,13 +144,6 @@ struct rec_specific {
 	fastf_t	rec_iAsq;	/* 1/MAGSQ(A) */
 	fastf_t	rec_iBsq;	/* 1/MAGSQ(B) */
 };
-
-#define REC_V	&vec[0*ELEMENTS_PER_VECT]
-#define REC_H	&vec[1*ELEMENTS_PER_VECT]
-#define REC_A	&vec[2*ELEMENTS_PER_VECT]
-#define REC_B	&vec[3*ELEMENTS_PER_VECT]
-#define REC_C	&vec[4*ELEMENTS_PER_VECT]
-#define REC_D	&vec[5*ELEMENTS_PER_VECT]
 
 /*
  *  			R E C _ P R E P
@@ -169,12 +162,14 @@ struct rec_specific {
  *  	stp->st_specific for use by rt_rec_shot().
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
+/* NEW_IF already */
 int
-rt_rec_prep( stp, rp, rtip )
+rt_rec_prep( stp, ip, rtip )
 struct soltab		*stp;
-union record		*rp;
+struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
+	struct tgc_internal	*tip;
 	register struct rec_specific *rec;
 	static double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
 	static double	mag_h, mag_a, mag_b, mag_c, mag_d;
@@ -185,23 +180,16 @@ struct rt_i		*rtip;
 	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
 	static vect_t	work;
 	static fastf_t	f;
-	fastf_t		vec[3*6];
 
-	rt_fastf_float( vec, rp->s.s_values, 6 );
-
-	/* Apply rotation to Hv, A,B,C,D */
-	MAT4X3VEC( Hv, stp->st_pathmat, REC_H );
-	MAT4X3VEC( A, stp->st_pathmat, REC_A );
-	MAT4X3VEC( B, stp->st_pathmat, REC_B );
-	MAT4X3VEC( C, stp->st_pathmat, REC_C );
-	MAT4X3VEC( D, stp->st_pathmat, REC_D );
+	tip = (struct tgc_internal *)ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D| */
-	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );
-	mag_a = sqrt( magsq_a = MAGSQ( A ) );
-	mag_b = sqrt( magsq_b = MAGSQ( B ) );
-	mag_c = sqrt( magsq_c = MAGSQ( C ) );
-	mag_d = sqrt( magsq_d = MAGSQ( D ) );
+	mag_h = sqrt( magsq_h = MAGSQ( tip->h ) );
+	mag_a = sqrt( magsq_a = MAGSQ( tip->a ) );
+	mag_b = sqrt( magsq_b = MAGSQ( tip->b ) );
+	mag_c = sqrt( magsq_c = MAGSQ( tip->c ) );
+	mag_d = sqrt( magsq_d = MAGSQ( tip->d ) );
 
 	/* Check for |H| > 0, |A| > 0, |B| > 0 */
 	if( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_a, RT_LEN_TOL)
@@ -210,27 +198,27 @@ struct rt_i		*rtip;
 	}
 
 	/* Make sure that A == C, B == D */
-	VSUB2( work, A, C );
+	VSUB2( work, tip->a, tip->c );
 	f = MAGSQ( work );
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		return(1);		/* BAD, !cylinder */
 	}
-	VSUB2( work, B, D );
+	VSUB2( work, tip->b, tip->d );
 	f = MAGSQ( work );
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		return(1);		/* BAD, !cylinder */
 	}
 
 	/* Check for A.B == 0, H.A == 0 and H.B == 0 */
-	f = VDOT( A, B ) / (mag_a * mag_b);
+	f = VDOT( tip->a, tip->b ) / (mag_a * mag_b);
 	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
-	f = VDOT( Hv, A ) / (mag_h * mag_a);
+	f = VDOT( tip->h, tip->a ) / (mag_h * mag_a);
 	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
-	f = VDOT( Hv, B ) / (mag_h * mag_b);
+	f = VDOT( tip->h, tip->b ) / (mag_h * mag_b);
 	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
@@ -243,15 +231,12 @@ struct rt_i		*rtip;
 	GETSTRUCT( rec, rec_specific );
 	stp->st_specific = (genptr_t)rec;
 
-	VMOVE( rec->rec_Hunit, Hv );
+	VMOVE( rec->rec_Hunit, tip->h );
 	VUNITIZE( rec->rec_Hunit );
 
-	{
-		register fastf_t *p = REC_V;
-		MAT4X3PNT( rec->rec_V, stp->st_pathmat, p );
-	}
-	VMOVE( rec->rec_A, REC_A );
-	VMOVE( rec->rec_B, REC_B );
+	VMOVE( rec->rec_V, tip->v );
+	VMOVE( rec->rec_A, tip->a );
+	VMOVE( rec->rec_B, tip->b );
 	rec->rec_iAsq = 1.0/magsq_a;
 	rec->rec_iBsq = 1.0/magsq_b;
 
@@ -260,11 +245,11 @@ struct rt_i		*rtip;
 	/* Compute R and Rinv matrices */
 	mat_idn( R );
 	f = 1.0/mag_a;
-	VSCALE( &R[0], A, f );
+	VSCALE( &R[0], tip->a, f );
 	f = 1.0/mag_b;
-	VSCALE( &R[4], B, f );
+	VSCALE( &R[4], tip->b, f );
 	f = 1.0/mag_h;
-	VSCALE( &R[8], Hv, f );
+	VSCALE( &R[8], tip->h, f );
 	mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute S */
@@ -792,3 +777,4 @@ rt_rec_class()
 }
 
 /* plot and tess are handled by g_tgc.c */
+/* import, export, ifree, and describe are also handled by g_tgc.c */
