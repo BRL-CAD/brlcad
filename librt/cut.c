@@ -310,7 +310,11 @@ int				 just_collect_info, depth;
 		nu_ncells = rtip->rti_nugrid_dimlimit;
 	nu_sol_per_cell = (fromp->bn_len + nu_ncells - 1) / nu_ncells;
 	nu_max_ncells = 2*nu_ncells + 8;
-	fake_depth = 0;/*depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));*/
+#if 1
+	fake_depth = depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));
+#else
+	fake_depth = depth;
+#endif
 
 	if( rt_g.debug&DEBUG_CUT )
 		bu_log(
