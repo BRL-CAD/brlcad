@@ -163,9 +163,12 @@ echo
 case ${TARGET} in
 
 benchmark)
-	sh $0 relink
+	if test x$NFS = x1
+	then	sh $0 relink
+	fi
 	(cd ${DIRPRE}libsysv${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libmalloc${DIRSUF};  cake -k)
+	(cd ${DIRPRE}bench${DIRSUF};  cake -k)
 	(cd ${DIRPRE}conv${DIRSUF}; cake -k)
 	(cd ${DIRPRE}db${DIRSUF}; cake -k)
 	if test ${HAS_TCP} = 1
@@ -231,7 +234,7 @@ mkdir|relink)
 		echo "${TARGET}:  unnecessary in non-NFS environment"
 		exit 0;		# Nothing to do
 	fi
-	if test ${HAS_SYMLINKS} = 1
+	if test x${HAS_SYMLINKS} = x1
 	then	lnarg="-s"
 	else	lnarg=""
 	fi
