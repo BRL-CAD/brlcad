@@ -259,30 +259,6 @@ case "${MACHINE}" in
 		;;
 esac
 
-# If this system has good vendor-provided libraries, use them.
-# Remove them from the list of targets to be compiled.
-# Two common sets:
-#	libtcl, libtk
-#	libpng, libz
-# Needs to be coordinated with setting of LIBTCL_DIR LIBTK_DIR LIBZ_DIR
-# in architecture-specific entry in Cakefile.defs
-case "${MACHINE}" in
-	li|fbsd)
-		BDIRS=`echo ${BDIRS} | \
-			sed -e 's/libz//' -e 's/libpng//'`
-		;;
-	pmac)
-		BDIRS=`echo ${BDIRS} | \
-			sed -e 's/libz//'`
-		;;
-	7d|m4i65)
-		# Be sure to look in /usr/lib64, not /usr/lib!
-		BDIRS=`echo ${BDIRS} | \
-		    sed -e 's/libz//' `
-		;;
-esac
-
-
 if test X"$1" = X""
 then	TARGET=all
 else	TARGET=$1; shift
