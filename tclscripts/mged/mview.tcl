@@ -2,7 +2,9 @@
 
 check_externs "_mged_attach"
 
-proc openmv { w wc dtype S } {
+proc openmv { id w wc dpy dtype S } {
+    global win_to_id
+
     frame $wc.u
     frame $wc.l
     frame $wc.u.l -relief sunken -borderwidth 2
@@ -10,10 +12,15 @@ proc openmv { w wc dtype S } {
     frame $wc.l.l -relief sunken -borderwidth 2
     frame $wc.l.r -relief sunken -borderwidth 2
 
-    attach -t 0 -S $S -n $w.ul $dtype
-    attach -t 0 -S $S -n $w.ur $dtype
-    attach -t 0 -S $S -n $w.ll $dtype
-    attach -t 0 -S $S -n $w.lr $dtype
+    attach -d $dpy -t 0 -S $S -n $w.ul $dtype
+    attach -d $dpy -t 0 -S $S -n $w.ur $dtype
+    attach -d $dpy -t 0 -S $S -n $w.ll $dtype
+    attach -d $dpy -t 0 -S $S -n $w.lr $dtype
+
+    set win_to_id($w.ul) $id
+    set win_to_id($w.ur) $id
+    set win_to_id($w.ll) $id
+    set win_to_id($w.lr) $id
 
     pack $w.ul -in $wc.u.l -expand 1 -fill both
     pack $w.ur -in $wc.u.r -expand 1 -fill both
@@ -58,8 +65,8 @@ proc closemv { id } {
 
 proc setupmv { id } {
     global mged_top
-    global mged_dmc
     global faceplate
+    global mged_faceplate
 
     winset $mged_top($id).ul
     press top
