@@ -2230,10 +2230,11 @@ out:
 }
 
 static int
-find_loop_to_cut( index1, index2, prior_start, prior_end, next_start, next_end, rs )
+find_loop_to_cut( index1, index2, prior_start, prior_end, next_start, next_end, mid_pt, rs )
 int *index1,*index2;
 int prior_start, prior_end;
 int next_start, next_end;
+point_t mid_pt;
 struct nmg_ray_state *rs;
 {
 	struct loopuse *lu1,*lu2;
@@ -2241,7 +2242,6 @@ struct nmg_ray_state *rs;
 	struct loopuse *match_lu=(struct loopuse *)NULL;
 	struct loopuse *prior_lu,*next_lu;
 	struct vertexuse *prior_vu, *next_vu;
-	int class;
 	int count;
 	int i,j;
 	int done=0;
@@ -2257,20 +2257,28 @@ struct nmg_ray_state *rs;
 		done = 1;
 		for( i=prior_start ; i < prior_end ; i++ )
 		{
+			int class_pt;
 
 			prior_lu = nmg_find_lu_of_vu( rs->vu[i] );
+			class_pt = NMG_CLASS_Unknown;
 			for( j=next_start ; j < next_end ; j++ )
 			{
 				next_lu = nmg_find_lu_of_vu( rs->vu[j] );
 				if( prior_lu == next_lu )
 				{
+					int class_lu;
+
 					if( !match_lu )
 					{
 						match_lu = next_lu;
 						continue;
 					}
-					class = nmg_classify_lu_lu( next_lu, match_lu, rs->tol );
-					if( class == NMG_CLASS_AinB )
+					if( class_pt == NMG_CLASS_Unknown )
+						class_pt = nmg_class_pt_lu_except( mid_pt,
+							match_lu, (struct edge *)NULL, rs->tol );
+
+					class_lu = nmg_classify_lu_lu( next_lu, match_lu, rs->tol );
+					if( class_lu == class_pt )
 					{
 						match_lu = next_lu;
 						done = 0;
@@ -2737,6 +2745,17 @@ struct nmg_ray_state *rs;
 		next_end = next_start;
 		while( ++next_end < rs->nvu && rs->vu[next_end]->v_p == vu2->v_p );
 
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+		{
+			rt_log( "rs->fu1 = x%x\n", rs->fu1 );
+			rt_log( "rs->fu2 = x%x\n", rs->fu2 );
+			rt_log( "prior_start=%d. prior_end=%d, next_start=%d, next_end=%d\n", 
+				prior_start, prior_end, next_start, next_end );
+			rt_log( "%d vertices on intersect line\n", rs->nvu );
+			for( cur=0 ; cur<rs->nvu ; cur++ )
+			rt_log( "\tvu=x%x, v=x%x, lu=x%x\n", rs->vu[cur], rs->vu[cur]->v_p, nmg_find_lu_of_vu( rs->vu[cur] ) );
+		}
+
 		/* look for an EU in this face that connects vu1 and vu2 */
 		if( nmg_find_eu_in_face( vu1->v_p, vu2->v_p, rs->fu1,
 			(struct edgeuse *)NULL, 0 ) )
@@ -2779,7 +2798,8 @@ struct nmg_ray_state *rs;
 		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
 			(struct edgeuse *)NULL, 0);
 
-		if( find_loop_to_cut( &index1, &index2, prior_start, prior_end, next_start, next_end, rs ) )
+		if( find_loop_to_cut( &index1, &index2, prior_start, prior_end,
+			next_start, next_end, mid_pt, rs ) )
 		{
 			vu1 = rs->vu[index1];
 			vu2 = rs->vu[index2];
@@ -2976,6 +2996,7 @@ struct nmg_ray_state *rs;
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 			{
 				rt_log( "\t join 2 loops\n" );
+				rt_log( "\t\tvu2 (x%x) replaced with new_vu2 x%x\n", vu2, new_vu2 );
 				nmg_pr_fu_briefly( rs->fu1, "" );
 			}
 
@@ -2986,16 +3007,10 @@ struct nmg_ray_state *rs;
 
 			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
 
-			/* vu2 has been killed, replace it in rs->vu[] */
-
-			for( i=next_start ; i<next_end ; i++ )
-			{
-				if( rs->vu[i] == vu2 )
-				{
-					rs->vu[i] = new_vu2;
-					break;
-				}
-			}
+			/* a new use of vu2->v_p has been created add it to the list by
+			 * overwriting a use of the previous vertex
+			 */
+			rs->vu[prior_end - 1] = new_vu2;
 
 			continue;
 		}
@@ -3402,10 +3417,12 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACEUSE(fu2);
 
 	/* Perhaps this should only happen when debugging is on? */
-	if( b1->end <= 0 || b2->end <= 0 )  {
+	if( rt_g.NMG_debug&DEBUG_FCUT && ( b1->end <= 0 || b2->end <= 0) )  {
 		rt_log("nmg_face_cutjoin(fu1=x%x, fu2=x%x): WARNING empty list %d %d\n",
 			fu1, fu2, b1->end, b2->end );
+#if 0
 		return eg;
+#endif
 	}
 
 top:
