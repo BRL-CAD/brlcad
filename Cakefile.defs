@@ -221,7 +221,6 @@ set -S2 "/bin/sh"
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	LGT_CONFIG	GFLAG
-#	define	LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	TCL_DEFS OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1 -DTK_NO_SECURITY=1
 
@@ -289,7 +288,6 @@ set -S2 "/bin/sh"
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -Wl,-woff,1048
 #	define	LGT_CONFIG	GFLAG
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
@@ -354,7 +352,6 @@ set -S2 "/bin/sh"
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=62
 #	define	LGT_CONFIG	GFLAG
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
@@ -423,7 +420,6 @@ set -S2 "/bin/sh"
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=62
 #	define	LGT_CONFIG	GFLAG
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
@@ -488,7 +484,6 @@ set -S2 "/bin/sh"
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=64
 #	define	LGT_CONFIG	GFLAG
-#	define	LIBBU_CONFIG	-DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
@@ -553,7 +548,6 @@ set -S2 "/bin/sh"
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65
 #	define	LGT_CONFIG	GFLAG
-#	define	LIBBU_CONFIG	-DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
@@ -604,7 +598,6 @@ set -S2 "/bin/sh"
 #	define	TCL_COMPAT_FILES strtoul fixstrtod
 #	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DNO_STDLIB_H=1 -Dmemmove=memcpy -Dstrtod=fixstrtod
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	if 0	/* PRODUCTION=1 */
 /*		Sun with X11 (aka "openwin") Default for SunOS 41.1 */
 #		define	XINCDIR		/usr/openwin/include
@@ -706,8 +699,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl
 #	endif
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
-
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBPKG_LIBES	-lnsl -lsocket
 
@@ -721,8 +712,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	TCL_COMPAT_FILES	fixstrtod
 #	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -Dstrtod=fixstrtod
 #	define	LIBTK_CONFIG	-I''XINCDIR
-
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 
 #  if 1	/* PRODUCTION=1 */
 #	define	LIBMESA_CONFIG	-DFBIND=2
@@ -779,7 +768,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 #	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBBU_LIBES	-lu
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
@@ -820,7 +808,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	FC	/bin/cf77
 #	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBBU_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBPKG_LIBES	-lnet
@@ -883,7 +870,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DNO_DLFCN_H=1
 #	define	TK_DEFS		OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DTK_PACKAGE_PATH='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 /*	Use the system-provided TCL and Tk libraries */
 #	define	LIBTCL_DIR	_use_system_tcl_
@@ -919,7 +905,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	CC_DEFS -pipe
 #	endif
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBRT_TIMER	timer42
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
@@ -956,7 +941,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	XINCDIR	/usr/X11/include
 #	define	XLIBDIR	/usr/X11/lib
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBRT_TIMER	timer42
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lipc
@@ -995,7 +979,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define  LIBFB_CONFIG    -DIF_REMOTE
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #       define  LIBDM_OBJS      dm-X
 #       define  LIBDM_CONFIG    -DDM_X
 #       define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
@@ -2128,10 +2111,13 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBTK_CONFIG	/**/
 #endif
 #if !defined(GFLAG)
-#	define	GFLAG	/**/
+#	define	GFLAG	/* I don't understand why this is passed on?!?!*/
 #endif
 #if !defined(LIBDM_OBJS)
 #	define	LIBDM_OBJS	/**/
+#endif
+#if !defined(LIBBU_CONFIG)
+#	define	LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #endif
 
 /* C compiler flags */
