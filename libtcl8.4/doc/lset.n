@@ -37,7 +37,7 @@ In this case, \fInewValue\fR replaces the old value of the variable
 \fIvarName\fR.
 .PP
 When presented with a single index, the \fBlset\fR command
-treats the content of the \fIvarBane\fR variable as a Tcl list.
+treats the content of the \fIvarName\fR variable as a Tcl list.
 It addresses the \fIindex\fR'th element in it 
 (0 refers to the first element of the list).
 When interpreting the list, \fBlset\fR observes the same rules

@@ -18,7 +18,7 @@
 tcltest \- Test harness support code and utilities
 .SH SYNOPSIS
 .nf
-\fBpackage require tcltest ?2.2.3?\fR
+\fBpackage require tcltest ?2.2.5?\fR
 .sp
 \fBtcltest::test \fIname description ?option value ...?\fR
 \fBtcltest::test \fIname description ?constraints? body result\fR
@@ -763,7 +763,8 @@ harness are doing.
 \fB-verbose \fIlevel\fR
 Sets the type of output verbosity desired to \fIlevel\fR,
 a list of zero or more of the elements \fBbody\fR, \fBpass\fR,
-\fBskip\fR, \fBstart\fR, and \fBerror\fR.  Default value is \fBbody\fR.
+\fBskip\fR, \fBstart\fR, and \fBerror\fR.  Default value
+is \fB{body error}\fR.
 Levels are defined as: 
 .RS
 .IP "body (b)"

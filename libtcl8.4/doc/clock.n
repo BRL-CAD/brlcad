@@ -43,8 +43,8 @@ of elapsed time.
 .TP
 \fBclock format \fIclockValue\fR ?\fB\-format \fIstring\fR? ?\fB\-gmt \fIboolean\fR?
 Converts an integer time value, typically returned by
-\fBclock seconds\fR, \fBclock scan\fR, or the \fBatime\fR, \fBmtime\fR,
-or \fBctime\fR options of the \fBfile\fR command, to human-readable
+\fBclock seconds\fR, \fBclock scan\fR, or the \fBatime\fR or \fBmtime\fR
+options of the \fBfile\fR command, to human-readable
 form.  If the \fB\-format\fR argument is present the next argument is a
 string that describes how the date and time are to be formatted.
 Field descriptors consist of a \fB%\fR followed by a field
