@@ -64,9 +64,8 @@ int
 empty( fd )
 int fd;
 	{
-#if defined( sgi ) && 0
-		extern FBIO *fbp;
-	if( fbp != FBIO_NULL && strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0 )
+#if 0
+	if( isSGI )
 		return sgi_Empty();
 	else
 #endif

@@ -69,6 +69,7 @@ extern Point image_center;
 extern Point windo_center;
 extern Point windo_anchor;
 extern Try *try_rootp;
+extern bool isSGI;
 extern char cread_buf[BUFSIZ*10], *cptr;
 extern char macro_buf[];
 extern char *macro_ptr;

@@ -49,21 +49,16 @@ sgi_Init()
 
 int
 sgi_Getchar()
-	{	extern FBIO *fbp;
-	if( fbp != FBIO_NULL && strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0 )
-		{	short	val;
-		winattach();
-		for( ; ; )
-			{	long	dev = qread( &val );
-			switch( dev )
-				{
-			case KEYBD :
-				return (int) val;
-				}
+	{	short	val;
+	winattach();
+	for( ; ; )
+		{	long	dev = qread( &val );
+		switch( dev )
+			{
+		case KEYBD :
+			return (int) val;
 			}
 		}
-	else
-		return getchar();
 	}
 
 int

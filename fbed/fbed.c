@@ -427,25 +427,28 @@ register RGBpixel *pixelp;
 		register int top = rectp->r_corner.p_y;
 		register int rgt = rectp->r_corner.p_x;
 		int lft = rectp->r_origin.p_x;
-#ifdef sgi /* More efficient on IRIS. */
-	if( top - btm < 10 || rgt - lft < 10 )
+	if( isSGI )
+		{ /* More efficient on IRIS. */
+		if( top - btm < 10 || rgt - lft < 10 )
+			{
+			for( ; btm <= top; btm++ )
+				{	register int x;
+				for( x = lft; x <= rgt; x++ )
+					(void) fb_write( fbp, x, btm,
+							pixelp, 1 );
+				}
+			}
+		}
+	else
 		{
 		for( ; btm <= top; btm++ )
-			{	register int x;
-			for( x = lft; x <= rgt; x++ )
-				(void) fb_write( fbp, x, btm, pixelp, 1 );
+			{	register int x = lft;
+			(void) fb_seek( fbp, x, btm );
+			for( ; x <= rgt; x++ )
+				FB_WPIXEL( fbp, *pixelp );
 			}
-		return;
+		(void) fb_flush( fbp );
 		}
-#endif
-	for( ; btm <= top; btm++ )
-		{	register int x = lft;
-		(void) fb_seek( fbp, x, btm );
-		for( ; x <= rgt; x++ )
-			FB_WPIXEL( fbp, *pixelp );
-		}
-	(void) fb_flush( fbp );
-	return;
 	}
 
 STATIC bool
@@ -1853,12 +1856,14 @@ char *buf;
 	/* If brush size is 2 or more, fill rectangle. */
 	if( rectwid == 0 )
 		{ /* Avoid overhead if only writing one pixel. */
-#ifdef sgi
-		(void) fb_write( fbp, cursor_pos.p_x, cursor_pos.p_y, paint, 1 );
-#else
-		(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
-		FB_WPIXEL( fbp, paint );
-#endif
+		if( isSGI )
+			(void) fb_write( fbp, cursor_pos.p_x, cursor_pos.p_y,
+					paint, 1 );
+		else
+			{
+			(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
+			FB_WPIXEL( fbp, paint );
+			}
 		}
 	else
 		fb_Paint( cursor_pos.p_x - rectwid, cursor_pos.p_y - rectwid,
@@ -1963,6 +1968,10 @@ fb_Setup()
 		fb_log( "Could not open default frame buffer.\n" );
 		return -1;
 		}
+	/* Set global flag to indicate whether we are running on an
+		SGI with graphics. */
+	isSGI = strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0;
+
 	fb_ioinit( fbp );
 	if( fb_setcursor( fbp, cursor.bits, cursor.xbits, cursor.ybits,
 	    cursor.xorig, cursor.yorig ) == -1 )
@@ -1970,8 +1979,10 @@ fb_Setup()
 		fb_log( "Can't set up cursor.\n" );
 		return 0;
 		}
-	windo_center.p_x = cursor_pos.p_x = image_center.p_x = fb_getwidth(fbp) / 2;
-	windo_center.p_y = cursor_pos.p_y = image_center.p_y = fb_getheight(fbp) / 2;
+	windo_center.p_x = cursor_pos.p_x = image_center.p_x =
+		fb_getwidth(fbp) / 2;
+	windo_center.p_y = cursor_pos.p_y = image_center.p_y =
+		fb_getheight(fbp) / 2;
 	size_viewport = fb_getwidth(fbp);
 	return 0;
 	}
@@ -2106,9 +2117,8 @@ init_Tty()
 	clr_Tabs( tty_fd );
 	clr_Echo( tty_fd );
 	clr_CRNL( tty_fd );
-#ifdef sgi
-	sgi_Init();
-#endif
+	if( isSGI )
+		sgi_Init();
 	return;
 	}
 
@@ -2129,12 +2139,13 @@ void
 fb_Get_Pixel( pixel )
 RGBpixel pixel;
 	{
-#ifdef sgi
-	(void) fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y, pixel, 1 );
-#else
-	(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
-	(void) fb_rpixel( fbp, (RGBpixel *) pixel );
-#endif
+	if( isSGI )
+		(void) fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y, pixel, 1 );
+	else
+		{
+		(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
+		(void) fb_rpixel( fbp, (RGBpixel *) pixel );
+		}
 	return;
 	}
 
@@ -2354,14 +2365,14 @@ int i;
 
 get_Mouse_Pos( pointp )
 Point *pointp;
-	{	extern FBIO *fbp;
+	{
 	if( pad_flag )
 		return do_Bitpad( pointp );
-#ifdef sgi
-	return sgi_Mouse_Pos( &cursor_pos );
-#else
-	return -1;
-#endif
+	else
+	if( isSGI )
+		return sgi_Mouse_Pos( &cursor_pos );
+	else
+		return -1;
 	}
 
 /*	d o _ B i t p a d ( ) */
@@ -2388,9 +2399,10 @@ register Point *pointp;
 int
 get_Char()
 	{	int c;
-#if defined( sgi ) && 0
-	return (c = sgi_Getchar()) == EOF ? EOF : toascii( c );
-#else
-	return (c = getchar()) == EOF ? EOF : toascii( c );
+#if 0
+	if( isSGI )
+		return (c = sgi_Getchar()) == EOF ? EOF : toascii( c );
+	else
 #endif
+		return (c = getchar()) == EOF ? EOF : toascii( c );
 	}
