@@ -1561,6 +1561,7 @@ extern CONST int rt_nfunctab;
 #define NMG_RAY_STATE_INSIDE	1
 #define NMG_RAY_STATE_ON	2
 #define NMG_RAY_STATE_OUTSIDE	4
+#define NMG_RAY_STATE_ANY	8
 
 #define HMG_HIT_IN_IN	0x11	/* hit internal structure */
 #define HMG_HIT_IN_OUT	0x14	/* breaking out */
@@ -2504,16 +2505,18 @@ BU_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs,
 
 
 /* From nmg_rt_isect.c */
-#if 0
 BU_EXTERN(void nmg_isect_ray_model, (struct ray_data *rd) );
 
 /* From nmg_rt_segs.c */
-BU_EXTERN(int			nmg_ray_isect_segs, (struct soltab *stp,
+#if 0
+/* Don't have "nmg_specific" */
+BU_EXTERN(int nmg_ray_isect_segs, (struct soltab *stp,
 					struct xray *rp,
 					struct application *ap,
 					struct seg *seghead,
 					struct nmg_specific *nmg_spec) );
 #endif
+
 /* From nmg_ck.c */
 /* XXX many others here */
 BU_EXTERN(void			nmg_ck_list_magic, (CONST struct bu_list *hd,
