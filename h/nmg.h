@@ -694,6 +694,8 @@ struct nmg_struct_counts {
 #define NMG_INDEX_IS_SET(_tab,_p)	NMG_INDEX_TEST(_tab,_p)
 #define NMG_INDEX_FIRST_TIME(_tab,_p)	NMG_INDEX_TEST_AND_SET(_tab,_p)
 #define NMG_INDEX_ASSIGN(_tab,_p,_val)	{(_tab)[(_p)->index] = _val;}
+#define NMG_INDEX_GET(_tab,_p)		((_tab)[(_p)->index])
+#define NMG_INDEX_GETP(_ty,_tab,_p)	((struct _ty *)((_tab)[(_p)->index]))
 #define NMG_INDEX_OR(_tab,_p,_val)	{(_tab)[(_p)->index] |= _val;}
 #define NMG_INDEX_AND(_tab,_p,_val)	{(_tab)[(_p)->index] &= _val;}
 
