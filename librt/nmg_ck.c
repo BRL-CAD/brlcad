@@ -435,13 +435,20 @@ void
 nmg_vfg(fg)
 struct face_g_plane *fg;
 {
-	NMG_CK_FACE_G_PLANE(fg);
+	NMG_CK_FACE_G_EITHER(fg);
 
-	if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 &&
-	    fg->N[H]!=0.0) {
-		rt_log("bad NMG plane equation %fX + %fY + %fZ = %f\n",
-			fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
-		rt_bomb("nmg_vfg() Bad NMG geometry\n");
+	if( fg->magic == NMG_FACE_G_PLANE_MAGIC )
+	{
+		if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 &&
+		    fg->N[H]!=0.0) {
+			rt_log("bad NMG plane equation %fX + %fY + %fZ = %f\n",
+				fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
+			rt_bomb("nmg_vfg() Bad NMG geometry\n");
+		    }
+	}
+	if( fg->magic == NMG_FACE_G_SNURB_MAGIC )
+	{
+		/* XXX Should the face's NURB be checked somehow?? */
 	}
 }
 
