@@ -91,7 +91,7 @@ char	*argv[];
 			return	1;
 		if( rle_verbose )
 			prnt_Cmap( &cmap );
-		if( is_linear_cmap( &cmap ) )
+		if( fb_is_linear_cmap( &cmap ) )
 			non_linear_cmap = 0;
 		else
 			non_linear_cmap = 1;
