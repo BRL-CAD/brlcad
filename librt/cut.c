@@ -53,6 +53,8 @@ register struct rt_i *rtip;
 		rtip->rti_CutHead.bn.bn_maxlen * sizeof(struct soltab *),
 		"rt_cut_it: root list" );
 	for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
+		if( stp->st_aradius >= INFINITY )
+			continue;
 		rtip->rti_CutHead.bn.bn_list[rtip->rti_CutHead.bn.bn_len++] = stp;
 		if( rtip->rti_CutHead.bn.bn_len > rtip->rti_CutHead.bn.bn_maxlen )  {
 			rt_log("rt_cut_it:  rtip->nsolids wrong, dropping solids\n");

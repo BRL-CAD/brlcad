@@ -305,7 +305,7 @@ next_one: ;
 	 *  Don't update min & max for halfspaces;  instead, add them
 	 *  to the list of infinite solids, for special handling.
 	 */
-	if( stp->st_max[X] >= INFINITY )  {
+	if( stp->st_aradius >= INFINITY )  {
 		rt_cut_extend( &rt_i.rti_inf_box, stp );
 	}  else  {
 		VMINMAX( rt_i.mdl_min, rt_i.mdl_max, stp->st_min );
