@@ -115,11 +115,34 @@ if [ ! $? = 0 ] ; then
 fi
 
 
+##############
+# stash path #
+##############
+_prev_path="`pwd`"
+cd "$PATH_TO_AUTOGEN"
+
+
+##################################
+# make sure required files exist #
+##################################
+
+if ! test -f AUTHORS ; then
+    touch AUTHORS
+fi
+if ! test -f ChangeLog ; then
+    touch ChangeLog
+fi
+if ! test -f INSTALL ; then
+    touch INSTALL
+fi
+if ! test -f NEWS ; then
+    touch NEWS
+fi
+
+
 ############################################
 # prepare build via autoreconf or manually #
 ############################################
-_prev_path="`pwd`"
-cd "$PATH_TO_AUTOGEN"
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
     echo -n "Automatically preparing build ..."
     autoreconf --force --i
@@ -142,6 +165,11 @@ else
     autoconf -f
     [ ! $? = 0 ] && echo "ERROR: autoconf failed" && exit 2
 fi
+
+
+################
+# restore path #
+################
 cd "$_prev_path"
 echo "done"
 echo
