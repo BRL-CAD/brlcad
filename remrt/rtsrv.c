@@ -17,9 +17,10 @@
  */
 static char RCSid[] = "@(#)$Header$ (BRL)";
 
+#include "conf.h"
+
 #include <stdio.h>
-#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
-#if __STDC__
+#ifdef HAVE_STDARG_H
 # include <stdarg.h>
 #else
 # include <varargs.h>
@@ -31,8 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <sys/resource.h>
 #endif
 
-#if BSD == 43
-# include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
 
