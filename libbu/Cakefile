@@ -13,7 +13,7 @@
 	getopt hist ispar linebuf list \
 	log magic malloc mappedfile memset \
 	parallel parse printb ptbl semaphore \
-	vls
+	vls asize
 
 #define VERSION_VARIABLE	bu_version
 #define LIBRARY_TITLE		"The BRL-CAD Utility Library"
