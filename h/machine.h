@@ -87,6 +87,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		4	/* Max number of processors */
+#define PARALLEL	1
 
 /**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
 #endif
