@@ -93,6 +93,8 @@ static int dmo_sync_tcl();
 static int dmo_size_tcl();
 static int dmo_aspect_tcl();
 
+static void dmo_fbs_callback();
+
 static struct dm_obj HeadDMObj;	/* head of display manager object list */
 
 static struct bu_cmdtab dmo_cmds[] = {
@@ -324,6 +326,7 @@ dmo_open_tcl(clientData, interp, argc, argv)
 	/* initialize dm_obj */
 	bu_vls_init(&dmop->dmo_name);
 	bu_vls_strcpy(&dmop->dmo_name,argv[name_index]);
+	dmop->dmo_interp = interp;
 	dmop->dmo_dmp = dmp;
 	VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
 	VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
@@ -331,6 +334,8 @@ dmo_open_tcl(clientData, interp, argc, argv)
 	dmop->dmo_fbs.fbs_listener.fbsl_fd = -1;
 	dmop->dmo_fbs.fbs_listener.fbsl_port = -1;
 	dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+	dmop->dmo_fbs.fbs_callback = dmo_fbs_callback;
+	dmop->dmo_fbs.fbs_clientData = dmop;
 
 	/* append to list of dm_obj's */
 	BU_LIST_APPEND(&HeadDMObj.l,&dmop->l);
@@ -1470,10 +1475,10 @@ dmo_sync_tcl(clientData, interp, argc, argv)
 }
 
 /*
- * Get window size (i.e. width and height)
+ * Set/get window size.
  *
  * Usage:
- *	  procname size
+ *	  procname size [width [height]]
  *
  */
 static int
@@ -1486,20 +1491,41 @@ dmo_size_tcl(clientData, interp, argc, argv)
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 	struct bu_vls vls;
 
-	if (argc != 2) {
+	if (argc == 2) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dm_size");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_printf(&vls, "%d %d", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 		bu_vls_free(&vls);
-		return TCL_ERROR;
+		return TCL_OK;
+	}
+
+	if (argc == 3 || argc == 4) {
+		int width, height;
+
+		if (sscanf(argv[2], "%d", &width) != 1) {
+			Tcl_AppendResult(interp, "size: bad width - ", argv[2], "\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+
+		if (argc == 3)
+			height = width;
+		else {
+			if (sscanf(argv[3], "%d", &height) != 1) {
+				Tcl_AppendResult(interp, "size: bad height - ", argv[3], "\n", (char *)NULL);
+				return TCL_ERROR;
+			}
+		}
+
+		Tk_GeometryRequest(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->xtkwin,
+				   width, height);
+		return TCL_OK;
 	}
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%d %d", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_printf(&vls, "helplib dm_size");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-
-	return TCL_OK;
+	return TCL_ERROR;
 }
 
 /*
@@ -1533,4 +1559,17 @@ dmo_aspect_tcl(clientData, interp, argc, argv)
 	bu_vls_free(&vls);
 
 	return TCL_OK;
+}
+
+static void
+dmo_fbs_callback(clientData)
+     genptr_t clientData;
+{
+	struct dm_obj *dmop = (struct dm_obj *)clientData;
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "fbs_callback %s", bu_vls_addr(&dmop->dmo_name));
+	Tcl_Eval(dmop->dmo_interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 }
