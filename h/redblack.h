@@ -24,14 +24,14 @@ typedef struct
 
 struct rb_node
 {
-    long		rbn_magic;	  /* Magic no. for integrity check */
-    rb_tree		*rbn_tree;	  /* Tree containing this node */
-    struct rb_node	**rbn_parent;	  /* Parents */
-    struct rb_node	**rbn_left;	  /* Left subtrees */
-    struct rb_node	**rbn_right;	  /* Right subtrees */
-    char		*rbn_color;	  /* Colors of this node */
-    void		**rbn_data;	  /* Contents of this node */
-    int			rbn_data_count;  /* How many orders being used? */
+    long		rbn_magic;	/* Magic no. for integrity check */
+    rb_tree		*rbn_tree;	/* Tree containing this node */
+    struct rb_node	**rbn_parent;	/* Parents */
+    struct rb_node	**rbn_left;	/* Left subtrees */
+    struct rb_node	**rbn_right;	/* Right subtrees */
+    char		*rbn_color;	/* Colors of this node */
+    void		**rbn_data;	/* Contents of this node */
+    int			rbn_data_refs;	/* How many orders are being used? */
 };
 #define	RB_NODE_NULL	((struct rb_node *) 0)
 
