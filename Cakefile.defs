@@ -1254,7 +1254,7 @@ set -S2 "/bin/sh"
 #	define	BINDIR	/usr/brlcad/bin
 #	define	LIBDIR	/usr/brlcad/lib
 #	define	ETCDIR	/usr/brlcad/etc
-#	define	INCLUDE_DIR	/usr/brlcad/include
+#	define	INCLUDE_DIR	/usr/brlcad/include/brlcad
 #	define	VFONTDIR	/usr/brlcad/vfont
 #endif
 
