@@ -1035,12 +1035,9 @@ struct rt_tol		*tol;
 	i = 0;
 	j = 0;
 	while (pos) {
-		fastf_t y,z;
 		vect_t tmp_norm;
 
 		/* calculate normal for 2D hyperbola */
-		y = pos->p[Y];
-		z = pos->p[Z];
 		VSET( tmp_norm , 0.0 , pos->p[Y]*bb_plus_2bc , (-r_sq*(pos->p[Z]+b_plus_c)) );
 		MAT4X3VEC( norms[j] , invR , tmp_norm );
 		VUNITIZE( norms[j] );
