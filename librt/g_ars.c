@@ -158,9 +158,6 @@ double			local2mm;
 	rec[0].a.a_totlen = per_curve_grans * arip->ncurves;
 
 	VMOVE( base_pt, &arip->curves[0][0] );
-	/* The later subtraction will "undo" this, leaving just base_pt */
-	VADD2( &arip->curves[0][0], &arip->curves[0][0], base_pt);
-
 	gno = 1;
 	for( cur=0; cur<arip->ncurves; cur++ )  {
 		register fastf_t	*fp;
@@ -182,7 +179,10 @@ double			local2mm;
 			lim = (left > 8 ) ? 8 : left;
 			for( el=0; el < lim; el++ )  {
 				vect_t	diff;
-				VSUB2SCALE( diff, fp, base_pt, local2mm );
+				if( cur==0 && npts==0 && el==0 )
+					VSCALE( diff , fp , local2mm )
+				else
+					VSUB2SCALE( diff, fp, base_pt, local2mm )
 				/* NOTE: also type converts to dbfloat_t */
 				VMOVE( &(bp->b_values[el*3]), diff );
 				fp += ELEMENTS_PER_VECT;
