@@ -2732,7 +2732,6 @@ register struct application *ap_p;
 struct partition *PartHeadp;
 struct region *reg1,*reg2;
 {
-	register struct partition *pp;
 	int a,b;
 	double depth;
 
