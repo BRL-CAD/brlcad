@@ -62,6 +62,12 @@ int		use_air = 1;		/* Handling of air in librt */
 
 extern int 	 rpt_overlap;
 
+extern fastf_t  rt_cline_radius;        /* from g_cline.c */
+
+extern struct bu_vls    ray_data_file;  /* file name for ray data output (declared in do.c) */
+FILE    *shot_fp;               /* FILE pointer for ray data output */
+static long     line_num;               /* count of lines output to shotline file */
+
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
@@ -83,6 +89,9 @@ Options:\n\
  -J #		Jitter.  Default is off.  Any non-zero number is on\n\
  -o model.g3	Specify output file, GIFT-3 format (default=stdout)\n\
  -U #		Set use_air boolean to # (default=1)\n\
+ -c \"set ray_data_file=ray_file_name\"         Specify ray data output file (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file)\n\
+ -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n\
+ -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n\
  -x #		Set librt debug flags\n\
 ";
 
@@ -110,6 +119,14 @@ char *file, *obj;
 	
 	save_file = file;
 	save_obj = obj;
+
+	if( ray_data_file.vls_magic == BU_VLS_MAGIC ) {
+		if( (shot_fp=fopen( bu_vls_addr( &ray_data_file ), "w" )) == NULL ) {
+			perror( "RTG3" );
+			bu_log( "Cannot open ray data output file %s\n", bu_vls_addr( &ray_data_file ) );
+			bu_bomb( "Cannot open ray data output file\n" );
+		}
+	}
 
 	/*
 	 *  Cause grid_setup() to align the grid on one inch boundaries,
@@ -654,6 +671,16 @@ out:
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 
 	fputs( bu_vls_addr( &str ), outfp );
+
+	if( shot_fp )
+	{
+		fprintf( shot_fp, "%g %g %g %g %g %g %g %g %ld\n",
+			azimuth, elevation, V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ), line_num );
+
+		line_num +=  1 + (comp_count / 3 );
+		if( comp_count % 3 )
+			line_num++;
+	}
 
 	/* End of single-thread region */
 	bu_semaphore_release( BU_SEM_SYSCALL );
