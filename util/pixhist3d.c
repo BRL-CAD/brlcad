@@ -101,7 +101,7 @@ int xoff, yoff;
 	register int	x, y;
 	static long	max;
 	static double scale;
-	RGBpixel	obuf[256];
+	unsigned char	obuf[256*3];
 
 	/* Find max value */
 	max = 0;
@@ -121,7 +121,7 @@ int xoff, yoff;
 			value = v[y][x] * scale;
 			if( value < THRESH && v[y][x] != 0 )
 				value = THRESH;
-			obuf[x][RED] = obuf[x][GRN] = obuf[x][BLU] = value;
+			obuf[x*3+RED] = obuf[x*3+GRN] = obuf[x*3+BLU] = value;
 		}
 		fb_write( fbp, xoff, yoff+y, obuf, 256 );
 	}

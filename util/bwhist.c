@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
 #include "fb.h"
 
 long	bin[256];
@@ -40,7 +41,7 @@ char **argv;
 	static double scale;
 	unsigned char buf[512];
 	register unsigned char *bp;
-	RGBpixel white[512];
+	unsigned char white[3*512];
 	FILE *fp;
 
 	/* check for verbose flag */
@@ -53,8 +54,8 @@ char **argv;
 	/* look for optional input file */
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1],"r")) == 0 ) {
-			fprintf( stderr, "bwhist: can't open \"%s\"\n", argv[1] );
-			exit( 1 );
+			fprintf( stderr, "bwhist: can't open '%s'\n", argv[1] );
+			exit(1);
 		}
 		argv++;
 		argc--;
@@ -67,8 +68,8 @@ char **argv;
 		exit( 1 );
 	}
 
-	for( i = 0; i < 512; i++ )
-		white[i][RED] = white[i][GRN] = white[i][BLU] = 255;
+	for( i = 0; i < 3*512; i++ )
+		white[i] = 255;
 
 	while( (n = fread(buf, sizeof(*buf), sizeof(buf), fp)) > 0 ) {
 		bp = &buf[0];
