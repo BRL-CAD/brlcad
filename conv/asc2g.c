@@ -36,14 +36,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "bu.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "externs.h"
 
 
 #define BUFSIZE			(8*1024)	/* input line buffer size */
