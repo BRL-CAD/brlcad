@@ -33,6 +33,21 @@
  *  $Header$
  */
 
+#ifndef SEEN_SPM_H
+#define SEEN_SPM_H seen
+
+#ifndef BN_EXPORT
+#   if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#      ifdef BN_EXPORT_DLL
+#         define BN_EXPORT __declspec(dllexport)
+#      else
+#         define BN_EXPORT __declspec(dllimport)
+#      endif
+#   else
+#      define BN_EXPORT
+#   endif
+#endif
+
 typedef	struct	{
 	long	magic;
 	int	ny;		/* Number of "y" bins */
@@ -51,20 +66,22 @@ typedef	struct	{
 
 /* XXX These should all have bn_ prefixes */
 
-spm_map_t *spm_init();
-void	spm_free();
-void	spm_read();
-void	spm_write();
-char	*spm_get();
-int	spm_load();
-int	spm_save();
-int	spm_pix_load();
-int	spm_pix_save();
-void	spm_dump();
+BN_EXPORT extern spm_map_t *spm_init();
+BN_EXPORT extern void	spm_free();
+BN_EXPORT extern void	spm_read();
+BN_EXPORT extern void	spm_write();
+BN_EXPORT extern char	*spm_get();
+BN_EXPORT extern int	spm_load();
+BN_EXPORT extern int	spm_save();
+BN_EXPORT extern int	spm_pix_load();
+BN_EXPORT extern int	spm_pix_save();
+BN_EXPORT extern void	spm_dump();
 
 /*----------------------------------------------------------------------*/
 /* sphmap.c */
-extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int ny);
+BN_EXPORT extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int ny);
+
+#endif /* SEEN_SPM_H */
 
 
 /*
