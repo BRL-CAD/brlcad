@@ -619,7 +619,7 @@ rts_close_session( int sessionid )
  *	negative number - we have a problem
  */
 int
-rts_load_geometry( char *filename, int use_articulation, int num_objs, char **objects )
+rts_load_geometry( char *filename, int use_articulation, int num_objs, char **objects, int thread_count )
 {
 	struct rt_i *rtip;
 	struct db_i *dbip;
@@ -859,7 +859,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		rtip = rts_rtip->rtrti_rtip;
 
 		/* create resource structures for each thread */
-		for( j=0 ; j<num_threads ; j++ ) {
+		for( j=0 ; j<thread_count ; j++ ) {
 			struct resource *resp;
 
 			resp = (struct resource *)bu_calloc( 1, sizeof( struct resource ), "resource" );
@@ -2052,7 +2052,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 	}
 
 	/* load the geometry */
-	if( (rts_load_return=rts_load_geometry( file_name, 0, num_objects, obj_list )) < 0 ) {
+	if( (rts_load_return=rts_load_geometry( file_name, 0, num_objects, obj_list, thread_count )) < 0 ) {
 		bu_log( "Failed to load geometry, rts_load_geometry() returned %d\n", rts_load_return );
 		ret = 2;
 	} else {
@@ -2382,14 +2382,14 @@ main( int argc, char *argv[] )
 		for( i=0 ; i<BU_PTBL_LEN( &objs ) ; i++ ) {
 			objects[i] = (char *)BU_PTBL_GET( &objs, i );
 		}
-		my_session_id = rts_load_geometry( argv[optind], 0, BU_PTBL_LEN( &objs ), objects );
+		my_session_id = rts_load_geometry( argv[optind], 0, BU_PTBL_LEN( &objs ), objects, thread_count );
 	} else {
 		if( optind >= argc ) {
 			fprintf( stderr, "No BRL-CAD model specified\n" );
 			fprintf( stderr, usage, argv[0] );
 			exit( 1 );
 		}
-		my_session_id = rts_load_geometry( argv[optind], 0, 0, (char **)NULL );
+		my_session_id = rts_load_geometry( argv[optind], 0, 0, (char **)NULL, thread_count );
 	}
 
 	if( my_session_id < 0 ) {
