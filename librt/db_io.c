@@ -412,8 +412,12 @@ struct db_i		*dbip;
 		rec = (union record *)ep->ext_buf;
 		NAMEMOVE( dp->d_namep, rec->s.s_name );
 	} else if( dbip->dbi_version == 5 )  {
-		if( ep->ext_nbytes != dp->d_len )
-			db_realloc5( dbip, dp, ep );
+		if( ep->ext_nbytes != dp->d_len )  {
+			if( db_realloc5( dbip, dp, ep ) < 0 )  {
+				bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
+				return -5;
+			}
+		}
 		BU_ASSERT_LONG( ep->ext_nbytes, ==, dp->d_len );
 	} else
 		bu_bomb("db_put_external(): unknown dbi_version\n");

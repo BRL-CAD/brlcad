@@ -51,9 +51,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  If the ojbect is getting larger and there is no suitable "hole"
  *  in the database, extend the file, write a free record in the
  *  new space, and write a free record in the old space.
+ *
+ *  Returns -
+ *	0	OK
+ *	-1	Failure
  */
 int
 db_realloc5( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 {
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
+	BU_CK_EXTERNAL(ep);
+	if(rt_g.debug&DEBUG_DB) bu_log("db_realloc5(%s) dbip=x%x, dp=x%x, ext_nbytes=%ld\n",
+		dp->d_namep, dbip, dp, ep->ext_nbytes );
+
+
 	bu_bomb("db_realloc5() not fully implemented\n");
 }
