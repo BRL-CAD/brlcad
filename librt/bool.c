@@ -55,6 +55,9 @@ RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
  * Notes -
  *	It is the responsibility of the CALLER to free the seg chain,
  *	as well as the partition list that we return.
+ *
+ * XXX Should be given dist tolerance value, to make approx-equal decisions!
+ * XXX Use of rt_fdiff is dangerous.
  */
 void
 rt_boolweave( out_hd, in_hd, PartHdp, ap )
@@ -106,6 +109,13 @@ struct application	*ap;
 		if( !(segp->seg_in.hit_dist >= -INFINITY &&
 		    segp->seg_out.hit_dist <= INFINITY) )  {
 		    	rt_log("rt_boolweave:  Defective segment %s (%g,%g)\n",
+				segp->seg_stp->st_name,
+				segp->seg_in.hit_dist,
+				segp->seg_out.hit_dist );
+			continue;
+		}
+		if( segp->seg_in.hit_dist > segp->seg_out.hit_dist )  {
+		    	rt_log("rt_boolweave:  Inside-out segment %s (%g,%g)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
