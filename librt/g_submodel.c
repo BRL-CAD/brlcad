@@ -405,11 +405,14 @@ struct seg		*segHeadp;
 		/* RT_HIT_CURVATURE */
 		/* no place to stash curvature data! */
 
-		/* Leave behind a distinctive surfno marker
-		 * in case app is using it for something.
+		/*
+		 *  Here, the surfno reported upwards is the solid's
+		 *  index (bit) number in the submodel.
+		 *  This can be used as subscript to rti_Solids[]
+		 *  to retrieve the identity of the solid that was hit.
 		 */
-		up_segp->seg_in.hit_surfno = 17;
-		up_segp->seg_out.hit_surfno = 17;
+		up_segp->seg_in.hit_surfno = inseg->seg_stp->st_bit;
+		up_segp->seg_out.hit_surfno = outseg->seg_stp->st_bit;
 
 		/* Put this segment on caller's shot routine seglist */
 		BU_LIST_INSERT( &(gp->up_seghead->l), &(up_segp->l) );
