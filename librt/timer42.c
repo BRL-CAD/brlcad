@@ -248,7 +248,6 @@ char *str;
 
 	rt_vls_init( &vls );
 	cpu = rt_get_timer( &vls, (double *)0 );
-rt_log("rt_read_timer:  %g\n", cpu);
 	todo = rt_vls_strlen( &vls );
 	if( todo > len )  todo = len-1;
 	strncpy( str, rt_vls_addr(&vls), todo );
