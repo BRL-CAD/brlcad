@@ -48,7 +48,8 @@ _LOCAL_ int	ug_dopen(),
 		ug_zoom_set(),
 		ug_curs_set(),
 		ug_cmemory_addr(),
-		ug_cscreen_addr();
+		ug_cscreen_addr(),
+		ug_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ug_interface =  {
@@ -528,4 +529,19 @@ fprintf( stderr, "numx,y= %d, %d; zoomx,y= %d, %d; windowx,y= %d, %d\n", numx, n
 	ug_tblk.addr = (int *)(ugbuf2);
 
 	write_ug();
+}
+
+_LOCAL_ int
+ug_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", ug_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		ug_interface.if_max_width,
+		ug_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		ug_interface.if_width,
+		ug_interface.if_height );
+	return(0);
 }
