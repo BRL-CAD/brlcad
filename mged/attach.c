@@ -51,10 +51,10 @@ void mged_slider_link_vars();
 void mged_slider_unlink_vars();
 static int do_2nd_attach_prompt();
 static void find_new_owner();
-int mged_load_dv();
 
 extern void set_scroll();  /* defined in set.c */
 extern void color_soltab();
+extern int mged_view_init(); /* defined in chgview.c */
 
 /* All systems can compile these! */
 extern int Plot_dm_init();
@@ -151,24 +151,32 @@ int need_close;
 
   if(!--p->s_info->_rc){
     if(rate_tran_vls[X].vls_magic == BU_VLS_MAGIC){
-#if TRY_NEW_MGED_VARS
-      mged_variable_free_vls(p);
-#endif
       mged_slider_unlink_vars(p);
       mged_slider_free_vls(p);
     }
+
+    /* free view ring */
+    if(p->s_info->_headView.l.magic == BU_LIST_HEAD_MAGIC){
+      struct view_list *vlp;
+      struct view_list *nvlp;
+
+      for(vlp = BU_LIST_FIRST(view_list, &p->s_info->_headView.l);
+	  BU_LIST_NOT_HEAD(vlp, &p->s_info->_headView.l);){
+	nvlp = BU_LIST_PNEXT(view_list, vlp);
+	BU_LIST_DEQUEUE(&vlp->l);
+	bu_free((genptr_t)vlp, "release: vlp");
+	vlp = nvlp;
+      }
+    }
+
     bu_free( (genptr_t)p->s_info, "release: s_info" );
   }else if(p->_owner)
     find_new_owner(p);
 
   /* If this display is being referenced by a command window,
      then remove the reference  */
-  for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
-    if(p_cmd->aim == p)
-      break;
-
-  if(p_cmd->aim == p)
-    p_cmd->aim = (struct dm_list *)NULL;
+  if(p->aim != NULL)
+    p->aim->aim = (struct dm_list *)NULL;
 
   if(need_close){
     /* Delete all references to display processor memory */
@@ -187,6 +195,7 @@ int need_close;
     Tcl_UnlinkVar(interp, bu_vls_addr(&p->_scroll_edit_vls));
     bu_vls_free(&p->_scroll_edit_vls);
   }
+
   bu_free( (genptr_t)p, "release: curr_dm_list" );
 
   if(save_dm_list != DM_LIST_NULL)
@@ -422,7 +431,6 @@ char *argv[];
 
   color_soltab();
   ++dmaflag;
-  (void)mged_load_dv();
   return TCL_OK;
 
 Bad:
@@ -631,10 +639,8 @@ char    **argv;
   p->_owner = 1;
   p->_dmp->dm_vp = &p->s_info->_Viewscale;
   p->s_info->opp = &p->_dmp->dm_pathName;
-#if TRY_NEW_MGED_VARS
-  mged_variable_setup(p);
-#endif
   mged_slider_link_vars(p);
+  mged_view_init(p);
 
   save_cdlp = curr_dm_list;
   curr_dm_list = p;
@@ -711,11 +717,23 @@ char    **argv;
 
   /* free p1's s_info struct if not being used */
   if(!--p1->s_info->_rc){
-#if TRY_NEW_MGED_VARS
-    mged_variable_free_vls(p1);
-#endif
     mged_slider_unlink_vars(p1);
     mged_slider_free_vls(p1);
+
+    /* free view ring */
+    if(p->s_info->_headView.l.magic == BU_LIST_HEAD_MAGIC){
+      struct view_list *vlp;
+      struct view_list *nvlp;
+
+      for(vlp = BU_LIST_FIRST(view_list, &p->s_info->_headView.l);
+	  BU_LIST_NOT_HEAD(vlp, &p->s_info->_headView.l);){
+	nvlp = BU_LIST_PNEXT(view_list, vlp);
+	BU_LIST_DEQUEUE(&vlp->l);
+	bu_free((genptr_t)vlp, "release: vlp");
+	vlp = nvlp;
+      }
+    }
+
     bu_free( (genptr_t)p1->s_info, "tie: s_info" );
   /* otherwise if p1's s_info struct is being used and p1 is the owner */
   }else if(p1->_owner)
@@ -760,10 +778,6 @@ struct dm_list *op;
     if(op != p && p->s_info == op->s_info){
       p->_owner = 1;
       p->s_info->opp = &p->_dmp->dm_pathName;
-#if TRY_NEW_MGED_VARS
-      mged_variable_free_vls(p);
-      mged_variable_setup(p);
-#endif
       mged_slider_unlink_vars(p);
       mged_slider_free_vls(p);
       mged_slider_link_vars(p);
@@ -798,10 +812,10 @@ struct dm_list *initial_dm_list;
 
   bn_mat_copy(Viewrot, bn_mat_identity);
   size_reset();
-  MAT_DELTAS_GET(orig_pos, toViewcenter);
+  MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
   new_mats();
 
-  am_mode = ALT_MOUSE_MODE_IDLE;
+  am_mode = ALT_IDLE;
   rc = 1;
   dmaflag = 1;
   owner = 1;
@@ -809,6 +823,11 @@ struct dm_list *initial_dm_list;
   mapped = 1;
   adc_a1_deg = adc_a2_deg = 45.0;
   last_v_axes = 2; /* center location */
+  mged_view_init(curr_dm_list);
+
+#if 1
+  BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
+#endif
 }
 
 void
@@ -1003,46 +1022,4 @@ struct dm_list *p;
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_ang1_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_ang2_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_distadc_vls));
-}
-
-
-int
-mged_load_dv()
-{
-  int i;
-
-  for(i = 0; i < VIEW_TABLE_SIZE; ++i){
-    press(default_view_strings[i]);
-    bn_mat_copy(viewrot_table[i], Viewrot);
-    viewscale_table[i] = Viewscale;
-  }
-
-  current_view = 0;
-  bn_mat_copy(Viewrot, viewrot_table[current_view]);
-  Viewscale = viewscale_table[current_view];
-  new_mats();
-
-  return TCL_OK;
-}
-
-
-/* Load default views */
-int
-f_load_dv(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
-{
-  if(argc < 1 || 1 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help load_dv");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  return mged_load_dv();
 }
