@@ -28,7 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define		FP_IN		0
 #define		FP_OUT		1
 
-static char	*usage = "ascii-pl [file.in [file.pl]]\n";
+static char	*usage = "asc-pl [file.in [file.pl]]\n";
 
 static void	printusage();
 static int	check_syntax();
@@ -41,6 +41,7 @@ char	*argv[];
 {
     char	*bp;
     char	buf[BUF_LEN];
+    char	sarg[BUF_LEN];
     static char	*fm[] = { "r", "w" };
     double	darg[6];
     static FILE	*fp[] = { stdin, stdout };
@@ -68,7 +69,7 @@ char	*argv[];
     }
     if (isatty(fileno(fp[FP_OUT])))
     {
-	(void) fputs("ascii-pl: Will not write to a TTY\n", stderr);
+	(void) fputs("asc-pl: Will not write to a TTY\n", stderr);
 	exit (1);
     }
 
@@ -90,6 +91,8 @@ char	*argv[];
 	    nm_args = sscanf(bp + 1, "%lf%lf%lf%lf%lf%lf",
 				&darg[0], &darg[1], &darg[2], 
 				&darg[3], &darg[4], &darg[5]);
+	else if (strchr("ft", *bp))
+	    nm_args = sscanf(bp, "%*[^\"]\"%[^\"]\"", sarg);
 
 	switch (*bp)
 	{
@@ -206,10 +209,12 @@ char	*argv[];
 		pl_erase(fp[FP_OUT]);
 		break;
 	    case 'f':
-		pl_linmod(fp[FP_OUT], bp + 1);
+		if (check_syntax(*bp, 1, nm_args, line_nm))
+		    pl_linmod(fp[FP_OUT], sarg);
 		break;
 	    case 't':
-		pl_label(fp[FP_OUT], bp + 1);
+		if (check_syntax(*bp, 1, nm_args, line_nm))
+		    pl_label(fp[FP_OUT], sarg);
 		break;
 	    default:
 		(void) fprintf(stderr,
