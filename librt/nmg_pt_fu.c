@@ -135,7 +135,7 @@ CONST struct bn_tol *tol;
 
 	BN_CK_TOL(tol);
 #if 0
-	if( rt_g.debug & DEBUG_MATH )  {
+	if( rt_g.debug & DEBUG_MATH )   {
 		bu_log("bn_distsq_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
 			V3ARGS(a),
 			V3ARGS(b),
@@ -169,7 +169,7 @@ CONST struct bn_tol *tol;
 	dot = VDOT(PtoA, AtoB);
 	t = dot * dot / B_A_sq;
 
-	if( t <= tol->dist_sq )  {
+	if( dot < 0.0 && t > tol->dist_sq )  {
 		/* P is "left" of A */
 		*dist = P_A_sq;
 		return 3;
