@@ -55,7 +55,10 @@ with the new image without clearing the screen.
 The
 .B \-z
 flag will zoom and center on the image being displayed
-to make it fill the display area.
+to make it fill the display area, using the libfb fb_zoom() routine.
+fb_zoom only offers integer zoom factors, so displays with non-square
+screens (such as the SGI 3D machines) may find this option of limited
+usefulness.
 .PP
 The
 .BI \-w\  file_width
