@@ -35,10 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./mged_dm.h"
 
-extern void set_dirty_flag();		/* defined in set.c */
-extern void set_adc_xyz();		/* defined in set.c */
-extern void set_adc_xyz_grid();		/* defined in set.c */
-
 #ifndef M_SQRT2
 #define M_SQRT2		1.41421356237309504880
 #endif
@@ -48,30 +44,28 @@ extern void set_adc_xyz_grid();		/* defined in set.c */
 #endif
 
 void
-adc_xyz_To_dv_xyadc()
+adc_model_To_adc_view()
+{
+  MAT4X3PNT(adc_pos_view, model2view, adc_pos_model);
+  dv_xadc = adc_pos_view[X] * GED_MAX;
+  dv_yadc = adc_pos_view[Y] * GED_MAX;
+}
+
+void
+adc_grid_To_adc_view()
 {
   point_t model_pt;
   point_t view_pt;
 
-  VSCALE(model_pt, mged_variables->adc_xyz, local2base);
+  VSETALL(model_pt, 0.0);
   MAT4X3PNT(view_pt, model2view, model_pt);
-  dv_xadc = view_pt[X] * GED_MAX;
-  dv_yadc = view_pt[Y] * GED_MAX;
+  VADD2(adc_pos_view, view_pt, adc_pos_grid);
+  dv_xadc = adc_pos_view[X] * GED_MAX;
+  dv_yadc = adc_pos_view[Y] * GED_MAX;
 }
 
 void
-dv_xyadc_To_adc_xyz()
-{
-  point_t model_pt;
-  point_t view_pt;
-
-  VSET(view_pt, dv_xadc * INV_GED, dv_yadc * INV_GED, 0.0);
-  MAT4X3PNT(model_pt, view2model, view_pt);
-  VSCALE(mged_variables->adc_xyz, model_pt, base2local);
-}
-
-void
-adc_xyz_grid_To_dv_xyadc()
+adc_view_To_adc_grid()
 {
   fastf_t f;
   point_t model_pt;
@@ -79,86 +73,7 @@ adc_xyz_grid_To_dv_xyadc()
 
   VSETALL(model_pt, 0.0);
   MAT4X3PNT(view_pt, model2view, model_pt);
-  f = Viewscale * base2local;
-  VSCALE(view_pt, view_pt, f);
-
-  f = 2047.0 / (Viewscale * base2local);
-  dv_xadc = (view_pt[X] + mged_variables->adc_xyz_grid[X]) * f;
-  dv_yadc = (view_pt[Y] + mged_variables->adc_xyz_grid[Y]) * f;
-}
-
-void
-dv_xyadc_To_adc_xyz_grid()
-{
-  fastf_t f;
-  point_t model_pt;
-  point_t view_pt;
-
-  VSETALL(model_pt, 0.0);
-  MAT4X3PNT(view_pt, model2view, model_pt);
-  VSCALE(view_pt, view_pt, GED_MAX);
-
-  f = INV_GED * Viewscale * base2local;
-  mged_variables->adc_xyz_grid[X] = (dv_xadc - view_pt[X]) * f;
-  mged_variables->adc_xyz_grid[Y] = (dv_yadc - view_pt[Y]) * f;
-}
-
-void
-adc_xyz_To_adc_xyz_grid()
-{
-  fastf_t f;
-  point_t model_pt;
-  point_t xyz_view_pt;		/* ADC's xyz in view space */
-  point_t mo_view_pt;		/* model origin in view space */
-  point_t diff;
-  
-  VSCALE(model_pt, mged_variables->adc_xyz, local2base);
-  MAT4X3PNT(xyz_view_pt, model2view, model_pt);
-
-  VSETALL(model_pt, 0.0);
-  MAT4X3PNT(mo_view_pt, model2view, model_pt);
-
-  VSUB2(diff, mo_view_pt, xyz_view_pt);
-  f = Viewscale * base2local;
-  mged_variables->adc_xyz_grid[X] = diff[X] * f;
-  mged_variables->adc_xyz_grid[Y] = diff[Y] * f;
-}
-
-void
-adc_xyz_grid_To_adc_xyz()
-{
-  fastf_t f;
-  point_t model_pt;
-  point_t xyz_view_pt;		/* ADC's xyz in view space */
-  point_t mo_view_pt;		/* model origin in view space */
-  point_t diff;
-
-  VSETALL(model_pt, 0.0);
-  MAT4X3PNT(mo_view_pt, model2view, model_pt);
-
-  f = 1.0 / (Viewscale * base2local);
-  diff[X] = mged_variables->adc_xyz_grid[X] * f;
-  diff[Y] = mged_variables->adc_xyz_grid[Y] * f;
-  diff[Z] = 0.0;
-
-  VADD2(xyz_view_pt, mo_view_pt, diff);
-  MAT4X3PNT(mged_variables->adc_xyz, view2model, xyz_view_pt);
-
-  f = Viewscale * base2local;
-  VSCALE(mged_variables->adc_xyz, mged_variables->adc_xyz, f);
-}
-
-void
-adc_dst_To_dv_distadc()
-{
-  dv_distadc = (mged_variables->adc_dst /
-		(Viewscale * base2local * M_SQRT2_DIV2) - 1.0) * GED_MAX;
-}
-
-void
-dv_distadc_To_adc_dst()
-{
-  mged_variables->adc_dst = (dv_distadc * INV_GED + 1.0) * Viewscale * base2local * M_SQRT2_DIV2;
+  VSUB2(adc_pos_grid, adc_pos_view, view_pt);
 }
 
 static void
@@ -252,50 +167,51 @@ adcursor()
    * Calculate a-d cursor displacement.
    */
 
-  if(mged_variables->adc_anchor_xyz == 1){
-    adc_xyz_To_dv_xyadc();
-    dv_xyadc_To_adc_xyz_grid();
-  }else if(mged_variables->adc_anchor_xyz == 2){
-    adc_xyz_grid_To_dv_xyadc();
-    dv_xyadc_To_adc_xyz();
+  if(adc_anchor_pos == 1){
+    adc_model_To_adc_view();
+    adc_view_To_adc_grid();
+  }else if(adc_anchor_pos == 2){
+    adc_grid_To_adc_view();
+    MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
+  }else{
+    adc_view_To_adc_grid();
+    MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
   }
-    
-  if(mged_variables->adc_anchor_a1){
+
+  if(adc_anchor_a1){
     fastf_t angle;
 
-    VSCALE(model_pt, mged_variables->adc_anchor_pt_a1, local2base);
-    MAT4X3PNT(view_pt, model2view, model_pt);
+    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_a1);
     dx = view_pt[X] * GED_MAX - dv_xadc;
     dy = view_pt[Y] * GED_MAX - dv_yadc;
 
     if(dx != 0 || dy != 0)
-      mged_variables->adc_a1 = RAD2DEG*atan2(dy, dx);
+      adc_a1 = RAD2DEG*atan2(dy, dx);
   }
 
-  if(mged_variables->adc_anchor_a2){
+  if(adc_anchor_a2){
     fastf_t angle;
 
-    VSCALE(model_pt, mged_variables->adc_anchor_pt_a2, local2base);
-    MAT4X3PNT(view_pt, model2view, model_pt);
+    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_a2);
     dx = view_pt[X] * GED_MAX - dv_xadc;
     dy = view_pt[Y] * GED_MAX - dv_yadc;
 
     if(dx != 0 || dy != 0)
-      mged_variables->adc_a2 = RAD2DEG*atan2(dy, dx);
+      adc_a2 = RAD2DEG*atan2(dy, dx);
   }
 
-  if(mged_variables->adc_anchor_tick){
+  if(adc_anchor_dst){
     fastf_t dist;
 
-    VSCALE(model_pt, mged_variables->adc_anchor_pt_tick, local2base);
-    MAT4X3PNT(view_pt, model2view, model_pt);
+    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_dst);
 
     dx = view_pt[X] * GED_MAX - dv_xadc;
     dy = view_pt[Y] * GED_MAX - dv_yadc;
     dist = sqrt(dx * dx + dy * dy);
-    mged_variables->adc_dst = dist * INV_GED * Viewscale * base2local;
+    adc_dst = dist * INV_GED;
     dv_distadc = (dist / M_SQRT2_DIV2) - 2047;
-  }
+  }else
+    adc_dst = (dv_distadc * INV_GED + 1.0) * M_SQRT2_DIV2;
 
 #if 0
   idxy[0] = dv_xadc;
@@ -316,8 +232,8 @@ adcursor()
 		  GED2PM1(dv_xadc), GED2PM1(GED_MAX),
 		  GED2PM1(dv_xadc), GED2PM1(GED_MIN));  /* Vertical */
 
-  angle1 = mged_variables->adc_a1 * DEG2RAD;
-  angle2 = mged_variables->adc_a2 * DEG2RAD;
+  angle1 = adc_a1 * DEG2RAD;
+  angle2 = adc_a2 * DEG2RAD;
 
   /* sin for X and cos for Y to reverse sense of knob */
   d1 = cos (angle1) * 8000.0;
@@ -375,17 +291,20 @@ adc_reset()
   dv_1adc = dv_2adc = 0;
   dv_distadc = 0;
 
-  dv_xyadc_To_adc_xyz();
-  dv_xyadc_To_adc_xyz_grid();
-  dv_distadc_To_adc_dst();
-  mged_variables->adc_a1 = mged_variables->adc_a2 = 45.0;
+  VSETALL(adc_pos_view, 0.0);
+  MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
+  adc_dst = (dv_distadc * INV_GED + 1.0) * M_SQRT2_DIV2;
+  adc_a1 = adc_a2 = 45.0;
+  adc_view_To_adc_grid();
 
-  mged_variables->adc_anchor_xyz = 0;
-  mged_variables->adc_anchor_a1 = 0;
-  mged_variables->adc_anchor_a2 = 0;
-  mged_variables->adc_anchor_tick = 0;
+  VSETALL(adc_anchor_pt_a1, 0.0);
+  VSETALL(adc_anchor_pt_a2, 0.0);
+  VSETALL(adc_anchor_pt_dst, 0.0);
 
-  set_dirty_flag();
+  adc_anchor_pos = 0;
+  adc_anchor_a1 = 0;
+  adc_anchor_a2 = 0;
+  adc_anchor_dst = 0;
 }
 
 /*
@@ -393,14 +312,28 @@ adc_reset()
  */
 
 static char	adc_syntax[] = "\
- adc		toggle display of angle/distance cursor\n\
- adc a1 #	set angle1\n\
- adc a2 #	set angle2\n\
- adc dst #	set radius (distance) of tick\n\
- adc hv # #	reposition (view coordinates)\n\
- adc xyz # # #	reposition in front of a point (model coordinates)\n\
- adc reset	reset angles, location, and tick distance\n\
- adc help       prints this help message\n\
+ adc			toggle display of angle/distance cursor\n\
+ adc draw [#]		set or get the draw parameter\n\
+ adc a1 [#]		set or get angle1\n\
+ adc a2 [#]		set or get angle2\n\
+ adc dst [#]		set or get radius (distance) of tick\n\
+ adc hv [# #]		set or get position (grid coordinates)\n\
+ adc xyz [# # #]	set or get position (model coordinates)\n\
+ adc dh #		add to horizontal position (grid coordinates)\n\
+ adc dv #		add to vertical position (grid coordinates)\n\
+ adc dx #		add to X position (model coordinates)\n\
+ adc dy #		add to Y position (model coordinates)\n\
+ adc dz #		add to Z position (model coordinates)\n\
+ adc anchor_pos		anchor ADC to current position in model coordinates\n\
+ adc anchor_a1		anchor angle1 to go through anchorpoint_a1\n\
+ adc anchor_a2		anchor angle2 to go through anchorpoint_a2\n\
+ adc anchor_dst		anchor tick distance to go through anchorpoint_dst\n\
+ adc anchorpoint_a1 [# # #]	set or get anchor point for angle1\n\
+ adc anchorpoint_a2 [# # #]	set or get anchor point for angle2\n\
+ adc anchorpoint_dst [# # #]	set or get anchor point for tick distance\n\
+ adc -i			any of the above appropriate commands will interpret parameters as increments\n\
+ adc reset		reset angles, location, and tick distance\n\
+ adc help		prints this help message\n\
 ";
 int
 f_adc (clientData, interp, argc, argv)
@@ -409,12 +342,14 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  struct bu_vls vls;
   char *parameter;
   char **argp = argv;
   point_t view_pt;
   point_t model_pt;
   point_t user_pt;		/* Value(s) provided by user */
   point_t diff;
+  point_t scaled_pos;
   int incr_flag;
   int i;
 
@@ -422,8 +357,6 @@ char	**argv;
     return TCL_OK;
 
   if(6 < argc){
-    struct bu_vls vls;
-
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "help adc");
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -432,22 +365,18 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  if (argc == 1){
-    if (mged_variables->adcflag)
-      mged_variables->adcflag = 0;
+  if(argc == 1){
+    if(adc_draw)
+      adc_draw = 0;
     else
-      mged_variables->adcflag = 1;
+      adc_draw = 1;
 
     if(adc_auto){
-      struct dm_list *dlp;
-
       adc_reset();
-
-      FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if(dlp->_mged_variables == mged_variables)
-	  dlp->_adc_auto = 0;
+      adc_auto = 0;
     }
 
+    dirty = 1;
     return TCL_OK;
   }
 
@@ -466,15 +395,46 @@ char	**argv;
   for (i = 0; i < argc; ++i)
     user_pt[i] = atof(argp[i]);
 
-  if(strcmp(parameter, "a1") == 0){
-    if(argc == 1){
-      if(!mged_variables->adc_anchor_a1){
-	if(incr_flag)
-	  mged_variables->adc_a1 += user_pt[0];
-	else
-	  mged_variables->adc_a1 = user_pt[0];
+  if(strcmp(parameter, "draw") == 0){
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d", adc_draw);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-	set_dirty_flag();
+      return TCL_OK;
+    }else if(argc == 1){
+      i = (int)user_pt[X];
+
+      if(i)
+	adc_draw = 1;
+      else
+	adc_draw = 0;
+
+      dirty = 1;
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc draw' command accepts 0 or 1 argument\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(strcmp(parameter, "a1") == 0){
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.15e", adc_a1);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }else if(argc == 1){
+      if(!adc_anchor_a1){
+	if(incr_flag)
+	  adc_a1 += user_pt[0];
+	else
+	  adc_a1 = user_pt[0];
+
+	dirty = 1;
       }
 
       return TCL_OK;
@@ -485,47 +445,68 @@ char	**argv;
   }
 
   if(strcmp(parameter, "a2") == 0){
-    if(argc == 1){
-      if(!mged_variables->adc_anchor_a2){
-	if(incr_flag)
-	  mged_variables->adc_a2 += user_pt[0];
-	else
-	  mged_variables->adc_a2 = user_pt[0];
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.15e", adc_a2);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-	set_dirty_flag();
+      return TCL_OK;
+    }else if(argc == 1){
+      if(!adc_anchor_a2){
+	if(incr_flag)
+	  adc_a2 += user_pt[0];
+	else
+	  adc_a2 = user_pt[0];
+
+	dirty = 1;
       }
 
       return TCL_OK;
     }
 
-    Tcl_AppendResult(interp, "The 'adc a2' command accepts only 1 argument\n", (char *)NULL);
+    Tcl_AppendResult(interp, "The 'adc a2' command accepts 0 or 1 argument\n", (char *)NULL);
     return TCL_ERROR;
   }
 
   if(strcmp(parameter, "dst") == 0){
-    if(argc == 1){
-      if(!mged_variables->adc_anchor_tick){
-	if(incr_flag)
-	  mged_variables->adc_dst += user_pt[0];
-	else
-	  mged_variables->adc_dst = user_pt[0];
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.15e", adc_dst * Viewscale * base2local);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-	adc_dst_To_dv_distadc();
-	set_dirty_flag();
+      return TCL_OK;
+    }else if(argc == 1){
+      if(!adc_anchor_dst){
+	if(incr_flag)
+	  adc_dst += user_pt[0] / (Viewscale * base2local);
+	else
+	  adc_dst = user_pt[0] / (Viewscale * base2local);
+
+	dv_distadc = (adc_dst / M_SQRT2_DIV2 - 1.0) * GED_MAX;
+
+	dirty = 1;
       }
 
       return TCL_OK;
     }
 
-    Tcl_AppendResult(interp, "The 'adc dst' command accepts only 1 argument\n", (char *)NULL);
+    Tcl_AppendResult(interp, "The 'adc dst' command accepts 0 or 1 argument\n", (char *)NULL);
     return TCL_ERROR;
   }
 
   if(strcmp(parameter, "dh") == 0){
     if(argc == 1){
-      mged_variables->adc_xyz_grid[X] += user_pt[0];
+      if(!adc_anchor_pos){
+	adc_pos_grid[X] += user_pt[0] / (Viewscale * base2local);
+	adc_grid_To_adc_view();
+	MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
 
-      set_adc_xyz_grid();
+	dirty = 1;
+      }
+
+      return TCL_OK;
     }
 
     Tcl_AppendResult(interp, "The 'adc dh' command requires 1 argument\n", (char *)NULL);
@@ -534,9 +515,15 @@ char	**argv;
 
   if(strcmp(parameter, "dv") == 0){
     if(argc == 1){
-      mged_variables->adc_xyz_grid[Y] += user_pt[0];
+      if(!adc_anchor_pos){
+	adc_pos_grid[Y] += user_pt[0] / (Viewscale * base2local);
+	adc_grid_To_adc_view();
+	MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
 
-      set_adc_xyz_grid();
+	dirty = 1;
+      }
+
+      return TCL_OK;
     }
 
     Tcl_AppendResult(interp, "The 'adc dv' command requires 1 argument\n", (char *)NULL);
@@ -544,32 +531,47 @@ char	**argv;
   }
 
   if(strcmp(parameter, "hv") == 0){
-    if(argc == 2){
-      if(!mged_variables->adc_anchor_xyz){
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.15e %.15e",
+		    adc_pos_grid[X] * Viewscale * base2local,
+		    adc_pos_grid[Y] * Viewscale * base2local);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }else if(argc == 2){
+      if(!adc_anchor_pos){
 	if(incr_flag){
-	  mged_variables->adc_xyz_grid[X] += user_pt[X];
-	  mged_variables->adc_xyz_grid[Y] += user_pt[Y];
+	  adc_pos_grid[X] += user_pt[X] / (Viewscale * base2local);
+	  adc_pos_grid[Y] += user_pt[Y] / (Viewscale * base2local);
 	}else{
-	  mged_variables->adc_xyz_grid[X] = user_pt[X];
-	  mged_variables->adc_xyz_grid[Y] = user_pt[Y];
+	  adc_pos_grid[X] = user_pt[X] / (Viewscale * base2local);
+	  adc_pos_grid[Y] = user_pt[Y] / (Viewscale * base2local);
 	}
 
-	set_adc_xyz_grid();
+	adc_pos_grid[Z] = 0.0;
+	adc_grid_To_adc_view();
+	MAT4X3PNT(adc_pos_model, view2model, adc_pos_model);
+
+	dirty = 1;
       }
 
       return TCL_OK;
     }
 
-    Tcl_AppendResult(interp, "The 'adc hv' command requires 2 arguments\n", (char *)NULL);
+    Tcl_AppendResult(interp, "The 'adc hv' command requires 0 or 2 arguments\n", (char *)NULL);
     return TCL_ERROR;
   }
 
   if(strcmp(parameter, "dx") == 0){
     if(argc == 1){
-      if(!mged_variables->adc_anchor_xyz){
-	mged_variables->adc_xyz[X] += user_pt[0];
+      if(!adc_anchor_pos){
+	adc_pos_model[X] += user_pt[0] * local2base;
+	adc_model_To_adc_view();
+	adc_view_To_adc_grid();
 
-	set_adc_xyz();
+	dirty = 1;
       }
 
       return TCL_OK;
@@ -581,10 +583,12 @@ char	**argv;
 
   if(strcmp(parameter, "dy") == 0){
     if(argc == 1){
-      if(!mged_variables->adc_anchor_xyz){
-	mged_variables->adc_xyz[Y] += user_pt[0];
+      if(!adc_anchor_pos){
+	adc_pos_model[Y] += user_pt[0] * local2base;
+	adc_model_To_adc_view();
+	adc_view_To_adc_grid();
 
-	set_adc_xyz();
+	dirty = 1;
       }
 
       return TCL_OK;
@@ -596,10 +600,12 @@ char	**argv;
 
   if(strcmp(parameter, "dz") == 0){
     if(argc == 1){
-      if(!mged_variables->adc_anchor_xyz){
-	mged_variables->adc_xyz[Z] += user_pt[0];
+      if(!adc_anchor_pos){
+	adc_pos_model[Z] += user_pt[0] * local2base;
+	adc_model_To_adc_view();
+	adc_view_To_adc_grid();
 
-	set_adc_xyz();
+	dirty = 1;
       }
 
       return TCL_OK;
@@ -610,119 +616,230 @@ char	**argv;
   }
 
   if(strcmp(parameter, "xyz") == 0){
-    if(argc == 3) {
-      if(!mged_variables->adc_anchor_xyz){
+    if(argc == 0){
+      VSCALE(scaled_pos, adc_pos_model, base2local);
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }else if(argc == 3) {
+      if(!adc_anchor_pos){
+	VSCALE(user_pt, user_pt, local2base);
+
 	if(incr_flag){
-	  VADD2(mged_variables->adc_xyz, mged_variables->adc_xyz, user_pt);
+	  VADD2(adc_pos_model, adc_pos_model, user_pt);
 	}else{
-	  VMOVE(mged_variables->adc_xyz, user_pt);
+	  VMOVE(adc_pos_model, user_pt);
 	}
 
-	set_adc_xyz();
+	adc_model_To_adc_view();
+	adc_view_To_adc_grid();
+
+	dirty = 1;
       }
 
       return TCL_OK;
     }
 
-    Tcl_AppendResult(interp, "The 'adc xyz' command requires 2 arguments\n", (char *)NULL);
+    Tcl_AppendResult(interp, "The 'adc xyz' command requires 0 or 3 arguments\n", (char *)NULL);
     return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchor") == 0){
-    mged_variables->adc_anchor_xyz = 1;
-    set_dirty_flag();
+  if(strcmp(parameter, "anchor_pos") == 0){
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d", adc_anchor_pos);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-    return TCL_OK;
-  }
+      return TCL_OK;
+    }else if(argc == 1){
+      i = (int)user_pt[X];
 
-  if(strcmp(parameter, "noanchor") == 0){
-    mged_variables->adc_anchor_xyz = 0;
-    set_dirty_flag();
+      if(i < 0 || 2 < i){
+	Tcl_AppendResult(interp, "The 'adc anchor_pos parameter accepts values of 0, 1, or 2.",
+			 (char *)NULL);
+	return TCL_ERROR;
+      }
 
-    return TCL_OK;
-  }
+      adc_anchor_pos = i;
 
-  if(strcmp(parameter, "anchor_grid") == 0){
-    mged_variables->adc_anchor_xyz = 2;
-    set_dirty_flag();
+      dirty = 1;
+      return TCL_OK;
+    }
 
-    return TCL_OK;
-  }
-
-  if(strcmp(parameter, "noanchor_grid") == 0){
-    mged_variables->adc_anchor_xyz = 0;
-    set_dirty_flag();
-
-    return TCL_OK;
+    Tcl_AppendResult(interp, "The 'adc anchor_pos' command accepts 0 or 1 argument\n",
+		     (char *)NULL);
+    return TCL_ERROR;
   }
 
   if(strcmp(parameter, "anchor_a1") == 0){
-    mged_variables->adc_anchor_a1 = 1;
-    set_dirty_flag();
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d", adc_anchor_a1);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-    return TCL_OK;
-  }
+      return TCL_OK;
+    }else if(argc == 1){
+      i = (int)user_pt[X];
 
-  if(strcmp(parameter, "noanchor_a1") == 0){
-    mged_variables->adc_anchor_a1 = 0;
-    set_dirty_flag();
+      if(i)
+	adc_anchor_a1 = 1;
+      else
+	adc_anchor_a1 = 0;
 
-    return TCL_OK;
+      dirty = 1;
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc anchor_a1' command accepts 0 or 1 argument\n",
+		     (char *)NULL);
+    return TCL_ERROR;
   }
 
   if(strcmp(parameter, "anchorpoint_a1") == 0){
-    VMOVE(mged_variables->adc_anchor_pt_a1, user_pt);
-    set_dirty_flag();
+    if(argc == 0){
+      VSCALE(scaled_pos, adc_anchor_pt_a1, base2local);
 
-    return TCL_OK;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }else if(argc == 3){
+      VSCALE(user_pt, user_pt, local2base);
+
+      if(incr_flag){
+	VADD2(adc_anchor_pt_a1, adc_anchor_pt_a1, user_pt);
+      }else{
+	VMOVE(adc_anchor_pt_a1, user_pt);
+      }
+
+      dirty = 1;
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc anchorpoint_a1' command accepts 0 or 3 arguments\n",
+		     (char *)NULL);
+    return TCL_ERROR;
   }
 
   if(strcmp(parameter, "anchor_a2") == 0){
-    mged_variables->adc_anchor_a2 = 1;
-    set_dirty_flag();
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d", adc_anchor_a2);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-    return TCL_OK;
-  }
+      return TCL_OK;
+    }else if(argc == 1){
+      i = (int)user_pt[X];
 
-  if(strcmp(parameter, "noanchor_a2") == 0){
-    mged_variables->adc_anchor_a2 = 0;
-    set_dirty_flag();
+      if(i)
+	adc_anchor_a2 = 1;
+      else
+	adc_anchor_a2 = 0;
 
-    return TCL_OK;
+      dirty = 1;
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc anchor_a2' command accepts 0 or 1 argument\n",
+		     (char *)NULL);
+    return TCL_ERROR;
   }
 
   if(strcmp(parameter, "anchorpoint_a2") == 0){
-    VMOVE(mged_variables->adc_anchor_pt_a2, user_pt);
-    set_dirty_flag();
+    if(argc == 0){
+      VSCALE(scaled_pos, adc_anchor_pt_a2, base2local);
 
-    return TCL_OK;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }else if(argc == 3){
+      VSCALE(user_pt, user_pt, local2base);
+
+      if(incr_flag){
+	VADD2(adc_anchor_pt_a2, adc_anchor_pt_a2, user_pt);
+      }else{
+	VMOVE(adc_anchor_pt_a2, user_pt);
+      }
+
+      dirty = 1;
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc anchorpoint_a2' command accepts 0 or 3 arguments\n",
+		     (char *)NULL);
+    return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "anchor_tick") == 0){
-    mged_variables->adc_anchor_tick = 1;
-    set_dirty_flag();
+  if(strcmp(parameter, "anchor_dst") == 0){
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d", adc_anchor_dst);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-    return TCL_OK;
+      return TCL_OK;
+    }else if(argc == 1){
+      i = (int)user_pt[X];
+
+      if(i)
+	adc_anchor_dst = 1;
+      else
+	adc_anchor_dst = 0;
+
+      dirty = 1;
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc anchor_dst' command accepts 0 or 1 argument\n",
+		     (char *)NULL);
+    return TCL_ERROR;
   }
 
-  if(strcmp(parameter, "noanchor_tick") == 0){
-    mged_variables->adc_anchor_tick = 0;
-    set_dirty_flag();
+  if(strcmp(parameter, "anchorpoint_dst") == 0){
+    if(argc == 0){
+      VSCALE(scaled_pos, adc_anchor_pt_dst, base2local);
 
-    return TCL_OK;
-  }
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-  if(strcmp(parameter, "anchorpoint_tick") == 0){
-    VMOVE(mged_variables->adc_anchor_pt_tick, user_pt);
-    set_dirty_flag();
+      return TCL_OK;
+    }else if(argc == 3){
+      VSCALE(user_pt, user_pt, local2base);
 
-    return TCL_OK;
+      if(incr_flag){
+	VADD2(adc_anchor_pt_dst, adc_anchor_pt_dst, user_pt);
+      }else{
+	VMOVE(adc_anchor_pt_dst, user_pt);
+      }
+
+      dirty = 1;
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc anchorpoint_dst' command accepts 0 or 3 arguments\n",
+		     (char *)NULL);
+    return TCL_ERROR;
   }
 
   if( strcmp(parameter, "reset") == 0)  {
     if (argc == 0) {
       adc_reset();
 
+      dirty = 1;
       return TCL_OK;
     }
 
