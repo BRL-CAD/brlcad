@@ -84,6 +84,8 @@ static Display	*dpy;			/* X display pointer */
 static Window	win;			/* X window */
 static GC	gc;			/* X Graphics Context */
 static unsigned long	black,gray,white,yellow,red,blue;
+static unsigned long	bd, bg, fg;	/* color of border, background, foreground */
+static int	is_monochrome = 0;
 static XFontStruct *fontstruct;		/* X Font */
 
 static int	no_faceplate = 0;
@@ -198,10 +200,11 @@ mat_t mat;
  */
 /* ARGSUSED */
 int
-X_object( sp, mat, ratio, white )
+X_object( sp, mat, ratio, white_flag )
 register struct solid *sp;
 mat_t mat;
 double ratio;
+int	white_flag;
 {
 	static vect_t   pnt;
 	register struct rt_vlist	*vp;
@@ -213,6 +216,8 @@ double ratio;
 	int	x, y;
 	int	lastx = 0;
 	int	lasty = 0;
+
+	XChangeGC( dpy, gc, GCForeground, &gcv );
 
 	if( sp->s_soldash ) {
 		XSetLineAttributes( dpy, gc, 1, LineOnOffDash, CapButt, JoinMiter );
@@ -260,7 +265,10 @@ double ratio;
 					continue; /* omit this point (ugh) */
 				/* Integerize and let the X server do the clipping */
 				/*XXX Color */
-				gcv.foreground = black;
+				gcv.foreground = fg;
+				if( white_flag && !is_monochrome )  {
+					gcv.foreground = white;
+				}
 				XChangeGC( dpy, gc, GCForeground, &gcv );
 
 				pnt[0] *= 2047;
@@ -279,7 +287,8 @@ double ratio;
 				useful = 1;
 				if( nseg == 1024 ) {
 					XDrawSegments( dpy, win, gc, segbuf, nseg );
-					if( white ) {
+					/* Thicken the drawing, if monochrome */
+					if( white_flag && is_monochrome ) {
 						int	i;
 						/* XXX - width and height don't work on Sun! */
 						/* Thus the following gross hack */
@@ -302,7 +311,7 @@ double ratio;
 	}
 	if( nseg ) {
 		XDrawSegments( dpy, win, gc, segbuf, nseg );
-		if( white ) {
+		if( white_flag && is_monochrome ) {
 			int	i;
 			/* XXX - width and height don't work on Sun! */
 			/* Thus the following gross hack */
@@ -644,11 +653,12 @@ char	*name;
 	char	hostname[80];
 	char	display[80];
 	char	*envp, *cp;
-	unsigned long	bd, bg, fg, bw;
+	unsigned long	bw;		/* border width */
 	XSizeHints xsh;
 	XEvent	event;
 	XGCValues gcv;
 	XColor a_color;
+	Visual	*a_visual;
 	int a_screen;
 	Colormap  a_cmap;
 
@@ -695,11 +705,13 @@ char	*name;
 		}
 	}
 
-	/* Get color map inddices for the colors we use. */
-	black = BlackPixel( dpy, DefaultScreen(dpy) );
-	white = WhitePixel( dpy, DefaultScreen(dpy) );
-
 	a_screen = DefaultScreen(dpy);
+	a_visual = DefaultVisual(dpy, a_screen);
+
+	/* Get color map inddices for the colors we use. */
+	black = BlackPixel( dpy, a_screen );
+	white = WhitePixel( dpy, a_screen );
+
 	a_cmap = DefaultColormap(dpy, a_screen);
 	a_color.red = 255<<8;
 	a_color.green=0;
@@ -748,9 +760,19 @@ char	*name;
 	/* Select border, background, foreground colors,
 	 * and border width.
 	 */
-	bd = BlackPixel( dpy, DefaultScreen(dpy) );
-	bg = WhitePixel( dpy, DefaultScreen(dpy) );
-	fg = BlackPixel( dpy, DefaultScreen(dpy) );
+	if( a_visual->class == GrayScale || a_visual->class == StaticGray )  {
+		is_monochrome = 1;
+		bd = BlackPixel( dpy, a_screen );
+		bg = WhitePixel( dpy, a_screen );
+		fg = BlackPixel( dpy, a_screen );
+	} else {
+		/* Hey, it's a color server.  Ought to use 'em! */
+		is_monochrome = 0;
+		bd = WhitePixel( dpy, a_screen );
+		bg = BlackPixel( dpy, a_screen );
+		fg = WhitePixel( dpy, a_screen );
+	}
+	if( !is_monochrome && fg != red && red != black )  fg = red;
 	bw = 1;
 
 	/* Fill in XSizeHints struct to inform window
