@@ -1508,6 +1508,265 @@ proc set_texture_values { shader_str id } {
 	}
 }
 
+
+
+
+
+
+
+
+
+
+######################################################################
+proc labeled_entry {w name varname summary range} {
+    upvar #0 $varname var
+    set f [frame $w]
+
+    pack [label $f.label -text $name] -side left -fill x
+    pack [entry $f.entry -textvariable $varname -width 10] -side right
+
+    hoc_register_data $f.label $name [list \
+	[list summary $summary] \
+	[list range $range] ]
+    hoc_register_data $f.entry $name [list \
+	[list summary $summary] \
+	[list range $range] ]
+
+    return $f
+}
+
+set light_variables {
+b shadows  s 1 "Does the light cast shadows" 
+b infinite i 0 "light infinitely far away (pos gives direction)" 
+b visible  v 1 "Is the light object visible" 
+v bright   b 1000 "1000"
+v angle    a 180 ""
+v fraction f 1 ""
+v direct   d {0 0 0} ""
+}
+
+proc set_light_defaults { id } {
+	global shader_params
+	global light_variables
+
+	foreach {type name abbrev def_val desc} $light_variables {
+		set shader_params($id,def_light_$abbrev) $def_val
+	}
+}
+
+proc assign_light_defaults { id } {
+	global shader_params
+	global light_variables
+
+	foreach {type name abbrev def_val desc} $light_variables {
+		set shader_params($id,light_$abbrev) $def_val
+	}
+}
+
+
+proc do_light { shade_var id } {
+	global shader_params
+	global light_variables
+	upvar #0 $shade_var shader_str
+
+	# Destroy our frame in case it already exists
+	catch { destroy $shader_params($id,window).fr }
+
+	# Create a frame for the widgets for this shader
+	frame $shader_params($id,window).fr
+
+
+	# For each variable, create a label and an entry widgets
+	# and bind <KeyRelease> so that the shader string wil be updated
+
+	set w $shader_params($id,window).fr
+
+	assign_light_defaults $id
+
+	grid [checkbutton $w.infinite -text Infinite \
+		-variable shader_params($id,light_i) \
+		-command "do_shader_apply $shade_var $id" ] \
+		-row 0 -column 0
+
+#	grid [scale $w.shadows -from 0 -to 9 -orient horiz -label "Shadows" \
+#		-resolution 1 -variable shader_params($id,light_s) ] \
+#		-row 0 -column 1
+
+	grid [checkbutton $w.shadows -text "Shadows" \
+		-variable shader_params($id,light_s) \
+		-command "do_shader_apply $shade_var $id" ] \
+		-row 0 -column 1
+
+	grid [checkbutton $w.visible -text "Visible" \
+		-variable shader_params($id,light_v) \
+		-command "do_shader_apply $shade_var $id" ] \
+		-row 0 -column 2
+
+	if { [info exists shader_params(light_i0_v0_s0)] == 0 } {
+	    foreach i { 0 1 } {
+		foreach v { 0 1 } {
+		    foreach s { 0 1 9 } {
+			set shader_params(light_i${i}_v${v}_s${s}) \
+			  [image create photo -file \
+				[bu_brlcad_path \
+				    "tclscripts/mged/l_i${i}_v${v}_s${s}.ppm"]]
+		    }
+		}
+	    }
+	}
+
+	grid [label $w.icon -relief sunken -bd 3 \
+		-image $shader_params(light_i0_v1_s1) ] \
+		-rowspan 3 -row 0 -column 3
+
+	set shader_params($id,icon) $w.icon
+
+
+	grid [labeled_entry $w.bright bright shader_params($id,light_b) \
+		"How bright should the light be" "0..1"] \
+		-row 1 -column 0
+	bind $w.bright.entry <KeyRelease> "do_shader_apply $shade_var $id"
+
+	grid [labeled_entry $w.fraction fraction \
+		shader_params($id,light_f) \
+		"What percentage of the total light does this produce" \
+		"0..1" ] \
+		-row 1 -column 1
+	bind $w.fraction.entry <KeyRelease> "do_shader_apply $shade_var $id"
+
+	grid [labeled_entry $w.angle angle shader_params($id,light_a) \
+		"What is the angle of the light cone?" "0..180"] \
+		-row 2 -column 0
+	bind $w.angle.entry <KeyRelease> "do_shader_apply $shade_var $id"
+
+	grid [labeled_entry $w.direct direct \
+		shader_params($id,light_d) \
+		"Where is the light pointed (when angle < 180)" \
+		"0..1"] \
+		-row 2 -column 1
+	bind $w.direct.entry <KeyRelease> "do_shader_apply $shade_var $id"
+
+	# Set the entry widget values from the current shader string
+	set_light_values $shader_str $id
+
+	# Grid the shader widget window into the parent widget
+	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
+
+	# weight the columns of the grid evenly
+	grid columnconfigure $shader_params($id,window).fr 0 -weight 1
+	grid columnconfigure $shader_params($id,window).fr 1 -weight 1
+
+	return $shader_params($id,window).fr
+}
+
+# set the entry widget values from the shader string and
+# fill in the gui variables
+
+# called when user modifies shader string directly
+proc set_light_values { shader_str id } {
+	global shader_params
+
+	# grab OUR shader parameters from the shader string
+	if { [llength $shader_str] > 1 } then {
+		set params [lindex $shader_str 1]
+	} else {
+		set params ""
+	}
+
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set  list_len 0}
+	if { $list_len > 1 } then {
+
+	    # For each of my parameters, set 
+	    foreach { key value } $params {
+
+		tk_messageBox -message "set_light_values key $key  value $value"
+
+		switch -- $key {
+		    default {
+				tk_messageBox -message "key $key value $value"
+		    }
+		    infinite -
+		    i { set shader_params($id,light_i) $value }
+		    visible -
+		    v {	set shader_params($id,light_v) $value }
+		    shadows -
+		    s {	set shader_params($id,light_s) $value }
+		    bright -
+		    b {	set shader_params($id,light_b) $value }
+		    angle -
+		    a { set shader_params($id,light_a) $value }
+		    fraction -
+		    f { set shader_params($id,light_f) $value }
+		    direct -
+		    d { set shader_params($id,light_d) $value }
+		}
+	    }
+	}
+
+
+	do_light_icon $id
+
+}
+
+# This routine takes the values in the shader_params array and creates
+# A shader string from it.
+# This is called when the user modifies a value in one of the entry widgets
+proc do_light_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader
+
+	set params ""
+
+	set pattern ($id,light_)(\[a-z\]*)
+	foreach i [array names shader_params] {
+	    if { [regexp $pattern $i name head varname] && \
+	         $shader_params($id,light_$varname) != $shader_params($id,def_light_$varname) } {
+			lappend params $varname $shader_params($id,light_$varname)
+		}
+	}
+
+	do_light_icon $id
+
+	set shader [list "light" $params ]
+}
+
+proc do_light_icon { id } {
+	global shader_params
+
+	set name ""
+
+	append name "light_i" $shader_params($id,light_i) 
+	append name "_v"  $shader_params($id,light_v)
+
+	 
+
+	if { $shader_params($id,light_s) > 1 } then {
+		append name "_s" 9
+	} 
+
+	if { $shader_params($id,light_s) > 0 } then {
+		append name "_s" 1
+	} else {
+		append name "_s" 0
+	}
+
+	$shader_params($id,icon) configure -image $shader_params($name)
+}
+
+
+######################################################################
+
+
+
+
+
+
+
+
+
+
+
 proc do_bump_apply { shade_var id } {
 	do_texture_apply $shade_var $id
 }
@@ -1845,6 +2104,10 @@ proc stack_add { shader shade_var id } {
 			set_mirror_defaults "$id,stk_$index"
 			set tmp_win [do_phong $shade_var $id,stk_$index]
 		}
+		light {
+			set_light_defaults "$id,light_$index"
+			set tmp_win [do_light $shade_var $id,light_$index]
+		}
 		bump -
 		bwtexture -
 		texture {
@@ -1926,6 +2189,10 @@ proc stack_insert { index shader shade_var id } {
 		mirror {
 			set_mirror_defaults "$id,stk_$index"
 			set tmp_win [do_phong $shade_var $id,stk_$index]
+		}
+		light {
+			set_light_defaults "$id,light_$index"
+			set tmp_win [do_light $shade_var $id,light_$index]
 		}
 		bump -
 		bwtexture -
@@ -2089,6 +2356,10 @@ proc do_stack { shade_var id } {
 		-label glass -command "stack_add glass $shade_var $id; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
 		-label mirror -command "stack_add mirror $shade_var $id; do_shader_apply $shade_var $id"
+
+	$shader_params($id,window).fr.add.m add command \
+		-label light -command "stack_add light $shade_var $id; do_shader_apply $shade_var $id"
+
 	$shader_params($id,window).fr.add.m add command \
 		-label "bump map" -command "stack_add bump $shade_var $id; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
@@ -2159,6 +2430,10 @@ proc env_select { shader shade_var id } {
 		mirror {
 			set_mirror_defaults "$id,env"
 			set tmp_win [do_phong $shade_var $id,env]
+		}
+		light {
+			set_light_defaults "$id,light_$index"
+			set tmp_win [do_light $shade_var $id,light_$index]
 		}
 		bump -
 		bwtexture -

@@ -235,6 +235,11 @@ the form of the selected shader type." } }
 	    -command "comb_shader_gui $id bwtexture"
     hoc_register_menu_data "Shader" "texture (b/w)" "Shader - Texture (b/w)" \
 	    { { summary "Map a black and white texture on this object." } }
+
+	$top.shaderMB.m add command -label "light" \
+	    -command "comb_shader_gui $id light" 
+
+
     $top.shaderMB.m add command -label "bump map" \
 	    -command "comb_shader_gui $id bump"
     hoc_register_menu_data "Shader" "bump map" "Shader - Bump" \
