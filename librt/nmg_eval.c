@@ -471,9 +471,12 @@ struct nmg_bool_state *bs;
 		 *  then any remaining loops, edges, etc, will die too.
 		 */
 		if( NMG_LIST_IS_EMPTY( &fu->lu_hd ) )  {
-			/* faceuse is empty, it dies */
+			/* faceuse is empty, face & mate die */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x empty, kill\n", fu);
+			if( NMG_LIST_MORE(fu, faceuse, &s->fu_hd) &&
+			    nextfu == fu->fumate_p )
+				nextfu = NMG_LIST_PNEXT(faceuse, nextfu);
 			nmg_kfu( fu );		/* kill face & mate */
 			fu = nextfu;
 			continue;
@@ -499,6 +502,9 @@ struct nmg_bool_state *bs;
 		if( fu->s_p != bs->bs_dest )  {
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x moved to A shell\n", fu);
+			if( NMG_LIST_MORE(fu, faceuse, &s->fu_hd) &&
+			    nextfu == fu->fumate_p )
+				nextfu = NMG_LIST_PNEXT(faceuse, nextfu);
 			nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
 			fu = nextfu;
 			continue;
