@@ -24,7 +24,7 @@
 
 /* Algorithm -
  * From the four corners of the surface, return the two parts split by the
- * diagonal from the first and thrid corner point making sure Homogeneous
+ * diagonal from the first and third corner point making sure Homogeneous
  * points are divided. 
  */
 
