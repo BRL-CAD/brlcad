@@ -915,6 +915,9 @@ out:
  *  
  *  Replacement for the LIBBU routine of the same name.
  */
+int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
+jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
+
 void
 bu_bomb(str)
 CONST char *str;
