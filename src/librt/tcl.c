@@ -1537,7 +1537,11 @@ rt_tcl_setup(Tcl_Interp *interp)
  *  "load /usr/brlcad/lib/librt.so"
  */
 int
+#ifdef BRLCAD_DEBUG
+Rt_d_Init(Tcl_Interp *interp)
+#else
 Rt_Init(Tcl_Interp *interp)
+#endif
 {
 	const char *version_number;
 
