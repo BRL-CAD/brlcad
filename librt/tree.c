@@ -477,25 +477,43 @@ int				id;
 		return( TREE_NULL );		/* BAD */
 	}
 
-	/*
-	 *  If there is more than just a direct reference to this leaf
-	 *  from it's containing region, copy that below-region path
-	 *  into st_path.  Otherwise, leave st_path's magic number 0.
-	 */
-	i = pathp->fp_len-1;
-	if( i > 0 && !(pathp->fp_names[i-1]->d_flags & DIR_REGION) )  {
-		/* Search backwards for region.  If no region, use whole path */
-		for( --i; i > 0; i-- )  {
-			if( pathp->fp_names[i-1]->d_flags & DIR_REGION ) break;
-		}
-		if( i < 0 )  i = 0;
+	if( rt_tree_rtip->rti_dont_instance )  {
+		/*
+		 *  If instanced solid refs are not being compressed,
+		 *  then memory isn't an issue, and the application
+		 *  (such as solids_on_ray) probably cares about the
+		 *  full path of this solid, from root to leaf.
+		 *  So make it available here.
+		 *  (stp->st_dp->d_uses could be the way to discriminate
+		 *  references uniquely, if the path isn't enough.
+		 *  To locate given dp and d_uses, search dp->d_use_hd list.
+		 *  Question is, where to stash current val of d_uses?)
+		 */
 		db_full_path_init( &stp->st_path );
-		db_dup_path_tail( &stp->st_path, pathp, i );
-		if(rt_g.debug&DEBUG_TREEWALK)  {
-			char	*sofar = db_path_to_string(&stp->st_path);
-			bu_log("rt_gettree_leaf() st_path=%s\n", sofar );
-			rt_free(sofar, "path string");
+		db_dup_full_path( &stp->st_path, pathp );
+	} else {
+		/*
+		 *  If there is more than just a direct reference to this leaf
+		 *  from it's containing region, copy that below-region path
+		 *  into st_path.  Otherwise, leave st_path's magic number 0.
+		 * XXX nothing depends on this behavior yet, and this whole
+		 * XXX 'else' clause might well be deleted. -Mike
+		 */
+		i = pathp->fp_len-1;
+		if( i > 0 && !(pathp->fp_names[i-1]->d_flags & DIR_REGION) )  {
+			/* Search backwards for region.  If no region, use whole path */
+			for( --i; i > 0; i-- )  {
+				if( pathp->fp_names[i-1]->d_flags & DIR_REGION ) break;
+			}
+			if( i < 0 )  i = 0;
+			db_full_path_init( &stp->st_path );
+			db_dup_path_tail( &stp->st_path, pathp, i );
 		}
+	}
+	if(rt_g.debug&DEBUG_TREEWALK && stp->st_path.magic == DB_FULL_PATH_MAGIC)  {
+		char	*sofar = db_path_to_string(&stp->st_path);
+		bu_log("rt_gettree_leaf() st_path=%s\n", sofar );
+		rt_free(sofar, "path string");
 	}
 
 #if 0
