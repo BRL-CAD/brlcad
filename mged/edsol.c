@@ -2732,6 +2732,7 @@ sedit()
 
 			RT_DSP_CK_MAGIC( dsp );
 
+			/* Pop-up the Tk file browser */
 			fname = get_file_name( bu_vls_addr(&dsp->dsp_file) );
 			if ( ! fname) break;
 
