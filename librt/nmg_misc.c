@@ -178,19 +178,23 @@ long *p;
  *	of nmg_inter.c is that it knows too much about the format and contents
  *	of an nmg_ptbl structure.
  */
-/* XXX Needs tol argument */
 void
-nmg_purge_unwanted_intersection_points(vert_list, fu)
-struct nmg_ptbl *vert_list;
-struct faceuse *fu;
+nmg_purge_unwanted_intersection_points(vert_list, fu, tol)
+struct nmg_ptbl		*vert_list;
+CONST struct faceuse	*fu;
+CONST struct rt_tol	*tol;
 {
-	int i, j;
-	struct vertexuse *vu;
-	struct loopuse *lu;
-	struct loopuse *fu2lu;
-	struct loop_g	*lg;
-	struct loop_g	*fu2lg;
-	int overlap;
+	int			i;
+	int			j;
+	struct vertexuse	*vu;
+	struct loopuse		*lu;
+	CONST struct loop_g	*lg;
+	CONST struct loopuse	*fu2lu;
+	CONST struct loop_g	*fu2lg;
+	int			overlap = 0;
+
+	NMG_CK_FACEUSE(fu);
+	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_purge_unwanted_intersection_points(0x%08x, 0x%08x)\n", vert_list, fu);
@@ -249,9 +253,8 @@ struct faceuse *fu;
 
 			fu2lg = fu2lu->l_p->lg_p;
 			NMG_CK_LOOP_G(fu2lg);
-	/* XXX Needs to be changed to V3RPP_OVERLAP_TOL */
-			if (V3RPP_OVERLAP(fu2lg->min_pt, fu2lg->max_pt,
-			    lg->min_pt, lg->max_pt)) {
+			if (V3RPP_OVERLAP_TOL(fu2lg->min_pt, fu2lg->max_pt,
+			    lg->min_pt, lg->max_pt, tol)) {
 				overlap = 1;
 				break;
 			}
@@ -339,12 +342,15 @@ int	orientation;
 	return "OT_IS_BOGUS!!";
 }
 
-/*	Print the orientation in a nice, english form
+/*
+ *			N M G _ P R _ O R I E N T
+ *
+ *	Print the orientation in a nice, english form
  */
 void 
 nmg_pr_orient(orientation, h)
-int	orientation;
-char	*h;
+int		orientation;
+CONST char	*h;
 {
 	switch (orientation) {
 	case OT_SAME : rt_log("%s%8s orientation\n", h, "SAME"); break;
@@ -356,12 +362,14 @@ char	*h;
 	}
 }
 
-
+/*
+ *			N M G _ P R _ M
+ */
 void 
 nmg_pr_m(m)
-struct model *m;
+CONST struct model *m;
 {
-	struct nmgregion *r;
+	CONST struct nmgregion *r;
 
 	rt_log("MODEL %8x\n", m);
 	if (!m || m->magic != NMG_MODEL_MAGIC) {
@@ -376,6 +384,8 @@ struct model *m;
 }
 
 /*
+ *			M K P A D
+ *
  *  NOTE:  All the nmg_pr_*() routines take an "h" (header string) pointer.
  *  This can be an arbitrary caller-provided string, as long as it is kept
  *  short.  The string will be copied over into nmg_pr_padstr[], and
@@ -391,9 +401,12 @@ static char nmg_pr_padstr[128];
 
 #define Return	{ h[strlen(h)-3] = '\0'; return; }
 
+/*
+ *			N M G _ P R _ R
+ */
 void 
 nmg_pr_r(r, h)
-struct nmgregion *r;
+CONST struct nmgregion *r;
 char *h;
 {
 	struct shell *s;
@@ -418,9 +431,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ S A
+ */
 void 
 nmg_pr_sa(sa, h)
-struct shell_a *sa;
+CONST struct shell_a *sa;
 char *h;
 {
 	MKPAD(h);
@@ -439,9 +455,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ L G
+ */
 void 
 nmg_pr_lg(lg, h)
-struct loop_g *lg;
+CONST struct loop_g *lg;
 char *h;
 {
 	MKPAD(h);
@@ -456,9 +475,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ F G
+ */
 void 
 nmg_pr_fg(fg, h)
-struct face_g *fg;
+CONST struct face_g *fg;
 char *h;
 {
 	MKPAD(h);
@@ -477,14 +499,17 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ S
+ */
 void 
 nmg_pr_s(s, h)
-struct shell *s;
+CONST struct shell *s;
 char *h;
 {
-	struct faceuse	*fu;
-	struct loopuse	*lu;
-	struct edgeuse	*eu;
+	CONST struct faceuse	*fu;
+	CONST struct loopuse	*lu;
+	CONST struct edgeuse	*eu;
 
 	MKPAD(h);
 	
@@ -518,9 +543,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ F
+ */
 void 
 nmg_pr_f(f, h)
-struct face *f;
+CONST struct face *f;
 char *h;
 {
 	MKPAD(h);
@@ -535,12 +563,16 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ F U
+ */
 void 
 nmg_pr_fu(fu, h)
-struct faceuse *fu;
+CONST struct faceuse *fu;
 char *h;
 {
-	struct loopuse *lu;
+	CONST struct loopuse *lu;
+
 	MKPAD(h);
 	NMG_CK_FACEUSE(fu);
 
@@ -568,12 +600,16 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ F U _ B R I E F L Y
+ */
 void 
 nmg_pr_fu_briefly(fu, h)
-struct faceuse *fu;
+CONST struct faceuse *fu;
 char *h;
 {
-	struct loopuse *lu;
+	CONST struct loopuse *lu;
+
 	MKPAD(h);
 	NMG_CK_FACEUSE(fu);
 
@@ -586,9 +622,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ L
+ */
 void 
 nmg_pr_l(l, h)
-struct loop *l;
+CONST struct loop *l;
 char *h;
 {
 	MKPAD(h);
@@ -606,13 +645,17 @@ char *h;
 
 	Return;
 }
+
+/*
+ *			N M G _ P R _ L U
+ */
 void 
 nmg_pr_lu(lu, h)
-struct loopuse *lu;
+CONST struct loopuse *lu;
 char *h;
 {
-	struct edgeuse	*eu;
-	struct vertexuse *vu;
+	CONST struct edgeuse	*eu;
+	CONST struct vertexuse *vu;
 	long		magic1;
 	
 	MKPAD(h);
@@ -660,15 +703,18 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ L U _ B R I E F L Y
+ */
 void 
 nmg_pr_lu_briefly(lu, h)
-struct loopuse *lu;
+CONST struct loopuse *lu;
 char *h;
 {
-	struct edgeuse	*eu;
-	struct vertexuse *vu;
+	CONST struct edgeuse	*eu;
+	CONST struct vertexuse *vu;
 	long		magic1;
-	
+
 	MKPAD(h);
 	NMG_CK_LOOPUSE(lu);
 
@@ -692,9 +738,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ E G
+ */
 void
 nmg_pr_eg(eg, h)
-struct edge_g *eg;
+CONST struct edge_g *eg;
 char *h;
 {
 	MKPAD(h);
@@ -708,9 +757,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ E
+ */
 void 
 nmg_pr_e(e, h)
-struct edge *e;
+CONST struct edge *e;
 char *h;
 {
 	MKPAD(h);
@@ -730,10 +782,12 @@ char *h;
 	Return;
 }
 
-
+/*
+ *			N M G _ P R _ E U
+ */
 void 
 nmg_pr_eu(eu, h)
-struct edgeuse *eu;
+CONST struct edgeuse *eu;
 char *h;
 {
 	MKPAD(h);
@@ -763,9 +817,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ E U _ B R I E F L Y
+ */
 void 
 nmg_pr_eu_briefly(eu, h)
-struct edgeuse *eu;
+CONST struct edgeuse *eu;
 char *h;
 {
 	MKPAD(h);
@@ -777,9 +834,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ V G
+ */
 void 
 nmg_pr_vg(vg, h)
-struct vertex_g *vg;
+CONST struct vertex_g *vg;
 char *h;
 {
 	MKPAD(h);
@@ -795,9 +855,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ V
+ */
 void 
 nmg_pr_v(v, h)
-struct vertex *v;
+CONST struct vertex *v;
 char *h;
 {
 	MKPAD(h);
@@ -821,9 +884,12 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ V U
+ */
 void 
 nmg_pr_vu(vu, h)
-struct vertexuse *vu;
+CONST struct vertexuse *vu;
 char *h;
 {
 	MKPAD(h);
@@ -851,12 +917,15 @@ char *h;
 	Return;
 }
 
+/*
+ *			N M G _ P R _ V U _ B R I E F L Y
+ */
 void 
 nmg_pr_vu_briefly(vu, h)
-struct vertexuse *vu;
+CONST struct vertexuse *vu;
 char *h;
 {
-	struct vertex_g	*vg;
+	CONST struct vertex_g	*vg;
 
 	MKPAD(h);
 	NMG_CK_VERTEXUSE(vu);
@@ -986,18 +1055,18 @@ struct model	*m;
  */
 void
 nmg_count_shell_kids(m, total_faces, total_wires, total_points)
-struct model *m;
+CONST struct model *m;
 unsigned long *total_wires;
 unsigned long *total_faces;
 unsigned long *total_points;
 {
 	short *tbl;
 
-	struct nmgregion *r;
-	struct shell *s;
-	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu;
+	CONST struct nmgregion *r;
+	CONST struct shell *s;
+	CONST struct faceuse *fu;
+	CONST struct loopuse *lu;
+	CONST struct edgeuse *eu;
 
 	NMG_CK_MODEL(m);
 
