@@ -11,7 +11,6 @@
  *	pkg_makeconn	Make a pkg_conn structure
  *	pkg_close	Close a network connection
  *	pkg_send	Send a message on the connection
- *	pkg_2send	Send a message combined from two buffers
  *	pkg_stream	Send a message that doesn't need a push
  *	pkg_flush	Empty the stream buffer of any queued messages
  *	pkg_waitfor	Wait for a specific msg, user buf, processing others
@@ -58,6 +57,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <EXOS/sys/socket.h>
 #include <EXOS/netinet/in.h>
 #include <sys/time.h>		/* for struct timeval */
+#define select	bsdselect	/* bloody GL2 select() conflict */
 #endif
 
 #include <errno.h>
@@ -229,6 +229,7 @@ void (*errlog)();
 	}
 	sinme.sin_port = sp->s_port;
 #endif
+	sinme.sin_family = AF_INET;
 #ifdef SGI_EXCELAN
 	/* What routine does SGI give for this one? */
 	sinme.sin_port = htons(5558);	/* mfb service!! XXX */
@@ -459,12 +460,7 @@ register struct pkg_conn *pc;
 		tv.tv_sec = 0;
 		tv.tv_usec = 0;		/* poll -- no waiting */
 		bits = 1 << pc->pkc_fd;
-#ifdef BSD
 		i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
-#endif
-#ifdef SGI_EXCELAN
-		i = select( pc->pkc_fd+1, &bits, (char *)0, tv.tv_usec );
-#endif
 		if( i > 0 && bits )
 			if( pkg_block(pc) < 0 )
 				return(-1);
@@ -564,12 +560,7 @@ register struct pkg_conn *pc;
 		tv.tv_sec = 0;
 		tv.tv_usec = 0;		/* poll -- no waiting */
 		bits = 1 << pc->pkc_fd;
-#ifdef BSD
 		i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
-#endif
-#ifdef SGI_EXCELAN
-		i = select( pc->pkc_fd+1, &bits, (char *)0, tv.tv_usec );
-#endif
 		if( i > 0 && bits )
 			if( pkg_block(pc) < 0 )
 				return(-1);
@@ -850,12 +841,7 @@ register struct pkg_conn *pc;
 		tv.tv_sec = 0;
 		tv.tv_usec = 20000;	/* 20 ms */
 		bits = (1<<pc->pkc_fd);
-#ifdef BSD
 		i = select( pc->pkc_fd+1, (char *)&bits, (char *)0, (char *)0, &tv );
-#endif
-#ifdef SGI_EXCELAN
-		i = select( pc->pkc_fd+1, (char *)&bits, (char *)0, &tv );
-#endif
 		if( i <= 0 )  return(0);	/* timed out */
 		if( !bits )  return(0);		/* no input */
 	}
@@ -1020,10 +1006,8 @@ register struct pkg_conn *pc;
 	return( pkg_dispatch(pc) );
 }
 
-#ifdef BSD
 extern int sys_nerr;
 extern char *sys_errlist[];
-#endif
 
 /*
  *			P K G _ P E R R O R
@@ -1035,15 +1019,11 @@ pkg_perror( errlog, s )
 void (*errlog)();
 char *s;
 {
-#ifdef BSD
 	if( errno >= 0 && errno < sys_nerr ) {
 		sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
 		errlog( errbuf );
 	} else
 		errlog( s );
-#else
-	errlog( s );
-#endif BSD
 }
 
 /*
@@ -1057,6 +1037,26 @@ char *s;
 {
 	fputs( s, stderr );
 }
+
+#ifdef SGI_EXCELAN
+/*
+ *			B S D S E L E C T
+ *
+ *  Not only is the calling sequence different, but
+ *  it conflicts with naming in the GL2 library, so
+ *  select can't be used!
+ */
+#undef select
+int
+bsdselect( nfd, a, b, c, tvp )
+int nfd;
+long *a, *b, *c;
+struct timeval *tvp;
+{
+/**	return( select( nfd, a, b, tvp->tv_usec ); **/
+	return(0);
+}
+#endif
 
 #ifdef SGI_EXCELAN
 /*
