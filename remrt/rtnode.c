@@ -371,6 +371,11 @@ bu_log("after Tcl_Init\n");
 	/* Don't allow unknown commands to be fed to the shell */
 	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
+	Tcl_LinkVar(interp, "test_fb_speed", (char *)&test_fb_speed, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "curframe", (char *)&curframe, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "print_on", (char *)&print_on, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "npsw", (char *)&npsw, TCL_LINK_INT);
+
 	/* Send our version string */
 #define PROTOCOL_VERSION	"Version1.0"
 	{
@@ -587,10 +592,6 @@ char *buf;
 		}
 		bu_vls_free(&cmd);
 	}
-
-	Tcl_LinkVar(interp, "test_fb_speed", (char *)&test_fb_speed, TCL_LINK_INT);
-	Tcl_LinkVar(interp, "curframe", (char *)&curframe, TCL_LINK_INT);
-	Tcl_LinkVar(interp, "print_on", (char *)&print_on, TCL_LINK_INT);
 }
 
 /*
@@ -698,6 +699,7 @@ char			*buf;
 	point_t	viewcenter_model;
 	point_t	eye_screen;
 	int	saved_print_on = print_on;
+	char	obuf[32];
 
 	RT_CK_RTI(rtip);
 
@@ -823,7 +825,9 @@ char			*buf;
 
 	if(debug) bu_log("done!\n");
 
-	if( pkg_send( RTSYNCMSG_DONE, "1", 2, pcsrv ) < 0 )  {
+	/* Build up reply message */
+	sprintf(obuf, "%d", npsw);
+	if( pkg_send( RTSYNCMSG_DONE, obuf, strlen(obuf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send RTSYNCMSG_DONE failed\n");
 		exit(12);
 	}
