@@ -468,6 +468,7 @@ CONST struct rt_tol	*tol;
 	double		n;		/* integer part of npi */
 	fastf_t		residue;	/* fractional part of npi */
 	int		n_angles=0;	/* number of edge/edge angles measured */
+	int		ret;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
@@ -516,9 +517,8 @@ CONST struct rt_tol	*tol;
 #endif
 
 	if( n_angles < 3 )  {
-	    	if (rt_g.NMG_debug)
-			rt_log("nmg_loop_is_ccw():  only %d angles, can't tell\n", n_angles);
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
 	npi = theta * rt_invpi;		/* n * pi.  n should be >= 2 */
@@ -535,11 +535,13 @@ CONST struct rt_tol	*tol;
 	/* "npi" value is normalized -1..+1, tolerance here is 1% */
 	if( npi >= 2 - 0.05 )  {
 		/* theta >= two pi, loop is CCW */
-		return 1;
+		ret = 1;
+		goto out;
 	}
 	if( npi <= -2 + 0.05 )  {
 		/* theta <= -two pi, loop is CW */
-		return -1;
+		ret = -1;
+		goto out;
 	}
 	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g, winding=%g*pi\n",
 		theta, npi );
@@ -549,7 +551,12 @@ CONST struct rt_tol	*tol;
 	rt_g.NMG_debug |= DEBUG_PLOTEM;
 	nmg_face_lu_plot( lu, this_vu, this_vu );
 	rt_bomb("nmg_loop_is_ccw()\n");
-	return 0;
+out:
+    	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_loop_is_ccw(lu=x%x) ret=%d (%d angles, winding=%g*pi)\n",
+			lu, ret, n_angles, npi);
+    	}
+	return ret;
 }
 
 /*
