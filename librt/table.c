@@ -256,6 +256,11 @@ BU_EXTERN(int rt_sketch_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char *attr));
 BU_EXTERN(int rt_sketch_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv));
+/* CLINE */
+BU_EXTERN(int rt_cline_tclget, (Tcl_Interp *interp,
+		CONST struct rt_db_internal *intern, CONST char *attr));
+BU_EXTERN(int rt_cline_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv));
 
 /* EXTRUSION */
 BU_EXTERN(int rt_extrude_tclget, (Tcl_Interp *interp,
@@ -680,7 +685,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_cline_import,	rt_cline_export,	rt_cline_ifree,
 		rt_cline_describe,rt_cline_xform,	rt_cline_parse,
 		sizeof(struct rt_cline_internal), RT_CLINE_INTERNAL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		rt_cline_tclget, rt_cline_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 
