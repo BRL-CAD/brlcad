@@ -2279,8 +2279,7 @@ struct hold_point *hp;
 	mat_t mat;
 	struct joint *jp;
 	struct rt_grip_internal *gip;
-	struct bu_external	es_ext;
-	struct rt_db_internal	es_int;
+	struct rt_db_internal	intern;
 	int id;
 
 	if(dbip == DBI_NULL)
@@ -2297,23 +2296,17 @@ struct hold_point *hp;
 			MAT4X3PNT(loc, mat, hp->point);
 			return 1;
 		}
-		bn_mat_idn(mat);
-		BU_INIT_EXTERNAL(&es_ext);
-		RT_INIT_DB_INTERNAL(&es_int);
-		if (db_get_external( &es_ext,
-		    hp->path.fp_names[hp->path.fp_len-1], dbip) < 0) return 0;
-		id = rt_id_solid( &es_ext);
-		if (id != ID_GRIP) return 0;
-		if (rt_functab[id].ft_import( &es_int, &es_ext, mat, dbip) < 0) {
-			db_free_external(&es_ext);
+
+		if( rt_db_get_internal( &intern, hp->path.fp_names[hp->path.fp_len-1], dbip, NULL ) < 0 )
 			return 0;
-		}
-		RT_CK_DB_INTERNAL(&es_int);
-		gip = (struct rt_grip_internal *)es_int.idb_ptr;
+
+		RT_CK_DB_INTERNAL(&intern);
+		if( intern.idb_type != ID_GRIP )  return 0;
+		gip = (struct rt_grip_internal *)intern.idb_ptr;
 		VMOVE(hp->point, gip->center);
 		hp->flag |= HOLD_PT_GOOD;
-		rt_functab[id].ft_ifree( &es_int);
-		db_free_external(&es_ext);
+		rt_db_free_internal( &intern );
+
 		db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2);
 		MAT4X3PNT(loc, mat, hp->point);
 		return 1;
