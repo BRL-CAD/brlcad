@@ -1,7 +1,9 @@
 /*			A N I M _ S O R T . C
  *
  *	Combine multiple animation scripts on standard input into a 
- *  single script on standard output.
+ *  single script on standard output. The output can be in natural order
+ *  or in a scrambled order for incrementally increasing time 
+ *  resolution (-i option).
  * 
  *
  *  Author -
@@ -26,29 +28,27 @@
 #include <stdlib.h>
 
 #define MAXLEN	50		/*maximum length of lines to be read */
-
-typedef struct list {		/* linked list of post-raytracing commands */
-	struct list *next;
-	char 	line[MAXLEN];
-} LINE_LIST;
+#define MAXLINES 30		/* maximum length of lines to be stored*/
 
 int suppressed;		/* flag: suppress printing of 'clean;' commands */
+int incremental;	/* flag: order for incremental time resolution */
 
 main(argc, argv)
 int argc;
 char **argv;
 {
-	int	frame_number, number, success; 
+	int	length,frame_number, number, success, maxnum; 
+	int 	first_frame,spread,reserve; 
 	long	last_pos;
 	char	line[MAXLEN];
+	char    pbuffer[MAXLEN*MAXLINES];
 
-	LINE_LIST *buf_start=NULL, *buf_end=NULL;
-	void do_free();
 
         if (!get_args(argc,argv))
 		fprintf(stderr,"Get_args error\n");
 
 	/* copy any lines preceeding the first "start" command */
+	last_pos = ftell(stdin);
 	while (fgets(line,MAXLEN,stdin)!=NULL){
 		if (strncmp(line,"start",5)){
 			printf("%s",line);
@@ -61,20 +61,40 @@ char **argv;
 	/* read the frame number of the first "start" command */
 	sscanf( strpbrk(line,"0123456789"),"%d", &frame_number);
 
-	/* main loop: repeat for every integer, beginning with the first */
-	/*  frame number, until reaching a frame number not found anywhere*/
-	/*  in the file */
+	/* find the highest frame number in the file */
+	maxnum = 0;
+	while(fgets(line,MAXLEN,stdin)!=NULL){
+		if(!strncmp(line,"start",5)){
+			sscanf(strpbrk(line,"0123456789"),"%d",&number);
+			maxnum = (maxnum>number)?maxnum:number;
+		}
+	}
+
+	length = maxnum - frame_number + 1;
+	/* spread should initially be the smallest power of two larger than
+	 * or equal to length */
+	spread = 2;
+	while (spread < length)
+		spread = spread<<1;
+
+	first_frame = frame_number;
 	success = 1;
-	while (success > 0){
+	while (length--){
 		number = -1;
 		success = 0; /* tells whether or not any frames have been found  which have the current frame number*/
-		fseek(stdin, last_pos, 0);
+		if (incremental){
+			fseek(stdin, 0L, 0);
+		} else {
+			fseek(stdin, last_pos, 0);
+		}
 
-		do_free(buf_start);
-		buf_start = buf_end = NULL;
+		reserve = MAXLEN*MAXLINES;
+		pbuffer[0] = '\0'; /* delete old pbuffer */
+
 		/* inner loop: search through the entire file for frames */
 		/*  which have the current frame number */
 		while (!feof(stdin)){
+
 			/*read to next "start" command*/
 			while (fgets(line,MAXLEN,stdin)!=NULL){
 				if (!strncmp(line,"start",5)){
@@ -101,16 +121,12 @@ char **argv;
 					if(!strncmp(line,"start",5))
 						break;
 					else {
-						if (buf_start==NULL){
-							buf_start = (LINE_LIST *) malloc(sizeof(LINE_LIST));
-							buf_end = buf_start;
+						reserve -= strlen(line);
+						reserve -= 1;
+						if (reserve > 0){
+							strncat(pbuffer,line,MAXLEN);
+							strcat(pbuffer,"\n");
 						}
-						else {
-							buf_end->next = (LINE_LIST *) malloc(sizeof(LINE_LIST));
-							buf_end = buf_end->next;
-						}
-						buf_end->next = NULL;
-						strcpy(buf_end->line,line);
 					}
 				}
 			}
@@ -118,30 +134,22 @@ char **argv;
 		if (success)
 			printf("end;\n");
 		/* print saved-up post-raytracing commands, if any */
-		buf_end = buf_start;
-		while(buf_end != NULL){
-			printf("%s",buf_end->line);
-			buf_end = buf_end->next;
+		printf("%s",pbuffer);
+
+		/* get next frame number */
+		if (incremental){
+			frame_number = frame_number + 2*spread;
+			while (frame_number > maxnum){
+				spread = spread>>1;
+				frame_number = first_frame + spread;
+			}
+		} else {
+			frame_number += 1;
 		}
-
-		frame_number += 1;
-	}
-	do_free(buf_start);
-}
-
-void do_free(pl)
-LINE_LIST *pl;
-{
-	LINE_LIST *px;
-
-	while (pl != NULL){
-		px = pl->next;
-		free(pl);
-		pl = px;
 	}
 }
 
-#define OPT_STR "c"
+#define OPT_STR "ci"
 
 int get_args(argc,argv)
 int argc;
@@ -156,6 +164,9 @@ char **argv;
                 case 'c':
                 	suppressed = 1;
                         break;
+                case 'i':
+                	incremental = 1;
+                	break;
                 default:
                         fprintf(stderr,"Unknown option: -%c\n",c);
                         return(0);
