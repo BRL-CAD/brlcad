@@ -681,14 +681,6 @@ out:
 	RES_RELEASE( &rt_g.res_syscall );
 }
 #endif /* not __STDC__ */
-void
-rt_bomb(str)
-char *str;
-{
-	rt_log("rtsrv:  Fatal Error %s, aborting\n", str);
-	abort();	/* should dump */
-	exit(12);
-}
 
 void
 ph_unexp(pc, buf)
