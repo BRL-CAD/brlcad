@@ -195,49 +195,128 @@ a middle mouse button event.
 </DD>
 <HR>
 
-<DT><a NAME="adc"><B>adc</B> [<I>a1|a2|dst|dh|dv|hv|dx|dy|dz|x|y|xyz|reset|help values</I>]</DT>
+<DT><a NAME="adc"><B>adc</B> [<I>-i </I>] [<I>subcommand</I>]</DT>
 
-<DD> Control the angle/distance cursor.
-The <I>adc</I> command with no arguments toggles the display of
-the angle/distance cursor (ADC).
-The command may also be used with any one of the
-optional subcommands to adjust values of the ADC as
-follows:
+<DD>This command controls the angle/distance cursor.
+<I>Adc</I> with no arguments toggles the display of the angle/distance cursor (ADC).
+The <I>-i</I> option, if specified, causes the given value(s)
+to be treated as increments. Note that the <I>-i</I> option is ignored
+when getting values or when used with subcommands where this option
+makes no sense. <I>Adc</I> accepts the following subcommands:
 
- 	<ul>
- 	<li><I>a1</I> set angle1 to a specified value in degrees</li>
- 	<li><I>a2</I> set angle2 to a specified value in degrees</li>
-	<li><I>dst</I> set the radius (distance) of the tick marks
-		to a specified value in current
-		<a href="#units">units</a></li>
- 	<li><I>dh</I> move the ADC horizontally a specified amount
-		in current <a href="#units">units</a></li>
- 	<li><I>dv</I> move the ADC vertically a specified amount
-		in current <a href="#units">units</a></li>
- 	<li><I>dx</I> move the ADC in the x&#173direction a specified amount
-		given in current <a href="#units">units</a></li>
- 	<li><I>dy</I> move the ADC in the y&#173direction a specified amount
-		given in current <a href="#units">units</a></li>
- 	<li><I>dz</I> move the ADC in the z&#173direction a specified amount
-		given in current <a href="#units">units</a></li>
- 	<li><I>hv</I> move the ADC to specified view coordinates
-		in current <a href="#units">units</a></li>
-	<li><I>x</I> move the ADC horizontally to a specified screen coordinate
-		between -2048 and +2048
-	<li><I>y</I> move the ADC vertically to a specified screen coordinate
-		between -2048 and +2048
- 	<li><I>xyz</I> position the ADC in front of a specified point in
-		the model in current <a href="#units">units</a></li>
- 	<li><I>reset</I> reset all the values to their defaults
- 	</ul>
-You can also control the position, angles, and radius
-of the ADC using a knob
-or the <a href="#knob">knob</a> command.
+	<ul>
+	<li><DT><B>vars</B></DT>
+	<DD>Returns a list of all ADC variables and their values (i.e. var = val).
+	</DD>
+
+	<li><DT><B>draw</B> [<I>0|1</I>]</DT>
+	<DD>Set or get the draw parameter.
+	</DD>
+
+	<li><DT><B>a1</B> [<I>angle</I>]</DT>
+	<DD>Set or get angle1 in degrees.
+	</DD>
+
+	<li><DT><B>a2</B> [<I>angle</I>]</DT>
+	<DD>Set or get angle2 in degrees.
+	</DD>
+
+	<li><DT><B>dst</B> [<I>distance</I>]</DT>
+	<DD>Set or get radius (distance) of tick in local units.
+	</DD>
+
+	<li><DT><B>odst</B> [<I>distance</I>]</DT>
+	<DD>Set or get radius (distance) of tick (+-2047).
+	</DD>
+
+	<li><DT><B>hv</B> [<I>position</I>]</DT>
+	<DD>Set or get position (grid coordinates and local units).
+	</DD>
+
+	<li><DT><B>xyz</B> [<I>position</I>]</DT>
+	<DD>Set or get position (model coordinates and local units).
+	</DD>
+
+	<li><DT><B>x</B> [<I>xpos</I>]</DT>
+	<DD>Set or get horizontal position (+-2047).
+	</DD>
+
+	<li><DT><B>y</B> [<I>ypos</I>]</DT>
+	<DD>Set or get vertical position (+-2047).
+	</DD>
+
+	<li><DT><B>dh</B> <I>distance</I></DT>
+	<DD>Add to horizontal position (grid coordinates and local units).
+	</DD>
+
+	<li><DT><B>dv</B> <I>distance</I></DT>
+	<DD>Add to vertical position (grid coordinates and local units).
+	</DD>
+
+	<li><DT><B>dx</B> <I>distance</I></DT>
+	<DD>Add to X position (model coordinates and local units).
+	</DD>
+
+	<li><DT><B>dy</B> <I>distance</I></DT>
+	<DD>Add to Y position (model coordinates and local units).
+	</DD>
+
+	<li><DT><B>dz</B> <I>distance</I></DT>
+	<DD>Add to Z position (model coordinates and local units).
+	</DD>
+
+	<li><DT><B>anchor_pos</B> [<I>0|1</I>]</DT>
+	<DD>Anchor ADC to current position in model coordinates.
+	</DD>
+
+	<li><DT><B>anchor_a1</B> [<I>0|1</I>]</DT>
+	<DD>Anchor angle1 to go through anchorpoint_a1.
+	</DD>
+
+	<li><DT><B>anchor_a2</B> [<I>0|1</I>]</DT>
+	<DD>Anchor angle2 to go through anchorpoint_a2.
+	</DD>
+
+	<li><DT><B>anchor_dst</B> [<I>0|1</I>]</DT>
+	<DD>Anchor tick distance to go through anchorpoint_dst.
+	</DD>
+
+	<li><DT><B>anchorpoint_a1</B> [<I>x y z</I>]</DT>
+	<DD>Set or get anchor point for angle1 (model coordinates and local units).
+	</DD>
+
+	<li><DT><B>anchorpoint_a2</B> [<I>x y z</I>]</DT>
+	<DD>Set or get anchor point for angle2 (model coordinates and local units).
+	</DD>
+
+	<li><DT><B>anchorpoint_dst</B> [<I>x y z</I>]</DT>
+	<DD>Set or get anchor point for tick distance (model coordinates and local units).
+	</DD>
+
+	<li><DT><B>reset</B></DT>
+	<DD>Reset all values to their defaults.
+	</DD>
+
+	<li><DT><B>help</B></DT>
+	<DD>Print the help message.
+	</DD>
+	</ul>
+
+	<br>You can also control the position, angles, and radius
+	of the ADC using a knob or the <a href="#knob">knob</a> command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>adc</b><br> -- display the angle/distance cursor.
-	<br><kbd>mged></kbd> <b>adc a1 37.5</b><br> -- set angle1 to 37.5 degrees
+	<DD>
+	<kbd>mged></kbd> <b>adc</b><br>
+	-- toggle display of the angle/distance cursor<br>
+	<kbd>mged></kbd> <b>adc a1 37.5</b><br>
+	-- set angle1 to 37.5 degrees<br>
+	<kbd>mged></kbd> <b>adc a1</b><br>
+	37.5<br>
+	-- get angle1<br>
+	<kbd>mged></kbd> <b>adc xyz 100 0 0</b><br>
+	-- move ADC position to  (100, 0, 0), model coordinates and local units
 	</DD>
 	</DL>
 </DD>
