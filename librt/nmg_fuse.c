@@ -38,17 +38,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern int debug_file_count;
 
-/* XXX Move to raytrace.h */
-RT_EXTERN(struct vertexuse 	*nmg_is_vertex_in_face, (CONST struct vertex *v,
-				CONST struct face *f));
-RT_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g, (struct edgeuse *eu1,
-				struct edgeuse *eu2, CONST struct bn_tol *tol));
-RT_EXTERN(void			nmg_pr_radial_list, (CONST struct bu_list *hd,
-				CONST struct bn_tol *tol));
-void nmg_pr_radial();
-
-RT_EXTERN( fastf_t mat_determinant, ( mat_t matrix ) );
-
 /* XXX move to nmg_info.c */
 /*
  *			N M G _ F I N D _ O T _ S A M E _ E U _ O F _ E
@@ -514,7 +503,7 @@ CONST struct bn_tol *tol;
 	matrix[15] = 1.0;
 		
 	/* Check that we don't have a singular matrix */
-	det = mat_determinant( matrix );
+	det = bn_mat_determinant( matrix );
 
 	if( !NEAR_ZERO( det , SMALL_FASTF ) )
 	{

@@ -956,60 +956,6 @@ CONST struct bn_tol *tol;
 	return( outer_shell_count );
 }
 
-/*		M A T _ D E T 3
- *
- *	Calculates the determinant of the 3X3 "rotation"
- *	part of the passed amtrix
-XXX should be re-named bn_mat_det3(), and moved to libbn/mat.c
- */
-fastf_t
-mat_det3( m )
-CONST mat_t m;
-{
-	fastf_t sum;
-
-	sum = m[0] * ( m[5]*m[10] - m[6]*m[9] )
-	     -m[1] * ( m[4]*m[10] - m[6]*m[8] )
-	     +m[2] * ( m[4]*m[9] - m[5]*m[8] );
-
-	return( sum );
-}
-
-
-/*		M A T _ D E T E R M I N A N T
- *
- *	Calculates the determinant of the 4X4 matrix
-XXX should be re-named bn_mat_determinant(), and moved to libbn/mat.c
- */
-fastf_t
-mat_determinant( m )
-CONST mat_t m;
-{
-	fastf_t det[4];
-	fastf_t sum;
-
-	det[0] = m[5] * (m[10]*m[15] - m[11]*m[14])
-		-m[6] * (m[ 9]*m[15] - m[11]*m[13])
-		+m[7] * (m[ 9]*m[14] - m[10]*m[13]);
-
-	det[1] = m[4] * (m[10]*m[15] - m[11]*m[14])
-		-m[6] * (m[ 8]*m[15] - m[11]*m[12])
-		+m[7] * (m[ 8]*m[14] - m[10]*m[12]);
-
-	det[2] = m[4] * (m[ 9]*m[15] - m[11]*m[13])
-		-m[5] * (m[ 8]*m[15] - m[11]*m[12])
-		+m[7] * (m[ 8]*m[13] - m[ 9]*m[12]);
-
-	det[3] = m[4] * (m[ 9]*m[14] - m[10]*m[13])
-		-m[5] * (m[ 8]*m[14] - m[10]*m[12])
-		+m[6] * (m[ 8]*m[13] - m[ 9]*m[12]);
-
-	sum = m[0]*det[0] - m[1]*det[1] + m[2]*det[2] - m[3]*det[3];
-
-	return( sum );
-
-}
-
 /*	N M G _ M A R K _ E D G E S _ R E A L
  *
  * Sets the "is_real" flag on all edges at or below the
@@ -1178,7 +1124,7 @@ CONST int pl_count;
 	matrix[15] = 1.0;
 
 	/* Check that we don't have a singular matrix */
-	det = mat_determinant( matrix );
+	det = bn_mat_determinant( matrix );
 	if( NEAR_ZERO( det , SMALL_FASTF ) )
 		return( 1 );
 
@@ -1853,7 +1799,7 @@ plane_t pl;
 
 
 	/* Check that we don't have a singular matrix */
-	det = mat_determinant( matrix );
+	det = bn_mat_determinant( matrix );
 
 	if( !NEAR_ZERO( det , SMALL_FASTF ) )
 	{
