@@ -1035,6 +1035,7 @@ identbld()
 	zap_nl();
 	(void)strncpy( title, buf, sizeof(title)-1 );
 
+/* XXX Should use db_conversions() for this */
 	switch(units)  {
 	case ID_NO_UNIT:
 		unit_str = "mm";
