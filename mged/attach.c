@@ -551,6 +551,9 @@ struct dm_list *initial_dm_list;
   *mged_variables = *initial_dm_list->dml_mged_variables;	/* struct copy */
   mged_variables->mv_rc = 1;
   mged_variables->mv_dlist = mged_default_dlist;
+  mged_variables->mv_listen = 0;
+  mged_variables->mv_port = 0;
+  mged_variables->mv_fb = 0;
 
   BU_GETSTRUCT(color_scheme, _color_scheme);
   *color_scheme = *initial_dm_list->dml_color_scheme;		/* struct copy */
@@ -577,6 +580,7 @@ struct dm_list *initial_dm_list;
 
   dirty = 1;
   mapped = 1;
+  netfd = -1;
   owner = 1;
   am_mode = AMM_IDLE;
   adc_auto = 1;
