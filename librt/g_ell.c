@@ -643,15 +643,17 @@ struct rt_tol		*tol;
 	return(0);
 }
 
-/* static point_t	octa_verts[6] = {
-/* 	{ 1, 0, 0 },	/* XPLUS */
-/* 	{-1, 0, 0 },	/* XMINUS */
-/* 	{ 0, 1, 0 },	/* YPLUS */
-/* 	{ 0,-1, 0 },	/* YMINUS */
-/* 	{ 0, 0, 1 },	/* ZPLUS */
-/* 	{ 0, 0,-1 }	/* ZMINUS */
-/* };
- */
+#if 0
+static point_t	octa_verts[6] = {
+	{ 1, 0, 0 },	/* XPLUS */
+	{-1, 0, 0 },	/* XMINUS */
+	{ 0, 1, 0 },	/* YPLUS */
+	{ 0,-1, 0 },	/* YMINUS */
+	{ 0, 0, 1 },	/* ZPLUS */
+	{ 0, 0,-1 }	/* ZMINUS */
+};
+#endif
+
 #define XPLUS 0
 #define XMIN  1
 #define YPLUS 2
