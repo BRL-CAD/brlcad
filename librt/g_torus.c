@@ -166,6 +166,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	LOCAL vect_t	work, temp;
 	FAST fastf_t	f;
 	LOCAL fastf_t	r1, r2;	/* primary and secondary radius */
+	LOCAL fastf_t	mag_b;
 
 #define SP_V	&vec[0*ELEMENTS_PER_VECT]
 #define SP_H	&vec[1*ELEMENTS_PER_VECT]
@@ -184,6 +185,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	magsq_h = MAGSQ( Hv );
 	r1 = sqrt(magsq_a);
 	r2 = sqrt(magsq_h);
+	mag_b = sqrt(magsq_b);
 
 	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_h) ) {
@@ -193,28 +195,33 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	}
 
 	/* Validate that |A| == |B| (for now) */
-	f = r1 - sqrt(magsq_b);
-	if( ! NEAR_ZERO(f) )  {
+	if( fdiff( r1, mag_b ) != 0 ) {
 		fprintf(stderr,"tor(%s):  (|A|=%f) != (|B|=%f) \n",
-			stp->st_name, r1, sqrt(magsq_b) );
+			stp->st_name, r1, mag_b );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
-	f = VDOT( A, B );
-	if( !NEAR_ZERO(f) )  {
-		/* perhaps something with reldiff() might be better? */
-		fprintf(stderr,"tor(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
+	f = VDOT( A, B )/(r1*mag_b);
+
+	if( ! NEAR_ZERO(f) )  {
+		fprintf(stderr,
+			"tor(%s):  A not perpendicular to B, f=%f\n",
+			stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( B, Hv );
-	if( !NEAR_ZERO(f) )  {
-		fprintf(stderr,"tor(%s):  B not perpendicular to H, f=%f\n",stp->st_name, f);
+	f = VDOT( B, Hv )/(mag_b*r2);
+	if( ! NEAR_ZERO(f) )  {
+		fprintf(stderr,
+			"tor(%s):  B not perpendicular to H, f=%f\n",
+			stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( A, Hv );
-	if( !NEAR_ZERO(f) )  {
-		fprintf(stderr,"tor(%s):  A not perpendicular to H, f=%f\n",stp->st_name, f);
+	f = VDOT( A, Hv )/(r1*r2);
+	if( ! NEAR_ZERO(f) )  {
+		fprintf(stderr,
+			"tor(%s):  A not perpendicular to H, f=%f\n",
+			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
