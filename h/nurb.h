@@ -176,8 +176,8 @@ RT_EXTERN(void rt_nurb_mesh_diff, (int order, CONST fastf_t *o_pts,
 			int o_size, int pt_type));
 
 /* nurb_eval.c */
-RT_EXTERN(fastf_t *rt_nurb_s_eval, (CONST struct snurb *srf, fastf_t u, fastf_t v));
-RT_EXTERN(fastf_t *rt_nurb_c_eval, (CONST struct cnurb *crv, fastf_t param));
+RT_EXTERN(void rt_nurb_s_eval, (CONST struct snurb *srf, fastf_t u, fastf_t v, fastf_t * final_value));
+RT_EXTERN(void rt_nurb_c_eval, (CONST struct cnurb *crv, fastf_t param, fastf_t * final_value));
 RT_EXTERN(fastf_t *rt_nurb_eval_crv, (fastf_t *crv, int order,
 			fastf_t param,
 			CONST struct knot_vector *k_vec, int k_index, int coords));
