@@ -112,6 +112,7 @@ static char *title_file, *title_obj;	/* name of file and first object */
  */
 extern int pkg_nochecking;
 void	ph_unexp();	/* foobar message handler */
+void	ph_enqueue();	/* Addes message to linked list */
 void	ph_start();
 void	ph_matrix();
 void	ph_options();
@@ -121,9 +122,9 @@ void	ph_restart();
 void	ph_loglvl();
 struct pkg_switch pkgswitch[] = {
 	{ MSG_START, ph_start, "Startup" },
-	{ MSG_MATRIX, ph_matrix, "Set Matrix" },
+	{ MSG_MATRIX, ph_enqueue, "Set Matrix" },
 	{ MSG_OPTIONS, ph_options, "Options" },
-	{ MSG_LINES, ph_lines, "Compute lines" },
+	{ MSG_LINES, ph_enqueue, "Compute lines" },
 	{ MSG_END, ph_end, "End" },
 	{ MSG_PRINT, ph_unexp, "Log Message" },
 	{ MSG_LOGLVL, ph_loglvl, "Change log level" },
@@ -231,6 +232,8 @@ char **argv;
 	nowait.tv_usec = 0;
 
 	for(;;)  {
+		register struct list	*lp;
+
 		ibits = 1 << pcsrv->pkc_fd;
 		n = select(32, (char *)&ibits, (char *)0, (char *)0,
 			WorkHead.li_forw != &WorkHead ? 
@@ -244,13 +247,50 @@ char **argv;
 			if( pkg_get(pcsrv) < 0 )
 				break;
 		}
-		/* More work may have just arrived, recheck queue */
-		if( WorkHead.li_forw != &WorkHead )  {
-			do_work();
+
+		/* More work may have just arrived, check queue */
+		if( (lp = WorkHead.li_forw) != &WorkHead )  {
+
+			DEQUEUE_LIST( lp );
+			switch( lp->li_start )  {
+			case MSG_MATRIX:
+				ph_matrix( (struct pkg_comm *)0, (char *)lp->li_stop );
+				break;
+			case MSG_LINES:
+				ph_lines( (struct pkg_comm *)0, (char *)lp->li_stop );
+				break;
+			default:
+				rt_log("bad list element %d\n", lp->li_start );
+				exit(33);
+			}
+			FREE_LIST( lp );
 		}
 	}
 
 	exit(0);
+}
+
+/*
+ *			P H _ E N Q U E U E
+ *
+ *  Generic routine to add a newly arrived PKG to a linked list,
+ *  for later processing.
+ *  Note that the buffer will be freed when the list element is processed.
+ *  Presently used for MATRIX and LINES messages.
+ */
+void
+ph_enqueue(pc, buf)
+register struct pkg_conn *pc;
+char	*buf;
+{
+	register struct list	*lp;
+
+	if( debug )  fprintf(stderr, "ph_enqueue: %s\n", buf );
+
+	GET_LIST( lp );
+	lp->li_start = (int)pc->pkc_type;
+	lp->li_stop = (int)buf;
+	APPEND_LIST( lp, WorkHead.li_back );
 }
 
 void
@@ -421,7 +461,7 @@ char *buf;
 /* 
  *			P H _ L I N E S
  *
- *  Queue a request for some pixels.
+ *  Compute some pixels.
  */
 void
 ph_lines(pc, buf)
@@ -429,7 +469,7 @@ struct pkg_comm *pc;
 char *buf;
 {
 	register struct list	*lp;
-	auto int a,b;
+	auto int	a,b;
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
 	if( !seen_start )  {
@@ -448,10 +488,7 @@ char *buf;
 		exit(2);
 	}
 
-	GET_LIST( lp );
-	lp->li_start = a;
-	lp->li_stop = b;
-	APPEND_LIST( lp, WorkHead.li_back );
+	do_work( a, b );
 
 	(void)free(buf);
 }
@@ -462,22 +499,17 @@ char *buf;
  *  Process scanlines from 'a' to 'b', inclusive, sending each back
  *  as soon as it's done.
  */
-do_work()
+do_work(a, b)
 {
-	register struct list	*lp;
 	struct line_info	info;
 	register struct rt_i	*rtip = ap.a_rt_i;
 	register int	y;
 	int	len;
 	char	*cp;
 
-	if( (lp = WorkHead.li_forw) == &WorkHead )
-		return;
+	if(debug) fprintf(stderr,"do_work %d %d\n", a, b);
 
-	DEQUEUE_LIST( lp );
-	if(debug) fprintf(stderr,"do_work %d %d\n", lp->li_start, lp->li_stop);
-
-	for( y = lp->li_start; y <= lp->li_stop; y++)  {
+	for( y = a; y <= b; y++)  {
 
 		rtip->rti_nrays = 0;
 		rt_prep_timer();
@@ -502,8 +534,6 @@ do_work()
 			fprintf(stderr,"MSG_PIXELS send error\n");
 		(void)free(cp);
 	}
-
-	FREE_LIST( lp );
 }
 
 int print_on = 1;
