@@ -1,7 +1,3 @@
-/* XXX Move to raytrace.h */
-#define	RT_BADNUM(n)	(!((n) >= -INFINITY && (n) <= INFINITY))
-#define RT_BADVEC(v)	(RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
-
 #define NUgrid 0
 /*
  *			S H O O T . C
