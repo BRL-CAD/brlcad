@@ -772,6 +772,7 @@ char *h;
 	if( vu->a.magic_p )  switch( *vu->a.magic_p )  {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
 		rt_log("%s%8x a.plane_p\n", h, vu->a.plane_p);
+		rt_log("%s normal: %f %f %f\n", h, V3ARGS( vu->a.plane_p->N ) );
 		break;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
 		rt_log("%s%8x a.cnurb_p\n", h, vu->a.cnurb_p);
