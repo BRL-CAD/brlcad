@@ -35,7 +35,7 @@ static struct cmdtab cmdtab[] = {
 };
 
 int
-dm_Tcl_Init(interp)
+dm_tclInit(interp)
 Tcl_Interp *interp;
 {
   register struct cmdtab *ctp;
@@ -60,7 +60,7 @@ char    **argv;
   bu_vls_init(&vls);
 
   if(argc != 1){
-    bu_vls_printf(&vls, "help dm_best_type");
+    bu_vls_printf(&vls, "helplib dm_best_type");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -84,7 +84,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help dm_best_type");
+    bu_vls_printf(&vls, "helplib dm_best_type");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -108,7 +108,7 @@ char    **argv;
   bu_vls_init(&vls);
 
   if(argc != 2){
-    bu_vls_printf(&vls, "help dm_name2type");
+    bu_vls_printf(&vls, "helplib dm_name2type");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -136,7 +136,7 @@ char    **argv;
   bu_vls_init(&vls);
 
   if(argc != 1){
-    bu_vls_printf(&vls, "help dm_names");
+    bu_vls_printf(&vls, "helplib dm_names");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -168,7 +168,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help dm_type2name");
+    bu_vls_printf(&vls, "helplib dm_type2name");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -194,7 +194,7 @@ char    **argv;
   bu_vls_init(&vls);
 
   if(argc != 1){
-    bu_vls_printf(&vls, "help dm_types");
+    bu_vls_printf(&vls, "helplib dm_types");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
