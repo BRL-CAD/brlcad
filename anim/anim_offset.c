@@ -45,6 +45,10 @@ char **argv;
 	fastf_t yaw, pitch, roll, time;
 	vect_t temp,point,zero;
 	mat_t mat;
+
+	VSETALL( temp , 0.0 );
+	VSETALL( point , 0.0 );
+	VSETALL( zero , 0.0 );
 	
 	(void) get_args(argc,argv);
 
