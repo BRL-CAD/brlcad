@@ -4,9 +4,9 @@
 .TL
 Installing the BRL-CAD Package
 .br
-Release 4.4
+Release 5.0
 .sp
-4-January-1995
+6-May-1997
 .AU
 Michael John Muuss
 .AI
@@ -42,7 +42,7 @@ Please, if anything seems wrong, pause to finish reading the directions.
 	mkdir cad
 	cd cad
 	tar x                           # 'tar xo'   on System V
-	sh machinetype.sh -v
+	sh sh/machinetype.sh -v
 	sh setup.sh
 	sh gen.sh all
 	sh gen.sh install
@@ -58,7 +58,7 @@ If you need to install the software somewhere other than /usr/brlcad,
 	mkdir cad
 	cd cad
 	tar x                           # 'tar xo'   on System V
-	sh machinetype.sh -v
+	sh sh/machinetype.sh -v
 	sh newbindir.sh /a/b/c
 	sh setup.sh
 	sh gen.sh all
@@ -481,11 +481,10 @@ else
 	set machine=unknown
 endif
 # Build "mcd" to push source-code dir onto dir stack, then goto binary dir
-foreach i ( /n/spark/m/cad   ~/cad )
-	test -d $i
-	if ( $status == 0 )  then
-		alias mcd "cd $i/\!:1; pushd ../.\!:1."'$machine'
-		break
+foreach i ( /m/cad /n/vapor/m/cad ~/cad )
+	if( -d $i ) then
+		set cadroot=$i
+		alias mcd "cd $cadroot/\!:1; pushd ../.\!:1."'$machine'
 	endif
 end
 .ft R
@@ -679,7 +678,7 @@ automatic determination of your machine type and system parameters,
 by running:
 .ft B
 .sp .5
-	sh machinetype.sh -v
+	sh sh/machinetype.sh -v
 .sp .5
 .ft R
 Be certain that the values which are printed are reasonable.
