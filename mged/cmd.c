@@ -1072,7 +1072,6 @@ char	**argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
-	struct rt_vls str;
 
 	if( argc == 0 )  {
 		rt_log("no command entered, type '%s?' for help\n",
@@ -1219,7 +1218,6 @@ char **argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
-	register int	i;
 
 	if( argc <= 1 )  {
 		rt_log("The following commands are available:\n");
