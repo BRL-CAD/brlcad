@@ -1,22 +1,30 @@
 /*
- *  How to add a new device interface:
+ *			I F _ T S . C
  *
- *  Copy this file to if_devname.c
- *  Do a global replace of DEVNAME with your devname.
- *   (In the interest of non-flexnames, DEVNAME should be no more
- *   than three characters; except perhaps for DEVNAME_interface)
- *  Fill in the device description, max width and height,
- *   default width and height, and shortname (what you will
- *   look it up as).
- *  Set the unimplemented functions to "fb_null"
- *   (and remove the skeletons if you're tidy)
- *  Set DEVNAME_readrect to fb_sim_readrect, and DEVNAME_writerect
- *   to fb_sim_writerect, if not implemented.
- *  Make DEVNAME_free call DEVNAME_close if not implemented.
- *  Go add an "ifdef IF_DEVNAME" to fb_generic.c (two places).
- *  Add defines to ../Cakefile.defs.
- *  Replace this header.
+ *  Tech-Source GDS-3924L+8 Interface.  This is a single VME board
+ *  frame buffer, most likely plugged into a Sun Microsystems computer.
+ *  Features include:  1280x1024x24bit display in a 2048x1024 window, or
+ *  double buffered 1024x1024x24bit.  Hardware pan and zoom, colormaps,
+ *  eight bits of overlay planes.
+ *
+ *  To use this module you must have the GDSLIB library and header
+ *  files installed, and add -lgds to the LIBFB_LIBS in Cakefile.defs.
+ *
+ *  Authors -
+ *	Phillip Dykstra
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include "fb.h"
 #include "./fblocal.h"
@@ -25,18 +33,18 @@
 
 _LOCAL_ int	ts_open(),
 		ts_close(),
-		ts_reset(),
 		ts_clear(),
 		ts_read(),
 		ts_write(),
 		ts_rmap(),
 		ts_wmap(),
-		ts_viewport(),
-		ts_window(),
-		ts_zoom(),
+		ts_view(),
+		ts_getview(),
+		ts_window(),		/* OLD */
+		ts_zoom(),		/* OLD */
 		ts_setcursor(),
 		ts_cursor(),
-		ts_scursor(),
+		ts_getcursor(),
 		ts_readrect(),
 		ts_writerect(),
 		ts_flush(),
@@ -45,32 +53,35 @@ _LOCAL_ int	ts_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ts_interface =  {
-	ts_open,		/* open device	*/
-	ts_close,		/* close device	*/
-	ts_reset,		/* reset device	*/
-	ts_clear,		/* clear device	*/
-	ts_read,		/* read	pixels	*/
-	ts_write,		/* write pixels */
-	ts_rmap,		/* rmap - read colormap	*/
-	ts_wmap,		/* wmap - write colormap */
-	ts_viewport,	/* viewport set	*/
-	ts_window,		/* window set	*/
-	ts_zoom,		/* zoom set	*/
-	ts_setcursor,	/* setcursor - define cursor	*/
-	ts_cursor,		/* cursor - memory address	*/
-	ts_scursor,	/* scursor - screen address	*/
-	ts_readrect,	/* readrect - read rectangle	*/
-	ts_writerect,	/* writerect - write rectangle	*/
-	ts_flush,		/* flush output	*/
-	ts_free,		/* free resources */
-	ts_help,		/* help message	*/
-	"Tech-Source GDS 39xx",	/* device description	*/
+	ts_open,		/* open device		*/
+	ts_close,		/* close device		*/
+	ts_clear,		/* clear device		*/
+	ts_read,		/* read	pixels		*/
+	ts_write,		/* write pixels		*/
+	ts_rmap,		/* read colormap	*/
+	ts_wmap,		/* write colormap	*/
+	ts_view,		/* set view		*/
+	ts_getview,		/* get view		*/
+	ts_setcursor,		/* define cursor	*/
+	ts_cursor,		/* set cursor		*/
+	ts_getcursor,		/* get cursor		*/
+	ts_readrect,		/* read rectangle	*/
+	ts_writerect,		/* write rectangle	*/
+	fb_null,		/* handle events	*/
+	ts_flush,		/* flush output		*/
+	ts_free,		/* free resources	*/
+	ts_help,		/* help message		*/
+	"Tech-Source GDS 39XX",	/* device description	*/
 	2048,			/* max width		*/
 	1024,			/* max height		*/
 	"/dev/ts",		/* short device name	*/
 	1280,			/* default/current width  */
 	1024,			/* default/current height */
+	-1,			/* select file desc	*/
 	-1,			/* file descriptor	*/
+	1, 1,			/* zoom			*/
+	640, 512,		/* window		*/
+	0, 0, 0,		/* cursor		*/
 	PIXEL_NULL,		/* page_base		*/
 	PIXEL_NULL,		/* page_curp		*/
 	PIXEL_NULL,		/* page_endp		*/
@@ -102,6 +113,23 @@ static struct modeflags {
 	{ '\0', 0, 0, "" }
 };
 
+/*
+ *  GSD Unit Numbers (bottom 3 bits is the "Monitor"):
+ *	0 for Red channel	(GMA0)
+ *	1 for Green channel	(GMA1)
+ *	2 for Blue channel	(GMA2)
+ *	3 for Overlay channel	(GMA3)
+ *	4 for RGB channels	(24bit GMA0-GMA2)
+ *	5 for 8bit into RGB channels (8bit GMA0-GMA2)
+ *
+ *  The hardware maintains 32 Graphics Units which hold a set of
+ *  "Local Attributes" (drawing colors, wite mask, clip rectangle, etc.)
+ *  The GDSLIB also associates a display list buffer with each open unit.
+ *  The bottom 3 bits of the Unit Number (0-7) become the "Monitor"
+ *  which is one of eight mappings of GMA's (Graphics Memory Arrays)
+ *  maintained by the GDP (Graphics Drawing Processor).
+ *  Global_Attributes[Unit] -> Local_Attributes[Monitor] -> Monitor_Def
+ */
 static int unit = 4;
 
 _LOCAL_ int
@@ -164,11 +192,13 @@ int	width, height;
 		}
 	}
 
+	/*printf("GSD unit = %d\n", unit);*/
+	/* GDSLSIZE 16bit words in display list */
 	if (open_gds(unit,GDSDLSIZE) < 0) {
 		fb_log("error %d\n", f_geterror());
 		exit(1);
 	}
-	init_gds(0);
+	init_gds(0);	/* if non-zero, will clear to altcolor */
 
 #if 0
 	if ((mode&MODE_2MASK) == MODE_2OVERONLY) {
@@ -178,14 +208,17 @@ printf("Overlay Only\n");
 printf("Overlay On\n");
 		f_ovlset(GDS_OVL_DISPLAY, GDS_OVL_ON, 0);
 	} else {
+/* Seems that even doing this overlay off command leaves us with
+ * only the RED channel.
+ */
 printf("Overlay Off\n");
 		f_ovlset(GDS_OVL_DISPLAY, GDS_OVL_OFF, 0);
 	}
 #endif
 
 	getviewmax(&viewmax);
-	ifp->if_width = viewmax.x;
-	ifp->if_height = viewmax.y;
+	ifp->if_width = viewmax.x + 1;
+	ifp->if_height = viewmax.y + 1;
 
 	return(0);
 }
@@ -195,13 +228,6 @@ ts_close( ifp )
 FBIO	*ifp;
 {
 	close_gds(unit);
-	return(0);
-}
-
-_LOCAL_ int
-ts_reset( ifp )
-FBIO	*ifp;
-{
 	return(0);
 }
 
@@ -321,46 +347,92 @@ ColorMap	*cmp;
 	return(0);
 }
 
-_LOCAL_ int
-ts_viewport( ifp, left, top, right, bottom )
-FBIO	*ifp;
-int	left, top, right, bottom;
-{
-	return(0);
-}
 
+/*
+ * Note: at first I didn't have any display list flushes in here and it
+ * worked fine.  Then it started messing up so I added one at the end
+ * (having learned from the cursor routine).  But, that would mess up.
+ * The two flush version is working again.  Strange....
+ */
 _LOCAL_ int
-ts_window( ifp, x, y )
+ts_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	struct point panorigin;
-	struct point rpanorigin;
+	struct point factor;
 
-	panorigin.x = x - ifp->if_width/2;
-	panorigin.y = y - ifp->if_height/2;
+	if (xzoom <= 0) xzoom = 1;
+	if (yzoom <= 0) yzoom = 1;
+
+	/* save a working copy for outselves */
+	ifp->if_xcenter = xcenter;
+	ifp->if_ycenter = xcenter;
+	ifp->if_xzoom = xzoom;
+	ifp->if_yzoom = yzoom;
+
+	panorigin.x = xcenter - ifp->if_width/(2*xzoom);
+	panorigin.y = ycenter - ifp->if_height/(2*yzoom);
 	f_pan(panorigin.x, panorigin.y);
-printf("pan %d %d -> %d %d\n\r", x, y, panorigin.x, panorigin.y);
-	f_rdpan(&rpanorigin);
-printf("hw pan %d %d\n\r", rpanorigin.x, rpanorigin.y);
+	f_exec_wr_dl();		/* flush display list */
+
+	factor.x = xzoom;
+	factor.y = yzoom;
+	f_zoom(factor.x, factor.y);
+	f_exec_wr_dl();		/* flush display list */
 
 	return(0);
 }
 
+/* return base^pow */
 _LOCAL_ int
-ts_zoom( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
+ipow(base,pow)
+int base;
+int pow;
 {
-	struct point factor;
+	int	i, n;
+
+	if (pow <= 0)
+		return	1;
+
+	n = base;
+	for (i = 1; i < pow; i++)
+		n *= base;
+
+	return	n;
+}
+
+/*
+ *  Note: A bug in the GDSLIB causes the yzoom factor to be read
+ *  back as a power of two, rather than as a pixel replication count.
+ */
+_LOCAL_ int
+ts_getview( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
+{
+	struct point rpanorigin;
 	struct point rfactor;
 
-	factor.x = x;
-	factor.y = y;
-	f_zoom(factor.x, factor.y);
-printf("zoom %d %d\n\r", factor.x, factor.y);
 	f_rdzoom(&rfactor);
-printf("hw zoom %d %d\n\r", rfactor.x, rfactor.y);
+	ifp->if_xzoom = rfactor.x;
+	ifp->if_yzoom = ipow(2,rfactor.y);	/* Bug fix - see above */
+	*xzoom = ifp->if_xzoom;
+	*yzoom = ifp->if_yzoom;
+
+	/* read lower left pixel coordinate */
+	f_rdpan(&rpanorigin);
+	/* convert to center pixel coordinate */
+	*xcenter = rpanorigin.x + ifp->if_width/(2*ifp->if_xzoom);
+	*ycenter = rpanorigin.y + ifp->if_height/(2*ifp->if_yzoom);
+
+#if 0
+	printf("getview: hw pan %d %d\n\r", rpanorigin.x, rpanorigin.y);
+	printf("getview: hw zoom %d %d\n\r", rfactor.x, rfactor.y);
+	printf("getview: returning %d %d %d %d\n", *xcenter, *ycenter, *xzoom, *yzoom);
+#endif
 
 	return(0);
 }
@@ -383,47 +455,65 @@ int	x, y;
 {
 	struct point pos;
 	struct color color;
+	struct rectangle rect;
 
 	pos.x = x;
 	pos.y = y;
 	color.red = 255;
 	color.green = 255;
 	color.blue = 255;
+	rect.x0 = 0;
+	rect.x1 = 1279;
+
+	/* XXX - BUG in GDSLIB, has these two backward! */
+	rect.y1 = 0;
+	rect.y0 = -1023;	/* Gross... */
 
 	if (!mode) {
 		f_hwcset(GDS_HWC_STYLE, GDS_HWCS_OFF, 0);
 	} else {
-		f_hwcset(GDS_HWC_STYLE, GDS_HWCS_CH1,
+		f_hwcset(GDS_HWC_STYLE, GDS_HWCS_CH1|GDS_HWCS_BITMAP,
+			GDS_HWC_ASSIGN, 4,
 			GDS_HWC_COLOR, &color,
+			GDS_HWC_WINDOW, &rect,
 			GDS_HWC_POSITION, &pos, 0);
 	}
+	f_exec_wr_dl();		/* flush display list */
+
+#if 0
+{
+	int	assign;
+	struct point *pp;
+	assign = f_hwcget(GDS_HWC_ASSIGN);
+	pp = (struct point *)f_hwcget(GDS_HWC_POSITION);
+	printf("cursor: %d %d %d\n", assign, pp->x, pp->y);
+}
+#endif
 
 	return(0);
 }
 
 _LOCAL_ int
-ts_scursor( ifp, mode, x, y )
+ts_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
-int	mode;
-int	x, y;
+int	*mode;
+int	*x, *y;
 {
-	struct point pos;
-	struct color color;
+	/*int	style;*/
+	int	assign;
+	struct point *pp;
 
-	pos.x = x;
-	pos.y = y;
-	color.red = 255;
-	color.green = 255;
-	color.blue = 255;
+	/*style = f_hwcget(GDS_HWC_ASSIGN);*/
+	assign = f_hwcget(GDS_HWC_ASSIGN);
+	pp = (struct point *)f_hwcget(GDS_HWC_POSITION);
 
-	if (!mode) {
-		f_hwcset(GDS_HWC_STYLE, GDS_HWCS_OFF, 0);
-	} else {
-		f_hwcset(GDS_HWC_STYLE, GDS_HWCS_CH1,
-			GDS_HWC_COLOR, &color,
-			GDS_HWC_POSITION, &pos, 0);
-	}
-	return(0);
+	if (assign)
+		*mode = 1;
+	else
+		*mode = 0;
+	*x = pp->x;
+	*y = pp->y;
+	printf("getcursor: %d %d %d\n", *mode, *x, *y);
 }
 
 _LOCAL_ int
@@ -433,6 +523,7 @@ int	xmin, ymin;
 int	width, height;
 RGBpixel	*pp;
 {
+	/* XXX */
 	return( width*height );
 }
 
@@ -443,6 +534,7 @@ int	xmin, ymin;
 int	width, height;
 RGBpixel	*pp;
 {
+#if 0
 	struct	point dest;
 	struct	size size;
 
@@ -453,6 +545,10 @@ RGBpixel	*pp;
 	f_pixar_ff(&dest,&size,2,pp);
 
 	return( width*height );
+#else
+	/* until we get 24bit writes that work... sigh */
+	return fb_sim_writerect(ifp, xmin, ymin, width, height, pp);
+#endif
 }
 
 _LOCAL_ int
