@@ -509,7 +509,7 @@ CONST union tree *tree;
 	int return_length;
 
 	if( tree == NULL )
-		return( (char *)NULL );
+		return bu_strdup("NULL_ptr");
 	RT_CK_TREE(tree);
 	if( tree->tr_op == OP_UNION || tree->tr_op == OP_SUBTRACT || tree->tr_op == OP_INTERSECT )
 	{
@@ -553,8 +553,13 @@ CONST union tree *tree;
 		return bu_strdup(tree->tr_l.tl_name) ;
 	else if( tree->tr_op == OP_REGION )
 		return( db_path_to_string( &tree->tr_c.tc_ctsp->cts_p ) );
+	else if( tree->tr_op == OP_SOLID )  {
+		RT_CK_SOLTAB(tree->tr_a.tu_stp);
+		return bu_strdup(tree->tr_a.tu_stp->st_dp->d_namep);
+	}
+		
 
-	return (char *)NULL;
+	return bu_strdup("Unknown:tr_op");
 }
 
 /*
