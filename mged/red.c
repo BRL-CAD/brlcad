@@ -63,6 +63,7 @@ char **argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	int node_count;
+	int fd;
 
 	CHECK_DBI_NULL;
 #if 0
@@ -99,7 +100,15 @@ char **argv;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 		/* Make a file for the text editor */
+#if 0
 		(void)mktemp( red_tmpfil );
+#else
+		if ((fd = mkstemp(red_tmpfil)) < 0) {
+			perror(red_tmpfil);
+			return TCL_ERROR;;
+		}
+		(void)close(fd);
+#endif
 
 		/* Write the combination components to the file */
 		if( writecomb( comb, dp->d_namep ) )
@@ -113,7 +122,15 @@ char **argv;
 	{
 		comb = (struct rt_comb_internal *)NULL;
 		/* Make a file for the text editor */
+#if 0
 		(void)mktemp( red_tmpfil );
+#else
+		if ((fd = mkstemp(red_tmpfil)) < 0) {
+			perror(red_tmpfil);
+			return TCL_ERROR;;
+		}
+		(void)close(fd);
+#endif
 
 		/* Write the combination components to the file */
 		if( writecomb( comb, argv[1] ) )

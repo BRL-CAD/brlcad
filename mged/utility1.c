@@ -126,8 +126,12 @@ char	*argv[];
   }
 
   strcpy(tmpfil, tmpfil_init);
+#if 0
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
+#else
+  i = mkstemp(tmpfil);
+#endif
   if( i < 0 ){
     perror(tmpfil);
     return TCL_ERROR;

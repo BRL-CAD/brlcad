@@ -59,25 +59,6 @@ void color_putrec(), color_zaprec();
 static char	tmpfil[17];
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 
-static void
-pr_mater( mp )
-register struct mater *mp;
-{
-  char buf[128];
-  struct bu_vls vls;
-
-  bu_vls_init(&vls);
-
-  (void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high );
-  vls_col_item(&vls, buf);
-  (void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
-  vls_col_item(&vls, buf);
-  vls_col_eol(&vls);
-
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-}
-
 /*
  *  			F _ P R C O L O R
  */
@@ -171,6 +152,7 @@ char	**argv;
 	register struct mater *mp;
 	register struct mater *zot;
 	register FILE *fp;
+	register int fd;
 	char line[128];
 	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
 
@@ -188,11 +170,23 @@ char	**argv;
 	}
 
 	strcpy(tmpfil, tmpfil_init);
+#if 0
 	(void)mktemp(tmpfil);
 	if ((fp = fopen(tmpfil, "w")) == NULL) {
 		perror(tmpfil);
 		return TCL_ERROR;;
 	}
+#else
+	if ((fd = mkstemp(tmpfil)) < 0) {
+		perror(tmpfil);
+		return TCL_ERROR;
+	}
+	if ((fp = fdopen(fd, "w+")) == NULL) {
+		close(fd);
+		perror(tmpfil);
+		return TCL_ERROR;;
+	}
+#endif
 
 	(void)fprintf( fp, hdr );
 	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {

@@ -85,8 +85,12 @@ char **argv;
 	  return TCL_ERROR;
 
 	strcpy(tmpfil, tmpfil_init);
+#if 0
 	(void)mktemp(tmpfil);
 	i=creat(tmpfil, 0600);
+#else
+	i = mkstemp(tmpfil);
+#endif
 	if( i < 0 )
 	{
 	  perror(tmpfil);
@@ -751,43 +755,8 @@ readsolid()
 
 /* Run $EDITOR on temp file */
 int
-editit( const char *file )
+editit(const char *file)
 {
-#if 0
-#ifdef BSD
-	register pid, xpid;
-	int stat, omask;
-
-#define	mask(s)	(1<<((s)-1))
-	omask = sigblock(mask(SIGINT)|mask(SIGQUIT)|mask(SIGHUP));
-
-	if ((pid = fork()) < 0) {
-		perror("fork");
-		return (0);
-	}
-	if (pid == 0) {
-		register char *ed;
-
-		sigsetmask(omask);
-		if ((ed = getenv("EDITOR")) == (char *)0)
-			ed = DEFEDITOR;
-
-		bu_log("Invoking %s...\n", ed);
-#if 0
-		(void)execlp(ed, ed, file, 0);
-#else
-		(void)execlp("xterm", "xterm", "-e", ed, file, (char *)0);
-#endif
-		perror(ed);
-		exit(1);
-	}
-	while ((xpid = wait(&stat)) >= 0)
-		if (xpid == pid)
-			break;
-	sigsetmask(omask);
-	return (!stat);
-#endif
-#else
 	register int pid, xpid;
 	register char *ed;
 	int stat;
@@ -827,6 +796,6 @@ editit( const char *file )
 
 	(void)signal(SIGINT, s2);
 	(void)signal(SIGQUIT, s3);
-#endif
+
 	return (!stat);
 }
