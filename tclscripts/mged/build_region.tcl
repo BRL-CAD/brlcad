@@ -140,7 +140,7 @@ proc build_region { args } {
 	if { $append } {
 		set regname ${tag}.r$regnum
 		if { [catch {db get $regname tree} oldtree] == 0 } {
-			set tree [list u $tree $oldtree]
+			set tree [list u $oldtree $tree]
 			if { [catch {db adjust $regname tree $tree} ret ] } {
 				error "failed to update existing region ($regname)"
 			}
