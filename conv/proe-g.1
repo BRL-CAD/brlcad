@@ -3,7 +3,7 @@
 proe-g \- Pro/Engineer Translator (Pro/Engineer to BRL-CAD)
 .SH SYNOPSIS
 .B proe-g
-[-dpsar] [-u reg_exp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] file.brl file.g
+[-sdarSn] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] file.brl file.g
 .SH DESCRIPTION
 .I proe-g\^
 converts the specified
@@ -11,12 +11,6 @@ converts the specified
 to a BRL-CAD
 .I file.g
 file.
-The
-.I -d
-option prints debugging information.
-The
-.I -p
-option results in a BRL-CAD model built from polysolids instead of NMGs.
 The
 .I -s
 option requests that the Pro/E parts be written as BRL-CAD
@@ -29,11 +23,31 @@ solid will raytrace faster than
 or
 .I NMG's.
 The
+.I -n
+option results in a BRL-CAD model built from NMGs instead of polysolids (not recommended).
+The
+.I -d
+option prints debugging information.
+The
 .I -a
 option implies that all the parts in the Pro/E model should be converted to
 BRL-CAD
 .I air
 regions.
+The
+.I -i
+option sets the starting ident number for the regions created. As each
+new region is created, this number will be incremented before assigning
+the next ident number (conflicts with 
+.I -I
+). The
+.I -I
+option sets a constant ident number that will be assigned to all the regions created (conflicts with
+.I -i
+).
+The
+.I -m
+option sets a material code that will be assigned to all the regions created (default is 1).
 The
 .I -r
 flag indicates that the model should not be rotated, translated, or scaled, but left in
@@ -43,6 +57,12 @@ This allows the user to convert parts that are referenced by previously converte
 assemblies, so that the transformation matrix in the referencing assembly will
 size and position the part.
 The
+.I -x
+option sets an RT debug flags (see librt/debug.h).
+The
+.I -X
+option specifies an NMG debug flag (see h/nmg.h).
+The
 .I file.brl
 file is expected to be output from the
 .I BRL-CAD
@@ -51,7 +71,7 @@ menu option of the Pro/Engineer
 menu. This menu option is a Pro/Develop application produced by the USARL.
 .SH EXAMPLE
 .RS
-$ \|\fIproe-g -p \|sample.brl \|sample.g\fP
+$ \|\fIproe-g -s \|sample.brl \|sample.g\fP
 .RE
 .SH "SEE ALSO"
 .I

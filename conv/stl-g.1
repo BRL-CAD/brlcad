@@ -3,7 +3,7 @@
 stl-g \- Stereolithography Translator (STL to BRL-CAD)
 .SH SYNOPSIS
 .B stl-g
-[-dpsa] [-u reg_exp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] file.stl file.g
+[-dsan] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-u reg_exp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] file.stl file.g
 .SH DESCRIPTION
 .I stl-g\^
 converts the specified
@@ -15,8 +15,22 @@ The
 .I -d
 option prints debugging information.
 The
-.I -p
-option results in a BRL-CAD model built from polysolids instead of NMGs.
+.I -n
+option results in a BRL-CAD model built from NMGs instead of polysolids (not recommended).
+The
+.I -i
+option sets the starting ident number for the regions created. As each
+new region is created, this number will be incremented before assigning
+the next ident number (conflicts with 
+.I -I
+). The
+.I -I
+option sets a constant ident number that will be assigned to all the regions created (conflicts with
+.I -i
+).
+The
+.I -m
+option sets a material code that will be assigned to all the regions created (default is 1).
 The
 .I -s
 option requests that the Pro/E parts be written as BRL-CAD
@@ -35,12 +49,17 @@ BRL-CAD
 .I air
 regions.
 The
+.I -x
+option sets an RT debug flags (see librt/debug.h).
+The
+.I -X
+option specifies an NMG debug flag (see h/nmg.h).
 The
 .I file.stl
 file is expected to be a stereolithography file.
 .SH EXAMPLE
 .RS
-$ \|\fIstl-g -p \|sample.stl \|sample.g\fP
+$ \|\fIstl-g -s \|sample.stl \|sample.g\fP
 .RE
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.

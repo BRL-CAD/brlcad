@@ -79,7 +79,7 @@ static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static int do_simplify=0;	/* flag to try to simplify solids */
 static regex_t reg_cmp;		/* compiled regular expression */
-static char *proe_usage="%s [-psdarS] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
+static char *proe_usage="%s [-sdarSn] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -n option is to NMG solids rather than polysolids.\n\
@@ -98,7 +98,7 @@ static char *proe_usage="%s [-psdarS] [-i initial_ident] [-I constant_ident] [-m
 	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
 	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
-static char *stl_usage="%s [-psda] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
+static char *stl_usage="%s [-dsan] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\",... default is \"mm\"\n\
