@@ -119,6 +119,7 @@ int	_pixelbits = 8;	/* Default : (8) bits per pixel.		*/
 int	rle_debug = 0;
 int	rle_verbose = 0;
 
+#undef HIDDEN
 #define HIDDEN static
 HIDDEN void	_put_Data();
 HIDDEN int	_put_Color_Map_Seg();
