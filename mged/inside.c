@@ -41,6 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"			/* XXX needed for NAMESIZE */
 #include "rtlist.h"
+#include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "./ged.h"
@@ -49,7 +50,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
+RT_EXTERN( void nmg_invert_shell , ( struct shell *s , struct rt_tol *tol ) );
+RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , struct rt_tol *tol ) );
+
 extern struct rt_db_internal	es_int;	/* from edsol.c */
+extern struct rt_tol		mged_tol;	/* from ged.c */
 
 extern int	args;		/* total number of args available */
 extern int	argcnt;		/* holder for number of args added later */
@@ -133,6 +138,9 @@ static char *p_etoin[] = {
 	"Enter thickness for body: ",
 };
 
+static char *p_nmgin[] = {
+	"Enter thickness for shell: ",
+};
 
 /*	F _ I N S I D E ( ) :	control routine...reads all data
  */
@@ -399,6 +407,16 @@ f_inside()
 		}
 
 		if( etoin(&intern, thick) )
+			return;
+		break;
+
+	case ID_NMG:
+		promp = p_nmgin;
+		(void)printf( "%s" , promp[0] );
+		if( (argcnt = getcmd(args)) < 0 )
+			return;
+		thick[0] = atof( cmd_args[args] ) * local2base;
+		if( nmgin( &intern , thick[0] ) )
 			return;
 		break;
 
@@ -760,4 +778,57 @@ fastf_t	thick[1];
 	eto->eto_rd -= thick[0];
 
 	return(0);
+}
+
+/* find inside for NMG */
+int
+nmgin( ip , thick )
+struct rt_db_internal	*ip;
+fastf_t thick;
+{
+	struct model *m;
+	struct nmgregion *r;
+
+	if( ip->idb_type != ID_NMG )
+		return( 1 );
+
+	m = (struct model *)ip->idb_ptr;
+	NMG_CK_MODEL( m );
+
+	r = RT_LIST_FIRST( nmgregion ,  &m->r_hd );
+	while( RT_LIST_NOT_HEAD( r , &m->r_hd ) )
+	{
+		struct nmgregion *next_r;
+		struct shell *s;
+
+		NMG_CK_REGION( r );
+
+		next_r = RT_LIST_PNEXT( nmgregion , &r->l );
+
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+		while( RT_LIST_NOT_HEAD( s , &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell , &s->l );
+
+			(void)nmg_extrude_shell( s , thick , 0 , &mged_tol );
+
+			s = next_s;
+		}
+
+		if( RT_LIST_IS_EMPTY( &r->s_hd ) )
+			nmg_kr( r );
+
+		r = next_r;
+	}
+
+	if( RT_LIST_IS_EMPTY( &m->r_hd ) )
+	{
+		rt_log( "No inside created\n" );
+		nmg_km( m );
+		return( 1 );
+	}
+	else
+		return( 0 );
 }
