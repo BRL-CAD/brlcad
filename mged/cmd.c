@@ -101,15 +101,17 @@ void	f_dm();
 void	f_vrot_center();
 void	f_opendb();
 
-static struct funtab {
+struct funtab {
 	char *ft_name;
 	char *ft_parms;
 	char *ft_comment;
 	void (*ft_func)();
 	int ft_min;
 	int ft_max;
-} funtab[] = {
-
+};
+static struct funtab funtab[] = {
+"", "", "Primary command Table.",
+	0, 0, 0,
 "?", "", "summary of available commands",
 	f_fhelp,0,MAXARGS,
 "%", "", "escape to interactive shell",
@@ -363,8 +365,10 @@ static struct funtab {
 	f_zap,1,1,
 "zoom", "scale_factor", "zoom view in or out",
 	f_zoom, 2,2,
+0, 0, 0,
+	0, 0, 0,
 };
-#define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
+
 
 /*
  *			C M D L I N E
@@ -413,7 +417,7 @@ struct rt_vls	*vp;
 		i = parse_line(rt_vls_addr(&cmd));
 		if( i < 0 )  continue;	/* some kind of error */
 		if( i == 0 ) {
-			mged_cmd( numargs, cmd_args );
+			mged_cmd( numargs, cmd_args, funtab );
 		}
 		need_prompt = 1;
 
@@ -499,18 +503,20 @@ char	*line;
  *  incorrect, print out a short help message.
  */
 void
-mged_cmd( argc, argv )
+mged_cmd( argc, argv, functions )
 int	argc;
 char	**argv;
+struct funtab *functions;
 {
 	register struct funtab *ftp;
 
 	if( argc == 0 )  {
-		(void)printf("no command entered, type ? for help\n");
+		(void)printf("no command entered, type '%s?' for help\n",
+		    functions->ft_name);
 		return;
 	}
 
-	for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+	for( ftp = functions+1; ftp->ft_name ; ftp++ )  {
 		if( strcmp( ftp->ft_name, argv[0] ) != 0 )
 			continue;
 		/* We have a match */
@@ -523,11 +529,12 @@ char	**argv;
 			ftp->ft_func(argc, argv);
 			return;
 		}
-		(void)printf("Usage: %s %s\n", ftp->ft_name, ftp->ft_parms);
-		(void)printf("\t(%s)\n", ftp->ft_comment);
+		rt_log("Usage: %s%s %s\n\t(%s)\n",functions->ft_name,
+		    ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 		return;
 	}
-	(void)printf("%s: no such command, type ? for help\n", argv[0] );
+	rt_log("%s%s: no such command, type '%s?' for help\n",
+	    functions->ft_name, argv[0], functions->ft_name);
 }
 
 /* Let the user temporarily escape from the editor */
@@ -573,24 +580,27 @@ char	**argv;
  *  Common code for help commands
  */
 static void
-helpcomm( argc, argv )
+helpcomm( argc, argv, functions)
 int	argc;
 char	**argv;
+struct funtab *functions;
 {
 	register struct funtab *ftp;
 	register int	i;
 
 	/* Help command(s) */
 	for( i=1; i<argc; i++ )  {
-		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
 			if( strcmp( ftp->ft_name, argv[i] ) != 0 )
 				continue;
-			(void)printf("Usage: %s %s\n", ftp->ft_name, ftp->ft_parms);
-			(void)printf("\t(%s)\n", ftp->ft_comment);
+			rt_log("Usage: %s%s %s\n\t(%s)\n", functions->ft_name,
+			    ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 			break;
 		}
-		if( ftp == &funtab[NFUNC] )
-			(void)printf("%s: no such command, type ? for help\n", argv[i] );
+		if( !ftp->ft_name ) {
+			rt_log("%s%s: no such command, type '%s?' for help\n",
+			    functions->ft_name, argv[i], functions->ft_name);
+		}
 	}
 }
 
@@ -605,18 +615,27 @@ f_help( argc, argv )
 int	argc;
 char	**argv;
 {
+	void f_help2();
+	f_help2(argc, argv, &funtab[0]);
+}
+
+void f_help2(argc, argv, functions)
+int argc;
+char **argv;
+struct funtab *functions;
+{
 	register struct funtab *ftp;
 	register int	i;
 
 	if( argc <= 1 )  {
 		(void)printf("The following commands are available:\n");
-		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
-			(void)printf("%s %s\n", ftp->ft_name, ftp->ft_parms);
-			(void)printf("\t(%s)\n", ftp->ft_comment);
+		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
+			rt_log("%s%s %s\n\t(%s)\n", functions->ft_name,
+			    ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 		}
 		return;
 	}
-	helpcomm( argc, argv );
+	helpcomm( argc, argv, functions );
 }
 
 /*
@@ -630,17 +649,26 @@ f_fhelp( argc, argv )
 int	argc;
 char	**argv;
 {
+	f_fhelp2(argc, argv, &funtab[0]);
+}
+void
+f_fhelp2( argc, argv, functions)
+int	argc;
+char	**argv;
+struct funtab *functions;
+{
 	register struct funtab *ftp;
 
 	if( argc <= 1 )  {
-		(void)printf("The following commands are available:\n");
-		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+		(void)printf("The following %scommands are available:\n",
+		    functions->ft_name);
+		for( ftp = functions; ftp->ft_name; ftp++ )  {
 			col_item(ftp->ft_name);
 		}
 		col_eol();
 		return;
 	}
-	helpcomm( argc, argv );
+	helpcomm( argc, argv, functions );
 }
 
 /* Hook for displays with no buttons */
