@@ -1893,7 +1893,7 @@ struct bu_vls *vls;
 
 		if( bu_vls_strlen( vls ) )
 			bu_vls_putc( vls, ' ' );
-		bu_vls_strcat( vls, "stack " );
+		bu_vls_strcat( vls, "stack" );
 
 		/* get number of shaders in the stack */
 		len = bu_tcl_list_length( params );
