@@ -6,14 +6,20 @@
  *	parse_line	Parse command line into argument vector
  *	do_cmd		Check arg counts, run a command
  *
- * The U. S. Army Ballistic Research Laboratory
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include	<signal.h>
 #include	<stdio.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 #include "ged.h"
 #include "dir.h"
@@ -40,7 +46,7 @@ void	f_delmem(), f_arbdef(), f_return(), f_comm(), f_quit();
 void	f_edcomb(), f_status(), f_rot();
 void	f_refresh(), f_fix(), f_rt();
 void	f_make(), f_attach(), f_release();
-void	f_tedit();
+void	f_tedit(), f_memprint();
 
 static struct funtab {
 	char *ft_name;
@@ -84,10 +90,11 @@ static struct funtab {
 	"fix",f_fix,1,1,"fix (restart display processor after hardware error)",
 	"refresh",f_refresh,1,1,"refresh (debug, send new control list)",
 	"rt",f_rt,1,20,"rt [options] (do raytrace of view)",
+	"attach",f_attach,2,2,"attach <mg|vg> (attach to display processor)",
+	"release",f_release,1,1,"release (release current display processor)",
+	"ted",f_tedit,1,1,"ted (text edit a solid's parameters)",
 	"make",f_make,3,3,"make name <arb8|ellg|tor|tgc> (create a primitive)",
-	"attach",f_attach,2,2,"attach <mg|vg> (unimplemented)",
-	"release",f_release,1,1,"release (unimplemented)",
-	"ted",f_tedit,1,1,"ted (text edit a solid's parameters)"
+	"memprint",f_memprint,1,1,"memprint (print memory maps)"
 };
 #define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
 

@@ -14,8 +14,9 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "ged.h"
 #include "solid.h"
 #include "dm.h"
@@ -39,12 +40,14 @@ struct dm dm_Null = {
 	"nu", "Null Display"
 };
 extern struct dm dm_Mg, dm_Vg;
-extern struct dm *dmp;		/* Ptr to current Display Manager package */
 
+struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
+
+/* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
-	&dm_Null,
 	&dm_Mg,
 	&dm_Vg,
+	&dm_Null,
 	0
 };
 
@@ -52,12 +55,11 @@ release()
 {
 	register struct solid *sp;
 
-	printf("releasing %s\n", dmp->dmr_name);
-
 	/* Delete all references to display processor memory */
 	FOR_ALL_SOLIDS( sp )  {
 		memfree( &(dmp->dmr_map), sp->s_bytes, sp->s_addr );
 		sp->s_bytes = 0;
+		sp->s_addr = 0;
 	}
 	mempurge( &(dmp->dmr_map) );
 
@@ -77,7 +79,7 @@ char *name;
 		if( strcmp( (*dp)->dmr_name, name ) != 0 )
 			continue;
 		dmp = *dp;
-		printf("attach(%s) %s\n",
+		printf("ATTACHING %s (%s)\n",
 			dmp->dmr_name, dmp->dmr_lname);
 
 		dmp->dmr_open();
@@ -108,4 +110,36 @@ Nu_input( fd, noblock )
 {
 	long readfds = (1<<fd);
 	(void)_select( 32, &readfds, 0L, 0L, (char *)0 );
+}
+
+/*
+ *  			G E T _ A T T A C H E D
+ *
+ *  Prompt the user with his options, and loop until a valid choice is made.
+ */
+get_attached()
+{
+	char line[80];
+	register struct dm **dp;
+
+	while(1)  {
+		printf("attach (");
+		for( dp = &which_dm[0]; *dp != (struct dm *)0; dp++ )
+			printf("%s|", (*dp)->dmr_name);
+		printf(")[%s]? ", which_dm[0]->dmr_name);
+		(void)gets( line );		/* Null terminated */
+		if( feof(stdin) )  quit();
+		if( line[0] == '\0' )  {
+			dp = &which_dm[0];	/* default */
+			break;
+		}
+		for( dp = &which_dm[0]; *dp != (struct dm *)0; dp++ )
+			if( strcmp( line, (*dp)->dmr_name ) == 0 )
+				break;
+		if( *dp != (struct dm *)0 )
+			break;
+		/* Not a valid choice, loop. */
+	}
+	/* Valid choice made, attach to it */
+	attach( (*dp)->dmr_name );
 }

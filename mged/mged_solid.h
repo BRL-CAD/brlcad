@@ -34,7 +34,7 @@ extern int		ndrawn;
 			} }
 #define FREE_SOLID(p) {(p)->s_forw = FreeSolid; FreeSolid = (p); \
 	if((p)->s_vlist) (void)free((char *)(p)->s_vlist); \
-	(p)->s_vlist = 0; }
+	(p)->s_vlist = 0; (p)->s_addr = 0; }
 
 #define FOR_ALL_SOLIDS(p)  \
 	for( p=HeadSolid.s_forw; p != &HeadSolid; p = p->s_forw )

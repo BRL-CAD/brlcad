@@ -5,7 +5,7 @@
 #include <signal.h>
 #include "ged_types.h"
 #include "ged.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 #include "vmath.h"
 

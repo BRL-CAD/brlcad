@@ -14,7 +14,7 @@
 #include "menu.h"
 #include "dm.h"
 #include "vmath.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 
 /*	Degree <-> Radian conversion factors	*/

@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged_types.h"
 #include "ged.h"
 #include "solid.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 #include "dm.h"
 #include "vmath.h"
@@ -55,7 +55,6 @@ extern long	time();
 
 extern struct dm dm_Mg;
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
-struct dm *dmp = &dm_Mg;		/* Ptr to Display Manager package */
 
 int	dmaflag;			/* Set to 1 to force new screen DMA */
 
@@ -97,8 +96,7 @@ char **argv;
 	FreeSolid = SOLID_NULL;
 
 	/* Fire up the display manager, and the display processor */
-	(void)printf("attach %s (%s)\n", dmp->dmr_name, dmp->dmr_lname);
-	dmp->dmr_open();
+	get_attached();
 
 	/* init rotation matrix */
 	mat_idn( identity );		/* Handy to have around */

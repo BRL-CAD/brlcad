@@ -8,7 +8,7 @@
 #include "ged.h"
 #include "solid.h"
 #include "dir.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 #include <math.h>
 #include "dm.h"

@@ -2,6 +2,8 @@
  *			C H G V I E W . C
  *
  * Functions -
+ *	eraseobj	Drop an object from the visible list
+ *	pr_solids	Print info about visible list
  *
  * The U. S. Army Ballistic Research Laboratory
  */
@@ -10,7 +12,7 @@
 #include	<signal.h>
 #include	<stdio.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 #include "ged.h"
 #include "dir.h"
@@ -291,7 +293,8 @@ f_zap()
 
 	sp=HeadSolid.s_forw;
 	while( sp != &HeadSolid )  {
-		memfree( &(dmp->dmr_map), sp->s_addr, sp->s_bytes );
+		memfree( &(dmp->dmr_map), sp->s_bytes, sp->s_addr );
+		sp->s_addr = sp->s_bytes = 0;
 		nsp = sp->s_forw;
 		DEQUEUE_SOLID( sp );
 		FREE_SOLID( sp );
@@ -426,4 +429,62 @@ void
 f_release()
 {
 	release();
+}
+
+/*
+ *			E R A S E O B J
+ *
+ * This routine goes through the solid table and deletes all displays
+ * which contain the specified object in their 'path'
+ */
+void
+eraseobj( dp )
+register struct directory *dp;
+{
+	register struct solid *sp;
+	static struct solid *nsp;
+	register int i;
+
+	sp=HeadSolid.s_forw;
+	while( sp != &HeadSolid )  {
+		nsp = sp->s_forw;
+		for( i=0; i<=sp->s_last; i++ )  {
+			if( sp->s_path[i] == dp )  {
+				memfree( &(dmp->dmr_map), sp->s_bytes, sp->s_addr );
+				DEQUEUE_SOLID( sp );
+				FREE_SOLID( sp );
+				break;
+			}
+		}
+		sp = nsp;
+	}
+}
+
+/*
+ *			P R _ S O L I D S
+ *
+ *  Given a pointer to a member of the circularly linked list of solids
+ *  (typically the head), chase the list and print out the information
+ *  about each solid structure.
+ */
+void
+pr_solids( startp )
+struct solid *startp;
+{
+	register struct solid *sp;
+	register int i;
+
+	sp = startp->s_forw;
+	while( sp != startp )  {
+		for( i=0; i <= sp->s_last; i++ )
+			(void)printf("/%s", sp->s_path[i]->d_namep);
+		(void)printf("  %s", sp->s_flag == UP ? "VIEW":"-NO-" );
+		if( sp->s_iflag == UP )
+			(void)printf(" ILL");
+		(void)printf(" [%f,%f,%f] size %f",
+			sp->s_center[X], sp->s_center[Y], sp->s_center[Z],
+			sp->s_size);
+		(void)putchar('\n');
+		sp = sp->s_forw;
+	}
 }

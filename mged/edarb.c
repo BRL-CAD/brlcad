@@ -14,7 +14,7 @@
 #include	<math.h>
 #include	<string.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 #include "vmath.h"
 #include "ged.h"

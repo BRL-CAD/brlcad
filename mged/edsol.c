@@ -14,7 +14,7 @@
 #include	<math.h>
 #include	<string.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 #include "vmath.h"
 #include "ged.h"
@@ -161,7 +161,7 @@ union record *recp;
 	}
 
 	/* Release previous chunk of displaylist, and rewrite control list */
-	memfree( &(dmp->dmr_map), addr, bytes );
+	memfree( &(dmp->dmr_map), bytes, addr );
 	dmaflag = 1;
 	return( sp );
 }

@@ -11,7 +11,7 @@
 
 #include	<string.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "ged.h"
 #include "dir.h"
 #include "solid.h"

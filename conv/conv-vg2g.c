@@ -9,7 +9,7 @@
  */
 #include <stdio.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 union record rec;
 
 char line[256];

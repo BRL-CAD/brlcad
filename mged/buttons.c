@@ -12,7 +12,7 @@
 #include "solid.h"
 #include "menu.h"
 #include "dm.h"
-#include "3d.h"
+#include "db.h"
 #include "sedit.h"
 
 extern void	perror();

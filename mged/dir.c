@@ -2,24 +2,35 @@
  *			D I R . C
  *
  * Functions -
+ *	db_open		Open the database
  *	dir_build	Build directory of object file
- *	toc		Print table-of-contents of object file
- *	eraseobj	Drop an object from the visible list
+ *	dir_print	Print table-of-contents of object file
  *	lookup		Convert an object name into directory pointer
- *	pr_solids	Print info about visible list
  *	dir_add		Add entry to the directory
  *	strdup		Duplicate a string in dynamic memory
  *	dir_delete	Delete entry from directory
  *	db_delete	Delete entry from database
  *	db_getrec	Get a record from database
  *	db_putrec	Put record to database
+ *	db_alloc	Find a contiguous block of database storage
+ *	db_grow		Increase size of existing database entry
+ *	db_trunc	Decrease size of existing entry, from it's end
+ *	f_memprint	Debug, print memory & db free maps
+ *
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<fcntl.h>
 #include	<stdio.h>
 #include	<string.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "ged.h"
 #include "solid.h"
 #include "dir.h"
@@ -31,6 +42,8 @@ extern long	lseek();
 extern char	*malloc();
 
 static struct directory *DirHead = DIR_NULL;
+
+static struct mem_map *dbfreep = MAP_NULL; /* map of free granules */
 
 static long	objfdend;		/* End+1 position of object file */
 int		objfd;			/* FD of object file */
@@ -47,6 +60,7 @@ static char *units_str[] = {
 	"extra"
 };
 char	*filename;			/* Name of database file */
+static int read_only = 0;		/* non-zero when read-only */
 
 /*
  *  			D B _ O P E N
@@ -60,6 +74,7 @@ char *name;
 			exit(2);		/* NOT finish */
 		}
 		(void)printf("%s: READ ONLY\n", name);
+		read_only = 1;
 	}
 	filename = name;
 }
@@ -101,6 +116,7 @@ dir_build()  {
 		}
 		if( record.u_id == ID_FREE )  {
 			/* Ought to inform db manager of avail. space */
+			memfree( &dbfreep, 1, addr/sizeof(union record) );
 			continue;
 		}
 		if( record.u_id == ID_ARS_A )  {
@@ -213,35 +229,6 @@ dir_print()  {
 }
 
 /*
- *			E R A S E O B J
- *
- * This routine goes through the solid table and deletes all displays
- * which contain the specified object in their 'path'
- */
-void
-eraseobj( dp )
-register struct directory *dp;
-{
-	register struct solid *sp;
-	static struct solid *nsp;
-	register int i;
-
-	sp=HeadSolid.s_forw;
-	while( sp != &HeadSolid )  {
-		nsp = sp->s_forw;
-		for( i=0; i<=sp->s_last; i++ )  {
-			if( sp->s_path[i] == dp )  {
-				memfree( &(dmp->dmr_map), sp->s_addr, sp->s_bytes );
-				DEQUEUE_SOLID( sp );
-				FREE_SOLID( sp );
-				break;
-			}
-		}
-		sp = nsp;
-	}
-}
-
-/*
  *			D I R _ L O O K U P
  *
  * This routine takes a name, and looks it up in the
@@ -266,35 +253,6 @@ register char *str;
 	if( noisy )
 		(void)printf("dir_lookup:  could not find '%s'\n", str );
 	return( DIR_NULL );
-}
-
-/*
- *			P R _ S O L I D S
- *
- *  Given a pointer to a member of the circularly linked list of solids
- *  (typically the head), chase the list and print out the information
- *  about each solid structure.
- */
-void
-pr_solids( startp )
-struct solid *startp;
-{
-	register struct solid *sp;
-	register int i;
-
-	sp = startp->s_forw;
-	while( sp != startp )  {
-		for( i=0; i <= sp->s_last; i++ )
-			(void)printf("/%s", sp->s_path[i]->d_namep);
-		(void)printf("  %s", sp->s_flag == UP ? "VIEW":"-NO-" );
-		if( sp->s_iflag == UP )
-			(void)printf(" ILL");
-		(void)printf(" [%f,%f,%f] size %f",
-			sp->s_center[X], sp->s_center[Y], sp->s_center[Z],
-			sp->s_size);
-		(void)putchar('\n');
-		sp = sp->s_forw;
-	}
 }
 
 /*
@@ -359,7 +317,6 @@ register struct directory *dp;
 {
 	register struct directory *findp;
 
-printf("dir_delete(%s)\n", dp->d_namep);
 	if( DirHead == dp )  {
 		free( dp->d_namep );
 		DirHead = dp->d_forw;
@@ -374,7 +331,7 @@ printf("dir_delete(%s)\n", dp->d_namep);
 		free( dp );
 		return;
 	}
-	printf("dir_delete:  unable to find %s\n", dp->d_namep );
+	(void)printf("dir_delete:  unable to find %s\n", dp->d_namep );
 }
 
 /*
@@ -391,11 +348,11 @@ struct directory *dp;
 {
 	register int i;
 
-printf("db_delete(%s) len=%d\n", dp->d_namep, dp->d_len);
 	zapper.u_id = ID_FREE;	/* The rest will be zeros */
 
 	for( i=0; i < dp->d_len; i++ )
 		db_putrec( dp, &zapper, i );
+	memfree( &dbfreep, dp->d_len, dp->d_addr/(sizeof(union record)) );
 	dp->d_len = 0;
 	dp->d_addr = -1;
 }
@@ -423,8 +380,37 @@ union record *where;
 	i = read( objfd, (char *)where, sizeof(union record) );
 	if( i != sizeof(union record) )  {
 		perror("db_getrec");
-		printf("db_getrec(%s):  read error.  Wanted %d, got %d\n",
+		(void)printf("db_getrec(%s):  read error.  Wanted %d, got %d\n",
 			dp->d_namep, sizeof(union record), i );
+		where->u_id = '\0';	/* undefined id */
+	}
+}
+
+/*
+ *  			D B _ G E T M A N Y
+ *
+ *  Retrieve several records from the database,
+ *  "offset" granules into this entry.
+ */
+void
+db_getmany( dp, where, offset, len )
+struct directory *dp;
+union record *where;
+{
+	register int i;
+
+	if( offset < 0 || offset+len >= dp->d_len )  {
+		(void)printf("db_getmany(%s):  xfer %d..%x exceeds 0..%d\n",
+			dp->d_namep, offset, offset+len, dp->d_len );
+		where->u_id = '\0';	/* undefined id */
+		return;
+	}
+	(void)lseek( objfd, dp->d_addr + offset * sizeof(union record), 0 );
+	i = read( objfd, (char *)where, len * sizeof(union record) );
+	if( i != len * sizeof(union record) )  {
+		perror("db_getmany");
+		(void)printf("db_getmany(%s):  read error.  Wanted %d, got %d\n",
+			dp->d_namep, len * sizeof(union record), i );
 		where->u_id = '\0';	/* undefined id */
 	}
 }
@@ -443,6 +429,10 @@ int offset;
 {
 	register int i;
 
+	if( read_only )  {
+		(void)printf("db_putrec on READ-ONLY file\n");
+		return;
+	}
 	if( offset < 0 || offset >= dp->d_len )  {
 		(void)printf("db_putrec(%s):  offset %d exceeds %d\n",
 			dp->d_namep, offset, dp->d_len );
@@ -452,7 +442,7 @@ int offset;
 	i = write( objfd, (char *)where, sizeof(union record) );
 	if( i != sizeof(union record) )  {
 		perror("db_putrec");
-		printf("db_putrec(%s):  write error\n", dp->d_namep );
+		(void)printf("db_putrec(%s):  write error\n", dp->d_namep );
 	}
 }
 
@@ -466,10 +456,33 @@ db_alloc( dp, count )
 register struct directory *dp;
 int count;
 {
-	/* For now, a dumb algorithm. */
-	dp->d_addr = objfdend;
+	unsigned long addr;
+	union record rec;
+
+	if( read_only )  {
+		(void)printf("db_alloc on READ-ONLY file\n");
+		return;
+	}
+	if( count <= 0 )  {
+		(void)printf("db_alloc(0)\n");
+		return;
+	}
+top:
+	if( (addr = memalloc( &dbfreep, count )) == 0L )  {
+		/* No contiguous free block, append to file */
+		dp->d_addr = objfdend;
+		dp->d_len = count;
+		objfdend += count * sizeof(union record);
+		return;
+	}
+	dp->d_addr = addr * sizeof(union record);
 	dp->d_len = count;
-	objfdend += count * sizeof(union record);
+	db_getrec( dp, &rec, 0 );
+	if( rec.u_id != ID_FREE )  {
+		(void)printf("db_alloc():  addr %ld non-FREE (id %d), skipping\n",
+			addr, rec.u_id );
+		goto top;
+	}
 }
 
 /*
@@ -485,6 +498,12 @@ int count;
 	register int i;
 	union record rec;
 	struct directory olddir;
+	unsigned long addr;
+
+	if( read_only )  {
+		(void)printf("db_grow on READ-ONLY file\n");
+		return;
+	}
 
 	/* Easy case -- see if at end-of-file */
 	if( dp->d_addr + dp->d_len * sizeof(union record) == objfdend )  {
@@ -492,22 +511,27 @@ int count;
 		dp->d_len += count;
 		return;
 	}
-printf("db_grow(%s, %d) ", dp->d_namep, count );
-	/* Next, check to see if granules are all availible */
+
+	/* Try to extend into free space immediately following current obj */
+	if( memget( &dbfreep, count, dp->d_addr/sizeof(union record) ) == 0L )
+		goto hard;
+
+	/* Check to see if granules are all really availible (sanity check) */
 	for( i=0; i < count; i++ )  {
 		(void)lseek( objfd, dp->d_addr +
 			((dp->d_len + i) * sizeof(union record)), 0 );
 		(void)read( objfd, (char *)&rec, sizeof(union record) );
-		if( rec.u_id != ID_FREE )
+		if( rec.u_id != ID_FREE )  {
+			(void)printf("db_grow:  FREE record wasn't?! (id%d)\n",
+				rec.u_id);
 			goto hard;
+		}
 	}
-printf("easy -- following records were free\n");
 	dp->d_len += count;
 	return;
 hard:
 	/* Sigh, got to duplicate it in some new space */
 	olddir = *dp;				/* struct copy */
-printf("hard -- make copy\n");
 	db_alloc( dp, dp->d_len + count );	/* fixes addr & len */
 	for( i=0; i < olddir.d_len; i++ )  {
 		db_getrec( &olddir, &rec, i );
@@ -531,10 +555,27 @@ int count;
 {
 	register int i;
 
-printf("db_trunc(%s, %d)\n", dp->d_namep, count );
+	if( read_only )  {
+		(void)printf("db_trunc on READ-ONLY file\n");
+		return;
+	}
 	zapper.u_id = ID_FREE;	/* The rest will be zeros */
 
 	for( i = 0; i < count; i++ )
 		db_putrec( dp, &zapper, (dp->d_len - 1) - i );
 	dp->d_len -= count;
+}
+
+/*
+ *			F _ M E M P R I N T
+ *  
+ *  Debugging aid:  dump memory maps
+ */
+void
+f_memprint()
+{
+	(void)printf("Display manager free map:\n");
+	memprint( &(dmp->dmr_map) );
+	(void)printf("Database free granule map:\n");
+	memprint( &dbfreep );
 }

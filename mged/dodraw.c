@@ -14,7 +14,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "ged.h"
 #include "solid.h"
 #include "dir.h"
@@ -62,10 +62,6 @@ union record *recordp;
 	static float xmax, ymax, zmax;
 	static float xmin, ymin, zmin;
 
-	if( recordp->u_id != ID_SOLID )  {
-		printf("dodraw: non-solid, id=%c\n", recordp->u_id );
-		return(-1);	/* ERROR */
-	}
 	vlp = &veclist[0];
 	if( regmemb >= 0 ) {
 		/* processing a member of a processed region */

@@ -148,7 +148,7 @@ extern int		clip(), getname(), use_pen(), drawHsolid();
 extern struct directory	*combadd(), *dir_add(), *lookup();
 extern struct solid *redraw();
 extern void		ellipse(), memfree(), mempurge();
-extern unsigned		memalloc();
+extern unsigned long	memalloc(), memget();
 
 #ifndef	NULL
 #define	NULL		0

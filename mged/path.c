@@ -9,7 +9,7 @@
 
 #include	<stdio.h>
 #include "ged_types.h"
-#include "3d.h"
+#include "db.h"
 #include "solid.h"
 #include "dir.h"
 #include "ged.h"
