@@ -124,7 +124,7 @@ char **argv;
 	else
 	    out_hdr.ncolors = 3;
 
-	if ( rle_dflt_hdr.background != NULL )
+	if ( rle_dflt_hdr.background != 0 )
 	{
 	    rle_pixel r, g, b, o;
 
