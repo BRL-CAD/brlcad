@@ -45,12 +45,6 @@ char *file, *obj;
 	ap->a_miss = dummymiss;
 	ap->a_onehit = 1;
 
-	printf("\n");
-	printf("view_init: ap->a_resource = 0x%x\n", ap->a_resource );
-	printf("view_init: &resource[0] = 0x%x\n", &resource[0] );
-		ap->a_resource = &resource[0];
-	printf("\n");
-
 	return(0);		/* no framebuffer needed */
 }
 
@@ -59,15 +53,19 @@ void
 view_2init( ap )
 struct application *ap;
 {
-	printf("\n");
-	printf("view_2init: ap->a_resource = 0x%x\n", ap->a_resource );
 }
 
 /* end of each pixel */
-void	view_pixel() {}
+void	view_pixel(ap)
+register struct application *ap;
+{
+}
 
 /* end of each line */
-void	view_eol() {}
+void	view_eol(ap)
+register struct application *ap;
+{
+}
 
 /* end of a frame */
 void	view_end() {}
@@ -77,17 +75,16 @@ dummyhit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	printf("hit: 0x%x\n", ap->a_resource);
+	rt_log("hit: 0x%x\n", ap->a_resource);
 
 	return(1);	/* report hit to main routine */
 }
 
 int
-dummymiss( ap, PartHeadp )
+dummymiss( ap )
 register struct application *ap;
-struct partition *PartHeadp;
 {
-	/*printf("miss: 0x%x\n", ap->a_resource);*/
+	rt_log("miss: 0x%x\n", ap->a_resource);
 
 	return(0);
 }
