@@ -1555,3 +1555,99 @@ f_mvall()
 	}
 
 }
+
+/*	F _ K I L L A L L
+ *
+ *	kill object[s] and
+ *	remove all occurences of object[s]
+ *	format:	killall obj1 ... objn
+ *
+ */
+void
+f_killall()
+{
+	register FILE *fp;
+	char combname[NAMESIZE];
+
+	/* no interupts */
+	(void)signal( SIGINT, SIG_IGN );
+
+	if( (fp = fopen(filename, "r")) == NULL ) {
+		(void)printf("f_killall: fopen failed\n");
+		return;
+	}
+
+	/* hunt for all combinations with matching member records */
+	while( fread( (char*)&record, sizeof(record), 1, fp ) == 1 &&
+	     ! feof(fp) )  {
+		if( record.u_id == ID_COMB ) {
+			if(record.c.c_length == 0)
+				continue;
+			/* save the combination name */
+			strcpy(combname, record.c.c_name);
+			fread( (char *)&record, sizeof(record), 1, fp );
+			if( record.u_id == ID_MEMB ) {
+				register int i;
+				for(i=1; i<numargs; i++) {
+					if(strcmp(cmd_args[i], record.M.m_instname) == 0) {
+						/* match ... must remove at least one member */
+						rm_membs( combname );
+						break;
+					}
+				}
+			}
+		}
+	}
+	fclose(fp);
+	/* ALL references removed...now KILL the object[s] */
+	/* reuse cmd_args[] */
+	f_kill();
+}
+
+/*
+ *			R M _ M E M B S
+ *
+ *  Hack:  re-uses cmd_args[]
+ */
+rm_membs( name )
+char *name;
+{
+	register struct directory *dp;
+	register int i, rec, num_deleted;
+	union record record;
+
+	if( (dp = lookup( name, LOOKUP_QUIET )) == DIR_NULL )
+		return;
+	(void)printf("%s: ",name);
+
+	/* Examine all the Member records, one at a time */
+	num_deleted = 0;
+	for( rec = 1; rec < dp->d_len; rec++ )  {
+		db_getrec( dp, &record, rec );
+top:
+		/* Compare this member to each command arg */
+		for( i = 1; i < numargs; i++ )  {
+			if( strcmp( cmd_args[i], record.M.m_instname ) != 0 )
+				continue;
+			(void)printf("deleting member %s\n", cmd_args[i] );
+			num_deleted++;
+
+			/* If deleting last member, just truncate */
+			if( rec == dp->d_len-1 ) {
+				db_trunc(dp, 1);
+				continue;
+			}
+
+			db_getrec( dp, &record, dp->d_len-1 );	/* last one */
+			db_putrec( dp, &record, rec );		/* xch */
+			db_trunc( dp, 1 );
+			goto top;
+		}
+	}
+	/* go back and undate the header record */
+	if( num_deleted ) {
+		db_getrec(dp, &record, 0);
+		record.c.c_length -= num_deleted;
+		db_putrec(dp, &record, 0);
+	}
+}
