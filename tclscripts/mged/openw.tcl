@@ -511,11 +511,13 @@ menu .$id.menubar.file.pref.default_wireframe_color -tearoff $do_tearoffs
 	-command "chooseDefaultWireframeColor $id"
 
 menu .$id.menubar.edit -tearoff $do_tearoffs
-.$id.menubar.edit add command -label "Solid..." -underline 0 \
+.$id.menubar.edit add command -label "Solid Selection..." -underline 0 \
 	-command "winset \$mged_active_dm($id); build_edit_menu_all s"
-.$id.menubar.edit add command -label "Matrix..." -underline 0 \
+.$id.menubar.edit add command -label "Matrix Selection..." -underline 0 \
 	-command "winset \$mged_active_dm($id); build_edit_menu_all o"
-.$id.menubar.edit add command -label "Combination..." -underline 0 \
+.$id.menubar.edit add command -label "Solid Editor..." -underline 6 \
+	-command "init_edit_solid $id"
+.$id.menubar.edit add command -label "Combination Editor..." -underline 0 \
 	-command "init_comb $id"
 
 menu .$id.menubar.create -tearoff $do_tearoffs
@@ -523,6 +525,10 @@ menu .$id.menubar.create -tearoff $do_tearoffs
 	-label "Solid" -underline 0 -menu .$id.menubar.create.solid
 .$id.menubar.create add command\
 	-label "Instance Creation Panel..." -underline 0 -command "icreate $id"
+.$id.menubar.create add command -label "Solid Editor..." -underline 6 \
+	-command "init_edit_solid $id"
+.$id.menubar.create add command -label "Combination Editor..." -underline 0 \
+	-command "init_comb $id"
 
 menu .$id.menubar.create.solid -tearoff $do_tearoffs
 .$id.menubar.create.solid add command\
@@ -916,11 +922,13 @@ menu .$id.menubar.tools -tearoff $do_tearoffs
 .$id.menubar.tools add command -label "Query Ray Control Panel..." -underline 0\
 	-command "init_qray_control $id"
 .$id.menubar.tools add separator
-.$id.menubar.tools add command -label "Combination Edit Tool..." -underline 0\
+.$id.menubar.tools add command -label "Solid Editor..." -underline 0\
+	-command "init_edit_solid $id"
+.$id.menubar.tools add command -label "Combination Editor..." -underline 0\
 	-command "init_comb $id"
-.$id.menubar.tools add command -label "Color Edit Tool..." -underline 1\
+.$id.menubar.tools add command -label "Color Editor..." -underline 1\
 	-command "cadColorWidget tool .$id colorEditTool\
-	-title \"Color Edit Tool\"\
+	-title \"Color Editor\"\
 	-initialcolor black"
 .$id.menubar.tools add separator
 .$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
