@@ -48,14 +48,14 @@
 	do_subfigs.o
 
 iges-g:	I_G_OBJ LIBRT_DEP LIBWDB_DEP LIBBN_DEP LIBBU_DEP
-	sh ../newvers.sh version "IGES-to-BRLCAD Translator"
+	newvers.sh version "IGES-to-BRLCAD Translator"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS -o iges-g I_G_OBJ vers.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 #define G_I_OBJ g-iges.o iges.o
 
 g-iges: G_I_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP
-	sh ../newvers.sh version "BRLCAD-to-IGES Translator"
+	newvers.sh version "BRLCAD-to-IGES Translator"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS -o g-iges G_I_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
