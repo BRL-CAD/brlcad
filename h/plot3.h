@@ -128,7 +128,7 @@ PL_EXTERN(void PL_FORTRAN(f2list, F2LIST), (FILE **fpp, float *x, float *y,
 PL_EXTERN(void tp_3list, (FILE *fp, double *x, double *y, double *z,
 			int npoints));
 PL_EXTERN(void PL_FORTRAN(f3list, F3LIST), (FILE **fpp, float *x, float *y,
-			float *z, int n));
+			float *z, int *n));
 PL_EXTERN(void tp_2mlist, (FILE *fp, double *x, double *y, int npoints,
 			int flag, int mark, int interval, double size));
 PL_EXTERN(void PL_FORTRAN(f2mlst, F2MLST), (FILE **fp, float *x, float *y,
