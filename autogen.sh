@@ -150,17 +150,14 @@ fi
 # make sure certain generated files do not exist #
 ##################################################
 
-if test -f config.guess ; then
-  mv -f config.guess config.guess.backup
+if test -f misc/config.guess ; then
+  mv -f misc/config.guess misc/config.guess.backup
 fi
-if test -f config.sub ; then
-  mv -f config.sub config.sub.backup
+if test -f misc/config.sub ; then
+  mv -f misc/config.sub misc/config.sub.backup
 fi
-if test -f ltmain.sh ; then
-  mv -f ltmain.sh ltmain.sh.backup
-fi
-if test -f libtool ; then
-  mv -f libtool libtaol.backup
+if test -f misc/ltmain.sh ; then
+  mv -f misc/ltmain.sh misc/ltmain.sh.backup
 fi
 
 
