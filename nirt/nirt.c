@@ -104,17 +104,15 @@ struct application	ap;
 
 
 int need_prep = 1;
-int attrib_use;
-int attrib_cnt;
-char **attrib;
+attr_table a_tab;
 
 void
 attrib_print(void)
 {
     int i;
 
-    for (i=0 ; i < attrib_use ; i++) {
-	bu_log("\"%s\"\n", attrib[i]);
+    for (i=0 ; i < a_tab.attrib_use ; i++) {
+	bu_log("\"%s\"\n", a_tab.attrib[i]);
     }
 
 }
@@ -125,9 +123,9 @@ attrib_flush()
     int i;
     /* flush the list of desired attributs */
 
-    attrib_use = 0;
-    for (i=0 ; i < attrib_use; i++ )
-	bu_free(attrib[i], "strdup");
+    a_tab.attrib_use = 0;
+    for (i=0 ; i < a_tab.attrib_use; i++ )
+	bu_free(a_tab.attrib[i], "strdup");
 
     return;
 }
@@ -146,16 +144,17 @@ attrib_add(char *a)
     while (p) {
 
 	/* make sure we have space */
-	if (!attrib || attrib_use >= (attrib_cnt-1)) {
-	    attrib_cnt += 16;
-	    attrib = bu_realloc(attrib, attrib_cnt * sizeof(char *),
-				"attrib_tab");
+	if (!a_tab.attrib || a_tab.attrib_use >= (a_tab.attrib_cnt-1)) {
+	    a_tab.attrib_cnt += 16;
+	    a_tab.attrib = bu_realloc(a_tab.attrib, 
+				      a_tab.attrib_cnt * sizeof(char *),
+				      "attrib_tab");
 	}
 
 	/* add the attribute name(s) */
-    	attrib[attrib_use] = bu_strdup(p);
+    	a_tab.attrib[a_tab.attrib_use] = bu_strdup(p);
 	/* bu_log("attrib[%d]=\"%s\"\n", attrib_use, attrib[attrib_use]); */
-	attrib[++attrib_use] = (char *)NULL;
+	a_tab.attrib[++a_tab.attrib_use] = (char *)NULL;
 
 	p = strtok((char *)NULL, "\t ");
 	need_prep = 1;
@@ -504,7 +503,7 @@ char **argv;
     ap.a_rt_i = rtip;         /* rt_i pointer                        */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h      */
     ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h      */
-    ap.a_uptr = (genptr_t)attrib;
+    ap.a_uptr = (genptr_t)a_tab.attrib;
 
     rt_prep( rtip );
 
@@ -611,7 +610,7 @@ int		nm_objects;
 	prev_names = object_name;
 	prev_nm = nm_objects;
     }
-    if (rt_gettrees_and_attrs(rtip, (const char **)attrib, nm_objects, (const char **) object_name, 1))
+    if (rt_gettrees_and_attrs(rtip, (const char **)a_tab.attrib, nm_objects, (const char **) object_name, 1))
     {
 	fflush(stdout);
 	fprintf(stderr, "rt_gettrees() failed\n");

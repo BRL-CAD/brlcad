@@ -78,10 +78,15 @@ struct VarTable
 	vect_t  grid;
 };
 
-extern struct rt_i		*rtip;
-extern int		attrib_use;
-extern int		attrib_cnt;
-extern char		**attrib;
+typedef struct attributes {
+    int	attrib_use;
+    int	attrib_cnt;
+    char **attrib;
+} attr_table;
+
+extern attr_table a_tab;
+
+extern struct rt_i	*rtip;
 extern void		attrib_add(char *a);
 extern void 		attrib_print(void);
 extern void 		attrib_flush(void);
@@ -114,5 +119,5 @@ extern void		dir2ae();
 extern void		set_diameter();
 extern void		report();
 extern int		check_conv_spec();
-extern void                   do_rt_gettrees();
-extern int need_prep;
+extern void             do_rt_gettrees();
+extern int		need_prep;

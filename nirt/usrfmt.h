@@ -48,12 +48,10 @@ extern FILE	*fopenrc();
 #define		OIT_FLOAT	1
 #define		OIT_FNOUNIT	2	/* Local units don't apply */
 #define		OIT_STRING	3
-#define		OIT_ATTRIB	4
 #define		oit_name(t)	(((t)==OIT_INT) ? "int" :\
 				 ((t)==OIT_FLOAT) ? "float" :\
 				 ((t)==OIT_FNOUNIT) ? "float" :\
-				 ((t)==OIT_STRING) ? "string" : \
-				 ((t)==OIT_ATTRIB) ? "attrib" : "unknown")
+				 ((t)==OIT_STRING) ? "string" : "unknown")
 
 /* Codes for output-statement types */
 #define		FMT_RAY 	0

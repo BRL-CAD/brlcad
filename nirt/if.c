@@ -46,16 +46,9 @@ struct seg		*finished_segs;
     struct bu_vls	claimant_list;	/* Names of the claiming regions */
     int			need_to_free = 0;	/* Clean up the bu_vls? */
     fastf_t		get_obliq();
-
-#if 0
-    avs = (struct bu_attribute_value_set *)ap->a_uptr;
-int
-db5_get_attributes( ap->a_rt_i->rti_dbip
-		    avs,
-		    part->pt_inseg->seg_stp->stp_dp
-		    part->pt_regionp
-		    const struct directory *dp )
-#endif
+    struct bu_vls       *vls;
+    struct bu_vls       attr_vls;
+    struct bu_mro **attr_values;
 
     report(FMT_RAY);
     report(FMT_HEAD);
@@ -167,8 +160,21 @@ db5_get_attributes( ap->a_rt_i->rti_dbip
 	    need_to_free = 1;
 	}
 
-	ValTab[VTI_ATTRIBUTES].value.sval = (char *)part->pt_regionp;
+	/* format up the attribute strings into a single string */
+	bu_vls_init(&attr_vls);
+	attr_values = part->pt_regionp->attr_values;
+	for (i=0 ; i < a_tab.attrib_use ; i++) {
 
+	    BU_CK_MRO(attr_values[i]);
+	    vls = &attr_values[i]->string_rep;
+
+	    if (bu_vls_strlen(vls) > 0) {
+		/* XXX only print attributes that actually were set */
+		bu_vls_printf(&attr_vls, "%s=%S ", a_tab.attrib[i], vls);
+	    }
+	}
+
+	ValTab[VTI_ATTRIBUTES].value.sval = bu_vls_addr(&attr_vls);
 
 	/* Do the printing for this partition */
 	report(FMT_PART);
@@ -216,6 +222,10 @@ db5_get_attributes( ap->a_rt_i->rti_dbip
     	    ovp = ovp->forw;
     	}
     }
+
+    bu_vls_free(&attr_vls);
+
+
     return( HIT );
 }
 
