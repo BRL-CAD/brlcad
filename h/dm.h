@@ -3,6 +3,17 @@
 
 #define DM_NULL (struct dm *)NULL
 
+/*
+ * Display coordinate conversion:
+ *  GED is using -2048..+2048,
+ *  X is 0..width,0..height
+ */
+#define DIVBY4096(x) (((double)(x))*0.0002441406)
+#define	GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
+#define	GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->dm_height))
+#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * 4095))
+#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * 4095))
+
 #if IR_KNOBS
 #define NOISE 16		/* Size of dead spot on knob */
 #endif
@@ -97,6 +108,12 @@
 #define LIGHT_ON	1
 #define LIGHT_RESET	2		/* all lights out */
 
+
+struct dm_vars {
+  genptr_t pub_vars;
+  genptr_t priv_vars;
+};
+
 /* Interface to a specific Display Manager */
 struct dm {
   int (*dm_close)();
@@ -130,7 +147,7 @@ struct dm {
   int dm_lineStyle;
   fastf_t dm_aspect;
   fastf_t *dm_vp;		/* XXX--ogl still depends on this--Viewscale pointer */
-  genptr_t dm_vars;		/* pointer to display manager dependant variables */
+  struct dm_vars dm_vars;	/* display manager dependant variables */
   struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
   struct bu_vls dm_tkName;	/* short Tcl/Tk name of drawing window */
   struct bu_vls dm_dName;	/* Display name */
@@ -146,7 +163,7 @@ struct dm {
      _dmp->dm_drawString2D(_dmp,_str,_x,_y,_size,_use_aspect)
 #define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2) _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
 #define DM_DRAW_POINT_2D(_dmp,_x,_y) _dmp->dm_drawPoint2D(_dmp,_x,_y)
-#define DM_DRAW_VLIST(_dmp,_vlist) _dmp->dm_drawVList(_dmp,_vlist)
+#define DM_DRAW_VLIST(_dmp,_vlist,_persp) _dmp->dm_drawVList(_dmp,_vlist,_persp)
 #define DM_SET_COLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setColor(_dmp,_r,_g,_b,_strict)
 #define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
 #define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
@@ -158,8 +175,10 @@ struct dm {
 
 extern int dm_tclInit();
 extern struct dm *dm_open();
-extern fastf_t dm_X2Normal();
-extern fastf_t dm_Y2Normal();
+extern fastf_t dm_Xx2Normal();
+extern int dm_Normal2Xx();
+extern fastf_t dm_Xy2Normal();
+extern int dm_Normal2Xy();
 extern int dm_processOptions();
 extern int dm_limit();
 extern int dm_unlimit();
