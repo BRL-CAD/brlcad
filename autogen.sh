@@ -9,8 +9,10 @@ MINOR_VERSION=50
 
 # environment check
 ###
-which sed > /dev/null 2>&1
-[ $? = 0 ] && HAVE_SED=yes || HAVE_SED=no
+_have_sed="`echo no | sed 's/no/yes/'`"
+if [ $? = 0 ] ; then
+  [ "x$_have_sed" = "xyes" ] && HAVE_SED=yes || HAVE_SED=no
+fi
 
 # version check
 ###
@@ -37,9 +39,9 @@ else
 	echo "Warning:  sed is not available to properly detect version of GNU Autotools"
     fi
     echo
-    echo "ERROR:  To prepare the BRL-CAD build system from scratch,"
 fi
 if [ "x$_report_error" = "xyes" ] ; then
+    echo "ERROR:  To prepare the BRL-CAD build system from scratch,"
     echo "        At least version $MAJOR_VERSION.$MINOR_VERSION of the GNU Autotools must be installed."
     echo 
     echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
