@@ -27,7 +27,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <varargs.h>
 
 #ifdef BSD
-#include <syslog.h>
+# ifndef CRAY2
+#	include <syslog.h>
+# endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>		/* For htonl(), etc */
@@ -97,14 +99,17 @@ int argc; char **argv;
 #endif
 
 #ifdef BSD
-#ifdef LOG_DAEMON
+# ifndef CRAY2
+#   ifdef LOG_DAEMON
 	openlog( "rfbd", LOG_PID|LOG_NOWAIT, LOG_DAEMON );	/* 4.3 style */
-#else
+#   else
 	openlog( "rfbd", LOG_PID );				/* 4.2 style */
-#endif
+#   endif
+# endif
 	if( setsockopt( netfd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
-		openlog( argv[0], LOG_PID, 0 );
+#		ifndef CRAY2
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
+#		endif
 	}
 #endif
 #if BSD >= 43
@@ -136,7 +141,7 @@ static void
 comm_error( str )
 char *str;
 {
-#ifdef BSD
+#if defined(BSD) && !defined(CRAY2)
 	syslog( LOG_ERR, str );
 #else
 	fprintf( stderr, "%s\n", str );
