@@ -30,6 +30,7 @@ static char RCSebm[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "./debug.h"
 #include "./fixpt.h"
 
