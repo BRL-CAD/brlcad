@@ -9,10 +9,13 @@
 #  Now, the whole "/usr/brlcad/" tree can be re-vectored anywhere you want,
 #  while preserving the tree structure below there.
 #
+#  Once this script is run, the "master" definition of BASEDIR is
+#  kept in "setup.sh".
+#  XXX It would be smarter to put it in machinetype.sh
+#
 #  $Header$
 
-eval `grep "^BINDIR=" setup.sh`		# sets BINDIR
-BASEDIR=`echo $BINDIR | sed -e 's/.bin$//'`
+eval `grep "^BASEDIR=" setup.sh`		# sets BASEDIR
 
 echo "Current BASEDIR is $BASEDIR"
 echo
@@ -25,7 +28,7 @@ fi
 NEW="$1"
 
 if test ! -d $NEW
-then	echo "Ahem, $NEW is not an existing directory"
+then	echo "Ahem, $NEW is not an existing directory.  Aborting."
 	exit 1
 fi
 
@@ -33,10 +36,10 @@ echo
 echo "BASEDIR was $BASEDIR, will be $NEW"
 echo
 
-#  Replace one path with another.
+#  Replace one path with another, in all the files that matter.
 
 for i in \
-	Cakefile.defs setup.sh gen.sh cray.sh \
+	Cakefile.defs setup.sh gen.sh cray.sh machinetype.sh \
 	cake/Makefile cakeaux/Makefile \
 	remrt/remrt.c libfont/vfont.c \
 	fb/cat-fb.c canon/canonserver.c \
@@ -50,4 +53,5 @@ g,$BASEDIR,s,,$NEW,p
 w
 q
 EOF
+	chmod 555 $i
 done
