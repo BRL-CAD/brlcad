@@ -1,12 +1,42 @@
+#!/bin/sh
+#
+# This is the initial brlcad test template
+#
+
+# Source function library
+. `dirname $0`/library
+
+# initialize some variables, if not already set, to expected brlcadish values
+initializeVariable PACKAGE_NAME brlcad
+if [ "x$REGRESS_DIR" = "x" ] ; then
+    if [ -d "$LPWD/../../$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD/../.."
+    elif [ -d "$LPWD/../$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD/.."
+    elif [ -d "$LPWD/$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD"
+    else
+        bomb "Unable to locate $PACKAGE_NAME"
+    fi
+fi
+__ARCH="$ARCH"
+initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
+initializeVariable ARCH "$__ARCH"
+initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
+
+
+start ( ) {
+    
+
 TEST="geometry"
 PRIMITIVES="tor arb arbn arg bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc torus vol xxx"
 VER="4 5"
 
 for PRIM in $PRIMITIVES ; do
 
-    echo ""
-    echo "Evaluating $PRIM"
-    echo "===================="
+    log ""
+    log "Evaluating $PRIM"
+    log "===================="
 
     rm -f ${GEOMETRY}.*
 
@@ -379,6 +409,38 @@ done
 # end loop over primitives
 
 
+    return 0
+}
 
-exit
+stop ( ) {
+    bomb "stop unimplemented"
+    return 0
+}
+
+status ( ) {
+    bomb "status unimplemented"
+    return 0
+}
+
+
+case "$1" in
+    start )
+        start
+        ;;
+    stop )
+        stop
+        ;;
+    restart )
+        stop
+        start
+        ;;
+    status )
+        status
+        ;;
+    * )
+        log "Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
+
+exit $?
 
