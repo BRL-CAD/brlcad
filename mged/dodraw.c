@@ -87,6 +87,20 @@ struct db_tree_state	mged_initial_tree_state = {
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0},
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
+#if __STDC__
+	{
+#endif
+		/* attribute value set */
+		BU_AVS_MAGIC,
+		0,
+		0,
+		NULL,
+		NULL,
+		NULL
+#if __STDC__
+	}
+#endif
+	,
 	0,				/* ts_stop_at_regions */
 	NULL,				/* ts_region_start_func */
 	NULL,				/* ts_region_end_func */
