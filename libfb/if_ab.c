@@ -708,7 +708,10 @@ int	to_network;
 	int			got;
 
 	if( !to_network )  {
-		sprintf( xmit_buf, "%s%d.yuv", host, frame );
+		if( frame >= 0 )
+			sprintf( xmit_buf, "%s%d.yuv", host, frame );
+		else
+			sprintf( xmit_buf, "%s.yuv", host);
 		if( output )
 			netfd = creat( xmit_buf, 0444 );
 		else
