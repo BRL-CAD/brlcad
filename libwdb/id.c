@@ -52,7 +52,7 @@ CONST char	*title;
  *			M K _ I D _ U N I T S
  *
  *  Make a database header (ID) record, and note the
- *  user's preferred editing units.
+ *  user's preferred editing units (specified as a string).
  *
  *  Returns -
  *	<0	error
@@ -81,4 +81,33 @@ register CONST char	*units;
 	return(0);
 }
 
-/* Should there be a routine which takes a local2mm arg as well? */
+/*
+ *			M K _ I D _ E D I T U N I T S
+ *
+ *  Make a database header (ID) record, and note the
+ *  user's preferred editing units (specified as a conversion factor).
+ *
+ *  Note that the v4 database format offers only a limited number
+ *  of choices for the preferred editing units.
+ *  If the user is editing in unusual units (like 2.5feet), don't
+ *  fail to create the database header.
+ *
+ *  In the v5 database, the conversion factor should be stored intact.
+ *
+ *  Returns -
+ *	<0	error
+ *	0	success
+ */
+int
+mk_id_editunits( fp, title, local2mm )
+FILE		*fp;
+CONST char	*title;
+double		local2mm;
+{
+	CONST char *str = bu_units_string(local2mm);
+
+	/* If user is in whacko units (like 2.5feet), don't fail */
+	if(!str)  str = "mm";
+
+	return mk_id_units( fp, title, str );
+}
