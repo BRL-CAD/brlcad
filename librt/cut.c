@@ -2319,7 +2319,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 }
 
 void
-remove_from_bsp( struct soltab *stp, union cutter *cutp )
+remove_from_bsp( struct soltab *stp, union cutter *cutp, struct bn_tol *tol )
 {
 	int index;
 	int i;
@@ -2327,15 +2327,46 @@ remove_from_bsp( struct soltab *stp, union cutter *cutp )
 	switch( cutp->cut_type ) {
 	case CUT_BOXNODE:
 		if( stp->st_npieces ) {
+			int remove_count, new_count;
+			struct rt_piecelist *new_piece_list;
+
+			index = 0;
+			remove_count = 0;
 			for( index=0 ; index<cutp->bn.bn_piecelen ; index++ ) {
 				if( cutp->bn.bn_piecelist[index].stp == stp ) {
-					/* found it, now remove it */
-					cutp->bn.bn_piecelen--;
-					for( i=index ; i<cutp->bn.bn_piecelen ; i++ ) {
-						cutp->bn.bn_piecelist[i] = cutp->bn.bn_piecelist[i+1];	/* struct copy */
-					}
-					return;
+					remove_count++;
 				}
+			}
+
+			if( remove_count ) {
+				new_count = cutp->bn.bn_piecelen - remove_count;
+				if( new_count > 0 ) {
+					new_piece_list = (struct rt_piecelist *)bu_calloc(
+								    new_count,
+								    sizeof( struct rt_piecelist ),
+								    "bn_piecelist" );
+				
+					i = 0;
+					for( index=0 ; index<cutp->bn.bn_piecelen ; index++ ) {
+						if( cutp->bn.bn_piecelist[index].stp != stp ) {
+							new_piece_list[i] = cutp->bn.bn_piecelist[index];
+							i++;
+						}
+					}
+				} else {
+					new_count = 0;
+					new_piece_list = NULL;
+				}
+
+				for( index=0 ; index<cutp->bn.bn_piecelen ; index++ ) {
+					if( cutp->bn.bn_piecelist[index].stp == stp ) {
+						bu_free( cutp->bn.bn_piecelist[index].pieces, "pieces" );
+					}
+				}
+				bu_free( cutp->bn.bn_piecelist, "piecelist" );
+				cutp->bn.bn_piecelist = new_piece_list;
+				cutp->bn.bn_piecelen = new_count;
+				cutp->bn.bn_maxpiecelen = new_count;
 			}
 		} else {
 			for( index=0 ; index < cutp->bn.bn_len ; index++ ) {
@@ -2351,13 +2382,13 @@ remove_from_bsp( struct soltab *stp, union cutter *cutp )
 		}
 		break;
 	case CUT_CUTNODE:
-		if( stp->st_min[cutp->cn.cn_axis] >= cutp->cn.cn_point ) {
-			remove_from_bsp( stp, cutp->cn.cn_r );
-		} else if( stp->st_max[cutp->cn.cn_axis] < cutp->cn.cn_point ) {
-			remove_from_bsp( stp, cutp->cn.cn_l );
+		if( stp->st_min[cutp->cn.cn_axis] > cutp->cn.cn_point + tol->dist ) {
+			remove_from_bsp( stp, cutp->cn.cn_r, tol );
+		} else if( stp->st_max[cutp->cn.cn_axis] < cutp->cn.cn_point - tol->dist ) {
+			remove_from_bsp( stp, cutp->cn.cn_l, tol );
 		} else {
-			remove_from_bsp( stp, cutp->cn.cn_r );
-			remove_from_bsp( stp, cutp->cn.cn_l );
+			remove_from_bsp( stp, cutp->cn.cn_r, tol );
+			remove_from_bsp( stp, cutp->cn.cn_l, tol );
 		}
 		break;
 	default:
@@ -2369,30 +2400,12 @@ remove_from_bsp( struct soltab *stp, union cutter *cutp )
 #define PIECE_BLOCK 512
 
 void
-insert_in_bsp( struct soltab *stp, union cutter *cutp, struct resource *resp, fastf_t bb[6] )
+insert_in_bsp( struct soltab *stp, union cutter *cutp )
 {
 	int i,j;
 
 	switch( cutp->cut_type ) {
 	case CUT_BOXNODE:
-		/* if this solid is bigger than the boxnode and we are at the edge of the model bb
-		 * we must enlarge this boxnode and the model RPP
-		 */
-		for( i=0 ; i<3 ; i++ ) {
-			if( bb[i] >= INFINITY && stp->st_min[i] < cutp->bn.bn_min[i] ) {
-				cutp->bn.bn_min[i] = stp->st_min[i];
-				if( stp->st_min[i] < stp->st_rtip->mdl_min[i] ) {
-					stp->st_rtip->mdl_min[i] = stp->st_min[i];
-				}
-			}
-			if( bb[i+3] <= -INFINITY && stp->st_max[i] > cutp->bn.bn_max[i] ) {
-				cutp->bn.bn_max[i] = stp->st_max[i];
-				if( stp->st_max[i] > stp->st_rtip->mdl_max[i] ) {
-					stp->st_rtip->mdl_max[i] = stp->st_max[i];
-				}
-			}
-		}
-
 		if( stp->st_npieces == 0 ) {
 			/* add the solid in this box */
 			if( cutp->bn.bn_len >= cutp->bn.bn_maxlen ) {
@@ -2468,20 +2481,12 @@ insert_in_bsp( struct soltab *stp, union cutter *cutp, struct resource *resp, fa
 		break;
 	case CUT_CUTNODE:
 		if( stp->st_min[cutp->cn.cn_axis] >= cutp->cn.cn_point ) {
-			bb[cutp->cn.cn_axis] = cutp->cn.cn_point;
-			insert_in_bsp( stp, cutp->cn.cn_r, resp, bb );
+			insert_in_bsp( stp, cutp->cn.cn_r );
 		} else if( stp->st_max[cutp->cn.cn_axis] < cutp->cn.cn_point ) {
-			bb[cutp->cn.cn_axis + 3] = cutp->cn.cn_point;
-			insert_in_bsp( stp, cutp->cn.cn_l, resp, bb );
+			insert_in_bsp( stp, cutp->cn.cn_l );
 		} else {
-			fastf_t bb2[6];
-
-			VMOVE( bb2, bb );
-			VMOVE( &bb2[3], &bb[3] );
-			bb[cutp->cn.cn_axis] = cutp->cn.cn_point;
-			insert_in_bsp( stp, cutp->cn.cn_r, resp, bb );
-			bb2[cutp->cn.cn_axis + 3] = cutp->cn.cn_point;
-			insert_in_bsp( stp, cutp->cn.cn_l, resp, bb2 );
+			insert_in_bsp( stp, cutp->cn.cn_r );
+			insert_in_bsp( stp, cutp->cn.cn_l );
 		}
 		break;
 	default:
