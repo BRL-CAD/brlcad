@@ -1109,6 +1109,8 @@ rt_log("lu1=%s lu2=%s\n", nmg_orientation(lu1->orientation), nmg_orientation(lu2
 		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
 		/* Make the two new edgeuses share just one edge */
 		nmg_moveeu( second_new_eu, first_new_eu );
+	} else {
+		second_new_eu = RT_LIST_NEXT( edgeuse, &eu1->l );
 	}
 
 	/*
@@ -1117,7 +1119,6 @@ rt_log("lu1=%s lu2=%s\n", nmg_orientation(lu1->orientation), nmg_orientation(lu2
 	 *  The final edge from loop 2 will then be followed by
 	 *  second_new_eu.
 	 */
-	/* Same orientation */
 	final_eu2 = RT_LIST_PLAST_CIRC(edgeuse, eu2 );
 	while( RT_LIST_NON_EMPTY( &lu2->down_hd ) )  {
 		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, final_eu2);
