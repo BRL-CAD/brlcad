@@ -2587,6 +2587,12 @@ top:
 	return count;
 }
 
+/* jaunt status flags used in the jaunt_status array */
+#define		JS_UNKNOWN		0
+#define		JS_SPLIT		1
+#define		JS_JAUNT		2
+#define		JS_TOUCHING_JAUNT	3
+
 /*	N M G _ G E T _ T O U C H I N G _ J A U N T S
  *
  * Create a table of EU's. Each EU will be the first EU in 
@@ -2649,13 +2655,33 @@ int *need_init;
 	return( count );
 }
 
+/*	N M G _ C H E C K _ P R O P O S E D _ L O O P
+ *
+ * Support routine for nmg_loop_split_at_touching_jaunt().
+ *
+ * Follow the edgeuses in a proposed loop (that may later be created by nmg_split_lu_at_vu)
+ * and predict the status of the jaunts in "jaunt_tbl". The jaunt_status array must be
+ * initialized before this routine is called and this routine should be called twice
+ * to account for both loops that will result from the application of nmg_split_lu_at_vu().
+ *
+ * input:
+ *	start_eu - edgeuse that will be first in the proposed new loop
+ *	jaunt_tbl - list of touching jaunts whose status in the resulting loops is desired.
+ *	jaunt_no - which entry in the jaunt_tbl is being considered as a split location
+ *	visit_count - array for counting the number of times a jaunt gets visited in the new loop
+ *		This array just provides working space for the routine.
+ *
+ * output:
+ *	jaunt_status - status of each touching jaunt that appears in the jaunt_tbl
+ *	next_start_eu - edgeuse that will be first in the next loop
+ */
+
 static void
-nmg_check_proposed_loop( lu, start_eu, next_start_eu, visit_count, include_or_split, jaunt_tbl, jaunt_no )
-CONST struct loopuse *lu;
+nmg_check_proposed_loop( start_eu, next_start_eu, visit_count, jaunt_status, jaunt_tbl, jaunt_no )
 struct edgeuse *start_eu;
 struct edgeuse **next_start_eu;
 int visit_count[];
-int include_or_split[];
+int jaunt_status[];
 CONST struct nmg_ptbl *jaunt_tbl;
 CONST int jaunt_no;
 {
@@ -2663,7 +2689,6 @@ CONST int jaunt_no;
 	struct edgeuse *last_eu;
 	int j;
 
-	NMG_CK_LOOPUSE( lu );
 	NMG_CK_EDGEUSE( start_eu );
 	NMG_CK_PTBL( jaunt_tbl );
 
@@ -2671,7 +2696,7 @@ CONST int jaunt_no;
 	for( j=0 ; j< NMG_TBL_END( jaunt_tbl ) ; j++ )
 		visit_count[j] = 0;
 
-	/* walk through the proposed new loop, updating the visit_count */
+	/* walk through the proposed new loop, updating the visit_count and the jaunt status */
 	last_eu = NULL;
 	loop_eu = start_eu;
 	do
@@ -2687,8 +2712,9 @@ CONST int jaunt_no;
 			jaunt_eu = (struct edgeuse *)NMG_TBL_GET( jaunt_tbl, j );
 			NMG_CK_EDGEUSE( jaunt_eu );
 
-			if( last_eu && last_eu == jaunt_eu && !include_or_split[j] )
-				include_or_split[j] = (-1);
+			/* if jaunt number j is included in this loop, update its status */
+			if( last_eu && last_eu == jaunt_eu && jaunt_status[j] != JS_TOUCHING_JAUNT )
+				jaunt_status[j] = JS_JAUNT;
 
 			/* if this loop_eu has its vertex at the apex of one of
 			 * the touching jaunts, increment the appropriate visit_count.
@@ -2701,19 +2727,19 @@ CONST int jaunt_no;
 	} while( loop_eu->vu_p->v_p != start_eu->vu_p->v_p );
 	*next_start_eu = loop_eu;
 
+
+	/* check all jaunts to see if they are still touching jaunts in the proposed loop */
 	for( j=0 ; j<NMG_TBL_END( jaunt_tbl ) ; j++ )
 	{
-		if( include_or_split[j] == (-1) )
+		if( jaunt_status[j] == JS_JAUNT ) /* proposed loop contains this jaunt */
 		{
-			if( visit_count[j] > 1 )
-				include_or_split[j] = 1;
-			else
-				include_or_split[j] = 0;
+			if( visit_count[j] > 1 )	/* it's still a touching jaunt */
+				jaunt_status[j] = JS_TOUCHING_JAUNT;
 		}
 	}
 
 	/* if the first or last eu in the proposed loop is a jaunt eu, the proposed
-	 * loop will split the jaunt, so set its visit_count to 0.
+	 * loop will split the jaunt, so set its status to JS_SPLIT.
 	 */
 	for( j=0 ; j<NMG_TBL_END( jaunt_tbl ) ; j++ )
 	{
@@ -2724,10 +2750,7 @@ CONST int jaunt_no;
 		jaunt_eu2 = RT_LIST_PNEXT_CIRC( edgeuse, &jaunt_eu->l );
 
 		if( last_eu == jaunt_eu || start_eu == jaunt_eu2 )
-		{
-			visit_count[j] = 0;
-			include_or_split[j] = 1;
-		}
+			jaunt_status[j] = JS_SPLIT;
 	}
 
 	return;
@@ -2760,7 +2783,7 @@ CONST struct rt_tol	*tol;
 	int			jaunt_no;
 	int			need_init=1;
 	int			*visit_count;
-	int			*include_or_split;
+	int			*jaunt_status;
 	int			i,j;
 
 	NMG_CK_LOOPUSE(lu);
@@ -2771,7 +2794,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	visit_count = (int *)NULL;
-	include_or_split = (int *)NULL;
+	jaunt_status = (int *)NULL;
 
 top:
 	jaunt_count = nmg_get_touching_jaunts( lu, &jaunt_tbl, &need_init );
@@ -2786,8 +2809,8 @@ top:
 	{
 		if( visit_count )
 			rt_free( (char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n" );
-		if( include_or_split )
-			rt_free( (char *)include_or_split, "nmg_loop_split_at_touching_jaunt: include_or_split[]\n" );
+		if( jaunt_status )
+			rt_free( (char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n" );
 		if( !need_init )
 			nmg_tbl( &jaunt_tbl, TBL_FREE, (long *)NULL );
 
@@ -2816,8 +2839,8 @@ top:
 		nmg_tbl( &jaunt_tbl, TBL_FREE, (long *)NULL );
 		if( visit_count )
 			rt_free( (char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n" );
-		if( include_or_split )
-			rt_free( (char *)include_or_split, "nmg_loop_split_at_touching_jaunt: include_or_split[]\n" );
+		if( jaunt_status )
+			rt_free( (char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n" );
 
 		if (rt_g.NMG_debug & DEBUG_BASIC)  {
 			rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) END count=%d\n",
@@ -2826,61 +2849,74 @@ top:
 		return( count );
 	}
 
-	/* if we get here, there are at least two touching jaunts in the loop
+	/* if we get here, there are at least two touching jaunts in the loop.
 	 * We need to select which order to split them to avoid converting the
-	 * touching jaunt into a crack. To do this, follow the EU's as nmg_split_lu_at_vu()
-	 * would do and count how many times the apex vertex of each touching jaunt is
-	 * encountered. A count of zero means that the new loop is disjoint from
-	 * the touching jaunt. A count of two means that the new loop will have
-	 * the touching jaunt as its own touching jaunt. A count of one means that
-	 * the touching jaunt and the vertex on the loop where it touches are going
-	 * to be seperated if this new loop is created (this will result in a two
-	 * edgeuse crack).
+	 * touching jaunt into a crack. To do this, select one touching jaunt
+	 * as the location for splitting the loop. Follow the EU's as nmg_split_lu_at_vu()
+	 * would do and predict the status of ALL the touching jaunts (not just the one being
+	 * split). Both the new loop and the remains of the current loop must be checked
+	 * to determine the status of all the touching jaunts.
+	 * The original touching jaunts must either remain as touching jaunts in
+	 * one of the two resulting loops, or they must be split between the two
+	 * resulting loops. If any of the touching jaunts are predicted to have a status
+	 * other than split or still touching, then this is a bad choice for splitting
+	 * the loop. For example, a touching jaunt may be converted to a non-touching
+	 * jaunt by applying nmg_split_lu_at_vu() at the wrong vu and will later be
+	 * converted to a two edgeuse loop by nmg_split_touching_loops.
 	 */
 	NMG_CK_PTBL( &jaunt_tbl );
 
 	if( visit_count )
 		rt_free( (char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n" );
-	if( include_or_split )
-		rt_free( (char *)include_or_split, "nmg_loop_split_at_touching_jaunt: include_or_split[]\n" );
+	if( jaunt_status )
+		rt_free( (char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n" );
 
 	visit_count = (int *)rt_calloc( NMG_TBL_END( &jaunt_tbl ), sizeof( int ),
 			"nmg_loop_split_at_touching_jaunt: visit_count[]" );
-	include_or_split = (int *)rt_calloc( NMG_TBL_END( &jaunt_tbl ), sizeof( int ),
-			"nmg_loop_split_at_touching_jaunt: include_or_split[]" );
+	jaunt_status = (int *)rt_calloc( NMG_TBL_END( &jaunt_tbl ), sizeof( int ),
+			"nmg_loop_split_at_touching_jaunt: jaunt_status[]" );
+
+	/* consider each jaunt as a possible location for splitting the loop */
 	for( jaunt_no=0 ; jaunt_no<NMG_TBL_END( &jaunt_tbl ) ; jaunt_no++ )
 	{
-		struct edgeuse *start_eu; /* EU that will start a new loop upon split */
+		struct edgeuse *start_eu;	/* EU that will start a new loop upon split */
 		struct edgeuse *next_start_eu;	/* starting eu for the remaining loop */
-		int do_split=1;
+		int do_split=1;			/* flag: 1 -> this jaunt is a good choice for making the split */
 
+		/* initialize the status of each jaunt to unknown */
 		for( i=0 ; i<NMG_TBL_END( &jaunt_tbl ) ; i++ )
-			include_or_split[i] = 0;
+			jaunt_status[i] = JS_UNKNOWN;
 
-		/* Check this jaunt */
+		/* consider splitting lu at this touching jaunt */
 		eu = (struct edgeuse *)NMG_TBL_GET( &jaunt_tbl, jaunt_no );
 		NMG_CK_EDGEUSE( eu );
 
 		/* get new loop starting edgeuse */
 		start_eu = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
-		nmg_check_proposed_loop( lu, start_eu, &next_start_eu, visit_count,
-			include_or_split, &jaunt_tbl, jaunt_no );
+		/* determine status of jaunts in the proposed new loop */
+		nmg_check_proposed_loop( start_eu, &next_start_eu, visit_count,
+			jaunt_status, &jaunt_tbl, jaunt_no );
 
 		/* Still need to check the loop that will be left if we do a split here */
 		start_eu = next_start_eu;
-		nmg_check_proposed_loop( lu, start_eu, &next_start_eu, visit_count,
-			include_or_split, &jaunt_tbl, jaunt_no );
+		nmg_check_proposed_loop( start_eu, &next_start_eu, visit_count,
+			jaunt_status, &jaunt_tbl, jaunt_no );
 
+		/* check predicted status of all the touching jaunts,
+		 * every one must be either split or still a touching jaunt.
+		 * Any other status will create loops of two edgeuses!!!
+		 */
 		for( i=0 ; i<NMG_TBL_END( &jaunt_tbl ) ; i++ )
 		{
-			if( !include_or_split[i] )
+			if(jaunt_status[i] != JS_SPLIT && jaunt_status[i] != JS_TOUCHING_JAUNT )
 			{
 				do_split = 0;
 				break;
 			}
 		}
 
+		/* if splitting lu at this touching jaunt is not desirable, check the next one */
 		if( !do_split )
 			continue;
 
@@ -2893,10 +2929,14 @@ top:
 		nmg_loop_g(new_lu->l_p, tol);
 		nmg_tbl( &jaunt_tbl, TBL_RST, (long *)NULL );
 
+		/* recurse on the new loop */
 		count += nmg_loop_split_at_touching_jaunt( new_lu, tol );
+
+		/* continue with the remains of the current loop */
 		goto top;
 	}
 
+	/* If we ever get here, we have failed to find a way to split this loop!!!! */
 	rt_log( "nmg_loop_split_at_touching_jaunt: Could not find a way to split lu x%x\n", lu );
 	nmg_pr_lu_briefly( lu, " " );
 	nmg_stash_model_to_file( "jaunt.g", nmg_find_model( &lu->l.magic ), "Can't split lu" );
