@@ -1306,19 +1306,19 @@ char	**argv;
 	  return TCL_OK;
 	}
 
-	if( strcmp(argv[1], "mm") == 0 ) 
+	if( strcmp(argv[1], "mm") == 0 || strcmp(argv[1], "millimeters") == 0 ) 
 		new_unit = ID_MM_UNIT;
 	else
-	if( strcmp(argv[1], "cm") == 0 ) 
+	if( strcmp(argv[1], "cm") == 0 || strcmp(argv[1], "centimeters") == 0) 
 		new_unit = ID_CM_UNIT;
 	else
 	if( strcmp(argv[1],"m")==0 || strcmp(argv[1],"meters")==0 ) 
 		new_unit = ID_M_UNIT;
 	else
-	if( strcmp(argv[1],"in")==0 || strcmp(argv[1],"inches")==0 ) 
+	if( strcmp(argv[1],"in")==0 || strcmp(argv[1],"inches")==0 || strcmp(argv[1],"inch")==0 ) 
 		new_unit = ID_IN_UNIT;
 	else
-	if( strcmp(argv[1],"ft")==0 || strcmp(argv[1],"feet")==0 ) 
+	if( strcmp(argv[1],"ft")==0 || strcmp(argv[1],"feet")==0 || strcmp(argv[1],"foot")==0 ) 
 		new_unit = ID_FT_UNIT;
 
 	if( new_unit ) {
