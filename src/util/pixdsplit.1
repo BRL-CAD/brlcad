@@ -1,0 +1,132 @@
+.\" Set the interparagraph spacing to 1 (default is 0.4)
+.PD 1v
+.\"
+.\" The man page begins...
+.\"
+.TH PIXDSPLIT 1
+.\"
+.SH NAME
+pixdsplit \- disentangle chars from doubles in a
+.IR pixd (5)
+stream
+.\"
+.SH SYNOPSIS
+.BR pixdsplit " [options] [infile]"
+.\"
+.SH DESCRIPTION
+.I Pixdsplit
+separates out interwoven characters and doubles
+from a single input stream.
+It treats the stream as consisting of successive ``pixels'',
+each of which is made up of 
+.I n
+unsigned chars
+followed by 
+.I m
+64-bit doubles,
+and writes the chars to one output stream
+and the doubles to another.
+The pixels are read from
+.I infile
+if it is specified;
+otherwise,
+.I pixdsplit
+reads from the standard input.
+
+.SS Options
+The command-line options and their meanings are:
+.\"
+.TP 12
+.BI -c " charfile"
+Causes
+.I pixdsplit
+to write the chars to the specified file.
+If
+.I charfile
+is the empty string,
+then
+.I pixdsplit
+does not write out the chars.
+Default is ``-'',
+so the chars are written to the standard output.
+.\"
+.TP 12
+.BI -d " doublefile"
+Causes
+.I pixdsplit
+to write the doubles to the specified file.
+If
+.I doublefile
+is the empty string,
+then
+.I pixdsplit
+does not write out the doubles.
+Default is ``'',
+so the doubles are not output.
+.\"
+.TP 12
+.BI -# " n.m"
+Defines a pixel to be made up of
+.I n
+unsigned chars and
+.IR m
+64-bit doubles,
+where
+.IR n " and " m
+are positive integers.
+Either of
+.IR n " and " m
+(but not both)
+may be omitted
+and if
+.I m
+is omitted,
+then the separating period, too, may be omitted.
+The variable for which a value was omitted
+retains its previous value.
+By default,
+.IR n " = 3"
+and
+.IR m " = 1",
+so
+the input stream is assumed to be in
+.IR pixd (5)
+format
+as produced by the
+.I "-d"
+option of
+.IR rt (1).
+.\"
+.SH EXAMPLES
+The command
+
+.nf
+.in +4
+pixdsplit file.pixd | pix-fb
+.in -4
+.fi
+
+extracts the
+.IR pix (5)
+data from
+.I file.pixd,
+sending it for display to
+.IR pix-fb (1),
+while
+
+.nf
+.in +4
+pixdsplit -# 3.2 -c '' -d coords datafile
+.in -4
+.fi
+
+ignores the RGB information in
+.I datafile
+but writes its pairs of doubles to
+.I coords.
+.\%
+.SH SEE ALSO
+.IR rt "(1), " pix "(5), " pixd (5)
+.\%
+.SH AUTHOR
+Paul Tanenbaum

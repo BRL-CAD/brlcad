@@ -1,0 +1,155 @@
+# $Id$
+
+if ONLY_BENCHMARK
+bin_PROGRAMS = \
+	asc2g \
+	asc2pix \
+	g2asc \
+	pix2asc
+else
+bin_PROGRAMS = \
+	asc-nmg \
+	asc2g \
+	asc2pix \
+	bot_shell-vtk \
+	conv-vg2g \
+	cy-g \
+	dbupgrade \
+	dxf-g \
+	enf-g \
+	euclid-g \
+	euclid_format \
+	euclid_unformat \
+	fast4-g \
+	g-acad \
+	g-dxf \
+	g-euclid \
+	g-euclid1 \
+	g-nff \
+	g-nmg \
+	g-shell.rect \
+	g-stl \
+	g-tankill \
+	g-vrml \
+	g-wave \
+	g-x3d \
+	g2asc \
+	nastran-g \
+	nmg-bot \
+	nmg-rib \
+	pix2asc \
+	ply-g \
+	poly-bot \
+	proe-g \
+	stl-g \
+	tankill-g \
+	viewpoint-g
+endif
+
+asc2g_LDADD = @WDB@ @RT@ 
+asc_nmg_LDADD = @WDB@ @RT@ 
+bot_shell_vtk_LDADD = @RT@ @SYSV@ 
+cy_g_LDADD = @WDB@ @RT@ 
+dbupgrade_LDADD = @WDB@ @RT@ 
+dxf_g_LDADD = @WDB@ @RT@ 
+enf_g_LDADD = @WDB@ @RT@ @SYSV@ 
+euclid_format_LDADD = @RT@ 
+euclid_g_LDADD = @WDB@ @RT@ 
+fast4_g_LDADD = @WDB@ @RT@ 
+g2asc_LDADD = @WDB@ @RT@ 
+g_acad_LDADD = @WDB@ @RT@ 
+g_dxf_LDADD = @WDB@ @RT@ 
+g_euclid1_LDADD = @RT@ 
+g_euclid_LDADD = @RT@ 
+g_nff_LDADD = @WDB@ @RT@ 
+g_nmg_LDADD = @WDB@ @RT@ 
+g_shell_rect_LDADD = @WDB@ @RT@ 
+g_stl_LDADD = @WDB@ @RT@ 
+g_tankill_LDADD = @RT@ 
+g_vrml_LDADD = @WDB@ @RT@ 
+g_wave_LDADD = @WDB@ @RT@ 
+g_x3d_LDADD = @WDB@ @RT@ 
+nastran_g_LDADD = @WDB@ @RT@ 
+nmg_bot_LDADD = @WDB@ @RT@ 
+nmg_rib_LDADD = @WDB@ @RT@ 
+ply_g_LDADD = @WDB@ @RT@ @SYSV@ 
+poly_bot_LDADD = @WDB@ @RT@ 
+proe_g_LDADD = @WDB@ @RT@ @SYSV@ 
+stl_g_LDADD = @WDB@ @RT@ @SYSV@ 
+tankill_g_LDADD = @WDB@ @RT@ 
+viewpoint_g_LDADD = @WDB@ @RT@ 
+
+asc2g_SOURCES = asc2g.c 
+asc2pix_SOURCES = asc2pix.c
+asc_nmg_SOURCES = asc-nmg.c 
+bot_shell_vtk_SOURCES = bot_shell-vtk.c 
+conv_vg2g_SOURCES = conv-vg2g.c
+cy_g_SOURCES = cy-g.c 
+dbupgrade_SOURCES = dbupgrade.c 
+dxf_g_SOURCES = dxf-g.c 
+enf_g_SOURCES = enf-g.c 
+euclid_format_SOURCES = euclid_format.c 
+euclid_g_SOURCES = euclid-g.c 
+euclid_unformat_SOURCES = euclid_unformat.c
+fast4_g_SOURCES = fast4-g.c 
+g2asc_SOURCES = g2asc.c 
+g_acad_SOURCES = g-acad.c 
+g_dxf_SOURCES = g-dxf.c 
+g_euclid1_SOURCES = g-euclid1.c 
+g_euclid_SOURCES = g-euclid.c 
+g_nff_SOURCES = g-nff.c 
+g_nmg_SOURCES = g-nmg.c 
+g_shell_rect_SOURCES = g-shell.rect.c 
+g_stl_SOURCES = g-stl.c 
+g_tankill_SOURCES = g-tankill.c 
+g_vrml_SOURCES = g-vrml.c 
+g_wave_SOURCES = g-wave.c 
+g_x3d_SOURCES = g-x3d.c 
+nastran_g_SOURCES = nastran-g.c 
+nmg_bot_SOURCES = nmg-bot.c 
+nmg_rib_SOURCES = nmg-rib.c 
+pix2asc_SOURCES = pix2asc.c
+ply_g_SOURCES = ply-g.c 
+poly_bot_SOURCES = poly-bot.c 
+proe_g_SOURCES = proe-g.c 
+stl_g_SOURCES = stl-g.c 
+tankill_g_SOURCES = tankill-g.c 
+viewpoint_g_SOURCES = viewpoint-g.c 
+
+
+dist_man_MANS = \
+	asc-nmg.1 \
+	bot_shell-vtk.1 \
+	conv-vg2g.1 \
+	cy-g.1 \
+	dbclean.1 \
+	dxf-g.1 \
+	enf-g.1 \
+	euclid-g.1 \
+	fast4-g.1 \
+	g-acad.1 \
+	g-dxf.1 \
+	g-euclid.1 \
+	g-nff.1 \
+	g-nmg.1 \
+	g-shell.rect.1 \
+	g-stl.1 \
+	g-tankill.1 \
+	g-vrml.1 \
+	g-wave.1 \
+	g-x3d.1 \
+	g2asc.1 \
+	nastran-g.1 \
+	nmg-bot.1 \
+	nmg-rib.1 \
+	pix2asc.1 \
+	ply-g.1 \
+	poly-bot.1 \
+	proe-g.1 \
+	stl-g.1 \
+	tankill-g.1 \
+	viewpoint-g.1
+
+EXTRA_DIST = \
+	g-xxx_facets.c \
+	g-xxx.c

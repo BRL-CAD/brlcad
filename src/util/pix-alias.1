@@ -1,0 +1,37 @@
+.TH PIX-ALIAS 1 BRL/CAD
+.SH NAME
+pix\(hyalias \- convert an image from pix format to Alias(tm) pix format
+.SH SYNOPSIS
+.B pix-alias
+.RB [ \-s\  squaresize ]
+.RB [ \-w\  file_width ]
+.RB [ \-n file_height ]
+< BRLpixfile > ALIASpixfile
+.SH DESCRIPTION
+.I pix\(hyalias
+converts the 
+.I brl pix(5)
+format file on the standard input to an 
+.I Alias pix
+format file on the standard output.
+.SH OPTIONS
+.TP
+.BI \-n\  file_height
+tells
+.I pix\(hyalias
+that the input is
+.I file_height
+scanlines tall
+.TP
+.BI \-s\  squaresize
+sets both the width and the height for the input to be
+.I squaresize
+.TP
+.BI \-w\  file_width
+tells
+.I pix\(hyalias
+that the input is
+.I file_width
+pixels wide
+
+
