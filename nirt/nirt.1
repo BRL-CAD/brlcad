@@ -7,7 +7,7 @@
 .SH NAME
 nirt \- interactively ray trace an MGED model
 .SH SYNOPSIS
-.BR "nirt  [ -u " n " ] [ -x " v " ] " "model.g objects ..."
+.BR "nirt  [ -M ] [ -u " n " ] [ -x " v " ] " "model.g objects ..."
 .SH DESCRIPTION
 .I Nirt
 operates on the specified
@@ -18,7 +18,7 @@ using
 .IR librt (3)
 to trace rays according to commands read from the standard input
 and producing an ASCII report of the results.
-The user can interact with
+By default, the user can interact with
 .I nirt,
 repeatedly specifying origination points and directions for rays
 and the format and destination for the reports.
@@ -29,6 +29,19 @@ Similarly, direction may be input and output either as
 vectors expressed in model coordinates or as
 angles of azimuth and elevation.
 
+The
+.B -M
+option causes
+.I nirt
+to read the eye point and the view-rotation matrix from the standard input,
+and fire a single ray from the point in the view direction.
+This option allows
+.I nirt
+to be called directly from within
+.I mged
+using the
+.B rrt
+command.
 The
 .BI -u " n"
 option sets the \fIuseair\fR member
@@ -157,7 +170,7 @@ Default is ``default,'' that is, the standard output.
 .BI "statefile [" f "]"
 Sets the name of the state file to which to dump
 and from which to load state information.
-See the
+See the discussion of the
 .IR dump " and " load
 commands below.
 If this command is invoked with no arguments,
