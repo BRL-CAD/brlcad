@@ -86,8 +86,8 @@ Options:\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o model.ray	Specify output file, ray(5V) format (default=stdout)\n\
- -U #		Set use_air boolean to #\n\
+ -o model.g3	Specify output file, GIFT-3 format (default=stdout)\n\
+ -U #		Set use_air boolean to # (default=1)\n\
  -x #		Set librt debug flags\n\
 ";
 
