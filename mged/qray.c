@@ -34,7 +34,7 @@ static int qray_get_fmt_index();
 
 struct bu_vls qray_basename;
 struct bu_vls qray_script;
-char qray_effects = 't';
+char qray_effects = 'b';
 int qray_cmd_echo = 0;
 struct qray_fmt *qray_fmts;
 static struct qray_color qray_odd_color = { 0, 255, 255 };
