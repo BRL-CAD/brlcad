@@ -60,8 +60,10 @@ int	points;		/* Length of filter kernel wanted */
 	step = pow( (double)window, 1.0/(window-1.0) );
 
 	filter[center] = butter( 1.0 );
+	w = 1;
 	for( i = 1; i <= points/2; i++ ) {
-		w = pow( step, (double)i );
+		w *= step;
+		/* w = pow( step, (double)i ); */
 		filter[center+i] = filter[center-i] = butter( w );
 	}
 }
