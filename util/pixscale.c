@@ -1,16 +1,16 @@
 /*
  *		P I X S C A L E . C
  *
- * Scale an RGB pix file.
+ *  Scale an RGB pix file.
  *
- * To scale up, we use bilinear interpolation.
- * To scale down, we assume "square pixels" and preserve the
- * amount of light energy per unit area.
+ *  To scale up, we use bilinear interpolation.
+ *  To scale down, we assume "square pixels" and preserve the
+ *  amount of light energy per unit area.
  *
- * This is a buffered version that can handle files of
- * almost arbitrary size.
+ *  This is a buffered version that can handle files of
+ *  almost arbitrary size.
  *
- * Note: This is a simple extension to bwcrop.  Improvements made
+ *  Note: This is a simple extension to bwcrop.  Improvements made
  *  there should be incorporated here.
  *
  *  Author -
@@ -32,6 +32,7 @@ unsigned char *malloc();
 
 #define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
 
+unsigned char	*outbuf;
 unsigned char	*buffer;
 int	scanlen;			/* length of infile (and buffer) scanlines */
 int	buflines;			/* Number of lines held in buffer */
@@ -68,6 +69,8 @@ int argc; char **argv;
 	/* See how many lines we can buffer */
 	scanlen = 3 * inx;
 	init_buffer( scanlen );
+	if( (outbuf = malloc(scanlen)) == NULL )
+		exit( 4 );
 
 	/* Here we go */
 	scale( stdout, inx, iny, outx, outy );
@@ -134,7 +137,7 @@ int	ix, iy, ox, oy;
 	double	xstart, xend, ystart, yend;	/* edges of new pixel in old coordinates */
 	double	xdist, ydist;			/* length of new pixel sides in old coord */
 	double	sumr, sumg, sumb;
-	unsigned char outpixel;
+	unsigned char *op;
 
 	pxlen = (double)ix / (double)ox;
 	pylen = (double)iy / (double)oy;
@@ -152,6 +155,7 @@ int	ix, iy, ox, oy;
 	for( j = 0; j < oy; j++ ) {
 		ystart = j * pylen;
 		yend = ystart + pylen;
+		op = outbuf;
 		for( i = 0; i < ox; i++ ) {
 			xstart = i * pxlen;
 			xend = xstart + pxlen;
@@ -189,13 +193,11 @@ int	ix, iy, ox, oy;
 					sumb += buffer[bufy * scanlen + 3*k+2] * xdist * ydist;
 				}
 			}
-			outpixel = (int)(sumr / (pxlen * pylen));
-			fwrite( &outpixel, sizeof(outpixel), 1, ofp );
-			outpixel = (int)(sumg / (pxlen * pylen));
-			fwrite( &outpixel, sizeof(outpixel), 1, ofp );
-			outpixel = (int)(sumb / (pxlen * pylen));
-			fwrite( &outpixel, sizeof(outpixel), 1, ofp );
+			*op++ = (int)(sumr / (pxlen * pylen));
+			*op++ = (int)(sumg / (pxlen * pylen));
+			*op++ = (int)(sumb / (pxlen * pylen));
 		}
+		fwrite( outbuf, 3, ox, ofp );
 	}
 	return( 1 );
 }
@@ -212,7 +214,7 @@ int	ix, iy, ox, oy;
 	int	i, j;
 	double	x, y, dx, dy, mid1, mid2;
 	double	xstep, ystep;
-	unsigned char outpixel;
+	register unsigned char *op, *up, *lp;
 
 	xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
 	ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
@@ -230,6 +232,8 @@ int	ix, iy, ox, oy;
 			bufy = (int)y - buf_start;
 		}
 
+		op = outbuf;
+
 		for( i = 0; i < ox; i++ ) {
 			x = i * xstep;
 			dx = x - (int)x;
@@ -237,23 +241,27 @@ int	ix, iy, ox, oy;
 
 			/* Note: (1-a)*foo + a*bar = foo + a*(bar-foo) */
 
+			lp = &buffer[bufy*scanlen+(int)x*3];
+			up = &buffer[(bufy+1)*scanlen+(int)x*3];
+
 			/* Red */
-			mid1 = (1.0 - dx) * buffer[bufy*scanlen+(int)x*3] + dx * buffer[bufy*scanlen+(int)(x+1)*3];
-			mid2 = (1.0 - dx) * buffer[(bufy+1)*scanlen+(int)x*3] + dx * buffer[(bufy+1)*scanlen+(int)(x+1)*3];
-			outpixel = (1.0 - dy) * mid1 + dy * mid2;
-			fwrite( &outpixel, sizeof(outpixel), 1, ofp );
+			mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+			mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+			*op++ = mid1 + dy * (mid2 - mid1);
+			lp++; up++;
 
 			/* Green */
-			mid1 = (1.0 - dx) * buffer[bufy*scanlen+(int)x*3+1] + dx * buffer[bufy*scanlen+(int)(x+1)*3+1];
-			mid2 = (1.0 - dx) * buffer[(bufy+1)*scanlen+(int)x*3+1] + dx * buffer[(bufy+1)*scanlen+(int)(x+1)*3+1];
-			outpixel = (1.0 - dy) * mid1 + dy * mid2;
-			fwrite( &outpixel, sizeof(outpixel), 1, ofp );
+			mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+			mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+			*op++ = mid1 + dy * (mid2 - mid1);
+			lp++; up++;
 
 			/* Blue */
-			mid1 = (1.0 - dx) * buffer[bufy*scanlen+(int)x*3+2] + dx * buffer[bufy*scanlen+(int)(x+1)*3+2];
-			mid2 = (1.0 - dx) * buffer[(bufy+1)*scanlen+(int)x*3+2] + dx * buffer[(bufy+1)*scanlen+(int)(x+1)*3+2];
-			outpixel = (1.0 - dy) * mid1 + dy * mid2;
-			fwrite( &outpixel, sizeof(outpixel), 1, ofp );
+			mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+			mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+			*op++ = mid1 + dy * (mid2 - mid1);
 		}
+
+		(void) fwrite( outbuf, 3, ox, ofp );
 	}
 }
