@@ -596,10 +596,8 @@ done:			ssp->lastcut = cutp;
 
 		/* Continue with the current space partitioning algorithm. */
 	}
-
-	rt_bomb("rt_advance_to_next_cell: escaped for(;;) loop: impossible!");
-	return CUTTER_NULL; /* not reached */
-
+	/* NOTREACHED */
+	bu_bomb("rt_advance_to_next_cell: escaped for(;;) loop: impossible!");
 }
 
 /*
