@@ -372,7 +372,7 @@ void
 bu_vls_strncpy( vp, s, n )
 register struct bu_vls	*vp;
 CONST char		*s;
-int			n;
+long			n;
 {
 	register int	len;
 
@@ -421,7 +421,7 @@ void
 bu_vls_strncat( vp, s, n )
 register struct bu_vls	*vp;
 CONST char		*s;
-int			n;
+long			n;
 {
 	register int	len;
 
