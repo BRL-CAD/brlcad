@@ -26,7 +26,7 @@ extern union record es_rec;		/* current solid record */
 
 #define es_name	es_rec.s.s_name
 #define es_type	es_rec.s.s_cgtype	/* COMGEOM solid type */
-#define es_gentype es_rec.s.s_type	/* GED general solid type */
+#define es_gentype es_rec.s.s_type	/* GED general solid type. XXX used only in chgmodel.c */
 
 extern int     es_edflag;		/* type of editing for this solid */
 #define IDLE	0
@@ -49,27 +49,8 @@ extern int     es_edflag;		/* type of editing for this solid */
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
 extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
-extern int	es_menu;		/* item selected from menu */
+extern int	es_menu;		/* item/edit_mode selected from menu */
 
-#define MENUH		1
-#define MENUR1		2
-#define MENUR2		3
-#define MENUA		4
-#define MENUB		5
-#define MENUC		6
-#define MENURH		7
-#define MENURAB 	8
-#define	MENUMH		9
-#define MENUMHH		10
-#define MENUP1		11
-#define MENUP2		12
-#define MENUAB		13
-#define MENUCD		14
-#define MENUABCD	15
-#define MENUABC		16
-#define EDGEMENU	17
-#define MOVEMENU	18
-#define ROTMENU		19
 extern mat_t	es_mat;			/* accumulated matrix of path */ 
 extern mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 
