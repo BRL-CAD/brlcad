@@ -219,7 +219,7 @@ nmg_rt_print_hitmiss(a_hit)
 struct hitmiss *a_hit;
 {
 	NMG_CK_HITMISS(a_hit);
-	rt_log("   dist:%12g pt=(%g %g %g) %s=x%x\n",
+	rt_log("   dist:%12g pt=(%f %f %f) %s=x%x\n",
 		a_hit->hit.hit_dist,
 		a_hit->hit.hit_point[0],
 		a_hit->hit.hit_point[1],
@@ -1441,7 +1441,7 @@ point_t pt;
 	ray_miss_vertex(rd, eu_p->eumate_p->vu_p);
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT) rt_log("\t - HIT edge 0x%08x\n", eu_p->e_p);
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) rt_log("\t - HIT edge 0x%08x (edgeuse=x%x)\n", eu_p->e_p, eu_p);
 
 	if (myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p)) {
 		switch (((struct rt_list *)myhit)->magic) {
@@ -2304,9 +2304,10 @@ CONST struct xray	*rp;
 }
 
 static int
-guess_class_from_hitlist_max(rd, hari_kari)
+guess_class_from_hitlist_max(rd, hari_kari, in_or_out_only)
 struct ray_data *rd;
 int *hari_kari;
+int in_or_out_only;
 {
 	struct hitmiss *a_hit;
 	struct hitmiss *plus_hit = (struct hitmiss *)NULL;
@@ -2320,16 +2321,21 @@ int *hari_kari;
 	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 
 		NMG_CK_HITMISS(a_hit);
-		/* if we've got a zero distance hit, that clinches it */
-		if (a_hit->hit.hit_dist <= rd->tol->dist &&
-	    	    a_hit->hit.hit_dist >= -rd->tol->dist) {
-			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
-				rt_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
+		if( !in_or_out_only )
+		{
+			/* if we've got a zero distance hit, that clinches it */
+			if (a_hit->hit.hit_dist <= rd->tol->dist &&
+		    	    a_hit->hit.hit_dist >= -rd->tol->dist) {
+				if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+					rt_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
 	    	    
-	    		return NMG_CLASS_AonBshared;
-	    	}
+		    		return NMG_CLASS_AonBshared;
+		    	}
 
-		if (a_hit->hit.hit_dist < -rd->tol->dist)
+			if (a_hit->hit.hit_dist < -rd->tol->dist)
+				continue;
+		}
+		else if (a_hit->hit.hit_dist < 0.0)
 			continue;
 
 		if (a_hit->in_out == HMG_HIT_ANY_ANY)
@@ -2394,9 +2400,10 @@ int *hari_kari;
 }
 
 static int
-guess_class_from_hitlist_min(rd, hari_kari)
+guess_class_from_hitlist_min(rd, hari_kari, in_or_out_only)
 struct ray_data *rd;
 int *hari_kari;
+int in_or_out_only;
 {
 	struct hitmiss *a_hit;
 	struct hitmiss *minus_hit = (struct hitmiss *)NULL;
@@ -2411,16 +2418,21 @@ int *hari_kari;
 	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 
 		NMG_CK_HITMISS(a_hit);
-		/* if we've got a zero distance hit, that clinches it */
-		if (a_hit->hit.hit_dist <= rd->tol->dist &&
-	    	    a_hit->hit.hit_dist >= -rd->tol->dist) {
-			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
-				rt_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
+		if( !in_or_out_only )
+		{
+			/* if we've got a zero distance hit, that clinches it */
+			if (a_hit->hit.hit_dist <= rd->tol->dist &&
+		    	    a_hit->hit.hit_dist >= -rd->tol->dist) {
+				if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+					rt_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
 
-	    		return NMG_CLASS_AonBshared;
-	    	}
+		    		return NMG_CLASS_AonBshared;
+		    	}
 
-		if (a_hit->hit.hit_dist > rd->tol->dist)
+			if (a_hit->hit.hit_dist > rd->tol->dist)
+				continue;
+		}
+		else if (a_hit->hit.hit_dist > 0.0)
 			continue;
 
 		if (a_hit->in_out == HMG_HIT_ANY_ANY)
@@ -2499,6 +2511,9 @@ int *hari_kari;
  *	If the negative-going and positive-going assessments don't agree,
  *	this is a problem.
  *
+ *	If "in_or_out_only" is non-zero, then we will not look for a
+ *	classification of "ON" the shell.
+ *
  *	The caller must be prepared for a return of NMG_CLASS_Unknown,
  *	in which case it should pick a less difficult ray direction to fire
  *	and try again.
@@ -2508,9 +2523,10 @@ int *hari_kari;
  *	NMG_CLASS_xxx		Classification of the pt w.r.t. the shell.
  */
 int
-nmg_class_ray_vs_shell(rp, s, tol)
+nmg_class_ray_vs_shell(rp, s, in_or_out_only, tol)
 struct xray *rp;
 struct shell *s;
+int in_or_out_only;
 struct rt_tol *tol;
 {
 	struct ray_data rd;
@@ -2612,8 +2628,8 @@ struct rt_tol *tol;
 		nmg_pl_hitmiss_list( "shell-ray", num++, &rd.rd_hit, rp );
 	}
 
-	minus_class = guess_class_from_hitlist_min(&rd, &hari_kari_minus);
-	plus_class = guess_class_from_hitlist_max(&rd, &hari_kari_plus);
+	minus_class = guess_class_from_hitlist_min(&rd, &hari_kari_minus, in_or_out_only);
+	plus_class = guess_class_from_hitlist_max(&rd, &hari_kari_plus, in_or_out_only);
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 		rt_log("minus_class = (%s)\n", nmg_class_name(minus_class));
