@@ -800,6 +800,20 @@ struct vlhead {
 #define VPRINT(a,b)	rt_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
 #define HPRINT(a,b)	rt_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
+/*
+ *			C O M M A N D _ T A B
+ *
+ *  Table for driving generic command-parsing routines
+ */
+struct command_tab {
+	char	*ct_cmd;
+	char	*ct_parms;
+	char	*ct_comment;
+	int	(*ct_func)();
+	int	ct_min;		/* min number of words in cmd */
+	int	ct_max;		/* max number of words in cmd */
+};
+
 
 /*****************************************************************
  *                                                               *
@@ -829,6 +843,9 @@ extern void rt_printb(char *s, unsigned long v, char *bits);
 extern struct soltab *rt_find_solid(struct rt_i *rtip, char *name);
 					/* Parse arbitrary data structure */
 extern void rt_structparse(char *cp, struct structparse *tab, stroff_t base );
+extern char *rt_read_cmd(FILE *fp);	/* Read semi-colon terminated line */
+					/* do cmd from string via cmd table */
+extern int rt_do_cmd(struct rt_i *rtip, char *lp, struct command_tab *ctp);
 					/* Start the timer */
 extern void rt_prep_timer(void);
 					/* Read timer, return time + str */
@@ -849,6 +866,8 @@ extern void rt_pr_partitions();		/* Print the partitions */
 extern void rt_printb();		/* Print a bit vector */
 extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
 extern void rt_structparse();		/* Parse arbitrary data structure */
+extern char *rt_read_cmd();		/* Read semi-colon terminated line */
+extern int rt_do_cmd();			/* do cmd from string via cmd table */
 
 extern void rt_prep_timer();		/* Start the timer */
 extern double rt_read_timer();		/* Read timer, return time + str */
