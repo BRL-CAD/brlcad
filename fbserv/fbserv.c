@@ -454,8 +454,8 @@ va_dcl
 		/* Initial state:  just printing chars */
 		if( *sp != '%' )  {
 			*op++ = *sp;
-			if( *sp == '\n' ) {
-				/* newline, put out the hostname again */
+			if( *sp == '\n' && *(sp+1) ) {
+				/* newline plus text, output hostname */
 				gethostname( op, sizeof(outbuf) );
 				op += strlen(op);
 				*op++ = ':';
