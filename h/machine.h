@@ -70,10 +70,10 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		8	/* Max number of processors */
 #define PARALLEL	1
 
-#endif alliant
+#endif
 
 
-#ifdef cray
+#ifdef CRAY
 /********************************
  *				*
  *  Cray-X/MP, COS or UNICOS	*
@@ -89,8 +89,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		4	/* Max number of processors */
 
 /**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
-
-#endif cray
+#endif
 
 
 #ifdef convex
@@ -125,8 +124,8 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 /* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines, for now */
-#define MAX_PSW	4		/* # processors, max */
-
+#define MAX_PSW		4	/* # processors, max */
+#define PARALLEL	1
 #endif
 
 
