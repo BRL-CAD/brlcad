@@ -2810,6 +2810,8 @@ struct nmg_ptbl *stack;
 	return( eu );
 }
 
+#if 0
+/* XXX Don't use this, use nmg_s_radial_harmonize() at the right time. */
 /*	N M G _ R E V E R S E _ F A C E _ A N D _ R A D I A L S
  *
  *	This routine calls "nmg_reverse_face" and also makes the radial
@@ -2833,6 +2835,7 @@ CONST struct rt_tol *tol;
 
 	(void)nmg_face_fix_radial_parity( fu , tol );
 }
+#endif
 
 /*	N M G _ S H E L L _ I S _ V O I D
  *
@@ -3000,6 +3003,7 @@ CONST struct rt_tol *tol;
 		/* if this face has already been processed, skip it */
 		if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
 		{
+#if 0
 			/* if orientation is wrong, or if the radial edges are in the same direction
 			 * then reverse the face and fix the radials */
 			if( fu->orientation != OT_SAME ||
@@ -3008,6 +3012,12 @@ CONST struct rt_tol *tol;
 			{
 				nmg_reverse_face_and_radials( fu , tol );
 			}
+#else
+			/* Reverse face now, caller will fix radials */
+			if( fu->orientation != OT_SAME )  {
+				nmg_reverse_face( fu );
+			}
+#endif
 
 			/* make sure we are dealing with an OT_SAME faceuse */
 			if( fu->orientation != OT_SAME )
@@ -3110,11 +3120,17 @@ CONST struct rt_tol *tol;
 
 		NMG_CK_FACEUSE( fu );
 
+		/* Establish radial parity */
+		nmg_s_radial_harmonize( s, tol );
+
 		/* fu is now known to be a correctly oriented faceuse,
 		 * propagate this throughout the shell, face by face, by
 		 * traversing the shell using the radial edge structure */
 
 		nmg_propagate_normals( fu , flags , tol );
+
+		/* Re-establish radial parity */
+		nmg_s_radial_harmonize( s, tol );
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 		{

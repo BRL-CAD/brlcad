@@ -1288,74 +1288,85 @@ CONST struct rt_tol	*tol;
 /*
  *			N M G _ R A D I A L _ M A R K _ F L I P S
  *
- *  For each shell, find an original edgeuse from that shell,
+ *  For a given shell, find an original edgeuse from that shell,
  *  and then mark parity violators with a "flip" flag.
  */
-void
-nmg_radial_mark_flips( hd, shells, tol )
+int
+nmg_radial_mark_flips( hd, s, tol )
 struct rt_list		*hd;
-CONST struct nmg_ptbl	*shells;
+CONST struct shell	*s;
 CONST struct rt_tol	*tol;
 {
 	struct nmg_radial	*rad;
-	struct shell		**sp;
 	struct nmg_radial	*orig;
 	register int		expected_ot;
+	int			count = 1;
+	int			nflip = 0;
 
 	RT_CK_LIST_HEAD(hd);
-	NMG_CK_PTBL(shells);
+	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
 
-	for( sp = (struct shell **)NMG_TBL_LASTADDR(shells);
- 	     sp >= (struct shell **)NMG_TBL_BASEADDR(shells); sp-- 
-	)  {
-		int	count = 1;
-
-		NMG_CK_SHELL(*sp);
-		orig = nmg_radial_find_an_original( hd, *sp, tol );
-		NMG_CK_RADIAL(orig);
-		if( !orig->existing_flag )  {
-			/* There were no originals.  Do something sensible to check the newbies */
-			if( !orig->fu )  continue;	/* Nothing but wires */
+	orig = nmg_radial_find_an_original( hd, s, tol );
+	NMG_CK_RADIAL(orig);
+	if( !orig->existing_flag )  {
+		/* There were no originals.  Do something sensible to check the newbies */
+		if( !orig->fu )  {
+			/* Nothing but wires */
+			return 0;
+		}
 #if 0
-			/*  Given that there were no existing edgeuses
-			 *  from this shell, make our first addition
-			 *  oppose the previous radial faceuse, just to be nice.
-			 */
-			rad = RT_LIST_PPREV_CIRC( nmg_radial, orig );
-			/* Hopefully it isn't a wire */
-			if( rad->eu->vu_p->v_p == orig->eu->vu_p->v_p )  {
-				/* Flip everything, for general compatibility */
-				for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
-					if( rad->s != *sp )  continue;
-					if( !rad->fu )  continue;	/* skip wires */
-					rad->needs_flip = !rad->needs_flip;
-				}
+		/*  Given that there were no existing edgeuses
+		 *  from this shell, make our first addition
+		 *  oppose the previous radial faceuse, just to be nice.
+		 */
+		rad = RT_LIST_PPREV_CIRC( nmg_radial, orig );
+		/* Hopefully it isn't a wire */
+		if( rad->eu->vu_p->v_p == orig->eu->vu_p->v_p )  {
+			/* Flip everything, for general compatibility */
+			for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
+				if( rad->s != s )  continue;
+				if( !rad->fu )  continue;	/* skip wires */
+				rad->needs_flip = !rad->needs_flip;
 			}
+		}
 #endif
-		}
-		expected_ot = !(orig->fu->orientation == OT_SAME);
+	}
+	expected_ot = !(orig->fu->orientation == OT_SAME);
 
-		for( RT_LIST_FOR_CIRC( rad, nmg_radial, orig ) )  {
-			if( rad->s != *sp )  continue;
-			if( !rad->fu )  continue;	/* skip wires */
-			count++;
-			if( expected_ot == (rad->fu->orientation == OT_SAME) )  {
-				expected_ot = !expected_ot;
-				continue;
-			}
-			/* Mis-match detected */
-			rt_log("nmg_radial_mark_flips() Mis-match detected, setting flip flag eu=x%x\n", rad->eu);
-			rad->needs_flip = !rad->needs_flip;
-			/* With this one flipped, set expectation for next */
+	for( RT_LIST_FOR_CIRC( rad, nmg_radial, orig ) )  {
+		if( rad->s != s )  continue;
+		if( !rad->fu )  continue;	/* skip wires */
+		count++;
+		if( expected_ot == (rad->fu->orientation == OT_SAME) )  {
 			expected_ot = !expected_ot;
-		}
-		if( expected_ot == (orig->fu->orientation == OT_SAME) )
 			continue;
-		rt_log("nmg_radial_mark_flips() unable to establish proper orientation parity.\n  eu count=%d, shell=x%x, expectation=%d\n",
-			count, *sp, expected_ot);
-		rt_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
- 	}
+		}
+		/* Mis-match detected */
+		if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+			rt_log("nmg_radial_mark_flips() Mis-match detected, setting flip flag eu=x%x\n", rad->eu);
+		}
+		rad->needs_flip = !rad->needs_flip;
+		nflip++;
+		/* With this one flipped, set expectation for next */
+		expected_ot = !expected_ot;
+	}
+	if( expected_ot == (orig->fu->orientation == OT_SAME) )
+		return nflip;
+
+	if( count == 1 )  {
+		rt_log("nmg_radial_mark_flips() NOTICE dangling fu=x%x detected at eu=x%x in shell=x%x, proceeding.\n  %g %g %g --- %g %g %g\n",
+			orig->fu, orig->eu, s,
+			V3ARGS(orig->eu->vu_p->v_p->vg_p->coord),
+			V3ARGS(orig->eu->eumate_p->vu_p->v_p->vg_p->coord)
+		);
+		return 0;
+	}
+
+	rt_log("nmg_radial_mark_flips() unable to establish proper orientation parity.\n  eu count=%d, shell=x%x, expectation=%d\n",
+		count, s, expected_ot);
+	nmg_pr_radial_list( hd, tol );
+	rt_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
 }
 
 /*
@@ -1513,6 +1524,7 @@ CONST struct rt_tol	*tol;
 	struct rt_list		list1;
 	struct rt_list		list2;
 	struct nmg_ptbl		shell_tbl;
+	struct shell		**sp;
 	int			count1, count2;
 
 	NMG_CK_EDGEUSE(eu1);
@@ -1592,7 +1604,11 @@ CONST struct rt_tol	*tol;
 	nmg_radial_merge_lists( &list1, &list2, tol );
 	nmg_radial_mark_cracks( &list1, tol );
 
-	nmg_radial_mark_flips( &list1, &shell_tbl, tol );
+	for( sp = (struct shell **)NMG_TBL_LASTADDR(&shell_tbl);
+ 	     sp >= (struct shell **)NMG_TBL_BASEADDR(&shell_tbl); sp-- 
+	)  {
+		nmg_radial_mark_flips( &list1, *sp, tol );
+	}
 #if 0
 rt_log("marked list:\n");
 rt_log("  edge: %g %g %g -> %g %g %g\n",
@@ -1607,6 +1623,9 @@ nmg_pr_radial_list( &list1, tol );
 	nmg_pr_radial_list( &list1, tol );
 	nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
 #endif
+	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
+	}
 	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
 	if( count1 )  rt_log("nmg_radial_join_eu_NEW() bad parity at completion, %d\n", count1);
 
@@ -1623,4 +1642,121 @@ nmg_pr_radial_list( &list1, tol );
 		RT_LIST_DEQUEUE( &rad->l );
 		rt_free( (char *)rad, "nmg_radial" );
 	}
+}
+
+/*
+ *			N M G _ R A D I A L _ E X C H A N G E _ M A R K E D
+ *
+ *  Exchange eu and eu->eumate_p on the radial list, where marked.
+ */
+void
+nmg_radial_exchange_marked( hd, tol )
+struct rt_list		*hd;
+CONST struct rt_tol	*tol;		/* for printing */
+{
+	struct nmg_radial	*rad;
+	struct nmg_radial	*prev;
+	int			skipped;
+
+	RT_CK_LIST_HEAD(hd);
+	RT_CK_TOL(tol);
+
+	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
+		struct edgeuse	*eu;
+		struct edgeuse	*eumate;
+		struct edgeuse	*before;
+		struct edgeuse	*after;
+
+		if( !rad->needs_flip )  continue;
+
+		/*
+		 *  Initial sequencing is:
+		 *    before(radial), eu, eumate, after(radial)
+		 */
+		eu = rad->eu;
+		eumate = eu->eumate_p;
+		before = eu->radial_p;
+		after = eumate->radial_p;
+
+		/*
+		 *  Rearrange order to be:
+		 *	before, eumate, eu, after.
+		 */
+		before->radial_p = eumate;
+		eumate->radial_p = before;
+
+		after->radial_p = eu;
+		eu->radial_p = after;
+
+		rad->eu = eumate;
+		rad->fu = nmg_find_fu_of_eu( rad->eu );
+		rad->needs_flip = 0;
+	}
+}
+
+/*
+ *			N M G _ S _ R A D I A L _ H A R M O N I Z E
+ *
+ *  Visit each edge in this shell exactly once.
+ *  Where the radial edgeuse parity has become disrupted
+ *  due to a boolean operation or whatever, fix it.
+ */
+void
+nmg_s_radial_harmonize( s, tol )
+struct shell		*s;
+CONST struct rt_tol	*tol;
+{
+	struct nmg_ptbl	edges;
+	struct edgeuse	*eu;
+	struct nmg_ptbl	shell_tbl;
+	struct rt_list	list;
+	vect_t		xvec, yvec, zvec;
+	struct edge	**ep;
+
+	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log("nmg_s_radial_harmonize( s=x%x ) BEGIN\n", s);
+
+	nmg_edge_tabulate( &edges, &s->l.magic );
+	for( ep = (struct edge **)NMG_TBL_LASTADDR(&edges);
+	     ep >= (struct edge **)NMG_TBL_BASEADDR(&edges); ep--
+	)  {
+		struct nmg_radial	*rad;
+		int	nflip;
+
+		NMG_CK_EDGE(*ep);
+		eu = (*ep)->eu_p;
+
+		nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, tol );
+
+		RT_LIST_INIT( &list );
+		nmg_tbl( &shell_tbl, TBL_INIT, 0 );
+
+		nmg_radial_build_list( &list, &shell_tbl, 1, eu, xvec, yvec, zvec, tol );
+		nflip = nmg_radial_mark_flips( &list, s, tol );
+		if( nflip )  {
+			if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+				rt_log("Flips needed:\n");
+				nmg_pr_radial_list( &list, tol );
+			}
+			/* Now, do the flips */
+			nmg_radial_exchange_marked( &list, tol );
+			if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+				nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
+			}
+		}
+		/* Release the storage */
+		nmg_tbl( &shell_tbl, TBL_FREE, 0 );
+		while( RT_LIST_WHILE( rad, nmg_radial, &list ) )  {
+			RT_LIST_DEQUEUE( &rad->l );
+			rt_free( (char *)rad, "nmg_radial" );
+		}
+	}
+
+	nmg_tbl( &edges, TBL_FREE, 0 );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log("nmg_s_radial_harmonize( s=x%x ) END\n", s);
 }
