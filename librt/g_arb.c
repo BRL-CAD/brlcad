@@ -1042,6 +1042,7 @@ struct faceuse	*fu;
 	struct edgeuse		*eu, *eu_last, *eu_next;
 	struct loopuse		*lu;
 	plane_t			plane;
+	struct vertex_g		*a, *b, *c;
 
 	if( fu == (struct faceuse *)0 )  {
 		rt_bomb("rt_mk_nmg_planeeqn(): null faceuse\n");
@@ -1053,23 +1054,23 @@ struct faceuse	*fu;
 	eu = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
-	eu_last = NMG_LIST_PLAST(edgeuse, eu);
-	eu_next = NMG_LIST_PNEXT(edgeuse, eu);
+	eu_last = NMG_LIST_PLAST_CIRC(edgeuse, eu);
+	eu_next = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
+	NMG_CK_EDGEUSE(eu_last);
+	NMG_CK_EDGEUSE(eu_next);
 
-	if (rt_mk_plane_3pts(plane,
-	    eu->vu_p->v_p->vg_p->coord,
-	    eu_last->vu_p->v_p->vg_p->coord,
-	    eu_next->vu_p->v_p->vg_p->coord) < 0 ) {
+	a = eu->vu_p->v_p->vg_p;
+	b = eu_last->vu_p->v_p->vg_p;
+	c = eu_next->vu_p->v_p->vg_p;
+	NMG_CK_VERTEX_G(a);
+	NMG_CK_VERTEX_G(b);
+	NMG_CK_VERTEX_G(c);
+
+	if (rt_mk_plane_3pts(plane, a->coord, b->coord, c->coord) < 0 ) {
 		rt_log("rt_mk_nmg_planeeqn(): rt_mk_plane_3pts failed on (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
-		    eu->vu_p->v_p->vg_p->coord[X],
-		    eu->vu_p->v_p->vg_p->coord[Y],
-		    eu->vu_p->v_p->vg_p->coord[Z],
-		    eu_last->vu_p->v_p->vg_p->coord[X],
-		    eu_last->vu_p->v_p->vg_p->coord[Y],
-		    eu_last->vu_p->v_p->vg_p->coord[Z],
-		    eu_next->vu_p->v_p->vg_p->coord[X],
-		    eu_next->vu_p->v_p->vg_p->coord[Y],
-		    eu_next->vu_p->v_p->vg_p->coord[Z] );
+			V3ARGS( a->coord ),
+			V3ARGS( b->coord ),
+			V3ARGS( c->coord ) );
 	    	HPRINT("plane", plane);
 	}
 	else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
