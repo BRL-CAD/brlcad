@@ -473,72 +473,66 @@ vect_t		face_normal;
  *	
  */
 void
-nmg_offset_eu_vert(base, eu, face_normal)
+nmg_offset_eu_vert(base, eu, face_normal, tip)
 point_t		base;
 struct edgeuse	*eu;
 vect_t		face_normal;
+int		tip;
 {
-	vect_t		eu_vec;	/* from cur_pt to next_pt */
 	struct edgeuse	*prev_eu;
 	struct edgeuse	*this_eu;
 	vect_t		prev_vec;	/* from cur_pt to prev_pt */
+	vect_t		eu_vec;		/* from cur_pt to next_pt */
 	vect_t		prev_left;
 	vect_t		eu_left;
-	vect_t		delta_vec;
-	struct vertex	*this_v;
-	struct vertex	*mate_v;
-	struct vertex	*prev_v;
+	vect_t		delta_vec;	/* offset vector from vertex */
 	struct vertex_g	*this_vg, *mate_vg, *prev_vg;
 
 	bzero(delta_vec, sizeof(vect_t)),
 	prev_eu = RT_LIST_PLAST_CIRC( edgeuse, eu ); 
+	this_eu = eu;
 
-	for(this_eu = eu ; MAGSQ(delta_vec) <= VDIVIDE_TOL && prev_eu != eu ;
-	    prev_eu = RT_LIST_PLAST_CIRC( edgeuse, prev_eu ),
-	    this_eu = RT_LIST_PNEXT_CIRC( edgeuse, this_eu ) ) {
+	NMG_CK_EDGEUSE(this_eu);
+	NMG_CK_VERTEXUSE(this_eu->vu_p);
+	NMG_CK_VERTEX(this_eu->vu_p->v_p);
+    	this_vg = this_eu->vu_p->v_p->vg_p;
+	NMG_CK_VERTEX_G(this_vg);
 
-		NMG_CK_EDGEUSE(this_eu);
-		NMG_CK_VERTEXUSE(this_eu->vu_p);
-	    	this_v = this_eu->vu_p->v_p;
-		NMG_CK_VERTEX(this_v);
-	    	this_vg = this_v->vg_p;
-		NMG_CK_VERTEX_G(this_vg);
+	NMG_CK_EDGEUSE(this_eu->eumate_p);
+	NMG_CK_VERTEXUSE(this_eu->eumate_p->vu_p);
+	NMG_CK_VERTEX(this_eu->eumate_p->vu_p->v_p);
+    	mate_vg = this_eu->eumate_p->vu_p->v_p->vg_p;
+	NMG_CK_VERTEX_G(mate_vg);
 
-		NMG_CK_EDGEUSE(this_eu->eumate_p);
-		NMG_CK_VERTEXUSE(this_eu->eumate_p->vu_p);
-	    	mate_v = this_eu->eumate_p->vu_p->v_p;
-		NMG_CK_VERTEX(mate_v);
-	    	mate_vg = mate_v->vg_p;
-		NMG_CK_VERTEX_G(mate_vg);
+	NMG_CK_EDGEUSE(prev_eu);
+	NMG_CK_VERTEXUSE(prev_eu->vu_p);
+	NMG_CK_VERTEX(prev_eu->vu_p->v_p);
+    	prev_vg = prev_eu->vu_p->v_p->vg_p;
+	NMG_CK_VERTEX_G(prev_vg);
 
-		NMG_CK_EDGEUSE(prev_eu);
-		NMG_CK_VERTEXUSE(prev_eu->vu_p);
-	    	prev_v = prev_eu->vu_p->v_p;
-		NMG_CK_VERTEX(prev_v);
-	    	prev_vg = prev_v->vg_p;
-		NMG_CK_VERTEX_G(prev_vg);
+	/* get "left" vector for edgeuse */
+	VSUB2(eu_vec, mate_vg->coord, this_vg->coord); 
+	VUNITIZE(eu_vec);
+	VCROSS(eu_left, face_normal, eu_vec);
 
-		if (prev_eu->e_p == this_eu->e_p)
-			continue;
 
-		/* get "left" vector for edgeuse */
-		VSUB2(eu_vec, mate_vg->coord, this_vg->coord); 
-		VUNITIZE(eu_vec);
-		VCROSS(eu_left, face_normal, eu_vec);
+	/* get "left" vector for previous edgeuse */
+	VSUB2(prev_vec, this_vg->coord, prev_vg->coord);
+	VUNITIZE(prev_vec);
+	VCROSS(prev_left, face_normal, prev_vec);
 
-		/* get "left" vector for previous edgeuse */
-		VSUB2(prev_vec, this_vg->coord, prev_vg->coord);
-		VUNITIZE(prev_vec);
-		VCROSS(prev_left, face_normal, prev_vec);
-
-		/* get "delta" vector to apply to vertex */
-		VADD2(delta_vec, prev_left, eu_left);
-	}
+	/* get "delta" vector to apply to vertex */
+	VADD2(delta_vec, prev_left, eu_left);
 
 	if (MAGSQ(delta_vec) > VDIVIDE_TOL) {
 		VUNITIZE(delta_vec);
 		VJOIN2(base, this_vg->coord,
 			(nmg_eue_dist*1.3),delta_vec,
+			(nmg_eue_dist*0.8),face_normal);
+		
+	} else if (tip) {
+		VJOIN2(base, this_vg->coord,
+			(nmg_eue_dist*1.3),prev_left,
 			(nmg_eue_dist*0.8),face_normal);
 	} else {
 		VJOIN2(base, this_vg->coord,
@@ -587,8 +581,9 @@ point_t base, tip60;
 #if 0
 		nmg_offset_eu_coord(base, tip, eu, face_normal);
 #else
-	    	nmg_offset_eu_vert(base, eu, face_normal);
-	    	nmg_offset_eu_vert(tip, RT_LIST_PNEXT_CIRC( edgeuse, eu ), face_normal);
+	    	nmg_offset_eu_vert(base, eu, face_normal, 0);
+		nmg_offset_eu_vert(tip, RT_LIST_PNEXT_CIRC(edgeuse, eu),
+			face_normal, 1);
 #endif
 	} else
 		rt_bomb("nmg_eu_coords: bad edgeuse up. What's going on?\n");
