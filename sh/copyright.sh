@@ -86,7 +86,8 @@ for file in $files ; do
   echo -n "."
 
   year=`date +%Y`
-  sed -E "s/Copyright ?\([cC]\) ?([0-9][0-9][0-9][0-9]) ?-? ?[0-9]?[0-9]?[0-9]?[0-9]?([ .;])/Copyright (C) \1-$year\2/" < $file > $file.copyright.new
+  sed -E "s/Copyright ?\([cC]\) ?([0-9][0-9][0-9][0-9]) ?-? ?[0-9]?[0-9]?[0-9]?[0-9]?([ .;]+)(by +the +United +States +Army)/Copyright (C) \1-$year\2\3/" < $file > $file.copyright.new
+
   if [ "x`diff $file $file.copyright.new`" = "x" ] ; then
     echo "."
     rm $file.copyright.new
