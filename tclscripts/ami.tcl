@@ -25,8 +25,6 @@ else
 	ITCLSH_NAME=itclsh
 # this is a comment \
 fi
-# this is a comment \
-echo "ITCLSH_NAME=$ITCLSH_NAME"
 # the next line restarts using itclsh \
 exec $ITCLSH_NAME "$0" "$@"
 
