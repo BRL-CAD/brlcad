@@ -11,7 +11,9 @@ cake \
  mathtab.o \
  opt.o \
  refract.o \
- regionfix.o &
+ sh_Nfbm.o \
+ sh_air.o \
+ sh_fire.o &
 
 cake \
  sh_cloud.o \
