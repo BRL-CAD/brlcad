@@ -573,7 +573,8 @@ struct bu_vls  {
  *  Section for manifest constants for bu_semaphore_acquire()
  */
 #define BU_SEM_SYSCALL	0
-
+#define BU_SEM_BN_NOISE	4	/* XXX really old res_model. should get own */
+#define BU_SEM_LAST	5	/* XXX allocate this many (want 6 really) */
 /*
  *  Automatic restart capability in bu_bomb().
  *  The return from BU_SETJUMP is the return from the setjmp().
