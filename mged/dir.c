@@ -915,6 +915,7 @@ char	**argv;
 			rt_free( (char *)rp, "dir_nref recs" );
 		}
 	}
+	return CMD_OK;
 }
 
 /*	F _ K I L L A L L
