@@ -1071,8 +1071,18 @@ CONST struct edgeuse *eu;
 {
 	CONST struct edgeuse	*eu1;
 	CONST struct faceuse	*fu;
+	vect_t			evect;
+	vect_t			xdir;
+	vect_t			ydir;
 
 	NMG_CK_EDGEUSE(eu);
+	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
+
+	VSUB2( evect, eu->eumate_p->vu_p->v_p->vg_p->coord,
+		eu->vu_p->v_p->vg_p->coord );
+	VUNITIZE( evect );
+	mat_vec_perp( xdir, evect );
+	VCROSS( ydir, xdir, evect );
 
 	eu1 = eu;
 	do {
@@ -1080,8 +1090,9 @@ CONST struct edgeuse *eu;
 		NMG_CK_EDGEUSE(eu1);
 		fu = eu1->up.lu_p->up.fu_p;
 		NMG_CK_FACEUSE(fu);
-		rt_log("%8.8x EDGEUSE, %8.8x FACEUSE, %8.8x FACE, %s\n",
-			eu1, fu, fu->f_p, nmg_orientation(fu->orientation) );
+		rt_log("%8.8x EDGEUSE, %8.8x FACEUSE, %8.8x FACE, %s %g\n",
+			eu1, fu, fu->f_p, nmg_orientation(fu->orientation),
+			rt_angle_measure( fu->f_p->fg_p->N, xdir, ydir) );
 
 		/* Second, the edgeuse mate */
 		eu1 = eu1->eumate_p;
