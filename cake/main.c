@@ -50,6 +50,8 @@ char	cakeflagbuf[MAXSIZE];
 char	*cppargv[MAXARGS];
 int	cppargc = 0;
 
+extern	int	yydebug;
+
 main(argc, argv)
 int	argc;
 char	**argv;
@@ -63,7 +65,6 @@ char	**argv;
 	extern	int	geteuid();
 	extern	FILE	*cake_popen();
 	extern	FILE	*yyin;
-	extern	int	yydebug;
 	Stat		statbuf;
 	int		envc;
 	char		*envv[MAXARGS];
