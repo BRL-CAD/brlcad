@@ -81,7 +81,8 @@ RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=Today
 # made it into the search path.  Otherwise, nothing will work.
 # For this purpose, specifically exclude "dot" from the check.
 #
-NECESSARY_CMDS="cake cakesub cakeinclude machinetype.sh ranlib5.sh"
+NECESSARY_CMDS="cake cakesub cakeinclude machinetype.sh \
+	ranlib5.sh"
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
@@ -123,6 +124,7 @@ ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		cray.sh cray-ar.sh ranlib5.sh sgisnap.sh \
 		machinetype.sh gen.sh setup.sh newvers.sh \
+		sharedlibvers.sh \
 		cakeinclude.sh newbindir.sh pixinfo.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
@@ -394,6 +396,9 @@ dist)
 	fi
 	echo
 	echo "I hope you have made Cakefile.defs tidy!"
+	echo "(Check for PRODUCTION values properly set)"
+	echo
+	grep PRODUCTION Cakefile.defs
 	echo
 
 	for i in ${CDIRS}
@@ -429,7 +434,7 @@ arch)
 	chmod 444 ${ARCHIVE}
 	echo "${ARCHIVE} created"
 
-	FTP_ARCHIVE=/usr/spool/ftp/tmp/cad${RELEASE}.tar
+	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/cad${RELEASE}.tar
 	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/Rel4.3/src/cad${RELEASE}.tar
 	echo "Enter encryption key:"
 	read KEY
