@@ -301,9 +301,11 @@ CONST struct rt_tol	*tol;
 	/* The point did not lie exactly ON the edge */
 	/* calculate in/out */
 	NMG_GET_FU_NORMAL(norm, eu->up.lu_p->up.fu_p);
-    	if (eu->up.lu_p->up.fu_p->orientation != OT_SAME) {
+    	if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE) {
     		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\tReversing normal\n");
 		VREVERSE(norm,norm);
+    	} else if (eu->up.lu_p->up.fu_p->orientation != OT_SAME) {
+    		rt_bomb("nmg_class_pt_e() bad fu orientation\n");
     	}
 
 	VSUB2(euvect, matept, eupt);
@@ -314,9 +316,11 @@ CONST struct rt_tol	*tol;
     	 * left, towards the interior of the CCW loop.
     	 */
     	VCROSS( left, norm, euvect );	/* left vector */
-	if(eu->up.lu_p->orientation != OT_SAME )  {
+	if(eu->up.lu_p->orientation == OT_OPPOSITE )  {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\tReversing left vec\n");
 		VREVERSE(left, left);
+	} else if(eu->up.lu_p->orientation != OT_SAME )  {
+		rt_bomb("nmg_class_pt_e() bad lu orientation\n");
 	}
 
 	VSUB2(ptvec, pt, pca);		/* pt - pca */
@@ -591,11 +595,12 @@ again:
 	for (RT_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
 		/* Do not use the supplied loopuse in the comparison! */
 		if( lu2 == lu )  continue;
+		if( lu2 == lu->lumate_p )  continue;
 
 		/* Any other OT_UNSPEC or OT_BOOLPLACE lu's don't help either */
 		if( lu2->orientation != OT_SAME && lu2->orientation != OT_OPPOSITE )  {
-			rt_log("nmg_class_lu_fu() WARNING:  skipping %s lu=x%x in fu=x%x!\n",
-				nmg_orientation(lu2->orientation), lu2, fu);
+			rt_log("nmg_class_lu_fu(lu=x%x) WARNING:  skipping %s lu=x%x in fu=x%x!\n",
+				lu, nmg_orientation(lu2->orientation), lu2, fu);
 			continue;
 		}
 
@@ -1348,8 +1353,9 @@ retry:
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 						rt_log("Loop is OUTSIDE\n");
 					return(OUTSIDE);
+			    	} else {
+			    		rt_bomb("class_lu_vs_s() bad fu orientation\n");
 			    	}
-
 			}
 			p = p->eumate_p->radial_p;
 		} while (p != eu->eumate_p);
