@@ -1,5 +1,3 @@
-#undef _LOCAL_
-#define _LOCAL_ /**/
 /*
  *			I F _ S G I . C
  *
@@ -114,7 +112,8 @@ _LOCAL_ int	sgi_dopen(),
 		sgi_zoom_set(),
 		sgi_curs_set(),
 		sgi_cmemory_addr(),
-		sgi_cscreen_addr();
+		sgi_cscreen_addr(),
+		sgi_help();
 
 /* This is the ONLY thing that we "export" */
 FBIO sgi_interface =
@@ -133,6 +132,7 @@ FBIO sgi_interface =
 		sgi_curs_set,
 		sgi_cmemory_addr,
 		fb_null,		/* cscreen_addr */
+		sgi_help,
 		"Silicon Graphics IRIS",
 		1024,			/* max width */
 		768,			/* max height */
@@ -1645,4 +1645,26 @@ RGBpixel	*pixelp;
 	hole->s = t;
 	hole->s = GEclosepoly;	/* Last? */
 	return;
+}
+
+_LOCAL_ int
+sgi_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", sgi_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		sgi_interface.if_max_width,
+		sgi_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		sgi_interface.if_width,
+		sgi_interface.if_height );
+	fb_log( "\
+Usage: /dev/sgi[#]\n\
+  where # is a optional number from:\n\
+    0    fixed color cube approximation (default)\n\
+    1    dynamic colormap entry allocation (slower)\n\
+   99    release shared memory\n" );
+
+	return(0);
 }
