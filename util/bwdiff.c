@@ -30,10 +30,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 FILE *fp1, *fp2;
 
-int	mflag = 0;
+#define	DIFF	0
+#define	MAG	1
+#define	GREATER	2
+#define	LESS	3
+#define	EQUAL	4
+#define	NEQ	5
+
+int	mode = DIFF;
+int	backgnd = 0;
 unsigned char ibuf1[512], ibuf2[512], obuf[512];
 
-static	char *Usage = "usage: bwdiff [-m] file1.bw file2.bw (- stdin, . skip)\n";
+char usage[] = "\
+Usage: bwdiff [-m -g -l -e -n] [-b] file1.bw file2.bw (- stdin, . skip)\n";
 
 main( argc, argv )
 int argc; char **argv;
@@ -41,20 +50,27 @@ int argc; char **argv;
 	register unsigned char *p1, *p2, *op;
 	int	i, n, m;
 	
-	if( argc > 1 && strcmp(argv[1],"-m") == 0 ) {
-		mflag++;
+	while( argc > 3 ) {
+		if( strcmp(argv[1],"-m") == 0 ) {
+			mode = MAG;
+		} else if( strcmp(argv[1],"-g") == 0 ) {
+			mode = GREATER;
+		} else if( strcmp(argv[1],"-l") == 0 ) {
+			mode = LESS;
+		} else if( strcmp(argv[1],"-e") == 0 ) {
+			mode = EQUAL;
+		} else if( strcmp(argv[1],"-n") == 0 ) {
+			mode = NEQ;
+		} else if( strcmp(argv[1],"-b") == 0 ) {
+			backgnd++;
+		} else
+			break;
 		argv++;
 		argc--;
 	}
 
 	if( argc != 3 || isatty(fileno(stdout)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
-	}
-
-	if( strcmp(argv[1], argv[2]) == 0) {
-		fprintf( stderr,
-		  "bwdiff: comparing a file to itself is a nop\n");
+		fputs( usage, stderr );
 		exit( 1 );
 	}
 
@@ -76,18 +92,76 @@ int argc; char **argv;
 			 bzero( (&ibuf1[n]), (m - n));
 			 n = m;
 		}
-		for( i = 0; i < n; i++ ) {
-			if( mflag ) {
-				*op++ = abs( (int)*p1 - (int)*p2 );
-			} else {
+		/* unrolled for speed */
+		switch( mode ) {
+		case DIFF:
+			for( i = 0; i < n; i++ ) {
 				/*
 				 * *p's promoted to ints automatically,
 				 * VAX then does /2 much faster! (extzv)
 				 */
 				*op++ = (*p1 - *p2)/2 + 128;
+				p1++;
+				p2++;
 			}
-			p1++;
-			p2++;
+			break;
+		case MAG:
+			for( i = 0; i < n; i++ ) {
+				*op++ = abs( (int)*p1++ - (int)*p2++ );
+			}
+			break;
+		case GREATER:
+			for( i = 0; i < n; i++ ) {
+				if( *p1 > *p2++ )
+					*op++ = 255;
+				else {
+					if( backgnd )
+						*op++ = *p1 >> 2;
+					else
+						*op++ = 0;
+				}
+				p1++;
+			}
+			break;
+		case LESS:
+			for( i = 0; i < n; i++ ) {
+				if( *p1 < *p2++ )
+					*op++ = 255;
+				else {
+					if( backgnd )
+						*op++ = *p1 >> 2;
+					else
+						*op++ = 0;
+				}
+				p1++;
+			}
+			break;
+		case EQUAL:
+			for( i = 0; i < n; i++ ) {
+				if( *p1 == *p2++ )
+					*op++ = 255;
+				else {
+					if( backgnd )
+						*op++ = *p1 >> 2;
+					else
+						*op++ = 0;
+				}
+				p1++;
+			}
+			break;
+		case NEQ:
+			for( i = 0; i < n; i++ ) {
+				if( *p1 != *p2++ )
+					*op++ = 255;
+				else {
+					if( backgnd )
+						*op++ = (*p1) >> 1;
+					else
+						*op++ = 0;
+				}
+				p1++;
+			}
+			break;
 		}
 		fwrite( &obuf[0], 1, n, stdout );
 	}
