@@ -1542,6 +1542,9 @@ RT_EXTERN(void rt_vls_item_print_nc, (struct rt_vls *vp,
 RT_EXTERN(void rt_vls_name_print, (struct rt_vls *vp,
 	CONST struct structparse *parsetab, CONST char *name,
 				    CONST char *base ) );
+RT_EXTERN(void rt_vls_name_print_nc, (struct rt_vls *vp,
+	CONST struct structparse *parsetab, CONST char *name,
+				    CONST char *base ) );
           /* Print single element from data structure, chosen by name */
 RT_EXTERN(void rt_structprint, (CONST char *title,
 	CONST struct structparse *tab, CONST char *base ) );
