@@ -598,7 +598,8 @@ again:
 		if( fareu == eu )  goto really_on;	/* All eu's are ON! */
 		if( fareu->g.lseg_p != eu->g.lseg_p )  goto really_on;
 		farv = fareu->vu_p->v_p;
-rt_log("nmg_assess_eu() farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs, farv) );
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log("nmg_assess_eu() farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs, farv) );
 		if( nmg_is_v_on_rs_list(rs, farv) > -1 )  {
 			/* farv is ON list, try going further back */
 			goto again;
@@ -606,7 +607,8 @@ rt_log("nmg_assess_eu() farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs
 		/* farv is not ON list, assess _it_ */
 		/* XXX Need to remove othervu from the list! */
 		otherv = farv;
-rt_log("nmg_assess_eu() assessing farv\n");
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log("nmg_assess_eu() assessing farv\n");
 		goto left_right;
 
 		/* Compute edge vector, for purposes of orienting answer */
@@ -761,11 +763,12 @@ int			pos;
 			VPRINT("vu  ", this_eu->vu_p->v_p->vg_p->coord);
 			VPRINT("prev", prev->vu_p->v_p->vg_p->coord);
 			VPRINT("next", next->vu_p->v_p->vg_p->coord);
-/* See how far off the line they are */
-rt_log("vu dist=%e, next dist=%e, tol=%e\n",
-rt_dist_line_point( rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord ),
-rt_dist_line_point( rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord ),
-rs->tol->dist );
+
+			/* See how far off the line they are */
+			rt_log("vu dist=%e, next dist=%e, tol=%e\n",
+			rt_dist_line_point( rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord ),
+			rt_dist_line_point( rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord ),
+				rs->tol->dist );
 #if 0
 			/* It's too late for this now. */
 			if( nmg_break_long_edges( nmg_find_s_of_eu(this_eu), rs->tol ) > 0 )
@@ -2798,8 +2801,8 @@ int			other_rs_state;
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
 		nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
-nmg_fu_touchingloops(rs->fu1);
-nmg_fu_touchingloops(rs->fu2);
+		nmg_fu_touchingloops(rs->fu1);
+		nmg_fu_touchingloops(rs->fu2);
 	}
 
 	assessment = nmg_assess_vu( rs, pos );
@@ -2865,7 +2868,8 @@ nmg_fu_touchingloops(rs->fu2);
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
 		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
-rt_log("force prev eu to ray\n");
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log("force prev eu to ray\n");
 			nmg_edge_geom_isect_line( eu, rs );
 		}
 	}
@@ -2873,7 +2877,8 @@ rt_log("force prev eu to ray\n");
 		eu = nmg_find_eu_of_vu(vu);
 		NMG_CK_EDGEUSE(eu);
 		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
-rt_log("force next eu to ray\n");
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log("force next eu to ray\n");
 			nmg_edge_geom_isect_line( eu, rs );
 		}
 	}
