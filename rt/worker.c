@@ -43,9 +43,8 @@ extern int	stereo;			/* stereo viewing */
 extern vect_t	left_eye_delta;
 extern int	hypersample;		/* number of extra rays to fire */
 extern int	jitter;			/* jitter ray starting positions */
-extern int	rt_perspective;		/* perspective view -vs- parallel */
+extern fastf_t	rt_perspective;		/* persp (degrees X) 0 => ortho */
 extern fastf_t	aspect;			/* view aspect ratio X/Y */
-extern fastf_t	persp_angle;		/* perspective angle (degrees X) */
 extern vect_t	dx_model;		/* view delta-X as model-space vect */
 extern vect_t	dy_model;		/* view delta-Y as model-space vect */
 extern point_t	eye_model;		/* model-space location of eye */
@@ -102,7 +101,7 @@ grid_setup()
 	if( rt_perspective )  {
 		fastf_t	zoomout;
 		extern double mat_degtorad;
-		zoomout = 1.0 / tan( mat_degtorad * persp_angle / 2.0 );
+		zoomout = 1.0 / tan( mat_degtorad * rt_perspective / 2.0 );
 		VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
 		/*
 		 * Divergance is (0.5 * viewsize / width) mm at
