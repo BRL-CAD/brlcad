@@ -63,6 +63,13 @@ typedef	long	Cast;
 #	define	CPP_OPTIONS	"-D__CAKE__bsdi"
 #endif
 
+#if __MACHINETYPE__li
+	/* Linux with GNU CPP */
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-traditional"
+#	define	CPP_OPTIONS2	"-D__CAKE__linux"
+#endif
+
 #if __MACHINETYPE__386
 	/* 386BSD from Jolitz */
 #	define	CPP		"/usr/bin/cpp"
@@ -92,7 +99,7 @@ typedef	long	Cast;
 	/* Gnu CPP */
 #	define	CPP		"/lib/cpp"
 #	define	CPP_OPTIONS	"-traditional"
-#	define	CPP_OPTIONS1	"-D__CAKE__next"
+#	define	CPP_OPTIONS2	"-D__CAKE__next"
 #endif
 
 #if __MACHINETYPE__ard
