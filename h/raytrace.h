@@ -74,7 +74,7 @@
  */
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#ifdef __STDC__
+#if __STDC__
 # define GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
 #else
@@ -618,22 +618,27 @@ struct resource {
  *  to elements of arbitrary data structures, the layout of which is
  *  described by tables of "structparse" structures.
  */
-#if defined(CRAY)
-	/*
-	 * CRAY machines have a problem taking the address of an arbitrary
-	 * character within a structure.  int pointers have to be used.
-	 * There is some matching hackery in the invididual tables.
-	 */
-	typedef int	*stroff_t;
+#if __STDC__
+#	define offsetofarray(_t, _m)	offsetof(_t, _m)
 #else
-	typedef char	*stroff_t;
+#	if CRAY
+		/* General problem of word-addressed hardware
+		 * where (int *) and (char *) have different representations.
+		 */
+#		define offsetof(_t, _m)		((int)(&(((_t *)0)->_m))*sizeof(int))
+#		define offsetofarray(_t, _m)	((int)( (((_t *)0)->_m))*sizeof(int))
+#	else
+#		define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
+#		define offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
+#	endif
 #endif
+
 
 struct structparse {
 	char		*sp_fmt;		/* "indir" or "%f", etc */
 	char		*sp_name;		/* Element's symbolic name */
-	stroff_t	sp_offset;		/* Offset within structure */
-	void		(*sp_hook)();		/* Optional hooked function */
+	int		sp_offset;		/* Byte offset in struct */
+	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
 };
 #define FUNC_NULL	((void (*)())0)
 
@@ -661,6 +666,7 @@ struct application  {
 	int		a_onehit;	/* flag to stop on first hit */
 	struct rt_i	*a_rt_i;	/* this librt instance */
 	struct resource	*a_resource;	/* dynamic memory resources */
+	int		a_zero1;	/* must be zero (sanity check) */
 	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
 	int		a_x;		/* Screen X of ray, if applicable */
 	int		a_y;		/* Screen Y of ray, if applicable */
@@ -674,8 +680,13 @@ struct application  {
 	vect_t		a_vvec;		/* application-specific vector */
 	fastf_t		a_refrac_index;	/* current index of refraction */
 	fastf_t		a_cumlen;	/* cumulative length of ray */
+	int		a_zero2;	/* must be zero (sanity check) */
 };
 #define RT_AFN_NULL	((int (*)())0)
+
+#define RT_AP_CHECK(_ap)	\
+	{if((_ap)->a_zero1||(_ap)->a_zero2) \
+		rt_bomb("corrupt application struct"); }
 
 /*
  *			R T _ G
@@ -819,7 +830,7 @@ struct command_tab {
  *                                                               *
  *****************************************************************/
 
-#ifdef __STDC__
+#if __STDC__
 extern void rt_bomb(char *str);		/* Fatal error */
 extern void rt_log();			/* Log message */
 					/* Read named MGED db, build toc */
@@ -840,7 +851,9 @@ extern void rt_printb(char *s, unsigned long v, char *bits);
 					/* Print a bit vector */
 extern struct soltab *rt_find_solid(struct rt_i *rtip, char *name);
 					/* Parse arbitrary data structure */
-extern void rt_structparse(char *cp, struct structparse *tab, stroff_t base );
+extern void rt_structparse(char *cp, struct structparse *tab, char *base );
+					/* Print arbitrary data structure */
+extern void rt_structprint(char *title, struct structparse *tab, char *base );
 extern char *rt_read_cmd(FILE *fp);	/* Read semi-colon terminated line */
 					/* do cmd from string via cmd table */
 extern int rt_do_cmd(struct rt_i *rtip, char *lp, struct command_tab *ctp);
@@ -864,6 +877,7 @@ extern void rt_pr_partitions();		/* Print the partitions */
 extern void rt_printb();		/* Print a bit vector */
 extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
 extern void rt_structparse();		/* Parse arbitrary data structure */
+extern void rt_structprint();		/* Print arbitrary data structure */
 extern char *rt_read_cmd();		/* Read semi-colon terminated line */
 extern int rt_do_cmd();			/* do cmd from string via cmd table */
 
@@ -888,7 +902,7 @@ extern double mat_atan2();
  *                                                               *
  *****************************************************************/
 
-#ifdef __STDC__
+#if __STDC__
 					/* visible malloc() */
 extern char *rt_malloc(unsigned int cnt, char *str);
 					/* visible free() */
@@ -1103,8 +1117,15 @@ extern double	rt_inv255;
 /*
  *  System library routines used by the RT library.
  */
+#if __STDC__
+/*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
+#	include <stdlib.h>
+#	include <stddef.h>
+#else
 extern char	*malloc();
 extern char	*calloc();
+extern char	*realloc();
 /**extern void	free(); **/
+#endif
 
 #endif /* RAYTRACE_H */
