@@ -13,13 +13,20 @@
 			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
-static
-char sccsTag[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, archive /vld/moss/src/fbed/s.getfont.c";
+static const char RCSid[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, archive /vld/moss/src/fbed/s.getfont.c";
 #endif
 /* 
 	getfont.c - Load a new font by reading in the header and directory.
  */ 
+#include "conf.h"
 #include <stdio.h>
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "./font.h"
 
 /* Variables controlling the font itself */
@@ -30,7 +37,9 @@ struct dispatch	dir[256];	/* Directory for character font. */
 int width = 0,	/* Size of current character. */
 		height = 0;
 
+extern void fb_log();
 
+int
 get_Font( fontname )
 char *fontname;
 	{	FILE		*newff;

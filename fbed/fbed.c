@@ -11,6 +11,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
@@ -170,134 +176,134 @@ STATIC int	/* ^X  */ f_Exec_Function(),
 
 Func_Tab func_tab[] =
 	{
-/* NUL */ f_Nop,			NULL,	"nop",
-/* ^A  */ f_Nop,			NULL,	"nop",
-/* ^B  */ f_Nop,			NULL,	"nop",
-/* ^C  */ f_Nop,			NULL,	"nop",
-/* ^D  */ f_Nop,			NULL,	"nop",
-/* ^E  */ f_Nop,			NULL,	"nop",
-/* ^F  */ f_Nop,			NULL,	"nop",
-/* ^G  */ f_Nop,			NULL,	"nop",
-/* ^H  */ f_Win_Lft,			NULL,	"move-window-left",
-/* ^I  */ f_Nop,			NULL,	"nop",
-/* ^J  */ f_Win_Dwn,			NULL,	"move-window-down",
-/* ^K  */ f_Win_Up,			NULL,	"move-window-up",
-/* ^L  */ f_Win_Rgt,			NULL,	"move-window-right",
-/* ^M  */ f_Reset_View,			NULL,	"reset-view",
-/* ^N  */ f_Nop,			NULL,	"nop",
-/* ^O  */ f_Nop,			NULL,	"nop",
-/* ^P  */ f_Nop,			NULL,	"nop",
-/* ^Q  */ f_Nop,			NULL,	"nop",
-/* ^R  */ f_Redraw,			NULL,	"redraw-tty-screen",
-/* ^S  */ f_Nop,			NULL,	"nop",
-/* ^T  */ f_Nop,			NULL,	"nop",
-/* ^U  */ f_Nop,			NULL,	"nop",
-/* ^V  */ f_Nop,			NULL,	"nop",
-/* ^W  */ f_Nop,			NULL,	"nop",
-/* ^X  */ f_Exec_Function,		NULL,	"execute-function-or-macro",
-/* ^Y  */ f_Nop,			NULL,	"nop",
-/* ^Z  */ f_Stop,			NULL,	"stop-program",
-/* ESC */ f_Iterations,			NULL,	"argument-count",
-/* FS  */ f_Nop,			NULL,	"nop",
-/* GS  */ f_Nop,			NULL,	"nop",
-/* RS  */ f_Nop,			NULL,	"nop",
-/* US  */ f_Nop,			NULL,	"nop",
-/* SP  */ f_Press,			NULL,	"pick-point",
-/* !   */ f_Nop,			NULL,	"nop",
-/* "   */ f_Nop,			NULL,	"nop",
-/* #   */ f_Comment,			NULL,	"print-comment",
-/* $   */ f_Nop,			NULL,	"nop",
-/* %   */ f_Nop,			NULL,	"nop",
-/* &   */ f_Nop,			NULL,	"nop",
-/* `   */ f_Nop,			NULL,	"nop",
-/* (   */ f_Nop,			NULL,	"nop",
-/* )   */ f_Nop,			NULL,	"nop",
-/* *   */ f_Nop,			NULL,	"nop",
-/* +   */ f_Nop,			NULL,	"nop",
-/* ,   */ f_Dec_Brush_Size,		NULL,	"decrement-brush-size",
-/* -   */ f_Nop,			NULL,	"nop",
-/* .   */ f_Inc_Brush_Size,		NULL,	"increment-brush-size",
-/* /   */ f_Nop,			NULL,	"nop",
-/* 0   */ f_Nop,			NULL,	"nop",
-/* 1   */ f_Nop,			NULL,	"nop",
-/* 2   */ f_Nop,			NULL,	"nop",
-/* 3   */ f_Nop,			NULL,	"nop",
-/* 4   */ f_Nop,			NULL,	"nop",
-/* 5   */ f_Nop,			NULL,	"nop",
-/* 6   */ f_Nop,			NULL,	"nop",
-/* 7   */ f_Nop,			NULL,	"nop",
-/* 8   */ f_Nop,			NULL,	"nop",
-/* 9   */ f_Nop,			NULL,	"nop",
-/* :   */ f_Nop,			NULL,	"nop",
-/* ;   */ f_Nop,			NULL,	"nop",
-/* <   */ f_Dec_Step_Size,		NULL,	"decrement-step-size",
-/* =   */ f_Nop,			NULL,	"nop",
-/* >   */ f_Inc_Step_Size,		NULL,	"increment-step-size",
-/* ?   */ f_Menu,			NULL,	"print-bindings",
-/* @   */ f_Nop,			NULL,	"nop",
-/* A   */ f_Start_Macro,		NULL,	"start-macro-definition",
-/* B   */ f_Bind_Macro_To_Key,		NULL,	"bind-macro-to-key",
-/* C   */ f_Crunch_Image,		NULL,	"shrink-image-by-half",
-/* D   */ f_Nop,			NULL,	"nop",
-/* E   */ f_Erase_Fb,			NULL,	"clear-framebuffer-memory",
-/* F   */ f_Flip_Resolution,		NULL,	"flip-framebuffer-resolution",
-/* G   */ f_Get_Panel,			NULL,	"get-current-rectangle",
-/* H   */ f_Jump_Lft,			NULL,	"jump-cursor-left",
-/* I   */ f_Nop,			NULL,	"nop",
-/* J   */ f_Jump_Dwn,			NULL,	"jump-cursor-down",
-/* K   */ f_Jump_Up,			NULL,	"jump-cursor-up",
-/* L   */ f_Jump_Rgt,			NULL,	"jump-cursor-right",
-/* M   */ f_Nop,			NULL,	"nop",
-/* N   */ f_Name_Keyboard_Macro,	NULL,	"name-keyboard-macro",
-/* O   */ f_Nop,			NULL,	"nop",
-/* P   */ f_Put_Panel,			NULL,	"put-saved-rectangle",
-/* Q   */ f_Nop,			NULL,	"nop",
-/* R   */ f_Restore_RLE,		NULL,	"read-rle-fle",
-/* S   */ f_Save_RLE,			NULL,	"write-rle-file",
-/* T   */ f_Transliterate,		NULL,	"replace-pixel-current-rectangle",
-/* U   */ f_Write_Macros_To_File,	NULL,	"write-macros-to-file",
-/* V   */ f_FillRegion,			NULL,	"fill-bounded-region",
-/* W   */ f_Fill_Panel,			NULL,	"fill-current-rectangle",
-/* X   */ f_Bind_Key_To_Key,		NULL,	"bind-key-to-key",
-/* Y   */ f_Bind_Name_To_Key,		NULL,	"bind-key-to-name",
-/* Z   */ f_Stop_Macro,			NULL,	"stop-macro-definition",
-/* [   */ f_Nop,			NULL,	"nop",
-/* \   */ f_Nop,			NULL,	"nop",
-/* ]   */ f_Nop,			NULL,	"nop",
-/* ^   */ f_Nop,			NULL,	"nop",
-/* _   */ f_Nop,			NULL,	"nop",
-/* `   */ f_Nop,			NULL,	"nop",
-/* a   */ f_Enter_Macro_Definition,	NULL,	"enter-macro-definition",
-/* b   */ f_Set_Rectangle,		NULL,	"set-current-rectangle",
-/* c   */ f_Center_Window,		NULL,	"window-center",
-/* d   */ f_DrawLine,			NULL,	"draw-line",
-/* e   */ f_Nop,			NULL,	"nop",
-/* f   */ f_Rd_Font,			NULL,	"read-font",
-/* g   */ f_Set_Pixel,			NULL,	"set-paint-to-current-pixel",
-/* h   */ f_Move_Lft,			NULL,	"move-cursor-left",
-/* i   */ f_Zoom_In,			NULL,	"zoom-in",
-/* j   */ f_Move_Dwn,			NULL,	"move-cursor-down",
-/* k   */ f_Move_Up,			NULL,	"move-cursor-up",
-/* l   */ f_Move_Rgt,			NULL,	"move-cursor-right",
-/* m   */ f_Status_Monitor,		NULL,	"set-monitor",
-/* n   */ f_Tolerance,			NULL,	"set-tolerance-color-match",
-/* o   */ f_Zoom_Out,			NULL,	"zoom-out",
-/* p   */ f_Key_Set_Pixel,		NULL,	"set-paint-from-key",
-/* q   */ f_Quit,			NULL,	"quit",
-/* r   */ f_Rd_Fb,			NULL,	"read-framebuffer",
-/* s   */ f_String,			NULL,	"put-string",
-/* t   */ f_ChngRegionColor,		NULL,	"change-region-color",
-/* u   */ f_Rd_Macros_From_File,	NULL,	"read-macros-from-file",
-/* v   */ f_DrawRectangle,		NULL,	"draw-rectangle",
-/* w   */ f_Put_Pixel,			NULL,	"put-pixel",
-/* x   */ f_Set_X_Pos,			NULL,	"set-cursor-x-pos",
-/* y   */ f_Set_Y_Pos,			NULL,	"set-cursor-y-pos",
-/* z   */ f_Nop,			NULL,	"nop",
-/* {   */ f_Nop,			NULL,	"nop",
-/* |   */ f_Nop,			NULL,	"nop",
-/* }   */ f_Nop,			NULL,	"nop",
-/* ~   */ f_Nop,			NULL,	"nop",
-/* DEL */ f_Nop,			NULL,	"nop"
+{/* NUL */ f_Nop,			NULL,	"nop"},
+{/* ^A  */ f_Nop,			NULL,	"nop"},
+{/* ^B  */ f_Nop,			NULL,	"nop"},
+{/* ^C  */ f_Nop,			NULL,	"nop"},
+{/* ^D  */ f_Nop,			NULL,	"nop"},
+{/* ^E  */ f_Nop,			NULL,	"nop"},
+{/* ^F  */ f_Nop,			NULL,	"nop"},
+{/* ^G  */ f_Nop,			NULL,	"nop"},
+{/* ^H  */ f_Win_Lft,			NULL,	"move-window-left"},
+{/* ^I  */ f_Nop,			NULL,	"nop"},
+{/* ^J  */ f_Win_Dwn,			NULL,	"move-window-down"},
+{/* ^K  */ f_Win_Up,			NULL,	"move-window-up"},
+{/* ^L  */ f_Win_Rgt,			NULL,	"move-window-right"},
+{/* ^M  */ f_Reset_View,			NULL,	"reset-view"},
+{/* ^N  */ f_Nop,			NULL,	"nop"},
+{/* ^O  */ f_Nop,			NULL,	"nop"},
+{/* ^P  */ f_Nop,			NULL,	"nop"},
+{/* ^Q  */ f_Nop,			NULL,	"nop"},
+{/* ^R  */ f_Redraw,			NULL,	"redraw-tty-screen"},
+{/* ^S  */ f_Nop,			NULL,	"nop"},
+{/* ^T  */ f_Nop,			NULL,	"nop"},
+{/* ^U  */ f_Nop,			NULL,	"nop"},
+{/* ^V  */ f_Nop,			NULL,	"nop"},
+{/* ^W  */ f_Nop,			NULL,	"nop"},
+{/* ^X  */ f_Exec_Function,		NULL,	"execute-function-or-macro"},
+{/* ^Y  */ f_Nop,			NULL,	"nop"},
+{/* ^Z  */ f_Stop,			NULL,	"stop-program"},
+{/* ESC */ f_Iterations,			NULL,	"argument-count"},
+{/* FS  */ f_Nop,			NULL,	"nop"},
+{/* GS  */ f_Nop,			NULL,	"nop"},
+{/* RS  */ f_Nop,			NULL,	"nop"},
+{/* US  */ f_Nop,			NULL,	"nop"},
+{/* SP  */ f_Press,			NULL,	"pick-point"},
+{/* !   */ f_Nop,			NULL,	"nop"},
+{/* "   */ f_Nop,			NULL,	"nop"},
+{/* #   */ f_Comment,			NULL,	"print-comment"},
+{/* $   */ f_Nop,			NULL,	"nop"},
+{/* %   */ f_Nop,			NULL,	"nop"},
+{/* &   */ f_Nop,			NULL,	"nop"},
+{/* `   */ f_Nop,			NULL,	"nop"},
+{/* (   */ f_Nop,			NULL,	"nop"},
+{/* )   */ f_Nop,			NULL,	"nop"},
+{/* *   */ f_Nop,			NULL,	"nop"},
+{/* +   */ f_Nop,			NULL,	"nop"},
+{/* ,   */ f_Dec_Brush_Size,		NULL,	"decrement-brush-size"},
+{/* -   */ f_Nop,			NULL,	"nop"},
+{/* .   */ f_Inc_Brush_Size,		NULL,	"increment-brush-size"},
+{/* /   */ f_Nop,			NULL,	"nop"},
+{/* 0   */ f_Nop,			NULL,	"nop"},
+{/* 1   */ f_Nop,			NULL,	"nop"},
+{/* 2   */ f_Nop,			NULL,	"nop"},
+{/* 3   */ f_Nop,			NULL,	"nop"},
+{/* 4   */ f_Nop,			NULL,	"nop"},
+{/* 5   */ f_Nop,			NULL,	"nop"},
+{/* 6   */ f_Nop,			NULL,	"nop"},
+{/* 7   */ f_Nop,			NULL,	"nop"},
+{/* 8   */ f_Nop,			NULL,	"nop"},
+{/* 9   */ f_Nop,			NULL,	"nop"},
+{/* :   */ f_Nop,			NULL,	"nop"},
+{/* ;   */ f_Nop,			NULL,	"nop"},
+{/* <   */ f_Dec_Step_Size,		NULL,	"decrement-step-size"},
+{/* =   */ f_Nop,			NULL,	"nop"},
+{/* >   */ f_Inc_Step_Size,		NULL,	"increment-step-size"},
+{/* ?   */ f_Menu,			NULL,	"print-bindings"},
+{/* @   */ f_Nop,			NULL,	"nop"},
+{/* A   */ f_Start_Macro,		NULL,	"start-macro-definition"},
+{/* B   */ f_Bind_Macro_To_Key,		NULL,	"bind-macro-to-key"},
+{/* C   */ f_Crunch_Image,		NULL,	"shrink-image-by-half"},
+{/* D   */ f_Nop,			NULL,	"nop"},
+{/* E   */ f_Erase_Fb,			NULL,	"clear-framebuffer-memory"},
+{/* F   */ f_Flip_Resolution,		NULL,	"flip-framebuffer-resolution"},
+{/* G   */ f_Get_Panel,			NULL,	"get-current-rectangle"},
+{/* H   */ f_Jump_Lft,			NULL,	"jump-cursor-left"},
+{/* I   */ f_Nop,			NULL,	"nop"},
+{/* J   */ f_Jump_Dwn,			NULL,	"jump-cursor-down"},
+{/* K   */ f_Jump_Up,			NULL,	"jump-cursor-up"},
+{/* L   */ f_Jump_Rgt,			NULL,	"jump-cursor-right"},
+{/* M   */ f_Nop,			NULL,	"nop"},
+{/* N   */ f_Name_Keyboard_Macro,	NULL,	"name-keyboard-macro"},
+{/* O   */ f_Nop,			NULL,	"nop"},
+{/* P   */ f_Put_Panel,			NULL,	"put-saved-rectangle"},
+{/* Q   */ f_Nop,			NULL,	"nop"},
+{/* R   */ f_Restore_RLE,		NULL,	"read-rle-fle"},
+{/* S   */ f_Save_RLE,			NULL,	"write-rle-file"},
+{/* T   */ f_Transliterate,		NULL,	"replace-pixel-current-rectangle"},
+{/* U   */ f_Write_Macros_To_File,	NULL,	"write-macros-to-file"},
+{/* V   */ f_FillRegion,			NULL,	"fill-bounded-region"},
+{/* W   */ f_Fill_Panel,			NULL,	"fill-current-rectangle"},
+{/* X   */ f_Bind_Key_To_Key,		NULL,	"bind-key-to-key"},
+{/* Y   */ f_Bind_Name_To_Key,		NULL,	"bind-key-to-name"},
+{/* Z   */ f_Stop_Macro,			NULL,	"stop-macro-definition"},
+{/* [   */ f_Nop,			NULL,	"nop"},
+{/* \   */ f_Nop,			NULL,	"nop"},
+{/* ]   */ f_Nop,			NULL,	"nop"},
+{/* ^   */ f_Nop,			NULL,	"nop"},
+{/* _   */ f_Nop,			NULL,	"nop"},
+{/* `   */ f_Nop,			NULL,	"nop"},
+{/* a   */ f_Enter_Macro_Definition,	NULL,	"enter-macro-definition"},
+{/* b   */ f_Set_Rectangle,		NULL,	"set-current-rectangle"},
+{/* c   */ f_Center_Window,		NULL,	"window-center"},
+{/* d   */ f_DrawLine,			NULL,	"draw-line"},
+{/* e   */ f_Nop,			NULL,	"nop"},
+{/* f   */ f_Rd_Font,			NULL,	"read-font"},
+{/* g   */ f_Set_Pixel,			NULL,	"set-paint-to-current-pixel"},
+{/* h   */ f_Move_Lft,			NULL,	"move-cursor-left"},
+{/* i   */ f_Zoom_In,			NULL,	"zoom-in"},
+{/* j   */ f_Move_Dwn,			NULL,	"move-cursor-down"},
+{/* k   */ f_Move_Up,			NULL,	"move-cursor-up"},
+{/* l   */ f_Move_Rgt,			NULL,	"move-cursor-right"},
+{/* m   */ f_Status_Monitor,		NULL,	"set-monitor"},
+{/* n   */ f_Tolerance,			NULL,	"set-tolerance-color-match"},
+{/* o   */ f_Zoom_Out,			NULL,	"zoom-out"},
+{/* p   */ f_Key_Set_Pixel,		NULL,	"set-paint-from-key"},
+{/* q   */ f_Quit,			NULL,	"quit"},
+{/* r   */ f_Rd_Fb,			NULL,	"read-framebuffer"},
+{/* s   */ f_String,			NULL,	"put-string"},
+{/* t   */ f_ChngRegionColor,		NULL,	"change-region-color"},
+{/* u   */ f_Rd_Macros_From_File,	NULL,	"read-macros-from-file"},
+{/* v   */ f_DrawRectangle,		NULL,	"draw-rectangle"},
+{/* w   */ f_Put_Pixel,			NULL,	"put-pixel"},
+{/* x   */ f_Set_X_Pos,			NULL,	"set-cursor-x-pos"},
+{/* y   */ f_Set_Y_Pos,			NULL,	"set-cursor-y-pos"},
+{/* z   */ f_Nop,			NULL,	"nop"},
+{/* {   */ f_Nop,			NULL,	"nop"},
+{/* |   */ f_Nop,			NULL,	"nop"},
+{/* }   */ f_Nop,			NULL,	"nop"},
+{/* ~   */ f_Nop,			NULL,	"nop"},
+{/* DEL */ f_Nop,			NULL,	"nop"}
 };
 
 static Func_Tab	*bindings[DEL+1];
@@ -307,6 +313,7 @@ FBIO *fbp;				/* Current framebuffer */
 static int cur_width = 512;
 
 /*	m a i n ( ) */
+int
 main( argc, argv )
 char *argv[];
 	{
@@ -846,7 +853,7 @@ f_Iterations( buf ) /* Specify number of iterations of next command. */
 char *buf;
 	{	char iterate_buf[MAX_DIGITS+1];
 		int iterate;
-		register int c, i;
+		register int c=0, i;
 	if( remembering )
 		/* Clobber "f_Iterations()" key-stroke. */
 		*--macro_ptr = NUL;
@@ -1128,7 +1135,7 @@ char *buf;
 				);
 		return 0;
 		}
-	bindings[key[0]] = macro_entry;
+	bindings[(int)key[0]] = macro_entry;
 	return 1;
 	}
 
@@ -1302,7 +1309,7 @@ char *buf;
 		}
 	if( ! get_Input( old_key, 2, "To function bound to key : " ) )
 		return 0;
-	bindings[new_key[0]] = bindings[old_key[0]];
+	bindings[(int)new_key[0]] = bindings[(int)old_key[0]];
 	return 1;
 	}
 
@@ -1330,7 +1337,7 @@ char *buf;
 	if( strcmp( ftbl->f_name, name ) == 0 )
 		{
 		/* Key is still bound to this function/macro. */
-		bindings[key[0]] = ftbl;
+		bindings[(int)key[0]] = ftbl;
 		return 1;
 		}
 	else
@@ -2378,7 +2385,7 @@ int i;
 		return "EOF";
 	return buf;
 	}
-
+int
 get_Mouse_Pos( pointp )
 Point *pointp;
 	{

@@ -99,11 +99,39 @@ extern void prnt_Status();
 extern void prnt_Usage();
 #if __STDC__
 extern void prnt_Scroll( char * fmt, ... );
+extern void prnt_Event( char *fmt, ... );
 #else
+extern void prnt_Event();
 extern void prnt_Scroll();
 #endif
 extern void prnt_Rectangle();
 extern void do_Key_Cmd();
+extern int InitTermCap();
+extern int get_Font();
+extern void prnt_Prompt();
+extern int empty();
+extern int get_Char();
+extern int get_Mouse_Pos();
+extern int SetStandout();
+extern int ClrStandout();
+extern int exec_Shell();
+extern void do_line();
+extern int pad_open();
+extern void save_Tty();
+extern void set_Raw();
+extern void clr_Tabs();
+extern void clr_Echo();
+extern void clr_CRNL();
+extern int MvCursor();
+extern void pad_close();
+extern void reset_Tty();
+extern int ClrText();
+extern int HmCursor();
+extern int DeleteLn();
+extern int ClrEOL();
+extern int SetScrlReg();
+extern int ResetScrlReg();
+extern void set_HUPCL();
 
 #define MAX_LN			81
 #define Toggle(f)		(f) = ! (f)

@@ -6,13 +6,18 @@
 			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
-static
-char sccsTag[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, archive /vld/moss/src/fbed/s.getinput.c";
+static const char RCSid[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, archive /vld/moss/src/fbed/s.getinput.c";
 #endif
 
 #include "conf.h"
 
 #include <stdio.h>
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -36,6 +41,7 @@ ring_Bell()
 /*	g e t _ I n p u t ( )
 	Get a line of input.
  */
+int
 get_Input( inbuf, bufsz, msg )
 char  *inbuf;
 int  bufsz;
