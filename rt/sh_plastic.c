@@ -62,6 +62,7 @@ struct structparse phong_parse[] = {
 	{"%f",	1, "reflect",		PL_O(reflect),		FUNC_NULL },
 	{"%f",	1, "re",		PL_O(reflect),		FUNC_NULL },
 	{"%f",	1, "ri",		PL_O(refrac_index),	FUNC_NULL },
+	{"%f",	1, "extinction_per_meter", PL_O(extinction),	FUNC_NULL },
 	{"%f",	1, "extinction",	PL_O(extinction),	FUNC_NULL },
 	{"%f",	1, "ex",		PL_O(extinction),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
