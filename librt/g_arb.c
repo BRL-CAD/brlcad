@@ -326,8 +326,6 @@ struct prep_arb	*pap;
 	switch( i )  {
 	case 0:
 		VMOVE( afp->A, point );
-VPRINT("pt", point );
-VPRINT(" A", afp->A);
 		if( pap->pa_doopt )  {
 			VMOVE( ofp->arb_UVorig, point );
 		}
