@@ -82,11 +82,11 @@ char	*title;
  *  outward pointing normal vector.
  */
 int
-mk_half( fp, name, d, norm )
+mk_half( fp, name, norm, d )
 FILE	*fp;
 char	*name;
-double	d;
 point_t	norm;
+double	d;
 {
 	static union record rec;
 
@@ -438,8 +438,8 @@ vect_t	c, d;
  *			M K _ P O L Y S O L I D
  *
  *  Make the header record for a polygon solid.
- *  Must be followed by 1 or more mk_facet() calls before
- *  any other mk_* routines
+ *  Must be followed by 1 or more mk_poly() or mk_fpoly() calls
+ *  before any other mk_* routines.
  */
 int
 mk_polysolid( fp, name )
@@ -456,22 +456,22 @@ char	*name;
 }
 
 /*
- *			M K _ F A C E T
+ *			M K _ P O L Y
  *
- *  Must follow a call to mk_polysolid() or mk_facet()
+ *  Must follow a call to mk_polysolid(), mk_poly(), or mk_fpoly().
  */
 int
-mk_facet( fp, npts, vert, norm )
+mk_poly( fp, npts, verts, norms )
 FILE	*fp;
 int	npts;
-fastf_t	vert[][3];
-fastf_t	norm[][3];
+fastf_t	verts[][3];
+fastf_t	norms[][3];
 {
 	static union record rec;
 	register int i,j;
 
 	if( npts < 3 || npts > 5 )  {
-		fprintf(stderr,"mk_facet:  npts=%d is bad\n", npts);
+		fprintf(stderr,"mk_poly:  npts=%d is bad\n", npts);
 		return(-1);
 	}
 
@@ -480,10 +480,39 @@ fastf_t	norm[][3];
 	rec.q.q_count = npts;
 	for( i=0; i<npts; i++ )  {
 		for( j=0; j<3; j++ )  {
-			rec.q.q_verts[i][j] = vert[i][j];
-			rec.q.q_norms[i][j] = norm[i][j];
+			rec.q.q_verts[i][j] = verts[i][j];
+			rec.q.q_norms[i][j] = norms[i][j];
 		}
 	}
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 	return(0);
+}
+
+/*
+ *			M K _ F P O L Y
+ *
+ *  Must follow a call to mk_polysolid(), mk_poly(), or mk_fpoly().
+ */
+int
+mk_fpoly( fp, npts, verts )
+FILE	*fp;
+int	npts;
+fastf_t	verts[][3];
+{
+	int	i;
+	vect_t	v1, v2, norms[5];
+
+	if( npts < 3 || npts > 5 )  {
+		fprintf(stderr,"mk_poly:  npts=%d is bad\n", npts);
+		return(-1);
+	}
+
+	VSUB2( v1, verts[1], verts[0] );
+	VSUB2( v2, verts[npts-1], verts[0] );
+	VCROSS( norms[0], v1, v2 );
+	VUNITIZE( norms[0] );
+	for( i = 1; i < npts; i++ ) {
+		VMOVE( norms[i], norms[0] );
+	}
+	return( mk_poly(fp, npts, verts, norms) );
 }
