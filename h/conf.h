@@ -78,6 +78,9 @@
 #	define HAVE_STRING_H	1
 #	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
 #	define HAVE_SBRK_DECL		1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_GETHOSTNAME	1
+#	define HAVE_TERMIOS_H	1
 #endif
 
 #if defined(sgi) || defined(__sgi) || defined(IRIX)
@@ -89,6 +92,8 @@
 #	define HAVE_GETOPT_H	1
 #	define HAVE_STDLIB_H	1
 #	define HAVE_UNISTD_H	1
+#	define HAVE_GETHOSTNAME	1
+#	define HAVE_SYS_MMAN_H	1
 #endif
 
 #if IRIX == 5
@@ -120,12 +125,15 @@
 	/* SunOS 4.X on Sun-3 or Sun-4 */
 #	define HAVE_STDLIB_H	1
 #	define HAVE_UNISTD_H	1
+#	define HAVE_SYS_MMAN_H	1
 #endif
 
 #if SUNOS >= 52
 #	define HAVE_STDLIB_H	1
 #	define HAVE_UNISTD_H	1
 #	define HAVE_XOSDEFS_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_SBRK_DECL	1
 #endif
 
 #if defined(linux)
@@ -153,10 +161,6 @@
 
 #ifdef CRAY1
 #	define HAVE_SYS_MACHD_H	1	/* XMP only, for HZ */
-#endif
-
-#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
-#	define HAVE_SYS_MMAN_H	1
 #endif
 
 #if BSD >= 43
@@ -273,10 +277,6 @@
 #	define HAVE_SBRK_DECL		1
 #endif
 
-#if SUNOS >= 52
-#	define HAVE_SBRK_DECL		1
-#endif
-
 #if !defined(SYSV)			/* XXXXXXXXX */
 #	define HAVE_CALTECH_MALLOC 1   /* XXX Bleh. See librt/storage.c */
 #endif
@@ -333,7 +333,7 @@
 #endif
 
 #ifndef CPP_ONLY
-#include <sys/types.h>
+# include <sys/types.h>
 #endif
 
 #if SUNOS >= 52
