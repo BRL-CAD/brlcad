@@ -1609,64 +1609,19 @@ int *array_len;
 }
 
 int
-get_tcl_curve( interp, crv, crv_obj )
+get_tcl_curve( interp, crv, seg_list )
 Tcl_Interp *interp;
 struct curve *crv;
-Tcl_Obj *crv_obj;
+Tcl_Obj *seg_list;
 {
-	Tcl_Obj *seg_list, *SL, *segments;
+	Tcl_Obj *SL, *segments;
 	int len2, seg_count;
 	int ret, j;
 
-	/* get the segment list */
-	if( (ret=Tcl_ListObjIndex( interp, crv_obj, 1, &seg_list ) ))
-	{
-		return( ret );
-	}
-
-	/* get length of segment list */
-	if( (ret=Tcl_ListObjLength( interp, seg_list, &len2 ) ))
-	{
-		Tcl_DecrRefCount( seg_list );
-		return( ret );
-	}
-
-	if( len2 != 2 )
-	{
-		Tcl_ResetResult( interp );
-		Tcl_AppendResult( interp, "ERROR: Segment list must have two elements ('SL' and segment list)!!\n", "Erroneous segment list: ",
-			Tcl_GetString( seg_list ), (char *)NULL);
-		Tcl_DecrRefCount( seg_list );
-		return( TCL_ERROR );
-	}
-	if( (ret=Tcl_ListObjIndex( interp, seg_list, 0, &SL ) ))
-	{
-		Tcl_DecrRefCount( seg_list );
-		return( ret );
-	}
-	if( strcmp( "SL", Tcl_GetString( SL )) )
-	{
-		Tcl_DecrRefCount( seg_list );
-		Tcl_DecrRefCount( SL );
-		Tcl_ResetResult( interp );
-		Tcl_AppendResult( interp, "ERROR: Segment list does not start with 'SL'!!\n", "Erroneous segment list: ",
-			Tcl_GetString( seg_list ), (char *)NULL);
-		return( TCL_ERROR );
-	}
-	Tcl_DecrRefCount( SL );
-
-	/* now get actual list of segments */
-	if( (ret=Tcl_ListObjIndex( interp, seg_list, 1, &segments ) ))
-	{
-		Tcl_DecrRefCount( seg_list );
-		return( ret );
-	}
 	/* get number of segments */
 	seg_count = 0;
-	if( (ret=Tcl_ListObjLength( interp, segments, &seg_count ) ))
+	if( (ret=Tcl_ListObjLength( interp, seg_list, &seg_count ) ))
 	{
-		Tcl_DecrRefCount( seg_list );
-		Tcl_DecrRefCount( segments );
 		return( ret );
 	}
 
@@ -1685,25 +1640,20 @@ Tcl_Obj *crv_obj;
 		int k, seg_len;
 
 		/* get the next segment */
-		if( (ret=Tcl_ListObjIndex( interp, segments, j, &seg ) ))
+		if( (ret=Tcl_ListObjIndex( interp, seg_list, j, &seg ) ))
 		{
-			Tcl_DecrRefCount( seg_list );
-			Tcl_DecrRefCount( segments );
 			return( ret );
 		}
 
 		if( (ret=Tcl_ListObjLength( interp, seg, &seg_len )) )
 		{
-			Tcl_DecrRefCount( seg_list );
-			Tcl_DecrRefCount( segments );
+			Tcl_DecrRefCount( seg );
 			return( ret );
 		}
 
 		/* get the segment type */
 		if( (ret=Tcl_ListObjIndex( interp, seg, 0, &seg_type ) ))
 		{
-			Tcl_DecrRefCount( seg_list );
-			Tcl_DecrRefCount( segments );
 			Tcl_DecrRefCount( seg );
 			return( ret );
 		}
@@ -1718,15 +1668,14 @@ Tcl_Obj *crv_obj;
 			{
 				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
 				{
-					Tcl_DecrRefCount( seg_list );
-					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg_type );
 					Tcl_DecrRefCount( seg );
 					return( ret );
 				}
 				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
 				{
-					Tcl_DecrRefCount( seg_list );
-					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg_elem );
+					Tcl_DecrRefCount( seg_type );
 					Tcl_DecrRefCount( seg );
 					return( ret );
 				}
@@ -1743,6 +1692,9 @@ Tcl_Obj *crv_obj;
 			}
 			lsg->magic = CURVE_LSEG_MAGIC;
 			crv->segments[j] = (genptr_t)lsg;
+			Tcl_DecrRefCount( seg_val );
+			Tcl_DecrRefCount( seg_elem );
+			Tcl_DecrRefCount( seg_type );
 		}
 		else if( !strcmp( type, "carc" ) )
 		{
@@ -1754,15 +1706,14 @@ Tcl_Obj *crv_obj;
 			{
 				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
 				{
-					Tcl_DecrRefCount( seg_list );
-					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg_type );
 					Tcl_DecrRefCount( seg );
 					return( ret );
 				}
 				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
 				{
-					Tcl_DecrRefCount( seg_list );
-					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg_elem );
+					Tcl_DecrRefCount( seg_type );
 					Tcl_DecrRefCount( seg );
 					return( ret );
 				}
@@ -1789,6 +1740,9 @@ Tcl_Obj *crv_obj;
 			}
 			csg->magic = CURVE_CARC_MAGIC;
 			crv->segments[j] = (genptr_t)csg;
+			Tcl_DecrRefCount( seg_val );
+			Tcl_DecrRefCount( seg_elem );
+			Tcl_DecrRefCount( seg_type );
 		}
 		else if( !strcmp( type, "nurb" ) )
 		{
@@ -1799,15 +1753,14 @@ Tcl_Obj *crv_obj;
 			{
 				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
 				{
-					Tcl_DecrRefCount( seg_list );
-					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg_type );
 					Tcl_DecrRefCount( seg );
 					return( ret );
 				}
 				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
 				{
-					Tcl_DecrRefCount( seg_list );
-					Tcl_DecrRefCount( segments );
+					Tcl_DecrRefCount( seg_elem );
+					Tcl_DecrRefCount( seg_type );
 					Tcl_DecrRefCount( seg );
 					return( ret );
 				}
@@ -1833,11 +1786,13 @@ Tcl_Obj *crv_obj;
 			}
 			nsg->magic = CURVE_NURB_MAGIC;
 			crv->segments[j] = (genptr_t)nsg;
+			Tcl_DecrRefCount( seg_val );
+			Tcl_DecrRefCount( seg_elem );
+			Tcl_DecrRefCount( seg_type );
 		}
 		else
 		{
-			Tcl_DecrRefCount( seg_list );
-			Tcl_DecrRefCount( segments );
+			Tcl_DecrRefCount( seg_type );
 			Tcl_DecrRefCount( seg );
 			Tcl_ResetResult( interp );
 			Tcl_AppendResult( interp, "ERROR: Unrecognized segment type: ",
@@ -1915,63 +1870,21 @@ char			**argv;
 		}
 		else if( !strcmp( argv[0], "SL" ) )	/* the entire segment list */
 		{
-			Tcl_Obj *list, *tmp, *tmp_list;
-			int len, len2, i;
+			Tcl_Obj *tmp;
+			struct curve *crv;
 
 			/* create a Tcl object */
 			tmp = Tcl_NewStringObj( argv[1], -1 );
-			tmp_list = Tcl_NewListObj( 1, &tmp );
 
-			/* get the actual list of curves */
-			if( (ret=Tcl_ListObjIndex( interp, tmp_list, 0, &list )) != TCL_OK )
+			crv = &skt->skt_curve;
+			crv->seg_count = 0;
+			crv->reverse = (int *)NULL;
+			crv->segments = (genptr_t)NULL;
+
+			if( (ret=get_tcl_curve( interp, crv, tmp )) != TCL_OK )
 			{
 				Tcl_DecrRefCount( tmp );
-				Tcl_DecrRefCount( tmp_list );
 				return( ret );
-			}
-
-			/* get the number of curves in the list */
-			if( (ret=Tcl_ListObjLength( interp, list, &len )) != TCL_OK )
-			{
-				Tcl_DecrRefCount( list );
-				return( ret );
-			}
-			if( len < 1 )
-				goto next_arg;
-
-			/* loop through each curve */
-			for( i=0 ; i<len ; i++ )
-			{
-				Tcl_Obj *crv_obj;
-				struct curve *crv;
-
-				/* get the curve */
-				if( (ret=Tcl_ListObjIndex( interp, list, i, &crv_obj ) ))
-				{
-					Tcl_DecrRefCount( list );
-					return( ret );
-				}
-
-				/* get length of this curve */
-				if( (ret=Tcl_ListObjLength( interp, crv_obj, &len2 ) ))
-				{
-					Tcl_DecrRefCount( list );
-					Tcl_DecrRefCount( crv_obj );
-					return( ret );
-				}
-
-				crv = &skt->skt_curve;
-				crv->seg_count = 0;
-				crv->reverse = (int *)NULL;
-				crv->segments = (genptr_t)NULL;
-
-				if( (ret=get_tcl_curve( interp, crv, crv_obj )) != TCL_OK )
-				{
-					Tcl_DecrRefCount( list );
-					Tcl_DecrRefCount( crv_obj );
-					return( ret );
-				}
-
 			}
 		}
 		else if( *argv[0] == 'V' && isdigit( *(argv[0]+1) )  )	/* changing a specific vertex */
