@@ -5,7 +5,7 @@
  */
 
 #define	SRCDIR	g_lint
-#define	PRODUCTS	g_lint solshoot testfree
+#define	PRODUCTS	g_lint
 #define	SRCSUFF		.c
 #define	MANSECTION	1
 
