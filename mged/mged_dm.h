@@ -21,6 +21,7 @@
 #include "dm.h"	/* struct dm */
 #include "./menu.h" /* struct menu_item */
 #define TRY_NEW_MGED_VARS 0
+#define DO_NEW_EDIT_MATS
 
 struct device_values  {
 	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
@@ -98,10 +99,11 @@ struct shared_info {
 #endif
 
   /* Tcl variable names for display info */
-  struct bu_vls aet_name;
-  struct bu_vls ang_name;
-  struct bu_vls center_name;
-  struct bu_vls size_name;
+  struct bu_vls _aet_name;
+  struct bu_vls _ang_name;
+  struct bu_vls _center_name;
+  struct bu_vls _size_name;
+  struct bu_vls _adc_name;
 
   /* Tcl variable names for sliders */
   struct bu_vls _rate_tran_vls[3];
@@ -132,6 +134,7 @@ struct dm_list {
   int _am_mode;    /* alternate mouse mode */
   int _ndrawn;
   double _frametime;/* time needed to draw last frame */
+  struct bu_vls _fps_name;
   struct cmd_list *aim;
   struct  _mged_variables _mged_variables;
   struct menu_item *_menu_array[NMENU];    /* base of array of menu items */
@@ -171,6 +174,7 @@ extern struct dm_list *curr_dm_list;
 #define am_mode curr_dm_list->_am_mode
 #define ndrawn curr_dm_list->_ndrawn
 #define frametime curr_dm_list->_frametime
+#define fps_name curr_dm_list->_fps_name
 #define knob_hook curr_dm_list->_knob_hook
 #define axes_color_hook curr_dm_list->_axes_color_hook
 #define cmd_hook curr_dm_list->_cmd_hook
@@ -239,9 +243,12 @@ extern struct dm_list *curr_dm_list;
 #define dmaflag curr_dm_list->s_info->_dmaflag
 #define rc curr_dm_list->s_info->_rc
 
-#if 0
-#define scroll_edit_vls curr_dm_list->s_info->_scroll_edit_vls
-#endif
+#define aet_name curr_dm_list->s_info->_aet_name
+#define ang_name curr_dm_list->s_info->_ang_name
+#define center_name curr_dm_list->s_info->_center_name
+#define size_name curr_dm_list->s_info->_size_name
+#define adc_name curr_dm_list->s_info->_adc_name
+
 #define rate_tran_vls curr_dm_list->s_info->_rate_tran_vls
 #define rate_rotate_vls curr_dm_list->s_info->_rate_rotate_vls
 #define rate_scale_vls curr_dm_list->s_info->_rate_scale_vls
