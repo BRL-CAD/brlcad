@@ -38,6 +38,8 @@ static char RCSprep[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+BU_EXTERN(void		rt_ck, (struct rt_i	*rtip));
+
 HIDDEN void	rt_solid_bitfinder();
 
 extern struct resource	rt_uniresource;		/* from shoot.c */
@@ -60,6 +62,7 @@ int			ncpu;
 	register struct region *regp;
 	register struct soltab *stp;
 	register int		i;
+	struct resource		*resp;
 	vect_t			diag;
 
 	RT_CK_RTI(rtip);
@@ -102,6 +105,13 @@ int			ncpu;
 	VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
 	rtip->rti_radius = 0.5 * MAGNITUDE(diag);
 
+	/*  If a resource structure has been provided for us, use it. */
+	if( BU_PTBL_LEN( &rtip->rti_resources ) > 0 )
+		resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
+	else
+		resp = &rt_uniresource;
+	RT_CK_RESOURCE(resp);
+
 	/*  Build array of region pointers indexed by reg_bit.
 	 *  Optimize each region's expression tree.
 	 *  Set this region's bit in the bit vector of every solid
@@ -112,10 +122,10 @@ int			ncpu;
 		"rtip->Regions[]" );
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
 		rtip->Regions[regp->reg_bit] = regp;
-		rt_optim_tree( regp->reg_treetop, &rt_uniresource );
-		rt_solid_bitfinder( regp->reg_treetop, regp,
-			&rt_uniresource );
+		rt_optim_tree( regp->reg_treetop, resp );
+		rt_solid_bitfinder( regp->reg_treetop, regp, resp );
 		if(rt_g.debug&DEBUG_REGIONS)  {
+			db_ck_tree( regp->reg_treetop);
 			rt_pr_region( regp );
 		}
 	}
@@ -522,7 +532,7 @@ register struct rt_i *rtip;
 	register struct soltab *stp;
 	int	i;
 
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_clean:  bad rtip\n");
+	RT_CK_RTI(rtip);
 
 	/* DEBUG: Ensure that all region trees are valid */
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
@@ -578,6 +588,7 @@ register struct rt_i *rtip;
 	rt_cut_clean(rtip);
 
 	/* Reset instancing counters in database directory */
+/* XXX move to dir.c */
 	for( i=0; i < RT_DBNHASH; i++ )  {
 		register struct directory	*dp;
 
@@ -587,6 +598,7 @@ register struct rt_i *rtip;
 	}
 
 	/* Free animation structures */
+/* XXX modify to only free those from this rtip */
 	db_free_anim(rtip->rti_dbip);
 
 	/* Free array of solid table pointers indexed by solid ID */
@@ -702,12 +714,16 @@ struct resource		*resp;
 	register union tree	**stackend;
 
 	RT_CK_REGION(regp);
+	RT_CK_RESOURCE(resp);
+
 	while( (sp = resp->re_boolstack) == (union tree **)0 )
 		rt_grow_boolstack( resp );
 	stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
+
 	*sp++ = TREE_NULL;
 	*sp++ = treep;
 	while( (treep = *--sp) != TREE_NULL ) {
+		RT_CK_TREE(treep);
 		switch( treep->tr_op )  {
 		case OP_NOP:
 			break;
@@ -736,3 +752,33 @@ struct resource		*resp;
 		}
 	}
 }
+
+/*
+ *			R T _ C K
+ *
+ *  Check as many of the in-memory data structures as is practical.
+ *  Useful for detecting memory corruption, and inappropriate sharing
+ *  between different LIBRT instances.
+ */
+void
+rt_ck( rtip )
+register struct rt_i	*rtip;
+{
+	struct region		*regp;
+	struct soltab		*stp;
+
+	RT_CK_RTI(rtip);
+	RT_CK_DBI(rtip->rti_dbip);
+
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+		RT_CK_SOLTAB(stp);
+	} RT_VISIT_ALL_SOLTABS_END
+
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		RT_CK_REGION(regp);
+		db_ck_tree(regp->reg_treetop);
+	}
+	/* rti_CutHead */
+
+}
+
