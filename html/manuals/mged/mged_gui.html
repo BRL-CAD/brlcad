@@ -1071,7 +1071,8 @@ the left mouse button.
 	set the horizontal and vertical tick spacing
 	to 1 mile.
 </UL>
-<A NAME="Framebuffer"><LI><B>Framebuffer</B>
+<A NAME="Framebuffer"><LI><B>Framebuffer</B> - a menu of
+     framebuffer related settings.
 <UL>
 <A NAME="All"><LI><B>All</B> - use the entire pane for the framebuffer.
 <A NAME="Rectangle Area"><LI><B>Rectangle Area</B> - use only the
@@ -1086,40 +1087,134 @@ the left mouse button.
 	the framebuffer data is placed in the pane before
 	the geometry is drawn (i.e. the geometry is drawn on
 	top of the framebuffer data).
-<A NAME="Framebuffer Active"><LI><B>Framebuffer Active</B>
-	this toggles the framebuffer." }
-<A NAME="Listen For Clients"><LI><B>Listen For Clients</B>
+<A NAME="Framebuffer Active"><LI><B>Framebuffer Active</B> -
+     this toggles the framebuffer.
+<A NAME="Listen For Clients"><LI><B>Listen For Clients</B> -
+     this toggles listening for clients.
+     If the framebuffer is listening for clients, new
+     data can be passed into the framebuffer. Otherwise,
+     the framebuffer is write protected. Actually, it is
+     also read protected.
+     In other words, in order for programs outside of MGED
+     to communicate with any of MGED's framebuffers, the
+     intended framebuffers must be listening.
 </UL>
-<A NAME="View Axes Position"><LI><B>View Axes Position</B>
+<A NAME="View Axes Position"><LI><B>View Axes Position</B> - a menu of
+     ''canned'' view axes positions.
 <UL>
-<A NAME="Center"><LI><B>Center</B>
-<A NAME="VAP Lower Left"><LI><B>Lower Left</B>
-<A NAME="VAP Upper Left"><LI><B>Upper Left</B>
-<A NAME="VAP Upper Right"><LI><B>Upper Right</B>
-<A NAME="VAP Lower Right"><LI><B>Lower Right</B>
+<A NAME="Center"><LI><B>Center</B> - locate the view axes in the
+     center of the active pane.
+<A NAME="VAP Lower Left"><LI><B>Lower Left</B> - locate the view axes in the
+     lower left corner of the active pane.
+<A NAME="VAP Upper Left"><LI><B>Upper Left</B> - locate the view axes in the
+     upper left corner of the active pane.
+<A NAME="VAP Upper Right"><LI><B>Upper Right</B> - locate the view axes in the
+     upper right corner of the active pane.
+<A NAME="VAP Lower Right"><LI><B>Lower Right</B> - locate the view axes in the
+     lower right corner of the active pane.
 </UL>
 </UL>
 <A NAME="Modes"><LI><B>Modes</B>
 <UL>
-<A NAME="Modes Draw Grid"><LI><B>Draw Grid</B>
-<A NAME="Modes Snap To Grid"><LI><B>Snap To Grid</B>
-<A NAME="Modes Framebuffer Active"><LI><B>Framebuffer Active</B>
+<A NAME="Modes Draw Grid"><LI><B>Draw Grid</B> -
+     toggle drawing the grid. The grid is a lattice
+     of points over the pane (display manager). The
+     regular spacing between the points gives the user
+     accurate visual cues regarding dimension. This
+     spacing can be set by the user.
+<A NAME="Modes Snap To Grid"><LI><B>Snap To Grid</B> - toggles snapping
+     to grid points. When snapping to grid points is active,
+     the user's mouse actions are ''snapped'' to the nearest
+     grid point before being further processed. This gives
+     the user a high degree of accuracy while using the mouse.
+<A NAME="Modes Framebuffer Active"><LI><B>Framebuffer Active</B> -
+     this toggles the framebuffer.
 <A NAME="Modes Listen For Clients"><LI><B>Listen For Clients</B>
-<A NAME="Persistent sweep rectangle"><LI><B>Persistent sweep rectangle</B>
-<A NAME="Angle/Dist Cursor"><LI><B>Angle/Dist Cursor</B>
-<A NAME="Faceplate"><LI><B>Faceplate</B>
-<A NAME="Axes"><LI><B>Axes</B>
+     this toggles listening for clients.
+     If the framebuffer is listening for clients, new
+     data can be passed into the framebuffer. Otherwise,
+     the framebuffer is write protected. Actually, it is
+     also read protected.
+     In other words, in order for programs outside of MGED
+     to communicate with any of MGED's framebuffers, the
+     intended framebuffers must be listening.
+<A NAME="Persistent sweep rectangle"><LI><B>Persistent sweep rectangle</B> -
+     this toggles drawing the rectangle while idle. For example,
+     if the sweep rectangle is not persistent, the rectangle will
+     not be drawn unless the user is actively sweeping out a
+     rectangle (i.e. for raytracing, zoom etc.). And if the sweep
+     rectangle is persistent, the rectangle will always be drawn.
+<A NAME="Angle/Dist Cursor"><LI><B>Angle/Dist Cursor</B> -
+     toggles drawing the angle distance cursor.
+<A NAME="Faceplate"><LI><B>Faceplate</B> -
+     toggles drawing the ''Classic MGED'' faceplate.
+<A NAME="Axes"><LI><B>Axes</B> - a menu of axes
 <UL>
-<A NAME="Modes View"><LI><B>View</B>
-<A NAME="Modes Model"><LI><B>Model</B>
-<A NAME="Modes Edit"><LI><B>Edit</B>
+<A NAME="Modes View"><LI><B>View</B> -
+     toggle display of the view axes. The view axes
+     are used to give the user visual cues indicating
+     the current view of model space. These axes are
+     drawn the same as the model axes, except that the
+     view axes' position is fixed in view space. This
+     position as well as other characteristics can be
+     set by the user using <A HREF="mged_cmd_index.html#rset">rset</A>.
+<A NAME="Modes Model"><LI><B>Model</B> -
+     toggle display of the model axes. The model axes
+     are used to give the user visual cues indicating
+     the current view of model space. The model axes
+     are by default located at the model origin and are
+     fixed in model space. So, if the user transforms
+     the view, the model axes will move with respect to
+     the view. The model axes position as well as other
+     characteristics can be set by the user
+      using <A HREF="mged_cmd_index.html#rset">rset</A>.
+<A NAME="Modes Edit"><LI><B>Edit</B> -
+     toggle display of the edit axes. The edit axes
+     are used to give the user visual cues indicating
+     how the edit is progressing. They consist of a
+     pair of axes. One remains unmoved, while the other
+     moves to indicate how things have changed.
+     Characteristics of the edit axes can be changed
+     using <A HREF="mged_cmd_index.html#rset">rset</A>.
 </UL>
-<A NAME="Multipane"><LI><B>Multipane</B>
-<A NAME="Edit Info"><LI><B>Edit Info</B>
-<A NAME="Status Bar"><LI><B>Status Bar</B>
-<A NAME="Collaborate"><LI><B>Collaborate</B>
-<A NAME="Rateknobs"><LI><B>Rateknobs</B>
-<A NAME="Display Lists"><LI><B>Display Lists</B>
+<A NAME="Multipane"><LI><B>Multipane</B> -
+     toggle between multipane and single pane mode.
+     In multipane mode there are four panes, each
+     with its own state.
+<A NAME="Edit Info"><LI><B>Edit Info</B> -
+     Toggle display of edit information. If in
+     solid edit state, the edit information is
+     displayed in the internal solid editor. This
+     editor, as its name implies, can be used to
+     edit the solid as well as to view its contents.
+     If in object edit state, the object information
+     is displayed in a dialog box.
+<A NAME="Status Bar"><LI><B>Status Bar</B> -
+     toggle display of the command window's status bar.
+<A NAME="Collaborate"><LI><B>Collaborate</B> -
+     toggle collaborate mode. When in collaborate
+     mode, the upper right pane's view can be shared
+     with other instances of MGED's new GUI that are
+     also collaborating.
+<A NAME="Rateknobs"><LI><B>Rateknobs</B> -
+     toggle rate knob mode. When in rate knob mode,
+     transformation with the mouse becomes rate based.
+     For example, if the user rotates the view about
+     the X axis, the view continues to rotate about the
+     X axis until the rate rotation is stopped.
+<A NAME="Display Lists"><LI><B>Display Lists</B> -
+     toggle the use of display lists. This currently affects
+     only Ogl display managers. When using display lists the
+     screen update time is significantly faster. This is especially
+     noticable when running MGED remotely. Use of display lists
+     is encouraged unless the geometry being viewed is bigger
+     than the Ogl server can handle (i.e. the server runs out
+     of available memory for storing display lists). When this
+     happens the machine will begin to swap (and little else).
+     If huge pieces of geometry need to be viewed, consider
+     toggling off display lists. Note that using display lists
+     while viewing geometry of any significant size will incur
+     noticable compute time up front to create the display lists.
 </UL>
 <A NAME="Misc"><LI><B>Misc</B>
 <UL>
