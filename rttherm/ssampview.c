@@ -532,6 +532,47 @@ return;
 	check( 0, 1, 1 );
 }
 
+static char usage[] = "\
+Usage: disp [-t] [-s squarefilesize] [-w file_width] [-n file_height]\n\
+		file.ssamp\n";
+
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "ts:w:n:" )) != EOF )  {
+		switch( c )  {
+		case 't':
+			fprintf(stderr, "disp: conducting library tests\n");
+			conduct_tests();
+			first_command = "do_testing";
+			Tk_Main( 1, argv, tcl_appinit );
+			/* NOTREACHED */
+			exit(0);
+			/* NOTREACHED */
+			break;
+		case 's':
+			/* square file size */
+			height = width = atoi(optarg);
+			break;
+		case 'w':
+			width = atoi(optarg);
+			break;
+		case 'n':
+			height = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )  return 0;
+	return 1;	/* OK */
+}
+
 /*
  *			M A I N
  */
@@ -545,21 +586,15 @@ char	**argv;
 
 	rt_make_ntsc_xyz2rgb( xyz2rgb );
 
-	if( argc < 2 )  {
-		fprintf(stderr, "Usage: disp [-t] file.ssamp\n");
-		exit(2);
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
 
 	if( argc > 1 && strcmp(argv[1], "-t") == 0 )  {
-		fprintf(stderr, "disp: conducting library tests\n");
-		conduct_tests();
-		first_command = "do_testing";
-		Tk_Main( 1, argv, tcl_appinit );
-		/* NOTREACHED */
-		exit(0);
 	}
 
-	basename = argv[1];
+	basename = argv[optind];
 
 	first_command = "doit1 42";
 
