@@ -369,7 +369,7 @@ char **argv;
 
 	if( multiple_lines )  {
 		/* Bottom to top with multi-line reads & writes */
-		int	height;
+		int	height=file_height;
 		for( y = scr_yoff; y < scr_yoff + yout; y += multiple_lines )  {
 			/* Don't over-write */
 			if( y + height > scr_yoff + yout )
