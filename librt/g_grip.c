@@ -25,19 +25,18 @@
 static char RCSgrip[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "db.h"
 #include "rtgeom.h"
 #include "./debug.h"
-
-#if defined(alliant) && !defined(__STDC__)
-extern double   modf();
-#endif
 
 struct grip_specific {
 	long	grip_magic;
