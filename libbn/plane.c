@@ -1491,6 +1491,11 @@ CONST struct rt_tol	*tol;
  *
  *  'dir' need not have unit length.
  *
+ *  Find parameter for PCA along line with unitized DIR:
+ *	d = VDOT(f, dir) / MAGNITUDE(dir);
+ *  Find distance g from PCA to A using Pythagoras:
+ *	g = sqrt( MAGSQ(f) - d**2 )
+ *
  *  Return -
  *	Distance
  */
@@ -1503,13 +1508,14 @@ CONST point_t	a;
 	LOCAL vect_t		f;
 	register fastf_t	FdotD;
 
-	VSUB2( f, pt, a );
 	if( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )  {
 		FdotD = 0.0;
 		goto out;
 	}
+	VSUB2( f, a, pt );
 	FdotD = VDOT( f, dir ) / FdotD;
-	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )  {
+	FdotD = MAGSQ( f ) - FdotD * FdotD;
+	if( FdotD <= SMALL_FASTF )  {
 		FdotD = 0.0;
 		goto out;
 	}
