@@ -8,13 +8,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) execshell.c	2.1
-		Modified: 	12/10/86 at 16:04:23	G S M
-		Retrieved: 	2/4/87 at 08:53:55
-		SCCS archive:	/vld/moss/src/lgt/s.execshell.c
-*/
 
 #include <stdio.h>
 #include <signal.h>
@@ -58,7 +51,7 @@ exec_Shell( args )
 char	*args[];
 	{	register int	child_pid;
 		static char	error_buf[32];
-#if defined( BSD ) || defined( SYSV )
+#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
 		int		(*intr_sig)(), (*quit_sig)();
 #else
 		void		(*intr_sig)(), (*quit_sig)();

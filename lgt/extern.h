@@ -7,13 +7,6 @@
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) extern.h	2.2
-		Modified: 	1/30/87 at 17:22:09	G S M
-		Retrieved: 	2/4/87 at 08:53:22
-		SCCS archive:	/vld/moss/src/lgt/s.extern.h
-*/
 #if ! defined(FAST)
 #include "machine.h"
 #endif
@@ -30,7 +23,7 @@
 #if defined( BSD )
 extern char		*tmpnam(), *gets(), *strtok();
 #endif
-#if defined( BSD ) || defined( SYSV )
+#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
 extern int		(*norml_sig)(), (*abort_sig)();
 extern int		abort_RT();
 #else
@@ -45,10 +38,12 @@ extern char		*get_Input();
 
 extern fastf_t		pow_Of_2();
 
-extern int		f_IR_Model(), f_IR_Backgr();
-extern int		pars_Argv();
-extern int		get_Answer();
 extern int		fb_Setup();
+extern int		f_IR_Model(), f_IR_Backgr();
+extern int		get_Answer();
+extern int		lgt_Edit_Db_Entry();
+extern int		lgt_Print_Db();
+extern int		pars_Argv();
 extern int		txtr_Val();
 
 #ifdef BSD
@@ -72,6 +67,7 @@ extern void		fb_Zoom_Window();
 extern void		grid_Rotate();
 extern void		init_Status();
 extern void		loc_Perror();
+extern void		note_IRmapping();
 extern void		prnt_Event();
 extern void		prnt_IR_Status();
 extern void		prnt_Lgt_Status();
@@ -89,6 +85,8 @@ extern void		prnt3vec();
 extern void		render_Model();
 extern void		ring_Bell();
 extern void		rt_log();
+extern void		set_IRmapping();
+extern void		set_Size_Grid();
 extern void		update_Screen();
 extern void		user_Interaction();
 
@@ -157,6 +155,7 @@ extern int		ir_doing_paint;
 extern int		ir_mapx, ir_mapy;
 extern int		ir_noise;
 extern int		ir_mapping;
+extern int		isiris;
 extern int		lgt_db_size;
 extern int		li;
 extern int		max_bounce;
@@ -174,14 +173,22 @@ extern int		x_fb_origin, y_fb_origin;
 extern int		zoom;
 
 extern unsigned char	arrowcursor[];
+extern unsigned char	menucursor[];
 extern unsigned char	sweeportrack[];
-extern unsigned char	arrowcursor[];
 extern unsigned char	target1[];
 
 #ifdef PARALLEL
 extern struct resource	resource[];
 #endif
 extern struct rt_i	*rt_ip;
+
+#define C_TAGPIXEL	0
+#define C_SWEEPREC	1
+#define C_I_WINDOW	2
+#define C_O_WINDOW	3
+#define C_QUERYREG	4
+#define XSCR2MEM(_x)	(_x)
+#define YSCR2MEM(_y)	(_y)
 
 #ifdef sgi
 extern int	win_active;
