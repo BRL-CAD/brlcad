@@ -4,8 +4,10 @@
  *  This header file defines many commonly used 3D vector math macros.
  *
  *  Note that while many people in the computer graphics field use
- *  post-multiplication, with column vectors, the BRL CAD system
- *  uses the more traditional representation of row vectors.  Therefore,
+ *  post-multiplication with row vectors (ie, vector * matrix * matrix ...)
+ *  the BRL CAD system uses the more traditional representation of 
+ *  column vectors (ie, ... matrix * matrix * vector).  (The matrices
+ *  in these two representations are the transposes of each other). Therefore,
  *  when transforming a vector by a matrix, pre-multiplication is used, ie:
  *
  *		view_vec = model2view_mat * model_vec
@@ -19,8 +21,8 @@
  *  "delta" (translation) values in the matrix, ie:
  *
  *        x'     ( R0   R1   R2   Dx )      x
- *        y' =  (  R4   R5   R6   Dy  )  *  y
- *        z'    (  R8   R9   R10  Dz  )     z
+ *        y' =   ( R4   R5   R6   Dy )   *  y
+ *        z'     ( R8   R9   R10  Dz )      z
  *        w'     (  0    0    0   1/s)      w
  *
  *  Note -
