@@ -65,6 +65,7 @@ fastf_t	acc_sc_obj;     /* global object scale factor --- accumulations */
 fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
 
 void bv_edit_toggle();
+static void be_s_context();
 static void bv_zoomin(), bv_zoomout(), bv_rate_toggle();
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
@@ -109,6 +110,9 @@ struct buttons  {
 	BE_S_ROTATE,	"srot",		be_s_rotate,
 	BE_S_SCALE,	"sscale",	be_s_scale,
 	BE_S_TRANS,	"sxy",		be_s_trans,
+#if 0
+	BE_S_CONTEXT,   "context",      be_s_context,
+#endif
 	BV_TOP,		"top",		bv_top,
 	BV_ZOOM_IN,	"zoomin",	bv_zoomin,
 	BV_ZOOM_OUT,	"zoomout",	bv_zoomout,
@@ -132,7 +136,7 @@ static struct menu_item first_menu[] = {
 	{ "(BUTTON MENU)", btn_head_menu, 1 },		/* chg to 2nd menu */
 	{ "", (void (*)())NULL, 0 }
 };
-static struct menu_item second_menu[] = {
+struct menu_item second_menu[] = {
 	{ "BUTTON MENU", btn_head_menu, 0 },	/* chg to 1st menu */
 	{ "REJECT Edit", btn_item_hit, BE_REJECT },
 	{ "ACCEPT Edit", btn_item_hit, BE_ACCEPT },
@@ -155,12 +159,15 @@ static struct menu_item second_menu[] = {
 	{ "Object Illum", btn_item_hit, BE_O_ILLUMINATE },
 	{ "", (void (*)())NULL, 0 }
 };
-static struct menu_item sed_menu[] = {
+struct menu_item sed_menu[] = {
 	{ "*SOLID EDIT*", btn_head_menu, 2 },
 	{ "edit menu", btn_item_hit, BE_S_EDIT },
 	{ "Rotate", btn_item_hit, BE_S_ROTATE },
 	{ "Translate", btn_item_hit, BE_S_TRANS },
 	{ "Scale", btn_item_hit, BE_S_SCALE },
+#if 0
+	{ "Context", btn_item_hit, BE_S_CONTEXT },
+#endif
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -336,9 +343,22 @@ bv_edit_toggle()
   dmaflag = 1;
 }
 
-static void bv_rate_toggle()
+static void
+bv_rate_toggle()
 {
   mged_variables.rateknobs = !mged_variables.rateknobs;
+
+  if(mged_variables.scroll_enabled){
+    Tcl_Eval(interp, "sliders on");
+  }
+
+  dmaflag = 1;
+}
+
+static void
+be_s_context()
+{
+  mged_variables.context = !mged_variables.context;
 
   if(mged_variables.scroll_enabled){
     Tcl_Eval(interp, "sliders on");
