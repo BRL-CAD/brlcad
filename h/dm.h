@@ -187,6 +187,7 @@ struct dm_obj {
 #ifdef USE_FBSERV
   struct fbserv_obj	dmo_fbs;		/* fbserv object */
 #endif
+  Tcl_Interp		*dmo_interp;		/* Tcl interpreter */
 };
 
 #define DM_OPEN(_type,_argc,_argv) dm_open(_type,_argc,_argv)
