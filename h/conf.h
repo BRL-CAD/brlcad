@@ -167,6 +167,8 @@
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1
 #	define HAVE_STRING_H	1
+#	define bzero(str,n)		memset( str, '\0', n )
+#	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
 #if defined(__FreeBSD__)
