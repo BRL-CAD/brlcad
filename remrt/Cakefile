@@ -24,7 +24,7 @@
 #endif
 
 #define REMRT_PIECES	\
-		RTDIR/opt.o \
+		ihost.o RTDIR/opt.o \
 		LIBFB LIBFB_LIBES LIBRT LIBRT_LIBES LIBES
 
 #define	RTSRV_PIECES	\
@@ -38,6 +38,7 @@
 		RTDIR/sh_wood.o RTDIR/turb.o \
 		RTDIR/sh_marble.o RTDIR/sh_stxt.o \
 		RTDIR/sh_points.o RTDIR/sh_toyota.o \
+		RTDIR/sh_Nfbm.o RTDIR/sh_camo.o RTDIR/sh_cloud3d.o \
 		RTDIR/sh_spm.o RTDIR/sh_light.o RTDIR/do.o \
 		LIBPKG LIBPKG_LIBES \
 		LIBRT LIBRT_LIBES LIBES
@@ -47,7 +48,7 @@
 /* Explicit composition of each product */
 
 /* LIBRT is needed to get htond, parser, etc */
-remrt:	remrt.o OBJS
+remrt:	remrt.o ihost.o OBJS
 	sh ../newvers.sh version "Network-Distributed RT (REMRT)"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS -o remrt remrt.o vers.o OBJS REMRT_PIECES
