@@ -27,118 +27,79 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "./debug.h"
 
-extern int	rt_nul_prep(), rt_nul_class();
-extern int	rt_tor_prep(), rt_tor_class();
-extern int	rt_tgc_prep(), rt_tgc_class();
-extern int	rt_ell_prep(), rt_ell_class();
-extern int	rt_arb_prep(), rt_arb_class();
-extern int	rt_hlf_prep(), rt_hlf_class();
-extern int	rt_ars_prep(), rt_ars_class();
-extern int	rt_rec_prep(), rt_rec_class();
-extern int	rt_pg_prep(), rt_pg_class();
-extern int	rt_spl_prep(), rt_spl_class();
-extern int	rt_sph_prep(), rt_sph_class();
-extern int	rt_ebm_prep(), rt_ebm_class();
-extern int	rt_vol_prep(), rt_vol_class();
-extern int	rt_arbn_prep(), rt_arbn_class();
-extern int	rt_part_prep(), rt_part_class();
-extern int	rt_pipe_prep(), rt_pipe_class();
-
-extern void	rt_nul_print(), rt_nul_norm(), rt_nul_uv();
-extern void	rt_tor_print(), rt_tor_norm(), rt_tor_uv();
-extern void	rt_tgc_print(), rt_tgc_norm(), rt_tgc_uv();
-extern void	rt_ell_print(), rt_ell_norm(), rt_ell_uv();
-extern void	rt_arb_print(), rt_arb_norm(), rt_arb_uv();
-extern void	rt_hlf_print(), rt_hlf_norm(), rt_hlf_uv();
-extern void	rt_ars_print(), rt_ars_norm(), rt_ars_uv();
-extern void	rt_rec_print(), rt_rec_norm(), rt_rec_uv();
-extern void	rt_pg_print(),  rt_pg_norm(),  rt_pg_uv();
-extern void	rt_spl_print(), rt_spl_norm(), rt_spl_uv();
-extern void	rt_sph_print(), rt_sph_norm(), rt_sph_uv();
-extern void	rt_ebm_print(), rt_ebm_norm(), rt_ebm_uv();
-extern void	rt_vol_print(), rt_vol_norm(), rt_vol_uv();
-extern void	rt_arbn_print(), rt_arbn_norm(), rt_arbn_uv();
-extern void	rt_part_print(), rt_part_norm(), rt_part_uv();
-extern void	rt_pipe_print(), rt_pipe_norm(), rt_pipe_uv();
-
-extern void	rt_nul_curve(), rt_nul_free();
-extern void	rt_tor_curve(), rt_tor_free();
-extern void	rt_tgc_curve(), rt_tgc_free();
-extern void	rt_ell_curve(), rt_ell_free();
-extern void	rt_arb_curve(), rt_arb_free();
-extern void	rt_hlf_curve(), rt_hlf_free();
-extern void	rt_ars_curve(), rt_ars_free();
-extern void	rt_rec_curve(), rt_rec_free();
-extern void	rt_pg_curve(),  rt_pg_free();
-extern void	rt_spl_curve(), rt_spl_free();
-extern void	rt_sph_curve(), rt_sph_free();
-extern void	rt_ebm_curve(), rt_ebm_free();
-extern void	rt_vol_curve(), rt_vol_free();
-extern void	rt_arbn_curve(), rt_arbn_free();
-extern void	rt_part_curve(), rt_part_free();
-extern void	rt_pipe_curve(), rt_pipe_free();
-
-extern int	rt_nul_plot();
-extern int	rt_tor_plot();
-extern int	rt_tgc_plot();
-extern int	rt_ell_plot();
-extern int	rt_arb_plot();
-extern int	rt_hlf_plot();
-extern int	rt_ars_plot();
-extern int	rt_pg_plot();
-extern int	rt_spl_plot();
-extern int	rt_ebm_plot();
-extern int	rt_vol_plot();
-extern int	rt_arbn_plot();
-extern int	rt_part_plot();
-extern int	rt_pipe_plot();
-
-extern int	rt_nul_shot();
-extern int	rt_tor_shot();
-extern int	rt_tgc_shot();
-extern int	rt_ell_shot();
-extern int	rt_arb_shot();
-extern int	rt_ars_shot();
-extern int	rt_hlf_shot();
-extern int	rt_rec_shot();
-extern int	rt_pg_shot();
-extern int	rt_spl_shot();
-extern int	rt_sph_shot();
-extern int	rt_ebm_shot();
-extern int	rt_vol_shot();
-extern int	rt_arbn_shot();
-extern int	rt_part_shot();
-extern int	rt_pipe_shot();
-
-extern void	rt_nul_vshot();
-extern void	rt_ell_vshot();
-extern void	rt_sph_vshot();
-extern void	rt_hlf_vshot();
-extern void	rt_rec_vshot();
-extern void	rt_arb_vshot();
-extern void	rt_tgc_vshot();
-extern void	rt_tor_vshot();
-extern void	rt_arbn_vshot();
-extern void	rt_part_vshot();
-extern void	rt_pipe_vshot();
-extern void	rt_vstub();	/* XXX vshoot.c */
-
-extern int	rt_nul_tess();
-extern int	rt_ell_tess();
-extern int	rt_arb_tess();
-extern int	rt_tgc_tess();
-extern int	rt_tor_tess();
-extern int	rt_pg_tess();
-extern int	rt_hlf_tess();
-extern int	rt_ars_tess();
-extern int	rt_spl_tess();
-#if 0
-extern int	rt_ebm_tess();
-extern int	rt_vol_tess();
+#if __STDC__ && !alliant && !apollo
+# define RT_DECLARE_INTERFACE(name)	\
+	RT_EXTERN(int rt_##name##_prep, (struct soltab *stp, \
+			union record *rec, struct rt_i *rtip)); \
+	RT_EXTERN(int rt_##name##_shot, (struct soltab *stp, struct xray *rp, \
+			struct application *ap, struct seg *seghead)); \
+	RT_EXTERN(void rt_##name##_print, (struct soltab *stp)); \
+	RT_EXTERN(void rt_##name##_norm, (struct hit *hitp, \
+			struct soltab *stp, struct xray *rp)); \
+	RT_EXTERN(void rt_##name##_uv, (struct application *ap, \
+			struct soltab *stp, struct hit *hitp, \
+			struct uvcoord *uvp)); \
+	RT_EXTERN(void rt_##name##_curve, (struct curvature *cvp, \
+			struct hit *hitp, struct soltab *stp)); \
+	RT_EXTERN(int rt_##name##_class, ()); \
+	RT_EXTERN(void rt_##name##_free, (struct soltab *stp)); \
+	RT_EXTERN(int rt_##name##_plot, (union record *rp, mat_t mat, \
+			struct vlhead *vhead, struct directory *dp, \
+			double abs_tol, double rel_tol, double norm_tol)); \
+	RT_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], \
+			struct xray *rp[], \
+			struct seg segp[], int n, struct resource *resp)); \
+	RT_EXTERN(int rt_##name##_tess, (struct nmgregion **r, \
+			struct model *m, union record *rp, \
+			mat_t mat, struct directory *dp, \
+			double abs_tol, double rel_tol, double norm_tol));
+#else
+# define RT_DECLARE_INTERFACE(name)	\
+	RT_EXTERN(int rt_/**/name/**/_prep, (struct soltab *stp, \
+			union record *rec, struct rt_i *rtip)); \
+	RT_EXTERN(int rt_/**/name/**/_shot, (struct soltab *stp, struct xray *rp, \
+			struct application *ap, struct seg *seghead)); \
+	RT_EXTERN(void rt_/**/name/**/_print, (struct soltab *stp)); \
+	RT_EXTERN(void rt_/**/name/**/_norm, (struct hit *hitp, \
+			struct soltab *stp, struct xray *rp)); \
+	RT_EXTERN(void rt_/**/name/**/_uv, (struct application *ap, \
+			struct soltab *stp, struct hit *hitp, \
+			struct uvcoord *uvp)); \
+	RT_EXTERN(void rt_/**/name/**/_curve, (struct curvature *cvp, \
+			struct hit *hitp, struct soltab *stp)); \
+	RT_EXTERN(int rt_/**/name/**/_class, ()); \
+	RT_EXTERN(void rt_/**/name/**/_free, (struct soltab *stp)); \
+	RT_EXTERN(int rt_/**/name/**/_plot, (union record *rp, mat_t mat, \
+			struct vlhead *vhead, struct directory *dp, \
+			double abs_tol, double rel_tol, double norm_tol)); \
+	RT_EXTERN(void rt_/**/name/**/_vshot, (struct soltab *stp[], \
+			struct xray *rp[], \
+			struct seg segp[], int n, struct resource *resp)); \
+	RT_EXTERN(int rt_/**/name/**/_tess, (struct nmgregion **r, \
+			struct model *m, union record *rp, \
+			mat_t mat, struct directory *dp, \
+			double abs_tol, double rel_tol, double norm_tol));
 #endif
-extern int	rt_arbn_tess();
-extern int	rt_part_tess();
-extern int	rt_pipe_tess();
+
+		
+RT_DECLARE_INTERFACE(nul);
+RT_DECLARE_INTERFACE(tor);
+RT_DECLARE_INTERFACE(tgc);
+RT_DECLARE_INTERFACE(ell);
+RT_DECLARE_INTERFACE(arb);
+RT_DECLARE_INTERFACE(ars);
+RT_DECLARE_INTERFACE(hlf);
+RT_DECLARE_INTERFACE(rec);
+RT_DECLARE_INTERFACE(pg);
+RT_DECLARE_INTERFACE(spl);
+RT_DECLARE_INTERFACE(sph);
+RT_DECLARE_INTERFACE(ebm);
+RT_DECLARE_INTERFACE(vol);
+RT_DECLARE_INTERFACE(arbn);
+RT_DECLARE_INTERFACE(pipe);
+RT_DECLARE_INTERFACE(part);
+
+extern void	rt_vstub();	/* XXX vshoot.c */
 
 struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_NULL",	0,
