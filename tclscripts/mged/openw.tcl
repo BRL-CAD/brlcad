@@ -142,6 +142,10 @@ if ![info exists mged_default(perspective_mode)] {
     set mged_default(perspective_mode) 0
 }
 
+if ![info exists mged_default(max_text_lines)] {
+    set mged_default(max_text_lines) 1000
+}
+
 ##
 # Set the class bindings for use with help. This requires the
 # widget to register its data using hoc_register_data. Also, for now,

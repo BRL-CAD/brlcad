@@ -24,6 +24,7 @@
 
 proc distribute_text { w cmd str } {
     global mged_players
+    global mged_default
 
     set src_id [get_player_id_t $w]
     foreach id $mged_players {
@@ -45,6 +46,12 @@ proc distribute_text { w cmd str } {
 
 		$_w mark set insert curr
 		$_w see insert
+	    }
+
+	    # get rid of oldest output
+	    set nlines [expr int([$_w index end])]
+	    if {$nlines > $mged_default(max_text_lines)} {
+		$_w delete 1.0 [expr $nlines - $mged_default(max_text_lines)].end
 	    }
 	}
     }
