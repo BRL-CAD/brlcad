@@ -67,7 +67,7 @@ int argc; char *argv[];
 	{
 		dump_patch( patches[i] );
 	}
-
+	return(0);
 }
 
 /* IEEE patch number of the Bi-Cubic Bezier patch and convert it
