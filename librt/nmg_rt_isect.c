@@ -2018,7 +2018,7 @@ struct face_g_plane *fg_p;
 	rd->face_subhit = 0;
 	rd->ray_dist_to_plane = dist;
 	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
-		eu_touch_func, vu_touch_func, (char *)rd, NMG_FPI_PERGEOM,
+		eu_touch_func, vu_touch_func, (char *)rd, NMG_FPI_PERGEOM, 0,
 		rd->tol);
 
 
