@@ -146,12 +146,8 @@ pattern(register char *cp, register int cnt)
 
 /******* timing *********/
 
-#ifndef _TIME_H
-typedef long	time_t;
-#endif
-
 #ifdef SYSV
-extern time_t time();
+extern time_t time(time_t *);
 static time_t time0;
 static struct tms tms0;
 #else
