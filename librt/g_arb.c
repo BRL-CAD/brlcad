@@ -26,10 +26,16 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "db.h"
 #include "./debug.h"
 
 void	arb_print();
+
+/* The internal (in memory form of an ARM -- 8 points in space */
+struct arb_internal {
+	fastf_t	arbi_pt[3*8];
+};
 
 /*
  *			Ray/ARB Intersection
@@ -79,7 +85,6 @@ struct arb_specific  {
 /* These hold temp values for the face being prep'ed */
 #define ARB_MAXPTS	4		/* All we need are 4 points */
 struct prep_arb {
-	fastf_t		pa_vec[3*8];	/* Original points */
 	point_t		pa_points[ARB_MAXPTS];	/* Actual points on plane */
 	int		pa_npts;	/* number of points on plane */
 	int		pa_faces;	/* Number of faces done so far */
@@ -135,40 +140,19 @@ int		uv_wanted;
 	register int	j;
 	register int	k;
 	LOCAL fastf_t	f;
+	struct arb_internal ai;
 	struct prep_arb	pa;
 
 	if( rec == (union record *)0 )  {
 		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		/* Convert from database to internal format */
-		rt_fastf_float( pa.pa_vec, rec->s.s_values, 8 );
+		i = arb_import( &ai, rec, stp->st_pathmat );
 		rt_free( (char *)rec, "arb record" );
 	} else {
-		/* Convert from database to internal format */
-		rt_fastf_float( pa.pa_vec, rec->s.s_values, 8 );
+		i = arb_import( &ai, rec, stp->st_pathmat );
 	}
+	if( i < 0 )  return(-1);		/* BAD */
 
 	pa.pa_doopt = uv_wanted;
-
-	/*
-	 * Process an ARB8, which is represented as a vector
-	 * from the origin to the first point, and 7 vectors
-	 * from the first point to the remaining points.
-	 *
-	 * Convert from vector to point notation IN PLACE
-	 * by rotating vectors and adding base vector.
-	 */
-	VSETALL( sum, 0 );
-	op = &pa.pa_vec[1*ELEMENTS_PER_VECT];
-#	include "noalias.h"
-	for( i=1; i<8; i++ )  {
-		VADD2( work, &pa.pa_vec[0], op );
-		MAT4X3PNT( op, stp->st_pathmat, work );
-		VADD2( sum, sum, op );			/* build the sum */
-		op += ELEMENTS_PER_VECT;
-	}
-	MAT4X3PNT( work, stp->st_pathmat, pa.pa_vec );	/* first point */
-	VMOVE( pa.pa_vec, work );			/* 1st: IN PLACE*/
-	VADD2( sum, sum, pa.pa_vec );			/* sum=0th element */
 
 	/*
 	 *  Determine a point which is guaranteed to be within the solid.
@@ -177,8 +161,14 @@ int		uv_wanted;
 	 *  The center of the enclosing RPP strategy used for the bounding
 	 *  sphere can be tricked by thin plates which are non-axis aligned,
 	 *  so this dual-strategy is required.  (What a bug hunt!).
-	 *  The actual work is done in the loop, above.
 	 */
+	VSETALL( sum, 0 );
+	op = &ai.arbi_pt[0*ELEMENTS_PER_VECT];
+#	include "noalias.h"
+	for( i=0; i<8; i++ )  {
+		VADD2( sum, sum, op );
+		op += ELEMENTS_PER_VECT;
+	}
 	VSCALE( stp->st_center, sum, 0.125 );	/* sum/8 */
 
 	pa.pa_faces = 0;
@@ -187,7 +177,7 @@ int		uv_wanted;
 		for( j=0; j<4; j++ )  {
 			register pointp_t point;
 
-			point = &pa.pa_vec[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT];
+			point = &ai.arbi_pt[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT];
 
 			/* Verify that this point is not the same
 			 * as an earlier point
@@ -276,7 +266,7 @@ next_pt:		;
 	 * bounding RPP.  Note that this center is NOT guaranteed
 	 * to be contained within the solid!
 	 */
-	op = &pa.pa_vec[0];
+	op = &ai.arbi_pt[0];
 #	include "noalias.h"
 	for( i=0; i< 8; i++ ) {
 		VMINMAX( stp->st_min, stp->st_max, op );
@@ -339,7 +329,7 @@ struct prep_arb	*pap;
 		return;					/* OK */
 	case 2:
 		VSUB2( P_A, point, afp->A );	/* C-A */
-		/* Check for co-linear, ie, (B-A)x(C-A) == 0 */
+		/* Check for co-linear, ie, |(B-A)x(C-A)| ~= 0 */
 		VCROSS( afp->N, ofp->arb_U, P_A );
 		f = MAGNITUDE( afp->N );
 		if( NEAR_ZERO(f,0.005) )  {
@@ -760,9 +750,9 @@ register struct soltab *stp;
 /*
  *  			A R B _ P L O T
  *
- * Plot an ARB, which is represented as a vector
- * from the origin to the first point, and 7 vectors
- * from the first point to the remaining points.
+ *  Plot an ARB by tracing out four "U" shaped contours
+ *  This draws each edge only once.
+ *  XXX No checking for degenerate faces is done, but probably should be.
  */
 void
 arb_plot( rp, matp, vhead, dp )
@@ -771,23 +761,67 @@ register matp_t		matp;
 struct vlhead		*vhead;
 struct directory	*dp;
 {
+	struct arb_internal	ai;
+
+	(void)arb_import( &ai, rp, matp );
+
+	ARB_FACE( ai.arbi_pt, 0, 1, 2, 3 );
+	ARB_FACE( ai.arbi_pt, 4, 0, 3, 7 );
+	ARB_FACE( ai.arbi_pt, 5, 4, 7, 6 );
+	ARB_FACE( ai.arbi_pt, 1, 5, 6, 2 );
+}
+
+/*
+ *			A R B _ C L A S S
+ */
+int
+arb_class()
+{
+	return(0);
+}
+
+/*
+ *			A R B _ I M P O R T
+ *
+ *  Import an ARB8 from the database format to the internal format.
+ *  There are two parts to this:  First, the database is presently
+ *  single precision binary floating point.
+ *  Secondly, the ARB in the database is represented as a vector
+ *  from the origin to the first point, and 7 vectors
+ *  from the first point to the remaining points.  In 1979 it seemed
+ *  like a good idea...
+ *
+ *  Convert from vector to point notation
+ *  by rotating each vector and adding in the base vector.
+ */
+int
+arb_import( aip, rp, matp )
+struct arb_internal	*aip;
+union record		*rp;
+register matp_t		matp;
+{
 	register int		i;
 	register fastf_t	*ip;
 	register fastf_t	*op;
-	static vect_t		work;
-	static fastf_t		vec[3*8];
-	static fastf_t		points[3*8];
+	LOCAL vect_t		work;
+	LOCAL fastf_t		vec[3*8];
 	
+	/* Check record type */
+	if( rp->u_id != ID_SOLID )  {
+		rt_log("arb_import: defective record\n");
+		return(-1);
+	}
+
 	/* Convert from database to internal format */
 	rt_fastf_float( vec, rp->s.s_values, 8 );
 
 	/*
 	 * Convert from vector to point notation for drawing.
 	 */
-	MAT4X3PNT( &points[0], matp, &vec[0] );
+	MAT4X3PNT( &aip->arbi_pt[0], matp, &vec[0] );
 
 	ip = &vec[1*3];
-	op = &points[1*3];
+	op = &aip->arbi_pt[1*3];
 #	include "noalias.h"
 	for( i=1; i<8; i++ )  {
 		VADD2( work, &vec[0], ip );
@@ -795,15 +829,106 @@ struct directory	*dp;
 		ip += 3;
 		op += ELEMENTS_PER_VECT;
 	}
-
-	ARB_FACE( points, 0, 1, 2, 3 );
-	ARB_FACE( points, 4, 0, 3, 7 );
-	ARB_FACE( points, 5, 4, 7, 6 );
-	ARB_FACE( points, 1, 5, 6, 2 );
+	return(0);			/* OK */
 }
 
-int
-arb_class()
+/*
+ *			A R B _ T E S S
+ *
+ *  "Tessellate" an ARB into an NMG data structure.
+ *  Purely a mechanical transformation of one faceted object
+ *  into another.
+ */
+void
+arb_tess( s, rp, matp, dp )
+struct shell		*s;
+register union record	*rp;
+register matp_t		matp;
+struct directory	*dp;
 {
-	return(0);
+	struct arb_internal	ai;
+	struct edgeuse		*eu;
+	struct vertex		*verts[8];
+	register int		i;
+
+	if( arb_import( &ai, rp, matp ) < 0 )  {
+		rt_log("arb_tess(%s): import failure\n", dp->d_namep);
+		return;
+	}
+
+	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
+
+	/* Build all 6 faces of the ARB */
+	if(
+	    arb_t2( s, verts, 0, 1, 2, 3 ) < 0 ||
+	    arb_t2( s, verts, 3, 7, 4, 0 ) < 0 ||
+	    arb_t2( s, verts, 4, 7, 6, 5 ) < 0 ||
+	    arb_t2( s, verts, 1, 5, 6, 2 ) < 0 ||
+	    arb_t2( s, verts, 0, 1, 5, 4 ) < 0 ||
+	    arb_t2( s, verts, 2, 3, 7, 6 ) < 0
+
+	)  {
+	    	rt_log("arb_tess(%s): NMG failure\n", dp->d_namep);
+	    	return;
+	}
+
+	/* Now, associate some geometry with the vertices */
+	for( i=0; i < 8; i++ )  {
+		if( !verts[i] )  continue;
+		if( verts[i]->magic != NMG_VERTEX_MAGIC )  {
+			rt_log("arb_tess: bad verts magic\n");
+			continue;
+		}
+		if( nmg_vertex_gv( verts[i], &ai.arbi_pt[3*i] ) ) {
+			rt_log("arb_tess: nmg_vertex_gv fail\n");
+			return;
+		}
+	}
+	return;
+}
+
+/*
+ *			A R B _ T 2
+ *
+ *  XXX need to see if an edge already exists between two vertices.
+ */
+HIDDEN int
+arb_t2( s, verts, a, b, c, d )
+struct shell	*s;
+struct vertex	*verts[];
+int		a, b, c, d;
+{
+
+	if( verts[a] == 0 )  {
+		/* First vertex better exist on all but 1st call! */
+		if( nmg_mkface1(s) ) goto fail;
+		verts[a] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+	} else {
+		if( nmg_mkfaceN(s, verts[a]) ) goto fail;
+		/* reused verts[a] */
+	}
+
+	if( verts[b] )  {
+		if( nmg_insfacev( verts[b], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
+	} else {
+		if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
+		verts[b] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+	}
+
+	if( verts[c] )  {
+		if( nmg_insfacev( verts[c], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
+	} else {
+		if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
+		verts[c] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+	}
+
+	if( verts[d] )  {
+		if( nmg_insfacev( verts[d], s->downptr.fu_p->lu_p->eu_p ) ) goto fail;
+	} else {
+		if( nmg_newfacev(s->downptr.fu_p->lu_p->eu_p) ) goto fail;
+		verts[d] = s->downptr.fu_p->lu_p->eu_p->vu_p->v_p;
+	}
+	return(0);			/* OK */
+fail:
+	return(-1);
 }
