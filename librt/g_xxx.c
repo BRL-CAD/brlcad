@@ -309,7 +309,7 @@ CONST struct db_i		*dbip;
 		return(-1);
 	}
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_XXX;
 	ip->idb_meth = &rt_functab[ID_XXX];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
@@ -386,19 +386,14 @@ register CONST mat_t		mat;
 CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
-	union record			*rp;
-	vect_t				vv;
+	fastf_t				vv[ELEMENTS_PER_VECT*1];
 
+	RT_CK_DB_INTERNAL(ip)
 	BU_CK_EXTERNAL( ep );
-	rp = (union record *)ep->ext_buf;
-	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
-		bu_log("rt_xxx_import: defective record\n");
-		return(-1);
-	}
+
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
 
 	/* set up the internal structure */
-	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_XXX;
 	ip->idb_meth = &rt_functab[ID_XXX];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
@@ -410,7 +405,7 @@ CONST struct db_i		*dbip;
 	 * (Big Endian ints, IEEE double floating point) to host local data
 	 * representations.
 	 */
-	ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, 3);
+	ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
 
 	/* Apply the modeling transformation */
 	MAT4X3PNT( xxx_ip->v, mat, vv );
@@ -435,7 +430,7 @@ double				local2mm;
 CONST struct db_i		*dbip;
 {
 	struct rt_xxx_internal	*xxx_ip;
-	fastf_t			vec;
+	fastf_t			vec[ELEMENTS_PER_VECT];
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_XXX )  return(-1);
@@ -443,7 +438,7 @@ CONST struct db_i		*dbip;
 	RT_XXX_CK_MAGIC(xxx_ip);
 
 	BU_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3;
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
 
 
@@ -453,15 +448,10 @@ CONST struct db_i		*dbip;
 	 */
 	VSCALE( vec, xxx_ip->v, local2mm );
 
-	/* convert from local editing units to mm and export
-	 * to database record format
-	 *
-	 * Warning: type conversion: double to float
-	 */
-	VSCALE( vec, xxx_ip->v, local2mm );
-	htond((char *)ep->ext_buf, (char *)vec, 3);
+	/* Convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1 );
 
-	return(0);
+	return 0;
 }
 
 /*
