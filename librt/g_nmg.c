@@ -234,144 +234,6 @@ struct hitlist	*a_hit;
 	return(2);
 }
 
-
-/*
- *
- *
- *	if we hit a 3 manifold for seg_in we enter the solid
- *	if we hit a 3 manifold for seg_out we leave the solid
- *	if we hit a 0,1or2 manifold for seg_in, we enter/leave the solid.
- *	if we hit a 0,1or2 manifold for seg_out, we ignore it.
- */
-static int
-vertex_hit(v_p, seg_p, rp, tbl, a_hit, filled)
-struct vertex	*v_p;
-struct seg	*seg_p;
-struct xray	*rp;
-char		*tbl;
-struct hitlist	*a_hit;
-int		filled;
-{
-	char manifolds = NMG_MANIFOLDS(tbl, v_p);
-	struct faceuse *fu_p;
-	struct vertexuse *vu_p;
-
-	if (manifolds & NMG_3MANIFOLD) {
-
-	    /* XXX */
-	    rt_bomb("God have mercy!\n");
-	    RT_LIST_DEQUEUE(&a_hit->l);
-	    rt_free((char *)a_hit, "freeing hitpoint");
-
-	} else if (manifolds & NMG_2MANIFOLD) {
-	    /* we've hit the corner of a dangling face */
-	    if (filled == 0) {
-	    	register int found=0;
-
-	    	/* find a surface normal */
-	    	for (RT_LIST_FOR(vu_p, vertexuse, &v_p->vu_hd)) {
-
-	    		if (NMG_MANIFOLDS(tbl, vu_p) & NMG_2MANIFOLD &&
-	    		    !(NMG_MANIFOLDS(tbl, vu_p) & NMG_3MANIFOLD) ) {
-	    		    	found = 1; break;
-	    		}
-	    	}
-	    	
-		bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
-		bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
-
-	    	if (found) {
-		    	/* we've found a 2manifold vertexuse.
-		    	 * get a pointer to the faceuse and get the
-		    	 * normal from the face
-		    	 */
-
-		    	if (*vu_p->up.magic_p == NMG_EDGEUSE_MAGIC)
-		    		fu_p = vu_p->up.eu_p->up.lu_p->up.fu_p;
-		    	else if (*vu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
-		    		fu_p = vu_p->up.lu_p->up.fu_p;
-	    		else  {
-	    			fu_p = (struct faceuse *)NULL;
-	    			rt_bomb("vertex_hit: bad vu->up\n");
-	    			/* NOTREACHED */
-	    		}
-
-		    	if (VDOT(fu_p->f_p->fg_p->N, rp->r_dir) > 0.0) {
-				VREVERSE(seg_p->seg_in.hit_normal,
-					fu_p->f_p->fg_p->N);
-				VMOVE(seg_p->seg_out.hit_normal,
-					fu_p->f_p->fg_p->N);
-		    	} else {
-				VMOVE(seg_p->seg_in.hit_normal,
-					fu_p->f_p->fg_p->N);
-				VREVERSE(seg_p->seg_out.hit_normal,
-					fu_p->f_p->fg_p->N);
-		    	}
-
-		} else {
-	    		/* we didn't find a face.  How did this happen? */
-	    		rt_log("2manifold lone vertex?\n");
-			VREVERSE(seg_p->seg_in.hit_normal, rp->r_dir);
-			VMOVE(seg_p->seg_out.hit_normal, rp->r_dir);
-
-			filled = 2;
-	    	}
-	    }
-	    RT_LIST_DEQUEUE(&a_hit->l);
-	    rt_free((char *)a_hit, "freeing hitpoint");
-
-	} else if (manifolds & NMG_1MANIFOLD) {
-	    /* we've hit the end of a wire.
-	     * this is the same as for hitting a wire.
-	     */
-	    if (filled == 0) {
-	    	/* go looking for a wire edge */
-		for (RT_LIST_FOR(vu_p, vertexuse, &v_p->vu_hd)) {
-		    /* if we find an edge which is only a 1 manifold
-		     * we'll call edge_hit with it
-		     */
-		    if (*vu_p->up.magic_p == NMG_EDGEUSE_MAGIC &&
-			! (NMG_MANIFOLDS(tbl, vu_p->up.eu_p->e_p) &
-			(NMG_3MANIFOLD|NMG_2MANIFOLD)) &&
-			(NMG_MANIFOLDS(tbl, vu_p->up.eu_p->e_p) &
-			NMG_1MANIFOLD) ) {
-			    filled = wire_hit(vu_p->up.eu_p->e_p,
-			    			seg_p, rp, a_hit);
-			    			
-			    break;
-		    }
-		}
-	    	if (filled == 0) {
-	    		/* we didn't find an edge.  How did this happen? */
-	    		rt_log("1manifold lone vertex?\n");
-			bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
-			bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
-			VREVERSE(seg_p->seg_in.hit_normal, rp->r_dir);
-			VMOVE(seg_p->seg_out.hit_normal, rp->r_dir);
-
-			filled = 2;
-	    	}
-	    }
-	    RT_LIST_DEQUEUE(&a_hit->l);
-	    rt_free((char *)a_hit, "freeing hitpoint");
-
-	} else if (manifolds & NMG_0MANIFOLD ) {
-	    if (filled == 0) {
-		/* we've hit a lone vertex */
-		bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
-		bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
-		VREVERSE(seg_p->seg_in.hit_normal, rp->r_dir);
-		VMOVE(seg_p->seg_out.hit_normal, rp->r_dir);
-
-		filled = 2;
-	    }
-	    RT_LIST_DEQUEUE(&a_hit->l);
-	    rt_free((char *)a_hit, "freeing hitpoint");
-	}
-	return(filled);
-}
-
-
 #define LEFT_MIN_ENTER	0
 #define LEFT_MIN_EXIT	1
 #define LEFT_MAX_ENTER	2
@@ -380,35 +242,6 @@ int		filled;
 #define RIGHT_MIN_EXIT	5
 #define RIGHT_MAX_ENTER	6
 #define RIGHT_MAX_EXIT	7
-
-static void
-edge_confusion(a_hit, i_u, file, line)
-struct hitlist	*a_hit;
-struct ef_data i_u[8];	/* "important" uses of edge */
-char *file;
-int line;
-{
-	if (file)
-		rt_log("edge_hit() in %s at %d is confused\n", file, line);
-
-	rt_structprint("LEFT_MIN_ENTER", ef_parsetab,
-		(char *)&i_u[LEFT_MIN_ENTER]);
-	rt_structprint("LEFT_MIN_EXIT", ef_parsetab,
-		(char *)&i_u[LEFT_MIN_EXIT]);
-	rt_structprint("LEFT_MAX_ENTER", ef_parsetab,
-		(char *)&i_u[LEFT_MAX_ENTER]);
-	rt_structprint("LEFT_MAX_EXIT", ef_parsetab,
-		(char *)&i_u[LEFT_MAX_EXIT]);
-	rt_structprint("RIGHT_MIN_ENTER", ef_parsetab,
-		(char *)&i_u[RIGHT_MIN_ENTER]);
-	rt_structprint("RIGHT_MIN_EXIT", ef_parsetab,
-		(char *)&i_u[RIGHT_MIN_EXIT]);
-	rt_structprint("RIGHT_MAX_ENTER", ef_parsetab,
-		(char *)&i_u[RIGHT_MAX_ENTER]);
-	rt_structprint("RIGHT_MAX_EXIT", ef_parsetab,
-		(char *)&i_u[RIGHT_MAX_EXIT]);
-
-}
 
 
 static void
@@ -541,6 +374,245 @@ vect_t left_vect;
 
 	} while (tmp.eu != e_p->eu_p);
 }
+
+
+static
+v_neighborhood(v_p, tbl, rp)
+struct vertex *v_p;
+char		*tbl;
+struct xray	*rp;
+{
+	char *nbh=(char *)NULL;
+	int hood;
+	int idx;
+	struct model *m;
+	struct vertexuse *vu_p;
+	vect_t left_vect;
+	struct ef_data i_u[8];	/* "important" uses of edge */
+
+	NMG_CK_VERTEX(v_p);
+	
+	m = nmg_find_model((long *)v_p);
+
+	nbh = rt_calloc(m->maxindex, sizeof (char),
+		"get nbh table");
+
+	hood = 1;
+	for (RT_LIST_FOR(vu_p, vertexuse, &v_p->vu_hd)) {
+		switch(*vu_p->up.magic_p) {
+		case NMG_EDGEUSE_MAGIC:
+			NMG_CK_EDGE(vu_p->up.eu_p->e_p);
+			if (NMG_INDEX_TEST(nbh, vu_p->up.eu_p->e_p)) break;
+
+			/* edge hasn't been seen, sort uses wrt seen edges */
+			sort_eus(i_u, vu_p->up.eu_p->e_p, tbl, rp, left_vect);
+			NMG_INDEX_ASSIGN(nbh, vu_p->up.eu_p->e_p, hood++);
+
+			break;
+		case NMG_LOOPUSE_MAGIC:
+			rt_bomb("XXX 3-Mainifold vertex loop hit\n");
+			break;
+		}
+	}
+
+	/* determine last/first faces */
+	
+
+}
+
+
+/*
+ *	if we hit a 3 manifold for seg_in we enter the solid
+ *	if we hit a 3 manifold for seg_out we leave the solid
+ *	if we hit a 0,1or2 manifold for seg_in, we enter/leave the solid.
+ *	if we hit a 0,1or2 manifold for seg_out, we ignore it.
+ */
+static int
+vertex_hit(v_p, seg_p, rp, tbl, a_hit, filled)
+struct vertex	*v_p;
+struct seg	*seg_p;
+struct xray	*rp;
+char		*tbl;
+struct hitlist	*a_hit;
+int		filled;
+{
+	char manifolds = NMG_MANIFOLDS(tbl, v_p);
+	struct faceuse *fu_p;
+	struct vertexuse *vu_p;
+	int entries = 0;
+	int exits = 0;
+	vect_t	saved_normal;
+	fastf_t BestRdotN = 5.0;
+	fastf_t RdotN;
+	struct face_g *fg;
+
+	if (manifolds & NMG_3MANIFOLD) {
+
+		for (RT_LIST_FOR(vu_p, vertexuse, &v_p->vu_hd)) {
+			if (NMG_MANIFOLDS(tbl, vu_p) & NMG_3MANIFOLD ||
+			    NMG_MANIFOLDS(tbl, vu_p) & NMG_2MANIFOLD) {
+
+				switch (*vu_p->up.magic_p) {
+				case NMG_EDGEUSE_MAGIC:
+					NMG_CK_LOOPUSE(vu_p->up.eu_p->up.lu_p);
+					NMG_CK_FACEUSE(vu_p->up.eu_p->up.lu_p->up.fu_p);
+					   NMG_CK_FACE(vu_p->up.eu_p->up.lu_p->up.fu_p->f_p);
+					 NMG_CK_FACE_G(vu_p->up.eu_p->up.lu_p->up.fu_p->f_p->fg_p);
+					fg = vu_p->up.eu_p->up.lu_p->up.fu_p->f_p->fg_p;
+
+					break;
+				case NMG_LOOPUSE_MAGIC:
+					NMG_CK_FACEUSE(vu_p->up.eu_p->up.lu_p->up.fu_p);
+					NMG_CK_FACE(vu_p->up.eu_p->up.lu_p->up.fu_p->f_p);
+					NMG_CK_FACE_G(vu_p->up.eu_p->up.lu_p->up.fu_p->f_p->fg_p);
+					fg = vu_p->up.eu_p->up.lu_p->up.fu_p->f_p->fg_p;
+					break;
+				}
+
+				if ((RdotN = VDOT(rp->r_dir, fg->N)) < 0) {
+			    		entries++;
+					if (-1.0 * RdotN < BestRdotN) {
+						BestRdotN = fabs(RdotN);
+						VMOVE(saved_normal, fg->N);
+					}
+				} else {
+					exits++;
+					if (RdotN < BestRdotN) {
+						BestRdotN = fabs(RdotN);
+						VMOVE(saved_normal, fg->N);
+					}
+				}
+			}
+		}
+
+		if (entries && !exits && filled == 0) {
+			/* single in-bound hit */
+			bcopy(&a_hit->hit, &seg_p->seg_in,sizeof(struct hit));
+			VMOVE(seg_p->seg_in.hit_normal, saved_normal);
+			filled++;
+		} else if (exits && !entries && filled) {
+			/* single out-bound hit */
+			bcopy(&a_hit->hit, &seg_p->seg_in,sizeof(struct hit));
+			VMOVE(seg_p->seg_in.hit_normal, saved_normal);
+			filled++;
+		}else {
+
+			v_neighborhood(v_p, tbl, rp);
+
+		}
+
+		RT_LIST_DEQUEUE(&a_hit->l);
+		rt_free((char *)a_hit, "freeing hitpoint");
+
+	} else if (manifolds & NMG_2MANIFOLD) {
+	    /* we've hit the corner of a dangling face */
+	    if (filled == 0) {
+	    	register int found=0;
+
+	    	/* find a surface normal */
+	    	for (RT_LIST_FOR(vu_p, vertexuse, &v_p->vu_hd)) {
+
+	    		if (NMG_MANIFOLDS(tbl, vu_p) & NMG_2MANIFOLD &&
+	    		    !(NMG_MANIFOLDS(tbl, vu_p) & NMG_3MANIFOLD) ) {
+	    		    	found = 1; break;
+	    		}
+	    	}
+	    	
+		bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
+		bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
+
+	    	if (found) {
+		    	/* we've found a 2manifold vertexuse.
+		    	 * get a pointer to the faceuse and get the
+		    	 * normal from the face
+		    	 */
+
+		    	if (*vu_p->up.magic_p == NMG_EDGEUSE_MAGIC)
+		    		fu_p = vu_p->up.eu_p->up.lu_p->up.fu_p;
+		    	else if (*vu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
+		    		fu_p = vu_p->up.lu_p->up.fu_p;
+	    		else  {
+	    			fu_p = (struct faceuse *)NULL;
+	    			rt_bomb("vertex_hit: bad vu->up\n");
+	    			/* NOTREACHED */
+	    		}
+
+		    	if (VDOT(fu_p->f_p->fg_p->N, rp->r_dir) > 0.0) {
+				VREVERSE(seg_p->seg_in.hit_normal,
+					fu_p->f_p->fg_p->N);
+				VMOVE(seg_p->seg_out.hit_normal,
+					fu_p->f_p->fg_p->N);
+		    	} else {
+				VMOVE(seg_p->seg_in.hit_normal,
+					fu_p->f_p->fg_p->N);
+				VREVERSE(seg_p->seg_out.hit_normal,
+					fu_p->f_p->fg_p->N);
+		    	}
+
+		} else {
+	    		/* we didn't find a face.  How did this happen? */
+	    		rt_log("2manifold lone vertex?\n");
+			VREVERSE(seg_p->seg_in.hit_normal, rp->r_dir);
+			VMOVE(seg_p->seg_out.hit_normal, rp->r_dir);
+
+			filled = 2;
+	    	}
+	    }
+	    RT_LIST_DEQUEUE(&a_hit->l);
+	    rt_free((char *)a_hit, "freeing hitpoint");
+
+	} else if (manifolds & NMG_1MANIFOLD) {
+	    /* we've hit the end of a wire.
+	     * this is the same as for hitting a wire.
+	     */
+	    if (filled == 0) {
+	    	/* go looking for a wire edge */
+		for (RT_LIST_FOR(vu_p, vertexuse, &v_p->vu_hd)) {
+		    /* if we find an edge which is only a 1 manifold
+		     * we'll call edge_hit with it
+		     */
+		    if (*vu_p->up.magic_p == NMG_EDGEUSE_MAGIC &&
+			! (NMG_MANIFOLDS(tbl, vu_p->up.eu_p->e_p) &
+			(NMG_3MANIFOLD|NMG_2MANIFOLD)) &&
+			(NMG_MANIFOLDS(tbl, vu_p->up.eu_p->e_p) &
+			NMG_1MANIFOLD) ) {
+			    filled = wire_hit(vu_p->up.eu_p->e_p,
+			    			seg_p, rp, a_hit);
+			    			
+			    break;
+		    }
+		}
+	    	if (filled == 0) {
+	    		/* we didn't find an edge.  How did this happen? */
+	    		rt_log("1manifold lone vertex?\n");
+			bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
+			bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
+			VREVERSE(seg_p->seg_in.hit_normal, rp->r_dir);
+			VMOVE(seg_p->seg_out.hit_normal, rp->r_dir);
+
+			filled = 2;
+	    	}
+	    }
+	    RT_LIST_DEQUEUE(&a_hit->l);
+	    rt_free((char *)a_hit, "freeing hitpoint");
+
+	} else if (manifolds & NMG_0MANIFOLD ) {
+	    if (filled == 0) {
+		/* we've hit a lone vertex */
+		bcopy(&a_hit->hit, seg_p->seg_in, sizeof(struct hit));
+		bcopy(&a_hit->hit, seg_p->seg_out, sizeof(struct hit));
+		VREVERSE(seg_p->seg_in.hit_normal, rp->r_dir);
+		VMOVE(seg_p->seg_out.hit_normal, rp->r_dir);
+
+		filled = 2;
+	    }
+	    RT_LIST_DEQUEUE(&a_hit->l);
+	    rt_free((char *)a_hit, "freeing hitpoint");
+	}
+	return(filled);
+}
+
+
 
 /*
  *	Fill in a seg struct to reflect a grazing hit of a solid on an
@@ -716,6 +788,35 @@ struct ef_data *i_u;	/* "important" uses of edge */
 
 	RT_LIST_DEQUEUE(&a_hit->l);
 	rt_free((char *)a_hit, "freeing hitpoint");
+}
+
+static void
+edge_confusion(a_hit, i_u, file, line)
+struct hitlist	*a_hit;
+struct ef_data i_u[8];	/* "important" uses of edge */
+char *file;
+int line;
+{
+	if (file)
+		rt_log("edge_hit() in %s at %d is confused\n", file, line);
+
+	rt_structprint("LEFT_MIN_ENTER", ef_parsetab,
+		(char *)&i_u[LEFT_MIN_ENTER]);
+	rt_structprint("LEFT_MIN_EXIT", ef_parsetab,
+		(char *)&i_u[LEFT_MIN_EXIT]);
+	rt_structprint("LEFT_MAX_ENTER", ef_parsetab,
+		(char *)&i_u[LEFT_MAX_ENTER]);
+	rt_structprint("LEFT_MAX_EXIT", ef_parsetab,
+		(char *)&i_u[LEFT_MAX_EXIT]);
+	rt_structprint("RIGHT_MIN_ENTER", ef_parsetab,
+		(char *)&i_u[RIGHT_MIN_ENTER]);
+	rt_structprint("RIGHT_MIN_EXIT", ef_parsetab,
+		(char *)&i_u[RIGHT_MIN_EXIT]);
+	rt_structprint("RIGHT_MAX_ENTER", ef_parsetab,
+		(char *)&i_u[RIGHT_MAX_ENTER]);
+	rt_structprint("RIGHT_MAX_EXIT", ef_parsetab,
+		(char *)&i_u[RIGHT_MAX_EXIT]);
+
 }
 
 /*
