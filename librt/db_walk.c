@@ -3,10 +3,12 @@
  *
  * Functions -
  *	db_functree	No-frills tree-walk
+ *	comb_functree	No-frills combination-walk
  *
  *
  *  Authors -
  *	Michael John Muuss
+ *	John R. Anderson
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -88,4 +90,45 @@ void		(*leaf_func)();
 			dp->d_namep );
 	}
 	rt_free( (char *)rp, "db_functree record[]" );
+}
+
+/*		C O M B _ F U N C T R E E
+ *
+ *	This routine traverses a combination (union tree) in LNR order
+ *	and calls the provided function for each leaf node.
+ *	Note that this routine does not go outside this one
+ *	combination!!!!
+ *
+ */
+void
+comb_functree( dbip, comb_tree, leaf_func, user_ptr )
+struct db_i		*dbip;
+union tree		*comb_tree;
+void			(*leaf_func)();
+genptr_t		user_ptr;
+{
+	RT_CK_DBI( dbip );
+
+	if( !comb_tree )
+		return;
+
+	RT_CK_TREE( comb_tree );
+
+	switch( comb_tree->tr_op )
+	{
+		case OP_DB_LEAF:
+			(*leaf_func)( dbip, comb_tree, user_ptr );
+			break;
+		case OP_UNION:
+		case OP_INTERSECT:
+		case OP_SUBTRACT:
+		case OP_XOR:
+			comb_functree( dbip, comb_tree->tr_b.tb_left, leaf_func, user_ptr );
+			comb_functree( dbip, comb_tree->tr_b.tb_right, leaf_func, user_ptr );
+			break;
+		default:
+			bu_log( "comb_functree: bad op %d\n", comb_tree->tr_op );
+			bu_bomb( "comb_functree: bad op\n" );
+			break;
+	}
 }
