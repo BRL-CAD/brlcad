@@ -535,7 +535,7 @@ struct rt_i	*rtip;
 		/* Allow RT library to prepare itself */
 		rt_vls_init( &times );
 		rt_prep_timer();
-		rt_prep(rtip);
+		rt_prep_parallel(rtip, npsw);
 
 		(void)rt_get_timer( &times, NULL );
 		rt_log( "PREP: %s\n", rt_vls_addr(&times) );
