@@ -20,11 +20,11 @@
 #	The Dm class wraps LIBDM's display manager object.
 #
 class Dm {
-    private variable dm ""
-    private variable width 512
-    private variable height 512
-    private variable invWidth ""
-    private variable aspect ""
+    protected variable dm ""
+    protected variable width 512
+    protected variable height 512
+    protected variable invWidth ""
+    protected variable aspect ""
     private variable initializing 1
 
     public variable name ""
@@ -86,11 +86,11 @@ class Dm {
     }
 
     # methods for handling window events
-    private method toggle_zclip {}
-    private method toggle_zbuffer {}
-    private method toggle_light {}
-    private method toggle_perspective {}
-    private method doBindings {}
+    protected method toggle_zclip {}
+    protected method toggle_zbuffer {}
+    protected method toggle_light {}
+    protected method toggle_perspective {}
+    protected method doBindings {}
 
     # methods that wrap LIBDM display manager object commands
     public method observer {args}
@@ -107,12 +107,12 @@ class Dm {
     public method fg {args}
     public method linewidth {args}
     public method linestyle {args}
-    public method dm_configure {}
-    public method light {args}
-    public method zbuffer {args}
+    public method handle_configure {}
     public method zclip {args}
-    public method bounds {args}
+    public method zbuffer {args}
+    public method light {args}
     public method perspective {args}
+    public method bounds {args}
     public method debug {args}
     public method listen {args}
     public method refreshfb {}
@@ -139,11 +139,11 @@ configbody Dm::size {
 
     # For now, put back the old value.
     # If the size really does change, size will
-    # be set in the dm_configure method.
+    # be set in the handle_configure method.
     set size "$width $height"
 
     # request a size change
-    eval size $s
+    eval Dm::size $s
 }
 
 configbody Dm::title {
@@ -175,57 +175,57 @@ configbody Dm::type {
 
 configbody Dm::listen {
     if {!$initializing} {
-	listen $listen
+	Dm::listen $listen
     }
 }
 
 configbody Dm::fb_active {
-    fb_active $fb_active
+    Dm::fb_active $fb_active
 }
 
 configbody Dm::fb_update {
-    fb_update $fb_update
+    Dm::fb_update $fb_update
 }
 
 configbody Dm::bg {
     if {!$initializing} {
-	bg $bg
+	Dm::bg $bg
     }
 }
 
 configbody Dm::light {
     if {!$initializing} {
-	light $light
+	Dm::light $light
     }
 }
 
 configbody Dm::zclip {
     if {!$initializing} {
-	zclip $zclip
+	Dm::zclip $zclip
     }
 }
 
 configbody Dm::zbuffer {
     if {!$initializing} {
-	zbuffer $zbuffer
+	Dm::zbuffer $zbuffer
     }
 }
 
 configbody Dm::perspective {
     if {!$initializing} {
-	perspective $perspective
+	Dm::perspective $perspective
     }
 }
 
 configbody Dm::debug {
     if {!$initializing} {
-	debug $debug
+	Dm::debug $debug
     }
 }
 
 configbody Dm::linewidth {
     if {!$initializing} {
-	linewidth $linewidth
+	Dm::linewidth $linewidth
     }
 }
 
@@ -308,13 +308,31 @@ body Dm::linestyle {args} {
     }
 }
 
-body Dm::dm_configure {} {
+body Dm::handle_configure {} {
     $dm configure
     set size [$dm size]
     set width [lindex $size 0]
     set height [lindex $size 1]
     set invWidth [expr 1.0 / $width]
     set aspect [expr (1.0 * $width) / $height]
+}
+
+body Dm::zclip {args} {
+    if {$args == ""} {
+	return $zclip
+    }
+
+    $dm zclip $args
+    set zclip $args
+}
+
+body Dm::zbuffer {args} {
+    if {$args == ""} {
+	return $zbuffer
+    }
+
+    $dm zbuffer $args
+    set zbuffer $args
 }
 
 # Get/set light
@@ -327,35 +345,17 @@ body Dm::light {args} {
     set light $args
 }
 
-body Dm::zbuffer {args} {
-    if {$args == ""} {
-	return $zbuffer
-    }
-
-    $dm zbuffer $args
-    set zbuffer $args
-}
-
-body Dm::zclip {args} {
-    if {$args == ""} {
-	return $zclip
-    }
-
-    $dm zclip $args
-    set zclip $args
-}
-
-body Dm::bounds {args} {
-    eval $dm bounds $args
-}
-
 body Dm::perspective {args} {
     if {$args == ""} {
 	return $perspective
     }
 
     $dm perspective $args
-    set perspective $perspective
+    set perspective $args
+}
+
+body Dm::bounds {args} {
+    eval $dm bounds $args
 }
 
 body Dm::debug {args} {
@@ -426,7 +426,7 @@ body Dm::get_aspect {} {
 }
 
 body Dm::get_name {} {
-    return $name
+    return $dm
 }
 
 body Dm::fb_active {args} {
@@ -485,7 +485,7 @@ body Dm::toggle_zbuffer {} {
 	set zbuffer 0
     } else {
 	$dm zbuffer 1
-	set zbuffer 0
+	set zbuffer 1
     }
 }
 
@@ -495,7 +495,7 @@ body Dm::toggle_light {} {
 	set light 0
     } else {
 	$dm light 1
-	set light 0
+	set light 1
     }
 }
 
@@ -505,17 +505,17 @@ body Dm::toggle_perspective {} {
 	set perspective 0
     } else {
 	$dm perspective 1
-	set perspective 0
+	set perspective 1
     }
 }
 
 body Dm::doBindings {} {
     bind $dm <Enter> "focus $dm;"
-    bind $dm <Configure> "[code $this dm_configure]; break"
+    bind $dm <Configure> "[code $this Dm::handle_configure]; break"
 
     # Key Bindings
-    bind $dm <F2> "$this toggle_zclip; break"
-    bind $dm <F3> "$this toggle_perspective; break"
-    bind $dm <F4> "$this toggle_zbuffer; break"
-    bind $dm <F5> "$this toggle_light; break"
+    bind $dm <F2> "$this Dm::toggle_zclip; break"
+    bind $dm <F3> "$this Dm::toggle_perspective; break"
+    bind $dm <F4> "$this Dm::toggle_zbuffer; break"
+    bind $dm <F5> "$this Dm::toggle_light; break"
 }
