@@ -242,6 +242,11 @@ struct holes
 
 point_t *grid_pts;
 
+int getline();
+void Add_holes( int type, int gr, int comp, struct hole_list *ptr );
+void make_bot_object();
+int skip_region( int id );
+
 int
 is_a_hole( id )
 int id;
@@ -2267,11 +2272,7 @@ do_ccone3()
 }
 
 void
-Add_holes( type, gr , comp , ptr )
-int type;
-int gr;
-int comp;
-struct hole_list *ptr;
+Add_holes( int type, int gr, int comp, struct hole_list *ptr )
 {
 	struct holes *hole_ptr, *prev;
 	struct hole_list *hptr;
@@ -2649,8 +2650,7 @@ do_quad()
 }
 
 int
-skip_region( id )
-int id;
+skip_region( int id )
 {
 	int i;
 
@@ -2734,11 +2734,11 @@ make_bot_object()
 	bot_ip.orientation = RT_BOT_UNORIENTED;
 	bot_ip.error_mode = 0;
 
-	count = bot_vertex_fuse( &bot_ip );
+	count = rt_bot_vertex_fuse( &bot_ip );
 	if( count )
-		(void)bot_condense( &bot_ip );
+		(void)rt_bot_condense( &bot_ip );
 
-	count = bot_face_fuse( &bot_ip );
+	count = rt_bot_face_fuse( &bot_ip );
 	if( count )
 		bu_log( "\t%d duplicate faces eliminated\n", count );
 
