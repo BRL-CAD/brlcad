@@ -308,7 +308,32 @@ proc sliders_zero { id w } {
     }
 }
 
+# Set only sliders with values in knob_val_list.
+# If knob_val_list is empty then set all sliders.
+proc set_slider {knob_val_list} {
+    global sliders
+
+    set id_list [cmd_get]
+    if { [string compare [lindex $id_list 0] "mged"] == 0 } {
+	return
+    }
+
+    if { [llength $knob_val_list] == 0 } {
+	#Set all sliders
+	set_sliders
+    } else {
+	foreach knob_val $knob_val_list {
+	    set knob [lindex $knob_val 0]
+	    set val [lindex $knob_val 1]
+	    foreach id $id_list {
+		set sliders($id,$knob) $val
+	    }
+	}
+    }
+}
+
 # set_sliders
+# Set all the sliders with values obtained from mged.
 proc set_sliders {} {
     global sliders
     global rateknobs
@@ -362,6 +387,12 @@ proc set_sliders {} {
 ## knob
 ##   To replace the regular knob function.
 proc knob args {
-    eval _mged_knob $args
-    set_sliders
+# if doing knob experiment in chgview.c
+# (i.e. #define DO_KNOB_EXPERIMENT 1 <--- in chgview.c) --- uncomment these 2 statements
+   set knob_val_list [eval _mged_knob $args]
+#puts "knob_val_list = $knob_val_list"
+   set_slider $knob_val_list
+# else --- uncomment these 2 statements
+#    eval _mged_knob $args
+#    set_sliders
 }
