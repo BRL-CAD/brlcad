@@ -68,9 +68,14 @@ register CONST char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
 CONST char				*value;	/* string containing value */
 {
-	int *p = (int *)(base+sdp->sp_offset);
 	struct light_specific *lsp = (struct light_specific *)base;
 
+	if (rdebug & RDEBUG_LIGHT) {
+		bu_log("light_cvt_visible(%s, %d)\n", name, sdp->sp_offset);
+		bu_log("visible: %d invisible: %d\n", 
+		       LIGHT_O(lt_visible),
+		       LIGHT_O(lt_invisible));
+	}
 	switch (sdp->sp_offset) {
 	case LIGHT_O(lt_invisible):
 		lsp->lt_visible = !lsp->lt_invisible;
@@ -79,8 +84,6 @@ CONST char				*value;	/* string containing value */
 		lsp->lt_invisible = !lsp->lt_visible;
 		break;
 	}
-	/* reconvert with optional units */
-	*p = !*p;
 }
 
 /*
@@ -119,6 +122,7 @@ struct bu_structparse light_print_tab[] = {
 {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
+{"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
 {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 struct bu_structparse light_parse[] = {
@@ -711,6 +715,9 @@ light_setup(register struct region *rp,
 		BU_LIST_INIT( &(LightHead.l) );
 	}
 	BU_LIST_INSERT( &(LightHead.l), &(lsp->l) );
+
+	if (rdebug&RDEBUG_LIGHT)
+		light_print(rp, lsp);
 
 	if (lsp->lt_invisible )  {
 		lsp->lt_rp = REGION_NULL;
