@@ -137,6 +137,8 @@ register char **argv;
 main( argc, argv )
 int argc; char **argv;
 {
+	int i;
+
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
@@ -150,11 +152,17 @@ int argc; char **argv;
 	/* See how many lines we can buffer */
 	scanlen = 3 * inx;
 	init_buffer( scanlen );
-	if( (outbuf = malloc(scanlen)) == NULL )
+	if (inx < outx) i = outx;
+	else i = inx;
+
+	if( (outbuf = malloc(i)) == NULL )
 		exit( 4 );
 
 	/* Here we go */
-	scale( stdout, inx, iny, outx, outy );
+	i = scale( stdout, inx, iny, outx, outy );
+	free( outbuf );
+	free( buffer );
+	return( 0 );
 }
 
 /*
