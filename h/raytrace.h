@@ -128,22 +128,26 @@ extern struct functab functab[];
 #define OP_SOLID	MKOP(1)			/* Leaf:  tr_stp -> solid */
 #define OP_UNION	MKOP(2)|OP_BINARY	/* Binary: L union R */
 #define OP_INTERSECT	MKOP(3)|OP_BINARY	/* Binary: L intersect R */
-#define OP_SUBTRACT	MKOP(4)|OP_BINARY	/* Binary: L intersect R */
+#define OP_SUBTRACT	MKOP(4)|OP_BINARY	/* Binary: L subtract R */
 
 union tree {
 	int	tr_op;		/* Operation */
 	struct tree_binary {
-		int		tb_op;
+		int		tb_op;		/* | OP_BINARY */
 		union tree	*tb_left;
 		union tree	*tb_right;
+		vect_t		tb_min;		/* subtree min pt of RPP */
+		vect_t		tb_max;		/* subtree max pt of RPP */
 	} tr_b;
 	struct tree_unary {
-		int		tu_op;
+		int		tu_op;		/* leaf, OP_SOLID */
 		struct soltab	*tu_stp;
 	} tr_a;
 };
 #define tr_left		tr_b.tb_left
 #define tr_right	tr_b.tb_right
+#define tr_min		tr_b.tb_min
+#define tr_max		tr_b.tb_max
 #define tr_stp		tr_a.tu_stp
 #define TREE_NULL	((union tree *)0)
 
@@ -163,6 +167,8 @@ struct region  {
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
 	struct region	*reg_active;	/* linked list of hit regions */
+	vect_t		reg_min;	/* min point, region RPP */
+	vect_t		reg_max;	/* max point, region RPP */
 };
 #define REGION_NULL	((struct region *)0)
 
