@@ -1,0 +1,69 @@
+#!/bin/sh
+#			F A S T . S H
+#
+# A quick way of recompiling MGED using multiple processors.
+#
+#  $Header$
+
+cake \
+ adc.o \
+ anal.o \
+ arb.o \
+ arbs.o \
+ attach.o &
+
+cake \
+ buttons.o \
+ chgmodel.o \
+ chgtree.o \
+ chgview.o \
+ clip.o \
+ cmd.o \
+ columns.o &
+
+cake \
+ dir.o \
+ dm-4d.o \
+ dm-plot.o \
+ dm-ps.o \
+ dm-tek.o \
+ dm-tek4109.o \
+ dodraw.o \
+ dozoom.o \
+ edarb.o \
+ edsol.o \
+ ell.o &
+
+cake \
+ facedef.o \
+ ged.o \
+ half.o \
+ hideline.o \
+ inside.o \
+ mater.o &
+
+cake \
+ menu.o \
+ mover.o \
+ overlay.o \
+ plot.o \
+ proc_reg.o \
+ rtif.o &
+
+cake \
+ scroll.o \
+ tedit.o \
+ tgc.o \
+ titles.o \
+ torus.o \
+ track.o &
+
+cake \
+ typein.o \
+ usepen.o \
+ concat.o \
+ utility1.o \
+ utility2.o &
+
+wait
+cake
