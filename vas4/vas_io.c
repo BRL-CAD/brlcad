@@ -134,9 +134,10 @@ vas_getc()
 {
 	char c;
 
-	if (read(vas_fd, &c, 1) > 0)
+	if (read(vas_fd, &c, 1) > 0)  {
+		if(debug)fprintf(stderr,"vas_getc: 0%o %c\n", c&0377, c&0377);
 		return(c & 0377);
-	else
+	}  else
 		return(EOF);
 }
 
