@@ -31,6 +31,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <netdb.h>
 #include <time.h>
 #include <math.h>
+#ifdef BSD
+# include <strings.h>
+# define strchr(s, c)	index(s, c)
+# define strrchr(s, c)	rindex(s, c)
+#else
+# include <string.h>
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -115,14 +122,18 @@ void	ph_default();	/* foobar message handler */
 void	ph_pixels();
 void	ph_print();
 void	ph_start();
+void	ph_version();
+void	ph_cmd();
 struct pkg_switch pkgswitch[] = {
-	{ MSG_START, ph_start, "Startup ACK" },
-	{ MSG_MATRIX, ph_default, "Set Matrix" },
-	{ MSG_LINES, ph_default, "Compute lines" },
-	{ MSG_END, ph_default, "End" },
-	{ MSG_PIXELS, ph_pixels, "Pixels" },
-	{ MSG_PRINT, ph_print, "Log Message" },
-	{ 0, 0, (char *)0 }
+	{ MSG_START,	ph_start,	"Startup ACK" },
+	{ MSG_MATRIX,	ph_default,	"Set Matrix" },
+	{ MSG_LINES,	ph_default,	"Compute lines" },
+	{ MSG_END,	ph_default,	"End" },
+	{ MSG_PIXELS,	ph_pixels,	"Pixels" },
+	{ MSG_PRINT,	ph_print,	"Log Message" },
+	{ MSG_VERSION,	ph_version,	"Protocol version check" },
+	{ MSG_CMD,	ph_cmd,		"Run one command" },
+	{ 0,		0,		(char *)0 }
 };
 
 int clients;
@@ -160,11 +171,13 @@ struct servers {
 	struct list	sr_work;
 	struct ihost	*sr_host;	/* description of this host */
 	int		sr_lump;	/* # lines to send at once */
-	int		sr_started;
-#define SRST_NEW	1		/* connected, no model loaded yet */
-#define SRST_LOADING	2		/* loading, awaiting ready response */
-#define SRST_READY	3		/* loaded, ready */
-#define SRST_RESTART	4		/* about to restart */
+	int		sr_state;	/* Server state, SRST_xxx */
+#define SRST_UNUSED	0		/* unused slot */
+#define SRST_NEW	1		/* connected, awaiting vers check */
+#define SRST_VERSOK	2		/* version OK, no model loaded yet */
+#define SRST_LOADING	3		/* loading, awaiting ready response */
+#define SRST_READY	4		/* loaded, ready */
+#define SRST_RESTART	5		/* about to restart */
 	struct frame	*sr_curframe;	/* ptr to current frame */
 	int		sr_index;	/* fr_servinit[] index */
 	/* Timings */
@@ -191,7 +204,7 @@ struct ihost {
 	int		ht_where;	/* Where to find database */
 #define HT_CD		1		/* cd to ht_path first */
 #define HT_CONVERT	2		/* cd to ht_path, asc2g database */
-	char		*ht_path;
+	char		*ht_path;	/* remote directory to run in */
 	struct ihost	*ht_next;
 };
 struct ihost		*HostHead;
@@ -199,6 +212,7 @@ struct ihost		*HostHead;
 struct ihost		*host_lookup_by_name();
 struct ihost		*host_lookup_by_addr();
 struct ihost		*host_lookup_by_hostent();
+struct ihost		*make_default_host();
 
 /* RT Options */
 extern int	width;
@@ -218,10 +232,11 @@ extern struct rt_g	rt_g;
 
 extern struct command_tab cmd_tab[];	/* given at end */
 
-char	start_cmd[256];		/* contains file name & objects */
+char	start_cmd[512];		/* contains file name & objects */
+char	file_basename[128];	/* contains last component of file name */
 
 FILE	*helper_fp;		/* pipe to rexec helper process */
-char	ourname[64];
+char	ourname[128];
 
 extern char *malloc();
 
@@ -231,15 +246,13 @@ extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 /*
  *			E R R L O G
  *
- *  Log an error.  We supply the newline, and route to user.
+ *  Log an error from the pkg library
  */
 /* VARARGS */
 void
 errlog( str, a, b, c, d, e, f, g, h )
 char *str;
 {
-	char buf[256];		/* a generous output line */
-
 	(void)fprintf( stderr, str, a, b, c, d, e, f, g, h );
 }
 
@@ -310,6 +323,7 @@ char	**argv;
 
 		while(clients)  {
 			check_input( 30 );	/* delay up to 30 secs */
+			schedule();
 		}
 		/* Might want to see if any work remains, and if so,
 		 * record it somewhere */
@@ -363,6 +377,7 @@ char	**argv;
 		while( FrameHead.fr_forw != &FrameHead )  {
 			start_servers();
 			check_input( 30 );	/* delay up to 30 secs */
+			schedule();
 		}
 		printf("REMRT:  task accomplished\n");
 	}
@@ -441,7 +456,7 @@ int waittime;
 		if( !(ibits&(1<<i)) )  continue;
 		pc = servers[i].sr_pc;
 		if( pkg_get(pc) < 0 )
-			dropclient(pc);
+			drop_server( &servers[i] );
 		ibits &= ~(1<<i);
 	}
 	/* Finally, handle any command input (This can recurse via "read") */
@@ -492,43 +507,53 @@ struct pkg_conn *pc;
 	bzero( (char *)sp, sizeof(*sp) );
 	sp->sr_pc = pc;
 	sp->sr_work.li_forw = sp->sr_work.li_back = &(sp->sr_work);
-	sp->sr_started = SRST_NEW;
+	sp->sr_state = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_lump = 32;
 	sp->sr_index = fd;
 	sp->sr_host = ihp;
 
 	printf("%s: ACCEPT\n", sp->sr_host->ht_name );
-
-	if( start_cmd[0] != '\0' )  {
-		send_start(sp);
-		send_loglvl(sp);
-	}
 }
 
 /*
- *			D R O P C L I E N T
+ *			D R O P _ S E R V E R
  */
-dropclient(pc)
-register struct pkg_conn *pc;
+drop_server(sp)
+register struct servers	*sp;
 {
-	register struct list *lhp, *lp;
-	register struct servers *sp;
-	register struct frame *fr;
+	register struct list	*lhp, *lp;
+	register struct pkg_conn *pc;
+	register struct frame	*fr;
 	int fd;
 
-	fd = pc->pkc_fd;
-	sp = &servers[fd];
-	printf("REMRT closing fd %d %s\n", fd, sp->sr_host->ht_name);
-	if( fd <= 3 || fd >= NFD )  {
-		printf("That's unreasonable, forget it!\n");
+	if( sp == SERVERS_NULL || sp->sr_host == IHOST_NULL )  {
+		printf("drop_server(x%x), sr_host=0\n", sp);
 		return;
 	}
-	pkg_close(pc);
-	clients &= ~(1<<fd);
-	sp->sr_pc = PKC_NULL;
+	printf("dropping %s\n", sp->sr_host->ht_name);
 
-	/* Need to remove any work in progress, and re-schedule */
+	pc = sp->sr_pc;
+	if( pc == PKC_NULL )  {
+		printf("drop_server(x%x), sr_pc=0\n", sp);
+		return;
+	}
+	fd = pc->pkc_fd;
+	if( fd <= 3 || fd >= NFD )  {
+		printf("drop_server: fd=%d is unreasonable, forget it!\n", fd);
+		return;
+	}
+	clients &= ~(1<<fd);
+
+	sp->sr_pc = PKC_NULL;
+	sp->sr_state = SRST_UNUSED;
+	sp->sr_index = -1;
+	sp->sr_host = IHOST_NULL;
+
+	/* After most server state has been zapped, close PKG connection */
+	pkg_close(pc);
+
+	/* Need to requeue any work that was in progress */
 	lhp = &(sp->sr_work);
 	while( (lp = lhp->li_forw) != lhp )  {
 		fr = lp->li_frame;
@@ -542,7 +567,6 @@ register struct pkg_conn *pc;
 		printf("ToDo:\n");
 		pr_list(&(fr->fr_todo));
 	}
-	if(running) schedule();
 }
 
 /*
@@ -559,33 +583,55 @@ start_servers()
 	register struct ihost	*ihp;
 	register struct servers	*sp;
 	struct timeval	now;
+	int	night;
+	int	add;
 
 	(void)gettimeofday( &now, (struct timezone *)0 );
 	if( tvdiff( &now, &last_server_check_time ) < SERVER_CHECK_INTERVAL )
 		return;
 
 	printf("seeking servers to start\n");
+	night = is_night( &now );
 	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
 
-		/* Skip hosts which are not eligible */
+		/* Skip hosts which are not eligible for add/drop */
+		add = 1;
 		switch( ihp->ht_when )  {
 		case HT_ALWAYS:
 			break;
 		case HT_NIGHT:
-			if( is_night( &now ) )  break;
-			printf("bypassing %s:  not night\n", ihp->ht_name);
-			continue;
+			if( night )
+				add = 1;
+			else
+				add = 0;
+			break;
 		default:
 		case HT_PASSIVE:
 			continue;
 		}
 
+		/* See if this host is already in contact as a server */
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
-			if( sp->sr_host == ihp )  goto next_host;
+			if( sp->sr_host != ihp )  continue;
+
+			/* This host is a server */
+			if( add == 0 )  {
+				/* Drop this host -- out of time range */
+				printf("auto dropping %s:  out of time range\n",
+					ihp->ht_name );
+				drop_server( sp );
+			} else {
+				/* Host already serving, do nothing more */
+			}
+			goto next_host;
 		}
-		/* This host is not busy, and is eligible */
-		add_host( ihp->ht_name );
+
+		/* This host is not presently in contact */
+		if( add )  {
+			printf("auto adding %s\n", ihp->ht_name);
+			add_host( ihp );
+		}
 
 next_host:	continue;
 	}
@@ -773,7 +819,7 @@ FILE *fp;
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( !running )
-				dropclient(sp->sr_pc);
+				drop_server(sp);
 			else
 				send_restart(sp);
 		}
@@ -847,7 +893,6 @@ do_a_frame()
 		return;
 	}
 	running = 1;
-	schedule();
 }
 
 /*
@@ -897,6 +942,9 @@ register struct frame *fr;
 /*
  *			S C H E D U L E
  *
+ *  This routine is called by the main loop, after each batch of PKGs
+ *  have arrived.
+ *
  *  If there is work to do, and a free server, send work.
  *  One assignment will be given to each free server.  If there are
  *  servers that do not have a proper number of assignments (to ensure
@@ -926,9 +974,22 @@ schedule()
 	scheduler_going = 1;
 
 	if( start_cmd[0] == '\0' )  goto out;
-	servers_going = 0;
+
+	/* Kick off any new servers */
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		if( sp->sr_state != SRST_VERSOK )  continue;
+
+		/* advance this server to SRST_LOADING */
+		send_loglvl(sp);
+
+		/* An error may have caused connection to drop */
+		if( sp->sr_pc == PKC_NULL )  continue;
+		send_start(sp);
+	}
 
 	/* Look for finished frames */
+	servers_going = 0;
 	fr = FrameHead.fr_forw;
 	while( fr != &FrameHead )  {
 		if( fr->fr_todo.li_forw != &(fr->fr_todo) )
@@ -965,7 +1026,7 @@ next_frame: ;
 		goto out;
 	}
 
-	/* Keep assigning work until all servers are sated */
+	/* Keep assigning work until all servers are fully loaded */
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
 		do {
 			another_pass = 0;
@@ -1003,13 +1064,9 @@ register struct frame	*fr;
 	register struct list	*lp;
 	int			a, b;
 
-	if( sp->sr_started == SRST_NEW )  {
-		/*  advance this server to state 1 (loading) */
-		send_start(sp);
-		return(0);
-	}
+	if( sp->sr_pc == PKC_NULL )  return(0);
 
-	if( sp->sr_started != SRST_READY )
+	if( sp->sr_state != SRST_READY )
 		return(0);	/* not running yet */
 
 #define N_SERVER_ASSIGNMENTS	3
@@ -1160,7 +1217,7 @@ char *buf;
 			sp->sr_host->ht_name);
 		printf(" local='%s'\n", PROTOCOL_VERSION );
 		printf("remote='%s'\n", buf );
-		dropclient( pc );
+		drop_server( sp );
 		if(buf) (void)free(buf);
 		return;
 	}
@@ -1169,12 +1226,11 @@ char *buf;
 		printf("unexpected MSG_START from fd %d\n", pc->pkc_fd);
 		return;
 	}
-	if( sp->sr_started != SRST_LOADING )  {
-		printf("MSG_START in state %d?\n", sp->sr_started);
+	if( sp->sr_state != SRST_LOADING )  {
+		printf("MSG_START in state %d?\n", sp->sr_state);
 	}
-	sp->sr_started = SRST_READY;
+	sp->sr_state = SRST_READY;
 	printf("%s READY FOR WORK\n", sp->sr_host->ht_name);
-	if(running) schedule();
 }
 
 /*
@@ -1188,6 +1244,50 @@ char *buf;
 	if(print_on)
 		printf("%s:%s", servers[pc->pkc_fd].sr_host->ht_name, buf );
 	if(buf) (void)free(buf);
+}
+
+/*
+ *			P H _ V E R S I O N
+ */
+void
+ph_version(pc, buf)
+register struct pkg_conn *pc;
+char	*buf;
+{
+	register struct servers	*sp;
+
+	sp = &servers[pc->pkc_fd];
+	if( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
+		printf("ERROR %s: protocol version mis-match\n",
+			sp->sr_host->ht_name);
+		printf("  local='%s'\n", PROTOCOL_VERSION );
+		printf(" remote='%s'\n", buf );
+		drop_server( sp );
+	} else {
+		if( sp->sr_state != SRST_NEW )  {
+			printf("NOTE %s:  VERSION message unexpected\n",
+				sp->sr_host->ht_name);
+		}
+		sp->sr_state = SRST_VERSOK;
+	}
+	if(buf) (void)free(buf);
+}
+
+/*
+ *			P H _ C M D
+ */
+void
+ph_cmd(pc, buf)
+register struct pkg_conn *pc;
+char	*buf;
+{
+	register struct servers	*sp;
+
+	sp = &servers[pc->pkc_fd];
+	printf("%s: cmd '%s'\n", sp->sr_host->ht_name, buf );
+	(void)rt_do_cmd( (struct rt_i *)0, buf, cmd_tab );
+	if(buf) (void)free(buf);
+	drop_server( sp );
 }
 
 /*
@@ -1229,7 +1329,7 @@ info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
 		printf("frame number mismatch, claimed=%d, actual=%d\n",
 			info.li_frame, fr->fr_number );
 bad:
-		dropclient( pc );
+		drop_server( sp );
 		if(buf) (void)free(buf);
 		return;
 	}
@@ -1286,10 +1386,6 @@ bad:
 
 	/* Remove from work list */
 	list_remove( &(sp->sr_work), info.li_startpix, info.li_endpix );
-
-	/* May be a recursive invocation;  but this is not a problem */
-	if( running )
-		schedule();
 }
 
 /*
@@ -1429,24 +1525,27 @@ register struct servers *sp;
 {
 	register struct ihost	*ihp;
 
-	if( start_cmd[0] == '\0' || sp->sr_started != SRST_NEW )  return;
+	if( sp->sr_pc == PKC_NULL )  return;
+	if( start_cmd[0] == '\0' || sp->sr_state != SRST_VERSOK )  return;
 
 	ihp = sp->sr_host;
 	switch( ihp->ht_where )  {
 	case HT_CD:
 		if( pkg_send( MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc ) < 0 )
-			dropclient(sp->sr_pc);
+			drop_server(sp);
 		break;
 	case HT_CONVERT:
+		/* Conversion was done when server was started */
+		break;
 	default:
-		printf("conversion of database is unimplemented\n");
-		dropclient(sp->sr_pc);
+		printf("send_start: ht_where=%d unimplemented\n", ihp->ht_where);
+		drop_server(sp);
 		return;
 	}
 
 	if( pkg_send( MSG_START, start_cmd, strlen(start_cmd)+1, sp->sr_pc ) < 0 )
-		dropclient(sp->sr_pc);
-	sp->sr_started = SRST_LOADING;
+		drop_server(sp);
+	sp->sr_state = SRST_LOADING;
 }
 
 /*
@@ -1455,9 +1554,11 @@ register struct servers *sp;
 send_restart(sp)
 register struct servers *sp;
 {
+	if( sp->sr_pc == PKC_NULL )  return;
+
 	if( pkg_send( MSG_RESTART, "", 0, sp->sr_pc ) < 0 )
-		dropclient(sp->sr_pc);
-	sp->sr_started = SRST_RESTART;
+		drop_server(sp);
+	sp->sr_state = SRST_RESTART;
 }
 
 /*
@@ -1466,8 +1567,10 @@ register struct servers *sp;
 send_loglvl(sp)
 register struct servers *sp;
 {
+	if( sp->sr_pc == PKC_NULL )  return;
+
 	if( pkg_send( MSG_LOGLVL, print_on?"1":"0", 2, sp->sr_pc ) < 0 )
-		dropclient(sp->sr_pc);
+		drop_server(sp);
 }
 
 /*
@@ -1479,11 +1582,11 @@ send_matrix(sp, fr)
 struct servers *sp;
 register struct frame *fr;
 {
-
+	if( sp->sr_pc == PKC_NULL )  return;
 	if( pkg_send( MSG_MATRIX,
 	    fr->fr_cmd.vls_str, fr->fr_cmd.vls_cur+1, sp->sr_pc
 	    ) < 0 )
-		dropclient(sp->sr_pc);
+		drop_server(sp);
 	printf("sent matrix to %s\n", sp->sr_host->ht_name);
 }
 
@@ -1494,9 +1597,12 @@ send_do_lines( sp, start, stop, fr )
 register struct servers *sp;
 {
 	char obuf[128];
+
+	if( sp->sr_pc == PKC_NULL )  return;
+
 	sprintf( obuf, "%d %d %d", start, stop, fr );
 	if( pkg_send( MSG_LINES, obuf, strlen(obuf)+1, sp->sr_pc ) < 0 )
-		dropclient(sp->sr_pc);
+		drop_server(sp);
 
 	(void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
 }
@@ -1521,11 +1627,32 @@ mathtab_constant()
 	/* Called on -B (benchmark) flag, by get_args() */
 }
 
-add_host( host )
-char	*host;
+/*
+ *			A D D _ H O S T
+ *
+ *  There are two message formats:
+ *	HT_CD		host, port, rem_dir
+ *	HT_CONVERT	host, port, rem_dir, db
+ */
+add_host( ihp )
+struct ihost	*ihp;
 {
 	/* Send message to helper process */
-	fprintf( helper_fp, "%s %d ", host, pkg_permport );
+	switch( ihp->ht_where )  {
+	case HT_CD:
+		fprintf( helper_fp,
+			"%s %d %s\n",
+			ihp->ht_name, pkg_permport, ihp->ht_path );
+		break;
+	case HT_CONVERT:
+		fprintf( helper_fp,
+			"%s %d %s %s\n",
+			ihp->ht_name, pkg_permport, ihp->ht_path, file_basename );
+		break;
+	default:
+		printf("add_host:  ht_where=%d?\n", ihp->ht_where );
+		break;
+	}
 	fflush( helper_fp );
 
 	/* Wait briefly to try and catch the incomming connection,
@@ -1534,6 +1661,117 @@ char	*host;
 	check_input(1);
 }
 
+#ifdef sgi
+#	define RSH	"/usr/bsd/rsh"
+#else
+#	define RSH	"/usr/ucb/rsh"
+#endif
+
+/*
+ *			H O S T _ H E L P E R
+ *
+ *  This loop runs in the child process of the real REMRT, and is directed
+ *  to initiate contact with new hosts via a one-way pipe from the parent.
+ *  In some cases, starting RTSRV on the indicated host is sufficient;
+ *  in other cases, the portable version of the database needs to be
+ *  sent first.
+ *
+ *  For now, a limitation is that the local and remote databases are
+ *  given the same name.  If relative path names are used, this should
+ *  not be a problem, but this could be changed later.
+ */
+host_helper(fp)
+FILE	*fp;
+{
+	char	line[512];
+	char	cmd[128];
+	char	host[128];
+	char	db[128];
+	char	rem_dir[128];
+	int	port;
+	int	cnt;
+	int	i;
+	int	pid;
+
+	while(1)  {
+		line[0] = '\0';
+		(void)fgets( line, sizeof(line), fp );
+		if( feof(fp) )  break;
+
+		db[0] = '\0';
+		rem_dir[0] = '\0';
+		cnt = sscanf( line, "%s %d %s %s",
+			host, &port, rem_dir, db );
+		if( cnt != 3 && cnt != 4 )  {
+			printf("host_helper: cnt=%d, aborting\n", cnt);
+			break;
+		}
+
+		if( cnt == 3 )  {
+			sprintf(cmd,
+				"cd %s; rtsrv %s %d",
+				rem_dir, ourname, port );
+printf("%s\n", cmd); fflush(stdout);
+
+			pid = fork();
+			if( pid == 0 )  {
+				/* 1st level child */
+				(void)close(0);
+				for(i=3; i<40; i++)  (void)close(i);
+				if( vfork() == 0 )  {
+					/* worker Child */
+					execl(
+						RSH,
+						"rsh", host,
+						"-n", cmd, 0 );
+					execlp(
+						"rsh",
+						"rsh", host,
+						"-n", cmd, 0 );
+					perror("rsh execl");
+					_exit(0);
+				}
+				_exit(0);
+			} else if( pid < 0 ) {
+				perror("fork");
+			} else {
+				(void)wait(0);
+			}
+		} else {
+			sprintf(cmd,
+			 "g2asc<%s|%s %s -n \"cd %s; asc2g>%s; rtsrv %s %d\"",
+				db,
+				RSH, host,
+				rem_dir, db,
+				ourname, port );
+printf("%s\n", cmd); fflush(stdout);
+
+			pid = fork();
+			if( pid == 0 )  {
+				/* 1st level child */
+				(void)close(0);
+				for(i=3; i<40; i++)  (void)close(i);
+
+				if( vfork() == 0 )  {
+					/* worker Child */
+					execl("/bin/sh", "remrt_sh", 
+						"-c", cmd, 0);
+					perror("/bin/sh");
+					_exit(0);
+				}
+				_exit(0);
+			} else if( pid < 0 ) {
+				perror("fork");
+			} else {
+				(void)wait(0);
+			}
+		}
+	}
+}
+
+/*
+ *			S T A R T _ H E L P E R
+ */
 start_helper()
 {
 	int	fds[2];
@@ -1549,50 +1787,13 @@ start_helper()
 	if( pid == 0 )  {
 		/* Child process */
 		FILE	*fp;
-		char	host[128];
-		int	port;
 
 		(void)close(fds[1]);
 		if( (fp = fdopen( fds[0], "r" )) == NULL )  {
 			perror("fdopen");
 			exit(3);
 		}
-		while( !feof(fp) )  {
-			char cmd[128];
-
-			if( fscanf( fp, "%s %d", host, &port ) != 2 )
-				break;
-			/* */
-			sprintf(cmd,
-				"rtsrv %s %d",
-				ourname, port );
-			if( fork() == 0 )  {
-				/* 1st level child */
-				(void)close(0);
-				for(i=3; i<40; i++)  (void)close(i);
-				if( vfork() == 0 )  {
-					/* worker Child */
-					execl(
-#ifdef sgi
-						"/usr/bsd/rsh",
-#else
-						"/usr/ucb/rsh",
-#endif
-						"rsh", host,
-						"-n", cmd, 0 );
-					execlp(
-						"rsh",
-						"rsh", host,
-						"-n", cmd, 0 );
-					perror("rsh execl");
-					_exit(0);
-				}
-				_exit(0);
-			} else {
-				(void)wait(0);
-			}
-
-		}
+		host_helper( fp );
 		/* No more commands from parent */
 		exit(0);
 	} else if( pid < 0 )  {
@@ -1607,6 +1808,9 @@ start_helper()
 	(void)close(fds[0]);
 }
 
+/*
+ *			B U I L D _ S T A R T _ C M D
+ */
 build_start_cmd( argc, argv, startc )
 int	argc;
 char	**argv;
@@ -1615,6 +1819,19 @@ int	startc;
 	register char	*cp;
 	register int	i;
 	int		len;
+
+	if( startc+2 > argc )  {
+		printf("build_start_cmd:  need file and at least one object\n");
+		start_cmd[0] = '\0';
+		return;
+	}
+
+	/* Save last component of file name */
+	if( (cp = strrchr( argv[startc], '/' )) != (char *)0 )  {
+		(void)strncpy( file_basename, cp+1, sizeof(file_basename) );
+	} else {
+		(void)strncpy( file_basename, argv[startc], sizeof(file_basename) );
+	}
 
 	/* Build new start_cmd[] string */
 	cp = start_cmd;
@@ -1627,6 +1844,9 @@ int	startc;
 	*cp++ = '\0';
 }
 
+/*
+ *			H O S T _ L O O K U P _ B Y _ H O S T E N T
+ */
 struct ihost *
 host_lookup_by_hostent( addr, enter )
 struct hostent	*addr;
@@ -1644,18 +1864,34 @@ int		enter;
 		return( IHOST_NULL );
 
 	/* If not found and enter==1, enter in host table w/defaults */
+	/* Note: gethostbyxxx() routines keep stuff in a static buffer */
+	return( make_default_host( addr->h_name ) );
+}
+
+/*
+ *			M A K E _ D E F A U L T _ H O S T
+ *
+ *  Add a new host entry to the list of known hosts, with
+ *  default parameters.
+ *  This routine is used to handle unexpected volunteers.
+ */
+struct ihost *
+make_default_host( name )
+char	*name;
+{
+	register struct ihost	*ihp;
+
 	GETSTRUCT( ihp, ihost );
 
-	/* Duplicate those fields of interst -- 
-	 * gethostbyxxx() routines keep stuff in a static buffer
-	 */
-	ihp->ht_name = rt_strdup( addr->h_name );
+	/* Make private copy of host name -- callers have static buffers */
+	ihp->ht_name = rt_strdup( name );
 
 	/* Default host parameters */
 	ihp->ht_when = HT_PASSIVE;
 	ihp->ht_where = HT_CD;
 	ihp->ht_path = ".";
 
+	/* Add to linked list of known hosts */
 	ihp->ht_next = HostHead;
 	HostHead = ihp;
 	return(ihp);
@@ -1668,6 +1904,7 @@ int	enter;
 {
 	struct hostent	*addr;
 	unsigned long	addr_tmp;
+	char		name[64];
 
 #ifdef CRAY
 	addr_tmp = from->sin_addr;
@@ -1678,17 +1915,23 @@ int	enter;
 	addr = gethostbyaddr(&from->sin_addr, sizeof (struct in_addr),
 		from->sin_family);
 #endif
-	if( addr == NULL )  {
-		/* Potentially, print up a hostent structure here */
-		addr_tmp = ntohl(addr_tmp);
-		printf("%d.%d.%d.%d: unknown host\n",
-			(addr_tmp>>24) & 0xff,
-			(addr_tmp>>16) & 0xff,
-			(addr_tmp>> 8) & 0xff,
-			(addr_tmp    ) & 0xff );
+	if( addr != NULL )
+		return( host_lookup_by_hostent( addr, enter ) );
+
+	/* Host name is not known */
+	addr_tmp = ntohl(addr_tmp);
+	sprintf( name, "%d.%d.%d.%d",
+		(addr_tmp>>24) & 0xff,
+		(addr_tmp>>16) & 0xff,
+		(addr_tmp>> 8) & 0xff,
+		(addr_tmp    ) & 0xff );
+	if( enter == 0 )  {
+		printf("%s: unknown host\n");
 		return( IHOST_NULL );
 	}
-	return( host_lookup_by_hostent( addr, enter ) );
+
+	/* Print up a hostent structure */
+	return( make_default_host( name ) );
 }
 
 struct ihost *
@@ -1746,13 +1989,6 @@ char	**argv;
 	}
 
 	build_start_cmd( argc, argv, 1 );
-
-	/* Start any idle servers */
-	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-		if( sp->sr_pc == PKC_NULL )  continue;
-		if( sp->sr_started != SRST_NEW )  continue;
-		send_start(sp);
-	}
 }
 
 cd_debug( argc, argv )
@@ -1765,7 +2001,8 @@ char	**argv;
 	len = strlen(argv[1])+1;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		(void)pkg_send( MSG_OPTIONS, argv[1], len, sp->sr_pc);
+		if( pkg_send( MSG_OPTIONS, argv[1], len, sp->sr_pc) < 0 )
+			drop_server(sp);
 	}
 }
 
@@ -1920,9 +2157,12 @@ int	argc;
 char	**argv;
 {
 	register int i;
+	struct ihost	*ihp;
 
 	for( i=1; i<argc; i++ )  {
-		add_host( argv[i] );
+		if( (ihp = host_lookup_by_name( argv[i], 1 )) != IHOST_NULL )  {
+			add_host( ihp );
+		}
 	}
 }
 
@@ -1934,7 +2174,7 @@ char	**argv;
 
 	sp = get_server_by_name( argv[1] );
 	if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return;
-	dropclient(sp->sr_pc);
+	drop_server(sp);
 }
 
 cd_restart( argc, argv )
@@ -2079,13 +2319,15 @@ char	**argv;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
 		printf("  %2d  %s ", sp->sr_index, sp->sr_host->ht_name );
-		switch( sp->sr_started )  {
+		switch( sp->sr_state )  {
 		case SRST_NEW:
-			printf("Idle"); break;
+			printf("New"); break;
+		case SRST_VERSOK:
+			printf("Vers_OK"); break;
 		case SRST_LOADING:
 			printf("(Loading)"); break;
 		case SRST_READY:
-			printf("Ready"); break;
+			printf("READY"); break;
 		case SRST_RESTART:
 			printf("--about to restart--"); break;
 		default:
@@ -2175,7 +2417,7 @@ char	**argv;
 	if( argc < 5 )  {
 		printf("Registered Host Table:\n");
 		for( ihp = HostHead; ihp != IHOST_NULL; ihp=ihp->ht_next )  {
-			printf("%s ", ihp->ht_name);
+			printf("  %s ", ihp->ht_name);
 			switch(ihp->ht_when)  {
 			case HT_ALWAYS:
 				printf("always ");
