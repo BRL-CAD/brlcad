@@ -274,6 +274,7 @@ CONST struct db_i		*dbip;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_COMBINATION;
+	ip->idb_meth = &rt_functab[ID_COMBINATION];
 	comb = (struct rt_comb_internal *)bu_malloc( sizeof( struct rt_comb_internal ) , "rt_comb_v4_import: rt_comb_internal" );
 	ip->idb_ptr = (genptr_t)comb;
 	comb->magic = RT_COMB_MAGIC;

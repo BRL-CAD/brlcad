@@ -67,8 +67,6 @@ struct bot_specific
 	struct tri_specific *bot_facelist;
 };
 
-static fastf_t cos_min=0.0008726;
-
 /*
  *  			R T _ B O T _ P R E P
  *  
@@ -339,8 +337,6 @@ struct seg		*seghead;
 			register int surfno = hits[i].hit_surfno;
 			register fastf_t los;
 
-			if( NEAR_ZERO( hits[i].hit_vpriv[X], cos_min ) )
-				continue;
 			los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
 			if( los < 0.0 )
 				los = -los;
@@ -1186,6 +1182,7 @@ CONST int free;
 		}
 		op->idb_ptr = (genptr_t)botop;
 		op->idb_type = ID_BOT;
+		op->idb_meth = &rt_functab[ID_BOT];
 	}
 	else
 		botop = botip;

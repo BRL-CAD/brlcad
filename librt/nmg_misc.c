@@ -5192,6 +5192,7 @@ CONST char		*title;
 
 	RT_INIT_DB_INTERNAL(&intern);
 	intern.idb_type = ID_NMG;
+	intern.idb_meth = &rt_functab[ID_NMG];
 	intern.idb_ptr = (genptr_t)m;
 	BU_INIT_EXTERNAL( &ext );
 

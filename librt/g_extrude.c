@@ -669,6 +669,7 @@ struct rt_db_internal	*ip;
 		RT_INIT_DB_INTERNAL( &tmp_ip );
 		tmp_ip.idb_type = ID_SKETCH;
 		tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
+		tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
 		rt_sketch_ifree( &tmp_ip );
 	}
 	extrude_ip->magic = 0;			/* sanity */
