@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "conf.h"
 #include <stdio.h>
+#include <ctype.h>
 #include "machine.h"
 #include "externs.h"			/* for getopt() */
 #include "bu.h"
@@ -510,7 +511,7 @@ char	*sf_name;
 
 /************************************************************************
  *									*
- *	  Routines for procesing the geometry database			*
+ *	  Routines for procesing the geometry databases			*
  *									*
  ************************************************************************/
 
@@ -608,6 +609,61 @@ int	depth;
     }
 }
 
+static void
+tankill_reassign( db_name )
+char *db_name;
+{
+	FILE *fd_in;
+	int vertex_count, id, surr_code;
+	struct curr_id *id_map, *cip;
+
+	/* open TANKILL model */
+	if( (fd_in=fopen( db_name, "r" )) == NULL )
+	{
+		bu_log( "Cannot open TANKILL database (%s)\n", db_name );
+		perror( "remapid" );
+		bu_bomb( "Cannot open TANKILL database\n" );
+	}
+
+	/* make a 'curr_id' structure to feed to rb_search */
+	cip = mk_curr_id( 0 );
+
+	/* filter TANKILL model, changing ids as we go */
+	while( fscanf( fd_in, "%d %d %d", &vertex_count, &id, &surr_code ) != EOF )
+	{
+		int coord_no=0;
+		int in_space=1;
+		int ch;
+
+		cip->ci_id = id;
+		id_map = (struct curr_id *)rb_search( assignment, 0, (void *)cip );
+		if( !id_map )
+			printf( "%d %d %d", vertex_count, id, surr_code );
+		else
+			printf( "%d %d %d", vertex_count, id_map->ci_newid, surr_code );
+
+		/* just copy the rest of the component */
+		while( coord_no < 3*vertex_count || !in_space )
+		{
+			ch = fgetc( fd_in );
+			if( ch == EOF && coord_no < 3*vertex_count )
+			{
+				bu_log( "Unexpected EOF while processing ident %d\n", id );
+				bu_bomb( "Unexpected EOF\n" );
+			}
+
+			if( isspace( ch ) )
+				in_space = 1;
+			else if( in_space )
+			{
+				in_space = 0;
+				coord_no++;
+			}
+			putchar( ch );
+		}
+	}
+}
+
 /************************************************************************
  *									*
  *	  	And finally... the main program				*
@@ -621,7 +677,8 @@ void print_usage (void)
 {
 #define OPT_STRING	"gt?"
 
-    bu_log("Usage: 'remapid [-{g|t}] file.g [spec_file]'\n");
+    bu_log("Usage: 'remapid [-{g|t}] [file.g|file.tankill] [spec_file]'\n\
+	Note that the '-t' option sends the modified TANKILL model to stdout\n");
 }
 
 /*
@@ -659,13 +716,6 @@ char	*argv[];
 		return(0);
 	}
 
-    if (tankill)
-    {
-	bu_log("Sorry, the TANKILL option is not yet implemented\n");
-	print_usage();
-	exit (1);
-    }
-
     switch (argc - optind)
     {
 	case 1:
@@ -697,10 +747,15 @@ char	*argv[];
      */
     read_spec (sfp, sf_name);
 
-    db_init(db_name);
-
-    if (debug)
-	rb_walk1(assignment, print_nonempty_curr_id, INORDER);
+    if( tankill )
+	tankill_reassign( db_name );
     else
-	rb_walk1(assignment, write_assignment, INORDER);
+    {
+	db_init(db_name);
+
+	if (debug)
+		rb_walk1(assignment, print_nonempty_curr_id, INORDER);
+	else
+		rb_walk1(assignment, write_assignment, INORDER);
+    }
 }
