@@ -65,7 +65,9 @@ char **argv;
 	int node_count;
 
 	CHECK_DBI_NULL;
+#if 0
 	CHECK_READ_ONLY;
+#endif
 
 	if(argc != 2){
 	  struct bu_vls vls;
@@ -124,43 +126,47 @@ char **argv;
 
 	/* Edit the file */
 	if( editit( red_tmpfil ) ){
-	  if( (node_count = checkcomb()) < 0 ){ /* Do some quick checking on the edited file */
-	    Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
-	    if( comb )
-		    rt_comb_ifree( &intern, &rt_uniresource );
-	    (void)unlink( red_tmpfil );
-	    return TCL_ERROR;
-	  }
+		if (!dbip->dbi_read_only) {
+			if( (node_count = checkcomb()) < 0 ){ /* Do some quick checking on the edited file */
+				Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
+				if( comb )
+					rt_comb_ifree( &intern, &rt_uniresource );
+				(void)unlink( red_tmpfil );
+				return TCL_ERROR;
+			}
 
-	  if( comb ){
-	    if( save_comb( dp ) ){ /* Save combination to a temp name */
-	      Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
-	      rt_comb_ifree( &intern, &rt_uniresource );
-	      (void)unlink( red_tmpfil );
-	      return TCL_OK;
-	    }
-	  }
+			if( comb ){
+				if( save_comb( dp ) ){ /* Save combination to a temp name */
+					Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
+					rt_comb_ifree( &intern, &rt_uniresource );
+					(void)unlink( red_tmpfil );
+					return TCL_OK;
+				}
+			}
 
-	  if( build_comb( comb, dp, node_count, argv[1] ) ){
-	    Tcl_AppendResult(interp, "Unable to construct new ", dp->d_namep,
-			     (char *)NULL);
-	    if( comb ){
-	      restore_comb( dp );
-	      Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL );
-	      rt_comb_ifree( &intern, &rt_uniresource );
-	    }
+			if( build_comb( comb, dp, node_count, argv[1] ) ){
+				Tcl_AppendResult(interp, "Unable to construct new ", dp->d_namep,
+						 (char *)NULL);
+				if( comb ){
+					restore_comb( dp );
+					Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL );
+					rt_comb_ifree( &intern, &rt_uniresource );
+				}
 
-	    (void)unlink( red_tmpfil );
-	    return TCL_ERROR;
-	  }else if( comb ){
-	    /* eliminate the temporary combination */
-	    char *av[3];
+				(void)unlink( red_tmpfil );
+				return TCL_ERROR;
+			}else if( comb ){
+				/* eliminate the temporary combination */
+				char *av[3];
 
-	    av[0] = "kill";
-	    av[1] = red_tmpcomb;
-	    av[2] = NULL;
-	    (void)f_kill(clientData, interp, 2, av);
-	  }
+				av[0] = "kill";
+				av[1] = red_tmpcomb;
+				av[2] = NULL;
+				(void)f_kill(clientData, interp, 2, av);
+			}
+		} else {
+			Tcl_AppendResult(interp, "Because the database is READ-ONLY no changes were made.\n", (char *)NULL);
+		}
 	}
 
 	(void)unlink( red_tmpfil );

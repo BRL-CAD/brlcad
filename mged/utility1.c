@@ -111,7 +111,9 @@ char	*argv[];
   char **av;
 
   CHECK_DBI_NULL;
+#if 0
   CHECK_READ_ONLY;
+#endif
 
   if(argc < 2){
     struct bu_vls vls;
@@ -155,10 +157,16 @@ char	*argv[];
 	}
 
   if( editit(tmpfil) ){
-    regflag = lastmemb = 0;
-    av[0] = "rcodes";
-    av[2] = NULL;
-    status = f_rcodes(clientData, interp, 2, av);
+	  regflag = lastmemb = 0;
+
+	  if (!dbip->dbi_read_only) {
+		  av[0] = "rcodes";
+		  av[2] = NULL;
+		  status = f_rcodes(clientData, interp, 2, av);
+	  } else {
+		  Tcl_AppendResult(interp, "Because the database is READ-ONLY no changes were made.\n", (char *)NULL);
+		  status = TCL_OK;
+	  }
   }else
     status = TCL_ERROR;
 
