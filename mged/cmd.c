@@ -2,8 +2,8 @@
  *			C M D . C
  *
  * Functions -
- *	cmdline		Process commands typed on the keyboard
- *	parse_line	Parse command line into argument vector
+
+
  *	f_press		hook for displays with no buttons
  *	f_summary	do directory summary
  *	mged_cmd		Check arg counts, run a command
@@ -45,68 +45,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern void	sync();
 
 #define	MAXARGS		2000	/* Maximum number of args per line */
-int	maxargs = MAXARGS;	/* For dir.c */
 int	inpara;			/* parameter input from keyboard */
-int	numargs;		/* number of args */
-char	*cmd_args[MAXARGS+2];	/* array of pointers to args */
 
 extern int	cmd_glob();
 
-static void	f_help(), f_fhelp(), f_comm();
-void	f_labelvert();
-void	f_red();
-void	f_pov();
-void	f_vrmgr();
-void	f_echo();
-void	f_param();
-void	mged_cmd();
-void	f_center(), f_press(), f_view(), f_blast();
-void	f_edit(), f_evedit(), f_delobj(), f_hideline();
-void	f_debug(), f_regdebug(), f_debuglib(), f_debugmem();
-void	f_name(), f_copy(), f_instance();
-void	f_copy_inv(), f_killall(), f_killtree();
-void	f_region(), f_itemair(), f_mater(), f_kill(), f_list(), f_cat();
-void	f_zap(), f_group(), f_mirror(), f_extrude();
-void	f_rm(), f_arbdef(), f_quit();
-void	f_edcomb(), f_status(), f_vrot();
-void	f_refresh(), f_fix(), f_rt(), f_rrt(), f_nirt();
-void	f_saveview(), f_savekey();
-void	f_make(), f_attach(), f_release();
-void	f_tedit(), f_memprint();
-void	f_mirface(), f_units(), f_title();
-void	f_permute();
-void	f_keypoint();
-void	f_rot_obj(), f_tr_obj(), f_sc_obj();
-void	f_analyze(), f_sed();
-void	f_ill(), f_knob(), f_tops(), f_summary();
-void	f_prcolor(), f_color(), f_edcolor(), f_3ptarb(), f_rfarb(), f_which_id();
-void	f_plot(), f_area(), f_find(), f_edgedir();
-void	f_regdef(), f_aeview(), f_in(), f_tables(), f_edcodes(), f_dup(), f_concat();
-void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack();
-void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
-void	f_overlay(), f_rtcheck(), f_comb();
-void	f_preview();
-void	f_ev(), f_debugnmg();
-void	f_tol();
-void	f_debugdir();
-void	f_polybinout();
-void	f_facetize();
-void	f_adc();
-void	f_set();
-void	f_zoom();
-void	f_mouse();
-void	f_fracture();
-void	f_orientation();
-void	f_dm();
-void	f_vrot_center();
-void	f_opendb();
-void	f_joint();
+int	mged_cmd();
+int	f_sync();
 
 struct funtab {
 	char *ft_name;
 	char *ft_parms;
 	char *ft_comment;
-	void (*ft_func)();
+	int (*ft_func)();
 	int ft_min;
 	int ft_max;
 };
@@ -333,7 +283,7 @@ static struct funtab funtab[] = {
 "summary", "[s r g]", "count/list solid/reg/groups",
 	f_summary,1,2,
 "sync",	"",	"forces UNIX sync",
-	sync, 1, 1,
+	f_sync, 1, 1,
 "t", "", "table of contents",
 	dir_print,1,MAXARGS,
 "tab", "object[s]", "tabulates objects as stored in database",
@@ -373,6 +323,17 @@ static struct funtab funtab[] = {
 };
 
 
+/* wrapper for sync() */
+
+int
+f_sync(argc, argv)
+int argc;
+char **argv;
+{
+	sync();
+	return CMD_OK;
+}
+
 /*
  *			C M D L I N E
  *
@@ -395,6 +356,11 @@ struct rt_vls	*vp;
 	char		*ep;
 	char		*end;
 	struct rt_vls	cmd;
+	struct rt_vls	cmd_buf;
+	struct rt_vls	str;
+	int  	result;
+	int	argc;
+	char 	*argv[MAXARGS+2];
 
 	RT_VLS_CHECK(vp);
 
@@ -404,6 +370,8 @@ struct rt_vls	*vp;
 	end = cp + len;
 
 	rt_vls_init( &cmd );
+	rt_vls_init( &cmd_buf );
+	rt_vls_init( &str );
 
 	while( cp < end )  {
 #ifdef BSD
@@ -417,15 +385,36 @@ struct rt_vls	*vp;
 		rt_vls_strncpy( &cmd, cp, ep-cp+1 );
 		/* parse_line insists on it ending with newline&null */
 		
-		i = parse_line(rt_vls_addr(&cmd));
-		if( i < 0 )  continue;	/* some kind of error */
-		if( i == 0 ) {
-			mged_cmd( numargs, cmd_args, funtab );
+		rt_vls_strcpy( &cmd_buf, rt_vls_addr(&cmd) );
+		i = parse_line( rt_vls_addr(&cmd_buf), &argc, argv );
+
+		while (i == 0) {
+			if (mged_cmd(argc, argv, funtab) != CMD_MORE)
+				break;
+
+			/* If we get here, it means the command failed due
+			   to insufficient arguments.  In this case, grab some
+			   more from stdin and call the command again. */
+
+			rt_vls_gets( &str, stdin );
+
+			/* Remove newline */
+			rt_vls_trunc( &cmd, strlen(rt_vls_addr(&cmd))-1 );
+
+			rt_vls_strcat( &cmd, " " );
+			rt_vls_vlscatzap( &cmd, &str );
+			rt_vls_strcat( &cmd, "\n" );
+			rt_vls_strcpy( &cmd_buf, rt_vls_addr(&cmd) );
+			i = parse_line( rt_vls_addr(&cmd_buf), &argc, argv );
+
+			rt_vls_free( &str );
 		}
+		if( i < 0 )  continue;	/* some kind of error */
 		need_prompt = 1;
 
 		cp = ep+1;
 		rt_vls_free( &cmd );
+		rt_vls_free( &cmd_buf );
 	}
 	rt_vls_free( &cmd );
 	return need_prompt;
@@ -438,21 +427,24 @@ struct rt_vls	*vp;
  * Returns nonzero value if input is to be ignored
  * Returns less than zero if there is no input to read.
  */
+
 int
-parse_line(line)
+parse_line(line, argcp, argv)
 char	*line;
+int	*argcp;
+char   **argv;
 {
 	register char *lp;
 	register char *lp1;
 
-	numargs = 0;
+	(*argcp) = 0;
 	lp = &line[0];
 
 	/* Delete leading white space */
 	while( (*lp == ' ') || (*lp == '\t'))
 		lp++;
 
-	cmd_args[numargs] = lp;
+	argv[0] = lp;
 
 	if( *lp == '\n' )
 		return(1);		/* NOP */
@@ -481,19 +473,19 @@ char	*line;
 			if((*lp1 == ' ') || (*lp1 == '\t') || (*lp1 == '\n'))
 				continue;
 			/* If not cmd [0], check for regular exp */
-			if( numargs > 0 )
-				(void)cmd_glob();
-			if( numargs++ >= MAXARGS )  {
+			if( *argcp > 0 )
+				(void)cmd_glob(argcp, argv, MAXARGS);
+			if( (*argcp)++ >= MAXARGS )  {
 				(void)printf("More than %d arguments, excess flushed\n", MAXARGS);
-				cmd_args[MAXARGS] = (char *)0;
+				argv[MAXARGS] = (char *)0;
 				return(0);
 			}
-			cmd_args[numargs] = lp1;
+			argv[*argcp] = lp1;
 		}
 		/* Finally, a non-space char */
 	}
 	/* Null terminate pointer array */
-	cmd_args[numargs] = (char *)0;
+	argv[*argcp] = (char *)0;
 	return(0);
 }
 
@@ -505,18 +497,19 @@ char	*line;
  *  to the proper function.  If the number of arguments is
  *  incorrect, print out a short help message.
  */
-void
+int
 mged_cmd( argc, argv, functions )
 int	argc;
 char	**argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
+	struct rt_vls str;
 
 	if( argc == 0 )  {
 		(void)printf("no command entered, type '%s?' for help\n",
 		    functions->ft_name);
-		return;
+		return CMD_BAD;
 	}
 
 	for( ftp = functions+1; ftp->ft_name ; ftp++ )  {
@@ -529,20 +522,32 @@ struct funtab *functions;
 		    	 * Call function listed in table, with
 		    	 * main(argc, argv) style args
 		    	 */
-			ftp->ft_func(argc, argv);
-			return;
+			switch (ftp->ft_func(argc, argv)) {
+			case CMD_OK:
+				return CMD_OK;
+			case CMD_BAD:
+				return CMD_BAD;
+			case CMD_MORE:
+				return CMD_MORE;
+			default:
+				printf("mged_cmd(): Invalid return from %s\n",
+					ftp->ft_name);
+				return CMD_BAD;
+			}
 		}
 		rt_log("Usage: %s%s %s\n\t(%s)\n",functions->ft_name,
 		    ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
-		return;
+		return CMD_BAD;
 	}
 	rt_log("%s%s: no such command, type '%s?' for help\n",
 	    functions->ft_name, argv[0], functions->ft_name);
+	return CMD_BAD;
 }
 
 /* Let the user temporarily escape from the editor */
 /* Format: %	*/
-static void
+
+int
 f_comm( argc, argv )
 int	argc;
 char	**argv;
@@ -562,11 +567,14 @@ char	**argv;
 		;
 	(void)signal(SIGINT, cur_sigint);
 	(void)printf("!\n");
+
+	return CMD_OK;  /* ? */
 }
 
 /* Quit and exit gracefully */
 /* Format: q	*/
-void
+
+int
 f_quit( argc, argv )
 int	argc;
 char	**argv;
@@ -582,15 +590,18 @@ char	**argv;
  *
  *  Common code for help commands
  */
-static void
+
+static int
 helpcomm( argc, argv, functions)
 int	argc;
 char	**argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
-	register int	i;
+	register int	i, bad;
 
+	bad = 0;
+	
 	/* Help command(s) */
 	for( i=1; i<argc; i++ )  {
 		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
@@ -603,8 +614,11 @@ struct funtab *functions;
 		if( !ftp->ft_name ) {
 			rt_log("%s%s: no such command, type '%s?' for help\n",
 			    functions->ft_name, argv[i], functions->ft_name);
+			bad = 1;
 		}
 	}
+
+	return bad ? CMD_BAD : CMD_OK;
 }
 
 /*
@@ -613,16 +627,18 @@ struct funtab *functions;
  *  Print a help message, two lines for each command.
  *  Or, help with the indicated commands.
  */
-void f_help2();
-static void
+int f_help2();
+
+int
 f_help( argc, argv )
 int	argc;
 char	**argv;
 {
-	f_help2(argc, argv, &funtab[0]);
+	return f_help2(argc, argv, &funtab[0]);
 }
 
-void f_help2(argc, argv, functions)
+int
+f_help2(argc, argv, functions)
 int argc;
 char **argv;
 struct funtab *functions;
@@ -636,9 +652,9 @@ struct funtab *functions;
 			rt_log("%s%s %s\n\t(%s)\n", functions->ft_name,
 			    ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 		}
-		return;
+		return CMD_OK;
 	}
-	helpcomm( argc, argv, functions );
+	return helpcomm( argc, argv, functions );
 }
 
 /*
@@ -647,15 +663,17 @@ struct funtab *functions;
  *  Print a fast help message;  just tabulate the commands available.
  *  Or, help with the indicated commands.
  */
-void f_fhelp2();
-static void
+int f_fhelp2();
+
+int
 f_fhelp( argc, argv )
 int	argc;
 char	**argv;
 {
-	f_fhelp2(argc, argv, &funtab[0]);
+	return f_fhelp2(argc, argv, &funtab[0]);
 }
-void
+
+int
 f_fhelp2( argc, argv, functions)
 int	argc;
 char	**argv;
@@ -670,13 +688,13 @@ struct funtab *functions;
 			col_item(ftp->ft_name);
 		}
 		col_eol();
-		return;
+		return CMD_OK;
 	}
-	helpcomm( argc, argv, functions );
+	return helpcomm( argc, argv, functions );
 }
 
 /* Hook for displays with no buttons */
-void
+int
 f_press( argc, argv )
 int	argc;
 char	**argv;
@@ -685,19 +703,23 @@ char	**argv;
 
 	for( i = 1; i < argc; i++ )
 		press( argv[i] );
+
+	return CMD_OK;
 }
 
-void
+int
 f_summary( argc, argv )
 int	argc;
 char	**argv;
 {
 	register char *cp;
 	int flags = 0;
+	int bad;
 
+	bad = 0;
 	if( argc <= 1 )  {
 		dir_summary(0);
-		return;
+		return CMD_OK;
 	}
 	cp = argv[1];
 	while( *cp )  switch( *cp++ )  {
@@ -712,9 +734,11 @@ char	**argv;
 			break;
 		default:
 			(void)printf("summary:  S R or G are only valid parmaters\n");
+			bad = 1;
 			break;
 	}
 	dir_summary(flags);
+	return bad ? CMD_BAD : CMD_OK;
 }
 
 /*
@@ -732,14 +756,14 @@ register FILE	*fp;
 
 	while( (len = rt_vls_gets( &str, fp )) >= 0 )  {
 		rt_vls_strcat( &str, "\n" );
-		if( len > 0 )  cmdline( &str );
+		if( len > 0 )  (void)cmdline( &str );
 		rt_vls_trunc( &str, 0 );
 	}
 
 	rt_vls_free(&str);
 }
 
-void
+int
 f_echo( argc, argv )
 int	argc;
 char	*argv[];
@@ -750,4 +774,6 @@ char	*argv[];
 		fprintf(stdout, i==1 ? "%s" : " %s", argv[i]);
 	}
 	fprintf(stdout, "\n");
+
+	return CMD_OK;
 }
