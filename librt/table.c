@@ -44,7 +44,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			struct hit *hitp, struct soltab *stp)); \
 	RT_EXTERN(int rt_##name##_class, ()); \
 	RT_EXTERN(void rt_##name##_free, (struct soltab *stp)); \
-	RT_EXTERN(int rt_##name##_plot, (struct vlhead *vhead, \
+	RT_EXTERN(int rt_##name##_plot, (struct rt_list *vhead, \
 			struct rt_db_internal *ip, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], \
@@ -78,7 +78,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			struct hit *hitp, struct soltab *stp)); \
 	RT_EXTERN(int rt_/**/name/**/_class, ()); \
 	RT_EXTERN(void rt_/**/name/**/_free, (struct soltab *stp)); \
-	RT_EXTERN(int rt_/**/name/**/_plot, (struct vlhead *vhead, \
+	RT_EXTERN(int rt_/**/name/**/_plot, (struct rt_list *vhead, \
 			struct rt_db_internal *ip, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(void rt_/**/name/**/_vshot, (struct soltab *stp[], \
@@ -277,7 +277,7 @@ void DEF(rt_nul_curve,(struct curvature *cvp,
 			struct soltab *stp))
 int IDEF(rt_nul_class,())
 void DEF(rt_nul_free,(struct soltab *stp))
-int NDEF(rt_nul_plot,(struct vlhead *vhead,
+int NDEF(rt_nul_plot,(struct rt_list *vhead,
 			struct rt_db_internal *ip,
 			double abs_tol, double rel_tol, double norm_tol))
 void DEF(rt_nul_vshot,(struct soltab *stp[],
