@@ -1,12 +1,12 @@
 .TH LOOP 1 BRL/CAD
 .SH NAME
-loop \- generate integer indices for shell loops, etc
+loop \- generate numerical indices for shell loops, etc
 .SH SYNOPSIS
 .B loop
 start finish [increment]
 .SH DESCRIPTION
 .I Loop\^
-generates a sequence of integers between
+generates a sequence of numbers between
 .I start
 and
 .I finish
@@ -22,6 +22,11 @@ If
 is zero, then the
 .I start
 value will be generated continuously.
+.P
+Both floating point and integer arguments can be used.  On
+integer arguments, if leading zeros are specified, they will
+be preserver on output.  This is useful for generating sequences
+of file names which are numbered with leading zeros.
 .SH EXAMPLE
 \fI
 .nf
@@ -32,6 +37,26 @@ done
 .fi
 \fP
 Will display the values 10, 15, 20, 25, and 30.
+.P
+\fI
+.nf
+for i in `loop 008 005`
+do
+  echo $i
+done
+.fi
+\fP
+Will display the values 008, 007, 006, 005.
+.P
+\fI
+.nf
+for i in `loop 0.1 2.9 0.5`
+do
+  echo $i
+done
+.fi
+\fP
+Will display the values 0.1, 0.6, 1.1, 1.6, 2.1, 2.6.
 .SH BUGS
 This program just scratches the surface.
 The shells could benefit from a greater ability to perform math.
@@ -39,6 +64,8 @@ Limitless opportunities for extensions exist, but
 this simple version is adequate for most shell scripts
 dealing with sequences of images, etc.
 .SH AUTHORS
+John Grosh
+.br
 Phillip Dykstra
 .br
 Douglas P. Kingston III
