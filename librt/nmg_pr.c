@@ -1031,3 +1031,78 @@ CONST struct rt_tol	*tol;
 
 	nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
 }
+
+/*
+ *			N M G _ P L _ L U _ A R O U N D _ E U
+ *
+ *  Plot all the loopuses around an edgeuse.
+ *  Don't bother drawing the loopuse mates.
+ */
+void
+nmg_pl_lu_around_eu(eu)
+CONST struct edgeuse	*eu;
+{
+	FILE			*fp;
+	CONST struct edgeuse	*eu1;
+	CONST struct loopuse	*lu1;
+	long			*b;
+	static int		num;
+	char			buf[128];
+
+	NMG_CK_EDGEUSE(eu);
+
+	sprintf(buf, "eu_vicinity%d.pl", num++);
+	if( (fp = fopen(buf, "w")) == NULL )  {
+		perror(buf);
+		return;
+	}
+
+	b = (long *)rt_calloc( nmg_find_model((long *)eu)->maxindex, sizeof(long),
+		"nmg_pl_lu_around_eu flag[]" );
+
+	/* To go correct way around, start with arg's mate,
+	 * so that arg, then radial, will follow.
+	 */
+	eu = eu->eumate_p;
+
+	eu1 = eu;
+	do {
+		/* First, the edgeuse mate */
+		/* Second, the edgeuse itself (mate's mate) */
+		eu1 = eu1->eumate_p;
+
+		if (*eu1->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			lu1 = eu1->up.lu_p;
+			nmg_pl_lu(fp, lu1, b, 80, 100, 170);
+		}
+
+		/* Now back around to the radial edgeuse */
+		eu1 = eu1->radial_p;
+	} while( eu1 != eu );
+
+	rt_free( (char *)b, "nmg_pl_lu_around_eu flag[]" );
+	fclose(fp);
+	rt_log("Wrote %s\n", buf);
+}
+
+/*
+ *			N M G _ P R _ F U S _ I N _ F G
+ *
+ *  For either kind of face geometry, print the list of all faces & faceuses
+ *  that share this geometry.
+ */
+void
+nmg_pr_fus_in_fg(fg_magic)
+CONST long	*fg_magic;
+{
+	struct face	*f;
+
+	NMG_CK_FACE_G_EITHER(fg_magic);
+	rt_log("nmg_pr_fus_in_fg(x%x):\n", fg_magic);
+	for( RT_LIST_FOR( f, face, &(((struct face_g_plane *)fg_magic)->f_hd) ) )  {
+		NMG_CK_FACE(f);
+		NMG_CK_FACEUSE(f->fu_p);
+		rt_log(" f=x%x, fu=x%x, fumate=x%x\n",
+			f, f->fu_p, f->fu_p->fumate_p );
+	}
+}
