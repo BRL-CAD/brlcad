@@ -70,7 +70,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 #if defined(sun) || defined(alliant) || defined(ardent) || \
-	defined(stellar) || defined(sparc) || defined(mips)
+	defined(stellar) || defined(sparc) || defined(mips) || \
+	defined(pyr)
 
 	/*  These systems already operate in
 	 *  IEEE format internally, using big-endian order.
@@ -290,7 +291,7 @@ ibm_normalized:
 #	define	HTOND	yes
 #endif
 
-#if	defined(CRAY1) || defined(CRAY2)
+#if	defined(CRAY1) || defined(CRAY2) || defined(eta10)
 	/*
 	 *  Cray version.  Somewhat easier using 64-bit registers.
 	 *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
@@ -596,7 +597,7 @@ ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
 #	define	NTOHD	yes
 #endif
 
-#if	defined(CRAY1) || defined(CRAY2)
+#if	defined(CRAY1) || defined(CRAY2) || defined(eta10)
 	/*
 	 *  Cray version.  Somewhat easier using 64-bit registers.
 	 *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
