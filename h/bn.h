@@ -334,6 +334,7 @@ BU_EXTERN(int		bn_mat_ck, (const char *title, const mat_t m));
 BU_EXTERN(fastf_t	bn_mat_det3, (const mat_t m));
 BU_EXTERN(fastf_t	bn_mat_determinant, (const mat_t m));
 
+BU_EXTERN(int		bn_mat_is_non_unif, (const mat_t m));
 /*----------------------------------------------------------------------*/
 /* msr.c */
 /*
