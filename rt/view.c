@@ -624,14 +624,12 @@ struct seg *finished_segs;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 		sub_ap.a_purpose = "pushed eye position";
 		(void)rt_shootray( &sub_ap );
-#if 0
-	/* XXX This is taken out because we tend to have air and 
-	 * vapor "solids" these days which typically fill space
-	 */
+
+		/* The eye is inside a solid and we are "Looking out" so
+		 * we are going to darken what we see beyond to give a visual
+		 * cue that something is wrong.
+		 */
 		VSCALE( ap->a_color, sub_ap.a_color, 0.80 );
-#else
-		VMOVE( ap->a_color, sub_ap.a_color);
-#endif
 
 		ap->a_user = 1;		/* Signal view_pixel: HIT */
 		ap->a_dist = hitp->hit_dist;
