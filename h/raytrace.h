@@ -2132,7 +2132,8 @@ RT_EXTERN(void			nmg_triangulate_model, (struct model *m, CONST struct rt_tol   
 RT_EXTERN(void			nmg_triangulate_fu, (struct faceuse *fu, CONST struct rt_tol   *tol) );
 
 /* nmg_manif.c */
-RT_EXTERN(int			nmg_dangling_face, (CONST struct faceuse *fu));
+RT_EXTERN(int			nmg_dangling_face, (CONST struct faceuse *fu,
+				CONST char *manifolds));
 /* static paint_face */
 /* static set_edge_sub_manifold */
 /* static set_loop_sub_manifold */
