@@ -748,6 +748,78 @@ EXTERN void		Tk_InitConsoleChannels _ANSI_ARGS_((
 /* 216 */
 EXTERN int		Tk_CreateConsoleWindow _ANSI_ARGS_((
 				Tcl_Interp * interp));
+/* 217 */
+EXTERN void		Tk_CreateSmoothMethod _ANSI_ARGS_((
+				Tcl_Interp * interp, 
+				Tk_SmoothMethod * method));
+/* Slot 218 is reserved */
+/* Slot 219 is reserved */
+/* 220 */
+EXTERN int		Tk_GetDash _ANSI_ARGS_((Tcl_Interp * interp, 
+				CONST char * value, Tk_Dash * dash));
+/* 221 */
+EXTERN void		Tk_CreateOutline _ANSI_ARGS_((Tk_Outline * outline));
+/* 222 */
+EXTERN void		Tk_DeleteOutline _ANSI_ARGS_((Display * display, 
+				Tk_Outline * outline));
+/* 223 */
+EXTERN int		Tk_ConfigOutlineGC _ANSI_ARGS_((XGCValues * gcValues, 
+				Tk_Canvas canvas, Tk_Item * item, 
+				Tk_Outline * outline));
+/* 224 */
+EXTERN int		Tk_ChangeOutlineGC _ANSI_ARGS_((Tk_Canvas canvas, 
+				Tk_Item * item, Tk_Outline * outline));
+/* 225 */
+EXTERN int		Tk_ResetOutlineGC _ANSI_ARGS_((Tk_Canvas canvas, 
+				Tk_Item * item, Tk_Outline * outline));
+/* 226 */
+EXTERN int		Tk_CanvasPsOutline _ANSI_ARGS_((Tk_Canvas canvas, 
+				Tk_Item * item, Tk_Outline * outline));
+/* 227 */
+EXTERN void		Tk_SetTSOrigin _ANSI_ARGS_((Tk_Window tkwin, GC gc, 
+				int x, int y));
+/* 228 */
+EXTERN int		Tk_CanvasGetCoordFromObj _ANSI_ARGS_((
+				Tcl_Interp * interp, Tk_Canvas canvas, 
+				Tcl_Obj * obj, double * doublePtr));
+/* 229 */
+EXTERN void		Tk_CanvasSetOffset _ANSI_ARGS_((Tk_Canvas canvas, 
+				GC gc, Tk_TSOffset * offset));
+/* 230 */
+EXTERN void		Tk_DitherPhoto _ANSI_ARGS_((Tk_PhotoHandle handle, 
+				int x, int y, int width, int height));
+/* 231 */
+EXTERN int		Tk_PostscriptBitmap _ANSI_ARGS_((Tcl_Interp * interp, 
+				Tk_Window tkwin, Tk_PostscriptInfo psInfo, 
+				Pixmap bitmap, int startX, int startY, 
+				int width, int height));
+/* 232 */
+EXTERN int		Tk_PostscriptColor _ANSI_ARGS_((Tcl_Interp * interp, 
+				Tk_PostscriptInfo psInfo, XColor * colorPtr));
+/* 233 */
+EXTERN int		Tk_PostscriptFont _ANSI_ARGS_((Tcl_Interp * interp, 
+				Tk_PostscriptInfo psInfo, Tk_Font font));
+/* 234 */
+EXTERN int		Tk_PostscriptImage _ANSI_ARGS_((Tk_Image image, 
+				Tcl_Interp * interp, Tk_Window tkwin, 
+				Tk_PostscriptInfo psinfo, int x, int y, 
+				int width, int height, int prepass));
+/* 235 */
+EXTERN void		Tk_PostscriptPath _ANSI_ARGS_((Tcl_Interp * interp, 
+				Tk_PostscriptInfo psInfo, double * coordPtr, 
+				int numPoints));
+/* 236 */
+EXTERN int		Tk_PostscriptStipple _ANSI_ARGS_((
+				Tcl_Interp * interp, Tk_Window tkwin, 
+				Tk_PostscriptInfo psInfo, Pixmap bitmap));
+/* 237 */
+EXTERN double		Tk_PostscriptY _ANSI_ARGS_((double y, 
+				Tk_PostscriptInfo psInfo));
+/* 238 */
+EXTERN int		Tk_PostscriptPhoto _ANSI_ARGS_((Tcl_Interp * interp, 
+				Tk_PhotoImageBlock * blockPtr, 
+				Tk_PostscriptInfo psInfo, int width, 
+				int height));
 
 typedef struct TkStubHooks {
     struct TkPlatStubs *tkPlatStubs;
@@ -977,6 +1049,28 @@ typedef struct TkStubs {
     int (*tk_SetOptions) _ANSI_ARGS_((Tcl_Interp * interp, char * recordPtr, Tk_OptionTable optionTable, int objc, Tcl_Obj *CONST objv[], Tk_Window tkwin, Tk_SavedOptions * savePtr, int * maskPtr)); /* 214 */
     void (*tk_InitConsoleChannels) _ANSI_ARGS_((Tcl_Interp * interp)); /* 215 */
     int (*tk_CreateConsoleWindow) _ANSI_ARGS_((Tcl_Interp * interp)); /* 216 */
+    void (*tk_CreateSmoothMethod) _ANSI_ARGS_((Tcl_Interp * interp, Tk_SmoothMethod * method)); /* 217 */
+    void *reserved218;
+    void *reserved219;
+    int (*tk_GetDash) _ANSI_ARGS_((Tcl_Interp * interp, CONST char * value, Tk_Dash * dash)); /* 220 */
+    void (*tk_CreateOutline) _ANSI_ARGS_((Tk_Outline * outline)); /* 221 */
+    void (*tk_DeleteOutline) _ANSI_ARGS_((Display * display, Tk_Outline * outline)); /* 222 */
+    int (*tk_ConfigOutlineGC) _ANSI_ARGS_((XGCValues * gcValues, Tk_Canvas canvas, Tk_Item * item, Tk_Outline * outline)); /* 223 */
+    int (*tk_ChangeOutlineGC) _ANSI_ARGS_((Tk_Canvas canvas, Tk_Item * item, Tk_Outline * outline)); /* 224 */
+    int (*tk_ResetOutlineGC) _ANSI_ARGS_((Tk_Canvas canvas, Tk_Item * item, Tk_Outline * outline)); /* 225 */
+    int (*tk_CanvasPsOutline) _ANSI_ARGS_((Tk_Canvas canvas, Tk_Item * item, Tk_Outline * outline)); /* 226 */
+    void (*tk_SetTSOrigin) _ANSI_ARGS_((Tk_Window tkwin, GC gc, int x, int y)); /* 227 */
+    int (*tk_CanvasGetCoordFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Canvas canvas, Tcl_Obj * obj, double * doublePtr)); /* 228 */
+    void (*tk_CanvasSetOffset) _ANSI_ARGS_((Tk_Canvas canvas, GC gc, Tk_TSOffset * offset)); /* 229 */
+    void (*tk_DitherPhoto) _ANSI_ARGS_((Tk_PhotoHandle handle, int x, int y, int width, int height)); /* 230 */
+    int (*tk_PostscriptBitmap) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tk_PostscriptInfo psInfo, Pixmap bitmap, int startX, int startY, int width, int height)); /* 231 */
+    int (*tk_PostscriptColor) _ANSI_ARGS_((Tcl_Interp * interp, Tk_PostscriptInfo psInfo, XColor * colorPtr)); /* 232 */
+    int (*tk_PostscriptFont) _ANSI_ARGS_((Tcl_Interp * interp, Tk_PostscriptInfo psInfo, Tk_Font font)); /* 233 */
+    int (*tk_PostscriptImage) _ANSI_ARGS_((Tk_Image image, Tcl_Interp * interp, Tk_Window tkwin, Tk_PostscriptInfo psinfo, int x, int y, int width, int height, int prepass)); /* 234 */
+    void (*tk_PostscriptPath) _ANSI_ARGS_((Tcl_Interp * interp, Tk_PostscriptInfo psInfo, double * coordPtr, int numPoints)); /* 235 */
+    int (*tk_PostscriptStipple) _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, Tk_PostscriptInfo psInfo, Pixmap bitmap)); /* 236 */
+    double (*tk_PostscriptY) _ANSI_ARGS_((double y, Tk_PostscriptInfo psInfo)); /* 237 */
+    int (*tk_PostscriptPhoto) _ANSI_ARGS_((Tcl_Interp * interp, Tk_PhotoImageBlock * blockPtr, Tk_PostscriptInfo psInfo, int width, int height)); /* 238 */
 } TkStubs;
 
 #ifdef __cplusplus
@@ -1860,6 +1954,88 @@ extern TkStubs *tkStubsPtr;
 #ifndef Tk_CreateConsoleWindow
 #define Tk_CreateConsoleWindow \
 	(tkStubsPtr->tk_CreateConsoleWindow) /* 216 */
+#endif
+#ifndef Tk_CreateSmoothMethod
+#define Tk_CreateSmoothMethod \
+	(tkStubsPtr->tk_CreateSmoothMethod) /* 217 */
+#endif
+/* Slot 218 is reserved */
+/* Slot 219 is reserved */
+#ifndef Tk_GetDash
+#define Tk_GetDash \
+	(tkStubsPtr->tk_GetDash) /* 220 */
+#endif
+#ifndef Tk_CreateOutline
+#define Tk_CreateOutline \
+	(tkStubsPtr->tk_CreateOutline) /* 221 */
+#endif
+#ifndef Tk_DeleteOutline
+#define Tk_DeleteOutline \
+	(tkStubsPtr->tk_DeleteOutline) /* 222 */
+#endif
+#ifndef Tk_ConfigOutlineGC
+#define Tk_ConfigOutlineGC \
+	(tkStubsPtr->tk_ConfigOutlineGC) /* 223 */
+#endif
+#ifndef Tk_ChangeOutlineGC
+#define Tk_ChangeOutlineGC \
+	(tkStubsPtr->tk_ChangeOutlineGC) /* 224 */
+#endif
+#ifndef Tk_ResetOutlineGC
+#define Tk_ResetOutlineGC \
+	(tkStubsPtr->tk_ResetOutlineGC) /* 225 */
+#endif
+#ifndef Tk_CanvasPsOutline
+#define Tk_CanvasPsOutline \
+	(tkStubsPtr->tk_CanvasPsOutline) /* 226 */
+#endif
+#ifndef Tk_SetTSOrigin
+#define Tk_SetTSOrigin \
+	(tkStubsPtr->tk_SetTSOrigin) /* 227 */
+#endif
+#ifndef Tk_CanvasGetCoordFromObj
+#define Tk_CanvasGetCoordFromObj \
+	(tkStubsPtr->tk_CanvasGetCoordFromObj) /* 228 */
+#endif
+#ifndef Tk_CanvasSetOffset
+#define Tk_CanvasSetOffset \
+	(tkStubsPtr->tk_CanvasSetOffset) /* 229 */
+#endif
+#ifndef Tk_DitherPhoto
+#define Tk_DitherPhoto \
+	(tkStubsPtr->tk_DitherPhoto) /* 230 */
+#endif
+#ifndef Tk_PostscriptBitmap
+#define Tk_PostscriptBitmap \
+	(tkStubsPtr->tk_PostscriptBitmap) /* 231 */
+#endif
+#ifndef Tk_PostscriptColor
+#define Tk_PostscriptColor \
+	(tkStubsPtr->tk_PostscriptColor) /* 232 */
+#endif
+#ifndef Tk_PostscriptFont
+#define Tk_PostscriptFont \
+	(tkStubsPtr->tk_PostscriptFont) /* 233 */
+#endif
+#ifndef Tk_PostscriptImage
+#define Tk_PostscriptImage \
+	(tkStubsPtr->tk_PostscriptImage) /* 234 */
+#endif
+#ifndef Tk_PostscriptPath
+#define Tk_PostscriptPath \
+	(tkStubsPtr->tk_PostscriptPath) /* 235 */
+#endif
+#ifndef Tk_PostscriptStipple
+#define Tk_PostscriptStipple \
+	(tkStubsPtr->tk_PostscriptStipple) /* 236 */
+#endif
+#ifndef Tk_PostscriptY
+#define Tk_PostscriptY \
+	(tkStubsPtr->tk_PostscriptY) /* 237 */
+#endif
+#ifndef Tk_PostscriptPhoto
+#define Tk_PostscriptPhoto \
+	(tkStubsPtr->tk_PostscriptPhoto) /* 238 */
 #endif
 
 #endif /* defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS) */

@@ -7,7 +7,7 @@
  * Copyright (c) 1989-1994 The Regents of the University of California.
  * Copyright (c) 1994 The Australian National University.
  * Copyright (c) 1994-1998 Sun Microsystems, Inc.
- * Copyright (c) 1998-1999 Scriptics Corporation.
+ * Copyright (c) 1998-2000 Ajuba Solutions.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -25,31 +25,33 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 /*
  * When version numbers change here, you must also go into the following files
  * and update the version numbers:
  *
- * unix/configure.in
- * README
- * win/configure.in
- * win/makefile.vc	(only if major.minor changes, not patchlevel)
- * library/tk.tcl	(only if major.minor changes, not patchlevel)
- * mac/README		(only if major.minor changes, not patchlevel)
- * win/README		(only if major.minor changes, not patchlevel)
- * unix/README		(only if major.minor changes, not patchlevel)
-
+ * library/tk.tcl	(only if Major.minor changes, not patchlevel)
+ * unix/configure.in	(2 LOC Major, 2 LOC minor, 1 LOC patch)
+ * win/configure.in	(as above)
+ * win/makefile.vc	(not patchlevel)
+ * README		(sections 0 and 1)
+ * mac/README		(not patchlevel)
+ * win/README		(not patchlevel)
+ * unix/README		(not patchlevel)
+ * unix/tk.spec		(3 LOC Major/Minor, 2 LOC patch)
+ * win/aclocal.m4	(not patchlevel)
+ *
  * You may also need to update some of these files when the numbers change
  * for the version of Tcl that this release of Tk is compiled against.
  */
 
 #define TK_MAJOR_VERSION   8
-#define TK_MINOR_VERSION   2
+#define TK_MINOR_VERSION   3
 #define TK_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TK_RELEASE_SERIAL  1
+#define TK_RELEASE_SERIAL  2
 
-#define TK_VERSION "8.2"
-#define TK_PATCH_LEVEL "8.2.1"
+#define TK_VERSION	"8.3"
+#define TK_PATCH_LEVEL	"8.3.2"
 
 /*
  * The following definitions set up the proper options for Macintosh
@@ -110,6 +112,7 @@ typedef struct Tk_Font_ *Tk_Font;
 typedef struct Tk_Image__ *Tk_Image;
 typedef struct Tk_ImageMaster_ *Tk_ImageMaster;
 typedef struct Tk_OptionTable_ *Tk_OptionTable;
+typedef struct Tk_PostscriptInfo_ *Tk_PostscriptInfo;
 typedef struct Tk_TextLayout_ *Tk_TextLayout;
 typedef struct Tk_Window_ *Tk_Window;
 typedef struct Tk_3DBorder_ *Tk_3DBorder;
@@ -199,6 +202,7 @@ typedef struct Tk_OptionSpec {
  */
 
 #define TK_OPTION_NULL_OK		1
+#define TK_OPTION_DONT_SET_DEFAULT	8
 
 /*
  * Macro to use to fill in "offset" fields of the Tk_OptionSpec.
@@ -347,6 +351,7 @@ typedef enum {
  */
 
 #define TK_CONFIG_ARGV_ONLY	1
+#define TK_CONFIG_OBJS		0x80
 
 /*
  * Possible flag values for Tk_ConfigSpec structures.  Any bits at
@@ -770,6 +775,21 @@ typedef struct Tk_FakeWin {
  *--------------------------------------------------------------
  */
 
+typedef enum {
+    TK_STATE_NULL = -1, TK_STATE_ACTIVE, TK_STATE_DISABLED,
+    TK_STATE_NORMAL, TK_STATE_HIDDEN
+} Tk_State;
+
+typedef struct Tk_SmoothMethod {
+    char *name;
+    int (*coordProc) _ANSI_ARGS_((Tk_Canvas canvas,
+		double *pointPtr, int numPoints, int numSteps,
+		XPoint xPoints[], double dblPoints[]));
+    void (*postscriptProc) _ANSI_ARGS_((Tcl_Interp *interp,
+		Tk_Canvas canvas, double *coordPtr,
+		int numPoints, int numSteps));
+} Tk_SmoothMethod;
+
 /*
  * For each item in a canvas widget there exists one record with
  * the following structure.  Each actual item is represented by
@@ -809,9 +829,9 @@ typedef struct Tk_Item  {
 					 * items in this canvas. Later items
 					 * in list are drawn just below earlier
 					 * ones. */
-    int   reserved1;			/* This padding is for compatibility */
-    char *reserved2;			/* with Jan Nijtmans dash patch */
-    int   reserved3;
+    Tk_State state;			/* state of item */
+    char *reserved1;			/* reserved for future use */
+    int redraw_flags;			/* some flags used in the canvas */
 
     /*
      *------------------------------------------------------------------
@@ -824,11 +844,25 @@ typedef struct Tk_Item  {
 } Tk_Item;
 
 /*
+ * Flag bits for canvases (redraw_flags):
+ *
+ * TK_ITEM_STATE_DEPENDANT -	1 means that object needs to be
+ *				redrawn if the canvas state changes.
+ * TK_ITEM_DONT_REDRAW - 	1 means that the object redraw is already
+ *				been prepared, so the general canvas code
+ *				doesn't need to do that any more.
+ */
+
+#define TK_ITEM_STATE_DEPENDANT		1
+#define TK_ITEM_DONT_REDRAW		2
+
+/*
  * Records of the following type are used to describe a type of
  * item (e.g.  lines, circles, etc.) that can form part of a
  * canvas widget.
  */
 
+#ifdef USE_OLD_CANVAS
 typedef int	Tk_ItemCreateProc _ANSI_ARGS_((Tcl_Interp *interp,
 		    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
 		    char **argv));
@@ -838,6 +872,17 @@ typedef int	Tk_ItemConfigureProc _ANSI_ARGS_((Tcl_Interp *interp,
 typedef int	Tk_ItemCoordProc _ANSI_ARGS_((Tcl_Interp *interp,
 		    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
 		    char **argv));
+#else
+typedef int	Tk_ItemCreateProc _ANSI_ARGS_((Tcl_Interp *interp,
+		    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
+		    Tcl_Obj *CONST objv[]));
+typedef int	Tk_ItemConfigureProc _ANSI_ARGS_((Tcl_Interp *interp,
+		    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
+		    Tcl_Obj *CONST objv[], int flags));
+typedef int	Tk_ItemCoordProc _ANSI_ARGS_((Tcl_Interp *interp,
+		    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
+		    Tcl_Obj *CONST argv[]));
+#endif
 typedef void	Tk_ItemDeleteProc _ANSI_ARGS_((Tk_Canvas canvas,
 		    Tk_Item *itemPtr, Display *display));
 typedef void	Tk_ItemDisplayProc _ANSI_ARGS_((Tk_Canvas canvas,
@@ -889,7 +934,7 @@ typedef struct Tk_ItemType {
 					 * this type. */
     int alwaysRedraw;			/* Non-zero means displayProc should
 					 * be called even when the item has
-					 * been moved off-screen. */
+  					 * been moved off-screen. */
     Tk_ItemPointProc *pointProc;	/* Computes distance from item to
 					 * a given point. */
     Tk_ItemAreaProc *areaProc;		/* Computes whether item is inside,
@@ -970,6 +1015,59 @@ typedef struct Tk_CanvasTextInfo {
 } Tk_CanvasTextInfo;
 
 /*
+ * Structures used for Dashing and Outline.
+ */
+
+typedef struct Tk_Dash {
+    int number;
+    union {
+	char *pt;
+	char array[sizeof(char *)];
+    } pattern;
+} Tk_Dash;
+
+typedef struct Tk_TSOffset {
+    int flags;			/* flags; see below for possible values */
+    int xoffset;		/* x offset */
+    int yoffset;		/* y offset */
+} Tk_TSOffset;
+
+/*
+ * Bit fields in Tk_Offset->flags:
+ */
+
+#define TK_OFFSET_INDEX		1
+#define TK_OFFSET_RELATIVE	2
+#define TK_OFFSET_LEFT		4
+#define TK_OFFSET_CENTER	8
+#define TK_OFFSET_RIGHT		16
+#define TK_OFFSET_TOP		32
+#define TK_OFFSET_MIDDLE	64
+#define TK_OFFSET_BOTTOM	128
+
+typedef struct Tk_Outline {
+    GC gc;			/* Graphics context. */
+    double width;		/* Width of outline. */
+    double activeWidth;		/* Width of outline. */
+    double disabledWidth;	/* Width of outline. */
+    int offset;			/* Dash offset */
+    Tk_Dash dash;		/* Dash pattern */
+    Tk_Dash activeDash;		/* Dash pattern if state is active*/
+    Tk_Dash disabledDash;	/* Dash pattern if state is disabled*/
+    VOID *reserved1;		/* reserved for future expansion */
+    VOID *reserved2;
+    VOID *reserved3;
+    Tk_TSOffset tsoffset;	/* stipple offset for outline*/
+    XColor *color;		/* Outline color. */
+    XColor *activeColor;	/* Outline color if state is active. */
+    XColor *disabledColor;	/* Outline color if state is disabled. */
+    Pixmap stipple;		/* Outline Stipple pattern. */
+    Pixmap activeStipple;	/* Outline Stipple pattern if state is active. */
+    Pixmap disabledStipple;	/* Outline Stipple pattern if state is disabled. */
+} Tk_Outline;
+
+
+/*
  *--------------------------------------------------------------
  *
  * Procedure prototypes and structures used for managing images:
@@ -978,9 +1076,15 @@ typedef struct Tk_CanvasTextInfo {
  */
 
 typedef struct Tk_ImageType Tk_ImageType;
+#ifdef USE_OLD_IMAGE
 typedef int (Tk_ImageCreateProc) _ANSI_ARGS_((Tcl_Interp *interp,
 	char *name, int argc, char **argv, Tk_ImageType *typePtr,
 	Tk_ImageMaster master, ClientData *masterDataPtr));
+#else
+typedef int (Tk_ImageCreateProc) _ANSI_ARGS_((Tcl_Interp *interp,
+	char *name, int objc, Tcl_Obj *CONST objv[], Tk_ImageType *typePtr,
+	Tk_ImageMaster master, ClientData *masterDataPtr));
+#endif
 typedef ClientData (Tk_ImageGetProc) _ANSI_ARGS_((Tk_Window tkwin,
 	ClientData masterData));
 typedef void (Tk_ImageDisplayProc) _ANSI_ARGS_((ClientData instanceData,
@@ -992,6 +1096,9 @@ typedef void (Tk_ImageDeleteProc) _ANSI_ARGS_((ClientData masterData));
 typedef void (Tk_ImageChangedProc) _ANSI_ARGS_((ClientData clientData,
 	int x, int y, int width, int height, int imageWidth,
 	int imageHeight));
+typedef int (Tk_ImagePostscriptProc) _ANSI_ARGS_((ClientData clientData,
+	Tcl_Interp *interp, Tk_Window tkwin, Tk_PostscriptInfo psinfo,
+	int x, int y, int width, int height, int prepass));
 
 /*
  * The following structure represents a particular type of image
@@ -1021,6 +1128,9 @@ struct Tk_ImageType {
 				 * will not be called until after freeProc
 				 * has been called for each instance of the
 				 * image. */
+    Tk_ImagePostscriptProc *postscriptProc;
+				/* Procedure to call to produce postscript
+				 * output for the image. */
     struct Tk_ImageType *nextPtr;
 				/* Next in list of all image types currently
 				 * known.  Filled in by Tk, not by image
@@ -1055,10 +1165,9 @@ typedef struct Tk_PhotoImageBlock {
 				 * pixels in successive lines. */
     int		pixelSize;	/* Address difference between successive
 				 * pixels in the same line. */
-    int		offset[3];	/* Address differences between the red, green
-				 * and blue components of the pixel and the
-				 * pixel as a whole. */
-    int		reserved;	/* Reserved for extensions (dash patch) */
+    int		offset[4];	/* Address differences between the red, green,
+				 * blue and alpha components of the pixel and
+				 * the pixel as a whole. */
 } Tk_PhotoImageBlock;
 
 /*
@@ -1067,6 +1176,7 @@ typedef struct Tk_PhotoImageBlock {
  */
 
 typedef struct Tk_PhotoImageFormat Tk_PhotoImageFormat;
+#ifdef USE_OLD_IMAGE
 typedef int (Tk_ImageFileMatchProc) _ANSI_ARGS_((Tcl_Channel chan,
 	char *fileName, char *formatString, int *widthPtr, int *heightPtr));
 typedef int (Tk_ImageStringMatchProc) _ANSI_ARGS_((char *string,
@@ -1083,6 +1193,25 @@ typedef int (Tk_ImageFileWriteProc) _ANSI_ARGS_((Tcl_Interp *interp,
 typedef int (Tk_ImageStringWriteProc) _ANSI_ARGS_((Tcl_Interp *interp,
 	Tcl_DString *dataPtr, char *formatString,
 	Tk_PhotoImageBlock *blockPtr));
+#else
+typedef int (Tk_ImageFileMatchProc) _ANSI_ARGS_((Tcl_Channel chan,
+	CONST char *fileName, Tcl_Obj *format, int *widthPtr,
+	int *heightPtr, Tcl_Interp *interp));
+typedef int (Tk_ImageStringMatchProc) _ANSI_ARGS_((Tcl_Obj *dataObj,
+	Tcl_Obj *format, int *widthPtr, int *heightPtr,
+	Tcl_Interp *interp));
+typedef int (Tk_ImageFileReadProc) _ANSI_ARGS_((Tcl_Interp *interp,
+	Tcl_Channel chan, CONST char *fileName, Tcl_Obj *format,
+	Tk_PhotoHandle imageHandle, int destX, int destY,
+	int width, int height, int srcX, int srcY));
+typedef int (Tk_ImageStringReadProc) _ANSI_ARGS_((Tcl_Interp *interp,
+	Tcl_Obj *dataObj, Tcl_Obj *format, Tk_PhotoHandle imageHandle,
+	int destX, int destY, int width, int height, int srcX, int srcY));
+typedef int (Tk_ImageFileWriteProc) _ANSI_ARGS_((Tcl_Interp *interp,
+	CONST char *fileName, Tcl_Obj *format, Tk_PhotoImageBlock *blockPtr));
+typedef int (Tk_ImageStringWriteProc) _ANSI_ARGS_((Tcl_Interp *interp,
+	Tcl_Obj *format, Tk_PhotoImageBlock *blockPtr));
+#endif
 
 /*
  * The following structure represents a particular file format for
@@ -1117,6 +1246,17 @@ struct Tk_PhotoImageFormat {
 				 * currently known.  Filled in by Tk, not
 				 * by image format handler. */
 };
+
+EXTERN void		Tk_CreateOldImageType _ANSI_ARGS_((
+				Tk_ImageType *typePtr));
+EXTERN void		Tk_CreateOldPhotoImageFormat _ANSI_ARGS_((
+				Tk_PhotoImageFormat *formatPtr));
+
+#if !defined(USE_TK_STUBS) && defined(USE_OLD_IMAGE)
+#define Tk_CreateImageType Tk_CreateOldImageType
+#define Tk_CreatePhotoImageFormat Tk_CreateOldPhotoImageFormat
+#endif
+
 
 /*
  *--------------------------------------------------------------
@@ -1176,6 +1316,14 @@ char *Tk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp, char *version, int exact));
 
 #endif
 
+void Tk_InitImageArgs _ANSI_ARGS_((Tcl_Interp *interp, int argc, char ***argv));
+
+#if !defined(USE_TK_STUBS) || !defined(USE_OLD_IMAGE)
+
+#define Tk_InitImageArgs(interp, argc, argv) /**/
+
+#endif
+
 
 /*
  *--------------------------------------------------------------
@@ -1199,6 +1347,7 @@ typedef Tk_RestrictAction (Tk_RestrictProc) _ANSI_ARGS_((
 typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 	int offset, char *buffer, int maxBytes));
 
+
 /*
  *--------------------------------------------------------------
  *

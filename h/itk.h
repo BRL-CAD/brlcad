@@ -93,62 +93,21 @@ typedef struct ItkClassOption {
     char *init;                   /* initial value for option */
 } ItkClassOption;
 
+#include "itkDecls.h"
 
 /*
- *  Exported functions:
+ *  This function is contained in the itkstub static library
  */
-EXTERN int Itk_Init _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int Itk_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+
+#ifdef USE_ITK_STUBS
+
+char *		Itk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
+			    char *version, int exact));
+#endif
 
 /*
- *  Functions used internally by this package:
+ * Public functions that are not accessible via the stubs table.
  */
-EXTERN int Itk_ConfigBodyCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itk_UsualCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-
-/*
- *  Functions for managing options included in class definitions:
- */
-EXTERN int Itk_ClassOptionDefineCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-EXTERN int Itk_ClassOptionIllegalCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
-
-EXTERN int Itk_ConfigClassOption _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclObject *contextObj, ClientData cdata, char* newVal));
-
-EXTERN ItkClassOptTable* Itk_CreateClassOptTable _ANSI_ARGS_((
-    Tcl_Interp *interp, ItclClass *cdefn));
-EXTERN ItkClassOptTable* Itk_FindClassOptTable _ANSI_ARGS_((
-    ItclClass *cdefn));
-EXTERN void Itk_DeleteClassOptTable _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclClass *cdefn));
-
-EXTERN int Itk_CreateClassOption _ANSI_ARGS_((Tcl_Interp *interp,
-    ItclClass *cdefn, char *switchName, char *resName, char *resClass,
-    char *defVal, char *config, ItkClassOption **optPtr));
-EXTERN ItkClassOption* Itk_FindClassOption _ANSI_ARGS_((
-    ItclClass *cdefn, char *switchName));
-EXTERN void Itk_DelClassOption _ANSI_ARGS_((ItkClassOption *opt));
-
-/*
- *  Functions needed for the Archetype base class:
- */
-EXTERN int Itk_ArchetypeInit _ANSI_ARGS_((Tcl_Interp* interp));
-
-/*
- *  Functions for maintaining the ordered option list:
- */
-EXTERN void Itk_OptListInit _ANSI_ARGS_((ItkOptList* olist,
-    Tcl_HashTable *options));
-EXTERN void Itk_OptListFree _ANSI_ARGS_((ItkOptList* olist));
-
-EXTERN void Itk_OptListAdd _ANSI_ARGS_((ItkOptList* olist,
-    Tcl_HashEntry *entry));
-EXTERN void Itk_OptListRemove _ANSI_ARGS_((ItkOptList* olist,
-    Tcl_HashEntry *entry));
 
 # undef TCL_STORAGE_CLASS
 # define TCL_STORAGE_CLASS DLLIMPORT

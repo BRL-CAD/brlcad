@@ -541,7 +541,7 @@ EXTERN Tcl_Obj *	Tcl_GetObjResult _ANSI_ARGS_((Tcl_Interp * interp));
 #if !defined(__WIN32__) && !defined(MAC_TCL) /* UNIX */
 /* 167 */
 EXTERN int		Tcl_GetOpenFile _ANSI_ARGS_((Tcl_Interp * interp, 
-				char * str, int write, int checkUsage, 
+				char * str, int forWriting, int checkUsage, 
 				ClientData * filePtr));
 #endif /* UNIX */
 /* 168 */
@@ -909,7 +909,7 @@ EXTERN Tcl_Channel	Tcl_StackChannel _ANSI_ARGS_((Tcl_Interp * interp,
 				ClientData instanceData, int mask, 
 				Tcl_Channel prevChan));
 /* 282 */
-EXTERN void		Tcl_UnstackChannel _ANSI_ARGS_((Tcl_Interp * interp, 
+EXTERN int		Tcl_UnstackChannel _ANSI_ARGS_((Tcl_Interp * interp, 
 				Tcl_Channel chan));
 /* 283 */
 EXTERN Tcl_Channel	Tcl_GetStackedChannel _ANSI_ARGS_((Tcl_Channel chan));
@@ -1199,8 +1199,7 @@ EXTERN Tcl_UniChar *	Tcl_GetUnicode _ANSI_ARGS_((Tcl_Obj * objPtr));
 EXTERN Tcl_Obj *	Tcl_GetRange _ANSI_ARGS_((Tcl_Obj * objPtr, 
 				int first, int last));
 /* 384 */
-EXTERN void		Tcl_AppendUnicodeToObj _ANSI_ARGS_((
-				register Tcl_Obj * objPtr, 
+EXTERN void		Tcl_AppendUnicodeToObj _ANSI_ARGS_((Tcl_Obj * objPtr, 
 				Tcl_UniChar * unicode, int length));
 /* 385 */
 EXTERN int		Tcl_RegExpMatchObj _ANSI_ARGS_((Tcl_Interp * interp, 
@@ -1212,6 +1211,75 @@ EXTERN void		Tcl_SetNotifier _ANSI_ARGS_((
 EXTERN Tcl_Mutex *	Tcl_GetAllocMutex _ANSI_ARGS_((void));
 /* 388 */
 EXTERN int		Tcl_GetChannelNames _ANSI_ARGS_((Tcl_Interp * interp));
+/* 389 */
+EXTERN int		Tcl_GetChannelNamesEx _ANSI_ARGS_((
+				Tcl_Interp * interp, char * pattern));
+/* 390 */
+EXTERN int		Tcl_ProcObjCmd _ANSI_ARGS_((ClientData clientData, 
+				Tcl_Interp * interp, int objc, 
+				Tcl_Obj *CONST objv[]));
+/* 391 */
+EXTERN void		Tcl_ConditionFinalize _ANSI_ARGS_((
+				Tcl_Condition * condPtr));
+/* 392 */
+EXTERN void		Tcl_MutexFinalize _ANSI_ARGS_((Tcl_Mutex * mutex));
+/* 393 */
+EXTERN int		Tcl_CreateThread _ANSI_ARGS_((Tcl_ThreadId * idPtr, 
+				Tcl_ThreadCreateProc proc, 
+				ClientData clientData, int stackSize, 
+				int flags));
+/* 394 */
+EXTERN int		Tcl_ReadRaw _ANSI_ARGS_((Tcl_Channel chan, 
+				char * dst, int bytesToRead));
+/* 395 */
+EXTERN int		Tcl_WriteRaw _ANSI_ARGS_((Tcl_Channel chan, 
+				char * src, int srcLen));
+/* 396 */
+EXTERN Tcl_Channel	Tcl_GetTopChannel _ANSI_ARGS_((Tcl_Channel chan));
+/* 397 */
+EXTERN int		Tcl_ChannelBuffered _ANSI_ARGS_((Tcl_Channel chan));
+/* 398 */
+EXTERN char *		Tcl_ChannelName _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 399 */
+EXTERN Tcl_ChannelTypeVersion Tcl_ChannelVersion _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 400 */
+EXTERN Tcl_DriverBlockModeProc * Tcl_ChannelBlockModeProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 401 */
+EXTERN Tcl_DriverCloseProc * Tcl_ChannelCloseProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 402 */
+EXTERN Tcl_DriverClose2Proc * Tcl_ChannelClose2Proc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 403 */
+EXTERN Tcl_DriverInputProc * Tcl_ChannelInputProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 404 */
+EXTERN Tcl_DriverOutputProc * Tcl_ChannelOutputProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 405 */
+EXTERN Tcl_DriverSeekProc * Tcl_ChannelSeekProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 406 */
+EXTERN Tcl_DriverSetOptionProc * Tcl_ChannelSetOptionProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 407 */
+EXTERN Tcl_DriverGetOptionProc * Tcl_ChannelGetOptionProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 408 */
+EXTERN Tcl_DriverWatchProc * Tcl_ChannelWatchProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 409 */
+EXTERN Tcl_DriverGetHandleProc * Tcl_ChannelGetHandleProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 410 */
+EXTERN Tcl_DriverFlushProc * Tcl_ChannelFlushProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
+/* 411 */
+EXTERN Tcl_DriverHandlerProc * Tcl_ChannelHandlerProc _ANSI_ARGS_((
+				Tcl_ChannelType * chanTypePtr));
 
 typedef struct TclStubHooks {
     struct TclPlatStubs *tclPlatStubs;
@@ -1415,7 +1483,7 @@ typedef struct TclStubs {
     CONST char * (*tcl_GetNameOfExecutable) _ANSI_ARGS_((void)); /* 165 */
     Tcl_Obj * (*tcl_GetObjResult) _ANSI_ARGS_((Tcl_Interp * interp)); /* 166 */
 #if !defined(__WIN32__) && !defined(MAC_TCL) /* UNIX */
-    int (*tcl_GetOpenFile) _ANSI_ARGS_((Tcl_Interp * interp, char * str, int write, int checkUsage, ClientData * filePtr)); /* 167 */
+    int (*tcl_GetOpenFile) _ANSI_ARGS_((Tcl_Interp * interp, char * str, int forWriting, int checkUsage, ClientData * filePtr)); /* 167 */
 #endif /* UNIX */
 #ifdef __WIN32__
     void *reserved167;
@@ -1561,7 +1629,7 @@ typedef struct TclStubs {
     void (*tcl_GetVersion) _ANSI_ARGS_((int * major, int * minor, int * patchLevel, int * type)); /* 279 */
     void (*tcl_InitMemory) _ANSI_ARGS_((Tcl_Interp * interp)); /* 280 */
     Tcl_Channel (*tcl_StackChannel) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_ChannelType * typePtr, ClientData instanceData, int mask, Tcl_Channel prevChan)); /* 281 */
-    void (*tcl_UnstackChannel) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Channel chan)); /* 282 */
+    int (*tcl_UnstackChannel) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Channel chan)); /* 282 */
     Tcl_Channel (*tcl_GetStackedChannel) _ANSI_ARGS_((Tcl_Channel chan)); /* 283 */
     void *reserved284;
     void *reserved285;
@@ -1663,11 +1731,34 @@ typedef struct TclStubs {
     Tcl_UniChar (*tcl_GetUniChar) _ANSI_ARGS_((Tcl_Obj * objPtr, int index)); /* 381 */
     Tcl_UniChar * (*tcl_GetUnicode) _ANSI_ARGS_((Tcl_Obj * objPtr)); /* 382 */
     Tcl_Obj * (*tcl_GetRange) _ANSI_ARGS_((Tcl_Obj * objPtr, int first, int last)); /* 383 */
-    void (*tcl_AppendUnicodeToObj) _ANSI_ARGS_((register Tcl_Obj * objPtr, Tcl_UniChar * unicode, int length)); /* 384 */
+    void (*tcl_AppendUnicodeToObj) _ANSI_ARGS_((Tcl_Obj * objPtr, Tcl_UniChar * unicode, int length)); /* 384 */
     int (*tcl_RegExpMatchObj) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Obj * stringObj, Tcl_Obj * patternObj)); /* 385 */
     void (*tcl_SetNotifier) _ANSI_ARGS_((Tcl_NotifierProcs * notifierProcPtr)); /* 386 */
     Tcl_Mutex * (*tcl_GetAllocMutex) _ANSI_ARGS_((void)); /* 387 */
     int (*tcl_GetChannelNames) _ANSI_ARGS_((Tcl_Interp * interp)); /* 388 */
+    int (*tcl_GetChannelNamesEx) _ANSI_ARGS_((Tcl_Interp * interp, char * pattern)); /* 389 */
+    int (*tcl_ProcObjCmd) _ANSI_ARGS_((ClientData clientData, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 390 */
+    void (*tcl_ConditionFinalize) _ANSI_ARGS_((Tcl_Condition * condPtr)); /* 391 */
+    void (*tcl_MutexFinalize) _ANSI_ARGS_((Tcl_Mutex * mutex)); /* 392 */
+    int (*tcl_CreateThread) _ANSI_ARGS_((Tcl_ThreadId * idPtr, Tcl_ThreadCreateProc proc, ClientData clientData, int stackSize, int flags)); /* 393 */
+    int (*tcl_ReadRaw) _ANSI_ARGS_((Tcl_Channel chan, char * dst, int bytesToRead)); /* 394 */
+    int (*tcl_WriteRaw) _ANSI_ARGS_((Tcl_Channel chan, char * src, int srcLen)); /* 395 */
+    Tcl_Channel (*tcl_GetTopChannel) _ANSI_ARGS_((Tcl_Channel chan)); /* 396 */
+    int (*tcl_ChannelBuffered) _ANSI_ARGS_((Tcl_Channel chan)); /* 397 */
+    char * (*tcl_ChannelName) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 398 */
+    Tcl_ChannelTypeVersion (*tcl_ChannelVersion) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 399 */
+    Tcl_DriverBlockModeProc * (*tcl_ChannelBlockModeProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 400 */
+    Tcl_DriverCloseProc * (*tcl_ChannelCloseProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 401 */
+    Tcl_DriverClose2Proc * (*tcl_ChannelClose2Proc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 402 */
+    Tcl_DriverInputProc * (*tcl_ChannelInputProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 403 */
+    Tcl_DriverOutputProc * (*tcl_ChannelOutputProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 404 */
+    Tcl_DriverSeekProc * (*tcl_ChannelSeekProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 405 */
+    Tcl_DriverSetOptionProc * (*tcl_ChannelSetOptionProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 406 */
+    Tcl_DriverGetOptionProc * (*tcl_ChannelGetOptionProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 407 */
+    Tcl_DriverWatchProc * (*tcl_ChannelWatchProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 408 */
+    Tcl_DriverGetHandleProc * (*tcl_ChannelGetHandleProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 409 */
+    Tcl_DriverFlushProc * (*tcl_ChannelFlushProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 410 */
+    Tcl_DriverHandlerProc * (*tcl_ChannelHandlerProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 411 */
 } TclStubs;
 
 #ifdef __cplusplus
@@ -3268,6 +3359,98 @@ extern TclStubs *tclStubsPtr;
 #ifndef Tcl_GetChannelNames
 #define Tcl_GetChannelNames \
 	(tclStubsPtr->tcl_GetChannelNames) /* 388 */
+#endif
+#ifndef Tcl_GetChannelNamesEx
+#define Tcl_GetChannelNamesEx \
+	(tclStubsPtr->tcl_GetChannelNamesEx) /* 389 */
+#endif
+#ifndef Tcl_ProcObjCmd
+#define Tcl_ProcObjCmd \
+	(tclStubsPtr->tcl_ProcObjCmd) /* 390 */
+#endif
+#ifndef Tcl_ConditionFinalize
+#define Tcl_ConditionFinalize \
+	(tclStubsPtr->tcl_ConditionFinalize) /* 391 */
+#endif
+#ifndef Tcl_MutexFinalize
+#define Tcl_MutexFinalize \
+	(tclStubsPtr->tcl_MutexFinalize) /* 392 */
+#endif
+#ifndef Tcl_CreateThread
+#define Tcl_CreateThread \
+	(tclStubsPtr->tcl_CreateThread) /* 393 */
+#endif
+#ifndef Tcl_ReadRaw
+#define Tcl_ReadRaw \
+	(tclStubsPtr->tcl_ReadRaw) /* 394 */
+#endif
+#ifndef Tcl_WriteRaw
+#define Tcl_WriteRaw \
+	(tclStubsPtr->tcl_WriteRaw) /* 395 */
+#endif
+#ifndef Tcl_GetTopChannel
+#define Tcl_GetTopChannel \
+	(tclStubsPtr->tcl_GetTopChannel) /* 396 */
+#endif
+#ifndef Tcl_ChannelBuffered
+#define Tcl_ChannelBuffered \
+	(tclStubsPtr->tcl_ChannelBuffered) /* 397 */
+#endif
+#ifndef Tcl_ChannelName
+#define Tcl_ChannelName \
+	(tclStubsPtr->tcl_ChannelName) /* 398 */
+#endif
+#ifndef Tcl_ChannelVersion
+#define Tcl_ChannelVersion \
+	(tclStubsPtr->tcl_ChannelVersion) /* 399 */
+#endif
+#ifndef Tcl_ChannelBlockModeProc
+#define Tcl_ChannelBlockModeProc \
+	(tclStubsPtr->tcl_ChannelBlockModeProc) /* 400 */
+#endif
+#ifndef Tcl_ChannelCloseProc
+#define Tcl_ChannelCloseProc \
+	(tclStubsPtr->tcl_ChannelCloseProc) /* 401 */
+#endif
+#ifndef Tcl_ChannelClose2Proc
+#define Tcl_ChannelClose2Proc \
+	(tclStubsPtr->tcl_ChannelClose2Proc) /* 402 */
+#endif
+#ifndef Tcl_ChannelInputProc
+#define Tcl_ChannelInputProc \
+	(tclStubsPtr->tcl_ChannelInputProc) /* 403 */
+#endif
+#ifndef Tcl_ChannelOutputProc
+#define Tcl_ChannelOutputProc \
+	(tclStubsPtr->tcl_ChannelOutputProc) /* 404 */
+#endif
+#ifndef Tcl_ChannelSeekProc
+#define Tcl_ChannelSeekProc \
+	(tclStubsPtr->tcl_ChannelSeekProc) /* 405 */
+#endif
+#ifndef Tcl_ChannelSetOptionProc
+#define Tcl_ChannelSetOptionProc \
+	(tclStubsPtr->tcl_ChannelSetOptionProc) /* 406 */
+#endif
+#ifndef Tcl_ChannelGetOptionProc
+#define Tcl_ChannelGetOptionProc \
+	(tclStubsPtr->tcl_ChannelGetOptionProc) /* 407 */
+#endif
+#ifndef Tcl_ChannelWatchProc
+#define Tcl_ChannelWatchProc \
+	(tclStubsPtr->tcl_ChannelWatchProc) /* 408 */
+#endif
+#ifndef Tcl_ChannelGetHandleProc
+#define Tcl_ChannelGetHandleProc \
+	(tclStubsPtr->tcl_ChannelGetHandleProc) /* 409 */
+#endif
+#ifndef Tcl_ChannelFlushProc
+#define Tcl_ChannelFlushProc \
+	(tclStubsPtr->tcl_ChannelFlushProc) /* 410 */
+#endif
+#ifndef Tcl_ChannelHandlerProc
+#define Tcl_ChannelHandlerProc \
+	(tclStubsPtr->tcl_ChannelHandlerProc) /* 411 */
 #endif
 
 #endif /* defined(USE_TCL_STUBS) && !defined(USE_TCL_STUB_PROCS) */
