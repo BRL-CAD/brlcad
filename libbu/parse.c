@@ -1957,7 +1957,8 @@ FILE			*fp;
 CONST struct bu_external *ep;
 CONST char		*str;
 {
-	unsigned char	*cp;
+	const unsigned char	*cp;
+	const unsigned char	*endp;
 	int i, j, k;
 
 	BU_CK_EXTERNAL(ep);
@@ -1966,11 +1967,13 @@ CONST char		*str;
 	if( ep->ext_nbytes <= 0 )  fprintf(fp, "\tWarning: 0 length external buffer\n");
 
 	cp = ep->ext_buf;
+	endp = cp + ep->ext_nbytes;
 	for( i=0; i < ep->ext_nbytes; i += 16 )  {
-		const char	*sp = cp;
+		const unsigned char	*sp = cp;
 
 		for( j=0; j < 4; j++ )  {
 			for( k=0; k < 4; k++ )  {
+				if( cp >= endp )  break;
 				fprintf(fp, "%2.2x ", *cp++ );
 			}
 			fprintf(fp, " ");
@@ -1978,6 +1981,7 @@ CONST char		*str;
 		fprintf(fp, " |");
 
 		for( j=0; j < 16; j++,sp++ )  {
+			if( sp >= endp )  break;
 			if( isprint(*sp) )
 				putc(*sp, fp);
 			else
