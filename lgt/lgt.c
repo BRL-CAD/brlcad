@@ -16,6 +16,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./screen.h"
+
 #if defined( CRAY )
 #include <sys/category.h>
 #include <sys/resource.h>
@@ -26,7 +27,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
 #define NICENESS	-6 /* should bring it down from 16 to 10 */
+#endif	/* Cray */
+
+#if !defined(NSIG)
+# define NSIG	64		/* conservative */
 #endif
+
 int	ready_Output_Device();
 void	close_Output_Device();
 #if STD_SIGNAL_DECLS
