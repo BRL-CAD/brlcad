@@ -95,8 +95,8 @@ body Db::constructor {filename} {
 }
 
 body Db::destructor {} {
-    $db close
-    delete object $help
+    rename $db ""
+    catch {delete object $help}
 }
 
 body Db::open {args} {

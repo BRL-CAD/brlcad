@@ -106,8 +106,8 @@ body View::constructor {args} {
 }
 
 body View::destructor {} {
-    $view close
-    delete object $help
+    rename $view ""
+    catch {delete object $help}
 }
 
 body View::get_viewname {} {

@@ -106,7 +106,7 @@ body Dm::destructor {} {
 # Hack around problem that showed up in Itcl3.2
 # 
     $tkwin listen -1
-    $tkwin close
+    rename $tkwin ""
 }
 
 configbody Dm::dmsize {
