@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fbed.c	2.6
-	Modified: 	1/5/87 at 16:56:54
-	Retrieved: 	1/5/87 at 16:58:08
+	SCCS id:	@(#) fbed.c	2.7
+	Modified: 	1/7/87 at 14:57:08
+	Retrieved: 	1/7/87 at 14:57:48
 	SCCS archive:	/vld/moss/src/fbed/s.fbed.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbed.c 2.6, modified 1/5/87 at 16:56:54, archive /vld/moss/src/fbed/s.fbed.c";
+char	sccsTag[] = "@(#) fbed.c 2.7, modified 1/7/87 at 14:57:08, archive /vld/moss/src/fbed/s.fbed.c";
 #endif
 
 #include <stdio.h>
@@ -59,6 +59,7 @@ _LOCAL_ void	init_Try();
 _LOCAL_ void	fb_Paint();
 _LOCAL_ void	fb_Wind();
 _LOCAL_ void	get_Point();
+_LOCAL_ void	clip_Rectangle();
 _LOCAL_ void	get_Rectangle();
 _LOCAL_ void	fill_Rectangle();
 _LOCAL_ void	fix_Rectangle();
@@ -369,9 +370,9 @@ register RGBpixel	*pixelp;
 	if( top - btm < 10 || rgt - lft < 10 )
 		{
 		for( ; btm <= top; btm++ )
-			{	register int	x = lft;
-			for( ; x <= rgt; x++ )
-				fb_write( fbp, x, btm, pixelp, 1 );
+			{	register int	x;
+			for( x = lft; x <= rgt; x++ )
+				(void) fb_write( fbp, x, btm, pixelp, 1 );
 			}
 		return;
 		}
@@ -382,7 +383,7 @@ register RGBpixel	*pixelp;
 		for( ; x <= rgt; x++ )
 			FB_WPIXEL( fbp, *pixelp );
 		}
-	(void) fb_flush(fbp);
+	(void) fb_flush( fbp );
 	return;
 	}
 
@@ -437,7 +438,7 @@ register int	n;
 	last_key = key;
 	if( *cptr == NUL )
 		{
-		prnt_Prompt( "" );
+		/*prnt_Prompt( "" );*/
 		prnt_Event( "" );
 		}
 	if( remembering )
@@ -1762,10 +1763,11 @@ register int	x0, y0, x1, y1;
 RGBpixel		*color;
 	{	register int	x;
 		Rectangle	clipped_rect;
-	clipped_rect.r_origin.p_x = x0 < 0 ? 0 : x0;
-	clipped_rect.r_corner.p_x = x1 >= fb_getwidth(fbp) ? fb_getwidth(fbp) - 1 : x1;
-	clipped_rect.r_origin.p_y = y0 < 0 ? 0 : y0;
-	clipped_rect.r_corner.p_y = y1 >= fb_getheight(fbp) ? fb_getheight(fbp) - 1 : y1;
+	clipped_rect.r_origin.p_x = x0;
+	clipped_rect.r_corner.p_x = x1;
+	clipped_rect.r_origin.p_y = y0;
+	clipped_rect.r_corner.p_y = y1;
+	clip_Rectangle( &clipped_rect );
 	fill_Rectangle( &clipped_rect, color ); 
 	return;
 	}
@@ -1949,24 +1951,15 @@ register Rectangle	*rectp;
 register RGBpixel	*panel;
 	{	register int	top, rectwid, y;
 		int		lft, rgt, btm;
+	rectwid = rectp->r_corner.p_x - rectp->r_origin.p_x + 1;
+	clip_Rectangle( rectp );
 	lft = rectp->r_origin.p_x;
 	rgt = rectp->r_corner.p_x;
 	btm = rectp->r_origin.p_y;
 	top = rectp->r_corner.p_y;
-	if( lft > rgt )
-		{
-		lft = rgt;
-		rgt = rectp->r_origin.p_x;
-		}
-	if( btm > top )
-		{
-		top = btm;
-		btm = rectp->r_origin.p_y;
-		}
-	rectwid = rgt-lft + 1;
 	for( y = btm; y <= top; y++, panel += rectwid )
 		{
-		if( fb_write( fbp, lft, y, panel, rectwid ) == -1 )
+		if( fb_write( fbp, lft, y, panel, rgt-lft+1 ) == -1 )
 			{
 			fb_log( "Write of %d pixels to <%d,%d> failed.\n",
 				rectwid, lft, btm
@@ -2031,7 +2024,8 @@ register Point	*pointp;
 				prnt_Status();
 			}
 		}
-	fb_log( "Point picked.\n" );
+	prnt_Event( "Point picked" );
+	prnt_Prompt( "" );
 	*pointp = cursor_pos;
 	return;
 	}
@@ -2066,6 +2060,17 @@ register Rectangle	*rectp;
 		rectp->r_origin.p_y = rectp->r_corner.p_y;
 		rectp->r_corner.p_y = i;
 		}
+	return;
+	}
+
+_LOCAL_ void
+clip_Rectangle( rectp )
+register Rectangle	*rectp;
+	{
+	rectp->r_origin.p_x = rectp->r_origin.p_x < 0 ? 0 : rectp->r_origin.p_x;
+	rectp->r_corner.p_x = rectp->r_corner.p_x >= fb_getwidth(fbp) ? fb_getwidth(fbp) - 1 : rectp->r_corner.p_x;
+	rectp->r_origin.p_y = rectp->r_origin.p_y < 0 ? 0 : rectp->r_origin.p_y;
+	rectp->r_corner.p_y = rectp->r_corner.p_y >= fb_getheight(fbp) ? fb_getheight(fbp) - 1 : rectp->r_corner.p_y;
 	return;
 	}
 
