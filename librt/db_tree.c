@@ -2101,10 +2101,9 @@ union tree *	(*leaf_func)();
 
 /*
  *			D B _ P A T H _ T O _ M A T
- *  XXX should be able to just call db_follow_path().
  *
  *  Returns -
- *	1	OK, updated matrix is in 'mat'.
+ *	1	OK, path matrix written into 'mat'.
  *	0	FAIL
  *
  *  Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
@@ -2126,7 +2125,6 @@ int depth;			/* number of arcs */
 
 	db_full_path_init( &null_path );
 	db_init_db_tree_state( &ts, dbip );
-	bn_mat_copy( ts.ts_mat, mat );
 
 	ret = db_follow_path( &ts, &null_path, pathp, LOOKUP_NOISY, depth );
 	db_free_full_path( &null_path );
