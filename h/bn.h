@@ -446,7 +446,7 @@ BU_EXTERN(void quat_log, (quat_t out, quat_t in));
  *  The values are in the range 0..1
  *
  * Usage:
- *	int idx;
+ *	unsigned idx;
  *	float f;
  *
  *	BN_RANDSEED( idx, integer_seed );
@@ -457,7 +457,7 @@ BU_EXTERN(void quat_log, (quat_t out, quat_t in));
  */
 #define BN_RAND_TABSIZE 4096
 #define BN_RAND_TABMASK 0xfff
-#define BN_RANDSEED( _i, _seed )        _i = _seed % BN_RAND_TABSIZE
+#define BN_RANDSEED( _i, _seed )        _i = ((unsigned)_seed) % BN_RAND_TABSIZE
 #define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
 extern CONST float bn_rand_table[BN_RAND_TABSIZE];
 
