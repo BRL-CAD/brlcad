@@ -226,6 +226,12 @@ register CONST struct soltab *stp;
  *  Intersect a ray with a bot.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
+ *
+ *	Notes for rt_bot_norm():
+ *		hit_private contains pointer to the tri_specific structure
+ *		hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific
+ *		hit_vpriv[Y] contains the BOT solid mode
+ *		hit_vpriv[Z] contains the +1 if the hit is a entrance, or -1 for an exit
  *  
  *  Returns -
  *  	0	MISS
@@ -288,12 +294,12 @@ struct seg		*seghead;
 			continue;
 		k = VDOT( wxb, trip->tri_wn ) / dn;
 
-		VJOIN1( hp->hit_point, rp->r_pt, k, rp->r_dir );
-
 		/* HIT is within planar face */
 		hp->hit_magic = RT_HIT_MAGIC;
 		hp->hit_dist = k;
-		VMOVE( hp->hit_normal, trip->tri_N );
+		hp->hit_private = (genptr_t)trip;
+		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
+		hp->hit_vpriv[Y] = bot->bot_mode;
 		hp->hit_surfno = trip->tri_surfno;
 		if( ++nhits >= MAXHITS )  {
 			bu_log("rt_bot_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
@@ -329,12 +335,11 @@ struct seg		*seghead;
 		for( i=0; i < nhits; i++ )
 		{
 			register int surfno = hits[i].hit_surfno;
-			register fastf_t los, dn;
+			register fastf_t los;
 
-			dn = VDOT( hits[i].hit_normal, rp->r_dir );
-			if( NEAR_ZERO( dn, cos_min ) )
+			if( NEAR_ZERO( hits[i].hit_vpriv[X], cos_min ) )
 				continue;
-			los = bot->bot_thickness[surfno] / dn;
+			los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
 			if( los < 0.0 )
 				los = -los;
 			if( BU_BITTEST( bot->bot_facemode, hits[i].hit_surfno ) )
@@ -342,14 +347,18 @@ struct seg		*seghead;
 				/* append thickness to hit point */
 				RT_GET_SEG( segp, ap->a_resource);
 				segp->seg_stp = stp;
-				segp->seg_in = hits[i];
-				if( dn > 0.0 )
-					VREVERSE( segp->seg_in.hit_normal, segp->seg_in.hit_normal )
 
-				VJOIN1( segp->seg_out.hit_point, segp->seg_in.hit_point, los, rp->r_dir );
+				/* set in hit */
+				segp->seg_in = hits[i];
+				segp->seg_in.hit_vpriv[Z] = 1;
+
+				/* set out hit */
 				segp->seg_out.hit_surfno = surfno;
 				segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-				VREVERSE( segp->seg_out.hit_normal, segp->seg_in.hit_normal );
+				segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
+				segp->seg_out.hit_vpriv[Z] = -1; /* a clue for rt_bot_norm that this is an exit */
+				segp->seg_out.hit_private = segp->seg_in.hit_private;
+
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
 			else
@@ -357,18 +366,21 @@ struct seg		*seghead;
 				/* center thickness about hit point */
 				RT_GET_SEG( segp, ap->a_resource);
 				segp->seg_stp = stp;
+
+				/* set in hit */
 				segp->seg_in.hit_surfno = surfno;
-				VMOVE( segp->seg_in.hit_normal, hits[i].hit_normal )
-				if( dn > 0.0 )
-					VREVERSE( segp->seg_in.hit_normal, segp->seg_in.hit_normal )
-
+				segp->seg_out.hit_vpriv[X] = hits[i].hit_vpriv[X]; /* ray dir dot normal */
+				segp->seg_in.hit_vpriv[Z] = 1;
+				segp->seg_in.hit_private = hits[i].hit_private;
 				segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5 );
-				VJOIN1( segp->seg_in.hit_point, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir );
 
+				/* set out hit */
 				segp->seg_out.hit_surfno = surfno;
 				segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-				VJOIN1( segp->seg_out.hit_point, rp->r_pt, segp->seg_out.hit_dist, rp->r_dir );
-				VREVERSE( segp->seg_out.hit_normal, segp->seg_in.hit_normal );
+				segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
+				segp->seg_out.hit_vpriv[Z] = -1;
+				segp->seg_out.hit_private = hits[i].hit_private;
+
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
 		}
@@ -384,12 +396,16 @@ struct seg		*seghead;
 		{
 			RT_GET_SEG( segp, ap->a_resource );
 			segp->seg_stp = stp;
+
+			/* set in hit */
 			segp->seg_in = hits[i];
+			segp->seg_in.hit_vpriv[Y] = bot->bot_mode;
+			segp->seg_in.hit_vpriv[Z] = 1;
+
+			/* set out hit */
 			segp->seg_out = hits[i];
-			if( VDOT( segp->seg_in.hit_normal, rp->r_dir ) > 0.0 )
-				VREVERSE( segp->seg_in.hit_normal, segp->seg_in.hit_normal )
-			else
-				VREVERSE( segp->seg_out.hit_normal, segp->seg_out.hit_normal )
+			segp->seg_out.hit_vpriv[Y] = bot->bot_mode;
+			segp->seg_out.hit_vpriv[Z] = -1;
 			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
 	}
@@ -406,17 +422,22 @@ struct seg		*seghead;
 				/* make a zero length partition */
 				RT_GET_SEG( segp, ap->a_resource );
 				segp->seg_stp = stp;
+
+				/* set in hit */
 				segp->seg_in = hits[0];
+				segp->seg_in.hit_vpriv[Y] = bot->bot_mode;
+				segp->seg_in.hit_vpriv[Z] = 1;
+
+				/* set out hit */
 				segp->seg_out = hits[0];
-				if( VDOT( segp->seg_in.hit_normal, rp->r_dir ) > 0.0 )
-					VREVERSE( segp->seg_in.hit_normal, segp->seg_in.hit_normal )
-				else
-					VREVERSE( segp->seg_out.hit_normal, segp->seg_out.hit_normal )
+				segp->seg_out.hit_vpriv[Y] = bot->bot_mode;
+				segp->seg_out.hit_vpriv[Z] = -1;
+
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 				return( 1 );
 			}
 
-			if( nhits%2 )
+			if( nhits&1 )
 			{
 				bu_log( "rt_bot_shot(%s): WARNING: odd number of hits (%d), last hit ignored\n",
 					stp->st_name, nhits );
@@ -427,25 +448,23 @@ struct seg		*seghead;
 			{
 				RT_GET_SEG( segp, ap->a_resource );
 				segp->seg_stp = stp;
+
+				/* set in hit */
 				segp->seg_in = hits[i];
+				segp->seg_in.hit_vpriv[Y] = bot->bot_mode;
+				segp->seg_in.hit_vpriv[Z] = 1;
+
+				/* set out hit */
 				segp->seg_out = hits[i+1];
-				if( VDOT( segp->seg_in.hit_normal, rp->r_dir ) > 0.0 )
-					VREVERSE( segp->seg_in.hit_normal, segp->seg_in.hit_normal )
-				if( VDOT( segp->seg_out.hit_normal, rp->r_dir ) < 0.0 )
-					VREVERSE( segp->seg_out.hit_normal, segp->seg_out.hit_normal )
+				segp->seg_out.hit_vpriv[Y] = bot->bot_mode;
+				segp->seg_out.hit_vpriv[Z] = -1;
+
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
 			return( nhits );
 		}
 
-		if( bot->bot_orientation == RT_BOT_CW )
-		{
-			/* reverse all normals */
-			for( i=0 ; i<nhits ; i++ )
-				VREVERSE( hits[i].hit_normal, hits[i].hit_normal )
-		}
-
-		/* from this point on, process the same as a polysolid */
+		/* from this point on, process very similar to a polysolid */
 
 		/* Remove duplicate hits.
 		   We remove one of a pair of hits when they are
@@ -467,8 +486,7 @@ struct seg		*seghead;
 
 				dist = hits[i].hit_dist - hits[i+1].hit_dist;
 				if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
-					VDOT( hits[i].hit_normal, rp->r_dir ) *
-				        VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
+					hits[i].hit_vpriv[X] * hits[i+1].hit_vpriv[X] > 0)
 				{
 					for( j=i ; j<nhits-1 ; j++ )
 						hits[j] = hits[j+1];
@@ -503,7 +521,7 @@ struct seg		*seghead;
 					point_t tmp_pt;
 
 					VJOIN1( tmp_pt, rp->r_pt, hits[i].hit_dist, rp->r_dir );
-					if( VDOT( rp->r_dir, hits[i].hit_normal ) < 0.0 )
+					if( hits[i].hit_vpriv[X] < 0.0 && bot->bot_orientation == RT_BOT_CCW )
 						bu_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
 					else
 						bu_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
@@ -523,7 +541,7 @@ struct seg		*seghead;
 				while( i<nhits )
 				{
 					dot1 = dot2;
-					dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
+					dot2 = hits[i].hit_vpriv[X];
 					if( dot1 > 0.0 && dot2 > 0.0 )
 					{
 						/* two consectutive exits,
@@ -533,8 +551,8 @@ struct seg		*seghead;
 						for( j=nhits ; j>i ; j-- )
 							hits[j] = hits[j-1];	/* struct copy */
 
-						VREVERSE( hits[i].hit_normal, hits[i].hit_normal );
-						dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
+						hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
+						dot2 = hits[i].hit_vpriv[X];
 						nhits++;
 						bu_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
 					}
@@ -548,8 +566,8 @@ struct seg		*seghead;
 							hits[j] = hits[j-1];	/* struct copy */
 
 						hits[i] = hits[i-1];	/* struct copy */
-						VREVERSE( hits[i].hit_normal, hits[i-1].hit_normal );
-						dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
+						hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
+						dot2 = hits[i].hit_vpriv[X];
 						nhits++;
 						bu_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
 					}
@@ -560,7 +578,7 @@ struct seg		*seghead;
 			else
 			{
 				hits[nhits] = hits[nhits-1];	/* struct copy */
-				VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
+				hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
 				bu_log( "\t\tadding fictitious hit at %f\n", hits[nhits].hit_dist );
 				nhits++;
 			}
@@ -574,7 +592,11 @@ struct seg		*seghead;
 				RT_GET_SEG(segp, ap->a_resource);
 				segp->seg_stp = stp;
 				segp->seg_in = hits[i];		/* struct copy */
+				segp->seg_in.hit_vpriv[Y] = bot->bot_mode;
+				segp->seg_in.hit_vpriv[Z] = 1;
 				segp->seg_out = hits[i+1];	/* struct copy */
+				segp->seg_out.hit_vpriv[Y] = bot->bot_mode;
+				segp->seg_out.hit_vpriv[Z] = -1;
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
 		}
@@ -611,6 +633,25 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
+	struct tri_specific *trip=(struct tri_specific *)hitp->hit_private;
+	fastf_t dn=hitp->hit_vpriv[X]; /* ray dir dot normal */
+
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+
+	if( hitp->hit_vpriv[Z] < 0 ) /* this is an out hit */
+	{
+		if( dn < 0.0 )
+			VREVERSE( hitp->hit_normal, trip->tri_N )
+		else
+			VMOVE( hitp->hit_normal, trip->tri_N )
+	}
+	else
+	{
+		if( dn > 0.0 )
+			VREVERSE( hitp->hit_normal, trip->tri_N )
+		else
+			VMOVE( hitp->hit_normal, trip->tri_N )
+	}
 }
 
 /*
