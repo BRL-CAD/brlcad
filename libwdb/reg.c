@@ -63,7 +63,7 @@ char	*matparm;
 char	*rgb;
 int	inherit;
 {
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
@@ -113,7 +113,7 @@ int	material;
 int	los;
 int	inherit;
 {
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
@@ -161,7 +161,7 @@ char	*name;
 int	len;
 int	region;
 {
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
@@ -188,7 +188,7 @@ char	*name;
 mat_t	mat;
 int	bool_op;
 {
-	static union record rec;
+	union record rec;
 	register int i;
 
 	bzero( (char *)&rec, sizeof(rec) );
