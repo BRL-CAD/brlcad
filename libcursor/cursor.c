@@ -19,7 +19,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <string.h>
-#if ! defined( BSD )
+#if ! defined( BSD ) && ! defined( sgi )
 #include <sys/_ioctl.h>
 #else
 #include <sys/ioctl.h>
