@@ -140,11 +140,11 @@ struct partition *PartHdp;
 				 * end of the current partition.
 				 *	PPPP
 				 *	    SSSS
-				 * Force an exact match of the endpoints,
+				 * FUSE an exact match of the endpoints,
 				 * advance to next partition.
-				 * Do NOT change lastseg or lastflip!
 				 */
-				lasthit = pp->pt_outhit;
+				lasthit->hit_dist = pp->pt_outhit->hit_dist;
+				VMOVE(lasthit->hit_point, pp->pt_outhit->hit_point);
 				continue;
 			}
 			/*
@@ -244,9 +244,12 @@ equal_start:
 					 *	SSSSSS
 					 *	     PPPPP
 					 *	newpp|pp
+					 * NOTE: only copy hit point, not
+					 * normals or norm private stuff.
 					 */
 					newpp->pt_outseg = segp;
-					newpp->pt_outhit = pp->pt_inhit;/*!!*/
+					newpp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
+					VMOVE(newpp->pt_outhit->hit_point, pp->pt_inhit->hit_point);
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
 					goto done_weave;
