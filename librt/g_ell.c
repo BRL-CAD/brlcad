@@ -766,19 +766,7 @@ struct directory	*dp;
 
 	/* Associate face geometry */
 	for (i=0 ; i < 8 ; ++i) {
-		eu = outfaceuses[i]->lu_p->down.eu_p;
-		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
-					eu->next->vu_p->v_p->vg_p->coord,
-					eu->last->vu_p->v_p->vg_p->coord)) {
-			rt_log("At %d in %s\n", __LINE__, __FILE__);
-			rt_bomb("cannot make plane equation\n");
-		}
-		else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
-			rt_log("Bad plane equation from rt_mk_plane_3pts at %d in %s\n",
-					__LINE__, __FILE__);
-			rt_bomb("BAD Plane Equation");
-		}
-		else nmg_face_g(outfaceuses[i], plane);
+		rt_mk_nmg_planeeqn( outfaceuses[i] );
 	}
 
 	/* Glue the edges of different outward pointing face uses together */
@@ -786,6 +774,8 @@ struct directory	*dp;
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
+
+	nmg_ck_closed_surf(s);		/* debug */
 
 	return(0);
 }

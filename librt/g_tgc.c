@@ -1601,7 +1601,9 @@ struct directory *dp;
 		return(-1);
 	}
 
-	/* Create two 16 point ellipses */
+	/* Create two 16 point ellipses
+	 *  Note that in both cases the points go counterclockwise.
+	 */
 	ell_16pts( bottom, ti.v, ti.a, ti.b );
 	VADD2( work, ti.v, ti.h );
 	ell_16pts( top, work, ti.c, ti.d );
@@ -1613,10 +1615,10 @@ struct directory *dp;
 		vtop[i] = vtemp[i] = (struct vertex *)0;
 	}
 
-	/* Create the top face topology.  Verts must go clockwise */
+	/* Top face topology.  Verts are considered to go clockwise */
 	outfaceuses[0] = nmg_cface(s, vtop, 16);
 
-	/* Create the bottom face topology.  Verts must go ccw */
+	/* Bottom face topology.  Verts must go in opposite dir (ccw) */
 	outfaceuses[1] = nmg_cface(s, vtemp, 16);
 	for( i=0; i<16; i++ )  vbottom[i] = vtemp[16-1-i];
 
@@ -1625,46 +1627,37 @@ struct directory *dp;
 	vbottom[16] = vbottom[0];
 
 	/* Build topology for all the triangular side faces (2*16 of them)
-	 * hanging down from the top face to the bottom face
-	 * XXX which way around?
+	 * hanging down from the top face to the bottom face.
+	 * increasing indices go towards clockwise.
 	 */
 	for( i=0; i<16; i++ )  {
-		vertlist[0] = vtop[i];
-		vertlist[1] = vbottom[i];
-		vertlist[2] = vbottom[i+1];
+		vertlist[0] = vtop[i];		/* from top, */
+		vertlist[1] = vbottom[i];	/* straight down, */
+		vertlist[2] = vbottom[i+1];	/* to left & back to top */
 		outfaceuses[2+2*i] = nmg_cface(s, vertlist, 3);
 
-		vertlist[0] = vtop[i];
-		vertlist[1] = vbottom[i+1];
-		vertlist[2] = vtop[i+1];
+		vertlist[0] = vtop[i];		/* from top, */
+		vertlist[1] = vbottom[i+1];	/* down to left, */
+		vertlist[2] = vtop[i+1];	/* straight up & to right */
 		outfaceuses[2+2*i+1] = nmg_cface(s, vertlist, 3);
+	}
+
+	for( i=0; i<16; i++ )  {
+		NMG_CK_VERTEX(vtop[i]);
+		NMG_CK_VERTEX(vbottom[i]);
 	}
 
 	/* Associate the vertex geometry */
 	for( i=0; i<16; i++ )  {
-		NMG_CK_VERTEX(vtop[i]);
-		nmg_vertex_gv( vtop[i], &top[3*i] );
+		nmg_vertex_gv( vtop[i], &top[3*(16-1-i)] );
 	}
 	for( i=0; i<16; i++ )  {
-		NMG_CK_VERTEX(vbottom[i]);
-		nmg_vertex_gv( vbottom[i], &bottom[3*i] );
+		nmg_vertex_gv( vbottom[i], &bottom[3*(16-1-i)] );
 	}
 
 	/* Associate the face geometry */
 	for (i=0 ; i < 2*16+2 ; ++i) {
-		eu = outfaceuses[i]->lu_p->down.eu_p;
-		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
-					eu->next->vu_p->v_p->vg_p->coord,
-					eu->last->vu_p->v_p->vg_p->coord)) {
-			rt_log("At %d in %s\n", __LINE__, __FILE__);
-			rt_bomb("cannot make plane equation\n");
-		}
-		else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
-			rt_log("Bad plane equation from rt_mk_plane_3pts at %d in %s\n",
-					__LINE__, __FILE__);
-			rt_bomb("BAD Plane Equation");
-		}
-		else nmg_face_g(outfaceuses[i], plane);
+		rt_mk_nmg_planeeqn( outfaceuses[i] );
 	}
 
 	/* Glue the edges of different outward pointing face uses together */
@@ -1672,6 +1665,8 @@ struct directory *dp;
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
+
+	nmg_ck_closed_surf(s);		/* debug */
 
 	return(0);
 }
