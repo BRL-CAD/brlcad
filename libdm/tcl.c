@@ -48,7 +48,7 @@ Tcl_Interp *interp;
   return TCL_OK;
 }
 
-int
+static int
 dm_best_type_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -73,7 +73,7 @@ char    **argv;
   return TCL_OK;
 }
 
-int
+static int
 dm_best_name_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -95,7 +95,7 @@ char    **argv;
   return TCL_OK;
 }
 
-int
+static int
 dm_name2type_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -122,7 +122,7 @@ char    **argv;
   return TCL_OK;
 }
 
-int
+static int
 dm_names_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -155,7 +155,7 @@ char    **argv;
   return TCL_OK;
 }
 
-int
+static int
 dm_type2name_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -180,7 +180,7 @@ char    **argv;
   return TCL_OK;
 }
 
-int
+static int
 dm_types_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
