@@ -88,7 +88,7 @@ void	*v;
     if (*((long *)(p)) != (RECORD_MAGIC))
     {
 	rt_log(
-	    "Error: Bad %s pointer x%x s/b x%x was x%x, file %s, line %d\n", \
+	    "Error: Bad %s pointer x%x s/b x%x was x%x, file %s, line %d\n",
 	    "president record", p, RECORD_MAGIC, *((long *)(p)),
 	    __FILE__, __LINE__);
 	exit (0);

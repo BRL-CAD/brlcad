@@ -10,6 +10,8 @@
 static char RCSid[] = "@(#) $Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "redblack.h"
