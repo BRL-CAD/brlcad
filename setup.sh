@@ -165,6 +165,7 @@ for LAST in \
 	bin include include/brlcad lib vfont \
 	man man/man1 man/man3 man/man5 etc \
 	tclscripts tclscripts/mged tclscripts/nirt \
+	tclscripts/lib tclscripts/util \
 	tclscripts/pl-dm html html/manuals html/manuals/mged \
 	html/manuals/mged/animmate html/manuals/libdm \
 	html/manuals/shaders html/manuals/Anim_Tutorial \

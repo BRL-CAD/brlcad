@@ -223,7 +223,7 @@ BDIRS="bench \
 	cwish \
 "			# This ends the list.
 
-TSDIRS=". mged nirt pl-dm"
+TSDIRS=". mged nirt pl-dm lib util"
 TDIRS="libtk libtkGLX"
 HTML_DIRS="html/manuals html/manuals/shaders html/manuals/Anim_Tutorial html/manuals/libdm html/manuals/mged html/manuals/mged/animmate html/ReleaseNotes html/ReleaseNotes/Rel5.0 html/ReleaseNotes/Rel5.0/Summary"
 INSTALL_ONLY_DIRS="sample_applications $HTML_DIRS"
