@@ -599,13 +599,19 @@ struct nmg_bool_state *bs;
 		NMG_CK_VERTEX( vu->v_p );
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
-			/* Simply eliminate the loopuse */
-			nmg_klu( lu );	/* kill loop & mate */
+			/* Eliminate the loopuse, and mate */
+			if( NMG_LIST_MORE(lu, loopuse, &lu->down_hd) &&
+			    nextlu == lu->lumate_p )
+				nextlu = NMG_LIST_PNEXT(loopuse, nextlu);
+			nmg_klu( lu );
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
 			if( lu->up.s_p == bs->bs_dest )  break;
+			if( NMG_LIST_MORE(lu, loopuse, &lu->down_hd) &&
+			    nextlu == lu->lumate_p )
+				nextlu = NMG_LIST_PNEXT(loopuse, nextlu);
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
 			lu = nextlu;
 			continue;
