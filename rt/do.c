@@ -104,6 +104,7 @@ struct region	env_region;		/* environment map region */
 
 void		def_tree();
 void		do_ae();
+void		res_pr();
 
 /*
  *			O L D _ W A Y
@@ -879,10 +880,11 @@ int framenumber;
 #endif
 	}
 
-#ifdef STAT_PARALLEL
-	lock_pr();
-	res_pr();
-#endif
+	if(rdebug&RDEBUG_STATS)  {
+		/* Print additional statistics */
+		lock_pr();
+		res_pr();
+	}
 
 	fprintf(stderr,"\n");
 	return(0);		/* OK */
