@@ -64,5 +64,5 @@ ITCL_STUB_LIB_PATH='@itcl_STUB_LIB_PATH@'
 # If [incr Tcl] was compiled in a different place than the directory
 # containing the source files, this points to the location of the sources,
 # not the location where [incr Tcl] was compiled.
-itcl_SRC_DIR='@srcdir@'
-ITCL_SRC_DIR='@srcdir@'
+itcl_SRC_DIR='@itcl_SRC_DIR@'
+ITCL_SRC_DIR='@itcl_SRC_DIR@'
