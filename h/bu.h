@@ -329,6 +329,10 @@ extern char *			bu_optarg;
 BU_EXTERN(int			bu_getopt, (int nargc, char * CONST nargv[],
 				CONST char *ostr) );
 
+/* ispar.c */
+BU_EXTERN(int			bu_is_parallel, () );
+BU_EXTERN(void			bu_kill_parallel, () );
+
 /* linebuf.c */
 #define port_setlinebuf		bu_setlinebuf	/* libsysv compat */
 BU_EXTERN(void			bu_setlinebuf, (FILE *fp) );
@@ -369,7 +373,6 @@ BU_EXTERN(int			bu_cpulimit_get, ());
 BU_EXTERN(void			bu_cpulimit_set, (int sec));
 BU_EXTERN(int			bu_avail_cpus, ());
 BU_EXTERN(void			bu_parallel, (void (*func)(), int ncpu));
-BU_EXTERN(int			bu_is_parallel, () );
 
 /* printb.c */
 BU_EXTERN(void			bu_vls_printb, (struct bu_vls *vls,
