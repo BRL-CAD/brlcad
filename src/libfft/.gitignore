@@ -3,6 +3,7 @@
 Makefile
 Makefile.in
 fftc
+fftest
 ifftc
 irfft128.c
 irfft16.c
