@@ -172,6 +172,103 @@ union tree			*curtree;
 }
 
 /*
+ *			R T _ F I N D _ I D E N T I C A L _ S O L I D
+ *
+ *  See if solid "dp" as transformed by "mat" already exists in the
+ *  soltab list.  If it does, return the matching stp, otherwise,
+ *  create a new soltab structure, enrole it in the list, and return
+ *  a pointer to that.
+ *
+ *  "mat" will be a null pointer when an identity matrix is signified.
+ *  This greatly speeds the comparison process.
+ *
+ *  The two cases can be distinguished by the fact that stp->st_id will
+ *  be 0 for a new soltab structure, and non-zero for an existing one.
+ *
+ *  This routine will run in parallel.
+ *
+ *  In order to avoid a race between searching the soltab list and
+ *  adding new solids to it, the new solid to be added *must* be
+ *  enrolled in the list before exiting the critical section.
+ */
+HIDDEN struct soltab *rt_find_identical_solid( mat, dp, rtip )
+register CONST matp_t	mat;
+CONST struct directory	*dp;
+struct rt_i		*rtip;
+{
+	register struct soltab	*stp;
+	register int		i;
+	int			have_match;
+
+	RT_CK_RTI(rtip);
+
+	have_match = 0;
+	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
+
+	for( RT_LIST( stp, soltab, &(rt_tree_rtip->rti_headsolid) ) )  {
+		RT_CK_SOLTAB(stp);		/* sanity */
+
+		/* Leaf solids must be the same before comparing matrices */
+		if( dp != stp->st_dp )  continue;
+
+		if( mat == (matp_t)0 )  {
+			if( stp->st_matp == (matp_t)0 )  {
+				have_match = 1;
+				break;
+			}
+			continue;
+		}
+		if( stp->st_matp == (matp_t)0 )  continue;
+
+#		include "noalias.h"
+		for( i=0; i<16; i++ )  {
+			register fastf_t	f;
+			f = mat[i] - stp->st_matp[i];
+			if( !NEAR_ZERO(f, 0.0001) )
+				goto next_one;
+		}
+		/* Success, we have a match! */
+		have_match = 1;
+		break;
+next_one: ;
+	}
+
+	if( have_match )  {
+		/*
+		 *  stp now points to re-referenced solid
+		 */
+		if( rt_g.debug & DEBUG_SOLIDS )  {
+			rt_log( mat ?
+			    "rt_find_identical_solid:  %s re-referenced\n" :
+			    "rt_find_identical_solid:  %s re-referenced (identity mat)\n",
+				dp->d_namep );
+		}
+	} else {
+		/*
+		 *  Create and link a new solid into the list.
+		 *  Ensure the search keys "dp" and "mat" are stored now.
+		 */
+		GETSTRUCT(stp, soltab);
+		stp->l.magic = RT_SOLTAB_MAGIC;
+		stp->st_dp = dp;
+		stp->st_bit = rt_tree_rtip->nsolids++;
+
+		if( mat )  {
+			stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
+			mat_copy( stp->st_matp, mat );
+		} else {
+			stp->st_matp = (matp_t)0;
+		}
+
+		RT_LIST_INSERT( &(rt_tree_rtip->rti_headsolid), &(stp->l) );
+	}
+
+	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
+	return stp;
+}
+
+
+/*
  *			R T _ G E T T R E E _ L E A F
  *
  *  This routine must be prepared to run in parallel.
@@ -189,7 +286,6 @@ int				id;
 	struct rt_db_internal	intern;
 	register int		i;
 	register matp_t		mat;
-	int			have_match;
 
 	RT_CK_EXTERNAL(ep);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -211,97 +307,47 @@ int				id;
 	/*
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
-	 *
-	 *  To avoid a race with updating rti_headsolid, this whole
-	 *  loop must be within a critical section.
 	 */
-	have_match = 0;
-	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
-	for( RT_LIST( stp, soltab, &(rt_tree_rtip->rti_headsolid) ) )  {
-		RT_CK_SOLTAB(stp);		/* sanity */
-		/* Leaf solids must be the same before comparing matrices */
-		if( dp != stp->st_dp )  continue;
+	stp = rt_find_identical_solid( mat, dp, rt_tree_rtip );
+	if( stp->st_id != 0 )  goto found_it;
 
-		if( mat == (matp_t)0 )  {
-			if( stp->st_matp == (matp_t)0 )  {
-				have_match = 1;
-				break;
-			}
-			continue;
-		}
-		if( stp->st_matp == (matp_t)0 )  continue;
-#		include "noalias.h"
-		for( i=0; i<16; i++ )  {
-			f = mat[i] - stp->st_matp[i];
-			if( !NEAR_ZERO(f, 0.0001) )
-				goto next_one;
-		}
-		/* Success, we have a match! */
-		have_match = 1;
-		break;
-next_one: ;
-	}
-	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
-	if( have_match )  {
-		/* stp now points to re-referenced solid */
-		if( rt_g.debug & DEBUG_SOLIDS )  {
-			rt_log( mat ?
-			    "rt_gettree_leaf:  %s re-referenced\n" :
-			    "rt_gettree_leaf:  %s re-referenced (ident)\n",
-				dp->d_namep );
-		}
-		goto found_it;
-	}
-
-	GETSTRUCT(stp, soltab);
-	stp->l.magic = RT_SOLTAB_MAGIC;
 	stp->st_id = id;
-	stp->st_dp = dp;
 	if( mat )  {
-		stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
-		mat_copy( stp->st_matp, mat );
 		mat = stp->st_matp;
 	} else {
-		stp->st_matp = mat;
 		mat = (matp_t)rt_identity;
 	}
-	stp->st_specific = (genptr_t)0;
+
+	/*
+	 *  Import geometry from on-disk (external) format to internal.
+	 */
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, ep, mat ) < 0 )  {
+		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		/* Too late to delete soltab entry; mark is as "dead" */
+		stp->st_aradius = -1;
+		return( TREE_NULL );		/* BAD */
+	}
+	RT_CK_DB_INTERNAL( &intern );
 
 	/* init solid's maxima and minima */
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-    	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, mat ) < 0 )  {
-		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
-		rt_free( (char *)stp, "struct soltab");
-		return( TREE_NULL );		/* BAD */
-	}
-	RT_CK_DB_INTERNAL( &intern );
-
     	/*
     	 *  If the ft_prep routine wants to keep the internal structure,
     	 *  that is OK, as long as idb_ptr is set to null.
+	 *  Note that the prep routine may have changed st_id.
     	 */
 	if( rt_functab[id].ft_prep( stp, &intern, rt_tree_rtip ) )  {
 		/* Error, solid no good */
 		rt_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
-		rt_free( (char *)stp, "struct soltab");
+	    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
+		/* Too late to delete soltab entry; mark is as "dead" */
+		stp->st_aradius = -1;
 		return( TREE_NULL );		/* BAD */
 	}
-	id = stp->st_id;	/* type may have changed in prep */
-
-	/*
-	 *  Link this new solid onto the list.  Critical section.
-	 */
-	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
-	RT_LIST_INSERT( &(rt_tree_rtip->rti_headsolid), &(stp->l) );
-	stp->st_bit = rt_tree_rtip->nsolids++;
-	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
 
 #if 0
 	if(rt_g.debug&DEBUG_SOLIDS)  {
@@ -309,7 +355,7 @@ next_one: ;
 		rt_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
 		rt_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
-		if( rt_functab[id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
+		if( rt_functab[stp->st_id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
 			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
 				dp->d_namep );
 		}
@@ -319,7 +365,7 @@ next_one: ;
 #endif
 
 	/* Release internal version */
-    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
 
 found_it:
 	GETUNION( curtree, tree );
