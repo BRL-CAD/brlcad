@@ -144,7 +144,6 @@ char	**argv;
 
 	/* Material */
 	rt_log("Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
-	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	nlp = strchr( line, '\n' );
 	if( strncmp(line, "del", 3) == 0 )  {
@@ -157,7 +156,6 @@ char	**argv;
 
 	/* Parameters */
 	rt_log("Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
-	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	nlp = strchr( line, '\n' );
 	if( strncmp(line, "del", 3) == 0  )  {
@@ -177,7 +175,6 @@ char	**argv;
 	else
 		rt_log("Color = (No color specified)\n");
 	rt_log("Color R G B (0..255)? ('del' to delete, CR to skip) ");
-	fflush(stdout);
 	/* XXX This is bad!!!  Should use CMD_MORE return*/
 	(void)fgets(line,sizeof(line),stdin);
 	if( strncmp(line, "del", 3) == 0 ) {
@@ -206,7 +203,6 @@ char	**argv;
 		break;
 	}
 	rt_log("Inheritance (0|1)? (CR to skip) ");
-	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	switch( line[0] )  {
 	case '1':
@@ -561,7 +557,6 @@ char	**argv;
 	struct rt_ehy_internal *ehy_ip;
 	struct rt_eto_internal *eto_ip;
 	struct rt_part_internal *part_ip;
-	struct rt_nmg_internal *nmg_ip;
 
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[1] );
@@ -1104,10 +1099,9 @@ char	**argv;
 
 static int frac_stat;
 void
-mged_add_nmg_part(newname, m, old_dp)
+mged_add_nmg_part(newname, m)
 char *newname;
 struct model *m;
-struct directory *old_dp;
 {
 	struct rt_db_internal	new_intern;
 	struct directory *new_dp;
@@ -1230,8 +1224,7 @@ char	**argv;
 
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 
-				mged_add_nmg_part(newname, new_model,
-							dbip);
+				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return CMD_BAD;
 				continue;
 			}
@@ -1253,8 +1246,7 @@ char	**argv;
 /*	nmg_end_dup(); */
 
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
-				mged_add_nmg_part(newname, new_model,
-							dbip);
+				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return CMD_BAD;
 			}
 #if 0
@@ -1268,8 +1260,7 @@ char	**argv;
 				nmg_klu(lu);
 
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
-				mged_add_nmg_part(newname, new_model,
-							dbip);
+				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return CMD_BAD;
 			}
 			while (RT_LIST_NON_EMPTY(&s->eu_hd)) {
@@ -1283,8 +1274,7 @@ char	**argv;
 
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 
-				mged_add_nmg_part(newname, new_model,
-							dbip, old_dp);
+				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return CMD_BAD;
 			}
 #endif
