@@ -340,6 +340,6 @@ char	**argv;
 		}
 	}
 	(void)printf("Presented area from this viewpoint, square %s:\n",
-		local_unit[localunit] );
+		rt_units_string(dbip->dbi_local2base) );
 	pclose( fp );
 }

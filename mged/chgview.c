@@ -866,7 +866,7 @@ char	**argv;
 		if( mged_abs_tol > 0.0 )  {
 			(void)printf("\tabs %g %s\n",
 				mged_abs_tol * base2local,
-				local_unit[localunit] );
+				rt_units_string(dbip->dbi_local2base) );
 		} else {
 			(void)printf("\tabs None\n");
 		}

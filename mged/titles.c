@@ -46,17 +46,6 @@ char	*state_str[] = {
 	"UNKNOWN",
 };
 
-char	*local_unit[] = {
-	"NONE",
-	"MILLIMETERS",
-	"CENTIMETERS",
-	"METERS",
-	"INCHES",
-	"FEET",
-	"UNKNOWN",
-};
-
-
 /*
  *			D O T I T L E S
  *
@@ -352,7 +341,7 @@ dotitles()
 		-toViewcenter[MDY]*base2local,
 		-toViewcenter[MDZ]*base2local,
 		VIEWSIZE*base2local,
-		local_unit[localunit] );
+		rt_units_string(dbip->dbi_local2base) );
 
 	cp = &linebuf[0];
 	FINDNULL(cp);
