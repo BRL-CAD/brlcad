@@ -406,12 +406,21 @@ CONST struct faceuse *fu;
 char *h;
 {
 	CONST struct loopuse *lu;
+	struct face *f;
+	struct face_g_plane *fg;
 
 	MKPAD(h);
 	NMG_CK_FACEUSE(fu);
+	f = fu->f_p;
 
-	rt_log("%sFACEUSE %8x (%s) f_p=x%x\n",
-		h, fu, nmg_orientation(fu->orientation), fu->f_p);
+	if( *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+	{
+		rt_log("%sFACEUSE %8x (%s) f_p=x%x pl= %f %f %f %f\n",
+			h, fu, nmg_orientation(fu->orientation), fu->f_p, V4ARGS( f->g.plane_p->N ));
+	}
+	else
+		rt_log("%sFACEUSE %8x (%s) f_p=x%x\n",
+			h, fu, nmg_orientation(fu->orientation), fu->f_p);
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu_briefly(lu, h);
