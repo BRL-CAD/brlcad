@@ -202,40 +202,35 @@ struct rt_i		*rtip;
 	mag_c = sqrt( magsq_c = MAGSQ( C ) );
 	mag_d = sqrt( magsq_d = MAGSQ( D ) );
 
-	if( NEAR_ZERO(magsq_h, 0.0001) )  {
-		return(1);		/* BAD */
-	}
-
-	/* Validate that A.B == 0 */
-	f = VDOT( A, B ) / (mag_a * mag_b);
-	if( ! NEAR_ZERO(f, 0.0001) )  {
-		return(1);		/* BAD */
+	/* Check for |H| > 0, |A| > 0, |B| > 0 */
+	if( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_a, RT_LEN_TOL)
+	 || NEAR_ZERO(mag_b, RT_LEN_TOL) )  {
+		return(1);		/* BAD, too small */
 	}
 
 	/* Make sure that A == C, B == D */
 	VSUB2( work, A, C );
 	f = MAGSQ( work );
 	if( ! NEAR_ZERO(f, 0.0001) )  {
-		return(1);		/* BAD */
+		return(1);		/* BAD, !cylinder */
 	}
 	VSUB2( work, B, D );
 	f = MAGSQ( work );
 	if( ! NEAR_ZERO(f, 0.0001) )  {
-		return(1);		/* BAD */
+		return(1);		/* BAD, !cylinder */
 	}
 
-	/* Check for H.A == 0 and H.B == 0 */
+	/* Check for A.B == 0, H.A == 0 and H.B == 0 */
+	f = VDOT( A, B ) / (mag_a * mag_b);
+	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+		return(1);		/* BAD */
+	}
 	f = VDOT( Hv, A ) / (mag_h * mag_a);
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
 	f = VDOT( Hv, B ) / (mag_h * mag_b);
-	if( ! NEAR_ZERO(f, 0.0001) )  {
-		return(1);		/* BAD */
-	}
-
-	/* Check for |A| > 0, |B| > 0 */
-	if( NEAR_ZERO(mag_a, 0.0001) || NEAR_ZERO(mag_b, 0.0001) )  {
+	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
 		return(1);		/* BAD */
 	}
 
@@ -292,7 +287,7 @@ struct rt_i		*rtip;
 		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-		if( tmp > 1.0e-8 )
+		if( tmp > SMALL )
 			f = tmp/sqrt(tmp);	/* XY part */
 		else
 			f = 0;
@@ -301,7 +296,7 @@ struct rt_i		*rtip;
 		/* 2nd end ellipse */
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-		if( tmp > 1.0e-8 )
+		if( tmp > SMALL )
 			f = tmp/sqrt(tmp);	/* XY part */
 		else
 			f = 0;
@@ -315,7 +310,7 @@ struct rt_i		*rtip;
 		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-		if( tmp > 1.0e-8 )
+		if( tmp > SMALL )
 			f = tmp/sqrt(tmp);	/* XY part */
 		else
 			f = 0;
@@ -324,7 +319,7 @@ struct rt_i		*rtip;
 		/* 2nd end ellipse */
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-		if( tmp > 1.0e-8 )
+		if( tmp > SMALL )
 			f = tmp/sqrt(tmp);	/* XY part */
 		else
 			f = 0;
@@ -338,7 +333,7 @@ struct rt_i		*rtip;
 		MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
-		if( tmp > 1.0e-8 )
+		if( tmp > SMALL )
 			f = tmp/sqrt(tmp);	/* XY part */
 		else
 			f = 0;
@@ -347,7 +342,7 @@ struct rt_i		*rtip;
 		/* 2nd end ellipse */
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
-		if( tmp > 1.0e-8 )
+		if( tmp > SMALL )
 			f = tmp/sqrt(tmp);	/* XY part */
 		else
 			f = 0;
@@ -426,7 +421,7 @@ struct application	*ap;
 	VSUB2( xlated, rp->r_pt, rec->rec_V );
 	MAT4X3VEC( pprime, rec->rec_SoR, xlated );
 
-	if( NEAR_ZERO(dprime[X], 0.0001) && NEAR_ZERO(dprime[Y], 0.0001) )
+	if( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )
 		goto check_plates;
 
 	/* Find roots of the equation, using forumla for quadratic w/ a=1 */
@@ -471,7 +466,7 @@ struct application	*ap;
 	 * Check for hitting the end plates.
 	 */
 check_plates:
-	if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], 0.0001) )  {
+	if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
 		/* 0 or 1 hits so far, this is worthwhile */
 		k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
 		k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
