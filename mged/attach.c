@@ -805,6 +805,7 @@ struct dm_list *initial_dm_list;
   dmaflag = 1;
   owner = 1;
   frametime = 1;
+  mapped = 1;
   adc_a1_deg = adc_a2_deg = 45.0;
   last_v_axes = 2; /* center location */
 }
