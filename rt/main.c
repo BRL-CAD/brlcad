@@ -516,6 +516,7 @@ cm_multiview( argc, argv )
 int	argc;
 char	**argv;
 {
+	register struct rt_i *rtip = ap.a_rt_i;
 	static int a[] = {
 		-35,
 		  0,  90, 135, 180, 225, 270, 315,
@@ -527,6 +528,9 @@ char	**argv;
 		  0,   0,   0,   0,   0,   0,   0
 	};
 
+	if( rtip->HeadRegion == REGION_NULL )  {
+		def_tree( rtip );		/* Load the default trees */
+	}
 	for( curframe=0; curframe<(sizeof(a)/sizeof(a[0])); curframe++ )  {
 		do_ae( (double)a[curframe], (double)e[curframe] );
 		(void)do_frame( curframe );
