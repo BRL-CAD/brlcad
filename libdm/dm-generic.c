@@ -91,8 +91,10 @@ struct dm *dmp2;
       return TCL_ERROR;
 
   switch(dmp1->dm_type){
+#ifdef DM_OGL
   case DM_TYPE_OGL:
     return ogl_share_dlist(dmp1, dmp2);
+#endif
   default:
     return TCL_OK;
   }
