@@ -87,7 +87,7 @@ cat << EOF > ${IN_FILE}
 /*	The network code is not tested yet */
 	MACHINE=stad;
 	UNIXTYPE=SYSV;
-	HAS_TCP=0;
+	HAS_TCP=1;
 	HAS_SYMLINKS=1;
 #endif
 
