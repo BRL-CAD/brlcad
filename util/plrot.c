@@ -53,7 +53,8 @@ point_t	space_min, space_max;	/* Current space */
 int	forced_space;		/* space is being forced */
 point_t	forced_space_min, forced_space_max;	/* forced space */
 
-int	rpp;			/* flag: indicates new center and space values */
+int	rpp;			/* flag: compute new center values */
+int	Mflag;			/* flag: don't rebound space rpp */
 
 void	dofile(), copy_string();
 void	two_coord_out(), three_coord_out();
@@ -88,6 +89,7 @@ register char **argv;
 		case 'M':
 			/* take model RPP from space() command */
 			rpp++;
+			Mflag = 1;		/* don't rebound */
 			break;
 		case 'g':
 			mat_angles( tmp, -90.0, 0.0, -90.0 );
@@ -524,8 +526,26 @@ CONST point_t	min, max;
 			mat_print("rmat", rmat);
 		}
 
-		/* re-bound the space() rpp after rotating & scaling it */
-		rotate_bbox( space_min, space_max, rmat, min, max );
+		if( Mflag )  {
+			/*  Don't rebound, just expand size of space
+			 *  around center point.
+			 *  Has advantage of the output space() not being
+			 *  affected by changes in rotation,
+			 *  which may be significant for animation scripts.
+			 */
+			vect_t	diag;
+			double	v;
+
+			VSUB2( diag, max, min );
+			v = MAGNITUDE(diag)*0.5 + 0.5;
+			VSET( space_min, -v, -v, -v );
+			VSET( space_max,  v,  v,  v );
+		} else {
+			/* re-bound the space() rpp with a tighter one
+			 * after rotating & scaling it.
+			 */
+			rotate_bbox( space_min, space_max, rmat, min, max );
+		}
 		space_set = 1;
 	} else {
 		VMOVE( space_min, min );
