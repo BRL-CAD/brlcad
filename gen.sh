@@ -157,13 +157,13 @@ BDIRS="bench \
 	libfb \
 	libtcl \
 	libtk \
+	libdm \
 	rfbd \
 	fbserv \
 	librt \
 	libredblack \
 	libtermio \
 	libtclcad \
-	libdm \
 	conv \
 	db \
 	rt \
