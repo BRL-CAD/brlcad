@@ -69,6 +69,7 @@ static int zclipping_on = 1;	/* Z Clipping flag */
 static int zbuffer_on = 1;	/* Hardware Z buffer is on */
 static int perspective_mode = 0;	/* Perspective flag */
 static int perspective_angle =3;	/* Angle of perspective */
+static int perspective_table[] = { 30, 45, 60, 90 };
 static int lighting_on = 0;	/* Lighting model on */
 static int no_faceplate = 0;	/* Don't draw faceplate */
 static int ovec = -1;		/* Old color map entry number */
@@ -1205,6 +1206,11 @@ checkevents()  {
 					continue;
 				}
 				perspective_mode = 1-perspective_mode;
+				rt_vls_printf( &dm_values.dv_string,
+					"set perspective=%d\n",
+					perspective_mode ?
+						perspective_table[perspective_angle] :
+						-1 );
 				dmaflag = 1;
 				continue;
 			} else if(ret == F4KEY)  {
@@ -1301,6 +1307,9 @@ checkevents()  {
 					    1.0, 0.01, 1.0e10, 1.0 );
 					break;
 				}
+				if(perspective_mode) rt_vls_printf( &dm_values.dv_string,
+					"set perspective=%d\n",
+					perspective_table[perspective_angle] );
 				dmaflag = 1;
 				continue;
 			} else if (ret == F7KEY) {
