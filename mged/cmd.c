@@ -142,7 +142,12 @@ int     f_aip(), f_ps();
 int     f_bindkey();
 #endif /* XMGED */
 
+/* Carl Nuzman experimental */
+#if 1
 extern int f_drawline();
+#else
+extern int cmd_vdraw();
+#endif
 
 extern void sync();
 int	inpara;			/* parameter input from keyboard */
@@ -289,8 +294,13 @@ static struct funtab funtab[] = {
 	f_delay,3,3,FALSE,
 "dm", "set var [val]", "Do display-manager specific command",
 	f_dm, 2, MAXARGS, FALSE,
+#if 1
 "drawline", "x y z (color) (kill)", "Experimental - draw a line (cnuzman)",
 	f_drawline, 4, 6, FALSE,
+#else
+"vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
+	cmd_vdraw, 2, 7, TRUE,
+#endif
 "dup", "file [prefix]", "check for dup names in 'file'",
 	f_dup, 2, 3, FALSE,
 "E", "<objects>", "evaluated edit of objects",
