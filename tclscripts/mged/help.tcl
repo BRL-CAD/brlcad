@@ -58,7 +58,7 @@ set mged_help_data(binary)      {{[-i|-o] -u type dest source}
                  For output source is an object name and dest is a file name.
                  Only uniform array binary objects are currently supported}}
 set mged_help_data(import_body)	{{object file type}	{read an object's body from a file}}
-set mged_help_data(export_body)	{{object file}	{write an object's body to a file}}
+set mged_help_data(export_body)	{{file object}	{write an object's body to a file}}
 set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {remove unreferenced vertices in a BOT solid}}
 set mged_help_data(bot_face_fuse) {{new_bot_solid old_bot_solid} {eliminate duplicate faces in a BOT solid}}
 set mged_help_data(bot_vertex_fuse) {{new_bot_solid old_bot_solid} {fuse duplicate vertices in a BOT solid}}
