@@ -3,19 +3,28 @@
  *
  *  $Header$
  */
+#include "../Cakefile.defs"
 
+#define PRODUCTS	*.c *.h makefile
 #define SRCDIR	sample_applications
-#define PRODUCTS	g-xxx rtexample
-#define	SRCSUFF	.c
+#undef BINDIR
+#define BINDIR	BASEDIR/sample_applications
+#undef BINPERM
+#define BINPERM 444
 #define MANSECTION	1
 
-#include "../Cakefile.defs"
-#include "../Cakefile.prog"
+#define BUILD_MAKEFILE build_makefile.sh
 
-g-xxx: g-xxx.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
-	CC LDFLAGS g-xxx.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-xxx
+clean&:
+	@echo "" > /dev/null
 
-rtexample:	rtexample.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	CC LDFLAGS rtexample.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtexample
+noprod&:
+	rm -f makefile
+
+clobber&:
+	@echo "" > /dev/null
+
+makefile:
+	BUILD_MAKEFILE
 
 #include "../Cakefile.rules"
