@@ -15,6 +15,8 @@ proc create_listbox { top screen type items abort_cmd } {
     foreach word $items {
 	$top.listbox insert end $word
     }
+    # right justify
+    $top.listbox xview 1000
     scrollbar $top.scrollbar -command "$top.listbox yview"
     button $top.abortB -text "Abort $type Selection" \
 	-command "$abort_cmd"
