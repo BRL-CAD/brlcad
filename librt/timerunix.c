@@ -46,7 +46,7 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
-#include "rtstring.h"
+#include "bu.h"
 
 /* Standard System V stuff */
 static long time0;
@@ -73,7 +73,7 @@ rt_prep_timer()
  */
 double
 rt_get_timer( vp, elapsed )
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 double		*elapsed;
 {
 	long	now;
@@ -104,11 +104,11 @@ double		*elapsed;
 		percent = user_cpu_secs/elapsed_secs*100.0;
 		RT_VLS_CHECK(vp);
 #ifdef DEFAULT_HZ
-		rt_vls_printf( vp,
+		bu_vls_printf( vp,
 "%g user + %g sys in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
 			user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
 #else
-		rt_vls_printf( vp,
+		bu_vls_printf( vp,
 			"%g user + %g sys in %g elapsed secs (%g%%)",
 			user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
 #endif
@@ -125,17 +125,17 @@ double
 rt_read_timer(str,len)
 char *str;
 {
-	struct rt_vls	vls;
+	struct bu_vls	vls;
 	double		cpu;
 	int		todo;
 
-	if( !str )  return  rt_get_timer( (struct rt_vls *)0, (double *)0 );
+	if( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
 
-	rt_vls_init( &vls );
+	bu_vls_init( &vls );
 	cpu = rt_get_timer( &vls, (double *)0 );
-	todo = rt_vls_strlen( &vls );
+	todo = bu_vls_strlen( &vls );
 	if( todo > len )  todo = len-1;
-	strncpy( str, rt_vls_addr(&vls), todo );
+	strncpy( str, bu_vls_addr(&vls), todo );
 	str[todo] = '\0';
 	return cpu;
 }
