@@ -59,9 +59,6 @@ char **argv;
    double loops;	/*  Number of rays fired.  */
    double r;		/*  Variable in loops.  */
    int i,j;		/*  Variable in loops.  */
-   double drand48();	/*  Random number generator.  Generates double  */
-			/*  floating-point values uniformly distributed  */
-			/*  over the interval [0.0,1.0).  */
    long seed;		/*  Initial seed for random number generator.  */
    double denom;	/*  Denominator.  */
    double elev;		/*  Elevation, used to find point on yz-plane.  */
