@@ -1,5 +1,16 @@
 /*
- *			fbed/Cakefile
+			fbed/Cakefile
+
+   To suppress warning messages on Suns running older releases than SunOS 4,
+   due to incorrect declarations of signal() before release 4.0, add the
+   following to CONFIGDEFS:
+
+	-DSunOS4=0
+
+   Also, for debugging, ADB and DBX typically don't see 'static' functions, so
+   add the following to CONFIGDEFS:
+
+	-DSTATIC=
  */
 /* #define CONFIGDEFS	-DSTATIC= */	/* debugging only */
 

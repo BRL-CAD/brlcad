@@ -1,17 +1,24 @@
 /*
- *			lgt/Cakefile
- *
- * FONTDIR is pathname to font file (times.r.6) which is included with sources
- * but on real BSD systems is found in /usr/lib/vfont.  So on non-BSD systems,
- * change path to the absolute directory path name where 'times.r.6' lives in
- * the following line, and add it to CONFIGDEFS:
- *
- *	-DFONTDIR=\\\\"path\\\\"
- *
- * Also, for debugging, ADB and DBX typically don't see 'static' functions, so
- * add the following to CONFIGDEFS:
- *
- *	-DSTATIC=
+			lgt/Cakefile
+
+   FONTDIR is pathname to font file (times.r.6) which is included with sources
+   but on real BSD systems is found in /usr/lib/vfont.  So on non-BSD systems,
+   change path to the absolute directory path name where 'times.r.6' lives in
+   the following line, and add it to CONFIGDEFS:
+
+	 -DFONTDIR=\\\\"path\\\\"
+
+   Also, for debugging, ADB and DBX typically don't see 'static' functions, so
+   add the following to CONFIGDEFS:
+
+	-DSTATIC=
+
+   To suppress warning messages on Suns running older releases than SunOS 4,
+   due to incorrect declarations of signal() before release 4.0, add the
+   following to CONFIGDEFS:
+
+	-DSunOS4=0
+
  */
 
 #define CONFIGDEFS	LGT_CONFIG -DBEHIND_ME_TOL=0.05 /* -DDEBUG */
