@@ -91,6 +91,7 @@ union record  {
 #define ID_BSURF	'D'     /* d_spline surface header */
 #define ID_MATERIAL	'm'	/* Material description record */
 #define ID_STRSOL	's'	/* String solid description */
+#define DBID_ARBN	'n'	/* Convex polyhedron with N faces */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -285,6 +286,14 @@ union record  {
 #define DB_SS_LEN	(DB_MINREC-NAMESIZE-2)
 		char	ss_str[DB_SS_LEN];	/* string keyword & values */
 	}  ss;
+	struct arbn_rec  {
+		char	n_id;			/* DBID_ARBN */
+		char	n_pad;
+		char	n_name[NAMESIZE];
+		int	n_neqn;			/* # equations which follow */
+		int	n_grans;		/* # eqn granules to follow */
+		/* Note that eqn granules are in "network" byte order */
+	}  n;
 };
 
 #endif	/* DB_H */
