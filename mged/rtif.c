@@ -235,14 +235,14 @@ register char **end;
 
 	/*
 	 * Find all unique top-level entries.
-	 *  Mark ones already done with s_iflag == UP
+	 *  Mark ones already done with s_wflag == UP
 	 */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		sp->s_iflag = DOWN;
+		sp->s_wflag = DOWN;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		register struct solid *forw;
 
-		if( sp->s_iflag == UP )
+		if( sp->s_wflag == UP )
 			continue;
 		if( sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR )
 			continue;	/* Ignore overlays, predictor, etc */
@@ -253,10 +253,10 @@ register char **end;
 				   sp->s_path[0]->d_namep, "\n", (char *)NULL);
 		  break;
 		}
-		sp->s_iflag = UP;
+		sp->s_wflag = UP;
 		for(BU_LIST_PFOR(forw, sp, solid, &HeadSolid.l)){
 			if( forw->s_path[0] == sp->s_path[0] )
-				forw->s_iflag = UP;
+				forw->s_wflag = UP;
 		}
 	}
 	*vp = (char *) 0;
@@ -428,7 +428,7 @@ run_rt()
 	(void)fclose( fp_in );
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		sp->s_iflag = DOWN;
+		sp->s_wflag = DOWN;
 
 	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
 			      rt_output_handler, (ClientData)pipe_err[0]);
@@ -567,7 +567,7 @@ int mask;
     fclose(rtcp->fp);
 
     FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-      sp->s_iflag = DOWN;
+      sp->s_wflag = DOWN;
 
     /* Add overlay */
     cvt_vlblock_to_solids( rtcp->vbp, "OVERLAPS", 0 );
@@ -798,21 +798,21 @@ char	**argv;
 	(void)fprintf(fp," %s\\\n ", dbip->dbi_filename);
 
 	/* Find all unique top-level entries.
-	 *  Mark ones already done with s_iflag == UP
+	 *  Mark ones already done with s_wflag == UP
 	 */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		sp->s_iflag = DOWN;
+		sp->s_wflag = DOWN;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		register struct solid *forw;	/* XXX */
 
-		if( sp->s_iflag == UP )
+		if( sp->s_wflag == UP )
 			continue;
 		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR) continue;
 		(void)fprintf(fp, "'%s' ", sp->s_path[0]->d_namep);
-		sp->s_iflag = UP;
+		sp->s_wflag = UP;
 		for(BU_LIST_PFOR(forw, sp, solid, &HeadSolid.l)){
 			if( forw->s_path[0] == sp->s_path[0] )
-				forw->s_iflag = UP;
+				forw->s_wflag = UP;
 		}
 	}
 	(void)fprintf(fp,"\\\n 2>> %s.log\\\n", base);
@@ -829,7 +829,7 @@ char	**argv;
 	(void)fclose( fp );
 	
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		sp->s_iflag = DOWN;
+		sp->s_wflag = DOWN;
 
 	return TCL_OK;
 }
@@ -1612,7 +1612,7 @@ done:
 #endif
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		sp->s_iflag = DOWN;
+		sp->s_wflag = DOWN;
 
 	return TCL_OK;
 }
@@ -2143,14 +2143,14 @@ char 		**argv;
 		
 
 	/* Find all unique top-level entries.
-	 *  Mark ones already done with s_iflag == UP
+	 *  Mark ones already done with s_wflag == UP
 	 */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-	  sp->s_iflag = DOWN;
+	  sp->s_wflag = DOWN;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  register struct solid *forw;	/* XXX */
 
-	  if( sp->s_iflag == UP )
+	  if( sp->s_wflag == UP )
 	    continue;
 	  if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR){
 	    if (skip_phony) continue;
@@ -2158,14 +2158,14 @@ char 		**argv;
 	    if (skip_real) continue;
 	  }
 	  Tcl_AppendResult(interp, sp->s_path[0]->d_namep, " ", (char *)NULL);
-	  sp->s_iflag = UP;
+	  sp->s_wflag = UP;
 	  FOR_REST_OF_SOLIDS(forw, sp, &HeadSolid.l){
 	    if( forw->s_path[0] == sp->s_path[0] )
-	      forw->s_iflag = UP;
+	      forw->s_wflag = UP;
 	  }
 	}
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		sp->s_iflag = DOWN;
+		sp->s_wflag = DOWN;
 
 	return TCL_OK;
 }
