@@ -263,7 +263,12 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+
+	if( db_dirbuild( dbip ) )
+	{
+		bu_log( "Failed to build directory for %s\n", argv[optind] );
+		exit(1);
+	}
 
 	if( out_file == NULL )
 		fp_out = stdout;
