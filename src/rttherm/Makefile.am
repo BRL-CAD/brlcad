@@ -47,8 +47,8 @@ noinst_LTLIBRARIES = librttherm.la
 
 librttherm_la_SOURCES = \
 	do.c \
-	main.c \
 	ext.h \
+	main.c \
 	opt.c \
 	worker.c
 
@@ -58,7 +58,7 @@ rttherm_SOURCES = \
 	viewtherm.c
 
 rttherm_CFLAGS = -DRT_MULTISPECTRAL
-rttherm_LDADD = $(MULTISPECTRAL) $(LDADD) librttherm.la
+rttherm_LDADD = librttherm.la $(MULTISPECTRAL) $(LDADD) 
 
 ssampview_SOURCES = \
 	spectrum.c \
