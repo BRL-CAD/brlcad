@@ -2433,6 +2433,9 @@ CONST struct rt_tol	*tol;
 	}
 	sa = s->sa_p;
 
+	VSETALL( sa->max_pt , -MAX_FASTF);
+	VSETALL( sa->min_pt , MAX_FASTF);
+
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		struct face	*f;
 
