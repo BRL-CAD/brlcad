@@ -151,9 +151,20 @@ char **argv;
 		fprintf(stderr, srv_usage);
 		exit(1);
 	}
-	if( strcmp( argv[1], "-d" ) == 0 )  {
+	while( argv[1][0] == '-' )  {
+		if( strcmp( argv[1], "-d" ) == 0 )  {
+			debug++;
+		} else if( strcmp( argv[1], "-x" ) == 0 )  {
+			sscanf( argv[2], "%x", &rt_g.debug );
+			argc--; argv++;
+		} else if( strcmp( argv[1], "-X" ) == 0 )  {
+			sscanf( argv[2], "%x", &rdebug );
+			argc--; argv++;
+		} else {
+			fprintf(stderr, srv_usage);
+			exit(3);
+		}
 		argc--; argv++;
-		debug++;
 	}
 	if( argc != 3 && argc != 4 )  {
 		fprintf(stderr, srv_usage);
@@ -473,6 +484,8 @@ char *buf;
 	int	argc;
 	struct rt_i *rtip = ap.a_rt_i;
 
+	RT_CK_RTI(rtip);
+
 	if( debug )  fprintf(stderr, "ph_gettrees: %s\n", buf );
 
 	if( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
@@ -483,8 +496,13 @@ char *buf;
 	title_obj = rt_strdup(argv[0]);
 
 	if( rtip->needprep == 0 )  {
+		/* First clean up after the end of the previous frame */
 		if(debug)rt_log("Cleaning previous model\n");
+		view_end( &ap );
+		view_cleanup( rtip );
 		rt_clean(rtip);
+		if(rdebug&RDEBUG_RTMEM_END)
+			rt_prmem( "After rt_clean" );
 	}
 
 	/* Load the desired portion of the model */
@@ -573,6 +591,8 @@ char *buf;
 {
 	register struct rt_i *rtip = ap.a_rt_i;
 
+	RT_CK_RTI(rtip);
+
 	if( debug )  fprintf(stderr, "ph_matrix: %s\n", buf );
 
 	/* Start options in a known state */
@@ -598,6 +618,8 @@ char *buf;
 prepare()
 {
 	register struct rt_i *rtip = ap.a_rt_i;
+
+	RT_CK_RTI(rtip);
 
 	if( debug )  fprintf(stderr, "prepare()\n");
 
@@ -648,6 +670,8 @@ char *buf;
 	register struct rt_i	*rtip = ap.a_rt_i;
 	int	len;
 	struct	rt_external	ext;
+
+	RT_CK_RTI(rtip);
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
 	if( !seen_gettrees )  {
