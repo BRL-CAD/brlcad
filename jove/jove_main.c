@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  85/05/14  01:44:41  dpk
+ * Added changes to support System V (conditional on SYS5)
+ * 
  * Revision 2.1  85/01/17  23:58:24  dpk
  * 
  * 
@@ -339,24 +342,24 @@ ttsize()
 	struct winsize win;
 
 	if (ioctl (0, TIOCGWINSZ, &win) == 0) {
-		if (win.col)
-			CO = win.col;
-		if (win.row)
-			LI = win.row;
+		if (win.ws_col)
+			CO = win.ws_col;
+		if (win.ws_row)
+			LI = win.ws_row;
 	}
-#else TIOCGWINSZ
+#else
 #ifdef BTL_BLIT
 #include <sys/jioctl.h>
 	struct jwinsize jwin;
 
 	if (ioctl (0, JWINSIZE, &jwin) == 0) {
 		if (jwin.bytesx)
-			CO = win.bytesx;
+			CO = jwin.bytesx;
 		if (jwin.bytesy)
-			LI = win.bytesy;
+			LI = jwin.bytesy;
 	}
-#endif BTL_BLIT
-#endif TIOCGWINSZ
+#endif
+#endif
 }
 
 ttinit()
