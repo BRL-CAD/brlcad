@@ -95,7 +95,6 @@ int dm_pipe[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 int    update_views = 0;
 int		(*cmdline_hook)() = NULL;
-static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 jmp_buf	jmp_env;		/* For non-local gotos */
 
 int bit_bucket();
@@ -348,13 +347,6 @@ char **argv;
 
 	setview( 0.0, 0.0, 0.0 );
 
-	windowbounds[0] = XMAX;		/* XHR */
-	windowbounds[1] = XMIN;		/* XLR */
-	windowbounds[2] = YMAX;		/* YHR */
-	windowbounds[3] = YMIN;		/* YLR */
-	windowbounds[4] = 2047;		/* ZHR */
-	windowbounds[5] = -2048;	/* ZLR */
-
 	if(argc >= 2){
 	  /* Open the database, attach a display manager */
 	  /* Command line may have more than 2 args, opendb only wants 2 */
@@ -369,10 +361,6 @@ char **argv;
 		dbip->dbi_read_only = 1;
 		bu_log( "Opened in READ ONLY mode\n" );
 	}
-
-#if 0
-	dmp->dm_setWinBounds(windowbounds);
-#endif
 
 	/* --- Now safe to process commands. --- */
 	if(interactive){
@@ -1113,20 +1101,6 @@ int	non_blocking;
     
     non_blocking = 0;
 
-    /*
-     * Set up window so that drawing does not run over into the
-     * status line area, and menu area (if present).
-     */
-
-    windowbounds[1] = XMIN;		/* XLR */
-    if( illump != SOLID_NULL )
-	windowbounds[1] = MENUXLIM;
-    windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
-
-#if 0
-    dmp->dm_setWinBounds(windowbounds);	/* hack */
-#endif
-
     /*********************************
      *  Handle rate-based processing *
      *********************************/
@@ -1459,7 +1433,6 @@ refresh()
       elapsed_time = -1;		/* timer running */
 
       dmp->dm_drawBegin(dmp);	/* update displaylist prolog */
-      dmp->dm_setWinBounds(dmp, windowbounds);
 
       if(dbip != DBI_NULL){
 	/*  Draw each solid in it's proper place on the screen
