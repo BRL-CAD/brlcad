@@ -180,7 +180,7 @@ int
 rt_do_cmd( rtip, lp, tp )
 struct rt_i		*rtip;			/* FUTURE:  for globbing */
 register char		*lp;
-register struct command_tab	*tp;
+register const struct command_tab	*tp;
 {
 	register int	nwords;			/* number of words seen */
 	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
@@ -204,7 +204,3 @@ register struct command_tab	*tp;
 	bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
 	return(-1);			/* ERROR */
 }
-
-
-
-

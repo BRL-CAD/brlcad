@@ -2222,10 +2222,6 @@ BU_EXTERN(void rt_pr_partitions, (CONST struct rt_i *rtip,
 					/* Find solid by leaf name */
 BU_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
 	CONST char *name) );
-
-BU_EXTERN(char *rt_read_cmd, (FILE *fp) );	/* Read semi-colon terminated line */
-					/* do cmd from string via cmd table */
-BU_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) );
 					/* Start the timer */
 BU_EXTERN(void rt_prep_timer, (void) );
 					/* Read timer, return time + str */
@@ -2317,6 +2313,12 @@ BU_EXTERN(int rt_in_rpp, (struct xray *rp, CONST fastf_t *invdir,
 		CONST fastf_t *min, CONST fastf_t *max));
 BU_EXTERN(CONST union cutter *rt_cell_n_on_ray, (struct application *ap, int n));
 extern void rt_cut_clean(struct rt_i *rtip);
+
+/* cmd.c */
+char *rt_read_cmd( FILE *fp );	/* Read semi-colon terminated line */
+int rt_split_cmd(char **argv, int lim, char *lp);
+int rt_do_cmd(struct rt_i *rtip, char *lp, const struct command_tab *tp );  /* do cmd from string via cmd table */
+
 
 /* The database library */
 
