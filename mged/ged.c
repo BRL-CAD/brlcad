@@ -1125,8 +1125,6 @@ int	non_blocking;
       }
 
       if( rateflag_rotate )  {
-#if 1
-#if 1
 	struct bu_vls vls;
 
 	non_blocking++;
@@ -1138,22 +1136,9 @@ int	non_blocking;
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-#else
-	non_blocking++;
-	mged_do_rate_rotate();
-#endif
-#else
-	non_blocking++;
-
-	/* Compute delta x,y,z parameters */
-	usejoy( rate_rotate[X] * 6 * degtorad,
-	        rate_rotate[Y] * 6 * degtorad,
-	        rate_rotate[Z] * 6 * degtorad );
-#endif
       }
       if( rateflag_slew )  {
 #if 1
-#if 0
 	struct bu_vls vls;
 
 	non_blocking++;
@@ -1168,19 +1153,8 @@ int	non_blocking;
 	non_blocking++;
 	mged_do_rate_slew();
 #endif
-#else
-	non_blocking++;
-
-	/* slew 1/10th of the view per update */
-	knobvec[X] = -rate_slew[X] / 10;
-	knobvec[Y] = -rate_slew[Y] / 10;
-	knobvec[Z] = -rate_slew[Z] / 10;
-	slewview( knobvec );
-#endif
       }
       if( rateflag_zoom )  {
-#if 1
-#if 1
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1188,42 +1162,15 @@ int	non_blocking;
 		      1.0 / (1.0 - (rate_zoom / 10.0)));
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-#else
-	int status;
+      }
+      if ( rateflag_azimuth ) {
 	struct bu_vls vls;
-	char *av[3];
 
-	av[0] = "zoom";
-	av[2] = NULL;
-
+	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%f", 1.0 / (1.0 - (rate_zoom / 10.0)));
-	av[1] = bu_vls_addr(&vls);
-	status = f_zoom((ClientData)NULL, interp, 2, av);
+	bu_vls_printf(&vls, "knob -i -v aazim %f", rate_azimuth);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-
-	if( status == TCL_OK )
-	  non_blocking++;
-#endif
-#else
-	fastf_t	factor;
-	mat_t scale_mat;
-
-	factor = 1.0 - (rate_zoom / 10);
-	Viewscale *= factor;
-	if( Viewscale < MINVIEW )
-	    Viewscale = MINVIEW;
-	else  {
-	    non_blocking++;
-	}
-
-	/* Scaling (zooming) takes place around view center */
-	bn_mat_idn( scale_mat );
-	scale_mat[15] = 1/factor;
-
-	wrt_view( ModelDelta, scale_mat, ModelDelta );
-	new_mats();
-#endif
       }
       
       curr_dm_list = save_dm_list;
@@ -1481,35 +1428,29 @@ new_mats()
 		       &curr_dm_list->s_info->elevation,
 		       &curr_dm_list->s_info->twist,
 		       temp , temp1 , (fastf_t)0.005 );
+#if 1
+	  /* Force azimuth range to be [0,360] */
+	  if((NEAR_ZERO(curr_dm_list->s_info->elevation - 90.0,(fastf_t)0.005) ||
+	     NEAR_ZERO(curr_dm_list->s_info->elevation + 90.0,(fastf_t)0.005)) &&
+	     curr_dm_list->s_info->azimuth < 0 &&
+	     !NEAR_ZERO(curr_dm_list->s_info->azimuth,(fastf_t)0.005))
+	    curr_dm_list->s_info->azimuth += 360.0;
+	  else if(NEAR_ZERO(curr_dm_list->s_info->azimuth,(fastf_t)0.005))
+	    curr_dm_list->s_info->azimuth = 0.0;
+#else
+	  /* Force azimuth range to be [-180,180] */
+	  if(!NEAR_ZERO(curr_dm_list->s_info->elevation - 90.0,(fastf_t)0.005) &&
+	      !NEAR_ZERO(curr_dm_list->s_info->elevation + 90.0,(fastf_t)0.005))
+	    curr_dm_list->s_info->azimuth -= 180;
+#endif
 	}
 #endif
-#ifdef DO_NEW_EDIT_MATS
+
 	if( state != ST_VIEW ) {
 	  bn_mat_mul( model2objview, model2view, modelchanges );
 	  bn_mat_inv( objview2model, model2objview );
 	}
 	dmaflag = 1;
-#else
-	if( state != ST_VIEW ) {
-	    register struct dm_list *p;
-	    struct dm_list *save_dm_list;
-
-	    save_dm_list = curr_dm_list;
-	    for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-	      if(!p->_owner)
-		continue;
-
-	      curr_dm_list = p;
-
-	      bn_mat_mul( model2objview, model2view, modelchanges );
-	      bn_mat_inv( objview2model, model2objview );
-	    }
-
-	    curr_dm_list = save_dm_list;
-	    update_views = 1;
-	}else
-	  dmaflag = 1;
-#endif
 }
 
 #ifdef DO_NEW_EDIT_MATS
