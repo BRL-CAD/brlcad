@@ -25,16 +25,30 @@
 
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <math.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
+#include "bn.h"
 #include "anim.h"
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
 #endif
+
+int		get_args();
+extern int	anim_steer_mat();
+extern void	anim_quat2mat();
+extern void	anim_v_unpermute();
+extern void	anim_mat_print();
 
 extern int bu_optind;
 extern char *bu_optarg;
@@ -48,6 +62,7 @@ vect_t centroid, rcentroid, front;
 mat_t m_axes, m_rev_axes; /* rotational analogue of centroid */
 char mat_cmd[10];   /* default is lmul */
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -155,7 +170,7 @@ char **argv;
 		}
 		frame++;
 	}
-
+	return( 0 );
 }
 
 #define OPT_STR	"a:b:c:d:f:m:pqrstv:"

@@ -30,6 +30,8 @@
  */
 
 #include "conf.h"
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -55,6 +57,13 @@
 #define DTOR    M_PI/180.0
 #define RTOD    180.0/M_PI
 
+int		parse_args();
+extern void	anim_y_p_r2mat();
+extern void	anim_tran();
+extern void	anim_v_unpermute();
+extern void	anim_dirn2mat();
+extern void	anim_v_permute();
+
 extern int optind;
 extern char *optarg;
 
@@ -62,6 +71,7 @@ int upright;
 int input_mode, output_mode, length, input_units, output_units;
 int input_perm, output_perm, input_inv, output_inv;
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -178,6 +188,7 @@ char **argv;
 		}
 
 	}
+	return( 0 );
 }
 
 int parse_args(argc,argv)
@@ -201,7 +212,7 @@ char **argv;
 
 	if (argc > 2) { /*read output mode */
 		cp = argv[2];
-		while (c=*cp++) {
+		while ( (c=*cp++) ) {
 			switch (c) {
 			case 'q':
 				output_mode = QUAT;
@@ -238,7 +249,7 @@ char **argv;
 	}
 	if (argc > 1) { /*read input mode */
 		cp = argv[1];
-		while (c=*cp++) {
+		while ( (c=*cp++) ) {
 			switch (c) {
 			case 'q':
 				input_mode = QUAT;
