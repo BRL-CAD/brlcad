@@ -1,6 +1,6 @@
 /*
- *	@(#) cgarbs.c			retrieved: 8/13/86 at 08:00:14,
- *	@(#) version 2.2		last edit: 1/31/85 at 14:59:52., G S Moss.
+ *	@(#) cgarbs.c			retrieved: 8/13/86 at 08:00:24,
+ *	@(#) version 2.3		last edit: 3/18/85 at 14:25:24., G S Moss.
  *
  *	Written by Keith Applin.
  */
@@ -351,7 +351,7 @@ float *x,*y;
 {
 	register int i;
 	for( i = 0; i < 3; i++ ) {
-		if( fabs( *x++ - *y++ ) > .0001 )
+		if( fabs( *x++ - *y++ ) > CONV_EPSILON )
 			return( 0 );   /* Different */
 	}
 	return( 1 );  /* Same */
