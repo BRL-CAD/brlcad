@@ -479,7 +479,7 @@ char	**argv;
 
 #ifdef DO_SINGLE_DISPLAY_LIST
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables.mv_dlist){
 	    save_dmlp = curr_dm_list;
 	    curr_dm_list = dmlp;
 	    createDList(&HeadSolid);
