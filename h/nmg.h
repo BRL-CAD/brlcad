@@ -81,6 +81,7 @@
 #define DEBUG_RT_SEGS	0x00400000	/* 027 nmg_rt_segs: */
 #define DEBUG_RT_ISECT	0x00800000	/* 028 nmg_rt_isect: */
 #define DEBUG_TRI	0x01000000	/* 029 nmg_tri */
+#define DEBUG_PT_FU	0x02000000	/* 029 nmg_pt_fu */
 #define NMG_DEBUG_FORMAT \
 "\020\031TRIANG\030RT_ISECT\
 \027RT_SEGS\026FCUT\025VU_SORT\024CUTLOOP\023CMFACE\022FINDEU\021RT_ISECT\020TBL_INS\
@@ -741,6 +742,7 @@ struct fu_pt_info {
 	int		allhits;	/* find first/all touches. */
 	fastf_t		dist_in_plane;	/* dist in plane (elem -> plane_pt) */
 	long		*closest;	/* ptr to elem w/ min(dist_in_plane)*/
+	point_t		pca;
 	int		PCA_loc;	/* is PCA at an edge-span,
 					 *  edge-vertex, or vertex?
 					 */
