@@ -1105,8 +1105,13 @@ struct command_tab {
 struct rt_functab {
 	char	*ft_name;
 	int	ft_use_rpp;
+#if defined(__STDC__) && defined(RECORD_DEFINED)
 	int	(*ft_prep) RT_ARGS((struct soltab *stp, union record *rec,
 			struct rt_i *rtip));
+#else
+	int	(*ft_prep) RT_ARGS((struct soltab *stp, void *rec,
+			struct rt_i *rtip));
+#endif
 	int 	(*ft_shot) RT_ARGS((struct soltab *stp, struct xray *rp,
 			struct application *ap, struct seg *seghead));
 	void	(*ft_print) RT_ARGS((struct soltab *stp));
@@ -1118,15 +1123,29 @@ struct rt_functab {
 			struct soltab *stp));
 	int	(*ft_classify)();
 	void	(*ft_free) RT_ARGS((struct soltab *stp));
+#if defined(__STDC__) && defined(RECORD_DEFINED)
 	int	(*ft_plot) RT_ARGS((union record *rp, mat_t mat,
 			struct vlhead *vhead, struct directory *dp,
 			double abs_tol, double rel_tol, double norm_tol));
+#else
+	int	(*ft_plot) RT_ARGS((void *rp, mat_t mat,
+			struct vlhead *vhead, struct directory *dp,
+			double abs_tol, double rel_tol, double norm_tol));
+#endif
 	void	(*ft_vshot) RT_ARGS((struct soltab *stp[], struct xray *rp[],
 			struct seg segp[], int n, struct resource *resp));
+#if defined(__STDC__) && defined(RECORD_DEFINED) && \
+    defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
 	int	(*ft_tessellate) RT_ARGS((struct nmgregion **r,
 			struct model *m, union record *rp,
 			mat_t mat, struct directory *dp,
 			double abs_tol, double rel_tol, double norm_tol));
+#else
+	int	(*ft_tessellate) RT_ARGS((void **r,
+			void *m, void *rp,
+			mat_t mat, struct directory *dp,
+			double abs_tol, double rel_tol, double norm_tol));
+#endif
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
@@ -1304,6 +1323,12 @@ RT_EXTERN(struct db_i *db_create, ( char *name ) );
 					/* close a model database */
 RT_EXTERN(void db_close, ( struct db_i *dbip ) );
 /* db_io.c */
+/* It is normal to test for __STDC__ when using *_DEFINED tests but in
+ * in this case "union record" is used for db_getmrec's return type.  This
+ * requires that the "union_record *db_getmrec" be used whenever 
+ * RECORD_DEFINED is defined.
+ */
+#if defined(RECORD_DEFINED)
 					/* malloc & read records */
 RT_EXTERN(union record *db_getmrec, ( struct db_i *, struct directory *dp ) );
 					/* get several records from db */
@@ -1312,6 +1337,16 @@ RT_EXTERN(int db_get, (struct db_i *, struct directory *dp, union record *where,
 					/* put several records into db */
 RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, union record *where,
 	int offset, int len ) );
+#else /* RECORD_DEFINED */
+					/* malloc & read records */
+RT_EXTERN(void *db_getmrec, ( struct db_i *, struct directory *dp ) );
+					/* get several records from db */
+RT_EXTERN(int db_get, (struct db_i *, struct directory *dp, void *where,
+	int offset, int len ) );
+					/* put several records into db */
+RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, void *where,
+	int offset, int len ) );
+#endif /* RECORD_DEFINED */
 /* db_scan.c */
 					/* read db (to build directory) */
 RT_EXTERN(int db_scan, ( struct db_i *, int (*handler)(), int do_old_matter ) );
