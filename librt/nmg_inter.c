@@ -186,9 +186,9 @@ struct faceuse *fu;
 	}
 
 	/*
-	 * First check the topology.  If the topology says that either
+	 * First check the topology.  If the topology says that starting
 	 * vertex of this edgeuse is on the other face, enter the
-	 * vertexuses in the list and return.
+	 * two vertexuses of it in the list and return.
 	 */
 	if (vu_other=vertex_on_face(v1, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
@@ -197,32 +197,18 @@ struct faceuse *fu;
 			p2 = v1mate->vg_p->coord;
 			rt_log("Edgeuse %g, %g, %g -> %g, %g, %g\n",
 				V3ARGS(p1), V3ARGS(p2) );
-			rt_log("\tvertex topologically on intersection plane\n");
+			rt_log("\tvertex topologically on isect plane.\n\tAdding vu1=x%x (v=x%x), vu_other=x%x (v=x%x)\n",
+				eu->vu_p, eu->vu_p->v_p,
+				vu_other, vu_other->v_p);
 		}
 
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		return;
 	}
-	if (vu_other=vertex_on_face(v1mate, fu)) {
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			register pointp_t	p1, p2;
-			p1 = v1->vg_p->coord;
-			p2 = v1mate->vg_p->coord;
-			rt_log("Edgeuse %g, %g, %g -> %g, %g, %g\n",
-				V3ARGS(p1), V3ARGS(p2) );
-			rt_log("\tMATE vertex topologically on intersection plane. skipping edgeuse\n");
-		}
-#if 0
-		/* For some reason, this currently causes trouble */
-		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->eumate_p->vu_p->l.magic);
-		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
-#endif
-		return;
-	}
 
 	/*
-	 *  Neither vertex lies on the face according to topology.
+	 *  Starting vertex does not lie on the face according to topology.
 	 *  Form a ray that starts at one vertex of the edgeuse
 	 *  and points to the other vertex.
 	 */
@@ -276,22 +262,34 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("Testing %g, %g, %g -> %g, %g, %g\n",
-			V3ARGS(v1->vg_p->coord), V3ARGS(v1mate->vg_p->coord) );
+		rt_log("Testing (%g, %g, %g) -> (%g, %g, %g) dir=(%g, %g, %g)\n",
+			V3ARGS(start_pt),
+			V3ARGS(v1mate->vg_p->coord),
+			V3ARGS(edge_vect) );
 	}
 
 	status = rt_isect_ray_plane(&dist, start_pt, edge_vect, fu->f_p->fg_p->N);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		if (status >= 0)
-			rt_log("\tStatus of rt_isect_ray_plane: %d dist: %g\n",
+			rt_log("\tHit. Status of rt_isect_ray_plane: %d dist: %g\n",
 				status, dist);
 		else
-			rt_log("\tBoring status of rt_isect_ray_plane: %d dist: %g\n",
+			rt_log("\tMiss. Boring status of rt_isect_ray_plane: %d dist: %g\n",
 				status, dist);
 	}
-	if (status < 0)
-		return;		/* No geometric intersection */
+	if (status < 0)  {
+		/*  Ray does not strike plane.
+		 *  See if start point lies on plane.
+		 */
+		dist = VDOT( start_pt, fu->f_p->fg_p->N ) - fu->f_p->fg_p->N[3];
+		if( !NEAR_ZERO( dist, bs->tol.dist ) )
+			return;		/* No geometric intersection */
+		/* Start point lies on plane of other face */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("\tStart point lies on plane of other face\n");
+		dist = VSUBDOT( v1->vg_p->coord, start_pt, edge_vect ) / edge_len;
+	}
 
 	/* The ray defined by the edgeuse intersects the plane 
 	 * of the other face.  Check to see if the distance to
@@ -538,8 +536,10 @@ struct faceuse *fu;
 	struct edgeuse	*eu;
 	long		magic1;
 
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("isect_loop_face(, lu=x%x, fu=x%x)\n", lu, fu);
+		HPRINT("  fg N", fu->f_p->fg_p->N);
+	}
 
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_FACEUSE(fu);
@@ -715,6 +715,11 @@ CONST struct rt_tol	*tol;
 		/* internal error */
 		rt_log("ERROR nmg_isect_2faces() unable to find plane intersection\n");
 		return;
+	}
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		VPRINT("isect ray bs.pt ", bs.pt);
+		VPRINT("isect ray bs.dir", bs.dir);
 	}
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
