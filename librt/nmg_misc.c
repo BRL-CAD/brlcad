@@ -1168,8 +1168,7 @@ struct vertexuse *vu;
 			return ((struct faceuse *)NULL);
 			break;
 		}
-		rt_log(stderr,
-			"Error at %s %d:\nInvalid loopuse parent magic 0x%x\n",
+		rt_log("Error at %s %d:\nInvalid loopuse parent magic 0x%x\n",
 			__FILE__, __LINE__, *vu->up.lu_p->up.magic_p);
 		abort();
 		break;
@@ -1198,7 +1197,7 @@ struct edgeuse *eu;
 
 	if (*eu->up.magic_p == NMG_LOOP_MAGIC &&
 		*eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC)
-			return *eu->up.lu_p->up.fu_p;
+			return eu->up.lu_p->up.fu_p;
 
 	return (struct faceuse *)NULL;			
 }
