@@ -1731,7 +1731,7 @@ mged_apply_local $id "rset cs mode 0"
 rset cs mode 1
 
 if { $join_c } {
-    jcs $id
+    collaborate join $id
 }
 
 trace variable mged_display($mged_gui($id,active_dm),fps) w "ia_changestate $id"
@@ -1809,7 +1809,7 @@ proc gui_destroy args {
     set mged_players [lreplace $mged_players $i $i]
 
     if { [lsearch -exact $mged_collaborators $id] != -1 } {
-	qcs $id
+	collaborate quit $id
     }
 
     set mged_gui($id,multi_view) 0
@@ -1983,68 +1983,6 @@ proc destroy_edit_info { id } {
     regexp "\[-+\]\[0-9\]+\[-+\]\[0-9\]+" [wm geometry .sei$id] match
     set mged_gui($id,edit_info_pos) $match
     destroy .sei$id
-}
-
-# Join Mged Collaborative Session
-proc jcs { id } {
-    global mged_gui
-    global mged_collaborators
-    global mged_players
-
-    if { [lsearch -exact $mged_players $id] == -1 } {
-	return "jcs: $id is not listed as an mged_player"
-    }
-
-    if { [lsearch -exact $mged_collaborators $id] != -1 } {
-	return "jcs: $id is already in the collaborative session"
-    }
-
-    if [winfo exists $mged_gui($id,active_dm)] {
-	set nw $mged_gui($id,top).ur
-    } else {
-	return "jcs: unrecognized pathname - $mged_gui($id,active_dm)"
-    }
-
-    if [llength $mged_collaborators] {
-	set cid [lindex $mged_collaborators 0]
-	if [winfo exists $mged_gui($cid,top).ur] {
-	    set ow $mged_gui($cid,top).ur
-	} else {
-	    return "jcs: me thinks the session is corrupted"
-	}
-
-	catch { share view $ow $nw }
-	reconfig_gui_default $id
-    }
-
-    lappend mged_collaborators $id
-}
-
-# Quit Mged Collaborative Session
-proc qcs { id } {
-    global mged_collaborators
-    global mged_gui
-
-    set i [lsearch -exact $mged_collaborators $id]
-    if { $i == -1 } {
-	return "qcs: bad id - $id"
-    }
-
-    if [winfo exists $mged_gui($id,active_dm)] {
-	set w $mged_gui($id,active_dm)
-    } else {
-	return "qcs: unrecognized pathname - $mged_gui($id,active_dm)"
-    }
-
-    catch {share -u view $w}
-    set mged_collaborators [lreplace $mged_collaborators $i $i]
-}
-
-# Print Collaborative Session participants
-proc pcs {} {
-    global mged_collaborators
-
-    return $mged_collaborators
 }
 
 # Print Mged Players
