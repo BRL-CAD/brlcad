@@ -509,7 +509,7 @@ struct partition {
 	struct region	*pt_regionp;		/* ptr to containing region */
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
-	struct bu_ptbl	pt_solids_hit;		/* all segs in this partition */
+	struct bu_ptbl	pt_seglist;		/* all segs in this partition */
 };
 #define PT_NULL		((struct partition *)0)
 #define PT_MAGIC	0x87687681
@@ -522,14 +522,14 @@ struct partition {
 
 /* Macros for copying only the essential "middle" part of a partition struct */
 #define RT_PT_MIDDLE_START	pt_inseg		/* 1st elem to copy */
-#define RT_PT_MIDDLE_END	pt_solids_hit.l.magic	/* copy up to this elem (non-inclusive) */
+#define RT_PT_MIDDLE_END	pt_seglist.l.magic	/* copy up to this elem (non-inclusive) */
 #define RT_PT_MIDDLE_LEN(p) \
 	(((char *)&(p)->RT_PT_MIDDLE_END) - ((char *)&(p)->RT_PT_MIDDLE_START))
 
 #define RT_DUP_PT(ip,new,old,res)	{ \
 	GET_PT(ip,new,res); \
 	bcopy((char *)(&(old)->RT_PT_MIDDLE_START), (char *)(&(new)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old) ); \
-	bu_ptbl_cat( &(new)->pt_solids_hit, &(old)->pt_solids_hit );  }
+	bu_ptbl_cat( &(new)->pt_seglist, &(old)->pt_seglist );  }
 
 /* Clear out the pointers, empty the hit list */
 #define GET_PT_INIT(ip,p,res)	{\
@@ -539,11 +539,11 @@ struct partition {
 #define GET_PT(ip,p,res)   { \
 	if( BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
 		BU_LIST_DEQUEUE((struct bu_list *)(p)); \
-		bu_ptbl_reset( &(p)->pt_solids_hit ); \
+		bu_ptbl_reset( &(p)->pt_seglist ); \
 	} else { \
 		(p) = (struct partition *)bu_malloc(sizeof(struct partition), "struct partition"); \
 		(p)->pt_magic = PT_MAGIC; \
-		bu_ptbl_init( &(p)->pt_solids_hit, 42, "pt_solids_hit ptbl" ); \
+		bu_ptbl_init( &(p)->pt_seglist, 42, "pt_seglist ptbl" ); \
 		(res)->re_partlen++; \
 	} \
 	res->re_partget++; }

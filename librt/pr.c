@@ -133,7 +133,7 @@ CONST struct rt_i		*rtip;
 register CONST struct partition *pp;
 {
 	register CONST struct soltab	*stp;
-	register struct soltab		**spp;
+	register struct seg		**segpp;
 
 	RT_CHECK_RTI(rtip);
 	RT_CHECK_PT(pp);
@@ -164,8 +164,8 @@ register CONST struct partition *pp;
 	rt_pr_hit_vls( v, " Out", pp->pt_outhit );
 	bu_log_indent_vls( v );
 	bu_vls_strcat( v, "  Solids: " );
-	for( BU_PTBL_FOR( spp, (struct soltab **), &pp->pt_solids_hit ) )  {
-		stp = *spp;
+	for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
+		stp = (*segpp)->seg_stp;
 		RT_CK_SOLTAB(stp);
 		bu_vls_strcat( v, stp->st_dp->d_namep );
 		bu_vls_strcat( v, ", " );
@@ -543,10 +543,17 @@ int			lvl;		/* Recursion level */
 	case OP_SOLID:
 		switch( pr_name )  {
 		case 0:
-			if( bu_ptbl_locate( &partp->pt_solids_hit, (long *)(tp->tr_a.tu_stp) ) ==  -1 )
+			{
+				register struct soltab *seek_stp = tp->tr_a.tu_stp;
+				register struct seg **segpp;
+				for( BU_PTBL_FOR( segpp, (struct seg **), &partp->pt_seglist ) )  {
+					if( (*segpp)->seg_stp == seek_stp )  {
+						bu_log("1");
+						goto out;
+					}
+				}
 				bu_log("0");
-			else
-				bu_log("1");
+			}
 			break;
 		case 1:
 			bu_log("%s", tp->tr_a.tu_stp->st_dp->d_namep );
@@ -597,6 +604,7 @@ int			lvl;		/* Recursion level */
 		break;
 	}
 
+out:
 	if( lvl == 0 )  bu_log("\n");
 }
 

@@ -583,7 +583,7 @@ struct resource	*resp;
 		while( BU_LIST_WHILE( pp, partition, &resp->re_parthead ) )  {
 			RT_CK_PT(pp);
 			BU_LIST_DEQUEUE( (struct bu_list *)pp );
-			bu_ptbl_free( &pp->pt_solids_hit );
+			bu_ptbl_free( &pp->pt_seglist );
 			bu_free( (genptr_t)pp, "struct partition" );
 		}
 	}

@@ -534,7 +534,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		RT_CK_SOLTAB(seg_p->seg_stp);
 
 		/* check to see if the seg/solid is in this partition */
-		if( bu_ptbl_locate( &pp->pt_solids_hit, (long *)seg_p->seg_stp ) != -1 )  {
+		if( bu_ptbl_locate( &pp->pt_seglist, (long *)seg_p ) != -1 )  {
 
 			/* XXX You might use a bu_ptbl list of the solid pointers... */
 			/* check to see if the solid is from this region */

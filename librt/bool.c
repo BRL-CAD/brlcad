@@ -90,7 +90,7 @@ struct application	*ap;
 	/* See if this segment ends before start of first partition */
 	if( segp->seg_out.hit_dist < PartHdp->pt_forw->pt_inhit->hit_dist )  {
 		GET_PT_INIT( rtip, pp, res );
-		bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
+		bu_ptbl_ins_unique( &pp->pt_seglist, (long *)segp );
 		pp->pt_inseg = segp;
 		pp->pt_inhit = &segp->seg_in;
 		pp->pt_outseg = segp;
@@ -129,7 +129,7 @@ struct application	*ap;
 		    	struct partition	*npp;
 			if(rt_g.debug&DEBUG_PARTITION) bu_log("0-len segment after existing partition, but before next partition.\n");
 			GET_PT_INIT( rtip, npp, res );
-			bu_ptbl_ins_unique( &npp->pt_solids_hit, (long *)segp->seg_stp );
+			bu_ptbl_ins_unique( &npp->pt_seglist, (long *)segp );
 			npp->pt_inseg = segp;
 			npp->pt_inhit = &segp->seg_in;
 			npp->pt_outseg = segp;
@@ -260,7 +260,7 @@ struct application	*ap;
 		if( PartHdp->pt_forw == PartHdp )  {
 			/* No partitions yet, simple! */
 			GET_PT_INIT( rtip, pp, res );
-			bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
+			bu_ptbl_ins_unique( &pp->pt_seglist, (long *)segp );
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
 			pp->pt_outseg = segp;
@@ -281,7 +281,7 @@ struct application	*ap;
 						bu_log("Insert nobool seg before next pt\n");
 					}
 					GET_PT_INIT( rtip, newpp, res );
-					bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
+					bu_ptbl_ins_unique( &newpp->pt_seglist, (long *)segp );
 					newpp->pt_inseg = segp;
 					newpp->pt_inhit = &segp->seg_in;
 					newpp->pt_outseg = segp;
@@ -294,7 +294,7 @@ struct application	*ap;
 				bu_log("Append nobool seg at end of list\n");
 			}
 			GET_PT_INIT( rtip, newpp, res );
-			bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
+			bu_ptbl_ins_unique( &newpp->pt_seglist, (long *)segp );
 			newpp->pt_inseg = segp;
 			newpp->pt_inhit = &segp->seg_in;
 			newpp->pt_outseg = segp;
@@ -321,7 +321,7 @@ struct application	*ap;
 					PartHdp->pt_back->pt_outhit->hit_dist);
 			}
 			GET_PT_INIT( rtip, pp, res );
-			bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
+			bu_ptbl_ins_unique( &pp->pt_seglist, (long *)segp );
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
 			pp->pt_outseg = segp;
@@ -381,7 +381,7 @@ struct application	*ap;
 				 *
 				 *  Segment starts after partition starts,
 				 *  but before the end of the partition.
-				 *  Note:  pt_solids_hit will be updated in equal_start.
+				 *  Note:  pt_seglist will be updated in equal_start.
 				 *	PPPPPPPPPPPP
 				 *	     SSSS...
 				 *	newpp|pp
@@ -441,7 +441,7 @@ equal_start:
 					 *	SSSSSSSS
 					 *	pp  |  newpp
 					 */
-					bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
+					bu_ptbl_ins_unique( &pp->pt_seglist, (long *)segp );
 					lasthit = pp->pt_outhit;
 					lastseg = pp->pt_outseg;
 					lastflip = 1;
@@ -456,7 +456,7 @@ equal_start:
 					 *	PPPP
 					 *	SSSS
 					 */
-					bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
+					bu_ptbl_ins_unique( &pp->pt_seglist, (long *)segp );
 					if(rt_g.debug&DEBUG_PARTITION) bu_log("same start&end\n");
 					goto done_weave;
 				} else {
@@ -471,7 +471,7 @@ equal_start:
 					 */
 					RT_DUP_PT( rtip, newpp, pp, res );
 					/* new partition contains segment */
-					bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
+					bu_ptbl_ins_unique( &newpp->pt_seglist, (long *)segp );
 					newpp->pt_outseg = segp;
 					newpp->pt_outhit = &segp->seg_out;
 					newpp->pt_outflip = 0;
@@ -494,7 +494,7 @@ equal_start:
 				 *	newpp|pp
 				 */
 				GET_PT_INIT( rtip, newpp, res );
-				bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
+				bu_ptbl_ins_unique( &newpp->pt_seglist, (long *)segp );
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
 				newpp->pt_inflip = lastflip;
@@ -567,7 +567,7 @@ equal_start:
 		 */
 		if(rt_g.debug&DEBUG_PARTITION) bu_log("seg extends beyond partition end\n");
 		GET_PT_INIT( rtip, newpp, res );
-		bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
+		bu_ptbl_ins_unique( &newpp->pt_seglist, (long *)segp );
 		newpp->pt_inseg = lastseg;
 		newpp->pt_inhit = lasthit;
 		newpp->pt_inflip = lastflip;
@@ -684,6 +684,7 @@ OVERLAP4: depth %.5fmm at (%g,%g,%g) x%d y%d lvl%d\n",
 		pp->pt_outseg->seg_stp->st_name,
 		depth, pt[X], pt[Y], pt[Z],
 		ap->a_x, ap->a_y, ap->a_level );
+rt_pr_partitions( ap->a_rt_i, pheadp, "Entire partition containing overlap");
 
 	/*
 	 *  Apply heuristics as to which region should claim partition.
@@ -1062,14 +1063,14 @@ CONST struct bu_bitv	*solidbits;
 		bu_ptbl_reset(regiontable);
 
 		/*
-		 *  For each solid that lies in this partition,
+		 *  For each segment's solid that lies in this partition,
 		 *  add the list of regions that refer to that solid
 		 *  into the "regiontable" array.
 		 */
 		{
-			struct soltab **spp;
-			for( BU_PTBL_FOR(spp, (struct soltab **), &pp->pt_solids_hit) )  {
-				struct soltab	*stp = *spp;
+			struct seg **segpp;
+			for( BU_PTBL_FOR(segpp, (struct seg **), &pp->pt_seglist) )  {
+				struct soltab	*stp = (*segpp)->seg_stp;
 				RT_CK_SOLTAB(stp);
 				bu_ptbl_cat_uniq( regiontable, &stp->st_regions );
 			}
@@ -1225,10 +1226,8 @@ CONST struct bu_bitv	*solidbits;
 				/* Don't lose the fact that the two solids
 				 * of this partition contributed.
 				 */
-				bu_ptbl_ins_unique( &lastpp->pt_solids_hit,
-					(long *)newpp->pt_inseg->seg_stp );
-				bu_ptbl_ins_unique( &lastpp->pt_solids_hit,
-					(long *)newpp->pt_outseg->seg_stp );
+				bu_ptbl_ins_unique( &lastpp->pt_seglist, (long *)newpp->pt_inseg );
+				bu_ptbl_ins_unique( &lastpp->pt_seglist, (long *)newpp->pt_outseg );
 
 				FREE_PT( newpp, ap->a_resource );
 				newpp = lastpp;
@@ -1324,10 +1323,17 @@ stack:
 		ret = 0;
 		goto pop;
 	case OP_SOLID:
-		if( bu_ptbl_locate( &partp->pt_solids_hit, (long *)treep->tr_a.tu_stp ) == -1 )
+		{
+			register struct soltab *seek_stp = treep->tr_a.tu_stp;
+			register struct seg **segpp;
+			for( BU_PTBL_FOR( segpp, (struct seg **), &partp->pt_seglist ) )  {
+				if( (*segpp)->seg_stp == seek_stp )  {
+					ret = 1;
+					goto pop;
+				}
+			}
 			ret = 0;
-		else
-			ret = 1;
+		}
 		goto pop;
 	case OP_UNION:
 	case OP_INTERSECT:
