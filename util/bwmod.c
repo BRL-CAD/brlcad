@@ -40,7 +40,7 @@ char	*file_name;
 FILE	*infp;
 
 char usage[] = "\
-Usage: bwmod {-a add -s sub -m mult -d div -A(abs) -e exp} [file.bw]\n";
+Usage: bwmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.bw]\n";
 
 #define	ADD	1
 #define MULT	2
@@ -61,7 +61,7 @@ register char **argv;
 	register int c;
 	double	d;
 
-	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			op[ numop ] = ADD;
@@ -91,6 +91,15 @@ register char **argv;
 		case 'e':
 			op[ numop ] = POW;
 			val[ numop++ ] = atof(optarg);
+			break;
+		case 'r':
+			op[ numop ] = POW;
+			d = atof(optarg);
+			if( d == 0.0 ) {
+				fprintf( stderr, "bwmod: zero root!\n" );
+				exit( 2 );
+			}
+			val[ numop++ ] = 1.0 / d;
 			break;
 
 		default:		/* '?' */
