@@ -36,6 +36,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
+#if RT_MULTISPECTRAL
+# include "tabdata.h"
+#endif
 #include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 #include "../rt/light.h"
@@ -45,6 +48,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 /* from view.c */
 extern double AmbientIntensity;
+
+#if RT_MULTISPECTRAL
+extern CONST struct rt_table	*spectrum;	/* from rttherm/viewtherm.c */
+#endif
 
 /* Local information */
 struct phong_specific {
@@ -317,14 +324,21 @@ struct shadework	*swp;
 char	*dp;
 {
 	register struct light_specific *lp;
-	register fastf_t *intensity, *to_light;
+#if !RT_MULTISPECTRAL
+	register fastf_t *intensity;
+#endif
+	register fastf_t *to_light;
 	register int	i;
 	register fastf_t cosine;
 	register fastf_t refl;
 	vect_t	work;
 	vect_t	reflected;
+#if RT_MULTISPECTRAL
+	struct rt_tabdata	*ms_matcolor = RT_TABDATA_NULL;
+#else
 	vect_t	cprod;			/* color product */
 	point_t	matcolor;		/* Material color */
+#endif
 	struct phong_specific *ps =
 		(struct phong_specific *)dp;
 
@@ -346,7 +360,11 @@ char	*dp;
 		return(1);	/* done */
 	}
 
+#if RT_MULTISPECTRAL
+	ms_matcolor = rt_tabdata_dup( swp->msw_color );
+#else
 	VMOVE( matcolor, swp->sw_color );
+#endif
 
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if( (cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
@@ -356,9 +374,17 @@ char	*dp;
 			cosine = 1;
 		}
 		cosine *= AmbientIntensity;
+#if RT_MULTISPECTRAL
+		rt_tabdata_scale( swp->msw_color, ms_matcolor, cosine );
+#else
 		VSCALE( swp->sw_color, matcolor, cosine );
+#endif
 	} else {
+#if RT_MULTISPECTRAL
+		rt_tabdata_constval( swp->msw_color, 0.0 );
+#else
 		VSETALL( swp->sw_color, 0 );
+#endif
 	}
 
 	/* With the advent of procedural shaders, the caller can no longer
@@ -375,7 +401,9 @@ char	*dp;
 			continue;
 	
 		/* Light is not shadowed -- add this contribution */
+#if !RT_MULTISPECTRAL
 		intensity = swp->sw_intensity+3*i;
+#endif
 		to_light = swp->sw_tolight+3*i;
 
 		/* Diffuse reflectance from this light source. */
@@ -385,12 +413,18 @@ char	*dp;
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
+#if RT_MULTISPECTRAL
+			rt_tabdata_incr_mul3_scale( swp->msw_color,
+				lp->lt_spectrum,
+				swp->msw_intensity[i],
+				ms_matcolor,
+				cosine * ps->wgt_diffuse );
+#else
 			refl = cosine * lp->lt_fraction * ps->wgt_diffuse;
-			VELMUL( work, lp->lt_color,
-				intensity );
-			VELMUL( cprod, matcolor, work );
+			VELMUL3( work, matcolor, lp->lt_color, intensity );
 			VJOIN1( swp->sw_color, swp->sw_color,
-				refl, cprod );
+				refl, work );
+#endif
 		}
 
 		/* Calculate specular reflectance.
@@ -406,6 +440,13 @@ char	*dp;
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
+#if RT_MULTISPECTRAL
+			rt_tabdata_incr_mul2_scale( swp->msw_color,
+				lp->lt_spectrum,
+				swp->msw_intensity[i],
+				ps->wgt_specular * cosine /
+				(ps->shine - ps->shine*cosine + cosine) );
+#else
 			refl = ps->wgt_specular * lp->lt_fraction *
 #ifdef PHAST_PHONG
 				/* It is unnecessary to compute the actual
@@ -418,15 +459,20 @@ char	*dp;
 				(ps->shine - ps->shine*cosine + cosine);
 #else
 				phg_ipow(cosine, ps->shine);
-#endif
+#endif /* PHAST_PHONG */
 			VELMUL( work, lp->lt_color,
 				intensity );
 			VJOIN1( swp->sw_color, swp->sw_color,
 				refl, work );
+#endif
 		}
 	}
 	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
+
+#if RT_MULTISPECTRAL
+	rt_tabdata_free(ms_matcolor);
+#endif
 	return(1);
 }
 
