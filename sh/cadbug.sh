@@ -36,7 +36,7 @@ ACTION=E
 while [ 1 ] ; do
 	case $ACTION in
 		S*|s*)	break ;;
-		F*|f*)	exit ;;
+		F*|f*)	rm -f $BUG_REPORT ; exit ;;
 		E*|e*)	$REPT_EDITOR $BUG_REPORT ;;
 	esac
 	
