@@ -444,6 +444,8 @@ struct _mged_variables {
 	int     m_axes;  /* model axes */
 	int     v_axes;  /* view axes */
 	int     e_axes;  /* edit axes */
+        int     linewidth;
+        int     linestyle;
         int     send_key;
         int     hot_key;
         int     context;

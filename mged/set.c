@@ -45,6 +45,8 @@ struct _mged_variables default_mged_variables = {
 /* m_axes */    	        0,
 /* v_axes */    	        0,
 /* e_axes */            	0,
+/* linewidth */                 1,
+/* linestyle */                 0,
 /* send_key */                  0,
 /* hot_key */                   0,
 /* context */                   1,
@@ -108,6 +110,8 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "m_axes",            MV_O(m_axes),           dirty_hook },
 	{"%d",  1, "v_axes",            MV_O(v_axes),           set_v_axes },
 	{"%d",  1, "e_axes",            MV_O(e_axes),           dirty_hook },
+	{"%d",	1, "linewidth",		MV_O(linewidth),	dirty_hook },
+	{"%d",	1, "linestyle",		MV_O(linestyle),	dirty_hook },
 	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "context",           MV_O(context),          dirty_hook },
@@ -324,6 +328,9 @@ set_absolute_tran()
 
   /* calculate absolute_tran */
   MAT4X3PNT(absolute_tran, model2view, orig_pos);
+
+  if(mged_variables.faceplate && mged_variables.orig_gui)
+    dirty = 1;
 }
 
 static void
