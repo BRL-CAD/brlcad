@@ -41,7 +41,7 @@ char *str;
 	rt_log( "%s (librt.a) : Fatal error, aborting!\n", str );
 	(void) fflush( stdout );
 	(void) abort();			  /* Should dump.		*/
-	exit(12);
+	/* exit(12); XXX - this shouldn't be needed */
 	}
 
 /*
