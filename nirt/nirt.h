@@ -53,8 +53,11 @@
 #define	made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
 /*	MACROS WITH ARGUMENTS	*/
+#ifndef WIN32
+/* already defined */
 #define	max(a,b)	(((a)>(b))?(a):(b))
 #define	min(a,b)	(((a)<(b))?(a):(b))
+#endif
 #if !defined(abs)
 # define	abs(a)	((a)>=0 ? (a):(-a))
 #endif
