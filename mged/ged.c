@@ -4,7 +4,7 @@
  * Mainline portion of the graphics editor
  *
  *  Functions -
- *	prprompt	print prompt
+ *	pr_prompt	print prompt
  *	main		Mainline portion of the graphics editor
  *	refresh		Internal routine to perform displaylist output writing
  *	usejoy		Apply joystick to viewing perspective
@@ -222,7 +222,9 @@ char **argv;
 
 	/* Identify ourselves if interactive */
 	if( argc == 2 )  {
-		interactive = 1;
+		if( isatty(fileno(stdin)) )
+			interactive = 1;
+
 		fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
 		fflush(stdout);
 		
@@ -409,7 +411,8 @@ char **argv;
 void
 pr_prompt()
 {
-    rt_log("\r%S", &mged_prompt);
+	if( interactive )
+		rt_log("\r%S", &mged_prompt);
 }
 
 void
@@ -457,7 +460,10 @@ int mask;
 
     if (!cbreak_mode) {
 	rt_vls_init(&temp);
-	rt_vls_gets(&temp, stdin);  /* Get line from stdin */
+
+	/* Get line from stdin */
+	if( rt_vls_gets(&temp, stdin) < 0 )
+    		quit();				/* does not return */
 	rt_vls_vlscat(&input_str, &temp);
 
 	/* If there are any characters already in the command string (left
