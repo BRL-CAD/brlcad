@@ -1111,7 +1111,7 @@ Tcl_Interp *interp;
 }
 
 /*
- *  Allows LIBBU to be dynamically loade to a vanilla tclsh/wish with
+ *  Allows LIBBU to be dynamically loaded to a vanilla tclsh/wish with
  *  "load /usr/brlcad/lib/libbu.so"
  */
 int
@@ -1119,5 +1119,9 @@ Bu_Init(interp)
 Tcl_Interp *interp;
 {
 	bu_tcl_setup(interp);
+#if 0
+	bu_hook_list_init(&bu_log_hook_list);
+	bu_hook_list_init(&bu_bomb_hook_list);
+#endif
 	return TCL_OK;
 }
