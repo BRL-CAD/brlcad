@@ -42,6 +42,7 @@ static void set_dlist();
 static void set_perspective();
 static void establish_perspective();
 static void toggle_perspective();
+static void set_coords();
 
 static char *read_var();
 static char *write_var();
@@ -109,7 +110,7 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "fb_all",		MV_O(mv_fb_all),		set_dirty_flag },
 	{"%d",  1, "fb_overlay",	MV_O(mv_fb_overlay),	set_dirty_flag },
 	{"%c",  1, "mouse_behavior",	MV_O(mv_mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%c",  1, "coords",            MV_O(mv_coords),           BU_STRUCTPARSE_FUNC_NULL },
+	{"%c",  1, "coords",            MV_O(mv_coords),	set_coords },
 	{"%c",  1, "rotate_about",      MV_O(mv_rotate_about),     BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "transform",         MV_O(mv_transform),        BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "predictor",		MV_O(mv_predictor),	predictor_hook },
@@ -478,4 +479,10 @@ toggle_perspective()
   view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
 
   set_dirty_flag();
+}
+
+static void
+set_coords()
+{
+	view_state->vs_vop->vo_coord = mged_variables->mv_coords;
 }
