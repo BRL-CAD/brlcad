@@ -195,6 +195,115 @@ CONST struct db_i	*dbip;
 	return(0);
 }
 
+
+/*
+ *			R T _ A R S _ I M P O R T 5
+ *
+ *  Read all the curves in as a two dimensional array.
+ *  The caller is responsible for freeing the dynamic memory.
+ *
+ *  Note that in each curve array, the first point is replicated
+ *  as the last point, to make processing the data easier.
+ */
+int
+rt_ars_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+CONST mat_t			mat;
+CONST struct db_i		*dbip;
+{
+	struct rt_ars_internal *ari;
+	register int		i, j;
+	register unsigned char	*cp;
+	vect_t			tmp_vec;
+	register fastf_t	*fp;
+
+	BU_CK_EXTERNAL( ep );
+	RT_CK_DB_INTERNAL( ip );
+
+	ip->idb_type = ID_ARS;
+	ip->idb_meth = &rt_functab[ID_ARS];
+	ip->idb_ptr = bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+
+	ari = (struct rt_ars_internal *)ip->idb_ptr;
+	ari->magic = RT_ARS_INTERNAL_MAGIC;
+
+	cp = (unsigned char *)ep->ext_buf;
+	ari->ncurves = bu_glong( cp );
+	cp += SIZEOF_NETWORK_LONG;
+	ari->pts_per_curve = bu_glong( cp );
+	cp += SIZEOF_NETWORK_LONG;
+
+	/*
+	 * Read all the curves into internal form.
+	 */
+	ari->curves = (fastf_t **)bu_calloc(
+		(ari->ncurves+1), sizeof(fastf_t *), "ars curve ptrs" );
+	for( i=0; i < ari->ncurves; i++ )  {
+		ari->curves[i] = (fastf_t *)bu_calloc( (ari->pts_per_curve + 1) * 3,
+			sizeof( fastf_t ), "ARS points" );
+		fp = ari->curves[i];
+		for( j=0 ; j<ari->pts_per_curve ; j++ ) {
+			ntohd( (unsigned char *)tmp_vec, cp, 3 );
+			MAT4X3PNT( fp, mat, tmp_vec );
+			cp += 3 * SIZEOF_NETWORK_DOUBLE;
+			fp += ELEMENTS_PER_VECT;
+		}
+		VMOVE( fp, ari->curves[i] );	/* duplicate first point */
+	}
+	return( 0 );
+}
+
+/*
+ *			R T _ A R S _ E X P O R T 5
+ *
+ *  The name will be added by the caller.
+ *  Generally, only libwdb will set conv2mm != 1.0
+ */
+int
+rt_ars_export5( ep, ip, local2mm, dbip )
+struct bu_external	*ep;
+CONST struct rt_db_internal	*ip;
+double			local2mm;
+CONST struct db_i	*dbip;
+{
+	struct rt_ars_internal	*arip;
+	unsigned char	*cp;
+	vect_t		tmp_vec;
+	int		cur;		/* current curve number */
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_ARS )  return(-1);
+	arip = (struct rt_ars_internal *)ip->idb_ptr;
+	RT_ARS_CK_MAGIC(arip);
+
+	BU_CK_EXTERNAL(ep);
+	ep->ext_nbytes = 2 * SIZEOF_NETWORK_LONG +
+		3 * arip->ncurves * arip->pts_per_curve * SIZEOF_NETWORK_DOUBLE;
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ars external");
+	cp = (unsigned char *)ep->ext_buf;
+
+	(void)bu_plong( cp, arip->ncurves );
+	cp += SIZEOF_NETWORK_LONG;
+	(void)bu_plong( cp, arip->pts_per_curve );
+	cp += SIZEOF_NETWORK_LONG;
+
+	for( cur=0; cur<arip->ncurves; cur++ )  {
+		register fastf_t	*fp;
+		int			npts;
+		int			left;
+
+		fp = arip->curves[cur];
+		for( npts=0; npts < arip->pts_per_curve; npts++ )  {
+			VSCALE( tmp_vec, fp, local2mm );
+			ntohd( cp, (unsigned char *)tmp_vec, 3 );
+			cp += 3 * SIZEOF_NETWORK_DOUBLE;
+			fp += ELEMENTS_PER_VECT;
+		}
+	}
+	return(0);
+}
+
 /*
  *			R T _ A R S _ D E S C R I B E
  *

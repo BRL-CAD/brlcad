@@ -458,7 +458,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_ars_uv,	rt_ars_curve,	rt_ars_class,	rt_ars_free,
 		rt_ars_plot,	rt_vstub,	rt_ars_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_ars_import5, rt_ars_export5,
 		rt_ars_import,	rt_ars_export,	rt_ars_ifree,
 		rt_ars_describe,rt_ars_xform,	NULL,
 		sizeof(struct rt_ars_internal), RT_ARS_INTERNAL_MAGIC,
