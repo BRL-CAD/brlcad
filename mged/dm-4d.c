@@ -102,7 +102,8 @@ static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 static char ir_title[] = "BRL MGED";
 static int perspective_mode = 0;	/* Perspective flag */
 static int perspective_angle =3;	/* Angle of perspective */
-static int perspective_table[] = { 30, 45, 60, 90 };
+static int perspective_table[] = { 
+	30, 45, 60, 90 };
 static int ovec = -1;		/* Old color map entry number */
 static int kblights();
 static double	xlim_view = 1.0;	/* args for ortho() */
@@ -122,12 +123,12 @@ void		ir_colorit();
 #define HELP_KEY	0
 #define ZERO_KNOBS	0
 static unsigned char bmap[IR_BUTTONS] = {
-             HELP_KEY,    BV_ADCURSOR, BV_RESET,    ZERO_KNOBS,
-BE_O_SCALE,  BE_O_XSCALE, BE_O_YSCALE, BE_O_ZSCALE, 0,           BV_VSAVE,
-BE_O_X,      BE_O_Y,      BE_O_XY,     BE_O_ROTATE, 0,           BV_VRESTORE,
-BE_S_TRANS,  BE_S_ROTATE, BE_S_SCALE,  BE_MENU,     BE_O_ILLUMINATE, BE_S_ILLUMINATE,
-BE_REJECT,   BV_BOTTOM,   BV_TOP,      BV_REAR,     BV_45_45,    BE_ACCEPT,
-             BV_RIGHT,    BV_FRONT,    BV_LEFT,     BV_35_25
+	HELP_KEY,    BV_ADCURSOR, BV_RESET,    ZERO_KNOBS,
+	BE_O_SCALE,  BE_O_XSCALE, BE_O_YSCALE, BE_O_ZSCALE, 0,           BV_VSAVE,
+	BE_O_X,      BE_O_Y,      BE_O_XY,     BE_O_ROTATE, 0,           BV_VRESTORE,
+	BE_S_TRANS,  BE_S_ROTATE, BE_S_SCALE,  BE_MENU,     BE_O_ILLUMINATE, BE_S_ILLUMINATE,
+	BE_REJECT,   BV_BOTTOM,   BV_TOP,      BV_REAR,     BV_45_45,    BE_ACCEPT,
+	BV_RIGHT,    BV_FRONT,    BV_LEFT,     BV_35_25
 };
 /* Inverse map for mapping MGED button functions to SGI button numbers */
 static unsigned char invbmap[BV_MAXFUNC+1];
@@ -217,6 +218,7 @@ struct structparse Ir_vparse[] = {
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
+
 static int	ir_oldmonitor;		/* Old monitor type */
 long gr_id;
 long win_l, win_b, win_r, win_t;
@@ -290,7 +292,7 @@ Ir_configure_window_shape()
 		ir_clear_to_black();
 	} else
 		ir_clear_to_black();
-	
+
 	switch( getmonitor() )  {
 	default:
 		break;
@@ -309,20 +311,20 @@ Ir_configure_window_shape()
 			viewport( 0, XMAX170, 0, YMAX170 );
 		} else {
 			/* Only use the central (square) faceplate area */
-/*
- * XXX Does this viewport() call do anything?  (Write enable pixels maybe?)
- * XXX (1) the first frame (only) is shrunken oddly in X, and
- * XXX (2) the drawing overflows the boundaries.
- * XXX Perhaps XY clipping could be used?
- * At least the aspect ratio is right!
- */
-/* XXXXX See page 8-9 in the manual.
- * XXX The best way to do the masking in NTSC mode is to
- * XXX just set a Z-buffer write mask of 0 on the parts we don't
- * XXX want to have written.
- */
+			/*
+			 * XXX Does this viewport() call do anything?  (Write enable pixels maybe?)
+			 * XXX (1) the first frame (only) is shrunken oddly in X, and
+			 * XXX (2) the drawing overflows the boundaries.
+			 * XXX Perhaps XY clipping could be used?
+			 * At least the aspect ratio is right!
+			 */
+			/* XXXXX See page 8-9 in the manual.
+			 * XXX The best way to do the masking in NTSC mode is to
+			 * XXX just set a Z-buffer write mask of 0 on the parts we don't
+			 * XXX want to have written.
+			 */
 			viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
-				(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
+			    (YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
 		}
 		/* Aspect ratio correction is needed either way */
 		xlim_view = XMAX170 / (double)YMAX170;
@@ -337,11 +339,12 @@ Ir_configure_window_shape()
 		winx_size = npix;	/* What is PAL aspect ratio? */
 		winy_size = npix;
 		win_l = (XMAXPAL - winx_size)/2;
-		win_r = win_l + winx_size;;
+		win_r = win_l + winx_size;
+		;
 		win_b = (YMAXPAL-winy_size)/2;
 		win_t = win_b + winy_size;
 		viewport( (XMAXPAL - npix)/2, npix + (XMAXPAL - npix)/2,
-			(YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
+		    (YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
 		ir_linewidth = 3;
 		blanktime(0);	/* don't screensave while recording video! */
 		break;
@@ -387,7 +390,8 @@ Ir_open()
 		if( inv->class != INV_GRAPHICS )  continue;
 		switch( inv->type )  {
 		default:
-			printf("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",inv->type);
+			printf("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",
+			    inv->type);
 			/* Since we recognize all the old devices, be
 			 * optimistic and assume that new devices are plush.
 			 */
@@ -435,27 +439,27 @@ Ir_open()
 #endif
 
 #if defined(INV_GR2)
-                case INV_GR2:		/* Elan Graphics */
-                        if(inv->state & INV_GR2_ELAN)
-                        {
-                                ir_has_rgb = 1;
-                                ir_has_doublebuffer = 1;
-                                ir_has_zbuf = 1;
-                                ir_is_gt = 1;
-                        }
-                        break;
+		case INV_GR2:		/* Elan Graphics */
+			if(inv->state & INV_GR2_ELAN)
+			{
+				ir_has_rgb = 1;
+				ir_has_doublebuffer = 1;
+				ir_has_zbuf = 1;
+				ir_is_gt = 1;
+			}
+			break;
 #endif
 		}
 #if defined(NEWPORT)
-                case NEWPORT:		/* Elan Graphics */
-                        if(inv->state & INV_NEWPORT)
-                        {
-                                ir_has_rgb = 1;
-                                ir_has_doublebuffer = 1;
-                                ir_has_zbuf = 1;
-                                ir_is_gt = 1;
-                        }
-                        break;
+	case NEWPORT:		/* Elan Graphics */
+		if(inv->state & INV_NEWPORT)
+		{
+			ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			ir_has_zbuf = 1;
+			ir_is_gt = 1;
+		}
+		break;
 #endif
 	}
 	endinvent();		/* frees internal inventory memory */
@@ -470,10 +474,10 @@ Ir_open()
 		win_size = mged_variables.sgi_win_size;
 
 	if (mged_variables.sgi_win_origin[0] != 0)
-	    	win_o_x = mged_variables.sgi_win_origin[0];
+		win_o_x = mged_variables.sgi_win_origin[0];
 
 	if (mged_variables.sgi_win_origin[1] != 0)
-	    	win_o_y = mged_variables.sgi_win_origin[1];
+		win_o_y = mged_variables.sgi_win_origin[1];
 
 	prefposition( win_o_x, win_o_x+win_size, win_o_y, win_o_y+win_size);
 #else
@@ -849,6 +853,15 @@ mat_t	mat;
 	loadmatrix( gtmat );
 }
 
+static float material_objdef[] = {
+	ALPHA,		1.0,	
+	AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
+	DIFFUSE,	0.6, 0.6, 0.6,
+	SPECULAR,	0.2, 0.2, 0.2,
+	EMISSION,	0.0, 0.0, 0.0,
+	SHININESS,	10.0,
+	LMNULL   };
+
 /*
  *  			I R _ O B J E C T
  *  
@@ -872,20 +885,10 @@ int		white;
 	register float	*gtvec;
 	char	gtbuf[16+3*sizeof(double)];
 	int first;
-	int i,j;	
+	int i,j;
 
 	if (ir_debug)
 		fprintf(stderr, "Ir_Object()\n");
-	/* It seems that this needs to be done before the loadmatrix() */
-	if( ir_is_gt && lighting_on )  {
-		/* Separate projection matrix from
-		 * modeling and viewing xforms.
-		 */
-		mmode(MVIEWING);
-		/* Select the material */
-		lmbind(MATERIAL, 20);
-		Ir_newrot(m);
-	}
 
 	/*
 	 *  It is claimed that the "dancing vector disease" of the
@@ -919,18 +922,42 @@ int		white;
 		}
 		if(cueing_on)  {
 			lRGBrange(
-				r/10, g/10, b/10,
-				r, g, b,
-				min_scr_z, max_scr_z );
-		}
-		RGBcolor( r, g, b );
+			    r/10, g/10, b/10,
+			    r, g, b,
+			    min_scr_z, max_scr_z );
+		} else
+		if(lighting_on && ir_is_gt)
+		{
+			/* Ambient = .2, Diffuse = .6, Specular = .2 */
+
+			/* Ambient */
+			material_objdef[3] = 	.2 * ( r / 255.0);
+			material_objdef[4] = 	.2 * ( g / 255.0);
+			material_objdef[5] = 	.2 * ( b / 255.0);
+
+			/* diffuse */
+			material_objdef[7] = 	.6 * ( r / 255.0);
+			material_objdef[8] = 	.6 * ( g / 255.0);
+			material_objdef[9] = 	.6 * ( b / 255.0);
+
+			/* Specular */
+			material_objdef[11] = 	.2 * ( r / 255.0);
+			material_objdef[12] = 	.2 * ( g / 255.0);
+			material_objdef[13] = 	.2 * ( b / 255.0);
+
+			lmdef(DEFMATERIAL, 21, 0, material_objdef);
+			lmbind(MATERIAL, 21);
+
+		} else
+
+			RGBcolor( r, g, b );
 	} else {
 		if( white ) {
 			ovec = nvec = MAP_ENTRY(DM_WHITE);
 			/* Use the *next* to the brightest white entry */
 			if(cueing_on)  {
 				lshaderange(nvec+1, nvec+1,
-					min_scr_z, max_scr_z );
+				    min_scr_z, max_scr_z );
 			}
 			color( nvec );
 		} else {
@@ -940,13 +967,13 @@ int		white;
 				 * The code will use the "reserved" color map entries
 				 * to display it when in depthcued mode.
 				 */
-			  	if(cueing_on)  {
+				if(cueing_on)  {
 					lshaderange(nvec+1, nvec+14,
-			  			min_scr_z, max_scr_z );
-			  	}
+					    min_scr_z, max_scr_z );
+				}
 				color( nvec );
-			  	ovec = nvec;
-			  }
+				ovec = nvec;
+			}
 		}
 	}
 
@@ -999,10 +1026,6 @@ int		white;
 		}
 	}
 	if( first == 0 ) endline();
-	if( lighting_on )  {
-		/* Return to no-lighting mode */
-		mmode(MSINGLE);
-	}
 
 	if (sp->s_soldash)
 		setlinestyle(0);		/* restore solid lines */
@@ -1041,8 +1064,8 @@ int x,y,size, colour;
 	cmov2( GED2IRIS(x), GED2IRIS(y));
 	if( ir_has_rgb )  {
 		RGBcolor( (short)ir_rgbtab[colour].r,
-			(short)ir_rgbtab[colour].g,
-			(short)ir_rgbtab[colour].b );
+		    (short)ir_rgbtab[colour].g,
+		    (short)ir_rgbtab[colour].b );
 	} else {
 		color( MAP_ENTRY(colour) );
 	}
@@ -1067,17 +1090,17 @@ int dashed;
 		/* Yellow */
 		if(cueing_on)  {
 			lRGBrange(
-				255, 255, 0,
-				255, 255, 0,
-				min_scr_z, max_scr_z );
+			    255, 255, 0,
+			    255, 255, 0,
+			    min_scr_z, max_scr_z );
 		}
 		RGBcolor( (short)255, (short)255, (short) 0 );
 	} else {
 		if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
-		  	if(cueing_on) lshaderange(nvec, nvec,
-				min_scr_z, max_scr_z );
+			if(cueing_on) lshaderange(nvec, nvec,
+			    min_scr_z, max_scr_z );
 			color( nvec );
-		  	ovec = nvec;
+			ovec = nvec;
 		}
 	}
 
@@ -1145,7 +1168,7 @@ int		noblock;
 		tv.tv_sec = 0;
 		if( noblock )  {
 			tv.tv_usec = 0;
-		}  else  {
+		}  else {
 			/* 1/20th second */
 			tv.tv_usec = 50000;
 		}
@@ -1199,10 +1222,10 @@ checkevents()  {
 		if( ir_debug ) printf("qread ret=%d, val=%d\n", ret, valp[1]);
 #if IR_BUTTONS
 		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
-		  || ret == F1KEY || ret == F2KEY || ret == F3KEY
-		  || ret == F4KEY || ret == F5KEY || ret == F6KEY
-		  || ret == F7KEY
-		) {
+		    || ret == F1KEY || ret == F2KEY || ret == F3KEY
+		    || ret == F4KEY || ret == F5KEY || ret == F6KEY
+		    || ret == F7KEY
+		    ) {
 			register int	i;
 
 			/*
@@ -1222,19 +1245,19 @@ checkevents()  {
 				 */
 				for(i = 0; i < 8; i++)
 					if(button0)
-						 knobs[i] =
-						   getvaluator(DIAL0+i);
+						knobs[i] =
+						    getvaluator(DIAL0+i);
 					else setvaluator(DIAL0+i,knobs[i],
-						-2048-NOISE, 2047+NOISE);
+					    -2048-NOISE, 2047+NOISE);
 #endif
 				if(button0)
 					ir_dbtext("Help Key");
 # if 0
-				else
-					ir_dbtext(ir_title);
+else
+	ir_dbtext(ir_title);
 # endif
-				continue;
-				
+continue;
+
 			}
 
 #if IR_KNOBS
@@ -1252,7 +1275,7 @@ checkevents()  {
 				/* zap the knobs */
 				for(i = 0; i < 8; i++)  {
 					setvaluator(DIAL0+i, 0,
-					  -2048-NOISE, 2047+NOISE);
+					    -2048-NOISE, 2047+NOISE);
 					knobs[i] = 0;
 				}
 #endif
@@ -1271,7 +1294,7 @@ checkevents()  {
 				}
 				/* toggle depthcueing and remake colormap */
 				rt_vls_printf(&dm_values.dv_string,
-					"dm set depthcue=!\n");
+				    "dm set depthcue=!\n");
 				continue;
 			} else if(ret == F2KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1282,7 +1305,7 @@ checkevents()  {
 				}
 				/* toggle zclipping */
 				rt_vls_printf(&dm_values.dv_string,
-					"dm set zclip=!\n");
+				    "dm set zclip=!\n");
 				continue;
 			} else if(ret == F3KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1293,10 +1316,10 @@ checkevents()  {
 				}
 				perspective_mode = 1-perspective_mode;
 				rt_vls_printf( &dm_values.dv_string,
-					"set perspective=%d\n",
-					perspective_mode ?
-						perspective_table[perspective_angle] :
-						-1 );
+				    "set perspective=%d\n",
+				    perspective_mode ?
+				    perspective_table[perspective_angle] :
+				    -1 );
 				dmaflag = 1;
 				continue;
 			} else if(ret == F4KEY)  {
@@ -1308,7 +1331,7 @@ checkevents()  {
 				}
 				/* toggle zbuffer status */
 				rt_vls_printf(&dm_values.dv_string,
-					"dm set zbuffer=!\n");
+				    "dm set zbuffer=!\n");
 				continue;
 			} else if(ret == F5KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1319,7 +1342,7 @@ checkevents()  {
 				}
 				/* toggle status */
 				rt_vls_printf(&dm_values.dv_string,
-					"dm set lighting=!\n");
+				    "dm set lighting=!\n");
 				continue;
 			} else if (ret == F6KEY) {
 				if (!valp[1]) continue; /* Ignore release */
@@ -1331,8 +1354,8 @@ checkevents()  {
 				/* toggle perspective matrix */
 				if (--perspective_angle < 0) perspective_angle = 3;
 				if(perspective_mode) rt_vls_printf( &dm_values.dv_string,
-					"set perspective=%d\n",
-					perspective_table[perspective_angle] );
+				    "set perspective=%d\n",
+				    perspective_table[perspective_angle] );
 				dmaflag = 1;
 				continue;
 			} else if (ret == F7KEY) {
@@ -1345,9 +1368,9 @@ checkevents()  {
 				/* Toggle faceplate on/off */
 				no_faceplate = !no_faceplate;
 				rt_vls_strcat( &dm_values.dv_string,
-					no_faceplate ?
-					"set faceplate=0\n" :
-					"set faceplate=1\n" );
+				    no_faceplate ?
+				    "set faceplate=0\n" :
+				    "set faceplate=1\n" );
 				Ir_configure_window_shape();
 				dmaflag = 1;
 				continue;
@@ -1364,20 +1387,20 @@ checkevents()  {
 
 			if(!valp[1]) continue;
 			if(button0) {
-				 ir_dbtext(label_button(i));
+				ir_dbtext(label_button(i));
 			} else {
 				/* An actual button press */
 #				if 0
-					/* old way -- an illegal upcall */
-					button(i);
+				/* old way -- an illegal upcall */
+				button(i);
 #				else
-					/* better way -- queue a string command */
-					rt_vls_strcat( &dm_values.dv_string,
-						"press " );
-					rt_vls_strcat( &dm_values.dv_string,
-						label_button(i) );
-					rt_vls_strcat( &dm_values.dv_string,
-						"\n" );
+				/* better way -- queue a string command */
+				rt_vls_strcat( &dm_values.dv_string,
+				    "press " );
+				rt_vls_strcat( &dm_values.dv_string,
+				    label_button(i) );
+				rt_vls_strcat( &dm_values.dv_string,
+				    "\n" );
 #				endif
 			}
 			continue;
@@ -1391,11 +1414,11 @@ checkevents()  {
 		 *	0	1
 		 */
 		if(ret >= DIAL0 && ret <= DIAL8)  {
-			int	setting;	
+			int	setting;
 			/*  Help MODE */
 			if(button0)  {
 				ir_dbtext(
-		(adcflag ? kn1_knobs:kn2_knobs)[ret-DIAL0]);
+				    (adcflag ? kn1_knobs:kn2_knobs)[ret-DIAL0]);
 				continue;
 			}
 			/* Make a dead zone around 0 */
@@ -1490,8 +1513,8 @@ checkevents()  {
 			 *  X value.
 			 */
 			rt_vls_printf( &dm_values.dv_string, "M %d %d %d\n",
-				pending_middleval,
-				pending_x, pending_y);
+			    pending_middleval,
+			    pending_x, pending_y);
 			pending_middleval = 0;
 			break;
 		case REDRAW:
@@ -1499,7 +1522,7 @@ checkevents()  {
 			Ir_configure_window_shape();
 			dmaflag = 1;
 			if( ir_has_doublebuffer) /* to fix back buffer */
-				refresh();		
+				refresh();
 			dmaflag = 1;
 			break;
 		case INPUTCHANGE:
@@ -1588,7 +1611,7 @@ Ir_statechange( a, b )
 		unqdevice( MOUSEY );	/* constant tracking OFF */
 		/* This should not affect the tie()'d MOUSEY events */
 		break;
-		
+
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
@@ -1656,10 +1679,18 @@ Ir_colorchange()
 	if( ir_debug )  printf("colorchange\n");
 
 	/* Program the builtin colors */
-	ir_rgbtab[0].r=0; ir_rgbtab[0].g=0; ir_rgbtab[0].b=0;/* Black */
-	ir_rgbtab[1].r=255; ir_rgbtab[1].g=0; ir_rgbtab[1].b=0;/* Red */
-	ir_rgbtab[2].r=0; ir_rgbtab[2].g=0; ir_rgbtab[2].b=255;/* Blue */
-	ir_rgbtab[3].r=255; ir_rgbtab[3].g=255;ir_rgbtab[3].b=0;/*Yellow */
+	ir_rgbtab[0].r=0; 
+	ir_rgbtab[0].g=0; 
+	ir_rgbtab[0].b=0;/* Black */
+	ir_rgbtab[1].r=255; 
+	ir_rgbtab[1].g=0; 
+	ir_rgbtab[1].b=0;/* Red */
+	ir_rgbtab[2].r=0; 
+	ir_rgbtab[2].g=0; 
+	ir_rgbtab[2].b=255;/* Blue */
+	ir_rgbtab[3].r=255; 
+	ir_rgbtab[3].g=255;
+	ir_rgbtab[3].b=0;/*Yellow */
 	ir_rgbtab[4].r = ir_rgbtab[4].g = ir_rgbtab[4].b = 255; /* White */
 	slotsused = 5;
 
@@ -1725,7 +1756,7 @@ ir_colorit()
 		b = sp->s_color[2];
 		if( (r == 255 && g == 255 && b == 255) ||
 		    (r == 0 && g == 0 && b == 0) )  {
-		    	sp->s_dmindex = DM_WHITE;
+			sp->s_dmindex = DM_WHITE;
 			continue;
 		}
 
@@ -1748,7 +1779,8 @@ ir_colorit()
 			continue;
 		}
 		sp->s_dmindex = DM_YELLOW;	/* Default color */
-next:		;
+next:		
+		;
 	}
 }
 
@@ -1762,12 +1794,12 @@ next:		;
  *  Because not all SGI button boxes have text displays,
  *  this now needs to go to stdout in order to be useful.
  */
- 
+
 ir_dbtext(str)
-	register char *str;
+register char *str;
 {
 #if IR_BUTTONS
-  	register i;
+	register i;
 	char	buf[9];
 	register char *cp;
 
@@ -1794,7 +1826,7 @@ ir_dbtext(str)
  */
 static 
 int irlimit(i)
-	int i;
+int i;
 {
 	if( i > NOISE )
 		return( i-NOISE );
@@ -1818,7 +1850,7 @@ gen_color(c)
 int c;
 {
 	if(cueing_on) {
-		
+
 		/*  Not much sense in making a ramp for DM_BLACK.  Besides
 		 *  which, doing so, would overwrite the bottom color
 		 *  map entries, which is a no-no.
@@ -1837,15 +1869,15 @@ int c;
 			blue = ir_rgbtab[c].b;
 
 			for(i = 15; i >= 0;
-			  i--, red -= r_inc, green -= g_inc, blue -= b_inc)
+			    i--, red -= r_inc, green -= g_inc, blue -= b_inc)
 				mapcolor( MAP_ENTRY(c) + i,
-					(short)red,
-					(short)green,
-					(short)blue );
+				    (short)red,
+				    (short)green,
+				    (short)blue );
 		}
 	} else {
 		mapcolor(c+CMAP_BASE,
-			ir_rgbtab[c].r, ir_rgbtab[c].g, ir_rgbtab[c].b);
+		    ir_rgbtab[c].r, ir_rgbtab[c].g, ir_rgbtab[c].b);
 	}
 }
 
@@ -1859,9 +1891,9 @@ kblights()
 	char	lights;
 
 	lights = (cueing_on)
-		| (zclipping_on << 1)
-		| (perspective_mode << 2)
-		| (zbuffer_on << 3);
+	    | (zclipping_on << 1)
+	    | (perspective_mode << 2)
+	    | (zbuffer_on << 3);
 
 	lampon(lights);
 	lampoff(lights^0xf);
@@ -1907,9 +1939,15 @@ ir_clear_to_black()
 
 #if 0
 /* Handy fakeouts when we don't want to link with -lmpc */
-usinit()	{ printf("usinit\n"); }
-usnewlock()	{ printf("usnewlock\n"); }
-taskcreate()	{ printf("taskcreate\n"); }
+usinit()	{ 
+	printf("usinit\n"); 
+}
+usnewlock()	{ 
+	printf("usnewlock\n"); 
+}
+taskcreate()	{ 
+	printf("taskcreate\n"); 
+}
 #endif
 
 /*
@@ -1932,28 +1970,20 @@ establish_lighting()
 			cueing_on = 0;
 			Ir_colorchange();
 		}
-			mmode(MVIEWING);
-		/* Define material properties */
-		make_materials();
-			lmbind(LMODEL, 2);	/* infinite */
-			lmbind(LIGHT2,2);
+
+		mmode(MVIEWING);
+
+
+		make_materials();	/* Define material properties */
+
+		lmbind(LMODEL, 2);	/* infinite */
+		lmbind(LIGHT2,2);
 		lmbind(LIGHT3,3);
 		lmbind(LIGHT4,4);
 		lmbind(LIGHT5,5);
 
 		/* RGB color commands & lighting */
-#if 1
-		/* Good for debugging */
-		/* Material color does not apply,
-		 * when lighting is on */
-		lmcolor( LMC_COLOR );	/* default */
-#else
-		/* Good for looking.
-		 * RGBcolor() values go to emissions
-		 * durring lighting calculations.
-		 */
-		lmcolor( LMC_EMISSION );
-#endif
+		lmcolor( LMC_COLOR );
 
 		mmode(MSINGLE);
 	}
@@ -1974,153 +2004,164 @@ establish_lighting()
  *	SHININESS	specular scattering exponent, integer 0..128
  */
 static float material_default[] = {
-			ALPHA,		1.0,
-			AMBIENT,	0.2, 0.2, 0.2,
-			DIFFUSE,	0.8, 0.8, 0.8,
-			EMISSION,	0.0, 0.0, 0.0,
-			SHININESS,	0.0,
-			SPECULAR,	0.0, 0.0, 0.0,
-			LMNULL   };
+	ALPHA,		1.0,
+	AMBIENT,	0.2, 0.2, 0.2,
+	DIFFUSE,	0.8, 0.8, 0.8,
+	EMISSION,	0.0, 0.0, 0.0,
+	SHININESS,	0.0,
+	SPECULAR,	0.0, 0.0, 0.0,
+	LMNULL   };
 
 /* Something like the RT default phong material */
 static float material_rtdefault[] = {
-			ALPHA,		1.0,	
-			AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
-			DIFFUSE,	0.6, 0.6, 0.6,
-			SPECULAR,	0.2, 0.2, 0.2,
-			EMISSION,	0.0, 0.0, 0.0,
-			SHININESS,	10.0,
-			LMNULL   };
+	ALPHA,		1.0,	
+	AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
+	DIFFUSE,	0.6, 0.6, 0.6,
+	SPECULAR,	0.2, 0.2, 0.2,
+	EMISSION,	0.0, 0.0, 0.0,
+	SHININESS,	10.0,
+	LMNULL   };
 
 /* This was the "default" material in the demo */
-static float material_xdefault[] = {AMBIENT, 0.35, 0.25,  0.1,
-			DIFFUSE, 0.1, 0.5, 0.1,
-			SPECULAR, 0.0, 0.0, 0.0,
-			SHININESS, 5.0,
-			LMNULL   };
+static float material_xdefault[] = {
+	AMBIENT, 0.35, 0.25,  0.1,
+	DIFFUSE, 0.1, 0.5, 0.1,
+	SPECULAR, 0.0, 0.0, 0.0,
+	SHININESS, 5.0,
+	LMNULL   };
 
-static float mat_brass[] = {AMBIENT, 0.35, 0.25,  0.1,
-			DIFFUSE, 0.65, 0.5, 0.35,
-			SPECULAR, 0.0, 0.0, 0.0,
-			SHININESS, 5.0,
-			LMNULL   };
+static float mat_brass[] = {
+	AMBIENT, 0.35, 0.25,  0.1,
+	DIFFUSE, 0.65, 0.5, 0.35,
+	SPECULAR, 0.0, 0.0, 0.0,
+	SHININESS, 5.0,
+	LMNULL   };
 
-static float mat_shinybrass[] = {AMBIENT, 0.25, 0.15, 0.0,
-			DIFFUSE, 0.65, 0.5, 0.35,
-			SPECULAR, 0.9, 0.6, 0.0,
-			SHININESS, 10.0,
-			LMNULL   };
+static float mat_shinybrass[] = {
+	AMBIENT, 0.25, 0.15, 0.0,
+	DIFFUSE, 0.65, 0.5, 0.35,
+	SPECULAR, 0.9, 0.6, 0.0,
+	SHININESS, 10.0,
+	LMNULL   };
 
-static float mat_pewter[] = {AMBIENT, 0.0, 0.0,  0.0,
-			DIFFUSE, 0.6, 0.55 , 0.65,
-			SPECULAR, 0.9, 0.9, 0.95,
-			SHININESS, 10.0,
-			LMNULL   };
+static float mat_pewter[] = {
+	AMBIENT, 0.0, 0.0,  0.0,
+	DIFFUSE, 0.6, 0.55 , 0.65,
+	SPECULAR, 0.9, 0.9, 0.95,
+	SHININESS, 10.0,
+	LMNULL   };
 
-static float mat_silver[] = {AMBIENT, 0.4, 0.4,  0.4,
-			DIFFUSE, 0.3, 0.3, 0.3,
-			SPECULAR, 0.9, 0.9, 0.95,
-			SHININESS, 30.0,
-			LMNULL   };
+static float mat_silver[] = {
+	AMBIENT, 0.4, 0.4,  0.4,
+	DIFFUSE, 0.3, 0.3, 0.3,
+	SPECULAR, 0.9, 0.9, 0.95,
+	SHININESS, 30.0,
+	LMNULL   };
 
-static float mat_gold[] = {AMBIENT, 0.4, 0.2, 0.0,
-			DIFFUSE, 0.9, 0.5, 0.0,
-			SPECULAR, 0.7, 0.7, 0.0,
-			SHININESS, 10.0,
-			LMNULL   };
+static float mat_gold[] = {
+	AMBIENT, 0.4, 0.2, 0.0,
+	DIFFUSE, 0.9, 0.5, 0.0,
+	SPECULAR, 0.7, 0.7, 0.0,
+	SHININESS, 10.0,
+	LMNULL   };
 
-static float mat_shinygold[] = {AMBIENT, 0.4, 0.2,  0.0,
-			DIFFUSE, 0.9, 0.5, 0.0,
-			SPECULAR, 0.9, 0.9, 0.0,
-			SHININESS, 20.0,
-			LMNULL   };
+static float mat_shinygold[] = {
+	AMBIENT, 0.4, 0.2,  0.0,
+	DIFFUSE, 0.9, 0.5, 0.0,
+	SPECULAR, 0.9, 0.9, 0.0,
+	SHININESS, 20.0,
+	LMNULL   };
 
-static float mat_plaster[] = {AMBIENT, 0.2, 0.2,  0.2,
-			DIFFUSE, 0.95, 0.95, 0.95,
-			SPECULAR, 0.0, 0.0, 0.0,
-			SHININESS, 1.0,
-			LMNULL   };
+static float mat_plaster[] = {
+	AMBIENT, 0.2, 0.2,  0.2,
+	DIFFUSE, 0.95, 0.95, 0.95,
+	SPECULAR, 0.0, 0.0, 0.0,
+	SHININESS, 1.0,
+	LMNULL   };
 
-static float mat_redplastic[] = {AMBIENT, 0.3, 0.1, 0.1,
-			DIFFUSE, 0.5, 0.1, 0.1,
-			SPECULAR, 0.45, 0.45, 0.45,
-			SHININESS, 30.0,
-			LMNULL   };
+static float mat_redplastic[] = {
+	AMBIENT, 0.3, 0.1, 0.1,
+	DIFFUSE, 0.5, 0.1, 0.1,
+	SPECULAR, 0.45, 0.45, 0.45,
+	SHININESS, 30.0,
+	LMNULL   };
 
-static float mat_greenplastic[] = {AMBIENT, 0.1, 0.3, 0.1,
-			DIFFUSE, 0.1, 0.5, 0.1,
-			SPECULAR, 0.45, 0.45, 0.45,
-			SHININESS, 30.0,
-			LMNULL   };
+static float mat_greenplastic[] = {
+	AMBIENT, 0.1, 0.3, 0.1,
+	DIFFUSE, 0.1, 0.5, 0.1,
+	SPECULAR, 0.45, 0.45, 0.45,
+	SHININESS, 30.0,
+	LMNULL   };
 
-static float mat_blueplastic[] = {AMBIENT, 0.1, 0.1, 0.3,
-			DIFFUSE, 0.1, 0.1, 0.5,
-			SPECULAR, 0.45, 0.45, 0.45,
-			SHININESS, 30.0,
-			LMNULL   };
+static float mat_blueplastic[] = {
+	AMBIENT, 0.1, 0.1, 0.3,
+	DIFFUSE, 0.1, 0.1, 0.5,
+	SPECULAR, 0.45, 0.45, 0.45,
+	SHININESS, 30.0,
+	LMNULL   };
 
 static float mat_greenflat[] = {
-			EMISSION,   0.0, 0.4, 0.0,
-			AMBIENT,    0.0, 0.0, 0.0,
-			DIFFUSE,    0.0, 0.0, 0.0,
-			SPECULAR,   0.0, 0.6, 0.0,
-			SHININESS, 10.0,
-			LMNULL
-			};
+	EMISSION,   0.0, 0.4, 0.0,
+	AMBIENT,    0.0, 0.0, 0.0,
+	DIFFUSE,    0.0, 0.0, 0.0,
+	SPECULAR,   0.0, 0.6, 0.0,
+	SHININESS, 10.0,
+	LMNULL
+};
 
 static float mat_greenshiny[]= {
-			EMISSION, 0.0, 0.4, 0.0,
-			AMBIENT,  0.1, 0.25, 0.1,
-			DIFFUSE,  0.5, 0.5, 0.5,
-			SPECULAR,  0.25, 0.9, 0.25,
-			SHININESS, 10.0,
-			LMNULL
-			};
+	EMISSION, 0.0, 0.4, 0.0,
+	AMBIENT,  0.1, 0.25, 0.1,
+	DIFFUSE,  0.5, 0.5, 0.5,
+	SPECULAR,  0.25, 0.9, 0.25,
+	SHININESS, 10.0,
+	LMNULL
+};
 
 static float mat_blueflat[] = {
-		       EMISSION, 0.0, 0.0, 0.4,
-		       AMBIENT,  0.1, 0.25, 0.1,
-		       DIFFUSE,  0.0, 0.5, 0.5,
-		       SPECULAR,  0.0, 0.0, 0.9,
-		       SHININESS, 10.0,
-		       LMNULL
-		       };
+	EMISSION, 0.0, 0.0, 0.4,
+	AMBIENT,  0.1, 0.25, 0.1,
+	DIFFUSE,  0.0, 0.5, 0.5,
+	SPECULAR,  0.0, 0.0, 0.9,
+	SHININESS, 10.0,
+	LMNULL
+};
 
 static float mat_blueshiny[] = {
-			EMISSION, 0.0, 0.0, 0.6,
-			AMBIENT,  0.1, 0.25, 0.5,
-			DIFFUSE,  0.5, 0.5, 0.5,
-			SPECULAR,  0.5, 0.0, 0.0,
-			SHININESS, 10.0,
-			LMNULL
-			};
+	EMISSION, 0.0, 0.0, 0.6,
+	AMBIENT,  0.1, 0.25, 0.5,
+	DIFFUSE,  0.5, 0.5, 0.5,
+	SPECULAR,  0.5, 0.0, 0.0,
+	SHININESS, 10.0,
+	LMNULL
+};
 
 static float mat_redflat[] = {
-			EMISSION, 0.60, 0.0, 0.0,
-			AMBIENT,  0.1, 0.25, 0.1,
-			DIFFUSE,  0.5, 0.5, 0.5,
-			SPECULAR,  0.5, 0.0, 0.0,
-			SHININESS, 1.0,
-			LMNULL
-			};
+	EMISSION, 0.60, 0.0, 0.0,
+	AMBIENT,  0.1, 0.25, 0.1,
+	DIFFUSE,  0.5, 0.5, 0.5,
+	SPECULAR,  0.5, 0.0, 0.0,
+	SHININESS, 1.0,
+	LMNULL
+};
 
 static float mat_redshiny[] = {
-			EMISSION, 0.60, 0.0, 0.0,
-			AMBIENT,  0.1, 0.25, 0.1,
-			DIFFUSE,  0.5, 0.5, 0.5,
-			SPECULAR,  0.5, 0.0, 0.0,
-			SHININESS, 10.0,
-			LMNULL
-			};
+	EMISSION, 0.60, 0.0, 0.0,
+	AMBIENT,  0.1, 0.25, 0.1,
+	DIFFUSE,  0.5, 0.5, 0.5,
+	SPECULAR,  0.5, 0.0, 0.0,
+	SHININESS, 10.0,
+	LMNULL
+};
 
 static float mat_beigeshiny[] = {
-			EMISSION, 0.5, 0.5, 0.6,
-			AMBIENT,  0.35, 0.35, 0.0,
-			DIFFUSE,  0.5, 0.5, 0.0,
-			SPECULAR,  0.5, 0.5, 0.0,
-			SHININESS, 10.0,
-			LMNULL
-			};
+	EMISSION, 0.5, 0.5, 0.6,
+	AMBIENT,  0.35, 0.35, 0.0,
+	DIFFUSE,  0.5, 0.5, 0.0,
+	SPECULAR,  0.5, 0.5, 0.0,
+	SHININESS, 10.0,
+	LMNULL
+};
 
 /*
  *  Meanings of the parameters:
@@ -2129,101 +2170,117 @@ static float mat_beigeshiny[] = {
  *	POSITION	position of light.  w=0 for infinite lights
  */
 static float default_light[] = {
-			AMBIENT,	0.0, 0.0, 0.0, 
-			LCOLOR,		1.0, 1.0, 1.0, 
-			POSITION,	0.0, 0.0, 1.0, 0.0,
-			LMNULL};
-		    
+	AMBIENT,	0.0, 0.0, 0.0, 
+	LCOLOR,		1.0, 1.0, 1.0, 
+	POSITION,	0.0, 0.0, 1.0, 0.0,
+	LMNULL};
+
 
 #if 1
 # if 0
-static float white_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.70, 0.70, 0.70, 
-			   POSITION, 100.0, -200.0, 100.0, 0.0, 
-			   LMNULL};
+static float white_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.70, 0.70, 0.70, 
+	POSITION, 100.0, -200.0, 100.0, 0.0, 
+	LMNULL};
 
 
-static float red_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.6, 0.1, 0.1, 
-			   POSITION, -100.0, -30.0, 100.0, 0.0, 
-			   LMNULL};
+static float red_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.6, 0.1, 0.1, 
+	POSITION, -100.0, -30.0, 100.0, 0.0, 
+	LMNULL};
 
-static float green_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.1, 0.3, 0.1, 
-			   POSITION, 100.0, -20.0, 20.0, 0.0, 
-			   LMNULL};
+static float green_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.1, 0.3, 0.1, 
+	POSITION, 100.0, -20.0, 20.0, 0.0, 
+	LMNULL};
 
 
-static float blue_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.1, 0.1, 0.3, 
-			   POSITION, 0.0, 100.0, -100.0, 0.0, 
-			   LMNULL};
+static float blue_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.1, 0.1, 0.3, 
+	POSITION, 0.0, 100.0, -100.0, 0.0, 
+	LMNULL};
 
-static float white_local_light[] = {AMBIENT, 0.0, 1.0, 0.0, 
-			     LCOLOR,   0.75, 0.75, 0.75, 
-			     POSITION, 0.0, 10.0, 10.0, 5.0, 
-			     LMNULL};
+static float white_local_light[] = {
+	AMBIENT, 0.0, 1.0, 0.0, 
+	LCOLOR,   0.75, 0.75, 0.75, 
+	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	LMNULL};
 # else
-static float white_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.70, 0.70, 0.70, 
-			   POSITION, 100.0, 200.0, 100.0, 0.0, 
-			   LMNULL};
+static float white_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.70, 0.70, 0.70, 
+	POSITION, 100.0, 200.0, 100.0, 0.0, 
+	LMNULL};
 
 
-static float red_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.6, 0.1, 0.1, 
-			   POSITION, 100.0, 30.0, 100.0, 0.0, 
-			   LMNULL};
+static float red_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.6, 0.1, 0.1, 
+	POSITION, 100.0, 30.0, 100.0, 0.0, 
+	LMNULL};
 
-static float green_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.1, 0.3, 0.1, 
-			   POSITION, -100.0, 20.0, 20.0, 0.0, 
-			   LMNULL};
+static float green_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.1, 0.3, 0.1, 
+	POSITION, -100.0, 20.0, 20.0, 0.0, 
+	LMNULL};
 
 
-static float blue_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.1, 0.1, 0.3, 
-			   POSITION, 0.0, -100.0, -100.0, 0.0, 
-			   LMNULL};
+static float blue_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.1, 0.1, 0.3, 
+	POSITION, 0.0, -100.0, -100.0, 0.0, 
+	LMNULL};
 
-static float white_local_light[] = {AMBIENT, 0.0, 1.0, 0.0, 
-			     LCOLOR,   0.75, 0.75, 0.75, 
-			     POSITION, 0.0, 10.0, 10.0, 5.0, 
-			     LMNULL};
+static float white_local_light[] = {
+	AMBIENT, 0.0, 1.0, 0.0, 
+	LCOLOR,   0.75, 0.75, 0.75, 
+	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	LMNULL};
 # endif
 
 #else
-static float white_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.70, 0.70, 0.70, 
-			   POSITION, 10.0, 50.0, 50.0, 0.0, 
-			   LMNULL};
+static float white_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.70, 0.70, 0.70, 
+	POSITION, 10.0, 50.0, 50.0, 0.0, 
+	LMNULL};
 
 
-static float red_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.5, 0.1, 0.1, 
-			   POSITION, -100.0, 0.0, 0.0, 0.0, 
-			   LMNULL};
+static float red_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.5, 0.1, 0.1, 
+	POSITION, -100.0, 0.0, 0.0, 0.0, 
+	LMNULL};
 
-static float green_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.1, 0.5, 0.1, 
-			   POSITION, 100.0, 50.0, 0.0, 0.0, 
-			   LMNULL};
+static float green_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.1, 0.5, 0.1, 
+	POSITION, 100.0, 50.0, 0.0, 0.0, 
+	LMNULL};
 
-static float blue_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			   LCOLOR,   0.1, 0.1, 0.5, 
-			   POSITION, 0.0, -50.0, 0.0, 0.0, 
-			   LMNULL};
+static float blue_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.1, 0.1, 0.5, 
+	POSITION, 0.0, -50.0, 0.0, 0.0, 
+	LMNULL};
 
-static float orange_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			    LCOLOR,	0.35, 0.175, 0.0, 
-			    POSITION, -50.0, 50.0, 10.0, 0.0, 
-			    LMNULL};
+static float orange_inf_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,	0.35, 0.175, 0.0, 
+	POSITION, -50.0, 50.0, 10.0, 0.0, 
+	LMNULL};
 
-static float white_local_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
-			     LCOLOR,   0.75, 0.75, 0.75, 
-			     POSITION, 0.0, 10.0, 10.0, 5.0, 
-			     LMNULL};
-			   
+static float white_local_light[] = {
+	AMBIENT, 0.0, 0.0, 0.0, 
+	LCOLOR,   0.75, 0.75, 0.75, 
+	POSITION, 0.0, 10.0, 10.0, 5.0, 
+	LMNULL};
+
 
 #endif
 
@@ -2237,63 +2294,65 @@ static float white_local_light[] = {AMBIENT, 0.0, 0.0, 0.0,
  *	LOCALVIEWER	1=eye at (0,0,0), 0=eye at (0,0,+inf)
  */
 static float	default_lmodel[] = {
-			AMBIENT,	0.2,  0.2,  0.2,
-			ATTENUATION,	1.0, 0.0, 
-			LOCALVIEWER,	0.0, 
-			LMNULL};
+	AMBIENT,	0.2,  0.2,  0.2,
+	ATTENUATION,	1.0, 0.0, 
+	LOCALVIEWER,	0.0, 
+	LMNULL};
 
-static float infinite[] = {AMBIENT, 0.3,  0.3, 0.3, 
-	            LOCALVIEWER, 0.0, 
-	            LMNULL};
+static float infinite[] = {
+	AMBIENT, 0.3,  0.3, 0.3, 
+	LOCALVIEWER, 0.0, 
+	LMNULL};
 
-static float local[] = {AMBIENT, 0.3,  0.3, 0.3, 
-	         LOCALVIEWER, 1.0, 
-	         ATTENUATION, 1.0, 0.0, 
-	         LMNULL};
+static float local[] = {
+	AMBIENT, 0.3,  0.3, 0.3, 
+	LOCALVIEWER, 1.0, 
+	ATTENUATION, 1.0, 0.0, 
+	LMNULL};
 
 
 make_materials()
 {
-    /* define material properties */
-    lmdef (DEFMATERIAL, 1, 0, material_default);
+	/* define material properties */
+	lmdef (DEFMATERIAL, 1, 0, material_default);
 
-    lmdef (DEFMATERIAL, 2, 0, mat_brass);
-    lmdef (DEFMATERIAL, 3, 0, mat_shinybrass);
-    lmdef (DEFMATERIAL, 4, 0, mat_pewter);
-    lmdef (DEFMATERIAL, 5, 0, mat_silver);
-    lmdef (DEFMATERIAL, 6, 0, mat_gold);
-    lmdef (DEFMATERIAL, 7, 0, mat_shinygold);
-    lmdef (DEFMATERIAL, 8, 0, mat_plaster);
-    lmdef (DEFMATERIAL, 9, 0, mat_redplastic);
-    lmdef (DEFMATERIAL, 10, 0, mat_greenplastic);
-    lmdef (DEFMATERIAL, 11, 0, mat_blueplastic);
+	lmdef (DEFMATERIAL, 2, 0, mat_brass);
+	lmdef (DEFMATERIAL, 3, 0, mat_shinybrass);
+	lmdef (DEFMATERIAL, 4, 0, mat_pewter);
+	lmdef (DEFMATERIAL, 5, 0, mat_silver);
+	lmdef (DEFMATERIAL, 6, 0, mat_gold);
+	lmdef (DEFMATERIAL, 7, 0, mat_shinygold);
+	lmdef (DEFMATERIAL, 8, 0, mat_plaster);
+	lmdef (DEFMATERIAL, 9, 0, mat_redplastic);
+	lmdef (DEFMATERIAL, 10, 0, mat_greenplastic);
+	lmdef (DEFMATERIAL, 11, 0, mat_blueplastic);
 
-    lmdef (DEFMATERIAL, 12, 0, mat_greenflat);
-    lmdef (DEFMATERIAL, 13, 0, mat_greenshiny);
+	lmdef (DEFMATERIAL, 12, 0, mat_greenflat);
+	lmdef (DEFMATERIAL, 13, 0, mat_greenshiny);
 
-    lmdef (DEFMATERIAL, 14, 0, mat_blueflat);
-    lmdef (DEFMATERIAL, 15, 0, mat_blueshiny);
+	lmdef (DEFMATERIAL, 14, 0, mat_blueflat);
+	lmdef (DEFMATERIAL, 15, 0, mat_blueshiny);
 
-    lmdef (DEFMATERIAL, 16, 0, mat_redflat);
-    lmdef (DEFMATERIAL, 17, 0, mat_redshiny);
+	lmdef (DEFMATERIAL, 16, 0, mat_redflat);
+	lmdef (DEFMATERIAL, 17, 0, mat_redshiny);
 
-    lmdef (DEFMATERIAL, 18, 0, mat_beigeshiny);
+	lmdef (DEFMATERIAL, 18, 0, mat_beigeshiny);
 
 	lmdef( DEFMATERIAL, 19, 0, material_xdefault );
 	lmdef( DEFMATERIAL, 20, 0, material_rtdefault );
 
-/*    lmdef (DEFLIGHT, 1, 0, default_light); */
-    lmdef (DEFLIGHT, 4, 0, green_inf_light);
-    lmdef (DEFLIGHT, 2, 0, white_inf_light);
-    lmdef (DEFLIGHT, 3, 0, red_inf_light);
-    lmdef (DEFLIGHT, 4, 0, green_inf_light);
-    lmdef (DEFLIGHT, 5, 0, blue_inf_light);
-/*    lmdef (DEFLIGHT, 6, 0, orange_inf_light); */
-    lmdef (DEFLIGHT, 7, 0, white_local_light);
+	/*    lmdef (DEFLIGHT, 1, 0, default_light); */
+	lmdef (DEFLIGHT, 4, 0, green_inf_light);
+	lmdef (DEFLIGHT, 2, 0, white_inf_light);
+	lmdef (DEFLIGHT, 3, 0, red_inf_light);
+	lmdef (DEFLIGHT, 4, 0, green_inf_light);
+	lmdef (DEFLIGHT, 5, 0, blue_inf_light);
+	/*    lmdef (DEFLIGHT, 6, 0, orange_inf_light); */
+	lmdef (DEFLIGHT, 7, 0, white_local_light);
 
-    lmdef (DEFLMODEL, 1, 0, default_lmodel);
-    lmdef (DEFLMODEL, 2, 0, infinite);
-    lmdef (DEFLMODEL, 3, 0, local);
+	lmdef (DEFLMODEL, 1, 0, default_lmodel);
+	lmdef (DEFLMODEL, 2, 0, infinite);
+	lmdef (DEFLMODEL, 3, 0, local);
 
 
 }
