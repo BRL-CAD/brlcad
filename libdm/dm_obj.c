@@ -84,7 +84,7 @@ HIDDEN int dmo_refreshFb_tcl();
 
 HIDDEN struct dm_obj HeadDMObj;	/* head of display manager object list */
 
-HIDDEN struct cmdtab dmo_cmds[] = {
+HIDDEN struct bu_cmdtab dmo_cmds[] = {
 	"drawBegin",		dmo_drawBegin_tcl,
 	"drawEnd",		dmo_drawEnd_tcl,
 	"normal",		dmo_normal_tcl,
@@ -128,7 +128,7 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  return do_cmd(clientData, interp, argc, argv, dmo_cmds, 1);
+  return bu_cmd(clientData, interp, argc, argv, dmo_cmds, 1);
 }
 
 int

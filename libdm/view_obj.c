@@ -61,7 +61,7 @@ HIDDEN void vo_mike_persp_mat();
 HIDDEN struct view_obj HeadViewObj;		/* head of view object list */
 HIDDEN point_t vo_eye_pos_scr = {0, 0, 1};
 
-HIDDEN struct cmdtab vo_cmds[] = 
+HIDDEN struct bu_cmdtab vo_cmds[] = 
 {
 	"scale",		vo_scale_tcl,
 	"size",			vo_size_tcl,
@@ -85,7 +85,7 @@ Tcl_Interp	*interp;
 int		argc;
 char		**argv;
 {
-  return do_cmd(clientData, interp, argc, argv, vo_cmds, 1);
+  return bu_cmd(clientData, interp, argc, argv, vo_cmds, 1);
 }
 
 int
