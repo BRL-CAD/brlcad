@@ -14,6 +14,9 @@
 
 /* Explicit composition of each product */
 
+add_chan: add_chan.o
+	CC LDFLAGS add_chan.o -o add_chan
+
 ascript: ascript.o anim.o
 	CC LDFLAGS ascript.o anim.o LIBRT -lm -lmpc -o ascript
 
@@ -31,6 +34,9 @@ lookat: lookat.o anim.o
 
 keyread: keyread.o anim.o
 	CC LDFLAGS keyread.o anim.o LIBES -o keyread
+
+mult_chan: mult_chan.o
+	CC LDFLAGS mult_chan.o -o mult_chan
 
 ntrack: ntrack.o cattrack.o anim.o
 	CC LDFLAGS ntrack.o cattrack.o anim.o LIBRT -lm -lmpc -o ntrack
