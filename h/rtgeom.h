@@ -34,9 +34,9 @@
 struct rt_tor_internal {
 	long	magic;
 	point_t	v;		/* center point */
-	vect_t	h;		/* normal, r_h length */
-	fastf_t	r_h;		/* radius in H direction */
-	fastf_t	r_a;		/* radius in A direction */
+	vect_t	h;		/* normal, unit length */
+	fastf_t	r_h;		/* radius in H direction (r2) */
+	fastf_t	r_a;		/* radius in A direction (r1) */
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	vect_t	a;		/* r_a length */
 	vect_t	b;		/* r_b length */
