@@ -242,9 +242,11 @@ struct bn_gauss {
 };
 
 BU_EXTERN(struct bn_unif *	bn_unif_init, (long setseed, int method));
+BU_EXTERN(struct bn_unif *	bn_unif_free, (struct bn_unif *p));
 BU_EXTERN(long			bn_unif_long_fill, (struct bn_unif *p));
 BU_EXTERN(double		bn_unif_double_fill, (struct bn_unif *p));
 BU_EXTERN(struct bn_gauss *	bn_gauss_init, (long setseed, int method));
+BU_EXTERN(double		bn_gauss_free, (struct bn_gauss *p));
 BU_EXTERN(double		bn_gauss_fill, (struct bn_gauss *p));
 
 #define	BN_UNIF_LONG(_p)	\
