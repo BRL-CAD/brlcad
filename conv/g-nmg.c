@@ -286,6 +286,7 @@ union tree		*curtree;
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
+	union tree		*ret_tree;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	RT_CK_TOL(tsp->ts_tol);
@@ -338,7 +339,13 @@ union tree		*curtree;
 		goto out;
 	}
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+
+	if( ret_tree )
+		r = ret_tree->tr_d.td_r;
+	else
+		r = (struct nmgregion *)NULL;
+
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 	if (r != 0)

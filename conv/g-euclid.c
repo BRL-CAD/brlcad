@@ -693,6 +693,7 @@ union tree		*curtree;
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
+	union tree		*ret_tree;
 
 	if( verbose )
 		rt_log( "do_region_end: regionid = %d\n" , tsp->ts_regionid );
@@ -747,7 +748,13 @@ union tree		*curtree;
 	if( verbose )
 		rt_log( "\tEvaluating region\n" );
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+
+	if( ret_tree )
+		r = ret_tree->tr_d.td_r;
+	else
+		r = (struct nmgregion *)NULL;
+
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 	if (r != 0)
