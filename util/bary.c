@@ -30,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 struct site
 {
-    struct rt_list	l;
+    struct bu_list	l;
     fastf_t		s_x;
     fastf_t		s_y;
     fastf_t		s_z;
@@ -43,40 +43,40 @@ void print_usage (void)
 {
 #define OPT_STRING	"ns:t?"
 
-    rt_log("Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
+    bu_log("Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
 }
 
 void enqueue_site (sl, x, y, z)
 
-struct rt_list	*sl;
+struct bu_list	*sl;
 fastf_t		x, y, z;
 
 {
     struct site	*sp;
 
-    RT_CK_LIST_HEAD(sl);
+    BU_CK_LIST_HEAD(sl);
 
-    sp = (struct site *) rt_malloc(sizeof(struct site), "site structure");
+    sp = (struct site *) bu_malloc(sizeof(struct site), "site structure");
     sp -> s_magic = SITE_MAGIC;
     sp -> s_x = x;
     sp -> s_y = y;
     sp -> s_z = z;
 
-    RT_LIST_INSERT(sl, &(sp -> l));
+    BU_LIST_INSERT(sl, &(sp -> l));
 }
 
 void show_sites (sl)
 
-struct rt_list	*sl;
+struct bu_list	*sl;
 
 {
     struct site	*sp;
 
-    RT_CK_LIST_HEAD(sl);
+    BU_CK_LIST_HEAD(sl);
 
-    for (RT_LIST_FOR(sp, site, sl))
+    for (BU_LIST_FOR(sp, site, sl))
     {
-	rt_log("I got a site (%g, %g, %g)\n",
+	bu_log("I got a site (%g, %g, %g)\n",
 	    sp -> s_x, sp -> s_y, sp -> s_z);
     }
 }
@@ -87,7 +87,7 @@ FILE		*fp;
 fastf_t		*c_p;
 int		c_len;
 int		normalize;
-struct rt_vls	*tail;
+struct bu_vls	*tail;
 
 {
     char		*cp;
@@ -95,18 +95,18 @@ struct rt_vls	*tail;
     int			i;
     int			return_code = 1;
     static int		line_nm = 0;
-    struct rt_vls	*bp;
+    struct bu_vls	*bp;
 
-    for (bp = rt_vls_vlsinit(); ; rt_vls_trunc(bp, 0))
+    for (bp = bu_vls_vlsinit(); ; bu_vls_trunc(bp, 0))
     {
-	if (rt_vls_gets(bp, fp) == -1)
+	if (bu_vls_gets(bp, fp) == -1)
 	{
 	    return_code = EOF;
 	    goto wrap_up;
 	}
 
 	++line_nm;
-	cp = rt_vls_addr(bp);
+	cp = bu_vls_addr(bp);
 
 	while ((*cp == ' ') || (*cp == '\t'))
 	    ++cp;
@@ -121,8 +121,8 @@ struct rt_vls	*tail;
 	    c_p[i] = strtod(cp, &endp);
 	    if (endp == cp)
 	    {
-		rt_log("Illegal input at line %d: '%s'\n",
-		    line_nm, rt_vls_addr(bp));
+		bu_log("Illegal input at line %d: '%s'\n",
+		    line_nm, bu_vls_addr(bp));
 		exit (1);
 	    }
 	    cp = endp;
@@ -142,10 +142,10 @@ struct rt_vls	*tail;
     wrap_up:
 	if ((return_code == 1) && (tail != 0))
 	{
-	    rt_vls_trunc(tail, 0);
-	    rt_vls_strcat(tail, cp);
+	    bu_vls_trunc(tail, 0);
+	    bu_vls_strcat(tail, cp);
 	}
-	rt_vls_vlsfree(bp);
+	bu_vls_vlsfree(bp);
 	return (return_code);
 }
 
@@ -163,14 +163,14 @@ char	*argv[];
     fastf_t		*coeff;
     fastf_t		x, y, z;
     FILE		*infp;
-    struct rt_list	site_list;
-    struct rt_vls	*tail_buf = 0;
+    struct bu_list	site_list;
+    struct bu_vls	*tail_buf = 0;
     struct site		*sp;
 
     extern int	optind;			/* index from getopt(3C) */
     extern char	*optarg;		/* index from getopt(3C) */
 
-    RT_LIST_INIT(&site_list);
+    BU_LIST_INIT(&site_list);
     while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
 	{
@@ -180,7 +180,7 @@ char	*argv[];
 	    case 's':
 		if (sscanf(optarg, "%lf %lf %lf", &x, &y, &z) != 3)
 		{
-		    rt_log("Illegal site: '%s'\n", optarg);
+		    bu_log("Illegal site: '%s'\n", optarg);
 		    print_usage();
 		    exit (1);
 		}
@@ -188,7 +188,7 @@ char	*argv[];
 		break;
 	    case 't':
 		if (tail_buf == 0)	 /* Only initialize it once */
-		    tail_buf = rt_vls_vlsinit();
+		    tail_buf = bu_vls_vlsinit();
 		break;
 	    case '?':
 	    default:
@@ -206,7 +206,7 @@ char	*argv[];
 	    inf_name = argv[optind++];
 	    if ((infp = fopen(inf_name, "r")) == NULL)
 	    {
-		rt_log ("Cannot open file '%s'\n", inf_name);
+		bu_log ("Cannot open file '%s'\n", inf_name);
 		exit (1);
 	    }
 	    break;
@@ -215,7 +215,7 @@ char	*argv[];
 	    exit (1);
     }
 
-    if (RT_LIST_IS_EMPTY(&site_list))
+    if (BU_LIST_IS_EMPTY(&site_list))
     {
 	enqueue_site(&site_list, (fastf_t) 1.0, (fastf_t) 0.0, (fastf_t) 0.0);
 	enqueue_site(&site_list, (fastf_t) 0.0, (fastf_t) 1.0, (fastf_t) 0.0);
@@ -223,26 +223,26 @@ char	*argv[];
     }
 
     nm_sites = 0;
-    for (RT_LIST_FOR(sp, site, &site_list))
+    for (BU_LIST_FOR(sp, site, &site_list))
 	++nm_sites;
 
     coeff = (fastf_t *)
-		rt_malloc(nm_sites * sizeof(fastf_t), "coefficient array");
+		bu_malloc(nm_sites * sizeof(fastf_t), "coefficient array");
 
     while (read_point(infp, coeff, nm_sites, normalize, tail_buf) != EOF)
     {
 	x = y = z = 0.0;
 	i = 0;
-	for (RT_LIST_FOR(sp, site, &site_list))
+	for (BU_LIST_FOR(sp, site, &site_list))
 	{
 	    x += sp -> s_x * coeff[i];
 	    y += sp -> s_y * coeff[i];
 	    z += sp -> s_z * coeff[i];
 	    ++i;
 	}
-	rt_flog(stdout, "%g %g %g", x, y, z);
+	bu_flog(stdout, "%g %g %g", x, y, z);
 	if (tail_buf)
-	    rt_flog(stdout, "%s", rt_vls_addr(tail_buf));
-	rt_flog(stdout, "\n");
+	    bu_flog(stdout, "%s", bu_vls_addr(tail_buf));
+	bu_flog(stdout, "\n");
     }
 }
