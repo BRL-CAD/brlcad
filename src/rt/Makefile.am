@@ -166,7 +166,7 @@ rtray_SOURCES = \
 	rtray_vers.c \
 	viewray.c
 
-rtregis_SOURCES = 
+rtregis_SOURCES = \
 	read-rtlog.c \
 	rtregis.c
 
