@@ -99,7 +99,13 @@ struct trail {
   point_t	t_pt[MAX_TRAIL];
 };
 
-#define MAX_CLIENTS 32
+#ifdef MAX_CLIENTS
+#	undef MAX_CLIENTS
+#	define MAX_CLIENTS 32
+#else
+#	define MAX_CLIENTS 32
+#endif
+
 struct client {
   int			c_fd;
   struct pkg_conn	*c_pkg;
