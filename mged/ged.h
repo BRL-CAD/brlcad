@@ -233,3 +233,9 @@ extern char *state_str[];		/* identifying strings */
 
 #define MIN(a,b)	if( (b) < (a) )  a = b
 #define MAX(a,b)	if( (b) > (a) )  a = b
+
+/* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
+#define GETSTRUCT(p,str) \
+	p = (struct str *)malloc((unsigned)sizeof(struct str)); \
+	if( p == (struct str *)0 ) \
+		(void)printf("getstruct( p, str ): malloc failed\n");/* cpp magic */
