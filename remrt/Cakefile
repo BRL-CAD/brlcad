@@ -49,7 +49,6 @@
 		RTDIR/sh_rtrans.o \
 		RTDIR/sh_brdf.o \
 		RTDIR/sh_gauss.o \
-		RTDIR/sh_paint.o \
 		RTDIR/sh_noise.o \
 		RTDIR/sh_prj.o \
 		RTDIR/sh_grass.o \
