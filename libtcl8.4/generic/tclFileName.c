@@ -1380,18 +1380,20 @@ Tcl_TranslateFileName(interp, name, bufferPtr)
 				 * with name after tilde substitution. */
 {
     Tcl_Obj *path = Tcl_NewStringObj(name, -1);
-    CONST char *result;
+    Tcl_Obj *transPtr;
 
     Tcl_IncrRefCount(path);
-    result = Tcl_FSGetTranslatedStringPath(interp, path);
-    if (result == NULL) {
+    transPtr = Tcl_FSGetTranslatedPath(interp, path);
+    if (transPtr == NULL) {
 	Tcl_DecrRefCount(path);
 	return NULL;
     }
+    
     Tcl_DStringInit(bufferPtr);
-    Tcl_DStringAppend(bufferPtr, result, -1);
+    Tcl_DStringAppend(bufferPtr, Tcl_GetString(transPtr), -1);
     Tcl_DecrRefCount(path);
-
+    Tcl_DecrRefCount(transPtr);
+    
     /*
      * Convert forward slashes to backslashes in Windows paths because
      * some system interfaces don't accept forward slashes.
@@ -1583,7 +1585,6 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
     join = 0;
     dir = PATH_NONE;
     typePtr = NULL;
-    resultPtr = Tcl_GetObjResult(interp);
     for (i = 1; i < objc; i++) {
 	if (Tcl_GetIndexFromObj(interp, objv[i], options, "option", 0, &index)
 		!= TCL_OK) {
@@ -1609,14 +1610,14 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
 		break;
 	    case GLOB_DIR:				/* -dir */
 		if (i == (objc-1)) {
-		    Tcl_AppendToObj(resultPtr,
-			    "missing argument to \"-directory\"", -1);
+		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			    "missing argument to \"-directory\"", -1));
 		    return TCL_ERROR;
 		}
 		if (dir != PATH_NONE) {
-		    Tcl_AppendToObj(resultPtr,
+		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 			    "\"-directory\" cannot be used with \"-path\"",
-			    -1);
+			    -1));
 		    return TCL_ERROR;
 		}
 		dir = PATH_DIR;
@@ -1632,14 +1633,14 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
 		break;
 	    case GLOB_PATH:				/* -path */
 	        if (i == (objc-1)) {
-		    Tcl_AppendToObj(resultPtr,
-			    "missing argument to \"-path\"", -1);
+		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			    "missing argument to \"-path\"", -1));
 		    return TCL_ERROR;
 		}
 		if (dir != PATH_NONE) {
-		    Tcl_AppendToObj(resultPtr,
+		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 			    "\"-path\" cannot be used with \"-directory\"",
-			    -1);
+			    -1));
 		    return TCL_ERROR;
 		}
 		dir = PATH_GENERAL;
@@ -1648,8 +1649,8 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
 		break;
 	    case GLOB_TYPE:				/* -types */
 	        if (i == (objc-1)) {
-		    Tcl_AppendToObj(resultPtr,
-			    "missing argument to \"-types\"", -1);
+		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			    "missing argument to \"-types\"", -1));
 		    return TCL_ERROR;
 		}
 		typePtr = objv[i+1];
@@ -1669,9 +1670,9 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
 	return TCL_ERROR;
     }
     if ((globFlags & TCL_GLOBMODE_TAILS) && (pathOrDir == NULL)) {
-	Tcl_AppendToObj(resultPtr,
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
 	  "\"-tails\" must be used with either \"-directory\" or \"-path\"",
-	  -1);
+	  -1));
 	return TCL_ERROR;
     }
     
@@ -1830,8 +1831,7 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
 		    }
 		}
 		/*
-		 * Error cases.  We re-get the interpreter's result,
-		 * just to be sure it hasn't changed, and we reset
+		 * Error cases.  We reset
 		 * the 'join' flag to zero, since we haven't yet
 		 * made use of it.
 		 */
@@ -1843,10 +1843,9 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
 		join = 0;
 		goto endOfGlob;
 		badMacTypesArg:
-		resultPtr = Tcl_GetObjResult(interp);
-		Tcl_AppendToObj(resultPtr,
+		Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		   "only one MacOS type or creator argument"
-		   " to \"-types\" allowed", -1);
+		   " to \"-types\" allowed", -1));
 		result = TCL_ERROR;
 		join = 0;
 		goto endOfGlob;
@@ -1862,11 +1861,6 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
      */
     objc -= i;
     objv += i;
-    /* 
-     * We re-retrieve this, in case it was changed in 
-     * the Tcl_ResetResult above 
-     */
-    resultPtr = Tcl_GetObjResult(interp);
     result = TCL_OK;
     if (join) {
 	if (dir != PATH_GENERAL) {

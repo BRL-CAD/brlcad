@@ -1399,8 +1399,8 @@ TclExecuteByteCode(interp, codePtr)
 	     * Finally, let TclEvalObjvInternal handle the command. 
 	     */
 
-	    Tcl_ResetResult(interp);
 	    DECACHE_STACK_INFO();
+	    Tcl_ResetResult(interp);
 	    result = TclEvalObjvInternal(interp, objc, objv, bytes, length, 0);
 	    CACHE_STACK_INFO();
 
@@ -1425,7 +1425,26 @@ TclExecuteByteCode(interp, codePtr)
 		        objc, cmdNameBuf), Tcl_GetObjResult(interp));
 
 		objResultPtr = Tcl_GetObjResult(interp);
-		NEXT_INST_V(pcAdjustment, opnd, 1);
+
+		/*
+		 * Reset the interp's result to avoid possible duplications
+		 * of large objects [Bug 781585]. We do not call
+		 * Tcl_ResetResult() to avoid any side effects caused by
+		 * the resetting of errorInfo and errorCode [Bug 804681], 
+		 * which are not needed here. We chose instead to manipulate
+		 * the interp's object result directly.
+		 *
+		 * Note that the result object is now in objResultPtr, it
+		 * keeps the refCount it had in its role of iPtr->objResultPtr.
+		 */
+		{
+		    Tcl_Obj *newObjResultPtr;
+		    TclNewObj(newObjResultPtr);
+		    Tcl_IncrRefCount(newObjResultPtr);
+		    iPtr->objResultPtr = newObjResultPtr;
+		}
+
+		NEXT_INST_V(pcAdjustment, opnd, -1);
 	    } else {
 		cleanup = opnd;
 		goto processExceptionReturn;
@@ -1451,7 +1470,26 @@ TclExecuteByteCode(interp, codePtr)
 	    objResultPtr = Tcl_GetObjResult(interp);
 	    TRACE_WITH_OBJ(("\"%.30s\" => ", O2S(objPtr)),
 			   Tcl_GetObjResult(interp));
-	    NEXT_INST_F(1, 1, 1);
+
+	    /*
+	     * Reset the interp's result to avoid possible duplications
+	     * of large objects [Bug 781585]. We do not call
+	     * Tcl_ResetResult() to avoid any side effects caused by
+	     * the resetting of errorInfo and errorCode [Bug 804681], 
+	     * which are not needed here. We chose instead to manipulate
+	     * the interp's object result directly.
+	     *
+	     * Note that the result object is now in objResultPtr, it
+	     * keeps the refCount it had in its role of iPtr->objResultPtr.
+	     */
+	    {
+	        Tcl_Obj *newObjResultPtr;
+		TclNewObj(newObjResultPtr);
+		Tcl_IncrRefCount(newObjResultPtr);
+		iPtr->objResultPtr = newObjResultPtr;
+	    }
+
+	    NEXT_INST_F(1, 1, -1);
 	} else {
 	    cleanup = 1;
 	    goto processExceptionReturn;
@@ -1459,8 +1497,8 @@ TclExecuteByteCode(interp, codePtr)
 
     case INST_EXPR_STK:
 	objPtr = stackPtr[stackTop];
-	Tcl_ResetResult(interp);
 	DECACHE_STACK_INFO();
+	Tcl_ResetResult(interp);
 	result = Tcl_ExprObj(interp, objPtr, &valuePtr);
 	CACHE_STACK_INFO();
 	if (result != TCL_OK) {
@@ -1889,7 +1927,9 @@ TclExecuteByteCode(interp, codePtr)
 	    if (result != TCL_OK) {
 		TRACE_WITH_OBJ(("%u (by %s) => ERROR converting increment amount to int: ",
 		        opnd, O2S(valuePtr)), Tcl_GetObjResult(interp));
+		DECACHE_STACK_INFO();
 		Tcl_AddErrorInfo(interp, "\n    (reading increment)");
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	    FORCE_LONG(valuePtr, i, w);
@@ -1931,8 +1971,10 @@ TclExecuteByteCode(interp, codePtr)
 	varPtr = TclObjLookupVar(interp, objPtr, part2, 
 	        TCL_LEAVE_ERR_MSG, "read", 0, 1, &arrayPtr);
 	if (varPtr == NULL) {
+	    DECACHE_STACK_INFO();
 	    Tcl_AddObjErrorInfo(interp,
 	            "\n    (reading value of variable to increment)", -1);
+	    CACHE_STACK_INFO();
 	    TRACE_APPEND(("ERROR: %.30s\n", O2S(Tcl_GetObjResult(interp))));
 	    result = TCL_ERROR;
 	    goto checkForCatch;
@@ -2146,7 +2188,9 @@ TclExecuteByteCode(interp, codePtr)
 	    if (result != TCL_OK) {
 		TRACE(("\"%.20s\" => ILLEGAL TYPE %s \n", O2S(valuePtr),
 		        (t1Ptr? t1Ptr->name : "null")));
+		DECACHE_STACK_INFO();
 		IllegalExprOperandType(interp, pc, valuePtr);
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	}
@@ -2173,7 +2217,9 @@ TclExecuteByteCode(interp, codePtr)
 	    if (result != TCL_OK) {
 		TRACE(("\"%.20s\" => ILLEGAL TYPE %s \n", O2S(value2Ptr),
 		        (t2Ptr? t2Ptr->name : "null")));
+		DECACHE_STACK_INFO();
 		IllegalExprOperandType(interp, pc, value2Ptr);
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	}
@@ -2899,7 +2945,9 @@ TclExecuteByteCode(interp, codePtr)
 		        O2S(valuePtr), O2S(value2Ptr), 
 		        (valuePtr->typePtr? 
 			     valuePtr->typePtr->name : "null")));
+		DECACHE_STACK_INFO();
 		IllegalExprOperandType(interp, pc, valuePtr);
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	}
@@ -2914,7 +2962,9 @@ TclExecuteByteCode(interp, codePtr)
 		        O2S(valuePtr), O2S(value2Ptr),
 		        (value2Ptr->typePtr?
 			    value2Ptr->typePtr->name : "null")));
+		DECACHE_STACK_INFO();
 		IllegalExprOperandType(interp, pc, value2Ptr);
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	}
@@ -3157,7 +3207,9 @@ TclExecuteByteCode(interp, codePtr)
 		        s, O2S(valuePtr),
 		        (valuePtr->typePtr?
 			    valuePtr->typePtr->name : "null")));
+		DECACHE_STACK_INFO();
 		IllegalExprOperandType(interp, pc, valuePtr);
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	    t1Ptr = valuePtr->typePtr;
@@ -3189,7 +3241,9 @@ TclExecuteByteCode(interp, codePtr)
 		        O2S(value2Ptr), s,
 		        (value2Ptr->typePtr?
 			    value2Ptr->typePtr->name : "null")));
+		DECACHE_STACK_INFO();
 		IllegalExprOperandType(interp, pc, value2Ptr);
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	    t2Ptr = value2Ptr->typePtr;
@@ -3235,7 +3289,9 @@ TclExecuteByteCode(interp, codePtr)
 	    if (IS_NAN(dResult) || IS_INF(dResult)) {
 		TRACE(("%.20s %.20s => IEEE FLOATING PT ERROR\n",
 		        O2S(valuePtr), O2S(value2Ptr)));
+		DECACHE_STACK_INFO();
 		TclExprFloatError(interp, dResult);
+		CACHE_STACK_INFO();
 		result = TCL_ERROR;
 		goto checkForCatch;
 	    }
@@ -3375,7 +3431,9 @@ TclExecuteByteCode(interp, codePtr)
 	    if (result != TCL_OK) { 
 		TRACE(("\"%.20s\" => ILLEGAL TYPE %s \n",
 		        s, (tPtr? tPtr->name : "null")));
+		DECACHE_STACK_INFO();
 		IllegalExprOperandType(interp, pc, valuePtr);
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	    tPtr = valuePtr->typePtr;
@@ -3448,7 +3506,9 @@ TclExecuteByteCode(interp, codePtr)
 		if (result != TCL_OK) {
 		    TRACE(("\"%.20s\" => ILLEGAL TYPE %s\n",
 		            s, (tPtr? tPtr->name : "null")));
+		    DECACHE_STACK_INFO();
 		    IllegalExprOperandType(interp, pc, valuePtr);
+		    CACHE_STACK_INFO();
 		    goto checkForCatch;
 		}
 	    }
@@ -3538,7 +3598,9 @@ TclExecuteByteCode(interp, codePtr)
 	    if (result != TCL_OK) {   /* try to convert to double */
 		TRACE(("\"%.20s\" => ILLEGAL TYPE %s\n",
 		        O2S(valuePtr), (tPtr? tPtr->name : "null")));
+		DECACHE_STACK_INFO();
 		IllegalExprOperandType(interp, pc, valuePtr);
+		CACHE_STACK_INFO();
 		goto checkForCatch;
 	    }
 	}
@@ -3703,7 +3765,9 @@ TclExecuteByteCode(interp, codePtr)
 		if (IS_NAN(d) || IS_INF(d)) {
 		    TRACE(("\"%.20s\" => IEEE FLOATING PT ERROR\n",
 		            O2S(objResultPtr)));
+		    DECACHE_STACK_INFO();
 		    TclExprFloatError(interp, d);
+		    CACHE_STACK_INFO();
 		    result = TCL_ERROR;
 		    goto checkForCatch;
 		}
@@ -3723,13 +3787,17 @@ TclExecuteByteCode(interp, codePtr)
     }
 	
     case INST_BREAK:
+	DECACHE_STACK_INFO();
 	Tcl_ResetResult(interp);
+	CACHE_STACK_INFO();
 	result = TCL_BREAK;
 	cleanup = 0;
 	goto processExceptionReturn;
 
     case INST_CONTINUE:
+	DECACHE_STACK_INFO();
 	Tcl_ResetResult(interp);
+	CACHE_STACK_INFO();
 	result = TCL_CONTINUE;
 	cleanup = 0;
 	goto processExceptionReturn;
@@ -3931,7 +3999,18 @@ TclExecuteByteCode(interp, codePtr)
     case INST_PUSH_RESULT:
 	objResultPtr = Tcl_GetObjResult(interp);
 	TRACE_WITH_OBJ(("=> "), Tcl_GetObjResult(interp));
-	NEXT_INST_F(1, 0, 1);
+
+	/*
+	 * See the comments at INST_INVOKE_STK
+	 */
+	{
+	    Tcl_Obj *newObjResultPtr;
+	    TclNewObj(newObjResultPtr);
+	    Tcl_IncrRefCount(newObjResultPtr);
+	    iPtr->objResultPtr = newObjResultPtr;
+	}
+
+	NEXT_INST_F(1, 0, -1);
 
     case INST_PUSH_RETURN_CODE:
 	objResultPtr = Tcl_NewLongObj(result);
@@ -3948,10 +4027,13 @@ TclExecuteByteCode(interp, codePtr)
      */
 	
  divideByZero:
+    DECACHE_STACK_INFO();
     Tcl_ResetResult(interp);
     Tcl_AppendToObj(Tcl_GetObjResult(interp), "divide by zero", -1);
     Tcl_SetErrorCode(interp, "ARITH", "DIVZERO", "divide by zero",
             (char *) NULL);
+    CACHE_STACK_INFO();
+
     result = TCL_ERROR;
     goto checkForCatch;
 	
@@ -4041,7 +4123,9 @@ TclExecuteByteCode(interp, codePtr)
     if ((result == TCL_ERROR) && !(iPtr->flags & ERR_ALREADY_LOGGED)) {
 	bytes = GetSrcInfoForPc(pc, codePtr, &length);
 	if (bytes != NULL) {
+	    DECACHE_STACK_INFO();
 	    Tcl_LogCommandInfo(interp, codePtr->source, bytes, length);
+            CACHE_STACK_INFO();
 	    iPtr->flags |= ERR_ALREADY_LOGGED;
 	}
     }

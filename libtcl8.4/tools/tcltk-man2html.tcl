@@ -479,7 +479,7 @@ proc output-RS-list {} {
 	    return
 	}
     }
-    man-puts <DL><P><DD>
+    man-puts <DL><DD>
     while {[more-text]} {
 	set line [next-text]
 	if {[is-a-directive $line]} {
@@ -512,7 +512,7 @@ proc output-IP-list {context code rest} {
     global manual
     if {![string length $rest]} {
 	# blank label, plain indent, no contents entry
-	man-puts <DL><P><DD>
+	man-puts <DL><DD>
 	while {[more-text]} {
 	    set line [next-text]
 	    if {[is-a-directive $line]} {
@@ -541,6 +541,7 @@ proc output-IP-list {context code rest} {
 	lappend manual(section-toc) <DL>
 	backup-text 1
 	set accept_RE 0
+	set para {}
 	while {[more-text]} {
 	    set line [next-text]
 	    if {[is-a-directive $line]} {
@@ -553,9 +554,9 @@ proc output-IP-list {context code rest} {
 			}
 			if {[string equal $manual(section) "ARGUMENTS"] || \
 				[regexp {^\[\d+\]$} $rest]} {
-			    man-puts "<P><DT>$rest<DD>"
+			    man-puts "$para<DT>$rest<DD>"
 			} else {
-			    man-puts "<P><DT>[long-toc $rest]<DD>"
+			    man-puts "$para<DT>[long-toc $rest]<DD>"
 			}
 			if {[string equal $manual(name):$manual(section) \
 				"selection:DESCRIPTION"]} {
@@ -590,7 +591,7 @@ proc output-IP-list {context code rest} {
 		    .PP {
 			if {[match-text @rest1 .br @rest2 .RS]} {
 			    # yet another nroff kludge as above
-			    man-puts "<P><DT>[long-toc $rest1]"
+			    man-puts "$para<DT>[long-toc $rest1]"
 			    man-puts "<DT>[long-toc $rest2]<DD>"
 			    incr accept_RE 1
 			} elseif {[match-text @rest .RE]} {
@@ -598,6 +599,7 @@ proc output-IP-list {context code rest} {
 			    if {!$accept_RE} {
 				man-puts "</DL><P>$rest<DL>"
 				backup-text 1
+				set para {}
 				break
 			    } else {
 				man-puts "<P>$rest"
@@ -625,8 +627,9 @@ proc output-IP-list {context code rest} {
 	    } else {
 		man-puts $line
 	    }
+	    set para <P>
 	}
-	man-puts <P></DL>
+	man-puts "$para</DL>"
 	lappend manual(section-toc) </DL>
 	if {$accept_RE} {
 	    manerror "missing .RE in output-IP-list"
@@ -1402,7 +1405,9 @@ proc make-man-pages {html args} {
 			    lappend manual(text) ".IP [process-text [unquote [string trim $rest]]]"
 			}
 			.TP {
-			    set next [gets $manual(infp)]
+			    while {[is-a-directive [set next [gets $manual(infp)]]]} {
+			    	manerror "ignoring $next after .TP"
+			    }
 			    if {"$next" != {'}} {
 				lappend manual(text) ".IP [process-text $next]"
 			    }

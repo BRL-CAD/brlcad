@@ -271,7 +271,9 @@ Tcl_GetIndexFromObjStruct(interp, objPtr, tablePtr, offset, msg, flags,
 	 * Produce a fancy error message.
 	 */
 	int count;
-	resultPtr = Tcl_GetObjResult(interp);
+
+	TclNewObj(resultPtr);
+	Tcl_SetObjResult(interp, resultPtr);
 	Tcl_AppendStringsToObj(resultPtr,
 		(numAbbrev > 1) ? "ambiguous " : "bad ", msg, " \"",
 		key, "\": must be ", STRING_AT(tablePtr,offset,0), (char*)NULL);
@@ -450,7 +452,8 @@ Tcl_WrongNumArgs(interp, objc, objv, message)
     int i;
     register IndexRep *indexRep;
 
-    objPtr = Tcl_GetObjResult(interp);
+    TclNewObj(objPtr);
+    Tcl_SetObjResult(interp, objPtr);
     Tcl_AppendToObj(objPtr, "wrong # args: should be \"", -1);
     for (i = 0; i < objc; i++) {
 	/*

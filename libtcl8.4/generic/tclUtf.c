@@ -501,11 +501,8 @@ Tcl_NumUtfChars(str, len)
 
     i = 0;
     if (len < 0) {
-	while (1) {
+	while (*str != '\0') {
 	    str += TclUtfToUniChar(str, chPtr);
-	    if (ch == '\0') {
-		break;
-	    }
 	    i++;
 	}
     } else {

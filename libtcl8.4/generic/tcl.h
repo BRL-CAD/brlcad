@@ -58,10 +58,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   4
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  4
+#define TCL_RELEASE_SERIAL  6
 
 #define TCL_VERSION	    "8.4"
-#define TCL_PATCH_LEVEL	    "8.4.4"
+#define TCL_PATCH_LEVEL	    "8.4.6"
 
 /*
  * The following definitions set up the proper options for Windows
@@ -1591,6 +1591,7 @@ typedef struct Tcl_GlobTypeData {
 #define TCL_GLOB_TYPE_FILE		(1<<4)
 #define TCL_GLOB_TYPE_LINK		(1<<5)
 #define TCL_GLOB_TYPE_SOCK		(1<<6)
+#define TCL_GLOB_TYPE_MOUNT		(1<<7)
 
 #define TCL_GLOB_PERM_RONLY		(1<<0)
 #define TCL_GLOB_PERM_HIDDEN		(1<<1)

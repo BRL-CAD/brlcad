@@ -553,8 +553,12 @@ struct nfa *nfa;
 			if (b->from != pre)
 				break;
 		if (b != NULL) {		/* must be split */
-			s->tmp = slist;
-			slist = s;
+			if (s->tmp == NULL) {  /* if not already in the list */
+			                       /* (fixes bugs 505048, 230589, */
+			                       /* 840258, 504785) */
+				s->tmp = slist;
+				slist = s;
+			}
 		}
 	}
 

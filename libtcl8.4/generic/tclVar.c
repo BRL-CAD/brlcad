@@ -616,7 +616,7 @@ TclObjLookupVar(interp, part1Ptr, part2, flags, msg, createPart1, createPart2,
  *     namespace; never follow the second (global) resolution path 
  *   - Bug #631741 - do not use special namespace or interp resolvers
  */
-#define LOOKUP_FOR_UPVAR 0x400
+#define LOOKUP_FOR_UPVAR 0x40000
 
 /*
  *----------------------------------------------------------------------

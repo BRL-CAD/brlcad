@@ -469,7 +469,9 @@ EXTERN int		gettimeofday _ANSI_ARGS_((struct timeval *tp,
  * isn't generally declared in a header file anywhere.
  */
 
+#ifdef NO_ERRNO
 extern int errno;
+#endif
 
 /*
  * Not all systems declare all the errors that Tcl uses!  Provide some

@@ -102,6 +102,10 @@ static Tcl_Obj*  TclFSNormalizeAbsolutePath
 
 static FilesystemRecord* FsGetFirstFilesystem(void);
 static void FsThrExitProc(ClientData cd);
+static Tcl_Obj* FsListMounts          _ANSI_ARGS_((Tcl_Obj *pathPtr, 
+						   CONST char *pattern));
+static Tcl_Obj* FsAddMountsToGlobResult  _ANSI_ARGS_((Tcl_Obj *result, 
+	   Tcl_Obj *pathPtr, CONST char *pattern, Tcl_GlobTypeData *types));
 
 #ifdef TCL_THREADS
 static void FsRecacheFilesystemList(void);
@@ -495,7 +499,7 @@ typedef struct ThreadSpecificData {
     FilesystemRecord *filesystemList;
 } ThreadSpecificData;
 
-Tcl_ThreadDataKey dataKey;
+static Tcl_ThreadDataKey dataKey;
 
 /* 
  * Declare fallback support function and 
@@ -586,11 +590,11 @@ FsRecacheFilesystemList(void)
     /* Trash the current cache */
     fsRecPtr = tsdPtr->filesystemList;
     while (fsRecPtr != NULL) {
-	tmpFsRecPtr = fsRecPtr;
+	tmpFsRecPtr = fsRecPtr->nextPtr;
 	if (--fsRecPtr->fileRefCount <= 0) {
 	    ckfree((char *)fsRecPtr);
 	}
-	fsRecPtr = tmpFsRecPtr->nextPtr;
+	fsRecPtr = tmpFsRecPtr;
     }
     tsdPtr->filesystemList = NULL;
 
@@ -710,7 +714,7 @@ FsUpdateCwd(cwdObj)
 void
 TclFinalizeFilesystem()
 {
-    FilesystemRecord *fsRecPtr, *tmpFsRecPtr;
+    FilesystemRecord *fsRecPtr;
 
     /* 
      * Assumption that only one thread is active now.  Otherwise
@@ -730,7 +734,7 @@ TclFinalizeFilesystem()
 
     fsRecPtr = filesystemList;
     while (fsRecPtr != NULL) {
-	tmpFsRecPtr = filesystemList->nextPtr;
+	FilesystemRecord *tmpFsRecPtr = fsRecPtr->nextPtr;
 	if (fsRecPtr->fileRefCount <= 0) {
 	    /* The native filesystem is static, so we don't free it */
 	    if (fsRecPtr != &nativeFilesystemRecord) {
@@ -1008,7 +1012,12 @@ Tcl_FSMatchInDirectory(interp, result, pathPtr, pattern, types)
     if (fsPtr != NULL) {
 	Tcl_FSMatchInDirectoryProc *proc = fsPtr->matchInDirectoryProc;
 	if (proc != NULL) {
-	    return (*proc)(interp, result, pathPtr, pattern, types);
+	    int ret = (*proc)(interp, result, pathPtr, pattern, types);
+	    if (ret == TCL_OK && pattern != NULL) {
+		result = FsAddMountsToGlobResult(result, pathPtr, 
+						 pattern, types);
+	    }
+	    return ret;
 	}
     } else {
 	Tcl_Obj* cwd;
@@ -1053,6 +1062,9 @@ Tcl_FSMatchInDirectory(interp, result, pathPtr, pattern, types)
 		if (ret == TCL_OK) {
 		    int resLength;
 
+		    tmpResultPtr = FsAddMountsToGlobResult(tmpResultPtr, cwd,
+							   pattern, types);
+
 		    ret = Tcl_ListObjLength(interp, tmpResultPtr, &resLength);
 		    if (ret == TCL_OK) {
 			int i;
@@ -1074,6 +1086,92 @@ Tcl_FSMatchInDirectory(interp, result, pathPtr, pattern, types)
     }
     Tcl_SetErrno(ENOENT);
     return -1;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * FsAddMountsToGlobResult --
+ *
+ *	This routine is used by the globbing code to take the results
+ *	of a directory listing and add any mounted paths to that
+ *	listing.  This is required so that simple things like 
+ *	'glob *' merge mounts and listings correctly.
+ *	
+ * Results: 
+ *	
+ *	The passed in 'result' may be modified (in place, if
+ *	necessary), and the correct list is returned.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------- 
+ */
+static Tcl_Obj*
+FsAddMountsToGlobResult(result, pathPtr, pattern, types)
+    Tcl_Obj *result;    /* The current list of matching paths */
+    Tcl_Obj *pathPtr;   /* The directory in question */
+    CONST char *pattern;
+    Tcl_GlobTypeData *types;
+{
+    int mLength, gLength, i;
+    int dir = (types == NULL || (types->type & TCL_GLOB_TYPE_DIR));
+    Tcl_Obj *mounts = FsListMounts(pathPtr, pattern);
+
+    if (mounts == NULL) return result; 
+
+    if (Tcl_ListObjLength(NULL, mounts, &mLength) != TCL_OK || mLength == 0) {
+	goto endOfMounts;
+    }
+    if (Tcl_ListObjLength(NULL, result, &gLength) != TCL_OK) {
+	goto endOfMounts;
+    }
+    for (i = 0; i < mLength; i++) {
+	Tcl_Obj *mElt;
+	int j;
+	int found = 0;
+	
+	Tcl_ListObjIndex(NULL, mounts, i, &mElt);
+
+	for (j = 0; j < gLength; j++) {
+	    Tcl_Obj *gElt;
+	    Tcl_ListObjIndex(NULL, result, j, &gElt);
+	    if (Tcl_FSEqualPaths(mElt, gElt)) {
+		found = 1;
+		if (!dir) {
+		    /* We don't want to list this */
+		    if (Tcl_IsShared(result)) {
+			Tcl_Obj *newList;
+			newList = Tcl_DuplicateObj(result);
+			Tcl_DecrRefCount(result);
+			result = newList;
+		    }
+		    Tcl_ListObjReplace(NULL, result, j, 1, 0, NULL);
+		    gLength--;
+		}
+		/* Break out of for loop */
+		break;
+	    }
+	}
+	if (!found && dir) {
+	    if (Tcl_IsShared(result)) {
+		Tcl_Obj *newList;
+		newList = Tcl_DuplicateObj(result);
+		Tcl_DecrRefCount(result);
+		result = newList;
+	    }
+	    Tcl_ListObjAppendElement(NULL, result, mElt);
+	    /* 
+	     * No need to increment gLength, since we
+	     * don't want to compare mounts against
+	     * mounts.
+	     */
+	}
+    }
+  endOfMounts:
+    Tcl_DecrRefCount(mounts);
+    return result;
 }
 
 /*
@@ -1810,6 +1908,9 @@ Tcl_FSStat(pathPtr, buf)
 	    retVal = (*statProcPtr->proc)(path, &oldStyleStatBuffer);
 	    statProcPtr = statProcPtr->nextPtr;
 	}
+	if (transPtr != NULL) {
+	    Tcl_DecrRefCount(transPtr);
+	}
     }
     
     Tcl_MutexUnlock(&obsoleteFsHookMutex);
@@ -1937,6 +2038,9 @@ Tcl_FSAccess(pathPtr, mode)
 	    retVal = (*accessProcPtr->proc)(path, mode);
 	    accessProcPtr = accessProcPtr->nextPtr;
 	}
+	if (transPtr != NULL) {
+	    Tcl_DecrRefCount(transPtr);
+	}
     }
     
     Tcl_MutexUnlock(&obsoleteFsHookMutex);
@@ -2013,6 +2117,9 @@ Tcl_FSOpenFileChannel(interp, pathPtr, modeString, permissions)
 	    retVal = (*openFileChannelProcPtr->proc)(interp, path,
 						     modeString, permissions);
 	    openFileChannelProcPtr = openFileChannelProcPtr->nextPtr;
+	}
+	if (transPtr != NULL) {
+	    Tcl_DecrRefCount(transPtr);
 	}
     }
     Tcl_MutexUnlock(&obsoleteFsHookMutex);
@@ -2402,7 +2509,8 @@ Tcl_FSGetCwd(interp)
 		 * we'll always be in the 'else' branch below which
 		 * is simpler.
 		 */
-                FsUpdateCwd(norm);
+		FsUpdateCwd(norm);
+		Tcl_DecrRefCount(norm);
 	    }
 	    Tcl_DecrRefCount(retVal);
 	}
@@ -2448,6 +2556,7 @@ Tcl_FSGetCwd(interp)
 			Tcl_DecrRefCount(norm);
 		    } else {
 			FsUpdateCwd(norm);
+			Tcl_DecrRefCount(norm);
 		    }
 		    Tcl_DecrRefCount(retVal);
 		} else {
@@ -3007,6 +3116,59 @@ Tcl_FSListVolumes(void)
 	    if (thisFsVolumes != NULL) {
 		Tcl_ListObjAppendList(NULL, resultPtr, thisFsVolumes);
 		Tcl_DecrRefCount(thisFsVolumes);
+	    }
+	}
+	fsRecPtr = fsRecPtr->nextPtr;
+    }
+    
+    return resultPtr;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * FsListMounts --
+ *
+ *	List all mounts within the given directory, which match the
+ *	given pattern.
+ *
+ * Results:
+ *	The list of mounts, in a list object which has refCount 0, or
+ *	NULL if we didn't even find any filesystems to try to list
+ *	mounts.
+ *
+ * Side effects:
+ *	None
+ *
+ *---------------------------------------------------------------------------
+ */
+
+static Tcl_Obj*
+FsListMounts(pathPtr, pattern)
+    Tcl_Obj *pathPtr;	        /* Contains path to directory to search. */
+    CONST char *pattern;	/* Pattern to match against. */
+{
+    FilesystemRecord *fsRecPtr;
+    Tcl_GlobTypeData mountsOnly = { TCL_GLOB_TYPE_MOUNT, 0, NULL, NULL };
+    Tcl_Obj *resultPtr = NULL;
+    
+    /*
+     * Call each of the "listMounts" functions in succession.
+     * A non-NULL return value indicates the particular function has
+     * succeeded.  We call all the functions registered, since we want
+     * a list from each filesystems.
+     */
+
+    fsRecPtr = FsGetFirstFilesystem();
+    while (fsRecPtr != NULL) {
+	if (fsRecPtr != &nativeFilesystemRecord) {
+	    Tcl_FSMatchInDirectoryProc *proc = 
+				  fsRecPtr->fsPtr->matchInDirectoryProc;
+	    if (proc != NULL) {
+		if (resultPtr == NULL) {
+		    resultPtr = Tcl_NewObj();
+		}
+		(*proc)(NULL, resultPtr, pathPtr, pattern, &mountsOnly);
 	    }
 	}
 	fsRecPtr = fsRecPtr->nextPtr;
@@ -4506,52 +4668,6 @@ Tcl_FSJoinPath(listObj, elements)
 	}
     }
     
-    if (elements == 2) {
-	/* 
-	 * This is a special case where we can be much more
-	 * efficient
-	 */
-	Tcl_Obj *base;
-	
-	Tcl_ListObjIndex(NULL, listObj, 0, &base);
-	/* 
-	 * There is only any value in doing this if the first object is
-	 * of path type, otherwise we'll never actually get any
-	 * efficiency benefit elsewhere in the code (from re-using the
-	 * normalized representation of the base object).
-	 */
-	if (base->typePtr == &tclFsPathType
-		&& !(base->bytes != NULL && base->bytes[0] == '\0')) {
-	    Tcl_Obj *tail;
-	    Tcl_PathType type;
-	    Tcl_ListObjIndex(NULL, listObj, 1, &tail);
-	    type = GetPathType(tail, NULL, NULL, NULL);
-	    if (type == TCL_PATH_RELATIVE) {
-		CONST char *str;
-		int len;
-		str = Tcl_GetStringFromObj(tail,&len);
-		if (len == 0) {
-		    /* 
-		     * This happens if we try to handle the root volume
-		     * '/'.  There's no need to return a special path
-		     * object, when the base itself is just fine!
-		     */
-		    return base;
-		}
-		if (str[0] != '.') {
-		    return TclNewFSPathObj(base, str, len);
-		}
-		/* 
-		 * Otherwise we don't have an easy join, and
-		 * we must let the more general code below handle
-		 * things
-		 */
-	    } else {
-		return tail;
-	    }
-	}
-    }
-    
     res = Tcl_NewObj();
     
     for (i = 0; i < elements; i++) {
@@ -4565,6 +4681,76 @@ Tcl_FSJoinPath(listObj, elements)
 	Tcl_Obj *driveName = NULL;
 	
 	Tcl_ListObjIndex(NULL, listObj, i, &elt);
+	
+	/* 
+	 * This is a special case where we can be much more
+	 * efficient, where we are joining a single relative path
+	 * onto an object that is already of path type.  The 
+	 * 'TclNewFSPathObj' call below creates an object which
+	 * can be normalized more efficiently.  Currently we only
+	 * use the special case when we have exactly two elements,
+	 * but we could expand that in the future.
+	 */
+	if ((i == (elements-2)) && (i == 0) && (elt->typePtr == &tclFsPathType)
+	  && !(elt->bytes != NULL && (elt->bytes[0] == '\0'))) {
+	    Tcl_Obj *tail;
+	    Tcl_PathType type;
+	    Tcl_ListObjIndex(NULL, listObj, i+1, &tail);
+	    type = GetPathType(tail, NULL, NULL, NULL);
+	    if (type == TCL_PATH_RELATIVE) {
+		CONST char *str;
+		int len;
+		str = Tcl_GetStringFromObj(tail,&len);
+		if (len == 0) {
+		    /* 
+		     * This happens if we try to handle the root volume
+		     * '/'.  There's no need to return a special path
+		     * object, when the base itself is just fine!
+		     */
+		    Tcl_DecrRefCount(res);
+		    return elt;
+		}
+		/* 
+		 * If it doesn't begin with '.'  and is a mac or unix
+		 * path or it a windows path without backslashes, then we
+		 * can be very efficient here.  (In fact even a windows
+		 * path with backslashes can be joined efficiently, but
+		 * the path object would not have forward slashes only,
+		 * and this would therefore contradict our 'file join'
+		 * documentation).
+		 */
+		if (str[0] != '.' && ((tclPlatform != TCL_PLATFORM_WINDOWS) 
+				      || (strchr(str, '\\') == NULL))) {
+		    Tcl_DecrRefCount(res);
+		    return TclNewFSPathObj(elt, str, len);
+		}
+		/* 
+		 * Otherwise we don't have an easy join, and
+		 * we must let the more general code below handle
+		 * things
+		 */
+	    } else {
+		if (tclPlatform == TCL_PLATFORM_UNIX) {
+		    Tcl_DecrRefCount(res);
+		    return tail;
+		} else {
+		    CONST char *str;
+		    int len;
+		    str = Tcl_GetStringFromObj(tail,&len);
+		    if (tclPlatform == TCL_PLATFORM_WINDOWS) {
+			if (strchr(str, '\\') == NULL) {
+			    Tcl_DecrRefCount(res);
+			    return tail;
+			}
+		    } else if (tclPlatform == TCL_PLATFORM_MAC) {
+			if (strchr(str, '/') == NULL) {
+			    Tcl_DecrRefCount(res);
+			    return tail;
+			}
+		    }
+		}
+	    }
+	}
 	strElt = Tcl_GetStringFromObj(elt, &strEltLen);
 	type = GetPathType(elt, &fsPtr, &driveNameLength, &driveName);
 	if (type != TCL_PATH_RELATIVE) {
@@ -5079,20 +5265,22 @@ Tcl_FSGetTranslatedPath(interp, pathPtr)
     srcFsPathPtr = (FsPath*) PATHOBJ(pathPtr);
     if (srcFsPathPtr->translatedPathPtr == NULL) {
 	if (PATHFLAGS(pathPtr) != 0) {
-	    return Tcl_FSGetNormalizedPath(interp, pathPtr);
+	    retObj = Tcl_FSGetNormalizedPath(interp, pathPtr);
+	} else {
+	    /* 
+	     * It is a pure absolute, normalized path object.
+	     * This is something like being a 'pure list'.  The
+	     * object's string, translatedPath and normalizedPath
+	     * are all identical.
+	     */
+	    retObj = srcFsPathPtr->normPathPtr;
 	}
-	/* 
-	 * It is a pure absolute, normalized path object.
-	 * This is something like being a 'pure list'.  The
-	 * object's string, translatedPath and normalizedPath
-	 * are all identical.
-	 */
-	retObj = srcFsPathPtr->normPathPtr;
     } else {
 	/* It is an ordinary path object */
 	retObj = srcFsPathPtr->translatedPathPtr;
     }
 
+    Tcl_IncrRefCount(retObj);
     return retObj;
 }
 
@@ -5123,7 +5311,13 @@ Tcl_FSGetTranslatedStringPath(interp, pathPtr)
     Tcl_Obj *transPtr = Tcl_FSGetTranslatedPath(interp, pathPtr);
 
     if (transPtr != NULL) {
-	return Tcl_GetString(transPtr);
+	int len;
+	CONST char *result, *orig;
+	orig = Tcl_GetStringFromObj(transPtr, &len);
+	result = (char*) ckalloc((unsigned)(len+1));
+	memcpy((VOID*) result, (VOID*) orig, (size_t) (len+1));
+	Tcl_DecrRefCount(transPtr);
+	return result;
     }
 
     return NULL;
@@ -5330,17 +5524,76 @@ Tcl_FSGetNormalizedPath(interp, pathObjPtr)
 	 * that call can actually result in a lot of other filesystem
 	 * action, which might loop back through here.
 	 */
-	if ((path[0] != '\0') && 
-	  (Tcl_FSGetPathType(pathObjPtr) == TCL_PATH_RELATIVE)) {
-	    useThisCwd = Tcl_FSGetCwd(interp);
+	if (path[0] != '\0') {
+	    Tcl_PathType type = Tcl_FSGetPathType(pathObjPtr);
+	    if (type == TCL_PATH_RELATIVE) {
+		useThisCwd = Tcl_FSGetCwd(interp);
 
-	    if (useThisCwd == NULL) {
-		return NULL;
+		if (useThisCwd == NULL) return NULL;
+
+		absolutePath = Tcl_FSJoinToPath(useThisCwd, 1, &absolutePath);
+		Tcl_IncrRefCount(absolutePath);
+		/* We have a refCount on the cwd */
+#ifdef __WIN32__
+	    } else if (type == TCL_PATH_VOLUME_RELATIVE) {
+		/* 
+		 * Only Windows has volume-relative paths.  These
+		 * paths are rather rare, but is is nice if Tcl can
+		 * handle them.  It is much better if we can
+		 * handle them here, rather than in the native fs code,
+		 * because we really need to have a real absolute path
+		 * just below.
+		 * 
+		 * We do not let this block compile on non-Windows
+		 * platforms because the test suite's manual forcing
+		 * of tclPlatform can otherwise cause this code path
+		 * to be executed, causing various errors because
+		 * volume-relative paths really do not exist.
+		 */
+		useThisCwd = Tcl_FSGetCwd(interp);
+		if (useThisCwd == NULL) return NULL;
+		
+		if (path[0] == '/') {
+		    /* 
+		     * Path of form /foo/bar which is a path in the
+		     * root directory of the current volume.
+		     */
+		    CONST char *drive = Tcl_GetString(useThisCwd);
+		    absolutePath = Tcl_NewStringObj(drive,2);
+		    Tcl_AppendToObj(absolutePath, path, -1);
+		    Tcl_IncrRefCount(absolutePath);
+		    /* We have a refCount on the cwd */
+		} else {
+		    /* 
+		     * Path of form C:foo/bar, but this only makes
+		     * sense if the cwd is also on drive C.
+		     */
+		    CONST char *drive = Tcl_GetString(useThisCwd);
+		    char drive_c = path[0];
+		    if (drive_c >= 'a') {
+			drive_c -= ('a' - 'A');
+		    }
+		    if (drive[0] == drive_c) {
+			absolutePath = Tcl_DuplicateObj(useThisCwd);
+			/* We have a refCount on the cwd */
+		    } else {
+			Tcl_DecrRefCount(useThisCwd);
+			useThisCwd = NULL;
+			/* 
+			 * The path is not in the current drive, but
+			 * is volume-relative.  The way Tcl 8.3 handles
+			 * this is that it treats such a path as
+			 * relative to the root of the drive.  We
+			 * therefore behave the same here.
+			 */
+			absolutePath = Tcl_NewStringObj(path, 2);
+		    }
+		    Tcl_IncrRefCount(absolutePath);
+		    Tcl_AppendToObj(absolutePath, "/", 1);
+		    Tcl_AppendToObj(absolutePath, path+2, -1);
+		}
+#endif /* __WIN32__ */
 	    }
-
-	    absolutePath = Tcl_FSJoinToPath(useThisCwd, 1, &absolutePath);
-	    Tcl_IncrRefCount(absolutePath);
-	    /* We have a refCount on the cwd */
 	}
 	/* Already has refCount incremented */
 	fsPathPtr->normPathPtr = TclFSNormalizeAbsolutePath(interp, absolutePath, 

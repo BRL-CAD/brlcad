@@ -5041,9 +5041,8 @@ Tcl_Ungets(chan, str, len, atEnd)
 
     bufPtr = AllocChannelBuffer(len);
     for (i = 0; i < len; i++) {
-        bufPtr->buf[i] = str[i];
+        bufPtr->buf[bufPtr->nextAdded++] = str[i];
     }
-    bufPtr->nextAdded += len;
 
     if (statePtr->inQueueHead == (ChannelBuffer *) NULL) {
         bufPtr->nextPtr = (ChannelBuffer *) NULL;

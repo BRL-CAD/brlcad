@@ -420,6 +420,9 @@ static Tcl_Obj*         SimpleListVolumes _ANSI_ARGS_ ((void));
 static int              SimplePathInFilesystem _ANSI_ARGS_ ((
 			    Tcl_Obj *pathPtr, ClientData *clientDataPtr));
 static Tcl_Obj*         SimpleCopy _ANSI_ARGS_ ((Tcl_Obj *pathPtr));
+static int              TestNumUtfCharsCmd _ANSI_ARGS_((ClientData clientData,
+                            Tcl_Interp *interp, int objc,
+			    Tcl_Obj *CONST objv[]));
 
 static Tcl_Filesystem testReportingFilesystem = {
     "reporting",
@@ -653,6 +656,9 @@ Tcltest_Init(interp)
             (ClientData) TCL_LEAVE_ERR_MSG, (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateObjCommand(interp, "testsetobjerrorcode", 
 	    TestsetobjerrorcodeCmd, (ClientData) 0,
+	    (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateObjCommand(interp, "testnumutfchars",
+	    TestNumUtfCharsCmd, (ClientData) 0, 
 	    (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateCommand(interp, "testsetplatform", TestsetplatformCmd,
 	    (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
@@ -1123,6 +1129,18 @@ TestcmdtraceCmd(dummy, interp, argc, argv)
 	cmdTrace = Tcl_CreateTrace(interp, 50000,
 	        (Tcl_CmdTraceProc *) CmdTraceDeleteProc, (ClientData) NULL);
 	Tcl_Eval(interp, argv[2]);
+    } else if (strcmp(argv[1], "leveltest") == 0) {
+	Interp *iPtr = (Interp *) interp;
+	Tcl_DStringInit(&buffer);
+	cmdTrace = Tcl_CreateTrace(interp, iPtr->numLevels + 4,
+		(Tcl_CmdTraceProc *) CmdTraceProc, (ClientData) &buffer);
+	result = Tcl_Eval(interp, argv[2]);
+	if (result == TCL_OK) {
+	    Tcl_ResetResult(interp);
+	    Tcl_AppendResult(interp, Tcl_DStringValue(&buffer), NULL);
+	}
+	Tcl_DeleteTrace(interp, cmdTrace);
+	Tcl_DStringFree(&buffer);
     } else if ( strcmp(argv[1], "resulttest" ) == 0 ) {
 	/* Create an object-based trace, then eval a script. This is used
 	 * to test return codes other than TCL_OK from the trace engine.
@@ -3333,12 +3351,26 @@ TestregexpObjCmd(dummy, interp, objc, objv)
 	    char *varName;
 	    CONST char *value;
 	    int start, end;
-	    char info[TCL_INTEGER_SPACE * 2];
+	    char resinfo[TCL_INTEGER_SPACE * 2];
 
 	    varName = Tcl_GetString(objv[2]);
 	    TclRegExpRangeUniChar(regExpr, -1, &start, &end);
-	    sprintf(info, "%d %d", start, end-1);
-	    value = Tcl_SetVar(interp, varName, info, 0);
+	    sprintf(resinfo, "%d %d", start, end-1);
+	    value = Tcl_SetVar(interp, varName, resinfo, 0);
+	    if (value == NULL) {
+		Tcl_AppendResult(interp, "couldn't set variable \"",
+			varName, "\"", (char *) NULL);
+		return TCL_ERROR;
+	    }
+	} else if (cflags & TCL_REG_CANMATCH) {
+	    char *varName;
+	    CONST char *value;
+	    char resinfo[TCL_INTEGER_SPACE * 2];
+
+	    Tcl_RegExpGetInfo(regExpr, &info);
+	    varName = Tcl_GetString(objv[2]);
+	    sprintf(resinfo, "%ld", info.extendStart);
+	    value = Tcl_SetVar(interp, varName, resinfo, 0);
 	    if (value == NULL) {
 		Tcl_AppendResult(interp, "couldn't set variable \"",
 			varName, "\"", (char *) NULL);
@@ -3455,6 +3487,10 @@ TestregexpXflags(string, length, cflagsPtr, eflagsPtr)
 	    }
 	    case 'b': {
 		cflags &= ~REG_ADVANCED;
+		break;
+	    }
+	    case 'c': {
+		cflags |= TCL_REG_CANMATCH;
 		break;
 	    }
 	    case 'e': {
@@ -4008,7 +4044,7 @@ TestfileCmd(dummy, interp, argc, argv)
     }
 
     for (j = i; j < argc; j++) {
-        if (Tcl_FSGetTranslatedPath(interp, argv[j]) == NULL) {
+        if (Tcl_FSGetNormalizedPath(interp, argv[j]) == NULL) {
 	    return TCL_ERROR;
 	}
     }
@@ -6085,16 +6121,21 @@ TestReportOpenFileChannel(interp, fileName, mode, permissions)
 static int
 TestReportMatchInDirectory(interp, resultPtr, dirPtr, pattern, types)
     Tcl_Interp *interp;		/* Interpreter to receive results. */
-    Tcl_Obj *resultPtr;		/* Directory separators to pass to TclDoGlob. */
+    Tcl_Obj *resultPtr;		/* Object to lappend results. */
     Tcl_Obj *dirPtr;	        /* Contains path to directory to search. */
     CONST char *pattern;	/* Pattern to match against. */
     Tcl_GlobTypeData *types;	/* Object containing list of acceptable types.
 				 * May be NULL. */
 {
-    TestReport("matchindirectory",dirPtr, NULL);
-    return Tcl_FSMatchInDirectory(interp, resultPtr, 
-				  TestReportGetNativePath(dirPtr), pattern, 
-				  types);
+    if (types != NULL && types->type & TCL_GLOB_TYPE_MOUNT) {
+	TestReport("matchmounts",dirPtr, NULL);
+	return TCL_OK;
+    } else {
+	TestReport("matchindirectory",dirPtr, NULL);
+	return Tcl_FSMatchInDirectory(interp, resultPtr, 
+				      TestReportGetNativePath(dirPtr), pattern, 
+				      types);
+    }
 }
 static int
 TestReportChdir(dirName)
@@ -6423,4 +6464,24 @@ SimpleListVolumes(void)
     Tcl_IncrRefCount(retVal);
     return retVal;
 }
-
+
+/*
+ * Used to check correct string-length determining in Tcl_NumUtfChars
+ */
+static int
+TestNumUtfCharsCmd(clientData, interp, objc, objv)
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int objc;
+    Tcl_Obj *CONST objv[];
+{
+    if (objc > 1) {
+	int len = -1;
+	if (objc > 2) {
+	    (void) Tcl_GetStringFromObj(objv[1], &len);
+	}
+	len = Tcl_NumUtfChars(Tcl_GetString(objv[1]), len);
+	Tcl_SetObjResult(interp, Tcl_NewIntObj(len));
+    }
+    return TCL_OK;
+}

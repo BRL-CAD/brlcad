@@ -44,10 +44,16 @@ AC_DEFUN(SC_PATH_TCLCONFIG, [
 	    if test x"${ac_cv_c_tclconfig}" = x ; then
 		for i in \
 			../tcl \
+			`ls -dr ../tcl[[8-9]].[[0-9]].[[0-9]]* 2>/dev/null` \
+			`ls -dr ../tcl[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ../tcl[[8-9]].[[0-9]]* 2>/dev/null` \
 			../../tcl \
+			`ls -dr ../../tcl[[8-9]].[[0-9]].[[0-9]]* 2>/dev/null` \
+			`ls -dr ../../tcl[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ../../tcl[[8-9]].[[0-9]]* 2>/dev/null` \
 			../../../tcl \
+			`ls -dr ../../../tcl[[8-9]].[[0-9]].[[0-9]]* 2>/dev/null` \
+			`ls -dr ../../../tcl[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ../../../tcl[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tclConfig.sh" ; then
 			ac_cv_c_tclconfig=`(cd $i/unix; pwd)`
@@ -74,6 +80,8 @@ AC_DEFUN(SC_PATH_TCLCONFIG, [
 	    if test x"${ac_cv_c_tclconfig}" = x ; then
 		for i in \
 			${srcdir}/../tcl \
+			`ls -dr ${srcdir}/../tcl[[8-9]].[[0-9]].[[0-9]]* 2>/dev/null` \
+			`ls -dr ${srcdir}/../tcl[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ${srcdir}/../tcl[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tclConfig.sh" ; then
 		    ac_cv_c_tclconfig=`(cd $i/unix; pwd)`
@@ -140,10 +148,16 @@ AC_DEFUN(SC_PATH_TKCONFIG, [
 	    if test x"${ac_cv_c_tkconfig}" = x ; then
 		for i in \
 			../tk \
+			`ls -dr ../tk[[8-9]].[[0-9]].[[0-9]]* 2>/dev/null` \
+			`ls -dr ../tk[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ../tk[[8-9]].[[0-9]]* 2>/dev/null` \
 			../../tk \
+			`ls -dr ../../tk[[8-9]].[[0-9]].[[0-9]]* 2>/dev/null` \
+			`ls -dr ../../tk[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ../../tk[[8-9]].[[0-9]]* 2>/dev/null` \
 			../../../tk \
+			`ls -dr ../../../tk[[8-9]].[[0-9]].[[0-9]]* 2>/dev/null` \
+			`ls -dr ../../../tk[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ../../../tk[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tkConfig.sh" ; then
 			ac_cv_c_tkconfig=`(cd $i/unix; pwd)`
@@ -168,6 +182,8 @@ AC_DEFUN(SC_PATH_TKCONFIG, [
 	    if test x"${ac_cv_c_tkconfig}" = x ; then
 		for i in \
 			${srcdir}/../tk \
+			`ls -dr ${srcdir}/../tk[[8-9]].[[0-9]].[[0-9]]* 2>/dev/null` \
+			`ls -dr ${srcdir}/../tk[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ${srcdir}/../tk[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tkConfig.sh" ; then
 			ac_cv_c_tkconfig=`(cd $i/unix; pwd)`
@@ -354,7 +370,7 @@ AC_DEFUN(SC_ENABLE_SHARED, [
 AC_DEFUN(SC_ENABLE_FRAMEWORK, [
     AC_MSG_CHECKING([how to package libraries])
     AC_ARG_ENABLE(framework,
-	[  --enable-framework      package shared libraries in frameworks [--disable-framework]],
+	[  --enable-framework      package shared libraries in MacOSX frameworks [--disable-framework]],
 	[tcl_ok=$enableval], [tcl_ok=no])
 
     if test "${enable_framework+set}" = set; then
@@ -453,6 +469,7 @@ AC_DEFUN(SC_ENABLE_THREADS, [
 	ac_saved_libs=$LIBS
 	LIBS="$LIBS $THREADS_LIBS"
 	AC_CHECK_FUNCS(pthread_attr_setstacksize)
+	AC_CHECK_FUNCS(pthread_atfork)
 	LIBS=$ac_saved_libs
 	AC_CHECK_FUNCS(readdir_r)
     else
@@ -816,30 +833,10 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    LIBS="$LIBS -lc"
 	    # AIX-5 uses ELF style dynamic libraries
 	    SHLIB_CFLAGS=""
-	    SHLIB_LD_LIBS='${LIBS}'
-	    SHLIB_SUFFIX=".so"
-	    if test "`uname -m`" = "ia64" ; then
-		# AIX-5 uses ELF style dynamic libraries on IA-64, but not PPC
-		SHLIB_LD="/usr/ccs/bin/ld -G -z text"
-		# AIX-5 has dl* in libc.so
-		DL_LIBS=""
-		if test "$GCC" = "yes" ; then
-		    CC_SEARCH_FLAGS='-Wl,-R,${LIB_RUNTIME_DIR}'
-		else
-		    CC_SEARCH_FLAGS='-R${LIB_RUNTIME_DIR}'
-		fi
-		LD_SEARCH_FLAGS='-R ${LIB_RUNTIME_DIR}'
-	    else
-		SHLIB_LD="${TCL_SRC_DIR}/unix/ldAix /bin/ld -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry"
-		DL_LIBS="-ldl"
-		CC_SEARCH_FLAGS='-L${LIB_RUNTIME_DIR}'
-		LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
-		TCL_NEEDS_EXP_FILE=1
-		TCL_EXPORT_FILE_SUFFIX='${VERSION}\$\{DBGX\}.exp'
-	    fi
-
 	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
 	    # symbols when dynamically loaded into tclsh.
+	    SHLIB_LD_LIBS='${LIBS}'
+	    SHLIB_SUFFIX=".so"
 
 	    DL_OBJS="tclLoadDl.o"
 	    LDFLAGS=""
@@ -859,6 +856,26 @@ dnl AC_CHECK_TOOL(AR, ar)
 		    SHLIB_LD_FLAGS="-b64"
 		fi
 	    fi
+
+	    if test "`uname -m`" = "ia64" ; then
+		# AIX-5 uses ELF style dynamic libraries on IA-64, but not PPC
+		SHLIB_LD="/usr/ccs/bin/ld -G -z text"
+		# AIX-5 has dl* in libc.so
+		DL_LIBS=""
+		if test "$GCC" = "yes" ; then
+		    CC_SEARCH_FLAGS='-Wl,-R,${LIB_RUNTIME_DIR}'
+		else
+		    CC_SEARCH_FLAGS='-R${LIB_RUNTIME_DIR}'
+		fi
+		LD_SEARCH_FLAGS='-R ${LIB_RUNTIME_DIR}'
+	    else
+		SHLIB_LD="${TCL_SRC_DIR}/unix/ldAix /bin/ld -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry ${SHLIB_LD_FLAGS}"
+		DL_LIBS="-ldl"
+		CC_SEARCH_FLAGS='-L${LIB_RUNTIME_DIR}'
+		LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
+		TCL_NEEDS_EXP_FILE=1
+		TCL_EXPORT_FILE_SUFFIX='${VERSION}\$\{DBGX\}.exp'
+	    fi
 	    ;;
 	AIX-*)
 	    if test "${TCL_THREADS}" = "1" -a "$GCC" != "yes" ; then
@@ -870,7 +887,6 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    fi
 	    LIBS="$LIBS -lc"
 	    SHLIB_CFLAGS=""
-	    SHLIB_LD="${TCL_SRC_DIR}/unix/ldAix /bin/ld -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry"
 	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
@@ -888,6 +904,21 @@ dnl AC_CHECK_TOOL(AR, ar)
 		DL_LIBS="-lld"
 	    fi
 
+	    # Check to enable 64-bit flags for compiler/linker
+	    if test "$do64bit" = "yes" ; then
+		if test "$GCC" = "yes" ; then
+		    AC_MSG_WARN("64bit mode not supported with GCC on $system")
+		else 
+		    do64bit_ok=yes
+		    EXTRA_CFLAGS="-q64"
+		    LDFLAGS="-q64"
+		    RANLIB="${RANLIB} -X64"
+		    AR="${AR} -X64"
+		    SHLIB_LD_FLAGS="-b64"
+		fi
+	    fi
+	    SHLIB_LD="${TCL_SRC_DIR}/unix/ldAix /bin/ld -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry ${SHLIB_LD_FLAGS}"
+
 	    # On AIX <=v4 systems, libbsd.a has to be linked in to support
 	    # non-blocking file IO.  This library has to be linked in after
 	    # the MATH_LIBS or it breaks the pow() function.  The way to
@@ -904,20 +935,6 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    if test $libbsd = yes; then
 	    	MATH_LIBS="$MATH_LIBS -lbsd"
 	    	AC_DEFINE(USE_DELTA_FOR_TZ)
-	    fi
-
-	    # Check to enable 64-bit flags for compiler/linker
-	    if test "$do64bit" = "yes" ; then
-		if test "$GCC" = "yes" ; then
-		    AC_MSG_WARN("64bit mode not supported with GCC on $system")
-		else 
-		    do64bit_ok=yes
-		    EXTRA_CFLAGS="-q64"
-		    LDFLAGS="-q64"
-		    RANLIB="${RANLIB} -X64"
-		    AR="${AR} -X64"
-		    SHLIB_LD_FLAGS="-b64"
-		fi
 	    fi
 	    ;;
 	BSD/OS-2.1*|BSD/OS-3*)
@@ -972,6 +989,12 @@ dnl AC_CHECK_TOOL(AR, ar)
 		LD_SEARCH_FLAGS='+s +b ${LIB_RUNTIME_DIR}:.'
 		LD_LIBRARY_PATH_VAR="SHLIB_PATH"
 	    fi
+	    if test "$GCC" = "yes" ; then
+		SHLIB_LD="gcc -shared"
+		SHLIB_LD_LIBS='${LIBS}'
+		LD_SEARCH_FLAGS=''
+		CC_SEARCH_FLAGS=''
+	    fi
 
 	    # Users may want PA-RISC 1.1/2.0 portable code - needs HP cc
 	    #EXTRA_CFLAGS="+DAportable"
@@ -985,7 +1008,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 			    # 64-bit gcc in use.  Fix flags for GNU ld.
 			    do64bit_ok=yes
 			    SHLIB_LD="gcc -shared"
-			    SHLIB_LD_LIBS=""
+			    SHLIB_LD_LIBS='${LIBS}'
 			    LD_SEARCH_FLAGS=''
 			    CC_SEARCH_FLAGS=''
 			    ;;
@@ -1044,7 +1067,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    EXTRA_CFLAGS=""
 	    LDFLAGS=""
 	    ;;
-	IRIX-6.*|IRIX64-6.5*)
+	IRIX-6.*)
 	    SHLIB_CFLAGS=""
 	    SHLIB_LD="ld -n32 -shared -rdata_shared"
 	    SHLIB_LD_LIBS='${LIBS}'

@@ -647,10 +647,7 @@ TestalarmCmd(clientData, interp, argc, argv)
 	Tcl_AppendResult(interp, "sigaction: ", Tcl_PosixError(interp), NULL);
 	return TCL_ERROR;
     }
-    if (alarm(sec) < 0) {
-	Tcl_AppendResult(interp, "alarm: ", Tcl_PosixError(interp), NULL);
-	return TCL_ERROR;
-    }
+    (void)alarm(sec);
     return TCL_OK;
 #else
     Tcl_AppendResult(interp, "warning: sigaction SA_RESTART not support on this platform", NULL);

@@ -1584,8 +1584,11 @@ BuildCommandLine(
 	if (arg[0] == '\0') {
 	    quote = 1;
 	} else {
-	    for (start = arg; *start != '\0'; start++) {
-		if (isspace(*start)) { /* INTL: ISO space. */
+	    int count;
+	    Tcl_UniChar ch;
+	    for (start = arg; *start != '\0'; start += count) {
+	        count = Tcl_UtfToUniChar(start, &ch);
+		if (Tcl_UniCharIsSpace(ch)) { /* INTL: ISO space. */
 		    quote = 1;
 		    break;
 		}
@@ -1594,39 +1597,34 @@ BuildCommandLine(
 	if (quote) {
 	    Tcl_DStringAppend(&ds, "\"", 1);
 	}
-
 	start = arg;	    
 	for (special = arg; ; ) {
 	    if ((*special == '\\') && 
-		    (special[1] == '\\' || special[1] == '"')) {
-		Tcl_DStringAppend(&ds, start, special - start);
+		    (special[1] == '\\' || special[1] == '"' || (quote && special[1] == '\0'))) {
+		Tcl_DStringAppend(&ds, start, (int) (special - start));
 		start = special;
 		while (1) {
 		    special++;
-		    if (*special == '"') {
+		    if (*special == '"' || (quote && *special == '\0')) {
 			/* 
 			 * N backslashes followed a quote -> insert 
 			 * N * 2 + 1 backslashes then a quote.
 			 */
 
-			Tcl_DStringAppend(&ds, start, special - start);
+			Tcl_DStringAppend(&ds, start,
+				(int) (special - start));
 			break;
 		    }
 		    if (*special != '\\') {
 			break;
 		    }
 		}
-		Tcl_DStringAppend(&ds, start, special - start);
+		Tcl_DStringAppend(&ds, start, (int) (special - start));
 		start = special;
 	    }
 	    if (*special == '"') {
-		Tcl_DStringAppend(&ds, start, special - start);
+		Tcl_DStringAppend(&ds, start, (int) (special - start));
 		Tcl_DStringAppend(&ds, "\\\"", 2);
-		start = special + 1;
-	    }
-	    if (*special == '{') {
-		Tcl_DStringAppend(&ds, start, special - start);
-		Tcl_DStringAppend(&ds, "\\{", 2);
 		start = special + 1;
 	    }
 	    if (*special == '\0') {
@@ -1634,7 +1632,7 @@ BuildCommandLine(
 	    }
 	    special++;
 	}
-	Tcl_DStringAppend(&ds, start, special - start);
+	Tcl_DStringAppend(&ds, start, (int) (special - start));
 	if (quote) {
 	    Tcl_DStringAppend(&ds, "\"", 1);
 	}
@@ -2629,6 +2627,9 @@ TclWinAddProcess(hProcess, id)
     DWORD id;                  /* Global process identifier */
 {
     ProcInfo *procPtr = (ProcInfo *) ckalloc(sizeof(ProcInfo));
+
+    PipeInit();
+    
     procPtr->hProcess = hProcess;
     procPtr->dwProcessId = id;
     Tcl_MutexLock(&pipeMutex);
