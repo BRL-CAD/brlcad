@@ -306,6 +306,7 @@ f_status()
 	printf("STATE=%s, ", state_str[state] );
 	printf("maxview=%f, ", maxview*base2local);
 	printf("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
+	printf("base2local=%f\n", base2local);
 	mat_print("toViewcenter", toViewcenter);
 	mat_print("Viewrot", Viewrot);
 	mat_print("model2view", model2view);
@@ -400,7 +401,7 @@ f_rt()
 
 	/* Send out model2view matrix */
 	for( i=0; i < 16; i++ )
-		fprintf( fp, "%f ", model2view[i] );
+		fprintf( fp, "%.9e ", model2view[i] );
 	fclose( fp );
 	
 	/* Wait for rt to finish */
@@ -430,7 +431,7 @@ f_saveview()
 	fprintf(fp, "#!/bin/sh\nrt -M ");
 	for( i=2; i < numargs; i++ )
 		fprintf(fp,"%s ", cmd_args[i]);
-	fprintf(fp," -o %s.pix", filename);
+	fprintf(fp,"-o %s.pix ", filename);
 	fprintf(fp,"%s ", filename);
 
 	/* Find all unique top-level entrys.
@@ -451,11 +452,13 @@ f_saveview()
 		}
 	}
 	fprintf(fp," 2>&1 > %s.log", filename);
-	fprintf(fp," <<EOF\n");
+	fprintf(fp," <<EOF");
 
 	/* Send out model2view matrix */
-	for( i=0; i < 16; i++ )
-		fprintf( fp, "%f ", model2view[i] );
+	for( i=0; i < 16; i++ ) {
+		if( (i%4) == 0 )  fprintf(fp, "\n");
+		fprintf( fp, "%.9e ", model2view[i] );
+	}
 	fprintf(fp,"\nEOF\n");
 	fclose( fp );
 	
