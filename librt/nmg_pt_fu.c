@@ -104,7 +104,7 @@ struct edgeuse	*eu;
 	}
 
 
-	/* The verticies at the ends of this edge were missed or not
+	/* The verticies at the ends of this edge were missed or hit
 	 * previously processed.
 	 */
 	switch (NMG_INDEX_GET(fpi->tbl, eu->e_p)) {
@@ -305,10 +305,14 @@ CONST struct loopuse	*lu;
 	NMG_CK_FPI(fpi);
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-		VPRINT("nmg_class_pt_lu\tPt:", fpi->pt);
-		rt_log("\tinitial class is %s\n",
-			nmg_class_name(fpi->pt_class));
+		rt_log(
+		    "nmg_class_pt_lu\tPt: (%g %g %g)\n\tinitial class is %s\n",
+		    fpi->pt, nmg_class_name(fpi->pt_class));
 	}
+
+	/* if this isn't a loop of a face, or if we've already tested
+	 * this loop, we're outta here
+	 */
 	if (lu->up.fu_p != fpi->fu_p || NMG_INDEX_TEST(fpi->tbl, lu))
 		return;
  
@@ -328,7 +332,7 @@ CONST struct loopuse	*lu;
 
 			/* If point lies ON edge, we might be done */
 			if( fpi->allhits == NMG_FPI_FIRST &&
-			    fpi->pt_class==NMG_CLASS_AonBshared )
+			    fpi->pt_class == NMG_CLASS_AonBshared )
 				 break;
 		}
 	} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
@@ -567,6 +571,11 @@ struct fu_pt_info *fpi;
 			VSUB2(vupt_v, fpi->pt, eu1->vu_p->v_p->vg_p->coord);
 			if (VDOT(vupt_v, left) >= 0.0)
 			{
+				if (rt_g.NMG_debug & DEBUG_PT_FU )
+rt_log("vdot w/eu (%g %g %g)->(%g %g %g) left\n\tsuggests NMG_CLASS_AinB\n",
+				V3ARGS(eu1->vu_p->v_p->vg_p->coord),
+				V3ARGS(eu1->eumate_p->vu_p->v_p->vg_p->coord));
+				
 				fpi->pt_class = NMG_CLASS_AinB;
 				break;
 			}
@@ -693,7 +702,7 @@ CONST struct loopuse	*ignore_lu;
 void			(*eu_func)();	/* func to call when pt on edgeuse */
 void			(*vu_func)();	/* func to call when pt on vertexuse*/
 char			*priv;		/* private data for [ev]u_func */
-CONST int		allhits;		/* return after finding first hit */
+CONST int		allhits;	/* return after finding first hit */
 CONST struct rt_tol	*tol;
 {
 	struct loopuse		*lu;
@@ -712,15 +721,16 @@ CONST struct rt_tol	*tol;
 		rt_log("nmg_class_pt_fu_except()\n");
 
 	fpi = (struct fu_pt_info *)rt_malloc(sizeof(*fpi), "struct fu_pt_info");
+
 	/* Validate distance from point to plane */
 	NMG_GET_FU_PLANE( fpi->norm, fu );
 	if( (dist=fabs(DIST_PT_PLANE( pt, fpi->norm ))) > tol->dist )  {
 		rt_log("nmg_class_pt_fu_except() ERROR, point (%g,%g,%g)\nnot on face %g %g %g %g,\ndist=%g\n",
 			V3ARGS(pt), V4ARGS(fpi->norm), dist );
 	}
+
 	m = nmg_find_model((CONST long *)fu);
 	fpi->tbl = rt_calloc(m->maxindex, 1, "nmg_class_pt_fu_except() proc tbl");
-
 
 	fpi->tol = tol;
 	fpi->fu_p = fu;
