@@ -435,6 +435,7 @@ char	**argv;
 		fprintf(stderr, "cake: cannot open cpp filter\n");
 		exit(1);
 	}
+ 
 
 	if (Zflag)
 	{
@@ -497,7 +498,10 @@ typedef	struct	rusage	Rusage;
 statistics()
 {
 	extern	char	*getlogin();
-	extern		getpw();
+#ifdef ANTIQUE
+	extern		getpw();	/* ancient */
+#endif
+
 	extern	int	out_tried, out_found;
 	extern	int	stat_tried, stat_found;
 	FILE		*sfp;
@@ -514,10 +518,12 @@ statistics()
 
 		if ((usr = getlogin()) == NULL)
 		{
+#ifdef ANTIQUE
 			char	buf[256];
 			char	*usr_end;
 
 			if (getpw(getuid(), buf) != 0)
+
 				usr = "NULL";
 			else
 			{
@@ -527,7 +533,14 @@ statistics()
 				else
 					usr = "NULL";
 			}
+#else
+			struct	passwd *pwent;
 
+			if ((pwent = getpwent()) == NULL)
+				usr = "NULL";
+			else
+				usr = pwent->pw_name;
+#endif
 			usr = new_name(usr);
 		}
 
