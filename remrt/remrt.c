@@ -43,7 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#ifndef CRAY
+#ifndef CRAY1
 #include <sys/time.h>		/* for struct timeval */
 #endif
 
@@ -1897,7 +1897,11 @@ struct ihost	*ihp;
 
 #ifdef sgi
 #	define RSH	"/usr/bsd/rsh"
-#else
+#endif
+#ifdef CRAY2
+#	define RSH	"/usr/bin/remsh"
+#endif
+#ifndef RSH
 #	define RSH	"/usr/ucb/rsh"
 #endif
 
@@ -2747,3 +2751,13 @@ struct command_tab cmd_tab[] = {
 	(char *)0, (char *)0, (char *)0,
 		0,		0, 0	/* END */
 };
+
+#ifdef CRAY2
+gettimeofday( tvp, tzp )
+struct timeval	*tvp;
+struct timezone	*tzp;
+{
+	tvp->tv_sec = time( (long *)0 );
+	tvp->tv_usec = 0;
+}
+#endif
