@@ -34,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "rtgeom.h"		/* for ID_POLY special support */
 #include "./ged.h"
 #include "externs.h"
 #include "./mged_solid.h"
@@ -67,7 +68,7 @@ struct db_tree_state	mged_initial_tree_state = {
 		/* struct mater_info ts_mater */
 		1.0, 0.0, 0.0,		/* color, RGB */
 		-1.0,			/* Temperature */
-		0,			/* override */
+		0,			/* ma_color_valid=0 --> use default */
 		0,			/* color inherit */
 		0,			/* mater inherit */
 		(char *)NULL		/* shader */
@@ -302,6 +303,137 @@ int			id;
 static int mged_do_not_draw_nmg_solids_during_debugging = 0;
 static int mged_draw_edge_uses=0;
 static struct rt_vlblock	*mged_draw_edge_uses_vbp;
+
+/*
+ *			M G E D _ N M G _ R E G I O N _ S T A R T
+ *
+ *  When performing "ev" on a region, consider whether to process
+ *  the whole subtree recursively.
+ *  Normally, say "yes" to all regions by returning 0.
+ *
+ *  Check for special case:  a region of one solid, which can be
+ *  directly drawn as polygons without going through NMGs.
+ *  If we draw it here, then return -1 to signal caller to ignore
+ *  further processing of this region.
+ *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
+ */
+mged_nmg_region_start( tsp, pathp, combp )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+CONST struct rt_comb_internal *combp;
+{
+	union tree		*tp;
+	struct directory	*dp;
+	struct rt_db_internal	intern;
+	mat_t			xform;
+	matp_t			matp;
+	struct bu_list		vhead;
+
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+		bu_log("mged_nmg_region_start(%s)\n", sofar);
+		bu_free((genptr_t)sofar, "path string");
+		rt_pr_tree( combp->tree, 1 );
+		db_pr_tree_state(tsp);
+	}
+
+	BU_LIST_INIT( &vhead );
+
+	RT_CK_COMB(combp);
+	tp = combp->tree;
+	RT_CK_TREE(tp);
+	if( tp->tr_l.tl_op != OP_DB_LEAF )
+		return 0;	/* proceed as usual */
+
+	/* The subtree is a single node.  It may be a combination, though */
+
+	/* Fetch by name, check to see if it's an easy type */
+	dp = db_lookup( tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY );
+	if( !dp )
+		return 0;	/* proceed as usual */
+	if( tsp->ts_mat )  {
+		if( tp->tr_l.tl_mat )  {
+			matp = xform;
+			bn_mat_mul( xform, tsp->ts_mat, tp->tr_l.tl_mat );
+		} else {
+			matp = tsp->ts_mat;
+		}
+	} else {
+		if( tp->tr_l.tl_mat )  {
+			matp = tp->tr_l.tl_mat;
+		} else {
+			matp = (matp_t)NULL;
+		}
+	}
+	if( rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp) < 0 )
+		return 0;	/* proceed as usual */
+
+	switch( intern.idb_type )  {
+	case ID_POLY:
+		{
+			struct rt_pg_internal	*pgp;
+			register int	i;
+			int		p;
+
+			if(rt_g.debug&DEBUG_TREEWALK)  {
+				bu_log("fast-path draw ID_POLY\n", dp->d_namep);
+			}
+			pgp = (struct rt_pg_internal *)intern.idb_ptr;
+			RT_PG_CK_MAGIC(pgp);
+
+			if( mged_draw_wireframes )  {
+				for( p = 0; p < pgp->npoly; p++ )  {
+					register struct rt_pg_face_internal	*pp;
+
+					pp = &pgp->poly[p];
+					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
+						RT_VLIST_LINE_MOVE );
+					for( i=0; i < pp->npts; i++ )  {
+						RT_ADD_VLIST( &vhead, &pp->verts[3*i],
+							RT_VLIST_LINE_DRAW );
+					}
+				}
+			} else {
+				for( p = 0; p < pgp->npoly; p++ )  {
+					register struct rt_pg_face_internal	*pp;
+					vect_t aa, bb, norm;
+
+					pp = &pgp->poly[p];
+					if( pp->npts < 3 )  continue;
+					VSUB2( aa, &pp->verts[3*(0)], &pp->verts[3*(1)] );
+					VSUB2( bb, &pp->verts[3*(0)], &pp->verts[3*(2)] );
+					VCROSS( norm, aa, bb );
+					VUNITIZE(norm);
+					RT_ADD_VLIST( &vhead, norm,
+						RT_VLIST_POLY_START );
+
+					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
+						RT_VLIST_POLY_MOVE );
+					for( i=0; i < pp->npts-1; i++ )  {
+						RT_ADD_VLIST( &vhead, &pp->verts[3*i],
+							RT_VLIST_POLY_DRAW );
+					}
+					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
+						RT_VLIST_POLY_END );
+				}
+			}
+		}
+		goto out;
+	case ID_COMBINATION:
+	default:
+		break;
+	}
+	rt_db_free_internal(&intern);
+	return 0;
+
+out:
+	/* Successful fast-path drawing of this solid */
+	db_add_node_to_full_path( pathp, dp );
+	drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
+	DB_FULL_PATH_POP(pathp);
+	rt_db_free_internal(&intern);
+	return -1;	/* SKIP THIS REGION */
+}
 
 /*
  *			M G E D _ N M G _ R E G I O N _ E N D
@@ -623,7 +755,7 @@ A production implementation will exist in the maintenance release.\n", (char *)N
 		i = db_walk_tree( dbip, argc, (CONST char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
-			0,			/* take all regions */
+			mged_nmg_region_start,
 			mged_nmg_region_end,
 	  		mged_nmg_use_tnurbs ?
 	  			nmg_booltree_leaf_tnurb :
@@ -733,13 +865,14 @@ struct solid		*existing_sp;
 		if (pathp->fp_len > MAX_PATH) {
 		  char *cp = db_path_to_string(pathp);
 
-		  Tcl_AppendResult(interp, "dodraw: path too long, solid ignored.\n\t",
+		  Tcl_AppendResult(interp, "drawH_part2: path too long, solid ignored.\n\t",
 				   cp, "\n", (char *)NULL);
 		  bu_free((genptr_t)cp, "Path string");
 		  return;
 		}
 		/* Handling a new solid */
 		GET_SOLID(sp, &FreeSolid.l);
+		/* NOTICE:  The structure is dirty & not initialized for you! */
 
 		sp->s_dlist = BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist + 1;
 	} else {
@@ -766,21 +899,25 @@ struct solid		*existing_sp;
 		if( mged_wireframe_color_override ) {
 		        /* a user specified the color, so arrange to use it */
 			sp->s_uflag = 1;
+			sp->s_dflag = 0;
 			sp->s_basecolor[0] = mged_wireframe_color[0];
 			sp->s_basecolor[1] = mged_wireframe_color[1];
 			sp->s_basecolor[2] = mged_wireframe_color[2];
 		} else {
 			sp->s_uflag = 0;
 			if (tsp) {
-			  if (!tsp->ts_mater.ma_override)
-			    sp->s_dflag = 1;
-			  else {
-			    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-			    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-			    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+			  if (tsp->ts_mater.ma_color_valid) {
+			    sp->s_dflag = 0;	/* color specified in db */
+			  } else {
+			    sp->s_dflag = 1;	/* default color */
 			  }
+			  /* Copy into basecolor anyway, to prevent black */
+			  sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
+			  sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
+			  sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
 			}
 		}
+		sp->s_cflag = 0;
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
 		sp->s_Eflag = 0;	/* This is a solid */
