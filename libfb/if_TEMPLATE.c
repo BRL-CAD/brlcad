@@ -31,7 +31,8 @@ _LOCAL_ int	DEVNAME_dopen(),
 		DEVNAME_zoom_set(),
 		DEVNAME_curs_set(),
 		DEVNAME_cmemory_addr(),
-		DEVNAME_cscreen_addr();
+		DEVNAME_cscreen_addr(),
+		DEVNAME_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO DEVNAME_interface =  {
@@ -49,6 +50,7 @@ FBIO DEVNAME_interface =  {
 	DEVNAME_curs_set,		/* curs_set		*/
 	DEVNAME_cmemory_addr,		/* cursor_move_memory_addr */
 	DEVNAME_cscreen_addr,		/* cursor_move_screen_addr */
+	DEVNAME_help,			/* help message		*/
 	"Device description",		/* device description	*/
 	0,				/* max width		*/
 	0,				/* max height		*/
@@ -182,5 +184,20 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	return(0);
+}
+
+_LOCAL_ int
+DEVNAME_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", DEVNAME_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		DEVNAME_interface.if_max_width,
+		DEVNAME_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		DEVNAME_interface.if_width,
+		DEVNAME_interface.if_height );
 	return(0);
 }
