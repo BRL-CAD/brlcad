@@ -76,9 +76,9 @@ extern Tk_Window tkwin;
 static Tk_Window xtkwin;
 static Display  *dpy;
 static Window   win;
-static int devmotionnotify;
-static int devbuttonpress;
-static int devbuttonrelease;
+static int devmotionnotify = LASTEvent;
+static int devbuttonpress = LASTEvent;
+static int devbuttonrelease = LASTEvent;
 #endif
 
 #include <gl/gl.h>		/* SGI IRIS library */
@@ -507,13 +507,86 @@ Ir_open()
 	Tk_MakeWindowExist(xtkwin);
 	win = Tk_WindowId(xtkwin);
 
+#if 0
 	ir_is_gt = 1;
 	ir_has_zbuf = 1;
 	ir_has_rgb = 1;
 	ir_has_doublebuffer = 1;
+#else
+	{
+	  GLXconfig *glx_config, *p;
 
+	  glx_config = TkGLXwin_RefGetConfig(ref);
+	
+	  for(p = glx_config; p->buffer; ++p){
+	    switch(p->buffer){
+	    case GLX_NORMAL:
+	      switch(p->mode){
+	      case GLX_ZSIZE:
+		if(p->arg)
+		  ir_has_zbuf = 1;
+		else
+		  ir_has_zbuf = 0;
+
+		break;
+	      case GLX_RGB:
+		if(p->arg)
+		  ir_has_rgb = 1;
+		else
+		  ir_has_rgb = 0;
+
+		break;
+	      case GLX_DOUBLE:
+		if(p->arg)
+		  ir_has_doublebuffer = 1;
+		else
+		  ir_has_doublebuffer = 0;
+
+		break;
+	      case GLX_STEREOBUF:
+		stereo_is_on = 1;
+
+		break;
+	      case GLX_BUFSIZE:
+	      case GLX_STENSIZE:
+	      case GLX_ACSIZE:
+	      case GLX_VISUAL:
+	      case GLX_COLORMAP:
+	      case GLX_WINDOW:
+	      case GLX_MSSAMPLE:
+	      case GLX_MSZSIZE:
+	      case GLX_MSSSIZE:
+	      case GLX_RGBSIZE:
+	      default:
+#if 0
+		/* What else do we have? */
+		rt_log("Ir_open: GLX_NORMAL\tmode - %d\targ - %d\n",
+		       p->mode, p->arg);
+#endif
+		break;
+	      }
+	    case GLX_OVERLAY:
+	    case GLX_POPUP:
+	    case GLX_UNDERLAY:
+	    default:
+#if 0
+	      /* What else do we have? */
+	      rt_log("Ir_open: buffer - %d\tmode - %d\targ - %d\n",
+		     p->buffer, p->mode, p->arg);
+#endif
+	      break;
+	    }
+	  }
+
+	  free((void *)glx_config);
+	}
+#endif
+
+#if 0
 	/* Start out with the usual window */
+/*XXX Not supposed to be using this guy in mixed mode. */
 	foreground();
+#endif
 	
 	if (mged_variables.sgi_win_size > 0)
 		win_size = mged_variables.sgi_win_size;
@@ -545,7 +618,7 @@ Ir_open()
 	 */
 	glcompat( GLC_ZRANGEMAP, 0 );
 	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
-#if 0
+#if 1
 	min_scr_z = getgdesc(GD_ZMIN)+15;
 	max_scr_z = getgdesc(GD_ZMAX)-15;
 #else
@@ -554,6 +627,10 @@ Ir_open()
 #endif
 
 	Ir_configure_window_shape();
+
+	/* Line style 0 is solid.  Program line style 1 as dot-dashed */
+	deflinestyle( 1, 0xCF33 );
+	setlinestyle( 0 );
 
 /* Take a look at the available input devices */
 	olist = list = (XDeviceInfoPtr) XListInputDevices (dpy, &ndevices);
@@ -595,17 +672,9 @@ Ir_open()
 	}
 Done:
 	XFreeDeviceList(olist);
-#if 0
-	Tk_CreateEventHandler(xtkwin, ExposureMask|PointerMotionMask|
-			      StructureNotifyMask,
-			      (void (*)())Ircheckevents, (ClientData)NULL);
-#else
 	Tk_CreateGenericHandler(Ircheckevents, (ClientData)NULL);
-#endif
-
-	/* Line style 0 is solid.  Program line style 1 as dot-dashed */
-	deflinestyle( 1, 0xCF33 );
-	setlinestyle( 0 );
+	XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+		     KeyPressMask|StructureNotifyMask);
 
 	return (0);
 }
@@ -1514,10 +1583,8 @@ i.e. drawing 2 or more times when resizing the window to a larger size.
 once for the Configure and once for the expose. This is especially
 annoying when running remotely. */
 
-#if 1
   if (eventPtr->xany.window != win)
     return TCL_OK;
-#endif
 
 #if 0
 if(eventPtr->type == Expose)
@@ -1527,19 +1594,18 @@ else if( eventPtr->type == ConfigureNotify )
   rt_log("Ircheckevents:%d\t%d\tevent type - %d\n",
 	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
 #endif
-if(focus && eventPtr->type == KeyPress){
-  char buffer[1];
-  int status;
-
-  XLookupString(&(eventPtr->xkey), buffer, 1,
-		(KeySym *)NULL, (XComposeStatus *)NULL);
 
 #if TRY_PIPES
-  write(ged_pipe[1], buffer, 1);
-#endif
+  if(focus && eventPtr->type == KeyPress){
+    char buffer[1];
 
-  return TCL_ERROR;
-}
+    XLookupString(&(eventPtr->xkey), buffer, 1,
+		  (KeySym *)NULL, (XComposeStatus *)NULL);
+
+    write(ged_pipe[1], buffer, 1);
+    return TCL_RETURN;
+  }
+#endif
 
 
   /* Now getting X events */
@@ -2115,6 +2181,25 @@ Ir_statechange( a, b )
 	 *  object highlighting
 	 */
 #if MIXED_MODE
+ 	switch( b )  {
+	case ST_VIEW:
+	  /* constant tracking OFF */
+	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+		       KeyPressMask|StructureNotifyMask);
+	  break;
+	case ST_S_PICK:
+	case ST_O_PICK:
+	case ST_O_PATH:
+	  /* constant tracking ON */
+	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+		       KeyPressMask|StructureNotifyMask|PointerMotionMask);
+	  break;
+	case ST_O_EDIT:
+	case ST_S_EDIT:
+	  /* constant tracking OFF */
+	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+		       KeyPressMask|StructureNotifyMask);
+	  break;
 #else
 	switch( b )  {
 	case ST_VIEW:
@@ -2133,11 +2218,12 @@ Ir_statechange( a, b )
 	case ST_S_VPICK:
 		unqdevice( MOUSEY );	/* constant tracking OFF */
 		break;
+#endif
 	default:
 		rt_log("Ir_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
-#endif
+
 	Ir_viewchange( DM_CHGV_REDO, SOLID_NULL );
 }
 

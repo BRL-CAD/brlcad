@@ -20,6 +20,9 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#define DO_XSELECTINPUT 1
+#define TRY_PIPES 1
+
 #include "conf.h"
 
 #include <sys/time.h>		/* for struct timeval */
@@ -45,6 +48,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./dm.h"
 #include "./solid.h"
+
+#if TRY_PIPES
+extern int ged_pipe[];
+#endif
 
 static void	label();
 static void	draw();
@@ -94,7 +101,10 @@ extern Tk_Window tkwin;
 static int height, width;
 static Tcl_Interp *xinterp;
 static Tk_Window xtkwin;
+
+#if !DO_XSELECTINPUT
 static int XdoMotion = 0;
+#endif
 
 static Display	*dpy;			/* X display pointer */
 static Window	win;			/* X window */
@@ -105,7 +115,13 @@ static GC	gc;			/* X Graphics Context */
 static int	is_monochrome = 0;
 static XFontStruct *fontstruct;		/* X Font */
 
+static int focus = 0;        /* send key events to the command window */
 static int	no_faceplate = 0;
+
+struct structparse X_vparse[] = {
+  {"%d",  1, "focus",             (int)&focus,            FUNC_NULL },
+  {"",    0,  (char *)0,          0,                      FUNC_NULL }
+};
 
 /*
  * Display coordinate conversion:
@@ -114,9 +130,8 @@ static int	no_faceplate = 0;
  */
 #define	GED_TO_Xx(x)	(((x)/4096.0+0.5)*width)
 #define	GED_TO_Xy(x)	((0.5-(x)/4096.0)*height)
-/*XXX
-#define X_TO_GED(x)	(x)
-*/
+#define Xx_TO_GED(x)    ((int)(((x)/(double)width - 0.5) * 4095))
+#define Xy_TO_GED(x)    ((int)((0.5 - (x)/(double)height) * 4095))
 
 /*
  *			X _ O P E N
@@ -453,7 +468,19 @@ XEvent *eventPtr;
     XWindowAttributes xwa;
 
     if (eventPtr->xany.window != win)
-	return TCL_ERROR;
+	return TCL_OK;
+
+#if TRY_PIPES
+    if(focus && eventPtr->type == KeyPress){
+      char buffer[1];
+
+      XLookupString(&(eventPtr->xkey), buffer, 1,
+		    (KeySym *)NULL, (XComposeStatus *)NULL);
+
+      write(ged_pipe[1], buffer, 1);
+      return TCL_RETURN;
+    }
+#endif
 
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
       XGetWindowAttributes( dpy, win, &xwa );
@@ -467,8 +494,12 @@ XEvent *eventPtr;
       rt_vls_printf( &dm_values.dv_string, "refresh\n" );
     } else if( eventPtr->type == MotionNotify ) {
 	int	x, y;
+
+#if !DO_XSELECTINPUT
 	if ( !XdoMotion )
 	    return TCL_OK;
+#endif
+
 	x = (eventPtr->xmotion.x/(double)width - 0.5) * 4095;
 	y = (0.5 - eventPtr->xmotion.y/(double)height) * 4095;
     	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
@@ -676,7 +707,28 @@ int	a, b;
 	 *  including enabling continuous tablet tracking,
 	 *  object highlighting
 	 */
-	switch( b )  {
+#if DO_XSELECTINPUT
+ 	switch( b )  {
+	case ST_VIEW:
+	  /* constant tracking OFF */
+	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+		       KeyPressMask|StructureNotifyMask);
+	  break;
+	case ST_S_PICK:
+	case ST_O_PICK:
+	case ST_O_PATH:
+	  /* constant tracking ON */
+	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+		       KeyPressMask|StructureNotifyMask|PointerMotionMask);
+	  break;
+	case ST_O_EDIT:
+	case ST_S_EDIT:
+	  /* constant tracking OFF */
+	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+		       KeyPressMask|StructureNotifyMask);
+	  break;
+#else
+ 	switch( b )  {
 	case ST_VIEW:
 	    /* constant tracking OFF */
 	    XdoMotion = 0;
@@ -692,6 +744,7 @@ int	a, b;
 	    /* constant tracking OFF */
 	    XdoMotion = 0;
 	    break;
+#endif
 	default:
 	    rt_log("X_statechange: unknown state %s\n", state_str[b]);
 	    break;
@@ -739,38 +792,50 @@ X_dm(argc, argv)
 int argc;
 char *argv[];
 {
-/* Experimental */
+  struct rt_vls   vls;
 
-  int x,y;
+  if( !strcmp( argv[0], "set" )){
+    rt_vls_init(&vls);
 
-  if(argc < 3)
-    return CMD_BAD;
+    if( argc < 2 )  {
+      /* Bare set command, print out current settings */
+      rt_structprint("dm_X internal variables", X_vparse, (char *)0 );
+      rt_log("%s", rt_vls_addr(&vls) );
+    } else if( argc == 2 ) {
+      rt_vls_name_print( &vls, X_vparse, argv[1], (char *)0 );
+      rt_log( "%s\n", rt_vls_addr(&vls) );
+    } else {
+      rt_vls_printf( &vls, "%s=\"", argv[1] );
+      rt_vls_from_argv( &vls, argc-2, argv+2 );
+      rt_vls_putc( &vls, '\"' );
+      rt_structparse( &vls, X_vparse, (char *)0 );
+    }
 
-  if(sscanf(argv[1], "%d", &x) != 1)
-    return CMD_BAD;
-
-  if(sscanf(argv[2], "%d", &y) != 1)
-    return CMD_BAD;
-  
-  x = (x/(double)width - 0.5) * 4095;
-  y = (0.5 - y/(double)height) * 4095;
-
-  switch(*argv[0]){
-  /* Buttonpress 1,2,3 */
-  case '1':
-    rt_vls_printf( &dm_values.dv_string, "L 1 %d %d\n", x, y);
-    break;
-  case '2':
-    rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", x, y);
-    break;
-  case '3':
-    rt_vls_printf( &dm_values.dv_string, "R 1 %d %d\n", x, y);
-    break;
-  default:
-    return CMD_BAD;
+    rt_vls_free(&vls);
+    return CMD_OK;
   }
 
-  return CMD_OK;
+  if( !strcmp( argv[0], "mouse")){
+    int up;
+    int xpos, ypos;
+
+    if( argc < 4){
+      rt_log("dm: need more parameters\n");
+      rt_log("mouse 1|0 xpos ypos\n");
+      return CMD_BAD;
+    }
+
+    up = atoi(argv[1]);
+    xpos = atoi(argv[2]);
+    ypos = atoi(argv[3]);
+
+    rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
+		  up, Xx_TO_GED(xpos), Xy_TO_GED(ypos));
+    return CMD_OK;
+  }
+
+  rt_log("dm: bad command - %s\n", argv[0]);
+  return CMD_BAD;
 }
 
 /*********XXX**********/
@@ -844,12 +909,22 @@ char	*name;
     xtkwin = Tk_CreateMainWindow(xinterp, name, "MGED", "MGED");
 #else
     rt_vls_init(&str);
-    rt_vls_strcpy(&str, "loadtk\n");
+    rt_vls_printf(&str, "loadtk %s\n", name);
     (void)cmdline(&str, FALSE);
     rt_vls_free(&str);
 
+    /* Use interp with all its registered commands. */
+#if 0
+    /* Make xtkwin a toplevel window */
     xtkwin = Tk_CreateWindow(interp, tkwin, "mged", name);
+#else
+    /* Make xtkwin an internal window */
+    xtkwin = Tk_CreateWindow(interp, tkwin, "mged", NULL);
 #endif
+#endif
+
+/*XXX* Temporary */
+    Tcl_EvalFile(interp, "/m/cad/mged/sample_bindings");
 
     /* Open the display - XXX see what NULL does now */
     if( xtkwin == NULL ) {
@@ -963,6 +1038,13 @@ char	*name;
 
 #else
     Tk_CreateGenericHandler(Xdoevent, (ClientData)NULL);
+
+#if DO_XSELECTINPUT
+    /* start with constant tracking OFF */
+    XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+		 KeyPressMask|StructureNotifyMask);
+#endif
+
 #endif
 
     Tk_SetWindowBackground(xtkwin, bg);
