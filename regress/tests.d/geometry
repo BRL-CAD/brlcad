@@ -3,7 +3,11 @@
 # g e o m e t r y
 #
 # This is the initial brlcad geometry test.  All of the supported primitives
-# that have values set for the mged 'in' and 'db put' commands actually 
+# that have values set for the mged 'in' and 'db put' commands have 
+# corresponding geometry created and then the resulting views are 
+# raytraced and compared.  Different versions of supported databases may
+# also be compared to each other and corresponding differences are
+# logged.
 #
 ###
 # Source function library
@@ -151,7 +155,7 @@ set glob_compat_mode 0
     set epa_DB_ARGS "epa V {0 0 0} H {0 0 10} A {1 0 0} r_1 5 r_2 2"
 
     #
-    # (eto) Arguments
+    # Elliptical Toroid (eto) Arguments
     # 
     # in args =>
     #
