@@ -902,25 +902,21 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	define	BSD	44
-#	define	OPTIMIZER	/**/
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
+#	define	CC	gcc
+#	define	OPTIMIZER	-O2
 
-#	if 1	/* PRODUCTION=0 */
-/*		Static linked executables */
-#		define	CC	gcc
-#		define	GFLAG	/**/
-#		define	CC_OPTS GFLAG
-/*		Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
-#	else
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support.  */
-#		define	CC	gcc
-#		define	GFLAG	-fPIC
-#		define	CC_OPTS GFLAG
+#		define	CC_DEFS -pipe -fPIC
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	gcc -shared -o
-#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
+#		define	BUILD_LIBRARY	ld -Bshareable -o
+#		define	STANDARD_LIBES	-lm -Wl,-R -Wl,LIBDIR
+#	else
+/*		Static linked executables */
+#		define	CC_DEFS -pipe
 #	endif
 
 #       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
@@ -935,9 +931,16 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TM_ZONE=1 -DHAVE_TM_GMTOFF=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
-/* #	define	LIBTCL_LIBES	-ldl */
 #	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1  -I''XINCDIR
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+/*	Use the system-provided TCL and Tk libraries */
+#	define	LIBTCL_DIR	_use_system_tcl_
+#	define	LIBTCL		-L/usr/local/lib -ltcl80
+#	define	LIBTCL_DEP	/**/
+/* #	define	LIBTCL_LIBES	-ldl */
+#	define	LIBTK_DIR	_use_system_tk_
+#	define	LIBTK		-L/usr/local/lib -ltk80
+#	define	LIBTK_DEP	/**/
 #endif
 
 #if defined(__CAKE__bsdi)
