@@ -1,136 +1,63 @@
 # $Id$
 
-required_files = \
-	h \
-	libtcl8.4 \
-	libbn \
-	libbu \
-	librt
+required_dirs = \
+	include \
+	src
 
-bench_files = \
-	libpkg \
-	libfb \
-	libwdb \
-	liboptical \
-	libsysv \
+bench_dirs = \
 	bench \
-	conv \
 	db \
-	fbserv \
-	rt	
+	pix
 
-rts_files = librtserver
-
-kitchensink_files = \
-	libpng \
-	libtk8.4 \
-	libitcl \
-	iwidgets4.0.1 \
-	libz \
-	libcursor \
-	libdm \
-	libpkg \
-	libfb \
-	libfft \
-	liborle \
-	librtserver \
-	libtclcad \
-	libtermio \
-	libutahrle \
-	libwdb \
-	anim \
-	awf \
-	bench \
-	brlman \
-	burst \
-	bwish \
-	comgeom-g \
-	conv \
-	db \
+other_dirs = \
 	doc \
-	fb \
-	fbed \
-	fbserv \
-	gtools \
-	halftone \
-	html \
-	iges \
-	irprep \
-	jack \
-	lgt \
-	mged \
-	mk \
-	nirt \
-	off \
-	patch \
-	pro-engineer \
-	remrt \
-	rt \
-	sample_applications \
-	sh \
-	sig \
-	tab \
-	tclscripts \
-	tools \
-	unigraphics \
-	util \
-	vas4 \
-	vdeck \
-	vfont
-
-
-#######################
-# put it all together #
-#######################
+	misc \
+	sh
 
 if ONLY_BENCHMARK
-
-if ONLY_RTS
 SUBDIRS = \
-	$(required_files) \
-	$(bench_files) \
-	$(rts_files)
-
-else !ONLY_RTS
-SUBDIRS = \
-	$(required_files) \
-	$(bench_files)
-
-endif
-# end ONLY_RTS
+	$(required_dirs) \
+	$(bench_dirs)
 
 else !ONLY_BENCHMARK
 
 if ONLY_RTS
 SUBDIRS = \
-	$(required_files) \
-	$(rts_files)
+	$(required_dirs)
 
 else !ONLY_RTS
 SUBDIRS = \
-	$(required_files) \
-	$(bench_files) \
-	$(rts_files) \
-	$(kitchensink_files)
+	$(required_dirs) \
+	$(bench_dirs) \
+	$(other_dirs)
 
 endif
-# end ONLY_RTS
+# ONLY_RTS
 
 endif
-# end ONLY_BENCHMARK
+# ONLY_BENCHMARK
 
 
-####################
-# dist maintenance #
-####################
+DIST_SUBDIRS = \
+	$(required_dirs) \
+	$(bench_dirs) \
+	$(other_dirs)
 
-DIST_SUBDIRS = $(SUBDIRS)
-
-EXTRA_DIST = $(PACKAGE).spec.in
+EXTRA_DIST = \
+	AUTHORS \
+	BUGS \
+	COPYING \
+	ChangeLog \
+	HACKING \
+	INSTALL \
+	NEWS \
+	README \
+	TODO \
+	autogen.sh \
+	$(PACKAGE).spec.in \
+	ltconfig
 
 MAINTAINERCLEANFILES = \
-	COPYING \
-	INSTALL \
 	Makefile.in \
 	aclocal.m4 \
 	autom4te.cache \
@@ -152,6 +79,7 @@ MAINTAINERCLEANFILES = \
 # the rules  #
 ##############
 
+# using home is probably not a great choice..
 .PHONY : rpm
 rpm: dist
 	cp $(PACKAGE)-$(VERSION).tar.gz ${HOME}/rpm/SOURCES/
