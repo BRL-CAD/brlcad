@@ -265,7 +265,7 @@ void (*errlog)();
 	if( atoi( host ) > 0 )  {
 		/* Numeric */
 		sinhim.sin_family = AF_INET;
-#ifdef CRAY
+#if CRAY && OLDTCP
 		addr_tmp = inet_addr(host);
 		sinhim.sin_addr = addr_tmp;
 #else
@@ -281,7 +281,7 @@ void (*errlog)();
 		}
 		sinhim.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (char *)&addr_tmp, hp->h_length);
-#		ifdef CRAY
+#		if CRAY && OLDTCP
 			sinhim.sin_addr = addr_tmp;
 #		else
 			sinhim.sin_addr.s_addr = addr_tmp;
