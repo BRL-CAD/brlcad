@@ -49,6 +49,7 @@ struct _mged_variables default_mged_variables = {
 /* sgi_win_origin */		{ 0, 0 },
 /* faceplate */			1,
 /* orig_gui */                  1,
+/* rt_output */			1,
 /* m_axes */    	        0,
 /* m_axes_color */		{ 100, 255, 100 },
 /* m_axes_label_color */	{ 255, 255, 0 },
@@ -101,8 +102,8 @@ struct _mged_variables default_mged_variables = {
 /* grid_anchor */		{ 0.0, 0.0, 0.0 },
 /* grid_res_h */		1.0,
 /* grid_res_v */		1.0,
-/* grid_res_major_h */		1,
-/* grid_res_major_v */		1,
+/* grid_res_major_h */		5,
+/* grid_res_major_v */		5,
 #endif
 /* mouse_behavior */            'd',
 /* query_ray_behavior */             't',
@@ -128,6 +129,8 @@ static void set_dlist();
 static void set_perspective();
 static void establish_perspective();
 static void toggle_perspective();
+static void set_grid_draw();
+static void set_grid_res();
 void set_dirty_flag();
 void set_scroll();
 void set_absolute_tran();
@@ -177,12 +180,13 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	set_dirty_flag },
 	{"%d",	1, "orig_gui",		MV_O(orig_gui),	        set_dirty_flag },
+	{"%d",	1, "rt_output",		MV_O(rt_output),        BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "m_axes",		MV_O(m_axes),		set_dirty_flag },
 	{"%d",  3, "m_axes_color",	MV_O(m_axes_color),	set_dirty_flag },
 	{"%d",  3, "m_axes_label_color",MV_O(m_axes_label_color),set_dirty_flag },
 	{"%d",  1, "m_axes_size",	MV_O(m_axes_size),	set_dirty_flag },
 	{"%d",  1, "m_axes_linewidth",	MV_O(m_axes_linewidth),	set_dirty_flag },
-	{"%f",  3, "m_axes_pos",	MV_O(m_axes_pos),	set_dirty_flag },
+	{"%f",	3, "m_axes_pos",	MV_O(m_axes_pos),	set_dirty_flag },
 	{"%d",  1, "v_axes",		MV_O(v_axes),		set_dirty_flag },
 	{"%d",  3, "v_axes_color",	MV_O(v_axes_color),	set_dirty_flag },
 	{"%d",  3, "v_axes_label_color",MV_O(v_axes_label_color),set_dirty_flag },
@@ -223,14 +227,14 @@ struct bu_structparse mged_vparse[] = {
 	{"%c",  1, "rubber_band_linestyle",	MV_O(rubber_band_linestyle),	set_dirty_flag },
 #endif
 #ifdef DO_SNAP_TO_GRID
-	{"%d",  1, "grid_draw",		MV_O(grid_draw),	set_dirty_flag },
+	{"%d",  1, "grid_draw",		MV_O(grid_draw),	set_grid_draw },
 	{"%d",  1, "grid_snap",		MV_O(grid_snap),	set_dirty_flag },
 	{"%d",  3, "grid_color",	MV_O(grid_color),	set_dirty_flag },
-	{"%f",  3, "grid_anchor",	MV_O(grid_anchor),	set_dirty_flag },
-	{"%f",  1, "grid_res_h",	MV_O(grid_res_h),	set_dirty_flag },
-	{"%f",  1, "grid_res_v",	MV_O(grid_res_v),	set_dirty_flag },
-	{"%d",  1, "grid_res_major_h",	MV_O(grid_res_major_h),	set_dirty_flag },
-	{"%d",  1, "grid_res_major_v",	MV_O(grid_res_major_v),	set_dirty_flag },
+	{"%f",	3, "grid_anchor",	MV_O(grid_anchor),	set_dirty_flag },
+	{"%f",	1, "grid_res_h",	MV_O(grid_res_h),	set_grid_res },
+	{"%f",	1, "grid_res_v",	MV_O(grid_res_v),	set_grid_res },
+	{"%d",  1, "grid_res_major_h",	MV_O(grid_res_major_h),	set_grid_res },
+	{"%d",  1, "grid_res_major_v",	MV_O(grid_res_major_v),	set_grid_res },
 #endif
 	{"%c",  1, "mouse_behavior",	MV_O(mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "query_ray_behavior",MV_O(query_ray_behavior),BU_STRUCTPARSE_FUNC_NULL },
@@ -589,3 +593,35 @@ set_fb()
   set_dirty_flag();
 }
 #endif
+
+static void
+set_grid_draw()
+{
+  struct dm_list *dlp;
+
+  set_dirty_flag();
+
+  /* This gets done at most one time. */
+  if(grid_auto_size && mged_variables->grid_draw){
+    fastf_t res = VIEWSIZE*base2local / 64.0;
+
+    mged_variables->grid_res_h = res;
+    mged_variables->grid_res_v = res;
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+      if(dlp->_mged_variables == mged_variables)
+	dlp->_grid_auto_size = 0;
+  }
+}
+
+static void
+set_grid_res()
+{
+  struct dm_list *dlp;
+
+  set_dirty_flag();
+
+  if(grid_auto_size)
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+      if(dlp->_mged_variables == mged_variables)
+	dlp->_grid_auto_size = 0;
+}
