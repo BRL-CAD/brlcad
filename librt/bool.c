@@ -268,6 +268,39 @@ struct application	*ap;
 			goto done_weave;
 		}
 
+		if( ap->a_no_booleans )  {
+			lastseg = segp;
+			lasthit = &segp->seg_in;
+			lastflip = 0;
+			/* Just sort in ascending in-dist order */
+			for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
+				if( lasthit->hit_dist < pp->pt_inhit->hit_dist )  {
+					if(rt_g.debug&DEBUG_PARTITION)  {
+						bu_log("Insert nobool seg before next pt\n");
+					}
+					GET_PT_INIT( rtip, newpp, res );
+					bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
+					newpp->pt_inseg = segp;
+					newpp->pt_inhit = &segp->seg_in;
+					newpp->pt_outseg = segp;
+					newpp->pt_outhit = &segp->seg_out;
+					INSERT_PT( newpp, pp );
+					goto done_weave;
+				}
+			}
+			if(rt_g.debug&DEBUG_PARTITION)  {
+				bu_log("Append nobool seg at end of list\n");
+			}
+			GET_PT_INIT( rtip, newpp, res );
+			bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
+			newpp->pt_inseg = segp;
+			newpp->pt_inhit = &segp->seg_in;
+			newpp->pt_outseg = segp;
+			newpp->pt_outhit = &segp->seg_out;
+			INSERT_PT( newpp, PartHdp );
+			goto done_weave;
+		}
+
 		/* Check for zero-thickness segment, within tol */
 		diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
 		if( NEAR_ZERO( diff, tol_dist ) )  {
@@ -766,6 +799,12 @@ CONST struct bu_bitv	*solidbits;
 	RT_CHECK_RTI(ap->a_rt_i);
 	BU_CK_BITV(solidbits);
 
+	if(rt_g.debug&DEBUG_PARTITION)  {
+		bu_log("\nrt_boolfinal(%g,%g) x%d y%d lvl%d START\n",
+			startdist, enddist,
+			ap->a_x, ap->a_y, ap->a_level );
+	}
+
 	if( enddist <= 0 )  {
 		reason = "not done, behind start point";
 		ret = 0;
@@ -792,6 +831,23 @@ CONST struct bu_bitv	*solidbits;
 			ret = 1;
 			goto out;
 		}
+	}
+
+	if( ap->a_no_booleans )  {
+		while( (pp = InputHdp->pt_forw) != InputHdp )  {
+			RT_CK_PT(pp);
+			DEQUEUE_PT(pp);
+			pp->pt_regionp = (struct region *)
+				BU_PTBL_GET(&pp->pt_inseg->seg_stp->st_regions, 0);
+			RT_CK_REGION(pp->pt_regionp);
+			if(rt_g.debug&DEBUG_PARTITION)  {
+				rt_pr_pt( ap->a_rt_i, pp );
+			}
+			INSERT_PT( pp, FinalHdp );
+		}
+		ret = 0;
+		reason = "No a_onehit processing in a_no_booleans mode";
+		goto out;
 	}
 
 	pp = InputHdp->pt_forw;
