@@ -1168,17 +1168,18 @@ struct rt_g {
 	union cutter	*rtg_CutFree;	/* cut Freelist */
 	/*  Definitions necessary to interlock in a parallel environment */
 	int		rtg_parallel;	/* !0 = trying to use multi CPUs */
-	int		res_syscall;	/* lock on system calls */
-	int		res_worker;	/* lock on work to do */
-	int		res_stats;	/* lock on statistics */
-	int		res_results;	/* lock on result buffer */
-	int		res_model;	/* lock on model growth (splines) */
+	long		res_syscall;	/* lock on system calls */
+	long		res_worker;	/* lock on work to do */
+	long		res_stats;	/* lock on statistics */
+	long		res_results;	/* lock on result buffer */
+	long		res_model;	/* lock on model growth (splines) */
 	struct rt_list	rtg_vlfree;	/* head of rt_vlist freelist */
 	int		rtg_logindent;	/* rt_log() indentation level */
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 	int		rtg_setjmp_valid;/* !0 = rtg_jmpbuf is valid */
-	int		rtg_jmpbuf[64];	/* for RT_SETJMP.  should be jmp_buf */
+	long		rtg_jmpbuf[64];	/* for RT_SETJMP.  should be jmp_buf */
 	struct rt_list	rtg_mapped_files; /* list of mapped files open */
+	struct rt_list	rtg_resources;	/* list of 'struct resource'es in use */
 };
 extern struct rt_g rt_g;
 
