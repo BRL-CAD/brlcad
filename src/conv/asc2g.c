@@ -177,8 +177,9 @@ main(int argc, char **argv)
 		rewind( ifp );
 		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 		interp = Tcl_CreateInterp();
-		if( wdb_init_obj( interp, ofp, db_name ) != TCL_OK ) {
-			bu_bomb( "Failed to initialize wdb_obj!!\n" );
+		if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
+		    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
+		    bu_bomb( "Failed to initialize wdb_obj!!\n" );
 		}
 
 		/* Create the safe interpreter */
