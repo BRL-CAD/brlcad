@@ -319,7 +319,14 @@ install-data-local:
 	    $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
 	    $(ECHO) ; \
 	fi ; \
-	@touch install.$(host_triplet).log
+	touch install.$(host_triplet).log ; \
+	if test -w install.$(host_triplet).log ; then \
+	    LC_ALL=C ; \
+	    if test "x$USER" = "x" ; then \
+		USER="unknown" ; \
+	    fi ; \
+	    $(ECHO) "Installed BRL-CAD Release @BRLCAD_VERSION@ Build @CONFIG_DATE@ by ${USER} on `date` to $(DESTDIR)$(prefix)" >> install.$(host_triplet).log ; \
+	fi
 
 
 # Print out an informative summary.  As just about everything seems to
