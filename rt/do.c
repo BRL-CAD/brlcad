@@ -464,7 +464,7 @@ char	**argv;
 	struct rt_vls	str;
 
 	if( argc <= 1 ) {
-		bu_structprint( "Generic and Application-Specific Parameter Values",
+		bu_struct_print( "Generic and Application-Specific Parameter Values",
 			set_parse, (char *)0 );
 		return(0);
 	}

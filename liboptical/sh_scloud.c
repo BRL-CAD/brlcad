@@ -105,10 +105,10 @@ struct rt_i		*rtip;
 	if( bu_struct_parse( matparm, scloud_parse, (char *)scloud ) < 0 )
 		return(-1);
 
-	(void)bu_structprint( rp->reg_name, scloud_pr, (char *)scloud );
+	(void)bu_struct_print( rp->reg_name, scloud_pr, (char *)scloud );
 
 	if( rdebug&RDEBUG_SHADE)
-		(void)bu_structprint( rp->reg_name, scloud_parse, (char *)scloud );
+		(void)bu_struct_print( rp->reg_name, scloud_parse, (char *)scloud );
 
 	/* get transformation between world and "region" coordinates */
 	if (db_string_to_path( &full_path, rtip->rti_dbip, rp->reg_name) ) {
@@ -152,7 +152,7 @@ scloud_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	(void)bu_structprint( rp->reg_name, scloud_pr, (char *)dp );
+	(void)bu_struct_print( rp->reg_name, scloud_pr, (char *)dp );
 }
 
 /*

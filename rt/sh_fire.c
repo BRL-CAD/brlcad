@@ -268,7 +268,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
-		bu_structprint( " FIRE Parameters:", fire_print_tab, (char *)fire_sp );
+		bu_struct_print( " FIRE Parameters:", fire_print_tab, (char *)fire_sp );
 		mat_print( "m_to_sh", fire_sp->fire_m_to_sh );
 		mat_print( "sh_to_noise", fire_sp->fire_sh_to_noise );
 		mat_print( "colorspline", fire_sp->fire_colorspline_mat );
@@ -285,7 +285,7 @@ fire_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, fire_print_tab, (char *)dp );
+	bu_struct_print( rp->reg_name, fire_print_tab, (char *)dp );
 }
 
 /*
@@ -362,7 +362,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_fire_SP(fire_sp);
 
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
-/*		bu_structprint( "fire_render Parameters:", fire_print_tab, (char *)fire_sp ); */
+/*		bu_struct_print( "fire_render Parameters:", fire_print_tab, (char *)fire_sp ); */
 		bu_log("fire_render()\n");
 	}
 	/* If we are performing the shading in "region" space, we must 

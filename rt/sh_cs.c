@@ -147,7 +147,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( rdebug&RDEBUG_SHADE) {
 		cs_sp->cs_reg_name = rt_strdup(rp->reg_name);
 
-		bu_structprint( " Parameters:", cs_print_tab, (char *)cs_sp );
+		bu_struct_print( " Parameters:", cs_print_tab, (char *)cs_sp );
 		mat_print( "m_to_sh", cs_sp->cs_m_to_sh );
 	}
 
@@ -162,7 +162,7 @@ cs_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, cs_print_tab, (char *)dp );
+	bu_struct_print( rp->reg_name, cs_print_tab, (char *)dp );
 }
 
 /*
@@ -206,7 +206,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_log("cs_render(%s)\n", cs_sp->cs_reg_name);
-		bu_structprint( "Parameters:", cs_print_tab, (char *)cs_sp );
+		bu_struct_print( "Parameters:", cs_print_tab, (char *)cs_sp );
 	}
 
 	/* If we are performing the shading in "region" space, we must 

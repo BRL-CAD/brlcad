@@ -631,7 +631,7 @@ char *file, *obj;
 	}
 #endif
 
-	rt_structprint( "rttherm variables", view_parse, NULL );
+	rt_struct_print( "rttherm variables", view_parse, NULL );
 
 	/* Build spectrum definition */
 	spectrum = rt_table_make_uniform( (int)spectrum_param[0],

@@ -139,7 +139,7 @@ char	*dp;
 	spm = (struct spm_specific *)dp;
 
 	rt_log("spm_print(rp=x%x, dp=x%x)\n", rp, dp);
-	(void)bu_structprint("spm_print", spm_parse, (char *)dp);
+	(void)bu_struct_print("spm_print", spm_parse, (char *)dp);
 	if( spm->sp_map )  spm_dump( spm->sp_map, 0 );
 }
 

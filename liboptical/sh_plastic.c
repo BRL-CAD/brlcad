@@ -207,7 +207,7 @@ phong_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint(rp->reg_name, phong_parse, (char *)dp);
+	bu_struct_print(rp->reg_name, phong_parse, (char *)dp);
 }
 
 /*
@@ -309,7 +309,7 @@ char	*dp;
 	if( ps->magic != PL_MAGIC )  rt_log("phong_render: bad magic\n");
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_structprint( "phong_render", phong_parse, (char *)ps );
+		bu_struct_print( "phong_render", phong_parse, (char *)ps );
 
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;

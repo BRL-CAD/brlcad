@@ -80,7 +80,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	rtrans_sp->msr = msr_unif_init( 0, 0 );
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_structprint( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
+		bu_struct_print( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
 
 	return(1);
 }
@@ -93,7 +93,7 @@ rtrans_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, rtrans_parse, (char *)dp );
+	bu_struct_print( rp->reg_name, rtrans_parse, (char *)dp );
 }
 
 /*
@@ -128,7 +128,7 @@ char	*dp;
 	CK_RTRANS_SP(rtrans_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_structprint( "random transparency", rtrans_parse, (char *)rtrans_sp );
+		bu_struct_print( "random transparency", rtrans_parse, (char *)rtrans_sp );
 
 	if( rtrans_sp->threshold >= 1.0 ||
 	    0.5 + MSR_UNIF_DOUBLE( rtrans_sp->msr ) < rtrans_sp->threshold )

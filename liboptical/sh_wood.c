@@ -521,7 +521,7 @@ struct wood_specific *wd;
 HIDDEN void wood_print( rp )
 register struct region *rp;
 {
-	bu_structprint(rp->reg_name, wood_parse, (char *)rp->reg_udata);
+	bu_struct_print(rp->reg_name, wood_parse, (char *)rp->reg_udata);
 }
 
 /*

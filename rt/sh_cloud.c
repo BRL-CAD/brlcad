@@ -139,7 +139,7 @@ cloud_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, cloud_parse, (char *)dp );
+	bu_struct_print( rp->reg_name, cloud_parse, (char *)dp );
 }
 
 /*

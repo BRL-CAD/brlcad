@@ -138,7 +138,7 @@ brdf_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint(rp->reg_name, brdf_parse, (char *)dp);
+	bu_struct_print(rp->reg_name, brdf_parse, (char *)dp);
 }
 
 /*
@@ -219,7 +219,7 @@ char	*dp;
 	if( ps->magic != BRDF_MAGIC )  rt_log("brdf_render: bad magic\n");
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_structprint( "brdf_render", brdf_parse, (char *)ps );
+		bu_struct_print( "brdf_render", brdf_parse, (char *)ps );
 
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;

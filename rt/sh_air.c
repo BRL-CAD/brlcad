@@ -116,7 +116,7 @@ air_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, air_parse, (char *)dp );
+	bu_struct_print( rp->reg_name, air_parse, (char *)dp );
 }
 
 /*
@@ -155,7 +155,7 @@ char	*dp;
 	CK_air_SP(air_sp);
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_structprint( "air_specific", air_parse, (char *)air_sp );
+		bu_struct_print( "air_specific", air_parse, (char *)air_sp );
 
 		bu_log("air in(%g) out%g)\n",
 			pp->pt_inhit->hit_dist,
@@ -195,7 +195,7 @@ char	*dp;
 	CK_air_SP(air_sp);
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_structprint( "air_specific", air_parse, (char *)air_sp );
+		bu_struct_print( "air_specific", air_parse, (char *)air_sp );
 		bu_log("air in(%g) out(%g) r_pt(%g %g %g)\n",
 			pp->pt_inhit->hit_dist,
 			pp->pt_outhit->hit_dist,

@@ -224,7 +224,7 @@ points_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint("points_setup", points_parse, (char *)dp);
+	bu_struct_print("points_setup", points_parse, (char *)dp);
 	/* Should be more here */
 }
 

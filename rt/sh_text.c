@@ -377,7 +377,7 @@ HIDDEN void
 txt_print( rp )
 register struct region *rp;
 {
-	bu_structprint(rp->reg_name, txt_parse, (char *)rp->reg_udata);
+	bu_struct_print(rp->reg_name, txt_parse, (char *)rp->reg_udata);
 }
 
 /*
@@ -479,7 +479,7 @@ HIDDEN void
 ckr_print( rp )
 register struct region *rp;
 {
-	bu_structprint(rp->reg_name, ckr_parse, rp->reg_udata);
+	bu_struct_print(rp->reg_name, ckr_parse, rp->reg_udata);
 }
 
 /*

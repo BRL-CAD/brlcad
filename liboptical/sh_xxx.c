@@ -177,7 +177,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_structprint( " Parameters:", xxx_print_tab, (char *)xxx_sp );
+		bu_struct_print( " Parameters:", xxx_print_tab, (char *)xxx_sp );
 		mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
 	}
 
@@ -192,7 +192,7 @@ xxx_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, xxx_print_tab, (char *)dp );
+	bu_struct_print( rp->reg_name, xxx_print_tab, (char *)dp );
 }
 
 /*
@@ -229,7 +229,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_xxx_SP(xxx_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_structprint( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
+		bu_struct_print( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
 
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.

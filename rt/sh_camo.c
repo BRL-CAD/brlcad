@@ -168,7 +168,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_mul2(tmp, camo_sp->xform);
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_structprint( rp->reg_name, camo_parse, (char *)camo_sp );
+		bu_struct_print( rp->reg_name, camo_parse, (char *)camo_sp );
 		mat_print( "xform", camo_sp->xform );
 	}
 
@@ -183,7 +183,7 @@ camo_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, camo_parse, (char *)dp );
+	bu_struct_print( rp->reg_name, camo_parse, (char *)dp );
 }
 
 /*
@@ -219,7 +219,7 @@ char	*dp;
 	CK_camo_SP(camo_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_structprint( "foo", camo_parse, (char *)camo_sp );
+		bu_struct_print( "foo", camo_parse, (char *)camo_sp );
 
 	/* Optional: transform hit point into "shader-space coordinates" */
 	MAT4X3PNT(pt, camo_sp->xform, swp->sw_hit.hit_point);

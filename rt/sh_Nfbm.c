@@ -141,7 +141,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_mul2(tmp, Nfbm_sp->xform);
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_structprint( rp->reg_name, Nfbm_parse, (char *)Nfbm_sp );
+		bu_struct_print( rp->reg_name, Nfbm_parse, (char *)Nfbm_sp );
 		mat_print( "xform", Nfbm_sp->xform );
 	}
 
@@ -156,7 +156,7 @@ Nfbm_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, Nfbm_parse, (char *)dp );
+	bu_struct_print( rp->reg_name, Nfbm_parse, (char *)dp );
 }
 
 /*
@@ -202,7 +202,7 @@ char	*dp;
 	CK_Nfbm_SP(Nfbm_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_structprint( "foo", Nfbm_parse, (char *)Nfbm_sp );
+		bu_struct_print( "foo", Nfbm_parse, (char *)Nfbm_sp );
 
 
 	/* transform hit point into "shader-space coordinates" */

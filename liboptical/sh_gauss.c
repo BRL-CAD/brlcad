@@ -352,7 +352,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_structprint( " Parameters:", gauss_print_tab, (char *)gauss_sp );
+		bu_struct_print( " Parameters:", gauss_print_tab, (char *)gauss_sp );
 		mat_print( "m_to_sh", gauss_sp->gauss_m_to_sh );
 	}
 
@@ -367,7 +367,7 @@ gauss_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_structprint( rp->reg_name, gauss_print_tab, (char *)dp );
+	bu_struct_print( rp->reg_name, gauss_print_tab, (char *)dp );
 }
 
 /*
@@ -511,7 +511,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_gauss_SP(gauss_sp);
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_structprint( "gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp );
+		bu_struct_print( "gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp );
 
 		bu_log("r_pt(%g %g %g)  r_dir(%g %g %g)\n",
 			V3ARGS(ap->a_ray.r_pt),
