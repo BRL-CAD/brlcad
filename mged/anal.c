@@ -87,7 +87,7 @@ char	*argv[];
 		case ST_S_EDIT:
 			/* Use already modified version. "new way" */
 			do_anal(&v, &es_int);
-			fputs( rt_vls_addr(&v), stdout );
+			fputs( rt_vls_addr(&v), stderr );
 			return CMD_OK;
 
 		case ST_O_EDIT:
@@ -106,7 +106,7 @@ char	*argv[];
 		}
 
 		do_anal(&v, &intern);
-		fputs( rt_vls_addr(&v), stdout );
+		fputs( rt_vls_addr(&v), stderr );
 		rt_db_free_internal( &intern );
 		return CMD_OK;
 	}
@@ -121,9 +121,9 @@ char	*argv[];
 			return CMD_BAD;
 		}
 
-		do_list( stdout, ndp, 1 );
+		do_list( stderr, ndp, 1 );
 		do_anal(&v, &intern);
-		fputs( rt_vls_addr(&v), stdout );
+		fputs( rt_vls_addr(&v), stderr );
 		rt_vls_free(&v);
 		rt_db_free_internal( &intern );
 	}
