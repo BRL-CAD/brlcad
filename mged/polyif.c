@@ -43,6 +43,22 @@ struct polygon_header  {
 	int	npts;			/* number of points */
 };
 #define POLYGON_HEADER_MAGIC	0x8623bad2
+
+struct bu_structparse polygon_desc[] = {
+	{"%d", 1, "magic", offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "ident", offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "interior", offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 3, "normal", offsetofarray(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL },
+	{"%c", 3, "color", offsetofarray(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "npts", offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL },
+	{"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+};
+struct bu_structparse vertex_desc[] = {
+	{"%f", 3, "vertex", 0, BU_STRUCTPARSE_FUNC_NULL },
+	{"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+};
+
+#if 0
 struct rt_imexport  polygon_desc[] = {
 	{"%d",	offsetof(struct polygon_header, magic),		1 },
 	{"%d",	offsetof(struct polygon_header, ident),		1 },
@@ -56,7 +72,7 @@ struct rt_imexport vertex_desc[] = {
 	{"%f",	0,	99 },	/* im_count will be filled in at runtime */
 	{"",	0,	0 }
 };
-
+#endif
 /*
  *			F _ P O L Y B I N O U T
  *
@@ -165,7 +181,7 @@ char	**argv;
 					}
 					db_free_external( &obuf );
 					/* Now export the vertices */
-					vertex_desc[0].im_count = ph.npts * 3;
+					vertex_desc[0].sp_count = ph.npts * 3;
 					if( rt_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
 					  Tcl_AppendResult(interp, "vertex export error\n", (char *)NULL);
 					  break;
