@@ -853,6 +853,7 @@ struct combined_tree_state {
 #define OP_NMG_TESS	MKOP(11)	/* Leaf: tr_stp -> nmgregion */
 
 union tree {
+	long	magic;
 	int	tr_op;		/* Operation */
 	struct tree_node {
 		int		tb_op;		/* non-leaf */
@@ -884,6 +885,8 @@ union tree {
 #define tr_regionp	tr_a.tu_regionp
 
 #define TREE_NULL	((union tree *)0)
+#define RT_TREE_MAGIC	0x91191191
+#define RT_CK_TREE(_p)	RT_CKMAG(_p, RT_TREE_MAGIC, "union tree")
 
 /*
  *			A N I M A T E
