@@ -6,7 +6,7 @@ if test -x ${BASEDIR}/bin/tclsh
 # this is a comment \
 then
 # this is a comment \
-	TCLSH_NAME=tclsh
+	TCLSH_NAME=${BASEDIR}/bin/tclsh
 # this is a comment \
 elif test -x /usr/local/bin/tclsh8.0 
 # this is a comment \
