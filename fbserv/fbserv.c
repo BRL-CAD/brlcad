@@ -452,8 +452,8 @@ int	fd;
 	int	on = 1;
 
 #if defined(SO_KEEPALIVE)
-	if( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
-#		ifndef CRAY2
+	if( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0 ) {
+#if		defined(BSD) && !defined(CRAY2)
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
 #		endif
 	}
