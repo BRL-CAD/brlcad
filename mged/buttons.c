@@ -325,7 +325,7 @@ bv_zoomout()
 static void
 bv_rate_toggle()
 {
-  mged_variables.rateknobs = !mged_variables.rateknobs;
+  mged_variables->rateknobs = !mged_variables->rateknobs;
   set_scroll();
 }
 
@@ -401,15 +401,15 @@ bv_vsave()
 static void
 bv_adcursor()
 {
-  if (mged_variables.adcflag)  {
+  if (mged_variables->adcflag)  {
     /* Was on, turn off */
-    mged_variables.adcflag = 0;
+    mged_variables->adcflag = 0;
 #if 0
     dmp->dm_light( dmp, LIGHT_OFF, BV_ADCURSOR );
 #endif
   }  else  {
     /* Was off, turn on */
-    mged_variables.adcflag = 1;
+    mged_variables->adcflag = 1;
 #if 0
     dmp->dm_light( dmp, LIGHT_ON, BV_ADCURSOR );
 #endif
@@ -872,16 +872,11 @@ char *str;
 	  point_t new_pos;
 
 	  save_dm_list = curr_dm_list;
-	  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 	    curr_dm_list = p;
 
-#if 0
-	    /* Advise display manager of state change */
-	    dmp->dm_statechange( from, to );
-#else
 	    if(state_hook)
 	      state_hook( from, to );
-#endif
 
 	    if(to == ST_VIEW){
 	      mat_t o_toViewcenter;
