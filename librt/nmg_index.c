@@ -106,19 +106,20 @@ register long	*p;
 		(_p)->index = newindex++; }
 
 /*
- *			N M G _ M _ R E I N D E X
+ *			N M G _ M _ S E T _ H I G H _ B I T
  *
- *  Reassign index numbers to all the data structures in a model.
- *  The model structure will get index 0, all others will be sequentially
- *  assigned after that.
+ *  First pass:  just set the high bit on all index words
+ *
+ *  This is a separate function largely for the benefit of global optimizers,
+ *  which tended to blow their brains out on such a large subroutine.
  */
 void
-nmg_m_reindex( m )
+nmg_m_set_high_bit( m )
 struct model	*m;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
-	struct faceuse		*fu;
+	struct  faceuse		*fu;
 	struct face		*f;
 	struct loopuse		*lu;
 	struct loop		*l;
@@ -126,16 +127,11 @@ struct model	*m;
 	struct edge			*e;
 	register struct vertexuse	*vu;
 	struct vertex			*v;
-	register int		newindex;
 
-	/*
-	 *  First pass:  just set the high bit on all index words
-	 */
 	NMG_CK_MODEL(m);
-	if( m->index != 0 )  rt_log("nmg_m_reindex() m->index=%d\n", m->index);
-
 	NMG_MARK_INDEX(m);
 	if( m->ma_p )  NMG_MARK_INDEX(m->ma_p);
+
 	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
 		NMG_MARK_INDEX(r);
@@ -324,6 +320,39 @@ struct model	*m;
 			}
 		}
 	}
+}
+
+/*
+ *			N M G _ M _ R E I N D E X
+ *
+ *  Reassign index numbers to all the data structures in a model.
+ *  The model structure will get index 0, all others will be sequentially
+ *  assigned after that.
+ *
+ *  Because the first pass has done extensive error checking,
+ *  the second pass can do less.
+ */
+void
+nmg_m_reindex( m )
+struct model	*m;
+{
+	struct nmgregion	*r;
+	struct shell		*s;
+	struct faceuse		*fu;
+	struct face		*f;
+	struct loopuse		*lu;
+	struct loop		*l;
+	register struct edgeuse		*eu;
+	struct edge			*e;
+	register struct vertexuse	*vu;
+	struct vertex			*v;
+	register int		newindex;
+
+	NMG_CK_MODEL(m);
+	if( m->index != 0 )  rt_log("nmg_m_reindex() m->index=%d\n", m->index);
+
+	/* First pass:  set high bits */
+	nmg_m_set_high_bit( m );
 
 	/*
 	 *  Second pass:  assign new index number
