@@ -495,10 +495,10 @@ proc gui { args } {
 	.$id.menubar.file add separator
 	.$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
 	.$id.menubar.file add separator
-	.$id.menubar.file add command -label "Create/Initialize .mgedrc" -underline 0 \
+	.$id.menubar.file add command -label "Create/Update .mgedrc" -underline 0 \
 			-command "update_mgedrc"
-	hoc_register_menu_data "File" "Create/Initialize .mgedrc" "Create/Initialize .mgedrc"\
-			{ { summary "Create or initialize the .mgedrc startup file with default variable settings." }
+	hoc_register_menu_data "File" "Create/Update .mgedrc" "Create/Update .mgedrc"\
+			{ { summary "Create the .mgedrc startup file with default variable settings, or update to current settings." }
 	{ see_also } }
 	.$id.menubar.file add command -label "Close" -underline 0 \
 			-command "closedb"
