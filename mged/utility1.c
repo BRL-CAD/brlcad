@@ -103,7 +103,7 @@ char	*argv[];
 {
   int i;
   int status;
-  char *tmpfil = "/tmp/GED.aXXXXX";
+  char tmpfil[128];
   char **av;
 
   if(dbip == DBI_NULL)
@@ -120,6 +120,8 @@ char	*argv[];
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
+
+  strcpy( tmpfil, "/tmp/GED.aXXXXX" );
 
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
