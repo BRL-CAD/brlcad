@@ -21,7 +21,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
-#include "rtlex.h"
 
 static int bu_lex_reading_comment = 0;
 
