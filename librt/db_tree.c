@@ -1362,8 +1362,10 @@ union tree *	(*leaf_func)();
 	}
 
 	/* Clean up any remaining sub-trees still in reg_trees[] */
-	for( i=0; i < new_reg_count; i++ )
-		db_free_tree( reg_trees[i] );
+	for( i=0; i < new_reg_count; i++ )  {
+		if( reg_trees[i] != TREE_NULL )
+			db_free_tree( reg_trees[i] );
+	}
 	rt_free( (char *)reg_trees, "*reg_trees[]" );
 
 	return(0);	/* OK */
