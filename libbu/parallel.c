@@ -735,11 +735,11 @@ genptr_t	arg;
 		 *  should be fixed in a later release.  Maybe.
 		 */
 		bu_log("\nWarning:  stdin file pointer has been corrupted by SGI multi-processor bug!\n");
-#if 0
-		bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, ftell(stdin) );
-		bu_pr_FILE("saved stdin", &stdin_save);
-		bu_pr_FILE("current stdin", stdin);
-#endif
+		if( bu_debug & BU_DEBUG_PARALLEL )  {
+			bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, ftell(stdin) );
+			bu_pr_FILE("saved stdin", &stdin_save);
+			bu_pr_FILE("current stdin", stdin);
+		}
 		fseek(stdin, stdin_pos, SEEK_SET);
 		if( ftell(stdin) != stdin_pos )  {
 			bu_log("WARNING: fseek() did not recover proper position.\n");
