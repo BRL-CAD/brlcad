@@ -202,17 +202,17 @@ char **argv;
 		exit(1);
 	}
 
-	/* Plot all of the solid RPPs in a light grey */
+	/* Plot all of the solids */
 	if( rdebug > 0 )  {
 		register struct soltab *stp;
 
 		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 		pl_color( plotfp, 150, 150, 150 );
 
-		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
+		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 			if( stp->st_aradius >= INFINITY )
 				continue;
-			pdv_3box( plotfp, stp->st_min, stp->st_max );
+			(void)rt_plot_solid( plotfp, rtip, stp );
 		}
 	}
 
