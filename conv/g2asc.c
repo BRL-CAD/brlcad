@@ -547,17 +547,6 @@ bsurfdump()	/* Print d-spline surface description record information */
 	(void)free( (char *)fp );
 }
 
-#ifdef SYSV
-
-bzero( str, n )
-register char *str;
-register int n;
-{
-	while( n-- > 0 )
-		*str++ = '\0';
-}
-#endif
-
 /*
  *			N A M E
  *
@@ -725,7 +714,7 @@ register mat_t		  mat;
 
 	/* Check record type */
 	if( rp->u_id != DBID_PARTICLE )  {
-		rt_log("rt_part_import: defective record\n");
+		fprintf(stderr,"rt_part_import: defective record\n");
 		return(-1);
 	}
 
