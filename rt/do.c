@@ -780,11 +780,10 @@ int framenumber;
 	 */
 	rt_prep_timer();
 	if( incr_mode )  {
-		for( incr_level = 0; incr_level < incr_nlevel; incr_level++ )  {
-			if( incr_level > 0 )
+		for( incr_level = 1; incr_level <= incr_nlevel; incr_level++ )  {
+			if( incr_level > 1 )
 				view_2init( &ap );
 			do_run( 0, (1<<incr_level)*(1<<incr_level)-1 );
-			view_end( &ap );
 		}
 	} else {
 		do_run( pix_start, pix_end );

@@ -283,11 +283,6 @@ register struct application *ap;
 			}
 			RES_RELEASE( &rt_g.res_syscall );
 			if( npix != width )  rt_bomb("fb_write error (incremental res)");
-			for( dy=spread; dy >= 0; dy-- )  {
-				yy = ap->a_y + dy;
-				rt_free( scanline[yy].sl_buf, "scanline buf" );
-				scanline[yy].sl_buf = (char *)0;
-			}
 		}
 		break;
 
@@ -336,11 +331,6 @@ register struct application *ap;
 view_end(ap)
 struct application *ap;
 {
-
-	if( incr_mode )  {
-		if( incr_level < incr_nlevel )
-			return(0);		 /* more res to come */
-	}
 	free_scanlines();
 	return(0);		/* OK */
 }
@@ -806,11 +796,16 @@ char	*framename;
 	ap->a_miss = hit_nothing;
 	ap->a_onehit = 1;
 
-	/* Always allocate the scanline[] array */
-	if( scanline )  free_scanlines();
-	scanline = (struct scanline *)rt_calloc(
-		height, sizeof(struct scanline),
-		"struct scanline[height]" );
+	/* Always allocate the scanline[] array
+	 * (unless we already have one in incremental mode)
+	 */
+	if( !incr_mode || !scanline )
+	{
+		if( scanline )  free_scanlines();
+		scanline = (struct scanline *)rt_calloc(
+			height, sizeof(struct scanline),
+			"struct scanline[height]" );
+	}
 
 #ifdef RTSRV
 	buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
@@ -850,10 +845,8 @@ char	*framename;
 					scanline[i*w].sl_left = j;
 			}
 		}
-		if( incr_level > 0 )  {
-			if( incr_level < incr_nlevel )
+		if( incr_level > 1 )
 				return;		 /* more res to come */
-		}
 		break;
 
 	case BUFMODE_DYNAMIC:
