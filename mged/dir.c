@@ -331,63 +331,19 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#if 0
-#else
-	register struct directory *dp;
-	register int i;
-	struct directory **dirp;
-	struct directory **dirp0 = (struct directory **)NULL;
-	struct bu_vls vls;
+	int		ret;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 1 || 1 < argc){
-	  struct bu_vls vls;
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+        else
+		return TCL_OK;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help tops");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
+	ret = invoke_db_wrapper(interp, argc, argv);
 
-	bu_vls_init(&vls);
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);	/* allow interupts */
-	else{
-	  if(dirp0)
-	    bu_free( (genptr_t)dirp0, "dir_getspace" );
-	  bu_vls_free(&vls);
-
-	  return TCL_OK;
-	}
-
-	db_update_nref( dbip, &rt_uniresource );
-	/*
-	 * Find number of possible entries and allocate memory
-	 */
-	dirp = dir_getspace(0);
-	dirp0 = dirp;
-	/*
-	 * Walk the directory list adding pointers (to the directory entries
-	 * which are the tops of their respective trees) to the array
-	 */
-	for( i = 0; i < RT_DBNHASH; i++)
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
-			if( dp->d_nref > 0) {
-				/* Object not member of any combination */
-				continue;
-			} else {
-				*dirp++ = dp;
-			}
-
-	vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	(void)signal( SIGINT, SIG_IGN );
-	bu_vls_free(&vls);
-	bu_free( (genptr_t)dirp0, "dir_getspace" );
-	return TCL_OK;
-#endif
+	(void)signal(SIGINT, SIG_IGN);
+	return ret;
 }
 
 /*
@@ -960,7 +916,7 @@ f_tree(clientData, interp, argc, argv)
 	CHECK_DBI_NULL;
 
 	if (setjmp(jmp_env) == 0)
-		(void)signal( SIGINT, sig3);  /* allow interupts */
+		(void)signal(SIGINT, sig3);  /* allow interupts */
 	else
 		return TCL_OK;
 
@@ -969,16 +925,7 @@ f_tree(clientData, interp, argc, argv)
 	 * routine with the name _mged_tree. So, we put back the original name.
 	 */ 
 	argv[0] = "tree";
-
-#if 1
 	ret = invoke_db_wrapper(interp, argc, argv);
-#else
-	bu_vls_init(&vls);
-	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
-
-	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-#endif
 
 	(void)signal(SIGINT, SIG_IGN);
 	return ret;
