@@ -48,7 +48,6 @@ install:	cake
 		eval `machinetype.sh -v` ; \
 		BRLCAD_BINDIR=$${BASEDIR}/bin; \
 		BRLCAD_MANDIR=$${BASEDIR}/man/man1; \
-		echo BRLCAD_BINDIR=$${BRLCAD_BINDIR}; \
 		if test -f $${BRLCAD_BINDIR}/cake; then \
 			mv -f $${BRLCAD_BINDIR}/cake $${BRLCAD_BINDIR}/cake.bak; fi; \
 		mv cake $${BRLCAD_BINDIR}/cake; \
