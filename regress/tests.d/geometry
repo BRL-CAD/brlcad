@@ -43,7 +43,7 @@ start ( ) {
 #
 # these should be the brlcad "database" names that are used to create geometry in a geometry editor
 #
-PRIMITIVES="arb4 arb5 arb6 arb7 arb8 arbn arg bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc tor vol xxx"
+PRIMITIVES="arb4 arb5 arb6 arb7 arb8 arbn ars bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc tor vol xxx"
 #
 # these are the versions that are supported and considered valid
 #
@@ -105,12 +105,12 @@ arbn_IN_ARGS="8 1 0 0 50 -1 0 0 50 0 1 0 50 0 -1 0 50 0 0 1 50 0 0 -1 50 0.57735
 arbn_DB_ARGS="N 8 P { {1 0 0 50} {-1 0 0 50} {0 1 0 50} {0 -1 0 50} {0 0 1 50} {0 0 -1 50} {0.57735 0.57735 0.57735 50} {-0.57735 -0.57735 -0.57735 50}}"
 
 #
-# (arg) Arguments
+# (ars) Arguments
 # 
 # in args =>
 #
-arg_IN_ARGS=""
-arg_DB_ARGS=""
+ars_IN_ARGS="4 4 0 0 0 0 0 1 1 0 1 1 1 1 0 1 1 0 0 2 1 0 2 1 1 2 0 1 2 0 0 2.5"
+ars_DB_ARGS="NC 4 PPC 4 C0 { { 0 0 0 } { 0 0 0 } { 0 0 0 } { 0 0 0 } } C1 { { 0 0 1 } { 1 0 1 } { 1 1 1 } { 0 1 1 } } C2 { { 0 0 2 } { 1 0 2 } { 1 1 2 } { 0 1 2 } } C3 { { 0 0 2.5 } { 0 0 2.5 } { 0 0 2.5 } { 0 0 2.5 } }"
 
 #
 # Bag O'Triangles (bot) Arguments
