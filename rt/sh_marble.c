@@ -92,9 +92,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
@@ -102,14 +105,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "./light.h"
 
-/* from opt.c */
-extern double	rt_pi;
-extern double   mat_degtorad;
-extern double	rt_inv255;
-extern int	curframe;
-
 /* from turb.c */
-extern fastf_t	turb_table[20][20][20];
+extern CONST fastf_t	turb_table[20][20][20];
 
 #define IPOINTS 10		/* Undithered number of points */
 #define TPOINTS 20		/* Total number of points */
@@ -390,7 +387,7 @@ char	**dpp;
 	 *	Do sundry limit range checking
 	 */
 
-	mp->angle       *= mat_degtorad;
+	mp->angle       *= rt_degtorad;
 	mp->compression *= rt_pi;
 
 	for (i=0; i<3; i++) {
