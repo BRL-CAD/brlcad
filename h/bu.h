@@ -8,6 +8,15 @@
  *	Parallel processing support:  threads, sempahores, parallel-malloc.
  *	Consolodated logging support:  bu_log(), bu_bomb().
  *
+ *  The intention is that these routines are general extensions to
+ *  the data types offered by the C language itself, and to the
+ *  basic C runtime support provided by the system LIBC.
+ *
+ *  All of the data types provided by this library are defined in bu.h;
+ *  none of the routines in this library will depend on data types defined
+ *  in other BRL-CAD header files, such as vmath.h.
+ *  Look for those routines in LIBBN.
+ *
  *  Author -
  *	Michael John Muuss
  *  
