@@ -90,7 +90,7 @@ set mged_help_data(i)		{{obj combination [operation]}	{add instance of obj to co
 set mged_help_data(idents)		{{file object(s)}	{make ascii summary of region idents}}
 set mged_help_data(ill)		{{name}	{illuminate object}}
 set mged_help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
-set mged_help_data(inside)	{{}	{finds inside solid per specified thicknesses}}
+set mged_help_data(inside)	{{[outside_solid new_inside_solid thicknesses]}	{finds inside solid per specified thicknesses. Note that in an edit mode the edited solid is used for the outside_solid and should not appear on the command line }}
 set mged_help_data(item)	{{region ident [air [material [los]]]}	{set region ident codes}}
 set mged_help_data(joint)	{{command [options]}	{articulation/animation commands}}
 set mged_help_data(journal)	{{[-d] fileName}	{record all commands and timings to journal}}
