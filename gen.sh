@@ -29,8 +29,9 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.14;	RCS_REVISION=9;		REL_DATE=Today
-RELEASE=3.13;	RCS_REVISION=9;		REL_DATE=9-Jul-91	# Beta+1
+#RELEASE=3.15;	RCS_REVISION=9;		REL_DATE=Today
+RELEASE=3.14;	RCS_REVISION=9;		REL_DATE=15-July-91	# Beta+2
+#RELEASE=3.13;	RCS_REVISION=9;		REL_DATE=9-Jul-91	# Beta+1
 #RELEASE=3.12;	RCS_REVISION=9;		REL_DATE=8-Jul-91	# Beta
 #RELEASE=3.11;	RCS_REVISION=9;		REL_DATE=2-Jul-91	# alpha+1
 #RELEASE=3.10;	RCS_REVISION=9;		REL_DATE=1-Jul-91	# alpha
@@ -396,6 +397,25 @@ arch)
 		gencolor -r${PADBYTES} 0 >> ${ARCHIVE}
 	fi
 	chmod 444 ${ARCHIVE}
+	echo "${ARCHIVE} created"
+
+	rm -f /tmp/cad-exclude
+	echo 'papers/*' >> /tmp/cad-exclude
+	echo 'vfont/*' >> /tmp/cad-exclude
+	echo 'contributed/*' >> /tmp/cad-exclude
+	echo 'dmdfb/*' >> /tmp/cad-exclude
+	echo 'doc/*' >> /tmp/cad-exclud
+	echo 'pix/*' >> /tmp/cad-exclude
+	/usr/gnu/bin/tar -cvf - -X /tmp/cad-exclude * |\
+		crypt alphabeta | compress > ${ARCHIVE}-a.Z
+	chmod 444 ${ARCHIVE}-a.Z
+	echo "${ARCHIVE}-a.Z created"
+	echo "${FTP_ARCHIVE}-a.Z created (doc)"
+	/usr/gnu/bin/tar cfv - Copy* README papers dmdfb doc \
+	    pix vfont contributed zzzEND |\
+		crypt alphabeta | compress > ${ARCHIVE}-b.Z
+	chmod 444 ${ARCHIVE}-b.Z
+	echo "${ARCHIVE}-b.Z created"
 	rm -f ${EXCLUDE}
 	;;
 
