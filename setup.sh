@@ -16,8 +16,11 @@ export SHELL
 # Confirm that the installation directory is correct.
 # newbindir.sh can be run to edit all relevant files (including this one).
 
-BINDIR=/usr/brlcad/bin
-BASEDIR=`echo $BINDIR | sed -e 's/\/bin$//' `
+# This is the "master" definition of where BRL-CAD is to installed.
+BASEDIR=/usr/brlcad
+
+BINDIR=$BASEDIR/bin
+MANDIR=$BASEDIR/man/man1
 
 echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
 
@@ -119,6 +122,7 @@ then
 		cp $i ${BINDIR}/.
 	done
 	make clobber
+	cp *.1 ${MANDIR}/.
 	cd ..
 fi
 
