@@ -635,6 +635,15 @@ set -S2 "/bin/sh"
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
 #	if 1
+/*		Bare Sun configuration */
+#		define	LIBFB_OBJS	if_remote if_sun
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
+#		define	LIBRT_TIMER	timer42
+#		define	MGED_OBJS	dm-sun
+#		define	MGED_CONFIG	-DDM_SUNPW
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
+#	else
 /*		Sun with X11 (aka "openwin").  Default for SunOS 4.1.1 */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
@@ -654,15 +663,6 @@ set -S2 "/bin/sh"
 #			define	MGED_CONFIG	-DDM_XGL -DDM_X -I/usr/openwin/include
 #			define	MGED_LIBES	-lxgl -L/usr/openwin/lib -lX11
 #		endif
-#	else
-/*		Bare Sun configuration */
-#		define	LIBFB_OBJS	if_remote if_sun
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
-#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
-#		define	LIBRT_TIMER	timer42
-#		define	MGED_OBJS	dm-sun
-#		define	MGED_CONFIG	-DDM_SUNPW
-#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
