@@ -155,12 +155,12 @@
 #	define HAVE_MATHERR	1
 #endif
 
-#if defined(BSD) && !defined(__bsdi__)
+#if (defined(BSD) && !defined(__bsdi__)) || defined(__GNUC__)
 #	define HAVE_REGEX	1
 #endif
 
 /* For those systems without regex, pick the alternative */
-#if defined(__bsdi__) || defined(__GNUC__)
+#if defined(__bsdi__)
 #	define USE_REGCOMP 1	/* This is the POSIX way */
 #else
 #	define USE_SYSV_RE 1
