@@ -86,9 +86,9 @@ struct vertexuse *vup;
 /* Verify vertex attributes */
 void
 nmg_vvua(vua)
-struct vertexuse_a_plane *vua;
+long *vua;
 {
-	NMG_CK_VERTEXUSE_A_PLANE(vua);
+	NMG_CK_VERTEXUSE_A_EITHER(vua);
 }
 
 /*
@@ -123,7 +123,7 @@ long		*up_magic_p;
 
 	nmg_vvertex(vu->v_p, vu);
 
-	if (vu->a.plane_p) nmg_vvua(vu->a.plane_p);
+	if (vu->a.magic_p) nmg_vvua(vu->a.magic_p);
 }
 
 /* Verify edge geometry */
