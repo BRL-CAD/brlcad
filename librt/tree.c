@@ -605,6 +605,7 @@ struct mater_info *materp;
 	/* Read all the member records */
 	i = sizeof(union record) * rec.c.c_length;
 	j = sizeof(struct tree_list) * rec.c.c_length;
+	trees = (struct tree_list *)0;	/* satisfy picky compilers */
 	if( (members = (union record *)rt_malloc(i, "member records")) ==
 	    (union record *)0  ||
 	    (trees = (struct tree_list *)rt_malloc( j, "tree_list array" )) ==
@@ -795,7 +796,7 @@ struct region *regionp;
 {
 	register struct tree_list *tlp;
 	register int i;
-	register struct tree_list *first_tlp;
+	register struct tree_list *first_tlp = (struct tree_list *)0;
 	register union tree *xtp;
 	register union tree *curtree;
 	register int inuse;
@@ -1309,10 +1310,11 @@ register struct region *delregp;
 	register struct region *regp;
 	register struct region *nextregp;
 
+	regp = rtip->HeadRegion;
 	if( rt_g.debug & DEBUG_REGIONS )
 		rt_log("Del Region %s\n", regp->reg_name);
 
-	if( (regp = rtip->HeadRegion ) == delregp )  {
+	if( regp == delregp )  {
 		rtip->HeadRegion = regp->reg_forw;
 		goto zot;
 	}

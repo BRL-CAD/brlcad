@@ -693,9 +693,9 @@ extern void rt_pr_seg(struct seg *segp);
 extern void rt_pr_partitions(struct rt_i *rtip,
 	struct partition *phead, char *title);
 					/* Find solid by leaf name */
-extern void rt_printb(char *s, long v, char *bits);
+extern void rt_printb(char *s, unsigned long v, char *bits);
 					/* Print a bit vector */
-extern struct soltab *rt_find_solid(struct rt_t *rtip, char *name);
+extern struct soltab *rt_find_solid(struct rt_i *rtip, char *name);
 					/* Start the timer */
 extern void rt_prep_timer(void);
 					/* Read timer, return time + str */
@@ -758,7 +758,7 @@ extern void rt_boolfinal(struct partition *InputHdp,
 	bitv_t *regionbits, struct application *ap);
 					/* Eval bool tree node */
 extern int rt_booleval(union tree *treep, struct partition *partp,
-	 struct region **trueregp);
+	 struct region **trueregp, struct resource *resp);
 					/* Approx Floating compare */
 extern int rt_fdiff(double a, double b);
 					/* Relative Difference */
@@ -800,7 +800,7 @@ extern void rt_color_addrec(union record *recp, long addr);
 extern void rt_cut_extend(union cutter *cutp, struct soltab *stp);
 					/* find RPP of one region */
 extern int rt_rpp_region(struct rt_i *rtip, char *reg_name,
-	fastf_t min_rpp, fastf_t max_rpp);
+	fastf_t *min_rpp, fastf_t *max_rpp);
 
 #else
 
