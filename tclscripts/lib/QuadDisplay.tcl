@@ -21,12 +21,14 @@
 #       keeps track of the current Display object and provides the means to toggle
 #       between showing all four Display objects or just the current one.
 #
+
+option add *Pane*margin 0 widgetDefault
+
 class QuadDisplay {
     inherit iwidgets::Panedwindow
 
     itk_option define -pane pane Pane ur
     itk_option define -multi_pane multi_pane Multi_pane 1
-    itk_option define -margin margin Margin 0
 
     constructor {{type X} args} {}
     destructor {}
@@ -67,9 +69,7 @@ class QuadDisplay {
     public method fb_update {args}
     public method rt {args}
     public method rtcheck {args}
-    public method get_dm_name {}
 
-    public method margin {val}
     public method resetall {}
     public method default_views {}
     public method attach_view {}
@@ -86,54 +86,76 @@ class QuadDisplay {
 }
 
 body QuadDisplay::constructor {{type X} args} {
-    Panedwindow::add upper
-    Panedwindow::add lower
+    iwidgets::Panedwindow::add upper
+    iwidgets::Panedwindow::add lower
+
+    itk_option add upper.margin
+    itk_option add lower.margin
 
     # create two more panedwindows
-    itk_component add upperpane {
-	panedwindow [childsite upper].pane -orient vertical
+    itk_component add upw {
+	::iwidgets::Panedwindow [childsite upper].pw -orient vertical
     } {
 	usual
 	keep -sashwidth -sashheight -sashborderwidth
 	keep -sashindent -thickness
     }
 
-    itk_component add lowerpane {
-	panedwindow [childsite lower].pane -orient vertical
+    itk_component add lpw {
+	::iwidgets::Panedwindow [childsite lower].pw -orient vertical
     } {
 	usual
 	keep -sashwidth -sashheight -sashborderwidth
 	keep -sashindent -thickness
     }
 
-    $itk_component(upperpane) add left
-    $itk_component(upperpane) add right
-    $itk_component(lowerpane) add left
-    $itk_component(lowerpane) add right
+    itk_component add ulp {
+	$itk_component(upw) add ulp
+    } {
+	keep -margin
+    }
+
+    itk_component add urp {
+	$itk_component(upw) add urp
+    } {
+	keep -margin
+    }
+
+    itk_component add llp {
+	$itk_component(lpw) add llp
+    } {
+	keep -margin
+    }
+
+    itk_component add lrp {
+	$itk_component(lpw) add lrp
+    } {
+	keep -margin
+    }
 
     # create four instances of Display
     itk_component add ul {
-	Display [$itk_component(upperpane) childsite left].ul $type
+	Display [$itk_component(ulp) childSite].display $type
     } {
-	keep -rscale -sscale -type
+	usual
     }
 
     itk_component add ur {
-	Display [$itk_component(upperpane) childsite right].ur $type
+	Display [$itk_component(urp) childSite].display $type
     } {
-	keep -rscale -sscale -type
+	usual
     }
 
     itk_component add ll {
-	Display [$itk_component(lowerpane) childsite left].ll $type
+	Display [$itk_component(llp) childSite].display $type
     } {
-	keep -rscale -sscale -type
+	usual
     }
 
     itk_component add lr {
-	Display [$itk_component(lowerpane) childsite right].lr $type
+	Display [$itk_component(lrp) childSite].display $type
     } {
-	keep -rscale -sscale -type
+	usual
     }
 
     # initialize the views
@@ -144,13 +166,10 @@ body QuadDisplay::constructor {{type X} args} {
     pack $itk_component(ll) -fill both -expand yes
     pack $itk_component(lr) -fill both -expand yes
 
-    pack $itk_component(upperpane) -fill both -expand yes
-    pack $itk_component(lowerpane) -fill both -expand yes
+    pack $itk_component(upw) -fill both -expand yes
+    pack $itk_component(lpw) -fill both -expand yes
 
-    eval itk_initialize $args
-
-    # set the margins
-    margin $itk_option(-margin)
+    catch {eval itk_initialize $args}
 }
 
 body QuadDisplay::destructor {} {
@@ -159,8 +178,8 @@ body QuadDisplay::destructor {} {
     ::delete object $itk_component(ll)
     ::delete object $itk_component(lr)
 
-    ::delete object $itk_component(upperpane)
-    ::delete object $itk_component(lowerpane)
+    ::delete object $itk_component(upw)
+    ::delete object $itk_component(lpw)
 }
 
 configbody QuadDisplay::pane {
@@ -169,10 +188,6 @@ configbody QuadDisplay::pane {
 
 configbody QuadDisplay::multi_pane {
     multi_pane $itk_option(-multi_pane)
-}
-
-configbody QuadDisplay::margin {
-    margin $itk_option(-margin)
 }
 
 body QuadDisplay::pane {args} {
@@ -204,44 +219,44 @@ body QuadDisplay::pane {args} {
 	    ul {
 		switch $itk_option(-pane) {
 		    ur {
-			$itk_component(upperpane) hide left
-			$itk_component(upperpane) show right
+			$itk_component(upw) hide ulp
+			$itk_component(upw) show urp
 		    }
 		    ll {
 			hide upper
-			$itk_component(upperpane) show right
+			$itk_component(upw) show urp
 			show lower
-			$itk_component(lowerpane) show left
-			$itk_component(lowerpane) hide right
+			$itk_component(lpw) show llp
+			$itk_component(lpw) hide lrp
 		    }
 		    lr {
 			hide upper
-			$itk_component(upperpane) show right
+			$itk_component(upw) show urp
 			show lower
-			$itk_component(lowerpane) hide left
-			$itk_component(lowerpane) show right
+			$itk_component(lpw) hide llp
+			$itk_component(lpw) show lrp
 		    }
 		}
 	    }
 	    ur {
 		switch $itk_option(-pane) {
 		    ul {
-			$itk_component(upperpane) hide right
-			$itk_component(upperpane) show left
+			$itk_component(upw) hide urp
+			$itk_component(upw) show ulp
 		    }
 		    ll {
 			hide upper
-			$itk_component(upperpane) show left
+			$itk_component(upw) show ulp
 			show lower
-			$itk_component(lowerpane) show left
-			$itk_component(lowerpane) hide right
+			$itk_component(lpw) show llp
+			$itk_component(lpw) hide lrp
 		    }
 		    lr {
 			hide upper
-			$itk_component(upperpane) show left
+			$itk_component(upw) show ulp
 			show lower
-			$itk_component(lowerpane) hide left
-			$itk_component(lowerpane) show right
+			$itk_component(lpw) hide llp
+			$itk_component(lpw) show lrp
 		    }
 		}
 	    }
@@ -249,21 +264,21 @@ body QuadDisplay::pane {args} {
 		switch $itk_option(-pane) {
 		    ul {
 			hide lower
-			$itk_component(lowerpane) show right
+			$itk_component(lpw) show lrp
 			show upper
-			$itk_component(upperpane) hide right
-			$itk_component(upperpane) show left
+			$itk_component(upw) hide urp
+			$itk_component(upw) show ulp
 		    }
 		    ur {
 			hide lower
-			$itk_component(lowerpane) show right
+			$itk_component(lpw) show lrp
 			show upper
-			$itk_component(upperpane) hide left
-			$itk_component(upperpane) show right
+			$itk_component(upw) hide ulp
+			$itk_component(upw) show urp
 		    }
 		    lr {
-			$itk_component(lowerpane) hide left
-			$itk_component(lowerpane) show right
+			$itk_component(lpw) hide llp
+			$itk_component(lpw) show lrp
 		    }
 		}
 	    }
@@ -271,21 +286,21 @@ body QuadDisplay::pane {args} {
 		switch $itk_option(-pane) {
 		    ul {
 			hide lower
-			$itk_component(lowerpane) show left
+			$itk_component(lpw) show llp
 			show upper
-			$itk_component(upperpane) hide right
-			$itk_component(upperpane) show left
+			$itk_component(upw) hide urp
+			$itk_component(upw) show ulp
 		    }
 		    ur {
 			hide lower
-			$itk_component(lowerpane) show left
+			$itk_component(lpw) show llp
 			show upper
-			$itk_component(upperpane) hide left
-			$itk_component(upperpane) show right
+			$itk_component(upw) hide ulp
+			$itk_component(upw) show urp
 		    }
 		    ll {
-			$itk_component(lowerpane) hide right
-			$itk_component(lowerpane) show left
+			$itk_component(lpw) hide lrp
+			$itk_component(lpw) show llp
 		    }
 		}
 	    }
@@ -325,19 +340,19 @@ body QuadDisplay::toggle_multi_pane {} {
 	switch $itk_option(-pane) {
 	    ul {
 		hide lower
-		$itk_component(upperpane) hide right
+		$itk_component(upw) hide urp
 	    }
 	    ur {
 		hide lower
-		$itk_component(upperpane) hide left
+		$itk_component(upw) hide ulp
 	    }
 	    ll {
 		hide upper
-		$itk_component(lowerpane) hide right
+		$itk_component(lpw) hide lrp
 	    }
 	    lr {
 		hide upper
-		$itk_component(lowerpane) hide left
+		$itk_component(lpw) hide llp
 	    }
 	}
     } else {
@@ -347,19 +362,19 @@ body QuadDisplay::toggle_multi_pane {} {
 	switch $itk_option(-pane) {
 	    ul {
 		show lower
-		$itk_component(upperpane) show right
+		$itk_component(upw) show urp
 	    }
 	    ur {
 		show lower
-		$itk_component(upperpane) show left
+		$itk_component(upw) show ulp
 	    }
 	    ll {
 		show upper
-		$itk_component(lowerpane) show right
+		$itk_component(lpw) show lrp
 	    }
 	    lr {
 		show upper
-		$itk_component(lowerpane) show left
+		$itk_component(lpw) show llp
 	    }
 	}
     }
@@ -503,24 +518,10 @@ body QuadDisplay::rtcheck {args} {
     eval $itk_component($itk_option(-pane)) rtcheck $args
 }
 
-body QuadDisplay::get_dm_name {} {
-    eval $itk_component($itk_option(-pane)) Dm::get_name
-}
-
-body QuadDisplay::margin {margin} {
-    set itk_option(-margin) $margin
-    paneconfigure 0 -margin $margin
-    paneconfigure 1 -margin $margin
-    $itk_component(upperpane) paneconfigure 0 -margin $margin
-    $itk_component(upperpane) paneconfigure 1 -margin $margin
-    $itk_component(lowerpane) paneconfigure 0 -margin $margin
-    $itk_component(lowerpane) paneconfigure 1 -margin $margin
-}
-
 body QuadDisplay::resetall {} {
     reset
-    $itk_component(upperpane) reset
-    $itk_component(lowerpane) reset
+    $itk_component(upw) reset
+    $itk_component(lpw) reset
 }
 
 body QuadDisplay::default_views {} {
