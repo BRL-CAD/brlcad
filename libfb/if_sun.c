@@ -52,21 +52,25 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/file.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <suntool/sunview.h>
 #include <suntool/canvas.h>
 
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
-extern char	*calloc(), *malloc();
-extern int	errno;
-extern char	*shmat();
+
+extern char *shmat();
+
 static int	linger();
 
 /* CONFIGURATION NOTES:

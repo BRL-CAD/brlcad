@@ -27,7 +27,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#include <errno.h>
+
+#include "machine.h"
+#include "externs.h"		/* For malloc */
 #include "fb.h"
 #include "./fblocal.h"
 #include <ultra/ugraf.h>
@@ -189,7 +195,6 @@ FBIO	*ifp;
 {
 	int	status;
 	FILE	*fp;
-	extern int errno;
 
 	/* save image to file */
 	if( (fp = fopen(FBSAVE, "w")) != NULL ) {

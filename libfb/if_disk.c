@@ -25,6 +25,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <fcntl.h>
 #endif
+
+#include "machine.h"
+#include "externs.h"		/* For malloc */
 #include "fb.h"
 #include "./fblocal.h"
 

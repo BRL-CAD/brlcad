@@ -20,6 +20,8 @@
 
 #include "conf.h"
 
+#include <stdio.h>
+
 #include "machine.h"
 #include "fb.h"
 #include "externs.h"

@@ -47,27 +47,21 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include <gl.h>
-#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <gl2/immed.h>
 #undef RED
 
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
-
-#ifndef bzero
-# define bzero(p,cnt)	memset(p,'\0',cnt)
-#endif
-
-extern char *sbrk();
-extern char *malloc();
-extern int errno;
-extern char *shmat();
-extern int brk();
 
 /*
  *  Defines for dealing with SGI Graphics Engine Pipeline

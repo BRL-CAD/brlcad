@@ -23,7 +23,13 @@
 *   this please let us know. <phil@brl.mil>
 */
 
+
+#include "conf.h"
+
+#include <stdio.h>
 #include <time.h>
+
+#include "machine.h"
 #include "base.h"
 #include "gpr.h"
 #include "fb.h"

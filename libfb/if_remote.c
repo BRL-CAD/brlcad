@@ -30,14 +30,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
-#ifdef BSD
-#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
-#include <sys/types.h>
+#ifdef HAVE_WRITEV
 #include <sys/uio.h>		/* for struct iovec */
-#include <netinet/in.h>		/* for htons(), etc */
 #endif
 
-#if BSD >= 43
+#include <netinet/in.h>		/* for htons(), etc */
+
+#ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
 
@@ -308,7 +307,7 @@ int	width, height;
 	PCPL(ifp) = (char *)pc;			/* stash in u1 */
 	ifp->if_fd = pc->pkc_fd;		/* unused */
 
-#if BSD >= 43
+#ifdef HAVE_SYS_SOCKET_H
 	{
 		int	n;
 		int	val;
