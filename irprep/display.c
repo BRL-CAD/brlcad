@@ -1,6 +1,6 @@
 
 /*  file:  display.c  */
-/*  S.Coates - 12 March 1992  */
+/*  S.Coates - 30 September 1994  */
 
 /*  Graphical display of output from PRISM or another infrared  */
 /*  model.  This program will read as input two different types  */
@@ -16,7 +16,7 @@
 /*  of a region (with the background being first and the rest of the  */
 /*  regions in order).  This pattern will repeat (except for the  */
 /*  number of regions).  This program will write a file that can  */
-/*  be read by Glen Durfee's 'Analyzer2' program or by my 'see'  */
+/*  be read by Glen Durfee's 'Analyzer2' program or by my 'ir-X'  */
 /*  program.  */
 
 /*  NOTE:  */
@@ -35,6 +35,7 @@
 /*	CHANGES		*/
 /*	25 November 1991 - Start of original program.  */
 /*	12 March 1992	 - Add some comments.  */
+/*	30 September 1994- Changed references to see to ir-X.  */
 
 #include "conf.h"
 
