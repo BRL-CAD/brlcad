@@ -1032,7 +1032,7 @@ start_cell:
 				psp->cutp = cutp;
 
 				if( (ret = stp->st_meth->ft_piece_shot(
-				    psp, plp, ss.dist_corr, &ss.newray, ap )) <= 0 )  {
+				    psp, plp, ss.dist_corr, &ss.newray, ap, &waiting_segs )) <= 0 )  {
 				    	/* No hits at all */
 					resp->re_piece_shot_miss++;
 				} else {

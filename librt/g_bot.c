@@ -726,16 +726,19 @@ struct seg		*seghead;
  *
  *  This routine may be invoked many times for a single ray,
  *  as the ray traverses from one space partitioning cell to the next.
- *  Complete (2 hit) segments will be returned as they're completed,
- *  with possibly one left-over hit being stashed between invocations.
+ *
+ *  Plate-mode (2 hit) segments will be returned immediately in seghead.
+ *
+ *  Generally the hits are stashed between invocations in psp.
  */
 int
-rt_bot_piece_shot( psp, plp, dist_corr, rp, ap )
+rt_bot_piece_shot( psp, plp, dist_corr, rp, ap, seghead )
 struct rt_piecestate	*psp;
 struct rt_piecelist	*plp;
 double			dist_corr;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	struct resource		*resp;
 	long		*sol_piece_subscr_p;
@@ -822,6 +825,16 @@ struct application	*ap;
 		hp->hit_surfno = trip->tri_surfno;
 		hp->hit_rayp = &ap->a_ray;
 		if(debug_shoot) bu_log("%s piece %d ... HIT %g\n", stp->st_name, piecenum, hp->hit_dist);
+	}
+	if( psp->htab.end > 0 &&
+	    (bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS) )
+	{
+		/*
+		 * Each of these hits is really two, resulting in an instant seg.
+		 * Saving an odd number of these will confuse a_onehit processing.
+		 */
+		rt_hitsort( psp->htab.hits, psp->htab.end );
+		return rt_bot_makesegs( psp->htab.hits, psp->htab.end, stp, rp, ap, seghead );
 	}
 	return psp->htab.end - starting_hits;
 }
