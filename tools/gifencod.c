@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 #include <rle.h>
-#include "rletogif.h"
+#include "./rletogif.h"
 
 #define TRUE 1
 #define FALSE 0
