@@ -5,6 +5,7 @@ brlcadincludedir = $(includedir)/brlcad
 brlcadinclude_required = \
 	bn.h \
 	bu.h \
+	common.h \
 	config.h \
 	raytrace.h \
 	rtgeom.h \
