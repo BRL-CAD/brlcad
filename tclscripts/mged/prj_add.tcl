@@ -21,26 +21,47 @@
 #
 proc prj_add {args} {
 	set prompts { {shaderfile: } {image_file: } {width: } {height: }}
+	set usage  {Usage prj_add [-t] [-n] [-b] shaderfile [image_file] [width] [height]\n}
 
 	if {[llength $args] == 0} {
-		puts {Usage prj_add shaderfile [image_file] [width] [height]}
+		puts $usage
 		puts {Appends image filename + current view parameters to shader}
 		return
 	}
 
-	set n [llength $args]
-	while {$n < 4} {
-		puts -nonewline "[lindex $prompts $n]"
-		flush stdout
-		gets stdin foo
-		lappend args $foo
-		set n [expr $n + 1]
+	set through "0"
+	set behind "0"
+	set antialias "1"
+
+	set argc [llength $args]
+	set n 0
+	set opt [lindex $args $n]
+	while { [string match "-*" $opt ] } {
+		switch -- $opt {
+			"-t" { set through "1" }
+			"-b" { set behind "1" }
+			"-n" { set antialias "0" }
+			default {
+				error "Unrecognized option ($opt)\n$usage"
+			}
+		}
+		incr n
+		if { $n >= $argc } break
+		set opt [lindex $args $n]
 	}
 
-	set shaderfile [lindex $args 0]
-	set image [lindex $args 1]
-	set width [lindex $args 2]
-	set height [lindex $args 3]
+	set need [expr $n + 4]
+	if { $need != $argc } {
+		error $usage
+	}
+
+	set shaderfile [lindex $args $n]
+	incr n
+	set image [lindex $args $n]
+	incr n
+	set width [lindex $args $n]
+	incr n
+	set height [lindex $args $n]
 
 	if ![file exists $image] {
 		puts "Image file $image does not exist"
@@ -62,9 +83,9 @@ proc prj_add {args} {
 	puts $fd "image=\"$image\""
 	puts $fd "w=$width"
 	puts $fd "n=$height"
-	puts $fd "through=0"
-	puts $fd "antialias=1"
-	puts $fd "behind=0"
+	puts $fd "through=$through"
+	puts $fd "antialias=$antialias"
+	puts $fd "behind=$behind"
 	puts $fd "viewsize=[viewget size]"
 	regsub -all { } [viewget eye] "," eye_pt
 	puts $fd "eye_pt=$eye_pt"
