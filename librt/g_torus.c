@@ -1366,7 +1366,7 @@ CONST struct rt_db_internal	*ip;
 double				local2mm;
 CONST struct db_i		*dbip;
 {
-	fastf_t			vec[2*3+2];
+	double			vec[2*3+2];
 	struct rt_tor_internal	*tip;
 
 	RT_CK_DB_INTERNAL( ip );
@@ -1381,8 +1381,8 @@ CONST struct db_i		*dbip;
 	/* scale values into local buffer */
 	VSCALE( &vec[0*3], tip->v, local2mm );
 	VMOVE(  &vec[1*3], tip->h);		/* UNIT vector, not scaled */
-	vec[2*3+0] = tip->r_a*local2mm;
-	vec[2*3+1] = tip->r_h*local2mm;
+	vec[2*3+0] = tip->r_a*local2mm;		/* r1 */
+	vec[2*3+1] = tip->r_h*local2mm;		/* r2 */
 
 	/* convert from internal (host) to database (network) format */
 	htond( ep->ext_buf, (unsigned char *)vec, 2*3+2);
@@ -1481,7 +1481,7 @@ CONST struct db_i		*dbip;
 /*
  *			R T _ T O R _ I M P O R T 5
  *
- *	rec:
+ *	Taken from the database record:
  *		v	vertex (point) of center of torus.
  *		h	unit vector in the normal direction of the torus
  *		major	radius of ring from 'v' to center of ring
@@ -1500,7 +1500,12 @@ register CONST mat_t		mat;
 CONST struct db_i		*dbip;
 {
 	struct rt_tor_internal	*tip;
-	LOCAL fastf_t		vec[2*3+2];
+	LOCAL struct rec {
+		double	v[3];
+		double	h[3];
+		double	ra;	/* r1 */
+		double	rh;	/* r2 */
+	} rec;
 
 	BU_CK_EXTERNAL( ep );
 	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (2*3+2) );
@@ -1514,23 +1519,23 @@ CONST struct db_i		*dbip;
 
 	tip->magic = RT_TOR_INTERNAL_MAGIC;
 
-	ntohd( (unsigned char *)vec, ep->ext_buf, 2*3+2);
+	ntohd( (unsigned char *)&rec, ep->ext_buf, 2*3+2);
 
 	/* Apply modeling transformations */
-	MAT4X3PNT( tip->v, mat, &vec[0*3] );
-	MAT4X3VEC( tip->h, mat, &vec[1*3] );
+	MAT4X3PNT( tip->v, mat, rec.v );
+	MAT4X3VEC( tip->h, mat, rec.h );
+	VUNITIZE( tip->h );			/* just to be sure */
 
-	tip->r_a = tip->r_b = vec[2*3];
-	tip->r_h = vec[2*3+1];
+	tip->r_a = rec.ra;
+	tip->r_h = rec.rh;
+
+	/* Prepare the extra information */
+	tip->r_b = rec.ra;
 
 	/* Calculate two mutually perpendicular vectors, perpendicular to N */
-	bn_vec_ortho( tip->a, tip->h );
-	VCROSS( tip->b, tip->h, tip->a);
-	VUNITIZE( tip->b );
-	/*
-	 * XXX - This is not normally allowed in vmath macros, having source
-	 * and destination being the same.
-	 */
+	bn_vec_ortho( tip->a, tip->h );		/* a has unit length */
+	VCROSS( tip->b, tip->h, tip->a);	/* |A| = |H| = 1, so |B|=1 */
+
 	VSCALE(tip->a, tip->a, tip->r_a);
 	VSCALE(tip->b, tip->b, tip->r_b);
 	return 0;
@@ -1551,52 +1556,45 @@ double			mm2local;
 {
 	register struct rt_tor_internal	*tip =
 		(struct rt_tor_internal *)ip->idb_ptr;
-	char				buf[256];
 	double				r3, r4;
 
 	RT_TOR_CK_MAGIC(tip);
 	bu_vls_strcat( str, "torus (TOR)\n");
 
-	sprintf(buf, "\tV (%g, %g, %g), r1=%g (A), r2=%g (H)\n",
+	bu_vls_printf( str, "\tV (%g, %g, %g), r1=%g (A), r2=%g (H)\n",
 		tip->v[X] * mm2local,
 		tip->v[Y] * mm2local,
 		tip->v[Z] * mm2local,
 		tip->r_a * mm2local, tip->r_h * mm2local );
-	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tN=(%g, %g, %g)\n",
+	bu_vls_printf( str, "\tN=(%g, %g, %g)\n",
 		tip->h[X] * mm2local,
 		tip->h[Y] * mm2local,
 		tip->h[Z] * mm2local );
-	bu_vls_strcat( str, buf );
 
 	if( !verbose )  return(0);
 
-	sprintf(buf, "\tA=(%g, %g, %g)\n",
+	bu_vls_printf( str, "\tA=(%g, %g, %g)\n",
 		tip->a[X] * mm2local / tip->r_a,
 		tip->a[Y] * mm2local / tip->r_a,
 		tip->a[Z] * mm2local / tip->r_a );
-	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tB=(%g, %g, %g)\n",
+	bu_vls_printf( str, "\tB=(%g, %g, %g)\n",
 		tip->b[X] * mm2local / tip->r_b,
 		tip->b[Y] * mm2local / tip->r_b,
 		tip->b[Z] * mm2local / tip->r_b );
-	bu_vls_strcat( str, buf );
 
 	r3 = tip->r_a - tip->r_h;
-	sprintf(buf, "\tvector to inner edge = (%g, %g, %g)\n",
+	bu_vls_printf( str, "\tvector to inner edge = (%g, %g, %g)\n",
 		tip->a[X] * mm2local / tip->r_a * r3,
 		tip->a[Y] * mm2local / tip->r_a * r3,
 		tip->a[Z] * mm2local / tip->r_a * r3 );
-	bu_vls_strcat( str, buf );
 
 	r4 = tip->r_a + tip->r_h;
-	sprintf(buf, "\tvector to outer edge = (%g, %g, %g)\n",
+	bu_vls_printf( str, "\tvector to outer edge = (%g, %g, %g)\n",
 		tip->a[X] * mm2local / tip->r_a * r4,
 		tip->a[Y] * mm2local / tip->r_a * r4,
 		tip->a[Z] * mm2local / tip->r_a * r4 );
-	bu_vls_strcat( str, buf );
 
 	return(0);
 }
