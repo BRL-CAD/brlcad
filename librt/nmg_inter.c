@@ -3641,7 +3641,8 @@ colinear:
 		if( code == 0 )  {
 			/* Geometry says lines are colinear.  Egads!  This can't be! */
 			if( is->on_eg )  {
-				rt_bomb("nmg_isect_line2_face2pNEW() edge_g not shared, geometry says lines are colinear.  Unresolvable inconsistency.\n");
+				rt_log("nmg_isect_line2_face2pNEW() edge_g not shared, geometry says lines are colinear.  Unresolvable inconsistency.\n");
+				goto fixup;
 			}
 			/* on_eg wasn't set, use it and continue on */
 			rt_log("WARNING: setting on_eg and continuing.\n");
@@ -3653,6 +3654,7 @@ colinear:
 		if( is->on_eg && rt_2line3_colinear(
 		    (*eg1)->e_pt, (*eg1)->e_dir,
 		    is->on_eg->e_pt, is->on_eg->e_dir, 1e5, &(is->tol) ) )  {
+fixup:
 			nmg_pr_eg(*eg1, 0);
 			nmg_pr_eg(is->on_eg, 0);
 			rt_log("nmg_isect_line2_face2pNEW() eg1 colinear to on_eg?\n");
@@ -3917,6 +3919,39 @@ hit_b:
 }
 
 /*
+ *			N M G _ I S _ E U _ O N _ L I N E 3
+ */
+int
+nmg_is_eu_on_line3(eu, pt, dir, tol)
+CONST struct edgeuse	*eu;
+CONST point_t		pt;
+CONST vect_t		dir;
+CONST struct rt_tol	*tol;
+{
+	struct edge_g	*eg;
+
+	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
+
+	eg = eu->e_p->eg_p;
+	NMG_CK_EDGE_G(eg);
+
+	/* Ensure direction vectors are generally parallel */
+	/* These are not unit vectors */
+	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
+	if( fabs(VDOT(eg->e_dir, dir)) <
+	    0.9 * MAGNITUDE(eg->e_dir) * MAGNITUDE(dir)  )  return 0;
+
+	/* Ensure that vertices on edge are within tol of line */
+	if( rt_distsq_line3_pt3( eg->e_pt, eg->e_dir,
+	    eu->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+	if( rt_distsq_line3_pt3( eg->e_pt, eg->e_dir,
+	    eu->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+
+	return 1;
+}
+
+/*
  *			N M G _ I S E C T _ T W O _ F A C E 3 P
  *
  *  Handle the complete mutual intersection of
@@ -3971,14 +4006,16 @@ struct faceuse		*fu1, *fu2;
 	if( (on_eu = nmg_find_edge_between_2fu(fu1, fu2, &(is->tol))) )  {
 		is->on_eg = on_eu->e_p->eg_p;
 		NMG_CK_EDGE_G(is->on_eg);
-		/* XXX Should call nmg_is_eu_on_line3() as double-check */
-#if 0
-rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
-		VPRINT("isect ray is->pt ", is->pt);
-		VPRINT("on_eu   eg->e_pt ", on_eu->e_p->eg_p->e_pt);
-		VPRINT("isect ray is->dir", is->dir);
-		VPRINT("on_eu   eg->e_dir", on_eu->e_p->eg_p->e_dir);
-#endif
+		/* Check this edge w.r.t. the line geometry */
+		if( !nmg_is_eu_on_line3( on_eu, is->pt, is->dir, &(is->tol) ) )  {
+			rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
+			VPRINT("isect ray is->pt ", is->pt);
+			VPRINT("on_eu   eg->e_pt ", on_eu->e_p->eg_p->e_pt);
+			VPRINT("isect ray is->dir", is->dir);
+			VPRINT("on_eu   eg->e_dir", on_eu->e_p->eg_p->e_dir);
+			rt_bomb("bad line\n");
+			/* XXX How about resetting is->pt to eg->pt, etc.? */
+		}
 	} else {
 		/* Geometry search */
 		if( !(is->on_eg = nmg_find_eg_on_line( &fu1->l.magic, is->pt, is->dir, &(is->tol) ) ) )  {
