@@ -22,7 +22,7 @@
 #
 
 set solid_data_vv_pairs {
-    { types {arb8 sph ell tor tgc rec half rpc rhc epa ehy eto part} }
+    { types {arb8 sph ell tor tgc rec half rpc rhc epa ehy eto part dsp ebm hf vol} }
     { hoc,arb8 "This is an arbitrary convex polyhedron
 with 8 vertices." }
     { hoc,sph "This is a sphere. The sphere
@@ -116,6 +116,49 @@ solid has the following input fields:
      H     height vector
      r_v   radius of v
      r_h   radius of h" }
+    { hoc,dsp "This is a displacement map. The displacement
+map has the following input fields:
+
+     file    data file
+     sm      Boolean: surface normal interpretation
+     w       width of data file
+     n       height of data file
+     stom    matrix for transforming solid to model space" }
+    { hoc,ebm "This is an extruded bitmap. The extruded
+bitmap has the following input fields:
+
+      file    bitmap
+      w       width of file
+      n       height of file
+      d       depth of file
+      mat     transform local coords to model space" }
+    { hoc,hf "This is a height field. The height field
+has the following input fields:
+
+      cfile      control file
+      dfile      data file
+      fmt        CV style file format descriptor
+      w          width of data file
+      n          height of data file
+      shorts     Boolean: use shorts instead of double
+      file2mm    scale file elevation units to mm
+      v          origin of height field in model space
+      x          X direction vector
+      y          Y direction vector
+      xlen       magnitude of HF in X direction
+      ylen       magnitude of HF in Y direction
+      zscale     scale of data in ''up'' dir (after file2mm is applied)" }
+    { hoc,vol "This is a volume solid. The volume solid
+has the following input fields:
+
+      file    data file
+      w      width of data file
+      n       height of data file
+      d       depth of data file
+      lo      Low threshold
+      hi      High threshold
+      size   ideal coords: size of each cell
+      mat   transform local coords to model space" }
     { label,arb8 "Arbitrary 8-vertex polyhedron" }
     { label,sph  "Sphere" }
     { label,ell  "Ellipsoid" }
@@ -130,6 +173,10 @@ solid has the following input fields:
     { label,ehy  "Right Hyperbolic Cylinder" }
     { label,eto  "Elliptical Torus" }
     { label,part "Particle Solid" }
+    { label,dsp "Displacement Map" }
+    { label,hf "Height Field" }
+    { label,ebm "Extruded Bitmap" }
+    { label,vol "Volume" }
     { label,V "Vertex" }
     { label,A "A vector" }
     { label,B "B vector" }
@@ -160,6 +207,11 @@ solid has the following input fields:
     { attr,ehy  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25 c .25} }
     { attr,eto  {V {-1 -1 -1} N {0 0 1} C {.1 0 .1} r .5 r_d .05} }
     { attr,part {V {-1 -1 -.5} H {0 0 1} r_v 0.5 r_h 0.25} }
+    { attr,dsp  {file "" sm 1 w 1 n 1 stom {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} }
+    { attr,hf   {cfile "" dfile "" fmt "" w 1 n 1 shorts 1 file2mm 1.0 v {0 0 0} \
+	    x {0 0 0} y {0 0 0} xlen 1 ylen 1 zscale 1} }
+    { attr,ebm  {file "" w 1 n 1 d 1 mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} }
+    { attr,vol  {file "" w 1 n 1 d 1 lo 0 hi 1 size {1 1 1} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} }
     { name,indexvar index }
     { name,op "incr index" }
     { name,default "mySolid" }
