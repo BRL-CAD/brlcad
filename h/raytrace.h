@@ -2021,6 +2021,7 @@ RT_EXTERN(struct edgeuse	*nmg_find_eu_with_vu_in_lu, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu) );
 RT_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
 RT_EXTERN(CONST struct edgeuse	*nmg_radial_face_edge_in_shell, (CONST struct edgeuse *eu) );
+RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1, CONST struct faceuse *fu2));
 RT_EXTERN(struct edge		*nmg_find_e_nearest_pt2, (long *magic_p,
 				CONST point_t pt2, CONST mat_t mat,
 				CONST struct rt_tol *tol) );
@@ -2228,10 +2229,11 @@ RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse	*lu,
 RT_EXTERN(double		nmg_vu_angle_measure, (struct vertexuse	*vu,
 				vect_t x_dir, vect_t y_dir, int assessment,
 				int in) );
-RT_EXTERN(void			nmg_face_cutjoin, (
+RT_EXTERN(struct edge_g		*nmg_face_cutjoin, (
 				struct nmg_ptbl *b1, struct nmg_ptbl *b2,
 				struct faceuse *fu1, struct faceuse *fu2,
 				point_t pt, vect_t dir,
+				struct edge_g *eg,
 				CONST struct rt_tol *tol) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
