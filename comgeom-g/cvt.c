@@ -40,6 +40,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+/* defined in region.c */
+extern void group_init();
+extern int getregion();
+extern void region_register();
+extern void group_write();
+
+/* defined in read.c */
+extern int getline();
+
+/* defined in solid.c */
+extern void trim_trail_spaces();
+extern int getsolid();
+
 struct wmember	*wmp;	/* array indexed by region number */
 
 int	version = 5;	/* v4 or v5 ? */

@@ -44,6 +44,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+/* defined in read.c */
+extern int getline();
+extern int getint();
+extern void namecvt();
+
+/* defined in cvt.c */
+extern void col_pr();
+
+/* defined in solid.c */
+extern int read_arbn();
 
 extern struct rt_wdb	*outfp;
 extern int	version;

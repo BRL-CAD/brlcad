@@ -32,6 +32,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+/* defined in read.c */
+extern int getline();
+extern int getint();
+extern void namecvt();
+
+/* defined in cvt.c */
+extern void col_pr();
+
 extern char	name_it[];
 
 extern struct wmember	*wmp;	/* array indexed by region number */
