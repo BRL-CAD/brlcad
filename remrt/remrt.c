@@ -73,7 +73,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "../librt/debug.h"
 
-#include "./list.h"
 #include "./protocol.h"
 #include "./ihost.h"
 
@@ -159,7 +158,35 @@ char *frame_script = NULL;
 #define MAXSERVERS	NFD		/* No relay function yet */
 #endif
 
-struct list *FreeList;
+/* -- */
+
+/*
+ *			L I S T
+ *
+ *  Macros to manage lists of pixel spans.
+ *  The span is inclusive, from start up to and including stop.
+ */
+struct list {
+	struct rt_list	l;
+	struct frame	*li_frame;
+	int		li_start;
+	int		li_stop;
+};
+
+struct rt_list 		FreeList;
+
+#define LIST_NULL	((struct list*)0)
+#define LIST_MAGIC	0x4c494c49
+
+#define GET_LIST(p)	if( RT_LIST_IS_EMPTY( &FreeList ) )  { \
+				GETSTRUCT((p), list); \
+				(p)->l.magic = LIST_MAGIC; \
+			} else { \
+				(p) = RT_LIST_FIRST(list, &FreeList); \
+				RT_LIST_DEQUEUE(&(p)->l); \
+			}
+
+#define FREE_LIST(p)	{ RT_LIST_APPEND( &FreeList, &(p)->l ); }
 
 /* -- */
 
@@ -174,7 +201,7 @@ struct frame {
 	/* options */
 	int		fr_width;	/* frame width (pixels) */
 	int		fr_height;	/* frame height (pixels) */
-	struct list	fr_todo;	/* work still to be done */
+	struct rt_list	fr_todo;	/* work still to be done */
 	/* Timings */
 	struct timeval	fr_start;	/* start time */
 	struct timeval	fr_end;		/* end time */
@@ -284,7 +311,7 @@ struct frame *FreeFrame;
 
 struct servers {
 	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
-	struct list	sr_work;
+	struct rt_list	sr_work;
 	struct ihost	*sr_host;	/* description of this host */
 	int		sr_lump;	/* # lines to send at once */
 	int		sr_state;	/* Server state, SRST_xxx */
@@ -477,9 +504,10 @@ char	**argv;
 
 	start_helper();
 
+	RT_LIST_INIT( &FreeList );
 	FrameHead.fr_forw = FrameHead.fr_back = &FrameHead;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-		sp->sr_work.li_forw = sp->sr_work.li_back = &sp->sr_work;
+		RT_LIST_INIT( &sp->sr_work );
 		sp->sr_pc = PKC_NULL;
 		sp->sr_curframe = FRAME_NULL;
 	}
@@ -792,7 +820,7 @@ struct pkg_conn *pc;
 	sp = &servers[fd];
 	bzero( (char *)sp, sizeof(*sp) );
 	sp->sr_pc = pc;
-	sp->sr_work.li_forw = sp->sr_work.li_back = &(sp->sr_work);
+	RT_LIST_INIT( &sp->sr_work );
 	sp->sr_state = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_lump = 32;
@@ -854,16 +882,16 @@ char	*why;
 	if( oldstate != SRST_READY && oldstate != SRST_NEED_TREE )  return;
 
 	/* Need to requeue any work that was in progress */
-	lhp = &(sp->sr_work);
-	while( (lp = lhp->li_forw) != lhp )  {
+	while( RT_LIST_WHILE( lp, list, &sp->sr_work ) )  {
 		fr = lp->li_frame;
 		CHECK_FRAME(fr);
-		DEQUEUE_LIST( lp );
+		RT_LIST_DEQUEUE( &lp->l );
 		rt_log("%s requeueing fr%d %d..%d\n",
 			stamp(),
 			fr->fr_number,
 			lp->li_start, lp->li_stop);
-		APPEND_LIST( lp, &(fr->fr_todo) );
+		/* Stick it at the head */
+		RT_LIST_APPEND( &fr->fr_todo, &lp->l );
 	}
 }
 
@@ -1291,12 +1319,12 @@ register struct frame *fr;
 	fr->fr_cpu = 0.0;
 
 	/* Build work list */
-	fr->fr_todo.li_forw = fr->fr_todo.li_back = &(fr->fr_todo);
+	RT_LIST_INIT( &fr->fr_todo );
 	GET_LIST(lp);
 	lp->li_frame = fr;
 	lp->li_start = 0;
 	lp->li_stop = fr->fr_width*fr->fr_height-1;	/* last pixel # */
-	APPEND_LIST( lp, fr->fr_todo.li_back );
+	RT_LIST_INSERT( &fr->fr_todo, &lp->l );
 }
 
 /*
@@ -1538,8 +1566,8 @@ register struct frame	*fr;
 	 *  Need to remove any pending work.
 	 *  What about work already assigned that will dribble in?
 	 */
-	while( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )  {
-		DEQUEUE_LIST( lp );
+	while( RT_LIST_WHILE( lp, list, &fr->fr_todo ) )  {
+		RT_LIST_DEQUEUE( &lp->l );
 		FREE_LIST(lp);
 	}
 
@@ -1572,17 +1600,16 @@ this_frame_done( fr )
 register struct frame	*fr;
 {
 	register struct servers	*sp;
-	register struct list	*lhp, *lp;
+	register struct list	*lp;
 
 	CHECK_FRAME(fr);
 
-	if( fr->fr_todo.li_forw != &(fr->fr_todo) )
+	if( RT_LIST_NON_EMPTY( &fr->fr_todo ) )
 		return(1);		/* more work still to be sent */
 
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		lhp = &(sp->sr_work);
-		for( lp = lhp->li_forw; lp != lhp; lp=lp->li_forw )  {
+		for( RT_LIST_FOR( lp, list, &sp->sr_work ) )  {
 			if( fr != lp->li_frame )  continue;
 			return(0);		/* nope, still more work */
 		}
@@ -1606,7 +1633,7 @@ all_servers_idle()
 		if( sp->sr_pc == PKC_NULL )  continue;
 		if( sp->sr_state != SRST_READY && 
 		    sp->sr_state != SRST_NEED_TREE )  continue;
-		if( sp->sr_work.li_forw == &(sp->sr_work) )  continue;
+		if( RT_LIST_IS_EMPTY( &sp->sr_work ) )  continue;
 		return(0);		/* nope, still more work */
 	}
 	return(1);			/* All done */
@@ -1629,7 +1656,7 @@ all_done()
 
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
 		CHECK_FRAME(fr);
-		if( fr->fr_todo.li_forw == &(fr->fr_todo) )
+		if( RT_LIST_IS_EMPTY( &fr->fr_todo ) )
 			continue;
 		return(0);		/* nope, still more work */
 	}
@@ -1711,7 +1738,7 @@ struct timeval	*nowp;
 	fr = FrameHead.fr_forw;
 	while( fr && fr != &FrameHead )  {
 		CHECK_FRAME(fr);
-		if( fr->fr_todo.li_forw != &(fr->fr_todo) )
+		if( RT_LIST_NON_EMPTY( &fr->fr_todo ) )
 			goto next_frame;	/* unassigned work remains */
 
 		if( this_frame_done( fr ) )  {
@@ -1740,7 +1767,7 @@ top:
 		nxt_frame=0;
 		do {
 			another_pass = 0;
-			if( fr->fr_todo.li_forw == &(fr->fr_todo) )
+			if( RT_LIST_IS_EMPTY( &fr->fr_todo ) )
 				break;	/* none waiting here */
 
 			/*
@@ -1889,7 +1916,7 @@ struct timeval		*nowp;
 	if( server_q_len(sp) >= N_SERVER_ASSIGNMENTS )
 		return(0);	/* plenty busy */
 
-	if( (lp = fr->fr_todo.li_forw) == &(fr->fr_todo) )  {
+	if( RT_LIST_IS_EMPTY( &fr->fr_todo ) )  {
 		/*  No more work to assign in this frame,
 		 *  on next pass, caller should advance to next frame.
 		 */
@@ -1969,12 +1996,13 @@ struct timeval		*nowp;
 	if (lump > maxlump) lump=maxlump;
 	sp->sr_lump = lump;
 
+	lp = RT_LIST_FIRST( list, &fr->fr_todo );
 	a = lp->li_start;
 	b = a+sp->sr_lump-1;	/* work increment */
 	if( b >= lp->li_stop )  {
 		b = lp->li_stop;
 		sp->sr_lump = b-a+1;	/* Indicate short assignment */
-		DEQUEUE_LIST( lp );
+		RT_LIST_DEQUEUE( &lp->l );
 		FREE_LIST( lp );
 		lp = LIST_NULL;
 	} else
@@ -1985,7 +2013,7 @@ struct timeval		*nowp;
 	lp->li_frame = fr;
 	lp->li_start = a;
 	lp->li_stop = b;
-	APPEND_LIST( lp, sp->sr_work.li_back );
+	RT_LIST_INSERT( &sp->sr_work, &lp->l );
 	send_do_lines( sp, a, b, fr->fr_number );
 
 	/* See if server will need more assignments */
@@ -2007,7 +2035,7 @@ register struct servers	*sp;
 	register int		count;
 
 	count = 0;
-	for( lp = sp->sr_work.li_forw; lp != &(sp->sr_work); lp = lp->li_forw )  {
+	for( RT_LIST_FOR( lp, list, &sp->sr_work ) )  {
 		count++;
 	}
 	return(count);
@@ -2276,7 +2304,7 @@ char *buf;
 			info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
 	}
 
-	if( (lp = sp->sr_work.li_forw) == &(sp->sr_work) )  {
+	if( RT_LIST_IS_EMPTY( &sp->sr_work ) )  {
 		rt_log("%s responded with pixels when none were assigned!\n",
 			sp->sr_host->ht_name );
 		drop_server( sp, "server responded, no assignment" );
@@ -2440,15 +2468,15 @@ out:
  */
 void
 list_remove( lhp, a, b )
-register struct list *lhp;
+register struct rt_list *lhp;
 int		a, b;
 {
 	register struct list *lp;
 
-	for( lp=lhp->li_forw; lp != lhp; lp=lp->li_forw )  {
+	for( RT_LIST_FOR( lp, list, lhp ) )  {
 		if( lp->li_start == a )  {
 			if( lp->li_stop == b )  {
-				DEQUEUE_LIST(lp);
+				RT_LIST_DEQUEUE(&lp->l);
 				FREE_LIST(lp);
 				return;
 			}
@@ -2469,11 +2497,11 @@ int		a, b;
 				lp->li_start, a-1,
 				b+1, lp->li_stop);
 			GET_LIST(lp2);
-			*lp2 = *lp;	/* struct copy li_frame, etc */
+			lp2->li_frame = lp->li_frame;
 			lp2->li_start = b+1;
 			lp2->li_stop = lp->li_stop;
 			lp->li_stop = a-1;
-			APPEND_LIST( lp2, lp );
+			RT_LIST_APPEND( &lp->l, &lp2->l );
 			return;
 		}
 	}
@@ -2772,11 +2800,11 @@ int		framenum;
  */
 void
 pr_list( lhp )
-register struct list *lhp;
+register struct rt_list *lhp;
 {
 	register struct list *lp;
 
-	for( lp = lhp->li_forw; lp != lhp; lp = lp->li_forw  )  {
+	for( RT_LIST_FOR( lp, list, lhp ) )  {
 		if( lp->li_frame == 0 )  {
 			rt_log("\t%d..%d frame *NULL*??\n",
 			lp->li_start, lp->li_stop );
