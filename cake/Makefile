@@ -14,7 +14,7 @@ SHELL=/bin/sh
 COPTS = -DCAKEDEBUG `machinetype.sh -d`
 
 # for gnu or Linux use "flex" instead of "lex"
-LEX = lex
+LEX = lex -n
 
 # Some systems (such as NetBSD 0.9a), need to add -l to get yylineno.
 LEXOPTS=
@@ -44,11 +44,12 @@ cake:		$(OBJ) $(GOBJ)
 all:		cake lint tags
 
 # This needs to be run all as one line, so variables are not lost.
+#		echo BINDIR=$${BINDIR};
+
 install:	cake
 		eval `machinetype.sh -v` ; \
 		BINDIR=$${BASEDIR}/bin; \
 		MANDIR=$${BASEDIR}/man/man1; \
-		echo BINDIR=$${BINDIR}; \
 		if test -f $${BINDIR}/cake; then \
 			mv -f $${BINDIR}/cake $${BINDIR}/cake.bak; fi; \
 		mv cake $${BINDIR}/cake; \
