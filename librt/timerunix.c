@@ -31,8 +31,9 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #include <sys/param.h>
 
 #ifndef HZ
-/* It's not always in sys/param.h */
-#define HZ	60
+	/* It's not always in sys/param.h;  if not, guess */
+#	define	HZ		60
+#	define	DEFAULT_HZ	yes
 #endif
 
 /* Standard System V stuff */
@@ -62,6 +63,7 @@ char *str;
 	long now;
 	double usert;
 	double realt;
+	double	percent;
 	struct tms tmsnow;
 	char line[132];
 
@@ -72,9 +74,15 @@ char *str;
 	usert /= HZ;
 	if( usert < 0.00001 )  usert = 0.01;
 	if( realt < 0.00001 )  realt = usert;
+	percent = usert/realt*100.0;
+#ifdef DEFAULT_HZ
+	sprintf(line,
+		"%g CPU secs in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
+		usert, realt, percent );
+#else
 	sprintf(line,"%g CPU secs in %g elapsed secs (%g%%)",
-		usert, realt,
-		usert/realt*100 );
+		usert, realt, percent );
+#endif
 	(void)strncpy( str, line, len );
 	return( usert );
 }
