@@ -83,7 +83,7 @@ int n;
 {
 	static	int	y = 0;
 	int	i, value;
-	RGBpixel lbuf[1024];
+	RGBpixel lbuf[1024*4];
 
 	if( n > fb_getwidth(fbp) ) n = fb_getwidth(fbp);
 
@@ -94,7 +94,7 @@ int n;
 		else if( value > 255 ) value = 255;
 		lbuf[i][RED] = lbuf[i][GRN] = lbuf[i][BLU] = value;
 	}
-	fb_write( fbp, 0, y, lbuf, n );
+	fb_write( fbp, 0, y, (unsigned char *)lbuf, n );
 
 	/* Next screen position */
 	y = (y + 1) % fb_getheight(fbp);
