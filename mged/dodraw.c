@@ -296,9 +296,7 @@ int			id;
 
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_REGION;	/* tag for nmg */
-	curtree->tr_a.tu_stp = (struct soltab *)r1;
-	curtree->tr_a.tu_name = (char *)0;
-	curtree->tr_a.tu_regionp = (struct region *)0;
+	curtree->tr_c.tc_ctsp = (struct combined_tree_state *)r1;
 
 	if(rt_g.debug&DEBUG_TREEWALK)
 		rt_log("mged_nmg_leaf() %s\n", curtree->tr_a.tu_name );
@@ -325,8 +323,9 @@ register union tree	*tp;
 		return( 0 );
 
 	case OP_REGION:
-		r = (struct nmgregion *)tp->tr_a.tu_stp;
-		tp->tr_a.tu_stp = SOLTAB_NULL;	/* Disconnect */
+		r = (struct nmgregion *)tp->tr_c.tc_ctsp;
+		tp->tr_c.tc_ctsp = (struct combined_tree_state *)0;/* Disconnect */
+		tp->tr_op = OP_NOP;	/* Keep our use of OP_REGION quiet */
 		return( r );
 
 	case OP_UNION:
