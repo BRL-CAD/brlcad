@@ -62,7 +62,7 @@ int shell_orient;
 			face_count++;
 	}
 
-	nmg_gluefaces( fu , face_count );
+	nmg_gluefaces( fu , face_count, &tol );
 
 	rt_free( (char *)fu , "Get_outer_shell: faceuse list" );
 	rt_free( (char *)face_de , "Get_outer_shell: face DE's" );
