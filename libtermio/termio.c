@@ -15,42 +15,22 @@ static
 char	sccsTag[] = "@(#) termio.c	1.5	last edit 6/18/86 at 09:57:54";
 #include <stdio.h>
 #include <fcntl.h>
-#include <sgtty.h>
-#ifndef	TANDEM	/* USG derivatives */
-/* Dammit. */
-#undef	NL1
-#undef	CR1
-#undef	CR2
-#undef	CR3
-#undef	TAB1
-#undef	BS1
-#undef	FF1
-#undef	B50
-#undef	B75
-#undef	B110
-#undef	B134
-#undef	B150
-#undef	B200
-#undef	B300
-#undef	B600
-#undef	B1200
-#undef	B1800
-#undef	B2400
-#undef	B4800
-#undef	B9600
-#undef	EXTA
-#undef	EXTB
-#undef	HUPCL
-#undef	ECHO
-#include	<termio.h>
+
+#ifdef SYSV
+/**#ifndef	TANDEM	/* USG derivatives */
+#include <termio.h>
+#include <memory.h>
 #endif
 
-#ifdef	TANDEM	/* 7th Edition derivatives */
+#ifdef BSD
+#include <sys/ioctl.h>
+/****#ifdef	TANDEM	/* 7th Edition derivatives */
 #define TCSETA	TIOCSETP
 #define TCGETA	TIOCGETP
 #ifndef	XTABS
 #define	XTABS	(TAB1 | TAB2)
 #endif
+
 static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
 #else		/* USG derivatives */
 static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
@@ -71,7 +51,7 @@ void
 clr_Raw( fd )
 int	fd;
 	{
-#ifdef TANDEM
+#ifdef BSD
 	curr_tio[fd].sg_flags &= ~RAW;		/* Raw mode OFF.	*/
 #else
 	curr_tio[fd].c_lflag |= ICANON;		/* Raw mode OFF.	*/
@@ -87,7 +67,7 @@ void
 set_Raw( fd )
 int	fd;
 	{
-#ifdef TANDEM
+#ifdef BSD
 	curr_tio[fd].sg_flags |= RAW;		/* Raw mode ON.		*/
 #else
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Raw mode ON.		*/
@@ -103,7 +83,7 @@ void
 set_Echo( fd )
 int	fd;
 	{
-#ifdef TANDEM
+#ifdef BSD
 	curr_tio[fd].sg_flags |= ECHO;		/* Echo mode ON.	*/
 #else
 	curr_tio[fd].c_lflag |= ECHO;		/* Echo mode ON.	*/
@@ -119,7 +99,7 @@ void
 clr_Echo( fd )
 int	fd;
 	{
-#ifdef TANDEM
+#ifdef BSD
 	curr_tio[fd].sg_flags &= ~ECHO;		/* Echo mode OFF.	*/
 #else
 	curr_tio[fd].c_lflag &= ~ECHO;		/* Echo mode OFF.	*/
@@ -135,7 +115,7 @@ void
 set_Tabs( fd )
 int	fd;
 	{
-#ifdef TANDEM
+#ifdef BSD
 	curr_tio[fd].sg_flags |= XTABS;		/* Tab expansion ON.	*/
 #else
 	curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
@@ -151,7 +131,7 @@ void
 clr_Tabs( fd )
 int	fd;
 	{
-#ifdef TANDEM
+#ifdef BSD
 	curr_tio[fd].sg_flags &= ~XTABS;	/* Tab expans. OFF.	*/
 #else
 	curr_tio[fd].c_oflag &= ~TAB3;		/* Tab expans. OFF.	*/
@@ -166,7 +146,7 @@ int	fd;
 unsigned short
 get_O_Speed( fd )
 	{
-#ifdef TANDEM
+#ifdef BSD
 	return	(unsigned short) save_tio[fd].sg_ospeed;
 #else
 	return	save_tio[fd].c_cflag & CBAUD;
@@ -236,17 +216,15 @@ read_Key_Brd()
 /*	c o p y _ T i o ( )						*/
 static void
 copy_Tio( to, from )
-#ifdef TANDEM
+#ifdef BSD
 struct sgttyb	*to, *from;
 #else
 struct termio	*to, *from;
 #endif
 	{
-#ifdef TANDEM
-	/* This could be dangerous if there are null bytes */
-	(void) strncpy( (char *) to, (char *) from, sizeof(struct sgttyb) );
+#ifdef BSD
+	(void)bcopy( (char *)from, (char*)to, sizeof(struct sgttyb) );
 #else
-#include	<memory.h>
 	(void) memcpy( (char *) to, (char *) from, sizeof(struct termio) );
 #endif
 	return;
@@ -256,14 +234,14 @@ struct termio	*to, *from;
 void
 prnt_Tio( msg, tio_ptr )
 char		*msg;
-#ifdef TANDEM
+#ifdef BSD
 struct sgttyb	*tio_ptr;
 #else
 struct termio	*tio_ptr;
 #endif
 	{	register int	i;
 	(void) fprintf( stderr, "%s :\n\r", msg );
-#ifdef TANDEM
+#ifdef BSD
 	(void) fprintf( stderr, "\tsg_ispeed=%d\n\r", (int) tio_ptr->sg_ispeed );
 	(void) fprintf( stderr, "\tsg_ospeed=%d\n\r", (int) tio_ptr->sg_ospeed );
 	(void) fprintf( stderr, "\tsg_erase='%c'\n\r", tio_ptr->sg_erase );
