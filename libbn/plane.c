@@ -741,9 +741,15 @@ fastf_t tolsq;	/* distance tolerance (squared) for point being */
  *
  *	Find the distance from a point P to a line segment described
  *	by the two endpoints A and B.
+ *
+ *	Explicit return
+ *	    distance from the point of closest approach on lseg to point
+ *
+ *	Implicit return
+ *	    pca 	the point of closest approach
  */
-double rt_dist_pt_lseg(a, b, p)
-point_t a, b, p;
+double rt_dist_pt_lseg(pca, a, b, p)
+point_t pca, a, b, p;
 {
 	vect_t ENDPTtoP, AtoB;
 	double dist, APdist;
@@ -754,6 +760,7 @@ point_t a, b, p;
 	dist = VDOT(ENDPTtoP, AtoB) / MAGSQ(AtoB);
 	if (dist <= 1.0 && dist >= 0.0) {
 		/* pt is along edge of lseg */
+		VSCALE(pca, AtoB, dist);
 		VUNITIZE(AtoB);
 		return(rt_dist_pt_line(a, AtoB, p));
 	}
@@ -764,6 +771,11 @@ point_t a, b, p;
 	VSUB2(ENDPTtoP, p, b);
 	dist = MAGNITUDE(ENDPTtoP);
 
-	if (APdist < dist) return(APdist);
+	if (APdist < dist) {
+		VMOVE(pca, a);
+		return(APdist);
+	}
+
+	VMOVE(pca, b);
 	return(dist);
 }
