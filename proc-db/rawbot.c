@@ -117,8 +117,6 @@ int main( int argc, char *argv[] )
 			continue;
 		}
 		inputZ = atof(inputString);
-		//		printf("scanned %f %f %f\n", inputX, inputY, inputZ);
-		//		printf("scanned %s\n", inputString);
 
 		if (triangleCount >= maxTriangleCapacity) {
 			vertices = realloc(vertices, ((maxTriangleCapacity + 128) * 3) * sizeof(fastf_t));
@@ -130,11 +128,11 @@ int main( int argc, char *argv[] )
 			maxTriangleCapacity += 128;
 		}
 
-		//		VSET( &vertices[triangleCount*3], inputX, inputY, inputZ );
+		/*		VSET( &vertices[triangleCount*3], inputX, inputY, inputZ ); */
 		vertices[(triangleCount*3)] = inputX;
 		vertices[(triangleCount*3)+1] = inputY;
 		vertices[(triangleCount*3)+2] = inputZ;
-		//		printf("%f %f %f\n", vertices[(triangleCount*3)], vertices[(triangleCount*3)+1], vertices[(triangleCount*3)+2]);
+		/*		printf("%f %f %f\n", vertices[(triangleCount*3)], vertices[(triangleCount*3)+1], vertices[(triangleCount*3)+2]); */
 		triangleCount++;
 	}
 
