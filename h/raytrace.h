@@ -178,6 +178,7 @@ struct soltab {
 #define ID_REC		7	/* Right Elliptical Cylinder [TGC special] */
 #define ID_POLY		8	/* Polygonal facted object */
 #define ID_BSPLINE	9	/* B-spline object */
+#define ID_SPH		10	/* Sphere */
 
 /*
  *			F U N C T A B
