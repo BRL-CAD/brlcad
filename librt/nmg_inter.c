@@ -2968,6 +2968,11 @@ fixup:
 		}
 		if( !V3PT_IN_RPP( hit3d, fu1->f_p->min_pt, fu1->f_p->max_pt ) )  {
 			/* Lines intersect outside bounds of this face. */
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+				VPRINT("\t\tintersection outise face RPP:", hit3d );
+				rt_log("\t\tface RPP: ( %g %g %g ) <-> ( %g %g %g )\n",
+					V3ARGS( fu1->f_p->min_pt ), V3ARGS( fu1->f_p->max_pt ) );
+			}
 			continue;
 		}
 
