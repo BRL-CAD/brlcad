@@ -85,7 +85,10 @@ int		rdebug;			/* RT program debugging (not library) */
 static char outbuf[132];
 static char idbuf[132];			/* First ID record info */
 
-static int seen_start, seen_matrix;	/* state flags */
+/* State flags */
+static int	seen_dirbuild;
+static int	seen_gettrees;
+static int	seen_matrix;
 
 static char *title_file, *title_obj;	/* name of file and first object */
 
@@ -96,7 +99,8 @@ static char *title_file, *title_obj;	/* name of file and first object */
  */
 void	ph_unexp();	/* foobar message handler */
 void	ph_enqueue();	/* Addes message to linked list */
-void	ph_start();
+void	ph_dirbuild();
+void	ph_gettrees();
 void	ph_matrix();
 void	ph_options();
 void	ph_lines();
@@ -105,7 +109,8 @@ void	ph_restart();
 void	ph_loglvl();
 void	ph_cd();
 struct pkg_switch pkgswitch[] = {
-	{ MSG_START,	ph_start,	"Startup" },
+	{ MSG_DIRBUILD,	ph_dirbuild,	"DirBuild" },
+	{ MSG_GETTREES,	ph_enqueue,	"Get Trees" },
 	{ MSG_MATRIX,	ph_enqueue,	"Set Matrix" },
 	{ MSG_OPTIONS,	ph_enqueue,	"Options" },
 	{ MSG_LINES,	ph_enqueue,	"Compute lines" },
@@ -306,6 +311,9 @@ char **argv;
 			case MSG_OPTIONS:
 				ph_options( (struct pkg_comm *)0, (char *)lp->li_stop );
 				break;
+			case MSG_GETTREES:
+				ph_gettrees( (struct pkg_comm *)0, (char *)lp->li_stop );
+				break;
 			default:
 				rt_log("bad list element %d\n", lp->li_start );
 				exit(33);
@@ -367,8 +375,13 @@ char *buf;
 	exit(1);
 }
 
+/*
+ *			P H _ D I R B U I L D
+ *
+ *  The only argument is the name of the database file.
+ */
 void
-ph_start(pc, buf)
+ph_dirbuild(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
 {
@@ -378,7 +391,7 @@ char *buf;
 	struct rt_i *rtip;
 	register int i;
 
-	if( debug )  fprintf(stderr, "ph_start: %s\n", buf );
+	if( debug )  fprintf(stderr, "ph_dirbuild: %s\n", buf );
 
 	if( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
 		/* No words in input */
@@ -386,54 +399,85 @@ char *buf;
 		return;
 	}
 
-	if( argc < 2 )  {
-		rt_log("ph_start:  no objects? %s\n", buf);
-		(void)free(buf);
-		return;
-	}
-	if( seen_start )  {
-		rt_log("ph_start:  start already seen, ignored\n");
+	if( seen_dirbuild )  {
+		rt_log("ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
 		(void)free(buf);
 		return;
 	}
 
 	title_file = rt_strdup(argv[0]);
-	title_obj = rt_strdup(argv[1]);
-
-	rt_prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
 	if( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )  {
-		rt_log("ph_start:  rt_dirbuild(%s) failure\n", title_file);
+		rt_log("ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
-	rt_log( "db title:  %s\n", idbuf);
+	seen_dirbuild = 1;
+
+	if( pkg_send( MSG_DIRBUILD_REPLY,
+	    idbuf, strlen(idbuf)+1, pcsrv ) < 0 )
+		fprintf(stderr,"MSG_DIRBUILD_REPLY error\n");
+}
+
+/*
+ *			P H _ G E T T R E E S
+ *
+ *  Each word in the command buffer is the name of a treetop.
+ */
+void
+ph_gettrees(pc, buf)
+register struct pkg_comm *pc;
+char *buf;
+{
+#define MAXARGS 1024
+	char	*argv[MAXARGS+1];
+	int	argc;
+	struct rt_i *rtip = ap.a_rt_i;
+
+	if( debug )  fprintf(stderr, "ph_gettrees: %s\n", buf );
+
+	if( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
+		/* No words in input */
+		(void)free(buf);
+		return;
+	}
+	title_obj = rt_strdup(argv[0]);
+
+	if( rtip->needprep == 0 )  {
+		if(debug)rt_log("Cleaning previous model\n");
+		rt_clean(rtip);
+	}
 
 	/* Load the desired portion of the model */
 #define npsw 1		/* XXXXXXXXX Temp. disable parallel prep, it may be buggy XXXXX -M */
-	if( rt_gettrees(rtip, argc-1, argv+1, npsw) < 0 )
-		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[1]);
+	if( rt_gettrees(rtip, argc, argv, npsw) < 0 )
+		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
 #undef npsw
 
 	/* In case it changed from startup time */
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
-		rt_log("ph_start:  running with %d processors\n", npsw );
+		rt_log("%d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
 
 	beginptr = sbrk(0);
 
-	seen_start = 1;
+	seen_gettrees = 1;
 	(void)free(buf);
 
+	prepare();
+
 	/* Acknowledge that we are ready */
-	if( pkg_send( MSG_START,
-	    PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv ) < 0 )
+	if( pkg_send( MSG_GETTREES_REPLY,
+	    title_obj, strlen(title_obj)+1, pcsrv ) < 0 )
 		fprintf(stderr,"MSG_START error\n");
 }
 
+/*
+ *			P R O C E S S _ C M D
+ */
 void
 process_cmd( buf )
 char	*buf;
@@ -506,6 +550,15 @@ char *buf;
 	process_cmd( buf );
 	free(buf);
 
+	seen_matrix = 1;
+}
+
+prepare()
+{
+	register struct rt_i *rtip = ap.a_rt_i;
+
+	if( debug )  fprintf(stderr, "prepare()\n");
+
 	/*
 	 * initialize application -- it will allocate 1 line and
 	 * set buf_mode=1, as well as do mlib_init().
@@ -532,7 +585,6 @@ char *buf;
 	rtip->nhits = 0;
 	rtip->rti_nrays = 0;
 
-	seen_matrix = 1;
 }
 
 /* 
@@ -556,12 +608,12 @@ char *buf;
 	char	*cp;
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
-	if( !seen_start )  {
-		rt_log("ph_lines:  no start yet\n");
+	if( !seen_gettrees )  {
+		rt_log("ph_lines:  no MSG_GETTREES yet\n");
 		return;
 	}
 	if( !seen_matrix )  {
-		rt_log("ph_lines:  no matrix yet\n");
+		rt_log("ph_lines:  no MSG_MATRIX yet\n");
 		return;
 	}
 
@@ -628,7 +680,7 @@ char *buf;
  *  Log an error.
  *  This version buffers a full line, to save network traffic.
  */
-#if __STDC__
+#if (__STDC__ && !apollo)
 void
 rt_log( char *fmt, ... )
 {
@@ -639,7 +691,7 @@ rt_log( char *fmt, ... )
 	if( print_on == 0 )  return;
 	RES_ACQUIRE( &rt_g.res_syscall );
 	va_start( ap, fmt );
-	(void)vfprintf( stderr, fmt, ap );
+	(void)vsprintf( cp, fmt, ap );
 	va_end(ap);
 
 	while( *cp++ )  ;		/* leaves one beyond null */
@@ -650,11 +702,67 @@ rt_log( char *fmt, ... )
 		goto out;
 	}
 	if(debug) fprintf(stderr, "%s", buf+1);
-	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )
+	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
+		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
 		exit(12);
+	}
 	cp = buf+1;
 out:
 	RES_RELEASE( &rt_g.res_syscall );
+}
+#else /* __STDC__ */
+
+#if defined(BSD) || defined(mips) || defined(CRAY2)
+/*
+ *  			R T _ L O G
+ *  
+ *  Log an RT library event using the Berkeley _doprnt() routine.
+ */
+/* VARARGS */
+void
+rt_log(va_alist)
+va_dcl
+{
+	va_list		ap;
+	char		*fmt;
+	static char	buf[512];
+	static char	*cp;
+	FILE		strbuf;
+
+	if( print_on == 0 )  return;
+	if( cp == (char *)0 )  cp = buf+1;
+#if defined(mips)
+	strbuf._file = 20;	/* _NFILE, flags as not a file */
+	strbuf._flag = 0;
+	strbuf._ptr = cp;
+	strbuf._cnt = sizeof(buf)-(cp-buf);
+#else
+	strbuf._flag = _IOWRD|_IOSTRG;
+	strbuf._ptr = cp;
+	strbuf._cnt = sizeof(buf)-(cp-buf);
+#endif
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	va_start(ap);
+	fmt = va_arg(ap,char *);
+	(void) _doprnt( fmt, ap, &strbuf );
+	putc( '\0', &strbuf );
+	va_end(ap);
+
+	if(debug) fprintf(stderr, "%s", buf+1);
+	while( *cp++ )  ;		/* leaves one beyond null */
+	if( cp[-2] != '\n' )
+		goto out;
+	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
+		fprintf(stderr, "%s", buf+1);
+		goto out;
+	}
+	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
+		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
+		exit(12);
+	}
+	cp = buf+1;
+out:
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 }
 #else
 /* VARARGS */
@@ -677,12 +785,15 @@ int	a, b, c, d, e, f, g, h;
 		goto out;
 	}
 	if(debug) fprintf(stderr, "%s", buf+1);
-	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )
+	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
+		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
 		exit(12);
+	}
 	cp = buf+1;
 out:
 	RES_RELEASE( &rt_g.res_syscall );
 }
+#endif /* not BSD */
 #endif /* not __STDC__ */
 
 void
