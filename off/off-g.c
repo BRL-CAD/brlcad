@@ -51,17 +51,18 @@ FILE *fgeom;
 	struct rt_tol 	   tol;
 
 		/* Get numbers of vertices and faces, and grab the appropriate amount of memory */
-	fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges);
+	if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
+		rt_bomb("Cannot read number of vertices, faces, edges.\n");
+
 	pts = (fastf_t *) rt_malloc(sizeof(fastf_t) * 3 * nverts, "points list");
 	verts = (struct vertex **) rt_malloc(sizeof(struct vertex *) * nverts, "vertices");
 	outfaceuses = (struct faceuse **) rt_malloc(sizeof(struct faceuse *) * nfaces, "faceuses");
 
 		/* Read in vertex geometry, store in geometry list */		
 	for (i = 0; i < nverts; i++) {
-		if (fscanf(fgeom, "%lf %lf %lf", &pts[3*i], &pts[3*i+1], &pts[3*i+2]) != 3) {
-			fprintf(stderr, "Not enough data points in geometry file.\n");
-			exit(1);
-		}
+		if (fscanf(fgeom, "%lf %lf %lf", &pts[3*i], &pts[3*i+1], &pts[3*i+2]) != 3)
+			rt_bomb("Not enough data points in geometry file.\n");
+
 		verts[i] = (struct vertex *) 0;
 		fscanf(fgeom, "%*[^\n]");
 	}
@@ -91,6 +92,7 @@ FILE *fgeom;
 		}
 
 		outfaceuses[i] = nmg_cface(s, vlist, nedges);	/* Create face. */
+		NMG_CK_FACEUSE(outfaceuses[i]);
 
 		for (j = 0; j < nedges; j++)		/* Save (possibly) newly created vertex structs. */
 			verts[pinds[j]-1] = vlist[j];
@@ -109,13 +111,15 @@ FILE *fgeom;
 
 	tol.magic = RT_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
 	tol.dist = 0.01;
-	tol.dist_sq = 0.0001;
+	tol.dist_sq = 0.01 * 0.01;
 	tol.perp = 0.001;
 	tol.para = 0.999;
 
-	for (i = 0; i < nfaces; i++)
+	for (i = 0; i < nfaces; i++) {
+		fprintf(stderr, "planeeqning face %d.\n", i);
 		if (nmg_fu_planeeqn(outfaceuses[i], &tol) < 0)
 			fail = 1;
+	}
 
 	if (fail) return (-1);
 
@@ -208,7 +212,7 @@ char **argv;
 				argv[0], argv[1]);
 			return (1);
 		}
-		if ((fpout == fopen(argv[2], "a")) == NULL) {
+		if ((fpout = fopen(argv[2], "a")) == NULL) {
 			fprintf(stderr, "%s: cannot open %s for appending\n",
 				argv[0], argv[2]);
 			return (1);
