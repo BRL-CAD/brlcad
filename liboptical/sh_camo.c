@@ -3,6 +3,14 @@
  *
  *	A shader to apply a crude camoflage color pattern to an object
  *	using a fractional Brownian motion of 3 colors
+ *
+ *	At each hit point, the shader evaluate the fbm to obtain a "Noise"
+ *	value between -1 and 1.  The color produced is:
+ *
+ *	Noise value		Color
+ *	-1 <= N < t1		 c1
+ *	t1 <= N < t2		 c2
+ *	t2 <= N <= 1		 c3
  */
 #include "conf.h"
 
@@ -23,7 +31,8 @@ struct camo_specific {
 	double	octaves;
 	double	t1;	/* color threshold 1 */
 	double	t2;	/* color threshold 2 */
-	point_t	scale;	/* scale of noise coordinate space */
+	double	size;
+	point_t	vscale;	/* size of noise coordinate space */
 	point_t c1;	/* color 1 */
 	point_t c2;	/* color 2 */
 	point_t c3;	/* color 3 */
@@ -32,17 +41,37 @@ struct camo_specific {
 };
 #define CK_camo_SP(_p) RT_CKMAG(_p, camo_MAGIC, "camo_specific")
 
+/* This allows us to specify the "size" parameter as values like ".5m"
+ * or "27in" rather than using mm all the time.
+ */
+void
+camo_cvt_parse( sdp, name, base, value )
+register CONST struct structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	double v;
+	double *p = (double *)(base+sdp->sp_offset);
+
+	/* reconvert with optional units */
+	*p = rt_mm_value(value);
+}
+
+
 static struct camo_specific camo_defaults = {
 	camo_MAGIC,
 	2.1753974,	/* lacunarity */
 	1.0,		/* h_val */
 	4.0,		/* octaves */
-	-0.5,		/* t1 */
-	0.5,		/* t2 */
-	{ 1.0, 1.0, 1.0 },	/* scale */
+	-0.25,		/* t1 */
+	0.25,		/* t2 */
+	1.0,		/* size */
+	{ 1.0, 1.0, 1.0 },	/* vscale */
 	{ .38, .29, .16 },	/* darker color c1 */
-	{ .125, .35, .04 },	/* basic color c2 */
-	{ .815, .635, .35 },	/* brighter color c3 */
+	{ .1, .30, .04 },	/* basic color c2 */
+/*	{ .815, .635, .35 },	/* brighter color c3 */
+	{ .15, .15, .15 },	/* dark black */
 	{ 1000.0, 1000.0, 1000.0 }	/* delta into noise space */
 	};
 
@@ -58,8 +87,11 @@ struct structparse camo_parse[] = {
 	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
 	{"%f",	1, "t1",		SHDR_O(t1),		FUNC_NULL },
 	{"%f",	1, "t2",		SHDR_O(t2),		FUNC_NULL },
-	{"%f",  3, "scale",		SHDR_AO(scale),		FUNC_NULL },
-	{"%f",  3, "s",			SHDR_AO(scale),		FUNC_NULL },
+	{"%f",  1, "size",		SHDR_O(size),		camo_cvt_parse },
+	{"%f",  1, "s",			SHDR_O(size),		camo_cvt_parse },
+	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",  3, "vs",		SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",  3, "v",			SHDR_AO(vscale),	FUNC_NULL },
 	{"%f",  3, "c1",		SHDR_AO(c1),		FUNC_NULL },
 	{"%f",  3, "c2",		SHDR_AO(c2),		FUNC_NULL },
 	{"%f",  3, "c3",		SHDR_AO(c3),		FUNC_NULL },
@@ -78,7 +110,6 @@ struct mfuncs camo_mfuncs[] = {
 	{(char *)0,	0,		0,		0,		0,
 	0,		0,		0,		0 }
 };
-
 
 /*	C A M O _ S E T U P
  *
@@ -116,9 +147,16 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* add the noise-space scaling */
 	mat_idn(tmp);
-	tmp[0] = camo_sp->scale[0];
-	tmp[5] = camo_sp->scale[1];
-	tmp[10] = camo_sp->scale[2];
+	if (camo_sp->size != 1.0) {
+		/* the user sets "size" to the size of the biggest
+		 * noise-space blob in model coordinates
+		 */
+		tmp[0] = tmp[5] = tmp[10] = 1.0/camo_sp->size;
+	} else {
+		tmp[0] = 1.0/camo_sp->vscale[0];
+		tmp[5] = 1.0/camo_sp->vscale[1];
+		tmp[10] = 1.0/camo_sp->vscale[2];
+	}
 
 	mat_mul(camo_sp->xform, tmp, model_to_region);
 
