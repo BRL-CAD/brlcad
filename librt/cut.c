@@ -369,7 +369,16 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		rt_pr_cut( nu_grid, 0 );
 	}
 
-	/*  Finished with NUgrid data structures */
+	rt_free( (char *)nu_xbox.bn_list, "nu_xbox bn_list[]" );
+	rt_free( (char *)nu_ybox.bn_list, "nu_ybox bn_list[]" );
+	rt_free( (char *)nu_zbox.bn_list, "nu_zbox bn_list[]" );
+#endif	/* NUgrid */
+
+	for( i=0; i<3; i++ )  {
+		rt_free( (char *)nu_axis[i], "NUgrid axis" );
+	}
+
+	/*  Finished with histogram data structures */
 	rt_hist_free( &xhist );
 	rt_hist_free( &yhist );
 	rt_hist_free( &zhist );
@@ -377,10 +386,6 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		rt_hist_free( &start_hist[i] );
 		rt_hist_free( &end_hist[i] );
 	}
-	rt_free( (char *)nu_xbox.bn_list, "nu_xbox bn_list[]" );
-	rt_free( (char *)nu_ybox.bn_list, "nu_ybox bn_list[]" );
-	rt_free( (char *)nu_zbox.bn_list, "nu_zbox bn_list[]" );
-#endif	/* NUgrid */
 
 	/*  Dynamic decisions on tree limits.
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
