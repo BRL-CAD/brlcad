@@ -219,12 +219,12 @@ RB_EXTERN(void *rb_neighbor,	(rb_tree	*tree,
 				 int		sense
 				));
 RB_EXTERN(void *rb_rank,	(rb_tree	*tree,
-				 int		order,
+				 int		order
 				));
 #define		rb_rank1(t)	rb_rank1((t), 0)
 RB_EXTERN(void *rb_search,	(rb_tree	*tree,
 				 int		order,
-				 void	*data
+				 void		*data
 				));
 #define		rb_search1(t,d)	rb_search((t), 0, (d))
 RB_EXTERN(void rb_set_uniqv,	(rb_tree	*tree,
