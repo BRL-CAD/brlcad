@@ -1007,7 +1007,11 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
+    char			*child;
+    int				i;
     mat_t			matrix;
+    struct db_tree_state	ts;
+    struct animate		*anp;
 
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;
@@ -1015,7 +1019,38 @@ char **argv;
     if (not_state( ST_VIEW, "Command-line matrix copy"))
 	return TCL_ERROR;
 
-    accumulate_mat(&matrix, argv[1]);
+    /*
+     *	Ensure that each argument contains exactly one slash
+     */
+    for (i = 1; i < 2; ++i)
+	if (((child = strchr(argv[i], '/')) == NULL)
+	 || (strchr(child + 1, '/') != NULL))
+	{
+	    Tcl_AppendResult(interp,
+		"Bad arc: '", argv[i], "'\n", (char *) NULL);
+	    return TCL_ERROR;
+	}
+	else
+	    Tcl_AppendResult(interp,
+		"OK, we have '", argv[i], "'\n", (char *) NULL);
+
+    BU_GETSTRUCT(anp, animate);
+    anp -> magic = ANIMATE_MAGIC;
+
+    bzero((char *) &ts, sizeof(ts));
+    ts.ts_dbip = dbip;
+    mat_idn(ts.ts_mat);
+    db_full_path_init(&anp -> an_path);
+    if (db_follow_path_for_state(&ts, &(anp -> an_path), argv[1], LOOKUP_NOISY)
+	< 0 )
+    {
+	Tcl_AppendResult(interp,
+	    "Cannot follow path for arc: '", argv[i], "'\n", (char *) NULL);
+	return TCL_ERROR;
+    }
+
+    matrix_print(ts.ts_mat);
+    /* MAT_COPY(to,from) */
     install_mat(matrix, argv[2]);
 
     return TCL_OK;
