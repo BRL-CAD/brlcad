@@ -34,17 +34,19 @@ int width = 0;		/* framebuffer width */
 int verbose = 0;	/* output scanline values to stdout */
 int overlay = 0;	/* plot on background, else black with grid */
 int reverse = 0;	/* highlight chosen line by inverting it */
-FBIO *fbp;
+char *outframebuffer = NULL;
+FBIO *fbp, *fboutp;
 
 char usage[] = "\
-Usage: fbscanplot [-h] [-v] [-o] [-r] [-W scr_width] yline\n";
+Usage: fbscanplot [-h] [-v] [-o] [-r]\n\
+	[-W scr_width] [-F outframebuffer] yline\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "vhorW" )) != EOF ) {
+	while ( (c = getopt( argc, argv, "vhorW:F:" )) != EOF ) {
 		switch( c )  {
 		case 'v':
 			verbose++;
@@ -60,6 +62,9 @@ register char **argv;
 			break;
 		case 'W':
 			width = atoi(optarg);
+			break;
+		case 'F':
+			outframebuffer = optarg;
 			break;
 		default:		/* '?' */
 			return(0);
@@ -93,6 +98,12 @@ int argc; char **argv;
 	if( (fbp = fb_open( NULL, width, width )) == NULL )
 		exit( 2 );
 
+	if( outframebuffer != NULL ) {
+		if( (fboutp = fb_open( outframebuffer, width, width )) == NULL )
+			exit( 3 );
+	} else
+		fboutp = fbp;
+
 	width = fb_getwidth(fbp);
 	fb_read( fbp, 0, yline, &scan[1][RED], width );
 
@@ -105,9 +116,11 @@ int argc; char **argv;
 	scan[width+1][BLU] = scan[width][BLU];
 
 	/* figure out where to put it on the screen */
-	if( overlay == 0 && yline < 256 )
+	if( overlay == 0 && fboutp == fbp && yline < 256 ) {
 		yoffset = fb_getheight(fbp) - 256;
-	else
+		if( yoffset <= yline )
+			yoffset = 0;
+	} else
 		yoffset = 0;
 
 	if( reverse ) {
@@ -122,7 +135,7 @@ int argc; char **argv;
 
 	for( y = 0; y < 256; y++ ) {
 		if( overlay )
-			fb_read( fbp, 0, y+yoffset, backgnd, width );
+			fb_read( fboutp, 0, y+yoffset, backgnd, width );
 
 		ip = &scan[1][RED];
 		op = &outline[0][RED];
@@ -177,7 +190,7 @@ int argc; char **argv;
 			}
 		}
 
-		fb_write( fbp, 0, y+yoffset, outline, width );
+		fb_write( fboutp, 0, y+yoffset, outline, width );
 	}
 
 	if( verbose ) {
@@ -185,4 +198,10 @@ int argc; char **argv;
 			printf( "%3d: %3d %3d %3d\n", x,
 			   scan[x+1][RED], scan[x+1][GRN], scan[x+1][BLU] );
 	}
+
+	fb_close( fbp );
+	if( fboutp != fbp )
+		fb_close( fboutp );
+
+	exit( 0 );
 }
