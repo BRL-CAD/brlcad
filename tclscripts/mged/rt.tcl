@@ -693,7 +693,7 @@ showing the inverse radius of curvature." } }
 showing the principal direction vector." } }
 
     set hoc_data { { summary "A place to specify other rt options." } }
-    label $top.otherL -text "Other options" -anchor e
+    label $top.otherL -text "Other Options" -anchor e
     hoc_register_data $top.otherL "Other" $hoc_data
     entry $top.otherE -relief sunken -bd 2 -width 2 -textvar rt_control($id,other)
     hoc_register_data $top.otherE "Other" $hoc_data
