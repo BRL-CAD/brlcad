@@ -169,12 +169,12 @@ dotitles()
 	register int i;
 	register char	*cp;		/* char pointer - for sprintf() */
 	register int y;			/* for menu computations */
-	static vect_t work;		/* work vector */
-	static vect_t temp;
+	static vect_t work,work1;		/* work vector */
+	static vect_t temp,temp1;
 	mat_t new_mat,temp_mat1,temp_mat2;
 	register int yloc, xloc;
 	register float y_val;
-	auto fastf_t	az, el;
+	auto fastf_t	az, el, twist;
 	auto char linebuf[512];
 	struct rt_vls	vls;
 	int		scroll_ybot;
@@ -274,37 +274,15 @@ dotitles()
 #define FINDNULL(p)	while(*p++); p--;	/* leaves p at NULL */
 	FINDNULL(cp);
 
-	/* Find current azimuth and elevation angles */
+	/* Find current azimuth, elevation, and twist angles */
+	VSET( work , 0 , 0 , 1 );	/* view z-direction */
+	MAT4X3VEC( temp , view2model , work );
+	VSET( work1 , 1 , 0 , 0 );	/* view x-direction */
+	MAT4X3VEC( temp1 , view2model , work1 );
+	mat_aet_vec( &az , &el , &twist , temp , temp1 );
 
-	/* Get elevation angle first directly from Viewrot */
-	el = mat_atan2( -Viewrot[6] , Viewrot[10] ) * radtodeg;
-
-	/* create a matrix to reverse the elevation angle */
-	mat_idn( temp_mat1 );
-	buildHrot( temp_mat1 , -el , 0.0 , 0.0 );
-
-	/* apply this matrix to Viewrot to get a matrix that contains
-	 * just the azimuth rotation
-	 */
-	mat_mul( temp_mat2 , temp_mat1 , Viewrot );
-
-	/* get the azimuth rotation from the final matrix
-	 * and adjust for the fact that 0,0 (az,el) is different from
-	 * an identity Viewrot.
-	 */
-	az = (-90.0) - mat_atan2( temp_mat2[4] , temp_mat2[5] ) * radtodeg;
-	if( az < (-180.0) )
-		az += 360.0;
-	else if( az > 180.0 )
-		az -= 360.0;
-	el += 90.0;
-	if( el < (-180.0) )
-		el += 360.0;
-	else if( el > 180 )
-		el -= 360.0;
-
-	(void)sprintf( cp, "az=%3.2f el=%2.2f ang=(%.2f, %.2f, %.2f)",
-		az, el,
+	(void)sprintf( cp, "az=%3.2f el=%2.2f twist=%3.2f ang=(%.2f, %.2f, %.2f)",
+		az, el, twist,
 		dm_values.dv_xjoy * 6,
 		dm_values.dv_yjoy * 6,
 		dm_values.dv_zjoy * 6 );
