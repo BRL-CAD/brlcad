@@ -1137,7 +1137,7 @@ char	**argv;
 
 			/* duplicate shell */
 			tmp_s = (struct shell *)nmg_dup_shell( s, &trans_tbl );
-			rt_free( (char *)trans_tbl, "trans_tbl" );
+			bu_free( (char *)trans_tbl, "trans_tbl" );
 
 			 /* move duplicate to temp region */
 			(void) nmg_mv_shell_to_region( tmp_s, tmp_r );
