@@ -1,4 +1,4 @@
-#
+##
 #                       G R I D . T C L
 #
 # Author -
@@ -15,6 +15,7 @@
 #
 # Description -
 #	Control Panel for MGED's grid.
+#
 
 proc do_grid_spacing { id spacing_type } {
     global player_screen
@@ -152,7 +153,6 @@ proc do_grid_color { id } {
     global player_screen
     global mged_active_dm
     global grid_control_color
-    global grid_color
 
     set top .$id.grid_color
 
@@ -196,10 +196,10 @@ proc do_grid_color { id } {
 	    -command "grid_control_choose_color $id $top"
 
     button $top.applyB -relief raised -text "Apply"\
-	    -command "mged_apply $id \"set grid_color \\\$grid_control_color($id)\""
+	    -command "mged_apply $id \"cs_set grid \\\$grid_control_color($id)\""
     button $top.loadB -relief raised -text "Load"\
 	    -command "winset \$mged_active_dm($id);\
-	    set grid_control_color($id) \$grid_color;\
+	    set grid_control_color($id) \[cs_set grid\];\
 	    grid_control_set_colorMB $id $top;"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }" 
@@ -225,7 +225,7 @@ proc do_grid_color { id } {
     bind $top.colorE <Return> "grid_control_set_colorMB $id $top; break"
 
     winset $mged_active_dm($id)
-    set grid_control_color($id) $grid_color
+    set grid_control_color($id) [cs_set grid]
     grid_control_set_colorMB $id $top
 
     set pxy [winfo pointerxy $top]
@@ -253,7 +253,6 @@ proc init_grid_control { id } {
     global grid_control_maj_v
     global grid_draw
     global grid_snap
-    global grid_color
     global grid anchor
     global grid_res_h
     global grid_res_v
@@ -287,8 +286,8 @@ proc init_grid_control { id } {
 
     frame $top.anchorF
     frame $top.anchorFF -relief sunken -bd 2
-    frame $top.colorF
-    frame $top.colorFF -relief sunken -bd 2
+#    frame $top.colorF
+#    frame $top.colorFF -relief sunken -bd 2
 
     label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
     label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
@@ -368,30 +367,30 @@ proc init_grid_control { id } {
     label $top.anchorL -text "Anchor Point" -anchor w
     entry $top.anchorE -relief flat -width 12 -textvar grid_control_anchor($id)
 
-    label $top.colorL -text "Color" -anchor w
-    entry $top.colorE -relief flat -width 12 -textvar grid_control_color($id)
-    menubutton $top.colorMB -relief raised -bd 2\
-	    -menu $top.colorMB.m -indicatoron 1
-    menu $top.colorMB.m -tearoff 0
-    $top.colorMB.m add command -label black\
-	    -command "set grid_control_color($id) \"0 0 0\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label white\
-	    -command "set grid_control_color($id) \"255 255 255\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label red\
-	    -command "set grid_control_color($id) \"255 0 0\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label green\
-	    -command "set grid_control_color($id) \"0 255 0\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label blue\
-	    -command "set grid_control_color($id) \"0 0 255\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label yellow\
-	    -command "set grid_control_color($id) \"255 255 0\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label cyan\
-	    -command "set grid_control_color($id) \"0 255 255\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label magenta\
-	    -command "set grid_control_color($id) \"255 0 255\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add separator
-    $top.colorMB.m add command -label "Color Tool..."\
-	    -command "grid_control_choose_color $id $top"
+#    label $top.colorL -text "Color" -anchor w
+#    entry $top.colorE -relief flat -width 12 -textvar grid_control_color($id)
+#    menubutton $top.colorMB -relief raised -bd 2\
+#	    -menu $top.colorMB.m -indicatoron 1
+#    menu $top.colorMB.m -tearoff 0
+#    $top.colorMB.m add command -label black\
+#	    -command "set grid_control_color($id) \"0 0 0\"; grid_control_set_colorMB $id $top"
+#    $top.colorMB.m add command -label white\
+#	    -command "set grid_control_color($id) \"255 255 255\"; grid_control_set_colorMB $id $top"
+#    $top.colorMB.m add command -label red\
+#	    -command "set grid_control_color($id) \"255 0 0\"; grid_control_set_colorMB $id $top"
+#    $top.colorMB.m add command -label green\
+#	    -command "set grid_control_color($id) \"0 255 0\"; grid_control_set_colorMB $id $top"
+#    $top.colorMB.m add command -label blue\
+#	    -command "set grid_control_color($id) \"0 0 255\"; grid_control_set_colorMB $id $top"
+#    $top.colorMB.m add command -label yellow\
+#	    -command "set grid_control_color($id) \"255 255 0\"; grid_control_set_colorMB $id $top"
+#    $top.colorMB.m add command -label cyan\
+#	    -command "set grid_control_color($id) \"0 255 255\"; grid_control_set_colorMB $id $top"
+#    $top.colorMB.m add command -label magenta\
+#	    -command "set grid_control_color($id) \"255 0 255\"; grid_control_set_colorMB $id $top"
+#    $top.colorMB.m add separator
+#    $top.colorMB.m add command -label "Color Tool..."\
+#	    -command "grid_control_choose_color $id $top"
 
     label $top.gridEffectsL -text "Grid Effects" -anchor w
 
@@ -426,14 +425,15 @@ proc init_grid_control { id } {
     grid $top.anchorL -sticky "ew" -in $top.anchorF
     grid $top.anchorE -sticky "ew" -in $top.anchorFF
     grid $top.anchorFF -sticky "ew" -in $top.anchorF
-    grid $top.colorL -sticky "ew" -in $top.colorF
-    grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorFF
-    grid $top.colorFF -sticky "ew" -in $top.colorF
-    grid $top.anchorF x $top.colorF -sticky "ew" -in $top.gridFF2 -padx 8 -pady 8
+#    grid $top.colorL -sticky "ew" -in $top.colorF
+#    grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorFF
+#    grid $top.colorFF -sticky "ew" -in $top.colorF
+#    grid $top.anchorF x $top.colorF -sticky "ew" -in $top.gridFF2 -padx 8 -pady 8
+    grid $top.anchorF x x -sticky "ew" -in $top.gridFF2 -padx 8 -pady 8
     grid columnconfigure $top.anchorF 0 -weight 1
     grid columnconfigure $top.anchorFF 0 -weight 1
-    grid columnconfigure $top.colorF 0 -weight 1
-    grid columnconfigure $top.colorFF 0 -weight 1
+#    grid columnconfigure $top.colorF 0 -weight 1
+#    grid columnconfigure $top.colorFF 0 -weight 1
 
     grid $top.gridEffectsL x $top.drawCB x $top.snapCB x -sticky "ew" -in $top.gridFF3\
 	    -padx 8 -pady 8
@@ -469,10 +469,10 @@ proc init_grid_control { id } {
     grid columnconfigure $top 0 -weight 1
     grid columnconfigure $top 0 -minsize 400
 
-    bind $top.colorE <Return> "grid_control_set_colorMB $id $top; break"
+#    bind $top.colorE <Return> "grid_control_set_colorMB $id $top; break"
 
     grid_control_load $id $top
-    grid_control_set_colorMB $id $top
+#    grid_control_set_colorMB $id $top
     set grid_control_square($id) 1
     set_grid_square $id
 
@@ -486,8 +486,6 @@ proc init_grid_control { id } {
 }
 
 proc grid_control_choose_color { id parent } {
-    global grid_control_color
-
     set child color
 
     cadColorWidget dialog $parent $child\
@@ -529,7 +527,6 @@ proc grid_control_apply { id } {
     global mged_grid_draw
     global grid_snap
     global mged_grid_snap
-    global grid_color
     global grid_anchor
     global grid_res_h
     global grid_res_v
@@ -540,7 +537,7 @@ proc grid_control_apply { id } {
 #    winset $mged_active_dm($id)
     mged_apply $id "set grid_draw \$grid_control_draw($id)"
     mged_apply $id "set grid_snap \$grid_control_snap($id)"
-    mged_apply $id "set grid_color \$grid_control_color($id)"
+    mged_apply $id "cs_set grid \$grid_control_color($id)"
     mged_apply $id "set grid_anchor \$grid_control_anchor($id)"
 
     mged_apply $id "set grid_res_h \$grid_control_h($id)"
@@ -574,7 +571,6 @@ proc grid_control_load { id top } {
     global mged_grid_draw
     global grid_snap
     global mged_grid_snap
-    global grid_color
     global grid_anchor
     global grid_res_h
     global grid_res_v
@@ -585,7 +581,7 @@ proc grid_control_load { id top } {
     winset $mged_active_dm($id)
     set grid_control_draw($id) $grid_draw
     set grid_control_snap($id) $grid_snap
-    set grid_control_color($id) $grid_color
+    set grid_control_color($id) [cs_set grid]
     set grid_control_anchor($id) $grid_anchor
 
     set grid_control_h($id) $grid_res_h
