@@ -945,7 +945,7 @@ char line[MAX_LINE_LEN];
 						bu_log( "\t( %g %g %g )\n", x, y, z );
 					}
 					tmp_face[vert_no++] = Add_vert( x, y, z );
-
+					VMINMAX( part_min, part_max, &bot_verts[tmp_face[vert_no-1]*3] );
 				}
 				else
 					bu_log( "Unrecognized line: %s\n", line1 );
