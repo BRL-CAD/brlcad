@@ -9,8 +9,8 @@ static char RCSid[] = "$Header$";
 #include	<machine.h>
 #include	<vmath.h>
 #include	<raytrace.h>
-#include	"nirt.h"
-#include	"usrfmt.h"
+#include	"./nirt.h"
+#include	"./usrfmt.h"
 
 extern struct rt_i	*rtip;
 extern outval		ValTab[];

@@ -8,8 +8,8 @@ static char RCSid[] = "$Header$";
 
 #include <stdio.h>
 #include <ctype.h>
-#include "nirt.h"
-#include "usrfmt.h"
+#include "./nirt.h"
+#include "./usrfmt.h"
 
 /* The table of output values */
 outval		ValTab[] =
@@ -479,7 +479,7 @@ FILE *fopenrc()
 		malloc(strlen(home) + strlen(DEF_RCF_NAME) + 1)) == NULL)
 	    {
 		fflush(stdout);
-		fputs(stderr, "fopenrc():  Ran out of memory\n");
+		fputs("fopenrc():  Ran out of memory\n", stderr);
 		exit (1);
 	    }
 	    sprintf(rc_file_name, "%s/%s", home, DEF_RCF_NAME);

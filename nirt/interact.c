@@ -7,8 +7,8 @@ static char RCSid[] = "$Header$";
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
-#include "nirt.h"
-#include "usrfmt.h"
+#include "./nirt.h"
+#include "./usrfmt.h"
 
 extern com_table	ComTab[];
 

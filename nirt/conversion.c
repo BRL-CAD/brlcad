@@ -8,8 +8,8 @@ static char RCSid[] = "$Header$";
 #include <machine.h>
 #include <vmath.h>
 #include <math.h>
-#include "nirt.h"
-#include "usrfmt.h"
+#include "./nirt.h"
+#include "./usrfmt.h"
 
 extern outval	ValTab[];
 

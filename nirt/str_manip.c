@@ -4,9 +4,9 @@ static char RCSid[] = "$Header$";
 #endif
 
 /*	INCLUDES	*/
-#include "nirt.h"
-#include <ctype.h>
 #include <stdio.h>
+#include <ctype.h>
+#include "./nirt.h"
 
 int str_dbl(buf, Result)
 char 	*buf;

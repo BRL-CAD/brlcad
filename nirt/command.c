@@ -10,8 +10,8 @@ static char RCSid[] = "$Header$";
 #include <machine.h>
 #include <vmath.h>
 #include <raytrace.h>
-#include "nirt.h"
-#include "usrfmt.h"
+#include "./nirt.h"
+#include "./usrfmt.h"
 
 char		*local_unit[] = {
 		    "none", "mm", "cm", "m", "in", "ft", "unknown"

@@ -28,8 +28,8 @@ static char RCSid[] = "$Header$";
 #include <machine.h>
 #include <vmath.h>
 #include <raytrace.h>
-#include "nirt.h"
-#include "usrfmt.h"
+#include "./nirt.h"
+#include "./usrfmt.h"
 
 char		*db_name;	/* the name of the MGED file      */
 com_table	ComTab[] =
@@ -248,7 +248,7 @@ int		save;		/* Add object_name to object_list? */
     {
 	if (op == NULL)
 	{
-	    fputs("Ran out of memory\n");
+	    fputs("Ran out of memory\n", stderr);
 	    exit (1);
 	}
 	op -> obj_name = object_name;
