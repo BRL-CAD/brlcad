@@ -371,6 +371,10 @@ Ir_open()
 #if IR_WIDGETS
 	int		use_widgets=0;
 #endif
+	int		win_size=1000;
+	int		win_o_x=272;
+	int		win_o_y=12;
+
 	/*
 	 *  Take inventory of the hardware
 	 */
@@ -400,7 +404,16 @@ Ir_open()
 	/* Start out with the usual window */
 	foreground();
 #if 1
-	prefposition( 272, 1272, 12, 1012 );		/* Larger still */
+	if (mged_variables.sgi_win_size > 0)
+		win_size = mged_variables.sgi_win_size;
+
+	if (mged_variables.sgi_win_origin[0] > 0 ||
+	    mged_variables.sgi_win_origin[0] > 0) {
+	    	win_o_x = mged_variables.sgi_win_origin[0];
+	    	win_o_y = mged_variables.sgi_win_origin[1];
+	}
+
+	prefposition( win_o_x, win_o_x+win_size, win_o_y, win_o_y+win_size);
 #else
 	prefposition( 376, 1276, 12, 912 );		/* Old, larger size */
 	prefposition( 376, 376+900, 112, 112+900 );	/* new, smaller size */
