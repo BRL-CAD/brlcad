@@ -80,7 +80,14 @@ set -S2 "/bin/sh"
 #	define	MTYPE	fx
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
+/***/
 #	define	CC_OPTS	-ce
+/***/
+/***
+#	define	CC	/usr/local/fxc2.0.16/fxc
+#	define	CC_OPTS	-ce -DVECTORIZE
+#	define	OPTIMIZER -Ogiv
+***/
 #	define	FC	/usr/alliant/fortran
 #	define	LIBMALLOC	/* use vendor library */
 #	define	RT_CONFIG	-lcvec
@@ -95,6 +102,15 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
 #	define	CC_OPTS	-m 8
+/*#	define	LIBFB_OBJS	if_remote pkg if_ptty if_X*/
+#	define	LIBFB_OBJS	if_remote pkg if_ptty
+/*#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_X -I/d/phil/X11*/
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
+/*		AR x /usr/local/lib/libX11.a; \*/
+#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
+		rm -f libfb.a; cd tmp; \
+		AR uv ../libfb.a *.o; \
+		cd ..; rm -fr tmp)
 #	define	LIBRT_TIMER	timer42
 #	define	MGED_VERS	newvers.sh
 #endif
@@ -188,9 +204,9 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
 /*	Select correct floating point flag, -fswitch if unsure */
-#	define	CC_OPTS	-f68881
+/*#	define	CC_OPTS	-fswitch*/
 /*#	define	CC_OPTS	-ffpa */
-/*#	define	CC_OPTS	-fswitch */
+#	define	CC_OPTS	-f68881
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBFB_OBJS	if_remote pkg if_sun
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
@@ -211,12 +227,16 @@ set -S2 "/bin/sh"
 #if defined(CRAY) && !defined(CRAY2)
 /*	Cray X-M/P running UNICOS. */
 #if defined(CRAY1)
+/*	Cray X-M/P running UNICOS 3.  Define CRAY_COS for use on COS. */
 #	undef	xmp
 #	define	UNIXTYPE	SYSV
 #	undef	cray
 #	define	CC_DEFS	-DPARALLEL
-#	define	CC_OPTS	-holevel_0
+/* olevel_0 definitely needed for UNICOS 2.1 */
+/***#	define	CC_OPTS	-holevel_0*/
+/***#	define	CC_OPTS	-DVECTORIZE**/
 #		define	CC	/bin/ncc
+#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #	define	REMRT_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #	define	LIBRT_TIMER	timercray
 #	define	RT_CONFIG	-L/lib/multi -lu
@@ -231,14 +251,18 @@ set -S2 "/bin/sh"
 #	define	LIBFB_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
 #ifdef CRAY2
 #if defined(CRAY2)
+/*	Cray-2 running UNICOS 4 */
 #	undef	cr2
 #	define	UNIXTYPE	SYSV
+#	undef	cray
 #	define	CC_DEFS	-DPARALLEL -Dcray
+/**#	define	CC_DEFS	-DPARALLEL -Dcray -DVECTORIZE -hvector,olevel_3,intrinsics**/
+#	define	CC	/bin/vcc
 #	define	FC	/bin/cft77
 		AR x /usr/lib/libnet.a select.o socket.o; \
 #	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #	define	REMRT_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
-#	define	LIBRT_TIMER	timercray
+#		define	RFBD_CONFIG	-DBSD=43
 #	define	RT_CONFIG	-lmt
 #	define	MGED_VERS	newvers5.sh
 #	define	RT_LIBES	-lmt
@@ -312,6 +336,10 @@ set -S2 "/bin/sh"
 
 #ifndef RT_CONFIG
 #	define	RT_CONFIG	/**/
+#endif
+
+#ifndef LGT_CONFIG
+#	define	LGT_CONFIG	/**/
 #endif
 #	define	RFBD_CONFIG
 #ifndef RFBD_CONFIG
@@ -452,18 +480,21 @@ set -S2 "/bin/sh"
 
 /* Program to install executables */
 #define	INS	cp
- *  Usage is:   TYPESET_MAN1 *.MANSECTION TYPESET_MAN2
+
 /* Command strings to typeset manual pages.
  *  Usage is:   TYPESET_MAN0 TYPESET_MAN1 *.MANSECTION TYPESET_MAN2
-#define	TYPESET_MAN1	tbl /usr/lib/tmac/tmac.an
-#define	TYPESET_MAN2	| /usr/5lib/troff -Ti300 | /usr/5bin/dimp -t | \
+ *  First version is 300dpi Imagen, then old Imagen, then plain troff
+ */
+#define	TYPESET_MAN0	tbl
 #define	TYPESET_MAN1	/usr/lib/tmac/tmac.an
 #define	TYPESET_MAN2	/usr/5lib/troff -Ti300 | /usr/5bin/dimp -t | \
-#define	TYPESET_MAN1	tbl /usr/lib/tmac/tmac.an 
 			    qpr -q im231
 #ifdef never
-#define	TYPESET_MAN1	troff -man
-#undef	TYPESET_MAN2
+#define	TYPESET_MAN2	| /usr/5lib/troff -Ti10 | /usr/5bin/di10 -t | \
+			    qpr -q im328-raw
+#endif
+#ifdef never
+#define	TYPESET_MAN0	troff -man
 #define	TYPESET_MAN1	/**/
 #define	TYPESET_MAN2	/**/
 #endif
