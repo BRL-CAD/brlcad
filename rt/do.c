@@ -267,7 +267,6 @@ char	**argv;
 	return(0);
 }
 
-
 cm_vrot( argc, argv )
 int	argc;
 char	**argv;
@@ -276,6 +275,19 @@ char	**argv;
 
 	for( i=0; i<16; i++ )
 		Viewrotscale[i] = atof( argv[i+1] );
+	return(0);
+}
+
+cm_orientation( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int	i;
+	quat_t		quat;
+
+	for( i=0; i<4; i++ )
+		quat[i] = atof( argv[i+1] );
+	quat_quat2mat( Viewrotscale, quat );
 	return(0);
 }
 
@@ -955,6 +967,8 @@ struct command_tab rt_cmdtab[] = {
 		cm_lookat_pt,	4, 5,
 	"viewrot", "4x4 matrix", "set view direction from matrix",
 		cm_vrot,	17,17,
+	"orientation", "quaturnion", "set view direction from quaturnion",
+		cm_orientation,	5, 5,
 	"end", 	"", "end of frame setup, begin raytrace",
 		cm_end,		1, 1,
 	"multiview", "", "produce stock set of views",
