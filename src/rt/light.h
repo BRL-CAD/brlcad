@@ -35,7 +35,7 @@ struct light_specific {
 	int	lt_exaim;	/* !0 if explicit aim in lt_target */
 	fastf_t lt_obscure;	/* percentage obscuration of light */
 	/* Internal fields */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	struct bn_tabdata *lt_spectrum;	/* Units?  mw*sr ? */
 #else
 	vect_t	lt_color;	/* RGB, as 0..1 */
