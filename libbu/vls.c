@@ -941,3 +941,43 @@ CONST struct bu_vls	*vp;
 	}
 	return used;
 }
+
+/*
+ *			B U _ V L S _ D E T A B
+ *
+ *  Given a vls, return a version of that string which has had all
+ *  "tab" characters converted to the appropriate number of spaces
+ *  according to the UNIX tab convention.
+ */
+void
+bu_vls_detab( vp )
+struct bu_vls	*vp;
+{
+	struct bu_vls	src;
+	register char	*cp;
+	int		used;
+
+	BU_CK_VLS(vp);
+	bu_vls_init( &src );
+	bu_vls_vlscatzap( &src, vp );	/* make temporary copy of src */
+	bu_vls_extend( vp, bu_vls_strlen(&src)+50 );
+
+	cp = bu_vls_addr( &src );
+	used = 0;
+	while( *cp != '\0' )  {
+		if( *cp == '\t' )  {
+			int	todo;
+			todo = 8 - (used % 8);
+			bu_vls_spaces( vp, todo );
+			used += todo;
+		} else if( *cp == '\n' )  {
+			bu_vls_putc( vp, '\n' );
+			used = 0;
+		} else {
+			bu_vls_putc( vp, *cp );
+			used++;
+		}
+		cp++;
+	}
+	bu_vls_free( &src );
+}
