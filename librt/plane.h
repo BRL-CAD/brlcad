@@ -64,7 +64,7 @@ struct tri_float_specific  {
 	float	tri_CA[3];			/* C - A (third point) */
 	float	tri_wn[3];			/* facet normal (non-unit) */
 	float	tri_N[3];			/* unit normal vector */
-	float *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
+	signed char *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
 	int	tri_surfno;		/* solid specific surface number */
 	struct tri_float_specific *tri_forw;	/* Next facet */
 };
