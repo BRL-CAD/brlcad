@@ -287,7 +287,6 @@ struct seg		*segHeadp;
 {
 	register struct partition *pp;
 	struct application	*up_ap;
-	struct seg		*segp;
 	struct soltab		*up_stp;
 	struct region		*up_reg;
 	struct submodel_gobetween *gp;
@@ -311,30 +310,39 @@ struct seg		*segHeadp;
 	RT_CK_REGION(up_reg);
 
 	/* Need to tackle this honestly --
-	 * build a totally new segment list,
+	 * build a totally new segment list from the partition list,
 	 * with normals, uv, and curvature already computed,
-	 * and converted back into up_model coordinate system.
-	 * So the lazy-evaluation routines don't have to do anything.
+	 * and converted back into up_model coordinate system,
+	 * so the lazy-evaluation routines don't have to do anything.
 	 * This is probably almost as cheap as the coordinate
 	 * re-mapping in the special hook routines.
 	 * Then the submodel can be stacked arbitrarily deep.
-XXX This should operate on the evaluated partition list!!
 	 */
-	for( BU_LIST_FOR( segp, seg, &(segHeadp->l) ) )  {
+	for( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )  {
 		struct seg	*up_segp;
-		RT_CHECK_SEG(segp);
+		struct seg	*inseg;
+		struct seg	*outseg;
 
-		/* Construct a completely new segment */
+		RT_CK_PT(pp);
+		inseg = pp->pt_inseg;
+		outseg = outseg;
+
+		/*
+		 * Construct a completely new segment
+		 *   build seg_in, seg_out, and seg_stp.
+		 * Take seg_in and seg_out literally, to track surfno, etc.,
+		 * then update specific values.
+		 */
 		RT_GET_SEG(up_segp, up_ap->a_resource );
-
-		*up_segp = *segp;	/* struct copy */
+		up_segp->seg_in = inseg->seg_in;		/* struct copy */
+		up_segp->seg_out = outseg->seg_out;	/* struct copy */
 		up_segp->seg_stp = up_stp;
 
 		/* Adjust for scale difference */
-		MAT4XSCALOR( up_segp->seg_in.hit_dist, submodel->subm2m, segp->seg_in.hit_dist);
+		MAT4XSCALOR( up_segp->seg_in.hit_dist, submodel->subm2m, inseg->seg_in.hit_dist);
 		up_segp->seg_in.hit_dist -= gp->delta;
-		MAT4XSCALOR( up_segp->seg_out.hit_dist, submodel->subm2m, segp->seg_out.hit_dist);
-		up_segp->seg_out.hit_dist -= gp->delta;
+		MAT4XSCALOR( up_segp->seg_out.hit_dist, submodel->subm2m, outseg->seg_out.hit_dist);
+		up_segp->seg_in.hit_dist -= gp->delta;
 
 		/* Link to ray in upper model, not submodel */
 		up_segp->seg_in.hit_rayp = &up_ap->a_ray;
@@ -347,19 +355,23 @@ XXX This should operate on the evaluated partition list!!
 			up_segp->seg_out.hit_dist, up_ap->a_ray.r_dir );
 
 		/* RT_HIT_NORMAL */
-		segp->seg_stp->st_meth->ft_norm( &segp->seg_in,
-			segp->seg_stp, segp->seg_in.hit_rayp );
-		segp->seg_stp->st_meth->ft_norm( &segp->seg_out,
-			segp->seg_stp, segp->seg_out.hit_rayp );
+		inseg->seg_stp->st_meth->ft_norm(
+			&inseg->seg_in,
+			inseg->seg_stp,
+			inseg->seg_in.hit_rayp );
+		outseg->seg_stp->st_meth->ft_norm(
+			&outseg->seg_out,
+			outseg->seg_stp,
+			outseg->seg_out.hit_rayp );
 		MAT4X3VEC( up_segp->seg_in.hit_normal, submodel->subm2m,
-			segp->seg_in.hit_normal );
+			inseg->seg_in.hit_normal );
 		MAT4X3VEC( up_segp->seg_out.hit_normal, submodel->subm2m,
-			segp->seg_out.hit_normal );
+			outseg->seg_out.hit_normal );
 
 		/* RT_HIT_UV */
 		{
 			struct uvcoord	uv;
-			RT_HIT_UVCOORD( ap, segp->seg_stp, &segp->seg_in, &uv );
+			RT_HIT_UVCOORD( ap, inseg->seg_stp, &inseg->seg_in, &uv );
 			up_segp->seg_in.hit_vpriv[X] = uv.uv_u;
 			up_segp->seg_in.hit_vpriv[Y] = uv.uv_v;
 			if( uv.uv_du >= uv.uv_dv )
@@ -367,7 +379,7 @@ XXX This should operate on the evaluated partition list!!
 			else
 				up_segp->seg_in.hit_vpriv[Z] = uv.uv_dv;
 
-			RT_HIT_UVCOORD( ap, segp->seg_stp, &segp->seg_out, &uv );
+			RT_HIT_UVCOORD( ap, outseg->seg_stp, &outseg->seg_out, &uv );
 			up_segp->seg_out.hit_vpriv[X] = uv.uv_u;
 			up_segp->seg_out.hit_vpriv[Y] = uv.uv_v;
 			if( uv.uv_du >= uv.uv_dv )
@@ -379,8 +391,8 @@ XXX This should operate on the evaluated partition list!!
 		/* RT_HIT_CURVATURE */
 		/* no place to stash curvature data! */
 
-		/* Leave behind a distinctive marker to make sure we're
-		 * getting the right stuff back in the hooked functions.
+		/* Leave behind a distinctive surfno marker
+		 * in case app is using it for something.
 		 */
 		up_segp->seg_in.hit_surfno = 17;
 		up_segp->seg_out.hit_surfno = 17;
