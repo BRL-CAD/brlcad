@@ -187,8 +187,7 @@ set -S2 "/bin/sh"
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -shared -o
 #		define	RANLIB	true
-/*		Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
-#		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
+#		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath LIBDIR:/usr/lib
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL''SHARED
@@ -269,7 +268,7 @@ set -S2 "/bin/sh"
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -mips4 -shared -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
+#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	else
@@ -337,7 +336,7 @@ set -S2 "/bin/sh"
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -mips4 -shared -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
+#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	else
@@ -627,12 +626,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	BSD	44
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	if 0	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=0 */
 /*		Static linked executables */
 #		define	CC	gcc
 #		define	RANLIB	ar -s
@@ -646,7 +645,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	gcc -b i486-linuxelf -shared -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,/usr/lib:LIBDIR
+#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
 #	endif
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
@@ -924,7 +923,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	BUILD_LIBRARY	ld -S -shared -o
 #		define	EXTRA_OBJ_NO_DEPENDENCY	-lm -lc
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,/usr/lib:LIBDIR
+#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -1599,7 +1598,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	VFONTDIR	/usr/brlcad/vfont
 #	define	TCLLIBDIR	/usr/brlcad/tcl
 #	define	TKLIBDIR	/usr/brlcad/tk
-#if 0
+#if 0	/* PRODUCTION=1 */
 #	define	TCLSCRIPTSDIR	/usr/brlcad/tclscripts
 #else
 /*XXX For development only */
