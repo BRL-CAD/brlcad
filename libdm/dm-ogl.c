@@ -83,6 +83,7 @@ HIDDEN int      ogl_drawPoint2D();
 HIDDEN int	ogl_drawVList();
 HIDDEN int      ogl_setFGColor(), ogl_setBGColor();
 HIDDEN int	ogl_setLineAttr();
+HIDDEN int	_ogl_configureWin();
 HIDDEN int	ogl_configureWin();
 HIDDEN int	ogl_setLight();
 HIDDEN int	ogl_setZBuffer();
@@ -477,7 +478,7 @@ Done:
     glDrawBuffer(GL_FRONT);
 
   /* do viewport, ortho commands and initialize font */
-  (void)ogl_configureWin(dmp);
+  (void)_ogl_configureWin(dmp, 1);
 
   /* Lines will be solid when stippling disabled, dashed when enabled*/
   glLineStipple( 1, 0xCF33);
@@ -571,7 +572,7 @@ struct dm *dmp2;
     ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->fontstruct = NULL;
 
     /* do viewport, ortho commands and initialize font */
-    (void)ogl_configureWin(dmp1);
+    (void)_ogl_configureWin(dmp1, 1);
 
     /* Lines will be solid when stippling disabled, dashed when enabled*/
     glLineStipple( 1, 0xCF33);
@@ -641,7 +642,7 @@ struct dm *dmp2;
       glDrawBuffer(GL_FRONT);
 
     /* do viewport, ortho commands and initialize font */
-    (void)ogl_configureWin(dmp2);
+    (void)_ogl_configureWin(dmp2, 1);
 
     /* Lines will be solid when stippling disabled, dashed when enabled*/
     glLineStipple( 1, 0xCF33);
@@ -1362,20 +1363,21 @@ Tk_Window tkwin;
  * also change font size if necessary
  */
 HIDDEN int
-ogl_configureWin(dmp)
+_ogl_configureWin(dmp, force)
 struct dm *dmp;
+int force;
 {
   GLint mm; 
   XWindowAttributes xwa;
   XFontStruct	*newfontstruct;
 
   if (dmp->dm_debugLevel)
-    bu_log("ogl_configureWin()\n");
+    bu_log("_ogl_configureWin()\n");
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
-    bu_log("ogl_configureWin: Couldn't make context current\n");
+    bu_log("_ogl_configureWin: Couldn't make context current\n");
     return TCL_ERROR;
   }
 
@@ -1383,7 +1385,8 @@ struct dm *dmp;
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa );
 
   /* nothing to do */
-  if (dmp->dm_height == xwa.height &&
+  if (!force &&
+      dmp->dm_height == xwa.height &&
       dmp->dm_width == xwa.width)
     return TCL_OK;
     
@@ -1392,7 +1395,7 @@ struct dm *dmp;
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
   if (dmp->dm_debugLevel) {
-    bu_log("ogl_configureWin()\n");
+    bu_log("_ogl_configureWin()\n");
     bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
   }
 
@@ -1429,7 +1432,7 @@ struct dm *dmp;
       if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 	   XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  FONTBACK)) == NULL) {
-	bu_log("ogl_configureWin: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
+	bu_log("_ogl_configureWin: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
 	return TCL_ERROR;
       }
     }
@@ -1499,6 +1502,13 @@ struct dm *dmp;
   }
 
   return TCL_OK;
+}
+
+HIDDEN int
+ogl_configureWin(dmp)
+struct dm *dmp;
+{
+  _ogl_configureWin(dmp, 0);
 }
 
 HIDDEN int
