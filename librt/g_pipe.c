@@ -364,6 +364,64 @@ register CONST struct soltab *stp;
 }
 
 void
+rt_pipeseg_print( pipe, mm2local )
+struct wdb_pipeseg *pipe;
+double mm2local;
+{
+	point_t p1,p2;
+	fastf_t radius;
+	struct wdb_pipeseg *next;
+
+	next = RT_LIST_NEXT( wdb_pipeseg, &pipe->l );
+	switch( pipe->ps_type )
+	{
+		case WDB_PIPESEG_TYPE_LINEAR:
+			rt_log( "Linear Pipe Segment:\n" );
+			VSCALE( p1, pipe->ps_start, mm2local );
+			VSCALE( p2, next->ps_start, mm2local );
+			rt_log( "\tfrom (%g %g %g) to (%g %g %g)\n" ,
+				V3ARGS( p1 ), V3ARGS( p2 ) );
+			if( pipe->ps_id > 0.0 )
+				rt_log( "\tat start: od=%g, id=%g\n",
+					pipe->ps_od*mm2local,
+					pipe->ps_id*mm2local );
+			else
+				rt_log( "\tat start: od=%g\n",
+					pipe->ps_od*mm2local );
+			if( next->ps_id > 0.0 )
+				rt_log( "\tat end: od=%g, id=%g\n",
+					next->ps_od*mm2local,
+					next->ps_id*mm2local );
+			else
+				rt_log( "\tat end: od=%g\n",
+					next->ps_od*mm2local );
+			break;
+		case WDB_PIPESEG_TYPE_BEND:
+			rt_log( "Bend Pipe Segment:\n" );
+			VSCALE( p1, pipe->ps_start, mm2local );
+			VSCALE( p2, next->ps_start, mm2local );
+			rt_log( "\tfrom (%g %g %g) to (%g %g %g)\n" ,
+				V3ARGS( p1 ), V3ARGS( p2 ) );
+			VSUB2( p2, pipe->ps_start, pipe->ps_bendcenter );
+			radius = MAGNITUDE( p2 );
+			VSCALE( p1, pipe->ps_bendcenter, mm2local );
+			rt_log( "\tBend center at (%g %g %g), bend radius = %g\n",
+				V3ARGS( p1 ), radius*mm2local );
+			if( pipe->ps_id > 0.0 )
+				rt_log( "\tod=%g, id=%g\n",
+					pipe->ps_od*mm2local,
+					pipe->ps_id*mm2local );
+			else
+				rt_log( "\tod=%g\n", pipe->ps_od*mm2local );
+			break;
+		case WDB_PIPESEG_TYPE_END:
+			rt_log( "End Pipe Segment\n" );
+			break;
+	}
+
+}
+
+void
 bend_pipe_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
 struct soltab           *stp;
 register struct xray    *rp;
@@ -2444,6 +2502,8 @@ struct rt_tol *tol;
 
 /*
  *			R T _ P I P E _ T E S S
+ *
+ *	XXXX Still needs vertexuse normals!
  */
 int
 rt_pipe_tess( r, m, ip, ttol, tol )
@@ -2764,6 +2824,8 @@ double			mm2local;
 
 	if( !verbose )  return(0);
 
+#if 0
+	/* Too much for the MGED Display!!!! */
 	for( RT_LIST_FOR( psp, wdb_pipeseg, &pip->pipe_segs_head ) )  {
 		/* XXX check magic number here */
 		sprintf(buf, "\t%d ", segno++ );
@@ -2803,6 +2865,7 @@ double			mm2local;
 			rt_vls_strcat( str, buf );
 		}
 	}
+#endif
 	return(0);
 }
 
