@@ -1272,10 +1272,11 @@ struct loopuse *lu;
 }
 
 
-/*	K I L L _ S N A K E S
+/*
+ *			N M G _ K I L L _ S N A K E S
  *
  */
-static void kill_snakes(lu)
+void nmg_kill_snakes(lu)
 struct loopuse *lu;
 {
 	struct edgeuse *eu, *eu_r;
@@ -1357,7 +1358,7 @@ struct faceuse *fu;
 
 	
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
-		kill_snakes(lu);
+		nmg_kill_snakes(lu);
 }
 
 
