@@ -1002,7 +1002,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(CRAY1)
-/*	Cray 1, X-MP or Y-MP running UNICOS 5 or later (tested on 8) */
+/*	Cray 1, X-MP or Y-MP running UNICOS 8 */
 #	undef	xmp
 #	undef	cray
 #	define	MTYPE	xmp
@@ -1030,9 +1030,8 @@ set -S2 "/bin/sh"
 #		endif
 #	endif
 #	define	RANLIB	true
-#	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
-#	define	LIBRT_LIBES	-L/lib/multi -lu -lio
+#	define	LIBRT_LIBES	-lu
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
 
@@ -1040,12 +1039,12 @@ set -S2 "/bin/sh"
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBFB_LIBES	LIBPKG -lX11
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lnet
+#	define	MGED_LIBES	-lX11 -lnet
 #endif
 
 #if defined(hpux)
