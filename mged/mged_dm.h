@@ -21,16 +21,16 @@
 #define DV_SLEW		8	/* dv_penpress for view slew */
 struct device_values  {
 	int	dv_buttonpress;		/* Number of button pressed when !0 */
-	float	dv_xjoy;		/* Joystick,  -1.0 <= x <= +1.0 */
-	float	dv_yjoy;
-	float	dv_zjoy;
+	double	dv_xjoy;		/* Joystick,  -1.0 <= x <= +1.0 */
+	double	dv_yjoy;
+	double	dv_zjoy;
 	int	dv_xpen;		/* Tablet.  -2048 <= x,y <= +2047 */
 	int	dv_ypen;
 	int	dv_penpress;		/* !0 when tablet is pressed */
-	float	dv_zoom;		/* Zoom knob.  -1.0 <= zoom <= +1.0 */
-	float	dv_xslew;		/* View slew.  -1.0 <= slew <= +1.0 */
-	float	dv_yslew;
-	float	dv_zslew;
+	double	dv_zoom;		/* Zoom knob.  -1.0 <= zoom <= +1.0 */
+	double	dv_xslew;		/* View slew.  -1.0 <= slew <= +1.0 */
+	double	dv_yslew;
+	double	dv_zslew;
 	int	dv_xadc;		/* A/D cursor -2048 <= adc <= +2047 */
 	int	dv_yadc;
 	int	dv_1adc;		/* angle 1 for A/D cursor */
@@ -69,7 +69,7 @@ struct dm {
 	void	(*dmr_window)();	/* Change window boundry */
 	void	(*dmr_debug)();		/* Set DM debug level */
 	int	dmr_displaylist;	/* !0 means device has displaylist */
-	float	dmr_bound;		/* zoom-in limit */
+	double	dmr_bound;		/* zoom-in limit */
 	char	*dmr_name;		/* short name of device */
 	char	*dmr_lname;		/* long name of device */
 	struct mem_map *dmr_map;	/* displaylist mem map */
