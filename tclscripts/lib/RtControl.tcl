@@ -157,14 +157,14 @@ body RtControl::constructor {args} {
 	$itk_component(menubar) add cascade -label "Objects" -underline 0 -menu $itk_component(objM)
     }
 
-    $itk_component(fbM) add radiobutton -value 0 -variable [scope fb_mode] \
-	    -label "Inactive" -underline 0 \
+    $itk_component(fbM) add radiobutton -value 2 -variable [scope fb_mode] \
+	    -label "Overlay" -underline 0 \
 	    -command [code $this fb_mode]
     $itk_component(fbM) add radiobutton -value 1 -variable [scope fb_mode] \
 	    -label "Underlay" -underline 0 \
 	    -command [code $this fb_mode]
-    $itk_component(fbM) add radiobutton -value 2 -variable [scope fb_mode] \
-	    -label "Overlay" -underline 0 \
+    $itk_component(fbM) add radiobutton -value 0 -variable [scope fb_mode] \
+	    -label "Inactive" -underline 0 \
 	    -command [code $this fb_mode]
 
     itk_component add srcL {
