@@ -754,7 +754,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_LIBES	-lX11 -lnet
 #endif
 
-#if defined(__CAKE__linux)
+#if defined(__CAKE__li)
 /*	IBM PC or clone running Linux */
 #	undef	li
 #	define	MTYPE	li
