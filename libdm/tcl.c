@@ -23,12 +23,12 @@ static struct cmdtab cmdtab[] = {
 };
 
 int
-dm_tclInit(interp)
+Dm_Init(interp)
 Tcl_Interp *interp;
 {
   register struct cmdtab *ctp;
 
-  for(ctp = cmdtab; ctp->ct_name != NULL; ctp++){
+  for(ctp = cmdtab; ctp->ct_name != (char *)NULL; ctp++){
     (void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
 			   (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
   }
