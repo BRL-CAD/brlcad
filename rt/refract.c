@@ -348,10 +348,12 @@ vdraw o rr;vdraw p c 00ff00; vdraw w n 0 %g %g %g; vdraw w n 1 %g %g %g; vdraw s
 		}
 		if( rdebug&RDEBUG_RAYPLOT )  {
 			/* plotfp */
+			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			pl_color( stdout, 0, 255, 0 );
 			pdv_3line( stdout,
 				sub_ap.a_ray.r_pt,
 				sub_ap.a_uvec );
+			bu_semaphore_release( BU_SEM_SYSCALL );
 		}
 		/* Advance.  Exit point becomes new start point */
 		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
@@ -508,11 +510,15 @@ do_reflection:
 			point_t		endpt;
 			/* Plot the surface normal -- green/blue */
 			/* plotfp */
-			if(rdebug&RDEBUG_RAYPLOT) pl_color( stdout, 0, 255, 255 );
 			f = sub_ap.a_rt_i->rti_radius * 0.02;
 			VJOIN1( endpt, sub_ap.a_ray.r_pt,
 				f, swp->sw_hit.hit_normal );
-			if(rdebug&RDEBUG_RAYPLOT) pdv_3line( stdout, sub_ap.a_ray.r_pt, endpt );
+			if(rdebug&RDEBUG_RAYPLOT)  {
+				bu_semaphore_acquire( BU_SEM_SYSCALL );
+				pl_color( stdout, 0, 255, 255 );
+				pdv_3line( stdout, sub_ap.a_ray.r_pt, endpt );
+				bu_semaphore_release( BU_SEM_SYSCALL );
+			}
 			bu_log("Surface normal for reflection:\n\
 vdraw o rrnorm;vdraw p c 00ffff;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
 				V3ARGS(sub_ap.a_ray.r_pt),

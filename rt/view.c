@@ -608,8 +608,10 @@ register struct application *ap;
 		/* XXX length should be 1 model diameter */
 		VJOIN1( out, ap->a_ray.r_pt,
 			10000, ap->a_ray.r_dir );	/* to imply direction */
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		pl_color( stdout, 190, 0, 0 );
 		pdv_3line( stdout, ap->a_ray.r_pt, out );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 	}
 
 	if( env_region.reg_mfuncs )  {
@@ -789,8 +791,10 @@ struct seg *finished_segs;
 			VJOIN1( inhit, ap->a_ray.r_pt,
 				hitp->hit_dist, ap->a_ray.r_dir );
 			if( rdebug&RDEBUG_RAYPLOT )  {
+				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				pl_color( stdout, i, 0, i );
 				pdv_3line( stdout, ap->a_ray.r_pt, inhit );
+				bu_semaphore_release( BU_SEM_SYSCALL );
 			}
 			bu_log("From ray start to inhit (purple):\n \
 vdraw o oray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
@@ -804,8 +808,10 @@ vdraw o oray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g
 				ap->a_ray.r_pt, out,
 				ap->a_ray.r_dir );
 			if( rdebug&RDEBUG_RAYPLOT )  {
+				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				pl_color( stdout, i, i, i );
 				pdv_3line( stdout, inhit, outhit );
+				bu_semaphore_release( BU_SEM_SYSCALL );
 			}
 			bu_log("From inhit to outhit (grey):\n \
 vdraw o iray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",

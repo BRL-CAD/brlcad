@@ -120,11 +120,15 @@ register int	want;
 			fastf_t		f;
 			/* Plot the surface normal -- green/blue */
 			/* plotfp */
-			if(rdebug&RDEBUG_RAYPLOT) pl_color( stdout, 0, 255, 255 );
 			f = ap->a_rt_i->rti_radius * 0.02;
 			VJOIN1( endpt, swp->sw_hit.hit_point,
 				f, swp->sw_hit.hit_normal );
-			if(rdebug&RDEBUG_RAYPLOT) pdv_3line( stdout, swp->sw_hit.hit_point, endpt );
+			if(rdebug&RDEBUG_RAYPLOT)  {
+				bu_semaphore_acquire( BU_SEM_SYSCALL );
+				pl_color( stdout, 0, 255, 255 );
+				pdv_3line( stdout, swp->sw_hit.hit_point, endpt );
+				bu_semaphore_release( BU_SEM_SYSCALL );
+			}
 			bu_log("Surface normal for shader:\n\
 hit pt: %g %g %g end pt: %g %g %g\n",
 				V3ARGS(swp->sw_hit.hit_point),
