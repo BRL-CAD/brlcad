@@ -1601,6 +1601,7 @@ struct application  {
 	/* THESE ELEMENTS ARE WRITTEN BY THE LIBRARY, AND MAY BE READ IN a_hit() */
 	struct seg	*a_finished_segs_hdp;
 	struct partition *a_Final_Part_hdp;
+	vect_t		a_inv_dir;	/* filled in by rt_shootray(), inverse of ray direction cosines */
 	/* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
 	/* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
 	int		a_user;		/* application-specific value */
