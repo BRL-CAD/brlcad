@@ -163,7 +163,7 @@ char *argv[];
 		bu_vls_printf( &file, "/tmp/%s.b", argv[i] );
 		bu_mem_barriercheck();
 
-		rt_v4_export( &ep, &ip, 1.0, dp );
+		rt_db_put_internal( dp, dbip, &ip );
 		bu_mem_barriercheck();
 
 		if( (fp = fopen(bu_vls_addr(&file), "w")) != NULL )  {
