@@ -298,11 +298,11 @@ fi
 # Get a copy of the cad package
 #
 log "Starting cvs export..."
-log "Running [$CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG >& $REGRESS_DIR/$CVS_LOGFILE]"
-$CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG >& ${REGRESS_DIR}/$CVS_LOGFILE
+log "Running [$CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG >> ${REGRESS_DIR}/${CVS_LOGFILE} 2>&1]"
+$CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG >> ${REGRESS_DIR}/$CVS_LOGFILE 2>&1
 # make sure cvs export exited nicely
 if [ $? != 0 ] ; then 
-    bomb "cvs export failed" "${REGRSS_DIR}/${CVS_LOGFILE}"
+    bomb "cvs export failed" "${REGRESS_DIR}/${CVS_LOGFILE}"
 else
     log "OK: cvs export completed" "${REGRESS_DIR}/${CVS_LOGFILE}"
 fi
