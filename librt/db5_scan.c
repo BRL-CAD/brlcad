@@ -381,7 +381,7 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 		if( (cp = bu_avs_get( &avs, "title" )) != NULL )  {
 			dbip->dbi_title = bu_strdup( cp );
 		} else {
-			dbip->dbi_title = bu_strdup( "Untitled BRL-CAD v5 database" );
+			dbip->dbi_title = bu_strdup( "Untitled BRL-CAD database" );
 		}
 		if( (cp = bu_avs_get( &avs, "units" )) != NULL )  {
 			double	dd;
