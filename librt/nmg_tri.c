@@ -2661,6 +2661,8 @@ CONST struct bn_tol   *tol;
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		bu_log("Triangulating NMG\n");
 
+	(void)nmg_unbreak_region_edges( &m->magic );
+
 	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 		NMG_CK_REGION(r);
 		for (BU_LIST_FOR(s, shell, &r->s_hd)) {
