@@ -642,8 +642,11 @@ CONST mat_t			mat;
 
 	pgp->npoly = (ep->ext_nbytes - sizeof(union record)) /
 		sizeof(union record);
-	pgp->poly = (struct rt_pg_face_internal *)rt_malloc(
-		pgp->npoly * sizeof(struct rt_pg_face_internal), "rt_pg_face_internal");
+	if( pgp->npoly < 0 )
+		pgp->npoly = 0;
+	if( pgp->npoly )
+		pgp->poly = (struct rt_pg_face_internal *)rt_malloc(
+			pgp->npoly * sizeof(struct rt_pg_face_internal), "rt_pg_face_internal");
 	pgp->max_npts = 0;
 
 	for( p=0; p < pgp->npoly; p++ )  {
@@ -758,11 +761,14 @@ double			mm2local;
 		pgp->max_npts );
 	rt_vls_strcat( str, buf );
 
-	sprintf(buf, "\tFirst vertex (%g, %g, %g)\n",
-		pgp->poly[0].verts[X] * mm2local,
-		pgp->poly[0].verts[Y] * mm2local,
-		pgp->poly[0].verts[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	if( pgp->npoly )
+	{
+		sprintf(buf, "\tFirst vertex (%g, %g, %g)\n",
+			pgp->poly[0].verts[X] * mm2local,
+			pgp->poly[0].verts[Y] * mm2local,
+			pgp->poly[0].verts[Z] * mm2local );
+		rt_vls_strcat( str, buf );
+	}
 
 	if( !verbose )  return(0);
 
@@ -814,7 +820,8 @@ struct rt_db_internal	*ip;
 		rt_free( (char *)pgp->poly[i].verts, "pg verts[]");
 		rt_free( (char *)pgp->poly[i].norms, "pg norms[]");
 	}
-	rt_free( (char *)pgp->poly, "pg poly[]" );
+	if( pgp->npoly )
+		rt_free( (char *)pgp->poly, "pg poly[]" );
 	pgp->magic = 0;			/* sanity */
 	pgp->npoly = 0;
 	rt_free( (char *)pgp, "pg ifree" );
