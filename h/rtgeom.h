@@ -127,9 +127,40 @@ struct rt_pg_internal {
 
 /* ID_NMG */
 
-/* ID_EBM */
+/*
+ *	ID_EBM
+ */
+#define RT_EBM_NAME_LEN 256
+struct rt_ebm_internal  {
+	long		magic;
+	char		file[RT_EBM_NAME_LEN];
+	int		xdim;		/* X dimension (w cells) */
+	int		ydim;		/* Y dimension (n cells) */
+	double		tallness;	/* Z dimension (mm) */
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+	unsigned char	*map;		/* actual bitmap, with padding */
+};
+#define RT_EBM_INTERNAL_MAGIC	0xf901b231
+#define RT_EBM_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EBM_INTERNAL_MAGIC,"rt_ebm_internal")
 
-/* ID_VOL */
+/*
+ *	ID_VOL
+ */
+#define RT_VOL_NAME_LEN 128
+struct rt_vol_internal  {
+	long		magic;
+	char		file[RT_VOL_NAME_LEN];
+	int		xdim;		/* X dimension */
+	int		ydim;		/* Y dimension */
+	int		zdim;		/* Z dimension */
+	int		lo;		/* Low threshold */
+	int		hi;		/* High threshold */
+	vect_t		cellsize;	/* ideal coords: size of each cell */
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+	unsigned char	*map;
+};
+#define RT_VOL_INTERNAL_MAGIC	0x987ba1d0
+#define RT_VOL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_VOL_INTERNAL_MAGIC,"rt_vol_internal")
 
 /*
  *	ID_ARBN
