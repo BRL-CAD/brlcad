@@ -26,6 +26,7 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "rtlist.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "wdb.h"
 #include "rtgeom.h"
 #include "./debug.h"
