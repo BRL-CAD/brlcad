@@ -1245,6 +1245,8 @@ register int regbit;
 	case OP_SOLID:
 		stp = treep->tr_a.tu_stp;
 		BITSET( stp->st_regions, regbit );
+		if( !BITTEST( stp->st_regions, regbit ) )
+			rt_bomb("BITSET failure\n");	/* sanity check */
 		if( regbit+1 > stp->st_maxreg )  stp->st_maxreg = regbit+1;
 		if( rt_g.debug&DEBUG_REGIONS )  {
 			rt_pr_bitv( stp->st_name, stp->st_regions,
