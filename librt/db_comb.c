@@ -842,34 +842,19 @@ double		mm2local;
 /*
  *			D B _ W R A P _ V 4 _ E X T E R N A L
  *
- *  Wraps the v4 object body in "ip" into a v4 wrapper in "op".
- *
  *  As the v4 database does not really have the notion of "wrapping",
- *  this function primarily writes the object name into the
- *  proper place (a standard location in all granules),
- *  and (maybe) checks/sets the u_id field.
+ *  this function writes the object name into the
+ *  proper place (a standard location in all granules).
  */
-int
-db_wrap_v4_external( op, ip, dp )
-struct bu_external	*op;
-struct bu_external	*ip;
-CONST struct directory	*dp;
+void
+db_wrap_v4_external( struct bu_external	*op, const char *name )
 {
-	union record *rec;
+	union record	*rec;
 
-	BU_CK_EXTERNAL(ip);
-	RT_CK_DIR(dp);
-
-	if( op != ip )  {
-		*op = *ip;		/* struct copy */
-		ip->ext_buf = NULL;
-		ip->ext_nbytes = 0;
-	}
+	BU_CK_EXTERNAL(op);
 
 	rec = (union record *)op->ext_buf;
-	NAMEMOVE( dp->d_namep, rec->s.s_name );
-
-	return 0;
+	NAMEMOVE( name, rec->s.s_name );
 }
 
 /* Some export support routines */
