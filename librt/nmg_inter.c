@@ -1379,8 +1379,8 @@ CONST struct rt_tol	*tol;
 		rt_log("co-planar faces.\n");
 		bs.coplanar = 1;
 		nmg_isect2d_prep( &bs, f1, f2 );
-		rt_log("Skipping, for now.\n");
 #if 0
+		rt_log("Skipping, for now.\n");
 		/* Use this for real, for now. */
 		return;	/* XXX break */
 #else
@@ -1431,7 +1431,6 @@ CONST struct rt_tol	*tol;
 	nmg_purge_unwanted_intersection_points(&vert_list1, fu2);
 	nmg_purge_unwanted_intersection_points(&vert_list2, fu1);
 
-
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_two_generic_faces(fu1=x%x, fu2=x%x) vert_lists B:\n", fu1, fu2);
     		nmg_pr_vert_list( "vert_list1", &vert_list1 );
@@ -1444,25 +1443,7 @@ CONST struct rt_tol	*tol;
     	}
 
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, bs.pt, bs.dir, tol);
-
-	/* When two faces are intersected
-	 * with each other, they should
-	 * share the same edge(s) of
-	 * intersection. 
-	 */
-    	if (rt_g.NMG_debug & DEBUG_MESH &&
-    	    rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		static int fnum=1;
-    	    	nmg_pl_2fu( "Before_mesh%d.pl", fnum++, fu1, fu2, 1 );
-    	}
-
 	nmg_mesh_faces(fu1, fu2);
-
-    	if (rt_g.NMG_debug & DEBUG_MESH &&
-    	    rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		static int fno=1;
-    	    	nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
-    	}
 
 #if 0
 	show_broken_stuff((long *)fu1, (long **)NULL, 1, 0);
@@ -1543,12 +1524,6 @@ CONST struct rt_tol	*tol;
 	    		NMG_CK_FACEUSE(fu2);
 	    		NMG_CK_FACE(fu2->f_p);
 
-	    		/* See if face f1 overlaps face 2 */
-			if( ! NMG_EXTENT_OVERLAP(
-			    fu2->f_p->fg_p->min_pt, fu2->f_p->fg_p->max_pt,
-			    f1->fg_p->min_pt, f1->fg_p->max_pt) )
-				continue;
-
 			nmg_isect_two_generic_faces(fu1, fu2, tol);
 
 			/* try not to process redundant faceuses (mates) */
@@ -1559,7 +1534,25 @@ CONST struct rt_tol	*tol;
 					fu2 = nextfu;
 			}
 	    	}
+
+		/* Check f1 from s1 against wire loops and edges of s2 */
+
+		/* Check f1 from s1 against lone verts of s2 */
+
 	    	NMG_INDEX_SET(flags, f1);
 	}
+
+	/*
+	 *  Check each wire loop and wire edge of shell 1 against shell 2.
+	 */
+#if 0
+	for( RT_LIST_FOR( lu1, loopuse, &s1->lu_hd ) )  {
+	}
+	for( RT_LIST_FOR( eu1, edgeuse, &s1->eu_hd ) )  {
+	}
+#endif
+
+	/* Check each lone vert of s1 against shell 2 */
+
 	rt_free( (char *)flags, "nmg_crackshells flags[]" );
 }

@@ -297,7 +297,7 @@ struct rt_list *hd;
 /*
  *			N M G _ M E S H _ F A C E S
  *
- *	make sure that all shareable edges of fu1/fu2 are indeed shared
+ *	Make sure that all shareable edges of fu1/fu2 are indeed shared
  */
 void
 nmg_mesh_faces(fu1, fu2)
@@ -309,8 +309,13 @@ struct faceuse *fu1, *fu2;
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
-	/* first make sure all edges withing fu1 that can be shared
-	 * are shared
+    	if (rt_g.NMG_debug & DEBUG_MESH && rt_g.NMG_debug & DEBUG_PLOTEM) {
+    		static int fnum=1;
+    	    	nmg_pl_2fu( "Before_mesh%d.pl", fnum++, fu1, fu2, 1 );
+    	}
+
+	/* Make sure all edges within fu1 that can be shared
+	 * with other edges in fu1 are in fact shared.
 	 */
 
 	if (rt_g.NMG_debug & DEBUG_MESH)
@@ -358,4 +363,9 @@ struct faceuse *fu1, *fu2;
 			}
 		}
 	}
+
+    	if (rt_g.NMG_debug & DEBUG_MESH && rt_g.NMG_debug & DEBUG_PLOTEM) {
+    		static int fno=1;
+    	    	nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
+    	}
 }
