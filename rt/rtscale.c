@@ -106,7 +106,7 @@ char	**argv;
 	 * usage message.
 	 */
 
-	if(argc < 4)  {
+	if(argc < 5)  {
 		fputs(usage, stderr);
 		exit(-1);
 	}
@@ -126,7 +126,7 @@ char	**argv;
 	strcat(label, units);
 	strcpy(name, argv[4]);
 
-	if( argv[5] != NULL )  {
+	if( argc == 6 )  {
 		strcpy( descript, argv[5] );
 	}
 
