@@ -1033,14 +1033,17 @@ int			seg_no;
 }
 
 HIDDEN void
-rt_pipe_hitsort( h, nh )
-struct hit_list *h;
-int *nh;
+rt_pipe_hitsort( h, nh, rp, stp )
+struct hit_list		*h;
+int			*nh;
+struct soltab		*stp;
+register struct xray	*rp;
 {
 	register int i, j;
 	struct hit_list *hitp;
 	struct hit_list *first;
 	struct hit_list *second;
+	struct hit_list *prev;
 	LOCAL struct hit temp;
 
 	hitp = RT_LIST_FIRST( hit_list, &h->l );
@@ -1109,203 +1112,59 @@ int *nh;
 		return;
 	}
 
-	if( *nh == 0 )
+	if( *nh == 0 || *nh == 2 )
 		return;
 
-	/* look for overlaps */
+	/* handle cases where this pipe overlaps with itself */
 	first = RT_LIST_FIRST( hit_list, &h->l );
+	if( VDOT( first->hitp->hit_normal, rp->r_dir ) > 0.0 )
+	{
+		bu_log( "ERROR: first hit on %s is an exit at (%g %g %g)\n",
+			stp->st_dp->d_namep, V3ARGS( first->hitp->hit_point ) );
+
+		while( RT_LIST_WHILE( hitp, hit_list, &h->l ) )
+		{
+			RT_LIST_DEQUEUE( &hitp->l );
+			rt_free( (char *)hitp->hitp, "pipe_hitsort: hitp->hitp" );
+			rt_free( (char *)hitp, "pipe_hitsort: hitp" );
+		}
+		(*nh) = 0;
+		return;
+	}
+
 	while( RT_LIST_NOT_HEAD( &first->l, &h->l ) )
 	{
-		struct hit_list *third;
-		struct hit_list *fourth;
-
 		second = RT_LIST_NEXT( hit_list, &first->l );
 		if( RT_LIST_IS_HEAD( &second->l, &h->l ) )
 			break;
-		else
+
+		while( RT_LIST_NOT_HEAD( &second->l, &h->l ) && VDOT( second->hitp->hit_normal, rp->r_dir ) < 0.0 )
 		{
-			third = RT_LIST_NEXT( hit_list, &second->l );
-			if( RT_LIST_IS_HEAD( &third->l, &h->l ) )
-				break;
-			else
+			prev = second;
+			second = RT_LIST_NEXT( hit_list, &second->l );
+			if( RT_LIST_NOT_HEAD( &second->l, &h->l ) )
 			{
-				fourth = RT_LIST_NEXT( hit_list, &third->l );
-				if( RT_LIST_IS_HEAD( &fourth->l, &h->l ) )
-					break;
+				RT_LIST_DEQUEUE( &prev->l );
+				rt_free( (char *)prev->hitp, "pipe_hitsort: prev->hitp" );
+				rt_free( (char *)prev, "pipe_hitsort: prev" );
+				(*nh)--;
 			}
 		}
-
-		if( first->hitp->hit_surfno == second->hitp->hit_surfno )
+		prev = NULL;
+		while( RT_LIST_NOT_HEAD( &second->l, &h->l ) && VDOT( second->hitp->hit_normal, rp->r_dir ) > 0.0 )
 		{
-			first = third;
-			continue;
-		}
-
-		if( first->hitp->hit_surfno == fourth->hitp->hit_surfno )
-		{
-			if( second->hitp->hit_surfno == third->hitp->hit_surfno )
+			if( prev )
 			{
-				/* "second" to "third" is entirely inside "first" to "fourth" */
-				RT_LIST_DEQUEUE( &second->l );
-				rt_free( (char *)second->hitp, "pipe_hitsort: hitp->hitp" );
-				rt_free( (char *)second, "pipe_hitsort: hitp" );
-				RT_LIST_DEQUEUE( &third->l );
-				rt_free( (char *)third->hitp, "pipe_hitsort: hitp->hitp" );
-				rt_free( (char *)third, "pipe_hitsort: hitp" );
-
-				first = RT_LIST_NEXT( hit_list, &fourth->l );
-				continue;
+				RT_LIST_DEQUEUE( &prev->l );
+				rt_free( (char *)prev->hitp, "pipe_hitsort: prev->hitp" );
+				rt_free( (char *)prev, "pipe_hitsort: prev" );
+				(*nh)--;
 			}
+			prev = second;
+			second = RT_LIST_NEXT( hit_list, &second->l );
 		}
-
-		if( first->hitp->hit_surfno == third->hitp->hit_surfno )
-		{
-			if( second->hitp->hit_surfno == fourth->hitp->hit_surfno )
-			{
-				/* segemnts overlap */
-				RT_LIST_DEQUEUE( &second->l );
-				rt_free( (char *)second->hitp, "pipe_hitsort: hitp->hitp" );
-				rt_free( (char *)second, "pipe_hitsort: hitp" );
-				RT_LIST_DEQUEUE( &third->l );
-				rt_free( (char *)third->hitp, "pipe_hitsort: hitp->hitp" );
-				rt_free( (char *)third, "pipe_hitsort: hitp" );
-
-				first = RT_LIST_NEXT( hit_list, &fourth->l );
-				continue;
-			}
-		}
-		first = RT_LIST_NEXT( hit_list, &first->l );
+		first = second;
 	}
-}
-
-/*
- *  			R T _ P I P E _ S H O T
- *  
- *  Intersect a ray with a pipe.
- *  If an intersection occurs, a struct seg will be acquired
- *  and filled in.
- *  
- *  Returns -
- *  	0	MISS
- *	>0	HIT
- */
-int
-rt_pipe_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
-{
-	register struct rt_list		*head =
-		(struct rt_list *)stp->st_specific;
-	register struct id_pipe		*pipe_id;
-	register struct lin_pipe	*pipe_lin;
-	register struct bend_pipe	*pipe_bend;
-	register struct seg		*segp;
-	LOCAL struct hit_list		hit_head;
-	LOCAL struct hit_list		*hitp;
-	LOCAL int			hit_count;
-	LOCAL int			total_hits=0;
-	LOCAL int			seg_no=0;
-	LOCAL int			i;
-
-	RT_LIST_INIT( &hit_head.l );
-
-	pipe_start_shot( stp, rp, ap, seghead, RT_LIST_FIRST( id_pipe, head ),
-		&hit_head, &total_hits, 1 );
-	for( RT_LIST_FOR( pipe_id, id_pipe, head ) )
-		seg_no++;
-	pipe_end_shot( stp, rp, ap, seghead, RT_LIST_LAST( id_pipe, head ),
-		&hit_head, &hit_count, seg_no );
-	total_hits += hit_count;
-
-	seg_no = 0;
-	for( RT_LIST_FOR( pipe_id, id_pipe, head ) )
-	{
-		seg_no++;
-
-		if( !pipe_id->pipe_is_bend )
-		{
-			linear_pipe_shot( stp, rp, ap, seghead, (struct lin_pipe *)pipe_id,
-				&hit_head, &hit_count, seg_no );
-			total_hits += hit_count;
-		}
-		else
-		{
-			bend_pipe_shot( stp, rp, ap, seghead, (struct bend_pipe *)pipe_id,
-				&hit_head, &hit_count, seg_no );
-			total_hits += hit_count;
-		}
-	}
-	if( !total_hits )
-		return( 0 );
-
-	rt_pipe_hitsort( &hit_head, &total_hits );
-
-	/* Build segments */
-	if( total_hits%2 )
-	{
-		i = 0;
-		rt_log( "rt_pipe_shot: bad number of hits (%d)\n" , total_hits );
-		for( RT_LIST_FOR( hitp, hit_list, &hit_head.l ) )
-		{
-			point_t hit_pt;
-
-			rt_log( "#%d, dist = %g, surfno=%d\n" , ++i, hitp->hitp->hit_dist, hitp->hitp->hit_surfno );
-			VJOIN1( hit_pt, rp->r_pt, hitp->hitp->hit_dist,  rp->r_dir );
-			rt_log( "\t( %g %g %g )\n" , V3ARGS( hit_pt ) );
-		}
-		rt_bomb( "rt_pipe_shot\n" );
-	}
-
-	hitp = RT_LIST_FIRST( hit_list, &hit_head.l );
-	while( RT_LIST_NOT_HEAD( &hitp->l, &hit_head.l ) )
-	{
-		struct hit_list *next;
-
-		next = RT_LIST_NEXT( hit_list, &hitp->l );
-
-		RT_GET_SEG(segp, ap->a_resource);
-
-		segp->seg_stp = stp;
-		segp->seg_in = (*hitp->hitp);
-		segp->seg_out = (*next->hitp);
-
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
-
-		hitp = RT_LIST_NEXT( hit_list, &next->l );
-	}
-
-	/* free the list of hits */
-	while( RT_LIST_WHILE( hitp, hit_list, &hit_head.l ) )
-	{
-		RT_LIST_DEQUEUE( &hitp->l );
-		rt_free( (char *)hitp->hitp, "rt_pipe_shot: hitp->hitp" );
-		rt_free( (char *)hitp, "rt_pipe_shot: hitp" );
-	}
-
-	if( total_hits )
-		return( 1 );		/* HIT */
-	else
-		return(0);		/* MISS */
-}
-
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
-
-/*
- *			R T_ P I P E _ V S H O T
- *
- *  Vectorized version.
- */
-void
-rt_pipe_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
-{
-	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /*
@@ -1394,6 +1253,140 @@ register struct xray	*rp;
 			rt_log( "rt_pipe_norm: Unrecognized surfno (%d)\n", hitp->hit_surfno );
 			break;
 	}
+}
+
+/*
+ *  			R T _ P I P E _ S H O T
+ *  
+ *  Intersect a ray with a pipe.
+ *  If an intersection occurs, a struct seg will be acquired
+ *  and filled in.
+ *  
+ *  Returns -
+ *  	0	MISS
+ *	>0	HIT
+ */
+int
+rt_pipe_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
+{
+	register struct rt_list		*head =
+		(struct rt_list *)stp->st_specific;
+	register struct id_pipe		*pipe_id;
+	register struct lin_pipe	*pipe_lin;
+	register struct bend_pipe	*pipe_bend;
+	register struct seg		*segp;
+	LOCAL struct hit_list		hit_head;
+	LOCAL struct hit_list		*hitp;
+	LOCAL int			hit_count;
+	LOCAL int			total_hits=0;
+	LOCAL int			seg_no=0;
+	LOCAL int			i;
+
+	RT_LIST_INIT( &hit_head.l );
+
+	pipe_start_shot( stp, rp, ap, seghead, RT_LIST_FIRST( id_pipe, head ),
+		&hit_head, &total_hits, 1 );
+	for( RT_LIST_FOR( pipe_id, id_pipe, head ) )
+		seg_no++;
+	pipe_end_shot( stp, rp, ap, seghead, RT_LIST_LAST( id_pipe, head ),
+		&hit_head, &hit_count, seg_no );
+	total_hits += hit_count;
+
+	seg_no = 0;
+	for( RT_LIST_FOR( pipe_id, id_pipe, head ) )
+	{
+		seg_no++;
+
+		if( !pipe_id->pipe_is_bend )
+		{
+			linear_pipe_shot( stp, rp, ap, seghead, (struct lin_pipe *)pipe_id,
+				&hit_head, &hit_count, seg_no );
+			total_hits += hit_count;
+		}
+		else
+		{
+			bend_pipe_shot( stp, rp, ap, seghead, (struct bend_pipe *)pipe_id,
+				&hit_head, &hit_count, seg_no );
+			total_hits += hit_count;
+		}
+	}
+	if( !total_hits )
+		return( 0 );
+
+	/* calculate hit points and normals */
+	for( RT_LIST_FOR( hitp, hit_list, &hit_head.l ) )
+		rt_pipe_norm( hitp->hitp, stp , rp );
+
+	rt_pipe_hitsort( &hit_head, &total_hits, rp, stp );
+
+	/* Build segments */
+	if( total_hits%2 )
+	{
+		i = 0;
+		rt_log( "rt_pipe_shot: bad number of hits (%d)\n" , total_hits );
+		for( RT_LIST_FOR( hitp, hit_list, &hit_head.l ) )
+		{
+			point_t hit_pt;
+
+			rt_log( "#%d, dist = %g, surfno=%d\n" , ++i, hitp->hitp->hit_dist, hitp->hitp->hit_surfno );
+			VJOIN1( hit_pt, rp->r_pt, hitp->hitp->hit_dist,  rp->r_dir );
+			rt_log( "\t( %g %g %g )\n" , V3ARGS( hit_pt ) );
+		}
+		rt_bomb( "rt_pipe_shot\n" );
+	}
+
+	hitp = RT_LIST_FIRST( hit_list, &hit_head.l );
+	while( RT_LIST_NOT_HEAD( &hitp->l, &hit_head.l ) )
+	{
+		struct hit_list *next;
+
+		next = RT_LIST_NEXT( hit_list, &hitp->l );
+
+		RT_GET_SEG(segp, ap->a_resource);
+
+		segp->seg_stp = stp;
+		segp->seg_in = (*hitp->hitp);
+		segp->seg_out = (*next->hitp);
+
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+
+		hitp = RT_LIST_NEXT( hit_list, &next->l );
+	}
+
+	/* free the list of hits */
+	while( RT_LIST_WHILE( hitp, hit_list, &hit_head.l ) )
+	{
+		RT_LIST_DEQUEUE( &hitp->l );
+		rt_free( (char *)hitp->hitp, "rt_pipe_shot: hitp->hitp" );
+		rt_free( (char *)hitp, "rt_pipe_shot: hitp" );
+	}
+
+	if( total_hits )
+		return( 1 );		/* HIT */
+	else
+		return(0);		/* MISS */
+}
+
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+
+/*
+ *			R T_ P I P E _ V S H O T
+ *
+ *  Vectorized version.
+ */
+void
+rt_pipe_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
+{
+	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /*
