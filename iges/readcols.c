@@ -18,6 +18,8 @@
 	buffer.  The number is "cols".  The string of characters read
 	is pointed to by "id". 	*/
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"

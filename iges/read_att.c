@@ -16,6 +16,8 @@
  *	at DE (att_de) and stores the values in the structure (att)
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"

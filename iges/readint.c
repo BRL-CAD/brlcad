@@ -24,6 +24,8 @@
 	"eof" is the "end-of-field" delimiter
 	"eor" is the "end-of-record" delimiter	*/
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
