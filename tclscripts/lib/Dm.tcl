@@ -22,68 +22,71 @@
 class Dm {
     inherit itk::Widget
 
-    itk_option define -dmsize dmsize Dmsize {512 512}
-    itk_option define -listen listen Listen -1
-    itk_option define -fb_active fb_active Fb_active 0
-    itk_option define -fb_update fb_update Fb_update 1
     itk_option define -bg bg Bg {0 0 0}
-    itk_option define -light light Light 0
-    itk_option define -zclip zclip Zclip 0
-    itk_option define -zbuffer zbuffer Zbuffer 0
-    itk_option define -perspective perspective Perspective 0
     itk_option define -debug debug Debug 0
-    itk_option define -linewidth linewidth Linewidth 0
+    itk_option define -dmsize dmsize Dmsize {512 512}
+    itk_option define -fb_active fb_active Fb_active 0
+    itk_option define -fb_observe fb_observe Fb_observe 1
+    itk_option define -light light Light 0
     itk_option define -linestyle linestyle Linestyle 0
+    itk_option define -linewidth linewidth Linewidth 0
+    itk_option define -listen listen Listen -1
+    itk_option define -perspective perspective Perspective 0
     itk_option define -type type Type X
+    itk_option define -zbuffer zbuffer Zbuffer 0
+    itk_option define -zclip zclip Zclip 0
 
     constructor {args} {}
     destructor {}
 
     # methods that wrap LIBDM-display-manager-object commands
-    public method observer {args}
+    public method bg {args}
+    public method bounds {args}
+    public method clear {}
+    public method debug {args}
+    public method dmsize {args}
     public method drawBegin {}
     public method drawEnd {}
-    public method clear {}
-    public method normal {}
-    public method loadmat {mat eye}
-    public method drawString {str x y size use_aspect}
-    public method drawPoint {x y}
-    public method drawLine {x1 y1 x2 y2}
     public method drawGeom {args}
-    public method bg {args}
+    public method drawLine {x1 y1 x2 y2}
+    public method drawPoint {x y}
+    public method drawString {str x y size use_aspect}
     public method fg {args}
-    public method linewidth {args}
-    public method linestyle {args}
-    public method handle_configure {}
-    public method zclip {args}
-    public method zbuffer {args}
-    public method light {args}
-    public method perspective {args}
-    public method bounds {args}
-    public method debug {args}
-    public method listen {args}
-    public method refreshfb {}
     public method flush {}
-    public method sync {}
-    public method dmsize {args}
     public method get_aspect {}
+    public method light {args}
+    public method linestyle {args}
+    public method linewidth {args}
+    public method listen {args}
+    public method loadmat {mat eye}
+    public method normal {}
+    public method observer {args}
+    public method perspective {args}
+    public method refreshfb {}
+    public method sync {}
+    public method zbuffer {args}
+    public method zclip {args}
 
-    # new methods
     public method fb_active {args}
-    public method fb_update {args}
+    public method fb_observe {args}
 
     # methods for handling window events
     protected method toggle_zclip {}
     protected method toggle_zbuffer {}
     protected method toggle_light {}
     protected method toggle_perspective {}
+    protected method handle_configure {}
     protected method doBindings {}
+    protected method changeType {type}
+    protected method createDm {type}
+    protected method initDm {}
 
     protected variable width 512
     protected variable height 512
     protected variable invWidth ""
     protected variable aspect 1.0
     private variable initializing 1
+    private variable priv_type X
 }
 
 body Dm::constructor {args} {
@@ -91,28 +94,8 @@ body Dm::constructor {args} {
     eval itk_initialize $args
     set initializing 0
 
-    itk_component add dm {
-	dm_open $itk_interior.dm $itk_option(-type) -t 0 -W $width -N $height
-    } {}
-
-    pack $itk_component(dm) -fill both -expand yes
-
-    # initialize display manager object
-    eval Dm::dmsize $itk_option(-dmsize)
-    Dm::listen $itk_option(-listen)
-    Dm::fb_active $itk_option(-fb_active)
-    Dm::fb_update $itk_option(-fb_update)
-    eval Dm::bg $itk_option(-bg)
-    Dm::light $itk_option(-light)
-    Dm::zclip $itk_option(-zclip)
-    Dm::zbuffer $itk_option(-zbuffer)
-    Dm::perspective $itk_option(-perspective)
-    Dm::debug $itk_option(-debug)
-    Dm::linewidth $itk_option(-linewidth)
-    Dm::linestyle $itk_option(-linestyle)
-
-    # event bindings
-    doBindings
+    createDm $itk_option(-type)
+    initDm
 }
 
 body Dm::destructor {} {
@@ -147,9 +130,9 @@ configbody Dm::fb_active {
     }
 }
 
-configbody Dm::fb_update {
+configbody Dm::fb_observe {
     if {!$initializing} {
-	Dm::fb_update $itk_option(-fb_update)
+	Dm::fb_observe $itk_option(-fb_observe)
     }
 }
 
@@ -196,14 +179,17 @@ configbody Dm::linewidth {
 }
 
 configbody Dm::type {
-    if {$initializing} {
-	switch $itk_option(-type) {
-	    X -
-	    ogl {
+    switch $itk_option(-type) {
+	X -
+	ogl {
+	    if {$initializing} {
+		set priv_type $itk_option(-type)
+	    } else {
+		changeType $itk_option(-type)
 	    }
-	    default {
-		error "bad type - $itk_option(-type)"
-	    }
+	}
+	default {
+	    error "bad type - $itk_option(-type)"
 	}
     }
 }
@@ -286,16 +272,6 @@ body Dm::linestyle {args} {
 
     $itk_component(dm) linestyle $args
     set itk_option(-linestyle) $args
-}
-
-body Dm::handle_configure {} {
-    $itk_component(dm) configure
-
-    set itk_option(-dmsize) [$itk_component(dm) size]
-    set width [lindex $itk_option(-dmsize) 0]
-    set height [lindex $itk_option(-dmsize) 1]
-    set invWidth [expr 1.0 / $width]
-    set aspect [get_aspect]
 }
 
 body Dm::zclip {args} {
@@ -408,19 +384,19 @@ body Dm::fb_active {args} {
     set itk_option(-fb_active) $args
 }
 
-body Dm::fb_update {args} {
+body Dm::fb_observe {args} {
     if {$args == ""} {
-	return $itk_option(-fb_update)
+	return $itk_option(-fb_observe)
     }
 
-    if {$args < 0 || 1 < $args} {
-	error "Usage: fb_update \[0|1\]"
+    if {$args != 0 && $args != 1} {
+	error "Usage: fb_observe \[0|1\]"
     }
 
     # update saved value
-    set itk_option(-fb_update) $args
+    set itk_option(-fb_observe) $args
 
-    switch $itk_option(-fb_update) {
+    switch $itk_option(-fb_observe) {
 	0 {
 	    catch {Dm::observer detach $this}
 	    return ""
@@ -469,6 +445,52 @@ body Dm::toggle_perspective {} {
 	$itk_component(dm) perspective 1
 	set itk_option(-perspective) 1
     }
+}
+
+body Dm::handle_configure {} {
+    $itk_component(dm) configure
+
+    set itk_option(-dmsize) [$itk_component(dm) size]
+    set width [lindex $itk_option(-dmsize) 0]
+    set height [lindex $itk_option(-dmsize) 1]
+    set invWidth [expr 1.0 / $width]
+    set aspect [get_aspect]
+}
+
+body Dm::changeType {type} {
+    if {$type != $priv_type} {
+	$itk_component(dm) listen -1
+	$itk_component(dm) close
+	createDm $type
+	initDm
+	set priv_type $type
+    }
+}
+
+body Dm::createDm {type} {
+    itk_component add dm {
+	dm_open $itk_interior.dm $type -t 0 -W $width -N $height
+    } {}
+
+    pack $itk_component(dm) -fill both -expand yes
+} 
+
+body Dm::initDm {} {
+    eval Dm::dmsize $itk_option(-dmsize)
+    Dm::listen $itk_option(-listen)
+    Dm::fb_active $itk_option(-fb_active)
+    Dm::fb_observe $itk_option(-fb_observe)
+    eval Dm::bg $itk_option(-bg)
+    Dm::light $itk_option(-light)
+    Dm::zclip $itk_option(-zclip)
+    Dm::zbuffer $itk_option(-zbuffer)
+    Dm::perspective $itk_option(-perspective)
+    Dm::debug $itk_option(-debug)
+    Dm::linewidth $itk_option(-linewidth)
+    Dm::linestyle $itk_option(-linestyle)
+
+    # event bindings
+    doBindings
 }
 
 body Dm::doBindings {} {
