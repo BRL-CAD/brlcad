@@ -216,7 +216,11 @@ typedef long	bitv_t;		/* largest integer type */
 	/* IBM format, being the next most restrictive format */
 #define MAX_FASTF		1.0e73	/* Very close to the largest number */
 #define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
+#if defined(aux)
+#define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
+#else
 #define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
+#endif
 #endif
 #define SMALL			SQRT_SMALL_FASTF
 
