@@ -129,7 +129,8 @@ struct region		*reg2;
 	 * againt it.
 	 */
 	if( rpt_overlap ) {
-		struct overlap_list	*prev_ol,*op;	/* overlap list */
+		struct overlap_list	*prev_ol = (struct overlap_list *)0;
+		struct overlap_list	*op;		/* overlap list */
 		double depth = ohitp->hit_dist - ihitp->hit_dist;
 
 		/* look for it in our list */

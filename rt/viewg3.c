@@ -217,7 +217,7 @@ register struct partition *PartHeadp;
 	fastf_t			h, v;		/* h,v actual ray pos */
 	fastf_t			hcen, vcen;	/* h,v cell center */
 	fastf_t			dfirst, dlast;	/* ray distances */
-	fastf_t			dcorrection;	/* RT to GIFT dist corr */
+	fastf_t			dcorrection = 0; /* RT to GIFT dist corr */
 	int			card_count;	/* # comp. on this card */
 	char			*fmt;		/* printf() format string */
 

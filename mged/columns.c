@@ -116,7 +116,7 @@ int num_in_list;
 	int lines, i, j, namelen, this_one;
 
 	qsort( (genptr_t)list_of_names,
-		num_in_list, sizeof(struct directory *),
+		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 		cmpdirname);
 	/*
 	 * For the number of (full and partial) lines that will be needed,

@@ -773,7 +773,7 @@ char	**argv;
 {
 	register struct directory *dp;
 	register struct solid *sp;
-	struct solid *lastfound;
+	struct solid *lastfound = SOLID_NULL;
 	register int i;
 	int nmatch;
 
