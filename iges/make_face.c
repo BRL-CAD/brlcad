@@ -11,6 +11,10 @@
  *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
@@ -40,9 +44,13 @@ int face_orient;
 	int			sol_num;	/* IGES solid type number */
 	int			no_of_edges;	/* edge count for this loop */
 	int			no_of_param_curves;
+	int			vert_count=0;	/* Actual number of vertices used to make face */
 	struct iges_edge_use	*edge_list;	/* list of edgeuses from iges loop entity */
 	struct faceuse		*fu=NULL;	/* NMG face use */
+	struct loopuse		*lu;		/* NMG loop use */
 	struct vertex		***verts;	/* list of vertices */
+	struct iges_vertex_list	*v_list;
+	int			done;
 	int			i,j,k;
 
 	/* Acquiring Data */
@@ -55,31 +63,28 @@ int face_orient;
 	}
 
 	Readrec( dir[entityno]->param );
-	printf( "Make Face (loop at %d), passed orient = %d\n" , entityno*2+1 , face_orient );
-	Readint( &sol_num , "LOOP: " );
+	Readint( &sol_num , "" );
 	if( sol_num != 508 )
 	{
 		rt_log( "Entity #%d is not a loop (it's a type %d)\n" , entityno , sol_num );
 		rt_bomb( "Fatal error\n" );
 	}
 
-	Readint( &no_of_edges , "no of edges: " );
+	Readint( &no_of_edges , "" );
 	edge_list = (struct iges_edge_use *)rt_calloc( no_of_edges , sizeof( struct iges_edge_use ) ,
 			"Make_face (edge_list)" );
 	for( i=0 ; i<no_of_edges ; i++ )
 	{
-		Readint( &edge_list[i].edge_is_vertex , "\n\tEdge is Vertex: " );
-		Readint( &edge_list[i].edge_de , "\tEdge DE: " );
-		Readint( &edge_list[i].index , "\tEdge index: " );
-		Readint( &edge_list[i].orient , "\tEdge orient: " );
+		Readint( &edge_list[i].edge_is_vertex , "" );
+		Readint( &edge_list[i].edge_de , "" );
+		Readint( &edge_list[i].index , "" );
+		Readint( &edge_list[i].orient , "" );
 		if( !face_orient ) /* need opposite orientation of edge */
 		{
-printf( "Face orientation is %d, so switch edge (%d) orientation from %d to" , face_orient , i , edge_list[i].orient );
 			if( edge_list[i].orient )
 				edge_list[i].orient = 0;
 			else
 				edge_list[i].orient = 1;
-printf( " %d\n" , edge_list[i].orient );
 		}
 		Readint( &no_of_param_curves , "" );
 		for( j=0 ; j<2*no_of_param_curves ; j++ )
@@ -89,7 +94,6 @@ printf( " %d\n" , edge_list[i].orient );
 	verts = (struct vertex ***)rt_calloc( no_of_edges , sizeof( struct vertex **) ,
 		"Make_face: vertex_list **" );
 
-	printf( "\t\tLOOP:\n" );
 	for( i=0 ; i<no_of_edges ; i++ )
 	{
 		if( face_orient )
@@ -98,43 +102,89 @@ printf( " %d\n" , edge_list[i].orient );
 			verts[no_of_edges-1-i] = Get_vertex( &edge_list[i] );
 	}
 
-	for( i=0 ; i<no_of_edges ; i++ )
+	/* eliminate zero length edges */
+	vert_count = no_of_edges;
+	done = 0;
+	while( !done )
 	{
-		struct iges_vertex_list *vl;
-		struct iges_vertex *iv;
-		int found;
-
-		found = 0;
-		vl  = vertex_root;
-		while( vl != NULL && !found )
+		done = 1;
+		for( i=0 ; i<vert_count ; i++ )
 		{
-			for( j=0 ; j<vl->no_of_verts ; j++ )
-			{
-				if( &vl->i_verts[j].v == verts[i] )
-				{
-					printf( "\t\t\t( %g , %g , %g )\n" ,
-						vl->i_verts[j].pt[X],
-						vl->i_verts[j].pt[Y],
-						vl->i_verts[j].pt[Z] );
-					found = 1;
-					break;
-				}
-			}
-			vl = vl->next;
-		}
+			k = i + 1;
+			if( k == vert_count )
+				k = 0;
 
-		k = i + 1;
-		if( k == no_of_edges )
-			k = 0;
-		if( verts[i] == verts[k] )
-			printf( "******************BAD LOOP (zero length edge)\n" );
+			if( verts[i] == verts[k] )
+			{
+				printf( "Ignoring zero length edge\n" );
+				done = 0;
+				vert_count--;
+				for( j=i ; j<vert_count ; j++ )
+					verts[j] = verts[j+1];
+			}
+		}
 	}
 
-	fu = nmg_cmface( s, verts, no_of_edges );
+	if( vert_count )
+	{
+		plane_t			pl;		/* Plane equation for face */
+		fastf_t			area;		/* area of loop */
+		fastf_t dist;
+		vect_t min2max;
+		point_t outside_pt;
 
-	rt_free( (char *)edge_list , "Make_face (edge_list)" );
-	rt_free( (char *)verts , "Make_face (vertexlist)" );
-	return( fu );
+		fu = nmg_cmface( s, verts, vert_count );
+
+		/* associate geometry */
+		v_list = vertex_root;
+		while( v_list != NULL )
+		{
+			for( i=0 ; i < v_list->no_of_verts ; i++ )
+			{
+				if( v_list->i_verts[i].v != NULL && v_list->i_verts[i].v->vg_p == NULL )
+				{
+					NMG_CK_VERTEX( v_list->i_verts[i].v );
+					nmg_vertex_gv( v_list->i_verts[i].v ,
+						v_list->i_verts[i].pt );
+				}
+			}
+			v_list = v_list->next;
+		}
+
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		NMG_CK_LOOPUSE( lu );
+
+		area = nmg_loop_plane_area( lu , pl );
+		if( area < 0.0 )
+		{
+			rt_log( "Could not calculate area for face\n" );
+			nmg_kfu( fu );
+			fu = (struct faceuse *)NULL;
+			goto err;
+		}
+
+		nmg_face_g( fu , pl );
+		nmg_face_bb( fu->f_p , &tol );
+
+		/* find a point that is surely outside the loop */
+		VSUB2( min2max , fu->f_p->max_pt , fu->f_p->min_pt );
+		VADD2( outside_pt , fu->f_p->max_pt , min2max );
+
+		/* move it to the plane of the face */
+		dist = DIST_PT_PLANE( outside_pt , pl );
+		VJOIN1( outside_pt , outside_pt , -dist , pl );
+
+		if( nmg_classify_pt_loop( outside_pt , lu , &tol ) != NMG_CLASS_AoutB )
+		{
+			nmg_reverse_face( fu , &tol );
+			if( fu->orientation != OT_SAME )
+			{
+				fu = fu->fumate_p;
+				if( fu->orientation != OT_SAME )
+					rt_bomb( "Make_face: no OT_SAME use for a face!!!\n" );
+			}
+		}
+	}
 
   err:
 	rt_free( (char *)edge_list , "Make_face (edge_list)" );
