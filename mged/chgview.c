@@ -1810,8 +1810,13 @@ char	**argv;
     argc -= bu_optind - 1;
   }
 
-  if(origin != 'v' && origin != 'm' && origin != 'e' && origin != 'k')
-    origin = mged_variables->rotate_about;
+  if(origin != 'v' && origin != 'm' && origin != 'e' && origin != 'k'){
+    if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
+			!view_flag && !model_flag) || edit_flag))
+      origin = mged_variables->erotate_about;
+    else
+      origin = mged_variables->rotate_about;
+  }
 
   /* print the current values */
   if(argc == 1)
@@ -1880,7 +1885,7 @@ char	**argv;
 	if(incr_flag){
 	  if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			      !view_flag && !model_flag) || edit_flag)){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      edit_rate_model_rotate[X] += f;
 	      edit_rate_model_origin = origin;
@@ -1915,7 +1920,7 @@ char	**argv;
 	}else{
 	  if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			      !view_flag && !model_flag) || edit_flag)){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      edit_rate_model_rotate[X] = f;
 	      edit_rate_model_origin = origin;
@@ -1954,7 +1959,7 @@ char	**argv;
 	if(incr_flag){
 	  if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			      !view_flag && !model_flag) || edit_flag)){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      edit_rate_model_rotate[Y] += f;
 	      edit_rate_model_origin = origin;
@@ -1989,7 +1994,7 @@ char	**argv;
 	}else{
 	  if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			      !view_flag && !model_flag) || edit_flag)){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      edit_rate_model_rotate[Y] = f;
 	      edit_rate_model_origin = origin;
@@ -2028,7 +2033,7 @@ char	**argv;
 	if(incr_flag){
 	  if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			      !view_flag && !model_flag) || edit_flag)){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      edit_rate_model_rotate[Z] += f;
 	      edit_rate_model_origin = origin;
@@ -2063,7 +2068,7 @@ char	**argv;
 	}else{
 	  if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			      !view_flag && !model_flag) || edit_flag)){
-	    switch(mged_variables->coords){
+	    switch(mged_variables->ecoords){
 	    case 'm':
 	      edit_rate_model_rotate[Z] = f;
 	      edit_rate_model_origin = origin;
@@ -2102,7 +2107,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[X] += f;
@@ -2127,7 +2132,7 @@ char	**argv;
       }else{
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[X] = f;
@@ -2156,7 +2161,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Y] += f;
@@ -2181,7 +2186,7 @@ char	**argv;
       }else{
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){	
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Y] = f;
@@ -2210,7 +2215,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Z] += f;
@@ -2235,7 +2240,7 @@ char	**argv;
       }else{
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Z] = f;
@@ -2289,7 +2294,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			     !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	    edit_absolute_model_rotate[X] += f;
 	    break;
@@ -2312,7 +2317,7 @@ char	**argv;
       }else{
 	if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			     !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	    rvec[X] = f - last_edit_absolute_model_rotate[X];
 	    edit_absolute_model_rotate[X] += f;
@@ -2343,7 +2348,7 @@ char	**argv;
 	fastf_t *arp;
 	fastf_t *larp;
 
-	switch(mged_variables->coords){
+	switch(mged_variables->ecoords){
 	case 'm':
 	  arp = edit_absolute_model_rotate;
 	  larp = last_edit_absolute_model_rotate;
@@ -2390,7 +2395,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			     !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	    edit_absolute_model_rotate[Y] += f;
 	    break;
@@ -2413,7 +2418,7 @@ char	**argv;
       }else{
 	if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			     !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	    rvec[Y] = f - last_edit_absolute_model_rotate[Y];
 	    edit_absolute_model_rotate[Y] += f;
@@ -2444,7 +2449,7 @@ char	**argv;
 	fastf_t *arp;
 	fastf_t *larp;
 
-	switch(mged_variables->coords){
+	switch(mged_variables->ecoords){
 	case 'm':
 	  arp = edit_absolute_model_rotate;
 	  larp = last_edit_absolute_model_rotate;
@@ -2492,7 +2497,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			     !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	    edit_absolute_model_rotate[Z] += f;
 	    break;
@@ -2515,7 +2520,7 @@ char	**argv;
       }else{
 	if(EDIT_ROTATE && ((mged_variables->transform == 'e' &&
 			     !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	    rvec[Z] = f - last_edit_absolute_model_rotate[Z];
 	    edit_absolute_model_rotate[Z] += f;
@@ -2546,7 +2551,7 @@ char	**argv;
 	fastf_t *arp;
 	fastf_t *larp;
 
-	switch(mged_variables->coords){
+	switch(mged_variables->ecoords){
 	case 'm':
 	  arp = edit_absolute_model_rotate;
 	  larp = last_edit_absolute_model_rotate;
@@ -2595,7 +2600,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_absolute_model_tran[X] += sf;
@@ -2620,7 +2625,7 @@ char	**argv;
       }else{
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    tvec[X] = f - last_edit_absolute_model_tran[X]*Viewscale*base2local;
@@ -2654,7 +2659,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_absolute_model_tran[Y] += sf;
@@ -2679,7 +2684,7 @@ char	**argv;
       }else{
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    tvec[Y] = f - last_edit_absolute_model_tran[Y]*Viewscale*base2local;
@@ -2712,7 +2717,7 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    edit_absolute_model_tran[Z] += sf;
@@ -2737,7 +2742,7 @@ char	**argv;
       }else{
 	if(EDIT_TRAN && ((mged_variables->transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
-	  switch(mged_variables->coords){
+	  switch(mged_variables->ecoords){
 	  case 'm':
 	  case 'o':
 	    tvec[Z] = f - last_edit_absolute_model_tran[Z]*Viewscale*base2local;
@@ -4159,7 +4164,7 @@ mat_t newrot;
 
   update_views = 1;
 
-  switch(mged_variables->coords){
+  switch(mged_variables->ecoords){
   case 'm':
     break;
   case 'o':
@@ -4181,8 +4186,8 @@ mat_t newrot;
   if(state == ST_S_EDIT){
     char save_origin;
 
-    save_origin = mged_variables->rotate_about;
-    mged_variables->rotate_about = origin;
+    save_origin = mged_variables->erotate_about;
+    mged_variables->erotate_about = origin;
 
     save_edflag = es_edflag;
     if(!SEDIT_ROTATE)
@@ -4193,7 +4198,7 @@ mat_t newrot;
     bn_mat_mul2(incr_change, acc_rot_sol);
     sedit();
 
-    mged_variables->rotate_about = save_origin;
+    mged_variables->erotate_about = save_origin;
     es_edflag = save_edflag;
   }else{
     point_t model_pt;
@@ -4563,7 +4568,10 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  return mged_rot_xyz(mged_variables->rotate_about, rvec);
+  if(EDIT_ROTATE && mged_variables->transform == 'e')
+    return mged_rot_xyz(mged_variables->erotate_about, rvec);
+  else
+    return mged_rot_xyz(mged_variables->rotate_about, rvec);
 }
 
 int
@@ -4610,9 +4618,13 @@ char    **argv;
 
   VSETALL(pt, 0.0);
   VUNITIZE(axis);
+
   bn_mat_arb_rot(newrot, pt, axis, angle*degtorad);
 
-  return mged_rot(mged_variables->rotate_about, newrot);
+  if(EDIT_ROTATE && mged_variables->transform == 'e')
+    return mged_rot(mged_variables->erotate_about, newrot);
+  else
+    return mged_rot(mged_variables->rotate_about, newrot);
 }
 
 int
@@ -4625,7 +4637,7 @@ point_t pt;
   point_t work;
   mat_t xlatemat;
 
-  switch(mged_variables->coords){
+  switch(mged_variables->ecoords){
   case 'm':
   case 'o':
     VSCALE(delta, pt, local2base);

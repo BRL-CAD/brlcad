@@ -53,7 +53,9 @@ struct _mged_variables default_mged_variables = {
 /* context */                   1,
 /* dlist */                     1,
 /* coords */                    'v',
+/* ecoords */                   'o',
 /* rotate_about */              'v',
+/* erotate_about */             'k',
 /* transform */                 'v',
 /* predictor */			0,
 /* predictor_advance */		1.0,
@@ -67,7 +69,6 @@ struct _mged_variables default_mged_variables = {
 };
 
 static void set_dlist();
-static void set_v_axes_pos();
 void set_dirty_flag();
 void set_scroll();
 void set_absolute_tran();
@@ -110,24 +111,26 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(rateknobs),	set_scroll },
 	{"%d",	1, "adcflag",		MV_O(adcflag),          set_scroll },
-	{"%d",	1, "slidersflag",	MV_O(slidersflag),   set_scroll },
+	{"%d",	1, "slidersflag",	MV_O(slidersflag),      set_scroll },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	set_dirty_flag },
 	{"%d",	1, "orig_gui",		MV_O(orig_gui),	        set_dirty_flag },
 	{"%d",  1, "m_axes",            MV_O(m_axes),           set_dirty_flag },
 	{"%d",  1, "v_axes",            MV_O(v_axes),           set_dirty_flag },
-	{"%d",  1, "v_axes_pos",        MV_O(v_axes_pos),       set_v_axes_pos },
+	{"%d",  1, "v_axes_pos",        MV_O(v_axes_pos),       set_dirty_flag },
 	{"%d",  1, "e_axes",            MV_O(e_axes),           set_dirty_flag },
 	{"%d",	1, "linewidth",		MV_O(linewidth),	set_dirty_flag },
 	{"%d",	1, "linestyle",		MV_O(linestyle),	set_dirty_flag },
 	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "context",           MV_O(context),          set_dirty_flag },
+	{"%d",  1, "context",           MV_O(context),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
-	{"%c",  1, "coords",            MV_O(coords),           set_absolute_tran },
-	{"%c",  1, "rotate_about",      MV_O(rotate_about),     set_dirty_flag },
-	{"%c",  1, "transform",         MV_O(transform),        set_dirty_flag },
+	{"%c",  1, "coords",            MV_O(coords),           BU_STRUCTPARSE_FUNC_NULL },
+	{"%c",  1, "ecoords",           MV_O(ecoords),          BU_STRUCTPARSE_FUNC_NULL },
+	{"%c",  1, "rotate_about",      MV_O(rotate_about),     BU_STRUCTPARSE_FUNC_NULL },
+	{"%c",  1, "erotate_about",     MV_O(erotate_about),    BU_STRUCTPARSE_FUNC_NULL },
+	{"%c",  1, "transform",         MV_O(transform),        BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
@@ -346,13 +349,6 @@ set_absolute_tran()
 }
 
 static void
-set_v_axes_pos()
-{
-  if(mged_variables->v_axes)
-    set_dirty_flag();
-}
-
-static void
 set_dlist()
 {
   struct dm_list *dmlp;
@@ -368,6 +364,8 @@ set_dlist()
 	continue;
 
       curr_dm_list = dmlp;
+
+      /* if display manager supports display lists */
       if(displaylist){
 	dirty = 1;
 #ifdef DO_SINGLE_DISPLAY_LIST
@@ -384,6 +382,8 @@ set_dlist()
 	continue;
 
       curr_dm_list = dmlp;
+
+      /* if display manager supports display lists */
       if(displaylist){
 	dirty = 1;
 #ifdef DO_SINGLE_DISPLAY_LIST
