@@ -908,66 +908,6 @@ struct rt_tol		*tol;
 	 */
 	nmg_fix_normals( s , tol );
 
-	/* Associate normals with vertexuses */
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-	{
-		struct loopuse *lu;
-		vect_t norm;
-		vect_t rev_norm;
-
-		NMG_CK_FACEUSE( fu );
-
-		if( fu->orientation != OT_SAME )
-			continue;
-
-		NMG_GET_FU_NORMAL( norm , fu );
-		VREVERSE( rev_norm , norm );
-
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-		{
-			NMG_CK_LOOPUSE( lu );
-
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
-			{
-				struct vertexuse *vu;
-
-				vu = RT_LIST_FIRST( vertexuse , &lu->down_hd );
-				NMG_CK_VERTEXUSE( vu );
-
-				/* OT_SAME faceuse */
-				nmg_vertexuse_nv( vu , norm );
-
-				vu = RT_LIST_FIRST( vertexuse , &lu->lumate_p->down_hd );
-
-				/* OT_OPPOSITE faceuse */
-				nmg_vertexuse_nv( vu , rev_norm );
-			}
-			else if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
-			{
-				struct edgeuse *eu;
-
-				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-				{
-					struct vertexuse *vu;
-
-					NMG_CK_EDGEUSE( eu );
-
-					vu = eu->vu_p;
-					NMG_CK_VERTEXUSE( vu );
-
-					/* OT_SAME faceuse */
-					nmg_vertexuse_nv( vu , norm );
-
-					vu = eu->eumate_p->vu_p;
-					NMG_CK_VERTEXUSE( vu );
-
-					/* OT_OPPOSITE faceuse */
-					nmg_vertexuse_nv( vu , rev_norm );
-				}
-			}
-		}
-	}
-
 	/* set edge's is_real flag */
 	nmg_mark_edges_real( &s->l );
 
