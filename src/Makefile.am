@@ -14,19 +14,17 @@ bench_dirs = \
 	libwdb \
 	liboptical \
 	libsysv \
+	liborle \
 	conv \
 	fbserv \
 	rt	
 
+# anything not included from above
 kitchensink_dirs = \
 	libcursor \
 	libdm \
-	libfb \
 	libfft \
 	libmultispectral \
-	liborle \
-	libpkg \
-	librtserver \
 	libtclcad \
 	libtermio \
 	libwdb \
@@ -36,10 +34,8 @@ kitchensink_dirs = \
 	bwish \
 	comgeom-g \
 	canon \
-	conv \
 	fb \
 	fbed \
-	fbserv \
 	gtools \
 	halftone \
 	iges \
@@ -54,7 +50,6 @@ kitchensink_dirs = \
 	patch \
 	proc-db \
 	remrt \
-	rt \
 	rttherm \
 	sample_applications \
 	sig \
