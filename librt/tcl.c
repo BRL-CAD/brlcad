@@ -60,9 +60,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 extern struct bu_structparse rt_tor_parse[];
 extern struct bu_structparse rt_tgc_parse[];
 extern struct bu_structparse rt_ell_parse[];
-extern struct bu_structparse rt_arb8_parse[];
+extern struct bu_structparse rt_arb_parse[];
 /* ARS -- not supported yet */
-extern struct bu_structparse rt_half_parse[];
+extern struct bu_structparse rt_hlf_parse[];
 /* REC -- subsumed by TGC */
 /* POLY -- not supported yet */
 /* BSPLINE -- not supported yet */
@@ -99,8 +99,8 @@ struct rt_solid_type_lookup {
 	{ ID_TOR,     sizeof(struct rt_tor_internal), (long)RT_TOR_INTERNAL_MAGIC, "tor", rt_tor_parse },
 	{ ID_TGC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "tgc", rt_tgc_parse },
 	{ ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "ell", rt_ell_parse },
-	{ ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8", rt_arb8_parse },
-	{ ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half", rt_half_parse },
+	{ ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8", rt_arb_parse },
+	{ ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half", rt_hlf_parse },
 	{ ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", rt_tgc_parse },
 	{ ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", rt_ell_parse },
 	{ ID_EBM,     sizeof(struct rt_ebm_internal), (long)RT_EBM_INTERNAL_MAGIC, "ebm", rt_ebm_parse },

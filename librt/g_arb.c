@@ -115,7 +115,7 @@ static CONST struct arb_info rt_arb_info[6] = {
 
 RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 
-struct bu_structparse rt_arb8_parse[] = {
+struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "V2", offsetof(struct rt_arb_internal, pt[1][X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "V3", offsetof(struct rt_arb_internal, pt[2][X]), BU_STRUCTPARSE_FUNC_NULL },

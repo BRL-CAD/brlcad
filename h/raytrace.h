@@ -1456,6 +1456,9 @@ struct rt_functab {
 	int	(*ft_xform) BU_ARGS((struct rt_db_internal * /*op*/,
 			CONST mat_t /*mat*/, struct rt_db_internal * /*ip*/,
 			int /*free*/));
+	CONST struct bu_structparse *ft_parsetab;	/* rt_xxx_parse */
+	size_t	ft_internal_size;	/* sizeof(struct rt_xxx_internal) */
+	long	ft_internal_magic;	/* RT_XXX_INTERNAL_MAGIC */
 };
 extern CONST struct rt_functab rt_functab[];
 extern CONST int rt_nfunctab;

@@ -54,22 +54,6 @@ static char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-/* parameters for solid, internal representation
- * This goes in rtgeom.h
- */
-/* parameters for solid, internal representation */
-struct rt_submodel_internal {
-	long	magic;
-	char	file[128];	/* .g filename, 0-len --> this database. */
-	char	treetop[128];	/* one treetop only */
-	int	meth;		/* space partitioning method */
-	/* other option flags (lazy prep, etc.)?? */
-	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-	mat_t	root2leaf;
-};
-#define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/* subm */
-#define RT_SUBMODEL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_INTERNAL_MAGIC,"rt_submodel_internal")
-
 #define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
 
 struct bu_structparse rt_submodel_parse[] = {
