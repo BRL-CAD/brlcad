@@ -497,9 +497,15 @@ int	reg_id;
 		rt_free( (char *)flags , "euclid-g: flags" );
 	}
 	s = RT_LIST_FIRST( shell , &r->s_hd );
-	
-	if( nmg_ck_closed_surf( s , &tol ) )
-		fprintf( stderr , "Warning: Region %d is not a closed surface\n" , reg_id );
+
+	if( nmg_check_closed_shell( s , &tol ) )
+	{
+		rt_log( "Warning: Region %d is not a closed surface\n" , reg_id );
+		rt_log( "\tCreating new faces to close region\n" );
+		nmg_close_shell( s , &tol );
+		if( nmg_check_closed_shell( s , &tol ) )
+			rt_bomb( "Cannot close shell\n" );
+	}
 
 	add_nmg_to_db(fpdb, m, reg_id);		/* Put region in db. */
 	nmg_km(m);				/* Safe to kill model now. */
