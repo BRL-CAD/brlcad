@@ -113,7 +113,7 @@ proc dbupgrade {args} {
     # first time through only
     if {![info exists dbupgrade_priv(dbname)]} {
 	if {[opendb] == ""} {
-	    if {[info exists tkPriv]} {
+	    if {[info exists tkPriv(cad_dialog)]} {
 		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
 			"No database has been opened!" info 0 OK
 		return
@@ -144,7 +144,7 @@ proc dbupgrade {args} {
     if {[llength $args] == 0} {
 	# inform and prompt the user to upgrade
 
-	if {[info exists tkPriv]} {
+	if {[info exists tkPriv(cad_dialog)]} {
 	    set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "Would you like to upgrade $dbname?" \
 		    $dbupgrade_priv(message) \
@@ -219,7 +219,7 @@ proc dbupgrade {args} {
 	# when overwrite is 0, the user hasn't been prompted to overwrite yet
 	if {!$overwrite} {
 	    # not a directory, so prompt the user about overwriting
-	    if {[info exists tkPriv]} {
+	    if {[info exists tkPriv(cad_dialog)]} {
 		set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 			"About to overwrite $dbname\R4"\
 			"Would you like to overwrite $dbname\R4"\
