@@ -575,6 +575,9 @@ struct rt_i {
 	int		rti_pt_bytes;	/* length of partition struct */
 	int		rti_bv_bytes;	/* length of BITV array */
 	long		rti_magic;	/* magic # for integrity check */
+	vect_t		rti_pmin;	/* for plotting, min RPP */
+	vect_t		rti_pmax;	/* for plotting, max RPP */
+	fastf_t		rti_pconv;	/* scale from rti_pmin */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x01016580	/* magic # for integrity check */
