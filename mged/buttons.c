@@ -130,7 +130,7 @@ static struct menu_item second_menu[] = {
 	{ "45,45", btn_item_hit, BV_45_45 },
 	{ "Restore View", btn_item_hit, BV_VRESTORE },
 	{ "Save View", btn_item_hit, BV_VSAVE },
-	{ "Angle/Dist Cursor", btn_item_hit, BV_ADCURSOR },
+	{ "Ang/Dist Curs", btn_item_hit, BV_ADCURSOR },
 	{ "Reset Viewsize", btn_item_hit, BV_RESET },
 	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
 	{ "Object Illum", btn_item_hit, BE_O_ILLUMINATE },
