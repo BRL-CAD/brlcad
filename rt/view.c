@@ -526,9 +526,8 @@ struct rt_i	*rtip;
  *  Background texture mapping could be done here.
  *  For now, return a pleasant dark blue.
  */
-static hit_nothing( ap, PartHeadp )
+static hit_nothing( ap )
 register struct application *ap;
-struct partition *PartHeadp;
 {
 	if( rdebug&RDEBUG_MISSPLOT )  {
 		vect_t	out;
@@ -758,9 +757,10 @@ out:
  *
  *  a_hit() routine for simple lighting model.
  */
-viewit( ap, PartHeadp )
+viewit( ap, PartHeadp, segHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg	*segHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
