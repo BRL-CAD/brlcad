@@ -357,83 +357,34 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 		return( nhits*2 );
 	}
 
-	if( bot->bot_mode == RT_BOT_SOLID )
+	BU_ASSERT( bot->bot_mode == RT_BOT_SOLID );
+
+	if( bot->bot_orientation == RT_BOT_UNORIENTED )
 	{
-		if( bot->bot_orientation == RT_BOT_UNORIENTED )
+		/*
+		 *  RT_BOT_SOLID, RT_BOT_UNORIENTED.
+		 */
+		if( nhits == 1 )
 		{
-			if( nhits == 1 )
-			{
-				/* make a zero length partition */
-				RT_GET_SEG( segp, ap->a_resource );
-				segp->seg_stp = stp;
+			if( pieces_flag )  return 1;	/* save hit for later */
 
-				/* set in hit */
-				segp->seg_in = hits[0];
-				segp->seg_in.hit_vpriv[Z] = 1;
+			/* make a zero length partition */
+			RT_GET_SEG( segp, ap->a_resource );
+			segp->seg_stp = stp;
 
-				/* set out hit */
-				segp->seg_out = hits[0];
-				segp->seg_out.hit_vpriv[Z] = -1;
+			/* set in hit */
+			segp->seg_in = hits[0];
+			segp->seg_in.hit_vpriv[Z] = 1;
 
-				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-				return( 1 );
-			}
+			/* set out hit */
+			segp->seg_out = hits[0];
+			segp->seg_out.hit_vpriv[Z] = -1;
 
-			/* Remove duplicate hits */
-			{
-				register int j;
-
-				for( i=0 ; i<nhits-1 ; i++ )
-				{
-					fastf_t dist;
-
-					dist = hits[i].hit_dist - hits[i+1].hit_dist;
-					if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) )
-					{
-						for( j=i ; j<nhits-1 ; j++ )
-							hits[j] = hits[j+1];
-						nhits--;
-						i--;
-					}
-				}
-			}
-			if( nhits&1 )
-			{
-				bu_log( "rt_bot_shot(%s): WARNING: odd number of hits (%d), last hit ignored\n",
-					stp->st_name, nhits );
-				nhits--;
-			}
-
-			for( i=0 ; i<nhits ; i += 2 )
-			{
-				RT_GET_SEG( segp, ap->a_resource );
-				segp->seg_stp = stp;
-
-				/* set in hit */
-				segp->seg_in = hits[i];
-				segp->seg_in.hit_vpriv[Z] = 1;
-
-				/* set out hit */
-				segp->seg_out = hits[i+1];
-				segp->seg_out.hit_vpriv[Z] = -1;
-
-				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-			}
-			return( nhits );
+			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+			return( 1 );
 		}
 
-		/* from this point on, process very similar to a polysolid */
-
-		/* Remove duplicate hits.
-		   We remove one of a pair of hits when they are
-			1) close together, and
-			2) both "entry" or both "exit" occurrences.
-		   Two immediate "entry" or two immediate "exit" hits suggest
-		   that we hit both of two joined faces, while we want to hit only
-		   one.  An "entry" followed by an "exit" (or vice versa) suggests
-		   that we grazed an edge, and thus we should leave both
-		   in the hit list. */
-		
+		/* Remove duplicate hits */
 		{
 			register int j;
 
@@ -442,8 +393,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 				fastf_t dist;
 
 				dist = hits[i].hit_dist - hits[i+1].hit_dist;
-				if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
-					hits[i].hit_vpriv[X] * hits[i+1].hit_vpriv[X] > 0)
+				if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) )
 				{
 					for( j=i ; j<nhits-1 ; j++ )
 						hits[j] = hits[j+1];
@@ -453,106 +403,164 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 			}
 		}
 
-
-		if( nhits == 1 )
-			nhits = 0;
-
-		if( nhits&1 )  {
-			register int i;
-			static int nerrors = 0;		/* message counter */
-			/*
-			 * If this condition exists, it is almost certainly due to
-			 * the dn==0 check above.  Thus, we will make the last
-			 * surface rather thin.
-			 * This at least makes the
-			 * presence of this solid known.  There may be something
-			 * better we can do.
-			 */
-
-			if( nerrors++ < 6 )  {
-				bu_log("rt_bot_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
-				bu_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
-					V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
-				for(i=0; i < nhits; i++ )
-				{
-					point_t tmp_pt;
-
-					VJOIN1( tmp_pt, rp->r_pt, hits[i].hit_dist, rp->r_dir );
-					if( hits[i].hit_vpriv[X] < 0.0 && bot->bot_orientation == RT_BOT_CCW )
-						bu_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
-					else
-						bu_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
-				}
-			}
-
-			if( nhits > 2 )
-			{
-				fastf_t dot1,dot2;
-				int j;
-
-				/* likely an extra hit,
-				 * look for consecutive entrances or exits */
-
-				dot2 = 1.0;
-				i = 0;
-				while( i<nhits )
-				{
-					dot1 = dot2;
-					dot2 = hits[i].hit_vpriv[X];
-					if( dot1 > 0.0 && dot2 > 0.0 )
-					{
-						/* two consectutive exits,
-						 * manufacture an entrance at same distance
-						 * as second exit.
-						 */
-						for( j=nhits ; j>i ; j-- )
-							hits[j] = hits[j-1];	/* struct copy */
-
-						hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
-						dot2 = hits[i].hit_vpriv[X];
-						nhits++;
-						bu_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
-					}
-					else if( dot1 < 0.0 && dot2 < 0.0 )
-					{
-						/* two consectutive entrances,
-						 * manufacture an exit between them.
-						 */
-
-						for( j=nhits ; j>i ; j-- )
-							hits[j] = hits[j-1];	/* struct copy */
-
-						hits[i] = hits[i-1];	/* struct copy */
-						hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
-						dot2 = hits[i].hit_vpriv[X];
-						nhits++;
-						bu_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
-					}
-					i++;
-				}
-
-			}
-			else
-			{
-				hits[nhits] = hits[nhits-1];	/* struct copy */
-				hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
-				bu_log( "\t\tadding fictitious hit at %f\n", hits[nhits].hit_dist );
-				nhits++;
-			}
-		}
-
-		/* nhits is even, build segments */
+		for( i=0 ; i<(nhits&~1) ; i += 2 )
 		{
-			for( i=0; i < nhits; i += 2 )  {
-				RT_GET_SEG(segp, ap->a_resource);
-				segp->seg_stp = stp;
-				segp->seg_in = hits[i];		/* struct copy */
-				segp->seg_in.hit_vpriv[Z] = 1;
-				segp->seg_out = hits[i+1];	/* struct copy */
-				segp->seg_out.hit_vpriv[Z] = -1;
-				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+			RT_GET_SEG( segp, ap->a_resource );
+			segp->seg_stp = stp;
+
+			/* set in hit */
+			segp->seg_in = hits[i];
+			segp->seg_in.hit_vpriv[Z] = 1;
+
+			/* set out hit */
+			segp->seg_out = hits[i+1];
+			segp->seg_out.hit_vpriv[Z] = -1;
+
+			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+		}
+		if( nhits&1 )
+		{
+			if( pieces_flag )  return 1;	/* save hit for later */
+
+			bu_log( "rt_bot_shot(%s): WARNING: odd number of hits (%d), last hit ignored\n",
+				stp->st_name, nhits );
+			nhits--;
+		}
+		return( nhits );
+	}
+
+	/*
+	 *  RT_BOT_SOLID, RT_BOT_ORIENTED.
+	 *
+	 *  From this point on, process very similar to a polysolid
+	 */
+
+	/* Remove duplicate hits.
+	 *  We remove one of a pair of hits when they are
+	 *	1) close together, and
+	 *	2) both "entry" or both "exit" occurrences.
+	 *   Two immediate "entry" or two immediate "exit" hits suggest
+	 *   that we hit both of two joined faces, while we want to hit only
+	 *   one.  An "entry" followed by an "exit" (or vice versa) suggests
+	 *   that we grazed an edge, and thus we should leave both
+	 *   in the hit list.
+	 */
+	{
+		register int j;
+
+		for( i=0 ; i<nhits-1 ; i++ )
+		{
+			FAST fastf_t dist;
+
+			dist = hits[i].hit_dist - hits[i+1].hit_dist;
+			if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
+				hits[i].hit_vpriv[X] * hits[i+1].hit_vpriv[X] > 0)
+			{
+				for( j=i ; j<nhits-1 ; j++ )
+					hits[j] = hits[j+1];
+				nhits--;
+				i--;
 			}
 		}
+	}
+
+	if( nhits == 1 )  {
+		if( pieces_flag )  return 1;	/* save hit for later */
+		return 0;
+	}
+
+	if( (nhits&1) && !pieces_flag )  {
+		register int i;
+		static int nerrors = 0;		/* message counter */
+		/*
+		 * If this condition exists, it is almost certainly due to
+		 * the dn==0 check above.  Thus, we will make the last
+		 * surface rather thin.
+		 * This at least makes the
+		 * presence of this solid known.  There may be something
+		 * better we can do.
+		 */
+
+		if( nerrors++ < 6 )  {
+			bu_log("rt_bot_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
+			bu_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
+				V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
+			for(i=0; i < nhits; i++ )
+			{
+				point_t tmp_pt;
+
+				VJOIN1( tmp_pt, rp->r_pt, hits[i].hit_dist, rp->r_dir );
+				if( hits[i].hit_vpriv[X] < 0.0 && bot->bot_orientation == RT_BOT_CCW )
+					bu_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
+				else
+					bu_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
+			}
+		}
+
+		if( nhits > 2 )
+		{
+			fastf_t dot1,dot2;
+			int j;
+
+			/* likely an extra hit,
+			 * look for consecutive entrances or exits */
+
+			dot2 = 1.0;
+			i = 0;
+			while( i<nhits )
+			{
+				dot1 = dot2;
+				dot2 = hits[i].hit_vpriv[X];
+				if( dot1 > 0.0 && dot2 > 0.0 )
+				{
+					/* two consectutive exits,
+					 * manufacture an entrance at same distance
+					 * as second exit.
+					 */
+					for( j=nhits ; j>i ; j-- )
+						hits[j] = hits[j-1];	/* struct copy */
+
+					hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
+					dot2 = hits[i].hit_vpriv[X];
+					nhits++;
+					bu_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
+				}
+				else if( dot1 < 0.0 && dot2 < 0.0 )
+				{
+					/* two consectutive entrances,
+					 * manufacture an exit between them.
+					 */
+
+					for( j=nhits ; j>i ; j-- )
+						hits[j] = hits[j-1];	/* struct copy */
+
+					hits[i] = hits[i-1];	/* struct copy */
+					hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
+					dot2 = hits[i].hit_vpriv[X];
+					nhits++;
+					bu_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
+				}
+				i++;
+			}
+		}
+		else
+		{
+			hits[nhits] = hits[nhits-1];	/* struct copy */
+			hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
+			bu_log( "\t\tadding fictitious hit at %f\n", hits[nhits].hit_dist );
+			nhits++;
+		}
+	}
+
+	/* nhits is even, build segments */
+	for( i=0; i < (nhits&~1); i += 2 )  {
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+		segp->seg_in = hits[i];		/* struct copy */
+		segp->seg_in.hit_vpriv[Z] = 1;
+		segp->seg_out = hits[i+1];	/* struct copy */
+		segp->seg_out.hit_vpriv[Z] = -1;
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(nhits);			/* HIT */
 }
@@ -688,7 +696,6 @@ struct resource		*resp;
 	RT_CK_SOLTAB(stp);
 	RT_CK_RESOURCE(resp);
 	bot = (struct bot_specific *)stp->st_specific;
-bu_log("rt_bot_piece_shot %d,%d\n", ap->a_x, ap->a_y);
 
 	/* Restore left-over hit from previous invocation */
 	if( psp->oddhit.hit_dist < INFINITY )  {
@@ -776,7 +783,17 @@ bu_log("rt_bot_piece_shot %d,%d\n", ap->a_x, ap->a_y);
 bu_log("rt_bot_piece_shot(): nhits = %d\n", nhits );
 
 	/* build segments */
-	return rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, 1 );
+	{
+		int ret;
+		ret = rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, 1 );
+
+		if( ret&1 )  {
+			/* Save odd hit up for next entry */
+			psp->oddhit = hits[ret-1];	/* struct copy */
+			return ret-1;
+		}
+		return ret;
+	}
 }
 
 #define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
