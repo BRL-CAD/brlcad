@@ -312,11 +312,13 @@ struct soltab *stp;
 	fastf_t        *u_eval, *v_eval, *s_eval, 
 	 	       *u2_eval, *v2_eval, *uv_eval;
 	fastf_t         u, v;
-	fastf_t         E, F, G, e, f, g;
+	fastf_t         E, F, G;		/* First Fundamental Form */
+	fastf_t		L, M, N;		/* Second Fundamental form */
 	struct b_spline *u2_srf, *v2_srf, *uv_srf;
-	fastf_t         denom, a11, a12, a21, a22, a, b, c;
-	vect_t          vec1, vec2;
-	vect_t          uvec, vvec;
+	fastf_t         denom;
+	fastf_t		wein[4];		/*Weingarten matrix */
+	fastf_t		evec[3];
+	fastf_t		mean, gauss, discrim;
 	vect_t 		norm;
 
 	u = hitp->hit_vpriv[0];
@@ -344,11 +346,11 @@ struct soltab *stp;
 		VMOVE( hitp->hit_normal, norm );
 		E = VDOT(u_eval, u_eval);
 		F = VDOT(u_eval, v_eval);
-		E = VDOT(v_eval, v_eval);
+		G = VDOT(v_eval, v_eval);
 
-		e = VDOT(norm, u2_eval);
-		f = VDOT(norm, uv_eval);
-		g = VDOT(norm, v2_eval);
+		L = VDOT(norm, u2_eval);
+		M = VDOT(norm, uv_eval);
+		N = VDOT(norm, v2_eval);
 
 	} else if (s_ptr->root->ctl_mesh->pt_type == P4) {
 		vect_t          ue, ve;
@@ -431,30 +433,55 @@ struct soltab *stp;
 			(-2.0 / (s_eval[3] * s_eval[3] * s_eval[3])) *
 			(v_eval[3] * u_eval[3] * s_eval[2]);
 
-		e = VDOT(norm, u2e);
-		f = VDOT(norm, uve);
-		g = VDOT(norm, v2e);
+		L = VDOT(norm, u2e);
+		M = VDOT(norm, uve);
+		N = VDOT(norm, v2e);
 	}
 
 	denom = ( (E*G) - (F*F) ); 
 
-	a11 = (( f * F ) -  (e * G) ) / denom;
+	gauss = ( L * N - M *M)/ denom;
+	mean  = ( G * L + E * N - 2 * F * M) / (2 * denom );
 
-	a21 = ((e*F) - (f * E))/ denom;
+	discrim = sqrt( mean * mean - gauss );
 
-	a12 = ((g * F) - (f * G))/ denom;
+	cvp->crv_c1 = mean - discrim;
+	cvp->crv_c2 = mean + discrim;
 
-	a22 = ((f * F) - (g * E))/ denom;
+	if ( APX_EQ( (E * G) - ( F* F ) , 0.0 ) )
+	{
+		rt_log("first fundamental form is singular E = %g F = %g G = %g\n",
+			E,F,G);
+		return;
+	}
 
-	a = 1.0;
-	b = - ( a11 +  a22);
-	c = (a11 * a22) - (a12 * a21);
+	wein[0] = ( (G * L) - (F * M))/ (denom);
+	wein[1] = ( (G * M) - (F * N))/ (denom);
+	wein[2] = ( (E * M) - (F * L))/ (denom);
+	wein[3] = ( (E * N) - (F * M))/ (denom);
 
-	vec_ortho( uvec, hitp->hit_normal );
-	VCROSS( vvec, hitp->hit_normal, uvec );
 
-	eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
-	VCOMB2( cvp->crv_pdir, vec1[X], uvec, vec1[Y], vvec );
+	if ( APX_EQ( wein[1] , 0.0 ) && APX_EQ( wein[3] - cvp->crv_c1, 0.0) )
+	{
+		evec[0] = 0.0; evec[1] = 1.0;
+	} else
+	{
+		evec[0] = 1.0;
+		if( fabs( wein[1] ) > fabs( wein[3] - cvp->crv_c1) )
+		{
+			evec[1] = (cvp->crv_c1 - wein[0]) / wein[1];
+		} else
+		{
+			evec[1] = wein[2] / ( cvp->crv_c1 - wein[3] );
+		}
+	}
+
+	VSET( cvp->crv_pdir, 0.0, 0.0, 0.0 );
+
+	cvp->crv_pdir[0] = evec[0] * u_eval[0] + evec[1] * v_eval[0];
+	cvp->crv_pdir[1] = evec[0] * u_eval[1] + evec[1] * v_eval[1];
+	cvp->crv_pdir[2] = evec[0] * u_eval[2] + evec[1] * v_eval[2];
+
 	VUNITIZE( cvp->crv_pdir );
 
 	rt_free( (char *)s_eval, "spl_curve:s_eval");
