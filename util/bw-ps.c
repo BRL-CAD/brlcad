@@ -31,29 +31,33 @@ extern char	*optarg;
 extern int	optind;
 
 static int	encapsulated = 0;	/* encapsulated postscript */
-static int	inverse = 0;	/* inverse video (RFU) */
-static int	center = 0;	/* center output on 8.5 x 11 page */
+static int	inverse = 0;		/* inverse video (RFU) */
+static int	center = 0;		/* center output on 8.5 x 11 page */
+static int	landscape = 0;		/* landscape mode */
 
-static int	width = 512;	/* input size in pixels */
+static int	width = 512;		/* input size in pixels */
 static int	height = 512;
-static double	outwidth;	/* output image size in inches */
+static double	outwidth;		/* output image size in inches */
 static double	outheight;
-static int	xpoints;	/* output image size in points */
+static int	xpoints;		/* output image size in points */
 static int	ypoints;
+static int	pagewidth = 612;	/* page size in points - 8.5 inches */
+static int	pageheight = 792;	/* 11 inches */
 
 static char	*file_name;
 static FILE	*infp;
 
 static char usage[] = "\
-Usage: bw-ps [-e] [-c] [-h] [-s squareinsize] [-w in_width] [-n in_height]\n\
-        [-S inches_square] [-W width_inches] [-N height_inches] [file.bw]\n";
+Usage: bw-ps [-e] [-c] [-L] [-h]\n\
+        [-s input_squaresize] [-w input_width] [-n input_height]\n\
+        [-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ehics:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "ehicLs:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'e':
 			/* Encapsulated PostScript */
@@ -68,6 +72,9 @@ register char **argv;
 			break;
 		case 'c':
 			center = 1;
+			break;
+		case 'L':
+			landscape = 1;
 			break;
 		case 's':
 			/* square file size */
@@ -182,25 +189,32 @@ int	width, height;		/* in points */
 
 	if( encapsulated ) {
 		fputs( "%!PS-Adobe-2.0 EPSF-1.2\n", fp );
-		fputs( "%%Creator: bw-ps\n", fp );
-		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
 		fprintf(fp, "%%%%Title: %s\n", name );
+		fputs( "%%Creator: BRL-CAD bw-ps\n", fp );
+		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
 		fputs( "%%Pages: 0\n", fp );
 	} else {
 		fputs( "%!PS-Adobe-1.0\n", fp );
 		fputs( "%begin(plot)\n", fp );
-		/*fputs( "%%DocumentFonts:  Courier\n", fp );*/
 		fprintf(fp, "%%%%Title: %s\n", name );
-		fputs( "%%Creator: bw-ps\n", fp );
+		fputs( "%%Creator: BRL-CAD bw-ps\n", fp );
 		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
 	}
 	fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", width, height );
 	fputs( "%%EndComments\n\n", fp );
 
-	if( center ) {
+	if( !encapsulated && landscape ) {
+		int	tmp;
+		tmp = pagewidth;
+		pagewidth = pageheight;
+		pageheight = tmp;
+		fprintf( fp, "90 rotate\n" );
+		fprintf( fp, "0 -%d translate\n", pageheight );
+	}
+	if( !encapsulated && center ) {
 		int	xtrans, ytrans;
-		xtrans = (8.5*72 - width)/2.0;
-		ytrans = (11*72 - height)/2.0;
+		xtrans = (pagewidth - width)/2.0;
+		ytrans = (pageheight - height)/2.0;
 		fprintf( fp, "%d %d translate\n", xtrans, ytrans );
 	}
 	fprintf( fp, "%d %d scale\n\n", width, height );
@@ -211,6 +225,6 @@ FILE	*fp;
 {
 	if( !encapsulated )
 		fputs( "%end(plot)\n", fp );
-	if( center )
-		fputs( "\nshowpage\n", fp );	/*XXX*/
+
+	fputs( "\nshowpage\n", fp );
 }
