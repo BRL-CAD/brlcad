@@ -29,10 +29,10 @@ display:  display.o LIBRT
         CC LDFLAGS display.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o display
 
 see:	see.o
-	CC LDFLAGS see.o -L/usr/X11/lib -lX11 -o see
+	CC LDFLAGS -I/usr/X11/include see.o -L/usr/X11/lib -lX11 -o see
 
 pictx:	pictx.o
-	CC LDFLAGS pictx.o -L/usr/X11/lib -lX11 -o pictx
+	CC LDFLAGS -I/usr/X11/include pictx.o -L/usr/X11/lib -lX11 -o pictx
 
 lint:
 	lint LFLAGS -I''INCDIR ../irprep/firpass.c ../irprep/subroutines.c > SRCDIR.lint
