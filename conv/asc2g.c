@@ -209,12 +209,12 @@ combbld()	/* Build Combination record */
 	if( temp_nflag )  {
 		fgets( buf, BUFSIZE, stdin );
 		zap_nl();
-		strncpy( record.c.c_matname, buf, sizeof(record.c.c_matname) );
+		strncpy( record.c.c_matname, buf, sizeof(record.c.c_matname)-1 );
 	}
 	if( temp_pflag )  {
 		fgets( buf, BUFSIZE, stdin );
 		zap_nl();
-		strncpy( record.c.c_matparm, buf, sizeof(record.c.c_matparm) );
+		strncpy( record.c.c_matparm, buf, sizeof(record.c.c_matparm)-1 );
 	}
 
 	/* Write out the record */

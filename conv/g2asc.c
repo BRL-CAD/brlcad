@@ -424,7 +424,7 @@ char *str;
 	char *ep;
 
 	if( len > sizeof(buf)-2 )  len=sizeof(buf)-2;
-	ep = &buf[len];
+	ep = &buf[len-1];		/* Leave room for null */
 	while( op < ep )  {
 		if( *ip == '\0' )  break;
 		if( isascii(*ip) && isprint(*ip) )  {
