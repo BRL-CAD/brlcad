@@ -192,6 +192,20 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     [ "x$HAVE_GLIBTOOLIZE" = "xyes" ] && glibtoolize --automake --copy --force
     [ ! $? = 0 ] && echo "ERROR: glibtoolize failed" && exit 2
   fi
+
+  # libtoolize might put ltmain.sh in the wrong place
+  if test -f ltmain.sh ; then
+    if test ! -f misc/ltmain.sh ; then
+      echo
+      echo "Warning:  libtoolize is creating ltmain.sh in the wrong directory"
+      echo
+      echo "Fortunately, the problem can be worked around by simply copying the"
+      echo "file to the appropriate location (misc/).  This has been done for you."
+      echo
+      cp ltmain.sh misc/ltmain.sh
+    fi
+  fi
+
   aclocal
   [ ! $? = 0 ] && echo "ERROR: aclocal failed" && exit 2
   autoheader 
