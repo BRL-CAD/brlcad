@@ -97,7 +97,11 @@ static int	spl_surfno;	/* What surf & ctl pt to edit on spline */
 static int	spl_ui;
 static int	spl_vi;
 
-static struct edgeuse	*es_eu;	/* Currently selected NMG edgeuse */
+static struct edgeuse	*es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
+static struct loopuse	*lu_copy=(struct loopuse*)NULL;	/* copy of loop to be extruded */
+static plane_t		lu_pl;	/* plane equation for loop to be extruded */
+static struct shell	*es_s=(struct shell *)NULL;	/* Shell where extrusion is to end up */
+static point_t		lu_keypoint;	/* keypoint of lu_copy for extrusion */
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -279,12 +283,13 @@ struct menu_item  nmg_menu[] = {
 	{ "NMG MENU", (void (*)())NULL, 0 },
 	{ "pick edge", nmg_ed, ECMD_NMG_EPICK },
 	{ "move edge", nmg_ed, ECMD_NMG_EMOVE },
-	{ "debug edge", nmg_ed, ECMD_NMG_EDEBUG },
 	{ "split edge", nmg_ed, ECMD_NMG_ESPLIT },
 	{ "delete edge", nmg_ed, ECMD_NMG_EKILL },
 	{ "next eu", nmg_ed, ECMD_NMG_FORW },
 	{ "prev eu", nmg_ed, ECMD_NMG_BACK },
 	{ "radial eu", nmg_ed, ECMD_NMG_RADIAL },
+	{ "extrude loop", nmg_ed , ECMD_NMG_LEXTRU },
+	{ "debug edge", nmg_ed, ECMD_NMG_EDEBUG },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -867,6 +872,103 @@ int arg;
 		(void)printf("edgeuse selected=x%x\n", es_eu);
 		sedraw = 1;
 		return;
+	case ECMD_NMG_LEXTRU:
+		{
+			struct model *m,*m_tmp;
+			struct nmgregion *r,*r_tmp;
+			struct shell *s,*s_tmp;
+			struct loopuse *lu=(struct loopuse *)NULL;
+			struct loopuse *lu_tmp;
+			struct edgeuse *eu;
+			fastf_t area;
+			int wire_loop_count=0;
+			long *trans_tbl;
+
+			m = (struct model *)es_int.idb_ptr;
+			NMG_CK_MODEL( m );
+
+			/* look for wire loops */
+			for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
+			{
+				NMG_CK_REGION( r );
+				for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+				{
+					if( RT_LIST_IS_EMPTY( &s->lu_hd ) )
+						continue;
+
+					for( RT_LIST_FOR( lu_tmp , loopuse , &s->lu_hd ) )
+					{
+						if( !lu )
+							lu = lu_tmp;
+						else if( lu_tmp == lu->lumate_p )
+							continue;
+
+						wire_loop_count++;
+					}
+				}
+			}
+
+			if( !wire_loop_count )
+			{
+				(void)printf( "No sketch (wire loop) to extrude\n" );
+				return;
+			}
+
+			if( wire_loop_count > 1 )
+			{
+				(void)printf( "Too many wire loops!!! Don't know which to extrude!!\n" );
+				return;
+			}
+
+			if( !lu | *lu->up.magic_p != NMG_SHELL_MAGIC )
+			{
+				/* This should never happen */
+				rt_bomb( "Cannot find wire loop!!\n" );
+			}
+
+			/* Make sure loop is not a crack */
+			area = nmg_loop_plane_area( lu , lu_pl );
+
+			if( area < 0.0 )
+			{
+				(void)printf( "Cannot extrude loop with no area\n" );
+				return;
+			}
+
+			/* Create a temporary model to store the basis loop */
+			m_tmp = nmg_mm();
+			r_tmp = nmg_mrsv( m_tmp );
+			s_tmp = RT_LIST_FIRST( shell , &r_tmp->s_hd );
+			lu_copy = nmg_dup_loop( lu , &s_tmp->l.magic , (long **)0 );
+			if( !lu_copy )
+			{
+				(void)printf( "Failed to make copy of loop\n" );
+				nmg_km( m_tmp );
+				return;
+			}
+
+			/* Get the first vertex in the loop as the basis for extrusion */
+			eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			VMOVE( lu_keypoint , eu->vu_p->v_p->vg_p->coord );
+
+			s = lu->up.s_p;
+			
+			if( RT_LIST_NON_EMPTY( &s->fu_hd ) )
+			{
+				long *trans_tbl;
+				struct loopuse *new_lu;
+
+				/* make a new shell to hold the extruded solid */
+
+				r = RT_LIST_FIRST( nmgregion , &m->r_hd );
+				NMG_CK_REGION( r );
+				es_s = nmg_msv( r );
+			}
+			else
+				es_s = s;
+
+		}
+		break;
 	}
 	/* For example, this will set es_edflag = ECMD_NMG_EPICK */
 	es_edflag = arg;
@@ -1483,6 +1585,7 @@ init_sedit()
 	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+	lu_copy = (struct loopuse *)NULL;
 
 	sedit_menu();		/* put up menu header */
 
@@ -2193,6 +2296,7 @@ sedit()
 				{
 					/* Currently can only kill wire edges or edges in wire loops */
 					(void)printf( "Currently, we can only kill wire edges or edges in wire loops\n" );
+					es_edflag = IDLE;
 					break;
 				}
 
@@ -2278,6 +2382,7 @@ sedit()
 				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
 				{
 					(void)printf( "Currently, we can only split wire edges or edges in wire loops\n" );
+					es_edflag = IDLE;
 					break;
 				}
 
@@ -2306,6 +2411,83 @@ sedit()
 			es_eu = nmg_esplit( v , es_eu , 0 );
 			nmg_vertex_gv( es_eu->vu_p->v_p , new_pt );
 			nmg_rebound( m , &mged_tol );
+		}
+		break;
+	case ECMD_NMG_LEXTRU:
+		{
+			fastf_t dist;
+			point_t to_pt;
+			vect_t extrude_vec;
+			struct loopuse *new_lu;
+			struct faceuse *fu;
+			struct model *m;
+			plane_t new_lu_pl;
+			fastf_t area;
+
+			if( es_mvalid )
+				VMOVE( to_pt , es_mparam )
+			else if( inpara == 3 )
+				VMOVE( to_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+				(void)printf( "x y z coordinates required for loop extrusion\n" );
+				break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			VSUB2( extrude_vec , to_pt , lu_keypoint );
+
+			if( rt_isect_line3_plane( &dist , to_pt , extrude_vec , lu_pl , &mged_tol ) < 1 )
+			{
+				(void)printf( "Cannot extrude parallel to plane of loop\n" );
+				return;
+			}
+
+			if( RT_LIST_NON_EMPTY( &es_s->fu_hd ) )
+			{
+				struct nmgregion *r;
+
+				r = es_s->r_p;
+				(void) nmg_ks( es_s );
+				es_s = nmg_msv( r );
+			}
+
+			new_lu = nmg_dup_loop( lu_copy , &es_s->l.magic , (long **)0 );
+			area = nmg_loop_plane_area( new_lu , new_lu_pl );
+			if( area < 0.0 )
+			{
+				(void)printf( "loop to be extruded as no area!!!\n" );
+				return;
+			}
+
+			if( VDOT( extrude_vec , new_lu_pl ) > 0.0 )
+			{
+				plane_t tmp_pl;
+
+				fu = nmg_mf( new_lu->lumate_p );
+				NMG_CK_FACEUSE( fu );
+				HREVERSE( tmp_pl , new_lu_pl );
+				nmg_face_g( fu , tmp_pl );
+			}
+			else
+			{
+				fu = nmg_mf( new_lu );
+				NMG_CK_FACEUSE( fu );
+				nmg_face_g( fu , new_lu_pl );
+			}
+
+			(void)nmg_extrude_face( fu , extrude_vec , &mged_tol );
+
+			nmg_fix_normals( fu->s_p , &mged_tol );
+
+			m = nmg_find_model( &fu->l.magic );
+			nmg_rebound( m , &mged_tol );
+
+			es_eu = (struct edgeuse *)NULL;
+
+			replot_editing_solid();
+			dmaflag = 1;
 		}
 		break;
 
@@ -2503,6 +2685,7 @@ CONST vect_t	mousevec;
 		}
 		break;
 
+	case ECMD_NMG_LEXTRU:
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
 		MAT4X3PNT( temp, view2model, mousevec );
@@ -3393,6 +3576,14 @@ sedit_accept()
 	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+	if( lu_copy )
+	{
+		struct model *m;
+
+		m = nmg_find_model( &lu_copy->l.magic );
+		nmg_km( m );
+		lu_copy = (struct loopuse *)NULL;
+	}
 
 	/* write editing changes out to disc */
 	dp = illump->s_path[illump->s_last];
@@ -3427,6 +3618,14 @@ sedit_reject()
 	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+	if( lu_copy )
+	{
+		struct model *m;
+
+		m = nmg_find_model( &lu_copy->l.magic );
+		nmg_km( m );
+		lu_copy = (struct loopuse *)NULL;
+	}
 
 	/* Restore the original solid */
 	replot_original_solid( illump );
@@ -3488,6 +3687,7 @@ char	**argv;
 		case PTARB:
 		case ECMD_NMG_ESPLIT:
 		case ECMD_NMG_EMOVE:
+		case ECMD_NMG_LEXTRU:
 			/* must convert to base units */
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;
@@ -4283,158 +4483,5 @@ char	**argv;
 	}
 
 	dmaflag = 1;
-	return CMD_OK;
-}
-
-int
-f_dextrude( argc, argv )
-int argc;
-char **argv;
-{
-	struct model *m;
-	struct nmgregion *r;
-	struct shell *s;
-	struct faceuse *fu;
-	struct loopuse *lu=(struct loopuse *)NULL;
-	struct loopuse *lu_tmp;
-	int wire_loop_count=0;
-	int shell_has_faces=0;
-	point_t to_pt;
-	fastf_t extrude_dist;
-	vect_t extrude_dir;
-	vect_t extrude_vec;
-	char *new_solid_name=(char *)NULL;
-	fastf_t area;
-	fastf_t dist;
-	plane_t pl;
-
-	if( not_state( ST_S_EDIT, "Dextrude" ) )
-		return CMD_BAD;
-
-	if( es_int.idb_type != ID_NMG )
-	{
-		(void)printf( "Dextrude: can only be applied to an NMG solid\n" );
-		return CMD_BAD;
-	}
-
-	if( argc == 4 )
-	{
-		VSET( to_pt , atof( argv[1] ) , atof( argv[2] ) , atof( argv[3] ) )
-		VSCALE( to_pt , to_pt , local2base );
-	}
-	else if( argc == 5 )
-	{
-		extrude_dist = atof( argv[1] ) * local2base;
-		VSET( extrude_dir , atof( argv[2] ) , atof( argv[3] ) , atof( argv[4] ) )
-		VUNITIZE( extrude_dir );
-	}
-
-	m = (struct model *)es_int.idb_ptr;
-	NMG_CK_MODEL( m );
-
-	/* look for wire loops */
-	for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
-	{
-		NMG_CK_REGION( r );
-		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
-		{
-			if( RT_LIST_IS_EMPTY( &s->lu_hd ) )
-				continue;
-
-			for( RT_LIST_FOR( lu_tmp , loopuse , &s->lu_hd ) )
-			{
-				if( !lu )
-					lu = lu_tmp;
-				else if( lu_tmp == lu->lumate_p )
-					continue;
-
-				wire_loop_count++;
-			}
-		}
-	}
-
-	if( !wire_loop_count )
-	{
-		(void)printf( "No sketch (wire loop) to extrude\n" );
-		return CMD_BAD;
-	}
-
-	if( wire_loop_count > 1 )
-	{
-		(void)printf( "Too many wire loops!!! Don't know which to extrude!!\n" );
-		return CMD_BAD;
-	}
-
-	if( !lu | *lu->up.magic_p != NMG_SHELL_MAGIC )
-	{
-		/* This should never happen */
-		rt_bomb( "Cannot find wire loop!!\n" );
-	}
-
-	/* Make sure loop is not a crack */
-	area = nmg_loop_plane_area( lu , pl );
-
-	if( area < 0.0 )
-	{
-		(void)printf( "Cannot extrude loop with no area\n" );
-		return CMD_BAD;
-	}
-
-	if( argc == 4 )
-	{
-		extrude_dist = DIST_PT_PLANE( to_pt , pl );
-		VMOVE( extrude_dir , pl );
-	}
-
-	if( rt_isect_line3_plane( &dist , to_pt , extrude_dir , pl , &mged_tol ) < 1 )
-	{
-		(void)printf( "Cannot extrude parallel to plane of loop\n" );
-		return CMD_BAD;
-	}
-
-	s = lu->up.s_p;
-	
-	if( RT_LIST_NON_EMPTY( &s->fu_hd ) )
-	{
-		long *trans_tbl;
-		struct loopuse *new_lu;
-
-		/* make a new shell to hold the extruded solid */
-
-		r = RT_LIST_FIRST( nmgregion , &m->r_hd );
-		NMG_CK_REGION( r );
-		s = nmg_msv( r );
-
-		/* copy the loop to the new shell */
-		trans_tbl = (long *)rt_calloc( 2*m->maxindex , sizeof( long ) , "Dextrude: trans_tbl" );
-		new_lu = nmg_dup_loop( lu , &s->l.magic , &trans_tbl );
-		rt_free( (char *)trans_tbl , "Dextrude: trans_tbl" );
-		if( nmg_klu( lu ) )
-		{
-			/* this should never happen */
-			rt_bomb( "Killed wire loop emptied shell with faces!!!!\n" );
-		}
-
-		lu = new_lu;
-		nmg_loop_g( lu->l_p , &mged_tol );
-	}
-
-	fu = nmg_mf( lu );
-	NMG_CK_FACEUSE( fu );
-	nmg_face_g( fu , pl );
-
-	VSCALE( extrude_vec , extrude_dir , extrude_dist )
-
-	(void)nmg_extrude_face( fu , extrude_vec , &mged_tol );
-	nmg_fix_normals( fu->s_p , &mged_tol );
-	nmg_rebound( m , &mged_tol );
-
-	es_eu = (struct edgeuse *)NULL;
-
-	replot_editing_solid();
-	dmaflag = 1;
-
-	
-
 	return CMD_OK;
 }
