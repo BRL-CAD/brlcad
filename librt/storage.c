@@ -36,6 +36,12 @@ static char RCSstorage[] = "@(#)$Header$";
 #include "raytrace.h"
 #include "./debug.h"
 
+#ifdef BSD
+# include <strings.h>
+#else
+# include <string.h>
+#endif
+
 /** #define MEMDEBUG 1 **/
 
 #ifdef MEMDEBUG
@@ -328,10 +334,9 @@ register struct resource *res;
 	if( size <= 0 )
 		rt_bomb("rt_get_pt: bad size");
 	bytes = rt_byte_roundup(64*size);
-	if( (cp = rt_malloc(bytes, "rt_get_pt")) == (char *)0 )  {
-		rt_log("rt_get_pt: malloc failure\n");
-		exit(17);
-	}
+	if( (cp = rt_malloc(bytes, "rt_get_pt")) == (char *)0 )
+		rt_bomb("rt_get_pt: malloc failure\n");
+
 	while( bytes >= size )  {
 		((struct partition *)cp)->pt_forw = res->re_part;
 		res->re_part = (struct partition *)cp;
