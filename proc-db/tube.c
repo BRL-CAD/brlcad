@@ -50,7 +50,7 @@ fastf_t	circle_knots[N_CIRCLE_KNOTS] = {
 #define IRT2	0.70710678	/* 1/sqrt(2) */
 #define NCOLS	9
 /* When scaling, multiply only XYZ, not W */
-fastf_t poly[NCOLS*4] = {
+fastf_t polyline[NCOLS*4] = {
 	0,	1,	0,	1,
 	0,	IRT2,	IRT2,	IRT2,
 	0,	0,	1,	1,
@@ -289,10 +289,10 @@ double	radius;
 		for( col=0; col<9; col++ )  {
 			register fastf_t h;
 
-			h = poly[col*4+H];
-			*meshp++ = poly[col*4+X]*radius + point[X]*h;
-			*meshp++ = poly[col*4+Y]*radius + point[Y]*h;
-			*meshp++ = poly[col*4+Z]*radius + point[Z]*h;
+			h = polyline[col*4+H];
+			*meshp++ = polyline[col*4+X]*radius + point[X]*h;
+			*meshp++ = polyline[col*4+Y]*radius + point[Y]*h;
+			*meshp++ = polyline[col*4+Z]*radius + point[Z]*h;
 			*meshp++ = h;
 		}
 	}
