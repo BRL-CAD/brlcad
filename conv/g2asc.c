@@ -68,6 +68,7 @@ Usage: g2asc < file.g > file.asc\n\
 FILE	*ifp;
 FILE	*ofp;
 
+int
 main(argc, argv)
 char **argv;
 {
