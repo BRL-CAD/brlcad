@@ -40,6 +40,34 @@ static char RCStabdata[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 /*
+ *			R T _ T A B L E _ F R E E
+ */
+void
+rt_table_free( tabp )
+struct rt_table	*tabp;
+{
+	RT_CK_TABLE(tabp);
+
+	tabp->nx = 0;			/* sanity */
+	bu_free( tabp, "struct rt_table");
+}
+
+/*
+ *			R T _ T A B D A T A _ F R E E
+ */
+void
+rt_tabdata_free( data )
+struct rt_tabdata *data;
+{
+	RT_CK_TABDATA(data);
+	RT_CK_TABLE(data->table);
+
+	data->ny = 0;			/* sanity */
+	data->table = NULL;		/* sanity */
+	bu_free( data, "struct rt_tabdata" );
+}
+
+/*
  *			R T _ C K _ T A B L E
  */
 void
@@ -917,6 +945,7 @@ CONST struct rt_table	*tabp;
 		return (struct rt_tabdata *)NULL;
 	}
 
+	/* Get a big array of structures for reading all at once */
 	data = (struct rt_tabdata *)bu_malloc( len+8, "rt_tabdata[]" );
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -1104,6 +1133,44 @@ CONST struct rt_tabdata	*data;
 }
 
 /*
+ *			R T _ T A B D A T A _ F R O M _ A R R A Y
+ *
+ *  Given an array of (x,y) pairs, build the relevant rt_table and
+ *  rt_tabdata structures.
+ *  The table is terminated by an x value <= 0.
+ *  Consistent with the interpretation of the spans,
+ *  invent a final span ending x value.
+ */
+struct rt_tabdata *
+rt_tabdata_from_array( array )
+CONST double *array;
+{
+	register CONST double	*dp;
+	int			len = 0;
+	struct rt_table		*tabp;
+	struct rt_tabdata	*data;
+	register int		i;
+
+	/* First, find len */
+	for( dp = array; *dp > 0; dp += 2 )	/* NIL */ ;
+	len = (dp - array) >> 1;
+
+	/* Second, build rt_table */
+	RT_GET_TABLE( tabp, len );
+	for( i = 0; i < len; i++ )  {
+		tabp->x[i] = array[i<<1];
+	}
+	tabp->x[len] = tabp->x[len-1] + 1;	/* invent span end */
+
+	/* Third, build rt_tabdata (last input "y" is ignored) */
+	RT_GET_TABDATA( data, tabp );
+	for( i = 0; i < len-1; i++ )  {
+		data->y[i] = array[(i<<1)+1];
+	}
+	return data;
+}
+
+/*
  *			R T _ T A B D A T A _ F R E Q _ S H I F T
  *
  *  Shift the data by a constant offset in the independent variable
@@ -1133,11 +1200,12 @@ double				offset;
 }
 
 /*
- *			R T _ T A B D A T A _ I N T E R V A L _ N U M _ S A M P L E S
+ *			R T _ T A B L E _ I N T E R V A L _ N U M _ S A M P L E S
+ *
  *  Returns number of sample points between 'low' and 'hi', inclusive.
  */
 int
-rt_tabdata_interval_num_samples( tabp, low, hi )
+rt_table_interval_num_samples( tabp, low, hi )
 CONST struct rt_table *tabp;
 double	low;
 double	hi;
@@ -1151,4 +1219,86 @@ double	hi;
 		if( tabp->x[i] >= low && tabp->x[i] <= hi )  count++;
 	}
 	return count;
+}
+
+/*
+ *			R T _ T A B L E _ D E L E T E _ S A M P L E _ P T S
+ *
+ *  Remove all sampling points between subscripts i and j, inclusive.
+ *  Don't bother freeing the tiny bit of storage at the end of the array.
+ */
+int
+rt_table_delete_sample_pts( tabp, i, j )
+struct rt_table *tabp;
+int	i;
+int	j;
+{
+	int	tokill;
+	int	k;
+
+	RT_CK_TABLE(tabp);
+
+	if( i < 0 || j < 0 )  bu_bomb("rt_table_delete_sample_pts() negative indices\n");
+	if( i >= tabp->nx || j >= tabp->nx )  bu_bomb("rt_table_delete_sample_pts() index out of range\n");
+
+	tokill = j - i + 1;
+	if( tokill < 1 )  bu_bomb("rt_table_delete_sample_pts(): nothing to delete\n");
+	if( tokill >= tabp->nx ) bu_bomb("rt_table_delete_sample_pts(): you can't kill 'em all!\n");
+
+	tabp->nx -= tokill;
+
+	for( k = i; k < tabp->nx; k++ )  {
+		tabp->x[k] = tabp->x[k+tokill];
+	}
+	return tokill;
+}
+
+/*
+ *			R T _ T A B L E _ M E R G E 2
+ *
+ *  A new table is returned which has sample points at places from
+ *  each of the input tables.
+ */
+struct rt_table *
+rt_table_merge2( a, b )
+CONST struct rt_table	*a;
+CONST struct rt_table	*b;
+{
+	struct rt_table *new;
+	register int i, j, k;
+
+	RT_CK_TABLE(a);
+	RT_CK_TABLE(b);
+
+	RT_GET_TABLE(new, a->nx + b->nx );
+
+	i = j = 0;		/* input subscripts */
+	k = 0;			/* output subscript */
+	while( i < a->nx && j < b->nx )  {
+		if( i >= a->nx )  {
+			while( j < b->nx )
+				new->x[k++] = b->x[j++];
+			break;
+		}
+		if( j >= b->nx )  {
+			while( i < a->nx )
+				new->x[k++] = a->x[i++];
+			break;
+		}
+		/* Both have remaining elements, take lower one */
+		if( a->x[i] == b->x[j] )  {
+			new->x[k++] = a->x[i++];
+			j++;		/* compress out duplicate */
+			continue;
+		}
+		if( a->x[i] <= b->x[j] )  {
+			new->x[k++] = a->x[i++];
+		} else {
+			new->x[k++] = b->x[j++];
+		}
+	}
+	if( k > new->nx )  bu_bomb("rt_table_merge2() assertion failed, k>nx?\n");
+	new->nx = k;
+
+	return new;
 }
