@@ -845,6 +845,32 @@ else
 fi
 
 
+#
+# check for --enable-64bit
+#
+echo $ac_n "checking if 64bit support is requested""... $ac_c" 1>&6
+echo "configure:1888: checking if 64bit support is requested" >&5
+# Check whether --enable-64bit or --disable-64bit was given.
+if test "${enable_64bit+set}" = set; then
+    enableval="$enable_64bit"
+    :
+else
+    enableval="no"
+fi
+if test "$enableval" = "yes"; then
+    do64bit=yes
+else
+    do64bit=no
+fi
+echo "$ac_t""$do64bit" 1>&6
+
+AR="ar"
+if test "$do64bit" = "yes" ; then
+    AR="${AR} -X64"
+    SHLIB_LDFLAGS=" -b64 -lc"
+fi
+
+
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
 # incompatible versions:
@@ -1419,7 +1445,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-lpthread  $LIBS"
+LIBS="-lpthread $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 1425 "configure"
 #include "confdefs.h"
@@ -1881,6 +1907,7 @@ s%@INSTALL_SCRIPT@%$INSTALL_SCRIPT%g
 s%@INSTALL_DATA@%$INSTALL_DATA%g
 s%@SET_MAKE@%$SET_MAKE%g
 s%@RANLIB@%$RANLIB%g
+s%@AR@%$AR%g
 s%@OBJEXT@%$OBJEXT%g
 s%@EXEEXT@%$EXEEXT%g
 s%@CYGPATH@%$CYGPATH%g

@@ -37,6 +37,12 @@
 			ln -s libitk3.2.[[echo ARCH_SUF]] libitk.ARCH_SUF
 #endif
 
+#if defined(USE_64)
+#define ENABLE_64 --enable-64bit
+#else
+#define ENABLE_64 /**/
+#endif
+
 /* Rule to see if cake is running with -s flag */
 #define MINUS_S	[[echo CAKEFLAGS | tr '\040' '\012' | sed -n -e /-s/p ]]
 
@@ -59,8 +65,8 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		\C\C=\"CC\"; \
 		 export INSTALL \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
 		 export \S\H\L\I\B\_\L\D \C\C \A\F\T\E\R\_\M\A\K\E; \
-		 echo ../SRCDIR/configure ITCL_OPTS; \
-		 ../SRCDIR/configure ITCL_OPTS; \
+		 echo ../SRCDIR/configure ITCL_OPTS ENABLE_64; \
+		 ../SRCDIR/configure ITCL_OPTS ENABLE_64; \
 		 echo ../SRCDIR/fix_makefile.sh '>' Makefile.MTYPE; \
 		 ../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
 
@@ -72,11 +78,11 @@ noprod&:
 
 #ifdef NFS
 clobber&:
-	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.ARCH_SUF
+	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.ARCH_SUF lib.exp
 	rm -rf itcl itk
 #else
 clobber&:
-	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.ARCH_SUF
+	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.ARCH_SUF lib.exp
 #endif
 
 install&: Makefile.MTYPE
