@@ -509,8 +509,8 @@ cvt_euclid_region(fp, fpdb, reg_id)
 FILE	*fp, *fpdb;
 int	reg_id;
 {
-	int	cur_id, face, facet_type, hole_face, i, j,
-		lst[MAX_PTS_PER_FACE], np, nv, shell_count;
+	int	cur_id, face, facet_type, hole_face, i,
+		lst[MAX_PTS_PER_FACE], np, nv;
 	struct faceuse	*outfaceuses[MAX_PTS_PER_FACE];
 	struct model	*m;	/* Input/output, nmg model. */
 	struct nmgregion *r;

@@ -44,7 +44,6 @@ static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [
 
 static int	NMG_debug=0;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	ncpu = 1;		/* Number of processors */
 static int	curr_id;		/* Current region ident code */
 static int	face_count;		/* Count of faces output for a region id */
 static char	*out_file = NULL;	/* Output filename */
@@ -564,7 +563,7 @@ char	*argv[];
 			verbose++;
 			break;
 		case 'P':
-			ncpu = atoi( optarg );
+/*			ncpu = atoi( optarg ); */
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':

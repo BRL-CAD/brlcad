@@ -31,15 +31,11 @@ static char RCSid[] = "$Header$";
 main()
 {
 	char str[1024];
-	point_t pts[MAX_PTS];
 	int ident,face_type,npts,face_no;
 	plane_t pl;
 	int i;
-	int tmp_i;
-	float tmp_a;
 	float a,b,c,d;
 	int old_id=(-1),e;
-	int face_count;
 
 	printf( "$03" );
 
