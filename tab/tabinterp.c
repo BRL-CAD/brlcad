@@ -63,6 +63,8 @@ struct chan {
 	int	c_offset;	/* source offset (NEXT) */
 };
 
+int		verbose = 1;
+
 int		o_len;		/* length of all output arrays */
 fastf_t		*o_time;	/* pointer to output time array */
 int		fps;		/* frames/sec of output */
@@ -78,6 +80,7 @@ extern int	cm_idump();
 extern int	cm_rate();
 extern int	cm_accel();
 extern int	cm_next();
+extern int	cm_help();
 
 struct command_tab cmdtab[] = {
 	"file", "filename chan_num(s)", "load channels from file",
@@ -94,9 +97,12 @@ struct command_tab cmdtab[] = {
 		cm_rate,	4, 5,
 	"accel", "chan_num init_value mult_per_sec [comment]", "create acceleration based channel",
 		cm_accel,	4, 5,
+	"help", "", "print help message",
+		cm_help,	1, 999,
 	(char *)0, (char *)0, (char *)0,
 		0,		0, 0	/* END */
 };
+
 
 /*
  *			M A I N
@@ -117,22 +123,47 @@ char	**argv;
 	 * called by rt_do_cmd().
 	 */
 	while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
-		fprintf(stderr,"cmd: %s\n", buf );
+		if(verbose) rt_log("cmd: %s\n", buf );
 		ret = rt_do_cmd( 0, buf, cmdtab );
 		rt_free( buf, "cmd buf" );
 		if( ret < 0 )  {
-			fprintf(stderr,"aborting\n");
+			if(verbose) rt_log("aborting\n");
 			exit(1);
 		}
 	}
 
-	fprintf(stderr,"performing interpolations\n");
+	if(verbose) rt_log("performing interpolations\n");
 	go();
 
-	fprintf(stderr,"writing output\n");
+	if(verbose) rt_log("writing output\n");
 	output();
 
 	exit(0);	
+}
+
+/*
+ *   XXX this really should go in librt/cmd.c as rt_help_cmd().
+ */
+int
+cm_help( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct command_tab	*ctp;
+
+#if 0
+	if( argc <= 1 )
+#endif
+	{
+		rt_log("The following commands are available:\n\n");
+		for( ctp = cmdtab; ctp->ct_cmd != (char *)0; ctp++ )  {
+			rt_log("%s %s\n\t%s\n",
+				ctp->ct_cmd, ctp->ct_parms,
+				ctp->ct_comment );
+		}
+		return;
+	}
+	/* XXX What here? */
 }
 
 /*
@@ -212,7 +243,7 @@ char	**argv;
 
 		i = rt_split_cmd( iwords, nwords+1, buf );
 		if( i != nwords )  {
-			fprintf(stderr,"File '%s', Line %d:  expected %d columns, got %d\n",
+			rt_log("File '%s', Line %d:  expected %d columns, got %d\n",
 				file, line, nwords, i );
 			while( i < nwords )  {
 				iwords[i++] = "0.123456789";
@@ -224,7 +255,7 @@ char	**argv;
 		sscanf( iwords[0], "%lf", &d );
 		times[line] = d;
 		if( line > 0 && times[line-1] > times[line] )  {
-		    	fprintf(stderr,"File '%s', Line %d:  time sequence error %g > %g\n",
+			rt_log("File '%s', Line %d:  time sequence error %g > %g\n",
 		    		file, line, times[line-1], times[line] );
 			errors++;
 		}
@@ -235,7 +266,7 @@ char	**argv;
 		for( i=1; i < nwords; i++ )  {
 			if( cnum[i] < 0 )  continue;
 			if( sscanf( iwords[i], "%lf", &d ) != 1 )  {
-			    	fprintf(stderr,"File '%s', Line %d:  scanf failure on '%s'\n",
+				rt_log("File '%s', Line %d:  scanf failure on '%s'\n",
 			    		file, line, iwords[i] );
 				d = 0.0;
 				errors++;
@@ -278,7 +309,7 @@ char	*itag;
 		} else {
 			while( n >= max_chans )
 				max_chans *= 2;
-			fprintf(stderr,"reallocating from %d to %d chans\n",
+			if(verbose) rt_log("reallocating from %d to %d chans\n",
 				prev, max_chans);
 			chan = (struct chan *)rt_realloc( (char *)chan,
 				max_chans * sizeof(struct chan),
@@ -290,14 +321,14 @@ char	*itag;
 	/* Allocate and clear channels */
 	while( nchans <= n )  {
 		if( chan[nchans].c_ilen > 0 ) {
-			fprintf(stderr,"create_chan: internal error\n");
+			rt_log("create_chan: internal error\n");
 			return -1;
 		} else {
 			bzero( (char *)&chan[nchans++], sizeof(struct chan) );
 		}
 	}
 
-fprintf(stderr, "chan %d:  %s\n", n, itag );
+	if(verbose) rt_log("chan %d:  %s\n", n, itag );
 	chan[n].c_ilen = len;
 	chan[n].c_itag = rt_strdup( itag );
 	chan[n].c_ival = (fastf_t *)rt_malloc( len * sizeof(fastf_t), "c_ival");
@@ -340,15 +371,15 @@ register int		ch;
 	register int		i;
 
 	if( ch < 0 || ch >= nchans )  {
-		fprintf(stderr, "pr_ichan(%d) out of range\n", ch );
+		rt_log("pr_ichan(%d) out of range\n", ch );
 		return;
 	}
 	cp = &chan[ch];
 	if( cp->c_itag == (char *)0 )  cp->c_itag = "_no_file_";
-	fprintf(stderr,"--- Channel %d, ilen=%d (%s):\n",
+	rt_log("--- Channel %d, ilen=%d (%s):\n",
 		ch, cp->c_ilen, cp->c_itag );
 	for( i=0; i < cp->c_ilen; i++ )  {
-		fprintf(stderr," %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
+		rt_log(" %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
 	}
 }
 
@@ -362,7 +393,7 @@ output()
 	register int		t;
 
 	if( !o_time )  {
-		fprintf(stderr,"times command not given\n");
+		rt_log("times command not given, aborting\n");
 		return;
 	}
 
@@ -397,11 +428,11 @@ char	**argv;
 	fps = atoi(argv[3]);
 
 	if( a >= b )  {
-		fprintf(stderr,"times:  %g >= %g\n", a, b );
+		rt_log("times:  %g >= %g\n", a, b );
 		return(0);
 	}
 	if( o_len > 0 )  {
-		fprintf(stderr,"times:  already specified\n");
+		rt_log("times:  already specified\n");
 		return(0);	/* ignore */
 	}
 	o_len = ((b-a) * fps) + 0.999;
@@ -453,7 +484,7 @@ char	**argv;
 		interp = INTERP_QUAT;
 		periodic = 0;
 	} else {
-		fprintf( stderr, "interpolation type '%s' unknown\n", argv[1] );
+		rt_log("interpolation type '%s' unknown\n", argv[1] );
 		interp = INTERP_LINEAR;
 	}
 
@@ -491,7 +522,7 @@ go()
 	register int	t;
 
 	if( !o_time )  {
-		fprintf(stderr,"times command not given\n");
+		rt_log("times command not given\n");
 		return;
 	}
 
@@ -542,7 +573,7 @@ go()
 again:
 		switch( chp->c_interp )  {
 		default:
-			fprintf(stderr,"channel %d: unknown interpolation type %d\n", ch, chp->c_interp);
+			rt_log("channel %d: unknown interpolation type %d\n", ch, chp->c_interp);
 			break;
 		case INTERP_LINEAR:
 			linear_interpolate( chp, times );
@@ -552,7 +583,7 @@ again:
 			break;
 		case INTERP_SPLINE:
 			if( spline( chp, times ) <= 0 )  {
-				fprintf(stderr, "spline failure, switching to linear\n");
+				rt_log("spline failure, switching to linear\n");
 				chp->c_interp = INTERP_LINEAR;
 				goto again;
 			}
@@ -668,7 +699,7 @@ register fastf_t	*times;
 	register int	i;		/* input time index */
 
 	if( chp->c_ilen < 2 )  {
-		fprintf(stderr,"lienar_interpolate:  need at least 2 points\n");
+		rt_log("lienar_interpolate:  need at least 2 points\n");
 		return;
 	}
 
@@ -719,7 +750,7 @@ register fastf_t	*times;
 	register double	rate;
 
 	if( chp->c_ilen != 2 )  {
-		fprintf(stderr,"rate_interpolate:  only 2 points (ival & rate) may be specified\n");
+		rt_log("rate_interpolate:  only 2 points (ival & rate) may be specified\n");
 		return;
 	}
 	ival = chp->c_ival[0];
@@ -745,7 +776,7 @@ register fastf_t	*times;
 	register double scale;
 
 	if( chp->c_ilen != 2 )  {
-		fprintf(stderr,"accel_interpolate:  only 2 points (ival & mul) may be specified\n");
+		rt_log("accel_interpolate:  only 2 points (ival & mul) may be specified\n");
 		return;
 	}
 	ival = chp->c_ival[0];
@@ -788,7 +819,7 @@ fastf_t			*times;
 	register int	t;
 
 	if(chp->c_ilen<3) {
-		fprintf(stderr,"spline(%s): need at least 3 points\n", chp->c_itag);
+		rt_log("spline(%s): need at least 3 points\n", chp->c_itag);
 		goto bad;
 	}
 
@@ -799,7 +830,7 @@ fastf_t			*times;
 		linear_interpolate( chp, times );
 
 	if( chp->c_periodic && chp->c_ival[0] != chp->c_ival[chp->c_ilen-1] )  {
-		fprintf(stderr,"spline(%s): endpoints don't match, replacing final data value\n", chp->c_itag);
+		rt_log("spline(%s): endpoints don't match, replacing final data value\n", chp->c_itag);
 		chp->c_ival[chp->c_ilen-1] = chp->c_ival[0];
 	}
 
@@ -807,7 +838,7 @@ fastf_t			*times;
 	diag = (double *)rt_malloc((unsigned)i, "diag");
 	rrr = (double *)rt_malloc((unsigned)i, "rrr");
 	if( !rrr || !diag )  {
-		fprintf(stderr, "spline: malloc failure\n");
+		rt_log("spline: malloc failure\n");
 		goto bad;
 	}
 
@@ -824,7 +855,7 @@ fastf_t			*times;
 			chp->c_itime[1] - chp->c_itime[0] :
 			chp->c_itime[i+1] - chp->c_itime[i];
 		if(hi1*hi<=0) {
-			fprintf(stderr,
+			rt_log(
 			    "spline: Horiz. interval changed sign at i=%d, time=%g\n",
 			    i, chp->c_itime[i]);
 			goto bad;
@@ -1075,17 +1106,17 @@ char	*argv[];
 	if( argc > 3 )  offset = atoi(argv[3]);
 	/* If input channel not loaded, or not interpolated, error */
 	if( chan[ichan].c_ilen <= 0 || chan[ichan].c_interp <= 0 )  {
-		fprintf(stderr,"ERROR next: ichan %d not loaded yet\n");
+		rt_log("ERROR next: ichan %d not loaded yet\n");
 		return 0;
 	}
 	/* If output channel is loaded, error */
 	if( chan[ochan].c_ilen > 0 )  {
-		fprintf(stderr,"ERROR next: ochan %d previous loaded\n");
+		rt_log("ERROR next: ochan %d previous loaded\n");
 		return 0;
 	}
 	sprintf(buf, "next: value of chan %d [%d]", ichan, offset);
 	if( create_chan( argv[1], chan[ichan].c_ilen, buf ) < 0 )  {
-		fprintf(stderr,"ERROR next: uanble to create output channel\n");
+		rt_log("ERROR next: uanble to create output channel\n");
 		return 0;
 	}
 	/* c_ilen, c_itag, c_ival are now initialized */
@@ -1110,11 +1141,11 @@ int	ch;
 {
 	if( ch < 0 || ch >= nchans )  return -1;
 	if( chan[ch].c_ilen <= 0 )  {
-		fprintf(stderr,"error: attempt to set interpolation type on unallocated channel %d\n", ch);
+		rt_log("error: attempt to set interpolation type on unallocated channel %d\n", ch);
 		return 1;
 	}
 	if( chan[ch].c_interp > 0 )  {
-		fprintf(stderr,"error: attempt to modify channel %d which already has interpolation type set\n", ch);
+		rt_log("error: attempt to modify channel %d which already has interpolation type set\n", ch);
 		return 1;
 	}
 	return 0;
