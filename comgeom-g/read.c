@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 
 extern FILE	*infp;
 
@@ -42,6 +43,41 @@ char	*title;
 	return	c;
 }
 
+/*
+ *			G E T I N T
+ */
+int
+getint( cp, start, len )
+char	*cp;
+int	start;
+int	len;
+{
+	char	buf[128];
+
+	if( len >= sizeof(buf) )  len = sizeof(buf)-1;
+
+	strncpy( buf, cp+start, len );
+	buf[len] = '\0';
+	return atoi(buf);	
+}
+
+/*
+ *			G E T D O U B L E
+ */
+double
+getdouble( cp, start, len )
+char	*cp;
+int	start;
+int	len;
+{
+	char	buf[128];
+
+	if( len >= sizeof(buf) )  len = sizeof(buf)-1;
+
+	strncpy( buf, cp+start, len );
+	buf[len] = '\0';
+	return atof(buf);	
+}
 
 /*		N A M E C V T	 */
 namecvt( n, cp, c )
