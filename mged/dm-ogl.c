@@ -991,7 +991,6 @@ ClientData clientData;
 XEvent *eventPtr;
 {
   static int button0  = 0;   /*  State of button 0 */
-  static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   register struct dm_list *save_dm_list;
   register struct dm_list *p;
@@ -1070,13 +1069,32 @@ XEvent *eventPtr;
 
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
-      rt_vls_printf( &cmd, "irot %f %f 0\n", (my - omy)/2.0,
-		     (mx - omx)/2.0);
+      rt_vls_printf( &cmd, "iknob ax %f; iknob ay %f\n",
+		     (my - omy)/512.0, (mx - omx)/512.0 );
       break;
     case VIRTUAL_TRACKBALL_TRANSLATE:
-      rt_vls_printf( &cmd, "tran %f %f %f\n",
-		     (mx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2,
-		     (0.5 - my/(double)((struct ogl_vars *)dm_vars)->height) * 2, tran_z);
+      {
+	fastf_t fx, fy;
+
+	fx = (mx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
+	fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
+
+	if(fx > 0.000001)
+	  fx += SL_TOL;
+	else if(fx < 0.000001)
+	  fx += -SL_TOL;
+	else
+	  fx = 0.0;
+
+	if(fy > 0.000001)
+	  fy += SL_TOL;
+	else if(fy < 0.000001)
+	  fy += -SL_TOL;
+	else
+	  fy = 0.0;
+
+	rt_vls_printf( &cmd, "knob aX %f; knob aY %f\n", fx, fy );
+      }	     
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
       rt_vls_printf( &cmd, "zoom %lf\n",
@@ -1098,60 +1116,87 @@ XEvent *eventPtr;
       goto end;
     }
 
-    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
-    setting = irlimit(knobs[M->first_axis]);
+    setting = M->axis_data[0] - knob_values[M->first_axis];
     knob_values[M->first_axis] = M->axis_data[0];
 
     switch(DIAL0 + M->first_axis){
     case DIAL0:
       if(adcflag) {
-	rt_vls_printf( &cmd, "knob ang1 %d\n",
+	rt_vls_printf( &cmd, "iknob ang1 %d\n",
 		      setting );
       }
       break;
     case DIAL1:
-      rt_vls_printf( &cmd , "knob S %f\n",
+      rt_vls_printf( &cmd , "iknob S %f\n",
 		    setting / 2048.0 );
       break;
     case DIAL2:
       if(adcflag)
-	rt_vls_printf( &cmd , "knob ang2 %d\n",
+	rt_vls_printf( &cmd , "iknob ang2 %d\n",
 		      setting );
-      else
-	rt_vls_printf( &cmd , "knob z %f\n",
+      else {
+	if(mged_variables.rateknobs)
+	  rt_vls_printf( &cmd , "iknob z %f\n",
 		      setting / 2048.0 );
+	else
+	  rt_vls_printf( &cmd , "iknob az %f\n",
+			 setting / 512.0 );
+      }
       break;
     case DIAL3:
       if(adcflag)
-	rt_vls_printf( &cmd , "knob distadc %d\n",
+	rt_vls_printf( &cmd , "iknob distadc %d\n",
 		      setting );
-      else
-	rt_vls_printf( &cmd , "knob Z %f\n",
-		      setting / 2048.0 );
+      else {
+	if(mged_variables.rateknobs)
+	  rt_vls_printf( &cmd , "iknob Z %f\n",
+			 setting / 2048.0 );
+	else
+	  rt_vls_printf( &cmd , "iknob aZ %f\n",
+			 setting / 512.0 );
+      }
       break;
     case DIAL4:
       if(adcflag)
-	rt_vls_printf( &cmd , "knob yadc %d\n",
+	rt_vls_printf( &cmd , "iknob yadc %d\n",
 		      setting );
-      else
-	rt_vls_printf( &cmd , "knob y %f\n",
-		      setting / 2048.0 );
+      else{
+	if(mged_variables.rateknobs)
+	  rt_vls_printf( &cmd , "iknob y %f\n",
+			 setting / 2048.0 );
+	else
+	  rt_vls_printf( &cmd , "iknob ay %f\n",
+			 setting / 512.0 );
+      }
       break;
     case DIAL5:
-      rt_vls_printf( &cmd , "knob Y %f\n",
-		    setting / 2048.0 );
+      if(mged_variables.rateknobs)
+	rt_vls_printf( &cmd , "iknob Y %f\n",
+		       setting / 2048.0 );
+      else
+	rt_vls_printf( &cmd , "iknob aY %f\n",
+		       setting / 512.0 );
       break;
     case DIAL6:
       if(adcflag)
-	rt_vls_printf( &cmd , "knob xadc %d\n",
+	rt_vls_printf( &cmd , "iknob xadc %d\n",
 		      setting );
-      else
-	rt_vls_printf( &cmd , "knob x %f\n",
-		      setting / 2048.0 );
+      else{
+	if(mged_variables.rateknobs)
+	  rt_vls_printf( &cmd , "iknob x %f\n",
+			 setting / 2048.0 );
+	else
+	  rt_vls_printf( &cmd , "iknob ax %f\n",
+			 setting / 512.0 );
+      }
       break;
     case DIAL7:
-      rt_vls_printf( &cmd , "knob X %f\n",
-		    setting / 2048.0 );
+      if(mged_variables.rateknobs)
+	rt_vls_printf( &cmd , "iknob X %f\n",
+		       setting / 2048.0 );
+      else
+	rt_vls_printf( &cmd , "iknob aX %f\n",
+		       setting / 512.0 );
       break;
     default:
       break;
@@ -1984,7 +2029,33 @@ char	**argv;
 	  break;
 	case 't':
 	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
+#if 1
+	  {
+	    fastf_t fx, fy;
 
+	    rt_vls_init(&vls);
+	    fx = (omx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
+	    fy = (0.5 - omy/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
+
+	    if(fx > 0.000001)
+	      fx += SL_TOL;
+	    else if(fx < 0.000001)
+	      fx += -SL_TOL;
+	    else
+	      fx = 0.0;
+
+	    if(fy > 0.000001)
+	      fy += SL_TOL;
+	    else if(fy < 0.000001)
+	      fy += -SL_TOL;
+	    else
+	      fy = 0.0;
+
+	    rt_vls_printf( &vls, "knob aX %f; knob aY %f\n", fx, fy);
+	    (void)cmdline(&vls, FALSE);
+	    rt_vls_free(&vls);
+	  }
+#else
 	  sprintf(xstr, "%f", (omx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2);
 	  sprintf(ystr, "%f", (0.5 - omy/(double)((struct ogl_vars *)dm_vars)->height) * 2);
 	  sprintf(zstr, "%f", tran_z);
@@ -1993,7 +2064,7 @@ char	**argv;
 	  av[2] = ystr;
 	  av[3] = zstr;
 	  status = f_tran((ClientData)NULL, interp, 4, av);
-	  
+#endif
 	  break;
 	case 'z':
 	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;

@@ -559,14 +559,33 @@ XEvent *eventPtr;
 
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
-      rt_vls_printf( &cmd, "irot %f %f 0\n",
-		     (double)(my - ((struct x_vars *)dm_vars)->omy)/2.0,
-		     (double)(mx - ((struct x_vars *)dm_vars)->omx)/2.0);
+       rt_vls_printf( &cmd, "iknob ax %f; iknob ay %f\n",
+		      (my - ((struct x_vars *)dm_vars)->omy)/512.0,
+		      (mx - ((struct x_vars *)dm_vars)->omx)/512.0 );
       break;
     case VIRTUAL_TRACKBALL_TRANSLATE:
-      rt_vls_printf( &cmd, "tran %f %f %f",
-		     ((double)mx/((struct x_vars *)dm_vars)->width - 0.5) * 2,
-		     (0.5 - (double)my/((struct x_vars *)dm_vars)->height) * 2, tran_z);
+      {
+	fastf_t fx, fy;
+
+	fx = (mx/(fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
+	fy = (0.5 - my/(fastf_t)((struct x_vars *)dm_vars)->height) * 2;
+
+	if(fx > 0.000001)
+	  fx += SL_TOL;
+	else if(fx < 0.000001)
+	  fx += -SL_TOL;
+	else
+	  fx = 0.0;
+
+	if(fy > 0.000001)
+	  fy += SL_TOL;
+	else if(fy < 0.000001)
+	  fy += -SL_TOL;
+	else
+	  fy = 0.0;
+
+	rt_vls_printf( &cmd, "knob aX %f; knob aY %f\n", fx, fy );
+      }
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
       rt_vls_printf( &cmd, "zoom %lf",
@@ -1249,7 +1268,35 @@ char *argv[];
 	  break;
 	case 't':
 	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
+#if 1
+	  {
+	    fastf_t fx, fy;
 
+	    rt_vls_init(&vls);
+	    fx = (((struct x_vars *)dm_vars)->omx/
+	      (fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
+	    fy = (0.5 - ((struct x_vars *)dm_vars)->omy/
+		   (fastf_t)((struct x_vars *)dm_vars)->height) * 2;
+
+	    if(fx > 0.000001)
+	      fx += SL_TOL;
+	    else if(fx < 0.000001)
+	      fx += -SL_TOL;
+	    else
+	      fx = 0.0;
+
+	    if(fy > 0.000001)
+	      fy += SL_TOL;
+	    else if(fy < 0.000001)
+	      fy += -SL_TOL;
+	    else
+	      fy = 0.0;
+
+	    rt_vls_printf( &vls, "knob aX %f; knob aY %f\n", fx, fy);
+	    (void)cmdline(&vls, FALSE);
+	    rt_vls_free(&vls);
+	  }
+#else
 	  sprintf(xstr, "%f", ((double)((struct x_vars *)dm_vars)->omx/
 			       ((struct x_vars *)dm_vars)->width - 0.5) * 2);
 	  sprintf(ystr, "%f", (0.5 - (double)((struct x_vars *)dm_vars)->omy/
@@ -1261,7 +1308,7 @@ char *argv[];
 	  av[2] = ystr;
 	  av[3] = zstr;
 	  status = f_tran((ClientData)NULL, interp, 4, av);
-
+#endif
 	  break;
 	case 'z':
 	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
