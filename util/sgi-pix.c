@@ -43,6 +43,9 @@ struct cmap {
 	unsigned char blu;
 } cmap[4096];
 
+static char usage[] = "\
+Usage: sgi-pix [x1 x2 y1 y2] [outfile]\n";
+
 int
 main(argc,argv)
 int argc;
