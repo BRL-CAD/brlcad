@@ -1785,7 +1785,7 @@ retry:
 
 	if (in > 0 && outside > 0) {
 		FILE *fp;
-		bu_log("Loopuse edges in:%d on:%d out:%d, turning on DEBUG_CLASSIFY\n", in, on, outside);
+
 		if( rt_g.NMG_debug & DEBUG_CLASSIFY )  {
 			char		buf[128];
 			static int	num;
@@ -1819,7 +1819,6 @@ retry:
 			nmg_stash_model_to_file( "class.g", nmg_find_model((long *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
 			bu_free( (char *)b, "nmg_pl_lu flag[]" );
 		}
-		rt_g.NMG_debug |= DEBUG_CLASSIFY;
 		if(seen_error)
 			rt_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
 		seen_error = 1;

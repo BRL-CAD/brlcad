@@ -4168,6 +4168,7 @@ int			other_rs_state;
 #endif
 
 		/* Drop a plot file */
+#if 0
 		rt_g.NMG_debug |= DEBUG_FCUT|DEBUG_PLOTEM;
 		nmg_pl_comb_fu( 0, 1, lu->up.fu_p );
 		nmg_plot_lu_ray(lu, rs->vu[0], rs->vu[rs->nvu-1], rs->left );
@@ -4179,6 +4180,7 @@ int			other_rs_state;
 		}
 		/* Store this face in a .g file for examination! */
 		nmg_stash_model_to_file( "error.g", nmg_find_model((long*)lu), "nmg_fcut.c error dump" );
+#endif
 	     }
 		/* Explode */
 	    	rt_bomb(bu_vls_addr(&str));
