@@ -48,6 +48,7 @@ char	*cmd_args[MAXARGS+2];	/* array of pointers to args */
 extern int	cmd_glob();
 
 static void	f_help(), f_fhelp(), f_comm();
+void	f_echo();
 void	f_param();
 void	mged_cmd();
 void	f_center(), f_press(), f_view(), f_blast();
@@ -146,6 +147,8 @@ static struct funtab {
 	f_evedit,2,MAXARGS,
 "e", "<objects>", "edit objects",
 	f_edit,2,MAXARGS,
+"echo", "[text]", "echo arguments back",
+	f_echo, 1, MAXARGS,
 "edcodes", "object(s)", "edit region ident codes",
 	f_edcodes, 2, MAXARGS,
 "edcolor", "", "text edit color table",
@@ -379,6 +382,9 @@ char	*line;
 
 	if( *lp == '\n' )
 		return(1);		/* NOP */
+
+	if( *lp == '#' )
+		return 1;		/* NOP -- a comment line */
 
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
@@ -632,4 +638,17 @@ register FILE	*fp;
 	}
 
 	rt_vls_free(&str);
+}
+
+void
+f_echo( argc, argv )
+int	argc;
+char	*argv[];
+{
+	register int i;
+
+	for( i=1; i < argc; i++ )  {
+		fprintf(stdout, i==1 ? "%s" : " %s", argv[i]);
+	}
+	fprintf(stdout, "\n");
 }
