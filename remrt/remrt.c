@@ -211,7 +211,7 @@ struct frame *FreeFrame;
 		} else { \
 			FreeFrame = (p)->fr_forw; (p)->fr_forw = FRAME_NULL; \
 		} \
-		bzero( (p), sizeof(struct frame) ); \
+		bzero( (char *)(p), sizeof(struct frame) ); \
 		(p)->fr_magic = FRAME_MAGIC; \
 		rt_vls_init( &(p)->fr_cmd ); \
 		rt_vls_init( &(p)->fr_after_cmd ); \
