@@ -37,7 +37,7 @@ static const char RCSars[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 #include "./plane.h"
-
+#include "./bot.h"
 #define TRI_NULL	((struct tri_specific *)0)
 
 /* Describe algorithm here */

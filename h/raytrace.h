@@ -3723,31 +3723,6 @@ BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
 				const fastf_t min_angle));
 
 /* g_bot.c */
-struct bot_specific
-{
-	unsigned char bot_mode;
-	unsigned char bot_orientation;
-	unsigned char bot_errmode;
-	fastf_t *bot_thickness;
-	struct bu_bitv *bot_facemode;
-	struct tri_specific *bot_facelist;	/* head of linked list */
-	struct tri_specific **bot_facearray;	/* head of face array */
-};
-
-
-void rt_bot_prep_pieces(struct bot_specific	*bot,
-			struct soltab		*stp,
-			int			ntri,
-			const struct bn_tol	*tol);
-
-extern int rt_botface(struct soltab	*stp,
-		      struct bot_specific	*bot,
-		      fastf_t		*ap,
-		      fastf_t		*bp,
-		      fastf_t		*cp,
-		      int			face_no,
-		      const struct bn_tol	*tol);
-
 int rt_bot_edge_in_list( const int v1, const int v2, const int edge_list[], const int edge_count );
 int rt_bot_plot( struct bu_list		*vhead,
 		 struct rt_db_internal	*ip,
