@@ -865,10 +865,18 @@ wdb_put_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	RT_CK_FUNCTAB(ftp);
+
 	if (ftp->ft_make) {
-		ftp->ft_make(ftp, &intern, 0.0);
+	    if (ftp->ft_make == rt_nul_make) {
+		Tcl_AppendResult(interp, "wdb_put_internal(", argv[1],
+				 ") cannot put a ", type, (char *)NULL);
+
+		return TCL_ERROR;
+	    }
+	    ftp->ft_make(ftp, &intern, 0.0);
 	} else {
-		rt_generic_make(ftp, &intern, 0.0);
+	    rt_generic_make(ftp, &intern, 0.0);
 	}
 
 	if (ftp->ft_tcladjust(interp, &intern, argc-3, argv+3, &rt_uniresource) == TCL_ERROR) {
