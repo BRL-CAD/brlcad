@@ -51,7 +51,6 @@ int entityno;
 	int i;
 	double x,y,z;
 	point_t pt;
-printf( "Setting edge vertices in model space: vert_count=%d\n" , *vert_count );
 
 	if( dir[entityno]->param <= pstart )
 	{
@@ -72,47 +71,74 @@ printf( "Setting edge vertices in model space: vert_count=%d\n" , *vert_count );
 				int curve_count;
 				int *curve_list;
 
-				Readint( &curve_count , "Number of curves: " );
+				Readint( &curve_count , "" );
 				curve_list = (int *)rt_calloc( curve_count , sizeof( int ) , "set_edge_vertices_m: curve_list" );
 				for( i=0 ; i<curve_count ; i++ )
-					Readint( &curve_list[i] , "\tCurve DE: " );
+					Readint( &curve_list[i] , "" );
 				for( i=0 ; i<curve_count ; i++ )
 					set_edge_vertices_m( fu , nverts , nurb_v , vert_count , (curve_list[i]-1)/2 );
 				rt_free( (char *)curve_list , "set_edge_vertices_m: curve_list" );
 			}
 			break;
 		case 110:
-			Readdbl( &x , "X1: " );
-			Readdbl( &y , "Y1: " );
-			Readdbl( &z , "Z1: " );
+			Readcnv( &x , "" );
+			Readcnv( &y , "" );
+			Readcnv( &z , "" );
 			if( *vert_count == 0 )
 			{
 				VSET( pt , x , y , z );
 				MAT4X3PNT( nurb_v[0].pt , *dir[entityno]->rot , pt );
 				nmg_vertex_gv( nurb_v[0].v , nurb_v[0].pt );
 			}
-			Readdbl( &x , "X2: " );
-			Readdbl( &y , "Y2: " );
-			Readdbl( &z , "Z2: " );
+			Readcnv( &x , "" );
+			Readcnv( &y , "" );
+			Readcnv( &z , "" );
 			(*vert_count)++;
 			VSET( pt , x , y , z )
 			MAT4X3PNT( nurb_v[*vert_count].pt , *dir[entityno]->rot , pt );
 			nmg_vertex_gv( nurb_v[*vert_count].v , nurb_v[*vert_count].pt );
 			break;
 		case 100:
-			Readdbl( &z , "Z: " );
-			Readdbl( &x , "X arc center: " );
-			Readdbl( &y , "Y arc center: " );
-			Readdbl( &x , "X1: " );
-			Readdbl( &y , "Y1: " );
+			Readcnv( &z , "" );
+			Readcnv( &x , "" );
+			Readcnv( &y , "" );
+			Readcnv( &x , "" );
+			Readcnv( &y , "" );
 			if( *vert_count == 0 )
 			{
 				VSET( pt , x , y , z );
 				MAT4X3PNT( nurb_v[0].pt , *dir[entityno]->rot , pt );
 				nmg_vertex_gv( nurb_v[0].v , nurb_v[0].pt );
 			}
-			Readdbl( &x , "X2: " );
-			Readdbl( &y , "Y2: " );
+			Readcnv( &x , "" );
+			Readcnv( &y , "" );
+			(*vert_count)++;
+			VSET( pt , x , y , z );
+			MAT4X3PNT( nurb_v[*vert_count].pt , *dir[entityno]->rot , pt );
+			nmg_vertex_gv( nurb_v[*vert_count].v , nurb_v[*vert_count].pt );
+			break;
+		case 104:
+			/* Skip conic coefficients */
+			Readdbl( &x , "" );
+			Readdbl( &x , "" );
+			Readdbl( &x , "" );
+			Readdbl( &x , "" );
+			Readdbl( &x , "" );
+			Readdbl( &x , "" );
+
+			/* common z coord */
+			Readcnv( &z , "" );
+
+			Readcnv( &x , "" );
+			Readcnv( &y , "" );
+			if( *vert_count == 0 )
+			{
+				VSET( pt , x , y , z );
+				MAT4X3PNT( nurb_v[0].pt , *dir[entityno]->rot , pt );
+				nmg_vertex_gv( nurb_v[0].v , nurb_v[0].pt );
+			}
+			Readcnv( &x , "" );
+			Readcnv( &y , "" );
 			(*vert_count)++;
 			VSET( pt , x , y , z );
 			MAT4X3PNT( nurb_v[*vert_count].pt , *dir[entityno]->rot , pt );
@@ -125,9 +151,9 @@ printf( "Setting edge vertices in model space: vert_count=%d\n" , *vert_count );
 				int j;
 				double a;
 
-				Readint( &i , "Upper index for sum: " );
+				Readint( &i , "" );
 				num_pts = i+1;
-				Readint( &degree , "Degree: " );
+				Readint( &degree , "" );
 
 				/* skip properties */
 				for( i=0 ; i<4 ; i++ )
@@ -142,9 +168,9 @@ printf( "Setting edge vertices in model space: vert_count=%d\n" , *vert_count );
 					Readdbl( &a , "" );
 
 				/* get first vertex */
-				Readdbl( &x , "X1: " );
-				Readdbl( &y , "Y1: " );
-				Readdbl( &z , "Z1: " );
+				Readcnv( &x , "" );
+				Readcnv( &y , "" );
+				Readcnv( &z , "" );
 				if( *vert_count == 0 )
 				{
 					VSET( pt , x , y , z );
@@ -155,30 +181,34 @@ printf( "Setting edge vertices in model space: vert_count=%d\n" , *vert_count );
 				/* skip to last vertex */
 				for( i=1 ; i<num_pts-1 ; i++ )
 				{
-					Readdbl( &x , "XMIDDLE: " );
-					Readdbl( &y , "YMIDDLE: " );
-					Readdbl( &z , "ZMIDDLE: " );
+					Readdbl( &x , "" );
+					Readdbl( &y , "" );
+					Readdbl( &z , "" );
 				}
 
 				/* get last vertex */
-				Readdbl( &x , "X2: " );
-				Readdbl( &y , "Y2: " );
-				Readdbl( &z , "Z2: " );
+				Readcnv( &x , "" );
+				Readcnv( &y , "" );
+				Readcnv( &z , "" );
 				(*vert_count)++;
 				VSET( pt , x , y , z );
 				MAT4X3PNT( nurb_v[*vert_count].pt , *dir[entityno]->rot , pt );
 				nmg_vertex_gv( nurb_v[*vert_count].v , nurb_v[*vert_count].pt );
 			}
 			break;
+		default:
+			printf( "Curves of type %d are not yet handled for trimmed surfaces\n" , entity_type );
+			break;
 	}
 }
 
 void
-set_edge_vertices_p( fu , nverts , nurb_v , vert_count , entityno )
+set_edge_vertices_p( fu, nverts, nurb_v, vert_count, u_min, u_max, v_min, v_max, entityno )
 struct faceuse *fu;
 int nverts;
 struct nurb_verts *nurb_v;
 int *vert_count;
+fastf_t u_min,u_max,v_min,v_max;
 int entityno;
 {
 	int entity_type;
@@ -188,7 +218,6 @@ int entityno;
 	struct edgeuse *eu;
 	struct loopuse *lu;
 	point_t pt;
-printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_count );
 
 	if( dir[entityno]->param <= pstart )
 	{
@@ -209,31 +238,32 @@ printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_co
 				int curve_count;
 				int *curve_list;
 
-				Readint( &curve_count , "Number of curves: " );
+				Readint( &curve_count , "" );
 				curve_list = (int *)rt_calloc( curve_count , sizeof( int ) , "set_edge_vertices_m: curve_list" );
 				for( i=0 ; i<curve_count ; i++ )
-					Readint( &curve_list[i] , "\tCurve DE: " );
+					Readint( &curve_list[i] , "" );
 				for( i=0 ; i<curve_count ; i++ )
-					set_edge_vertices_p( fu , nverts , nurb_v , vert_count , (curve_list[i]-1)/2 );
-				rt_free( (char *)curve_list , "set_edge_vertices_m: curve_list" );
+					set_edge_vertices_p( fu, nverts, nurb_v, vert_count,
+						u_min, u_max, v_min, v_max, (curve_list[i]-1)/2 );
+				rt_free( (char *)curve_list , "set_edge_vertices_p: curve_list" );
 			}
 			break;
 		case 110:
-			Readdbl( &x , "U1: " );
-			Readdbl( &y , "V1: " );
-			Readdbl( &z , "W1: " );
+			Readdbl( &x , "" );
+			Readdbl( &y , "" );
+			Readdbl( &z , "" );
 			if( *vert_count == 0 )
 			{
-				VSET( pt , x , y , z );
+				VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
 				MAT4X3PNT( nurb_v[0].uvw , *dir[entityno]->rot , pt );
 				for( RT_LIST_FOR( vu , vertexuse , &nurb_v[0].v->vu_hd ) )
 					nmg_vertexuse_a_cnurb( vu , nurb_v[0].uvw );
 			}
-			Readdbl( &x , "U2: " );
-			Readdbl( &y , "V2: " );
-			Readdbl( &z , "W2: " );
+			Readdbl( &x , "" );
+			Readdbl( &y , "" );
+			Readdbl( &z , "" );
 			(*vert_count)++;
-			VSET( pt , x , y , z );
+			VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
 			MAT4X3PNT( nurb_v[*vert_count].uvw , *dir[entityno]->rot , pt );
 			for( RT_LIST_FOR( vu , vertexuse , &nurb_v[*vert_count].v->vu_hd ) )
 				nmg_vertexuse_a_cnurb( vu , nurb_v[*vert_count].uvw );
@@ -250,81 +280,8 @@ printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_co
 			}
 			break;
 		case 100:
-			{
-				fastf_t kv[8];
-				fastf_t pts[5*4];
-				fastf_t pts1[5*4];
-				fastf_t radius;
-				fastf_t cx,cy,x1,y1;
-				fastf_t ang1,ang2;
-				fastf_t fact1=1.048816;
-				vect_t tangent;
-				int pt_type;
-
-				/* don't use automatic aggregate initialization (Ultrix) */
-				kv[0] = 0.0;
-				kv[1] = 0.0;
-				kv[2] = 0.0;
-				kv[3] = 1.0;
-				kv[4] = 2.0;
-				kv[5] = 3.0;
-				kv[6] = 3.0;
-				kv[7] = 3.0;
-
-				pt_type = RT_NURB_MAKE_PT_TYPE( 4 , 2 , 1 );
-
-				Readdbl( &z , "W: " );
-				Readdbl( &cx , "U arc center: " );
-				Readdbl( &cy , "V arc center: " );
-				Readdbl( &x1 , "U1: " );
-				Readdbl( &y1 , "V1: " );
-				if( *vert_count == 0 )
-				{
-					VSET( pt , x , y , z );
-					MAT4X3PNT( nurb_v[0].uvw , *dir[entityno]->rot , pt );
-					for( RT_LIST_FOR( vu , vertexuse , &nurb_v[0].v->vu_hd ) )
-						nmg_vertexuse_a_cnurb( vu , nurb_v[0].uvw );
-				}
-				Readdbl( &x , "U2: " );
-				Readdbl( &y , "V2: " );
-				(*vert_count)++;
-				VSET( pt , x , y , z );
-				MAT4X3PNT( nurb_v[*vert_count].uvw , *dir[entityno]->rot , pt );
-				for( RT_LIST_FOR( vu , vertexuse , &nurb_v[*vert_count].v->vu_hd ) )
-					nmg_vertexuse_a_cnurb( vu , nurb_v[*vert_count].uvw );
-
-				radius = sqrt( (x-cx)*(x-cx) + (y-cy)*(y-cy) );
-				VSET( &pts[0] , x1 , y1 , z );
-				VSET( &pts[4*4] , x , y , z );
-				ang1 = atan2( y1-cy , x1-cx );
-				ang2 = atan2( y-cy , x-cx );
-				while( ang2 <= ang1 )
-					ang2 += rt_twopi;
-				VSET( &pts[2*4] , cx + fact1*radius*cos( 0.5*(ang1+ang2) ) , cy + fact1*radius*sin( 0.5*(ang1+ang2) ) , 0.0 );
-				VSET( tangent , -sin( ang1 ) , cos( ang1 ) , 0.0 );
-				VJOIN1( &pts[1*4] , &pts[0] , 0.5*sqrt(2.0)*radius , tangent );
-				VSET( tangent , sin( ang2 ) , -cos( ang2 ) , 0.0 );
-				VJOIN1( &pts[3*4] , &pts[4*4] , 0.5*sqrt(2.0)*radius , tangent );
-				for( i=0 ; i<5 ; i++ )
-					pts[i*4+3] = 1.0;
-				pts[2*4+3] = 2.0;
-				for( i=0 ; i<5 ; i++ )
-				{
-					pts1[i*4+3] = pts[i*4+3];
-					MAT4X3PNT( &pts1[i*4] , *dir[entityno]->rot , &pts[i*4] );
-				}
-				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-				{
-					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-					{
-						if( (eu->vu_p->v_p == nurb_v[*vert_count].v &&
-						    eu->eumate_p->vu_p->v_p == nurb_v[*vert_count-1].v ) ||
-						    (eu->vu_p->v_p == nurb_v[*vert_count-1].v &&
-						    eu->eumate_p->vu_p->v_p == nurb_v[*vert_count].v ) )
-								nmg_edge_g_cnurb( eu, 3, 8, kv, 5, pt_type, pts1  );
-					}
-				}
-			}
+		case 104:
+			printf( "Circular or conic arc edges not yet handled for trimmed surfaces\n" );
 			break;
 		case 126:
 			{
@@ -339,9 +296,9 @@ printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_co
 				int j;
 				double a;
 
-				Readint( &i , "Upper index for sum: " );
+				Readint( &i , "" );
 				num_pts = i+1;
-				Readint( &degree , "Degree: " );
+				Readint( &degree , "" );
 
 				/* properties */
 				Readint( &j , "" );
@@ -372,10 +329,10 @@ printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_co
 				}
 
 				/* get first vertex */
-				Readdbl( &x , "U1: " );
-				Readdbl( &y , "V1: " );
-				Readdbl( &z , "W1: " );
-				VSET( pt , x , y , z );
+				Readdbl( &x , "" );
+				Readdbl( &y , "" );
+				Readdbl( &z , "" );
+				VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
 				MAT4X3PNT( &points[0] , *dir[entityno]->rot , pt );
 				if( *vert_count == 0 )
 				{
@@ -387,19 +344,19 @@ printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_co
 				/* middle vertices */
 				for( i=1 ; i<num_pts-1 ; i++ )
 				{
-					Readdbl( &x , "UMIDDLE: " );
-					Readdbl( &y , "VMIDDLE: " );
-					Readdbl( &z , "WMIDDLE: " );
-					VSET( pt , x , y , z );
+					Readdbl( &x , "" );
+					Readdbl( &y , "" );
+					Readdbl( &z , "" );
+					VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
 					MAT4X3PNT( &points[i*coords] , *dir[entityno]->rot , pt );
 					VSET( &points[i*coords] , x , y , z );
 				}
 
 				/* get last vertex */
-				Readdbl( &x , "U2: " );
-				Readdbl( &y , "V2: " );
-				Readdbl( &z , "W2: " );
-				VSET( pt , x , y , z );
+				Readdbl( &x , "" );
+				Readdbl( &y , "" );
+				Readdbl( &z , "" );
+				VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
 				MAT4X3PNT( &points[num_pts-1] , *dir[entityno]->rot , pt );
 				(*vert_count)++;
 				VMOVE( nurb_v[*vert_count].uvw , &points[num_pts-1] );
@@ -419,15 +376,19 @@ printf( "Setting edge vertices in parameter space: (vert_count=%d)\n" , *vert_co
 				}
 			}
 			break;
+		default:
+			printf( "Curve type %d not handled for trimmed surfaces yet\n" , entity_type );
+			break;
 	}
 }
 
 void
-Set_loop_vertices( fu , nverts , nurb_v , pcurve , mcurve )
+Set_loop_vertices( fu , nverts , nurb_v , pcurve , mcurve, u_min, u_max, v_min, v_max )
 struct faceuse *fu;
 int nverts;
 struct nurb_verts *nurb_v;
 int pcurve,mcurve;
+fastf_t u_min,u_max,v_min,v_max;
 {
 	int vert_count;
 
@@ -437,16 +398,17 @@ int pcurve,mcurve;
 
 	/* now do parametric space */
 	vert_count = 0;
-	set_edge_vertices_p( fu , nverts , nurb_v , &vert_count , pcurve );
+	set_edge_vertices_p( fu , nverts , nurb_v , &vert_count, u_min, u_max, v_min, v_max , pcurve );
 }
 
 void
-Set_vertices( fu , nverts , nurb_v , on_surf_de , entityno )
+Set_vertices( fu , nverts , nurb_v , on_surf_de , entityno , u_min , u_max , v_min , v_max )
 struct faceuse *fu;
 int nverts;
 struct nurb_verts *nurb_v;
 int on_surf_de;
 int entityno;
+fastf_t u_min,u_max,v_min,v_max;
 {
 	int entity_type;
 	int surf_de;
@@ -469,15 +431,15 @@ int entityno;
 		printf( "Expected Curve on a Paremetric Surface, found entity type %d\n" , entity_type );
 		return;
 	}
-	Readint( &i , "Curve created by method %d: " );
-	Readint( &surf_de , "Curve is on surface %d: " );
+	Readint( &i , "" );
+	Readint( &surf_de , "" );
 	if( surf_de != on_surf_de )
 		printf( "Curve is on surface at DE %d, should be on surface at DE %d\n", surf_de, on_surf_de );
 
-	Readint( &param_curve_de , "Parametric Curve DE: " );
-	Readint( &model_curve_de , "Model Curve DE: " );
+	Readint( &param_curve_de , "" );
+	Readint( &model_curve_de , "" );
 
-	Set_loop_vertices( fu , nverts , nurb_v , (param_curve_de-1)/2 , (model_curve_de-1)/2 );
+	Set_loop_vertices( fu , nverts , nurb_v , (param_curve_de-1)/2 , (model_curve_de-1)/2, u_min, u_max, v_min, v_max );
 }
 
 int
@@ -510,10 +472,10 @@ int entityno;
 			vert_count = 1;
 			break;
 		case 102:
-			Readint( &curve_count , "Number of curves on composite: " );
+			Readint( &curve_count , "" );
 			comp_curve_des = (int *)rt_calloc( curve_count , sizeof( int ) , "Count_verts: comp_curve_des" );
 			for( i=0 ; i<curve_count ; i++ )
-				Readint( &comp_curve_des[i] , "\tCurve DE: " );
+				Readint( &comp_curve_des[i] , "" );
 
 			for( i=0 ; i<curve_count ; i++ )
 				vert_count += Count_verts( (comp_curve_des[i]-1)/2 );
@@ -549,13 +511,13 @@ struct nurb_verts **nurb_v;
 		printf( "Expected Curve on a Paremetric Surface, found entity type %d\n" , entity_type );
 		return( 0 );
 	}
-	Readint( &i , "Curve created by method %d: " );
-	Readint( &surf_de , "Curve is on surface %d: " );
+	Readint( &i , "" );
+	Readint( &surf_de , "" );
 	if( surf_de != on_surf_de )
 		printf( "Curve is on surface at DE %d, should be on surface at DE %d\n", surf_de, on_surf_de );
 
-	Readint( &param_curve_de , "Parametric Curve DE: " );
-	Readint( &model_curve_de , "Model Curve DE: " );
+	Readint( &param_curve_de , "" );
+	Readint( &model_curve_de , "" );
 
 	vert_count = Count_verts( (model_curve_de-1)/2 );
 
@@ -565,10 +527,11 @@ struct nurb_verts **nurb_v;
 }
 
 int
-Get_nurb_surf( entityno, u_order, v_order, n_u_knots, n_v_knots, ukv, vkv, n_rows, n_cols, pt_type, mesh )
+Get_nurb_surf( entityno, u_order, v_order, n_u_knots, n_v_knots, ukv, vkv, u_min, u_max, v_min, v_max, n_rows, n_cols, pt_type, mesh )
 int entityno;
 int *u_order,*v_order,*n_u_knots,*n_v_knots,*n_rows,*n_cols,*pt_type;
 fastf_t **ukv,**vkv,**mesh;
+fastf_t *u_min,*u_max,*v_min,*v_max;
 {
 	int entity_type;
 	int i;
@@ -576,7 +539,6 @@ fastf_t **ukv,**vkv,**mesh;
 	int num_pts;
 	int rational;
 	double a;
-	fastf_t u_min,u_max,v_min,v_max;
 
 	/* Acquiring Data */
 
@@ -591,75 +553,75 @@ fastf_t **ukv,**vkv,**mesh;
 	Readint( &entity_type , "" );
 	if( entity_type != 128 )
 	{
-		rt_log( "Only B-Spline surfaces allowed for faces (found type %d)\n", entity_type );
+		printf( "Only B-Spline surfaces allowed for faces (found type %d)\n", entity_type );
 		return( 1 );
 	}
-	Readint( &i , "Upper index of first Sum: " );
+	Readint( &i , "" );
 	*n_rows = i+1;
-	Readint( &i , "Upper index of second sum: " );
+	Readint( &i , "" );
 	*n_cols = i+1;
-	Readint( &i , "Degree in first direction: " );
+	Readint( &i , "" );
 	*u_order = i+1;
-	Readint ( &i , "Degree in second direction: " );
+	Readint ( &i , "" );
 	*v_order = i+1;
-	Readint( &i , "Closed in first direction: " );
-	Readint( &i , "Closed in second direction: " );
-	Readint( &i , "Polynomial: " );
+	Readint( &i , "" );
+	Readint( &i , "" );
+	Readint( &i , "" );
 	rational = !i;
 	*pt_type = RT_NURB_MAKE_PT_TYPE( 3+rational , 2 , rational );
-	Readint( &i , "Periodic in first direction: " );
-	Readint( &i , "Periodic in second direction: " );
+	Readint( &i , "" );
+	Readint( &i , "" );
 	*n_u_knots = (*n_rows)+(*u_order);
 	*ukv = (fastf_t *)rt_calloc( *n_u_knots , sizeof( fastf_t ) , "Get_nurb_surf: *ukv" );
 	for( i=0 ; i<*n_u_knots ; i++ )
 	{
-		Readdbl( &a , "U_knot Vector: " );
+		Readdbl( &a , "" );
 		(*ukv)[i] = a;
 	}
 	*n_v_knots = (*n_cols)+(*v_order);
 	(*vkv) = (fastf_t *)rt_calloc( *n_v_knots , sizeof( fastf_t ) , "Get_nurb_surf: *vkv" );
 	for( i=0 ; i<*n_v_knots ; i++ )
 	{
-		Readdbl( &a , "V_knot Vector: " );
+		Readdbl( &a , "" );
 		(*vkv)[i] = a;
 	}
 	num_pts = (*n_rows)*(*n_cols);
 	*mesh = (fastf_t *)rt_calloc( num_pts*(3+rational) , sizeof( fastf_t ) , "Get_nurb_surf: *mesh" );
 	for( i=0 ; i<num_pts ; i++ )
 	{
-		Readdbl( &a , "Weight: " );
+		Readdbl( &a , "" );
 		if( rational )
 			(*mesh)[i*4+3] = a;
 	}
 	for( i=0 ; i<num_pts ; i++ )
 	{
-		Readdbl( &a , "X: " );
+		Readcnv( &a , "" );
 		(*mesh)[i*(3+rational)] = a;
-		Readdbl( &a , "Y: " );
+		Readcnv( &a , "" );
 		(*mesh)[i*(3+rational)+1] = a;
-		Readdbl( &a , "Z: " );
+		Readcnv( &a , "" );
 		(*mesh)[i*(3+rational)+2] = a;
 	}
-	Readdbl( &a , "u_min: " );
-	u_min = a;
-	Readdbl( &a , "u_max: " );
-	u_max = a;
-	Readdbl( &a , "v_min: " );
-	v_min = a;
-	Readdbl( &a , "v_max: " );
-	v_max = a;
+	Readdbl( &a , "" );
+	*u_min = a;
+	Readdbl( &a , "" );
+	*u_max = a;
+	Readdbl( &a , "" );
+	*v_min = a;
+	Readdbl( &a , "" );
+	*v_max = a;
 
-	if( u_min != 0.0 || u_max != 1.0 )
+	if( *u_min != 0.0 || *u_max != 1.0 )
 	{
 		num_knots = (*n_rows)+(*u_order);
 		for( i=0 ; i<num_knots ; i++ )
-			(*ukv)[i] = ((*ukv)[i]-u_min)/(u_max-u_min);
+			(*ukv)[i] = ((*ukv)[i]-(*u_min))/(*u_max-(*u_min));
 	}
-	if( v_min != 0.0 || v_max != 1.0 )
+	if( *v_min != 0.0 || *v_max != 1.0 )
 	{
 		num_knots = (*n_cols)+(*v_order);
 		for( i=0 ; i<num_knots ; i++ )
-			(*vkv)[i] = ((*vkv)[i]-v_min)/(v_max-v_min);
+			(*vkv)[i] = ((*vkv)[i]-(*v_min))/(*v_max-(*v_min));
 	}
 
 	return( 0 );
@@ -677,7 +639,7 @@ struct shell *s;
 	int surf_de;
 	int nverts;
 	int u_order,v_order,n_u_knots,n_v_knots,n_rows,n_cols,pt_type;
-	fastf_t *ukv,*vkv,*mesh;
+	fastf_t *ukv,*vkv,*mesh,u_min,u_max,v_min,v_max;
 	int coords;
 	int has_outer_boundary,inner_loop_count,outer_loop;
 	int *inner_loop;
@@ -699,19 +661,19 @@ struct shell *s;
 		printf( "Expected Trimmed Surface Entity found type %d\n" );
 		return( (struct faceuse *)NULL );
 	}
-	Readint( &surf_de , "Surface DE = " );
-	Readint( &has_outer_boundary , "Has outer boundary = " );
-	Readint( &inner_loop_count , "Inner loops = " );
-	Readint( &outer_loop , "Outer loop = " );
+	Readint( &surf_de , "" );
+	Readint( &has_outer_boundary , "" );
+	Readint( &inner_loop_count , "" );
+	Readint( &outer_loop , "" );
 	if( inner_loop_count )
 	{
 		inner_loop = (int *)rt_calloc( inner_loop_count , sizeof( int ) , "trim_surf: innerloop" );
 		for( i=0 ; i<inner_loop_count ; i++ )
-			Readint( &inner_loop[i] , "\tInner loop = " );
+			Readint( &inner_loop[i] , "" );
 	}
 
 	if( Get_nurb_surf( (surf_de-1)/2, &u_order, &v_order, &n_u_knots, &n_v_knots, &ukv, &vkv,
-				&n_rows, &n_cols, &pt_type, &mesh ) )
+				&u_min, &u_max, &v_min, &v_max, &n_rows, &n_cols, &pt_type, &mesh ) )
 	{
 		rt_free( (char *)inner_loop , "trim_surf: inner_loop" );
 		return( (struct faceuse *)NULL );
@@ -720,54 +682,20 @@ struct shell *s;
 
 	if( !has_outer_boundary )
 	{
-printf( "No outer boundary use rectangle\n" );
 		nverts = 4;
 		nurb_v = (struct nurb_verts *)rt_calloc( nverts , sizeof( struct nurb_verts ) , "trim_surf: nurb_v " );
 	}
 	else
-		nverts = Get_curve_verts( (outer_loop-1)/2 , entityno*2+1 , &nurb_v );
-printf( "Outer boundary has %d vertices\n" , nverts );
+		nverts = Get_curve_verts( (outer_loop-1)/2 , surf_de , &nurb_v );
 
 	verts = (struct vertex ***)rt_calloc( nverts , sizeof( struct vertex **) , "trim_surf: verts" );
 	if( has_outer_boundary )
 	{
 		for( i=0 ; i<nverts ; i++ )
-		{
 			verts[i] = &nurb_v[i].v;
-printf( "pt ( %f %f %f ) vertex pointer x%x\n" , V3ARGS( nurb_v[i].pt ) , verts[i] );
-		}
 	}
-	fu = nmg_cmface( s , verts , nverts );
-printf( "Made faceuse x%x\n" , fu );
-printf( "Calling nmg_face_g_snurb:\n" ) ;
-printf( "\tu_order = %d, v_order = %d, num_u_knots = %d, num_v_knots = %d\n" , u_order,v_order,n_u_knots,n_v_knots );
-printf( "\tU knots:\n" );
-for( i=0 ; i<n_u_knots ; i++ )
-	printf( "\t\t%f\n" , ukv[i] );
-printf( "\tV knots:\n" );
-for( i=0 ; i<n_v_knots ; i++ )
-	printf( "\t\t%f\n" , vkv[i] );
-printf( "\tControl mesh is %dX%d (%d coords per point):\n" , n_rows,n_cols,coords );
-for( i=0 ; i<n_rows ; i++ )
-{
-	int j;
 
-	printf( "\t\tRow %d:\n\t\t\t" , i );
-	for( j=0 ; j<n_cols ; j++ )
-	{
-		if( coords == 3 )
-			printf( " ( %f, %f, %f)" , V3ARGS( &mesh[i*n_cols*3+j*3] ) );
-		else if( coords ==4 )
-			printf( " ( %f, %f, %f, %f)" , V4ARGS( &mesh[i*n_cols*4+j*4] ) );
-		else
-		{
-			printf( "Coords = %d!!!!!!\n" , coords );
-			exit( 1 );
-		}
-		
-	}
-	putchar( '\n' );
-}
+	fu = nmg_cmface( s , verts , nverts );
 	nmg_face_g_snurb( fu, u_order, v_order, n_u_knots, n_v_knots, ukv, vkv, n_rows, n_cols, pt_type, mesh );
 
 	if( !has_outer_boundary )
@@ -799,10 +727,11 @@ for( i=0 ; i<n_rows ; i++ )
 			nmg_vertexuse_a_cnurb( vu , nurb_v[3].uvw );
 	}
 	else
-		Set_vertices( fu , nverts , nurb_v , surf_de , (outer_loop-1)/2 );
+		Set_vertices( fu , nverts , nurb_v , surf_de , (outer_loop-1)/2 , u_min , u_max , v_min , v_max );
 
 	if( inner_loop_count )	
 		rt_free( (char *)inner_loop , "trim_surf: inner_loop" );
+
 	return( fu );
 }
 
