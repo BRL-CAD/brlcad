@@ -637,6 +637,7 @@ register struct pkg_conn *pc;
 	}
 #else
 	(void)write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) );
+	if( len <= 0 )  return(0);
 	if( (i = write( pc->pkc_fd, buf, len )) != len )  {
 		if( i < 0 )  {
 			pkg_perror(pc->pkc_errlog, "pkg_send: write");
@@ -730,7 +731,8 @@ register struct pkg_conn *pc;
 #else
 	/* Assume all succeed if last one does */
 	(void)write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) );
-	(void)write( pc->pkc_fd, buf1, len1 );
+	i = write( pc->pkc_fd, buf1, len1 );
+	if( len2 <= 0 )  return(i);
 	if( (i = write( pc->pkc_fd, buf2, len2 )) != len2 )  {
 		if( i < 0 )  {
 			pkg_perror(pc->pkc_errlog, "pkg_2send: write2");
