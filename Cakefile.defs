@@ -1606,9 +1606,9 @@ set -S2 "/bin/sh"
 #	define	LIBWDB_DIR	../libwdb
 #	define	LIBWDB		-L''LIBWDB_DIR -lwdb
 #	define	LIBWDB_DEP	[[LIBVERS ../libwdb/libwdb.ARCH_SUF]]
-#	define	LIBNURB_DIR	../libnurb
-#	define	LIBNURB		-L''LIBNURB_DIR -lnurb
-#	define	LIBNURB_DEP	[[LIBVERS ../libnurb/libnurb.ARCH_SUF]]
+#	define	LIBNURB_DIR	LIBRT_DIR
+#	define	LIBNURB		/**/
+#	define	LIBNURB_DEP	/**/
 #	define	LIBMSR_DIR	../libmsr
 #	define	LIBMSR		-L''LIBMSR_DIR -lmsr
 #	define	LIBMSR_DEP	[[LIBVERS ../libmsr/libmsr.ARCH_SUF]]
@@ -1683,9 +1683,9 @@ set -S2 "/bin/sh"
 #	define	LIBWDB_DIR	../.libwdb.MTYPE
 #	define	LIBWDB		-L''LIBWDB_DIR -lwdb
 #	define	LIBWDB_DEP	[[LIBVERS ../.libwdb.MTYPE/libwdb.ARCH_SUF]]
-#	define	LIBNURB_DIR	../.libnurb.MTYPE
-#	define	LIBNURB		-L''LIBNURB_DIR -lnurb
-#	define	LIBNURB_DEP	[[LIBVERS ../.libnurb.MTYPE/libnurb.ARCH_SUF]]
+#	define	LIBNURB_DIR	LIBRT_DIR
+#	define	LIBNURB		/**/
+#	define	LIBNURB_DEP	/**/
 #	define	LIBMSR_DIR	../.libmsr.MTYPE
 #	define	LIBMSR		-L''LIBMSR_DIR -lmsr
 #	define	LIBMSR_DEP	[[LIBVERS ../.libmsr.MTYPE/libmsr.ARCH_SUF]]
