@@ -245,12 +245,16 @@ bu_avail_cpus()
 	return( ret );
 }
 
+
 /*
  *			B U _ G E T _ L O A D _ A V E R A G E
  *
  *  A generally portable method for obtaining the 1-minute load average.
  *  Vendor-specific methods which don't involve a fork/exec sequence
  *  would be preferable.
+ *  Alas, very very systems put the load average in /proc,
+ *  most still grunge the avenrun[3] array out of /dev/kmem,
+ *  which requires special privleges to open.
  */
 fastf_t
 bu_get_load_average()
