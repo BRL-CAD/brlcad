@@ -812,3 +812,39 @@ CONST struct rt_table	*tabp;
 
 	return data;
 }
+
+/*
+ *			R T _ T A B D A T A _ T O _ T C L
+ *
+ *  Convert an rt_tabdata/rt_table pair into a Tcl compatible string
+ *  appended to a VLS.  It will have form:
+ *	x {...} y {...} nx # ymin # ymax #
+ */
+void
+rt_tabdata_to_tcl( vp, data )
+struct bu_vls		*vp;
+CONST struct rt_tabdata	*data;
+{
+	CONST struct rt_table	*tabp;
+	register int i;
+	FAST fastf_t	minval = INFINITY, maxval = -INFINITY;
+
+	BU_CK_VLS(vp);
+	RT_CK_TABDATA(data);
+	tabp = data->table;
+	RT_CK_TABLE(tabp);
+
+	bu_vls_strcat(vp, "x {");
+	for( i=0; i < tabp->nx; i++ )  {
+		bu_vls_printf( vp, "%g ", tabp->x[i] );
+	}
+	bu_vls_strcat(vp, "} y {");
+	for( i=0; i < data->ny; i++ )  {
+		register fastf_t val = data->y[i];
+		bu_vls_printf( vp, "%g ", val );
+		if( val < minval )  minval = val;
+		if( val > maxval )  maxval = val;
+	}
+	bu_vls_printf( vp, "} nx %d ymin %g ymax %g",
+		tabp->nx, minval, maxval );
+}
