@@ -37,7 +37,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 void
 rt_nurb_nodes( nodes, knots, order)
 fastf_t * nodes;
-struct knot_vector * knots;
+CONST struct knot_vector * knots;
 int order;
 {
 	int i, j;
