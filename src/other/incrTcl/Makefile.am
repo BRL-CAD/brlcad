@@ -7,8 +7,6 @@ SUBDIRS = \
 	tools
 
 EXTRA_DIST = \
-	doc \
-	tools \
 	CHANGES \
 	INCOMPATIBLE \
 	license.terms \
