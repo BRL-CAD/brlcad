@@ -291,7 +291,13 @@ int mask;
   char line[MAXLINE];
 
   /* Get data from rt */
+#if 0
   if((count = read((int)fd, line, MAXLINE)) == 0){
+#else
+    /* anything bigger than 5120 causes the last line (i.e. bu_log("%s", line);)
+       to hang if writing to a pipe */
+  if((count = read((int)fd, line, 5120)) == 0){
+#endif
     Tcl_DeleteFileHandler(fd);
     return;
   }
@@ -349,7 +355,7 @@ run_rt()
 
 	(void)close( pipe_err[1] );
 
-	if(*zclip_ptr || mged_variables->mv_perspective_mode){
+	if((zclip_ptr != NULL && *zclip_ptr) || mged_variables->mv_perspective_mode){
 	  vect_t temp;
 
 	  VSET( temp, 0.0, 0.0, 1.0 );
