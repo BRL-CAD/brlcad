@@ -377,7 +377,8 @@ struct soltab		*stp;
  *
  *  initialize memory resources.
  *	This routine should initialize all the same resources
- *	that rt_free_resource() deallocates.
+ *	that rt_clean_resource() releases.
+ *	It shouldn't allocate any dynamic memory, just init pointers & lists.
  */
 void
 rt_init_resource( resp, cpu_num )
@@ -425,7 +426,7 @@ int		cpu_num;
 }
 
 /*
- *			R T _ F R E E _ R E S O U R C E
+ *			R T _ C L E A N _ R E S O U R C E
  *
  *  Deallocate the per-cpu "private" memory resources.
  *	segment freelist
@@ -438,20 +439,23 @@ int		cpu_num;
  *  Some care is required, as rt_uniresource may not be fully initialized
  *  before it gets freed.
  *
- *  Note that the resource struct's storage is not freed (it may be static),
- *  but it is zeroed.
+ *  Note that the resource struct's storage is not freed (it may be static
+ *  or otherwise allocated by a LIBRT application) but any dynamic
+ *  memory pointed to by it is freed.
  */
 void
-rt_free_resource( rtip, resp )
+rt_clean_resource( rtip, resp )
 struct rt_i	*rtip;
 struct resource	*resp;
 {
 	RT_CK_RTI(rtip);
 	RT_CK_RESOURCE(resp);
 
-	/* The 'struct seg' guys are malloc()ed in blocks, not individually */
+	/*  The 'struct seg' guys are malloc()ed in blocks, not individually,
+	 *  so they're kept track of two different ways.
+	 */
 	BU_LIST_INIT( &resp->re_seg );	/* abandon the list of individuals */
-	if( !BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )  {
+	if( !BU_LIST_UNINITIALIZED( &resp->re_seg_blocks.l ) )  {
 		struct seg **spp;
 		BU_CK_PTBL( &resp->re_seg_blocks );
 		for( BU_PTBL_FOR( spp, (struct seg **), &resp->re_seg_blocks ) )  {
@@ -510,7 +514,11 @@ struct resource	*resp;
 		resp->re_boolslen = 0;
 	}
 
-	/* Reinitialize, to be ready for next frame */
+	if( !resp->re_pmem.buckets[0].q_forw )  {
+		/* XXX How to release the pmalloc buckets? */
+	}
+
+	/* Reinitialize pointers, to be tidy.  No storage is allocated. */
 	rt_init_resource( resp, resp->re_cpu );
 }
 
@@ -518,7 +526,8 @@ struct resource	*resp;
  *			R T _ C L E A N
  *
  *  Release all the dynamic storage associated with a particular rt_i
- *  structure, except for the database instance information (dir, etc).
+ *  structure, except for the database instance information (dir, etc)
+ *  and the rti_resources ptbl.
  *
  *  Note that an animation script can invoke a "clean" operation before
  *  anything has been prepped.
@@ -607,23 +616,26 @@ register struct rt_i *rtip;
 	 *  These are provided by the caller's application (or are
 	 *  defaulted to rt_uniresource) and can't themselves be freed.
 	 *  rt_shootray() saved a table of them for us to use here.
+	 *  rt_uniresource may or may not be in this table.
  	 */
 	if( !BU_LIST_UNINITIALIZED( &rtip->rti_resources.l ) )  {
 		struct resource	**rpp;
 		BU_CK_PTBL( &rtip->rti_resources );
 		for( BU_PTBL_FOR( rpp, (struct resource **), &rtip->rti_resources ) )  {
 			RT_CK_RESOURCE(*rpp);
-			rt_free_resource(rtip, *rpp);
+			/* Clean but do not free the resource struct */
+			rt_clean_resource(rtip, *rpp);
 		}
-		bu_ptbl_free( &rtip->rti_resources );
+		/* Forget the remembered pointers, but keep ptbl ready */
+		bu_ptbl_trunc( &rtip->rti_resources, 0 );
 	}
 	if( rt_uniresource.re_magic )  {
-		rt_free_resource(rtip, &rt_uniresource );/* Used for rt_optim_tree() */
+		rt_clean_resource(rtip, &rt_uniresource );/* Used for rt_optim_tree() */
 	}
 
 	/*
 	 *  Re-initialize everything important.
-	 *  This duplicates the code in rt_dirbuild().
+	 *  This duplicates the code in rt_new_rti().
 	 */
 
 	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
@@ -771,4 +783,3 @@ register struct rt_i	*rtip;
 	/* rti_CutHead */
 
 }
-

@@ -699,30 +699,15 @@ register struct application *ap;
 	BU_LIST_INIT( &finished_segs.l );
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
-		int i;
-
-		BU_LIST_INIT( &resp->re_parthead );
-
-		/* If one is, they all probably are.  Runs once per processor. */
-		if( BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
-			BU_LIST_INIT(  &resp->re_solid_bitv );
-		if( BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
-			BU_LIST_INIT(  &resp->re_region_ptbl );
-		if( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
-			BU_LIST_INIT(  &resp->re_nmgfree );
-
-		for( i=0 ; i<RT_PM_NBUCKETS ; i++ )
-		{
-			resp->re_pmem.buckets[i].q_forw = &resp->re_pmem.buckets[i];
-			resp->re_pmem.buckets[i].q_back = &resp->re_pmem.buckets[i];
-		}
-		resp->re_pmem.adjhead.q_forw = &resp->re_pmem.adjhead;
-		resp->re_pmem.adjhead.q_back = &resp->re_pmem.adjhead;
-
 		/*
-		 *  Add this resource structure to the table.
-		 *  This is how per-cpu resource structures are discovered.
+		 *  We've been handed a mostly un-initialized resource struct,
+		 *  with only a magic number and a cpu number filled in.
+		 *  Init it and add it to the table.
+		 *  This is how application-provided resource structures
+		 *  are remembered for later cleanup by the library.
 		 */
+		rt_init_resource( resp, resp->re_cpu );
+
 		bu_semaphore_acquire(RT_SEM_MODEL);
 		bu_ptbl_ins_unique( &rtip->rti_resources, (long *)resp );
 		bu_semaphore_release(RT_SEM_MODEL);

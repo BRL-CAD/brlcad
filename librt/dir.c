@@ -155,6 +155,7 @@ struct rt_i	*rtip;
 	rt_clean( rtip );
 	db_close( rtip->rti_dbip );
 	rtip->rti_dbip = (struct db_i *)NULL;
+	bu_ptbl_free( &rtip->rti_resources );
 	rt_free( (char *)rtip, "struct rt_i" );
 }
 
