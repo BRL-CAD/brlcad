@@ -461,13 +461,45 @@ char *dstr;
 
   /* This runs the tk.tcl script */
   if(Tk_Init(interp) == TCL_ERROR){
-    Tcl_AppendResult(interp, "\ngui_setup: Couldn't initialize Tk\n", (char *)NULL);
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
+#if 0
+  Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
+#endif
+
+#if 0
+  /* XXX Initialize [incr Tk] */
+  if (Itk_Init(interp) == TCL_ERROR) {
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+#if 0
+  Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
+#endif
+
+  /* Import [incr Tcl] commands into the global namespace */
+  if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		 "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+#endif
+
+  /* Initialize libdm */
+  (void)Dm_Init(interp);
+
+  /* Initialize libfb */
+  (void)Fb_Init(interp);
+
   if((tkwin = Tk_MainWindow(interp)) == NULL){
-    Tcl_AppendResult(interp, "gui_setup: Failed to get main window.\n", (char *)NULL);
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
