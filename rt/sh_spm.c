@@ -92,11 +92,12 @@ char	*dp;
 HIDDEN int
 spm_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct spm_specific *spp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( spp, spm_specific );
 	*dpp = (char *)spp;
 

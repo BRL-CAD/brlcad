@@ -56,7 +56,7 @@ struct structparse stk_parse[] = {
 HIDDEN int
 stk_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;	/* parameter string */
+struct rt_vls	*matparm;	/* parameter string */
 char	**dpp;		/* pointer to user data pointer */
 {
 	register struct stk_specific *sp;
@@ -65,15 +65,16 @@ char	**dpp;		/* pointer to user data pointer */
 	int	inputs = 0;
 	struct mfuncs *mfp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( sp, stk_specific );
 	*dpp = (char *)sp;
 
 	/*rt_structparse( matparm, stk_parse, (char *)sp );*/
 
 	if(rdebug&RDEBUG_MATERIAL)
-		rt_log( "stk_setup called with \"%s\"\n", matparm );
+		rt_log( "stk_setup called with \"%s\"\n", RT_VLS_ADDR(matparm) );
 	i = 0;
-	start = cp = matparm;
+	start = cp = RT_VLS_ADDR(matparm);
 	while( *cp != NULL ) {
 		if( *cp == ';' ) {
 			*cp = NULL;

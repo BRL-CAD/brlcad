@@ -103,11 +103,12 @@ struct mfuncs cook_mfuncs[] = {
 HIDDEN int
 cook_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct cook_specific *pp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( pp, cook_specific );
 	*dpp = (char *)pp;
 
@@ -145,11 +146,12 @@ char	**dpp;
 HIDDEN int
 cmirror_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct cook_specific *pp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( pp, cook_specific );
 	*dpp = (char *)pp;
 
@@ -183,11 +185,12 @@ char	**dpp;
 HIDDEN int
 cglass_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct cook_specific *pp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( pp, cook_specific );
 	*dpp = (char *)pp;
 

@@ -64,7 +64,7 @@ HIDDEN double	n[IPOINTS+1][IPOINTS+1][IPOINTS+1];
 HIDDEN int
 marble_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	int	i, j, k;
@@ -72,6 +72,7 @@ char	**dpp;
 	extern struct resource		rt_uniresource;
 	register struct resource	*resp = &rt_uniresource;;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( mp, marble_specific );
 	*dpp = (char *)mp;
 

@@ -103,7 +103,7 @@ char	*dp;
 HIDDEN int
 light_setup( rp, matparm, dpp )
 register struct region *rp;
-char		*matparm;
+struct rt_vls	*matparm;
 genptr_t	*dpp;
 {
 	register struct light_specific *lp;
@@ -111,6 +111,7 @@ genptr_t	*dpp;
 	vect_t	work;
 	fastf_t	f;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( lp, light_specific );
 	*dpp = (genptr_t)lp;
 

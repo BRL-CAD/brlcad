@@ -112,22 +112,19 @@ fastf_t Contrast, initFx, initFy;
 HIDDEN int
 cloud_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct cloud_specific *cp;
-	struct rt_vls vls;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( cp, cloud_specific );
-	rt_vls_init( &vls);
-	rt_vls_strcat( &vls, matparm );
-
 	*dpp = (char *)cp;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
-	rt_structparse( &vls, cloud_parse, (char *)cp );
-	rt_vls_free( &vls );
+	rt_structparse( matparm, cloud_parse, (char *)cp );
+
 	return(1);
 }
 

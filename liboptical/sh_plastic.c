@@ -99,11 +99,12 @@ extern double phg_ipow();
 HIDDEN int
 phong_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct phong_specific *pp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 
@@ -129,11 +130,12 @@ char	**dpp;
 HIDDEN int
 mirror_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct phong_specific *pp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 
@@ -159,11 +161,12 @@ char	**dpp;
 HIDDEN int
 glass_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct phong_specific *pp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 

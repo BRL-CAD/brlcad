@@ -553,11 +553,12 @@ char	*dp;
 HIDDEN int
 envmap_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls *matparm;
 char	**dpp;
 {
 	register char	*cp;
 
+	RT_VLS_CHECK( matparm );
 	if( env_region.reg_mfuncs )  {
 		rt_log("envmap_setup:  second environment map ignored\n");
 		return(0);		/* drop region */
@@ -566,14 +567,21 @@ char	**dpp;
 	env_region.reg_mfuncs = (char *)0;
 
 	/* Expect "material SPACE args", find space */
-	cp = matparm;
+	cp = RT_VLS_ADDR( matparm );
 	while( *cp != '\0' && *cp != ' ' )
 		cp++;
 	*cp++ = '\0';
-	strncpy( env_region.reg_mater.ma_matname, matparm,
-		sizeof(rp->reg_mater.ma_matname) );
-	strncpy( env_region.reg_mater.ma_matparm, cp,
+
+	strncpy( env_region.reg_mater.ma_matparm, cp++,
 		sizeof(rp->reg_mater.ma_matparm) );
+
+	/* truncate the string to just the material name */
+	rt_vls_trunc( matparm, (int)(--cpp - RT_VLS_ADDR(matparm)) );
+
+	strncpy( env_region.reg_mater.ma_matname, RT_VLS_ADDR(matparm),
+		sizeof(rp->reg_mater.ma_matname) );
+
+
 	(void)mlib_setup( &env_region );
 	return(0);		/* This region should be dropped */
 }

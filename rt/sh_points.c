@@ -81,13 +81,14 @@ struct points {
 HIDDEN int
 points_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
+struct rt_vls	*matparm;
 char	**dpp;
 {
 	register struct points_specific *ptp;
 	char	buf[513];
 	FILE	*fp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( ptp, points_specific );
 	*dpp = (char *)ptp;
 
