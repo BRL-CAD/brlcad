@@ -230,7 +230,11 @@ BDIRS="bench \
 	btclsh \
 "			# This ends the list.
 
-TSDIRS=". mged nirt pl-dm lib util"
+#
+# Cakefiles to execute in tclscripts.
+#
+TSDIRS=". mged nirt pl-dm lib util rtwizard/examples/PictureTypeA rtwizard/examples/PictureTypeB rtwizard/examples/PictureTypeC rtwizard/examples/PictureTypeD rtwizard/examples/PictureTypeE rtwizard/examples/PictureTypeF rtwizard/lib rtwizard"
+
 HTML_DIRS="html/manuals html/manuals/shaders html/manuals/Anim_Tutorial html/manuals/libdm html/manuals/mged html/manuals/mged/animmate html/manuals/librt html/manuals/libbu html/manuals/cadwidgets html/ReleaseNotes html/ReleaseNotes/Rel5.0 html/ReleaseNotes/Rel5.0/Summary"
 INSTALL_ONLY_DIRS="sample_applications $HTML_DIRS"
 PROE_DIRS=". sgi_mips4 text resource"

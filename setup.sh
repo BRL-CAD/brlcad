@@ -201,6 +201,15 @@ for LAST in \
 	man man/man1 man/man3 man/man5 \
 	tclscripts tclscripts/mged tclscripts/nirt \
 		tclscripts/lib tclscripts/util tclscripts/pl-dm \
+                tclscripts/rtwizard \
+		tclscripts/rtwizard/lib \
+		tclscripts/rtwizard/examples \
+		tclscripts/rtwizard/examples/PictureTypeA \
+		tclscripts/rtwizard/examples/PictureTypeB \
+		tclscripts/rtwizard/examples/PictureTypeC \
+		tclscripts/rtwizard/examples/PictureTypeD \
+		tclscripts/rtwizard/examples/PictureTypeE \
+		tclscripts/rtwizard/examples/PictureTypeF \
 	html html/manuals html/manuals/mged \
 		html/manuals/mged/animmate html/manuals/libdm \
 		html/manuals/shaders html/manuals/Anim_Tutorial \
