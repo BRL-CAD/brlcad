@@ -55,7 +55,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -2101,6 +2103,25 @@ long		*magic_p;
 
 	old = eu->g.lseg_p;	/* This may be NULL.  For printing only. */
 
+	/* Sanity check */
+	if( old && eg )  {
+		vect_t		dir_src;
+		vect_t		dir_dest;
+		fastf_t		deg;
+
+		VMOVE( dir_src, old->e_dir );
+		VUNITIZE( dir_src );
+		VMOVE( dir_dest, eg->e_dir );
+		VUNITIZE( dir_dest );
+		deg = acos(fabs(VDOT( dir_src, dir_dest ))) * rt_radtodeg;
+		if( fabs(deg) > 2 )  {
+			VPRINT( "dir_src ", dir_src );
+			VPRINT( "dir_dest", dir_dest );
+			rt_log("Angle between lines is %g degrees\n", deg );
+			rt_bomb("nmg_use_edge_g() angle between 2 existing lines is excessive\n");
+		}
+	}
+
 	/* Handle edgeuse */
 	if( eu->g.lseg_p != eg && eu->g.lseg_p )  {
 
@@ -2989,12 +3010,28 @@ struct edge_g_lseg	*dest_eg;
 struct edge_g_lseg	*src_eg;
 {
 	register struct edgeuse		*eu;
+	vect_t				dir_src;
+	vect_t				dir_dest;
+	fastf_t				deg;
 
 	NMG_CK_EDGE_G_LSEG(src_eg);
 	NMG_CK_EDGE_G_LSEG(dest_eg);
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_jeg( src_eg=x%x, dest_eg=x%x )\n",
 			src_eg, dest_eg );
+	}
+
+	/* Sanity check */
+	VMOVE( dir_src, src_eg->e_dir );
+	VUNITIZE( dir_src );
+	VMOVE( dir_dest, dest_eg->e_dir );
+	VUNITIZE( dir_dest );
+	deg = acos(fabs(VDOT( dir_src, dir_dest ))) * rt_radtodeg;
+	if( fabs(deg) > 2 )  {
+		VPRINT( "dir_src ", dir_src );
+		VPRINT( "dir_dest", dir_dest );
+		rt_log("Angle between lines is %g degrees\n", deg );
+		rt_bomb("nmg_jeg() angle between lines is excessive\n");
 	}
 
 	while( RT_LIST_NON_EMPTY( &src_eg->eu_hd2 ) )  {
