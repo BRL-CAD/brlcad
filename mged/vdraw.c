@@ -1,14 +1,15 @@
 /*******************************************************************
 
-CMD_VDRAW - edit, query, and display a vector list as a pseudosolid
+CMD_VDRAW - edit vector lists and display them as pseudosolids
 
 OPEN COMMAND
-vdraw	open	name		- select the current pseudo-solid
-				  returns 1 if creating new pseudo-solid
-				          0 if reading an existing solid vlist
-					  -1 if solid not opened (see *)
+vdraw	open			- with no argument, asks if there is
+	  			  an open curve (1 yes, 0 no)
 
-
+		name		- opens the specified curve
+				  returns 1 if creating new curve
+				          0 if opening an existing curve
+	
 EDITING COMMANDS - no return value
 
 vdraw	write	i	c x y z	- write params into i-th vector
@@ -23,16 +24,20 @@ vdraw	delete 	i		- delete i-th vector
 PARAMETER SETTING COMMAND - no return value
 vdraw	params	color		- set the current color with 6 hex digits
 				  representing rrggbb
-		name		- change the name of the current pseudosolid
+		name		- change the name of the current curve
 
 QUERY COMMAND
 vdraw	read	i		- returns contents of i-th vector "c x y z"
 		color		- return the current color in hex
 		length		- return number of vectors in list
-		name		- return name of current pseudo-solid
+		name		- return name of current curve
+
+CURVE COMMANDS
+vdraw	curve	list		- return list of all existing curves
+		delete	name	- delete the named curve
 
 DISPLAY COMMAND - 
-vdraw	send			- send the current list to the display
+vdraw	send			- send the current curve to the display
 				  returns 0 on success, -1 if the name
 				  conflicts with an existing true solid
 
@@ -59,13 +64,6 @@ In the above listing:
 "x y z" refer to floating point values which represent a point or normal
 	vector. For commands 0,1,3,4, and 5, they represent a point, while
 	for commands 2 and 6 they represent normal vectors
-
-* note - if name is an existing displayed solid, vdraw will read its 
-vector list. It can be edited like any list, but can't be sent until
-the name is changed.
-	open will fail non-destructively (-1) if a solid exists but is 
-not displayed.
-
 
 author - Carl Nuzman
 ********************************************************************/
@@ -97,14 +95,25 @@ author - Carl Nuzman
 #define M_SQRT2		1.41421356237309504880
 #endif
 
-static struct rt_list head;
 
-#define MAX_NAME	30
+#define PREFIX		"_VDRW"
+#define PREFIX_LEN	6
+#define MAX_NAME	31
 #define DEF_COLOR	0xffff00
 #define REV_RT_LIST_FOR(p,structure,hp)	\
 	(p)=RT_LIST_LAST(structure,hp);	\
 	RT_LIST_NOT_HEAD(p,hp);		\
 	(p)=RT_LIST_PLAST(structure,p)
+
+static struct rt_list vdraw_head;
+struct rt_curve {
+	struct rt_list	l;
+	char		name[MAX_NAME+1]; 	/* name array */
+	long		rgb;	/* color */
+	struct rt_list	vhd;	/* head of list of vertices */
+};
+
+
 
 int my_final_check(hp)
 struct rt_list *hp;
@@ -125,8 +134,11 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
+	char *str;
+	static struct rt_curve *curhead;
 	static initialized = 0;
 	static int verbose = 0;
+	struct rt_curve *rcp, *rcp2;
 	struct rt_vlist *vp, *cp, *wp;
 	int i, index, uind, blocks, change;
 	int length;
@@ -137,9 +149,10 @@ char **argv;
 	struct solid *sp, *sp2;
 	struct directory *dp;
 	char result_string[90]; /* make sure there's room */
-	static char vdraw_name[MAX_NAME];
-	static char temp_name[MAX_NAME];
+	static char vdraw_name[MAX_NAME+1];
+	static char temp_name[MAX_NAME+1];
 	static char def_name[] = "_vdraw_sol_";
+	char solid_name [MAX_NAME+PREFIX_LEN+1];
 	static int real_flag;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -148,46 +161,40 @@ char **argv;
 	if (!initialized){
 		if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
 			RT_LIST_INIT( &rt_g.rtg_vlfree );
-		RT_LIST_INIT( &head );
-		RT_GET_VLIST(vp);
-		RT_LIST_APPEND( &head, &(vp->l) );
-		strncpy(vdraw_name, def_name, MAX_NAME);
-		my_rgb = DEF_COLOR;
-		real_flag = 0;
+		RT_LIST_INIT( &vdraw_head );
+		curhead = (struct rt_curve *) NULL;
 		initialized = 1;
-	}
-
-	/* following code assumes list non-empty */
-	if (RT_LIST_IS_EMPTY(&head)){
-		RT_GET_VLIST(vp);
-		RT_LIST_APPEND( &head, &(vp->l) );
 	}
 
 	switch ( argv[1][0] ) {
 	case 'w': /*write*/
+		if (!curhead) {
+			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			return TCL_ERROR;
+		}
 		if (argc < 7){
 			Tcl_AppendResult(interp, "vdraw: not enough args\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'n') { /* next */
-			for (REV_RT_LIST_FOR(vp, rt_vlist, &head)){
+			for (REV_RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd))){
 				if (vp->nused > 0){
 					break;
 				}
 			}
-			if (RT_LIST_IS_HEAD(vp,&head)){
+			if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
 				/* we went all the way through */
 				vp = RT_LIST_PNEXT(rt_vlist, vp);
-				if (RT_LIST_IS_HEAD(vp,&head)){
+				if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
 					RT_GET_VLIST(vp);
-					RT_LIST_INSERT( &head, &(vp->l) );
+					RT_LIST_INSERT( &(curhead->vhd), &(vp->l) );
 				}
 			}
 			if (vp->nused >= RT_VLIST_CHUNK){
 				vp = RT_LIST_PNEXT(rt_vlist, vp);
-				if (RT_LIST_IS_HEAD(vp,&head)){
+				if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
 					RT_GET_VLIST(vp);
-					RT_LIST_INSERT(&head,&(vp->l));
+					RT_LIST_INSERT(&(curhead->vhd),&(vp->l));
 				}
 			}
 			cp = vp;
@@ -199,7 +206,7 @@ char **argv;
 			/* uind holds user-specified index */
 			/* only allow one past the end */
 
-			for (RT_LIST_FOR(vp, rt_vlist, &head) ){
+			for (RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
 				if (uind < RT_VLIST_CHUNK){
 					/* this is the right vlist */
 					break;
@@ -210,13 +217,13 @@ char **argv;
 				uind -= vp->nused;
 			}
 
-			if (RT_LIST_IS_HEAD(vp,&head)){
+			if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
 				if (uind > 0){
 					Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
 					return TCL_ERROR;
 				}
 				RT_GET_VLIST(vp);
-				RT_LIST_INSERT(&head,&(vp->l));
+				RT_LIST_INSERT(&(curhead->vhd),&(vp->l));
 			}
 			if (uind > vp->nused) {
 				Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
@@ -240,6 +247,10 @@ char **argv;
 		return TCL_OK;
 		break;
 	case 'i': /*insert*/
+		if (!curhead) {
+			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			return TCL_ERROR;
+		}
 		if (argc < 7){
 			Tcl_AppendResult(interp, "vdraw: not enough args", (char *)NULL);
 			return TCL_ERROR;
@@ -250,7 +261,7 @@ char **argv;
 		} 
 
 		/* uinds hold user specified index */
-		for (RT_LIST_FOR(vp, rt_vlist, &head) ){
+		for (RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
 			if (uind < RT_VLIST_CHUNK){
 				/* this is the right vlist */
 				break;
@@ -261,13 +272,13 @@ char **argv;
 			uind -= vp->nused;
 		}
 
-		if (RT_LIST_IS_HEAD(vp,&head)){
+		if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
 			if (uind > 0){
 				Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
 				return TCL_ERROR;
 			}
 			RT_GET_VLIST(vp);
-			RT_LIST_INSERT(&head,&(vp->l));
+			RT_LIST_INSERT(&(curhead->vhd),&(vp->l));
 		}
 		if (uind > vp->nused) {
 			Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
@@ -278,7 +289,7 @@ char **argv;
 		cp = vp;
 		index = uind;
 
-		vp = RT_LIST_LAST(rt_vlist, &head);
+		vp = RT_LIST_LAST(rt_vlist, &(curhead->vhd));
 		vp->nused++;
 
 		while (vp != cp){
@@ -306,20 +317,24 @@ char **argv;
 		return TCL_OK;
 		break;
 	case 'd': /*delete*/
+		if (!curhead) {
+			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			return TCL_ERROR;
+		}
 		if (argc < 3){
 			Tcl_AppendResult(interp, "vdraw: not enough args\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'a') {
 			/* delete all */
-			for ( RT_LIST_FOR( vp, rt_vlist, &head) ){
+			for ( RT_LIST_FOR( vp, rt_vlist, &(curhead->vhd)) ){
 				vp->nused = 0;
 			}
 			return TCL_OK;
 		} 
 		if (argv[2][0] == 'l') {
 			/* delete last */
-			for ( REV_RT_LIST_FOR( vp, rt_vlist, &head) ){
+			for ( REV_RT_LIST_FOR( vp, rt_vlist, &(curhead->vhd)) ){
 				if (vp->nused > 0){
 					vp->nused--;
 					break;
@@ -332,7 +347,7 @@ char **argv;
 			return TCL_ERROR;
 		}  
 
-		for ( RT_LIST_FOR(vp, rt_vlist, &head) ){
+		for ( RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
 			if (uind < RT_VLIST_CHUNK){
 				/* this is the right vlist */
 				break;
@@ -355,7 +370,7 @@ char **argv;
 		}
 		
 		wp = RT_LIST_PNEXT(rt_vlist, vp);
-		while ( RT_LIST_NOT_HEAD(wp, &head) ){
+		while ( RT_LIST_NOT_HEAD(wp, &(curhead->vhd)) ){
 			if (wp->nused == 0) {
 				break;
 			}
@@ -381,26 +396,31 @@ char **argv;
 		return TCL_OK;
 		break;
 	case 'r': /*read*/
+		if (!curhead) {
+			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			return TCL_ERROR;
+		}
 		if (argc < 3) {
 			Tcl_AppendResult(interp, "vdraw: need index to read\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'c') {
 			/* read color of current solid */
-			sprintf(result_string, "%lx", my_rgb);
+			sprintf(result_string, "%lx", curhead->rgb);
 			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
 		if (argv[2][0] == 'n') {
 			/*read name of currently open solid*/
-			Tcl_AppendResult(interp, vdraw_name, (char *)NULL);
+			sprintf(result_string, "%s", curhead->name);
+			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
 		if (argv[2][0] == 'l') {
 			/* return lenght of list */
 			length = 0;
-			vp = RT_LIST_FIRST(rt_vlist, &head);
-			while ( !RT_LIST_IS_HEAD(vp, &head) ) {
+			vp = RT_LIST_FIRST(rt_vlist, &(curhead->vhd));
+			while ( !RT_LIST_IS_HEAD(vp, &(curhead->vhd)) ) {
 				length += vp->nused;
 				vp = RT_LIST_PNEXT(rt_vlist, vp);
 			}
@@ -413,7 +433,7 @@ char **argv;
 			return TCL_ERROR;
 		}
 
-		for ( RT_LIST_FOR(vp, rt_vlist, &head) ){
+		for ( RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
 			if (uind < RT_VLIST_CHUNK){
 				/* this is the right vlist */
 				break;
@@ -437,7 +457,13 @@ char **argv;
 		return TCL_OK;
 		break;
 	case 's': /*send*/
-		if (( dp = db_lookup( dbip, vdraw_name, LOOKUP_QUIET )) == DIR_NULL ) {
+		if (!curhead) {
+			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			return TCL_ERROR;
+		}
+		sprintf(solid_name, PREFIX);
+		strncat(solid_name, curhead->name, MAX_NAME);
+		if (( dp = db_lookup( dbip, solid_name, LOOKUP_QUIET )) == DIR_NULL ) {
 			real_flag = 0;
 		} else {
 			real_flag = (dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
@@ -448,37 +474,53 @@ char **argv;
 			return TCL_OK;
 		}
 		rt_vls_init(&killstr);
-		rt_vls_printf( &killstr, "kill -f %s*\n", vdraw_name );
+		rt_vls_printf( &killstr, "kill -f %s\n", solid_name );
 		(void)cmdline( &killstr, FALSE );
 		rt_vls_free(&killstr);
 		index = 0;
-		if (verbose)
-			my_final_check(&head);
-		index = invent_solid( vdraw_name, &head, my_rgb, 1);
+		index = invent_solid( solid_name, &(curhead->vhd), curhead->rgb, 1);
 		sprintf(result_string,"%d",index);
 		/* 0 means OK, -1 means conflict with real solid name */
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 		break;
 	case 'p':  /* params */
+		if (!curhead) {
+			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			return TCL_ERROR;
+		}
 		if (argc < 4) {
 			Tcl_AppendResult(interp, "vdraw: need params to set\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'c'){
 			if (sscanf(argv[3],"%lx", &rgb)>0)
-				my_rgb = rgb;
+				curhead->rgb = rgb;
 			return TCL_OK;
 		}
 		if (argv[2][0] == 'n'){
-			strncpy(vdraw_name, argv[3], MAX_NAME);
+			/* check for conflicts with existing curves*/
+			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
+				if (!strncmp( rcp->name, argv[3], MAX_NAME)) {
+					Tcl_AppendResult(interp,"-1",(char *)NULL);
+					return TCL_OK;
+				}
+			}
+			/* otherwise name not yet used */
+			strncpy(curhead->name, argv[3], MAX_NAME);
+			curhead->name[MAX_NAME] = (char) NULL;
+			Tcl_AppendResult(interp,"0",(char *)NULL);
 			return TCL_OK;
 		}
 		break;
 	case 'h': /* help */
+		if (!curhead) {
+			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			return TCL_ERROR;
+		}
 		if (argv[2][0]=='1'){
 			uind = 0;
-			for ( RT_LIST_FOR( vp, rt_vlist, &head)){
+			for ( RT_LIST_FOR( vp, rt_vlist, &(curhead->vhd))){
 				uind++;
 			}
 			sprintf(result_string, "%d", uind);
@@ -488,7 +530,7 @@ char **argv;
 		if (argv[2][0]=='2'){
 			uind = 0;
 			sscanf(argv[3], "%d", &index);
-			for ( RT_LIST_FOR( vp, rt_vlist, &head)){
+			for ( RT_LIST_FOR( vp, rt_vlist, &(curhead->vhd))){
 				if (index==uind)
 					break;
 				uind ++;
@@ -499,55 +541,97 @@ char **argv;
 		}
 		break;
 	case 'o': /* open */
-		
 		if (argc < 3) {
-			strncpy(temp_name, def_name, MAX_NAME);
-		} else {
-			strncpy(temp_name, argv[2], MAX_NAME);
-		}
-		if ( (dp = db_lookup( dbip, temp_name, LOOKUP_QUIET))== DIR_NULL ) {
-			/* release old list */
-			RT_FREE_VLIST( &head);
-			/* initialize new list */
-			RT_GET_VLIST(vp);
-			RT_LIST_INIT( &head );
-			RT_LIST_APPEND( &head, &(vp->l) );
-			my_rgb = DEF_COLOR;
-			/* new pseudo-solid created */
-			strncpy(vdraw_name, temp_name, MAX_NAME);
-			Tcl_AppendResult(interp, "1", (char *)NULL);
-			return TCL_OK;
-		} else {
-			found = 0;
-			FOR_ALL_SOLIDS( sp ) {
-				int j;
-				for ( j = sp->s_last; j>=0; j--) {
-					if (sp->s_path[j] == dp) {
-						found = 1;
-						break;
-					}
-				}
-				if (found)
-					break;
-			}
-			if (!found) {
-				/* solid exists but is not displayed */
-				Tcl_AppendResult(interp, "-1", (char *)NULL);
+			if (curhead) {
+				Tcl_AppendResult(interp, "1", (char *)NULL);
+				return TCL_OK;
+			} else {
+				Tcl_AppendResult(interp, "0", (char *)NULL);
 				return TCL_OK;
 			}
-			/* release old list */
-			RT_FREE_VLIST( &head);
-			/* get copy of new list */
-			rt_vlist_copy( &head   , &(sp->s_vlist));
-
-			my_rgb = ((sp->s_color[0])<<16) |
-				  ((sp->s_color[1])<<8) |
-				       (sp->s_color[2]);
-
-			/* existing displayed solid used */
-			strncpy(vdraw_name, temp_name, MAX_NAME);
+		}
+		strncpy(temp_name, argv[2], MAX_NAME);
+		temp_name[MAX_NAME] = (char) NULL;
+		curhead = (struct rt_curve *) NULL;
+		for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
+			if (!strncmp( rcp->name, temp_name, MAX_NAME)) {
+				curhead = rcp;
+				break;
+			}
+		}
+		if (!curhead) { /* create new entry */
+			GETSTRUCT( rcp, rt_curve );
+			RT_LIST_APPEND( &vdraw_head, &(rcp->l) );
+			strcpy( rcp->name, temp_name);
+			rcp->name[MAX_NAME] = (char) NULL;
+			rcp->rgb = DEF_COLOR;
+			RT_LIST_INIT(&(rcp->vhd));
+			RT_GET_VLIST(vp);
+			RT_LIST_APPEND( &(rcp->vhd), &(vp->l) );
+			curhead = rcp;
+			/* 1 means new entry */
+			Tcl_AppendResult(interp, "1", (char *)NULL);
+			return TCL_OK;
+		} else { /* entry already existed */
+			if (RT_LIST_IS_EMPTY(&(curhead->vhd))){
+				RT_GET_VLIST(vp);
+				RT_LIST_APPEND( &(curhead->vhd), &(vp->l) );
+			}
+			curhead->name[MAX_NAME] = (char) NULL; /*safety*/
+			/* 0 means new entry */
 			Tcl_AppendResult(interp, "0", (char *)NULL);
 			return TCL_OK;
+		}
+		break;
+	case 'c':
+		if (argc<3) {
+			Tcl_AppendResult(interp,"vdraw: need more args",(char *)NULL);
+			return TCL_ERROR;
+		}
+		switch  (argv[2][0]) {
+		case 'l':
+			rt_vls_init(&killstr);
+			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
+				rt_vls_strcat( &killstr, rcp->name);
+				rt_vls_strcat( &killstr, " ");
+			}
+			/* also does free */
+			str = rt_vls_strgrab(&killstr);
+			Tcl_AppendResult(interp, str, (char *)NULL);
+			return TCL_OK;
+			break;
+		case 'd':
+			if (argc<4) {
+				Tcl_AppendResult(interp,"vdraw: need name of curve to delete", (char *)NULL);
+				return TCL_ERROR;
+			}
+			rcp2 = (struct rt_curve *)NULL;
+			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
+				if (!strncmp(rcp->name,argv[3],MAX_NAME)){
+					rcp2 = rcp;
+					break;
+				}
+			}
+			if (!rcp2) {
+				sprintf(result_string,"vdraw: curve %s not found", argv[3]);
+				Tcl_AppendResult(interp, result_string, (char *)NULL);
+				return TCL_ERROR;
+			}
+			RT_LIST_DEQUEUE(&(rcp2->l));
+			if (curhead == rcp2) {
+				if ( RT_LIST_IS_EMPTY( &vdraw_head ) ){
+					curhead = (struct rt_curve *)NULL;
+				} else {
+					curhead = RT_LIST_LAST(rt_curve,&vdraw_head);
+				}
+			}
+			RT_FREE_VLIST(&(rcp2->vhd));
+			rt_free((char *) rcp2, "rt_curve");
+			return TCL_OK;
+			break;
+		default:
+			Tcl_AppendResult(interp,"vdraw: unknown option to vdraw curve", (char *)NULL);
+			return TCL_ERROR;
 		}
 		break;
 	case 'v':
