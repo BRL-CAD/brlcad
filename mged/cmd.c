@@ -144,8 +144,6 @@ int     f_bindkey();
 
 /* Carl Nuzman experimental */
 #if 1
-extern int f_drawline();
-#else
 extern int cmd_vdraw();
 #endif
 
@@ -294,13 +292,6 @@ static struct funtab funtab[] = {
 	f_delay,3,3,FALSE,
 "dm", "set var [val]", "Do display-manager specific command",
 	f_dm, 2, MAXARGS, FALSE,
-#if 1
-"drawline", "x y z (color) (kill)", "Experimental - draw a line (cnuzman)",
-	f_drawline, 4, 6, FALSE,
-#else
-"vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
-	cmd_vdraw, 2, 7, TRUE,
-#endif
 "dup", "file [prefix]", "check for dup names in 'file'",
 	f_dup, 2, 3, FALSE,
 "E", "<objects>", "evaluated edit of objects",
@@ -596,6 +587,10 @@ static struct funtab funtab[] = {
 #endif
 "units", "[mm|cm|m|in|ft|...]", "change units",
 	f_units,1,2,FALSE,
+#if 1
+"vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
+	cmd_vdraw, 2, 7, TRUE,
+#endif
 "vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
 	f_vrmgr, 3, MAXARGS,FALSE,
 "vrot", "xdeg ydeg zdeg", "rotate viewpoint",
