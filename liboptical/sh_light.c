@@ -1550,9 +1550,11 @@ retry:
 		point_t ray_endpt;
 
  /* Yelow -- light visibility ray */
-		pl_color(stdout, 200, 200, 0);
 		VADD2(ray_endpt, los->swp->sw_hit.hit_point, shoot_dir);
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		pl_color(stdout, 200, 200, 0);
 		pdv_3line(stdout, los->swp->sw_hit.hit_point, ray_endpt);
+		bu_semaphore_release( BU_SEM_SYSCALL );
 	}
 
 	VUNITIZE( shoot_dir );
