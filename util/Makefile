@@ -1,21 +1,21 @@
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	85/03/14	Gary S. Moss
+#	last edit:	85/03/15	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.9
+#	SCCS ID:	@(#)Makefile	1.10
 
-PRODUCT	= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
+PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
 CFILES	= pp-fb.c fbclear.c fbgrid.c rle-fb.c fb-rle.c fbcmap.c fbzoom.c\
 	termio.c
 OBJS	= pp-fb.o fbclear.o fbgrid.o rle-fb.o fb-rle.o fbcmap.o fbzoom.o\
 	termio.o
 #/usr/brl/bin eventually
-BINDIR	= /vld/moss/bin
+BINDIR	= /vld/bin
 LIBDIR	= /vld/lib
 INCDIR	= /vld/include
 MANDIR	= /usr/man/man1
-MANUAL	= fb-rle.1
+MANUALS	= pp-fb.1 fbclear.1 fbgrid.1 rle-fb.1 fb-rle.1 fbcmap.1 fbzoom.1
 BINPERM	= 755
 MANPERM	= 664
 CFLAGS	= -I${INCDIR} -O
@@ -27,9 +27,9 @@ INS	= cp
 	$(GET) $(GFLAGS) -p s.$@ > $@
 	touch $@
 
-all:	fbzoom ${PRODUCT} ${MANUAL}
+all:	fbzoom ${PRODUCTS}# ${MANUALS}
 
-${PRODUCT}:	$$@.o
+${PRODUCTS}:	$$@.o
 	$(CC) -o $@ ${LDFLAGS} $@.o ${LIBES} 
 	size $@
 	touch $@
@@ -39,39 +39,45 @@ fbzoom: fbzoom.o termio.o
 	size $@
 	touch $@
 
-print:		${MANUAL} Makefile ${HEADERS} ${CFILES}
-	( nroff -Tlp -man ${MANUAL} ; \
+print:		${MANUALS} Makefile ${HEADERS} ${CFILES}
+	( nroff -Tlp -man ${MANUALS} ; \
 	  pr Makefile ${HEADERS} ${CFILES} \
-				${MANUAL} ) | lpr
+				${MANUALS} ) | lpr
 
 lint:		${HEADERS} ${CFILES}
-	lint -I${INCDIR} ${CFILES} > ${PRODUCT}.lint
+	lint -I${INCDIR} ${CFILES} > ${PRODUCTS}.lint
 
 flow:		${HEADERS} ${CFILES}
-	cflow ${CFILES} > ${PRODUCT}.flow
+	cflow ${CFILES} > ${PRODUCTS}.flow
 
 xref:		${HEADERS} ${CFILES}
-	cxref -c -s -w132 ${CFILES} > ${PRODUCT}.xref
+	cxref -c -s -w132 ${CFILES} > ${PRODUCTS}.xref
 
 compare:	all
-	cmp ${BINDIR}/${PRODUCT} ${PRODUCT}
-	cmp ${MANDIR}/${MANUAL} ${MANUAL}
+	for i in ${PRODUCTS} fbzoom ; \
+	do	cmp ${BINDIR}/$$i $$i ; \
+	done
+	for i in ${MANUALS} ; \
+	do	cmp $$i ${MANDIR}/$$i ; \
+	done
 
 install:	all
-	${INS} ${PRODUCT} fbzoom ${BINDIR}
-	for i in ${PRODUCT} fbzoom ; \
-	do	chmod ${BINPERM} $$i ; \
+	${INS} ${PRODUCTS} fbzoom ${BINDIR}
+	for i in ${PRODUCTS} fbzoom ; \
+	do	chmod ${BINPERM} ${BINDIR}/$$i ; \
 	done
-#	${INS} ${MANUAL} ${MANDIR}/${MANUAL}
-#	chmod ${MANPERM} ${MANDIR}/${MANUAL}
+#	for i in ${MANUALS} ; \
+#	do	${INS} $$i ${MANDIR}/$$i ; \
+#		chmod ${MANPERM} ${MANDIR}/$$i ; \
+#	done
 
 clean:
 	-if vax; then rm -f ${HEADERS} ${CFILES}; fi
 	-rm -f ${OBJS}
 
 clobber:	clean
-	-if vax; then rm -f ${MANUAL}; fi
-	-rm -f ${PRODUCT} fbzoom
+	-if vax; then rm -f ${MANUALS}; fi
+	-rm -f ${PRODUCTS} fbzoom
 
 # Richard Draves <draves@HARVARD.ARPA> provide this depend implementation.
 BSD_CPP	=	/lib/cpp
