@@ -162,6 +162,63 @@ char	*framebuffer_name;
 char srv_usage[] = "Usage: rtnode [-d] control-host tcp-port [cmd]\n";
 
 /*
+ *			B U _ G E T _ L O A D _ A V E R A G E
+ */
+fastf_t
+bu_get_load_average()
+{
+	FILE	*fp;
+	double	load = -1.0;
+
+	fp = popen("PATH=/bin:/usr/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
+	if( !fp )
+		return -1.0;
+
+	fscanf( fp, "%lf", &load );
+	fclose(fp);
+
+	while( wait(NULL) != -1 )  ;	/* NIL */
+	return load;
+}
+
+/*
+ *			B U _ G E T _ P U B L I C _ C P U S
+ */
+#define PUBLIC_CPUS1	"/var/tmp/public_cpus"
+#define PUBLIC_CPUS2	"/usr/tmp/public_cpus"
+int
+bu_get_public_cpus()
+{
+	FILE	*fp;
+	int	avail_cpus;
+	int	public_cpus = 1;
+
+	avail_cpus = bu_avail_cpus();
+
+	if( (fp = fopen(PUBLIC_CPUS1, "r")) != NULL ||
+	    (fp = fopen(PUBLIC_CPUS2, "r")) != NULL
+	)  {
+		(void)fscanf( fp, "%d", &public_cpus );
+		fclose(fp);
+		if( public_cpus < 0 )  public_cpus = avail_cpus + public_cpus;
+		if( public_cpus > avail_cpus )  public_cpus = avail_cpus;
+		return public_cpus;
+	}
+
+	(void)unlink(PUBLIC_CPUS1);
+	(void)unlink(PUBLIC_CPUS2);
+	if( (fp = fopen(PUBLIC_CPUS1, "w")) != NULL ||
+	    (fp = fopen(PUBLIC_CPUS2, "w")) != NULL
+	)  {
+		fprintf(fp, "%d\n", avail_cpus);
+		fclose(fp);
+		(void)chmod(PUBLIC_CPUS1, 0666);
+		(void)chmod(PUBLIC_CPUS2, 0666);
+	}
+	return avail_cpus;
+}
+
+/*
  *			C M D _ G E T _ P T R
  *
  *  Returns an appropriately-formatted string that can later be reinterpreted
@@ -191,7 +248,6 @@ int argc;
 char **argv;
 {
 	register int	n;
-	FILE		*fp;
 	double		load = 0;
 
 	use_air = 1;	/* air & clouds are generally desired */
@@ -313,40 +369,19 @@ char **argv;
 
 	beginptr = (char *) sbrk(0);
 
-#define PUBLIC_CPUS	"/usr/tmp/public_cpus"
-	max_cpus = avail_cpus = bu_avail_cpus();
-	if( (fp = fopen(PUBLIC_CPUS, "r")) != NULL )  {
-		(void)fscanf( fp, "%d", &max_cpus );
-		fclose(fp);
-		if( max_cpus < 0 )  max_cpus = avail_cpus + max_cpus;
-		if( max_cpus > avail_cpus )  max_cpus = avail_cpus;
-	} else {
-		(void)unlink(PUBLIC_CPUS);
-		if( (fp = fopen(PUBLIC_CPUS, "w")) != NULL )  {
-			fprintf(fp, "%d\n", avail_cpus);
-			fclose(fp);
-			(void)chmod(PUBLIC_CPUS, 0666);
-		}
-	}
+	avail_cpus = bu_avail_cpus();
+	max_cpus = bu_get_public_cpus();
 
 	/* Be nice on loaded machines */
 	if( (debug&1) == 0 )  {
-		FILE	*fp;
-		fp = popen("PATH=/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
-		if( fp )  {
-			int	iload;
+		int	iload;
 
-			fscanf( fp, "%lf", &load );
-			fclose(fp);
-
-			iload = (int)(load + 0.5);	/* round up */
-			max_cpus -= iload;
-			if( max_cpus <= 0 )  {
-				bu_log("This machine is overloaded, load=%g, aborting.\n", load);
-				exit(9);
-			}
-
-			while( wait(NULL) != -1 )  ;	/* NIL */
+		load = bu_get_load_average();
+		iload = (int)(load + 0.5);	/* round up */
+		max_cpus -= iload;
+		if( max_cpus <= 0 )  {
+			bu_log("This machine is overloaded, load=%g, aborting.\n", load);
+			exit(9);
 		}
 	}
 
