@@ -94,7 +94,8 @@ CONST char	*value;
 
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
+		if( avp->readonly_max &&
+		    (app->value < avp->readonly_min || app->value > avp->readonly_max) )
 			bu_free( (genptr_t)app->value, "app->value" );
 		app->value = bu_strdup( value );
 		return 1;
@@ -184,22 +185,22 @@ CONST char	*attribute;
 
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( app->name < avp->readonly_min || app->name > avp->readonly_max )  {
+		if( avp->readonly_max &&
+		    (app->name < avp->readonly_min || app->name > avp->readonly_max) )
 			bu_free( (genptr_t)app->name, "app->name" );
-			app->name = NULL;	/* sanity */
-		}
-		if( app->value < avp->readonly_min || app->value > avp->readonly_max )  {
+		app->name = NULL;	/* sanity */
+		if( avp->readonly_max &&
+		    (app->value < avp->readonly_min || app->value > avp->readonly_max) )
 			bu_free( (genptr_t)app->value, "app->value" );
-			app->value = NULL;	/* sanity */
-		}
+		app->value = NULL;	/* sanity */
 
 		/* Move last one down to fit */
 		epp = &avp->avp[avp->count--];
 		if( app != epp )  {
 			*app = *epp;		/* struct copy */
 		}
-		epp->name = 0;			/* sanity */
-		epp->value = 0;
+		epp->name = NULL;			/* sanity */
+		epp->value = NULL;
 		return 0;
 	}
 	return -1;
@@ -216,14 +217,14 @@ bu_avs_free( struct bu_attribute_value_set *avp )
 	BU_CK_AVS(avp);
 
 	for( BU_AVS_FOR(app, avp) )  {
-		if( app->name < avp->readonly_min || app->name > avp->readonly_max )  {
+		if( avp->readonly_max &&
+		    (app->name < avp->readonly_min || app->name > avp->readonly_max) )
 			bu_free( (genptr_t)app->name, "app->name" );
-			app->name = NULL;	/* sanity */
-		}
-		if( app->value < avp->readonly_min || app->value > avp->readonly_max )  {
+		app->name = NULL;	/* sanity */
+		if( avp->readonly_max &&
+		    (app->value < avp->readonly_min || app->value > avp->readonly_max) )
 			bu_free( (genptr_t)app->value, "app->value" );
-			app->value = NULL;	/* sanity */
-		}
+		app->value = NULL;	/* sanity */
 	}
 	bu_free( (genptr_t)avp->avp, "avp->avp" );
 	avp->magic = -1L;
