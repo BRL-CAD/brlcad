@@ -73,8 +73,10 @@ register struct bu_vls	*vp;
 {
 	struct directory	*dp;
 	register int	i;
+	struct bu_vls vls;
 
 	BU_CK_VLS(vp);
+	bu_vls_init(&vls);
 
 	/*
 	 * Set up for character output.  For the best generality, we
@@ -124,6 +126,56 @@ register struct bu_vls	*vp;
 			vls_solid( vp, &es_int, new_mat );
 		}
 	}
+
+	{
+	  register char *start;
+	  register char *p;
+	  register int imax = 0;
+	  register int i = 0;
+	  register int j;
+	  struct bu_vls vls;
+
+	  start = bu_vls_addr( vp );
+	  /*
+	   * Some display managers don't handle TABs properly, so
+	   * we replace any TABs with spaces. Also, look for the
+	   * maximum line length.
+	   */
+	  for(p = start; *p != '\0'; ++p){
+	    if(*p == '\t')
+	      *p = ' ';
+	    else if(*p == '\n'){
+	      if(i > imax)
+		imax = i;
+	      i = 0;
+	    }else
+	      ++i;
+	  }
+
+	  if(i > imax)
+	    imax = i;
+
+	  /* Prep string for use with Tcl/Tk */
+	  ++imax;
+	  i = 0;
+	  bu_vls_init(&vls);
+	  for(p = start; *p != '\0'; ++p){
+	    if(*p == '\n'){
+	      for(j = 0; j < imax - i; ++j)
+		bu_vls_putc(&vls, ' ');
+
+	      bu_vls_putc(&vls, *p);
+	      i = 0;
+	    }else{
+	      bu_vls_putc(&vls, *p);
+	      ++i;
+	    }
+	  }
+
+	  Tcl_SetVar(interp, bu_vls_addr(&edit_info_vls),
+		     bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
+	  bu_vls_free(&vls);
+	}
 }
 
 /*
@@ -142,34 +194,33 @@ int	xbase;
 int	ybase;
 register struct bu_vls	*vp;
 {
-	register char	*start;
-	register char	*end;
-	register int	y;
+  register char	*start;
+  register char	*end;
+  register int	y;
 
-	BU_CK_VLS( vp );
-	y = ybase;
+  BU_CK_VLS( vp );
+  y = ybase;
 
-	start = bu_vls_addr( vp );
-	while( *start != '\0' )  {
-		if( (end = strchr( start, '\n' )) == NULL )  return;
+  start = bu_vls_addr( vp );
+  while( *start != '\0' )  {
+    if( (end = strchr( start, '\n' )) == NULL )  return;
 
-		*end = '\0';
-#if 1
-		{
-		  register char *p;
+    *end = '\0';
+#if 0
+    {
+      register char *p;
 
-		  /* Some display managers don't handle TABs properly, so
-		     we replace any TABs with spaces. */
-		  for(p = start; *p != '\0'; ++p)
-		    if(*p == '\t')
-		      *p = ' ';
-
-		}
+      /* Some display managers don't handle TABs properly, so
+	 we replace any TABs with spaces. */
+      for(p = start; *p != '\0'; ++p)
+	if(*p == '\t')
+	  *p = ' ';
+    }
 #endif
-		dmp->dm_drawString2D( dmp, start, xbase, y, 0, 0 );
-		start = end+1;
-		y += TEXT0_DY;
-	}
+    dmp->dm_drawString2D( dmp, start, xbase, y, 0, 0 );
+    start = end+1;
+    y += TEXT0_DY;
+  }
 }
 
 /*
@@ -179,7 +230,8 @@ register struct bu_vls	*vp;
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void
-dotitles()
+dotitles(overlay_vls)
+struct bu_vls *overlay_vls;
 {
 	register int    i;
 	register int    x, y;			/* for menu computations */
@@ -190,8 +242,7 @@ dotitles()
 	int		scroll_ybot;
 	struct bu_vls   vls;
 	typedef char    c_buf[80];
-	auto c_buf      cent_x, cent_y, cent_z, size, azimuth, elevation,
-	                twist, ang_x, ang_y, ang_z;
+	auto c_buf      cent_x, cent_y, cent_z, size, ang_x, ang_y, ang_z;
 
 	bu_vls_init(&vls);
 	
@@ -224,53 +275,35 @@ dotitles()
 	sprintf(cent_x, "%.3f", -toViewcenter[MDX]*base2local);
 	sprintf(cent_y, "%.3f", -toViewcenter[MDY]*base2local);
 	sprintf(cent_z, "%.3f", -toViewcenter[MDZ]*base2local);
-
 	bu_vls_printf(&vls, "%s %s %s", cent_x, cent_y, cent_z);
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "center", bu_vls_addr(&vls),
-		    TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->center_name),
+		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 
 	sprintf(size, "%.3f", VIEWSIZE*base2local);
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "size", size, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->size_name),
+		    size, TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "units",
 		    (char *)rt_units_string(dbip->dbi_local2base),
 		    TCL_GLOBAL_ONLY);
 
-#if 1
-	sprintf(azimuth,   "%3.2f", curr_dm_list->s_info->azimuth);
-	sprintf(elevation, "%2.2f", curr_dm_list->s_info->elevation);
-	sprintf(twist,     "%3.2f", curr_dm_list->s_info->twist);
-#else
-	/* Find current azimuth, elevation, and twist angles */
-	VSET( work , 0 , 0 , 1 );	/* view z-direction */
-	MAT4X3VEC( temp , view2model , work );
-	VSET( work1 , 1 , 0 , 0 );	/* view x-direction */
-	MAT4X3VEC( temp1 , view2model , work1 );
-
-	/* calculate angles using accuracy of 0.005, since display
-	 * shows 2 digits right of decimal point */
-	bn_aet_vec( &az , &el , &tw , temp , temp1 , (fastf_t)0.005 );
-
-	sprintf(azimuth,   "%3.2f", az);
-	sprintf(elevation, "%2.2f", el);
-	sprintf(twist,     "%3.2f", tw);
-#endif
-	
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "azimuth", azimuth,
-		    TCL_GLOBAL_ONLY);
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "elevation", elevation,
-		    TCL_GLOBAL_ONLY);
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "twist", twist, TCL_GLOBAL_ONLY);
+	bu_vls_printf(&vls, "Azim: %3.2f  Elev: %3.2f  Twist: %3.2f",
+		      curr_dm_list->s_info->azimuth,
+		      curr_dm_list->s_info->elevation,
+		      curr_dm_list->s_info->twist);
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->aet_name),
+		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
+	bu_vls_trunc(&vls, 0);
 
 	sprintf(ang_x, "%.2f", rate_rotate[X]);
 	sprintf(ang_y, "%.2f", rate_rotate[Y]);
 	sprintf(ang_z, "%.2f", rate_rotate[Z]);
 
-	bu_vls_printf(&vls, "%s %s %s", ang_x, ang_y, ang_z);
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "ang", bu_vls_addr(&vls),
-		    TCL_GLOBAL_ONLY);
+	bu_vls_printf(&vls, "ang(%s %s %s)", ang_x, ang_y, ang_z);
+	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->ang_name),
+		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc", "", TCL_GLOBAL_ONLY);
@@ -288,11 +321,7 @@ dotitles()
 
 		label_edited_solid( pl, 8+1, xform, &es_int );
 
-#if 0
-		dmp->dm_setColor(dmp, DM_WHITE, 1);
-#else
 		dmp->dm_setColor(dmp, DM_YELLOW, 1);
-#endif
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
 			dmp->dm_drawString2D( dmp, pl[i].str,
@@ -379,12 +408,11 @@ if(mged_variables.faceplate){
 	/*
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
-	create_text_overlay( &vls );
-
+	/*	create_text_overlay( &vls ); */
 	if(mged_variables.show_menu){
-	  screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, &vls );
+	  screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls );
 	}else{
-	  screen_vls( x, y, &vls );
+	  screen_vls( x, y, overlay_vls );
 	}
 
 	/*
@@ -393,10 +421,12 @@ if(mged_variables.faceplate){
 	bu_vls_printf(&vls,
 		      " cent=(%s, %s, %s), sz=%s %s, ", cent_x, cent_y, cent_z,
 		      size, rt_units_string(dbip->dbi_local2base));
-
 	bu_vls_printf(&vls,
-		       "az=%s el=%s tw=%s ang=(%s, %s, %s)",
-		      azimuth, elevation, twist, ang_x, ang_y, ang_z);
+		       "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)",
+		      curr_dm_list->s_info->azimuth,
+		      curr_dm_list->s_info->elevation,
+		      curr_dm_list->s_info->twist,
+		      ang_x, ang_y, ang_z);
 	dmp->dm_setColor(dmp, DM_WHITE, 1);
 	dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1, 0 );
 	bu_vls_trunc(&vls, 0);
