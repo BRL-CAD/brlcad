@@ -55,112 +55,112 @@ VER="4 5"
 # 
 # in args =>
 #
-    set arb_IN_ARGS ""
-    set arb_DB_ARGS ""
+arb_IN_ARGS ""
+arb_DB_ARGS ""
 
 #
 # (arbn) Arguments
 # 
 # in args =>
 #
-    set arbn_IN_ARGS ""
-    set arbn_DB_ARGS ""
+arbn_IN_ARGS ""
+arbn_DB_ARGS ""
 
 #
 # (arg) Arguments
 # 
 # in args =>
 #
-    set arg_IN_ARGS ""
-    set arg_DB_ARGS ""
+arg_IN_ARGS ""
+arg_DB_ARGS ""
 
 #
 # Bag O'Triangles (bot) Arguments
 # 
 # in args => name num_vertices num_triangles mode orientation vertex1 vertex2... face1 face2 ...
 #
-    set bot_IN_ARGS "4 4 2 1 0 0 0 50 0 0 50 50 0 50 50 50 0 1 2 1 2 3 0 1 3 0 2 3 "
-    set bot_DB_ARGS "mode volume orient no V { { 0 0 0 } { 50 0 0 } { 50 50 0 } { 50 50 50 } } F { { 0 1 2 } { 1 2 3 } { 0 1 3 } { 0 2 3 } }"
+bot_IN_ARGS "4 4 2 1 0 0 0 50 0 0 50 50 0 50 50 50 0 1 2 1 2 3 0 1 3 0 2 3 "
+bot_DB_ARGS "mode volume orient no V { { 0 0 0 } { 50 0 0 } { 50 50 0 } { 50 50 50 } } F { { 0 1 2 } { 1 2 3 } { 0 1 3 } { 0 2 3 } }"
 
 #
 # (cline) Arguments
 # 
 # in args =>
 #
-    set cline_IN_ARGS ""
-    set cline_DB_ARGS ""
+cline_IN_ARGS ""
+cline_DB_ARGS ""
 
 #
 # (dsp) Arguments
 # 
 # in args =>
 #
-    set dsp_IN_ARGS ""
-    set dsp_DB_ARGS ""
+dsp_IN_ARGS ""
+dsp_DB_ARGS ""
 
 #
 # (ebm) Arguments
 # 
 # in args =>
 #
-    set ebm_IN_ARGS ""
-    set ebm_DB_ARGS ""
+ebm_IN_ARGS ""
+ebm_DB_ARGS ""
 
 #
 # (ehy) Arguments
 # 
 # in args =>
 #
-    set ehy_IN_ARGS "0 0 0 0 0 180 75 0 0 50 80"
-    set ehy_DB_ARGS "V {0 0 0} H {0 0 180} A {1 0 0} r_1 75 r_2 50 c 80"
+ehy_IN_ARGS "0 0 0 0 0 180 75 0 0 50 80"
+ehy_DB_ARGS "V {0 0 0} H {0 0 180} A {1 0 0} r_1 75 r_2 50 c 80"
 
 #
 # Ellipsoid (ell) Arguments
 #
 # in args => name type xvertex yvertex zvertex radius1 radius2 radius3
 #
-    set ell_IN_ARGS "0 0 0  45 0 0  0 30 0  0 0 15"
-    set ell_DB_ARGS "V { 0 0 0 } A {45 0 0} B {0 30 0} C {0 0 15}"
+ell_IN_ARGS "0 0 0  45 0 0  0 30 0  0 0 15"
+ell_DB_ARGS "V { 0 0 0 } A {45 0 0} B {0 30 0} C {0 0 15}"
 
 #
 # Elliptical Paraboloid (epa) Arguments
 # 
 # in args =>
 #
-    set epa_IN_ARGS "0 0 0  0 0 10  5 0 0 2"
-    set epa_DB_ARGS "epa V {0 0 0} H {0 0 10} A {1 0 0} r_1 5 r_2 2"
+epa_IN_ARGS "0 0 0  0 0 10  5 0 0 2"
+epa_DB_ARGS "epa V {0 0 0} H {0 0 10} A {1 0 0} r_1 5 r_2 2"
 
 #
 # Elliptical Toroid (eto) Arguments
 # 
 # in args =>
 #
-    set eto_IN_ARGS "0 0 0 0 0 1 8 0 0 4 1 "
-    set eto_DB_ARGS "eto V {0 0 0} N {0 0 1} C {0 0 4} r 8 r_d 1"
+eto_IN_ARGS "0 0 0 0 0 1 8 0 0 4 1 "
+eto_DB_ARGS "eto V {0 0 0} N {0 0 1} C {0 0 4} r 8 r_d 1"
 
 #
 # (extrude) Arguments
 # 
 # in args =>
 #
-    set extrude_IN_ARGS ""
-    set extrude_DB_ARGS ""
+extrude_IN_ARGS ""
+extrude_DB_ARGS ""
 
 #
 # (grip) Arguments
 # 
 # in args =>
 #
-    set grip_IN_ARGS ""
-    set grip_DB_ARGS ""
+grip_IN_ARGS ""
+grip_DB_ARGS ""
 
 #
 # (half) Arguments
 # 
 # in args =>
 #
-    set half_IN_ARGS ""
-    set half_DB_ARGS ""
+half_IN_ARGS ""
+half_DB_ARGS ""
 
 #
 # (hf) Arguments
