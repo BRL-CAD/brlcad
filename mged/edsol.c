@@ -113,6 +113,10 @@ static int	spl_surfno;	/* What surf & ctl pt to edit on spline */
 static int	spl_ui;
 static int	spl_vi;
 
+static int	es_ars_crv;	/* curve and column identifying selected ARS point */
+static int	es_ars_col;
+static point_t	es_pt;		/* coordinates of selected ARS point */
+
 static struct edgeuse	*es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
 static struct loopuse	*lu_copy=(struct loopuse*)NULL;	/* copy of loop to be extruded */
 static plane_t		lu_pl;	/* plane equation for loop to be extruded */
@@ -178,6 +182,29 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_PIPE_SCALE_RADIUS	73
 
 extern int arb_faces[5][24];	/* from edarb.c */
+
+struct menu_item ars_pick_menu[] = {
+	{ "ARS PICK MENU", (void (*)())NULL, 0 },
+	{ "pick vertex", ars_ed, ECMD_ARS_PICK },
+	{ "next vertex", ars_ed, ECMD_ARS_NEXT_PT },
+	{ "prev vertex", ars_ed, ECMD_ARS_PREV_PT },
+	{ "next curve", ars_ed, ECMD_ARS_NEXT_CRV },
+	{ "prev curve", ars_ed, ECMD_ARS_PREV_CRV },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item ars_menu[] = {
+	{ "ARS MENU", (void (*)())NULL, 0 },
+	{ "pick vertex", ars_ed, ECMD_ARS_PICK_MENU },
+	{ "move point", ars_ed, ECMD_ARS_MOVE_PT },
+	{ "delete curve", ars_ed, ECMD_ARS_DEL_CRV },
+	{ "delete column", ars_ed, ECMD_ARS_DEL_COL },
+	{ "dup curve", ars_ed, ECMD_ARS_DUP_CRV },
+	{ "dup column", ars_ed, ECMD_ARS_DUP_COL },
+	{ "move curve", ars_ed, ECMD_ARS_MOVE_CRV },
+	{ "move column", ars_ed, ECMD_ARS_MOVE_COL },
+	{ "", (void (*)())NULL, 0 }
+};
 
 struct menu_item  edge8_menu[] = {
 	{ "ARB8 EDGES", (void (*)())NULL, 0 },
@@ -295,12 +322,6 @@ struct menu_item  ell_menu[] = {
 	{ "scale B", ell_ed, MENU_ELL_SCALE_B },
 	{ "scale C", ell_ed, MENU_ELL_SCALE_C },
 	{ "scale A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
-	{ "", (void (*)())NULL, 0 }
-};
-
-struct menu_item  ars_menu[] = {
-	{ "ARS MENU", (void (*)())NULL, 0 },
-	{ "not implemented", ars_ed, 1 },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -949,7 +970,8 @@ static void
 ars_ed( arg )
 int arg;
 {
-  Tcl_AppendResult(interp,"NOT IMPLEMENTED YET\n", (char *)NULL);
+	es_edflag = arg;
+	sedraw = 1;
 }
 
 
@@ -1882,6 +1904,8 @@ init_sedit()
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 	lu_copy = (struct loopuse *)NULL;
+	es_ars_crv = (-1);
+	es_ars_col = (-1);
 
 	sedit_menu();		/* put up menu header */
 
@@ -3015,6 +3039,500 @@ sedit()
 			es_pipept = del_pipept( es_pipept );
 		}
 		break;
+	case ECMD_ARS_PICK_MENU:
+		/* put up point pick menu for ARS solid */
+		menuflag = 0;
+		es_edflag = ECMD_ARS_PICK;
+		mmenu_set( MENU_L1, ars_pick_menu );
+		break;
+	case ECMD_ARS_EDIT_MENU:
+		/* put up main ARS edit menu */
+		menuflag = 0;
+		es_edflag = IDLE;
+		mmenu_set( MENU_L1, ars_menu );
+		break;
+	case ECMD_ARS_PICK:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			point_t pick_pt;
+			vect_t view_dir;
+			vect_t z_dir;
+			struct rt_vls tmp_vls;
+			point_t selected_pt;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_mvalid )
+				VMOVE( pick_pt, es_mparam )
+			else if( inpara == 3 )
+				VMOVE( pick_pt, es_para )
+			else if( inpara && inpara != 3 )
+			{
+				Tcl_AppendResult(interp, "x y z coordinates required for 'pick point'\n", (char *)NULL);
+				break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			/* Get view direction vector */
+			VSET( z_dir , 0 , 0 , 1 );
+			MAT4X3VEC( view_dir , view2model , z_dir );
+			find_nearest_ars_pt( &es_ars_crv, &es_ars_col, ars, pick_pt, view_dir );
+			VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
+			VSCALE( selected_pt, es_pt, base2local );
+			rt_log( "Selected point #%d from curve #%d (%f %f %f)\n",
+				 es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+			rt_vls_init( &tmp_vls );
+			rt_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+			Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL );
+			rt_vls_free( &tmp_vls );
+		}
+		break;
+	case ECMD_ARS_NEXT_PT:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			struct rt_vls tmp_vls;
+			point_t selected_pt;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			{
+				es_ars_col++;
+				if( es_ars_col >= ars->pts_per_curve )
+					es_ars_col = 0;
+				VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
+				VSCALE( selected_pt, es_pt, base2local );
+				rt_log( "Selected point #%d from curve #%d (%f %f %f)\n",
+					 es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+				rt_vls_init( &tmp_vls );
+				rt_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+				Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL );
+				rt_vls_free( &tmp_vls );
+			}
+		}
+		break;
+	case ECMD_ARS_PREV_PT:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			struct rt_vls tmp_vls;
+			point_t selected_pt;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			{
+				es_ars_col--;
+				if( es_ars_col < 0 )
+					es_ars_col = ars->pts_per_curve - 1;
+				VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
+				VSCALE( selected_pt, es_pt, base2local );
+				rt_log( "Selected point #%d from curve #%d (%f %f %f)\n",
+					 es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+				rt_vls_init( &tmp_vls );
+				rt_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+				Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL );
+				rt_vls_free( &tmp_vls );
+			}
+		}
+		break;
+	case ECMD_ARS_NEXT_CRV:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			struct rt_vls tmp_vls;
+			point_t selected_pt;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			{
+				es_ars_crv++;
+				if(es_ars_crv >= ars->ncurves )
+					es_ars_crv = 0;
+				VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
+				VSCALE( selected_pt, es_pt, base2local );
+				rt_log( "Selected point #%d from curve #%d (%f %f %f)\n",
+					 es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+				rt_vls_init( &tmp_vls );
+				rt_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+				Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL );
+				rt_vls_free( &tmp_vls );
+			}
+		}
+		break;
+	case ECMD_ARS_PREV_CRV:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			struct rt_vls tmp_vls;
+			point_t selected_pt;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			{
+				es_ars_crv--;
+				if( es_ars_crv < 0 )
+					es_ars_crv = ars->ncurves - 1;
+				VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
+				VSCALE( selected_pt, es_pt, base2local );
+				rt_log( "Selected point #%d from curve #%d (%f %f %f)\n",
+					 es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+				rt_vls_init( &tmp_vls );
+				rt_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
+				Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL );
+				rt_vls_free( &tmp_vls );
+			}
+		}
+		break;
+	case ECMD_ARS_DUP_CRV:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			fastf_t **curves;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv < 0 || es_ars_col < 0 )
+			{
+				rt_log( "No ARS point selected\n" );
+				break;
+			}
+
+			curves = (fastf_t **)rt_malloc( (ars->ncurves+1) * sizeof( fastf_t * ),
+					"new curves" );
+
+			for( i=0 ; i<ars->ncurves+1 ; i++ )
+			{
+				int j,k;
+
+				curves[i] = (fastf_t *)rt_malloc( ars->pts_per_curve * 3 * sizeof( fastf_t ),
+						"new curves[i]" );
+
+				if( i <= es_ars_crv )
+					k = i;
+				else
+					k = i - 1;
+
+				for( j=0 ; j<ars->pts_per_curve*3 ; j++ )
+					curves[i][j] = ars->curves[k][j];
+			}
+
+			for( i=0 ; i<ars->ncurves ; i++ )
+				rt_free( (char *)ars->curves[i], "ars->curves[i]" );
+			rt_free( (char *)ars->curves, "ars->curves" );
+
+			ars->curves = curves;
+			ars->ncurves++;
+		}
+		break;
+	case ECMD_ARS_DUP_COL:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			fastf_t **curves;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv < 0 || es_ars_col < 0 )
+			{
+				rt_log( "No ARS point selected\n" );
+				break;
+			}
+
+			curves = (fastf_t **)rt_malloc( ars->ncurves * sizeof( fastf_t * ),
+					"new curves" );
+
+			for( i=0 ; i<ars->ncurves ; i++ )
+			{
+				int j,k;
+
+				curves[i] = (fastf_t *)rt_malloc( (ars->pts_per_curve + 1) * 3 * sizeof( fastf_t ),
+						"new curves[i]" );
+
+				for( j=0 ; j<ars->pts_per_curve+1 ; j++ )
+				{
+					if( j <= es_ars_col )
+						k = j;
+					else
+						k = j - 1;
+
+					curves[i][j*3] = ars->curves[i][k*3];
+					curves[i][j*3+1] = ars->curves[i][k*3+1];
+					curves[i][j*3+2] = ars->curves[i][k*3+2];
+				}
+			}
+
+			for( i=0 ; i<ars->ncurves ; i++ )
+				rt_free( (char *)ars->curves[i], "ars->curves[i]" );
+			rt_free( (char *)ars->curves, "ars->curves" );
+
+			ars->curves = curves;
+			ars->pts_per_curve++;
+		}
+		break;
+	case ECMD_ARS_DEL_CRV:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			fastf_t **curves;
+			int k;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv < 0 || es_ars_col < 0 )
+			{
+				rt_log( "No ARS point selected\n" );
+				break;
+			}
+
+			if( es_ars_crv == 0 || es_ars_crv == ars->ncurves-1 )
+			{
+				rt_log( "Cannot delete first or last curve\n" );
+				break;
+			}
+
+			curves = (fastf_t **)rt_malloc( (ars->ncurves - 1) * sizeof( fastf_t * ),
+					"new curves" );
+
+			k = 0;
+			for( i=0 ; i<ars->ncurves ; i++ )
+			{
+				int j;
+
+				if( i == es_ars_crv )
+					continue;
+
+				curves[k] = (fastf_t *)rt_malloc( ars->pts_per_curve * 3 * sizeof( fastf_t ),
+						"new curves[k]" );
+
+				for( j=0 ; j<ars->pts_per_curve*3 ; j++ )
+					curves[k][j] = ars->curves[i][j];
+
+				k++;
+			}
+
+			for( i=0 ; i<ars->ncurves ; i++ )
+				rt_free( (char *)ars->curves[i], "ars->curves[i]" );
+			rt_free( (char *)ars->curves, "ars->curves" );
+
+			ars->curves = curves;
+			ars->ncurves--;
+
+			if( es_ars_crv >= ars->ncurves )
+				es_ars_crv = ars->ncurves - 1;
+		}
+		break;
+	case ECMD_ARS_DEL_COL:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			fastf_t **curves;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv < 0 || es_ars_col < 0 )
+			{
+				rt_log( "No ARS point selected\n" );
+				break;
+			}
+
+			if( es_ars_col == 0 || es_ars_col == ars->ncurves - 1 )
+			{
+				rt_log( "Cannot delete first or last column\n" );
+				break;
+			}
+
+			if( ars->pts_per_curve < 3 )
+			{
+				rt_log( "Cannot create an ARS with less than two points per curve\n" );
+				break;
+			}
+
+			curves = (fastf_t **)rt_malloc( ars->ncurves * sizeof( fastf_t * ),
+					"new curves" );
+
+			for( i=0 ; i<ars->ncurves ; i++ )
+			{
+				int j,k;
+
+
+				curves[i] = (fastf_t *)rt_malloc( (ars->pts_per_curve - 1) * 3 * sizeof( fastf_t ),
+						"new curves[i]" );
+
+				k = 0;
+				for( j=0 ; j<ars->pts_per_curve ; j++ )
+				{
+					if( j == es_ars_col )
+						continue;
+
+					curves[i][k*3] = ars->curves[i][j*3];
+					curves[i][k*3+1] = ars->curves[i][j*3+1];
+					curves[i][k*3+2] = ars->curves[i][j*3+2];
+					k++;
+				}
+			}
+
+			for( i=0 ; i<ars->ncurves ; i++ )
+				rt_free( (char *)ars->curves[i], "ars->curves[i]" );
+			rt_free( (char *)ars->curves, "ars->curves" );
+
+			ars->curves = curves;
+			ars->pts_per_curve--;
+
+			if( es_ars_col >= ars->pts_per_curve )
+				es_ars_col = ars->pts_per_curve - 1;
+		}
+		break;
+	case ECMD_ARS_MOVE_COL:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			point_t new_pt;
+			vect_t diff;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv < 0 || es_ars_col < 0 )
+			{
+				rt_log( "No ARS point selected\n" );
+				break;
+			}
+
+			if( es_mvalid )
+			{
+				vect_t view_dir;
+				plane_t view_pl;
+				fastf_t dist;
+
+				/* construct a plane perpendiculr to view direction
+				 * that passes through ARS point being moved
+				 */
+				VSET( view_dir, 0.0, 0.0, 1.0 );
+				MAT4X3VEC( view_pl, view2model, view_dir );
+				VUNITIZE( view_pl );
+				view_pl[3] = VDOT( view_pl, &ars->curves[es_ars_crv][es_ars_col*3] );
+
+				/* project es_mparam onto the plane */
+				dist = DIST_PT_PLANE( es_mparam, view_pl );
+				VJOIN1( new_pt, es_mparam, -dist, view_pl );
+			}
+			else if( inpara == 3 )
+				VMOVE( new_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			VSUB2( diff, new_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
+
+			for( i=0 ; i<ars->ncurves ; i++ )
+				VADD2( &ars->curves[i][es_ars_col*3],
+					&ars->curves[i][es_ars_col*3], diff );
+		}
+		break;
+	case ECMD_ARS_MOVE_CRV:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			point_t new_pt;
+			vect_t diff;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv < 0 || es_ars_col < 0 )
+			{
+				rt_log( "No ARS point selected\n" );
+				break;
+			}
+
+			if( es_mvalid )
+			{
+				vect_t view_dir;
+				plane_t view_pl;
+				fastf_t dist;
+
+				/* construct a plane perpendiculr to view direction
+				 * that passes through ARS point being moved
+				 */
+				VSET( view_dir, 0.0, 0.0, 1.0 );
+				MAT4X3VEC( view_pl, view2model, view_dir );
+				VUNITIZE( view_pl );
+				view_pl[3] = VDOT( view_pl, &ars->curves[es_ars_crv][es_ars_col*3] );
+
+				/* project es_mparam onto the plane */
+				dist = DIST_PT_PLANE( es_mparam, view_pl );
+				VJOIN1( new_pt, es_mparam, -dist, view_pl );
+			}
+			else if( inpara == 3 )
+				VMOVE( new_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			VSUB2( diff, new_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
+
+			for( i=0 ; i<ars->pts_per_curve ; i++ )
+				VADD2( &ars->curves[es_ars_crv][i*3],
+					&ars->curves[es_ars_crv][i*3], diff );
+		}
+		break;
+	case ECMD_ARS_MOVE_PT:
+		{
+			struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			point_t new_pt;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			if( es_ars_crv < 0 || es_ars_col < 0 )
+			{
+				rt_log( "No ARS point selected\n" );
+				break;
+			}
+
+			if( es_mvalid )
+			{
+				vect_t view_dir;
+				plane_t view_pl;
+				fastf_t dist;
+
+				/* construct a plane perpendiculr to view direction
+				 * that passes through ARS point being moved
+				 */
+				VSET( view_dir, 0.0, 0.0, 1.0 );
+				MAT4X3VEC( view_pl, view2model, view_dir );
+				VUNITIZE( view_pl );
+				view_pl[3] = VDOT( view_pl, &ars->curves[es_ars_crv][es_ars_col*3] );
+
+				/* project es_mparam onto the plane */
+				dist = DIST_PT_PLANE( es_mparam, view_pl );
+				VJOIN1( new_pt, es_mparam, -dist, view_pl );
+			}
+			else if( inpara == 3 )
+				VMOVE( new_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			VMOVE( &ars->curves[es_ars_crv][es_ars_col*3] , new_pt );
+		}
+		break;
 	default:
 	  {
 	    struct rt_vls tmp_vls;
@@ -3245,6 +3763,10 @@ CONST vect_t	mousevec;
 	case ECMD_PIPE_PT_MOVE:
 	case ECMD_PIPE_PT_ADD:
 	case ECMD_PIPE_PT_INS:
+	case ECMD_ARS_PICK:
+	case ECMD_ARS_MOVE_PT:
+	case ECMD_ARS_MOVE_CRV:
+	case ECMD_ARS_MOVE_COL:
 		MAT4X3PNT( temp, view2model, mousevec );
 		/* apply inverse of es_mat */
 		MAT4X3PNT( es_mparam, es_invmat, temp );
@@ -3364,9 +3886,18 @@ CONST mat_t			mat;
 	id = ip->idb_type;
 	transform_editing_solid( &intern, mat, (struct rt_db_internal *)ip, 0 );
 
-	if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
-	    base2local ) < 0 )
-	  Tcl_AppendResult(interp, "vls_solid: describe error\n", (char *)NULL);
+	if( id != ID_ARS )
+	{
+		if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
+		    base2local ) < 0 )
+		  Tcl_AppendResult(interp, "vls_solid: describe error\n", (char *)NULL);
+	}
+	else
+	{
+		if( rt_functab[id].ft_describe( vp, &intern, 0 /* not verbose */,
+		    base2local ) < 0 )
+		  Tcl_AppendResult(interp, "vls_solid: describe error\n", (char *)NULL);
+	}
 
 	if( id == ID_PIPE && es_pipept )
 	{
@@ -3387,6 +3918,7 @@ CONST mat_t			mat;
 		if( ps == es_pipept )
 			vls_pipept( vp, seg_no, &intern, base2local );
 	}
+
 	rt_functab[id].ft_ifree( &intern );
 }
 
@@ -4356,6 +4888,9 @@ sedit_reject()
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+	es_ars_crv = (-1);
+	es_ars_col = (-1);
+
 	if( lu_copy )
 	{
 		struct model *m;
@@ -4449,6 +4984,10 @@ char	**argv;
 		case ECMD_PIPE_PT_MOVE:
 		case ECMD_PIPE_PT_ADD:
 		case ECMD_PIPE_PT_INS:
+		case ECMD_ARS_PICK:
+		case ECMD_ARS_MOVE_PT:
+		case ECMD_ARS_MOVE_CRV:
+		case ECMD_ARS_MOVE_COL:
 #if 1
 		  if(SEDIT_TRAN){
 		    vect_t temp;
@@ -4871,6 +5410,16 @@ struct rt_db_internal	*ip;
 			RT_ARS_CK_MAGIC( ars );
 
 			MAT4X3PNT(pos_view, xform, ars->curves[0] )
+
+			if( es_ars_crv >= 0 && es_ars_col >= 0 )
+			{
+				point_t work;
+				point_t ars_pt;
+
+				VMOVE( work, &ars->curves[es_ars_crv][es_ars_col*3] );
+				MAT4X3PNT(ars_pt, xform, work);
+				POINT_LABEL_STR( ars_pt, "pt" );
+			}
 		}
 		POINT_LABEL( pos_view, 'V' );
 		break;
