@@ -20,16 +20,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #endif
 
-#if defined(__NetBSD__)
+#if HAVE_IOCTL_COMPAT_H
 #	include <sys/ioctl_compat.h>
 #	define TAB3 (TAB1|TAB2)
+#	if !defined(OCRNL)
+#		define OCRNL   0000010
+#	endif
 #endif
 
-#if defined(__bsdi__)
-#	include <sys/ioctl_compat.h>
-#	define TAB3 (TAB1|TAB2)
-#	define OCRNL   0000010
-#endif
 
 
 #include "machine.h"
