@@ -29,6 +29,7 @@ class Mged {
     itk_option define -prompt prompt Prompt "mged> "
 
     public method opendb {args}
+    public method opendbFile {}
     public method match {args}
     public method get {args}
     public method put {args}
@@ -99,10 +100,23 @@ class Mged {
     public method rtcheck {args}
 
     public method reset_panes {}
+    public method default_views {}
+
+    protected method attach_view {}
+    protected method attach_drawable {}
+    protected method detach_view {}
+    protected method detach_drawable {}
+    protected method refresh {}
 
     private variable qd ""
     private variable db ""
+    private variable dg ""
     private variable cmd ""
+    private variable top ""
+    private variable screen ""
+
+    private variable ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
+    private variable dir ""
 }
 
 body Mged::constructor {file args} {
@@ -118,7 +132,8 @@ body Mged::constructor {file args} {
     pack $cmd -fill both -expand yes
 
     set db [Database #auto $file]
-    $qd addall [$db Drawable::get_name]
+    set dg [$db Drawable::get_name]
+    $qd addall $dg
 
     # initialize pane
     paneconfigure 0 -margin 0
@@ -126,19 +141,45 @@ body Mged::constructor {file args} {
 
     # default real estate allocation:  geometry ---> 75%, command window ---> 25%
     fraction 75 25
+
+    set dir [pwd]
+    set top [winfo toplevel [string map {:: ""} $this]]
+    set screen [winfo screen $top]
+    wm title $top $file
 }
 
 body Mged::destructor {} {
     ::delete object $qd
-    ::delete object $db
     ::delete object $cmd
+    ::delete object $db
 }
 
 ######################### User Interface #########################
 
 ######################### Commands related to the Database #########################
 body Mged::opendb {args} {
-    eval $db open $args
+    set file [eval $db open $args]
+    wm title $top $file
+    return $file
+}
+
+body Mged::opendbFile {} {
+    set filename [tk_getOpenFile -parent $top -filetypes $ftypes \
+	    -initialdir $dir -title "Open MGED Database"]
+
+    if {$filename != ""} {
+	# save the directory
+	set dir [file dirname $filename]
+
+	set ret [catch {opendb $filename} msg]
+	if {$ret} {
+	    cad_dialog .uncool $screen "Error" \
+		    $msg info 0 OK
+	} else {
+	    cad_dialog .cool $screen "File loaded" \
+		    $msg info 0 OK
+	}
+    }
 }
 
 body Mged::match {args} {
@@ -306,10 +347,25 @@ body Mged::draw {args} {
 	set blank 0
     }
 
-    set result [eval $db draw $args]
-
     if {$blank} {
+	# stop observing the Drawable
+	detach_drawable
+	set result [eval $db draw $args]
+	# resume observing the Drawable
+	attach_drawable
+
+	# stop observing the View
+	detach_view
 	autoview
+	# resume observing the View
+	attach_view
+
+	# We need to refresh here because nobody was observing
+	# during the changes to the Drawable and the View. This
+	# was done in order to prevent multiple refreshes.
+	refresh
+    } else {
+	set result [eval $db draw $args]
     }
 
     return $result
@@ -418,6 +474,30 @@ body Mged::rt {args} {
 
 body Mged::rtcheck {args} {
     eval $qd rtcheck $args
+}
+
+body Mged::default_views {} {
+    $qd default_views
+}
+
+body Mged::attach_view {} {
+    $qd attach_viewall
+}
+
+body Mged::attach_drawable {} {
+    $qd attach_drawableall $dg
+}
+
+body Mged::detach_view {} {
+    $qd detach_viewall
+}
+
+body Mged::detach_drawable {} {
+    $qd detach_drawableall $dg
+}
+
+body Mged::refresh {} {
+    $qd refreshall
 }
 
 ######################### Other Public Methods #########################
