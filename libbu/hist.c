@@ -70,8 +70,7 @@ int			nbins;
 	histp->hg_max = ceil(max);
 	histp->hg_nbins = nbins;
 
-	/* When max-min <= nbins, clumpsize should be 1 */
-	histp->hg_clumpsize = ((max-min)/nbins)+1;
+	histp->hg_clumpsize = ((max-min)/nbins);
 	if( histp->hg_clumpsize <= 0 )  histp->hg_clumpsize = 1;
 
 	histp->hg_nsamples = 0L;
@@ -123,14 +122,14 @@ CONST char			*title;
 	char		buf[256];
 	int		percent;
 	int		mark_count;
-	int		val;
+	double		val;
 	int		nbins;
 
 	BU_CK_HIST(histp);
 
 	/* Find entry with highest count */
 	maxcount = 0L;
-	for( i=0; i<histp->hg_nbins; i++ )  {
+	for( i=0; i<=histp->hg_nbins; i++ )  {
 		if( histp->hg_bins[i] > maxcount )
 			maxcount = histp->hg_bins[i];
 	}
@@ -147,12 +146,20 @@ CONST char			*title;
 		histp->hg_nbins, histp->hg_clumpsize,
 		histp->hg_nsamples, maxcount );
 
-	/* Print each bin.  Final bins with zero counts are supressed. */
+	/* Print each bin.  Leading & final bins with zero counts are supressed. */
 	for( i=0; i <= nbins; i++ )  {
+		if(histp->hg_bins[i] > 0)  break;
+	}
+	for( ; i <= nbins; i++ )  {
 		percent = (int)(((double)histp->hg_bins[i])*100.0/maxcount);
 		mark_count = percent*NMARKS/100;
 		if( mark_count <= 0 && histp->hg_bins[i] > 0 )
 			mark_count = 1;
+		if( mark_count > NMARKS )  {
+			bu_log("mark_count = %d, NMARKS=%d, hg_bins[%d]=%d, maxcount\n",
+				mark_count, NMARKS, i, histp->hg_bins[i], maxcount);
+			bu_bomb("bu_hist_pr() bogus mark_count\n");
+		}
 		if( mark_count <= 0 )  {
 			buf[0] = '\0';
 		} else {
@@ -160,7 +167,7 @@ CONST char			*title;
 			buf[mark_count] = '\0';
 		}
 		val = histp->hg_min + i*histp->hg_clumpsize;
-		bu_log("%8d %8d %3d |%s\n",
+		bu_log("%8g %8d %3d |%s\n",
 			val,
 			histp->hg_bins[i], percent, buf );
 	}
