@@ -1967,8 +1967,12 @@ CONST struct loopuse	*lu;
 			/*
 			 *  Repeated vertex exists.
 			 */
+#if 0
 nmg_pr_lu_briefly(lu,0);
 rt_bomb("nmg_touchingloops()\n");
+#else
+rt_log("nmg_touchingloops(lu=x%x, vu1=x%x, vu2=x%x, v=x%x\n", lu, vu, tvu, v );
+#endif
 			return 1;
 		}
 	}
