@@ -212,7 +212,7 @@ register char **end;
 	register struct solid *sp;
 
 	/*
-	 * Find all unique top-level entrys.
+	 * Find all unique top-level entries.
 	 *  Mark ones already done with s_iflag == UP
 	 */
 	FOR_ALL_SOLIDS( sp )
@@ -344,7 +344,7 @@ char	**argv;
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
 	dm = dmp->dmr_name;
-	if( needs_reattach = dmp->dmr_releasedisplay )
+	if( (needs_reattach = dmp->dmr_releasedisplay) != 0 )
 		release();		/* changes dmp */
 
 	vp = &rt_cmd_vec[0];
