@@ -89,7 +89,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./protocol.h"
 #include "./ihost.h"
 
-#ifndef HAVE_VFORK
+#if !defined(HAVE_VFORK) || HAVE_VFORK==0
 # define vfork	fork
 #endif
 
