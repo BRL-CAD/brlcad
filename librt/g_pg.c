@@ -43,7 +43,7 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
  *  This routine is used to prepare a list of planar faces for
  *  being shot at by the triangle routines.
  *
- * Process an PG, which is represented as a vector
+ * Process a PG, which is represented as a vector
  * from the origin to the first point, and many vectors
  * from the first point to the remaining points.
  *  
@@ -362,9 +362,12 @@ struct soltab *stp;
 	}
 }
 
-pg_norm()
+pg_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
-	rt_log("pg_norm?\n");
+	/* Normals computed in pg_shot, nothing to do here */
 }
 
 pg_uv()
@@ -379,6 +382,12 @@ pg_plot()
 {
 }
 
-pg_curve()
+pg_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
 {
+	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
+
