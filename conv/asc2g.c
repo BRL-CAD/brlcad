@@ -131,7 +131,11 @@ solbld()	/* Build Solid record */
 	}
 	cp = nxt_spc( cp );
 
+#if 0
 	record.s.s_cgtype = (short)atoi( cp );
+#else
+	record.s.s_cgtype = 0;	/* no longer significant */
+#endif
 
 	for( i = 0; i < 24; i++ )  {
 		cp = nxt_spc( cp );
