@@ -487,7 +487,7 @@ struct partition *PartHeadp;
 					ap->a_x, ap->a_y,
 					pp->pt_inseg->seg_stp->st_name, f);
 				VPRINT("Dir ", ap->a_ray.r_dir);
-				VPRINT("Norm", sw.sw_hit.hit_norm);
+				VPRINT("Norm", sw.sw_hit.hit_normal);
 			}
 		}
 	}
