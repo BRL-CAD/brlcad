@@ -28,6 +28,7 @@
 #define MSG_PIXELS	7	/* response to server MSG_LINES */
 #define MSG_RESTART	8	/* recycle server */
 #define MSG_LOGLVL	9	/* enable/disable logging */
+#define	MSG_CD		10	/* change directory */
 
 /*
  *  This structure is used for MSG_PIXELS messages
