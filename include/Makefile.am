@@ -108,11 +108,11 @@ endif
 # end ONLY_BENCHMARK
 
 noinst_HEADERS = \
-	build_date.h
+	brlcad_version.h
 
-build_date.h:
-	@sh $(top_srcdir)/sh/vers.sh version "BRL-CAD Build Date" > $@
+brlcad_version.h:
+	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > $@
 
 # make sure that the build date is updated every time make is run
 all-local:
-	@sh $(top_srcdir)/sh/vers.sh version "BRL-CAD Build Date" > build_date.h
+	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > build_date.h
