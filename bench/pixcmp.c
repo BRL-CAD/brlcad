@@ -110,8 +110,15 @@ char **argv;
 	fprintf(stderr,
 		"pixcmp bytes: %7d matching, %7d off by 1, %7d off by many\n",
 		matching, off1, offmany );
-	if( offmany) {
+
+	/* If files were of different lengths, that is an error */
+	if( feof(f1) != feof(f2) )
+		exit(2);
+
+	/* If any pixels were off by more than +/- 1, that is an error */
+	if( offmany)
 		exit(1);
-	}
+
+	/* Success! */
 	exit(0);
 }
