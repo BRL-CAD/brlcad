@@ -138,7 +138,7 @@ struct bu_semaphores {
 };
 #endif	/* HAS_POSIX_THREADS */
 
-#define	SEMAPHORE_MAGIC		0x62757365
+#define	BU_SEMAPHORE_MAGIC		0x62757365
 
 #if defined(SGI_4D)
 /*
@@ -241,28 +241,28 @@ unsigned int	nsemaphores;
 
 #	if defined(alliant)	
 	for( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		(void) initialize_lock( &bu_semaphores[i].c );
 	}
 #	endif
 
 #	ifdef ardent
 	for( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		bu_semaphores[i].sem = 1;	/* mark as released */
 	}
 #	endif
 
 #	if defined(convex) || defined(__convex__)
 	for( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		bu_semaphores[i].sem = 0;	/* mark as released */
 	}
 #	endif
 
 #	ifdef CRAY
 	for( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		LOCKASGN( &bu_semaphores[i].p );
 	}
 #	endif /* CRAY */
@@ -276,7 +276,7 @@ unsigned int	nsemaphores;
 	 *  area to contain the lock, and sets it to PAR_UNLOCKED.
 	 */
 	for( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		bu_semaphores[i].sem = PAR_UNLOCKED;
 	}
 #	endif
@@ -284,7 +284,7 @@ unsigned int	nsemaphores;
 #	ifdef SGI_4D
 	bu_semaphore_sgi_init();
 	for( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if( (bu_semaphores[i].ltp = usnewlock(bu_lockstuff)) == NULL )  {
 			perror("usnewlock");
 			fprintf(stderr, "bu_semaphore_init: usnewlock() failed, unable to allocate lock %d\n", i);
@@ -295,7 +295,7 @@ unsigned int	nsemaphores;
 
 #	if SUNOS
 	for( i=0; i < nsemaphores; i++ )  {
-		bu_semaphores[i].magic = SEMAPHORE_MAGIC;
+		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if (mutex_init( &bu_semaphores[i].mu, USYNC_THREAD, (void *)0)) {
 			fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on %d\n", i);
 			abort();
@@ -325,7 +325,7 @@ unsigned int	i;
 		return;
 	}
 
-	BU_CKMAG(bu_semaphores, SEMAPHORE_MAGIC, "bu_semaphore");
+	BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
 	if( i >= bu_nsemaphores )  {
 		fprintf(stderr, "bu_semaphore_acquire(%d): semaphore # exceeds max of %d\n",
@@ -333,7 +333,7 @@ unsigned int	i;
 		abort();
 	}
 
-	BU_CKMAG(&bu_semaphores[i], SEMAPHORE_MAGIC, "bu_semaphore");
+	BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
 	/*
 	 *  Begin vendor-specific initialization sections.
@@ -386,7 +386,7 @@ unsigned int	i;
 		return;
 	}
 
-	BU_CKMAG(bu_semaphores, SEMAPHORE_MAGIC, "bu_semaphore");
+	BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
 	if( i >= bu_nsemaphores )  {
 		fprintf(stderr, "bu_semaphore_release(%d): semaphore # exceeds max of %d\n",
@@ -394,7 +394,7 @@ unsigned int	i;
 		exit(3);
 	}
 
-	BU_CKMAG(&bu_semaphores[i], SEMAPHORE_MAGIC, "bu_semaphore");
+	BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
 	/*
 	 *  Begin vendor-specific initialization sections.
