@@ -52,6 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "nmg.h"
 
 /*
@@ -2049,6 +2050,161 @@ struct faceuse *fu;
 	} while (lu != fu->lu_p);
 	return ((struct vertexuse *)NULL);
 }
+
+/*	N M G _ G L U E F A C E S
+ *
+ *	given a shell containing "n" faces whose outward oriented faceuses are
+ *	enumerated in "fulist", glue the edges of the faces together
+ *
+ *
+ *
+ */
+nmg_gluefaces(fulist, n)
+struct faceuse *fulist[];
+int n;
+{
+	struct shell	*s;
+	struct edgeuse	*eu;
+	int		i;
+	int		f_no;		/* Face number */
+	
+	NMG_CK_FACEUSE(fulist[0]);
+	s = fulist[0]->s_p;
+	NMG_CK_SHELL(s);
+	for (i = 0 ; i < n ; ++i) {
+		NMG_CK_FACEUSE(fulist[i]);
+		if (fulist[i]->s_p != s) {
+			rt_log("in %s at %d faceuses don't share parent\n",
+				__FILE__, __LINE__);
+			rt_bomb("nmg_gluefaces\n");
+		}
+		NMG_CK_LOOPUSE(fulist[i]->lu_p);
+		if (*fulist[i]->lu_p->down.magic_p != NMG_EDGEUSE_MAGIC) {
+			rt_bomb("Cannot glue edges of face on vertex\n");
+		} else {
+			NMG_CK_EDGEUSE(fulist[i]->lu_p->down.eu_p);
+		}
+	}
+
+	for (i=0 ; i < n ; ++i) {
+	    eu = fulist[i]->lu_p->down.eu_p;
+	    do {
+
+		for (f_no=i+1 ; eu->radial_p == eu->eumate_p && f_no < n ;
+		    ++f_no) {
+			register struct edgeuse	*eu2;
+
+			eu2 = fulist[f_no]->lu_p->down.eu_p;
+			do {
+			    if (EDGESADJ(eu, eu2))
+			    	nmg_moveeu(eu, eu2);
+
+			    eu2 = eu2->next;
+			} while (eu2 != fulist[f_no]->lu_p->down.eu_p);
+		}
+
+		eu = eu->next;
+	    } while (eu != fulist[i]->lu_p->down.eu_p);
+	}
+}
+
+/*
+ *			N M G _ S _ T O _ V L I S T
+ *
+ *  poly_markers = 0 for vectors, 1 for polygon markers
+ */
+nmg_s_to_vlist( vhead, s, poly_markers )
+struct vlhead	*vhead;
+struct shell	*s;
+int		poly_markers;
+{
+	struct faceuse	*fu;
+	struct face_g	*fg;
+	struct loopuse	*lu;
+	struct edgeuse	*eu;
+	struct vertexuse *vu;
+	struct vertex	*v;
+	register struct vertex_g *vg;
+	int		isfirst;
+	struct vertex_g	*first_vg;
+
+	NMG_CK_SHELL(s);
+	if (s->vu_p)  {
+		if (s->fu_p || s->lu_p || s->eu_p) {
+			rt_bomb("nmg_s_to_vlist:  shell with vu also has other pointers\n");
+		}
+		vu = s->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+		vg = v->vg_p;
+		if( vg )  {
+			/* Only thing in this shell is a point */
+			NMG_CK_VERTEX_G(vg);
+			ADD_VL( vhead, vg->coord, 0 );
+			ADD_VL( vhead, vg->coord, 1 );
+		}
+		return;
+	}
+	if( !(s->fu_p) )  {
+		rt_log("nmg_s_to_vlist: shell with no faces?\n");
+		return;
+	}
+	if (s->lu_p || s->eu_p || s->vu_p) {
+		rt_bomb("nmg_s_to_vlist:  shell with fu also has other pointers\n");
+	}
+
+	fu = s->fu_p;
+	do {
+		/* Consider this face */
+		NMG_CK_FACEUSE(fu);
+		NMG_CK_FACE(fu->f_p);
+		fg = fu->f_p->fg_p;
+		NMG_CK_FACE_G(fg);
+		lu = fu->lu_p;
+		do {
+			/* Consider this loop */
+			NMG_CK_LOOPUSE(lu);
+			eu = lu->down.eu_p;
+			NMG_CK_EDGEUSE(eu);
+			isfirst = 1;
+			first_vg = (struct vertex_g *)0;
+			do {
+				/* Consider this edge */
+				vu = eu->vu_p;
+				NMG_CK_VERTEXUSE(vu);
+				v = vu->v_p;
+				NMG_CK_VERTEX(v);
+				vg = v->vg_p;
+				if( vg ) {
+					NMG_CK_VERTEX_G(vg);
+					if (isfirst) {
+						if( poly_markers) {
+							/* Insert a "start polygon, normal" marker */
+							ADD_VL( vhead, fg->N, 2 );
+						}
+						ADD_VL( vhead, vg->coord, 0 );
+						isfirst = 0;
+						first_vg = vg;
+					} else {
+						ADD_VL( vhead, vg->coord, 1 );
+					}
+				}
+				eu = eu->next;
+			} while(eu != lu->down.eu_p);
+
+			/* Draw back to the first vertex used */
+			if( !isfirst && first_vg )  {
+				ADD_VL( vhead, first_vg->coord, 1 );
+			}
+
+			lu = lu->next;
+		}while (lu != fu->lu_p);
+		fu = fu->next;
+	} while (fu != s->fu_p);
+}
+
+
 #if 0
 
 /* ToDo:
