@@ -35,12 +35,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 Matrix	*viewmat;	/* current viewing projection */
 Matrix	viewortho;	/* ortho viewing projection */
 Matrix	viewpersp;	/* perspective viewing projection */
+Matrix	identmat;	/* identity */
 Matrix	centermat;	/* center screen matrix */
 Coord	viewsize;
 
 int	axis = 0;	/* display coord axis */
 int	minobj = 1;	/* lowest active object number */
 int	maxobj = 1;	/* next available object number */
+long	menu;
 
 /*
  *  Color Map:
@@ -120,15 +122,26 @@ char	**argv;
 	}
 	viewmat = (Matrix *)viewortho;
 
+	/* Make an identity matrix */
+	identmat[0][0] = identmat[1][1] = identmat[2][2] = identmat[3][3] = 1.0;
+	identmat[1][0] = identmat[1][2] = identmat[1][3] = 0.0;
+	identmat[2][0] = identmat[0][1] = identmat[2][3] = 0.0;
+	identmat[3][0] = identmat[3][1] = identmat[3][2] = 0.0;
+
 	/* set up and save the initial rot/trans/scale matrix */
-	ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 );	/* ident on stack XXX */
+	loadmatrix( identmat );
 	translate( -(max[0]+min[0])/2.0, -(max[1]+min[1])/2.0,
 		-(max[2]+min[2])/2.0 );
 	getmatrix( centermat );
 
+	/* set up the command menu */
+	menu = defpup( "Axis|Exit" );
+
 	view_loop();
+	exit( 0 );
 #else
 	printf( "pl-sgi: this is an SGI Iris specific program\n" );
+	exit( 1 );
 #endif
 }
 
@@ -145,27 +158,38 @@ char	**argv;
 #define	TRANZ	DIAL3
 #define	ZOOM	DIAL1
 
+#define	ORTHO	SW0
+#define	PERSP	SW1
+#define	RESET	SW2
+
+#define	BOTTOM	SW23
+#define	TOP	SW24
+#define	REAR	SW25
+#define	V4545	SW26
+#define	RIGHT	SW28
+#define	FRONT	SW29
+#define	LEFT	SW30
+#define	V3525	SW31
+
 view_loop()
 {
-	Matrix          m, ident;
-	Device          event;
-	short           val;
-	int             end_it = 0;
-	int 		o = 1;
-	float		fval;
+	Matrix	m, newm;
+	Device	event;
+	short	val;
+	int	end_it = 0;
+	int	o = 1;
+	long	menuval;
+	float	tran[3];	/* x, y, z screen space translate */
+	float	scal[3];	/* pre-translate scale */
 
 	/* Initial translate/rotate/scale matrix */
 	loadmatrix( centermat );
 	getmatrix( m );
-
-	/* Make an identity matrix */
-	ident[0][0] = ident[1][1] = ident[2][2] = ident[3][3] = 1.0;
-	ident[1][0] = ident[1][2] = ident[1][3] = 0.0;
-	ident[2][0] = ident[0][1] = ident[2][3] = 0.0;
-	ident[3][0] = ident[3][1] = ident[3][2] = 0.0;
+	tran[0] = tran[1] = tran[2] = 0;
+	scal[0] = scal[1] = scal[2] = 1;
 
 	/*depthcue(1);*/
-	cursoff();
+	/*cursoff();XXX*/
 
 	/*
 	 *  Each time through this loop, m holds the current
@@ -181,7 +205,7 @@ view_loop()
 			event = qread( &val );
 		fval = val;
 
-		loadmatrix ( ident );
+		loadmatrix ( identmat );
 
 		switch (event) {
 		case ROTX:
@@ -191,68 +215,118 @@ view_loop()
 			break;
 		case ROTY:
 			fval *= 5.0;
-			rotate( (Angle) -fval, 'y' );
+			rotate( (Angle) fval, 'y' );
 			setvaluator(ROTY, 0, -360, 360);
 			break;
 		case ROTZ:
 			fval *= 5.0;
-			rotate( (Angle) -fval, 'z' );
+			rotate( (Angle) fval, 'z' );
 			setvaluator(ROTZ, 0, -360, 360);
 			break;
 		case TRANX:
 			fval *= viewsize/200.0;
-			translate( fval, 0.0, 0.0 );
+			tran[0] += fval;
+			/*translate( fval, 0.0, 0.0 );*/
 			setvaluator(TRANX, 0, -10, 10);
 			break;
 		case TRANY:
 			fval *= viewsize/200.0;
-			translate( 0.0, fval, 0.0 );
+			tran[1] += fval;
+			/*translate( 0.0, fval, 0.0 );*/
 			setvaluator(TRANY, 0, -10, 10);
 			break;
 		case TRANZ:
 			fval *= viewsize/200.0;
-			translate( 0.0, 0.0, fval );
+			tran[2] += fval;
+			/*translate( 0.0, 0.0, fval );*/
 			setvaluator(TRANZ, 0, -10, 10);
 			break;
 		case ZOOM:
-			fval = 1.0 + fval / 500.0;
-			scale( fval, fval, fval );
+			fval = 1.0 + fval / 1100.0;
+			scal[0] *= fval;
+			scal[1] *= fval;
+			scal[2] *= fval;
+			/*scale( fval, fval, fval );*/
 			setvaluator(ZOOM, 1, -1000, 1000);
 			break;
 		case LEFTMOUSE:
 			if( val == 0 )
 				break;
 			fval = 0.5;
-			scale( fval, fval, fval );
-			break;
-		case MIDDLEMOUSE:
-			if( val == 0 )
-				break;
-			end_it = 1;
+			scal[0] *= fval;
+			scal[1] *= fval;
+			scal[2] *= fval;
+			/*scale( fval, fval, fval );*/
 			break;
 		case RIGHTMOUSE:
+		/*case MIDDLEMOUSE:*/
+			if( val == 0 )
+				break;
+			menuval = dopup( menu );
+			if( menuval == 2 )
+				end_it = 1;
+			else
+				domenu( menuval );
+			break;
+		case MIDDLEMOUSE:
+		/*case RIGHTMOUSE:*/
 			if( val == 0 )
 				break;
 			fval = 2.0;
-			scale( fval, fval, fval );
+			scal[0] *= fval;
+			scal[1] *= fval;
+			scal[2] *= fval;
+			/*scale( fval, fval, fval );*/
 			break;
-		case SW0:
+		case ORTHO:
 			if( val == 0 )
 				break;
 			viewmat = (Matrix *)viewortho;
 			break;
-		case SW1:
+		case PERSP:
 			if( val == 0 )
 				break;
 			viewmat = (Matrix *)viewpersp;
 			break;
-		case SW2:
+		case RESET:
 			if( val == 0 )
 				break;
 			/* reset */
 			loadmatrix( centermat );
 			getmatrix( m );
-			loadmatrix( ident );
+			loadmatrix( identmat );
+			break;
+		case BOTTOM:
+			if( val != 0 )
+			setview( m, 180, 0, 0 );
+			break;
+		case TOP:
+			if( val != 0 )
+			setview( m, 0, 0, 0 );
+			break;
+		case REAR:
+			if( val != 0 )
+			setview( m, 270, 0, 90 );
+			break;
+		case V4545:
+			if( val != 0 )
+			setview( m, 270+45, 0, 270-45 );
+			break;
+		case RIGHT:
+			if( val != 0 )
+			setview( m, 270, 0, 0 );
+			break;
+		case FRONT:
+			if( val != 0 )
+			setview( m, 270, 0, 270 );
+			break;
+		case LEFT:
+			if( val != 0 )
+			setview( m, 270, 0, 180 );
+			break;
+		case V3525:
+			if( val != 0 )
+			setview( m, 270+25, 0, 270-35 );
 			break;
 		}
 		event = 0;
@@ -260,6 +334,7 @@ view_loop()
 		if (end_it == 1)
 			break;
 
+#ifdef never
 		/* combine new rot/trans with old */
 		multmatrix( m );
 		getmatrix( m );
@@ -267,6 +342,10 @@ view_loop()
 		/* set up total viewing transformation */
 		loadmatrix( viewmat );
 		multmatrix( m );
+#else
+		getmatrix( newm );
+		newview( m, newm, viewmat, tran, scal );
+#endif
 
 		/* draw the object */
 		color(BLACK);
@@ -311,7 +390,6 @@ init_display()
 	int	i;
 	short	r, g, b;
 	int map_size;		/* # of color map slots available */
-
 
 	if( ismex() ) {
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
@@ -374,14 +452,17 @@ init_display()
 		}
 	}
 
+	/* enable the mouse */
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
 	qdevice(RIGHTMOUSE);
+	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
 
-	qdevice( SW0 );
-	qdevice( SW1 );
-	qdevice( SW2 );
+	/* enable all buttons */
+	for( i = 0; i < 32; i++ )
+		qdevice(i+SWBASE);
 
+	/* enable all dials */
 	for (i = DIAL0; i < DIAL8; i++) {
 		qdevice(i);
 	}
@@ -400,6 +481,8 @@ init_display()
 	noise( TRANY, 5 );
 	noise( TRANZ, 5 );
 	noise( ZOOM, 5 );
+
+	return	0;
 }
 
 
@@ -656,7 +739,74 @@ int	n;
 	ntohd( out, in, n );
 }
 
-draw_axis() {
+setview( m, rx, ry, rz )
+Matrix	m;
+int	rx, ry, rz;
+{
+	loadmatrix( centermat );
+	getmatrix( m );
+	loadmatrix( identmat );
+
+	rotate( (Angle) rx*10, 'x' );
+	rotate( (Angle) ry*10, 'y' );
+	rotate( (Angle) rz*10, 'z' );
+#ifdef never
+	calpha = cos( alpha );
+	cbeta = cos( beta );    
+	cgamma = cos( ggamma ); 
+
+	salpha = sin( alpha );
+	sbeta = sin( beta ); 
+	sgamma = sin( ggamma );
+            
+	mat[0] = cbeta * cgamma;
+	mat[1] = -cbeta * sgamma;
+	mat[2] = sbeta;
+
+	mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
+	mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
+	mat[6] = -salpha * cbeta;
+
+	mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
+	mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
+	mat[10] = calpha * cbeta;
+#endif
+}
+
+newview( m, newm, viewmat, tran, scal )
+Matrix	m, newm, viewmat;
+float	tran[3], scal[3];
+{
+	/* combine new rot/trans with old */
+	multmatrix( m );
+	getmatrix( m );
+
+	/* set up total viewing transformation */
+	loadmatrix( viewmat );
+	/* mult m here rotates about view but translates along model */
+	translate( tran[0], tran[1], tran[2] );
+	scale( scal[0], scal[1], scal[2] );
+	/* mult m here translates along view but rotates about model */
+	multmatrix( m );
+}
+
+domenu( n )
+int	n;
+{
+	switch( n ) {
+	case 1:
+		if( axis == 0 )
+			axis = 1;
+		else
+			axis = 0;
+		break;
+	case 2:
+		break;
+	}
+}
+
+draw_axis()
+{
 	color( MAGENTA );
 	movei( 0, 0, 0 );
 	drawi( 10, 0, 0 );
