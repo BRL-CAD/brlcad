@@ -251,7 +251,10 @@ int	cpu;
 	/* The more CPUs at work, the bigger the bites we take */
 	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
 
-	if( cpu >= MAX_PSW )  rt_bomb("rt/worker() cpu > MAXPSW, array overrun\n");
+	if( cpu >= MAX_PSW )  {
+		rt_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
+		rt_bomb("rt/worker() cpu > MAX_PSW, array overrun\n");
+	}
 	RT_CK_RESOURCE( &resource[cpu] );
 
 	while(1)  {
