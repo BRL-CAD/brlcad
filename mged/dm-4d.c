@@ -408,12 +408,22 @@ double ratio;
 {
 	register struct vlist *vp;
 	register int nvec;
-	register float gtvec[3];
+	register float	*gtvec;
+	char	gtbuf[16+3*sizeof(float)];
 	register fastf_t *mptr;
 	Matrix gtmat;
 	int first;
 	int i,j;	
 	mat_t	mtmp, newm;
+
+	/*
+	 *  It is claimed that the "dancing vector disease" of the
+	 *  4D GT processors is due to the array being passed to v3f()
+	 *  not being quad-word aligned (16-byte boundary).
+	 *  This hack ensures that the buffer has this alignment.
+	 *  Note that this requires gtbuf to be 16 bytes longer than needed.
+	 */
+	gtvec = (float *)((((int)gtbuf)+15) & (~0xF));
 
 	/* This section has the potential of being speed up since a new
 	 * matrix is loaded for each object. Even though its the same
