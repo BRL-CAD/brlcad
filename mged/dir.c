@@ -577,6 +577,11 @@ top:
 		}
 		dp->d_len = count;
 		eof_addr += count * sizeof(union record);
+
+		/* Clear out the granules, for safety */
+		zapper.u_id = ID_FREE;	/* The rest will be zeros */
+		for( i=0; i < dp->d_len; i++ )
+			db_putrec( dp, &zapper, i );
 		return;
 	}
 	dp->d_addr = addr * sizeof(union record);
