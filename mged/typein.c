@@ -421,6 +421,7 @@ char **argv;
 
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
+	bu_opterr = 0;          /* suppress bu_getopt()'s error message */
 	while( (c=bu_getopt(argc,argv,"sf")) != EOF )  {
 		switch(c)  {
 		case 's':
@@ -434,7 +435,7 @@ char **argv;
 		    struct bu_vls tmp_vls;
 
 		    bu_vls_init(&tmp_vls);
-		    bu_vls_printf(&tmp_vls, "in: option '%c' unknown\n", c);
+		    bu_vls_printf(&tmp_vls, "in: option '%c' unknown\n", bu_optopt);
 		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    bu_vls_free(&tmp_vls);
 		  }
