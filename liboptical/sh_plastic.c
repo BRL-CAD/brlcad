@@ -383,7 +383,7 @@ color[1]= swp -> sw_color[1];
 color[2]= swp -> sw_color[2];
 #endif
 
-#if 1
+if (!PM_Visualize) {
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
 		if (cosine > 1.00001 )  {
@@ -556,7 +556,7 @@ PM_Intensity= 1.0;
 #endif
 #endif
 
-#else
+} else {
 
 #ifndef RT_MULTISPECTRAL
   if (PM_Activated) {
@@ -567,7 +567,7 @@ PM_Intensity= 1.0;
     if (swp -> sw_color[1] > 1.0) swp -> sw_color[1]= 1.0;
     if (swp -> sw_color[2] > 1.0) swp -> sw_color[2]= 1.0;
   }
-#endif
+}
 
 #endif
 

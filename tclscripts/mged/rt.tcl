@@ -1313,7 +1313,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,pmIrradianceRaysScale) 10
 	set rt_control($id,pmAngularTolerance) 60.0
 	set rt_control($id,pmRandomSeedEntry) 0
-	set rt_control($id,pmIrradianceHypersamplingCache) 1
+	set rt_control($id,pmIrradianceHypersamplingCache) 0
 	set rt_control($id,pmVisualizeIrradiance) 0
 	set rt_control($id,pmLightIntensityScale) 1.0
 
@@ -1512,7 +1512,7 @@ proc PMMenu {id top enable} {
     ## Irradiance Hypersampling
     checkbutton $top.gridF4.pmIrradianceHypersamplingCache -text "Use Irradiance Hypersampling Cache" -variable rt_control($id,pmIrradianceHypersamplingCache)
     grid $top.gridF4.pmIrradianceHypersamplingCache -row 7 -column 1 -columnspan 2 -sticky w
-    $top.gridF4.pmIrradianceHypersamplingCache select
+#    $top.gridF4.pmIrradianceHypersamplingCache select
 
     ## Irradiance Hypersampling
     checkbutton $top.gridF4.pmVisualizeIrradiance -text "Visualize Irradiance Cache" -variable rt_control($id,pmVisualizeIrradiance)

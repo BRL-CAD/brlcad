@@ -815,7 +815,9 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
 
 
   PM_Intensity= LightIntensity;
-  bu_log("I: %.3f\n",LightIntensity);
+  PM_Visualize= VisualizeIrradiance;
+
+/*  bu_log("I,V,H: %.3f,%d,%d\n",LightIntensity,VisualizeIrradiance,IrradianceHypersampling);*/
   temp1= temp2= temp3= 0;
   bu_log("Building Photon Map:\n");
 
