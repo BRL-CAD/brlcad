@@ -18,7 +18,7 @@
 #	Tcl/Tk interface to MGED's "make" command.
 
 if ![info exists mged_default(solid_name_fmt)] {
-    set mged_default(solid_name_fmt) "default_name"
+    set mged_default(solid_name_fmt) "s@"
 }
 
 proc make_dsp { id top } {
