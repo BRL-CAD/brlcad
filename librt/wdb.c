@@ -282,7 +282,7 @@ double		local2mm;
 	struct bu_external	ext;
 	int			ret;
 
-	if( (id <= 0 || id > ID_MAXIMUM) && id != ID_COMBINATION )  {
+	if( (id <= 0 || id > ID_MAX_SOLID) && id != ID_COMBINATION )  {
 		bu_log("wdb_export(%s): id=%d bad\n",
 			name, id );
 		return(-1);

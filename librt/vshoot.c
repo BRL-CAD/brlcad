@@ -176,7 +176,7 @@ register struct application *ap;
 	}
 
 	/* For each type of solid to be shot at, assemble the vectors */
-	for( id = 1; id <= ID_MAXIMUM; id++ )  {
+	for( id = 1; id <= ID_MAX_SOLID; id++ )  {
 		register int	nsol;
 
 		if( (nsol = rtip->rti_nsol_by_type[id]) <= 0 )  continue;

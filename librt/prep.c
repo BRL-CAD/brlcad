@@ -288,12 +288,12 @@ int			ncpu;
 
 	/* Find solid type with maximum length (for rt_shootray) */
 	rtip->rti_maxsol_by_type = 0;
-	for( i=0; i <= ID_MAXIMUM; i++ )  {
+	for( i=0; i <= ID_MAX_SOLID; i++ )  {
 		if( rtip->rti_nsol_by_type[i] > rtip->rti_maxsol_by_type )
 			rtip->rti_maxsol_by_type = rtip->rti_nsol_by_type[i];
 	}
 	/* Malloc the storage and zero the counts */
-	for( i=0; i <= ID_MAXIMUM; i++ )  {
+	for( i=0; i <= ID_MAX_SOLID; i++ )  {
 		if( rtip->rti_nsol_by_type[i] <= 0 )  continue;
 		rtip->rti_sol_by_type[i] = (struct soltab **)bu_calloc(
 			rtip->rti_nsol_by_type[i],
@@ -311,7 +311,7 @@ int			ncpu;
 		bu_log("rt_prep_parallel(%s,%d) printing number of solids by type\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses);
-		for( i=1; i <= ID_MAXIMUM; i++ )  {
+		for( i=1; i <= ID_MAX_SOLID; i++ )  {
 			bu_log("%5d %s (%d)\n",
 				rtip->rti_nsol_by_type[i],
 				rt_functab[i].ft_name,
@@ -774,7 +774,7 @@ register struct rt_i *rtip;
 	db_free_anim(rtip->rti_dbip);
 
 	/* Free array of solid table pointers indexed by solid ID */
-	for( i=0; i <= ID_MAXIMUM; i++ )  {
+	for( i=0; i <= ID_MAX_SOLID; i++ )  {
 		if( rtip->rti_nsol_by_type[i] <= 0 )  continue;
 		bu_free( (char *)rtip->rti_sol_by_type[i], "sol_by_type" );
 		rtip->rti_sol_by_type[i] = (struct soltab **)0;

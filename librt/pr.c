@@ -45,7 +45,7 @@ register CONST struct soltab	*stp;
 {
 	register int	id = stp->st_id;
 
-	if( id <= 0 || id > ID_MAXIMUM )  {
+	if( id <= 0 || id > ID_MAX_SOLID )  {
 		bu_log("stp=x%x, id=%d.\n", stp, id);
 		rt_bomb("rt_pr_soltab:  bad st_id");
 	}
