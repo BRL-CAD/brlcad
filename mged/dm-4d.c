@@ -46,6 +46,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+/* Experimental */
 #define MIXED_MODE 1
 
 #include "conf.h"
@@ -76,6 +77,7 @@ static Display  *dpy;
 static Window   win;
 static int devmotionnotify;
 static int devbuttonpress;
+static int devbuttonrelease;
 #endif
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
@@ -146,6 +148,7 @@ static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 
 static int	ir_fd;			/* GL file descriptor to select() on */
 static CONST char ir_title[] = "BRL MGED";
+static int dummy_perspective = 1;
 static int perspective_mode = 0;	/* Perspective flag */
 static int perspective_angle =3;	/* Angle of perspective */
 static int perspective_table[] = { 
@@ -239,6 +242,8 @@ struct dm dm_4d = {
 
 extern struct device_values dm_values;	/* values read from devices */
 
+static void     establish_perspective();
+static void     next_perspective();
 static void	establish_lighting();
 static void	establish_zbuffer();
 
@@ -253,6 +258,8 @@ struct structparse Ir_vparse[] = {
 	{"%d",  1, "zclip",		(int)&zclipping_on,	refresh_hook },
 	{"%d",  1, "zbuffer",		(int)&zbuffer_on,	establish_zbuffer },
 	{"%d",  1, "lighting",		(int)&lighting_on,	establish_lighting },
+	{"%d",  1, "perspective",       (int)&perspective_mode, establish_perspective },
+	{"%d",  1, "next_perspective",(int)&dummy_perspective,  next_perspective },
 	{"%d",  1, "no_faceplate",	(int)&no_faceplate,	refresh_hook },
 	{"%d",  1, "has_zbuf",		(int)&ir_has_zbuf,	refresh_hook },
 	{"%d",  1, "has_rgb",		(int)&ir_has_rgb,	Ir_colorchange },
@@ -849,6 +856,8 @@ Ir_open()
 		switch(cip->input_class){
 		case ButtonClass:
 		  DeviceButtonPress(dev, devbuttonpress, e_class[nclass]);
+		  ++nclass;
+		  DeviceButtonRelease(dev, devbuttonrelease, e_class[nclass]);
 		  ++nclass;
 		  break;
 		case ValuatorClass:
@@ -1765,12 +1774,22 @@ input_waiting:
 }
 
 #if MIXED_MODE
+/*
+   This routine does not get key events. The key events are
+   being processed via the TCL/TK bind command. Eventually, I'd also
+   like to do the dials+buttons that way. That would leave this
+   routine to handle only events like Expose and ConfigureNotify.
+*/
 int
 Ircheckevents(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
   XEvent event;
+  static int button0  = 0;   /*  State of button 0 */
+  static int knobs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  static int knobs_offset[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 /*XXX still drawing too much!!!
 i.e. drawing 2 or more times when resizing the window to a larger size.
@@ -1815,9 +1834,6 @@ else if( eventPtr->type == ConfigureNotify )
   }else if( eventPtr->type == MotionNotify ) {
     int x, y;
 
-    if (eventPtr->xany.window != win)
-      return TCL_OK;
-
     x = (eventPtr->xmotion.x/(double)winx_size - 0.5) * 4095;
     y = (0.5 - eventPtr->xmotion.y/(double)winy_size) * 4095;
     /* Constant tracking (e.g. illuminate mode) bound to M mouse */
@@ -1826,11 +1842,17 @@ else if( eventPtr->type == ConfigureNotify )
     XDeviceMotionEvent *M;
     int setting;
 
-    if (eventPtr->xany.window != win)
-      return TCL_OK;
-
     M = (XDeviceMotionEvent * ) eventPtr;
-    setting = irlimit(M->axis_data[0]);
+
+    if(button0){
+      knobs_during_help[M->first_axis] = M->axis_data[0];
+      ir_dbtext(
+		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
+      return TCL_OK;
+    }else{
+      knobs[M->first_axis] = M->axis_data[0];
+      setting = irlimit(knobs[M->first_axis] - knobs_offset[M->first_axis]);
+    }
 
     switch(DIAL0 + M->first_axis){
     case DIAL0:
@@ -1841,7 +1863,7 @@ else if( eventPtr->type == ConfigureNotify )
       break;
     case DIAL1:
       rt_vls_printf( &dm_values.dv_string , "knob S %f\n",
-		    setting/2048.0 );
+		    setting / 2048.0 );
       break;
     case DIAL2:
       if(adcflag)
@@ -1849,7 +1871,7 @@ else if( eventPtr->type == ConfigureNotify )
 		      setting );
       else
 	rt_vls_printf( &dm_values.dv_string , "knob z %f\n",
-		      setting/2048.0 );
+		      setting / 2048.0 );
       break;
     case DIAL3:
       if(adcflag)
@@ -1857,7 +1879,7 @@ else if( eventPtr->type == ConfigureNotify )
 		      setting );
       else
 	rt_vls_printf( &dm_values.dv_string , "knob Z %f\n",
-		      setting/2048.0 );
+		      setting / 2048.0 );
       break;
     case DIAL4:
       if(adcflag)
@@ -1865,11 +1887,11 @@ else if( eventPtr->type == ConfigureNotify )
 		      setting );
       else
 	rt_vls_printf( &dm_values.dv_string , "knob y %f\n",
-		      setting/2048.0 );
+		      setting / 2048.0 );
       break;
     case DIAL5:
       rt_vls_printf( &dm_values.dv_string , "knob Y %f\n",
-		    setting/2048.0 );
+		    setting / 2048.0 );
       break;
     case DIAL6:
       if(adcflag)
@@ -1877,11 +1899,11 @@ else if( eventPtr->type == ConfigureNotify )
 		      setting );
       else
 	rt_vls_printf( &dm_values.dv_string , "knob x %f\n",
-		      setting/2048.0 );
+		      setting / 2048.0 );
       break;
     case DIAL7:
       rt_vls_printf( &dm_values.dv_string , "knob X %f\n",
-		    setting/2048.0 );
+		    setting / 2048.0 );
       break;
     default:
       break;
@@ -1890,31 +1912,47 @@ else if( eventPtr->type == ConfigureNotify )
   }else if( eventPtr->type == devbuttonpress ){
     XDeviceButtonEvent *B;
 
-    if (eventPtr->xany.window != win)
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1){
+      button0 = 1;
       return TCL_OK;
+    }
+
+    if(button0){
+      ir_dbtext(label_button(bmap[B->button - 1]));
+    }else if(B->button == 4){
+      int i;
+
+      rt_vls_strcat(&dm_values.dv_string, "knob zero\n");
+      for(i = 0; i < 8; ++i){
+#if 0 /* Not surprising that this really doesn't work. */
+	/* Not supposed to use this in mixed mode; trying it anyway:-). */
+	setvaluator(DIAL0+i, 0, -2048-NOISE, 2047+NOISE);
+
+	knobs[i] = 0;
+#else
+	knobs_offset[i] = knobs[i];
+#endif
+      }
+    }else
+      rt_vls_printf(&dm_values.dv_string, "press %s\n",
+		    label_button(bmap[B->button - 1]));
+  }else if( eventPtr->type == devbuttonrelease ){
+    XDeviceButtonEvent *B;
 
     B = (XDeviceButtonEvent * ) eventPtr;
 
-/* Temporary */
-    if(B->button == 4)
-          rt_vls_strcat(&dm_values.dv_string, "knob zero\n");
-    else
-      rt_vls_printf(&dm_values.dv_string, "press %s\n",
-		 label_button(bmap[B->button - 1]));
-  }
+    if(B->button == 1){
+      int i;
 
-#if 0
-/*XXX hack */
-  while( XPending( dpy ) > 0){
-    XNextEvent( dpy, &event );
-    if( event.type == devmotionnotify)
-      rt_log("Ircheckevents: got a devmotionnotify event\n");
-    else if( event.type == devbuttonpress)
-      rt_log("Ircheckevents: got a devbuttonpress event\n");
-    else
-      rt_log("Ircheckevents: got an event of type %d\n", event.type);
+      button0 = 0;
+
+      /* update the offset */
+      for(i = 0; i < 8; ++i)
+	knobs_offset[i] += knobs_during_help[i] - knobs[i];
+    }
   }
-#endif
 
   return TCL_OK;
 }
@@ -2644,6 +2682,42 @@ kblights()
 	lampoff(lights^0xf);
 }
 #endif
+
+static void
+establish_perspective()
+{
+  rt_vls_printf( &dm_values.dv_string,
+		"set perspective %d\n",
+		perspective_mode ?
+		perspective_table[perspective_angle] :
+		-1 );
+  dmaflag = 1;
+}
+
+/*
+   This routine will toggle the perspective_angle if the
+   dummy_perspective value is 0 or less. Otherwise, the
+   perspective_angle is set to the value of (dummy_perspective - 1).
+*/
+static void
+next_perspective()
+{
+  /* set perspective matrix */
+  if(dummy_perspective > 0)
+    perspective_angle = dummy_perspective <= 4 ? dummy_perspective - 1: 3;
+  else if (--perspective_angle < 0) /* toggle perspective matrix */
+    perspective_angle = 3;
+
+  if(perspective_mode)
+    rt_vls_printf( &dm_values.dv_string,
+		  "set perspective %d\n",
+		  perspective_table[perspective_angle] );
+
+  /* just in case the "!" is used with the set command */
+  dummy_perspective = 1;
+
+  dmaflag = 1;
+}
 
 static void
 establish_zbuffer()
