@@ -54,7 +54,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define Max(a, b)		((a) > (b) ? (a) : (b))
 #define MinMax(m, M, a)    { m = Min(m, a); M = Max(M, a); }
 #endif
-/* Map user units into pixels */
+
+/* Map user units into pixels.  H2SCRX */
 #define XFB(_x) (int)(xorigin+(((_x)-xmin)/cell_size)*(wid+grid_flag))
 
 /* Translate between different coordinate systems at play: h,v (GIFT),
@@ -74,12 +75,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define VPX2H(_vp_x)	( cell_size * ((_vp_x)/(wid+grid_flag)-1.0) + xmin )
 #define VPY2V(_vp_y)	( cell_size * ((_vp_y)/(hgt+grid_flag)-key_height) + ymin )
 
+#define H2SCRX(_h)	VPX2SCRX( H2VPX(_h) )
+#define V2SCRY(_v)	VPY2SCRY( V2VPY(_v) )
+
 #define SCRX2H(_s_x)	VPX2H( SCRX2VPX(_s_x) )
 #define SCRY2V(_s_y)	VPY2V( SCRY2VPY(_s_y) )
 
-/* Map pixels into user units */
-#define	fbh2uu(_h)	(cell_size*(((_h)-xorigin)/(wid+grid_flag)-1.0)+xmin)
-#define	fbv2uu(_v)	(cell_size*(((_v)-yorigin)/(hgt+grid_flag)-key_height)+ymin)
 /* Absolute value */
 #define Abs(_a)	((_a) < 0.0 ? -(_a) : (_a))
 
@@ -816,6 +817,7 @@ int YFB(_y)
 double	_y;
 
 {
+	double vpy;
     if (debug_flag & CFB_DBG_GRID)
     {
 	fprintf(stderr,
@@ -824,8 +826,10 @@ double	_y;
 	    (int)(yorigin + (int)((_y - ymin) / cell_size + key_height)
 	    * (hgt + grid_flag)));
     }
-    return (yorigin + (int)((_y - ymin) / cell_size + key_height)
-	    * (hgt + grid_flag));
+	vpy = ((_y - ymin) / cell_size + key_height) * (hgt + grid_flag);
+	vpy = V2VPY(_y);
+
+	return (int)(VPY2SCRY(vpy));
 }
 
 STATIC void log_Run()
@@ -853,7 +857,7 @@ STATIC void log_Run()
 	tempus -> tm_year + 1900, tempus -> tm_hour, tempus -> tm_min);
     (void) printf("az_el: %f %f\n", az, el);
     (void) printf("view_extrema: %f %f %f %f\n",
-	fbh2uu(0), fbh2uu(fb_width), fbv2uu(0), fbv2uu(fb_height));
+	SCRX2H(0), SCRX2H(fb_width), SCRY2V(0), SCRY2V(fb_height));
     (void) printf("fb_size: %d %d\n", fb_width, fb_height);
 
 	/* Produce the orientation, the model eye_pos, and the model
