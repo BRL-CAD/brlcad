@@ -249,9 +249,12 @@ struct mater_info *materp;
 		} else {
 			if( curmater.ma_cinherit == DB_INH_LOWER )  {
 				curmater.ma_override = 1;
-				curmater.ma_color[0] = (rp[0].c.c_rgb[0])*rt_inv255;
-				curmater.ma_color[1] = (rp[0].c.c_rgb[1])*rt_inv255;
-				curmater.ma_color[2] = (rp[0].c.c_rgb[2])*rt_inv255;
+				curmater.ma_color[0] =
+					((double)(rp[0].c.c_rgb[0]))*rt_inv255;
+				curmater.ma_color[1] =
+					((double)(rp[0].c.c_rgb[1]))*rt_inv255;
+				curmater.ma_color[2] =
+					((double)(rp[0].c.c_rgb[2]))*rt_inv255;
 				curmater.ma_cinherit = rp[0].c.c_inherit;
 			}
 		}
