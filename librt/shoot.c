@@ -720,8 +720,9 @@ register struct application *ap;
 	}
 	if( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
-		rt_uniresource.re_magic = RESOURCE_MAGIC;
 		if(rt_g.debug)bu_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
+		if( rt_uniresource.re_magic == 0 )
+			rt_init_resource( &rt_uniresource, 0, ap->a_rt_i );
 	}
 	ss.ap = ap;
 	rtip = ap->a_rt_i;
@@ -1329,8 +1330,9 @@ int	n;		/* First cell is #0 */
 	}
 	if( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
-		rt_uniresource.re_magic = RESOURCE_MAGIC;
 		if(rt_g.debug)bu_log("rt_cell_n_on_ray:  defaulting a_resource to &rt_uniresource\n");
+		if( rt_uniresource.re_magic == 0 )
+			rt_init_resource( &rt_uniresource, 0, ap->a_rt_i );
 	}
 	ss.ap = ap;
 	rtip = ap->a_rt_i;
