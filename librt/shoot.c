@@ -127,10 +127,10 @@ struct shootray_status {
  */
 union cutter *
 rt_advance_to_next_cell( ssp )
-struct shootray_status	*ssp;
+register struct shootray_status	*ssp;
 {
 	register union cutter	*cutp;
-	AUTO int		push_flag = 0;
+	int			push_flag = 0;
 	double			fraction;
 	int			exponent;
 	register struct application *ap = ssp->ap;
@@ -357,13 +357,14 @@ if(rt_g.debug&DEBUG_ADVANCE)rt_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
  */
 union cutter *
 rt_advance_to_next_cell( ssp )
-struct shootray_status	*ssp;
+register struct shootray_status	*ssp;
 {
 	register union cutter	*cutp;
-	AUTO int		push_flag = 0;
+	int			push_flag = 0;
 	double			fraction;
 	int			exponent;
 	register struct application *ap = ssp->ap;
+	register fastf_t	*pt = ssp->newray.r_pt;
 
 	for(;;)  {
 		/*
@@ -374,19 +375,18 @@ struct shootray_status	*ssp;
 		ssp->dist_corr = ssp->box_start + OFFSET_DIST;
 		if( ssp->dist_corr >= ssp->model_end )
 			break;	/* done! */
-		VJOIN1( ssp->newray.r_pt, ap->a_ray.r_pt,
+		VJOIN1( pt, ap->a_ray.r_pt,
 			ssp->dist_corr, ap->a_ray.r_dir );
 		if( rt_g.debug&DEBUG_ADVANCE) {
 			rt_log("rt_advance_to_next_cell() dist_corr=%g\n",
 				ssp->dist_corr );
 			rt_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
-				V3ARGS( ssp->newray.r_pt ) );
+				V3ARGS( pt ) );
 		}
 
 		cutp = &(ap->a_rt_i->rti_CutHead);
 		while( cutp->cut_type == CUT_CUTNODE )  {
-			if( ssp->newray.r_pt[cutp->cn.cn_axis] >=
-			    cutp->cn.cn_point )  {
+			if( pt[cutp->cn.cn_axis] >= cutp->cn.cn_point )  {
 				cutp=cutp->cn.cn_r;
 			}  else  {
 				cutp=cutp->cn.cn_l;
@@ -398,16 +398,20 @@ struct shootray_status	*ssp;
 
 		/* Ensure point is located in the indicated cell */
 		if( (rt_g.debug & DEBUG_ADVANCE) &&
-		    ! RT_POINT_IN_RPP( ssp->newray.r_pt,
+		    ! RT_POINT_IN_RPP( pt,
 		    cutp->bn.bn_min, cutp->bn.bn_max ) )  {
-		    	VPRINT( "newray.r_pt", ssp->newray.r_pt );
+		    	VPRINT( "newray.r_pt", pt );
 		     	rt_pr_cut( cutp, 0 );
 			rt_bomb("rt_advance_to_next_cell(): point not in cell\n");
 		}
 
 		/* Don't get stuck within the same box for long */
 		if( cutp==ssp->lastcut )  {
+#if 0
 			if( rt_g.debug & DEBUG_ADVANCE )  {
+#else
+			{
+#endif
 				rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
 					ap->a_x, ap->a_y,
 					ssp->odist_corr, ssp->dist_corr, ssp->model_end );
@@ -415,7 +419,7 @@ struct shootray_status	*ssp;
 					ssp->obox_start, ssp->box_start,
 					ssp->obox_end, ssp->box_end );
 				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-			     	VPRINT("Point", ssp->newray.r_pt);
+			     	VPRINT("Point", pt);
 				VPRINT("Dir", ssp->newray.r_dir);
 			     	rt_pr_cut( cutp, 0 );
 			}
@@ -461,7 +465,7 @@ struct shootray_status	*ssp;
 /**		     	if( rt_g.debug & DEBUG_ADVANCE )  ***/
 			{
 				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-			     	VPRINT("Point", ssp->newray.r_pt);
+			     	VPRINT("Point", pt);
 				VPRINT("Dir", ssp->newray.r_dir);
 				VPRINT("inv_dir", ssp->inv_dir);
 			     	rt_pr_cut( cutp, 0 );
