@@ -111,7 +111,11 @@ char *node;
 	mat_t	root;
 	struct mater_info root_mater;
 
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_gettree:  bad rtip\n");
+	if( rtip->rti_magic != RTI_MAGIC )  {
+		rt_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
+			rtip->rti_magic, RTI_MAGIC );
+		rt_bomb("rt_gettree:  bad rtip\n");
+	}
 
 	if(!rtip->needprep)
 		rt_bomb("rt_gettree called again after rt_prep!");
