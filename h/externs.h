@@ -206,8 +206,8 @@ extern int	opterr;
 #endif
 
 /* sys_errlist and errno */
-#ifndef HAVE_SYS_ERRLIST_DECL
 extern int	errno;
+#ifndef HAVE_SYS_ERRLIST_DECL
 extern int	sys_nerr;
 extern char *	sys_errlist[];
 #endif
