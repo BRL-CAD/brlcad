@@ -700,6 +700,8 @@ NMG_EXTERN(void			nmg_shell_a, (struct shell *s) );
 NMG_EXTERN(void			nmg_region_a, (struct nmgregion *r) );
 NMG_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
 NMG_EXTERN(int			nmg_demote_lu, (struct loopuse *lu) );
+NMG_EXTERN(void			nmg_ensure_vertex, (struct vertex *v,
+				struct shell *s) );
 NMG_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
 /* nmg_eu_sq */
 
@@ -727,6 +729,7 @@ NMG_EXTERN(void			nmg_cut_loop, (struct vertexuse *vu1, struct vertexuse *vu2) )
 NMG_EXTERN(struct loopuse	*nmg_split_lu_at_vu, (struct loopuse *lu, struct vertexuse *vu) );
 NMG_EXTERN(void			nmg_split_touchingloops, (struct loopuse *lu) );
 NMG_EXTERN(void			nmg_ck_list, (CONST struct rt_list *hd, CONST char *str) );
+NMG_EXTERN(void			nmg_move_fu_fu, (struct faceuse *dest, struct faceuse *src) );
 
 /* From nmg_misc.c */
 NMG_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
@@ -821,8 +824,14 @@ NMG_EXTERN(void			nmg_mesh_faces, (struct faceuse *fu1,
 NMG_EXTERN(struct nmgregion	*nmg_do_bool, (struct nmgregion *s1,
 				struct nmgregion *s2,
 				CONST int oper, CONST struct rt_tol *tol) );
-NMG_EXTERN(void			nmg_ensure_vertex, (struct vertex *v,
-				struct shell *s) );
+NMG_EXTERN(void			nmg_shell_coplanar_face_merge,
+				(struct shell *s, CONST struct rt_tol *tol,
+				CONST int simplify) );
+
+/* from nmg_class.c */
+NMG_EXTERN(void			nmg_class_shells, (struct shell *sA,
+				struct shell *sB, long *classlist[4],
+				CONST struct rt_tol *tol) );
 
 /* from nmg_comb.c */
 NMG_EXTERN(void			nmg_ck_lueu, (struct loopuse *cklu, char *s) );
