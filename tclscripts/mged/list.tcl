@@ -8,7 +8,7 @@
 #	Tcl routines for utilizing Tcl's listbox.
 #
 
-proc create_listbox { top screen type items } {
+proc create_listbox { top screen type items abort_cmd } {
     toplevel $top -screen $screen
     frame $top.frame
     listbox $top.listbox -yscrollcommand "$top.scrollbar set"
@@ -17,7 +17,7 @@ proc create_listbox { top screen type items } {
     }
     scrollbar $top.scrollbar -command "$top.listbox yview"
     button $top.abortB -text "Abort $type Selection" \
-	-command "destroy $top"
+	-command "$abort_cmd"
 
     grid $top.listbox $top.scrollbar -sticky "nsew" -in $top.frame
     grid $top.frame -sticky "nsew" -padx 8 -pady 8
