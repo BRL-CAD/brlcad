@@ -1834,10 +1834,19 @@ wdb_trace(register struct directory	*dp,
 	wtdp->wtd_path[pathpos] = dp;
 
 	/* check for desired path */
-	for (i=0; i<=pathpos; i++) {
-		if (wtdp->wtd_path[i]->d_addr != wtdp->wtd_obj[i]->d_addr) {
-			/* not the desired path */
-			return;
+	if( wtdp->wtd_flag == WDB_CPEVAL ) {
+		for (i=0; i<=pathpos; i++) {
+			if (wtdp->wtd_path[i]->d_addr != wtdp->wtd_obj[i]->d_addr) {
+				/* not the desired path */
+				return;
+			}
+		}
+	} else {
+		for (i=0; i<wtdp->wtd_objpos; i++) {
+			if (wtdp->wtd_path[i]->d_addr != wtdp->wtd_obj[i]->d_addr) {
+				/* not the desired path */
+				return;
+			}
 		}
 	}
 
