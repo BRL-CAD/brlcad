@@ -1120,6 +1120,7 @@ struct rt_i {
 	struct histogram rti_hist_cellsize; /* occupancy of cut cells */
 	struct histogram rti_hist_cutdepth; /* depth of cut tree */
 	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
+	struct rt_tol	rti_tol;	/* Tolerances for this model */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
