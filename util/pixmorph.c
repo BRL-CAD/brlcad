@@ -45,6 +45,9 @@
 
 #include "machine.h"
 #include "externs.h"			/* For malloc and getopt */
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 #include "fb.h"
 
 /* Adapted from an assignment for

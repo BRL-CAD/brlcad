@@ -50,6 +50,7 @@ unsigned char	*oline;
 int	discard;
 int	wpad;
 
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

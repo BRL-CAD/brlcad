@@ -43,6 +43,7 @@ struct cmap {
 	unsigned char blu;
 } cmap[4096];
 
+int
 main(argc,argv)
 int argc;
 char **argv;

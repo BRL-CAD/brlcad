@@ -134,6 +134,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main( argc, argv )
 int argc; char **argv;
 {

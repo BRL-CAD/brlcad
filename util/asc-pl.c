@@ -58,7 +58,7 @@ char	*argv[];
     int		i;
     int		iarg[6];
     int		line_nm;
-    int		nm_args;
+    int		nm_args = 0;
 
     /* Handle command-line syntax */
     if (argc > 3)

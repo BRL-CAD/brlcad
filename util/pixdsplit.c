@@ -30,8 +30,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <fcntl.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
+#include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"
+#include "bn.h"
 
 extern int errno;
 

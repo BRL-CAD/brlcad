@@ -95,6 +95,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;
@@ -180,6 +181,7 @@ doit()
 	return 0;
 }
 #else
+int
 main()
 {
 	fprintf( stderr, "op-bw: this is a vax specific program\n" );

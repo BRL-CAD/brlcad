@@ -38,6 +38,7 @@ static char usage[] = "\
 Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\
 	[-d] [even.pix odd.pix]\n";
 
+int
 get_args( argc, argv )
 int	argc;
 register char **argv;
@@ -78,6 +79,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

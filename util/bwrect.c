@@ -32,6 +32,7 @@ int	xorig, yorig;		/* Bottom left corner to extract from */
 int	linelen;
 char	*buf;			/* output scanline buffer, malloc'd */
 
+int
 main(argc, argv)
 int argc; char **argv;
 {
@@ -69,4 +70,5 @@ int argc; char **argv;
 		fread(buf, sizeof(*buf), xnum, ifp);
 		fwrite(buf, sizeof(*buf), xnum, ofp);
 	}
+	return 0;
 }

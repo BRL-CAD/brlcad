@@ -118,6 +118,7 @@ Window	win;
 GC	gc;
 XFontStruct *fontstruct;
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;

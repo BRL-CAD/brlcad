@@ -42,6 +42,7 @@ double	bweight = 0.0;
 static char usage[] = "\
 Usage: pix-bw [-ntsc -crt -R[#] -G[#] -B[#]] [in.pix] > out.bw\n";
 
+int
 main( argc, argv )
 int argc; char **argv;
 {

@@ -153,6 +153,7 @@ register char	**argv;
 	return true;
 }
 
+int
 main( argc, argv )
 int		argc;
 char		*argv[];

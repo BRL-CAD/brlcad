@@ -104,6 +104,7 @@ void usage()
  *
  *    Parse arguemnts and  call 'dump' to perform primary task.
  */
+int
 main(ac,av)
 int ac;
 char *av[];
@@ -155,4 +156,5 @@ char *av[];
 			(void)fclose(fd);
 		}
 	}
+	return 0;
 }

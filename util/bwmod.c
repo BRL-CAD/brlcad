@@ -62,6 +62,7 @@ unsigned char ibuf[BUFLEN];	/* input buffer */
 int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
 int char_arith = 0;
 
+int
 get_args( argc, argv )
 register char **argv;
 {

@@ -45,6 +45,7 @@ FILE	*outfp;
 genptr_t	ibuf;
 genptr_t	obuf;
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;

@@ -90,7 +90,7 @@ int		normalize;
 struct bu_vls	*tail;
 
 {
-    char		*cp;
+    char		*cp = NULL;
     fastf_t		sum;
     int			i;
     int			return_code = 1;
@@ -149,6 +149,7 @@ struct bu_vls	*tail;
 	return (return_code);
 }
 
+int
 main (argc, argv)
 
 int	argc;
@@ -245,4 +246,5 @@ char	*argv[];
 	    bu_flog(stdout, "%s", bu_vls_addr(tail_buf));
 	bu_flog(stdout, "\n");
     }
+    return 0;
 }

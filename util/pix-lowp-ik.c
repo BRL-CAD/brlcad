@@ -34,6 +34,7 @@ static int pix_line;		/* Number of pixels/line */
 
 char usage[] = "Usage: pix-ik [-h] file.pix [width]\n";
 
+int
 main(argc, argv)
 int argc;
 char **argv;

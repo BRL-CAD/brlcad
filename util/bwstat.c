@@ -42,6 +42,7 @@ void	show_hist();
 
 static char *Usage = "usage: bwstat [-v] [file.bw]\n";
 
+int
 main( argc, argv )
 int argc;
 char **argv;

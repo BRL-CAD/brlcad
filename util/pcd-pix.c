@@ -33,6 +33,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
@@ -260,7 +265,7 @@ char **argv;
 {
 	int bildnr;
 	char *opt;
-	dim w,h;
+	dim w=0,h=0;
 	long cd_offset,cd_offhelp;
 	int do_info,do_overskip;
 	int	do_pixfb = 0;

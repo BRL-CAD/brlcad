@@ -118,6 +118,7 @@ int	no3d = 1;
 static char usage[] = "\
 Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;

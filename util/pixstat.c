@@ -50,6 +50,7 @@ void	show_hist();
 
 static char *Usage = "usage: pixstat [-v] [file.pix]\n";
 
+int
 main( argc, argv )
 int argc;
 char **argv;

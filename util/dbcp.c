@@ -29,6 +29,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"			/* For getopt and malloc and atoi */
 
+int mread(int fd, char *bufp, int n );
+
 #define	STOP	0170
 #define	GO	0017
 
@@ -53,7 +55,8 @@ void prs();
 /*
  *			M A I N
  */
-main (argc, argv)
+int
+main(argc, argv)
 int	argc;
 char	**argv;
 {
@@ -62,8 +65,8 @@ char	**argv;
 	register unsigned int	nread;
 	int	rfd;		/* pipe to read message from */
 	int	wfd;		/* pipe to write message to */
-	int	exitval;
-	int	saverrno;
+	int	exitval=0;
+	int	saverrno=0;
 	int	waitcode;
 	char	msgchar;
 	pipefds par2chld, chld2par;

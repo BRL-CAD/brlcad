@@ -33,6 +33,7 @@ static int pix_line;		/* Number of pixels/line */
 
 char usage[] = "Usage: pix-both-ik [-h] file.pix [width] [fr_offset] [fr_count]\n";
 
+int
 main(argc, argv)
 int argc;
 char **argv;

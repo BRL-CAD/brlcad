@@ -126,6 +126,7 @@ int	expand_it = 0;		/* expand plot to 4k, beyond what will fit on real Tek scree
 static char usage[] = "\
 Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;

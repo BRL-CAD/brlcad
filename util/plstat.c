@@ -105,6 +105,7 @@ void	outchar(), outstring(), outshort(), outfloat();
 static char usage[] = "\
 Usage: pldebug [-v] [unix_plot]\n";
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;

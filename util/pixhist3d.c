@@ -51,6 +51,7 @@ void	disp_array();
 
 static char *Usage = "usage: pixhist3d [file.pix]\n";
 
+int
 main(argc, argv)
 int argc; char **argv;
 {

@@ -180,6 +180,7 @@ register int 	argc;
 char	*buf;			/* output scanline buffer, malloc'd */
 int	outbytes;
 
+int
 main(argc, argv)
 register char **argv;
 register int 	argc;

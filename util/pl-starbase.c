@@ -30,6 +30,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 int fildes,indx;
 
+int
 main(argc,argv)
 int argc;
 char **argv;

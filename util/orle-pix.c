@@ -45,6 +45,7 @@ static void	prnt_Usage();
 static int	non_linear_cmap = 0;
 
 /*	m a i n ( )							*/
+int
 main( argc, argv )
 int	argc;
 char	*argv[];

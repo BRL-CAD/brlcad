@@ -27,6 +27,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	geti(x)	{ (x) = getchar(); (x) |= (short)(getchar()<<8); }
 #define getb(x)	((x) = getchar())
 
+int
 main(argc,argv)
 int argc;
 char **argv;

@@ -33,6 +33,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define	INTEGER 0
 #define	REAL	1
 
+int
 main(argc, argv)
 int	argc;
 char	**argv;

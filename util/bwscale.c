@@ -61,6 +61,7 @@ static	char usage[] = "\
 Usage: bwscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -138,6 +139,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main( argc, argv )
 int argc; char **argv;
 {
@@ -235,6 +237,7 @@ int y;
  * We will preserve the amount of light energy per unit area.
  * To scale up we use bilinear interpolation.
  */
+int
 scale( ofp, ix, iy, ox, oy )
 FILE	*ofp;
 int	ix, iy, ox, oy;

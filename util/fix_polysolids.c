@@ -62,6 +62,7 @@ static char usage[] = "Usage: %s [-v] [-xX lvl] < brlcad_db.g > new db.g\n\
  *			M A I N
  */
 int
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

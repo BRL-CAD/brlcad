@@ -28,6 +28,7 @@ unsigned char	red[1024], green[1024], blue[1024];
 
 char *Usage = "usage: pix-bw3 redout greenout blueout < file.pix\n";
 
+int
 main( argc, argv )
 int argc;
 char **argv;

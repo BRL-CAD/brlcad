@@ -69,6 +69,7 @@ void	fill_buffer(), reverse_buffer(), arbrot();
 static char	*file_name;
 FILE	*ifp, *ofp;
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -140,6 +141,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main( argc, argv )
 int argc; char **argv;
 {
@@ -255,6 +257,7 @@ int argc; char **argv;
 
 		yin += buflines;
 	}
+	return 0;
 }
 
 void

@@ -24,6 +24,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <ctype.h>
+
+#include "machine.h"
+#include "externs.h"
 
 long bin[256];
 unsigned char new[256];
@@ -36,6 +40,7 @@ char usage[] = "Usage: bwhisteq [-v] file.bw > file.equalized\n";
 
 int	verbose = 0;
 
+int
 main( argc, argv )
 int argc; char **argv;
 {
@@ -112,4 +117,5 @@ int argc; char **argv;
 		}
 		fwrite( obuf, 1, n, stdout );
 	}
+	return 0;
 }

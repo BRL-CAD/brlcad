@@ -115,6 +115,7 @@ Window	w;
 FontInfo *font;
 WindowInfo winfo;
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;

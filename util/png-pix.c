@@ -40,6 +40,7 @@ static int verbose=0;
 
 static char *usage="Usage:\n\t%s [-v] [png_input_file] > pix_output_file\n";
 
+int
 main( argc, argv )
 int argc;
 char *argv[];
@@ -212,5 +213,5 @@ char *argv[];
 			bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
 				mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
 	}
-
+	return 0;
 }

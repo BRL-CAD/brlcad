@@ -36,6 +36,7 @@ struct	pix_element {
 
 static char *Usage = "usage: pixhist3d-pl [file.pix] | plot\n";
 
+int
 main( argc, argv )
 int argc;
 char **argv;

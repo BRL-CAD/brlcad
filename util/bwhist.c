@@ -24,7 +24,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <ctype.h>
 #include "machine.h"
+#include "externs.h"
 #include "fb.h"
 
 long	bin[256];
@@ -33,6 +35,7 @@ FBIO	*fbp;
 
 static char *Usage = "usage: bwhist [-v] [file.bw]\n";
 
+int
 main( argc, argv )
 int argc;
 char **argv;

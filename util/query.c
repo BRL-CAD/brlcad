@@ -79,6 +79,7 @@ register char **argv;
 }
 void handler();
 
+int
 main( argc, argv )
 int argc;
 char *argv[];

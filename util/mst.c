@@ -606,6 +606,7 @@ void print_usage ()
 /*
  *                                M A I N ( )
  */
+int
 main (argc, argv)
 
 int	argc;
@@ -764,4 +765,5 @@ char	*argv[];
 	}
     }
     bu_log("MST weight: %g\n", weight);
+    return 0;
 }

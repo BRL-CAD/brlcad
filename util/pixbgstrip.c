@@ -23,6 +23,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>	
 #include "machine.h"
 #include "externs.h"			/* For getopt */
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 #include "fb.h"
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
@@ -44,6 +47,7 @@ Usage: pixbgstrip [-a -h] [-t thresh] [-x x_off for bg pixel]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.pix]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -106,6 +110,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv)
 int	argc;
 char	**argv;

@@ -45,6 +45,7 @@ static double	scalefactor;
 static unsigned char	line[512*3];
 static FILE	*fp;
 
+int
 main( argc, argv )
 int argc;
 char **argv;

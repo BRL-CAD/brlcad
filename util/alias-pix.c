@@ -9,6 +9,10 @@
 #include "conf.h"
 
 #include <stdio.h>
+#include <ctype.h>
+#include "machine.h"
+#include "externs.h"
+
 char *progname = "(noname)";
 void usage()
 {
@@ -31,6 +35,7 @@ int verbose = 0;
 
 char *image;
 
+int
 main(ac,av)
 int ac;
 char *av[];

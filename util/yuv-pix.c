@@ -41,6 +41,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "externs.h"		/* For getopt, etc */
 
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+
 static char	*file_name;
 static int	infd;
 
@@ -117,6 +121,7 @@ register char **argv;
 /*
  *			M A I N
  */
+int
 main( argc, argv )
 int	argc;
 char	**argv;

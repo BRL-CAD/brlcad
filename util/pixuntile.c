@@ -95,6 +95,7 @@ int	numx;
 int	numy;
 int	pixsize = 3;
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;

@@ -28,6 +28,7 @@
 struct bn_gauss *gp;
 struct bn_unif *up;
 
+int
 main(argc,argv)
 int argc;
 char **argv;

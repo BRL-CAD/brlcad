@@ -27,6 +27,7 @@ char	buf[2048];
 
 int	debug = 0;
 
+int
 main(argc, argv)
 int	argc;
 char	*argv;

@@ -104,6 +104,7 @@ Usage: plgetframe [-v] desired_frame < unix_plot\n";
 
 char	buf[8*32];
 
+int
 main( argc, argv )
 int	argc;
 char	**argv;
