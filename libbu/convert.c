@@ -32,21 +32,24 @@ static char RCSid[] = "$Header$ (BRL)";
 /*
  * Theses should be moved to a header file soon.
  */
-struct cv_cookie_type {
-	int	channels:8;	/* number of input channels */
-	int	host:1;		/* host or net */
-	int	is_signed:1;	/* is this a signed integer */
-	int	type:3;		/* type/size */
-	int	conversion:2;	/* conversion style */
-};
-#define	CV_8	0
-#define	CV_16	1
-#define	CV_32	2
-#define	CV_64	3
-#define	CV_D	4
-#define CV_NORMAL	0;
-#define CV_CLIP		1;
-#define CV_LIT		2;
+#define CV_CHANNEL_MASK	0x00ff
+#define CV_HOST_MASK	0x0100
+#define CV_SIGNED_MASK	0x0200
+#define CV_TYPE_MASK	0x1c00
+#define CV_CONVERT_MASK 0x6000
+
+#define CV_TYPE_SHIFT	10
+#define CV_CONVERT_SHIFT 13
+
+#define CV_8	0x0000
+#define	CV_16	0x0400
+#define CV_32	0x0800
+#define CV_64	0x0c00
+#define CV_D	0x1000
+
+#define CV_CLIP		0x0000
+#define CV_NORMAL	0x2000
+#define CV_LIT		0x4000
 
 /* cv_cookie	Set's a bit vector after parsing an input string.
  *
@@ -67,27 +70,30 @@ struct cv_cookie_type {
  * char | short | integer | long | double | number of bits of integer
  * Normalize | Clip | low-order
  */
-struct cv_cookie
+int
 cv_cookie(in)
 char *in;			/* input format */
 {
 	char *p;
 	int collector;
-	struct cv_cookie result = {
-		1,0,0,CV_8,CV_CLIP};
+	int result = 0x0000;	/* zero/one channel, Net, unsigned, char, clip */
 
 	if (!in) return(NULL);
 	if (!*in) return(NULL);
 
 	collector = 0;
 	for (p=in; *p && isdigit(*p); ++p) collector = collector*10 + (*p - '0');
-	if (collector > 255) collector = 255;
-	if (!collector) result.channels = collector;
+	if (collector > 255) {
+		collector = 255;
+	} else if (collector == 0) {
+		collector = 1;
+	}
+	result = collector;	/* number of channels set '|=' */
 
 	if (!*p) return(NULL);
 
 	if (*p == 'h') {
-		result.host = 1;
+		result |= CV_HOST_MASK;
 		++p;
 	} else if (*p = 'n') {
 		++p;
@@ -100,7 +106,7 @@ char *in;			/* input format */
 		char *p2;
 		p2 = p+1;
 		if (*p2 && (islower(*p2) || isdigit(*p2)) {
-			result.signed = 1;
+			result |= CV_SIGNED_MASK;
 			++p;
 		}
 	}
@@ -109,63 +115,132 @@ char *in;			/* input format */
 	switch (*p) {
 	case 'c':
 	case '8':
-		collector = CV_8;
+		result |= CV_8;
 		break;
 	case '1':
 		p++;
 		if (*p != '6') return(NULL);
 		/* fall through */
 	case 's':
-		collector = CV_16;
+		result |= CV_16;
 		break;
 	case '3':
 		p++;
 		if (*p != '2') return(NULL);
 		/* fall through */
 	case 'i':
-		collector = CV_32;
+		result |= CV_32;
 		break;
 	case '6':
 		p++;
 		if (*p != '4') return(NULL);
 		/* fall through */
 	case 'l':
-		collector = CV_64;
+		result | = CV_64;
 		break;
 	case 'd':
-		collector = CV_D;
+		result | = CV_D;
 		break;
 	default:
 		return(NULL);
 	}
 	p++;
-	result.type = collector;
 
 	if (!*p) return(result);
 	if (*p == 'N') {
-		result.conversion = CV_NORMAL;
+		result |= CV_NORMAL;
 	} else if (*p == 'C') {
-		result.conversion = CV_CLIP;
+		result |= CV_CLIP;
 	} else if (*p == 'L') {
-		result.conversion = CV_LIT;
+		result |= CV_LIT;
 	} else {
 		return(NULL);
 	}
 	return(result);
 }
-/* convert - convert from one format to another.
+/* cv - convert from one format to another.
  *
  * Entry:
  *	in	input pointer
  *	out	output pointer
  *	count	number of entries to convert.
  *	size	size of output buffer.
+ *	infmt	input format
+ *	outfmt	output format
  *
  */
-convert(out, size, in, count)
+cv(out, outfmt, size, in, infmt, count)
 genptr_t out;
+char	*outfmt;
 int	size;
 getptr_t in;
+char	*infmt;
 int	count;
 {
+	int	incookie, outcookie;
+	incookie = cv_cookie(infmt);
+	outcookie = cv_cookie(outfmt);
+	return(cv_w_cookie(out, outcookie, size, in, incookie, count));
+}
+/* cv_w_cookie - convert with cookie
+ *
+ * Entry:
+ *	in		input pointer
+ *	incookie	input format cookie.
+ *	count		number of entries to convert.
+ *	out		output pointer.
+ *	outcookie	output format cookie.
+ *	size		size of output buffer in bytes;
+ */
+cv_w_cookie(out, outcookie, size, in, incookie, count)
+genptr_t out;
+int	outcookie;
+int	size;
+genptr_t in;
+int	incookie;
+int	count;
+{
+	int number_converted = 0;
+	int host_size_table[5] = {sizeof(char), sizeof(short), sizeof(int),
+		sizeof(long int), sizeof(double)};
+	int net_size_table[5] = {1,2,4,8,8};
+	int bytes_per;
+	double *working;
+	int	work_count = 500;
+
+	working = (double *) malloc(work_count*sizeof(double));
+
+	bytes_per = (outcookie & CV_HOST_MASK) ?
+	    host_size_table[ (outcookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT] :
+	    net_size_table[ (outcookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT] ;
+
+/*
+ * Currently we assume that all machines are big-indian - XXX
+ */
+	while (size>= bytes_per && number_converted < count) {
+		remaining = size / bytes_per;
+		if (remaining > count-number_converted) {
+			remaining = count - number_converted;
+		}
+		if (remaining < work_count) work_count = remaining;
+/*
+ * net to host
+ */
+
+/*
+ * to double.
+ */
+
+/*
+ * convert.  (Normalize, clip, literal)
+ */
+
+/*
+ * from double.
+ */
+
+/*
+ * to host.
+ */
+	}
 }
