@@ -34,6 +34,10 @@
 # include "vmath.h"
 #endif
 
+#ifndef NMG_H
+# include "nmg.h"
+#endif
+
 #ifndef RAYTRACE_H
 # include "raytrace.h"
 #endif
@@ -80,25 +84,12 @@
 #define NMG_CK_CNURB(_p)	NMG_CKMAG(_p, RT_CNURB_MAGIC, "cnurb")
 #define NMG_CK_SNURB(_p)	NMG_CKMAG(_p, RT_SNURB_MAGIC, "snurb")
 
-#define GET_KNOT_VECTOR(p/*,m*/)    {NMG_GETSTRUCT(p, knot_vector); \
-	/* NMG_INCR_INDEX(p,m); */ }
 #define GET_CNURB(p/*,m*/) 		{NMG_GETSTRUCT(p, cnurb); \
 	/* NMG_INCR_INDEX(p,m); */ \
 	RT_LIST_INIT( &(p)->l ); (p)->l.magic = RT_CNURB_MAGIC; }
 #define GET_SNURB(p/*,m*/) 		{NMG_GETSTRUCT(p, snurb); \
 	/* NMG_INCR_INDEX(p,m); */ \
 	RT_LIST_INIT( &(p)->l ); (p)->l.magic = RT_SNURB_MAGIC; }
-
-/* Definition of a knot vector */
-#ifndef NMG_H
-struct knot_vector {
-	int		magic;
-	int		k_size;		/* knot vector size */
-	fastf_t		* knots;	/* pointer to knot vector  */
-	long		index;		/* struct # in this model */
-};
-#endif
-#define RT_KNOT_VECTOR_MAGIC	0x6b6e6f74
 
 /* ----- The actual data structures for curves and surfaces ----- */
 
