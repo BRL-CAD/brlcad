@@ -6,6 +6,7 @@
  *	dir_print	Print table-of-contents of object file
  *	f_memprint	Debug, print memory & db free maps
  *	dir_nref	Count number of times each db element referenced
+ *	regexp_match	Does regular exp match given string?
  *	dir_summary	Summarize contents of directory by categories
  *	f_tops		Prints top level items in database
  *	cmd_glob	Does regular expression expansion
@@ -71,15 +72,12 @@ static void printnode();
  *  b) the number of entries specified by the argument if > 0.
  */
 struct directory **
-dir_getspace(num_entries)
+dir_getspace( num_entries)
 register int num_entries;
 {
 	register struct directory *dp;
 	register int i;
 	register struct directory **dir_basep;
-
-	if(dbip == DBI_NULL)
-	  return (struct directory **) 0;
 
 	if( num_entries < 0) {
 		bu_log( "dir_getspace: was passed %d, used 0\n",
@@ -118,9 +116,6 @@ char	**argv;
   struct directory **dirp;
   struct directory **dirp0 = (struct directory **)NULL;
   struct bu_vls vls;
-
-  if(dbip == DBI_NULL)
-    return TCL_OK;
 
   if(argc < 1 || MAXARGS < argc){
     struct bu_vls vls;
@@ -189,9 +184,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;
 
@@ -202,15 +194,168 @@ char	**argv;
     return TCL_ERROR;
   }
 
-#if 0
   Tcl_AppendResult(interp, "Display manager free map:\n", (char *)NULL);
   rt_memprint( &(dmp->dm_map) );
-#endif
   Tcl_AppendResult(interp, "Database free granule map:\n", (char *)NULL);
   rt_memprint( &(dbip->dbi_freep) );
 
   return TCL_OK;
 }
+
+HIDDEN void
+Count_refs( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	struct directory *dp;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	if( (dp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != DIR_NULL )
+		dp->d_nref++;
+}
+
+/*
+ *			D I R _ N R E F
+ *
+ * Count the number of time each directory member is referenced
+ * by a COMBination record.
+ */
+void
+dir_nref( )
+{
+	register int		i,j;
+	register struct directory *dp;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal *comb;
+
+	/* First, clear any existing counts */
+	for( i = 0; i < RT_DBNHASH; i++ )  {
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
+			dp->d_nref = 0;
+	}
+
+	/* Examine all COMB nodes */
+	for( i = 0; i < RT_DBNHASH; i++ )  {
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			if( !(dp->d_flags & DIR_COMB) )
+				continue;
+
+			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+				continue;
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			db_tree_funcleaf( dbip, comb, comb->tree, Count_refs, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL );
+			rt_comb_ifree( &intern );
+		}
+	}
+}
+
+/*
+ *			R E G E X P _ M A T C H
+ *
+ *	If string matches pattern, return 1, else return 0
+ *
+ *	special characters:
+ *		*	Matches any string including the null string.
+ *		?	Matches any single character.
+ *		[...]	Matches any one of the characters enclosed.
+ *		-	May be used inside brackets to specify range
+ *			(i.e. str[1-58] matches str1, str2, ... str5, str8)
+ *		\	Escapes special characters.
+ */
+int
+regexp_match( pattern, string )
+register char *pattern, *string;
+{
+    do {
+	switch( *pattern ) {
+	case '*':
+	    /* match any string including null string */
+	    ++pattern;
+	    do {
+		if( regexp_match( pattern, string ) )
+		    return( 1 );
+	    } while( *string++ != '\0' );
+	    return( 0 );
+	case '?':
+	    /* match any character  */
+	    if( *string == '\0' )
+		return( 0 );
+	    break;
+	case '[':
+	    /* try to match one of the characters in brackets */
+	    ++pattern;
+	    if( *pattern == '\0' )
+		return( 0 );
+	    while( *pattern != *string ) {
+		if( pattern[0] == '-' && pattern[-1] != '\\')
+		    if(	pattern[-1] <= *string &&
+		        pattern[-1] != '[' &&
+		       	pattern[ 1] >= *string &&
+		        pattern[ 1] != ']' )
+			break;
+		++pattern;
+		if( *pattern == '\0' || *pattern == ']' )
+		    return( 0 );
+	    }
+	    /* skip to next character after closing bracket */
+	    while( *pattern != '\0' && *pattern != ']' )
+		++pattern;
+	    break;
+	case '\\':
+	    /* escape special character */
+	    ++pattern;
+	    /* compare characters */
+	    if( *pattern != *string )
+		return( 0 );
+	    break;
+	default:
+	    /* compare characters */
+	    if( *pattern != *string )
+		return( 0 );
+	}
+	++string;
+    } while( *pattern++ != '\0' );
+    return( 1 );
+}
+
+/*
+ *			R E G E X P _ M A T C H _ A L L
+ *
+ * Appends a list of all database matches to the given vls, or the pattern
+ * itself if no matches are found.
+ * Returns the number of matches.
+ *
+ */
+ 
+int
+regexp_match_all( dest, pattern )
+struct bu_vls *dest;
+char *pattern;
+{
+    register int i, num;
+    register struct directory *dp;
+
+    for( i = num = 0; i < RT_DBNHASH; i++ )  {
+	for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
+	    if( !regexp_match( pattern, dp->d_namep ) )
+		continue;
+	    if( num == 0 )
+		bu_vls_strcat( dest, dp->d_namep );
+	    else {
+		bu_vls_strcat( dest, " " );
+		bu_vls_strcat( dest, dp->d_namep );
+	    }
+	    ++num;
+	}
+    }
+
+    return num;
+}
+
 
 /*
  *  			D I R _ S U M M A R Y
@@ -228,9 +373,6 @@ dir_summary(flag)
 	struct directory **dirp;
 	struct directory **dirp0 = (struct directory **)NULL;
 	struct bu_vls vls;
-
-	if(dbip == DBI_NULL)
-	  return;
 
 	bu_vls_init(&vls);
 	if( setjmp( jmp_env ) == 0 )
@@ -305,9 +447,6 @@ char	**argv;
 	struct directory **dirp0 = (struct directory **)NULL;
 	struct bu_vls vls;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 1 || 1 < argc){
 	  struct bu_vls vls;
 
@@ -329,7 +468,7 @@ char	**argv;
 	  return TCL_OK;
 	}
 
-	db_update_nref( dbip );
+	dir_nref();
 	/*
 	 * Find number of possible entries and allocate memory
 	 */
@@ -384,9 +523,6 @@ int   maxargs;
 	int escaped = 0;
 	int orig_numargs = *argcp;
 
-	if(dbip == DBI_NULL)
-	  return 0;
-
 	strncpy( word, argv[*argcp], sizeof(word)-1 );
 	/* If * ? [ or \ are present, this is a regular expression */
 	pattern = word;
@@ -418,7 +554,7 @@ int   maxargs;
 
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( !db_regexp_match( word, dp->d_namep ) )
+			if( !regexp_match( word, dp->d_namep ) )
 				continue;
 			/* Successful match */
 			/* See if already over the limit */
@@ -499,9 +635,6 @@ char **argv;
     register int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
 
-    if(dbip == DBI_NULL)
-      return TCL_OK;
-
     if(argc < 1 || MAXARGS < argc){
       struct bu_vls vls;
 
@@ -550,7 +683,7 @@ char **argv;
 	thismatch = 0;
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 	    for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-	        if( !db_regexp_match( pattern, dp->d_namep ) )
+	        if( !regexp_match( pattern, dp->d_namep ) )
 		    continue;
 		/* Successful match */
 		if( nummatch == 0 )
@@ -582,7 +715,6 @@ genptr_t		user_ptr3;
 {
 	char *obj_name;
 	char *comb_name;
-	register int sflag = (int)user_ptr3;
 
 	RT_CK_TREE( comb_leaf );
 
@@ -592,10 +724,7 @@ genptr_t		user_ptr3;
 
 	comb_name = (char *)comb_name_ptr;
 
-	if (sflag)
-	  Tcl_AppendElement(interp, comb_name);
-	else
-	  Tcl_AppendResult(interp, obj_name, ":  member of ", comb_name, "\n", (char *)NULL );
+	Tcl_AppendResult(interp, obj_name, ":  member of ", comb_name, "\n", (char *)NULL );
 }
 
 /*
@@ -611,15 +740,11 @@ int	argc;
 char	**argv;
 {
   register int	i,j,k;
-  register int sflag = 0;
   register struct directory *dp;
   struct rt_db_internal intern;
   register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 1 || MAXARGS < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -627,23 +752,6 @@ char	**argv;
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
-  }
-
-  if (strcmp(argv[1], "-s") == 0) {
-    --argc;
-    ++argv;
-
-    if(argc < 2){
-      struct bu_vls vls;
-
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "help find");
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-    }
-
-    sflag = 1;
   }
 
   if( setjmp( jmp_env ) == 0 )
@@ -667,7 +775,7 @@ char	**argv;
 	}
     	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	for( k=0; k<argc; k++ )
-	    	db_tree_funcleaf( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)sflag );
+	    	db_tree_funcleaf( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)NULL );
 
     	rt_comb_ifree( &intern );
     }
@@ -720,9 +828,6 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
 	char		tempstring[NAMESIZE+2];
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -830,9 +935,6 @@ char	**argv;
 	struct bu_vls		units;
 	register int		i;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -929,9 +1031,6 @@ char	**argv;
   register struct directory *dp;
   register int j;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
 
@@ -972,9 +1071,6 @@ char prefix;
   register struct directory *nextdp;
   struct rt_db_internal intern;
   struct rt_comb_internal *comb;
-
-  if(dbip == DBI_NULL)
-    return;
 
   for( i=0; i<pathpos; i++) 
     Tcl_AppendResult(interp, "\t", (char *)NULL);
@@ -1119,9 +1215,6 @@ char	**argv;
 	struct rt_comb_internal *comb;
 	struct bu_ptbl		stack;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
@@ -1249,9 +1342,6 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	int			ret;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1342,9 +1432,6 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1380,31 +1467,14 @@ killtree( dbip, dp )
 struct db_i	*dbip;
 register struct directory *dp;
 {
-  register struct dm_list *dmlp;
-  register struct dm_list *save_dmlp;
-
-  if(dbip == DBI_NULL)
-    return;
-
-  Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+	Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		   ":  ", dp->d_namep, "\n", (char *)NULL);
 
-  eraseobjall( dp );
+	eraseobjall( dp );
 
-#ifdef DO_SINGLE_DISPLAY_LIST
-  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-    if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-      save_dmlp = curr_dm_list;
-      curr_dm_list = dmlp;
-      createDList(&HeadSolid);
-      curr_dm_list = save_dmlp;
-    }
-  }
-#endif
-
-  if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
-    TCL_DELETE_ERR("");
-  }
+	if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
+	  TCL_DELETE_ERR("");
+	}
 }
 
 int
@@ -1414,9 +1484,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;
 

@@ -138,14 +138,16 @@ char	**argv;
 		is_pipe = 0;
 	}
 
+	color_soltab();		/* apply colors to the solid table */
+
 	if( floating )  {
 		pd_3space( fp,
-			-view_state->vs_toViewcenter[MDX] - view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDY] - view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDZ] - view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDX] + view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDY] + view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDZ] + view_state->vs_Viewscale );
+			-toViewcenter[MDX] - Viewscale,
+			-toViewcenter[MDY] - Viewscale,
+			-toViewcenter[MDZ] - Viewscale,
+			-toViewcenter[MDX] + Viewscale,
+			-toViewcenter[MDY] + Viewscale,
+			-toViewcenter[MDZ] + Viewscale );
 		Dashing = 0;
 		pl_linmod( fp, "solid" );
 		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
@@ -185,9 +187,9 @@ char	**argv;
 	}
 
 	if( Three_D )
-		pl_3space( fp, (int)GED_MIN, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX, (int)GED_MAX );
+		pl_3space( fp, -2048, -2048, -2048, 2048, 2048, 2048 );
 	else
-		pl_space( fp, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX );
+		pl_space( fp, -2048, -2048, 2048, 2048 );
 	pl_erase( fp );
 	Dashing = 0;
 	pl_linmod( fp, "solid");
@@ -212,13 +214,13 @@ char	**argv;
 				case RT_VLIST_POLY_MOVE:
 				case RT_VLIST_LINE_MOVE:
 					/* Move, not draw */
-					MAT4X3PNT( last, view_state->vs_model2view, *pt );
+					MAT4X3PNT( last, model2view, *pt );
 					continue;
 				case RT_VLIST_POLY_DRAW:
 				case RT_VLIST_POLY_END:
 				case RT_VLIST_LINE_DRAW:
 					/* draw */
-					MAT4X3PNT( fin, view_state->vs_model2view, *pt );
+					MAT4X3PNT( fin, model2view, *pt );
 					VMOVE( start, last );
 					VMOVE( last, fin );
 					break;
@@ -234,18 +236,18 @@ char	**argv;
 						sp->s_color[1],
 						sp->s_color[2] );
 					pl_3line( fp,
-						(int)( start[X] * GED_MAX ),
-						(int)( start[Y] * GED_MAX ),
-						(int)( start[Z] * GED_MAX ),
-						(int)( fin[X] * GED_MAX ),
-						(int)( fin[Y] * GED_MAX ),
-						(int)( fin[Z] * GED_MAX ) );
+						(int)( start[X] * 2047 ),
+						(int)( start[Y] * 2047 ),
+						(int)( start[Z] * 2047 ),
+						(int)( fin[X] * 2047 ),
+						(int)( fin[Y] * 2047 ),
+						(int)( fin[Z] * 2047 ) );
 				}  else  {
 					pl_line( fp,
-						(int)( start[0] * GED_MAX ),
-						(int)( start[1] * GED_MAX ),
-						(int)( fin[0] * GED_MAX ),
-						(int)( fin[1] * GED_MAX ) );
+						(int)( start[0] * 2047 ),
+						(int)( start[1] * 2047 ),
+						(int)( fin[0] * 2047 ),
+						(int)( fin[1] * 2047 ) );
 				}
 			}
 		}
@@ -283,9 +285,6 @@ char	**argv;
 	char result[MAXLINE];
 	char tol_str[32];
 	char *tol_ptr;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if(argc < 1 || 2 < argc){
 	  struct bu_vls vls;
@@ -338,8 +337,8 @@ char	**argv;
 	}
 
 	if ((pid1 = fork()) == 0){
-	  dup2(fd1[0], fileno(stdin));
-	  dup2(fd2[1], fileno(stdout));
+	  dup2(fd1[0], STDIN_FILENO);
+	  dup2(fd2[1], STDOUT_FILENO);
 
 	  close(fd1[0]);
 	  close(fd1[1]);
@@ -352,8 +351,8 @@ char	**argv;
 	}
 
 	if ((pid2 = fork()) == 0){
-	  dup2(fd2[0], fileno(stdin));
-	  dup2(fd3[1], fileno(stdout));
+	  dup2(fd2[0], STDIN_FILENO);
+	  dup2(fd3[1], STDOUT_FILENO);
 
 	  close(fd1[0]);
 	  close(fd1[1]);
@@ -391,13 +390,13 @@ char	**argv;
 	      case RT_VLIST_POLY_MOVE:
 	      case RT_VLIST_LINE_MOVE:
 		/* Move, not draw */
-		MAT4X3VEC( last, view_state->vs_Viewrot, *pt );
+		MAT4X3VEC( last, Viewrot, *pt );
 		continue;
 	      case RT_VLIST_POLY_DRAW:
 	      case RT_VLIST_POLY_END:
 	      case RT_VLIST_LINE_DRAW:
 		/* draw.  */
-		MAT4X3VEC( fin, view_state->vs_Viewrot, *pt );
+		MAT4X3VEC( fin, Viewrot, *pt );
 		break;
 	      }
 

@@ -1238,8 +1238,8 @@ CONST struct bn_tol	*tol;
 		VSUB2( a_to_p , p , a );
 		VCROSS( n , a_to_p , d );
 
-		if( NEAR_ZERO( MAGSQ( n ) , SMALL_FASTF ) )
-			bn_vec_ortho( n, d );
+		/* if normal still has zero length, then lines are parallel and collinear
+		 * and the following code will work OK */
 	}
 
 	/*
@@ -1739,7 +1739,7 @@ register CONST point_t a, b, c;
  *    A *   /
  *	
  *	tol = distance limit from line to pt P;
- *	dist = parametric distance from A to P' (in terms of A to B)
+ *	dist = distance from A to P'
  */
 int bn_isect_pt_lseg(dist, a, b, p, tol)
 fastf_t			*dist;		/* distance along line from A to P */

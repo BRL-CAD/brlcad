@@ -89,7 +89,11 @@ char	*argv[];
 		rt_g.rtg_parallel = 1;
 	else
 		rt_g.rtg_parallel = 0;
-	bu_semaphore_init( RT_SEM_LAST );
+	RES_INIT( &rt_g.res_model );
+	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
 
 #if defined( CRAY )
 	{	int	newnice;

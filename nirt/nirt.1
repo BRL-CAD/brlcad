@@ -5,9 +5,9 @@
 .\"
 .TH NIRT 1
 .SH NAME
-nirt \- interactively ray trace a BRL-CAD geometric model
+nirt \- interactively ray trace an MGED model
 .SH SYNOPSIS
-.BR "nirt  [" " options " "] " "model.g objects ..."
+.BR "nirt  [ -M ] [-sv] [ -u " n " ] [ -x " v " ] " "model.g objects ..."
 .SH DESCRIPTION
 .I Nirt
 operates on the specified
@@ -29,10 +29,9 @@ Similarly, direction may be input and output either as
 vectors expressed in model coordinates or as
 angles of azimuth and elevation.
 
-.SS Options
-.TP
+The
 .B -M
-causes
+option causes
 .I nirt
 to read the eye point and
 either the orientation quaternion (new format)
@@ -45,87 +44,38 @@ to be called directly from within
 using the
 .BR nirt " and " rrt
 commands.
-.TP
-.B -b
-causes
-.I nirt
-to perform a
-.B backout
-command before the first
-.B shoot
-command (see the description of these two commands below).
-This is probably only useful with the
-.B -M
-option.
-.TP
-.BI -e " script"
-causes
-.I nirt
-to run the
-.I script
-string before reading the standard input.
-Multiple commands in
-.I script
-may be separated with a semicolon ';'.
-Scripts specified with either the
-.BR -e " or " -f
-options are executed in the order in which they are specified
-on the command line.
-.TP
-.B -E
-causes
-.I nirt
-to ignore any
-.BR -e " or " -f
-options specified previously on the command line.
-.TP
-.BI -f " sfile"
-causes
-.I nirt
-to run the script file
-.I sfile
-before reading the standard input.
-Scripts specified with either the
-.BR -e " or " -f
-options are executed in the order in which they are specified
-on the command line.
-.TP
+Given the
 .B -s
-causes
+option,
 .I nirt
-to run in short (that is, non-verbose) mode.
+runs in short (that is, non-verbose) mode.
 In this mode,
 which is useful in a pipeline,
 .I nirt
 does not print its initial lines of output or the prompt.
-.TP
+The
 .B -v
-causes
+option, on the other hand, causes
 .I nirt
 to run in verbose mode.
 The default is verbose mode,
 except if standard input has been redirected,
 in which case the default is short mode.
-.TP
+The
 .BI -u " n"
-sets the \fIuseair\fR member
+option sets the \fIuseair\fR member
 of the \fIrt_i\fR structure to \fIn\fR.
 See the discussion of the
 .I useair
 command below.
-.TP
+The
 .BI -x " v"
-sets the
+option sets the
 .IR librt (3)
 debug flags to the hexadecimal bit vector \fIv\fR.
 See the discussion of the
 .I libdebug
 command below.
-.TP
-.BI -X " v"
-sets
-.IR nirt "'s"
-own debug flags to the hexadecimal bit vector \fIv\fR.
 
 If there is a file called .nirtrc in the current directory,
 otherwise in the user's home directory,

@@ -39,6 +39,7 @@ static char RCScheckview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 
 #define OVLP_TOL	0.1
 
@@ -93,10 +94,9 @@ static struct overlap_list *olist=NULL;	/* root of the list */
  */
 /*ARGSUSED*/
 int
-hit( ap, PartHeadp, segHeadp )
+hit( ap, PartHeadp )
 struct application *ap;
 register struct partition *PartHeadp;
-struct seg		*segHeadp;
 {
 	return	1;
 }
@@ -141,18 +141,18 @@ struct region		*reg2;
 	if( depth < OVLP_TOL )
 		return(0);
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	pdv_3line( outfp, ihit, ohit );
 	noverlaps++;
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 
 	if( !rpt_overlap ) {
 		rt_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
 			noverlaps,reg1->reg_name,
 			noverlaps,reg2->reg_name,
 			noverlaps,depth,
-			noverlaps,ihit[X],ihit[Y],ihit[Z],
-			noverlaps,ohit[X],ohit[Y],ohit[Z]);
+			noverlaps,ihit[X],ihit[Y],ihit[Z],depth,
+			noverlaps,ohit[X],ohit[Y],ohit[Z],depth);
 
 	/* If we report overlaps, don't print if already noted once.
 	 * Build up a linked list of known overlapping regions and compare 
@@ -165,14 +165,14 @@ struct region		*reg2;
 		new_op =(struct overlap_list *)rt_malloc(sizeof(struct overlap_list),"overlap list");
 
 		/* look for it in our list */
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		RES_ACQUIRE( &rt_g.res_syscall );
 		for( op=olist; op; prev_ol=op,op=op->next ) {
 			if( (strcmp(reg1->reg_name,op->reg1) == 0)
 			 && (strcmp(reg2->reg_name,op->reg2) == 0) ) {
 				op->count++;
 				if( depth > op->maxdepth )
 					op->maxdepth = depth;
-				bu_semaphore_release( BU_SEM_SYSCALL );
+				RES_RELEASE( &rt_g.res_syscall );
 				rt_free( (char *) new_op, "overlap list");
 				return	0;	/* already on list */
 			}
@@ -190,7 +190,7 @@ struct region		*reg2;
 		op->maxdepth = depth;
 		op->next = NULL;
 		op->count = 1;
-		bu_semaphore_release( BU_SEM_SYSCALL );
+		RES_RELEASE( &rt_g.res_syscall );
 	}
 
 	return(0);	/* No further consideration to this partition */

@@ -44,6 +44,7 @@ static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 #include "./ext.h"
 #include "rdebug.h"
 

@@ -6,13 +6,8 @@
  *	bn_noise_vec	Vector-valued noise
  *
  *  Spectral Noise functions
- *
  *	bn_noise_fbm	fractional Brownian motion.  Based on noise_perlin
  *	bn_noise_turb	turbulence.  Based on noise_perlin
- *
- *  These noise functions provide mostly random noise at the integer lattice
- *  points.  The functions should be evaluated at non-integer locations for
- *  their nature to be realized.
  *
  *  Author - 
  *	Lee A. Butler
@@ -62,20 +57,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  * designed to extend the effective domain of the function, albeit by
  * introducing periodicity.	-FKM 4/93
  */
-
-#define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
-
-#if 0
 #define MAXVAL  	2147483647.  /* (2^31)-1 max val for noise integers */
 #define TWICE_MAXVAL 	4294967294.
-
-/* XXX Do we need this for 64bit integer architectures?
- *
- * #define MAXVAL	  	 9223372036854775807.
- * #define TWICE_MAXVAL 	18446744073709551615.
- * #endif
- */
-
+#define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
 
 #define FILTER_ARGS( src) {\
 	register int i; \
@@ -98,40 +82,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 	y = dst[1];	iy = FLOOR(y);	fy = y - iy; \
 	z = dst[2];	iz = FLOOR(z);	fz = z - iz; \
 }
-#endif
-static void
-filter_args(src, p, f, ip)
-point_t src;
-point_t p;
-point_t f;
-int	ip[3];
-{
-	register int i;
-	point_t dst;
-	static unsigned long max2x = -1;
-	static unsigned long max = (-1) >> 1;
 
-	for (i=0 ; i < 3 ; i++) {
-		/* assure values are positive */
-		if (src[i] < 0) dst[i] = -src[i];
-		else dst[i] = src[i];
-
-
-		/* fold space */
-		while (dst[i] > max || dst[i]<0) {
-			if (dst[i] > max) {
-				dst[i] = max2x - dst[i];
-			} else {
-				dst[i] = -dst[i];
-			}
-		}
-
-	}
-
-	p[X] = dst[0];	ip[X] = FLOOR(p[X]);	f[X] = p[X] - ip[X];
-	p[Y] = dst[1];	ip[Y] = FLOOR(p[Y]);	f[Y] = p[Y] - ip[Y];
-	p[Z] = dst[2];	ip[Z] = FLOOR(p[Z]);	f[Z] = p[Z] - ip[Z];
-}
 
 
 /* 
@@ -250,14 +201,6 @@ bn_noise_init()
 
 /*
  * Robert Skinner's Perlin-style "Noise" function
- *
- * Results are in the range [-0.5 .. 0.5].  Unlike many implementations,
- * this function provides random noise at the integer lattice values.  
- * However this produces much poorer quality and should be avoided if 
- * possible.
- *
- * The power distribution of the result has no particular shape, though it 
- * isn't as flat as the literature would have one believe.
  */
 double
 bn_noise_perlin(point)
@@ -270,26 +213,12 @@ CONST point_t point;
 	double	sx, sy, sz, tx, ty, tz;
 	double	sum;
 	short	m;
-	point_t p, f;
-	int ip[3];
 
-	if (!ht.hashTableValid) bn_noise_init();
+	if (!ht.hashTableValid) noise_init();
 	else {
 /*		CK_HT(); */
 	}
-
-	filter_args( point, p, f, ip);
-	ix = ip[X];
-	iy = ip[Y];
-	iz = ip[Z];
-
-	fx = f[X];
-	fy = f[Y];
-	fz = f[Z];
-
-	x = p[X];
-	y = p[Y];
-	z = p[Z];
+	FILTER_ARGS( point); /* sets x,y,z, ix,iy,iz, fx,fy,fz */
 
 	jx = ix + 1; /* (jx,jy,jz) = integer lattice point above (ix,iy,iz) */
 	jy = iy + 1; 
@@ -351,11 +280,9 @@ point_t result;
 	double		px, py, pz, s;
 	double		sx, sy, sz, tx, ty, tz;
 	short		m;
-	point_t p, f;
-	int ip[3];
 
 
-	if ( ! ht.hashTableValid ) bn_noise_init();
+	if ( ! ht.hashTableValid ) noise_init();
 
 
 	/* sets:
@@ -363,18 +290,7 @@ point_t result;
 	 * ix,iy,iz to integer portion,
 	 * fx,fy,fz to fractional portion
 	 */
-	filter_args( point, p, f, ip);
-	ix = ip[X];
-	iy = ip[Y];
-	iz = ip[Z];
-
-	fx = f[X];
-	fy = f[Y];
-	fz = f[Z];
-
-	x = p[X];
-	y = p[Y];
-	z = p[Z];
+	FILTER_ARGS( point);
 
 	jx = ix+1;   jy = iy + 1;   jz = iz + 1;
 
@@ -582,20 +498,6 @@ double			o;
  *    ``lacunarity''	gap between successive frequencies
  *    ``octaves''  	number of frequencies in the fBm
  *
- * The spectral properties of the result are in the APPROXIMATE range [-1..1]
- * Depending upon the number of octaves computed, this range may be exceeded.
- * Applications should clamp or scale the result to their needs.
- * The results have a more-or-less gaussian distribution.  Typical 
- * results for 1M samples include:
- *
- * Min           -1.15246
- * Max            1.23146
- * Mean        -0.0138744
- * s.d.          0.306642
- * Var          0.0940295
- * 
- * 
- * 
  * The function call pow() is relatively expensive.  Therfore, this function
  * pre-computes and saves the spectral weights in a table for re-use in 
  * successive invocations.
@@ -657,17 +559,6 @@ double octaves;
  *    ``h_val''		fractal increment parameter
  *    ``lacunarity''	gap between successive frequencies
  *    ``octaves''  	number of frequencies in the fBm
- *
- * The result is characterized by sharp, narrow trenches in low values and
- * a more fbm-like quality in the mid-high values.  Values are in the
- * APPROXIMATE range [0 .. 1] depending upon the number of octaves evaluated.
- * Typical results:
- *
- * Min         0.00857137
- * Max            1.26712
- * Mean          0.395122
- * s.d.          0.174796
- * Var          0.0305536
  *
  * The function call pow() is relatively expensive.  Therfore, this function
  * pre-computes and saves the spectral weights in a table for re-use in 

@@ -28,7 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./Sc.h"
 #include "./Hm.h"
 #include "./Mm.h"
-#define ErLog	brst_log
+#define ErLog	rt_log
 #if __STDC__
 extern void	exit( int s );
 extern unsigned alarm( unsigned s );
@@ -38,11 +38,7 @@ extern unsigned alarm();
 #endif
 
 #ifndef _POSIX_SOURCE
-#if __STDC__
 extern FILE    *fdopen(int, const char *);
-#else
-extern FILE    *fdopen();
-#endif
 #endif
 
 #define HmDEBUG		false

@@ -36,16 +36,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-extern void stateChange();		/* defined in dm-generic.c */
 extern int mged_svbase();
 extern void set_e_axes_pos();
 extern int mged_zoom();
-extern void set_absolute_tran();	/* defined in set.c */
-extern void set_scroll_private();	/* defined in set.c */
-extern void adc_set_scroll();		/* defined in adc.c */
+extern void set_scroll();  /* defined in set.c */
 
-/*
- * This flag indicates that SOLID editing is in effect.
+/* This flag indicates that SOLID editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function
  * that is currently in effect (eg, BE_S_SCALE).
@@ -68,6 +64,8 @@ fastf_t	acc_sc_sol;
 fastf_t	acc_sc_obj;     /* global object scale factor --- accumulations */
 fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
 
+static void bv_edit_toggle(), bv_eyerot_toggle();
+static void be_s_context();
 static void bv_zoomin(), bv_zoomout(), bv_rate_toggle();
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
@@ -112,10 +110,15 @@ struct buttons  {
 	BE_S_ROTATE,	"srot",		be_s_rotate,
 	BE_S_SCALE,	"sscale",	be_s_scale,
 	BE_S_TRANS,	"sxy",		be_s_trans,
+#if 0
+	BE_S_CONTEXT,   "context",      be_s_context,
+#endif
 	BV_TOP,		"top",		bv_top,
 	BV_ZOOM_IN,	"zoomin",	bv_zoomin,
 	BV_ZOOM_OUT,	"zoomout",	bv_zoomout,
 	BV_RATE_TOGGLE, "rate",		bv_rate_toggle,
+	BV_EDIT_TOGGLE, "edit",		bv_edit_toggle,
+	BV_EYEROT_TOGGLE, "eyerot",     bv_eyerot_toggle,
 	-1,		"-end-",	be_reject
 };
 
@@ -150,6 +153,8 @@ struct menu_item second_menu[] = {
 	{ "Zero Sliders", sl_halt_scroll, 0 },
 	{ "Sliders", sl_toggle_scroll, 0 },
 	{ "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
+	{ "Edit/View", btn_item_hit, BV_EDIT_TOGGLE },
+	{ "Rotate About Eye", btn_item_hit, BV_EYEROT_TOGGLE },
 	{ "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
 	{ "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
 	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
@@ -162,10 +167,13 @@ struct menu_item sed_menu[] = {
 	{ "Rotate", btn_item_hit, BE_S_ROTATE },
 	{ "Translate", btn_item_hit, BE_S_TRANS },
 	{ "Scale", btn_item_hit, BE_S_SCALE },
+#if 0
+	{ "Context", btn_item_hit, BE_S_CONTEXT },
+#endif
 	{ "", (void (*)())NULL, 0 }
 };
 
-struct menu_item oed_menu[] = {
+static struct menu_item oed_menu[] = {
 	{ "*OBJ EDIT*", btn_head_menu, 2 },
 	{ "Scale", btn_item_hit, BE_O_SCALE },
 	{ "X move", btn_item_hit, BE_O_X },
@@ -187,8 +195,14 @@ register int bnum;
 {
 	register struct buttons *bp;
 
-	if( edsol && edobj )
-	  bu_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
+	if( edsol && edobj ){
+	  struct bu_vls tmp_vls;
+
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
+	}
 
 	/* Process the button function requested. */
 	for( bp = button_table; bp->bu_code >= 0; bp++ )  {
@@ -199,7 +213,14 @@ register int bnum;
 		return;
 	}
 
-	bu_log("button(%d):  Not a defined operation\n", bnum);
+	{
+	  struct bu_vls tmp_vls;
+	  
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "button(%d):  Not a defined operation\n", bnum);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
+	}
 }
 
 /*
@@ -246,7 +267,7 @@ char *str;{
 		return;
 	}
 
-	for( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++,menu++ )  {
+	for( menu=0, m=menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
 		if( *m == MENU_NULL )  continue;
 		for( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0';
@@ -254,10 +275,10 @@ char *str;{
 		    if ( strcmp( str, mptr->menu_string ) != 0 )
 			continue;
 			
-		    menu_state->ms_cur_item = item;
-		    menu_state->ms_cur_menu = menu;
-		    menu_state->ms_flag = 1;
-		    /* It's up to the menu_func to set menu_state->ms_flag=0
+		    cur_item = item;
+		    cur_menu = menu;
+		    menuflag = 1;
+		    /* It's up to the menu_func to set menuflag=0
 		     * if no arrow is desired */
 		    if( mptr->menu_func != ((void (*)())0) )
 			(*(mptr->menu_func))(mptr->menu_arg, menu, item);
@@ -313,10 +334,32 @@ bv_zoomout()
 }
 
 static void
+bv_edit_toggle()
+{
+  mged_variables.edit = !mged_variables.edit;
+  set_scroll();
+}
+
+static void
 bv_rate_toggle()
 {
-  mged_variables->mv_rateknobs = !mged_variables->mv_rateknobs;
-  set_scroll_private();
+  mged_variables.rateknobs = !mged_variables.rateknobs;
+  set_scroll();
+}
+
+static void
+bv_eyerot_toggle()
+{
+  mged_variables.eyerot = !mged_variables.eyerot;
+
+  ++dmaflag;
+}
+
+static void
+be_s_context()
+{
+  mged_variables.context = !mged_variables.context;
+  set_scroll();
 }
 
 static void
@@ -366,9 +409,9 @@ bv_vrestore()
 {
   /* restore to saved view */
   if ( vsaved )  {
-    view_state->vs_Viewscale = sav_vscale;
-    bn_mat_copy( view_state->vs_Viewrot, sav_viewrot );
-    bn_mat_copy( view_state->vs_toViewcenter, sav_toviewcenter );
+    Viewscale = sav_vscale;
+    bn_mat_copy( Viewrot, sav_viewrot );
+    bn_mat_copy( toViewcenter, sav_toviewcenter );
     new_mats();
 
     (void)mged_svbase();
@@ -379,24 +422,33 @@ static void
 bv_vsave()
 {
   /* save current view */
-  sav_vscale = view_state->vs_Viewscale;
-  bn_mat_copy( sav_viewrot, view_state->vs_Viewrot );
-  bn_mat_copy( sav_toviewcenter, view_state->vs_toViewcenter );
+  sav_vscale = Viewscale;
+  bn_mat_copy( sav_viewrot, Viewrot );
+  bn_mat_copy( sav_toviewcenter, toViewcenter );
   vsaved = 1;
+#if 0
+  dmp->dm_light( dmp, LIGHT_ON, BV_VRESTORE );
+#endif
 }
 
 static void
 bv_adcursor()
 {
-  if (adc_state->adc_draw)  {
+  if (mged_variables.adcflag)  {
     /* Was on, turn off */
-    adc_state->adc_draw = 0;
+    mged_variables.adcflag = 0;
+#if 0
+    dmp->dm_light( dmp, LIGHT_OFF, BV_ADCURSOR );
+#endif
   }  else  {
     /* Was off, turn on */
-    adc_state->adc_draw = 1;
+    mged_variables.adcflag = 1;
+#if 0
+    dmp->dm_light( dmp, LIGHT_ON, BV_ADCURSOR );
+#endif
   }
 
-  adc_set_scroll();
+  set_scroll();
 }
 
 static void
@@ -422,18 +474,23 @@ bv_35_25()  {
 static int
 ill_common()  {
 	/* Common part of illumination */
+#if 0
+	dmp->dm_light( dmp, LIGHT_ON, BE_REJECT );
+#endif
 	if(BU_LIST_IS_EMPTY(&HeadSolid.l)) {
 	  Tcl_AppendResult(interp, "no solids in view\n", (char *)NULL);
 	  return(0);	/* BAD */
 	}
 
 	illump = BU_LIST_NEXT(solid, &HeadSolid.l);/* any valid solid would do */
-	illump->s_iflag = UP;
 	edobj = 0;		/* sanity */
 	edsol = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
 	bn_mat_idn( modelchanges );	/* No changes yet */
 
+#if 0
+	update_views = 1;
+#endif
 	return(1);		/* OK */
 }
 
@@ -442,31 +499,52 @@ be_o_illuminate()  {
 	if( not_state( ST_VIEW, "Object Illuminate" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_ON, BE_O_ILLUMINATE );
+#endif
 	if( ill_common() )  {
 		(void)chg_state( ST_VIEW, ST_O_PICK, "Object Illuminate" );
+#if 0
+		new_mats();
+#endif
 	}
 	/* reset accumulation local scale factors */
 	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
 
 	/* reset accumulation global scale factors */
 	acc_sc_obj = 1.0;
+
+#if 0
+	update_views = 1;
+#endif
 }
 
 static void
 be_s_illuminate()  {
 	if( not_state( ST_VIEW, "Solid Illuminate" ) )
 		return;
-
+#if 0
+	dmp->dm_light( dmp, LIGHT_ON, BE_S_ILLUMINATE );
+#endif
 	if( ill_common() )  {
 		(void)chg_state( ST_VIEW, ST_S_PICK, "Solid Illuminate" );
+#if 0
+		new_mats();
+#endif
 	}
+#if 0
+	update_views = 1;
+#endif
 }
 
 static void
 be_o_scale()  {
 	if( not_state( ST_O_EDIT, "Object Scale" ) )
 		return;
-
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edobj );
+	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_SCALE );
+#endif
 	edobj = BE_O_SCALE;
 	movedir = SARROW;
 	update_views = 1;
@@ -482,6 +560,10 @@ be_o_xscale()  {
 	if( not_state( ST_O_EDIT, "Object Local X Scale" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edobj );
+	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_XSCALE );
+#endif
 	edobj = BE_O_XSCALE;
 	movedir = SARROW;
 	update_views = 1;
@@ -497,6 +579,10 @@ be_o_yscale()  {
 	if( not_state( ST_O_EDIT, "Object Local Y Scale" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edobj );
+	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_YSCALE );
+#endif
 	edobj = BE_O_YSCALE;
 	movedir = SARROW;
 	update_views = 1;
@@ -512,6 +598,10 @@ be_o_zscale()  {
 	if( not_state( ST_O_EDIT, "Object Local Z Scale" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edobj );
+	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_ZSCALE );
+#endif
 	edobj = BE_O_ZSCALE;
 	movedir = SARROW;
 	update_views = 1;
@@ -527,9 +617,14 @@ be_o_x()  {
 	if( not_state( ST_O_EDIT, "Object X Motion" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edobj );
+	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_X );
+#endif
 	edobj = BE_O_X;
 	movedir = RARROW;
 	update_views = 1;
+
 	set_e_axes_pos(1);
 }
 
@@ -538,9 +633,14 @@ be_o_y()  {
 	if( not_state( ST_O_EDIT, "Object Y Motion" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edobj );
+	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_Y );
+#endif
 	edobj = BE_O_Y;
 	movedir = UARROW;
 	update_views = 1;
+
 	set_e_axes_pos(1);
 }
 
@@ -550,9 +650,14 @@ be_o_xy()  {
 	if( not_state( ST_O_EDIT, "Object XY Motion" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edobj );
+	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_XY );
+#endif
 	edobj = BE_O_XY;
 	movedir = UARROW | RARROW;
 	update_views = 1;
+
 	set_e_axes_pos(1);
 }
 
@@ -561,34 +666,54 @@ be_o_rotate()  {
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edobj );
+	dmp->dm_light( dmp, LIGHT_ON, edobj = BE_O_ROTATE );
+#endif
 	edobj = BE_O_ROTATE;
 	movedir = ROTARROW;
 	update_views = 1;
+
 	set_e_axes_pos(1);
 }
 
 static void
 be_accept()  {
 	register struct solid *sp;
-	register struct dm_list *dmlp;
 
 	if( state == ST_S_EDIT )  {
 		/* Accept a solid edit */
+#if 0
+		dmp->dm_light( dmp, LIGHT_OFF, BE_ACCEPT );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_REJECT );
+		dmp->dm_light( dmp, LIGHT_OFF, edsol );
+#endif
 		edsol = 0;
 
 		sedit_accept();		/* zeros "edsol" var */
 
 		mmenu_set_all( MENU_L1, MENU_NULL );
 		mmenu_set_all( MENU_L2, MENU_NULL );
+#if 0
+		dmp->dm_light( dmp, LIGHT_OFF, BE_S_EDIT );
+#endif
 
 		FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 			sp->s_iflag = DOWN;
 
 		illump = SOLID_NULL;
 		color_soltab();
+#if 0
+		dmp->dm_colorchange(dmp);
+#endif
 		(void)chg_state( ST_S_EDIT, ST_VIEW, "Edit Accept" );
 	}  else if( state == ST_O_EDIT )  {
 		/* Accept an object edit */
+#if 0
+		dmp->dm_light( dmp, LIGHT_OFF, BE_ACCEPT );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_REJECT );
+		dmp->dm_light( dmp, LIGHT_OFF, edobj );
+#endif
 		edobj = 0;
 		movedir = 0;	/* No edit modes set */
 
@@ -598,34 +723,27 @@ be_accept()  {
 
 		illump = SOLID_NULL;
 		color_soltab();
+#if 0
+		dmp->dm_colorchange(dmp);
+#endif
 		(void)chg_state( ST_O_EDIT, ST_VIEW, "Edit Accept" );
 	} else {
 		(void)not_state( ST_S_EDIT, "Edit Accept" );
 		return;
-	}
-
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	  if(dmlp->dml_mged_variables->mv_transform == 'e')
-	    dmlp->dml_mged_variables->mv_transform = 'v';
-
-	{
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_strcpy(&vls, "end_edit_callback");
-	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
 	}
 }
 
 static void
 be_reject()  {
 	register struct solid *sp;
-	register struct dm_list *dmlp;
 
 	update_views = 1;
 
 	/* Reject edit */
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, BE_ACCEPT );
+	dmp->dm_light( dmp, LIGHT_OFF, BE_REJECT );
+#endif
 
 	switch( state )  {
 	default:
@@ -634,6 +752,11 @@ be_reject()  {
 
 	case ST_S_EDIT:
 		/* Reject a solid edit */
+#if 0
+		if( edsol )
+			dmp->dm_light( dmp, LIGHT_OFF, edsol );
+#endif
+
 		mmenu_set_all( MENU_L1, MENU_NULL );
 		mmenu_set_all( MENU_L2, MENU_NULL );
 
@@ -641,19 +764,34 @@ be_reject()  {
 		break;
 
 	case ST_O_EDIT:
+#if 0
+		if( edobj )
+			dmp->dm_light( dmp, LIGHT_OFF, edobj );
+#endif
+#if 0
+		mmenu_set( MENU_L1, MENU_NULL );
+#endif
 		mmenu_set_all( MENU_L2, MENU_NULL );
 
 		oedit_reject();
 		break;
 	case ST_O_PICK:
+#if 0
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_ILLUMINATE );
+#endif
+
 		break;
 	case ST_S_PICK:
+#if 0
+		dmp->dm_light( dmp, LIGHT_OFF, BE_S_ILLUMINATE );
+#endif
+
 		break;
 	case ST_O_PATH:
 		break;
 	}
 
-	menu_state->ms_flag = 0;
+	menuflag = 0;
 	movedir = 0;
 	edsol = 0;
 	edobj = 0;
@@ -664,20 +802,10 @@ be_reject()  {
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 	color_soltab();
+#if 0
+	dmp->dm_colorchange(dmp);
+#endif
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );
-
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	  if(dmlp->dml_mged_variables->mv_transform == 'e')
-	    dmlp->dml_mged_variables->mv_transform = 'v';
-
-	{
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_strcpy(&vls, "end_edit_callback");
-	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	}
 }
 
 static void
@@ -690,8 +818,16 @@ be_s_edit()  {
 	if( not_state( ST_S_EDIT, "Solid Edit (Menu)" ) )
 		return;
 
+#if 0
+	if( edsol )
+		dmp->dm_light( dmp, LIGHT_OFF, edsol );
+
+	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_EDIT );
+#endif
 	edsol = BE_S_EDIT;
 	sedit_menu();		/* Install appropriate menu */
+
+	set_e_axes_pos(1);
 }
 
 static void
@@ -700,9 +836,14 @@ be_s_rotate()  {
 	if( not_state( ST_S_EDIT, "Solid Rotate" ) )
 		return;
 
-	es_edflag = SROT;
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edsol );
+	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_ROTATE );
+#endif
 	edsol = BE_S_ROTATE;
 	mmenu_set( MENU_L1, MENU_NULL );
+	es_edflag = SROT;
+	bn_mat_idn(acc_rot_sol);
 
         set_e_axes_pos(1);
 }
@@ -713,11 +854,14 @@ be_s_trans()  {
 	if( not_state( ST_S_EDIT, "Solid Translate" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edsol );
+	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_TRANS );
+#endif
 	edsol = BE_S_TRANS;
 	es_edflag = STRANS;
 	movedir = UARROW | RARROW;
 	mmenu_set( MENU_L1, MENU_NULL );
-
         set_e_axes_pos(1);
 }
 
@@ -727,11 +871,14 @@ be_s_scale()  {
 	if( not_state( ST_S_EDIT, "Solid Scale" ) )
 		return;
 
+#if 0
+	dmp->dm_light( dmp, LIGHT_OFF, edsol );
+	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_SCALE );
+#endif
 	edsol = BE_S_SCALE;
 	es_edflag = SSCALE;
 	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
-
         set_e_axes_pos(1);
 }
 
@@ -766,57 +913,59 @@ chg_state( from, to, str )
 int from, to;
 char *str;
 {
-  register struct dm_list *p;
-  struct dm_list *save_dm_list;
-  point_t new_pos;
-  struct bu_vls vls;
+	if( state != from ) {
+	  Tcl_AppendResult(interp, "Unable to do <", str, "> going from ",
+			   state_str[from], " to ", state_str[to], " state.\n", (char *)NULL);
+	  return(1);	/* BAD */
+	}
+	state = to;
 
-  if(state != from){
-    bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
-    return(1);	/* BAD */
-  }
+	{
+	  register struct dm_list *p;
+	  struct dm_list *save_dm_list;
+	  point_t new_pos;
 
-  state = to;
-  stateChange(from, to);
-
-  save_dm_list = curr_dm_list;
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-    curr_dm_list = p;
-
-#if 0
-    if(to == ST_VIEW){
-      mat_t o_toViewcenter;
-      fastf_t o_Viewscale;
-
-      /* save toViewcenter and Viewscale */
-      bn_mat_copy(o_toViewcenter, view_state->vs_toViewcenter);
-      o_Viewscale = view_state->vs_Viewscale;
-
-      /* get new orig_pos */
-      size_reset();
-      MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
-
-      /* restore old toViewcenter and Viewscale */
-      bn_mat_copy(view_state->vs_toViewcenter, o_toViewcenter);
-      view_state->vs_Viewscale = o_Viewscale;
-    }
-#endif
-    new_mats();
+	  save_dm_list = curr_dm_list;
+	  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	    curr_dm_list = p;
 
 #if 0
-    /* recompute absolute_tran */
-    set_absolute_tran();
+	    /* Advise display manager of state change */
+	    dmp->dm_statechange( from, to );
+#else
+	    if(state_hook)
+	      state_hook( from, to );
 #endif
-  }
 
-  curr_dm_list = save_dm_list;
+	    if(to == ST_VIEW){
+	      mat_t o_toViewcenter;
+	      fastf_t o_Viewscale;
 
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
-  Tcl_SetVar(interp, bu_vls_addr(&vls), state_str[state], TCL_GLOBAL_ONLY);
-  bu_vls_free(&vls);
+	      /* save toViewcenter and Viewscale */
+	      bn_mat_copy(o_toViewcenter, toViewcenter);
+	      o_Viewscale = Viewscale;
 
-  return(0);		/* GOOD */
+	      /* get new orig_pos */
+	      size_reset();
+	      MAT_DELTAS_GET(orig_pos, toViewcenter);
+
+	      /* restore old toViewcenter and Viewscale */
+	      bn_mat_copy(toViewcenter, o_toViewcenter);
+	      Viewscale = o_Viewscale;
+
+	    }
+
+	    new_mats();
+
+	    /* recompute absolute_slew */
+	    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+	    MAT4X3PNT(absolute_slew, model2view, new_pos);
+	  }
+
+	  curr_dm_list = save_dm_list;
+	}
+
+	return(0);		/* GOOD */
 }
 
 void
@@ -838,7 +987,7 @@ void
 	button(arg);
 	if( menu == MENU_GEN && 
 	    ( arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE) )
-		menu_state->ms_flag = 0;
+		menuflag = 0;
 }
 
 /*
@@ -871,6 +1020,11 @@ btn_head_menu(i, menu, item)  {
 
 	  break;
 	}
+
+#if 0
+	if(mged_variables.show_menu)
+	  dmaflag = 1;
+#endif
 }
 
 void

@@ -65,7 +65,7 @@ struct bu_semaphores {
 # define SGI_4D	1
 # define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
 # define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
-#if ( IRIX == 6 ) && !defined(IRIX64)
+#if ( IRIX == 6 )
 typedef __uint64_t k_sigset_t;  /* signal set type */
 #endif
 # include <sys/types.h>
@@ -122,14 +122,6 @@ struct bu_semaphores {
 };
 #endif	/* SUNOS */
 
-#if defined(HAS_POSIX_THREADS)
-#	include <sys/unistd.h>
-#	include <pthread.h>
-struct bu_semaphores {
-	pthread_mutex_t	mu;
-};
-#endif	/* HAS_POSIX_THREADS */
-
 #if defined(SGI_4D)
 /*
  *			 B U _ S E M A P H O R E _ S G I _ I N I T
@@ -162,12 +154,14 @@ bu_semaphore_sgi_init()
 	/* Set maximum number of procs that can share this arena */
 	usconfig(CONF_INITUSERS, bu_avail_cpus()+1);
 
-	if( bu_debug & BU_DEBUG_PARALLEL )  {
-		/* This is a big performance hit, but may find bugs */
-		usconfig(CONF_LOCKTYPE, US_DEBUG);
-	} else {
-		usconfig(CONF_LOCKTYPE, US_NODEBUG);
-	}
+#if 0
+	/* Horrible R8000 TFP Bug!!  Regular locks die!! */
+	/* XXX This is fixed in Irix 6.0.1, due out in January 95 */
+	fprintf(stderr,"\n\n***Horrible R8000 IRIX 6 Bug, switching to software semaphores to bypass.\n\n");
+	usconfig(CONF_LOCKTYPE, US_DEBUG);
+#else
+	usconfig(CONF_LOCKTYPE, US_NODEBUG);
+#endif
 
 	/* Initialize arena */
 	bu_lockstuff = usinit(bu_lockfile);
@@ -193,8 +187,8 @@ register long *p;
 }
 #endif /* convex */
 
-static unsigned int		bu_nsemaphores = 0;
-static struct bu_semaphores	*bu_semaphores = (struct bu_semaphores *)NULL;
+static unsigned int		bu_nsemaphores;
+static struct bu_semaphores	*bu_semaphores;
 
 /*
  *			B U _ S E M A P H O R E _ I N I T
@@ -220,8 +214,8 @@ unsigned int	nsemaphores;
 		nsemaphores,
 		sizeof(struct bu_semaphores) );
 	if( !bu_semaphores )  {
-		fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
-			nsemaphores, (long)sizeof(struct bu_semaphores));
+		fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %d\n",
+			nsemaphores, sizeof(struct bu_semaphores));
 		exit(2);
 	}
 

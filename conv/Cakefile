@@ -8,8 +8,7 @@
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
-			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave \
-			nmg-polysolid g-shell.rect stl-g
+			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -20,17 +19,8 @@
 
 /* Explicit composition of each product */
 
-nmg-polysolid: nmg-polysolid.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
-	CC LDFLAGS nmg-polysolid.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o nmg-polysolid
-
-g-sgp: g-sgp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
-	CC LDFLAGS g-sgp.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g-sgp
-
-nmg-sgp: nmg-sgp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
-	CC LDFLAGS nmg-sgp.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -lgen -o nmg-sgp
-
 nastran-g: nastran-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
-	CC LDFLAGS nastran-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o nastran-g
+	CC LDFLAGS nastran-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -lgen -o nastran-g
 
 g-acad: g-acad.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS g-acad.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g-acad
@@ -38,15 +28,11 @@ g-acad: g-acad.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 g-wave: g-wave.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS g-wave.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g-wave
 
-g-shell.rect: g-shell.rect.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
-	CC LDFLAGS g-shell.rect.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g-shell.rect
+test: test.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS test.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o test
 
-proe-g: proe-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBSYSV_DEP
-	CC LDFLAGS proe-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES LIBSYSV -o proe-g
-
-stl-g:	proe-g
-	rm -f stl-g
-	ln -s proe-g stl-g
+proe-g: proe-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
+	CC LDFLAGS proe-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -lgen -o proe-g
 
 fast4-g: fast4-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS fast4-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o fast4-g

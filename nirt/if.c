@@ -16,8 +16,6 @@ static char RCSid[] = "$Header$";
 #include "./usrfmt.h"
 
 extern outval		ValTab[];
-extern int		nirt_debug;
-
 overlap			ovlp_list;
 
 overlap			*find_ovlp();
@@ -35,8 +33,6 @@ struct partition 	*part_head;
     fastf_t		los;
     int			i;
     overlap		*ovp;	/* the overlap record for this partition */
-    point_t		inormal;
-    point_t		onormal;
 
     fastf_t		get_obliq();
 
@@ -45,10 +41,8 @@ struct partition 	*part_head;
     report(FMT_HEAD);
     for (part = part_head -> pt_forw; part != part_head; part = part -> pt_forw)
     {
-	RT_HIT_NORMAL( inormal, part->pt_inhit, part->pt_inseg->seg_stp,
-		&ap->a_ray, part->pt_inflip );
-	RT_HIT_NORMAL( onormal, part->pt_outhit, part->pt_outseg->seg_stp,
-		&ap->a_ray, part->pt_outflip );
+	RT_HIT_NORM( part->pt_inhit, part->pt_inseg->seg_stp, &ap->a_ray );
+	RT_HIT_NORM( part->pt_outhit, part->pt_outseg->seg_stp, &ap->a_ray );
 
 	/* Update the output values */
 	/*
@@ -61,8 +55,8 @@ struct partition 	*part_head;
 	{
 	    r_entry(i) = part-> pt_inhit -> hit_point[i];
 	    r_exit(i) = part-> pt_outhit -> hit_point[i];
-	    n_entry(i) = inormal[i];
-	    n_exit(i) = onormal[i];
+	    n_entry(i) = part -> pt_inhit -> hit_normal[i];
+	    n_exit(i) = part -> pt_outhit -> hit_normal[i];
 	}
 	r_entry(D) = r_entry(X) * cos(er) * cos(ar)
 		    + r_entry(Y) * cos(er) * sin(ar)
@@ -97,9 +91,9 @@ struct partition 	*part_head;
 	ValTab[VTI_SURF_NUM_IN].value.ival = part -> pt_inhit -> hit_surfno;
 	ValTab[VTI_SURF_NUM_OUT].value.ival = part -> pt_outhit -> hit_surfno;
 	ValTab[VTI_OBLIQ_IN].value.fval =
-	    get_obliq(ap -> a_ray.r_dir, inormal);
+	    get_obliq(ap -> a_ray.r_dir, part -> pt_inhit -> hit_normal);
 	ValTab[VTI_OBLIQ_OUT].value.fval =
-	    get_obliq(ap -> a_ray.r_dir, onormal);
+	    get_obliq(ap -> a_ray.r_dir, part -> pt_outhit -> hit_normal);
 
 	/* Do the printing for this partition */
 	report(FMT_PART);
@@ -183,53 +177,6 @@ struct region			*reg2;
     ovlp_list.forw = new_ovlp;
 
     return(1);
-}
-
-/*
- *
- *		The callbacks used by backup()
- *
- */
-int if_bhit(ap, part_head)
-struct application	*ap;
-struct partition 	*part_head;
-{
-    struct partition	*part;
-    vect_t		dir;
-    point_t		point;
-    int			i;
-
-    if ((part = part_head -> pt_back) == part_head)
-    {
-	bu_log("if_bhit() got empty partition list.  Shouldn't happen\n");
-	exit (1);
-    }
-
-    if (nirt_debug & DEBUG_BACKOUT)
-    {
-	bu_log("Backmost region is '%s'\n", part->pt_regionp->reg_name);
-	bu_log("Backout ray exits at (%g %g %g)\n",
-	    V3ARGS(part -> pt_outhit -> hit_point));
-    }
-
-    for (i = 0; i < 3; ++i)
-	dir[i] = -direct(i);
-    VJOIN1(point, part -> pt_outhit -> hit_point, BACKOUT_DIST, dir);
-
-    if (nirt_debug & DEBUG_BACKOUT)
-	bu_log("Point %g beyond is (%g %g %g)\n",
-	    BACKOUT_DIST, V3ARGS(point));
-
-    for (i = 0; i < 3; ++i)
-	target(i) = point[i];
-    targ2grid();
-
-    return( HIT );
-}
-
-int if_bmiss()
-{ 
-    return ( MISS );
 }
 
 fastf_t get_obliq (ray, normal)

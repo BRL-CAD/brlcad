@@ -494,7 +494,6 @@ struct seg		*seghead;
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[1]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[0]*tor->tor_r1;
-	segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
 	/* Set aside vector for rt_tor_norm() later */
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
@@ -509,7 +508,6 @@ struct seg		*seghead;
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[3]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[2]*tor->tor_r1;
-	segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 1;
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[3], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[2], dprime );
 	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
@@ -943,7 +941,7 @@ rt_tor_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+struct rt_tol		*tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1063,7 +1061,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+struct rt_tol		*tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1455,7 +1453,7 @@ double				local2mm;
 int
 rt_tor_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
-CONST struct rt_db_internal	*ip;
+struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

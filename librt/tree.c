@@ -4,6 +4,10 @@
  *  Ray Tracing library database tree walker.
  *  Collect and prepare regions and solids for subsequent ray-tracing.
  *
+ *  PARALLEL lock usage note -
+ *	res_model	used for interlocking rti_headsolid list (PARALLEL)
+ *	res_results	used for interlocking HeadRegion list (PARALLEL)
+ *
  *  Author -
  *	Michael John Muuss
  *  
@@ -76,35 +80,7 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 	0.0, 0.0, 0.0, 1.0,
 };
 
-#define ACQUIRE_SEMAPHORE_TREE(_hash)	switch((_hash)&03)  { \
-	case 0: \
-		bu_semaphore_acquire( RT_SEM_TREE0 ); \
-		break; \
-	case 1: \
-		bu_semaphore_acquire( RT_SEM_TREE1 ); \
-		break; \
-	case 2: \
-		bu_semaphore_acquire( RT_SEM_TREE2 ); \
-		break; \
-	default: \
-		bu_semaphore_acquire( RT_SEM_TREE3 ); \
-		break; \
-	}
-
-#define RELEASE_SEMAPHORE_TREE(_hash)	switch((_hash)&03)  { \
-	case 0: \
-		bu_semaphore_release( RT_SEM_TREE0 ); \
-		break; \
-	case 1: \
-		bu_semaphore_release( RT_SEM_TREE1 ); \
-		break; \
-	case 2: \
-		bu_semaphore_release( RT_SEM_TREE2 ); \
-		break; \
-	default: \
-		bu_semaphore_release( RT_SEM_TREE3 ); \
-		break; \
-	}
+static struct rt_i	*rt_tree_rtip;
 
 /*
  *			R T _ G E T T R E E _ R E G I O N _ S T A R T
@@ -116,11 +92,10 @@ HIDDEN int rt_gettree_region_start( tsp, pathp )
 CONST struct db_tree_state	*tsp;
 CONST struct db_full_path	*pathp;
 {
-	RT_CK_RTI(tsp->ts_rtip);
 
 	/* Ignore "air" regions unless wanted */
-	if( tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
-		tsp->ts_rtip->rti_air_discards++;
+	if( rt_tree_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
+		rt_tree_rtip->rti_air_discards++;
 		return(-1);	/* drop this region */
 	}
 	return(0);
@@ -148,13 +123,10 @@ union tree			*curtree;
 	struct region		*rp;
 	struct directory	*dp;
 	int			shader_len=0;
-	struct rt_i		*rtip;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_TREE(curtree);
-	rtip =  tsp->ts_rtip;
-	RT_CK_RTI(rtip);
 
 	if( curtree->tr_op == OP_NOP )  {
 		/* Ignore empty regions */
@@ -196,7 +168,7 @@ union tree			*curtree;
 	if( rp->reg_mater.ma_override == 0 )
 		rt_region_color_map(rp);
 
-	bu_semaphore_acquire( RT_SEM_RESULTS );	/* enter critical section */
+	RES_ACQUIRE( &rt_g.res_results );	/* enter critical section */
 
 	rp->reg_instnum = dp->d_uses++;
 
@@ -204,11 +176,11 @@ union tree			*curtree;
 	 *  Add the region to the linked list of regions.
 	 *  Positions in the region bit vector are established at this time.
 	 */
-	rp->reg_forw = rtip->HeadRegion;
-	rtip->HeadRegion = rp;
+	rp->reg_forw = rt_tree_rtip->HeadRegion;
+	rt_tree_rtip->HeadRegion = rp;
 
-	rp->reg_bit = rtip->nregions++;	/* Assign bit vector pos. */
-	bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
+	rp->reg_bit = rt_tree_rtip->nregions++;	/* Assign bit vector pos. */
+	RES_RELEASE( &rt_g.res_results );	/* leave critical section */
 
 	if( rt_g.debug & DEBUG_REGIONS )  {
 		bu_log("Add Region %s instnum %d\n",
@@ -248,9 +220,14 @@ union tree			*curtree;
  *
  *  It is safe, and much faster, to use several different
  *  critical sections when searching different lists.
+ *  Note that there are only 5 resource locks defined:
  *
- *  There are only 4 dedicated semaphores defined, TREE0 through TREE3.
- *  This unfortunately limits the code to having only 4 CPUs doing list
+ *	res_worker 	is used by db_walk_dispatcher(), so it can't be used
+ * 			for fear of affecting load balancing.
+ *	res_syscall	is used by rt_malloc() & database reading, so it
+ *			can't be used either.
+ *
+ *  This unfortunately limits the code to having only 3 CPUs doing list
  *  searching at any one time.  Hopefully, this is enough parallelism
  *  to keep the rest of the CPUs doing I/O and actual solid prepping.
  *
@@ -287,11 +264,21 @@ struct rt_i			*rtip;
 	have_match = 0;
 	hash = db_dirhash( dp->d_namep );
 
-	/* Enter the appropriate dual critical-section */
-	ACQUIRE_SEMAPHORE_TREE(hash);
+	/* Enter the appropriate critical section */
+	switch( hash%3 )  {
+	case 0:
+		RES_ACQUIRE( &rt_g.res_model );
+		break;
+	case 1:
+		RES_ACQUIRE( &rt_g.res_results );
+		break;
+	default:
+		RES_ACQUIRE( &rt_g.res_stats );
+		break;
+	}
 
 	/* If solid has not been referenced yet, the search can be skipped */
-	if( dp->d_uses > 0 && rtip->rti_dont_instance == 0 )  {
+	if( dp->d_uses > 0 )  {
 		struct bu_list	*mid;
 
 		/* Search dp->d_use_hd list for other instances */
@@ -300,37 +287,31 @@ struct rt_i			*rtip;
 			stp = BU_LIST_MAIN_PTR( soltab, mid, l2 );
 			RT_CK_SOLTAB(stp);
 
-			if( stp->st_matp == (matp_t)0 )  {
-				if( mat == (matp_t)0 )  {
-					/* Both have identity matrix */
-					goto more_checks;
+			/* Don't instance this solid in some other model instance */
+			if( stp->st_rtip != rtip )  continue;
+
+			if( mat == (matp_t)0 )  {
+				if( stp->st_matp == (matp_t)0 )  {
+					have_match = 1;
+					break;
 				}
 				continue;
 			}
-			if( mat == (matp_t)0 )  continue;	/* doesn't match */
+			if( stp->st_matp == (matp_t)0 )  continue;
 
-			if( !rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol))
-				continue;
-
-more_checks:
-			/* Don't instance this solid from some other model instance */
-			/* As this is nearly always equal, check it last */
-			if( stp->st_rtip != rtip )  continue;
-
-			have_match = 1;
-			break;
+			if (rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol)) {
+				have_match = 1;
+				break;
+			}
 		}
 	}
 
 	if( have_match )  {
 		/*
-		 *  stp now points to re-referenced solid.
-		 *  stp->st_id is non-zero, indicating pre-existing solid.
+		 *  stp now points to re-referenced solid
 		 */
 		RT_CK_SOLTAB(stp);		/* sanity */
-		/* Only increment use counter for non-dead solids. */
-		if( !(stp->st_aradius <= -1) )
-			stp->st_uses++;
+		stp->st_uses++;
 		/* dp->d_uses is NOT incremented, because number of soltab's using it has not gone up. */
 		if( rt_g.debug & DEBUG_SOLIDS )  {
 			bu_log( mat ?
@@ -360,20 +341,29 @@ more_checks:
 			stp->st_matp = (matp_t)0;
 		}
 		/* Add to the appropriate soltab list head */
-		/* PARALLEL NOTE:  Uses critical section on rt_solidheads element */
+		/* PARALLEL NOTE:  Needs critical section on rt_solidheads element */
 		BU_LIST_INSERT( &(rtip->rti_solidheads[hash]), &(stp->l) );
 
 		/* Also add to the directory structure list head */
-		/* PARALLEL NOTE:  Uses critical section on this 'dp' */
+		/* PARALLEL NOTE:  Needs critical section on this 'dp' */
 		BU_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
 
 		/* Tables of regions using this solid.  Usually small. */
 		bu_ptbl_init( &stp->st_regions, 7, "st_regions ptbl" );
 	}
 
-	/* Leave the appropriate dual critical-section */
-	RELEASE_SEMAPHORE_TREE(hash);
-
+	/* Leave the appropriate critical section */
+	switch( hash%3 )  {
+	case 0:
+		RES_RELEASE( &rt_g.res_model );
+		break;
+	case 1:
+		RES_RELEASE( &rt_g.res_results );
+		break;
+	default:
+		RES_RELEASE( &rt_g.res_stats );
+		break;
+	}
 	return stp;
 }
 
@@ -395,18 +385,16 @@ int				id;
 	struct rt_db_internal	intern;
 	register matp_t		mat;
 	int			i;
-	struct rt_i		*rtip;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 	BU_CK_EXTERNAL(ep);
-	rtip = tsp->ts_rtip;
-	RT_CK_RTI(rtip);
+	RT_CK_RTI(rt_tree_rtip);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/* Determine if this matrix is an identity matrix */
 
-	if( !rt_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rtip->rti_tol)) {
+	if( !rt_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rt_tree_rtip->rti_tol)) {
 		/* Not identity matrix */
 		mat = (matp_t)tsp->ts_mat;
 	} else {
@@ -424,11 +412,10 @@ int				id;
 	 *  soltab structure has become a dead solid, so by testing against
 	 *  -1 (instead of <= 0, like before, oops), it isn't a problem.
 	 */
-	stp = rt_find_identical_solid( mat, dp, rtip );
+	stp = rt_find_identical_solid( mat, dp, rt_tree_rtip );
 	if( stp->st_id != 0 )  {
-		/* stp is an instance of a pre-existing solid */
 		if( stp->st_aradius <= -1 )  {
-			/* It's dead, Jim.  st_uses was not incremented. */
+			stp->st_uses--;
 			return( TREE_NULL );	/* BAD: instance of dead solid */
 		}
 		goto found_it;
@@ -445,16 +432,12 @@ int				id;
 	 *  Import geometry from on-disk (external) format to internal.
 	 */
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, mat, tsp->ts_dbip ) < 0 )  {
-		int	hash;
+	if( rt_functab[id].ft_import( &intern, ep, mat ) < 0 )  {
 		bu_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
-		hash = db_dirhash( dp->d_namep );
-		ACQUIRE_SEMAPHORE_TREE(hash);
 		stp->st_aradius = -1;
 		stp->st_uses--;
-		RELEASE_SEMAPHORE_TREE(hash);
 		return( TREE_NULL );		/* BAD */
 	}
 	RT_CK_DB_INTERNAL( &intern );
@@ -468,57 +451,35 @@ int				id;
     	 *  that is OK, as long as idb_ptr is set to null.
 	 *  Note that the prep routine may have changed st_id.
     	 */
-	if( rt_functab[id].ft_prep( stp, &intern, rtip ) )  {
-		int	hash;
+	if( rt_functab[id].ft_prep( stp, &intern, rt_tree_rtip ) )  {
 		/* Error, solid no good */
 		bu_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
-		hash = db_dirhash( dp->d_namep );
-		ACQUIRE_SEMAPHORE_TREE(hash);
 		stp->st_aradius = -1;
 		stp->st_uses--;
-		RELEASE_SEMAPHORE_TREE(hash);
 		return( TREE_NULL );		/* BAD */
 	}
 
-	if( rtip->rti_dont_instance )  {
-		/*
-		 *  If instanced solid refs are not being compressed,
-		 *  then memory isn't an issue, and the application
-		 *  (such as solids_on_ray) probably cares about the
-		 *  full path of this solid, from root to leaf.
-		 *  So make it available here.
-		 *  (stp->st_dp->d_uses could be the way to discriminate
-		 *  references uniquely, if the path isn't enough.
-		 *  To locate given dp and d_uses, search dp->d_use_hd list.
-		 *  Question is, where to stash current val of d_uses?)
-		 */
-		db_full_path_init( &stp->st_path );
-		db_dup_full_path( &stp->st_path, pathp );
-	} else {
-		/*
-		 *  If there is more than just a direct reference to this leaf
-		 *  from it's containing region, copy that below-region path
-		 *  into st_path.  Otherwise, leave st_path's magic number 0.
-		 * XXX nothing depends on this behavior yet, and this whole
-		 * XXX 'else' clause might well be deleted. -Mike
-		 */
-		i = pathp->fp_len-1;
-		if( i > 0 && !(pathp->fp_names[i-1]->d_flags & DIR_REGION) )  {
-			/* Search backwards for region.  If no region, use whole path */
-			for( --i; i > 0; i-- )  {
-				if( pathp->fp_names[i-1]->d_flags & DIR_REGION ) break;
-			}
-			if( i < 0 )  i = 0;
-			db_full_path_init( &stp->st_path );
-			db_dup_path_tail( &stp->st_path, pathp, i );
+	/*
+	 *  If there is more than just a direct reference to this leaf
+	 *  from it's containing region, copy that below-region path
+	 *  into st_path.  Otherwise, leave st_path's magic number 0.
+	 */
+	i = pathp->fp_len-1;
+	if( i > 0 && !(pathp->fp_names[i-1]->d_flags & DIR_REGION) )  {
+		/* Search backwards for region.  If no region, use whole path */
+		for( --i; i > 0; i-- )  {
+			if( pathp->fp_names[i-1]->d_flags & DIR_REGION ) break;
 		}
-	}
-	if(rt_g.debug&DEBUG_TREEWALK && stp->st_path.magic == DB_FULL_PATH_MAGIC)  {
-		char	*sofar = db_path_to_string(&stp->st_path);
-		bu_log("rt_gettree_leaf() st_path=%s\n", sofar );
-		rt_free(sofar, "path string");
+		if( i < 0 )  i = 0;
+		db_full_path_init( &stp->st_path );
+		db_dup_path_tail( &stp->st_path, pathp, i );
+		if(rt_g.debug&DEBUG_TREEWALK)  {
+			char	*sofar = db_path_to_string(&stp->st_path);
+			bu_log("rt_gettree_leaf() st_path=%s\n", sofar );
+			rt_free(sofar, "path string");
+		}
 	}
 
 #if 0
@@ -562,55 +523,52 @@ found_it:
  *  Decrement use count on soltab structure.  If no longer needed,
  *  release associated storage, and free the structure.
  *
- *  This routine semaphore protects against other copies of itself
- *  running in parallel, and against
- *  other routines (such as rt_find_identical_solid()) which might
- *  also be modifying the linked list heads.
+ *  This routine can not be used in PARALLEL, hence the st_aradius hack.
  *
- *  Called by -
- *	db_free_tree()
- *	rt_clean()
- *	rt_gettrees()
- *	rt_kill_deal_solid_refs()
+ *  This routine will semaphore protect against other copies of itself
+ *  running in parallel.  However, there is no protection against
+ *  other routines (such as rt_find_identical_solid()) which might
+ *  be modifying the linked list heads while locked on other semaphores
+ *  (resources).  This is the strongest argument I can think of for
+ *  removing the 3-way semaphore stuff in rt_find_identical_solid().
  */
 void
 rt_free_soltab( stp )
 struct soltab	*stp;
 {
-	int	hash;
-
 	RT_CK_SOLTAB(stp);
 	if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
 		rt_bomb("rt_free_soltab:  bad st_id");
-	hash = db_dirhash(stp->st_dp->d_namep);
 
-	ACQUIRE_SEMAPHORE_TREE(hash);		/* start critical section */
+	RES_ACQUIRE( &rt_g.res_model );
 	if( --(stp->st_uses) > 0 )  {
-		RELEASE_SEMAPHORE_TREE(hash);
+		RES_RELEASE( &rt_g.res_model );
 		return;
 	}
-	BU_LIST_DEQUEUE( &(stp->l2) );		/* remove from st_dp->d_use_hd list */
-	BU_LIST_DEQUEUE( &(stp->l) );		/* uses rti_solidheads[] */
 
-	RELEASE_SEMAPHORE_TREE(hash);		/* end critical section */
+	/* NON-PARALLEL, on d_use_hd (may be locked on other semaphore) */
+	BU_LIST_DEQUEUE( &(stp->l2) );	/* remove from st_dp->d_use_hd list */
+
+	BU_LIST_DEQUEUE( &(stp->l) );	/* NON-PARALLEL on rti_solidheads[] */
+
+	RES_RELEASE( &rt_g.res_model );
 
 	if( stp->st_aradius > 0 )  {
 		rt_functab[stp->st_id].ft_free( stp );
 		stp->st_aradius = 0;
 	}
-	if( stp->st_matp )  bu_free( (char *)stp->st_matp, "st_matp");
+	if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
 	stp->st_matp = (matp_t)0;	/* Sanity */
 
 	bu_ptbl_free(&stp->st_regions);
 
 	stp->st_dp = DIR_NULL;		/* Sanity */
+	rt_free( (char *)stp, "struct soltab" );
 
 	if( stp->st_path.magic )  {
 		RT_CK_FULL_PATH( &stp->st_path );
 		db_free_full_path( &stp->st_path );
 	}
-
-	bu_free( (char *)stp, "struct soltab" );
 }
 
 /*
@@ -641,9 +599,9 @@ CONST char	*node;
  *  because db_walk_tree() isn't multiply re-entrant.
  *
  *  Semaphores used for critical sections in parallel mode:
- *	RT_SEM_MODEL	protects rti_solidheads[] lists
- *	RT_SEM_RESULTS	protects HeadRegion, mdl_min/max, d_uses, nregions
- *	RT_SEM_WORKER	(db_walk_dispatcher, from db_walk_tree)
+ *	res_model	protects rti_solidheads[] lists
+ *	res_results	protects HeadRegion, mdl_min/max, d_uses, nregions
+ *	res_worker	(db_walk_dispatcher, from db_walk_tree)
  *  
  *  Returns -
  *  	0	Ordinarily
@@ -674,16 +632,18 @@ int		ncpus;
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
 	prev_sol_count = rtip->nsolids;
+	rt_tree_rtip = rtip;
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_dbip = rtip->rti_dbip;
-	tree_state.ts_rtip = rtip;
 
 	i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
-		&tree_state,
+		&rt_initial_tree_state,
 		rt_gettree_region_start,
 		rt_gettree_region_end,
 		rt_gettree_leaf );
+
+	rt_tree_rtip = (struct rt_i *)0;	/* sanity */
 
 	/* DEBUG:  Ensure that all region trees are valid */
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
@@ -754,6 +714,42 @@ again:
 		bu_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
 	return(0);	/* OK */
 }
+
+#if 0	/* XXX rt_plookup replaced by db_follow_path_for_state */
+/*
+ *			R T _ P L O O K U P
+ * 
+ *  Look up a path where the elements are separates by slashes.
+ *  If the whole path is valid,
+ *  set caller's pointer to point at path array.
+ *
+ *  Returns -
+ *	# path elements on success
+ *	-1	ERROR
+ */
+int
+rt_plookup( rtip, dirp, cp, noisy )
+struct rt_i	*rtip;
+struct directory ***dirp;
+register char	*cp;
+int		noisy;
+{
+	struct db_tree_state	ts;
+	struct db_full_path	path;
+
+	bzero( (char *)&ts, sizeof(ts) );
+	ts.ts_dbip = rtip->rti_dbip;
+	mat_idn( ts.ts_mat );
+	path.fp_len = path.fp_maxlen = 0;
+	path.fp_names = (struct directory **)0;
+
+	if( db_follow_path_for_state( &ts, &path, cp, noisy ) < 0 )
+		return(-1);		/* ERROR */
+
+	*dirp = path.fp_names;
+	return(path.fp_len);
+}
+#endif
 
 /*
  *			R T _ B O U N D _ T R E E

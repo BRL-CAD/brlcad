@@ -65,9 +65,6 @@ int			flags;
 	struct directory	*dupdp;
 	char			local[NAMESIZE+2];
 
-	if(dbip == DBI_NULL)
-	  return 0;
-
 	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_check:  bad dbip\n");
 
 	/* Add the prefix, if any */
@@ -107,9 +104,6 @@ char	**argv;
   struct directory	**dirp0 = (struct directory **)NULL;
   int status = TCL_OK;
   struct bu_vls vls;
-
-  if(dbip == DBI_NULL)
-    return TCL_OK;
 
   if(argc < 2 || 3 < argc){
     struct bu_vls vls;
@@ -160,7 +154,7 @@ char	**argv;
 		   "  with ", argv[1], " for duplicate names\n", (char *)NULL);
   if( ncharadd ) {
     Tcl_AppendResult(interp, "  For comparison, all names in ",
-		     argv[1], " were prefixed with:  ", prestr, "\n", (char *)NULL);
+		     argv[1], " prefixed with:  ", prestr, "\n", (char *)NULL);
   }
 
   /* Get array to hold names of duplicates */
@@ -204,9 +198,6 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	char	*prestr;
 	int	*ncharadd;
 
-	if(dbip == DBI_NULL)
-	  return;
-
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
 
@@ -216,7 +207,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	(void)strncpy( mref, prestr, *ncharadd );
 	(void)strncpy( mref+(*ncharadd),
 		comb_leaf->tr_l.tl_name,
-		NAMESIZE-(*ncharadd) );
+		NAMESIZE-1-(*ncharadd) );
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
 	comb_leaf->tr_l.tl_name = bu_strdup( mref );
 }
@@ -240,9 +231,6 @@ int			flags;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	char			local[NAMESIZE+2+2];
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_add:  bad dbip\n");
 
@@ -312,8 +300,7 @@ int			flags;
 			bu_log("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
 				prestr,name, local);
 
-		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
-		dp->d_namep = bu_strdup(local);
+		NAMEMOVE( local, dp->d_namep );
 	}
 	else
 	{
@@ -321,8 +308,7 @@ int			flags;
 		char	mref[NAMESIZE+2];
 
 		bu_log("adding  comb '%s'\n", local );
-		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
-		dp->d_namep = bu_strdup(local);
+		NAMEMOVE( local, dp->d_namep );
 
 		/* Update all the member records */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -364,9 +350,6 @@ char	**argv;
 {
 	struct db_i		*newdbp;
 	int bad = 0;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 

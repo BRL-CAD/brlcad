@@ -31,6 +31,7 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 #include "./rdebug.h"
 #include "./rad.h"
 
@@ -185,10 +186,9 @@ view_end()
 }
 
 static int
-radhit( ap, PartHeadp, segHeadp )
+radhit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
-struct seg	*segHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -281,9 +281,7 @@ struct seg	*segHeadp;
 }
 
 static int
-radmiss(ap)
-struct application *ap;
-{
+radmiss()  {
 	return(0);
 }
 
@@ -294,10 +292,9 @@ struct application *ap;
  *  Called via isvisible on a hit.
  */
 static int
-hiteye( ap, PartHeadp, segHeadp )
+hiteye( ap, PartHeadp )
 struct application *ap;
 struct partition *PartHeadp;
-struct seg	*segHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -344,8 +341,9 @@ struct seg	*segHeadp;
  *  Called via isvisible on a miss.
  */
 static int
-hittrue( ap )
+hittrue( ap, PartHeadp )
 struct application *ap;
+struct partition *PartHeadp;
 {
 	return(1);
 }

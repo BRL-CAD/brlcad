@@ -27,13 +27,9 @@
  */
 
 #include "conf.h"
-
 #include <math.h>
 #include <stdio.h>
-
 #include "machine.h"
-#include "externs.h"
-#include "bu.h"
 #include "vmath.h"
 #include "anim.h" 
 
@@ -42,6 +38,9 @@
 #endif
 
 #define MAXN	100
+
+extern int optind;
+extern char *optarg;
 
 int estimate_f = 0;
 fastf_t max_bank = 0;
@@ -289,24 +288,24 @@ char **argv;
 	int c;
 
 	estimate_f = 0;
-	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'b':
-			sscanf(bu_optarg,"%lf",&max_bank);
+			sscanf(optarg,"%lf",&max_bank);
 			estimate_f = 1;
 			break;
 		case 'f':
-			sscanf(bu_optarg,"%lf",&magic_factor);
+			sscanf(optarg,"%lf",&magic_factor);
 			magic_factor *= 0.001; /* to put factors in a more reasonable range */
 			break;
 		case 'p':
-			sscanf(bu_optarg,"%d",&print_int);
+			sscanf(optarg,"%d",&print_int);
 			break;
 		case 'r':
 			loop = 0;
 			break;
 		case 's':
-			sscanf(bu_optarg, "%lf", &desired_step);
+			sscanf(optarg, "%lf", &desired_step);
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);

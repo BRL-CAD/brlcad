@@ -89,7 +89,6 @@ union tree		*curtree;
 	struct rt_list		vhead;
 	union tree		*ret_tree;
 	char			*sofar;
-	struct bu_vls		shader_params;
 	char nmg_name[16];
 	unsigned char rgb[3];
 	unsigned char *color;
@@ -151,6 +150,7 @@ union tree		*curtree;
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 
 	RT_UNSETJUMP;		/* Relinquish the protection */
@@ -163,18 +163,6 @@ union tree		*curtree;
 
 	shader = strtok( tsp->ts_mater.ma_shader, tok_sep );
 	matparm = strtok( (char *)NULL, tok_sep );
-	bu_vls_init( &shader_params );
-	if( matparm )
-	{
-		bu_vls_strcpy( &shader_params, matparm );
-		matparm = strtok( (char *)NULL, tok_sep );
-		while( matparm )
-		{
-			bu_vls_putc( &shader_params, ' ' );
-			bu_vls_strcat( &shader_params, matparm );
-			matparm = strtok( (char *)NULL, tok_sep );
-		}
-	}
 	if (r != 0)
 	{
 		struct shell *s;
@@ -232,7 +220,7 @@ union tree		*curtree;
 		(void)mk_addmember( nmg_name , &headp , WMOP_UNION );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
-		    shader, bu_vls_addr( &shader_params ), color,
+		    shader, matparm, color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
 		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
 		{
@@ -244,15 +232,13 @@ union tree		*curtree;
 		RT_LIST_INIT( &headp.l );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
-		    shader, bu_vls_addr( &shader_params ), color,
+		    shader, matparm, color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
 		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
 		{
 			rt_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
 		}
 	}
-
-	bu_vls_free( &shader_params );
 
 	/*
 	 *  Dispose of original tree, so that all associated dynamic
@@ -472,7 +458,7 @@ char	*argv[];
 			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg)*bn_pi/180.0;
+			ttol.norm = atof(optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name */

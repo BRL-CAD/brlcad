@@ -46,9 +46,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "externs.h"
-#include "shadefuncs.h"
-
-extern struct mfuncs	*mfHead;	/* rt/view.c */
 
 #define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
 #define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p, RTI_MAGIC, "struct rt_i")
@@ -112,7 +109,7 @@ bu_log("sh_directchange_rgb() changing %s\n", regp->reg_name);
 
 		/* Update the shader */
 		mlib_free(regp);
-		if( mlib_setup( &mfHead, regp, rtip ) != 1 )  {
+		if( mlib_setup( regp, rtip ) != 1 )  {
 			Tcl_AppendResult(interp, regp->reg_name, ": mlib_setup() failure\n", NULL);
 		}
 	}
@@ -141,7 +138,7 @@ char **argv;
 	struct bu_vls	shader;
 	char		buf[64];
 
-	if( argc < 4 )  {
+	if( argc != 6 )  {
 		Tcl_AppendResult(interp, "Usage: sh_directchange_shader $rtip comb shader_arg(s)\n", NULL);
 		return TCL_ERROR;
 	}
@@ -161,7 +158,6 @@ char **argv;
 
 	bu_vls_init(&shader);
 	bu_vls_from_argv(&shader, argc-3, argv+3);
-	bu_vls_trimspace(&shader);
 
 	/* Find all region names which match /comb/ pattern */
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
@@ -182,7 +178,7 @@ bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
 
 		/* Update the shader */
 		mlib_free(regp);
-		if( mlib_setup( &mfHead, regp, rtip ) != 1 )  {
+		if( mlib_setup( regp, rtip ) != 1 )  {
 			Tcl_AppendResult(interp, regp->reg_name, ": mlib_setup() failure\n", NULL);
 		}
 	}

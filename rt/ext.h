@@ -30,13 +30,8 @@ extern int		lightmodel;		/* Select lighting model */
 extern int		rpt_overlap;		/* Warn about overlaps? */
 extern int		rpt_dist;		/* Output depth along w/ RGB? */
 extern int		space_partition;		/* Space partitioning algorithm to use */
-extern int		nugrid_dimlimit;		/* limit to dimensions of nugrid; <= 0 means no limit */
-extern double		nu_gfactor;		/* constant factor in NUgrid algorithm */
-extern int		sub_grid_mode;		/* mode to raytrace a rectangular portion of view */
-extern int		sub_xmin;		/* lower left of sub rectangle */
-extern int		sub_ymin;
-extern int		sub_xmax;		/* upper right of sub rectangle */
-extern int		sub_ymax;
+extern double		nu_gfactor;	/* constant factor in NUgrid algorithm,
+					   if applicable */
 
 /***** variables declared in rt.c *****/
 extern struct application	ap;
@@ -67,21 +62,6 @@ extern int		incr_level;		/* current incremental level */
 extern int		incr_nlevel;		/* number of levels */
 extern int		npsw;			/* number of worker PSWs to run */
 extern struct resource	resource[];		/* memory resources */
-struct floatpixel {
-	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
-	float	ff_hitpt[3];
-	struct region *ff_regp;
-	int	ff_frame;		/* >= 0 means pixel was reprojected */
-	short	ff_x;			/* screen x,y coords of first location */
-	short	ff_y;
-	char	ff_color[3];
-};
-extern int		fullfloat_mode;
-extern int		reproject_mode;
-extern int		reproj_cur;	/* number of pixels reprojected this frame */
-extern int		reproj_max;	/* out of total number of pixels */
-extern struct floatpixel	*curr_float_frame;	/* buffer of full frame */
-extern struct floatpixel	*prev_float_frame;
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/

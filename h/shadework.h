@@ -1,5 +1,5 @@
 /*
- *			S H A D E W O R K . H
+ *			M A T E R I A L . H
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -9,31 +9,53 @@
  *  $Header$
  */
 
+/*
+ *			M F U N C S
+ *
+ *  The interface to the various material property & texture routines.
+ */
+struct mfuncs {
+	char		*mf_name;	/* Keyword for material */
+	int		mf_magic;	/* To validate structure */
+	struct mfuncs	*mf_forw;	/* Forward link */
+	int		mf_inputs;	/* shadework inputs needed */
+	int		mf_flags;	/* Flags describing shader */
+	int		(*mf_setup)();	/* Routine for preparing */
+	int		(*mf_render)();	/* Routine for rendering */
+	void		(*mf_print)();	/* Routine for printing */
+	void		(*mf_free)();	/* Routine for releasing storage */
+};
+#define MF_MAGIC	0x55968058
+#define MF_NULL		((struct mfuncs *)0)
+
+/*
+ *  mf_inputs lists what optional shadework fields are needed.
+ *  dist, point, color, & default(trans,reflect,ri) are always provided
+ */
+#define MFI_NORMAL	0x01		/* Need normal */
+#define MFI_UV		0x02		/* Need uv */
+#define MFI_LIGHT	0x04		/* Need light visibility */
+#define MFI_HIT		0x08		/* Need just hit point */
+
+
+/* mf_flags lists important details about individual shaders */
+#define MFF_PROC	0x01		/* shader is procedural, computes tr/re/hits */
+
 #define SW_NLIGHTS	16		/* Max # of light sources */
 
 /*
  *			S H A D E W O R K
  */
 struct shadework {
-/* XXX At least the first three of these need to be spectral curves */
 	fastf_t		sw_transmit;	/* 0.0 -> 1.0 */
 	fastf_t		sw_reflect;	/* 0.0 -> 1.0 */
-	fastf_t		sw_extinction;	/* extinction coeff, mm^-1 */
 	fastf_t		sw_refrac_index;
-#if RT_MULTISPECTRAL
-	struct rt_tabdata *msw_color;
-	struct rt_tabdata *msw_basecolor;
-#else
+	fastf_t		sw_extinction;	/* extinction coeff, mm^-1 */
 	fastf_t		sw_color[3];	/* shaded color */
 	fastf_t		sw_basecolor[3]; /* base color */
-#endif
 	struct hit	sw_hit;		/* ray hit (dist,point,normal) */
 	struct uvcoord	sw_uv;
-#if RT_MULTISPECTRAL
-	struct rt_tabdata *msw_intensity[SW_NLIGHTS];
-#else
 	fastf_t		sw_intensity[3*SW_NLIGHTS]; /* light intensities */
-#endif
 	fastf_t		sw_tolight[3*SW_NLIGHTS];   /* light directions */
 	char		*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
 	int		sw_xmitonly;	/* flag: need sw_transmit only */
@@ -44,4 +66,4 @@ struct shadework {
 	struct seg	*sw_segs;	/* segs which made partition */
 };
 
-BU_EXTERN(void		pr_shadework, (CONST char *str, CONST struct shadework *swp));
+extern void pr_shadework();

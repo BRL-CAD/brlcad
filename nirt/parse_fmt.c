@@ -250,23 +250,11 @@ int	outcom_type;	/* Type of output command */
 	of = oip -> format;
 	while (up != uos)
 	{
-	    if (*up == '\\')
-		switch (*(up + 1))
-		{
-		    case 'n':
-			*of++ = '\n';
-			up += 2;
-			break;
-		    case '\042':
-		    case '\047':
-		    case '\134':
-			*of++ = *(up + 1);
-			up += 2;
-			break;
-		    default:
-			*of++ = *up++;
-			break;
-		}
+	    if ((*up == '\\') && (*(up + 1) == 'n'))
+	    {
+		*of++ = '\n';
+		up += 2;
+	    }
 	    else
 		*of++ = *up++;
 	}
@@ -786,9 +774,9 @@ com_table	*ctp;
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
 	return;
     }
-    bu_log("Loading NIRT state from file '%s'...", sf_name);
-    interact(READING_FILE, sfPtr);
-    bu_log("\n");
+    printf("Loading NIRT state from file '%s'...", sf_name);
+    interact(sfPtr);
+    printf("\n");
     fclose(sfPtr);
 }
 

@@ -400,38 +400,34 @@ char *file;
 void
 build_cppargv()
 {
-	static char	buf[512];
-	char	buf2[512*2];
+	char	buf[128];
+	char	buf2[128*2];
 	int	len;
 	FILE	*fp;
 	Wait	status;
 
-	if( buf[0] == '\0' )  {
-		/* First time through, run shell script */
+	if( (fp = popen( "machinetype.sh -m", "r" ) ) == NULL )  {
+		fprintf(stderr, "cake:  Unable to run \"machinetype.sh\" to determine system type, aborting.\nCheck your $PATH variable.\n");
+		exit(42);
+	}
+	if( fgets( buf, sizeof(buf)-2, fp ) == NULL )  {
+		fprintf(stderr, "cake:  \"machinetype.sh\" returned null string, unable to determine system type, aborting.\nTry running machinetype.sh -v manually before proceeding.\n");
+		exit(42);
+	}
+	fclose(fp);
 
-		if( (fp = popen( "machinetype.sh -m", "r" ) ) == NULL )  {
-			fprintf(stderr, "cake:  Unable to run \"machinetype.sh\" to determine system type, aborting.\nCheck your $PATH variable.\n");
-			exit(42);
-		}
-		if( fgets( buf, sizeof(buf)-2, fp ) == NULL )  {
-			fprintf(stderr, "cake:  \"machinetype.sh\" returned null string, unable to determine system type, aborting.\nTry running machinetype.sh -v manually before proceeding.\n");
-			exit(42);
-		}
-		fclose(fp);
-
-		/* Slurp up dead process indication from popen() */
+	/* Slurp up dead process indication from popen() */
 #if defined(__convexc__) || defined(__bsdi__)
-		while (wait(&status.w_status) != -1) ;
+	while (wait(&status.w_status) != -1) ;
 #else
-		while (wait(&status) != -1) ;
+	while (wait(&status) != -1) ;
 #endif
 
-		/* Ensure proper null termination, even if string overran buffer */
-		buf[sizeof(buf)-1] = '\0';
-		buf[sizeof(buf)-2] = '\0';
-		len = strlen(buf);
-		if( buf[len-1] == '\n' )  buf[len-1] = '\0';
-	}
+	/* Ensure proper null termination, even if string overran buffer */
+	buf[sizeof(buf)-1] = '\0';
+	buf[sizeof(buf)-2] = '\0';
+	len = strlen(buf);
+	if( buf[len-1] == '\n' )  buf[len-1] = '\0';
 
 	/* Trudge through all the possibilities */
 	if( strcmp( buf, "vax" ) == 0 )  {
@@ -466,14 +462,7 @@ build_cppargv()
 	}
 	if( strcmp( buf, "li" ) == 0 )  {
 		/* Linux with GNU CPP */
-#if 0
-		/* This worked with Redhat 4 */
 		cppargv[cppargc++] = new_name("/lib/cpp");
-		cppargv[cppargc++] = new_name("-traditional");
-#endif
-		/* For RedHat 5 */
-		cppargv[cppargc++] = new_name("cc");
-		cppargv[cppargc++] = new_name("-E");
 		cppargv[cppargc++] = new_name("-traditional");
 		goto out;
 	}
@@ -553,18 +542,6 @@ and no special built-in support for machine type '%s', aborting.\n",
 out:
 	sprintf( buf2, "-D__CAKE__%s", buf );
 	cppargv[cppargc++] = new_name(buf2);
-
-	/* The runtime environment variable overrides compile-time one */
-	if( getenv("BRLCAD_ROOT") == NULL )  {
-#if defined(BRLCAD_ROOT_STRING)
-		sprintf( buf2, "-DBRLCAD_ROOT=%s", BRLCAD_ROOT_STRING );
-		cppargv[cppargc++] = new_name(buf2);
-#endif
-	} else {
-		sprintf( buf2, "-DBRLCAD_ROOT=%s", getenv("BRLCAD_ROOT") );
-		cppargv[cppargc++] = new_name(buf2);
-	}
-
 	return;
 }
 

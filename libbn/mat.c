@@ -87,22 +87,18 @@ CONST mat_t	m;
 
 	sprintf(obuf, "MATRIX %s:\n  ", title);
 	cp = obuf+strlen(obuf);
-	if( !m )  {
-		strcat( obuf, "(Identity)" );
-	} else {
-		for(i=0; i<16; i++)  {
-			sprintf(cp, " %8.3f", m[i]);
-			cp += strlen(cp);
-			if( i == 15 )  {
-				break;
-			} else if( (i&3) == 3 )  {
-				*cp++ = '\n';
-				*cp++ = ' ';
-				*cp++ = ' ';
-			}
+	for(i=0; i<16; i++)  {
+		sprintf(cp, " %8.3f", m[i]);
+		cp += strlen(cp);
+		if( i == 15 )  {
+			break;
+		} else if( (i&3) == 3 )  {
+			*cp++ = '\n';
+			*cp++ = ' ';
+			*cp++ = ' ';
 		}
-		*cp++ = '\0';
 	}
+	*cp++ = '\0';
 	bu_log("%s\n", obuf);
 }
 
@@ -606,46 +602,29 @@ fastf_t accuracy;
  * Gamma is angle of rotation about Z axis, and is done first.
  */
 void
-bn_mat_angles( mat, alpha_in, beta_in, ggamma_in )
+bn_mat_angles( mat, alpha, beta, ggamma )
 register mat_t	mat;
-double alpha_in, beta_in, ggamma_in;
+double alpha, beta, ggamma;
 {
-	LOCAL double alpha, beta, ggamma;
 	LOCAL double calpha, cbeta, cgamma;
 	LOCAL double salpha, sbeta, sgamma;
 
-	if( alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0 )  {
+	if( alpha == 0.0 && beta == 0.0 && ggamma == 0.0 )  {
 		bn_mat_idn( mat );
 		return;
 	}
 
-	alpha = alpha_in * bn_degtorad;
-	beta = beta_in * bn_degtorad;
-	ggamma = ggamma_in * bn_degtorad;
+	alpha *= bn_degtorad;
+	beta *= bn_degtorad;
+	ggamma *= bn_degtorad;
 
 	calpha = cos( alpha );
 	cbeta = cos( beta );
 	cgamma = cos( ggamma );
 
-	/* sine of "180*bn_degtorad" will not be exactly zero
-	 * and will result in errors when some codes try to
-	 * convert this back to azimuth and elevation.
-	 * do_frame() uses this technique!!!
-	 */
-	if( alpha_in == 180.0 )
-		salpha = 0.0;
-	else
-		salpha = sin( alpha );
-
-	if( beta_in == 180.0 )
-		sbeta = 0.0;
-	else
-		sbeta = sin( beta );
-
-	if( ggamma_in == 180.0 )
-		sgamma = 0.0;
-	else
-		sgamma = sin( ggamma );
+	salpha = sin( alpha );
+	sbeta = sin( beta );
+	sgamma = sin( ggamma );
 
 	mat[0] = cbeta * cgamma;
 	mat[1] = -cbeta * sgamma;
@@ -1160,7 +1139,7 @@ CONST struct bn_tol	*tol;
 	 * perpendicular tolerance.  There is no ratio tolerance so we use
 	 * the tighter of dist or perp.
 	 */
-	f = a[15] - b[15];
+	f = a[15] - a[15];
 	if ( !NEAR_ZERO(f, tperp)) return 0;
 
 	return 1;
@@ -1272,59 +1251,4 @@ CONST mat_t	in;
 	out = (matp_t) bu_malloc( sizeof(mat_t), "bn_mat_dup" );
 	bcopy( (CONST char *)in, (char *)out, sizeof(mat_t) );
 	return out;
-}
-
-/*
- *			B N _ M A T _ C K
- *
- *  Check to ensure that a rotation matrix preserves axis perpendicularily.
- *  Note that not all matricies are rotation matricies.
- *
- *  Returns -
- *	-1	FAIL
- *	 0	OK
- */
-int
-bn_mat_ck( title, m )
-CONST char *title;
-CONST mat_t m;
-{
-	vect_t	A, B, C;
-	fastf_t	fx, fy, fz;
-
-	if( !m )  return 0;		/* implies identity matrix */
-
-	/*
-	 * Validate that matrix preserves perpendicularity of axis
-	 * by checking that A.B == 0, B.C == 0, A.C == 0
-	 * XXX these vectors should just be grabbed out of the matrix
-	 */
-#if 0
-	MAT4X3VEC( A, m, xaxis );
-	MAT4X3VEC( B, m, yaxis );
-	MAT4X3VEC( C, m, zaxis );
-#else
-	VMOVE( A, &m[0] );
-	VMOVE( B, &m[4] );
-	VMOVE( C, &m[8] );
-#endif
-	fx = VDOT( A, B );
-	fy = VDOT( B, C );
-	fz = VDOT( A, C );
-	if( ! NEAR_ZERO(fx, 0.0001) ||
-	    ! NEAR_ZERO(fy, 0.0001) ||
-	    ! NEAR_ZERO(fz, 0.0001) ||
-	    NEAR_ZERO( m[15], VDIVIDE_TOL )
-	)  {
-		bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n",
-			title, fx, fy, fz, m[15] );
-		bn_mat_print("bn_mat_ck() bad matrix", m);
-
-		if( bu_debug & (BU_DEBUG_MATH | BU_DEBUG_COREDUMP) )  {
-			bu_debug |= BU_DEBUG_COREDUMP;
-			bu_bomb("bn_mat_ck() bad matrix\n");
-		}
-	    	return -1;	/* FAIL */
-	}
-	return 0;		/* OK */
 }

@@ -165,9 +165,9 @@ struct rt_i		*rtip;
 	hf->hf_w = hip->w;
 	hf->hf_n = hip->n;
 	hf->hf_mp = hip->mp;
-	bu_semaphore_acquire( RT_SEM_MODEL);
+	RES_ACQUIRE( &rt_g.res_model);
 	++hf->hf_mp->uses;
-	bu_semaphore_release( RT_SEM_MODEL);
+	RES_RELEASE( &rt_g.res_model);
 	hf->hf_shorts = hip->shorts;
 	/*
 	 * From here down, we are calculating new values on a one time
@@ -1814,9 +1814,9 @@ err1:
 	if( xip->cfile[0] )  {
 		FILE	*fp;
 
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		RES_ACQUIRE( &rt_g.res_syscall );
 		fp = fopen( xip->cfile, "r" );
-		bu_semaphore_release( BU_SEM_SYSCALL );
+		RES_RELEASE( &rt_g.res_syscall );
 		if( !fp )  {
 			perror(xip->cfile);
 			rt_log("rt_hf_import() unable to open cfile=%s\n", xip->cfile);
@@ -1825,9 +1825,9 @@ err1:
 		bu_vls_init( &str );
 		while( bu_vls_gets( &str, fp ) >= 0 )
 			bu_vls_strcat( &str, " " );
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		RES_ACQUIRE( &rt_g.res_syscall );
 		fclose(fp);
-		bu_semaphore_release( BU_SEM_SYSCALL );
+		RES_RELEASE( &rt_g.res_syscall );
 		if( bu_struct_parse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
 			rt_log("rt_hf_import() parse error in cfile input '%s'\n",
 				bu_vls_addr(&str) );

@@ -71,8 +71,8 @@ char	**argv;
 	if ((unsigned char) thresh_val[i] != thresh_val[i])
 	{
 	    (void) fprintf(stderr,
-		"Threshold[%d] value %d out of range.  Need 0 <= v <= 255\n",
-		i, thresh_val[i]);
+		"Threshold value %d out of range.  Need 0 <= v <= 255\n",
+		thresh_val);
 	    exit (1);
 	}
 	if ((i > 0) && (thresh_val[i] <= thresh_val[i - 1]))

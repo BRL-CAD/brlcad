@@ -1,6 +1,4 @@
 /*
-	XXX Outdated : should not be used
-  
 	SCCS id:	%Z% %M%	%I%
 	Modified: 	%G% at %U%
 	Retrieved: 	%H% at %T%
@@ -11,9 +9,6 @@
 	Aberdeen Proving Ground
 	Maryland 21005-5066
 */
-
-#if 0
-
 /*LINTLIBRARY*/
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -393,5 +388,3 @@ struct termio	*tio_ptr;
 #endif
 	return;
 	}
-
-#endif

@@ -44,8 +44,6 @@
  *
  *	HAVE_REGEX
  *
- *	HAVE_POSIX_REGEXEC	POSIX regexec(), regcomp(), regfree(), regerror(), and regex.h
- *
  *	HAVE_STRCHR		Usually for folks who have strings.h
  *
  *	HAVE_VFORK		BSD, non-SYSV systems.
@@ -118,7 +116,6 @@
 #	define _BSD_TIME		1	/* for good timeval */
 #	define HAVE_SBRK_DECL		1
 #	define HAVE_REGEX_DECL		1
-#	define HAVE_POSIX_REGEXEC	1
 #endif
 
 #if defined(_AIX) || defined(__AIX)
@@ -166,20 +163,9 @@
 #	define	HAVE_VPRINTF	1
 #	define	HAVE_WRITEV	1
 #	define	HAVE_SBRK	1
-#	define	HAVE_SBRK_DECL	1
 
 #	define	HAVE_SYS_ERRLIST_DECL	1
 #	define	USE_REGCOMP	1
-#	define HAVE_REGEX_DECL	1
-#	define HAVE_POSIX_REGEXEC	1
-#	define HAVE_STDLIB_H	1
-#	define HAVE_UNISTD_H	1
-#	define HAVE_TERMIOS_H	1
-#	define HAVE_IOCTL_COMPAT_H 1
-#	define HAVE_SYS_MMAN_H	1
-#       define HAVE_FLOAT_H     1
-#       define HAVE_LIMITS_H    1
-#	define HAVE_BZERO	1
 #endif
 
 #if defined(__bsdi__)
@@ -203,12 +189,9 @@
 #endif
 
 #if defined(linux)
-#	define _BSD_SOURCE	1	/* for sys/types.h to define caddr_t */
 #       define STDIN_FILENO    0
 #	define HAVE_GETOPT_H	1
 #	define HAVE_XOSDEFS_H	1
-#	define HAVE_SYS_ERRLIST_DECL	1
-#	define HAVE_POSIX_REGEXEC	1
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
 #endif
 

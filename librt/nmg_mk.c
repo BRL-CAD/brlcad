@@ -1934,7 +1934,7 @@ fastf_t		*points;
 		eg->k.knots = kv;
 	} else {
 		/* Give a default curve, no interior knots */
-		rt_nurb_kvknot( &eg->k, order, 0.0, 1.0, n_knots - (2 * order), (struct resource *)NULL );
+		rt_nurb_kvknot( &eg->k, order, 0.0, 1.0, n_knots - (2 * order) );
 	}
 
 	if( n_pts < 2 )  rt_bomb("nmg_edge_g_cnurb() n_pts < 2\n");
@@ -2509,7 +2509,7 @@ CONST struct bn_tol	*tol;
 		rt_nurb_s_bound( fu->f_p->g.snurb_p, fu->f_p->g.snurb_p->min_pt,
 			fu->f_p->g.snurb_p->max_pt);
 		VMIN(f->min_pt, fu->f_p->g.snurb_p->min_pt );
-		VMAX(f->max_pt, fu->f_p->g.snurb_p->max_pt );
+		VMIN(f->max_pt, fu->f_p->g.snurb_p->max_pt );
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {

@@ -39,17 +39,11 @@ fastf_t		gift_grid_rounding = 0;		/* set to 25.4 for inches */
 
 point_t		viewbase_model;	/* model-space location of viewplane corner */
 
-int			fullfloat_mode = 0;
-int			reproject_mode = 0;
-struct floatpixel	*curr_float_frame;	/* buffer of full frame */
-struct floatpixel	*prev_float_frame;
-int		reproj_cur;	/* number of pixels reprojected this frame */
-int		reproj_max;	/* out of total number of pixels */
-/* XXX should record width&height, in case size changes on-the-fly */
-
 /* Local communication with worker() */
-int cur_pixel;			/* current pixel number, 0..last_pixel */
-int last_pixel;			/* last pixel number */
+HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
+HIDDEN int last_pixel;		/* last pixel number */
+HIDDEN int nworkers_started;	/* number of workers started */
+HIDDEN int nworkers_finished;	/* number of workers properly finished */
 
 /*
  *			G R I D _ S E T U P
@@ -71,11 +65,11 @@ grid_setup()
 	if( viewsize <= 0.0 )
 		rt_bomb("viewsize <= 0");
 	/* model2view takes us to eye_model location & orientation */
-	bn_mat_idn( toEye );
+	mat_idn( toEye );
 	MAT_DELTAS_VEC_NEG( toEye, eye_model );
 	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-	bn_mat_mul( model2view, Viewrotscale, toEye );
-	bn_mat_inv( view2model, model2view );
+	mat_mul( model2view, Viewrotscale, toEye );
+	mat_inv( view2model, model2view );
 
 	/* Determine grid cell size and number of pixels */
 	if( cell_newsize ) {
@@ -106,9 +100,9 @@ grid_setup()
 		mat_t		hv2model;
 
 		/* Build model2hv matrix, including mm2inches conversion */
-		bn_mat_copy( model2hv, Viewrotscale );
+		mat_copy( model2hv, Viewrotscale );
 		model2hv[15] = gift_grid_rounding;
-		bn_mat_inv( hv2model, model2hv );
+		mat_inv( hv2model, model2hv );
 
 		VSET( v_ll, -1, -1, 0 );
 		MAT4X3PNT( m_ll, view2model, v_ll );
@@ -119,8 +113,8 @@ grid_setup()
 		MAT4X3PNT( m_delta, hv2model, hv_delta );
 		VSUB2( eye_model, eye_model, m_delta );
 		MAT_DELTAS_VEC_NEG( toEye, eye_model );
-		bn_mat_mul( model2view, Viewrotscale, toEye );
-		bn_mat_inv( view2model, model2view );
+		mat_mul( model2view, Viewrotscale, toEye );
+		mat_inv( view2model, model2view );
 	}
 
 	/* Create basis vectors dx and dy for emanation plane (grid) */
@@ -135,7 +129,7 @@ grid_setup()
 	if( stereo )  {
 		/* Move left 2.5 inches (63.5mm) */
 		VSET( temp, -63.5*2.0/viewsize, 0, 0 );
-		bu_log("red eye: moving %f relative screen (left)\n", temp[X]);
+		rt_log("red eye: moving %f relative screen (left)\n", temp[X]);
 		MAT4X3VEC( left_eye_delta, view2model, temp );
 		VPRINT("left_eye_delta", left_eye_delta);
 	}
@@ -146,12 +140,10 @@ grid_setup()
 		zoomout = 1.0 / tan( bn_degtorad * rt_perspective / 2.0 );
 		VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
 		/*
-		 * divergence is perspective angle divided by the number
-		 * of pixels in that angle. Extra factor of 0.5 is because
-		 * perspective is a full angle while divergence is the tangent
-		 * (slope) of a half angle.
+		 * Divergance is (0.5 * viewsize / width) mm at
+		 * a ray distance of (viewsize * zoomout) mm.
 		 */
-		ap.a_diverge = tan( bn_degtorad * rt_perspective * 0.5 / width );
+		ap.a_diverge = (0.5 / width) / zoomout;
 		ap.a_rbeam = 0;
 	}  else  {
 		/* all rays go this direction */
@@ -172,7 +164,7 @@ grid_setup()
 		fastf_t		ang;	/* radians */
 		fastf_t		dx, dy;
 
-		ang = curframe * frame_delta_t * bn_twopi / 10;	/* 10 sec period */
+		ang = curframe * frame_delta_t * rt_twopi / 10;	/* 10 sec period */
 		dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
 		dy = sin(ang) * 0.5;
 		VJOIN2( viewbase_model, viewbase_model,
@@ -182,12 +174,12 @@ grid_setup()
 
 	if( cell_width <= 0 || cell_width >= INFINITY ||
 	    cell_height <= 0 || cell_height >= INFINITY )  {
-		bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
+		rt_log("grid_setup: cell size ERROR (%g, %g) mm\n",
 			cell_width, cell_height );
 	    	rt_bomb("cell size");
 	}
 	if( width <= 0 || height <= 0 )  {
-		bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
+		rt_log("grid_setup: ERROR bad image size (%d, %d)\n",
 			width, height );
 		rt_bomb("bad size");
 	}
@@ -207,23 +199,38 @@ do_run( a, b )
 	cur_pixel = a;
 	last_pixel = b;
 
+	nworkers_started = 0;
+	nworkers_finished = 0;
 	if( !rt_g.rtg_parallel )  {
 		/*
 		 * SERIAL case -- one CPU does all the work.
 		 */
 		npsw = 1;
-		worker(0, NULL);
+		worker();
 	} else {
 		/*
 		 *  Parallel case.
 		 */
-		bu_parallel( worker, npsw, NULL );
+		rt_parallel( worker, npsw );
+	}
+	/*
+	 *  Ensure that all the workers are REALLY finished.
+	 *  On some systems, if threads core dump, the rest of
+	 *  the gang keeps going, so this can actually happen (sigh).
+	 */
+	if( nworkers_finished != npsw )  {
+		rt_log("\n***ERROR: %d workers did not finish!\n\n",
+			npsw - nworkers_finished);
+	}
+	if( nworkers_started != npsw )  {
+		rt_log("\nNOTICE:  only %d workers started, expected %d\n",
+			nworkers_started, npsw );
 	}
 
 	/* Tally up the statistics */
 	for( cpu=0; cpu < npsw; cpu++ )  {
 		if( resource[cpu].re_magic != RESOURCE_MAGIC )  {
-			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+			rt_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 			continue;
 		}
 		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
@@ -233,22 +240,18 @@ do_run( a, b )
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
 #define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
-int	stop_worker = 0;
 
 /*
  *  			W O R K E R
  *  
  *  Compute some pixels, and store them.
  *  A "self-dispatching" parallel algorithm.
- *  Executes until there is no more work to be done, or is told to stop.
  *
  *  In order to reduce the traffic through the res_worker critical section,
  *  a multiple pixel block may be removed from the work queue at once.
  */
 void
-worker(cpu, arg)
-int		cpu;
-genptr_t	arg;
+worker()
 {
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
@@ -256,30 +259,31 @@ genptr_t	arg;
 	int	pixel_start;
 	int	pixelnum;
 	int	samplenum;
+	int	cpu;			/* our CPU (PSW) number */
+
+	RES_ACQUIRE( &rt_g.res_worker );
+	cpu = nworkers_started++;
+	RES_RELEASE( &rt_g.res_worker );
 
 	/* The more CPUs at work, the bigger the bites we take */
 	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
 
-	if( cpu >= MAX_PSW )  {
-		rt_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
-		rt_bomb("rt/worker() cpu > MAX_PSW, array overrun\n");
-	}
-	RT_CK_RESOURCE( &resource[cpu] );
+	if( cpu >= MAX_PSW )  rt_bomb("rt/worker() cpu > MAXPSW, array overrun\n");
+	rt_init_resource( &resource[cpu], cpu );
+	rand_init( resource[cpu].re_randptr, cpu );
 
 	while(1)  {
-		if( stop_worker )  return;
-
-		bu_semaphore_acquire( RT_SEM_WORKER );
+		RES_ACQUIRE( &rt_g.res_worker );
 		pixel_start = cur_pixel;
 		cur_pixel += per_processor_chunk;
-		bu_semaphore_release( RT_SEM_WORKER );
+		RES_RELEASE( &rt_g.res_worker );
 
 		for( pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++ )  {
 
 			if( pixelnum > last_pixel )
-				return;
+				goto out;
 
-			/* Obtain fresh copy of global application struct */
+			/* Obtain fresh copy of application struct */
 			a = ap;				/* struct copy */
 			a.a_resource = &resource[cpu];
 
@@ -299,20 +303,6 @@ genptr_t	arg;
 				a.a_x = pixelnum%width;
 				a.a_y = pixelnum/width;
 			}
-			if( sub_grid_mode )  {
-				if( a.a_x < sub_xmin || a.a_x > sub_xmax )
-					continue;
-				if( a.a_y < sub_ymin || a.a_y > sub_ymax )
-					continue;
-			}
-			if( fullfloat_mode )  {
-				register struct floatpixel	*fp;
-				fp = &curr_float_frame[a.a_y*width + a.a_x];
-				if( fp->ff_frame >= 0 )  {
-					continue;	/* pixel was reprojected */
-				}
-			}
-
 			VSETALL( colorsum, 0 );
 			for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
 				if( jitter & JITTER_CELL )  {
@@ -373,4 +363,8 @@ genptr_t	arg;
 				view_eol( &a );		/* End of scan line */
 		}
 	}
+out:
+	RES_ACQUIRE( &rt_g.res_worker );
+	nworkers_finished++;
+	RES_RELEASE( &rt_g.res_worker );
 }

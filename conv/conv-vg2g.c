@@ -95,14 +95,13 @@ char *argv[];
 		rec.i.i_units = 100;
 		while( rec.i.i_units < ID_MM_UNIT || rec.i.i_units > ID_FT_UNIT )  {
 			printf("Units: 1=mm, 2=cm, 3=meters, 4=inches, 5=feet\nUnits? ");
-			fgets( line, sizeof(line), stdin );
+			gets( line );
 			sscanf( line, "%d", &units );
 			rec.i.i_units = units;
 			printf("units=%d\n", rec.i.i_units);
 		}
 		printf("Title? "); fflush(stdout);
-		fgets( line, sizeof(line), stdin );
-		line[strlen(line)-1] = '\0';		/* discard \n */
+		gets( line );
 		strncpy( rec.i.i_title, line, 71 );
 		rec.i.i_title[71] = '\0';
 		printf("Title=%s\n", rec.i.i_title );

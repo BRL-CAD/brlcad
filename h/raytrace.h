@@ -54,10 +54,6 @@
 #include "compat4.h"
 #include "bn.h"
 
-#ifndef NMG_H
-#include "nmg.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -425,11 +421,8 @@ struct soltab {
 #define ID_JOINT	23	/* Pseudo Solid/Region Joint */
 #define ID_HF		24	/* Height Field */
 #define ID_DSP		25	/* Displacement map */
-#define	ID_SKETCH	26	/* 2D sketch */
-#define	ID_EXTRUDE	27	/* Solid of extrusion */
-#define ID_SUBMODEL	28	/* Instanced submodel */
 
-#define ID_MAXIMUM	28	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	25	/* Maximum defined ID_xxx value */
 
 #define ID_COMBINATION	(ID_MAXIMUM+1)	/* Combination Record (non-geometric) */
 
@@ -644,7 +637,6 @@ struct db_i  {
 	long			dbi_eof;	/* End+1 pos after db_scan() */
 	long			dbi_nrec;	/* # records after db_scan() */
 	int			dbi_localunit;	/* unit currently in effect */
-	int			dbi_uses;	/* # of uses of this struct */
 	double			dbi_local2base;
 	double			dbi_base2local;	/* unit conversion factors */
 	char			*dbi_title;	/* title from IDENT rec */
@@ -785,7 +777,6 @@ struct db_tree_state {
 #else
 	genptr_t		*ts_m;		/* ptr to genptr */
 #endif
-	struct rt_i		*ts_rtip;	/* Helper for rt_gettrees() */
 };
 #define TS_SOFAR_MINUS	1		/* Subtraction encountered above */
 #define TS_SOFAR_INTER	2		/* Intersection encountered above */
@@ -938,22 +929,6 @@ struct animate {
 #define ANIMATE_MAGIC	0x414e4963		/* 1095649635 */
 #define RT_CK_ANIMATE(_p)	BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
-/*			Q E L E M
- *
- *	Structure for use by pmalloc()
- */
-#define RT_PM_NBUCKETS        18
-
-struct rt_qelem {
-        struct rt_qelem *q_forw;
-        struct rt_qelem *q_back;
-};
-
-struct rt_pm_res {
-	struct rt_qelem buckets[RT_PM_NBUCKETS];
-	struct rt_qelem adjhead;
-};
-
 /*
  *			R E S O U R C E
  *
@@ -991,7 +966,6 @@ struct resource {
 	struct bu_list	re_solid_bitv;	/* head of freelist */
 	struct bu_list	re_region_ptbl;	/* head of freelist */
 	struct bu_list	re_nmgfree;	/* head of NMG hitmiss freelist */
-	struct rt_pm_res re_pmem;	/* for use by pmalloc() */
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	float		*re_randptr;	/* ptr into random number table */
@@ -1061,8 +1035,8 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
 	struct xray	a_ray;		/* Actual ray to be shot */
-	int		(*a_hit)BU_ARGS( (struct application *, struct partition *, struct seg *));	/* called when shot hits model */
-	int		(*a_miss)BU_ARGS( (struct application *));	/* called when shot misses */
+	int		(*a_hit)();	/* called when shot hits model */
+	int		(*a_miss)();	/* called when shot misses */
 	int		a_onehit;	/* flag to stop on first hit */
 	fastf_t		a_ray_length;	/* distance from ray start to end intersections */
 	struct rt_i	*a_rt_i;	/* this librt instance */
@@ -1077,15 +1051,10 @@ struct application  {
 	fastf_t		a_rbeam;	/* initial beam radius (mm) */
 	fastf_t		a_diverge;	/* slope of beam divergance/mm */
 	int		a_return;	/* Return of a_hit()/a_miss() */
-	int		a_no_booleans;	/* 1= partitions==segs, no booleans */
-	/* THESE ELEMENTS ARE WRITTEN BY THE LIBRARY, AND MAY BE READ IN a_hit() */
-	struct seg	*a_finished_segs_hdp;
-	struct partition *a_Final_Part_hdp;
 	/* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
 	/* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
 	int		a_user;		/* application-specific value */
 	genptr_t	a_uptr;		/* application-specific pointer */
-	struct rt_tabdata *a_spectrum;	/* application-specific rt_tabdata prointer */
 	fastf_t		a_color[3];	/* application-specific color */
 	fastf_t		a_dist;		/* application-specific distance */
 	vect_t		a_uvec;		/* application-specific vector */
@@ -1107,32 +1076,18 @@ struct application  {
  *  regardless of how many different models are being worked on
  */
 struct rt_g {
-	int		debug;		/* !0 for debug, see librt/debug.h */
-	/* XXX rtg_parallel is not used by LIBRT any longer */
+	int		debug;		/* non-zero for debug, see debug.h */
+	/*  Definitions necessary to interlock in a parallel environment */
 	int		rtg_parallel;	/* !0 = trying to use multi CPUs */
+	long		res_syscall;	/* lock on system calls */
+	long		res_worker;	/* lock on work to do */
+	long		res_stats;	/* lock on statistics */
+	long		res_results;	/* lock on result buffer */
+	long		res_model;	/* lock on model growth (splines) */
 	struct bu_list	rtg_vlfree;	/* head of rt_vlist freelist */
-	int		NMG_debug;	/* debug bits for NMG's see h/nmg.h */
+	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 };
 extern struct rt_g rt_g;
-
-/*
- *			S E M A P H O R E S
- *
- *  Definition of global parallel-processing semaphores.
- *
- * res_syscall is now	BU_SEM_SYSCALL
- */
-#define RT_SEM_TREE0	(BU_SEM_LAST+1)
-#define RT_SEM_TREE1	(RT_SEM_TREE0+1)
-#define RT_SEM_TREE2	(RT_SEM_TREE1+1)
-#define RT_SEM_TREE3	(RT_SEM_TREE2+1)
-#define RT_SEM_WORKER	(RT_SEM_TREE3+1)
-#define RT_SEM_STATS	(RT_SEM_WORKER+1)
-#define RT_SEM_RESULTS	(RT_SEM_STATS+1)
-#define RT_SEM_MODEL	(RT_SEM_RESULTS+1)
-
-#define RT_SEM_LAST	(RT_SEM_MODEL+1)	/* Call bu_semaphore_init( RT_SEM_LAST ); */
-
 
 /*
  *			R T _ I
@@ -1151,15 +1106,11 @@ extern struct rt_g rt_g;
 struct rt_i {
 	long		rti_magic;	/* magic # for integrity check */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ & MODIFY */
-	int		useair;		/* 1="air" regions are retained while prepping */
-	int		rti_dont_instance; /* 1=Don't compress instances of solids into 1 while prepping */
-	int		rti_hasty_prep;	/* 1=hasty prep, slower ray-trace */
+	int		useair;		/* "air" regions are used */
 	int		rti_nlights;	/* number of light sources */
 	char		*rti_region_fix_file; /* rt_regionfix() file or NULL */
 	int		rti_space_partition;  /* space partitioning method */
 	int		rti_nugrid_dimlimit;  /* limit on nugrid dimensions */
-	struct bn_tol	rti_tol;	/* Math tolerances for this model */
-	struct rt_tess_tol rti_ttol;	/* Tessellation tolerance defaults */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
@@ -1199,9 +1150,10 @@ struct rt_i {
 	struct bu_hist rti_hist_cellsize; /* occupancy of cut cells */
 	struct bu_hist rti_hist_cutdepth; /* depth of cut tree */
 	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
+	struct bn_tol	rti_tol;	/* Tolerances for this model */
 	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
-	double		rti_nu_gfactor;	/* constant in numcells computation */
+	double		 rti_nu_gfactor; /* constant in numcells computation */
 };
 
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
@@ -1357,44 +1309,6 @@ struct rt_point_labels {
 };
 
 /*
- *			L I N E _ S E G
- *	used by the solid of extrusion
- */
-
-struct line_seg		/* line segment */
-{
-	long			magic;
-	int			start, end;	/* indices into sketch's array of vertices */
-	int			curve_count;	/* number of curves using this segment */
-	struct curve		**curves;	/* array of pointers to curves using this segment */
-};
-#define CURVE_LSEG_MAGIC     0x6c736567		/* lseg */
-
-struct carc_seg		/* circular arc segment */
-{
-	long			magic;
-	int			start, end;	/* indices */
-	fastf_t			radius;		/* radius < 0.0 -> full circle with start point on
-						 * circle and "end" at center */
-
-	int			orientation;	/* 0 -> ccw, !0 -> cw */
-	int			curve_count;	/* number of curves using this segment */
-	struct curve		**curves;	/* array of pointers to curves using this segment */
-};
-#define CURVE_CARC_MAGIC     0x63617263		/* carc */
-
-struct nurb_seg		/* NURB curve segment */
-{
-	long			magic;
-	int			start, end;	/* indices */
-	struct edge_g_cnurb	cnurb;		/* NURB curve (some fields ignored) */
-	int			curve_count;	/* number of curves using this segment */
-	struct curve		**curves;	/* array of pointers to curves using this segment */
-};
-#define CURVE_NURB_MAGIC     0x6e757262		/* nurb */
-
-
-/*
  *			R T _ F U N C T A B
  *
  *  Object-oriented interface to geometry modules.
@@ -1468,12 +1382,10 @@ struct rt_functab {
 #endif
 	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
 			CONST struct bu_external * /*ep*/,
-			CONST mat_t /*mat*/,
-			CONST struct db_i * /*dbip*/));
+			CONST mat_t /*mat*/));
 	int	(*ft_export) RT_ARGS((struct bu_external * /*ep*/,
 			CONST struct rt_db_internal * /*ip*/,
-			double /*local2mm*/,
-			CONST struct db_i * /*dbip*/));
+			double /*local2mm*/));
 	void	(*ft_ifree) RT_ARGS((struct rt_db_internal * /*ip*/));
 	int	(*ft_describe) RT_ARGS((struct bu_vls * /*str*/,
 			struct rt_db_internal * /*ip*/,
@@ -1731,10 +1643,9 @@ struct ray_data {
  *                                                               *
  *****************************************************************/
 					/* Read named MGED db, build toc */
-RT_EXTERN(struct rt_i *rt_dirbuild, (CONST char *filename, char *buf, int len) );
+RT_EXTERN(struct rt_i *rt_dirbuild, (char *filename, char *buf, int len) );
 					/* Prepare for raytracing */
 RT_EXTERN(struct rt_i *rt_new_rti, (struct db_i *dbip));
-RT_EXTERN(void rt_free_rti, (struct rt_i *rtip));
 RT_EXTERN(void rt_prep, (struct rt_i *rtip) );
 RT_EXTERN(void rt_prep_parallel, (struct rt_i *rtip, int ncpu) );
 					/* Handle overlap w/o logging */
@@ -1794,8 +1705,7 @@ RT_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
 RT_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	struct partition *FinalHdp,
 	fastf_t startdist, fastf_t enddist,
-	struct bu_ptbl *regionbits, struct application *ap,
-	CONST struct bu_bitv *solidbits) );
+	struct bu_ptbl *regionbits, struct application *ap) );
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *res) );
 					/* Approx Floating compare */
@@ -1861,9 +1771,9 @@ RT_EXTERN(void db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
 				point_t p_max) );
 /* db_open.c */
 					/* open an existing model database */
-RT_EXTERN(struct db_i *db_open, ( CONST char *name, CONST char *mode ) );
+RT_EXTERN(struct db_i *db_open, ( char *name, char *mode ) );
 					/* create a new model database */
-RT_EXTERN(struct db_i *db_create, ( CONST char *name ) );
+RT_EXTERN(struct db_i *db_create, ( char *name ) );
 					/* close a model database */
 RT_EXTERN(void db_close, ( struct db_i *dbip ) );
 /* db_io.c */
@@ -1983,6 +1893,11 @@ RT_EXTERN(struct rt_vlblock *rt_vlblock_init, () );
 RT_EXTERN(void rt_vlblock_free, (struct rt_vlblock *vbp) );
 RT_EXTERN(struct bu_list *rt_vlblock_find, (struct rt_vlblock *vbp,
 	int r, int g, int b) );
+
+/* plane.c */
+ 
+/* bn_cx_div, CxSqrt */
+extern void bn_pr_roots();		/* print complex roots */
 
 /* rtassoc.c */
 RT_EXTERN(struct bu_vls *rt_assoc, (char *fname, char *value, int field_sep));
@@ -2410,7 +2325,7 @@ RT_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
 /* From nmg_eval.c */
-RT_EXTERN(CONST char		*nmg_class_name, (int class_no) );
+RT_EXTERN(CONST char		*nmg_class_name, (int class) );
 #if 0
 /* These can't be included because struct nmg_bool_state is in nmg_eval.c */
 RT_EXTERN(void			nmg_eval_shell, (struct shell *s,
@@ -2433,8 +2348,6 @@ RT_EXTERN(int			nmg_ray_isect_segs, (struct soltab *stp,
 #endif
 /* From nmg_ck.c */
 /* XXX many others here */
-RT_EXTERN(void			nmg_ck_list_magic, (CONST struct bu_list *hd,
-				CONST char *str, CONST long magic) );
 RT_EXTERN(void			nmg_ck_list, (struct bu_list *hd, CONST char *str) );
 RT_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
 RT_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct bn_tol *tol));
@@ -2468,10 +2381,9 @@ RT_EXTERN(void			rt_dspline_matrix, (mat_t m,CONST char *type,
 					CONST double	bias) );
 RT_EXTERN(double		rt_dspline4, (mat_t m, double a, double b,
 					double c, double d, double alpha) );
-RT_EXTERN(void			rt_dspline4v, (double *pt, CONST mat_t m,
-					CONST double *a, CONST double *b,
-					CONST double *c, CONST double *d,
-					CONST int depth, CONST double alpha) );
+RT_EXTERN(void			rt_dspline4v, (double *pt, mat_t m, double *a,
+					double *b, double *c, double *d,
+					int depth, double alpha) );
 RT_EXTERN(void			rt_dspline_n, (double *r, CONST mat_t m,
 					CONST double *knots, CONST int n,
 					CONST int depth, CONST double alpha));
@@ -2486,6 +2398,10 @@ extern CONST char   *rt_vlist_cmd_descriptions[];
 
 /* vers.c (created by librt/Cakefile) */
 extern CONST char   rt_version[];
+
+#if defined(NMG_H)
+extern CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
+#endif
 
 #ifdef __cplusplus
 }

@@ -64,9 +64,6 @@ matp_t xlate;
 	register int		i;
 	int			id;
 
-	if(dbip == DBI_NULL)
-	  return;
-
     	RT_INIT_DB_INTERNAL(&intern);
 	if( (id=rt_db_get_internal( &intern, dp, dbip, xlate )) < 0 )
 	{
@@ -106,9 +103,6 @@ matp_t xlate;
 	int found=0;
 	mat_t temp, xmat;		/* Temporary for mat_mul */
 
-	if(dbip == DBI_NULL)
-	  return;
-
 	if( rt_db_get_internal( &intern, cdp, dbip, (mat_t *)NULL ) < 0 )
 		READ_ERR_return;
 
@@ -121,10 +115,7 @@ matp_t xlate;
 		if( tp != TREE_NULL )
 		{
 			found = 1;
-			if( tp->tr_l.tl_mat )
-				bn_mat_mul2( xlate, tp->tr_l.tl_mat );
-			else
-				tp->tr_l.tl_mat = xlate;
+			bn_mat_mul2( xlate, tp->tr_l.tl_mat );
 			if( rt_db_put_internal( cdp, dbip, &intern ) < 0 )
 			{
 				Tcl_AppendResult(interp, "rt_db_put_internal failed for ",
@@ -165,9 +156,6 @@ int air;				/* Air code */
 	struct rt_tree_array *tree_list;
 	int node_count;
 	int actual_count;
-
-	if(dbip == DBI_NULL)
-	  return DIR_NULL;
 
 	/*
 	 * Check to see if we have to create a new combination
@@ -211,8 +199,8 @@ int air;				/* Air code */
 			comb->GIFTmater = mat_default;
 			bu_vls_init(&tmp_vls);
 			bu_vls_printf(&tmp_vls,
-				"Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
-				ident, air, mat_default, los_default );
+				"Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
+				ident, air, los_default, mat_default );
 			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			bu_vls_free(&tmp_vls);
 		}

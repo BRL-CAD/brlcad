@@ -38,7 +38,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "./mathtab.h"
 #include "./ext.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
@@ -133,7 +132,7 @@ char **argv;
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
-	if( bu_optind >= argc )  {
+	if( optind >= argc )  {
 		fprintf(stderr,"rt:  MGED database not specified\n");
 		(void)fputs(usage, stderr);
 		exit(1);
@@ -172,12 +171,14 @@ char **argv;
 	    fprintf(stderr,"Planning to run with %d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
-
-	/* Initialize parallel processor support */
-	bu_semaphore_init( RT_SEM_LAST );
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_model );
 
 	/*
-	 *  Do not use bu_log() or bu_malloc() before this point!
+	 *  Do not use rt_log() or rt_malloc() before this point!
 	 */
 
 	if( bu_debug )  {
@@ -194,10 +195,10 @@ char **argv;
 		bu_log("\n");
 	}
 
-	title_file = argv[bu_optind];
-	title_obj = argv[bu_optind+1];
-	nobjs = argc - bu_optind - 1;
-	objtab = &(argv[bu_optind+1]);
+	title_file = argv[optind];
+	title_obj = argv[optind+1];
+	nobjs = argc - optind - 1;
+	objtab = &(argv[optind+1]);
 
 	if( nobjs <= 0 )  {
 		bu_log("rt: no objects specified\n");
@@ -214,7 +215,6 @@ char **argv;
 
 	/* Copy values from command line options into rtip */
 	rtip->rti_space_partition = space_partition;
-	rtip->rti_nugrid_dimlimit = nugrid_dimlimit;
 	rtip->rti_nu_gfactor = nu_gfactor;
 	rtip->useair = use_air;
 	if( rt_dist_tol > 0 )  {
@@ -248,20 +248,16 @@ char **argv;
 			xx = width;
 			yy = height;
 		}
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		RES_ACQUIRE( &rt_g.res_syscall );
 		fbp = fb_open( framebuffer, xx, yy );
-		bu_semaphore_release( BU_SEM_SYSCALL );
+		RES_RELEASE( &rt_g.res_syscall );
 		if( fbp == FBIO_NULL )  {
 			fprintf(stderr,"rt:  can't open frame buffer\n");
 			exit(12);
 		}
 
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		/* If fb came out smaller than requested, do less work */
-		if( fb_getwidth(fbp) < xx )  width = fb_getwidth(fbp);
-		if( fb_getheight(fbp) < yy )  height = fb_getheight(fbp);
-
 		/* If the fb is lots bigger (>= 2X), zoom up & center */
+		RES_ACQUIRE( &rt_g.res_syscall );
 		if( width > 0 && height > 0 )  {
 			zoom = fb_getwidth(fbp)/width;
 			if( fb_getheight(fbp)/height < zoom )
@@ -271,7 +267,7 @@ char **argv;
 		}
 		(void)fb_view( fbp, width/2, height/2,
 			zoom, zoom );
-		bu_semaphore_release( BU_SEM_SYSCALL );
+		RES_RELEASE( &rt_g.res_syscall );
 	} else if( outputfile == (char *)0 )  {
 		/* If not going to framebuffer, or to a file, then use stdout */
 		if( outfp == NULL )  outfp = stdout;
@@ -281,19 +277,8 @@ char **argv;
 			exit(14);
 		}
 	}
-
-	/*
-	 *  Initialize all the per-CPU memory resources.
-	 *  The number of processors can change at runtime, init them all.
-	 */
-	for( i=0; i < MAX_PSW; i++ )  {
-		rt_init_resource( &resource[i], i );
-		rand_init( resource[i].re_randptr, i );
-	}
-
 #ifdef HAVE_SBRK
-	fprintf(stderr,"initial dynamic memory use=%ld.\n",
-		(long)((char *)sbrk(0)-beginptr) );
+	fprintf(stderr,"initial dynamic memory use=%d.\n", (char *)sbrk(0)-beginptr );
 	beginptr = (char *) sbrk(0);
 #endif
 

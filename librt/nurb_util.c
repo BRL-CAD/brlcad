@@ -36,9 +36,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 /* Create a place holder for a nurb surface. */
 
 struct face_g_snurb *
-rt_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, res)
+rt_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type)
 int u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type;
-struct resource *res;
 {
 	register struct face_g_snurb * srf;
 	int pnum;
@@ -50,30 +49,19 @@ struct resource *res;
 
 	srf->u.k_size = n_u;
 	srf->v.k_size = n_v;
+
+	srf->u.knots = (fastf_t *) rt_malloc ( 
+		n_u * sizeof (fastf_t ), "rt_nurb_new_snurb: u kv knot values");
+	srf->v.knots = (fastf_t *) rt_malloc ( 
+		n_v * sizeof (fastf_t ), "rt_nurb_new_snurb: v kv knot values");
+
 	srf->s_size[0] = n_rows;
 	srf->s_size[1] = n_cols;
 	srf->pt_type = pt_type;
-
+	
 	pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
-
-	if( res )
-	{
-		srf->u.knots = (fastf_t *) rt_pmalloc ( 
-			n_u * sizeof (fastf_t ), &res->re_pmem);
-		srf->v.knots = (fastf_t *) rt_pmalloc ( 
-			n_v * sizeof (fastf_t ), &res->re_pmem);
-		srf->ctl_points = ( fastf_t *) rt_pmalloc( 
-			pnum, &res->re_pmem);
-	}
-	else
-	{
-		srf->u.knots = (fastf_t *) rt_malloc ( 
-			n_u * sizeof (fastf_t ), "rt_nurb_new_snurb: u kv knot values");
-		srf->v.knots = (fastf_t *) rt_malloc ( 
-			n_v * sizeof (fastf_t ), "rt_nurb_new_snurb: v kv knot values");
-		srf->ctl_points = ( fastf_t *) rt_malloc( 
-			pnum, "rt_nurb_new_snurb: control mesh points");
-	}
+	srf->ctl_points = ( fastf_t *) rt_malloc( 
+		pnum, "rt_nurb_new_snurb: control mesh points");
 
 	return srf;
 }
@@ -112,24 +100,14 @@ int order, n_knots, n_pts, pt_type;
  *  or use automatic variables to hold one.
  */
 void
-rt_nurb_clean_snurb( srf, res )
+rt_nurb_clean_snurb( srf )
 struct face_g_snurb * srf;
-struct resource *res;
 {
 	NMG_CK_SNURB(srf);
 
-	if( res )
-	{
-		rt_pfree( (char *)srf->u.knots, &res->re_pmem );
-		rt_pfree( (char *)srf->v.knots, &res->re_pmem );
-		rt_pfree( (char *)srf->ctl_points, &res->re_pmem );
-	}
-	else
-	{
-		rt_free( (char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots" );
-		rt_free( (char *)srf->v.knots, "rt_nurb_free_snurb() v.knots" );
-		rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
-	}
+	rt_free( (char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots" );
+	rt_free( (char *)srf->v.knots, "rt_nurb_free_snurb() v.knots" );
+	rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
 	/* Invalidate the structure */
 	srf->u.knots = (fastf_t *)NULL;
 	srf->v.knots = (fastf_t *)NULL;
@@ -142,27 +120,16 @@ struct resource *res;
  *			R T _ N U R B _ F R E E _ S N U R B
  */
 void
-rt_nurb_free_snurb( srf, res )
+rt_nurb_free_snurb( srf )
 struct face_g_snurb * srf;
-struct resource *res;
 {
 	NMG_CK_SNURB(srf);
 
 	/* assume that links to other surface and curves are already deleted */
 
-	if( res )
-	{
-		rt_pfree( (char *)srf->u.knots, &res->re_pmem );
-		rt_pfree( (char *)srf->v.knots, &res->re_pmem );
-		rt_pfree( (char *)srf->ctl_points, &res->re_pmem);
-	}
-	else
-	{
-
-		rt_free( (char *)srf->u.knots, "rt_nurb_free_snurb: u kv knots" );
-		rt_free( (char *)srf->v.knots, "rt_nurb_free_snurb: v kv knots" );
-		rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
-	}
+	rt_free( (char *)srf->u.knots, "rt_nurb_free_snurb: u kv knots" );
+	rt_free( (char *)srf->v.knots, "rt_nurb_free_snurb: v kv knots" );
+	rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
 
 	srf->l.magic = 0;
 	rt_free( (char *)srf, "rt_nurb_free_snurb: snurb struct" );

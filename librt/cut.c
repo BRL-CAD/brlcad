@@ -136,21 +136,21 @@ struct nugridnode *nuginfop;
  *  until none remain.
  *  This routine is run in parallel.
  */
+static struct rt_i	*rt_cut_rtip;	/* Shared across threads */
+
 void
-rt_cut_optimize_parallel( cpu, arg )
-int		cpu;
-genptr_t	arg;
+rt_cut_optimize_parallel()
 {
-	struct rt_i	*rtip = (struct rt_i *)arg;
+	struct rt_i	*rtip = rt_cut_rtip;
 	union cutter	*cp;
 	int		i;
 
 	RT_CK_RTI(rtip);
 	for(;;)  {
 
-		bu_semaphore_acquire( RT_SEM_WORKER );
+		RES_ACQUIRE( &rt_g.res_worker );
 		i = rtip->rti_cuts_waiting.end--;	/* get first free index */
-		bu_semaphore_release( RT_SEM_WORKER );
+		RES_RELEASE( &rt_g.res_worker );
 		i -= 1;				/* change to last used index */
 
 		if( i < 0 )  break;
@@ -161,68 +161,62 @@ genptr_t	arg;
 	}
 }
 
-#define CMP(_p1,_p2,_memb,_ind) \
-	(*(CONST struct soltab **)(_p1))->_memb[_ind] < \
-	(*(CONST struct soltab **)(_p2))->_memb[_ind] ? -1 : \
-	(*(CONST struct soltab **)(_p1))->_memb[_ind] > \
-	(*(CONST struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
+#define CMP(p1,p2,memb,ind) \
+	(*(CONST struct soltab **)(p1))->memb[ind] < \
+	(*(CONST struct soltab **)(p2))->memb[ind] ? -1 : \
+	(*(CONST struct soltab **)(p1))->memb[ind] > \
+	(*(CONST struct soltab **)(p2))->memb[ind] ? 1 : 0
 	
 HIDDEN int
 rt_projXmin_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void *p1, *p2;
 {
 	return CMP(p1,p2,st_min,X);
 }
 
 HIDDEN int
 rt_projXmax_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void *p1, *p2;
 {
 	return CMP(p1,p2,st_max,X);
 }
 
 HIDDEN int
 rt_projYmin_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void *p1, *p2;
 {
 	return CMP(p1,p2,st_min,Y);
 }
 
 HIDDEN int
 rt_projYmax_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void *p1, *p2;
 {
 	return CMP(p1,p2,st_max,Y);
 }
 
 HIDDEN int
 rt_projZmin_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void *p1, *p2;
 {
 	return CMP(p1,p2,st_min,Z);
 }
 
 HIDDEN int
 rt_projZmax_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void *p1, *p2;
 {
 	return CMP(p1,p2,st_max,Z);
 }
 
-static struct cmp_pair {
-	int (*cmp_min)();
-	int (*cmp_max)();
-} pairs[] = {
-	{ rt_projXmin_comp, rt_projXmax_comp },
-	{ rt_projYmin_comp, rt_projYmax_comp },
-	{ rt_projZmin_comp, rt_projZmax_comp }
-};
-
 /*
  *			R T _ N U G R I D _ C U T
  *
- *   Makes a NUGrid node (CUT_NUGRIDNODE), filling the cells with solids
- *   from the given list.
+ *   Makes a NUGrid node (CUT_NUGRIDNODE) and fills in the specified
+ *   list of solids.
+ *
+ *   This may possibly recurse if a particular box is
+ *   assigned more than RT_MAX_NUGRIDCELL_ENTRIES.
  */
 
 void
@@ -242,7 +236,7 @@ int				 just_collect_info, depth;
 	int	nu_ncells;		/* # cells along one axis */
 	int	nu_sol_per_cell;	/* avg # solids per cell */
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
-	int	pseudo_depth;		/* "fake" depth to tell rt_ct_optim */
+	int	fake_depth;
 	register int	i, j, xp, yp, zp;
 	vect_t	xmin, xmax, ymin, ymax, zmin, zmax;
 	struct boxnode nu_xbox, nu_ybox, nu_zbox;
@@ -316,11 +310,7 @@ int				 just_collect_info, depth;
 		nu_ncells = rtip->rti_nugrid_dimlimit;
 	nu_sol_per_cell = (fromp->bn_len + nu_ncells - 1) / nu_ncells;
 	nu_max_ncells = 2*nu_ncells + 8;
-#if 0
-	pseudo_depth = depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));
-#else
-	pseudo_depth = depth;
-#endif
+	fake_depth = 0;/*depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));*/
 
 	if( rt_g.debug&DEBUG_CUT )
 		bu_log(
@@ -429,6 +419,14 @@ int				 just_collect_info, depth;
 	}
 #else
 	{
+		struct cmp_pair {
+			int (*cmp_min)();
+			int (*cmp_max)();
+		} pairs[] = {
+			{ rt_projXmin_comp, rt_projXmax_comp },
+			{ rt_projYmin_comp, rt_projYmax_comp },
+			{ rt_projZmin_comp, rt_projZmax_comp }
+		};
 		struct soltab **list_min, **list_max;
 		register struct soltab **l1, **l2;
 		register int nstart, nend, axi, len = fromp->bn_len;
@@ -443,9 +441,9 @@ int				 just_collect_info, depth;
 		bcopy( fromp->bn_list, list_min, len*sizeof(struct soltab *) );
 		bcopy( fromp->bn_list, list_max, len*sizeof(struct soltab *) );
 		for( i=0; i<3; i++ ) {
-			qsort( (genptr_t)list_min, len,
+			qsort( (void *)list_min, len,
 			       sizeof(struct soltab *), pairs[i].cmp_min );
-			qsort( (genptr_t)list_max, len,
+			qsort( (void *)list_max, len,
 			       sizeof(struct soltab *), pairs[i].cmp_max );
 			nstart = nend = axi = 0;
 			l1 = list_min;
@@ -475,20 +473,18 @@ int				 just_collect_info, depth;
 					continue;
 
 				/* Don't make really teeny intervals. */
-				if( pos <= nugnp->nu_axis[i][axi].nu_spos
-#if 1				    
-					   + 1.0
-#endif				    
-				           + rtip->rti_tol.dist )
+#if 0
+				if( pos <= nugnp->nu_axis[i][axi].nu_spos +
+				           rtip->rti_tol.dist )
 					continue;
-
+#else
+				if( pos <= nugnp->nu_axis[i][axi].nu_spos +
+				           2.0 )
+					continue;
+#endif				
 				/* don't make any more cuts if we've gone
 				   past the end. */
-				if( pos >= fromp->bn_max[i]
-#if 1				    
-					   - 1.0
-#endif
-					   - rtip->rti_tol.dist )
+				if( pos >= fromp->bn_max[i] )
 					continue;
 
 				/* End current interval, start new one */
@@ -653,7 +649,7 @@ int				 just_collect_info, depth;
 
 				if( rtip->rti_nugrid_dimlimit > 0 ) {
 #if 1					
-					rt_ct_optim( rtip, cutp, pseudo_depth);
+					rt_ct_optim( rtip, cutp, fake_depth );
 #else
 				/* Recurse, but only if we're cutting down on
 				   the cellsize. */
@@ -725,13 +721,9 @@ int			ncpu;
 
 	BU_GETUNION( finp, cutter );
 	finp->cut_type = CUT_BOXNODE;
-	VMOVE( finp->bn.bn_min, rtip->mdl_min );
-	VMOVE( finp->bn.bn_max, rtip->mdl_max );
-	finp->bn.bn_len = 0;
-	finp->bn.bn_maxlen = rtip->nsolids+1;
-	finp->bn.bn_list = (struct soltab **)bu_malloc(
-		finp->bn.bn_maxlen * sizeof(struct soltab *),
-		"rt_cut_it: initial list alloc" );
+	VMOVE( finp->bn.bn_min, rtip->rti_pmin );
+	VMOVE( finp->bn.bn_max, rtip->rti_pmax );
+	finp->bn.bn_maxlen = finp->bn.bn_len = 0;
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip ) {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
@@ -758,11 +750,6 @@ int			ncpu;
 
 	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids,
 		      "rti_cuts_waiting ptbl" );
-
-	if( rtip->rti_hasty_prep )  {
-		rtip->rti_space_partition = RT_PART_NUBSPT;
-		rt_cutDepth = 6;
-	}
 
 	switch( rtip->rti_space_partition ) {
 	case RT_PART_NUGRID:
@@ -813,10 +800,11 @@ int			ncpu;
 				rt_pr_cut( &rtip->rti_CutHead, 0 );
 			}
 			
+			rt_cut_rtip = rtip;
 			if( ncpu <= 1 )  {
-				rt_cut_optimize_parallel(0, rtip);
+				rt_cut_optimize_parallel(rtip);
 			} else {
-			bu_parallel( rt_cut_optimize_parallel, ncpu, rtip );
+				bu_parallel( rt_cut_optimize_parallel, ncpu );
 			}
 		}
 #endif
@@ -1232,9 +1220,7 @@ register CONST struct rt_i *rtip;
 	/* Ignore "dead" solids in the list.  (They failed prep) */
 	if( stp->st_aradius <= 0 )  return(0);
 	if( stp->st_aradius >= INFINITY )  {
-		if( rt_functab[stp->st_id].ft_classify( stp, min, max,
-				&rtip->rti_tol ) == RT_CLASSIFY_OUTSIDE )
-			goto fail;
+		/* Need object classification test here */
 		if( rt_g.debug&DEBUG_BOXING )  bu_log("rt_ck_overlap:  TRUE (inf)\n");
 		return(1);
 	}
@@ -1409,7 +1395,7 @@ struct rt_i	*rtip;
 	register union cutter *cutp;
 
 	RT_CK_RTI(rtip);
-	bu_semaphore_acquire(RT_SEM_MODEL);
+	RES_ACQUIRE(&rt_g.res_model);
 	if( !rtip->rti_busy_cutter_nodes.l.magic )
 		bu_ptbl_init( &rtip->rti_busy_cutter_nodes, 128, "rti_busy_cutter_nodes" );
 
@@ -1429,7 +1415,7 @@ struct rt_i	*rtip;
 	}
 	cutp = rtip->rti_CutFree;
 	rtip->rti_CutFree = cutp->cut_forw;
-	bu_semaphore_release(RT_SEM_MODEL);
+	RES_RELEASE(&rt_g.res_model);
 
 	cutp->cut_forw = CUTTER_NULL;
 	return(cutp);
@@ -1446,10 +1432,10 @@ struct rt_i		*rtip;
 register union cutter	*cutp;
 {
 	RT_CK_RTI(rtip);
-	bu_semaphore_acquire(RT_SEM_MODEL);
+	RES_ACQUIRE(&rt_g.res_model);
 	cutp->cut_forw = rtip->rti_CutFree;
 	rtip->rti_CutFree = cutp;
-	bu_semaphore_release(RT_SEM_MODEL);
+	RES_RELEASE(&rt_g.res_model);
 }
 
 /*

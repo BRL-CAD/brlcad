@@ -94,22 +94,22 @@ register char **argv;
 {
 	register int c;
 
-	while( (c=bu_getopt( argc, argv, "x:X:n:v:" )) != EOF )  {
+	while( (c=getopt( argc, argv, "x:X:n:v:" )) != EOF )  {
 		switch( c )  {
 		case 'x':
-			sscanf( bu_optarg, "%x", &rt_g.debug );
+			sscanf( optarg, "%x", &rt_g.debug );
 			fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
 			break;
 		case 'X':
-			sscanf( bu_optarg, "%x", &rdebug );
+			sscanf( optarg, "%x", &rdebug );
 			fprintf(stderr,"rt rdebug=x%x\n", rdebug);
 			break;
 
 		case 'n':
-			nsteps = atoi( bu_optarg );
+			nsteps = atoi( optarg );
 			break;
 		case 'v':
-			viewsize = atof( bu_optarg );
+			viewsize = atof( optarg );
 			break;
 
 		default:		/* '?' */
@@ -134,27 +134,31 @@ char **argv;
 	vect_t	first_dir;		/* First dir chosen on a step */
 	int	i;
 
-	bu_semaphore_init( RT_SEM_LAST );
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_model );
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
-	if( bu_optind+7 >= argc )  {
+	if( optind+7 >= argc )  {
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
 
 	/* Start point */
-	start_point[X] = atof( argv[bu_optind] );
-	start_point[Y] = atof( argv[bu_optind+1] );
-	start_point[Z] = atof( argv[bu_optind+2] );
+	start_point[X] = atof( argv[optind] );
+	start_point[Y] = atof( argv[optind+1] );
+	start_point[Z] = atof( argv[optind+2] );
 
 	/* Destination point */
-	goal_point[X] = atof( argv[bu_optind+3] );
-	goal_point[Y] = atof( argv[bu_optind+4] );
-	goal_point[Z] = atof( argv[bu_optind+5] );
-	bu_optind += 6;
+	goal_point[X] = atof( argv[optind+3] );
+	goal_point[Y] = atof( argv[optind+4] );
+	goal_point[Z] = atof( argv[optind+5] );
+	optind += 6;
 
 	VSUB2( first_dir, goal_point, start_point );
 	incr_dist = MAGNITUDE(first_dir) / nsteps;
@@ -166,7 +170,7 @@ char **argv;
 	fprintf(stderr,"viewsize = %gmm\n", viewsize);
 
 	/* Load database */
-	title_file = argv[bu_optind++];
+	title_file = argv[optind++];
 	if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 		fprintf(stderr,"rtwalk:  rt_dirbuild failure\n");
 		exit(2);
@@ -175,10 +179,10 @@ char **argv;
 	fprintf(stderr, "db title:  %s\n", idbuf);
 
 	/* Walk trees */
-	for( i=bu_optind; i < argc; i++ )  {
-		if( rt_gettree(rtip, argv[bu_optind]) < 0 )
-			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[bu_optind]);
-		bu_optind++;
+	for( i=optind; i < argc; i++ )  {
+		if( rt_gettree(rtip, argv[optind]) < 0 )
+			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[optind]);
+		optind++;
 	}
 
 	/* Prep finds the model RPP, needed for the plotting step */

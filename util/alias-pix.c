@@ -81,8 +81,8 @@ char *av[];
 
 
 	if ( (image=malloc(hdr.x*hdr.y*3)) == (char *)NULL) {
-		(void) fprintf(stderr, "%s: insufficient memory for %d * %d image\n",
-			progname, hdr.x, hdr.y);
+		(void) fprintf(stderr, "%s: insufficient memor for %d x %d image\n",
+			hdr.x, hdr.y);
 		exit(-1);
 	}
 

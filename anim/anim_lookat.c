@@ -43,8 +43,8 @@
 #define LOOKAT_QUAT	2
 
 
-extern int bu_optind;
-extern char *bu_optarg;
+extern int optind;
+extern char *optarg;
 
 int frame = 0;
 int print_mode = LOOKAT_SCRIPT;
@@ -128,10 +128,10 @@ int argc;
 char **argv;
 {
 	int c;
-	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'f':
-			sscanf(bu_optarg,"%d",&frame);
+			sscanf(optarg,"%d",&frame);
 			break;
 		case 'y':
 			print_mode = LOOKAT_YPR;

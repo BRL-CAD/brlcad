@@ -47,7 +47,6 @@ static char		*tcp_port = "5555";	/* "gedd", remote mged */
 #define VRMSG_EVENT	3	/* from MGED: device event */
 #define VRMSG_POV	4	/* from MGED: point of view info */
 #define VRMSG_VLIST	5	/* transfer binary vlist block */
-#define VRMSG_CMD_REPLY	6	/* from MGED: reply to VRMSG_CMD */
 
 void	ph_cmd();
 void	ph_vlist();
@@ -57,7 +56,6 @@ static struct pkg_switch pkgswitch[] = {
 	{ 0,			0,		(char *)0 }
 };
 
-#if 0
 /*
  *			P K G _ S E N D _ V L S
  */
@@ -74,7 +72,6 @@ struct pkg_conn	*pc;
 	}
 	return pkg_send( type, bu_vls_addr(vp), bu_vls_strlen(vp)+1, pc );
 }
-#endif
 
 /*
  *  Called from cmdline() for now.
@@ -144,19 +141,19 @@ vr_viewpoint_hook()
 	bu_vls_init_if_uninit(&old_str);
 	bu_vls_init(&str);
 
-	quat_mat2quat( orient, view_state->vs_Viewrot );
+	quat_mat2quat( orient, Viewrot );
 
 	/* Need to send current viewpoint to VR mgr */
 	/* XXX more will be needed */
 	/* Eye point, quaturnion for orientation */
 	bu_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
-		-view_state->vs_toViewcenter[MDX],
-		-view_state->vs_toViewcenter[MDY],
-		-view_state->vs_toViewcenter[MDZ],
+		-toViewcenter[MDX],
+		-toViewcenter[MDY],
+		-toViewcenter[MDZ],
 		V4ARGS(orient),
-		view_state->vs_Viewscale,
+		Viewscale,
 		V3ARGS(eye_pos_scr),
-		mged_variables->mv_perspective
+		mged_variables.perspective
 		);
 
 	if( strcmp( bu_vls_addr(&old_str), bu_vls_addr(&str) ) == 0 )  {
@@ -210,19 +207,19 @@ char	*argv[];
 	  return TCL_ERROR;
 	}
 
-	view_state->vs_toViewcenter[MDX] = -atof(argv[1]);
-	view_state->vs_toViewcenter[MDY] = -atof(argv[2]);
-	view_state->vs_toViewcenter[MDZ] = -atof(argv[3]);
+	toViewcenter[MDX] = -atof(argv[1]);
+	toViewcenter[MDY] = -atof(argv[2]);
+	toViewcenter[MDZ] = -atof(argv[3]);
 	orient[0] = atof(argv[4]);
 	orient[1] = atof(argv[5]);
 	orient[2] = atof(argv[6]);
 	orient[3] = atof(argv[7]);
-	quat_quat2mat( view_state->vs_Viewrot, orient );
-	view_state->vs_Viewscale = atof(argv[8]);
+	quat_quat2mat( Viewrot, orient );
+	Viewscale = atof(argv[8]);
 	eye_pos_scr[X] = atof(argv[9]);		/* interpreted in dozoom.c */
 	eye_pos_scr[Y] = atof(argv[10]);
 	eye_pos_scr[Z] = atof(argv[11]);
-	mged_variables->mv_perspective = atof(argv[12]);
+	mged_variables.perspective = atof(argv[12]);
 	new_mats();
 
 	return TCL_OK;
@@ -314,26 +311,22 @@ char	*argv[];
 /*
  *			P H _ C M D
  *
- *  Package handler for incomming commands.  Do whatever he says,
- *  and send a reply back.
+ *  Package handler for incomming commands.  Do whatever he says.
  */
 void
 ph_cmd(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
-	int		status;
+	struct bu_vls	str;
 
-	status = Tcl_Eval(interp, buf);
+	bu_vls_init(&str);
 
-	if( pkg_2send( VRMSG_CMD_REPLY,
-		(status == TCL_OK) ? "Y" : "N", 1,
-		interp->result, strlen(interp->result)+1, pc ) < 0 )  {
-		bu_log("ph_cmd: pkg_2send reply to vrmgr failed, disconnecting\n");
-		pkg_close(vrmgr);
-		vrmgr = PKC_NULL;
-		cmdline_hook = 0;	/* Relinquish this hook */
-	}
+	bu_vls_strcpy( &str, buf );
+
+	(void)cmdline( &str, FALSE );
+
+	bu_vls_free( &str );
 	if(buf) (void)free(buf);
 }
 

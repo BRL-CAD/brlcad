@@ -20,13 +20,13 @@
 #define MANSECTION	1
 #define FILES	burst error fb glob grid gridrotate idents\
 		paint plot prnt trie ui\
-		Hm HmGetc HmGlob Sc
+		Hm HmGetc HmGlob Sc Tc
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
-PRODUCTS:	OBJ LIBRT_DEP LIBBN_DEP LIBFB_DEP LIBBU_DEP LIBTERMIO_DEP
-	CC LDFLAGS -o burst OBJ LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBTERMIO LIBTERMLIB LIBES -lm
+PRODUCTS:	OBJ LIBRT_DEP LIBBN_DEP LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o burst OBJ LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBTERMLIB LIBES -lm
 
 all&: PRODUCTS
 

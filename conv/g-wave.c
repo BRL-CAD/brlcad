@@ -49,7 +49,7 @@ RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
-Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
+Usage: %s [-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
 [-e error_file ][-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
 
 static long	vert_offset=0;
@@ -57,12 +57,6 @@ static long	norm_offset=0;
 static int	do_normals=0;
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	usemtl=0;	/* flag to include 'usemtl' statements with a code for GIFT materials:
-				 * 	usemtl 0_100_32
-				 *		means aircode is 0
-				 *		      los is 100
-				 *		      GIFT material is 32
-				 */
 static int	ncpu = 1;	/* Number of processors */
 static char	*output_file = NULL;	/* output filename */
 static char	*error_file = NULL;	/* error filename */
@@ -130,11 +124,8 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:i:")) != EOF) {
+	while ((c = getopt(argc, argv, "ua:n:o:r:vx:D:P:X:e:i:")) != EOF) {
 		switch (c) {
-		case 'm':		/* include 'usemtl' statements */
-			usemtl = 1;
-			break;
 		case 'u':		/* Include vertexuse normals */
 			do_normals = 1;
 			break;
@@ -256,8 +247,8 @@ char	*argv[];
 
 	if( regions_tried > 0 ){
 		percent = ((double)regions_written * 100) / regions_tried;
-		printf( "                  %d triangulated successfully. %g%%\n",
-			regions_written, percent );
+	printf( "                  %d triangulated successfully. %g%%\n",
+		regions_written, percent );
 	}
 	fclose(fp);
 
@@ -274,12 +265,10 @@ char	*argv[];
 }
 
 static void
-nmg_to_wave( r, pathp, region_id, aircode, los, material_id )
+nmg_to_wave( r, pathp, region_id, material_id )
 struct nmgregion *r;
 struct db_full_path *pathp;
 int region_id;
-int aircode;
-int los;
 int material_id;
 {
 	struct model *m;
@@ -292,17 +281,24 @@ int material_id;
 	int numtri   = 0;		/* Number of triangles to output */
 	int tricount = 0;		/* Triangle number */
 	int i;
+	float npercent;
+	float tpercent;
 
 	NMG_CK_REGION( r );
 	RT_CK_FULL_PATH(pathp);
 
 	region_name = db_path_to_string( pathp );
 
-#if 0
 	printf("Attempting to process region %s\n",region_name);
 	fflush(stdout);
-#endif
-
+/* XXX */
+	if(regions_tried>0){
+		npercent = (float)(regions_converted * 100) / regions_tried;
+		tpercent = (float)(regions_written * 100) / regions_tried;
+		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
+		regions_tried, regions_converted, regions_written, npercent,tpercent);
+	}
+/* XXX */
 	m = r->m_p;
 	NMG_CK_MODEL( m );
 
@@ -373,15 +369,13 @@ int material_id;
 						rt_bomb( "Can't find vertex in list!!!" );
 					}
 				}
-				if( vert_count > 3 )
+				if( vert_count != 3 )
 				{
 		/*XXX*/			nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 		/*XXX*/			rt_free( region_name, "region name" );
 					rt_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
 					rt_bomb( "LU is not a triangle" );
 				}
-				else if( vert_count < 3 )
-					continue;
 				numtri++;
 			}
 		}
@@ -389,9 +383,6 @@ int material_id;
 
 /* END CHECK SECTION */
 /* Write pertinent info for this region */
-
-	if( usemtl )
-		fprintf( fp, "usemtl %d_%d_%d\n", aircode, los, material_id );
 
 	fprintf( fp, "g %s %s\n", pathp->fp_names[0]->d_namep, DB_FULL_PATH_CUR_DIR(pathp)->d_namep); 
 
@@ -499,15 +490,15 @@ int material_id;
 						int j;
 
 						j = nmg_tbl( &norms, TBL_LOC, (long *)eu->vu_p->a.magic_p );
-						fprintf( fp, " %ld//%ld", i+1+vert_offset, j+1+norm_offset );
+						fprintf( fp, " %d//%d", i+1+vert_offset, j+1+norm_offset );
 					}
 					else
-						fprintf( fp, " %ld", i+1+vert_offset );
+						fprintf( fp, " %d", i+1+vert_offset );
 				}
 
 				fprintf( fp, "\n" );
 
-				if( vert_count > 3 )
+				if( vert_count != 3 )
 				{
 					nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 					rt_free( region_name, "region name" );
@@ -685,7 +676,7 @@ union tree		*curtree;
 				goto out;
 			}
 		/* Write the region to the TANKILL file */
-			nmg_to_wave( r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater );
+			nmg_to_wave( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
 
 			regions_written++;
 
@@ -708,16 +699,6 @@ out:
 
 
 	db_free_tree(curtree);		/* Does an nmg_kr() */
-
-	if(regions_tried>0){
-		float npercent;
-		float tpercent;
-
-		npercent = (float)(regions_converted * 100) / regions_tried;
-		tpercent = (float)(regions_written * 100) / regions_tried;
-		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
-		regions_tried, regions_converted, regions_written, npercent,tpercent);
-	}
 
 	GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;

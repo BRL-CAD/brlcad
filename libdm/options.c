@@ -6,7 +6,8 @@
 #include "bu.h"
 #include "dm.h"
 
-int dm_processOptions(dmp, init_proc_vls, argc, argv)
+int
+dm_process_options(dmp, init_proc_vls, argc, argv)
 struct dm *dmp;
 struct bu_vls *init_proc_vls;
 int argc;
@@ -15,14 +16,12 @@ char *argv[];
   register int c;
 
   bu_optind = 0;	 /* re-init bu_getopt */
-  bu_opterr = 0;
-  while((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != EOF){
+  while((c = bu_getopt(argc, argv, "N:S:W:d:i:n:t:")) != EOF){
     switch(c){
     case 'N':
       dmp->dm_height = atoi(bu_optarg);
       break;
     case 'S':
-    case 's':
       dmp->dm_width = dmp->dm_height = atoi(bu_optarg);
       break;
     case 'W':
@@ -44,7 +43,6 @@ char *argv[];
       dmp->dm_top = atoi(bu_optarg);
       break;
     default:
-      bu_log("dm_processOptions: option '%c' unknown\n", bu_optopt);
       break;
     }
   }

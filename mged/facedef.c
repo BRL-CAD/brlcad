@@ -321,9 +321,6 @@ char	*argv[];
 {
 	int i;
 
-	if(dbip == DBI_NULL)
-	  return;
-
 	for(i=0; i<4; i++)
 		plane[i]= atof(argv[i]);
 	VUNITIZE( &plane[0] );
@@ -351,9 +348,6 @@ CONST struct bn_tol	*tol;
 {
 	int i;
 	point_t	a,b,c;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	for(i=0; i<3; i++)
 		a[i] = atof(argv[0+i]) * local2base;
@@ -386,9 +380,6 @@ CONST struct rt_arb_internal	*arb;
 	fastf_t rota, fb;
 	short int i,temp;
 	point_t		pt;
-
-	if(dbip == DBI_NULL)
-	  return;
 
 	rota= atof(argv[0]) * degtorad;
 	fb  = atof(argv[1]) * degtorad;
@@ -423,9 +414,6 @@ char	*argv[];
 {
 	int	i;
 	point_t	pt;
-
-	if(dbip == DBI_NULL)
-	  return;
 
 	for(i=0; i<3; i++)
 		pt[i] = atof(argv[i]) * local2base;

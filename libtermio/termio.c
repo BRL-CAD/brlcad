@@ -20,14 +20,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #endif
 
-#if HAVE_IOCTL_COMPAT_H
+#if defined(__NetBSD__)
 #	include <sys/ioctl_compat.h>
 #	define TAB3 (TAB1|TAB2)
-#	if !defined(OCRNL)
-#		define OCRNL   0000010
-#	endif
 #endif
 
+#if defined(__bsdi__)
+#	include <sys/ioctl_compat.h>
+#	define TAB3 (TAB1|TAB2)
+#	define OCRNL   0000010
+#endif
 
 
 #include "machine.h"
@@ -424,10 +426,9 @@ int	fd;
 	{
 #if defined(SYSV) || defined(BSD)
 	return	fcntl( fd, F_SETFL, O_NDELAY );
-#else
+#endif
 #if HAVE_TERMIOS_H
 	return	fcntl( fd, F_SETFL, FNDELAY );
-#endif
 #endif
 	}
 

@@ -39,7 +39,7 @@ struct site
 #define	SITE_MAGIC	0x73697465
 #define s_magic		l.magic
 
-void print_usage ()
+void print_usage (void)
 {
 #define OPT_STRING	"ns:t?"
 

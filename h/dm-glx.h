@@ -7,10 +7,14 @@
 #define Glx_MV_O(_m) offsetof(struct modifiable_glx_vars, _m)
 
 struct modifiable_glx_vars {
+  int linewidth;
+  int linestyle;
   int cueing_on;
   int zclipping_on;
   int zbuffer_on;
   int lighting_on;
+  int perspective_mode;
+  int dummy_perspective;
   int debug;
   int zbuf;
   int rgb;
@@ -25,11 +29,12 @@ struct glx_vars {
   Window win;
   Tk_Window top;
   Tk_Window xtkwin;
-  int depth;
   int omx, omy;
   unsigned int mb_mask;
   Colormap cmap;
-  XVisualInfo *vip;
+  Visual *vis;
+  int depth;
+  int perspective_angle;
   int devmotionnotify;
   int devbuttonpress;
   int devbuttonrelease;
@@ -39,7 +44,12 @@ struct glx_vars {
   struct modifiable_glx_vars mvars;
 };
 
-extern void glx_clearToBlack();
+extern void glx_configure_window_shape();
+extern void glx_establish_perspective();
+extern void glx_set_perspective();
+extern void glx_establish_lighting();
+extern void glx_establish_zbuffer();
+extern void glx_clear_to_black();
 extern struct glx_vars head_glx_vars;
 
 #endif /* SEEN_DM_GLX */

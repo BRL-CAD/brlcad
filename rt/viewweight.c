@@ -244,7 +244,7 @@ struct application *ap;
 	for( rp = rtip->HeadRegion; rp != (struct region *) NULL;
 			rp = rp->reg_forw ) {
 		register fastf_t weight = 0;
-		register int l = strlen(rp->reg_name);
+		register l = strlen(rp->reg_name);
 		register fastf_t *ptr;
 
 /* */
@@ -366,7 +366,7 @@ struct partition *PartHeadp;
 		part_count++;
 		/* add the datapoint structure in and then calculate it
 		   in parallel, the region structures are a shared resource */
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		RES_ACQUIRE( &rt_g.res_syscall );
 #if 0
 		rt_log( "\nhit: partition %d\n", part_count );
 #endif
@@ -374,13 +374,13 @@ struct partition *PartHeadp;
 		addp = reg->reg_udata;
 		reg->reg_udata = (genptr_t) dp;
 		dp->next = (struct datapoint *) addp;
-        	bu_semaphore_release( BU_SEM_SYSCALL );
+        	RES_RELEASE( &rt_g.res_syscall );
 
 		if( density[ reg->reg_gmater ] < 0 ) {
 			rt_log( "Material type %d used, but has no density file entry.\n", reg->reg_gmater );
-			bu_semaphore_acquire( BU_SEM_SYSCALL );
+			RES_ACQUIRE( &rt_g.res_syscall );
 			reg->reg_gmater = 0;
-        		bu_semaphore_release( BU_SEM_SYSCALL );
+        		RES_RELEASE( &rt_g.res_syscall );
 			}
 		else if( density[ reg->reg_gmater ] > 0 ) {
 			VBLEND2( dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point );
@@ -391,12 +391,12 @@ struct partition *PartHeadp;
 				cell_height * cell_height * 0.00001;
 			dp->volume = depth * cell_height * cell_width;
 #if 0
-			bu_semaphore_acquire( BU_SEM_SYSCALL );
+			RES_ACQUIRE( &rt_g.res_syscall );
 			rt_log( "hit: reg_name=\"%s\"\n",reg->reg_name );
 			rt_log( "hit: gmater=%d, los=%d, density=%gg/cc, depth=%gmm, wt=%gg\n",
 			reg->reg_gmater, reg->reg_los, density[reg->reg_gmater],
 			depth, dp->weight );
-        		bu_semaphore_release( BU_SEM_SYSCALL );
+        		RES_RELEASE( &rt_g.res_syscall );
 #endif
 			}
 		}
@@ -417,9 +417,9 @@ struct partition        *pp;
 struct region           *reg1;
 struct region           *reg2;
 	{
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	noverlaps++;
-        bu_semaphore_release( BU_SEM_SYSCALL );
+        RES_RELEASE( &rt_g.res_syscall );
 	return(0);
 	}
 

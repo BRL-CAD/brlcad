@@ -2,7 +2,7 @@
 #define SEEN_MGED_DM_H
 
 /*
- *			M G E D _ D M . H
+ *			D M . H
  *
  * Header file for communication with the display manager.
  *  
@@ -21,473 +21,275 @@
 #include "dm.h"	/* struct dm */
 #include "./menu.h" /* struct menu_item */
 #include "./scroll.h" /* struct scroll_item */
-#include "fb.h" /* FBIO */
-#include "pkg.h" /* struct pkg_conn */
-
+#define TRY_NEW_MGED_VARS 0
 #define DO_NEW_EDIT_MATS
 
-#define DO_DISPLAY_LISTS
-#if 0
-#define DO_SINGLE_DISPLAY_LIST
-#endif
-
-#if !defined(PI)      /* sometimes found in math.h */
-#define PI 3.14159265358979323846264338327950288419716939937511
-#endif
-
-#define MGED_DISPLAY_VAR "mged_display"
-
-#define GED_MAX 2047.0
-#define GED_MIN -2048.0
-#define GED_RANGE 4095.0
-#define INV_GED 0.00048828125
-
-#define RAD2DEG 57.2957795130823208767981548141051703324054724665642
-#define DEG2RAD 0.01745329251994329573
-
-/* +-2048 to +-1 */
-#define GED2PM1(x) (((fastf_t)(x))*INV_GED)
-
-#define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
-
-#define AMM_IDLE 0
-#define AMM_ROT 1 
-#define AMM_TRAN 2
-#define AMM_SCALE 3
-#define AMM_ADC_ANG1 4
-#define AMM_ADC_ANG2 5
-#define AMM_ADC_TRAN 6
-#define AMM_ADC_DIST 7
-#define AMM_CON_ROT_X 8
-#define AMM_CON_ROT_Y 9
-#define AMM_CON_ROT_Z 10
-#define AMM_CON_TRAN_X 11
-#define AMM_CON_TRAN_Y 12
-#define AMM_CON_TRAN_Z 13
-#define AMM_CON_SCALE_X 14
-#define AMM_CON_SCALE_Y 15
-#define AMM_CON_SCALE_Z 16 
-#define AMM_CON_XADC 17
-#define AMM_CON_YADC 18
-#define AMM_CON_ANG1 19
-#define AMM_CON_ANG2 20
-#define AMM_CON_DIST 21
-
-#define IS_CONSTRAINED_ROT(_mode) ( \
-	(_mode) == AMM_CON_ROT_X || \
-	(_mode) == AMM_CON_ROT_Y || \
-	(_mode) == AMM_CON_ROT_Z )
-
-#define IS_CONSTRAINED_TRAN(_mode) ( \
-	(_mode) == AMM_CON_TRAN_X || \
-	(_mode) == AMM_CON_TRAN_Y || \
-	(_mode) == AMM_CON_TRAN_Z )
-
-struct view_ring {
-  struct bu_list l;
-  mat_t   vr_rot_mat;
-  mat_t   vr_tvc_mat;
-  fastf_t vr_scale;
-  int     vr_id;
+struct device_values  {
+	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
 };
+extern struct device_values dm_values;
 
-#define NUM_TRAILS 8
-#define MAX_TRAIL 32
-struct trail {
-  int t_cur_index;      /* index of first free entry */
-  int t_nused;          /* max index in use */
-  point_t t_pt[MAX_TRAIL];
-};
+/* defined in ged.c */
+extern int dm_pipe[];
 
-#define MAX_CLIENTS 32
-struct client {
-  int c_fd;
-  struct pkg_conn *c_pkg;
-};
+#define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
 
-/* mged command variables for affecting the user environment */
-struct _mged_variables {
-  int		mv_rc;
-  int		mv_autosize;
-  int		mv_rateknobs;
-  int		mv_slidersflag;
-  int		mv_faceplate;
-  int		mv_orig_gui;
-  int		mv_rt_output;
-  int		mv_linewidth;
-  char		mv_linestyle;
-  int		mv_send_key;
-  int		mv_hot_key;
-  int		mv_context;
-  int		mv_dlist;
-  int		mv_use_air;
-  int		mv_listen;			/* nonzero to listen on port */
-  int		mv_port;			/* port to listen on */
-  int		mv_fb;				/* toggle image on/off */
-  int		mv_fb_all;			/* 0 - use part of image as defined by the rectangle
-						   1 - use the entire image */
-  int		mv_fb_overlay;			/* 0 - underlay     1 - overlay */
-  char		mv_mouse_behavior;
-  char		mv_coords;
-  char		mv_rotate_about;
-  char		mv_transform;
-  int		mv_predictor;
-  double	mv_predictor_advance;
-  double	mv_predictor_length;
-  double	mv_perspective;			/* used to directly set the perspective angle */
-  int		mv_perspective_mode;		/* used to toggle perspective viewing on/off */
-  int		mv_toggle_perspective;		/* used to toggle through values in perspective_table[] */
-  double	mv_nmg_eu_dist;
-  double	mv_eye_sep_dist;		/* >0 implies stereo.  units = "room" mm */
-  char		mv_union_lexeme[1024];
-  char		mv_intersection_lexeme[1024];
-  char		mv_difference_lexeme[1024];
-};
+#define ALT_MOUSE_MODE_IDLE 0
+#define ALT_MOUSE_MODE_ROTATE 1 
+#define ALT_MOUSE_MODE_TRANSLATE 2
+#define ALT_MOUSE_MODE_ZOOM 3
 
-struct _axes_state {
-  int		ax_rc;
-  int		ax_model_draw;			/* model axes */
-  int		ax_model_size;
-  int		ax_model_linewidth;
-  fastf_t	ax_model_pos[3];
-  int		ax_view_draw;			/* view axes */
-  int		ax_view_size;
-  int		ax_view_linewidth;
-  int		ax_view_pos[2];
-  int		ax_edit_draw;			/* edit axes */
-  int		ax_edit_size1;
-  int		ax_edit_size2;
-  int		ax_edit_linewidth1;
-  int		ax_edit_linewidth2;
-};
+#define VIEW_TABLE_SIZE 5    /* enough to hold the menu's view selections */
 
-struct _grid_state {
-  int		gr_rc;
-  int		gr_draw;	/* draw grid */
-  int		gr_snap;	/* snap to grid */
-  fastf_t	gr_anchor[3];
-  fastf_t	gr_res_h;	/* grid resolution in h */
-  fastf_t	gr_res_v;	/* grid resolution in v */
-  int		gr_res_major_h;	/* major grid resolution in h */
-  int		gr_res_major_v;	/* major grid resolution in v */
-};
+struct shared_info {
+  fastf_t _Viewscale;
+  fastf_t _i_Viewscale;
+  fastf_t azimuth;
+  fastf_t elevation;
+  fastf_t twist;
+  mat_t   _Viewrot;
+  mat_t   _toViewcenter;
+  mat_t   _model2view;
+  mat_t   _view2model;
+  mat_t   _model2objview;
+  mat_t   _objview2model;
 
-struct _adc_state {
-  int		adc_rc;
-  int		adc_draw;
-  int		adc_dv_x;
-  int		adc_dv_y;
-  int		adc_dv_a1;
-  int		adc_dv_a2;
-  int		adc_dv_dist;
-  fastf_t	adc_pos_model[3];
-  fastf_t	adc_pos_view[3];
-  fastf_t	adc_pos_grid[3];
-  fastf_t	adc_a1;
-  fastf_t	adc_a2;
-  fastf_t	adc_dst;
-  int		adc_anchor_pos;
-  int		adc_anchor_a1;
-  int		adc_anchor_a2;
-  int		adc_anchor_dst;
-  fastf_t	adc_anchor_pt_a1[3];
-  fastf_t	adc_anchor_pt_a2[3];
-  fastf_t	adc_anchor_pt_dst[3];
-};
+  mat_t	  _viewrot_table[VIEW_TABLE_SIZE];
+  fastf_t _viewscale_table[VIEW_TABLE_SIZE];
+  int	  _current_view;
 
-struct _rubber_band {
-  int		rb_rc;
-  int		rb_active;	/* 1 - actively drawing a rubber band */
-  int		rb_draw;	/* draw rubber band rectangle */
-  int		rb_linewidth;
-  char		rb_linestyle;
-  int		rb_pos[2];	/* Position in image coordinates */
-  int		rb_dim[2];	/* Rectangle dimension in image coordinates */
-  fastf_t	rb_x;		/* Corner of rectangle in normalized     */
-  fastf_t	rb_y;		/* ------ view coordinates (i.e. +-1.0). */
-  fastf_t	rb_width;	/* Width and height of rectangle in      */
-  fastf_t	rb_height;	/* ------ normalized view coordinates.   */
-};
+/* Angle/distance cursor stuff */
+  int	  _dv_xadc;
+  int	  _dv_yadc;
+  int	  _dv_1adc;
+  int	  _dv_2adc;
+  int	  _dv_distadc;
+  fastf_t _curs_x;
+  fastf_t _curs_y;
+  fastf_t _c_tdist;
+  fastf_t _angle1;
+  fastf_t _angle2;
+  fastf_t _adc_a1_deg;
+  fastf_t _adc_a2_deg;
 
-struct _view_state {
-  int		vs_rc;
-  int		vs_flag;
+/* Rate stuff */
+  int	  _rateflag_tran;
+  vect_t  _rate_tran;
 
-  fastf_t	vs_Viewscale;
-  fastf_t	vs_i_Viewscale;
-  fastf_t	vs_azimuth;
-  fastf_t	vs_elevation;
-  fastf_t	vs_twist;
-  mat_t		vs_Viewrot;
-  mat_t		vs_toViewcenter;
-  mat_t		vs_model2view;
-  mat_t		vs_view2model;
-  mat_t		vs_model2objview;
-  mat_t		vs_objview2model;
-  mat_t		vs_ModelDelta;		/* changes to Viewrot this frame */
-
-  struct view_ring	vs_headView;
-  struct view_ring	*vs_current_view;
-  struct view_ring	*vs_last_view;
-
-  /* Rate stuff */
-  int		vs_rateflag_model_tran;
-  vect_t	vs_rate_model_tran;
-
-  int		vs_rateflag_model_rotate;
-  vect_t	vs_rate_model_rotate;
-  char		vs_rate_model_origin;
-
-  int		vs_rateflag_tran;
-  vect_t	vs_rate_tran;
-
-  int		vs_rateflag_rotate;
-  vect_t	vs_rate_rotate;
-  char		vs_rate_origin;
+  int	  _rateflag_rotate;
+  vect_t  _rate_rotate;
 	
-  int		vs_rateflag_scale;
-  fastf_t	vs_rate_scale;
+  int	  _rateflag_scale;
+  fastf_t _rate_scale;
 
-  /* Absolute stuff */
-  vect_t	vs_absolute_tran;
-  vect_t	vs_absolute_model_tran;
-  vect_t	vs_last_absolute_tran;
-  vect_t	vs_last_absolute_model_tran;
-  vect_t	vs_absolute_rotate;
-  vect_t	vs_absolute_model_rotate;
-  vect_t	vs_last_absolute_rotate;
-  vect_t	vs_last_absolute_model_rotate;
-  fastf_t	vs_absolute_scale;
+/* Absolute stuff */
+  vect_t  _absolute_tran;
+  vect_t  _absolute_rotate;
+  vect_t  _last_absolute_rotate;
+  fastf_t _absolute_scale;
 
-  /* Virtual trackball stuff */
-  point_t	vs_orig_pos;
+/* Virtual trackball stuff */
+  point_t _orig_pos;
+
+  int _dmaflag;
+  int _rc;         /* reference count */
+
+#if TRY_NEW_MGED_VARS
+  /* Tcl variable names for mged_variables */
+  struct bu_vls mged_variable_names[27];
+#endif
 
   /* Tcl variable names for display info */
-  struct bu_vls	vs_aet_name;
-  struct bu_vls	vs_ang_name;
-  struct bu_vls	vs_center_name;
-  struct bu_vls	vs_size_name;
-  struct bu_vls	vs_adc_name;
+  struct bu_vls _aet_name;
+  struct bu_vls _ang_name;
+  struct bu_vls _center_name;
+  struct bu_vls _size_name;
+  struct bu_vls _adc_name;
+
+  /* Tcl variable names for sliders */
+  struct bu_vls _rate_tran_vls[3];
+  struct bu_vls _rate_rotate_vls[3];
+  struct bu_vls _rate_scale_vls;
+  struct bu_vls _absolute_tran_vls[3];
+  struct bu_vls _absolute_rotate_vls[3];
+  struct bu_vls _absolute_scale_vls;
+  struct bu_vls _xadc_vls;
+  struct bu_vls _yadc_vls;
+  struct bu_vls _ang1_vls;
+  struct bu_vls _ang2_vls;
+  struct bu_vls _distadc_vls;
+
+  /* Convenient pointer to the owner's (of the shared_info) dm_pathName */
+  struct bu_vls *opp;
 };
 
-struct _color_scheme {
-  int	cs_rc;
-  int	cs_mode;
-  int	cs_bg[3];
-  int	cs_bg_a[3];
-  int	cs_bg_ia[3];
-  int	cs_adc_line[3];
-  int	cs_adc_line_a[3];
-  int	cs_adc_line_ia[3];
-  int	cs_adc_tick[3];
-  int	cs_adc_tick_a[3];
-  int	cs_adc_tick_ia[3];
-  int	cs_geo_def[3];
-  int	cs_geo_def_a[3];
-  int	cs_geo_def_ia[3];
-  int	cs_geo_hl[3];
-  int	cs_geo_hl_a[3];
-  int	cs_geo_hl_ia[3];
-  int	cs_geo_label[3];
-  int	cs_geo_label_a[3];
-  int	cs_geo_label_ia[3];
-  int	cs_model_axes[3];
-  int	cs_model_axes_a[3];
-  int	cs_model_axes_ia[3];
-  int	cs_model_axes_label[3];
-  int	cs_model_axes_label_a[3];
-  int	cs_model_axes_label_ia[3];
-  int	cs_view_axes[3];
-  int	cs_view_axes_a[3];
-  int	cs_view_axes_ia[3];
-  int	cs_view_axes_label[3];
-  int	cs_view_axes_label_a[3];
-  int	cs_view_axes_label_ia[3];
-  int	cs_edit_axes1[3];
-  int	cs_edit_axes1_a[3];
-  int	cs_edit_axes1_ia[3];
-  int	cs_edit_axes_label1[3];
-  int	cs_edit_axes_label1_a[3];
-  int	cs_edit_axes_label1_ia[3];
-  int	cs_edit_axes2[3];
-  int	cs_edit_axes2_a[3];
-  int	cs_edit_axes2_ia[3];
-  int	cs_edit_axes_label2[3];
-  int	cs_edit_axes_label2_a[3];
-  int	cs_edit_axes_label2_ia[3];
-  int	cs_rubber_band[3];
-  int	cs_rubber_band_a[3];
-  int	cs_rubber_band_ia[3];
-  int	cs_grid[3];
-  int	cs_grid_a[3];
-  int	cs_grid_ia[3];
-  int	cs_predictor[3];
-  int	cs_predictor_a[3];
-  int	cs_predictor_ia[3];
-  int	cs_menu_line[3];
-  int	cs_menu_line_a[3];
-  int	cs_menu_line_ia[3];
-  int	cs_slider_line[3];
-  int	cs_slider_line_a[3];
-  int	cs_slider_line_ia[3];
-  int	cs_other_line[3];
-  int	cs_other_line_a[3];
-  int	cs_other_line_ia[3];
-  int	cs_status_text1[3];
-  int	cs_status_text1_a[3];
-  int	cs_status_text1_ia[3];
-  int	cs_status_text2[3];
-  int	cs_status_text2_a[3];
-  int	cs_status_text2_ia[3];
-  int	cs_slider_text1[3];
-  int	cs_slider_text1_a[3];
-  int	cs_slider_text1_ia[3];
-  int	cs_slider_text2[3];
-  int	cs_slider_text2_a[3];
-  int	cs_slider_text2_ia[3];
-  int	cs_menu_text1[3];
-  int	cs_menu_text1_a[3];
-  int	cs_menu_text1_ia[3];
-  int	cs_menu_text2[3];
-  int	cs_menu_text2_a[3];
-  int	cs_menu_text2_ia[3];
-  int	cs_menu_title[3];
-  int	cs_menu_title_a[3];
-  int	cs_menu_title_ia[3];
-  int	cs_menu_arrow[3];
-  int	cs_menu_arrow_a[3];
-  int	cs_menu_arrow_ia[3];
-  int	cs_state_text1[3];
-  int	cs_state_text1_a[3];
-  int	cs_state_text1_ia[3];
-  int	cs_state_text2[3];
-  int	cs_state_text2_a[3];
-  int	cs_state_text2_ia[3];
-  int	cs_edit_info[3];
-  int	cs_edit_info_a[3];
-  int	cs_edit_info_ia[3];
-  int	cs_center_dot[3];
-  int	cs_center_dot_a[3];
-  int	cs_center_dot_ia[3];
-};
-
-struct _menu_state {
-  int	ms_rc;
-  int	ms_flag;
-  int	ms_top;
-  int	ms_cur_menu;
-  int	ms_cur_item;
-  struct menu_item	*ms_menus[NMENU];    /* base of menu items array */
-};
 
 struct dm_list {
   struct bu_list l;
-  struct dm *dml_dmp;
-  FBIO *dml_fbp;
-  int dml_netfd;			/* socket used to listen for connections */
-  struct client dml_clients[MAX_CLIENTS];
-  int dml_dirty;			/* true if received an expose or configuration event */
-  int dml_mapped;
-  int dml_owner;			/* true if owner of the view info */
-  int dml_am_mode;			/* alternate mouse mode */
-  int dml_ndrawn;
-  int dml_perspective_angle;
-  int *dml_zclip_ptr;
-  double dml_frametime;			/* time needed to draw last frame */
-  struct bu_vls dml_fps_name;
-  struct bu_list dml_p_vlist;		/* predictor vlist */
-  struct trail dml_trails[NUM_TRAILS];
-  struct cmd_list *dml_tie;
+  struct dm *_dmp;
 
-  int dml_adc_auto;
-  int dml_grid_auto_size;
-  int dml_mouse_dx;
-  int dml_mouse_dy;
-  int dml_omx;
-  int dml_omy;
-  int dml_knobs[8];
-  point_t dml_work_pt;
+/* New stuff to allow more than one active display manager */
+  struct shared_info *s_info;  /* info that can be used by display managers that are tied */
+  int _dirty;      /* true if received an expose or configuration event */
+  int _owner;      /* true if owner of the shared info */
+  int _am_mode;    /* alternate mouse mode */
+  int _ndrawn;
+  double _frametime;/* time needed to draw last frame */
+  struct bu_vls _fps_name;
+  struct cmd_list *aim;
+  struct  _mged_variables _mged_variables;
+  struct menu_item *_menu_array[NMENU];    /* base of array of menu items */
+  int _menuflag;
+  int _menu_top;
+  int _cur_menu;
+  int _cur_menu_item;
 
-  /* Slider stuff */
-  int dml_scroll_top;
-  int dml_scroll_active;
-  int dml_scroll_y;
-  struct scroll_item *dml_scroll_array[6];
+/* Slider stuff */
+  int _scroll_top;
+  int _scroll_active;
+  int _scroll_y;
+  int _scroll_edit;
+  struct scroll_item *_scroll_array[6];
+  struct bu_vls _scroll_edit_vls;
 
-  /* Shareable Resources */
-  struct _view_state *dml_view_state;
-  struct _adc_state *dml_adc_state;
-  struct _menu_state *dml_menu_state;
-  struct _rubber_band *dml_rubber_band;
-  struct _mged_variables *dml_mged_variables;
-  struct _color_scheme *dml_color_scheme;
-  struct _grid_state *dml_grid_state;
-  struct _axes_state *dml_axes_state;
-
-  /* Hooks */
-  int (*dml_cmd_hook)();
-  void (*dml_viewpoint_hook)();
-  int (*dml_eventHandler)();
+  int _last_v_axes;
+  void (*_knob_hook)();
+  void (*_axes_color_hook)();
+  int (*_cmd_hook)();
+  void (*_state_hook)();
+  void (*_viewpoint_hook)();
+  int (*dm_init)();
 };
 
-struct dm_char_queue {
-  struct bu_list l;
-  struct dm_list *dlp;
-};
+extern int update_views;   /* from ged.c */
+extern struct dm_list head_dm_list;  /* list of active display managers */
+extern struct dm_list *curr_dm_list;
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
-#define dmp curr_dm_list->dml_dmp
-#define fbp curr_dm_list->dml_fbp
-#define netfd curr_dm_list->dml_netfd
-#define clients curr_dm_list->dml_clients
+#define dmp curr_dm_list->_dmp
 #define pathName dmp->dm_pathName
 #define tkName dmp->dm_tkName
 #define dName dmp->dm_dName
-#define displaylist dmp->dm_displaylist
-#define dirty curr_dm_list->dml_dirty
-#define mapped curr_dm_list->dml_mapped
-#define owner curr_dm_list->dml_owner
-#define am_mode curr_dm_list->dml_am_mode
-#define ndrawn curr_dm_list->dml_ndrawn
-#define perspective_angle curr_dm_list->dml_perspective_angle
-#define zclip_ptr curr_dm_list->dml_zclip_ptr
-#define frametime curr_dm_list->dml_frametime
-#define fps_name curr_dm_list->dml_fps_name
+#define dirty curr_dm_list->_dirty
+#define owner curr_dm_list->_owner
+#define am_mode curr_dm_list->_am_mode
+#define ndrawn curr_dm_list->_ndrawn
+#define frametime curr_dm_list->_frametime
+#define fps_name curr_dm_list->_fps_name
+#define knob_hook curr_dm_list->_knob_hook
+#define axes_color_hook curr_dm_list->_axes_color_hook
+#define cmd_hook curr_dm_list->_cmd_hook
+#define state_hook curr_dm_list->_state_hook
+#define viewpoint_hook curr_dm_list->_viewpoint_hook
 
-#define view_state curr_dm_list->dml_view_state
-#define adc_state curr_dm_list->dml_adc_state
-#define menu_state curr_dm_list->dml_menu_state
-#define rubber_band curr_dm_list->dml_rubber_band
-#define mged_variables curr_dm_list->dml_mged_variables
-#define color_scheme curr_dm_list->dml_color_scheme
-#define grid_state curr_dm_list->dml_grid_state
-#define axes_state curr_dm_list->dml_axes_state
+#if 0
+#define mged_variables curr_dm_list->s_info->_mged_variables
+#else
+#define mged_variables curr_dm_list->_mged_variables
+#endif
 
-#define cmd_hook curr_dm_list->dml_cmd_hook
-#define viewpoint_hook curr_dm_list->dml_viewpoint_hook
-#define eventHandler curr_dm_list->dml_eventHandler
+#define menu_array curr_dm_list->_menu_array
+#define menuflag curr_dm_list->_menuflag
+#define menu_top curr_dm_list->_menu_top
+#define cur_menu curr_dm_list->_cur_menu
+#define cur_item curr_dm_list->_cur_menu_item
 
-#define adc_auto curr_dm_list->dml_adc_auto
-#define grid_auto_size curr_dm_list->dml_grid_auto_size
-#define dml_mouse_dx curr_dm_list->dml_mouse_dx
-#define dml_mouse_dy curr_dm_list->dml_mouse_dy
-#define dml_omx curr_dm_list->dml_omx
-#define dml_omy curr_dm_list->dml_omy
-#define dml_knobs curr_dm_list->dml_knobs
-#define dml_work_pt curr_dm_list->dml_work_pt
+#define curs_x curr_dm_list->s_info->_curs_x
+#define curs_y curr_dm_list->s_info->_curs_y
+#define c_tdist curr_dm_list->s_info->_c_tdist
+#define angle1 curr_dm_list->s_info->_angle1
+#define angle2 curr_dm_list->s_info->_angle2
+#define adc_a1_deg curr_dm_list->s_info->_adc_a1_deg
+#define adc_a2_deg curr_dm_list->s_info->_adc_a2_deg
+#define dv_xadc curr_dm_list->s_info->_dv_xadc
+#define dv_yadc curr_dm_list->s_info->_dv_yadc
+#define dv_1adc curr_dm_list->s_info->_dv_1adc
+#define dv_2adc curr_dm_list->s_info->_dv_2adc
+#define dv_distadc curr_dm_list->s_info->_dv_distadc
 
-#define scroll_top curr_dm_list->dml_scroll_top
-#define scroll_active curr_dm_list->dml_scroll_active
-#define scroll_y curr_dm_list->dml_scroll_y
-#define scroll_array curr_dm_list->dml_scroll_array
+#define rateflag_slew curr_dm_list->s_info->_rateflag_tran
+#define rateflag_tran curr_dm_list->s_info->_rateflag_tran
+#define rate_slew curr_dm_list->s_info->_rate_tran
+#define rate_tran curr_dm_list->s_info->_rate_tran
+#define absolute_slew curr_dm_list->s_info->_absolute_tran
+#define absolute_tran curr_dm_list->s_info->_absolute_tran
+#define rateflag_rotate curr_dm_list->s_info->_rateflag_rotate
+#define rate_rotate curr_dm_list->s_info->_rate_rotate
+#define absolute_rotate curr_dm_list->s_info->_absolute_rotate
+#define last_absolute_rotate curr_dm_list->s_info->_last_absolute_rotate
+#define rateflag_zoom curr_dm_list->s_info->_rateflag_scale
+#define rate_zoom curr_dm_list->s_info->_rate_scale
+#define absolute_zoom curr_dm_list->s_info->_absolute_scale
+
+#define Viewscale curr_dm_list->s_info->_Viewscale
+#define i_Viewscale curr_dm_list->s_info->_i_Viewscale
+#define Viewrot curr_dm_list->s_info->_Viewrot
+#define toViewcenter curr_dm_list->s_info->_toViewcenter
+#define model2view curr_dm_list->s_info->_model2view
+#define view2model curr_dm_list->s_info->_view2model
+#define model2objview curr_dm_list->s_info->_model2objview
+#define objview2model curr_dm_list->s_info->_objview2model
+#define viewrot_table curr_dm_list->s_info->_viewrot_table
+#define viewscale_table curr_dm_list->s_info->_viewscale_table
+#define current_view curr_dm_list->s_info->_current_view
+
+#define rot_x curr_dm_list->s_info->_rot_x
+#define rot_y curr_dm_list->s_info->_rot_y
+#define rot_z curr_dm_list->s_info->_rot_z
+#define tran_x curr_dm_list->s_info->_tran_x
+#define tran_y curr_dm_list->s_info->_tran_y
+#define tran_z curr_dm_list->s_info->_tran_z
+#define orig_pos curr_dm_list->s_info->_orig_pos
+
+#define dmaflag curr_dm_list->s_info->_dmaflag
+#define rc curr_dm_list->s_info->_rc
+
+#define aet_name curr_dm_list->s_info->_aet_name
+#define ang_name curr_dm_list->s_info->_ang_name
+#define center_name curr_dm_list->s_info->_center_name
+#define size_name curr_dm_list->s_info->_size_name
+#define adc_name curr_dm_list->s_info->_adc_name
+
+#define rate_tran_vls curr_dm_list->s_info->_rate_tran_vls
+#define rate_rotate_vls curr_dm_list->s_info->_rate_rotate_vls
+#define rate_scale_vls curr_dm_list->s_info->_rate_scale_vls
+#define absolute_tran_vls curr_dm_list->s_info->_absolute_tran_vls
+#define absolute_rotate_vls curr_dm_list->s_info->_absolute_rotate_vls
+#define absolute_scale_vls curr_dm_list->s_info->_absolute_scale_vls
+#define xadc_vls curr_dm_list->s_info->_xadc_vls
+#define yadc_vls curr_dm_list->s_info->_yadc_vls
+#define ang1_vls curr_dm_list->s_info->_ang1_vls
+#define ang2_vls curr_dm_list->s_info->_ang2_vls
+#define distadc_vls curr_dm_list->s_info->_distadc_vls
+
+#if 0
+#define scroll_top curr_dm_list->s_info->_scroll_top
+#define scroll_active curr_dm_list->s_info->_scroll_active
+#define scroll_y curr_dm_list->s_info->_scroll_y
+#define scroll_edit curr_dm_list->s_info->_scroll_edit
+#define scroll_array curr_dm_list->s_info->_scroll_array
+#else
+#define scroll_top curr_dm_list->_scroll_top
+#define scroll_active curr_dm_list->_scroll_active
+#define scroll_y curr_dm_list->_scroll_y
+#define scroll_edit curr_dm_list->_scroll_edit
+#define scroll_array curr_dm_list->_scroll_array
+#define scroll_edit_vls curr_dm_list->_scroll_edit_vls
+#endif
+
+#define last_v_axes curr_dm_list->_last_v_axes
 
 #define MINVIEW		0.001				
-#define VIEWSIZE	(2.0*view_state->vs_Viewscale)	/* Width of viewing cube */
-#define VIEWFACTOR	(1/view_state->vs_Viewscale)	/* 2.0 / VIEWSIZE */
+#define VIEWSIZE	(2.0*Viewscale)	/* Width of viewing cube */
+#define VIEWFACTOR	(1/Viewscale)	/* 2.0 / VIEWSIZE */
 
 #define RATE_ROT_FACTOR 6.0
 #define ABS_ROT_FACTOR 180.0
 #define ADC_ANGLE_FACTOR 45.0
+
+#define ALT_MOUSE_MODE_NOT_ACTIVE(_type,_name)\
+  ((_type)dm_vars)->_name == ALT_MOUSE_MODE_OFF ||\
+  ((_type)dm_vars)->_name == ALT_MOUSE_MODE_ON
 
 /*
  * Definitions for dealing with the buttons and lights.
@@ -539,29 +341,19 @@ struct dm_char_queue {
 
 #define BV_MAXFUNC	64	/* largest code used */
 
-#define FOR_ALL_DISPLAYS(p,hp) \
-	for(BU_LIST_FOR(p,dm_list,hp))
-
-#define GET_DM_LIST(p,id) { \
-		register struct dm_list *tp; \
-\
-		FOR_ALL_DISPLAYS(tp, &head_dm_list.l) { \
-			if((id) == tp->dml_dmp->dm_id) { \
-				(p) = tp; \
-				break; \
-			} \
+#define GET_DM_LIST(p,structure,w) { \
+	register struct dm_list *tp; \
+	for(BU_LIST_FOR(tp, dm_list, &head_dm_list.l)) { \
+		if(w == ((struct structure *)tp->_dmp->dm_vars)->win) { \
+			(p) = tp; \
+			break; \
 		} \
+	} \
 \
-		if(BU_LIST_IS_HEAD(tp, &head_dm_list.l)) \
-			(p) = DM_LIST_NULL; \
+	if(BU_LIST_IS_HEAD(tp, &head_dm_list.l))\
+		p = DM_LIST_NULL;\
 	}
 
-extern int doEvent(); /* defined in doevent.c */
-extern int dm_pipe[];  /* defined in ged.c */
-extern int update_views;   /* defined in ged.c */
-extern struct dm_list head_dm_list;  /* list of active display managers */
-extern struct dm_list *curr_dm_list;
-extern struct dm_char_queue head_dm_char_queue;
 
 struct w_dm {
   int type;
@@ -573,14 +365,5 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 /* indices into which_dm[] */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1
-
-
-/* Flags indicating whether the ogl and sgi display managers have been
- * attached. Defined in dm-ogl.c. 
- * These are necessary to decide whether or not to use direct rendering
- * with ogl.
- */
-extern	char	ogl_ogl_used;
-extern	char	ogl_sgi_used;
 
 #endif /* SEEN_MGED_DM_H */

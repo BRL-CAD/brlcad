@@ -60,9 +60,6 @@ char **argv;
 	char shell_name[NAMESIZE];
 	long **trans_tbl;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 2 < argc){
@@ -174,9 +171,6 @@ int	argc;
 char	**argv;
 {
 	int i, flag, pos_in;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -290,9 +284,6 @@ char **argv;
 	int	endpos;
 	int status = TCL_OK;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 27 < argc){
@@ -377,7 +368,7 @@ char **argv;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
-	if( rt_functab[id].ft_import( &internal, &external, identity, dbip ) < 0 )
+	if( rt_functab[id].ft_import( &internal, &external, identity ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "solid import failure on ",
 			   argv[argc-1], "\n", (char *)NULL);
@@ -413,7 +404,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( rt_functab[id].ft_export( &new_ext , &new_int , 1.0, dbip ) )
+	if( rt_functab[id].ft_export( &new_ext , &new_int , 1.0 ) )
 	{
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
@@ -474,11 +465,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	old_xlate = (matp_t)user_ptr2;
 	flag = (int *)user_ptr3;
 
-	if( comb_leaf->tr_l.tl_mat )  {
-		bn_mat_mul( new_xlate, old_xlate, comb_leaf->tr_l.tl_mat );
-	} else {
-		bn_mat_copy( new_xlate, old_xlate );
-	}
+	bn_mat_mul( new_xlate, old_xlate, comb_leaf->tr_l.tl_mat );
 	if( (nextdp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
@@ -500,9 +487,6 @@ int flag;
 	int nparts, i, k;
 	int id;
 	struct bu_vls str;
-
-	if(dbip == DBI_NULL)
-	  return;
 
 	bu_vls_init( &str );
 
@@ -666,7 +650,7 @@ int			id;
  *  for each tree walk.  If it is not, then d_uses is NOT a safe
  *  way to check and this method will always work.)
  */
-	bu_semaphore_acquire((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+	bu_semaphore_acquire((unsigned int)(&rt_g.res_worker - &rt_g.res_syscall));
 	FOR_ALL_PUSH_SOLIDS(pip) {
 	  if (pip->pi_dir == dp ) {
 	    if (!bn_mat_is_equal(pip->pi_mat,
@@ -679,7 +663,7 @@ int			id;
 	      push_error = 1;
 	    }
 
-	    bu_semaphore_release((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+	    bu_semaphore_release((unsigned int)(&rt_g.res_worker - &rt_g.res_syscall));
 	    BU_GETUNION(curtree, tree);
 	    curtree->magic = RT_TREE_MAGIC;
 	    curtree->tr_op = OP_NOP;
@@ -698,7 +682,7 @@ int			id;
 	pi_head.back = pip;
 	pip->forw = &pi_head;
 	pip->back->forw = pip;
-	bu_semaphore_release((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+	bu_semaphore_release((unsigned int)(&rt_g.res_worker - &rt_g.res_syscall));
 	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
@@ -749,7 +733,7 @@ static struct db_tree_state push_initial_tree_state = {
 
 /*			F _ P U S H
  *
- * The push command is used to move matrices from combinations 
+ * The push command is used to move matricies from combinations 
  * down to the solids. At some point, it is worth while thinking
  * about adding a limit to have the push go only N levels down.
  *
@@ -770,8 +754,8 @@ char **argv;
 #if 0
 	int	levels;	/* XXX levels option on push command not yet implemented */
 #endif
-	extern 	int bu_optind;
-	extern	char *bu_optarg;
+	extern 	int optind;
+	extern	char *optarg;
 	extern	struct bn_tol	mged_tol;	/* from ged.c */
 	extern	struct rt_tess_tol mged_ttol;
 	int	i;
@@ -779,9 +763,6 @@ char **argv;
 	struct push_id *pip;
 	struct bu_external	es_ext;
 	struct rt_db_internal	es_int;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -806,16 +787,16 @@ char **argv;
 	ncpu = 1;
 
 	/* Parse options */
-	bu_optind = 1;	/* re-init bu_getopt() */
-	while ( (c=bu_getopt(argc, argv, "l:P:d")) != EOF) {
+	optind = 1;	/* re-init getopt() */
+	while ( (c=getopt(argc, argv, "l:P:d")) != EOF) {
 		switch(c) {
 		case 'l':
 #if 0
-			levels=atoi(bu_optarg);
+			levels=atoi(optarg);
 #endif
 			break;
 		case 'P':
-			ncpu = atoi(bu_optarg);
+			ncpu = atoi(optarg);
 			if (ncpu<1) ncpu = 1;
 			break;
 		case 'd':
@@ -828,8 +809,8 @@ char **argv;
 		}
 	}
 
-	argc -= bu_optind;
-	argv += bu_optind;
+	argc -= optind;
+	argv += optind;
 
 	push_error = 0;
 
@@ -882,7 +863,7 @@ char **argv;
 		  continue;
 		}
 		id = rt_id_solid( &es_ext);
-		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat, dbip) < 0 ) {
+		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat) < 0 ) {
 		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 				   "): solid import failure\n", (char *)NULL);
 		  if (es_int.idb_ptr) rt_functab[id].ft_ifree( &es_int);
@@ -890,7 +871,7 @@ char **argv;
 		  continue;
 		}
 		RT_CK_DB_INTERNAL( &es_int);
-		if ( rt_functab[id].ft_export( &es_ext, &es_int, 1.0, dbip) < 0 ) {
+		if ( rt_functab[id].ft_export( &es_ext, &es_int, 1.0) < 0 ) {
 		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 				   "): solid export failure\n", (char *)NULL);
 		} else {
@@ -943,9 +924,6 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
 
-	if( !comb_leaf->tr_l.tl_mat )  {
-		comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat" );
-	}
 	bn_mat_idn( comb_leaf->tr_l.tl_mat );
 	if( (dp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -967,9 +945,6 @@ struct directory *dp;
 	struct directory *nextdp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-
-	if(dbip == DBI_NULL)
-	  return;
 
 	if( dp->d_flags & DIR_SOLID )
 		return;
@@ -1051,9 +1026,6 @@ struct directory *dp;
 	struct rt_db_internal sol_int;
 	int id;
 
-	if(dbip == DBI_NULL)
-	  return;
-
 	RT_CK_DIR( dp );
 
 	while( BU_LIST_NON_EMPTY( &dp->d_use_hd ) )
@@ -1086,9 +1058,6 @@ struct directory *dp;
 	char format[25];
 	char name[NAMESIZE];
 
-	if(dbip == DBI_NULL)
-	  return;
-
 	/* only one use and not referenced elsewhere, nothing to do */
 	if( dp->d_uses < 2 && dp->d_uses == dp->d_nref )
 		return;
@@ -1116,7 +1085,6 @@ struct directory *dp;
 		bn_mat_zero( use->xform );
 		use->used = 0;
 		NAMEMOVE( dp->d_namep, name );
-		name[NAMESIZE-1] = '\0';                /* ensure null termination */
 
 		/* Add an entry for the original at the end of the list
 		 * This insures that the original will be last to be modified
@@ -1158,9 +1126,6 @@ mat_t xform;
 	struct rt_db_internal sol_int;
 	struct object_use *use;
 	int id;
-
-	if(dbip == DBI_NULL)
-	  return DIR_NULL;
 
 	RT_CK_DIR( dp );
 
@@ -1220,7 +1185,7 @@ mat_t xform;
 	RT_INIT_DB_INTERNAL( &sol_int );
 
 	id = rt_id_solid( &sol_ext );
-	if( rt_functab[id].ft_import( &sol_int, &sol_ext, xform, dbip ) < 0 )
+	if( rt_functab[id].ft_import( &sol_int, &sol_ext, xform ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "Cannot import solid ",
 			   dp->d_namep, "\n", (char *)NULL);
@@ -1262,11 +1227,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	xform = (matp_t)user_ptr1;
 
 	/* apply transform matrix for this arc */
-	if( comb_leaf->tr_l.tl_mat )  {
-		bn_mat_mul( new_xform, xform, comb_leaf->tr_l.tl_mat );
-	} else {
-		bn_mat_copy( new_xform, xform );
-	}
+	bn_mat_mul( new_xform, xform, comb_leaf->tr_l.tl_mat );
 
 	/* Copy member with current tranform matrix */
 	if( (dp_new=Copy_object( dp, new_xform )) == DIR_NULL )
@@ -1281,9 +1242,6 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	comb_leaf->tr_l.tl_name = bu_strdup( dp_new->d_namep );
 
 	/* make transform for this arc the identity matrix */
-	if( !comb_leaf->tr_l.tl_mat )  {
-		comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat" );
-	}
 	bn_mat_idn( comb_leaf->tr_l.tl_mat );
 }
 
@@ -1298,9 +1256,6 @@ mat_t xform;
 	struct rt_comb_internal *comb;
 	mat_t new_xform;
 	int i;
-
-	if(dbip == DBI_NULL)
-	  return DIR_NULL;
 
 	RT_CK_DIR( dp );
 
@@ -1404,9 +1359,6 @@ char **argv;
 	struct bu_ptbl tops;
 	mat_t xform;
 	int i,j;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -1532,10 +1484,8 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	if( *count == 1 )
 	{
 		mat_t tmp_mat;
-		if( comb_leaf->tr_l.tl_mat )  {
-			bn_mat_mul( tmp_mat, acc_matrix, comb_leaf->tr_l.tl_mat );
-			bn_mat_copy( acc_matrix, tmp_mat );
-		}
+		bn_mat_mul( tmp_mat, acc_matrix, comb_leaf->tr_l.tl_mat );
+		MAT_COPY( acc_matrix, tmp_mat );
 	}
 
 }
@@ -1553,9 +1503,6 @@ char **argv;
 	int max_count=1;
 	mat_t acc_matrix;
 	struct bu_vls tmp_vls;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if(argc < 2 || 2 < argc){
 	  struct bu_vls vls;
@@ -1655,9 +1602,6 @@ char *argv[];
 	char *nmg_name;
 	int success = 0;
 	int shell_count=0;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -1901,9 +1845,6 @@ char **argv;
 	struct region		*regp;
 	char			*new_name;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
@@ -2113,9 +2054,6 @@ char **argv;
 	struct rt_comb_internal *comb;
 	char id[10];
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -2158,9 +2096,6 @@ char **argv;
 	struct bu_vls v;
 	int new_argc;
 	int lim;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -2237,192 +2172,4 @@ char **argv;
 		(void)signal( SIGINT, SIG_IGN );
 		return TCL_OK;
 	}
-}
-
-
-int
-f_edge_collapse( clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	char *new_name;
-	struct model *m;
-	struct rt_db_internal intern;
-	struct directory *dp;
-	long count;
-	char count_str[32];
-	fastf_t tol_coll;
-	fastf_t min_angle;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
-	CHECK_READ_ONLY;
-
-	if(argc < 5 || MAXARGS < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help nmg_collapse");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( strchr( argv[2], '/' ) )
-	{
-	  Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[2], "\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-
-	new_name = argv[2];
-	
-	if( db_lookup( dbip, new_name, LOOKUP_QUIET ) != DIR_NULL )
-	{
-	  Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-
-	if( (dp=db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return TCL_ERROR;
-
-	if( dp->d_flags & DIR_COMB )
-	{
-		Tcl_AppendResult(interp, argv[1], " is a combination, only NMG solids are allowed here\n", (char *)NULL );
-		return TCL_ERROR;
-	}
-
-	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) < 0 )
-	{
-		Tcl_AppendResult(interp, "Failed to get internal form of ", argv[1], "!!!!\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-
-	if( intern.idb_type != ID_NMG )
-	{
-		Tcl_AppendResult(interp, argv[1], " is not an NMG solid!!!!\n", (char *)NULL );
-		rt_db_free_internal( &intern );
-		return TCL_ERROR;
-	}
-
-	tol_coll = atof( argv[3] ) * local2base;
-	if( tol_coll <= 0.0 )
-	{
-		Tcl_AppendResult(interp, "tolerance distance too small\n", (char *)NULL );
-		return TCL_ERROR;
-	}
-
-	if( argc == 5 )
-	{
-		min_angle = atof( argv[4] );
-		if( min_angle < 0.0 )
-		{
-			Tcl_AppendResult(interp, "Minimum angle cannot be less than zero\n", (char *)NULL );
-			return TCL_ERROR;
-		}
-	}
-	else
-		min_angle = 0.0;
-
-	m = (struct model *)intern.idb_ptr;
-	NMG_CK_MODEL( m );
-
-	/* triangulate model */
-	nmg_triangulate_model( m, &mged_tol );
-
-	count = nmg_edge_collapse( m, &mged_tol, tol_coll, min_angle );
-
-	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
-	{
-		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
-		rt_db_free_internal( &intern );
-		return TCL_ERROR;
-	}
-
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
-	{
-		rt_db_free_internal( &intern );
-		TCL_WRITE_ERR_return;
-	}
-
-	rt_db_free_internal( &intern );
-
-	sprintf( count_str, "%ld", count );
-	Tcl_AppendResult(interp, count_str, " edges collapsed\n", (char *)NULL );
-
-	/* use "e" command to get new solid displayed */
-	{
-	  char *av[3];
-
-	  av[0] = "e";
-	  av[1] = new_name;
-	  av[2] = NULL;
-
-	  return f_edit( clientData, interp, 2, av );
-	}
-
-}
-
-/*			F _ M A K E _ N A M E
- *
- * Generate an identifier that is guaranteed not to be the name
- * of any object currently in the database.
- *
- */
-int
-f_make_name(clientData, interp, argc, argv)
-
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-
-{
-    struct bu_vls	obj_name;
-    char		*cp, *tp;
-    static int		i = 0;
-    int			len;
-
-    bu_log("make_name %s\n", argv[1]);
-    if (dbip == DBI_NULL)
-	return TCL_OK;
-
-    if ((argc < 2) || (2 < argc))
-    {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help make_name");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    bu_vls_init(&obj_name);
-    for (cp = argv[1], len = 0; (*cp != '\0'); ++cp, ++len)
-    {
-	if (*cp == '@')
-	    if (*(cp + 1) == '@')
-		++cp;
-	    else
-		break;
-	bu_vls_putc(&obj_name, *cp);
-    }
-    bu_vls_putc(&obj_name, '\0');
-    tp = (*cp == '\0') ? ""
-		       : cp + 1;
-
-    do
-    {
-	bu_vls_trunc(&obj_name, len);
-	bu_vls_printf(&obj_name, "%d", i++);
-	bu_vls_strcat(&obj_name, tp);
-	bu_log("OK, object_name is '%s'\n", bu_vls_addr(&obj_name));
-    }
-    while (db_lookup(dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
-    bu_log("%s\n", bu_vls_addr(&obj_name));
-    Tcl_AppendResult(interp, bu_vls_addr(&obj_name), (char *) NULL);
-    return TCL_OK;
 }

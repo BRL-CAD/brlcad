@@ -598,10 +598,10 @@ struct rt_tol		*tol;
 	 * Don't depend on them here.
 	 */
 	nmg_fix_normals( s , tol );
-#if 0
+
 	/* mark edges as real */
 	(void)nmg_mark_edges_real( &s->l );
-#endif
+	
 	rt_free( (char *)verts, "pg_tess verts[]" );
 	rt_free( (char *)vertp, "pg_tess vertp[]" );
 

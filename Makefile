@@ -26,6 +26,7 @@ SHELL		= /bin/sh
 # Main rule (default):
 all:
 	-@sh gen.sh all
+
 help:
 	-@sh gen.sh help
 benchmark:
@@ -69,10 +70,4 @@ rmdir:
 tcl:
 	-@sh gen.sh $@
 install-tcl:
-	-@sh gen.sh $@
-ami:
-	-@sh gen.sh $@
-tags:
-	-@sh gen.sh $@
-TAGS:
 	-@sh gen.sh $@

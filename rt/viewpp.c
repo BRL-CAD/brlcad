@@ -32,6 +32,7 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 
 int		use_air = 0;		/* Handling of air in librt */
 
@@ -67,10 +68,9 @@ void	pknum();
 
 /* Support for pretty-picture files */
 int
-pphit( ap, PartHeadp, segHeadp )
+pphit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
-struct seg	*segHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -124,9 +124,7 @@ struct seg	*segHeadp;
 }
 
 int
-ppmiss(ap)
-struct application *ap;
-{
+ppmiss()  {
 	last_solidp = SOLTAB_NULL;
 	ntomiss++;
 	return(0);

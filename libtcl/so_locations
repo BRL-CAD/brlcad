@@ -1,4 +1,0 @@
-libtcl8.0.so \
-		:st = .text 0x5ff60000, 0x00090000:\
-		:st = .data 0x5fff0000, 0x00010000:\
-

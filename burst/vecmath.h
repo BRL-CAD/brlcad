@@ -66,9 +66,7 @@
 			       (B)[Z] = Max( (B)[Z], (C)[Z] ); }
 #define NearZero( a )		((a) < EPSILON && (a) > -EPSILON)
 #define NonZeroVec( V )	(!NearZero((V)[X]) || !NearZero((V)[Y])|| !NearZero((V)[Z]))
-#ifndef PI
 #define PI	3.14159265358979323846264338327950288419716939937511
-#endif
 					/* ratio of circumf. to diam. */
 #define RelDist3d( A, B )	(Sqr((A)[X]-(B)[X])+\
 				 Sqr((A)[Y]-(B)[Y])+\
@@ -85,7 +83,7 @@
 #define V_Length( a, l ) \
 		{	double f, m; \
 		if( (m=Mag(a)) == 0.0 ) \
-			brst_log( "Magnitude is zero!\n" ); \
+			rt_log( "Magnitude is zero!\n" ); \
 		else \
 			{ \
 			f = (l)/m; \

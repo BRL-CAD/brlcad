@@ -16,15 +16,9 @@
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-#define COMPLETE_LIBES	\
-	LIBFB LIBBU RFBD_LIBES LIBFB_LIBES LIBBU_LIBES LIBES
-
 /* Explicit composition of each product */
 
-fbserv:	OBJ LIBFB_DEP LIBBU_DEP LIBDM_DEP
-	CC LDFLAGS -o fbserv OBJ COMPLETE_LIBES
+fbserv:	OBJ LIBFB_DEP
+	CC LDFLAGS -o fbserv OBJ LIBFB LIBFB_LIBES RFBD_LIBES LIBES
 
 #include "../Cakefile.rules"
-
-
-

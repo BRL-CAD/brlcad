@@ -26,11 +26,11 @@
 	extern char *rindex();
 #endif
 
-#ifndef HAVE_TERMIOS_H
+#ifndef HAS_TERMIOS
 #if (defined(BSD) && BSD >= 44) || defined(_POSIX_SOURCE)
-#	define HAVE_TERMIOS_H	1
+#	define HAS_TERMIOS	1
 #else
-#	define HAVE_TERMIOS_H	0
+#	define HAS_TERMIOS	0
 #endif
 #endif
 
@@ -442,7 +442,7 @@ extern int	UpdModLine,	/* Whether we want to update the mode line */
  * which is a quad_t or "long long".
  * It is also delcared in <sys/types.h>
  */
-#if BSD <= 43
+#if !defined(__bsdi__) && !defined(__NetBSD__)
 extern long	lseek();
 #endif
 

@@ -108,7 +108,7 @@ register CONST struct bu_vls	*vp;
 
 	BU_CK_VLS(vp);
 
-	if( vp->vls_max == 0 || vp->vls_str == (char *)NULL )  {
+	if( vp->vls_max == 0 || vp->vls_len == 0 || vp->vls_str == (char *)NULL )  {
 		/* A zero-length VLS is a null string */
 		nullbuf[0] = '\0';
 		return(nullbuf);
@@ -495,63 +495,6 @@ char	**argv;
 }
 
 /*
- *			B U _ A R G V _ F R O M _ S T R I N G
- *
- *  Build argv[] array from input buffer, by splitting whitespace
- *  separated "words" into null terminated strings.
- *  The input buffer is altered by this process.
- *  The argv[] array points into the input buffer.
- *  The input buffer should not be freed until argv has been freed
- *  or passes out of scope.
- *
- *  'lim' indicates the number of elements in the argv[] array.
- *
- *  Returns -
- *	 0	no words in input
- *	nwords	number of words of input, now in argv[]
- *
- *  Built from rt_split_cmd(), but without the shell escape support.
- */
-int
-bu_argv_from_string(argv, lim, lp )
-char		**argv;
-int		lim;
-register char	*lp;
-{
-	register int	nwords;			/* number of words seen */
-	register char	*lp1;
-
-	argv[0] = "_NIL_";		/* sanity */
-
-	while( *lp != '\0' && isspace( *lp ) )
-		lp++;
-
-	if( *lp == '\0' )
-		return 0;		/* No words */
-
-	/* some non-space string has been seen, argv[0] is set */
-	nwords = 1;
-	argv[0] = lp;
-
-	for( ; *lp != '\0'; lp++ )  {
-		if( !isspace( *lp ) )
-			continue;	/* skip over current word */
-
-		*lp = '\0';		/* terminate current word */
-		lp1 = lp + 1;
-		if( *lp1 != '\0' && !isspace( *lp1 ) )  {
-			/* Begin next word */
-			if( nwords >= lim-1 )
-				break;	/* argv[] full */
-
-			argv[nwords++] = lp1;
-		}
-	}
-	argv[nwords] = (char *)0;	/* safety */
-	return nwords;
-}
-
-/*
  *			B U _ V L S _ F W R I T E
  */
 void
@@ -572,78 +515,6 @@ CONST struct bu_vls	*vp;
 		perror("fwrite");
 		bu_bomb("bu_vls_fwrite() write error\n");
 	}
-}
-
-/*
- *			B U _ V L S _ W R I T E
- */
-void
-bu_vls_write( fd, vp )
-int			fd;
-CONST struct bu_vls	*vp;
-{
-	int status;
-
-	BU_CK_VLS(vp);
-	if( vp->vls_len <= 0 )  return;
-
-#if !unix
-	bu_bomb("bu_vls_write(): This isn't UNIX\n");
-#else
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	status = write( fd, vp->vls_str + vp->vls_offset, vp->vls_len );
-	bu_semaphore_release(BU_SEM_SYSCALL);
-
-	if( status != vp->vls_len ) {    
-		perror("write");
-		bu_bomb("bu_vls_write() write error\n");
-	}
-#endif
-}
-
-/*
- *			B U _ V L S _ R E A D
- *
- *  Read the remainder of a UNIX file onto the end of a vls.
- *
- *  Returns -
- *	nread	number of characters read
- *	0	if EOF encountered immediately
- *	-1	read error
- */
-int
-bu_vls_read( vp, fd )
-struct bu_vls	*vp;
-int		fd;
-{
-	int	ret = 0;
-	int	todo;
-	int	got;
-
-	BU_CK_VLS(vp);
-
-#if !unix
-	bu_bomb("bu_vls_read(): This isn't UNIX\n");
-#else
-	for(;;)  {
-		bu_vls_extend( vp, 4096 );
-		todo = vp->vls_max - vp->vls_len - vp->vls_offset - 1;
-
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		got = read(fd, vp->vls_str+vp->vls_offset+vp->vls_len, todo );
-		bu_semaphore_release(BU_SEM_SYSCALL);
-
-		if( got < 0 )  {
-			/* Read error, abandon the read */
-			return -1;
-		}
-		if(got == 0)  break;
-		vp->vls_len += got;
-		ret += got;
-	}
-	vp->vls_str[vp->vls_len+vp->vls_offset] = '\0';	/* force null termination */
-#endif
-	return ret;
 }
 
 /*
@@ -672,15 +543,7 @@ register FILE		*fp;
 
 	startlen = bu_vls_strlen(vp);
 	bu_vls_extend( vp, 80 );		/* Ensure room to grow */
-	for( ;; )  {
-		/* Talk about inefficiency... */
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		c = getc(fp);
-		bu_semaphore_release( BU_SEM_SYSCALL );
-
-		/* XXX Alternatively, code up something with fgets(), chunking */
-
-		if( c == EOF || c == '\n' )  break;
+	while( (c = getc(fp)) != EOF && c != '\n' )  {
 		bu_vls_putc( vp, c );
 	}
 	if( c == EOF && bu_vls_strlen(vp) <= startlen )  return -1;

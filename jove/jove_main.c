@@ -4,9 +4,6 @@
  * $Revision$
  *
  * $Log$
- * Revision 11.5  1997/01/03  17:42:17  jra
- * Mods for Irix 6.2
- *
  * Revision 11.4  1995/06/21  03:42:30  gwyn
  * Eliminated trailing blanks.
  * BinShell, version, Joverc are now arrays rather than string literal pointers.
@@ -147,7 +144,7 @@ static char RCSid[] = "@(#)$Header$";
 #include "./termcap.h"
 
 #include <signal.h>
-#if HAVE_TERMIOS_H
+#if HAS_TERMIOS
 #  if !defined(_XOPEN_SOURCE)
 #	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
 #  endif
@@ -329,7 +326,7 @@ charp()
 		if (ioctl(0, FIONREAD, (char *) &c) == -1)
 			c = 0;
 #else
-#if defined(SYS5) || HAVE_TERMIOS_H
+#if defined(SYS5) || HAS_TERMIOS
 		int c, flags;
 
 		/* Since VMIN=1, we need to be able to poll for input
@@ -339,7 +336,7 @@ charp()
 		 * characters here, to see if there are any.
 		 */
 		flags = fcntl( Input, F_GETFL, 0);
-#  if HAVE_TERMIOS_H
+#  if HAS_TERMIOS
 		(void)fcntl( Input, F_SETFL, flags|O_NONBLOCK );
 #  else
 		(void)fcntl( Input, F_SETFL, flags|O_NDELAY );
@@ -456,7 +453,7 @@ register int	prompt;
 int	OKXonXoff = 0;		/* ^S and ^Q initially DON'T work */
 
 #ifndef	BRLUNIX
-# if HAVE_TERMIOS_H
+# if HAS_TERMIOS
 struct termios	oldtty, newtty;
 # else
 #  if defined(SYS5)
@@ -472,7 +469,7 @@ struct sg_brl	oldtty, newtty;
 void
 ttsetup() {
 #ifndef BRLUNIX
-#  if HAVE_TERMIOS_H
+#  if HAS_TERMIOS
 	if (tcgetattr( 0, &oldtty ) < 0) {
 #  else
 #    if defined(SYS5)
@@ -480,7 +477,7 @@ ttsetup() {
 #    else
 	if (ioctl(0, TIOCGETP, (char *) &oldtty) == -1) {
 #    endif
-#  endif	/* HAVE_TERMIOS_H */
+#  endif	/* HAS_TERMIOS */
 #else
 	if (gtty(0, &oldtty) < 0) {
 #endif
@@ -491,7 +488,7 @@ ttsetup() {
 	/* One time setup of "raw mode" stty struct */
 	newtty = oldtty;
 #ifndef BRLUNIX
-#if !defined(SYS5) && !HAVE_TERMIOS_H
+#if !defined(SYS5) && !HAS_TERMIOS
 	newtty.sg_flags &= ~(ECHO | CRMOD);
 	newtty.sg_flags |= CBREAK;
 #else
@@ -618,7 +615,7 @@ ttinit()
 void
 ttyset(n)
 {
-#if HAVE_TERMIOS_H
+#if HAS_TERMIOS
 	struct termios	tty;
 #else
 # if defined(SYS5)
@@ -633,7 +630,7 @@ ttyset(n)
 	else
 		tty = oldtty;
 
-#if HAVE_TERMIOS_H
+#if HAS_TERMIOS
 	if (tcsetattr( 0, TCSANOW, &tty) == -1)
 #else
 #  if !defined(SYS5)

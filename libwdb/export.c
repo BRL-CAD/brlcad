@@ -62,7 +62,7 @@ int		id;
 	intern.idb_ptr = gp;
 
 	/* Scale change on export is from global "mk_conv2mm" */
-	if( rt_functab[id].ft_export( &ext, &intern, mk_conv2mm, NULL ) < 0 )  {
+	if( rt_functab[id].ft_export( &ext, &intern, mk_conv2mm ) < 0 )  {
 		rt_log("mk_export_fwrite(%s): solid export failure\n",
 			name );
 		db_free_external( &ext );

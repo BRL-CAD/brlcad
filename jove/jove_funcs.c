@@ -4,9 +4,6 @@
  * $Revision$
  *
  * $Log$
- * Revision 11.3  1997/01/03  17:42:17  jra
- * Mods for Irix 6.2
- *
  * Revision 11.2  1995/06/21  03:41:04  gwyn
  * Eliminated trailing blanks.
  * WriteMacs() now uses Dfltmode instead of hard-wired 0644.
@@ -531,7 +528,6 @@ InitBindings()
 	BindFunc(pref1map, 'Z', DownScroll);
 	BindFunc(pref1map, 'z', DownScroll);
 	BindFunc(pref1map, '[', VtKeys);	/* Vt100 arrows */
-	BindFunc(pref1map, 'O', VtKeys);	/* xterm "application" arrow keys */
 	BindFunc(pref1map, '!', SubShell);
 	BindFunc(pref1map, '\177', DelPWord);
 	BindFunc(pref1map, '\\', DelWtSpace);

@@ -132,8 +132,7 @@ char *av[];
 			if (eos != optarg) 
 				offset = newoffset;
 			else
-				fprintf(stderr,"%s: error parsing offset \"%s\"\n",
-					progname, optarg);
+				fprintf(stderr,"%s: error parsing offset \"%s\"\n", optarg);
 		}
 		else usage();
 

@@ -184,7 +184,7 @@ nmg_dump()
 		struct_count[j] = rt_glong( &record.nmg.N_structs[j*4] );
 
 	/* output some header info */
-	(void)printf( "%c %d %.16s %ld\n",
+	(void)printf( "%c %d %.16s %d\n",
 		record.nmg.N_id,	/* N */
 		record.nmg.N_version,	/* NMG version */
 		record.nmg.N_name,	/* solid name */
@@ -192,7 +192,7 @@ nmg_dump()
 
 	/* output the structure counts */
 	for( j=0 ; j<26 ; j++ )
-		(void)printf( " %ld" , struct_count[j] );
+		(void)printf( " %d" , struct_count[j] );
 	(void)putchar( '\n' );
 
 	/* dump the reminder in hex format */

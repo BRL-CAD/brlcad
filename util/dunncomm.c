@@ -62,32 +62,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  endif	/* BSD */
 
 #  ifdef SYSV
-#if 0
 #	if !defined(__sparc) && !defined(CRAY)
 		struct timeval {
 			int	tv_sec;
 			int	tv_usec;
 	};
 #	endif
-#endif
 #   include <termio.h>
     struct	termio	tty;
 #  endif /* SYSV */
 
 #endif /* _POSIX_SOURCE */
-
-#ifndef OCRNL
-#define OCRNL 0x00000008
-#endif
-
-#ifndef TAB1
-#define TAB1 0x00000400
-#endif
-
-#ifndef TAB2
-#define TAB2 0x00000800
-#endif
-
 #ifndef	XTABS
 #	define	XTABS	(TAB1 | TAB2)
 #endif /* XTABS */

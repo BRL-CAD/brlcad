@@ -80,9 +80,8 @@ char *p_half[] = {
 
 char *p_dsp[] = {
 	"Enter name of displacement-map file: ",
-	"Enter width of displacement-map (number of values): ",
-	"Enter length of displacement-map (number of values): ",
-	"Normal Interpolation? 0=no 1=yes default=1: "
+	"Enter width of displacement-map (number of cells): ",
+	"Enter length of displacement-map (number of cells): "
 };
 
 char *p_hf[] = {
@@ -112,12 +111,6 @@ char *p_ebm[] = {
 	"Enter width of bit-map (number of cells): ",
 	"Enter height of bit-map (number of cells): ",
 	"Enter extrusion distance: "
-};
-
-char *p_submodel[] = {
-	"Enter name of treetop: ",
-	"Enter space partitioning method: ",
-	"Enter name of .g file (or \"\" for none): "
 };
 
 char *p_vol[] = {
@@ -410,10 +403,7 @@ char **argv;
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(),
-				dsp_in(), submodel_in();
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+				dsp_in();
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -426,9 +416,8 @@ char **argv;
 	}
 
 	/* Parse options. */
-	bu_optind = 1;		/* re-init bu_getopt() */
-	bu_opterr = 0;          /* suppress bu_getopt()'s error message */
-	while( (c=bu_getopt(argc,argv,"sf")) != EOF )  {
+	optind = 1;		/* re-init getopt() */
+	while( (c=getopt(argc,argv,"sf")) != EOF )  {
 		switch(c)  {
 		case 's':
 			do_solid_edit = 1;
@@ -441,7 +430,7 @@ char **argv;
 		    struct bu_vls tmp_vls;
 
 		    bu_vls_init(&tmp_vls);
-		    bu_vls_printf(&tmp_vls, "in: option '%c' unknown\n", bu_optopt);
+		    bu_vls_printf(&tmp_vls, "in: option '%c' unknown\n", c);
 		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    bu_vls_free(&tmp_vls);
 		  }
@@ -449,8 +438,8 @@ char **argv;
 		  break;
 		}
 	}
-	argc -= bu_optind-1;
-	argv += bu_optind-1;
+	argc -= optind-1;
+	argv += optind-1;
 
 	vals = 0;
 
@@ -491,10 +480,6 @@ char **argv;
 		nvals = 4;
 		menu = p_ebm;
 		fn_in = ebm_in;
-	} else if( strcmp( argv[2], "submodel" ) == 0 )  {
-		nvals = 3;
-		menu = p_submodel;
-		fn_in = submodel_in;
 	} else if( strcmp( argv[2], "vol" ) == 0 )  {
 		nvals = 9;
 		menu = p_vol;
@@ -504,7 +489,7 @@ char **argv;
 		menu = p_hf;
 		fn_in = hf_in;
 	} else if( strcmp( argv[2], "dsp" ) == 0 )  {
-		nvals = 4;
+		nvals = 3;
 		menu = p_dsp;
 		fn_in = dsp_in;
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
@@ -523,17 +508,7 @@ char **argv;
 		menu = p_half;
 		fn_in = half_in;
 	} else if( strncmp( argv[2], "arb", 3 ) == 0 )  {
-		int n = atoi(&argv[2][3]);
-
-		if(n < 4 || 8 < n){
-			Tcl_AppendResult(interp, "ERROR: \"", argv[2],
-					 "\" not supported!\n", (char *)0);
-			Tcl_AppendResult(interp, "supported arbs: arb4 arb5 arb6 arb7 arb8\n",
-						 (char *)0);
-			return TCL_ERROR;
-		}
-
-		nvals = 3*n;
+		nvals = 3*atoi(&argv[2][3]);
 		menu = p_arb;
 		fn_in = arb_in;
 	} else if( strcmp( argv[2], "sph" ) == 0 )  {
@@ -667,9 +642,6 @@ struct rt_db_internal	*intern;
 {
 	struct rt_ebm_internal	*ebm;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	BU_GETSTRUCT( ebm, rt_ebm_internal );
 	intern->idb_type = ID_EBM;
 	intern->idb_ptr = (genptr_t)ebm;
@@ -680,48 +652,6 @@ struct rt_db_internal	*intern;
 	ebm->ydim = atoi( cmd_argvs[5] );
 	ebm->tallness = atof( cmd_argvs[6] ) * local2base;
 	bn_mat_idn( ebm->mat );
-
-	return( 0 );
-}
-
-/* parameters for solid, internal representation
- * XXX This goes in rtgeom.h
- */
-/* parameters for solid, internal representation */
-struct rt_submodel_internal {
-	long	magic;
-	char	file[128];	/* .g filename, 0-len --> this database. */
-	char	treetop[128];	/* one treetop only */
-	int	meth;		/* space partitioning method */
-	/* other option flags (lazy prep, etc.)?? */
-	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-	mat_t	root2leaf;
-};
-#define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/* subm */
-
-/*			S U B M O D E L _ I N
- *
- *	Read submodel from keyboard
- *
- */
-int
-submodel_in( cmd_argvs, intern )
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
-{
-	struct rt_submodel_internal	*sip;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
-	BU_GETSTRUCT( sip, rt_submodel_internal );
-	intern->idb_type = ID_SUBMODEL;
-	intern->idb_ptr = (genptr_t)sip;
-	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
-
-	strcpy( sip->treetop, cmd_argvs[3] );
-	sip->meth = atoi( cmd_argvs[4] );
-	strcpy( sip->file, cmd_argvs[5] );
 
 	return( 0 );
 }
@@ -745,7 +675,6 @@ struct rt_db_internal	*intern;
 	strcpy( dsp->dsp_file, cmd_argvs[3] );
 	dsp->dsp_xcnt = atoi( cmd_argvs[4] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[5] );
-	dsp->dsp_smooth = atoi( cmd_argvs[6] );
 	bn_mat_idn( dsp->dsp_mtos );
 	bn_mat_idn( dsp->dsp_stom );
 
@@ -766,9 +695,6 @@ struct rt_db_internal	*intern;
 {
 	struct rt_hf_internal	*hf;
 	vect_t work;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	BU_GETSTRUCT( hf, rt_hf_internal );
 	intern->idb_type = ID_HF;
@@ -832,9 +758,6 @@ struct rt_db_internal	*intern;
 {
 	struct rt_vol_internal	*vol;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	BU_GETSTRUCT( vol, rt_vol_internal );
 	intern->idb_type = ID_VOL;
 	intern->idb_ptr = (genptr_t)vol;
@@ -870,11 +793,8 @@ char			*promp[];
 	int			cv;	/* current curve (waterline) # */
 	int			axis;	/* current fastf_t in waterline */
 	int			ncurves_minus_one;
+
 	int num_pts, num_curves;
-
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if( argc < 5 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-3], (char *)NULL);
@@ -988,9 +908,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_half_internal	*hip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_HALF;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_half_internal),
 		"rt_half_internal" );
@@ -1021,9 +938,6 @@ struct rt_db_internal	*intern;
 {
 	int			i, j, n;
 	struct rt_arb_internal	*aip;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	intern->idb_type = ID_ARB8;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
@@ -1070,9 +984,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_ell_internal	*sip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_ELL;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal),
 		"rt_ell_internal" );
@@ -1107,9 +1018,6 @@ struct rt_db_internal	*intern;
 	fastf_t			len, mag_b, r_rev, vals[12];
 	int			i, n;
 	struct rt_ell_internal	*eip;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	n = 7;				/* ELL and ELL1 have seven params */
 	if (cmd_argvs[2][3] == 'g')	/* ELLG has twelve */
@@ -1184,9 +1092,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_tor_internal	*tip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_TOR;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tor_internal),
 		"rt_tor_internal" );
@@ -1225,9 +1130,6 @@ struct rt_db_internal	*intern;
 	fastf_t			r1, r2;
 	int			i;
 	struct rt_tgc_internal	*tip;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
@@ -1279,9 +1181,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_tgc_internal	*tip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
@@ -1326,9 +1225,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_tgc_internal	*tip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
@@ -1369,9 +1265,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_tgc_internal	*tip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
@@ -1411,9 +1304,6 @@ struct rt_db_internal	*intern;
 	fastf_t			r1, r2;
 	int			i;
 	struct rt_tgc_internal	*tip;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	intern->idb_type = ID_TGC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
@@ -1462,9 +1352,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_arb_internal	*aip;
 	vect_t			Dpth, Hgt, Vrtx, Wdth;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	intern->idb_type = ID_ARB8;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
@@ -1521,9 +1408,6 @@ struct rt_db_internal	*intern;
 	fastf_t			xmin, xmax, ymin, ymax, zmin, zmax;
 	struct rt_arb_internal	*aip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_ARB8;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
 		"rt_arb_internal" );
@@ -1574,9 +1458,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_rpc_internal	*rip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_RPC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_rpc_internal),
 		"rt_rpc_internal" );
@@ -1613,9 +1494,6 @@ struct rt_db_internal	*intern;
 {
 	int			i;
 	struct rt_rhc_internal	*rip;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	intern->idb_type = ID_RHC;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_rhc_internal),
@@ -1654,9 +1532,6 @@ struct rt_db_internal	*intern;
 {
 	int			i;
 	struct rt_epa_internal	*rip;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	intern->idb_type = ID_EPA;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_epa_internal),
@@ -1700,9 +1575,6 @@ struct rt_db_internal	*intern;
 	int			i;
 	struct rt_ehy_internal	*rip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	intern->idb_type = ID_EHY;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ehy_internal),
 		"rt_ehy_internal" );
@@ -1745,9 +1617,6 @@ struct rt_db_internal	*intern;
 {
 	int			i;
 	struct rt_eto_internal	*eip;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	intern->idb_type = ID_ETO;
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_eto_internal),

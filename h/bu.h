@@ -135,13 +135,11 @@ extern char	*realloc();
  *  the first entry in the structure is a magic number.
  */
 #define BU_CKMAG(_ptr, _magic, _str)	\
-	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
-	    *((long *)(_ptr)) != (_magic) )  { \
+	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
 		bu_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
 #define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
-	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
-	     *((long *)(_ptr)) != (_magic) )  { \
+	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
 		bu_badmagic_tcl( (_interp), (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 		return TCL_ERROR; \
 	}
@@ -298,7 +296,6 @@ struct bu_list {
 
 /* Handle list initialization */
 #define	BU_LIST_UNINITIALIZED(hp)	((hp)->forw == BU_LIST_NULL)
-#define	BU_LIST_IS_INITIALIZED(hp)	((hp)->forw != BU_LIST_NULL)
 #define BU_LIST_INIT(hp)	{ \
 	(hp)->forw = (hp)->back = (hp); \
 	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
@@ -590,7 +587,6 @@ struct bu_ptbl {
 #define BU_PTBL_LEN(p)	((p)->end)
 #define BU_PTBL_GET(ptbl,i)	((ptbl)->buffer[(i)])
 #define BU_PTBL_TEST(ptbl)	((ptbl)->l.magic == BU_PTBL_MAGIC)
-#define BU_PTBL_CLEAR_I(_ptbl, _i) ((_ptbl)->buffer[(_i)] = (long *)0)
 
 /*
  *  A handy way to visit all the elements of the table is:
@@ -651,16 +647,13 @@ struct bu_vls  {
 };
 #define BU_VLS_MAGIC		0x89333bbb
 #define BU_CK_VLS(_vp)		BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
-#define BU_VLS_IS_INITIALIZED(_vp)	\
-	((_vp) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
 /*
  *  Section for manifest constants for bu_semaphore_acquire()
  */
 #define BU_SEM_SYSCALL	0
-#define BU_SEM_LISTS	1
-#define BU_SEM_BN_NOISE	2
-#define BU_SEM_LAST	(BU_SEM_BN_NOISE+1)	/* allocate this many for LIBBU+LIBBN */
+#define BU_SEM_BN_NOISE	4	/* XXX really old res_model. should get own */
+#define BU_SEM_LAST	5	/* XXX allocate this many (want 6 really) */
 /*
  *  Automatic restart capability in bu_bomb().
  *  The return from BU_SETJUMP is the return from the setjmp().
@@ -731,7 +724,7 @@ extern int	bu_debug;
 #if CRAY
 #	define bu_byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
-#  if IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
+#  if IRIX > 5
 #	define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
@@ -796,50 +789,6 @@ struct bu_external  {
 #define BU_CK_EXTERNAL(_p)	RT_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
 /*----------------------------------------------------------------------*/
-/* file.c */
-/*
- *	General I/O for ASCII files: bu_file support
- */
-struct bu_file  {
-	long		file_magic;
-	FILE		*file_ptr;	/* the actual file */
-	char		*file_name;
-	struct bu_vls	file_buf;	/* contents of current line */
-	char		*file_bp;	/* pointer into current line */
-	int		file_needline;	/* time to grab another line? */
-	int		file_linenm;
-	int		file_comment;	/* the comment character */
-	int		file_buflen;	/* length of intact buffer */
-};
-typedef struct bu_file		BU_FILE;
-#define BU_FILE_MAGIC		0x6275666c
-#define BU_CK_FILE(_fp)		BU_CKMAG(_fp, BU_FILE_MAGIC, "bu_file")
-
-#define bu_stdin		(&bu_iob[0])
-extern BU_FILE			bu_iob[1];
-#define BU_FILE_NO_COMMENT	-1
-
-/*----------------------------------------------------------------------*/
-/* color.c */
-#define	HUE		0
-#define	SAT		1
-#define	VAL		2
-#define	ACHROMATIC	-1.0
-
-struct bu_color
-{
-    long	buc_magic;
-    fastf_t	buc_rgb[3];
-};
-#define	BU_COLOR_MAGIC		0x6275636c
-#define	BU_COLOR_NULL		((struct bu_color *) 0)
-#define BU_CK_COLOR(_bp)	BU_CKMAG(_bp, BU_COLOR_MAGIC, "bu_color")
-
-/*----------------------------------------------------------------------*/
-/* Miscellaneous macros */
-#define bu_made_it()		bu_log("Made it to %s:%d\n",	\
-					__FILE__, __LINE__)
-/*----------------------------------------------------------------------*/
 /*
  *  Declarations of external functions in LIBBU.
  *  Source file names listed alphabetically.
@@ -863,10 +812,6 @@ BU_EXTERN(void			bu_pr_bitv, (CONST char *str,
 
 /* bomb.c */
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
-
-/* brlcad_path.c */
-BU_EXTERN(int			bu_file_exists, (CONST char *path) );
-BU_EXTERN(char			*bu_brlcad_path, (CONST char *rhs) );
 
 /* getopt.c */
 extern int			bu_opterr;
@@ -897,9 +842,6 @@ BU_EXTERN(void			bu_setlinebuf, (FILE *fp) );
 BU_EXTERN(int			bu_list_len, (CONST struct bu_list *hd));
 BU_EXTERN(void			bu_list_reverse, (struct bu_list *hd));
 BU_EXTERN(void			bu_list_free, (struct bu_list *hd));
-BU_EXTERN(void			bu_list_parallel_append, (struct bu_list *headp,
-					struct bu_list *itemp));
-BU_EXTERN(struct bu_list *	bu_list_parallel_dequeue, (struct bu_list *headp));
 
 /* log.c */
 BU_EXTERN(void			bu_log_indent_delta, (int delta) );
@@ -945,8 +887,7 @@ BU_EXTERN(int			bu_avail_cpus, ());
 BU_EXTERN(fastf_t		bu_get_load_average, ());
 BU_EXTERN(int			bu_get_public_cpus, ());
 BU_EXTERN(int			bu_set_realtime, ());
-BU_EXTERN(void			bu_parallel, (void (*func)BU_ARGS((int ncpu, genptr_t arg)),
-				int ncpu, genptr_t arg));
+BU_EXTERN(void			bu_parallel, (void (*func)(), int ncpu));
 
 /* parse.c */
 BU_EXTERN(int			bu_struct_export, (struct bu_external *ext,
@@ -989,10 +930,6 @@ BU_EXTERN(void			bu_parse_mm, (CONST struct bu_structparse *sdp,
 				CONST char *name,
 				char *base,
 				CONST char *value));
-BU_EXTERN( int                  bu_key_eq_to_key_val, (char *in, char **next, struct bu_vls *vls) );
-BU_EXTERN( int                  bu_shader_to_tcl_list, (char *in, struct bu_vls *vls) );
-BU_EXTERN( int                  bu_key_val_to_key_eq, (char *in) );
-BU_EXTERN( int                  bu_shader_to_key_eq, (char *in, struct bu_vls *vls) );
 				
 
 
@@ -1062,12 +999,6 @@ BU_EXTERN(void			bu_vls_printf, (struct bu_vls *vls, char *fmt, ... ) );
 BU_EXTERN(void			bu_vls_blkset, (struct bu_vls *vp, int len, int ch) );
 #endif
 
-/* file.c */
-BU_EXTERN(struct bu_file	*bu_fopen, (char *fname, char *type) );
-BU_EXTERN(int			bu_fclose, (struct bu_file *bfp) );
-BU_EXTERN(int			bu_fgetc, (struct bu_file *bfp) );
-BU_EXTERN(void			bu_printfile, (struct bu_file *bfp) );
-
 /* vers.c (created by the Cakefile) */
 extern CONST char		bu_version[];
 
@@ -1077,26 +1008,6 @@ BU_EXTERN(CONST char *bu_units_string, (CONST double mm) );
 BU_EXTERN(double bu_mm_value, (CONST char *s) );
 BU_EXTERN(void bu_mm_cvt, (register CONST struct bu_structparse	*sdp,
 		register CONST char *name,  char *base, CONST char *value) );
-
-/* color.c */
-BU_EXTERN(void		bu_rgb_to_hsv,		(unsigned char *rgb,
-						    fastf_t *hsv) );
-BU_EXTERN(int		bu_hsv_to_rgb,		(fastf_t *hsv,
-						    unsigned char *rgb) );
-BU_EXTERN(int		bu_str_to_rgb,		(char *str,
-						    unsigned char *rgb) );
-BU_EXTERN(void		bu_color_of_rgb_chars,	(struct bu_color *cp,
-						    unsigned char *rgb) );
-BU_EXTERN(int		bu_color_to_rgb_chars,	(struct bu_color *cp,
-						    unsigned char *rgb) );
-BU_EXTERN(int		bu_color_of_rgb_floats,	(struct bu_color *cp,
-						    fastf_t *rgb) );
-BU_EXTERN(int		bu_color_to_rgb_floats,	(struct bu_color *cp,
-						    fastf_t *rgb) );
-BU_EXTERN(int		bu_color_of_hsv_floats,	(struct bu_color *cp,
-						    fastf_t *hsv) );
-BU_EXTERN(int		bu_color_to_hsv_floats,	(struct bu_color *cp,
-						    fastf_t *hsv) );
 
 
 

@@ -151,7 +151,7 @@ register int 	argc;
 		if (optind >= argc) {
 			if (isatty(fileno(stdin))) {
 				fprintf(stderr,
-					"pixrect: input from sdtin\n");
+					"pixrect: input from sdtin\n",file_name);
 				return(0);
 			}
 			ifp = stdin;

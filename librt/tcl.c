@@ -51,8 +51,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "externs.h"
 
-#include "./debug.h"
-
 #define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)DBI_MAGIC,"struct db_i")
 #define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)RTI_MAGIC,"struct rt_i")
 #define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)RT_WDB_MAGIC,"struct rt_wdb")
@@ -84,8 +82,6 @@ extern struct bu_structparse rt_hf_parse[];
 extern struct bu_structparse rt_dsp_parse[];
 /* COMB -- supported below */
 
-/* XXX This should probably become part of the rt_functab in librt/table.c */
-
 struct rt_solid_type_lookup {
 	char			id;
 	size_t			db_internal_size;
@@ -112,414 +108,6 @@ struct rt_solid_type_lookup {
 	{ ID_DSP,     sizeof(struct rt_dsp_internal), (long)RT_DSP_INTERNAL_MAGIC, "dsp", rt_dsp_parse },
 	{ 0, 0, 0, 0 }
 };
-
-struct dbcmdstruct {
-	char *cmdname;
-	int (*cmdfunc)();
-};
-
-/*
- *			R T _ T C L _ P R _ H I T
- *
- *  Format a hit in a TCL-friendly format.
- *
- *  It is possible that a solid may have been removed from the
- *  directory after this database was prepped, so check pointers
- *  carefully.
- *
- *  It might be beneficial to use some format other than %g to
- *  give the user more precision.
- */
-void
-rt_tcl_pr_hit( interp, hitp, segp, rayp, flipflag )
-Tcl_Interp	*interp;
-struct hit	*hitp;
-struct seg	*segp;
-struct xray	*rayp;
-int		flipflag;
-{
-	struct bu_vls	str;
-	vect_t		norm;
-	struct soltab	*stp;
-	CONST struct directory	*dp;
-	struct curvature crv;
-
-	RT_CK_SEG(segp);
-	stp = segp->seg_stp;
-	RT_CK_SOLTAB(stp);
-	dp = stp->st_dp;
-	RT_CK_DIR(dp);
-
-	RT_HIT_NORMAL( norm, hitp, stp, rayp, flipflag );
-	RT_CURVATURE( &crv, hitp, flipflag, stp );
-
-	bu_vls_init(&str);
-	bu_vls_printf( &str, " {dist %g point {", hitp->hit_dist);
-	bn_encode_vect( &str, hitp->hit_point );
-	bu_vls_printf( &str, "} normal {" );
-	bn_encode_vect( &str, norm );
-	bu_vls_printf( &str, "} c1 %g c2 %g pdir {",
-		crv.crv_c1, crv.crv_c2 );
-	bn_encode_vect( &str, crv.crv_pdir );
-	bu_vls_printf( &str, "} surfno %d", hitp->hit_surfno );
-	if( stp->st_path.magic == DB_FULL_PATH_MAGIC )  {
-		/* Magic is left 0 if the path is not filled in. */
-		char	*sofar = db_path_to_string(&stp->st_path);
-		bu_vls_printf( &str, " path ");
-		bu_vls_strcat( &str, sofar );
-		bu_free( (genptr_t)sofar, "path string" );
-	}
-	bu_vls_printf( &str, " solid %s}", dp->d_namep );
-
-	Tcl_AppendResult( interp, bu_vls_addr( &str ), (char *)NULL );
-	bu_vls_free( &str );
-}
-
-/*
- *			R T _ T C L _ A _ H I T
- */
-int
-rt_tcl_a_hit( ap, PartHeadp, segHeadp )
-struct application	*ap;
-struct partition	*PartHeadp;
-struct seg		*segHeadp;
-{
-	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
-	register struct partition *pp;
-
-	RT_CK_PT_HD(PartHeadp);
-
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
-		RT_CK_PT(pp);
-		Tcl_AppendResult( interp, "{in", (char *)NULL );
-		rt_tcl_pr_hit( interp, pp->pt_inhit, pp->pt_inseg,
-			&ap->a_ray, pp->pt_inflip );
-		Tcl_AppendResult( interp, "\nout", (char *)NULL );
-		rt_tcl_pr_hit( interp, pp->pt_outhit, pp->pt_outseg,
-			&ap->a_ray, pp->pt_outflip );
-		Tcl_AppendResult( interp,
-			"\nregion ",
-			pp->pt_regionp->reg_name,
-			(char *)NULL );
-		Tcl_AppendResult( interp, "}\n", (char *)NULL );
-	}
-
-	return 1;
-}
-
-/*
- *			R T _ T C L _ A _ M I S S
- */
-int
-rt_tcl_a_miss( ap )
-struct application	*ap;
-{
-	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
-
-	return 0;
-}
-
-
-/*
- *			R T _ T C L _ S H O O T R A Y
- *
- *  Usage -
- *	procname shootray {P} dir|at {V}
- *
- *  Example -
- *	set glob_compat_mode 0
- *	.inmem rt_gettrees .rt all.g
- *	.rt shootray {0 0 0} dir {0 0 -1}
- *
- *	set tgt [bu_get_value_by_keyword V [concat type [.inmem get LIGHT]]]
- *	.rt shootray {20 -13.5 20} at $tgt
- *		
- *
- *  Returns -
- *	This "shootray" operation returns a nested set of lists. It returns
- *	a list of zero or more partitions. Inside each partition is a list
- *	containing an in, out, and region keyword, each with an associated
- *	value. The associated value for each "inhit" and "outhit" is itself
- *	a list containing a dist, point, normal, surfno, and solid keyword,
- *	each with an associated value.
- */
-int
-rt_tcl_rt_shootray( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	struct application	*ap = (struct application *)clientData;
-	struct rt_i		*rtip;
-
-	if( argc != 5 )  {
-		Tcl_AppendResult( interp,
-				"wrong # args: should be \"",
-				argv[0], " ", argv[1], " {P} dir|at {V}\"",
-				(char *)NULL );
-		return TCL_ERROR;
-	}
-
-	/* Could core dump */
-	RT_AP_CHECK(ap);
-	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
-
-	if( bn_decode_vect( ap->a_ray.r_pt,  argv[2] ) != 3 ||
-	    bn_decode_vect( ap->a_ray.r_dir, argv[4] ) != 3 )  {
-		Tcl_AppendResult( interp,
-			"badly formatted vector", (char *)NULL );
-		return TCL_ERROR;
-	}
-	switch( argv[3][0] )  {
-	case 'd':
-		/* [4] is direction vector */
-		break;
-	case 'a':
-		/* [4] is target point, build a vector from start pt */
-		VSUB2( ap->a_ray.r_dir, ap->a_ray.r_dir, ap->a_ray.r_pt );
-		break;
-	default:
-		Tcl_AppendResult( interp,
-				"wrong keyword: '", argv[4],
-				"', should be one of 'dir' or 'at'",
-				(char *)NULL );
-		return TCL_ERROR;
-	}
-	VUNITIZE( ap->a_ray.r_dir );	/* sanity */
-	ap->a_hit = rt_tcl_a_hit;
-	ap->a_miss = rt_tcl_a_miss;
-	ap->a_uptr = (genptr_t)interp;
-
-	(void)rt_shootray( ap );
-
-	return TCL_OK;
-}
-
-/*
- *			R T _ T C L _ R T _ O N E H I T
- *  Usage -
- *	procname onehit
- *	procname onehit #
- */
-int
-rt_tcl_rt_onehit( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	struct application	*ap = (struct application *)clientData;
-	struct rt_i		*rtip;
-	char			buf[64];
-
-	if( argc < 2 || argc > 3 )  {
-		Tcl_AppendResult( interp,
-				"wrong # args: should be \"",
-				argv[0], " ", argv[1], " [#]\"",
-				(char *)NULL );
-		return TCL_ERROR;
-	}
-
-	/* Could core dump */
-	RT_AP_CHECK(ap);
-	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
-
-	if( argc == 3 )  {
-		ap->a_onehit = atoi(argv[2]);
-	}
-	sprintf(buf, "%d", ap->a_onehit );
-	Tcl_AppendResult( interp, buf, (char *)NULL );
-	return TCL_OK;
-}
-
-/*
- *			R T _ T C L _ R T _ N O _ B O O L
- *  Usage -
- *	procname no_bool
- *	procname no_bool #
- */
-int
-rt_tcl_rt_no_bool( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	struct application	*ap = (struct application *)clientData;
-	struct rt_i		*rtip;
-	char			buf[64];
-
-	if( argc < 2 || argc > 3 )  {
-		Tcl_AppendResult( interp,
-				"wrong # args: should be \"",
-				argv[0], " ", argv[1], " [#]\"",
-				(char *)NULL );
-		return TCL_ERROR;
-	}
-
-	/* Could core dump */
-	RT_AP_CHECK(ap);
-	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
-
-	if( argc == 3 )  {
-		ap->a_no_booleans = atoi(argv[2]);
-	}
-	sprintf(buf, "%d", ap->a_no_booleans );
-	Tcl_AppendResult( interp, buf, (char *)NULL );
-	return TCL_OK;
-}
-
-/*
- *			R T _ T C L _ R T _ C H E C K
- *
- *  Run some of the internal consistency checkers over the data structures.
- *
- *  Usage -
- *	procname check
- */
-int
-rt_tcl_rt_check( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	struct application	*ap = (struct application *)clientData;
-	struct rt_i		*rtip;
-	char			buf[64];
-
-	if( argc != 2 )  {
-		Tcl_AppendResult( interp,
-				"wrong # args: should be \"",
-				argv[0], " ", argv[1], "\"",
-				(char *)NULL );
-		return TCL_ERROR;
-	}
-
-	/* Could core dump */
-	RT_AP_CHECK(ap);
-	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
-
-	rt_ck(rtip);
-
-	return TCL_OK;
-}
-
-/*
- *			R T _ T C L _ R T _ P R E P
- *
- *  When run with no args, just prints current status of prepping.
- *
- *  Usage -
- *	procname prep
- *	procname prep use_air [hasty_prep]
- */
-int
-rt_tcl_rt_prep( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	struct application	*ap = (struct application *)clientData;
-	struct rt_i		*rtip;
-	struct bu_vls		str;
-
-	if( argc < 2 || argc > 5 )  {
-		Tcl_AppendResult( interp,
-				"wrong # args: should be \"",
-				argv[0], " ", argv[1],
-				" [hasty_prep]\"",
-				(char *)NULL );
-		return TCL_ERROR;
-	}
-
-	/* Could core dump */
-	RT_AP_CHECK(ap);
-	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
-
-	if( argc >= 3 && !rtip->needprep )  {
-		Tcl_AppendResult( interp,
-			argv[0], " ", argv[1],
-			" invoked when model has already been prepped.\n",
-			(char *)NULL );
-		return TCL_ERROR;
-	}
-
-	if( argc >= 3 )  rtip->rti_hasty_prep = atoi(argv[3]);
-
-	/* If args were given, prep now. */
-	if( argc >= 3 )  rt_prep_parallel( rtip, 1 );
-
-	/* Now, describe the current state */
-	bu_vls_init( &str );
-	bu_vls_printf( &str, "hasty_prep %d dont_instance %d useair %d needprep %d",
-		rtip->rti_hasty_prep,
-		rtip->rti_dont_instance,
-		rtip->useair,
-		rtip->needprep
-	);
-
-	Tcl_AppendResult( interp, bu_vls_addr(&str), (char *)NULL );
-	bu_vls_free( &str );
-	return TCL_OK;
-}
-
-static struct dbcmdstruct rt_tcl_rt_cmds[] = {
-	"shootray",	rt_tcl_rt_shootray,
-	"onehit",	rt_tcl_rt_onehit,
-	"no_bool",	rt_tcl_rt_no_bool,
-	"check",	rt_tcl_rt_check,
-	"prep",		rt_tcl_rt_prep,
-	(char *)0,	(int (*)())0
-};
-
-/*
- *			R T _ T C L _ R T
- *
- * Generic interface for the LIBRT_class manipulation routines.
- * Usage:
- *        procname dbCmdName ?args?
- * Returns: result of cmdName LIBRT operation.
- */
-int
-rt_tcl_rt( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	struct dbcmdstruct	*dbcmd;
-
-	if( argc < 2 ) {
-		Tcl_AppendResult( interp,
-				  "wrong # args: should be \"", argv[0],
-				  " command [args...]\"",
-				  (char *)NULL );
-		return TCL_ERROR;
-	}
-
-	for( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
-		if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
-			return (*dbcmd->cmdfunc)( clientData, interp,
-						  argc, argv );
-		}
-	}
-
-
-	Tcl_AppendResult( interp, "unknown LIBRT command; must be one of:",
-			  (char *)NULL );
-	for( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
-		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
-	}
-	return TCL_ERROR;
-}
 
 /*
  *		R T _ G E T _ P A R S E T A B _ B Y _ I D
@@ -558,6 +146,374 @@ char *s_type;
 }
 
 /*
+ *			B U _ B A D M A G I C _ T C L
+ */
+
+void
+bu_badmagic_tcl( interp, ptr, magic, str, file, line )
+Tcl_Interp	*interp;
+CONST long	*ptr;
+long		magic;
+CONST char	*str;
+CONST char	*file;
+int		line;
+{
+	char	buf[256];
+
+	if( !(ptr) )  { 
+		sprintf(buf, "ERROR: NULL %s pointer, file %s, line %d\n", 
+			str, file, line ); 
+		Tcl_AppendResult(interp, buf, NULL);
+		return;
+	}
+	if( *((long *)(ptr)) != (magic) )  { 
+		sprintf(buf, "ERROR: bad pointer x%x: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
+			ptr,
+			str, magic,
+			bu_identify_magic( *(ptr) ), *(ptr),
+			file, line ); 
+		Tcl_AppendResult(interp, buf, NULL);
+		return;
+	}
+	Tcl_AppendResult(interp, "bu_badmagic_tcl() mysterious error condition, ", str, " pointer, ", file, "\n", NULL);
+}
+
+
+
+/*
+ *			B U _ S T R U C T P A R S E _ A R G V
+ *
+ * Support routine for db adjust and db put.  Much like bu_structparse routine,
+ * but takes the arguments as lists, a more Tcl-friendly method.
+ * Also knows about the Tcl result string, so it can make more informative
+ * error messages.
+ * XXX move to libbu/bu_tcl.c
+ */
+
+int
+bu_structparse_argv( interp, argc, argv, desc, base )
+Tcl_Interp			*interp;
+int				 argc;
+char			       **argv;
+CONST struct bu_structparse	*desc;		/* structure description */
+char				*base;		/* base addr of users struct */
+{
+	register char				*cp, *loc;
+	register CONST struct bu_structparse	*sdp;
+	register int				 i, j;
+	struct bu_vls				 str;
+
+	if( desc == (struct bu_structparse *)NULL ) {
+		bu_log( "bu_structparse_argv: NULL desc pointer\n" );
+		Tcl_AppendResult( interp, "NULL desc pointer", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* Run through each of the attributes and their arguments. */
+
+	bu_vls_init( &str );
+	while( argc > 0 ) {
+		/* Find the attribute which matches this argument. */
+		for( sdp = desc; sdp->sp_name != NULL; sdp++ ) {
+			if( strcmp(sdp->sp_name, *argv) != 0 )
+				continue;
+
+			/* if we get this far, we've got a name match
+			 * with a name in the structure description
+			 */
+
+#if CRAY && !__STDC__
+			loc = (char *)(base+((int)sdp->sp_offset*sizeof(int)));
+#else
+			loc = (char *)(base+((int)sdp->sp_offset));
+#endif
+			if( sdp->sp_fmt[0] != '%' ) {
+				bu_log( "bu_structparse_argv: unknown format\n" );
+				bu_vls_free( &str );
+				Tcl_AppendResult( interp, "unknown format",
+						  (char *)NULL );
+				return TCL_ERROR;
+			}
+
+			--argc;
+			++argv;
+
+			switch( sdp->sp_fmt[1] )  {
+			case 'c':
+			case 's':
+				/* copy the string, converting escaped
+				 * double quotes to just double quotes
+				 */
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+			 "not enough values for \"%s\" argument: should be %d",
+						       sdp->sp_name,
+						       sdp->sp_count );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+				for( i = j = 0;
+				     j < sdp->sp_count && argv[0][i] != '\0';
+				     loc[j++] = argv[0][i++] )
+					;
+				if( sdp->sp_count > 1 ) {
+					loc[sdp->sp_count-1] = '\0';
+					Tcl_AppendResult( interp,
+							  sdp->sp_name, " ",
+							  loc, " ",
+							  (char *)NULL );
+				} else {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str, "%s %c ",
+						       sdp->sp_name, *loc );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+				}
+				--argc;
+				++argv;
+				break;
+			case 'i':
+				bu_log(
+			 "Error: %%i not implemented. Contact developers.\n" );
+				Tcl_AppendResult( interp,
+						  "%%i not implemented yet",
+						  (char *)NULL );
+				bu_vls_free( &str );
+				return TCL_ERROR;
+			case 'd': {
+				register int *ip = (int *)loc;
+				register int tmpi;
+				register char CONST *cp;
+
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+      "not enough values for \"%s\" argument: should have %d, only %d given",
+						       sdp->sp_name,
+						       sdp->sp_count, i );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+
+				Tcl_AppendResult( interp, sdp->sp_name, " ",
+						  (char *)NULL );
+
+				/* Special case:  '=!' toggles a boolean */
+				if( argv[0][0] == '!' ) {
+					*ip = *ip ? 0 : 1;
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str, "%d ", *ip );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					++argv;
+					--argc;
+					break;
+				}
+				/* Normal case: an integer */
+				cp = *argv;
+				for( i = 0; i < sdp->sp_count; ++i ) {
+					if( *cp == '\0' ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str,
+		      "not enough values for \"%s\" argument: should have %d",
+							       sdp->sp_name,
+							       sdp->sp_count );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+			
+					tmpi = atoi( cp );
+					if( *cp && (*cp == '+' || *cp == '-') )
+						cp++;
+					while( *cp && isdigit(*cp) )
+						cp++; 
+					/* make sure we actually had an
+					 * integer out there
+					 */
+
+					if( cp == *argv ||
+					    (cp == *argv+1 &&
+					     (argv[0][0] == '+' ||
+					      argv[0][0] == '-')) ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+			       "value \"%s\" to argument %s isn't an integer",
+							       argv,
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					} else {
+						*(ip++) = tmpi;
+					}
+					/* Skip the separator(s) */
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp ) 
+						++cp;
+				}
+				Tcl_AppendResult( interp,
+						  sdp->sp_count > 1 ? "{" : "",
+						  argv[0],
+						  sdp->sp_count > 1 ? "}" : "",
+						  " ", (char *)NULL);
+				--argc;
+				++argv;
+				break; }
+			case 'f': {
+				int		dot_seen;
+				double		tmp_double;
+				register double *dp;
+				char		*numstart;
+
+				dp = (double *)loc;
+
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+       "not enough values for \"%s\" argument: should have %d, only %d given",
+						       sdp->sp_name,
+						       sdp->sp_count, argc );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+
+				Tcl_AppendResult( interp, sdp->sp_name, " ",
+						  (char *)NULL );
+
+				cp = *argv;
+				for( i = 0; i < sdp->sp_count; i++ ) {
+					if( *cp == '\0' ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str,
+       "not enough values for \"%s\" argument: should have %d, only %d given",
+							       sdp->sp_name,
+							       sdp->sp_count,
+							       i );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+					
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+
+					numstart = cp;
+					if( *cp == '-' || *cp == '+' ) cp++;
+
+					/* skip matissa */
+					dot_seen = 0;
+					for( ; *cp ; cp++ ) {
+						if( *cp == '.' && !dot_seen ) {
+							dot_seen = 1;
+							continue;
+						}
+						if( !isdigit(*cp) )
+							break;
+					}
+
+					/* If no mantissa seen,
+					   then there is no float here */
+					if( cp == (numstart + dot_seen) ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+	                           "value \"%s\" to argument %s isn't a float",
+							       argv[0],
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+
+					/* there was a mantissa,
+					   so we may have an exponent */
+					if( *cp == 'E' || *cp == 'e' ) {
+						cp++;
+
+						/* skip exponent sign */
+						if (*cp == '+' || *cp == '-')
+							cp++;
+						while( isdigit(*cp) )
+							cp++;
+					}
+
+					bu_vls_trunc( &str, 0 );
+					bu_vls_strcpy( &str, numstart );
+					bu_vls_trunc( &str, cp-numstart );
+					if( sscanf(bu_vls_addr(&str),
+						   "%lf", &tmp_double) != 1 ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+				  "value \"%s\" to argument %s isn't a float",
+							       numstart,
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+					
+					*dp++ = tmp_double;
+
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+				}
+				Tcl_AppendResult( interp,
+						  sdp->sp_count > 1 ? "{" : "",
+						  argv[0],
+						  sdp->sp_count > 1 ? "}" : "",
+						  " ", (char *)NULL );
+				--argc;
+				++argv;
+				break; }
+			default:
+				Tcl_AppendResult( interp, "unknown format",
+						  (char *)NULL );
+				return TCL_ERROR;
+			}
+			break;
+		}
+		
+		if( sdp->sp_name == NULL ) {
+			bu_vls_trunc( &str, 0 );
+			bu_vls_printf( &str, "invalid attribute %s", argv[0] );
+			Tcl_AppendResult( interp, bu_vls_addr(&str),
+					  (char *)NULL );
+			bu_vls_free( &str );
+			return TCL_ERROR;
+		}
+	}
+	return TCL_OK;
+}
+
+/*
  *		D B _ T C L _ T R E E _ D E S C R I B E
  *
  * Fills a Tcl_DString with a representation of the given tree appropriate
@@ -567,8 +523,7 @@ char *s_type;
  *
  * A tree 't' is represented in the following manner:
  *
- *	t := { l dbobjname { mat } }
- *	   | { l dbobjname }
+ *	t := { l dbobjname mat }
  *	   | { u t1 t2 }
  * 	   | { n t1 t2 }
  *	   | { - t1 t2 }
@@ -595,17 +550,15 @@ union tree		*tp;
 
 	RT_CK_TREE(tp);
 	switch( tp->tr_op ) {
-	case OP_DB_LEAF:
+	case OP_DB_LEAF: {
+		struct bu_vls vls;
 		Tcl_DStringAppendElement( dsp, "l" );
 		Tcl_DStringAppendElement( dsp, tp->tr_l.tl_name );
-		if( tp->tr_l.tl_mat )  {
-			struct bu_vls vls;
-			bu_vls_init( &vls );
-			bn_encode_mat( &vls, tp->tr_l.tl_mat );
-			Tcl_DStringAppendElement( dsp, bu_vls_addr(&vls) );
-			bu_vls_free( &vls );
-		}
-		break;
+		bu_vls_init( &vls );
+		bn_encode_mat( &vls, tp->tr_l.tl_mat );
+		Tcl_DStringAppendElement( dsp, bu_vls_addr(&vls) );
+		bu_vls_free( &vls );
+		break; }
 
 		/* This node is known to be a binary op */
 	case OP_UNION:
@@ -656,163 +609,6 @@ union tree		*tp;
 }
 
 /*
- *			D B _ T C L _ T R E E _ P A R S E
- *
- *  Take a TCL-style string description of a binary tree, as produced by
- *  db_tcl_tree_describe(), and reconstruct
- *  the in-memory form of that tree.
- */
-union tree *
-db_tcl_tree_parse( interp, str )
-Tcl_Interp	*interp;
-char		*str;
-{
-	int	argc;
-	char	**argv;
-	union tree	*tp = TREE_NULL;
-	union tree	*lhs;
-	union tree	*rhs;
-
-	/* Skip over leading spaces in input */
-	while( *str && isspace(*str) ) str++;
-
-	if( Tcl_SplitList( interp, str, &argc, &argv ) != TCL_OK )
-		return TREE_NULL;
-
-	if( argc <= 0 || argc > 3 )  {
-		Tcl_AppendResult( interp, "db_tcl_tree_parse: tree node does not have 1, 2 or 2 elements: ",
-			str, "\n", (char *)NULL );
-		goto out;
-	}
-
-#if 0
-Tcl_AppendResult( interp, "\n\ndb_tcl_tree_parse(): ", str, "\n", NULL );
-
-Tcl_AppendResult( interp, "db_tcl_tree_parse() arg0=", argv[0], NULL );
-if(argc > 1 ) Tcl_AppendResult( interp, "\n\targ1=", argv[1], NULL );
-if(argc > 2 ) Tcl_AppendResult( interp, "\n\targ2=", argv[2], NULL );
-Tcl_AppendResult( interp, "\n\n", NULL);
-#endif
-
-	if( argv[0][1] != '\0' )  {
-		Tcl_AppendResult( interp, "db_tcl_tree_parse() operator is not single character: ",
-			argv[0], (char *)NULL );
-		goto out;
-	}
-
-	switch( argv[0][0] )  {
-	case 'l':
-		/* Leaf node: {l name {mat}} */
-		BU_GETUNION( tp, tree );
-		tp->tr_l.magic = RT_TREE_MAGIC;
-		tp->tr_op = OP_DB_LEAF;
-		tp->tr_l.tl_name = bu_strdup( argv[1] );
-		if( argc == 3 )  {
-			tp->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat");
-			if( bn_decode_mat( tp->tr_l.tl_mat, argv[2] ) != 16 )  {
-				Tcl_AppendResult( interp, "db_tcl_tree_parse: unable to parse matrix '",
-					argv[2], "', using all-zeros", (char *)NULL );
-				bn_mat_zero( tp->tr_l.tl_mat );
-			}
-		}
-		break;
-
-	case 'u':
-		/* Binary: Union: {u {lhs} {rhs}} */
-		BU_GETUNION( tp, tree );
-		tp->tr_b.tb_op = OP_UNION;
-		goto binary;
-	case 'n':
-		/* Binary: Intersection */
-		BU_GETUNION( tp, tree );
-		tp->tr_b.tb_op = OP_INTERSECT;
-		goto binary;
-	case '-':
-		/* Binary: Union */
-		BU_GETUNION( tp, tree );
-		tp->tr_b.tb_op = OP_SUBTRACT;
-		goto binary;
-	case '^':
-		/* Binary: Xor */
-		BU_GETUNION( tp, tree );
-		tp->tr_b.tb_op = OP_XOR;
-		goto binary;
-binary:
-		tp->tr_b.magic = RT_TREE_MAGIC;
-		if( argv[1] == (char *)NULL || argv[2] == (char *)NULL )  {
-			Tcl_AppendResult( interp, "db_tcl_tree_parse: binary operator ",
-				argv[0], " has insufficient operands in ",
-				str, (char *)NULL );
-			bu_free( (char *)tp, "union tree" );
-			tp = TREE_NULL;
-			goto out;
-		}
-		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1] );
-		if( tp->tr_b.tb_left == TREE_NULL )  {
-			bu_free( (char *)tp, "union tree" );
-			tp = TREE_NULL;
-			goto out;
-		}
-		tp->tr_b.tb_right = db_tcl_tree_parse( interp, argv[2] );
-		if( tp->tr_b.tb_left == TREE_NULL )  {
-			db_free_tree( tp->tr_b.tb_left );
-			bu_free( (char *)tp, "union tree" );
-			tp = TREE_NULL;
-			goto out;
-		}
-		break;
-
-	case '!':
-		/* Unary: not {! {lhs}} */
-		BU_GETUNION( tp, tree );
-		tp->tr_b.tb_op = OP_NOT;
-		goto unary;
-	case 'G':
-		/* Unary: GUARD {G {lhs}} */
-		BU_GETUNION( tp, tree );
-		tp->tr_b.tb_op = OP_GUARD;
-		goto unary;
-	case 'X':
-		/* Unary: XNOP {X {lhs}} */
-		BU_GETUNION( tp, tree );
-		tp->tr_b.tb_op = OP_XNOP;
-		goto unary;
-unary:
-		tp->tr_b.magic = RT_TREE_MAGIC;
-		if( argv[1] == (char *)NULL )  {
-			Tcl_AppendResult( interp, "db_tcl_tree_parse: unary operator ",
-				argv[0], " has insufficient operands in ",
-				str, "\n", (char *)NULL );
-			bu_free( (char *)tp, "union tree" );
-			tp = TREE_NULL;
-			goto out;
-		}
-		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1] );
-		if( tp->tr_b.tb_left == TREE_NULL )  {
-			bu_free( (char *)tp, "union tree" );
-			tp = TREE_NULL;
-			goto out;
-		}
-		break;
-
-	case 'N':
-		/* NOP: no args.  {N} */
-		BU_GETUNION( tp, tree );
-		tp->tr_b.tb_op = OP_XNOP;
-		tp->tr_b.magic = RT_TREE_MAGIC;
-		break;
-
-	default:
-		Tcl_AppendResult( interp, "db_tcl_tree_parse: unable to interpret operator '",
-			argv[1], "'\n", (char *)NULL );
-	}
-
-out:
-	free( (char *)argv);		/* not bu_free() */
-	return tp;
-}
-
-/*
  *		D B _ T C L _ C O M B _ D E S C R I B E
  *
  * Sets the interp->result string to a description of the given combination.
@@ -841,46 +637,33 @@ CONST char		*item;
 		Tcl_DStringAppendElement( &ds, "region" );
 		if( comb->region_flag ) {
 			Tcl_DStringAppendElement( &ds, "yes" );
-
 			Tcl_DStringAppendElement( &ds, "id" );
 			sprintf( buf, "%d", comb->region_id );
 			Tcl_DStringAppendElement( &ds, buf );
-
-			if( comb->aircode )  {
-				Tcl_DStringAppendElement( &ds, "air" );
-				sprintf( buf, "%d", comb->aircode );
-				Tcl_DStringAppendElement( &ds, buf );
-			}
-			if( comb->los )  {
-				Tcl_DStringAppendElement( &ds, "los" );
-				sprintf( buf, "%d", comb->los );
-				Tcl_DStringAppendElement( &ds, buf );
-			}
-
-			if( comb->GIFTmater )  {
-				Tcl_DStringAppendElement( &ds, "GIFTmater" );
-				sprintf( buf, "%d", comb->GIFTmater );
-				Tcl_DStringAppendElement( &ds, buf );
-			}
+			Tcl_DStringAppendElement( &ds, "air" );
+			sprintf( buf, "%d", comb->aircode );
+			Tcl_DStringAppendElement( &ds, buf );
+			Tcl_DStringAppendElement( &ds, "los" );
+			sprintf( buf, "%d", comb->los );
+			Tcl_DStringAppendElement( &ds, buf );
+			Tcl_DStringAppendElement( &ds, "GIFTmater" );
+			sprintf( buf, "%d", comb->GIFTmater );
+			Tcl_DStringAppendElement( &ds, buf );
 		} else {
 			Tcl_DStringAppendElement( &ds, "no" );
 		}
 		
+		Tcl_DStringAppendElement( &ds, "rgb" );
 		if( comb->rgb_valid ) {
-			Tcl_DStringAppendElement( &ds, "rgb" );
 			sprintf( buf, "%d %d %d", V3ARGS(comb->rgb) );
 			Tcl_DStringAppendElement( &ds, buf );
-		}
+		} else
+			Tcl_DStringAppendElement( &ds, "invalid" );
 
-		if( bu_vls_strlen(&comb->shader) > 0 )  {
-			Tcl_DStringAppendElement( &ds, "shader" );
-			Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->shader) );
-		}
-
-		if( bu_vls_strlen(&comb->material) > 0 )  {
-			Tcl_DStringAppendElement( &ds, "material" );
-			Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->material) );
-		}
+		Tcl_DStringAppendElement( &ds, "shader" );
+		Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->shader) );
+		Tcl_DStringAppendElement( &ds, "material" );
+		Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->material) );
 
 		if( comb->inherit )
 			Tcl_DStringAppendElement( &ds, "inherit" );
@@ -959,9 +742,6 @@ CONST char		*item;
 
 /*
  *			D B _ T C L _ C O M B _ A D J U S T
- *
- *  Invocation:
- *	rgb "1 2 3" ...
  */
 
 int
@@ -975,13 +755,13 @@ char			      **argv;
 	int	i;
 	
 	RT_CK_COMB( comb );
+	
+
+	for( i=0; i<128 && argv[0]!=0; i++ )
+		buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
+	buf[i] = 0;
 
 	while( argc >= 2 ) {
-		/* Force to lower case */
-		for( i=0; i<128 && argv[0][i]!='\0'; i++ )
-			buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
-		buf[i] = 0;
-
 		if( strcmp(buf, "region")==0 ) {
 			if( Tcl_GetBoolean( interp, argv[1], &i )!= TCL_OK )
 				return TCL_ERROR;
@@ -1013,13 +793,8 @@ char			      **argv;
 				comb->rgb_valid = 0;
 			} else {
 				unsigned int r, g, b;
-				i = sscanf( argv[1], "%u %u %u",
+				sscanf( argv[1], "%u %u %u",
 					&r, &g, &b );
-				if( i != 3 )   {
-					Tcl_AppendResult( interp, "adjust rgb ",
-						argv[1], ": not valid rgb 3-tuple\n", (char *)NULL );
-					return TCL_ERROR;
-				}
 				comb->rgb[0] = (unsigned char)r;
 				comb->rgb[1] = (unsigned char)g;
 				comb->rgb[2] = (unsigned char)b;
@@ -1039,19 +814,9 @@ char			      **argv;
 				return TCL_ERROR;
 			comb->inherit = (char)i;
 		} else if( strcmp(buf, "tree" )==0 ) {
-			union tree	*new;
-
-			new = db_tcl_tree_parse( interp, argv[1] );
-			if( new == TREE_NULL )  {
-				Tcl_AppendResult( interp, "db adjust tree: bad tree '",
-					argv[1], "'\n", (char *)NULL );
-				return TCL_ERROR;
-			}
-			if( comb->tree )
-				db_free_tree( comb->tree );
-			comb->tree = new;
+			;
 		} else {
-			Tcl_AppendResult( interp, "db adjust ", buf,
+			Tcl_AppendResult( interp, argv[0],
 					  ": no such attribute",
 					  (char *)NULL );
 			return TCL_ERROR;
@@ -1087,9 +852,6 @@ char	      **argv;
 	struct rt_wdb  *wdb = (struct rt_wdb *)clientData;
 	struct bu_vls	matches;
 
-	--argc;
-	++argv;
-
 	RT_CK_WDB_TCL(wdb);
 	
 	/* Verify that this wdb supports lookup operations
@@ -1108,74 +870,6 @@ char	      **argv;
 	Tcl_AppendResult( interp, bu_vls_addr(&matches), (char *)NULL );
 	bu_vls_free( &matches );
 	return TCL_OK;
-}
-
-int
-rt_db_report( interp, intern, attr )
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-char			*attr;
-{
-	register struct bu_structparse         *sp = NULL;
-	register struct rt_solid_type_lookup   *stlp;
-	int                     id, status;
-	Tcl_DString             ds;
-	struct bu_vls           str;
-
-	RT_CK_DB_INTERNAL( intern );
-
-       /* Find out what type of object we are dealing with and report on it. */
-	id = intern->idb_type;
-	switch( id ) {
-	case ID_COMBINATION:
-		status = db_tcl_comb_describe( interp,
-			       (struct rt_comb_internal *)intern->idb_ptr,
-					       attr );
-		break;
-	default:
-		if( (stlp=rt_get_parsetab_by_id(id)) == NULL ) {
-			Tcl_AppendResult( interp,
- "invalid {an output routine for this data type has not yet been implemented}",
-				  (char *)NULL );
-			return TCL_OK;
-		}
-
-		bu_vls_init( &str );
-		Tcl_DStringInit( &ds );
-
-		sp = stlp->parsetab;
-		if( attr == (char *)0 ) {
-			/* Print out solid type and all attributes */
-			Tcl_DStringAppendElement( &ds, stlp->label );
-			while( sp->sp_name != NULL ) {
-				Tcl_DStringAppendElement( &ds, sp->sp_name );
-				bu_vls_trunc( &str, 0 );
-				bu_vls_struct_item( &str, sp,
-						 (char *)intern->idb_ptr, ' ' );
-				Tcl_DStringAppendElement( &ds,
-							  bu_vls_addr(&str) );
-				++sp;
-			}
-			status = TCL_OK;
-		} else {
-			if( bu_vls_struct_item_named( &str, sp, attr,
-					   (char *)intern->idb_ptr, ' ') < 0 ) {
-				Tcl_DStringAppend( &ds, "no such attribute",
-						   17 );
-				status = TCL_ERROR;
-			} else {
-				Tcl_DStringAppendElement( &ds,
-							  bu_vls_addr(&str) );
-				status = TCL_OK;
-			}
-		}
-
-		Tcl_DStringResult( interp, &ds );
-		Tcl_DStringFree( &ds );
-		bu_vls_free( &str );
-	}
-
-	return status;
 }
 
 /*
@@ -1207,10 +901,6 @@ char	      **argv;
 	struct rt_wdb	       *wdb = (struct rt_wdb *)clientData;
 	Tcl_DString		ds;
 	struct bu_vls		str;
-	char			*curr_elem;
-
-	--argc;
-	++argv;
 
 	if( argc < 2 || argc > 3) {
 		Tcl_AppendResult( interp,
@@ -1228,7 +918,6 @@ char	      **argv;
 		return TCL_ERROR;
 	}
 
-#if 0
 	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
 	if( dp == NULL ) {
 		Tcl_AppendResult( interp, argv[1], ": not found\n",
@@ -1242,67 +931,60 @@ char	      **argv;
 				  argv[1], (char *)NULL );
 		return TCL_ERROR;
 	}
-#else
-	if( strchr( argv[1], '/' ) )
-	{
-		/* This is a path */
-		struct db_tree_state	ts;
-		struct db_full_path	old_path;
-		struct db_full_path	new_path;
-		struct directory	*dp_curr;
-		int			ret;
+	RT_CK_DB_INTERNAL( &intern );
 
-		db_init_db_tree_state( &ts, wdb->dbip );
-		db_full_path_init(&old_path);
-		db_full_path_init(&new_path);
-
-		if( db_string_to_path( &new_path, wdb->dbip, argv[1] ) < 0 )  {
-			Tcl_AppendResult(interp, "tcl_follow_path: '",
-				argv[1], "' contains unknown object names\n", (char *)NULL);
-			return TCL_ERROR;
+       /* Find out what type of object we are dealing with and report on it. */
+	id = intern.idb_type;
+	switch( id ) {
+	case ID_COMBINATION:
+		status = db_tcl_comb_describe( interp,
+			       (struct rt_comb_internal *)intern.idb_ptr,
+					       argv[2] );
+		break;
+	default:
+		if( (stlp=rt_get_parsetab_by_id(id)) == NULL ) {
+			Tcl_AppendResult( interp,
+ "invalid {an output routine for this data type has not yet been implemented}",
+				  (char *)NULL );
+			return TCL_OK;
 		}
 
-		dp_curr = DB_FULL_PATH_CUR_DIR( &new_path );
-		ret = db_follow_path( &ts, &old_path, &new_path, LOOKUP_NOISY );
-		db_free_full_path( &old_path );
-		db_free_full_path( &new_path );
+		bu_vls_init( &str );
+		Tcl_DStringInit( &ds );
 
-		if( ret < 0 )  {
-			Tcl_AppendResult(interp, "tcl_follow_path: '",
-				argv[1], "' is a bad path\n", (char *)NULL );
-			return TCL_ERROR;
+		sp = stlp->parsetab;
+		if( argc == 2 ) {
+			/* Print out solid type and all attributes */
+			Tcl_DStringAppendElement( &ds, stlp->label );
+			while( sp->sp_name != NULL ) {
+				Tcl_DStringAppendElement( &ds, sp->sp_name );
+				bu_vls_trunc( &str, 0 );
+				bu_vls_struct_item( &str, sp,
+						 (char *)intern.idb_ptr, ' ' );
+				Tcl_DStringAppendElement( &ds,
+							  bu_vls_addr(&str) );
+				++sp;
+			}
+			status = TCL_OK;
+		} else {
+			if( bu_vls_struct_item_named( &str, sp, argv[2],
+					   (char *)intern.idb_ptr, ' ') < 0 ) {
+				Tcl_DStringAppend( &ds, "no such attribute",
+						   17 );
+				status = TCL_ERROR;
+			} else {
+				Tcl_DStringAppendElement( &ds,
+							  bu_vls_addr(&str) );
+				status = TCL_OK;
+			}
 		}
 
-		status = wdb_import( wdb, &intern, dp_curr->d_namep, ts.ts_mat );
-		if( status == -4 )  {
-			Tcl_AppendResult( interp, dp_curr->d_namep, ": not found\n",
-					  (char *)NULL );
-			return TCL_ERROR;
-		}
-		if( status < 0 ) {
-			Tcl_AppendResult( interp, "wdb_import failure: ",
-					  dp_curr->d_namep, (char *)NULL );
-			return TCL_ERROR;
-		}
+		Tcl_DStringResult( interp, &ds );
+		Tcl_DStringFree( &ds );
+		bu_vls_free( &str );
 	}
-	else
-	{
-		status = wdb_import( wdb, &intern, argv[1], (matp_t)NULL );
-		if( status == -4 )  {
-			Tcl_AppendResult( interp, argv[1], ": not found\n",
-					  (char *)NULL );
-			return TCL_ERROR;
-		}
-		if( status < 0 ) {
-			Tcl_AppendResult( interp, "wdb_import failure: ",
-					  argv[1], (char *)NULL );
-			return TCL_ERROR;
-		}
-	}
-#endif
-	status = rt_db_report( interp, &intern, argv[2] );
 
-	rt_functab[intern.idb_type].ft_ifree( &intern );
+	rt_functab[id].ft_ifree( &intern );
 	return status;
 }
 
@@ -1328,9 +1010,7 @@ char	      **argv;
 	struct rt_wdb			  *wdb = (struct rt_wdb *)clientData;
 	char				        type[16];
 
-	--argc;
-	++argv;
-
+    
 	if( argc < 2 ) {
 		Tcl_AppendResult( interp,
  	               "wrong # args: should be db put objName objType attrs",
@@ -1422,7 +1102,6 @@ char	      **argv;
  ** For use with Tcl, this routine accepts as its first argument an item in
  ** the database; as its remaining arguments it takes the properties that
  ** need to be changed and their values.
- **	.inmem adjust LIGHT V { -46 -13 5 }
  **/
 
 int
@@ -1435,34 +1114,33 @@ char	      **argv;
 	register struct directory	*dp;
 	register struct bu_structparse	*sp = NULL;
 	int				 id, status, i;
-	char				*name;
+	char			        *name = argv[1];
 	struct rt_db_internal		 intern;
 	mat_t				 idn;
 	char				 objecttype;
 	struct rt_wdb		        *wdb = (struct rt_wdb *)clientData;
 
-	if( argc < 5 ) {
+	if( argc < 4 ) {
 		Tcl_AppendResult( interp,
 		"wrong # args: should be \"db adjust objName attr value ?attr? ?value?...\"",
 				  (char *)NULL );
 		return TCL_ERROR;
 	}
-	name = argv[2];
 
 	/* XXX
 	   Verify that this wdb supports lookup operations (non-null dbip) */
 	RT_CK_DBI_TCL(wdb->dbip);
 
-	dp = db_lookup( wdb->dbip, name, LOOKUP_QUIET );
+	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
 	if( dp == DIR_NULL ) {
-		Tcl_AppendResult( interp, name, ": not found\n",
+		Tcl_AppendResult( interp, argv[1], ": not found\n",
 				  (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	status = rt_db_get_internal( &intern, dp, wdb->dbip, (matp_t)NULL );
 	if( status < 0 ) {
-		Tcl_AppendResult( interp, "rt_db_get_internal(", name,
+		Tcl_AppendResult( interp, "rt_db_get_internal(", argv[1],
 				  ") failure\n", (char *)NULL );
 		return TCL_ERROR;
 	}
@@ -1476,8 +1154,7 @@ char	      **argv;
 			(struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 
-		/* .inmem adjust light.r rgb { 255 255 255 } */
-		status = db_tcl_comb_adjust( comb, interp, argc-3, argv+3 );
+		status = db_tcl_comb_adjust( comb, interp, argc+2, argv-2 );
 	} else if( rt_get_parsetab_by_id(id) == NULL ||
 		   (sp=rt_get_parsetab_by_id(id)->parsetab) == NULL ) {
 		Tcl_AppendResult( interp,
@@ -1485,16 +1162,11 @@ char	      **argv;
 				  (char *)NULL );
 		status = TCL_ERROR;
 	} else {
-		/* If we were able to find an entry in the strutparse "cheat sheet",
-		   just use the handy parse functions to return the object.
-		   Pass first attribute as argv[0].
-		 */
-		/* .inmem adjust LIGHT V { -46 -13 5 } */
-		status = bu_structparse_argv( interp, argc-3, argv+3, sp,
+		/* If we were able to find an entry in on the "cheat sheet",
+		   just use the handy parse functions to return the object. */
+
+		status = bu_structparse_argv( interp, argc-2, argv+2, sp,
 					      (char *)intern.idb_ptr );
-		if( status != TCL_OK )  Tcl_AppendResult( interp,
-			"bu_structparse_argv(", name, ") failure\n", (char *)NULL );
-		/* fall through */
 	}
 
 	if( status == TCL_OK && wdb_export( wdb, name, intern.idb_ptr,
@@ -1524,9 +1196,6 @@ char **argv;
 	register int i;
 	struct bu_vls str;
 	register char *cp;
-
-	--argc;
-	++argv;
 
 	if (argc != 2) {
 		Tcl_AppendResult(interp, "wrong # args: should be \"db form objType\"",
@@ -1571,6 +1240,30 @@ error:
 }
 
 /*
+ *			R T _ D B _ C L O S E
+ */
+int
+rt_db_close( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct rt_wdb		        *wdbp = (struct rt_wdb *)clientData;
+
+	RT_CK_WDB_TCL(wdbp);
+
+	wdb_close(wdbp);		/* frees memory */
+	wdbp = NULL;
+
+	/* De-register Tcl command */
+bu_log("De-registering Tcl command '%s'\n", argv[-1] );
+	Tcl_DeleteCommand( interp, argv[-1] );
+	return TCL_OK;
+}
+
+
+/*
  *			R T _ D B _ T O P S
  */
 
@@ -1602,191 +1295,11 @@ char	      **argv;
 }
 
 /*
- *			R T _ T C L _ D E L E T E P R O C _ R T
- *
- *  Called when the named proc created by rt_gettrees() is destroyed.
- */
-void
-rt_tcl_deleteproc_rt(clientData)
-ClientData clientData;
-{
-	struct application	*ap = (struct application *)clientData;
-	struct rt_i		*rtip;
-
-	RT_AP_CHECK(ap);
-	rtip = ap->a_rt_i;
-	RT_CK_RTI(rtip);
-
-	rt_free_rti(rtip);
-	ap->a_rt_i = (struct rt_i *)NULL;
-
-	bu_free( (genptr_t)ap, "struct application" );
-}
-
-/*
- *			R T _ D B _ R T _ G E T T R E E S
- *
- *  Given an instance of a database and the name of some treetops,
- *  create a named "ray-tracing" object (proc) which will respond to
- *  subsequent operations.
- *  Returns new proc name as result.
- *
- *  Example:
- *	.inmem rt_gettrees .rt all.g light.r
- */
-int
-rt_db_rt_gettrees( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
-{
-	struct rt_wdb *wdp = (struct rt_wdb *)clientData;
-	struct rt_i	*rtip;
-	struct application	*ap;
-	struct resource		*resp;
-	char		*newprocname;
-	char		buf[64];
-
-	RT_CK_WDB_TCL( wdp );
-	RT_CK_DBI_TCL( wdp->dbip );
-
-	if( argc < 4 )  {
-		Tcl_AppendResult( interp,
-			"rt_gettrees: wrong # args: should be \"",
-			argv[0], " ", argv[1],
-			" newprocname [-i] [-u] treetops...\"\n", (char *)NULL );
-		return TCL_ERROR;
-	}
-
-	rtip = rt_new_rti( wdp->dbip );
-	newprocname = argv[2];
-
-	/* Delete previous proc (if any) to release all that memory, first */
-	(void)Tcl_DeleteCommand( interp, newprocname );
-
-	while( argv[3][0] == '-' )  {
-		if( strcmp( argv[3], "-i" ) == 0 )  {
-			rtip->rti_dont_instance = 1;
-			argc--;
-			argv++;
-			continue;
-		}
-		if( strcmp( argv[3], "-u" ) == 0 )  {
-			rtip->useair = 1;
-			argc--;
-			argv++;
-			continue;
-		}
-		break;
-	}
-
-	if( rt_gettrees( rtip, argc-3, (CONST char **)&argv[3], 1 ) < 0 )  {
-		Tcl_AppendResult( interp,
-			"rt_gettrees() returned error\n", (char *)NULL );
-		rt_free_rti( rtip );
-		return TCL_ERROR;
-	}
-
-	/* Establish defaults for this rt_i */
-	rtip->rti_hasty_prep = 1;	/* Tcl isn't going to fire many rays */
-
-	/*
-	 *  In case of multiple instances of the library, make sure that
-	 *  each instance has a separate resource structure,
-	 *  because the bit vector lengths depend on # of solids.
-	 *  And the "overwrite" sequence in Tcl is to create the new
-	 *  proc before running the Tcl_CmdDeleteProc on the old one,
-	 *  which in this case would trash rt_uniresource.
-	 *  Once on the rti_resources list, rt_clean() will clean 'em up.
-	 */
-	BU_GETSTRUCT( resp, resource );
-	rt_init_resource( resp, 0 );
-	bu_ptbl_ins_unique( &rtip->rti_resources, (long *)resp );
-
-	BU_GETSTRUCT( ap, application );
-	ap->a_resource = resp;
-	ap->a_rt_i = rtip;
-	ap->a_purpose = "Conquest!";
-
-	rt_ck(rtip);
-
-	/* Instantiate the proc, with clientData of wdb */
-	/* Beware, returns a "token", not TCL_OK. */
-	(void)Tcl_CreateCommand( interp, newprocname, rt_tcl_rt,
-				 (ClientData)ap, rt_tcl_deleteproc_rt );
-
-	/* Return new function name as result */
-	Tcl_AppendResult( interp, newprocname, (char *)NULL );
-
-	return TCL_OK;
-
-}
-
-/*
- *			R T _ D B _ D U M P
- *
- *  Write the current state of a database object out to a file.
- *
- *  Example:
- *	.inmem dump "/tmp/foo.g"
- */
-int
-rt_db_dump( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
-{
-	struct rt_wdb	*wdp = (struct rt_wdb *)clientData;
-	struct rt_wdb	*op;
-	int		ret;
-
-	RT_CK_WDB_TCL( wdp );
-	RT_CK_DBI_TCL( wdp->dbip );
-
-	if( argc != 3 )  {
-		Tcl_AppendResult( interp,
-			"dump: wrong # args: should be \"",
-			argv[0], "dump filename.g\n", (char *)NULL );
-		return TCL_ERROR;
-	}
-
-	if( (op = wdb_fopen( argv[2] )) == RT_WDB_NULL )  {
-		Tcl_AppendResult( interp,
-			argv[0], " dump:  ", argv[2], ": cannot create\n",
-			(char *)NULL );
-		return TCL_ERROR;
-	}
-	ret = db_dump( op, wdp->dbip );
-	wdb_close( op );
-	if( ret < 0 )  {
-		Tcl_AppendResult( interp,
-			argv[0], " dump ", argv[2], ": db_dump() error\n",
-			(char *)NULL );
-		return TCL_ERROR;
-	}
-	return TCL_OK;
-}
-
-static struct dbcmdstruct rt_db_cmds[] = {
-	"match",	rt_db_match,
-	"get",		rt_db_get,
-	"put",		rt_db_put,
-	"adjust",	rt_db_adjust,
-	"form",		rt_db_form,
-	"tops",		rt_db_tops,
-	"rt_gettrees",	rt_db_rt_gettrees,
-	"dump",		rt_db_dump,
-	(char *)0,	(int (*)())0
-};
-
-/*
  *			R T _ D B
  *
  * Generic interface for the database_class manipulation routines.
  * Usage:
- *        procname dbCmdName ?args?
+ *        widget_command dbCmdName ?args?
  * Returns: result of cmdName database command.
  */
 
@@ -1799,6 +1312,19 @@ char **argv;
 {
 	struct dbcmdstruct	*dbcmd;
 	struct rt_wdb		*wdb = (struct rt_wdb *)clientData;
+	struct dbcmdstruct {
+		char *cmdname;
+		int (*cmdfunc)();
+	} rt_db_cmds[] = {
+		"match",	rt_db_match,
+		"get",		rt_db_get,
+		"put",		rt_db_put,
+		"adjust",	rt_db_adjust,
+		"form",		rt_db_form,
+		"tops",		rt_db_tops,
+		"close",	rt_db_close,
+		(char *)0,	(int (*)())0
+	};
 
 	if( argc < 2 ) {
 		Tcl_AppendResult( interp,
@@ -1811,37 +1337,19 @@ char **argv;
 	/* Could core dump */
 	RT_CK_WDB_TCL(wdb);
 
-	for( dbcmd = rt_db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
-		if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
-			return (*dbcmd->cmdfunc)( clientData, interp,
-						  argc, argv );
-		}
-	}
-
-
 	Tcl_AppendResult( interp, "unknown database command; must be one of:",
 			  (char *)NULL );
 	for( dbcmd = rt_db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
+		if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
+			/* hack: dispose of error msg if OK */
+			Tcl_ResetResult( interp );
+			return (*dbcmd->cmdfunc)( clientData, interp,
+						  argc-1, argv+1 );
+		}
 		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
 	}
-	Tcl_AppendResult( interp, "\n", (char *)NULL );
+
 	return TCL_ERROR;
-}
-
-/*
- *			R T _ T C L _ D E L E T E P R O C _ W D B
- *
- *  Called when the named proc created by wdb_open() is destroyed.
- *  This is used instead of a "close" operation on the object.
- */
-void
-rt_tcl_deleteproc_wdb(clientData)
-ClientData clientData;
-{
-	struct rt_wdb	*wdbp = (struct rt_wdb *)clientData;
-	RT_CK_WDB(wdbp);
-
-	wdb_close(wdbp);
 }
 
 /*
@@ -1875,17 +1383,14 @@ char		**argv;
 
 	if( argc != 4 )  {
 		Tcl_AppendResult(interp, "\
-Usage: wdb_open newprocname file filename\n\
-       wdb_open newprocname disk $dbip\n\
-       wdb_open newprocname disk_append $dbip\n\
-       wdb_open newprocname inmem $dbip\n\
-       wdb_open newprocname inmem_append $dbip\n",
+Usage: wdb_open widget_command file filename\n\
+       wdb_open widget_command disk $dbip\n\
+       wdb_open widget_command disk_append $dbip\n\
+       wdb_open widget_command inmem $dbip\n\
+       wdb_open widget_command inmem_append $dbip\n",
 		NULL);
 		return TCL_ERROR;
 	}
-
-	/* Delete previous proc (if any) to release all that memory, first */
-	(void)Tcl_DeleteCommand( interp, argv[1] );
 
 	if( strcmp( argv[2], "file" ) == 0 )  {
 		wdb = wdb_fopen( argv[3] );
@@ -1915,133 +1420,16 @@ Usage: wdb_open newprocname file filename\n\
 		return TCL_ERROR;
 	}
 
-	/* Instantiate the newprocname, with clientData of wdb */
+	/* Instantiate the widget_command, with clientData of wdb */
+	/* XXX should we see if it exists first? default=overwrite */
+	/* XXX Should provide delete proc to free up wdb */
 	/* Beware, returns a "token", not TCL_OK. */
 	(void)Tcl_CreateCommand( interp, argv[1], rt_db,
-				 (ClientData)wdb, rt_tcl_deleteproc_wdb );
+				 (ClientData)wdb, (Tcl_CmdDeleteProc *)NULL );
 
 	/* Return new function name as result */
 	Tcl_AppendResult( interp, argv[1], (char *)NULL );
 	
-	return TCL_OK;
-}
-
-/*
- *			D B _ T C L _ F O L L O W _ P A T H
- *
- *  Provides the same format output as a "db get" operation on a
- *  combination, as much as possible.
- */
-int
-db_tcl_follow_path( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char		**argv;
-{
-	struct db_i		*dbip;
-	struct db_tree_state	ts;
-	struct db_full_path	old_path;
-	struct db_full_path	new_path;
-	Tcl_DString		ds;
-	char			buf[128];
-	int			ret;
-
-	if( argc != 3 )  {
-		Tcl_AppendResult(interp, "Usage: db_follow_path [get_dbip] path\n", NULL);
-		return TCL_ERROR;
-	}
-
-	dbip = (struct db_i *)atol( argv[1] );
-	/* Could core dump */
-	RT_CK_DBI_TCL(dbip);
-
-	db_init_db_tree_state( &ts, dbip );
-	db_full_path_init(&old_path);
-	db_full_path_init(&new_path);
-
-	if( db_string_to_path( &new_path, dbip, argv[2] ) < 0 )  {
-		Tcl_AppendResult(interp, "tcl_follow_path: '",
-			argv[2], "' contains unknown object names\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-	ret = db_follow_path( &ts, &old_path, &new_path, LOOKUP_NOISY );
-	db_free_full_path( &old_path );
-	db_free_full_path( &new_path );
-
-	if( ret < 0 )  {
-		Tcl_AppendResult(interp, "tcl_follow_path: '",
-			argv[2], "' is a bad path\n", (char *)NULL );
-		return TCL_ERROR;
-	}
-
-	/* Could be called db_tcl_tree_state_describe() */
-	Tcl_DStringInit( &ds );
-
-	Tcl_DStringAppendElement( &ds, "region" );
-	if( ts.ts_sofar & TS_SOFAR_REGION ) {
-		Tcl_DStringAppendElement( &ds, "yes" );
-
-		Tcl_DStringAppendElement( &ds, "id" );
-		sprintf( buf, "%d", ts.ts_regionid );
-		Tcl_DStringAppendElement( &ds, buf );
-
-		if( ts.ts_aircode )  {
-			Tcl_DStringAppendElement( &ds, "air" );
-			sprintf( buf, "%d", ts.ts_aircode );
-			Tcl_DStringAppendElement( &ds, buf );
-		}
-
-		if( ts.ts_los )  {
-			Tcl_DStringAppendElement( &ds, "los" );
-			sprintf( buf, "%d", ts.ts_los );
-			Tcl_DStringAppendElement( &ds, buf );
-		}
-
-		if( ts.ts_gmater )  {
-			Tcl_DStringAppendElement( &ds, "GIFTmater" );
-			sprintf( buf, "%d", ts.ts_gmater );
-			Tcl_DStringAppendElement( &ds, buf );
-		}
-	} else {
-		Tcl_DStringAppendElement( &ds, "no" );
-	}
-		
-	if( ts.ts_mater.ma_override ) {
-		Tcl_DStringAppendElement( &ds, "rgb" );
-		sprintf( buf, "%d %d %d",
-			(int)(ts.ts_mater.ma_color[0]*255),
-			(int)(ts.ts_mater.ma_color[1]*255),
-			(int)(ts.ts_mater.ma_color[2]*255) );
-		Tcl_DStringAppendElement( &ds, buf );
-	}
-
-	if( ts.ts_mater.ma_shader && strlen( ts.ts_mater.ma_shader ) > 0 )  {
-		Tcl_DStringAppendElement( &ds, "shader" );
-		Tcl_DStringAppendElement( &ds, ts.ts_mater.ma_shader );
-	}
-
-#if 0
-	Tcl_DStringAppendElement( &ds, "material" );
-	Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->material) );
-#endif
-	if( ts.ts_mater.ma_minherit )
-		Tcl_DStringAppendElement( &ds, "inherit" );
-
-	if ( !bn_mat_is_identity( ts.ts_mat ) )  {
-		struct bu_vls	str;
-		Tcl_DStringAppendElement( &ds, "mat" );
-		bu_vls_init(&str);
-		bn_encode_mat( &str, ts.ts_mat );
-		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
-		bu_vls_free(&str);
-	}
-
-	db_free_db_tree_state( &ts );
-
-	Tcl_DStringResult( interp, &ds );
-	Tcl_DStringFree( &ds );
-
 	return TCL_OK;
 }
 
@@ -2055,9 +1443,11 @@ void
 rt_tcl_setup(interp)
 Tcl_Interp *interp;
 {
+	/* XXX All these are temporary hacks, don't get dependent on
+	 * XXX them just yet.  -Mike.
+	 */
+
 	(void)Tcl_CreateCommand(interp, "wdb_open", wdb_open,
-		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "db_follow_path", db_tcl_follow_path,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
 }

@@ -1041,13 +1041,13 @@ register struct uvcoord *uvp;
 		/*
 		 *  The double check of arb_opt is to avoid the case
 		 *  where another processor did the UV setup while
-		 *  this processor was waiting in bu_semaphore_acquire().
+		 *  this processor was waiting in RES_ACQUIRE().
 		 */
-		bu_semaphore_acquire( RT_SEM_MODEL );
+		RES_ACQUIRE( &rt_g.res_model );
 		if( arbp->arb_opt == (struct oface *)0 )  {
 			ret = rt_arb_setup(stp, aip, ap->a_rt_i, 1 );
 		}
-		bu_semaphore_release( RT_SEM_MODEL );
+		RES_RELEASE( &rt_g.res_model );
 
 		rt_arb_ifree( &intern );
 
@@ -1081,11 +1081,11 @@ register struct uvcoord *uvp;
 	VJOIN1( UV_dir, rev_dir, -dot_N, norm )
 	VUNITIZE( UV_dir )
 	uvp->uv_du = r * VDOT( UV_dir, ofp->arb_U ) / dot_N;
-	uvp->uv_dv = r * VDOT( UV_dir, ofp->arb_V ) / dot_N;
 	if( uvp->uv_du < 0.0 )
 		uvp->uv_du = -uvp->uv_du;
 	if( uvp->uv_du < min_r_U )
 		uvp->uv_du = min_r_U;
+	uvp->uv_dv = r * VDOT( UV_dir, ofp->arb_V ) / dot_N;
 	if( uvp->uv_dv < 0.0 )
 		uvp->uv_dv = -uvp->uv_dv;
 	if( uvp->uv_dv < min_r_V )

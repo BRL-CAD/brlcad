@@ -87,25 +87,6 @@ register struct db_tree_state	*tsp;
 }
 
 /*
- *			D B _ I N I T _ D B _ T R E E _ S T A T E
- *
- *  In most cases, you don't want to use this routine, you want to
- *  struct copy mged_initial_tree_state or rt_initial_tree_state,
- *  and then set ts_dbip in your copy.
- */
-void
-db_init_db_tree_state( tsp, dbip )
-register struct db_tree_state	*tsp;
-struct db_i			*dbip;
-{
-	RT_CK_DBI(dbip);
-
-	bzero( (char *)tsp, sizeof(*tsp) );
-	tsp->ts_dbip = dbip;
-	bn_mat_idn( tsp->ts_mat );	/* XXX should use null pointer convention! */
-}
-
-/*
  *			D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
@@ -156,7 +137,7 @@ register struct combined_tree_state	*ctsp;
 	db_free_full_path( &(ctsp->cts_p) );
 	db_free_db_tree_state( &(ctsp->cts_s) );
 	bzero( (char *)ctsp, sizeof(*ctsp) );		/* sanity */
-	bu_free( (char *)ctsp, "combined_tree_state");
+	rt_free( (char *)ctsp, "combined_tree_state");
 }
 
 /*
@@ -179,7 +160,7 @@ register CONST struct db_tree_state	*tsp;
 		tsp->ts_mater.ma_color[1],
 		tsp->ts_mater.ma_color[2] );
 	bu_log(" ts_mater.ma_shader=%s\n", tsp->ts_mater.ma_shader ? tsp->ts_mater.ma_shader : "" );
-	bn_mat_print("ts_mat", tsp->ts_mat );
+	mat_print("ts_mat", tsp->ts_mat );
 }
 
 /*
@@ -196,7 +177,7 @@ register CONST struct combined_tree_state	*ctsp;
 	db_pr_tree_state( &(ctsp->cts_s) );
 	str = db_path_to_string( &(ctsp->cts_p) );
 	bu_log(" path='%s'\n", str);
-	bu_free( str, "path string" );
+	rt_free( str, "path string" );
 }
 
 /*
@@ -226,7 +207,7 @@ register CONST struct rt_comb_internal	*comb;
 
 				bu_log("db_apply_state_from_comb(): WARNING: color override in combination within region '%s', ignored\n",
 					sofar );
-				bu_free(sofar, "path string");
+				rt_free(sofar, "path string");
 			}
 			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_cinherit == 0 )  {
@@ -249,31 +230,15 @@ register CONST struct rt_comb_internal	*comb;
 
 				bu_log("db_apply_state_from_comb(): WARNING: material property spec in combination below region '%s', ignored\n",
 					sofar );
-				bu_free(sofar, "path string");
+				rt_free(sofar, "path string");
 			}
 			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_minherit == 0 )  {
-			struct bu_vls tmp_vls;
-
 			/* DB_INH_LOWER -- lower nodes in tree override */
 			if( tsp->ts_mater.ma_shader )
 				bu_free( (genptr_t)tsp->ts_mater.ma_shader, "ma_shader" );
-
-			bu_vls_init( &tmp_vls );
-			if( bu_shader_to_key_eq( bu_vls_addr( &comb->shader ), &tmp_vls ) )
-			{
-				char *sofar = db_path_to_string(pathp);
-
-				bu_log( "db_apply_state_from_comb: Warning: bad shader in %s (ignored):\n", sofar );
-				bu_vls_free( &tmp_vls );
-				bu_free(sofar, "path string");
-				tsp->ts_mater.ma_shader = (char *)NULL;
-			}
-			else
-			{
-				tsp->ts_mater.ma_shader = bu_vls_strdup( &tmp_vls );
-				bu_vls_free( &tmp_vls );
-			}
+			tsp->ts_mater.ma_shader = bu_vls_strdup(
+				&comb->shader);
 		tsp->ts_mater.ma_minherit = comb->inherit;
 		}
 	}
@@ -285,7 +250,7 @@ register CONST struct rt_comb_internal	*comb;
 				char	*sofar = db_path_to_string(pathp);
 				bu_log("Warning:  region unioned into region at '%s', lower region info ignored\n",
 					sofar);
-				bu_free(sofar, "path string");
+				rt_free(sofar, "path string");
 			}
 			/* Go on as if it was not a region */
 		} else {
@@ -327,22 +292,67 @@ CONST union tree	*tp;
 	if( (mdp = db_lookup( tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_QUIET )) == DIR_NULL )  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_lookup(%s) failed in %s\n", tp->tr_l.tl_name, sofar);
-		bu_free(sofar, "path string");
+		rt_free(sofar, "path string");
 		return -1;
 	}
 
 	db_add_node_to_full_path( pathp, mdp );
 
-	bn_mat_copy( old_xlate, tsp->ts_mat );
+	mat_copy( old_xlate, tsp->ts_mat );
 	if( tp->tr_l.tl_mat )
-		bn_mat_copy( xmat, tp->tr_l.tl_mat );
+		mat_copy( xmat, tp->tr_l.tl_mat );
 	else
-		bn_mat_idn( xmat );
+		mat_idn( xmat );
 
-	db_apply_anims( pathp, mdp, old_xlate, xmat, &tsp->ts_mater );
+	/* Check here for animation to apply */
+	if ((mdp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
+		char	*sofar = db_path_to_string(pathp);
+		bu_log("Animate %s with...\n", sofar);
+		rt_free(sofar, "path string");
+	}
+	/*
+	 *  For each of the animations attached to the mentioned object,
+	 *  see if the current accumulated path matches the path
+	 *  specified in the animation.
+	 *  Comparison is performed right-to-left (from leafward to rootward).
+	 */
+	for( anp = mdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
+		register int i;
+		register int j = pathp->fp_len-1;
+		register int anim_flag;
+		
+		RT_CK_ANIMATE(anp);
+		i = anp->an_path.fp_len-1;
+		anim_flag = 1;
 
-	bn_mat_mul(tsp->ts_mat, old_xlate, xmat);
+		if (rt_g.debug & DEBUG_ANIM) {
+			char	*str;
 
+			str = db_path_to_string( &(anp->an_path) );
+			bu_log( "\t%s\t", str );
+			rt_free( str, "path string" );
+			bu_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
+				i, j);
+
+		}
+		for( ; i>=0 && j>=0; i--, j-- )  {
+			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
+				if (rt_g.debug & DEBUG_ANIM) {
+					bu_log("%s != %s\n",
+					     anp->an_path.fp_names[i]->d_namep,
+					     pathp->fp_names[j]->d_namep);
+				}
+				anim_flag = 0;
+				break;
+			}
+		}
+		/* Perhaps tsp->ts_mater should be just tsp someday? */
+		if (anim_flag)  {
+			db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
+		}
+	}
+
+	mat_mul(tsp->ts_mat, old_xlate, xmat);
 	return(0);		/* Success */
 }
 
@@ -663,7 +673,7 @@ CONST mat_t	mat;
 
 	case OP_DB_LEAF:
 		if( tp->tr_l.tl_mat == NULL )  {
-			tp->tr_l.tl_mat = bn_mat_dup(mat);
+			tp->tr_l.tl_mat = mat_dup(mat);
 			return;
 		}
 		bn_mat_mul( temp, mat, tp->tr_l.tl_mat );
@@ -728,174 +738,10 @@ genptr_t		user_ptr1,user_ptr2,user_ptr3;
 }
 
 /*
- *			D B _ F O L L O W _ P A T H
- *
- *  Starting with possible prior partial path and corresponding accumulated state,
- *  follow the path given by "new_path", updating
- *  *tsp and *total_path with full state information along the way.
- *  In a better world, there would have been a "combined_tree_state" arg.
- *
- *  A much more complete version of rt_plookup() and pathHmat().
- *  There is also a TCL interface.
- *
- *  Returns -
- *	 0	success (plus *tsp is updated)
- *	-1	error (*tsp values are not useful)
- */
-int
-db_follow_path( tsp, total_path, new_path, noisy, depth )
-struct db_tree_state		*tsp;
-struct db_full_path		*total_path;
-CONST struct db_full_path	*new_path;
-int				noisy;
-int				depth;		/* # arcs in new_path to use */
-{
-	struct rt_db_internal	intern;
-	struct rt_comb_internal	*comb;
-	register int		i;
-	struct directory	*comb_dp;	/* combination's dp */
-	struct directory	*dp;		/* element's dp */
-	int			j;
-
-	RT_CHECK_DBI( tsp->ts_dbip );
-	RT_CK_FULL_PATH( total_path );
-	RT_CK_FULL_PATH( new_path );
-
-	if(rt_g.debug&DEBUG_TREEWALK)  {
-		char	*sofar = db_path_to_string(total_path);
-		char	*toofar = db_path_to_string(new_path);
-		bu_log("db_follow_path() total_path='%s', tsp=x%x, new_path='%s', noisy=%d, depth=%d\n",
-			sofar, tsp, toofar, noisy, depth );
-		bu_free(sofar, "path string");
-		bu_free(toofar, "path string");
-	}
-
-	if( depth < 0 )  {
-		depth = new_path->fp_len-1 + depth;
-		if( depth < 0 ) rt_bomb("db_follow_path() depth exceeded provided path\n");
-	} else if( depth >= new_path->fp_len )  {
-		depth = new_path->fp_len-1;
-	} else if( depth == 0 )  {
-		/* depth of zero means "do it all". */
-		depth = new_path->fp_len-1;
-	}
-
-	j = 0;
-
-	/* Get the first combination */
-	if( total_path->fp_len > 0 )  {
-		/* Some path has already been processed */
-		comb_dp = DB_FULL_PATH_CUR_DIR(total_path);
-	}  else  {
-		/* No prior path. Process any animations located at the root */
-		comb_dp = DIR_NULL;
-		dp = new_path->fp_names[0];
-		RT_CK_DIR(dp);
-
-		if( tsp->ts_dbip->dbi_anroot )  {
-			register struct animate *anp;
-			mat_t	old_xlate, xmat;
-
-			for( anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
-				RT_CK_ANIMATE(anp);
-				if( dp != anp->an_path.fp_names[0] )
-					continue;
-				bn_mat_copy( old_xlate, tsp->ts_mat );
-				bn_mat_idn( xmat );
-				db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
-				bn_mat_mul( tsp->ts_mat, old_xlate, xmat );
-			}
-		}
-
-		/* Put first element on output path, either way */
-		db_add_node_to_full_path( total_path, dp );
-
-		if( (dp->d_flags & DIR_COMB) == 0 )  goto is_leaf;
-
-		/* Advance to next path element */
-		j = 1;
-		comb_dp = dp;
-	}
-	/*
-	 *  Process two things at once:
-	 *  the combination at [j], and it's member at [j+1].
-	 */
-	do  {
-		/* j == depth is the last one, presumably a leaf */
-		if( j > depth )  break;
-		dp = new_path->fp_names[j];
-		RT_CK_DIR(dp);
-
-		if( (comb_dp->d_flags & DIR_COMB) == 0 )  {
-			bu_log("db_follow_path() %s isn't combination\n", comb_dp->d_namep);
-			goto fail;
-		}
-
-		/* At this point, comb_db is the comb, dp is the member */
-		if(rt_g.debug&DEBUG_TREEWALK)  {
-			bu_log("db_follow_path() at %s/%s\n", comb_dp->d_namep, dp->d_namep );
-		}
-
-		/* Load the combination object into memory */
-		if( rt_db_get_internal( &intern, comb_dp, tsp->ts_dbip, NULL ) < 0 )
-			goto fail;
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		RT_CK_COMB(comb);
-		if( db_apply_state_from_comb( tsp, total_path, comb ) < 0 )
-			goto fail;
-
-		/* Crawl tree searching for specified leaf */
-		if( db_apply_state_from_one_member( tsp, total_path, dp->d_namep, 0, comb->tree ) <= 0 )  {
-			bu_log("db_follow_path() ERROR: unable to apply member %s state\n", dp->d_namep);
-			goto fail;
-		}
-		/* Found it, state has been applied, sofar applied,
-		 * member's directory entry pushed onto total_path
-		 */
-		rt_comb_ifree( &intern );
-
-		/* If member is a leaf, handle leaf processing too. */
-		if( (dp->d_flags & DIR_COMB) == 0 )  {
-is_leaf:
-			/* Object is a leaf */
-			if( j == new_path->fp_len-1 )  {
-				/* No more path was given, all is well */
-				goto out;
-			}
-			/* Additional path was given, this is wrong */
-			if( noisy )  {
-				char	*sofar = db_path_to_string(total_path);
-				char	*toofar = db_path_to_string(new_path);
-				bu_log("db_follow_path() ERROR: path ended in leaf at '%s', additional path specified '%s'\n",
-					sofar, toofar );
-				bu_free(sofar, "path string");
-				bu_free(toofar, "path string");
-			}
-			goto fail;
-		}
-
-		/* Advance to next path element */
-		j++;
-		comb_dp = dp;
-	} while( j <= depth );
-
-out:
-	if(rt_g.debug&DEBUG_TREEWALK)  {
-		char	*sofar = db_path_to_string(total_path);
-		bu_log("db_follow_path() returns total_path='%s'\n",
-			sofar);
-		bu_free(sofar, "path string");
-	}
-	return 0;		/* SUCCESS */
-fail:
-	return -1;		/* FAIL */
-}
-
-/*
  *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
  *
  *  Follow the slash-separated path given by "cp", and update
- *  *tsp and *total_path with full state information along the way.
+ *  *tsp and *pathp with full state information along the way.
  *
  *  A much more complete version of rt_plookup().
  *
@@ -904,26 +750,178 @@ fail:
  *	-1	error (*tsp values are not useful)
  */
 int
-db_follow_path_for_state( tsp, total_path, orig_str, noisy )
+db_follow_path_for_state( tsp, pathp, orig_str, noisy )
 struct db_tree_state	*tsp;
-struct db_full_path	*total_path;
+struct db_full_path	*pathp;
 CONST char		*orig_str;
 int			noisy;
 {
-	struct db_full_path	new_path;
-	int			ret;
+	struct bu_external	ext;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	register int		i;
+	register char		*cp;
+	register char		*ep;
+	char			*str;		/* ptr to duplicate string */
+	char			oldc;
+	register struct member *mp;
+	struct directory	*comb_dp;	/* combination's dp */
+	struct directory	*dp;		/* element's dp */
 
-	if( *orig_str == '\0' )  return 0;		/* Null string */
+	RT_CHECK_DBI( tsp->ts_dbip );
+	RT_CK_FULL_PATH( pathp );
 
-	if( db_string_to_path( &new_path, tsp->ts_dbip, orig_str ) < 0 )
-		return -1;
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+		bu_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
+			sofar, tsp, orig_str, noisy );
+		rt_free(sofar, "path string");
+	}
 
-	if( new_path.fp_len <= 0 )  return 0;		/* Null string */
+	if( *orig_str == '\0' )  return(0);		/* Null string */
 
-	ret = db_follow_path( tsp, total_path, &new_path, noisy, 0 );
-	db_free_full_path( &new_path );
+	BU_INIT_EXTERNAL( &ext );
+	cp = str = bu_strdup( orig_str );
 
-	return ret;
+	/* Prime the pumps, and get the starting combination */
+	if( pathp->fp_len > 0 )  {
+		comb_dp = DB_FULL_PATH_CUR_DIR(pathp);
+		oldc = 'X';	/* Anything non-null */
+	}  else  {
+		/* Peel out first path element & look it up. */
+
+		/* Skip any leading slashes */
+		while( *cp && *cp == '/' )  cp++;
+
+		/* Find end of this path element and null terminate */
+		ep = cp;
+		while( *ep != '\0' && *ep != '/' )  ep++;
+		oldc = *ep;
+		*ep = '\0';
+
+		if( (dp = db_lookup( tsp->ts_dbip, cp, noisy )) == DIR_NULL )
+			goto fail;
+
+		/* Process animations located at the root */
+		if( tsp->ts_dbip->dbi_anroot )  {
+			register struct animate *anp;
+			mat_t	old_xlate, xmat;
+
+			for( anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
+				RT_CK_ANIMATE(anp);
+				if( dp != anp->an_path.fp_names[0] )
+					continue;
+				mat_copy( old_xlate, tsp->ts_mat );
+				mat_idn( xmat );
+				db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
+				mat_mul( tsp->ts_mat, old_xlate, xmat );
+			}
+		}
+
+		db_add_node_to_full_path( pathp, dp );
+
+		if( (dp->d_flags & DIR_COMB) == 0 )  goto is_leaf;
+
+		/* Advance to next path element */
+		cp = ep+1;
+		comb_dp = dp;
+	}
+	/*
+	 *  Process two things at once: the combination, and it's member.
+	 */
+	do  {
+		if( oldc == '\0' )  break;
+
+		/* Skip any leading slashes */
+		while( *cp && *cp == '/' )  cp++;
+		if( *cp == '\0' )  break;
+
+		/* Find end of this path element and null terminate */
+		ep = cp;
+		while( *ep != '\0' && *ep != '/' )  ep++;
+		oldc = *ep;
+		*ep = '\0';
+
+		if( (dp = db_lookup( tsp->ts_dbip, cp, noisy )) == DIR_NULL )
+			goto fail;
+
+		/* At this point, comb_db is the comb, dp is the member */
+		if(rt_g.debug&DEBUG_TREEWALK)  {
+			bu_log("db_follow_path_for_state() at %s/%s\n", comb_dp->d_namep, dp->d_namep );
+		}
+
+		/* Load the entire combination into contiguous memory */
+		if( db_get_external( &ext, comb_dp, tsp->ts_dbip ) < 0 )
+			goto fail;
+
+		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
+			bu_log("db_follow_path_for_state() import of %s failed\n", comb_dp->d_namep);
+			goto fail;
+		}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB(comb);
+		if( db_apply_state_from_comb( tsp, pathp, comb ) < 0 )
+			goto fail;
+
+		/* Crawl tree searching for specified leaf */
+		if( db_apply_state_from_one_member( tsp, pathp, cp, 0, comb->tree ) <= 0 )  {
+			bu_log("db_follow_path_for_state() ERROR: unable to apply member %s state\n", dp->d_namep);
+			goto fail;
+		}
+		/* Found it, state has been applied, sofar applied, directory entry pushed onto pathp */
+		/* Done */
+		rt_comb_ifree( &intern );
+
+		db_free_external( &ext );
+
+		/* If member is a leaf, handle leaf processing too. */
+		if( (dp->d_flags & DIR_COMB) == 0 )  {
+is_leaf:
+			/* Object is a leaf */
+			/*db_add_node_to_full_path( pathp, dp );*/
+			if( oldc == '\0' )  {
+				/* No more path was given, all is well */
+				goto out;
+			}
+			/* Additional path was given, this is wrong */
+			if( noisy )  {
+				char	*sofar = db_path_to_string(pathp);
+				bu_log("db_follow_path_for_state(%s) ERROR: found leaf early at '%s'\n",
+					cp, sofar );
+				rt_free(sofar, "path string");
+			}
+			goto fail;
+		}
+
+		/* Member is itself a combination */
+		if( dp->d_len <= 1 )  {
+			/* Combination has no members */
+			if( noisy )  {
+				bu_log("db_follow_path_for_state(%s) ERROR: combination '%s' has no members\n",
+					cp, dp->d_namep );
+			}
+			goto fail;
+		}
+
+		/* Advance to next path element */
+		cp = ep+1;
+		comb_dp = dp;
+	} while( oldc != '\0' );
+
+out:
+	db_free_external( &ext );
+	rt_free( str, "bu_strdup (dup'ed path)" );
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+		bu_log("db_follow_path_for_state() returns pathp='%s'\n",
+			sofar);
+		rt_free(sofar, "path string");
+	}
+	return(0);		/* SUCCESS */
+fail:
+	db_free_external( &ext );
+	rt_free( str, "bu_strdup (dup'ed path)" );
+	return(-1);		/* FAIL */
 }
 
 
@@ -951,10 +949,10 @@ struct combined_tree_state	**region_start_statepp;
 		if( db_apply_state_from_memb( &memb_state, pathp, tp ) < 0 )  {
 			/* Lookup of this leaf failed, NOP it out. */
 			if( tp->tr_l.tl_mat )  {
-				bu_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+				rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
 				tp->tr_l.tl_mat = NULL;
 			}
-			bu_free( tp->tr_l.tl_name, "tl_name" );
+			rt_free( tp->tr_l.tl_name, "tl_name" );
 			tp->tr_l.tl_name = NULL;
 			tp->tr_op = OP_NOP;
 			goto out;
@@ -970,16 +968,15 @@ struct combined_tree_state	**region_start_statepp;
 			RT_CK_TREE(subtree);
 			*tmp = *tp;	/* struct copy */
 			*tp = *subtree;	/* struct copy */
-			bu_free( (char *)subtree, "subtree" );
 			db_free_tree( tmp );
 			RT_CK_TREE(tp);
 		} else {
 			/* Processing of this leaf failed, NOP it out. */
 			if( tp->tr_l.tl_mat )  {
-				bu_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+				rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
 				tp->tr_l.tl_mat = NULL;
 			}
-			bu_free( tp->tr_l.tl_name, "tl_name" );
+			rt_free( tp->tr_l.tl_name, "tl_name" );
 			tp->tr_l.tl_name = NULL;
 			tp->tr_op = OP_NOP;
 		}
@@ -1044,12 +1041,12 @@ struct combined_tree_state	**region_start_statepp;
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
+
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x, tsp->ts_sofar=%d\n",
 			sofar, tsp,
 			*region_start_statepp, tsp->ts_sofar );
-		bu_free(sofar, "path string");
-		bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat);
+		rt_free(sofar, "path string");
 	}
 
 	/*
@@ -1096,7 +1093,7 @@ struct combined_tree_state	**region_start_statepp;
 					char	*sofar = db_path_to_string(pathp);
 					bu_log("db_recurse() ts_region_start_func deletes %s\n",
 						sofar);
-					bu_free(sofar, "path string");
+					rt_free(sofar, "path string");
 				}
 				db_free_db_tree_state( &nts );
 				curtree = TREE_NULL;		/* FAIL */
@@ -1153,6 +1150,8 @@ region_end:
 		if(curtree) RT_CK_TREE(curtree);
 	} else if( dp->d_flags & DIR_SOLID )  {
 		int	id;
+		vect_t	A, B, C;
+		fastf_t	fx, fy, fz;
 
 		/* Get solid ID */
 		if( (id = rt_id_solid( &ext )) == ID_NULL )  {
@@ -1163,10 +1162,23 @@ region_end:
 			goto out;
 		}
 
-		if( bn_mat_ck( dp->d_namep, tsp->ts_mat ) < 0 )  {
-			bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",
-				dp->d_namep );
-			bn_mat_print("bad matrix", tsp->ts_mat);
+		/*
+		 * Validate that matrix preserves perpendicularity of axis
+		 * by checking that A.B == 0, B.C == 0, A.C == 0
+		 * XXX these vectors should just be grabbed out of the matrix
+		 */
+		MAT4X3VEC( A, tsp->ts_mat, xaxis );
+		MAT4X3VEC( B, tsp->ts_mat, yaxis );
+		MAT4X3VEC( C, tsp->ts_mat, zaxis );
+		fx = VDOT( A, B );
+		fy = VDOT( B, C );
+		fz = VDOT( A, C );
+		if( ! NEAR_ZERO(fx, 0.0001) ||
+		    ! NEAR_ZERO(fy, 0.0001) ||
+		    ! NEAR_ZERO(fz, 0.0001) )  {
+			bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
+				dp->d_namep, fx, fy, fz );
+			mat_print("bad matrix", tsp->ts_mat);
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
@@ -1199,7 +1211,7 @@ region_end:
 					sofar, ctsp );
 				db_pr_combined_tree_state(ctsp);
 			}
-		    	bu_free( sofar, "path string" );
+		    	rt_free( sofar, "path string" );
 		}
 
 		/* Hand the solid off for leaf processing */
@@ -1222,7 +1234,7 @@ out:
 		bu_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
 			curtree, sofar,
 			*region_start_statepp );
-		bu_free(sofar, "path string");
+		rt_free(sofar, "path string");
 	}
 	if(curtree) RT_CK_TREE(curtree);
 	return(curtree);
@@ -1351,7 +1363,7 @@ union tree	*tp;
 		{
 			struct nmgregion *r = tp->tr_d.td_r;
 			if( tp->tr_d.td_name )  {
-				bu_free( (char *)tp->tr_d.td_name, "region name" );
+				rt_free( (char *)tp->tr_d.td_name, "region name" );
 				tp->tr_d.td_name = (CONST char *)NULL;
 			}
 			if( r == (struct nmgregion *)NULL )  {
@@ -1381,10 +1393,10 @@ union tree	*tp;
 
 	case OP_DB_LEAF:
 		if( tp->tr_l.tl_mat )  {
-			bu_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+			rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
 			tp->tr_l.tl_mat = NULL;
 		}
-		bu_free( tp->tr_l.tl_name, "tl_name" );
+		rt_free( tp->tr_l.tl_name, "tl_name" );
 		tp->tr_l.tl_name = NULL;
 		break;
 
@@ -1414,7 +1426,7 @@ union tree	*tp;
 		rt_bomb("db_free_tree\n");
 	}
 	tp->tr_op = 0;		/* sanity */
-	bu_free( (char *)tp, "union tree" );
+	rt_free( (char *)tp, "union tree" );
 }
 
 /*			D B _ L E F T _ H V Y _ N O D E
@@ -1554,7 +1566,7 @@ top:
 		A = tp->tr_b.tb_right->tr_b.tb_left;
 		B = tp->tr_b.tb_right->tr_b.tb_right;
 		tp->tr_op = OP_UNION;
-		BU_GETUNION( tmp, tree );
+		GETUNION( tmp, tree );
 		tmp->tr_regionp = tp->tr_regionp;
 		tmp->magic = RT_TREE_MAGIC;
 		tmp->tr_op = OP_INTERSECT;
@@ -1769,16 +1781,12 @@ int			id;
 	return(curtree);
 }
 
-struct db_walk_parallel_state {
-	long		magic;
-	union tree	**reg_trees;
-	int		reg_count;
-	int		reg_current;		/* semaphored when parallel */
-	union tree *	(*reg_end_func)();
-	union tree *	(*reg_leaf_func)();
-};
-#define DB_WALK_PARALLEL_STATE_MAGIC	0x64777073	/* dwps */
-#define DB_CK_WPS(_p)	BU_CKMAG(_p, DB_WALK_PARALLEL_STATE_MAGIC, "db_walk_parallel_state")
+static struct db_i	*db_dbip;
+static union tree	**db_reg_trees;
+static int		db_reg_count;
+static int		db_reg_current;		/* semaphored when parallel */
+static union tree *	(*db_reg_end_func)();
+static union tree *	(*db_reg_leaf_func)();
 
 /*
  *			D B _ W A L K _ S U B T R E E
@@ -1810,7 +1818,7 @@ union tree		 *(*leaf_func)();
 			tp->tr_a.tu_stp = 0;
 			return;
 		}
-		RT_CK_DBI(ctsp->cts_s.ts_dbip);
+		ctsp->cts_s.ts_dbip = db_dbip;
 		ctsp->cts_s.ts_stop_at_regions = 0;
 		/* All regions will be accepted, in this 2nd pass */
 		ctsp->cts_s.ts_region_start_func = 0;
@@ -1830,7 +1838,7 @@ union tree		 *(*leaf_func)();
 			char	*str;
 			str = db_path_to_string( &(ctsp->cts_p) );
 			bu_log("db_walk_subtree() FAIL on '%s'\n", str);
-			bu_free( str, "path string" );
+			rt_free( str, "path string" );
 
 			db_free_combined_tree_state( ctsp );
 			/* Result is an empty tree */
@@ -1841,7 +1849,7 @@ union tree		 *(*leaf_func)();
 		/* replace *tp with new subtree */
 		*tp = *curtree;		/* struct copy */
 		db_free_combined_tree_state( ctsp );
-		bu_free( (char *)curtree, "replaced tree node" );
+		rt_free( (char *)curtree, "replaced tree node" );
 		return;
 
 	case OP_NOT:
@@ -1879,36 +1887,30 @@ union tree		 *(*leaf_func)();
  *  Pick off the next region's tree, and walk it.
  */
 void
-db_walk_dispatcher( cpu, arg )
-int		cpu;
-genptr_t	arg;
+db_walk_dispatcher()
 {
 	struct combined_tree_state	*region_start_statep;
 	int		mine;
 	union tree	*curtree;
-	struct db_walk_parallel_state	*wps = (struct db_walk_parallel_state *)arg;
-
-	DB_CK_WPS(wps);
 
 	while(1)  {
-		bu_semaphore_acquire( RT_SEM_WORKER );
-		mine = wps->reg_current++;
-		bu_semaphore_release( RT_SEM_WORKER );
+		RES_ACQUIRE( &rt_g.res_worker );
+		mine = db_reg_current++;
+		RES_RELEASE( &rt_g.res_worker );
 
-		if( mine >= wps->reg_count )
+		if( mine >= db_reg_count )
 			break;
 
 		if( rt_g.debug&DEBUG_TREEWALK )
 			bu_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
 
-		if( (curtree = wps->reg_trees[mine]) == TREE_NULL )
+		if( (curtree = db_reg_trees[mine]) == TREE_NULL )
 			continue;
 		RT_CK_TREE(curtree);
 
 		/* Walk the full subtree now */
 		region_start_statep = (struct combined_tree_state *)0;
-		db_walk_subtree( curtree, &region_start_statep,
-			wps->reg_leaf_func );
+		db_walk_subtree( curtree, &region_start_statep, db_reg_leaf_func );
 
 		/*  curtree->tr_op may be OP_NOP here.
 		 *  It is up to db_reg_end_func() to deal with this,
@@ -1931,8 +1933,8 @@ genptr_t	arg;
 		 *  reg_end_func() returns a pointer to any unused
 		 *  subtree for freeing.
 		 */
-		if( wps->reg_end_func )  {
-			wps->reg_trees[mine] = (*(wps->reg_end_func))(
+		if( db_reg_end_func )  {
+			db_reg_trees[mine] = (*db_reg_end_func)(
 				&(region_start_statep->cts_s),
 				&(region_start_statep->cts_p),
 				curtree );
@@ -1947,10 +1949,8 @@ genptr_t	arg;
  *
  *  This is the top interface to the tree walker.
  *
- *  This routine will employ multiple CPUs if asked,
- *  but is not multiply-parallel-recursive.
- *  Call this routine with ncpu > 1 from serial code only.
- *  When called from within an existing thread, ncpu must be 1.
+ *  This routine will employ multiple CPUs, but is not
+ *  itself parallel-safe.  Call this routine from serial code only.
  *
  *  If ncpu > 1, the caller is responsible for making sure that
  *	rt_g.rtg_parallel is non-zero, and that the various
@@ -1975,9 +1975,10 @@ union tree *	(*leaf_func)();
 	int			new_reg_count;
 	int			i;
 	union tree		**reg_trees;	/* (*reg_trees)[] */
-	struct db_walk_parallel_state	wps;
 
 	RT_CHECK_DBI(dbip);
+
+	db_dbip = dbip;			/* make global to this module */
 
 	/* Walk each of the given path strings */
 	for( i=0; i < argc; i++ )  {
@@ -2061,7 +2062,7 @@ union tree *	(*leaf_func)();
 	 *  for parallel processing below.
 	 */
 	new_reg_count = db_count_subtree_regions( whole_tree );
-	reg_trees = (union tree **)bu_calloc( sizeof(union tree *),
+	reg_trees = (union tree **)rt_calloc( sizeof(union tree *),
 		(new_reg_count+1), "*reg_trees[]" );
 	new_reg_count = db_tally_subtree_regions( whole_tree, reg_trees, 0,
 		new_reg_count );
@@ -2095,7 +2096,7 @@ union tree *	(*leaf_func)();
 		 	RT_CK_CTS(ctsp);
 			str = db_path_to_string( &(ctsp->cts_p) );
 			bu_log("%d '%s'\n", i, str);
-			bu_free( str, "path string" );
+			rt_free( str, "path string" );
 		}
 		bu_log("end of waiting regions\n");
 	}
@@ -2103,24 +2104,17 @@ union tree *	(*leaf_func)();
 	/*
 	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
 	 */
-	if( bu_is_parallel() && ncpu != 1 )  {
-		bu_log("db_walk_tree() recursively invoked while inside parallel section with additional parallelism of ncpu=%d requested.  Running only in one thread.\n",
-			ncpu );
-		ncpu = 1;
-	}
-
-	/* Make state available to the threads */
-	wps.magic = DB_WALK_PARALLEL_STATE_MAGIC;
-	wps.reg_trees = reg_trees;
-	wps.reg_count = new_reg_count;
-	wps.reg_current = 0;			/* Semaphored */
-	wps.reg_end_func = reg_end_func;
-	wps.reg_leaf_func = leaf_func;
+	/* Export some state to read-only static variables */
+	db_reg_trees = reg_trees;
+	db_reg_count = new_reg_count;
+	db_reg_current = 0;			/* Semaphored */
+	db_reg_end_func = reg_end_func;
+	db_reg_leaf_func = leaf_func;
 
 	if( ncpu <= 1 )  {
-		db_walk_dispatcher( 0, (genptr_t)&wps );
+		db_walk_dispatcher();
 	} else {
-		bu_parallel( db_walk_dispatcher, ncpu, (genptr_t)&wps );
+		bu_parallel( db_walk_dispatcher, ncpu );
 	}
 
 	/* Clean up any remaining sub-trees still in reg_trees[] */
@@ -2128,19 +2122,13 @@ union tree *	(*leaf_func)();
 		if( reg_trees[i] != TREE_NULL )
 			db_free_tree( reg_trees[i] );
 	}
-	bu_free( (char *)reg_trees, "*reg_trees[]" );
+	rt_free( (char *)reg_trees, "*reg_trees[]" );
 
 	return(0);	/* OK */
 }
 
 /*
  *			D B _ P A T H _ T O _ M A T
- *
- *  Returns -
- *	1	OK, path matrix written into 'mat'.
- *	0	FAIL
- *
- *  Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
  */
 int
 db_path_to_mat( dbip, pathp, mat, depth)
@@ -2149,28 +2137,6 @@ struct db_full_path *pathp;
 mat_t mat;
 int depth;			/* number of arcs */
 {
-	struct db_tree_state	ts;
-	struct db_full_path	null_path;
-	int			ret;
-
-	RT_CHECK_DBI(dbip);
-	RT_CK_FULL_PATH(pathp);
-	if( !mat ) rt_bomb("db_path_to_mat() NULL matrix pointer\n");
-
-	db_full_path_init( &null_path );
-	db_init_db_tree_state( &ts, dbip );
-
-	ret = db_follow_path( &ts, &null_path, pathp, LOOKUP_NOISY, depth );
-	db_free_full_path( &null_path );
-	bn_mat_copy( mat, ts.ts_mat );	/* implicit return */
-	db_free_db_tree_state( &ts );
-
-	if( ret < 0 )  {
-		return 0;	/* FAIL */
-	}
-	return 1;		/* OK */
-
-#if 0
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	union tree		*tp;
@@ -2179,6 +2145,11 @@ int depth;			/* number of arcs */
 	int			i,j;
 	mat_t			tmat;
 	int			holdlength;
+
+	RT_CHECK_DBI(dbip);
+	RT_CK_FULL_PATH(pathp);
+
+
 	/* XXX case where depth == 0 and pathp->fp_len=2 */
 
 
@@ -2191,7 +2162,7 @@ int depth;			/* number of arcs */
 	 */
 	if (depth > pathp->fp_len-1) depth = pathp->fp_len-1;
 
-	bn_mat_idn(mat);
+	mat_idn(mat);
 	/*
 	 * if there is no arc, return ident matrix now
 	 */
@@ -2204,7 +2175,7 @@ int depth;			/* number of arcs */
 			char *sofar = db_path_to_string(pathp);
 			bu_log("db_path_to_mat: '%s' of '%s' not a combination.\n",
 			    parentp->d_namep, sofar);
-			bu_free(sofar, "path string");
+			rt_free(sofar, "path string");
 			return 0;
 		}
 
@@ -2225,23 +2196,20 @@ int depth;			/* number of arcs */
 		pathp->fp_len = i+2;
 		if( tp->tr_l.tl_mat )  {
 			db_apply_anims(pathp, kidp, mat, tp->tr_l.tl_mat, 0);
-			bn_mat_mul(tmat, mat, tp->tr_l.tl_mat);
-			bn_mat_copy(mat, tmat);
+			mat_mul(tmat, mat, tp->tr_l.tl_mat);
+			mat_copy(mat, tmat);
 		} else {
-			bn_mat_idn( tmat );
+			mat_idn( tmat );
 			db_apply_anims(pathp, kidp, mat, tmat, 0);
 		}
 		pathp->fp_len = holdlength;
 		rt_comb_ifree( &intern );
 	}
 	return 1;
-#endif
 }
 
 /*
  *			D B _ A P P L Y _ A N I M S
- *
- *  Note that 'arc' may be a null pointer.
  */
 void
 db_apply_anims(pathp, dp, stack, arc, materp)
@@ -2259,7 +2227,7 @@ struct mater_info *materp;
 	if ((dp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("Animate %s with...\n", sofar);
-		bu_free(sofar, "path string");
+		rt_free(sofar, "path string");
 	}
 
 	/*
@@ -2283,9 +2251,7 @@ struct mater_info *materp;
 
 			str = db_path_to_string( &(anp->an_path) );
 			bu_log( "\t%s\t", str );
-			bu_free( str, "path string" );
-			bu_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
-				i, j);
+			rt_free( str, "path string" );
 		}
 
 		for( ; i>=0 && j>=0; i--, j-- )  {
@@ -2337,14 +2303,12 @@ CONST char *name;
 	/* get matrix to map points from model (world) space
 	 * to "region" space
 	 */
-	bn_mat_inv(m, region_to_model);
+	mat_inv(m, region_to_model);
 }
 
 
 
 /*		D B _ S H A D E R _ M A T
- * XXX given that this routine depends on rtip, it should be called
- * XXX rt_shader_mat().
  *
  *  Given a region, return a matrix which maps model coordinates into
  *  region "shader space".  This is a space where points in the model
@@ -2378,7 +2342,7 @@ point_t p_max;	/* shader/region max point */
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
 #ifdef DEBUG_SHADER_MAT
-	bn_mat_print("model_to_region", model_to_region);
+	mat_print("model_to_region", model_to_region);
 #endif
 	if (VEQUAL(p_min, p_max)) {
 		/* User/shader did not specify bounding box,
@@ -2407,10 +2371,10 @@ point_t p_max;	/* shader/region max point */
 	/*
 	 * Translate bounding box to origin
 	 */
-	bn_mat_idn(m_xlate);
+	mat_idn(m_xlate);
 	VSCALE(v_tmp, p_min, -1);
 	MAT_DELTAS_VEC(m_xlate, v_tmp);
-	bn_mat_mul(m_tmp, m_xlate, model_to_region);
+	mat_mul(m_tmp, m_xlate, model_to_region);
 
 
 	/* 
@@ -2418,7 +2382,7 @@ point_t p_max;	/* shader/region max point */
 	 */
 	VSUB2(v_tmp, p_max, p_min);
 	VINVDIR(v_tmp, v_tmp);
-	bn_mat_idn(m_scale);
+	mat_idn(m_scale);
 	MAT_SCALE_VEC(m_scale, v_tmp);
-	bn_mat_mul(model_to_shader, m_scale, m_tmp);
+	mat_mul(model_to_shader, m_scale, m_tmp);
 }

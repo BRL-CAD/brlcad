@@ -18,7 +18,8 @@
  */
 
 /* For use in MSG_VERSION exchanges */
-#define PROTOCOL_VERSION	"BRL-CAD REMRT Protocol v2.0"
+#define PROTOCOL_VERSION	\
+	"$Header$"
 
 #define MSG_MATRIX	2
 #define MSG_OPTIONS	3

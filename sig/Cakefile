@@ -84,11 +84,11 @@ dconv: dconv.o
 	CC LDFLAGS -o dconv dconv.o LIBFFT LIBES
 
 
-ddisp: ddisp.o LIBFB_DEP LIBBU_DEP
-	CC LDFLAGS -o ddisp ddisp.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+ddisp: ddisp.o
+	CC LDFLAGS -o ddisp ddisp.o LIBFB LIBFB_LIBES LIBES
 
-fhor: fhor.o LIBFB_DEP LIBBU_DEP
-	CC LDFLAGS -o fhor fhor.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+fhor: fhor.o
+	CC LDFLAGS -o fhor fhor.o LIBFB LIBFB_LIBES LIBES
 
 imod: imod.o
 	CC LDFLAGS -o imod imod.o  LIBES

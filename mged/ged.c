@@ -62,6 +62,13 @@ in all countries except the USA.  All rights reserved.";
 
 #include "tk.h"
 
+/* defined in cmd.c */
+extern Tcl_Interp *interp;
+extern Tk_Window tkwin;
+
+/* defined in attach.c */
+extern int mged_slider_link_vars();
+
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -78,77 +85,33 @@ in all countries except the USA.  All rights reserved.";
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
-extern void draw_e_axes();
-extern void draw_m_axes();
-extern void draw_v_axes();
+int dm_pipe[2];
+struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 
-extern void fb_tclInit();  /* from in libfb/tcl.c */
-extern int fb_refresh();
-
-extern void draw_grid();		/* grid.c */
-
-extern void draw_rect();		/* rect.c */
-extern void paint_rect_area();
-
-/* defined in predictor.c */
-extern void predictor_init();
-
-/* defined in cmd.c */
-extern Tcl_Interp *interp;
-extern Tk_Window tkwin;
-
-/* defined in attach.c */
-extern int mged_slider_link_vars();
-
-/* defined in chgmodel.c */
-extern void set_localunit_TclVar();
-
-/* defined in dodraw.c */
-extern unsigned char geometry_default_color[];
-
-/* defined in libdm/dm-Null.c */
+int    update_views = 0;
 extern struct dm dm_Null;
-
-/* defined in set.c */
 extern struct _mged_variables default_mged_variables;
 
-/* defined in color_scheme.c */
-extern struct _color_scheme default_color_scheme;
+mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
-/* defined in grid.c */
-extern struct _grid_state default_grid_state;
-
-/* defined in axes.c */
-extern struct _axes_state default_axes_state;
-
-/* defined in rect.c */
-extern struct _rubber_band default_rubber_band;
-
-int pipe_out[2];
-int pipe_err[2];
-struct db_i *dbip = DBI_NULL;	/* database instance pointer */
-int    update_views = 0;
 int		(*cmdline_hook)() = NULL;
-jmp_buf	jmp_env;		/* For non-local gotos */
 
+static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
+
+jmp_buf	jmp_env;		/* For non-local gotos */
 int             cmd_stuff_str();
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2(), sig3();
-void		reset_input_strings();
 void		new_mats();
 void		usejoy();
 void            slewview();
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
-int		classic_mged=0;
-char		*dpy_string = (char *)NULL;
-static int	mged_init_flag = 1;	/* >0 means in initialization stage */
 
-struct bu_vls input_str, scratchline, input_str_prefix;
-int input_str_index = 0;
+static struct bu_vls input_str, scratchline, input_str_prefix;
+static int input_str_index = 0;
 
 static void     mged_insert_char();
-static void	mged_process_char();
 static int	do_rc();
 static void	log_event();
 extern char	version[];		/* from vers.c */
@@ -160,8 +123,8 @@ static char *units_str[] = {
 	"mm",
 	"um",
 	"cm",
-	"meters",
 	"km",
+	"meters",
 	"inches",
 	"feet",
 	"yards",
@@ -174,10 +137,8 @@ void pr_prompt(), pr_beep();
 
 #ifdef USE_PROTOTYPES
 Tcl_FileProc stdin_input;
-Tcl_FileProc std_out_or_err;
 #else
 void stdin_input();
-void std_out_or_err();
 #endif
 
 /* 
@@ -189,82 +150,64 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	extern char *bu_optarg;
-	extern int bu_optind, bu_opterr, bu_optopt;
-	int	force_interactive = 0;
+	extern char *optarg;
+	extern int optind, opterr, optopt;
 	int	rateflag = 0;
 	int	c;
 	int	read_only_flag=0;
 
-	while ((c = bu_getopt(argc, argv, "d:hicnrx:X:")) != EOF)
+	/* Check for proper invocation */
+	if( argc < 2 )  {
+		fprintf(stdout, "Usage:  %s [-r] database [command]\n", argv[0]);
+		fflush(stdout);
+		return(1);		/* NOT finish() */
+	}
+
+	while ((c = getopt(argc, argv, "r")) != EOF)
 	{
 		switch( c )
 		{
-			case 'd':
-				dpy_string = bu_optarg;
-				break;
-			case 'i':
-				force_interactive = 1;
-				break;
 			case 'r':
 				read_only_flag = 1;
 				break;
-			case 'n':		/* "not new" == "classic" */
-			case 'c':
-				classic_mged = 1;
-				break;
-			case 'x':
-				sscanf( bu_optarg, "%x", &rt_g.debug );
-				break;
-			case 'X':
-	                        sscanf( bu_optarg, "%x", &bu_debug );
-				break;
 			default:
 				fprintf( stdout, "Unrecognized option (%c)\n", c );
-				/* Fall through to help */
-			case 'h':
-				fprintf(stdout, "Usage:  %s [-c] [-h] [-i] [-r] [-x#] -X#] [database [command]]\n", argv[0]);
 				fflush(stdout);
-				return(1);
+				return( 1 );
 		}
 	}
 
-	argc -= (bu_optind - 1);
-	argv += (bu_optind - 1);
+	argc -= (optind - 1);
+	argv += (optind - 1);
 
-#if 0
 	/* Check again for proper invocation */
 	if( argc < 2 )  {
-	  argv -= (bu_optind - 1);
-	  fprintf(stdout, "Usage:  %s [-n] [-r] [database [command]]\n", argv[0]);
+	  argv -= (optind - 1);
+	  fprintf(stdout, "Usage:  %s [-r] database [command]\n", argv[0]);
 	  fflush(stdout);
 	  return(1);		/* NOT finish() */
 	}
-#endif
 
 	/* Identify ourselves if interactive */
-	if( argc <= 2 )  {
-	  if( isatty(fileno(stdin)) )
-	    interactive = 1;
+	if( argc == 2 )  {
+		if( isatty(fileno(stdin)) )
+			interactive = 1;
 
-	  if(classic_mged){
-	    fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
-	    fflush(stdout);
+		fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
+		fflush(stdout);
 		
-	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+		if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 #ifndef COMMAND_LINE_EDITING
 #define COMMAND_LINE_EDITING 1
 #endif
-	      /* Set up for character-at-a-time terminal IO. */
-	      cbreak_mode = COMMAND_LINE_EDITING;
-	      save_Tty(fileno(stdin));
-	    }
-	  }
+ 		    cbreak_mode = COMMAND_LINE_EDITING;
+		}
 	}
 
-	if( force_interactive )
-		interactive = 1;
-
+	/* Set up for character-at-a-time terminal IO. */
+	if (cbreak_mode) 
+	    save_Tty(fileno(stdin));
+	
 	(void)signal( SIGPIPE, SIG_IGN );
 
 	/*
@@ -282,7 +225,12 @@ char **argv;
 	 */
 	if( bu_avail_cpus() > 1 )  {
 	  rt_g.rtg_parallel = 1;
-	  bu_semaphore_init( RT_SEM_LAST );
+
+	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( 5 );
 	}
 
 	/* Set up linked lists */
@@ -292,8 +240,8 @@ char **argv;
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
 	BU_LIST_INIT(&head_cmd_list.l);
-	bu_vls_init(&head_cmd_list.cl_name);
-	bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
+	bu_vls_init(&head_cmd_list.name);
+	bu_vls_strcpy(&head_cmd_list.name, "mged");
 	curr_cmd_list = &head_cmd_list;
 
 	bzero((void *)&head_dm_list, sizeof(struct dm_list));
@@ -305,11 +253,6 @@ char **argv;
 	  BU_LIST_APPEND(&head_dm_list.l, &dlp->l);
 	  curr_dm_list = dlp;
 	}
-
-	/* initialize predictor stuff */
-	BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
-	predictor_init();
-
 	BU_GETSTRUCT(dmp, dm);
 	*dmp = dm_Null;
 	bu_vls_init(&pathName);
@@ -317,55 +260,35 @@ char **argv;
 	bu_vls_init(&dName);
 	bu_vls_strcpy(&pathName, "nu");
 	bu_vls_strcpy(&tkName, "nu");
-
-	BU_GETSTRUCT(rubber_band, _rubber_band);
-	*rubber_band = default_rubber_band;		/* struct copy */
-
-	BU_GETSTRUCT(mged_variables, _mged_variables);
-	*mged_variables = default_mged_variables;	/* struct copy */
-
-	BU_GETSTRUCT(color_scheme, _color_scheme);
-	*color_scheme = default_color_scheme;		/* struct copy */
-
-	BU_GETSTRUCT(grid_state, _grid_state);
-	*grid_state = default_grid_state;		/* struct copy */
-
-	BU_GETSTRUCT(axes_state, _axes_state);
-	*axes_state = default_axes_state;		/* struct copy */
-
-	BU_GETSTRUCT(adc_state, _adc_state);
-	adc_state->adc_rc = 1;
-	adc_state->adc_a1 = adc_state->adc_a2 = 45.0;
-
-	BU_GETSTRUCT(menu_state, _menu_state);
-	menu_state->ms_rc = 1;
-
-	BU_GETSTRUCT(view_state, _view_state);
-	view_state->vs_rc = 1;
-	view_ring_init(curr_dm_list);
-	/* init rotation matrix */
-	view_state->vs_Viewscale = 500;		/* => viewsize of 1000mm (1m) */
-	bn_mat_idn( view_state->vs_Viewrot );
-	bn_mat_idn( view_state->vs_toViewcenter );
-	bn_mat_idn( view_state->vs_ModelDelta );
-	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
-	view_state->vs_i_Viewscale = view_state->vs_Viewscale;
-
-	am_mode = AMM_IDLE;
+	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
+	mged_variables = default_mged_variables;
+	am_mode = ALT_MOUSE_MODE_IDLE;
+	rc = 1;
 	owner = 1;
 	frametime = 1;
+	adc_a1_deg = adc_a2_deg = 45.0;
+	curr_dm_list->s_info->opp = &pathName;
+	mged_view_init();
 
 	bu_vls_init(&fps_name);
-	bu_vls_printf(&fps_name, "%s(%S,fps)", MGED_DISPLAY_VAR,
-		      &curr_dm_list->dml_dmp->dm_pathName);
+	bu_vls_printf(&fps_name, "mged_display(%S,fps)",
+		      &curr_dm_list->_dmp->dm_pathName);
 
 	bn_mat_idn( identity );		/* Handy to have around */
+	/* init rotation matrix */
+	Viewscale = 500;		/* => viewsize of 1000mm (1m) */
+	bn_mat_idn( Viewrot );
+	bn_mat_idn( toViewcenter );
 	bn_mat_idn( modelchanges );
+	bn_mat_idn( ModelDelta );
 	bn_mat_idn( acc_rot_sol );
+
+	MAT_DELTAS_GET(orig_pos, toViewcenter);
+	i_Viewscale = Viewscale;
 
 	state = ST_VIEW;
 	es_edflag = -1;
-	es_edclass = EDIT_CLASS_NULL;
+	es_edclass = scroll_edit = EDIT_CLASS_NULL;
 	inpara = newedge = 0;
 
 	/* These values match old GED.  Use 'tol' command to change them. */
@@ -379,9 +302,10 @@ char **argv;
 
 	new_mats();
 
+	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
 
-	bu_vls_init( &curr_cmd_list->cl_more_default );
+	bu_vls_init( &curr_cmd_list->more_default );
 	bu_vls_init(&input_str);
 	bu_vls_init(&input_str_prefix);
 	bu_vls_init(&scratchline);
@@ -392,100 +316,42 @@ char **argv;
 	mged_setup();
 	mmenu_init();
 	btn_head_menu(0,0,0);
-	mged_slider_link_vars(curr_dm_list);
-
-	{
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "set version \"%s\"", version+5);
-	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	}
-
-	/* Initialize libdm */
-	(void)dm_tclInit(interp);
-
-#if 1
-	/* Initialize libfb */
-	(void)fb_tclInit(interp);
+#if TRY_NEW_MGED_VARS
+	mged_variable_setup(curr_dm_list);
 #endif
+	mged_slider_link_vars(curr_dm_list);
 
 	setview( 0.0, 0.0, 0.0 );
 
-	if(dpy_string == (char *)NULL)
-	  dpy_string = getenv("DISPLAY");
+	windowbounds[0] = XMAX;		/* XHR */
+	windowbounds[1] = XMIN;		/* XLR */
+	windowbounds[2] = YMAX;		/* YHR */
+	windowbounds[3] = YMIN;		/* YLR */
+	windowbounds[4] = 2047;		/* ZHR */
+	windowbounds[5] = -2048;	/* ZLR */
 
-	if(interactive && !classic_mged){
-	  int status;
-	  struct bu_vls vls;
+	/* Open the database, attach a display manager */
+	/* Command line may have more than 2 args, opendb only wants 2 */
+	if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR)
+	  mged_finish(1);
+	else
+	  bu_log("%s", interp->result);
 
-	  bu_vls_init(&vls);
-	  if(dpy_string != (char *)NULL)
-	    bu_vls_printf(&vls, "loadtk %s", dpy_string);
-	  else
-	    bu_vls_strcpy(&vls, "loadtk");
-
-	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-
-	  if(status != TCL_OK)
-	    exit(1);
-	}
-
-	if(argc >= 2){
-	  /* Open the database, attach a display manager */
-	  /* Command line may have more than 2 args, opendb only wants 2 */
-	  if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR)
-	    mged_finish(1);
-	}
-
-	if( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) )
+	if( read_only_flag && !dbip->dbi_read_only )
 	{
 		dbip->dbi_read_only = 1;
 		bu_log( "Opened in READ ONLY mode\n" );
 	}
 
-	/* --- Now safe to process commands. --- */
-	if(interactive){
-	  /* This is an interactive mged, process .mgedrc */
-	  do_rc();
-#if 1
-	  /*
-	   * Initialze variables here in case the user specified changes
-	   * to the defaults in their .mgedrc file.
-	   */
+#if 0
+	dmp->dm_setWinBounds(windowbounds);
 #endif
 
-	  if(classic_mged)
-	    get_attached();
-	  else{
-	    int pid;
-
-	    if ((pid = fork()) == 0){
-	      struct bu_vls vls;
-
-	      (void)pipe(pipe_out);
-	      (void)pipe(pipe_err);
-
-	      /* Redirect stdout */
-	      (void)close(1);
-	      (void)dup(pipe_out[1]);
-	      (void)close(pipe_out[1]);
-
-	      /* Redirect stderr */
-	      (void)close(2);
-	      (void)dup(pipe_err[1]);
-	      (void)close(pipe_err[1]);
-
-	      bu_vls_init(&vls);
-	      bu_vls_strcpy(&vls, "gui");
-	      (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	      bu_vls_free(&vls);
-	    }else{
-	      exit(0);
-	    }
-	  }
+	/* --- Now safe to process commands. --- */
+	if( interactive )  {
+		/* This is an interactive mged, process .mgedrc */
+		do_rc();
+		get_attached();
 	}
 
 	/* --- Now safe to process geometry. --- */
@@ -513,33 +379,44 @@ char **argv;
 
 	refresh();			/* Put up faceplate */
 
-	if(classic_mged){
-	  Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,
-				stdin_input, (ClientData)STDIN_FILENO);
+#if 0
+	/* Reset the lights */
+	dmp->dm_light( dmp, LIGHT_RESET, 0 );
+#endif
 
-	  (void)signal( SIGINT, SIG_IGN );
+	(void)pipe(dm_pipe);
+	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
+			      TCL_READABLE, stdin_input,
+			     (ClientData)STDIN_FILENO);
+	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)dm_pipe[0], TCL_UNIX_FD),
+			      TCL_READABLE, stdin_input,
+			     (ClientData)dm_pipe[0]);
 
-	  bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
-	  pr_prompt();
+	(void)signal( SIGINT, SIG_IGN );
 
-	  if (cbreak_mode) {
-	    set_Cbreak(fileno(stdin));
-	    clr_Echo(fileno(stdin));
-	  }
-	}else{
-	  Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE,
-				std_out_or_err, (ClientData)pipe_out[0]);
-	  Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
-				std_out_or_err, (ClientData)pipe_err[0]);
-	}
-
-	mged_init_flag = 0;	/* all done with initialization */
+	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	pr_prompt();
 
 	/****************  M A I N   L O O P   *********************/
+
+	if (cbreak_mode) {
+	    set_Cbreak(fileno(stdin));
+	    clr_Echo(fileno(stdin));
+	}
+
 	while(1) {
 		/* This test stops optimizers from complaining about an infinite loop */
 		if( (rateflag = event_check( rateflag )) < 0 )  break;
-
+#if 0
+		/* apply solid editing changes if necessary */
+		if( sedraw > 0) {
+			sedit();
+#if 1
+			sedraw = 0;
+			dmaflag = 1;
+#endif
+		}
+#endif
 		/*
 		 * Cause the control portion of the displaylist to be
 		 * updated to reflect the changes made above.
@@ -590,7 +467,10 @@ int mask;
 {
     int count;
     char ch;
+    struct bu_vls *vp;
     struct bu_vls temp;
+    static int escaped = 0;
+    static int bracketed = 0;
     static int freshline = 1;
     long fd;
 
@@ -611,23 +491,23 @@ int mask;
 	   over from a CMD_MORE), then prepend them to the new input. */
 
 	/* If no input and a default is supplied then use it */
-	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
+	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->more_default))
 	  bu_vls_printf(&input_str_prefix, "%s%S\n",
 			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			&curr_cmd_list->cl_more_default);
+			&curr_cmd_list->more_default);
 	else
 	  bu_vls_printf(&input_str_prefix, "%s%S\n",
 			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			&input_str);
 
-	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
+	bu_vls_trunc(&curr_cmd_list->more_default, 0);
 
 	/* If a complete line was entered, attempt to execute command. */
 	
 	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
-	    if(curr_cmd_list->cl_tie)
-	      curr_dm_list = curr_cmd_list->cl_tie;
+	    if(curr_cmd_list->aim)
+	      curr_dm_list = curr_cmd_list->aim;
 	    if (cmdline_hook != NULL) {
 		if ((*cmdline_hook)(&input_str))
 		    pr_prompt();
@@ -683,28 +563,7 @@ int mask;
       f_quit((ClientData)NULL, interp, 1, av);
     }
 
-#ifdef TRY_STDIN_INPUT_HACK
-    /* Process everything in buf */
-    for(index = 0, ch = buf[index]; index < count; ch = buf[++index]){
-#endif
-      mged_process_char(ch);
-#ifdef TRY_STDIN_INPUT_HACK
-    }
-    }
-#endif	
-}
-
-/* Process character */
-static void
-mged_process_char(ch)
-char ch;
-{
-  struct bu_vls *vp;
-  struct bu_vls temp;
-  static int escaped = 0;
-  static int bracketed = 0;
-  static int freshline = 1;
-
+    /* Process character */
 #define CTRL_A      1
 #define CTRL_B      2
 #define CTRL_D      4
@@ -722,396 +581,404 @@ char ch;
 #define DELETE      127
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
-  /* ANSI arrow keys */
+#ifdef TRY_STDIN_INPUT_HACK
+    /* Process everything in buf */
+    for(index = 0, ch = buf[index]; index < count; ch = buf[++index]){
+#endif
+    /* ANSI arrow keys */
     
-  if (escaped && bracketed) {
-    if (ch == 'A') ch = CTRL_P;
-    if (ch == 'B') ch = CTRL_N;
-    if (ch == 'C') ch = CTRL_F;
-    if (ch == 'D') ch = CTRL_B;
-    escaped = bracketed = 0;
-  }
-
-  switch (ch) {
-  case ESC:           /* Used for building up ANSI arrow keys */
-    escaped = 1;
-    break;
-  case '\n':          /* Carriage return or line feed */
-  case '\r':
-    bu_log("\n");   /* Display newline */
-
-    /* If there are any characters already in the command string (left
-       over from a CMD_MORE), then prepend them to the new input. */
-
-    /* If no input and a default is supplied then use it */
-    if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-      bu_vls_printf(&input_str_prefix, "%s%S\n",
-		    bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-		    &curr_cmd_list->cl_more_default);
-    else {
-      if (curr_cmd_list->cl_quote_string)
-	bu_vls_printf(&input_str_prefix, "%s\"%S\"\n",
-		      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-		      &input_str);
-      else
-	bu_vls_printf(&input_str_prefix, "%s%S\n",
-		      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-		      &input_str);
+    if (escaped && bracketed) {
+	if (ch == 'A') ch = CTRL_P;
+	if (ch == 'B') ch = CTRL_N;
+	if (ch == 'C') ch = CTRL_F;
+	if (ch == 'D') ch = CTRL_B;
+	escaped = bracketed = 0;
     }
 
-    curr_cmd_list->cl_quote_string = 0;
-    bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
-
-    /* If this forms a complete command (as far as the Tcl parser is
-       concerned) then execute it. */
-	
-    if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
-      curr_cmd_list = &head_cmd_list;
-      if(curr_cmd_list->cl_tie)
-	curr_dm_list = curr_cmd_list->cl_tie;
-      if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
-	reset_Tty(fileno(stdin));
-
-	if ((*cmdline_hook)(&input_str_prefix))
-	  pr_prompt();
-
-	set_Cbreak(fileno(stdin));
-	clr_Echo(fileno(stdin));
-
-	bu_vls_trunc(&input_str, 0);
-	bu_vls_trunc(&input_str_prefix, 0);
-	(void)signal( SIGINT, SIG_IGN );
-      } else {
-	reset_Tty(fileno(stdin)); /* Backwards compatibility */
-	(void)signal( SIGINT, SIG_IGN );
-	if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
-	  /* Remove newline */
-	  bu_vls_trunc(&input_str_prefix,
-		       bu_vls_strlen(&input_str_prefix)-1);
-	  bu_vls_trunc(&input_str, 0);
-	  (void)signal( SIGINT, sig2 );
-	  /* *** The mged_prompt vls now contains prompt for more input. *** */
-	} else {
-	  /* All done; clear all strings. */
-	  bu_vls_trunc(&input_str_prefix, 0);
-	  bu_vls_trunc(&input_str, 0);
-	  (void)signal( SIGINT, SIG_IGN );
-	}
-	set_Cbreak(fileno(stdin)); /* Back to single-character mode */
-	clr_Echo(fileno(stdin));
-      }
-    } else {
-      bu_vls_trunc(&input_str, 0);
-      bu_vls_strcpy(&mged_prompt, "\r? ");
-
-      /* Allow the user to hit ^C */
-      (void)signal( SIGINT, sig2 );
-    }
-    pr_prompt(); /* Print prompt for more input */
-    input_str_index = 0;
-    freshline = 1;
-    escaped = bracketed = 0;
-    break;
-  case BACKSPACE:
-  case DELETE:
-    if (input_str_index <= 0) {
-      pr_beep();
-      break;
-    }
-
-    if (input_str_index == bu_vls_strlen(&input_str)) {
-      bu_log("\b \b");
-      bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1);
-    } else {
-      bu_vls_init(&temp);
-      bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
-      bu_vls_trunc(&input_str, input_str_index-1);
-      bu_log("\b%S ", &temp);
-      pr_prompt();
-      bu_log("%S", &input_str);
-      bu_vls_vlscat(&input_str, &temp);
-      bu_vls_free(&temp);
-    }
-    --input_str_index;
-    escaped = bracketed = 0;
-    break;
-  case CTRL_A:                    /* Go to beginning of line */
-    pr_prompt();
-    input_str_index = 0;
-    escaped = bracketed = 0;
-    break;
-  case CTRL_E:                    /* Go to end of line */
-    if (input_str_index < bu_vls_strlen(&input_str)) {
-      bu_log("%s", bu_vls_addr(&input_str)+input_str_index);
-      input_str_index = bu_vls_strlen(&input_str);
-    }
-    escaped = bracketed = 0;
-    break;
-  case CTRL_D:                    /* Delete character at cursor */
-    if (input_str_index == bu_vls_strlen(&input_str)) {
-      pr_beep(); /* Beep if at end of input string */
-      break;
-    }
-    bu_vls_init(&temp);
-    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
-    bu_vls_trunc(&input_str, input_str_index);
-    bu_log("%S ", &temp);
-    pr_prompt();
-    bu_log("%S", &input_str);
-    bu_vls_vlscat(&input_str, &temp);
-    bu_vls_free(&temp);
-    escaped = bracketed = 0;
-    break;
-  case CTRL_U:                   /* Delete whole line */
-    pr_prompt();
-    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
-    pr_prompt();
-    bu_vls_trunc(&input_str, 0);
-    input_str_index = 0;
-    escaped = bracketed = 0;
-    break;
-  case CTRL_K:                    /* Delete to end of line */
-    bu_log("%*s", bu_vls_strlen(&input_str)-input_str_index, SPACES);
-    bu_vls_trunc(&input_str, input_str_index);
-    pr_prompt();
-    bu_log("%S", &input_str);
-    escaped = bracketed = 0;
-    break;
-  case CTRL_L:                   /* Redraw line */
-    bu_log("\n");
-    pr_prompt();
-    bu_log("%S", &input_str);
-    if (input_str_index == bu_vls_strlen(&input_str))
-      break;
-    pr_prompt();
-    bu_log("%*S", input_str_index, &input_str);
-    escaped = bracketed = 0;
-    break;
-  case CTRL_B:                   /* Back one character */
-    if (input_str_index == 0) {
-      pr_beep();
-      break;
-    }
-    --input_str_index;
-    bu_log("\b"); /* hopefully non-destructive! */
-    escaped = bracketed = 0;
-    break;
-  case CTRL_F:                   /* Forward one character */
-    if (input_str_index == bu_vls_strlen(&input_str)) {
-      pr_beep();
-      break;
-    }
-    
-    bu_log("%c", bu_vls_addr(&input_str)[input_str_index]);
-    ++input_str_index;
-    escaped = bracketed = 0;
-    break;
-  case CTRL_T:                  /* Transpose characters */
-    if (input_str_index == 0) {
-      pr_beep();
-      break;
-    }
-    if (input_str_index == bu_vls_strlen(&input_str)) {
-      bu_log("\b");
-      --input_str_index;
-    }
-    ch = bu_vls_addr(&input_str)[input_str_index];
-    bu_vls_addr(&input_str)[input_str_index] =
-      bu_vls_addr(&input_str)[input_str_index - 1];
-    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
-    bu_log("\b%*s", 2, bu_vls_addr(&input_str)+input_str_index-1);
-    ++input_str_index;
-    escaped = bracketed = 0;
-    break;
-  case CTRL_N:                  /* Next history command */
-  case CTRL_P:                  /* Last history command */
-    /* Work the history routines to get the right string */
-    curr_cmd_list = &head_cmd_list;
-    if (freshline) {
-      if (ch == CTRL_P) {
-	vp = history_prev();
-	if (vp == NULL) {
-	  pr_beep();
-	  break;
-	}
-	bu_vls_trunc(&scratchline, 0);
-	bu_vls_vlscat(&scratchline, &input_str);
-	freshline = 0;
-      } else {
-	pr_beep();
+    switch (ch) {
+    case ESC:           /* Used for building up ANSI arrow keys */
+	escaped = 1;
 	break;
-      }
-    } else {
-      if (ch == CTRL_P) {
-	vp = history_prev();
-	if (vp == NULL) {
-	  pr_beep();
-	  break;
+    case '\n':          /* Carriage return or line feed */
+    case '\r':
+	bu_log("\n");   /* Display newline */
+
+	/* If there are any characters already in the command string (left
+	   over from a CMD_MORE), then prepend them to the new input. */
+
+	/* If no input and a default is supplied then use it */
+	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->more_default))
+	  bu_vls_printf(&input_str_prefix, "%s%S\n",
+			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			&curr_cmd_list->more_default);
+	else {
+	  if (curr_cmd_list->quote_string)
+	    bu_vls_printf(&input_str_prefix, "%s\"%S\"\n",
+			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			  &input_str);
+	  else
+	    bu_vls_printf(&input_str_prefix, "%s%S\n",
+			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			  &input_str);
 	}
-      } else {
-	vp = history_next();
-	if (vp == NULL) {
-	  vp = &scratchline;
-	  freshline = 1;
+
+	curr_cmd_list->quote_string = 0;
+	bu_vls_trunc(&curr_cmd_list->more_default, 0);
+
+	/* If this forms a complete command (as far as the Tcl parser is
+	   concerned) then execute it. */
+	
+	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
+	    curr_cmd_list = &head_cmd_list;
+	    if(curr_cmd_list->aim)
+	      curr_dm_list = curr_cmd_list->aim;
+	    if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
+		reset_Tty(fileno(stdin));
+
+		if ((*cmdline_hook)(&input_str_prefix))
+		    pr_prompt();
+
+		set_Cbreak(fileno(stdin));
+		clr_Echo(fileno(stdin));
+
+		bu_vls_trunc(&input_str, 0);
+		bu_vls_trunc(&input_str_prefix, 0);
+		(void)signal( SIGINT, SIG_IGN );
+	    } else {
+		reset_Tty(fileno(stdin)); /* Backwards compatibility */
+		(void)signal( SIGINT, SIG_IGN );
+		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
+		    /* Remove newline */
+		    bu_vls_trunc(&input_str_prefix,
+				 bu_vls_strlen(&input_str_prefix)-1);
+		    bu_vls_trunc(&input_str, 0);
+		    (void)signal( SIGINT, sig2 );
+       /* *** The mged_prompt vls now contains prompt for more input. *** */
+		} else {
+		    /* All done; clear all strings. */
+		    bu_vls_trunc(&input_str_prefix, 0);
+		    bu_vls_trunc(&input_str, 0);
+		    (void)signal( SIGINT, SIG_IGN );
+		}
+		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
+		clr_Echo(fileno(stdin));
+	    }
+	} else {
+	    bu_vls_trunc(&input_str, 0);
+	    bu_vls_strcpy(&mged_prompt, "\r? ");
+
+	    /* Allow the user to hit ^C */
+	    (void)signal( SIGINT, sig2 );
 	}
-      }
-    }
-    pr_prompt();
-    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
-    pr_prompt();
-    bu_vls_trunc(&input_str, 0);
-    bu_vls_vlscat(&input_str, vp);
-    if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
-      bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-    bu_log("%S", &input_str);
-    input_str_index = bu_vls_strlen(&input_str);
-    escaped = bracketed = 0;
-    break;
-  case CTRL_W:                   /* backward-delete-word */
-    {
-      char *start;
-      char *curr;
-      int len;
-      
-      start = bu_vls_addr(&input_str);
-      curr = start + input_str_index - 1;
-      
-      /* skip spaces */
-      while(curr > start && *curr == ' ')
-	--curr;
-      
-      /* find next space */
-      while(curr > start && *curr != ' ')
-	--curr;
-      
-      bu_vls_init(&temp);
-      bu_vls_strcat(&temp, start+input_str_index);
-      
-      if(curr == start)
+	pr_prompt(); /* Print prompt for more input */
 	input_str_index = 0;
-      else
-	input_str_index = curr - start + 1;
-      
-      len = bu_vls_strlen(&input_str);
-      bu_vls_trunc(&input_str, input_str_index);
-      pr_prompt();
-      bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
-      pr_prompt();
-      bu_log("%S", &input_str);
-      bu_vls_vlscat(&input_str, &temp);
-      bu_vls_free(&temp);
-    }
-  
-  escaped = bracketed = 0;
-  break;
-  case 'd':
-    if (escaped) {                /* delete-word */
-      char *start;
-      char *curr;
-      int i;
+	freshline = 1;
+	escaped = bracketed = 0;
+	break;
+    case BACKSPACE:
+    case DELETE:
+	if (input_str_index <= 0) {
+	    pr_beep();
+	    break;
+	}
 
-      start = bu_vls_addr(&input_str);
-      curr = start + input_str_index;
-
-      /* skip spaces */
-      while(*curr != '\0' && *curr == ' ')
-	++curr;
-
-      /* find next space */
-      while(*curr != '\0' && *curr != ' ')
-	++curr;
-
-      i = curr - start;
-      bu_vls_init(&temp);
-      bu_vls_strcat(&temp, curr);
-      bu_vls_trunc(&input_str, input_str_index);
-      pr_prompt();
-      bu_log("%S%S%*s", &input_str, &temp, i - input_str_index, SPACES);
-      pr_prompt();
-      bu_log("%S", &input_str);
-      bu_vls_vlscat(&input_str, &temp);
-      bu_vls_free(&temp);
-    }else
-      mged_insert_char(ch);
-
-    escaped = bracketed = 0;
-    break;
-  case 'f':
-    if (escaped) {                /* forward-word */
-      char *start;
-      char *curr;
-
-      start = bu_vls_addr(&input_str);
-      curr = start + input_str_index;
-
-      /* skip spaces */
-      while(*curr != '\0' && *curr == ' ')
-	++curr;
-
-      /* find next space */
-      while(*curr != '\0' && *curr != ' ')
-	++curr;
-
-      input_str_index = curr - start;
-      bu_vls_init(&temp);
-      bu_vls_strcat(&temp, start+input_str_index);
-      bu_vls_trunc(&input_str, input_str_index);
-      pr_prompt();
-      bu_log("%S", &input_str);
-      bu_vls_vlscat(&input_str, &temp);
-      bu_vls_free(&temp);
-    }else
-      mged_insert_char(ch);
-
-    escaped = bracketed = 0;
-    break;
-  case 'b':
-    if (escaped) {                /* backward-word */
-      char *start;
-      char *curr;
-
-      start = bu_vls_addr(&input_str);
-      curr = start + input_str_index - 1;
-
-      /* skip spaces */
-      while(curr > start && *curr == ' ')
-	--curr;
-
-      /* find next space */
-      while(curr > start && *curr != ' ')
-	--curr;
-
-      if(curr == start)
+	if (input_str_index == bu_vls_strlen(&input_str)) {
+	    bu_log("\b \b");
+	    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1);
+	} else {
+	    bu_vls_init(&temp);
+	    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
+	    bu_vls_trunc(&input_str, input_str_index-1);
+	    bu_log("\b%S ", &temp);
+	    pr_prompt();
+	    bu_log("%S", &input_str);
+	    bu_vls_vlscat(&input_str, &temp);
+	    bu_vls_free(&temp);
+	}
+	--input_str_index;
+	escaped = bracketed = 0;
+	break;
+    case CTRL_A:                    /* Go to beginning of line */
+	pr_prompt();
 	input_str_index = 0;
-      else
-	input_str_index = curr - start + 1;
+	escaped = bracketed = 0;
+	break;
+    case CTRL_E:                    /* Go to end of line */
+	if (input_str_index < bu_vls_strlen(&input_str)) {
+	    bu_log("%s", bu_vls_addr(&input_str)+input_str_index);
+	    input_str_index = bu_vls_strlen(&input_str);
+	}
+	escaped = bracketed = 0;
+	break;
+    case CTRL_D:                    /* Delete character at cursor */
+	if (input_str_index == bu_vls_strlen(&input_str)) {
+	    pr_beep(); /* Beep if at end of input string */
+	    break;
+	}
+	bu_vls_init(&temp);
+	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
+	bu_vls_trunc(&input_str, input_str_index);
+	bu_log("%S ", &temp);
+	pr_prompt();
+	bu_log("%S", &input_str);
+	bu_vls_vlscat(&input_str, &temp);
+	bu_vls_free(&temp);
+	escaped = bracketed = 0;
+	break;
+    case CTRL_U:                   /* Delete whole line */
+	pr_prompt();
+	bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+	pr_prompt();
+	bu_vls_trunc(&input_str, 0);
+	input_str_index = 0;
+	escaped = bracketed = 0;
+	break;
+    case CTRL_K:                    /* Delete to end of line */
+	bu_log("%*s", bu_vls_strlen(&input_str)-input_str_index, SPACES);
+	bu_vls_trunc(&input_str, input_str_index);
+	pr_prompt();
+	bu_log("%S", &input_str);
+	escaped = bracketed = 0;
+	break;
+    case CTRL_L:                   /* Redraw line */
+	bu_log("\n");
+	pr_prompt();
+	bu_log("%S", &input_str);
+	if (input_str_index == bu_vls_strlen(&input_str))
+	    break;
+	pr_prompt();
+	bu_log("%*S", input_str_index, &input_str);
+	escaped = bracketed = 0;
+	break;
+    case CTRL_B:                   /* Back one character */
+	if (input_str_index == 0) {
+	    pr_beep();
+	    break;
+	}
+	--input_str_index;
+	bu_log("\b"); /* hopefully non-destructive! */
+	escaped = bracketed = 0;
+	break;
+    case CTRL_F:                   /* Forward one character */
+	if (input_str_index == bu_vls_strlen(&input_str)) {
+	    pr_beep();
+	    break;
+	}
 
-      bu_vls_init(&temp);
-      bu_vls_strcat(&temp, start+input_str_index);
-      bu_vls_trunc(&input_str, input_str_index);
-      pr_prompt();
-      bu_log("%S", &input_str);
-      bu_vls_vlscat(&input_str, &temp);
-      bu_vls_free(&temp);
-    }else
-      mged_insert_char(ch);
+	bu_log("%c", bu_vls_addr(&input_str)[input_str_index]);
+	++input_str_index;
+	escaped = bracketed = 0;
+	break;
+    case CTRL_T:                  /* Transpose characters */
+	if (input_str_index == 0) {
+	    pr_beep();
+	    break;
+	}
+	if (input_str_index == bu_vls_strlen(&input_str)) {
+	    bu_log("\b");
+	    --input_str_index;
+	}
+	ch = bu_vls_addr(&input_str)[input_str_index];
+	bu_vls_addr(&input_str)[input_str_index] =
+	    bu_vls_addr(&input_str)[input_str_index - 1];
+	bu_vls_addr(&input_str)[input_str_index - 1] = ch;
+	bu_log("\b%*s", 2, bu_vls_addr(&input_str)+input_str_index-1);
+	++input_str_index;
+	escaped = bracketed = 0;
+	break;
+    case CTRL_N:                  /* Next history command */
+    case CTRL_P:                  /* Last history command */
+	/* Work the history routines to get the right string */
+        curr_cmd_list = &head_cmd_list;
+	if (freshline) {
+	    if (ch == CTRL_P) {
+		vp = history_prev();
+		if (vp == NULL) {
+		    pr_beep();
+		    break;
+		}
+		bu_vls_trunc(&scratchline, 0);
+		bu_vls_vlscat(&scratchline, &input_str);
+		freshline = 0;
+	    } else {
+		pr_beep();
+		break;
+	    }
+	} else {
+	    if (ch == CTRL_P) {
+		vp = history_prev();
+		if (vp == NULL) {
+		    pr_beep();
+		    break;
+		}
+	    } else {
+		vp = history_next();
+		if (vp == NULL) {
+		    vp = &scratchline;
+		    freshline = 1;
+		}
+	    }
+	}
+	pr_prompt();
+	bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+	pr_prompt();
+	bu_vls_trunc(&input_str, 0);
+	bu_vls_vlscat(&input_str, vp);
+	if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
+	    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
+	bu_log("%S", &input_str);
+	input_str_index = bu_vls_strlen(&input_str);
+	escaped = bracketed = 0;
+	break;
+    case CTRL_W:                   /* backward-delete-word */
+	{
+	  char *start;
+	  char *curr;
+	  int len;
 
-    escaped = bracketed = 0;
-    break;
-  case '[':
-    if (escaped) {
-      bracketed = 1;
+	  start = bu_vls_addr(&input_str);
+	  curr = start + input_str_index - 1;
+
+	  /* skip spaces */
+	  while(curr > start && *curr == ' ')
+	    --curr;
+
+	  /* find next space */
+	  while(curr > start && *curr != ' ')
+	    --curr;
+
+	  bu_vls_init(&temp);
+	  bu_vls_strcat(&temp, start+input_str_index);
+
+	  if(curr == start)
+	    input_str_index = 0;
+	  else
+	    input_str_index = curr - start + 1;
+
+	  len = bu_vls_strlen(&input_str);
+	  bu_vls_trunc(&input_str, input_str_index);
+	  pr_prompt();
+	  bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
+	  pr_prompt();
+	  bu_log("%S", &input_str);
+	  bu_vls_vlscat(&input_str, &temp);
+	  bu_vls_free(&temp);
+	}
+
+        escaped = bracketed = 0;
+        break;
+    case 'd':
+      if (escaped) {                /* delete-word */
+	char *start;
+	char *curr;
+	int i;
+
+	start = bu_vls_addr(&input_str);
+	curr = start + input_str_index;
+
+	/* skip spaces */
+	while(*curr != '\0' && *curr == ' ')
+	  ++curr;
+
+	/* find next space */
+	while(*curr != '\0' && *curr != ' ')
+	  ++curr;
+
+	i = curr - start;
+	bu_vls_init(&temp);
+	bu_vls_strcat(&temp, curr);
+	bu_vls_trunc(&input_str, input_str_index);
+	pr_prompt();
+	bu_log("%S%S%*s", &input_str, &temp, i - input_str_index, SPACES);
+	pr_prompt();
+	bu_log("%S", &input_str);
+	bu_vls_vlscat(&input_str, &temp);
+	bu_vls_free(&temp);
+      }else
+	mged_insert_char(ch);
+
+      escaped = bracketed = 0;
       break;
+    case 'f':
+      if (escaped) {                /* forward-word */
+	char *start;
+	char *curr;
+
+	start = bu_vls_addr(&input_str);
+	curr = start + input_str_index;
+
+	/* skip spaces */
+	while(*curr != '\0' && *curr == ' ')
+	  ++curr;
+
+	/* find next space */
+	while(*curr != '\0' && *curr != ' ')
+	  ++curr;
+
+	input_str_index = curr - start;
+	bu_vls_init(&temp);
+	bu_vls_strcat(&temp, start+input_str_index);
+	bu_vls_trunc(&input_str, input_str_index);
+	pr_prompt();
+	bu_log("%S", &input_str);
+	bu_vls_vlscat(&input_str, &temp);
+	bu_vls_free(&temp);
+      }else
+	mged_insert_char(ch);
+
+      escaped = bracketed = 0;
+      break;
+    case 'b':
+      if (escaped) {                /* backward-word */
+	char *start;
+	char *curr;
+
+	start = bu_vls_addr(&input_str);
+	curr = start + input_str_index - 1;
+
+	/* skip spaces */
+	while(curr > start && *curr == ' ')
+	  --curr;
+
+	/* find next space */
+	while(curr > start && *curr != ' ')
+	  --curr;
+
+	if(curr == start)
+	  input_str_index = 0;
+	else
+	  input_str_index = curr - start + 1;
+
+	bu_vls_init(&temp);
+	bu_vls_strcat(&temp, start+input_str_index);
+	bu_vls_trunc(&input_str, input_str_index);
+	pr_prompt();
+	bu_log("%S", &input_str);
+	bu_vls_vlscat(&input_str, &temp);
+	bu_vls_free(&temp);
+      }else
+	mged_insert_char(ch);
+
+      escaped = bracketed = 0;
+      break;
+    case '[':
+	if (escaped) {
+	    bracketed = 1;
+	    break;
+	}
+	/* Fall through if not escaped! */
+    default:
+	if (!isprint(ch))
+	    break;
+
+	mged_insert_char(ch);
+	escaped = bracketed = 0;
+	break;
     }
-    /* Fall through if not escaped! */
-  default:
-    if (!isprint(ch))
-      break;
-
-    mged_insert_char(ch);
-    escaped = bracketed = 0;
-    break;
-  }
+#ifdef TRY_STDIN_INPUT_HACK
+    }
+    }
+#endif	
 }
 
 static void
@@ -1152,39 +1019,16 @@ char    **argv;
   if(argc != 2)
     return TCL_ERROR;
 
-  if(classic_mged){
-    bu_log("\r%s\n", argv[1]);
-    pr_prompt();
-    bu_log("%s", bu_vls_addr(&input_str));
-    pr_prompt();
-    for(i = 0; i < input_str_index; ++i)
-      bu_log("%c", bu_vls_addr(&input_str)[i]);
-  }
+  bu_log("\r%s\n", argv[1]);
+  pr_prompt();
+  bu_log("%s", bu_vls_addr(&input_str));
+  pr_prompt();
+  for(i = 0; i < input_str_index; ++i)
+    bu_log("%c", bu_vls_addr(&input_str)[i]);
 
   return TCL_OK;
 }
 
-void
-std_out_or_err(clientData, mask)
-ClientData clientData;
-int mask;
-{
-  int fd = (int)clientData;
-  int count;
-  struct bu_vls vls;
-  char line[MAXLINE];
-
-  /* Get data from stdout or stderr */
-  if((count = read((int)fd, line, MAXLINE)) == 0)
-    return;
-
-  line[count] = '\0';
-
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "distribute_text {} {} {%s}", line);
-  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-}
 
 /*
  *			E V E N T _ C H E C K
@@ -1202,7 +1046,6 @@ int	non_blocking;
     vect_t		knobvec;	/* knob slew */
     register struct dm_list *p;
     struct dm_list *save_dm_list;
-    int save_edflag;
 
     /* Let cool Tk event handler do most of the work */
 
@@ -1223,276 +1066,114 @@ int	non_blocking;
     
     non_blocking = 0;
 
-    /*********************************
-     *  Handle rate-based processing *
-     *********************************/
+    /*
+     * Set up window so that drawing does not run over into the
+     * status line area, and menu area (if present).
+     */
+
+    windowbounds[1] = XMIN;		/* XLR */
+    if( illump != SOLID_NULL )
+	windowbounds[1] = MENUXLIM;
+    windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
+
+#if 0
+    dmp->dm_setWinBounds(windowbounds);	/* hack */
+#endif
+
     save_dm_list = curr_dm_list;
-    if( edit_rateflag_model_rotate ) {
-      struct bu_vls vls;
-      char save_coords;
-
-      curr_dm_list = edit_rate_mr_dm_list;
-      save_coords = mged_variables->mv_coords;
-      mged_variables->mv_coords = 'm';
-
-      if(state == ST_S_EDIT){
-	save_edflag = es_edflag;
-	if(!SEDIT_ROTATE)
-	  es_edflag = SROT;
-      }else{
-	save_edflag = edobj;
-	edobj = BE_O_ROTATE;
-      }
-
-      non_blocking++;
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		    edit_rate_model_origin,
-		    edit_rate_model_rotate[X],
-		    edit_rate_model_rotate[Y],
-		    edit_rate_model_rotate[Z]);
-	
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-
-      mged_variables->mv_coords = save_coords;
-
-      if(state == ST_S_EDIT)
-	es_edflag = save_edflag;
-      else
-	edobj = save_edflag;
-    }
-    if( edit_rateflag_object_rotate ) {
-      struct bu_vls vls;
-      char save_coords;
-
-      curr_dm_list = edit_rate_or_dm_list;
-      save_coords = mged_variables->mv_coords;
-      mged_variables->mv_coords = 'o';
-
-      if(state == ST_S_EDIT){
-	save_edflag = es_edflag;
-	if(!SEDIT_ROTATE)
-	  es_edflag = SROT;
-      }else{
-	save_edflag = edobj;
-	edobj = BE_O_ROTATE;
-      }
-
-      non_blocking++;
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		    edit_rate_object_origin,
-		    edit_rate_object_rotate[X],
-		    edit_rate_object_rotate[Y],
-		    edit_rate_object_rotate[Z]);
-	
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-
-      mged_variables->mv_coords = save_coords;
-
-      if(state == ST_S_EDIT)
-	es_edflag = save_edflag;
-      else
-	edobj = save_edflag;
-    }
-    if( edit_rateflag_view_rotate ) {
-      struct bu_vls vls;
-      char save_coords;
-
-      curr_dm_list = edit_rate_vr_dm_list;
-      save_coords = mged_variables->mv_coords;
-      mged_variables->mv_coords = 'v';
-
-      if(state == ST_S_EDIT){
-	save_edflag = es_edflag;
-	if(!SEDIT_ROTATE)
-	  es_edflag = SROT;
-      }else{
-	save_edflag = edobj;
-	edobj = BE_O_ROTATE;
-      }
-
-      non_blocking++;
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		    edit_rate_view_origin,
-		    edit_rate_view_rotate[X],
-		    edit_rate_view_rotate[Y],
-		    edit_rate_view_rotate[Z]);
-	
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-
-      mged_variables->mv_coords = save_coords;
-
-      if(state == ST_S_EDIT)
-	es_edflag = save_edflag;
-      else
-	edobj = save_edflag;
-    }
-    if( edit_rateflag_model_tran ) {
-      char save_coords;
-      struct bu_vls vls;
-
-      curr_dm_list = edit_rate_mt_dm_list;
-      save_coords = mged_variables->mv_coords;
-      mged_variables->mv_coords = 'm';
-
-      if(state == ST_S_EDIT){
-	save_edflag = es_edflag;
-	if(!SEDIT_TRAN)
-	  es_edflag = STRANS;
-      }else{
-	save_edflag = edobj;
-	edobj = BE_O_XY;
-      }
-
-      non_blocking++;
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		    edit_rate_model_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
-		    edit_rate_model_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
-		    edit_rate_model_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
-	
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-
-      mged_variables->mv_coords = save_coords;
-
-      if(state == ST_S_EDIT)
-	es_edflag = save_edflag;
-      else
-	edobj = save_edflag;
-    }
-    if( edit_rateflag_view_tran ) {
-      char save_coords;
-      struct bu_vls vls;
-
-      curr_dm_list = edit_rate_vt_dm_list;
-      save_coords = mged_variables->mv_coords;
-      mged_variables->mv_coords = 'v';
-
-      if(state == ST_S_EDIT){
-	save_edflag = es_edflag;
-	if(!SEDIT_TRAN)
-	  es_edflag = STRANS;
-      }else{
-	save_edflag = edobj;
-	edobj = BE_O_XY;
-      }
-
-      non_blocking++;
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		    edit_rate_view_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
-		    edit_rate_view_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
-		    edit_rate_view_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
-	
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-
-      mged_variables->mv_coords = save_coords;
-
-      if(state == ST_S_EDIT)
-	es_edflag = save_edflag;
-      else
-	edobj = save_edflag;
-    }
-    if( edit_rateflag_scale ) {
-      struct bu_vls vls;
-
-      if(state == ST_S_EDIT){
-	save_edflag = es_edflag;
-	if(!SEDIT_SCALE)
-	  es_edflag = SSCALE;
-      }else{
-	save_edflag = edobj;
-	if(!OEDIT_SCALE)
-	  edobj = BE_O_SCALE;
-      }
-
-      non_blocking++;
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
-	
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-
-      if(state == ST_S_EDIT)
-	es_edflag = save_edflag;
-      else
-	edobj = save_edflag;
-    }
-
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-      if(!p->dml_owner)
+    for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+      if(!p->_owner)
 	continue;
 
       curr_dm_list = p;
 
-      if( view_state->vs_rateflag_model_rotate ) {
+      /*********************************
+       *  Handle rate-based processing *
+       *********************************/
+      if( edit_rateflag_rotate ) {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -o %c -i -m ax %f ay %f az %f\n",
-		      view_state->vs_rate_model_origin,
-		      view_state->vs_rate_model_rotate[X],
-		      view_state->vs_rate_model_rotate[Y],
-		      view_state->vs_rate_model_rotate[Z]);
+	bu_vls_printf(&vls, "knob -i -e ax %f ay %f az %f\n",
+		      edit_rate_rotate[X],
+		      edit_rate_rotate[Y],
+		      edit_rate_rotate[Z]);
 	
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( view_state->vs_rateflag_model_tran ) {
+
+      if( edit_rateflag_tran ) {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-		      view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
-		      view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
-		      view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
-
+	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
+		      -edit_rate_tran[X] * 0.1,
+		      -edit_rate_tran[Y] * 0.1,
+		      -edit_rate_tran[Z] * 0.1);
+	
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( view_state->vs_rateflag_rotate )  {
+
+      if( edit_rateflag_scale ) {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -o %c -i -v ax %f ay %f az %f\n",
-		      view_state->vs_rate_origin,
-		      view_state->vs_rate_rotate[X],
-		      view_state->vs_rate_rotate[Y],
-		      view_state->vs_rate_rotate[Z]);
+	bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
+	
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+      }
+
+      if( rateflag_rotate )  {
+	struct bu_vls vls;
+
+	non_blocking++;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob -i -v ax %f ay %f az %f\n",
+		      rate_rotate[X],
+		      rate_rotate[Y],
+		      rate_rotate[Z]);
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( view_state->vs_rateflag_tran )  {
+      if( rateflag_slew )  {
+#if 1
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-		      view_state->vs_rate_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
-		      view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
-		      view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
+		      rate_slew[X] * 0.1,
+		      rate_slew[Y] * 0.1,
+		      rate_slew[Z] * 0.1);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+#else
+	non_blocking++;
+	mged_do_rate_slew();
+#endif
+      }
+      if( rateflag_zoom )  {
+	struct bu_vls vls;
 
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "zoom %f",
+		      1.0 / (1.0 - (rate_zoom / 10.0)));
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( view_state->vs_rateflag_scale )  {
+      if ( rateflag_azimuth ) {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "zoom %f",
-		      1.0 / (1.0 - (view_state->vs_rate_scale / 10.0)));
+	bu_vls_printf(&vls, "knob -i -v aazim %f", rate_azimuth);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
@@ -1525,113 +1206,73 @@ refresh()
   struct bu_vls overlay_vls;
   struct bu_vls tmp_vls;
   register int do_overlay = 1;
-  double elapsed_time = -1;
 
-  rt_prep_timer();
+  if(dbip == DBI_NULL)
+    return;
 
   save_dm_list = curr_dm_list;
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    double	elapsed_time;
+
     /*
      * if something has changed, then go update the display.
      * Otherwise, we are happy with the view we have
      */
     curr_dm_list = p;
-    if(mapped && (update_views || view_state->vs_flag || dirty)) {
-      VMOVE(geometry_default_color,color_scheme->cs_geo_def);
-
-      if(dbip != DBI_NULL){
-	if(do_overlay){
-	  bu_vls_init(&overlay_vls);
-	  bu_vls_init(&tmp_vls);
-	  create_text_overlay(&overlay_vls);
-	  do_overlay = 0;
-	}
-
-	/* XXX VR hack */
-	if( viewpoint_hook )  (*viewpoint_hook)();
+    if(mapped && (update_views || dmaflag || dirty)) {
+      if(do_overlay){
+	bu_vls_init(&overlay_vls);
+	bu_vls_init(&tmp_vls);
+	create_text_overlay(&overlay_vls);
+	do_overlay = 0;
       }
 
-      if( mged_variables->mv_predictor )
-	predictor_frame();
+      /* XXX VR hack */
+      if( viewpoint_hook )  (*viewpoint_hook)();
 
-#if 0
       rt_prep_timer();
       elapsed_time = -1;		/* timer running */
-#endif
 
-      DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
+      dmp->dm_setWinBounds(dmp, windowbounds);
 
-      if(dbip != DBI_NULL){
-	/* do framebuffer underlay */
-	if(mged_variables->mv_fb && !mged_variables->mv_fb_overlay){
-	  if(mged_variables->mv_fb_all)
-	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else if(mged_variables->mv_mouse_behavior != 'z')
-	    paint_rect_area();
-	}
+      if( mged_variables.predictor )
+	predictor_frame();
 
-	/*  Draw each solid in it's proper place on the screen
-	 *  by applying zoom, rotation, & translation.
-	 *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
-	 */
-	if( dmp->dm_stereo == 0 || mged_variables->mv_eye_sep_dist <= 0 )  {
-	  /* Normal viewing */
-	  dozoom(0);
-	} else {
-	  /* Stereo viewing */
-	  dozoom(1);
-	  dozoom(2);
-	}
+      dmp->dm_drawBegin(dmp);	/* update displaylist prolog */
 
-	/* do framebuffer overlay */
-	if(mged_variables->mv_fb && mged_variables->mv_fb_overlay){
-	  if(mged_variables->mv_fb_all)
-	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else if(mged_variables->mv_mouse_behavior != 'z')
-	    paint_rect_area();
-	}
-
-	/* Restore to non-rotated, full brightness */
-	DM_NORMAL(dmp);
-
-	if(rubber_band->rb_active || rubber_band->rb_draw)
-	  draw_rect();
-
-	if(grid_state->gr_draw)
-	  draw_grid();
-
-	/* Compute and display angle/distance cursor */
-	if (adc_state->adc_draw)
-	  adcursor();
-
-	if(axes_state->ax_view_draw)
-	  draw_v_axes();
-
-	if(axes_state->ax_model_draw)
-	  draw_m_axes();
-
-	if(axes_state->ax_edit_draw &&
-	   (state == ST_S_EDIT || state == ST_O_EDIT))
-	  draw_e_axes();
-
-	/* Display titles, etc., if desired */
-	bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-	dotitles(&tmp_vls);
-	bu_vls_trunc(&tmp_vls, 0);
+      /*  Draw each solid in it's proper place on the screen
+       *  by applying zoom, rotation, & translation.
+       *  Calls dmp->dm_newrot() and dmp->dm_drawVList().
+       */
+      if( mged_variables.eye_sep_dist <= 0 )  {
+	/* Normal viewing */
+	dozoom(0);
+      } else {
+	/* Stereo viewing */
+	dozoom(1);
+	dozoom(2);
       }
 
-      /* Draw center dot */
-      DM_SET_FGCOLOR(dmp,
-		     color_scheme->cs_center_dot[0],
-		     color_scheme->cs_center_dot[1],
-		     color_scheme->cs_center_dot[2], 1);
-      DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
+      /* Restore to non-rotated, full brightness */
+      dmp->dm_normal(dmp);
 
-      DM_DRAW_END(dmp);
+      /* Compute and display angle/distance cursor */
+      if (mged_variables.adcflag)
+	adcursor();
+
+      /* Display titles, etc., if desired */
+      bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+      dotitles(&tmp_vls);
+      bu_vls_trunc(&tmp_vls, 0);
+
+      /* Draw center dot */
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawVertex2D(dmp, 0, 0);
+
+      dmp->dm_drawEnd(dmp);
 
       dirty = 0;
 
-#if 0
       if (elapsed_time < 0)  {
 	(void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
 	/* Only use reasonable measurements */
@@ -1640,23 +1281,11 @@ refresh()
 	  frametime = 0.9 * frametime + 0.1 * elapsed_time;
 	}
       }
-#endif
     }
   }
 
-#if 1
-  if (elapsed_time < 0)  {
-    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
-    /* Only use reasonable measurements */
-    if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
-      /* Smoothly transition to new speed */
-      frametime = 0.9 * frametime + 0.1 * elapsed_time;
-    }
-  }
-#endif
-
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l)
-    p->dml_view_state->vs_flag = 0;
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) )
+    p->s_info->_dmaflag = 0;
 
   curr_dm_list = save_dm_list;
   update_views = 0;
@@ -1689,7 +1318,7 @@ char *arg;
 	(void)sprintf(line, "%s [%s] time=%ld uid=%d (%s) %s\n",
 		      event,
 		      dmp->dm_name,
-		      (long)now,
+		      now,
 		      getuid(),
 		      timep,
 		      arg
@@ -1718,10 +1347,13 @@ int	exitcode;
 	(void)sprintf(place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
 
-	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
+	for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
 	  curr_dm_list = p;
 
-	  DM_CLOSE(dmp);
+	  dmp->dm_close(dmp);
+#if 0
+	  dmp->dm_light( dmp, LIGHT_RESET, 0 );	/* turn off the lights */
+#endif
 	}
 
 	if (cbreak_mode > 0)
@@ -1748,7 +1380,17 @@ quit()
 void
 sig2()
 {
-  reset_input_strings();
+  /* Truncate input string */
+  bu_vls_trunc(&input_str, 0);
+  bu_vls_trunc(&input_str_prefix, 0);
+  bu_vls_trunc(&curr_cmd_list->more_default, 0);
+  input_str_index = 0;
+
+  curr_cmd_list->quote_string = 0;
+
+  bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+  bu_log("\n");
+  pr_prompt();
 
   (void)signal( SIGINT, SIG_IGN );
 }
@@ -1758,30 +1400,6 @@ sig3()
 {
   (void)signal( SIGINT, SIG_IGN );
   longjmp( jmp_env, 1 );
-}
-
-void
-reset_input_strings()
-{
-  if(BU_LIST_IS_HEAD(curr_cmd_list, &head_cmd_list.l)){
-    /* Truncate input string */
-    bu_vls_trunc(&input_str, 0);
-    bu_vls_trunc(&input_str_prefix, 0);
-    bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
-    input_str_index = 0;
-
-    curr_cmd_list->cl_quote_string = 0;
-    bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
-    bu_log("\n");
-    pr_prompt();
-  }else{
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "reset_input_strings");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-  }
 }
 
 
@@ -1794,9 +1412,9 @@ reset_input_strings()
 void
 new_mats()
 {
-	bn_mat_mul( view_state->vs_model2view, view_state->vs_Viewrot, view_state->vs_toViewcenter );
-	view_state->vs_model2view[15] = view_state->vs_Viewscale;
-	bn_mat_inv( view_state->vs_view2model, view_state->vs_model2view );
+	bn_mat_mul( model2view, Viewrot, toViewcenter );
+	model2view[15] = Viewscale;
+	bn_mat_inv( view2model, model2view );
 
 #if 1
 	{
@@ -1804,40 +1422,40 @@ new_mats()
 	  vect_t temp, temp1;
 
 	  /* Find current azimuth, elevation, and twist angles */
-	  VSET( work , 0.0, 0.0, 1.0 );       /* view z-direction */
-	  MAT4X3VEC( temp , view_state->vs_view2model , work );
-	  VSET( work1 , 1.0, 0.0, 0.0 );      /* view x-direction */
-	  MAT4X3VEC( temp1 , view_state->vs_view2model , work1 );
+	  VSET( work , 0 , 0 , 1 );       /* view z-direction */
+	  MAT4X3VEC( temp , view2model , work );
+	  VSET( work1 , 1 , 0 , 0 );      /* view x-direction */
+	  MAT4X3VEC( temp1 , view2model , work1 );
 
 	  /* calculate angles using accuracy of 0.005, since display
 	   * shows 2 digits right of decimal point */
-	  bn_aet_vec( &view_state->vs_azimuth,
-		       &view_state->vs_elevation,
-		       &view_state->vs_twist,
+	  bn_aet_vec( &curr_dm_list->s_info->azimuth,
+		       &curr_dm_list->s_info->elevation,
+		       &curr_dm_list->s_info->twist,
 		       temp , temp1 , (fastf_t)0.005 );
 #if 1
 	  /* Force azimuth range to be [0,360] */
-	  if((NEAR_ZERO(view_state->vs_elevation - 90.0,(fastf_t)0.005) ||
-	     NEAR_ZERO(view_state->vs_elevation + 90.0,(fastf_t)0.005)) &&
-	     view_state->vs_azimuth < 0 &&
-	     !NEAR_ZERO(view_state->vs_azimuth,(fastf_t)0.005))
-	    view_state->vs_azimuth += 360.0;
-	  else if(NEAR_ZERO(view_state->vs_azimuth,(fastf_t)0.005))
-	    view_state->vs_azimuth = 0.0;
+	  if((NEAR_ZERO(curr_dm_list->s_info->elevation - 90.0,(fastf_t)0.005) ||
+	     NEAR_ZERO(curr_dm_list->s_info->elevation + 90.0,(fastf_t)0.005)) &&
+	     curr_dm_list->s_info->azimuth < 0 &&
+	     !NEAR_ZERO(curr_dm_list->s_info->azimuth,(fastf_t)0.005))
+	    curr_dm_list->s_info->azimuth += 360.0;
+	  else if(NEAR_ZERO(curr_dm_list->s_info->azimuth,(fastf_t)0.005))
+	    curr_dm_list->s_info->azimuth = 0.0;
 #else
 	  /* Force azimuth range to be [-180,180] */
-	  if(!NEAR_ZERO(view_state->vs_elevation - 90.0,(fastf_t)0.005) &&
-	      !NEAR_ZERO(view_state->vs_elevation + 90.0,(fastf_t)0.005))
-	    view_state->vs_azimuth -= 180;
+	  if(!NEAR_ZERO(curr_dm_list->s_info->elevation - 90.0,(fastf_t)0.005) &&
+	      !NEAR_ZERO(curr_dm_list->s_info->elevation + 90.0,(fastf_t)0.005))
+	    curr_dm_list->s_info->azimuth -= 180;
 #endif
 	}
 #endif
 
 	if( state != ST_VIEW ) {
-	  bn_mat_mul( view_state->vs_model2objview, view_state->vs_model2view, modelchanges );
-	  bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
+	  bn_mat_mul( model2objview, model2view, modelchanges );
+	  bn_mat_inv( objview2model, model2objview );
 	}
-	view_state->vs_flag = 1;
+	dmaflag = 1;
 }
 
 #ifdef DO_NEW_EDIT_MATS
@@ -1848,14 +1466,14 @@ new_edit_mats()
   struct dm_list *save_dm_list;
 
   save_dm_list = curr_dm_list;
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-    if(!p->dml_owner)
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    if(!p->_owner)
       continue;
 
     curr_dm_list = p;
-    bn_mat_mul( view_state->vs_model2objview, view_state->vs_model2view, modelchanges );
-    bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
-    view_state->vs_flag = 1;
+    bn_mat_mul( model2objview, model2view, modelchanges );
+    bn_mat_inv( objview2model, model2objview );
+    dmaflag = 1;
   }
 
   curr_dm_list = save_dm_list;
@@ -1969,21 +1587,19 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  struct db_i *save_dbip;
-  struct bu_vls vls;
+  static int first = 1;
 
-  if( argc <= 1 )  {
-    /* Invoked without args, return name of current database */
-    if( dbip != DBI_NULL )  {
-      Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
-      return TCL_OK;
-    }
+	if( argc <= 1 )  {
+		/* Invoked without args, return name of current database */
+		if( dbip )  {
+			Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
+			return TCL_OK;
+		}
+		Tcl_AppendResult(interp, "opendb: No database presently open\n", (char *)NULL);
+		return TCL_ERROR;
+	}
 
-    Tcl_AppendResult(interp, "", (char *)NULL);
-    return TCL_OK;
-  }
-
-  if(3 < argc || (strlen(argv[1]) == 0)){
+  if( 3 < argc || (strlen(argv[1]) == 0)){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1993,68 +1609,49 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  if(argc == 3 &&
-     strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
-     strcmp("n", argv[2]) && strcmp("N", argv[2])){
-    struct bu_vls vls;
+  if( dbip )  {
+    char *av[2];
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help opendb");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
+    av[0] = "zap";
+    av[1] = NULL;
+
+    /* Clear out anything in the display */
+    f_zap(clientData, interp, 1, av);
+
+    /* Close current database.  Releases MaterHead, etc. too. */
+    db_close(dbip);
+    dbip = DBI_NULL;
+
+    log_event( "CEASE", "(close)" );
   }
-
-  save_dbip = dbip;
-  dbip = DBI_NULL;
 
   /* Get input file */
   if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
       ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
     char line[128];
 
-    if(mged_init_flag){
-      if(classic_mged){
+    if( isatty(0) ) {
+      if(first){
 	perror( argv[1] );
 	bu_log("Create new database (y|n)[n]? ");
 	(void)fgets(line, sizeof(line), stdin);
-	if( line[0] != 'y' && line[0] != 'Y' ) {
-	  bu_log("Warning: no database is currently opened!\n");
-	  return TCL_OK;
+	if( line[0] != 'y' && line[0] != 'Y' )
+	  exit(0);                /* NOT finish() */
+      } else {
+	if(argc == 2){
+	  perror( argv[1] );
+
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
+			   (char *)NULL);
+	  bu_vls_printf(&curr_cmd_list->more_default, "n");
+
+	  dmaflag = 0;
+	  update_views = 0;
+	  return TCL_ERROR;
 	}
-      }else{
-	int status;
-	struct bu_vls vls;
 
-	bu_vls_init(&vls);
-	if(dpy_string != (char *)NULL)
-	  bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
-			dpy_string, argv[1]);
-	else
-	  bu_vls_printf(&vls, "cad_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
-			argv[1]);
-
-	status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	if(status != TCL_OK || interp->result[0] != '0') {
-	  bu_log("Warning: no database is currently opened!\n");
-	  return TCL_OK;
-	}
-      }
-    } else { /* not initializing mged */
-      if(argc == 2){
-	/* need to reset this before returning */
-	dbip = save_dbip;
-	Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
-			 (char *)NULL);
-	bu_vls_printf(&curr_cmd_list->cl_more_default, "n");
-	return TCL_ERROR;
-      }
-
-      if( *argv[2] != 'y' && *argv[2] != 'Y' ){
-	dbip = save_dbip; /* restore previous database */
-	return TCL_OK;
+	if( *argv[2] != 'y' && *argv[2] != 'Y' )
+	  exit(0);		/* NOT finish() */
       }
     }
 
@@ -2065,21 +1662,6 @@ char	**argv;
       perror( argv[1] );
       exit(2);		/* NOT finish() */
     }
-  }/* if( ((dbip = db_open( argv[1] ..... */
-
-  if( save_dbip )  {
-    char *av[2];
-
-    av[0] = "zap";
-    av[1] = NULL;
-
-    /* Clear out anything in the display */
-    f_zap(clientData, interp, 1, av);
-
-    /* Close current database.  Releases MaterHead, etc. too. */
-    db_close(save_dbip);
-
-    log_event( "CEASE", "(close)" );
   }
 
   if( dbip->dbi_read_only )
@@ -2088,40 +1670,11 @@ char	**argv;
   /* Quick -- before he gets away -- write a logfile entry! */
   log_event( "START", argv[1] );
 
+  if(first)
+    first = 0;
+
   /* --- Scan geometry database and build in-memory directory --- */
   db_scan( dbip, (int (*)())db_diradd, 1);
-
-  /* Close previous databases, if any.  Ignore errors. */
-  (void)Tcl_Eval( interp, "db close; .inmem close" );
-
-  /* Establish TCL access to both disk and in-memory databases */
-  if( Tcl_Eval( interp, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]" ) != TCL_OK )  {
-	bu_log("%s\n%s\n",
-    		interp->result,
-		Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
-	return TCL_ERROR;
-  }
-  Tcl_ResetResult( interp );
-
-  bu_vls_init(&vls);
-
-  /* Perhaps do something special with the GUI */
-  bu_vls_printf(&vls, "new_db_callback %s", dbip->dbi_filename);
-  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-
-  bu_vls_strcpy(&vls, "local2base");
-  Tcl_UnlinkVar(interp, bu_vls_addr(&vls));
-  Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&local2base,
-	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
-
-  bu_vls_strcpy(&vls, "base2local");
-  Tcl_UnlinkVar(interp, bu_vls_addr(&vls));
-  Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&base2local,
-	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
-
-  bu_vls_free(&vls);
-
-  set_localunit_TclVar();
 
   /* Print title/units information */
   if( interactive )

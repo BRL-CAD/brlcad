@@ -178,11 +178,10 @@ int			op;
  *  Import a combination record from a V4 database into internal form.
  */
 int
-rt_comb_v4_import( ip, ep, matrix, dbip )
+rt_comb_v4_import( ip, ep, matrix )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 CONST matp_t			matrix;		/* NULL if identity */
-CONST struct db_i		*dbip;
 {
 	union record		*rp;
 	struct rt_tree_array	*rt_tree_array;
@@ -249,19 +248,19 @@ CONST struct db_i		*dbip;
 
 			/* See if disk record is identity matrix */
 			rt_mat_dbmat( diskmat, rp[j+1].M.m_mat );
-			if( bn_mat_is_identity( diskmat ) )  {
+			if( mat_is_identity( diskmat ) )  {
 				if( matrix == NULL )  {
 					tp->tr_l.tl_mat = NULL;	/* identity */
 				} else {
-					tp->tr_l.tl_mat = bn_mat_dup( matrix );
+					tp->tr_l.tl_mat = mat_dup( matrix );
 				}
 			} else {
 				if( matrix == NULL )  {
-					tp->tr_l.tl_mat = bn_mat_dup( diskmat );
+					tp->tr_l.tl_mat = mat_dup( diskmat );
 				} else {
 					mat_t	prod;
 					bn_mat_mul( prod, matrix, diskmat );
-					tp->tr_l.tl_mat = bn_mat_dup( prod );
+					tp->tr_l.tl_mat = mat_dup( prod );
 				}
 			}
 /* bu_log("M_name=%s, matp=x%x\n", tp->tr_l.tl_name, tp->tr_l.tl_mat ); */
@@ -296,21 +295,10 @@ CONST struct db_i		*dbip;
 	}
 	if( rp[0].c.c_matname[0] != '\0' )
 	{
-		char shader_str[94];
-
-		/* copy shader info to a static string */
-		strncpy( shader_str,  rp[0].c.c_matname, 32 );
-		shader_str[33] = '\0';
-		strcat( shader_str, " " );
-		strncat( shader_str, rp[0].c.c_matparm, 60 );
-		shader_str[93] = '\0';
-
-		/* convert to TCL format and place into comb->shader */
-		if( bu_shader_to_tcl_list( shader_str, &comb->shader ) )
-		{
-			bu_log( "rt_comb_v4_import: Error: Cannot convert following shader to TCL format:\n" );
-			bu_log( "\t%s\n", shader_str );
-			bu_vls_free( &comb->shader );
+		bu_vls_strncpy( &comb->shader , rp[0].c.c_matname, 32 );
+		if( rp[0].c.c_matparm[0] != '\0' )  {
+			bu_vls_putc( &comb->shader, ' ' );
+			bu_vls_strncat( &comb->shader , rp[0].c.c_matparm, 60 );
 		}
 	}
 	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
@@ -329,11 +317,10 @@ CONST struct db_i		*dbip;
  *			R T _ C O M B _ V 4 _ E X P O R T
  */
 int
-rt_comb_v4_export( ep, ip, local2mm, dbip )
+rt_comb_v4_export( ep, ip, local2mm )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
 {
 	struct rt_comb_internal	*comb;
 	int			node_count;
@@ -343,7 +330,6 @@ CONST struct db_i		*dbip;
 	union record		*rp;
 	int			j;
 	char			*endp;
-	struct bu_vls		tmp_vls;
 
 	RT_CK_DB_INTERNAL( ip );
 	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_v4_export() type not ID_COMBINATION");
@@ -375,7 +361,7 @@ CONST struct db_i		*dbip;
 	}
 
 	/* Reformat the data into the necessary V4 granules */
-	BU_INIT_EXTERNAL(ep);
+	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record) * ( 1 + node_count );
 	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "v4 comb external" );
 	rp = (union record *)ep->ext_buf;
@@ -426,38 +412,21 @@ CONST struct db_i		*dbip;
 		rp[0].c.c_rgb[1] = comb->rgb[1];
 		rp[0].c.c_rgb[2] = comb->rgb[2];
 	}
-
-	bu_vls_init( &tmp_vls );
-
-	/* convert TCL list format shader to keyword=value format */
-	if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
-	{
-		bu_log( "rt_comb_v4_export: Error in combination!\n" );
-		bu_log( "\tCannot convert following shader string to keyword=value format:\n" );
-		bu_log( "\t%s\n", bu_vls_addr(&comb->shader) );
-		rp[0].c.c_matparm[0] = '\0';
-		rp[0].c.c_matname[0] = '\0';
-	}
-	else
-	{
-		endp = strchr( bu_vls_addr(&tmp_vls), ' ' );
-		if( endp )  {
-			int	len;
-			len = endp - bu_vls_addr(&tmp_vls);
-			if( len <= 0 && bu_vls_strlen(&tmp_vls) > 0 )  {
-				bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
-					bu_vls_addr(&tmp_vls) );
-			}
-			if( len > 32 ) len = 32;
-			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), len );
-			strncpy( rp[0].c.c_matparm, endp+1, 60 );
-		} else {
-			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), 32 );
-			rp[0].c.c_matparm[0] = '\0';
+	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
+	if( endp )  {
+		int	len;
+		len = endp - bu_vls_addr(&comb->shader);
+		if( len <= 0 && bu_vls_strlen(&comb->shader) > 0 )  {
+			bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
+				bu_vls_addr(&comb->shader) );
 		}
+		if( len > 32 ) len = 32;
+		strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader), len );
+		strncpy( rp[0].c.c_matparm, endp+1, 60 );
+	} else {
+		strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader), 32 );
+		rp[0].c.c_matparm[0] = '\0';
 	}
-	bu_vls_free( &tmp_vls );
-
 	rp[0].c.c_inherit = comb->inherit;
 
 	return 0;		/* OK */
@@ -574,7 +543,7 @@ unary:
  */
 void
 db_comb_describe(str, comb, verbose, mm2local)
-struct bu_vls	*str;
+struct rt_vls	*str;
 struct rt_comb_internal	*comb;
 int		verbose;
 double		mm2local;
@@ -629,28 +598,26 @@ double		mm2local;
  *			R T _ C O M B _ I M P O R T
  */
 int
-rt_comb_import(ip, ep, mat, dbip)
+rt_comb_import(ip, ep, mat)
 struct rt_db_internal	*ip;
-CONST struct bu_external *ep;
+CONST struct rt_external *ep;
 CONST mat_t		mat;
-CONST struct db_i	*dbip;
 {
 	/* XXX Switch out to right routine, based on database version */
-	return rt_comb_v4_import( ip, ep, mat, dbip );
+	return rt_comb_v4_import( ip, ep, mat );
 }
 
 /*
  *			R T _ C O M B _ E X P O R T
  */
 int
-rt_comb_export(ep, ip, local2mm, dbip)
-struct bu_external	*ep;
+rt_comb_export(ep, ip, local2mm)
+struct rt_external	*ep;
 CONST struct rt_db_internal *ip;
 double			local2mm;
-CONST struct db_i	*dbip;
 {
 	/* XXX Switch out to right routine, based on database version */
-	return rt_comb_v4_export( ep, ip, local2mm, dbip );
+	return rt_comb_v4_export( ep, ip, local2mm );
 }
 
 /*
@@ -685,7 +652,7 @@ struct rt_db_internal	*ip;
  */
 int
 rt_comb_describe(str, ip, verbose, mm2local)
-struct bu_vls	*str;
+struct rt_vls	*str;
 struct rt_db_internal *ip;
 int		verbose;
 double		mm2local;
@@ -982,13 +949,12 @@ CONST struct db_wrapper		*wp;
  *			R T _ V 5 _ E X P O R T
  */
 int
-rt_v5_export( ep, ip, local2mm, dp, wp, dbip )
+rt_v5_export( ep, ip, local2mm, dp, wp )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 CONST struct directory		*dp;
 CONST struct db_wrapper		*wp;
-CONST struct db_i		*dbip;
 {
 	struct bu_external	temp;
 	int			ret;
@@ -1000,9 +966,9 @@ CONST struct db_i		*dbip;
 
 	/* Convert Object Body to external form */
 	if( ip->idb_type == ID_COMBINATION )  {
-		ret = rt_comb_v4_export( &temp, ip, local2mm, dbip );
+		ret = rt_comb_v4_export( &temp, ip, local2mm );
 	} else {
-		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, local2mm, dbip );
+		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, local2mm );
 	}
 	if( ret < 0 )  {
 		bu_log("rt_v5_export(%s): ft_export error %d\n",

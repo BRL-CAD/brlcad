@@ -41,14 +41,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"	/* XXX */
 
+extern void color_soltab();
+
 void		cvt_vlblock_to_solids();
 void		drawH_part2();
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
 extern void	(*nmg_mged_debug_display_hack)();
+int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
-
-unsigned char geometry_default_color[] = { 255, 0, 0 };
 
 /*
  *  This is just like the rt_initial_tree_state in librt/tree.c,
@@ -87,8 +88,6 @@ static int		mged_draw_normals;
 static int		mged_draw_solid_lines_only=0;
 static int		mged_draw_no_surfaces = 0;
 static int		mged_shade_per_vertex_normals=0;
-int			mged_wireframe_color_override;
-int			mged_wireframe_color[3];
 static struct model	*mged_nmg_model;
 struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
@@ -248,7 +247,7 @@ int			id;
 		dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
 
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat, dbip ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat ) < 0 )  {
 	  Tcl_AppendResult(interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 			   ":  solid import failure\n", (char *)NULL);
 
@@ -332,22 +331,8 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	if ( !mged_draw_nmg_only ) {
-		if( BU_SETJUMP )
-		{
-			char  *sofar = db_path_to_string(pathp);
-
-			BU_UNSETJUMP;
-
-			Tcl_AppendResult(interp, "WARNING: Boolean evaluation of ", sofar,
-				" failed!!!\n", (char *)NULL );
-			bu_free((genptr_t)sofar, "path string");
-			if( curtree )
-				db_free_tree( curtree );
-			return (union tree *)NULL;
-		}
+	if ( ! mged_draw_nmg_only ) {
 		failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );
-		BU_UNSETJUMP;
 		if( failed )  {
 			db_free_tree( curtree );
 			return (union tree *)NULL;
@@ -368,21 +353,7 @@ union tree		*curtree;
 	}
 
 	if (mged_nmg_triangulate) {
-		if( BU_SETJUMP )
-		{
-			char  *sofar = db_path_to_string(pathp);
-
-			BU_UNSETJUMP;
-
-			Tcl_AppendResult(interp, "WARNING: Triangulation of ", sofar,
-				" failed!!!\n", (char *)NULL );
-			bu_free((genptr_t)sofar, "path string");
-			if( curtree )
-				db_free_tree( curtree );
-			return (union tree *)NULL;
-		}
 		nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
-		BU_UNSETJUMP;
 	}
 
 	if( r != 0 )  {
@@ -449,14 +420,11 @@ int	kind;
 	int		ncpu;
 	int		mged_nmg_use_tnurbs = 0;
 
-	if(dbip == DBI_NULL)
-	  return 0;
-
 	RT_CHECK_DBI(dbip);
 
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
-	/* Initial values for options, must be reset each time */
+	/* Initial vaues for options, must be reset each time */
 	ncpu = 1;
 	mged_draw_nmg_only = 0;	/* no booleans */
 	mged_nmg_triangulate = 1;
@@ -466,11 +434,10 @@ int	kind;
 	mged_draw_solid_lines_only = 0;
 	mged_shade_per_vertex_normals = 0;
 	mged_draw_no_surfaces = 0;
-	mged_wireframe_color_override = 0;
 
 	/* Parse options. */
-	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"dnqstuvwSTP:C:")) != EOF )  {
+	optind = 1;		/* re-init getopt() */
+	while( (c=getopt(argc,argv,"dnqstuvwSTP:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
@@ -497,7 +464,7 @@ int	kind;
 			mged_draw_normals = 1;
 			break;
 		case 'P':
-			ncpu = atoi(bu_optarg);
+			ncpu = atoi(optarg);
 			break;
 		case 'q':
 			mged_do_not_draw_nmg_solids_during_debugging = 1;
@@ -505,42 +472,16 @@ int	kind;
 		case 'd':
 			mged_draw_nmg_only = 1;
 			break;
-		case 'C':
-			{
-				char		buf[128];
-				int		r,g,b;
-				register char	*cp = bu_optarg;
-
-				r = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-				g = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-				b = atoi(cp);
-
-				if( r < 0 || r > 255 )  r = 255;
-				if( g < 0 || g > 255 )  g = 255;
-				if( b < 0 || b > 255 )  b = 255;
-
-				mged_wireframe_color_override = 1;
-				mged_wireframe_color[0] = r;
-				mged_wireframe_color[1] = g;
-				mged_wireframe_color[2] = b;
-			}
-			break;
 		default:
-			{
-				struct bu_vls vls;
+		  {
+		    struct bu_vls tmp_vls;
 
-				bu_vls_init(&vls);
-				bu_vls_printf(&vls, "help %s", argv[0]);
-				Tcl_Eval(interp, bu_vls_addr(&vls));
-				bu_vls_free(&vls);
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
+		  }
 
-				return TCL_ERROR;
-			}
-#if 0
 		  Tcl_AppendResult(interp, "Usage: ev [-dnqstuvwST] [-P ncpu] object(s)\n\
 	-d draw nmg without performing boolean operations\n\
 	-w draw wireframes (rather than polygons)\n\
@@ -551,12 +492,11 @@ int	kind;
 	-u debug: draw edgeuses\n\
 	-S draw tNURBs with trimming curves only, no surfaces.\n\
 	-T debug: disable triangulator\n", (char *)NULL);
-			break;
-#endif
+		break;
 		}
 	}
-	argc -= bu_optind;
-	argv += bu_optind;
+	argc -= optind;
+	argv += optind;
 
 	/* Establish upcall interfaces for use by bottom of NMG library */
 	nmg_plot_anim_upcall = mged_plot_anim_upcall_handler;
@@ -566,11 +506,6 @@ int	kind;
 	/* Establish tolerances */
 	mged_initial_tree_state.ts_ttol = &mged_ttol;
 	mged_initial_tree_state.ts_tol = &mged_tol;
-
-#if 0
-	/* set default wireframe color */
-	VMOVE(mged_initial_tree_state.ts_mater.ma_color, default_wireframe_color);
-#endif
 
 	mged_ttol.magic = RT_TESS_TOL_MAGIC;
 	mged_ttol.abs = mged_abs_tol;
@@ -607,11 +542,9 @@ int	kind;
 	case 3:
 	  {
 		/* NMG */
-#if 0
 	    Tcl_AppendResult(interp, "\
 Please note that the NMG library used by this command is experimental.\n\
 A production implementation will exist in the maintenance release.\n", (char *)NULL);
-#endif
 	  	mged_nmg_model = nmg_mm();
 		mged_initial_tree_state.ts_m = &mged_nmg_model;
 	  	if (mged_draw_edge_uses) {
@@ -725,8 +658,6 @@ struct solid		*existing_sp;
 {
 	register struct solid *sp;
 	register int	i;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	if( !existing_sp )  {
 		if (pathp->fp_len > MAX_PATH) {
@@ -739,8 +670,6 @@ struct solid		*existing_sp;
 		}
 		/* Handling a new solid */
 		GET_SOLID(sp, &FreeSolid.l);
-
-		sp->s_dlist = BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist + 1;
 	} else {
 		/* Just updating an existing solid.
 		 *  'tsp' and 'pathpos' will not be used
@@ -762,23 +691,10 @@ struct solid		*existing_sp;
 	 */
 	if( !existing_sp )  {
 		/* Take note of the base color */
-		if( mged_wireframe_color_override ) {
-		        /* a user specified the color, so arrange to use it */
-			sp->s_uflag = 1;
-			sp->s_basecolor[0] = mged_wireframe_color[0];
-			sp->s_basecolor[1] = mged_wireframe_color[1];
-			sp->s_basecolor[2] = mged_wireframe_color[2];
-		} else {
-			sp->s_uflag = 0;
-			if (tsp) {
-			  if (!tsp->ts_mater.ma_override)
-			    sp->s_dflag = 1;
-			  else {
-			    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-			    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-			    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
-			  }
-			}
+		if( tsp )  {
+			sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
+			sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
+			sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
 		}
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
@@ -791,31 +707,37 @@ struct solid		*existing_sp;
 		}
 		sp->s_regionid = tsp->ts_regionid;
 	}
+	sp->s_addr = 0;
+	sp->s_bytes = 0;
 
-#ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-	/* do nothing here */
-#else
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(sp);
-	  }
+	/* Cvt to displaylist, determine displaylist memory requirement. */
+	if( !no_memory && (sp->s_bytes = dmp->dm_cvtvecs( dmp, sp )) != 0 )  {
+		/* Allocate displaylist storage for object */
+		sp->s_addr = rt_memalloc( &(dmp->dm_map), sp->s_bytes );
+		if( sp->s_addr == 0 )  {
+		  no_memory = 1;
+		  Tcl_AppendResult(interp, "draw: out of Displaylist\n" ,(char *)NULL);
+		  sp->s_bytes = 0;	/* not drawn */
+		} else {
+		  sp->s_bytes = dmp->dm_load(dmp, sp->s_addr, sp->s_bytes );
+		}
 	}
-	curr_dm_list = save_dmlp;
-#endif
-#endif
 
 	/* Solid is successfully drawn */
 	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
-		bu_semaphore_acquire( RT_SEM_MODEL );
+		bu_semaphore_acquire( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
 		BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
-		bu_semaphore_release( RT_SEM_MODEL );
+		bu_semaphore_release( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
+#if 0
+		dmp->dm_viewchange( dmp, DM_CHGV_ADD, sp );
+#endif
 	} else {
 		/* replacing existing solid -- struct already linked in */
 		sp->s_iflag = UP;
+#if 0
+		dmp->dm_viewchange( dmp, DM_CHGV_REPL, sp );
+#endif
 	}
 }
 
@@ -842,32 +764,7 @@ genptr_t                user_ptr1, user_ptr2, user_ptr3;
 	found = (int *)user_ptr3;
 
 	(*found) = 1;
-	if( comb_leaf->tr_l.tl_mat )
-		bn_mat_copy( xmat, comb_leaf->tr_l.tl_mat );
-	else
-		bn_mat_idn( xmat );
-}
-
-/*
- *			F U L L _ P A T H _ F R O M _ S O L I D
- *
- *  Initializes a 'db_full_path' to correspond to sp->s_path.
- */
-void
-full_path_from_solid( pathp, sp )
-struct db_full_path	*pathp;
-register struct solid	*sp;
-{
-	register int	j;
-
-	pathp->fp_len = pathp->fp_maxlen = sp->s_last+1;
-	pathp->fp_names = (struct directory **)bu_malloc(
-		pathp->fp_maxlen * sizeof(struct directory *),
-		"db_full_path array");
-	pathp->magic = DB_FULL_PATH_MAGIC;
-
-	bcopy( (char *)sp->s_path, (char *)pathp->fp_names,
-		pathp->fp_len * sizeof(struct directory *) );
+	bn_mat_copy( xmat, comb_leaf->tr_l.tl_mat );
 }
 
 /*
@@ -875,57 +772,15 @@ register struct solid	*sp;
  *  
  *  Find the transformation matrix obtained when traversing
  *  the arc indicated in sp->s_path[] to the indicated depth.
+ *  Be sure to omit s_path[sp->s_last] -- it's a solid.
  *
- *  Returns -
- *	matp is filled with values (never read first).
- *	sp may have fields updated.
+ *  XXX Change to using db_path_to_mat().
  */
 void
 pathHmat( sp, matp, depth )
 register struct solid *sp;
 matp_t matp;
 {
-	struct db_tree_state	ts;
-	struct db_full_path	null_path;
-	struct db_full_path	path;
-	int			ret;
-
-	RT_CHECK_DBI(dbip);
-
-	full_path_from_solid( &path, sp );
-
-	db_full_path_init( &null_path );
-	ts = mged_initial_tree_state;		/* struct copy */
-	ts.ts_dbip = dbip;
-
-	ret = db_follow_path( &ts, &null_path, &path, LOOKUP_NOISY, depth+1 );
-	db_free_full_path( &null_path );
-	db_free_full_path( &path );
-
-#if 0
-	/*
-	 *  Copy color out to solid structure, in case it changed.
-	 *  This is an odd place to do this, but...
-	 */
-#if 0
-	sp->s_color[0] = sp->s_basecolor[0] = ts.ts_mater.ma_color[0] * 255.;
-	sp->s_color[1] = sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
-	sp->s_color[2] = sp->s_basecolor[2] = ts.ts_mater.ma_color[2] * 255.;
-#else
-	if(!sp->s_uflag){
-	  /* the user did not specify a color */
-	  sp->s_basecolor[0] = ts.ts_mater.ma_color[0] * 255.;
-	  sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
-	  sp->s_basecolor[2] = ts.ts_mater.ma_color[2] * 255.;
-	}
-#endif
-#endif
-
-	mat_copy( matp, ts.ts_mat );	/* implicit return */
-
-	db_free_db_tree_state( &ts );
-
-#if 0
 	register struct directory *parentp;
 	register struct directory *kidp;
 	register int		j;
@@ -933,9 +788,6 @@ matp_t matp;
 	struct rt_comb_internal	*comb;
 	auto mat_t		tmat;
 	register int		i;
-
-	if(dbip == DBI_NULL)
-	  return;
 
 	bn_mat_idn( matp );
 	for( i=0; i <= depth; i++ )  {
@@ -972,7 +824,6 @@ matp_t matp;
 			}
 		}
 	}
-#endif
 }
 
 /*
@@ -996,9 +847,6 @@ struct solid	*sp;
 	mat_t			mat;
 	int			id;
 
-	if(dbip == DBI_NULL)
-	  return 0;
-
 	dp = sp->s_path[sp->s_last];
 	if( sp->s_Eflag )  {
 	  Tcl_AppendResult(interp, "replot_original_solid(", dp->d_namep,
@@ -1018,7 +866,7 @@ struct solid	*sp;
 	}
 
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, mat, dbip ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
 	  if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 	  db_free_external( &ext );
@@ -1056,6 +904,7 @@ struct rt_db_internal		*ip;
 CONST mat_t			mat;
 {
 	struct rt_db_internal	intern;
+	unsigned		addr, bytes;
 	struct bu_list		vhead;
 
 	BU_LIST_INIT( &vhead );
@@ -1067,6 +916,10 @@ CONST mat_t			mat;
 
 	/* Release existing vlist of this solid */
 	RT_FREE_VLIST( &(sp->s_vlist) );
+
+	/* Remember displaylist location of previous solid */
+	addr = sp->s_addr;
+	bytes = sp->s_bytes;
 
 	/* Draw (plot) a normal solid */
 	RT_CK_DB_INTERNAL( ip );
@@ -1090,13 +943,10 @@ CONST mat_t			mat;
 		(struct db_full_path *)0,
 		(struct db_tree_state *)0, sp );
 
-#if 0
 	/* Release previous chunk of displaylist. */
 	if( bytes > 0 )
 		rt_memfree( &(dmp->dm_map), bytes, (unsigned long)addr );
-#endif
-
-	view_state->vs_flag = 1;
+	dmaflag = 1;
 	return(0);
 }
 
@@ -1113,8 +963,6 @@ int			copy;
 	char		shortname[32];
 	char		namebuf[64];
 	char		*av[4];
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	strncpy( shortname, name, 16-6 );
 	shortname[16-6] = '\0';
@@ -1128,22 +976,14 @@ int			copy;
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;
 		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
-
-		sprintf( namebuf, "%s%lx",
+		if( i== 0 )  {
+			invent_solid( name, &vbp->head[0], vbp->rgb[0], copy );
+			continue;
+		}
+		sprintf( namebuf, "%s%x",
 			shortname, vbp->rgb[i] );
 		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
 	}
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    save_dmlp = curr_dm_list;
-	    curr_dm_list = dmlp;
-	    createDList(&HeadSolid);
-	    curr_dm_list = save_dmlp;
-	  }
-	}
-#endif
 }
 
 /*
@@ -1164,11 +1004,6 @@ int		copy;
 {
 	register struct directory	*dp;
 	register struct solid		*sp;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
-
-	if(dbip == DBI_NULL)
-	  return 0;
 
 	if( (dp = db_lookup( dbip,  name, LOOKUP_QUIET )) != DIR_NULL )  {
 	  if( dp->d_addr != RT_DIR_PHONY_ADDR )  {
@@ -1183,6 +1018,7 @@ int		copy;
 	}
 	/* Need to enter phony name in directory structure */
 	dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID );
+
 
 #if 0
 	/* XXX need to get this going. */
@@ -1218,24 +1054,30 @@ int		copy;
 	sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
 	sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
 	sp->s_regionid = 0;
-	sp->s_dlist = BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist + 1;
+	sp->s_addr = 0;
+	sp->s_bytes = 0;
+
+	/* Cvt to displaylist, determine displaylist memory requirement. */
+	if( !no_memory && (sp->s_bytes = dmp->dm_cvtvecs( dmp, sp )) != 0 )  {
+		/* Allocate displaylist storage for object */
+		sp->s_addr = rt_memalloc( &(dmp->dm_map), sp->s_bytes );
+		if( sp->s_addr == 0 )  {
+		  no_memory = 1;
+		  Tcl_AppendResult(interp, "invent_solid: out of Displaylist\n", (char *)NULL);
+		  sp->s_bytes = 0;	/* not drawn */
+		} else {
+		  sp->s_bytes = dmp->dm_load(dmp, sp->s_addr, sp->s_bytes );
+		}
+	}
 
 	/* Solid successfully drawn, add to linked list of solid structs */
 	BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
-
-#ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-	/* do nothing here */
-#else
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(sp);
-	  }
-	}
-	curr_dm_list = save_dmlp;
+#if 0
+	dmp->dm_viewchange( dmp, DM_CHGV_ADD, sp );
 #endif
+	color_soltab();
+#if 0
+	dmp->dm_colorchange(dmp);
 #endif
 #endif
 	return(0);		/* OK */
@@ -1267,7 +1109,7 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	bu_semaphore_acquire( RT_SEM_MODEL );
+	bu_semaphore_acquire( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
 	if( mged_facetize_tree )  {
 		union tree	*tr;
 		tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
@@ -1280,7 +1122,7 @@ union tree		*curtree;
 	} else {
 		mged_facetize_tree = curtree;
 	}
-	bu_semaphore_release( RT_SEM_MODEL );
+	bu_semaphore_release( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
 
 	/* Tree has been saved, and will be freed later */
 	return( TREE_NULL );
@@ -1304,9 +1146,6 @@ char	**argv;
 	int			failed;
 	int			mged_nmg_use_tnurbs = 0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -1318,6 +1157,10 @@ char	**argv;
 	}
 
 	RT_CHECK_DBI(dbip);
+
+	Tcl_AppendResult(interp, "Please note that the NMG library used by ",
+			 "this command is experimental.\n", "A production implementation ",
+			 "will exist in the maintenance release.\n", (char *)NULL);
 
 	/* Establish tolerances */
 	mged_initial_tree_state.ts_ttol = &mged_ttol;
@@ -1333,11 +1176,11 @@ char	**argv;
 	triangulate = 0;
 
 	/* Parse options. */
-	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"tTP:")) != EOF )  {
+	optind = 1;		/* re-init getopt() */
+	while( (c=getopt(argc,argv,"tTP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
-			ncpu = atoi(bu_optarg);
+			ncpu = atoi(optarg);
 			break;
 		case 'T':
 			triangulate = 1;
@@ -1360,8 +1203,8 @@ char	**argv;
 		  break;
 		}
 	}
-	argc -= bu_optind;
-	argv += bu_optind;
+	argc -= optind;
+	argv += optind;
 	if( argc < 0 ){
 	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -1418,20 +1261,7 @@ char	**argv;
 		/* Now, evaluate the boolean tree into ONE region */
 		Tcl_AppendResult(interp, "facetize:  evaluating boolean expressions\n", (char *)NULL);
 
-		if( BU_SETJUMP )
-		{
-			BU_UNSETJUMP;
-			Tcl_AppendResult(interp, "WARNING: facetization failed!!!\n", (char *)NULL );
-			if( mged_facetize_tree )
-				db_free_tree( mged_facetize_tree );
-			mged_facetize_tree = (union tree *)NULL;
-			nmg_km( mged_nmg_model );
-			mged_nmg_model = (struct model *)NULL;
-			return TCL_ERROR;
-		}
-
 		failed = nmg_boolean( mged_facetize_tree, mged_nmg_model, &mged_tol );
-		BU_UNSETJUMP;
 	}
 	else
 		failed = 1;
@@ -1453,20 +1283,8 @@ char	**argv;
 	/* Triangulate model, if requested */
 	if( triangulate )
 	{
-		Tcl_AppendResult(interp, "facetize:  triangulating resulting object\n", (char *)NULL);
-		if( BU_SETJUMP )
-		{
-			BU_UNSETJUMP;
-			Tcl_AppendResult(interp, "WARNING: triangulation failed!!!\n", (char *)NULL );
-			if( mged_facetize_tree )
-				db_free_tree( mged_facetize_tree );
-			mged_facetize_tree = (union tree *)NULL;
-			nmg_km( mged_nmg_model );
-			mged_nmg_model = (struct model *)NULL;
-			return TCL_ERROR;
-		}
-		nmg_triangulate_model( mged_nmg_model , &mged_tol );
-		BU_UNSETJUMP;
+	  Tcl_AppendResult(interp, "facetize:  triangulating resulting object\n", (char *)NULL);
+	  nmg_triangulate_model( mged_nmg_model , &mged_tol );
 	}
 
 	Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n", (char *)NULL);
@@ -1522,9 +1340,6 @@ char	**argv;
 	char			op;
 	int			failed;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1538,6 +1353,10 @@ char	**argv;
 	}
 
 	RT_CHECK_DBI( dbip );
+
+	Tcl_AppendResult(interp, "Please note that the NMG library used by this command",
+			 "is experimental.\n A production implementation will exist",
+			 "in the maintenance release.\n", (char *)NULL);
 
 	/* Establish tolerances */
 	mged_initial_tree_state.ts_ttol = &mged_ttol;
@@ -1553,11 +1372,11 @@ char	**argv;
 	triangulate = 0;
 
 	/* Parse options. */
-	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"tP:")) != EOF )  {
+	optind = 1;		/* re-init getopt() */
+	while( (c=getopt(argc,argv,"tP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
-			ncpu = atoi(bu_optarg);
+			ncpu = atoi(optarg);
 			break;
 		case 't':
 			triangulate = 1;
@@ -1575,8 +1394,8 @@ char	**argv;
 		  break;
 		}
 	}
-	argc -= bu_optind;
-	argv += bu_optind;
+	argc -= optind;
+	argv += optind;
 
 	newname = argv[0];
 	argv++;
@@ -1694,21 +1513,7 @@ char	**argv;
 		/* Now, evaluate the boolean tree into ONE region */
 		Tcl_AppendResult(interp, "bev:  evaluating boolean expressions\n", (char *)NULL);
 
-		if( BU_SETJUMP )
-		{
-			BU_UNSETJUMP;
-
-			Tcl_AppendResult(interp, "WARNING: Boolean evaluation failed!!!\n", (char *)NULL );
-			if( tmp_tree )
-				db_free_tree( tmp_tree );
-			tmp_tree = (union tree *)NULL;
-			nmg_km( mged_nmg_model );
-			mged_nmg_model = (struct model *)NULL;
-			return TCL_ERROR;
-		}
-
 		failed = nmg_boolean( tmp_tree, mged_nmg_model, &mged_tol );
-		BU_UNSETJUMP;
 	}
 	else
 		failed = 1;
@@ -1731,20 +1536,8 @@ char	**argv;
 	/* Triangulate model, if requested */
 	if( triangulate )
 	{
-		Tcl_AppendResult(interp, "bev:  triangulating resulting object\n", (char *)NULL);
-		if( BU_SETJUMP )
-		{
-			BU_UNSETJUMP;
-			Tcl_AppendResult(interp, "WARNING: Triangulation failed!!!\n", (char *)NULL );
-			if( tmp_tree )
-				db_free_tree( tmp_tree );
-			tmp_tree = (union tree *)NULL;
-			nmg_km( mged_nmg_model );
-			mged_nmg_model = (struct model *)NULL;
-			return TCL_ERROR;
-		}
-		nmg_triangulate_model( mged_nmg_model , &mged_tol );
-		BU_UNSETJUMP;
+	  Tcl_AppendResult(interp, "bev:  triangulating resulting object\n", (char *)NULL);
+	  nmg_triangulate_model( mged_nmg_model , &mged_tol );
 	}
 
 	Tcl_AppendResult(interp, "bev:  converting NMG to database format\n", (char *)NULL);
@@ -1783,85 +1576,4 @@ char	**argv;
 	  /* draw the new solid */
 	  return f_edit( clientData, interp, 2, av );
 	}
-}
-
-/*
- *			A D D _ S O L I D _ P A T H _ T O _ R E S U L T
- */
-void
-add_solid_path_to_result( interp, sp )
-Tcl_Interp *interp;
-register struct solid	*sp;
-{
-	register int	i;
-
-	for( i = 0; i <= sp->s_last; i++ )  {
-		Tcl_AppendResult( interp, sp->s_path[i]->d_namep,
-			i == sp->s_last ? NULL : "/", NULL );
-	}
-	Tcl_AppendResult( interp, " ", NULL );
-}
-
-/*
- *			R E D R A W _ V L I S T
- *
- *  Given the name(s) of database objects, re-generate the vlist
- *  associated with every solid in view which references the
- *  named object(s), either solids or regions.
- *  Particularly useful with outboard .inmem database modifications.
- */
-int
-cmd_redraw_vlist( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-	struct directory	*dp;
-	int		i;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
-	if( argc < 2 )  {
-		Tcl_AppendResult(interp, "Usage: rtdraw_vlist object(s)\n", NULL);
-		return TCL_ERROR;
-	}
-
-	for( i = 1; i < argc; i++ )  {
-		register struct solid	*sp;
-
-		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == NULL )
-			continue;
-
-		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-			register int j;
-			for( j = sp->s_last; j >= 0; j-- )  {
-				if( sp->s_path[j] != dp )
-					continue;
-#if 0
-				add_solid_path_to_result(interp, sp);
-#endif
-				(void)replot_original_solid( sp );
-				sp->s_iflag = DOWN;	/* It won't be drawn otherwise */
-				break;
-			}
-		}
-	}
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(&HeadSolid);
-	  }
-	}
-	curr_dm_list = save_dmlp;
-#endif
-
-	update_views = 1;
-	return TCL_OK;
 }

@@ -176,7 +176,7 @@ int	enter;
 
 	/* Host name is not known */
 	addr_tmp = ntohl(addr_tmp);
-	sprintf( name, "%ld.%ld.%ld.%ld",
+	sprintf( name, "%d.%d.%d.%d",
 		(addr_tmp>>24) & 0xff,
 		(addr_tmp>>16) & 0xff,
 		(addr_tmp>> 8) & 0xff,

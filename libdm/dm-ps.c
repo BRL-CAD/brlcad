@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
-#include "bn.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -47,12 +46,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct dm	*ps_open();
 static int	ps_close();
 static int	ps_drawBegin(), ps_drawEnd();
-static int	ps_normal(), ps_loadMatrix();
+static int	ps_normal(), ps_newrot();
 static int	ps_drawString2D(), ps_drawLine2D();
-static int      ps_drawPoint2D();
+static int      ps_drawVertex2D();
 static int	ps_drawVList();
-static int      ps_setFGColor();
+static int      ps_setColor();
 static int      ps_setLineAttr();
+static unsigned ps_cvtvecs(), ps_load();
 static int	ps_setWinBounds(), ps_debug();
 
 struct dm dm_ps = {
@@ -60,24 +60,19 @@ struct dm dm_ps = {
   ps_drawBegin,
   ps_drawEnd,
   ps_normal,
-  ps_loadMatrix,
+  ps_newrot,
   ps_drawString2D,
   ps_drawLine2D,
-  ps_drawPoint2D,
+  ps_drawVertex2D,
   ps_drawVList,
-  ps_setFGColor,
-  Nu_int0,
-  Nu_int0,
+  ps_setColor,
   ps_setLineAttr,
+  ps_cvtvecs,
+  ps_load,
   ps_setWinBounds,
   ps_debug,
   Nu_int0,
-  Nu_int0,
-  Nu_int0,
-  Nu_int0,
-  0,
   0,				/* no displaylist */
-  0,                            /* no stereo */
   PLOTBOUND,
   "ps",
   "Screen to PostScript",
@@ -89,7 +84,8 @@ struct dm dm_ps = {
   0,
   1.0, /* aspect ratio */
   0,
-  {0, 0},
+  0,
+  0,
   0,
   0,
   0
@@ -99,7 +95,6 @@ char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inche
  [-l linewidth] file";
 
 struct ps_vars head_ps_vars;
-static mat_t psmat;
 
 /*
  *			P S _ O P E N
@@ -108,7 +103,8 @@ static mat_t psmat;
  *
  */
 struct dm *
-ps_open(argc, argv)
+ps_open(eventHandler, argc, argv)
+int (*eventHandler)();
 int argc;
 char *argv[];
 {
@@ -120,9 +116,10 @@ char *argv[];
     return DM_NULL;
 
   *dmp = dm_ps;  /* struct copy */
+  dmp->dm_eventHandler = eventHandler;
 
-  dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
-  if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
+  if(dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "ps_open: dmp");
     return DM_NULL;
   }
@@ -132,18 +129,17 @@ char *argv[];
   bu_vls_printf(&dmp->dm_pathName, ".dm_ps%d", count++);
   bu_vls_printf(&dmp->dm_tkName, "dm_ps%d", count++);
 
-  bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname);
-  bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font);
-  bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title);
-  bu_vls_init(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator);
+  bu_vls_init(&((struct ps_vars *)dmp->dm_vars)->fname);
+  bu_vls_init(&((struct ps_vars *)dmp->dm_vars)->font);
+  bu_vls_init(&((struct ps_vars *)dmp->dm_vars)->title);
+  bu_vls_init(&((struct ps_vars *)dmp->dm_vars)->creator);
 
   /* set defaults */
-  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, "Courier");
-  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, "No Title");
-  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, "LIBDM dm-ps");
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->scale = 0.0791;
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth = 4;
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip = 0;
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, "Courier");
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, "No Title");
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, "LIBDM dm-ps");
+  ((struct ps_vars *)dmp->dm_vars)->scale = 0.0791;
+  ((struct ps_vars *)dmp->dm_vars)->linewidth = 4;
 
   /* skip first argument */
   --argc; ++argv;
@@ -153,7 +149,7 @@ char *argv[];
     switch(argv[0][1]){
     case 'f':               /* font */
       if(argv[0][2] != '\0')
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, &argv[0][2]);
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, &argv[0][2]);
       else{
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
@@ -161,12 +157,12 @@ char *argv[];
 	  (void)ps_close(dmp);
 	  return DM_NULL;
 	}else
-	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font, &argv[0][0]);
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, &argv[0][0]);
       }
       break;
     case 't':               /* title */
       if(argv[0][2] != '\0')
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, &argv[0][2]);
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, &argv[0][2]);
       else{
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
@@ -174,12 +170,12 @@ char *argv[];
 	  (void)ps_close(dmp);
 	  return DM_NULL;
 	}else
-	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title, &argv[0][0]);
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, &argv[0][0]);
       }
       break;
     case 'c':               /* creator */
       if(argv[0][2] != '\0')
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, &argv[0][2]);
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, &argv[0][2]);
       else{
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
@@ -187,7 +183,7 @@ char *argv[];
 	  (void)ps_close(dmp);
 	  return DM_NULL;
 	}else
-	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator, &argv[0][0]);
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, &argv[0][0]);
       }
       break;
     case 's':               /* size in inches */
@@ -206,12 +202,12 @@ char *argv[];
 	    sscanf(&argv[0][0], "%lf", &size);
 	}
 
-	((struct ps_vars *)dmp->dm_vars.priv_vars)->scale = size * 0.017578125;
+	((struct ps_vars *)dmp->dm_vars)->scale = size * 0.017578125;
       }
       break;
     case 'l':               /* line width */
       if(argv[0][2] != '\0')
-	sscanf(&argv[0][2], "%d", &((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth);
+	sscanf(&argv[0][2], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
       else{
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
@@ -219,11 +215,8 @@ char *argv[];
 	  (void)ps_close(dmp);
 	  return DM_NULL;
 	}else
-	  sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth);
+	  sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
       }
-      break;
-    case 'z':
-      ((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
       break;
     default:
       Tcl_AppendResult(interp, ps_usage, (char *)0);
@@ -239,34 +232,34 @@ char *argv[];
     return DM_NULL;
   }
 
-  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname, argv[0]);
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->fname, argv[0]);
 
-  if( (((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp =
-       fopen(bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname), "w")) == NULL){
+  if( (((struct ps_vars *)dmp->dm_vars)->ps_fp =
+       fopen(bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->fname), "w")) == NULL){
     Tcl_AppendResult(interp, "f_ps: Error opening file - ",
-		     ((struct ps_vars *)dmp->dm_vars.priv_vars)->fname,
+		     ((struct ps_vars *)dmp->dm_vars)->fname,
 		     "\n", (char *)NULL);
     (void)ps_close(dmp);
     return DM_NULL;
   }
   
-  setbuf( ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
-	  ((struct ps_vars *)dmp->dm_vars.priv_vars)->ttybuf );
-  fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,"%%!PS-Adobe-1.0\n\
+  setbuf( ((struct ps_vars *)dmp->dm_vars)->ps_fp,
+	  ((struct ps_vars *)dmp->dm_vars)->ttybuf );
+  fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,"%%!PS-Adobe-1.0\n\
 %%begin(plot)\n\
 %%%%DocumentFonts:  %s\n",
-	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font));
+	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->font));
 
-  fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "%%%%Title: %s\n",
-	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title));
+  fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "%%%%Title: %s\n",
+	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->title));
 
-  fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "\
+  fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "\
 %%%%Creator: %s\n\
 %%%%BoundingBox: 0 0 324 324	%% 4.5in square, for TeX\n\
 %%%%EndComments\n\
-\n", bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator));
+\n", bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->creator));
 
-  fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "\
+  fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "\
 %d setlinewidth\n\
 \n\
 %% Sizes, made functions to avoid scaling if not needed\n\
@@ -288,15 +281,13 @@ char *argv[];
 \n\
 FntH  setfont\n\
 NEWPG\n\
-", ((struct ps_vars *)dmp->dm_vars.priv_vars)->linewidth,
-	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
-	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
-	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
-	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font),
-	  ((struct ps_vars *)dmp->dm_vars.priv_vars)->scale,
-	  ((struct ps_vars *)dmp->dm_vars.priv_vars)->scale);
-
-  bn_mat_idn(psmat);
+", ((struct ps_vars *)dmp->dm_vars)->linewidth,
+	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->font),
+	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->font),
+	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->font),
+	  bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->font),
+	  ((struct ps_vars *)dmp->dm_vars)->scale,
+	  ((struct ps_vars *)dmp->dm_vars)->scale);
 
   return dmp;
 }
@@ -310,19 +301,19 @@ static int
 ps_close(dmp)
 struct dm *dmp;
 {
-  if(!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
+  if(!((struct ps_vars *)dmp->dm_vars)->ps_fp)
     return TCL_ERROR;
 
-  fputs("%end(plot)\n", ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
-  (void)fclose(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
+  fputs("%end(plot)\n", ((struct ps_vars *)dmp->dm_vars)->ps_fp);
+  (void)fclose(((struct ps_vars *)dmp->dm_vars)->ps_fp);
 
   bu_vls_free(&dmp->dm_pathName);
   bu_vls_free(&dmp->dm_tkName);
-  bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->fname);
-  bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font);
-  bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title);
-  bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator);
-  bu_free(dmp->dm_vars.priv_vars, "ps_close: ps_vars");
+  bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->fname);
+  bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->font);
+  bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->title);
+  bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->creator);
+  bu_free(dmp->dm_vars, "ps_close: ps_vars");
   bu_free(dmp, "ps_close: dmp");
 
   return TCL_OK;
@@ -347,46 +338,26 @@ static int
 ps_drawEnd(dmp)
 struct dm *dmp;
 {
-  if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+  if( !((struct ps_vars *)dmp->dm_vars)->ps_fp )
     return TCL_ERROR;
 
   fputs("% showpage	% uncomment to use raw file\n",
-	((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp);
-  (void)fflush( ((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp );
+	((struct ps_vars *)dmp->dm_vars)->ps_fp);
+  (void)fflush( ((struct ps_vars *)dmp->dm_vars)->ps_fp );
 
   return TCL_OK;
 }
 
 /*
  *  			P S _ N E W R O T
- *
- *  Load a new transformation matrix.  This will be followed by
- *  many calls to ps_drawVList().
+ *  Stub.
  */
+/* ARGSUSED */
 static int
-ps_loadMatrix(dmp, mat, which_eye)
+ps_newrot(dmp, mat)
 struct dm *dmp;
 mat_t mat;
-int which_eye;
 {
-  if(((struct ps_vars *)dmp->dm_vars.priv_vars)->debug){
-    struct bu_vls tmp_vls;
-
-    Tcl_AppendResult(interp, "ps_loadMatrix()\n", (char *)NULL);
-
-    bu_vls_init(&tmp_vls);
-    bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
-    bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    bu_vls_free(&tmp_vls);
-  }
-
-  bn_mat_copy(psmat, mat);
   return TCL_OK;
 }
 
@@ -401,38 +372,24 @@ int which_eye;
  */
 /* ARGSUSED */
 static int
-ps_drawVList( dmp, vp, perspective )
+ps_drawVList( dmp, vp, mat )
 struct dm *dmp;
 register struct rt_vlist *vp;
-double perspective;
+mat_t mat;
 {
   static vect_t			last;
   register struct rt_vlist	*tvp;
-  register point_t		*pt_prev=NULL;
-  register fastf_t		dist_prev=1.0;
-  register fastf_t		dist;
-  fastf_t			delta;
   int useful = 0;
 
-  if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+  if( !((struct ps_vars *)dmp->dm_vars)->ps_fp )
     return TCL_ERROR;
 
 #if 0
   if( linestyle )
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV ");		/* Dot-dashed vectors */
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "DDV ");		/* Dot-dashed vectors */
   else
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV ");		/* Normal vectors */
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "NV ");		/* Normal vectors */
 #endif
-
-    /* delta is used in clipping to insure clipped endpoint is slightly
-     * in front of eye plane (perspective mode only).
-     * This value is a SWAG that seems to work OK.
-     */
-    delta = psmat[15]*0.0001;
-    if( delta < 0.0 )
-	delta = -delta;
-    if( delta < SQRT_SMALL_FASTF )
-	delta = SQRT_SMALL_FASTF;
 
   for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
     register int	i;
@@ -448,93 +405,23 @@ double perspective;
       case RT_VLIST_POLY_MOVE:
       case RT_VLIST_LINE_MOVE:
 	/* Move, not draw */
-		if( perspective > 0.0 )
-	    	{
-	    		/* cannot apply perspective transformation to
-			 * points behind eye plane!!!!
-	    		 */
-	    		dist = VDOT( *pt, &psmat[12] ) + psmat[15];
-	    		if( dist <= 0.0 )
-	    		{
-	    			pt_prev = pt;
-	    			dist_prev = dist;
-	    			continue;
-	    		}
-	    		else
-	    		{
-	    			MAT4X3PNT( last, psmat, *pt );
-	    			dist_prev = dist;
-	    			pt_prev = pt;
-	    		}
-	    	}
-		else
-			MAT4X3PNT( last, psmat, *pt );
+	MAT4X3PNT( last, mat, *pt );
 	continue;
       case RT_VLIST_POLY_DRAW:
       case RT_VLIST_POLY_END:
       case RT_VLIST_LINE_DRAW:
 	/* draw */
-		if( perspective > 0.0 )
-	    	{
-	    		/* cannot apply perspective transformation to
-			 * points behind eye plane!!!!
-	    		 */
-	    		dist = VDOT( *pt, &psmat[12] ) + psmat[15];
-	    		if( dist <= 0.0 )
-	    		{
-	    			if( dist_prev <= 0.0 )
-	    			{
-	    				/* nothing to plot */
-		    			dist_prev = dist;
-		    			pt_prev = pt;
-		    			continue;
-	    			}
-	    			else
-	    			{
-	    				fastf_t alpha;
-	    				vect_t diff;
-	    				point_t tmp_pt;
-
-	    				/* clip this end */
-	    				VSUB2( diff, *pt, *pt_prev );
-	    				alpha = (dist_prev - delta) / ( dist_prev - dist );
-	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-	    				MAT4X3PNT( fin, psmat, tmp_pt );
-	    			}
-	    		}
-	    		else
-	    		{
-	    			if( dist_prev <= 0.0 )
-	    			{
-	    				fastf_t alpha;
-	    				vect_t diff;
-	    				point_t tmp_pt;
-
-	    				/* clip other end */
-	    				VSUB2( diff, *pt, *pt_prev );
-	    				alpha = (-dist_prev + delta) / ( dist - dist_prev );
-	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-	    				MAT4X3PNT( last, psmat, tmp_pt );
-	    				MAT4X3PNT( fin, psmat, *pt );
-	    			}
-	    			else
-	    			{
-	    				MAT4X3PNT( fin, psmat, *pt );
-	    			}
-	    		}
-	    	}
-		else
-			MAT4X3PNT( fin, psmat, *pt );
+	MAT4X3PNT( fin, mat, *pt );
 	VMOVE( start, last );
 	VMOVE( last, fin );
 	break;
       }
 
-      if(vclip( start, fin, ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin,
-		((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax ) == 0)
+      if(vclip( start, fin, ((struct ps_vars *)dmp->dm_vars)->clipmin,
+		((struct ps_vars *)dmp->dm_vars)->clipmax ) == 0)
 	continue;
 
-      fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
+      fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,
 	      "newpath %d %d moveto %d %d lineto stroke\n",
 	      GED_TO_PS( start[0] * 2047 ),
 	      GED_TO_PS( start[1] * 2047 ),
@@ -565,7 +452,7 @@ struct dm *dmp;
 }
 
 /*
- *			P S _ D R A W S T R I N G 2 D
+ *			P S _ P U T S
  *
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
@@ -575,78 +462,74 @@ static int
 ps_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
-fastf_t x, y;
+int x, y;
 int size;
 int use_aspect;
 {
-  int sx, sy;
-
-  if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+  if( !((struct ps_vars *)dmp->dm_vars)->ps_fp )
     return TCL_ERROR;
 
   switch( size )  {
   default:
     /* Smallest */
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,"DFntS ");
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,"DFntS ");
     break;
   case 1:
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,"DFntM ");
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,"DFntM ");
     break;
   case 2:
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,"DFntL ");
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,"DFntL ");
     break;
   case 3:
     /* Largest */
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,"FntH ");
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,"FntH ");
     break;
   }
 
-  sx = x * 2047.0 + 2048;
-  sy = y * 2047.0 + 2048;
-  fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
-	  "(%s) %d %d moveto show\n", str, sx, sy );
+  fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,
+	  "(%s) %d %d moveto show\n", str, GED_TO_PS(x), GED_TO_PS(y) );
 
   return TCL_OK;
 }
 
 /*
- *			P S _ D R A W L I N E 2 D
+ *			P S _ 2 D _ G O T O
  *
  */
 static int
-ps_drawLine2D(dmp, x1, y1, x2, y2)
+ps_drawLine2D( dmp, x1, y1, x2, y2 )
 struct dm *dmp;
-fastf_t x1, y1;
-fastf_t x2, y2;
+int x1, y1;
+int x2, y2;
 {
-  int sx1, sy1;
-  int sx2, sy2;
-
-  if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
+  if( !((struct ps_vars *)dmp->dm_vars)->ps_fp )
     return TCL_ERROR;
 
-  sx1 = x1 * 2047.0 + 2048;
-  sx2 = x2 * 2047.0 + 2048;
-  sy1 = y1 * 2047.0 + 2048;
-  sy2 = y2 * 2047.0 + 2048;
+#if 0
+  if( dashed )
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "DDV ");	/* Dot-dashed vectors */
+  else
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "NV ");		/* Normal vectors */
+#endif
 
-  fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
+  fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,
 	  "newpath %d %d moveto %d %d lineto stroke\n",
-	  sx1, sy1, sx2, sy2);
+	  GED_TO_PS(x1), GED_TO_PS(y1),
+	  GED_TO_PS(x2), GED_TO_PS(y2) );
 
   return TCL_OK;
 }
 
 static int
-ps_drawPoint2D(dmp, x, y)
+ps_drawVertex2D(dmp, x, y)
 struct dm *dmp;
-fastf_t x, y;
+int x, y;
 {
   return ps_drawLine2D(dmp, x, y, x, y);
 }
 
 static int
-ps_setFGColor(dmp, r, g, b, strict)
+ps_setColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;
@@ -664,11 +547,34 @@ int style;
   dmp->dm_lineStyle = style;
 
   if(style == DM_DASHED_LINE)
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV "); /* Dot-dashed vectors */
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "DDV "); /* Dot-dashed vectors */
   else
-    fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV "); /* Normal vectors */
+    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "NV "); /* Normal vectors */
 
   return TCL_OK;
+}
+
+/* ARGSUSED */
+static unsigned
+ps_cvtvecs( dmp, sp )
+struct dm *dmp;
+struct solid *sp;
+{
+	return( 0 );
+}
+
+/*
+ * Loads displaylist
+ */
+static unsigned
+ps_load( dmp, addr, count )
+struct dm *dmp;
+unsigned addr, count;
+{
+#if 0
+	bu_log("ps_load(x%x, %d.)\n", addr, count );
+#endif
+	return( 0 );
 }
 
 /* ARGSUSED */
@@ -685,18 +591,12 @@ struct dm *dmp;
 register int w[];
 {
   /* Compute the clipping bounds */
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin[0] = w[0] / 2048.;
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax[0] = w[1] / 2047.;
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin[1] = w[2] / 2048.;
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax[1] = w[3] / 2047.;
-
-  if(((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip){
-    ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = w[4] / 2048.;
-    ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = w[5] / 2047.;
-  }else{
-    ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = -1.0e20;
-    ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = 1.0e20;
-  }
+  ((struct ps_vars *)dmp->dm_vars)->clipmin[0] = w[1] / 2048.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
 
   return TCL_OK;
 }

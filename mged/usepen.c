@@ -109,11 +109,11 @@ char	**argv;
 	}
 
 	/* Build floating point mouse vector, -1 to +1 */
-	mousevec[X] =  xpos * INV_GED;
-	mousevec[Y] =  ypos * INV_GED;
+	mousevec[X] =  xpos / 2047.0;
+	mousevec[Y] =  ypos / 2047.0;
 	mousevec[Z] = 0;
 
-	if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui && up) {
+	if (mged_variables.faceplate && mged_variables.show_menu && up) {
 	  /*
 	   * If mouse press is in scroll area, see if scrolling, and if so,
 	   * divert this mouse press.
@@ -191,9 +191,9 @@ char	**argv;
 	   */
 	  isave = ipathpos;
 	  ipathpos = illump->s_last - (
-				       (ypos+(int)GED_MAX) * (illump->s_last+1) / (int)GED_RANGE);
+				       (ypos+2048L) * (illump->s_last+1) / 4096);
 	  if( ipathpos != isave )
-	    view_state->vs_flag++;
+	    dmaflag++;
 	  return TCL_OK;
 
 	} else switch( state )  {
@@ -209,17 +209,17 @@ char	**argv;
 	case ST_O_PICK:
 	  ipathpos = 0;
 	  (void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
-	  view_state->vs_flag = 1;
+	  dmaflag = 1;
 	  return TCL_OK;
 
 	case ST_S_PICK:
 	  /* Check details, Init menu, set state */
 	  init_sedit();		/* does chg_state */
-	  view_state->vs_flag = 1;
+	  dmaflag = 1;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  if((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
+	  if((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables.edit)
 	    sedit_mouse( mousevec );
 	  else
 	    slewview( mousevec );
@@ -252,7 +252,7 @@ char	**argv;
 		return TCL_OK;
 
 	case ST_O_EDIT:
-	  if((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
+	  if((OEDIT_TRAN || OEDIT_SCALE) && mged_variables.edit)
 	    objedit_mouse( mousevec );
 	  else
 	    slewview( mousevec );
@@ -277,19 +277,25 @@ static void
 illuminate( y )  {
 	register int count;
 	register struct solid *sp;
+	register struct solid *saveillump;
+
+	saveillump = illump;
 
 	/*
 	 * Divide the mouse into 'ndrawn' VERTICAL zones, and use the
 	 * zone number as a sequential position among solids
 	 * which are drawn.
 	 */
-	count = ((fastf_t)y + GED_MAX) * ndrawn / GED_RANGE;
+	count = ( (fastf_t) y + 2048.0 ) * ndrawn / 4096.0;
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		/* Only consider solids which are presently in view */
 		if( sp->s_flag == UP )  {
-		        if( count-- == 0 ) {
+			if( count-- == 0 && illump != sp )  {
 				sp->s_iflag = UP;
+#if 0
+				dmp->dm_viewchange( dmp, DM_CHGV_ILLUM, sp );
+#endif
 				illump = sp;
 			}  else  {
 				/* All other solids have s_iflag set DOWN */
@@ -298,7 +304,8 @@ illuminate( y )  {
 		}
 	}
 
-	update_views = 1;
+	if( saveillump != illump )
+	  update_views = 1;
 }
 
 /*
@@ -327,15 +334,8 @@ char *argv[];
     return TCL_ERROR;
   }
 
-  if (!ndrawn){
-      Tcl_AppendResult(interp, "aip: no solids displayed\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-    else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH)
-    {
-      state_err("advance the illumination pointer");
-      return TCL_ERROR;
-  }
+  if(!ndrawn || (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH))
+    return TCL_ERROR;
 
   if(state == ST_O_PATH){
     if(argc == 1 || *argv[1] == 'f'){
@@ -347,7 +347,7 @@ char *argv[];
       if(ipathpos < 0)
 	ipathpos = illump->s_last;
     }else{
-      Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
+      Tcl_AppendResult(interp, "aill: bad parameter - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
   }else{
@@ -364,11 +364,14 @@ char *argv[];
       else
 	sp = BU_LIST_PLAST(solid, sp);
     }else{
-      Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
+      Tcl_AppendResult(interp, "aill: bad parameter - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
 
     sp->s_iflag = UP;
+#if 0
+    dmp->dm_viewchange( dmp, DM_CHGV_ILLUM, sp );
+#endif
     illump = sp;
   }
 
@@ -452,12 +455,12 @@ register matp_t out, change, in;
 {
 	static mat_t t1, t2;
 
-	bn_mat_mul( t1, view_state->vs_toViewcenter, in );
+	bn_mat_mul( t1, toViewcenter, in );
 	bn_mat_mul( t2, change, t1 );
 
 	/* Build "fromViewcenter" matrix */
 	bn_mat_idn( t1 );
-	MAT_DELTAS( t1, -view_state->vs_toViewcenter[MDX], -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ] );
+	MAT_DELTAS( t1, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ] );
 	bn_mat_mul( out, t1, t2 );
 }
 
@@ -510,7 +513,7 @@ register vect_t point, direc;
 	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
 
 	/* build "direc to zaxis" matrix */
-	VSET(zaxis, 0.0, 0.0, 1.0);
+	VSET(zaxis, 0, 0, 1);
 	bn_mat_fromto(d_to_zaxis, direc, zaxis);
 
 	/* build "zaxis to direc" matrix */
@@ -551,28 +554,8 @@ char	**argv;
 	register struct solid	*sp;
 	char			*cp;
 	register int		j;
-	int			illum_only = 0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
-	if(argc < 2 || 3 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help matpick");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if(!strcmp("-n", argv[1])){
-	  illum_only = 1;
-	  --argc;
-	  ++argv;
-	}
-
-	if(argc != 2){
+	if(argc < 2 || 2 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -609,6 +592,12 @@ char	**argv;
 		else if( ipathpos > illump->s_last )  ipathpos = illump->s_last;
 	}
 got:
+#if 0
+	dmp->dm_light( dmp, LIGHT_ON, BE_ACCEPT );
+	dmp->dm_light( dmp, LIGHT_ON, BE_REJECT );
+	dmp->dm_light( dmp, LIGHT_OFF, BE_O_ILLUMINATE );
+#endif
+
 	/* Include all solids with same tree top */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		for( j = 0; j <= ipathpos; j++ )  {
@@ -617,19 +606,14 @@ got:
 		}
 		/* Only accept if top of tree is identical */
 		if( j == ipathpos+1 )
-		  sp->s_iflag = UP;
-		else
-		  sp->s_iflag = DOWN;
+			sp->s_iflag = UP;
 	}
+	(void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
+	chg_l2menu(ST_O_EDIT);
 
-	if(!illum_only){
-	  (void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
-	  chg_l2menu(ST_O_EDIT);
+	/* begin object editing - initialize */
+	init_objedit();
 
-	  /* begin object editing - initialize */
-	  init_objedit();
-	}
-
-	update_views = 1;
+	dmaflag++;
 	return TCL_OK;
 }

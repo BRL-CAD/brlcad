@@ -209,11 +209,10 @@ char *argv[];
 		}
 	}
 
-	while( fgets(line, sizeof(line), stdin) )
+	while( gets(line) )
 	{
-		if( strlen( line ) <= 1 )
+		if( strlen( line ) == 0 )
 			continue;
-		line[strlen(line)-1] = '\0';	/* eliminate \n */
 
 		x = get_ftn_float( line , 0 , "f8.3" );
 		y = get_ftn_float( line , 8 , "f8.3" );

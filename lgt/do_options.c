@@ -2227,7 +2227,11 @@ char	**args;
 	else
 		rt_g.rtg_parallel = 0;		
 
-	bu_semaphore_init( RT_SEM_LAST );
+	RES_INIT( &rt_g.res_model );
+	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
 #endif
 	return	1;
 	}

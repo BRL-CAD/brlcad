@@ -86,7 +86,7 @@ char **argv;
 	scale = 511.0 / (double)max;
 
 	/* Display the max? */
-	printf( "Full screen = %ld pixels\n", max );
+	printf( "Full screen = %d pixels\n", max );
 
 	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
 		fprintf(stderr,"fb_open failed\n");
@@ -101,7 +101,7 @@ char **argv;
 		fb_write( fbp, 0, 2*i, white, value );
 		fb_write( fbp, 0, 2*i+1, white, value );
 		if( verbose )
-			printf( "%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/(float)max );
+			printf( "%3d: %10d (%10f)\n", i, bin[i], (float)bin[i]/(float)max );
 	}
 	fb_close( fbp );
 	exit(0);

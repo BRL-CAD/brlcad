@@ -464,16 +464,14 @@ int	state;
 	static char	buf[128];
 
 	switch( state )  {
-	case SRST_UNUSED:
-		return "[unused]";
 	case SRST_NEW:
 		return("..New..");
 	case SRST_VERSOK:
 		return("Vers_OK");
 	case SRST_DOING_DIRBUILD:
-		return("DoDirbld");
+		return("DirBuild");
 	case SRST_NEED_TREE:
-		return("NeedTree");
+		return("WaitTree");
 	case SRST_READY:
 		return(" Ready");
 	case SRST_RESTART:
@@ -485,24 +483,6 @@ int	state;
 	}
 	sprintf(buf, "UNKNOWN_x%x", state);
 	return(buf);
-}
-
-/*
- *			S T A T E C H A N G E
- */
-void
-statechange( sp, newstate )
-register struct servers *sp;
-int	newstate;
-{
-	if( rem_debug )  {
-		bu_log("%s %s %s --> %s\n",
-			stamp(),
-			sp->sr_host->ht_name,
-			state_to_string(sp->sr_state),
-			state_to_string(newstate) );
-	}
-	sp->sr_state = newstate;
 }
 
 /*
@@ -518,7 +498,7 @@ char	**argv;
 
 	/* Random inits */
 	our_hostname = get_our_hostname();
-	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, (char *)(version+5) );
+	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, version+5 );
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */
@@ -592,11 +572,11 @@ char	**argv;
 		if (interactive) work_allocate_method = OPT_FRAME;
 
 		/* take note of database name and treetops */
-		if( bu_optind+2 > argc )  {
+		if( optind+2 > argc )  {
 			fprintf(stderr,"remrt:  insufficient args\n");
 			exit(2);
 		}
-		build_start_cmd( argc, argv, bu_optind );
+		build_start_cmd( argc, argv, optind );
 
 		/* Read .remrtrc file to acquire servers */
 		read_rc_file();
@@ -714,6 +694,12 @@ read_rc_file()
 			return;
 		}
 	}
+
+	if( (fp = fopen("/usr/brlcad/etc/.remrtrc", "r")) != NULL )  {
+		source(fp);
+		fclose(fp);
+		return;
+	}
 }
 
 /*
@@ -790,6 +776,7 @@ int waittime;
 	/* Finally, handle any command input (This can recurse via "read") */
 	if( waittime>0 &&
 	    !feof(stdin) &&
+	    fileno(stdin) >= 0 &&
 	    FD_ISSET( fileno(stdin), &ifdset ) )  {
 		interactive_cmd(stdin);
 	}
@@ -836,10 +823,10 @@ struct pkg_conn *pc;
 	bzero( (char *)sp, sizeof(*sp) );
 	sp->sr_pc = pc;
 	BU_LIST_INIT( &sp->sr_work );
+	sp->sr_state = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_lump = 32;
 	sp->sr_host = ihp;
-	statechange(sp, SRST_NEW);
 
 	/* Clear any frame state that may remain from an earlier server */
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
@@ -869,7 +856,7 @@ char	*why;
 		return;
 	}
 	oldstate = sp->sr_state;
-	statechange(sp, SRST_CLOSING);
+	sp->sr_state = SRST_CLOSING;
 	sp->sr_curframe = FRAME_NULL;
 
 	/* Only remark on servers that got out of "NEW" state.
@@ -1463,10 +1450,10 @@ register struct frame	*fr;
 
 	/* Always create a file name to write into */
 	if( outputfile )  {
-		sprintf( name, "%s.%ld", outputfile, fr->fr_number );
+		sprintf( name, "%s.%d", outputfile, fr->fr_number );
 		fr->fr_tempfile = 0;
 	} else {
-		sprintf( name, "remrt.pix.%ld", fr->fr_number );
+		sprintf( name, "remrt.pix.%d", fr->fr_number );
 		fr->fr_tempfile = 1;
 	}
 	fr->fr_filename = bu_strdup( name );
@@ -1519,7 +1506,7 @@ register struct frame *fr;
 	(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
 	delta = tvdiff( &fr->fr_end, &fr->fr_start);
 	if( delta < 0.0001 )  delta=0.0001;
-	bu_log("%s Frame %ld DONE: %g elapsed sec, %d rays/%g cpu sec\n",
+	bu_log("%s Frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
 		stamp(),
 		fr->fr_number,
 		delta,
@@ -1543,7 +1530,7 @@ register struct frame *fr;
 		char *cmd;
 		cmd = malloc(strlen(frame_script) + strlen(fr->fr_filename) +
 		    20); /* spaces and frame number */
-		(void) sprintf(cmd,"%s %s %ld",frame_script,fr->fr_filename,
+		(void) sprintf(cmd,"%s %s %d",frame_script,fr->fr_filename,
 		    fr->fr_number);
 		if(rem_debug) bu_log("%s %s\n", stamp(), cmd);
 		(void) system(cmd);
@@ -1742,7 +1729,7 @@ struct timeval	*nowp;
 			pkg_close(sp->sr_pc);
 
 			sp->sr_pc = PKC_NULL;
-			statechange(sp, SRST_UNUSED);
+			sp->sr_state = SRST_UNUSED;
 			sp->sr_host = IHOST_NULL;
 
 			break;
@@ -2157,7 +2144,7 @@ char *buf;
 		drop_server( sp, "wrong state" );
 		return;
 	}
-	statechange(sp, SRST_NEED_TREE);
+	sp->sr_state = SRST_NEED_TREE;
 }
 
 /*
@@ -2190,7 +2177,7 @@ char *buf;
 		drop_server( sp, "wrong state" );
 		return;
 	}
-	statechange(sp, SRST_READY);
+	sp->sr_state = SRST_READY;
 }
 
 /*
@@ -2234,7 +2221,7 @@ char	*buf;
 			bu_log("NOTE %s:  VERSION message unexpected\n",
 				sp->sr_host->ht_name);
 		}
-		statechange(sp, SRST_VERSOK);
+		sp->sr_state = SRST_VERSOK;
 	}
 	if(buf) (void)free(buf);
 }
@@ -2703,7 +2690,6 @@ register struct servers *sp;
 	ihp = sp->sr_host;
 	switch( ihp->ht_where )  {
 	case HT_CD:
-		if( rem_debug > 1 )  bu_log("%s MSG_CD %s\n", stamp(), ihp->ht_path);
 		if( pkg_send( MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc ) < 0 )
 			drop_server(sp, "MSG_CD send error");
 		break;
@@ -2716,14 +2702,13 @@ register struct servers *sp;
 		return;
 	}
 
-	if( rem_debug > 1 )  bu_log("%s MSG_DIRBUILD %s\n", stamp(), file_basename);
 	if( pkg_send( MSG_DIRBUILD, file_basename, strlen(file_basename)+1,
 	    sp->sr_pc ) < 0
 	)  {
 		drop_server(sp, "MSG_DIRBUILD pkg_send error");
 		return;
 	}
-	statechange(sp, SRST_DOING_DIRBUILD);
+	sp->sr_state = SRST_DOING_DIRBUILD;
 }
 
 /*
@@ -2737,7 +2722,7 @@ register struct servers *sp;
 
 	if( pkg_send( MSG_RESTART, "", 0, sp->sr_pc ) < 0 )
 		drop_server(sp, "MSG_RESTART pkg_send error");
-	statechange(sp, SRST_RESTART);
+	sp->sr_state = SRST_RESTART;
 }
 
 /*
@@ -2789,7 +2774,7 @@ register struct frame	*fr;
 		drop_server(sp, "MSG_GETTREES pkg_send error");
 		return;
 	}
-	statechange(sp, SRST_DOING_GETTREES);
+	sp->sr_state = SRST_DOING_GETTREES;
 }
 
 /*

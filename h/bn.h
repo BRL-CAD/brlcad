@@ -96,7 +96,7 @@ struct bn_tol {
 #define BN_VECT_ARE_PERP(_dot,_tol)		\
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
-#define BN_APPROXEQUAL(_a, _b, _tol) (fabs( (_a) - (_b) ) <= _tol->dist)
+
 
 /*----------------------------------------------------------------------*/
 /* complex.c */
@@ -183,7 +183,7 @@ BU_EXTERN(void		bn_eigen2x2, ( fastf_t	*val1, fastf_t *val2,
 					vect_t	vec1, vect_t vec2, fastf_t a,
 					fastf_t b, fastf_t c) );
 
-BU_EXTERN(void		bn_vec_perp, (vect_t new_vec, CONST vect_t old_vec));
+BU_EXTERN(void		bn_vec_perp, (vect_t new, CONST vect_t	old));
 BU_EXTERN(void		bn_mat_fromto, ( mat_t m, CONST vect_t from,
 					CONST vect_t to));
 BU_EXTERN(void		bn_mat_xrot, (mat_t m, double sinx, double cosx));
@@ -446,7 +446,7 @@ BU_EXTERN(void quat_log, (quat_t out, quat_t in));
  *  The values are in the range 0..1
  *
  * Usage:
- *	unsigned idx;
+ *	int idx;
  *	float f;
  *
  *	BN_RANDSEED( idx, integer_seed );
@@ -457,7 +457,7 @@ BU_EXTERN(void quat_log, (quat_t out, quat_t in));
  */
 #define BN_RAND_TABSIZE 4096
 #define BN_RAND_TABMASK 0xfff
-#define BN_RANDSEED( _i, _seed )        _i = ((unsigned)_seed) % BN_RAND_TABSIZE
+#define BN_RANDSEED( _i, _seed )        _i = _seed % BN_RAND_TABSIZE
 #define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
 extern CONST float bn_rand_table[BN_RAND_TABSIZE];
 

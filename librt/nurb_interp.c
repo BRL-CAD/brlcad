@@ -114,7 +114,7 @@ int		n;
 	/* First set up Curve data structs */
 	/* For now we will assume that all paramerizations are uniform */
 
-	rt_nurb_kvknot( &crv->k, order, 0.0, 1.0, (n - order), (struct resource *)NULL);
+	rt_nurb_kvknot( &crv->k, order, 0.0, 1.0, (n - order));
 	
 	/* Calculate Nodes at which the data points will be
 	 * evaluated in the curve
@@ -186,8 +186,8 @@ int		xmax;		/* ncol = max X */
 	 * similar for the V knot vector
 	 */
 
-	rt_nurb_kvknot(&srf->u, order, 0.0, 1.0, ymax - order, (struct resource *)NULL);
-	rt_nurb_kvknot(&srf->v, order, 0.0, 1.0, xmax - order, (struct resource *)NULL);
+	rt_nurb_kvknot(&srf->u, order, 0.0, 1.0, ymax - order);
+	rt_nurb_kvknot(&srf->v, order, 0.0, 1.0, xmax - order);
 
 	srf->ctl_points = (fastf_t *) rt_malloc(
 		sizeof(fastf_t) * xmax * ymax * 3,
@@ -195,7 +195,7 @@ int		xmax;		/* ncol = max X */
 	cpt = &srf->ctl_points[0];
 
 /* _col is X, _row is Y */
-#define NVAL(_col,_row)	data[((_row)*xmax+(_col))*3]
+#define VAL(_col,_row)	data[((_row)*xmax+(_col))*3]
 
 	crv = (struct edge_g_cnurb *)rt_calloc( sizeof(struct edge_g_cnurb), ymax,
 		"rt_nurb_sinterp() crv[]");
@@ -204,9 +204,8 @@ int		xmax;		/* ncol = max X */
 	for( y = 0; y < ymax; y++)  {
 		crv[y].l.magic = RT_CNURB_MAGIC;
 		/* Build curve from from (0,y) to (xmax-1, y) */
-		rt_nurb_cinterp( &crv[y], order, &NVAL(0,y), xmax );
+		rt_nurb_cinterp( &crv[y], order, &VAL(0,y), xmax );
 	}
-#undef NVAL
 
 	tmp = (fastf_t *)rt_malloc( sizeof(fastf_t)*3 * ymax,
 		"rt_nurb_sinterp() tmp[]");

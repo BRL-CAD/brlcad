@@ -67,9 +67,6 @@ char **argv;
 {
 	register int i;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 1 < argc){
@@ -111,7 +108,7 @@ char **argv;
 
 		/* Update the display */
 		replot_editing_solid();
-		view_state->vs_flag = 1;
+		dmaflag = 1;
 		Tcl_AppendResult(interp, "done\n", (char *)NULL);
 	}
 	(void)unlink(tmpfil);
@@ -125,9 +122,6 @@ writesolid()
 {
 	register int i;
 	FILE *fp;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	fp = fopen(tmpfil, "w");
 
@@ -265,9 +259,6 @@ readsolid()
 	register int i;
 	FILE *fp;
 	int ret_val=0;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	fp = fopen(tmpfil, "r");
 	if( fp == NULL )  {

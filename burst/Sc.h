@@ -25,7 +25,6 @@
 #ifndef Sc_H_INCLUDE
 #define Sc_H_INCLUDE
 #include "./burst.h"
-#include "./Tc.h"
 
 /**
 	bool	ScInit( FILE *fp )

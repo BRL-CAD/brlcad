@@ -55,13 +55,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "bu.h"
 
-static struct bu_list	bu_mapped_file_list = {
-	0,
-	(struct bu_list *)NULL,
-	(struct bu_list *)NULL
-};	/* list of currently open mapped files */
+static struct rt_list	bu_mapped_file_list;	/* list of currently open mapped files */
 
-#define FILE_LIST_SEMAPHORE_NUM	BU_SEM_BN_NOISE	/* Anything but BU_SEM_SYSCALL */
+#define FILE_LIST_SEMAPHORE_NUM	1	/* Anything but BU_SEM_SYSCALL */
 
 /*
  *			B U _ O P E N _ M A P P E D _ F I L E
@@ -85,10 +81,10 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 #endif
 
 	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
-	if( BU_LIST_UNINITIALIZED( &bu_mapped_file_list ) )  {
-		BU_LIST_INIT( &bu_mapped_file_list );
+	if( RT_LIST_UNINITIALIZED( &bu_mapped_file_list ) )  {
+		RT_LIST_INIT( &bu_mapped_file_list );
 	}
-	for( BU_LIST_FOR( mp, bu_mapped_file, &bu_mapped_file_list ) )  {
+	for( RT_LIST_FOR( mp, bu_mapped_file, &bu_mapped_file_list ) )  {
 		BU_CK_MAPPED_FILE(mp);
 		if( strcmp( name, mp->name ) )  continue;
 		if( appl && strcmp( appl, mp->appl ) )
@@ -99,7 +95,6 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 		return mp;
 	}
 	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
-	mp = (struct bu_mapped_file *)NULL;
 
 	/* File is not yet mapped, open file read only. */
 #ifdef HAVE_UNIX_IO
@@ -180,7 +175,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	}
 	/* Read it once to see how large it is */
 	{
-		char	buf[32768];
+		char	buf[10240];
 		int	got;
 		mp->buflen = 0;
 
@@ -219,108 +214,58 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	mp->l.magic = BU_MAPPED_FILE_MAGIC;
 
 	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
-	BU_LIST_APPEND( &bu_mapped_file_list, &mp->l );
+	RT_LIST_APPEND( &bu_mapped_file_list, &mp->l );
 	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
 
 	return mp;
 
 fail:
-	if( mp )  {
-		bu_free( mp->name, "mp->name" );
-		if( mp->appl ) bu_free( mp->appl, "mp->appl" );
-		/* Don't free mp->buf here, it might not be bu_malloced but mmaped */
-		bu_free( mp, "mp from bu_open_mapped_file fail");
-	}
+	if( mp )  bu_free( mp, "bu_open_mapped_file failed");
 	bu_log("bu_open_mapped_file(%s) can't open file\n", name);
 	return (struct bu_mapped_file *)NULL;
 }
-
 /*
  *			B U _ C L O S E _ M A P P E D _ F I L E
- *
- *  Release a use of a mapped file.
- *  Because it may be re-used shortly, e.g. by the next frame of
- *  an animation, don't release the memory even on final close,
- *  so that it's available when next needed.
- *  Call bu_free_mapped_files() after final close to reclaim space.
  */
 void
 bu_close_mapped_file( mp )
 struct bu_mapped_file	*mp;
 {
-	BU_CK_MAPPED_FILE(mp);
-
-	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
-	--mp->uses;
-	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
-}
-
-/*
- *			B U _ P R _ M A P P E D _ F I L E
- */
-void
-bu_pr_mapped_file( title, mp )
-CONST char		*title;
-struct bu_mapped_file	*mp;
-{
-	BU_CK_MAPPED_FILE(mp);
-
-	bu_log("%8lx mapped_file %s %lx len=%ld mapped=%d, uses=%d %s\n",
-		(long)mp, mp->name, (long)mp->buf, mp->buflen,
-		mp->is_mapped, mp->uses,
-		title );
-}
-
-/*
- *			B U _ F R E E _ M A P P E D _ F I L E S
- *
- *  Release storage being used by mapped files with no remaining users.
- *  This entire routine runs inside a critical section, for parallel protection.
- */
-void
-bu_free_mapped_files(verbose)
-int	verbose;
-{
-	struct bu_mapped_file	*mp;
 	int	ret;
 
+	BU_CK_MAPPED_FILE(mp);
+
 	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
+	if( --mp->uses > 0 )  {
+		bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
+		return;
+	}
+	RT_LIST_DEQUEUE( &mp->l );
+	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
 
-	for( BU_LIST_FOR( mp, bu_mapped_file, &bu_mapped_file_list ) )  {
-		BU_CK_MAPPED_FILE(mp);
-
-		if( mp->uses > 0 )  continue;
-
-		/* Found one that needs to have storage released */
-		if(verbose)  bu_pr_mapped_file( "freeing", mp );
-
-		BU_LIST_DEQUEUE( &mp->l );
-
-		/* If application pointed mp->apbuf at mp->buf, break that
-		 * association so we don't double-free the buffer.
-		 */
-		if( mp->apbuf == mp->buf )  mp->apbuf = (genptr_t)NULL;
+	/* If application pointed mp->apbuf at mp->buf, break that
+	 * association so we don't double-free the buffer.
+	 */
+	if( mp->apbuf == mp->buf )  mp->apbuf = (genptr_t)NULL;
 
 #ifdef HAVE_SYS_MMAN_H
-		if( mp->is_mapped )  {
-			bu_semaphore_acquire(BU_SEM_SYSCALL);
-			ret = munmap( mp->buf, mp->buflen );
-			bu_semaphore_release(BU_SEM_SYSCALL);
-			if( ret < 0 )  perror("munmap");
-			/* XXX How to get this chunk of address space back to malloc()? */
-		} else
+	if( mp->is_mapped )  {
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		ret = munmap( mp->buf, mp->buflen );
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		if( ret < 0 )  perror("munmap");
+		/* XXX How to get this chunk of address space back to malloc()? */
+	} else
 #endif
-		{
-			bu_free( mp->buf, "bu_mapped_file.buf[]" );
-		}
-		mp->buf = (genptr_t)NULL;		/* sanity */
-		if( mp->apbuf )  {
-			bu_free( mp->apbuf, "bu_mapped_file.apbuf[]" );
-			mp->apbuf = (genptr_t)NULL;	/* sanity */
-		}
-		bu_free( (genptr_t)mp->name, "bu_mapped_file.name" );
-		if( mp->appl )  bu_free( (genptr_t)mp->appl, "bu_mapped_file.appl" );
-		bu_free( (genptr_t)mp, "struct bu_mapped_file" );
+	{
+		bu_free( mp->buf, "bu_mapped_file.buf[]" );
 	}
-	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
+	mp->buf = (genptr_t)NULL;		/* sanity */
+	if( mp->apbuf )  {
+		bu_free( mp->apbuf, "bu_close_mapped_file() apbuf[]" );
+		mp->apbuf = (genptr_t)NULL;	/* sanity */
+	}
+	bu_free( (genptr_t)mp->name, "bu_mapped_file.name" );
+	if( mp->appl )  bu_free( (genptr_t)mp->appl, "bu_mapped_file.appl" );
+	bu_free( (genptr_t)mp, "struct bu_mapped_file" );
 }

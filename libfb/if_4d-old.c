@@ -96,8 +96,6 @@ FBIO mips_interface =
 		mips_bwrite,
 		mips_cmread,
 		mips_cmwrite,
-		fb_sim_bwreadrect,
-		fb_sim_bwwriterect,
 		mips_viewport_set,
 		mips_window_set,
 		mips_zoom_set,

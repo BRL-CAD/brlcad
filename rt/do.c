@@ -35,6 +35,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "externs.h"
+#include "./material.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
@@ -430,7 +431,7 @@ extern struct bu_structparse view_parse[];
 #if CRAY
 #	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
-#  if IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
+#  if IRIX > 5
 #	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
@@ -1005,15 +1006,15 @@ res_pr()
 			fprintf(stderr,"Bad magic number!!\n");
 			continue;
 		}
-		fprintf(stderr,"seg       len=%10ld get=%10ld free=%10ld\n",
+		fprintf(stderr,"seg       len=%10d get=%10d free=%10d\n",
 			res->re_seglen, res->re_segget, res->re_segfree );
-		fprintf(stderr,"partition len=%10ld get=%10ld free=%10ld\n",
+		fprintf(stderr,"partition len=%10d get=%10d free=%10d\n",
 			res->re_partlen, res->re_partget, res->re_partfree );
 #if 0
-		fprintf(stderr,"bitv_elem len=%10ld get=%10ld free=%10ld\n",
+		fprintf(stderr,"bitv_elem len=%10d get=%10d free=%10d\n",
 			res->re_bitvlen, res->re_bitvget, res->re_bitvfree );
 #endif
-		fprintf(stderr,"boolstack len=%10ld\n",
+		fprintf(stderr,"boolstack len=%10d\n",
 			res->re_boolslen);
 	}
 }

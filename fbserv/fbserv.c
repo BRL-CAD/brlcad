@@ -1,7 +1,7 @@
 /*
  *			F B S E R V . C
  *
- *  Remote libfb server (originally rfbd).
+ *  Remote libfb server (formerly rfbd).
  *
  *  There are three ways this program can be run:
  *  Inetd Daemon - every PKG connection invokes a new copy of us,
@@ -77,17 +77,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "pkg.h"
 
 #include "../libfb/pkgtypes.h"
+#include "./fbserv.h"
 
-/* These symbols are provided by libfb/server.c */
-extern CONST struct pkg_switch fb_server_pkg_switch[];
-extern FBIO	*fb_server_fbp;
-extern fd_set	*fb_server_select_list;			/* master copy */
-extern int	*fb_server_max_fd;
-extern	int	fb_server_retain_on_close;	/* !0 => we are holding a reusable FB open */
-extern	int	fb_server_got_fb_free;	/* !0 => we have received an fb_free */
-
-fd_set	select_list;			/* master copy */
-int	max_fd;
+#define NET_LONG_LEN	4	/* # bytes to network long */
 
 extern	int	_fb_disk_enable;
 
@@ -101,7 +93,10 @@ static	char	*framebuffer = NULL;	/* frame buffer name */
 static	int	width = 0;		/* use default size */
 static	int	height = 0;
 static	int	port = 0;
-static	int	port_set = 0;		/* !0 if user supplied port num */
+static	int	port_set;		/* !0 if user supplied port num */
+static	FBIO	*fbp;
+static	int	single_fb;	/* !0 => we are holding a reusable FB open */
+static	int	got_fb_free;	/* !0 => we have received an fb_free */
 static	int	once_only = 0;
 static 	int	netfd;
 
@@ -111,15 +106,15 @@ struct client {
 };
 #define MAX_CLIENTS	32
 struct client	clients[MAX_CLIENTS];
-
-int	verbose = 0;
+static fd_set	select_list;			/* master copy */
+static int	max_fd;
 
 
 /* Hidden args: -p<port_num> -F<frame_buffer> */
 static char usage[] = "\
 Usage: fbserv port_num\n\
           (for a stand-alone daemon)\n\
-   or  fbserv [-v] [-h] [-S squaresize]\n\
+   or  fbserv [-h] [-S squaresize]\n\
           [-W width] [-N height] port_num frame_buffer\n\
           (for a single-frame-buffer server)\n\
 ";
@@ -129,11 +124,8 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hvF:s:w:n:S:W:N:p:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hF:s:w:n:S:W:N:p:" )) != EOF )  {
 		switch( c )  {
-		case 'v':
-			verbose = 1;
-			break;
 		case 'h':
 			/* high-res */
 			height = width = 1024;
@@ -203,9 +195,9 @@ static void
 sigalarm(code)
 int	code;
 {
-	printf("alarm %s\n", fb_server_fbp ? "FBP" : "NULL");
-	if( fb_server_fbp != FBIO_NULL )
-		fb_poll(fb_server_fbp);
+	printf("alarm %s\n", fbp ? "FBP" : "NULL");
+	if( fbp != FBIO_NULL )
+		fb_poll(fbp);
 	(void)signal( SIGALRM, sigalarm );	/* SYSV removes handler */
 	alarm(1);
 }
@@ -265,15 +257,12 @@ int argc; char **argv;
 
 	/* No disk files on remote machine */
 	_fb_disk_enable = 0;
-	bzero((void *)clients, sizeof(struct client) * MAX_CLIENTS);
 
 	(void)signal( SIGPIPE, SIG_IGN );
 	(void)signal( SIGALRM, sigalarm );
 	/*alarm(1)*/
 
 	FD_ZERO(&select_list);
-	fb_server_select_list = &select_list;
-	fb_server_max_fd = &max_fd;
 
 #ifdef BSD
 	/*
@@ -285,7 +274,7 @@ int argc; char **argv;
 	netfd = 0;
 	if( is_socket(netfd) ) {
 		init_syslog();
-		new_client( pkg_transerver( fb_server_pkg_switch, comm_error ) );
+		new_client( pkg_transerver( pkg_switch, comm_error ) );
 		max_fd = 8;
 		once_only = 1;
 		main_loop();
@@ -301,14 +290,14 @@ int argc; char **argv;
 
 	/* Single-Frame-Buffer Server */
 	if( framebuffer != NULL ) {
-		fb_server_retain_on_close = 1;	/* don't ever close the frame buffer */
+		single_fb = 1;	/* don't ever close the frame buffer */
 
 		/* open a frame buffer */
-		if( (fb_server_fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
+		if( (fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
 			exit(1);
-		if( fb_server_fbp->if_selfd > 0 )  {
-			FD_SET(fb_server_fbp->if_selfd, &select_list);
-			max_fd = fb_server_fbp->if_selfd;
+		if( fbp->if_selfd > 0 )  {
+			FD_SET(fbp->if_selfd, &select_list);
+			max_fd = fbp->if_selfd;
 		}
 
 		/* check/default port */
@@ -353,7 +342,7 @@ int argc; char **argv;
 		int stat;
 		struct pkg_conn	*pcp;
 
-		pcp = pkg_getclient( netfd, fb_server_pkg_switch, comm_error, 0 );
+		pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
 		if( pcp == PKC_ERROR )
 			break;		/* continue is unlikely to work */
 
@@ -395,7 +384,7 @@ main_loop()
 	int	nopens = 0;
 	int	ncloses = 0;
 
-	while( !fb_server_got_fb_free ) {
+	while( !got_fb_free ) {
 		fd_set infds;
 		struct timeval tv;
 		register int	i;
@@ -408,21 +397,20 @@ main_loop()
 			     &tv )) == 0 ) {
 			/* Process fb events while waiting for client */
 			/*printf("select timeout waiting for client\n");*/
-			if(fb_server_fbp) fb_poll(fb_server_fbp);
+			if(fbp) fb_poll(fbp);
 			continue;
 		}
 		/* Handle any events from the framebuffer */
-		if (fb_server_fbp && fb_server_fbp->if_selfd > 0 && FD_ISSET(fb_server_fbp->if_selfd, &infds))
-			fb_poll(fb_server_fbp);
+		if (fbp && fbp->if_selfd > 0 && FD_ISSET(fbp->if_selfd, &infds))
+			fb_poll(fbp);
 
 		/* Accept any new client connections */
 		if( netfd > 0 && FD_ISSET(netfd, &infds))  {
-			new_client( pkg_getclient( netfd, fb_server_pkg_switch, comm_error, 0 ) );
+			new_client( pkg_getclient( netfd, pkg_switch, comm_error, 0 ) );
 			nopens++;
 		}
 
 		/* Process arrivals from existing clients */
-		/* First, pull the data out of the kernel buffers */
 		for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
 			if( clients[i].fd == 0 )  continue;
 			if( pkg_process( clients[i].pkg ) < 0 ) {
@@ -435,10 +423,6 @@ main_loop()
 				ncloses++;
 				continue;
 			}
-		}
-		/* Second, process all the finished ones that we just got */
-		for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-			if( clients[i].fd == 0 )  continue;
 			if( pkg_process( clients[i].pkg ) < 0 ) {
 				fprintf(stderr,"pkg_process error encountered (2)\n");
 			}
@@ -515,9 +499,510 @@ char *str;
 #else
 	fprintf( stderr, "%s", str );
 #endif
-	if(verbose) fprintf( stderr, "%s", str );
 }
 
+/*
+ * This is where we go for message types we don't understand.
+ */
+void
+pkgfoo(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	fb_log( "fbserv: unable to handle message type %d\n",
+		pcp->pkc_type );
+	(void)free(buf);
+}
+
+/******** Here's where the hooks lead *********/
+
+void
+rfbopen(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	height, width;
+	char	rbuf[5*NET_LONG_LEN+1];
+	int	want;
+
+	width = pkg_glong( &buf[0*NET_LONG_LEN] );
+	height = pkg_glong( &buf[1*NET_LONG_LEN] );
+
+	if( fbp == FBIO_NULL ) {
+		if( strlen(&buf[8]) == 0 )
+			fbp = fb_open( NULL, width, height );
+		else
+			fbp = fb_open( &buf[8], width, height );
+	}
+
+	if( fbp == FBIO_NULL )  {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], -1 );	/* ret */
+		(void)pkg_plong( &rbuf[1*NET_LONG_LEN], 0 );
+		(void)pkg_plong( &rbuf[2*NET_LONG_LEN], 0 );
+		(void)pkg_plong( &rbuf[3*NET_LONG_LEN], 0 );
+		(void)pkg_plong( &rbuf[4*NET_LONG_LEN], 0 );
+	} else {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], 0 );	/* ret */
+		(void)pkg_plong( &rbuf[1*NET_LONG_LEN], fbp->if_max_width );
+		(void)pkg_plong( &rbuf[2*NET_LONG_LEN], fbp->if_max_height );
+		(void)pkg_plong( &rbuf[3*NET_LONG_LEN], fbp->if_width );
+		(void)pkg_plong( &rbuf[4*NET_LONG_LEN], fbp->if_height );
+		if(fbp->if_selfd > 0 )  {
+			FD_SET(fbp->if_selfd, &select_list);
+			if( fbp->if_selfd > max_fd )  max_fd = fbp->if_selfd;
+		}
+	}
+
+	want = 5*NET_LONG_LEN;
+	if( pkg_send( MSG_RETURN, rbuf, want, pcp ) != want )
+		comm_error("pkg_send fb_open reply\n");
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbclose(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	char	rbuf[NET_LONG_LEN+1];
+	
+	if( single_fb ) {
+		/*
+		 * We are playing FB server so we don't really close the
+		 * frame buffer.  We should flush output however.
+		 */
+		(void)fb_flush( fbp );
+		(void)pkg_plong( &rbuf[0], 0 );		/* return success */
+	} else {
+		if(fbp->if_selfd > 0 )  {
+			FD_CLR(fbp->if_selfd, &select_list);
+		}
+		(void)pkg_plong( &rbuf[0], fb_close( fbp ) );
+		fbp = FBIO_NULL;
+	}
+	/* Don't check for errors, SGI linger mode or other events
+	 * may have already closed down all the file descriptors.
+	 * If communication has broken, other end will know we are gone.
+	 */
+	(void)pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbfree(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	char	rbuf[NET_LONG_LEN+1];
+	
+	(void)pkg_plong( &rbuf[0], fb_free( fbp ) );
+	fbp = FBIO_NULL;
+	if( pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp ) != NET_LONG_LEN )
+		comm_error("pkg_send fb_free reply\n");
+	if( buf ) (void)free(buf);
+
+	got_fb_free = 1;
+}
+
+void
+rfbclear(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	RGBpixel bg;
+	char	rbuf[NET_LONG_LEN+1];
+
+	bg[RED] = buf[0];
+	bg[GRN] = buf[1];
+	bg[BLU] = buf[2];
+
+	(void)pkg_plong( rbuf, fb_clear( fbp, bg ) );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbread(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	x, y, num;
+	int	ret;
+	static unsigned char	*scanbuf = NULL;
+	static int	buflen = 0;
+
+	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+	y = pkg_glong( &buf[1*NET_LONG_LEN] );
+	num = pkg_glong( &buf[2*NET_LONG_LEN] );
+
+	if( num*sizeof(RGBpixel) > buflen ) {
+		if( scanbuf != NULL )
+			free( (char *)scanbuf );
+		buflen = num*sizeof(RGBpixel);
+		if( buflen < 1024*sizeof(RGBpixel) )
+			buflen = 1024*sizeof(RGBpixel);
+		if( (scanbuf = (unsigned char *)malloc( buflen )) == NULL ) {
+			fb_log("fb_read: malloc failed!");
+			if( buf ) (void)free(buf);
+			buflen = 0;
+			return;
+		}
+	}
+
+	ret = fb_read( fbp, x, y, scanbuf, num );
+	if( ret < 0 )  ret = 0;		/* map error indications */
+	/* sending a 0-length package indicates error */
+	pkg_send( MSG_RETURN, scanbuf, ret*sizeof(RGBpixel), pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbwrite(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	x, y, num;
+	char	rbuf[NET_LONG_LEN+1];
+	int	ret;
+	int	type;
+
+	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+	y = pkg_glong( &buf[1*NET_LONG_LEN] );
+	num = pkg_glong( &buf[2*NET_LONG_LEN] );
+	type = pcp->pkc_type;
+	ret = fb_write( fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], num );
+
+	if( type < MSG_NORETURN ) {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	}
+	if( buf ) (void)free(buf);
+}
+
+/*
+ *			R F B R E A D R E C T
+ */
+void
+rfbreadrect(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	xmin, ymin;
+	int	width, height;
+	int	num;
+	int	ret;
+	static unsigned char	*scanbuf = NULL;
+	static int	buflen = 0;
+
+	xmin = pkg_glong( &buf[0*NET_LONG_LEN] );
+	ymin = pkg_glong( &buf[1*NET_LONG_LEN] );
+	width = pkg_glong( &buf[2*NET_LONG_LEN] );
+	height = pkg_glong( &buf[3*NET_LONG_LEN] );
+	num = width * height;
+
+	if( num*sizeof(RGBpixel) > buflen ) {
+		if( scanbuf != NULL )
+			free( (char *)scanbuf );
+		buflen = num*sizeof(RGBpixel);
+		if( buflen < 1024*sizeof(RGBpixel) )
+			buflen = 1024*sizeof(RGBpixel);
+		if( (scanbuf = (unsigned char *)malloc( buflen )) == NULL ) {
+			fb_log("fb_read: malloc failed!");
+			if( buf ) (void)free(buf);
+			buflen = 0;
+			return;
+		}
+	}
+
+	ret = fb_readrect( fbp, xmin, ymin, width, height, scanbuf );
+	if( ret < 0 )  ret = 0;		/* map error indications */
+	/* sending a 0-length package indicates error */
+	pkg_send( MSG_RETURN, scanbuf, ret*sizeof(RGBpixel), pcp );
+	if( buf ) (void)free(buf);
+}
+
+/*
+ *			R F B W R I T E R E C T
+ */
+void
+rfbwriterect(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	x, y;
+	int	width, height;
+	char	rbuf[NET_LONG_LEN+1];
+	int	ret;
+	int	type;
+
+	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+	y = pkg_glong( &buf[1*NET_LONG_LEN] );
+	width = pkg_glong( &buf[2*NET_LONG_LEN] );
+	height = pkg_glong( &buf[3*NET_LONG_LEN] );
+
+	type = pcp->pkc_type;
+	ret = fb_writerect( fbp, x, y, width, height,
+		(unsigned char *)&buf[4*NET_LONG_LEN] );
+
+	if( type < MSG_NORETURN ) {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	}
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbcursor(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	mode, x, y;
+	char	rbuf[NET_LONG_LEN+1];
+
+	mode = pkg_glong( &buf[0*NET_LONG_LEN] );
+	x = pkg_glong( &buf[1*NET_LONG_LEN] );
+	y = pkg_glong( &buf[2*NET_LONG_LEN] );
+
+	(void)pkg_plong( &rbuf[0], fb_cursor( fbp, mode, x, y ) );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbgetcursor(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	ret;
+	int	mode, x, y;
+	char	rbuf[4*NET_LONG_LEN+1];
+
+	ret = fb_getcursor( fbp, &mode, &x, &y );
+	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+	(void)pkg_plong( &rbuf[1*NET_LONG_LEN], mode );
+	(void)pkg_plong( &rbuf[2*NET_LONG_LEN], x );
+	(void)pkg_plong( &rbuf[3*NET_LONG_LEN], y );
+	pkg_send( MSG_RETURN, rbuf, 4*NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbsetcursor(pcp, buf)
+struct pkg_conn *pcp;
+char		*buf;
+{
+	char	rbuf[NET_LONG_LEN+1];
+	int	ret;
+	int	xbits, ybits;
+	int	xorig, yorig;
+
+	xbits = pkg_glong( &buf[0*NET_LONG_LEN] );
+	ybits = pkg_glong( &buf[1*NET_LONG_LEN] );
+	xorig = pkg_glong( &buf[2*NET_LONG_LEN] );
+	yorig = pkg_glong( &buf[3*NET_LONG_LEN] );
+
+	ret = fb_setcursor( fbp, (unsigned char *)&buf[4*NET_LONG_LEN],
+		xbits, ybits, xorig, yorig );
+
+	if( pcp->pkc_type < MSG_NORETURN ) {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	}
+	if( buf ) (void)free(buf);
+}
+
+/*OLD*/
+void
+rfbscursor(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	mode, x, y;
+	char	rbuf[NET_LONG_LEN+1];
+
+	mode = pkg_glong( &buf[0*NET_LONG_LEN] );
+	x = pkg_glong( &buf[1*NET_LONG_LEN] );
+	y = pkg_glong( &buf[2*NET_LONG_LEN] );
+
+	(void)pkg_plong( &rbuf[0], fb_scursor( fbp, mode, x, y ) );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+/*OLD*/
+void
+rfbwindow(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	x, y;
+	char	rbuf[NET_LONG_LEN+1];
+
+	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+	y = pkg_glong( &buf[1*NET_LONG_LEN] );
+
+	(void)pkg_plong( &rbuf[0], fb_window( fbp, x, y ) );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+/*OLD*/
+void
+rfbzoom(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	x, y;
+	char	rbuf[NET_LONG_LEN+1];
+
+	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+	y = pkg_glong( &buf[1*NET_LONG_LEN] );
+
+	(void)pkg_plong( &rbuf[0], fb_zoom( fbp, x, y ) );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbview(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	ret;
+	int	xcenter, ycenter, xzoom, yzoom;
+	char	rbuf[NET_LONG_LEN+1];
+
+	xcenter = pkg_glong( &buf[0*NET_LONG_LEN] );
+	ycenter = pkg_glong( &buf[1*NET_LONG_LEN] );
+	xzoom = pkg_glong( &buf[2*NET_LONG_LEN] );
+	yzoom = pkg_glong( &buf[3*NET_LONG_LEN] );
+
+	ret = fb_view( fbp, xcenter, ycenter, xzoom, yzoom );
+	(void)pkg_plong( &rbuf[0], ret );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbgetview(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	ret;
+	int	xcenter, ycenter, xzoom, yzoom;
+	char	rbuf[5*NET_LONG_LEN+1];
+
+	ret = fb_getview( fbp, &xcenter, &ycenter, &xzoom, &yzoom );
+	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+	(void)pkg_plong( &rbuf[1*NET_LONG_LEN], xcenter );
+	(void)pkg_plong( &rbuf[2*NET_LONG_LEN], ycenter );
+	(void)pkg_plong( &rbuf[3*NET_LONG_LEN], xzoom );
+	(void)pkg_plong( &rbuf[4*NET_LONG_LEN], yzoom );
+	pkg_send( MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbrmap(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	register int	i;
+	char	rbuf[NET_LONG_LEN+1];
+	ColorMap map;
+	char	cm[256*2*3];
+
+	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], fb_rmap( fbp, &map ) );
+	for( i = 0; i < 256; i++ ) {
+		(void)pkg_pshort( cm+2*(0+i), map.cm_red[i] );
+		(void)pkg_pshort( cm+2*(256+i), map.cm_green[i] );
+		(void)pkg_pshort( cm+2*(512+i), map.cm_blue[i] );
+	}
+	pkg_send( MSG_DATA, cm, sizeof(cm), pcp );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+/*
+ *			R F B W M A P
+ *
+ *  Accept a color map sent by the client, and write it to the framebuffer.
+ *  Network format is to send each entry as a network (IBM) order 2-byte
+ *  short, 256 red shorts, followed by 256 green and 256 blue, for a total
+ *  of 3*256*2 bytes.
+ */
+void
+rfbwmap(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	i;
+	char	rbuf[NET_LONG_LEN+1];
+	long	ret;
+	ColorMap map;
+
+	if( pcp->pkc_len == 0 )
+		ret = fb_wmap( fbp, COLORMAP_NULL );
+	else {
+		for( i = 0; i < 256; i++ ) {
+			map.cm_red[i] = pkg_gshort( buf+2*(0+i) );
+			map.cm_green[i] = pkg_gshort( buf+2*(256+i) );
+			map.cm_blue[i] = pkg_gshort( buf+2*(512+i) );
+		}
+		ret = fb_wmap( fbp, &map );
+	}
+	(void)pkg_plong( &rbuf[0], ret );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbflush(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	ret;
+	char	rbuf[NET_LONG_LEN+1];
+
+	ret = fb_flush( fbp );
+
+	if( pcp->pkc_type < MSG_NORETURN ) {
+		(void)pkg_plong( rbuf, ret );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	}
+	if( buf ) (void)free(buf);
+}
+
+void
+rfbpoll(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	(void)fb_poll( fbp );
+	if( buf ) (void)free(buf);
+}
+
+/*
+ *  At one time at least we couldn't send a zero length PKG
+ *  message back and forth, so we receive a dummy long here.
+ */
+void
+rfbhelp(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	long	ret;
+	char	rbuf[NET_LONG_LEN+1];
+
+	(void)pkg_glong( &buf[0*NET_LONG_LEN] );
+
+	ret = fb_help(fbp);
+	(void)pkg_plong( &rbuf[0], ret );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+/**************************************************************/
 /*
  *			F B _ L O G
  *
@@ -555,7 +1040,7 @@ fb_log( char *fmt, ... )
 			nsent++;
 		}
 	}
-	if( nsent == 0 || verbose )  {
+	if( nsent == 0 )  {
 		/* No PKG connection open yet! */
 		fputs( outbuf, stderr );
 		fflush(stderr);
@@ -673,7 +1158,7 @@ va_dcl
 			nsent++;
 		}
 	}
-	if( nsent == 0 || verbose )  {
+	if( nsent == 0 )  {
 		/* No PKG connection open yet! */
 		fputs( outbuf, stderr );
 		fflush(stderr);

@@ -43,7 +43,7 @@ char *s;
 	if (s) (void)fputs(s, stderr);
 
 	(void) fprintf(stderr, "Usage: %s [-t] file.g nmg_solid [ nmg_solid ... ]\n",
-			progname);
+			progname, options);
 	exit(1);
 }
 
@@ -198,15 +198,13 @@ char *av[];
 
 	/* process each remaining argument */
 	for ( ; arg_index < ac ; arg_index++ ) {
-		int id;
-
 		if ( ! (dp = db_lookup(dbip, av[arg_index], 1)) ) {
 			fprintf(stderr, "%s: db_lookup failed\n", progname);
 			exit(-1);
 		}
 		
 		mat_idn( my_mat );
-		if ((id=rt_db_get_internal( &ip, dp, dbip, my_mat ))<0) {
+		if (rt_db_get_internal( &ip, dp, dbip, my_mat )) {
 			fprintf(stderr, "%s: rt_db_get_internal() failed\n", progname);
 			exit(-1);
 		}

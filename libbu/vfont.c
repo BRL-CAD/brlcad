@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vfont-if.h"
 
+#define FONTDIR1	"/usr/brlcad/vfont"
 #define FONTDIR2	"/usr/lib/vfont"
 #define DEFAULT_FONT	"nonie.r.12"
 #define FONTNAMESZ	128
@@ -67,7 +68,7 @@ char *font;
 
 	/* Open the file and read in the header information. */
 	if( (fp = fopen( font, "r" )) == NULL )  {
-		sprintf( fname, "%s/%s", (char *)bu_brlcad_path("vfont"), font );
+		sprintf( fname, "%s/%s", FONTDIR1, font );
 		if( (fp = fopen( fname, "r" )) == NULL )  {
 			sprintf( fname, "%s/%s", FONTDIR2, font );
 			if( (fp = fopen( fname, "r" )) == NULL )  {

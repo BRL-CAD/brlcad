@@ -14,7 +14,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *
  *  Functions -
  *	rt_bomb		Called upon fatal RT library error.
- *	brst_log		Called to log RT library events.
+ *	rt_log		Called to log RT library events.
  *	fb_log		Called to log FB library events.
  *
  *	Idea originated by Mike John Muuss
@@ -33,26 +33,26 @@ void
 rt_bomb(str)
 char *str;
 	{
-	brst_log( "%s (librt.a) : Fatal error, aborting!\n", str );
+	rt_log( "%s (librt.a) : Fatal error, aborting!\n", str );
 	(void) fflush( stdout );
 	(void) abort();			  /* Should dump.		*/
 	/* exit(12); XXX - this shouldn't be needed */
 	}
 
 /*
- *  		B R S T _  L O G
+ *  		R T _  L O G
  *  
  *  Log an RT library event
  */
 /* VARARGS */
 void
 #if defined(HAVE_STDARG_H)
-brst_log( char *fmt, ... )
+rt_log( char *fmt, ... )
 	{
 	va_list	ap;
 	va_start( ap, fmt );
 #else
-brst_log( va_alist )
+rt_log( va_alist )
 va_dcl
 	{
 	register char *fmt; /* picked up by va_arg() */
@@ -133,6 +133,6 @@ va_dcl
 	va_start( ap );
 	fmt = va_arg( ap, char * );
 #endif
-	(void) brst_log( fmt, ap );
+	(void) rt_log( fmt, ap );
 	va_end( ap );
 	}

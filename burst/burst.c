@@ -169,12 +169,12 @@ FILE *fp;
 		{	Func	*cmdfunc;
 		if( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
 			{	register int i, len = strlen( cmdname );
-			brst_log( "ERROR -- command syntax:\n" );
-			brst_log( "\t%s\n", cmdbuf );
-			brst_log( "\t" );
+			rt_log( "ERROR -- command syntax:\n" );
+			rt_log( "\t%s\n", cmdbuf );
+			rt_log( "\t" );
 			for( i = 0; i < len; i++ )
-				brst_log( " " );
-			brst_log( "^\n" );
+				rt_log( " " );
+			rt_log( "^\n" );
 			}
 		else
 		if( strcmp( cmdname, CMD_COMMENT ) == 0 )
