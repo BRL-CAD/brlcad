@@ -225,7 +225,7 @@ char **argv;
 	fprintf(stderr,"shooting at %d solids in %d regions\n",
 		rtip->nsolids, rtip->nregions );
 
-	fprintf(stderr,"model X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+	fprintf(stderr,"model X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
 		rtip->mdl_min[X], rtip->mdl_max[X],
 		rtip->mdl_min[Y], rtip->mdl_max[Y],
 		rtip->mdl_min[Z], rtip->mdl_max[Z] );
@@ -257,7 +257,7 @@ do_more:
 
 		mat_idn( Viewrotscale );
 		mat_angles( Viewrotscale, 270.0-elevation, 0.0, 270.0+azimuth );
-		fprintf(stderr,"Viewing %f azimuth, %f elevation off of front view\n",
+		fprintf(stderr,"Viewing %g azimuth, %g elevation off of front view\n",
 			azimuth, elevation);
 
 		rt_viewbounds( view_min, view_max, Viewrotscale );
