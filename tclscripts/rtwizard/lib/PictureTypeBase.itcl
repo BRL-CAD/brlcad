@@ -109,9 +109,14 @@ namespace eval RtWizard {
 
 	#
 	# The support directory name is the same as the 
-	# class type. Note that although this is
+	# class type.
 	#
-	set dir [ file join / vld rbowers brlcad rtwizard lib examples \
+	if { [info exists env(BRLCAD_ROOT)] } {
+	    set rootDir $env(BRLCAD_ROOT)
+	} else {
+	    set rootDir [file join / usr brlcad ]
+	} 
+	set dir [ file join $rootDir tclscripts rtwizard examples \
 		$type ]
 
 	#
