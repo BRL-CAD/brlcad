@@ -94,15 +94,6 @@ _LOCAL_ struct ogl_cursor nil_data = {	/* default blank cursor */
 };
 _LOCAL_ Cursor nil_cursor;
 
-_LOCAL_ char *visual_class[] = {
-	"StaticGray",
-	"GrayScale",
-	"StaticColor",
-	"PseudoColor",
-	"TrueColor",
-	"DirectColor"
-};
-
 /* Internal callbacks etc.*/
 _LOCAL_ void		do_event();
 _LOCAL_ void		expose_callback();
@@ -2097,6 +2088,10 @@ XEvent *eventPtr;
 		/* unattach context for other threads to use */
 		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
 	}
+#if 0
+	XFlush(OGL(ifp)->dispp);
+	glFlush();
+#endif
 }  
 
  
@@ -2299,13 +2294,6 @@ FBIO *ifp;
 	int num, i, j;
 	int m_hard_cmap, m_sing_buf, m_doub_buf;
 	int use, rgba, dbfr;
-	char *visual_class[] = {
-		"StaticGrey",
-		"GreyScale",
-		"StaticColor",
-		"PseudoColor",
-		"TrueColor",
-		"DirectColor" };
 	
 	m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
 	m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
