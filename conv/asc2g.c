@@ -723,7 +723,6 @@ register int n;
  */
 #include <ctype.h>
 /******#include <values.h>******/
-#ifndef BITSPERBYTE
 /* These values work with any binary representation of integers
  * where the high-order bit contains the sign. */
 
