@@ -1,6 +1,6 @@
 /*
- *	@(#) vproc.c			retrieved: 8/13/86 at 08:24:51,
- *	@(#) version 1.10		last edit: 6/1/84 at 14:00:58.
+ *	@(#) vproc.c			retrieved: 8/13/86 at 08:25:07,
+ *	@(#) version 2.1		last edit: 6/1/84 at 14:05:19.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
