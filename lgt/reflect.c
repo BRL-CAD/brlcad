@@ -1860,8 +1860,8 @@ hl_Postprocess()
 				HL_CLRBIT( xi, yi );
 			else
 			if( yi == 0 )
-				if( hl_Norm_Diff( &hl_normap[xi],
-							&hl_normap[xi-1] ) )
+				if( hl_Norm_Diff( &hl_normap[xi][0],
+							&hl_normap[xi-1][0] ) )
 					HL_SETBIT( xi, yi );
 				else
 					HL_CLRBIT( xi, yi );
@@ -1869,12 +1869,12 @@ hl_Postprocess()
 			if(  (hl_regmap != NULL &&
 				(hl_Reg_Diff( xi, yi, xi-1, yi )
 			     ||	 hl_Reg_Diff( xi, yi, xi, yi-1 )))
-			  ||	hl_Norm_Diff( &hl_normap[yi*a_gridsz+xi],
-						&hl_normap[yi*a_gridsz+(xi-1)] )
-			  ||	hl_Norm_Diff( &hl_normap[yi*a_gridsz+xi],
-						&hl_normap[(yi-1)*a_gridsz+xi] )
+			  ||	hl_Norm_Diff( &hl_normap[yi*a_gridsz+xi][0],
+						&hl_normap[yi*a_gridsz+(xi-1)][0] )
+			  ||	hl_Norm_Diff( &hl_normap[yi*a_gridsz+xi][0],
+						&hl_normap[(yi-1)*a_gridsz+xi][0] )
 			  || (	hl_dstmap != NULL
-			     && ! hi_Obliq( &hl_normap[yi*a_gridsz+xi] )
+			     && ! hi_Obliq( &hl_normap[yi*a_gridsz+xi][0] )
 			     && (hl_Dst_Diff( xi, yi, xi-1, yi, maxdist )
 			     ||	 hl_Dst_Diff( xi, yi, xi, yi-1, maxdist )))
 				)
