@@ -60,7 +60,7 @@ CONST matp_t	mat;		/* convert solid coords to model space */
 	struct rt_dsp_internal dsp;
 	
 	dsp.magic = RT_DSP_INTERNAL_MAGIC;
-	BU_VLS_INIT(dsp.dsp_file);
+	bu_vls_init( &dsp.dsp_file );
 	bu_vls_strcpy( &dsp.dsp_file, file);
 
 	dsp.dsp_xcnt = xdim;
