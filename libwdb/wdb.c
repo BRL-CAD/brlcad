@@ -170,7 +170,6 @@ FILE	*fp;
 char	*name;
 point_t	min, max;
 {
-	register int i;
 	point_t	pt8[8];
 
 	VSET( pt8[0], min[X], min[Y], min[Z] );
@@ -183,8 +182,7 @@ point_t	min, max;
 	VSET( pt8[6], max[X], max[Y], max[Z] );
 	VSET( pt8[7], min[X], max[Y], max[Z] );
 
-	mk_arb8( fp, name, pt8 );
-	return(0);
+	return( mk_arb8( fp, name, pt8 ) );
 }
 
 /*
@@ -196,7 +194,6 @@ FILE	*fp;
 char	*name;
 point_t	pts[];
 {
-	register int i;
 	point_t	pt8[8];
 
 	VMOVE( pt8[0], pts[0] );
@@ -256,7 +253,6 @@ char	*name;
 point_t	center;
 fastf_t	radius;
 {
-	register int i;
 	union record rec;
 	fastf_t		nrad = radius * mk_conv2mm;
 
@@ -290,7 +286,6 @@ char	*name;
 point_t	center;
 vect_t	a, b, c;
 {
-	register int i;
 	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
@@ -323,7 +318,6 @@ point_t	center;
 vect_t	inorm;
 double	r1, r2;
 {
-	register int i;
 	union record rec;
 	vect_t	norm;
 	vect_t	cross1, cross2;
@@ -439,7 +433,6 @@ vect_t	a, b;
 vect_t	c, d;
 {
 	union record rec;
-	fastf_t m1, m2;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
@@ -466,7 +459,7 @@ vect_t	c, d;
  *  Make a truncated right cylinder. 
  */
 int
-mk_trc( fp, name, ibase, iheight, radbase,radtop )
+mk_trc( fp, name, ibase, iheight, radbase, radtop )
 FILE	*fp;
 char	*name;
 point_t	ibase;
@@ -508,6 +501,26 @@ fastf_t	radtop;
 	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
 		return(-1);
 	return(0);	/* OK */
+}
+
+/*
+ *			M K _ T R C _ T O P
+ *
+ *  Convenience wrapper for mk_trc().
+ */
+int
+mk_trc_top( fp, name, ibase, itop, radbase, radtop )
+FILE	*fp;
+char	*name;
+point_t	ibase;
+point_t	itop;
+fastf_t	radbase;
+fastf_t	radtop;
+{
+	vect_t	height;
+
+	VSUB2( height, itop, ibase );
+	return( mk_trc( fp, name, ibase, height, radbase, radtop ) );
 }
 
 /*
