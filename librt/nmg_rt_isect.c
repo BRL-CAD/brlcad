@@ -1400,6 +1400,7 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 
 
 	switch(myhit->in_out) {
+	case HMG_HIT_ON_ON:	/* Another fall through?? JRA */
 	case HMG_HIT_IN_IN:	/* fallthrough */
 	case HMG_HIT_OUT_OUT:	/* fallthrough */
 	case HMG_HIT_IN_ON:	/* fallthrough */
