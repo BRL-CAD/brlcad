@@ -150,6 +150,7 @@ char **argv;
 	edgelimit( &end );
 	BuildStr( &start, &end );	/* pixels */
 
+	fb_close( fbp );
 	exit(0);
 }
 
