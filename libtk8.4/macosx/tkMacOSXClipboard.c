@@ -66,14 +66,43 @@ TkSelGetSelection(
          * Get the scrap from the Macintosh global clipboard.
          */
          
-        err=GetCurrentScrap(&scrapRef);
+        err = GetCurrentScrap(&scrapRef);
         if (err != noErr) {
             Tcl_AppendResult(interp, Tk_GetAtomName(tkwin, selection),
                 " GetCurrentScrap failed.", (char *) NULL);
             return TCL_ERROR;
         }
-        
-        err=GetScrapFlavorSize(scrapRef,'TEXT',&length);
+
+	/*
+	 * Try UNICODE first
+	 */
+        err = GetScrapFlavorSize(scrapRef, kScrapFlavorTypeUnicode, &length);
+        if (err == noErr && length > 0) {
+	    Tcl_DString ds;
+	    char *data;
+
+	    buf = (char *) ckalloc(length + 2);
+	    buf[length] = 0;
+	    buf[length+1] = 0; /* 2-byte unicode null */
+	    err = GetScrapFlavorData(scrapRef, kScrapFlavorTypeUnicode,
+		    &length, buf);
+	    if (err == noErr) {
+		Tcl_DStringInit(&ds);
+		Tcl_UniCharToUtfDString((Tcl_UniChar *)buf,
+			Tcl_UniCharLen((Tcl_UniChar *)buf), &ds);
+		for (data = Tcl_DStringValue(&ds); *data != '\0'; data++) {
+		    if (*data == '\r') {
+			*data = '\n';
+		    }
+		}
+		result = (*proc)(clientData, interp, Tcl_DStringValue(&ds));
+		Tcl_DStringFree(&ds);
+		ckfree(buf);
+		return result;
+	    }
+	}
+
+        err = GetScrapFlavorSize(scrapRef, 'TEXT', &length);
         if (err != noErr) {
             Tcl_AppendResult(interp, Tk_GetAtomName(tkwin, selection),
                 " GetScrapFlavorSize failed.", (char *) NULL);
@@ -287,6 +316,7 @@ TkSuspendClipboard()
     }
     if (targetPtr != NULL) {
         Tcl_DString encodedText;
+	Tcl_DString unicodedText;	  
 
         length = 0;
         for (cbPtr = targetPtr->firstBufferPtr; cbPtr != NULL;
@@ -310,9 +340,23 @@ TkSuspendClipboard()
 
         ClearCurrentScrap();
         GetCurrentScrap(&scrapRef);
-        Tcl_UtfToExternalDString(TkMacOSXCarbonEncoding, buffer, length, &encodedText);
-        PutScrapFlavor(scrapRef, 'TEXT', 0, Tcl_DStringLength(&encodedText), Tcl_DStringValue(&encodedText) );
+        Tcl_UtfToExternalDString(TkMacOSXCarbonEncoding, buffer, 
+                length, &encodedText);
+        PutScrapFlavor(scrapRef, 'TEXT', 0, 
+                Tcl_DStringLength(&encodedText), 
+                Tcl_DStringValue(&encodedText) );
         Tcl_DStringFree(&encodedText);
+
+	/*
+	 * Also put unicode data on scrap
+	 */
+	Tcl_DStringInit(&unicodedText);
+	Tcl_UtfToUniCharDString(buffer, length, &unicodedText);
+	PutScrapFlavor(scrapRef, kScrapFlavorTypeUnicode, 0,
+		Tcl_DStringLength(&unicodedText),
+		Tcl_DStringValue(&unicodedText));
+	Tcl_DStringFree(&unicodedText);
+
         ckfree(buffer);
     }
 

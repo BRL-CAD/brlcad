@@ -260,7 +260,7 @@ CarbonEventToAscii(EventRef eventRef, char * buf)
     strcat(buf, " ");
     buf += strlen(buf);
     while (list->names && (!names) ) {
-        if (eventClass==list->c) {
+        if (eventClass == list->c) {
             names = list -> names;
         } else {
             list++;
@@ -269,9 +269,9 @@ CarbonEventToAscii(EventRef eventRef, char * buf)
     if (names) {
        found = 0;
        while (names->name && !found) {
-           if (eventKind==names->kind) {
+           if (eventKind == names->kind) {
                sprintf(buf, "%-20s", names->name);
-               found=1;
+               found = 1;
            } else {
                names++;
            }
@@ -302,11 +302,11 @@ char * CarbonEventKindToAscii(EventRef eventRef, char * buf )
        }
    }
    if (names) {
-       found=0;
+       found = 0;
        while ( names->name && !found ) {
-           if (eventKind==names->kind) {
+           if (eventKind == names->kind) {
                sprintf(buf,"%s",names->name);
-               found=1;
+               found = 1;
            } else {
                names++;
            }
@@ -326,17 +326,17 @@ char * ClassicEventToAscii(EventRecord * eventPtr, char * buf )
     int found = 0;
     names = classicEventNames;
     while ( names -> name && !found )
-        if (eventPtr->what==names->kind) {
+        if (eventPtr->what == names->kind) {
             int * iPtr;
             char cBuf[8];
-            iPtr=( int *)&cBuf;
+            iPtr=(int *) &cBuf;
             *iPtr = eventPtr->message;
             cBuf[4] = 0;
             sprintf(buf, "%-16s %08x %04x %s", names->name,
                     (int) eventPtr->message,
                     eventPtr->modifiers, 
                     cBuf);
-            found=1;
+            found = 1;
         } else {
           names++;
         }
@@ -358,8 +358,8 @@ void printPoint(char * tag, Point * p )
 void printRect(char * tag, Rect * r )
 {
     fprintf(stderr,"%s %4d %4d %4d %4d (%dx%d)\n",
-        tag,r->left,r->top,r->right,r->bottom,
-        r->right-r->left+1,r->bottom-r->top+1 );
+        tag, r->left, r->top, r->right, r->bottom,
+        r->right - r->left + 1, r->bottom - r->top + 1);
 }
 
 void printRegion(char * tag, RgnHandle rgn )
@@ -373,7 +373,7 @@ void printWindowTitle(char * tag, WindowRef window )
 {
     Str255 title;
     GetWTitle(window,title);
-    title [ title[0] + 1 ] = 0;
+    title [title[0] + 1] = 0;
     fprintf(stderr, "%s %s\n", tag, title +1 );
 }
 
@@ -402,7 +402,7 @@ TkMacOSXMenuMessageToAscii(int msg, char * s)
 {
     MsgName * msgNamePtr;
     for (msgNamePtr = msgNames;msgNamePtr->name;) {
-        if (msgNamePtr->msg==msg) {
+        if (msgNamePtr->msg == msg) {
            strcpy(s,msgNamePtr->name);
            return s;
         } else {
@@ -428,9 +428,9 @@ char * MouseTrackingResultToAscii(MouseTrackingResult r, char * buf)
         { -1, NULL }
     };
     MsgName * namePtr;
-    for (namePtr=trackingNames;namePtr->name;namePtr++) {
-        if (namePtr->msg==r) {
-            strcpy(buf,namePtr->name);
+    for (namePtr = trackingNames; namePtr->name; namePtr++) {
+        if (namePtr->msg == r) {
+            strcpy(buf, namePtr->name);
             return buf;
         }
     }

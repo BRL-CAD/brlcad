@@ -199,16 +199,18 @@ substitutions you would make when binding to these events.
 Some mice on the Windows platform support a mouse wheel which is used
 for scrolling documents without using the scrollbars.  By rolling the
 wheel, the system will generate \fBMouseWheel\fR events that the
-application can use to scroll.  Like \fBKey\fR events the event is
-always routed to the window that currently has focus. When the event
+application can use to scroll.  On Windows, the event is
+always routed to the window that currently has focus. On Mac OS X,
+the event is routed to the window under the pointer.  When the event
 is received you can use the \fB%D\fR substitution to get the
 \fIdelta\fR field for the event which is a integer value of motion
 that the mouse wheel has moved.  The smallest value for which the
 system will report is defined by the OS.  On Windows 95 & 98 machines
 this value is at least 120 before it is reported.  However, higher
-resolution devices may be available in the future.  The sign of the
-value determines which direction your widget should scroll.  Positive
-values should scroll up and negative values should scroll down.
+resolution devices may be available in the future.  On Mac OS X, the value is
+not scaled by 120, but a value of 1 corresponds to roughly one text line.
+The sign of the value determines which direction your widget should scroll.  
+Positive values should scroll up and negative values should scroll down.
 .VE
 .PP
 The last part of a long event specification is \fIdetail\fR.  In the

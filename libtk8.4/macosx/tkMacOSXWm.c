@@ -72,6 +72,8 @@ static int		ParseGeometry _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *string, TkWindow *winPtr));
 static void		TopLevelEventProc _ANSI_ARGS_((ClientData clientData,
 			    XEvent *eventPtr));
+static void             TkWmStackorderToplevelWrapperMap _ANSI_ARGS_((
+                            TkWindow *winPtr, Tcl_HashTable *table));
 static void		TopLevelReqProc _ANSI_ARGS_((ClientData dummy,
 			    Tk_Window tkwin));
 static void		UpdateGeometryInfo _ANSI_ARGS_((
@@ -4267,29 +4269,27 @@ TkSetWMName(
     TkWindow *winPtr,
     Tk_Uid titleUid)
 {
-    Str255  pTitle;
+    CFStringRef  title;
     WindowRef macWin;
-    int destWrote;
     
     if (Tk_IsEmbedded(winPtr)) {
         return;
     }
-    Tcl_UtfToExternal(NULL, TkMacOSXCarbonEncoding, titleUid,
-	    strlen(titleUid), 0, NULL, 
-	    (char *) &pTitle[1],
-	    255, NULL, &destWrote, NULL); /* Internalize native */
-    pTitle[0] = destWrote;
+    
+    if (strlen(titleUid) > 0) {
+        title = CFStringCreateWithBytes(NULL, titleUid, strlen(titleUid), 
+                kCFStringEncodingUTF8, false); 
+    } else {
+    	title = NULL;
+    }
     
     macWin = GetWindowFromPort(TkMacOSXGetDrawablePort(winPtr->window));
 
-    /* 
-     * FIXME: Convert this to SetWindowTitleWithCFString, we should
-     * use CFStrings and not pascal strings wherever they are supported,
-     * since at some point there will be encodings that can't be supported
-     * with the pascal string interfaces.
-     */
-     
-    SetWTitle( macWin, pTitle);
+    SetWindowTitleWithCFString(macWin, title);
+    
+    if (title != NULL) {
+        CFRelease(title);
+    }
 }
 
 
@@ -5029,7 +5029,7 @@ TkMacOSXUnregisterMacWindow(
     if (!windowHashInit) {
 	panic("TkMacOSXUnregisterMacWindow: unmapping before inited");
     }
-    entryPtr=Tcl_FindHashEntry(&windowTable,(char *) macWinPtr);
+    entryPtr = Tcl_FindHashEntry(&windowTable,(char *) macWinPtr);
     if (!entryPtr) {
           fprintf(stderr,"Unregister:failed to find window %08x\n", 
                  (int) macWinPtr );
@@ -5253,15 +5253,15 @@ TkMacOSXWindowOffset(
 
     if (!strucRgn) {
         if(!(strucRgn = NewRgn())) {
-           err=MemError();
+           err = MemError();
         }
     }
     if (!contRgn) {
         if(!(contRgn = NewRgn())) {
-           err=MemError();
+           err = MemError();
         }
     }
-    if (err==noErr) {
+    if (err == noErr) {
         GetWindowRegion(wRef, kWindowStructureRgn, strucRgn);
         GetWindowRegion(wRef, kWindowContentRgn, contRgn);
         GetRegionBounds(strucRgn,&strucRect);
@@ -5408,21 +5408,21 @@ TkpChangeFocus(winPtr, force)
  *
  *----------------------------------------------------------------------
  */
-void
+static void
 TkWmStackorderToplevelWrapperMap(winPtr, table)
     TkWindow *winPtr;				/* TkWindow to recurse on */
     Tcl_HashTable *table;			/* Maps mac window to TkWindow */
 {
     TkWindow *childPtr;
     Tcl_HashEntry *hPtr;
-    void *wrapper;
+    WindowRef macWindow;
     int newEntry;
 
     if (Tk_IsMapped(winPtr) && Tk_IsTopLevel(winPtr)) {
-        wrapper = (void *) TkMacOSXGetDrawablePort(winPtr->window);
+        macWindow = GetWindowFromPort(TkMacOSXGetDrawablePort(winPtr->window));
 
         hPtr = Tcl_CreateHashEntry(table,
-            (char *) wrapper, &newEntry);
+            (const char *) macWindow, &newEntry);
         Tcl_SetHashValue(hPtr, winPtr);
     }
 

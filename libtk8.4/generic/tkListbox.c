@@ -1402,8 +1402,7 @@ ListboxGetItemAttributes(interp, listPtr, index)
     Tcl_HashEntry *entry;
     ItemAttr *attrs;
 
-    entry = Tcl_CreateHashEntry(listPtr->itemAttrTable, (char *)index,
-	    &new);
+    entry = Tcl_CreateHashEntry(listPtr->itemAttrTable, (char *)index, &new);
     if (new) {
 	attrs = (ItemAttr *) ckalloc(sizeof(ItemAttr));
 	attrs->border = NULL;
@@ -2398,6 +2397,7 @@ ListboxDeleteSubCmd(listPtr, first, last)
 
 	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *)i);
 	if (entry != NULL) {
+	    ckfree((char *)Tcl_GetHashValue(entry));
 	    Tcl_DeleteHashEntry(entry);
 	}
 	
@@ -3367,6 +3367,7 @@ ListboxListVarProc(clientData, interp, name1, name2, flags)
 	    /* Clean up attributes */
 	    entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *)i);
 	    if (entry != NULL) {
+		ckfree((char *)Tcl_GetHashValue(entry));
 		Tcl_DeleteHashEntry(entry);
 	    }
 	}

@@ -179,8 +179,24 @@ bind Listbox <B2-Motion> {
 # someone could use the "event generate" command to produce one
 # on other platforms.
 
-bind Listbox <MouseWheel> {
-    %W yview scroll [expr {- (%D / 120) * 4}] units
+if {[string equal [tk windowingsystem] "classic"]
+	|| [string equal [tk windowingsystem] "aqua"]} {
+    bind Listbox <MouseWheel> {
+        %W yview scroll [expr {- (%D)}] units
+    }
+    bind Listbox <Option-MouseWheel> {
+        %W yview scroll [expr {-10 * (%D)}] units
+    }
+    bind Listbox <Shift-MouseWheel> {
+        %W xview scroll [expr {- (%D)}] units
+    }
+    bind Listbox <Shift-Option-MouseWheel> {
+        %W xview scroll [expr {-10 * (%D)}] units
+    }
+} else {
+    bind Listbox <MouseWheel> {
+        %W yview scroll [expr {- (%D / 120) * 4}] units
+    }
 }
 
 if {[string equal "x11" [tk windowingsystem]]} {

@@ -93,6 +93,18 @@ test image-1.11 {Tk_ImageCmd procedure, "create" option with same name as main w
     removeFile script
     set x
 } {0 {1 {images may not be named the same as the main window}}}
+test image-1.11 {Tk_ImageCmd, "create" option: do not generated command name in use} -setup {
+    set i [image create bitmap]
+    regexp {^image(\d+)$} $i -> serial
+    incr serial
+    proc image$serial {} {return works}
+    set j [image create bitmap]
+} -body {
+    image$serial
+} -cleanup {
+    rename image$serial {}
+    image delete $i $j
+} -result works
 
 test image-2.1 {Tk_ImageCmd procedure, "delete" option} {
     list [catch {image delete} msg] $msg

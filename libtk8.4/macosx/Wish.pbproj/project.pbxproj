@@ -1552,7 +1552,7 @@
 	<key>CFBundleExecutable</key>
 	<string>Tk</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Tk Library 8.4, Copyright Â© 2003 Tcl Core Team.
+	<string>Tk Library 8.4, Copyright Â© 2004 Tcl Core Team.
 MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â© 2001-2002, Apple Computer, Inc.</string>
 	<key>CFBundleIconFile</key>
 	<string></string>
@@ -1565,11 +1565,11 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
 	<key>CFBundleShortVersionString</key>
-	<string>8.4.4</string>
+	<string>8.4.6</string>
 	<key>CFBundleSignature</key>
 	<string>WiSH</string>
 	<key>CFBundleVersion</key>
-	<string>8.4.4</string>
+	<string>8.4.6</string>
 </dict>
 </plist>
 ";
@@ -1634,7 +1634,6 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 		F53755E1016C38D301DC9062 = {
 			buildActionMask = 2147483647;
 			files = (
-				F5C2EA34034D71B2016F146B,
 			);
 			isa = PBXResourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1909,6 +1908,9 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 			fileRef = F537557B016C37A601DC9062;
 			isa = PBXBuildFile;
 			settings = {
+				ATTRIBUTES = (
+					Private,
+				);
 			};
 		};
 		F53755F8016C390401DC9062 = {
@@ -1975,6 +1977,9 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 			fileRef = F5375543016C376E01DC9062;
 			isa = PBXBuildFile;
 			settings = {
+				ATTRIBUTES = (
+					Private,
+				);
 			};
 		};
 		F5375603016C397D01DC9062 = {
@@ -2880,11 +2885,14 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 				F5877FBD031FAC6A016F146B,
 			);
 			buildSettings = {
+				APPLICATION_INSTALL_PATH = "${SYSTEM_ADMIN_APPS_DIR}";
+				BINDIR = /usr/bin;
+				DYLIB_INSTALL_PATH = /Library/Frameworks;
 				FRAMEWORK_SEARCH_PATHS = "\"$(TCL_FRAMEWORK_DIR)\" \"$(SYMROOT)\"";
 				FRAMEWORK_VERSION = 8.4;
 				GLOBAL_CFLAGS = "`source \"${TCL_FRAMEWORK_DIR}/Tcl.framework/tclConfig.sh\"; echo $${}{TCL_EXTRA_CFLAGS} $${}{TCL_DEFS} | sed -e 's|\\\\\\\\\\\\\\\"|\\\"|g' | sed -e 's| -DTCL_WIDE_INT_TYPE=long. long||'` -U_REENTRANT";
 				HEADER_SEARCH_PATHS = "\"$(TCL_FRAMEWORK_DIR)/Tcl.framework/Headers\" \"$(TCL_FRAMEWORK_DIR)/Tcl.framework/PrivateHeaders\" ../generic ../xlib";
-				INSTALL_PATH = /Applications/Utilities;
+				INSTALL_PATH = "${APPLICATION_INSTALL_PATH}";
 				LIBRARY_SEARCH_PATHS = "";
 				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "-DMAC_OSX_TK -DTCL_WIDE_INT_TYPE=\"long long\"";
@@ -2945,11 +2953,11 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>8.4.4</string>
+	<string>8.4.6</string>
 	<key>CFBundleSignature</key>
 	<string>WiSH</string>
 	<key>CFBundleVersion</key>
-	<string>8.4.4</string>
+	<string>8.4.6</string>
 </dict>
 </plist>
 ";
@@ -3141,7 +3149,7 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -n \"${EMBEDDED_BUILD:-}\" ]; then\ncd \"${TARGET_BUILD_DIR}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}/Contents\"\n\n# if we are embedding frameworks, copy them into the app\nrm -rf \"Frameworks\"\nmkdir -p \"Frameworks\"\nif [ \"${DEPLOYMENT_LOCATION:-}\" = \"YES\" -o \"${ACTION}\" = \"install\" ]; then\n    FWKDIR=\"${INSTALL_ROOT}/Library/Frameworks\"\nelse\n    FWKDIR=\"${TARGET_BUILD_DIR}\"\nfi\ncp -fRPH \"${FWKDIR}/Tcl.framework\" \"Frameworks\"\ncp -fRPH \"${FWKDIR}/Tk.framework\" \"Frameworks\"\n\n# fix install names when embedding\nfix_install_id ( ) {\n    chmod -RH a+w \"$1\"\n    install_name_tool -id $(otool -L \"$1\" | awk \"/$(basename \"$1\")\\.framework.*[^:]\\$/ {sub(\\\"^.*/Frameworks\\\",\\\"@executable_path/../Frameworks\\\",\\$1); print \\$1}\") \"$1\"\n    chmod -RH a-w \"$1\"   \n}\nfix_install_name ( ) {\n    chmod -RH a+w \"$1\"\n    install_name_tool -change $(otool -L \"$1\" | awk \"/$2\\.framework.*[^:]\\$/ {print \\$1; sub(\\\"^.*/Frameworks\\\",\\\"@executable_path/../Frameworks\\\",\\$1); print \\$1}\") \"$1\"\n    chmod -RH a-w \"$1\"   \n}\nfix_install_id Frameworks/Tcl.framework/Tcl\nfix_install_id Frameworks/Tk.framework/Tk\nfix_install_name Frameworks/Tk.framework/Tk Tcl\nfix_install_name \"MacOS/${PRODUCT_NAME}\" Tcl\nfix_install_name \"MacOS/${PRODUCT_NAME}\" Tk\n\nfi";
+			shellScript = "if [ -n \"${EMBEDDED_BUILD:-}\" ]; then\ncd \"${TARGET_BUILD_DIR}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}/Contents\"\n\n# if we are embedding frameworks, copy them into the app\nrm -rf \"Frameworks\"\nmkdir -p \"Frameworks\"\nif [ \"${DEPLOYMENT_LOCATION:-}\" = \"YES\" -o \"${ACTION}\" = \"install\" ]; then\n    FWKDIR=\"${INSTALL_ROOT}${DYLIB_INSTALL_PATH}\"\nelse\n    FWKDIR=\"${TARGET_BUILD_DIR}\"\nfi\ncp -fpRPH \"${FWKDIR}/Tcl.framework\" \"Frameworks\"\ncp -fpRPH \"${FWKDIR}/Tk.framework\" \"Frameworks\"\n\n# fix install names when embedding\nfix_install_id ( ) {\n    chmod -RH a+w \"$1\"\n    install_name_tool -id $(otool -L \"$1\" | awk \"/$(basename \"$1\")\\.framework.*[^:]\\$/ {sub(\\\"^.*/Frameworks\\\",\\\"@executable_path/../Frameworks\\\",\\$1); print \\$1}\") \"$1\"\n    chmod -RH a-w \"$1\"   \n}\nfix_install_name ( ) {\n    chmod -RH a+w \"$1\"\n    install_name_tool -change $(otool -L \"$1\" | awk \"/$2\\.framework.*[^:]\\$/ {print \\$1; sub(\\\"^.*/Frameworks\\\",\\\"@executable_path/../Frameworks\\\",\\$1); print \\$1}\") \"$1\"\n    chmod -RH a-w \"$1\"   \n}\nfix_install_id Frameworks/Tcl.framework/Tcl\nfix_install_id Frameworks/Tk.framework/Tk\nfix_install_name Frameworks/Tk.framework/Tk Tcl\nfix_install_name \"MacOS/${PRODUCT_NAME}\" Tcl\nfix_install_name \"MacOS/${PRODUCT_NAME}\" Tk\n\nfi";
 		};
 		F55BC46802B2D38B01DC9062 = {
 			fileEncoding = 5;
@@ -3191,7 +3199,7 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "# ensure we can overwrite a previous install\nif [ -d \"${INSTALL_ROOT}/${INSTALL_PATH}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}\" ]; then\n    chmod -RH u+w \"${INSTALL_ROOT}/${INSTALL_PATH}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}\"\nfi";
+			shellScript = "# ensure we can overwrite a previous install\nif [ -d \"${INSTALL_ROOT}${INSTALL_PATH}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}\" ]; then\n    chmod -RH u+w \"${INSTALL_ROOT}${INSTALL_PATH}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}\"\nfi";
 		};
 		F5877FB8031F982D016F146B = {
 			buildActionMask = 8;
@@ -3229,7 +3237,7 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "# redo prebinding\ncd \"${INSTALL_ROOT}\"\nif [ ! -d usr/lib ]; then mkdir -p usr; ln -fs /usr/lib usr/; RM_USRLIB=1; fi\nif [ ! -d System ]; then ln -fs /System .; RM_SYSTEM=1; fi\nif [ ! -d Library/Frameworks/Tcl.framework ]; then ln -fs ${TCL_FRAMEWORK_DIR}/Tcl.framework Library/Frameworks; RM_TCL=1; fi\nredo_prebinding -r . \"./${INSTALL_PATH}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}/Versions/${FRAMEWORK_VERSION}/${PRODUCT_NAME}\"\nif [ -n \"${RM_USRLIB:-}\" ]; then rm -f usr/lib; rmdir -p usr 2>&-; fi\nif [ -n \"${RM_SYSTEM:-}\" ]; then rm -f System; fi\nif [ -n \"${RM_TCL:-}\" ]; then rm -f Library/Frameworks/Tcl.framework; fi\n\n# fix permissions on uninstalled products\nchmod a+w \"${TEMP_ROOT}/UninstalledProducts\"\nchmod a+w \"${TEMP_ROOT}\"/UninstalledProducts/libtkstub*.a";
+			shellScript = "# redo prebinding\ncd \"${INSTALL_ROOT}/\"\nif [ ! -d usr/lib ]; then mkdir -p usr; ln -fs /usr/lib usr/; RM_USRLIB=1; fi\nif [ ! -d System ]; then ln -fs /System .; RM_SYSTEM=1; fi\nif [ ! -d Library/Frameworks/Tcl.framework ]; then ln -fs ${TCL_FRAMEWORK_DIR}/Tcl.framework Library/Frameworks; RM_TCL=1; fi\nredo_prebinding -r . \"./${INSTALL_PATH}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}/Versions/${FRAMEWORK_VERSION}/${PRODUCT_NAME}\"\nif [ -n \"${RM_USRLIB:-}\" ]; then rm -f usr/lib; rmdir -p usr 2>&-; fi\nif [ -n \"${RM_SYSTEM:-}\" ]; then rm -f System; fi\nif [ -n \"${RM_TCL:-}\" ]; then rm -f Library/Frameworks/Tcl.framework; fi\n\n# fix permissions on uninstalled products\nchmod a+w \"${TEMP_ROOT}/UninstalledProducts\"\nchmod a+w \"${TEMP_ROOT}\"/UninstalledProducts/libtkstub*.a";
 		};
 		F5877FBD031FAC6A016F146B = {
 			buildActionMask = 8;
@@ -3242,7 +3250,7 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "# redo prebinding\ncd \"${INSTALL_ROOT}\"\nEXECUTABLE_DIR=\"./${INSTALL_PATH}/${PRODUCT_NAME}.${WRAPPER_EXTENSION}/Contents/MacOS\"\nif [ -z \"${EMBEDDED_BUILD:-}\" ]; then\n    if [ ! -d usr/lib ]; then mkdir -p usr; ln -fs /usr/lib usr/; RM_USRLIB=1; fi\n    if [ ! -d System ]; then ln -fs /System .; RM_SYSTEM=1; fi\n    if [ ! -d Library/Frameworks/Tcl.framework ]; then ln -fs ${TCL_FRAMEWORK_DIR}/Tcl.framework Library/Frameworks; RM_TCL=1; fi\n    PREBIND_OPTS=\"-r .\"\nfi\nredo_prebinding ${PREBIND_OPTS:-} -e \"${EXECUTABLE_DIR}\" \"${EXECUTABLE_DIR}/${PRODUCT_NAME}\"\nif [ -n \"${RM_USRLIB:-}\" ]; then rm -f usr/lib; rmdir -p usr 2>&-; fi\nif [ -n \"${RM_SYSTEM:-}\" ]; then rm -f System; fi\nif [ -n \"${RM_TCL:-}\" ]; then rm -f Library/Frameworks/Tcl.framework; fi\n\n# install wish script & symbolic links\nif [ -z \"${EMBEDDED_BUILD:-}\" ]; then\nmkdir -p \"${INSTALL_ROOT}/usr/bin\"\nrm -f \"${INSTALL_ROOT}/usr/bin/wish${FRAMEWORK_VERSION}\"\ncat > \"${INSTALL_ROOT}/usr/bin/wish${FRAMEWORK_VERSION}\" <<EOF\n#!/bin/sh\n\"\\$(dirname \\$0)/../../${EXECUTABLE_DIR}/${PRODUCT_NAME}\" \"\\$@\"\nEOF\nchmod a+x \"${INSTALL_ROOT}/usr/bin/wish${FRAMEWORK_VERSION}\"\nln -fs \"wish${FRAMEWORK_VERSION}\" \"${INSTALL_ROOT}/usr/bin/wish\"\nfi";
+			shellScript = "# redo prebinding\ncd \"${INSTALL_ROOT}/\"\nAPP_DIR=\"${PRODUCT_NAME}.${WRAPPER_EXTENSION}\"\nEXECUTABLE_DIR=\"${APP_DIR}/Contents/MacOS\"\nEXECUTABLE=\"${EXECUTABLE_DIR}/${PRODUCT_NAME}\"\nFWK_RSRC_DIR=\"${DYLIB_INSTALL_PATH}/Tk.framework/Versions/${FRAMEWORK_VERSION}/Resources\"\nif [ -z \"${EMBEDDED_BUILD:-}\" ]; then\n    if [ ! -d usr/lib ]; then mkdir -p usr; ln -fs /usr/lib usr/; RM_USRLIB=1; fi\n    if [ ! -d System ]; then ln -fs /System .; RM_SYSTEM=1; fi\n    if [ ! -d Library/Frameworks/Tcl.framework ]; then ln -fs ${TCL_FRAMEWORK_DIR}/Tcl.framework Library/Frameworks; RM_TCL=1; fi\n    PREBIND_OPTS=\"-r .\"\nfi\nredo_prebinding ${PREBIND_OPTS:-} -e \"./${INSTALL_PATH}/${EXECUTABLE_DIR}\" \"./${INSTALL_PATH}/${EXECUTABLE}\"\nif [ -n \"${RM_USRLIB:-}\" ]; then rm -f usr/lib; rmdir -p usr 2>&-; fi\nif [ -n \"${RM_SYSTEM:-}\" ]; then rm -f System; fi\nif [ -n \"${RM_TCL:-}\" ]; then rm -f Library/Frameworks/Tcl.framework; fi\n\n# copy Wish.app into framework, install wish script & symbolic link\nif [ -z \"${EMBEDDED_BUILD:-}\" ]; then\nrm -rf \"./${FWK_RSRC_DIR}/${APP_DIR}\"\ncp -fpRPH \"./${INSTALL_PATH}/${APP_DIR}\" \"./${FWK_RSRC_DIR}\"\nmkdir -p \"./${BINDIR}\"\nrm -f \"./${BINDIR}/wish${FRAMEWORK_VERSION}\"\ncat > \"./${BINDIR}/wish${FRAMEWORK_VERSION}\" <<EOF\n#!/bin/sh\n\"\\$(dirname \\$0)$(echo ${BINDIR} | sed -e 's#/[^/][^/]*#/..#g')${FWK_RSRC_DIR}/${EXECUTABLE}\" \"\\$@\"\nEOF\nchmod a+x \"./${BINDIR}/wish${FRAMEWORK_VERSION}\"\nln -fs \"wish${FRAMEWORK_VERSION}\" \"./${BINDIR}/wish\"\nfi";
 		};
 		F59D847903390D7E016F146B = {
 			buildActionMask = 2147483647;
@@ -3535,12 +3543,6 @@ MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright Â
 			name = mkpsenc.tcl;
 			path = ../library/mkpsenc.tcl;
 			refType = 2;
-		};
-		F5C2EA34034D71B2016F146B = {
-			fileRef = F5C2EA33034D71B2016F146B;
-			isa = PBXBuildFile;
-			settings = {
-			};
 		};
 		F5C2EA35034D7212016F146B = {
 			fileRef = F5C2EA33034D71B2016F146B;

@@ -289,8 +289,8 @@ XCopyPlane(
              * Case 2: transparent bitmaps.  If it's color we ignore
              * the forecolor.
              */
-            pm=GetPortPixMap(srcPort);
-            if (GetPixDepth(pm)== 1) {
+            pm = GetPortPixMap(srcPort);
+            if (GetPixDepth(pm) == 1) {
                 tmode = srcOr;
             } else {
                 tmode = transparent;
@@ -347,13 +347,15 @@ TkPutImage(
     GDHandle saveDevice;
     GWorldPtr destPort;
     const BitMap * destBits;
+    MacDrawable *dstDraw = (MacDrawable *) d;
     int i, j;
     BitMap bitmap;
     char *newData = NULL;
     Rect destRect, srcRect;
 
     destPort = TkMacOSXGetDrawablePort(d);
-    SetRect(&destRect, dest_x, dest_y, dest_x + width, dest_y + height);
+    SetRect(&destRect, dstDraw->xOff + dest_x, dstDraw->yOff + dest_y, 
+            dstDraw->xOff + dest_x + width, dstDraw->yOff + dest_y + height);
     SetRect(&srcRect, src_x, src_y, src_x + width, src_y + height);
 
     display->request++;
@@ -362,7 +364,13 @@ TkPutImage(
 
     TkMacOSXSetUpClippingRgn(d);
 
-    if (image->depth == 1) {
+    if (image->obdata) {
+        /* Image from XGetImage, copy from containing GWorld directly */
+        GWorldPtr srcPort = TkMacOSXGetDrawablePort((Drawable)image->obdata);
+        CopyBits(GetPortBitMapForCopyBits(srcPort),
+                GetPortBitMapForCopyBits (destPort),
+                &srcRect, &destRect, srcCopy, NULL);
+    } else if (image->depth == 1) {
 
         /* 
          * This code assumes a pixel depth of 1 
@@ -400,15 +408,15 @@ TkPutImage(
                 &srcRect, &destRect, srcCopy, NULL);
 
     } else {
-            /* Color image */
-            PixMap pixmap;
+        /* Color image */
+        PixMap pixmap;
             
         pixmap.bounds.left = 0;
         pixmap.bounds.top = 0;
         pixmap.bounds.right = (short) image->width;
         pixmap.bounds.bottom = (short) image->height;
         pixmap.pixelType = RGBDirect;
-        pixmap.pmVersion = 4;        /* 32bit clean */
+        pixmap.pmVersion = baseAddr32;        /* 32bit clean */
         pixmap.packType = 0;
         pixmap.packSize = 0;
         pixmap.hRes = 0x00480000;
@@ -416,7 +424,7 @@ TkPutImage(
         pixmap.pixelSize = 32;
         pixmap.cmpCount = 3;
         pixmap.cmpSize = 8;
-        pixmap.pixelFormat = 0;
+        pixmap.pixelFormat = k32ARGBPixelFormat;
         pixmap.pmTable = NULL;
         pixmap.pmExt = 0;
         pixmap.baseAddr = image->data;
@@ -453,7 +461,7 @@ XFillRectangles(
     Drawable d,                        /* Draw on this. */
     GC gc,                        /* Use this GC. */
     XRectangle *rectangles,        /* Rectangle array. */
-    int n_rectangels)                /* Number of rectangles. */
+    int n_rectangles)                /* Number of rectangles. */
 {
     MacDrawable *macWin = (MacDrawable *) d;
     CGrafPtr saveWorld;
@@ -472,7 +480,7 @@ XFillRectangles(
 
     TkMacOSXSetUpGraphicsPort(gc, destPort);
 
-    for (i=0; i<n_rectangels; i++) {
+    for (i = 0; i < n_rectangles; i++) {
         theRect.left = (short) (macWin->xOff + rectangles[i].x);
         theRect.top = (short) (macWin->yOff + rectangles[i].y);
         theRect.right = (short) (theRect.left + rectangles[i].width);

@@ -276,6 +276,7 @@ Tk_MenubuttonObjCmd(clientData, interp, objc, objv)
     mbPtr->activeTextGC = None;
     mbPtr->gray = None;
     mbPtr->disabledGC = None;
+    mbPtr->stippleGC = None;
     mbPtr->leftBearing = 0;
     mbPtr->rightBearing = 0;
     mbPtr->widthString = NULL;
@@ -451,14 +452,16 @@ DestroyMenuButton(memPtr)
     if (mbPtr->disabledGC != None) {
 	Tk_FreeGC(mbPtr->display, mbPtr->disabledGC);
     }
+    if (mbPtr->stippleGC != None) {
+	Tk_FreeGC(mbPtr->display, mbPtr->stippleGC);
+    }
     if (mbPtr->gray != None) {
 	Tk_FreeBitmap(mbPtr->display, mbPtr->gray);
     }
     if (mbPtr->textLayout != NULL) {
         Tk_FreeTextLayout(mbPtr->textLayout);
     }
-    Tk_FreeConfigOptions((char *) mbPtr, mbPtr->optionTable,
-	    mbPtr->tkwin);
+    Tk_FreeConfigOptions((char *) mbPtr, mbPtr->optionTable, mbPtr->tkwin);
     mbPtr->tkwin = NULL;
     Tcl_EventuallyFree((ClientData) mbPtr, TCL_DYNAMIC);
 }
@@ -702,7 +705,6 @@ TkMenuButtonWorldChanged(instanceData)
     }
     mbPtr->normalTextGC = gc;
 
-    gcValues.font = Tk_FontId(mbPtr->tkfont);
     gcValues.foreground = mbPtr->activeFg->pixel;
     gcValues.background = Tk_3DBorderColor(mbPtr->activeBorder)->pixel;
     mask = GCForeground | GCBackground | GCFont;
@@ -712,23 +714,36 @@ TkMenuButtonWorldChanged(instanceData)
     }
     mbPtr->activeTextGC = gc;
 
-    gcValues.font = Tk_FontId(mbPtr->tkfont);
     gcValues.background = Tk_3DBorderColor(mbPtr->normalBorder)->pixel;
-    if ((mbPtr->disabledFg != NULL) && (mbPtr->imageString == NULL)) {
-	gcValues.foreground = mbPtr->disabledFg->pixel;
-	mask = GCForeground | GCBackground | GCFont;
-    } else {
+
+    /*
+     * Create the GC that can be used for stippling
+     */
+
+    if (mbPtr->stippleGC == None) {
 	gcValues.foreground = gcValues.background;
 	mask = GCForeground;
 	if (mbPtr->gray == None) {
-	    mbPtr->gray = Tk_GetBitmap(NULL, mbPtr->tkwin,
-		    Tk_GetUid("gray50"));
+	    mbPtr->gray = Tk_GetBitmap(NULL, mbPtr->tkwin, "gray50");
 	}
 	if (mbPtr->gray != None) {
 	    gcValues.fill_style = FillStippled;
 	    gcValues.stipple = mbPtr->gray;
 	    mask |= GCFillStyle | GCStipple;
 	}
+	mbPtr->stippleGC = Tk_GetGC(mbPtr->tkwin, mask, &gcValues);
+    }
+
+    /*
+     * Allocate the disabled graphics context, for drawing text in
+     * its disabled state.
+     */
+
+    mask = GCForeground | GCBackground | GCFont;
+    if (mbPtr->disabledFg != NULL) {
+	gcValues.foreground = mbPtr->disabledFg->pixel;
+    } else {
+	gcValues.foreground = gcValues.background;
     }
     gc = Tk_GetGC(mbPtr->tkwin, mask, &gcValues);
     if (mbPtr->disabledGC != None) {

@@ -130,6 +130,21 @@ bind Scrollbar <End> {
     tk::ScrollToPos %W 1
 }
 }
+if {[string equal [tk windowingsystem] "classic"]
+	|| [string equal [tk windowingsystem] "aqua"]} {
+    bind Scrollbar <MouseWheel> {
+        tk::ScrollByUnits %W v [expr {- (%D)}]
+    }
+    bind Scrollbar <Option-MouseWheel> {
+        tk::ScrollByUnits %W v [expr {-10 * (%D)}]
+    }
+    bind Scrollbar <Shift-MouseWheel> {
+        tk::ScrollByUnits %W h [expr {- (%D)}]
+    }
+    bind Scrollbar <Shift-Option-MouseWheel> {
+        tk::ScrollByUnits %W h [expr {-10 * (%D)}]
+    }
+}
 # tk::ScrollButtonDown --
 # This procedure is invoked when a button is pressed in a scrollbar.
 # It changes the way the scrollbar is displayed and takes actions

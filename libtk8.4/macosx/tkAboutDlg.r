@@ -48,7 +48,7 @@ resource 'DITL' (128, "About Box", purgeable) {
 	{200, 147, 220, 217}, Button	    {enabled, "Ok"},
 	{ 20, 108, 180, 344}, StaticText    {disabled, 
 	    "Tcl " TCL_PATCH_LEVEL " & Tk " TK_PATCH_LEVEL "\n\n" 
-	    "© 2003 Tcl Core Team." "\n\n" 
+	    "© 2004 Tcl Core Team." "\n\n" 
 	    "Jim Ingham & Ian Reid" "\n"
 	    "© 2001-2002 Apple Computer, Inc." "\n\n" 
 	    "Jim Ingham & Ray Johnson" "\n"

@@ -16,10 +16,10 @@
 #include "tkMacInt.h"
 #include <Controls.h>
 
-#define kShadowOffset				(3)	/* amount to offset shadow from frame */
-#define kTriangleWidth				(11)	/* width of the triangle */
-#define kTriangleHeight				(6)	/* height of the triangle */
-#define kTriangleMargin				(5)	/* margin around triangle */
+#define kShadowOffset	(3)	/* amount to offset shadow from frame */
+#define kTriangleWidth	(11)	/* width of the triangle */
+#define kTriangleHeight	(6)	/* height of the triangle */
+#define kTriangleMargin	(5)	/* margin around triangle */
 
 /*
  * Declaration of Unix specific button structure.
@@ -93,6 +93,7 @@ TkpDisplayMenuButton(
     int y;
     Tk_Window tkwin = mbPtr->tkwin;
     int width, height, fullWidth, fullHeight;
+    int imageWidth, imageHeight;
     int imageXOffset, imageYOffset, textXOffset, textYOffset;
     int haveImage = 0, haveText = 0;
     MacMenuButton * macMBPtr = (MacMenuButton *) mbPtr;
@@ -128,6 +129,9 @@ TkpDisplayMenuButton(
         Tk_SizeOfBitmap(mbPtr->display, mbPtr->bitmap, &width, &height);
         haveImage = 1;
     }
+    imageWidth  = width;
+    imageHeight = height;
+
     haveText = (mbPtr->textWidth != 0 && mbPtr->textHeight != 0);
 
     /*
@@ -199,46 +203,44 @@ TkpDisplayMenuButton(
                 mbPtr->indicatorWidth + fullWidth, fullHeight,
                 &x, &y);
 
+	imageXOffset += x;
+	imageYOffset += y;
         if (mbPtr->image != NULL) {
             Tk_RedrawImage(mbPtr->image, 0, 0, width, height, Tk_WindowId(tkwin),
-                    x + imageXOffset, y + imageYOffset);
-        }
-        if (mbPtr->bitmap != None) {
+                    imageXOffset, imageYOffset);
+        } else if (mbPtr->bitmap != None) {
             XCopyPlane(mbPtr->display, mbPtr->bitmap, Tk_WindowId(tkwin),
                     gc, 0, 0, (unsigned) width, (unsigned) height,
-                    x + imageXOffset, y + imageYOffset, 1);
+                    imageXOffset, imageYOffset, 1);
         }
-        if (haveText) {
-            Tk_DrawTextLayout(mbPtr->display, Tk_WindowId(tkwin), gc,
-                    mbPtr->textLayout, x  + textXOffset, y + textYOffset ,
-                    0, -1);
-            Tk_UnderlineTextLayout(mbPtr->display, Tk_WindowId(tkwin), gc,
-                    mbPtr->textLayout, x + textXOffset, y + textYOffset ,
-                    mbPtr->underline);
-        }
+
+	Tk_DrawTextLayout(mbPtr->display, Tk_WindowId(tkwin), gc,
+		mbPtr->textLayout, x + textXOffset, y + textYOffset, 0, -1);
+	Tk_UnderlineTextLayout(mbPtr->display, Tk_WindowId(tkwin), gc,
+		mbPtr->textLayout, x + textXOffset, y + textYOffset,
+		mbPtr->underline);
+    } else if (haveImage) {
+	TkComputeAnchor(mbPtr->anchor, tkwin, 0, 0,
+		width + mbPtr->indicatorWidth, height, &x, &y);
+	imageXOffset += x;
+	imageYOffset += y;
+	if (mbPtr->image != NULL) {
+	    Tk_RedrawImage(mbPtr->image, 0, 0, width, height, Tk_WindowId(tkwin),
+		    imageXOffset, imageYOffset);
+	} else if (mbPtr->bitmap != None) {
+	    XCopyPlane(mbPtr->display, mbPtr->bitmap, Tk_WindowId(tkwin),
+		    gc, 0, 0, (unsigned) width, (unsigned) height, 
+		    x, y, 1);
+	}
     } else {
-       if (mbPtr->image != NULL) {
-           TkComputeAnchor(mbPtr->anchor, tkwin, 0, 0,
-                   width + mbPtr->indicatorWidth, height, &x, &y);
-           Tk_RedrawImage(mbPtr->image, 0, 0, width, height, Tk_WindowId(tkwin),
-                   x + imageXOffset, y + imageYOffset);
-       } else if (mbPtr->bitmap != None) {
-           TkComputeAnchor(mbPtr->anchor, tkwin, 0, 0,
-                   width + mbPtr->indicatorWidth, height, &x, &y);
-           XCopyPlane(mbPtr->display, mbPtr->bitmap, Tk_WindowId(tkwin),
-                   gc, 0, 0, (unsigned) width, (unsigned) height,
-                   x + imageXOffset, y + imageYOffset, 1);
-       } else {
-           TkComputeAnchor(mbPtr->anchor, tkwin, mbPtr->padX, mbPtr->padY,
-                   mbPtr->textWidth + mbPtr->indicatorWidth,
-                   mbPtr->textHeight, &x, &y);
-           Tk_DrawTextLayout(mbPtr->display, Tk_WindowId(tkwin), gc,
-                   mbPtr->textLayout, x  + textXOffset, y + textYOffset,
-                   0, -1);
-           Tk_UnderlineTextLayout(mbPtr->display, Tk_WindowId(tkwin), gc,
-                   mbPtr->textLayout, x + textXOffset, y + textYOffset ,
-                   mbPtr->underline);
-        }
+	TkComputeAnchor(mbPtr->anchor, tkwin, mbPtr->padX, mbPtr->padY,
+		mbPtr->textWidth + mbPtr->indicatorWidth,
+		mbPtr->textHeight, &x, &y);
+	Tk_DrawTextLayout(mbPtr->display, Tk_WindowId(tkwin), gc,
+		mbPtr->textLayout, x + textXOffset, y + textYOffset, 0, -1);
+	Tk_UnderlineTextLayout(mbPtr->display, Tk_WindowId(tkwin), gc,
+		mbPtr->textLayout, x + textXOffset, y + textYOffset,
+		mbPtr->underline);
     }
 
 #if 0		/* this is the original code */
@@ -278,10 +280,20 @@ TkpDisplayMenuButton(
 
     if ((mbPtr->state == STATE_DISABLED)
 	    && ((mbPtr->disabledFg != NULL) || (mbPtr->image != NULL))) {
-	XFillRectangle(mbPtr->display, Tk_WindowId(tkwin), 
-                mbPtr->disabledGC, mbPtr->inset, mbPtr->inset,
-		(unsigned) (Tk_Width(tkwin) - 2*mbPtr->inset),
-		(unsigned) (Tk_Height(tkwin) - 2*mbPtr->inset));
+	/*
+	 * Stipple the whole button if no disabledFg was specified,
+	 * otherwise restrict stippling only to displayed image
+	 */
+	if (mbPtr->disabledFg == NULL) {
+	    XFillRectangle(mbPtr->display, Tk_WindowId(tkwin),
+		    mbPtr->stippleGC, mbPtr->inset, mbPtr->inset,
+		    (unsigned) (Tk_Width(tkwin) - 2*mbPtr->inset),
+		    (unsigned) (Tk_Height(tkwin) - 2*mbPtr->inset));
+	} else {
+	    XFillRectangle(mbPtr->display, Tk_WindowId(tkwin),
+		    mbPtr->stippleGC, imageXOffset, imageYOffset,
+		    (unsigned) imageWidth, (unsigned) imageHeight);
+	}
     }
 
     /*

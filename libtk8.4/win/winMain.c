@@ -32,7 +32,7 @@
  */
 
 static void		setargv _ANSI_ARGS_((int *argcPtr, char ***argvPtr));
-static void		WishPanic _ANSI_ARGS_(TCL_VARARGS(CONST char *,format));
+static Tcl_PanicProc	WishPanic;
 
 #ifdef TK_TEST
 extern int		Tktest_Init(Tcl_Interp *interp);

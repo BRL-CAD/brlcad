@@ -630,7 +630,7 @@ XFillRectangles(display, d, gc, rectangles, nrectangles)
     int i;
     RECT rect;
     TkWinDCState state;
-    HBRUSH brush;
+    HBRUSH brush, oldBrush;
 
     if (d == None) {
 	return;
@@ -644,7 +644,7 @@ XFillRectangles(display, d, gc, rectangles, nrectangles)
 	    || gc->fill_style == FillOpaqueStippled)
 	    && gc->stipple != None) {
 	TkWinDrawable *twdPtr = (TkWinDrawable *)gc->stipple;
-	HBRUSH oldBrush, stipple;
+	HBRUSH stipple;
 	HBITMAP oldBitmap, bitmap;
 	HDC dcMem;
 	HBRUSH bgBrush = CreateSolidBrush(gc->background);
@@ -694,9 +694,28 @@ XFillRectangles(display, d, gc, rectangles, nrectangles)
 	DeleteObject(stipple);
 	DeleteObject(bgBrush);
     } else {
-	for (i = 0; i < nrectangles; i++) {
-	    TkWinFillRect(dc, rectangles[i].x, rectangles[i].y,
-		    rectangles[i].width, rectangles[i].height, gc->foreground);
+	if (gc->function == GXcopy) {
+	    for (i = 0; i < nrectangles; i++) {
+		rect.left = rectangles[i].x;
+		rect.right = rect.left + rectangles[i].width;
+		rect.top = rectangles[i].y;
+		rect.bottom = rect.top + rectangles[i].height;
+		FillRect(dc, &rect, brush);
+	    }
+	} else {
+	    HPEN newPen = CreatePen(PS_NULL, 0, gc->foreground);
+	    HPEN oldPen = SelectObject(dc, newPen);
+	    oldBrush = SelectObject(dc, brush);
+	    
+	    for (i = 0; i < nrectangles; i++) {
+		Rectangle(dc, rectangles[i].x, rectangles[i].y,
+		    rectangles[i].x + rectangles[i].width + 1,
+		    rectangles[i].y + rectangles[i].height + 1);
+	    }
+
+	    SelectObject(dc, oldBrush);
+	    SelectObject(dc, oldPen);
+	    DeleteObject(newPen);
 	}
     }
     DeleteObject(brush);

@@ -64,6 +64,9 @@ XCreateBitmapFromData(display, d, data, width, height)
     ximage.bitmap_bit_order = LSBFirst;
     ximage.bitmap_pad = 8;
     ximage.bytes_per_line = (width+7)/8;
+#ifdef MAC_OSX_TK
+    ximage.obdata = NULL;
+#endif
 
     TkPutImage(NULL, 0, display, pix, gc, &ximage, 0, 0, 0, 0, width, height);
     XFreeGC(display, gc);

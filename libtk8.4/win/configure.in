@@ -11,7 +11,7 @@ AC_PREREQ(2.13)
 TK_VERSION=8.4
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=4
-TK_PATCH_LEVEL=".4"
+TK_PATCH_LEVEL=".6"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -153,10 +153,17 @@ eval "TK_LIB_FILE=${LIBPREFIX}tk$VER${LIBSUFFIX}"
 eval "TK_STUB_LIB_FILE=${LIBPREFIX}tkstub${VER}${LIBSUFFIX}"
 # FIXME: All of this var junk needs to be done in tcl.m4 !!!!
 # I left out the other vars that also need to get defined here.
-# we also need to double check about including DBGX in lib names
-# and spaces in file or directory names for the eval
+# we also need to double check about spaces in path names
+eval "TK_LIB_FLAG=\"-ltk${VER}${LIBFLAGSUFFIX}\""
+TK_LIB_SPEC="-L${libdir} ${TK_LIB_FLAG}"
+TK_BUILD_LIB_SPEC="-L`pwd` ${TK_LIB_FLAG}"
+
 eval "TK_STUB_LIB_FLAG=\"-ltkstub${VER}${LIBFLAGSUFFIX}\""
-eval "TK_BUILD_STUB_LIB_SPEC=\"-L`pwd` ${TK_STUB_LIB_FLAG}\""
+TK_BUILD_STUB_LIB_SPEC="-L`pwd` ${TK_STUB_LIB_FLAG}"
+
+TK_STUB_LIB_SPEC="-L${libdir} ${TK_STUB_LIB_FLAG}"
+TK_STUB_LIB_PATH="${libdir}/${TK_STUB_LIB_FILE}"
+TK_BUILD_STUB_LIB_PATH="`pwd`/${TK_STUB_LIB_FILE}"
 
 eval "DLLSUFFIX=${DLLSUFFIX}"
 eval "LIBPREFIX=${LIBPREFIX}"
@@ -256,14 +263,15 @@ AC_SUBST(POST_MAKE_LIB)
 AC_SUBST(MAKE_DLL)
 AC_SUBST(MAKE_EXE)
 
-# undefined at this point for win
-AC_SUBST(TK_BUILD_LIB_SPEC)
-AC_SUBST(TK_CC_SEARCH_FLAGS)
-AC_SUBST(TK_LD_SEARCH_FLAGS)
 AC_SUBST(TK_LIB_FLAG)
 AC_SUBST(TK_LIB_SPEC)
+AC_SUBST(TK_BUILD_LIB_SPEC)
 AC_SUBST(TK_STUB_LIB_SPEC)
-AC_SUBST(TK_BUILD_STUB_LIB_PATH)
 AC_SUBST(TK_STUB_LIB_PATH)
+AC_SUBST(TK_BUILD_STUB_LIB_PATH)
+
+# undefined at this point for win
+AC_SUBST(TK_CC_SEARCH_FLAGS)
+AC_SUBST(TK_LD_SEARCH_FLAGS)
 
 AC_OUTPUT(Makefile tkConfig.sh)

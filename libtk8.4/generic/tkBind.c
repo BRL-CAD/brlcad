@@ -3406,6 +3406,11 @@ HandleEventGenerate(interp, mainWin, objc, objv)
 	event.xcreatewindow.window = event.xany.window;
     }
 
+    if (flags & (KEY_BUTTON_MOTION_VIRTUAL|CROSSING)) {
+	event.xkey.x_root = -1;
+	event.xkey.y_root = -1;
+    }
+
     /*
      * Process the remaining arguments to fill in additional fields
      * of the event.
@@ -3771,17 +3776,21 @@ HandleEventGenerate(interp, mainWin, objc, objv)
 		break;
 	    }
 	    case EVENT_X: {
-		int rootX, rootY;
-
 		if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number)
 			!= TCL_OK) {
 		    return TCL_ERROR;
 		}
-		Tk_GetRootCoords(tkwin, &rootX, &rootY);
-		rootX += number;
 		if (flags & (KEY_BUTTON_MOTION_VIRTUAL|CROSSING)) {	
 		    event.xkey.x = number;
-		    event.xkey.x_root = rootX;
+		    /*
+		     * Only modify rootx as well if it hasn't been changed.
+		     */
+		    if (event.xkey.x_root == -1) {
+			int rootX, rootY;
+
+			Tk_GetRootCoords(tkwin, &rootX, &rootY);
+			event.xkey.x_root = rootX + number;
+		    }
 		} else if (flags & EXPOSE) {
 		    event.xexpose.x = number;
 		} else if (flags & (CREATE|CONFIG|GRAVITY)) { 
@@ -3794,17 +3803,21 @@ HandleEventGenerate(interp, mainWin, objc, objv)
 		break;
 	    }
 	    case EVENT_Y: {
-		int rootX, rootY;
-
 		if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number)
 			!= TCL_OK) {
 		    return TCL_ERROR;
 		}
-		Tk_GetRootCoords(tkwin, &rootX, &rootY);
-		rootY += number;
 		if (flags & (KEY_BUTTON_MOTION_VIRTUAL|CROSSING)) {
 		    event.xkey.y = number;
-		    event.xkey.y_root = rootY;
+		    /*
+		     * Only modify rooty as well if it hasn't been changed.
+		     */
+		    if (event.xkey.y_root == -1) {
+			int rootX, rootY;
+
+			Tk_GetRootCoords(tkwin, &rootX, &rootY);
+			event.xkey.y_root = rootY + number;
+		    }
 		} else if (flags & EXPOSE) {
 		    event.xexpose.y = number;
 		} else if (flags & (CREATE|CONFIG|GRAVITY)) {

@@ -1080,6 +1080,13 @@ ConfigureButton(interp, butPtr, objc, objv)
 	    Tk_RestoreSavedOptions(&savedOptions);
 	}
 
+	if ((butPtr->flags & BUTTON_DELETED)) {
+	    /*
+	     * Somehow button was deleted - just abort now. [Bug #824479]
+	     */
+	    return TCL_ERROR;
+	}
+
 	/*
 	 * A few options need special processing, such as setting the
 	 * background from a 3-D border, or filling in complicated

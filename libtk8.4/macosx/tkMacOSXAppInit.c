@@ -133,7 +133,7 @@ main(argc, argv)
     }
 
 #endif
-    textEncoding=GetApplicationTextEncoding();
+    textEncoding = GetApplicationTextEncoding();
     
     /*
      * Now add the scripts folder to the auto_path.

@@ -235,7 +235,7 @@ GenerateUpdateEvent(Window window)
     GetRegionBounds(visRgn,&bounds);
     bounds.right -= bounds.left;
     bounds.bottom -= bounds.top;
-    bounds.left=
+    bounds.left = 0;
     bounds.top=0;
     RectRgn(visRgn, &bounds);
     GenerateUpdates(visRgn, winPtr);

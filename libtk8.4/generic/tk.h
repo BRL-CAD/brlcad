@@ -50,10 +50,10 @@ extern "C" {
 #define TK_MAJOR_VERSION   8
 #define TK_MINOR_VERSION   4
 #define TK_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TK_RELEASE_SERIAL  4
+#define TK_RELEASE_SERIAL  6
 
 #define TK_VERSION	"8.4"
-#define TK_PATCH_LEVEL	"8.4.4"
+#define TK_PATCH_LEVEL	"8.4.6"
 
 /*
  * The following definitions set up the proper options for Macintosh

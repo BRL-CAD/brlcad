@@ -673,6 +673,11 @@ declare 148 generic {
 	    CONST char *cmdName)
 }
 
+declare 149 generic {
+    CONST Tk_OptionSpec * TkGetOptionSpec (CONST char *name,
+					   Tk_OptionTable optionTable)
+}
+
 ##############################################################################
 
 # Define the platform specific internal Tcl interface. These functions are

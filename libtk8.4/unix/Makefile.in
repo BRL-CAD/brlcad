@@ -235,8 +235,8 @@ WISH_LIBS = $(TCL_LIB_SPEC) @LIBS@ $(X11_LIB_SWITCHES) @DL_LIBS@ @MATH_LIBS@
 
 STLIB_LD		= @STLIB_LD@
 SHLIB_LD		= @SHLIB_LD@
-SHLIB_LD_LIBS		= @SHLIB_LD_LIBS@
 SHLIB_LD_FLAGS		= @SHLIB_LD_FLAGS@
+SHLIB_LD_LIBS		= @SHLIB_LD_LIBS@
 TK_SHLIB_LD_EXTRAS	= @TK_SHLIB_LD_EXTRAS@
 
 # Additional search flags needed to find the various shared libraries
@@ -300,7 +300,7 @@ WIDGOBJS = tkButton.o tkEntry.o tkFrame.o tkListbox.o \
 
 CANVOBJS = tkCanvas.o tkCanvArc.o tkCanvBmap.o tkCanvImg.o \
 	tkCanvLine.o tkCanvPoly.o tkCanvPs.o tkCanvText.o \
-	tkCanvUtil.o tkCanvWind.o tkRectOval.o tkTrig.o tkCanvBezier.o
+	tkCanvUtil.o tkCanvWind.o tkCanvBezier.o tkRectOval.o tkTrig.o
 
 IMAGEOBJS = tkImage.o tkImgBmap.o tkImgGIF.o tkImgPPM.o tkImgPhoto.o
 
@@ -836,6 +836,9 @@ tkCanvArc.o: $(GENERIC_DIR)/tkCanvArc.c
 tkCanvBmap.o: $(GENERIC_DIR)/tkCanvBmap.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvBmap.c
 
+tkCanvBezier.o: $(GENERIC_DIR)/tkCanvBezier.c
+	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvBezier.c
+
 tkCanvImg.o: $(GENERIC_DIR)/tkCanvImg.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvImg.c
 
@@ -844,9 +847,6 @@ tkCanvLine.o: $(GENERIC_DIR)/tkCanvLine.c
 
 tkCanvPoly.o: $(GENERIC_DIR)/tkCanvPoly.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvPoly.c
-
-tkCanvBezier.o: $(GENERIC_DIR)/tkCanvBezier.c
-	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvBezier.c
 
 tkCanvPs.o: $(GENERIC_DIR)/tkCanvPs.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvPs.c

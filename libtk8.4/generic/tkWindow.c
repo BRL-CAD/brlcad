@@ -142,7 +142,7 @@ static TkCmd commands[] = {
     {"tk_getOpenFile",  NULL,			Tk_GetOpenFileObjCmd,	0, 1},
     {"tk_getSaveFile",  NULL,			Tk_GetSaveFileObjCmd,	0, 1},
 #endif
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(MAC_OSX_TK)
     {"tk_messageBox",   NULL,			Tk_MessageBoxObjCmd,	0, 1},
 #endif
     {"update",		NULL,			Tk_UpdateObjCmd,	1, 1},

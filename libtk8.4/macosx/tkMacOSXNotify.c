@@ -1155,11 +1155,11 @@ TkMacOSXCreateFakeEvent ()
     EventTime       eTime;
     EventRef        eventRef;
     EventAttributes flags;
-    eClass=kEventClassWish;
+    eClass = kEventClassWish;
     eKind = 0xffff;
-    eTime =GetLastUserEventTime() + 0.001;
-    flags=kEventAttributeUserEvent;
-    if (CreateEvent(NULL,eClass,eKind,eTime,flags,&eventRef)!=noErr) {
+    eTime = GetLastUserEventTime() + 0.001;
+    flags = kEventAttributeUserEvent;
+    if (CreateEvent(NULL,eClass,eKind,eTime,flags,&eventRef) != noErr) {
         fprintf(stderr,"CreateEvent failed\n");
         return NULL;
     }

@@ -1305,7 +1305,7 @@ test grid-16.7 {layout weights (shrinking at minsize)} {
 	lappend a [winfo width .$i]-[winfo height .$i]-[winfo ismapped .$i]
     }
     set a
-} {100-75-1 1-1-0 200-150-1}
+} {100-75-1 1-1-0 100-75-1}
 grid_reset 16.7
 
 test grid-16.8 {layout internal constraints} {
@@ -1425,6 +1425,30 @@ test grid-16.12 {layout uniform (grow)} {
 } [list {0 0 50 95} {50 0 50 95} {100 0 100 95} {200 0 70 95} \
         {0 0 70 95} {70 0 50 95} {120 0 140 95} {260 0 90 95}]
 grid_reset 16.12
+
+test grid-16.13 {layout weights (shrinking at minsize)} {
+    foreach i {0 1 2 3} {
+    	frame .$i -bg gray  -width 100 -height 75 -bd 2 -relief ridge
+    	grid .$i -row $i -column $i -sticky nswe
+    }
+    grid propagate . 0
+    grid columnconfigure . {0 1} -weight 1 -minsize 0
+    grid rowconfigure . {0 1} -weight 1 -minsize 0
+    set a ""
+    . configure -width 250 -height 200
+    update
+    foreach i {0 1 2 3} {
+	lappend a [winfo width .$i]-[winfo height .$i]-[winfo ismapped .$i]
+    }
+    . configure -width 150 -height 100
+    update
+    foreach i {0 1 2 3} {
+	lappend a [winfo width .$i]-[winfo height .$i]-[winfo ismapped .$i]
+    }
+    set a
+} {25-25-1 25-25-1 100-75-1 100-75-1 25-25-0 25-25-0 100-75-1 100-75-1}
+grid_reset 16.13
+
 
 test grid-17.1 {forget and pending idle handlers} {
     # This test is intended to detect a crash caused by a failure to remove

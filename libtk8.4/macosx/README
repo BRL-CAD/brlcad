@@ -70,9 +70,8 @@ system's standard framework directories:
 	/Network/Library/Frameworks /System/Library/Frameworks
 and 'Wish Shell' as well as /usr/bin/tclsh will work.
 
-- /usr/bin/wish is a script that calls 'Wish Shell' in its default location
-	/Applications/Utilities/Wish Shell.app
-it will break if 'Wish Shell' is moved.
+- /usr/bin/wish is a script that calls a copy of 'Wish Shell' contained in
+	Tk.framework/Resources
 
 - if 'Wish Shell' is started from the Finder or via 'open', $argv contains a
 "-psn_XXXX" argument. This is the Wish's carbon process serial number, you may

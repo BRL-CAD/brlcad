@@ -1137,7 +1137,13 @@ GetPostscriptPoints(interp, string, doublePtr)
  #define GetGValue(rgb)	((BYTE)(((WORD)(rgb)) >> 8))
  #define GetBValue(rgb)	((BYTE)((rgb)>>16))
 */
+#else
+#define GetRValue(rgb)	((rgb & cdata->red_mask) >> cdata->red_shift)
+#define GetGValue(rgb)	((rgb & cdata->green_mask) >> cdata->green_shift)
+#define GetBValue(rgb)	((rgb & cdata->blue_mask) >> cdata->blue_shift)
+#endif
 
+#if defined(WIN32) || defined(MAC_OSX_TK)
 static void
 TkImageGetColor(cdata, pixel, red, green, blue)
     TkColormapData *cdata;              /* Colormap data */
@@ -1156,9 +1162,9 @@ TkImageGetColor(cdata, pixel, red, green, blue)
     double *red, *green, *blue;         /* Color data to return */
 {
     if (cdata->separated) {
-	int r = (pixel & cdata->red_mask) >> cdata->red_shift;
-	int g = (pixel & cdata->green_mask) >> cdata->green_shift;
-	int b = (pixel & cdata->blue_mask) >> cdata->blue_shift;
+	int r = GetRValue(pixel);
+	int g = GetGValue(pixel);
+	int b = GetBValue(pixel);
 	*red   = cdata->colors[r].red / 65535.0;
 	*green = cdata->colors[g].green / 65535.0;
 	*blue  = cdata->colors[b].blue / 65535.0;

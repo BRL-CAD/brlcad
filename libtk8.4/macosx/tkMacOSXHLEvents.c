@@ -329,10 +329,11 @@ ScriptHandler (const AppleEvent * event, AppleEvent * reply, long handlerRefcon)
             else {
                    AEGetDescData(&theDesc,data,size);
                    data [ size ] = 0;
-                   for (i=0; i<size; i++)
+                   for (i = 0; i < size; i++)
                     if (data[i] == '\r')
                      data[i] = '\n';
-                   AEReplaceDescData(theDesc.descriptorType,data,size+1,&theDesc);
+                   AEReplaceDescData(theDesc.descriptorType, data, 
+		           size + 1, &theDesc);
             }
             Tcl_ExternalToUtfDString(NULL, data, size,
                     &encodedText);
