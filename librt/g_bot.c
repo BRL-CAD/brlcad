@@ -2492,7 +2492,7 @@ char			**argv;
 
 /*	This routine adjusts the vertex pointers in each face so that 
  *	pointers to duplicate vertices end up pointing to the same vertex.
- *	The unused vertices are not removed (bot_condense will do that).
+ *	The unused vertices are removed.
  *	Returns the number of vertices fused.
  */
 int
@@ -2506,25 +2506,23 @@ struct rt_bot_internal *bot;
 
 	for( i=0 ; i<bot->num_vertices ; i++ )
 	{
-		point_t pt1;
-
-		VMOVE( pt1, &bot->vertices[i*3] );
 		for( j=i+1 ; j<bot->num_vertices ; j++ )
 		{
-			point_t pt2;
-
-			VMOVE( pt2, &bot->vertices[j*3] );
-
 			/* specifically not using tolerances here */
-			if( VEQUAL( pt1, pt2 ) )
+			if( VEQUAL( &bot->vertices[i*3], &bot->vertices[j*3] ) )
 			{
 				count++;
+				bot->num_vertices--;
+				for( k=j ; k<bot->num_vertices ; k++ )
+					VMOVE( &bot->vertices[k*3] , &bot->vertices[(k+1)*3] );
 				for( k=0 ; k<bot->num_faces*3 ; k++ )
 				{
 					if( bot->faces[k] == j )
 					{
 						bot->faces[k] = i;
 					}
+					else if ( bot->faces[k] > j )
+						bot->faces[k]--;
 				}
 			}
 		}
