@@ -142,6 +142,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	LOCAL mat_t	SS;
 	LOCAL mat_t	mtemp;
 	LOCAL vect_t	A, B, C;
+	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
 	LOCAL vect_t	work;
 	LOCAL vect_t	vbc;	/* used for bounding RPP */
@@ -169,18 +170,26 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		return(1);		/* BAD */
 	}
 
-	/* Validate that A.B == 0, B.C == 0, A.C == 0 */
-	f = VDOT( A, B );
+	/* Create unit length versions of A,B,C */
+	f = 1.0/sqrt(magsq_a);
+	VSCALE( Au, A, f );
+	f = 1.0/sqrt(magsq_b);
+	VSCALE( Bu, B, f );
+	f = 1.0/sqrt(magsq_c);
+	VSCALE( Cu, C, f );
+
+	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
+	f = VDOT( Au, Bu );
 	if( ! NEAR_ZERO(f) )  {
 		rtlog("ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( B, C );
+	f = VDOT( Bu, Cu );
 	if( ! NEAR_ZERO(f) )  {
 		rtlog("ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( A, C );
+	f = VDOT( Au, Cu );
 	if( ! NEAR_ZERO(f) )  {
 		rtlog("ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
@@ -199,12 +208,9 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	mat_idn( R );
 
 	/* Compute R and Rinv matrices */
-	f = 1.0/sqrt(magsq_a);
-	VSCALE( &R[0], A, f );
-	f = 1.0/sqrt(magsq_b);
-	VSCALE( &R[4], B, f );
-	f = 1.0/sqrt(magsq_c);
-	VSCALE( &R[8], C, f );
+	VMOVE( &R[0], Au );
+	VMOVE( &R[4], Bu );
+	VMOVE( &R[8], Cu );
 	mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute SoS (Affine transformation) */
