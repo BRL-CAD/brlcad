@@ -15,6 +15,9 @@ cake  \
  const.o \
  cut.o \
  dir.o \
+ file.o \
+ rtlex.o \
+ g_hf.o \
  &
 
 cake \
