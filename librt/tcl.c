@@ -1477,6 +1477,11 @@ ClientData clientData;
 	rtip = ap->a_rt_i;
 	RT_CK_RTI(rtip);
 
+	RT_CK_RESOURCE(ap->a_resource);
+	rt_free_resource(rtip, ap->a_resource);
+	bu_free( (genptr_t)ap->a_resource, "a_resource" );
+	ap->a_resource = (struct resource *)NULL;
+
 #if 0
 	/* Warning!  This calls db_close()!  Clobber city. */
 	rt_free_rti(rtip);
@@ -1509,6 +1514,7 @@ char	      **argv;
 	struct rt_wdb *wdp = (struct rt_wdb *)clientData;
 	struct rt_i	*rtip;
 	struct application	*ap;
+	struct resource		*resp;
 	char		*newprocname;
 	char		buf[64];
 
@@ -1549,7 +1555,19 @@ char	      **argv;
 	/* Establish defaults for this rt_i */
 	rtip->rti_hasty_prep = 1;	/* Tcl isn't going to fire many rays */
 
+	/*
+	 *  In case of multiple instances of the library, make sure that
+	 *  each instance has a separate resource structure,
+	 *  because the bit vector lengths depend on # of solids.
+	 *  And the "overwrite" sequence in Tcl is to create the new
+	 *  proc before running the Tcl_CmdDeleteProc on the old one,
+	 *  which in this case would trash rt_uniresource.
+	 */
+	BU_GETSTRUCT( resp, resource );
+	rt_init_resource( resp, 0 );
+
 	BU_GETSTRUCT( ap, application );
+	ap->a_resource = resp;
 	ap->a_rt_i = rtip;
 	ap->a_purpose = "Conquest!";
 
