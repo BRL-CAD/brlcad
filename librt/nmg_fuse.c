@@ -36,6 +36,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nurb.h"
 #include "./debug.h"
 
+extern int debug_file_count;
+
 /* XXX Move to raytrace.h */
 RT_EXTERN(struct vertexuse 	*nmg_is_vertex_in_face, (CONST struct vertex *v,
 				CONST struct face *f));
@@ -2050,6 +2052,9 @@ CONST struct rt_tol *tol;
 	int i;
 	int count=0;
 
+	if( rt_g.NMG_debug & DEBUG_BOOL )
+		rt_log( "nmg_model_break_all_es_on_v( m=x%x, v=x%x )\n", m, v );
+
 	NMG_CK_MODEL( m );
 	NMG_CK_VERTEX( v );	
 	RT_CK_TOL( tol );
@@ -2085,7 +2090,10 @@ CONST struct rt_tol *tol;
 			continue;
 		}
 		/* Break edge on vertex, but don't fuse yet. */
-rt_log( "nmg_model_break_all_es_on_v(): breaking eu x%x(mate=x%x, e=x%x) at vertex x%x\n", eu, eu->eumate_p, eu->e_p, v );
+
+		if( rt_g.NMG_debug & DEBUG_BOOL )
+			rt_log( "\tnmg_model_break_all_es_on_v: breaking eu x%x on v x%x\n", eu, v );
+
 		(void)nmg_ebreak( v, eu );
 		count++;
 	}
@@ -3087,6 +3095,12 @@ CONST struct rt_tol	*tol;
 		/* Only originals were "outie" cracks.  No flipping */
 		return 0;
 	}
+
+	if( !orig->fu )
+	{
+		/* nothing but wires */
+		return( 0 );
+	}
 	if( !orig->existing_flag )  {
 		/* There were no originals.  Do something sensible to check the newbies */
 		if( !orig->fu )  {
@@ -3110,6 +3124,7 @@ CONST struct rt_tol	*tol;
 		}
 #endif
 	}
+
 	expected_ot = !(orig->fu->orientation == OT_SAME);
 	if( !orig->is_outie ) count++;	/* Don't count orig if "outie" crack */
 
@@ -3678,12 +3693,16 @@ CONST struct rt_tol	*tol;
 		if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
 			nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
 		}
-if (rt_g.NMG_debug)
-{
-	nmg_stash_model_to_file( "radial_check.g", nmg_find_model( &eu->l.magic ), "error" );
-	for( RT_LIST_FOR( rad, nmg_radial, &list ) )
-		nmg_pr_fu_briefly( rad->fu, "" );
-}
+
+		if (rt_g.NMG_debug)
+		{
+			char tmp_name[256];
+
+			sprintf( tmp_name, "radial_check_%d.g", debug_file_count );
+			nmg_stash_model_to_file( tmp_name, nmg_find_model( &eu->l.magic ), "error" );
+			for( RT_LIST_FOR( rad, nmg_radial, &list ) )
+				nmg_pr_fu_briefly( rad->fu, "" );
+		}
 	}
 
 	/* Release the storage */
