@@ -15,11 +15,6 @@
 #include "fb.h"		/* has once-only latch */
 #include "./hmenu.h"	/* has once-only latch */
 
-#ifdef BSD
-#define strchr	index
-#define strrchr	rindex
-#endif
-
 #define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported. */
 #define MAX_SCANSIZE	2048	/* Longest output scanline. */
 #define MAX_HL_SIZE	2048	/* Maximum size of hidden-line image. */
