@@ -1470,6 +1470,9 @@ AC_SUBST(FB)
 FFT='${top_builddir}/src/libfft/libfft.la'
 AC_SUBST(FFT)
 
+MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
+AC_SUBST(MULTISPECTRAL)
+
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 AC_SUBST(OPTICAL)
 
