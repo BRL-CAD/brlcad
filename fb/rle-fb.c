@@ -44,14 +44,17 @@ static ColorMap	cmap;
 static char	*framebuffer = (char *)0;
 static int	screen_width = 0;
 static int	screen_height = 0;
+static int	scr_xoff = 0;
+static int	scr_yoff = 0;
 
 static int	crunch;
 static int	overlay;
 static int	r_debug;
 
 static char	usage[] = "\
-Usage: rle-fb [-h -d -v -c -O] [-F framebuffer]  [-C r/g/b]\n\
-	[-s squarefilesize] [-w file_width] [-n file_height] [file.rle]\n\
+Usage: rle-fb [-c -d -h -O] [-F framebuffer]  [-C r/g/b]\n\
+	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
+	[-X scr_xoff] [-Y scr_yoff] [file.rle]\n\
 ";
 
 /*
@@ -63,7 +66,7 @@ register char	**argv;
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "cOdhs:w:n:C:F:" )) != EOF )  {
+	while( (c = getopt( argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:" )) != EOF )  {
 		switch( c )  {
 		case 'O':
 			overlay = 1;
@@ -81,15 +84,24 @@ register char	**argv;
 			/* high-res */
 			screen_height = screen_width = 1024;
 			break;
+		case 'S':
 		case 's':
 			/* square screen size */
 			screen_height = screen_width = atoi(optarg);
 			break;
+		case 'W':
 		case 'w':
 			screen_width = atoi(optarg);
 			break;
+		case 'N':
 		case 'n':
 			screen_height = atoi(optarg);
+			break;
+		case 'X':
+			scr_xoff = atoi(optarg);
+			break;
+		case 'Y':
+			scr_yoff = atoi(optarg);
 			break;
 		case 'C':
 			{
@@ -184,6 +196,10 @@ char ** argv;
 			sv_globals.sv_bg_color[i] = background[i];
 	}
 
+	sv_globals.sv_xmin += scr_xoff;
+	sv_globals.sv_xmax += scr_xoff;
+	sv_globals.sv_ymin += scr_yoff;
+	sv_globals.sv_ymax += scr_yoff;
 	if( sv_globals.sv_xmax > screen_width ||
 	    sv_globals.sv_ymax > screen_height )  {
 	    	screen_width = sv_globals.sv_xmax + 1;
