@@ -32,6 +32,8 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
+extern char	*malloc();
+
 static char	*f1_name;
 static char	*f2_name;
 static FILE	*f1;
@@ -47,8 +49,14 @@ static int	seen_formula;
 
 static int	width = 3;
 static unsigned char	const[32];
-static unsigned char	fg[32];
-static unsigned char	bg[32];
+
+#define CHUNK	1024
+static char	*b1;			/* fg input buffer */
+static char	*b2;			/* bg input buffer */
+static char	*b3;			/* output buffer */
+
+static long	fg_cnt;
+static long	bg_cnt;
 
 static char usage[] = "\
 Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-c r/g/b]\n\
@@ -136,7 +144,6 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-	register int i;
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
@@ -147,50 +154,92 @@ char **argv;
 		wanted = GT;
 		seen_const = 1;		/* Default is const of 0/0/0 */
 	}
-	fprintf(stderr, "Selecting foreground when fg ");
+	fprintf(stderr, "pixmerge: Selecting foreground when fg ");
 	if( wanted & LT )  putc( '<', stderr );
 	if( wanted & EQ )  putc( '=', stderr );
 	if( wanted & GT )  putc( '>', stderr );
 	if( seen_const )  {
+		register int i;
+
 		putc( ' ', stderr );
-		for( i = 0; i < width; i++ )
-			fprintf( stderr, "%d/", const[i] );
+		for( i = 0; i < width; i++ )  {
+			fprintf( stderr, "%d", const[i] );
+			if( i < width-1 )
+				putc( '/', stderr );
+		}
 		putc( '\n', stderr );
 	} else {
 		fprintf( stderr, " bg\n" );
 	}
 
-	while(1)  {
-		register unsigned char	*ap, *bp;
-		register unsigned char	*ep;		/* end ptr */
+	if( (b1 = malloc( width*CHUNK )) == (char *)0 ||
+	    (b2 = malloc( width*CHUNK )) == (char *)0 ||
+	    (b3 = malloc( width*CHUNK )) == (char *)0 ) {
+	    	fprintf(stderr, "pixmerge:  malloc failure\n");
+	    	exit(3);
+	}
 
-		if( fread( fg, width, 1, f1 ) != 1 ||
-		    fread( bg, width, 1, f2 ) != 1 )
+	while(1)  {
+		unsigned char	*cb1, *cb2;	/* current input buf ptrs */
+		register unsigned char	*cb3; 	/* current output buf ptr */
+		unsigned char	*ebuf;		/* end ptr in b1 */
+		int r1, r2, len;
+
+		r1 = fread( b1, width, CHUNK, f1 );
+		r2 = fread( b2, width, CHUNK, f2 );
+		len = r1;
+		if( r2 < len )
+			len = r2;
+		if( len <= 0 )
 			break;
 
-		/*
-		 * Stated condition must hold for all input bytes
-		 * to select the foreground for output
-		 */
-		ap = fg;
-		if( seen_const )
-			bp = const;
-		else
-			bp = bg;
-		for( ep = fg+width; ap < ep; ap++,bp++ )  {
-			if( *ap > *bp )  {
-				if( !(GT & wanted) ) goto fail;
-			} else if( *ap == *bp )  {
-				if( !(EQ & wanted) ) goto fail;
-			} else  {
-				if( !(LT & wanted) ) goto fail;
+		cb1 = (unsigned char *)b1;
+		cb2 = (unsigned char *)b2;
+		cb3 = (unsigned char *)b3;
+		ebuf = cb1 + width*len;
+		for( ; cb1 < ebuf; cb1 += width, cb2 += width )  {
+			/*
+			 * Stated condition must hold for all input bytes
+			 * to select the foreground for output
+			 */
+			register unsigned char	*ap, *bp;
+			register unsigned char	*ep;		/* end ptr */
+
+			ap = cb1;
+			if( seen_const )
+				bp = const;
+			else
+				bp = cb2;
+			for( ep = cb1+width; ap < ep; ap++,bp++ )  {
+				if( *ap > *bp )  {
+					if( !(GT & wanted) ) goto fail;
+				} else if( *ap == *bp )  {
+					if( !(EQ & wanted) ) goto fail;
+				} else  {
+					if( !(LT & wanted) ) goto fail;
+				}
 			}
-		}
-		/* success */
-		fwrite( fg, width, 1, stdout );
-		continue;
+			/* success */
+			{
+				register int i;
+				ap = cb1;
+				for( i=0; i<width; i++ )
+					*cb3++ = *ap++;
+			}
+			fg_cnt++;
+			continue;
 fail:
-		fwrite( bg, width, 1, stdout );
+			{
+				register int i;
+				bp = cb2;
+				for( i=0; i<width; i++ )
+					*cb3++ = *bp++;
+			}
+			bg_cnt++;
+		}
+		fwrite( b3, width, len, stdout );
 	}
+	fprintf( stderr, "pixmerge: %d foreground, %d background\n",
+		fg_cnt, bg_cnt );
 	exit(0);
 }
