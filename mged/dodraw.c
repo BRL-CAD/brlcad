@@ -268,9 +268,29 @@ int			id;
 		rt_functab[id].ft_ifree( &intern );
 	    	return(TREE_NULL);		/* ERROR */
 	}
-	rt_functab[id].ft_ifree( &intern );
 
-	drawH_part2( dashflag, &vhead, pathp, tsp, SOLID_NULL );
+	/*
+	 * XXX HACK CTJ - drawH_part2 sets the default color of a
+	 * solid by looking in tps->ts_mater.ma_color, for pseudo
+	 * solids, this needs to be something different and drawH
+	 * has no idea or need to know what type of solid this is.
+	 */
+	if (intern.idb_type == ID_GRIP) {
+		int r,g,b;
+		r= tsp->ts_mater.ma_color[0];
+		g= tsp->ts_mater.ma_color[1];
+		b= tsp->ts_mater.ma_color[2];
+		tsp->ts_mater.ma_color[0] = 0;
+		tsp->ts_mater.ma_color[1] = 128;
+		tsp->ts_mater.ma_color[2] = 128;
+		drawH_part2( dashflag, &vhead, pathp, tsp, SOLID_NULL );
+		tsp->ts_mater.ma_color[0] = r;
+		tsp->ts_mater.ma_color[1] = g;
+		tsp->ts_mater.ma_color[2] = b;
+	} else {
+		drawH_part2( dashflag, &vhead, pathp, tsp, SOLID_NULL );
+	}
+	rt_functab[id].ft_ifree( &intern );
 
 	/* Indicate success by returning something other than TREE_NULL */
 	GETUNION( curtree, tree );
