@@ -31,9 +31,11 @@ typedef int bool;			/* Boolean data */
 
 typedef char *pointer;		/* generic pointer (void *) */
 
+#if !defined(__STDC__)
 #define	const		/* nothing */	/* (undefine for ANSI C) */
 #define	signed		/* nothing */	/* (undefine for ANSI C) */
 #define	volatile	/* nothing */	/* (undefine for ANSI C) */
+#endif
 
 /* Universal constants */
 
