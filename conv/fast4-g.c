@@ -6552,8 +6552,9 @@ struct directory *dp;
 
 	if( internal2.idb_type != ID_COMBINATION )
 	{
-		bu_log( "%s is not a combination!!!!\n", dp2->d_namep );
-		bu_bomb( "Expecting a combination!!!!\n" );
+		rt_db_free_internal( &internal );
+		rt_db_free_internal( &internal2 );
+		return;
 	}
 
 	comb2 = (struct rt_comb_internal *)internal2.idb_ptr;
@@ -6591,7 +6592,6 @@ char *output_file;
 
 	db_scan(dbip, (int (*)())db_diradd, 1);
 
-	/* make a list of all the regions to be modified */
 	if( (dp=db_lookup( dbip, "all", 0 )) == DIR_NULL )
 	{
 		bu_log( "Cannot find group 'all' in model, post processing not completed\n" );
