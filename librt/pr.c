@@ -23,6 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./debug.h"
 
@@ -253,6 +254,99 @@ int lvl;			/* recursion level */
 	case OP_GUARD:
 	case OP_XNOP:
 		/* UNARY tree */
+		rt_pr_tree( tp->tr_b.tb_left, lvl+1 );
+		break;
+	}
+}
+
+/*
+ *			R T _ P R _ T R E E _ V L S
+ *
+ *  Produce a compact representation of this tree.
+ *  The destination vls must be initialized by the caller.
+ *
+ *  Operations are responsible for generating white space.
+ */
+void
+struct rt_vls		*vls;
+struct bu_vls		*vls;
+register CONST union tree *tp;
+{
+	char		*str;
+
+		rt_vls_strcat( vls, "??NULL_tree??" );
+		bu_vls_strcat( vls, "??NULL_tree??" );
+		return;
+	}
+
+	switch( tp->tr_op )  {
+
+		rt_vls_strcat( vls, "NOP");
+		bu_vls_strcat( vls, "NOP");
+		return;
+
+		rt_vls_strcat( vls, tp->tr_a.tu_stp->st_name );
+		bu_vls_strcat( vls, tp->tr_a.tu_stp->st_dp->d_namep );
+		return;
+
+	case OP_REGION:
+		rt_vls_strcat( vls, str );
+		bu_vls_strcat( vls, str );
+		rt_free( str, "path string" );
+		return;
+
+		rt_log("rt_pr_tree_vls() Unknown op=x%x\n", tp->tr_op );
+		bu_log("rt_pr_tree_vls() Unknown op=x%x\n", tp->tr_op );
+		return;
+
+	case OP_UNION:
+		rt_vls_strcat( vls, " (" );
+		bu_vls_strcat( vls, " (" );
+		rt_vls_strcat( vls, ") u (" );
+		bu_vls_strcat( vls, ") u (" );
+		rt_vls_strcat( vls, ") " );
+		bu_vls_strcat( vls, ") " );
+		break;
+	case OP_INTERSECT:
+		rt_vls_strcat( vls, " (" );
+		bu_vls_strcat( vls, " (" );
+		rt_vls_strcat( vls, ") + (" );
+		bu_vls_strcat( vls, ") + (" );
+		rt_vls_strcat( vls, ") " );
+		bu_vls_strcat( vls, ") " );
+		break;
+	case OP_SUBTRACT:
+		rt_vls_strcat( vls, " (" );
+		bu_vls_strcat( vls, " (" );
+		rt_vls_strcat( vls, ") - (" );
+		bu_vls_strcat( vls, ") - (" );
+		rt_vls_strcat( vls, ") " );
+		bu_vls_strcat( vls, ") " );
+		break;
+	case OP_XOR:
+		rt_vls_strcat( vls, " (" );
+		bu_vls_strcat( vls, " (" );
+		rt_vls_strcat( vls, ") ^ (" );
+		bu_vls_strcat( vls, ") ^ (" );
+		rt_vls_strcat( vls, ") " );
+		bu_vls_strcat( vls, ") " );
+		break;
+	case OP_NOT:
+		rt_vls_strcat( vls, " !(" );
+		bu_vls_strcat( vls, " !(" );
+		rt_vls_strcat( vls, ") " );
+		bu_vls_strcat( vls, ") " );
+		break;
+	case OP_GUARD:
+		rt_vls_strcat( vls, " guard(" );
+		bu_vls_strcat( vls, " guard(" );
+		rt_vls_strcat( vls, ") " );
+		bu_vls_strcat( vls, ") " );
+		break;
+	case OP_XNOP:
+		rt_vls_strcat( vls, " xnop(" );
+		bu_vls_strcat( vls, " xnop(" );
+		rt_vls_strcat( vls, ") " );
 		bu_vls_strcat( vls, ") " );
 		break;
 	return (char *)NULL;
