@@ -43,6 +43,7 @@
 
 extern int cmdInit();
 extern void Cad_Main();
+extern void Tk_CreateCanvasBezierType();
 
 static int Cad_AppInit();
 #ifdef BWISH
@@ -172,6 +173,9 @@ Cad_AppInit(interp)
 #ifdef BWISH
 	if ((tkwin = Tk_MainWindow(interp)) == NULL)
 		return TCL_ERROR;
+
+	/* Add Bezier Curves to the canvas widget */
+	Tk_CreateCanvasBezierType();
 #endif
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
