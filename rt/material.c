@@ -71,8 +71,10 @@ register struct region *rp;
 		return(-1);
 	}
 	material = rp->reg_mater.ma_matname;
-	if( material[0] == '\0' )
+	if( material[0] == '\0' )  {
 		material = mdefault;
+		param[0] = '\0';
+	}
 retry:
 	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 		if( material[0] != mfp->mf_name[0]  ||
@@ -84,6 +86,7 @@ retry:
 		material );
 	if( material != mdefault )  {
 		material = mdefault;
+		param[0] = '\0';
 		goto retry;
 	}
 	return(-1);
@@ -97,6 +100,7 @@ found:
 		/* What to do if setup fails? */
 		if( material != mdefault )  {
 			material = mdefault;
+			param[0] = '\0';
 			goto retry;
 		}
 	}
