@@ -173,6 +173,7 @@ dotitles()
 	auto fastf_t	az, el;
 	auto char linebuf[512];
 	struct rt_vls	vls;
+	int		scroll_ybot;
 
 	RT_VLS_INIT( &vls );
 
@@ -186,7 +187,7 @@ dotitles()
 	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX, TITLE_YBASE-TEXT1_DY, 0 );
 
 	/* Display scroll bars */
-	y = scroll_display( SCROLLY ); 
+	scroll_ybot = scroll_display( SCROLLY ); 
 	y = MENUY;
 
 	/* Display state and local unit in upper right corner, boxed */
@@ -251,7 +252,7 @@ dotitles()
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
 	create_text_overlay( &vls );
-	screen_vls( SOLID_XBASE, SOLID_YBASE, &vls );
+	screen_vls( SOLID_XBASE, SOLID_YBASE+scroll_ybot, &vls );
 	rt_vls_free( &vls );
 
 	/*
