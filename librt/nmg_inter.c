@@ -116,6 +116,7 @@ struct faceuse *fu;
 		    	VPRINT("Making vertexloop", vu->v_p->vg_p->coord);
 
 		plu = nmg_mlv(&fu->l.magic, vu->v_p, OT_UNSPEC);
+		nmg_loop_g(plu->l_p);
 	    	(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
 			&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 	}
@@ -344,6 +345,7 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 			    		v1->vg_p->coord);
 
 			plu = nmg_mlv(&fu->l.magic, v1, OT_UNSPEC);
+			nmg_loop_g(plu->l_p);
 			vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			NMG_CK_VERTEXUSE(vu_other);
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
@@ -448,6 +450,7 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 				eu->eumate_p->vu_p->v_p, OT_SAME);
 			vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			NMG_CK_VERTEXUSE(vu_other);
+			nmg_loop_g(plu->l_p);
 
 			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			    	VPRINT("Making vertexloop",
@@ -531,6 +534,8 @@ struct faceuse *fu;
 {
 	struct edgeuse	*eu;
 	long		magic1;
+	struct loopuse	*fulu;
+	int		no_overlaps;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("isect_loop_face(, lu=x%x, fu=x%x)\n", lu, fu);
@@ -538,6 +543,9 @@ struct faceuse *fu;
 	}
 
 	NMG_CK_LOOPUSE(lu);
+	NMG_CK_LOOP(lu->l_p);
+	NMG_CK_LOOP_G(lu->l_p->lg_p);
+
 	NMG_CK_FACEUSE(fu);
 
 	/* loop overlaps intersection face? */
@@ -549,6 +557,27 @@ struct faceuse *fu;
 		isect_vertex_face(bs,
 			RT_LIST_FIRST(vertexuse,&lu->down_hd), fu);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
+		/*
+		 * If the bounding box of a loop doesn't intersect the
+		 * bounding box of a loop in the other face, it doesn't need
+		 * to get cut.
+		 */
+		no_overlaps = 1;
+		for (RT_LIST_FOR(fulu, loopuse, &fu->lu_hd )){
+			NMG_CK_LOOPUSE(fulu);
+			NMG_CK_LOOP(fulu->l_p);
+			NMG_CK_LOOP_G(fulu->l_p->lg_p);
+
+			if (NMG_EXTENT_OVERLAP(
+			    fulu->l_p->lg_p->min_pt,fulu->l_p->lg_p->max_pt,
+			    lu->l_p->lg_p->min_pt,lu->l_p->lg_p->max_pt)) {
+				no_overlaps = 0;
+				break;
+			}
+		}
+		if (no_overlaps)
+			return;
+
 		/*
 		 *  Process a loop consisting of a list of edgeuses.
 		 *
@@ -781,6 +810,11 @@ CONST struct rt_tol	*tol;
 
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
+
+#if 0
+	show_broken_stuff((long *)fu1, (long **)NULL, 1, 0);
+	show_broken_stuff((long *)fu2, (long **)NULL, 1, 0);
+#endif
 }
 
 /*
