@@ -1263,7 +1263,8 @@ CONST struct rt_tol	*tol;		/* for printing */
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
 
-rt_log("nmg_radial_build_list( existing=%d, eu=x%x )\n", existing, eu );
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log("nmg_radial_build_list( existing=%d, eu=x%x )\n", existing, eu );
 
 	amin = 64;
 	amax = -64;
@@ -1677,12 +1678,12 @@ again:
 		 *  Insert "rad" CCW radial from "prev".
 		 *
 		 */
-#if 1
-rt_log("Before -- ");
-nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
-nmg_pr_radial("prev:", prev);
-nmg_pr_radial(" rad:", rad);
-#endif
+		if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+			rt_log("Before -- ");
+			nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
+			nmg_pr_radial("prev:", prev);
+			nmg_pr_radial(" rad:", rad);
+		}
 		dest = prev->eu;
 		if( rad->needs_flip )  {
 			struct edgeuse	*other_eu = rad->eu->eumate_p;
@@ -1695,15 +1696,14 @@ nmg_pr_radial(" rad:", rad);
 			nmg_je( dest, rad->eu->eumate_p );
 		}
 		rad->existing_flag = 1;
-#if 1
-rt_log("After -- ");
-nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
-#endif
+		if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+			rt_log("After -- ");
+			nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
+		}
 	}
 	if( skipped )  {
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 			rt_log("nmg_radial_implement_decisions() %d remaining, go again\n", skipped);
-rt_log("nmg_radial_implement_decisions() %d remaining, go again\n", skipped);
 		goto again;
 	}
 
@@ -1893,21 +1893,20 @@ CONST struct rt_tol	*tol;
 	)  {
 		nmg_radial_mark_flips( &list1, *sp, tol );
 	}
-#if 1
-rt_log("marked list:\n");
-rt_log("  edge: %g %g %g -> %g %g %g\n",
-	V3ARGS(eu1ref->vu_p->v_p->vg_p->coord), V3ARGS(eu1ref->eumate_p->vu_p->v_p->vg_p->coord) );
-nmg_pr_radial_list( &list1, tol );
-#endif
+
+	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+		rt_log("marked list:\n");
+		rt_log("  edge: %g %g %g -> %g %g %g\n",
+			V3ARGS(eu1ref->vu_p->v_p->vg_p->coord),
+			V3ARGS(eu1ref->eumate_p->vu_p->v_p->vg_p->coord) );
+		nmg_pr_radial_list( &list1, tol );
+	}
 
 	nmg_radial_implement_decisions( &list1, tol, eu1ref, xvec, yvec, zvec );
 
-#if 0
-	/* How did it come out? */
-	nmg_pr_radial_list( &list1, tol );
-	nmg_pr_fu_around_eu_vecs( eu1ref, xvec, yvec, zvec, tol );
-#endif
 	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+		/* How did it come out? */
+		nmg_pr_radial_list( &list1, tol );
 		nmg_pr_fu_around_eu_vecs( eu1ref, xvec, yvec, zvec, tol );
 	}
 	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
@@ -2072,7 +2071,7 @@ CONST struct rt_tol	*tol;
 
 	nflip = nmg_radial_mark_flips( &list, s, tol );
 	if( nflip )  {
-		rt_log("nmg_eu_radial_check(x%s) %d flips needed\n  %g %g %g --- %g %g %g\n",
+		rt_log("nmg_eu_radial_check(x%x) %d flips needed\n  %g %g %g --- %g %g %g\n",
 			s, nflip,
 			V3ARGS(eu->vu_p->v_p->vg_p->coord),
 			V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
