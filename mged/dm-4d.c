@@ -249,7 +249,7 @@ Ir_configure_window_shape()
 	default:
 		break;
 	case NTSC:
-		/* Only use the central square part */
+		/* Only use the central square part, due to overscan */
 		npix = YMAX170-30;
 		winx_size = npix * 4 / 3;	/* NTSC aspect ratio */
 		winy_size = npix;
@@ -260,15 +260,22 @@ Ir_configure_window_shape()
 
 		if( no_faceplate )  {
 			/* Use the whole screen, for VR & visualization */
-			xlim_view = XMAX170 / (double)npix / (4 / 3);;
-			ylim_view = YMAX170 / (double)npix;
+			viewport( 0, XMAX170, 0, YMAX170 );
 		} else {
 			/* Only use the central (square) faceplate area */
+/*
+ * XXX Does this viewport() call do anything?  (Write enable pixels maybe?)
+ * XXX (1) the first frame (only) is shrunken oddly in X, and
+ * XXX (2) the drawing overflows the boundaries.
+ * XXX Perhaps XY clipping could be used?
+ * At least the aspect ratio is right!
+ */
 			viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
 				(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
-			xlim_view = 1;
-			ylim_view = 1;
 		}
+		/* Aspect ratio correction is needed either way */
+		xlim_view = XMAX170 / (double)YMAX170;
+		ylim_view = 1;	/* YMAX170 / YMAX170 */
 
 		linewidth(3);
 		blanktime(0);	/* don't screensave while recording video! */
