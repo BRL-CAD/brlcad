@@ -5,27 +5,32 @@
  *	Lee A. Butler
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
+ *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  *
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by 
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
- *  Note -
- *	Any program that uses this header file must also include
- *	these other header files, in this order:
- *		<stdio.h>
- *		<math.h>
- *		"machine.h"
- *		"vmath.h"
- *		"nmg.h"		(This file)
- *		"raytrace.h"
+ *  Include Sequencing -
+ *	#include <stdio.h>
+ *	#include <math.h>
+ *	#include "machine.h"	/* For fastf_t definition on this machine *_/
+ *	#include "vmath.h"	/* For vect_t definition *_/
+ *	#include "rtlist.h"	/* OPTIONAL, auto-included by raytrace.h *_/
+ *	#include "rtstring.h"	/* OPTIONAL, auto-included by raytrace.h *_/
+ *	#include "nmg.h"
+ *	#include "raytrace.h"
+ *	#include "nurb.h"	/* OPTIONAL, follows raytrace.h when used *_/
+ *
+ *  Libraries Used -
+ *	LIBRT LIBRT_LIBES -lm -lc
+ *
+ *  $Header$
  */
 #ifndef NMG_H
 #define NMG_H seen
@@ -132,10 +137,13 @@
 #define TBL_INS_UNIQUE	 7	/* insert item into list, if not present */
 
 struct nmg_ptbl {
+	long	magic;	/* magic */
 	int	end;	/* index into buffer of first available location */
 	int	blen;	/* # of (long *)'s worth of storage at *buffer */
 	long  **buffer;	/* data storage area */
 };
+#define NMG_PTBL_MAGIC		0x7074626c		/* "ptbl" */
+#define NMG_CK_PTBL(_p)		NMG_CKMAG(_p, NMG_PTBL_MAGIC, "nmg_ptbl")
 
 /* For those routines that have to "peek" a little */
 #define NMG_TBL_BASEADDR(p)	((p)->buffer)
