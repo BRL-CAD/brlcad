@@ -20,11 +20,11 @@ int	state;
 char	*state_str[] = {
 	"-ZOT-",
 	"VIEW",
-	"SOLID PICK",
-	"SOLID EDIT",
-	"OBJECT PICK",
-	"OBJECT PATH",
-	"OBJECT EDIT",
+	"SOL PICK",
+	"SOL EDIT",
+	"OBJ PICK",
+	"OBJ PATH",
+	"OBJ EDIT",
 	"UNKNOWN",
 };
 
@@ -58,7 +58,7 @@ dotitles()
 	}
 
 	/* Display current state in upper right corner */
-	dmp->dmr_puts( state_str[state], MENUX, MENUY - MENU_DY, 1, DM_YELLOW );
+	dmp->dmr_puts( state_str[state], MENUX, MENUY - MENU_DY, 2, DM_YELLOW );
 
 	/*
 	 * Print information about object illuminated
