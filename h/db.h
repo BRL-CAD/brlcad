@@ -59,14 +59,13 @@ union record  {
 #define ID_MATERIAL	'm'	/* Material description record */
 	char	u_size[128];	/* Total record size */
 	struct material_rec {
-		char	md_id;		/* = ID_MATERIAL */
-		char	md_flags;
-		short	md_low;		/* lower end of this material ID */
-		short	md_hi;		/* upper end of this material ID */
+		char	md_id;		/* = ID_MATERIAL color override */
+		char	md_pad;
+		short	md_low;		/* lower end of region IDs affected */
+		short	md_hi;		/* upper end of region IDs affected */
 		unsigned char md_r;
-		unsigned char md_g;	/* color of this material 0..255 */
+		unsigned char md_g;	/* color of these regions:  0..255 */
 		unsigned char md_b;
-		char	md_material[100]; /* "handle" in material database */
 	} md;
 	struct b_spline_head {
 		char    d_id;		/* = B_SPLINE_HEAD */
@@ -176,9 +175,13 @@ union record  {
 		short	c_regionid;		/* region ID code */
 		short	c_aircode;		/* air space code */
 		short	c_length;		/* # of members */
-		short	c_num;			/* COMGEOM region # */
-		short	c_material;		/* material code */
+		short	c_pad;
+		short	c_material;		/* (GIFT) material code */
 		short	c_los;			/* equivalent LOS estimate */
+		char	c_override;		/* non-0 ==> c_rgb is color */
+		unsigned char c_rgb[3];		/* 0..255 color override */
+		char	c_matname[32];		/* Reference: Material name */
+		char	c_matparm[60];		/* String Material parms */
 	}  c;
 	struct member  {
 		char	m_id;		/* M */
