@@ -18,6 +18,7 @@
 #
 
 
+
 #
 #                               R C C - C A P
 #
@@ -26,8 +27,9 @@
 #     Assume (A=B=C=D) || (A=B && C=D)
 #
 proc rcc-cap {args} {
+    global mged_display
     set usage "Usage: rcc-cap rccname newname \[height\] \[b|t\] \n \
-	       \t(create a cap at an end of an rcc)"
+	       \t(create a cap (ell) at an end of an rcc)"
     set argc [llength $args]
     if {$argc < 2 || $argc > 4} {
 	error "$usage"
@@ -41,7 +43,7 @@ proc rcc-cap {args} {
 	set end b
     } elseif {$argc == 3} {
 	if { [regexp {^[0-9]+.*[0-9]*$} [lindex $args 2]]} {
-	    set height [lindex $args 2]
+	    set height [expr [bu_units_conversion $mged_display(units)] *[lindex $args 2]]
             set end b
 	} else {
 	    foreach {ax ay az} [lindex [db get $rccname A] 0] {}
@@ -50,7 +52,7 @@ proc rcc-cap {args} {
 	    set end [lindex $args 2]
 	}
     } else {
-       set height [lindex $args 2]
+       set height [expr [bu_units_conversion $mged_display(units)] *[lindex $args 2]]
        set end [lindex $args 3]
     }
   #Choices for $end are either "b" (base) or "t" (top)
@@ -87,6 +89,7 @@ proc rcc-cap {args} {
 #
 #
 proc rcc-tgc {args} {
+    global mged_display
     set usage "Usage: rcc-tgc rccname newname x y z \[b|t\] \n   \
                \t(create a tgc with the specified apex at an end of an rcc)"
     set argc [llength $args]
@@ -120,9 +123,24 @@ proc rcc-tgc {args} {
     set vector1 [lindex [db get $rccname $vec1] 0]
     set vector2 [lindex [db get $rccname $vec2] 0]
     set scalar .000001
-    set apex [list $ptx $pty $ptz]
+#    set apex [list $ptx $pty $ptz]
+    set apex ""
+    foreach pt {$ptx $pty $ptz} {
+	set result [expr $pt*[bu_units_conversion $mged_display(units)]]
+        lappend apex $result
+    }
     set height [eval vsub2 {$apex} {$vertex}]
   #Create TGC
+  #in order to create properly, convert to display units
+    foreach param {vertex height vector1 vector2} val "{$vertex} {$height} {$vector1} {$vector2}" {
+	set result ""
+	foreach coord $val {
+	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
+            lappend result $temp
+	}
+	set $param $result
+    }
+    set scalar [expr $scalar/[bu_units_conversion $mged_display(units)]]
     eval in $newname tgc $vertex $height $vector1 $vector2 $scalar $scalar
     return $newname
 }
@@ -134,6 +152,7 @@ proc rcc-tgc {args} {
 #
 #
 proc tor-rcc {args} {
+    global mged_display
     set usage "Usage: tor-rcc torname newname \n \
 	       \t(create an rcc from a tor)"
     set argc [llength $args]
@@ -156,6 +175,10 @@ proc tor-rcc {args} {
 	set $coord [expr $scale * $hval]
     }
   #Create RCC
+  #in order to create properly, have to use display units
+    foreach param {rvx rvy rvz rhx rhy rhz radius1} val "$rvx $rvy $rvz $rhx $rhy $rhz $radius1" {
+	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+    }
     in $newname rcc $rvx $rvy $rvz $rhx $rhy $rhz $radius1
     return $newname
 }
@@ -167,6 +190,7 @@ proc tor-rcc {args} {
 #
 #   
 proc rcc-tor {args} {
+    global mged_display
     set usage "Usage: rcc-tor rccname newname \n \
 	       \t(create a tor from an rcc)"
     set argc [llength $args]
@@ -191,6 +215,10 @@ proc rcc-tor {args} {
 	set $coord [expr $vval + $hval*.5]
     }
   #Create TOR
+  #in order to create properly, have to use display units
+    foreach param {tvx tvy tvz rhx rhy rhz radius1 radius2} val "$tvx $tvy $tvz $rhx $rhy $rhz $radius1 $radius2" {
+	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+    }
     in $newname tor $tvx $tvy $tvz $rhx $rhy $rhz $radius1 $radius2
     return $newname
 }
@@ -204,6 +232,7 @@ proc rcc-tor {args} {
 #
 #
 proc rcc-blend {args} {
+    global mged_display
     set usage "Usage: rcc-blend rccname newname thickness \[b|t\] \n \
 	       \t(create a blend at an end of an rcc)"
     set argc [llength $args]
@@ -212,7 +241,7 @@ proc rcc-blend {args} {
     }
     set rccname1 [lindex $args 0]
     set newname [lindex $args 1]
-    set thickness [lindex $args 2]
+    set thickness [expr [bu_units_conversion $mged_display(units)] * [lindex $args 2]]
     if {$argc == 3} {
 	set end b
     } else {
@@ -225,7 +254,7 @@ proc rcc-blend {args} {
   #Get RCC coordinates
     foreach {rvx rvy rvz} [lindex [db get $rccname1 V] 0] {}
     foreach {rhx rhy rhz} [lindex [db get $rccname1 H] 0] {}
-    foreach {rax ray raz} [lindex [db get $rccname1 A] 0] {}        
+    foreach {rax ray raz} [lindex [db get $rccname1 A] 0] {}    
   #Set Variables  
     set amag [expr $thickness + (sqrt($rax*$rax + $ray*$ray + $raz*$raz))]
     set hmag [expr sqrt($rhx*$rhx + $rhy*$rhy + $rhz*$rhz)]
@@ -242,10 +271,18 @@ proc rcc-blend {args} {
     }
   #Create TOR
     set torname [eval make_name $newname]
+    set hscale [expr $thickness/$hmag]
+  #In order to make TOR properly, have to convert parameters to display units  
+    foreach param {tvx tvy tvz rhx rhy rhz amag thickness} val "$tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness" {
+	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+    } 
     in $torname tor $tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness
   #Create RCC2
     set rccname2 [eval make_name $newname]
-    set hscale [expr $thickness/$hmag]
+  #In order to make TOR properly, have to convert parameters to display units
+    foreach param {rvx rvy rvz } val "$rvx $rvy $rvz" {
+	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+    }
     in $rccname2 rcc $rvx $rvy $rvz [expr $hscale*$rhx] [expr $hscale*$rhy] [expr $hscale*$rhz] $amag
   #Create Flange
     r $newname u $rccname2 - $torname - $rccname1
@@ -262,13 +299,13 @@ proc rcc-blend {args} {
 #
 #
 proc rpp-cap {args} {
-
 #If orient = 0, the peaks of the ARB6 are drawn at the midpoint between the
 # first and second points and the midpoint between the third and fourth points
 # of the specified face
 #If orient = 1, the peaks of the ARB6 are drawn at the midpoint between the 
 # first and fourth points and the midpoint between the second and third points
 # of the specified face
+    global mged_display
     set usage "Usage: rpp-cap rppname newname face height \[0|1\] \n \
 	       \t(create a cap (arb6) at a face of an rpp)"
     set argc [llength $args]
@@ -278,7 +315,7 @@ proc rpp-cap {args} {
     set rppname [lindex $args 0]
     set newname [lindex $args 1]
     set face [lindex $args 2]
-    set height [lindex $args 3]
+    set height [expr [lindex $args 3]*[bu_units_conversion $mged_display(units)]]
     if {$argc == 4} {
 	set orient 0
     } else {
@@ -348,6 +385,18 @@ proc rpp-cap {args} {
 	set $coord [expr $value + [lindex $hvector $index]]
     }
   #Create ARB6
+  #in order to create properly, convert to display units
+    foreach param {P1 P2 P3 P4} val "{$P1} {$P2} {$P3} {$P4}" {
+	set result ""
+	foreach coord $val {
+	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
+            lappend result $temp
+	}
+	set $param $result
+    }
+    foreach coord {r1x r1y r1z r2x r2y r2z } val "$r1x $r1y $r1z $r2x $r2y $r2z" {
+	set $coord [expr $val/[bu_units_conversion $mged_display(units)]]
+    }
     eval in $newname arb6 $P1 $P2 $P3 $P4 $r1x $r1y $r1z $r2x $r2y $r2z
     return $newname
 }
@@ -361,6 +410,7 @@ proc rpp-cap {args} {
 #
 #
 proc rpp-arch {args} {
+    global mged_display
     set usage "Usage: rpp-arch rppname newname face \n \
 	       \t(create an arch at a face of an rpp)"
     set argc [llength $args]
@@ -382,6 +432,15 @@ proc rpp-arch {args} {
     set vertex [eval vscale {[eval vadd2 $V4 $V1]} .5]
     set radius [eval vmagnitude {[eval vsub2 {$vertex} $V4]}]
   #Create RCC 
+  #in order to create properly, have to use display units
+    foreach param {vertex height radius} val "{$vertex} {$height} {$radius}" {
+	set result ""
+	foreach coord $val {
+	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
+            lappend result $temp
+	}
+	set $param $result
+    }
     eval in $newname rcc $vertex $height $radius
     return $newname
 }
@@ -393,6 +452,7 @@ proc rpp-arch {args} {
 #
 #
 proc sph-part {args} {
+    global mged_display
     set usage "Usage: sph-part sph1name sph2name newname \n \
 	       \t(create a part from two sph's)"
     set argc [llength $args]
@@ -412,7 +472,11 @@ proc sph-part {args} {
     set radius2 [expr sqrt($ax2*$ax2 + $ay2*$ay2 + $az2*$az2)] 
     set hx [expr $vx2-$vx1]
     set hy [expr $vy2-$vy1]
-    set hz [expr $vz2-$vz1]
+    set hz [expr $vz2-$vz1]    
+  #in order to create properly, convert to display units
+    foreach param {vx1 vy1 vz1 hx hy hz radius1 radius2} val "$vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2" {
+	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+    }
   #Create PART
     in $newname part $vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2
     return $newname
