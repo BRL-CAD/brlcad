@@ -218,7 +218,15 @@ RT_EXTERN(void rt_nurb_curvature, (struct curvature *cvp,
 			CONST struct snurb *srf, fastf_t u, fastf_t v));
 
 /* nurb_plot.c */
-RT_EXTERN(void rt_nurb_s_plot, (struct snurb *srf) );
+RT_EXTERN(void rt_nurb_plot_snurb, (FILE *fp, CONST struct snurb *srf));
+RT_EXTERN(void rt_nurb_plot_cnurb, (FILE *fp, CONST struct cnurb *crv));
+RT_EXTERN(void rt_nurb_s_plot, (CONST struct snurb *srf) );
+
+/* nurb_interp.c */
+RT_EXTERN(void rt_nurb_cinterp, (struct cnurb *crv, int order,
+			CONST fastf_t *data, int n));
+RT_EXTERN(void rt_nurb_sinterp, (struct snurb *srf, int order,
+			CONST fastf_t *data, int ymax, int xmax));
 
 /* nurb_poly.c */
 RT_EXTERN(struct rt_nurb_poly *rt_nurb_to_poly, (struct snurb *srf));
