@@ -124,10 +124,15 @@ struct plot_list{
 
 struct plot_list HeadPlot;
 
+#ifdef DM_OGL
+int dm_type = DM_TYPE_OGL;
+#else
 int dm_type = DM_TYPE_X;
+#endif
 
 struct bu_structparse X_vparse[] = {
   {"%d",  1, "zclip",             X_MV_O(zclip),        refresh},
+  {"%d",  1, "debug",             X_MV_O(debug),        BU_STRUCTPARSE_FUNC_NULL },
   {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -137,11 +142,12 @@ struct bu_structparse Ogl_vparse[] = {
   {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh },
   {"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	Ogl_establish_zbuffer },
   {"%d",  1, "lighting",	Ogl_MV_O(lighting_on),	Ogl_establish_lighting },
+  {"%d",  1, "debug",		Ogl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
   {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 #endif
 
-static char usage[] = "Usage: pl-dm [-t g|o|X] plot_file(s)\n";
+static char usage[] = "Usage: pl-dm [-t o|X] plot_file(s)\n";
 
 /*
  *                     O U T P U T _ C A T C H
