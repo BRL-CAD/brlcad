@@ -30,8 +30,6 @@ static char RCSid[] = "$Header$";
 #endif
 #include <signal.h>
 
-#include <setjmp.h>
-
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
