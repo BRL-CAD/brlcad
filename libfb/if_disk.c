@@ -96,6 +96,18 @@ int	width, height;
 	if( height == 0 )
 		height = ifp->if_height;
 
+	if( strcmp( file, "-" ) == 0 )  {
+		/*
+		 *  It is the applications job to write ascending scanlines.
+		 *  If it does not, then this can be stacked with /dev/mem,
+		 *  i.e.	/dev/mem -
+		 */
+		ifp->if_fd = 1;		/* fileno(stdin) */
+		ifp->if_width = width;
+		ifp->if_height = height;
+		return 0;
+	}
+
 	if( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1
 	  && (ifp->if_fd = open( file, O_RDONLY, 0 )) == -1 ) {
 		if( (ifp->if_fd = open( file, O_RDWR|O_CREAT, 0664 )) > 0 ) {
