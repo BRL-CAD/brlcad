@@ -33,8 +33,11 @@
 #define DO_SINGLE_DISPLAY_LIST
 #endif
 
+#define GED_FACTOR 2048.0
+#define INV_GED_FACTOR 0.00048828125
+#define GED2PM1(x) (((fastf_t)(x))*INV_GED_FACTOR)
 #define DEGRAD  57.2957795130823208767981548141051703324054724665642
-#define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
+#define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
 
 #define AMM_IDLE 0
 #define AMM_ROT 1 
