@@ -507,12 +507,13 @@ struct rt_tol *tol;
 	nmg_vertex_g(vertl[48],  -10.0, 40.0, -10.0);
 
 
+#if 0
 	/* make a region &shell of a single vertex */
 	lrp = nmg_mrsv(m);
 	sp = RT_LIST_FIRST(shell, &lrp->s_hd);
 	vertl[47] = sp->vu_p->v_p;
 	nmg_vertex_g(vertl[47],  -10.0, 50.0, -10.0);
-
+#endif
 }
 
 
