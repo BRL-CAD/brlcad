@@ -292,8 +292,13 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 # else
 /* 	Carl's test version */
+#if 0
+#	define	MGED_OBJS	dm-X libdm-X
+#	define	MGED_CONFIG	GFLAG -DDM_X -I''XINCDIR -DUSE_LIBDM -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
+#else
 #	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx dm-pex
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
+#endif
 # endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
