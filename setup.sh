@@ -20,8 +20,19 @@ export SHELL
 # Script newbindir.sh can be run to change them all.
 
 BINDIR=/usr/brlcad/bin
+BASEDIR=`echo $BINDIR | sed -e 's/\/bin$//' `
 
-echo "  BINDIR = ${BINDIR}"
+echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
+
+# Create all the necessary directories
+
+for LAST in bin include lib vfont man man/man1 man/man3 man/man5
+do
+	if test ! -d $BASEDIR/$LAST
+	then
+		mkdir $BASEDIR/$LAST
+	fi
+done
 
 ############################################################################
 #
