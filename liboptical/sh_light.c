@@ -1049,6 +1049,7 @@ struct light_obs_stuff *los;
 	 *  Advance start point slightly off surface.
 	 */
 	sub_ap = *los->ap;			/* struct copy */
+	RT_CK_AP(&sub_ap);
 
 	VMOVE( sub_ap.a_ray.r_dir, shoot_dir );
 	{
@@ -1075,7 +1076,7 @@ struct light_obs_stuff *los;
 	sub_ap.a_purpose = los->lp->lt_name;	/* name of light shot at */
 
 	RT_CK_LIGHT((struct light_specific *)(sub_ap.a_uptr));
-
+	RT_CK_AP(&sub_ap);
 
 	if (rt_shootray( &sub_ap ) )  {
 		/* light visible */
@@ -1083,9 +1084,11 @@ struct light_obs_stuff *los;
 			bu_log("light visible: %s\n", los->lp->lt_name);
 
 #if RT_MULTISPECTRAL
+		BN_CK_TABDATA(sub_ap.a_spectrum);
 		if (los->inten == BN_TABDATA_NULL) {
 			los->inten = sub_ap.a_spectrum;
 		} else {
+			BN_CK_TABDATA(los->inten);
 			bn_tabdata_add(los->inten,
 				       los->inten,
 				       sub_ap.a_spectrum);
@@ -1142,6 +1145,7 @@ int have;
 	if (rdebug & RDEBUG_LIGHT )
 		bu_log("computing Light obscuration: start\n");
 
+	RT_CK_AP(ap);
 	los.rand_idx = &rand_idx;
 	los.ap = ap;
 	los.swp = swp;
@@ -1169,6 +1173,7 @@ int have;
 		los.lp = lp;
 #if RT_MULTISPECTRAL
 		los.inten = (void *)&swp->msw_intensity[i];
+		if(los.inten) BN_CK_TABDATA(los.inten);
 #else
 		los.inten = (void *)&swp->sw_intensity[3*i];
 #endif
