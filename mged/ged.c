@@ -349,12 +349,10 @@ int	non_blocking;
 		rt_vls_init(&str);
 
 		/* Read input line */
-		if( (len = rt_vls_gets( &str, stdin )) >= 0 )  {
+		if( rt_vls_gets( &str, stdin ) >= 0 )  {
 			rt_vls_strcat( &str, "\n" );
-			if( len > 0 )  {
-				if( cmdline( &str ) )
-					pr_prompt();
-			}
+			if( cmdline( &str ) )
+				pr_prompt();
 		} else {
 			/* Check for Control-D (EOF) */
 			if( feof( stdin ) )  {
@@ -593,8 +591,9 @@ refresh()
 		if (adcflag)
 			adcursor();
 
-		/* Display titles, etc */
-		dotitles();
+		/* Display titles, etc., if desired */
+		if( mged_variables.faceplate > 0 )
+			dotitles();
 
 		dmp->dmr_epilog();
 
