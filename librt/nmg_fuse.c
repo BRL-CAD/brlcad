@@ -1336,7 +1336,7 @@ const struct bn_tol *tol;
 			{
 				count++;
 				nmg_radial_join_eu(eu1, eu2, tol);
-				if( !e2->magic )
+				if(!e2->magic)
 					bu_ptbl_zero( &edges, (long *)e2 );
 			}
 		}

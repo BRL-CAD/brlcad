@@ -23,7 +23,9 @@ static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -39,6 +41,10 @@ static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "rtgeom.h"
 #include "./debug.h"
+
+#ifdef WIN32
+#include <float.h> //isnan function
+#endif
 
 struct id_pipe
 {

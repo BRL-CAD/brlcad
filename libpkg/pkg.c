@@ -43,12 +43,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
+#ifndef WIN32
 #undef BSD	/* /usr/include/sys/param.h redefines this */
 #include <sys/param.h>
 #include <sys/time.h>
+#endif
 #if !defined(vax)
 #include <time.h>
 #endif
+#ifndef WIN32
 #include <sys/socket.h>
 #include <sys/ioctl.h>		/* for FIONBIO */
 #include <netinet/in.h>		/* for htons(), etc */
@@ -56,6 +59,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
 #include <arpa/inet.h>		/* for inet_addr() */
 #undef LITTLE_ENDIAN		/* defined in netinet/{ip.h,tcp.h} */
+#else
+#include <io.h>
+#include <process.h>
+#include <winsock.h>
+#endif
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -488,8 +496,13 @@ void (*errlog)();
 #ifdef FIONBIO
 	if(nodelay)  {
 		onoff = 1;
+#ifdef WIN32
+		if( ioctlsocket(fd, FIONBIO, &onoff) < 0 )
+			pkg_perror( errlog, "pkg_getclient: FIONBIO 1" );
+#else
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 1" );
+#endif
 	}
 #endif
 	do  {
@@ -497,19 +510,30 @@ void (*errlog)();
 		if (s2 < 0) {
 			if(errno == EINTR)
 				continue;
+#ifdef WIN32
+			if(errno == WSAEWOULDBLOCK)
+				return(PKC_NULL);
+#else
 			if(errno == EWOULDBLOCK)
 				return(PKC_NULL);
-			pkg_perror( errlog, "pkg_getclient: accept" );
+#endif			pkg_perror( errlog, "pkg_getclient: accept" );
 			return(PKC_ERROR);
 		}
 	}  while( s2 < 0);
 #ifdef FIONBIO
 	if(nodelay)  {		
 		onoff = 0;
+		#ifdef WIN32
+		if( ioctlsocket(fd, FIONBIO, &onoff) < 0 )
+			pkg_perror( errlog, "pkg_getclient: FIONBIO 2" );
+		if( ioctlsocket(s2, FIONBIO, &onoff) < 0 )
+			pkg_perror( errlog, "pkg_getclient: FIONBIO 3");
+#else
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 2" );
 		if( ioctl(s2, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 3");
+#endif
 	}
 #endif
 

@@ -252,11 +252,18 @@ char	*dp;
 	return(1);
 }
 
+#ifndef WIN32
 int
 tmist_hit(ap, PartHeadp, segHeadp)
 register struct application *ap;
 struct partition *PartHeadp;
 struct seg *segHeadp;
+#else
+int tmist_hit(
+register struct application *ap,
+struct partition *PartHeadp,
+struct seg *segHeadp)
+#endif
 {
 	/* go looking for the object named in
 	 * ((struct air_specific *)ap->a_uptr)->name
@@ -265,9 +272,15 @@ struct seg *segHeadp;
 	 */
 	return 0;
 }
+
+#ifndef WIN32
 int
 tmist_miss( ap )
 register struct application *ap;
+#else
+int
+tmist_miss( register struct application *ap )
+#endif
 {
 	/* we missed?!  This is bogus!
 	 * but set ap->a_dist to something big
