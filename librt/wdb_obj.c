@@ -117,7 +117,7 @@ struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 
 /* ==== BEGIN evil stuff ==== */
 
-static struct directory *wdb_accumulated_path[WDB_MAX_LEVELS];
+struct db_full_path	wdb_accumulated_path;
 
 /* ==== END evil stuff ==== */
 
@@ -1222,31 +1222,17 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform, des_path)
 	int nparts, i, k;
 	int id;
 	struct bu_vls str;
-
-	bu_vls_init( &str );
 	
-	if (pathpos >= WDB_MAX_LEVELS) {
-		struct bu_vls tmp_vls;
-
-		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, "nesting exceeds %d levels\n", WDB_MAX_LEVELS);
-		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-
-		for(i=0; i < WDB_MAX_LEVELS; i++)
-			Tcl_AppendResult(interp, "/", wdb_accumulated_path[i]->d_namep, (char *)NULL);
-
-		Tcl_AppendResult(interp, "\n", (char *)NULL);
-		return 0;
-	}
-
 	if (dp->d_flags & DIR_COMB) {
 		if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
 			Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
 			return 0;
 		}
 
-		wdb_accumulated_path[pathpos] = dp;
+		/* XXX Should check to make sure this comb is on desired_path */
+		/* otherwise, why bother recursing into it? */
+
+		db_add_node_to_full_path( &wdb_accumulated_path, dp );
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if (comb->tree)  {
 			struct do_trace_state	dts;
@@ -1260,49 +1246,38 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform, des_path)
 				(genptr_t)&dts, NULL, NULL );
 		}
 		rt_comb_ifree(&intern);
+		DB_FULL_PATH_POP( &wdb_accumulated_path );
 		return 0;
 	}
 
 	/* not a combination  -  should have a solid */
 
-	/* last (bottom) position */
-	wdb_accumulated_path[pathpos] = dp;
+	db_add_node_to_full_path( &wdb_accumulated_path, dp );
 
 	/* check for desired path */
 	for (k=0; k<des_path->fp_len; k++) {
-		if (wdb_accumulated_path[k] != des_path->fp_names[k]) {
+		if (wdb_accumulated_path.fp_names[k] != des_path->fp_names[k]) {
 			/* not the desired path */
 			return 0;
 		}
 	}
 
-	/* have the desired path */
+	/* have followed the desired path, all they wanted was the matrix. */
 	bn_mat_copy(wdb_xform, old_xlate);
 
 	if (flag == WDB_CPEVAL)
 		return 1;
 
 	/* print the path */
-	for (k=0; k<pathpos; k++)
-		Tcl_AppendResult(interp, "/", wdb_accumulated_path[k]->d_namep, (char *)NULL);
-	bu_vls_printf( &str, "/%16s:\n", dp->d_namep );
+	db_full_path_appendresult( interp, &wdb_accumulated_path );
 
 	if (flag == WDB_LISTPATH) {
-		Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-		bu_vls_free(&str);
 		return 1;
 	}
 
-	/* NOTE - only reach here if flag == WDB_LISTEVAL */
-
-	if ((id=rt_db_get_internal(&intern, dp, dbip, wdb_xform)) < 0) {
-		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-				 ") failure", (char *)NULL );
-		return 0;			/* ERROR */
-	}
-	if (rt_functab[id].ft_describe(&str, &intern, 1, dbip->dbi_base2local) < 0)
-		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-	rt_functab[id].ft_ifree(&intern);
+	BU_ASSERT( flag == WDB_LISTEVAL );
+	bu_vls_init( &str );
+	wdb_do_list( dbip, interp, &str, dp, 1 );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 	return 1;
@@ -2885,8 +2860,7 @@ wdb_do_list(dbip, interp, outstrp, dp, verbose)
 	int			id;
 	struct rt_db_internal	intern;
 
-	if (dbip == DBI_NULL)
-		return;
+	RT_CK_DBI(dbip);
 
 	if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL)) < 0) {
 		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
