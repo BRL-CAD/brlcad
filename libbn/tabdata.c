@@ -201,6 +201,81 @@ register double		scale;
 }
 
 /*
+ *			R T _ T A B D A T A _ J O I N 1
+ *
+ *  Multiply every element in data table in2 by a scalar value 'scale',
+ *  add it to the element in in1, and store in 'out'.
+ *  'out' may overlap in1 or in2.
+ */
+void
+rt_tabdata_join1( out, in1, scale, in2 )
+struct rt_tabdata		*out;
+CONST struct rt_tabdata		*in1;
+register double			scale;
+CONST struct rt_tabdata		*in2;
+{
+	register int		j;
+	register fastf_t	*op, *i1, *i2;
+
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 )
+	RT_CK_TABDATA( in2 );
+
+	if( in1->table != out->table )
+		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+	if( in1->table != in2->table )
+		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+	if( in1->ny != out->ny )
+		rt_bomb("rt_tabdata_join1(): different tabdata lengths?\n");
+
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	for( j = in1->ny; j > 0; j-- )
+		*op++ = *i1++ + scale * *i2++;
+	/* VJOIN1N( out->y, in1->y, scale, in2->y ); */
+}
+
+/*
+ *			R T _ T A B D A T A _ B L E N D 3
+ */
+void
+rt_tabdata_blend3( out, scale1, in1, scale2, in2, scale3, in3 )
+struct rt_tabdata		*out;
+register double			scale1;
+CONST struct rt_tabdata		*in1;
+register double			scale2;
+CONST struct rt_tabdata		*in2;
+register double			scale3;
+CONST struct rt_tabdata		*in3;
+{
+	register int		j;
+	register fastf_t	*op, *i1, *i2, *i3;
+
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 )
+	RT_CK_TABDATA( in2 );
+	RT_CK_TABDATA( in3 );
+
+	if( in1->table != out->table )
+		rt_bomb("rt_tabdata_blend3(): samples drawn from different tables\n");
+	if( in1->table != in2->table )
+		rt_bomb("rt_tabdata_blend3(): samples drawn from different tables\n");
+	if( in1->table != in3->table )
+		rt_bomb("rt_tabdata_blend3(): samples drawn from different tables\n");
+	if( in1->ny != out->ny )
+		rt_bomb("rt_tabdata_blend3(): different tabdata lengths?\n");
+
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	i3 = in3->y;
+	for( j = in1->ny; j > 0; j-- )
+		*op++ = scale1 * *i1++ + scale2 * *i2++ + scale3 * *i3++;
+	/* VBLEND3N( out->y, scale1, in1->y, scale2, in2->y, scale3, in3->y ); */
+}
+
+/*
  *			R T _ T A B D A T A _ A R E A 1
  *
  *  Following interpretation #1, where y[j] stores the total (integral
@@ -251,6 +326,36 @@ CONST struct rt_tabdata	*in;
 		width = tabp->x[j+1] - tabp->x[j];
 		area += in->y[j] * width;
 	}
+
+	return area;
+}
+
+/*
+ *			R T _ T A B D A T A _ M U L _ A R E A 1
+ *
+ *  Following interpretation #1, where y[j] stores the total (integral
+ *  or area) value within the interval, return the area under the whole curve.
+ *  This is simply totaling up the areas from each of the intervals.
+ *  The curve value is found by multiplying corresponding entries from
+ *  in1 and in2.
+ */
+double
+rt_tabdata_mul_area1( in1, in2 )
+CONST struct rt_tabdata	*in1;
+CONST struct rt_tabdata	*in2;
+{
+	FAST fastf_t		area;
+	register fastf_t	*i1, *i2;
+	register int		j;
+
+	RT_CK_TABDATA(in1);
+	RT_CK_TABDATA(in2);
+
+	area = 0;
+	i1 = in1->y;
+	i2 = in2->y;
+	for( j = in1->ny; j > 0; j-- )
+		area += *i1++ * *i2++;
 
 	return area;
 }

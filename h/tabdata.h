@@ -106,8 +106,23 @@ RT_EXTERN( void			rt_tabdata_mul, (struct rt_tabdata *out,
 RT_EXTERN( void			rt_tabdata_scale, (struct rt_tabdata *out,
 					CONST struct rt_tabdata *in1,
 					double scale));
+RT_EXTERN( void			rt_table_scale, (struct rt_table *tabp,
+					double scale));
+RT_EXTERN( void			rt_tabdata_join1, (struct rt_tabdata *out,
+					CONST struct rt_tabdata *in1,
+					double scale,
+					CONST struct rt_tabdata *in2));
+RT_EXTERN( void			rt_tabdata_blend3, (struct rt_tabdata *out,
+					double scale1,
+					CONST struct rt_tabdata *in1,
+					double scale2,
+					CONST struct rt_tabdata *in2,
+					double scale3,
+					CONST struct rt_tabdata *in3));
 RT_EXTERN( double		rt_tabdata_area1, (CONST struct rt_tabdata *in));
 RT_EXTERN( double		rt_tabdata_area2, (CONST struct rt_tabdata *in));
+RT_EXTERN( double		rt_tabdata_mul_area1, (CONST struct rt_tabdata *in1,
+					CONST struct rt_tabdata	*in2));
 RT_EXTERN( fastf_t		rt_table_lin_interp, (CONST struct rt_tabdata *samp,
 					double wl));
 RT_EXTERN( struct rt_tabdata	*rt_tabdata_resample, (
