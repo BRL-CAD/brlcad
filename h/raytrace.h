@@ -371,9 +371,12 @@ union bitv_elem {
  *  BITV_SHIFT and BITV_MASK are defined in machine.h
  */
 #define BITS2BYTES(nbits) (((nbits)+BITV_MASK)/8)	/* conservative */
-#define BITTEST(lp,bit)	(lp[bit>>BITV_SHIFT] & (1<<(bit&BITV_MASK)))
-#define BITSET(lp,bit)	(lp[bit>>BITV_SHIFT] |= (1<<(bit&BITV_MASK)))
-#define BITCLR(lp,bit)	(lp[bit>>BITV_SHIFT] &= ~(1<<(bit&BITV_MASK)))
+#define BITTEST(lp,bit)	\
+	((lp[bit>>BITV_SHIFT] & (((bitv_t)1)<<(bit&BITV_MASK)))?1:0)
+#define BITSET(lp,bit)	\
+	(lp[bit>>BITV_SHIFT] |= (((bitv_t)1)<<(bit&BITV_MASK)))
+#define BITCLR(lp,bit)	\
+	(lp[bit>>BITV_SHIFT] &= ~(((bitv_t)1)<<(bit&BITV_MASK)))
 #define BITZERO(lp,nbits) bzero((char *)lp, BITS2BYTES(nbits))
 
 /*
