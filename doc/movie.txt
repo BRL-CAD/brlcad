@@ -1,0 +1,29 @@
+DRAFT   DRAFT   DRAFT   DRAFT   DRAFT   DRAFT   DRAFT   DRAFT   DRAFT
+
+General Discussion about how to Make Animations using the BRL-CAD Package
+
+There are several distinct aspects to producing an animation:
+
+1) The creative insight.
+
+2) Specification of the geometry.
+
+3) Specification of the material properties, colors, textures.
+
+4) Specification of the model motion and articulation (choreography),
+    plus specification of the camera motion and lighting details
+    (cinematography).
+
+5) Previewing the animation sequence using wireframe tools.
+
+6) Computation ("rendering") of the final sequence in very low
+    resolution, suitable for frame-buffer animation previews (see
+    fbanim(1)).
+
+7) Computation ("rendering") of the final ray-traced images, storing
+    them in .pix files.
+
+8) Viewing selected frames, to review them for quality.
+
+9) Recording of the final images either on videotape or 16mm movie
+    film.

@@ -1,5 +1,5 @@
 Date:     Wed, 3 Feb 88 23:39:04 EST
-From:     Mike Muuss (SECAD) <mike@BRL.MIL>
+From:     Mike Muuss (SECAD) <mike@XXX.XXX>
 
 This evening I have been working on a program which compares floating
 point numbers over the network (part of something much bigger).
