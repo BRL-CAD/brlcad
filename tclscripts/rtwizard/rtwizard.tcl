@@ -18,7 +18,6 @@ set wizDir [ file join $rootDir tclscripts rtwizard ]
 set libDir [ file join $wizDir lib ]
 
 lappend auto_path $wizDir $libDir
-puts $auto_path
 
 #
 # All RtWizard stuff is in the RtWizard namespace
