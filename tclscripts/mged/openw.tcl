@@ -684,7 +684,7 @@ against MGED database objects."\
 
 menu .$id.menubar.edit -title "Edit" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.edit add command -label "Prim Selection..." -underline 0 \
-	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all s"
+	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all s1"
 hoc_register_menu_data "Edit" "Prim Selection..." "Prim Selection"\
 	{ { summary "A tool for selecting a primitive to edit." } }
 .$id.menubar.edit add command -label "Matrix Selection..." -underline 0 \
@@ -1225,7 +1225,7 @@ hoc_register_menu_data "Grid" "Anchor" "Grid Anchor"\
 .$id.menubar.settings.grid add separator
 .$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,grid_draw)\
 	-label "Draw Grid" -underline 0\
-	-command "mged_apply $id \"rset grid draw \$mged_gui($id,grid_draw)\""
+	-command "mged_draw_grid $id"
 hoc_register_menu_data "Grid" "Draw Grid" "Draw Grid"\
 	{ { summary "Toggle drawing the grid. The grid is a lattice
 of points over the pane (geometry window). The
@@ -1453,7 +1453,7 @@ mode, the mouse can be used to transform the model parameters." }
 menu .$id.menubar.modes -title "Modes" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,grid_draw)\
 	-label "Draw Grid" -underline 0\
-	-command "mged_apply $id \"rset grid draw \$mged_gui($id,grid_draw)\""
+	-command "mged_draw_grid $id"
 hoc_register_menu_data "Modes" "Draw Grid" "Draw Grid"\
 	{ { summary "Toggle drawing the grid. The grid is a lattice
 of points over the pane (geometry window). The
@@ -2694,6 +2694,10 @@ proc update_view_ring_labels { id } {
     global mged_gui
     global view_ring
 
+    if {[_mged_opendb] == ""} {
+	error "No database has been opened!"
+    }
+
     winset $mged_gui($id,active_dm)
     set view_ring($id) [view_ring get]
     set views [view_ring get -a]
@@ -2874,4 +2878,18 @@ proc mged_handle_configure { id } {
     if {[winfo exists .$id.rt]} {
 	rt_handle_configure $id
     }
+}
+
+proc mged_draw_grid {id} {
+    global mged_gui
+
+    winset $mged_gui($id,active_dm)
+    rset grid draw $mged_gui($id,grid_draw)
+
+    # Reconcile the Tcl grid_draw with the internal grid_draw.
+    # Note - the internal grid_draw cannot be set to 1 if a database
+    #        is not currently open (i.e. dbip == DBI_NULL).
+    set mged_gui($id,grid_draw) [rset grid draw]
+
+    # XXX - At the moment this routine does not honor the "apply_to" settings
 }
