@@ -275,7 +275,7 @@ WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *fi
 
 /*
  *  The polysolid has been replaced by the BoT.
- *  Automatic conversion is provided by rt_pg_bot()
+ *  Automatic conversion is provided by rt_pg_to_bot()
  */
 #define mk_polysolid(fp,name)	+++error_obsolete_libwdb_routine+++
 #define mk_poly(fp,npts,verts,norms)	+++error_obsolete_libwdb_routine+++
