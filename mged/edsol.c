@@ -1141,12 +1141,22 @@ register float *angles, *unitv;
 {
 	FAST fastf_t f;
 
-	/* direction cos */
-	angles[X] = acos( unitv[X] ) * radtodeg;
-	angles[Y] = acos( unitv[Y] ) * radtodeg;
-	angles[Z] = acos( unitv[Z] ) * radtodeg;
+	/* convert direction cosines into axis angles */
+	if( unitv[X] <= -1.0 )  angles[X] = -90.0;
+	else if( unitv[X] >= 1.0 )  angles[X] = 90.0;
+	else angles[X] = acos( unitv[X] ) * radtodeg;
+
+	if( unitv[Y] <= -1.0 )  angles[Y] = -90.0;
+	else if( unitv[Y] >= 1.0 )  angles[Y] = 90.0;
+	else angles[Y] = acos( unitv[Y] ) * radtodeg;
+
+	if( unitv[Z] <= -1.0 )  angles[Z] = -90.0;
+	else if( unitv[Z] >= 1.0 )  angles[Z] = 90.0;
+	else angles[Z] = acos( unitv[Z] ) * radtodeg;
 
 	/* fallback angle */
+	if( unitv[Z] <= -1.0 )  unitv[Z] = -1.0;
+	else if( unitv[Z] >= 1.0 )  unitv[Z] = 1.0;
 	angles[4] = asin(unitv[Z]);
 
 	/* rotation angle */
