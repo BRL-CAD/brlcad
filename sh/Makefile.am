@@ -6,6 +6,7 @@ bin_SCRIPTS = \
 	cadbug.sh \
 	cakeinclude.sh \
 	cray.sh \
+	elapsed.sh \
 	ldAix.sh \
 	machinetype.sh \
 	pixinfo.sh \
