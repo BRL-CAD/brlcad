@@ -439,7 +439,7 @@ register struct xray	*rp;
 {
 	register struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
-	struct seg		*segp;
+	LOCAL struct seg	*segp;
 	LOCAL vect_t		pprime,
 				dprime,
 				norm,
@@ -450,6 +450,9 @@ register struct xray	*rp;
 				t, b, zval, dir,
 				alf1, alf2;
 	LOCAL int		npts, n, intersect;
+	LOCAL vect_t		cor_pprime;	/* corrected P prime */
+	LOCAL fastf_t		cor_proj;	/* corrected projected dist */
+	LOCAL int		i;
 
 	/* find rotated point and direction				*/
 	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp->r_dir );
@@ -458,25 +461,21 @@ register struct xray	*rp;
 	VSUB2( work, rp->r_pt, tgc->tgc_V );
 	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
 
-	/*  start code to normalize distance from tgc. */
-	{
-		static fastf_t	cor_pprime[3], cor_proj;
-		register int		i;
-		/* Translating ray origin along direction of ray to closest
-		 * pt. to origin of solids coordinate system, new ray origin
-		 * is 'cor_pprime'.
-		 */
-		cor_proj = VDOT( pprime, dprime );
-		VSCALE( cor_pprime, dprime, cor_proj );
-		VSUB2( cor_pprime, pprime, cor_pprime );
+	/* Translating ray origin along direction of ray to closest
+	 * pt. to origin of solids coordinate system, new ray origin
+	 * is 'cor_pprime'.
+	 */
+	cor_proj = VDOT( pprime, dprime );
+	VSCALE( cor_pprime, dprime, cor_proj );
+	VSUB2( cor_pprime, pprime, cor_pprime );
 
-		npts = stdCone( cor_pprime, dprime, tgc, k );
-		/* We must reverse the above translation by adding
-		 * the distance to all 'k' values.
-		 */
-		for( i = 0; i < npts; ++i )
-			k[i] -= cor_proj;
-	}
+	npts = stdCone( cor_pprime, dprime, tgc, k );
+
+	/*
+	 * Reverse above translation by adding distance to all 'k' values.
+	 */
+	for( i = 0; i < npts; ++i )
+		k[i] -= cor_proj;
 
 	if ( npts != 0 && npts != 2 && npts != 4 ){
 		fprintf(stderr,"tgc(%s):  %d intersects != {0,2,4}\n",
