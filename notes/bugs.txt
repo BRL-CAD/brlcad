@@ -1,1 +1,13 @@
 
+---
+Error given when asking for a list of the _GLOBAL object
+
+mged> ls
+_GLOBAL
+
+mged> l _GLOBAL
+rt_db_external5_to_internal5(_GLOBAL):  unable to import non-BRL-CAD object, major=2
+
+rt_db_get_internal(_GLOBAL) failure
+
+---
