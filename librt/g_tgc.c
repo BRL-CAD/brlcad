@@ -387,13 +387,16 @@ struct tgc_specific	*tgc;
  */
 static void
 rt_tgc_shear( vect, axis, Shr, Trn, Inv )
-vect_t	vect;
-int	axis;
-mat_t	Shr, Trn, Inv;
+CONST vect_t	vect;
+int		axis;
+mat_t		Shr, Trn, Inv;
 {
 	mat_idn( Shr );
 	mat_idn( Trn );
 	mat_idn( Inv );
+
+	if( NEAR_ZERO( vect[axis], SMALL_FASTF ) )
+		rt_bomb("rt_tgc_shear() divide by zero\n");
 
 	if ( axis == X ){
 		Inv[4] = -(Shr[4] = Trn[1] = -vect[Y]/vect[X]);
@@ -494,7 +497,7 @@ register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	register struct tgc_specific	*tgc =
+	register CONST struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
 	register struct seg	*segp;
 	LOCAL vect_t		pprime;
@@ -521,7 +524,13 @@ struct seg		*seghead;
 	 *  the special unit-tgc space.  This scale factor will restore
 	 *  proper length after hit points are found.
 	 */
-	t_scale = 1/MAGNITUDE( dprime );
+	t_scale = MAGNITUDE(dprime);
+	if( NEAR_ZERO( t_scale, SMALL_FASTF ) )  {
+		rt_log("tgc(%s) dprime=(%g,%g,%g), t_scale=%e, miss.\n",
+			V3ARGS(dprime), t_scale);
+		return 0;
+	}
+	t_scale = 1/t_scale;
 	VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
 
 	if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )  {
@@ -771,7 +780,7 @@ struct seg		*seghead;
 		 *  plane (in the standard coordinate system), and test
 		 *  whether this lies within the governing ellipse.
 		 */
-		if( dprime[Z] == 0.0 )  {
+		if( NEAR_ZERO( dprime[Z], SMALL_FASTF ) )  {
 			rt_log("tgc: dprime[Z] = 0!\n" );
 			return(0);
 		}
@@ -820,6 +829,7 @@ struct seg		*seghead;
 			segp->seg_out.hit_dist = pt[IN] * t_scale;
 			segp->seg_out.hit_surfno = nflag;
 		}
+
 		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return(2);
 	}
@@ -832,7 +842,7 @@ struct seg		*seghead;
 	 *  so) to the planes, it (obviously) won't intersect
 	 *  either of them.
 	 */
-	if( dprime[Z] == 0.0 )
+	if( NEAR_ZERO( dprime[Z], SMALL_FASTF ) )
 		return(0);
 
 	dir = VDOT( tgc->tgc_N, rp->r_dir );	/* direc */
