@@ -337,11 +337,12 @@ proc do_Raytrace { id } {
     }
 
     if {!$fb_all} {
-	set rect [_mged_get_rect]
-	set xmin [lindex $rect 0]
-	set ymin [lindex $rect 1]
-	set width [lindex $rect 2]
-	set height [expr [lindex $rect 3] * $aspect]
+	set pos [rset rb pos]
+	set xmin [lindex $pos 0]
+	set ymin [lindex $pos 1]
+	set dim [rset rb dim]
+	set width [lindex $dim 0]
+	set height [lindex $dim 1]
 	regexp "^\[-\]?\[0-9\]+" $height height
 
 	if {$width != 0 && $height != 0} {
