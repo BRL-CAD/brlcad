@@ -6,11 +6,11 @@
 #  @(#)$Header$ (BRL)
 
 # Ensure /bin/sh
-export PATH || (echo "This isn't sh.  Feeding myself to sh."; sh $0 $*; kill $$)
+export PATH || (sh $0 $*; kill $$)
 
-if test "x$3" = x
+if test "x$1" = x
 then
-	echo "Usage:  $0 hostname note1 note2"
+	echo "Usage:  $0 hostname [note1] [note2]"
 	exit 1
 fi
 
