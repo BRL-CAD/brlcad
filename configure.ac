@@ -686,6 +686,11 @@ AM_PROG_LIBTOOL
 AC_PROG_RANLIB
 AM_PROG_LEX
 
+AN_MAKEVAR([AR], [BC_PROG_AR])
+AN_PROGRAM([ar], [BC_PROG_AR])
+AC_DEFUN([BC_PROG_AR], [AC_CHECK_TOOL(AR, ar, :)])
+BC_PROG_AR
+
 dnl check for basic shell facilities
 AC_PATH_PROG(SH, sh)
 AC_PATH_PROG(MV, mv)
