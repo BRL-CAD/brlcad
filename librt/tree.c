@@ -114,6 +114,10 @@ union tree			*curtree;
 	struct region		*rp;
 	struct directory	*dp;
 
+	RT_CK_DBI(tsp->ts_dbip);
+	RT_CK_FULL_PATH(pathp);
+	RT_CK_TREE(curtree);
+
 	if( curtree->tr_op == OP_NOP )  {
 		/* Ignore empty regions */
 		return  curtree;
@@ -218,6 +222,7 @@ struct rt_i			*rtip;
 	int			have_match;
 	int			hash;
 
+	RT_CK_DIR(dp);
 	RT_CK_RTI(rtip);
 
 	have_match = 0;
@@ -253,7 +258,6 @@ struct rt_i			*rtip;
 		}
 		if( stp->st_matp == (matp_t)0 )  continue;
 
-#		include "noalias.h"
 		if (rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol)) {
 			have_match = 1;
 			break;
@@ -265,11 +269,13 @@ struct rt_i			*rtip;
 		 *  stp now points to re-referenced solid
 		 */
 		RT_CK_SOLTAB(stp);		/* sanity */
+		stp->st_uses++;
+		/** dp->d_uses++ ? **/
 		if( rt_g.debug & DEBUG_SOLIDS )  {
 			rt_log( mat ?
-			    "rt_find_identical_solid:  %s re-referenced\n" :
-			    "rt_find_identical_solid:  %s re-referenced (identity mat)\n",
-				dp->d_namep );
+			    "rt_find_identical_solid:  %s re-referenced %d\n" :
+			    "rt_find_identical_solid:  %s re-referenced %d (identity mat)\n",
+				dp->d_namep, stp->st_uses );
 		}
 	} else {
 		/*
@@ -278,9 +284,11 @@ struct rt_i			*rtip;
 		 */
 		GETSTRUCT(stp, soltab);
 		stp->l.magic = RT_SOLTAB_MAGIC;
+		stp->st_uses = 1;
 		stp->st_dp = dp;
 		dp->d_uses++;
 		stp->st_bit = rtip->nsolids++;
+		/* stp->st_id is intentionally left zero here, as a flag */
 
 		if( mat )  {
 			stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
@@ -327,6 +335,8 @@ int				id;
 	register int		i;
 	register matp_t		mat;
 
+	RT_CK_DBI(tsp->ts_dbip);
+	RT_CK_FULL_PATH(pathp);
 	RT_CK_EXTERNAL(ep);
 	RT_CK_RTI(rt_tree_rtip);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -354,6 +364,7 @@ int				id;
 	stp = rt_find_identical_solid( mat, dp, rt_tree_rtip );
 	if( stp->st_id != 0 )  {
 		if( stp->st_aradius <= -1 )  {
+			stp->st_uses--;
 			return( TREE_NULL );	/* BAD: instance of dead solid */
 		}
 		goto found_it;
@@ -375,6 +386,7 @@ int				id;
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
 		stp->st_aradius = -1;
+		stp->st_uses--;
 		return( TREE_NULL );		/* BAD */
 	}
 	RT_CK_DB_INTERNAL( &intern );
@@ -394,6 +406,7 @@ int				id;
 	    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
 		stp->st_aradius = -1;
+		stp->st_uses--;
 		return( TREE_NULL );		/* BAD */
 	}
 
@@ -417,6 +430,7 @@ int				id;
 
 found_it:
 	GETUNION( curtree, tree );
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
 	/* regionp will be filled in later by rt_tree_region_assign() */
@@ -429,6 +443,37 @@ found_it:
 	}
 
 	return(curtree);
+}
+
+/*
+ *			R T _ F R E E _ S O L T A B
+ *
+ *  Decrement use count on soltab structure.  If no longer needed,
+ *  release associated storage, and free the structure.
+ *  This routine can not be used in PARALLE, hence the st_aradius hack.
+ */
+void
+rt_free_soltab( stp )
+struct soltab	*stp;
+{
+	RT_CK_SOLTAB(stp);
+	if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
+		rt_bomb("rt_free_soltab:  bad st_id");
+
+	if( --(stp->st_uses) > 0 )  return;
+
+	if( stp->st_aradius > 0 )
+		rt_functab[stp->st_id].ft_free( stp );
+
+	RT_LIST_DEQUEUE( &(stp->l) );	/* Non-PARALLEL */
+	if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
+	stp->st_matp = (matp_t)0;	/* Sanity */
+
+	if( stp->st_regions ) rt_free( (char *)stp->st_regions, "st_regions bitv" );
+	stp->st_regions = (bitv_t *)0;	/* Sanity */
+
+	stp->st_dp = DIR_NULL;		/* Sanity */
+	rt_free( (char *)stp, "struct soltab" );
 }
 
 /*
@@ -495,6 +540,12 @@ int		ncpus;
 
 	rt_tree_rtip = (struct rt_i *)0;	/* sanity */
 
+	/* DEBUG:  Ensure that all region trees are valid */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		RT_CK_REGION(regp);
+		db_ck_tree(regp->reg_treetop);
+	}
+
 	/*
 	 *  Eliminate any "dead" solids that parallel code couldn't change.
 	 *  First remove any references from the region tree,
@@ -509,12 +560,8 @@ again:
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		RT_CK_SOLTAB(stp);
 		if( stp->st_aradius <= 0 )  {
-			RT_LIST_DEQUEUE( &(stp->l) );
-			if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
-			stp->st_matp = (matp_t)0;
-			stp->st_regions = (bitv_t *)0;
-			stp->st_dp = DIR_NULL;		/* was ptr to directory */
-			rt_free( (char *)stp, "dead struct soltab" );
+			rt_bomb("Found a dead solid\n");
+			rt_free_soltab(stp);
 			/* Can't do rtip->nsolids--, that doubles as max bit number! */
 			/* The macro makes it hard to regain place, punt */
 			goto again;
@@ -539,14 +586,20 @@ again:
 		 *  to the list of infinite solids, for special handling.
 		 */
 		if( rt_bound_tree( regp->reg_treetop, region_min, region_max ) < 0 )  {
-			rt_log("rt_gettree_region_end() %s\n", regp->reg_name );
-			rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
+			rt_log("rt_gettrees() %s\n", regp->reg_name );
+			rt_bomb("rt_gettrees(): rt_bound_tree() fail\n");
 		}
 		if( region_max[X] < INFINITY )  {
 			/* infinite regions are exempted from this */
 			VMINMAX( rtip->mdl_min, rtip->mdl_max, region_min );
 			VMINMAX( rtip->mdl_min, rtip->mdl_max, region_max );
 		}
+	}
+
+	/* DEBUG:  Ensure that all region trees are valid */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		RT_CK_REGION(regp);
+		db_ck_tree(regp->reg_treetop);
 	}
 
 	if( i < 0 )  return(-1);
@@ -611,10 +664,7 @@ vect_t				tree_max;
 {	
 	vect_t	r_min, r_max;		/* rpp for right side of tree */
 
-	if( tp == TREE_NULL )  {
-		rt_log( "rt_bound_tree(): NULL tree pointer.\n" );
-		return(-1);
-	}
+	RT_CK_TREE(tp);
 
 	switch( tp->tr_op )  {
 
@@ -687,10 +737,7 @@ rt_tree_kill_dead_solid_refs( tp )
 register union tree	*tp;
 {	
 
-	if( tp == TREE_NULL )  {
-		rt_log( "rt_tree_kill_dead_solid_refs(): NULL tree pointer.\n" );
-		return;
-	}
+	RT_CK_TREE(tp);
 
 	switch( tp->tr_op )  {
 
@@ -703,6 +750,7 @@ register union tree	*tp;
 			if( stp->st_aradius <= 0 )  {
 				if(rt_g.debug&DEBUG_TREEWALK)rt_log("rt_tree_kill_dead_solid_refs: encountered dead solid '%s' stp=x%x, tp=x%x\n",
 					stp->st_dp->d_namep, stp, tp);
+				rt_free_soltab(stp);
 				tp->tr_a.tu_stp = SOLTAB_NULL;
 				tp->tr_op = OP_NOP;	/* Convert to NOP */
 			}
@@ -755,10 +803,7 @@ register union tree	*tp;
 {	
 	union tree	*left, *right;
 top:
-	if( tp == TREE_NULL )  {
-		rt_log( "rt_tree_elim_nops(): NULL tree pointer.\n" );
-		return(-1);
-	}
+	RT_CK_TREE(tp);
 
 	switch( tp->tr_op )  {
 
@@ -873,6 +918,7 @@ register char	*reg_name;
 	register struct region	*regp = rtip->HeadRegion;
 	register CONST char *reg_base = rt_basename(reg_name);
 
+	RT_CK_RTI(rtip);
 	for( ; regp != REGION_NULL; regp = regp->reg_forw )  {	
 		register CONST char	*cp;
 		/* First, check for a match of the full path */
@@ -1036,6 +1082,7 @@ struct resource		*resp;
 	register union tree	*low;
 	register union tree	**stackend;
 
+	RT_CK_TREE(tp);
 	while( (sp = resp->re_boolstack) == (union tree **)0 )
 		rt_grow_boolstack( resp );
 	stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
@@ -1097,6 +1144,8 @@ rt_tree_region_assign( tp, regionp )
 register union tree	*tp;
 register CONST struct region	*regionp;
 {
+	RT_CK_TREE(tp);
+	RT_CK_REGION(regionp);
 	switch( tp->tr_op )  {
 	case OP_NOP:
 		return;

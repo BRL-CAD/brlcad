@@ -596,6 +596,7 @@ int		howfar;
 			continue;
 
 		GETUNION( xtp, tree );
+		xtp->magic = RT_TREE_MAGIC;
 		xtp->tr_b.tb_left = curtree;
 		xtp->tr_b.tb_right = tlp->tl_tree;
 		xtp->tr_b.tb_regionp = (struct region *)0;
@@ -808,6 +809,7 @@ struct combined_tree_state	**region_start_statepp;
 		if( tlp <= trees )  {
 			/* No subtrees in this region, invent a NOP */
 			GETUNION( curtree, tree );
+			curtree->magic = RT_TREE_MAGIC;
 			curtree->tr_op = OP_NOP;
 		} else {
 			curtree = db_mkgift_tree( trees, tlp-trees, tsp );
@@ -821,6 +823,7 @@ region_end:
 			if( tsp->ts_region_end_func )  {
 				curtree = tsp->ts_region_end_func(
 					&nts, pathp, curtree );
+				if(curtree) RT_CK_TREE(curtree);
 			}
 		}
 	} else if( dp->d_flags & DIR_SOLID )  {
@@ -889,6 +892,7 @@ region_end:
 		/* Hand the solid off for leaf processing */
 		if( !tsp->ts_leaf_func )  goto fail;
 		curtree = tsp->ts_leaf_func( tsp, pathp, &ext, id );
+		if(curtree) RT_CK_TREE(curtree);
 	} else {
 		rt_log("db_functree:  %s is neither COMB nor SOLID?\n",
 			dp->d_namep );
@@ -919,6 +923,7 @@ CONST union tree	*tp;
 {
 	union tree	*new;
 
+	RT_CK_TREE(tp);
 	GETUNION( new, tree );
 	*new = *tp;		/* struct copy */
 
@@ -956,6 +961,48 @@ CONST union tree	*tp;
 }
 
 /*
+ *			D B _ C K _ T R E E
+ */
+void
+db_ck_tree( tp )
+CONST union tree	*tp;
+{
+
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		break;
+	case OP_SOLID:
+		if( tp->tr_a.tu_stp )
+			RT_CK_SOLTAB( tp->tr_a.tu_stp );
+		break;
+	case OP_REGION:
+		RT_CK_CTS( tp->tr_c.tc_ctsp );
+		break;
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		db_ck_tree( tp->tr_b.tb_left );
+		break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		/* This node is known to be a binary op */
+		db_ck_tree( tp->tr_b.tb_left );
+		db_ck_tree( tp->tr_b.tb_right );
+		break;
+
+	default:
+		rt_log("db_ck_tree: bad op %d\n", tp->tr_op);
+		rt_bomb("db_ck_tree\n");
+	}
+}
+
+/*
  *			D B _ F R E E _ T R E E
  *
  *  Release all storage associated with node 'tp', including
@@ -965,7 +1012,7 @@ void
 db_free_tree( tp )
 union tree	*tp;
 {
-
+	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {
 	case OP_NOP:
 		break;
@@ -973,15 +1020,9 @@ union tree	*tp;
 	case OP_SOLID:
 		if( tp->tr_a.tu_stp )  {
 			register struct soltab	*stp = tp->tr_a.tu_stp;
-			/* XXX If solid is used multiple times,
-			 * XXX the pointer may now be bogus.
-			 * XXX rt_free() will smash magic number to -1.
-			 */
-			if( stp->l.magic == -1 )  break;	/* XXX */
 			RT_CK_SOLTAB(stp);
-			RT_LIST_DEQUEUE( &(stp->l) );
-			rt_free( (char *)stp, "(union tree) solid" );
 			tp->tr_a.tu_stp = RT_SOLTAB_NULL;
+			rt_free_soltab(stp);
 		}
 		break;
 	case OP_REGION:
@@ -1053,7 +1094,7 @@ void
 db_non_union_push( tp )
 register union tree	*tp;
 {
-
+	RT_CK_TREE(tp);
 top:
 	switch( tp->tr_op )  {
 	case OP_REGION:
@@ -1155,6 +1196,7 @@ db_count_tree_nodes( tp, count )
 register CONST union tree	*tp;
 register int			count;
 {
+	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {
 	case OP_NOP:
 	case OP_SOLID:
@@ -1194,6 +1236,7 @@ CONST union tree	*tp;
 {
 	int	cnt;
 
+	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {
 	case OP_SOLID:
 	case OP_REGION:
@@ -1234,6 +1277,7 @@ int		lim;
 {
 	union tree	*new;
 
+	RT_CK_TREE(tp);
 	if( cur >= lim )  rt_bomb("db_tally_subtree_regions: array overflow\n");
 
 	switch( tp->tr_op )  {
@@ -1286,6 +1330,7 @@ union tree		*curtree;
 	RT_CK_FULL_PATH(pathp);
 
 	GETUNION( curtree, tree );
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_REGION;
 	curtree->tr_c.tc_ctsp = db_new_combined_tree_state( tsp, pathp );
 
@@ -1304,6 +1349,7 @@ int			id;
 	RT_CK_FULL_PATH(pathp);
 
 	GETUNION( curtree, tree );
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_REGION;
 	curtree->tr_c.tc_ctsp = db_new_combined_tree_state( tsp, pathp );
 
@@ -1317,6 +1363,9 @@ static int		db_reg_current;		/* semaphored when parallel */
 static union tree *	(*db_reg_end_func)();
 static union tree *	(*db_reg_leaf_func)();
 
+/*
+ *			D B _ W A L K _ S U B T R E E
+ */
 HIDDEN void
 db_walk_subtree( tp, region_start_statepp, leaf_func )
 register union tree	*tp;
@@ -1326,6 +1375,7 @@ union tree		 *(*leaf_func)();
 	struct combined_tree_state	*ctsp;
 	union tree	*curtree;
 
+	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {
 	case OP_NOP:
 		return;
@@ -1427,6 +1477,7 @@ db_walk_dispatcher()
 
 		if( (curtree = db_reg_trees[mine]) == TREE_NULL )
 			continue;
+		RT_CK_TREE(curtree);
 
 		/* Walk the full subtree now */
 		region_start_statep = (struct combined_tree_state *)0;
@@ -1436,7 +1487,7 @@ db_walk_dispatcher()
 		 *  It is up to db_reg_end_func() to deal with this,
 		 *  either by discarding it, or making a null region.
 		 */
-
+		RT_CK_TREE(curtree);
 		if( !region_start_statep )  {
 			rt_log("ERROR: db_walk_dispatcher() region %d started with no state\n", mine);
 			if( rt_g.debug&DEBUG_TREEWALK )			
@@ -1533,6 +1584,7 @@ union tree *	(*leaf_func)();
 		if( curtree == TREE_NULL )
 			continue;	/* ERROR */
 
+		RT_CK_TREE(curtree);
 		if( rt_g.debug&DEBUG_TREEWALK )  {
 			rt_log("tree after db_recurse():\n");
 			rt_pr_tree( curtree, 0 );
@@ -1544,6 +1596,7 @@ union tree *	(*leaf_func)();
 			union tree	*new;
 
 			GETUNION( new, tree );
+			new->magic = RT_TREE_MAGIC;
 			new->tr_op = OP_UNION;
 			new->tr_b.tb_left = whole_tree;
 			new->tr_b.tb_right = curtree;
@@ -1592,6 +1645,7 @@ union tree *	(*leaf_func)();
 				rt_log("%d: NULL\n", i);
 				continue;
 			}
+			RT_CK_TREE(treep);
 			if( treep->tr_op != OP_REGION )  {
 				rt_log("%d: op=%\n", i, treep->tr_op);
 				continue;

@@ -373,33 +373,19 @@ register struct rt_i *rtip;
 
 	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_clean:  bad rtip\n");
 
-	/*
-	 *  Clear out the solid table
-	 */
-	head = &(rtip->rti_solidheads[0]);
-	for( ; head < &(rtip->rti_solidheads[RT_DBNHASH]); head++ )  {
-		while( RT_LIST_WHILE( stp, soltab, head ) )  {
-			RT_CHECK_SOLTAB(stp);
-			RT_LIST_DEQUEUE( &(stp->l) );
-			if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
-				rt_bomb("rt_clean:  bad st_id");
-			rt_functab[stp->st_id].ft_free( stp );
-			rt_free( (char *)stp->st_regions, "st_regions bitv" );
-			if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
-			stp->st_matp = (matp_t)0;
-			stp->st_regions = (bitv_t *)0;
-			stp->st_dp = DIR_NULL;		/* was ptr to directory */
-			rt_free( (char *)stp, "struct soltab");
-		}
+	/* DEBUG: Ensure that all region trees are valid */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		RT_CK_REGION(regp);
+		db_ck_tree( regp->reg_treetop );
 	}
-	rtip->nsolids = 0;
-
 	/*  
 	 *  Clear out the region table
+	 *  db_free_tree() will delete most soltab structures.
 	 */
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
 		register struct region *nextregp = regp->reg_forw;
 
+		RT_CK_REGION(regp);
 		db_free_tree( regp->reg_treetop );
 		rt_free( (char *)regp->reg_name, "region name str");
 		regp->reg_name = (char *)0;
@@ -408,6 +394,18 @@ register struct rt_i *rtip;
 	}
 	rtip->HeadRegion = REGION_NULL;
 	rtip->nregions = 0;
+
+	/*
+	 *  Clear out the solid table, AFTER doing the region table.
+	 */
+	head = &(rtip->rti_solidheads[0]);
+	for( ; head < &(rtip->rti_solidheads[RT_DBNHASH]); head++ )  {
+		while( RT_LIST_WHILE( stp, soltab, head ) )  {
+			RT_CHECK_SOLTAB(stp);
+			rt_free_soltab(stp);
+		}
+	}
+	rtip->nsolids = 0;
 
 	/**** The best thing to do would be to hunt down the
 	 *  bitv and partition structs and release them, because
