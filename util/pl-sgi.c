@@ -547,7 +547,7 @@ Coord max[3], min[3];
 			geti(y2);
 			min[0] = x1; min[1] = y1;
 			max[0] = x2; max[1] = y2;
-			min[2] = -32768.0; max[2] = 32768.0;
+			min[2] = -1.0; max[2] = 1.0;
 			break;
 		case 'p':
 			geti(x);
