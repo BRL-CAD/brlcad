@@ -641,19 +641,19 @@ double		t[];
 	 *
 	 *  Look at each root returned; if the imaginary part is zero
 	 *  or sufficiently close, then use the real part as one value
-	 *  of 't' for the intersections, otherwise reduce the number
-	 *  of points returned.
+	 *  of 't' for the intersections
 	 */
-	for ( l=0, i=0; i < npts; ++l ){
+	for ( l=0, i=0; l < npts; l++ ){
 		if ( NEAR_ZERO( val[l].im ) )
 			t[i++] = val[l].re;
-		else
-			--npts;
 	}
-	if ( npts != 0 && npts != 2 && npts != 4 ){
-		fprintf(stderr,"stdCone:  polyRoots() returned %d real roots\n", npts);
+	/* Here, 'i' is number of points being returned */
+	if ( i != 0 && i != 2 && i != 4 ){
+		fprintf(stderr,"stdCone:  reduced %d to %d roots\n",npts,i);
+		pr_poly( &C );
+		pr_roots( npts, val );
 	}
-	return npts;
+	return i;
 }
 
 

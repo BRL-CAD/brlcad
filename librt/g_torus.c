@@ -27,7 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./polyno.h"
 #include "./complex.h"
 
-static int	stdTorus();
+HIDDEN int	stdTorus();
 static void	PtSort();
 
 /*
@@ -173,10 +173,13 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	MAT4X3VEC( B, mat, SP_B );
 	MAT4X3VEC( Hv, mat, SP_H );
 
-	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
 	magsq_a = MAGSQ( A );
 	magsq_b = MAGSQ( B );
 	magsq_h = MAGSQ( Hv );
+	r1 = sqrt(magsq_a);
+	r2 = sqrt(magsq_h);
+
+	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_h) ) {
 		fprintf(stderr,"tor(%s):  zero length A, B, or H vector\n",
 			stp->st_name );
@@ -184,33 +187,32 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	}
 
 	/* Validate that |A| == |B| (for now) */
-	f = sqrt(magsq_a) - sqrt(magsq_b);
+	f = r1 - sqrt(magsq_b);
 	if( ! NEAR_ZERO(f) )  {
 		fprintf(stderr,"tor(%s):  (|A|=%f) != (|B|=%f) \n",
-			stp->st_name, sqrt(magsq_a), sqrt(magsq_b) );
+			stp->st_name, r1, sqrt(magsq_b) );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
 	f = VDOT( A, B );
-	if( ! NEAR_ZERO(f) )  {
+	if( !NEAR_ZERO(f) )  {
+		/* perhaps something with reldiff() might be better? */
 		fprintf(stderr,"tor(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, Hv );
-	if( ! NEAR_ZERO(f) )  {
+	if( !NEAR_ZERO(f) )  {
 		fprintf(stderr,"tor(%s):  B not perpendicular to H, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, Hv );
-	if( ! NEAR_ZERO(f) )  {
+	if( !NEAR_ZERO(f) )  {
 		fprintf(stderr,"tor(%s):  A not perpendicular to H, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that 0 < r2 <= r1 for alpha computation */
-	r1 = sqrt(magsq_a);
-	r2 = sqrt(magsq_h);
 	if( 0.0 >= r2  || r2 > r1 )  {
 		fprintf(stderr,"r1 = %f, r2 = %f\n", r1, r2 );
 		fprintf(stderr,"tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
@@ -346,13 +348,8 @@ register struct xray *rp;
 	MAT4X3VEC( pprime, tor->tor_SoR, work );
 
 	npts = stdTorus( pprime, dprime, tor->tor_alpha, k);
-	if( npts <= 0 )
+	if( npts != 2 && npts != 4 )
 		return(SEG_NULL);		/* No hit */
-
-	if( npts != 2 && npts != 4 )  {
-		fprintf(stderr,"tor(%s):  %d intersects != {2,4}\n", stp->st_name, npts );
-		return(SEG_NULL);		/* No hit */
-	}
 
 	/* Most distant to least distant */
 	PtSort( k, npts );
@@ -473,7 +470,7 @@ register struct tor_specific *tor;
  *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
  *  		[0]                [1]           [2]    dgr=2
  */
-static int
+HIDDEN int
 stdTorus(Point,Direc,alpha,t)
 vect_t	Point, Direc;
 double	alpha, t[];
@@ -509,25 +506,28 @@ double	alpha, t[];
 	 *  be a problem somewhere, so return an error value.
 	 */
 	if ( (npts = polyRoots( &C, val )) != 4 ){
-		fprintf(stderr,"stdTorus:  polyRoots() returned %d?\n", npts);
-		return(-1);
+		fprintf(stderr,"stdTorus:  polyRoots() 4!=%d\n", npts);
+		pr_poly( &C );
+		pr_roots( npts, val );
+		return(-1);		/* BAD */
 	}
 
 	/*  Only real roots indicate an intersection in real space.
 	 *
 	 *  Look at each root returned; if the imaginary part is zero
 	 *  or sufficiently close, then use the real part as one value
-	 *  of 't' for the intersections, otherwise reduce the number
-	 *  of points returned.
+	 *  of 't' for the intersections
 	 */
-#define	TOLER		.00001
-	for ( l=0, i=0; i < npts; ++l ){
-		if ( Abs( val[l].im ) <= TOLER )
+	for ( l=0, i=0; l < npts; l++ ){
+		if( NEAR_ZERO( val[l].im ) )
 			t[i++] = val[l].re;
-		else
-			npts--;
 	}
-	return npts;
+	/* Here, 'i' is number of points being returned */
+	if( i != 0 && i != 2 && i != 4 )  {
+		fprintf(stderr,"stdTorus reduced 4 to %d roots != {2,4}\n",i);
+		pr_roots( npts, val );
+	}
+	return i;
 }
 
 /*	>>>  s o r t ( )  <<<
