@@ -206,6 +206,12 @@ f_in()
 	register int i;
 	register struct directory *dp;
 	union record record;
+	char			name[NAMESIZE+2];
+	struct rt_db_internal	internal;
+	struct rt_external	external;
+	char			*new_cmd[3];
+	int			ngran;		/* number of db granules */
+	int			id;
 
 	(void)signal( SIGINT, sig2);	/* allow interrupts */
 
@@ -231,6 +237,7 @@ f_in()
 	}
 	/* Save the solid name since cmd_args[] might get bashed */
 	NAMEMOVE( cmd_args[1], record.s.s_name );
+	strncpy( name, cmd_args[1], sizeof(name) );
 
 	/* Make sure to note this is a solid record */
 	record.s.s_id = ID_SOLID;
@@ -406,14 +413,13 @@ f_in()
 		}
 		goto do_update;
 	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
-#ifdef ARS_DEBUGGED
-		if (ars_in(&record) != 0)
+		if (ars_in(numargs, cmd_args, &internal) != 0)  {
 			(void)printf("ERROR, ars not made!\n");
-		return;
-#else
-		(void)printf("typein ars not implimented yet\n");
-		return;
-#endif
+			if(internal.idb_type) rt_functab[internal.idb_type].
+				ft_ifree( &internal );
+			return;
+		}
+		goto do_new_update;
 	} else {
 		(void)printf("f_in:  %s is not a known primitive\n", cmd_args[2]);
 		return;
@@ -440,14 +446,56 @@ do_update:
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  record.s.s_name, -1, 0, DIR_SOLID )) == DIR_NULL ||
+	if( (dp = db_diradd( dbip,  name, -1L, 0, DIR_SOLID )) == DIR_NULL ||
 	    db_alloc( dbip, dp, 1 ) < 0 )  {
 	    	ALLOC_ERR_return;
 	}
 	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 
 	/* draw the "made" solid */
-	f_edit( 2, cmd_args );	/* depends on name being in argv[1] */
+	new_cmd[0] = "e";
+	new_cmd[1] = name;
+	new_cmd[2] = (char *)NULL;
+	f_edit( 2, new_cmd );
+	return;
+
+do_new_update:
+	/* don't allow interrupts while we update the database! */
+	(void)signal( SIGINT, SIG_IGN);
+
+	RT_CK_DB_INTERNAL( &internal );
+	id = internal.idb_type;
+	if( rt_functab[id].ft_export( &external, &internal, local2base ) < 0 )  {
+		printf("export failure\n");
+		rt_functab[id].ft_ifree( &internal );
+		return;
+	}
+	rt_functab[id].ft_ifree( &internal );	/* free internal rep */
+
+	/* Add name to database record */
+	{
+		union record	*rec = (union record *)external.ext_buf;
+		/* NOTE:  This depends on name always being in the same place */
+		NAMEMOVE( name, rec->s.s_name );
+	}
+
+	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
+	if ((dp=db_diradd(dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
+	     db_alloc(dbip, dp, ngran ) < 0) {
+		db_free_external( &external );
+	    	ALLOC_ERR_return;
+	}
+	if (db_put_external( &external, dp, dbip ) < 0 )  {
+		db_free_external( &external );
+		WRITE_ERR_return;
+	}
+	db_free_external( &external );
+
+	/* draw the "made" solid */
+	new_cmd[0] = "e";
+	new_cmd[1] = name;
+	new_cmd[2] = (char *)NULL;
+	f_edit( 2, new_cmd );
 }
 
 /*
@@ -493,77 +541,32 @@ union record	*rp;
 	rp->ss.ss_id = ID_STRSOL;
 	return(0);		/* OK */
 }
-#ifdef ARS_DEBUGGED
-static void
-mk_mem_ars( rec, p_data, total_points, pts_per_curve, n_waterlines )
-union record *rec;
-fastf_t p_data[][ELEMENTS_PER_PT];
-int total_points, pts_per_curve, n_waterlines;
-{
-	register struct directory *dp;
-	union record *p_recs;
-	int i, j;
-	int tot_recs, gran_per_curve;
 
-	gran_per_curve = (pts_per_curve+7)/8;
-	tot_recs = gran_per_curve * n_waterlines;
+/*
+ *			A R S _ I N
+ */
 
-	p_recs = (union record *)rt_malloc(sizeof(union record) * tot_recs+1);
-
-	NAMEMOVE( rec->a.a_name, p_recs[0].a.a_name );
-
-	p_recs[0].a.a_id = ID_ARS_A;
-	p_recs[0].a.a_type = ARS;	/* obsolete? */
-	p_recs[0].a.a_m = n_waterlines;
-	p_recs[0].a.a_n = pts_per_curve;
-	p_recs[0].a.a_curlen = gran_per_curve;
-	p_recs[0].a.a_totlen = tot_recs; /* total granules */
-
-	for (i=0,j=1 ; i < total_points ; i += 8 ) {
-		p_recs[j].b.b_id = ID_ARS_B;
-		p_recs[j].b.b_type = ARSCONT;	/* obsolete? */
-		p_recs[j].b.b_n = i / pts_per_curve;/* obs? curve number */
-		p_recs[j].b.b_ngranule = ((i%pts_per_curve)/8)+1; /* obs? */
-
-		for (j=0 ; j < 8 ; ++j)
-			VSCALE(&(p_recs[j].b.b_values[j]),
-				&(p_data[i][j]), local2base);
-	}
-
-	if ((dp=db_diradd(dbip, p_recs[0].a.a_name, -1, tot_recs, DIR_SOLID))
-	    == DIR_NULL || db_alloc(dbip, dp, tot_recs ) < 0) {
-	    	ALLOC_ERR_return;
-	}
-
-
-	if (db_put(dbip, dp, p_recs, 0, tot_recs) < 0 )  {
-		WRITE_ERR_return;
-	}
-
-	/* draw the "made" solid */
-	strcpy(cmd_args[0], "e");
-
-	cmd_args[1] = cmd_args[0] + 2;
-	bcopy( rec->a.a_name , cmd_args[1], sizeof(rec->a.a_name));
-	*((char *)(cmd_args[1] + sizeof(rec->a.a_name))) = '\0';
-
-	cmd_args[2] = (char *)NULL;
-
-	f_edit( 2, cmd_args );	/* depends on name being in argv[1] */
-}
-
+/* XXX this should come from a header file.  Must match librt/g_ars.c */
+/* The internal (in memory) form of an ARS */
+struct ars_internal {
+	int	magic;
+	int	ncurves;
+	int	pts_per_curve;
+	fastf_t	**curves;
+};
+#define RT_ARS_INTERNAL_MAGIC	0x77ddbbe3
 
 int
-ars_in(rec)
-union record *rec;
+ars_in( argc, argv, intern )
+int			argc;
+char			**argv;
+struct rt_db_internal	*intern;
 {
-	int pts_per_curve;
-	int n_waterlines;
-	int i;
-	int total_points;
-	int axis;	/* current element in pt vector */
-	int pt;	/* current point in waterline */
-	fastf_t (*point_data)[ELEMENTS_PER_PT];
+	struct ars_internal	*arip;
+	int			i;
+	int			total_points;
+	int			cv;	/* current curve (waterline) # */
+	int			axis;	/* current fastf_t in waterline */
 
 	while (args < 5) {
 		(void)printf("%s", p_ars[args-3]);
@@ -573,17 +576,29 @@ union record *rec;
 		args += argcnt;
 	}
 
-	if ((pts_per_curve = atoi(cmd_args[3])) < 3 ||
-	    (n_waterlines =  atoi(cmd_args[4])) < 3 ) {
+	RT_INIT_DB_INTERNAL( intern );
+	intern->idb_type = ID_ARS;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct ars_internal), "ars_internal");
+	arip = (struct ars_internal *)intern->idb_ptr;
+	arip->magic = RT_ARS_INTERNAL_MAGIC;
+
+	if ((arip->pts_per_curve = atoi(cmd_args[3])) < 3 ||
+	    (arip->ncurves =  atoi(cmd_args[4])) < 3 ) {
 	    	printf("Invalid number of lines or pts_per_curve\n");
 		return(1);
 	}
-	printf("Waterlines: %d curve points: %d\n", n_waterlines, pts_per_curve);
+	printf("Waterlines: %d, curve points: %d\n", arip->ncurves, arip->pts_per_curve);
 	/* */
-	total_points = n_waterlines * pts_per_curve;
+	total_points = arip->ncurves * arip->pts_per_curve;
 
-	point_data = (fastf_t (*)[ELEMENTS_PER_PT])rt_malloc(
-			sizeof(point_t) * total_points);
+	arip->curves = (fastf_t **)rt_malloc(
+		(arip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
+	for( i=0; i < arip->ncurves; i++ )  {
+		/* Leave room for first point to be repeated */
+		arip->curves[i] = (fastf_t *)rt_malloc(
+		    (arip->pts_per_curve+1) * sizeof(point_t),
+		    "ars curve" );
+	}
 
 	while (args < 8) {
 		(void)printf("%s", p_ars[args-3]);
@@ -593,79 +608,61 @@ union record *rec;
 		args += argcnt;
 	}
 	/* fill in the point of the first row */
-	point_data[0][0] = atof(cmd_args[5]);
-	point_data[0][1] = atof(cmd_args[6]);
-	point_data[0][2] = atof(cmd_args[7]);
+	arip->curves[0][0] = atof(cmd_args[5]);
+	arip->curves[0][1] = atof(cmd_args[6]);
+	arip->curves[0][2] = atof(cmd_args[7]);
 
-	/* fill in the other points of the first row */
-	for (pt=1 ; pt < pts_per_curve ; ++pt) {
-		point_data[pt][0] = point_data[0][0];
-		point_data[pt][1] = point_data[0][1];
-		point_data[pt][2] = point_data[0][2];
+	/* The first point is duplicated across the first curve */
+	for (i=1 ; i < arip->pts_per_curve ; ++i) {
+		VMOVE( arip->curves[0]+3*i, arip->curves[0] );
 	}
 
+	cv = 1;
 	axis = 0;
 	/* scan each of the other points we've already got */
 	for (i=8 ; i < args && i < total_points * ELEMENTS_PER_PT ; ++i) {
 
-		point_data[pt][axis] = atof(cmd_args[i]);
-		if (++axis >= ELEMENTS_PER_PT) {
+		arip->curves[cv][axis] = atof(cmd_args[i]);
+		if (++axis >= arip->pts_per_curve * ELEMENTS_PER_PT) {
 			axis = 0;
-			++pt;
+			cv++;
 		}
 	}
 
 	/* go get the waterline points from the user */
-	while (pt < total_points-pts_per_curve+1) {
-		if (pt < total_points-pts_per_curve)
+	while( cv < arip->ncurves )  {
+		if (cv < arip->ncurves-1)
 			(void)printf("%s for Waterline %d, Point %d : ",
-				p_ars[5+axis],
-				pt / pts_per_curve +1,
-				pt % pts_per_curve +1);
+				p_ars[5+axis%3], cv, axis/3 );
 		else
 			(void)printf("%s for point of last waterline : ",
-				p_ars[5+axis],
-				pt / pts_per_curve +1,
-				pt % pts_per_curve +1);
+				p_ars[5+axis%3] );
 
+		/* Get some more input */
 		*cmd_args[0] = '\0';
 		if ((argcnt = getcmd(1)) < 0)
 			return(1);
 
 		/* scan each of the args we've already got */
 		for (i=1 ; i < argcnt+1 &&
-		    pt < n_waterlines * pts_per_curve * ELEMENTS_PER_PT ; ++i) {
-			point_data[pt][axis] = atof(cmd_args[i]);
-			if (++axis >= ELEMENTS_PER_PT) {
+		    cv < arip->ncurves && axis < 3*arip->pts_per_curve; i++ )  {
+			arip->curves[cv][axis] = atof(cmd_args[i]);
+			if (++axis >= arip->pts_per_curve * ELEMENTS_PER_PT) {
 				axis = 0;
-				++pt;
+				cv++;
 			}
 		}
+		if( cv >= arip->ncurves-1 && axis >= ELEMENTS_PER_PT )  break;
 	}
 
-	/* replicate last point */
-	for (i=pt+1 ; i < total_points ; ++i) {
-		point_data[i][0] = point_data[pt][0];
-		point_data[i][1] = point_data[pt][1];
-		point_data[i][2] = point_data[pt][2];
+	/* The first point is duplicated across the last curve */
+	for (i=1 ; i < arip->pts_per_curve ; ++i) {
+		VMOVE( arip->curves[arip->ncurves-1]+3*i,
+			arip->curves[arip->ncurves-1] );
 	}
-
-	/* now it's time to make the in-memory database records */
-
-	rec->a.a_id = ID_ARS_A;
-	rec->a.a_type = ARS;	/* obsolete? */
-	rec->a.a_m = n_waterlines;
-	rec->a.a_n = pts_per_curve;
-	rec->a.a_curlen = (pts_per_curve+7)/8;	/* granules per curve */
-	rec->a.a_totlen = rec->a.a_curlen * n_waterlines; /* total granules */
-
-	mk_mem_ars(rec, point_data, total_points,
-			pts_per_curve, n_waterlines);
-
-	rt_free((char *)point_data);
 	return(0);
 }
-#endif
+
 /*	H A L F _ I N ( ) :    	reads halfspace parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
