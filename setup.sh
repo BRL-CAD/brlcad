@@ -89,26 +89,6 @@ done
 ############################################################################
 chmod 664 Cakefile.defs
 
-case X$MACHINE in
-
-X4gt|X4d|X4d2)
-	# SGI 4D foolishness
-	case $MACHINE in
-	4gt)	SGI_TYPE=1;;
-	4d)	SGI_TYPE=2;;
-	4d2)	SGI_TYPE=3;;
-	esac
-	ed - Cakefile.defs << EOF
-g/define	SGI_TYPE/d
-/SGI_4D_TYPE_MARKER/a
-#	define	SGI_TYPE	$SGI_TYPE
-.
-w
-EOF
-#	End of SGI stuff
-
-esac
-
 ############################################################################
 #
 #  Finally, after potentially having edited Cakefile.defs, 
