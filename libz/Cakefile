@@ -9,10 +9,12 @@
 
 #if !defined(BUILD_LIBRARY)
 #define PRODUCTS	libz.a
+#define CONFIG_OPTS	--prefix=BINDIR
 #define	AFTER_MAKE	/**/
 #else
 #define PRODUCTS	libz.so
 #define SHARED_PRODUCT	libz.so''[[LIBVERS]]
+#define CONFIG_OPTS	--shared --prefix=BINDIR
 #define	AFTER_MAKE	mv libz.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #endif
 
@@ -26,7 +28,7 @@ Makefile.MTYPE:		if not exist Makefile.MTYPE
 		\R\A\N\L\I\B=\"RANLIB\"; \
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
 		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
-		../SRCDIR/configure; \
+		../SRCDIR/configure CONFIG_OPTS; \
 		../SRCDIR/fix_makefile.sh >  Makefile.MTYPE)
 
 
