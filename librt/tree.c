@@ -35,17 +35,31 @@ int rt_pure_boolean_expressions = 0;
 HIDDEN union tree *rt_drawobj();
 HIDDEN void rt_add_regtree();
 HIDDEN union tree *rt_make_bool_tree();
+HIDDEN int rt_rpp_tree();
+HIDDEN char *rt_basename();
+HIDDEN struct region *rt_find_region();
 
 extern int nul_prep(),	nul_print(), nul_norm(), nul_uv();
 extern int tor_prep(),	tor_print(), tor_norm(), tor_uv();
 extern int tgc_prep(),	tgc_print(), tgc_norm(), tgc_uv();
 extern int ell_prep(),	ell_print(), ell_norm(), ell_uv();
 extern int arb_prep(),	arb_print(), arb_norm(), arb_uv();
-extern int half_prep(),	half_print(),half_norm(),half_uv();
+extern int hlf_prep(),	hlf_print(),hlf_norm(),hlf_uv();
 extern int ars_prep(),  ars_print(), ars_norm(), ars_uv();
 extern int rec_prep(),	rec_print(), rec_norm(), rec_uv();
 extern int pg_prep(),	pg_print(),  pg_norm(),  pg_uv();
 extern int spl_prep(),	spl_print(), spl_norm(), spl_uv();
+
+extern int nul_curve(), nul_class();
+extern int tor_curve(), tor_class();
+extern int tgc_curve(), tgc_class();
+extern int ell_curve(), ell_class();
+extern int arb_curve(), arb_class();
+extern int hlf_curve(), hlf_class();
+extern int ars_curve(), ars_class();
+extern int rec_curve(), rec_class();
+extern int pg_curve(), pg_class();
+extern int spl_curve(), spl_class();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -53,23 +67,34 @@ extern struct seg *tgc_shot();
 extern struct seg *ell_shot();
 extern struct seg *arb_shot();
 extern struct seg *ars_shot();
-extern struct seg *half_shot();
+extern struct seg *hlf_shot();
 extern struct seg *rec_shot();
 extern struct seg *pg_shot();
 extern struct seg *spl_shot();
 
 struct rt_functab rt_functab[] = {
-	nul_prep, nul_shot, nul_print, nul_norm, nul_uv, "ID_NULL",
-	tor_prep, tor_shot, tor_print, tor_norm, tor_uv, "ID_TOR",
-	tgc_prep, tgc_shot, tgc_print, tgc_norm, tgc_uv, "ID_TGC",
-	ell_prep, ell_shot, ell_print, ell_norm, ell_uv, "ID_ELL",
-	arb_prep, arb_shot, arb_print, arb_norm, arb_uv, "ID_ARB8",
-	ars_prep, ars_shot, ars_print, ars_norm, ars_uv, "ID_ARS",
-	half_prep,half_shot,half_print,half_norm,half_uv,"ID_HALF",
-	rec_prep, rec_shot, rec_print, rec_norm, rec_uv, "ID_REC",
-	pg_prep,  pg_shot,  pg_print,  pg_norm,  pg_uv,  "ID_POLY",
-	spl_prep, spl_shot, spl_print, spl_norm, spl_uv, "ID_BSPLINE",
-	nul_prep, nul_shot, nul_print, nul_norm, nul_uv, ">ID_NULL"
+	0,	nul_prep,	nul_shot,	nul_print,	nul_norm,
+		nul_uv,		nul_curve,	nul_class,	"ID_NULL",
+	1,	tor_prep,	tor_shot,	tor_print,	tor_norm,
+		tor_uv,		tor_curve,	tor_class,	"ID_TOR",
+	1,	tgc_prep,	tgc_shot,	tgc_print,	tgc_norm,
+		tgc_uv,		tgc_curve,	tgc_class,	"ID_TGC",
+	1,	ell_prep,	ell_shot,	ell_print,	ell_norm,
+		ell_uv,		ell_curve,	ell_class,	"ID_ELL",
+	0,	arb_prep,	arb_shot,	arb_print,	arb_norm,
+		arb_uv,		arb_curve,	arb_class,	"ID_ARB8",
+	1,	ars_prep,	ars_shot,	ars_print,	ars_norm,
+		ars_uv,		ars_curve,	ars_class,	"ID_ARS",
+	0,	hlf_prep,	hlf_shot,	hlf_print,	hlf_norm,
+		hlf_uv,	hlf_curve,	hlf_class,	"ID_HALF",
+	1,	rec_prep,	rec_shot,	rec_print,	rec_norm,
+		rec_uv,		rec_curve,	rec_class,	"ID_REC",
+	1,	pg_prep,	pg_shot,	pg_print,	pg_norm,
+		pg_uv,		pg_curve,	pg_class,	 "ID_POLY",
+	1,	spl_prep,	spl_shot,	spl_print,	spl_norm,
+		spl_uv,		spl_curve,	spl_class,	"ID_BSPLINE",
+	0,	nul_prep,	nul_shot,	nul_print,	nul_norm,
+		nul_uv,		nul_curve,	nul_class,	">ID_NULL"
 };
 
 /*
@@ -78,6 +103,17 @@ struct rt_functab rt_functab[] = {
 #define DEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
 
 DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nul_uv);
+
+DEF(nul_curve); DEF(nul_class);
+DEF(tor_curve); DEF(tor_class);
+DEF(tgc_curve); DEF(tgc_class);
+DEF(ell_curve); DEF(ell_class);
+DEF(arb_curve); DEF(arb_class);
+DEF(hlf_curve); DEF(hlf_class);
+DEF(ars_curve); DEF(ars_class);
+DEF(rec_curve); DEF(rec_class);
+DEF(pg_curve); DEF(pg_class);
+DEF(spl_curve); DEF(spl_class);
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
@@ -263,22 +299,17 @@ next_one: ;
 
 	mat_copy( stp->st_pathmat, mat );
 
-	/* Update the model maxima and minima */
-#define TREE_MINMAX(a,b,c)	{ if( (c) < (a) )  a = (c);\
-			if( (c) > (b) )  b = (c); }
-
-#define TREE_MM(v)	TREE_MINMAX( rt_i.mdl_min[X], rt_i.mdl_max[X], v[X] ); \
-		TREE_MINMAX( rt_i.mdl_min[Y], rt_i.mdl_max[Y], v[Y] ); \
-		TREE_MINMAX( rt_i.mdl_min[Z], rt_i.mdl_max[Z], v[Z] )
 	/*
+	 * Update the model maxima and minima
+	 *
 	 *  Don't update min & max for halfspaces;  instead, add them
 	 *  to the list of infinite solids, for special handling.
 	 */
 	if( stp->st_max[X] >= INFINITY )  {
 		rt_cut_extend( &rt_i.rti_inf_box, stp );
 	}  else  {
-		TREE_MM( stp->st_min );
-		TREE_MM( stp->st_max );
+		VMINMAX( rt_i.mdl_min, rt_i.mdl_max, stp->st_min );
+		VMINMAX( rt_i.mdl_min, rt_i.mdl_max, stp->st_max );
 	}
 
 	stp->st_bit = rt_i.nsolids++;
@@ -767,6 +798,126 @@ int lvl;			/* recursion level */
 }
 
 /*
+ *			R T _ R P P _ T R E E
+ *
+ *	Calculate the bounding RPP of the region whose boolean tree is 'tp'.
+ *	Depends on caller having initialized min_rpp and max_rpp.
+ *	Returns 0 for failure (and prints a diagnostic), or 1 for success.
+ */
+HIDDEN int
+rt_rpp_tree( tp, min_rpp, max_rpp )
+register union tree *tp;
+register fastf_t *min_rpp, *max_rpp;
+{	
+	register int i;
+
+	if( tp == TREE_NULL )  {
+		rt_log( "librt/rt_rpp_tree: NULL tree pointer.\n" );
+		return(0);
+	}
+
+	switch( tp->tr_op )  {
+
+	case OP_SOLID:
+		VMINMAX( min_rpp, max_rpp, tp->tr_a.tu_stp->st_min );
+		return(1);
+
+	default:
+		rt_log( "librt/rt_rpp_tree: unknown op=x%x\n", tp->tr_op );
+		return(0);
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		/* BINARY type */
+		if( !rt_rpp_tree( tp->tr_b.tb_left, min_rpp, max_rpp )  ||
+		    !rt_rpp_tree( tp->tr_b.tb_right, min_rpp, max_rpp )  )
+			return	0;
+		break;
+	case OP_NOT:
+	case OP_GUARD:
+		/* UNARY tree */
+		if( ! rt_rpp_tree( tp->tr_b.tb_left, min_rpp, max_rpp ) )
+			return	0;
+		break;
+	}
+	return	1;
+}
+
+/*
+ *			R T _ B A S E N A M E
+ *
+ *  Given a string containing slashes such as a pathname, return a
+ *  pointer to the first character after the last slash.
+ */
+HIDDEN char *
+rt_basename( str )
+register char	*str;
+{	
+	register char	*p = str;
+	while( *p != '\0' )
+		if( *p++ == '/' )
+			str = p;
+	return	str;
+}
+
+/*
+ *			R T _ F I N D _ R E G I O N
+ *
+ *  Return a pointer to the corresponding region structure of the given
+ *  region's name (reg_name), or REGION_NULL if it does not exist.
+ *
+ *  If the full path of a region is specified, then that one is
+ *  returned.  However, if only the database node name of the
+ *  region is specified and that region has been referenced multiple
+ *  time in the tree, then this routine will simply return the first one.
+ */
+HIDDEN struct region *
+rt_find_region( rtip, reg_name )
+struct rt_i	*rtip;
+register char	*reg_name;
+{	
+	register struct region	*regp = rtip->HeadRegion;
+	register char *reg_base = rt_basename(reg_name);
+
+	for( ; regp != REGION_NULL; regp = regp->reg_forw )  {	
+		register char	*cp;
+		/* First, check for a match of the full path */
+		if( *reg_base == regp->reg_name[0] &&
+		    strcmp( reg_base, regp->reg_name ) == 0 )
+			return(regp);
+		/* Second, check for a match of the database node name */
+		cp = rt_basename( regp->reg_name );
+		if( *cp == *reg_name && strcmp( cp, reg_name ) == 0 )
+			return(regp);
+	}
+	return(REGION_NULL);
+}
+
+/*
+ *			R T _ R P P _ R E G I O N
+ *
+ *  Calculate the bounding RPP for a region given the name of
+ *  the region node in the database.  See remarks in rt_find_region()
+ *  above for name conventions.
+ *  Returns 0 for failure (and prints a diagnostic), or 1 for success.
+ */
+int
+rt_rpp_region( rtip, reg_name, min_rpp, max_rpp )
+struct rt_i		*rtip;
+char			*reg_name;
+register fastf_t	*min_rpp, *max_rpp;
+{	
+	register struct region	*regp = rt_find_region( rtip, reg_name );
+
+	if( regp == REGION_NULL )  return(0);
+	VMOVE( min_rpp, rtip->mdl_max );
+	VMOVE( max_rpp, rtip->mdl_min );
+	return( rt_rpp_tree( regp->reg_treetop, min_rpp, max_rpp ) );
+}
+
+/*
  *			R T _ F A S T F _ F L O A T
  *
  *  Convert TO 4xfastf_t FROM 3xfloats (for database) 
@@ -790,14 +941,16 @@ register int n;
  *  
  *  Given the (leaf) name of a solid, find the first occurance of it
  *  in the solid list.  Used mostly to find the light source.
+ *  Returns soltab pointer, or SOLTAB_NULL.
  */
 struct soltab *
-rt_find_solid( name )
+rt_find_solid( rtip, name )
+struct rt_i *rtip;
 register char *name;
 {
 	register struct soltab *stp;
 	register char *cp;
-	for( stp = rt_i.HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
 		if( *(cp = stp->st_name) == *name  &&
 		    strcmp( cp, name ) == 0 )  {
 			return(stp);
