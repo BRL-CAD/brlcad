@@ -591,6 +591,7 @@ rt_init_resource(
 		cpu_num = MAX_PSW;		/* array is [MAX_PSW+1] just for this */
 		if(rtip)  RT_CK_RTI(rtip);	/* check it if provided */
 	} else {
+		BU_ASSERT_PTR( resp, !=, NULL );
 		BU_ASSERT_LONG( cpu_num, >=, 0 );
 		BU_ASSERT_LONG( cpu_num, <, MAX_PSW );
 		RT_CK_RTI(rtip);		/* mandatory */
