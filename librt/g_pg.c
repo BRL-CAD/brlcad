@@ -31,6 +31,8 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
 
 #define TRI_NULL	((struct tri_specific *)0)
 
+HIDDEN int pgface();
+
 /* Describe algorithm here */
 
 
@@ -126,6 +128,7 @@ struct directory *dp;
  *	0	if the 3 points didn't form a plane (eg, colinear, etc).
  *	#pts	(3) if a valid plane resulted.
  */
+HIDDEN int
 pgface( stp, ap, bp, cp, np )
 struct soltab	*stp;
 fastf_t		*ap, *bp, *cp;
@@ -184,7 +187,6 @@ register struct soltab *stp;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
-	register int i;
 
 	if( trip == TRI_NULL )  {
 		rt_log("pg(%s):  no faces\n", stp->st_name);
