@@ -1645,6 +1645,7 @@ proc sketch_init_table {} {
 	uplevel #0 set mged_sketch_table_lmode "replace"
 	uplevel #0 set mged_sketch_table_index -1
 	uplevel #0 set mged_sketch_table_prefix "_a_txt_"
+	uplevel #0 set mged_sketch_table_interp "quat"
 	#dependencies
 	foreach dep {main } {
 		if { [info globals mged_sketch_init_$dep] == "" } {
@@ -1973,7 +1974,8 @@ proc sketch_table_col_add_one {} {
 
 proc sketch_table_col_add { i col cmd flag } {
 		frame ._sketch_col.fr$i
-		label ._sketch_col.fr$i.l0 -text "$col:" -width 10
+		set col [string trim $col]
+		label ._sketch_col.fr$i.l0 -text "$col:"
 		entry ._sketch_col.fr$i.e0 -width 20
 		if { $flag == "old" } {
 			._sketch_col.fr$i.e0 insert end @$i
@@ -1984,8 +1986,8 @@ proc sketch_table_col_add { i col cmd flag } {
 			bind ._sketch_col.fr$j.e0 <Key-Return> \
 			  "focus ._sketch_col.fr$i.e0"
 		}
-		pack ._sketch_col.fr$i -side top
-		pack ._sketch_col.fr$i.l0 ._sketch_col.fr$i.e0 -side left
+		pack ._sketch_col.fr$i -side top -fill x -expand yes
+		pack ._sketch_col.fr$i.l0 ._sketch_col.fr$i.e0 -side left -fill x -expand yes
 		return $cmd
 }
 
@@ -2053,6 +2055,7 @@ proc sketch_text_do_script {wout win rows slist} {
 }
 
 proc sketch_popup_table_interp {w wbar}	{
+	global mged_sketch_table_interp
 	#make sure bar is up to date
 	sketch_table_bar_reset $w
 
@@ -2060,20 +2063,25 @@ proc sketch_popup_table_interp {w wbar}	{
 	toplevel ._sketch_col
 	wm title ._sketch_col "Column Interpolator"
 	frame ._sketch_col.fz
-	label ._sketch_col.fz.l0 -text "0:" -width 10
+	label ._sketch_col.fz.l0 -text "0:" 
 	label ._sketch_col.fz.l1 -text "time" -width 20
-	pack ._sketch_col.fz -side top
-	pack ._sketch_col.fz.l0 ._sketch_col.fz.l1 -side left
+	pack ._sketch_col.fz -side top -fill x -expand yes
+	pack ._sketch_col.fz.l0 ._sketch_col.fz.l1 -side left -fill x -expand yes
 	frame ._sketch_col.fa
 	frame ._sketch_col.fb
 	frame ._sketch_col.fc
 	frame ._sketch_col.fd
-	menubutton ._sketch_col.mb0 -text "Choose Command" \
-		-menu ._sketch_col.mb0.m0
-	menu ._sketch_col.mb0.m0
-	pack ._sketch_col.mb0 ._sketch_col.fa -side bottom -fill x -expand yes
+
+	frame ._sketch_col.fe
+	menubutton ._sketch_col.fe.mb0 -text "Active Command:" \
+		-menu ._sketch_col.fe.mb0.m0
+	menu ._sketch_col.fe.mb0.m0
+	label ._sketch_col.fe.l0 -textvariable mged_sketch_table_interp
+
+	pack ._sketch_col.fe ._sketch_col.fa -side bottom -fill x -expand yes
 	pack ._sketch_col.fd ._sketch_col.fc \
 		._sketch_col.fb -side bottom -anchor e
+
 	set collist [lrange [split [$wbar get 1.0 "1.0 lineend"] "\t"] \
 			2 end]
 	set i 1
@@ -2102,20 +2110,23 @@ proc sketch_popup_table_interp {w wbar}	{
 	entry ._sketch_col.fd.e0 -width 10
 	bind ._sketch_col.fd.e0 <Key-Return> {._sketch_col.fa.b0 invoke}
 	._sketch_col.fd.e0 insert end "30"
-	pack ._sketch_col.fa.b2 ._sketch_col.fa.b0 ._sketch_col.fa.b1 -side left
+	pack ._sketch_col.fa.b2 ._sketch_col.fa.b0 ._sketch_col.fa.b1 \
+		._sketch_col.fe.mb0 ._sketch_col.fe.l0 \
+		-side left -expand yes -fill x
 	pack ._sketch_col.fb.l0 ._sketch_col.fb.e0 \
 		._sketch_col.fc.l0 ._sketch_col.fc.e0 \
 		._sketch_col.fd.l0 ._sketch_col.fd.e0 \
 		-side left -fill x
 
-	._sketch_col.mb0.m0 add command -label "Step (src)" -command {sketch_interp_fill step i}
-	._sketch_col.mb0.m0 add command -label "Linear (src)" -command {sketch_interp_fill linear i}
-	._sketch_col.mb0.m0 add command -label "Spline (src)" -command {sketch_interp_fill spline i}
-	._sketch_col.mb0.m0 add command -label "Periodic spline (src)" -command {sketch_interp_fill cspline i}
-	._sketch_col.mb0.m0 add command -label "Quaternion (src)" -command {sketch_interp_fill quat i}
-	._sketch_col.mb0.m0 add command -label "Rate (init) (incr/s)" -command {sketch_interp_fill rate }
-	._sketch_col.mb0.m0 add command -label "Accel (init) (incr/s)" -command {sketch_interp_fill accel}
-	._sketch_col.mb0.m0 add command -label "Next (src) (offset)" -command {sketch_interp_fill next}
+	._sketch_col.fe.mb0.m0 add command -label "Step (src)" -command {set mged_sketch_table_interp step }
+	._sketch_col.fe.mb0.m0 add command -label "Linear (src)" -command {set mged_sketch_table_interp linear }
+	._sketch_col.fe.mb0.m0 add command -label "Spline (src)" -command {set mged_sketch_table_interp spline }
+	._sketch_col.fe.mb0.m0 add command -label "Periodic spline (src)" -command {set mged_sketch_table_interp cspline }
+	._sketch_col.fe.mb0.m0 add command -label "Quaternion (src)" -command {set mged_sketch_table_interp quat }
+	._sketch_col.fe.mb0.m0 add command -label "Rate (init) (incr/s)" -command {set mged_sketch_table_interp rate }
+	._sketch_col.fe.mb0.m0 add command -label "Accel (init) (incr/s)" -command {set mged_sketch_table_interp accel}
+	._sketch_col.fe.mb0.m0 add command -label "Next (src) (offset)" -command {set mged_sketch_table_interp next}
+	._sketch_col.fe.mb0.m0 add command -label "Delete column" -command {set mged_sketch_table_interp delete}
 
 	if { $i > 1 } {
 		focus ._sketch_col.fr1.e0
@@ -2232,7 +2243,9 @@ proc sketch_interp_fill { str args} {
 
 proc sketch_table_interp_add { i col cmd flag } {
 		frame ._sketch_col.fr$i
-		label ._sketch_col.fr$i.l0 -text "$col:" -width 10
+		set col [string trim $col]
+		button ._sketch_col.fr$i.l0 -text "$col:" \
+			-command "sketch_table_interp_entry ._sketch_col.fr$i.e0 $i"
 		entry ._sketch_col.fr$i.e0 -width 20
 		if { $flag == "old" } {
 			._sketch_col.fr$i.e0 insert end "spline $i"
@@ -2243,10 +2256,35 @@ proc sketch_table_interp_add { i col cmd flag } {
 			bind ._sketch_col.fr$j.e0 <Key-Return> \
 			  "focus ._sketch_col.fr$i.e0"
 		}
-		pack ._sketch_col.fr$i -side top
-		pack ._sketch_col.fr$i.l0 ._sketch_col.fr$i.e0 -side left
+		pack ._sketch_col.fr$i -side top -fill x -expand yes
+		pack ._sketch_col.fr$i.l0 ._sketch_col.fr$i.e0 -side left -fill x -expand yes
 		return $cmd
 }
+
+proc sketch_table_interp_entry { entry index } {
+	upvar #0 mged_sketch_table_interp type
+
+	switch $type {
+		step -
+		linear -
+		spline - 
+		cspline -
+		quat {
+			$entry delete 0 end
+			$entry insert 0 "$type $index"
+		}
+		rate -
+		accel -
+		next {
+			$entry delete 0 end
+			$entry insert 0 $type
+		}
+		delete {
+			$entry delete 0 end
+		}
+	}
+}
+
 
 proc sketch_table_interp_add_one {} {
 	set num [llength [info commands ._sketch_col.fr*.e0]]
@@ -2965,12 +3003,16 @@ proc sketch_script_update { objorview } {
 proc sketch_init_track {} {
 	#track animation
 	uplevel #0 set mged_sketch_init_track 1
-	uplevel #0 {set mged_sketch_whlname ""}
-	uplevel #0 {set mged_sketch_whlsource ""}
-	uplevel #0 {set mged_sketch_lnkname ""}
-	uplevel #0 set mged_sketch_numpads 1
-	uplevel #0 set mged_sketch_radii "1"
-	uplevel #0 {set mged_sketch_track_arced ""}
+	uplevel #0 {set mged_sketch_track_vsrc ""}
+	uplevel #0 {set mged_sketch_track_wname ""}
+	uplevel #0 {set mged_sketch_track_wsrc ""}
+	uplevel #0 {set mged_sketch_track_pname ""}
+	uplevel #0 set mged_sketch_track_npads 1
+	uplevel #0 {set mged_sketch_track_dist "-s"  }
+	uplevel #0 {set mged_sketch_track_type Minimize  }
+	uplevel #0 {set mged_sketch_track_len ""  }
+	uplevel #0 {set mged_sketch_track_geom 0  }
+	uplevel #0 {set mged_sketch_track_arced "0"}
 	#dependencies
 	foreach dep {main objanim} {
 		if { [info globals mged_sketch_init_$dep] == "" } {
@@ -2990,6 +3032,7 @@ proc sketch_popup_track_anim { p } {
 		raise $root
 		return
 	}
+
 	toplevel $root
 
 	wm title $root "MGED AnimMate Track Animation"
@@ -2998,23 +3041,32 @@ proc sketch_popup_track_anim { p } {
 	label $root.f0.l0 -text "Output file: "
 	entry $root.f0.e0 -width 20 -textvariable mged_sketch_objscript
 	frame $root.f1
-	label $root.f1.l0 -text "Vehicle path curve: "
-	entry $root.f1.e0 -width 20 -textvariable mged_sketch_objsource
+	label $root.f1.l0 -text "Vehicle path from table: "
+	entry $root.f1.e0 -width 20 -textvariable mged_sketch_track_vsrc
+	frame $root.f1a
+	radiobutton $root.f1a.r0 -text "Distance" -variable mged_sketch_track_dist -value "-u"
+	radiobutton $root.f1a.r1 -text "Position" -variable mged_sketch_track_dist -value "-s"
+	radiobutton $root.f1a.r2 -text "Pos. and ypr" -variable mged_sketch_track_dist -value "-y"
 	frame $root.f2
-	label $root.f2.l0 -text "Wheel curve: "
-	entry $root.f2.e0 -width 20 -textvariable mged_sketch_whlsource
-	frame $root.f3
-	label $root.f3.l0 -text "Radii of wheels (or common radius):"
-	entry $root.f3.e0 -textvariable mged_sketch_radii
+	label $root.f2.l0 -text "Wheel specs from table: "
+	entry $root.f2.e0 -width 20 -textvariable mged_sketch_track_wsrc
 	frame $root.fw
 	label $root.fw.l0 -text "Wheel base name:"
-	entry $root.fw.e0 -width 20 -textvariable mged_sketch_whlname
+	entry $root.fw.e0 -width 20 -textvariable mged_sketch_track_wname
 	frame $root.f4
 	label $root.f4.l0 -text "Pad base name:"
-	entry $root.f4.e0 -width 20 -textvariable mged_sketch_lnkname
+	entry $root.f4.e0 -width 20 -textvariable mged_sketch_track_pname
 	frame $root.f5
 	label $root.f5.l0 -text "Number of pads: "
-	entry $root.f5.e0 -textvariable mged_sketch_numpads
+	entry $root.f5.e0 -textvariable mged_sketch_track_npads
+	frame $root.f3
+	tk_optionMenu $root.f3.om mged_sketch_track_type \
+		"Minimize" "Elastic" "Rigid"	
+	label $root.f3.l0 -text "track length:"
+	entry $root.f3.e0 -width 20 -textvariable mged_sketch_track_len
+	frame $root.f3a
+	button $root.f3a.b0 -text "Get track length from wheel specs" \
+		-command "sketch_track_get_length \$mged_sketch_track_wsrc"
 	frame $root.f6
 	button $root.f6.b0 -text "Vehicle center:" \
 			-command { set mged_sketch_objcen [viewget center] }
@@ -3027,35 +3079,38 @@ proc sketch_popup_track_anim { p } {
 	label $root.f8.l0 -text "First frame:"
 	entry $root.f8.e0 -width 20 -textvariable mged_sketch_objframe
 	frame $root.fa
-	label $root.fa.l0 -text "Arced frame (arced script only):"
-	entry $root.fa.e0 -width 20 -textvariable mged_sketch_track_arced
+	checkbutton $root.fa.cb -text "Create geometry file from frame:" -variable mged_sketch_track_geom
+	entry $root.fa.e0 -width 3 -textvariable mged_sketch_track_arced
 	frame $root.f9
-	button $root.f9.b0 -text "OK" -command {sketch_do_track $mged_sketch_objscript $mged_sketch_whlsource $mged_sketch_objsource $mged_sketch_objori $mged_sketch_objcen $mged_sketch_radii $mged_sketch_numpads $mged_sketch_lnkname}
+	button $root.f9.b0 -text "OK" -command {sketch_do_track }
 	button $root.f9.b1 -text "Show Script" -command "sketch_popup_preview $p \$mged_sketch_objscript"
 	button $root.f9.b2 -text "Up" -command "raise $p"
 	button $root.f9.b3 -text "Cancel" -command "destroy $root"
 	
 
-	pack	$root.l0 $root.f0 $root.f1 $root.f2 \
-		$root.f3 $root.fw \
-		$root.f4 $root.f5 \
+	pack	$root.l0 $root.f0 $root.f1 $root.f1a $root.f2 \
+		$root.fw \
+		$root.f4 $root.f5 $root.f3 $root.f3a\
 		$root.f6 $root.f7 \
 		$root.f8 $root.fa $root.f9\
 		-side top -fill x -expand yes
 
-
 	pack \
 		$root.f0.l0 $root.f1.l0 $root.f2.l0 \
-		$root.f3.l0 $root.fw.l0 \
+		$root.fw.l0 \
 		$root.f4.l0 $root.f5.l0 \
 		$root.f6.b0 $root.f7.b0 \
-		$root.f8.l0 $root.fa.l0 \
+		$root.f8.l0 \
+		$root.f3.om $root.f3.l0 \
 		-side left -anchor w
 
 	pack \
 		$root.f0.e0 $root.f1.e0 $root.f2.e0 $root.f3.e0\
 		$root.fw.e0 $root.f4.e0 $root.f5.e0\
-		$root.f6.e0 $root.f7.e0 $root.f8.e0 $root.fa.e0 \
+		$root.f6.e0 $root.f7.e0 $root.f8.e0 \
+		$root.fa.e0 $root.fa.cb \
+		$root.f1a.r2 $root.f1a.r1 $root.f1a.r0 \
+		$root.f3a.b0 \
 		-side right -anchor e
 
 	pack \
@@ -3065,26 +3120,57 @@ proc sketch_popup_track_anim { p } {
 
 	focus $root.f0.e0
 	bind $root.f0.e0 <Key-Return> "focus $root.f1.e0"
-	bind $root.f1.e0 <Key-Return> "focus $root.f2.e0"
-	bind $root.f2.e0 <Key-Return> "focus $root.f3.e0"
-	bind $root.f3.e0 <Key-Return> "focus $root.fw.e0"
+	bind $root.f1.e0 <Key-Return> "focus $root.f1a.e0"
+	bind $root.f1a.e0 <Key-Return> "focus $root.f3.e0"
+	bind $root.f2.e0 <Key-Return> "focus $root.fw.e0"
 	bind $root.fw.e0 <Key-Return> "focus $root.f4.e0"
 	bind $root.f4.e0 <Key-Return> "focus $root.f5.e0"
-	bind $root.f5.e0 <Key-Return> "focus $root.f6.e0"
+	bind $root.f5.e0 <Key-Return> "focus $root.f3.e0"
+	bind $root.f3.e0 <Key-Return> "focus $root.f6.e0"
 	bind $root.f6.e0 <Key-Return> "focus $root.f7.e0"
 	bind $root.f7.e0 <Key-Return> "focus $root.f8.e0"
-	bind $root.f8.e0 <Key-Return> "$root.f9.b0 invoke"
+	bind $root.f8.e0 <Key-Return> "focus $root.fa.e0"
+	bind $root.fa.e0 <Key-Return> "$root.f9.b0 invoke"
 
 
 }
 
+proc sketch_track_get_length { tid } {
+	global mged_sketch_temp1 mged_sketch_anim_path mged_sketch_track_len
+	
+	set text [sketch_text_from_table $tid 4]
+	if { $text == "" } {return 0}
+	set fd [open $mged_sketch_temp1 w]
+	sketch_text_to_fd $text $fd all
+	close $fd
+	set fd [open "| ${mged_sketch_anim_path}anim_track \
+		-c $mged_sketch_temp1" r]
+	catch {flush $fd}
+	gets $fd length
+	catch {close $fd}
+	set mged_sketch_track_len $length
+	exec rm $mged_sketch_temp1
+}
+	
 
-proc sketch_do_track { outfile wcurve tcurve ypr center radius numpads \
-								padname} {
+proc sketch_do_track { } {
+	
 	global mged_sketch_temp1 mged_sketch_anim_path \
-		mged_sketch_track_arced
+		mged_sketch_track_vsrc \
+		mged_sketch_track_wsrc \
+		mged_sketch_track_dist \
+		mged_sketch_track_type \
+		mged_sketch_track_len \
+		mged_sketch_track_geom \
+		mged_sketch_track_arced \
+		mged_sketch_objcen mged_sketch_objori mged_sketch_objframe
 
-	upvar #0 mged_sketch_whlname wname
+	upvar #0 mged_sketch_track_wname wname
+	upvar #0 mged_sketch_track_pname pname
+	upvar #0 mged_sketch_track_npads numpads
+	upvar #0 mged_sketch_objscript outfile
+	set ypr $mged_sketch_objori
+	set center $mged_sketch_objcen
 
 	#check for overwriting script file
 	if {[file exists $outfile] } {
@@ -3095,63 +3181,81 @@ proc sketch_do_track { outfile wcurve tcurve ypr center radius numpads \
 			return
 		}
 	}
-	set oldname [vdraw r n]
-	if {[sketch_open_curve $wcurve] < 0} {
-		sketch_open_curve $oldname
-		return -1
+
+	set wtext [sketch_text_from_table $mged_sketch_track_wsrc 4]
+	if { $wtext == "" } { return -1 }
+
+	switch -- $mged_sketch_track_dist {
+		"-u" {set needcol 2}
+		"-s" {set needcol 4}
+		"-y" {set needcol 7}
 	}
-	set numwheels [vdraw r l]
+	set vtext \
+	  [sketch_text_from_table $mged_sketch_track_vsrc $needcol]
+	if { $vtext == "" } { return -1 }
+
+	set numwheels [sketch_text_rows $wtext]
 	if { $numwheels < 2 } {
-		tk_dialog ._sketch_msg "Not enough wheels" "The curve $wcurve \
-		has only $numwheels point(s). You must specify the position \
-		of at least 2 wheels." {} 0 "OK"
+		tk_dialog ._sketch_msg "Not enough wheels" "The wheel file \
+		has only $numwheels wheel(s). You must specify the position \
+		and radius of at least 2 wheels." {} 0 "OK"
 		return -1
 	}
+
 	if { $wname == "" } {
 		set wcmd ""
 	} else {
 		set wcmd "-w $wname"
 	}
-	if { ($padname == "") || ($numpads == "") } {
-		set lcmd ""
+	if { ($pname == "") || ($numpads == "") } {
+		set pcmd ""
 	} else {
-		set lcmd "-l $numpads $padname"
+		set pcmd "-p $numpads $pname"
 	}
-	if { ($lcmd == "") && ($wcmd == "") } {
+	if { ($pcmd == "") && ($wcmd == "") } {
 		tk_dialog ._sketch_msg "AnimMate Track animation error" \
 		   "You must specify a pad name and number and/or a wheel name." {} 0 "OK"
 		return -1;
 	}
 	set fd [open $mged_sketch_temp1 w]
-	set rad 1
-	for {set i 0} { $i < $numwheels} { incr i} {
-		if {[llength $radius] > $i} {
-			set rad [lindex $radius $i]
-		}
-		set node [vdraw r $i]
-		puts $fd [list [lindex $node 1] [lindex $node 2] \
-			[lindex $node 3] $rad]
-	}
+	sketch_text_to_fd $wtext $fd all
 	close $fd
-	sketch_open_curve $tcurve
-	set len [vdraw r l]
-	if { $len < 3 } {
-		tk_dialog ._sketch_msg "Curve too short"	"The curve $tcurve \
-		has only $len point(s). At least 3 are required." {} 0 "OK"
-		return -1
-	}
+
 	while { [llength $ypr] < 3 } { lappend ypr 0}
-	while { [llength $center] < 3 } { lappend ypr 0}
-	if { $mged_sketch_track_arced == "" } {
-		set arccmd ""
-	} else {
+	while { [llength $center] < 3 } { lappend center 0}
+	if { $mged_sketch_track_geom == 1 } {
+		if { $mged_sketch_track_arced == "" } {
+			set mged_sketch_track_arced 0
+		}
 		set arccmd "-g $mged_sketch_track_arced"
+	} else {
+		set arccmd ""
 	}
-	set fd [ open "| ${mged_sketch_anim_path}anim_hardtrack $arccmd -s -b $ypr \
-		-d $center $wcmd $lcmd $mged_sketch_temp1 > $outfile" w]
-	sketch_write_to_fd $fd $len
+	
+	set tlen [expr $mged_sketch_track_len]
+	if { $tlen == "" } {
+		set tlen 0
+	}
+	switch $mged_sketch_track_type {
+		Minimize { set lencmd "-lm" }
+		Elastic { set lencmd "-le $tlen" }
+		Fixed { set lencmd "-lf $tlen" }
+	}
+
+	if { $mged_sketch_objframe != ""} {
+		set fcmd "-f $mged_sketch_objframe"
+	} else {
+		set fcmd ""
+	}
+
+	set myargs "$lencmd $arccmd $mged_sketch_track_dist -b $ypr \
+		-d $center $fcmd $wcmd $pcmd"
+	#puts $myargs
+
+	set fd [ open "| ${mged_sketch_anim_path}anim_track \
+		$myargs	$mged_sketch_temp1 > $outfile" w]
+	sketch_text_to_fd $vtext $fd all
 	close $fd
-	sketch_open_curve $oldname
 	exec rm $mged_sketch_temp1
 }
 
@@ -3925,6 +4029,34 @@ proc sketch_hex_to_rgb { hex } {
 	return [ list [expr $red/0x10000] [expr $green/0x100] [expr $blue]]
 }
 
+#Given table editor id, return corresponding text widget.
+#If needcol is specified, check that widget has needcol columns.
+proc sketch_text_from_table {tid {needcol -1}} {
+	set text ""
+	foreach ted [sketch_table_list] {
+		if { [sketch_table_get_label $ted] == $tid } {
+			set text $ted.t
+			break
+		}
+	}
+	if { $text  == ""} {
+		tk_dialog ._sketch_msg {Couldn't find editor} \
+		  "Couldn't find table editor $tid. \
+		   (Text editor identifier must be an integer)." \
+		  {} 0 {OK}
+		return
+	}
+	#check number of columns
+	set numcol [sketch_text_cols $text]
+	if { ($needcol != -1) && ( $numcol != $needcol) } {
+		tk_dialog ._sketch_msg {Wrong number of columns} \
+		 "Table editor $tid has $numcol \
+		  columns, but $needcol are required." {} 0 {OK}
+		return
+	}
+	return $text
+}
+
 
 	
 #-------------------------------------------------------------------
@@ -3933,4 +4065,4 @@ proc sketch_hex_to_rgb { hex } {
 # Uncomment the following command in order to run the animator 
 # automatically when anim.tcl is sourced.
 
-#sketch_main_window
+#sketch_popup_main
