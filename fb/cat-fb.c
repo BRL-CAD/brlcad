@@ -361,6 +361,7 @@ static int	debug = 0;
 static int	output_pix = 0;		/* output pixfile, rather than to fb */
 
 void		ofile();
+void		readrailmag();
 
 static char usage[] = "\
 Usage: cat-fb [-h -c -O -o] [-F framebuffer] [-C r/g/b]\n\
@@ -484,6 +485,10 @@ main(argc, argv)
 	exit(0);
 }
 
+/*
+ *			R E A D R A I L M A G
+ */
+void
 readrailmag()
 {
 	register int i;

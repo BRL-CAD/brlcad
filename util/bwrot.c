@@ -162,8 +162,8 @@ int argc; char **argv;
 		exit( 1 );
 	}
 	if( buflines > nyin ) buflines = nyin;
-	buffer = malloc( buflines * scanbytes );
-	obuf = (nyin > nxin) ? malloc( nyin ) : malloc( nxin );
+	buffer = (unsigned char *)malloc( buflines * scanbytes );
+	obuf = (unsigned char *)malloc( (nyin > nxin) ? nyin : nxin );
 	if( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
 		fprintf( stderr, "bwrot: malloc failed\n" );
 		exit( 3 );
