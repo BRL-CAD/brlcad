@@ -49,6 +49,26 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 
 int
+mk_dsp( fp, name, file, xdim, ydim, mat )
+FILE		*fp;
+char		*name;
+char		*file;		/* name of file containing elevation data */
+int		xdim;		/* X dimension of file (w cells) */
+int		ydim;		/* Y dimension of file (n cells) */
+CONST matp_t	mat;		/* convert solid coords to model space */
+{
+	struct rt_dsp_internal dsp;
+	
+	dsp.magic = RT_DSP_INTERNAL_MAGIC;
+	strncpy( dsp.dsp_file, file, DSP_NAME_LEN );
+	dsp.dsp_xcnt = xdim;
+	dsp.dsp_ycnt = ydim;
+	mat_copy( dsp.dsp_stom, mat );
+
+	return( mk_export_fwrite( fp, name, (genptr_t)&dsp, ID_DSP ) );
+}
+
+int
 mk_ebm( fp, name, file, xdim, ydim, tallness, mat )
 FILE		*fp;
 char		*name;
