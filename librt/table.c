@@ -169,6 +169,8 @@ RT_DECLARE_INTERFACE(dsp)
 #define rt_sketch_xform rt_generic_xform
 RT_DECLARE_INTERFACE(sketch)
 RT_DECLARE_INTERFACE(extrude)
+#define rt_submodel_xform rt_generic_xform
+RT_DECLARE_INTERFACE(submodel)
 
 /* from db_comb.c */
 RT_EXTERN(int rt_comb_import, (struct rt_db_internal *ip,
@@ -385,6 +387,13 @@ struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_extrude_import,	rt_extrude_export,	rt_extrude_ifree,
 		rt_extrude_describe,rt_extrude_xform,
 
+	"ID_SUBMODEL",	0,		/* 28 Instanced submodel */
+		rt_submodel_prep,	rt_submodel_shot,	rt_submodel_print,	rt_submodel_norm,
+		rt_submodel_uv,		rt_submodel_curve,	rt_submodel_class,	rt_submodel_free,
+		rt_submodel_plot,	rt_vstub,		rt_submodel_tess,	rt_nul_tnurb,
+		rt_submodel_import,	rt_submodel_export,	rt_submodel_ifree,
+		rt_submodel_describe,	rt_submodel_xform,
+
 	/* ID_MAXIMUM.  Add new solids _above_ this point */
 
 	"ID_COMBINATION",	0,
@@ -555,6 +564,9 @@ struct rt_external	*ep;
 			break;
 		} else if( strcmp( rec->ss.ss_keyword, "dsp" ) == 0 )  {
 			id = ID_DSP;
+			break;
+		} else if( strcmp( rec->ss.ss_keyword, "submodel" ) == 0 )  {
+			id = ID_SUBMODEL;
 			break;
 		}
 		rt_log("rt_id_solid(%s):  String solid type '%s' unknown\n",
