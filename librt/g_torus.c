@@ -133,7 +133,9 @@ static char RCStorus[] = "@(#)$Header$ (BRL)";
 struct tor_specific {
 	fastf_t	tor_alpha;	/* 0 < (R2/R1) <= 1 */
 	fastf_t	tor_r1;		/* for inverse scaling of k values. */
+	fastf_t	tor_r2;		/* for curvature */
 	vect_t	tor_V;		/* Vector to center of torus */
+	vect_t	tor_N;		/* unit normal to plane of torus */
 	mat_t	tor_SoR;	/* Scale(Rot(vect)) */
 	mat_t	tor_invR;	/* invRot(vect') */
 };
@@ -235,12 +237,14 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_specific = (int *)tor;
 
 	tor->tor_r1 = r1;
+	tor->tor_r2 = r2;
 
 	MAT4X3PNT( tor->tor_V, mat, TOR_V );
 	tor->tor_alpha = r2/tor->tor_r1;
 
 	/* Compute R and invR matrices */
 	VUNITIZE( Hv );
+	VMOVE( tor->tor_N, Hv );
 
 	mat_idn( R );
 	VMOVE( &R[0], A );
@@ -298,7 +302,9 @@ register struct soltab *stp;
 
 	rt_log("r2/r1 (alpha) = %f\n", tor->tor_alpha);
 	rt_log("r1 = %f\n", tor->tor_r1);
+	rt_log("r2 = %f\n", tor->tor_r2);
 	VPRINT("V", tor->tor_V);
+	VPRINT("N", tor->tor_N);
 	mat_print("S o R", tor->tor_SoR );
 	mat_print("invR", tor->tor_invR );
 }
@@ -525,6 +531,62 @@ register struct xray *rp;
 		  w * hitp->hit_vpriv[Z] );
 	VUNITIZE( work );
 	MAT3XVEC( hitp->hit_normal, tor->tor_invR, work );
+}
+
+/*
+ *			T O R _ C U R V E
+ *
+ *  Return the curvature of the torus.
+ */
+tor_curve( cvp, hitp, stp, rp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
+struct xray *rp;
+{
+	register struct tor_specific *tor =
+		(struct tor_specific *)stp->st_specific;
+	vect_t	w4, w5;
+	fastf_t	nx, ny, nz, x1, y1, z1;
+	fastf_t d;
+
+	nx = tor->tor_N[X];
+	ny = tor->tor_N[Y];
+	nz = tor->tor_N[Z];
+
+	/* vector from V to hit point */
+	VSUB2( w4, hitp->hit_point, tor->tor_V );
+
+	if( !NEAR_ZERO(nz, 0.0001) ) {
+		z1 = w4[Z]*nx*nx + w4[Z]*ny*ny - w4[X]*nx*nz - w4[Y]*ny*nz;
+		x1 = (nx*(z1-w4[Z])/nz) + w4[X];
+		y1 = (ny*(z1-w4[Z])/nz) + w4[Y];
+	} else if( !NEAR_ZERO(ny, 0.0001) ) {
+		y1 = w4[Y]*nx*nx + w4[Y]*nz*nz - w4[X]*nx*ny - w4[Z]*ny*nz;
+		x1 = (nx*(y1-w4[Y])/ny) + w4[X];
+		z1 = (nz*(y1-w4[Y])/ny) + w4[Z];
+	} else {
+		x1 = w4[X]*ny*ny + w4[X]*nz*nz - w4[Y]*nx*ny - w4[Z]*nz*nx;
+		y1 = (ny*(x1-w4[X])/nx) + w4[Y];
+		z1 = (nz*(x1-w4[X])/nx) + w4[Z];
+	}
+	d = sqrt(x1*x1 + y1*y1 + z1*z1);
+
+	cvp->crv_c1 = (d - tor->tor_r1) / (d * tor->tor_r2);
+	cvp->crv_c2 = 1.0 / tor->tor_r2;
+
+	w4[X] = x1 / d;
+	w4[Y] = y1 / d;
+	w4[Z] = z1 / d;
+	VCROSS( w5, tor->tor_N, w4 );
+	VCROSS( cvp->crv_pdir, w5, hitp->hit_normal );
+	VUNITIZE( cvp->crv_pdir );
+
+	if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
+		/* ray strikes surface from inside; make curv negative */
+		cvp->crv_c1 = - cvp->crv_c1;
+		cvp->crv_c2 = - cvp->crv_c2;
+	}
 }
 
 tor_uv()
