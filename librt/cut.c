@@ -17,8 +17,8 @@ static char RCScut[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-int rt_cutLen = 3;		/* normal limit on number objs per box node */
-int rt_cutDepth = 32;		/* normal limit on depth of cut tree */
+int rt_cutLen;			/* normal limit on number objs per box node */
+int rt_cutDepth;		/* normal limit on depth of cut tree */
 
 HIDDEN int rt_ck_overlap(), rt_ct_box();
 HIDDEN void rt_ct_add(), rt_ct_optim(), rt_ct_free();
@@ -95,10 +95,10 @@ rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 		rtip->rti_pmax[1] = rtip->mdl_max[1] + diff;
 		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
 
-		diff = 4096.0 / (rtip->rti_pmax[X] - rtip->rti_pmin[X]);
-		f = 4096.0 / (rtip->rti_pmax[Y] - rtip->rti_pmin[Y]);
+		diff = 4095.0 / (rtip->rti_pmax[X] - rtip->rti_pmin[X]);
+		f = 4095.0 / (rtip->rti_pmax[Y] - rtip->rti_pmin[Y]);
 		if( f < diff )  diff = f;
-		f = 4096.0 / (rtip->rti_pmax[Z] - rtip->rti_pmin[Z]);
+		f = 4095.0 / (rtip->rti_pmax[Z] - rtip->rti_pmin[Z]);
 		if( f < diff )  diff = f;
 		rtip->rti_pconv = diff;
 	}
@@ -226,7 +226,12 @@ register int axis;
 	register int i;
 
 	if(rt_g.debug&DEBUG_CUT)rt_log("rt_ct_box(x%x, %c)\n",cutp,"XYZ345"[axis]);
+
+	/*  In absolute terms, each box must be at least 1mm wide after cut. */
+	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
+		return(0);
 	oldbox = *cutp;		/* struct copy */
+
 	/*
 	 *  Split distance between min and max in half.
 	 *  Find the closest edge of a solid's bounding RPP
@@ -253,10 +258,14 @@ register int axis;
 	}
 	if( pt_close <= oldbox.bn.bn_min[axis] ||
 	    pt_close >= oldbox.bn.bn_max[axis] )
-		return(0);	/* not worthwhile */
+		return(0);	/* not reasonable */
+
+	if( pt_close - oldbox.bn.bn_min[axis] <= 1.0 ||
+	    oldbox.bn.bn_max[axis] - pt_close <= 1.0 )
+		return(0);	/* cut will be too small */
 
 	/* We are going to cut -- convert caller's node type */
-	if(rt_g.debug&DEBUG_CUT)rt_log("rt_ct_box(x%x) %e..%e..%e\n",
+	if(rt_g.debug&DEBUG_CUT)rt_log("rt_ct_box(x%x) [%g,%g,%g]\n",
 		cutp,
 		oldbox.bn.bn_min[axis], pt_close, oldbox.bn.bn_max[axis]);
 	cutp->cut_type = CUT_CUTNODE;
@@ -671,7 +680,6 @@ register fastf_t *min, *max;
  *  			R T _ D R A W V E C
  *  
  *  Arrange to draw a vector in 3-space using UNIX-plot.
- *  Scale to +/- 4096 range from model space.
  */
 void
 rt_drawvec( fp, rtip, aa, bb )
