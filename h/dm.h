@@ -111,12 +111,15 @@ struct dm {
   int (*dm_drawVList)();	/* formerly dmr_object */
   int (*dm_setColor)();
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
-  unsigned (*dm_cvtvecs)();	/* returns size requirement of subr */
-  unsigned (*dm_load)();	/* DMA the subr to device */
   int (*dm_setWinBounds)();
   int (*dm_debug)();		/* Set DM debug level */
   int (*dm_eventHandler)();	/* application provided dm-specific event handler */
+  int (*dm_beginDList)();
+  int (*dm_endDList)();
+  int (*dm_drawDList)();
+  int (*dm_freeDLists)();
   int dm_displaylist;		/* !0 means device has displaylist */
+  int dm_stereo;                /* stereo flag */
   double dm_bound;		/* zoom-in limit */
   char *dm_name;		/* short name of device */
   char *dm_lname;		/* long name of device */
@@ -129,7 +132,6 @@ struct dm {
   fastf_t dm_aspect;
   fastf_t *dm_vp;		/* XXX--ogl still depends on this--Viewscale pointer */
   genptr_t dm_vars;		/* pointer to display manager dependant variables */
-  struct mem_map *dm_map;	/* displaylist mem map */
   struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
   struct bu_vls dm_tkName;	/* short Tcl/Tk name of drawing window */
   struct bu_vls dm_dName;	/* Display name */
@@ -142,17 +144,19 @@ struct dm {
 #define DM_NEWROT(_dmp,_mat,_eye) _dmp->dm_newrot(_dmp,_mat,_eye)
 #define DM_DRAW_STRING_2D(_dmp,_str,_x,_y,_size,_use_aspect)\
      _dmp->dm_drawString2D(_dmp,_str,_x,_y,_size,_use_aspect)
-#define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2)\
-     _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
+#define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2) _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
 #define DM_DRAW_VERTEX_2D(_dmp,_x,_y) _dmp->dm_drawVertex2D(_dmp,_x,_y)
-#define DM_DRAW_VLIST(_dmp,_vlist,_mat) _dmp->dm_drawVList(_dmp,_vlist,_mat)
+#define DM_DRAW_VLIST(_dmp,_vlist) _dmp->dm_drawVList(_dmp,_vlist)
 #define DM_SET_COLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setColor(_dmp,_r,_g,_b,_strict)
-#define DM_SET_LINE_ATTR(_dmp,_width,_dashed)\
-     _dmp->dm_setLineAttr(_dmp,_width,_dashed)
-#define DM_CVTVECS(_dmp,_sp) _dmp->dm_cvtvecs(_dmp,_sp)
-#define DM_LOAD(_dmp,_saddr,_sbytes) _dmp->dm_load(_dmp,_saddr,_sbytes)
+#define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
 #define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
 #define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
+#if 1
+#define DM_BEGINDLIST(_dmp,_list) _dmp->dm_beginDList(_dmp,_list)
+#define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
+#define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
+#define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
+#endif
 
 extern int dm_Tcl_Init();
 extern struct dm *dm_open();
