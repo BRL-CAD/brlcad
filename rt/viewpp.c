@@ -68,9 +68,10 @@ void	pknum();
 
 /* Support for pretty-picture files */
 int
-pphit( ap, PartHeadp )
+pphit( ap, PartHeadp, segHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg	*segHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -124,7 +125,9 @@ struct partition *PartHeadp;
 }
 
 int
-ppmiss()  {
+ppmiss(ap)
+struct application *ap;
+{
 	last_solidp = SOLTAB_NULL;
 	ntomiss++;
 	return(0);
