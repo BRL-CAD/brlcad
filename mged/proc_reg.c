@@ -65,7 +65,7 @@ static union record input;		/* Holds an object file record */
 /* following variables are used in processing regions
  *  for producing edge representations
  */
-#define NMEMB	100	/* max number of members in a region */
+#define NMEMB	250	/* max number of members in a region */
 static int	nmemb = 0;		/* actual number of members */
 static int	m_type[NMEMB];		/* member solid types */
 static char	m_op[NMEMB];		/* member operations */
