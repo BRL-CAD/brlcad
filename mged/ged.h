@@ -441,6 +441,7 @@ struct _mged_variables {
 	int	sgi_win_origin[2];
 	int	faceplate;
         int	orig_gui;
+	int	rt_output;
 	int	m_axes;  /* model axes */
 	int	m_axes_color[3];
 	int	m_axes_label_color[3];
