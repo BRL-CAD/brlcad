@@ -315,17 +315,37 @@ struct db_i			*dbip;
 int
 db_put_external( ep, dp, dbip )
 struct rt_external	*ep;
-CONST struct directory	*dp;
+struct directory	*dp;
 struct db_i		*dbip;
 {
+	int	ngran;
+
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put_external:  bad dbip\n");
 	if(rt_g.debug&DEBUG_DB) rt_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
 	RT_CK_EXTERNAL(ep);
-	if( db_put( dbip, dp, (union record *)(ep->ext_buf), 0,
-	    (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record)
-	    ) < 0 )
+
+	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
+	if( ngran != dp->d_len )  {
+		if( ngran < dp->d_len )  {
+			if( db_trunc( dbip, dp, dp->d_len - ngran ) < 0 )
+			    	return(-2);
+		} else if( ngran > dp->d_len )  {
+			if( db_delete( dbip, dp ) < 0 || 
+			    db_alloc( dbip, dp, ngran ) < 0 )  {
+			    	return(-3);
+			}
+		}
+	}
+	/* Sanity check */
+	if( ngran != dp->d_len )  {
+		rt_log("db_put_external(%s) ngran=%d != dp->d_len %d\n",
+			dp->d_namep, ngran, dp->d_len );
+		rt_bomb("db_io.c: db_put_external()");
+	}
+
+	if( db_put( dbip, dp, (union record *)(ep->ext_buf), 0, ngran ) < 0 )
 		return(-1);
 	return(0);
 }
