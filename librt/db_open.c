@@ -250,14 +250,21 @@ register struct db_i	*dbip;
 		rt_free( dbip->dbi_filename, "dbi_filename" );
 
 	db_free_anim( dbip );
+	rt_color_free();		/* Free MaterHead list */
 
-	/* dbi_freep */
+	/* Release map of database holes */
+	mempurge( &(dbip->dbi_freep) );
+	memclose();
+
 	/* dbi_inmem */
 
 	/* Free all directory entries */
 	for( i=0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
+			RT_CK_DIR(dp);
 			nextdp = dp->d_forw;
+			rt_free( dp->d_namep, "d_namep" );
+			dp->d_namep = (char *)NULL;
 			rt_free( (char *)dp, "dir");
 			dp = nextdp;
 		}
