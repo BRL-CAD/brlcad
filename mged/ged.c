@@ -168,11 +168,16 @@ struct bu_vls input_str, scratchline, input_str_prefix;
 int input_str_index = 0;
 
 /*
- * 0 - warn
- * 1 - no warn, prompt to convert database
- * 2 - no warn, convert database
+ * 0 - no warn
+ * 1 - warn
  */
-int db_nowarn = 0;
+int db_warn = 0;
+
+/*
+ * 0 - no upgrade
+ * 1 - upgrade
+ */
+int db_upgrade = 0;
 
 /* force creation of specific database versions */
 int db_version = 5;
@@ -1988,10 +1993,11 @@ f_opendb(
 	int	argc,
 	char	**argv)
 {
-	struct db_i *save_dbip;
-	struct mater *save_materp;
-	struct bu_vls vls;
-	struct bu_vls msg;	/* use this to hold returned message */
+	struct db_i		*save_dbip;
+	struct mater		*save_materp;
+	struct bu_vls		vls;
+	struct bu_vls		msg;	/* use this to hold returned message */
+	int			create_new_db = 0;
 
 	bu_vls_init(&vls);
 	bu_vls_init(&msg);
@@ -2128,6 +2134,7 @@ f_opendb(
 		}
 	    	/* New database has already had db_dirbuild() by here */
 
+		create_new_db = 1;
 		bu_vls_printf(&msg, "The new database %s was successfully created.\n", argv[1]);
 	} else {
 		/* Opened existing database file */
@@ -2227,9 +2234,31 @@ f_opendb(
 	set_localunit_TclVar();
 
 	/* Print title/units information */
-	if( interactive )
+	if (interactive)
 		bu_vls_printf(&msg, "%s (units=%s)\n", dbip->dbi_title,
-		    bu_units_string(dbip->dbi_local2base) );
+			      bu_units_string(dbip->dbi_local2base));
+
+	/*
+	 * We have an old database version AND
+	 * we're not in the process of
+	 * creating a new database.
+	 */
+	if (wdbp->dbip->dbi_version != 5 && !create_new_db) {
+		if (db_upgrade) {
+			if (db_warn)
+				bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");
+
+			bu_vls_strcpy(&vls, "after idle dbupgrade -f y");
+			(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+		} else {
+			if (db_warn) {
+				if (classic_mged)
+					bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tSee the dbupgrade command.");
+				else
+					bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tSelect Tools-->Upgrade Database for info.");
+			}
+		}
+	}
 
 	Tcl_ResetResult( interp );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
