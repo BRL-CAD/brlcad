@@ -1102,7 +1102,12 @@ int n;
 /*
  *			N M G _ F I N D E U
  *
- *	find an edgeuse in a shell between a pair of verticies
+ *  Find an edgeuse in a shell between a given pair of vertex structs.
+ *  If "eup" is non-NULL, that specific edgeuse & it's mate will be ignored.
+ *
+ *  Returns -
+ *	edgeuse*	Edgeuse which matches the criteria
+ *	NULL		Unable to find matching edgeuse
  */
 struct edgeuse *
 nmg_findeu(v1, v2, s, eup)
@@ -1112,69 +1117,87 @@ struct edgeuse *eup;
 {
 	register struct vertexuse	*vu;
 	register struct edgeuse		*eu;
+	struct edgeuse			*eup_mate;
+	int				eup_orientation;
 
 	NMG_CK_VERTEX(v1);
 	NMG_CK_VERTEX(v2);
 	NMG_CK_SHELL(s);
 
-	if (rt_g.NMG_debug & DEBUG_FINDEU)
-		rt_log("nmg_findeu() looking for edge between %8x and %8x other than %8x/%8x\n",
-		v1, v2, eup, eup->eumate_p);
-
-	for( RT_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )  {
-		NMG_CK_VERTEXUSE(vu);
-		if (!vu->up.magic_p) {
-			rt_log("nmg_findeu() in %s at %d vertexuse has null parent\n",
-				__FILE__, __LINE__);
-			rt_bomb("nmg_findeu\n");
-		}
-
-		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
-
-		if (rt_g.NMG_debug & DEBUG_FINDEU )  {
-			rt_log("checking edgeuse %8x vertex pair (%8x, %8x)\n",
-				vu->up.eu_p, vu->up.eu_p->vu_p->v_p,
-				vu->up.eu_p->eumate_p->vu_p->v_p);
-		}
-
-		/* look for an edgeuse pair (other than the one we have)
-		 * on the vertices we want
-		 * the edgeuse pair should be a dangling edge
-		 */
-		eu = vu->up.eu_p;
-		if( eu != eup && eu->eumate_p != eup &&
-		    eu->eumate_p->vu_p->v_p == v2  &&
-		    eu->eumate_p == eu->radial_p) {
-
-		    	/* if the edgeuse we have found is a part of a face
-		    	 * in the proper shell, we've found what we're looking
-		    	 * for.
-		    	 */
-			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
-			    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
-			    eu->up.lu_p->up.fu_p->s_p == s) {
-
-			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-				    	rt_log("Found %8x/%8x\n",
-				    		eu, eu->eumate_p);
-
-			    	if (eup->up.lu_p->up.fu_p->orientation ==
-			    	    eu->up.lu_p->up.fu_p->orientation)
-				    	return(eu);
-			    	else
-			    		return(eu->eumate_p);
-			    }
-		    	else
-		    		if (rt_g.NMG_debug & DEBUG_FINDEU)
-		    		rt_log("ignoring an edge because it has wrong parent\n");
-
-		}
+	if(eup)  {
+		NMG_CK_EDGEUSE(eup);
+		eup_mate = eup->eumate_p;
+		NMG_CK_EDGEUSE(eup_mate);
+		if (*eup->up.magic_p != NMG_LOOPUSE_MAGIC ||
+		    *eup->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
+			rt_bomb("nmg_findeu(): eup not part of a face\n");
+		eup_orientation = eup->up.lu_p->up.fu_p->orientation;
+	} else {
+		eup_mate = eup;			/* NULL */
+		eup_orientation = OT_SAME;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_FINDEU)
-	    	rt_log("nmg_findeu search failed\n");
+		rt_log("nmg_findeu() seeking eu!=%8x/%8x between (%8x, %8x)\n",
+			eup, eup_mate, v1, v2 );
 
-	return((struct edgeuse *)NULL);
+	for( RT_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+		if (!vu->up.magic_p)
+			rt_bomb("nmg_findeu() vertexuse in vu_hd list has null parent\n");
+
+		/* Ignore self-loops and lone shell verts */
+		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+		eu = vu->up.eu_p;
+
+		/* Ignore edgeuses which don't run between the right verts */
+		if( eu->eumate_p->vu_p->v_p != v2 )  continue;
+
+		if (rt_g.NMG_debug & DEBUG_FINDEU )  {
+			rt_log("nmg_findeu: check eu=%8x vertex=(%8x, %8x)\n",
+				eu, eu->vu_p->v_p,
+				eu->eumate_p->vu_p->v_p);
+		}
+
+		/* Ignore the edgeuse to be excluded */
+		if( eu == eup || eu->eumate_p == eup )  {
+			if (rt_g.NMG_debug & DEBUG_FINDEU )
+				rt_log("\tIgnoring -- excluded edgeuse\n");
+			continue;
+		}
+
+		/* See if this edgeuse is in the proper shell */
+		if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC ||
+		    *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
+		    eu->up.lu_p->up.fu_p->s_p != s) {
+		    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    		rt_log("\tIgnoring -- wrong parent\n");
+			continue;
+		}
+
+		/* If it's not a dangling edge, skip on */
+		if( eu->eumate_p != eu->radial_p) {
+		    	if (rt_g.NMG_debug & DEBUG_FINDEU)  {
+			    	rt_log("\tIgnoring %8x/%8x (radial=x%x)\n",
+			    		eu, eu->eumate_p,
+					eu->radial_p );
+		    	}
+			continue;
+		}
+
+	    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    	rt_log("\tFound %8x/%8x\n", eu, eu->eumate_p);
+
+	    	if ( eup_orientation != eu->up.lu_p->up.fu_p->orientation)
+			eu = eu->eumate_p;	/* Take other orient */
+		goto out;
+	}
+	eu = (struct edgeuse *)NULL;
+out:
+	if (rt_g.NMG_debug & DEBUG_FINDEU)
+	    	rt_log("nmg_findeu() returns x%x\n", eu);
+
+	return eu;
 }
 
 /*
