@@ -1,5 +1,11 @@
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 
 #include "machine.h"
@@ -72,6 +78,18 @@ char	**argv;
 			errors++;
 			continue;
 		}
+		if( id == ID_COMBINATION ) {
+			struct rt_comb_internal *comb;
+			char *ptr;
+
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			RT_CK_COMB( comb );
+
+			/* Convert "plastic" to "phong" in the shader string */
+			while( (ptr=strstr( bu_vls_addr( &comb->shader), "plastic" )) != NULL ) {
+				strncpy( ptr, "phong  ", 7 );
+			}
+		}
 		if ( id == ID_HF ) {
 			if (rt_hf_to_dsp( &intern, &rt_uniresource )) {
 				fprintf(stderr,
@@ -109,3 +127,60 @@ char	**argv;
 	fprintf(stderr, "%ld objects failed to convert\n", errors);
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
