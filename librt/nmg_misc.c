@@ -349,7 +349,7 @@ long *flags;
 {
 	struct face *top_face;
 
-	for( *dir=X ; *dir<=Z ; *dir++ )
+	for( *dir=X ; *dir<=Z ; (*dir)++ )
 		if( (top_face=nmg_find_top_face_in_dir( s, *dir, flags )) != (struct face *)NULL )
 			return( top_face );
 
@@ -3309,8 +3309,6 @@ CONST struct rt_tol *tol;
 
 		/* find the top face */
 		f_top = nmg_find_top_face( s, &dir , flags );
-		if( NMG_INDEX_TEST( flags, f_top ) )
-			rt_log(" nmg_find_top_face returned a flagged face %x\n" , f_top );
 		if( f_top == (struct face *)NULL )
 		{
 			rt_log( "nmg_fix_normals: Could not get a top face from nmg_find_top_face()\n" );
@@ -3318,6 +3316,10 @@ CONST struct rt_tol *tol;
 			rt_free( (char *)flags, "nmg_fix_normals: flags" );
 			return;
 		}
+
+		if( NMG_INDEX_TEST( flags, f_top ) )
+			rt_log(" nmg_find_top_face returned a flagged face %x\n" , f_top );
+
 		NMG_CK_FACE( f_top );
 		fu = f_top->fu_p;
 		NMG_CK_FACEUSE( fu );
