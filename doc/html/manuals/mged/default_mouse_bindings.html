@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<title>Default Mouse Bindings</title>
+</HEAD>
+<BODY>
+<h1>Default Mouse Bindings</h1>
+<TABLE COLS=3 RULES=all BORDER=1 CELLPADDING=3>
+<TR><TH ALIGN=LEFT>Mouse Button<TH ALIGN=LEFT>Command<TH ALIGN=LEFT>Description
+<TR><TD ALIGN=LEFT>&lt;1&gt;<TD ALIGN=LEFT>zoom 0.5<TD ALIGN=LEFT>zoom out
+<TR><TD ALIGN=LEFT>&lt;2&gt;<TD ALIGN=LEFT>dm m %b %x %y<TD ALIGN=LEFT>slew view
+<TR><TD ALIGN=LEFT>&lt;3&gt;<TD ALIGN=LEFT>zoom 2.0<TD ALIGN=LEFT>zoom in
+<TR><TD ALIGN=LEFT><TD ALIGN=LEFT><TD ALIGN=LEFT>
+<TR><TD ALIGN=LEFT>&lt;ButtonRelease&gt;<TD ALIGN=LEFT>dm idle<TD ALIGN=LEFT>stop drag operation
+<TR><TD ALIGN=LEFT>&lt;KeyRelease-Control_L&gt<TD ALIGN=LEFT>dm idle<TD ALIGN=LEFT>stop drag operation
+<TR><TD ALIGN=LEFT>&lt;KeyRelease-Control_R&gt<TD ALIGN=LEFT>dm idle<TD ALIGN=LEFT>stop drag operation
+<TR><TD ALIGN=LEFT>&lt;KeyRelease-Shift_L&gt<TD ALIGN=LEFT>dm idle<TD ALIGN=LEFT>stop drag operation
+<TR><TD ALIGN=LEFT>&lt;KeyRelease-Shift_R&gt<TD ALIGN=LEFT>dm idle<TD ALIGN=LEFT>stop drag operation
+<TR><TD ALIGN=LEFT>&lt;KeyRelease-Alt_L&gt<TD ALIGN=LEFT>dm idle<TD ALIGN=LEFT>stop drag operation
+<TR><TD ALIGN=LEFT>&lt;KeyRelease-Alt_R&gt<TD ALIGN=LEFT>dm idle<TD ALIGN=LEFT>stop drag operation
+<TR><TD ALIGN=LEFT><TD ALIGN=LEFT><TD ALIGN=LEFT>
+<TR><TD ALIGN=LEFT>&lt;Shift-ButtonPress-1&gt<TD ALIGN=LEFT>dm am t %x %y<TD ALIGN=LEFT>start translation
+<TR><TD ALIGN=LEFT>&lt;Shift-ButtonPress-2&gt<TD ALIGN=LEFT>dm am t %x %y<TD ALIGN=LEFT>start translation
+<TR><TD ALIGN=LEFT>&lt;Shift-ButtonPress-3&gt<TD ALIGN=LEFT>dm am t %x %y<TD ALIGN=LEFT>start translation
+
+<TR><TD ALIGN=LEFT>&lt;Control-ButtonPress-1&gt<TD ALIGN=LEFT>dm am r %x %y<TD ALIGN=LEFT>start rotation
+<TR><TD ALIGN=LEFT>&lt;Control-ButtonPress-2&gt<TD ALIGN=LEFT>dm am r %x %y<TD ALIGN=LEFT>start rotation
+<TR><TD ALIGN=LEFT>&lt;Control-ButtonPress-3&gt<TD ALIGN=LEFT>dm am r %x %y<TD ALIGN=LEFT>start rotation
+
+<TR><TD ALIGN=LEFT>&lt;Shift-Control-ButtonPress-1&gt<TD ALIGN=LEFT>dm am s %x %y<TD ALIGN=LEFT>start scale
+<TR><TD ALIGN=LEFT>&lt;Shift-Control-ButtonPress-2&gt<TD ALIGN=LEFT>dm am s %x %y<TD ALIGN=LEFT>start scale
+<TR><TD ALIGN=LEFT>&lt;Shift-Control-ButtonPress-3&gt<TD ALIGN=LEFT>dm am s %x %y<TD ALIGN=LEFT>start scale
+
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-ButtonPress-1&gt<TD ALIGN=LEFT>dm con t x %x %y<TD ALIGN=LEFT>start constrained X translation
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-ButtonPress-2&gt<TD ALIGN=LEFT>dm con t y %x %y<TD ALIGN=LEFT>start constrained Y translation
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-ButtonPress-3&gt<TD ALIGN=LEFT>dm con t z %x %y<TD ALIGN=LEFT>start constrained Z translation
+
+<TR><TD ALIGN=LEFT>&lt;Alt-Control-ButtonPress-1&gt<TD ALIGN=LEFT>dm con r x %x %y<TD ALIGN=LEFT>start constrained X rotation
+<TR><TD ALIGN=LEFT>&lt;Alt-Control-ButtonPress-2&gt<TD ALIGN=LEFT>dm con r y %x %y<TD ALIGN=LEFT>start constrained Y rotation
+<TR><TD ALIGN=LEFT>&lt;Alt-Control-ButtonPress-3&gt<TD ALIGN=LEFT>dm con r z %x %y<TD ALIGN=LEFT>start constrained Z rotation
+
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-Control-ButtonPress-1&gt<TD ALIGN=LEFT>dm con s x %x %y<TD ALIGN=LEFT>start constrained X scale
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-Control-ButtonPress-2&gt<TD ALIGN=LEFT>dm con s y %x %y<TD ALIGN=LEFT>start constrained Y scale
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-Control-ButtonPress-3&gt<TD ALIGN=LEFT>dm con s z %x %y<TD ALIGN=LEFT>start constrained Z scale
+</TABLE>
+
+<BR><BR>
+<h3>Custom Mouse Bindings for the Angle Distance Cursor</h3>
+<TABLE COLS=3 RULES=all BORDER=1 CELLPADDING=3>
+<TR><TH ALIGN=LEFT>Mouse Button<TH ALIGN=LEFT>Command<TH ALIGN=LEFT>Description
+<TR><TD ALIGN=LEFT>&lt;Shift-ButtonPress-1&gt<TD ALIGN=LEFT>dm adc t %x %y<TD ALIGN=LEFT>translate
+<TR><TD ALIGN=LEFT>&lt;Shift-ButtonPress-2&gt<TD ALIGN=LEFT>dm adc t %x %y<TD ALIGN=LEFT>translate
+<TR><TD ALIGN=LEFT>&lt;Shift-ButtonPress-3&gt<TD ALIGN=LEFT>dm adc d %x %y<TD ALIGN=LEFT>move tick
+
+<TR><TD ALIGN=LEFT>&lt;Control-ButtonPress-1&gt<TD ALIGN=LEFT>dm adc 1 %x %y<TD ALIGN=LEFT>move angle 1
+<TR><TD ALIGN=LEFT>&lt;Control-ButtonPress-2&gt<TD ALIGN=LEFT>dm adc 2 %x %y<TD ALIGN=LEFT>move angle 2
+<TR><TD ALIGN=LEFT>&lt;Control-ButtonPress-3&gt<TD ALIGN=LEFT>dm adc d %x %y<TD ALIGN=LEFT>move tick
+
+<TR><TD ALIGN=LEFT>&lt;Shift-Control-ButtonPress-1&gt<TD ALIGN=LEFT>dm adc d %x %y<TD ALIGN=LEFT>move tick
+<TR><TD ALIGN=LEFT>&lt;Shift-Control-ButtonPress-2&gt<TD ALIGN=LEFT>dm adc d %x %y<TD ALIGN=LEFT>move tick
+<TR><TD ALIGN=LEFT>&lt;Shift-Control-ButtonPress-3&gt<TD ALIGN=LEFT>dm adc d %x %y<TD ALIGN=LEFT>move tick
+
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-ButtonPress-1&gt<TD ALIGN=LEFT>dm con a x %x %y<TD ALIGN=LEFT>constrained translate in X
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-ButtonPress-2&gt<TD ALIGN=LEFT>dm con a y %x %y<TD ALIGN=LEFT>constrained translate in Y
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-ButtonPress-3&gt<TD ALIGN=LEFT>dm con a d %x %y<TD ALIGN=LEFT>constrained tick movement
+
+<TR><TD ALIGN=LEFT>&lt;Alt-Control-ButtonPress-1&gt<TD ALIGN=LEFT>dm con a 1 %x %y<TD ALIGN=LEFT>constrained angle 1 movement
+<TR><TD ALIGN=LEFT>&lt;Alt-Control-ButtonPress-2&gt<TD ALIGN=LEFT>dm con a 2 %x %y<TD ALIGN=LEFT>constrained angle 2 movement
+<TR><TD ALIGN=LEFT>&lt;Alt-Control-ButtonPress-3&gt<TD ALIGN=LEFT>dm con a d %x %y<TD ALIGN=LEFT>constrained tick movement
+
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-Control-ButtonPress-1&gt<TD ALIGN=LEFT>dm con a d %x %y<TD ALIGN=LEFT>constrained tick movement
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-Control-ButtonPress-2&gt<TD ALIGN=LEFT>dm con a d %x %y<TD ALIGN=LEFT>constrained tick movement
+<TR><TD ALIGN=LEFT>&lt;Alt-Shift-Control-ButtonPress-3&gt<TD ALIGN=LEFT>dm con a d %x %y<TD ALIGN=LEFT>constrained tick movement
+</TABLE>
+</BODY>

@@ -1,0 +1,66 @@
+<HTML><HEAD><TITLE>BRL-CAD rt Camoflage shader</TITLE></HEAD><BODY>
+<H1>Camoflage shader</H1>
+<p>
+The "camo" shader creates a pseudo-random tri-color camoflage pattern on
+the object using a fractal noise pattern.  This is a procedural shader based
+upon a fractal noise function known as fractional brownian motion or fBm.
+<p>
+The fractal noise function produces
+a pseudo- random number in the range [-1.0 ... 1.0] from the 3-space
+coordinates of a point in the bounding volume of the region.  This noise value
+is used to determine the color of the object at the given location.
+<p>
+<center><table border=1>
+<tr><th>Noise value</th><th>Object Color</th></tr>
+<tr><td>nv < thresh1</td><td align=center>color1</td></tr>
+<tr><td>nv < thresh1<br><center>and</center>nv < thresh2</td><td align=center>color2</td></tr>
+<tr><td>nv > thresh2</td><td align=center>color3</td></tr>
+</table></center>
+<p>
+The fractal pattern has infinite resolution.  As a result, the borders of the
+color splashes never become pixelated, no mater how close the eyepoint is to the
+surface.
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><th colspan=3>Noise Parameters</th></tr>
+<tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
+<tr><td>H</td><td>H</td><td>1.0</td></tr>
+<tr><td>octaves</td><td>o</td><td>4.0</td></tr>
+<tr><td>size</td><td>s</td><td>1.0</td></tr>
+<tr><td>vscale</td><td>v</td><td>1.0/1.0/1.0</td></tr>
+<tr><td>delta</td><td>d</td><td>1000/1000/1000</td></tr>
+<tr></tr>
+<tr><th colspan=3>Shader Specific Parameters</tr>
+<tr><td>thresh1</td><td>t1</td><td>-0.25</td></tr>
+<tr><td>thresh2</td><td>t2</td><td>0.25</td></tr>
+<tr><td>color1</td><td>c1</td><td>97/74/41</td></tr>
+<tr><td>color2</td><td>c2</td><td>26/77/10</td></tr>
+<tr><td>color3</td><td>c3</td><td>38/38/38</td></tr>
+</table></center>
+<dl>
+<dt><b>Lacunarity</b>
+<dd>The grid on which the noise function is built is scaled by this value
+for each successive octave of noise which will be combined to produce the
+final result.
+<dt><b>H</b>
+<dd>
+<dt><B>Octaves</b>
+<dd>The number of times the noise grid will be scaled and recombined to 
+produce the final noise function
+<dt><b>Size, Vscale</b>
+<dd>If <b>size</b> is set it is used as a scalar which defines the size of the
+noise grid on the object.  So if t2=0.5 and size=5mm then splotches of color3
+would tend to be no larger than 5-10mm.  If non-uniform scaling is required, 
+Vscale can specify the grid size in X, Y and Z.
+<dt><b>Delta</b>
+<dd>This specifies a translation in noise space for the origin of region space.
+Since the origin of noise space is reflected 8 ways, it is undesireable to have
+that portion of noise space overlap with region space.
+</dl>
+
+<h2>Limitations</h2>
+Because of the continuous nature of the fractal noise space, it is impossible
+to get a splash of color1 directly adjacent to a splash of color3.
+<P>
+</BODY></HTML>

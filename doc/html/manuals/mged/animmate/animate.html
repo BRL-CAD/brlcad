@@ -1,0 +1,1004 @@
+
+<h1>View Curve Editor</h1>
+The view editor permits the user to create, display, and edit a view
+curve. Like an ordinary curve, a view curve is an ordered list of nodes.
+While an ordinary curve represents the path through
+space, a view curve represents a path through a viewing state space
+which includes parameters such as view size, eye position, and eye
+orientation.
+The current viewing
+state of the MGED display window can be stored in a view curve node, and
+then the viewing state can be restored when that node is made current.
+<p>
+When the <b>View Editor</b> button is pressed, two widgets pop up. One
+is the view editor widget, which is similar in appearance to the
+curve editor widget. The second is a widget similar to a table editor which
+stores and displays the contents of a given view curve.
+<p>
+The functions of these two widgets are explained below. First, the view
+editor widget is described:
+<p>
+<h2>Current V-Curve</h2>
+The top frame of the view curve editor widget shows the name of the
+current view curve. If there is no current curve when the editor is
+created, then an empty view curve named <var>view</var> is
+automatically created. Clicking on the label posts a menu with the
+following entries:
+<dl>
+<dt><b>New V-Curve</b>
+<dd>An input-request widget pops up asking for the name of a new view curve
+to select as the current view curve. If the named view curve does not
+already exist, an empty view curve is created.
+<p>
+<dt><b>Open V-Curve</b>
+<dd>This option posts a submenu listing all of the existing view curves.
+If one of these view curves is selected, then it becomes the current
+view curve.
+<p>
+<dt><b>Rename V-Curve</b>
+<dd>An input-request widget pops up asking for a new name for the curent
+view curve. The name of the current view curve will be changed to the
+new name. If a view curve with the specified name already exits, the user is
+notified and asked whether to rename anyway or cancel. If the user opts
+to rename anyway, the view curve which previously had the new name is
+deleted. 
+<p>
+<dt><b>Copy V-Curve</b>
+<dd>An input-request widget pops up asking for a name for a copy of the
+current view curve. The copy will be created and will become the current
+view curve. If a view curve with the specified name already exists, the
+user is notified and asked whether to copy anyway or cancel. If the user
+opts to copy anyway, the view curve which previously had the new name is
+deleted.
+<p>
+<dt><b>Delete V-Curve</b>
+<dd>This option posts a submenu listing all of the existing view curves. If
+one of these view curves is selected, then it is deleted.
+</dl>
+The view curve name displayed next to the <b>Current v-curve</b> label
+also acts as a button which causes the correspoding view curve display
+widget to appear, if it had previously been hidden with the <b>Hide</b>
+button, and raises the display widget to the top of the stack.
+<h2>View Curve Parameters</h2>
+The next line of the view curve editor widget displays the view
+parameters which are stored in the current view curve. The possible
+view parameters are:
+<ul>
+<li>size - a single value representing the viewsize.
+<li>eye - three spatial coordinates representing the eye point.
+<li>center - three spatial coordinates representing the center point.
+<li>quat - four quaternion coordinates representing orientation.
+<li>ypr - three values representing the view yaw, pitch, and roll.
+</ul>
+Refer to the <em>viewget</em> manual page for more information about
+these parameters.
+<p>
+In the MGED display editor, the viewing state is conceptually
+made up of a viewing cube centered at <var>center</var> with sides of
+length <var>size</var> and an orientation given by <var>quat</var> or
+<var>ypr</var>. The eye point is centered in a face of the viewing
+cube, so that the center point is always directy in front of the eye
+point; the distance between the points is one half the <var>size</var>.
+<p>
+Combinations of these parameters are needed in order to specify the
+viewing state completely. The <b>Parameters</b> label indicates which view
+parameters are being stored in the current curve. Whenever a node is
+added to the current view curve, those parameters are stored along with
+a time parameter in a new
+row of the view curve display widget.
+<p>
+Clicking on the <b>Parameters</b> label posts a
+menu which lists the parameter combinations supported by AnimMate. These
+are:
+<ul>
+<li>size eye quat
+<li>size eye ypr
+<li>size center quat
+<li>size center ypr
+<li>eye center
+</ul>
+When a new combination of parameters is selected, the nodes of the the
+current curve are converted to the new format, and any nodes which are
+added will be stored in the new format.
+<p>
+Most of the parameter combinations contain a size, a position,
+and an orientation, completely specifying the view state. By contrast,
+simply fixing the eye point and center point leaves one degree of
+freedom in the view state. This ambiguity is resolved by always
+selecting a "right-side up" orientation (i.e. an orientation with no twist
+or roll). If the user tries to add a view state which is not "right-side
+up" to a view curve in in <code>eye center</code> form, then a
+"right-side up" viewing state with the same eye and center points is
+stored instead. 
+<p>
+Note that converting a view curve to one of the "size position
+orientation" formats and back
+always leaves the view curve unchanged. Converting a view curve
+to <code>eye center</code> format and back always creates a view curve
+consisting only of "right-side up" view states.
+<h2>Current Node</h2>
+The next section of the view curve editor displays and controls the
+current view curve node. Whenever the current view curve is non-empty,
+one of the nodes is highlighted in the display widget as the current
+node. This is the node which will be affected by move and delete
+operations and which controls where new nodes are added and inserted, as
+explained in the next section. 
+<p>
+The editor widget contains a label of the form "Node <var>i</var> of
+<var>n</var>", where <var>n</var> is the number of nodes in the current
+curve, and <var>i</var> is the index of the current node. The index is
+always constrained to lie between 0 and <var>n</var>-1.
+<p>
+The left and right arrow buttons can be used to change the current node
+index. The small right and left arrows increment and decrement the
+current node index by one, while the larger arrows increment and
+decrement in steps of 10.
+<p>
+The entry widget next to the <b>Time</b> label displays the time
+parameter of the current node. The time parameter can be keyboard-edited
+after clicking on the entry widget with the left mouse. The new
+parameter is applied to the view curve when the <kbd>Return</kbd> key is
+pressed.
+<p>
+The checkbutton labeled <b>Apply current node to view</b> determines
+whether or not the contents of the current node should be applied to the
+MGED display editor. This checkbutton should be selected in
+order to visually step through a view curve. It should be deselected in
+order change the current node without losing the current view state. For
+example, to copy the first node to the end of a view curve, the first
+node is made current with the checkbutton selected, to set the
+view state of the editor. Then the check button is deselected and the
+last node is made current before invoking the <b>ADD</b> button.
+<p>
+<h2>View Curve Editing</h2>
+The next four buttons in the view curve editor widget perform the
+principal editing operations:
+<dl>
+<dt><b>ADD</b>
+<dd>This command adds a new node to the current view curve, inserting it
+after the current node. The new node then becomes current.
+The view parameters for the new node are taken from the
+current view state of the MGED display window. Before
+activating the button, the user should set the display to the desired view
+state.
+If the new node is being
+added to the end of the current view curve, then the time parameter will be
+the time parameter of the previous last node plus the global variable
+<var>mged_sketch_tinc</var> (normally 1.0). Otherwise, the new time 
+parameter will be the average of the time parameters before and after 
+the new node.
+<p>
+<dt><b>INSERT</b>
+<dd>This command adds a new node to the current view curve, inserting it
+before the current node.
+The new node then becomes current. The view parameters for
+the new node are taken from the current view state of the
+MGED display window. If the new node is being inserted onto the
+beginning of the current view curve, then the time parameter will be the time
+parameter of the previous first node minus the global variable
+<var>mged_sketch_tinc</var>. Otherwise, the new time parameter will
+be the average of the time parameters before and after the new node.
+<p>
+<dt><b>MOVE</b>
+<dd>This command changes the view parameters of the current node to
+the current viewing state of the MGED display window.
+<p>
+<dt><b>DELETE</b>
+<dd>This command deletes the current node from the current view curve. The
+current node index remains the same, unless the deleted node was the
+last node in the view curve.
+</dl>
+<h2>Reading and Writing View Curves</h2>
+The <b>Read/Write</b> menu has the following options:
+<dl>
+<dt><b>Read V-curve From File</b>
+<dd>An input-request widget pops up asking for the name of the file to
+load and which view curve to load into. The specified view curve becomes
+the current view curve. The file should be an ASCII text file, with
+columns corresponding to time and the view parameters of the view curve in
+question. If the view curve does not yet exist, then the default
+parameters <code>size eye quat</code> are assumed. 
+In order to read in a
+view curve from a file which contains a given combination of view
+parameters, the user must first convert the view curve to the same
+parameter combination, using the <b>Parameters</b> menu.
+An error message is
+displayed if the number of columns in the file does not match the number
+of columns required by the view curve's view parameter combination.
+<p>
+<dt><b>Write V-curve to File</b>
+<dd>An input-request widget pops up asking which view curve to write, 
+which file to write to, and which columns of the view curve to write. 
+The columns of the resulting ASCII file are identical to the columns
+in the view curve display widget.
+</dl>
+<h2>Other Buttons</h2>
+The <b>Up</b> button raises the parent of the view curve editor widget to the
+top of the stacking order, and the <b>Cancel</b> button closes the view curve
+editor widget.
+<h2>View Curve Display Widget</h2>
+Each view curve is stored and displayed in a view curve display widget
+that looks much like a table editor widget. A major difference between
+the two widgets is that the text editor in the view curve cannot be
+keyboard-edited. This helps ensure that the view curve always has the correct
+number of columns.
+<p>
+The view curve name is displayed at the top of the display widget.
+Immediately below the name are the column bar, which labels the index of
+each column, and the text display area. The current contents of the view
+curve appear in the text display area, with one row for each node of the
+view curve. The row corresponding to the current node is always highlighted.
+<p>
+Some additional functions are contained in a menu bar at the bottom of
+the view curve display widget:
+<dl>
+<dt><b>Write</b>
+<dd>
+The contents of the view curve can be written to a file, curve, or
+another view curve. Once a type of destination has been selected, an
+input-request widget pops up asking for the name of the file, curve, or
+view curve to write to, and which columns to write. 
+While a file can accept any number of columns, curves
+and view curves are picky about the number of columns they accept. A
+curve can accept either three or four columns; in the latter case, the
+columns are interpreted as <var>time x y z</var>, and in the former
+case, columns are interpreted as <var>x y z</var> and the time of each
+node is set to the node index. The number of columns accepted by a view
+curve may vary from seven to nine, depending on the combination of view 
+parameters which it stores.
+If the number of columns is incorrect, an error message is displayed and
+the user is given the opportunity to try again.
+<p>
+The user is also permitted to specify which source columns are to be
+written. The string <kbd>all</kbd> in this context represents all the columns.
+Comma-separated integers can also be used to identify columns: 0 is the
+first column and <var>n</var>-1 is the last of <var>n</var> columns.
+Dashes can be used to represent ranges. For example, <kbd>2-4</kbd>
+is identical in meaning to <kbd>2,3,4</kbd>; <kbd>4-2</kbd> is the same
+as <kbd>4,3,2</kbd>; and <kbd>4-</kbd> represents columns 4 through 
+<var>n-1</var>.
+<p>
+<dt><b>Clone</b>
+<dd>This button creates a normal table editor containing a copy of the
+the parameters of the view curve. This table editor can be used for
+all of the table editor operations such as
+keyboard editing, interpolation, column editing, and time estimation,
+and the results can be written back into the view curve. This method of
+editing helps to ensure that the view curve always has the correct
+number of columns.
+<p>
+<dt><b>Up</b>
+<dd>This button raises the view curve editor widget to the top
+of the stacking order.
+<p>
+<dt><b>Hide</b>
+<dd>This button removes the view curve display widget from the screen.
+The display widget is redisplayed when the corresponding view curve becomes
+current, or,  if it is already current, when the user clicks on the view
+curve name displayed next to the <b>Current v-curve</b> label on the
+view curve editor widget. The view curve display widget should not be
+closed or killed by the window manager, or the contents of the view
+curve will be lost.
+</dl>
+<hr>
+<h1>Creating Object Scripts</h1>
+The purpose of the object animation widget is to convert an animation
+table into an animation script controlling the position and orientation
+of an modeled object. 
+The functions of each part of the object
+animation widget are explained below.
+
+<h2>Output File</h2>
+When the <b>OK</b> button is pressed, an animation script is created and
+stored in the file named in the <b>Output file</b> entry box. If this
+file already exists, the user is asked whether to overwrite or cancel. The
+output script contains one frame for each row of the input animation
+table.
+
+<h2>Source</h2>
+The animation tables driving the output script may come from curves,
+view curves, table editors, or files. The type of source is selected
+using the option menu next to the <b>Source</b> label. An appropriate
+source name should then be entered into the associated entry box. This
+should be the name of the curve, view curve, or file, or the integer
+identifier of the table editor.
+<p>
+Below the <b>Source</b> label is a description of the number of columns
+needed and what each column should contain. This
+description changes depending which of the widget's checkbuttons are
+selected. For example, when the <b>No Rotation</b> checkbutton is
+active, the source description reads:
+<p>
+<b>4 input columns needed: t x y z</b>
+<p>
+The following codes are used to describe what the contents of each
+column should be:
+<pre>
+t               - time column
+x y z           - three columns: object's path through space
+y p r           - three columns: yaw, pitch, and roll 
+qx qy qz qw     - four columns: quaternion coordinates
+lx ly lz        - three columns: path for object to look toward
+</pre>
+If the number of columns in the source doesn't match the number of
+columns needed when the <b>OK</b> button is invoked, an error message is
+displayed. A curve always contains four columns, while the number of
+columns in a view curve, table editor, or file may vary.
+<h2>Object Name</h2>
+The name of the modeled object being animated should be entered in this
+entry box, as it will appear in the output script. For top level
+objects, the name should be proceeded by a forward slash:
+<var>/car.g</var>. For an object being animated as part of a larger
+entity, the following syntax should be used:
+<var>car.g/suspension/wheel.0</var>.
+<h2>Object Center and Orientation</h2>
+Most objects being animated are rigid bodies taking up space in three
+dimensions. When the object's position and orientation are specified in
+an animation
+table, this raises a question: which part of the object should be placed
+at the given position? The user must supply the answer to this question
+in the entry box labeled <b>Object Center</b>. Although this point is
+refered to hereafter as the object center, it does not need to be the
+geometric center of the object. The object center is also the point
+about which all rotations occur. For example, when animating a vehicle
+such as an airplane, the most convenient object center is probably the
+airplane's center of mass. When animating a door, the most convenient
+object center would be a point along the hinge axis.
+<p>
+The object center can be keyboard-edited after clicking on the
+entry box with the mouse. As an alternative to keyboard entry, the user
+may center the MGED viewing display on the desired center point
+and then
+press the <b>Object center</b> button to automatically enter the correct
+values into the entry box.
+<p>
+In a similar vein, most objects being animated have a side which is
+considered their front, and similarly sides labeled left, right, top,
+bottom, and back.
+In this case, AnimMate needs to know how the object's
+orientation relates to the model axes. 
+By default, a yaw, pitch, and roll of
+<code>0 0 0</code> is assumed; that is, 
+the front of the object faces the model x-axis,
+the left side faces the y-axis, and the top faces the z-axis.
+If this is not the case, the true yaw,
+pitch, and roll may be entered in the <b>Object yaw,pitch,roll</b> entry box.
+For example, if the object is a car which faces the y-axis, with the
+left side facing the negative x-axis and the top facing the z-axis,
+the user would
+enter a ypr of <code>90 0 0</code>. 
+<p>
+The object yaw, pitch, and roll can be keyboard-edited after 
+clicking on the
+entry box with the mouse. As an alternative to keyboard entry, the user
+may align the MGED viewing display in the same orientation as
+the object and then
+press the <b>Object yaw,pitch,roll</b> button to automatically enter the correct
+values into the entry box.
+<h2>First Frame</h2>
+An animation script is made of a series of numbered frames. Each
+frame gives animation commands needed for one image in the final
+product. By default, the frames numbers for a given script begin at
+zero. If a different initial frame number is desired, it may be entered
+in the <b>First Frame</b> entry box. For example, the first frame number
+might be set to 300 when creating a script which will be appended onto
+the end of another script which is 300 frames long.
+<h2>Relative Displacement</h2>
+If this checkbutton is selected, then positions in the source
+animation table are interpreted as relative displacements from the
+object's initial position, rather than absolute displacements from the
+model origin. For example, if an animation table contains the position
+<code>(0,0,0)</code>, then AnimMate normally creates a script which
+moves the center of the object (as specified in the <b>Object center</b>
+entry box) to the model origin. If relative displacement were enabled, then
+AnimMate would create a script which left the object in its initial
+position. 
+<p>
+When relative displacement is enabled, it is still important to fill in
+the <b>Object center</b> entry box, because the center point also
+defines the point about which the object rotates.
+<h2>Relative Orientation</h2>
+If this checkbutton is selected, then orientation parameters from the
+animation table are interpreted as being relative to the orientation
+specified in the <b>Object yaw,pitch,roll</b> entry box. For example, if
+an animation table contains a yaw,pitch,and roll of
+<code>(0,45,0)</code>, then AnimMate normally creates a script which
+orients the object 45 degrees up from the x-axis. If relative
+orientation were enabled, however, then AnimMate would create a script which
+tilted the object 45 degrees up from whatever direction it initially
+faced (as specified in the <b>Object yaw,pitch,roll</b> entry box).
+<p>
+The relative orientation function can be thought of as defining an
+alternate set of axes for an object. When relative orientation is enabled,
+all rotations and displacements are defined in terms of the object's
+own axes. For example, suppose that the <b>Object yaw,pitch,roll</b>
+entry box is set to <code>90 0 0</code>. This means that the object's
+x-axis (front) coincides with the model's y-axis. The object's y-axis
+(left) coincides with the model's negative x-axis. Thus if relative
+rotation is enabled, then a position <code>(1, 2, 0)</code> from an
+animation table would correspond to <code>(-2, 1, 0)</code> in
+model coordinates.
+<h2>No Translation</h2>
+If this checkbutton is enabled, then AnimMate will only expect to read
+time and orientation information from the source animation table, and
+the animation script will only rotate the object. The <b>No
+Translation</b> button can only be enabled if either 
+<b>Rotation specified as ypr</b> or <b>Rotation specified as
+quat</b> are specified in the <b>Orientation controls</b> section.
+<b>No Translation</b> is commonly used with <b>Relative Displacement</b>
+for rotating an object about its center point.
+<h2>Orientation Control</h2>
+The user may select one of the following six options for specifying the
+orientation of the object being animated:
+<dl>
+<dt><b>No Rotation</b>
+<dd>The object will not change orientation during the animation. The
+source animation table only contains time and position columns, while
+the yaw, pitch, and roll are assumed to be zero in every frame.
+If relative orientation is active, then the object will always be 
+in the same orientation it was modeled in. If relative orientation is inactive, 
+then the object will be turned from its initial orientation (as
+specified with <b>Object yaw,pitch,roll</b>) to a zero yaw, pitch, and
+roll.
+<p>
+<dt><b>Automatic Steering</b>
+<dd>Given an source animation table containing time and position
+columns, this option produces an animation script which always orients
+the object in the direction it is moving. The object is always oriented
+"right-side up", that is, with yaw and pitch but no roll.
+Relative orientation should not be used with this option.
+<p>
+<dt><b>Automatic steering and banking</b>
+<dd>This option is similar to the previous option except that the
+animation script banks the object into turns, simulating the behavior of
+an aircraft. The severity of the bank depends directly on the sharpness
+of the turn, and is scaled so that the object reaches the maximum bank
+angle at the point in the animation table with the sharpest turn. The
+maximum bank angle, which defaults to 60 degrees, can be set to any
+value between -89 and 89 degrees by editing
+the corresponding entry box. Negative values cause the object to bank
+in the opposite direction, like a cart almost overturning as it rounds a
+corner. A maximum bank angle of zero causes no banking to occur.
+Relative orientation should not be used with this option.
+<p>
+<dt><b>Rotation specified as ypr</b>
+<dd>The last three columns in the animation table give the object's yaw,
+pitch, and roll in each frame. If relative orientation is active, the yaw
+pitch, and roll are relative to the object's own axes; otherwise, they
+are with respect to the model axes.
+<p>
+<dt><b>Rotation specified as quat</b>
+<dd>The last four columns of the animation table give the object's
+orientation as a quaternion, in the order x, y, z, w. The convention is
+the same as the quaternions returned by MGED's <code>viewget
+quat</code> command: the identity
+quaternion (0,0,0,1) puts an object in the default eye position, facing
+the negative z-direction with the x-axis to the right. This is
+equivalent to a yaw, pitch, and roll of (90,-90,0). The quaternion
+(0.5, -0.5, -0.5, 0.5) leaves an object in the default object position,
+corresponding to a yaw, pitch, and roll of (0,0,0). If relative orientation
+is active, the orientations are relative to the object's own axes;
+otherwise, they are with respect to the model axes.
+<p>
+<dt><b>Object path and look-at path</b>
+<dd>This option requires that the animation table contain a path for the
+object to follow and a path for the object to look toward.
+The object will be orientated "right-side up" along the axis defined
+by the two points given in every frame. If relative orientation is active,
+the paths in interpreted in terms of the object's axes; otherwise, they
+are with respect to the model axes.
+</dl>
+<h2>Other Buttons</h2>
+<dl>
+<dt><b>OK</b>
+<dd>Create the animation script, leaving the object animation widget in
+place for further work.
+<p>
+<dt><b>Show Script</b>
+<dd>Display a widget which can be sued to run the animation script in
+the MGED display window. 
+<p><dt><b>Up</b>
+<dd> Raise the object animation widget's parent to the top of the
+stacking order.
+<p><dt><b>Cancel</b>
+<dd>Close the object animation widget.
+</dl>
+<hr>
+<h1>Creating View Scripts</h1>
+The purpose of the view animation widget is to convert an animatin table
+into an animation script controlling the view size, view position and
+view orientation. The functions of each part of the view animation
+widget are explained below.
+
+<h2>Output File</h2>
+When the <b>OK</b> button is pressed, an animation script is created and
+stored in the file named in the <b>Output file</b> entry box. If this
+file already exists, the user is asked whether to overwrite or cancel. The
+output script contains one frame for each row of the input animation
+table.
+
+<h2>Source</h2>
+The animation tables driving the output script may come from curves,
+view curves, table editors, or files. The type of source is selected
+using the option menu next to the <b>Source</b> label. An appropriate
+source name should then be entered into the associated entry box. This
+should be the name of the curve, view curve, or file, or the integer
+identifier of the table editor.
+<p>
+Below the <b>Source</b> label is a description of the number of columns
+needed and what each column should contain. This
+description changes depending which of the widget's checkbuttons are
+selected. For example, when the <b>No Rotation</b> checkbutton is
+active, and the <b>Read viewsize from source</b> button is inactive, 
+the source description reads:
+<p>
+<b>4 input columns needed: t x y z</b>
+<p>
+The following codes are used to describe what the contents of each
+column should be:
+<pre>
+t               - time column
+v		- viewsize column
+x y z           - three columns: path through space
+y p r           - three columns: yaw, pitch, and roll 
+qx qy qz qw     - four columns: quaternion coordinates
+lx ly lz        - three columns: path for eye to look toward
+</pre>
+If the number of columns in the source doesn't match the number of
+columns needed when the <b>OK</b> button is invoked, an error message is
+displayed. A curve always contains four columns, while the number of
+columns in a view curve, table editor, or file may vary.
+
+<h2>View Size</h2>
+If a constant view size is desired, it may be specified in the entry box
+corresponding to the <b>View size</b> label. As an alternative to
+keyboard entry, the user may click on the label to enter the current
+viewsize into the entry box. This entry is ignored when the <b>Read
+viewsize from source</b> checkbutton is active.
+
+<h2>Object and Eye Center and Orientation</h2>
+The four entry boxes labeled <b>Object center</b>, <b>Object
+yaw,pitch,roll</b>, <b>Eye point</b>, and <b>Eye yaw,pitch,roll</b>
+are used when the source animation table refers to an
+object, and the user wishes to rigidly attach the eye to the object in
+some way. For example, 
+the user might want to attach
+the eye to a point behind the windshield of a car to to show the
+view from the driver's seat as the car drives around.
+<p>
+As explained in the section on <b>Object Center and Orientation</b>,
+when animating objects the user must provide a center point and an
+initial orientation. The center point is the point on or near the object
+which is moved to the positions in the animation table, and about which
+rotations occur. The initial orientation defines which direction the
+object considers to be forward, left, up, and so on. The same center
+point and orientation used in creating the object animation script
+should be used in creating a rigidly attached view script.
+<p>
+The object center and object yaw, pitch, and roll can be keyboard-edited 
+after clicking on the corresponding
+entry box with the mouse. As an alternative to keyboard entry, the user
+can press the <b>Object center</b> button to enter the current center point
+of the MGED display window, or press the <b>Object
+yaw,pitch,roll</b> button to enter the current orientation of the
+display window.
+<p>
+Next, the user must specify an initial position and orientation for the
+eye. For each frame of the output view script, 
+AnimMate moves the view to where the eye would be if it were rigidly
+attached to the object, and the object were moved to the
+the position and orientation specified in the animation table.
+<p>
+The eye position and eye yaw, pitch, and roll can be keyboard-edited 
+after clicking on the corresponding
+entry box with the mouse. As an alternative to keyboard entry, the user
+may press the <b>Eye Point</b> button to enter the current eye point
+of the MGED display window, or press the <b>Eye
+yaw,pitch,roll</b> button to enter the current orientation of the
+display window. 
+<h2>First Frame</h2>
+An animation script is made of of a series of numbered frames. Each
+frame gives animation commands needed for one image in the final
+product. By default, the frames numbers for a given script begin at
+zero. If a different initial frame number is desired, it may be entered
+in the <b>First Frame</b> entry box. For example, the first frame number
+might be set to 300 when creating a script which will be appended onto
+the end of another script which is 300 frames long.
+<h2>Read Viewsize from Source</h2>
+If this checkbutton is active, the viewsize for each frame will be read
+from the source animation table rather than from the <b>View size</b>
+entry box. In most cases, the viewsize must be provided explicitly in
+the second column of the animation table. The exception is when the
+<b>Orientation control</b> is set to <b>Eye path and look-at path</b>.
+In this case, viewsize is calculated in each frame from the distance 
+between the eye path and look-at path.
+<h2>No Translation</h2>
+If this checkbutton is enabled, then AnimMate will only expect to read
+time and orientation information from the source animation table, and
+the animation script will only rotate the view. The <b>No
+Translation</b> button can only be enabled if either 
+<b>Rotation specified as ypr</b> or <b>Rotation specified as
+quat</b> are specified in the <b>Orientation controls</b> section.
+<h2>Orientation Control</h2>
+The user may select one of the following six options for specifying the
+view orientation:
+<dl>
+<dt><b>No Rotation</b>
+<dd>The view orientation will not change during the animation. The
+source animation table contains no orientation information, and 
+the yaw, pitch, and roll are assumed to be zero in every frame.
+<p>
+<dt><b>Automatic Steering</b>
+<dd>Given an source animation table containing time and position
+columns, this option produces an animation script which always orients
+the view in the direction the eye is moving. The view is always oriented
+"right-side up", that is, with yaw and pitch but no roll.
+<p>
+<dt><b>Automatic steering and banking</b>
+<dd>This option is similar to the previous option except that the
+animation script banks the view into turns, simulating the behavior of
+an aircraft. The severity of the bank depends directly on the sharpness
+of the turn, and is scaled so that the view reaches the maximum bank
+angle at the point in the animation table with the sharpest turn. The
+maximum bank angle, which defaults to 60 degrees, can be set to any
+value between -89 and 89 degrees by editing
+the corresponding entry box. Negative values cause the view to bank
+in the opposite direction, like a cart almost overturning as it rounds a
+corner. A maximum bank angle of zero causes no banking to occur.
+<p>
+<dt><b>Rotation specified as ypr</b>
+<dd>The last three columns in the animation table give the view's yaw,
+pitch, and roll in each frame. 
+<p>
+<dt><b>Rotation specified as quat</b>
+<dd>The last four columns of the animation table give the view
+orientation as a quaternion, in the order x, y, z, w. The convention is
+the same as the quaternions returned by MGED's <code>viewget
+quat</code> command: the identity
+quaternion (0,0,0,1) represents the default view, facing
+the negative z-direction with the x-axis to the right. This is
+equivalent to a yaw, pitch, and roll of (90,-90,0). The quaternion
+(0.5, -0.5, -0.5, 0.5) leaves the view in the default object position,
+corresponding to a yaw, pitch, and roll of (0,0,0). 
+<p>
+<dt><b>Eye path and look-at path</b>
+<dd>This option requires that the animation table contain a path for the
+eye to follow and a path for the eye to look toward.
+The view will be oriented "right-side up" along the axis defined
+by the two points given in every frame. If the <b>Read viewsize from
+source</b> relative orientation is active, the viewsize is calculated as
+twice the distance from the eye point to the look-at point; otherwise,
+the viewsize comes from the entry box labeled <b>View size</b>.
+</dl>
+<h2>Other Buttons</h2>
+<dl>
+<dt><b>OK</b>
+<dd>Create the animation script, leaving the view animation widget in
+place for further work.
+<p>
+<dt><b>Show Script</b>
+<dd>Display a widget which can be sued to run the animation script in
+the MGED display window. 
+<p><dt><b>Up</b>
+<dd> Raise the view animation widget's parent to the top of the
+stacking order.
+<p><dt><b>Cancel</b>
+<dd>Close the view animation widget.
+</dl>
+<hr>
+<h1>Creating Articulated Track Animation Scripts</h1>
+The track animation widget is used to create animation scripts for an
+articulated track on a vehicle such as a tank or bulldozer. Among the
+inputs required for this widget are a curve representing the path of the
+vehicle and a curve indicating the position of each of the wheels. Each
+frame of the resulting animation script positions 
+each of the track pads and/or rotates each of the wheels. The amount of
+rotation is derived from the movement of the vehicle.
+When the track animation script is combined with the vehicle
+animation script, realistic motion is achieved.
+<p>
+This widget is implemented through a call to <em>anim_track</em>. See the
+manual page for more information on this program, which includes some 
+capabilities not used by the AnimMate interface.
+<h2>Preparation</h2>
+Before the track animation widget can be used, some preparation is
+needed to ensure that the modeled vehicle can be animated correctly.
+For AnimMate, an articulated track consists of
+identical pads which AnimMate wraps around 
+two or more wheels in a circular chain. 
+All of the pads should have a common base
+name, with integer indexes starting at zero. For example, a track might
+have 80 track pads named pad.0, pad.1, ... pad.79. 
+The pads should all be instances of a prototype pad which is modeled
+with the inner, wheel-contacting
+surface centered on the model origin. The outer, ground-contacting surface of
+the pad should face the positive z direction. The forward end of the pad
+should face the positive x-axis.
+<p>
+The wheels defining the track should have a common base name
+with integer indexes 0 to <var>n</var>-1. The wheels should be numbered
+in the direction a pad would move around them when the vehicle is moving
+forward (clockwise, when looking from the right). 
+Moreover, the zero-th wheel should be at the front and top, and the
+(<var>n</var>-1)th wheel should be at the back and top of the vehicle.
+The wheel centers
+should all lie in a plane perpendicular to the vehicle's left-right
+axis, and the axis of rotation of each wheel should be parallel to the
+vehicle's left-right axis. 
+<p>
+The purpose of each entry box in the track animation widget
+entry box on the widget is described below:
+<h2>Output File</h2>
+When the <b>OK</b> button is pressed, an animation script is created and
+stored in the file named in the <b>Output file</b> entry box. If this
+file already exists, the user is asked whether to overwrite or cancel. The
+output script contains one frame for each node of the vehicle path
+curve.
+<h2>Vehicle path from table</h2>
+The track animation widget needs an animation table which specifies in some
+way how many output frames are desired and how far the track should roll
+in each frame. This information must be specified directly or indirectly
+in one of three different ways. If the <b>Distance</b> button is
+enabled, then the vehicle path table should contain two columns,
+representing time and the distance the track has rolled in each frame.
+If <b>Position</b> is enabled, the table should contain four columsn
+representing time and the position of the vehicle that the track is a
+part of. The track widget will calculate the distance the track needs to
+roll in order to steer the vehicle along the given path. If <b>Pos. and
+ypr</b> is specified, the table should contain seven columns
+representing time, position, yaw, pitch, and roll of the vehicle
+containing the track. The track widget will calculate the distance the
+track should roll as the vehicle moves through the given positions and
+orientations. In any event, the animation table must be placed in a
+table editor, and the integer identifier of the table editor should be
+entered in the <b>Vehicle path from table</b> entry box.
+<h2>Wheel specs from table</h2>
+The user must enter in this box the identifier of a table editor
+containing the wheel specifications for the track being animated. The
+wheel spec table should have one row for each wheel defining the track.
+The first three columns of the table specify the center point of the
+wheel, and the fourth column specifies the radius of each wheel.
+The wheels should be specified in order, going from wheel zero up to
+wheel <var>n</var>-1.
+<h2>Wheel base name</h2>
+The common base name of the wheels should be specified in the <b>Wheel
+base name</b> entry box. The base name includes the name of the group or
+region to which the wheels belong and the common base name of the
+wheels,
+but doesn't include the integer index.
+For example, if <var>wheel_0</var> through <var>wheel_3</var> are
+members of
+the group <var>rwheels</var>, then the base name is
+<var>rwheels/wheel_</var>.
+<p>
+If the <b>Wheel base name</b> entry box is left empty, then the output
+animation script won't contain any animation commands for the wheels.
+The wheel curve and wheel radius are still needed to define the shape of
+the track.
+<h2>Pad base name and Number of pads</h2>
+The common base name of the pads should be specified in the <b>Pad base
+name</b> entry box. The base name includes the name of a gropu or region
+to which the wheels beong and the common base name of the pads, but
+doesn't include the integer index.
+For example, if
+<var>pad0</var> through <var>pad79</var> are members of the group
+<var>rtrack</var> then the base name is
+<var>rtrack/pad</var>. 
+If the pad base name is omitted, then the output scripts won't contain
+any animation commands for the pads. Either the pad base name, the wheel
+base name, or both, must be specified, or there will be no output.
+<p>
+The number of pads should be specified in the <b>Number of pads</b>
+entry box. 
+<h2>Track length</h2>
+Three different track length options can be selected from the <b>track
+length</b> option menu. The default option is <b>Minimize track
+length</b>. In this case, the length of the track is assumed to be the
+minimum length needed to fit around the wheels defining the track. Any
+value specified in the track length entry box is ignored in this case.
+If the <b>Elastic track length</b> option is selected, then the desired
+length of the track should be entered in the track length entry box. If
+this length is longer than what is needed to fit around the wheels, then
+any excess length is taken up in a caternary arc which hangs between
+wheel zero and wheel (<var>n</var>-1). If the track length isn't long
+enough, the track is stretched just far enough to meet the need. If the
+<b>Rigid track length</b> is selected and the track is longer than
+needed, then the resulting track is identical to the elastic track. If
+the specified track length is too short, a rigid track generates an
+error message rather than automatically stretching the track.
+<p>
+The minimum track length for a given set of wheel specifications can be
+obtained by pressing the <b>Get track length from wheel specs</b>
+button. The <b>Wheel specs from table</b> entry must be filled in before
+that button can function.
+<h2>Vehicle Center and Orientation</h2>
+As explained in the section on <b>Object Center and Orientation</b>,
+when animating objects the user must provide a center point and an
+initial orientation. The center point is the point on or near the object
+which is moved to the positions in the animation table, and about which
+rotations occur. The initial orientation defines which direction the
+object considers to be forward, left, up, and so on. 
+<p>
+The same center point and orientation used in creating the object
+animation script for the vehicle should be entered into the appropriate
+entry widgets of the track animation widget. 
+<P>
+The vehicle center and yaw, pitch, and roll can be keyboard edited after 
+clicking on the
+entry box with the mouse. As an alternative to keyboard entry, the user
+can click on the <b>Vehicle center</b> label to enter the current center
+point of the MGED display window, or click on the <b>Vehicle
+orientation</b> label to enter the current yaw, pitch, and roll of the
+display.
+<p>
+The center point and orientation are important parameters because they
+are used in defining the plane that the track will lie in 
+(perpendicular to the vehicle's left-right axis) and in determining the
+distance forward or backward that the track should roll in each frame.
+<h2>First Frame</h2>
+An animation script is made of a series of numbered frames. Each
+frame gives animation commands needed for one image in the final
+product. By default, the frames numbers for a given script begin at
+zero. If a different initial frame number is desired, it may be entered
+in the <b>First Frame</b> entry box. For example, the first frame number
+might be set to 300 when creating a script which will be appended onto
+the end of another script which is 300 frames long.
+<h2>Create geometry file from frame</h2>
+Besides making an animation scripts for an articulated track, the track
+widget can also be used to help in creating the original model of the
+track. When the <b>Create geometry file</b> button is enabled, the
+MGED modeling commmands rather than animation commands will be
+written to the output file. The modeling commands operate on the
+matrices between the pads and their common parent. The entry box
+corresponding to this button should contain a frame number of the
+animation frame which is to be emulated. For example, specifying frame 1
+means that the modeling commands will actually model the pads in the
+positions they would have in frame 1 of the animation script, if an
+animation script were to be created. The modeling file must be applied
+with MGED's "source" command, and the vehicle must be redisplayed
+with the "e" command to view the results.
+<h2>Enable Anti-Strobing</h2>
+In track animations, a strobing effect can sometimes cause the track to
+appear to stop, slow down, or move backwards. When the track is moving
+forward 
+at slow speeds, the position of a pad in a given frame is slightly
+forward of its position in the previous frame. However, when the track
+is moving faster, a pad might move far enough forward between frames so
+that it's position in a given frame is just behind the position its
+neighbor was in during the previous frame. Since all the pads are
+identical, the eye assumes that it was actually the neighboring pad that
+moved slightly backward between frames. This creates the illusion of a
+backward-moving track.
+<p>
+The <b>Enable Anti-Strobing</b> option uses <em>anim_track</em>'s "-a"
+option to avoid
+this strobing effect. When the track is moving at slow speeds which are
+not subject to strobing effects, this
+option has no effect.
+However, when the track speed exceeds a threshold (0.5 pad
+lengths per frame), <em>anim_track</em> begins adding random jitter to
+the track movements. The effect on the eye is to replace the strobing
+problem with motion blur.
+<h2>Other Buttons</h2>
+<dl>
+<dt><b>OK</b>
+<dd>Create the animation script, leaving the track animation widget in
+place for further work.
+<p>
+<dt><b>Show Script</b>
+<dd>Display a widget which can be sued to run the animation script in
+the MGED display window. 
+<p><dt><b>Up</b>
+<dd> Raise the track animation widget's parent to the top of the
+stacking order.
+<p><dt><b>Cancel</b>
+<dd>Close the track animation widget.
+</dl>
+<hr>
+<h1>Combining Scripts</h1>
+The purpose of this widget is to create a new animation script which
+combines the functions of two or more other animation scripts.
+For
+example, a script controlling the view and a script 
+controlling a vehicle can be used to produce a script controlling both.
+both.
+<p>
+The entry box under the <b>Combine Scripts</b> label can be used to type
+in the names of the script files to combine. When the
+<code>Return</code> key is pressed, the name is added onto the list of
+names in the list box immediately below the entry box. File names can be
+removed from the list box by clicking on the name with the left mouse button.
+<p>
+On the right side of the widget is an entry box which contains a 
+a filter string. By default,
+the filter string is <code>./*.script</code>, specifying the files in the
+current directory with the <code>.script</code> suffix. 
+The files which match the
+filter are listed in the list box immediately below the filter string.
+The filter string can be keyboard edited, and the list of files is
+regenerated when the <b>Filter</b> button is pressed.
+<p>
+File names can in the <b>Filter</b> list box can be added to the <b>Combine
+Scripts</b> list box by clicking on the desired file name with the left
+mouse button.
+<p>
+The entry box labeled <b>Create script</b> contains the name of the file
+that will be created by combining all of the scripts in the <b>Combine
+Scripts</b> list box. 
+<p>
+The following buttons appear at the bottom of the widget:
+<dl>
+<dt><b>OK</b>
+<dd>When this button is invoked, a new script is created by combining
+the scripts listed in the <b>Combine scripts</b> list box. The name for
+the new script comes from the <b>Create script</b> entry box. If a file
+with this name already exists, the user is asked whether to overwrite
+the old file or cancel the operation.
+<p>
+Depending on the size of the input files, the sorting algorithm may take
+a few seconds to complete. The sorting is
+performed in the background so that the user can continue working during
+the sort. A message is posted at the bottom of the widget to let the
+user know that the scripts are being combined, and a <b>Halt</b> button
+is posted to allow the user to cancel the operation mid-way. Only one
+sort may be active at a time. When the operation is complete, the
+message and <b>Halt</b> button disappear.
+<p><dt><b>Show Script</b>
+<dd>This button pops up a widget for running the new script in the
+MGED display window.
+<p><dt><b>Up</b>
+<dd>This button raises the parent of the script-combining widget to the
+top of the stacking order.
+<p><dt><b>Cancel</b>
+<dd>This button closes the script-combining widget.
+</dl>
+<hr>
+<h1>Showing Scripts</h1>
+This widget allows the user to run an animation script in the
+MGED display window. The widget is basically a front-end to the
+MGED <code>preview</code> command, with the added feature that
+the widget re-displayes animation curves which are 
+"zapped" from the screen during the <code>preview</code> command.
+The <b>Show Script</b> widget has the following entry boxes and
+buttons:
+<dl>
+<dt><b>Script file</b>
+<dd>The name of the file containing the animation script
+<p><dt><b>Max frames per second</b>
+<dd>The maximum rate at which frames will be shown in the display
+window. The display will try to run an the maximum rate, or as fast as
+MGED knows how if if no maximum rate is specified.
+<p><dt><b>Start frame</b>
+<dd>The frame number of the first frame in the script to be shown. 
+If no start frame
+is specified, then the animation display will start at first frame
+encountered in the animation script.
+<p><dt><b>End frame</b>
+<dd>The frame number of the last frame of the script to be shown. 
+If no end frame is specified, then the animation display will continue
+to the end of the animaiton script.
+<p><dt><b>Polygon Rendering</b>
+<dd>If this checkbutton is enabled, animated objects will be rendered
+with polygons rather than in wireframe form. Note that the user should turn
+on polygon lighting prior to this form of previewing (the <b>F5</b> key toggles
+polygon lighting).
+<p><dt><b>Show</b>
+<dd>Display the animation. Before pressing this button, the user should
+make sure that all of the objects which are to be animated are currently
+being edited (with the MGED <code>e</code> command.
+<p><dt><b>Up</b>
+<dd>Raise the parent of this widget to the top of the stacking order.
+<p><dt><b>Cancel</b>
+<dd>Close this widget.
+<p><dt><b>Restore</b>
+<dd>Restore the view and objects to their previous state. When an
+animation has been run, the animated objects and the view state are left
+as they were specified in the last frame of the animation. This button
+returns all the objects to the normal modeled positions and restores the
+display to the viewing state that was current before the animation was
+run.
+</dl>
+<hr>
+
+</body>
+</html>

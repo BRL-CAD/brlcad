@@ -1,0 +1,2 @@
+# $Id$
+SUBDIRS = ReleaseNotes manuals

@@ -1,0 +1,399 @@
+<HTML>
+<HEAD>
+<TITLE>Drawable Geometry Object Documentation</TITLE>
+</HEAD>
+<BODY>
+<A HREF="#toc">Table of Contents</A><P>
+_________________________________________________________________
+<P>
+
+<H2><A NAME="sect1" HREF="#toc1"><B>NAME</B></A></H2>
+dg_open - create and manipulate a drawable geometry object.
+<P>
+
+<H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
+<B>dg_open</B> [<I>dgName dbName</I>]
+<P>
+
+<H2><A NAME="sect8" HREF="#toc8"><B>DESCRIPTION</B></A></H2>
+The <B>dg_open</B> command creates a new drawable geometry object
+(given by the <I>dgName</I> argument) and is associated with
+the database object (given by the <I>dbName</I> argument).
+The <B>dg_open</B> command returns its <I>dgName</I> argument.
+At the time this command is invoked, there must not exist a
+drawable geometry object named <I>dgName</I>.
+<P>
+
+<H2><A NAME="sect9" HREF="#toc9"><B>METHODS</B></A></H2>
+The <B>dg_open</B> command creates a new Tcl command whose name
+is <I>dgName</I>. This command may be used to invoke various
+operations on the drawable geometry object. It has the following general
+form: 
+<P>
+<I>dgName</I> <I>option</I> ?<I>arg</I> <I>arg</I> ...?
+<P>
+<I>Option</I> and the <I>arg</I>s determine the exact behavior of the command.
+The following commands are possible for drawable geometry objects:
+<P>
+<DL>
+<DT><I>dgName</I> <A NAME="assoc"><B>assoc</B></A> [dbName]</DT>
+<DD>The drawable geometry object is associated with a
+<A>database object</A>. If <I>dbName</I> is specified, associate
+this drawable geometry object with <I>dbName</I>. Otherwise,
+return the associated database object.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="blast"><B>blast</B></A> [<I>-C#/#/#</I>] &lt;<I>objects</I>&gt</DT>
+<DD> Clear the display list of objects,
+then populate the list with the objects provided in the
+parameter list.
+Equivalent to
+the <a href="#zap">zap</a> command
+followed by the command
+<a href="#draw">draw</a> &lt;<I>objects</I>&gt.
+The <I>-C</I> option provides the user a way to
+specify a color that overrides all other color
+specifications including combination colors and
+region id based colors.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="clear"><B>clear</B></A></DT>
+<DD>Clear/empty the display list. This is the same as
+<A HREF="#zap">zap</A>.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="close"><B>close</B></A></DT>
+<DD>Close/destroy this drawable geometry object.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="draw"><B>draw</B></A> [<I>-C#/#/#</I>] &lt;<I>objects</I>&gt</DT>
+<DD>Add &lt;<I>objects</I>&gt to the display list.
+The <I>-C</I> option provides the user a way to
+specify a color that overrides all other color
+specifications including combination colors and
+region id based colors.
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="erase"><B>erase</B></A> <I>&lt;objects&gt</I></DT>
+<DD>Only objects that have been explicitly displayed
+may be deleted with the ``erase'' command (use the <a href="#who">who</a>
+command to see a list of explicitly displayed objects). Objects that are
+displayed as members of explicitly displayed combinations cannot be
+deleted from the display with this command (see <a href="#erase_all">erase_all</a>).
+Note that this has no effect on the
+<I>BRL&#173CAD</I> database itself. To actually remove objects from the
+database, use the <a href="#kill">kill</a> command.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="erase_all"><B>erase_all</B></A> <I>&lt;objects&gt</I></DT>
+<DD>Delete the specified list of objects from the display list.
+This command will allow the user to delete objects
+that have not been explicitly displayed (unlike the <a href="#erase">erase</a> command).
+Note that this has no effect on the
+<I>BRL&#173CAD</I> database itself. To actually remove objects from the
+database, use the <a href="#kill">kill</a> command.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="ev"><B>ev</B></A> [<I>-dnqstuvwT</I>] [<I>-P #</I>] &lt;<I>objects</I>&gt</DT>
+<DD>Evaluate the <I>objects</I> specified by tesselating
+all <a href="../mged/brlcad_glossary.html#SOLID">primitive solids</a> in the objects
+and then performing any <a href="../mged/brlcad_glossary.html#BOOLEAN">Boolean operations</a>
+specified in the <I>objects</I>. The result is then added to the display list
+according to the specified options:
+
+<ul>
+<li><I>d</I> -- do not perform Boolean operations or any checking</li>
+<li><I>w</I> -- draw wireframes (rather than polygons)</li>
+<li><I>n</I> -- draw surface normals as little 'hairs'</li>
+<li><I>s</I> -- draw solid lines only (no dot&#173dash for subtract and intersect)</li>
+<li><I>t</I> -- Perform CSG&#173to&#173tNURBS conversion (still under development)</li>
+<li><I>v</I> -- shade using per&#173vertex normals, when present</li>
+<li><I>u</I> -- draw <a href="../mged/brlcad_solids.html#NMG">NMG</a> edgeuses (for debugging)</li>
+<li><I>S</I> -- draw tNURBs with trimming curves only, no surfaces</li>
+<li><I>T</I> -- do not triangulate (may produce unexpected results if not used with the <I>w</I> option</li>
+</ul>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="get_autoview"><B>get_autoview</B></A></DT>
+<DD>Return the view parameters (i.e. center and size) for optimal viewing
+(i.e. centered on the geometry with the smallest view size such that all
+geometry is still visible).
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="headSolid"><B>headSolid</B></A></DT>
+<DD>Return the head solid pointer.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="illum"><B>illum</B></A> <I>object(s)</I></DT>
+<DD>Iluminate/highlight the specified <I>object(s)</I>.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="label"><B>label</B></A></DT>
+<DD>Not ready yet.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME= "observer"><B>observer</B></A> [<I>subcommand</I>]</DT>
+<DD>This command is used to maintain a list of observers. Observers
+are objects who have registered an interest in this drawable geometry object and
+are notified when the display list changes (i.e. draw/erase geometry). 
+<P>
+	<DL>
+	<DT><I>dgName observer</I> <B>attach</B> <I>obs</I> [<I>command</I>]</DT>
+	<DD>Add the specified observer, <I>obs</I>, to the list of observers.
+	If <I>command</I> is specified then it is executed each time the display list
+	changes. Otherwise, the observer is expected to have an update method
+	which is called with the name of this drawable geometry object as an argument.
+	</DD>
+<P>
+	<DT><I>dgName observer</I> <B>detach</B> <I>obs</I></DT>
+	<DD>Remove the specified observer, <I>obs</I>, from the list of observers.
+	</DD>
+<P>
+	<DT><I>dgName observer</I> <B>show</B></DT>
+	<DD>Return the list of observers for this drawable geometry object.
+	</DD>
+	</DL>
+</DD>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="overlay"><B>overlay</B></A> <I>plot_file</I> [<I>name</I>]</DT>
+<DD>Plot the specified UNIX <I>plot_file</I>
+in the display list. Phony object names are created for each part
+of the plot file that is unique in color. The names are created by adding
+a color to the specified <I>name</I>, or to ``_PLOT_OVER'' if no name is
+provided. The color suffix is built by converting the
+<a href="../mged/brlcad_glossary.html#RGB">RGB</a> color to a six digit hex number.
+Each color corresponds to 2 hex digits, so that white becomes "ffffff",
+red becomes "ff0000",  green is "00ff00", etc.
+</DD>
+<P>
+<DT><I>dgName</I> <a NAME="report"><B>report</B> [<I>level</I>]</DT>
+<DD> Report all the <a href="../mged/brlcad_glossary.html#SOLID">primitive solids</a>
+currently drawn. The <I>level</I> determines how much detail should
+be included in the list. For <I>level</I> zero (the default),
+only a list of paths to solids in the display list is produced
+with and indication of whether they are being iluminated/highlighted.
+If <I>level</I> is greater than zero, the center, size,
+<a href="../mged/brlcad_glossary.html#IDENT">ident number</a>,
+<a href="../mged/brlcad_glossary.html#RGB">RGB</a> color assigned to the region,
+and the actual color used to draw the solid are also listed.
+If <I>level</I> is greater than one, the number of vlist structures and the number of
+points in each vlist structure are also listed for each solid.
+If <I>level</I> is greater than two, then the actual lines drawn for each solid are also listed.
+The <a href="#who">who</a> command performs a similar function, but lists
+only the top level objects that are displayed.
+Going in the other direction, if <I>level</I> is -1,
+only a list of paths to solids in the display list is produced with
+no indication of whether they are being illuminated.
+If <I>level</I> is less than -1, only the leaves are printed.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="rt"><B>rt</B></A> <I>view_obj</I> [<I>options</I>] [-- <I>objects</I>]</I></DT>
+<DD>Execute the <I>BRL&#173CAD</I> <I>rt</I> program with the default
+options of ``-s50 -M''.
+The current database name is added to the end of the <I>rt</I> command line
+along with either the specified <I>objects</I>
+or, if none is specified,
+the list of currently displayed objects.
+The <I>rt</I>
+program is written such that options may be repeated, and the last occurrence of an option
+will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>)
+options.
+The <I>-M</I> option tells <I>rt</I> to read the viewing
+parameters from standard input so that rays are only fired from
+the view specified by <A HREF="view_obj.html">view_obj</A>.
+See the <I>man</I> page on <I>rt</I> for details.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="rtcheck"><B>rtcheck</B></A> <I>view_obj</I> [<I>options</I>]</I></DT>
+<DD>Execute the <I>BRL&#173CAD</I> <I>rtcheck</I> program with the default
+options of ``-s50 -M''.
+The <I>-M</I> option tells <I>rtcheck</I> to read the viewing
+parameters from standard input so that rays are only fired from
+the view specified by <A HREF="view_obj.html">view_obj</A>.
+The current database name and the list
+of currently displayed objects are added to the end of the <I>rtcheck</I> command line. The <I>rtcheck</I>
+program is written such that options may be repeated, and the last occurrence of an option
+will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>)
+options.
+The <I>rtcheck</I> program uses raytracing to check for
+overlapping regions in the list of objects passed on the command line.
+Any discovered overlaps along a ray are represented as yellow lines
+that extend only in the areas of overlap. Details and a count of overlaps are also reported.
+Note that overlaps of less than 0.1 mm are currently ignored by <I>rtcheck</I>. The default
+option of <I>-s50</I> indicates that the checking rays should be fired from a uniform square grid
+with 50 rays on a side. This is very coarse and may miss significant overlaps. It is recommended
+that the user select appropriate options for the <I>rtcheck</I> program and execute it for
+a variety viewing aspects to perform a thorough check. The granularity of the grid may be controlled
+with the <I>-s</I>, <I>-w</I>, <I>-n</I>, <I>-g</I>, and <I>-G</I> options. See the <I>man</I>
+page on <I>rtcheck</I> for details.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="vdraw"><B>vdraw</B></A> <I>command</I> [<I>args</I>]</DT>
+<DD>This command allows the user to draw lines and polygons (optionally with
+per vertex normals) in the display list. <I>Vdraw</I> is used to build a named list
+of drawing commands, send the command list to the display list,
+modify the command list, or delete all or part of the command list.
+All vertices in the <I>vdraw</I> command are in millimeters.
+The drawing commands are represented by integers in the <I>vdraw</I>
+command. The drawing commands and the integers that vdraw uses for them
+are:
+<br>
+<br>
+<center>
+<table COLS=3 RULES=all BORDER=1 CELLPADDING=3>
+<tbody>
+	<tr>
+		<th ALIGN=center>MGED Drawing Command</th>
+		<th ALIGN=center>Vdraw integer</th>
+		<th ALIGN=center>MGED Action</th>
+	</tr>
+	<tr>
+		<td ALIGN=center>RT_VLIST_LINE_MOVE</td>
+		<td ALIGN=center>0</td>
+		<td ALIGN=center>begin a new line at this point</td>
+	</tr>
+	<tr>
+		<td ALIGN=center>RT_VLIST_LINE_DRAW</td>
+		<td ALIGN=center>1</td>
+		<td ALIGN=center>draw line from previous point to this point</td>
+	</tr>
+	<tr>
+		<td ALIGN=center>RT_VLIST_POLY_START</td>
+		<td ALIGN=center>2</td>
+		<td ALIGN=center>start polygon (argument is surface normal)</td>
+	</tr>
+	<tr>
+		<td ALIGN=center>RT_VLIST_POLY_MOVE</td>
+		<td ALIGN=center>3</td>
+		<td ALIGN=center>move to first polygon vertex</td>
+	</tr>
+	<tr>
+		<td ALIGN=center>RT_VLIST_POLY_DRAW</td>
+		<td ALIGN=center>4</td>
+		<td ALIGN=center>subsequent polygon vertices</td>
+	</tr>
+	<tr>
+		<td ALIGN=center>RT_VLIST_POLY_END</td>
+		<td ALIGN=center>5</td>
+		<td ALIGN=center>last vertex of polygon (should be same as first)</td>
+	</tr>
+	<tr>
+		<td ALIGN=center>RT_VLIST_POLY_VERTNORM</td>
+		<td ALIGN=center>6</td>
+		<td ALIGN=center>vertex normal (for shading interpolation)</td>
+	</tr>
+</tbody>
+</table>
+</center>
+<br>
+<br>
+The <I>vdraw</I> <I>commands</I> are:
+<ul>
+	<li>open -- with no arguments, this returns ``1'' if there is an open list, ``0''
+		otherwise. If an argument is supplied, a command list is opened with
+		the provided name.</li>
+	<li>write -- with arguments of <I>i c x y z</I>, the <I>mged</I> drawing command
+		#<I>c</I> is placed in the <I>i<sup>th</sup></I> position of the command list.
+		with a vertex of (<I>x y z</I>).<br>-- with arguments of <I>next c x y z</I>,
+		the command is placed at the end of the list.</li>
+	<li>insert --  with arguments of <I>i c x y z</I>, the <I>mged</I> drawing command
+                #<I>c</I> is inserted just before the <I>i<sup>th</sup></I> position of the command list.</li>
+	<li>delete -- with an integer argument of <I>i</I>, the <I>i<sup>th</sup></I> command is deleted.<br>
+		-- with an argument of ``last'', the last command on the list is deleted.<br>
+		-- with an argument of ``all'', all the commands on the list are deleted.</li>
+	<li>params -- with an argument of <I>color rrggbb</I>, the color of all objects
+		on this list is set. The <I>rrggbb</I> is a hex number representing the color,
+		``ffffff'' is white, ``ff0000'' is red, ``00ff00'' is green, ...<br>
+		-- with a single string argument, the name of the current list is changed.</li>
+	<li>read -- with an integer argument of <I>i</I>, the <I>i<sup>th</sup></I> command is returned.<br>
+		-- with an argument of ``color'', the curent color is returned.<br>
+		-- with an argument of ``length'', the number of commands in the current list is returned.<br>
+		-- with an argument of ``name'', the name of the current command list is returned.</li>
+	<li>show -- send the current command list to the display list.</li>
+	<li>vlist -- with an argument of ``list'', return a list of the names of all existing command lists.<br>
+		-- with an argument of <I>delete list_name</I>, delete the specified command list.</li>
+</ul>
+<br>
+All textual arguments may be abbreviated by their first letter.
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="who"><B>who</B></A> [<I>real</I> | <I>phony</I> | <I>both</I>]</DT>
+<DD>List the top-level objects that are currently displayed.
+The <I>phony</I> flag asks for just <I>phony</I> objects. <I>Phony</I> objects are
+typically objects that are drawn in the display list, but are not actual
+database objects. Some <I>phony</I> objects are drawings from the <a href="#vdraw">
+vdraw</a> command and the edgeuses drawn by the <a href="#ev">ev -u</a> command.
+The <I>real</I> flag asks for just <I>real</I> objects, and the <I>both</I> flag
+asks for both <I>real</I> and <I>phony</I> objects. The default is just <I>real</I>
+objects. Any of the flags may be abbreviated by its first letter.
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="zap"><B>zap</B></A></DT>
+<DD>Clear/empty the display list. This is the same as
+<A HREF="#clear">clear<A>.
+</DD>
+<P>
+</DL>
+
+<H2><A NAME="sect16" HREF="#toc16"><B>EXAMPLE</B></A></H2>
+The following sequence creates a database object and
+a drawable geometry object.
+And then draws some geometry from the associated database object.
+<P>
+cwish> wdb_open db moss moss.g
+<BR>
+moss
+<BR>
+cwish> dg_open dg moss
+<BR>
+dg
+<BR>
+cwish> moss ls
+<PRE>
+LIGHT               cone.r/R            light.r/R           tor.r/R
+all.g/              cone.s              platform.r/R
+box.r/R             ellipse.r/R         platform.s
+box.s               ellipse.s           tor
+</PRE>
+cwish> dg draw all.g
+<BR>
+cwish> dg who
+<BR>
+all.g
+<BR>
+cwish> dg zap
+<BR>
+cwish> dg who
+<BR>
+cwish> dg
+<BR>
+<P>
+
+<H2><A NAME="sect17" HREF="#toc17"><B>ACKNOWLEDGEMENTS:</B></A></H2>
+
+Mark L. Ulferts &lt;mulferts@austin.dsccc.com&gt;
+<PRE>        Basic layout for documenting classes.</PRE>
+<P>
+
+<H2><A NAME="sect18" HREF="#toc18"><B>AUTHOR</B></A></H2>
+<P>
+Robert G. Parker
+<P>
+
+<HR><P>
+<A NAME="toc"><B>Table of Contents</B></A><P>
+<UL>
+<LI><A NAME="toc1" HREF="#sect1">NAME</A></LI>
+<LI><A NAME="toc2" HREF="#sect2">SYNOPSIS</A></LI>
+<LI><A NAME="toc8" HREF="#sect8">DESCRIPTION</A></LI>
+<LI><A NAME="toc9" HREF="#sect9">METHODS</A></LI>
+<LI><A NAME="toc16" HREF="#sect16">EXAMPLE</A></LI>
+<LI><A NAME="toc17" HREF="#sect17">ACKNOWLEDGEMENTS</A></LI>
+<LI><A NAME="toc18" HREF="#sect18">AUTHOR</A></LI>
+</UL>
+</BODY>
+</HTML>

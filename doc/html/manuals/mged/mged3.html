@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD><TITLE>Mged User's Manual</TITLE></HEAD>
+<BODY BGCOLOR="#E0D8c8" Text="#000000">
+<a name="ListingObjects"><h3>Listing Objects</h3></a>
+
+Now let's take a look at what we have.  The 
+``<a href="mged_cmds.html#l">l</a>'' 
+command lists the definition of a combination
+or primitive solid.
+
+<pre><tt>
+   mged> </tt><B><FONT color="#20a020">l mug.r</FONT></B><tt>
+   mug.r:  REGION id=1000  (air=0, los=100, GIFTmater=1) --
+   Shader 'plastic'
+   Color 32 128 32
+     u cup.c
+       handle.c
+</tt></pre>
+This tells us that mug.r is a <a href="brlcad_glossary.html#REGION">region</a>
+and that it uses the <a href="shaders.html#plastic">plastic</a> shader.
+The color of the object is "32 128 32", and it is made up of the union of two
+objects: cup.c and handle.c
+
+<p>
+If we look at cup.c we get:
+<pre><tt>
+   mged> </tt><B><FONT color="#20a020">l cup.c</FONT></B><tt>
+   cup.c:  --
+     u - outside.s
+         inside.s
+       rim.s
+</tt></pre>
+Note that this is not a <a href="brlcad_glossary.html#REGION">region</a>
+so there are no material properties.  The boolean tree indicates that the 
+object consists of: (outside.s - inside.s) u rim.s which in graph form looks
+like:
+<pre>
+		   outside.s
+		  /
+	        (-)
+	       /  \
+	      /    inside.s
+   cup.c -- (u)
+	      \
+	       rim.s
+</pre>
+The text output of the boolean tree lines up the indentation of the operands
+with the operator.&nbsp So here, becaus outside.s and inside.s are indented 
+together, they are the operands to the subtraction operator.&nbsp 
+The subtraction operator and rim.s are indented the same amount, so the 
+result of the subtraction, and rim.s are the operands of the union operator.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="shaders1"><H2>An Introduction to Shaders</h2></a>
+<p>
+In the example above, we specified that the mug should be rendered with
+the ``plastic'' shader.&nbsp This implements a simple ``phong'' lighting model.
+The result can be altered by adjusting parameters that define how the shader
+operates.&nbsp These parameters are:
+<center><table border=1>
+<tr><th align=left>Parameter</th>   <th>Abbrev</th><th>Type</th><th>Range</th><th>default</th></tr>
+<tr><th align=left>Shine</th>       <th>sh</th><td>int</td>  <td>4 ..&nbsp20</td><td>10</td></tr>
+<tr><th align=left>diffuse</th>     <th>di</th><td>float</td><td>0 ..&nbsp1</td><td>0.3</td></tr>
+<tr><th align=left>specular</th>    <th>sp</th><td>float</td><td>0 ..&nbsp1</td><td>0.7</td></tr>
+<tr><th align=left>transmission</th><th>tr</th><td>float</td><td>0 ..&nbsp1</td><td>0.0</td></tr>
+<tr><th align=left>reflection</th>  <th>re</th><td>float</td><td>0 ..&nbsp1</td><td>0.0</td></tr>
+</table></center>
+
+
+We can alter the look of our mug a bit by specifying some of the parameters to
+the plastic shader:
+
+<pre>
+   <tt>mged> </tt><B><FONT color="#20a020">mater mug.r</FONT></B><tt>
+   Shader = 
+   Shader?  ('del' to delete, CR to skip) </tt><B><FONT color="#20a020">plastic di=.9 sh=4</FONT></B><tt>
+   Color = (No color specified)
+   Color R G B (0..255)? ('del' to delete, CR to skip) </tt><B><FONT color="#20a020">32 128 32</FONT></B><tt>
+   Inherit = 0:  lower nodes (towards leaves) override
+   Inheritance (0|1)? (CR to skip) 
+   mged></tt>
+</pre>
+
+<p>If we raytrace the mug now, it has a different appearance.
+<!--- XXX raytrace and show --->
+
+
+
+<p> Sometimes it is useful to combine the effects of two shaders.&nbsp The
+``stack'' shader was created for this situation.&nbsp For example, we might want
+to apply a blotchy camoflage-like color pattern to the mug.&nbsp The ``camo''
+shader provides the color pattern, while the ``plastic'' shader provides the
+lighting model.&nbsp 
+
+<pre>
+   <tt>mged> </tt><B><FONT color="#20a020">mater mug.r</FONT></B><tt>
+   Shader = plastic
+   Shader?  ('del' to delete, CR to skip) </tt><B><FONT 
+color="#20a020">stack camo s=10;plastic</FONT></B><tt>
+   Color = 32 128 32
+   Color R G B (0..255)? ('del' to delete, CR to skip) 
+   Inherit = 0:  lower nodes (towards leaves) override
+   Inheritance (0|1)? (CR to skip) 
+   mged> </tt>
+</pre>
+
+The ``camo'' shader creates a color pattern using a procedural noise
+technique.&nbsp It computes a fBm value based upon the point being shaded.&nbsp To
+compute this value it needs to be able to map coordinates in model space 
+into a noise space.&nbsp The most important parameter to specify is ``size''.&nbsp 
+This tells the shader what the spacing is (in millimeters) of grid points
+from the noise space.&nbsp It also gives us a rough bound on the size of the blobs
+of color it creates.&nbsp 
+
+<center>
+<table border=1>
+<tr><th align=left>Parameter</th>  <th>abbrev</th><th>type</th><th>default</th></tr>
+<tr><th align=left>Lacunarity</th> <th>l</th> <td>float</td><td>2.1753974</td></tr>
+<tr><th align=left>H_value</th>    <th>H</th> <td>float</td><td>1.0</td></tr>
+<tr><th align=left>octaves</th>    <th>o</th> <td>int</td><td>4</td></tr>
+<tr><th align=left>delta</th>      <th>d</th> <td>float vector</td><td>1000.0, 1000.0, 1000.0</td></tr>
+<tr><th align=left>Threshold 1</th><th>t1</td><td>float</td><td>-0.25</td></tr>
+<tr><th align=left>Threshold 2</th><th>t2</td><td>float</td><td>0.25</td></tr>
+<tr><th align=left>size</th>       <th>s</th> <td>float</td><td>1.0</td></tr>
+<tr><th align=left>color 1</th>    <th>c1</td><td>int vector</td><td>97, 74, 41</td></tr>
+<tr><th align=left>color 2</th>    <th>c2</td><td>int vector</td><td>26, 77, 10</td></tr>
+<tr><th align=left>color 3</th>    <th>c3</td><td>int vector</td><td>38, 38, 38</td></tr>
+
+</table></center>
+
+<p>This time we will raytrace the image with a grey background instead of
+black.&nbsp We specify this with the -C option:
+
+<pre>
+<tt>   mged> </tt><B><FONT color="#20a020">rt -F:1 -s 128 -C100/100/100</FONT></B>
+</pre>
+<a href="mug_camo.jpg"><img src="mug_camo.gif" alt="camoflage mug"></a>
+
+<p>
+Mged can save a shell script to raytrace the current view.&nbsp This is done with
+the ``saveview'' command.&nbsp 
+
+<pre>
+<tt>   mged> </tt><B><FONT color="#20a020">saveview mug_camo</FONT></B>
+</pre>
+
+If we exit mged we will find a file called ``mug_camo'' in the current
+directory.&nbsp Running this script will start the ``rt'' program to create a file
+called mug_camo.pix.&nbsp If you do not specify the size of the image on the
+command line, it will default to a 512x512 image.&nbsp This file can be displayed
+in your framebuffer server window using the ``pix-fb'' command.&nbsp 
+
+<pre>
+<tt>   % </tt><B><FONT color="#20a020">./mug_camo</FONT></B>
+<tt>   % </tt><B><FONT color="#20a020">pix-fb mug_camo.pix</FONT></B>
+</pre>
+
+<p>When you are done with the framebuffer, you can dismiss the window with
+the ``fbfree'' command.&nbsp 
+
+</BODY></HTML>

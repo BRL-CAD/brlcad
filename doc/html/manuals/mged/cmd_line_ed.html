@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<title>Command Line Editing</title>
+</HEAD>
+<BODY BGCOLOR="#E0D8c8" TEXT="#000000">
+
+<CENTER><H2>Command Line Editing</H2></CENTER>
+
+<A NAME="emacs">
+<CENTER><H3>Emacs Bindings</H3></CENTER>
+<TABLE>
+<TR><TH ALIGN=LEFT>Key Sequence</TH><TH ALIGN=LEFT>Function</TH>
+<TR><TD ALIGN=LEFT>BackSpace</TD><TD ALIGN=LEFT>backward delete character</TD>
+<TR><TD ALIGN=LEFT>Delete</TD><TD ALIGN=LEFT>backward delete character</TD>
+<TR><TD ALIGN=LEFT>Left</TD><TD ALIGN=LEFT>backward character</TD>
+<TR><TD ALIGN=LEFT>Right</TD><TD ALIGN=LEFT>forward character</TD>
+<TR><TD ALIGN=LEFT>Up</TD><TD ALIGN=LEFT>previous command</TD>
+<TR><TD ALIGN=LEFT>Down</TD><TD ALIGN=LEFT>next command</TD>
+<TR><TD ALIGN=LEFT>Home</TD><TD ALIGN=LEFT>beginning of line</TD>
+<TR><TD ALIGN=LEFT>End</TD><TD ALIGN=LEFT>end of line</TD>
+<TR><TD ALIGN=LEFT>C-a</TD><TD ALIGN=LEFT>move to beginning of line</TD>
+<TR><TD ALIGN=LEFT>C-b</TD><TD ALIGN=LEFT>move back one character</TD>
+<TR><TD ALIGN=LEFT>C-c</TD><TD ALIGN=LEFT>interrupt</TD>
+<TR><TD ALIGN=LEFT>C-d</TD><TD ALIGN=LEFT>delete character at cursor</TD>
+<TR><TD ALIGN=LEFT>C-e</TD><TD ALIGN=LEFT>move to end of line</TD>
+<TR><TD ALIGN=LEFT>C-f</TD><TD ALIGN=LEFT>move forward one character</TD>
+<TR><TD ALIGN=LEFT>C-h</TD><TD ALIGN=LEFT>backward delete character</TD>
+<TR><TD ALIGN=LEFT>C-k</TD><TD ALIGN=LEFT>delete to end of line</TD>
+<TR><TD ALIGN=LEFT>C-n</TD><TD ALIGN=LEFT>next history command</TD>
+<TR><TD ALIGN=LEFT>C-p</TD><TD ALIGN=LEFT>previous history command</TD>
+<TR><TD ALIGN=LEFT>C-t</TD><TD ALIGN=LEFT>transpose characters</TD>
+<TR><TD ALIGN=LEFT>C-u</TD><TD ALIGN=LEFT>delete whole line</TD>
+<TR><TD ALIGN=LEFT>C-w</TD><TD ALIGN=LEFT>backward delete word</TD>
+</TABLE>
+
+<BR>
+<HR>
+<BR>
+
+<A NAME="vi">
+<CENTER><H3>VI Bindings</H3></CENTER>
+<TABLE>
+<CAPTION><STRONG>Insert and Command Mode</STRONG></CAPTION>
+<TR><TH ALIGN=LEFT>Key Sequence</TH><TH ALIGN=LEFT>Function</TH>
+<TR><TD ALIGN=LEFT>Delete</TD><TD ALIGN=LEFT>backward delete character</TD>
+<TR><TD ALIGN=LEFT>Up</TD><TD ALIGN=LEFT>previous command</TD>
+<TR><TD ALIGN=LEFT>Down</TD><TD ALIGN=LEFT>next command</TD>
+<TR><TD ALIGN=LEFT>Home</TD><TD ALIGN=LEFT>beginning of line</TD>
+<TR><TD ALIGN=LEFT>End</TD><TD ALIGN=LEFT>end of line</TD>
+<TR><TD ALIGN=LEFT>Control-a</TD><TD ALIGN=LEFT>beginning of line</TD>
+<TR><TD ALIGN=LEFT>Control-b</TD><TD ALIGN=LEFT>backward character</TD>
+<TR><TD ALIGN=LEFT>Control-c</TD><TD ALIGN=LEFT>interrupt command</TD>
+<TR><TD ALIGN=LEFT>Control-e</TD><TD ALIGN=LEFT>end of line</TD>
+<TR><TD ALIGN=LEFT>Control-f</TD><TD ALIGN=LEFT>forward character</TD>
+<TR><TD ALIGN=LEFT>Control-h</TD><TD ALIGN=LEFT>backward delete character</TD>
+<TR><TD ALIGN=LEFT>Control-k</TD><TD ALIGN=LEFT>delete end of line</TD>
+<TR><TD ALIGN=LEFT>Control-n</TD><TD ALIGN=LEFT>next command</TD>
+<TR><TD ALIGN=LEFT>Control-p</TD><TD ALIGN=LEFT>previous command</TD>
+<TR><TD ALIGN=LEFT>Control-t</TD><TD ALIGN=LEFT>transpose</TD>
+<TR><TD ALIGN=LEFT>Control-u</TD><TD ALIGN=LEFT>delete to beginning of line</TD>
+<TR><TD ALIGN=LEFT>Control-w</TD><TD ALIGN=LEFT>backward delete word</TD>
+</TABLE>
+
+<PRE>
+
+</PRE>
+
+<TABLE>
+<CAPTION><STRONG>Insert Mode</STRONG></CAPTION>
+<TR><TH ALIGN=LEFT>Key Sequence</TH><TH ALIGN=LEFT>Function</TH>
+<TR><TD ALIGN=LEFT>Escape</TD><TD ALIGN=LEFT>command</TD>
+<TR><TD ALIGN=LEFT>Left</TD><TD ALIGN=LEFT>backward character, command</TD>
+<TR><TD ALIGN=LEFT>Right</TD><TD ALIGN=LEFT>forward character, command</TD>
+<TR><TD ALIGN=LEFT>BackSpace</TD><TD ALIGN=LEFT>backward delete character</TD>
+</TABLE>
+
+<PRE>
+
+</PRE>
+
+<TABLE>
+<CAPTION><STRONG>Command Mode</STRONG></CAPTION>
+<CENTER>
+<TR><TH ALIGN=LEFT>Key Sequence</TH><TH ALIGN=LEFT>Function</TH>
+<TR><TD ALIGN=LEFT>Left</TD><TD ALIGN=LEFT>backward character</TD>
+<TR><TD ALIGN=LEFT>Right</TD><TD ALIGN=LEFT>forward character</TD>
+<TR><TD ALIGN=LEFT>BackSpace</TD><TD ALIGN=LEFT>backward character</TD>
+<TR><TD ALIGN=LEFT>Space</TD><TD ALIGN=LEFT>forward character</TD>
+<TR><TD ALIGN=LEFT>A</TD><TD ALIGN=LEFT>end of line, insert (i.e. append to end of line)</TD>
+<TR><TD ALIGN=LEFT>C</TD><TD ALIGN=LEFT>delete to end of line, insert</TD>
+<TR><TD ALIGN=LEFT>D</TD><TD ALIGN=LEFT>delete to end of line</TD>
+<TR><TD ALIGN=LEFT>F</TD><TD ALIGN=LEFT>search backward character</TD>
+<TR><TD ALIGN=LEFT>I</TD><TD ALIGN=LEFT>beginning of line, insert</TD>
+<TR><TD ALIGN=LEFT>R</TD><TD ALIGN=LEFT>overwrite</TD>
+<TR><TD ALIGN=LEFT>X</TD><TD ALIGN=LEFT>backward delete character</TD>
+<TR><TD ALIGN=LEFT>0</TD><TD ALIGN=LEFT>beginning of line</TD>
+<TR><TD ALIGN=LEFT>$</TD><TD ALIGN=LEFT>end of line</TD>
+<TR><TD ALIGN=LEFT>;</TD><TD ALIGN=LEFT>continue search in same direction</TD>
+<TR><TD ALIGN=LEFT>,</TD><TD ALIGN=LEFT>continue search in opposite direction</TD>
+<TR><TD ALIGN=LEFT>a</TD><TD ALIGN=LEFT>forward character, insert (i.e. append)</TD>
+<TR><TD ALIGN=LEFT>b</TD><TD ALIGN=LEFT>backward word</TD>
+<TR><TD ALIGN=LEFT>c</TD><TD ALIGN=LEFT>change</TD>
+<TR><TD ALIGN=LEFT>d</TD><TD ALIGN=LEFT>delete</TD>
+<TR><TD ALIGN=LEFT>e</TD><TD ALIGN=LEFT>end of word</TD>
+<TR><TD ALIGN=LEFT>f</TD><TD ALIGN=LEFT>search forward character</TD>
+<TR><TD ALIGN=LEFT>h</TD><TD ALIGN=LEFT>backward character</TD>
+<TR><TD ALIGN=LEFT>i</TD><TD ALIGN=LEFT>insert</TD>
+<TR><TD ALIGN=LEFT>j</TD><TD ALIGN=LEFT>next command</TD>
+<TR><TD ALIGN=LEFT>k</TD><TD ALIGN=LEFT>previous command</TD>
+<TR><TD ALIGN=LEFT>l</TD><TD ALIGN=LEFT>forward character</TD>
+<TR><TD ALIGN=LEFT>r</TD><TD ALIGN=LEFT>replace character</TD>
+<TR><TD ALIGN=LEFT>s</TD><TD ALIGN=LEFT>delete character, insert</TD>
+<TR><TD ALIGN=LEFT>w</TD><TD ALIGN=LEFT>forward word</TD>
+<TR><TD ALIGN=LEFT>x</TD><TD ALIGN=LEFT>delete character</TD>
+</CENTER>
+</TABLE>
+
+</BODY>
+</HTML>
