@@ -46,7 +46,7 @@ struct rt_imexport  polygon_desc[] = {
 	{"%d",	offsetof(struct polygon_header, ident),		1 },
 	{"%d",	offsetof(struct polygon_header, interior),	1 },
 	{"%f",	offsetofarray(struct polygon_header, normal),	3 },
-	{"%s",	offsetofarray(struct polygon_header, color),	3 },
+	{"%c",	offsetofarray(struct polygon_header, color),	3 },
 	{"%d",	offsetof(struct polygon_header, npts),		1 },
 	{"",	0,						0 }
 };
