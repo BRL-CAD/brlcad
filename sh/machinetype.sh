@@ -91,6 +91,14 @@ then
 			HAS_TCP=1
 			HAS_SYMLINKS=1 ;;
 		esac ;;
+	ia64)
+		case "$OS_TYPE" in
+		Linux)
+			MACHINE=altix
+			UNIXTYPE=BSD
+			HAS_TCP=1
+			HAS_SYMLINKS=1 ;;
+		esac ;;
 	i[3456]86 | ppc)
 		UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1
 		case "$OS_TYPE" in
