@@ -196,7 +196,7 @@ set help_data(size)		{{size}	{set view size}}
 set help_data(sliders)		{{[on|off]}	{turns the sliders on or off, or reads current state}}
 set help_data(solids)		{{file object(s)}	{make ascii summary of solid parameters}}
 set help_data(solids_on_ray)	{{h v}	{List all displayed solids along a ray}}
-set help_data(status)		{{}	{get view status}}
+set help_data(status)		{"[state|Viewscale|base2local|local2base|\n               toViewcenter|Viewrot|model2view|view2model|\n               model2objview|objview2model|help]"	{get view status}}
 set help_data(summary)		{{[s r g]}	{count/list solid/reg/groups}}
 set help_data(sv)		{{x y [z]}	{Move view center to (x, y, z)}}
 set help_data(svb)		{{}	{set view reference base}}
@@ -219,6 +219,7 @@ set help_data(unshare_vars)	{{pathName}	{pathName no longer shares its vars}}
 set help_data(unshare_view)	{{pathName}	{pathName no longer shares its view}}
 set help_data(vars)		{{[var=opt]}	{assign/display mged variables}}
 set help_data(vdraw)		{{write|insert|delete|read|length|show [args]}	{Expermental drawing (cnuzman)}}
+set help_data(view)		{{center|size|eye|ypr|quat|aet}	{Experimental - get/set view parameters (local units).}}
 set help_data(viewget)		{{center|size|eye|ypr|quat|aet}	{Experimental - return high-precision view parameters.}}
 set help_data(viewset)		{{center|eye|size|ypr|quat|aet}	{Experimental - set several view parameters at once.}}
 set help_data(view2model)	{{mx my mz}	{convert point in view coords to model coords (mm)}}
