@@ -200,10 +200,12 @@ register int	want;
 #endif
 			if( pp->pt_inflip )  {
 				VREVERSE( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal );
-				pp->pt_inflip = 0;	/* shouldnt be needed now??? */
+				/* Don't modify pp->pt_inflip here, it's the original.
+				 * swp->sw_hit is a copy, not the original hit;
+				 */
 			}
 
-			/* Temporary check to make sure normals are OK */
+			/* Check to make sure normals are OK */
 			if( (f=VDOT( ap->a_ray.r_dir, swp->sw_hit.hit_normal )) > 0 )  {
 				rt_log("shade_inputs(%s) flip N xy=%d,%d %s surf=%d dot=%g\n",
 					pp->pt_inseg->seg_stp->st_name,
