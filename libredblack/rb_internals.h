@@ -37,7 +37,8 @@
 	exit (0);						\
     }
 #define	RB_NODE_MAGIC		0x72626e6f
-#define	RB_PKG_MAGIC		0x7262504b
+#define	RB_PKG_MAGIC		0x7262706b
+#define	RB_LIST_MAGIC		0x72626c73
 
 /*			R B _ C K O R D E R ( )
  *
@@ -151,6 +152,8 @@ RB_EXTERN(void _rb_walk,		(rb_tree	*tree,
 					 int		what_to_visit,
 					 int		trav_type
 					));
+RB_EXTERN(void rb_free_node,		(struct rb_node *node));
+RB_EXTERN(void rb_free_package,		(struct rb_package *package));
 
 #endif /* RB_INTERNALS_H */
 
