@@ -4690,7 +4690,7 @@ CONST vect_t	mousevec;
       vect_t	delta;
       mat_t	xlatemat;
 
-      MAT4X3PNT( pos_view, model2view, es_keypoint );
+      MAT4X3PNT( pos_view, model2view, e_axes_pos );
       pos_view[X] = mousevec[X];
       pos_view[Y] = mousevec[Y];
       MAT4X3PNT( pt, view2model, pos_view );
@@ -4699,7 +4699,7 @@ CONST vect_t	mousevec;
        * to desired new location.
        */
       MAT4X3PNT( raw_mp, es_invmat, pt );
-      MAT4X3PNT( raw_kp, es_invmat, es_keypoint );
+      MAT4X3PNT( raw_kp, es_invmat, curr_e_axes_pos );
       VSUB2( delta, raw_kp, raw_mp );
       bn_mat_idn( xlatemat );
       MAT_DELTAS_VEC_NEG( xlatemat, delta );
@@ -4716,7 +4716,7 @@ CONST vect_t	mousevec;
      * Leave desired location in es_mparam.
      */
 
-    MAT4X3PNT( pos_view, model2view, curr_e_axes_pos );
+    MAT4X3PNT( pos_view, model2view, e_axes_pos );
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT( temp, view2model, pos_view );
@@ -4733,7 +4733,7 @@ CONST vect_t	mousevec;
 	(struct rt_tgc_internal *)es_int.idb_ptr;
       RT_TGC_CK_MAGIC(tgc);
 
-      MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
+      MAT4X3PNT(pos_view, model2view, e_axes_pos);
       pos_view[X] = mousevec[X];
       pos_view[Y] = mousevec[Y];
       /* Do NOT change pos_view[Z] ! */
@@ -4746,7 +4746,7 @@ CONST vect_t	mousevec;
   case PTARB:
     /* move an arb point to indicated point */
     /* point is located at es_values[es_menu*3] */
-    MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, model2view, e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
@@ -4755,7 +4755,7 @@ CONST vect_t	mousevec;
 
     break;
   case EARB:
-    MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, model2view, e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
@@ -4764,7 +4764,7 @@ CONST vect_t	mousevec;
 
     break;
   case ECMD_ARB_MOVE_FACE:
-    MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, model2view, e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
@@ -4797,7 +4797,7 @@ CONST vect_t	mousevec;
       tmp_tol.perp = 0.0;
       tmp_tol.para = 1 - tmp_tol.perp;
 
-      MAT4X3PNT( pos_view, model2view, curr_e_axes_pos );
+      MAT4X3PNT( pos_view, model2view, e_axes_pos );
       pos_view[X] = mousevec[X];
       pos_view[Y] = mousevec[Y];
       if( (e = nmg_find_e_nearest_pt2( &m->magic, pos_view,
@@ -4838,7 +4838,7 @@ CONST vect_t	mousevec;
   case ECMD_ARS_MOVE_PT:
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
-    MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
+    MAT4X3PNT(pos_view, model2view, e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
