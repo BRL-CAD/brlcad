@@ -21,8 +21,6 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define DO_XSELECTINPUT 0
-
 #include "conf.h"
 
 #include <sys/time.h>		/* for struct timeval */
@@ -40,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/multibuf.h>
-
+#include "./xinit.h"
 
 #include "machine.h"
 #include "externs.h"
@@ -156,9 +154,7 @@ static int perspective_angle = 3;	/* Angle of perspective */
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
 
-#if !DO_XSELECTINPUT
 static int XdoMotion = 0;
-#endif
 
 /*
  * Display coordinate conversion:
@@ -204,9 +200,6 @@ X_open()
     if( xsetup(envp) )
       return(1);	/* BAD */
   }
-
-  /* Ignore the old scrollbars and menus */
-  mged_variables.show_menu = 0;
 
   return(0);			/* OK */
 }
@@ -571,7 +564,6 @@ XEvent *eventPtr;
 		  (KeySym *)NULL, (XComposeStatus *)NULL);
 
     write(dm_pipe[1], buffer, 1);
-
     curr_dm_list = save_dm_list;
 
     /* Use this so that these events won't propagate */
@@ -580,17 +572,12 @@ XEvent *eventPtr;
 #endif
 
   if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
-    XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, &xwa);
-    ((struct x_vars *)dm_vars)->height = xwa.height;
-    ((struct x_vars *)dm_vars)->width = xwa.width;
-
     dmaflag = 1;
     refresh();
     goto end;
   }else if(eventPtr->type == ConfigureNotify){
-    XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, &xwa);
-    ((struct x_vars *)dm_vars)->height = xwa.height;
-    ((struct x_vars *)dm_vars)->width = xwa.width;
+    ((struct x_vars *)dm_vars)->height = eventPtr->xconfigure.height;
+    ((struct x_vars *)dm_vars)->width = eventPtr->xconfigure.width;
 
     dmaflag = 1;
     refresh();
@@ -599,13 +586,18 @@ XEvent *eventPtr;
 #ifdef VIRTUAL_TRACKBALL
     int mx, my;
 
+    if ( !XdoMotion &&
+	 (VIRTUAL_TRACKBALL_NOT_ACTIVE(struct x_vars *, mvars.virtual_trackball)) )
+      goto end;
+
     rt_vls_init(&cmd);
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
     switch(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
     case VIRTUAL_TRACKBALL_OFF:
-      /* do the regular thing */
+    case VIRTUAL_TRACKBALL_ON:
+      /* trackball not active so do the regular thing */
       mx = (mx/(double)((struct x_vars *)dm_vars)->width - 0.5) * 4095;
       my = (0.5 - my/(double)((struct x_vars *)dm_vars)->height) * 4095;
 
@@ -627,9 +619,6 @@ XEvent *eventPtr;
 		     ((double)((struct x_vars *)dm_vars)->omy - my)/
 		     ((struct x_vars *)dm_vars)->height + 1.0);
       break;
-    case VIRTUAL_TRACKBALL_IGNORE:
-    default:
-      goto end;
     }
 
     ((struct x_vars *)dm_vars)->omx = mx;
@@ -637,10 +626,8 @@ XEvent *eventPtr;
 #else
     int	x, y;
 
-#if !DO_XSELECTINPUT
     if ( !XdoMotion )
       return TCL_OK;
-#endif
 
     x = (eventPtr->xmotion.x/(double)((struct x_vars *)dm_vars)->width - 0.5) * 4095;
     y = (0.5 - eventPtr->xmotion.y/(double)((struct x_vars *)dm_vars)->height) * 4095;
@@ -727,31 +714,7 @@ int	a, b;
 	 *  including enabling continuous tablet tracking,
 	 *  object highlighting
 	 */
-#if DO_XSELECTINPUT
- 	switch( b )  {
-	case ST_VIEW:
-	  /* constant tracking OFF */
-	  XSelectInput(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ExposureMask|ButtonPressMask|
-		       KeyPressMask|StructureNotifyMask);
-	  break;
-	case ST_S_PICK:
-	case ST_O_PICK:
-	case ST_O_PATH:
-	  /* constant tracking ON */
-	  XSelectInput(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ExposureMask|ButtonPressMask|
-		       KeyPressMask|StructureNotifyMask|PointerMotionMask);
-	  break;
-	case ST_O_EDIT:
-	case ST_S_EDIT:
-	  /* constant tracking OFF */
-	  XSelectInput(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ExposureMask|ButtonPressMask|
-		       KeyPressMask|StructureNotifyMask);
-	  break;
-#else
-#ifdef VIRTUAL_TRACKBALL
-  if(!((struct x_vars *)dm_vars)->mvars.virtual_trackball){
-#endif
- 	switch( b )  {
+	switch( b )  {
 	case ST_VIEW:
 	    /* constant tracking OFF */
 	    XdoMotion = 0;
@@ -759,6 +722,7 @@ int	a, b;
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
+	case ST_S_VPICK:
 	    /* constant tracking ON */
 	    XdoMotion = 1;
 	    break;
@@ -767,14 +731,10 @@ int	a, b;
 	    /* constant tracking OFF */
 	    XdoMotion = 0;
 	    break;
-#endif
 	default:
 	    rt_log("X_statechange: unknown state %s\n", state_str[b]);
 	    break;
 	}
-#ifdef VIRTUAL_TRACKBALL
-  }
-#endif
 
 	/*X_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
 }
@@ -899,6 +859,7 @@ char	*name;
   Display *tmp_dpy;
 
   rt_vls_init(&str);
+  rt_vls_init(&pathName);
 
   /* Only need to do this once */
   if(tkwin == NULL){
@@ -910,6 +871,7 @@ char	*name;
     }
   }
 
+
   /* Only need to do this once for this display manager */
   if(!count){
     if( X_load_startup() ){
@@ -918,12 +880,7 @@ char	*name;
     }
   }
 
-  rt_vls_init(&pathName);
   rt_vls_printf(&pathName, ".dm_x%d", count++);
-
-  /* initialize the modifiable variables */
-  ((struct x_vars *)dm_vars)->mvars.dummy_perspective = 1;
-  ((struct x_vars *)dm_vars)->mvars.perspective_mode = 0;
 
 #if 0
   if((tmp_dpy = XOpenDisplay(name)) == NULL){
@@ -1126,13 +1083,6 @@ char	*name;
     /* Register the file descriptor with the Tk event handler */
     Tk_CreateGenericHandler(Xdoevent, (ClientData)curr_dm_list);
 
-#if DO_XSELECTINPUT
-    /* start with constant tracking OFF */
-    XSelectInput(((struct x_vars *)dm_vars)->dpy,
-		 ((struct x_vars *)dm_vars)->win,
-		 ExposureMask|ButtonPressMask|KeyPressMask|StructureNotifyMask);
-#endif
-
     Tk_SetWindowBackground(((struct x_vars *)dm_vars)->xtkwin, ((struct x_vars *)dm_vars)->bg);
     Tk_MapWindow(((struct x_vars *)dm_vars)->xtkwin);
 
@@ -1182,21 +1132,7 @@ set_perspective()
 static void
 establish_vtb()
 {
-  if(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
-    if(state != ST_S_PICK && state != ST_O_PICK &&
-       state != ST_O_PATH && state != ST_S_VPICK){
-
-      /* turn constant tracking ON */
-      XdoMotion = 1;
-    }
-  }else{
-    if(state != ST_S_PICK && state != ST_O_PICK &&
-       state != ST_O_PATH && state != ST_S_VPICK){
-
-      /* turn constant tracking OFF */
-      XdoMotion = 0;
-    }    
-  }
+  return;
 }
 #endif
 
@@ -1294,7 +1230,7 @@ char *argv[];
 	return CMD_BAD;
       }
     }else{
-      ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_IGNORE;
+      ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
     }
 
     return CMD_OK;
@@ -1313,6 +1249,8 @@ x_var_init()
 {
   dm_vars = (char *)rt_malloc(sizeof(struct x_vars), "x_var_init: x_vars");
   bzero((void *)dm_vars, sizeof(struct x_vars));
+
+  ((struct x_vars *)dm_vars)->mvars.dummy_perspective = 1;
 }
 
 static int
@@ -1365,7 +1303,15 @@ X_load_startup()
 
   if(!found){
     rt_vls_free(&str);
-    return -1;
+
+    /* Using default */
+    if(Tcl_Eval( interp, x_init_str ) == TCL_ERROR){
+      rt_log("X_load_startup: Error interpreting x_init_str.\n");
+      rt_log("%s\n", interp->result);
+      return -1;
+    }
+
+    return 0;
   }
 
   fclose( fp );
