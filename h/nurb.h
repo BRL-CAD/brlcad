@@ -61,7 +61,7 @@
 
 /* point types */
 #define RT_NURB_PT_XY 	1			/* x,y coordintes */
-#define RT_NURB_RT_NURB_PT_XYZ	2			/* x,y,z coordinates */
+#define RT_NURB_PT_XYZ	2			/* x,y,z coordinates */
 #define RT_NURB_PT_UV	3			/* trim u,v parameter space */
 #define RT_NURB_PT_DATA 4			/* random data */
 #define RT_NURB_PT_PROJ	5			/* Projected Surface */
@@ -95,17 +95,17 @@ struct s_mesh {
 struct cnurb {
 	struct cnurb	* next;		/* next curve in list */
 	int		order;		/* Curve Order */
-	struct knot_vector * knot;	/* curve knot vector */
-	struct c_mesh	* mesh;		/* curve control polygon */
+	struct knot_vector knot;	/* curve knot vector */
+	struct c_mesh	mesh;		/* curve control polygon */
 };
 
 struct snurb {
 	struct snurb	* next;		/* next surface */
 	int		order[2];	/* surface order [0] = u, [1] = v */
 	int		dir;		/* last direction of refinement */
-	struct knot_vector * u_knots;	/* surface knot vectors */
-	struct knot_vector * v_knots;	/* surface knot vectors */
-	struct s_mesh	* mesh;		/* surface control points */
+	struct knot_vector u_knots;	/* surface knot vectors */
+	struct knot_vector v_knots;	/* surface knot vectors */
+	struct s_mesh	mesh;		/* surface control points */
 };
 
 /* ----- Internal structures ----- */
@@ -165,23 +165,27 @@ RT_EXTERN(int rt_nurb_s_flat, (struct snurb *srf, fastf_t epsilon));
 RT_EXTERN(fastf_t rt_nurb_crv_flat, (fastf_t *crv, int	size, int pt_type));
 
 /* nurb_knot.c */
-RT_EXTERN(struct knot_vector *rt_nurb_kvknot, (int order,
+RT_EXTERN(void rt_nurb_kvknot, (struct knot_vector *new_knots, int order,
 			fastf_t lower, fastf_t upper, int num));
-RT_EXTERN(struct knot_vector *rt_nurb_kvmult, (struct knot_vector *kv,
+RT_EXTERN(void rt_nurb_kvmult, (struct knot_vector *new_kv,
+			CONST struct knot_vector *kv,
 			int num, fastf_t val));
-RT_EXTERN(struct knot_vector *rt_nurb_kvgen, (fastf_t lower, fastf_t upper,
-			int num));
-RT_EXTERN(struct knot_vector *rt_nurb_kvmerge, (struct knot_vector *kv1,
-			struct knot_vector *kv2));
-RT_EXTERN(int rt_nurb_kvcheck, (fastf_t val, struct knot_vector *kv));
-RT_EXTERN(struct knot_vector *rt_nurb_kvextract, (struct knot_vector *kv,
+RT_EXTERN(void rt_nurb_kvgen, (struct knot_vector *kv,
+			fastf_t lower, fastf_t upper, int num));
+RT_EXTERN(void rt_nurb_kvmerge, (struct knot_vector *new_knots,
+			CONST struct knot_vector *kv1,
+			CONST struct knot_vector *kv2));
+RT_EXTERN(int rt_nurb_kvcheck, (fastf_t val, CONST struct knot_vector *kv));
+RT_EXTERN(void rt_nurb_kvextract, (struct knot_vector *new_kv,
+			CONST struct knot_vector *kv,
 			int lower, int upper));
-RT_EXTERN(struct knot_vector *rt_nurb_kvcopy, (struct knot_vector *old_kv));
+RT_EXTERN(void rt_nurb_kvcopy, (struct knot_vector *new_kv,
+			CONST struct knot_vector *old_kv));
 RT_EXTERN(void rt_nurb_kvnorm, (struct knot_vector *kv));
-RT_EXTERN(int rt_knot_index, (struct knot_vector *kv, fastf_t k_value,
+RT_EXTERN(int rt_knot_index, (CONST struct knot_vector *kv, fastf_t k_value,
 			int order));
-RT_EXTERN(struct knot_vector *rt_nurb_gen_knot_vector, (int order,
-			fastf_t lower, fastf_t upper));
+RT_EXTERN(void rt_nurb_gen_knot_vector, (struct knot_vector *new_knots,
+			int order, fastf_t lower, fastf_t upper));
 
 /* nurb_norm.c */
 RT_EXTERN(fastf_t *rt_nurb_s_norm, (struct snurb *srf, fastf_t u, fastf_t v));
