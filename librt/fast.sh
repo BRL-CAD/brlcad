@@ -29,6 +29,9 @@ cake \
  nmg_rt_segs.o \
  g_ebm.o \
  g_ell.o \
+ g_extrude.o \
+ g_submodel.o \
+ g_bot.o \
  db_open.o \
  db_path.o \
  db_scan.o \
@@ -51,6 +54,8 @@ cake \
  g_torus.o \
  g_part.o \
  g_pipe.o \
+ g_dsp.o \
+ g_sketch.o \
  nmg_class.o \
  &
 
@@ -61,6 +66,7 @@ cake \
  nmg_pr.o \
  global.o \
  mater.o \
+ pmalloc.o \
  memalloc.o \
  tcl.o \
  &
@@ -90,6 +96,8 @@ cake \
  &
 
 cake \
+ wdb.o \
+ fortray.o \
  nmg_bool.o \
  nmg_fuse.o \
  prep.o \
@@ -116,4 +124,5 @@ cake \
  nurb_interp.o nurb_reverse.o nurb_tess.o nurb_trim_util.o &
 
 wait
+echo --- Collecting any stragglers.
 cake
