@@ -36,28 +36,32 @@
 # include "config.h"
 #endif
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
+/* system headers */
 #include <time.h>
 #if defined(IRIX) && IRIX == 5
 #define _BSD_COMPAT
 #endif
 #include <sys/time.h>
-
-#include "tcl.h"
-
-#ifdef USE_STRING_H
-#include <string.h>
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
 #else
-#include <strings.h>
+#  if defined(HAVE_SYS_UNISTD_H)
+#    include <sys/unistd.h>
+#  endif
+#endif
+#ifdef USE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <ctype.h>
 
+/* interface headers */
+#include "tcl.h"
 #include "machine.h"
 #include "bu.h"
 #include "libtermio.h"
+
 
 #define CTRL_A      1
 #define CTRL_B      2
