@@ -982,10 +982,12 @@ CONST struct rt_tol	*tol;
 	register struct loopuse	*lu;
 	struct edgeuse		*eu;
 	vect_t			delta;
-	register pointp_t	pp;
+	struct vertex		*v;
+	register struct vertex_g *vg;
 	int			magic1;
 
 	NMG_CK_FACEUSE(fu);
+	RT_CK_TOL(tol);
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
@@ -993,15 +995,21 @@ CONST struct rt_tol	*tol;
 		if (magic1 == NMG_VERTEXUSE_MAGIC) {
 			struct vertexuse	*vu;
 			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
-			pp = vu->v_p->vg_p->coord;
-			VSUB2(delta, pp, pt);
+			v = vu->v_p;
+			NMG_CK_VERTEX(v);
+			if( !(vg = v->vg_p) )  continue;
+			NMG_CK_VERTEX_G(vg);
+			VSUB2(delta, vg->coord, pt);
 			if ( MAGSQ(delta) < tol->dist_sq)
 				return(vu);
 		}
 		else if (magic1 == NMG_EDGEUSE_MAGIC) {
 			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-				pp = eu->vu_p->v_p->vg_p->coord;
-				VSUB2(delta, pp, pt);
+				v = eu->vu_p->v_p;
+				NMG_CK_VERTEX(v);
+				if( !(vg = v->vg_p) )  continue;
+				NMG_CK_VERTEX_G(vg);
+				VSUB2(delta, vg->coord, pt);
 				if ( MAGSQ(delta) < tol->dist_sq)
 					return(eu->vu_p);
 			}
