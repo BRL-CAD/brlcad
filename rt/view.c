@@ -133,12 +133,19 @@ struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
 fastf_t	gamma_corr = 0.0;			/* gamma correction if !0 */
 
+/* The default a_onehit = -1 requires at least one non-air hit,
+ * (stop at first surface) and stops ray/geometry intersection after that.
+ * Set to 0 to turn off first hit optimization, with -c 'set a_onehit=0'
+ */
+int a_onehit = -1;
+
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
 	{"%f",	1, "gamma",	bu_byteoffset(gamma_corr),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "a_onehit",	bu_byteoffset(a_onehit),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
@@ -1180,7 +1187,7 @@ char	*framename;
 		ap->a_overlap = RT_AFN_NULL;
 	else
 		ap->a_overlap = rt_overlap_quietly;
-	ap->a_onehit = -1;		/* Require at least one non-air hit */
+	ap->a_onehit = a_onehit;
 	if (rpt_dist)
 		pwidth = 3+8;
 	else
