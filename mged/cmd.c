@@ -501,99 +501,6 @@ stop_catching_output(vp)
 	bu_log_delete_hook(output_catch, (genptr_t)vp);
 }
 
-#if 0
-/*
- *	T C L _ A P P I N I T
- *
- *	Called by the Tcl/Tk libraries for initialization.
- *	Unncessary in our case; cmd_setup does all the work.
- */
-
-
-int
-Tcl_AppInit(interp)
-	Tcl_Interp *interp;		/* Interpreter for application. */
-{
-	return TCL_OK;
-}
-
-/*			C M D _ W R A P P E R
- *
- * Translates between MGED's "CMD_OK/BAD/MORE" result codes to ones that
- * Tcl can understand.
- */
-
-int
-cmd_wrapper(clientData, interp, argc, argv)
-	ClientData clientData;
-	Tcl_Interp *interp;
-	int argc;
-	char **argv;
-{
-	int status;
-	size_t len;
-	struct bu_vls result;
-	int catch_output;
-
-	argv[0] = ((struct funtab *)clientData)->ft_name;
-
-	/* We now leave the world of Tcl where everything prints its results
-	   in the interp->result field.  Here, stuff gets printed with the
-	   bu_log command; hence, we must catch such output and stuff it into
-	   the result string.  Do this *only* if "output_as_return" global
-	   variable is set.  Make a local copy of this variable in case it's
-	   changed by our command. */
-
-	catch_output = output_as_return;
-    
-	bu_vls_init(&result);
-
-	if (catch_output)
-		start_catching_output(&result);
-	status = mged_cmd(argc, argv, funtab);
-	if (catch_output)
-		stop_catching_output(&result);
-
-	/* Remove any trailing newlines. */
-
-	if (catch_output) {
-		len = bu_vls_strlen(&result);
-		while (len > 0 && bu_vls_addr(&result)[len-1] == '\n')
-			bu_vls_trunc(&result, --len);
-	}
-    
-	switch (status) {
-	case CMD_OK:
-		if (catch_output)
-			Tcl_SetResult(interp, bu_vls_addr(&result), TCL_VOLATILE);
-		status = TCL_OK;
-		break;
-	case CMD_BAD:
-		if (catch_output)
-			Tcl_SetResult(interp, bu_vls_addr(&result), TCL_VOLATILE);
-		status = TCL_ERROR;
-		break;
-	case CMD_MORE:
-		Tcl_SetResult(interp, MORE_ARGS_STR, TCL_STATIC);
-		if (catch_output) {
-			Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-		}
-		status = TCL_ERROR;
-		break;
-	default:
-		Tcl_SetResult(interp, "error executing mged routine::", TCL_STATIC);
-		if (catch_output) {
-			Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-		}
-		status = TCL_ERROR;
-		break;
-	}
-    
-	bu_vls_free(&result);
-	return status;
-}
-#endif
-
 /*
  *                            G U I _ O U T P U T
  *
@@ -701,7 +608,7 @@ cmd_output_hook(clientData, interp, argc, argv)
 		return TCL_OK;
 
 	/* Make sure the command exists before putting in the hook! */
-    
+	/* Note - the parameters to proc could be wrong and/or the proc could still disappear later */
 	bu_vls_init(&infocommand);
 	bu_vls_strcat(&infocommand, "info commands ");
 	bu_vls_strcat(&infocommand, argv[1]);
