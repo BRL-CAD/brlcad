@@ -40,12 +40,6 @@
 #      could get nasty after working on a set of databases for a while.
 #   6) color selection support (right now, it's a hard-wired list)
 #
-#
-
-
-#global glob_compat_mode
-#set prevGlobCompatMode [ set glob_compat_mode ]
-#set glob_compat_mode 0
 
 package require Itcl
 package require Itk
