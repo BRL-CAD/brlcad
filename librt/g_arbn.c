@@ -949,24 +949,26 @@ const struct db_i		*dbip;
 
 	ntohd((unsigned char *)aip->eqn, (unsigned char *)ep->ext_buf + 4, double_count);
 
-	/* Transform by the matrix */
+	/* Transform by the matrix, if we have one that is not the identity */
 #	include "noalias.h"
-	for (i=0; i < aip->neqn; i++) {
-		point_t	orig_pt;
-		point_t	pt;
-		vect_t	norm;
+	if( mat && !bn_mat_is_identity( mat ) ) {
+		for (i=0; i < aip->neqn; i++) {
+			point_t	orig_pt;
+			point_t	pt;
+			vect_t	norm;
 
-		/* Pick a point on the original halfspace */
-		VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
+			/* Pick a point on the original halfspace */
+			VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
 
-		/* Transform the point, and the normal */
-		MAT4X3VEC( norm, mat, aip->eqn[i] );
-		MAT4X3PNT( pt, mat, orig_pt );
+			/* Transform the point, and the normal */
+			MAT4X3VEC( norm, mat, aip->eqn[i] );
+			MAT4X3PNT( pt, mat, orig_pt );
 
-		/* Measure new distance from origin to new point */
-		VUNITIZE( norm );
-		VMOVE( aip->eqn[i], norm );
-		aip->eqn[i][3] = VDOT( pt, norm );
+			/* Measure new distance from origin to new point */
+			VUNITIZE( norm );
+			VMOVE( aip->eqn[i], norm );
+			aip->eqn[i][3] = VDOT( pt, norm );
+		}
 	}
 
 	return(0);
@@ -1123,7 +1125,7 @@ const char			*attr;
 		bu_vls_printf( &vls, "%d", arbn->neqn );
 	else if( !strcmp( attr, "P" ) ) {
 		for( i=0 ; i<arbn->neqn ; i++ ) {
-			bu_vls_printf( &vls, " P%d {%.25g %.25g %.25g}", i,
+			bu_vls_printf( &vls, " P%d {%.25g %.25g %.25g %.25g}", i,
 				       V4ARGS( arbn->eqn[i] ) );
 		}
 	}
