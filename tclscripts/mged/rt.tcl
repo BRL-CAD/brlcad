@@ -1084,7 +1084,10 @@ proc rt_cook_dest { id raw_dest } {
 
     set fb 1
 #    set fb_all 1
-    set listen 1
+
+    if {!$listen} {
+	set listen 1
+    }
     set rt_control($id,cooked_dest) $port
     set rt_control($id,fb) 1
     set rt_control($id,fb_all) $fb_all
@@ -1150,7 +1153,7 @@ proc rt_set_fb { id } {
 
     winset $rt_control($id,half_baked_dest)
     set fb $rt_control($id,fb)
-    if {$fb} {
+    if {$fb && !$listen} {
 	set listen 1
     }
 
