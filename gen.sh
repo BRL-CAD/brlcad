@@ -676,12 +676,12 @@ dist)
 	chmod 444 ${FTP_ARCHIVE}-c.gz
 	echo "${FTP_ARCHIVE}-c.gz created (core 2)"
 
-	tar -cvf - -X ${EXCLUDE} Copy* README lib[t-z]* li[c-z]* l[j-z]* [m-t]* zzzEND |\
+	tar -cvf - -X ${EXCLUDE} Copy* README lib[t-z]* li[c-z]* l[j-z]* [m-p]* zzzEND |\
 		gzip -9 > ${FTP_ARCHIVE}-d.gz
 	chmod 444 ${FTP_ARCHIVE}-d.gz
 	echo "${FTP_ARCHIVE}-d.gz created (core 3)"
 
-	tar -cvf - -X ${EXCLUDE} Copy* README [m-t]* [u-z]* zzzEND |\
+	tar -cvf - -X ${EXCLUDE} Copy* README [q-z]* zzzEND |\
 		gzip -9 > ${FTP_ARCHIVE}-e.gz
 	chmod 444 ${FTP_ARCHIVE}-e.gz
 	echo "${FTP_ARCHIVE}-e.gz created (core 4)"
