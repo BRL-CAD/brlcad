@@ -457,3 +457,31 @@ top:
 
 	return (struct rt_nurb_uv_hit *)h;
 }
+
+rt_nurb_pbound( srf, vmin, vmax)
+struct snurb * srf;
+point_t vmin, vmax;
+{
+	register fastf_t * ptr;
+	register int coords;
+	int i;
+	
+ 	vmin[0] = vmin[1] = vmin[2] = INFINITY;
+	vmax[0] = vmax[1] = vmax[2] = -INFINITY;
+
+	ptr = srf->ctl_points;
+
+	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+
+	for( i = (srf->s_size[RT_NURB_SPLIT_ROW] * 
+	    srf->s_size[RT_NURB_SPLIT_COL] ); i > 0; i--)
+	{
+		V_MIN( (vmin[0]), (ptr[0]));
+		V_MAX( (vmax[0]), (ptr[0]));
+
+		V_MIN( (vmin[1]), (ptr[1]));
+		V_MAX( (vmax[1]), (ptr[1]));
+		
+		ptr += coords;
+	}
+}
