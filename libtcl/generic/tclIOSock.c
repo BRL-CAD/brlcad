@@ -3,19 +3,19 @@
  *
  *	Common routines used by all socket based channel types.
  *
- * Copyright (c) 1995 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclIOSock.c 1.20 97/04/25 16:36:40
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
 #include "tclPort.h"
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
  * TclSockGetPort --
  *
@@ -24,14 +24,14 @@
  *	registered service names to port numbers.
  *
  * Results:
- *	A standard Tcl result.  On success, the port number is
- *	returned in portPtr. On failure, an error message is left in
- *	interp->result.
+ *	A standard Tcl result.  On success, the port number is returned
+ *	in portPtr. On failure, an error message is left in the interp's
+ *	result.
  *
  * Side effects:
  *	None.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 int
@@ -42,14 +42,21 @@ TclSockGetPort(interp, string, proto, portPtr)
     int *portPtr;		/* Return port number */
 {
     struct servent *sp;		/* Protocol info for named services */
-    if (Tcl_GetInt(interp, string, portPtr) != TCL_OK) {
-	sp = getservbyname(string, proto);    
+    Tcl_DString ds;
+    char *native;
+
+    if (Tcl_GetInt(NULL, string, portPtr) != TCL_OK) {
+	/*
+	 * Don't bother translating 'proto' to native.
+	 */
+	 
+	native = Tcl_UtfToExternalDString(NULL, string, -1, &ds);
+	sp = getservbyname(native, proto);		/* INTL: Native. */
+	Tcl_DStringFree(&ds);
 	if (sp != NULL) {
 	    *portPtr = ntohs((unsigned short) sp->s_port);
-	    Tcl_ResetResult(interp);	/* clear error message */
 	    return TCL_OK;
 	}
-	return TCL_ERROR;
     }
     if (Tcl_GetInt(interp, string, portPtr) != TCL_OK) {
 	return TCL_ERROR;

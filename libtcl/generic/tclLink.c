@@ -8,12 +8,12 @@
  *	him.
  *
  * Copyright (c) 1993 The Regents of the University of California.
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclLink.c 1.15 97/01/21 21:51:42
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -74,7 +74,8 @@ static char *		StringValue _ANSI_ARGS_((Link *linkPtr,
  *
  * Results:
  *	The return value is TCL_OK if everything went well or TCL_ERROR
- *	if an error occurred (interp->result is also set after errors).
+ *	if an error occurred (the interp's result is also set after
+ *	errors).
  *
  * Side effects:
  *	The value at *addr is linked to the Tcl variable "varName",
@@ -234,8 +235,8 @@ LinkTraceProc(clientData, interp, name1, name2, flags)
     Link *linkPtr = (Link *) clientData;
     int changed;
     char buffer[TCL_DOUBLE_SPACE];
-    char *value, **pp;
-    Tcl_DString savedResult;
+    char *value, **pp, *result;
+    Tcl_Obj *objPtr;
 
     /*
      * If the variable is being unset, then just re-create it (with a
@@ -315,36 +316,42 @@ LinkTraceProc(clientData, interp, name1, name2, flags)
 	 */
 	return "internal error: linked variable couldn't be read";
     }
-    Tcl_DStringInit(&savedResult);
-    Tcl_DStringAppend(&savedResult, interp->result, -1);
+
+    objPtr = Tcl_GetObjResult(interp);
+    Tcl_IncrRefCount(objPtr);
     Tcl_ResetResult(interp);
+    result = NULL;
+
     switch (linkPtr->type) {
 	case TCL_LINK_INT:
 	    if (Tcl_GetInt(interp, value, &linkPtr->lastValue.i) != TCL_OK) {
-		Tcl_DStringResult(interp, &savedResult);
+		Tcl_SetObjResult(interp, objPtr);
 		Tcl_SetVar(interp, linkPtr->varName,
 			StringValue(linkPtr, buffer), TCL_GLOBAL_ONLY);
-		return "variable must have integer value";
+		result = "variable must have integer value";
+		goto end;
 	    }
 	    *(int *)(linkPtr->addr) = linkPtr->lastValue.i;
 	    break;
 	case TCL_LINK_DOUBLE:
 	    if (Tcl_GetDouble(interp, value, &linkPtr->lastValue.d)
 		    != TCL_OK) {
-		Tcl_DStringResult(interp, &savedResult);
+		Tcl_SetObjResult(interp, objPtr);
 		Tcl_SetVar(interp, linkPtr->varName,
 			StringValue(linkPtr, buffer), TCL_GLOBAL_ONLY);
-		return "variable must have real value";
+		result = "variable must have real value";
+		goto end;
 	    }
 	    *(double *)(linkPtr->addr) = linkPtr->lastValue.d;
 	    break;
 	case TCL_LINK_BOOLEAN:
 	    if (Tcl_GetBoolean(interp, value, &linkPtr->lastValue.i)
 		    != TCL_OK) {
-		Tcl_DStringResult(interp, &savedResult);
+		Tcl_SetObjResult(interp, objPtr);
 		Tcl_SetVar(interp, linkPtr->varName,
 			StringValue(linkPtr, buffer), TCL_GLOBAL_ONLY);
-		return "variable must have boolean value";
+		result = "variable must have boolean value";
+		goto end;
 	    }
 	    *(int *)(linkPtr->addr) = linkPtr->lastValue.i;
 	    break;
@@ -359,8 +366,9 @@ LinkTraceProc(clientData, interp, name1, name2, flags)
 	default:
 	    return "internal error: bad linked variable type";
     }
-    Tcl_DStringResult(interp, &savedResult);
-    return NULL;
+    end:
+    Tcl_DecrRefCount(objPtr);
+    return result;
 }
 
 /*
@@ -372,8 +380,7 @@ LinkTraceProc(clientData, interp, name1, name2, flags)
  *	Tcl variable to which it is linked.
  *
  * Results:
- *	The return value is a pointer
- to a string that represents
+ *	The return value is a pointer to a string that represents
  *	the value of the C variable given by linkPtr.
  *
  * Side effects:

@@ -8,7 +8,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) clock.n 1.18 97/09/10 13:31:23
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH clock n 7.4 Tcl "Tcl Built-In Commands"
@@ -74,11 +74,11 @@ AM/PM indicator.
 .IP \fB%S\fR
 Seconds (00 - 59).
 .IP \fB%U\fR
-Week of year (01 - 52), Sunday is the first day of the week.
+Week of year (00 - 52), Sunday is the first day of the week.
 .IP \fB%w\fR
 Weekday number (Sunday = 0).
 .IP \fB%W\fR
-Week of year (01 - 52), Monday is the first day of the week.
+Week of year (00 - 52), Monday is the first day of the week.
 .IP \fB%x\fR
 Locale specific date format.
 .IP \fB%X\fR

@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) @(#) CrtObjCmd.3 1.10 97/07/31 14:10:38
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tcl_CreateObjCommand 3 8.0 Tcl "Tcl Library Procedures"
@@ -62,8 +62,10 @@ such that whenever \fIname\fR is
 invoked as a Tcl command (e.g., via a call to \fBTcl_EvalObj\fR)
 the Tcl interpreter will call \fIproc\fR to process the command.
 .PP
-\fBTcl_CreateObjCommand\fR will delete any command \fIname\fR
-already associated with the interpreter.
+\fBTcl_CreateObjCommand\fR deletes any existing command
+\fIname\fR already associated with the interpreter
+(however see below for an exception where the existing command
+is not deleted).
 It returns a token that may be used to refer
 to the command in subsequent calls to \fBTcl_GetCommandName\fR.
 If \fIname\fR contains any \fB::\fR namespace qualifiers,
@@ -101,7 +103,7 @@ cause memory to be lost and the runtime stack to be corrupted.  The
 compilers to report any such attempted assignment as an error.  However,
 it is acceptable to modify the internal representation of any individual
 object argument.  For instance, the user may call
-\fBTcl_GetIntFromObject\fR on \fIobjv\fR[\fB2\fR] to obtain the integer
+\fBTcl_GetIntFromObj\fR on \fIobjv\fR[\fB2\fR] to obtain the integer
 representation of that object; that call may change the type of the object
 that \fIobjv\fR[\fB2\fR] points at, but will not change where
 \fIobjv\fR[\fB2\fR] points.
@@ -127,6 +129,17 @@ guaranteed to persist once \fIproc\fR returns: \fIproc\fR should
 not modify them.
 Call \fBTcl_SetObjResult\fR if you want
 to return something from the \fIobjv\fR array.
+.PP
+Ordinarily, \fBTcl_CreateObjCommand\fR deletes any existing command
+\fIname\fR already associated with the interpreter.
+However, if the existing command was created by a previous call to
+\fBTcl_CreateCommand\fR,
+\fBTcl_CreateObjCommand\fR does not delete the command
+but instead arranges for the Tcl interpreter to call the
+\fBTcl_ObjCmdProc\fR \fIproc\fR in the future.
+The old string-based \fBTcl_CmdProc\fR associated with the command
+is retained and its address can be obtained by subsequent 
+\fBTcl_GetCommandInfo\fR calls. This is done for backwards compatibility.
 .PP
 \fIDeleteProc\fR will be invoked when (if) \fIname\fR is deleted.
 This can occur through a call to \fBTcl_DeleteCommand\fR,

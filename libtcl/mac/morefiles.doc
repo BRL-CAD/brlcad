@@ -1,7 +1,7 @@
 Notes about MoreFiles, dnr.c & other non-Tcl source files
 ---------------------------------------------------------
 
-@(#) morefiles.doc 1.4 97/08/13 12:57:08
+RCS: @(#) $Id$
 
 The Macintosh distribution uses several source files that don't
 actually ship with Tcl.  This sometimes causes problems or confusion

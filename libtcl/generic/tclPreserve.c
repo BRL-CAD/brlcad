@@ -7,12 +7,12 @@
  *	depend on their existence.
  *
  * Copyright (c) 1991-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1998 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclPreserve.c 1.18 96/08/05 13:15:08
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -40,6 +40,31 @@ static int spaceAvl = 0;	/* Total number of structures available
 static int inUse = 0;		/* Count of structures currently in use
 				 * in refArray. */
 #define INITIAL_SIZE 2
+TCL_DECLARE_MUTEX(preserveMutex)/* To protect the above statics */
+
+/*
+ * The following data structure is used to keep track of whether an
+ * arbitrary block of memory has been deleted.  This is used by the
+ * TclHandle code to avoid the more time-expensive algorithm of
+ * Tcl_Preserve().  This mechanism is mainly used when we have lots of
+ * references to a few big, expensive objects that we don't want to live
+ * any longer than necessary.
+ */
+
+typedef struct HandleStruct {
+    VOID *ptr;			/* Pointer to the memory block being
+				 * tracked.  This field will become NULL when
+				 * the memory block is deleted.  This field
+				 * must be the first in the structure. */
+#ifdef TCL_MEM_DEBUG
+    VOID *ptr2;			/* Backup copy of the abpve pointer used to
+				 * ensure that the contents of the handle are
+				 * not changed by anyone else. */
+#endif
+    int refCount;		/* Number of TclHandlePreserve() calls in
+				 * effect on this handle. */
+} HandleStruct;
+
 
 /*
  * Static routines in this file:
@@ -69,12 +94,14 @@ static void
 PreserveExitProc(clientData)
     ClientData clientData;		/* NULL -Unused. */
 {
+    Tcl_MutexLock(&preserveMutex);
     if (spaceAvl != 0) {
         ckfree((char *) refArray);
         refArray = (Reference *) NULL;
         inUse = 0;
         spaceAvl = 0;
     }
+    Tcl_MutexUnlock(&preserveMutex);
 }
 
 /*
@@ -108,9 +135,11 @@ Tcl_Preserve(clientData)
      * just increment its reference count.
      */
 
+    Tcl_MutexLock(&preserveMutex);
     for (i = 0, refPtr = refArray; i < inUse; i++, refPtr++) {
 	if (refPtr->clientData == clientData) {
 	    refPtr->refCount++;
+	    Tcl_MutexUnlock(&preserveMutex);
 	    return;
 	}
     }
@@ -150,6 +179,7 @@ Tcl_Preserve(clientData)
     refPtr->mustFree = 0;
     refPtr->freeProc = TCL_STATIC;
     inUse += 1;
+    Tcl_MutexUnlock(&preserveMutex);
 }
 
 /*
@@ -181,6 +211,7 @@ Tcl_Release(clientData)
     Tcl_FreeProc *freeProc;
     int i;
 
+    Tcl_MutexLock(&preserveMutex);
     for (i = 0, refPtr = refArray; i < inUse; i++, refPtr++) {
 	if (refPtr->clientData != clientData) {
 	    continue;
@@ -206,12 +237,16 @@ Tcl_Release(clientData)
                         (freeProc == (Tcl_FreeProc *) free)) {
 		    ckfree((char *) clientData);
 		} else {
+		    Tcl_MutexUnlock(&preserveMutex);
 		    (*freeProc)((char *) clientData);
+		    return;
 		}
 	    }
 	}
+	Tcl_MutexUnlock(&preserveMutex);
 	return;
     }
+    Tcl_MutexUnlock(&preserveMutex);
 
     /*
      * Reference not found.  This is a bug in the caller.
@@ -252,6 +287,7 @@ Tcl_EventuallyFree(clientData, freeProc)
      * "mustFree" flag (the flag had better not be set already!).
      */
 
+    Tcl_MutexLock(&preserveMutex);
     for (i = 0, refPtr = refArray; i < inUse; i++, refPtr++) {
 	if (refPtr->clientData != clientData) {
 	    continue;
@@ -261,8 +297,10 @@ Tcl_EventuallyFree(clientData, freeProc)
         }
         refPtr->mustFree = 1;
 	refPtr->freeProc = freeProc;
+	Tcl_MutexUnlock(&preserveMutex);
         return;
     }
+    Tcl_MutexUnlock(&preserveMutex);
 
     /*
      * No reference for this block.  Free it now.
@@ -275,3 +313,178 @@ Tcl_EventuallyFree(clientData, freeProc)
 	(*freeProc)((char *)clientData);
     }
 }
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclHandleCreate --
+ *
+ *	Allocate a handle that contains enough information to determine
+ *	if an arbitrary malloc'd block has been deleted.  This is 
+ *	used to avoid the more time-expensive algorithm of Tcl_Preserve().
+ *
+ * Results:
+ *	The return value is a TclHandle that refers to the given malloc'd
+ *	block.  Doubly dereferencing the returned handle will give
+ *	back the pointer to the block, or will give NULL if the block has
+ *	been deleted.
+ *
+ * Side effects:
+ *	The caller must keep track of this handle (generally by storing
+ *	it in a field in the malloc'd block) and call TclHandleFree()
+ *	on this handle when the block is deleted.  Everything else that
+ *	wishes to keep track of whether the malloc'd block has been deleted
+ *	should use calls to TclHandlePreserve() and TclHandleRelease()
+ *	on the associated handle.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+TclHandle
+TclHandleCreate(ptr)
+    VOID *ptr;			/* Pointer to an arbitrary block of memory
+				 * to be tracked for deletion.  Must not be
+				 * NULL. */
+{
+    HandleStruct *handlePtr;
+
+    handlePtr = (HandleStruct *) ckalloc(sizeof(HandleStruct));
+    handlePtr->ptr = ptr;
+#ifdef TCL_MEM_DEBUG
+    handlePtr->ptr2 = ptr;
+#endif
+    handlePtr->refCount = 0;
+    return (TclHandle) handlePtr;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclHandleFree --
+ *
+ *	Called when the arbitrary malloc'd block associated with the
+ *	handle is being deleted.  Modifies the handle so that doubly
+ *	dereferencing it will give NULL.  This informs any user of the
+ *	handle that the block of memory formerly referenced by the
+ *	handle has been freed.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	If nothing is referring to the handle, the handle will be reclaimed.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+void
+TclHandleFree(handle)
+    TclHandle handle;		/* Previously created handle associated
+				 * with a malloc'd block that is being
+				 * deleted.  The handle is modified so that
+				 * doubly dereferencing it will give NULL. */
+{
+    HandleStruct *handlePtr;
+
+    handlePtr = (HandleStruct *) handle;
+#ifdef TCL_MEM_DEBUG
+    if (handlePtr->refCount == 0x61616161) {
+	panic("using previously disposed TclHandle %x", handlePtr);
+    }
+    if (handlePtr->ptr2 != handlePtr->ptr) {
+	panic("someone has changed the block referenced by the handle %x\nfrom %x to %x",
+		handlePtr, handlePtr->ptr2, handlePtr->ptr);
+    }
+#endif
+    handlePtr->ptr = NULL;
+    if (handlePtr->refCount == 0) {
+	ckfree((char *) handlePtr);
+    }
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclHandlePreserve --
+ *
+ *	Declare an interest in the arbitrary malloc'd block associated
+ *	with the handle.  
+ *
+ * Results:
+ *	The return value is the handle argument, with its ref count
+ *	incremented.
+ *
+ * Side effects:
+ *	For each call to TclHandlePreserve(), there should be a matching
+ *	call to TclHandleRelease() when the caller is no longer interested
+ *	in the malloc'd block associated with the handle.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+TclHandle
+TclHandlePreserve(handle)
+    TclHandle handle;		/* Declare an interest in the block of
+				 * memory referenced by this handle. */
+{
+    HandleStruct *handlePtr;
+
+    handlePtr = (HandleStruct *) handle;
+#ifdef TCL_MEM_DEBUG
+    if (handlePtr->refCount == 0x61616161) {
+	panic("using previously disposed TclHandle %x", handlePtr);
+    }
+    if ((handlePtr->ptr != NULL)
+	    && (handlePtr->ptr != handlePtr->ptr2)) {
+	panic("someone has changed the block referenced by the handle %x\nfrom %x to %x",
+		handlePtr, handlePtr->ptr2, handlePtr->ptr);
+    }
+#endif
+    handlePtr->refCount++;
+
+    return handle;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclHandleRelease --
+ *
+ *	This procedure is called to release an interest in the malloc'd
+ *	block associated with the handle.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The ref count of the handle is decremented.  If the malloc'd block
+ *	has been freed and if no one is using the handle any more, the
+ *	handle will be reclaimed.
+ *
+ *---------------------------------------------------------------------------
+ */
+ 
+void
+TclHandleRelease(handle)
+    TclHandle handle;		/* Unregister interest in the block of
+				 * memory referenced by this handle. */
+{
+    HandleStruct *handlePtr;
+
+    handlePtr = (HandleStruct *) handle;
+#ifdef TCL_MEM_DEBUG
+    if (handlePtr->refCount == 0x61616161) {
+	panic("using previously disposed TclHandle %x", handlePtr);
+    }
+    if ((handlePtr->ptr != NULL)
+	    && (handlePtr->ptr != handlePtr->ptr2)) {
+	panic("someone has changed the block referenced by the handle %x\nfrom %x to %x",
+		handlePtr, handlePtr->ptr2, handlePtr->ptr);
+    }
+#endif
+    handlePtr->refCount--;
+    if ((handlePtr->refCount == 0) && (handlePtr->ptr == NULL)) {
+	ckfree((char *) handlePtr);
+    }
+}
+    

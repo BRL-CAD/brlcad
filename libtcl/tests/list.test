@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) list.test 1.22 97/06/23 18:19:17
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 # First, a bunch of individual tests
 
@@ -105,3 +109,19 @@ proc slowsort list {
 test list-3.1 {SetListFromAny and lrange/concat results} {
     slowsort {fred julie alex carol bill annie}
 } {alex annie bill carol fred julie}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

@@ -10,9 +10,12 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) foreach.test 1.8 97/08/12 18:19:27
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 catch {unset a}
 catch {unset x}
@@ -208,5 +211,33 @@ test foreach-5.4 {break tests} {
     set msg
 } {wrong # args: should be "break"}
 
+# Test for incorrect "double evaluation" semantics
+
+test foreach-6.1 {delayed substitution of body} {knownBug} {
+    proc foo {} {
+       set a 0
+       foreach a [list 1 2 3] "
+           set x $a
+       "
+       set x
+    }
+    foo
+} {0}
+
+# cleanup
 catch {unset a}
 catch {unset x}
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

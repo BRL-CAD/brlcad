@@ -7,7 +7,7 @@
  *	originally from Larry Wall.
  *
  *
- * SCCS: @(#) opendir.c 1.3 96/02/15 12:08:21
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"

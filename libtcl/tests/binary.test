@@ -5,20 +5,34 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1997 by Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) binary.test 1.13 97/09/11 18:50:30
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
+
+test binary-2.1 {DupByteArrayInternalRep} {
+    set hdr [binary format cc 0 0316]
+    set buf hellomatt
+    
+    set data $hdr
+    append data $buf
+    
+    string length $data
+} 11
 
 test binary-1.1 {Tcl_BinaryObjCmd: bad args} {
     list [catch {binary} msg] $msg
 } {1 {wrong # args: should be "binary option ?arg arg ...?"}}
 test binary-1.2 {Tcl_BinaryObjCmd: bad args} {
     list [catch {binary foo} msg] $msg
-} {1 {bad option "foo": must be format, or scan}}
+} {1 {bad option "foo": must be format or scan}}
 
 test binary-1.3 {Tcl_BinaryObjCmd: format error} {
     list [catch {binary f} msg] $msg
@@ -1441,3 +1455,24 @@ test binary-41.8 {ScanNumber: word alignment} {nonPortable pcOnly} {
     catch {unset arg1; unset arg2}
     list [binary scan \x01\x9a\x99\x99\x99\x99\x99\xf9\x3f c1d1 arg1 arg2] $arg1 $arg2
 } {2 1 1.6}
+
+test binary-42.1 {Tcl_BinaryObjCmd: bad arguments} {} {
+    catch {binary ""} result
+    set result
+} {bad option "": must be format or scan}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

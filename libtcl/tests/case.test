@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) case.test 1.13 96/02/16 08:55:41
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 test case-1.1 {simple pattern} {
     case a in a {format 1} b {format 2} c {format 3} default {format 4}
@@ -81,3 +85,19 @@ test case-3.2 {single-argument form for pattern/command pairs} {
 test case-3.3 {single-argument form for pattern/command pairs} {
     list [catch {case z in {a 2 b}} msg] $msg
 } {1 {extra case pattern with no body}}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

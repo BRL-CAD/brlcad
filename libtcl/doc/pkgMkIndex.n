@@ -4,17 +4,19 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) pkgMkIndex.n 1.8 97/10/31 12:51:13
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH pkg_mkIndex n 7.6 Tcl "Tcl Built-In Commands"
+.TH pkg_mkIndex n 8.0 Tcl "Tcl Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
 pkg_mkIndex \- Build an index for automatic loading of packages
 .SH SYNOPSIS
 .nf
-\fBpkg_mkIndex \fIdir\fR \fIpattern \fR?\fIpattern pattern ...\fR?
+.VS 8.0.3
+\fBpkg_mkIndex ?\fI-direct\fR? ?\fI-load pkgPat\fR? ?\fI-verbose\fR? \fIdir\fR ?\fIpattern pattern ...\fR?
+.VE
 .fi
 .BE
 
@@ -39,14 +41,24 @@ Create the index by invoking \fBpkg_mkIndex\fR.
 The \fIdir\fR argument gives the name of a directory and each
 \fIpattern\fR argument is a \fBglob\fR-style pattern that selects
 script or binary files in \fIdir\fR.
+.VS 8.0.3
+The default pattern is \fB*.tcl\fR and \fB*.[info sharedlibextension]\fR.
+.VE
+.sp 1
 \fBPkg_mkIndex\fR will create a file \fBpkgIndex.tcl\fR in \fIdir\fR
 with package information about all the files given by the \fIpattern\fR
 arguments.
-It does this by loading each file and seeing what packages
+It does this by loading each file into a slave
+interpreter and seeing what packages
 and new commands appear (this is why it is essential to have
 \fBpackage provide\fR commands or \fBTcl_PkgProvide\fR calls
 in the files, as described above).
-.VS "" br
+If you have a package split among scripts and binary files, 
+or if you have dependencies among files,
+you may have to use the \fB-load\fP option
+or adjust the order in which \fBpkg_mkIndex\fR processes
+the files.  See COMPLEX CASES below.
+
 .IP [3]
 Install the package as a subdirectory of one of the directories given by
 the \fBtcl_pkgPath\fR variable.  If \fB$tcl_pkgPath\fR contains more
@@ -60,22 +72,19 @@ the package's script and/or binary files as well as the \fBpkgIndex.tcl\fR
 file.  As long as the package is installed as a subdirectory of a
 directory in \fB$tcl_pkgPath\fR it will automatically be found during
 \fBpackage require\fR commands.
-.RS
-.LP
+.sp 1
 If you install the package anywhere else, then you must ensure that
-the directory contaiingn the package is in the \fBauto_path\fR global variable
+the directory containing the package is in the \fBauto_path\fR global variable
 or an immediate subdirectory of one of the directories in \fBauto_path\fR.
 \fBAuto_path\fR contains a list of directories that are searched
 by both the auto-loader and the package loader; by default it
 includes \fB$tcl_pkgPath\fR.
 The package loader also checks all of the subdirectories of the
 directories in \fBauto_path\fR.
-.VE
 You can add a directory to \fBauto_path\fR explicitly in your
 application, or you can add the directory to your \fBTCLLIBPATH\fR
 environment variable:  if this environment variable is present,
 Tcl initializes \fBauto_path\fR from it during application startup.
-.RE
 .IP [4]
 Once the above steps have been taken, all you need to do to use a
 package is to invoke \fBpackage require\fR.
@@ -89,6 +98,27 @@ in \fBauto_path\fR, but only one will actually be loaded in a given
 interpreter, based on the first call to \fBpackage require\fR.
 Different versions of a package may be loaded in different
 interpreters.
+
+.SH OPTIONS
+The optional switches are:
+.TP 15
+\fB\-direct\fR
+The generated index
+will manage to load the package immediately upon \fBpackage require\fR
+instead of delaying loading until actual use of one of the commands.
+.TP 15
+\fB\-load \fIpkgPat\fR
+The index process will pre-load any packages that exist in the
+current interpreter and match \fIpkgPat\fP into the slave interpreter used to
+generate the index.  The pattern match uses string match rules.
+See COMPLEX CASES below.
+.TP 15
+\fB\-verbose\fR
+Generate output during the indexing process.  Output is via
+the \fBtclLog\fP procedure, which by default prints to stderr.
+.TP 15
+\fB\-\-\fR
+End of the flags, in case \fIdir\fP begins with a dash.
 
 .SH "PACKAGES AND THE AUTO-LOADER"
 .PP
@@ -124,12 +154,87 @@ commands for each version of each available package;  these commands
 invoke \fBpackage provide\fR commands to announce the
 availability of the package, and they setup auto-loader
 information to load the files of the package.
-A given file of a given version of a given package isn't
+.VS 8.0.3
+Unless the \fI-direct\fR flag was provided when the \fBpkgIndex.tcl\fR
+was generated,
+.VE
+a given file of a given version of a given package isn't
 actually loaded until the first time one of its commands
 is invoked.
-Thus, after invoking \fBpackage require\fR you won't see
+Thus, after invoking \fBpackage require\fR you
+.VS 8.0.3
+may
+.VE
+not see
 the package's commands in the interpreter, but you will be able
 to invoke the commands and they will be auto-loaded.
+
+.VS 8.0.3
+.SH "DIRECT LOADING"
+.PP
+Some packages, for instance packages which use namespaces and export
+commands or those which require special initialization, might select
+that their package files be loaded immediately upon \fBpackage require\fR
+instead of delaying the actual loading to the first use of one of the
+package's command. This mode is enabled when generating the package
+index by specifying the \fI-direct\fR argument.
+.VE
+
+.SH "COMPLEX CASES"
+Most complex cases of dependencies among scripts
+and binary files, and packages being split among scripts and
+binary files are handled OK.  However, you may have to adjust
+the order in which files are processed by \fBpkg_mkIndex\fR.
+These issues are described in detail below.
+.PP
+If each script or file contains one package, and packages
+are only contained in one file, then things are easy.
+You simply specify all files to be indexed in any order
+with some glob patterns.
+.PP
+In general, it is OK for scripts to have dependencies on other
+packages.
+If scripts contain \fBpackage require\fP commands, these are
+stubbed out in the interpreter used to process the scripts,
+so these do not cause problems.
+If scripts call into other packages in global code,
+these calls are handled by a stub \fBunknown\fP command.
+However, if scripts make variable references to other package's
+variables in global code, these will cause errors.  That is
+also bad coding style.
+.PP
+If binary files have dependencies on other packages, things
+can become tricky because it is not possible to stub out
+C-level API's such as \fBTcl_PkgRequire\fP API
+when loading a binary file.
+For example, suppose the BLT package requires Tk, and expresses
+this with a call to \fBTcl_PkgRequire\fP in its \fBBlt_Init\fP routine.
+To support this, you must run \fBpkg_mkIndex\fR in an interpreter that
+has Tk loaded.  You can achieve this with the
+\fB-load \fIpkgPat\fR option.  If you specify this option,
+\fBpkg_mkIndex\fR will load any packages listed by
+\fBinfo loaded\fP and that match \fIpkgPat\fP
+into the interpreter used to process files.
+In most cases this will satisfy the \fBTcl_PkgRequire\fP calls
+made by binary files.
+.PP
+If you are indexing two binary files and one depends on the other,
+you should specify the one that has dependencies last.
+This way the one without dependencies will get loaded and indexed,
+and then the package it provides
+will be available when the second file is processed.
+You may also need to load the first package into the
+temporary interpreter used to create the index by using
+the \fB-load\fP flag;
+it won't hurt to specify package patterns that are not yet loaded.
+.PP
+If you have a package that is split across scripts and a binary file,
+then you should avoid the \fB-load\fP flag. The problem is that
+if you load a package before computing the index it masks any
+other files that provide part of the same package.
+If you must use \fB-load\fP,
+then you must specify the scripts first; otherwise the package loaded from
+the binary file may mask the package defined by the scripts.
 
 .SH KEYWORDS
 auto-load, index, package, version

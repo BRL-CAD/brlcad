@@ -6,13 +6,17 @@
 # errors. No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) namespace.test 1.15 97/07/30 15:26:42
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 # Clear out any namespaces called test_ns_*
 catch {eval namespace delete [namespace children :: test_ns_*]}
@@ -77,14 +81,14 @@ test namespace-5.2 {Tcl_PopCallFrame, local vars must be deleted} {
 test namespace-6.1 {Tcl_CreateNamespace} {
     catch {eval namespace delete [namespace children :: test_ns_*]}
     list [lsort [namespace children :: test_ns_*]] \
-	 [namespace eval test_ns_1 {namespace current}] \
-	 [namespace eval test_ns_2 {namespace current}] \
-	 [namespace eval ::test_ns_3 {namespace current}] \
-	 [namespace eval ::test_ns_4 \
-             {namespace eval foo {namespace current}}] \
-	 [namespace eval ::test_ns_5 \
-             {namespace eval ::test_ns_6 {namespace current}}] \
-         [lsort [namespace children :: test_ns_*]]
+        [namespace eval test_ns_1 {namespace current}] \
+	[namespace eval test_ns_2 {namespace current}] \
+	[namespace eval ::test_ns_3 {namespace current}] \
+	[namespace eval ::test_ns_4 \
+            {namespace eval foo {namespace current}}] \
+	[namespace eval ::test_ns_5 \
+            {namespace eval ::test_ns_6 {namespace current}}] \
+        [lsort [namespace children :: test_ns_*]]
 } {{} ::test_ns_1 ::test_ns_2 ::test_ns_3 ::test_ns_4::foo ::test_ns_6 {::test_ns_1 ::test_ns_2 ::test_ns_3 ::test_ns_4 ::test_ns_5 ::test_ns_6}}
 test namespace-6.2 {Tcl_CreateNamespace, odd number of :'s in name is okay} {
     list [namespace eval :::test_ns_1::::foo {namespace current}] \
@@ -222,6 +226,23 @@ test namespace-9.6 {Tcl_Import, cmd redefinition ok if allowOverwrite!=0} {
         cmd1 555
     }
 } {cmd1: 555}
+test namespace-9.7 {Tcl_Import, links are preserved if cmd is redefined} {
+    catch {eval namespace delete [namespace children :: test_ns_*]}
+    namespace eval test_ns_export {
+        namespace export cmd1
+        proc cmd1 {args} {return "cmd1: $args"}
+    }
+    namespace eval test_ns_import {
+        namespace import -force ::test_ns_export::*
+    }
+    list [test_ns_import::cmd1 a b c] \
+         [test_ns_export::cmd1 d e f] \
+         [proc test_ns_export::cmd1 {args} {return "new1: $args"}] \
+         [namespace origin test_ns_import::cmd1] \
+         [namespace origin test_ns_export::cmd1] \
+         [test_ns_import::cmd1 g h i] \
+         [test_ns_export::cmd1 j k l]
+} {{cmd1: a b c} {cmd1: d e f} {} ::test_ns_export::cmd1 ::test_ns_export::cmd1 {new1: g h i} {new1: j k l}}
 
 test namespace-10.1 {Tcl_ForgetImport, check for valid namespaces} {
     catch {eval namespace delete [namespace children :: test_ns_*]}
@@ -1073,8 +1094,23 @@ test namespace-38.1 {UpdateStringOfNsName} {
          [namespace eval {} {namespace current}]
 } {:: ::}
 
+# cleanup
 catch {rename cmd1 {}}
 catch {unset l}
 catch {unset msg}
 catch {unset trigger}
 eval namespace delete [namespace children :: test_ns_*]
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

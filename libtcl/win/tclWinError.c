@@ -9,11 +9,10 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclWinError.c 1.7 97/10/28 17:30:33
+ * RCS: @(#) $Id$
  */
 
-#include "tclInt.h"
-#include "tclPort.h"
+#include "tclWinInt.h"
 
 /*
  * The following table contains the mapping from Win32 errors to

@@ -1,11 +1,12 @@
 '\"
 '\" Copyright (c) 1993 The Regents of the University of California.
 '\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\" Copyright (c) 1999 Scriptics Corporation
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) lsort.n 1.10 97/08/22 18:50:53
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH lsort n 8.0 Tcl "Tcl Built-In Commands"
@@ -20,11 +21,14 @@ lsort \- Sort the elements of a list
 .SH DESCRIPTION
 .PP
 This command sorts the elements of \fIlist\fR, returning a new
-list in sorted order.  By default ASCII sorting is used with
-the result returned in increasing order.
-However, any of the
-following options may be specified before \fIlist\fR to
-control the sorting process (unique abbreviations are accepted):
+list in sorted order.  The implementation of the \fBlsort\fR command
+uses the merge\-sort algorithm which is a stable sort that has O(n log
+n) performance characteristics.
+.PP
+By default ASCII sorting is used with the result returned in
+increasing order.  However, any of the following options may be
+specified before \fIlist\fR to control the sorting process (unique
+abbreviations are accepted):
 .TP 20
 \fB\-ascii\fR
 Use string comparison with ASCII collation order.  This is

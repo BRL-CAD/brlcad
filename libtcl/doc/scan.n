@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) scan.n 1.12 96/08/26 13:00:13
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH scan n "" Tcl "Tcl Built-In Commands"
@@ -31,25 +31,41 @@ and assigned to the corresponding variable.
 
 .SH "DETAILS ON SCANNING"
 .PP
-\fBScan\fR operates by scanning \fIstring\fR and \fIformatString\fR together.
-If the next character in \fIformatString\fR is a blank or tab then it
+\fBScan\fR operates by scanning \fIstring\fR and \fIformat\fR together.
+If the next character in \fIformat\fR is a blank or tab then it
 matches any number of white space characters in \fIstring\fR (including
 zero).
 Otherwise, if it isn't a \fB%\fR character then it 
 must match the next character of \fIstring\fR.
-When a \fB%\fR is encountered in \fIformatString\fR, it indicates
+When a \fB%\fR is encountered in \fIformat\fR, it indicates
 the start of a conversion specifier.
-A conversion specifier contains three fields after the \fB%\fR:
+A conversion specifier contains up to four fields after the \fB%\fR:
 a \fB*\fR, which indicates that the converted value is to be discarded 
-instead of assigned to a variable; a number indicating a maximum field
-width; and a conversion character.
+.VS 8.1
+instead of assigned to a variable; a XPG3 position specifier; a number
+.VE 8.1
+indicating a maximum field width; and a conversion character.
 All of these fields are optional except for the conversion character.
+The fields that are present must appear in the order given above.
 .PP
-When \fBscan\fR finds a conversion specifier in \fIformatString\fR, it
-first skips any white-space characters in \fIstring\fR.
+When \fBscan\fR finds a conversion specifier in \fIformat\fR, it
+first skips any white-space characters in \fIstring\fR (unless the
+specifier is \fB[\fR or \fBc\fR).
 Then it converts the next input characters according to the 
 conversion specifier and stores the result in the variable given
 by the next argument to \fBscan\fR.
+.VS 8.1
+.PP
+If the \fB%\fR is followed by a decimal number and a \fB$\fR, as in
+``\fB%2$d\fR'', then the variable to use is not taken from the next
+sequential argument.  Instead, it is taken from the argument indicated
+by the number, where 1 corresponds to the first \fIvarName\fR.  If
+there are any positional specifiers in \fIformat\fR then all of the
+specifiers must be positional.  Every \fIvarName\fR on the argument
+list must correspond to exactly one conversion specifier or an error
+is generated.
+.VE 8.1
+.PP
 The following conversion characters are supported:
 .TP 10
 \fBd\fR
@@ -63,6 +79,17 @@ value is stored in the variable as a decimal string.
 \fBx\fR
 The input field must be a hexadecimal integer. It is read in 
 and the value is stored in the variable as a decimal string.
+.VS 8.1
+.TP 10
+\fBu\fR
+The input field must be a decimal integer.  The value is stored in the
+variable as an unsigned decimal integer string.
+.TP 10
+\fBi\fR 
+The input field must be an integer.  The base (i.e. decimal, octal, or
+hexadecimal) is determined in the same fashion as described in
+\fBexpr\fR.  The value is stored in the variable as a decimal string.
+.VE 8.1
 .TP 10
 \fBc\fR
 A single character is read in and its binary value is stored in 
@@ -92,6 +119,13 @@ The matching string is stored in the variable.
 If the first character between the brackets is a \fB]\fR then
 it is treated as part of \fIchars\fR rather than the closing
 bracket for the set.
+.VS 8.1
+If \fIchars\fR
+contains a sequence of the form \fIa\fB\-\fIb\fR then any
+character between \fIa\fR and \fIb\fR (inclusive) will match.
+If the first or last character between the brackets is a \fB\-\fR, then
+it is treated as part of \fIchars\fR rather than indicating a range.
+.VE 8.1
 .TP 10
 \fB[^\fIchars\fB]\fR
 The input field consists of any number of characters not in 
@@ -100,6 +134,18 @@ The matching string is stored in the variable.
 If the character immediately following the \fB^\fR is a \fB]\fR then it is 
 treated as part of the set rather than the closing bracket for 
 the set.
+.VS 8.1
+If \fIchars\fR
+contains a sequence of the form \fIa\fB\-\fIb\fR then any
+character between \fIa\fR and \fIb\fR (inclusive) will be excluded
+from the set.
+If the first or last character between the brackets is a \fB\-\fR, then
+it is treated as part of \fIchars\fR rather than indicating a range.
+.TP 10
+\fBn\fR
+No input is consumed from the input string.  Instead, the total number
+of chacters scanned from the input string so far is stored in the variable.
+.VE 8.1
 .LP
 The number of characters read from the input for a conversion is the
 largest number that makes sense for that particular conversion (e.g.
@@ -115,9 +161,11 @@ then no variable is assigned and the next scan argument is not consumed.
 .PP
 The behavior of the \fBscan\fR command is the same as the behavior of
 the ANSI C \fBsscanf\fR procedure except for the following differences:
+.VS 8.1
 .IP [1]
-\fB%p\fR and \fB%n\fR conversion specifiers are not currently
+\fB%p\fR conversion specifier is not currently
 supported.
+.VE 8.1
 .IP [2]
 For \fB%c\fR conversions a single character value is
 converted to a decimal string, which is then assigned to the

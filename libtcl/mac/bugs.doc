@@ -4,7 +4,7 @@ by Ray Johnson
 Sun Microsystems Laboratories
 rjohnson@eng.sun.com
 
-SCCS: @(#) bugs.doc 1.6 97/08/13 18:09:12
+RCS: @(#) $Id$
 
 This was a new feature as of Tcl7.6b1 and as such I'll started with
 a clean slate.  I currently know of no reproducable bugs.  I often

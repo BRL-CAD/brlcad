@@ -8,13 +8,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) set-old.test 1.22 97/10/29 14:05:07
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 proc ignore args {}
 
@@ -474,6 +478,38 @@ test set-old-8.37 {array command, set option} {
     array set aVaRnAmE {}
     list [info exists aVaRnAmE] [catch {set aVaRnAmE} msg] $msg
 } {1 1 {can't read "aVaRnAmE": variable is array}}
+test set-old-8.37.1 {array command, set scalar} {
+    catch {unset aVaRnAmE}
+    set aVaRnAmE 1
+    list [catch {array set aVaRnAmE {}} msg] $msg
+} {1 {can't array set "aVaRnAmE": variable isn't array}}
+test set-old-8.37.2 {array command, set alias} {
+    catch {unset aVaRnAmE}
+    upvar 0 aVaRnAmE anAliAs
+    array set anAliAs {}
+    list [array exists aVaRnAmE] [catch {set anAliAs} msg] $msg
+} {1 1 {can't read "anAliAs": variable is array}}
+test set-old-8.37.3 {array command, set element alias} {
+    catch {unset aVaRnAmE}
+    list [catch {upvar 0 aVaRnAmE(elem) elemAliAs}] \
+	    [catch {array set elemAliAs {}} msg] $msg
+} {0 1 {can't array set "elemAliAs": variable isn't array}}
+test set-old-8.37.4 {array command, empty set with populated array} {
+    catch {unset aVaRnAmE}
+    array set aVaRnAmE [list e1 v1 e2 v2]
+    array set aVaRnAmE {}
+    array set aVaRnAmE [list e3 v3]
+    list [lsort [array names aVaRnAmE]] [catch {set aVaRnAmE(e2)} msg] $msg
+} {{e1 e2 e3} 0 v2}
+test set-old-8.37.5 {array command, set with non-existent namespace} {
+    list [catch {array set bogusnamespace::var {}} msg] $msg
+} {1 {can't set "bogusnamespace::var": parent namespace doesn't exist}}
+test set-old-8.37.6 {array command, set with non-existent namespace} {
+    list [catch {array set bogusnamespace::var {a b}} msg] $msg
+} {1 {can't set "bogusnamespace::var(a)": parent namespace doesn't exist}}
+test set-old-8.37.7 {array command, set with non-existent namespace} {
+    list [catch {array set bogusnamespace::var(0) {a b}} msg] $msg
+} {1 {can't set "bogusnamespace::var(0)": variable isn't array}}
 test set-old-8.38 {array command, size option} {
     catch {unset a}
     array size a
@@ -763,9 +799,23 @@ test set-old-12.2 {cleanup on procedure return} {
 
 # Must delete variables when done, since these arrays get used as
 # scalars by other tests.
-
 catch {unset a}
 catch {unset b}
 catch {unset c}
 catch {unset aVaRnAmE}
-return ""
+
+# cleanup
+::tcltest::cleanupTests
+return 
+
+
+
+
+
+
+
+
+
+
+
+

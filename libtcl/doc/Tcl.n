@@ -5,10 +5,10 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) Tcl.n 1.128 96/08/26 12:59:50
-'
+'\" RCS: @(#) $Id$
+'\"
 .so man.macros
-.TH Tcl n "" Tcl "Tcl Built-In Commands"
+.TH Tcl n "8.1" Tcl "Tcl Built-In Commands"
 .BS
 .SH NAME
 Tcl \- Summary of Tcl language syntax.
@@ -111,47 +111,61 @@ special processing.
 The following table lists the backslash sequences that are
 handled specially, along with the value that replaces each sequence.
 .RS
-.TP 6
+.TP 7
 \e\fBa\fR
 Audible alert (bell) (0x7).
-.TP 6
+.TP 7
 \e\fBb\fR
 Backspace (0x8).
-.TP 6
+.TP 7
 \e\fBf\fR
 Form feed (0xc).
-.TP 6
+.TP 7
 \e\fBn\fR
 Newline (0xa).
-.TP 6
+.TP 7
 \e\fBr\fR
 Carriage-return (0xd).
-.TP 6
+.TP 7
 \e\fBt\fR
 Tab (0x9).
-.TP 6
+.TP 7
 \e\fBv\fR
 Vertical tab (0xb).
-.TP 6
+.TP 7
 \e\fB<newline>\fIwhiteSpace\fR
-A single space character replaces the backslash, newline, and all
-spaces and tabs after the newline.
-This backslash sequence is unique in that it is replaced in a separate
-pre-pass before the command is actually parsed.
-This means that it will be replaced even when it occurs between
-braces, and the resulting space will be treated as a word separator
-if it isn't in braces or quotes.
-.TP 6
+.
+A single space character replaces the backslash, newline, and all spaces
+and tabs after the newline.  This backslash sequence is unique in that it
+is replaced in a separate pre-pass before the command is actually parsed.
+This means that it will be replaced even when it occurs between braces,
+and the resulting space will be treated as a word separator if it isn't
+in braces or quotes.
+.TP 7
 \e\e
 Backslash (``\e'').
-.TP 6
-\e\fIooo\fR
-The digits \fIooo\fR (one, two, or three of them) give the octal value of
-the character.
-.TP 6
-\e\fBx\fIhh\fR
-The hexadecimal digits \fIhh\fR give the hexadecimal value of
-the character.  Any number of digits may be present.
+.VS 8.1 br
+.TP 7
+\e\fIooo\fR 
+.
+The digits \fIooo\fR (one, two, or three of them) give an eight-bit octal 
+value for the Unicode character that will be inserted.  The upper bits of the
+Unicode character will be 0.
+.TP 7
+\e\fBx\fIhh\fR 
+.
+The hexadecimal digits \fIhh\fR give an eight-bit hexadecimal value for the
+Unicode character that will be inserted.  Any number of hexadecimal digits
+may be present; however, all but the last two are ignored (the result is
+always a one-byte quantity).  The upper bits of the Unicode character will
+be 0.
+.TP 7
+\e\fBu\fIhhhh\fR 
+.
+The hexadecimal digits \fIhhhh\fR (one, two, three, or four of them) give a
+sixteen-bit hexadecimal value for the Unicode character that will be
+inserted.
+.VE
 .LP
 Backslash substitution is not performed on words enclosed in braces,
 except for backslash-newline as described above.

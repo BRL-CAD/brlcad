@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) library.n 1.23 96/11/20 14:07:04
+'\" RCS: @(#) $Id$
 .so man.macros
 .TH library n "8.0" Tcl "Tcl Built-In Commands"
 .BS
@@ -16,7 +16,9 @@ library \- standard library of Tcl procedures
 \fBauto_execok \fIcmd\fR
 \fBauto_load \fIcmd\fR
 \fBauto_mkindex \fIdir pattern pattern ...\fR
+\fBauto_mkindex_old \fIdir pattern pattern ...\fR
 \fBauto_reset\fR
+\fBtcl_findLibrary \fIbasename version patch initScript enVarName varName\fR
 \fBparray \fIarrayName\fR
 .VS
 \fBtcl_endOfWord \fIstr start\fR
@@ -58,16 +60,18 @@ the auto-load mechanism defined below.
 The following procedures are provided in the Tcl library:
 .TP
 \fBauto_execok \fIcmd\fR
-Determines whether there is an executable file by the name \fIcmd\fR.
-This command examines the directories in the current search path
-(given by the PATH environment variable) to see if there is an
-executable file named \fIcmd\fR in any of those directories.
-If so, it returns 1;  if not it returns 0.  \fBAuto_exec\fR
-remembers information about previous searches in an array
-named \fBauto_execs\fR;  this avoids the path search in
-future calls for the same \fIcmd\fR.  The command \fBauto_reset\fR
-may be used to force \fBauto_execok\fR to forget its cached
-information.
+Determines whether there is an executable file or shell builtin
+by the name \fIcmd\fR.  If so, it returns a list of arguments to be
+passed to \fBexec\fR to execute the executable file or shell builtin
+named by \fIcmd\fR.  If not, it returns an empty string.  This command
+examines the directories in the current search path (given by the PATH
+environment variable) in its search for an executable file named
+\fIcmd\fR.  On Windows platforms, the search is expanded with the same
+directories and file extensions as used by \fBexec\fR. \fBAuto_exec\fR
+remembers information about previous searches in an array named
+\fBauto_execs\fR;  this avoids the path search in future calls for the
+same \fIcmd\fR.  The command \fBauto_reset\fR may be used to force
+\fBauto_execok\fR to forget its cached information.
 .TP
 \fBauto_load \fIcmd\fR
 This command attempts to load the definition for a Tcl command named
@@ -121,7 +125,15 @@ For example, the command
 will read all the \fB.tcl\fR files in subdirectory \fBfoo\fR
 and generate a new index file \fBfoo/tclIndex\fR.
 .PP
-\fBAuto_mkindex\fR parses the Tcl scripts in a relatively
+\fBAuto_mkindex\fR parses the Tcl scripts by sourcing them
+into a slave interpreter and monitoring the proc and
+namespace commands that are executed.
+Extensions can use the (undocumented)
+auto_mkindex_parser package to register other commands that
+can contribute to the auto_load index.
+You will have to read through init.tcl to see how this works.
+.PP
+\fBAuto_mkindex_old\fR parses the Tcl scripts in a relatively
 unsophisticated way:  if any line contains the word \fBproc\fR
 as its first characters then it is assumed to be a procedure
 definition and the next word of the line is taken as the
@@ -138,6 +150,26 @@ needed.
 \fBAuto_reset\fR also deletes any procedures listed in the auto-load
 index, so that fresh copies of them will be loaded the next time
 that they're used.
+.TP
+\fBtcl_findLibrary \fIbasename version patch initScript enVarName varName\fR
+This is a standard search procedure for use by extensions during
+their initialization.  They call this procedure to look for their
+script library in several standard directories.
+The last component of the name of the library directory is 
+normally \fIbasenameversion\fP
+(e.g., tk8.0), but it might be "library" when in the build hierarchies.
+The \fIinitScript\fR file will be sourced into the interpreter
+once it is found.  The directory in which this file is found is
+stored into the global variable \fIvarName\fP.
+If this variable is already defined (e.g., by C code during
+application initialization) then no searching is done.
+Otherwise the search looks in these directories:
+the directory named by the environment variable \fIenVarName\fP;
+relative to the Tcl library directory;
+relative to the executable file in the standard installation
+bin or bin/\fIarch\fP directory;
+relative to the executable file in the current build tree;
+relative to the executable file in a parallel build tree.
 .TP
 \fBparray \fIarrayName\fR
 Prints on standard output the names and values of all the elements
@@ -208,17 +240,24 @@ any commands.
 \fBauto_path\fR
 If set, then it must contain a valid Tcl list giving directories to
 search during auto-load operations.
+This variable is initialized during startup to contain, in order:
+the directories listed in the TCLLIBPATH environment variable,
+the directory named by the $tcl_library variable,
+the parent directory of $tcl_library,
+the directories listed in the $tcl_pkgPath variable.
 .TP
 \fBenv(TCL_LIBRARY)\fR
 If set, then it specifies the location of the directory containing
-library scripts (the value of this variable will be returned by
+library scripts (the value of this variable will be
+assigned to the \fBtcl_library\fR variable and therefore returned by
 the command \fBinfo library\fR).  If this variable isn't set then
 a default value is used.
 .TP
 \fBenv(TCLLIBPATH)\fR
 If set, then it must contain a valid Tcl list giving directories to
 search during auto-load operations.
-This variable is only used if \fBauto_path\fR is not defined.
+This variable is only used when
+initializing the \fBauto_path\fR variable.
 .TP
 \fBtcl_nonwordchars\fR
 .VS
@@ -239,11 +278,15 @@ comprised of any character that is not a space, tab, or newline.  Under
 Unix, words are comprised of numbers, letters or underscores.
 .VE
 .TP
-\fBunknown_active\fR
-This variable is set by \fBunknown\fR to indicate that it is active.
+\fBunknown_pending\fR
+Used by \fBunknown\fR to record the command(s) for which it is
+searching.
 It is used to detect errors where \fBunknown\fR recurses on itself
 infinitely.
 The variable is unset before \fBunknown\fR returns.
+
+.SH "SEE ALSO"
+re_syntax(n)
 
 .SH KEYWORDS
 auto-exec, auto-load, library, unknown, word, whitespace 

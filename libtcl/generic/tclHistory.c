@@ -12,7 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclHistory.c 1.47 97/08/04 16:08:17
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -57,20 +57,16 @@ Tcl_RecordAndEval(interp, cmd, flags)
 	 * Call Tcl_RecordAndEvalObj to do the actual work.
 	 */
 
-	TclNewObj(cmdPtr);
-	TclInitStringRep(cmdPtr, cmd, length);
+	cmdPtr = Tcl_NewStringObj(cmd, length);
 	Tcl_IncrRefCount(cmdPtr);
-
 	result = Tcl_RecordAndEvalObj(interp, cmdPtr, flags);
 
 	/*
 	 * Move the interpreter's object result to the string result, 
 	 * then reset the object result.
-	 * FAILS IF OBJECT RESULT'S STRING REPRESENTATION CONTAINS NULLS.
 	 */
 
-	Tcl_SetResult(interp,
-	        TclGetStringFromObj(Tcl_GetObjResult(interp), (int *) NULL),
+	Tcl_SetResult(interp, TclGetString(Tcl_GetObjResult(interp)),
 	        TCL_VOLATILE);
 
 	/*
@@ -116,11 +112,10 @@ Tcl_RecordAndEvalObj(interp, cmdPtr, flags)
 				 * record and execute. */
     int flags;			/* Additional flags. TCL_NO_EVAL means
 				 * record only: don't execute the command.
-				 * TCL_EVAL_GLOBAL means use
-				 * Tcl_GlobalEvalObj instead of
-				 * Tcl_EvalObj. */
+				 * TCL_EVAL_GLOBAL means evaluate the
+				 * script in global variable context instead
+				 * of the current procedure. */
 {
-    Interp *iPtr = (Interp *) interp;
     int result;
     Tcl_Obj *list[3];
     register Tcl_Obj *objPtr;
@@ -135,7 +130,7 @@ Tcl_RecordAndEvalObj(interp, cmdPtr, flags)
     
     objPtr = Tcl_NewListObj(3, list);
     Tcl_IncrRefCount(objPtr);
-    (void) Tcl_GlobalEvalObj(interp, objPtr);
+    (void) Tcl_EvalObjEx(interp, objPtr, TCL_EVAL_GLOBAL);
     Tcl_DecrRefCount(objPtr);
 
     /*
@@ -144,12 +139,7 @@ Tcl_RecordAndEvalObj(interp, cmdPtr, flags)
 
     result = TCL_OK;
     if (!(flags & TCL_NO_EVAL)) {
-	iPtr->evalFlags = (flags & ~TCL_EVAL_GLOBAL);
-	if (flags & TCL_EVAL_GLOBAL) {
-	    result = Tcl_GlobalEvalObj(interp, cmdPtr);
-	} else {
-	    result = Tcl_EvalObj(interp, cmdPtr);
-	}
+	result = Tcl_EvalObjEx(interp, cmdPtr, flags & TCL_EVAL_GLOBAL);
     }
     return result;
 }

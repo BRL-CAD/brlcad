@@ -1,7 +1,7 @@
 Notes about the Background Only application template
 ====================================================
 
-SCCS: @(#) Background.doc 1.1 97/11/03 17:05:54
+RCS: @(#) $Id$
 
 We have included sample code and project files for making a Background-Only
  application (BOA) in Tcl.  This could be used for server processes (like the 

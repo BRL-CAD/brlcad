@@ -5,12 +5,12 @@
  *	in systems that don't support dynamic loading; it just returns
  *	an error.
  *
- * Copyright (c) 1995-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclLoadNone.c 1.6 97/05/14 13:23:38
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -18,7 +18,7 @@
 /*
  *----------------------------------------------------------------------
  *
- * TclLoadFile --
+ * TclpLoadFile --
  *
  *	This procedure is called to carry out dynamic loading of binary
  *	code;  it is intended for use only on systems that don't support
@@ -26,7 +26,7 @@
  *
  * Results:
  *	The result is TCL_ERROR, and an error message is left in
- *	interp->result.
+ *	the interp's result.
  *
  * Side effects:
  *	None.
@@ -35,7 +35,7 @@
  */
 
 int
-TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
+TclpLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr, clientDataPtr)
     Tcl_Interp *interp;		/* Used for error reporting. */
     char *fileName;		/* Name of the file containing the desired
 				 * code. */
@@ -44,6 +44,9 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
     Tcl_PackageInitProc **proc1Ptr, **proc2Ptr;
 				/* Where to return the addresses corresponding
 				 * to sym1 and sym2. */
+    ClientData *clientDataPtr;	/* Filled with token for dynamically loaded
+				 * file which will be passed back to 
+				 * TclpUnloadFile() to unload the file. */
 {
     Tcl_SetResult(interp,
 	    "dynamic loading is not currently available on this system",
@@ -79,4 +82,31 @@ TclGuessPackageName(fileName, bufPtr)
 				 * package name to this if possible. */
 {
     return 0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpUnloadFile --
+ *
+ *    This procedure is called to carry out dynamic unloading of binary
+ *    code;  it is intended for use only on systems that don't support
+ *    dynamic loading (it does nothing).
+ *
+ * Results:
+ *    None.
+ *
+ * Side effects:
+ *    None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclpUnloadFile(clientData)
+    ClientData clientData;    /* ClientData returned by a previous call
+			       * to TclpLoadFile().  The clientData is 
+			       * a token that represents the loaded 
+			       * file. */
+{
 }

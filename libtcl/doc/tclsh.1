@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) tclsh.1 1.13 96/08/26 13:00:15
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH tclsh 1 "" Tcl "Tcl Applications"
@@ -26,7 +26,8 @@ Tcl commands from standard input and printing command results and
 error messages to standard output.
 It runs until the \fBexit\fR command is invoked or until it
 reaches end-of-file on its standard input.
-If there exists a file \fB.tclshrc\fR in the home directory of
+If there exists a file \fB.tclshrc\fR (or \fBtclshrc.tcl\fR on
+the Windows platforms) in the home directory of
 the user, \fBtclsh\fR evaluates the file as a Tcl script
 just before reading the first command from standard input.
 

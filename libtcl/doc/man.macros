@@ -59,7 +59,7 @@
 '\" .UL arg1 arg2
 '\"	Print arg1 underlined, then print arg2 normally.
 '\"
-'\" SCCS: @(#) man.macros 1.9 97/08/22 18:50:59
+'\" RCS: @(#) $Id$
 '\"
 '\"	# Set up traps and other miscellaneous stuff for Tcl/Tk man pages.
 .if t .wh -1.3i ^B
@@ -72,8 +72,8 @@
 .   ie !"\\$2"" .TP \\n()Cu
 .   el          .TP 15
 .\}
-.ie !"\\$3"" \{\
 .ta \\n()Au \\n()Bu
+.ie !"\\$3"" \{\
 \&\\$1	\\fI\\$2\\fP	(\\$3)
 .\".b
 .\}

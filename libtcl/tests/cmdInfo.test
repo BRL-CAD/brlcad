@@ -8,19 +8,24 @@
 #
 # Copyright (c) 1993 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) cmdInfo.test 1.10 97/06/20 14:51:12
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 if {[info commands testcmdinfo] == {}} {
     puts "This application hasn't been compiled with the \"testcmdinfo\""
     puts "command, so I can't test Tcl_GetCommandInfo etc."
+    ::tcltest::cleanupTests
     return
 }
-
-if {[string compare test [info procs test]] == 1} then {source defs}
 
 test cmdinfo-1.1 {command procedure and clientData} {
     testcmdinfo create x1
@@ -93,6 +98,20 @@ test cmdinfo-6.1 {Names for commands created when outside namespaces} {
     eval lappend y [testcmdtoken name $x]
 } {testCmd ::cmdInfoNs1::cmdInfoNs2::testCmd newTestCmd2 ::newTestCmd2}
 
+# cleanup
 catch {namespace delete cmdInfoNs1::cmdInfoNs2 cmdInfoNs1}
 catch {rename x1 ""}
-concat {}
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

@@ -5,12 +5,13 @@
  *	procedure for Tcl applications (without Tk).  Note that this
  *	program must be built in Win32 console mode to work properly.
  *
- * Copyright (c) 1996 by Sun Microsystems, Inc.
+ * Copyright (c) 1996-1997 by Sun Microsystems, Inc.
+ * Copyright (c) 1998-1999 by Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclAppInit.c 1.12 97/04/30 11:04:50
+ * RCS: @(#) $Id$
  */
 
 #include "tcl.h"
@@ -18,8 +19,13 @@
 #include <locale.h>
 
 #ifdef TCL_TEST
-EXTERN int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int		TclObjTest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Procbodytest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Procbodytest_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		TclObjTest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+#ifdef TCL_THREADS
+extern int		TclThread_Init _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
 #endif /* TCL_TEST */
 
 static void		setargv _ANSI_ARGS_((int *argcPtr, char ***argvPtr));
@@ -47,30 +53,13 @@ main(argc, argv)
     int argc;			/* Number of command-line arguments. */
     char **argv;		/* Values of command-line arguments. */
 {
-    char *p;
-    char buffer[MAX_PATH];
-
     /*
      * Set up the default locale to be standard "C" locale so parsing
      * is performed correctly.
      */
 
     setlocale(LC_ALL, "C");
-
     setargv(&argc, &argv);
-
-    /*
-     * Replace argv[0] with full pathname of executable, and forward
-     * slashes substituted for backslashes.
-     */
-
-    GetModuleFileName(NULL, buffer, sizeof(buffer));
-    argv[0] = buffer;
-    for (p = buffer; *p != '\0'; p++) {
-	if (*p == '\\') {
-	    *p = '/';
-	}
-    }
 
     Tcl_Main(argc, argv, Tcl_AppInit);
     return 0;			/* Needed only to prevent compiler warning. */
@@ -88,7 +77,7 @@ main(argc, argv)
  *
  * Results:
  *	Returns a standard Tcl completion code, and leaves an error
- *	message in interp->result if an error occurs.
+ *	message in the interp's result if an error occurs.
  *
  * Side effects:
  *	Depends on the startup script.
@@ -113,6 +102,16 @@ Tcl_AppInit(interp)
     if (TclObjTest_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+#ifdef TCL_THREADS
+    if (TclThread_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+#endif
+    if (Procbodytest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "procbodytest", Procbodytest_Init,
+            Procbodytest_SafeInit);
 #endif /* TCL_TEST */
 
     /*
@@ -178,7 +177,7 @@ setargv(argcPtr, argvPtr)
     char **argv;
     int argc, size, inquote, copy, slashes;
     
-    cmdLine = GetCommandLine();
+    cmdLine = GetCommandLine();	/* INTL: BUG */
 
     /*
      * Precompute an overly pessimistic guess at the number of arguments
@@ -187,9 +186,9 @@ setargv(argcPtr, argvPtr)
 
     size = 2;
     for (p = cmdLine; *p != '\0'; p++) {
-	if (isspace(*p)) {
+	if ((*p == ' ') || (*p == '\t')) {	/* INTL: ISO space. */
 	    size++;
-	    while (isspace(*p)) {
+	    while ((*p == ' ') || (*p == '\t')) { /* INTL: ISO space. */
 		p++;
 	    }
 	    if (*p == '\0') {
@@ -197,8 +196,8 @@ setargv(argcPtr, argvPtr)
 	    }
 	}
     }
-    argSpace = (char *) ckalloc((unsigned) (size * sizeof(char *) 
-	    + strlen(cmdLine) + 1));
+    argSpace = (char *) Tcl_Alloc(
+	    (unsigned) (size * sizeof(char *) + strlen(cmdLine) + 1));
     argv = (char **) argSpace;
     argSpace += size * sizeof(char *);
     size--;
@@ -206,7 +205,7 @@ setargv(argcPtr, argvPtr)
     p = cmdLine;
     for (argc = 0; argc < size; argc++) {
 	argv[argc] = arg = argSpace;
-	while (isspace(*p)) {
+	while ((*p == ' ') || (*p == '\t')) {	/* INTL: ISO space. */
 	    p++;
 	}
 	if (*p == '\0') {
@@ -240,7 +239,8 @@ setargv(argcPtr, argvPtr)
 		slashes--;
 	    }
 
-	    if ((*p == '\0') || (!inquote && isspace(*p))) {
+	    if ((*p == '\0')
+		    || (!inquote && ((*p == ' ') || (*p == '\t')))) { /* INTL: ISO space. */
 		break;
 	    }
 	    if (copy != 0) {

@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) binary.n 1.7 97/11/11 19:08:47
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH binary n 8.0 Tcl "Tcl Built-In Commands"
@@ -119,7 +119,7 @@ remaining bits of the last byte will be zeros.  For example,
 .CS
 \fBbinary format h3h* AB def\fR
 .CE
-will return a string equivalent to \fB\\xba\\xed\\x0f\fR.
+will return a string equivalent to \fB\\xba\\x00\\xed\\x0f\fR.
 .RE
 .IP \fBH\fR 5
 This form is the same as \fBh\fR except that the digits are stored in
@@ -128,7 +128,7 @@ high-to-low order within each byte.  For example,
 .CS
 \fBbinary format H3H* ab DEF\fR
 .CE
-will return a string equivalent to \fB\\xab\\xde\\xf0\fR.
+will return a string equivalent to \fB\\xab\\x00\\xde\\xf0\fR.
 .RE
 .IP \fBc\fR 5
 Stores one or more 8-bit integer values in the output string.  If no
@@ -142,10 +142,10 @@ error is generated.  If the number of elements in the list is greater
 than \fIcount\fR, then the extra elements are ignored.  For example,
 .RS
 .CS
-\fBbinary format c3cc* {3 -3 128 1} 257 {2 5}\fR
+\fBbinary format c3cc* {3 -3 128 1} 260 {2 5}\fR
 .CE
 will return a string equivalent to
-\fB\\x03\\xfd\\x80\\x01\\x02\\x05\fR, whereas
+\fB\\x03\\xfd\\x80\\x04\\x02\\x05\fR, whereas
 .CS
 \fBbinary format c {2 5}\fR
 .CE
@@ -186,7 +186,7 @@ example,
 \fBbinary format i3 {3 -3 65536 1}\fR
 .CE
 will return a string equivalent to 
-\fB\\x03\\x00\\x00\\x00\\xfd\\xff\\xff\\xff\\x00\\x00\\x10\\x00\fR.
+\fB\\x03\\x00\\x00\\x00\\xfd\\xff\\xff\\xff\\x00\\x00\\x01\\x00\fR
 .RE
 .IP \fBI\fR 5
 This form is the same as \fBi\fR except that it stores one or more one
@@ -197,7 +197,7 @@ For example,
 \fBbinary format I3 {3 -3 65536 1}\fR
 .CE
 will return a string equivalent to 
-\fB\\x00\\x00\\x00\\x03\\xff\\xff\\xff\\xfd\\x00\\x10\\x00\\x00\fR.
+\fB\\x00\\x00\\x00\\x03\\xff\\xff\\xff\\xfd\\x00\\x01\\x00\\x00\fR
 .RE
 .IP \fBf\fR 5
 This form is the same as \fBc\fR except that it stores one or more one
@@ -318,7 +318,7 @@ This form is the same as \fBa\fR, except trailing blanks and nulls are stripped 
 the scanned value before it is stored in the variable.  For example,
 .RS
 .CS
-\fBbinary scan "abc efghi  \\000" a* var1\fR
+\fBbinary scan "abc efghi  \\000" A* var1\fR
 .CE
 will return \fB1\fR with \fBabc efghi\fR stored in \fBvar1\fR.
 .RE
@@ -338,11 +338,11 @@ will return \fB2\fR with \fB11100\fR stored in \fBvar1\fR and
 \fB1110000110100000\fR stored in \fBvar2\fR.
 .RE
 .IP \fBB\fR 5
-This form is the same as \fBB\fR, except the bits are taken in
+This form is the same as \fBb\fR, except the bits are taken in
 high-to-low order within each byte.  For example,
 .RS
 .CS
-\fBbinary scan \\x70\\x87\\x05 b5b* var1 var2\fR
+\fBbinary scan \\x70\\x87\\x05 B5B* var1 var2\fR
 .CE
 will return \fB2\fR with \fB01110\fR stored in \fBvar1\fR and
 \fB1000011100000101\fR stored in \fBvar2\fR.
@@ -365,7 +365,7 @@ will return \fB2\fR with \fB706\fR stored in \fBvar1\fR and
 .RE
 .IP \fBH\fR 5
 This form is the same as \fBh\fR, except the digits are taken in
-low-to-high order within each byte.  For example,
+high-to-low order within each byte.  For example,
 .RS
 .CS
 \fBbinary scan \\x07\\x86\\x05 H3H* var1 var2\fR

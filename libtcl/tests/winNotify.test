@@ -5,27 +5,30 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1997 by Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) winNotify.test 1.2 97/04/14 17:24:56
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
-
-if {$tcl_platform(platform) != "windows"} {
-    return
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
 }
+
+set ::tcltest::testConstraints(testeventloop) \
+	[expr {[info commands testeventloop] != {}}]
 
 # There is no explicit test for InitNotifier or NotifierExitHandler
 
-test winNotify-1.1 {Tcl_SetTimer: positive timeout} {
+test winNotify-1.1 {Tcl_SetTimer: positive timeout} {pcOnly} {
     set done 0
     after 1000 { set done 1 }
     vwait done
     set done
 } 1
-test winNotify-1.2 {Tcl_SetTimer: positive timeout, message pending} {
+test winNotify-1.2 {Tcl_SetTimer: positive timeout, message pending} {pcOnly} {
     set x 0
     set y 1
     set a1 [after 0 { incr y }]
@@ -34,7 +37,7 @@ test winNotify-1.2 {Tcl_SetTimer: positive timeout, message pending} {
     vwait x
     list $x $y
 } {1 1}
-test winNotify-1.3 {Tcl_SetTimer: cancelling positive timeout} {
+test winNotify-1.3 {Tcl_SetTimer: cancelling positive timeout} {pcOnly} {
     set x 0
     set y 1
     set id [after 10000 { incr y }]
@@ -43,7 +46,7 @@ test winNotify-1.3 {Tcl_SetTimer: cancelling positive timeout} {
     after cancel $id
     list $x $y
 } {1 1}
-test winNotify-1.4 {Tcl_SetTimer: null timeout, message pending} {
+test winNotify-1.4 {Tcl_SetTimer: null timeout, message pending} {pcOnly} {
     set x 0
     set y 1
     after 0 { incr x }
@@ -52,14 +55,14 @@ test winNotify-1.4 {Tcl_SetTimer: null timeout, message pending} {
     list $x $y
 } {1 2}
 
-test winNotify-2.1 {Tcl_ResetIdleTimer} {
+test winNotify-2.1 {Tcl_ResetIdleTimer} {pcOnly} {
     set x 0
     update
     after idle { incr x }
     vwait x
     set x
 } 1
-test winNotify-2.2 {Tcl_ResetIdleTimer: message pending} {
+test winNotify-2.2 {Tcl_ResetIdleTimer: message pending} {pcOnly} {
     set x 0
     set y 1
     update
@@ -69,7 +72,7 @@ test winNotify-2.2 {Tcl_ResetIdleTimer: message pending} {
     list $x $y
 } {1 2}
 
-test winNotify-3.1 {NotifierProc: non-modal normal timer} {
+test winNotify-3.1 {NotifierProc: non-modal normal timer} {pcOnly testeventloop} {
     update
     set x 0
     foreach i [after info] {
@@ -79,7 +82,7 @@ test winNotify-3.1 {NotifierProc: non-modal normal timer} {
     testeventloop wait
     set x
 } 1
-test winNotify-3.2 {NotifierProc: non-modal normal timer, rescheduled} {
+test winNotify-3.2 {NotifierProc: non-modal normal timer, rescheduled} {pcOnly testeventloop} {
     update
     set x 0
     foreach i [after info] {
@@ -89,7 +92,7 @@ test winNotify-3.2 {NotifierProc: non-modal normal timer, rescheduled} {
     testeventloop wait
     set x
 } 2
-test winNotify-3.3 {NotifierProc: modal normal timer} {
+test winNotify-3.3 {NotifierProc: modal normal timer} {pcOnly} {
     update
     set x 0
     foreach i [after info] {
@@ -99,7 +102,7 @@ test winNotify-3.3 {NotifierProc: modal normal timer} {
     vwait x
     set x
 } 1
-test winNotify-3.4 {NotifierProc: modal normal timer, rescheduled} {
+test winNotify-3.4 {NotifierProc: modal normal timer, rescheduled} {pcOnly} {
     update
     set x 0
     foreach i [after info] {
@@ -110,7 +113,7 @@ test winNotify-3.4 {NotifierProc: modal normal timer, rescheduled} {
     vwait x
     list $x $y
 } {1 1}
-test winNotify-3.5 {NotifierProc: non-modal idle timer} {
+test winNotify-3.5 {NotifierProc: non-modal idle timer} {pcOnly testeventloop} {
     update
     set x 0
     foreach i [after info] {
@@ -120,7 +123,7 @@ test winNotify-3.5 {NotifierProc: non-modal idle timer} {
     testeventloop wait
     set x
 } 1
-test winNotify-3.6 {NotifierProc: non-modal idle timer, rescheduled} {
+test winNotify-3.6 {NotifierProc: non-modal idle timer, rescheduled} {pcOnly testeventloop} {
     update
     set x 0
     foreach i [after info] {
@@ -130,7 +133,7 @@ test winNotify-3.6 {NotifierProc: non-modal idle timer, rescheduled} {
     testeventloop wait
     set x
 } 2
-test winNotify-3.7 {NotifierProc: modal idle timer} {
+test winNotify-3.7 {NotifierProc: modal idle timer} {pcOnly} {
     update
     set x 0
     foreach i [after info] {
@@ -140,7 +143,7 @@ test winNotify-3.7 {NotifierProc: modal idle timer} {
     vwait x
     set x
 } 1
-test winNotify-3.8 {NotifierProc: modal idle timer, rescheduled} {
+test winNotify-3.8 {NotifierProc: modal idle timer, rescheduled} {pcOnly} {
     update
     set x 0
     foreach i [after info] {
@@ -153,3 +156,19 @@ test winNotify-3.8 {NotifierProc: modal idle timer, rescheduled} {
 } {1 1}
 
 # Tcl_DoOneEvent is tested by the timer.test, io.test, and event.test files
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

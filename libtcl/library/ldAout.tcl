@@ -18,7 +18,7 @@
 #	its .o file placed before all others in the command; then
 #	"ld" is executed to bind the objects together.
 #
-# SCCS: @(#) ldAout.tcl 1.12 96/11/30 17:11:02
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1995, by General Electric Company. All rights reserved.
 #
@@ -98,9 +98,9 @@ proc tclLdAout {{cc {}} {shlib_suffix {}} {shlib_cflags none}} {
     } elseif {![string compare $a -o]} {
       set minusO 1
     }
-    if [regexp {^-[lL]} $a] {
+    if {[regexp {^-[lL]} $a]} {
 	lappend libraries $a
-	if [regexp {^-L} $a] {
+	if {[regexp {^-L} $a]} {
 	    lappend libdirs [string range $a 2 end]
 	}
     } elseif {$seenDotO} {
@@ -116,10 +116,10 @@ proc tclLdAout {{cc {}} {shlib_suffix {}} {shlib_cflags none}} {
 
   set libs {}
   foreach lib $libraries {
-      if [regexp {^-l} $lib] {
+      if {[regexp {^-l} $lib]} {
 	  set lname [string range $lib 2 end]
 	  foreach dir $libdirs {
-	      if [file exists [file join $dir lib${lname}_G0.a]] {
+	      if {[file exists [file join $dir lib${lname}_G0.a]]} {
 		  set lname ${lname}_G0
 		  break
 	      }
@@ -137,22 +137,22 @@ proc tclLdAout {{cc {}} {shlib_suffix {}} {shlib_cflags none}} {
     error "-o option must be supplied to link a Tcl load module"
   }
   set m [file tail $outputFile]
-  if [regexp {\.a$} $outputFile] {
+  if {[regexp {\.a$} $outputFile]} {
     set shlib_suffix .a
   } else {
     set shlib_suffix ""
   }
-  if [regexp {\..*$} $outputFile match] {
-    set l [expr [string length $m] - [string length $match]]
+  if {[regexp {\..*$} $outputFile match]} {
+    set l [expr {[string length $m] - [string length $match]}]
   } else {
     error "Output file does not appear to have a suffix"
   }
-  set modName [string tolower [string range $m 0 [expr $l-1]]]
-  if [regexp {^lib} $modName] {
+  set modName [string tolower [string range $m 0 [expr {$l-1}]]]
+  if {[regexp {^lib} $modName]} {
     set modName [string range $modName 3 end]
   }
-  if [regexp {[0-9\.]*(_g0)?$} $modName match] {
-    set modName [string range $modName 0 [expr [string length $modName]-[string length $match]-1]]
+  if {[regexp {[0-9\.]*(_g0)?$} $modName match]} {
+    set modName [string range $modName 0 [expr {[string length $modName]-[string length $match]-1}]]
   }
   set modName "[string toupper [string index $modName 0]][string range $modName 1 end]"
   
@@ -160,7 +160,7 @@ proc tclLdAout {{cc {}} {shlib_suffix {}} {shlib_cflags none}} {
 
   set f [open $nmCommand r]
   while {[gets $f l] >= 0} {
-    if [regexp {T[ 	]*_?([A-Z][a-z0-9_]*_(Safe)?Init(__FP10Tcl_Interp)?)$} $l trash symbol] {
+    if {[regexp {T[ 	]*_?([A-Z][a-z0-9_]*_(Safe)?Init(__FP10Tcl_Interp)?)$} $l trash symbol]} {
       if {![regexp {_?([A-Z][a-z0-9_]*_(Safe)?Init)} $symbol trash s]} {
 	set s $symbol
       }
@@ -219,10 +219,10 @@ proc tclLdAout {{cc {}} {shlib_suffix {}} {shlib_cflags none}} {
     set ldCommand "ar cr $outputFile"
     regsub { -o} $tail {} tail
   } else {
-  set ldCommand ld
-  foreach item $head {
-    lappend ldCommand $item
-  }
+    set ldCommand ld
+    foreach item $head {
+      lappend ldCommand $item
+    }
   }
   lappend ldCommand tcl$modName.o
   foreach item $tail {

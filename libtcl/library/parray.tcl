@@ -1,7 +1,7 @@
 # parray:
 # Print the contents of a global array on stdout.
 #
-# SCCS: @(#) parray.tcl 1.9 96/02/16 08:56:44
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
@@ -12,7 +12,7 @@
 
 proc parray {a {pattern *}} {
     upvar 1 $a array
-    if ![array exists array] {
+    if {![array exists array]} {
 	error "\"$a\" isn't an array"
     }
     set maxl 0

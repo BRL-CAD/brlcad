@@ -1,7 +1,7 @@
 Notes about the use of libmoto
 ------------------------------
 
-@(#) libmoto.doc 1.1 96/07/17 14:29:48
+RCS: @(#) $Id$
 
 First of all, libmoto is not required!  If you don't have it, you
 can simply remove the library reference from the project file and

@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) lindex.test 1.7 97/02/27 16:53:56
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 test lindex-1.1 {basic tests} {
     lindex {a b c} 0} a
@@ -49,7 +53,7 @@ test lindex-2.2 {error conditions} {
 } {1 {wrong # args: should be "lindex list index"}}
 test lindex-2.3 {error conditions} {
     list [catch {lindex 1 2a2} msg] $msg
-} {1 {bad index "2a2": must be integer or "end"}}
+} {1 {bad index "2a2": must be integer or end?-integer?}}
 test lindex-2.4 {error conditions} {
     list [catch {lindex "a \{" 2} msg] $msg
 } {1 {unmatched open brace in list}}
@@ -72,3 +76,7 @@ test lindex-3.3 {quoted elements} {
 test lindex-3.4 {quoted elements} {
     lindex {a b {c d "e} {f g"}} 2
 } {c d "e}
+
+# cleanup
+::tcltest::cleanupTests
+return

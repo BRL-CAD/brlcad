@@ -5,13 +5,13 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) SetResult.3 1.23 97/06/26 14:05:57
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tcl_SetResult 3 7.5 Tcl "Tcl Library Procedures"
 .BS
 .SH NAME
-Tcl_SetObjResult, Tcl_GetObjResult, Tcl_SetResult, Tcl_GetStringResult, Tcl_AppendResult, Tcl_AppendElement, Tcl_ResetResult \- manipulate Tcl result
+Tcl_SetObjResult, Tcl_GetObjResult, Tcl_SetResult, Tcl_GetStringResult, Tcl_AppendResult, Tcl_AppendResultVA, Tcl_AppendElement, Tcl_ResetResult \- manipulate Tcl result
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -27,6 +27,8 @@ char *
 \fBTcl_GetStringResult\fR(\fIinterp\fR)
 .sp
 \fBTcl_AppendResult\fR(\fIinterp, string, string, ... , \fB(char *) NULL\fR)
+.sp
+\fBTcl_AppendResultVA\fR(\fIinterp, argList\fR)
 .sp
 \fBTcl_AppendElement\fR(\fIinterp, string\fR)
 .sp
@@ -46,6 +48,9 @@ appended to the existing result.
 Address of procedure to call to release storage at
 \fIstring\fR, or \fBTCL_STATIC\fR, \fBTCL_DYNAMIC\fR, or
 \fBTCL_VOLATILE\fR.
+.AP va_list argList in
+An argument list which must have been initialised using
+\fBTCL_VARARGS_START\fR, and cleared using \fBva_end\fR.
 .BE
 
 .SH DESCRIPTION
@@ -136,6 +141,9 @@ It also converts the current interpreter result from an object
 to a string, if necessary, before appending the argument strings.
 Any number of \fIstring\fR arguments may be passed in a single
 call; the last argument in the list must be a NULL pointer.
+.PP
+\fBTcl_AppendResultVA\fR is the same as \fBTcl_AppendResult\fR except that
+instead of taking a variable number of arguments it takes an argument list.
 .PP
 \fBTcl_AppendElement\fR is similar to \fBTcl_AppendResult\fR in
 that it allows results to be built up in pieces.

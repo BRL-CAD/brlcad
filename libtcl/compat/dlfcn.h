@@ -17,7 +17,7 @@
  *	for any results of using the software, alterations are clearly marked
  *	as such, and this notice is not modified.
  *
- * SCCS: @(#) dlfcn.h 1.4 96/09/17 09:05:59
+ * RCS: @(#) $Id$
  */
 
 /*

@@ -4,16 +4,15 @@
  *	Contains Windows specific versions of Tcl functions that
  *	obtain time values from the operating system.
  *
- * Copyright 1995 by Sun Microsystems, Inc.
+ * Copyright 1995-1998 by Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclWinTime.c 1.6 97/04/14 17:25:56
+ * RCS: @(#) $Id$
  */
 
-#include "tclInt.h"
-#include "tclPort.h"
+#include "tclWinInt.h"
 
 #define SECSPERDAY (60L * 60L * 24L)
 #define SECSPERYEAR (SECSPERDAY * 365L)
@@ -31,6 +30,12 @@ static int normalDays[] = {
 static int leapDays[] = {
     -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
 };
+
+typedef struct ThreadSpecificData {
+    char tzName[64];		/* Time zone name */
+    struct tm tm;		/* time information */
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * Declarations for functions defined later in this file.
@@ -162,14 +167,70 @@ TclpGetTime(timePtr)
  */
 
 char *
-TclpGetTZName()
+TclpGetTZName(int dst)
 {
-    tzset();
-    if (_daylight && _tzname[1] != NULL) {
-	return _tzname[1];
-    } else {
-	return _tzname[0];
+    int len;
+    char *zone, *p;
+    TIME_ZONE_INFORMATION tz;
+    Tcl_Encoding encoding;
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
+    char *name = tsdPtr->tzName;
+
+    /*
+     * tzset() under Borland doesn't seem to set up tzname[] at all.
+     * tzset() under MSVC has the following weird observed behavior:
+     *	 First time we call "clock format [clock seconds] -format %Z -gmt 1"
+     *	 we get "GMT", but on all subsequent calls we get the current time 
+     *	 zone string, even though env(TZ) is GMT and the variable _timezone 
+     *   is 0.
+     */
+
+    name[0] = '\0';
+
+    zone = getenv("TZ");
+    if (zone != NULL) {
+	/*
+	 * TZ is of form "NST-4:30NDT", where "NST" would be the
+	 * name of the standard time zone for this area, "-4:30" is
+	 * the offset from GMT in hours, and "NDT is the name of 
+	 * the daylight savings time zone in this area.  The offset 
+	 * and DST strings are optional.
+	 */
+
+	len = strlen(zone);
+	if (len > 3) {
+	    len = 3;
+	}
+	if (dst != 0) {
+	    /*
+	     * Skip the offset string and get the DST string.
+	     */
+
+	    p = zone + len;
+	    p += strspn(p, "+-:0123456789");
+	    if (*p != '\0') {
+		zone = p;
+		len = strlen(zone);
+		if (len > 3) {
+		    len = 3;
+		}
+	    }
+	}
+	Tcl_ExternalToUtf(NULL, NULL, zone, len, 0, NULL, name,
+		sizeof(tsdPtr->tzName), NULL, NULL, NULL);
     }
+    if ((name[0] == '\0') 
+	    && (GetTimeZoneInformation(&tz) != TIME_ZONE_ID_UNKNOWN)) {
+	encoding = Tcl_GetEncoding(NULL, "unicode");
+	Tcl_ExternalToUtf(NULL, encoding, 
+		(char *) ((dst) ? tz.DaylightName : tz.StandardName), -1, 
+		0, NULL, name, sizeof(tsdPtr->tzName), NULL, NULL, NULL);
+	Tcl_FreeEncoding(encoding);
+    } 
+    if (name[0] == '\0') {
+	return "%Z";
+    }
+    return name;
 }
 
 /*
@@ -191,10 +252,11 @@ TclpGetTZName()
  */
 
 struct tm *
-TclpGetDate(tp, useGMT)
-    const time_t *tp;
+TclpGetDate(t, useGMT)
+    TclpTime_t t;
     int useGMT;
 {
+    const time_t *tp = (const time_t *) t;
     struct tm *tmPtr;
     long time;
 
@@ -207,10 +269,11 @@ TclpGetDate(tp, useGMT)
 	 * algorithm ignores daylight savings time before the epoch.
 	 */
 
-	time = *tp - _timezone;
-	if (time >= 0) {
+	if (*tp >= 0) {
 	    return localtime(tp);
 	}
+
+	time = *tp - _timezone;
 	
 	/*
 	 * If we aren't near to overflowing the long, just add the bias and
@@ -272,7 +335,7 @@ TclpGetDate(tp, useGMT)
  *	the epoch (midnight Jan 1 1970).
  *
  * Results:
- *	Returns a statically allocated struct tm.
+ *	Returns a (per thread) statically allocated struct tm.
  *
  * Side effects:
  *	Updates the values of the static struct tm.
@@ -284,10 +347,13 @@ static struct tm *
 ComputeGMT(tp)
     const time_t *tp;
 {
-    static struct tm tm;	  /* This should be allocated per thread.*/
+    struct tm *tmPtr;
     long tmp, rem;
     int isLeap;
     int *days;
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
+
+    tmPtr = &tsdPtr->tm;
 
     /*
      * Compute the 4 year span containing the specified time.
@@ -327,47 +393,47 @@ ComputeGMT(tp)
 	    }
 	}
     }
-    tm.tm_year = tmp;
+    tmPtr->tm_year = tmp;
 
     /*
      * Compute the day of year and leave the seconds in the current day in
      * the remainder.
      */
 
-    tm.tm_yday = rem / SECSPERDAY;
+    tmPtr->tm_yday = rem / SECSPERDAY;
     rem %= SECSPERDAY;
     
     /*
      * Compute the time of day.
      */
 
-    tm.tm_hour = rem / 3600;
+    tmPtr->tm_hour = rem / 3600;
     rem %= 3600;
-    tm.tm_min = rem / 60;
-    tm.tm_sec = rem % 60;
+    tmPtr->tm_min = rem / 60;
+    tmPtr->tm_sec = rem % 60;
 
     /*
      * Compute the month and day of month.
      */
 
     days = (isLeap) ? leapDays : normalDays;
-    for (tmp = 1; days[tmp] < tm.tm_yday; tmp++) {
+    for (tmp = 1; days[tmp] < tmPtr->tm_yday; tmp++) {
     }
-    tm.tm_mon = --tmp;
-    tm.tm_mday = tm.tm_yday - days[tmp];
+    tmPtr->tm_mon = --tmp;
+    tmPtr->tm_mday = tmPtr->tm_yday - days[tmp];
 
     /*
      * Compute day of week.  Epoch started on a Thursday.
      */
 
-    tm.tm_wday = (*tp / SECSPERDAY) + 4;
+    tmPtr->tm_wday = (*tp / SECSPERDAY) + 4;
     if ((*tp % SECSPERDAY) < 0) {
-	tm.tm_wday--;
+	tmPtr->tm_wday--;
     }
-    tm.tm_wday %= 7;
-    if (tm.tm_wday < 0) {
-	tm.tm_wday += 7;
+    tmPtr->tm_wday %= 7;
+    if (tmPtr->tm_wday < 0) {
+	tmPtr->tm_wday += 7;
     }
 
-    return &tm;
+    return tmPtr;
 }

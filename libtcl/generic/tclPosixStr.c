@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclPosixStr.c 1.33 97/10/08 12:40:12
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -336,7 +336,7 @@ Tcl_ErrnoId()
 #ifdef ENXIO
 	case ENXIO: return "ENXIO";
 #endif
-#ifdef EOPNOTSUPP
+#if defined(EOPNOTSUPP) &&  (!defined(ENOTSUP) || (ENOTSUP != EOPNOTSUPP))
 	case EOPNOTSUPP: return "EOPNOTSUPP";
 #endif
 #ifdef EPERM
@@ -736,7 +736,7 @@ Tcl_ErrnoMsg(err)
 	case ENOPKG: return "package not installed";
 #endif
 #ifdef ENOPROTOOPT
-	case ENOPROTOOPT: return "bad proocol option";
+	case ENOPROTOOPT: return "bad protocol option";
 #endif
 #ifdef ENOSPC
 	case ENOSPC: return "no space left on device";
@@ -783,7 +783,7 @@ Tcl_ErrnoMsg(err)
 #ifdef ENXIO
 	case ENXIO: return "no such device or address";
 #endif
-#ifdef EOPNOTSUPP
+#if defined(EOPNOTSUPP) &&  (!defined(ENOTSUP) || (ENOTSUP != EOPNOTSUPP))
 	case EOPNOTSUPP: return "operation not supported on socket";
 #endif
 #ifdef EPERM

@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" SCCS: @(#) registry.n 1.5 97/08/11 19:33:27
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH registry n 8.0 Tcl "Tcl Built-In Commands"
@@ -39,8 +39,11 @@ one of the following forms:
 \fIHostname\fR specifies the name of any valid Windows
 host that exports its registry.  The \fIrootname\fR component must be
 one of \fBHKEY_LOCAL_MACHINE\fR, \fBHKEY_USERS\fR,
-\fBHKEY_CLASSES_ROOT\fR, \fBHKEY_CURRENT_USER\fR, or
-\fBHKEY_CURRENT_CONFIG\fR.  The \fIkeypath\fR can be one or more
+.VS
+\fBHKEY_CLASSES_ROOT\fR, \fBHKEY_CURRENT_USER\fR,
+\fBHKEY_CURRENT_CONFIG\fR, \fBHKEY_PERFORMANCE_DATA\fR, or
+\fBHKEY_DYN_DATA\fR.  The \fIkeypath\fR can be one or more
+.VE
 registry key names separated by backslash (\fB\e\fR) characters.
 .PP
 \fIOption\fR indicates what to do with the registry key name.  Any
@@ -109,7 +112,6 @@ registry command:
 .
 The registry value contains arbitrary binary data.  The data is represented
 exactly in Tcl, including any embedded nulls.
-Tcl 
 .TP
 \fBnone\fR
 .

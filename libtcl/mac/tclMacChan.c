@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacChan.c 1.43 97/06/20 11:27:48
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -25,12 +25,6 @@
 #include <MoreFiles.h>
 #include <MoreFilesExtras.h>
 
-/*
- * The following variable is used to tell whether this module has been
- * initialized.
- */
-
-static int initialized = 0;
 
 /*
  * The following are flags returned by GetOpenMode.  They
@@ -66,12 +60,16 @@ typedef struct FileState {
     struct FileState *nextPtr;	/* Pointer to next registered file. */
 } FileState;
 
-/*
- * The following pointer refers to the head of the list of files managed
- * that are being watched for file events.
- */
+typedef struct ThreadSpecificData {
+    int initialized;		/* True after the thread initializes */
+    FileState *firstFilePtr;	/* the head of the list of files managed
+				 * that are being watched for file events. */
+    Tcl_Channel stdinChannel;
+    Tcl_Channel stdoutChannel;	/* Note - these seem unused */
+    Tcl_Channel stderrChannel;
+} ThreadSpecificData;
 
-static FileState *firstFilePtr;
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * The following structure is what is added to the Tcl event queue when
@@ -106,7 +104,7 @@ static int		FileClose _ANSI_ARGS_((ClientData instanceData,
 			    Tcl_Interp *interp));
 static int		FileEventProc _ANSI_ARGS_((Tcl_Event *evPtr,
 			    int flags));
-static void		FileInit _ANSI_ARGS_((void));
+static ThreadSpecificData *FileInit _ANSI_ARGS_((void));
 static int		FileInput _ANSI_ARGS_((ClientData instanceData,
 			    char *buf, int toRead, int *errorCode));
 static int		FileOutput _ANSI_ARGS_((ClientData instanceData,
@@ -116,9 +114,9 @@ static int		FileSeek _ANSI_ARGS_((ClientData instanceData,
 static void		FileSetupProc _ANSI_ARGS_((ClientData clientData,
 			    int flags));
 static int		GetOpenMode _ANSI_ARGS_((Tcl_Interp *interp,
-        		    char *string));
-static Tcl_Channel	OpenFileChannel _ANSI_ARGS_((char *fileName, int mode, 
-			    int permissions, int *errorCodePtr));
+        		    CONST char *string));
+static Tcl_Channel	OpenFileChannel _ANSI_ARGS_((CONST char *fileName, 
+			    int mode, int permissions, int *errorCodePtr));
 static int		StdIOBlockMode _ANSI_ARGS_((ClientData instanceData,
 			    int mode));
 static int		StdIOClose _ANSI_ARGS_((ClientData instanceData,
@@ -177,13 +175,6 @@ typedef void (*TclGetStdChannelsProc) _ANSI_ARGS_((Tcl_Channel *stdinPtr,
 	
 TclGetStdChannelsProc getStdChannelsProc = NULL;
 
-/*
- * Static variables to hold channels for stdin, stdout and stderr.
- */
-
-static Tcl_Channel stdinChannel = NULL;
-static Tcl_Channel stdoutChannel = NULL;
-static Tcl_Channel stderrChannel = NULL;
 
 /*
  *----------------------------------------------------------------------
@@ -201,13 +192,18 @@ static Tcl_Channel stderrChannel = NULL;
  *----------------------------------------------------------------------
  */
 
-static void
+static ThreadSpecificData *
 FileInit()
 {
-    initialized = 1;
-    firstFilePtr = NULL;
-    Tcl_CreateEventSource(FileSetupProc, FileCheckProc, NULL);
-    Tcl_CreateExitHandler(FileChannelExitHandler, NULL);
+    ThreadSpecificData *tsdPtr =
+	(ThreadSpecificData *)TclThreadDataKeyGet(&dataKey);
+    if (tsdPtr == NULL) {
+	tsdPtr = TCL_TSD_INIT(&dataKey);
+	tsdPtr->firstFilePtr = NULL;
+	Tcl_CreateEventSource(FileSetupProc, FileCheckProc, NULL);
+	Tcl_CreateThreadExitHandler(FileChannelExitHandler, NULL);
+    }
+    return tsdPtr;
 }
 
 /*
@@ -232,7 +228,6 @@ FileChannelExitHandler(
     ClientData clientData)	/* Old window proc */
 {
     Tcl_DeleteEventSource(FileSetupProc, FileCheckProc, NULL);
-    initialized = 0;
 }
 
 /*
@@ -259,6 +254,7 @@ FileSetupProc(
 {
     FileState *infoPtr;
     Tcl_Time blockTime = { 0, 0 };
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     if (!(flags & TCL_FILE_EVENTS)) {
 	return;
@@ -268,7 +264,8 @@ FileSetupProc(
      * Check to see if there is a ready file.  If so, poll.
      */
 
-    for (infoPtr = firstFilePtr; infoPtr != NULL; infoPtr = infoPtr->nextPtr) {
+    for (infoPtr = tsdPtr->firstFilePtr; infoPtr != NULL; 
+	    infoPtr = infoPtr->nextPtr) {
 	if (infoPtr->watchMask) {
 	    Tcl_SetMaxBlockTime(&blockTime);
 	    break;
@@ -302,6 +299,7 @@ FileCheckProc(
     FileState *infoPtr;
     int sentMsg = 0;
     Tcl_Time blockTime = { 0, 0 };
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     if (!(flags & TCL_FILE_EVENTS)) {
 	return;
@@ -313,7 +311,8 @@ FileCheckProc(
      * events).
      */
 
-    for (infoPtr = firstFilePtr; infoPtr != NULL; infoPtr = infoPtr->nextPtr) {
+    for (infoPtr = tsdPtr->firstFilePtr; infoPtr != NULL; 
+	    infoPtr = infoPtr->nextPtr) {
 	if (infoPtr->watchMask && !infoPtr->pending) {
 	    infoPtr->pending = 1;
 	    evPtr = (FileEvent *) ckalloc(sizeof(FileEvent));
@@ -352,6 +351,7 @@ FileEventProc(
 {
     FileEvent *fileEvPtr = (FileEvent *)evPtr;
     FileState *infoPtr;
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     if (!(flags & TCL_FILE_EVENTS)) {
 	return 0;
@@ -364,7 +364,8 @@ FileEventProc(
      * event is in the queue.
      */
 
-    for (infoPtr = firstFilePtr; infoPtr != NULL; infoPtr = infoPtr->nextPtr) {
+    for (infoPtr = tsdPtr->firstFilePtr; infoPtr != NULL; 
+	    infoPtr = infoPtr->nextPtr) {
 	if (fileEvPtr->infoPtr == infoPtr) {
 	    infoPtr->pending = 0;
 	    Tcl_NotifyChannel(infoPtr->fileChan, infoPtr->watchMask);
@@ -428,29 +429,31 @@ StdIOClose(
     Tcl_Interp *interp)		/* Unused. */
 {
     int fd, errorCode = 0;
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     /*
      * Invalidate the stdio cache if necessary.  Note that we assume that
      * the stdio file and channel pointers will become invalid at the same
      * time.
+     * Do not close standard channels while in thread-exit.
      */
 
     fd = (int) ((FileState*)instanceData)->fileRef;
-    if (fd == 0) {
-	fd = 0;
-	stdinChannel = NULL;
-    } else if (fd == 1) {
-	stdoutChannel = NULL;
-    } else if (fd == 2) {
-	stderrChannel = NULL;
-    } else {
-	panic("recieved invalid std file");
+    if (!TclInExit()) {
+	if (fd == 0) {
+	    tsdPtr->stdinChannel = NULL;
+	} else if (fd == 1) {
+	    tsdPtr->stdoutChannel = NULL;
+	} else if (fd == 2) {
+	    tsdPtr->stderrChannel = NULL;
+	} else {
+	    panic("recieved invalid std file");
+	}
+    
+	if (close(fd) < 0) {
+	    errorCode = errno;
+	}
     }
-
-    if (close(fd) < 0) {
-	errorCode = errno;
-    }
-
     return errorCode;
 }
 
@@ -459,7 +462,7 @@ StdIOClose(
  *
  * CommonGetHandle --
  *
- *	Called from Tcl_GetChannelFile to retrieve OS handles from inside
+ *	Called from Tcl_GetChannelHandle to retrieve OS handles from inside
  *	a file based channel.
  *
  * Results:
@@ -642,7 +645,7 @@ Tcl_PidObjCmd(dummy, interp, objc, objv)
 	sprintf(buf, "0x%08x%08x", psn.highLongOfPSN, psn.lowLongOfPSN);
         Tcl_SetStringObj(resultPtr, buf, -1);
     } else {
-        chan = Tcl_GetChannel(interp, Tcl_GetStringFromObj(objv[1], NULL),
+        chan = Tcl_GetChannel(interp, Tcl_GetString(objv[1]),
                 NULL);
         if (chan == (Tcl_Channel) NULL) {
             return TCL_ERROR;
@@ -659,7 +662,7 @@ Tcl_PidObjCmd(dummy, interp, objc, objv)
 /*
  *----------------------------------------------------------------------
  *
- * TclGetDefaultStdChannel --
+ * TclpGetDefaultStdChannel --
  *
  *	Constructs a channel for the specified standard OS handle.
  *
@@ -674,14 +677,14 @@ Tcl_PidObjCmd(dummy, interp, objc, objv)
  */
 
 Tcl_Channel
-TclGetDefaultStdChannel(
+TclpGetDefaultStdChannel(
     int type)			/* One of TCL_STDIN, TCL_STDOUT, TCL_STDERR. */
 {
     Tcl_Channel channel = NULL;
     int fd = 0;			/* Initializations needed to prevent */
     int mode = 0;		/* compiler warning (used before set). */
     char *bufMode = NULL;
-    char channelName[20];
+    char channelName[16 + TCL_INTEGER_SPACE];
     int channelPermissions;
     FileState *fileState;
 
@@ -731,7 +734,7 @@ TclGetDefaultStdChannel(
 /*
  *----------------------------------------------------------------------
  *
- * Tcl_OpenFileChannel --
+ * TclpOpenFileChannel --
  *
  *	Open an File based channel on Unix systems.
  *
@@ -747,7 +750,7 @@ TclGetDefaultStdChannel(
  */
 
 Tcl_Channel
-Tcl_OpenFileChannel(
+TclpOpenFileChannel(
     Tcl_Interp *interp,			/* Interpreter for error reporting;
                                          * can be NULL. */
     char *fileName,			/* Name of file to open. */
@@ -759,8 +762,8 @@ Tcl_OpenFileChannel(
 {
     Tcl_Channel chan;
     int mode;
-    char *nativeName;
-    Tcl_DString buffer;
+    char *native;
+    Tcl_DString ds, buffer;
     int errorCode;
     
     mode = GetOpenMode(interp, modeString);
@@ -768,12 +771,13 @@ Tcl_OpenFileChannel(
 	return NULL;
     }
 
-    nativeName = Tcl_TranslateFileName(interp, fileName, &buffer);
-    if (nativeName == NULL) {
+    if (Tcl_TranslateFileName(interp, fileName, &buffer) == NULL) {
 	return NULL;
     }
-
-    chan = OpenFileChannel(nativeName, mode, permissions, &errorCode);
+    native = Tcl_UtfToExternalDString(NULL, Tcl_DStringValue(&buffer), 
+    	    Tcl_DStringLength(&buffer), &ds);
+    chan = OpenFileChannel(native, mode, permissions, &errorCode);
+    Tcl_DStringFree(&ds);
     Tcl_DStringFree(&buffer);
 
     if (chan == NULL) {
@@ -806,7 +810,7 @@ Tcl_OpenFileChannel(
 
 static Tcl_Channel
 OpenFileChannel(
-    char *fileName,			/* Name of file to open. */
+    CONST char *fileName,		/* Name of file to open (native). */
     int mode,				/* Mode for opening file. */
     int permissions,			/* If the open involves creating a
                                          * file, with what modes to create
@@ -820,7 +824,7 @@ OpenFileChannel(
     OSErr err;
     short fileRef;
     FileState *fileState;
-    char channelName[64];
+    char channelName[16 + TCL_INTEGER_SPACE];
     
     /*
      * Note we use fsRdWrShPerm instead of fsRdWrPerm which allows shared
@@ -916,6 +920,35 @@ OpenFileChannel(
     }
     
     return chan;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_MakeFileChannel --
+ *
+ *	Makes a Tcl_Channel from an existing OS level file handle.
+ *
+ * Results:
+ *	The Tcl_Channel created around the preexisting OS level file handle.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tcl_Channel
+Tcl_MakeFileChannel(handle, mode)
+    ClientData handle;		/* OS level handle. */
+    int mode;			/* ORed combination of TCL_READABLE and
+                                 * TCL_WRITABLE to indicate file mode. */
+{
+    /*
+     * Not implemented yet.
+     */
+
+    return NULL;
 }
 
 /*
@@ -1190,16 +1223,15 @@ CommonWatch(
     FileState **nextPtrPtr, *ptr;
     FileState *infoPtr = (FileState *) instanceData;
     int oldMask = infoPtr->watchMask;
+    ThreadSpecificData *tsdPtr;
 
-    if (!initialized) {
-	FileInit();
-    }
+    tsdPtr = FileInit();
 
     infoPtr->watchMask = mask;
     if (infoPtr->watchMask) {
 	if (!oldMask) {
-	    infoPtr->nextPtr = firstFilePtr;
-	    firstFilePtr = infoPtr;
+	    infoPtr->nextPtr = tsdPtr->firstFilePtr;
+	    tsdPtr->firstFilePtr = infoPtr;
 	}
     } else {
 	if (oldMask) {
@@ -1207,7 +1239,7 @@ CommonWatch(
 	     * Remove the file from the list of watched files.
 	     */
 
-	    for (nextPtrPtr = &firstFilePtr, ptr = *nextPtrPtr;
+	    for (nextPtrPtr = &(tsdPtr->firstFilePtr), ptr = *nextPtrPtr;
 		 ptr != NULL;
 		 nextPtrPtr = &ptr->nextPtr, ptr = *nextPtrPtr) {
 		if (infoPtr == ptr) {
@@ -1231,7 +1263,7 @@ CommonWatch(
  *
  * Results:
  *	On success, returns mode to pass to "open". If an error occurs, the
- *	returns -1 and if interp is not NULL, sets interp->result to an
+ *	returns -1 and if interp is not NULL, sets the interp's result to an
  *	error message.
  *
  * Side effects:
@@ -1249,7 +1281,7 @@ static int
 GetOpenMode(
     Tcl_Interp *interp,			/* Interpreter to use for error
 					 * reporting - may be NULL. */
-    char *string)			/* Mode string, e.g. "r+" or
+    CONST char *string)			/* Mode string, e.g. "r+" or
 					 * "RDONLY CREAT". */
 {
     int mode, modeArgc, c, i, gotRW;
@@ -1262,7 +1294,13 @@ GetOpenMode(
      */
 
     mode = 0;
-    if (islower(UCHAR(string[0]))) {
+    /*
+     * Guard against international characters before using byte oriented
+     * routines.
+     */
+
+    if (!(string[0] & 0x80)
+	    && islower(UCHAR(string[0]))) { /* INTL: ISO only. */
 	switch (string[0]) {
 	    case 'r':
 		mode = TCL_RDONLY;

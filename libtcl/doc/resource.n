@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" SCCS: @(#) resource.n 1.4 97/09/10 15:22:18
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH resource n 8.0 Tcl "Tcl Built-In Commands"
@@ -55,7 +55,7 @@ If the \fB-file\fR option is specified then the resource will be
 deleted from the file pointed to by \fIresourceRef\fR.  Otherwise the
 first resource with the given \fIresourceName\fR and or
 \fIresourceId\fR which is found on the resource file path will be 
-deleted.  To inspect the file path, use the \fIresource files\fB command.
+deleted.  To inspect the file path, use the \fIresource files\fR command.
 .RE
 .TP
 \fBresource files ?\fIresourceRef\fR?
@@ -75,8 +75,8 @@ A Tcl list of either the resource name's or resource id's of the found
 resources will be returned.  See the RESOURCE IDS section below for
 more details about what a resource id is.
 .TP
-\fBresource open \fIfileName\fR ?\fIpermissions\fR?
-Open the resource for the file \fIfileName\fR.  Standard file
+\fBresource open \fIfileName\fR ?\fIaccess\fR?
+Open the resource for the file \fIfileName\fR.  Standard file access
 permissions may also be specified (see the manual entry for \fBopen\fR
 for details).  A resource reference (\fIresourceRef\fR) is returned
 that can be used by the other resource commands.  An error can occur

@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) array.n 1.9 97/10/29 14:10:13
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH array n 7.4 Tcl "Tcl Built-In Commands"
@@ -58,14 +58,14 @@ array element.  The order of the pairs is undefined.
 If \fIpattern\fR is not specified, then all of the elements of the
 array are included in the result.
 If \fIpattern\fR is specified, then only those elements whose names
-match \fIpattern\fR (using the glob-style matching rules of
+match \fIpattern\fR (using the matching rules of
 \fBstring match\fR) are included.
 If \fIarrayName\fR isn't the name of an array variable, or if
 the array contains no elements, then an empty list is returned.
 .TP
 \fBarray names \fIarrayName\fR ?\fIpattern\fR?
 Returns a list containing the names of all of the elements in
-the array that match \fIpattern\fR (using the glob-style matching
+the array that match \fIpattern\fR (using the matching
 rules of \fBstring match\fR).
 If \fIpattern\fR is omitted then the command returns all of
 the element names in the array.

@@ -9,7 +9,7 @@
  * software without specific written prior permission. This software
  * is provided ``as is'' without express or implied warranty.
  *
- * SCCS: @(#) tmpnam.c 1.3 96/02/15 12:08:25
+ * RCS: @(#) $Id$
  */
 
 #include <sys/param.h>

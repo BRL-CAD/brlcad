@@ -1,8 +1,14 @@
+Tcl UNIX README
+---------------
+
 This is the directory where you configure, compile, test, and install
 UNIX versions of Tcl.  This directory also contains source files for Tcl
 that are specific to UNIX.  Some of the files in this directory are
 used on the PC or Mac platform too, but they all depend on UNIX
 (POSIX/ANSI C) interfaces and some of them only make sense under UNIX.
+
+Updated forms of the information found in this file is available at:
+    http://www.scriptics.com/support/howto/compile.html#unix
 
 The rest of this file contains instructions on how to do this.  The
 release should compile and run either "out of the box" or with trivial
@@ -12,7 +18,7 @@ SGI, as well as PCs running Linux, BSDI, and SCO UNIX.  To compile for
 a PC running Windows, see the README file in the directory ../win.  To
 compile for a Macintosh, see the README file in the directory ../mac.
 
-SCCS: @(#) README 1.15 96/12/19 14:02:23
+RCS: @(#) $Id$
 
 How To Compile And Install Tcl:
 -------------------------------
@@ -24,7 +30,17 @@ How To Compile And Install Tcl:
     platform, or if you have applied patches, type "make distclean" to
     discard all the configuration information computed previously.
 
-(c) Type "./configure".  This runs a configuration script created by GNU
+(c) If there is no "configure" script in this directory it is because you
+    are working out of the source repository (i.e., CVS) instead of working
+    from a source distribution.  In this case you need to use "autoconf"
+    to generate the configure script.  It runs with no arguments.
+    Remember to run it here and down in the dltest directory.
+
+    (in the tcl/unix directory)
+    autoconf
+    cd dltest ; autoconf ; cd ..
+
+(d) Type "./configure".  This runs a configuration script created by GNU
     autoconf, which configures Tcl for your system and creates a
     Makefile.  The configure script allows you to customize the Tcl
     configuration for your site; for details on how you can do this,
@@ -37,6 +53,8 @@ How To Compile And Install Tcl:
 				Makefile to use gcc after configure is run;
 				if you do this, then information related to
 				dynamic linking will be incorrect.
+	--enable-threads	If this switch is set, Tcl will compile
+				itself with multithreading support.
 	--disable-load		If this switch is specified then Tcl will
 				configure itself not to allow dynamic loading,
 				even if your system appears to support it.
@@ -49,11 +67,11 @@ How To Compile And Install Tcl:
     Note: be sure to use only absolute path names (those starting with "/")
     in the --prefix and --exec_prefix options.
 
-(d) Type "make".  This will create a library archive called "libtcl.a"
+(e) Type "make".  This will create a library archive called "libtcl.a"
     or "libtcl.so" and an interpreter application called "tclsh" that
     allows you to type Tcl commands interactively or execute script files.
 
-(e) If the make fails then you'll have to personalize the Makefile
+(f) If the make fails then you'll have to personalize the Makefile
     for your site or possibly modify the distribution in other ways.
     First check the file "porting.notes" to see if there are hints
     for compiling on your system.  Then look at the porting Web page
@@ -61,7 +79,7 @@ How To Compile And Install Tcl:
     are comments at the beginning of it that describe the things you
     might want to change and how to change them.
 
-(f) Type "make install" to install Tcl binaries and script files in
+(g) Type "make install" to install Tcl binaries and script files in
     standard places.  You'll need write permission on the installation
     directories to do this.  The installation directories are
     determined by the "configure" script and may be specified with
@@ -70,27 +88,24 @@ How To Compile And Install Tcl:
     can override these choices by modifying the "prefix" and
     "exec_prefix" variables in the Makefile.
 
-(g) At this point you can play with Tcl by invoking the "tclsh"
+(h) At this point you can play with Tcl by invoking the "tclsh"
     program and typing Tcl commands.  However, if you haven't installed
     Tcl then you'll first need to set your TCL_LIBRARY variable to
     hold the full path name of the "library" subdirectory.  Note that
     the installed versions of tclsh, libtcl.a, and libtcl.so have a
-    version number in their names, such as "tclsh8.0" or "libtcl8.0.so";
+    version number in their names, such as "tclsh8.2" or "libtcl8.2.so";
     to use the installed versions, either specify the version number
-    or create a symbolic link (e.g. from "tclsh" to "tclsh8.0").
+    or create a symbolic link (e.g. from "tclsh" to "tclsh8.2").
 
-If you have trouble compiling Tcl, read through the file" porting.notes".
-It contains information that people have provided about changes they had
-to make to compile Tcl in various environments.  Or, check out the
-following Web URL:
-    http://www.sunlabs.com/cgi-bin/tcl/info.8.0
-This is an on-line database of porting information.  We make no guarantees
-that this information is accurate, complete, or up-to-date, but you may
-find it useful.  If you get Tcl running on a new configuration, we would
-be happy to receive new information to add to "porting.notes".  You can
-also make a new entry into the on-line Web database.  We're also interested
-in hearing how to change the configuration setup so that Tcl compiles out
-of the box on more platforms.
+If you have trouble compiling Tcl, check out the following Web URL:
+    http://www.scriptics.com/software/install.html#Database
+This is an on-line database of porting information.  We make no
+guarantees that this information is accurate, complete, or up-to-date,
+but you may find it useful.  If you get Tcl running on a new
+configuration, we would be happy to receive new information to add to
+the database.  We're also interested in hearing how to change the
+configuration setup so that Tcl compiles out of the box on more
+platforms.
 
 Test suite
 ----------

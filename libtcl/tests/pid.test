@@ -6,20 +6,25 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1995 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) pid.test 1.12 96/04/12 11:14:43
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 # If pid is not defined just return with no error
 # Some platforms may not have the pid command implemented
 if {[info commands pid] == ""} {
     puts "pid is not implemented for this machine"
+    ::tcltest::cleanupTests
     return
 }
-
-if {[string compare test [info procs test]] == 1} then {source defs}
 
 catch {removeFile test1}
 
@@ -48,5 +53,19 @@ test pid-1.5 {pid command} {
     list [catch {pid gorp} msg] $msg
 } {1 {can not find channel named "gorp"}}
 
-catch {removeFile test1}
-concat {}
+# cleanup
+catch {::tcltest::removeFile test1}
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

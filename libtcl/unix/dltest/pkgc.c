@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) pkgc.c 1.4 96/02/15 12:30:35
+ * RCS: @(#) $Id$
  */
 #include "tcl.h"
 
@@ -114,6 +114,9 @@ Pkgc_Init(interp)
 {
     int code;
 
+    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
+	return TCL_ERROR;
+    }
     code = Tcl_PkgProvide(interp, "Pkgc", "1.7.2");
     if (code != TCL_OK) {
 	return code;
@@ -147,6 +150,9 @@ Pkgc_SafeInit(interp)
     Tcl_Interp *interp;		/* Interpreter in which the package is
 				 * to be made available. */
 {
+    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
+	return TCL_ERROR;
+    }
     Tcl_CreateCommand(interp, "pkgc_sub", Pkgc_SubCmd, (ClientData) 0,
 	    (Tcl_CmdDeleteProc *) NULL);
     return TCL_OK;

@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) tclvars.n 1.34 97/08/22 18:51:04
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH tclvars n 8.0 Tcl "Tcl Built-In Commands"
@@ -219,20 +219,20 @@ command.
 .TP
 \fBtcl_pkgPath\fR
 This variable holds a list of directories indicating where packages are
-normally installed.  It typically contains either one or two entries; 
-if it contains two entries, the first is normally a directory for
-platform-dependent packages (e.g., shared library binaries) and the
-second is normally a directory for platform-independent packages (e.g.,
-script files). Typically a package is installed as a subdirectory of one
-of the entries in \fB$tcl_pkgPath\fR. The directories in
-\fB$tcl_pkgPath\fR are included by default in the \fBauto_path\fR
+normally installed.  It is not used on Windows.  It typically contains
+either one or two entries; if it contains two entries, the first is
+normally a directory for platform-dependent packages (e.g., shared library
+binaries) and the second is normally a directory for platform-independent
+packages (e.g., script files). Typically a package is installed as a
+subdirectory of one of the entries in \fB$tcl_pkgPath\fR. The directories
+in \fB$tcl_pkgPath\fR are included by default in the \fBauto_path\fR
 variable, so they and their immediate subdirectories are automatically
 searched for packages during \fBpackage require\fR commands.  Note:
-\fBtcl_pkgPath\fR it not intended to be modified by the application.
-Its value is added to \fBauto_path\fR at startup; changes to
-\fBtcl_pkgPath\fR are not reflected in \fBauto_path\fR.  If you
-want Tcl to search additional directories for packages you should add
-the names of those directories to \fBauto_path\fR, not \fBtcl_pkgPath\fR.
+\fBtcl_pkgPath\fR it not intended to be modified by the application.  Its
+value is added to \fBauto_path\fR at startup; changes to \fBtcl_pkgPath\fR
+are not reflected in \fBauto_path\fR.  If you want Tcl to search additional
+directories for packages you should add the names of those directories to
+\fBauto_path\fR, not \fBtcl_pkgPath\fR.
 .VE
 .TP
 \fBtcl_platform\fR
@@ -244,6 +244,11 @@ be defined, but they may have empty strings as values if Tcl couldn't
 retrieve any relevant information.  In addition, extensions
 and applications may add additional values to the array.  The
 predefined elements are:
+
+
+
+
+
 .RS
 .VS
 .TP
@@ -252,6 +257,12 @@ The native byte order of this machine: either \fBlittleEndian\fR or
 \fBbigEndian\fR. 
 .VE
 .TP
+\fBdebug\fR
+If this variable exists, then the interpreter
+was compiled with debugging symbols enabled.  This varible will only
+exist on Windows so extension writers can specify which package to load
+depending on the C run-time library that is loaded.
+.TP
 \fBmachine\fR
 The instruction set executed by this machine, such as
 \fBintel\fR, \fBPPC\fR, \fB68k\fR, or \fBsun4m\fR.  On UNIX machines, this
@@ -259,16 +270,31 @@ is the value returned by \fBuname -m\fR.
 .TP
 \fBos\fR 
 The name of the operating system running on this machine,
-such as \fBWin32s\fR, \fBWindows NT\fR, \fBMacOS\fR, or \fBSunOS\fR.
+such as \fBWindows 95\fR, \fBWindows NT\fR, \fBMacOS\fR, or \fBSunOS\fR.
 On UNIX machines, this is the value returned by \fBuname -s\fR.
+On Windows 95 and Windows 98, the value returned will be \fBWindows
+95\fR to provide better backwards compatibility to Windows 95; to
+distinguish between the two, check the \fBosVersion\fR.
 .TP
 \fBosVersion\fR
 The version number for the operating system running on this machine.
-On UNIX machines, this is the value returned by \fBuname -r\fR.
+On UNIX machines, this is the value returned by \fBuname -r\fR.  On
+Windows 95, the version will be 4.0; on Windows 98, the version will
+be 4.10.
 .TP
 \fBplatform\fR
 Either \fBwindows\fR, \fBmacintosh\fR, or \fBunix\fR.  This identifies the
 general operating environment of the machine.
+.TP
+\fBthreaded\fR
+If this variable exists, then the interpreter
+was compiled with threads enabled.
+.TP
+\fBuser\fR
+This identifies the
+current user based on the login information available on the platform.
+This comes from the USER or LOGNAME environment variable on Unix,
+and the value from GetUserName on Windows and Macintosh.
 .RE
 .TP
 \fBtcl_precision\fR

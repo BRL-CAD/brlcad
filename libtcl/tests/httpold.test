@@ -6,28 +6,35 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) http.test 1.12 97/07/29 17:04:12
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
-
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 if {[catch {package require http 1.0}]} {
     if {[info exist httpold]} {
-	catch {puts stderr "Cannot load http 1.0 package"}
+	catch {puts "Cannot load http 1.0 package"}
+	::tcltest::cleanupTests
 	return
     } else {
-	catch {puts stderr "Running http 1.0 tests in slave interp"}
+	catch {puts "Running http 1.0 tests in slave interp"}
 	set interp [interp create httpold]
 	$interp eval [list set httpold "running"]
 	$interp eval [list source [info script]]
 	interp delete $interp
+	::tcltest::cleanupTests
 	return
     }
 }
+
+catch {unset data}
 
 ############### The httpd_ procedures implement a stub http server. ########
 proc httpd_init {{port 8015}} {
@@ -36,7 +43,7 @@ proc httpd_init {{port 8015}} {
 proc httpd_log {args} {
     global httpLog
     if {[info exists httpLog] && $httpLog} {
-	puts stderr "httpd: [join $args { }]"
+	puts "httpd: [join $args { }]"
     }
 }
 array set httpdErrors {
@@ -72,6 +79,7 @@ proc httpdRead { sock } {
 	if [regexp {(POST|GET|HEAD) ([^?]+)\??([^ ]*) HTTP/1.0} \
 		$line x data(proto) data(url) data(query)] {
 	    set data(state) mime
+	    after 10
 	    httpd_log $sock Query $line
 	} else {
 	    httpdError $sock 400
@@ -145,6 +153,14 @@ proc httpdRespond { sock } {
 	    append html "<h2>Query</h2>\n<dl>\n"
 	    foreach {key value} [split $data(query) &=] {
 		append html "<dt>$key<dd>$value\n"
+		if {[string compare $key timeout] == 0} {
+		    # Simulate a timeout by not responding,
+		    # but clean up our socket later.
+
+		    after 50 [list httpdSockDone $sock]
+		    httpd_log $sock Noresponse ""
+		    return
+		}
 	    }
 	    append html </dl>\n
 	}
@@ -171,8 +187,9 @@ proc httpdRespond { sock } {
 
 set port 8010
 if [catch {httpd_init $port} listen] {
-    puts stderr "Cannot start http server, http test skipped"
+    puts "Cannot start http server, http test skipped"
     unset port
+    ::tcltest::cleanupTests
     return
 }
 
@@ -376,10 +393,12 @@ test http-4.11 {httpEvent} {
 } {reset}
 test http-4.12 {httpEvent} {
     update
-    set token [http_get $url -timeout 1 -command {#}]
-    update
-    http_status $token
-} {timeout}
+    set x {}
+    after 500 {lappend x ok}
+    set token [http_get $url -timeout 1 -command {lappend x fail}]
+    vwait x
+    list [http_status $token] $x
+} {timeout ok}
 
 test http-5.1 {http_formatQuery} {
     http_formatQuery name1 value1 name2 "value two"
@@ -406,6 +425,22 @@ test http-6.1 {httpProxyRequired} {
 <h2>GET http://$url</h2>
 </body></html>"
 
-unset url
-unset port
+# cleanup
+catch {unset url}
+catch {unset port}
+catch {unset data}
 close $listen
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

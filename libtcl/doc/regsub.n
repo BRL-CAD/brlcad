@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) regsub.n 1.9 96/08/26 13:00:11
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH regsub n 7.4 Tcl "Tcl Built-In Commands"
@@ -23,6 +23,8 @@ This command matches the regular expression \fIexp\fR against
 \fIstring\fR,
 and it copies \fIstring\fR to the variable whose name is
 given by \fIvarName\fR.
+(Regular expression matching is described in the \fBre_syntax\fR
+reference page.)
 If there is a match, then while copying \fIstring\fR to \fIvarName\fR
 the portion of \fIstring\fR that
 matched \fIexp\fR is replaced with \fIsubSpec\fR.

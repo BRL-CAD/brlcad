@@ -19,7 +19,7 @@
  *           compiler other than Visual C++.
  *----------------------------------------------------------------------
  *
- * SCCS: @(#) winDumpExts.c 1.11 96/09/18 15:25:11
+ * RCS: @(#) $Id$
  */
 
 #include <windows.h>
@@ -236,8 +236,14 @@ DumpExternals(PIMAGE_SYMBOL pSymbolTable, FILE *fout, unsigned cSymbols)
 		    strcpy(symbol, s);
 		}
 		s = symbol;
-		f = strchr(s, '@');
-		if (f) {
+
+		/*
+		 * Skip to the last @ and ensure it is followed by digits,
+		 * otherwise it is probably part of a C++ mangled name.
+		 */
+
+		f = strrchr(s, '@');
+		if (f && f[1] >= '0' && f[1] <= '9') {
 		    *f = 0;
 		}
 #if defined(_MSC_VER) && defined(_X86_)
@@ -468,10 +474,6 @@ main(int argc, char **argv)
 	if (arg == argc) {
 	    goto Usage;
 	}
-	fprintf(fout, "LIBRARY    %s\n", dllname);
-	fprintf(fout, "EXETYPE WINDOWS\n");
-	fprintf(fout, "CODE PRELOAD MOVEABLE DISCARDABLE\n");
-	fprintf(fout, "DATA PRELOAD MOVEABLE MULTIPLE\n\n");
 	fprintf(fout, "EXPORTS\n");
     }
 

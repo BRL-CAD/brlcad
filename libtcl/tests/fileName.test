@@ -5,17 +5,22 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1995-1996 Sun Microsystems, Inc.
+# Copyright (c) 1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) fileName.test 1.31 97/08/19 18:45:07
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 if {[info commands testsetplatform] == {}} {
     puts "This application hasn't been compiled with the \"testsetplatform\""
     puts "command, so I can't test the filename conversion procedures."
+    ::tcltest::cleanupTests
     return 
 } 
 
@@ -1028,11 +1033,11 @@ test filename-10.22 {Tcl_TranslateFileName} {
 
 testsetplatform $platform
 
-test filename-10.23 {Tcl_TranslateFileName} {nonPortable unixOnly} {
+test filename-10.23 {Tcl_TranslateFileName} {unixOnly nonPortable} {
     # this test fails if ~ouster is not /home/ouster
     list [catch {testtranslatefilename ~ouster} msg] $msg
 } {0 /home/ouster}
-test filename-10.24 {Tcl_TranslateFileName} {nonPortable unixOnly} {
+test filename-10.24 {Tcl_TranslateFileName} {unixOnly nonPortable} {
     # this test fails if ~ouster is not /home/ouster
     list [catch {testtranslatefilename ~ouster/foo} msg] $msg
 } {0 /home/ouster/foo}
@@ -1103,10 +1108,6 @@ close [open "globTest/weird name.c" w]
 close [open globTest/a1/b1/x2.c w]
 close [open globTest/a1/b2/y2.c w]
 
-# Cannot create a file with the following names under Win32s.  We have to
-# skip the tests that are checking the difference between a "." or "," in
-# the file name vs. a "." or "," in the glob pattern.
-
 catch {close [open globTest/.1 w]}
 catch {close [open globTest/x,z1.c w]}
 
@@ -1171,13 +1172,13 @@ test filename-13.7 {globbing with brace substitution} {
 test filename-13.8 {globbing with brace substitution} {
     list [catch {glob globTest/\{x\{\}\}1.c} msg] $msg
 } "0 $globPreResult$x1"
-test filename-13.9 {globbing with brace substitution} {!win32s} {
+test filename-13.9 {globbing with brace substitution} {
     list [lsort [catch {glob globTest/\{x,y\}1.c} msg]] $msg
 } [list 0 [list $globPreResult$x1 $globPreResult$y1]]
-test filename-13.10 {globbing with brace substitution} {!win32s} {
+test filename-13.10 {globbing with brace substitution} {
     list [lsort [catch {glob globTest/\{x,,y\}1.c} msg]] $msg
 } [list 0 [list $globPreResult$x1 $globPreResult$y1]]
-test filename-13.11 {globbing with brace substitution} {unixOrPc && !win32s} {
+test filename-13.11 {globbing with brace substitution} {unixOrPc} {
     list [lsort [catch {glob globTest/\{x,x\\,z,z\}1.c} msg]] $msg
 } {0 {globTest/x1.c globTest/x,z1.c globTest/z1.c}}
 test filename-13.12 {globbing with brace substitution} {macOnly} {
@@ -1214,12 +1215,9 @@ test filename-13.22 {globbing with brace substitution} {
     list [catch {glob globTest/\{a,x\}1/*/\{} msg] $msg
 } {1 {unmatched open-brace in file name}}
 
-test filename-14.1 {asterisks, question marks, and brackets} {unixOrPc && !win32s} {
+test filename-14.1 {asterisks, question marks, and brackets} {unixOrPc} {
     lsort [glob g*/*.c]
 } {{globTest/weird name.c} globTest/x,z1.c globTest/x1.c globTest/y1.c globTest/z1.c}
-test filename-14.1 {asterisks, question marks, and brackets} {win32s} {
-    lsort [glob g*/*.c]
-} {globtest/weirdn~1.c globtest/x1.c globtest/y1.c globtest/z1.c}
 test filename-14.2 {asterisks, question marks, and brackets} {macOnly} {
     lsort [glob g*/*.c]
 } {{:globTest:weird name.c} :globTest:x,z1.c :globTest:x1.c :globTest:y1.c :globTest:z1.c}
@@ -1229,30 +1227,21 @@ test filename-14.3 {asterisks, question marks, and brackets} {unixOrPc} {
 test filename-14.4 {asterisks, question marks, and brackets} {macOnly} {
     lsort [glob globTest/?1.c]
 } {:globTest:x1.c :globTest:y1.c :globTest:z1.c}
-test filename-14.5 {asterisks, question marks, and brackets} {unixOrPc && !win32s} {
+test filename-14.5 {asterisks, question marks, and brackets} {unixOrPc} {
     lsort [glob */*/*/*.c]
 } {globTest/a1/b1/x2.c globTest/a1/b2/y2.c}
-test filename-14.5 {asterisks, question marks, and brackets} {win32s} {
-    lsort [glob */*/*/*.c]
-} {globtest/a1/b1/x2.c globtest/a1/b2/y2.c}
 test filename-14.6 {asterisks, question marks, and brackets} {macOnly} {
     lsort [glob */*/*/*.c]
 } {:globTest:a1:b1:x2.c :globTest:a1:b2:y2.c}
-test filename-14.7 {asterisks, question marks, and brackets} {unixOrPc && !win32s} {
+test filename-14.7 {asterisks, question marks, and brackets} {unixOrPc} {
     lsort [glob globTest/*]
 } {globTest/a1 globTest/a2 globTest/a3 {globTest/weird name.c} globTest/x,z1.c globTest/x1.c globTest/y1.c globTest/z1.c}
-test filename-14.7 {asterisks, question marks, and brackets} {win32s} {
-    lsort [glob globTest/*]
-} {globTest/a1 globTest/a2 globTest/a3 globTest/weirdn~1.c globTest/x1.c globTest/y1.c globTest/z1.c}
 test filename-14.8 {asterisks, question marks, and brackets} {macOnly} {
     lsort [glob globTest/*]
 } {:globTest:.1 :globTest:a1 :globTest:a2 :globTest:a3 {:globTest:weird name.c} :globTest:x,z1.c :globTest:x1.c :globTest:y1.c :globTest:z1.c}
-test filename-14.9 {asterisks, question marks, and brackets} {unixOrPc && !win32s} {
+test filename-14.9 {asterisks, question marks, and brackets} {unixOrPc} {
     lsort [glob globTest/.*]
 } {globTest/. globTest/.. globTest/.1}
-test filename-14.9 {asterisks, question marks, and brackets} {win32s} {
-    lsort [glob globTest/.*]
-} {globTest/. globTest/..}
 test filename-14.10 {asterisks, question marks, and brackets} {macOnly} {
     lsort [glob globTest/.*]
 } {:globTest:.1}
@@ -1282,12 +1271,9 @@ test filename-14.17 {asterisks, question marks, and brackets} {
     set env(HOME) $temp
     set result
 } [list 0 [list [file join $env(HOME) globTest z1.c]]]
-test filename-14.18 {asterisks, question marks, and brackets} {unixOrPc && !win32s} {
+test filename-14.18 {asterisks, question marks, and brackets} {unixOrPc} {
     list [catch {lsort [glob globTest/*.c goo/*]} msg] $msg
 } {0 {{globTest/weird name.c} globTest/x,z1.c globTest/x1.c globTest/y1.c globTest/z1.c}}
-test filename-14.18 {asterisks, question marks, and brackets} {win32s} {
-    list [catch {lsort [glob globTest/*.c goo/*]} msg] $msg
-} {0 {globTest/weirdn~1.c globTest/x1.c globTest/y1.c globTest/z1.c}}
 test filename-14.19 {asterisks, question marks, and brackets} {macOnly} {
     list [catch {lsort [glob globTest/*.c goo/*]} msg] $msg
 } {0 {{:globTest:weird name.c} :globTest:x,z1.c :globTest:x1.c :globTest:y1.c :globTest:z1.c}}
@@ -1308,142 +1294,137 @@ test filename-14.24 {slash globbing} {pcOnly} {
 } /
 
 # The following tests are only valid for Unix systems.
+# On some systems, like AFS, "000" protection doesn't prevent
+# access by owner, so the following test is not portable.
 
-if {$tcl_platform(platform) == "unix"} {
-    # On some systems, like AFS, "000" protection doesn't prevent
-    # access by owner, so the following test is not portable.
+catch {exec chmod 000 globTest/a1}
+test filename-15.1 {unix specific globbing} {unixOnly nonPortable} {
+    string tolower [list [catch {glob globTest/a1/*} msg]  $msg $errorCode]
+} {1 {couldn't read directory "globtest/a1": permission denied} {posix eacces {permission denied}}}
+test filename-15.2 {unix specific no complain: no errors} {unixOnly nonPortable} {
+    glob -nocomplain globTest/a1/*
+} {}
+test filename-15.3 {unix specific no complain: no errors, good result} \
+	{unixOnly nonPortable knownBug} {
+    # test fails because if an error occur , the interp's result
+    # is reset...
+    glob -nocomplain globTest/a2 globTest/a1/* globTest/a3
+} {globTest/a2 globTest/a3}
 
-    exec chmod 000 globTest/a1
-    test filename-15.1 {unix specific globbing} {nonPortable} {
-	string tolower [list [catch {glob globTest/a1/*} msg]  $msg $errorCode]
-    } {1 {couldn't read directory "globtest/a1": permission denied} {posix eacces {permission denied}}}
-    test filename-15.2 {unix specific no complain: no errors} {nonPortable} {
-	glob -nocomplain globTest/a1/*
-    } {}
-    test filename-15.3 {unix specific no complain: no errors, good result} {nonPortable knownBug} {
-	# test fails because if an error occur , the interp's result
-	# is reset...
-	glob -nocomplain globTest/a2 globTest/a1/* globTest/a3
-    } {globTest/a2 globTest/a3}
-    exec chmod 755 globTest/a1
-    test filename-15.4 {unix specific no complain: no errors, good result} {nonPortable knownBug} {
-	# test fails because if an error occur , the interp's result
-	# is reset... (or you don't run at sunscript where the
-	# outser and demailly's users exists
-	glob -nocomplain ~ouster ~foo ~demailly
-    } {/home/ouster /home/demailly}
-    test filename-15.5 {unix specific globbing} {nonPortable} {
-	glob ~ouster/.csh*
-    } "/home/ouster/.cshrc"
-    close [open globTest/odd\\\[\]*?\{\}name w]
-    test filename-15.6 {unix specific globbing} {
-	global env
-	set temp $env(HOME)
-	set env(HOME) $env(HOME)/globTest/odd\\\[\]*?\{\}name
-	set result [list [catch {glob ~} msg] $msg]
-	set env(HOME) $temp
-	set result
-    } [list 0 [list [glob ~]/globTest/odd\\\[\]*?\{\}name]]
-    exec rm -f globTest/odd\\\[\]*?\{\}name
-}
+catch {exec chmod 755 globTest/a1}
+test filename-15.4 {unix specific no complain: no errors, good result} \
+	{unixOnly nonPortable knownBug} {
+    # test fails because if an error occurs, the interp's result
+    # is reset... or you don't run at scriptics where the
+    # outser and welch users exists
+    glob -nocomplain ~ouster ~foo ~welch
+} {/home/ouster /home/welch}
+test filename-15.5 {unix specific globbing} {unixOnly nonPortable} {
+    glob ~ouster/.csh*
+} "/home/ouster/.cshrc"
+catch {close [open globTest/odd\\\[\]*?\{\}name w]}
+test filename-15.6 {unix specific globbing} {unixOnly} {
+    global env
+    set temp $env(HOME)
+    set env(HOME) $env(HOME)/globTest/odd\\\[\]*?\{\}name
+    set result [list [catch {glob ~} msg] $msg]
+    set env(HOME) $temp
+    set result
+} [list 0 [list [glob ~]/globTest/odd\\\[\]*?\{\}name]]
+catch {exec rm -f globTest/odd\\\[\]*?\{\}name}
+
 
 # The following tests are only valid for Windows systems.
-
-if {$tcl_platform(platform) == "windows"} {
-    set temp [pwd]
+set temp [pwd]
+catch {cd c:/}
+catch {
     cd c:/
-    catch {
-	removeDirectory globTest
-	makeDirectory globTest
-	close [open globTest/x1.BAT w]
-	close [open globTest/y1.Bat w]
-	close [open globTest/z1.bat w]
-    }
-    
-    test filename-16.1 {windows specific globbing} {!win32s} {
-	lsort [glob globTest/*.bat]
-    } {globTest/x1.BAT globTest/y1.Bat globTest/z1.bat}
-    test filename-16.1 {windows specific globbing} {win32s} {
-	lsort [glob globTest/*.bat]
-    } {globTest/x1.bat globTest/y1.bat globTest/z1.bat}
-    test filename-16.2 {windows specific globbing} {
-	glob c:
-    } c:
-    test filename-16.3 {windows specific globbing} {
-	glob c:\\\\
-	} c:/
-    test filename-16.4 {windows specific globbing} {
-	glob c:/
-    } c:/
-    test filename-16.5 {windows specific globbing} {!win32s} {
-	glob c:*Test
-    } c:globTest
-    test filename-16.5 {windows specific globbing} {win32s} {
-	glob c:*Test
-    } c:globtest
-    test filename-16.6 {windows specific globbing} {!win32s} {
-	glob c:\\\\*Test
-    } c:/globTest
-    test filename-16.6 {windows specific globbing} {win32s} {
-	glob c:\\\\*Test
-    } c:/globtest
-    test filename-16.7 {windows specific globbing} {!win32s} {
-	glob c:/*Test
-    } c:/globTest
-    test filename-16.7 {windows specific globbing} {win32s} {
-	glob c:/*Test
-    } c:/globtest
-    test filename-16.8 {windows specific globbing} {!win32s} {
-	lsort [glob c:globTest/*.bat]
-    } {c:globTest/x1.BAT c:globTest/y1.Bat c:globTest/z1.bat}
-    test filename-16.8 {windows specific globbing} {win32s} {
-	lsort [glob c:globTest/*.bat]
-    } {c:globTest/x1.bat c:globTest/y1.bat c:globTest/z1.bat}
-    test filename-16.9 {windows specific globbing} {!win32s} {
-	lsort [glob c:/globTest/*.bat]
-    } {c:/globTest/x1.BAT c:/globTest/y1.Bat c:/globTest/z1.bat}
-    test filename-16.9 {windows specific globbing} {win32s} {
-	lsort [glob c:/globTest/*.bat]
-    } {c:/globTest/x1.bat c:/globTest/y1.bat c:/globTest/z1.bat}
-    test filename-16.10 {windows specific globbing} {!win32s} {
-	lsort [glob c:globTest\\\\*.bat]
-    } {c:globTest/x1.BAT c:globTest/y1.Bat c:globTest/z1.bat}
-    test filename-16.10 {windows specific globbing} {win32s} {
-	lsort [glob c:globTest\\\\*.bat]
-    } {c:globTest/x1.bat c:globTest/y1.bat c:globTest/z1.bat}
-    test filename-16.11 {windows specific globbing} {!win32s} {
-	lsort [glob c:\\\\globTest\\\\*.bat]
-    } {c:/globTest/x1.BAT c:/globTest/y1.Bat c:/globTest/z1.bat}
-    test filename-16.11 {windows specific globbing} {win32s} {
-	lsort [glob c:\\\\globTest\\\\*.bat]
-    } {c:/globTest/x1.bat c:/globTest/y1.bat c:/globTest/z1.bat}
-
     removeDirectory globTest
-
-    if {($testConfig(nonPortable) != 0) && [catch {cd //gaspode/d}] == 0} {
-	removeDirectory globTest
-	makeDirectory globTest
-
-	close [open globTest/x1.BAT w]
-	close [open globTest/y1.Bat w]
-	close [open globTest/z1.bat w]
-
-	test filename-16.12 {windows specific globbing} {
-	    glob //gaspode/d/*Test
-	} //gaspode/d/globTest
-	test filename-16.13 {windows specific globbing} {
-	    glob {\\\\gaspode\\d\\*Test}
-	} //gaspode/d/globTest
-
-	removeDirectory globTest
-    }	    
-
-    cd $temp
+    makeDirectory globTest
+    close [open globTest/x1.BAT w]
+    close [open globTest/y1.Bat w]
+    close [open globTest/z1.bat w]
 }
 
-removeDirectory globTest
-set env(HOME) $oldhome
+test filename-16.1 {windows specific globbing} {pcOnly} {
+    lsort [glob globTest/*.bat]
+} {globTest/x1.BAT globTest/y1.Bat globTest/z1.bat}
+test filename-16.2 {windows specific globbing} {pcOnly} {
+    glob c:
+} c:
+test filename-16.3 {windows specific globbing} {pcOnly} {
+    glob c:\\\\
+} c:/
+test filename-16.4 {windows specific globbing} {pcOnly} {
+    glob c:/
+} c:/
+test filename-16.5 {windows specific globbing} {pcOnly} {
+    glob c:*Test
+} c:globTest
+test filename-16.6 {windows specific globbing} {pcOnly} {
+    glob c:\\\\*Test
+} c:/globTest
+test filename-16.7 {windows specific globbing} {pcOnly} {
+    glob c:/*Test
+} c:/globTest
+test filename-16.8 {windows specific globbing} {pcOnly} {
+    lsort [glob c:globTest/*.bat]
+} {c:globTest/x1.BAT c:globTest/y1.Bat c:globTest/z1.bat}
+test filename-16.9 {windows specific globbing} {pcOnly} {
+    lsort [glob c:/globTest/*.bat]
+} {c:/globTest/x1.BAT c:/globTest/y1.Bat c:/globTest/z1.bat}
+test filename-16.10 {windows specific globbing} {pcOnly} {
+    lsort [glob c:globTest\\\\*.bat]
+} {c:globTest/x1.BAT c:globTest/y1.Bat c:globTest/z1.bat}
+test filename-16.11 {windows specific globbing} {pcOnly} {
+    lsort [glob c:\\\\globTest\\\\*.bat]
+} {c:/globTest/x1.BAT c:/globTest/y1.Bat c:/globTest/z1.bat}
 
+# some tests require a shared C drive
+
+if {[catch {cd //[info hostname]/c}]} {
+    set ::tcltest::testConstraints(sharedCdrive) 0
+} else {
+    set ::tcltest::testConstraints(sharedCdrive) 1
+}
+
+test filename-16.12 {windows specific globbing} {pcOnly sharedCdrive} {
+    cd //[info hostname]/c
+    removeDirectory globTest
+    makeDirectory globTest
+    close [open globTest/x1.BAT w]
+    close [open globTest/y1.Bat w]
+    close [open globTest/z1.bat w]
+    glob //[info hostname]/c/*Test
+} //[info hostname]/c/globTest
+test filename-16.13 {windows specific globbing} {pcOnly sharedCdrive} {
+    cd //[info hostname]/c
+    removeDirectory globTest
+    makeDirectory globTest
+    close [open globTest/x1.BAT w]
+    close [open globTest/y1.Bat w]
+    close [open globTest/z1.bat w]
+    glob "\\\\\\\\[info hostname]\\\\c\\\\*Test"
+} //[info hostname]/c/globTest
+
+# cleanup
+file delete -force //[info hostname]/c/globTest
+cd $temp
+file delete -force globTest
+set env(HOME) $oldhome
 testsetplatform $platform
 catch {unset oldhome platform temp result}
-concat ""
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

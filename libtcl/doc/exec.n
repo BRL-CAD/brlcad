@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) exec.n 1.17 96/09/18 15:21:17
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH exec n 7.6 Tcl "Tcl Built-In Commands"
@@ -202,10 +202,11 @@ instead of ``applbakery.default'').
 Two or more forward or backward slashes in a row in a path refer to a
 network path.  For example, a simple concatenation of the root directory
 \fBc:/\fR with a subdirectory \fB/windows/system\fR will yield
-\fBc://windows/system\fR (two slashes together), which refers to the
-directory \fB/system\fR on the machine \fBwindows\fR (and the \fBc:/\fR is
-ignored), and is not equivalent to \fBc:/windows/system\fR, which describes
-a directory on the current computer.
+\fBc://windows/system\fR (two slashes together), which refers to the mount
+point called \fBsystem\fR on the machine called \fBwindows\fR (and the
+\fBc:/\fR is ignored), and is not equivalent to \fBc:/windows/system\fR,
+which describes a directory on the current computer.  The \fBfile join\fR
+command should be used to concatenate path components.
 .TP
 \fBWindows NT\fR
 .
@@ -264,7 +265,7 @@ the caller must prepend ``\fBcommand.com /c\0\fR'' to the desired command.
 Once a 16-bit DOS application has read standard input from a console and 
 then quit, all subsequently run 16-bit DOS applications will see the 
 standard input as already closed.  32-bit applications do not have this
-problem and will run correctly even after a 16-bit DOS application thinks 
+problem and will run correctly, even after a 16-bit DOS application thinks 
 that standard input is closed.  There is no known workaround for this bug
 at this time.
 .sp
@@ -282,8 +283,8 @@ other end of the pipe must be closed before the 16-bit DOS application
 begins executing.  All standard output or error from a 16-bit DOS
 application to a pipe is collected into temporary files; the application
 must terminate before the temporary files are redirected to the next stage
-of the pipeline.  This is due to a workaround for a Windows 95 bug in the 
-implementation of pipes, and is how the Windows 95 command line interpreter
+of the pipeline.  This is due to a workaround for a Windows 95 bug in the
+implementation of pipes, and is how the standard Windows 95 DOS shell
 handles pipes itself.
 .sp
 Certain applications, such as \fBcommand.com\fR, should not be executed

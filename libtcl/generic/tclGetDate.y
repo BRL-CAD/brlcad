@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclGetDate.y 1.34 97/02/03 14:53:54
+ * RCS: @(#) $Id$
  */
 
 %{
@@ -250,11 +250,11 @@ date    : tUNUMBER '/' tUNUMBER {
             yyMonth = $2;
             yyDay = $1;
         }
-		  | tEPOCH {
-				yyMonth = 1;
-				yyDay = 1;
-				yyYear = EPOCH;
-		  }
+	| tEPOCH {
+	    yyMonth = 1;
+	    yyDay = 1;
+	    yyYear = EPOCH;
+	}
         | tUNUMBER tMONTH tUNUMBER {
             yyMonth = $2;
             yyDay = $1;
@@ -413,7 +413,8 @@ static TABLE    TimezoneTable[] = {
     { "gmt",    tZONE,     HOUR( 0) },      /* Greenwich Mean */
     { "ut",     tZONE,     HOUR( 0) },      /* Universal (Coordinated) */
     { "utc",    tZONE,     HOUR( 0) },
-    { "wet",    tZONE,     HOUR( 0) } ,     /* Western European */
+    { "uct",    tZONE,     HOUR( 0) },      /* Universal Coordinated Time */
+    { "wet",    tZONE,     HOUR( 0) },      /* Western European */
     { "bst",    tDAYZONE,  HOUR( 0) },      /* British Summer */
     { "wat",    tZONE,     HOUR( 1) },      /* West Africa */
     { "at",     tZONE,     HOUR( 2) },      /* Azores */
@@ -445,6 +446,7 @@ static TABLE    TimezoneTable[] = {
     { "nt",     tZONE,     HOUR(11) },      /* Nome */
     { "idlw",   tZONE,     HOUR(12) },      /* International Date Line West */
     { "cet",    tZONE,    -HOUR( 1) },      /* Central European */
+    { "cest",   tDAYZONE, -HOUR( 1) },      /* Central European Summer */
     { "met",    tZONE,    -HOUR( 1) },      /* Middle European */
     { "mewt",   tZONE,    -HOUR( 1) },      /* Middle European Winter */
     { "mest",   tDAYZONE, -HOUR( 1) },      /* Middle European Summer */
@@ -596,7 +598,7 @@ Convert(Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode, TimePtr)
         return -1;
     Julian += tod;
     if (DSTmode == DSTon
-     || (DSTmode == DSTmaybe && TclpGetDate(&Julian, 0)->tm_isdst))
+     || (DSTmode == DSTmaybe && TclpGetDate((TclpTime_t)&Julian, 0)->tm_isdst))
         Julian -= 60 * 60;
     *TimePtr = Julian;
     return 0;
@@ -611,8 +613,8 @@ DSTcorrect(Start, Future)
     time_t      StartDay;
     time_t      FutureDay;
 
-    StartDay = (TclpGetDate(&Start, 0)->tm_hour + 1) % 24;
-    FutureDay = (TclpGetDate(&Future, 0)->tm_hour + 1) % 24;
+    StartDay = (TclpGetDate((TclpTime_t)&Start, 0)->tm_hour + 1) % 24;
+    FutureDay = (TclpGetDate((TclpTime_t)&Future, 0)->tm_hour + 1) % 24;
     return (Future - Start) + (StartDay - FutureDay) * 60L * 60L;
 }
 
@@ -627,7 +629,7 @@ RelativeDate(Start, DayOrdinal, DayNumber)
     time_t      now;
 
     now = Start;
-    tm = TclpGetDate(&now, 0);
+    tm = TclpGetDate((TclpTime_t)&now, 0);
     now += SECSPERDAY * ((DayNumber - tm->tm_wday + 7) % 7);
     now += 7 * SECSPERDAY * (DayOrdinal <= 0 ? DayOrdinal : DayOrdinal - 1);
     return DSTcorrect(Start, now);
@@ -650,7 +652,7 @@ RelativeMonth(Start, RelMonth, TimePtr)
         *TimePtr = 0;
         return 0;
     }
-    tm = TclpGetDate(&Start, 0);
+    tm = TclpGetDate((TclpTime_t)&Start, 0);
     Month = 12 * (tm->tm_year + TM_YEAR_BASE) + tm->tm_mon + RelMonth;
     Year = Month / 12;
     Month = Month % 12 + 1;
@@ -692,11 +694,8 @@ LookupWord(buff)
     /*
      * Make it lowercase.
      */
-    for (p = buff; *p; p++) {
-        if (isupper(UCHAR(*p))) {
-            *p = (char) tolower(UCHAR(*p));
-	}
-    }
+
+    Tcl_UtfToLower(buff);
 
     if (strcmp(buff, "am") == 0 || strcmp(buff, "a.m.") == 0) {
         yylval.Meridian = MERam;
@@ -769,7 +768,8 @@ LookupWord(buff)
     /*
      * Military timezones.
      */
-    if (buff[1] == '\0' && isalpha(UCHAR(*buff))) {
+    if (buff[1] == '\0' && !(*buff & 0x80)
+	    && isalpha(UCHAR(*buff))) {	/* INTL: ISO only */
         for (tp = MilitaryTable; tp->name; tp++) {
             if (strcmp(buff, tp->name) == 0) {
                 yylval.Number = tp->value;
@@ -815,10 +815,10 @@ yylex()
             yyInput++;
 	}
 
-        if (isdigit(c = *yyInput) || c == '-' || c == '+') {
+        if (isdigit(UCHAR(c = *yyInput)) || c == '-' || c == '+') { /* INTL: digit */
             if (c == '-' || c == '+') {
                 sign = c == '-' ? -1 : 1;
-                if (!isdigit(*++yyInput)) {
+                if (!isdigit(UCHAR(*++yyInput))) { /* INTL: digit */
                     /*
 		     * skip the '-' sign
 		     */
@@ -827,7 +827,8 @@ yylex()
             } else {
                 sign = 0;
 	    }
-            for (yylval.Number = 0; isdigit(c = *yyInput++); ) {
+            for (yylval.Number = 0;
+		    isdigit(UCHAR(c = *yyInput++)); ) { /* INTL: digit */
                 yylval.Number = 10 * yylval.Number + c - '0';
 	    }
             yyInput--;
@@ -836,8 +837,9 @@ yylex()
 	    }
             return sign ? tSNUMBER : tUNUMBER;
         }
-        if (isalpha(UCHAR(c))) {
-            for (p = buff; isalpha(c = *yyInput++) || c == '.'; ) {
+        if (!(c & 0x80) && isalpha(UCHAR(c))) {	/* INTL: ISO only. */
+            for (p = buff; isalpha(UCHAR(c = *yyInput++)) /* INTL: ISO only. */
+		     || c == '.'; ) {
                 if (p < &buff[sizeof buff - 1]) {
                     *p++ = c;
 		}
@@ -881,7 +883,7 @@ TclGetDate(p, now, zone, timePtr)
     int thisyear;
 
     yyInput = p;
-    tm = TclpGetDate((time_t *) &now, 0);
+    tm = TclpGetDate((TclpTime_t) &now, 0);
     thisyear = tm->tm_year + TM_YEAR_BASE;
     yyYear = thisyear;
     yyMonth = tm->tm_mon + 1;

@@ -10,8 +10,9 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) pkge.c 1.5 96/03/07 09:34:27
+ * RCS: @(#) $Id$
  */
+
 #include "tcl.h"
 
 /*
@@ -45,5 +46,9 @@ Pkge_Init(interp)
     Tcl_Interp *interp;		/* Interpreter in which the package is
 				 * to be made available. */
 {
-    return Tcl_Eval(interp, "if 44 {open non_existent}");
+    static char script[] = "if 44 {open non_existent}";
+    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
+	return TCL_ERROR;
+    }
+    return Tcl_Eval(interp, script);
 }

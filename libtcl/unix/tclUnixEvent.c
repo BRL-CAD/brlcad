@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclUnixEvent.c 1.1 97/03/04 14:19:34
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -34,7 +34,7 @@ void
 Tcl_Sleep(ms)
     int ms;			/* Number of milliseconds to sleep. */
 {
-    static struct timeval delay;
+    struct timeval delay;
     Tcl_Time before, after;
 
     /*

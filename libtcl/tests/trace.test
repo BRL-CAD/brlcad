@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) trace.test 1.27 97/07/23 17:08:38
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 proc traceScalar {name1 name2 op} {
     global info
@@ -610,10 +614,10 @@ test trace-12.1 {delete one trace from another} {
 
 test trace-13.1 {trace command (overall)} {
     list [catch {trace} msg] $msg
-} {1 {too few args: should be "trace option [arg arg ...]"}}
+} {1 {wrong # args: should be "trace option [arg arg ...]"}}
 test trace-13.2 {trace command (overall)} {
     list [catch {trace gorp} msg] $msg
-} {1 {bad option "gorp": should be variable, vdelete, or vinfo}}
+} {1 {bad option "gorp": must be variable, vdelete, or vinfo}}
 test trace-13.3 {trace command ("variable" option)} {
     list [catch {trace variable x y} msg] $msg
 } {1 {wrong # args: should be "trace variable name ops command"}}
@@ -963,4 +967,19 @@ test trace-17.1 {unset traces on procedure returns} {
 
 catch {unset x}
 catch {unset y}
-concat {}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

@@ -4,13 +4,13 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" SCCS: @(#) CrtChannel.3 1.29 97/06/20 13:37:45
+'\" RCS: @(#) $Id$
 .so man.macros
 .TH Tcl_CreateChannel 3 8.0 Tcl "Tcl Library Procedures"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-Tcl_CreateChannel, Tcl_GetChannelInstanceData, Tcl_GetChannelType, Tcl_GetChannelName, Tcl_GetChannelHandle, Tcl_GetChannelMode, Tcl_GetChannelBufferSize, Tcl_SetDefaultTranslation, Tcl_SetChannelBufferSize, Tcl_NotifyChannel, Tcl_BadChannelOption \- procedures for creating and manipulating channels
+Tcl_CreateChannel, Tcl_GetChannelInstanceData, Tcl_GetChannelType, Tcl_GetChannelName, Tcl_GetChannelHandle, Tcl_GetChannelMode, Tcl_GetChannelBufferSize, Tcl_SetChannelBufferSize, Tcl_NotifyChannel, Tcl_BadChannelOption \- procedures for creating and manipulating channels
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -31,11 +31,6 @@ char *
 int
 \fBTcl_GetChannelHandle\fR(\fIchannel, direction, handlePtr\fR)
 .VE
-.sp
-int
-\fBTcl_GetChannelFlags\fR(\fIchannel\fR)
-.sp
-\fBTcl_SetDefaultTranslation\fR(\fIchannel, transMode\fR)
 .sp
 int
 \fBTcl_GetChannelBufferSize\fR(\fIchannel\fR)
@@ -170,13 +165,7 @@ for each driver to determine what type of handle is returned.
 and \fBTCL_WRITABLE\fR, indicating whether the channel is open for input
 and output.
 .PP
-\fBTcl_SetDefaultTranslation\fR sets the default end of line translation
-mode. This mode will be installed as the translation mode for the channel
-if an attempt is made to output on the channel while it is still in
-\fBTCL_TRANSLATE_AUTO\fR mode. For a description of end of line translation
-modes, see the manual entry for \fBfconfigure\fR.
-.PP
-\fBTcl_GetChannelBufferSize\fR returns the size, in bytes, of buffers
+ \fBTcl_GetChannelBufferSize\fR returns the size, in bytes, of buffers
 allocated to store input or output in \fIchan\fR. If the value was not set
 by a previous call to \fBTcl_SetChannelBufferSize\fR, described below, then
 the default value of 4096 is returned.
@@ -221,16 +210,19 @@ typedef struct Tcl_ChannelType {
 	Tcl_DriverGetOptionProc *\fIgetOptionProc\fR;
 	Tcl_DriverWatchProc *\fIwatchProc\fR;
 	Tcl_DriverGetHandleProc *\fIgetHandleProc\fR;
+	Tcl_DriverClose2Proc *\fIclose2Proc\fR;
 } Tcl_ChannelType;
 .CE
 .VE
 .PP
 The driver must provide implementations for all functions except
-\fIblockModeProc\fR, \fIseekProc\fR, \fIsetOptionProc\fR, and
-\fIgetOptionProc\fR, which may be specified as NULL to indicate that the
-channel does not support seeking.  Other functions that can not be
-implemented for this type of device should return \fBEINVAL\fR when invoked
-to indicate that they are not implemented.
+\fIblockModeProc\fR, \fIseekProc\fR, \fIsetOptionProc\fR,
+.VS
+\fIgetOptionProc\fR, and \fIclose2Proc\fR, which may be specified as
+.VE
+NULL.  Other functions that can not be implemented for this type of
+device should return \fBEINVAL\fR when invoked to indicate that they
+are not implemented.
 
 .SH TYPENAME
 .PP
@@ -264,7 +256,7 @@ For some device types, the blocking and nonblocking behavior can be
 implemented by the underlying operating system; for other device types, the
 behavior must be emulated in the channel driver.
 
-.SH CLOSEPROC
+.SH CLOSEPROC AND CLOSE2PROC
 .PP
 The \fIcloseProc\fR field contains the address of a function called by the
 generic layer to clean up driver-related information when the channel is
@@ -286,6 +278,35 @@ calling the \fIcloseProc\fR. If the close operation is successful, the
 procedure should return zero; otherwise it should return a nonzero POSIX
 error code. In addition, if an error occurs and \fIinterp\fR is not NULL,
 the procedure should store an error message in \fIinterp->result\fR.
+.PP
+.VS
+Alternatively, channels that support closing the read and write sides
+independently may set \fIcloseProc\fR to \fBTCL_CLOSE2PROC\fR and set
+\fIclose2Proc\fR to the address of a function that matches the
+following prototype:
+.PP
+.CS
+typedef int Tcl_DriverClose2Proc(
+	ClientData \fIinstanceData\fR,
+	Tcl_Interp *\fIinterp\fR,
+	int \fIflags\fR);
+.CE
+.PP
+The \fIclose2Proc\fR will be called with \fIflags\fR set to an OR'ed
+combination of \fBTCL_CLOSE_READ\fR or \fBTCL_CLOSE_WRITE\fR to
+indicate that the driver should close the read and/or write side of
+the channel.  The channel driver may be invoked to perform
+additional operations on the channel after \fIclose2Proc\fR is
+called to close one or both sides of the channel.  If \fIflags\fR is
+\fB0\fR (zero), the driver should close the channel in the manner
+described above for \fIcloseProc\fR.  No further operations will be
+invoked on this instance after \fIclose2Proc\fR is called with all
+flags cleared.  In all cases, the \fIclose2Proc\fR function should
+return zero if the close operation was successful; otherwise it should
+return a nonzero POSIX error code. In addition, if an error occurs and
+\fIinterp\fR is not NULL, the procedure should store an error message
+in \fIinterp->result\fR.
+.VE
 
 .SH INPUTPROC
 .PP
@@ -382,7 +403,7 @@ typedef int Tcl_DriverSeekProc(
 .PP
 The \fIinstanceData\fR argument is the same as the value given to
 \fBTcl_CreateChannel\fR when this channel was created.  \fIOffset\fR and
-\fIseekMode\fR have the same meaning as for the \fBTcl_SeekChannel\fR
+\fIseekMode\fR have the same meaning as for the \fBTcl_Seek\fR
 procedure (described in the manual entry for \fBTcl_OpenFileChannel\fR).
 .PP
 The \fIerrorCodePtr\fR argument points to an integer variable provided by

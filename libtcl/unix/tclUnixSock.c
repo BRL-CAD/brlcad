@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclUnixSock.c 1.9 97/10/09 18:24:49
+ * RCS: @(#) $Id$
  */
 
 #include "tcl.h"
@@ -41,6 +41,8 @@
 
 static char hostname[TCL_HOSTNAME_LEN + 1];
 static int  hostnameInited = 0;
+TCL_DECLARE_MUTEX(hostMutex)
+
 
 /*
  *----------------------------------------------------------------------
@@ -66,35 +68,68 @@ Tcl_GetHostName()
 #ifndef NO_UNAME
     struct utsname u;
     struct hostent *hp;
+#else
+    char buffer[sizeof(hostname)];
 #endif
+    CONST char *native;
 
+    Tcl_MutexLock(&hostMutex);
     if (hostnameInited) {
+	Tcl_MutexUnlock(&hostMutex);
         return hostname;
     }
 
+    native = NULL;
 #ifndef NO_UNAME
     (VOID *) memset((VOID *) &u, (int) 0, sizeof(struct utsname));
-    if (uname(&u) > -1) {
-        hp = gethostbyname(u.nodename);
+    if (uname(&u) > -1) {				/* INTL: Native. */
+        hp = gethostbyname(u.nodename);			/* INTL: Native. */
         if (hp != NULL) {
-            strcpy(hostname, hp->h_name);
+	    native = hp->h_name;
         } else {
-            strcpy(hostname, u.nodename);
+	    native = u.nodename;
         }
-        hostnameInited = 1;
-        return hostname;
     }
 #else
     /*
      * Uname doesn't exist; try gethostname instead.
      */
 
-    if (gethostname(hostname, sizeof(hostname)) > -1) {
-	hostnameInited = 1;
-        return hostname;
+    if (gethostname(buffer, sizeof(buffer)) > -1) {	/* INTL: Native. */
+	native = buffer;
     }
 #endif
 
-    hostname[0] = 0;
+    if (native == NULL) {
+	hostname[0] = 0;
+    } else {
+	Tcl_ExternalToUtf(NULL, NULL, native, -1, 0, NULL, hostname,
+		sizeof(hostname), NULL, NULL, NULL);
+    }
+    hostnameInited = 1;
+    Tcl_MutexUnlock(&hostMutex);
     return hostname;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpHasSockets --
+ *
+ *	Detect if sockets are available on this platform.
+ *
+ * Results:
+ *	Returns TCL_OK.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclpHasSockets(interp)
+    Tcl_Interp *interp;		/* Not used. */
+{
+    return TCL_OK;
 }

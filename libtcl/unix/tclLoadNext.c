@@ -5,12 +5,12 @@
  *	works with NeXTs rld_* dynamic loading.  This file provided
  *	by Pedja Bogdanovich.
  *
- * Copyright (c) 1995 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclLoadNext.c 1.4 96/02/15 11:58:55
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -20,7 +20,7 @@
 /*
  *----------------------------------------------------------------------
  *
- * TclLoadFile --
+ * TclpLoadFile --
  *
  *	Dynamically loads a binary code file into memory and returns
  *	the addresses of two procedures within that file, if they
@@ -28,7 +28,7 @@
  *
  * Results:
  *	A standard Tcl completion code.  If an error occurs, an error
- *	message is left in interp->result.  *proc1Ptr and *proc2Ptr
+ *	message is left in the interp's result.  *proc1Ptr and *proc2Ptr
  *	are filled in with the addresses of the symbols given by
  *	*sym1 and *sym2, or NULL if those symbols can't be found.
  *
@@ -39,7 +39,7 @@
  */
 
 int
-TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
+TclpLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr, clientDataPtr)
     Tcl_Interp *interp;		/* Used for error reporting. */
     char *fileName;		/* Name of the file containing the desired
 				 * code. */
@@ -48,6 +48,9 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
     Tcl_PackageInitProc **proc1Ptr, **proc2Ptr;
 				/* Where to return the addresses corresponding
 				 * to sym1 and sym2. */
+    ClientData *clientDataPtr;	/* Filled with token for dynamically loaded
+				 * file which will be passed back to 
+				 * TclpUnloadFile() to unload the file. */
 {
   struct mach_header *header;
   char *data;
@@ -76,8 +79,36 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
     sym[0]='_'; sym[1]=0; strcat(sym,sym2);
     rld_lookup(NULL,sym,(unsigned long *)proc2Ptr);
   }
+  *clientDataPtr = NULL;
 
   return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpUnloadFile --
+ *
+ *	Unloads a dynamically loaded binary code file from memory.
+ *	Code pointers in the formerly loaded file are no longer valid
+ *	after calling this function.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Does nothing.  Can anything be done?
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclpUnloadFile(clientData)
+    ClientData clientData;	/* ClientData returned by a previous call
+				 * to TclpLoadFile().  The clientData is 
+				 * a token that represents the loaded 
+				 * file. */
+{
 }
 
 /*

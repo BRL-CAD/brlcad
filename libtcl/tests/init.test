@@ -5,14 +5,17 @@
 # errors. No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) init.test 1.5 97/11/19 18:08:20
+# RCS: @(#) $Id$
 
-
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 # Clear out any namespaces called test_ns_*
 catch {eval namespace delete [namespace children :: test_ns_*]}
@@ -58,25 +61,28 @@ test init-1.8 {auto_qualify - multiple colons 2} {
 # places where auto_loading occur (before loading the indexes files and after)
 
 set testInterp [interp create]
-interp eval $testInterp [list set VERBOSE $VERBOSE]
-interp eval $testInterp [list set TESTS $TESTS]
+interp eval $testInterp [list set argv $argv]
+interp eval $testInterp [list package require tcltest]
+interp eval $testInterp [list namespace import ::tcltest::*]
 
 interp eval $testInterp {
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+}
 
 auto_reset
 catch {rename parray {}}
 
 test init-2.0 {load parray - stage 1} {
-    set ret [catch {namespace eval ::test {parray}} error]
+    set ret [catch {namespace eval ::tcltest {parray}} error]
     rename parray {} ; # remove it, for the next test - that should not fail.
     list $ret $error
 } {1 {no value given for parameter "a" to "parray"}}
 
 
 test init-2.1 {load parray - stage 2} {
-    set ret [catch {namespace eval ::test {parray}} error]
+    set ret [catch {namespace eval ::tcltest {parray}} error]
     list $ret $error
 } {1 {no value given for parameter "a" to "parray"}}
 
@@ -129,7 +135,7 @@ catch {rename ::http::geturl {}}
 
 test init-2.8 {load http::geturl (package)} {
     # 3 ':' on purpose
-    set ret [catch {namespace eval ::test {http:::geturl}} error]
+    set ret [catch {namespace eval ::tcltest {http:::geturl}} error]
     # removing it, for the next test. should not fail.
     rename ::http::geturl {} ; 
     list $ret $error
@@ -138,12 +144,26 @@ test init-2.8 {load http::geturl (package)} {
 
 test init-3.0 {random stuff in the auto_index, should still work} {
     set auto_index(foo:::bar::blah) {
-	namespace eval foo {namespace eval bar {proc blah {} {return 1}}}
+        namespace eval foo {namespace eval bar {proc blah {} {return 1}}}
     }
     foo:::bar::blah
 } 1
 
 }
 
+# cleanup
 interp delete $testInterp
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
 

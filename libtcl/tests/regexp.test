@@ -5,14 +5,18 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
-# Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) regexp.test 1.21 96/12/23 13:59:48
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 catch {unset foo}
 test regexp-1.1 {basic regexp operation} {
@@ -30,6 +34,15 @@ test regexp-1.4 {basic regexp operation} {
 test regexp-1.5 {basic regexp operation} {
     regexp {^([^ ]*)[ ]*([^ ]*)} "" a
 } 1
+test regexp-1.6 {basic regexp operation} {
+    list [catch {regexp {} abc} msg] $msg
+} {0 1}
+test regexp-1.7 {regexp utf compliance} {
+    # if not UTF-8 aware, result is "0 1"
+    set foo "\u4e4eb q"
+    regexp "\u4e4eb q" "a\u4e4eb qw\u5e4e\x4e wq" bar
+    list [string compare $foo $bar] [regexp 4 $bar]
+} {0 0}
 
 test regexp-2.1 {getting substrings back from regexp} {
     set foo {}
@@ -67,7 +80,10 @@ test regexp-2.7 {getting substrings back from regexp} {
     set foo 1; set f2 1; set f3 1; set f4 1
     list [regexp (a)(b)?(c) xacy foo f2 f3 f4] $foo $f2 $f3 $f4
 } {1 ac a {} c}
-
+test regexp-2.8 {getting substrings back from regexp} {
+    set match {}
+    list [regexp {^a*b} aaaab match] $match
+} {1 aaaab}
 
 test regexp-3.1 {-indices option to regexp} {
     set foo {}
@@ -120,10 +136,10 @@ test regexp-4.3 {-nocase option to regexp} {
 } 1
 set x abcdefghijklmnopqrstuvwxyz1234567890
 set x $x$x$x$x$x$x$x$x$x$x$x$x
-test regexp-4.4 {case conversion in regsub} {
+test regexp-4.4 {case conversion in regexp} {
     list [regexp -nocase $x $x foo] $foo
 } "1 $x"
-unset x
+catch {unset x}
 
 test regexp-5.1 {exercise cache of compiled expressions} {
     regexp .*a b
@@ -174,20 +190,21 @@ test regexp-6.2 {regexp errors} {
 } {1 {wrong # args: should be "regexp ?switches? exp string ?matchVar? ?subMatchVar subMatchVar ...?"}}
 test regexp-6.3 {regexp errors} {
     list [catch {regexp -gorp a} msg] $msg
-} {1 {bad switch "-gorp": must be -indices, -nocase, or --}}
+} {1 {bad switch "-gorp": must be -indices, -nocase, -about, -expanded, -line, -linestop, -lineanchor, or --}}
 test regexp-6.4 {regexp errors} {
     list [catch {regexp a( b} msg] $msg
-} {1 {couldn't compile regular expression pattern: unmatched ()}}
+} {1 {couldn't compile regular expression pattern: parentheses () not balanced}}
 test regexp-6.5 {regexp errors} {
     list [catch {regexp a( b} msg] $msg
-} {1 {couldn't compile regular expression pattern: unmatched ()}}
+} {1 {couldn't compile regular expression pattern: parentheses () not balanced}}
 test regexp-6.6 {regexp errors} {
     list [catch {regexp a a f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1 f1} msg] $msg
 } {0 1}
 test regexp-6.7 {regexp errors} {
     list [catch {regexp (x)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.) xyzzy} msg] $msg
-} {1 {couldn't compile regular expression pattern: too many ()}}
+} {0 0}
 test regexp-6.8 {regexp errors} {
+    catch {unset f1}
     set f1 44
     list [catch {regexp abc abc f1(f2)} msg] $msg
 } {1 {couldn't set variable "f1(f2)"}}
@@ -244,6 +261,12 @@ test regexp-7.16 {basic regsub operation} {
     set foo xxx
     list [regsub x "" y foo] $foo
 } {0 {}}
+test regexp-7.17 {regsub utf compliance} {
+    # if not UTF-8 aware, result is "0 1"
+    set foo "xyz555ijka\u4e4ebpqr"
+    regsub a\u4e4eb xyza\u4e4ebijka\u4e4ebpqr 555 bar
+    list [string compare $foo $bar] [regexp 4 $bar]
+} {0 0}
 
 test regexp-8.1 {case conversion in regsub} {
     list [regsub -nocase a(a+) xaAAaAAay & foo] $foo
@@ -295,24 +318,114 @@ test regexp-9.6 {-all option to regsub} {
     list [regsub -all ^ xxx 123 foo] $foo
 } {1 123xxx}
 
-test regexp-10.1 {regsub errors} {
+test regexp-10.1 {expanded syntax in regsub} {
+    set foo xxx
+    list [regsub -expanded ". \#comment\n  . \#comment2" abc def foo] $foo
+} {1 defc}
+test regexp-10.2 {newline sensitivity in regsub} {
+    set foo xxx
+    list [regsub -line {^a.*b$} "dabc\naxyb\n" 123 foo] $foo
+} "1 {dabc\n123\n}"
+test regexp-10.3 {newline sensitivity in regsub} {
+    set foo xxx
+    list [regsub -line {^a.*b$} "dabc\naxyb\nxb" 123 foo] $foo
+} "1 {dabc\n123\nxb}"
+test regexp-10.4 {partial newline sensitivity in regsub} {
+    set foo xxx
+    list [regsub -lineanchor {^a.*b$} "da\naxyb\nxb" 123 foo] $foo
+} "1 {da\n123}"
+test regexp-10.5 {inverse partial newline sensitivity in regsub} {
+    set foo xxx
+    list [regsub -linestop {a.*b} "da\nbaxyb\nxb" 123 foo] $foo
+} "1 {da\nb123\nxb}"
+
+test regexp-11.1 {regsub errors} {
     list [catch {regsub a b c} msg] $msg
 } {1 {wrong # args: should be "regsub ?switches? exp string subSpec varName"}}
-test regexp-10.2 {regsub errors} {
+test regexp-11.2 {regsub errors} {
     list [catch {regsub -nocase a b c} msg] $msg
 } {1 {wrong # args: should be "regsub ?switches? exp string subSpec varName"}}
-test regexp-10.3 {regsub errors} {
+test regexp-11.3 {regsub errors} {
     list [catch {regsub -nocase -all a b c} msg] $msg
 } {1 {wrong # args: should be "regsub ?switches? exp string subSpec varName"}}
-test regexp-10.4 {regsub errors} {
+test regexp-11.4 {regsub errors} {
     list [catch {regsub a b c d e f} msg] $msg
 } {1 {wrong # args: should be "regsub ?switches? exp string subSpec varName"}}
-test regexp-10.5 {regsub errors} {
+test regexp-11.5 {regsub errors} {
     list [catch {regsub -gorp a b c} msg] $msg
-} {1 {bad switch "-gorp": must be -all, -nocase, or --}}
-test regexp-10.6 {regsub errors} {
+} {1 {bad switch "-gorp": must be -all, -nocase, -expanded, -line, -linestop, -lineanchor, or --}}
+test regexp-11.6 {regsub errors} {
     list [catch {regsub -nocase a( b c d} msg] $msg
-} {1 {couldn't compile regular expression pattern: unmatched ()}}
-test regexp-10.7 {regsub errors} {
+} {1 {couldn't compile regular expression pattern: parentheses () not balanced}}
+test regexp-11.7 {regsub errors} {
+    catch {unset f1}
+    set f1 44
     list [catch {regsub -nocase aaa aaa xxx f1(f2)} msg] $msg
 } {1 {couldn't set variable "f1(f2)"}}
+
+test regexp-12.1 {Tcl_RegExpExec: large number of subexpressions} {
+    list [regexp (.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.) abcdefghijklmnopqrstuvwxyz all a b c d e f g h i j k l m n o p q r s t u v w x y z] $all $a $b $c $d $e $f $g $h $i $j $k $l $m $n $o $p $q $r $s $t $u $v $w $x $y $z
+} {1 abcdefghijklmnopqrstuvwxyz a b c d e f g h i j k l m n o p q r s t u v w x y z}
+
+test regexp-13.1 {regsub of a very large string} {
+    # This test is designed to stress the memory subsystem in order
+    # to catch Bug #933.  It only fails if the Tcl memory allocator
+    # is in use.
+
+    set line {BEGIN_TABLE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; END_TABLE}
+    set filedata ""
+    for {set i 1} {$i<200} {incr i} {
+	append filedata $line
+    }
+    for {set i 1} {$i<10} {incr i} {
+	regsub -all "BEGIN_TABLE " $filedata "" newfiledata
+    }
+    set x done
+} {done}
+
+test regexp-14.1 {CompileRegexp: regexp cache} {
+    regexp .*a b
+    regexp .*b c
+    regexp .*c d
+    regexp .*d e
+    regexp .*e f
+    set x .
+    append x *a
+    regexp $x bbba
+} 1
+test regexp-14.2 {CompileRegexp: regexp cache, different flags} {
+    regexp .*a b
+    regexp .*b c
+    regexp .*c d
+    regexp .*d e
+    regexp .*e f
+    set x .
+    append x *a
+    regexp -nocase $x bbba
+} 1
+test regexp-14.3 {CompileRegexp: regexp cache, empty regexp and empty cache} {
+    makeFile {puts [regexp {} foo]} junk.tcl
+    exec $::tcltest::tcltest junk.tcl
+} 1
+
+set x 1
+set y 2
+regexp "$x$y" 123
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+
+

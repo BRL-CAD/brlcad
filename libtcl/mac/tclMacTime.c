@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacTime.c 1.19 97/06/27 13:07:10
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -241,9 +241,10 @@ TclpGetTime(
 
 struct tm *
 TclpGetDate(
-    const time_t *tp,	/* Time struct to fill. */
+    TclpTime_t time,	/* Time struct to fill. */
     int useGMT)		/* True if date should reflect GNT time. */
 {
+    const time_t *tp = (const time_t *)time;
     DateTimeRec dtr;
     MachineLocation loc;
     long int offset;

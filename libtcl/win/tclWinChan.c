@@ -9,24 +9,10 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclWinChan.c 1.75 97/09/26 16:17:46
+ * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
-
-/*
- * This is the size of the channel name for File based channels
- */
-
-#define CHANNEL_NAME_SIZE	64
-static char channelName[CHANNEL_NAME_SIZE+1];
-
-/*
- * The following variable is used to tell whether this module has been
- * initialized.
- */
-
-static int initialized = 0;
 
 /*
  * State flags used in the info structures below.
@@ -35,6 +21,9 @@ static int initialized = 0;
 #define FILE_PENDING	(1<<0)	/* Message is pending in the queue. */
 #define FILE_ASYNC	(1<<1)	/* Channel is non-blocking. */
 #define FILE_APPEND	(1<<2)	/* File is in append mode. */
+
+#define FILE_TYPE_SERIAL  (FILE_TYPE_PIPE+1)
+#define FILE_TYPE_CONSOLE (FILE_TYPE_PIPE+2)
 
 /*
  * The following structure contains per-instance data for a file based channel.
@@ -53,11 +42,15 @@ typedef struct FileInfo {
     struct FileInfo *nextPtr;	/* Pointer to next registered file. */
 } FileInfo;
 
-/*
- * List of all file channels currently open.
- */
+typedef struct ThreadSpecificData {
+    /*
+     * List of all file channels currently open.
+     */
 
-static FileInfo *firstFilePtr;
+    FileInfo *firstFilePtr;
+} ThreadSpecificData;
+
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * The following structure is what is added to the Tcl event queue when
@@ -77,14 +70,6 @@ typedef struct FileEvent {
  * Static routines for this file:
  */
 
-static int		ComGetOptionProc _ANSI_ARGS_((ClientData instanceData, 
-			    Tcl_Interp *interp, char *optionName,
-			    Tcl_DString *dsPtr));
-static int		ComInputProc _ANSI_ARGS_((ClientData instanceData,
-	            	    char *buf, int toRead, int *errorCode));
-static int		ComSetOptionProc _ANSI_ARGS_((ClientData instanceData,
-			    Tcl_Interp *interp, char *optionName, 
-			    char *value));
 static int		FileBlockProc _ANSI_ARGS_((ClientData instanceData,
 			    int mode));
 static void		FileChannelExitHandler _ANSI_ARGS_((
@@ -97,7 +82,7 @@ static int		FileEventProc _ANSI_ARGS_((Tcl_Event *evPtr,
 			    int flags));
 static int		FileGetHandleProc _ANSI_ARGS_((ClientData instanceData,
 		            int direction, ClientData *handlePtr));
-static void		FileInit _ANSI_ARGS_((void));
+static ThreadSpecificData *FileInit _ANSI_ARGS_((void));
 static int		FileInputProc _ANSI_ARGS_((ClientData instanceData,
 	            	    char *buf, int toRead, int *errorCode));
 static int		FileOutputProc _ANSI_ARGS_((ClientData instanceData,
@@ -127,18 +112,6 @@ static Tcl_ChannelType fileChannelType = {
     FileGetHandleProc,		/* Get an OS handle from channel. */
 };
 
-static Tcl_ChannelType comChannelType = {
-    "com",			/* Type name. */
-    FileBlockProc,		/* Set blocking or non-blocking mode.*/
-    FileCloseProc,		/* Close proc. */
-    ComInputProc,		/* Input proc. */
-    FileOutputProc,		/* Output proc. */
-    NULL,			/* Seek proc. */
-    ComSetOptionProc,		/* Set option proc. */
-    ComGetOptionProc,		/* Get option proc. */
-    FileWatchProc,		/* Set up notifier to watch the channel. */
-    FileGetHandleProc		/* Get an OS handle from channel. */
-};
 
 /*
  *----------------------------------------------------------------------
@@ -156,13 +129,18 @@ static Tcl_ChannelType comChannelType = {
  *----------------------------------------------------------------------
  */
 
-static void
+static ThreadSpecificData *
 FileInit()
 {
-    initialized = 1;
-    firstFilePtr = NULL;
-    Tcl_CreateEventSource(FileSetupProc, FileCheckProc, NULL);
-    Tcl_CreateExitHandler(FileChannelExitHandler, NULL);
+    ThreadSpecificData *tsdPtr =
+	(ThreadSpecificData *)TclThreadDataKeyGet(&dataKey);
+    if (tsdPtr == NULL) {
+	tsdPtr = TCL_TSD_INIT(&dataKey);
+	tsdPtr->firstFilePtr = NULL;
+	Tcl_CreateEventSource(FileSetupProc, FileCheckProc, NULL);
+	Tcl_CreateThreadExitHandler(FileChannelExitHandler, NULL);
+    }
+    return tsdPtr;
 }
 
 /*
@@ -187,7 +165,6 @@ FileChannelExitHandler(clientData)
     ClientData clientData;	/* Old window proc */
 {
     Tcl_DeleteEventSource(FileSetupProc, FileCheckProc, NULL);
-    initialized = 0;
 }
 
 /*
@@ -214,6 +191,7 @@ FileSetupProc(data, flags)
 {
     FileInfo *infoPtr;
     Tcl_Time blockTime = { 0, 0 };
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     if (!(flags & TCL_FILE_EVENTS)) {
 	return;
@@ -223,7 +201,8 @@ FileSetupProc(data, flags)
      * Check to see if there is a ready file.  If so, poll.
      */
 
-    for (infoPtr = firstFilePtr; infoPtr != NULL; infoPtr = infoPtr->nextPtr) {
+    for (infoPtr = tsdPtr->firstFilePtr; infoPtr != NULL; 
+	    infoPtr = infoPtr->nextPtr) {
 	if (infoPtr->watchMask) {
 	    Tcl_SetMaxBlockTime(&blockTime);
 	    break;
@@ -255,6 +234,7 @@ FileCheckProc(data, flags)
 {
     FileEvent *evPtr;
     FileInfo *infoPtr;
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     if (!(flags & TCL_FILE_EVENTS)) {
 	return;
@@ -266,7 +246,8 @@ FileCheckProc(data, flags)
      * events).
      */
 
-    for (infoPtr = firstFilePtr; infoPtr != NULL; infoPtr = infoPtr->nextPtr) {
+    for (infoPtr = tsdPtr->firstFilePtr; infoPtr != NULL; 
+	    infoPtr = infoPtr->nextPtr) {
 	if (infoPtr->watchMask && !(infoPtr->flags & FILE_PENDING)) {
 	    infoPtr->flags |= FILE_PENDING;
 	    evPtr = (FileEvent *) ckalloc(sizeof(FileEvent));
@@ -305,6 +286,7 @@ FileEventProc(evPtr, flags)
 {
     FileEvent *fileEvPtr = (FileEvent *)evPtr;
     FileInfo *infoPtr;
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     if (!(flags & TCL_FILE_EVENTS)) {
 	return 0;
@@ -317,7 +299,8 @@ FileEventProc(evPtr, flags)
      * event is in the queue.
      */
 
-    for (infoPtr = firstFilePtr; infoPtr != NULL; infoPtr = infoPtr->nextPtr) {
+    for (infoPtr = tsdPtr->firstFilePtr; infoPtr != NULL;
+	    infoPtr = infoPtr->nextPtr) {
 	if (fileEvPtr->infoPtr == infoPtr) {
 	    infoPtr->flags &= ~(FILE_PENDING);
 	    Tcl_NotifyChannel(infoPtr->channel, infoPtr->watchMask);
@@ -390,6 +373,7 @@ FileCloseProc(instanceData, interp)
     FileInfo *fileInfoPtr = (FileInfo *) instanceData;
     FileInfo **nextPtrPtr;
     int errorCode = 0;
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     /*
      * Remove the file from the watch list.
@@ -397,11 +381,22 @@ FileCloseProc(instanceData, interp)
 
     FileWatchProc(instanceData, 0);
 
-    if (CloseHandle(fileInfoPtr->handle) == FALSE) {
-	TclWinConvertError(GetLastError());
-	errorCode = errno;
+    /*
+     * Don't close the Win32 handle if the handle is a standard channel
+     * during the exit process.  Otherwise, one thread may kill the stdio
+     * of another.
+     */
+
+    if (!TclInExit() 
+	    || ((GetStdHandle(STD_INPUT_HANDLE) != fileInfoPtr->handle)
+		&& (GetStdHandle(STD_OUTPUT_HANDLE) != fileInfoPtr->handle)
+		&& (GetStdHandle(STD_ERROR_HANDLE) != fileInfoPtr->handle))) {
+	if (CloseHandle(fileInfoPtr->handle) == FALSE) {
+	    TclWinConvertError(GetLastError());
+	    errorCode = errno;
+	}
     }
-    for (nextPtrPtr = &firstFilePtr; (*nextPtrPtr) != NULL;
+    for (nextPtrPtr = &(tsdPtr->firstFilePtr); (*nextPtrPtr) != NULL;
 	 nextPtrPtr = &((*nextPtrPtr)->nextPtr)) {
 	if ((*nextPtrPtr) == fileInfoPtr) {
 	    (*nextPtrPtr) = fileInfoPtr->nextPtr;
@@ -454,7 +449,8 @@ FileSeekProc(instanceData, offset, mode, errorCodePtr)
     newPos = SetFilePointer(infoPtr->handle, offset, NULL, moveMethod);
     if (newPos == 0xFFFFFFFF) {
         TclWinConvertError(GetLastError());
-        return -1;
+        *errorCodePtr = errno;
+	return -1;
     }
     return newPos;
 }
@@ -604,7 +600,7 @@ FileWatchProc(instanceData, mask)
  *
  * FileGetHandleProc --
  *
- *	Called from Tcl_GetChannelFile to retrieve OS handles from
+ *	Called from Tcl_GetChannelHandle to retrieve OS handles from
  *	a file based channel.
  *
  * Results:
@@ -632,201 +628,12 @@ FileGetHandleProc(instanceData, direction, handlePtr)
 	return TCL_ERROR;
     }
 }
+
 
 /*
  *----------------------------------------------------------------------
  *
- * ComInputProc --
- *
- *	Reads input from the IO channel into the buffer given. Returns
- *	count of how many bytes were actually read, and an error indication.
- *
- * Results:
- *	A count of how many bytes were read is returned and an error
- *	indication is returned in an output argument.
- *
- * Side effects:
- *	Reads input from the actual channel.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-ComInputProc(instanceData, buf, bufSize, errorCode)
-    ClientData instanceData;	/* File state. */
-    char *buf;			/* Where to store data read. */
-    int bufSize;		/* How much space is available 
-				 * in the buffer? */
-    int *errorCode;		/* Where to store error code. */
-{
-    FileInfo *infoPtr;
-    DWORD bytesRead;
-    DWORD dw;
-    COMSTAT cs;
-
-    *errorCode = 0;
-    infoPtr = (FileInfo *) instanceData;
-
-    if (ClearCommError(infoPtr->handle, &dw, &cs)) {
-	if (dw != 0) {
-	    *errorCode = EIO;
-	    return -1;
-	}
-	if (cs.cbInQue != 0) {
-	    if ((DWORD) bufSize > cs.cbInQue) {
-		bufSize = cs.cbInQue;
-	    }
-	} else {
-	    if (infoPtr->flags & FILE_ASYNC) {
-		errno = *errorCode = EAGAIN;
-		return -1;
-	    } else {
-		bufSize = 1;
-	    }
-	}
-    }
-    
-    if (ReadFile(infoPtr->handle, (LPVOID) buf, (DWORD) bufSize, &bytesRead,
-            (LPOVERLAPPED) NULL) == FALSE) {
-	TclWinConvertError(GetLastError());
-	*errorCode = errno;
-	return -1;
-    }
-    
-    return bytesRead;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ComSetOptionProc --
- *
- *	Sets an option on a channel.
- *
- * Results:
- *	A standard Tcl result. Also sets interp->result on error if
- *	interp is not NULL.
- *
- * Side effects:
- *	May modify an option on a device.
- *
- *----------------------------------------------------------------------
- */
-
-static int		
-ComSetOptionProc(instanceData, interp, optionName, value)
-    ClientData instanceData;	/* File state. */
-    Tcl_Interp *interp;		/* For error reporting - can be NULL. */
-    char *optionName;		/* Which option to set? */
-    char *value;		/* New value for option. */
-{
-    FileInfo *infoPtr;
-    DCB dcb;
-    int len;
-
-    infoPtr = (FileInfo *) instanceData;
-
-    len = strlen(optionName);
-    if ((len > 1) && (strncmp(optionName, "-mode", len) == 0)) {
-	if (GetCommState(infoPtr->handle, &dcb)) {
-	    if ((BuildCommDCB(value, &dcb) == FALSE) ||
-		    (SetCommState(infoPtr->handle, &dcb) == FALSE)) {
-		/*
-		 * one should separate the 2 errors... 
-		 */
-                if (interp) {
-                    Tcl_AppendResult(interp, "bad value for -mode: should be ",
-			    "baud,parity,data,stop", NULL);
-		}
-		return TCL_ERROR;
-	    } else {
-		return TCL_OK;
-	    }
-	} else {
-	    if (interp) {
-		Tcl_AppendResult(interp, "can't get comm state", NULL);
-	    }
-	    return TCL_ERROR;
-	}
-    } else {
-	return Tcl_BadChannelOption(interp, optionName, "mode");
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ComGetOptionProc --
- *
- *	Gets a mode associated with an IO channel. If the optionName arg
- *	is non NULL, retrieves the value of that option. If the optionName
- *	arg is NULL, retrieves a list of alternating option names and
- *	values for the given channel.
- *
- * Results:
- *	A standard Tcl result. Also sets the supplied DString to the
- *	string value of the option(s) returned.
- *
- * Side effects:
- *	The string returned by this function is in static storage and
- *	may be reused at any time subsequent to the call.
- *
- *----------------------------------------------------------------------
- */
-
-static int		
-ComGetOptionProc(instanceData, interp, optionName, dsPtr)
-    ClientData instanceData;	/* File state. */
-    Tcl_Interp *interp;          /* For error reporting - can be NULL. */
-    char *optionName;		/* Option to get. */
-    Tcl_DString *dsPtr;		/* Where to store value(s). */
-{
-    FileInfo *infoPtr;
-    DCB dcb;
-    int len;
-
-    infoPtr = (FileInfo *) instanceData;
-
-    if (optionName == NULL) {
-	Tcl_DStringAppendElement(dsPtr, "-mode");
-	len = 0;
-    } else {
-	len = strlen(optionName);
-    }
-    if ((len == 0) || 
-	    ((len > 1) && (strncmp(optionName, "-mode", len) == 0))) {
-	if (GetCommState(infoPtr->handle, &dcb) == 0) {
-	    /*
-	     * shouldn't we flag an error instead ? 
-	     */
-	    Tcl_DStringAppendElement(dsPtr, "");
-	} else {
-	    char parity;
-	    char *stop;
-	    char buf[32];
-
-	    parity = 'n';
-	    if (dcb.Parity < 4) {
-		parity = "noems"[dcb.Parity];
-	    }
-
-	    stop = (dcb.StopBits == ONESTOPBIT) ? "1" : 
-		    (dcb.StopBits == ONE5STOPBITS) ? "1.5" : "2";
-
-	    wsprintf(buf, "%d,%c,%d,%s", dcb.BaudRate, parity, dcb.ByteSize,
-		    stop);
-	    Tcl_DStringAppendElement(dsPtr, buf);
-	}
-	return TCL_OK;
-    } else {
-	return Tcl_BadChannelOption(interp, optionName, "mode");
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_OpenFileChannel --
+ * TclpOpenFileChannel --
  *
  *	Open an File based channel on Unix systems.
  *
@@ -842,7 +649,7 @@ ComGetOptionProc(instanceData, interp, optionName, dsPtr)
  */
 
 Tcl_Channel
-Tcl_OpenFileChannel(interp, fileName, modeString, permissions)
+TclpOpenFileChannel(interp, fileName, modeString, permissions)
     Tcl_Interp *interp;			/* Interpreter for error reporting;
                                          * can be NULL. */
     char *fileName;			/* Name of file to open. */
@@ -852,28 +659,27 @@ Tcl_OpenFileChannel(interp, fileName, modeString, permissions)
                                          * file, with what modes to create
                                          * it? */
 {
-    FileInfo *infoPtr;
+    Tcl_Channel channel = 0;
     int seekFlag, mode, channelPermissions;
-    DWORD accessMode, createMode, shareMode, flags;
-    char *nativeName;
-    Tcl_DString buffer;
+    DWORD accessMode, createMode, shareMode, flags, consoleParams, type;
+    TCHAR *nativeName;
+    Tcl_DString ds, buffer;
     DCB dcb;
-    Tcl_ChannelType *channelTypePtr;
     HANDLE handle;
-
-    if (!initialized) {
-	FileInit();
-    }
+    char channelName[16 + TCL_INTEGER_SPACE];
+    TclFile readFile = NULL;
+    TclFile writeFile = NULL;
 
     mode = TclGetOpenMode(interp, modeString, &seekFlag);
     if (mode == -1) {
         return NULL;
     }
 
-    nativeName = Tcl_TranslateFileName(interp, fileName, &buffer);
-    if (nativeName == NULL) {
+    if (Tcl_TranslateFileName(interp, fileName, &ds) == NULL) {
 	return NULL;
     }
+    nativeName = Tcl_WinUtfToTChar(Tcl_DStringValue(&ds), 
+	    Tcl_DStringLength(&ds), &buffer);
 
     switch (mode & (O_RDONLY | O_WRONLY | O_RDWR)) {
 	case O_RDONLY:
@@ -889,7 +695,7 @@ Tcl_OpenFileChannel(interp, fileName, modeString, permissions)
 	    channelPermissions = (TCL_READABLE | TCL_WRITABLE);
 	    break;
 	default:
-	    panic("Tcl_OpenFileChannel: invalid mode value");
+	    panic("TclpOpenFileChannel: invalid mode value");
 	    break;
     }
 
@@ -929,7 +735,7 @@ Tcl_OpenFileChannel(interp, fileName, modeString, permissions)
             flags = FILE_ATTRIBUTE_READONLY;
         }
     } else {
-	flags = GetFileAttributes(nativeName);
+	flags = (*tclWinProcs->getFileAttributesProc)(nativeName);
         if (flags == 0xFFFFFFFF) {
 	    flags = 0;
 	}
@@ -945,13 +751,11 @@ Tcl_OpenFileChannel(interp, fileName, modeString, permissions)
      * Now we get to create the file.
      */
 
-    handle = CreateFile(nativeName, accessMode, shareMode, NULL, createMode,
-            flags, (HANDLE) NULL);
+    handle = (*tclWinProcs->createFileProc)(nativeName, accessMode, 
+	    shareMode, NULL, createMode, flags, (HANDLE) NULL);
 
     if (handle == INVALID_HANDLE_VALUE) {
 	DWORD err;
-
-	openerr:
 	err = GetLastError();
 	if ((err & 0xffffL) == ERROR_OPEN_FAILED) {
 	    err = (mode & O_CREAT) ? ERROR_FILE_EXISTS : ERROR_FILE_NOT_FOUND;
@@ -959,87 +763,94 @@ Tcl_OpenFileChannel(interp, fileName, modeString, permissions)
         TclWinConvertError(err);
 	if (interp != (Tcl_Interp *) NULL) {
             Tcl_AppendResult(interp, "couldn't open \"", fileName, "\": ",
-                    Tcl_PosixError(interp), (char *) NULL);
+			     Tcl_PosixError(interp), (char *) NULL);
         }
         Tcl_DStringFree(&buffer);
         return NULL;
     }
-
-    if (GetFileType(handle) == FILE_TYPE_CHAR) {
-	dcb.DCBlength = sizeof( DCB ) ;
-	if (GetCommState(handle, &dcb)) {
-	    /*
-	     * This is a com port.  Reopen it with the correct modes. 
-	     */
-
-	    COMMTIMEOUTS cto;
-
-	    CloseHandle(handle);
-	    handle = CreateFile(nativeName, accessMode, 0, NULL, OPEN_EXISTING,
-		    flags, NULL);
-	    if (handle == INVALID_HANDLE_VALUE) {
-		goto openerr;
-	    }
-
-	    /*
-	     * FileInit the com port.
-	     */
-
-	    SetCommMask(handle, EV_RXCHAR);
-	    SetupComm(handle, 4096, 4096);
-	    PurgeComm(handle, PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR
-		    | PURGE_RXCLEAR);
-	    cto.ReadIntervalTimeout = MAXDWORD;
-	    cto.ReadTotalTimeoutMultiplier = 0;
-	    cto.ReadTotalTimeoutConstant = 0;
-	    cto.WriteTotalTimeoutMultiplier = 0;
-	    cto.WriteTotalTimeoutConstant = 0;
-	    SetCommTimeouts(handle, &cto);
-
-	    GetCommState(handle, &dcb);
-	    SetCommState(handle, &dcb);
-	    channelTypePtr = &comChannelType;
-	} else {
-	    channelTypePtr = &fileChannelType;
-	}
-    } else {
-	channelTypePtr = &fileChannelType;
-    }
-    Tcl_DStringFree(&buffer);
-
-    infoPtr = (FileInfo *) ckalloc((unsigned) sizeof(FileInfo));
-    infoPtr->nextPtr = firstFilePtr;
-    firstFilePtr = infoPtr;
-    infoPtr->validMask = channelPermissions;
-    infoPtr->watchMask = 0;
-    infoPtr->flags = (mode & O_APPEND) ? FILE_APPEND : 0;
-    infoPtr->handle = handle;
-   
-    sprintf(channelName, "file%d", (int) handle);
-
-    infoPtr->channel = Tcl_CreateChannel(channelTypePtr, channelName,
-            (ClientData) infoPtr, channelPermissions);
-
-    if (seekFlag) {
-        if (Tcl_Seek(infoPtr->channel, 0, SEEK_END) < 0) {
-            if (interp != (Tcl_Interp *) NULL) {
-                Tcl_AppendResult(interp, "could not seek to end of file on \"",
-                        channelName, "\": ", Tcl_PosixError(interp),
-                        (char *) NULL);
-            }
-            Tcl_Close(NULL, infoPtr->channel);
-            return NULL;
-        }
-    }
+    
+    type = GetFileType(handle);
 
     /*
-     * Files have default translation of AUTO and ^Z eof char, which
-     * means that a ^Z will be appended to them at close.
+     * If the file is a character device, we need to try to figure out
+     * whether it is a serial port, a console, or something else.  We
+     * test for the console case first because this is more common.
      */
-    
-    Tcl_SetChannelOption(NULL, infoPtr->channel, "-translation", "auto");
-    Tcl_SetChannelOption(NULL, infoPtr->channel, "-eofchar", "\032 {}");
-    return infoPtr->channel;
+
+    if (type == FILE_TYPE_CHAR) {
+	if (GetConsoleMode(handle, &consoleParams)) {
+	    type = FILE_TYPE_CONSOLE;
+	} else {
+	    dcb.DCBlength = sizeof( DCB ) ;
+	    if (GetCommState(handle, &dcb)) {
+		type = FILE_TYPE_SERIAL;
+	    }
+		    
+	}
+    }
+
+    channel = NULL;
+
+    switch (type)
+    {
+    case FILE_TYPE_SERIAL:
+	channel = TclWinOpenSerialChannel(handle, channelName,
+	        channelPermissions);
+	break;
+    case FILE_TYPE_CONSOLE:
+	channel = TclWinOpenConsoleChannel(handle, channelName,
+	        channelPermissions);
+	break;
+    case FILE_TYPE_PIPE:
+	if (channelPermissions & TCL_READABLE)
+	{
+	    readFile = TclWinMakeFile(handle);
+	}
+	if (channelPermissions & TCL_WRITABLE)
+	{
+	    writeFile = TclWinMakeFile(handle);
+	}
+	channel = TclpCreateCommandChannel(readFile, writeFile, NULL, 0, NULL);
+	break;
+    case FILE_TYPE_CHAR:
+    case FILE_TYPE_DISK:
+    case FILE_TYPE_UNKNOWN:
+	channel = TclWinOpenFileChannel(handle, channelName,
+					channelPermissions,
+					(mode & O_APPEND) ? FILE_APPEND : 0);
+	break;
+
+    default:
+	/*
+	 * The handle is of an unknown type, probably /dev/nul equivalent
+	 * or possibly a closed handle.  
+	 */
+	
+	channel = NULL;
+	Tcl_AppendResult(interp, "couldn't open \"", fileName, "\": ",
+		"bad file type", (char *) NULL);
+	break;
+    }
+
+    Tcl_DStringFree(&buffer);
+    Tcl_DStringFree(&ds);
+
+    if (channel != NULL)
+    {
+	if (seekFlag) {
+	    if (Tcl_Seek(channel, 0, SEEK_END) < 0) {
+		if (interp != (Tcl_Interp *) NULL) {
+		    Tcl_AppendResult(interp,
+			    "could not seek to end of file on \"",
+			    channelName, "\": ", Tcl_PosixError(interp),
+			    (char *) NULL);
+		}
+		Tcl_Close(NULL, channel);
+		return NULL;
+	    }
+	}
+    }
+    return channel;
 }
 
 /*
@@ -1060,57 +871,87 @@ Tcl_OpenFileChannel(interp, fileName, modeString, permissions)
  */
 
 Tcl_Channel
-Tcl_MakeFileChannel(handle, mode)
-    ClientData handle;		/* OS level handle */
+Tcl_MakeFileChannel(rawHandle, mode)
+    ClientData rawHandle;	/* OS level handle */
     int mode;			/* ORed combination of TCL_READABLE and
                                  * TCL_WRITABLE to indicate file mode. */
 {
-    char channelName[20];
-    FileInfo *infoPtr;
-
-    if (!initialized) {
-	FileInit();
-    }
+    char channelName[16 + TCL_INTEGER_SPACE];
+    Tcl_Channel channel = NULL;
+    HANDLE handle = (HANDLE) rawHandle;
+    DCB dcb;
+    DWORD consoleParams;
+    DWORD type;
+    TclFile readFile = NULL;
+    TclFile writeFile = NULL;
 
     if (mode == 0) {
 	return NULL;
     }
 
-    sprintf(channelName, "file%d", (int) handle);
+    type = GetFileType(handle);
 
     /*
-     * See if a channel with this handle already exists.
+     * If the file is a character device, we need to try to figure out
+     * whether it is a serial port, a console, or something else.  We
+     * test for the console case first because this is more common.
      */
-    
-    for (infoPtr = firstFilePtr; infoPtr != NULL; infoPtr = infoPtr->nextPtr) {
-	if (infoPtr->handle == (HANDLE) handle) {
-	    return (mode == infoPtr->validMask) ? infoPtr->channel : NULL;
+
+    if (type == FILE_TYPE_CHAR) {
+	if (GetConsoleMode(handle, &consoleParams)) {
+	    type = FILE_TYPE_CONSOLE;
+	} else {
+	    dcb.DCBlength = sizeof( DCB ) ;
+	    if (GetCommState(handle, &dcb)) {
+		type = FILE_TYPE_SERIAL;
+	    }
 	}
     }
 
-    infoPtr = (FileInfo *) ckalloc((unsigned) sizeof(FileInfo));
-    infoPtr->nextPtr = firstFilePtr;
-    firstFilePtr = infoPtr;
-    infoPtr->validMask = mode;
-    infoPtr->watchMask = 0;
-    infoPtr->flags = 0;
-    infoPtr->handle = (HANDLE) handle;
-    infoPtr->channel = Tcl_CreateChannel(&fileChannelType, channelName,
-            (ClientData) infoPtr, mode);
+    switch (type)
+    {
+    case FILE_TYPE_SERIAL:
+	channel = TclWinOpenSerialChannel(handle, channelName, mode);
+	break;
+    case FILE_TYPE_CONSOLE:
+	channel = TclWinOpenConsoleChannel(handle, channelName, mode);
+	break;
+    case FILE_TYPE_PIPE:
+	if (mode & TCL_READABLE)
+	{
+	    readFile = TclWinMakeFile(handle);
+	}
+	if (mode & TCL_WRITABLE)
+	{
+	    writeFile = TclWinMakeFile(handle);
+	}
+	channel = TclpCreateCommandChannel(readFile, writeFile, NULL, 0, NULL);
+	break;
 
-    /*
-     * Windows files have AUTO translation mode and ^Z eof char on input.
-     */
-    
-    Tcl_SetChannelOption(NULL, infoPtr->channel, "-translation", "auto");
-    Tcl_SetChannelOption(NULL, infoPtr->channel, "-eofchar", "\032 {}");
-    return infoPtr->channel;
+    case FILE_TYPE_DISK:
+    case FILE_TYPE_CHAR:
+    case FILE_TYPE_UNKNOWN:
+	channel = TclWinOpenFileChannel(handle, channelName, mode, 0);
+	break;
+	
+    default:
+	/*
+	 * The handle is of an unknown type, probably /dev/nul equivalent
+	 * or possibly a closed handle.
+	 */
+	
+	channel = NULL;
+	break;
+
+    }
+
+    return channel;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TclGetDefaultStdChannel --
+ * TclpGetDefaultStdChannel --
  *
  *	Constructs a channel for the specified standard OS handle.
  *
@@ -1125,7 +966,7 @@ Tcl_MakeFileChannel(handle, mode)
  */
 
 Tcl_Channel
-TclGetDefaultStdChannel(type)
+TclpGetDefaultStdChannel(type)
     int type;			/* One of TCL_STDIN, TCL_STDOUT, TCL_STDERR. */
 {
     Tcl_Channel channel;
@@ -1154,19 +995,24 @@ TclGetDefaultStdChannel(type)
 	    panic("TclGetDefaultStdChannel: Unexpected channel type");
 	    break;
     }
+
     handle = GetStdHandle(handleId);
 
     /*
-     * Note that we need to check for 0 because Windows will return 0 if this
+     * Note that we need to check for 0 because Windows may return 0 if this
      * is not a console mode application, even though this is not a valid
-     * handle. 
+     * handle.
      */
-
+    
     if ((handle == INVALID_HANDLE_VALUE) || (handle == 0)) {
 	return NULL;
     }
-
+    
     channel = Tcl_MakeFileChannel(handle, mode);
+
+    if (channel == NULL) {
+	return NULL;
+    }
 
     /*
      * Set up the normal channel options for stdio handles.
@@ -1183,3 +1029,72 @@ TclGetDefaultStdChannel(type)
     }
     return channel;
 }
+
+
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclWinOpenFileChannel --
+ *
+ *	Constructs a File channel for the specified standard OS handle.
+ *      This is a helper function to break up the construction of 
+ *      channels into File, Console, or Serial.
+ *
+ * Results:
+ *	Returns the new channel, or NULL.
+ *
+ * Side effects:
+ *	May open the channel and may cause creation of a file on the
+ *	file system.
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tcl_Channel
+TclWinOpenFileChannel(handle, channelName, permissions, appendMode)
+    HANDLE handle;
+    char *channelName;
+    int permissions;
+    int appendMode;
+{
+    FileInfo *infoPtr;
+    ThreadSpecificData *tsdPtr;
+
+    tsdPtr = FileInit();
+
+    /*
+     * See if a channel with this handle already exists.
+     */
+    
+    for (infoPtr = tsdPtr->firstFilePtr; infoPtr != NULL; 
+	 infoPtr = infoPtr->nextPtr) {
+	if (infoPtr->handle == (HANDLE) handle) {
+	    return (permissions == infoPtr->validMask) ? infoPtr->channel : NULL;
+	}
+    }
+
+    infoPtr = (FileInfo *) ckalloc((unsigned) sizeof(FileInfo));
+    infoPtr->nextPtr = tsdPtr->firstFilePtr;
+    tsdPtr->firstFilePtr = infoPtr;
+    infoPtr->validMask = permissions;
+    infoPtr->watchMask = 0;
+    infoPtr->flags = appendMode;
+    infoPtr->handle = handle;
+	
+    wsprintfA(channelName, "file%lx", (int) infoPtr);
+    
+    infoPtr->channel = Tcl_CreateChannel(&fileChannelType, channelName,
+	    (ClientData) infoPtr, permissions);
+    
+    /*
+     * Files have default translation of AUTO and ^Z eof char, which
+     * means that a ^Z will be accepted as EOF when reading.
+     */
+    
+    Tcl_SetChannelOption(NULL, infoPtr->channel, "-translation", "auto");
+    Tcl_SetChannelOption(NULL, infoPtr->channel, "-eofchar", "\032 {}");
+
+    return infoPtr->channel;
+}
+

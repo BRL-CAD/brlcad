@@ -26,12 +26,12 @@
  *
  *	John Robert LoVerso <loverso@freebsd.osf.org>
  *
- * Copyright (c) 1995 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclLoadOSF.c 1.2 96/02/15 11:58:40
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -41,7 +41,7 @@
 /*
  *----------------------------------------------------------------------
  *
- * TclLoadFile --
+ * TclpLoadFile --
  *
  *	Dynamically loads a binary code file into memory and returns
  *	the addresses of two procedures within that file, if they
@@ -49,7 +49,7 @@
  *
  * Results:
  *	A standard Tcl completion code.  If an error occurs, an error
- *	message is left in interp->result.  *proc1Ptr and *proc2Ptr
+ *	message is left in the interp's result.  *proc1Ptr and *proc2Ptr
  *	are filled in with the addresses of the symbols given by
  *	*sym1 and *sym2, or NULL if those symbols can't be found.
  *
@@ -60,7 +60,7 @@
  */
 
 int
-TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
+TclpLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr, clientDataPtr)
     Tcl_Interp *interp;		/* Used for error reporting. */
     char *fileName;		/* Name of the file containing the desired
 				 * code. */
@@ -69,6 +69,9 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
     Tcl_PackageInitProc **proc1Ptr, **proc2Ptr;
 				/* Where to return the addresses corresponding
 				 * to sym1 and sym2. */
+    ClientData *clientDataPtr;	/* Filled with token for dynamically loaded
+				 * file which will be passed back to 
+				 * TclpUnloadFile() to unload the file. */
 {
     ldr_module_t lm;
     char *pkg;
@@ -80,6 +83,8 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
 	return TCL_ERROR;
     }
 
+    *clientDataPtr = NULL;
+    
     /*
      * My convention is to use a [OSF loader] package name the same as shlib,
      * since the idiots never implemented ldr_lookup() and it is otherwise
@@ -95,6 +100,33 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
     *proc1Ptr = ldr_lookup_package(pkg, sym1);
     *proc2Ptr = ldr_lookup_package(pkg, sym2);
     return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpUnloadFile --
+ *
+ *	Unloads a dynamically loaded binary code file from memory.
+ *	Code pointers in the formerly loaded file are no longer valid
+ *	after calling this function.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Does nothing.  Can anything be done?
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclpUnloadFile(clientData)
+    ClientData clientData;	/* ClientData returned by a previous call
+				 * to TclpLoadFile().  The clientData is 
+				 * a token that represents the loaded 
+				 * file. */
+{
 }
 
 /*

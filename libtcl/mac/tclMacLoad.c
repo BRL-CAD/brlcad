@@ -5,12 +5,12 @@
  *	on the Macintosh.  This procedure will only work with systems 
  *	that use the Code Fragment Manager.
  *
- * Copyright (c) 1995-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacLoad.c 1.20 97/11/20 18:39:20
+ * RCS: @(#) $Id$
  */
 
 #include <CodeFragments.h>
@@ -88,7 +88,7 @@ typedef struct CfrgItem CfrgItem;
  *
  * Results:
  *	The result is TCL_ERROR, and an error message is left in
- *	interp->result.
+ *	the interp's result.
  *
  * Side effects:
  *	New binary code is loaded.
@@ -97,16 +97,19 @@ typedef struct CfrgItem CfrgItem;
  */
 
 int
-TclLoadFile(
+TclpLoadFile(
     Tcl_Interp *interp,		/* Used for error reporting. */
     char *fileName,		/* Name of the file containing the desired
 				 * code. */
     char *sym1, char *sym2,	/* Names of two procedures to look up in
 				 * the file's symbol table. */
     Tcl_PackageInitProc **proc1Ptr,
-    Tcl_PackageInitProc **proc2Ptr)
+    Tcl_PackageInitProc **proc2Ptr,
 				/* Where to return the addresses corresponding
 				 * to sym1 and sym2. */
+    ClientData *clientDataPtr)	/* Filled with token for dynamically loaded
+				 * file which will be passed back to 
+				 * TclpUnloadFile() to unload the file. */
 {
     CFragConnectionID connID;
     Ptr dummy;
@@ -119,6 +122,8 @@ TclLoadFile(
     UInt32 length = kCFragGoesToEOF;
     char packageName[255];
     Str255 errName;
+    Tcl_DString ds;
+    char *native;
     
     /*
      * First thing we must do is infer the package name from the sym1
@@ -126,22 +131,26 @@ TclLoadFile(
      * this value, it just doesn't give it to us.
      */
     strcpy(packageName, sym1);
-    *packageName = (char) tolower(*packageName);
-    packageName[strlen(packageName) - 5] = NULL;
+    Tcl_UtfToLower(packageName);
+    *(Tcl_UtfAtIndex(packageName, Tcl_NumUtfChars(packageName, -1) - 5)) = 0;
     
+    native = Tcl_UtfToExternalDString(NULL, fileName, -1, &ds);
     err = FSpLocationFromPath(strlen(fileName), fileName, &fileSpec);
+    Tcl_DStringFree(&ds);
+    
     if (err != noErr) {
-	interp->result = "could not locate shared library";
+	Tcl_SetResult(interp, "could not locate shared library", TCL_STATIC);
 	return TCL_ERROR;
     }
     
     /*
-     * See if this fragment has a 'cfrg' resource.  It will tell us were
+     * See if this fragment has a 'cfrg' resource.  It will tell us where
      * to look for the fragment in the file.  If it doesn't exist we will
      * assume we have a ppc frag using the whole data fork.  If it does
      * exist we find the frag that matches the one we are looking for and
      * get the offset and size from the resource.
      */
+     
     saveFileRef = CurResFile();
     SetResLoad(false);
     fragFileRef = FSpOpenResFile(&fileSpec, fsRdPerm);
@@ -199,8 +208,9 @@ TclLoadFile(
     err = FindSymbol(connID, (StringPtr) sym1, (Ptr *) proc1Ptr, &symClass);
     p2cstr((StringPtr) sym1);
     if (err != fragNoErr || symClass == kDataCFragSymbol) {
-	interp->result =
-	    "could not find Initialization routine in library";
+	Tcl_SetResult(interp,
+		"could not find Initialization routine in library",
+		TCL_STATIC);
 	return TCL_ERROR;
     }
 
@@ -211,7 +221,36 @@ TclLoadFile(
 	*proc2Ptr = NULL;
     }
     
+    *clientDataPtr = (ClientData) connID;
+    
     return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpUnloadFile --
+ *
+ *	Unloads a dynamically loaded binary code file from memory.
+ *	Code pointers in the formerly loaded file are no longer valid
+ *	after calling this function.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Does nothing.  Can anything be done?
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclpUnloadFile(clientData)
+    ClientData clientData;	/* ClientData returned by a previous call
+				 * to TclpLoadFile().  The clientData is 
+				 * a token that represents the loaded 
+				 * file. */
+{
 }
 
 /*

@@ -9,9 +9,12 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) for.test 1.10 97/07/02 16:40:59
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 # Basic "for" operation.
 
@@ -582,11 +585,172 @@ test for-4.1 {break must reset the interp result} {
     set j
 } {}
 
-# Check "for" and computed command names.
+# Test for incorrect "double evaluation" semantics
 
-test for-5.1 {for and computed command names} {
-    set j 0
+test for-5.1 {possible delayed substitution of increment command} {knownBug} {
+    # Increment should be 5, and lappend should always append 5
+    catch {unset a}
+    catch {unset i}
+    set a 5
+    set i {}
+    for {set a 1} {$a < 12} "incr a $a" {lappend i $a}
+    set i
+} {1 6 11}
+
+test for-5.2 {possible delayed substitution of body command} {knownBug} {
+    # Increment should be 5, and lappend should always append 5
+    set a 5
+    set i {}
+    for {set a 1} {$a < 12} {incr a $a} "lappend i $a"
+    set i
+} {5 5 5 5}
+
+# In the following tests we need to bypass the bytecode compiler by
+# substituting the command from a variable.  This ensures that command
+# procedure is invoked directly.
+
+test for-6.1 {Tcl_ForObjCmd: number of args} {
     set z for
-    $z {set i 0} {$i<10} {incr i} {set j $i}
-    set j
-} 9
+    catch {$z} msg
+    set msg
+} {wrong # args: should be "for start test next command"}
+test for-6.2 {Tcl_ForObjCmd: number of args} {
+    set z for
+    catch {$z {set i 0}} msg
+    set msg
+} {wrong # args: should be "for start test next command"}
+test for-6.3 {Tcl_ForObjCmd: number of args} {
+    set z for
+    catch {$z {set i 0} {$i < 5}} msg
+    set msg
+} {wrong # args: should be "for start test next command"}
+test for-6.4 {Tcl_ForObjCmd: number of args} {
+    set z for
+    catch {$z {set i 0} {$i < 5} {incr i}} msg
+    set msg
+} {wrong # args: should be "for start test next command"}
+test for-6.5 {Tcl_ForObjCmd: number of args} {
+    set z for
+    catch {$z {set i 0} {$i < 5} {incr i} {body} extra} msg
+    set msg
+} {wrong # args: should be "for start test next command"}
+test for-6.6 {Tcl_ForObjCmd: error in initial command} {
+    set z for
+    list [catch {$z {set} {$i < 5} {incr i} {body}} msg] $msg $errorInfo
+} {1 {wrong # args: should be "set varName ?newValue?"} {wrong # args: should be "set varName ?newValue?"
+    while compiling
+"set"
+    ("for" initial command)
+    invoked from within
+"$z {set} {$i < 5} {incr i} {body}"}}
+test for-6.7 {Tcl_ForObjCmd: error in test expression} {
+    set z for
+    list [catch {$z {set i 0} {i < 5} {incr i} {body}} msg] $msg $errorInfo
+} {1 {syntax error in expression "i < 5"} {syntax error in expression "i < 5"
+    while executing
+"$z {set i 0} {i < 5} {incr i} {body}"}}
+test for-6.8 {Tcl_ForObjCmd: test expression is enclosed in quotes} {
+    set z for
+    set i 0
+    $z {set i 6} "$i > 5" {incr i} {set y $i}
+    set i
+} 6
+test for-6.9 {Tcl_ForObjCmd: error executing command body} {
+    set z for
+    catch {$z {set i 0} {$i < 5} {incr i} {set}} msg
+    set errorInfo
+} {wrong # args: should be "set varName ?newValue?"
+    while compiling
+"set"
+    ("for" body line 1)
+    invoked from within
+"$z {set i 0} {$i < 5} {incr i} {set}"}
+test for-6.10 {Tcl_ForObjCmd: simple command body} {
+    set z for
+    set a {}
+    $z {set i 1} {$i<6} {set i [expr $i+1]} {
+	if $i==4 break
+	set a [concat $a $i]
+    }
+    set a
+} {1 2 3}
+test for-6.11 {Tcl_ForObjCmd: command body in quotes} {
+    set z for
+    set a {}
+    $z {set i 1} {$i<6} {set i [expr $i+1]} "append a x"
+    set a
+} {xxxxx}
+test for-6.12 {Tcl_ForObjCmd: computed command body} {
+    set z for
+    catch {unset x1}
+    catch {unset bb}
+    catch {unset x2}
+    set x1 {append a x1; }
+    set bb {break}
+    set x2 {; append a x2}
+    set a {}
+    $z {set i 1} {$i<6} {set i [expr $i+1]} $x1$bb$x2
+    set a
+} {x1}
+test for-6.13 {Tcl_ForObjCmd: error in "next" command} {
+    set z for
+    catch {$z {set i 0} {$i < 5} {set} {set j 4}} msg
+    set errorInfo
+} {wrong # args: should be "set varName ?newValue?"
+    while compiling
+"set"
+    ("for" loop-end command)
+    invoked from within
+"$z {set i 0} {$i < 5} {set} {set j 4}"}
+test for-6.14 {Tcl_ForObjCmd: long command body} {
+    set z for
+    set a {}
+    $z {set i 1} {$i<6} {set i [expr $i+1]} {
+	if $i==4 break
+	if $i>5 continue
+	if {$i>6 && $tcl_platform(machine)=="xxx"} {
+	    catch {set a $a} msg
+	    catch {incr i 5} msg
+	    catch {incr i -5} msg
+	}
+	if {$i>6 && $tcl_platform(machine)=="xxx"} {
+	    catch {set a $a} msg
+	    catch {incr i 5} msg
+	    catch {incr i -5} msg
+	}
+	if {$i>6 && $tcl_platform(machine)=="xxx"} {
+	    catch {set a $a} msg
+	    catch {incr i 5} msg
+	    catch {incr i -5} msg
+	}
+	if {$i>6 && $tcl_platform(machine)=="xxx"} {
+	    catch {set a $a} msg
+	    catch {incr i 5} msg
+	    catch {incr i -5} msg
+	}
+	if {$i>6 && $tcl_platform(machine)=="xxx"} {
+	    catch {set a $a} msg
+	    catch {incr i 5} msg
+	    catch {incr i -5} msg
+	}
+	set a [concat $a $i]
+    }
+    set a
+} {1 2 3}
+test for-6.15 {Tcl_ForObjCmd: for command result} {
+    set z for
+    set a [$z {set i 0} {$i < 5} {incr i} {}]
+    set a
+} {}
+test for-6.16 {Tcl_ForObjCmd: for command result} {
+    set z for
+    set a [$z {set i 0} {$i < 5} {incr i} {if $i==3 break}]
+    set a
+} {}
+
+
+
+# cleanup
+::tcltest::cleanupTests
+return
+

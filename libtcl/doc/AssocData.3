@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
 '\" 
-'\" SCCS: @(#) AssocData.3 1.8 96/03/25 19:56:17
+'\" RCS: @(#) $Id$
 .so man.macros
 .TH Tcl_SetAssocData 3 7.5 Tcl "Tcl Library Procedures"
 .BS
@@ -84,6 +84,6 @@ specified key exists in the given interpreter \fBTcl_GetAssocData\fR
 returns \fBNULL\fR.
 .PP
 \fBTcl_DeleteAssocData\fR deletes an association with a specified key in
-the given interpreter.  It does not call the deletion procedure.
+the given interpreter.  Then it calls the deletion procedure.
 .SH KEYWORDS
 association, data, deletion procedure, interpreter, key

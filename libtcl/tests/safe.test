@@ -5,13 +5,17 @@
 # and generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1995-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) safe.test 1.34 97/11/19 14:59:13
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 foreach i [interp slaves] {
   interp delete $i
@@ -81,7 +85,7 @@ test safe-3.2 {calling safe::interpCreate on trusted interp} {
     set l [lsort [a aliases]]
     safe::interpDelete a
     set l
-} {exit file load source}
+} {encoding exit file load source}
 test safe-3.3 {calling safe::interpCreate on trusted interp} {
     catch {safe::interpDelete a}
     safe::interpCreate a
@@ -168,7 +172,19 @@ test safe-6.2 {test safe interpreters knowledge of the world} {
     SI; set r [$I eval {info script}]; DI; set r
 } {}
 test safe-6.3 {test safe interpreters knowledge of the world} {
-    SI; set r [lsort [$I eval {array names tcl_platform}]]; DI; set r
+    SI
+    set r [lsort [$I eval {array names tcl_platform}]]
+    DI
+    # If running a windows-debug shell, remove the "debug" element from r.
+    if {$tcl_platform(platform) == "windows" && \
+	    [lsearch $r "debug"] != -1} {
+	set r [lreplace $r 1 1]
+    }
+    set threaded [lsearch $r "threaded"]
+    if {$threaded != -1} {
+	set r [lreplace $r $threaded $threaded]
+    }
+    set r
 } {byteOrder platform}
 
 # more test should be added to check that hostname, nameofexecutable,
@@ -431,3 +447,86 @@ test safe-10.4 {testing nested statics loading / -nestedloadok} {
 
 
 }
+
+test safe-11.1 {testing safe encoding} {
+    set i [safe::interpCreate]
+    list \
+	    [catch {interp eval $i encoding} msg] \
+	    $msg \
+	    [safe::interpDelete $i];
+} {1 {wrong # args: should be "encoding option ?arg ...?"} {}}
+
+test safe-11.2 {testing safe encoding} {
+    set i [safe::interpCreate]
+    list \
+	    [catch {interp eval $i encoding system cp775} msg] \
+	    $msg \
+	    [safe::interpDelete $i];
+} {1 {wrong # args: should be "encoding system"} {}}
+
+test safe-11.3 {testing safe encoding} {
+    set i [safe::interpCreate]
+    set result [catch {
+	string match [encoding system] [interp eval $i encoding system]
+    } msg]
+    list $result $msg [safe::interpDelete $i]
+} {0 1 {}}
+
+test safe-11.4 {testing safe encoding} {
+    set i [safe::interpCreate]
+    set result [catch {
+	string match [encoding names] [interp eval $i encoding names]
+    } msg]
+    list $result $msg  [safe::interpDelete $i]
+} {0 1 {}}
+
+test safe-11.5 {testing safe encoding} {
+    set i [safe::interpCreate]
+    list \
+	    [catch {interp eval $i encoding convertfrom cp1258 foobar} msg] \
+	    $msg \
+	    [safe::interpDelete $i];
+} {0 foobar {}}
+
+
+test safe-11.6 {testing safe encoding} {
+    set i [safe::interpCreate]
+    list \
+	    [catch {interp eval $i encoding convertto cp1258 foobar} msg] \
+	    $msg \
+	    [safe::interpDelete $i];
+} {0 foobar {}}
+
+test safe-11.7 {testing safe encoding} {
+    set i [safe::interpCreate]
+    list \
+	    [catch {interp eval $i encoding convertfrom} msg] \
+	    $msg \
+	    [safe::interpDelete $i];
+} {1 {wrong # args: should be "encoding convertfrom ?encoding? data"} {}}
+
+
+test safe-11.8 {testing safe encoding} {
+    set i [safe::interpCreate]
+    list \
+	    [catch {interp eval $i encoding convertto} msg] \
+	    $msg \
+	    [safe::interpDelete $i];
+} {1 {wrong # args: should be "encoding convertto ?encoding? data"} {}}
+
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

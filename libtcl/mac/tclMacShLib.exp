@@ -197,6 +197,7 @@ SetIsStationery
 SetNameLocked
 Share
 StrToAddr
+TclAccess
 TclAllocateFreeObjects
 TclChdir
 TclCleanupByteCode
@@ -250,7 +251,6 @@ TclEmitForwardJump
 TclExecuteByteCode
 TclExpandCodeArray
 TclExpandJumpFixupArray
-TclExpandParseValue
 TclExprFloatError
 TclFileAttrsCmd
 TclFileCopyCmd
@@ -303,7 +303,7 @@ TclIsProc
 TclLoadFile
 TclLooksLikeInt
 TclLookupVar
-TclMacAccess
+TclpAccess
 TclMacCreateEnv
 TclMacExitHandler
 TclMacFOpenHack
@@ -313,7 +313,7 @@ TclMacOSErrorToPosixError
 TclMacReadlink
 TclMacRemoveTimer
 TclMacStartTimer
-TclMacStat
+TclpStat
 TclMacTimerExpired
 TclMatchFiles
 TclNeedSpace
@@ -321,9 +321,6 @@ TclObjIndexForString
 TclObjInterpProc
 TclObjInvoke
 TclObjInvokeGlobal
-TclParseBraces
-TclParseNestedCmd
-TclParseQuotes
 TclPlatformExit
 TclPlatformInit
 TclPreventAliasLoop
@@ -341,6 +338,7 @@ TclSetEnv
 TclSetIndexedScalar
 TclSetupEnv
 TclSockGetPort
+TclStat
 TclTeardownNamespace
 TclTestChannelCmd
 TclTestChannelEventCmd
@@ -528,7 +526,6 @@ Tcl_GlobalEvalObj
 Tcl_GlobalObjCmd
 Tcl_HashStats
 Tcl_HideCommand
-Tcl_HistoryCmd
 Tcl_IfCmd
 Tcl_Import
 Tcl_IncrCmd

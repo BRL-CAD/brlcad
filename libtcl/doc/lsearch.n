@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) lsearch.n 1.7 96/08/26 13:00:05
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH lsearch n 7.0 Tcl "Tcl Built-In Commands"
@@ -37,7 +37,8 @@ element using the same rules as the \fBstring match\fR command.
 .TP
 \fB\-regexp\fR
 \fIPattern\fR is treated as a regular expression and matched against
-each list element using the same rules as the \fBregexp\fR command.
+each list element using the rules described in the \fBre_syntax\fR
+reference page.
 .PP
 If \fImode\fR is omitted then it defaults to \fB\-glob\fR.
 

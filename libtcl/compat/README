@@ -5,4 +5,4 @@ Tcl when a system doesn't contain the corresponding files or when
 they are known to be incorrect.  When the whole world becomes POSIX-
 compliant this directory should be unnecessary.
 
-sccsid = SCCS: @(#) README 1.3 96/02/16 08:56:51
+RCS: @(#) $Id$

@@ -13,7 +13,7 @@ some cases, a person has volunteered to act as a contact point for
 questions about porting Tcl to a particular machine;  in these
 cases the person's name and e-mail address are listed.
 
-sccsid = SCCS: @(#) porting.old 1.3 96/02/16 08:56:07
+sccsid = RCS: @(#) $Id$
 
 ---------------------------------------------
 Cray machines running UNICOS:

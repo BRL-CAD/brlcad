@@ -5,15 +5,12 @@
 # widgets behave properly for different platforms.
 #
 # Copyright (c) 1996 by Sun Microsystems, Inc.
+# Copyright (c) 1998 by Scritpics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # 
-# SCCS: @(#) word.tcl 1.2 96/11/20 14:07:22
-# 
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
+# RCS: @(#) $Id$
 
 # The following variables are used to determine which characters are
 # interpreted as white space.  
@@ -42,8 +39,8 @@ if {$tcl_platform(platform) == "windows"} {
 proc tcl_wordBreakAfter {str start} {
     global tcl_nonwordchars tcl_wordchars
     set str [string range $str $start end]
-    if [regexp -indices "$tcl_wordchars$tcl_nonwordchars|$tcl_nonwordchars$tcl_wordchars" $str result] {
-	return [expr [lindex $result 1] + $start]
+    if {[regexp -indices "$tcl_wordchars$tcl_nonwordchars|$tcl_nonwordchars$tcl_wordchars" $str result]} {
+	return [expr {[lindex $result 1] + $start}]
     }
     return -1
 }
@@ -64,7 +61,7 @@ proc tcl_wordBreakBefore {str start} {
     if {[string compare $start end] == 0} {
 	set start [string length $str]
     }
-    if [regexp -indices "^.*($tcl_wordchars$tcl_nonwordchars|$tcl_nonwordchars$tcl_wordchars)" [string range $str 0 $start] result] {
+    if {[regexp -indices "^.*($tcl_wordchars$tcl_nonwordchars|$tcl_nonwordchars$tcl_wordchars)" [string range $str 0 $start] result]} {
 	return [lindex $result 1]
     }
     return -1
@@ -84,9 +81,9 @@ proc tcl_wordBreakBefore {str start} {
 
 proc tcl_endOfWord {str start} {
     global tcl_nonwordchars tcl_wordchars
-    if [regexp -indices "$tcl_nonwordchars*$tcl_wordchars+$tcl_nonwordchars" \
-	    [string range $str $start end] result] {
-	return [expr [lindex $result 1] + $start]
+    if {[regexp -indices "$tcl_nonwordchars*$tcl_wordchars+$tcl_nonwordchars" \
+	    [string range $str $start end] result]} {
+	return [expr {[lindex $result 1] + $start}]
     }
     return -1
 }
@@ -105,9 +102,9 @@ proc tcl_endOfWord {str start} {
 
 proc tcl_startOfNextWord {str start} {
     global tcl_nonwordchars tcl_wordchars
-    if [regexp -indices "$tcl_wordchars*$tcl_nonwordchars+$tcl_wordchars" \
-	    [string range $str $start end] result] {
-	return [expr [lindex $result 1] + $start]
+    if {[regexp -indices "$tcl_wordchars*$tcl_nonwordchars+$tcl_wordchars" \
+	    [string range $str $start end] result]} {
+	return [expr {[lindex $result 1] + $start}]
     }
     return -1
 }
@@ -126,9 +123,9 @@ proc tcl_startOfPreviousWord {str start} {
     if {[string compare $start end] == 0} {
 	set start [string length $str]
     }
-    if [regexp -indices \
+    if {[regexp -indices \
 	    "$tcl_nonwordchars*($tcl_wordchars+)$tcl_nonwordchars*\$" \
-	    [string range $str 0 [expr $start - 1]] result word] {
+	    [string range $str 0 [expr {$start - 1}]] result word]} {
 	return [lindex $word 0]
     }
     return -1

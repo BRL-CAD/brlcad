@@ -5,7 +5,7 @@
 # These procedures use a callback interface to avoid using vwait,
 # which is not defined in the safe base.
 #
-# SCCS: @(#) http.tcl 1.10 97/10/29 16:12:55
+# RCS: @(#) $Id$
 #
 # See the http.n man page for documentation
 
@@ -40,7 +40,7 @@ proc http_config {args} {
 	}
     } else {
 	foreach {flag value} $args {
-	    if [regexp -- $pat $flag] {
+	    if {[regexp -- $pat $flag]} {
 		set http($flag) $value
 	    } else {
 		return -code error "Unknown option $flag, must be: $usage"
@@ -81,7 +81,7 @@ proc http_reset { token {why reset} } {
 }
 proc http_get { url args } {
     global http
-    if ![info exists http(uid)] {
+    if {![info exists http(uid)]} {
 	set http(uid) 0
     }
     set token http#[incr http(uid)]
@@ -106,7 +106,7 @@ proc http_get { url args } {
     regsub -all -- - $options {} options
     set pat ^-([join $options |])$
     foreach {flag value} $args {
-	if [regexp $pat $flag] {
+	if {[regexp $pat $flag]} {
 	    # Validate numbers
 	    if {[info exists state($flag)] && \
 		    [regexp {^[0-9]+$} $state($flag)] && \
@@ -213,7 +213,7 @@ proc http_size {token} {
     upvar #0 $token state
     set s $state(sock)
 
-    if [eof $s] then {
+     if {[eof $s]} {
 	httpEof $token
 	return
     }
@@ -221,7 +221,7 @@ proc http_size {token} {
 	set n [gets $s line]
 	if {$n == 0} {
 	    set state(state) body
-	    if ![regexp -nocase ^text $state(type)] {
+	    if {![regexp -nocase ^text $state(type)]} {
 		# Turn off conversions for non-text data
 		fconfigure $s -translation binary
 		if {[info exists state(-channel)]} {
@@ -235,20 +235,20 @@ proc http_size {token} {
 		httpCopyStart $s $token
 	    }
 	} elseif {$n > 0} {
-	    if [regexp -nocase {^content-type:(.+)$} $line x type] {
+	    if {[regexp -nocase {^content-type:(.+)$} $line x type]} {
 		set state(type) [string trim $type]
 	    }
-	    if [regexp -nocase {^content-length:(.+)$} $line x length] {
+	    if {[regexp -nocase {^content-length:(.+)$} $line x length]} {
 		set state(totalsize) [string trim $length]
 	    }
-	    if [regexp -nocase {^([^:]+):(.+)$} $line x key value] {
+	    if {[regexp -nocase {^([^:]+):(.+)$} $line x key value]} {
 		lappend state(meta) $key $value
 	    } elseif {[regexp ^HTTP $line]} {
 		set state(http) $line
 	    }
 	}
     } else {
-	if [catch {
+	if {[catch {
 	    if {[info exists state(-handler)]} {
 		set n [eval $state(-handler) {$s $token}]
 	    } else {
@@ -261,10 +261,10 @@ proc http_size {token} {
 	    if {$n >= 0} {
 		incr state(currentsize) $n
 	    }
-	} err] {
+	} err]} {
 	    httpFinish $token $err
 	} else {
-	    if [info exists state(-progress)] {
+	    if {[info exists state(-progress)]} {
 		eval $state(-progress) {$token $state(totalsize) $state(currentsize)}
 	    }
 	}
@@ -272,10 +272,10 @@ proc http_size {token} {
 }
  proc httpCopyStart {s token} {
     upvar #0 $token state
-    if [catch {
+    if {[catch {
 	fcopy $s $state(-channel) -size $state(-blocksize) -command \
 	    [list httpCopyDone $token]
-    } err] {
+    } err]} {
 	httpFinish $token $err
     }
 }
@@ -283,7 +283,7 @@ proc http_size {token} {
     upvar #0 $token state
     set s $state(sock)
     incr state(currentsize) $count
-    if [info exists state(-progress)] {
+    if {[info exists state(-progress)]} {
 	eval $state(-progress) {$token $state(totalsize) $state(currentsize)}
     }
     if {([string length $error] != 0)} {
@@ -345,7 +345,7 @@ proc http_formatQuery {args} {
  proc httpMapReply {string} {
     global httpFormMap
     set alphanumeric	a-zA-Z0-9
-    if ![info exists httpFormMap] {
+    if {![info exists httpFormMap]} {
 	 
 	for {set i 1} {$i <= 256} {incr i} {
 	    set c [format %c $i]

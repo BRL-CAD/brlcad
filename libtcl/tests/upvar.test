@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) upvar.test 1.15 97/10/29 18:25:56
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 test upvar-1.1 {reading variables with upvar} {
     proc p1 {a b} {set c 22; set d 33; p2}
@@ -327,6 +331,11 @@ test upvar-8.9 {upvar won't create namespace variable that refers to procedure v
     }
     list [catch {MakeLink 1} msg] $msg
 } {1 {bad variable name "a": upvar won't create namespace variable that refers to procedure variable}}
+test upvar-8.10 {upvar will create element alias for new array element} {
+    catch {unset upvarArray}
+    array set upvarArray {}
+    catch {upvar 0 upvarArray(elem) upvarArrayElemAlias}
+} {0}
 
 if {[info commands testupvar] != {}} {
     test upvar-9.1 {Tcl_UpVar2 procedure} {
@@ -391,4 +400,18 @@ if {[info commands testupvar] != {}} {
 }
 catch {unset a}
 
-concat
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

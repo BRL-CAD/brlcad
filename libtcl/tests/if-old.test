@@ -8,13 +8,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) if-old.test 1.10 96/10/22 11:33:06
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 test if-old-1.1 {taking proper branch} {
     set a {}
@@ -154,3 +158,19 @@ test if-old-4.10 {error conditions} {
 test if-old-4.11 {error conditions} {
     list [catch {if 0 then foo elseif 0 bar else {[error "error in else clause"]}} msg] $msg
 } {1 {error in else clause}}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

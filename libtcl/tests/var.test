@@ -9,14 +9,18 @@
 # errors. No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) var.test 1.10 97/07/28 18:31:47
+# RCS: @(#) $Id$
 #
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 catch {rename p ""}
 catch {namespace delete test_ns_var}
@@ -27,7 +31,7 @@ catch {unset i}
 catch {unset a}
 catch {unset arr}
 
-test var-1.1 {TclLookupVar, TCL_PARSE_PART1 flag set} {
+test var-1.1 {TclLookupVar, Array handling} {
     catch {unset a}
     set x "incr"  ;# force no compilation and runtime call to Tcl_IncrCmd 
     set i 10
@@ -113,6 +117,62 @@ test var-1.14 {TclLookupVar, namespace code ignores ":"s in middle and end of va
              [expr {[lsearch [info vars] x:y:] != -1}]
     }
 } {123 456 789 123 456 789 1 1 1}
+test var-1.15 {TclLookupVar, resurrect variable via upvar to deleted namespace: compiled code path} {
+    namespace eval test_ns_var {
+	variable foo 2
+    }
+    proc p {} {
+	variable ::test_ns_var::foo
+	lappend result [catch {set foo} msg] $msg
+        namespace delete ::test_ns_var
+	lappend result [catch {set foo 3} msg] $msg
+	lappend result [catch {set foo(3) 3} msg] $msg
+    }
+    p
+} {0 2 1 {can't set "foo": upvar refers to variable in deleted namespace} 1 {can't set "foo(3)": upvar refers to variable in deleted namespace}}
+test var-1.16 {TclLookupVar, resurrect variable via upvar to deleted namespace: uncompiled code path} {
+    namespace eval test_ns_var {
+	variable result
+        namespace eval subns {
+	    variable foo 2
+	}
+	upvar 0 subns::foo foo
+	lappend result [catch {set foo} msg] $msg
+        namespace delete subns
+	lappend result [catch {set foo 3} msg] $msg
+	lappend result [catch {set foo(3) 3} msg] $msg
+        namespace delete [namespace current]
+	set result
+    }
+} {0 2 1 {can't set "foo": upvar refers to variable in deleted namespace} 1 {can't set "foo(3)": upvar refers to variable in deleted namespace}}
+test var-1.17 {TclLookupVar, resurrect array element via upvar to deleted array: compiled code path} {
+    namespace eval test_ns_var {
+	variable result
+	proc p {} {
+	    array set x {1 2 3 4}
+	    upvar 0 x(1) foo
+	    lappend result [catch {set foo} msg] $msg
+	    unset x
+	    lappend result [catch {set foo 3} msg] $msg
+	}
+	set result [p]
+        namespace delete [namespace current]
+	set result
+    }
+} {0 2 1 {can't set "foo": upvar refers to element in deleted array}}
+test var-1.18 {TclLookupVar, resurrect array element via upvar to deleted array: uncompiled code path} {
+    namespace eval test_ns_var {
+	variable result {}
+	variable x
+	array set x {1 2 3 4}
+	upvar 0 x(1) foo
+	lappend result [catch {set foo} msg] $msg
+	unset x
+	lappend result [catch {set foo 3} msg] $msg
+        namespace delete [namespace current]
+	set result
+    }
+} {0 2 1 {can't set "foo": upvar refers to element in deleted array}}
 
 test var-2.1 {Tcl_LappendObjCmd, create var if new} {
     catch {unset x}
@@ -389,6 +449,16 @@ test var-7.12 {Tcl_VariableObjCmd, variable cmd inside proc creates local link v
     }
     p
 } {{My name is empty} {{}}}
+test var-7.13 {Tcl_VariableObjCmd, variable named ":"} {
+    namespace eval test_ns_var {
+        variable : {My name is ":"}
+	proc p {} {
+	    variable :
+	    list [set :] [info vars]
+	}
+	p
+    }
+} {{My name is ":"} :}
 
 test var-8.1 {TclDeleteVars, "unset" traces are called with fully-qualified var names} {
     catch {namespace delete test_ns_var}
@@ -407,48 +477,112 @@ test var-8.1 {TclDeleteVars, "unset" traces are called with fully-qualified var 
     list [unset test_ns_var::v] $test_ns_var::info
 } {{} {test_ns_var::v {} u}}
 
-test var-9.1 {behaviour of TclSetVar without TCL_LEAVE_ERR_MSG flag} {
-	testsetnoerr v 1
-} 1
-test var-9.2 {behaviour of TclGetVar without TCL_LEAVE_ERR_MSG flag} {
-	catch {unset v}
-	list [catch {testsetnoerr v} res] $res;
-} {1 {before get}}
-test var-9.3 {behaviour of TclGetVar without TCL_LEAVE_ERR_MSG flag} {
-	catch {unset arr}
-	set arr(1) 1;
-	list [catch {testsetnoerr arr} res] $res;
-} {1 {before get}}
-test var-9.4 {behaviour of TclGetVar without TCL_LEAVE_ERR_MSG flag} {
-	namespace eval ns {variable v nsv}
-	testsetnoerr ns::v;
-} nsv;
-test var-9.5 {behaviour of TclGetVar without TCL_LEAVE_ERR_MSG flag} {
-	catch {namespace delete ns}
-	list [catch {testsetnoerr ns::v} res] $res;
-} {1 {before get}}
-test var-9.6 {behaviour of TclSetVar without TCL_LEAVE_ERR_MSG flag} {
-	catch {unset arr}
-	set arr(1) 1;
-	list [catch {testsetnoerr arr 2} res] $res;
-} {1 {before set}}
-test var-9.7 {behaviour of TclSetVar without TCL_LEAVE_ERR_MSG flag} {
-	catch {unset arr}
-	set arr(1) 1;
-	list [catch {testsetnoerr arr 2} res] $res;
-} {1 {before set}}
-test var-9.8 {behaviour of TclSetVar without TCL_LEAVE_ERR_MSG flag} {
-    # this test currently fails, should not...
-    # (some namespace function resets the interp while it should not)
+if {[info commands testsetnoerr] == {}} {
+    puts "This application hasn't been compiled with the \"testsetnoerr\""
+    puts "command, so I can't test TclSetVar etc."
+} else {
+test var-9.1 {behaviour of TclGet/SetVar simple get/set} {
+    catch {unset u}; catch {unset v}
+    list \
+       [set u a; testsetnoerr u] \
+       [testsetnoerr v b] \
+       [testseterr u] \
+       [unset v; testseterr v b]
+} [list {before get a} {before set b} {before get a} {before set b}]
+test var-9.2 {behaviour of TclGet/SetVar namespace get/set} {
     catch {namespace delete ns}
-    list [catch {testsetnoerr ns::v 1} res] $res;
-} {1 {before set}}
-test var-9.9 {behaviour of TclSetVar without TCL_LEAVE_ERR_MSG flag} {
+    namespace eval ns {variable u a; variable v}
+    list \
+       [testsetnoerr ns::u] \
+       [testsetnoerr ns::v b] \
+       [testseterr ns::u] \
+       [unset ns::v; testseterr ns::v b]
+} [list {before get a} {before set b} {before get a} {before set b}]
+test var-9.3 {behaviour of TclGetVar no variable} {
+    catch {unset u}
+    list \
+       [catch {testsetnoerr u} res] $res \
+       [catch {testseterr u} res] $res
+} {1 {before get} 1 {can't read "u": no such variable}}
+test var-9.4 {behaviour of TclGetVar no namespace variable} {
+    catch {namespace delete ns}
+    namespace eval ns {}
+    list \
+       [catch {testsetnoerr ns::w} res] $res \
+       [catch {testseterr ns::w} res] $res
+} {1 {before get} 1 {can't read "ns::w": no such variable}}
+test var-9.5 {behaviour of TclGetVar no namespace} {
+    catch {namespace delete ns}
+    list \
+       [catch {testsetnoerr ns::u} res] $res \
+       [catch {testseterr ns::v} res] $res
+} {1 {before get} 1 {can't read "ns::v": no such variable}}
+test var-9.6 {behaviour of TclSetVar no namespace} {
+    catch {namespace delete ns}
+    list \
+       [catch {testsetnoerr ns::v 1} res] $res \
+       [catch {testseterr ns::v 1} res] $res
+} {1 {before set} 1 {can't set "ns::v": parent namespace doesn't exist}}
+test var-9.7 {behaviour of TclGetVar array variable} {
+    catch {unset arr}
+    set arr(1) 1;
+    list \
+       [catch {testsetnoerr arr} res] $res \
+       [catch {testseterr arr} res] $res
+} {1 {before get} 1 {can't read "arr": variable is array}}
+test var-9.8 {behaviour of TclSetVar array variable} {
+    catch {unset arr}
+    set arr(1) 1
+    list \
+       [catch {testsetnoerr arr 2} res] $res \
+       [catch {testseterr arr 2} res] $res
+} {1 {before set} 1 {can't set "arr": variable is array}}
+test var-9.9 {behaviour of TclGetVar read trace success} {
+    proc resetvar {val name elem op} {upvar 1 $name v; set v $val}
+    catch {unset u}; catch {unset v}
+    set u 10
+    trace var u r [list resetvar 1]
+    trace var v r [list resetvar 2]
+    list \
+       [testsetnoerr u] \
+       [testseterr v]
+} {{before get 1} {before get 2}}
+test var-9.10 {behaviour of TclGetVar read trace error} {
+    proc writeonly args {error "write-only"}
+    set v 456
+    trace var v r writeonly
+    list \
+       [catch {testsetnoerr v} msg] $msg \
+       [catch {testseterr v} msg] $msg
+} {1 {before get} 1 {can't read "v": write-only}}
+test var-9.11 {behaviour of TclSetVar write trace success} {
+    proc doubleval {name elem op} {upvar 1 $name v; set v [expr {2 * $v}]}
+    catch {unset u}; catch {unset v}
+    set v 1
+    trace var v w doubleval
+    trace var u w doubleval
+    list \
+       [testsetnoerr u 2] \
+       [testseterr v 3]
+} {{before set 4} {before set 6}}
+test var-9.12 {behaviour of TclSetVar write trace error} {
     proc readonly args {error "read-only"}
     set v 456
     trace var v w readonly
-    list [catch {testsetnoerr v 2} msg] $msg
-} {1 {before set}}
+    list \
+       [catch {testsetnoerr v 2} msg] $msg $v \
+       [catch {testseterr v 3} msg] $msg $v
+} {1 {before set} 2 1 {can't set "v": read-only} 3}
+}
+test var-10.1 {can't nest arrays with array set} {
+   catch {unset arr}
+   list [catch {array set arr(x) {a 1 b 2}} res] $res
+} {1 {can't set "arr(x)": variable isn't array}}
+
+test var-10.2 {can't nest arrays with array set} {
+   catch {unset arr}
+   list [catch {array set arr(x) {}} res] $res
+} {1 {can't set "arr(x)": variable isn't array}}
 
 catch {namespace delete ns}
 catch {unset arr}
@@ -464,4 +598,19 @@ catch {unset i}
 catch {unset a}
 catch {unset xxxxx}
 catch {unset aaaaa}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
 

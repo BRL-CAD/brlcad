@@ -5,13 +5,17 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1996-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) expr.test 1.39 97/11/03 16:04:47
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 if {([catch {expr T1()} msg] == 1) && ($msg == {unknown math function "T1"})} {
     set gotT1 0
@@ -88,7 +92,7 @@ test expr-1.5 {TclCompileExprCmd: quoted expression word} {
 test expr-1.6 {TclCompileExprCmd: quoted expression word} {
     catch {expr "0005"zxy} msg
     set msg
-} {quoted string doesn't terminate properly}
+} {extra characters after close-quote}
 test expr-1.7 {TclCompileExprCmd: expression word in braces} {
     expr {-0005}
 } -5
@@ -98,7 +102,7 @@ test expr-1.8 {TclCompileExprCmd: expression word in braces} {
 test expr-1.9 {TclCompileExprCmd: expression word in braces} {
     catch {expr {-0005}foo} msg
     set msg
-} {argument word in braces doesn't terminate properly}
+} {extra characters after close-brace}
 test expr-1.10 {TclCompileExprCmd: other expression word in braces} {
     expr 4*[llength "6 2"]
 } 8
@@ -479,7 +483,6 @@ test expr-14.16 {CompilePrimaryExpr: error compiling var reference primary} {
     catch {expr {$a(foo}} msg
     set errorInfo
 } {missing )
-    (parsing index for array "a")
     while compiling
 "expr {$a(foo}"}
 test expr-14.17 {CompilePrimaryExpr: string primary that looks like var ref} {
@@ -516,9 +519,7 @@ test expr-14.23 {CompilePrimaryExpr: error in subcommand primary} {
 test expr-14.24 {CompilePrimaryExpr: error in subcommand primary} {
     catch {expr {[set i}} msg
     set errorInfo
-} {missing close-bracket or close-brace
-    while compiling
-"set i"
+} {missing close-bracket
     while compiling
 "expr {[set i}"}
 test expr-14.25 {CompilePrimaryExpr: math function primary} {
@@ -531,7 +532,7 @@ test expr-14.27 {CompilePrimaryExpr: error in math function primary} {
     catch {expr sinh::(2.0)} msg
     set errorInfo
 } {syntax error in expression "sinh::(2.0)"
-    while executing
+    while compiling
 "expr sinh::(2.0)"}
 test expr-14.28 {CompilePrimaryExpr: subexpression primary} {
     expr 2+(3*4)
@@ -548,7 +549,7 @@ test expr-14.30 {CompilePrimaryExpr: missing paren in subexpression primary} {
     catch {expr 2+(3*(4+5)} msg
     set errorInfo
 } {syntax error in expression "2+(3*(4+5)"
-    while executing
+    while compiling
 "expr 2+(3*(4+5)"}
 test expr-14.31 {CompilePrimaryExpr: just var ref in subexpression primary} {
     set i "5+10"
@@ -558,44 +559,44 @@ test expr-14.32 {CompilePrimaryExpr: unexpected token} {
     catch {expr @} msg
     set errorInfo
 } {syntax error in expression "@"
-    while executing
+    while compiling
 "expr @"}
 
 test expr-15.1 {CompileMathFuncCall: missing parenthesis} {
     catch {expr sinh2.0)} msg
     set errorInfo
 } {syntax error in expression "sinh2.0)"
-    while executing
+    while compiling
 "expr sinh2.0)"}
 test expr-15.2 {CompileMathFuncCall: unknown math function} {
     catch {expr whazzathuh(1)} msg
     set errorInfo
 } {unknown math function "whazzathuh"
-    while executing
+    while compiling
 "expr whazzathuh(1)"}
 test expr-15.3 {CompileMathFuncCall: too many arguments} {
     catch {expr sin(1,2,3)} msg
     set errorInfo
 } {too many arguments for math function
-    while executing
+    while compiling
 "expr sin(1,2,3)"}
 test expr-15.4 {CompileMathFuncCall: ')' found before last required arg} {
     catch {expr sin()} msg
     set errorInfo
-} {syntax error in expression "sin()"
-    while executing
+} {too few arguments for math function
+    while compiling
 "expr sin()"}
 test expr-15.5 {CompileMathFuncCall: too few arguments} {
     catch {expr pow(1)} msg
     set errorInfo
 } {too few arguments for math function
-    while executing
+    while compiling
 "expr pow(1)"}
 test expr-15.6 {CompileMathFuncCall: missing ')'} {
     catch {expr sin(1} msg
     set errorInfo
 } {syntax error in expression "sin(1"
-    while executing
+    while compiling
 "expr sin(1"}
 if $gotT1 {
     test expr-15.7 {CompileMathFuncCall: call registered math function} {
@@ -667,4 +668,53 @@ test expr-19.1 {expr and interpreter result object resetting} {
     p
 } 3
 
-unset a
+# Test for incorrect "double evaluation" semantics
+
+test expr-20.1 {wrong brace matching} {
+    catch {unset l}
+    catch {unset r}
+    catch {unset q}
+    catch {unset cmd}
+    catch {unset a}
+    set l "\{"; set r "\}"; set q "\""
+    set cmd "expr $l$q|$q == $q$r$q$r"
+    list [catch $cmd a] $a
+} {1 {extra characters after close-brace}}
+test expr-20.2 {double invocation of variable traces} {knownBug} {
+    set exprtracecounter 0
+    proc exprtraceproc {args} {
+       upvar #0 exprtracecounter counter
+       set argc [llength $args]
+       set extraargs [lrange $args 0 [expr {$argc - 4}]]
+       set name [lindex $args [expr {$argc - 3}]]
+       upvar 1 $name var
+       if {[incr counter] % 2 == 1} {
+           set var "$counter oops [concat $extraargs]"
+       } else {
+           set var "$counter + [concat $extraargs]"
+       }
+    }
+    trace variable exprtracevar r [list exprtraceproc 10]
+    list [catch {expr "$exprtracevar + 20"} a] $a \
+        [catch {expr "$exprtracevar + 20"} b] $b \
+        [unset exprtracevar exprtracecounter]
+} {1 {syntax error in expression "1 oops 10 + 20"} 0 32 {}}
+test expr-20.3 {broken substitution of integer digits} {
+    # fails with 8.0.x, but not 8.1b2
+    list [set a 000; expr 0x1$a] [set a 1; expr ${a}000]
+} {4096 1000}
+test expr-20.4 {proper double evaluation compilation, error case} {
+    catch {unset a}; # make sure $a doesn't exist
+    list [catch {expr 1?{$a}:0} msg] $msg
+} {1 {can't read "a": no such variable}}
+test expr-20.5 {proper double evaluation compilation, working case} {
+    set a yellow
+    expr 1?{$a}:0
+} yellow
+
+# cleanup
+if {[info exists a]} {
+    unset a
+}
+::tcltest::cleanupTests
+return

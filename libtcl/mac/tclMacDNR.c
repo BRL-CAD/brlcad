@@ -15,7 +15,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacDNR.c 1.2 97/01/28 10:37:21
+ * RCS: @(#) $Id$
  */
 
 #pragma ANSI_strict off

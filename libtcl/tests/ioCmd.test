@@ -7,13 +7,17 @@
 #
 # Copyright (c) 1991-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# "@(#) ioCmd.test 1.49 97/10/31 17:23:22"
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 removeFile test1
 removeFile pipe
@@ -97,16 +101,16 @@ test iocmd-3.5 {gets command} {
 
 test iocmd-4.1 {read command} {
    list [catch {read} msg] $msg
-} {1 {wrong # args: should be "read channelId ?numBytes?" or "read ?-nonewline? channelId"}}
+} {1 {wrong # args: should be "read channelId ?numChars?" or "read ?-nonewline? channelId"}}
 test iocmd-4.2 {read command} {
    list [catch {read a b c d e f g h} msg] $msg
-} {1 {wrong # args: should be "read channelId ?numBytes?" or "read ?-nonewline? channelId"}}
+} {1 {wrong # args: should be "read channelId ?numChars?" or "read ?-nonewline? channelId"}}
 test iocmd-4.3 {read command} {
    list [catch {read aaa} msg] $msg
 } {1 {can not find channel named "aaa"}}
 test iocmd-4.4 {read command} {
    list [catch {read -nonewline} msg] $msg
-} {1 {wrong # args: should be "read channelId ?numBytes?" or "read ?-nonewline? channelId"}}
+} {1 {wrong # args: should be "read channelId ?numChars?" or "read ?-nonewline? channelId"}}
 test iocmd-4.5 {read command} {
    list [catch {read -nonew file4} msg] $msg $errorCode
 } {1 {can not find channel named "-nonew"} NONE}
@@ -126,7 +130,7 @@ test iocmd-4.8 {read command with incorrect combination of arguments} {
     set x [list [catch {read -nonewline $f 20 z} msg] $msg $errorCode]
     close $f
     set x
-} {1 {wrong # args: should be "read channelId ?numBytes?" or "read ?-nonewline? channelId"} NONE}
+} {1 {wrong # args: should be "read channelId ?numChars?" or "read ?-nonewline? channelId"} NONE}
 test iocmd-4.9 {read command} {
     list [catch {read stdin foo} msg] $msg $errorCode
 } {1 {bad argument "foo": should be "nonewline"} NONE}
@@ -158,7 +162,7 @@ test iocmd-5.3 {seek command} {
 } {1 {expected integer but got "gugu"}}
 test iocmd-5.4 {seek command} {
     list [catch {seek stdin 100 gugu} msg] $msg
-} {1 {bad origin "gugu": should be start, current, or end}}
+} {1 {bad origin "gugu": must be start, current, or end}}
 
 test iocmd-6.1 {tell command} {
     list [catch {tell} msg] $msg
@@ -195,7 +199,7 @@ test iocmd-8.4 {fconfigure command} {
     set x [list [catch {fconfigure $f1 froboz} msg] $msg]
     close $f1
     set x
-} {1 {bad option "froboz": should be one of -blocking, -buffering, -buffersize, -eofchar, or -translation}}
+} {1 {bad option "froboz": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, or -translation}}
 test iocmd-8.5 {fconfigure command} {
     list [catch {fconfigure stdin -buffering froboz} msg] $msg
 } {1 {bad value for -buffering: must be one of full, line, or none}}
@@ -205,43 +209,43 @@ test iocmd-8.6 {fconfigure command} {
 test iocmd-8.7 {fconfigure command} {
     removeFile test1
     set f1 [open test1 w]
-    fconfigure $f1 -translation lf -eofchar {}
+    fconfigure $f1 -translation lf -eofchar {} -encoding unicode
     set x [fconfigure $f1]
     close $f1
     set x
-} {-blocking 1 -buffering full -buffersize 4096 -eofchar {} -translation lf}
+} {-blocking 1 -buffering full -buffersize 4096 -encoding unicode -eofchar {} -translation lf}
 test iocmd-8.8 {fconfigure command} {
     removeFile test1
     set f1 [open test1 w]
     fconfigure $f1 -translation lf -buffering line -buffersize 3030 \
-		-eofchar {}
+		-eofchar {} -encoding unicode
     set x ""
     lappend x [fconfigure $f1 -buffering]
     lappend x [fconfigure $f1]
     close $f1
     set x
-} {line {-blocking 1 -buffering line -buffersize 3030 -eofchar {} -translation lf}}
+} {line {-blocking 1 -buffering line -buffersize 3030 -encoding unicode -eofchar {} -translation lf}}
 test iocmd-8.9 {fconfigure command} {
     removeFile test1
     set f1 [open test1 w]
     fconfigure $f1 -translation binary -buffering none -buffersize 4040 \
-		-eofchar {}
+		-eofchar {} -encoding binary
     set x [fconfigure $f1]
     close $f1
     set x
-} {-blocking 1 -buffering none -buffersize 4040 -eofchar {} -translation lf}
+} {-blocking 1 -buffering none -buffersize 4040 -encoding binary -eofchar {} -translation lf}
 test iocmd-8.10 {fconfigure command} {
     list [catch {fconfigure a b} msg] $msg
 } {1 {can not find channel named "a"}}
 test iocmd-8.11 {fconfigure command} {
     list [catch {fconfigure stdout -froboz blarfo} msg] $msg
-} {1 {bad option "-froboz": should be one of -blocking, -buffering, -buffersize, -eofchar, or -translation}}
+} {1 {bad option "-froboz": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, or -translation}}
 test iocmd-8.12 {fconfigure command} {
     list [catch {fconfigure stdout -b blarfo} msg] $msg
-} {1 {bad option "-b": should be one of -blocking, -buffering, -buffersize, -eofchar, or -translation}}
+} {1 {bad option "-b": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, or -translation}}
 test iocmd-8.13 {fconfigure command} {
     list [catch {fconfigure stdout -buffer blarfo} msg] $msg
-} {1 {bad option "-buffer": should be one of -blocking, -buffering, -buffersize, -eofchar, or -translation}}
+} {1 {bad option "-buffer": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, or -translation}}
 test iocmd-8.14 {fconfigure command} {
     fconfigure stdin -buffers
 } 4096
@@ -250,7 +254,7 @@ proc iocmdSSETUP {} {
 	set srv [socket -server iocmdSRV 0];
 	set port [lindex [fconfigure $srv -sockname] 2];
 	proc iocmdSRV {sock ip port} {close $sock}
-	set cli [socket localhost $port];
+	set cli [socket 127.0.0.1 $port];
   }
 }
 proc iocmdSSHTDWN {} {
@@ -267,7 +271,7 @@ test iocmd-8.15 {fconfigure command / tcp channel} {socket} {
 	set r [list [catch {fconfigure $cli -blah} msg] $msg];
 	iocmdSSHTDWN
 	set r;
-} {1 {bad option "-blah": should be one of -blocking, -buffering, -buffersize, -eofchar, -translation, -peername, or -sockname}}
+} {1 {bad option "-blah": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, -translation, -peername, or -sockname}}
 test iocmd-8.16 {fconfigure command / tcp channel} {socket} {
 	iocmdSSETUP
 	set r [expr [lindex [fconfigure $cli -peername] 2]==$port];
@@ -292,15 +296,14 @@ test iocmd-8.18 {fconfigure command / unix tty channel} {nonPortable unixOnly} {
 	set r [list [catch {fconfigure $tty -blah blih} msg] $msg];
 	close $tty;
 	set r;
-} {1 {bad option "-blah": should be one of -blocking, -buffering, -buffersize, -eofchar, -translation, or -mode}}
-test iocmd-8.19 {fconfigure command / win tty channel} {pcOnly && !win32s} {
-	# None of the com port functions are implemented on Win32s.
-	# Also, might fail if com1 is unavailable
+} {1 {bad option "-blah": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, -translation, or -mode}}
+test iocmd-8.19 {fconfigure command / win tty channel} {nonPortable pcOnly} {
+	# might fail if com1 is unavailable
 	set tty [open com1]
 	set r [list [catch {fconfigure $tty -blah blih} msg] $msg];
 	close $tty;
 	set r;
-} {1 {bad option "-blah": should be one of -blocking, -buffering, -buffersize, -eofchar, -translation, or -mode}}
+} {1 {bad option "-blah": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, -translation, -mode, or -pollinterval}}
 
 test iocmd-9.1 {eof command} {
     list [catch {eof} msg] $msg $errorCode
@@ -312,6 +315,8 @@ test iocmd-9.3 {eof command} {
     catch {close file100}
     list [catch {eof file100} msg] $msg $errorCode
 } {1 {can not find channel named "file100"} NONE}
+
+# The tests for Tcl_ExecObjCmd are in exec.test
 
 test iocmd-10.1 {fblocked command} {
     list [catch {fblocked} msg] $msg
@@ -488,7 +493,7 @@ test iocmd-15.9 {Tcl_FcopyObjCmd} {
 } "1 {channel \"$rfile\" wasn't opened for writing}"
 test iocmd-15.10 {Tcl_FcopyObjCmd} {
     list [catch {fcopy $rfile $wfile foo bar} msg] $msg
-} {1 {bad switch "foo": must be -size, or -command}}
+} {1 {bad switch "foo": must be -size or -command}}
 test iocmd-15.11 {Tcl_FcopyObjCmd} {
     list [catch {fcopy $rfile $wfile -size foo} msg] $msg
 } {1 {expected integer but got "foo"}}
@@ -499,14 +504,26 @@ test iocmd-15.12 {Tcl_FcopyObjCmd} {
 close $rfile
 close $wfile
 
-removeFile test1
-removeFile test2
-removeFile test3
-removeFile test4
+# cleanup
+foreach file [list test1 test2 test3 test4] {
+    ::tcltest::removeFile $file
+}
 # delay long enough for background processes to finish
 after 500
-removeFile test5
-removeFile pipe
-removeFile output
-set x ""
-set x
+foreach file [list test5 pipe output] {
+    ::tcltest::removeFile $file
+}
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

@@ -4,16 +4,15 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) safe.n 1.11 97/10/31 12:51:13
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH "Safe Tcl" n 8.0 Tcl "Tcl Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-Safe Base \- A mechanism for creating and manipulating safe interpreters.
+Safe\ Base \- A mechanism for creating and manipulating safe interpreters.
 .SH SYNOPSIS
-.PP
 \fB::safe::interpCreate\fR ?\fIslave\fR? ?\fIoptions...\fR?
 .sp
 \fB::safe::interpInit\fR \fIslave\fR ?\fIoptions...\fR?
@@ -50,7 +49,7 @@ hosting application to any party.
 .PP
 The Safe Base allows a master interpreter to create safe, restricted
 interpreters that contain a set of predefined aliases for the \fBsource\fR,
-\fBload\fR, \fBfile\fR and \fBexit\fR commands and
+\fBload\fR, \fBfile\fR, \fBencoding\fR, and \fBexit\fR commands and
 are able to use the auto-loading and package mechanisms.
 .PP
 No knowledge of the file system structure is leaked to the
@@ -246,6 +245,12 @@ the \fBfile\fR command; it allows only \fBdirname\fR, \fBjoin\fR,
 subcommands. For more details on what these subcommands do see the manual
 page for the \fBfile\fR command.
 .TP
+\fBencoding\fR ?\fIsubCmd args...\fR?
+The \fBenconding\fR alias provides access to a safe subset of the
+subcommands of the \fBencoding\fR command;  it disallows setting of
+the system encoding, but allows all other subcommands including
+\fBsystem\fR to check the current encoding.
+.TP
 \fBexit\fR
 The calling interpreter is deleted and its computation is stopped, but the
 Tcl process in which this interpreter exists is not terminated.
@@ -262,9 +267,9 @@ is to prevent.
 .PP
 The commands available in a safe interpreter, in addition to
 the safe set as defined in \fBinterp\fR manual page, are mediated aliases
-for \fBsource\fR, \fBload\fR, \fBexit\fR, and a safe subset of \fBfile\fR.
-The safe interpreter can also auto-load code and it can request that
-packages be loaded.
+for \fBsource\fR, \fBload\fR, \fBexit\fR, and safe subsets of
+\fBfile\fR and \fBencoding\fR. The safe interpreter can also auto-load
+code and it can request that packages be loaded.
 .PP
 Because some of these commands access the local file system, there is a
 potential for information leakage about its directory structure.

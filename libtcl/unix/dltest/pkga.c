@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) pkga.c 1.4 96/02/15 12:30:35
+ * RCS: @(#) $Id$
  */
 #include "tcl.h"
 
@@ -118,6 +118,9 @@ Pkga_Init(interp)
 {
     int code;
 
+    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
+	return TCL_ERROR;
+    }
     code = Tcl_PkgProvide(interp, "Pkga", "1.0");
     if (code != TCL_OK) {
 	return code;

@@ -6,19 +6,24 @@
 #
 # Copyright (c) 1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) link.test 1.12 97/01/21 21:16:04
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 if {[info commands testlink] == {}} {
     puts "This application hasn't been compiled with the \"testlink\""
     puts "command, so I can't test Tcl_LinkVar et al."
+    ::tcltest::cleanupTests
     return
 }
-
-if {[string compare test [info procs test]] == 1} then {source defs}
 
 foreach i {int real bool string} {
     catch {unset $i}
@@ -228,7 +233,24 @@ test link-8.3 {Tcl_UpdateLinkedVar procedure, read-only variable} {
     list [catch {testlink update 47 {} {} {}} msg] $msg $int
 } {0 {} 47}
 
+testlink set 0 0 0 -
 testlink delete
 foreach i {int real bool string} {
     catch {unset $i}
 }
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

@@ -6,16 +6,13 @@
  *
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
+ * Copyright (c) 1998-1999 by Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclAppInit.c 1.20 97/03/24 14:29:43
+ * RCS: @(#) $Id$
  */
-
-#ifdef TCL_XT_TEST
-#include <X11/Intrinsic.h>
-#endif
 
 #include "tcl.h"
 
@@ -29,11 +26,22 @@ int *tclDummyMathPtr = (int *) matherr;
 
 
 #ifdef TCL_TEST
-EXTERN int		TclObjTest_Init _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+
+#include "tclInt.h"
+
+extern int		Procbodytest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Procbodytest_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		TclObjTest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+#ifdef TCL_THREADS
+extern int		TclThread_Init _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
+
 #endif /* TCL_TEST */
+
 #ifdef TCL_XT_TEST
-EXTERN int		Tclxttest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern void		XtToolkitInitialize _ANSI_ARGS_((void));
+extern int		Tclxttest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #endif
 
 /*
@@ -58,9 +66,20 @@ main(argc, argv)
     int argc;			/* Number of command-line arguments. */
     char **argv;		/* Values of command-line arguments. */
 {
+#ifdef TCL_TEST
+    /*
+     * Pass the build time location of the tcl library (to find init.tcl)
+     */
+    Tcl_Obj *path;
+    path = Tcl_NewStringObj(TCL_BUILDTIME_LIBRARY, -1);
+    TclSetLibraryPath(Tcl_NewListObj(1,&path));
+
+#endif
+
 #ifdef TCL_XT_TEST
     XtToolkitInitialize();
 #endif
+
     Tcl_Main(argc, argv, Tcl_AppInit);
     return 0;			/* Needed only to prevent compiler warning. */
 }
@@ -76,7 +95,7 @@ main(argc, argv)
  *
  * Results:
  *	Returns a standard Tcl completion code, and leaves an error
- *	message in interp->result if an error occurs.
+ *	message in the interp's result if an error occurs.
  *
  * Side effects:
  *	Depends on the startup script.
@@ -106,6 +125,16 @@ Tcl_AppInit(interp)
     if (TclObjTest_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+#ifdef TCL_THREADS
+    if (TclThread_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+#endif
+    if (Procbodytest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "procbodytest", Procbodytest_Init,
+            Procbodytest_SafeInit);
 #endif /* TCL_TEST */
 
     /*

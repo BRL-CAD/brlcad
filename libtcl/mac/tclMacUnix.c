@@ -7,12 +7,12 @@
  *      Unix Tcl normally hands off to the Unix OS.
  *
  * Copyright (c) 1993-1994 Lockheed Missle & Space Company, AI Center
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacUnix.c 1.56 96/12/12 19:38:08
+ * RCS: @(#) $Id$
  */
 
 #include <Files.h>
@@ -51,60 +51,6 @@
 #define noSourceErr		501
 #define isDirErr		502
 
-/*
- * Static functions in this file.
- */
-
-static int	GlobArgs _ANSI_ARGS_((Tcl_Interp *interp,
-		    int *argc, char ***argv));
-
-/*
- *----------------------------------------------------------------------
- *
- * GlobArgs --
- *
- *	The following function was taken from Peter Keleher's Alpha
- *	Editor.  *argc should only count the end arguments that should
- *	be globed.  argv should be incremented to point to the first
- *	arg to be globed.
- *
- * Results:
- *	Returns 'true' if it worked & memory was allocated, else 'false'.
- *
- * Side effects:
- *	argv will be alloced, the call will need to release the memory
- *
- *----------------------------------------------------------------------
- */
- 
-static int
-GlobArgs(
-    Tcl_Interp *interp,		/* Tcl interpreter. */
-    int *argc,			/* Number of arguments. */
-    char ***argv)		/* Argument strings. */
-{
-    int res, len;
-    char *list;
-	
-    /*
-     * Places the globbed args all into 'interp->result' as a list.
-     */
-    res = Tcl_GlobCmd(NULL, interp, *argc + 1, *argv - 1);
-    if (res != TCL_OK) {
-	return false;
-    }
-    len = strlen(interp->result);
-    list = (char *) ckalloc(len + 1);
-    strcpy(list, interp->result);
-    Tcl_ResetResult(interp);
-	
-    res = Tcl_SplitList(interp, list, argc, argv);
-    ckfree((char *) list);
-    if (res != TCL_OK) {
-	return false;
-    }
-    return true;
-}
 
 /*
  *----------------------------------------------------------------------
@@ -138,24 +84,24 @@ Tcl_EchoCmd(
         return TCL_ERROR;
     }
     for (i = 1; i < argc; i++) {
-	result = Tcl_Write(chan, argv[i], -1);
+	result = Tcl_WriteChars(chan, argv[i], -1);
 	if (result < 0) {
 	    Tcl_AppendResult(interp, "echo: ", Tcl_GetChannelName(chan),
 		    ": ", Tcl_PosixError(interp), (char *) NULL);
 	    return TCL_ERROR;
 	}
         if (i < (argc - 1)) {
-	    Tcl_Write(chan, " ", -1);
+	    Tcl_WriteChars(chan, " ", -1);
 	}
     }
-    Tcl_Write(chan, "\n", -1);
+    Tcl_WriteChars(chan, "\n", -1);
     return TCL_OK;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * Tcl_LsCmd --
+ * Tcl_LsObjCmd --
  *
  *	This procedure is invoked to process the "ls" Tcl command.
  *	See the user documentation for details on what it does.
@@ -169,17 +115,16 @@ Tcl_EchoCmd(
  *----------------------------------------------------------------------
  */
 int
-Tcl_LsCmd(
+Tcl_LsObjCmd(
     ClientData dummy,			/* Not used. */
     Tcl_Interp *interp,			/* Current interpreter. */
-    int argc,				/* Number of arguments. */
-    char **argv)			/* Argument strings. */
+    int objc,				/* Number of arguments. */
+    Tcl_Obj *CONST objv[])		/* Argument strings. */
 {
 #define STRING_LENGTH 80
 #define CR '\n'
     int i, j;
     int fieldLength, len = 0, maxLen = 0, perLine;
-    char **origArgv = argv;
     OSErr err;
     CInfoPBRec paramBlock;
     HFileInfo *hpb = (HFileInfo *)&paramBlock;
@@ -188,24 +133,27 @@ Tcl_LsCmd(
     char theLine[STRING_LENGTH + 2];
     int fFlag = false, pFlag = false, aFlag = false, lFlag = false,
 	cFlag = false, hFlag = false;
+    char *argv;
+    Tcl_Obj *newObjv[2], *resultObjPtr;
 
     /*
      * Process command flags.  End if argument doesn't start
      * with a dash or is a dash by itself.  The remaining arguments
      * should be files.
      */
-    for (i = 1; i < argc; i++) {
-	if (argv[i][0] != '-') {
+    for (i = 1; i < objc; i++) {
+    	argv = Tcl_GetString(objv[i]);
+	if (argv[0] != '-') {
 	    break;
 	}
 		
-	if (!strcmp(argv[i], "-")) {
+	if (!strcmp(argv, "-")) {
 	    i++;
 	    break;
 	}
 		
-	for (j = 1 ; argv[i][j] ; ++j) {
-	    switch(argv[i][j]) {
+	for (j = 1 ; argv[j] ; ++j) {
+	    switch(argv[j]) {
 	    case 'a':
 	    case 'A':
 		aFlag = true;
@@ -237,23 +185,33 @@ Tcl_LsCmd(
 	}
     }
 
-    argv += i;
-    argc -= i;
+    objv += i;
+    objc -= i;
 
     /*
      * No file specifications means we search for all files.
      * Glob will be doing most of the work.
      */
-     if (!argc) {
-	argc = 1;
-	argv = origArgv;
-	strcpy(argv[0], "*");
+     if (!objc) {
+	objc = 1;
+	newObjv[0] = Tcl_NewStringObj("*", -1);
+	newObjv[1] = NULL;
+	objv = newObjv;
     }
 
-    if (!GlobArgs(interp, &argc, &argv)) {
-	Tcl_ResetResult(interp);
-	return TCL_ERROR;
+    if (Tcl_GlobObjCmd(NULL, interp, objc + 1, objv - 1) != TCL_OK) {
+    	Tcl_ResetResult(interp);
+    	return TCL_ERROR;
     }
+
+    resultObjPtr = Tcl_GetObjResult(interp);
+    Tcl_IncrRefCount(resultObjPtr);
+    if (Tcl_ListObjGetElements(interp, resultObjPtr, &objc, &objv) != TCL_OK) {
+    	Tcl_DecrRefCount(resultObjPtr);
+    	return TCL_ERROR;
+    }
+
+    Tcl_ResetResult(interp);
 
     /*
      * There are two major methods for listing files: the long
@@ -264,6 +222,9 @@ Tcl_LsCmd(
 	char	lineTag;
 	long	size;
 	unsigned short flags;
+	Tcl_Obj *objPtr;
+	char *string;
+	int length;
 
 	/*
 	 * Print the header for long listing.
@@ -278,8 +239,8 @@ Tcl_LsCmd(
 		    NULL);
 	}
 		
-	for (i = 0; i < argc; i++) {
-	    strcpy(theFile, argv[i]);
+	for (i = 0; i < objc; i++) {
+	    strcpy(theFile, Tcl_GetString(objv[i]));
 			
 	    c2pstr(theFile);
 	    hpb->ioCompletion = NULL;
@@ -347,11 +308,10 @@ Tcl_LsCmd(
 	    
 	}
 		
-	if ((interp->result != NULL) && (*(interp->result) != '\0')) {
-	    int slen = strlen(interp->result);
-	    if (interp->result[slen - 1] == '\n') {
-		interp->result[slen - 1] = '\0';
-	    }
+	objPtr = Tcl_GetObjResult(interp);
+	string = Tcl_GetStringFromObj(objPtr, &length);
+	if ((length > 0) && (string[length - 1] == '\n')) {
+	    Tcl_SetObjLength(objPtr, length - 1);
 	}
     } else {
 	/*
@@ -369,8 +329,9 @@ Tcl_LsCmd(
 	    perLine = 1;
 	    fieldLength = STRING_LENGTH;
 	} else {
-	    for (i = 0; i < argc; i++) {
-		len = strlen(argv[i]);
+	    for (i = 0; i < objc; i++) {
+	    	argv = Tcl_GetString(objv[i]);
+		len = strlen(argv);
 		if (len > maxLen) {
 		    maxLen = len;
 		}
@@ -382,8 +343,8 @@ Tcl_LsCmd(
 	argCount = 0;
 	linePos = 0;
 	memset(theLine, ' ', STRING_LENGTH);
-	while (argCount < argc) {
-	    strcpy(theFile, argv[argCount]);
+	while (argCount < objc) {
+	    strcpy(theFile, Tcl_GetString(objv[argCount]));
 			
 	    c2pstr(theFile);
 	    hpb->ioCompletion = NULL;
@@ -457,8 +418,8 @@ Tcl_LsCmd(
 	    }
 	}
     }
-	
-    ckfree((char *) argv);
-	
+
+    Tcl_DecrRefCount(resultObjPtr);
+    	
     return TCL_OK;
 }

@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) rename.test 1.20 97/06/24 17:26:23
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 # Must eliminate the "unknown" command while the test is running,
 # especially if the test is being run in a program with its
@@ -128,6 +132,9 @@ if {[info command testdel] == "testdel"} {
 	testdel foo cmd {set env(value) deleted; kill}
 	list [catch {interp delete foo} msg] $msg $env(value)
     } {0 {} deleted}
+    if {[info exists env(value)]} {
+	unset env(value)
+    }
 }
 
 # Save the unknown procedure which is modified by the following test.
@@ -163,10 +170,9 @@ test rename-6.1 {old code invalidated (epoch incremented) when cmd with compile 
     set msg
 } {called "incr" with too many arguments}
 
-catch {rename incr {}}
-catch {rename incr.old incr}
-
-# Make the file return an empty string (cleaner.).
-
-set x ""
-
+if {[info commands incr.old] != {}} {
+    catch {rename incr {}}
+    catch {rename incr.old incr}
+}
+::tcltest::cleanupTests
+return

@@ -5,32 +5,44 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) osa.test 1.4 97/06/23 18:24:24
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
-
-# This command only runs on the Macintosh, only run the test if we
-# can load the command
-if {$tcl_platform(platform) != "macintosh"} {
-    puts "skipping: Mac only tests..."
-    return
-}
-if {[info commands AppleScript] == ""} {
-    puts "couldn't find AppleScript command..."
-    return
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
 }
 
-test osa-1.1 {Tcl_OSAComponentCmd} {
+# Only run the test if we can load the AppleScript command
+set ::tcltest::testConstraints(appleScript) [expr {[info commands AppleScript] != ""}]
+
+test osa-1.1 {Tcl_OSAComponentCmd} {macOnly appleScript} {
     list [catch AppleScript msg] $msg
 } {1 {wrong # args: should be "AppleScript option ?arg ...?"}}
-test osa-1.2 {Tcl_OSAComponentCmd} {
+test osa-1.2 {Tcl_OSAComponentCmd} {macOnly appleScript} {
     list [catch {AppleScript x} msg] $msg
 } {1 {bad option "x": should be compile, decompile, delete, execute, info, load, run or store}}
 
-test osa-1.3 {TclOSACompileCmd} {
+test osa-1.3 {TclOSACompileCmd} {macOnly appleScript} {
     list [catch {AppleScript compile} msg] $msg
 } {1 {wrong # args: should be "AppleScript compile ?options? code"}}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

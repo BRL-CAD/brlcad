@@ -3,13 +3,17 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) cmdIL.test 1.18 97/09/18 11:42:12
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 test cmdIL-1.1 {Tcl_LsortObjCmd procedure} {
     list [catch {lsort} msg] $msg
@@ -38,34 +42,37 @@ test cmdIL-1.7 {Tcl_LsortObjCmd procedure, -decreasing option} {
 test cmdIL-1.8 {Tcl_LsortObjCmd procedure, -dictionary option} {
     lsort -dictionary {d e c b a d35 d300}
 } {a b c d d35 d300 e}
-test cmdIL-1.9 {Tcl_LsortObjCmd procedure, -increasing option} {
+test cmdIL-1.9 {Tcl_LsortObjCmd procedure, -dictionary option} {
+    lsort -dictionary {1k 0k 10k}
+} {0k 1k 10k}
+test cmdIL-1.10 {Tcl_LsortObjCmd procedure, -increasing option} {
     lsort -decreasing -increasing {d e c b a d35 d300}
 } {a b c d d300 d35 e}
-test cmdIL-1.10 {Tcl_LsortObjCmd procedure, -index option} {
+test cmdIL-1.11 {Tcl_LsortObjCmd procedure, -index option} {
     list [catch {lsort -index {1 3 2 5}} msg] $msg
 } {1 {"-index" option must be followed by list index}}
-test cmdIL-1.11 {Tcl_LsortObjCmd procedure, -index option} {
-    list [catch {lsort -index foo {1 3 2 5}} msg] $msg
-} {1 {bad index "foo": must be integer or "end"}}
 test cmdIL-1.12 {Tcl_LsortObjCmd procedure, -index option} {
+    list [catch {lsort -index foo {1 3 2 5}} msg] $msg
+} {1 {bad index "foo": must be integer or end?-integer?}}
+test cmdIL-1.13 {Tcl_LsortObjCmd procedure, -index option} {
     lsort -index end -integer {{2 25} {10 20 50 100} {3 16 42} 1}
 } {1 {2 25} {3 16 42} {10 20 50 100}}
-test cmdIL-1.13 {Tcl_LsortObjCmd procedure, -index option} {
+test cmdIL-1.14 {Tcl_LsortObjCmd procedure, -index option} {
     lsort -index 1 -integer {{1 25 100} {3 16 42} {10 20 50}}
 } {{3 16 42} {10 20 50} {1 25 100}}
-test cmdIL-1.14 {Tcl_LsortObjCmd procedure, -integer option} {
+test cmdIL-1.15 {Tcl_LsortObjCmd procedure, -integer option} {
     lsort -integer {24 6 300 18}
 } {6 18 24 300}
-test cmdIL-1.15 {Tcl_LsortObjCmd procedure, -integer option} {
+test cmdIL-1.16 {Tcl_LsortObjCmd procedure, -integer option} {
     list [catch {lsort -integer {1 3 2.4}} msg] $msg
 } {1 {expected integer but got "2.4"}}
-test cmdIL-1.16 {Tcl_LsortObjCmd procedure, -real option} {
+test cmdIL-1.17 {Tcl_LsortObjCmd procedure, -real option} {
     lsort -real {24.2 6e3 150e-1}
 } {150e-1 24.2 6e3}
-test cmdIL-1.17 {Tcl_LsortObjCmd procedure, bogus list} {
+test cmdIL-1.18 {Tcl_LsortObjCmd procedure, bogus list} {
     list [catch {lsort "1 2 3 \{ 4"} msg] $msg
 } {1 {unmatched open brace in list}}
-test cmdIL-1.18 {Tcl_LsortObjCmd procedure, empty list} {
+test cmdIL-1.19 {Tcl_LsortObjCmd procedure, empty list} {
     lsort {}
 } {}
 
@@ -251,3 +258,57 @@ test cmdIL-4.22 {DictionaryCompare procedure, case} {
 test cmdIL-4.23 {DictionaryCompare procedure, case} {
     lsort -dictionary {ABcd AbCd}
 } {ABcd AbCd}
+test cmdIL-4.24 {DictionaryCompare procedure, international characters} {hasIsoLocale} {
+    ::tcltest::set_iso8859_1_locale
+    set result [lsort -dictionary "a b c A B C \xe3 \xc4"]
+    ::tcltest::restore_locale
+    set result
+} "A a B b C c \xe3 \xc4"
+test cmdIL-4.25 {DictionaryCompare procedure, international characters} {hasIsoLocale} {
+    ::tcltest::set_iso8859_1_locale
+    set result [lsort -dictionary "a23\xe3 a23\xc5 a23\xe4"]
+    ::tcltest::restore_locale
+    set result
+} "a23\xe3 a23\xe4 a23\xc5"
+test cmdIL-4.26 {DefaultCompare procedure, signed characters} {
+    set l [lsort [list "abc\200" "abc"]]
+    set viewlist {}
+    foreach s $l {
+	set viewelem ""
+	set len [string length $s]
+	for {set i 0} {$i < $len} {incr i} {
+	    set c [string index $s $i]
+	    scan $c %c d
+	    if {$d > 0 && $d < 128} {
+		append viewelem $c
+	    } else {
+		append viewelem "\\[format %03o $d]"
+	    }
+	}
+	lappend viewlist $viewelem
+    }
+    set viewlist
+} [list "abc" "abc\\200"]
+test cmdIL-4.27 {DictionaryCompare procedure, signed characters} {
+    set l [lsort -dictionary [list "abc\200" "abc"]]
+    set viewlist {}
+    foreach s $l {
+	set viewelem ""
+	set len [string length $s]
+	for {set i 0} {$i < $len} {incr i} {
+	    set c [string index $s $i]
+	    scan $c %c d
+	    if {$d > 0 && $d < 128} {
+		append viewelem $c
+	    } else {
+		append viewelem "\\[format %03o $d]"
+	    }
+	}
+	lappend viewlist $viewelem
+    }
+    set viewlist
+} [list "abc" "abc\\200"]
+
+# cleanup
+::tcltest::cleanupTests
+return

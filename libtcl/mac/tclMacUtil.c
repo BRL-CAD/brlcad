@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacUtil.c 1.53 97/07/30 16:46:16
+ * RCS: @(#) $Id$
  */
 
 #include "tcl.h"
@@ -201,7 +201,7 @@ FSpFindFolder(
 int
 FSpLocationFromPath(
     int length,			/* Length of path. */
-    char *path,			/* The path to convert. */
+    CONST char *path,		/* The path to convert. */
     FSSpecPtr fileSpecPtr)	/* On return the spec for the path. */
 {
     Str255 fileName;

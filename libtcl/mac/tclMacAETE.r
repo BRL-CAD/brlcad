@@ -12,7 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacAETE.r 1.1 97/11/03 17:06:22
+ * RCS: @(#) $Id$
  */
 
 #define SystemSevenOrLater 1

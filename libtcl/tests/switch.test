@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) switch.test 1.7 97/02/10 17:27:13
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 test switch-1.1 {simple patterns} {
     switch a a {format 1} b {format 2} c {format 3} default {format 4}
@@ -56,7 +60,7 @@ test switch-3.1 {-exact vs. -glob vs. -regexp} {
     }
 } exact
 test switch-3.2 {-exact vs. -glob vs. -regexp} {
-    switch -exact -regexp aaaab {
+    switch -regexp aaaab {
 	^a*b$	{concat regexp}
 	*b	{concat glob}
 	aaaab	{concat exact}
@@ -121,7 +125,7 @@ test switch-5.1 {errors in -regexp matching} {
 	aaaab	{concat exact}
 	default	{concat none}
     }} msg] $msg
-} {1 {couldn't compile regular expression pattern: ?+* follows nothing}}
+} {1 {couldn't compile regular expression pattern: quantifier operand invalid}}
 
 test switch-6.1 {backslashes in patterns} {
     switch -exact {\a\$\.\[} {
@@ -177,3 +181,19 @@ test switch-8.1 {empty body} {
         default {set msg 2}
     }
 } {}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

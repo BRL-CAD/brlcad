@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) unknown.test 1.12 96/08/26 11:29:29
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 catch {unset x}
 catch {rename unknown unknown.old}
@@ -56,6 +60,20 @@ test unknown-4.1 {errors in "unknown" procedure} {
     list [catch {non-existent a b} msg] $msg $errorCode
 } {1 {unknown failed} NONE}
 
+# cleanup
 catch {rename unknown {}}
 catch {rename unknown.old unknown}
-return {}
+::tcltest::cleanupTests
+return 
+
+
+
+
+
+
+
+
+
+
+
+

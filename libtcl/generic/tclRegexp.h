@@ -1,40 +1,51 @@
-/*
- * Definitions etc. for regexp(3) routines.
+/* 
+ * tclRegexp.h --
  *
- * Caveat:  this is V8 regexp(3) [actually, a reimplementation thereof],
- * not the System V one.
+ * 	This file contains definitions used internally by Henry
+ *	Spencer's regular expression code.
  *
- * SCCS: @(#) tclRegexp.h 1.6 96/04/02 18:43:57
+ * Copyright (c) 1998 by Sun Microsystems, Inc.
+ * Copyright (c) 1998-1999 by Scriptics Corporation.
+ *
+ * See the file "license.terms" for information on usage and redistribution
+ * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
  */
 
-#ifndef _REGEXP
-#define _REGEXP 1
+#ifndef _TCLREGEXP
+#define _TCLREGEXP
 
-#ifndef _TCL
-#include "tcl.h"
+#include "regex.h"
+
+#ifdef BUILD_tcl
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 /*
- * NSUBEXP must be at least 10, and no greater than 117 or the parser
- * will not work properly.
+ * The TclRegexp structure encapsulates a compiled regex_t,
+ * the flags that were used to compile it, and an array of pointers
+ * that are used to indicate subexpressions after a call to Tcl_RegExpExec.
+ * Note that the string and objPtr are mutually exclusive.  These values
+ * are needed by Tcl_RegExpRange in order to return pointers into the
+ * original string.
  */
 
-#define NSUBEXP  20
+typedef struct TclRegexp {
+    int flags;			/* Regexp compile flags. */
+    regex_t re;			/* Compiled re, includes number of
+				 * subexpressions. */
+    CONST char *string;		/* Last string passed to Tcl_RegExpExec. */
+    Tcl_Obj *objPtr;		/* Last object passed to Tcl_RegExpExecObj. */
+    regmatch_t *matches;	/* Array of indices into the Tcl_UniChar
+				 * representation of the last string matched
+				 * with this regexp to indicate the location
+				 * of subexpressions. */
+    rm_detail_t details;	/* Detailed information on match (currently
+				 * used only for REG_EXPECT). */
+    int refCount;		/* Count of number of references to this
+				 * compiled regexp. */
+} TclRegexp;
 
-typedef struct regexp {
-	char *startp[NSUBEXP];
-	char *endp[NSUBEXP];
-	char regstart;		/* Internal use only. */
-	char reganch;		/* Internal use only. */
-	char *regmust;		/* Internal use only. */
-	int regmlen;		/* Internal use only. */
-	char program[1];	/* Unwarranted chumminess with compiler. */
-} regexp;
-
-EXTERN regexp *TclRegComp _ANSI_ARGS_((char *exp));
-EXTERN int TclRegExec _ANSI_ARGS_((regexp *prog, char *string, char *start));
-EXTERN void TclRegSub _ANSI_ARGS_((regexp *prog, char *source, char *dest));
-EXTERN void TclRegError _ANSI_ARGS_((char *msg));
-EXTERN char *TclGetRegError _ANSI_ARGS_((void));
-
-#endif /* REGEXP */
+#endif /* _TCLREGEXP */

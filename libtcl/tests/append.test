@@ -6,15 +6,19 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) append.test 1.17 97/10/28 15:45:52
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
-
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 catch {unset x}
+
 test append-1.1 {append command} {
     catch {unset x}
     list [append x 1 2 abc "long string"] $x
@@ -170,5 +174,22 @@ test append-7.1 {lappend-created var and error in trace on that var} {
     list [info exists x] [catch {set x} msg] $msg
 } {0 1 {can't read "x": no such variable}}
 
-catch {unset x}
+catch {unset i x result y}
 catch {rename foo ""}
+catch {rename check ""}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

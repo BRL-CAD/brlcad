@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) lreplace.test 1.16 97/10/29 16:32:39
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 test lreplace-1.1 {lreplace command} {
     lreplace {1 2 3 4 5} 0 0 a
@@ -106,13 +110,13 @@ test lreplace-2.2 {lreplace errors} {
 } {1 {wrong # args: should be "lreplace list first last ?element element ...?"}}
 test lreplace-2.3 {lreplace errors} {
     list [catch {lreplace x a 10} msg] $msg
-} {1 {bad index "a": must be integer or "end"}}
+} {1 {bad index "a": must be integer or end?-integer?}}
 test lreplace-2.4 {lreplace errors} {
     list [catch {lreplace x 10 x} msg] $msg
-} {1 {bad index "x": must be integer or "end"}}
+} {1 {bad index "x": must be integer or end?-integer?}}
 test lreplace-2.5 {lreplace errors} {
     list [catch {lreplace x 10 1x} msg] $msg
-} {1 {bad index "1x": must be integer or "end"}}
+} {1 {bad index "1x": must be integer or end?-integer?}}
 test lreplace-2.6 {lreplace errors} {
     list [catch {lreplace x 3 2} msg] $msg
 } {1 {list doesn't contain element 3}}
@@ -128,4 +132,7 @@ test lreplace-3.1 {lreplace won't modify shared argument objects} {
     p
 } "a b c"
 
+# cleanup
 catch {unset foo}
+::tcltest::cleanupTests
+return

@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) package.n 1.5 96/03/18 14:17:31
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH package n 7.5 Tcl "Tcl Built-In Commands"
@@ -17,6 +17,7 @@ package \- Facilities for package loading and version control
 \fBpackage forget \fIpackage\fR
 \fBpackage ifneeded \fIpackage version\fR ?\fIscript\fR?
 \fBpackage names\fR
+\fBpackage present \fR?\fB\-exact\fR? \fIpackage \fR?\fIversion\fR?
 \fBpackage provide \fIpackage \fR?\fIversion\fR?
 \fBpackage require \fR?\fB\-exact\fR? \fIpackage \fR?\fIversion\fR?
 \fBpackage unknown \fR?\fIcommand\fR?
@@ -74,6 +75,10 @@ interpreter for which a version has been provided (via
 \fBpackage provide\fR) or for which a \fBpackage ifneeded\fR
 script is available.
 The order of elements in the list is arbitrary.
+.TP
+\fBpackage present \fR?\fB\-exact\fR? \fIpackage \fR?\fIversion\fR?
+This command is equivalent to \fBpackage require\fR except that it
+does not try and load the package if it is not already loaded.
 .TP
 \fBpackage provide \fIpackage \fR?\fIversion\fR?
 This command is invoked to indicate that version \fIversion\fR

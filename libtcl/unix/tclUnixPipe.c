@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclUnixPipe.c 1.37 97/10/31 17:23:37
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -128,12 +128,16 @@ TclpMakeFile(channel, direction)
 
 TclFile
 TclpOpenFile(fname, mode)
-    char *fname;			/* The name of the file to open. */
-    int mode;				/* In what mode to open the file? */
+    CONST char *fname;		/* The name of the file to open. */
+    int mode;			/* In what mode to open the file? */
 {
     int fd;
+    char *native;
+    Tcl_DString ds;
 
-    fd = open(fname, mode, 0666);
+    native = Tcl_UtfToExternalDString(NULL, fname, -1, &ds);
+    fd = open(native, mode, 0666);			/* INTL: Native. */
+    Tcl_DStringFree(&ds);
     if (fd != -1) {
         fcntl(fd, F_SETFD, FD_CLOEXEC);
 
@@ -175,36 +179,28 @@ TclpOpenFile(fname, mode)
  */
 
 TclFile
-TclpCreateTempFile(contents, namePtr)
-    char *contents;		/* String to write into temp file, or NULL. */
-    Tcl_DString *namePtr;	/* If non-NULL, pointer to initialized 
-				 * DString that is filled with the name of 
-				 * the temp file that was created. */
+TclpCreateTempFile(contents)
+    CONST char *contents;	/* String to write into temp file, or NULL. */
 {
     char fileName[L_tmpnam];
-    TclFile file;
-    size_t length = (contents == NULL) ? 0 : strlen(contents);
+    int fd;
 
-    tmpnam(fileName);
-    file = TclpOpenFile(fileName, O_RDWR|O_CREAT|O_TRUNC);
-    unlink(fileName);
+    tmpnam(fileName);					/* INTL: Native. */
+    fd = open(fileName, O_RDWR|O_CREAT|O_TRUNC, 0666);	/* INTL: Native. */
+    if (fd == -1) {
+	return NULL;
+    }
+    fcntl(fd, F_SETFD, FD_CLOEXEC);
+    unlink(fileName);					/* INTL: Native. */
 
-    if ((file != NULL) && (length > 0)) {
-	int fd = GetFd(file);
-	while (1) {
-	    if (write(fd, contents, length) != -1) {
-		break;
-	    } else if (errno != EINTR) {
-		close(fd);
-		return NULL;
-	    }
+    if (contents != NULL) {
+	if (write(fd, contents, strlen(contents)) == -1) {
+	    close(fd);
+	    return NULL;
 	}
 	lseek(fd, 0, SEEK_SET);
     }
-    if (namePtr != NULL) {
-	Tcl_DStringAppend(namePtr, fileName, -1);
-    }
-    return file;
+    return MakeFile(fd);
 }
 
 /*
@@ -279,7 +275,7 @@ TclpCloseFile(file)
 }
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
  * TclpCreateProcess --
  *
@@ -292,14 +288,14 @@ TclpCloseFile(file)
  *
  * Results:
  *	The return value is TCL_ERROR and an error message is left in
- *	interp->result if there was a problem creating the child 
+ *	the interp's result if there was a problem creating the child 
  *	process.  Otherwise, the return value is TCL_OK and *pidPtr is
  *	filled with the process id of the child process.
  * 
  * Side effects:
  *	A process is created.
  *	
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
     /* ARGSUSED */
@@ -311,11 +307,11 @@ TclpCreateProcess(interp, argc, argv, inputFile, outputFile, errorFile,
 				 * Error messages from the child process
 				 * itself are sent to errorFile. */
     int argc;			/* Number of arguments in following array. */
-    char **argv;		/* Array of argument strings.  argv[0]
-				 * contains the name of the executable
-				 * converted to native format (using the
-				 * Tcl_TranslateFileName call).  Additional
-				 * arguments have not been converted. */
+    char **argv;		/* Array of argument strings in UTF-8.
+				 * argv[0] contains the name of the executable
+				 * translated using Tcl_TranslateFileName
+				 * call).  Additional arguments have not been
+				 * converted. */
     TclFile inputFile;		/* If non-NULL, gives the file to use as
 				 * input for the child process.  If inputFile
 				 * file is not readable or is NULL, the child
@@ -336,7 +332,7 @@ TclpCreateProcess(interp, argc, argv, inputFile, outputFile, errorFile,
 {
     TclFile errPipeIn, errPipeOut;
     int joinThisError, count, status, fd;
-    char errSpace[200];
+    char errSpace[200 + TCL_INTEGER_SPACE];
     int pid;
     
     errPipeIn = NULL;
@@ -357,6 +353,10 @@ TclpCreateProcess(interp, argc, argv, inputFile, outputFile, errorFile,
     joinThisError = (errorFile == outputFile);
     pid = vfork();
     if (pid == 0) {
+	Tcl_DString *dsArray;
+	char *oldArgv0;
+	int i;
+
 	fd = GetFd(errPipeOut);
 
 	/*
@@ -381,9 +381,19 @@ TclpCreateProcess(interp, argc, argv, inputFile, outputFile, errorFile,
 	 */
 
 	RestoreSignals();
-	execvp(argv[0], &argv[0]);
+	for (i = 0; argv[i] != NULL; i++) {
+	    /*
+	     * How many arguments?
+	     */
+	}
+	oldArgv0 = argv[0];
+	dsArray = (Tcl_DString *) ckalloc(i * sizeof(Tcl_DString));
+	for (i = 0; argv[i] != NULL; i++) {
+	    argv[i] = Tcl_UtfToExternalDString(NULL, argv[i], -1, &dsArray[i]);
+	}
+	execvp(argv[0], argv);				/* INTL: Native. */
 	sprintf(errSpace, "%dcouldn't execute \"%.150s\": ", errno,
-		argv[0]);
+		oldArgv0);
 	write(fd, errSpace, (size_t) strlen(errSpace));
 	_exit(1);
     }
@@ -621,7 +631,7 @@ TclpCreateCommandChannel(readFile, writeFile, errorFile, numPids, pidPtr)
                                  * the channel is closed or the processes
                                  * are detached (in a background exec). */
 {
-    char channelName[20];
+    char channelName[16 + TCL_INTEGER_SPACE];
     int channelId;
     PipeState *statePtr = (PipeState *) ckalloc((unsigned) sizeof(PipeState));
     int mode;
@@ -676,13 +686,13 @@ TclpCreateCommandChannel(readFile, writeFile, errorFile, numPids, pidPtr)
  *	This procedure is invoked in the generic implementation of a
  *	background "exec" (An exec when invoked with a terminating "&")
  *	to store a list of the PIDs for processes in a command pipeline
- *	in interp->result and to detach the processes.
+ *	in the interp's result and to detach the processes.
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	Modifies interp->result. Detaches processes.
+ *	Modifies the interp's result. Detaches processes.
  *
  *----------------------------------------------------------------------
  */
@@ -695,7 +705,7 @@ TclGetAndDetachPids(interp, chan)
     PipeState *pipePtr;
     Tcl_ChannelType *chanTypePtr;
     int i;
-    char buf[20];
+    char buf[TCL_INTEGER_SPACE];
 
     /*
      * Punt if the channel is not a command channel.
@@ -708,7 +718,7 @@ TclGetAndDetachPids(interp, chan)
 
     pipePtr = (PipeState *) Tcl_GetChannelInstanceData(chan);
     for (i = 0; i < pipePtr->numPids; i++) {
-        sprintf(buf, "%ld", TclpGetPid(pipePtr->pidPtr[i]));
+        TclFormatInt(buf, (long) TclpGetPid(pipePtr->pidPtr[i]));
         Tcl_AppendElement(interp, buf);
         Tcl_DetachPids(1, &(pipePtr->pidPtr[i]));
     }
@@ -1129,8 +1139,7 @@ Tcl_PidObjCmd(dummy, interp, objc, objv)
     if (objc == 1) {
 	Tcl_SetLongObj(Tcl_GetObjResult(interp), (long) getpid());
     } else {
-        chan = Tcl_GetChannel(interp, Tcl_GetStringFromObj(objv[1], NULL),
-		NULL);
+        chan = Tcl_GetChannel(interp, Tcl_GetString(objv[1]), NULL);
         if (chan == (Tcl_Channel) NULL) {
 	    return TCL_ERROR;
 	}

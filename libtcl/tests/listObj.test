@@ -6,19 +6,24 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1995-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) listObj.test 1.9 97/06/10 15:28:11
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 if {[info commands testobj] == {}} {
     puts "This application hasn't been compiled with the \"testobj\""
     puts "command, so I can't test the Tcl type and object support."
+    ::tcltest::cleanupTests
     return
 }
-
-if {[string compare test [info procs test]] == 1} then {source defs}
 
 catch {unset x}
 test listobj-1.1 {Tcl_GetListObjType} {
@@ -27,16 +32,19 @@ test listobj-1.1 {Tcl_GetListObjType} {
     set result [expr {$first != -1}]
 } {1}
 
-test listobj-2.1 {Tcl_ListObjForObjArray, use in lappend} {
+test listobj-2.1 {Tcl_SetListObj, use in lappend} {
     catch {unset x}
     list [lappend x 1 abc def] [lappend x 1 ghi jkl] $x
 } {{1 abc def} {1 abc def 1 ghi jkl} {1 abc def 1 ghi jkl}}
-test listobj-2.2 {Tcl_ListObjForObjArray, use in ObjInterpProc} {
+test listobj-2.2 {Tcl_SetListObj, use in ObjInterpProc} {
     proc return_args {args} {
         return $args
     }
     list [return_args] [return_args x] [return_args x y]
 } {{} x {x y}}
+test listobj-2.3 {Tcl_SetListObj, zero element count} {
+    list
+} {}
 
 test listobj-3.1 {Tcl_ListObjAppend, list conversion} {
     catch {unset x}
@@ -174,3 +182,19 @@ test listobj-8.1 {SetListFromAny} {
 test listobj-9.1 {UpdateStringOfList} {
     string length [list foo\x00help]
 } 8
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

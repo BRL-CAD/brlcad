@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) namespace.n 1.9 97/08/13 17:08:25
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH namespace n 8.0 Tcl "Tcl Built-In Commands"
@@ -245,21 +245,21 @@ The \fBnamespace eval\fR command lets you create new namespaces.
 For example,
 .CS
 \fBnamespace eval Counter {
-    namespace export Bump
+    namespace export bump
     variable num 0
 
-    proc Bump {} {
+    proc bump {} {
         variable num
         incr num
     }
 }\fR
 .CE
 creates a new namespace containing the variable \fBnum\fR and
-the procedure \fBBump\fR.
+the procedure \fBbump\fR.
 The commands and variables in this namespace are separate from
 other commands and variables in the same program.
-If there is a command named \fBBump\fR in the global namespace,
-for example, it will be different from the command \fBBump\fR
+If there is a command named \fBbump\fR in the global namespace,
+for example, it will be different from the command \fBbump\fR
 in the \fBCounter\fR namespace.
 .PP
 Namespace variables resemble global variables in Tcl.
@@ -276,7 +276,7 @@ as the namespace definition shown above:
 .CS
 \fBnamespace eval Counter {
     variable num 0
-    proc Bump {} {
+    proc bump {} {
         variable num
         return [incr num]
     }
@@ -322,7 +322,7 @@ Names must be qualified by the namespace that contains them.
 From the global namespace,
 we might access the \fBCounter\fR procedures like this:
 .CS
-\fBCounter::Bump 5
+\fBCounter::bump 5
 Counter::Reset\fR
 .CE
 We could access the current count like this:
@@ -332,10 +332,10 @@ We could access the current count like this:
 When one namespace contains another, you may need more than one
 qualifier to reach its elements.
 If we had a namespace \fBFoo\fR that contained the namespace \fBCounter\fR,
-you could invoke its \fBBump\fR procedure
+you could invoke its \fBbump\fR procedure
 from the global namespace like this:
 .CS
-\fBFoo::Counter::Bump 3\fR
+\fBFoo::Counter::bump 3\fR
 .CE
 .PP
 You can also use qualified names when you create and rename commands.
@@ -517,36 +517,36 @@ the command is automatically removed from all namespaces that import it.
 You can export commands from a namespace like this:
 .CS
 \fBnamespace eval Counter {
-    namespace export Bump Reset
-    variable num 0
-    variable max 100
+    namespace export bump reset
+    variable Num 0
+    variable Max 100
 
-    proc Bump {{by 1}} {
-        variable num
-        incr num $by
-        check
-        return $num
+    proc bump {{by 1}} {
+        variable Num
+        incr Num $by
+        Check
+        return $Num
     }
-    proc Reset {} {
-        variable num
-        set num 0
+    proc reset {} {
+        variable Num
+        set Num 0
     }
-    proc check {} {
-        variable num
-        variable max
-        if {$num > $max} {
+    proc Check {} {
+        variable Num
+        variable Max
+        if {$Num > $Max} {
             error "too high!"
         }
     }
 }\fR
 .CE
-The procedures \fBBump\fR and \fBReset\fR are exported,
+The procedures \fBbump\fR and \fBreset\fR are exported,
 so they are included when you import from the \fBCounter\fR namespace,
 like this:
 .CS
 \fBnamespace import Counter::*\fR
 .CE
-However, the \fBcheck\fR procedure is not exported,
+However, the \fBCheck\fR procedure is not exported,
 so it is ignored by the import operation.
 .PP
 The \fBnamespace import\fR command only imports commands

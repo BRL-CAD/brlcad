@@ -9,4 +9,4 @@ Tcl before configuring here, since information learned during Tcl's
 configure is needed here.  Then type "make" to create the shared
 libraries.
 
-sccsid: @(#) README 1.2 95/08/22 08:13:23
+RCS: @(#) $Id$

@@ -14,7 +14,7 @@
  * and Design Engineering (MADE) Initiative through ARPA contract
  * F33615-94-C-4400.
  *
- * SCCS: @(#) tclLoadAout.c 1.9 97/02/22 14:05:01
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -97,7 +97,7 @@ static void UnlinkSymbolTable _ANSI_ARGS_((void));
 /*
  *----------------------------------------------------------------------
  *
- * TclLoadFile --
+ * TclpLoadFile --
  *
  *	Dynamically loads a binary code file into memory and returns
  *	the addresses of two procedures within that file, if they
@@ -105,7 +105,7 @@ static void UnlinkSymbolTable _ANSI_ARGS_((void));
  *
  * Results:
  *	A standard Tcl completion code.  If an error occurs, an error
- *	message is left in interp->result.  *proc1Ptr and *proc2Ptr
+ *	message is left in the interp's result.  *proc1Ptr and *proc2Ptr
  *	are filled in with the addresses of the symbols given by
  *	*sym1 and *sym2, or NULL if those symbols can't be found.
  *
@@ -136,15 +136,18 @@ static void UnlinkSymbolTable _ANSI_ARGS_((void));
  */
 
 int
-TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
+TclpLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr, clientDataPtr)
     Tcl_Interp *interp;		/* Used for error reporting. */
     char *fileName;		/* Name of the file containing the desired
-				 * code. */
+				 * code (UTF-8). */
     char *sym1, *sym2;		/* Names of two procedures to look up in
 				 * the file's symbol table. */
     Tcl_PackageInitProc **proc1Ptr, **proc2Ptr;
 				/* Where to return the addresses corresponding
 				 * to sym1 and sym2. */
+    ClientData *clientDataPtr;	/* Filled with token for dynamically loaded
+				 * file which will be passed back to 
+				 * TclpUnloadFile() to unload the file. */
 {
   char * inputSymbolTable;	/* Name of the file containing the 
 				 * symbol table from the last link. */
@@ -163,6 +166,8 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
   int status;			/* Status return from Tcl_ calls */
   char * p;
 
+  *clientDataPtr = NULL;
+  
   /* Find the file that contains the symbols for the run-time link. */
 
   if (SymbolTableFile != NULL) {
@@ -313,8 +318,8 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
  *
  * Results:
  *	A standard Tcl completion code.  If an error occurs,
- *	an error message is left in interp->result.  The -l and -L flags
- *	are concatenated onto the dynamic string `buf'.
+ *	an error message is left in the interp's result.  The -l and -L
+ *	flags are concatenated onto the dynamic string `buf'.
  *
  *------------------------------------------------------------------------
  */
@@ -328,10 +333,16 @@ FindLibraries (interp, fileName, buf)
   FILE * f;			/* The load module */
   int c;			/* Byte from the load module */
   char * p;
+  Tcl_DString ds;
+  CONST char *native;
 
   /* Open the load module */
 
-  if ((f = fopen (fileName, "rb")) == NULL) {
+  native = Tcl_UtfToExternalDString(NULL, fileName, -1, &ds);
+  f = fopen(native, "rb");				/* INTL: Native. */
+  Tcl_DStringFree(&ds);
+  
+  if (f == NULL) {
     Tcl_AppendResult (interp, "couldn't open \"", fileName, "\": ",
 		      Tcl_PosixError (interp), (char *) NULL);
     return TCL_ERROR;
@@ -407,6 +418,33 @@ UnlinkSymbolTable ()
 /*
  *----------------------------------------------------------------------
  *
+ * TclpUnloadFile --
+ *
+ *	Unloads a dynamically loaded binary code file from memory.
+ *	Code pointers in the formerly loaded file are no longer valid
+ *	after calling this function.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Does nothing.  Can anything be done?
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclpUnloadFile(clientData)
+    ClientData clientData;	/* ClientData returned by a previous call
+				 * to TclpLoadFile().  The clientData is 
+				 * a token that represents the loaded 
+				 * file. */
+{
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TclGuessPackageName --
  *
  *	If the "load" command is invoked without providing a package
@@ -432,6 +470,7 @@ TclGuessPackageName(fileName, bufPtr)
 				 * package name to this if possible. */
 {
     char *p, *q, *r;
+    int srcOff, dstOff;
 
     if (q = strrchr(fileName,'/')) {
 	q++;
@@ -457,14 +496,12 @@ TclGuessPackageName(fileName, bufPtr)
     r = Tcl_DStringValue(bufPtr);
     r += strlen(r) - (p-q);
 
-    if (islower(UCHAR(*r))) {
-	*r = (char) toupper(UCHAR(*r));
-    }
-    while (*(++r)) {
-	if (isupper(UCHAR(*r))) {
-	    *r = (char) tolower(UCHAR(*r));
-	}
-    }
+    /*
+     * Capitalize the string and then recompute the length.
+     */
+
+    Tcl_UtfToTitle(r);
+    Tcl_DStringSetLength(bufPtr, strlen(Tcl_DStringValue(bufPtr)));
 
     return 1;
 }

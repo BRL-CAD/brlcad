@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) cat.c 1.3 96/09/18 15:15:32
+ * RCS: @(#) $Id$
  */
 
 #include <stdio.h>

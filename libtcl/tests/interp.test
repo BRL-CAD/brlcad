@@ -5,20 +5,24 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1995-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) interp.test 1.64 97/09/04 16:02:23
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 # The set of hidden commands is platform dependent:
 
 if {"$tcl_platform(platform)" == "macintosh"} {
-    set hidden_cmds {beep cd echo exit fconfigure file glob load ls open pwd socket source}
+    set hidden_cmds {beep cd echo encoding exit fconfigure file glob load ls open pwd socket source}
 } else {
-    set hidden_cmds {cd exec exit fconfigure file glob load open pwd socket source}
+    set hidden_cmds {cd encoding exec exit fconfigure file glob load open pwd socket source}
 }
 
 foreach i [interp slaves] {
@@ -39,7 +43,7 @@ test interp-1.3 {options for interp command} {
 } ""
 test interp-1.4 {options for interp command} {
     list [catch {interp delete foo bar} msg] $msg
-} {1 {interpreter named "foo" not found}}
+} {1 {could not find interpreter "foo"}}
 test interp-1.5 {options for interp command} {
     list [catch {interp exists foo bar} msg] $msg
 } {1 {wrong # args: should be "interp exists ?path?"}}
@@ -83,7 +87,7 @@ test interp-2.6 {basic interpreter creation} {
 } d
 test interp-2.7 {basic interpreter creation} {
     list [catch {interp create -froboz} msg] $msg
-} {1 {bad option "-froboz": should be -safe}}
+} {1 {bad option "-froboz": must be -safe or --}}
 test interp-2.8 {basic interpreter creation} {
     interp create -- -froboz
 } -froboz
@@ -99,17 +103,15 @@ test interp-2.11 {anonymous interps vs existing procs} {
     set x [interp create]
     regexp "interp(\[0-9]+)" $x dummy thenum
     interp delete $x
-    incr thenum
     proc interp$thenum {} {}
     set x [interp create]
     regexp "interp(\[0-9]+)" $x dummy anothernum
-    expr $anothernum - $thenum
+    expr $anothernum > $thenum
 } 1    
 test interp-2.12 {anonymous interps vs existing procs} {
     set x [interp create -safe]
     regexp "interp(\[0-9]+)" $x dummy thenum
     interp delete $x
-    incr thenum
     proc interp$thenum {} {}
     set x [interp create -safe]
     regexp "interp(\[0-9]+)" $x dummy anothernum
@@ -148,8 +150,8 @@ test interp-3.8 {testing interp exists and interp slaves} {
 } {1 {wrong # args: should be "interp slaves ?path?"}}
 test interp-3.9 {testing interp exists and interp slaves} {
     interp create {a a2} -safe
-    interp slaves a
-} {a2}
+    expr {[lsearch [interp slaves a] a2] >= 0}
+} 1
 test interp-3.10 {testing interp exists and interp slaves} {
     interp exists {a a2}
 } 1
@@ -164,10 +166,10 @@ test interp-4.1 {testing interp delete} {
 } ""
 test interp-4.2 {testing interp delete} {
     list [catch {interp delete nonexistent} msg] $msg
-} {1 {interpreter named "nonexistent" not found}}
+} {1 {could not find interpreter "nonexistent"}}
 test interp-4.3 {testing interp delete} {
     list [catch {interp delete x y z} msg] $msg
-} {1 {interpreter named "x" not found}}
+} {1 {could not find interpreter "x"}}
 test interp-4.4 {testing interp delete} {
     interp delete
 } ""
@@ -175,8 +177,8 @@ test interp-4.5 {testing interp delete} {
     interp create a
     interp create {a x1}
     interp delete {a x1}
-    interp slaves a
-} ""
+    expr {[lsearch [interp slaves a] x1] >= 0}
+} 0
 test interp-4.6 {testing interp delete} {
     interp create c1
     interp create c2
@@ -187,7 +189,10 @@ test interp-4.7 {testing interp delete} {
     interp create c1
     interp create c2
     list [catch {interp delete c1 c2 c3} msg] $msg
-} {1 {interpreter named "c3" not found}}
+} {1 {could not find interpreter "c3"}}
+test interp-4.8 {testing interp delete} {
+    list [catch {interp delete {}} msg] $msg
+} {1 {cannot delete the current interpreter}}
 
 foreach i [interp slaves] {
     interp delete $i
@@ -1439,7 +1444,7 @@ test interp-20.45 {interp hide vs namespaces} {
     catch {interp delete a}
     interp create a
     a eval {
-	namespace eval foo {}
+        namespace eval foo {}
 	proc foo::x {} {}
     }
     set l [list [catch {interp hide a foo::x} msg] $msg]
@@ -1450,7 +1455,7 @@ test interp-20.46 {interp hide vs namespaces} {
     catch {interp delete a}
     interp create a
     a eval {
-	namespace eval foo {}
+        namespace eval foo {}
 	proc foo::x {} {}
     }
     set l [list [catch {interp hide a foo::x x} msg] $msg]
@@ -1471,7 +1476,7 @@ test interp-20.48 {interp hide vs namespaces} {
     catch {interp delete a}
     interp create a
     a eval {
-	namespace eval foo {}
+        namespace eval foo {}
 	proc foo::x {} {}
     }
     set l [list [catch {interp hide a foo::x bar::x} msg] $msg]
@@ -1594,7 +1599,7 @@ test interp-22.5 {testing interp marktrusted} {
     catch {a eval {interp marktrusted b}} msg
     interp delete a
     set msg
-} {"interp marktrusted" can only be invoked from a trusted interpreter}
+} {permission denied: safe interpreter cannot mark trusted}
 test interp-22.6 {testing interp marktrusted} {
     catch {interp delete a}
     interp create a -safe
@@ -1602,7 +1607,7 @@ test interp-22.6 {testing interp marktrusted} {
     catch {a eval {b marktrusted}} msg
     interp delete a
     set msg
-} {"b marktrusted" can only be invoked from a trusted interpreter}
+} {permission denied: safe interpreter cannot mark trusted}
 test interp-22.7 {testing interp marktrusted} {
     catch {interp delete a}
     interp create a -safe
@@ -1662,7 +1667,7 @@ test interp-23.1 {testing hiding vs aliases} {
     interp delete a
     set l
 } {{} bar {} bar bar {} {}}
-test interp-23.2 {testing hiding vs aliases} {pc || unix} {
+test interp-23.2 {testing hiding vs aliases} {unixOrPc} {
     catch {interp delete a}
     interp create a -safe
     set l ""
@@ -1678,7 +1683,7 @@ test interp-23.2 {testing hiding vs aliases} {pc || unix} {
     lappend l [lsort [interp hidden a]]
     interp delete a
     set l
-} {{cd exec exit fconfigure file glob load open pwd socket source} bar {cd exec exit fconfigure file glob load open pwd socket source} bar {bar cd exec exit fconfigure file glob load open pwd socket source} {} {cd exec exit fconfigure file glob load open pwd socket source}} 
+} {{cd encoding exec exit fconfigure file glob load open pwd socket source} bar {cd encoding exec exit fconfigure file glob load open pwd socket source} bar {bar cd encoding exec exit fconfigure file glob load open pwd socket source} {} {cd encoding exec exit fconfigure file glob load open pwd socket source}} 
 
 test interp-23.3 {testing hiding vs aliases} {macOnly} {
     catch {interp delete a}
@@ -1929,31 +1934,94 @@ test interp-25.1 {testing aliasing of string commands} {
 } ""
 
 
+#
 # Interps result transmission
-test interp-26.1 {result code transmission 1} {knownBug} {
-    # This test currently fails ! (only ok/error are passed, not the other
-    # codes). Fixing the code is thus needed...  -- dl
-    # (the only other acceptable result list would be
-    #  {-1 0 1 0 3 4 5} because of the way return -code return(=2) works)
-    # test that all the possibles error codes from Tcl get passed
+#
+
+test interp-26.1 {result code transmission : interp eval direct} {
+    # Test that all the possibles error codes from Tcl get passed up
+    # from the slave interp's context to the master, even though the
+    # slave nominally thinks the command is running at the root level.
+    
     catch {interp delete a}
     interp create a
-    interp eval a {proc ret {code} {return -code $code $code}}
     set res {}
     # use a for so if a return -code break 'escapes' we would notice
     for {set code -1} {$code<=5} {incr code} {
-	lappend res [catch {interp eval a ret $code} msg]
+	lappend res [catch {interp eval a return -code $code} msg]
     }
     interp delete a
     set res
 } {-1 0 1 2 3 4 5}
 
-test interp-26.2 {result code transmission 2} {knownBug} {
-    # This test currently fails ! (error is cleared)
-    # Code fixing is needed...  -- dl
-    # (the only other acceptable result list would be
-    #  {-1 0 1 0 3 4 5} because of the way return -code return(=2) works)
-    # test that all the possibles error codes from Tcl get passed
+
+test interp-26.2 {result code transmission : interp eval indirect} {
+    # retcode == 2 == return is special
+    catch {interp delete a}
+    interp create a
+    interp eval a {proc retcode {code} {return -code $code ret$code}}
+    set res {}
+    # use a for so if a return -code break 'escapes' we would notice
+    for {set code -1} {$code<=5} {incr code} {
+	lappend res [catch {interp eval a retcode $code} msg] $msg
+    }
+    interp delete a
+    set res
+} {-1 ret-1 0 ret0 1 ret1 0 ret2 3 ret3 4 ret4 5 ret5}
+
+test interp-26.3 {result code transmission : aliases} {
+    # Test that all the possibles error codes from Tcl get passed up
+    # from the slave interp's context to the master, even though the
+    # slave nominally thinks the command is running at the root level.
+    
+    catch {interp delete a}
+    interp create a
+    set res {}
+    proc MyTestAlias {code} {
+	return -code $code ret$code
+    }
+    interp alias a Test {} MyTestAlias
+    for {set code -1} {$code<=5} {incr code} {
+	lappend res [interp eval a [list catch [list Test $code] msg]]
+    }
+    interp delete a
+    set res
+} {-1 0 1 2 3 4 5}
+
+test interp-26.4 {result code transmission: invoke hidden direct--bug 1637} \
+	{knownBug} {
+    # The known bug is that code 2 is returned, not the -code argument
+    catch {interp delete a}
+    interp create a
+    set res {}
+    interp hide a return
+    for {set code -1} {$code<=5} {incr code} {
+	lappend res [catch {interp invokehidden a return -code $code ret$code}]
+    }
+    interp delete a
+    set res
+} {-1 0 1 2 3 4 5}
+
+test interp-26.5 {result code transmission: invoke hidden indirect--bug 1637} \
+	{knownBug} {
+    # The known bug is that the break and continue should raise errors
+    # that they are used outside a loop.
+    catch {interp delete a}
+    interp create a
+    set res {}
+    interp eval a {proc retcode {code} {return -code $code ret$code}}
+    interp hide a retcode
+    for {set code -1} {$code<=5} {incr code} {
+	lappend res [catch {interp invokehidden a retcode $code} msg] $msg
+    }
+    interp delete a
+    set res
+} {-1 ret-1 0 ret0 1 ret1 0 ret2 3 ret3 4 ret4 5 ret5}
+
+test interp-26.6 {result code transmission: all combined--bug 1637} \
+	{knownBug} {
+    # Test that all the possibles error codes from Tcl get passed
+    # In both directions.  This doesn't work.
     set interp [interp create];
     proc MyTestAlias {interp args} {
 	global aliasTrace;
@@ -1964,17 +2032,22 @@ test interp-26.2 {result code transmission 2} {knownBug} {
 	interp hide $interp  $c;
         interp alias $interp $c {} MyTestAlias $interp $c;
     }
-    interp eval $interp {proc ret {code} {return -code $code $code}}
+    interp eval $interp {proc ret {code} {return -code $code ret$code}}
     set res {}
     set aliasTrace {}
     for {set code -1} {$code<=5} {incr code} {
-	lappend res [catch {interp eval $interp ret $code} msg]
+	lappend res [catch {interp eval $interp ret $code} msg] $msg
     }
     interp delete $interp;
-    list $res
-} {-1 0 1 2 3 4 5}
+    set res
+} {-1 ret-1 0 ret0 1 ret1 0 ret2 3 ret3 4 ret4 5 ret5}
 
-test interp-26.3 {errorInfo transmission : regular interps} {
+# Some tests might need to be added to check for difference between
+# toplevel and non toplevel evals.
+
+# End of return code transmission section
+
+test interp-26.7 {errorInfo transmission: regular interps} {
     set interp [interp create];
     proc MyError {secret} {
 	return -code error "msg"
@@ -1989,14 +2062,15 @@ test interp-26.3 {errorInfo transmission : regular interps} {
 } {msg
     while executing
 "MyError "some secret""
-    (procedure "test" line 2)
+    (procedure "MyTestAlias" line 2)
     invoked from within
-"catch test"}
+"test"}
 
-test interp-26.4 {errorInfo transmission : safe interps} {knownBug} {
+test interp-26.8 {errorInfo transmission: safe interps--bug 1637} {knownBug} {
     # this test fails because the errorInfo is fully transmitted
-    # whether the interp is safe or not. this is maybe a feature
-    # and not a bug.
+    # whether the interp is safe or not.  The errorInfo should never
+    # report data from the master interpreter because it could
+    # contain sensitive information.
     set interp [interp create -safe];
     proc MyError {secret} {
 	return -code error "msg"
@@ -2010,7 +2084,7 @@ test interp-26.4 {errorInfo transmission : safe interps} {knownBug} {
     set res
 } {msg
     while executing
-"catch test"}
+"test"}
 
 # Interps & Namespaces
 test interp-27.1 {interp aliases & namespaces} {
@@ -2075,7 +2149,7 @@ test interp-27.4 {interp aliases & namespaces} {
 # test interp-27.5 {interp hidden & namespaces} {
 #    set i [interp create];
 #    interp eval $i {
-#	namespace eval foo {
+#        namespace eval foo {
 #	    proc bar {args} {
 #		return "bar called ([namespace current]) ($args)"
 #	    }
@@ -2100,7 +2174,7 @@ test interp-27.4 {interp aliases & namespaces} {
 # 	}
 #     }
 #     interp eval $i {
-# 	namespace eval foo {
+#        namespace eval foo {
 # 	    namespace export *
 # 	    variable v foo-slave;
 # 	    proc bar {args} {
@@ -2114,7 +2188,7 @@ test interp-27.4 {interp aliases & namespaces} {
 #     $i alias foo::bar foo::bar $i;
 #     set res [concat $res [interp eval $i {
 # 	set v root-slave;
-# 	namespace eval test {
+#         namespace eval test {
 # 	    variable v foo-test;
 # 	    namespace import ::foo::*;
 # 	    bar test2
@@ -2138,7 +2212,7 @@ test interp-27.4 {interp aliases & namespaces} {
 # 	}
 #     }
 #     interp eval $i {
-# 	namespace eval foo {
+#       namespace eval foo {
 # 	    namespace export *
 # 	    variable v foo-slave;
 # 	    proc bar {args} {
@@ -2147,7 +2221,7 @@ test interp-27.4 {interp aliases & namespaces} {
 # 	    }
 # 	}
 # 	set v root-slave;
-# 	namespace eval test {
+#       namespace eval test {
 # 	    variable v foo-test;
 # 	    namespace import ::foo::*;
 #         }
@@ -2159,7 +2233,7 @@ test interp-27.4 {interp aliases & namespaces} {
 #     namespace delete mfoo;
 #     interp delete $i;
 #     set res
-# } {{slave bar called (foo-slave) (bar test1) (::test) (::foo) (test1)} {master bar called (foo-master) (::mfoo) (test2)} {slave bar called (foo-slave) (test::bar test2) (::) (::foo) (test2)}}
+# } {{slave bar called (foo-slave) (bar test1) (::tcltest) (::foo) (test1)} {master bar called (foo-master) (::mfoo) (test2)} {slave bar called (foo-slave) (test::bar test2) (::) (::foo) (test2)}}
 
 #test interp-27.8 {hiding, namespaces and integrity} {
 #    namespace eval foo {
@@ -2178,7 +2252,7 @@ test interp-28.1 {getting fooled by slave's namespace ?} {
     proc master {interp args} {interp hide $interp list}
     $i alias master master $i;
     set r [interp eval $i {
-	namespace eval foo {
+        namespace eval foo {
 	    proc list {args} {
 		return "dummy foo::list";
 	    }
@@ -2250,9 +2324,38 @@ test interp-29.2 {recursion limit inheritance} {
 #test interp-29.1 {interp and stack (info level)} {
 #} {}
 
+# End of stack-recursion tests
 }
 
+# This test dumps core in Tcl 8.0.3!
+test interp-30.1 {deletion of aliases inside namespaces} {
+    set i [interp create]
+    $i alias ns::cmd list
+    $i alias ns::cmd {}
+} {}
 
+test interp-31.1 {alias invocation scope} {
+    proc mySet {varName value} {
+	upvar 1 $varName localVar
+	set localVar $value
+    }
+
+    interp alias {} myNewSet {} mySet
+    proc testMyNewSet {value} {
+	myNewSet a $value
+	return $a
+    }
+    catch {unset a}
+    set result [testMyNewSet "ok"]
+    rename testMyNewSet {}
+    rename mySet {}
+    rename myNewSet {}
+    set result
+} ok
+
+# cleanup
 foreach i [interp slaves] {
   interp delete $i
 }
+::tcltest::cleanupTests
+return

@@ -3,19 +3,22 @@
 # are organized in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# @(#) indexObj.test 1.3 97/06/23 18:23:09
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
 }
 
 if {[info commands testindexobj] == {}} {
     puts "This application hasn't been compiled with the \"testindexobj\""
     puts "command, so I can't test Tcl_GetIndexFromObj etc."
+    ::tcltest::cleanupTests
     return 
 }
 
@@ -66,3 +69,19 @@ test indexObj-4.1 {free old internal representation} {
     lindex $x 1
     testindexobj 1 1 $x abc def {a b} zzz
 } {2}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,12 +1,13 @@
 '\"
 '\" Copyright (c) 1996 Sun Microsystems, Inc.
+'\" Copyright (c) 1998-1999 by Scriptics Corporation.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" SCCS: @(#) socket.n 1.14 97/10/31 12:51:12
+'\" RCS: @(#) $Id$
 .so man.macros
-.TH socket n 7.5 Tcl "Tcl Built-In Commands"
+.TH socket n 8.0 Tcl "Tcl Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -103,6 +104,14 @@ will be accepted.
 .SH CONFIGURATION OPTIONS
 The \fBfconfigure\fR command can be used to query several readonly
 configuration options for socket channels:
+.VS 8.0.5
+.TP
+\fB\-error\fR
+This option gets the current error status of the given socket.  This
+is useful when you need to determine if an asynchronous connect
+operation succeeded.  If there was an error, the error message is
+returned.  If there was no error, an empty string is returned.
+.VE 8.0.5
 .TP
 \fB\-sockname\fR
 This option returns a list of three elements, the address, the host name

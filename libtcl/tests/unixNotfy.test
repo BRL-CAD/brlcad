@@ -5,27 +5,30 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1997 by Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) unixNotfy.test 1.3 97/09/15 15:39:53
-
-if {[string compare test [info procs test]] == 1} then {source defs}
-
-if {$tcl_platform(platform) != "unix"} {
-    return
-}
+# RCS: @(#) $Id$
 
 # The tests should not be run if you have a notifier which is unable to
 # detect infinite vwaits, as the tests below will hang. The presence of
-# the "testeventloop" command indicates that this is the case.
+# the "testthread" command indicates that this is the case.
 
-if {"[info commands testeventloop]" == "testeventloop"} {
-    return
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
 }
 
-test unixNotfy-1.1 {Tcl_DeleteFileHandler} {
+set ::tcltest::testConstraints(testthread) \
+	[expr {[info commands testthread] != {}}]
+
+# The next two tests will hang if threads are enabled because the notifier
+# will not necessarily wait for ever in this case, so it does not generate
+# an error.
+
+test unixNotfy-1.1 {Tcl_DeleteFileHandler} {unixOnly && !testthread} {
     catch {vwait x}
     set f [open foo w]
     fileevent $f writable {set x 1}
@@ -33,7 +36,7 @@ test unixNotfy-1.1 {Tcl_DeleteFileHandler} {
     close $f
     list [catch {vwait x} msg] $msg
 } {1 {can't wait for variable "x":  would wait forever}}
-test unixNotfy-1.2 {Tcl_DeleteFileHandler} {
+test unixNotfy-1.2 {Tcl_DeleteFileHandler} {unixOnly && !testthread} {
     catch {vwait x}
     set f1 [open foo w]
     set f2 [open foo2 w]
@@ -46,4 +49,52 @@ test unixNotfy-1.2 {Tcl_DeleteFileHandler} {
     list [catch {vwait x} msg] $msg
 } {1 {can't wait for variable "x":  would wait forever}}
 
+
+test unixNotfy-2.1 {Tcl_DeleteFileHandler} {unixOnly testthread} {
+    update
+    set f [open foo w]
+    fileevent $f writable {set x 1}
+    vwait x
+    close $f
+    testthread create "after 500
+    testthread send [testthread id] {set x ok}
+    testthread exit"
+    vwait x
+    set x
+} {ok}
+test unixNotfy-1.2 {Tcl_DeleteFileHandler} {unixOnly testthread} {
+    update
+    set f1 [open foo w]
+    set f2 [open foo2 w]
+    fileevent $f1 writable {set x 1}
+    fileevent $f2 writable {set y 1}
+    vwait x
+    close $f1
+    vwait y
+    close $f2
+    testthread create "after 500
+    testthread send [testthread id] {set x ok}
+    testthread exit"
+    vwait x
+    set x
+} {ok}
+
+
+
+# cleanup
 file delete foo
+file delete foo2
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

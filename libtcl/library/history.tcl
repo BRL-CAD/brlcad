@@ -2,7 +2,7 @@
 #
 # Implementation of the history command.
 #
-# SCCS: @(#) history.tcl 1.7 97/08/07 16:45:50
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
 #
@@ -19,7 +19,7 @@
 
 namespace eval tcl {
     variable history
-    if ![info exists history] {
+    if {![info exists history]} {
 	array set history {
 	    nextid	0
 	    keep	20
@@ -118,7 +118,7 @@ proc history {args} {
 		return [tcl::HistKeep]
 	    } else {
 		set limit [lindex $args 1]
-		if {[catch {expr $limit}] || ($limit < 0)} {
+		if {[catch {expr {~$limit}}] || ($limit < 0)} {
 		    return -code error "illegal keep count \"$limit\""
 		}
 		return [tcl::HistKeep $limit]
@@ -132,7 +132,7 @@ proc history {args} {
 	    if {![string match $key* nextid]} {
 		return -code error "bad option \"$key\": must be $options"
 	    }
-	    return [expr $tcl::history(nextid) + 1]
+	    return [expr {$tcl::history(nextid) + 1}]
 	}
 	r* { # history redo
 
@@ -196,7 +196,7 @@ proc history {args} {
 	return $history(keep)
     } else {
 	set oldold $history(oldest)
-	set history(oldest) [expr $history(nextid) - $limit]
+	set history(oldest) [expr {$history(nextid) - $limit}]
 	for {} {$oldold <= $history(oldest)} {incr oldold} {
 	    if {[info exists history($oldold)]} {unset history($oldold)}
 	}
@@ -241,13 +241,13 @@ proc history {args} {
  proc tcl::HistInfo {{num {}}} {
     variable history
     if {$num == {}} {
-	set num [expr $history(keep) + 1]
+	set num [expr {$history(keep) + 1}]
     }
     set result {}
     set newline ""
-    for {set i [expr $history(nextid) - $num + 1]} \
+    for {set i [expr {$history(nextid) - $num + 1}]} \
 	    {$i <= $history(nextid)} {incr i} {
-	if ![info exists history($i)] {
+	if {![info exists history($i)]} {
 	    continue
 	}
 	set cmd [string trimright $history($i) \ \n]
@@ -304,7 +304,7 @@ proc history {args} {
 
  proc tcl::HistIndex {event} {
     variable history
-    if {[catch {expr $event}]} {
+    if {[catch {expr {~$event}}]} {
 	for {set i $history(nextid)} {[info exists history($i)]} {incr i -1} {
 	    if {[string match $event* $history($i)]} {
 		return $i;
@@ -315,7 +315,7 @@ proc history {args} {
 	}
 	return -code error "no event matches \"$event\""
     } elseif {$event <= 0} {
-	set i [expr $history(nextid) + $event]
+	set i [expr {$history(nextid) + $event}]
     } else {
 	set i $event
     }

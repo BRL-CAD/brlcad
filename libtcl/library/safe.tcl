@@ -12,7 +12,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) safe.tcl 1.26 97/08/21 11:57:20
+# RCS: @(#) $Id$
 
 #
 # The implementation is based on namespaces. These naming conventions
@@ -22,7 +22,7 @@
 #
 
 # Needed utilities package
-package require opt 0.2;
+package require opt 0.4.1;
 
 # Create the safe namespace
 namespace eval ::safe {
@@ -31,12 +31,6 @@ namespace eval ::safe {
     namespace export interpCreate interpInit interpConfigure interpDelete \
 	    interpAddToAccessPath interpFindInAccessPath \
 	    setLogCmd ;
-
-# Proto/dummy declarations for auto_mkIndex
-proc ::safe::interpCreate {} {}
-proc ::safe::interpInit {} {}
-proc ::safe::interpConfigure {} {}
-
 
     ####
     #
@@ -417,7 +411,7 @@ proc ::safe::interpAddToAccessPath {slave path} {
 
 	Lappend [VirtualPathListName $slave] $token;
 	Lappend [PathListName $slave] $path;
-	Set $nname [expr $n+1];
+	Set $nname [expr {$n+1}];
 
 	SyncAccessPath $slave;
 
@@ -445,6 +439,13 @@ proc ::safe::interpAddToAccessPath {slave path} {
 	# absolute paths.
 	::interp alias $slave source {} [namespace current]::AliasSource $slave
 	::interp alias $slave load {} [namespace current]::AliasLoad $slave
+
+	# This alias lets the slave use the encoding names, convertfrom,
+	# convertto, and system, but not "encoding system <name>" to set
+	# the system encoding.
+
+	::interp alias $slave encoding {} [namespace current]::AliasEncoding \
+		$slave
 
 	# This alias lets the slave have access to a subset of the 'file'
 	# command functionality.
@@ -528,7 +529,7 @@ proc ::safe::interpDelete {slave} {
 		# remove the hook now, otherwise if the hook
 		# calls us somehow, we'll loop
 		Unset $hookname;
-		if {[catch {eval $hook $slave} err]} {
+		if {[catch {eval $hook [list $slave]} err]} {
 		    Log $slave "Delete hook error ($err)";
 		}
 	    }
@@ -681,7 +682,7 @@ proc ::safe::setLogCmd {args} {
 	if {[regexp {(::)|(\.\.)} $path]} {
 	    error "invalid characters in path $path";
 	}
-	set n [expr [Set [PathNumberName $slave]]-1];
+	set n [expr {[Set [PathNumberName $slave]]-1}];
 	for {} {$n>=0} {incr n -1} {
 	    # fill the token virtual names with their real value
 	    set [PathToken $n] [Set [PathToken $n $slave]];
@@ -888,6 +889,43 @@ proc ::safe::setLogCmd {args} {
 	append pat )\$
 	::interp alias $slave $alias {}\
 		[namespace current]::Subset $slave $target $pat
+    }
+
+    # AliasEncoding is the target of the "encoding" alias in safe interpreters.
+
+    proc AliasEncoding {slave args} {
+
+	set argc [llength $args];
+
+	set okpat "^(name.*|convert.*)\$"
+	set subcommand [lindex $args 0]
+
+	if {[regexp $okpat $subcommand]} {
+	    return [eval ::interp invokehidden $slave encoding $subcommand \
+		    [lrange $args 1 end]]
+	}
+
+	if {[string match $subcommand system]} {
+	    if {$argc == 1} {
+		# passed all the tests , lets source it:
+		if {[catch {::interp invokehidden \
+			$slave encoding system} msg]} {
+		    Log $slave $msg;
+		    return -code error "script error";
+		}
+	    } else {
+		set msg "wrong # args: should be \"encoding system\"";
+		Log $slave $msg;
+		error $msg;
+	    }
+	} else {
+	    set msg "wrong # args: should be \"encoding option ?arg ...?\"";
+	    Log $slave $msg;
+	    error $msg;
+	}
+	
+	
+	return $msg
     }
 
 }

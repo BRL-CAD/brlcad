@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) fcopy.n 1.4 97/06/19 11:10:07
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH fcopy n 8.0 Tcl "Tcl Built-In Commands"

@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclPipe.c 1.8 97/06/20 13:26:45
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -32,6 +32,7 @@ typedef struct Detached {
 } Detached;
 
 static Detached *detList = NULL;	/* List of all detached proceses. */
+TCL_DECLARE_MUTEX(pipeMutex)		/* Guard access to detList. */
 
 /*
  * Declarations for local procedures defined in this file:
@@ -53,7 +54,7 @@ static TclFile	FileForRedirect _ANSI_ARGS_((Tcl_Interp *interp,
  * Results:
  *	The return value is the descriptor number for the file.  If an
  *	error occurs then NULL is returned and an error message is left
- *	in interp->result.  Several arguments are side-effected; see
+ *	in the interp's result.  Several arguments are side-effected; see
  *	the argument list below for details.
  *
  * Side effects:
@@ -183,12 +184,15 @@ Tcl_DetachPids(numPids, pidPtr)
     register Detached *detPtr;
     int i;
 
+    Tcl_MutexLock(&pipeMutex);
     for (i = 0; i < numPids; i++) {
 	detPtr = (Detached *) ckalloc(sizeof(Detached));
 	detPtr->pid = pidPtr[i];
 	detPtr->nextPtr = detList;
 	detList = detPtr;
     }
+    Tcl_MutexUnlock(&pipeMutex);
+
 }
 
 /*
@@ -219,6 +223,7 @@ Tcl_ReapDetachedProcs()
     int status;
     Tcl_Pid pid;
 
+    Tcl_MutexLock(&pipeMutex);
     for (detPtr = detList, prevPtr = NULL; detPtr != NULL; ) {
 	pid = Tcl_WaitPid(detPtr->pid, &status, WNOHANG);
 	if ((pid == 0) || ((pid == (Tcl_Pid) -1) && (errno != ECHILD))) {
@@ -235,6 +240,7 @@ Tcl_ReapDetachedProcs()
 	ckfree((char *) detPtr);
 	detPtr = nextPtr;
     }
+    Tcl_MutexUnlock(&pipeMutex);
 }
 
 /*
@@ -249,10 +255,10 @@ Tcl_ReapDetachedProcs()
  * Results:
  *	The return value is a standard Tcl result.  If anything at
  *	weird happened with the child processes, TCL_ERROR is returned
- *	and a message is left in interp->result.
+ *	and a message is left in the interp's result.
  *
  * Side effects:
- *	If the last character of interp->result is a newline, then it
+ *	If the last character of the interp's result is a newline, then it
  *	is removed unless keepNewline is non-zero.  File errorId gets
  *	closed, and pidPtr is freed back to the storage allocator.
  *
@@ -305,13 +311,13 @@ TclCleanupChildren(interp, numPids, pidPtr, errorChan)
 	 */
 
 	if (!WIFEXITED(waitStatus) || (WEXITSTATUS(waitStatus) != 0)) {
-	    char msg1[20], msg2[20];
+	    char msg1[TCL_INTEGER_SPACE], msg2[TCL_INTEGER_SPACE];
 
 	    result = TCL_ERROR;
-	    sprintf(msg1, "%ld", TclpGetPid(pid));
+	    TclFormatInt(msg1, (long) TclpGetPid(pid));
 	    if (WIFEXITED(waitStatus)) {
                 if (interp != (Tcl_Interp *) NULL) {
-                    sprintf(msg2, "%d", WEXITSTATUS(waitStatus));
+		    TclFormatInt(msg2, WEXITSTATUS(waitStatus));
                     Tcl_SetErrorCode(interp, "CHILDSTATUS", msg1, msg2,
                             (char *) NULL);
                 }
@@ -361,32 +367,28 @@ TclCleanupChildren(interp, numPids, pidPtr, errorChan)
 	 * Make sure we start at the beginning of the file.
 	 */
 
-	Tcl_Seek(errorChan, 0L, SEEK_SET);
-
-        if (interp != (Tcl_Interp *) NULL) {
-            while (1) {
-#define BUFFER_SIZE 1000
-                char buffer[BUFFER_SIZE+1];
-                int count;
-    
-                count = Tcl_Read(errorChan, buffer, BUFFER_SIZE);
-                if (count == 0) {
-                    break;
-                }
-                result = TCL_ERROR;
-                if (count < 0) {
-                    Tcl_AppendResult(interp,
-                            "error reading stderr output file: ",
-                            Tcl_PosixError(interp), (char *) NULL);
-                    break;	/* out of the "while (1)" loop. */
-                }
-                buffer[count] = 0;
-                Tcl_AppendResult(interp, buffer, (char *) NULL);
-                anyErrorInfo = 1;
-            }
-        }
-        
-	Tcl_Close((Tcl_Interp *) NULL, errorChan);
+        if (interp != NULL) {
+	    int count;
+	    Tcl_Obj *objPtr;
+	    
+	    Tcl_Seek(errorChan, 0L, SEEK_SET);
+	    objPtr = Tcl_NewObj();
+	    count = Tcl_ReadChars(errorChan, objPtr, -1, 0);
+	    if (count < 0) {
+		result = TCL_ERROR;
+		Tcl_DecrRefCount(objPtr);
+		Tcl_ResetResult(interp);
+		Tcl_AppendResult(interp, "error reading stderr output file: ",
+			Tcl_PosixError(interp), NULL);
+	    } else if (count > 0) {
+		anyErrorInfo = 1;
+		Tcl_SetObjResult(interp, objPtr);
+		result = TCL_ERROR;
+	    } else {
+		Tcl_DecrRefCount(objPtr);
+	    }
+	}
+	Tcl_Close(NULL, errorChan);
     }
 
     /*
@@ -394,11 +396,10 @@ TclCleanupChildren(interp, numPids, pidPtr, errorChan)
      * at all, generate an error message here.
      */
 
-    if (abnormalExit && !anyErrorInfo && (interp != (Tcl_Interp *) NULL)) {
+    if ((abnormalExit != 0) && (anyErrorInfo == 0) && (interp != NULL)) {
 	Tcl_AppendResult(interp, "child process exited abnormally",
 		(char *) NULL);
     }
-    
     return result;
 }
 
@@ -689,7 +690,7 @@ TclCreatePipeline(interp, argc, argv, pidArrayPtr, inPipePtr,
 	     * Tcl.  Create a temporary file for it and put the data into the
 	     * file.
 	     */
-	    inputFile = TclpCreateTempFile(inputLiteral, NULL);
+	    inputFile = TclpCreateTempFile(inputLiteral);
 	    if (inputFile == NULL) {
 		Tcl_AppendResult(interp,
 			"couldn't create input file for command: ",
@@ -765,7 +766,7 @@ TclCreatePipeline(interp, argc, argv, pidArrayPtr, inPipePtr,
 	     * complete because stderr was backed up.
 	     */
 
-	    errorFile = TclpCreateTempFile(NULL, NULL);
+	    errorFile = TclpCreateTempFile(NULL);
 	    if (errorFile == NULL) {
 		Tcl_AppendResult(interp,
 			"couldn't create error file for command: ",
@@ -799,15 +800,15 @@ TclCreatePipeline(interp, argc, argv, pidArrayPtr, inPipePtr,
     curInFile = inputFile;
 
     for (i = 0; i < argc; i = lastArg + 1) { 
-	int joinThisError;
+	int result, joinThisError;
 	Tcl_Pid pid;
+	char *oldName;
 
 	/*
 	 * Convert the program name into native form. 
 	 */
 
-	argv[i] = Tcl_TranslateFileName(interp, argv[i], &execBuffer);
-	if (argv[i] == NULL) {
+	if (Tcl_TranslateFileName(interp, argv[i], &execBuffer) == NULL) {
 	    goto error;
 	}
 
@@ -851,8 +852,17 @@ TclCreatePipeline(interp, argc, argv, pidArrayPtr, inPipePtr,
 	    curErrFile = errorFile;
 	}
 
-	if (TclpCreateProcess(interp, lastArg - i, argv + i,
-		curInFile, curOutFile, curErrFile, &pid) != TCL_OK) {
+	/*
+	 * Restore argv[i], since a caller wouldn't expect the contents of
+	 * argv to be modified.
+	 */
+	 
+	oldName = argv[i];
+	argv[i] = Tcl_DStringValue(&execBuffer);
+	result = TclpCreateProcess(interp, lastArg - i, argv + i,
+		curInFile, curOutFile, curErrFile, &pid);
+	argv[i] = oldName;
+	if (result != TCL_OK) {
 	    goto error;
 	}
 	Tcl_DStringFree(&execBuffer);

@@ -5,12 +5,12 @@
  *	files.  It also comtains Macintosh version of other Tcl
  *	functions that deal with the file system.
  *
- * Copyright (c) 1995-1997 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1998 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacFile.c 1.57 97/04/23 16:23:05
+ * RCS: @(#) $Id$
  */
 
 /*
@@ -32,175 +32,21 @@
 #include <FSpCompat.h>
 
 /*
- * Static variables used by the TclMacStat function.
+ * Static variables used by the TclpStat function.
  */
-static int initalized = false;
+static int initialized = false;
 static long gmt_offset;
+TCL_DECLARE_MUTEX(gmtMutex)
 
-/*
- * The variable below caches the name of the current working directory
- * in order to avoid repeated calls to getcwd.  The string is malloc-ed.
- * NULL means the cache needs to be refreshed.
- */
-
-static char *currentDir =  NULL;
 
 /*
  *----------------------------------------------------------------------
  *
- * TclChdir --
- *
- *	Change the current working directory.
- *
- * Results:
- *	The result is a standard Tcl result.  If an error occurs and 
- *	interp isn't NULL, an error message is left in interp->result.
- *
- * Side effects:
- *	The working directory for this application is changed.  Also
- *	the cache maintained used by TclGetCwd is deallocated and
- *	set to NULL.
- *
- *----------------------------------------------------------------------
- */
-
-int
-TclChdir(
-    Tcl_Interp *interp,		/* If non NULL, used for error reporting. */
-    char *dirName)		/* Path to new working directory. */
-{
-    FSSpec spec;
-    OSErr err;
-    Boolean isFolder;
-    long dirID;
-
-    if (currentDir != NULL) {
-	ckfree(currentDir);
-	currentDir = NULL;
-    }
-
-    err = FSpLocationFromPath(strlen(dirName), dirName, &spec);
-    if (err != noErr) {
-	errno = ENOENT;
-	goto chdirError;
-    }
-    
-    err = FSpGetDirectoryID(&spec, &dirID, &isFolder);
-    if (err != noErr) {
-	errno = ENOENT;
-	goto chdirError;
-    }
-
-    if (isFolder != true) {
-	errno = ENOTDIR;
-	goto chdirError;
-    }
-
-    err = FSpSetDefaultDir(&spec);
-    if (err != noErr) {
-	switch (err) {
-	    case afpAccessDenied:
-		errno = EACCES;
-		break;
-	    default:
-		errno = ENOENT;
-	}
-	goto chdirError;
-    }
-
-    return TCL_OK;
-    chdirError:
-    if (interp != NULL) {
-	Tcl_AppendResult(interp, "couldn't change working directory to \"",
-		dirName, "\": ", Tcl_PosixError(interp), (char *) NULL);
-    }
-    return TCL_ERROR;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclGetCwd --
- *
- *	Return the path name of the current working directory.
- *
- * Results:
- *	The result is the full path name of the current working
- *	directory, or NULL if an error occurred while figuring it
- *	out.  If an error occurs and interp isn't NULL, an error
- *	message is left in interp->result.
- *
- * Side effects:
- *	The path name is cached to avoid having to recompute it
- *	on future calls;  if it is already cached, the cached
- *	value is returned.
- *
- *----------------------------------------------------------------------
- */
-
-char *
-TclGetCwd(
-    Tcl_Interp *interp)		/* If non NULL, used for error reporting. */
-{
-    FSSpec theSpec;
-    int length;
-    Handle pathHandle = NULL;
-    
-    if (currentDir == NULL) {
-	if (FSpGetDefaultDir(&theSpec) != noErr) {
-	    if (interp != NULL) {
-		interp->result = "error getting working directory name";
-	    }
-	    return NULL;
-	}
-	if (FSpPathFromLocation(&theSpec, &length, &pathHandle) != noErr) {
-	    if (interp != NULL) {
-		interp->result = "error getting working directory name";
-	    }
-	    return NULL;
-	}
-	HLock(pathHandle);
-	currentDir = (char *) ckalloc((unsigned) (length + 1));
-	strcpy(currentDir, *pathHandle);
-	HUnlock(pathHandle);
-	DisposeHandle(pathHandle);	
-    }
-    return currentDir;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_WaitPid --
- *
- *	Fakes a call to wait pid.
- *
- * Results:
- *	Always returns -1.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-Tcl_Pid
-Tcl_WaitPid(
-    Tcl_Pid pid,
-    int *statPtr,
-    int options)
-{
-    return (Tcl_Pid) -1;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_FindExecutable --
+ * TclpFindExecutable --
  *
  *	This procedure computes the absolute path name of the current
  *	application, given its argv[0] value.  However, this
- *	implementation doesn't use of need the argv[0] value.  NULL
+ *	implementation doesn't need the argv[0] value.  NULL
  *	may be passed in its place.
  *
  * Results:
@@ -214,9 +60,9 @@ Tcl_WaitPid(
  *----------------------------------------------------------------------
  */
 
-void
-Tcl_FindExecutable(
-    char *argv0)		/* The value of the application's argv[0]. */
+char *
+TclpFindExecutable(
+    CONST char *argv0)		/* The value of the application's argv[0]. */
 {
     ProcessSerialNumber psn;
     ProcessInfoRec info;
@@ -225,6 +71,9 @@ Tcl_FindExecutable(
     int pathLength;
     Handle pathName = NULL;
     OSErr err;
+    Tcl_DString ds;
+    
+    TclInitSubsystems(argv0);
     
     GetCurrentProcess(&psn);
     info.processInfoLength = sizeof(ProcessInfoRec);
@@ -238,52 +87,29 @@ Tcl_FindExecutable(
     }
     
     err = FSpPathFromLocation(&fileSpec, &pathLength, &pathName);
-
-    tclExecutableName = (char *) ckalloc((unsigned) pathLength + 1);
     HLock(pathName);
-    strcpy(tclExecutableName, *pathName);
+    Tcl_ExternalToUtfDString(NULL, *pathName, pathLength, &ds);
     HUnlock(pathName);
     DisposeHandle(pathName);	
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclGetUserHome --
- *
- *	This function takes the passed in user name and finds the
- *	corresponding home directory specified in the password file.
- *
- * Results:
- *	On a Macintosh we always return a NULL.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
 
-char *
-TclGetUserHome(
-    char *name,			/* User name to use to find home directory. */
-    Tcl_DString *bufferPtr)	/* May be used to hold result.  Must not hold
-				 * anything at the time of the call, and need
-				 * not even be initialized. */
-{
-    return NULL;
+    tclExecutableName = (char *) ckalloc((unsigned) 
+    	    (Tcl_DStringLength(&ds) + 1));
+    strcpy(tclExecutableName, Tcl_DStringValue(&ds));
+    Tcl_DStringFree(&ds);
+    return tclExecutableName;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TclMatchFiles --
+ * TclpMatchFiles --
  *
  *	This routine is used by the globbing code to search a
  *	directory for all files which match a given pattern.
  *
  * Results: 
  *	If the tail argument is NULL, then the matching files are
- *	added to the interp->result.  Otherwise, TclDoGlob is called
+ *	added to the the interp's result.  Otherwise, TclDoGlob is called
  *	recursively for each matching subdirectory.  The return value
  *	is a standard Tcl result indicating whether an error occurred
  *	in globbing.
@@ -294,15 +120,16 @@ TclGetUserHome(
  *---------------------------------------------------------------------- */
 
 int
-TclMatchFiles(
+TclpMatchFiles(
     Tcl_Interp *interp,		/* Interpreter to receive results. */
     char *separators,		/* Directory separators to pass to TclDoGlob. */
     Tcl_DString *dirPtr,	/* Contains path to directory to search. */
     char *pattern,		/* Pattern to match against. */
     char *tail)			/* Pointer to end of pattern.  Tail must
-				 * point to a location in pattern. */
+				 * point to a location in pattern and must
+				 * not be static.*/
 {
-    char *dirName, *patternEnd = tail;
+    char *patternEnd = tail;
     char savedChar;
     int result = TCL_OK;
     int baseLength = Tcl_DStringLength(dirPtr);
@@ -313,15 +140,18 @@ TclMatchFiles(
     long dirID;
     short itemIndex;
     Str255 fileName;
-    
+    Tcl_DString fileString;    
 
     /*
      * Make sure that the directory part of the name really is a
      * directory.
      */
 
-    dirName = dirPtr->string;
-    FSpLocationFromPath(strlen(dirName), dirName, &dirSpec);
+    Tcl_UtfToExternalDString(NULL, dirPtr->string, dirPtr->length, &fileString);
+    
+    FSpLocationFromPath(fileString.length, fileString.string, &dirSpec);
+    Tcl_DStringFree(&fileString);
+    
     err = FSpGetDirectoryID(&dirSpec, &dirID, &isDirectory);
     if ((err != noErr) || !isDirectory) {
 	return TCL_OK;
@@ -368,11 +198,12 @@ TclMatchFiles(
 	 * directories before calling TclDoGlob. Otherwise, just add
 	 * the file to the result.
 	 */
-
-	p2cstr(fileName);
-	if (Tcl_StringMatch((char *) fileName, pattern)) {
+	 
+	Tcl_ExternalToUtfDString(NULL, (char *) fileName + 1, fileName[0],
+		&fileString);
+	if (Tcl_StringMatch(Tcl_DStringValue(&fileString), pattern)) {
 	    Tcl_DStringSetLength(dirPtr, baseLength);
-	    Tcl_DStringAppend(dirPtr, (char *) fileName, -1);
+	    Tcl_DStringAppend(dirPtr, Tcl_DStringValue(&fileString), -1);
 	    if (tail == NULL) {
 		if ((dirPtr->length > 1) &&
 			(strchr(dirPtr->string+1, ':') == NULL)) {
@@ -384,10 +215,12 @@ TclMatchFiles(
 		Tcl_DStringAppend(dirPtr, ":", 1);
 		result = TclDoGlob(interp, separators, dirPtr, tail);
 		if (result != TCL_OK) {
+		    Tcl_DStringFree(&fileString);
 		    break;
 		}
 	    }
 	}
+	Tcl_DStringFree(&fileString);
 	
 	itemIndex++;
     }
@@ -399,258 +232,9 @@ TclMatchFiles(
 /*
  *----------------------------------------------------------------------
  *
- * TclMacStat --
+ * TclpAccess --
  *
- *	This function replaces the library version of stat.  The stat
- *	function provided by most Mac compiliers is rather broken and
- *	incomplete.
- *
- * Results:
- *	See stat documentation.
- *
- * Side effects:
- *	See stat documentation.
- *
- *----------------------------------------------------------------------
- */
-
-int
-TclMacStat(
-    char *path,
-    struct stat *buf)
-{
-    HFileInfo fpb;
-    HVolumeParam vpb;
-    OSErr err;
-    FSSpec fileSpec;
-    Boolean isDirectory;
-    long dirID;
-    
-    err = FSpLocationFromPath(strlen(path), path, &fileSpec);
-    if (err != noErr) {
-	errno = TclMacOSErrorToPosixError(err);
-	return -1;
-    }
-    
-    /*
-     * Fill the fpb & vpb struct up with info about file or directory.
-     */
-     
-    FSpGetDirectoryID(&fileSpec, &dirID, &isDirectory);
-    vpb.ioVRefNum = fpb.ioVRefNum = fileSpec.vRefNum;
-    vpb.ioNamePtr = fpb.ioNamePtr = fileSpec.name;
-    if (isDirectory) {
-	fpb.ioDirID = fileSpec.parID;
-    } else {
-	fpb.ioDirID = dirID;
-    }
-
-    fpb.ioFDirIndex = 0;
-    err = PBGetCatInfoSync((CInfoPBPtr)&fpb);
-    if (err == noErr) {
-	vpb.ioVolIndex = 0;
-	err = PBHGetVInfoSync((HParmBlkPtr)&vpb);
-	if (err == noErr && buf != NULL) {
-	    /* 
-	     * Files are always readable by everyone.
-	     */
-	     
-	    buf->st_mode = S_IRUSR | S_IRGRP | S_IROTH;
-
-	    /* 
-	     * Use the Volume Info & File Info to fill out stat buf.
-	     */
-	    if (fpb.ioFlAttrib & 0x10) {
-		buf->st_mode |= S_IFDIR;
-		buf->st_nlink = 2;
-	    } else {
-		buf->st_nlink = 1;
-		if (fpb.ioFlFndrInfo.fdFlags & 0x8000) {
-		    buf->st_mode |= S_IFLNK;
-		} else {
-		    buf->st_mode |= S_IFREG;
-		}
-	    }
-	    if ((fpb.ioFlAttrib & 0x10) || (fpb.ioFlFndrInfo.fdType == 'APPL')) {
-	    	/*
-	    	 * Directories and applications are executable by everyone.
-	    	 */
-	    	 
-	    	buf->st_mode |= S_IXUSR | S_IXGRP | S_IXOTH;
-	    }
-	    if ((fpb.ioFlAttrib & 0x01) == 0){
-	    	/* 
-	    	 * If not locked, then everyone has write acces.
-	    	 */
-	    	 
-	        buf->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
-	    }
-	    buf->st_ino = fpb.ioDirID;
-	    buf->st_dev = fpb.ioVRefNum;
-	    buf->st_uid = -1;
-	    buf->st_gid = -1;
-	    buf->st_rdev = 0;
-	    buf->st_size = fpb.ioFlLgLen;
-	    buf->st_blksize = vpb.ioVAlBlkSiz;
-	    buf->st_blocks = (buf->st_size + buf->st_blksize - 1)
-		/ buf->st_blksize;
-
-	    /*
-	     * The times returned by the Mac file system are in the
-	     * local time zone.  We convert them to GMT so that the
-	     * epoch starts from GMT.  This is also consistant with
-	     * what is returned from "clock seconds".
-	     */
-	    if (initalized == false) {
-		MachineLocation loc;
-    
-		ReadLocation(&loc);
-		gmt_offset = loc.u.gmtDelta & 0x00ffffff;
-		if (gmt_offset & 0x00800000) {
-		    gmt_offset = gmt_offset | 0xff000000;
-		}
-		initalized = true;
-	    }
-	    buf->st_atime = buf->st_mtime = fpb.ioFlMdDat - gmt_offset;
-	    buf->st_ctime = fpb.ioFlCrDat - gmt_offset;
-
-	}
-    }
-
-    if (err != noErr) {
-	errno = TclMacOSErrorToPosixError(err);
-    }
-    
-    return (err == noErr ? 0 : -1);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclMacReadlink --
- *
- *	This function replaces the library version of readlink.
- *
- * Results:
- *	See readlink documentation.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-int
-TclMacReadlink(
-    char *path,
-    char *buf,
-    int size)
-{
-    HFileInfo fpb;
-    OSErr err;
-    FSSpec fileSpec;
-    Boolean isDirectory;
-    Boolean wasAlias;
-    long dirID;
-    char fileName[256];
-    char *end;
-    Handle theString = NULL;
-    int pathSize;
-
-    /*
-     * Remove ending colons if they exist.
-     */
-    while ((strlen(path) != 0) && (path[strlen(path) - 1] == ':')) {
-	path[strlen(path) - 1] = NULL;
-    }
-
-    if (strchr(path, ':') == NULL) {
-	strcpy(fileName, path);
-	path = NULL;
-    } else {
-	end = strrchr(path, ':') + 1;
-	strcpy(fileName, end);
-	*end = NULL;
-    }
-    c2pstr(fileName);
-    
-    /*
-     * Create the file spec for the directory of the file
-     * we want to look at.
-     */
-    if (path != NULL) {
-	err = FSpLocationFromPath(strlen(path), path, &fileSpec);
-	if (err != noErr) {
-	    errno = EINVAL;
-	    return -1;
-	}
-    } else {
-	FSMakeFSSpecCompat(0, 0, NULL, &fileSpec);
-    }
-    
-    /*
-     * Fill the fpb struct up with info about file or directory.
-     */
-    FSpGetDirectoryID(&fileSpec, &dirID, &isDirectory);
-    fpb.ioVRefNum = fileSpec.vRefNum;
-    fpb.ioDirID = dirID;
-    fpb.ioNamePtr = (StringPtr) fileName;
-
-    fpb.ioFDirIndex = 0;
-    err = PBGetCatInfoSync((CInfoPBPtr)&fpb);
-    if (err != noErr) {
-	errno = TclMacOSErrorToPosixError(err);
-	return -1;
-    } else {
-	if (fpb.ioFlAttrib & 0x10) {
-	    errno = EINVAL;
-	    return -1;
-	} else {
-	    if (fpb.ioFlFndrInfo.fdFlags & 0x8000) {
-		/*
-		 * The file is a link!
-		 */
-	    } else {
-		errno = EINVAL;
-		return -1;
-	    }
-	}
-    }
-    
-    /*
-     * If we are here it's really a link - now find out
-     * where it points to.
-     */
-    err = FSMakeFSSpecCompat(fileSpec.vRefNum, dirID, (StringPtr) fileName, &fileSpec);
-    if (err == noErr) {
-	err = ResolveAliasFile(&fileSpec, true, &isDirectory, &wasAlias);
-    }
-    if ((err == fnfErr) || wasAlias) {
-	err = FSpPathFromLocation(&fileSpec, &pathSize, &theString);
-	if ((err != noErr) || (pathSize > size)) {
-	    DisposeHandle(theString);
-	    errno = ENAMETOOLONG;
-	    return -1;
-	}
-    } else {
-    	errno = EINVAL;
-	return -1;
-    }
-
-    strncpy(buf, *theString, pathSize);
-    DisposeHandle(theString);
-    
-    return pathSize;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclMacAccess --
- *
- *	This function replaces the library version of access.  The
- *	access function provided by most Mac compiliers is rather 
- *	broken or incomplete.
+ *	This function replaces the library version of access().
  *
  * Results:
  *	See access documentation.
@@ -662,9 +246,9 @@ TclMacReadlink(
  */
 
 int
-TclMacAccess(
-    const char *path,
-    int mode)
+TclpAccess(
+    CONST char *path,		/* Path of file to access (UTF-8). */
+    int mode)			/* Permission setting. */
 {
     HFileInfo fpb;
     HVolumeParam vpb;
@@ -672,9 +256,14 @@ TclMacAccess(
     FSSpec fileSpec;
     Boolean isDirectory;
     long dirID;
+    Tcl_DString ds;
+    char *native;
     int full_mode = 0;
 
-    err = FSpLocationFromPath(strlen(path), (char *) path, &fileSpec);
+    native = Tcl_UtfToExternalDString(NULL, path, -1, &ds);
+    err = FSpLocationFromPath(Tcl_DStringLength(&ds), native, &fileSpec);
+    Tcl_DStringFree(&ds);
+
     if (err != noErr) {
 	errno = TclMacOSErrorToPosixError(err);
 	return -1;
@@ -742,6 +331,441 @@ TclMacAccess(
 /*
  *----------------------------------------------------------------------
  *
+ * TclpChdir --
+ *
+ *	This function replaces the library version of chdir().
+ *
+ * Results:
+ *	See chdir() documentation.
+ *
+ * Side effects:
+ *	See chdir() documentation.  Also the cache maintained used by 
+ *	TclGetCwd() is deallocated and set to NULL.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclpChdir(
+    CONST char *dirName)     	/* Path to new working directory (UTF-8). */
+{
+    FSSpec spec;
+    OSErr err;
+    Boolean isFolder;
+    long dirID;
+    Tcl_DString ds;
+    char *native;
+
+    native = Tcl_UtfToExternalDString(NULL, dirName, -1, &ds);
+    err = FSpLocationFromPath(Tcl_DStringLength(&ds), native, &spec);
+    Tcl_DStringFree(&ds);
+
+    if (err != noErr) {
+	errno = ENOENT;
+	return -1;
+    }
+    
+    err = FSpGetDirectoryID(&spec, &dirID, &isFolder);
+    if (err != noErr) {
+	errno = ENOENT;
+	return -1;
+    }
+
+    if (isFolder != true) {
+	errno = ENOTDIR;
+	return -1;
+    }
+
+    err = FSpSetDefaultDir(&spec);
+    if (err != noErr) {
+	switch (err) {
+	    case afpAccessDenied:
+		errno = EACCES;
+		break;
+	    default:
+		errno = ENOENT;
+	}
+	return -1;
+    }
+
+    return 0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpGetCwd --
+ *
+ *	This function replaces the library version of getcwd().
+ *
+ * Results:
+ *	The result is a pointer to a string specifying the current
+ *	directory, or NULL if the current directory could not be
+ *	determined.  If NULL is returned, an error message is left in the
+ *	interp's result.  Storage for the result string is allocated in
+ *	bufferPtr; the caller must call Tcl_DStringFree() when the result
+ *	is no longer needed.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+char *
+TclpGetCwd(
+    Tcl_Interp *interp,		/* If non-NULL, used for error reporting. */
+    Tcl_DString *bufferPtr)	/* Uninitialized or free DString filled
+				 * with name of current directory. */
+{
+    FSSpec theSpec;
+    int length;
+    Handle pathHandle = NULL;
+    
+    if (FSpGetDefaultDir(&theSpec) != noErr) {
+ 	if (interp != NULL) {
+	    Tcl_SetResult(interp, "error getting working directory name",
+		    TCL_STATIC);
+	}
+	return NULL;
+    }
+    if (FSpPathFromLocation(&theSpec, &length, &pathHandle) != noErr) {
+ 	if (interp != NULL) {
+	     Tcl_SetResult(interp, "error getting working directory name",
+		    TCL_STATIC);
+	}
+	return NULL;
+    }
+    HLock(pathHandle);
+    Tcl_ExternalToUtfDString(NULL, *pathHandle, length, bufferPtr);
+    HUnlock(pathHandle);
+    DisposeHandle(pathHandle);	
+
+    return Tcl_DStringValue(bufferPtr);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpReadlink --
+ *
+ *	This function replaces the library version of readlink().
+ *
+ * Results:
+ *	The result is a pointer to a string specifying the contents
+ *	of the symbolic link given by 'path', or NULL if the symbolic
+ *	link could not be read.  Storage for the result string is
+ *	allocated in bufferPtr; the caller must call Tcl_DStringFree()
+ *	when the result is no longer needed.
+ *
+ * Side effects:
+ *	See readlink() documentation.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+char *
+TclpReadlink(
+    CONST char *path,		/* Path of file to readlink (UTF-8). */
+    Tcl_DString *linkPtr)	/* Uninitialized or free DString filled
+				 * with contents of link (UTF-8). */
+{
+    HFileInfo fpb;
+    OSErr err;
+    FSSpec fileSpec;
+    Boolean isDirectory;
+    Boolean wasAlias;
+    long dirID;
+    char fileName[257];
+    char *end;
+    Handle theString = NULL;
+    int pathSize;
+    Tcl_DString ds;
+    char *native;
+    
+    native = Tcl_UtfToExternalDString(NULL, path, -1, &ds);
+
+    /*
+     * Remove ending colons if they exist.
+     */
+     
+    while ((strlen(native) != 0) && (path[strlen(native) - 1] == ':')) {
+	native[strlen(native) - 1] = NULL;
+    }
+
+    if (strchr(native, ':') == NULL) {
+	strcpy(fileName + 1, native);
+	native = NULL;
+    } else {
+	end = strrchr(native, ':') + 1;
+	strcpy(fileName + 1, end);
+	*end = NULL;
+    }
+    fileName[0] = (char) strlen(fileName + 1);
+    
+    /*
+     * Create the file spec for the directory of the file
+     * we want to look at.
+     */
+
+    if (native != NULL) {
+	err = FSpLocationFromPath(strlen(native), native, &fileSpec);
+	if (err != noErr) {
+	    Tcl_DStringFree(&ds);
+	    errno = EINVAL;
+	    return NULL;
+	}
+    } else {
+	FSMakeFSSpecCompat(0, 0, NULL, &fileSpec);
+    }
+    Tcl_DStringFree(&ds);
+    
+    /*
+     * Fill the fpb struct up with info about file or directory.
+     */
+
+    FSpGetDirectoryID(&fileSpec, &dirID, &isDirectory);
+    fpb.ioVRefNum = fileSpec.vRefNum;
+    fpb.ioDirID = dirID;
+    fpb.ioNamePtr = (StringPtr) fileName;
+
+    fpb.ioFDirIndex = 0;
+    err = PBGetCatInfoSync((CInfoPBPtr)&fpb);
+    if (err != noErr) {
+	errno = TclMacOSErrorToPosixError(err);
+	return NULL;
+    } else {
+	if (fpb.ioFlAttrib & 0x10) {
+	    errno = EINVAL;
+	    return NULL;
+	} else {
+	    if (fpb.ioFlFndrInfo.fdFlags & 0x8000) {
+		/*
+		 * The file is a link!
+		 */
+	    } else {
+		errno = EINVAL;
+		return NULL;
+	    }
+	}
+    }
+    
+    /*
+     * If we are here it's really a link - now find out
+     * where it points to.
+     */
+    err = FSMakeFSSpecCompat(fileSpec.vRefNum, dirID, (StringPtr) fileName, 
+    	    &fileSpec);
+    if (err == noErr) {
+	err = ResolveAliasFile(&fileSpec, true, &isDirectory, &wasAlias);
+    }
+    if ((err == fnfErr) || wasAlias) {
+	err = FSpPathFromLocation(&fileSpec, &pathSize, &theString);
+	if (err != noErr) {
+	    DisposeHandle(theString);
+	    errno = ENAMETOOLONG;
+	    return NULL;
+	}
+    } else {
+    	errno = EINVAL;
+	return NULL;
+    }
+    
+    Tcl_ExternalToUtfDString(NULL, *theString, pathSize, linkPtr);
+    DisposeHandle(theString);
+    
+    return Tcl_DStringValue(linkPtr);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpLstat --
+ *
+ *	This function replaces the library version of lstat().
+ *
+ * Results:
+ *	See stat() documentation.
+ *
+ * Side effects:
+ *	See stat() documentation.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclpLstat(
+    CONST char *path,		/* Path of file to stat (in UTF-8). */
+    struct stat *bufPtr)	/* Filled with results of stat call. */
+{
+    /*
+     * FIXME: Emulate TclpLstat
+     */
+     
+    return TclpStat(path, bufPtr);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpStat --
+ *
+ *	This function replaces the library version of stat().
+ *
+ * Results:
+ *	See stat() documentation.
+ *
+ * Side effects:
+ *	See stat() documentation.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclpStat(
+    CONST char *path,		/* Path of file to stat (in UTF-8). */
+    struct stat *bufPtr)	/* Filled with results of stat call. */
+{
+    HFileInfo fpb;
+    HVolumeParam vpb;
+    OSErr err;
+    FSSpec fileSpec;
+    Boolean isDirectory;
+    long dirID;
+    Tcl_DString ds;
+    
+    path = Tcl_UtfToExternalDString(NULL, path, -1, &ds);
+    err = FSpLocationFromPath(Tcl_DStringLength(&ds), path, &fileSpec);
+    Tcl_DStringFree(&ds);
+    
+    if (err != noErr) {
+	errno = TclMacOSErrorToPosixError(err);
+	return -1;
+    }
+    
+    /*
+     * Fill the fpb & vpb struct up with info about file or directory.
+     */
+     
+    FSpGetDirectoryID(&fileSpec, &dirID, &isDirectory);
+    vpb.ioVRefNum = fpb.ioVRefNum = fileSpec.vRefNum;
+    vpb.ioNamePtr = fpb.ioNamePtr = fileSpec.name;
+    if (isDirectory) {
+	fpb.ioDirID = fileSpec.parID;
+    } else {
+	fpb.ioDirID = dirID;
+    }
+
+    fpb.ioFDirIndex = 0;
+    err = PBGetCatInfoSync((CInfoPBPtr)&fpb);
+    if (err == noErr) {
+	vpb.ioVolIndex = 0;
+	err = PBHGetVInfoSync((HParmBlkPtr)&vpb);
+	if (err == noErr && bufPtr != NULL) {
+	    /* 
+	     * Files are always readable by everyone.
+	     */
+	     
+	    bufPtr->st_mode = S_IRUSR | S_IRGRP | S_IROTH;
+
+	    /* 
+	     * Use the Volume Info & File Info to fill out stat buf.
+	     */
+	    if (fpb.ioFlAttrib & 0x10) {
+		bufPtr->st_mode |= S_IFDIR;
+		bufPtr->st_nlink = 2;
+	    } else {
+		bufPtr->st_nlink = 1;
+		if (fpb.ioFlFndrInfo.fdFlags & 0x8000) {
+		    bufPtr->st_mode |= S_IFLNK;
+		} else {
+		    bufPtr->st_mode |= S_IFREG;
+		}
+	    }
+	    if ((fpb.ioFlAttrib & 0x10) || (fpb.ioFlFndrInfo.fdType == 'APPL')) {
+	    	/*
+	    	 * Directories and applications are executable by everyone.
+	    	 */
+	    	 
+	    	bufPtr->st_mode |= S_IXUSR | S_IXGRP | S_IXOTH;
+	    }
+	    if ((fpb.ioFlAttrib & 0x01) == 0){
+	    	/* 
+	    	 * If not locked, then everyone has write acces.
+	    	 */
+	    	 
+	        bufPtr->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+	    }
+	    bufPtr->st_ino = fpb.ioDirID;
+	    bufPtr->st_dev = fpb.ioVRefNum;
+	    bufPtr->st_uid = -1;
+	    bufPtr->st_gid = -1;
+	    bufPtr->st_rdev = 0;
+	    bufPtr->st_size = fpb.ioFlLgLen;
+	    bufPtr->st_blksize = vpb.ioVAlBlkSiz;
+	    bufPtr->st_blocks = (bufPtr->st_size + bufPtr->st_blksize - 1)
+		/ bufPtr->st_blksize;
+
+	    /*
+	     * The times returned by the Mac file system are in the
+	     * local time zone.  We convert them to GMT so that the
+	     * epoch starts from GMT.  This is also consistant with
+	     * what is returned from "clock seconds".
+	     */
+
+	    Tcl_MutexLock(&gmtMutex);
+	    if (initialized == false) {
+		MachineLocation loc;
+    
+		ReadLocation(&loc);
+		gmt_offset = loc.u.gmtDelta & 0x00ffffff;
+		if (gmt_offset & 0x00800000) {
+		    gmt_offset = gmt_offset | 0xff000000;
+		}
+		initialized = true;
+	    }
+	    Tcl_MutexUnlock(&gmtMutex);
+
+	    bufPtr->st_atime = bufPtr->st_mtime = fpb.ioFlMdDat - gmt_offset;
+	    bufPtr->st_ctime = fpb.ioFlCrDat - gmt_offset;
+	}
+    }
+
+    if (err != noErr) {
+	errno = TclMacOSErrorToPosixError(err);
+    }
+    
+    return (err == noErr ? 0 : -1);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_WaitPid --
+ *
+ *	Fakes a call to wait pid.
+ *
+ * Results:
+ *	Always returns -1.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tcl_Pid
+Tcl_WaitPid(
+    Tcl_Pid pid,
+    int *statPtr,
+    int options)
+{
+    return (Tcl_Pid) -1;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TclMacFOpenHack --
  *
  *	This function replaces fopen.  It supports paths with alises.
@@ -759,8 +783,8 @@ TclMacAccess(
 #undef fopen
 FILE *
 TclMacFOpenHack(
-    const char *path,
-    const char *mode)
+    CONST char *path,
+    CONST char *mode)
 {
     OSErr err;
     FSSpec fileSpec;
@@ -782,6 +806,36 @@ TclMacFOpenHack(
     HUnlock(pathString);
     DisposeHandle(pathString);
     return f;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclpGetUserHome --
+ *
+ *	This function takes the specified user name and finds their
+ *	home directory.
+ *
+ * Results:
+ *	The result is a pointer to a string specifying the user's home
+ *	directory, or NULL if the user's home directory could not be
+ *	determined.  Storage for the result string is allocated in
+ *	bufferPtr; the caller must call Tcl_DStringFree() when the result
+ *	is no longer needed.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+char *
+TclpGetUserHome(name, bufferPtr)
+    CONST char *name;		/* User name for desired home directory. */
+    Tcl_DString *bufferPtr;	/* Uninitialized or free DString filled
+				 * with name of user's home directory. */
+{
+    return NULL;
 }
 
 /*
@@ -837,4 +891,31 @@ TclMacOSErrorToPosixError(
 	default:
 	    return EINVAL;
     }
+}
+int
+TclMacChmod(
+    char *path, 
+    int mode)
+{
+    HParamBlockRec hpb;
+    OSErr err;
+    
+    c2pstr(path);
+    hpb.fileParam.ioNamePtr = (unsigned char *) path;
+    hpb.fileParam.ioVRefNum = 0;
+    hpb.fileParam.ioDirID = 0;
+    
+    if (mode & 0200) {
+        err = PBHRstFLockSync(&hpb);
+    } else {
+        err = PBHSetFLockSync(&hpb);
+    }
+    p2cstr((unsigned char *) path);
+    
+    if (err != noErr) {
+        errno = TclMacOSErrorToPosixError(err);
+        return -1;
+    }
+    
+    return 0;
 }

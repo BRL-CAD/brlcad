@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) linsert.test 1.14 97/11/18 13:54:18
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 catch {unset lis}
 catch {rename p ""}
@@ -74,6 +78,9 @@ test linsert-1.18 {linsert command} {
 test linsert-1.19 {linsert command} {
     linsert {} end q r
 } {q r}
+test linsert-1.20 {linsert command, use of end-int index} {
+    linsert {a b c d} end-2 e f
+} {a b e f c d}
 
 test linsert-2.1 {linsert errors} {
     list [catch linsert msg] $msg
@@ -83,7 +90,7 @@ test linsert-2.2 {linsert errors} {
 } {1 {wrong # args: should be "linsert list index element ?element ...?"}}
 test linsert-2.3 {linsert errors} {
     list [catch {linsert a 12x 2} msg] $msg
-} {1 {bad index "12x": must be integer or "end"}}
+} {1 {bad index "12x": must be integer or end?-integer?}}
 test linsert-2.4 {linsert errors} {
     list [catch {linsert \{ 12 2} msg] $msg
 } {1 {unmatched open brace in list}}
@@ -101,5 +108,8 @@ test linsert-3.2 {linsert won't modify shared argument objects} {
     linsert $lis 0 [string length $lis]
 } "7 a b c"
 
+# cleanup
 catch {unset lis}
 catch {rename p ""}
+::tcltest::cleanupTests
+return

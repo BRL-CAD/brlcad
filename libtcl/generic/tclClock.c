@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclClock.c 1.37 97/07/29 10:29:58
+ * RCS: @(#) $Id$
  */
 
 #include "tcl.h"
@@ -19,11 +19,17 @@
 #include "tclPort.h"
 
 /*
+ * The date parsing stuff uses lexx and has tons o statics.
+ */
+
+TCL_DECLARE_MUTEX(clockMutex)
+
+/*
  * Function prototypes for local procedures in this file:
  */
 
 static int		FormatClock _ANSI_ARGS_((Tcl_Interp *interp,
-			    time_t clockVal, int useGMT,
+			    unsigned long clockVal, int useGMT,
 			    char *format));
 
 /*
@@ -56,8 +62,7 @@ Tcl_ClockObjCmd (client, interp, objc, objv)
     int useGMT = 0;
     char *format = "%a %b %d %X %Z %Y";
     int dummy;
-    time_t baseClock, clockVal;
-    long long_dummy;
+    unsigned long baseClock, clockVal;
     long zone;
     Tcl_Obj *baseObjPtr = NULL;
     char *scanStr;
@@ -93,11 +98,10 @@ Tcl_ClockObjCmd (client, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 
-	    if (Tcl_GetLongFromObj(interp, objv[2], &long_dummy)
+	    if (Tcl_GetLongFromObj(interp, objv[2], (long*) &clockVal)
 		    != TCL_OK) {
 		return TCL_ERROR;
 	    }
-    	    clockVal = long_dummy;
     
 	    objPtr = objv+3;
 	    objc -= 3;
@@ -123,7 +127,7 @@ Tcl_ClockObjCmd (client, interp, objc, objv)
 	    if (objc != 0) {
 		goto wrongFmtArgs;
 	    }
-	    return FormatClock(interp, (time_t) clockVal, useGMT,
+	    return FormatClock(interp, (unsigned long) clockVal, useGMT,
 		    format);
 	case 2:			/* scan */
 	    if ((objc < 3) || (objc > 7)) {
@@ -160,10 +164,9 @@ Tcl_ClockObjCmd (client, interp, objc, objv)
 
 	    if (baseObjPtr != NULL) {
 		if (Tcl_GetLongFromObj(interp, baseObjPtr,
-			&long_dummy) != TCL_OK) {
+			(long*) &baseClock) != TCL_OK) {
 		    return TCL_ERROR;
 		}
-	    	baseClock = long_dummy;
 	    } else {
 		baseClock = TclpGetSeconds();
 	    }
@@ -171,17 +174,20 @@ Tcl_ClockObjCmd (client, interp, objc, objv)
 	    if (useGMT) {
 		zone = -50000; /* Force GMT */
 	    } else {
-		zone = TclpGetTimeZone((time_t) baseClock);
+		zone = TclpGetTimeZone((unsigned long) baseClock);
 	    }
 
 	    scanStr = Tcl_GetStringFromObj(objv[2], &dummy);
-	    if (TclGetDate(scanStr, (time_t) baseClock, zone,
-		    (time_t *) &clockVal) < 0) {
+	    Tcl_MutexLock(&clockMutex);
+	    if (TclGetDate(scanStr, (unsigned long) baseClock, zone,
+		    (unsigned long *) &clockVal) < 0) {
+		Tcl_MutexUnlock(&clockMutex);
 		Tcl_AppendStringsToObj(resultPtr,
 			"unable to convert date-time string \"",
 			scanStr, "\"", (char *) NULL);
 		return TCL_ERROR;
 	    }
+	    Tcl_MutexUnlock(&clockMutex);
 
 	    Tcl_SetLongObj(resultPtr, (long) clockVal);
 	    return TCL_OK;
@@ -217,7 +223,7 @@ Tcl_ClockObjCmd (client, interp, objc, objv)
 static int
 FormatClock(interp, clockVal, useGMT, format)
     Tcl_Interp *interp;			/* Current interpreter. */
-    time_t clockVal;	       	/* Time in seconds. */
+    unsigned long clockVal;	       	/* Time in seconds. */
     int useGMT;				/* Boolean */
     char *format;			/* Format string */
 {
@@ -225,11 +231,12 @@ FormatClock(interp, clockVal, useGMT, format)
     Tcl_DString buffer;
     int bufSize;
     char *p;
-#ifdef TCL_USE_TIMEZONE_VAR
-    int savedTimeZone;
-    char *savedTZEnv;
-#endif
     Tcl_Obj *resultPtr;
+    int result;
+#ifndef HAVE_TM_ZONE
+    int savedTimeZone = 0;	/* lint. */
+    char *savedTZEnv = NULL;	/* lint. */
+#endif
 
     resultPtr = Tcl_GetObjResult(interp);
 #ifdef HAVE_TZSET
@@ -238,18 +245,21 @@ FormatClock(interp, clockVal, useGMT, format)
      */
     static int  calledTzset = 0;
 
+    Tcl_MutexLock(&clockMutex);
     if (!calledTzset) {
         tzset();
         calledTzset = 1;
     }
+    Tcl_MutexUnlock(&clockMutex);
 #endif
 
-#ifdef TCL_USE_TIMEZONE_VAR
+#ifndef HAVE_TM_ZONE
     /*
-     * This is a horrible kludge for systems not having the timezone in
-     * struct tm.  No matter what was specified, they use the global time
-     * zone.  (Thanks Solaris).
+     * This is a kludge for systems not having the timezone string in
+     * struct tm.  No matter what was specified, they use the local
+     * timezone string.
      */
+
     if (useGMT) {
         char *varValue;
 
@@ -266,7 +276,7 @@ FormatClock(interp, clockVal, useGMT, format)
     }
 #endif
 
-    timeDataPtr = TclpGetDate((time_t *) &clockVal, useGMT);
+    timeDataPtr = TclpGetDate((TclpTime_t) &clockVal, useGMT);
     
     /*
      * Make a guess at the upper limit on the substituted string size
@@ -283,14 +293,12 @@ FormatClock(interp, clockVal, useGMT, format)
     Tcl_DStringInit(&buffer);
     Tcl_DStringSetLength(&buffer, bufSize);
 
-    if ((TclStrftime(buffer.string, (unsigned int) bufSize, format,
-	    timeDataPtr) == 0) && (*format != '\0')) {
-	Tcl_AppendStringsToObj(resultPtr, "bad format string \"",
-		format, "\"", (char *) NULL);
-	return TCL_ERROR;
-    }
+    Tcl_MutexLock(&clockMutex);
+    result = TclpStrftime(buffer.string, (unsigned int) bufSize, format,
+	    timeDataPtr);
+    Tcl_MutexUnlock(&clockMutex);
 
-#ifdef TCL_USE_TIMEZONE_VAR
+#ifndef HAVE_TM_ZONE
     if (useGMT) {
         if (savedTZEnv != NULL) {
             Tcl_SetVar2(interp, "env", "TZ", savedTZEnv, TCL_GLOBAL_ONLY);
@@ -302,6 +310,11 @@ FormatClock(interp, clockVal, useGMT, format)
         tzset();
     }
 #endif
+    if ((result == 0) && (*format != '\0')) {
+	Tcl_AppendStringsToObj(resultPtr, "bad format string \"", format, 
+		"\"", (char *) NULL);
+	return TCL_ERROR;
+    }
 
     Tcl_SetStringObj(resultPtr, buffer.string, -1);
     Tcl_DStringFree(&buffer);

@@ -1,6 +1,6 @@
 Recent user-visible changes to Tcl:
 
-SCCS: @(#) changes 1.338 97/11/25 08:30:52
+RCS: @(#) $Id$
 
 1. No more [command1] [command2] construct for grouping multiple
 commands on a single command line.
@@ -2547,7 +2547,7 @@ changes are to expressions and lists.
       incorrect programs that took advantage of behavior of the old
       implementation that was not documented in the man pages.
 Other changes to Tcl scripts are discussed in the web page at
-http://www.sunlabs.com/research/tcl/compiler.html. (BL)
+http://www.scriptics.com/doc/compiler.html. (BL)
 *** POTENTIAL INCOMPATIBILITY ***
 
 10/21/96 (new feature) In earlier versions of Tcl, strings were used as a
@@ -3115,7 +3115,7 @@ activity.  A refcount bug triggered a panic in Tcl_ListObjAppendElement. (BW)
 
 7/8/97 (bug fix) Relaxed the pattern matching on http_get so you do not
 need a trailing path component.  You can now get away with just
-http_get sunscript.sun.com					(BW)
+http_get www.scriptics.com					(BW)
 
 7/9/97 (bug fix) Creating anonymous interpreters no longer smashes existing
 commands with names similar to the generated name. Previously creating an
@@ -3451,3 +3451,1205 @@ Universal Headers V.3.0, so that Tcl will compile with CW Pro 2.
 -gmt flag set.  Thanks to Jan Nijtmans for reporting the problem. (RJ)
 
 ----------------- Released 8.0p2, 11/25/97 -----------------------
+
+12/3/97 (bug fix/optimization) Removed uneeded and potentially dangerous
+instances of double evaluations if "if" and "expr" statements from
+the library files. It is recommended that unless you need a double
+evaluation you always use "expr {...}" instead of "expr ..." and
+"if {...} ..." instead of "if ... ...". It will also be faster
+thanks to the byte compiler. (DL)
+
+---- Shipped as part of the plugin2.0b5 as 8.0p2Plugin1, Dec 8th 97 ----
+
+12/8/97 (bug fix) Need to protect the newly accepted channel in an
+accept callback on a socket, otherwise the callback may close it and
+cause an error, which would cause the C code to attempt to close the
+now deleted channel. Bumping the refcount assures that the channel sticks
+around to be really closed in this case. (JL)
+
+12/8/97 (bug fix) Need to protect the channel in a fileevent so that it
+is not deleted before the fileevent handler returns. (CS, JL)
+
+12/18/97 (bug fix) In the opt argument parsing package: if the description 
+had only flags, the "too many arguments" case was not detected. The default
+value was not used for the special "args" ending argument. (DL)
+
+1/15/98 (improvement) Moved common part of initScript in common file.
+Moved windows specific initialization to init.tcl so you can initialize
+Tcl in windows without having to call Tcl_Init which is now only
+searching for init.tcl {back ported from 8.1}. (DL)
+
+---- Shipped as part of the plugin as 8.0p2Plugin2, Jan 15th 98 ----
+
+5/27/98 (bug fix) Windows socket driver did not notice new data arriving
+on nonblocking sockets until the event loop was entered. (SS)
+
+5/27/98 (bug fix) Windows socket driver used FIONREAD, which is not
+supported correctly by WinSock. (SS)
+
+6/9/98 (bug fix) Generic channel code failed to report readable file
+events on buffered data that was left behind by a gets or read that
+did not consume all available data. (SS)
+
+6/18/98 (bug fix) Compilation of loop expressions was too aggressive
+and incorrectly inlined non-literal expressions. (SS)
+
+6/18/98 (bug fix) "info var" and "info locals" incorrectly reported
+the existence of compiler temporary variables. (SS)
+
+6/18/98 (bug fix) Dictionary sorting used signed character
+comparisons. (SS)
+
+6/18/98 (bug fix) Compile procs corrupted the exception stack in some
+cases. (SS)
+
+6/18/98 (bug fix) Array set had erratic behavior when initializing a
+variable from an empty value list. (SS)
+
+6/18/98 (bug fix) The Windows registry package had a bad bounds check
+that could lead to a crash. (SS)
+
+6/18/98 (bug fix) The foreach compile proc did not correctly handle
+non-local variable references. (SS)
+
+6/25/98 (new features) Added name resolution hooks to support [incr Tcl].
+There are new internal Tcl_*Resolver* APIs to add, query and remove the hooks. 
+With this changes it should be possible to dynamically load [incr Tcl]
+as an extension. (MM)
+
+7/1/97 (bug fix) The commands "info args, body, default, procs" did
+not correctly handle imported procedures. (RJ)
+
+7/6/98 (improvement) pkg_mkIndex now implements the "package require"
+command.  This makes it possible to create index files for packages
+that require another package and then execute code from that package in
+their file. Previously, this would throw an error because the required
+package had not been loaded.  The -nopkgrequied flag is provided to
+revert back to the old functionality. (EMS)
+
+7/6/98 (improvement) back-ported the -direct flag from 8.1 into
+pkg_mkIndex.  This results in pkgIndex.tcl files that contain direct
+source or load commands instead of tclPkgSetup commands. (EMS)
+
+7/6/98 (improvement) made changes to the AuxData items structures to support
+storage of compiled scripts on disk. Also some related minor changes in
+the compilation and execution engine. (EMS)
+
+6/4/98 (enhancement) Added new internal routines to support inserting
+and deleting from the stat, access, and open-file-channel mechanisms.
+TclAccessInsertProc, TclStatInsertProc, & TclOpenFileChannelInsertProc
+insert pointers to such routines; TclAccessDeleteProc, TclStatDeleteProc,
+& TclOpenFileChannelDeleteProc delete pointers to such routines.  See
+the file generic/tclIOUtils.c for more details. (SKS)
+ 
+7/1/98 (enhancement) Added a new internal C variable
+tclPreInitScript.  This is a pointer to a string that may hold an
+initialization script; If this pointer is non-NULL it is evaluated in
+Tcl_Init() prior to the built-in initialization script defined in the
+file generic/tclInitScript.h.  (SKS)
+
+7/6/98 (bug fix) Removed dead code in PlatformInitExitHandler so that
+the TCL_LIBRARY value can be safely patched in binaries. (BW)
+
+7/24/98 (enhancement) Incorporated a new version of auto_mkindex that
+can support the [incr Tcl] class structures.  This version will index
+all procedures in a source file, not just those where "proc" starts
+at the beginning of the line.  If you want the old behavior, use the
+auto_mkindex_old procedure. (MM)
+
+7/24/98 (feature change) Changed the Windows registry key to be
+HKEY_LOCAL_MACHINE\Software\Scriptics\Tcl\8.0, and to store the path
+in the default value instead of "Root".  Also, this key can be
+specified at compile time in case Tcl is being used in a different
+context where it needs an alternate library path from the standard Tcl
+installation. (SS)
+
+7/24/98 (feature change) Changed the search order for init.tcl.  The
+tcl_library variable can now be set before calling Tcl_Init to avoid
+doing any searches.  If it isn't set, then Tcl checks
+env(TCL_LIBRARY), the static value set at compile time, an install
+directory relative to the executable, a source directory relative to
+the executable, and a tcl directory relative to the source heirarchy
+containing the executable.  See the comment at the top of
+generic/tclInitScript.h for more details. (SS)
+
+7/27/98 (config change) Changed the use of the DBGX flag in configure.in
+and the makefile to be TCL_DBGX.  Users of tclConfig.sh may need to pass
+this through their configure files with AC_SUBST. (BW)
+
+729/98 (bug fix) Changed [info body] to return a copy of the body of a
+compiled procedure instead of the body itself, to avoid invalidation
+of the internal rep and loss of the byte-codes. (EMS)
+
+8/5/98 (bug fix) The platform init code could walk off the end of a
+buffer when reading the PkgPath registry value on Windows. (SS)
+
+8/5/98 (Windows makefile change) Introduced a set of macros to deal with
+exporting symbols when compiling DLLS on Windows. See win/README for
+details. (EMS)
+
+8/5/98 (addendum) Added a second Windows registry key under
+HKEY_LOCAL_MACHINE\Software\Scriptics\Tcl\8.0, named "pkgPath".
+This is a multi-string value used to initialize the tcl_pkgPath
+variable. This is required if extension DLLs are in architecture specific
+subdirectories. (SS)
+
+8/6/98 (new feature) Added tcl_findLibrary to init.tcl for use by
+extensions, including Tk.  This searches in a canonical way for
+an extensions library directory and initialization file. (BW)
+
+8/10/98 (bug fix) Imported commands used to get lost if the target
+of the import was redefined.  Tcl_CreateCommand and Tcl_CreateObjCommand
+were updated to restore import links. (Note that if you rename a command,
+the import links move to the new name, and if you delete a command then
+the import links get lost. These semantics have not changed.) (MC)
+
+-------- Released 8.0.3 to the Tcl Consortium CD-ROM project, 8/10/98 ------
+
+9/3/98 (bug fix) Tcl_Realloc was failing under Windows because the
+GlobalReAlloc API was not correctly re-allocating blocks that were
+32k+.  The fix was to use newer Win32 APIs (HeapAlloc, HeapFree, and
+HeapReAlloc.) (BS)
+
+10/5/98 (bug fix) Fixed bug in pkg_mkIndex that caused some files that do
+a "package require" of packages in the Tcl libraries to give a warning like
+	warning: "xx.tcl" provides more than one package ({xx 2.0} {yy 0.3})
+and generate a broken pkgIndex.tcl file. (EMS)
+
+10/5/98 (bug fix) Pkg_mkIndex was not doing a case-insensitive comparison
+of extensions to determine whether to load or source a file. Thus, under
+Windows, MYDLLNAME.DLL was sourced, and mydllname.dll loaded. (EMS)
+
+10/5/98 (new feature) Created a new Tcl_Obj type, "procbody". This object's
+internal representation holds a pointer to a Proc structure. Extended
+TclCreateProc to take both strings and "procbody". (EMS)
+
+10/13/98 (bug fix) The "info complete" command can now handle strings
+with NULLs embedded.  Thanks to colin@field.medicine.adelaide.edu.au 
+for providing this fix. (RJ)
+
+10/13/98 (bug fix) The "lsort -dictionary" command did not properly
+handle some numbers starting with 0.  Thanks to Richard Hipp
+<drh@acm.org> for submitting the fix to Scriptics. (RJ)
+
+10/13/98 (bug fix) The function Tcl_SetListObj was creating an invalid
+Tcl_Obj if the list had zero elements (despite what the comments said
+it would do).  Thanks to Sebastian Wangnick for reporting the
+problem. (RJ)
+
+10/20/98 (new feature) Added tcl_platform(debug) element to the
+tcl_platform array on Windows platform.  The existence of the debug
+element of the tcl_platform array indicates that the particular Tcl
+shell has been compiled with debug information.  Using
+"info exists tcl_platform(debug)" a Tcl script can direct the
+interpreter to load debug versions of DLLs with the load
+command. (SKS)
+
+10/20/98 (feature change) The Makefile and configure scripts have been
+changed for IRIX to build n32 binaries instead of the old 32 abi
+format.  If you have extensions built with the o32 abi's you will need
+to update them to n32 for them to work with Tcl.  (RJ)
+*** POTENTIAL INCOMPATIBILITY ***
+
+10/23/98 (bug fix) tcl_findLibrary had a stray ] in one of the
+pathnames it searched for the initialization script.  tclInitScript.h
+was incorrectly adding the parent of tcl_library to tcl_pkgPath.  This
+logic was moved into init.tcl, and the initialization of auto_path was
+documented.  Thanks to Donald Porter and Tom Silva for related
+patches. (BW)
+
+10/29/98 (bug fix) Fixed Tcl_NotifyChannel to use Tcl_Preserve instead
+of Tcl_RegisterChannel so that 1) unregistered channels do not get
+closed after their first fileevent, and 2) errors that occur during
+close in a fileevent script are actually reflected by the close
+command. (BW)
+
+10/30/98 (bug fix) Overhaul of pkg_mkIndex to deal with transitive
+package requires and packages split among scripts and binary files.
+Also fixed ommision of global for errorInfo in tcl_findLibrary. (BW)
+
+11/08/98 (bug fix) Fixed the resource command to always detect
+the case where a file is opened a second time with the same
+permissions.  IM claims that this will always cause the same
+FileRef to be returned, but in MacOS 8.1+, this is no longer the case,
+so we have to test for this explicitly. (JI)
+
+11/10/98 (feature change) When compiling with Metrowerk's MSL, use the
+exit function from MSL rather than ExitToShell.  This allows MSL to
+clean up its temporary files. Thanks to Vince Darley for this
+improvement. (JI)
+
+----------------- Released 8.0.4, 11/19/98 -------------------------
+
+11/20/98 (bug fix) Handle possible NULL return in TclGetStdFiles. (RJ)
+
+11/20/98 (bug fix) The dltests would not build on SGI.  They reported
+that you could not mix n32 with 032 binaries.  The configure script
+has been modified to get the EXTRA_CFLAGS from the tcl configure
+script.  [Bug id: 840] (RJ)
+
+12/3/98 (bug fix) Windows NT creates sockets so they are inheritable
+by default.  Fixed socket code so it turns off this bit right after
+creation so sockets aren't kept open by exec'ed processes. [Bug: 892]
+Thanks to Kevin Kenny for this fix.  (SS)
+
+1/11/98 (bug fix)  On HP, "info sharedlibextension" was returning 
+empty string on static apps.  It now always returns ".sl".  (RJ)
+
+1/28/99 (configure change) Now support -pipe option on gcc.  (RJ)
+
+2/2/99 (bug fix) Fixed initialization problem on Windows where no
+searching for init.tcl would be performed if the registry keys were
+missing.  (stanton)
+
+2/2/99 (bug fix) Added support for HKEY_PERFORMANCE_DATA and
+HKEY_DYN_DATA keys in the "registry" command. (stanton)
+
+2/2/99 (bug fix) ENOTSUP and EOPNOTSUPP clashed on some Linux
+variants. (stanton)
+
+2/2/99 (enhancement) The "open" command has been changed to use the
+object interfaces. (stanton)
+
+2/2/99 (bug fix) In some cases Tcl would crash due to an overflow of
+the exception stack resulting from a missing byte code in some
+expressions. (stanton)
+
+2/2/99 (bug fix) Changed configure so Linux and IRIX shared libraries
+are linked with the system libraries. (stanton)
+
+2/2/99 (bug fix) Added support for BSDI 4.x (BSD/OS-4*) to the
+configure script. (stanton)
+
+2/2/99 (bug fix) Fixed bug where upvar could resurrect a namespace
+variable after the namespace had been deleted. (stanton)
+
+2/2/99 (bug fix) In some cases when creating variables, the
+interpreter result was being modified even if the TCL_LEAVE_ERR_MSG
+flag was set. (stanton)
+
+2/2/99 (bug fix & new feature) Changed the socket drivers to properly
+handle failures during an async socket connection.  Added a new
+fconfigure option "-error" to retrieve the failure message.  See the
+socket.n manual entry for details. (stanton)
+
+2/2/99 (bug fix) Deleting a renamed interp alias could result in a
+panic. (stanton)
+
+2/2/99 (feature change/bug fix) Changed the behavior of "file
+extension" so that it splits at the last period.  Now the extension of
+a file like "foo..o" is ".o" instead of "..o" as in previous versions. 
+*** POTENTIAL INCOMPATIBILITY ***
+
+----------------- Released 8.0.5, 3/9/99 -------------------------
+
+======== Changes for 8.0 go above this line ========
+======== Changes for 8.1 go below this line ========
+
+6/18/97 (new feature) Tcl now supports international character sets:
+    - All C APIs now accept UTF-8 strings instead of iso8859-1 strings,
+      wherever you see "char *", unless explicitly noted otherwise.
+    - All Tcl strings represented in UTF-8, which is a convenient
+      multi-byte encoding of Unicode.  Variable names, procedure names,
+      and all other values in Tcl may include arbitrary Unicode characters.
+      For example, the Tcl command "string length" returns how many
+      Unicode characters are in the argument string.
+    - For Java compatibility, embedded null bytes in C strings are
+      represented as \xC080 in UTF-8 strings, but the null byte at the end
+      of a UTF-8 string remains \0.  Thus Tcl strings once again do not
+      contain null bytes, except for termination bytes.
+    - For Java compatibility, "\uXXXX" is used in Tcl to enter a Unicode
+      character.  "\u0000" through "\uffff" are acceptable Unicode 
+      characters.  
+    - "\xXX" is used to enter a small Unicode character (between 0 and 255)
+      in Tcl.
+    - Tcl automatically translates between UTF-8 and the normal encoding for
+      the platform during interactions with the system.
+    - The fconfigure command now supports a -encoding option for specifying
+      the encoding of an open file or socket.  Tcl will automatically
+      translate between the specified encoding and UTF-8 during I/O. 
+      See the directory library/encoding to find out what encodings are
+      supported (eventually there will be an "encoding" command that
+      makes this information more accessible).
+    - There are several new C APIs that support UTF-8 and various encodings.
+      See Utf.3 for procedures that translate between Unicode and UTF-8
+      and manipulate UTF-8 strings. See Encoding.3 for procedures that
+      create new encodings and translate between encodings.  See
+      ToUpper.3 for procedures that perform case conversions on UTF-8
+      strings.
+
+9/18/97 (enhancement) Literal objects are now shared by the ByteCode
+structures created when compiled different scripts. This saves up to 45%
+of the total memory needed for all literals. (BL)
+
+9/24/97 (bug fixes) Fixed Tcl_ParseCommand parsing of backslash-newline
+sequences at start of command words. Suppressed Tcl_EvalDirect error logging
+if non-TCL_OK result wasn't an error. (BL)
+
+10/17/97 (feature enhancement) "~username" now refers to the users' home
+directory on Windows (previously always returned failure). (CCS)
+
+10/20/97 (implementation change) The Tcl parser has been completely rewritten
+to make it more modular.  It can now be used to parse a script without actually
+executing it.  The APIs for the new parser are not correctly exported, but
+they will eventually be exported and augmented with Tcl commands so that
+Tcl scripts can parse other Tcl scripts. (JO)
+
+10/21/97 (API change) Added "flags" argument to Tcl_EvalObj, removed
+Tcl_GlobalEvalObj procedure.  Added new procedures Tcl_Eval2 and
+Tcl_EvalObjv. (JO)
+*** POTENTIAL INCOMPATIBILITY ***
+
+10/22/97 (API change) Renamed Tcl_ObjSetVar2 and Tcl_ObjGetVar2 to
+Tcl_SetObjVar2 and Tcl_GetObjVar2 (for consistency with other C APIs)
+and changed the name arguments to be strings instead of objects.  (JO)
+*** POTENTIAL INCOMPATIBILITY ***
+
+10/27/97 (enhancement) Bytecode compiler rewritten to use the new Tcl
+parser. (BL)
+
+11/3/97 (New routines) Added Tcl_AppendObjToObj, which appends the
+string rep of one Tcl_Obj to another. Added Tcl_GetIndexFromObjStruct,
+which is similar to Tcl_GetIndexFromObj, except that you can give an
+offset between strings. This allows Tcl_GetIndexFromObjStruct to be
+called with a table of records which have strings in them. (SRP)
+
+12/4/97 (enhancement) New Tcl expression parser added. Added new procedure
+Tcl_ParseExpr and new token types TCL_TOKEN_SUB_EXPR and
+TCL_TOKEN_OPERATOR. Expression compiler is reimplemented to use this
+parser. (BL)
+
+12/9/97 (bug fix) Tcl_EvalObj() increments/decrements the refcount of the
+script object to prevent the object from deleting itself while in the
+middle of being evaluated. (CCS)
+
+12/9/97 (bug fix) Memory leak in Tcl_GetsObjCmd(). (CCS)
+
+12/11/97 (bug fix) Environment array leaked memory when compiled with
+Visual C++. (SS)
+
+12/11/97 (bug fix) File events and non-blocking I/O did not work on
+pipes under Windows.  Changed to use threads to achieve non-blocking
+behavior. (SS)
+
+12/18/97 (bug fixes) Fixed segfault in "namespace import"; importing a
+procedure that causes a cycle now returns an error. Modified "info procs",
+"info args", "info body", and "info default" to return information about
+imported procedures as well as procedures defined in a namespace. (BL)
+
+12/19/97 (enhancement) Added new Tcl_GetString() procedure that can be used
+in place of Tcl_GetStringFromObj() if the string representation's length
+isn't needed. (BL)
+
+12/18/97 (bug fix) In the opt argument parsing package: if the description 
+had only flags, the "too many arguments" case was not detected. The default
+value was not used for the special "args" ending argument. (DL)
+
+1/7/98 (clean up) Moved everything not absolutly necessary out of init.tcl
+procs now in auto.tcl and package.tcl can be autoloaded if needed. (DL)
+
+1/7/98 (enhancement) tcltest made at install time will search for it's
+init.tcl where it is, even when using virtual path compilation. (DL)
+
+1/8/98 (os bug workaround) when needed, using a replacement for memcmp so 
+string compare "char with high bit set" "char w/o high bit set" returns
+the expected value on all platforms. (DL)
+
+1/8/98 (unix portability/configure) building from .../unix/targetName/ 
+subdirectories and simply using "../configure" should now work fine. (DL)
+
+1/14/98 (enhancement) Added new regular expression package that
+supports AREs, EREs, and BREs.  The new package includes new escape
+characters, meta-syntax, and character classes inside brackets.
+Regexps involving backslashes may behave differently.  (MH)
+*** POTENTIAL INCOMPATIBILITY ***
+
+1/16/98 (os workaround) Under windows, "file volume" was causing chatter
+and/or several seconds of hanging when querying empty floppy drives.
+Changed implementation to call an empirically-derived function that doesn't
+cause this. (CCS)
+
+1/16/98 (enhancement) Converted regular expressions to a Tcl_Obj type so
+their compiled form gets cached automatically.  Reduced NSUBEXP from 100
+to 20. (BW)
+
+1/16/98 (documentation) Change unclear documentation and comments for
+functions like Tcl_TranslateFileName() and Tcl_ExternalToUtfDString().  Now
+it explicitly says they take an uninitialized or free DString.  A DString
+that is "empty" or "not holding anything" could have been interpreted as one
+currently with a zero length, but with a large dynamically allocated buffer.
+(CCS)
+
+----------------- Released 8.1a1, 1/22/98 -----------------------
+
+1/28/98 (new feature) Added a "-direct" optional flag to pkg_mkIndex
+to generate direct loading package indexes (such those you need
+if you use namespaces and plan on using namespace import just after
+package require). pkg_mkIndex still has limitations regarding
+package dependencies but errors are now ignored and with -direct, correct
+package indexes can be generated even if there are dependencies as long 
+as the "package provide" are done early enough in the files. (DL)
+
+1/28/98 (enhancement) Performance tuning of regexp and regsub. (CCS)
+
+1/28/98 (bug fix) regexp and regsub with "-indices" returned the byte-offsets
+of the characters in the UTF-8 representation, not the character offsets
+themselves. (CCS)
+
+1/28/98 (bug fix) "clock format 0 -format %Z -gmt 1" would return the local
+timezone string instead of "GMT" on Solaris and Windows.
+
+1/28/98 (bug fix) Restore tty settings when closing serial device on Unix.
+This is good behavior when closing real serial devices, essential when
+closing the pseudo-device /dev/tty because the user's terminal settings
+would be left useless, in raw mode, when tcl quit. (CCS)
+
+1/28/98 (bug fix) Tcl_OpenCommandChannel() was modifying the contents of the
+argv array passed to it, causing problems for any caller that wanted to
+continue to use the argv array after calling Tcl_OpenCommandChannel(). (CCS)
+
+2/1/98 (bug fix) More bugs with %Z in format string argument to strftime():
+1. Borland always returned empty string.
+2. MSVC always returned the timezone string for the current time, not the
+   timezone string for the specified time.  
+3. With MSVC, "clock format 0 -format %Z -gmt 1" would return "GMT" the first
+   time it was called, but would return the current timezone string on all
+   subsequent calls. (CCS)
+
+2/1/98 (bug fix) "file stat" was broken on Windows.
+1. "file stat" of a root directory (local or network) or a relative path that
+   resolved to a root directory (c:. when in pwd was c:/) was returning error.
+2. "file stat" on a regular file (S_IFREG), the st_mode was sign extended to
+   a negative int if the platform-dependant type "mode_t" was declared as a
+   short instead of an unsigned short.
+3. "file stat" of a network directory, the st_dev was incorrectly reported
+   as the id of the last accessed local drive rather than the id of the
+   network drive. (CCS)
+
+2/1/98 (bug fix) "file attributes" of a relative path that resolved to a
+root directory was returning error. (CCS)
+
+2/1/98 (bug fix) Change error message when "file attribute" could not
+determine the attributes for a file.  Previously it would return different
+error messages on Unix vs.  Windows vs. Mac. (CCS)
+
+2/4/98 (bug fixes) Fixed several instances of bugs where the parser/compiler 
+would reach outside the range of allocated memory. Improved the array
+lookup algorithm in set compilation. (DL)
+
+2/5/98 (change) The TCL_PARSE_PART1 flag for Set/Get(Obj)Var2 C APIs is now
+deprecated and ignored. The part1 is always parsed when the part2 argument
+is NULL. This is to avoid a pattern of errors for extension writers converting
+from string based Tcl_SetVar() to new Tcl_SetObjVar2() and who could easily
+forget to provide the flag and thus get code working for normal variables 
+but not for array elements. The performance hit is minimal. A side effect
+of that change is that is is no longer possible to create scalar variables
+that can't be accessed by tcl scripts because of their invalid name 
+(ending with parenthesis). Likewise it is also parsed and checked to 
+ensure that you don't create array elements of array whose name is a valid 
+array element because they would not be accessible from scripts anyway. 
+Note: There is still duplicate array elements parsing code. (DL)
+*** POTENTIAL INCOMPATIBILITY ***
+
+2/11/98 (bug fix) Sharing objects between interps, such as by "interp
+eval" or "send" could cause a crash later when dereferencing an interp
+that had been deleted, given code such as:
+	set a {set x y}
+	interp create foo
+	interp eval foo $a
+	interp delete foo
+	unset a
+Interp "foo" was gone, but "a" had a internal rep consisting of bytecodes
+containing a dangling pointer to "foo".  Unsetting "a" would attempt to
+return resources back to "foo", causing a crash as random memory was
+accessed.  The lesson is that that if an object's internal rep depends on
+an interp (or any other data structure) it must preserve that data in
+some fashion. (CCS)
+
+2/11/98 (enhancement) The "interp" command was returning inconsistent error
+messages when the specified slave interp could not be found. (CCS)
+
+2/11/98 (bug fix) Result codes like TCL_BREAK and TCL_CONTINUE were not
+propagating through the master/slave interp boundaries, such as "interp
+eval" and "interp alias".  TCL_OK, TCL_ERROR, and non-standard codes like
+teh integer 57 work.  There is still a question as to whether TCL_RETURN
+can/should propagate. (CCS)
+
+2/11/98 (bug fix) TclCompileScript() was derefering memory 1 byte before
+start of the string to compile, looking for ']'. (CCS,DL)
+
+2/11/98 (bug fix) Tcl_Eval2() was derefering memory 1 byte before start
+of the string to eval, looking for ']'. (CCS,DL)
+
+2/11/98 (bug fix) Compiling "set a(b" was running off end of string. (CCS,DL)
+
+2/11/98 (bug fix) Windows initialization code was dereferencing
+uninitialized memory if TCL_LIBRARY environment didn't exist. (CCS)
+
+2/11/98 (bug fix) Windows "registry" command was dereferencing
+uninitialized memory when constructing the $errorCode for a failed
+registry call. (CCS)
+
+2/11/98 (enhancement) Eliminate the TCL_USE_TIMEZONE_VAR definition from
+configure.in, because it was the same information as the already existing
+HAVE_TM_ZONE definition.  The lack of HAVE_TM_ZONE is used to work around a
+Solaris and Windows bug where "clock format [clock sec] -format %Z -gmt 1" 
+produces the local timezone string instead of "GMT". (CCS)
+
+2/11/98 (bug fix) Memleaks and dereferencing of uninitialized memory in
+regexp if an error occurred while compiling a regular expression. (CCS).
+
+2/18/98 (new feature) Added mutexes and thread local storage in order
+to make Tcl thread safe.  For testing purposes, there is a testthread
+command that creates a new thread and an interpreter inside it.  See
+thread.test for examples, but this script-level interface is not fixed.
+Each thread has its own notifier instance to manage its own events,
+and threads can post messages to each other's message queue.
+This uses pthreads on UNIX, and native thread support on other platforms.
+You enable this by configuring with --enable-threads.  Note that at
+this time *Tk* is still not thread safe. Special thanks to
+Richard Hipp: his earlier implementation inspired this work. (BW, SS, JI)
+
+2/18/98 (hidden feature change) The way the env() array is shared among
+interpreters changed.  Updates to env used to trigger write traces in
+other interpreters.  This undocumented feature is no longer implemented.
+Instead, variable tracing is used to keep the C-level environ array in sync
+with the Tcl-level env array. This required adding TCL_TRACE_ARRAY support
+to Tcl_TraceVar2 so that array names works properly. (BW)
+*** POTENTIAL INCOMPATIBILITY ***
+
+2/18/98 (enhancement) Conditional compilation for unix systems (e.g.,
+IRIX, SCO) that use f_bsize instead of st_blksize to determine disk block
+size. (CCS)
+
+2/23/98 (bug fix) Fixed the emulation of polling selects in the threaded
+version of the Unix notifier.  The bug was showing up on a multiprocessor
+as starvation of the notifier thread. (BW)
+
+----------------- Released 8.1a2, Feb 23 1998 -----------------------
+
+9/22/98 (bug fix) Changed the value of TCL_TRACE_ARRAY so it no longer
+conflicts with the deprecated TCL_PARSE_PART1 flag.  This should
+improve portability of C code. (stanton)
+
+10/6/98 (bug fix) The compile procedure for "if" incorrectly attempted
+to match against the literal string "if", resulting in a stack
+overflow when "::if" was compiled.  It also would incorrectly accept
+"if" instead of "elsif" in later clauses.  (stanton)
+
+10/15/98 (new feature) Added a "totitle" subcommand to the "string"
+command to convert strings to capitalize the first character of a string
+and lowercase all of the other characters. (stanton)
+
+10/15/98 (bug fix) Changed regexp and string commands to properly
+handle case folding according to the Unicode character
+tables. (stanton)
+
+10/21/98 (new feature) Added an "encoding" command to facilitate
+translations of strings between different character encodings.  See
+the encoding.n manual entry for more details. (stanton)
+
+11/3/98 (bug fix) The regular expression character classification
+syntax now includes Unicode characters in the supported
+classes. (stanton)
+
+11/6/98 (bug fix) Variable traces were causing crashes when upvar
+variables went out of scope. [Bug: 796] (stanton)
+
+11/9/98 (bug fix) "format" now correctly handles multibyte characters
+in %s format strings. (stanton)
+
+11/10/98 (new feature) "regexp" now accepts three new switches
+("-line", "-lineanchor", and "-linestop") that control how regular
+expressions treat line breaks. See the regexp manual entry for more
+details. (stanton)
+
+11/17/98 (bug fix) "scan" now correctly handles Unicode
+characters. (stanton)
+
+11/17/98 (new feature) "scan" now supports XPG3 position specifiers
+and the "%n" conversion character.  See the "scan" manual entry for
+more details. (stanton)
+
+11/17/98 (bug fix) The Tcl memory allocator now returns 8-byte aligned
+chunks of memory which improves performance on Windows and avoids
+crashes on other platforms. [Bug: 834] (stanton)
+
+11/23/98 (bug fix) Applied various regular expression performance bug
+fixes supplied by Henry Spencer. (stanton)
+
+11/30/98 (bug fix) Fixed various thread related race conditions. [Bug:
+880 & 607] (stanton)
+
+11/30/98 (bug fix) Fixed a number of memory overflow and leak
+bugs. [Bug: 584] (stanton)
+
+12/1/98 (new feaure) Added support for Korean encodings. (stanton)
+
+12/1/98 (feature change) Changed the Tcl_EvalObjv interface to remove
+the string and length arguments.
+*** POTENTIAL INCOMPATIBILITY with previous alpha releases ***
+
+12/2/98 (bug fix) Fixed various bugs related to line feed
+translation. [Bug: 887] (stanton)
+
+12/4/98 (new feature) Added a message catalog facility to help with
+localizing Tcl scripts.  Thanks to Mark Harrison for contributing the
+initial implementation of the "msgcat" package. (stanton)
+
+12/7/98 (bug fix) The memory allocator was failing to update the
+block list for large memory blocks that were reallocated into a
+different address. [Bug: 933] (stanton)
+
+----------------- Released 8.1b1, Dec 10 1998 -----------------------
+
+12/22/98 (performance improvement) Improved the -command option of the
+lsort command to better use the object system for improved
+performance (about 5x speed up).  Thanks to Syd Polk for suppling the
+patch. [RFE: 726] (rjohnson)
+
+2/10/99 (bug fix) Restored the Tcl_ObjSetVar2/Tcl_ObjGetVar2
+interfaces from 8.0 and renamed the Tcl_GetObjVar2/Tcl_SetObjVar2
+interfaces to Tcl_GetVar2Ex and Tcl_SetVar2Ex.  This should provide
+better compatibility with 8.0. (stanton)
+*** POTENTIAL INCOMPATIBILITY with previous alpha/beta releases ***
+
+2/10/99 (bug fix) Made the eval interfaces compatible with 8.0 by
+renaming Tcl_EvalObj to Tcl_EvalObjEx, renaming Tcl_Eval2 to
+Tcl_EvalEx and restoring Tcl_EvalObj and Tcl_GlobalEvalObj interfaces
+so they match Tcl 8.0. (stanton)
+*** POTENTIAL INCOMPATIBILITY with previous alpha/beta releases ***
+
+2/25/99 (bug fix/new feature) On Windows, the channel drivers for
+consoles and serial ports now completely support file events. (redman)
+
+3/5/99 (bug fix) Integrated patches to fix various configure problems
+that affected HP-UX-11, 64-bit IRIX, Linux, and Solaris. (stanton)
+
+3/9/99 (bug fix) Integrated various AIX related patches to improve
+support for shared libraries. (stanton)
+
+3/9/99 (new feature) Added tcl_platform(user) to provide a portable
+way to get the name of the current user. (welch)
+
+3/9/99 (new feature) Integrated the stub library mechanism contributed
+by Jan Nijtmans, Paul Duffin, and Jean-Claude Wippler.  This feature
+should make it possible to write extensions that support multiple
+versions of Tcl simultaneously.  It also makes it possible to
+dynamically load extensions into statically linked interpreters.  This
+patch includes the following changes:
+      -	Added a Tcl_InitStubs() interface
+      -	Added Tcl_PkgProvideEx, Tcl_PkgRequireEx, Tcl_PkgPresentEx,
+      	and Tcl_PkgPresent.
+      - Added va_list versions of all VARARGS functions so they can be
+	invoked from wrapper functions.
+See the manual for more information. (stanton)
+
+
+3/10/99 (feature change) Replaced Tcl_AlertNotifier with
+Tcl_ThreadAlert since the Tcl_AlertNotifier function relied on passing
+internal data structures. (stanton)
+*** POTENTIAL INCOMPATIBILITY with previous alpha/beta releases ***
+
+3/10/99 (new feature) Added a Tcl_GetVersion API to make it easier to
+check the Tcl version and patch level from C. (redman)
+
+3/14/99 (feature change) Tried to unify the TclpInitLibrary path
+routines to look in similar places from Windows to UNIX.  The new
+library search path is: TCL_LIBRARY, TCL_LIBRARY/../tcl8.1, relative
+to DLL (Windows Only) relative to installed executable, relative to
+develop executable, and relative to compiled-in in location (UNIX
+Only.)  This fix included:
+    - Defining a TclpFindExecutable
+    - Moving Tcl_FindExecutable to a common area in tclEncoding.c
+    - Modifying the TclpInitLibraryPath routines.
+(surles)
+
+3/14/99 (feature change) Added hooks for TclPro Wrapper to initialize
+the location of the encoding files and libraries.  This fix included:
+    - Adding the TclSetPerInitScript routine.
+    - Modifying the Tcl_Init routines to evaluate the non-NULL
+      pre-init script.
+    - Adding the Tcl_SetdefaultEncodingDir and Tcl_GetDefaultEncodingDir
+      routines.
+    - Modifying the TclpInitLibrary routines to append the default
+      encoding dir.
+(surles)
+
+3/14/99 (feature change) Test suite now uses "test" namespace to
+define the test procedure and other auxiliary procedures as well as
+global variables.
+    - Global array testConfige is now called ::test::testConfig.
+    - Global variable VERBOSE is now called ::test::verbose, and
+      ::test::verbose no longer works with numerical values.  We've
+      switched to a bitwise character string.  You can set
+      ::test::verbose by using the -verbose option on the Tcl command
+      line.
+    - Global variable TESTS is now called ::test::matchingTests, and
+      can be set on the Tcl command line via the -match option.
+    - There is now a ::test::skipTests variable (works similarly to
+      ::test::matchTests) that can be set on the Tcl command line via
+      the -match option.
+    - The test suite can now be run in any working directory.  When
+      you run "make test", the working directory is nolonger switched
+      to ../tests.
+(hirschl)
+*** POTENTIAL INCOMPATIBILITY ***
+
+--------------- Released 8.1b2, March 16, 1999 ----------------------
+
+3/18/99 (bug fix) Fixed missing/incorrect characters in shift-jis table
+(stanton)
+
+3/18/99 (feature change) The glob command ignores the
+FS_CASE_IS_PRESERVED bit on file systesm and always returns
+exactly what it gets from the system. (stanton)
+*** POTENTIAL INCOMPATIBILITY ***
+
+3/19/99 (new feature) Added support for --enable-64bit.  For now,
+this is only supported on Solaris 7 64bit (SunOS 5.7) using the Sun
+compiler. (redman)
+
+3/23/99 (bug fix) Fixed fileevents and gets on Windows consoles and
+serial devices so that non-blocking channels do not block on partial
+input lines.  (redman)
+
+3/23/99 (bug fix) Added a new Tcl_ServiceModeHook interface.
+This is used on Windows to avoid the various problems that people
+have been seeing where the system hangs when tclsh is running
+outside of the event loop. As part of this, renamed
+TclpAlertNotifier back to Tcl_AlertNotifier since it is public.
+(stanton)
+
+3/23/99 (feature change) Test suite now uses "tcltest" namespace to
+define the test procedure and other auxiliary procedures as well as
+global variables.  The previously chosen "test" namespace was thought
+to be too generic and likely to create conflits.
+(hirschl)
+*** POTENTIAL INCOMPATIBILITY ***
+
+3/24/99 (bug fix) Make sockets thread safe on Windows.
+(redman)
+
+3/24/99 (bug fix) Fix cases where expr would incorrect return
+a floating point value instead of an integer. (stanton)
+
+3/25/99 (bug fix) Added ASCII to big5 and gb2312 encodings.
+(stanton)
+
+3/25/99 (feature change) Changed so aliases are invoked at current
+scope in the target interpreter instead of at the global scope.  This
+was an incompatibility introduced in 8.1 that is being removed.
+(stanton)
+*** POTENTIAL INCOMPATIBILITY with previous beta releases ***
+
+3/26/99 (feature change) --nameble-shared is now the default and build
+Tcl as a shared library; specify --disable-shared to build a static Tcl
+library and shell.
+*** POTENTIAL INCOMPATIBILITY ***
+
+3/29/99 (bug fix)  Removed the stub functions and changed the stub
+macros to just use the name without params. Pass &tclStubs into the
+interp (don't use tclStubsPtr because of collisions with the stubs on
+Solaris). (redman)
+
+3/30/99 (bug fix) Loadable modules are now unloaded at the last
+possible moment during Tcl_Finalize to fix various exit-time crashes.
+(welch)
+
+3/30/99 (bug fix) Tcl no longer calls setlocale().  It looks at
+env(LANG) and env(LC_TYPE) instead.  (stanton)
+
+4/1/99 (bug fix) Fixed the Ultrix multiple symbol definition problem.
+Now, even Tcl includes a copy of the Tcl stub library. (redman)
+
+4/1/99 (bug fix) Internationalized the registry package.
+
+4/1/99 (bug fix) Changed the implemenation of Tcl_ConditionWait and
+Tcl_ConditionNotify on Windows.  The new algorithm eliminates a race
+condition and was suggested by Jim Davidson. (welch)
+
+4/2/99 (new apis)  Made various Unicode utility functions public.
+Tcl_UtfToUniCharDString, Tcl_UniCharToUtfDString, Tcl_UniCharLen,
+Tcl_UniCharNcmp, Tcl_UniCharIsAlnum, Tcl_UniCharIsAlpha,
+Tcl_UniCharIsDigit, Tcl_UniCharIsLower, Tcl_UniCharIsSpace,
+Tcl_UniCharIsUpper, Tcl_UniCharIsWordChar, Tcl_WinUtfToTChar,
+Tcl_WinTCharToUtf (stanton)
+
+4/2/99 (feature change) Add new DDE package and removed the Tk
+send command from the Windows version.  Changed DDE-based send
+code into "dde eval" command.  The DDE package can be loaded
+into tclsh, not just wish.  Windows only. (redman)
+
+4/5/99 (bug fix) Changed safe-tcl so that the encoding command
+is an alias that masks out the "encoding system" subcommand.
+(redman)
+
+4/5/99 (bug fix) Configure patches to improve support for
+OS/390 and BSD/OS 4.*. (stanton)
+
+4/5/99 (bug fix) Fixed crash in the clock command that occurred
+with negative time values in timezones east of GMT. (stanton)
+
+4/6/99 (bug fix) Moved the "array set" C level code into a common
+routine (TclArraySet).  The TclSetupEnv routine now uses this API to
+create an env array w/ no elements.  This fixes the bug caused when
+every environ varaible is removed, and the Tcl env variable is
+synched.  If no environ vars existed, the Tcl env var would never be
+created. (surles)
+
+4/6/99 (bug fix) Made the Env module I18N compliant. (surles)
+
+4/6/99 (bug fix) Changed the FindVariable routine to TclpFindVariable,
+that now does a case insensitive string comparison on Windows, and not
+on UNIX. (surles)
+
+--------------- Released 8.1b3, April 6, 1999 ----------------------
+
+4/9/99 (bug fix)  Fixed notifier deadlock situation when the pipe used
+to talk back notifier thread is filled with data.  Found as a result of the
+focus.test for Tk hanging. (redman)
+
+4/13/99 (bug fix) Fixed bug where socket -async combined with
+fileevent for writing did not work under Windows NT. (redman)
+
+4/13/99 (encoding fix) Restored the double byte definition of GB2312
+and added the EUC-CN encoding.  EUC-CN is a variant of GB2312 that
+shifts the characters into bytes with the high bit set and includes
+ASCII as a subset. (stanton)
+
+4/27/99 (bug fix) Added 'extern "C" {}' block around the stub table
+pointer declaration so the stub library can be used from C++. (stanton)
+
+--------------- Released 8.1 final, April 29, 1999 ----------------------
+
+4/22/99 (bug fix) Changed Windows NT socket implementation to avoid
+creating a communication window.  This avoids the problem where the
+system hangs waiting for tclsh to respond to a system-wide synchronous
+broadcast (e.g. if you change system colors). (redman)
+
+4/22/99 (bug fix) Added call to TclWinInit from TclpInitPlatform when
+building a static library since DllMain will not be invoked.  This
+could break old code that explicitly called TclWinInit, but should be
+simpler in the long run. (stanton)
+*** POTENTIAL INCOMPATIBILITY ***
+
+4/23/99 (bug fix) Added support for the koi8-r Cyrillic
+encoding. [Bug: 1771] (stanton)
+
+4/28/99 (bug fix) Changed internal Tcl_Obj usage to avoid freeing the
+internal representation after the string representation has been
+freed.  This makes it easier to debug extensions. (stanton)
+
+4/30/99 (bug fix) Fixed a memory leak in CommandComplete. (stanton)
+
+5/3/99 (bug fix) Fixed a bug where the Tcl_ObjType was not being set
+in a duplicated Tcl_Obj. [Bug: 1975, 2047] (stanton)
+
+5/3/99 (bug fix) Changed Tcl_ParseCommand to avoid modifying eval'ed
+strings that are already null terminated.  [Bug: 1793] (stanton)
+
+5/3/99 (new feature) Applied Jeff Hobbs's string patch which includes
+the following changes:
+    - added new subcommands: equal, repeat, map, is, replace 
+    - added -length option to "string compare|equal"
+    - added -nocase option to "string compare|equal|match"
+    - string and list indices can be an integer or end?-integer?.
+    - added optional first and last index args to string toupper, et al.
+See the string.n manual entry for more details about the new string
+features.  [Bug: 1845] (stanton)
+
+5/6/99 (new feature) Added Tcl_UtfNcmp and Tcl_UtfNcasecmp to make Utf
+string comparision easier. (stanton)
+
+5/7/99 (bug fix) Improved OS/390 support. [Bug: 1976, 1997] (stanton)
+
+5/12/99 (bug fix) Changed Windows initialization code to avoid using
+GetUserName system call in favor of the env(USERNAME) variable.  This
+provides a significant startup speed improvement. (stanton)
+
+5/12/99 (bug fix) Replaced the per-interpreter regexp cache with a
+per-thread cache.  Changed the Regexp object to take advantage of this
+extra cache.  Added a reference count to the TclRegexp type so regexps
+can be shared by multiple objects.  Removed the per-interp regexp cache
+from the interpreter.  Now regexps can be used with no need for an
+interpreter. This set of changes should provide significant speed
+improvements for many Tcl scripts.  [Bug: 1063] (stanton)
+
+5/14/99 (bug fix) Durining initialization on Unix, Tcl now extracts the
+encoding subfield from the LANG/LC_ALL environment variables in cases
+where the locale is not found in the built-in locale table.  It also
+attempts to initialize the locale subsystem so X11 is happy. [Bug: 1989]
+(stanton) 
+
+5/14/99 (bug fix) Applied the patch to fix 100-year and 400-year
+boundaries in leap year code, from Isaac Hollander.  [Bug: 2066] (redman)
+
+5/14/99 (bug fix) Fixed a crash caused by a failure to reset the result
+before evaluating the test expression in an uncompiled for
+statement. (stanton)
+
+5/18/99 (bug fix) Modified initialization code on Windows to avoid
+inherenting closed or invalid channels.  If the standard input is
+anything other than a console, file, serial port, or pipe, then we fall
+back to the standard Tk window console. (stanton)
+
+5/19/99 (bug fix) Added an extern "C" block around the entire tcl.h
+header file to avoid C++ linkage issues. (redman)
+
+5/19/99 (new feature) Applied Jeff Hobb's patch to add
+Tcl_StringCaseMatch to support case insensitive glob style matching and
+Tcl_UniCharIs* character classification functions. (stanton)
+
+5/20/99 (bug fix) Added the directory containing the executuble and the
+../lib directory relative to that to the auto_path variable. (redman)
+
+--------------- Released 8.1.1, May 25, 1999 ----------------------
+
+5/21/99 (bug fix) Fixed launching command.com on Win95/98, no longer
+hangs. [Bug: 2105] (redman)
+
+5/28/99 (bug fix) Fixed bug where dde calls were being passed an
+invalid dde handle. [Bug: 2124] (stanton)
+
+6/1/99  (bug fix) Small configure.in patches. [Bug: 2121] (stanton)
+
+6/1/99  (bug fix) Applied latest regular expression patches to fix an
+infinite loop bug and add support for testing whether a string could
+match with additional input. [Bug: 2117] (stanton)
+
+6/2/99  (bug fix) Fixed incorrect computation of relative ordering in
+Utf case-insensitive comparison. [Bug: 2135] (stanton)
+
+6/3/99  (bug fix) Fxied bug where string equal/compare -nocase
+reported wrong result on null strings. [Bug: 2138] (stanton)
+
+6/4/99  (new feature) Windows build now uses Cygwin tools plus GNU
+make and autoconf to build static/dynamic and debug/nodebug. (stanton)
+
+6/7/99  (new feature) Optimized string index, length, range, and
+append commands. Added a new Unicode object type. (hershey)
+
+6/8/99  (bug fix) Rolled back Windows socket driver to 8.1.0
+version. (stanton)
+
+6/9/99  (new feature) Added Tcl_RegExpMatchObj and Tcl_RegExpGetInfo
+to public Tcl API, these functions are needed by Expect.  Changed
+tools/genStubs.tcl to always write output in LF mode. (stanton)
+
+6/14/99 (new feature) Merged string and Unicode object types.  Added
+new public Tcl API functions:  Tcl_NewUnicodeObj, Tcl_SetUnicodeObj,
+Tcl_GetUnicode, Tcl_GetUniChar, Tcl_GetCharLength, Tcl_GetRange,
+Tcl_AppendUnicodeToObj. (hershey)
+
+6/16/99 (new feature) Changed to conform to TEA specification, added
+tcl.m4 and aclocal.m4 macro libraries for configure.  (wart)
+
+6/17/99 (new feature) Added new regexp interfaces: -expanded, -line,
+-linestop, and -lineanchor switches.  Renamed Tcl_RegExpMatchObj to
+Tcl_RegExpExecObj and added new Tcl_RegExpMatchObj that is equivalent
+to Tcl_RegExpMatch.  Added public macros for regexp flags.  Added
+REG_BOSONLY flag to allow Expect to iterate through a string and only
+find matches that start at the current position within the
+string. (stanton)
+
+6/21/99 (bug fix) Fixed memory leak in TclpThreadCreate where thread
+attributes were not being released.  [Bug: 2254] (stanton)
+
+6/23/99 (new feature) Updated Unicode character tables to reflect
+Unicode 2.1 data. (stanton)
+
+6/25/99 (new feature) Fixed bugs in non-greedy quantifiers for regular
+expression code. (stanton)
+
+6/25/99 (new feature) Added initial implementation of new Tcl test
+harness package.  Modified test files to use new tcltest package.
+(jenn)
+
+6/26/99 (new feature) Applied patch from Peter Hardie to add poke
+command to dde and changed the dde package version number to
+1.1. (redman) 
+
+6/28/99 (bug fix) Applied patch from Peter Hardie to fix problem in
+Tcl_GetIndexFromObj() when the key being passed is the empty string.
+[Bug: 1738] (redman)
+
+6/29/99 (new feature) Added options to tcltest package: -preservecore,
+-limitconstraints, -help, -file, -notfile, and flags.  (jenn)
+
+7/3/99  (new feature) Changed parsing of variable names to allow empty
+array names.  Now "$(foo)" is a variable reference.  Previously you
+had to use something line $::(foo), which is slower.  This change was
+requested by Jean-Luc Fontaine for his STOOOP package. (welch)
+
+7/3/99  (new feature) Added Tcl_SetNotifier (public API) and
+associated hook points in the notifiers to be able to replace the
+notifier calls at runtime. The Xt notifier and test program use this
+hook.  (welch)
+
+7/3/99  (new feature) Added a new variant of the "Trf core patch" from
+Andreas Kupries that adds new C APIs Tcl_StackChannel,
+Tcl_UnstackChannel, and Tcl_GetStackedChannel.  This allows the Trf
+extension to work without applying patches to the Tcl core. (welch)
+
+7/6/99  (new feature) Added -timeout option to http.tcl to handle
+timeouts that occur during connection attempts to hosts that are
+down. (welch)
+
+7/6/99  (bug fix) Applied new implementation of the Windows serial
+port driver from Rolf Schroedter that fixes reading only one byte from
+the port at a time.  Uses polling every 10ms to implement
+fileevents. [Bug: 1980 2217] (redman)
+
+7/8/99  (bug fix) Applied fix for bug in DFA state caching under
+lookahead conditions (regular expressions).  [Bug: 2318] (stanton)
+
+7/8/99  (bug fix) Fixed bug in string range bounds checking
+code. (stanton)
+
+--------------- Released 8.2b1, July 14, 1999 ----------------------
+
+7/16/99 (bug fix) Added Tcl_SetNotifier to stub table. [Bug: 2364]
+Added check for Alpha/Linux to correct the IEEE  floating point flag,
+patch from Don Porter. (redman)
+
+7/20/99 (bug fix) Merged 8.0.5 code to handle tcl_library properly,
+also fixed a bug that caused TCL_LIBRARY to be ignored. (hershey)
+
+7/21/99 (bug fix) Implemented modified socket driver for Windows that
+uses a thread to manage the socket event window.  Code works the same
+on all supported versions of Windows and was based on original 8.1.0
+code.  [Bug: 2178 2256 2259 2329 2323 2355] (redman)
+
+7/21/99 (new feature) Applied patch from Rolf Schroedter to add
+-pollinterval option to fconfigure for Windows serial ports.  Allows
+the maxblocktime to be modified to control how often serial ports are
+checked for fileevents.  Also added documentation for \\.\comX
+notation for opening serial ports on Windows.  (redman)
+
+7/21/99 (bug fix) Changed APIs in stub tables to use "unsigned long"
+instead of the platform-specific "size_t", primarily after SunOS 4
+users could no longer compile. (redman)
+
+7/22/99 (bug fix) Fixed crashing during "array set a(b) {}". 
+[Bug: 2427] (redman)
+
+7/22/99 (bug fix) The install-sh script must be given execute
+permissions prior to running.  [Bug: 2413] (redman)
+
+7/22/99 (bug fix) Applied patch from Ulrich Ring to remove ANSI-style
+prototypes in the code.  [Bug: 2391] (redman)
+
+7/22/99 (bug fix) Added #if blocks around #includes of sys/*.h header
+files, to allow an extension author on Windows to use the MetroWerks
+compiler. [Bug: 2385] (redman)
+
+7/22/99 (bug fix) Fixed running the safe.test test suite, one change
+to the Windows Makefile.in to fix paths and another in safe.test to
+check for the tcl_platform(threaded) variable properly. (redman)
+
+7/22/99 (bug fix) Fixed hanging in new Win32 socket driver with
+threads enabled. (redman)
+
+7/26/99 (bug fix) Fixed terminating of helper threads by holding any
+mutexes from the primary thread while waiting for the helper thread to
+terminate.  Fixes dual-CPU WinNT hangs, only one rare sporadic hang
+that still exists with dual-CPU WinNT.  Also fixed test cases so that
+they would not depend as much on timing for dual-CPU WinNT. (redman)
+
+7/27/99 (bug fix) Some test suite cleanup. (jenn)
+
+7/29/99 (bug fix) Applied patch to fix typo in .SH NAME line in
+doc/Encoding.n [Bug: 2451].  Applied patch to avoid linking pack.n to
+pack-old.n [Bug: 2469]. Patches from Don Porter. (redman)
+
+7/29/99 (bug fix) Allow tcl to open CON and NUL, even for redirection
+of std channels.  [Bug: 2393 2392 2209 2458] (redman)
+
+7/30/99 (bug fix) Applied fixed Trf patch from Andreas Kupries. 
+[Bug: 2386] (hobbs)
+
+7/30/99 (bug fix) Fixed bug in info complete. [Bug: 2383 2466] (hobbs)
+
+7/30/99 (bug fix) Applied patch to fix threading on Irix 6.5, patch
+provided by James Dennett.  [Bug: 2450] (redman)
+
+7/30/99 (bug fix) Fixed launching of 16bit applications on Win9x from
+wish.  The command line was being primed with tclpip82.dll, but it was
+ignored later. 
+
+7/30/99 (bug fix) Added functions to stub table, patch provided by Jan
+Njitmans. [Bug: 2445] (hobbs)
+
+8/1/99  (bug fix) Changed Windows socket driver to terminate threads
+by sending a message to the window rather than calling
+TerminateThread(), which seems to leak about 4k from the helper
+thread's stack space. (redman)
+
+--------------- Released 8.2b2, August 5, 1999 ----------------------
+
+8/4/99 (bug fix) Applied patches supplied by Henry Spencer to greatly
+enhance performance of certain classes of regular expressions. 
+[Bug: 2440 2447] (stanton)
+
+8/5/99 (doc change) Made it clear that tcl_pkgPath was not set for
+Windows. [Bug: 2455] (hobbs)
+
+8/5/99 (bug fix) Fixed reference to bytes that might not be null
+terminated in tclLiteral.c. [Bug: 2496] (hobbs)
+
+8/5/99 (bug fix) Fixed typo in http.tcl. [Bug: 2502] (hobbs)
+
+8/9/99 (bug fix) Fixed test suite to handle larger integers
+(64bit). Patch from Don Porter. (hobbs)
+
+8/9/99 (documentation fix) Clarified Tcl_DecrRefCount docs 
+[Bug: 1952]. Clarified array pattern docs [Bug: 1330]. Fixed clock docs
+[Bug: 693]. Fixed formatting errors [Bug: 2188 2189]. Fixed doc error
+in tclvars.n [Bug: 2042]. (hobbs)
+
+8/9/99 (bug fix) Fixed path handling in auto_execok [Bug: 1276] (hobbs)
+
+8/9/99 (internal api change) Removed the TclpMutexLock and TclpMutexUnlock
+APIs and added a new exported api, Tcl_GetAllocMutex. These APIs are all for
+the mutex used in the simple memory allocators.  By making this change
+we are able to substitute different implementations of the thread-related
+APIs without having to recompile the Tcl core. (welch)
+
+8/9/99 (new C API) Tcl_GetChannelNames returns a list of open channel
+names in the interpreter result.  Still no Tcl-level version of this,
+but server-like applications can use this to clean up files without
+deleting interpreters. (welch)
+
+8/9/99 (bug fix) Traces were not firing on "info exists", which used to
+happen in Tcl 7.6 and earlier. An "info exists" now fires a read trace,
+if defined.  This makes it possible to fully implement variables that
+are defined via traces. (welch)
+
+8/10/99 (bug fix) Fixed Brent's changes so that they work on
+Windows. (redman)
+
+--------------- Released 8.2b3, August 11, 1999 ----------------------
+
+8/12/99 (Mac) Rearrange projects in tclMacProjects.sea.hqx so that the
+build directory is separate from the sources. (Jim Ingham)
+
+8/12/99 (bug fix) Fixed bug in Tcl_EvalEx where the termOffset was not
+being updated in cases where the evaluation returned a non TCL_OK
+error code. [Bug: 2535] (stanton)
+
+--------------- Released 8.2.0, August 17, 1999 ----------------------
+
+9/21/99 (config fixes) fixed several AIX configuration issues.  gcc and
+threading may still cause problems on AIX. (hobbs)
+
+9/21/99 (bug fix) fixed expr double-eval problem. [Bug: 732] (hobbs)
+
+9/21/99 (bug fix) fixed static buffer overflow problem. [Bug: 2483] (hobbs)
+
+9/21/99 (bug fix) fixed end-int linsert interpretation. [Bug: 2693] (hobbs)
+
+9/21/99 (bug fix) fixed bug when setting array in non-existent
+namespace. [Bug: 2613] (hobbs)
+
+--- Released 8.2.1, October 04, 1999 --- See ChangeLog for details ---

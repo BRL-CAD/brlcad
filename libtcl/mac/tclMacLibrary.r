@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMacLibrary.r 1.5 97/09/23 12:53:28
+ * RCS: @(#) $Id$
  */
 
 #include <Types.r>
@@ -141,9 +141,7 @@ resource 'STR ' (-16397, purgeable) {
  * will load the TEXT resource named "Init".
  */
 
-read 'TEXT' (TCL_LIBRARY_RESOURCES, "Init", purgeable) "::library:init.tcl";
-read 'TEXT' (TCL_LIBRARY_RESOURCES + 1, "History", purgeable) "::library:history.tcl";
-read 'TEXT' (TCL_LIBRARY_RESOURCES + 2, "Word", purgeable,preload) "::library:word.tcl";
+#include "tclMacTclCode.r"
 
 /*
  * The following are icons for the shared library.

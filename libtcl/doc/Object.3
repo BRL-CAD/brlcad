@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) @(#) Object.3 1.10 97/07/22 11:40:10
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tcl_Obj 3 8.0 Tcl "Tcl Library Procedures"
@@ -85,7 +85,7 @@ Because of this representation invalidation and regeneration,
 it is dangerous for extension writers to access
 \fBTcl_Obj\fR fields directly.
 It is better to access Tcl_Obj information using
-procedures like \fBTcl_GetStringFromObj\fR.
+procedures like \fBTcl_GetStringFromObj\fR and \fBTcl_GetString\fR.
 .PP
 Objects are allocated on the heap
 and are referenced using a pointer to their \fBTcl_Obj\fR structure.
@@ -138,7 +138,7 @@ The byte array must always have a null after the last byte,
 at offset \fIlength\fR;
 this allows string representations that do not contain nulls
 to be treated as conventional null-terminated C strings.
-C programs use \fBTcl_GetStringFromObj\fR to get
+C programs use \fBTcl_GetStringFromObj\fR and \fBTcl_GetString\fR to get
 an object's string representation.
 If \fIbytes\fR is NULL,
 the string representation is invalid.
@@ -177,7 +177,8 @@ An object typically starts out containing only a string representation:
 it is untyped and has a NULL \fItypePtr\fR.
 An object containing an empty string or a copy of a specified string
 is created using \fBTcl_NewObj\fR or \fBTcl_NewStringObj\fR respectively.
-An object's string value is gotten with \fBTcl_GetStringFromObj\fR
+An object's string value is gotten with
+\fBTcl_GetStringFromObj\fR or \fBTcl_GetString\fR
 and changed with \fBTcl_SetStringObj\fR.
 If the object is later passed to a procedure like \fBTcl_GetIntFromObj\fR
 that requires a specific internal representation,
@@ -187,7 +188,7 @@ An object's two representations are duals of each other:
 changes made to one are reflected in the other.
 For example, \fBTcl_ListObjReplace\fR will modify an object's
 internal representation and the next call to \fBTcl_GetStringFromObj\fR
-will reflect that change.
+or \fBTcl_GetString\fR will reflect that change.
 .PP
 Representations are recomputed lazily for efficiency.
 A change to one representation made by a procedure
@@ -208,7 +209,7 @@ free any storage associated with the old string representation.
 Objects usually remain one type over their life,
 but occasionally an object must be converted from one type to another.
 For example, a C program might build up a string in an object
-with repeated calls to \fBTcl_StringObjAppend\fR,
+with repeated calls to \fBTcl_AppendToObj\fR,
 and then call \fBTcl_ListObjIndex\fR to extract a list element from
 the object.
 The same object holding the same string value
@@ -292,7 +293,7 @@ reference to it from the formal parameter.
 When the called procedure returns,
 the interpreter calls \fBTcl_DecrRefCount\fR to decrement
 each argument's reference count.
-When an object's reference count drops to zero,
+When an object's reference count drops less than or equal to zero,
 \fBTcl_DecrRefCount\fR reclaims its storage.
 Most command procedures do not have to be concerned about
 reference counting since they use an object's value immediately

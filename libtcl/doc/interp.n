@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) interp.n 1.37 97/10/31 12:51:11
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH interp n 7.6 Tcl "Tcl Built-In Commands"
@@ -198,7 +198,7 @@ Hidden commands are explained in more detail in HIDDEN COMMANDS, below.
 Returns a list of the names of all hidden commands in the interpreter
 identified by \fIpath\fR.
 .TP
-\fBinterp\fR \fBinvokehidden\fR \fIpath\fR ?\fB-global\fR \fIhiddenCmdName\fR ?\fIarg ...\fR?
+\fBinterp\fR \fBinvokehidden\fR \fIpath\fR ?\fB-global\fR? \fIhiddenCmdName\fR ?\fIarg ...\fR?
 Invokes the hidden command \fIhiddenCmdName\fR with the arguments supplied
 in the interpreter denoted by \fIpath\fR. No substitutions or evaluation
 are applied to the arguments.

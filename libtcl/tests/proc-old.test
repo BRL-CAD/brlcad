@@ -9,13 +9,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) proc-old.test 1.31 97/07/02 16:41:36
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 catch {rename t1 ""}
 catch {rename foo ""}
@@ -501,5 +505,20 @@ test proc-old-10.1 {ByteCode epoch change during recursive proc execution} {
     t1 1
 } 20
 
+# cleanup
 catch {rename t1 ""}
 catch {rename foo ""}
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

@@ -5,12 +5,12 @@
  *	works with the "dlopen" and "dlsym" library procedures for
  *	dynamic loading.
  *
- * Copyright (c) 1995 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclLoadDl.c 1.8 96/12/03 16:57:00
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -36,9 +36,9 @@
 #endif
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
- * TclLoadFile --
+ * TclpLoadFile --
  *
  *	Dynamically loads a binary code file into memory and returns
  *	the addresses of two procedures within that file, if they
@@ -46,18 +46,18 @@
  *
  * Results:
  *	A standard Tcl completion code.  If an error occurs, an error
- *	message is left in interp->result.  *proc1Ptr and *proc2Ptr
+ *	message is left in the interp's result.  *proc1Ptr and *proc2Ptr
  *	are filled in with the addresses of the symbols given by
  *	*sym1 and *sym2, or NULL if those symbols can't be found.
  *
  * Side effects:
  *	New code suddenly appears in memory.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 int
-TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
+TclpLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr, clientDataPtr)
     Tcl_Interp *interp;		/* Used for error reporting. */
     char *fileName;		/* Name of the file containing the desired
 				 * code. */
@@ -66,11 +66,20 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
     Tcl_PackageInitProc **proc1Ptr, **proc2Ptr;
 				/* Where to return the addresses corresponding
 				 * to sym1 and sym2. */
+    ClientData *clientDataPtr;	/* Filled with token for dynamically loaded
+				 * file which will be passed back to 
+				 * TclpUnloadFile() to unload the file. */
 {
     VOID *handle;
-    Tcl_DString newName;
+    Tcl_DString newName, ds;
+    char *native;
 
-    handle = dlopen(fileName, RTLD_NOW | RTLD_GLOBAL);
+    native = Tcl_UtfToExternalDString(NULL, fileName, -1, &ds);
+    handle = dlopen(native, RTLD_NOW | RTLD_GLOBAL);	/* INTL: Native. */
+    Tcl_DStringFree(&ds);
+    
+    *clientDataPtr = (ClientData) handle;
+    
     if (handle == NULL) {
 	Tcl_AppendResult(interp, "couldn't load file \"", fileName,
 		"\": ", dlerror(), (char *) NULL);
@@ -83,25 +92,64 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
      * with the underscore.
      */
 
-    *proc1Ptr = (Tcl_PackageInitProc *) dlsym(handle, (char *) sym1);
+    native = Tcl_UtfToExternalDString(NULL, sym1, -1, &ds);
+    *proc1Ptr = (Tcl_PackageInitProc *) dlsym(handle,	/* INTL: Native. */
+	    native);	
     if (*proc1Ptr == NULL) {
 	Tcl_DStringInit(&newName);
 	Tcl_DStringAppend(&newName, "_", 1);
-	Tcl_DStringAppend(&newName, sym1, -1);
-	*proc1Ptr = (Tcl_PackageInitProc *) dlsym(handle,
-		Tcl_DStringValue(&newName));
+	native = Tcl_DStringAppend(&newName, native, -1);
+	*proc1Ptr = (Tcl_PackageInitProc *) dlsym(handle, /* INTL: Native. */
+		native);
 	Tcl_DStringFree(&newName);
     }
-    *proc2Ptr = (Tcl_PackageInitProc *) dlsym(handle, (char *) sym2);
+    Tcl_DStringFree(&ds);
+
+    native = Tcl_UtfToExternalDString(NULL, sym2, -1, &ds);
+    *proc2Ptr = (Tcl_PackageInitProc *) dlsym(handle,	/* INTL: Native. */
+	    native);
     if (*proc2Ptr == NULL) {
 	Tcl_DStringInit(&newName);
 	Tcl_DStringAppend(&newName, "_", 1);
-	Tcl_DStringAppend(&newName, sym2, -1);
-	*proc2Ptr = (Tcl_PackageInitProc *) dlsym(handle,
-		Tcl_DStringValue(&newName));
+	native = Tcl_DStringAppend(&newName, native, -1);
+	*proc2Ptr = (Tcl_PackageInitProc *) dlsym(handle, /* INTL: Native. */
+		native);
 	Tcl_DStringFree(&newName);
     }
+    Tcl_DStringFree(&ds);
+    
     return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpUnloadFile --
+ *
+ *	Unloads a dynamically loaded binary code file from memory.
+ *	Code pointers in the formerly loaded file are no longer valid
+ *	after calling this function.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Code removed from memory.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclpUnloadFile(clientData)
+    ClientData clientData;	/* ClientData returned by a previous call
+				 * to TclpLoadFile().  The clientData is 
+				 * a token that represents the loaded 
+				 * file. */
+{
+    VOID *handle;
+
+    handle = (VOID *) clientData;
+    dlclose(handle);
 }
 
 /*

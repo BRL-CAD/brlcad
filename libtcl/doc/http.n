@@ -1,10 +1,11 @@
 '\"
 '\" Copyright (c) 1995-1997 Sun Microsystems, Inc.
+'\" Copyright (c) 1999 by Scriptics Corporation.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) http.n 1.11 97/08/07 16:45:02
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH "Http" n 8.0 Tcl "Tcl Built-In Commands"
@@ -13,7 +14,7 @@
 .SH NAME
 Http \- Client-side implementation of the HTTP/1.0 protocol.
 .SH SYNOPSIS
-\fBpackage require http ?2.0?\fP
+\fBpackage require http ?2.1?\fP
 .sp
 \fB::http::config \fI?options?\fR
 .sp
@@ -32,6 +33,8 @@ Http \- Client-side implementation of the HTTP/1.0 protocol.
 \fB::http::code \fItoken\fR
 .sp
 \fB::http::data \fItoken\fR
+.sp
+\fB::http::cleanup \fItoken\fR
 .BE
 
 .SH DESCRIPTION
@@ -98,7 +101,7 @@ non-empty.
 .TP
 \fB\-useragent\fP \fIstring\fP
 The value of the User-Agent header in the HTTP request.  The default
-is \fB"Tcl http client package 2.0."\fR
+is \fB"Tcl http client package 2.1."\fR
 .RE
 .TP
 \fB::http::geturl\fP \fIurl\fP ?\fIoptions\fP? 
@@ -243,6 +246,13 @@ state array.
 \fB::http::size\fP \fItoken\fP
 This is a convenience procedure that returns the \fBcurrentsize\fP
 element of the state array.
+.TP
+\fB::http::cleanup\fP \fItoken\fP
+This procedure cleans up the state associated with the connection
+identified by \fItoken\fP.  After this call, the procedures
+like \fB::http::data\fP cannot be used to get information
+about the operation.
+
 .SH "STATE ARRAY"
 The \fB::http::geturl\fR procedure returns a \fItoken\fR that can be used to
 get to the state of the HTTP transaction in the form of a Tcl array.
@@ -250,7 +260,11 @@ Use this construct to create an easy-to-use array variable:
 .CS
 upvar #0 $token state
 .CE
-The following elements of the array are supported:
+Once the data associated with the url is no longer needed, the state
+array should be unset to free up storage.
+The \fBhttp::cleanup\fP procedure is provided for that purpose.
+The following elements of
+the array are supported:
 .RS
 .TP
 \fBbody\fR

@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclUnixTime.c 1.13 97/10/31 15:04:58
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -32,7 +32,7 @@
  *-----------------------------------------------------------------------------
  */
 
-time_t
+unsigned long
 TclpGetSeconds()
 {
     return time((time_t *) NULL);
@@ -57,10 +57,10 @@ TclpGetSeconds()
  *-----------------------------------------------------------------------------
  */
 
-time_t
+unsigned long
 TclpGetClicks()
 {
-    time_t now;
+    unsigned long now;
 #ifdef NO_GETTOD
     struct tms dummy;
 #else
@@ -69,7 +69,7 @@ TclpGetClicks()
 #endif
 
 #ifdef NO_GETTOD
-    now = (time_t) times(&dummy);
+    now = (unsigned long) times(&dummy);
 #else
     gettimeofday(&date, &tz);
     now = date.tv_sec*1000000 + date.tv_usec;
@@ -99,7 +99,7 @@ TclpGetClicks()
 
 int
 TclpGetTimeZone (currentTime)
-    time_t  currentTime;
+    unsigned long  currentTime;
 {
     /*
      * Determine how a timezone is obtained from "struct tm".  If there is no
@@ -165,12 +165,17 @@ TclpGetTimeZone (currentTime)
 #if defined(HAVE_TIMEZONE_VAR) && !defined (TCL_GOT_TIMEZONE)
 #   define TCL_GOT_TIMEZONE
     static int setTZ = 0;
+#ifdef TCL_THREADS
+    static Tcl_Mutex tzMutex;
+#endif
     int        timeZone;
 
+    Tcl_MutexLock(&tzMutex);
     if (!setTZ) {
         tzset();
         setTZ = 1;
     }
+    Tcl_MutexUnlock(&tzMutex);
 
     /*
      * Note: this is not a typo in "timezone" below!  See tzset
@@ -233,4 +238,62 @@ TclpGetTime(timePtr)
     (void) gettimeofday(&tv, &tz);
     timePtr->sec = tv.tv_sec;
     timePtr->usec = tv.tv_usec;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpGetDate --
+ *
+ *	This function converts between seconds and struct tm.  If
+ *	useGMT is true, then the returned date will be in Greenwich
+ *	Mean Time (GMT).  Otherwise, it will be in the local time zone.
+ *
+ * Results:
+ *	Returns a static tm structure.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+struct tm *
+TclpGetDate(time, useGMT)
+    TclpTime_t time;
+    int useGMT;
+{
+    CONST time_t *tp = (CONST time_t *)time;
+
+    if (useGMT) {
+	return gmtime(tp);
+    } else {
+	return localtime(tp);
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpStrftime --
+ *
+ *	On Unix, we can safely call the native strftime implementation.
+ *
+ * Results:
+ *	The normal strftime result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+size_t
+TclpStrftime(s, maxsize, format, t)
+    char *s;
+    size_t maxsize;
+    CONST char *format;
+    CONST struct tm *t;
+{
+    return strftime(s, maxsize, format, t);
 }

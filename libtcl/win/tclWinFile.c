@@ -6,58 +6,68 @@
  *      files, which can be manipulated through the Win32 console redirection
  *      interfaces.
  *
- * Copyright (c) 1995-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1998 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclWinFile.c 1.45 97/10/29 19:08:35
+ * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
 #include <sys/stat.h>
 #include <shlobj.h>
+#include <lmaccess.h>		/* For TclpGetUserHome(). */
 
-/*
- * The variable below caches the name of the current working directory
- * in order to avoid repeated calls to getcwd.  The string is malloc-ed.
- * NULL means the cache needs to be refreshed.
- */
+static time_t		ToCTime(FILETIME fileTime);
 
-static char *currentDir =  NULL;
+typedef NET_API_STATUS NET_API_FUNCTION NETUSERGETINFOPROC
+	(LPWSTR servername, LPWSTR username, DWORD level, LPBYTE *bufptr);
+
+typedef NET_API_STATUS NET_API_FUNCTION NETAPIBUFFERFREEPROC
+	(LPVOID Buffer);
+
+typedef NET_API_STATUS NET_API_FUNCTION NETGETDCNAMEPROC
+	(LPWSTR servername, LPWSTR domainname, LPBYTE *bufptr);
 
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
- * Tcl_FindExecutable --
+ * TclpFindExecutable --
  *
  *	This procedure computes the absolute path name of the current
  *	application, given its argv[0] value.
  *
  * Results:
- *	None.
+ *	A dirty UTF string that is the path to the executable.  At this
+ *	point we may not know the system encoding.  Convert the native
+ *	string value to UTF using the default encoding.  The assumption
+ *	is that we will still be able to parse the path given the path
+ *	name contains ASCII string and '/' chars do not conflict with
+ *	other UTF chars.
  *
  * Side effects:
- *	The variable tclExecutableName gets filled in with the file
+ *	The variable tclNativeExecutableName gets filled in with the file
  *	name for the application, if we figured it out.  If we couldn't
- *	figure it out, Tcl_FindExecutable is set to NULL.
+ *	figure it out, tclNativeExecutableName is set to NULL.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
-void
-Tcl_FindExecutable(argv0)
-    char *argv0;		/* The value of the application's argv[0]. */
+char *
+TclpFindExecutable(argv0)
+    CONST char *argv0;		/* The value of the application's argv[0]
+				 * (native). */
 {
-    Tcl_DString buffer;
-    int length;
+    Tcl_DString ds;
+    WCHAR wName[MAX_PATH];
 
-    Tcl_DStringInit(&buffer);
-
-    if (tclExecutableName != NULL) {
-	ckfree(tclExecutableName);
-	tclExecutableName = NULL;
+    if (argv0 == NULL) {
+	return NULL;
+    }
+    if (tclNativeExecutableName != NULL) {
+	return tclNativeExecutableName;
     }
 
     /*
@@ -65,26 +75,28 @@ Tcl_FindExecutable(argv0)
      * create this process.
      */
 
-    Tcl_DStringSetLength(&buffer, MAX_PATH+1);
-    length = GetModuleFileName(NULL, Tcl_DStringValue(&buffer), MAX_PATH+1);
-    if (length > 0) {
-	tclExecutableName = (char *) ckalloc((unsigned) (length + 1));
-	strcpy(tclExecutableName, Tcl_DStringValue(&buffer));
-    }
-    Tcl_DStringFree(&buffer);
+    (*tclWinProcs->getModuleFileNameProc)(NULL, wName, MAX_PATH);
+    Tcl_WinTCharToUtf((TCHAR *) wName, -1, &ds);
+
+    tclNativeExecutableName = ckalloc((unsigned) (Tcl_DStringLength(&ds) + 1));
+    strcpy(tclNativeExecutableName, Tcl_DStringValue(&ds));
+    Tcl_DStringFree(&ds);
+
+    TclWinNoBackslash(tclNativeExecutableName);
+    return tclNativeExecutableName;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TclMatchFiles --
+ * TclpMatchFiles --
  *
  *	This routine is used by the globbing code to search a
  *	directory for all files which match a given pattern.
  *
  * Results: 
  *	If the tail argument is NULL, then the matching files are
- *	added to the interp->result.  Otherwise, TclDoGlob is called
+ *	added to the the interp's result.  Otherwise, TclDoGlob is called
  *	recursively for each matching subdirectory.  The return value
  *	is a standard Tcl result indicating whether an error occurred
  *	in globbing.
@@ -95,25 +107,27 @@ Tcl_FindExecutable(argv0)
  *---------------------------------------------------------------------- */
 
 int
-TclMatchFiles(interp, separators, dirPtr, pattern, tail)
+TclpMatchFiles(interp, separators, dirPtr, pattern, tail)
     Tcl_Interp *interp;		/* Interpreter to receive results. */
     char *separators;		/* Directory separators to pass to TclDoGlob. */
     Tcl_DString *dirPtr;	/* Contains path to directory to search. */
     char *pattern;		/* Pattern to match against. */
     char *tail;			/* Pointer to end of pattern.  Tail must
-				 * point to a location in pattern. */
+				 * point to a location in pattern. Must not
+				 * point to a static string. */
 {
-    char drivePattern[4] = "?:\\";
-    char *newPattern, *p, *dir, *root, c;
-    char *src, *dest;
-    int length, matchDotFiles;
-    int result = TCL_OK;
-    int baseLength = Tcl_DStringLength(dirPtr);
-    Tcl_DString buffer;
-    DWORD atts, volFlags;
+    char drivePat[] = "?:\\";
+    const char *message;
+    char *dir, *newPattern, *root;
+    int matchDotFiles;
+    int dirLength, result = TCL_OK;
+    Tcl_DString dirString, patternString;
+    DWORD attr, volFlags;
     HANDLE handle;
-    WIN32_FIND_DATA data;
+    WIN32_FIND_DATAT data;
     BOOL found;
+    Tcl_DString ds;
+    TCHAR *nativeName;
 
     /*
      * Convert the path to normalized form since some interfaces only
@@ -121,31 +135,37 @@ TclMatchFiles(interp, separators, dirPtr, pattern, tail)
      * separator character.
      */
 
-    Tcl_DStringInit(&buffer);
-    if (baseLength == 0) {
-	Tcl_DStringAppend(&buffer, ".", 1);
+    dirLength = Tcl_DStringLength(dirPtr);
+    Tcl_DStringInit(&dirString);
+    if (dirLength == 0) {
+	Tcl_DStringAppend(&dirString, ".\\", 2);
     } else {
-	Tcl_DStringAppend(&buffer, Tcl_DStringValue(dirPtr),
+	char *p;
+
+	Tcl_DStringAppend(&dirString, Tcl_DStringValue(dirPtr),
 		Tcl_DStringLength(dirPtr));
-    }
-    for (p = Tcl_DStringValue(&buffer); *p != '\0'; p++) {
-	if (*p == '/') {
-	    *p = '\\';
+	for (p = Tcl_DStringValue(&dirString); *p != '\0'; p++) {
+	    if (*p == '/') {
+		*p = '\\';
+	    }
+	}
+	p--;
+	if ((*p != '\\') && (*p != ':')) {
+	    Tcl_DStringAppend(&dirString, "\\", 1);
 	}
     }
-    p--;
-    if (*p != '\\' && *p != ':') {
-	Tcl_DStringAppend(&buffer, "\\", 1);
-    }
-    dir = Tcl_DStringValue(&buffer);
-    
+    dir = Tcl_DStringValue(&dirString);
+
     /*
      * First verify that the specified path is actually a directory.
      */
 
-    atts = GetFileAttributes(dir);
-    if ((atts == 0xFFFFFFFF) || ((atts & FILE_ATTRIBUTE_DIRECTORY) == 0)) {
-	Tcl_DStringFree(&buffer);
+    nativeName = Tcl_WinUtfToTChar(dir, Tcl_DStringLength(&dirString), &ds);
+    attr = (*tclWinProcs->getFileAttributesProc)(nativeName);
+    Tcl_DStringFree(&ds);
+
+    if ((attr == 0xffffffff) || ((attr & FILE_ATTRIBUTE_DIRECTORY) == 0)) {
+	Tcl_DStringFree(&dirString);
 	return TCL_OK;
     }
 
@@ -158,82 +178,67 @@ TclMatchFiles(interp, separators, dirPtr, pattern, tail)
 
     switch (Tcl_GetPathType(dir)) {
 	case TCL_PATH_RELATIVE:
-	    found = GetVolumeInformation(NULL, NULL, 0, NULL,
-		    NULL, &volFlags, NULL, 0);
+	    found = GetVolumeInformationA(NULL, NULL, 0, NULL, NULL, 
+		    &volFlags, NULL, 0);
 	    break;
 	case TCL_PATH_VOLUME_RELATIVE:
-	    if (*dir == '\\') {
+	    if (dir[0] == '\\') {
 		root = NULL;
 	    } else {
-		root = drivePattern;
-		*root = *dir;
+		root = drivePat;
+		*root = dir[0];
 	    }
-	    found = GetVolumeInformation(root, NULL, 0, NULL,
-		    NULL, &volFlags, NULL, 0);
+	    found = GetVolumeInformationA(root, NULL, 0, NULL, NULL, 
+		    &volFlags, NULL, 0);
 	    break;
 	case TCL_PATH_ABSOLUTE:
 	    if (dir[1] == ':') {
-		root = drivePattern;
-		*root = *dir;
-		found = GetVolumeInformation(root, NULL, 0, NULL,
-			NULL, &volFlags, NULL, 0);
+		root = drivePat;
+		*root = dir[0];
+		found = GetVolumeInformationA(root, NULL, 0, NULL, NULL, 
+			&volFlags, NULL, 0);
 	    } else if (dir[1] == '\\') {
-		p = strchr(dir+2, '\\');
-		p = strchr(p+1, '\\');
+		char *p;
+
+		p = strchr(dir + 2, '\\');
+		p = strchr(p + 1, '\\');
 		p++;
-		c = *p;
-		*p = 0;
-		found = GetVolumeInformation(dir, NULL, 0, NULL,
-			NULL, &volFlags, NULL, 0);
-		*p = c;
+		nativeName = Tcl_WinUtfToTChar(dir, p - dir, &ds);
+		found = (*tclWinProcs->getVolumeInformationProc)(nativeName, 
+			NULL, 0, NULL, NULL, &volFlags, NULL, 0);
+		Tcl_DStringFree(&ds);
 	    }
 	    break;
     }
 
-    if (!found) {
-	Tcl_DStringFree(&buffer);
-	TclWinConvertError(GetLastError());
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "couldn't read volume information for \"",
-		dirPtr->string, "\": ", Tcl_PosixError(interp), (char *) NULL);
-	return TCL_ERROR;
+    if (found == 0) {
+	message = "couldn't read volume information for \"";
+	goto error;
     }
-    
+
     /*
      * In Windows, although some volumes may support case sensitivity, Windows
      * doesn't honor case.  So in globbing we need to ignore the case
      * of file names.
      */
 
-    length = tail - pattern;
-    newPattern = ckalloc(length+1);
-    for (src = pattern, dest = newPattern; src < tail; src++, dest++) {
-	*dest = (char) tolower(*src);
-    }
-    *dest = '\0';
-    
+    Tcl_DStringInit(&patternString);
+    newPattern = Tcl_DStringAppend(&patternString, pattern, tail - pattern);
+    Tcl_UtfToLower(newPattern);
+
     /*
      * We need to check all files in the directory, so append a *.*
      * to the path. 
      */
 
-
-    dir = Tcl_DStringAppend(&buffer, "*.*", 3);
-
-    /*
-     * Now open the directory for reading and iterate over the contents.
-     */
-
-    handle = FindFirstFile(dir, &data);
-    Tcl_DStringFree(&buffer);
+    dir = Tcl_DStringAppend(&dirString, "*.*", 3);
+    nativeName = Tcl_WinUtfToTChar(dir, -1, &ds);
+    handle = (*tclWinProcs->findFirstFileProc)(nativeName, &data);
+    Tcl_DStringFree(&ds);
 
     if (handle == INVALID_HANDLE_VALUE) {
-	TclWinConvertError(GetLastError());
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "couldn't read directory \"",
-		dirPtr->string, "\": ", Tcl_PosixError(interp), (char *) NULL);
-	ckfree(newPattern);
-	return TCL_ERROR;
+	message = "couldn't read directory \"";
+	goto error;
     }
 
     /*
@@ -265,42 +270,42 @@ TclMatchFiles(interp, separators, dirPtr, pattern, tail)
      * Now iterate over all of the files in the directory.
      */
 
-    Tcl_DStringInit(&buffer);
-    for (found = 1; found; found = FindNextFile(handle, &data)) {
-	char *matchResult;
+    for (found = 1; found != 0; 
+	    found = (*tclWinProcs->findNextFileProc)(handle, &data)) {
+	TCHAR *nativeMatchResult;
+	char *name;
 
-	/*
-	 * Ignore hidden files.
-	 */
-
-	if (!matchDotFiles && (data.cFileName[0] == '.')) {
-	    continue;
+	if (tclWinProcs->useWide) {
+	    nativeName = (TCHAR *) data.w.cFileName;
+	} else {
+	    nativeName = (TCHAR *) data.a.cFileName;
 	}
+	name = Tcl_WinTCharToUtf(nativeName, -1, &ds);
 
 	/*
 	 * Check to see if the file matches the pattern.  We need to convert
 	 * the file name to lower case for comparison purposes.  Note that we
 	 * are ignoring the case sensitivity flag because Windows doesn't honor
 	 * case even if the volume is case sensitive.  If the volume also
-	 * doesn't preserve case, then we return the lower case form of the
-	 * name, otherwise we return the system form.
+	 * doesn't preserve case, then we previously returned the lower case
+	 * form of the name.  This didn't seem quite right since there are
+	 * non-case-preserving volumes that actually return mixed case.  So now
+	 * we are returning exactly what we get from the system.
 	 */
 
-	matchResult = NULL;
-	Tcl_DStringSetLength(&buffer, 0);
-	Tcl_DStringAppend(&buffer, data.cFileName, -1);
-	for (p = buffer.string; *p != '\0'; p++) {
-	    *p = (char) tolower(*p);
-	}
-	if (Tcl_StringMatch(buffer.string, newPattern)) {
-	    if (volFlags & FS_CASE_IS_PRESERVED) {
-		matchResult = data.cFileName;
-	    } else {
-		matchResult = buffer.string;
-	    }	
-	}
+	Tcl_UtfToLower(name);
+	nativeMatchResult = NULL;
 
-	if (matchResult == NULL) {
+	if ((matchDotFiles == 0) && (name[0] == '.')) {
+	    /*
+	     * Ignore hidden files.
+	     */
+	} else if (Tcl_StringMatch(name, newPattern) != 0) {
+	    nativeMatchResult = nativeName;
+	}
+        Tcl_DStringFree(&ds);
+
+	if (nativeMatchResult == NULL) {
 	    continue;
 	}
 
@@ -311,13 +316,19 @@ TclMatchFiles(interp, separators, dirPtr, pattern, tail)
 	 * file to the result.
 	 */
 
-	Tcl_DStringSetLength(dirPtr, baseLength);
-	Tcl_DStringAppend(dirPtr, matchResult, -1);
+	name = Tcl_WinTCharToUtf(nativeMatchResult, -1, &ds);
+	Tcl_DStringAppend(dirPtr, name, -1);
+	Tcl_DStringFree(&ds);
+
 	if (tail == NULL) {
-	    Tcl_AppendElement(interp, dirPtr->string);
+	    Tcl_AppendElement(interp, Tcl_DStringValue(dirPtr));
 	} else {
-	    atts = GetFileAttributes(dirPtr->string);
-	    if (atts & FILE_ATTRIBUTE_DIRECTORY) {
+	    nativeName = Tcl_WinUtfToTChar(Tcl_DStringValue(dirPtr), 
+		    Tcl_DStringLength(dirPtr), &ds);
+	    attr = (*tclWinProcs->getFileAttributesProc)(nativeName);
+	    Tcl_DStringFree(&ds);
+
+	    if (attr & FILE_ATTRIBUTE_DIRECTORY) {
 		Tcl_DStringAppend(dirPtr, "/", 1);
 		result = TclDoGlob(interp, separators, dirPtr, tail);
 		if (result != TCL_OK) {
@@ -325,121 +336,545 @@ TclMatchFiles(interp, separators, dirPtr, pattern, tail)
 		}
 	    }
 	}
+	Tcl_DStringSetLength(dirPtr, dirLength);
     }
 
-    Tcl_DStringFree(&buffer);
     FindClose(handle);
-    ckfree(newPattern);
-    return result;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclChdir --
- *
- *	Change the current working directory.
- *
- * Results:
- *	The result is a standard Tcl result.  If an error occurs and 
- *	interp isn't NULL, an error message is left in interp->result.
- *
- * Side effects:
- *	The working directory for this application is changed.  Also
- *	the cache maintained used by TclGetCwd is deallocated and
- *	set to NULL.
- *
- *----------------------------------------------------------------------
- */
+    Tcl_DStringFree(&dirString);
+    Tcl_DStringFree(&patternString);
 
-int
-TclChdir(interp, dirName)
-    Tcl_Interp *interp;		/* If non NULL, used for error reporting. */
-    char *dirName;     		/* Path to new working directory. */
-{
-    if (currentDir != NULL) {
-	ckfree(currentDir);
-	currentDir = NULL;
-    }
-    if (!SetCurrentDirectory(dirName)) {
-	TclWinConvertError(GetLastError());
-	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "couldn't change working directory to \"",
-		    dirName, "\": ", Tcl_PosixError(interp), (char *) NULL);
-	}
-	return TCL_ERROR;
-    }
-    return TCL_OK;
+    return result;
+
+    error:
+    Tcl_DStringFree(&dirString);
+    TclWinConvertError(GetLastError());
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, message, Tcl_DStringValue(dirPtr), "\": ", 
+	    Tcl_PosixError(interp), (char *) NULL);
+    return TCL_ERROR;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TclGetCwd --
+ * TclpGetUserHome --
  *
- *	Return the path name of the current working directory.
+ *	This function takes the passed in user name and finds the
+ *	corresponding home directory specified in the password file.
  *
  * Results:
- *	The result is the full path name of the current working
- *	directory, or NULL if an error occurred while figuring it
- *	out.  If an error occurs and interp isn't NULL, an error
- *	message is left in interp->result.
+ *	The result is a pointer to a string specifying the user's home
+ *	directory, or NULL if the user's home directory could not be
+ *	determined.  Storage for the result string is allocated in
+ *	bufferPtr; the caller must call Tcl_DStringFree() when the result
+ *	is no longer needed.
  *
  * Side effects:
- *	The path name is cached to avoid having to recompute it
- *	on future calls;  if it is already cached, the cached
- *	value is returned.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
 char *
-TclGetCwd(interp)
-    Tcl_Interp *interp;		/* If non NULL, used for error reporting. */
+TclpGetUserHome(name, bufferPtr)
+    CONST char *name;		/* User name for desired home directory. */
+    Tcl_DString *bufferPtr;	/* Uninitialized or free DString filled
+				 * with name of user's home directory. */
 {
-    static char buffer[MAXPATHLEN+1];
-    char *bufPtr, *p;
+    char *result;
+    HINSTANCE netapiInst;
 
-    if (currentDir == NULL) {
-	if (GetCurrentDirectory(MAXPATHLEN+1, buffer) == 0) {
-	    TclWinConvertError(GetLastError());
-	    if (interp != NULL) {
-		if (errno == ERANGE) {
-		    Tcl_SetResult(interp,
-			    "working directory name is too long",
-			    TCL_STATIC);
-		} else {
-		    Tcl_AppendResult(interp,
-			    "error getting working directory name: ",
-			    Tcl_PosixError(interp), (char *) NULL);
-		}
+    result = NULL;
+
+    Tcl_DStringInit(bufferPtr);
+
+    netapiInst = LoadLibraryA("netapi32.dll");
+    if (netapiInst != NULL) {
+	NETAPIBUFFERFREEPROC *netApiBufferFreeProc;
+	NETGETDCNAMEPROC *netGetDCNameProc;
+	NETUSERGETINFOPROC *netUserGetInfoProc;
+
+	netApiBufferFreeProc = (NETAPIBUFFERFREEPROC *)
+		GetProcAddress(netapiInst, "NetApiBufferFree");
+	netGetDCNameProc = (NETGETDCNAMEPROC *) 
+		GetProcAddress(netapiInst, "NetGetDCName");
+	netUserGetInfoProc = (NETUSERGETINFOPROC *) 
+		GetProcAddress(netapiInst, "NetUserGetInfo");
+	if ((netUserGetInfoProc != NULL) && (netGetDCNameProc != NULL)
+		&& (netApiBufferFreeProc != NULL)) {
+	    USER_INFO_1 *uiPtr;
+	    Tcl_DString ds;
+	    int nameLen, badDomain;
+	    char *domain;
+	    WCHAR *wName, *wHomeDir, *wDomain;
+	    WCHAR buf[MAX_PATH];
+
+	    badDomain = 0;
+	    nameLen = -1;
+	    wDomain = NULL;
+	    domain = strchr(name, '@');
+	    if (domain != NULL) {
+		Tcl_DStringInit(&ds);
+		wName = Tcl_UtfToUniCharDString(domain + 1, -1, &ds);
+		badDomain = (*netGetDCNameProc)(NULL, wName,
+			(LPBYTE *) &wDomain);
+		Tcl_DStringFree(&ds);
+		nameLen = domain - name;
 	    }
-	    return NULL;
+	    if (badDomain == 0) {
+		Tcl_DStringInit(&ds);
+		wName = Tcl_UtfToUniCharDString(name, nameLen, &ds);
+		if ((*netUserGetInfoProc)(wDomain, wName, 1, 
+			(LPBYTE *) &uiPtr) == 0) {
+		    wHomeDir = uiPtr->usri1_home_dir;
+		    if ((wHomeDir != NULL) && (wHomeDir[0] != L'\0')) {
+			Tcl_UniCharToUtfDString(wHomeDir, lstrlenW(wHomeDir),
+				bufferPtr);
+		    } else {
+			/* 
+			 * User exists but has no home dir.  Return
+			 * "{Windows Drive}:/users/default".
+			 */
+
+			GetWindowsDirectoryW(buf, MAX_PATH);
+			Tcl_UniCharToUtfDString(buf, 2, bufferPtr);
+			Tcl_DStringAppend(bufferPtr, "/users/default", -1);
+		    }
+		    result = Tcl_DStringValue(bufferPtr);
+		    (*netApiBufferFreeProc)((void *) uiPtr);
+		}
+		Tcl_DStringFree(&ds);
+	    }
+	    if (wDomain != NULL) {
+		(*netApiBufferFreeProc)((void *) wDomain);
+	    }
 	}
+	FreeLibrary(netapiInst);
+    }
+    if (result == NULL) {
 	/*
-	 * Watch for the wierd Windows '95 c:\\UNC syntax.
+	 * Look in the "Password Lists" section of system.ini for the 
+	 * local user.  There are also entries in that section that begin 
+	 * with a "*" character that are used by Windows for other 
+	 * purposes; ignore user names beginning with a "*".
 	 */
 
-	if (buffer[0] != '\0' && buffer[1] == ':' && buffer[2] == '\\'
-		&& buffer[3] == '\\') {
-	    bufPtr = &buffer[2];
-	} else {
-	    bufPtr = buffer;
-	}
+	char buf[MAX_PATH];
 
-	/*
-	 * Convert to forward slashes for easier use in scripts.
-	 */
+	if (name[0] != '*') {
+	    if (GetPrivateProfileStringA("Password Lists", name, "", buf, 
+		    MAX_PATH, "system.ini") > 0) {
+		/* 
+		 * User exists, but there is no such thing as a home 
+		 * directory in system.ini.  Return "{Windows drive}:/".
+		 */
 
-	for (p = bufPtr; *p != '\0'; p++) {
-	    if (*p == '\\') {
-		*p = '/';
+		GetWindowsDirectoryA(buf, MAX_PATH);
+		Tcl_DStringAppend(bufferPtr, buf, 3);
+		result = Tcl_DStringValue(bufferPtr);
 	    }
 	}
     }
-    return bufPtr;
+
+    return result;
 }
 
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclpAccess --
+ *
+ *	This function replaces the library version of access(), fixing the
+ *	following bugs:
+ * 
+ *	1. access() returns that all files have execute permission.
+ *
+ * Results:
+ *	See access documentation.
+ *
+ * Side effects:
+ *	See access documentation.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+int
+TclpAccess(
+    CONST char *path,		/* Path of file to access (UTF-8). */
+    int mode)			/* Permission setting. */
+{
+    Tcl_DString ds;
+    TCHAR *nativePath;
+    DWORD attr;
+
+    nativePath = Tcl_WinUtfToTChar(path, -1, &ds);
+    attr = (*tclWinProcs->getFileAttributesProc)(nativePath);
+    Tcl_DStringFree(&ds);
+
+    if (attr == 0xffffffff) {
+	/*
+	 * File doesn't exist. 
+	 */
+
+	TclWinConvertError(GetLastError());
+	return -1;
+    }
+
+    if ((mode & W_OK) && (attr & FILE_ATTRIBUTE_READONLY)) {
+	/*
+	 * File is not writable.
+	 */
+
+	Tcl_SetErrno(EACCES);
+	return -1;
+    }
+
+    if (mode & X_OK) {
+        CONST char *p;
+
+	if (attr & FILE_ATTRIBUTE_DIRECTORY) {
+	    /*
+	     * Directories are always executable. 
+	     */
+	    
+	    return 0;
+	}
+	p = strrchr(path, '.');
+	if (p != NULL) {
+	    p++;
+	    if ((stricmp(p, "exe") == 0)
+		    || (stricmp(p, "com") == 0)
+		    || (stricmp(p, "bat") == 0)) {
+		/*
+		 * File that ends with .exe, .com, or .bat is executable.
+		 */
+
+		return 0;
+	    }
+	}
+	Tcl_SetErrno(EACCES);
+	return -1;
+    }
+
+    return 0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpChdir --
+ *
+ *	This function replaces the library version of chdir().
+ *
+ * Results:
+ *	See chdir() documentation.
+ *
+ * Side effects:
+ *	See chdir() documentation.  
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclpChdir(path)
+    CONST char *path;     	/* Path to new working directory (UTF-8). */
+{
+    int result;
+    Tcl_DString ds;
+    TCHAR *nativePath;
+
+    nativePath = Tcl_WinUtfToTChar(path, -1, &ds);
+    result = (*tclWinProcs->setCurrentDirectoryProc)(nativePath);
+    Tcl_DStringFree(&ds);
+
+    if (result == 0) {
+	TclWinConvertError(GetLastError());
+	return -1;
+    }
+    return 0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpGetCwd --
+ *
+ *	This function replaces the library version of getcwd().
+ *
+ * Results:
+ *	The result is a pointer to a string specifying the current
+ *	directory, or NULL if the current directory could not be
+ *	determined.  If NULL is returned, an error message is left in the
+ *	interp's result.  Storage for the result string is allocated in
+ *	bufferPtr; the caller must call Tcl_DStringFree() when the result
+ *	is no longer needed.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+char *
+TclpGetCwd(interp, bufferPtr)
+    Tcl_Interp *interp;		/* If non-NULL, used for error reporting. */
+    Tcl_DString *bufferPtr;	/* Uninitialized or free DString filled
+				 * with name of current directory. */
+{
+    WCHAR buffer[MAX_PATH];
+    char *p;
+
+    if ((*tclWinProcs->getCurrentDirectoryProc)(MAX_PATH, buffer) == 0) {
+	TclWinConvertError(GetLastError());
+	if (interp != NULL) {
+	    Tcl_AppendResult(interp,
+		    "error getting working directory name: ",
+		    Tcl_PosixError(interp), (char *) NULL);
+	}
+	return NULL;
+    }
+
+    /*
+     * Watch for the wierd Windows c:\\UNC syntax.
+     */
+
+    if (tclWinProcs->useWide) {
+	WCHAR *native;
+
+	native = (WCHAR *) buffer;
+	if ((native[0] != '\0') && (native[1] == ':') 
+		&& (native[2] == '\\') && (native[3] == '\\')) {
+	    native += 2;
+	}
+	Tcl_WinTCharToUtf((TCHAR *) native, -1, bufferPtr);
+    } else {
+	char *native;
+
+	native = (char *) buffer;
+	if ((native[0] != '\0') && (native[1] == ':') 
+		&& (native[2] == '\\') && (native[3] == '\\')) {
+	    native += 2;
+	}
+	Tcl_WinTCharToUtf((TCHAR *) native, -1, bufferPtr);
+    }
+
+    /*
+     * Convert to forward slashes for easier use in scripts.
+     */
+	      
+    for (p = Tcl_DStringValue(bufferPtr); *p != '\0'; p++) {
+	if (*p == '\\') {
+	    *p = '/';
+	}
+    }
+    return Tcl_DStringValue(bufferPtr);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpStat --
+ *
+ *	This function replaces the library version of stat(), fixing 
+ *	the following bugs:
+ *
+ *	1. stat("c:") returns an error.
+ *	2. Borland stat() return time in GMT instead of localtime.
+ *	3. stat("\\server\mount") would return error.
+ *	4. Accepts slashes or backslashes.
+ *	5. st_dev and st_rdev were wrong for UNC paths.
+ *
+ * Results:
+ *	See stat documentation.
+ *
+ * Side effects:
+ *	See stat documentation.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclpStat(path, statPtr)
+    CONST char *path;		/* Path of file to stat (UTF-8). */
+    struct stat *statPtr;	/* Filled with results of stat call. */
+{
+    Tcl_DString ds;
+    TCHAR *nativePath;
+    WIN32_FIND_DATAT data;
+    HANDLE handle;
+    DWORD attr;
+    WCHAR nativeFullPath[MAX_PATH];
+    TCHAR *nativePart;
+    char *p, *fullPath;
+    int dev, mode;
+
+    /*
+     * Eliminate file names containing wildcard characters, or subsequent 
+     * call to FindFirstFile() will expand them, matching some other file.
+     */
+
+    if (strpbrk(path, "?*") != NULL) {
+	Tcl_SetErrno(ENOENT);
+	return -1;
+    }
+
+    nativePath = Tcl_WinUtfToTChar(path, -1, &ds);
+    handle = (*tclWinProcs->findFirstFileProc)(nativePath, &data);
+    if (handle == INVALID_HANDLE_VALUE) {
+	/* 
+	 * FindFirstFile() doesn't work on root directories, so call
+	 * GetFileAttributes() to see if the specified file exists.
+	 */
+
+	attr = (*tclWinProcs->getFileAttributesProc)(nativePath);
+	if (attr == 0xffffffff) {
+	    Tcl_DStringFree(&ds);
+	    Tcl_SetErrno(ENOENT);
+	    return -1;
+	}
+
+	/* 
+	 * Make up some fake information for this file.  It has the 
+	 * correct file attributes and a time of 0.
+	 */
+
+	memset(&data, 0, sizeof(data));
+	data.a.dwFileAttributes = attr;
+    } else {
+	FindClose(handle);
+    }
+
+    (*tclWinProcs->getFullPathNameProc)(nativePath, MAX_PATH, nativeFullPath,
+	    &nativePart);
+
+    Tcl_DStringFree(&ds);
+    fullPath = Tcl_WinTCharToUtf((TCHAR *) nativeFullPath, -1, &ds);
+
+    dev = -1;
+    if ((fullPath[0] == '\\') && (fullPath[1] == '\\')) {
+	char *p;
+	DWORD dw;
+	TCHAR *nativeVol;
+	Tcl_DString volString;
+
+	p = strchr(fullPath + 2, '\\');
+	p = strchr(p + 1, '\\');
+	if (p == NULL) {
+	    /*
+	     * Add terminating backslash to fullpath or 
+	     * GetVolumeInformation() won't work.
+	     */
+
+	    fullPath = Tcl_DStringAppend(&ds, "\\", 1);
+	    p = fullPath + Tcl_DStringLength(&ds);
+	} else {
+	    p++;
+	}
+	nativeVol = Tcl_WinUtfToTChar(fullPath, p - fullPath, &volString);
+	dw = (DWORD) -1;
+	(*tclWinProcs->getVolumeInformationProc)(nativeVol, NULL, 0, &dw,
+		NULL, NULL, NULL, 0);
+	/*
+	 * GetFullPathName() turns special devices like "NUL" into "\\.\NUL", 
+	 * but GetVolumeInformation() returns failure for "\\.\NUL".  This 
+	 * will cause "NUL" to get a drive number of -1, which makes about 
+	 * as much sense as anything since the special devices don't live on 
+	 * any drive.
+	 */
+
+	dev = dw;
+	Tcl_DStringFree(&volString);
+    } else if ((fullPath[0] != '\0') && (fullPath[1] == ':')) {
+	dev = Tcl_UniCharToLower(fullPath[0]) - 'a';
+    }
+    Tcl_DStringFree(&ds);
+
+    attr = data.a.dwFileAttributes;
+    mode  = (attr & FILE_ATTRIBUTE_DIRECTORY) ? S_IFDIR | S_IEXEC : S_IFREG;
+    mode |= (attr & FILE_ATTRIBUTE_READONLY) ? S_IREAD : S_IREAD | S_IWRITE;
+    p = strrchr(path, '.');
+    if (p != NULL) {
+	if ((lstrcmpiA(p, ".exe") == 0) 
+		|| (lstrcmpiA(p, ".com") == 0) 
+		|| (lstrcmpiA(p, ".bat") == 0)
+		|| (lstrcmpiA(p, ".pif") == 0)) {
+	    mode |= S_IEXEC;
+	}
+    }
+
+    /*
+     * Propagate the S_IREAD, S_IWRITE, S_IEXEC bits to the group and 
+     * other positions.
+     */
+
+    mode |= (mode & 0x0700) >> 3;
+    mode |= (mode & 0x0700) >> 6;
+    
+    statPtr->st_dev	= (dev_t) dev;
+    statPtr->st_ino	= 0;
+    statPtr->st_mode	= (unsigned short) mode;
+    statPtr->st_nlink	= 1;
+    statPtr->st_uid	= 0;
+    statPtr->st_gid	= 0;
+    statPtr->st_rdev	= (dev_t) dev;
+    statPtr->st_size	= data.a.nFileSizeLow;
+    statPtr->st_atime	= ToCTime(data.a.ftLastAccessTime);
+    statPtr->st_mtime	= ToCTime(data.a.ftLastWriteTime);
+    statPtr->st_ctime	= ToCTime(data.a.ftCreationTime);
+    return 0;
+}
+
+static time_t
+ToCTime(
+    FILETIME fileTime)		/* UTC Time to convert to local time_t. */
+{
+    FILETIME localFileTime;
+    SYSTEMTIME systemTime;
+    struct tm tm;
+
+    if (FileTimeToLocalFileTime(&fileTime, &localFileTime) == 0) {
+	return 0;
+    }
+    if (FileTimeToSystemTime(&localFileTime, &systemTime) == 0) {
+	return 0;
+    }
+    tm.tm_sec = systemTime.wSecond;
+    tm.tm_min = systemTime.wMinute;
+    tm.tm_hour = systemTime.wHour;
+    tm.tm_mday = systemTime.wDay;
+    tm.tm_mon = systemTime.wMonth - 1;
+    tm.tm_year = systemTime.wYear - 1900;
+    tm.tm_wday = 0;
+    tm.tm_yday = 0;
+    tm.tm_isdst = -1;
+
+    return mktime(&tm);
+}
+
+#if 0
+
+    /*
+     * Borland's stat doesn't take into account localtime.
+     */
+
+    if ((result == 0) && (buf->st_mtime != 0)) {
+	TIME_ZONE_INFORMATION tz;
+	int time, bias;
+
+	time = GetTimeZoneInformation(&tz);
+	bias = tz.Bias;
+	if (time == TIME_ZONE_ID_DAYLIGHT) {
+	    bias += tz.DaylightBias;
+	}
+	bias *= 60;
+	buf->st_atime -= bias;
+	buf->st_ctime -= bias;
+	buf->st_mtime -= bias;
+    }
+
+#endif
+
+
 #if 0
 /*
  *-------------------------------------------------------------------------
@@ -518,130 +953,3 @@ TclWinResolveShortcut(bufferPtr)
     return 0;
 }
 #endif
-
-/*
- *----------------------------------------------------------------------
- *
- * TclWinStat, TclWinLstat --
- *
- *	These functions replace the library versions of stat and lstat.
- *
- *	The stat and lstat functions provided by some Windows compilers 
- *	are incomplete.  Ideally, a complete rewrite of stat would go
- *	here; now, the only fix is that stat("c:") used to return an
- *	error instead infor for current dir on specified drive.
- *
- * Results:
- *	See stat documentation.
- *
- * Side effects:
- *	See stat documentation.
- *
- *----------------------------------------------------------------------
- */
-
-int
-TclWinStat(path, buf)
-    CONST char *path;		/* Path of file to stat (in current CP). */
-    struct stat *buf;		/* Filled with results of stat call. */
-{
-    char name[4];
-    int result;
-
-    if ((strlen(path) == 2) && (path[1] == ':')) {
-	strcpy(name, path);
-	name[2] = '.';
-	name[3] = '\0';
-	path = name;
-    }
-
-#undef stat
-
-    result = stat(path, buf);
-
-#ifndef _MSC_VER
-
-    /*
-     * Borland's stat doesn't take into account localtime.
-     */
-
-    if ((result == 0) && (buf->st_mtime != 0)) {
-	TIME_ZONE_INFORMATION tz;
-	int time, bias;
-
-	time = GetTimeZoneInformation(&tz);
-	bias = tz.Bias;
-	if (time == TIME_ZONE_ID_DAYLIGHT) {
-	    bias += tz.DaylightBias;
-	}
-	bias *= 60;
-	buf->st_atime -= bias;
-	buf->st_ctime -= bias;
-	buf->st_mtime -= bias;
-    }
-
-#endif
-
-    return result;
-}
-
-/*
- *---------------------------------------------------------------------------
- *
- * TclWinAccess --
- *
- *	This function replaces the library version of access.
- *
- *	The library version of access returns that all files have execute
- *	permission.
- *
- * Results:
- *	See access documentation.
- *
- * Side effects:
- *	See access documentation.
- *
- *---------------------------------------------------------------------------
- */
-
-int
-TclWinAccess(
-    CONST char *path,		/* Path of file to access (in current CP). */
-    int mode)			/* Permission setting. */
-{
-    int result;
-    CONST char *p;
-
-#undef access
-
-    result = access(path, mode);
-
-    if (result == 0) {
-	if (mode & 1) {
-	    if (GetFileAttributes(path) & FILE_ATTRIBUTE_DIRECTORY) {
-		/*
-		 * Directories are always executable. 
-		 */
-
-		return 0;
-	    }
-	    p = strrchr(path, '.');
-	    if (p != NULL) {
-		p++;
-		if ((stricmp(p, "exe") == 0)
-			|| (stricmp(p, "com") == 0)
-			|| (stricmp(p, "bat") == 0)) {
-		    /*
-		     * File that ends with .exe, .com, or .bat is executable.
-		     */
-
-		    return 0;
-		}
-	    }
-	    errno = EACCES;
-	    return -1;
-	}
-    }
-    return result;
-}
-

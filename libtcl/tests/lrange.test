@@ -6,13 +6,17 @@
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# SCCS: @(#) lrange.test 1.12 97/06/23 18:19:25
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest
+    namespace import ::tcltest::*
+}
 
 test lrange-1.1 {range of list elements} {
     lrange {a b c d} 1 2
@@ -71,13 +75,17 @@ test lrange-2.2 {error conditions} {
 } {1 {wrong # args: should be "lrange list first last"}}
 test lrange-2.3 {error conditions} {
     list [catch {lrange a b 6} msg] $msg
-} {1 {bad index "b": must be integer or "end"}}
+} {1 {bad index "b": must be integer or end?-integer?}}
 test lrange-2.4 {error conditions} {
     list [catch {lrange a 0 enigma} msg] $msg
-} {1 {bad index "enigma": must be integer or "end"}}
+} {1 {bad index "enigma": must be integer or end?-integer?}}
 test lrange-2.5 {error conditions} {
     list [catch {lrange "a \{b c" 3 4} msg] $msg
 } {1 {unmatched open brace in list}}
 test lrange-2.6 {error conditions} {
     list [catch {lrange "a b c \{ d e" 1 4} msg] $msg
 } {1 {unmatched open brace in list}}
+
+# cleanup
+::tcltest::cleanupTests
+return

@@ -5,36 +5,76 @@
  *	differences between Windows and Unix. It should be the only
  *	file that contains #ifdefs to handle different flavors of OS.
  *
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclWinPort.h 1.53 97/07/30 14:12:17
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TCLWINPORT
 #define _TCLWINPORT
 
-#include <malloc.h>
-#include <stdio.h>
+#ifndef _TCLINT
+#   include "tclInt.h"
+#endif
 
+#ifdef CHECK_UNICODE_CALLS
+
+#define _UNICODE
+#define UNICODE
+
+#define __TCHAR_DEFINED
+typedef float *_TCHAR;
+
+#define _TCHAR_DEFINED
+typedef float *TCHAR;
+
+#endif
+
+/*
+ *---------------------------------------------------------------------------
+ * The following sets of #includes and #ifdefs are required to get Tcl to
+ * compile under the windows compilers.
+ *---------------------------------------------------------------------------
+ */
+
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
+#include <direct.h>
 #include <errno.h>
-#include <process.h>
-#include <signal.h>
-#include <winsock.h>
-#include <sys/stat.h>
-#include <sys/timeb.h>
-#include <time.h>
-#include <io.h>
 #include <fcntl.h>
 #include <float.h>
+#include <io.h>
+#include <malloc.h>
+#include <process.h>
+#include <signal.h>
+#include <string.h>
+
+/*
+ * Need to block out these includes for building extensions with MetroWerks
+ * compiler for Win32.
+ */
+
+#ifndef __MWERKS__
+#include <sys/stat.h>
+#include <sys/timeb.h>
+#endif
+
+#include <tchar.h>
+#include <time.h>
+#include <winsock2.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
+
+#ifdef BUILD_tcl
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLEXPORT
+#endif
 
 /*
  * Define EINPROGRESS in terms of WSAEINPROGRESS.
@@ -51,172 +91,6 @@
 #ifndef ENOTSUP
 #define	ENOTSUP		-1030507
 #endif
-
-/*
- * The following defines wrap the system memory allocation routines for
- * use by tclAlloc.c.
- */
-
-#define TclpSysAlloc(size, isBin)	((void*)GlobalAlloc(GMEM_FIXED, \
-					    (DWORD)size))
-#define TclpSysFree(ptr)		(GlobalFree((HGLOBAL)ptr))
-#define TclpSysRealloc(ptr, size)	((void*)GlobalReAlloc((HGLOBAL)ptr, \
-					    (DWORD)size, 0))
-
-/*
- * The default platform eol translation on Windows is TCL_TRANSLATE_CRLF:
- */
-
-#define	TCL_PLATFORM_TRANSLATION	TCL_TRANSLATE_CRLF
-
-/*
- * Declare dynamic loading extension macro.
- */
-
-#define TCL_SHLIB_EXT ".dll"
-
-/*
- * Supply definitions for macros to query wait status, if not already
- * defined in header files above.
- */
-
-#if TCL_UNION_WAIT
-#   define WAIT_STATUS_TYPE union wait
-#else
-#   define WAIT_STATUS_TYPE int
-#endif
-
-#ifndef WIFEXITED
-#   define WIFEXITED(stat)  (((*((int *) &(stat))) & 0xff) == 0)
-#endif
-
-#ifndef WEXITSTATUS
-#   define WEXITSTATUS(stat) (((*((int *) &(stat))) >> 8) & 0xff)
-#endif
-
-#ifndef WIFSIGNALED
-#   define WIFSIGNALED(stat) (((*((int *) &(stat)))) && ((*((int *) &(stat))) == ((*((int *) &(stat))) & 0x00ff)))
-#endif
-
-#ifndef WTERMSIG
-#   define WTERMSIG(stat)    ((*((int *) &(stat))) & 0x7f)
-#endif
-
-#ifndef WIFSTOPPED
-#   define WIFSTOPPED(stat)  (((*((int *) &(stat))) & 0xff) == 0177)
-#endif
-
-#ifndef WSTOPSIG
-#   define WSTOPSIG(stat)    (((*((int *) &(stat))) >> 8) & 0xff)
-#endif
-
-/*
- * Define constants for waitpid() system call if they aren't defined
- * by a system header file.
- */
-
-#ifndef WNOHANG
-#   define WNOHANG 1
-#endif
-#ifndef WUNTRACED
-#   define WUNTRACED 2
-#endif
-
-/*
- * Define MAXPATHLEN in terms of MAXPATH if available
- */
-
-#ifndef MAXPATH
-#define MAXPATH MAX_PATH
-#endif /* MAXPATH */
-
-#ifndef MAXPATHLEN
-#define MAXPATHLEN MAXPATH
-#endif /* MAXPATHLEN */
-
-#ifndef F_OK
-#    define F_OK 00
-#endif
-#ifndef X_OK
-#    define X_OK 01
-#endif
-#ifndef W_OK
-#    define W_OK 02
-#endif
-#ifndef R_OK
-#    define R_OK 04
-#endif
-
-/*
- * Define macros to query file type bits, if they're not already
- * defined.
- */
-
-#ifndef S_ISREG
-#   ifdef S_IFREG
-#       define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-#   else
-#       define S_ISREG(m) 0
-#   endif
-# endif
-#ifndef S_ISDIR
-#   ifdef S_IFDIR
-#       define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
-#   else
-#       define S_ISDIR(m) 0
-#   endif
-# endif
-#ifndef S_ISCHR
-#   ifdef S_IFCHR
-#       define S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
-#   else
-#       define S_ISCHR(m) 0
-#   endif
-# endif
-#ifndef S_ISBLK
-#   ifdef S_IFBLK
-#       define S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
-#   else
-#       define S_ISBLK(m) 0
-#   endif
-# endif
-#ifndef S_ISFIFO
-#   ifdef S_IFIFO
-#       define S_ISFIFO(m) (((m) & S_IFMT) == S_IFIFO)
-#   else
-#       define S_ISFIFO(m) 0
-#   endif
-# endif
-
-/*
- * Define pid_t and uid_t if they're not already defined.
- */
-
-#if ! TCL_PID_T
-#   define pid_t int
-#endif
-#if ! TCL_UID_T
-#   define uid_t int
-#endif
-
-/*
- * Provide a stub definition for TclGetUserHome().
- */
-
-#define TclGetUserHome(name,bufferPtr) (NULL)
-
-/*
- * Visual C++ has some odd names for common functions, so we need to
- * define a few macros to handle them.  Also, it defines EDEADLOCK and
- * EDEADLK as the same value, which confuses Tcl_ErrnoId().
- */
-
-#ifdef _MSC_VER
-#    define environ _environ
-#    define hypot _hypot
-#    define exception _exception
-#    undef EDEADLOCK
-#endif /* _MSC_VER */
 
 /*
  * The following defines redefine the Windows Socket errors as
@@ -327,13 +201,186 @@
 #endif
 
 /*
+ * Supply definitions for macros to query wait status, if not already
+ * defined in header files above.
+ */
+
+#if TCL_UNION_WAIT
+#   define WAIT_STATUS_TYPE union wait
+#else
+#   define WAIT_STATUS_TYPE int
+#endif
+
+#ifndef WIFEXITED
+#   define WIFEXITED(stat)  (((*((int *) &(stat))) & 0xff) == 0)
+#endif
+
+#ifndef WEXITSTATUS
+#   define WEXITSTATUS(stat) (((*((int *) &(stat))) >> 8) & 0xff)
+#endif
+
+#ifndef WIFSIGNALED
+#   define WIFSIGNALED(stat) (((*((int *) &(stat)))) && ((*((int *) &(stat))) == ((*((int *) &(stat))) & 0x00ff)))
+#endif
+
+#ifndef WTERMSIG
+#   define WTERMSIG(stat)    ((*((int *) &(stat))) & 0x7f)
+#endif
+
+#ifndef WIFSTOPPED
+#   define WIFSTOPPED(stat)  (((*((int *) &(stat))) & 0xff) == 0177)
+#endif
+
+#ifndef WSTOPSIG
+#   define WSTOPSIG(stat)    (((*((int *) &(stat))) >> 8) & 0xff)
+#endif
+
+/*
+ * Define constants for waitpid() system call if they aren't defined
+ * by a system header file.
+ */
+
+#ifndef WNOHANG
+#   define WNOHANG 1
+#endif
+#ifndef WUNTRACED
+#   define WUNTRACED 2
+#endif
+
+/*
+ * Define access mode constants if they aren't already defined.
+ */
+
+#ifndef F_OK
+#    define F_OK 00
+#endif
+#ifndef X_OK
+#    define X_OK 01
+#endif
+#ifndef W_OK
+#    define W_OK 02
+#endif
+#ifndef R_OK
+#    define R_OK 04
+#endif
+
+/*
+ * Define macros to query file type bits, if they're not already
+ * defined.
+ */
+
+#ifndef S_ISREG
+#   ifdef S_IFREG
+#       define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#   else
+#       define S_ISREG(m) 0
+#   endif
+# endif
+#ifndef S_ISDIR
+#   ifdef S_IFDIR
+#       define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#   else
+#       define S_ISDIR(m) 0
+#   endif
+# endif
+#ifndef S_ISCHR
+#   ifdef S_IFCHR
+#       define S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
+#   else
+#       define S_ISCHR(m) 0
+#   endif
+# endif
+#ifndef S_ISBLK
+#   ifdef S_IFBLK
+#       define S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
+#   else
+#       define S_ISBLK(m) 0
+#   endif
+# endif
+#ifndef S_ISFIFO
+#   ifdef S_IFIFO
+#       define S_ISFIFO(m) (((m) & S_IFMT) == S_IFIFO)
+#   else
+#       define S_ISFIFO(m) 0
+#   endif
+# endif
+
+/*
+ * Define MAXPATHLEN in terms of MAXPATH if available
+ */
+
+#ifndef MAXPATH
+#define MAXPATH MAX_PATH
+#endif /* MAXPATH */
+
+#ifndef MAXPATHLEN
+#define MAXPATHLEN MAXPATH
+#endif /* MAXPATHLEN */
+
+/*
+ * Define pid_t and uid_t if they're not already defined.
+ */
+
+#if ! TCL_PID_T
+#   define pid_t int
+#endif
+#if ! TCL_UID_T
+#   define uid_t int
+#endif
+
+/*
+ * Visual C++ has some odd names for common functions, so we need to
+ * define a few macros to handle them.  Also, it defines EDEADLOCK and
+ * EDEADLK as the same value, which confuses Tcl_ErrnoId().
+ */
+
+#ifdef _MSC_VER
+#    define environ _environ
+#    define hypot _hypot
+#    define exception _exception
+#    undef EDEADLOCK
+#endif /* _MSC_VER */
+
+/*
+ *---------------------------------------------------------------------------
+ * The following macros and declarations represent the interface between 
+ * generic and windows-specific parts of Tcl.  Some of the macros may 
+ * override functions declared in tclInt.h.
+ *---------------------------------------------------------------------------
+ */
+
+/*
+ * The default platform eol translation on Windows is TCL_TRANSLATE_CRLF:
+ */
+
+#define	TCL_PLATFORM_TRANSLATION	TCL_TRANSLATE_CRLF
+
+/*
+ * Declare dynamic loading extension macro.
+ */
+
+#define TCL_SHLIB_EXT ".dll"
+
+/*
  * The following define ensures that we use the native putenv
  * implementation to modify the environment array.  This keeps
  * the C level environment in synch with the system level environment.
  */
 
 #define USE_PUTENV	1
-    
+
+/*
+ * The following defines wrap the system memory allocation routines for
+ * use by tclAlloc.c.
+ */
+
+#define TclpSysAlloc(size, isBin)	((void*)HeapAlloc(GetProcessHeap(), \
+					    (DWORD)0, (DWORD)size))
+#define TclpSysFree(ptr)		(HeapFree(GetProcessHeap(), \
+					    (DWORD)0, (HGLOBAL)ptr))
+#define TclpSysRealloc(ptr, size)	((void*)HeapReAlloc(GetProcessHeap(), \
+					    (DWORD)0, (LPVOID)ptr, (DWORD)size))
+
 /*
  * The following defines map from standard socket names to our internal
  * wrappers that redirect through the winSock function table (see the
@@ -346,54 +393,58 @@
 #define setsockopt	TclWinSetSockOpt
 
 /*
- * The following implements the Windows method for exiting the process.
+ * The following macros have trivial definitions, allowing generic code to 
+ * address platform-specific issues.
  */
-#define TclPlatformExit(status) exit(status)
-
-
-/*
- * The following declarations belong in tclInt.h, but depend on platform
- * specific types (e.g. struct tm).
- */
-
-EXTERN struct tm *	TclpGetDate _ANSI_ARGS_((const time_t *tp,
-			    int useGMT));
-EXTERN unsigned long	TclpGetPid _ANSI_ARGS_((Tcl_Pid pid));
-EXTERN size_t		TclStrftime _ANSI_ARGS_((char *s, size_t maxsize,
-			    const char *format, const struct tm *t));
-
-/*
- * The following prototypes and defines replace the Windows versions
- * of POSIX function that various compilier vendors didn't implement 
- * well or consistantly.
- */
-
-#define stat(path, buf)		TclWinStat(path, buf)
-#define lstat			stat
-#define access(path, mode)	TclWinAccess(path, mode)
-
-EXTERN int		TclWinStat _ANSI_ARGS_((CONST char *path, 
-			    struct stat *buf));
-EXTERN int		TclWinAccess _ANSI_ARGS_((CONST char *path, 
-			    int mode));
 
 #define TclpReleaseFile(file)	ckfree((char *) file)
 
 /*
- * Declarations for Windows specific functions.
+ * The following macros and declarations wrap the C runtime library 
+ * functions.
  */
 
-EXTERN void		TclWinConvertError _ANSI_ARGS_((DWORD errCode));
-EXTERN void		TclWinConvertWSAError _ANSI_ARGS_((DWORD errCode));
-EXTERN struct servent * PASCAL FAR
-			TclWinGetServByName _ANSI_ARGS_((const char FAR *nm,
-		            const char FAR *proto));
-EXTERN int PASCAL FAR	TclWinGetSockOpt _ANSI_ARGS_((SOCKET s, int level,
-		            int optname, char FAR * optval, int FAR *optlen));
-EXTERN HINSTANCE	TclWinGetTclInstance _ANSI_ARGS_((void));
-EXTERN HINSTANCE	TclWinLoadLibrary _ANSI_ARGS_((char *name));
-EXTERN u_short PASCAL FAR
-			TclWinNToHS _ANSI_ARGS_((u_short ns));
-EXTERN int PASCAL FAR	TclWinSetSockOpt _ANSI_ARGS_((SOCKET s, int level,
-		            int optname, const char FAR * optval, int optlen));
+#define TclpExit		exit
+#define TclpLstat		TclpStat
+
+/*
+ * Declarations for Windows-only functions.
+ */
+
+EXTERN Tcl_Channel  TclWinOpenSerialChannel _ANSI_ARGS_((HANDLE handle,
+                        char *channelName, int permissions));
+					 
+EXTERN Tcl_Channel  TclWinOpenConsoleChannel _ANSI_ARGS_((HANDLE handle,
+                        char *channelName, int permissions));
+
+EXTERN Tcl_Channel  TclWinOpenFileChannel _ANSI_ARGS_((HANDLE handle,
+                        char *channelName, int permissions, int appendMode));
+
+EXTERN TclFile TclWinMakeFile _ANSI_ARGS_((HANDLE handle));
+
+/*
+ * Platform specific mutex definition used by memory allocators.
+ * These mutexes are statically allocated and explicitly initialized.
+ * Most modules do not use this, but instead use Tcl_Mutex types and
+ * Tcl_MutexLock and Tcl_MutexUnlock that are self-initializing.
+ */
+
+#ifdef TCL_THREADS
+typedef CRITICAL_SECTION TclpMutex;
+EXTERN void	TclpMutexInit _ANSI_ARGS_((TclpMutex *mPtr));
+EXTERN void	TclpMutexLock _ANSI_ARGS_((TclpMutex *mPtr));
+EXTERN void	TclpMutexUnlock _ANSI_ARGS_((TclpMutex *mPtr));
+#else
+typedef int TclpMutex;
+#define	TclpMutexInit(a)
+#define	TclpMutexLock(a)
+#define	TclpMutexUnlock(a)
+#endif /* TCL_THREADS */
+
+#include "tclPlatDecls.h"
+#include "tclIntPlatDecls.h"
+
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLIMPORT
+
 #endif /* _TCLWINPORT */

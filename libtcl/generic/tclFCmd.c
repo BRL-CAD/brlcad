@@ -4,12 +4,12 @@
  *      This file implements the generic portion of file manipulation 
  *      subcommands of the "file" command. 
  *
- * Copyright (c) 1996-1997 Sun Microsystems, Inc.
+ * Copyright (c) 1996-1998 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclFCmd.c 1.17 97/05/14 13:23:13
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -141,12 +141,12 @@ FileCopyRename(interp, argc, argv, copyFlag)
     result = TCL_OK;
 
     /*
-     * Call stat() so that if target is a symlink that points to a directory
-     * we will put the sources in that directory instead of overwriting the
-     * symlink.
+     * Call TclStat() so that if target is a symlink that points to a
+     * directory we will put the sources in that directory instead of
+     * overwriting the symlink.
      */
 
-    if ((stat(target, &statBuf) != 0) || !S_ISDIR(statBuf.st_mode)) {
+    if ((TclStat(target, &statBuf) != 0) || !S_ISDIR(statBuf.st_mode)) {
 	if ((argc - i) > 2) {
 	    errno = ENOTDIR;
 	    Tcl_PosixError(interp);
@@ -172,7 +172,7 @@ FileCopyRename(interp, argc, argv, copyFlag)
      * Move each source file into target directory.  Extract the basename
      * from each source, and append it to the end of the target path.
      */
-    
+
     for ( ; i < argc - 1; i++) {
 	char *jargv[2];
 	char *source, *newFileName;
@@ -253,11 +253,12 @@ TclFileMakeDirsCmd(interp, argc, argv)
 	    char *target = Tcl_JoinPath(j + 1, pargv, &targetBuffer);
 
 	    /*
-	     * Call stat() so that if target is a symlink that points to a
-	     * directory we will create subdirectories in that directory.
+	     * Call TclStat() so that if target is a symlink that points
+	     * to a directory we will create subdirectories in that
+	     * directory.
 	     */
 
-	    if (stat(target, &statBuf) == 0) {
+	    if (TclStat(target, &statBuf) == 0) {
 		if (!S_ISDIR(statBuf.st_mode)) {
 		    errno = EEXIST;
 		    errfile = target;
@@ -349,7 +350,7 @@ TclFileDeleteCmd(interp, argc, argv)
 	 * Call lstat() to get info so can delete symbolic link itself.
 	 */
 
-	if (lstat(name, &statBuf) != 0) {
+	if (TclpLstat(name, &statBuf) != 0) {
 	    /*
 	     * Trying to delete a file that does not exist is not
 	     * considered an error, just a no-op
@@ -431,7 +432,7 @@ CopyRenameOneFile(interp, source, target, copyFlag, force)
     Tcl_DString sourcePath, targetPath, errorBuffer;
     char *targetName, *sourceName, *errfile;
     struct stat sourceStatBuf, targetStatBuf;
-	
+
     sourceName = Tcl_TranslateFileName(interp, source, &sourcePath);
     if (sourceName == NULL) {
 	return TCL_ERROR;
@@ -453,11 +454,11 @@ CopyRenameOneFile(interp, source, target, copyFlag, force)
      * target.
      */
 
-    if (lstat(sourceName, &sourceStatBuf) != 0) {
+    if (TclpLstat(sourceName, &sourceStatBuf) != 0) {
 	errfile = source;
 	goto done;
     }
-    if (lstat(targetName, &targetStatBuf) != 0) {
+    if (TclpLstat(targetName, &targetStatBuf) != 0) {
 	if (errno != ENOENT) {
 	    errfile = target;
 	    goto done;
@@ -605,8 +606,8 @@ CopyRenameOneFile(interp, source, target, copyFlag, force)
  * Results:
  *	The return value is how many arguments from argv were consumed
  *	by this function, or -1 if there was an error parsing the
- *	options.  If an error occurred, an error message is left in
- *	interp->result.
+ *	options.  If an error occurred, an error message is left in the
+ *	interp's result.
  *
  * Side effects:
  *	None.
@@ -619,7 +620,7 @@ FileForceOption(interp, argc, argv, forcePtr)
     Tcl_Interp *interp;		/* Interp, for error return. */
     int argc;			/* Number of arguments. */
     char **argv;		/* Argument strings.  First command line
-    option, if it exists, begins at */
+				 * option, if it exists, begins at 0. */
     int *forcePtr;		/* If the "-force" was specified, *forcePtr
 				 * is filled with 1, otherwise with 0. */
 {
@@ -750,66 +751,91 @@ TclFileAttrsCmd(interp, objc, objv)
     int objc;			/* Number of command line arguments. */
     Tcl_Obj *CONST objv[];	/* The command line objects. */
 {
-    Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
     char *fileName;
-    int length, index;
-    Tcl_Obj *listObjPtr;
-    Tcl_Obj *elementObjPtr;
+    int result;
     Tcl_DString buffer;
 
-    if ((objc > 2) && ((objc % 2) == 0)) {
-	Tcl_AppendStringsToObj(resultPtr, 
-		"wrong # args: must be \"file attributes name ?option? ?value? ?option value? ...\"",
-		(char *) NULL);
+    if (objc < 3) {
+	Tcl_WrongNumArgs(interp, 2, objv,
+		"name ?option? ?value? ?option value ...?");
 	return TCL_ERROR;
     }
 
-    fileName = Tcl_GetStringFromObj(objv[0], &length);
-    if (Tcl_TranslateFileName(interp, fileName, &buffer) == NULL) {
+    fileName = Tcl_GetString(objv[2]);
+    fileName = Tcl_TranslateFileName(interp, fileName, &buffer);
+    if (fileName == NULL) {
     	return TCL_ERROR;
     }
-    fileName = Tcl_DStringValue(&buffer);
     
-    if (objc == 1) {
-    	listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
-    	
+    objc -= 3;
+    objv += 3;
+    result = TCL_ERROR;
+
+    if (objc == 0) {
+	/*
+	 * Get all attributes.
+	 */
+
+	int index;
+	Tcl_Obj *listPtr, *objPtr;
+	 
+	listPtr = Tcl_NewListObj(0, NULL);
     	for (index = 0; tclpFileAttrStrings[index] != NULL; index++) {
-    	    elementObjPtr = Tcl_NewStringObj(tclpFileAttrStrings[index], -1);
-	    Tcl_ListObjAppendElement(interp, listObjPtr, elementObjPtr);
+    	    objPtr = Tcl_NewStringObj(tclpFileAttrStrings[index], -1);
+	    Tcl_ListObjAppendElement(interp, listPtr, objPtr);
+
 	    if ((*tclpFileAttrProcs[index].getProc)(interp, index, fileName,
-	    	    &elementObjPtr) != TCL_OK) {
-	    	Tcl_DecrRefCount(listObjPtr);
-	    	return TCL_ERROR;
+	    	    &objPtr) != TCL_OK) {
+		Tcl_DecrRefCount(listPtr);
+		goto end;
 	    }
-	    Tcl_ListObjAppendElement(interp, listObjPtr, elementObjPtr);
+	    Tcl_ListObjAppendElement(interp, listPtr, objPtr);
     	}
-    	Tcl_SetObjResult(interp, listObjPtr);
-    } else if (objc == 2) {
-    	if (Tcl_GetIndexFromObj(interp, objv[1], tclpFileAttrStrings, "option",
-    		0, &index) != TCL_OK) {
-    	    return TCL_ERROR;
+    	Tcl_SetObjResult(interp, listPtr);
+    } else if (objc == 1) {
+	/*
+	 * Get one attribute.
+	 */
+
+	int index;
+	Tcl_Obj *objPtr;
+	 
+    	if (Tcl_GetIndexFromObj(interp, objv[0], tclpFileAttrStrings,
+		"option", 0, &index) != TCL_OK) {
+	    goto end;
     	}
 	if ((*tclpFileAttrProcs[index].getProc)(interp, index, fileName,
-		&elementObjPtr) != TCL_OK) {
-	    return TCL_ERROR;
+		&objPtr) != TCL_OK) {
+	    goto end;
 	}
-	Tcl_SetObjResult(interp, elementObjPtr);
+	Tcl_SetObjResult(interp, objPtr);
     } else {
-        int i;
+	/*
+	 * Set option/value pairs.
+	 */
+
+	int i, index;
         
-    	for (i = 1; i < objc ; i += 2) {
-    	    if (Tcl_GetIndexFromObj(interp, objv[i], tclpFileAttrStrings, "option",
-    	    	    0, &index) != TCL_OK) {
-    	    	return TCL_ERROR;
+    	for (i = 0; i < objc ; i += 2) {
+    	    if (Tcl_GetIndexFromObj(interp, objv[i], tclpFileAttrStrings,
+		    "option", 0, &index) != TCL_OK) {
+		goto end;
     	    }
+	    if (i + 1 == objc) {
+		Tcl_AppendResult(interp, "value for \"",
+			Tcl_GetString(objv[i]), "\" missing",
+			(char *) NULL);
+		goto end;
+	    }
     	    if ((*tclpFileAttrProcs[index].setProc)(interp, index, fileName,
     	    	    objv[i + 1]) != TCL_OK) {
-    	    	return TCL_ERROR;
+		goto end;
     	    }
     	}
     }
-    
+    result = TCL_OK;
+
+    end:
     Tcl_DStringFree(&buffer);
-    
-    return TCL_OK;
+    return result;
 }

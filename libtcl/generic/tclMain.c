@@ -4,16 +4,19 @@
  *	Main program for Tcl shells and other Tcl-based applications.
  *
  * Copyright (c) 1988-1994 The Regents of the University of California.
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclMain.c 1.54 97/08/07 19:04:43
+ * RCS: @(#) $Id$
  */
 
 #include "tcl.h"
 #include "tclInt.h"
+
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLEXPORT
 
 /*
  * The following code ensures that tclLink.c is linked whenever
@@ -37,24 +40,6 @@ int (*tclDummyLinkVarPtr)() = Tcl_LinkVar;
 extern int		isatty _ANSI_ARGS_((int fd));
 extern char *		strcpy _ANSI_ARGS_((char *dst, CONST char *src));
 
-static Tcl_Interp *interp;	/* Interpreter for application. */
-
-#ifdef TCL_MEM_DEBUG
-static char dumpFile[100];	/* Records where to dump memory allocation
-				 * information. */
-static int quitFlag = 0;	/* 1 means "checkmem" command was called,
-				 * so the application should quit and dump
-				 * memory allocation information. */
-#endif
-
-/*
- * Forward references for procedures defined later in this file:
- */
-
-#ifdef TCL_MEM_DEBUG
-static int		CheckmemCmd _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int argc, char *argv[]));
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -85,21 +70,19 @@ Tcl_Main(argc, argv, appInitProc)
 				 * initialization but before starting to
 				 * execute commands. */
 {
-    Tcl_Obj *prompt1NamePtr = NULL;
-    Tcl_Obj *prompt2NamePtr = NULL;
     Tcl_Obj *resultPtr;
     Tcl_Obj *commandPtr = NULL;
-    char buffer[1000], *args, *fileName, *bytes;
+    char buffer[1000], *args, *fileName;
     int code, gotPartial, tty, length;
     int exitCode = 0;
     Tcl_Channel inChannel, outChannel, errChannel;
+    Tcl_Interp *interp;
+    Tcl_DString argString;
 
     Tcl_FindExecutable(argv[0]);
     interp = Tcl_CreateInterp();
 #ifdef TCL_MEM_DEBUG
     Tcl_InitMemory(interp);
-    Tcl_CreateCommand(interp, "checkmem", CheckmemCmd, (ClientData) 0,
-	    (Tcl_CmdDeleteProc *) NULL);
 #endif
 
     /*
@@ -115,12 +98,20 @@ Tcl_Main(argc, argv, appInitProc)
 	argv++;
     }
     args = Tcl_Merge(argc-1, argv+1);
-    Tcl_SetVar(interp, "argv", args, TCL_GLOBAL_ONLY);
+    Tcl_ExternalToUtfDString(NULL, args, -1, &argString);
+    Tcl_SetVar(interp, "argv", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
+    Tcl_DStringFree(&argString);
     ckfree(args);
+
+    if (fileName == NULL) {
+	Tcl_ExternalToUtfDString(NULL, argv[0], -1, &argString);
+    } else {
+	fileName = Tcl_ExternalToUtfDString(NULL, fileName, -1, &argString);
+    }
+
     TclFormatInt(buffer, argc-1);
     Tcl_SetVar(interp, "argc", buffer, TCL_GLOBAL_ONLY);
-    Tcl_SetVar(interp, "argv0", (fileName != NULL) ? fileName : argv[0],
-	    TCL_GLOBAL_ONLY);
+    Tcl_SetVar(interp, "argv0", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
 
     /*
      * Set the "tcl_interactive" variable.
@@ -137,10 +128,10 @@ Tcl_Main(argc, argv, appInitProc)
     if ((*appInitProc)(interp) != TCL_OK) {
 	errChannel = Tcl_GetStdChannel(TCL_STDERR);
 	if (errChannel) {
-	    Tcl_Write(errChannel,
+	    Tcl_WriteChars(errChannel,
 		    "application-specific initialization failed: ", -1);
-	    Tcl_Write(errChannel, interp->result, -1);
-	    Tcl_Write(errChannel, "\n", 1);
+	    Tcl_WriteObj(errChannel, Tcl_GetObjResult(interp));
+	    Tcl_WriteChars(errChannel, "\n", 1);
 	}
     }
 
@@ -160,14 +151,15 @@ Tcl_Main(argc, argv, appInitProc)
 		 */
 
 		Tcl_AddErrorInfo(interp, "");
-		Tcl_Write(errChannel,
-			Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY), -1);
-		Tcl_Write(errChannel, "\n", 1);
+		Tcl_WriteObj(errChannel, Tcl_GetVar2Ex(interp, "errorInfo",
+			NULL, TCL_GLOBAL_ONLY));
+		Tcl_WriteChars(errChannel, "\n", 1);
 	    }
 	    exitCode = 1;
 	}
 	goto done;
     }
+    Tcl_DStringFree(&argString);
 
     /*
      * We're running interactively.  Source a user-specific startup
@@ -184,11 +176,7 @@ Tcl_Main(argc, argv, appInitProc)
 
     commandPtr = Tcl_NewObj();
     Tcl_IncrRefCount(commandPtr);
-    prompt1NamePtr = Tcl_NewStringObj("tcl_prompt1", -1);
-    Tcl_IncrRefCount(prompt1NamePtr);
-    prompt2NamePtr = Tcl_NewStringObj("tcl_prompt2", -1);
-    Tcl_IncrRefCount(prompt2NamePtr);
-    
+
     inChannel = Tcl_GetStdChannel(TCL_STDIN);
     outChannel = Tcl_GetStdChannel(TCL_STDOUT);
     gotPartial = 0;
@@ -196,25 +184,23 @@ Tcl_Main(argc, argv, appInitProc)
 	if (tty) {
 	    Tcl_Obj *promptCmdPtr;
 
-	    promptCmdPtr = Tcl_ObjGetVar2(interp,
-		    (gotPartial? prompt2NamePtr : prompt1NamePtr),
-		    (Tcl_Obj *) NULL, TCL_GLOBAL_ONLY);
+	    promptCmdPtr = Tcl_GetVar2Ex(interp,
+		    (gotPartial ? "tcl_prompt2" : "tcl_prompt1"),
+		    NULL, TCL_GLOBAL_ONLY);
 	    if (promptCmdPtr == NULL) {
                 defaultPrompt:
 		if (!gotPartial && outChannel) {
-		    Tcl_Write(outChannel, "% ", 2);
+		    Tcl_WriteChars(outChannel, "% ", 2);
 		}
 	    } else {
-		code = Tcl_EvalObj(interp, promptCmdPtr);
+		code = Tcl_EvalObjEx(interp, promptCmdPtr, 0);
 		inChannel = Tcl_GetStdChannel(TCL_STDIN);
 		outChannel = Tcl_GetStdChannel(TCL_STDOUT);
 		errChannel = Tcl_GetStdChannel(TCL_STDERR);
 		if (code != TCL_OK) {
 		    if (errChannel) {
-			resultPtr = Tcl_GetObjResult(interp);
-			bytes = Tcl_GetStringFromObj(resultPtr, &length);
-			Tcl_Write(errChannel, bytes, length);
-			Tcl_Write(errChannel, "\n", 1);
+			Tcl_WriteObj(errChannel, Tcl_GetObjResult(interp));
+			Tcl_WriteChars(errChannel, "\n", 1);
 		    }
 		    Tcl_AddErrorInfo(interp,
 			    "\n    (script that generates prompt)");
@@ -254,24 +240,20 @@ Tcl_Main(argc, argv, appInitProc)
 	Tcl_SetObjLength(commandPtr, 0);
 	if (code != TCL_OK) {
 	    if (errChannel) {
-		resultPtr = Tcl_GetObjResult(interp);
-		bytes = Tcl_GetStringFromObj(resultPtr, &length);
-		Tcl_Write(errChannel, bytes, length);
-		Tcl_Write(errChannel, "\n", 1);
+		Tcl_WriteObj(errChannel, Tcl_GetObjResult(interp));
+		Tcl_WriteChars(errChannel, "\n", 1);
 	    }
 	} else if (tty) {
 	    resultPtr = Tcl_GetObjResult(interp);
-	    bytes = Tcl_GetStringFromObj(resultPtr, &length);
+	    Tcl_GetStringFromObj(resultPtr, &length);
 	    if ((length > 0) && outChannel) {
-		Tcl_Write(outChannel, bytes, length);
-		Tcl_Write(outChannel, "\n", 1);
+		Tcl_WriteObj(outChannel, resultPtr);
+		Tcl_WriteChars(outChannel, "\n", 1);
 	    }
 	}
 #ifdef TCL_MEM_DEBUG
-	if (quitFlag) {
+	if (tclMemDumpFileName != NULL) {
 	    Tcl_DecrRefCount(commandPtr);
-	    Tcl_DecrRefCount(prompt1NamePtr);
-	    Tcl_DecrRefCount(prompt2NamePtr);
 	    Tcl_DeleteInterp(interp);
 	    Tcl_Exit(0);
 	}
@@ -288,53 +270,6 @@ Tcl_Main(argc, argv, appInitProc)
     if (commandPtr != NULL) {
 	Tcl_DecrRefCount(commandPtr);
     }
-    if (prompt1NamePtr != NULL) {
-	Tcl_DecrRefCount(prompt1NamePtr);
-    }
-    if (prompt2NamePtr != NULL) {
-	Tcl_DecrRefCount(prompt2NamePtr);
-    }
     sprintf(buffer, "exit %d", exitCode);
     Tcl_Eval(interp, buffer);
 }
-
-/*
- *----------------------------------------------------------------------
- *
- * CheckmemCmd --
- *
- *	This is the command procedure for the "checkmem" command, which
- *	causes the application to exit after printing information about
- *	memory usage to the file passed to this command as its first
- *	argument.
- *
- * Results:
- *	Returns a standard Tcl completion code.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-#ifdef TCL_MEM_DEBUG
-
-	/* ARGSUSED */
-static int
-CheckmemCmd(clientData, interp, argc, argv)
-    ClientData clientData;		/* Not used. */
-    Tcl_Interp *interp;			/* Interpreter for evaluation. */
-    int argc;				/* Number of arguments. */
-    char *argv[];			/* String values of arguments. */
-{
-    extern char *tclMemDumpFileName;
-    if (argc != 2) {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		" fileName\"", (char *) NULL);
-	return TCL_ERROR;
-    }
-    strcpy(dumpFile, argv[1]);
-    tclMemDumpFileName = dumpFile;
-    quitFlag = 1;
-    return TCL_OK;
-}
-#endif

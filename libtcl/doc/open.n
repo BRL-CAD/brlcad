@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) open.n 1.16 97/01/14 18:00:35
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH open n 7.6 Tcl "Tcl Built-In Commands"
@@ -144,6 +144,14 @@ number of data bits, and number of stop bits for this serial port.  The
 ``odd'', ``even'', ``mark'', or ``space''.  \fIData\fR is the number of
 data bits and should be an integer from 5 to 8, while \fIstop\fR is the
 number of stop bits and should be the integer 1 or 2.
+.TP
+\fB\-pollinterval \fImsec\fR
+.
+This option, available only on Windows for serial ports, is used to
+set the maximum time between polling for fileevents.  This affects the
+time interval between checking for events throughout the Tcl
+interpreter (the smallest value always wins).  Use this option only if
+you want to poll the serial port more often than 10 msec (the default).
 .VE
 
 .VS
@@ -153,8 +161,13 @@ number of stop bits and should be the integer 1 or 2.
 \fBWindows \fR(all versions)
 .
 Valid values for \fIfileName\fR to open a serial port are of the form
-\fBcom\fIX\fB:\fR, where \fIX\fR is a number, generally from 1 to 4.  An
-attempt to open a serial port that does not exist will fail.
+\fBcom\fIX\fB:\fR, where \fIX\fR is a number, generally from 1 to 4.
+This notation only works for serial ports from 1 to 9, if the system
+happens to have more than four.  An attempt to open a serial port that
+does not exist or has a number greater than 9 will fail.  An alternate
+form of opening serial ports is to use the filename \fB\e\e.\ecomX\fR,
+where X is any number that corresponds to a serial port; please note
+that this method is considerably slower on Windows 95 and Windows 98.
 .TP
 \fBWindows NT\fR
 .

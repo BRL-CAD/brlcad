@@ -9,7 +9,7 @@
 #
 # The information in this file is specific to a single platform.
 #
-# SCCS: @(#) tclConfig.sh.in 1.20 97/07/01 11:40:19
+# RCS: @(#) $Id$
 
 # Tcl's version number.
 TCL_VERSION='@TCL_VERSION@'
@@ -23,11 +23,32 @@ TCL_CC='@CC@'
 # -D flags for use with the C compiler.
 TCL_DEFS='@DEFS@'
 
+# If TCL was built with debugging symbols, generated libraries contain
+# this string at the end of the library name (before the extension).
+TCL_DBGX=@TCL_DBGX@
+
+# Default flags used in an optimized and debuggable build, respectively.
+TCL_CFLAGS_DEBUG='@CFLAGS_DEBUG@'
+TCL_CFLAGS_OPTIMIZE='@CFLAGS_OPTIMIZE@'
+
+# Default linker flags used in an optimized and debuggable build, respectively.
+TCL_LDFLAGS_DEBUG='@LDFLAGS_DEBUG@'
+TCL_LDFLAGS_OPTIMIZE='@LDFLAGS_OPTIMIZE@'
+
 # Flag, 1: we built a shared lib, 0 we didn't
 TCL_SHARED_BUILD=@TCL_SHARED_BUILD@
 
 # The name of the Tcl library (may be either a .a file or a shared library):
-TCL_LIB_FILE=@TCL_LIB_FILE@
+TCL_LIB_FILE='@TCL_LIB_FILE@'
+
+# Flag to indicate whether shared libraries need export files.
+TCL_NEEDS_EXP_FILE=@TCL_NEEDS_EXP_FILE@
+
+# String that can be evaluated to generate the part of the export file
+# name that comes after the "libxxx" (includes version number, if any,
+# extension, and anything else needed).  May depend on the variables
+# VERSION.  On most UNIX systems this is ${VERSION}.exp.
+TCL_EXPORT_FILE_SUFFIX='@CFG_TCL_EXPORT_FILE_SUFFIX@'
 
 # Additional libraries to use when linking Tcl.
 TCL_LIBS='@DL_LIBS@ @LIBS@ @MATH_LIBS@'
@@ -43,8 +64,17 @@ TCL_EXEC_PREFIX='@exec_prefix@'
 # Flags to pass to cc when compiling the components of a shared library:
 TCL_SHLIB_CFLAGS='@SHLIB_CFLAGS@'
 
+# Flags to pass to cc to get warning messages
+TCL_CFLAGS_WARNING='@CFLAGS_WARNING@'
+
+# Extra flags to pass to cc:
+TCL_EXTRA_CFLAGS='@EXTRA_CFLAGS@'
+
 # Base command to use for combining object files into a shared library:
 TCL_SHLIB_LD='@SHLIB_LD@'
+
+# Base command to use for combining object files into a shared library:
+TCL_STLIB_LD='@STLIB_LD@'
 
 # Either '$LIBS' (if dependent libraries should be included when linking
 # shared libraries) or an empty string.  See Tcl's configure.in for more
@@ -60,7 +90,7 @@ TCL_DL_LIBS='@DL_LIBS@'
 
 # Flags to pass to the compiler when linking object files into
 # an executable tclsh or tcltest binary.
-TCL_LD_FLAGS='@LD_FLAGS@'
+TCL_LD_FLAGS='@LDFLAGS@'
 
 # Flags to pass to ld, such as "-R /usr/local/tcl/lib", that tell the
 # run-time dynamic linker where to look for shared libraries such as
@@ -74,6 +104,9 @@ TCL_COMPAT_OBJS='@LIBOBJS@'
 
 # Name of the ranlib program to use.
 TCL_RANLIB='@RANLIB@'
+
+# -l flag to pass to the linker to pick up the Tcl library
+TCL_LIB_FLAG='@TCL_LIB_FLAG@'
 
 # String to pass to linker to pick up the Tcl library from its
 # build directory.
@@ -94,13 +127,13 @@ TCL_LIB_VERSIONS_OK='@TCL_LIB_VERSIONS_OK@'
 # extension, and anything else needed).  May depend on the variables
 # VERSION and SHLIB_SUFFIX.  On most UNIX systems this is
 # ${VERSION}${SHLIB_SUFFIX}.
-TCL_SHARED_LIB_SUFFIX='@TCL_SHARED_LIB_SUFFIX@'
+TCL_SHARED_LIB_SUFFIX='@CFG_TCL_SHARED_LIB_SUFFIX@'
 
 # String that can be evaluated to generate the part of an unshared library
 # name that comes after the "libxxx" (includes version number, if any,
 # extension, and anything else needed).  May depend on the variable
 # VERSION.  On most UNIX systems this is ${VERSION}.a.
-TCL_UNSHARED_LIB_SUFFIX='@TCL_UNSHARED_LIB_SUFFIX@'
+TCL_UNSHARED_LIB_SUFFIX='@CFG_TCL_UNSHARED_LIB_SUFFIX@'
 
 # Location of the top-level source directory from which Tcl was built.
 # This is the directory that contains a README file as well as
@@ -114,3 +147,26 @@ TCL_SRC_DIR='@TCL_SRC_DIR@'
 # "package require" commands.  Contains the "prefix" directory plus also
 # the "exec_prefix" directory, if it is different.
 TCL_PACKAGE_PATH='@TCL_PACKAGE_PATH@'
+
+# Tcl supports stub.
+TCL_SUPPORTS_STUBS=1
+
+# The name of the Tcl stub library (.a):
+TCL_STUB_LIB_FILE='@TCL_STUB_LIB_FILE@'
+
+# -l flag to pass to the linker to pick up the Tcl stub library
+TCL_STUB_LIB_FLAG='@TCL_STUB_LIB_FLAG@'
+
+# String to pass to linker to pick up the Tcl stub library from its
+# build directory.
+TCL_BUILD_STUB_LIB_SPEC='@TCL_BUILD_STUB_LIB_SPEC@'
+
+# String to pass to linker to pick up the Tcl stub library from its
+# installed directory.
+TCL_STUB_LIB_SPEC='@TCL_STUB_LIB_SPEC@'
+
+# Path to the Tcl stub library in the build directory.
+TCL_BUILD_STUB_LIB_PATH='@TCL_BUILD_STUB_LIB_PATH@'
+
+# Path to the Tcl stub library in the install directory.
+TCL_STUB_LIB_PATH='@TCL_STUB_LIB_PATH@'

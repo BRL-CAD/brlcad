@@ -5,12 +5,12 @@
  *	with the "shl_load" and "shl_findsym" library procedures for
  *	dynamic loading (e.g. for HP machines).
  *
- * Copyright (c) 1995-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclLoadShl.c 1.5 96/03/15 15:01:44
+ * RCS: @(#) $Id$
  */
 
 #include <dl.h>
@@ -28,7 +28,7 @@
 /*
  *----------------------------------------------------------------------
  *
- * TclLoadFile --
+ * TclpLoadFile --
  *
  *	Dynamically loads a binary code file into memory and returns
  *	the addresses of two procedures within that file, if they
@@ -36,7 +36,7 @@
  *
  * Results:
  *	A standard Tcl completion code.  If an error occurs, an error
- *	message is left in interp->result.  *proc1Ptr and *proc2Ptr
+ *	message is left in the interp's result.  *proc1Ptr and *proc2Ptr
  *	are filled in with the addresses of the symbols given by
  *	*sym1 and *sym2, or NULL if those symbols can't be found.
  *
@@ -47,7 +47,7 @@
  */
 
 int
-TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
+TclpLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr, clientDataPtr)
     Tcl_Interp *interp;		/* Used for error reporting. */
     char *fileName;		/* Name of the file containing the desired
 				 * code. */
@@ -56,16 +56,30 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
     Tcl_PackageInitProc **proc1Ptr, **proc2Ptr;
 				/* Where to return the addresses corresponding
 				 * to sym1 and sym2. */
+    ClientData *clientDataPtr;	/* Filled with token for dynamically loaded
+				 * file which will be passed back to 
+				 * TclpUnloadFile() to unload the file. */
 {
     shl_t handle;
     Tcl_DString newName;
 
-    handle = shl_load(fileName, BIND_IMMEDIATE, 0L);
+    /*
+     * The flags below used to be BIND_IMMEDIATE; they were changed at
+     * the suggestion of Wolfgang Kechel (wolfgang@prs.de): "This
+     * enables verbosity for missing symbols when loading a shared lib
+     * and allows to load libtk8.0.sl into tclsh8.0 without problems.
+     * In general, this delays resolving symbols until they are actually
+     * needed.  Shared libs do no longer need all libraries linked in
+     * when they are build."
+     */
+
+    handle = shl_load(fileName, BIND_DEFERRED|BIND_VERBOSE, 0L);
     if (handle == NULL) {
 	Tcl_AppendResult(interp, "couldn't load file \"", fileName,
 		"\": ", Tcl_PosixError(interp), (char *) NULL);
 	return TCL_ERROR;
     }
+    *clientDataPtr = (ClientData) handle;
 
     /*
      * Some versions of the HP system software still use "_" at the
@@ -96,6 +110,37 @@ TclLoadFile(interp, fileName, sym1, sym2, proc1Ptr, proc2Ptr)
 	Tcl_DStringFree(&newName);
     }
     return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpUnloadFile --
+ *
+ *	Unloads a dynamically loaded binary code file from memory.
+ *	Code pointers in the formerly loaded file are no longer valid
+ *	after calling this function.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Code removed from memory.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclpUnloadFile(clientData)
+    ClientData clientData;	/* ClientData returned by a previous call
+				 * to TclpLoadFile().  The clientData is 
+				 * a token that represents the loaded 
+				 * file. */
+{
+    shl_t handle;
+
+    handle = (shl_t) clientData;
+    shl_unload(handle);
 }
 
 /*

@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) DString.3 1.20 96/08/26 12:59:44
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tcl_DString 3 7.4 Tcl "Tcl Library Procedures"
@@ -35,6 +35,8 @@ char *
 \fBTcl_DStringValue\fR(\fIdsPtr\fR)
 .sp
 \fBTcl_DStringSetLength\fR(\fIdsPtr, newLength\fR)
+.sp
+\fBTcl_DStringTrunc\fR(\fIdsPtr, newLength\fR)
 .sp
 \fBTcl_DStringFree\fR(\fIdsPtr\fR)
 .sp
@@ -123,6 +125,10 @@ caller to fill in the new space.
 \fBTcl_DStringSetLength\fR does not free up the string's storage space
 even if the string is truncated to zero length, so \fBTcl_DStringFree\fR
 will still need to be called.
+.PP
+\fBTcl_DStringTrunc\fR changes the length of a dynamic string.
+This procedure is now deprecated.  \fBTcl_DStringSetLength\fR  should
+be used instead.
 .PP
 \fBTcl_DStringFree\fR should be called when you're finished using
 the string.  It frees up any memory that was allocated for the string
