@@ -73,20 +73,21 @@ struct txt_specific {
 	char	*tx_pixels;	/* Pixel holding area */
 };
 #define TX_NULL	((struct txt_specific *)0)
+#define TX_O(m)	offsetof(struct txt_specific, m)
 
 struct structparse txt_parse[] = {
 #ifndef CRAY
-	"%C",	"transp",	(stroff_t)(TX_NULL->tx_transp),		FUNC_NULL,
-	"%s",	"file",		(stroff_t)(TX_NULL->tx_file),		FUNC_NULL,
+	"%C",	"transp",	offsetofarray(struct txt_specific, tx_transp),	FUNC_NULL,
+	"%s",	"file",		offsetofarray(struct txt_specific, tx_file),		FUNC_NULL,
 #else
-	"%C",	"transp",	(stroff_t)0,				FUNC_NULL,
-	"%s",	"file",		(stroff_t)1,				FUNC_NULL,
+	"%C",	"transp",	0,			FUNC_NULL,
+	"%s",	"file",		1,			FUNC_NULL,
 #endif
-	"%d",	"w",		(stroff_t)&(TX_NULL->tx_w),		FUNC_NULL,
-	"%d",	"n",		(stroff_t)&(TX_NULL->tx_n),		FUNC_NULL,
-	"%d",	"l",		(stroff_t)&(TX_NULL->tx_n),		FUNC_NULL,	/*compat*/
-	"%d",	"fw",		(stroff_t)&(TX_NULL->tx_fw),		FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%d",	"w",		TX_O(tx_w),		FUNC_NULL,
+	"%d",	"n",		TX_O(tx_n),		FUNC_NULL,
+	"%d",	"l",		TX_O(tx_n),		FUNC_NULL,	/*compat*/
+	"%d",	"fw",		TX_O(tx_fw),		FUNC_NULL,
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 /*
@@ -247,7 +248,7 @@ char	**dpp;
 
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_fw = tp->tx_n = -1;
-	rt_structparse( matparm, txt_parse, (stroff_t)tp );
+	rt_structparse( matparm, txt_parse, (char *)tp );
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
 	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
@@ -267,7 +268,7 @@ HIDDEN void
 txt_print( rp )
 register struct region *rp;
 {
-	rt_structprint(rp->reg_name, txt_parse, (stroff_t)rp->reg_udata);
+	rt_structprint(rp->reg_name, txt_parse, (char *)rp->reg_udata);
 }
 
 /*
@@ -287,17 +288,18 @@ struct ckr_specific  {
 	unsigned char	ckr_a[8];	/* first RGB */
 	unsigned char	ckr_b[8];	/* second RGB */
 };
-#define CKR_NULL ((struct ckr_specific *)0)
+#define CKR_NULL	((struct ckr_specific *)0)
+#define CKR_O(m)	offsetof(struct ckr_specific, m)
 
 struct structparse ckr_parse[] = {
 #ifndef CRAY
-	"%C",	"a",		(stroff_t)(CKR_NULL->ckr_a),		FUNC_NULL,
-	"%C",	"b",		(stroff_t)(CKR_NULL->ckr_b),		FUNC_NULL,
+	"%C",	"a",		offsetofarray(struct ckr_specific, ckr_a),		FUNC_NULL,
+	"%C",	"b",		offsetofarray(struct ckr_specific, ckr_b),		FUNC_NULL,
 #else
-	"%C",	"a",		(stroff_t)0,				FUNC_NULL,
-	"%C",	"b",		(stroff_t)1,				FUNC_NULL,
+	"%C",	"a",		0,			FUNC_NULL,
+	"%C",	"b",		1,			FUNC_NULL,
 #endif
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 /*
@@ -342,7 +344,7 @@ char	**dpp;
 	GETSTRUCT( ckp, ckr_specific );
 	*dpp = (char *)ckp;
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
-	rt_structparse( matparm, ckr_parse, (stroff_t)ckp );
+	rt_structparse( matparm, ckr_parse, (char *)ckp );
 	return(1);
 }
 
@@ -353,7 +355,7 @@ HIDDEN void
 ckr_print( rp )
 register struct region *rp;
 {
-	rt_structprint(rp->reg_name, ckr_parse, (stroff_t)rp->reg_udata);
+	rt_structprint(rp->reg_name, ckr_parse, rp->reg_udata);
 }
 
 /*

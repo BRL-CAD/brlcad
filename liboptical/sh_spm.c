@@ -36,12 +36,13 @@ struct spm_specific {
 	spm_map_t *sp_map;	/* stuff */
 };
 #define SP_NULL	((struct spm_specific *)0)
+#define SP_O(m)	offsetof(struct spm_specific, m)
 
 struct structparse spm_parse[] = {
-	"%s",	"file",		(stroff_t)(SP_NULL->sp_file),	FUNC_NULL,
-	"%d",	"w",		(stroff_t)&(SP_NULL->sp_w),	FUNC_NULL,
-	"%d",	"n",		(stroff_t)&(SP_NULL->sp_w),	FUNC_NULL,	/*compat*/
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%s",	"file",		offsetofarray(struct spm_specific, sp_file),	FUNC_NULL,
+	"%d",	"w",		SP_O(sp_w),	FUNC_NULL,
+	"%d",	"n",		SP_O(sp_w),	FUNC_NULL,	/*compat*/
+	(char *)0,(char *)0,	0,		FUNC_NULL
 };
 
 HIDDEN int	spm_setup(), spm_render();
@@ -102,7 +103,7 @@ char	**dpp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_w = -1;
-	rt_structparse( matparm, spm_parse, (stroff_t)spp );
+	rt_structparse( matparm, spm_parse, (char *)spp );
 	if( spp->sp_w < 0 )  spp->sp_w = 512;
 	if( spp->sp_file[0] == '\0' )
 		goto fail;
@@ -124,7 +125,7 @@ spm_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint("spm_setup", spm_parse, (stroff_t)dp);
+	rt_structprint("spm_setup", spm_parse, (char *)dp);
 	/* Should be more here */
 }
 

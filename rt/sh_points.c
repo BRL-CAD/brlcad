@@ -43,12 +43,13 @@ struct points_specific {
 	spm_map_t *pt_map;	/* stuff */
 };
 #define POINTS_NULL	((struct points_specific *)0)
+#define POINTS_O(m)	offsetof(struct points_specific, m)
 
 struct structparse points_parse[] = {
-	"%s",	"file",		(stroff_t)(POINTS_NULL->pt_file),	FUNC_NULL,
-	"%d",	"size",		(stroff_t)&(POINTS_NULL->pt_size),	FUNC_NULL,
-	"%d",	"w",		(stroff_t)&(POINTS_NULL->pt_size),	FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%s",	"file",		offsetofarray(struct points_specific, pt_file),	FUNC_NULL,
+	"%d",	"size",		POINTS_O(pt_size),	FUNC_NULL,
+	"%d",	"w",		POINTS_O(pt_size),	FUNC_NULL,
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 HIDDEN int	points_setup(), points_render();
@@ -93,7 +94,7 @@ char	**dpp;
 	/* get or default shader parameters */
 	ptp->pt_file[0] = '\0';
 	ptp->pt_size = -1;
-	rt_structparse( matparm, points_parse, (stroff_t)ptp );
+	rt_structparse( matparm, points_parse, (char *)ptp );
 	if( ptp->pt_size < 0 )
 		ptp->pt_size = 512;
 	if( ptp->pt_file[0] == '\0' )
@@ -217,7 +218,7 @@ points_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint("points_setup", points_parse, (stroff_t)dp);
+	rt_structprint("points_setup", points_parse, (char *)dp);
 	/* Should be more here */
 }
 

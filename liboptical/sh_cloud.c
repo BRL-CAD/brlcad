@@ -34,11 +34,12 @@ struct cloud_specific {
 	float	cl_range;
 };
 #define CL_NULL	((struct cloud_specific *)0)
+#define CL_O(m)	offsetof(struct cloud_specific, m)
 
 struct structparse cloud_parse[] = {
-	"%f",	"thresh",	(stroff_t)&(CL_NULL->cl_thresh),	FUNC_NULL,
-	"%f",	"range",	(stroff_t)&(CL_NULL->cl_range),		FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%f",	"thresh",	CL_O(cl_thresh),	FUNC_NULL,
+	"%f",	"range",	CL_O(cl_range),		FUNC_NULL,
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 HIDDEN int	cloud_setup(), cloud_render();
@@ -121,7 +122,7 @@ char	**dpp;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
-	rt_structparse( matparm, cloud_parse, (stroff_t)cp );
+	rt_structparse( matparm, cloud_parse, (char *)cp );
 	return(1);
 }
 
@@ -133,7 +134,7 @@ cloud_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, cloud_parse, (stroff_t)dp );
+	rt_structprint( rp->reg_name, cloud_parse, (char *)dp );
 }
 
 /*

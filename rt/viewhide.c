@@ -58,9 +58,9 @@ int		use_air = 1;		/* Handling of air in librt */
 int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
- struct structparse view_parse[] = {
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
- };
+struct structparse view_parse[] = {
+	(char *)0,(char *)0,	0,			FUNC_NULL
+};
 
 FILE            *plotfp;		/* optional plotting file */
 

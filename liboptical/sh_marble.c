@@ -32,11 +32,11 @@ struct	marble_specific  {
 	vect_t	mar_min;
 	vect_t	mar_max;
 };
-#define MARB_NULL ((struct marble_specific *)0)
-
+#define MARB_NULL	((struct marble_specific *)0)
+#define MARB_O(m)	offsetof(struct marble_specific, m)
 
 struct	structparse marble_parse[] = {
-	(char *)0,(char *)0,	(stroff_t)0,			FUNC_NULL
+	(char *)0,(char *)0,	0,		FUNC_NULL
 };
 
 

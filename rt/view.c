@@ -107,10 +107,10 @@ void	shade_inputs();
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
-	"%d",	"bounces",	(stroff_t)&max_bounces,			FUNC_NULL,
-	"%d",	"ireflect",	(stroff_t)&max_ireflect,		FUNC_NULL,
-	"%V",	"background",	(stroff_t)background,			FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%d",	"bounces",	(int)&max_bounces,		FUNC_NULL,
+	"%d",	"ireflect",	(int)&max_ireflect,		FUNC_NULL,
+	"%V",	"background",	(int)background,		FUNC_NULL,
+	(char *)0,(char *)0,	0,				FUNC_NULL
 };
 
 /*

@@ -441,11 +441,11 @@ extern struct structparse view_parse[];
  *  the actual memory address is given here as the structure offset.
  */
 struct structparse set_parse[] = {
-	"%d",	"width",	(stroff_t)&width,		FUNC_NULL,
-	"%d",	"height",	(stroff_t)&height,		FUNC_NULL,
-	"%f",	"angle",	(stroff_t)&rt_perspective,	FUNC_NULL,
-	"indir", "View Module",	(stroff_t)view_parse,		FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,			FUNC_NULL
+	"%d",	"width",	(int)&width,		FUNC_NULL,
+	"%d",	"height",	(int)&height,		FUNC_NULL,
+	"%f",	"angle",	(int)&rt_perspective,	FUNC_NULL,
+	"indir", "View Module",	(int)0,		(void (*)())view_parse,
+	(char *)0,(char *)0,	(int)0,			FUNC_NULL
 };
 
 /*
@@ -459,11 +459,11 @@ char	**argv;
 {
 	if( argc <= 1 ) {
 		rt_structprint( "Generic and Application-Specific Parameter Values",
-			set_parse, (stroff_t)0 );
+			set_parse, (char *)0 );
 		return(0);
 	}
 	while( argc > 1 ) {
-		rt_structparse( argv[1], set_parse, (stroff_t)0 );
+		rt_structparse( argv[1], set_parse, (char *)0 );
 		argc--;
 		argv++;
 	}
@@ -505,6 +505,12 @@ register struct rt_i	*rtip;
 {
 	char outbuf[132];
 	register int i;
+
+	if( rtip->rti_magic != RTI_MAGIC )  {
+		rt_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
+			rtip->rti_magic, RTI_MAGIC );
+		rt_bomb("def_tree:  bad rtip\n");
+	}
 
 	rt_prep_timer();
 	for( i=0; i < nobjs; i++ )  {

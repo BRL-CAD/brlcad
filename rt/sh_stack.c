@@ -43,10 +43,11 @@ struct stk_specific {
 	char	*udata[16];
 };
 #define STK_NULL	((struct stk_specific *)0)
+#define STK_O(m)	offsetof(struct stk_specific, m)
 
 struct structparse stk_parse[] = {
-	"%s",	"file",		(stroff_t)(STK_NULL->st_file),		FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%s",	"file",		offsetofarray(struct stk_specific, st_file),		FUNC_NULL,
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 /*
@@ -70,7 +71,7 @@ char	**dpp;		/* pointer to user data pointer */
 	*dpp = (char *)sp;
 
 	sp->st_file[0] = '\0';
-	/*rt_structparse( matparm, stk_parse, (stroff_t)sp );*/
+	/*rt_structparse( matparm, stk_parse, (char *)sp );*/
 
 	if(rdebug&RDEBUG_MATERIAL)
 		rt_log( "stk_setup called with \"%s\"\n", matparm );
@@ -148,7 +149,7 @@ stk_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, stk_parse, (stroff_t)dp);
+	rt_structprint(rp->reg_name, stk_parse, (char *)dp);
 }
 
 /*

@@ -53,21 +53,22 @@ struct cook_specific {
 	double	rd[3];		/* Diffuse reflection coefficient */
 };
 #define CK_NULL	((struct cook_specific *)0)
+#define CL_O(m)	offsetof(struct cook_specific, m)
 
 struct structparse cook_parse[] = {
-	"%f", "m",		(stroff_t)&(CK_NULL->m),		FUNC_NULL,
-	"%f", "specular",	(stroff_t)&(CK_NULL->wgt_specular),	FUNC_NULL,
-	"%f", "sp",		(stroff_t)&(CK_NULL->wgt_specular),	FUNC_NULL,
-	"%f", "diffuse",	(stroff_t)&(CK_NULL->wgt_diffuse),	FUNC_NULL,
-	"%f", "di",		(stroff_t)&(CK_NULL->wgt_diffuse),	FUNC_NULL,
-	"%f", "transmit",	(stroff_t)&(CK_NULL->transmit),		FUNC_NULL,
-	"%f", "tr",		(stroff_t)&(CK_NULL->transmit),		FUNC_NULL,
-	"%f", "reflect",	(stroff_t)&(CK_NULL->reflect),		FUNC_NULL,
-	"%f", "re",		(stroff_t)&(CK_NULL->reflect),		FUNC_NULL,
-	"%f", "ri",		(stroff_t)&(CK_NULL->refrac_index),	FUNC_NULL,
-	"%f", "extinction",	(stroff_t)&(CK_NULL->extinction),	FUNC_NULL,
-	"%f", "ex",		(stroff_t)&(CK_NULL->extinction),	FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%f", "m",		CL_O(m),		FUNC_NULL,
+	"%f", "specular",	CL_O(wgt_specular),	FUNC_NULL,
+	"%f", "sp",		CL_O(wgt_specular),	FUNC_NULL,
+	"%f", "diffuse",	CL_O(wgt_diffuse),	FUNC_NULL,
+	"%f", "di",		CL_O(wgt_diffuse),	FUNC_NULL,
+	"%f", "transmit",	CL_O(transmit),		FUNC_NULL,
+	"%f", "tr",		CL_O(transmit),		FUNC_NULL,
+	"%f", "reflect",	CL_O(reflect),		FUNC_NULL,
+	"%f", "re",		CL_O(reflect),		FUNC_NULL,
+	"%f", "ri",		CL_O(refrac_index),	FUNC_NULL,
+	"%f", "extinction",	CL_O(extinction),	FUNC_NULL,
+	"%f", "ex",		CL_O(extinction),	FUNC_NULL,
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 HIDDEN int	cook_setup(), cmirror_setup(), cglass_setup();
@@ -133,7 +134,7 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / pi;
 
-	rt_structparse( matparm, cook_parse, (stroff_t)pp );
+	rt_structparse( matparm, cook_parse, (char *)pp );
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
 	if( pp->transmit > 0 )
@@ -171,7 +172,7 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / pi;
 
-	rt_structparse( matparm, cook_parse, (stroff_t)pp );
+	rt_structparse( matparm, cook_parse, (char *)pp );
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
 	if( pp->transmit > 0 )
@@ -209,7 +210,7 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / pi;
 
-	rt_structparse( matparm, cook_parse, (stroff_t)pp );
+	rt_structparse( matparm, cook_parse, (char *)pp );
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
 	if( pp->transmit > 0 )
@@ -225,7 +226,7 @@ cook_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, cook_parse, (stroff_t)dp);
+	rt_structprint(rp->reg_name, cook_parse, (char *)dp);
 }
 
 /*

@@ -28,7 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
-#if defined(alliant) && !defined(__STDC__)
+#if defined(alliant) && !__STDC__
 extern double	modf();
 #endif
 
@@ -44,21 +44,22 @@ struct	stxt_specific  {
 	vect_t	stx_max;
 	char	*stx_pixels;	/* Pixel holding area */
 };
-#define SOL_NULL ((struct stxt_specific *)0)
+#define SOL_NULL	((struct stxt_specific *)0)
+#define SOL_O(m)	offsetof(struct stxt_specific, m)
 
 struct	structparse stxt_parse[] = {
 #ifndef CRAY
-	"%C",	"transp",	(stroff_t)(SOL_NULL->stx_transp),	FUNC_NULL,
-	"%s",	"file",		(stroff_t)(SOL_NULL->stx_file),		FUNC_NULL,
+	"%C",	"transp",	offsetofarray(struct stxt_specific, stx_transp),	FUNC_NULL,
+	"%s",	"file",		offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL,
 #else
-	"%C",	"transp",	(stroff_t)0,				FUNC_NULL,
-	"%s",	"file",		(stroff_t)1,				FUNC_NULL,
+	"%C",	"transp",	0,			FUNC_NULL,
+	"%s",	"file",		1,			FUNC_NULL,
 #endif
-	"%d",	"w",		(stroff_t)&(SOL_NULL->stx_w),		FUNC_NULL,
-	"%d",	"n",		(stroff_t)&(SOL_NULL->stx_n),		FUNC_NULL,
-	"%d",	"d",		(stroff_t)&(SOL_NULL->stx_d),		FUNC_NULL,
-	"%d",	"fw",		(stroff_t)&(SOL_NULL->stx_fw),		FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%d",	"w",		SOL_O(stx_w),		FUNC_NULL,
+	"%d",	"n",		SOL_O(stx_n),		FUNC_NULL,
+	"%d",	"d",		SOL_O(stx_d),		FUNC_NULL,
+	"%d",	"fw",		SOL_O(stx_fw),		FUNC_NULL,
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
@@ -157,7 +158,7 @@ char	**dpp;
 	rt_rpp_tree(rp->reg_treetop,stp->stx_min,stp->stx_max);
 
 	/**	Get input values  **/
-	rt_structparse( matparm, stxt_parse, (stroff_t)stp );
+	rt_structparse( matparm, stxt_parse, (char *)stp );
 	/*** DEFAULT SIZE OF STXT FILES ***/
 	if( stp->stx_w < 0 )  stp->stx_w = 512;
 	if( stp->stx_n < 0 )  stp->stx_n = stp->stx_w;

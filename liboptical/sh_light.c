@@ -1,3 +1,4 @@
+
 /*
  *			L I G H T . C
  *
@@ -29,15 +30,16 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 #include "./light.h"
 #include "./rdebug.h"
 
+#define LIGHT_O(m)	offsetof(struct light_specific, m)
 
 struct structparse light_parse[] = {
-	"%f",	"inten",	(stroff_t)&(LIGHT_NULL->lt_intensity),	FUNC_NULL,
-	"%f",	"angle",	(stroff_t)&(LIGHT_NULL->lt_angle),	FUNC_NULL,
-	"%f",	"fract",	(stroff_t)&(LIGHT_NULL->lt_fraction),	FUNC_NULL,
-	"%d",	"shadows",	(stroff_t)&(LIGHT_NULL->lt_shadows),	FUNC_NULL,
-	"%d",	"infinite",	(stroff_t)&(LIGHT_NULL->lt_infinite),	FUNC_NULL,
-	"%d",	"invisible",	(stroff_t)&(LIGHT_NULL->lt_invisible),	FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%f",	"inten",	LIGHT_O(lt_intensity),	FUNC_NULL,
+	"%f",	"angle",	LIGHT_O(lt_angle),	FUNC_NULL,
+	"%f",	"fract",	LIGHT_O(lt_fraction),	FUNC_NULL,
+	"%d",	"shadows",	LIGHT_O(lt_shadows),	FUNC_NULL,
+	"%d",	"infinite",	LIGHT_O(lt_infinite),	FUNC_NULL,
+	"%d",	"invisible",	LIGHT_O(lt_invisible),	FUNC_NULL,
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 struct light_specific *LightHeadp = LIGHT_NULL;		/* Linked list of lights */
@@ -121,7 +123,7 @@ char	**dpp;
 	lp->lt_infinite = 0;
 	lp->lt_rp = rp;
 	lp->lt_name = rt_strdup( rp->reg_name );
-	rt_structparse( matparm, light_parse, (stroff_t)lp );
+	rt_structparse( matparm, light_parse, (char *)lp );
 
 	if( lp->lt_angle > 180 )  lp->lt_angle = 180;
 	lp->lt_cosangle = cos( (double) lp->lt_angle * 0.0174532925199433 );
@@ -195,7 +197,7 @@ light_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, light_parse, (stroff_t)dp);
+	rt_structprint(rp->reg_name, light_parse, (char *)dp);
 }
 
 /*
