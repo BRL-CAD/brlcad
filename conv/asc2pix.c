@@ -1,5 +1,8 @@
 /*
  *  			A S C 2 P I X . C
+ *
+ *  Convert ASCII (hex) pixel files to the binary form.
+ *  For portable images.
  *  
  *  Author -
  *	Michael John Muuss
@@ -19,23 +22,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-unsigned char line[512*3];		/* R, G, B per pixel */
-
 main()
 {
-	register unsigned char *ip;
-	auto int r,g,b;
+	static int r,g,b;
 
-	ip = line;
-	while( !feof( stdin ) )  {
-		scanf( "%x %x %x", &r, &g, &b );
-		*ip++ = r;
-		*ip++ = g;
-		*ip++ = b;
-		if( ip >= &line[512*3] )  {
-			ip = line;
-			write( 1, line, sizeof(line) );
-		}
+	while( !feof( stdin )  &&
+	    scanf( "%x %x %x", &r, &g, &b ) == 3 )  {
+		putc( r, stdout );
+		putc( g, stdout );
+		putc( b, stdout );
 	}
+	fflush(stdout);
 	exit(0);
 }
