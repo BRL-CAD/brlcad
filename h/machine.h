@@ -604,7 +604,7 @@ typedef long	bitv_t;		/* largest integer type */
  *  ANSI and POSIX do not seem to have prototypes for the hypot() routine,
  *  but several vendors include it in their -lm math library.
  */
-#if defined(_POSIX_SOURCE)
+#if defined(_POSIX_SOURCE) && !defined(__USE_MISC)
 	/* But the sgi -lm does have a hypot routine so lets use it */
 #if defined(__sgi) || defined(__convexc__)
         extern double hypot(double, double);
