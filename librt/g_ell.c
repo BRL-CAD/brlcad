@@ -144,11 +144,11 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 #define SP_C	&vec[3*ELEMENTS_PER_VECT]
 
 	/*
-	 * Apply 3x3 rotation mat only to A,B,C
+	 * Apply rotation only to A,B,C
 	 */
-	MAT3XVEC( A, mat, SP_A );
-	MAT3XVEC( B, mat, SP_B );
-	MAT3XVEC( C, mat, SP_C );
+	MAT4X3VEC( A, mat, SP_A );
+	MAT4X3VEC( B, mat, SP_B );
+	MAT4X3VEC( C, mat, SP_C );
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
 	magsq_a = MAGSQ( A );
@@ -163,17 +163,17 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 */
 	f = VDOT( A, B );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"ell(%s):  A not perpendicular to B\n",stp->st_name);
+		fprintf(stderr,"ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, C );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"ell(%s):  B not perpendicular to C\n",stp->st_name);
+		fprintf(stderr,"ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, C );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"ell(%s):  A not perpendicular to C\n",stp->st_name);
+		fprintf(stderr,"ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
@@ -291,9 +291,9 @@ register struct xray *rp;
 	LOCAL vect_t	xlated;		/* translated vector */
 
 	/* out, Mat, vect */
-	MAT3XVEC( dprime, ell->ell_SoR, rp->r_dir );
+	MAT4X3VEC( dprime, ell->ell_SoR, rp->r_dir );
 	VSUB2( xlated, rp->r_pt, ell->ell_V );
-	MAT3XVEC( pprime, ell->ell_SoR, xlated );
+	MAT4X3VEC( pprime, ell->ell_SoR, xlated );
 
 	dp = VDOT( dprime, pprime );
 	dd = VDOT( dprime, dprime );
@@ -337,7 +337,7 @@ register struct xray *rp;
 
 		/* Normal at that point, pointing out */
 		VSUB2( xlated, segp->seg_in.hit_point, ell->ell_V );
-		MAT3XVEC( segp->seg_in.hit_normal, ell->ell_invRSSR, xlated );
+		MAT4X3VEC( segp->seg_in.hit_normal, ell->ell_invRSSR, xlated );
 		f = 1.0 / MAGNITUDE(segp->seg_in.hit_normal );
 		VSCALE( segp->seg_in.hit_normal, segp->seg_in.hit_normal, f);
 	}
@@ -348,7 +348,7 @@ register struct xray *rp;
 		VJOIN1( segp->seg_out.hit_point, rp->r_pt, k2, rp->r_dir );
 
 		VSUB2( xlated, segp->seg_out.hit_point, ell->ell_V );
-		MAT3XVEC( segp->seg_out.hit_normal,ell->ell_invRSSR, xlated );
+		MAT4X3VEC( segp->seg_out.hit_normal,ell->ell_invRSSR, xlated );
 		f = 1.0 / MAGNITUDE( segp->seg_out.hit_normal );
 		VSCALE(segp->seg_out.hit_normal, segp->seg_out.hit_normal, f);
 	}

@@ -193,17 +193,17 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
 	f = VDOT( A, B );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"tor(%s):  A not perpendicular to B\n",stp->st_name);
+		fprintf(stderr,"tor(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, Hv );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"tor(%s):  B not perpendicular to H\n",stp->st_name);
+		fprintf(stderr,"tor(%s):  B not perpendicular to H, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, Hv );
 	if( ! NEAR_ZERO(f) )  {
-		fprintf(stderr,"tor(%s):  A not perpendicular to H\n",stp->st_name);
+		fprintf(stderr,"tor(%s):  A not perpendicular to H, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
