@@ -132,11 +132,11 @@ struct rt_list  {
 
 /*
  *  Intended as innards for a for() loop to visit all nodes on list, e.g.:
- *	for( RT_LIST( p, structure, hp ) )  {
+ *	for( RT_LIST_FOR( p, structure, hp ) )  {
  *		work_on( p );
  *	}
  */
-#define RT_LIST(p,structure,hp)	\
+#define RT_LIST_FOR(p,structure,hp)	\
 	(p)=RT_LIST_FIRST(structure,hp); \
 	RT_LIST_NOT_HEAD(p,hp); \
 	(p)=RT_LIST_PNEXT(structure,p)
@@ -144,13 +144,17 @@ struct rt_list  {
 /*
  *  Innards for a while() loop that constantly picks off the first element.
  *  Useful mostly for a loop that will dequeue every list element, e.g.:
- *	while( RT_LIST_LOOP(p, structure, hp) )  {
+ *	while( RT_LIST_WHILE(p, structure, hp) )  {
  *		RT_LIST_DEQUEUE( &(p->l) );
  *		free( (char *)p );
  *	}
  */
-#define RT_LIST_LOOP(p,structure,hp)	\
+#define RT_LIST_WHILE(p,structure,hp)	\
 	(((p)=(struct structure *)((hp)->forw)) != (struct structure *)(hp))
+
+/* compat */
+#define RT_LIST(p,structure,hp)		RT_LIST_FOR(p,structure,hp)
+#define RT_LIST_LOOP(p,structure,hp)	RT_LIST_WHILE(p,structure,hp)
 
 /* Return the magic number of the first (or last) item on a list */
 #define RT_LIST_FIRST_MAGIC(hp)		((hp)->forw->magic)
