@@ -44,7 +44,7 @@ chan_mult_SOURCES = chan_mult.c
 
 chan_permute_SOURCES = chan_permute.c
 
-CFLAGS = -I$(top_srcdir)/h
+AM_CFLAGS = -I$(top_srcdir)/h
 
 man_MANS = anim_cascade.1 anim_fly.1 anim_hardtrack.1 anim_keyread.1 anim_lookat.1 anim_offset.1 anim_orient.1 anim_script.1 anim_sort.1 anim_time.1 anim_track.1 anim_turn.1 chan_mult.1 chan_permute.1
 EXTRA_DIST = $(man_MANS)

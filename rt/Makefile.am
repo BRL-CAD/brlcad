@@ -28,7 +28,7 @@ rt_bot_faces_SOURCES = rt_bot_faces_vers.c view_bot_faces.c main.c opt.c do.c wo
 
 noinst_HEADERS = ext.h light.h rad.h scat.h
 
-CFLAGS = -I$(top_srcdir)/h
+AM_CFLAGS = -I$(top_srcdir)/h
 
 LDADD = @RT@ @FB@ @OPTICAL@
 

@@ -5,7 +5,7 @@ SRCS = init.c material.c photonmap.c refract.c shade.c sh_air.c sh_billboard.c s
 
 liboptical_la_SOURCES = $(SRCS) vers.c
 liboptical_la_LDFLAGS = -version-info 19:1
-CFLAGS = -I$(top_srcdir)/h
+AM_CFLAGS = -I$(top_srcdir)/h
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)

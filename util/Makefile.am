@@ -339,7 +339,7 @@ binfo_LDADD = @BN@ @FB@
 rtwizard = $(top_srcdir)//rtwizard
 	cp $(top_srcdir)/tclscripts/rtwizard rtwizard
 
-CFLAGS = -I$(top_srcdir)/h
+AM_CFLAGS = -I$(top_srcdir)/h
 
 .PHONY : vers.c
 vers.c:

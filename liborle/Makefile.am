@@ -5,7 +5,7 @@ lib_LTLIBRARIES = liborle.la
 SRCS = rle.c
 liborle_la_SOURCES = $(SRCS) vers.c
 liborle_la_LDFLAGS = -version-info 19:1
-CFLAGS = -I$(top_srcdir)/h
+AM_CFLAGS = -I$(top_srcdir)/h
 
 vers.c: $(SRCS)
 	$(top_srcdir)/sh/newvers.sh  liborle_version "University of Utah RLE Library, Version 2"

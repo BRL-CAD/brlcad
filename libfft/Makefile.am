@@ -2,7 +2,7 @@
 
 lib_LTLIBRARIES = libfft.la
 
-CFLAGS=-I$(top_srcdir)/h
+AM_CFLAGS=-I$(top_srcdir)/h
 noinst_PROGRAMS = fftc ifftc
 SRCS = fftfast.c splitdit.c ditsplit.c
 BUILT_SOURCES = rfft16.c rfft32.c rfft64.c rfft128.c rfft256.c irfft16.c irfft32.c irfft64.c irfft128.c irfft256.c vers.c

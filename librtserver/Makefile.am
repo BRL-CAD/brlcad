@@ -8,6 +8,6 @@ VERSION = $(MAJOR):$(PATCH):$(MINOR)
  
 librtserver_la_SOURCES = rtserver.c
 
-CFLAGS = -I$(top_srcdir)/h
+AM_CFLAGS = -I$(top_srcdir)/h
 librtserver_la_LDFLAGS = -version-info $(VERSION)
  

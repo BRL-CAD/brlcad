@@ -13,5 +13,5 @@ pngtest_LDADD = libpng.la -lz -lm
 include_HEADERS = png.h pngconf.h
 dist_man_MANS = ansi2knr.1 libpng.3 libpngpf.3 png.5
 
-CFLAGS = -I$(top_srcdir)/h
+AM_CFLAGS = -I$(top_srcdir)/h
 

@@ -8,7 +8,7 @@ libfb_la_LDFLAGS = -version-info 19:1
 
 include_HEADERS = adage.h adagecursor.h adageframe.h dmdfb.h fblocal.h nilcursor.h oglcursor.h pkgtypes.h sgicursor.h
 
-CFLAGS = @X_CFLAGS@ -I$(top_srcdir)/h -DIF_REMOTE -DIF_AB -DIF_X
+AM_CFLAGS = @X_CFLAGS@ -I$(top_srcdir)/h -DIF_REMOTE -DIF_AB -DIF_X
 libfb_la_LIBADD = @PKG@ @X_LIBS@
 
 BUILT_SOURCES = vers.c

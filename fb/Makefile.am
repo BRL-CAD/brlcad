@@ -129,7 +129,7 @@ cell_fb_SOURCES = cell-fb.c
 cell_fb_LDADD = @FB@ @BN@
 
 
-CFLAGS = -I$(top_srcdir)/h
+AM_CFLAGS = -I$(top_srcdir)/h
 
 
 man_MANS = bw-fb.1 cat-fb.1 cell-fb.1 cmap-fb.1 fb-bw.1 fb-cmap.1 fb-fb.1 fb-orle.1 fb-pix.1 fb-png.1 fb-rle.1 fbanim.1 fbcbars.1 fbclear.1 fbcmap.1 fbcmrot.1 fbcolor.1 fbfade.1 fbframe.1 fbfree.1 fbgamma.1 fbgrid.1 fbhelp.1 fblabel.1 fbline.1 fbpoint.1 fbscanplot.1 fbstretch.1 fbzoom.1 gif-fb.1 gif2fb.1 orle-fb.1 pix-fb.1 pixautosize.1 pl-fb.1 png-fb.1 polar-fb.1 pp-fb.1 rle-fb.1
