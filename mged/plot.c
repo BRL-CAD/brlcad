@@ -39,7 +39,7 @@ extern char	*cmd_args[];	/* array of pointers to args */
 extern char	*local_unit[];
 
 /* UNIX-Plot routines */
-static FILE *up_fp;		/* output file pointer */
+FILE *up_fp;		/* output file pointer */
 int up_color(), up_cont(), up_cont3(), up_erase(), up_label();
 int up_line(), up_line3(), up_linemod();
 int up_move(), up_move3(), up_putsi(), up_space(), up_space3();

@@ -52,7 +52,12 @@ struct dm dm_Null = {
 	0.0,
 	"nu", "Null Display"
 };
-extern struct dm dm_Tek;	/* All systems can compile this one! */
+
+/* All systems can compile these! */
+extern struct dm dm_Tek;
+extern struct dm dm_Plot;
+
+/* Only some systems can do these */
 #ifdef BSD42
 extern struct dm dm_Mg, dm_Vg, dm_Rat;
 #endif
@@ -72,6 +77,7 @@ struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 static struct dm *which_dm[] = {
 	&dm_Null,		/* This should go first */
 	&dm_Tek,
+	&dm_Plot,
 #ifdef DM_IR
 	&dm_Ir,
 #endif
