@@ -11,8 +11,6 @@
  *  Depends on having machine.h, vmath.h, and rtlist.h included first.
  *  RT_xxx_CK_MAGIC() can only be used if raytrace.h is included too.
  *
- *  XXX Should structure names start with rt_ ?  Probably yes.
- *
  *  Author -
  *	Michael John Muuss
  *  
@@ -26,6 +24,9 @@
  *
  *  $Header$
  */
+
+#ifndef SEEN_RTGEOM_H
+#define SEEN_RTGEOM_H seen
 
 /*
  *	ID_TOR
@@ -201,3 +202,5 @@ struct rt_part_internal {
 #define RT_PARTICLE_TYPE_SPHERE		1
 #define RT_PARTICLE_TYPE_CYLINDER	2
 #define RT_PARTICLE_TYPE_CONE		3
+
+#endif /* SEEN_RTGEOM_H */
