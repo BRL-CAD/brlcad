@@ -50,7 +50,7 @@ Acknowledgment:
 
 #include	<signal.h>
 #include	<stdio.h>
-
+
 /*
 	Raster device model and image terminology as used herein:
 
@@ -90,12 +90,12 @@ for each pixels, times the number of pixels desired (512 in LORES,
 
 /* the following parameter should be tweaked for fine-tuning */
 #define SPB		16		/* scan lines per band */
-#define	X_CHAR_SIZE	((Npixels/73)-1) /* pixels per char horizontal */
-#define	Y_CHAR_SIZE	Nscanlines/46	/* pixels per char vertical */
+#define	X_CHAR_SIZE	(8)		/* pixels per char horizontal */
+#define	Y_CHAR_SIZE	(10)		/* pixels per char vertical */
 
 #define	CLEAR	0			/* value for no intensity */
 
-
+
 /*	Program constants computed from device parameters:	*/
 
 #define BANDS	(Nscanlines / SPB)		/* # of "bands" */
@@ -136,7 +136,7 @@ typedef struct descr
 	short		de;		/* increment for `e' */
 	char		col[PIXELSIZE];	/* COLOR of this vector */
 	}	stroke; 		/* rasterization descriptor */
-
+
 /*	Global data allocations:	*/
 
 STATIC struct
@@ -217,12 +217,15 @@ STATIC struct vectorchar {
    '<', 4,0,   0,4,   4,8,   END,   NIL,   NIL,   NIL,   NIL,   NIL,   NIL,
    '>', 2,0,   6,4,   2,8,   END,   NIL,   NIL,   NIL,   NIL,   NIL,   NIL,
 
+/* Some needed chars, hastily drawn -MJM */
+   '.', 4,7,   3,7,   3,6,   4,6,   4,7,   END,   NIL,   NIL,   NIL,   NIL,
+   ',', 4,6,   3,6,   3,5,   4,5,   4,8,   END,   NIL,   NIL,   NIL,   NIL,
+
    NULL
 };
 
 STATIC int	Nscanlines = 512;
 STATIC int	Npixels = 512;
-STATIC int	charsz = 1;
 
 STATIC long	delta;			/* larger window dimension */
 STATIC long	deltao2;		/* delta / 2 */
@@ -269,7 +272,7 @@ STATIC bool	BuildStr(), GetCoords(),
 STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
 		Requeue(),
 		Raster(), SetSigs();
-
+
 /*
  *  M A I N
  *
@@ -305,7 +308,6 @@ char **argv;
 			case 'h':
 				ikhires = 1;
 				Nscanlines = Npixels = 1024;
-				charsz = 2;
 				break;
 
 			default:
@@ -353,43 +355,30 @@ char **argv;
 	if( debug )
 		fprintf(stderr, "ikplot output of %s\n", filename);
 		
-	vik( filename );
+	if ( filename == NULL || filename[0] == 0 )
+		pfin = stdin;
+	else if( (pfin = fopen( filename, "r" )) == NULL )
+		return Foo( -2 );
+
+	SetSigs();			/* set signal catchers */
+
+	(void)DoFile( );	/* plot it */
 }
 
 
 /*
-	vpl - rasterizer control subroutine
+	DoFile - process UNIX plot file onto IKONAS
 
 	This routine reads UNIX plot records from the specified file
 	and controls the entry of the strokes into the descriptor lists.
 	Strokes are limited (not clipped) to fit the frame.
 
 	Upon end of file or erase, plot data is copied to the device.
+	Returns status code:
+		   < 0	=> catastrophe
+		   = 0	=> complete success
+		   > 0	=> line limit hit
 */
-
-int
-vik( pname )	/* returns status code:
-					   < 0	=> catastrophe
-					   = 0	=> complete success
-					   > 0	=> line limit hit   */
-char	*pname; 		/* name of plot data file */
-{
-
-	if ( pname == NULL || pname[0] == 0 )
-		pfin = stdin;
-
-	else if( (pfin = fopen( pname, "r" )) == NULL )
-		return Foo( -2 );
-
-	SetSigs();			/* set signal catchers */
-
-	return DoFile( );	/* plot it */
-	}
-
-/*
-	DoFile - process UNIX plot file onto IKONAS
-*/
-
 STATIC int
 DoFile( )	/* returns vpl status code */
 {
@@ -427,6 +416,7 @@ DoFile( )	/* returns vpl status code */
 				if ( c == EOF )
 					return Foo( 0 );/* success */
 
+				(void)lseek( ikfd, 0L, 0 );	/* top */
 				break;	/* next frame */
 
 			case 'f':	/* linemod */
@@ -553,8 +543,7 @@ spacend:
 				while ( (c = getc( pfin )) != EOF && c != '\n'
 				      )  {
 					/* vectorize the characters */
-					put_vector_char( c, newpos);
-					newpos.x += X_CHAR_SIZE;
+					put_vector_char( c, &newpos);
 				
 					if( debug )
 						putc( c, stderr );
@@ -578,37 +567,42 @@ spacend:
 /*
  *	PutVectorChar - Put vectors corresponding to this character out
  * 	into plotting space
+ *	Update position to reflect character width.
  */
 put_vector_char( c, pos )
 register char	c;
-coords		pos;
+register coords	*pos;
 {
-	coords	start, end;
+	static coords	start, end;
 	register struct vectorchar	*vc;
 	register struct relvect		*rv;
 
 	if( c >= 'a' && c <= 'z' )
-		c = c - 'a' + 'A';	/* xlate upper to lower case */
+		c = c - 'a' + 'A';	/* xlate to upper case */
 	
 	for( vc = &charset[0]; vc->ascii; vc++)
 		if( vc->ascii == c )
 			break;
 
-	if( !vc->ascii )
+	if( !vc->ascii )  {
+		/* Character not found -- space over 1/2 char */
+		pos->x += X_CHAR_SIZE/2;
 		return;
+	}
 
 	/* have the correct character entry - start plotting */
-	start.x = vc->r[0].x*charsz + pos.x;
-	start.y = vc->r[0].y*charsz + pos.y - Y_CHAR_SIZE;
+	start.x = vc->r[0].x + pos->x;
+	start.y = vc->r[0].y + pos->y - Y_CHAR_SIZE;
 
 	for( rv = &vc->r[1]; (rv < &vc->r[10]) && rv->x >= 0; rv++ )  {
-		end.x = rv->x*charsz + pos.x;
-		end.y = rv->y*charsz + pos.y - Y_CHAR_SIZE;
+		end.x = rv->x + pos->x;
+		end.y = rv->y + pos->y - Y_CHAR_SIZE;
 		edgelimit( &start );
 		edgelimit( &end );
-		BuildStr( &start, &end );
+		BuildStr( &start, &end );	/* pixels */
 		start = end;
 	}
+	pos->x += X_CHAR_SIZE;
 }
 
 /*
@@ -763,7 +757,7 @@ FreeUp()
 		while ( (vp = Dequeue( bp, &bp->first )) != NULL )
 			free( (char *)vp );	/* free storage */
 	}
-
+
 /*
 	RdBand - Read in next band from output image file,
 		for overlay purposes.  Reposition back.
@@ -801,7 +795,7 @@ WrBand()
 	}
 	return true;
 }
-
+
 /*
 	BuildStr - set up DDA parameters and queue stroke
 */
@@ -857,7 +851,7 @@ BuildStr( pt1, pt2 )			/* returns true unless bug */
 
 	return true;
 	}
-
+
 /*
 	Allocate - allocate a descriptor (possibly updating image file)
 */
@@ -875,7 +869,7 @@ Allocate()				/* returns addr of descriptor
 
 	return vp;			/* should be non-NULL now */
 	}
-
+
 /*
 	OutBuild - rasterize all strokes into raster frame image
 */
@@ -918,7 +912,7 @@ OutBuild()				/* returns true if successful */
 
 	return true;			/* success */
 }
-
+
 /*
 	Raster - rasterize stroke.  If overflow into next band, requeue;
 					else free the descriptor.
@@ -972,7 +966,7 @@ Raster( vp, np )
 	vp->pixel.y = ystart + SPB;
 	Requeue( np, vp );       /* DDA parameters already set */
 	}
-
+
 /*
 	Foo - clean up before return from rasterizer
 */
@@ -987,7 +981,7 @@ Foo( code )				/* returns status code */
 
 	return code;
 	}
-
+
 /*
 	SetSigs - set up signal catchers
 */
