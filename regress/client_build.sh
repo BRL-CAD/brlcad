@@ -17,7 +17,6 @@ set -- $args
 
 MAILUSER=lamas
 QUIET=0
-BRLCAD_ROOT=/tmp/brlcad
 initializeVariable REGRESS_DIR /tmp/`whoami`
 
 for i in $* ; do
@@ -46,10 +45,10 @@ for i in $* ; do
 done
 
 initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
+initializeVariable BRLCAD_ROOT $REGRESS_DIR/brlcad.$ARCH
 export QUIET
 export BRLCAD_ROOT
 export ARCH
-
 
 PATH="$BRLCAD_ROOT/bin:$PATH" ; export PATH
 
@@ -89,7 +88,8 @@ echo "$HOSTNAME .regress.${ARCH} installation complete" >> ${REGRESS_DIR}/.regre
 
 cd $STARTPWD
 
-echo "Running tests"
-./client_test.sh
+echo "Testing package"
+echo "Running [./client_test.sh -d $REGRESS_DIR]"
+./client_test.sh -d $REGRESS_DIR
 
 echo "Done client_build.sh"

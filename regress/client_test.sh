@@ -6,6 +6,7 @@
 
 . ./library
 
+initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
 initializeVariable TESTS_DIR "$PWD/tests.d"
 
 #

@@ -24,7 +24,6 @@ BEGIN_HOUR=18
 END_HOUR=7
 MAILUSER=morrison@arl.army.mil
 QUIET=0
-BRLCAD_ROOT=/tmp/brlcad
 SLEEP_DELTA=10
 
 for i in $* ; do
@@ -64,7 +63,6 @@ for i in $* ; do
 	esac
 done
 
-
 export BEGIN_HOUR
 export END_HOUR
 export QUIET
@@ -101,6 +99,8 @@ echo "Verified that machinetype.sh exists"
 ARCH=`${REGRESS_DIR}/brlcad/sh/machinetype.sh`
 export ARCH
 
+initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/brlcad.$ARCH"
+
 echo "Regression testing an [$ARCH] architecture in [$REGRESS_DIR]"
 
 #
@@ -128,6 +128,9 @@ if [ ! -d ${REGRESS_DIR}/.regress.$ARCH ] ; then mkdir ${REGRESS_DIR}/.regress.$
 # run the build script out of the source tree
 #
 echo "Building source"
+echo "Running [./client_build.sh -d $REGRESS_DIR]"
 ./client_build.sh -d $REGRESS_DIR
 
 releaseLock ${REGRESS_DIR}/start_${ARCH}.semaphore
+
+echo "Done client_wait.sh"
