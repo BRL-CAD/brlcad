@@ -235,12 +235,12 @@ char **argv;
 	{
 		FAST double utime;
 		utime = timer_print("SHOT");
-		fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
-			npts*npts, utime, (double)(npts*npts/utime) );
 		fprintf(stderr,"%ld calls to ft_shot(), %ld calls pruned\n",
 			nshots, (long)nmiss );
 		fprintf(stderr,"%ld calls in %f sec = %f calls/sec\n",
 			nshots, utime, (double)(nshots/utime) );
+		fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
+			npts*npts, utime, (double)(npts*npts/utime) );
 	}
 	return(0);
 }
