@@ -742,6 +742,28 @@ It returns the number of vertices eliminated.
 </DD>
 <HR>
 
+<DT><a NAME="bot_decimate"><B>bot_decimate</B> <I>new_bot_primitive old_bot_primitive maximum_distance_error [maximum_normal_error]</I></DT>
+
+<DD> The ``bot_decimate'' command reduces the number of triangles in the <I>old_bot_primitive</I> and saves the results
+to the <I>new_bot_primitive</I>. The reduction is accomplished through an edge decimation algorithm. Only changes
+that do not exceed the specified constraints are performed. The <I>maximum_distance_error</I> parameter specifies
+the maximum distance allowed between the original surface and the surface of the new BOT primitive in the current editing units. The <I>maximum_normal_error</I> specifies the maximum change in surface normal (degrees) between the old and new
+surfaces. If a normal constraint is not specified, a 90 degree constraint is assumed. This command should not be
+re-run on its output BOT. The constraints are with respect to the input BOT, so repeated application of this
+command may produce unacceptbale results.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<kbd>mged></kbd> <b>bot_decimate bot.new abot 0.5 10.0</b><br>
+-- create a new BOT primitive named <I>bot.new</I> by reducing the number of triangles in <I>abot</I> while
+keeping the resulting surface within 0.5 units of the surface of <I>abot</I> and keeping the surface normals
+within 10 degrees.
+</DD>
+</DL>
+</DD>
+<HR>
+
 <DT><a NAME="bot_face_fuse"><B>bot_face_fuse</B> <I>new_bot_solid old_bot_solid</I></DT>
 
 <DD> The ``bot_face_fuse'' command is used to eliminate duplicate faces from a <I>BOT</I> solid.
