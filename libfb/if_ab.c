@@ -4,6 +4,12 @@
  *  Communicate with an Abekas A60 digital videodisk as if it was
  *  a framebuffer, to ease the task of loading and storing images.
  *
+ *  Normal (non output-only) behavior depends on
+ *  what the first operation of the caller is.
+ *  If first op is a read, then Abekas is read.
+ *  If first op is a full width write at scanline 0, the Abekas is NOT read.
+ *  If first op is some other write, the Abekas is read first.
+ *
  *  Authors -
  *	Michael John Muuss
  *	Phillip Dykstra
@@ -267,10 +273,6 @@ int		width, height;
 		}
 	}
 
-	/* If not in output-only mode, read the frame first */
-	if( (ifp->if_mode & MODE_2MASK) == MODE_2READFIRST )  {
-		if( ab_readframe(ifp) < 0 )  return(-1);
-	}
 
 	/*
 	 *  If "output-only" mode was set, clear the frame to black.
@@ -511,11 +513,11 @@ int		count;
 	 */
 	if( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 &&
 	    (ifp->if_mode & STATE_USER_HAS_WRITTEN) == 0 )  {
-		if( x != 0 || y != 0 )  {
-	    		/* Try to read in the frame */
+		if( x != 0 || y != 0 || count < ifp->if_width )  {
+	    		/* Read in the frame first */
 			(void)ab_readframe(ifp);
 		} else {
-			/* Just clear to black and proceed */
+			/* Assume "well behaved": clear to black and proceed */
 			(void)ab_clear( ifp, PIXEL_NULL );
 		}
 	}
