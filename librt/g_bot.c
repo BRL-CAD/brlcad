@@ -89,8 +89,8 @@ CONST struct bn_tol	*tol;
 	VSUB2( work, bp, cp );
 	m3 = MAGNITUDE( work );
 	m4 = MAGNITUDE( trip->tri_wn );
-	if( m1 < tol->dist || m2 < tol->dist ||
-	    m3 < tol->dist || m4 < tol->dist )  {
+	if( m1 < 0.00001 || m2 < 0.00001 ||
+	    m3 < 0.00001 || m4 < 0.00001 )  {
 		bu_free( (char *)trip, "getstruct tri_specific");
 	    	{
 			bu_log("bot(%s): degenerate facet #%d\n",
