@@ -185,7 +185,7 @@ struct rt_ebm_internal  {
 	fastf_t		tallness;	/* Z dimension (mm) */
 	mat_t		mat;		/* convert local coords to model space */
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-	unsigned char	*map;		/* actual bitmap, with padding */
+	struct rt_mapped_file	*mp;	/* actual data */
 };
 #define RT_EBM_INTERNAL_MAGIC	0xf901b231
 #define RT_EBM_CK_MAGIC(_p)	RT_CKMAG(_p,RT_EBM_INTERNAL_MAGIC,"rt_ebm_internal")
