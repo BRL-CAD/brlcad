@@ -29,7 +29,8 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 struct pipe_internal {
-	vect_t	pipe_V;
+	int		pipe_count;
+	struct wdb_pipeseg *pipe_segs;
 };
 
 struct pipe_specific {
@@ -221,7 +222,48 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-	return(-1);
+	register struct wdb_pipeseg	*psp;
+	struct pipe_internal	pi;
+	vect_t		head, tail;
+	point_t		pt;
+	int		i;
+
+	if( rt_pipe_import( &pi, rp, mat ) < 0 )  {
+		rt_log("rt_pipe_plot(%s): db import failure\n", dp->d_namep);
+		return(-1);
+	}
+
+	ADD_VL( vhead, pi.pipe_segs->ps_start, 0 );
+	for( psp = pi.pipe_segs; psp != WDB_PIPESEG_NULL; psp = psp->ps_next )  {
+		switch( psp->ps_type )  {
+		case WDB_PIPESEG_TYPE_END:
+			/* Previous segment aleady connected to end plate */
+			break;
+		case WDB_PIPESEG_TYPE_LINEAR:
+			ADD_VL( vhead, psp->ps_next->ps_start, 1 );
+			break;
+		case WDB_PIPESEG_TYPE_BEND:
+			VSUB2( head, psp->ps_start, psp->ps_bendcenter );
+			VSUB2( tail, psp->ps_next->ps_start, psp->ps_bendcenter );
+			for( i=0; i <= 4; i++ )  {
+				double	ang;
+				double	cos_ang, sin_ang;
+				ang = rt_halfpi * i / 4.0;
+				cos_ang = cos(ang);
+				sin_ang = sin(ang);
+				VJOIN2( pt, psp->ps_bendcenter,
+					cos_ang, head,
+					sin_ang, tail );
+				ADD_VL( vhead, pt, 1 );
+			}
+			break;
+		default:
+			return(-1);
+		}
+	}
+
+	/* XXX Need to release storage here! */
+	return(0);
 }
 
 /*
@@ -251,8 +293,8 @@ union record		*rp;
 register mat_t		mat;
 {
 	register struct exported_pipeseg *ep;
-	int		count;
-
+	register struct wdb_pipeseg	*psp;
+	struct wdb_pipeseg		tmp;
 
 	/* Check record type */
 	if( rp->u_id != DBID_PIPE )  {
@@ -261,9 +303,9 @@ register mat_t		mat;
 	}
 
 	/* Count number of segments */
-	count = 0;
+	pipe->pipe_count = 0;
 	for( ep = &rp->pw.pw_data[0]; ; ep++ )  {
-		count++;
+		pipe->pipe_count++;
 		switch( (int)(ep->eps_type[0]) )  {
 		case WDB_PIPESEG_TYPE_END:
 			goto done;
@@ -275,12 +317,36 @@ register mat_t		mat;
 		}
 	}
 done:	;
-	if( count <= 1 )
+	if( pipe->pipe_count <= 1 )
 		return(-3);		/* Not enough for 1 pipe! */
 
-	/*  Allocate a linked list of segments in internal format,
+	/*
+	 *  Walk the array of segments in reverse order,
+	 *  allocating a linked list of segments in internal format,
 	 *  using exactly the same structures as libwdb.
 	 */
+	pipe->pipe_segs = WDB_PIPESEG_NULL;
+	for( ep = &rp->pw.pw_data[pipe->pipe_count-1]; ep >= &rp->pw.pw_data[0]; ep-- )  {
+		tmp.ps_type = (int)ep->eps_type[0];
+		ntohd( tmp.ps_start, ep->eps_start, 3 );
+		ntohd( &tmp.ps_id, ep->eps_id, 1 );
+		ntohd( &tmp.ps_od, ep->eps_od, 1 );
+
+		/* Apply modeling transformations */
+		GETSTRUCT( psp, wdb_pipeseg );
+		psp->ps_type = tmp.ps_type;
+		MAT4X3PNT( psp->ps_start, mat, tmp.ps_start );
+		if( psp->ps_type == WDB_PIPESEG_TYPE_BEND )  {
+			ntohd( tmp.ps_bendcenter, ep->eps_bendcenter, 3 );
+			MAT4X3PNT( psp->ps_bendcenter, mat, tmp.ps_bendcenter );
+		} else {
+			VSETALL( psp->ps_bendcenter, 0 );
+		}
+		psp->ps_id = tmp.ps_id / mat[15];
+		psp->ps_od = tmp.ps_od / mat[15];
+		psp->ps_next = pipe->pipe_segs;
+		pipe->pipe_segs = psp;
+	}
 
 	return(0);			/* OK */
 }
