@@ -14,7 +14,7 @@
 /* Don't let this JOVE get installed automatically,
  * as it may be different from the JOVE provided in /usr/brl/bin.
  */
-#define DONT_INSTALL	1
+/* #define DONT_INSTALL	1 */
 
 #define JOVE_OBJ	jove_buf.o \
 		jove_c.o \
@@ -43,27 +43,34 @@
 /* Explicit composition of each product */
 /* Do not use LIBES symbol.  We don't need anything but libc */
 
-jove:	JOVE_OBJ
+jove:	FRC JOVE_OBJ
 	CC LDFLAGS -o jove JOVE_OBJ LIBTERMLIB
+	rm -f version.o
 
 findcom:	findcom.o tune.o
 	CC LDFLAGS findcom.o tune.o -o findcom
+	rm -f tune.o
 
-teach-jove:	teach-jove.sh FRC
-	sed -e 's;BinDir;$(BINDIR);' -e 's;LibDir;$(LIBDIR);' < teach-jove.sh > teach-jove
-
-tune.c:		jove_tune.c FRC
-	sed -e 's;LibDir;$(LIBDIR);' < jove_tune.c > tune.c
-
-version.c:	FRC
-	if test ! -f version.number ; then echo 0 > version.number; fi
-	c=`cat version.number`; \
-	rm -f version.number version.c; \
-	echo $$c | \
-		awk '{version = $$1 + 1; };END{printf "%d\n", version > "version.number"; }'; \
-	c=`cat version.number`; \
-	echo "char	version[] = \"2.$$c\";" > version.c
+teach-jove:	../SRCDIR/teach-jove.sh
+	sed -e \'s;BinDir;BINDIR;\' -e \'s;LibDir;LIBDIR;\' < ../SRCDIR/teach-jove.sh > teach-jove
 
 FRC:
+	rm -f tune.o
+	rm -f version.o
+	sed -e \'s;BinDir;BINDIR;\' -e \'s;LibDir;LIBDIR;\' < ../SRCDIR/jove_tune.c > ../SRCDIR/tune.c
+	if test ! -f version.number ; then echo 0 > version.number; fi
+	c=`cat version.number`; \
+	rm -f version.number ../SRCDIR/version.c; \
+	echo $$c | \
+		awk '{version = \$1 + 1; };END{printf "\%d\n", version > "version.number"; }'; \
+	c=`cat version.number`; \
+	echo "char	version[] = \\\\"2.$c\\\\";" > ../SRCDIR/version.c
+	touch FRC
+
+#define EXTRA_INSTALL_TARGETS install-library
 
 #include "../Cakefile.rules"
+
+install-library&:
+	cp ../SRCDIR/doc/describe.com LIBDIR/.
+	cp ../SRCDIR/doc/teach-jove LIBDIR/.
