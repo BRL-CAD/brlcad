@@ -161,6 +161,7 @@ int			extra;
  *  Useful for subroutines that are planning on mucking with the data
  *  array themselves.  Not advisable, but occasionally useful.
  *  Does not change the offset from the front of the buffer, if any.
+ *  Does not initialize the value of any of the new bytes.
  */
 void
 bu_vls_setlen( vp, newlen )
@@ -176,7 +177,7 @@ int		newlen;
 /*
  *			B U _ V L S _ S T R L E N
  *
- *  Return length of the string, in bytes, not including the null.
+ *  Return length of the string, in bytes, not including the null terminator.
  */
 int
 bu_vls_strlen(vp)
@@ -191,17 +192,19 @@ register CONST struct bu_vls	*vp;
  *			B U _ V L S _ T R U N C
  *
  *  Truncate string to at most 'len' characters.
+ *  If 'len' is negative, trim off that many from the end.
+ *  If 'len' is zero, don't release storage -- user is probably
+ *  just going to refill it again, e.g. with bu_vls_gets().
  */
 void
 bu_vls_trunc( vp, len )
 register struct bu_vls	*vp;
+int			len;
 {
 	BU_CK_VLS(vp);
+	if( len < 0 )  len = vp->vls_len + len;	/* now an absolute length */
 	if( vp->vls_len <= len )  return;
-	if( len <= 0 )  {
-		bu_vls_free( vp );
-		return;
-	}
+	if( len == 0 )  vp->vls_offset = 0;
 	vp->vls_str[len+vp->vls_offset] = '\0';	/* force null termination */
 	vp->vls_len = len;
 }
@@ -210,19 +213,17 @@ register struct bu_vls	*vp;
  *			B U _ V L S _ T R U N C 2
  *
  *  Son of bu_vls_trunc.
- *  Same as bu_vls_trunc except that it doesn't free memory.
+ *  Same as bu_vls_trunc except that it doesn't take negative len.
  */
 void
 bu_vls_trunc2( vp, len )
 register struct bu_vls	*vp;
+int			len;
 {
 	BU_CK_VLS(vp);
 	if( vp->vls_len <= len )  return;
-	if( len <= 0 )  {
-		vp->vls_len = vp->vls_offset = 0;
-		vp->vls_str[0] = '\0'; /* force null termination */
-		return;
-	}
+	if( len < 0 )  len = 0;
+	if( len == 0 )  vp->vls_offset = 0;
 	vp->vls_str[len+vp->vls_offset] = '\0';	/* force null termination */
 	vp->vls_len = len;
 }
@@ -521,6 +522,9 @@ CONST struct bu_vls	*vp;
  *  to the end of the vls pointed to by "vp".
  *  The newline from the file is read, but not stored into the vls.
  *
+ *  The most common error is to forget to bu_vls_trunc(vp,0) before
+ *  reading the next line into the vls.
+ *
  *  Returns -
  *	>=0	the length of the resulting vls
  *	 -1	on EOF where no characters were added to the vls.
@@ -558,7 +562,6 @@ register FILE		*fp;
  *
  *  Append the given character to the vls.
  */
-
 void
 bu_vls_putc( vp, c )
 register struct bu_vls	*vp;
@@ -569,6 +572,26 @@ int			c;
 	if( vp->vls_offset + vp->vls_len+1 >= vp->vls_max )  bu_vls_extend( vp, 80 );
 	vp->vls_str[vp->vls_offset + vp->vls_len++] = (char)c;
 	vp->vls_str[vp->vls_offset + vp->vls_len] = '\0';	/* force null termination */
+}
+
+/*
+ *			B U _ V L S _ T R I M S P A C E
+ *
+ *  Remove leading and trailing white space from a vls string.
+ */
+void
+bu_vls_trimspace( vp )
+struct bu_vls	*vp;
+{
+	BU_CK_VLS(vp);
+
+	/* Remove trailing white space */
+	while( isspace( bu_vls_addr(vp)[bu_vls_strlen(vp)-1] ) )
+		bu_vls_trunc( vp, -1 );
+
+	/* Remove leading white space */
+	while( isspace( *bu_vls_addr(vp) ) )
+		bu_vls_nibble( vp, 1 );
 }
 
 #if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
