@@ -72,6 +72,7 @@ Usage: asc2g file.asc file.g\n\
  Convert an ASCII BRL-CAD database to binary form\n\
 ";
 
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -205,7 +206,7 @@ after_read:
 	 * region-id-based color table.
 	 */
 	mk_write_color_table( ofp );
-	fclose(ofp);
+	wdb_close(ofp);
 
 	exit(0);
 }
@@ -216,6 +217,7 @@ after_read:
 void
 strsolbld()
 {
+#if 0
 	register char *cp;
 	register char *np;
 	char keyword[10];
@@ -251,6 +253,9 @@ strsolbld()
 		bu_log("asc2g(%s) couldn't convert %s type solid\n",
 			name, keyword );
 	}
+#else
+	bu_bomb("strsolbld() needs to be upgraded to v5\n");
+#endif
 }
 
 #define LSEG 'L'
@@ -460,6 +465,7 @@ extrbld()
 void
 nmgbld()
 {
+#if 0
 	register char *cp;
 	int cp_i;
 	char *ptr;
@@ -524,6 +530,9 @@ nmgbld()
 		}
 		(void)fwrite( (char *)&record , sizeof( union record ) , 1 , ofp );
 	}
+#else
+	bu_bomb("nmgbld() needs to be upgraded to v5\n");
+#endif
 }
 
 /*		S O L B L D
@@ -883,6 +892,7 @@ struct wmember	*headp;
 void
 arsabld()
 {
+#if 0
 	register char *cp;
 	register char *np;
 
@@ -922,7 +932,9 @@ arsabld()
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
-
+#else
+	bu_bomb("arsabld() needs to be upgraded to v5\n");
+#endif
 }
 
 /*		A R S B L D
@@ -933,6 +945,7 @@ arsabld()
 void
 arsbbld()
 {
+#if 0
 	register char *cp;
 	register int i;
 
@@ -953,7 +966,9 @@ arsbbld()
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
-
+#else
+	bu_bomb("arbbbld() needs to be upgraded to v5\n");
+#endif
 }
 
 
@@ -1077,7 +1092,7 @@ identbld()
 void
 polyhbld()
 {
-
+#if 0
 	/* Headder for polysolid */
 
 	register char	*cp;
@@ -1094,6 +1109,9 @@ polyhbld()
 	*np = '\0';
 
 	mk_polysolid(ofp, name);
+#else
+	bu_bomb("bsrfbld() needs to be upgraded to v5\n");
+#endif
 }
 
 /*		P O L Y D B L D
@@ -1104,6 +1122,7 @@ polyhbld()
 void
 polydbld()
 {
+#if 0
 	register char	*cp;
 	register int	i, j;
 	char		count;		/* number of vertices */
@@ -1131,6 +1150,9 @@ polydbld()
 	}
 
 	mk_poly(ofp, count, verts, norms);
+#else
+	bu_bomb("polydbld() needs to be upgraded to v5\n");
+#endif
 }
 
 
@@ -1175,6 +1197,7 @@ materbld()
 void
 bsplbld()
 {
+#if 0
 	register char	*cp;
 	register char	*np;
 	short		nsurf;		/* number of surfaces */
@@ -1196,6 +1219,9 @@ bsplbld()
 	resolution = atof( cp );
 
 	mk_bsolid(ofp, name, nsurf, resolution);
+#else
+	bu_bomb("bsplbld() needs to be upgraded to v5\n");
+#endif
 }
 
 /* 		B S U R F B L D
@@ -1206,6 +1232,7 @@ bsplbld()
 void
 bsurfbld()
 {
+#if 0
 
 /* HELP! This involves mk_bsurf(filep, bp) where bp is a ptr to struct */
 
@@ -1303,6 +1330,9 @@ bsurfbld()
 
 	/* Free the control mesh memory */
 	(void)free( (char *)fp );
+#else
+	bu_bomb("bsrfbld() needs to be upgraded to v5\n");
+#endif
 }
 
 /*		C L I N E B L D
