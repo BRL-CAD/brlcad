@@ -56,6 +56,10 @@
 #define NAMESIZE 16
 #define NAMEMOVE(from,to)       (void)strncpy(to, from, NAMESIZE)
 
+#define MGED_DB_NAME "db"
+#define MGED_INMEM_NAME ".inmem"
+#define MGED_DG_NAME "dg"
+
 #define ID_NO_UNIT	0		/* unspecified */
 #define ID_MM_UNIT	1		/* millimeters (preferred) */
 #define ID_UM_UNIT	2		/* micrometers */
