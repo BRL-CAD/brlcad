@@ -101,64 +101,64 @@ struct rt_tabdata {
  * Routines
  */
 
-RT_EXTERN( void			rt_ck_table, (CONST struct rt_table *tabp));
-RT_EXTERN( struct rt_table	*rt_table_make_uniform, (int num, double first,
+BU_EXTERN( void			rt_ck_table, (CONST struct rt_table *tabp));
+BU_EXTERN( struct rt_table	*rt_table_make_uniform, (int num, double first,
 					double last));
-RT_EXTERN( void			rt_tabdata_add, (struct rt_tabdata *out,
+BU_EXTERN( void			rt_tabdata_add, (struct rt_tabdata *out,
 					CONST struct rt_tabdata *in1,
 					CONST struct rt_tabdata *in2));
-RT_EXTERN( void			rt_tabdata_mul, (struct rt_tabdata *out,
+BU_EXTERN( void			rt_tabdata_mul, (struct rt_tabdata *out,
 					CONST struct rt_tabdata *in1,
 					CONST struct rt_tabdata *in2));
-RT_EXTERN( void			rt_tabdata_scale, (struct rt_tabdata *out,
+BU_EXTERN( void			rt_tabdata_scale, (struct rt_tabdata *out,
 					CONST struct rt_tabdata *in1,
 					double scale));
-RT_EXTERN( void			rt_table_scale, (struct rt_table *tabp,
+BU_EXTERN( void			rt_table_scale, (struct rt_table *tabp,
 					double scale));
-RT_EXTERN( void			rt_tabdata_join1, (struct rt_tabdata *out,
+BU_EXTERN( void			rt_tabdata_join1, (struct rt_tabdata *out,
 					CONST struct rt_tabdata *in1,
 					double scale,
 					CONST struct rt_tabdata *in2));
-RT_EXTERN( void			rt_tabdata_blend3, (struct rt_tabdata *out,
+BU_EXTERN( void			rt_tabdata_blend3, (struct rt_tabdata *out,
 					double scale1,
 					CONST struct rt_tabdata *in1,
 					double scale2,
 					CONST struct rt_tabdata *in2,
 					double scale3,
 					CONST struct rt_tabdata *in3));
-RT_EXTERN( double		rt_tabdata_area1, (CONST struct rt_tabdata *in));
-RT_EXTERN( double		rt_tabdata_area2, (CONST struct rt_tabdata *in));
-RT_EXTERN( double		rt_tabdata_mul_area1, (CONST struct rt_tabdata *in1,
+BU_EXTERN( double		rt_tabdata_area1, (CONST struct rt_tabdata *in));
+BU_EXTERN( double		rt_tabdata_area2, (CONST struct rt_tabdata *in));
+BU_EXTERN( double		rt_tabdata_mul_area1, (CONST struct rt_tabdata *in1,
 					CONST struct rt_tabdata	*in2));
-RT_EXTERN( double		rt_tabdata_mul_area2, (CONST struct rt_tabdata *in1,
+BU_EXTERN( double		rt_tabdata_mul_area2, (CONST struct rt_tabdata *in1,
 					CONST struct rt_tabdata	*in2));
-RT_EXTERN( fastf_t		rt_table_lin_interp, (CONST struct rt_tabdata *samp,
+BU_EXTERN( fastf_t		rt_table_lin_interp, (CONST struct rt_tabdata *samp,
 					double wl));
-RT_EXTERN( struct rt_tabdata	*rt_tabdata_resample_max, (
+BU_EXTERN( struct rt_tabdata	*rt_tabdata_resample_max, (
 					CONST struct rt_table *newtable,
 					CONST struct rt_tabdata *olddata));
-RT_EXTERN( struct rt_tabdata	*rt_tabdata_resample_avg, (
+BU_EXTERN( struct rt_tabdata	*rt_tabdata_resample_avg, (
 					CONST struct rt_table *newtable,
 					CONST struct rt_tabdata *olddata));
-RT_EXTERN( int			rt_table_write, (CONST char *filename,
+BU_EXTERN( int			rt_table_write, (CONST char *filename,
 					CONST struct rt_table *tabp));
-RT_EXTERN( struct rt_table	*rt_table_read, (CONST char *filename));
-RT_EXTERN( int			rt_pr_table_and_tabdata, (CONST char *filename,
+BU_EXTERN( struct rt_table	*rt_table_read, (CONST char *filename));
+BU_EXTERN( int			rt_pr_table_and_tabdata, (CONST char *filename,
 					CONST struct rt_tabdata *data));
-RT_EXTERN( struct rt_tabdata	*rt_read_table_and_tabdata, (
+BU_EXTERN( struct rt_tabdata	*rt_read_table_and_tabdata, (
 					CONST char *filename));
-RT_EXTERN( struct rt_tabdata	*rt_tabdata_binary_read, (CONST char *filename,
+BU_EXTERN( struct rt_tabdata	*rt_tabdata_binary_read, (CONST char *filename,
 					int num,
 					CONST struct rt_table *tabp));
-RT_EXTERN( struct rt_tabdata	*rt_tabdata_malloc_array, (
+BU_EXTERN( struct rt_tabdata	*rt_tabdata_malloc_array, (
 					CONST struct rt_table *tabp,
 					int num));
-RT_EXTERN( void			rt_tabdata_copy, (struct rt_tabdata *out,
+BU_EXTERN( void			rt_tabdata_copy, (struct rt_tabdata *out,
 					CONST struct rt_tabdata *in));
-RT_EXTERN(struct rt_tabdata	*rt_tabdata_dup, (CONST struct rt_tabdata *in));
-RT_EXTERN(struct rt_tabdata	*rt_tabdata_get_constval, (double val,
+BU_EXTERN(struct rt_tabdata	*rt_tabdata_dup, (CONST struct rt_tabdata *in));
+BU_EXTERN(struct rt_tabdata	*rt_tabdata_get_constval, (double val,
 					CONST struct rt_table	*tabp));
-RT_EXTERN(void			rt_tabdata_constval, (struct rt_tabdata	*data, double val));
+BU_EXTERN(void			rt_tabdata_constval, (struct rt_tabdata	*data, double val));
 
 #ifdef __cplusplus
 }
