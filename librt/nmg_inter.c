@@ -3238,13 +3238,13 @@ CONST struct rt_tol	*tol;
  *  
  * XXX This is a lame name.
  */
-struct vertexuse *
-nmg_search_v_eg( eu, second, eg1, eg2, hit_vu, tol )
+struct vertex *
+nmg_search_v_eg( eu, second, eg1, eg2, hit_v, tol )
 CONST struct edgeuse		*eu;
 int				second;		/* 2nd vu on eu, not 1st */
 CONST struct edge_g		*eg1;
 CONST struct edge_g		*eg2;
-struct vertexuse		*hit_vu;	/* often will be NULL */
+struct vertex			*hit_v;		/* often will be NULL */
 CONST struct rt_tol		*tol;
 {
 	struct vertex		*v;
@@ -3278,53 +3278,93 @@ CONST struct rt_tol		*tol;
 		if( eu1->e_p->eg_p == eg2 )  seen2 = 1;
 		if( !seen1 || !seen2 )  continue;
 
-		/* Both edge_g's have been seen at 'vu', this is a hit. */
-		if( !hit_vu )  return vu;
+		/* Both edge_g's have been seen at 'v', this is a hit. */
+		if( !hit_v )  return v;
 
-		/* Is it a different vertex than hit_vu? */
-		if( hit_vu->v_p == v )  return hit_vu;
+		/* Is it a different vertex than hit_v? */
+		if( hit_v == v )  return hit_v;
 
 		/* Different vertices, this "can't happen" */
-		rt_log("vu=x%x, v=x%x; hit_vu=x%x, v=x%x\n",
-			vu, v, hit_vu, hit_vu->v_p );
+		rt_log("vu=x%x, v=x%x; hit_v=x%x\n",
+			vu, v, hit_v);
 		VPRINT("vu ", vu->v_p->vg_p->coord);
-		VPRINT("hit", hit_vu->v_p->vg_p->coord);
+		VPRINT("hit", hit_v->vg_p->coord);
 		rt_log("dist vu-hit=%g, equal=%d\n",
 			rt_dist_pt3_pt3(vu->v_p->vg_p->coord,
-				hit_vu->v_p->vg_p->coord),
+				hit_v->vg_p->coord),
 			rt_pt3_pt3_equal(vu->v_p->vg_p->coord,
-				hit_vu->v_p->vg_p->coord, tol)
+				hit_v->vg_p->coord, tol)
 		    );
 		rt_log("eg1: line/ vu dist=%g, hit dist=%g\n",
 			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, vu->v_p->vg_p->coord ),
-			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_vu->v_p->vg_p->coord ) );
+			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord ) );
 		rt_log("eg2: line/ vu dist=%g, hit dist=%g\n",
 			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, vu->v_p->vg_p->coord ),
-			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_vu->v_p->vg_p->coord ) );
+			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_v->vg_p->coord ) );
 		nmg_pr_eg(eg1, 0);
 		nmg_pr_eg(eg2, 0);
 
 		if( rt_dist_pt3_pt3(vu->v_p->vg_p->coord,
-		      hit_vu->v_p->vg_p->coord) < 10 * tol->dist )  {
+		      hit_v->vg_p->coord) < 10 * tol->dist )  {
 			struct edgeuse	*eu0;
 			rt_log("NOTICE: The intersection of two lines has resulted in 2 different intersect points\n");
 			rt_log("  Since the two points are 'close', they are being fused.\n");
 
 			/* See if there is an edge between them */
-			eu0 = nmg_findeu(hit_vu->v_p, v, (struct shell *)NULL,
+			eu0 = nmg_findeu(hit_v, v, (struct shell *)NULL,
 				(struct edgeuse *)NULL, 0);
 			if( eu0 )  {
 				rt_log("DANGER: a 0-length edge is being created eu0=x%x\n", eu0);
 			}
 
-			nmg_jv(hit_vu->v_p, v);
+			nmg_jv(hit_v, v);
 			/* XXX Kill all uses of the 0-length edge? */
-			return hit_vu;
+			return hit_v;
 		}
 
 		rt_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
 	}
-	return hit_vu;
+	return hit_v;
+}
+
+/*
+ *			N M G _ I S E C T _ 2 E G
+ *
+ *  Perform a topology search for a common vertex between two edge geometry
+ *  lines.
+ */
+struct vertex *
+nmg_isect_2eg( eg1, eg2, tol, m )
+struct edge_g		*eg1;
+struct edge_g		*eg2;
+CONST struct rt_tol	*tol;
+struct model		*m;		/* XXX */
+{
+	struct nmg_ptbl		eu1_list;
+	struct edgeuse		**eu1;
+	struct vertex		*hit_v = (struct vertex *)NULL;
+
+	NMG_CK_EDGE_G(eg1);
+	NMG_CK_EDGE_G(eg2);
+	RT_CK_TOL(tol);
+	NMG_CK_MODEL(m);
+
+	/* XXX "without regard to complexity".  This is a slow algorithm. */
+	/* XXX Re-write once edge_g heads a lists of edges, rather than ->usage */
+
+	/* Build a list of all edgeuses in this model on eg1 */
+	nmg_edgeuse_with_eg_tabulate( &eu1_list, &m->magic, eg1 );
+
+	for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(&eu1_list);
+	     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu1_list); eu1--
+	)  {
+		NMG_CK_EDGEUSE(*eu1);
+		if( (*eu1)->e_p->eg_p != eg1 )  rt_bomb("nmg_isect_2eg() sanity\n");
+		/* Both verts of *eu1 lie on line *eg1 */
+		hit_v = nmg_search_v_eg( *eu1, 0, eg1, eg2, hit_v, tol );
+		hit_v = nmg_search_v_eg( *eu1, 1, eg1, eg2, hit_v, tol );
+	}
+	return hit_v;
 }
 
 /*
@@ -3378,7 +3418,6 @@ struct nmg_ptbl		*eu2_list;
 	for( eg1 = (struct edge_g **)NMG_TBL_LASTADDR(&eg_list);
 	     eg1 >= (struct edge_g **)NMG_TBL_BASEADDR(&eg_list); eg1--
 	)  {
-		struct vertexuse	*hit_vu = (struct vertexuse *)NULL;
 		struct vertex		*hit_v = (struct vertex *)NULL;
 
 		NMG_CK_EDGE_G(*eg1);
@@ -3453,26 +3492,16 @@ colinear:
 		/* If on_eg was specified, do a topology search */
 		if( is->on_eg )  {
 			/* See if any vu along eg1 is used by edge from on_eg */
-			for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
-			     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list); eu1--
-			)  {
-				NMG_CK_EDGEUSE(*eu1);
-				if( (*eu1)->e_p->eg_p != *eg1 )  continue;
-				/* Both verts of *eu1 lie on line *eg1 */
-				hit_vu = nmg_search_v_eg( *eu1, 0, *eg1, is->on_eg, hit_vu, &(is->tol) );
-				hit_vu = nmg_search_v_eg( *eu1, 1, *eg1, is->on_eg, hit_vu, &(is->tol) );
-			}
-			/* hit_vu will be non-NULL if there is 1 topological intersection */
+			hit_v = nmg_isect_2eg( *eg1, is->on_eg, &(is->tol), nmg_find_model( &fu1->l.magic ) );
 		}
 
 		/* Now compare results of topology and geometry calculations */
 
 		if( code < 0 )  {
 			/* Geometry says lines are parallel, no intersection */
-			if( hit_vu )  {
+			if( hit_v )  {
 				rt_log("NOTICE: geom/topo mis-match, enlisting topo vu\n");
-				/* XXX There could be many vu's with same v, due to acordian pleats */
-				nmg_enlist_vu(is, hit_vu, 0);
+				goto force_isect;
 			}
 			continue;
 		}
@@ -3488,18 +3517,17 @@ colinear:
 
 		VJOIN1_2D( hit2d, is->pt2d, dist[0], is->dir2d );
 
-		/* Consistency check between geometry, and hit_vu. */
-		if( hit_vu && !rt_pt3_pt3_equal( hit3d, hit_vu->v_p->vg_p->coord, &(is->tol) ) )  {
-			rt_log("NOTICE: hit_vu and hit3d don't agree, using hit_vu.\n");
-			VPRINT("\thit3d ", hit3d);
-			VPRINT("\thit_vu", hit_vu->v_p->vg_p->coord);
+		/* Consistency check between geometry, and hit_v. */
+		if( hit_v && !rt_pt3_pt3_equal( hit3d, hit_v->vg_p->coord, &(is->tol) ) )  {
+			rt_log("NOTICE: hit_v and hit3d don't agree, using hit_v.\n");
+			VPRINT("\thit3d", hit3d);
+			VPRINT("\thit_v", hit_v->vg_p->coord);
 
+force_isect:
 			/* Just in case, make things consistent */
-			VMOVE(hit3d, hit_vu->v_p->vg_p->coord);
-			nmg_get_2d_vertex( hit2d, hit_vu->v_p, is, fu1 );
+			VMOVE(hit3d, hit_v->vg_p->coord);
+			nmg_get_2d_vertex( hit2d, hit_v, is, fu1 );
 		}
-
-		if( hit_vu )  hit_v = hit_vu->v_p;
 
 		/* Search all eu's on eg1 for vu's to enlist.  May be many. */
 		for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
@@ -3586,6 +3614,7 @@ hit_b:
 						rt_bomb("About to make 0-length edge!\n");
 				}
 				new_eu = nmg_ebreak(hit_v, *eu1);
+				/* XXX What about realloc() moving the array? */
 				nmg_tbl( eu1_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 				vu1_midpt = new_eu->vu_p;
 				if( !hit_v )  {
@@ -3640,6 +3669,7 @@ hit_b:
 			/* *eu1 is from fu1 and on the intersection line */
 			new_eu = nmg_break_eu_on_v( *eu1, vu1->v_p, fu1, is );
 			if( !new_eu )  continue;
+			/* XXX What about realloc() moving the array? */
 			nmg_tbl( eu1_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 			nmg_enlist_vu(is, new_eu->vu_p, 0 );
 		}
@@ -3654,6 +3684,7 @@ hit_b:
 			/* *eu2 is from fu2 and on the intersection line */
 			new_eu = nmg_break_eu_on_v( *eu2, vu1->v_p, fu1, is );
 			if( !new_eu )  continue;
+			/* XXX What about realloc() moving the array? */
 			nmg_tbl( eu2_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 			nmg_enlist_vu(is, new_eu->vu_p, 0 );
 		}
