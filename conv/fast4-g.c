@@ -3425,8 +3425,9 @@ struct db_i *dbip;
 		case OP_DB_LEAF:
 			if( (dp=db_lookup( dbip, ptr->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL )
 			{
-				ptr->tr_l.tl_op = OP_NOP;
-				return( ptr );
+				db_free_tree( ptr );
+				ptr = TREE_NULL;
+				return( TREE_NULL );
 			}
 
 			if( !(dp->d_flags & DIR_REGION) )
@@ -3512,6 +3513,54 @@ struct db_i *dbip;
 			/* recurse */
 			ptr->tr_b.tb_left = expand_tree( ptr->tr_b.tb_left, dbip );
 			ptr->tr_b.tb_right = expand_tree( ptr->tr_b.tb_right, dbip );
+			if( (ptr->tr_b.tb_left == TREE_NULL) && (ptr->tr_b.tb_right == TREE_NULL) )
+			{
+				ptr->tr_op = 0;
+				bu_free( (char *)ptr, "union tree" );
+				ptr = TREE_NULL;
+			}
+			else if( ptr->tr_b.tb_right == TREE_NULL )
+			{
+				if( ptr->tr_op == OP_INTERSECT )
+				{
+					/* intersection with nothing is nothing */
+					db_free_tree( ptr->tr_b.tb_left );
+					ptr->tr_op = 0;
+					bu_free( (char *)ptr, "union tree" );
+					ptr = TREE_NULL;
+				}
+				else
+				{
+					union tree *save;
+
+					/* just return the left tree */
+					save = ptr->tr_b.tb_left;
+					ptr->tr_op = 0;
+					bu_free( (char *)ptr, "union tree" );
+					ptr = save;
+				}
+			}
+			else if( ptr->tr_b.tb_left == TREE_NULL )
+			{
+				if( ptr->tr_op == OP_UNION )
+				{
+					union tree *save;
+
+					/* return the right tree */
+					save = ptr->tr_b.tb_right;
+					ptr->tr_op = 0;
+					bu_free( (char *)ptr, "union tree" );
+					ptr = save;
+				}
+				else
+				{
+					/* result is nothing */
+					db_free_tree( ptr->tr_b.tb_right );
+					ptr->tr_op = 0;
+					bu_free( (char *)ptr, "union tree" );
+					ptr = TREE_NULL;
+				}
+			}
 			return( ptr );
 			break;
 	}
