@@ -3260,15 +3260,13 @@ sedit()
 
 			RT_EXTRUDE_CK_MAGIC( extr );
 
-			ret_tcl = Tcl_VarEval( interp, "get_sketch_and_curve", " $mged_gui(mged,screen) ",
-				extr->sketch_name, " ", extr->curve_name, (char *)NULL );
+			ret_tcl = Tcl_VarEval( interp, "get_sketch", " $mged_gui(mged,screen) ",
+				extr->sketch_name, " ", (char *)NULL );
 			if( ret_tcl != TCL_OK )
 				break;
 
 			sketch_name = Tcl_GetVar( interp, "final_sketch_name", TCL_GLOBAL_ONLY );
 			NAMEMOVE( sketch_name, extr->sketch_name );
-			curve_name = Tcl_GetVar( interp, "final_curve_name", TCL_GLOBAL_ONLY );
-			NAMEMOVE( curve_name, extr->curve_name );
 
 			if( extr->skt )
 			{

@@ -254,14 +254,15 @@ void
 sktbld()
 {
 	register char *cp, *ptr;
-	int i;
-	int vert_count, curve_count;
+	int i, j;
+	int vert_count, seg_count;
 	float fV[3], fu[3], fv[3];
 	point_t V;
 	vect_t u, v;
 	point2d_t *verts;
 	char name[NAMESIZE+1];
 	struct rt_sketch_internal *skt;
+	struct curve *crv;
 	struct line_seg *lsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
@@ -272,7 +273,11 @@ sktbld()
 	cp++;
 
 	(void)sscanf( cp, "%s %f %f %f %f %f %f %f %f %f %d %d",
-		name, &fV[0], &fV[1], &fV[2], &fu[0], &fu[1], &fu[2], &fv[0], &fv[1], &fv[2], &vert_count, &curve_count );
+		name,
+		&fV[0], &fV[1], &fV[2],
+		&fu[0], &fu[1], &fu[2],
+		&fv[0], &fv[1], &fv[2],
+		&vert_count, &seg_count );
 
 	VMOVE( V, fV );
 	VMOVE( u, fu );
@@ -312,13 +317,22 @@ sktbld()
 		}
 	}
 
-	skt = (struct rt_sketch_internal *)sketch_start( V, u, v );
-	(void)sketch_add_verts( skt, vert_count, verts );
+	skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
+	skt->magic = RT_SKETCH_INTERNAL_MAGIC;
+	VMOVE( skt->V, V );
+	VMOVE( skt->u_vec, u );
+	VMOVE( skt->v_vec, v );
+	skt->vert_count = vert_count;
+	skt->verts = verts;
+	crv = &skt->skt_curve;
+	crv->seg_count = seg_count;
 
-	for( i=0 ; i<curve_count ; i++ )
+	crv->segments = (genptr_t *)bu_calloc( crv->seg_count, sizeof( genptr_t ), "segments" );
+	crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof( int ), "reverse" );
+	for( j=0 ; j<crv->seg_count ; j++ )
 	{
-		int j;
-		struct curve crv;
+		double radius;
+		int k;
 
 		if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 		{
@@ -326,123 +340,82 @@ sktbld()
 			exit( -1 );
 		}
 
-		cp = buf+1;
-		bzero( &crv, sizeof( struct curve ) );
-		sscanf( cp, "%s %d", crv.crv_name, &crv.seg_count );
-		crv.segments = (genptr_t *)bu_calloc( crv.seg_count, sizeof( genptr_t ), "segments" );
-		crv.reverse = (int *)bu_calloc( crv.seg_count, sizeof( int ), "reverse" );
-		for( j=0 ; j<crv.seg_count ; j++ )
+		cp = buf + 2;
+		switch( *cp )
 		{
-			double radius;
-			int k;
-
-			if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-			{
-				bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-				exit( -1 );
-			}
-
-			cp = buf + 2;
-			switch( *cp )
-			{
-				case LSEG:
-					lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line segment" );
-					sscanf( cp+1, "%d %d %d", &crv.reverse[j], &lsg->start, &lsg->end );
-					lsg->magic = CURVE_LSEG_MAGIC;
-					crv.segments[j] = lsg;
-					break;
-				case CARC:
-					csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "arc segment" );
-					sscanf( cp+1, "%d %d %d %lf %d %d", &crv.reverse[j], &csg->start, &csg->end,
-						&radius, &csg->center_is_left, &csg->orientation );
-					csg->radius = radius;
-					csg->magic = CURVE_CARC_MAGIC;
-					crv.segments[j] = csg;
-					break;
-				case NURB:
-					nsg = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nurb segment" );
-					sscanf( cp+1, "%d %d %d %d %d", &crv.reverse[j], &nsg->order, &nsg->pt_type,
-						&nsg->k.k_size, &nsg->c_size );
-					nsg->k.knots = (fastf_t *)bu_calloc( nsg->k.k_size, sizeof( fastf_t ), "knots" );
-					nsg->ctl_points = (int *)bu_calloc( nsg->c_size, sizeof( int ), "control points" );
-					if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+			case LSEG:
+				lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line segment" );
+				sscanf( cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end );
+				lsg->magic = CURVE_LSEG_MAGIC;
+				crv->segments[j] = lsg;
+				break;
+			case CARC:
+				csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "arc segment" );
+				sscanf( cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
+					&radius, &csg->center_is_left, &csg->orientation );
+				csg->radius = radius;
+				csg->magic = CURVE_CARC_MAGIC;
+				crv->segments[j] = csg;
+				break;
+			case NURB:
+				nsg = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nurb segment" );
+				sscanf( cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
+					&nsg->k.k_size, &nsg->c_size );
+				nsg->k.knots = (fastf_t *)bu_calloc( nsg->k.k_size, sizeof( fastf_t ), "knots" );
+				nsg->ctl_points = (int *)bu_calloc( nsg->c_size, sizeof( int ), "control points" );
+				if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+				{
+					bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
+					exit( -1 );
+				}
+				cp = buf + 3;
+				ptr = strtok( cp, " " );
+				if( !ptr )
+				{
+					bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)!!!\n", name );
+					exit( 1 );
+				}
+				for( k=0 ; k<nsg->k.k_size ; k++ )
+				{
+					nsg->k.knots[k] = atof( ptr );
+					ptr = strtok( (char *)NULL, " " );
+					if( !ptr && k<nsg->k.k_size-1 )
 					{
-						bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-						exit( -1 );
-					}
-					cp = buf + 3;
-					ptr = strtok( cp, " " );
-					if( !ptr )
-					{
-						bu_log( "ERROR: not enough knots for nurb segment of curve (%s) in sketch (%s)!!!\n", crv.crv_name, name );
+						bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)!!!\n", name );
 						exit( 1 );
 					}
-					for( k=0 ; k<nsg->k.k_size ; k++ )
+				}
+				if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+				{
+					bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
+					exit( -1 );
+				}
+				cp = buf + 3;
+				ptr = strtok( cp, " " );
+				if( !ptr )
+				{
+					bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)!!!\n", name );
+					exit( 1 );
+				}
+				for( k=0 ; k<nsg->c_size ; k++ )
+				{
+					nsg->ctl_points[k] = atoi( ptr );
+					ptr = strtok( (char *)NULL, " " );
+					if( !ptr && k<nsg->c_size-1 )
 					{
-						nsg->k.knots[k] = atof( ptr );
-						ptr = strtok( (char *)NULL, " " );
-						if( !ptr && k<nsg->k.k_size-1 )
-						{
-							bu_log( "ERROR: not enough knots for nurb segment of curve (%s) in sketch (%s)!!!\n", crv.crv_name, name );
-							exit( 1 );
-						}
-					}
-					if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-					{
-						bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-						exit( -1 );
-					}
-					cp = buf + 3;
-					ptr = strtok( cp, " " );
-					if( !ptr )
-					{
-						bu_log( "ERROR: not enough control points for nurb segment of curve (%s) in sketch (%s)!!!\n", crv.crv_name, name );
+						bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)!!!\n", name );
 						exit( 1 );
 					}
-					for( k=0 ; k<nsg->c_size ; k++ )
-					{
-						nsg->ctl_points[k] = atoi( ptr );
-						ptr = strtok( (char *)NULL, " " );
-						if( !ptr && k<nsg->c_size-1 )
-						{
-							bu_log( "ERROR: not enough control points for nurb segment of curve (%s) in sketch (%s)!!!\n", crv.crv_name, name );
-							exit( 1 );
-						}
-					}
-					nsg->magic = CURVE_NURB_MAGIC;
-					crv.segments[j] = nsg;
-					break;
-				default:
-					bu_log( "Unrecognized segment type (%c) in sketch (%s), curve (%s)!!!\n",
-						*cp, name, crv.crv_name );
-					exit( 1 );
-			}
+				}
+				nsg->magic = CURVE_NURB_MAGIC;
+				crv->segments[j] = nsg;
+				break;
+			default:
+				bu_log( "Unrecognized segment type (%c) in sketch (%s)!!!\n",
+					*cp, name );
+				exit( 1 );
 		}
 
-		(void)sketch_add_curve( skt, &crv );
-
-		/* now free the temporary memory */
-		for( i=0 ; i<curve_count ; i++ )
-		{
-			long *lng;
-
-			lng = (long *)crv.segments[i];
-			switch( *lng )
-			{
-				case CURVE_NURB_MAGIC:
-					nsg = (struct nurb_seg *)lng;
-					bu_free( nsg->k.knots, "knots" );
-					bu_free( nsg->ctl_points, "control points" );
-				case CURVE_LSEG_MAGIC:
-				case CURVE_CARC_MAGIC:
-					bu_free( crv.segments[i], "segment" );
-					break;
-				default:
-					bu_log( "Unrecognized segment type in sketch (%s), curve (%s)!!!\n",
-						*cp, name, crv.crv_name );
-					exit( 1 );
-			}
-		}
 	}
 
 	(void)mk_sketch(ofp, name,  skt );
@@ -454,7 +427,6 @@ extrbld()
 	register char *cp;
 	char name[NAMESIZE+1];
 	char sketch_name[NAMESIZE+1];
-	char curve_name[NAMESIZE+1];
 	int keypoint;
 	float fV[3];
 	float fh[3];
@@ -467,15 +439,15 @@ extrbld()
 	cp++;
 
 	cp++;
-	(void)sscanf( cp, "%s %s %s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
-		name, sketch_name, curve_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
+	(void)sscanf( cp, "%s %s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
+		name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
 		&fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2] );
 
 	VMOVE( V, fV );
 	VMOVE( h, fh );
 	VMOVE( u_vec, fu_vec );
 	VMOVE( v_vec, fv_vec );
-	(void)mk_extrusion( ofp, name, sketch_name, curve_name, V, h, u_vec, v_vec, keypoint );
+	(void)mk_extrusion( ofp, name, sketch_name, V, h, u_vec, v_vec, keypoint );
 }
 
 void

@@ -389,14 +389,11 @@ struct rt_sketch_internal
 	int		vert_count;	/* number of vertices in this sketch */
 	point2d_t	*verts;		/* array of 2D vertices that may be used as
 					 * endpoints, centers, or NURB control points */
-
-	int		curve_count;	/* number of curves in this sketch */
 	struct curve {
-		char		crv_name[SKETCH_NAME_LEN];
 		int		seg_count;	/* number of segments in this curve */
 		int		*reverse;	/* array of ints indicating if segment should be reversed */
 		genptr_t	*segments;	/* array of pointers to segments in this curve */
-	} *curves;			/* array of curves in this sketch */
+	} skt_curve;				/* the curve in this sketch */
 };
 #define RT_SKETCH_INTERNAL_MAGIC	0x736b6574	/* sket */
 #define RT_SKETCH_CK_MAGIC(_p)	BU_CKMAG(_p,RT_SKETCH_INTERNAL_MAGIC,"rt_sketch_internal")
@@ -431,8 +428,6 @@ struct rt_extrude_internal
 	int		keypoint;	/* index of keypoint vertex */
 	char		sketch_name[SKETCH_NAME_LEN];	/* name of sketch object that defines
 						 * the curve to be extruded */
-
-	char		curve_name[SKETCH_NAME_LEN];	/* name of curve (in sketch) to be extruded */
 	struct rt_sketch_internal	*skt;	/* pointer to referenced sketch */
 };
 

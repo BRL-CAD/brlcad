@@ -1543,8 +1543,6 @@ struct line_seg		/* line segment */
 {
 	long			magic;
 	int			start, end;	/* indices into sketch's array of vertices */
-	int			curve_count;	/* number of curves using this segment */
-	struct curve		**curves;	/* array of pointers to curves using this segment */
 };
 #define CURVE_LSEG_MAGIC     0x6c736567		/* lseg */
 
@@ -1558,8 +1556,6 @@ struct carc_seg		/* circular arc segment */
 						 * If non-zero, then center is to left of vector
 						 * from start to end */
 	int			orientation;	/* 0 -> ccw, !0 -> cw */
-	int			curve_count;	/* number of curves using this segment */
-	struct curve		**curves;	/* array of pointers to curves using this segment */
 	int			center;		/* index of vertex at center of arc (only used by rt_extrude_prep and rt_extrude_shot) */
 };
 #define CURVE_CARC_MAGIC     0x63617263		/* carc */
@@ -1573,8 +1569,6 @@ struct nurb_seg		/* NURB curve segment */
 	int			c_size;		/* number of control points */
 	int			*ctl_points;	/* array of indicies for control points */
 	fastf_t			*weights;	/* array of weights for control points (NULL if non_rational) */
-	int			curve_count;	/* number of curves using this segment */
-	struct curve		**curves;	/* array of pointers to curves using this segment */
 };
 #define CURVE_NURB_MAGIC     0x6e757262		/* nurb */
 

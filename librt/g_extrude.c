@@ -121,29 +121,11 @@ struct rt_i		*rtip;
 	skt = eip->skt;
 	RT_SKETCH_CK_MAGIC( skt );
 
-	/* find referenced curve */
-	curve_no = -1;
-	for( i=0 ; i<skt->curve_count ; i++ )
-	{
-		if( !strcmp( skt->curves[i].crv_name, eip->curve_name ) )
-		{
-			curve_no = i;
-			break;
-		}
-	}
-
-	if( curve_no < 0 )
-	{
-		bu_log( "ERROR: rt_extrude_prep(): solid (%s) references non-existent curve (%s) in sketch (%s)\n",
-			stp->st_dp->d_namep, eip->curve_name, eip->sketch_name );
-		return( -1 );	/* failure */
-	}
-
 	/* make sure the curve is valid */
-	if( rt_check_curve( &skt->curves[curve_no], skt, 1 ) )
+	if( rt_check_curve( &skt->skt_curve, skt, 1 ) )
 	{
-		bu_log( "ERROR: referenced curve (%s) in sketch (%s) is bad!!!\n",
-			eip->curve_name, eip->sketch_name );
+		bu_log( "ERROR: referenced sketch (%s) is bad!!!\n",
+			eip->sketch_name );
 		return( -1 );
 	}
 
@@ -193,9 +175,9 @@ struct rt_i		*rtip;
 
 	vert_count = skt->vert_count;
 	/* count how many additional vertices we will need for arc centers */
-	for( i=0 ; i<skt->curves[curve_no].seg_count ; i++ )
+	for( i=0 ; i<skt->skt_curve.seg_count ; i++ )
 	{
-		struct carc_seg *csg=(struct carc_seg *)skt->curves[curve_no].segments[i];
+		struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
 
 		if( csg->magic != CURVE_CARC_MAGIC )
 			continue;
@@ -229,12 +211,12 @@ struct rt_i		*rtip;
 	extr->pl1_rot[3] = VDOT( extr->pl1_rot, extr->verts[0] );
 
 	/* copy the curve */
-	rt_copy_curve( &extr->crv, &skt->curves[curve_no] );
+	rt_copy_curve( &extr->crv, &skt->skt_curve );
 
 	/* if any part of the curve is a circular arc, the arc may extend beyond the listed vertices */
-	for( i=0 ; i<skt->curves[curve_no].seg_count ; i++ )
+	for( i=0 ; i<skt->skt_curve.seg_count ; i++ )
 	{
-		struct carc_seg *csg=(struct carc_seg *)skt->curves[curve_no].segments[i];
+		struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
 		struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segments[i];
 		point_t center;
 
@@ -278,8 +260,8 @@ struct rt_i		*rtip;
 			magsq_s2m = MAGSQ( s_to_m );
 			if( magsq_s2m >= csg->radius*csg->radius )
 			{
-				bu_log( "Impossible radius for circular arc (%s) in extrusion (%s)!!!\n", 
-						extr->crv.crv_name, stp->st_dp->d_namep );
+				bu_log( "Impossible radius for circular arc in extrusion (%s)!!!\n", 
+						stp->st_dp->d_namep );
 				return( -1 );
 			}
 			dist = sqrt( csg->radius*csg->radius - magsq_s2m );
@@ -715,9 +697,9 @@ struct seg		*seghead;
 			case CURVE_NURB_MAGIC:
 				break;
 			default:
-				bu_log( "Unrecognized curve segment type in curve (%s) referenced by extrusion (%s)\n",
-					crv->crv_name, stp->st_dp->d_namep );
-				bu_bomb( "Unrecognized curve segment type in curve\n" );
+				bu_log( "Unrecognized segment type in sketch (%s) referenced by extrusion (%s)\n",
+					stp->st_dp->d_namep );
+				bu_bomb( "Unrecognized segment type in sketch\n" );
 				break;
 		}
 
@@ -1168,30 +1150,15 @@ CONST struct bn_tol	*tol;
 	sketch_ip = extrude_ip->skt;
 	RT_SKETCH_CK_MAGIC( sketch_ip );
 
-	/* find the curve for this extrusion */
-	for( curve_no=0 ; curve_no < sketch_ip->curve_count ; curve_no++ )
-	{
-		if( !strncmp( extrude_ip->curve_name, sketch_ip->curves[curve_no].crv_name, SKETCH_NAME_LEN ) )
-		{
-			crv = &sketch_ip->curves[curve_no];
-			break;
-		}
-	}
-
-	if( !crv )
-	{
-		bu_log( "rt_extrude_plot: ERROR: cannot find curve named '%.16s' in sketch named '%.16s'\n",
-			extrude_ip->curve_name, extrude_ip->sketch_name );
-		return( -1 );
-	}
+	crv = &sketch_ip->skt_curve;
 
 	/* plot bottom curve */
 	vp1 = BU_LIST_LAST( bn_vlist, vhead );
 	nused1 = vp1->nused;
 	if( curve_to_vlist( vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv ) )
 	{
-		bu_log( "Error: curve (%s) in sketch (%s) references non-existent vertices!!!\n",
-			crv->crv_name, extrude_ip->sketch_name );
+		bu_log( "Error: sketch (%s) references non-existent vertices!!!\n",
+			extrude_ip->sketch_name );
 		return( -1 );
 	}
 
@@ -1326,8 +1293,6 @@ CONST struct db_i		*dbip;
 	ptr = (char *)rp;
 	ptr += sizeof( struct extr_rec );
 	strncpy( extrude_ip->sketch_name, ptr, 16 );
-	ptr += 16;
-	strncpy( extrude_ip->curve_name, ptr, 16 );
 
 	return(0);			/* OK */
 }
@@ -1376,8 +1341,6 @@ CONST struct db_i		*dbip;
 	ptr += sizeof( struct extr_rec );
 
 	strncpy( (char *)ptr, extrude_ip->sketch_name, 16 );
-	ptr += 16;
-	strncpy( (char *)ptr, extrude_ip->curve_name, 16 );
 
 	return(0);
 }
@@ -1414,9 +1377,8 @@ double			mm2local;
 		V3ARGS( u ),
 		V3ARGS( v ) );
 	bu_vls_strcat( str, buf );
-	sprintf( buf, "\tsketch name: %.16s\n\tcurve name: %.16s\n",
-		extrude_ip->sketch_name,
-		extrude_ip->curve_name );
+	sprintf( buf, "\tsketch name: %.16s\n",
+		extrude_ip->sketch_name );
 	bu_vls_strcat( str, buf );
 	
 
@@ -1494,7 +1456,6 @@ int free;
 	VMOVE( eop->v_vec, tmp_vec );
 	eop->keypoint = eip->keypoint;
 	strncpy( eop->sketch_name, eip->sketch_name, 16 );
-	strncpy( eop->curve_name, eip->curve_name, 16 );
 
 	if( free && ip != op )
 	{
@@ -1541,7 +1502,7 @@ CONST char                      *attr;
 		bu_vls_printf( &vls, " H {%.25g %.25g %.25g}", V3ARGS( extr->h ) );
 		bu_vls_printf( &vls, " A {%.25g %.25g %.25g}", V3ARGS( extr->u_vec ) );
 		bu_vls_printf( &vls, " B {%.25g %.25g %.25g}", V3ARGS( extr->v_vec ) );
-		bu_vls_printf( &vls, " S %s C %s", extr->sketch_name, extr->curve_name );
+		bu_vls_printf( &vls, " S %s", extr->sketch_name );
 		bu_vls_printf( &vls, " K %d", extr->keypoint );
 	}
 	else if( *attr == 'V' )
@@ -1554,13 +1515,11 @@ CONST char                      *attr;
 		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->v_vec ) );
 	else if( *attr == 'S' )
 		bu_vls_printf( &vls, "%s", extr->sketch_name );
-	else if( *attr == 'C' )
-		bu_vls_printf( &vls, "%s", extr->curve_name );
 	else if( *attr == 'K' )
 		bu_vls_printf( &vls, "%d", extr->keypoint );
 	else
 	{
-		bu_vls_strcat( &vls, "ERROR: unrecognized attribute, must be V, H, A, B, S, C, or K!!!" );
+		bu_vls_strcat( &vls, "ERROR: unrecognized attribute, must be V, H, A, B, S, or K!!!" );
 		ret = TCL_ERROR;
 	}
 
@@ -1618,8 +1577,6 @@ char                    **argv;
 			extr->keypoint = atoi( argv[1] );
 		else if( *argv[0] == 'S' )
 			NAMEMOVE( argv[1], extr->sketch_name );
-		else if( *argv[0] =='C' )
-			NAMEMOVE( argv[1], extr->curve_name );
 
 		argc -= 2;
 		argv += 2;

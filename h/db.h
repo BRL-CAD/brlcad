@@ -381,7 +381,6 @@ union record  {
 		unsigned char	skt_uvec[8*3];	/* vector in U parameter direction */
 		unsigned char	skt_vvec[8*3];	/* vector in V parameter direction */
 		unsigned char	skt_vert_count[4];	/* number of vertices in sketch */
-		unsigned char	skt_curve_count[4];	/* number of curves in sketch */
 		unsigned char	skt_seg_count[4];	/* number of segments in sketch */
 		unsigned char	skt_count[4];		/* number of additional granules */
 	} skt;
