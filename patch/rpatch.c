@@ -2,9 +2,7 @@
  *	John R. Anderson
  *		Based on rpatch.f by Bill Mermagen Jr. 
  *     This pre-processor program alters the data file format
- *     for use by the main conversion program.  An End-of-File
- *     flag is used in the read statement to prevent loss of data
- *     and provide a clean exit from this processing loop.
+ *     for use by the main conversion program.
  */
 
 #include "conf.h"
