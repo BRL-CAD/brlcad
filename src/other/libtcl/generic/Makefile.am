@@ -1,7 +1,5 @@
 # $Id$
 
-noinst_LTLIBRARIES = libtclgeneric.la
-
 lib_LTLIBRARIES = libtclstub.la libtclstub@TCL_VERSION@.la
 
 libtclstub_la_SOURCES = \
@@ -10,11 +8,41 @@ libtclstub_la_SOURCES = \
 libtclstub@TCL_VERSION@_la_SOURCES = \
 	$(libtclstub_la_SOURCES)
 
-libtclgeneric_la_SOURCES = \
+noinst_HEADERS = \
+	regcustom.h \
+	regerrs.h \
+	regex.h \
+	regguts.h \
+	tclCompile.h \
+	tclIO.h \
+	tclInitScript.h \
+	tclInt.h \
+	tclIntDecls.h \
+	tclIntPlatDecls.h \
+	tclMath.h \
+	tclPort.h \
+	tclRegexp.h
+
+include_HEADERS = \
+	tcl.h \
+	tclDecls.h \
+	tclPlatDecls.h
+
+brlcadincludedir = $(includedir)/brlcad
+brlcadinclude_HEADERS = $(include_HEADERS)
+
+EXTRA_DIST = \
+	regc_color.c \
+	regc_cvec.c \
+	regc_lex.c \
+	regc_locale.c \
+	regc_nfa.c \
 	regcomp.c \
+	rege_dfa.c \
 	regerror.c \
 	regexec.c \
 	regfree.c \
+	regfronts.c \
 	tclAlloc.c \
 	tclAsync.c \
 	tclBasic.c \
@@ -48,6 +76,7 @@ libtclgeneric_la_SOURCES = \
 	tclListObj.c \
 	tclLiteral.c \
 	tclLoad.c \
+	tclLoadNone.c \
 	tclMain.c \
 	tclNamesp.c \
 	tclNotify.c \
@@ -67,46 +96,15 @@ libtclgeneric_la_SOURCES = \
 	tclStringObj.c \
 	tclStubInit.c \
 	tclStubLib.c \
+	tclTest.c \
+	tclTestObj.c \
+	tclTestProcBodyObj.c \
 	tclThread.c \
 	tclThreadAlloc.c \
 	tclThreadJoin.c \
+	tclThreadTest.c \
 	tclTimer.c \
+	tclUniData.c \
 	tclUtf.c \
 	tclUtil.c \
 	tclVar.c
-
-noinst_HEADERS = \
-	regcustom.h \
-	regerrs.h \
-	regex.h \
-	regguts.h \
-	tclCompile.h \
-	tclIO.h \
-	tclInitScript.h \
-	tclInt.h \
-	tclIntDecls.h \
-	tclIntPlatDecls.h \
-	tclMath.h \
-	tclPort.h \
-	tclRegexp.h
-
-include_HEADERS = \
-	tcl.h \
-	tclDecls.h \
-	tclPlatDecls.h
-
-brlcadinclude_HEADERS = $(include_HEADERS)
-
-EXTRA_DIST = \
-	regc_color.c \
-	regc_cvec.c \
-	regc_lex.c \
-	regc_locale.c \
-	regc_nfa.c \
-	rege_dfa.c \
-	tclUniData.c
-
-MAINTAINERCLEANFILES = \
-	Makefile.in
-
-brlcadincludedir = $(includedir)/brlcad

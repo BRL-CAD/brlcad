@@ -1,8 +1,13 @@
 # $Id$
 
-noinst_LTLIBRARIES = libtclunix.la
+tcllib_DATA = tclConfig.sh
 
-libtclunix_la_SOURCES = \
+EXTRA_DIST = \
+	dltest \
+	ldAix \
+	mkLinks \
+	tclAppInit.c \
+	tclConfig.sh.in \
 	tclLoadDl.c \
 	tclUnixChan.c \
 	tclUnixEvent.c \
@@ -15,24 +20,7 @@ libtclunix_la_SOURCES = \
 	tclUnixThrd.c \
 	tclUnixTime.c
 
-tcllib_DATA = tclConfig.sh
-
-EXTRA_DIST = \
-	dltest \
-	tclConfig.sh.in \
-	mkLinks \
-	tclAppInit.c \
-	ldAix
-
-AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/libtcl/generic \
-	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
-	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0
-
 noinst_HEADERS = \
 	tclUnixPort.h \
 	tclUnixThrd.h
-
-tcllibdir = ${libdir}
 

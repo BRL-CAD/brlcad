@@ -1,8 +1,39 @@
 # $Id$
 
-noinst_LTLIBRARIES = libtkgeneric.la
+noinst_HEADERS = \
+	default.h \
+	ks_names.h \
+	tk3d.h \
+	tkButton.h \
+	tkCanvas.h \
+	tkColor.h \
+	tkFileFilter.h \
+	tkFont.h \
+	tkInitScript.h \
+	tkInt.h \
+	tkIntDecls.h \
+	tkIntPlatDecls.h \
+	tkIntXlibDecls.h \
+	tkMenu.h \
+	tkMenubutton.h \
+	tkPort.h \
+	tkScale.h \
+	tkScrollbar.h \
+	tkSelect.h \
+	tkText.h \
+	tkUndo.h
 
-libtkgeneric_la_SOURCES = \
+include_HEADERS = \
+	tk.h \
+	tkDecls.h \
+	tkPlatDecls.h
+
+brlcadinclude_HEADERS = $(include_HEADERS)
+
+EXTRA_DIST = \
+	README \
+	prolog.ps \
+	tk.decls \
 	tk3d.c \
 	tkArgv.c \
 	tkAtom.c \
@@ -42,6 +73,7 @@ libtkgeneric_la_SOURCES = \
 	tkImgGIF.c \
 	tkImgPPM.c \
 	tkImgPhoto.c \
+	tkInt.decls \
 	tkListbox.c \
 	tkMain.c \
 	tkMenu.c \
@@ -76,52 +108,5 @@ libtkgeneric_la_SOURCES = \
 	tkVisual.c \
 	tkWindow.c
 
-noinst_HEADERS = \
-	default.h \
-	ks_names.h \
-	tk3d.h \
-	tkButton.h \
-	tkCanvas.h \
-	tkColor.h \
-	tkFileFilter.h \
-	tkFont.h \
-	tkInitScript.h \
-	tkInt.h \
-	tkIntDecls.h \
-	tkIntPlatDecls.h \
-	tkIntXlibDecls.h \
-	tkMenu.h \
-	tkMenubutton.h \
-	tkPort.h \
-	tkScale.h \
-	tkScrollbar.h \
-	tkSelect.h \
-	tkText.h \
-	tkUndo.h
-
-include_HEADERS = \
-	tk.h \
-	tkDecls.h \
-	tkPlatDecls.h
-
-brlcadinclude_HEADERS = $(include_HEADERS)
-
-EXTRA_DIST = \
-	README \
-	prolog.ps \
-	tk.decls \
-	tkInt.decls
-
-MAINTAINERCLEANFILES = \
-	Makefile.in
-
 brlcadincludedir = $(includedir)/brlcad
-
-AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/libtk/bitmaps \
-	-I${top_srcdir}/src/other/libtcl/generic \
-	-I${top_srcdir}/src/other/libtk/unix \
-	@X_CFLAGS@
-
-libtkgeneric_la_LIBADD = ${X_LIBS}
 
