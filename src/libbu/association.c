@@ -33,7 +33,6 @@ static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
 #include <string.h>
 #endif
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 /*

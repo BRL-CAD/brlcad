@@ -48,7 +48,6 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 

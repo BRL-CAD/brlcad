@@ -30,7 +30,6 @@ static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
-#include "externs.h"
 #include "vfont-if.h"
 #include "bu.h"
 

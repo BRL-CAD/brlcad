@@ -35,7 +35,6 @@ static const char libbu_units_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"	/* needed for things like strtod() */
 #include "bu.h"
 
 static const struct cvt_tab {

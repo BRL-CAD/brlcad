@@ -33,7 +33,6 @@
 #include <string.h>
 #endif
 #include "machine.h"
-#include "externs.h"
 #include "cmd.h"
 
 /* bu_cmdhist routines are defined in libbu/cmdhist.c */

@@ -37,7 +37,6 @@ static const char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 #include <ctype.h>
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 /*

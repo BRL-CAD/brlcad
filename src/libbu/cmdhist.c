@@ -38,7 +38,6 @@
 #include "tcl.h"
 
 #include "machine.h"
-#include "externs.h"
 #include "cmd.h"
 
 /*

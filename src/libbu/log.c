@@ -48,7 +48,6 @@ static const char RCSlog[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 #if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)

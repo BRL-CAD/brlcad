@@ -36,7 +36,6 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 #include <string.h>
 #endif
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 #ifdef HAVE_UNIX_IO

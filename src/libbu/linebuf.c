@@ -27,7 +27,6 @@ static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 void

@@ -43,7 +43,6 @@
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 /*  B U _ F O P E N _ U N I Q

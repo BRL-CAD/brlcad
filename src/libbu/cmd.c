@@ -41,7 +41,6 @@ static const char RCSid[] = "";
 
 #include "tcl.h"
 #include "machine.h"
-#include "externs.h"
 #include "cmd.h"			/* includes bu.h */
 
 /*****f* libbu/cmd.c

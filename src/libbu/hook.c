@@ -29,7 +29,6 @@
 #include <stdio.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 void

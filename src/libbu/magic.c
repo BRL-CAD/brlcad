@@ -34,7 +34,6 @@ static const char RCSmagic[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "externs.h"
 #include "nmg.h"
 #include "bu.h"
 #include "bn.h"

@@ -44,7 +44,6 @@ static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 int	bu_debug = 0;

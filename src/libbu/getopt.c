@@ -30,7 +30,6 @@ static const char libbu_getopt_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 int	bu_opterr = 1;		/* set to zero to suppress errors */
