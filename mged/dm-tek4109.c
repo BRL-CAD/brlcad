@@ -47,10 +47,10 @@ is different from the factory default.
 
 #include <stdio.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "ged.h"
-#include "dm.h"
-#include "solid.h"
+#include "vmath.h"
+#include "./ged.h"
+#include "./dm.h"
+#include "./solid.h"
 
 extern void	perror();
 

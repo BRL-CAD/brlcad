@@ -31,11 +31,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "ged.h"
-#include "dm.h"
-#include "solid.h"
-#include "../h/mater.h"
+#include "vmath.h"
+#include "mater.h"
+#include "./ged.h"
+#include "./dm.h"
+#include "./solid.h"
 
 extern void	perror();
 

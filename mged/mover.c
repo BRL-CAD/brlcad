@@ -24,11 +24,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include	<string.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "ged.h"
-#include "objdir.h"
-#include "solid.h"
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./objdir.h"
+#include "./solid.h"
 
 extern int	printf();
 

@@ -46,12 +46,12 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 #include <setjmp.h>
 
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "ged.h"
-#include "solid.h"
-#include "../h/db.h"
-#include "sedit.h"
-#include "dm.h"
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./solid.h"
+#include "./sedit.h"
+#include "./dm.h"
 
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */

@@ -27,10 +27,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <signal.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "ged.h"
-#include "../h/db.h"
-#include "sedit.h"
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./sedit.h"
 
 extern void	exit(), perror();
 extern char	*mktemp();

@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "dm.h"		/* for struct mem_map */
+#include "./dm.h"		/* for struct mem_map */
 
 extern char	*malloc();
 

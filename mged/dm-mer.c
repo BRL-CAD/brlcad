@@ -37,11 +37,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sgtty.h>
 
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "ged.h"
-#include "dm.h"
-#include "../h/mater.h"
-#include "solid.h"
+#include "vmath.h"
+#include "mater.h"
+#include "./ged.h"
+#include "./dm.h"
+#include "./solid.h"
 
 typedef unsigned char u_char;
 

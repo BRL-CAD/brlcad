@@ -30,14 +30,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <stdio.h>
 #include <strings.h>
-#include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "ged.h"
-#include "objdir.h"
-#include "sedit.h"
 #include <math.h>
-#include "solid.h"
+#include "./machine.h"	/* special copy */
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./objdir.h"
+#include "./sedit.h"
+#include "./solid.h"
 
 extern void aexists();
 extern double atof();

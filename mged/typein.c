@@ -42,10 +42,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <strings.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "ged.h"
-#include "objdir.h"
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./objdir.h"
 
 void	aexists();
 extern double atof();

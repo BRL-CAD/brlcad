@@ -12,19 +12,25 @@
  *
  */
 
+#ifdef BSD42
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+#ifdef SYSV
+# include <stat.h>
+#endif
+
+#include <time.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <strings.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "ged.h"
-#include "sedit.h"
-#include "objdir.h"
-#include <time.h>
-#include <pwd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./sedit.h"
+#include "./objdir.h"
 
 void	aexists();
 extern double atof();

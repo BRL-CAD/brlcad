@@ -48,14 +48,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <stdio.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "../h/mater.h"
-#include "sedit.h"
-#include "ged.h"
-#include "objdir.h"
-#include "solid.h"
-#include "dm.h"
+#include "vmath.h"
+#include "db.h"
+#include "mater.h"
+#include "./sedit.h"
+#include "./ged.h"
+#include "./objdir.h"
+#include "./solid.h"
+#include "./dm.h"
 
 extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
@@ -438,25 +438,23 @@ f_refresh()
  *  			R T _ W R I T E
  *  
  *  Write out the information that RT's -M option needs to show current view.
+ *  Note that the model-space location of the eye is a parameter,
+ *  as it can be computed in different ways.
  */
 HIDDEN void
-rt_write(fp)
+rt_write(fp, eye_model)
 FILE *fp;
+vect_t eye_model;
 {
 	register int i;
-	vect_t temp;
-	vect_t eye_model;
-
-	VSET( temp, 0, 0, 1 );
-	MAT4X3PNT( eye_model, view2model, temp );
 
 	(void)fprintf(fp, "%.9e\n", VIEWSIZE );
 	(void)fprintf(fp, "%.9e %.9e %.9e\n",
 		eye_model[X], eye_model[Y], eye_model[Z] );
 	for( i=0; i < 16; i++ )  {
+		(void)fprintf( fp, "%.9e ", Viewrot[i] );
 		if( (i%4) == 3 )
 			(void)fprintf(fp, "\n");
-		(void)fprintf( fp, "%.9e ", Viewrot[i] );
 	}
 	(void)fprintf(fp, "\n");
 }
@@ -568,7 +566,14 @@ f_rt()
 	/* Connect up to pipe */
 	(void)close( o_pipe[0] );
 	fp = fdopen( o_pipe[1], "w" );
-	rt_write(fp);
+	{
+		vect_t temp;
+		vect_t eye_model;
+
+		VSET( temp, 0, 0, 1 );
+		MAT4X3PNT( eye_model, view2model, temp );
+		rt_write(fp, eye_model );
+	}
 	(void)fclose( fp );
 	
 	/* Wait for rt to finish */
@@ -624,8 +629,8 @@ f_saveview()
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
 	for( i=2; i < numargs; i++ )
 		(void)fprintf(fp,"%s ", cmd_args[i]);
-	(void)fprintf(fp,"\\\n -o %s.pix ", base);
-	(void)fprintf(fp,"%s \\\n", filename);
+	(void)fprintf(fp,"$*\\\n -o %s.pix\\\n", base);
+	(void)fprintf(fp," %s\\\n ", filename);
 
 	/* Find all unique top-level entrys.
 	 *  Mark ones already done with s_iflag == UP
@@ -644,9 +649,16 @@ f_saveview()
 				forw->s_iflag = UP;
 		}
 	}
-	(void)fprintf(fp,"\\\n 2> %s.log", base);
+	(void)fprintf(fp,"\\\n 2> %s.log\\\n", base);
 	(void)fprintf(fp," <<EOF\n");
-	rt_write(fp);
+	{
+		vect_t temp;
+		vect_t eye_model;
+
+		VSET( temp, 0, 0, 1 );
+		MAT4X3PNT( eye_model, view2model, temp );
+		rt_write(fp, eye_model);
+	}
 	(void)fprintf(fp,"\nEOF\n");
 	(void)fclose( fp );
 	
@@ -874,6 +886,7 @@ f_savekey()
 	register int i;
 	register FILE *fp;
 	float	time;
+	vect_t	eye_model;
 
 	if( (fp = fopen( cmd_args[1], "a")) == NULL )  {
 		perror(cmd_args[1]);
@@ -883,6 +896,14 @@ f_savekey()
 		time = atof( cmd_args[2] );
 		(void)fprintf(fp,"%f\n", time);
 	}
-	rt_write(fp);
+	/* Important difference:  The eye is located
+	 *  where the alignment dot in the center of
+	 *  the screen is, NOT at the front of the viewing cube.
+	 *  At least for now.
+	 */
+	VSET( eye_model, -toViewcenter[MDX],
+		 -toViewcenter[MDY],
+		 -toViewcenter[MDZ] );
+	rt_write(fp, eye_model);
 	(void)fclose( fp );
 }

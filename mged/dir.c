@@ -54,12 +54,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #include <signal.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "ged.h"
-#include "solid.h"
-#include "objdir.h"
-#include "dm.h"
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./solid.h"
+#include "./objdir.h"
+#include "./dm.h"
 
 extern int	read(), strcmp();
 extern long	lseek();

@@ -20,14 +20,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "ged.h"
-#include "solid.h"
-#include "../h/db.h"
-#include "sedit.h"
 #include <math.h>
-#include "dm.h"
+#include "./machine.h"	/* special copy */
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./solid.h"
+#include "./sedit.h"
+#include "./dm.h"
 
 /* Variables for dozoom() */
 float	Viewscale;

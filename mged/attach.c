@@ -23,11 +23,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "ged.h"
-#include "solid.h"
-#include "dm.h"
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./solid.h"
+#include "./dm.h"
 
 static int	Nu_input();	/* Quite necessary */
 static void	Nu_void();

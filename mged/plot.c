@@ -22,15 +22,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 
-#include	<math.h>
-#include	<stdio.h>
+#include <math.h>
+#include <stdio.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/mater.h"
-#include "ged.h"
-#include "objdir.h"
-#include "solid.h"
-#include "dm.h"
+#include "vmath.h"
+#include "mater.h"
+#include "./ged.h"
+#include "./objdir.h"
+#include "./solid.h"
+#include "./dm.h"
 
 extern FILE	*popen();	/* stdio pipe open routine */
 

@@ -30,14 +30,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<math.h>
 #include	<string.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "sedit.h"
-#include "ged.h"
-#include "solid.h"
-#include "objdir.h"
-#include "dm.h"
-#include "menu.h"
+#include "vmath.h"
+#include "db.h"
+#include "./sedit.h"
+#include "./ged.h"
+#include "./solid.h"
+#include "./objdir.h"
+#include "./dm.h"
+#include "./menu.h"
 
 extern int	printf();
 

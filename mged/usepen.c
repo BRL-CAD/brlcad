@@ -24,13 +24,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <math.h>
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "ged.h"
-#include "solid.h"
-#include "menu.h"
-#include "dm.h"
-#include "sedit.h"
+#include "vmath.h"
+#include "db.h"
+#include "./ged.h"
+#include "./solid.h"
+#include "./menu.h"
+#include "./dm.h"
+#include "./sedit.h"
 
 /*	Degree <-> Radian conversion factors	*/
 double	degtorad =  0.01745329251994329573;

@@ -24,10 +24,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "./machine.h"	/* special copy */
-#include "../h/vmath.h"
-#include "ged.h"
-#include "menu.h"
-#include "dm.h"
+#include "vmath.h"
+#include "./ged.h"
+#include "./menu.h"
+#include "./dm.h"
 
 int	menuflag;	/* flag indicating if a menu item is selected */
 struct menu_item *menu_array[NMENU];	/* base of array of menu items */

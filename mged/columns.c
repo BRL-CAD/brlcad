@@ -29,8 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "../h/db.h"		/* for NAMESIZE */
-#include "objdir.h"		/* for directory structure */
+#include "db.h"			/* for NAMESIZE */
+#include "./objdir.h"		/* for directory structure */
 
 static int	col_count;		/* names listed on current line */
 static int	col_len;		/* length of previous name */
