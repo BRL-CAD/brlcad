@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.2
-	Last edit: 	3/21/85 at 16:21:57	G S M
-	Retrieved: 	8/13/86 at 10:26:53
+	SCCS id:	@(#) librle.c	1.3
+	Last edit: 	3/22/85 at 13:59:56	G S M
+	Retrieved: 	8/13/86 at 10:27:09
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -16,12 +16,11 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.2	last edit 3/21/85 at 16:21:57";
+char	sccsTag[] = "@(#) librle.c	1.3	last edit 3/22/85 at 13:59:56";
 #endif
 #include <stdio.h>
 #include <fb.h>
-typedef unsigned char	u_char;
-#include "./rle.h"
+#include <rle.h>
 extern int	debug, verbose;
 
 #define CUR red		/* Must be rightmost part of Pixel.		*/
@@ -124,6 +123,7 @@ int	_bg_flag = 2;
 int	_bw_flag = 0;
 int	_cm_flag = 0;
 Pixel	_bg_pixel = { 0, 0, 0, 0 };
+
 
 /*	r l e _ w h d r ( )
  	This routine should be called after 'setfbsize()', unless the
@@ -335,6 +335,8 @@ ColorMap	*cmap;
 /*	r l e _ d e c o d e _ l n ( )
 	Decode one scanline into 'scan_buf'.
 	Buffer is assumed to be filled with background color.
+	Returns -1 on failure, 1 if buffer is altered
+	and 0 if untouched.
  */
 rle_decode_ln( fp, scan_buf )
 FILE	*fp;
@@ -342,14 +344,15 @@ Pixel	*scan_buf;
 	{
 	static Rle_Word inst;
 	static short	word;
+	static int	lines_to_skip = 0;
 	register int	n;
 	register u_char	*pp = (u_char *) scan_buf; /* Pointer into pixel. */
-	static int	lines_to_skip = 0;
+	register int	dirty_flag = 0;
 
 	if( lines_to_skip > 0 )
 		{
-		--lines_to_skip;
-		return	0;
+		lines_to_skip--;
+		return	dirty_flag;
 		}
 	while( _Get_Inst( fp, &inst ) != EOF )
 		{
@@ -362,16 +365,16 @@ Pixel	*scan_buf;
 		switch( n = inst.opcode )
 			{
 			case RSkipLinesOp :
-				lines_to_skip = inst.datum - 1;
-				if (debug)
+				lines_to_skip = inst.datum;
+				if( debug )
 					(void) fprintf( stderr,
 							"Skip Lines %d\n",
 							lines_to_skip
 							);
-				if( lines_to_skip < 0 )
+				if( lines_to_skip-- < 1 )
 					return	-1;
 				else
-					return	0;
+					return	dirty_flag;
 			case RSetColorOp:
 				if( debug )
 					(void) fprintf( stderr,
@@ -444,7 +447,6 @@ Pixel	*scan_buf;
 						*pp++ = c = getc( fp );
 						*pp++ = c;
 						*pp++ = c;
-						*pp++ = c;
 						}
 					}
 				if( feof( fp ) )
@@ -457,6 +459,7 @@ Pixel	*scan_buf;
 				if( (inst.datum+1) & 01 )
 					/* word align file ptr */
 					(void) getc( fp );
+				dirty_flag = 1;
 				break;
 			case RRunDataOp:
 				n = inst.datum + 1;
@@ -488,9 +491,9 @@ Pixel	*scan_buf;
 						*pp++ = (u_char) word;
 						*pp++ = (u_char) word;
 						*pp++ = (u_char) word;
-						*pp++ = (u_char) word;
 						}
 					}
+				dirty_flag = 1;
 				break;
 			default:
 				(void) fprintf( stderr,
@@ -501,7 +504,7 @@ Pixel	*scan_buf;
 					return	-1;
 			}
 		}
-	return	0;
+	return	dirty_flag;
 	}
 
 /* 	r l e _ e n c o d e _ l n ( )
