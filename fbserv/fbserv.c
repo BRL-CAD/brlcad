@@ -8,7 +8,11 @@
  *	courtesy of inetd.  We process a single frame buffer
  *	open/process/close cycle and then exit.  A full installation
  *	includes setting up inetd and /etc/services to start one
- *	of these.
+ *	of these, with these entries:
+ *
+ * remotefb stream tcp     nowait  nobody   /usr/brlcad/bin/fbserv  fbserv
+ * remotefb        5558/tcp                        # remote frame buffer
+ *
  *  Stand-Alone Daemon - once started we run forever, forking a
  *	copy of ourselves for each new connection.  Each child is
  *	essentially like above, i.e. one open/process/close cycle.
@@ -16,6 +20,7 @@
  *	or when inetd is not available.
  *	A child process is necessary because different framebuffers
  *	may be specified in each open.
+ *
  *  Single-Frame-Buffer Server - we open a particular frame buffer
  *	at invocation time and leave it open.  We will accept
  *	multiple connections for this frame buffer.
