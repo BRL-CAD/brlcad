@@ -222,7 +222,7 @@ genptr_t		client_data;
 			color = (unsigned char *)NULL;
 
 		BU_LIST_INIT( &headp.l );
-		(void)mk_addmember( nmg_name , &headp , WMOP_UNION );
+		(void)mk_addmember( nmg_name , &headp.l , WMOP_UNION );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
 		    shader, bu_vls_addr( &shader_params ), color,
@@ -386,7 +386,7 @@ genptr_t	ptr;
 				rt_db_free_internal( &intern );
 				return;
 		}
-		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name , &headp , op );
+		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name , &headp.l , op );
 		if( tree_list[i].tl_tree->tr_l.tl_mat )
 			bn_mat_copy( wm->wm_mat, tree_list[i].tl_tree->tr_l.tl_mat );
 	}
@@ -536,7 +536,7 @@ char	*argv[];
 		db_functree( dbip , dp , csg_comb_func , 0 , NULL );
 	}
 
-	bn_vlist_cleanup();
+	rt_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
