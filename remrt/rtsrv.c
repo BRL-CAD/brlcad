@@ -162,10 +162,15 @@ char **argv;
 
 	beginptr = sbrk(0);
 
-#ifdef cray
+#ifdef CRAY1
 	npsw = 1;			/* >1 on GOS crashes system */
 #endif cray
 
+	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
+	if( npsw > 1 )  {
+		rt_g.rtg_parallel = 1;
+	} else
+		rt_g.rtg_parallel = 0;
 	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
@@ -377,6 +382,7 @@ char *buf;
 		(void)rt_gettree(rtip, cmd_args[i]);
 	}
 
+	/* In case it changed from startup time */
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
 		rt_log("rtsrv:  running with %d processors\n", npsw );
@@ -558,7 +564,7 @@ char *str;
 	while( *cp++ )  ;		/* leaves one beyond null */
 	if( cp[-2] != '\n' )
 		goto out;
-	if( pcsrv == PKC_NULL )  {
+	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
 		fprintf(stderr, "%s", buf+1);
 		goto out;
 	}
