@@ -501,7 +501,6 @@ CONST vect_t	v;
  * Find the azimuth, elevation, and twist from two vectors.
  * Vec_ae is in the direction of view (+z in mged view)
  * and vec_twist points to the viewers right (+x in mged view).
- * Vec_twist must be a unit vector.
  * Accuracy (degrees) is used to stabilze flutter between
  * equivalent extremes of atan2(), and to snap twist to zero
  * when elevation is near +/- 90
@@ -535,7 +534,7 @@ fastf_t accuracy;
 		VSET( z_dir , 0 , 0 , 1 );
 		VCROSS( zero_twist , z_dir , vec_ae );
 		VUNITIZE( zero_twist );
-		VCROSS( ninety_twist , zero_twist , vec_ae );
+		VCROSS( ninety_twist , vec_ae , zero_twist );
 		VUNITIZE( ninety_twist );
 
 		*twist = mat_atan2( VDOT( vec_twist , ninety_twist ) , VDOT( vec_twist , zero_twist ) ) * mat_radtodeg;
