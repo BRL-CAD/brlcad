@@ -279,3 +279,14 @@ const long		magic;
 		bu_bomb("bu_ck_list_magic() headless!\n");
 	}
 }
+
+struct bu_list *
+bu_list_dequeue_next( struct bu_list *hp, struct bu_list *p )
+{
+	struct bu_list *p2;
+
+	p2 = BU_LIST_NEXT( bu_list, p );
+	BU_LIST_DEQUEUE( p2 );
+
+	return( p2 );
+}
