@@ -40,7 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./titles.h"
 #include "./solid.h"
 #include "./menu.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 #include "./sedit.h"
 
@@ -279,11 +279,7 @@ illuminate( y )  {
 		if( sp->s_flag == UP )  {
 			if( count-- == 0 && illump != sp )  {
 				sp->s_iflag = UP;
-#ifdef USE_LIBDM
 				dmp->dmr_viewchange( dmp, DM_CHGV_ILLUM, sp );
-#else
-				dmp->dmr_viewchange( DM_CHGV_ILLUM, sp );
-#endif
 				illump = sp;
 			}  else  {
 				/* All other solids have s_iflag set DOWN */
@@ -350,11 +346,7 @@ char *argv[];
     }
 
     sp->s_iflag = UP;
-#ifdef USE_LIBDM
     dmp->dmr_viewchange( dmp, DM_CHGV_ILLUM, sp );
-#else
-    dmp->dmr_viewchange( DM_CHGV_ILLUM, sp );
-#endif
     illump = sp;
   }
 
@@ -590,15 +582,10 @@ char	**argv;
 		else if( ipathpos > illump->s_last )  ipathpos = illump->s_last;
 	}
 got:
-#ifdef USE_LIBDM
 	dmp->dmr_light( dmp, LIGHT_ON, BE_ACCEPT );
 	dmp->dmr_light( dmp, LIGHT_ON, BE_REJECT );
 	dmp->dmr_light( dmp, LIGHT_OFF, BE_O_ILLUMINATE );
-#else
-	dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
-	dmp->dmr_light( LIGHT_ON, BE_REJECT );
-	dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
-#endif
+
 	/* Include all solids with same tree top */
 	FOR_ALL_SOLIDS( sp )  {
 		for( j = 0; j <= ipathpos; j++ )  {
