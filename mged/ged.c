@@ -246,7 +246,7 @@ char **argv;
 	owner = 1;
 	frametime = 1;
 	adc_a1_deg = adc_a2_deg = 45.0;
-	curr_dm_list->s_info->opp = &pathName;
+	curr_dm_list->s_info->opp = &tkName;
 
 	bn_mat_idn( identity );		/* Handy to have around */
 	/* init rotation matrix */
@@ -288,6 +288,8 @@ char **argv;
 
 	/* Get set up to use Tcl */
 	mged_setup();
+	mmenu_init();
+	btn_head_menu(0,0,0);
 #if TRY_NEW_MGED_VARS
 	mged_variable_setup(curr_dm_list);
 #endif
@@ -1204,6 +1206,9 @@ refresh()
 {
   struct dm_list *p;
   struct dm_list *save_dm_list;
+
+  if(dbip == DBI_NULL)
+    return;
 
   save_dm_list = curr_dm_list;
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
