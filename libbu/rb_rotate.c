@@ -31,8 +31,9 @@ void left_rotate (struct rb_node *x, int order)
      *	Set y and check data types of both x and y
      */
     RB_CKMAG(x, RB_NODE_MAGIC, "red-black node");
+    RB_CKORDER(x -> rbn_tree, order);
+
     y = rb_right_child(x, order);
-    RB_CKMAG(y, RB_NODE_MAGIC, "red-black node");
 
     rb_right_child(x, order) = beta = rb_left_child(y, order);
     if (beta != rb_null(tree))
@@ -67,8 +68,9 @@ void right_rotate (struct rb_node *y, int order)
      *	Set x and check data types of both x and y
      */
     RB_CKMAG(y, RB_NODE_MAGIC, "red-black node");
+    RB_CKORDER(y -> rbn_tree, order);
+
     x = rb_left_child(y, order);
-    RB_CKMAG(x, RB_NODE_MAGIC, "red-black node");
 
     rb_left_child(y, order) = beta = rb_right_child(x, order);
     if (beta != rb_null(tree))
