@@ -45,6 +45,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
@@ -605,6 +606,7 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
+	struct rt_vls		title;
 	register int		i;
 
 	/* First, clear any existing counts */
@@ -619,13 +621,14 @@ char	**argv;
 	}
 	
 	/* ident record */
-	record.i.i_id = ID_IDENT;
-	record.i.i_units = localunit;
-	strcpy(record.i.i_version, ID_VERSION);
-	sprintf(record.i.i_title, "Parts of: %s", cur_title);	/* XXX len */
-	if( fwrite( (char *)&record, sizeof(record), 1, keepfp ) != 1 )  {
-		perror("keep fwrite (ident)");
+	rt_vls_init( &title );
+	rt_vls_strcat( &title, "Parts of: " );
+	rt_vls_strcat( &title, dbip->dbi_title );
+	if( mk_id_units( keepfp, rt_vls_addr(&title), localunit ) < 0 )  {
+		perror("fwrite");
+		(void)printf("mk_id_units() failed\n");
 		fclose(keepfp);
+		rt_vls_free( &title );
 		return;
 	}
 
@@ -635,6 +638,7 @@ char	**argv;
 		db_functree( dbip, dp, node_write, node_write );
 	}
 	fclose(keepfp);
+	rt_vls_free( &title );
 }
 
 #ifdef OLD
