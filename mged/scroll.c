@@ -40,13 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./mgedtcl.h"
 
-#if 0
-static int	scroll_top;	/* screen loc of the first menu item */
-static int	scroll_enabled = 0;
-
-struct scroll_item *scroll_array[6];	/* Active scroll bar definitions */
-#endif
-
 /************************************************************************
  *									*
  *	First part:  scroll bar definitions				*
@@ -67,6 +60,17 @@ struct scroll_item scr_menu[] = {
 	{ "zrot",	sl_tol,		(fastf_t *)6,   "knob z" },
 	{ "",		(void (*)())NULL, 0, "" }
       };
+
+struct scroll_item sl_abs_menu[] = {
+	{ "Xslew",	sl_tol,		(fastf_t *)0,	"knob aX" },
+	{ "Yslew",	sl_tol,		(fastf_t *)1,	"knob aY" },
+	{ "Zslew",	sl_tol,		(fastf_t *)2,	"knob aZ" },
+	{ "Zoom",	sl_tol,		(fastf_t *)3,	"knob aS" },
+	{ "Xrot",	sl_tol,		(fastf_t *)4,   "knob ax" },
+	{ "Yrot",	sl_tol,		(fastf_t *)5,   "knob ay" },
+	{ "Zrot",	sl_tol,		(fastf_t *)6,   "knob az" },
+	{ "",		(void (*)())NULL, 0, "" }
+};
 
 struct scroll_item sl_adc_menu[] = {
 	{ "xadc",	sl_itol,	(fastf_t *)0, "knob xadc" },
@@ -135,7 +139,10 @@ char **argv;
 	return TCL_ERROR;
 
     if (scroll_enabled) {
+      if(mged_variables.rateknobs)
 	scroll_array[0] = scr_menu;
+      else
+	scroll_array[0] = sl_abs_menu;
     } else {
 	scroll_array[0] = SCROLL_NULL;	
 	scroll_array[1] = SCROLL_NULL;	
@@ -156,7 +163,6 @@ char **argv;
  *  everything can bel handled by sl_tol().				*
  *									*
  ************************************************************************/
-#define SL_TOL	0.015625		/* size of dead spot, 0.015 = 32/2048 */
 
 static void sl_tol( mptr, val )
 register struct scroll_item     *mptr;
@@ -170,19 +176,26 @@ double				val;
 	} else {
 		val = 0.0;
 	}
-#endif
+#else
+	struct rt_vls cmd;
 
-	rt_vls_printf( &dm_values.dv_string, "%s %f\n",
-		mptr->scroll_cmd, val );
+	rt_vls_init( &cmd );
+	rt_vls_printf( &cmd, "%s %f\n", mptr->scroll_cmd, val );
+	(void)cmdline( &cmd, FALSE );
+	rt_vls_free(&cmd);
+#endif
 }
 
 static void sl_itol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
-	rt_vls_printf(&dm_values.dv_string, "%s %d\n",
-		mptr->scroll_cmd,
-		(int)(val * 2047) );
+	struct rt_vls cmd;
+
+	rt_vls_init( &cmd );
+	rt_vls_printf( &cmd, "%s %d\n", mptr->scroll_cmd, (int)(val * 2047.0) );
+	(void)cmdline( &cmd, FALSE );
+	rt_vls_free(&cmd);
 }
 
 
@@ -227,47 +240,75 @@ int y_top;
 	    switch((int)mptr->scroll_val){
 	    case 0:
 	      if(second_menu)
-		f = (double)dv_xadc / 2047.0;
-	      else
-		f = rate_slew[X];
+                f = (double)dv_xadc / 2047.0;
+	      else {
+		if(mged_variables.rateknobs)
+		  f = rate_slew[X];
+		else
+		  f = absolute_slew[X];
+	      }
 	      break;
 	    case 1:
 	      if(second_menu)
 		f = (double)dv_yadc / 2047.0;
-	      else
-		f = rate_slew[Y];
+	      else {
+		if(mged_variables.rateknobs)
+		  f = rate_slew[Y];
+		else
+		  f = absolute_slew[Y];
+	      }
 	      break;
 	    case 2:
 	      if(second_menu)
 		f = (double)dv_1adc / 2047.0;
-	      else
-		f = rate_slew[Z];
+	      else {
+		if(mged_variables.rateknobs)
+		  f = rate_slew[Z];
+		else
+		  f = absolute_slew[Z];
+	      }
 	      break;
 	    case 3:
 	      if(second_menu)
 		f = (double)dv_2adc / 2047.0;
-	      else
-		f = rate_zoom;
+	      else {
+		if(mged_variables.rateknobs)
+		  f = rate_zoom;
+		else
+		  f = rate_zoom;
+	      }
 	      break;
 	    case 4:
 	      if(second_menu)
 		f = (double)dv_distadc / 2047.0;
-	      else
-		f = rate_rotate[X];
+	      else {
+		if(mged_variables.rateknobs)
+		  f = rate_rotate[X];
+		else
+		  f = absolute_rotate[X];
+	      }
 	      break;
 	    case 5:
 	      if(second_menu)
 		Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 				 (char *)NULL);
-	      else
-		f = rate_rotate[Y];
+	      else {
+		if(mged_variables.rateknobs)
+		  f = rate_rotate[Y];
+		else
+		  f = absolute_rotate[Y];
+	      }
 	      break;
 	    case 6:
 	      if(second_menu)
 		Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 				 (char *)NULL);
-	      else
-		f = rate_rotate[Z];
+	      else {
+		if(mged_variables.rateknobs)
+		  f = rate_rotate[Z];
+		else
+		  f = absolute_rotate[Z];
+	      }
 	      break;
 	    default:
 	      if(second_menu)
@@ -278,10 +319,10 @@ int y_top;
 				 (char *)NULL);
 	    }
 
-	    if( f > 0 )
-	      xpos = (f + SL_TOL - SL_TOL * f) * 2047;
-	    else if(f < 0)
-	      xpos = (f - SL_TOL - SL_TOL * f) * -MENUXLIM;
+	    if(f > 0.000001)
+	      xpos = (f + SL_TOL) * 2047;
+	    else if(f < - 0.000001)
+	      xpos = (f - SL_TOL) * -MENUXLIM;
 	    else
 	      xpos = 0;
 
@@ -352,7 +393,9 @@ register int	pen_y;
 			if( mptr->scroll_func == ((void (*)())0) )  continue;
 
 			(*(mptr->scroll_func))(mptr, val);
+#if 0
 			dmaflag = 1;
+#endif
 			return( 1 );		/* scroll claims pen value */
 		}
 	}

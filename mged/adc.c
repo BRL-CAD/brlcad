@@ -198,22 +198,28 @@ char	**argv;
 	point_t	pt2, pt3;	/* Extra points as needed */
 	fastf_t	view2dm = 2047.0 / Viewscale;
 	int	i;
+	int     iadc = 0;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
+	if(strstr(argv[0], "iadc"))
+	   iadc = 1;
+
 	if (argc == 1)
 	{
-		if (adcflag)  {
-			dmp->dmr_light( LIGHT_OFF, BV_ADCURSOR );
-			adcflag = 0;
-		} else {
-			dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
-			adcflag = 1;
-		}
+	  if (adcflag)  {
+	    dmp->dmr_light( LIGHT_OFF, BV_ADCURSOR );
+	    adcflag = 0;
+	  } else {
+	    dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
+	    adcflag = 1;
+	  }
 
-		dmaflag = 1;
-		return TCL_OK;
+	  rt_vls_printf( &dm_values.dv_string, "set sliders(adc) %d; sliders %s\n",
+			 adcflag, scroll_enabled ? "on" : "off");
+	  dmaflag = 1;
+	  return TCL_OK;
 	}
 
 	parameter = argv[1];
@@ -226,7 +232,11 @@ char	**argv;
 
 	if( strcmp( parameter, "a1" ) == 0 )  {
 	  if (argc == 1) {
-	    dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
+	    if(iadc)
+	      dv_1adc += (1.0 - pt[0] / 45.0) * 2047.0;
+	    else
+	      dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
+
 	    dmaflag = 1;
 	    return TCL_OK;
 	  }
@@ -235,7 +245,11 @@ char	**argv;
 	}
 	if( strcmp( parameter, "a2" ) == 0 )  {
 	  if (argc == 1) {
-	    dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
+	    if(iadc)
+	      dv_2adc += (1.0 - pt[0] / 45.0) * 2047.0;
+	    else
+	      dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
+
 	    dmaflag = 1;
 	    return TCL_OK;
 	  }
@@ -244,8 +258,13 @@ char	**argv;
 	}
 	if(strcmp(parameter, "dst") == 0)  {
 	  if (argc == 1) {
-	    dv_distadc = (pt[0] /
+	    if(iadc)
+	      dv_distadc += (pt[0] /
 			  (Viewscale * base2local * M_SQRT2) - 1.0) * 2047.0;
+	    else
+	      dv_distadc = (pt[0] /
+			    (Viewscale * base2local * M_SQRT2) - 1.0) * 2047.0;
+
 	    dmaflag = 1;
 	    return TCL_OK;
 	  }
@@ -333,7 +352,11 @@ char	**argv;
 	}
 	if( strcmp(parameter, "x") == 0 ) {
 	  if( argc == 1 ) {
-	    dv_xadc = pt[0];
+	    if(iadc)
+	      dv_xadc += pt[0];
+	    else
+	      dv_xadc = pt[0];
+
 	    dmaflag = 1;
 	    return TCL_OK;
 	  }
@@ -342,7 +365,11 @@ char	**argv;
 	}
 	if( strcmp(parameter, "y") == 0 ) {
 	  if( argc == 1 ) {
-	    dv_yadc = pt[0];
+	    if(iadc)
+	      dv_yadc += pt[0];
+	    else
+	      dv_yadc = pt[0];
+
 	    dmaflag = 1;
 	    return TCL_OK;
 	  }
