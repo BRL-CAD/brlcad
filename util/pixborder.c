@@ -48,6 +48,11 @@ static int		tol_using_rgb = 1; /* Compare via RGB, not HSV? */
 static int		file_width = 512;
 static int		file_height = 512;
 
+static int		left_edge = -1;
+static int		right_edge = -1;
+static int		bottom_edge = -1;
+static int		top_edge = -1;
+
 static unsigned char	border_rgb[3];
 static unsigned char	region_rgb[3];
 static unsigned char	rgb_tol[3];
@@ -56,7 +61,7 @@ fastf_t			border_hsv[3];
 fastf_t			region_hsv[3];
 fastf_t			hsv_tol[3];
 
-#define	OPT_STRING	"ab:hi:s:t:w:n:B:I:T:?"
+#define	OPT_STRING	"ab:hi:n:s:t:w:x:y:B:I:T:X:Y:?"
 
 #define	made_it()	fprintf(stderr, "Made it to %s:%d\n",	\
 				__FILE__, __LINE__);		\
@@ -64,6 +69,8 @@ fastf_t			hsv_tol[3];
 static char usage[] = "\
 Usage: pixborder [-b 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
                  [-B 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
+		 [-x left_edge] [-y bottom_edge]\n\
+		 [-X right_edge] [-Y top_edge]\n\
                  [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
                  [file.pix]\n";
 
@@ -173,6 +180,12 @@ register char **argv;
 		file_width = atoi(optarg);
 		autosize = 0;
 		break;
+	    case 'x':
+		left_edge = atoi(optarg);
+		break;
+	    case 'y':
+		bottom_edge = atoi(optarg);
+		break;
 	    case 'B':
 		if (! read_hsv(border_hsv, optarg))
 		{
@@ -197,12 +210,16 @@ register char **argv;
 		}
 		tol_using_rgb = 0;
 		break;
+	    case 'X':
+		right_edge = atoi(optarg);
+		break;
+	    case 'Y':
+		top_edge = atoi(optarg);
+		break;
 	    case '?':
 		(void) fputs(usage, stderr);
-		made_it();
 		exit (0);
 	    default:
-		made_it();
 		return (0);
 	}
     }
@@ -229,6 +246,14 @@ register char **argv;
     if (argc > ++optind)
 	(void) fprintf(stderr, "pixborder: excess argument(s) ignored\n");
 
+    if (left_edge == -1)
+	left_edge = 0;
+    if (right_edge == -1)
+	right_edge = file_width - 1;
+    if (bottom_edge == -1)
+	bottom_edge = 0;
+    if (top_edge == -1)
+	top_edge = file_height - 1;
     return (1);
 }
 
@@ -529,7 +554,6 @@ char	*argv[];
     if (!get_args( argc, argv ))
     {
 	(void) fputs(usage, stderr);
-	made_it();
 	exit (1);
     }
 
@@ -593,25 +617,39 @@ char	*argv[];
 	/*
 	 *	Fill the output-scanline buffer
 	 */
-	for (col_nm = 0; col_nm < file_width; ++col_nm)
+	if ((row_nm < bottom_edge) || (row_nm > top_edge))
 	{
-	    unsigned char	*color_ptr;
-
-	    color_ptr = is_border(inrow[prev_row], inrow[this_row],
-				    inrow[next_row], col_nm, tol_using_rgb)
-		    ? border_rgb
-		    : inrow[this_row] + (col_nm + 1) * 3;
-
-	    VMOVE(outbuf + col_nm * 3, color_ptr);
+	    if (fwrite(inrow[this_row] + 3, 3, file_width, stdout)
+		!= file_width)
+	    {
+		perror("stdout");
+		exit(2);
+	    }
 	}
-
-	/*
-	 *	Write the output scanline
-	 */
-	if (fwrite(outbuf, 3, file_width, stdout) != file_width)
+	else
 	{
-	    perror("stdout");
-	    exit(2);
+	    for (col_nm = 0; col_nm < file_width; ++col_nm)
+	    {
+		unsigned char	*color_ptr;
+
+		if ((col_nm >= left_edge) && (col_nm <= right_edge)
+		 && is_border(inrow[prev_row], inrow[this_row],
+			    inrow[next_row], col_nm, tol_using_rgb))
+		    color_ptr = border_rgb;
+		else
+		    color_ptr = inrow[this_row] + (col_nm + 1) * 3;
+
+		VMOVE(outbuf + col_nm * 3, color_ptr);
+	    }
+
+	    /*
+	     *	Write the output scanline
+	     */
+	    if (fwrite(outbuf, 3, file_width, stdout) != file_width)
+	    {
+		perror("stdout");
+		exit(2);
+	    }
 	}
 
 	/*
