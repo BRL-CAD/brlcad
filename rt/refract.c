@@ -268,7 +268,6 @@ struct partition *PartHeadp;
 			rt_log("rr_hit:  '%s' inhit %g not near zero!\n",
 				stp->st_name, hitp->hit_dist);
 			rt_pr_hit("inhit", hitp);
-			rt_pr_hit("outhit", pp->pt_outhit);
 		}
 		goto bad;
 	}
