@@ -1514,7 +1514,7 @@ proc set_texture_values { shader_str id } {
 set light_data {
 	e	fraction	f	1.0	"fraction of total light contributed"		"0..1" 		0 0 \
 	e	angle		a	180	"angle of light cone"				"0..180" 	1 0 \
-	e	target		t	{0 0 0}	"Point to which light is directed\n   (angle must be set)"   "any X,Y,Z"	2 0 \
+	e	target		d	{0 0 0}	"Point to which light is directed\n   (angle must be less than 180)"   "any X,Y,Z"	2 0 \
 	c	infinite 	i	0	"Boolean: light is infinite distance away"	"0,1" 		3 2 \
 	c	visible 	v	1	"Boolean: light souce object can be seen"	"0,1" 		3 3 \
 	i	icon		icon	""	"Shows effect of values for:\n  Shadow Rays\n  infinite\n  visible" "" 0 4 \
@@ -1528,6 +1528,8 @@ proc set_light_defaults { id } {
 	foreach {type name abbrev def_val desc range row col } $light_data {
 		set shader_params(def_light_$abbrev) $def_val
 	}
+
+	set shader_params(def_light_s) 1
 }
 
 proc assign_light_defaults { id } {
@@ -1617,7 +1619,7 @@ proc do_light { shade_var id } {
 		-command "light_scale $shade_var $id $w.icon"\
 		-variable shader_params($id,light_s) ] \
 		-row 0 -column 2 -rowspan 3 -columnspan 2 -sticky nesw
-        hoc_register_data $w.shadows shadows [list [list summary summary] [list range range]]
+        hoc_register_data $w.shadows shadows [list [list summary "number of rays to fire at light source in determining shadow\n0 rays means no shadows"] [list range "0..9"]]
 
 
 
