@@ -611,6 +611,43 @@ arch)
 
 # On a Linux system, bundle up /usr/brlcad binary tree as an RPM.
 rpm)
+	REV=1
+	RPM_BASE=brlcad-${RELEASE}-${REV}.i386
+	SPEC=/tmp/${RPM_BASE}.spec
+	rm -f $SPEC
+	cat > $SPEC << EOF
+Summary:  BRL-CAD(tm) Solid Modeling System with ray-tracer and geometry editor
+Name: brlcad
+Version: ${RELEASE}
+Release: ${REV}
+Copyright:  Copyright 1999 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
+Group: Applications/Graphics
+Source:  ftp.arl.mil:/pub/brl-cad/Rel${RELEASE}/src/
+URL:  http://ftp.arl.mil/brlcad/
+Vendor: The U. S. Army Research Laboratory, Aberdeen Proving Ground, MD  USA  21005-5068
+Packager: Mike Muuss <Mike@arl.mil>
+%description
+The BRL-CAD(tm) Package is a powerful Constructive Solid Geometry (CSG)
+solid modeling system.  BRL-CAD includes an interactive geometry
+editor, a ray tracing library, two ray-tracing based lighting models,
+a generic framebuffer library, a network-distributed image-processing
+and signal-processing capability, and a large collection of related
+tools and utilities.
+
+This version was compiled on RedHat Linux 5.2
+
+%prep
+        exit 0
+%files
+%docdir /usr/brlcad/man
+%docdir /usr/brlcad/html
+/usr/brlcad
+EOF
+	rpm -bb $SPEC
+	# Oddly, this produces /usr/src/redhat/RPMS/i386/${RPM_BASE}.rpm
+	gzip -9 < /usr/src/redhat/RPMS/i386/${RPM_BASE}.rpm > ./${RPM_BASE}.rpm.gz
+	# Privacy step still needed.
+	# enigma $KEY < ./${RPM_BASE}.rpm.gz > ./${RPM_BASE}.rpm.gz.cy
 	;;
 
 *)
