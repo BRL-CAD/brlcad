@@ -79,14 +79,11 @@ if [info exists env(DISPLAY)] {
     if ![info exists mged_default(display)] {
 	set mged_default(display) :0
     }
+    set env(DISPLAY) $mged_default(display)
 }
 
 if ![info exists mged_default(gdisplay)] {
     set mged_default(gdisplay) $mged_default(display)
-}
-
-if ![info exists env(DISPLAY)] {
-    set env(DISPLAY) $mged_default(display)
 }
 
 if ![info exists mged_default(dm_type)] {
