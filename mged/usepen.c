@@ -463,26 +463,10 @@ wrt_point( out, change, in, point )
 register matp_t out, change, in;
 register vect_t point;
 {
-	static mat_t t1, t2, pt_to_origin, origin_to_pt;
+	mat_t	t;
 
-	/* build "point to origin" matrix */
-	bn_mat_idn( pt_to_origin );
-	MAT_DELTAS(pt_to_origin, -point[X], -point[Y], -point[Z]);
-
-	/* build "origin to point" matrix */
-	bn_mat_idn( origin_to_pt );
-	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
-
-	/* t1 = pt_to_origin * in */
-	bn_mat_mul( t1, pt_to_origin, in );
-
-	/* apply change matrix: t2 = change * pt_to_origin * in */
-	bn_mat_mul( t2, change, t1 );
-
-	/* apply origin_to_pt matrix:
-	 *	out = origin_to_pt * change * pt_to_origin * in
-	 */
-	bn_mat_mul( out, origin_to_pt, t2 );
+	bn_mat_xform_about_pt( t, change, point );
+	bn_mat_mul( out, t, in );
 }
 
 /*
@@ -497,7 +481,7 @@ wrt_point_direc( out, change, in, point, direc )
 register matp_t out, change, in;
 register vect_t point, direc;
 {
-	static mat_t	t1, t2;
+	static mat_t	t1;
 	static mat_t	pt_to_origin, origin_to_pt;
 	static mat_t	d_to_zaxis, zaxis_to_d;
 	static vect_t	zaxis;
@@ -517,27 +501,16 @@ register vect_t point, direc;
 	/* build "zaxis to direc" matrix */
 	bn_mat_inv(zaxis_to_d, d_to_zaxis);
 
-	/* t1 = pt_to_origin * in */
-	bn_mat_mul( t1, pt_to_origin, in );
-
-	/* t2 = d_to_zaxis * pt_to_origin * in */
-	bn_mat_mul( t2, d_to_zaxis, t1 );
-
 	/* apply change matrix...
 	 *	t1 = change * d_to_zaxis * pt_to_origin * in
 	 */
-	bn_mat_mul( t1, change, t2 );
-
-	/* apply zaxis_to_d matrix:
-	 *	t2 = zaxis_to_d * change * d_to_zaxis * pt_to_origin * in
-	 */
-	bn_mat_mul( t2, zaxis_to_d, t1 );
+	bn_mat_mul4( t1, change, d_to_zaxis, pt_to_origin, in );
 
 	/* apply origin_to_pt matrix:
-	 *	out = origin_to_pt * zaxis_to_d * change *
-	 *		d_to_zaxis * pt_to_origin * in
+	 *	out = origin_to_pt * zaxis_to_d *
+	 *		change * d_to_zaxis * pt_to_origin * in
 	 */
-	bn_mat_mul( out, origin_to_pt, t2 );
+	bn_mat_mul3( out, origin_to_pt, zaxis_to_d, t1 );
 }
 
 /*
