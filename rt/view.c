@@ -228,6 +228,11 @@ register struct application *ap;
 					*pixelp++ = b ;
 				}
 			}
+			/* If incremental, first 3 iterations are boring */
+			if( buf_mode == 2 && incr_level > 3 )  {
+				if( --(npix_left[ap->a_y]) <= 0 )
+					do_eol = 1;
+			}
 		} else {
 			*pixelp++ = r ;
 			*pixelp++ = g ;
@@ -239,7 +244,20 @@ register struct application *ap;
 
 		if( do_eol && fbp != FBIO_NULL )  {
 			RES_ACQUIRE( &rt_g.res_syscall );
-			fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*width*3, width );
+			if( incr_mode )  {
+				register int dy, yy;
+				register int spread;
+
+				spread = 1<<(incr_nlevel-incr_level);
+				for( dy=0; dy<spread; dy++ )  {
+					yy = ap->a_y + dy;
+					fb_write( fbp, 0, yy,
+					    scanbuf+yy*width*3, width );
+				}
+			} else {
+				fb_write( fbp, 0, ap->a_y,
+				    scanbuf+ap->a_y*width*3, width );
+			}
 			RES_RELEASE( &rt_g.res_syscall );
 		}
 	}
@@ -289,6 +307,8 @@ struct application *ap;
 			for( y=0; y<height; y++ )
 				fb_write( fbp, 0, y, scanbuf+y*width*3, width );
 		}
+	}
+	if( incr_mode )  {
 		if( incr_level < incr_nlevel )
 			return(0);		 /* more res to come */
 	}
@@ -893,10 +913,11 @@ char *file, *obj;
 {
 
 #ifndef RTSRV
+	/* buf_mode = 3 presently can't be set, but still is supported */
 	if( incr_mode )  {
-		buf_mode = 3;		/* Frame buffering, dump at end */
+		buf_mode = 2;		/* Frame buffering, write each line */
 	} else if( rt_g.rtg_parallel )  {
-		buf_mode = 2;		/* frame buffering */
+		buf_mode = 2;		/* frame buffering, write each line */
 	} else if( width <= 96 )  {
 		buf_mode = 0;		/* single-pixel I/O */
 	}  else
@@ -954,6 +975,32 @@ register struct application *ap;
 	ap->a_miss = hit_nothing;
 	ap->a_onehit = 1;
 
+	switch( buf_mode )  {
+	case 2:
+		if( incr_mode )  {
+			register int j = 1<<incr_level;
+			register int w = 1<<(incr_nlevel-incr_level);
+
+			/* Diminish buffer expectations on work-saved lines */
+			for( i=0; i<j; i++ )  {
+				if( (i & 1) == 0 )
+					npix_left[i*w] = j/2;
+				else
+					npix_left[i*w] = j;
+			}
+		} else {
+			for( i=0; i<height; i++ )
+				npix_left[i] = width;
+		}
+		break;
+	default:
+		break;
+	}
+	if( incr_mode && incr_level > 0 )  {
+		if( incr_level < incr_nlevel )
+			return;		 /* more res to come */
+	}
+
 	switch( lightmodel )  {
 	case 0:
 		ap->a_hit = colorview;
@@ -981,14 +1028,5 @@ register struct application *ap;
 	ibackground[0] = background[0] * 255;
 	ibackground[1] = background[1] * 255;
 	ibackground[2] = background[2] * 255;
-
-	switch( buf_mode )  {
-	case 2:
-		for( i=0; i<height; i++ )
-			npix_left[i] = width;
-		break;
-	default:
-		break;
-	}
 
 }
