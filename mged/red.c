@@ -474,7 +474,7 @@ struct directory *dpold;
 	/* Following code is lifted from "f_copy()" and slightly modified */
 	if( (rp = db_getmrec( dbip, dpold )) == (union record *)0 )
 	{
-		(void)printf( "Cannot save copy of %s, no changes made\n" , dp->d_namep );
+		(void)printf( "Cannot save copy of %s, no changes made\n" , dpold->d_namep );
 		return( 1 );
 	}
 
