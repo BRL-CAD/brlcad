@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.9
-	Last edit: 	10/15/85 at 15:10:57
-	Retrieved: 	8/13/86 at 03:11:24
+	SCCS id:	@(#) fb-rle.c	1.10
+	Last edit: 	2/12/86 at 12:57:27
+	Retrieved: 	8/13/86 at 03:11:31
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.9	last edit 10/15/85 at 15:10:57";
+char	sccsTag[] = "@(#) fb-rle.c	1.10	last edit 2/12/86 at 12:57:27";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -27,7 +27,7 @@ char	sccsTag[] = "@(#) fb-rle.c	1.9	last edit 10/15/85 at 15:10:57";
 #define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
 static char	*usage[] = {
 "",
-"fb-rle (1.9)",
+"fb-rle (1.10)",
 "",
 "Usage: fb-rle [-CScdhvw][-l X Y][-p X Y][file.rle]",
 "",
@@ -121,7 +121,15 @@ char	*argv[];
 		if( page_fault )
 			{
 			if( fbread( 0, y_buffer, scan_buf, dma_pixels ) == -1)
+				{
+				(void) fprintf(	stderr,
+					"read of %d pixels from (0,%d) failed!\n",
+						dma_pixels,
+						y_buffer
+						);
+						
 				return	1;
+				}
 			if( crunch )
 				do_Crunch( scan_buf, dma_pixels, &cmap );
 			}
@@ -134,8 +142,7 @@ char	*argv[];
 	return	0;
 	}
 
-/*	p a r s A r g v ( )
- */
+/*	p a r s A r g v ( )						*/
 static int
 parsArgv( argc, argv )
 register char	**argv;
