@@ -23,17 +23,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "rle.h"
 
-/* Number of pixels to buffer, expressed in hi-res scanlines * nlines */
-#ifdef pdp11
-#define BUF_PIXELS	(1024*4)
-#else
-#define BUF_PIXELS	(1024*32)
-#endif
-
 typedef unsigned char	u_char;
 static char	*usage[] =
 	{
-"Usage: rle-fb [-Odv] [-b (rgbBG)] [-p X Y] [file.rle]",
+"Usage: rle-fb [-Otdv] [-b (rgbBG)] [-p X Y] [file.rle]",
 "",
 "If no rle file is specifed, rle-fb will read its standard input.",
 "If the environment variable FB_FILE is set, its value will be used",
@@ -53,6 +46,8 @@ static int	xpos = -1, ypos = -1;
 static void	prnt_Cmap();
 static void	prnt_Usage();
 static int	width = 512;
+static int	topdown = 0;
+static int	pixels_per_buffer;
 
 /*	m a i n ( )							*/
 main( argc, argv )
@@ -60,11 +55,10 @@ int	argc;
 char	*argv[];
 	{	register int	y;
 		register int	lines_per_buffer;
-		static RGBpixel	scanbuf[BUF_PIXELS];
+		register RGBpixel *scanbuf;
 		static RGBpixel	bg_scan[1025];
 		static ColorMap	cmap;
 		int		get_flags;
-		int		pixels_per_buffer;
 
 	if( ! pars_Argv( argc, argv ) || isatty(fileno(fp)) )
 		{
@@ -95,12 +89,30 @@ char	*argv[];
 		ylen = width - ypos;
 	rle_wlen( xlen, ylen, 0 );
 
-	lines_per_buffer = BUF_PIXELS / width;	/* # of full scanlines in buffer */
-	pixels_per_buffer = lines_per_buffer * width;
-
 	if( (fbp = fb_open( NULL, width, width )) == NULL )  {
 		exit(12);
 	}
+
+	if( topdown )
+		pixels_per_buffer = width * width;
+	else
+		pixels_per_buffer = width * 64;
+	scanbuf = RGBPIXEL_NULL;
+	while( scanbuf == RGBPIXEL_NULL && pixels_per_buffer > 0 )  {
+		scanbuf = (RGBpixel *)malloc(pixels_per_buffer*sizeof(RGBpixel));
+		if( scanbuf == RGBPIXEL_NULL )  {
+			pixels_per_buffer >>= 1;
+			continue;
+		}
+		break;
+	}
+	if( scanbuf == RGBPIXEL_NULL )  {
+		fprintf(stderr," rle-fb:  unable to malloc pixel buffer\n");
+		return(1);
+	}
+
+	lines_per_buffer = pixels_per_buffer / width;	/* # of full scanlines in buffer */
+	pixels_per_buffer = lines_per_buffer * width;
 
 	if( rle_verbose )
 		(void) fprintf( stderr,
@@ -248,10 +260,14 @@ register char	**argv;
 		extern int	optind;
 		extern char	*optarg;
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "Ob:dp:v" )) != EOF )
+	while( (c = getopt( argc, argv, "tOb:dp:v" )) != EOF )
 		{
 		switch( c )
 			{
+		case 't':
+			/* Top-down mode */
+			topdown = 1;
+			break;
 		case 'O' : /* Overlay mode.				*/
 			olflag = 1;
 			break;
