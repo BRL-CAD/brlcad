@@ -399,18 +399,20 @@ register struct partition *PartHeadp;
 		if(rdebug & RDEBUG_RAYPLOT) {
 			vect_t     inpt;
 			vect_t     outpt;
-			VJOIN(inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+			VJOIN1(inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 				ap->a_ray.r_dir);
-			VJOIN(outpt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+			VJOIN1(outpt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
 				ap->a_ray.r_dir);
-			pd3v_line(plotfp, inpt,outpt);
+			pdv_3line(plotfp, inpt,outpt);
 			
 			if(air_thickness > 0) {
 				vect_t     air_end;
-				VJOIN(air_end, ap->a_ray.r_pt,
+				VJOIN1(air_end, ap->a_ray.r_pt,
 					pp->pt_outhit->hit_dist + air_thickness,
 					ap->a_ray.r_dir);
-				pd3v_move(plotfp, air_end);
+				pl_color(plotfp, 0, 0, 255);	/* blue */
+				pdv_3move(plotfp, air_end);
+				pl_color(plotfp, 0, 255, 0);	/* green */
 			}
 		}
 	}
