@@ -56,13 +56,13 @@ class View {
     public method sca {args}
     public method setview {args}
     public method size {args}
-    public method slew {x y}
+    public method slew {args}
     public method tra {args}
     public method units {args}
     public method view2model {args}
     public method vrot {args}
     public method vtra {args}
-    public method zoom {sf}
+    public method zoom {args}
 
     public method ? {}
     public method apropos {key}
@@ -136,6 +136,7 @@ body View::ae {args} {
     # set ae
     eval $view ae $args
     set ae $args
+    return
 }
 
 body View::arot {args} {
@@ -143,6 +144,7 @@ body View::arot {args} {
 
     set ae [$view ae]
     set center [$view center]
+    return
 }
 
 body View::center {args} {
@@ -154,6 +156,7 @@ body View::center {args} {
     # set center
     eval $view center $args
     set center $args
+    return
 }
 
 body View::coord {args} {
@@ -164,14 +167,23 @@ body View::coord {args} {
 
     eval $view coord $args
     set coord $args
+    return
 }
 
 body View::eye {args} {
     eval $view eye $args
+
+    set ae [$view ae]
+    set center [$view center]
+    return
 }
 
 body View::eye_pos {args} {
     eval $view eye_pos $args
+
+    set ae [$view ae]
+    set center [$view center]
+    return
 }
 
 body View::invSize {args} {
@@ -186,10 +198,15 @@ body View::keypoint {args} {
 
     eval $view keypoint $args
     set keypoint $args
+    return
 }
 
 body View::lookat {args} {
     eval $view lookat $args
+
+    set ae [$view ae]
+    set center [$view center]
+    return
 }
 
 body View::model2view {args} {
@@ -198,6 +215,10 @@ body View::model2view {args} {
 
 body View::mrot {args} {
     eval $view mrot $args
+
+    set ae [$view ae]
+    set center [$view center]
+    return
 }
 
 body View::observer {args} {
@@ -206,6 +227,10 @@ body View::observer {args} {
 
 body View::orientation {args} {
     eval $view orientation $args
+
+    set ae [$view ae]
+    set center [$view center]
+    return
 }
 
 body View::perspective {args} {
@@ -216,6 +241,7 @@ body View::perspective {args} {
 
     eval $view perspective $args
     set perspective_angle $args
+    return
 }
 
 body View::pmat {args} {
@@ -228,10 +254,23 @@ body View::pmodel2view {args} {
 
 body View::pov {args} {
     eval $view pov $args
+
+    set ae [$view ae]
+    set center [$view center]
+    return
 }
 
 body View::rmat {args} {
+    # get rotation matrix
+    if {$args == ""} {
+	return [$view rmat]
+    }
+
     eval $view rmat $args
+
+    set ae [$view ae]
+    set center [$view center]
+    return
 }
 
 body View::rot {args} {
@@ -240,6 +279,7 @@ body View::rot {args} {
 
     set ae [$view ae]
     set center [$view center]
+    return
 }
 
 body View::rotate_about {args} {
@@ -250,14 +290,21 @@ body View::rotate_about {args} {
 
     eval $view rotate_about $args
     set rotate_about $args
+    return
 }
 
 body View::sca {args} {
     eval $view sca $args
+    set size [$view size]
+    return
 }
 
 body View::setview {args} {
     eval $view setview $args
+
+    set ae [$view ae]
+    set center [$view center]
+    return
 }
 
 body View::size {args} {
@@ -269,13 +316,15 @@ body View::size {args} {
     # set size
     eval $view size $args
     set size $args
+    return
 }
 
-body View::slew {x y} {
+body View::slew {args} {
     # slew the view
-    $view slew [list $x $y]
+    eval $view slew $args
 
     set center [$view center]
+    return
 }
 
 body View::tra {args} {
@@ -283,6 +332,7 @@ body View::tra {args} {
     eval $view tra $args
 
     set center [$view center]
+    return
 }
 
 body View::units {args} {
@@ -306,6 +356,7 @@ body View::vrot {args} {
 
     set ae [$view ae]
     set center [$view center]
+    return
 }
 
 body View::vtra {args} {
@@ -313,12 +364,14 @@ body View::vtra {args} {
     eval $view tra -v $args
 
     set center [$view center]
+    return
 }
 
-body View::zoom {sf} {
-    eval $view zoom $sf
+body View::zoom {args} {
+    eval $view zoom $args
 
     set size [$view size]
+    return
 }
 
 body View::? {} {
