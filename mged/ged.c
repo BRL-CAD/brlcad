@@ -87,21 +87,15 @@ extern Tk_Window tkwin;
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
-#ifdef SEND_KEY_DOWN_PIPE
 int dm_pipe[2];
-#endif
 
 struct db_i	*dbip;			/* database instance pointer */
 
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
 
-#ifdef MULTI_ATTACH
 int    update_views;
 extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
-#else
-int		dmaflag;		/* Set to 1 to force new screen DMA */
-#endif
 
 double		frametime = 1.0;	/* time needed to draw last frame */
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
@@ -218,7 +212,6 @@ char **argv;
 	FreeSolid = SOLID_NULL;
 	RT_LIST_INIT( &rt_g.rtg_vlfree );
 
-#ifdef MULTI_ATTACH
 	RT_LIST_INIT( &head_dm_list.l );
 	head_dm_list._dmp = &dm_Null;
 	curr_dm_list = &head_dm_list;
@@ -228,7 +221,6 @@ char **argv;
 	mged_variables = default_mged_variables;
 	rt_vls_init(&pathName);
 	rt_vls_strcpy(&pathName, "nu");
-#endif
 
 	state = ST_VIEW;
 	es_edflag = -1;
@@ -319,16 +311,11 @@ char **argv;
 	/* Reset the lights */
 	dmp->dmr_light( LIGHT_RESET, 0 );
 
-#ifdef SEND_KEY_DOWN_PIPE 
 	(void)pipe(dm_pipe);
 	Tk_CreateFileHandler(STDIN_FILENO, TK_READABLE, stdin_input,
 			     (ClientData)STDIN_FILENO);
 	Tk_CreateFileHandler(dm_pipe[0], TK_READABLE, stdin_input,
 			     (ClientData)dm_pipe[0]);
-#else
-	Tk_CreateFileHandler(fileno(stdin), TK_READABLE, stdin_input,
-			     (ClientData)NULL);
-#endif
 
 	/* Caught interrupts take us back here, via longjmp() */
 	if( setjmp( jmp_env ) == 0 )  {
@@ -430,11 +417,9 @@ int mask;
     static int escaped = 0;
     static int bracketed = 0;
     static int freshline = 1;
-#ifdef SEND_KEY_DOWN_PIPE
     int fd;
 
     fd = (int)clientData;
-#endif
 
     /* When not in cbreak mode, just process an entire line of input, and
        don't do any command-line manipulation. */
@@ -492,11 +477,7 @@ int mask;
 
     /* Grab single character from stdin */
 
-#ifdef SEND_KEY_DOWN_PIPE
     count = read(fd, (void *)&ch, 1);
-#else
-    count = read(fileno(stdin), (void *)&ch, 1);
-#endif
     if (count <= 0 && feof(stdin))
 	f_quit(0, NULL);
 
@@ -794,10 +775,8 @@ event_check( non_blocking )
 int	non_blocking;
 {
     vect_t		knobvec;	/* knob slew */
-#ifdef MULTI_ATTACH
     register struct dm_list *p;
     struct dm_list *save_dm_list;
-#endif
 
     /* Let cool Tk event handler do most of the work */
 
@@ -864,25 +843,25 @@ again:
     windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
     dmp->dmr_window(windowbounds);	/* hack */
 
-#ifdef MULTI_ATTACH
     save_dm_list = curr_dm_list;
     for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+      if(!p->_owner)
+	continue;
 
       curr_dm_list = p;
-#endif
 
-    /*********************************
-     *  Handle rate-based processing *
-     *********************************/
-    if( rateflag_rotate )  {
+      /*********************************
+       *  Handle rate-based processing *
+       *********************************/
+      if( rateflag_rotate )  {
 	non_blocking++;
 
 	/* Compute delta x,y,z parameters */
 	usejoy( rate_rotate[X] * 6 * degtorad,
 	        rate_rotate[Y] * 6 * degtorad,
 	        rate_rotate[Z] * 6 * degtorad );
-    }
-    if( rateflag_slew )  {
+      }
+      if( rateflag_slew )  {
 	non_blocking++;
 
 	/* slew 1/10th of the view per update */
@@ -890,8 +869,8 @@ again:
 	knobvec[Y] = -rate_slew[Y] / 10;
 	knobvec[Z] = -rate_slew[Z] / 10;
 	slewview( knobvec );
-    }
-    if( rateflag_zoom )  {
+      }
+      if( rateflag_zoom )  {
 	fastf_t	factor;
 	mat_t scale_mat;
 
@@ -910,13 +889,11 @@ again:
 	scale_mat[15] = 1/factor;
 
 	wrt_view( ModelDelta, scale_mat, ModelDelta );
-	dmaflag = 1;
 	new_mats();
+      }
+      
+      curr_dm_list = save_dm_list;
     }
-#ifdef MULTI_ATTACH
-        curr_dm_list = save_dm_list;
-    }
-#endif
 
     return( non_blocking );
 }
@@ -938,7 +915,6 @@ again:
 void
 refresh()
 {
-#ifdef MULTI_ATTACH
   register struct dm_list *p;
   struct dm_list *save_dm_list;
 
@@ -954,73 +930,59 @@ refresh()
     if(update_views || dmaflag || dirty) {
       double	elapsed_time;
 
-#else
-	/*
-	 * if something has changed, then go update the display.
-	 * Otherwise, we are happy with the view we have
-	 */
-	if( dmaflag )  {
-		double	elapsed_time;
-#endif
+      /* XXX VR hack */
+      if( viewpoint_hook )  (*viewpoint_hook)();
 
-		/* XXX VR hack */
-		if( viewpoint_hook )  (*viewpoint_hook)();
+      rt_prep_timer();
 
-		rt_prep_timer();
+      if( mged_variables.predictor )
+	predictor_frame();
 
-		if( mged_variables.predictor )
-			predictor_frame();
+      dmp->dmr_prolog();	/* update displaylist prolog */
 
-		dmp->dmr_prolog();	/* update displaylist prolog */
+      /*  Draw each solid in it's proper place on the screen
+       *  by applying zoom, rotation, & translation.
+       *  Calls dmp->dmr_newrot() and dmp->dmr_object().
+       */
+      if( mged_variables.eye_sep_dist <= 0 )  {
+	/* Normal viewing */
+	dozoom(0);
+      } else {
+	/* Stereo viewing */
+	dozoom(1);
+	dozoom(2);
+      }
 
-		/*  Draw each solid in it's proper place on the screen
-		 *  by applying zoom, rotation, & translation.
-		 *  Calls dmp->dmr_newrot() and dmp->dmr_object().
-		 */
-		if( mged_variables.eye_sep_dist <= 0 )  {
-			/* Normal viewing */
-			dozoom(0);
-		} else {
-			/* Stereo viewing */
-			dozoom(1);
-			dozoom(2);
-		}
+      /* Restore to non-rotated, full brightness */
+      dmp->dmr_normal();
 
-		/* Restore to non-rotated, full brightness */
-		dmp->dmr_normal();
+      /* Compute and display angle/distance cursor */
+      if (adcflag)
+	adcursor();
 
-		/* Compute and display angle/distance cursor */
-		if (adcflag)
-			adcursor();
-
-		/* Display titles, etc., if desired */
-		dotitles(mged_variables.faceplate);
+      /* Display titles, etc., if desired */
+      dotitles(mged_variables.faceplate);
 		
-		dmp->dmr_epilog();
+      dmp->dmr_epilog();
 
-		(void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
-		/* Only use reasonable measurements */
-		if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
-			/* Smoothly transition to new speed */
-			frametime = 0.9 * frametime + 0.1 * elapsed_time;
-		}
-#ifdef MULTI_ATTACH
+      (void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
+      /* Only use reasonable measurements */
+      if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
+	/* Smoothly transition to new speed */
+	frametime = 0.9 * frametime + 0.1 * elapsed_time;
+      }
+
       dirty = 0;
     }
   }
 
+  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    curr_dm_list = p;
+    dmaflag = 0;
+  }
+
   curr_dm_list = save_dm_list;
   update_views = 0;
-  dmaflag = 0;
-#else
-  } else {
-		/* For displaylist machines??? */
-		dmp->dmr_prolog();	/* update displaylist prolog */
-		dmp->dmr_update();
-	}
-
-	dmaflag = 0;
-#endif
 }
 
 /*
@@ -1052,8 +1014,6 @@ usejoy( xangle, yangle, zangle )
 double	xangle, yangle, zangle;
 {
 	mat_t	newrot;		/* NEW rot matrix, from joystick */
-
-	dmaflag = 1;
 
 	if( state == ST_S_EDIT )  {
 		if( sedit_rotate( xangle, yangle, zangle ) > 0 )
@@ -1186,11 +1146,17 @@ mged_finish( exitcode )
 int	exitcode;
 {
 	char place[64];
+	register struct dm_list *p;
 
 	(void)sprintf(place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
-	dmp->dmr_light( LIGHT_RESET, 0 );	/* turn off the lights */
-	dmp->dmr_close();
+
+	for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	  curr_dm_list = p;
+
+	  dmp->dmr_light( LIGHT_RESET, 0 );	/* turn off the lights */
+	  dmp->dmr_close();
+	}
 
 	if (cbreak_mode > 0)
 	    reset_Tty(fileno(stdin)); 
@@ -1231,6 +1197,7 @@ sig2()
 void
 new_mats()
 {
+#if 0
 	mat_mul( model2view, Viewrot, toViewcenter );
 	model2view[15] = Viewscale;
 	mat_inv( view2model, model2view );
@@ -1239,6 +1206,31 @@ new_mats()
 		mat_inv( objview2model, model2objview );
 	}
 	dmaflag = 1;
+#else
+	mat_mul( model2view, Viewrot, toViewcenter );
+	model2view[15] = Viewscale;
+	mat_inv( view2model, model2view );
+
+	if( state != ST_VIEW ) {
+	    register struct dm_list *p;
+	    struct dm_list *save_dm_list;
+
+	    save_dm_list = curr_dm_list;
+	    for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	      if(!p->_owner)
+		continue;
+
+	      curr_dm_list = p;
+
+	      mat_mul( model2objview, model2view, modelchanges );
+	      mat_inv( objview2model, model2objview );
+	    }
+
+	    curr_dm_list = save_dm_list;
+	    update_views = 1;
+	}else
+	  dmaflag = 1;
+#endif
 }
 
 /*
