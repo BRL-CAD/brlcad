@@ -244,6 +244,49 @@ CONST struct rt_tabdata		*in2;
 }
 
 /*
+ *			R T _ T A B D A T A _ J O I N 2
+ *
+ *  Multiply every element in data table in2 by a scalar value 'scale2',
+ *  plus in3 * scale3, and
+ *  add it to the element in in1, and store in 'out'.
+ *  'out' may overlap in1 or in2.
+ */
+void
+rt_tabdata_join1( out, in1, scale2, in2, scale3, in3 )
+struct rt_tabdata		*out;
+CONST struct rt_tabdata		*in1;
+register double			scale2;
+CONST struct rt_tabdata		*in2;
+register double			scale3;
+CONST struct rt_tabdata		*in3;
+{
+	register int		j;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2, *i3;
+
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 )
+	RT_CK_TABDATA( in2 );
+
+	if( in1->table != out->table )
+		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+	if( in1->table != in2->table )
+		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+	if( in1->table != in3->table )
+		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+	if( in1->ny != out->ny )
+		rt_bomb("rt_tabdata_join1(): different tabdata lengths?\n");
+
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	i3 = in3->y;
+	for( j = in1->ny; j > 0; j-- )
+		*op++ = *i1++ + scale2 * *i2++ + scale3 * *i3++;
+	/* VJOIN2N( out->y, in1->y, scale2, in2->y, scale3, in3->y ); */
+}
+
+/*
  *			R T _ T A B D A T A _ B L E N D 3
  */
 void
@@ -943,10 +986,26 @@ CONST struct rt_tabdata	*in;
 }
 
 /*
- *			R T _ T A B D A T A _ C O N S T V A L
+ *			R T _ T A B D A T A _ D U P
+ */
+struct rt_tabdata *
+rt_tabdata_dup( in )
+CONST struct rt_tabdata	*in;
+{
+	struct rt_tabdata *data;
+
+	RT_CK_TABDATA( in );
+	RT_GET_TABDATA( data, in->table );
+
+	bcopy( (char *)in->y, (char *)data->y, in->ny * sizeof(fastf_t) );
+	return data;
+}
+
+/*
+ *			R T _ T A B D A T A _ G E T _ C O N S T V A L
  *
- *  For a given table, return a tabdata structure with all elements
- *  initialized to 'val'.
+ *  For a given table, allocate and return a tabdata structure
+ *  with all elements initialized to 'val'.
  */
 struct rt_tabdata *
 rt_tabdata_get_constval( val, tabp )
@@ -965,6 +1024,26 @@ CONST struct rt_table	*tabp;
 		*op++ = val;
 
 	return data;
+}
+
+/*
+ *			R T _ T A B D A T A _ C O N S T V A L
+ *
+ *  Set all the tabdata elements to 'val'
+ */
+void
+rt_tabdata_constval( data, val )
+struct rt_tabdata	*data;
+double			val;
+{
+	int			todo;
+	register fastf_t	*op;
+
+	RT_CK_TABDATA(data);
+
+	op = data->y;
+	for( todo = data->ny-1; todo >= 0; todo-- )
+		*op++ = val;
 }
 
 /*
