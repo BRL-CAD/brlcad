@@ -59,9 +59,10 @@
 #define DEBUG_PL_ANIM	0x00000001	/* 1 mged animated evaluation */
 #define DEBUG_PL_SLOW	0x00000002	/* 2 add delays to animation */
 
+#define DEBUG_PLOTEM	0x00000008	/* 4 make plots in debugged routines (needs other flags set too) */
 #define DEBUG_CUTLOOP	0x00000010	/* 5 nmg_mod: nmg_cut_loop */
 #define DEBUG_POLYSECT	0x00000020	/* 6 nmg_inter: face intersection */
-#define DEBUG_PLOTEM	0x00000040	/* 7 make plots in debugged routined */
+#define DEBUG_VERIFY	0x00000040	/* 7 nmg_vshell() frequently, verify health */
 #define DEBUG_BOOL	0x00000080	/* 8 nmg_bool:  */
 #define DEBUG_CLASSIFY	0x00000100	/* 9 nmg_class: */
 #define DEBUG_BOOLEVAL	0x00000200	/* 10 nmg_eval: what to retain */
@@ -83,7 +84,7 @@
 \017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\
 \013GRAZING\
 \012BOOLEVAL\011CLASSIFY\
-\010BOOL\7PLOTEM\6POLYSECT\5CUTLOOP\4XXX\3XXX\2PL_SLOW\1PL_ANIM"
+\010BOOL\7VERIFY\6POLYSECT\5CUTLOOP\4PLOTEM\3XXX\2PL_SLOW\1PL_ANIM"
 
 /*
  *  Macros for providing function prototypes, regardless of whether
