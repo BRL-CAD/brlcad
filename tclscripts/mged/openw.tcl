@@ -736,7 +736,7 @@ foreach ptype $mged_Priv(arb8) {
 	    -command "init_solid_create $id $ptype"
 
     set ksl {}
-    lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+    lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
     hoc_register_menu_data "Arb8" "$ptype..." "Make a $ptype" $ksl
 }
 
@@ -746,7 +746,7 @@ foreach ptype $mged_Priv(cones) {
 	    -command "init_solid_create $id $ptype"
 
     set ksl {}
-    lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+    lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
     hoc_register_menu_data "Cones & Cyls" "$ptype..." "Make a $ptype" $ksl
 }
 
@@ -756,7 +756,7 @@ foreach ptype $mged_Priv(ellipses) {
 	    -command "init_solid_create $id $ptype"
 
     set ksl {}
-    lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+    lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
     hoc_register_menu_data "Ellipses" "$ptype..." "Make a $ptype" $ksl
 }
 
@@ -767,14 +767,14 @@ foreach ptype $mged_Priv(other_prims) {
 		-command "dsp_create $id"
 
 	set ksl {}
-	lappend ksl "summary \"Make a dsp solid.\"" "see_also \"make, in\""
+	lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
 	hoc_register_menu_data "Create" "dsp..." "Make a dsp solid" $ksl
     } else {
 	.$id.menubar.create add command -label "$ptype..."\
 		-command "init_solid_create $id $ptype"
 
 	set ksl {}
-	lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+	lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
 	hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 }
