@@ -78,6 +78,8 @@ char **argv;
 	mat_t Viewrotscale;
 	mat_t toEye;
 	fastf_t viewsize;
+	int framenumber = 0;
+	int desiredframe = 0;
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -91,6 +93,9 @@ char **argv;
 	argc--; argv++;
 	while( argv[0][0] == '-' )  {
 		switch( argv[0][1] )  {
+		case 'F':
+			desiredframe = atoi( &argv[0][2] );
+			break;
 		case 'M':
 			matflag = 1;
 			break;
@@ -257,6 +262,8 @@ do_more:
 			if( scanf( "%f", &Viewrotscale[i] ) != 1 )
 				goto out;
 	}
+	if( framenumber++ < desiredframe )  goto do_more;
+
 	/* model2view takes us to eye_model location & orientation */
 	mat_idn( toEye );
 	toEye[MDX] = -eye_model[X];
@@ -322,7 +329,8 @@ do_more:
 	fprintf(stderr,"pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 		nshots>0?((double)nhits*100.0)/nshots:100.0,
 		nmiss_model, nmiss_tree, nmiss_solid );
-	fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
+	fprintf(stderr,"Frame %d:  %d output rays in %f sec = %f rays/sec\n",
+		framenumber-1,
 		npts*npts, utime, (double)(npts*npts/utime) );
 #ifdef HEP
 	if( write( outfd, scanbuf, npts*npts*3 ) != npts*npts*3 )  {
