@@ -126,6 +126,7 @@ struct isect_stuff {
 
 	struct seg *sp;	/* the current segment being filled */
 	int sp_is_valid;
+	int sp_is_done;
 };
 
 #define INHIT(isp, dist, surf, cell, norm) {\
@@ -164,6 +165,7 @@ struct isect_stuff {
 	isp->sp->seg_out.hit_vpriv[X] = cell[X]; \
 	isp->sp->seg_out.hit_vpriv[Y] = cell[Y]; \
 	VMOVE(isp->sp->seg_out.hit_normal, norm); \
+	isp->sp_is_done = 1; \
 	if (rt_g.debug & DEBUG_HF) { \
 		point_t out, t; \
 		VJOIN1(t, isp->r.r_pt, dist, isp->r.r_dir); \
@@ -179,6 +181,11 @@ struct isect_stuff {
 		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, \
 			isp->ap->a_x, isp->ap->a_y); \
 		bu_bomb("attempt to commit an invalid seg\n"); \
+	} \
+	if ( ! (isp)->sp_is_done) { \
+		bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, \
+			isp->ap->a_x, isp->ap->a_y); \
+		bu_bomb("attempt to commit an incomplete seg\n"); \
 	} \
  \
 	if (rt_g.debug & DEBUG_HF) { \
@@ -1417,17 +1424,21 @@ int (*isect_wall)();
 		hit = isect_wall(isect, cs->grid_cell, next_surf, dt, next_pt);
 
 		if (hit) {
+			if (*inside) {
+				if (rt_g.debug & DEBUG_HF)
+					bu_log("\thit X out-wall\n");
+				OUTHIT(isect, (cs->bbin_dist+dt), next_surf,
+					cs->grid_cell,
+					dsp_pl[BBSURF(*cs->curr_surf)]);
+				*inside = 1;
+			}
+#if 0
 			if (!*inside) {
-				bu_log("\t%s:%d pixel(%d,%d) ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y);
+				bu_log("\t%s:%d pixel(%d,%d) cell(%d,%d)", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y, V2ARGS(cs->grid_cell));
 				bu_log("\thit dsp and not inside g_dsp.c line:%d", __LINE__);
 				bu_bomb("");
 			}
-			if (rt_g.debug & DEBUG_HF)
-				bu_log("\thit X out-wall\n");
-			OUTHIT(isect, (cs->bbin_dist+dt), next_surf,
-				cs->grid_cell,
-				dsp_pl[BBSURF(*cs->curr_surf)]);
-			*inside = 1;
+#endif
 		} else {
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("\tmiss X out-wall\n");
@@ -1684,13 +1695,14 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_dist, curr_surf);
 		grid_cell[Y] >= cell_bbox[YMIN] &&
 		grid_cell[Y] <= cell_bbox[YMAX] );
 
-	/* What we've got is hits in the 0 .. span_dist range.
-	 * We need them in the in_dist .. out_dist range.
-	 
-	 */
-
-
 	if (inside) {
+		OUTHIT( isect, 
+		isect->bbox.out_dist,
+		isect->bbox.out_surf,
+		bbout_cell,
+		dsp_pl[isect->bbox.out_surf]);
+
+
 		HIT_COMMIT( isect );
 		inside = 0;
 	}
@@ -1759,6 +1771,7 @@ struct seg		*seghead;
 	isect.dsp = (struct dsp_specific *)stp->st_specific;
 	isect.tol = &ap->a_rt_i->rti_tol;
 	isect.sp_is_valid = 0;
+	isect.sp_is_done = 0;
 
 	/* intersect ray with bounding cube */
 	if ( isect_ray_bbox(&isect) == 0)
