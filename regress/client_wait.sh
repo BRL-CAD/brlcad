@@ -25,7 +25,7 @@ END_HOUR=7
 MAILUSER=morrison@arl.army.mil
 QUIET=0
 BRLCAD_ROOT=/tmp/brlcad
-SLEEP_DELTA=1
+SLEEP_DELTA=10
 
 for i in $* ; do
 	case "$i" in
@@ -82,7 +82,7 @@ if [ $START_HOUR -ge $END_HOUR ] ; then
 fi
 
 #
-#  First we must sleep until the "cvs checkout" is complete or we are past
+#  First we must sleep until the "cvs export" is complete or we are past
 #  when we are allowed to run
 #
 WAIT_MACH_TIME=`expr $SLEEP_DELTA \* 60`
@@ -98,7 +98,8 @@ while [ ! -f $REGRESS_DIR/brlcad/sh/machinetype.sh ] ; do
 done
 echo "Verified that machinetype.sh exists"
 
-export ARCH=`${REGRESS_DIR}/brlcad/sh/machinetype.sh`
+ARCH=`${REGRESS_DIR}/brlcad/sh/machinetype.sh`
+export ARCH
 
 echo "Regression testing an [$ARCH] architecture in [$REGRESS_DIR]"
 
@@ -108,16 +109,20 @@ echo "Regression testing an [$ARCH] architecture in [$REGRESS_DIR]"
 COUNT=0
 HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
 echo "HOUR=$HOUR, END_HOUR=$END_HOUR, BEGIN_HOUR=$BEGIN_HOUR"
-while ! eval "acquireLock ${REGRESS_DIR}/start_${ARCH}.semaphore 2 $SLEEP_DELTA" ; do
+
+# !!! booo, sun5 sh giving trouble with while ! true
+if acquireLock ${REGRESS_DIR}/start_${ARCH}.semaphore 2 10 ; then LOCKED=1 ; else LOCKED=0 ; fi
+while [ ! "x$LOCKED" = "x1" ]  ; do
     if [ $HOUR -ge $END_HOUR -o $HOUR -lt $BEGIN_HOUR ] ; then
 	echo "ERROR: time expired on $HOSTNAME waiting for creation of start_${ARCH}.semaphore"
 	exit 2
     fi
     HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
+    if acquireLock ${REGRESS_DIR}/start_${ARCH}.semaphore 2 10 ; then LOCKED=1 ; else LOCKED=0 ; fi
 done
 
-if [ ! -d ${REGRESS_DIR}/.regress.$ARCH ] ; then mkdir ${REGRESS_DIR}/.regress.$ARCH ; fi
 echo "$ARCH commencing build at `date`"
+if [ ! -d ${REGRESS_DIR}/.regress.$ARCH ] ; then mkdir ${REGRESS_DIR}/.regress.$ARCH ; fi
 
 #
 # run the build script out of the source tree

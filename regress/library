@@ -43,7 +43,7 @@
 
 # have to init LOG here so functions will output properly
 if [ x$LOG = x ] ; then 
-    export LOG=/dev/tty
+    LOG="/dev/tty" ; export LOG
 fi
 if [ ! x$DEBUG = x ]  ; then echo "LOG=$LOG" ; fi
 #
@@ -51,16 +51,38 @@ if [ ! x$DEBUG = x ]  ; then echo "LOG=$LOG" ; fi
 #
 # log writes a given message out to a file name
 #
-function log {
+log ( ) {
 # for gratuitous logging...
-    if [ ! x$DEBUG = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" >> $LOG ; fi
+#    if [ ! x$DEBUG = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" >> $LOG ; fi
 
-    local MESSAGE="\$1"
-    if [ "x$2" = "x" ] ; then local FILE=$LOG ; else local FILE="$2" ; fi
+    MESSAGE="\$1"
+    if [ "x$2" = "x" ] ; then FILE="$LOG" ; else FILE="$2" ; fi
 
     # check for explicit escape option support
-    local LOGTEST=`echo "\t\ntest"`
-    if [ "x$LOGTEST" = "x\\t\\ntest" ] ; then local ECHO="echo -e" ; else local ECHO="echo" ; fi
+    # try to find a decent echo with -e support
+    LOGTEST=`echo -e "\t\ntest"`
+    if [ `echo $LOGTEST | awk '{print $1}'` = "test" ] ; then
+	ECHO="echo -e"
+
+    # no -e support
+    else 
+	# need to do some extra checking since the sun5 /bin/echo sucks
+	# see if default echo supports special chars
+	LOGTEST=`echo "\t\ntest"`
+	if [ "x`echo $LOGTEST | awk '{print $1}'`" = "xtest" ] ; then 
+	    ECHO="echo"
+	else
+	    # for sun5 (built-in echo is poor)
+	    LOGTEST=`/usr/bin/echo "\t\ntest"`
+	    if [ "x`echo $LOGTEST | awk '{print $1}'`" = "xtest" ] ; then
+		ECHO="/usr/bin/echo"
+	    else
+		echo "WARNING: cannot find decent echo"
+		ECHO="echo"
+	    fi
+	fi
+    fi
+
 # for gratuitous logging...
 #    if [ ! x$DEBUG = x ] ; then echo "log: ECHO=[${ECHO}] MESSAGE=[${MESSAGE}] FILE=[${FILE}]" >> $LOG ; fi
 
@@ -77,22 +99,26 @@ function log {
 # is already defined (e.g. already initialized).  this allows
 # script variables to also be overridden by environment variables
 #
-function initializeVariable {
+initializeVariable ( ) {
     if [ ! x$DEBUG = x ] ; then log "initializeVariable( \$1=[$1] \$2=[$2] )" ; fi
 
     if [ x$1 = x ] ; then 
-	log "initializeVariable arg1 mismatch"
+	log "initializeVariable: arg1 mismatch -- no variable name given"
 	exit 
     else 
-	local VAR=$1 
+	VAR="$1"
     fi
     # do not need to check since may be empty anyways
-    local DEF=$2
+    DEF="$2"
 
-    # stupid name to variable translation was a bitch..
-    local PVAR="echo \$$VAR"
+    # stupid name to variable translation is a bitch..especially on sun5
+
+    # make sure a value is not already set for the variable being initialized
+    PVAR="echo \$$VAR"
     if [ x`eval $PVAR` = x ] ; then
-	export $VAR=$DEF
+	CMD="$VAR=\"$DEF\""
+	eval $CMD
+	export $VAR
     fi
 
     if [ ! x$DEBUG = x ] ; then log "initializeVariable: $VAR=[`eval $PVAR`]" ; fi
@@ -109,27 +135,27 @@ function initializeVariable {
 #
 # returns the host name set
 #
-function getHostName {
+getHostName ( ) {
     if [ ! x$DEBUG = x ] ; then log "getHostName( \$1=[${1}] \$2=[${2}] )" ; fi
 
     if [ x$1 = x ] ; then 
-	local VAR="HOSTNAME"
+	VAR="HOSTNAME"
     else 
-	local VAR=$1
+	VAR="$1"
 	# do not forget to check system
 	initializeVariable $VAR "$HOST"
-	if [ x$VAR = x ] ; then export $VAR=$HOSTNAME ; fi
+	if [ x$VAR = x ] ; then export $VAR="$HOSTNAME" ; fi
     fi
-    if [ x$2 = x ] ; then local DEFVAL="unknown" ; else local DEFVAL=$2 ; fi
+    if [ x$2 = x ] ; then DEFVAL="unknown" ; else DEFVAL="$2" ; fi
 
     # multiple inits work (without the ifthen mess) since the set should
     # not clobber a variable that already has a non-empty value set
-    if [ x$VAR = x ] ; then initializeVariable $VAR `hostname` ; fi
-    if [ x$VAR = x ] ; then initializeVariable $VAR $HOST ; fi
-    if [ x$VAR = x ] ; then initializeVariable $VAR `uname -n` ; fi
-    if [ x$VAR = x ] ; then initializeVariable $VAR $DEFVAL ; fi
+    if [ ! x$VAR = x ] ; then initializeVariable $VAR `hostname` ; fi
+    if [ ! x$VAR = x ] ; then initializeVariable $VAR $HOST ; fi
+    if [ ! x$VAR = x ] ; then initializeVariable $VAR `uname -n` ; fi
+    if [ ! x$VAR = x ] ; then initializeVariable $VAR $DEFVAL ; fi
 
-    local VARVAL="echo \$$VAR"
+    VARVAL="echo \$$VAR"
     if [ ! x$DEBUG = x ] ; then log "getHostName: ${VAR}=[`eval $VARVAL`]" ; fi
 
     # return value is only useful if DEBUG is off (since echo'd values are return values)
@@ -140,12 +166,12 @@ function getHostName {
 #
 # acquireLock [lockFile] [retryCount] [waitLength]
 #
-function acquireLock {
+acquireLock ( ) {
     if [ ! x$DEBUG = x ] ; then log "acquireLock( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
 
-    if [ x$1 = x ] ; then local LOCK="local.lock" ; else local LOCK=$1 ; fi
-    if [ x$2 = x ] ; then local RETRY=1 ; else local RETRY=$2 ; fi
-    if [ x$3 = x ] ; then local WAIT=0 ; else local WAIT=$3 ; fi
+    if [ x$1 = x ] ; then LOCK="local.lock" ; else LOCK="$1" ; fi
+    if [ x$2 = x ] ; then RETRY="1" ; else RETRY="$2" ; fi
+    if [ x$3 = x ] ; then WAIT="0" ; else WAIT="$3" ; fi
 
     while [ ! -f $LOCK ] ; do
 	RETRY=`expr $RETRY - 1`
@@ -164,12 +190,12 @@ function acquireLock {
 
 
 #
-# releaseLock lockFile
+# releaseLock [lockFile]
 #
-function releaseLock {
+releaseLock ( ) {
     if [ ! x$DEBUG = x ] ; then log "releaseLock( \$1=[$1] )" ; fi
 
-    if [ x$1 = x ] ; then local LOCK="local.lock" ; else local LOCK=$1 ; fi
+    if [ x$1 = x ] ; then LOCK="local.lock" ; else LOCK="$1" ; fi
     if [ -f $LOCK ] ; then
 	log "WARNING: Lock [$LOCK] is already released"
 	return 1
@@ -179,6 +205,50 @@ function releaseLock {
     return 0
 }
 
+#
+# mail {addressList} [subject] [body]
+#
+# mailer sends out a mail message with a given subject and given body to an address list
+# addressList is required only if USER is not set
+###
+mail ( ) {
+    if [ ! x$DEBUG = x ] ; then log "mail( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
+
+    if [ "x$1" = x ] ; then 
+	if [ ! "x$USER" = x ] ; then
+	    ADDRESS="$USER"
+	else
+	    log "mail: arg1 mismatch -- no e-mail address given, no USER set"
+	    exit
+	fi
+    else
+	ADDRESS="$1"
+    fi
+    if [ "x$2" = x ] ; then SUBJECT="" ; else SUBJECT="$2" ; fi
+    if [ "x$3" = x ] ; then BODY="" ; else BODY=`echo -e $3` ; fi
+    if [ "x$MAILER" = x ] ; then 
+	MAILER=""
+	for MAILER in /bin/mail /usr/bin/mail ; do
+	    if [ -f $MAILER ] && [ -x $MAILER ] ; then
+		break
+	    fi
+	done
+    fi
+
+    if [ ! x$DEBUG = x ] ; then log "mail: MAILER=[$MAILER] ADDRESS=[$ADDRESS] SUBJECT=[$SUBJECT]" ; fi
+
+    # !!! should test validity of mail program existance
+
+    MAILRUN="$MAILER -s \"$SUBJECT\" $ADDRESS"
+    
+    $MAILER -s "$SUBJECT" $ADDRESS <<EOF
+$BODY 
+EOF
+
+    if [ $? != 0 ] ; then
+	log "ERROR: mail failed"
+    fi
+}
 
 # GLOBAL STUFF
 # get a hostname and pwd to play with -- exports HOSTNAME and PWD accordingly

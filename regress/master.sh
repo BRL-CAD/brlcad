@@ -58,7 +58,7 @@ initializeVariable TESTS_D tests.d
 # current working directory
 initializeVariable START_PWD $PWD
 
-# cvs log file
+# cvs log file (do not change unless modify status.sh as well)
 initializeVariable CVS_LOGFILE .cvs-${HOSTNAME}.log
 
 # build up the usage and help incrementally just so it is easier to modify later
@@ -87,16 +87,16 @@ HELP="${HELP}\t-l\tName of log file for script output (default is [$LOGFILE])"
 
 # handle dash question special since some getopts don't play nice
 if [ x$1 = "x-?" ] ; then
-    echo $USAGE
-    echo -e $HELP
+    log $USAGE
+    log $HELP
     exit
 fi
 
 args=`getopt S:T:d:c:r:m:t:l:whH? $*`
 
 if [ $? != 0 ] ; then
-    echo $USAGE
-    echo -e $HELP
+    log $USAGE
+    log $HELP
     exit
 fi
 
@@ -141,7 +141,7 @@ export REGRESS_DIR CVS REPOSITORY CVS_TAG WAIT_FOR_LOCK_TIMEOUT NO_WARNINGS LOGF
 # sanity check -- make sure someone didn't request ""
 # not a good idea to use "." either, but we do not check
 if [ "x$REGRESS_DIR" = "x" ] ; then
-	echo "ERROR: Must specify regression directory [REGRESS_DIR]"
+	echo "ERROR: Must specify regression directory [REGRESS_DIR=$REGRESS_DIR]"
 	exit
 fi
 #
@@ -248,15 +248,21 @@ fi
 # Get a copy of the cad package
 #
 log "Starting cvs export..."
-log "Running [$CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG >> $CVS_LOGFILE/$CVS_LOGFILE]"
+log "Running [$CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG >> $REGRESS_DIR/$CVS_LOGFILE]"
 $CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG >> ${REGRESS_DIR}/$CVS_LOGFILE
 log "...done with cvs checkout"
+
+if [ $? != 0 ] ; then 
+    log "ERROR: CVS EXPORT RETURNED NON-ZERO" $REGRESS_DIR/$CVS_LOGFILE
+else
+    log "OK: CVS CHECKOUT SUCCEEDED" $REGRESS_DIR/$CVS_LOGFILE
+fi
 
 #
 # Touch a file for each architecture that we support.  The clients wait for
 # this file to be created before starting their build.
 #
-for ARCH in m4i64 m4i65 7d fbsd li; do
+for ARCH in m4i64 m4i65 7d fbsd li sun5; do
     releaseLock ${REGRESS_DIR}/start_${ARCH}.semaphore
 done
 

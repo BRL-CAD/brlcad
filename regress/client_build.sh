@@ -51,7 +51,7 @@ export BRLCAD_ROOT
 export ARCH
 
 
-export PATH=$BRLCAD_ROOT/bin:$PATH
+PATH="$BRLCAD_ROOT/bin:$PATH" ; export PATH
 
 STARTPWD=$PWD
 
