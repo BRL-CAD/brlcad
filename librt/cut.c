@@ -786,10 +786,17 @@ rt_split_mostly_empty_cells( struct rt_i *rtip, union cutter *cutp )
 
 			fastf_t where;
 
+			/* select cutting plane, but move it slightly off any geometry */
 			if( upper_or_lower[max_empty_dir] ) {
-				where = max[max_empty_dir];
+			        where = max[max_empty_dir] + rtip->rti_tol.dist;
+				if( where >= cutp->bn.bn_max[max_empty_dir] ) {
+				       return( num_splits );
+				}
 			} else {
-				where = min[max_empty_dir];
+				where = min[max_empty_dir] - rtip->rti_tol.dist;
+				if( where <= cutp->bn.bn_min[max_empty_dir] ) {
+				       return( num_splits );
+				}
 			}
 			if( rt_ct_box( rtip, cutp, max_empty_dir, where ) ) {
 				num_splits++;
