@@ -2,8 +2,11 @@
  *			A T T A C H . C
  *
  * Functions -
+ *	f_refresh	request display refresh
+ *	f_attach	attach display device
  *	attach		attach to a given display processor
- *	release		detach from current display processor
+ *	f_release	release display device
+ *	release		guts for f_release
  *  
  *  Author -
  *	Michael John Muuss
@@ -128,6 +131,7 @@ static struct w_dm which_dm[] = {
   { (struct dm *)0, (int (*)())0}
 };
 
+
 int
 release(name, need_close)
 char *name;
@@ -201,6 +205,24 @@ int need_close;
 
 	return TCL_OK;
 }
+
+
+int
+f_release(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  if(argc == 2)
+    return release(argv[1], 1);
+
+  return release(NULL, 1);
+}
+
 
 int
 reattach()
