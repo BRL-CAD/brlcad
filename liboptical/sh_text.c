@@ -91,13 +91,18 @@ register struct txt_specific *tp;
  */
 HIDDEN
 txt_render( ap, pp )
-register struct application *ap;
-register struct partition *pp;
+struct application *ap;
+struct partition *pp;
 {
-	register struct txt_specific *tp =
+	struct txt_specific *tp =
 		(struct txt_specific *)pp->pt_regionp->reg_udata;
 	auto struct uvcoord uv;
-	register unsigned char *cp;
+	fastf_t xmin, xmax, ymin, ymax;
+	int line;
+	int dx, dy;
+	int x,y;
+	register long r,g,b;
+	fastf_t f;
 
 	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
 		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
@@ -111,11 +116,54 @@ register struct partition *pp;
 		VSET( ap->a_color, uv.uv_u*255, 0, uv.uv_v*255 );
 		return(1);
 	}
-	/* u is left->right index, v is line number */
-	cp = (unsigned char *)tp->tx_pixels +
-	     ((int) (uv.uv_v*(tp->tx_l-1))) * tp->tx_w * 3 +	/* v */
-	     ((int) (uv.uv_u*(tp->tx_w-1))) * 3;
-	VSET( ap->a_color, *cp++/255., *cp++/255., *cp++/255.);
+	/* u is left->right index, v is line number bottom->top */
+	if( uv.uv_u < 0 || uv.uv_u > 1 || uv.uv_v < 0 || uv.uv_v > 1 )  {
+		rt_log("txt_render:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
+			uv.uv_u, uv.uv_v,
+			uv.uv_du, uv.uv_dv,
+			pp->pt_inseg->seg_stp->st_name );
+		VSET( ap->a_color, 0, 1, 0 );
+		return(1);
+	}
+	/* Don't filter more than 1/8 of the texture for 1 pixel! */
+	if( uv.uv_du > 0.125 )  uv.uv_du = 0.125;
+	if( uv.uv_dv > 0.125 )  uv.uv_dv = 0.125;
+
+	if( uv.uv_du < 0 || uv.uv_dv < 0 )  {
+		rt_log("txt_render uv=%g,%g, du dv=%g %g seg=%s\n",
+			uv.uv_u, uv.uv_v, uv.uv_du, uv.uv_dv,
+			pp->pt_inseg->seg_stp->st_name );
+		uv.uv_du = uv.uv_dv = 0;
+	}
+	xmin = uv.uv_u - uv.uv_du;
+	xmax = uv.uv_u + uv.uv_du;
+	ymin = uv.uv_v - uv.uv_dv;
+	ymax = uv.uv_v + uv.uv_dv;
+	if( xmin < 0 )  xmin = 0;
+	if( ymin < 0 )  ymin = 0;
+	if( xmax > 1 )  xmax = 1;
+	if( ymax > 1 )  ymax = 1;
+	x = xmin * (tp->tx_w-1);
+	y = ymin * (tp->tx_l-1);
+	dx = (xmax - xmin) * (tp->tx_w-1);
+	dy = (ymax - ymin) * (tp->tx_l-1);
+	if( dx < 1 )  dx = 1;
+	if( dy < 1 )  dy = 1;
+/** rt_log("x=%d y=%d, dx=%d, dy=%d\n", x, y, dx, dy); **/
+	r = g = b = 0;
+	for( line=0; line<dy; line++ )  {
+		register unsigned char *cp;
+		register int i;
+		cp = (unsigned char *)(tp->tx_pixels +
+		     (y+line) * tp->tx_w * 3  +  x * 3);
+		for( i=0; i<dx; i++ )  {
+			r += *cp++;
+			g += *cp++;
+			b += *cp++;
+		}
+	}
+	f = 1.0 / ( 255 * dx * dy );
+	VSET( ap->a_color, r * f, g * f, b * f );
 	return(1);
 }
 

@@ -329,6 +329,8 @@ register struct partition *pp;
 		sub_ap.a_x = ap->a_x;
 		sub_ap.a_y = ap->a_y;
 		sub_ap.a_rt_i = ap->a_rt_i;
+		sub_ap.a_rbeam = ap->a_rbeam;
+		sub_ap.a_diverge = ap->a_diverge;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 
 		/* Dither light pos for penumbra by +/- 0.5 light radius */
@@ -398,6 +400,8 @@ register struct partition *pp;
 		sub_ap.a_miss = hit_nothing;
 		sub_ap.a_rt_i = ap->a_rt_i;
 		sub_ap.a_onehit = 1;
+		sub_ap.a_rbeam = ap->a_rbeam;
+		sub_ap.a_diverge = ap->a_diverge;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 		f = 2 * VDOT( to_eye, hitp->hit_normal );
 		VSCALE( work, hitp->hit_normal, f );
@@ -462,6 +466,8 @@ do_exit:
 		sub_ap.a_hit =  colorview;
 		sub_ap.a_miss = hit_nothing;
 		sub_ap.a_rt_i = ap->a_rt_i;
+		sub_ap.a_rbeam = ap->a_rbeam;
+		sub_ap.a_diverge = ap->a_diverge;
 		sub_ap.a_level++;
 		(void) rt_shootray( &sub_ap );
 		VJOIN1( ap->a_color, ap->a_color,
@@ -505,6 +511,14 @@ struct partition *PartHeadp;
 		rt_log("phg_rhit:  no hit out front?\n");
 		return(0);
 	}
+
+	hitp = pp->pt_inhit;
+	if( !NEAR_ZERO(hitp->hit_dist, 10) )  {
+		rt_log("phg_rhit:   inhit not near zero!\n");
+		rt_pr_hit("inhit", hitp);
+		return(0);
+	}
+
 	hitp = pp->pt_outhit;
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("phg_rhit:  (%g,%g) bad!\n", pp->pt_inhit->hit_dist, hitp->hit_dist);

@@ -311,9 +311,6 @@ do_more:
 	mat_mul( model2view, Viewrotscale, toEye );
 	mat_inv( view2model, model2view );
 
-	fprintf(stderr,"Deltas=%f (model units between rays)\n",
-		viewsize/npts );
-
 	/* Chop -1.0..+1.0 range into npts parts */
 	VSET( temp, 2.0/npts, 0, 0 );
 	MAT4X3VEC( dx_model, view2model, temp );
@@ -323,14 +320,25 @@ do_more:
 	/* "Lower left" corner of viewing plane */
 	if( perspective )  {
 		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
+		/*
+		 * Divergance is (0.5 * viewsize / npts) mm at
+		 * a ray distance of (viewsize * zoomout) mm.
+		 */
+		ap.a_diverge = (0.5 / npts) / zoomout;
+		ap.a_rbeam = 0;
 	}  else  {
 		VSET( temp, 0, 0, -1 );
 		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
 		VUNITIZE( ap.a_ray.r_dir );
 
 		VSET( temp, -1, -1, 0 );	/* eye plane */
+		ap.a_rbeam = 0.5 * viewsize / npts;
+		ap.a_diverge = 0;
 	}
 	MAT4X3PNT( viewbase_model, view2model, temp );
+
+	fprintf(stderr,"Beam radius=%g mm, divergance=%g mm/1mm\n",
+		ap.a_rbeam, ap.a_diverge );
 
 	/* initialize lighting */
 	view_2init( &ap, outfp );
@@ -422,6 +430,8 @@ register struct application *ap;
 		a.a_hit = ap->a_hit;
 		a.a_miss = ap->a_miss;
 		a.a_rt_i = ap->a_rt_i;
+		a.a_rbeam = ap->a_rbeam;
+		a.a_diverge = ap->a_diverge;
 		for( com=0; com<=hypersample; com++ )  {
 			/* NEED to multiply a_x,y by +/-0.5 for dithering!! */
 			VJOIN2( a.a_ray.r_pt, viewbase_model,

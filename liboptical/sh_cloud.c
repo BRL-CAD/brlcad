@@ -158,13 +158,13 @@ register struct partition *pp;
 {
 	register struct cloud_specific *cp =
 		(struct cloud_specific *)pp->pt_regionp->reg_udata;
-	auto fastf_t uv[2];
+	auto struct uvcoord uv;
 	double intensity;
 	FAST fastf_t	TR;
 
 	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		pp->pt_inseg->seg_stp, pp->pt_inhit, uv );
-	intensity = cloud_texture( uv[0], uv[1], 1.0, 2.0, 1.0 );
+		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
+	intensity = cloud_texture( uv.uv_u, uv.uv_v, 1.0, 2.0, 1.0 );
 
 	/* Intensity is normalized - check bounds */
 	if( intensity > 1.0 )

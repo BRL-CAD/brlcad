@@ -167,6 +167,7 @@ struct partition *PartHeadp;
 		rt_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
 		VPRINT("RGB", ap->a_color);
 	}
+	return(0);
 }
 
 /*
@@ -243,7 +244,6 @@ struct partition *PartHeadp;
 		VSET( ap->a_color, 1, 1, 0 );
 		return(1);
 	}
-
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("colorview:  entry beyond infinity\n");
 		VSET( ap->a_color, .5, 0, 0 );
@@ -296,6 +296,7 @@ struct partition *PartHeadp;
 		pp->pt_inflip = 0;
 	}
 
+	/* This really needs to be done in prep stage */
 	if( !(pp->pt_regionp->reg_ufunc) )  {
 		if( mlib_setup( pp->pt_regionp ) == 0 )  {
 			rt_log("mlib_setup failure");
@@ -390,7 +391,7 @@ FILE *outfp;
 	case 0:
 		ap->a_hit = colorview;
 		/* If present, use user-specified light solid */
-		if( (l0stp=rt_find_solid("LIGHT")) != SOLTAB_NULL )  {
+		if( (l0stp=rt_find_solid(ap->a_rt_i,"LIGHT")) != SOLTAB_NULL )  {
 			VMOVE( l0pos, l0stp->st_center );
 			VPRINT("LIGHT0 at", l0pos);
 			break;
