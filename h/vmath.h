@@ -833,7 +833,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /* Test a vector for non-unit length */
 #define BN_VEC_NON_UNIT_LEN(_vec)	\
-	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) < 0.0001)
+	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) > 0.0001)
 
 /* Compare two vectors for EXACT equality.  Use carefully. */
 #define VEQUAL(a,b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
