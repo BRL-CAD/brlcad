@@ -1458,7 +1458,15 @@ AC_CONFIG_FILES([
 	src/other/libtcl/unix/Makefile
 	src/other/libtcl/unix/tclConfig.sh
 	src/other/libtk/Makefile
+	src/other/libtk/doc/Makefile
+	src/other/libtk/generic/Makefile
+	src/other/libtk/library/Makefile
+	src/other/libtk/library/demos/Makefile
+	src/other/libtk/library/demos/images/Makefile
+	src/other/libtk/library/images/Makefile
+	src/other/libtk/library/msgs/Makefile
 	src/other/libtk/library/pkgIndex.tcl
+	src/other/libtk/unix/Makefile
 	src/other/libtk/unix/tkConfig.sh
 	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
