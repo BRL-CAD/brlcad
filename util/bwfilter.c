@@ -138,7 +138,7 @@ int argc; char **argv;
 
 	if ( !get_args( argc, argv ) )  {
 		dousage();
-		return 1;
+		exit( 1 );
 	}
 
 	if( width > MAXLINE )  {
@@ -202,6 +202,8 @@ int argc; char **argv;
 	/* Give advise on scaling factors */
 	if( verbose )
 		fprintf( stderr, "Max = %d,  Min = %d\n", max, min );
+
+	exit( 0 );
 }
 
 /*

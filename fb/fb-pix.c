@@ -103,7 +103,7 @@ char **argv;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		return 1;
+		exit( 1 );
 	}
 
 	scanbytes = width * sizeof(RGBpixel);

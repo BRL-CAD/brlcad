@@ -115,7 +115,7 @@ int argc; char **argv;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		return 1;
+		exit( 1 );
 	}
 
 	/* Open Display Device */
@@ -145,4 +145,5 @@ int argc; char **argv;
 	}
 
 	fb_close( fbp );
+	exit( 0 );
 }

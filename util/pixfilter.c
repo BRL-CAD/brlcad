@@ -138,12 +138,12 @@ int argc; char **argv;
 
 	if ( !get_args( argc, argv ) )  {
 		dousage();
-		return 1;
+		exit( 1 );
 	}
 
 	if( width > MAXLINE )  {
 		fprintf(stderr, "pixfilter:  limited to scanlines of %d\n", MAXLINE);
-		exit(1);
+		exit( 1 );
 	}
 
 	/*
@@ -204,6 +204,8 @@ int argc; char **argv;
 	/* Give advise on scaling factors */
 	if( verbose )
 		fprintf( stderr, "Max = %d,  Min = %d\n", max, min );
+
+	exit( 0 );
 }
 
 /*
