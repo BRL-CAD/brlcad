@@ -5,7 +5,7 @@
 
 #define SRCDIR	irprep
 #define PRODUCTS	firpass secpass shapefact all_sf \
-			display ir-X ir-sgi pictx pictsgi
+			display ir-X ir-sgi irdisp
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -38,11 +38,8 @@ ir-X:	ir-X.o
 ir-sgi:	ir-sgi.o
 	CC LDFLAGS ir-sgi.o LIBFB_LIBES -o ir-sgi
 
-pictsgi:	pictsgi.o
-	CC LDFLAGS pictsgi.o LIBFB_LIBES -o pictsgi
-
-pictx:	pictx.o
-	CC LDFLAGS pictx.o -L''XLIBDIR -lX11 -o pictx
+irdisp:	irdisp.o
+	CC LDFLAGS irdisp.o LIBFB_LIBES -o irdisp
 
 lint:
 	lint LFLAGS -I''INCDIR ../irprep/firpass.c ../irprep/subroutines.c > SRCDIR.lint
@@ -51,6 +48,6 @@ lint:
 	lint LFLAGS -I''INCDIR ../irprep/all_sf.c ../irprep/subroutines.c >> SRCDIR.lint
 	lint LFLAGS -I''INCDIR ../irprep/display.c >>SRCDIR.lint
 	lint LFLAGS -I''INCDIR ../irprep/ir-X.c >>SRCDIR.lint
-	lint LFLAGS -I''INCDIR ../irprep/pictx.c >>SRCDIR.lint
+	lint LFLAGS -I''INCDIR ../irprep/irdisp.c >>SRCDIR.lint
 
 #include "../Cakefile.rules"
