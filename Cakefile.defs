@@ -901,6 +901,8 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bshareable -o
 #		define	STANDARD_LIBES	-lm -Wl,-R -Wl,LIBDIR
+/*		LIBBU needs LIBTCL, even if it's not used. */
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #	else
 /*		Static linked executables */
 #		define	CC_DEFS -pipe
