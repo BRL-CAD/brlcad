@@ -37,6 +37,7 @@ static char RCSid[] = "";
 #include "./ged.h"
 #include "./mged_dm.h"
 
+extern void mged_vls_struct_parse(); /* defined in vparse.c */
 extern vect_t curr_e_axes_pos;  /* from edsol.c */
 
 void draw_grid();
