@@ -58,9 +58,9 @@
 
 #define DEBUG_PL_ANIM	0x00000001	/* 1 mged animated evaluation */
 #define DEBUG_PL_SLOW	0x00000002	/* 2 add delays to animation */
-
-#define DEBUG_PLOTEM	0x00000008	/* 4 make plots in debugged routines (needs other flags set too) */
-#define DEBUG_CUTLOOP	0x00000010	/* 5 nmg_mod: nmg_cut_loop */
+#define DEBUG_GRAPHCL	0x00000004	/* 3 graphic classification */
+#define DEBUG_PL_LOOP	0x00000008	/* 4 loop class (needs GRAPHCL) */
+#define DEBUG_PLOTEM	0x00000010	/* 5 make plots in debugged routines (needs other flags set too) */
 #define DEBUG_POLYSECT	0x00000020	/* 6 nmg_inter: face intersection */
 #define DEBUG_VERIFY	0x00000040	/* 7 nmg_vshell() frequently, verify health */
 #define DEBUG_BOOL	0x00000080	/* 8 nmg_bool:  */
@@ -75,16 +75,16 @@
 #define DEBUG_NMGRT     0x00010000	/* 17 ray tracing */
 #define DEBUG_FINDEU	0x00020000	/* 18 nmg_mod: nmg_findeu() */
 #define DEBUG_CMFACE	0x00040000	/* 19 nmg_mod: nmg_cmface() */
-#define DEBUG_GRAPHCL	0x00080000	/* 20 graphic classification */
+#define DEBUG_CUTLOOP	0x00080000	/* 024 nmg_mod: nmg_cut_loop */
 #define DEBUG_VU_SORT	0x00100000	/* 025 nmg_fcut: coincident vu sort */
 #define DEBUG_FCUT	0x00200000	/* 026 nmg_fcut: face cutter */
 
 #define NMG_DEBUG_FORMAT \
-"\020\026FCUT\025VU_SORT\024GRAPHCL\023CMFACE\022FINDEU\021NMGRT\020TBL_INS\
+"\020\026FCUT\025VU_SORT\024CUTLOOP\023CMFACE\022FINDEU\021NMGRT\020TBL_INS\
 \017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\
 \013GRAZING\
 \012BOOLEVAL\011CLASSIFY\
-\010BOOL\7VERIFY\6POLYSECT\5CUTLOOP\4PLOTEM\3XXX\2PL_SLOW\1PL_ANIM"
+\010BOOL\7VERIFY\6POLYSECT\5PLOTEM\4PL_LOOP\3GRAPHCL\2PL_SLOW\1PL_ANIM"
 
 /*
  *  Macros for providing function prototypes, regardless of whether
@@ -690,6 +690,7 @@ struct nmg_struct_counts {
 #define NMG_INDEX_VALUE(_tab,_index)	((_tab)[_index])
 #define NMG_INDEX_TEST(_tab,_p)		( (_tab)[(_p)->index] )
 #define NMG_INDEX_SET(_tab,_p)		{(_tab)[(_p)->index] = 1;}
+#define NMG_INDEX_CLEAR(_tab,_p)	{(_tab)[(_p)->index] = 0;}
 #define NMG_INDEX_TEST_AND_SET(_tab,_p)	\
 	( (_tab)[(_p)->index] == 0 ? ((_tab)[(_p)->index] = 1) : 0 )
 #define NMG_INDEX_IS_SET(_tab,_p)	NMG_INDEX_TEST(_tab,_p)
