@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char RCSid[] = "@(#)$Header";
+static const char RCSid[] = "@(#)$Header";
 #endif
 
 #include "conf.h"
@@ -92,7 +92,7 @@ char *argv[];
 
   Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 
-  if((dmp = dm_open(DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
+  if((dmp = dm_open(interp, DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
     return TCL_ERROR;
 
   /*XXXX this eventually needs to move into Ogl's private structure */
