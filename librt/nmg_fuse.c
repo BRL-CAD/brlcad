@@ -629,7 +629,8 @@ CONST struct rt_tol	*tol;
 	 *  according to topology, then by all rights the faces MUST be
 	 *  shared.
 	 */
-	if( nmg_is_common_bigloop( f1, f2 ) )  {
+	if( fabs(VDOT(fg1->N, fg2->N)) >= 0.99  &&
+	    nmg_is_common_bigloop( f1, f2 ) )  {
 		if( VDOT( fg1->N, fg2->N ) < 0 )  flip2 = 1;
 		if (rt_g.NMG_debug & DEBUG_MESH)  {
 			rt_log("nmg_two_face_fuse(x%x, x%x) faces have a common loop, they MUST be fused.  flip2=%d\n",
