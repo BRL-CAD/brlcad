@@ -273,11 +273,8 @@ int			poly_markers;
 	fg = fu->f_p->g.snurb_p;
 	NMG_CK_FACE_G_SNURB(fg);
 
-	/* First step, draw the surface. */
 	/* XXX For now, draw the whole surface, not just the interior */
 	nmg_snurb_to_vlist( vhead, fg, 10 );
-
-	/* Second step, draw the trimming curves */
 }
 
 /*
