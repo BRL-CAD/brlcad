@@ -36,7 +36,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern int bn_common_file_size(int *, int *, const char *, int);
 
 int mread(int fd, register char *bp, register int num);
-int skipbytes(int fd, off_t num);
+int skipbytes(int fd, long int num);
 
 #define	MAX_LINE	(16*1024)	/* Largest output scan line length */
 

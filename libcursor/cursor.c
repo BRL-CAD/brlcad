@@ -20,6 +20,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <stdlib.h> /* for getenv() */
 
 #ifdef USE_STRING_H
 #include <string.h>
@@ -30,9 +31,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_TERMCAP_H
 #  include <termcap.h>
 #endif
-#ifdef __ppc__
+#ifdef __ppc__  /* this should be a check ifdef HAVE_CURSES */
 #  include <curses.h>
-#endif
+#else /* not __ppc__ */
+extern char	*getenv(), *tgetstr(const char *, char **);
+extern int	tgetent(void *, const char *);
+#endif  /* end check ifdef __ppc__ */
 
 #include <sys/ioctl.h>
 #define _winsize winsize	/* For compat with _ioctl.h. */
@@ -40,8 +44,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define TBUFSIZ		1024
 #define MAX_TERM_LEN	80
 
-extern char	*getenv(), *tgetstr(const char *, char **);
-extern int	tgetent(void *, const char *);
 #if ! defined( BSD )
 extern void	clr_Tabs(), save_Tty();
 #endif
