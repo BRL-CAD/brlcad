@@ -47,6 +47,8 @@ static struct shell *s;
 static struct model *m;
 static struct rt_tol tol;
 
+void dump_patch();
+
 main(argc, argv) 			/* really has no arguments */
 int argc; char *argv[];
 {
@@ -128,7 +130,7 @@ int argc; char *argv[];
  * to a B-Spline surface (Bezier surfaces are a subset of B-spline surfaces
  * and output it to a BRLCAD binary format.
  */
-
+void
 dump_patch( patch )
 pt patch;
 {

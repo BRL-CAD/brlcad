@@ -29,6 +29,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "wdb.h"
 
+void do_bending();
+void pr_pipe();
+
 struct wdb_pipept  pipe1[] = {
 	{
 		{(long)WDB_PIPESEG_MAGIC, 0, 0},
@@ -130,6 +133,7 @@ char	**argv;
 	do_bending( stdout, "pipe2", pipe2, pipe2_npts, 0.1, 0.05 );
 }
 
+void
 do_bending( fp, name, pts, npts, bend, od )
 FILE	*fp;
 char	*name;
@@ -173,6 +177,7 @@ double	od;
 	mk_pipe_free( &head );
 }
 
+void
 pr_pipe( name, head )
 char	*name;
 struct wdb_pipept *head;

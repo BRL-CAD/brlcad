@@ -27,6 +27,8 @@ extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
 char *Usage = "This program ordinarily generates a database on stdout.\n\
 	Your terminal probably wouldn't like it.";
 
+void dump_patch();
+
 main(argc, argv) 			/* really has no arguments */
 int argc; char *argv[];
 {
@@ -75,7 +77,7 @@ int argc; char *argv[];
  * to a B-Spline surface (Bezier surfaces are a subset of B-spline surfaces
  * and output it to a BRLCAD binary format.
  */
-
+void
 dump_patch( patch )
 pt patch;
 {

@@ -470,6 +470,7 @@ struct boardseg *seglist;
 
 }
 
+void
 mksolid(fd, pts, wm_hd)
 FILE *fd;
 point_t pts[8];
@@ -485,6 +486,7 @@ struct wmember *wm_hd;
 		bcopy((char *)trans_matrix, (char *)wm->wm_mat, sizeof(mat_t));
 }
 
+void
 mk_h_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
 FILE *fd;
 struct wmember *wm_hd;
@@ -504,6 +506,7 @@ double xmin, xmax, ymin, ymax, zmin, zmax;
 	mksolid(fd, pts, wm_hd);
 }
 
+void
 mk_v_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
 FILE *fd;
 struct wmember *wm_hd;

@@ -95,6 +95,8 @@ char *tub_reg="%02d.tube",*tub_flu="%02d.tubflu";
 char *elb_reg="%02d.elbow",*elb_flu="%02d.elbflu";
 char *arb="%02d.arb";
 
+void Usage();
+
 FILE *fdout;	/* file for libwdb writes */
 
 void
@@ -807,6 +809,7 @@ char *argv[];
 
 }
 
+void
 Usage()
 {
 	fprintf( stderr , "Usage: pipe [-tsmnc] tag filename\n");

@@ -38,6 +38,8 @@ fastf_t grid[10][10][3];
 char *Usage = "This program ordinarily generates a database on stdout.\n\
 	Your terminal probably wouldn't like it.";
 
+void interpolate_data();
+
 main(argc, argv)
 int argc; char * argv[];
 {
@@ -65,7 +67,6 @@ int argc; char * argv[];
 			(void)fprintf(stderr,
 				"Usage: %s [-d] > database.g\n", *argv);
 			return(-1);
-			break;
 		}
 	}
 
@@ -97,7 +98,7 @@ int argc; char * argv[];
 
 }
 /* Interpoate the data using b-splines */
-
+void
 interpolate_data()
 {
 	struct face_g_snurb srf;
