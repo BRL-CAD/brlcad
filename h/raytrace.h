@@ -3600,8 +3600,10 @@ BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
 struct rt_bot_internal		*nmg_bot( struct shell *s, const struct bn_tol *tol );
 
 /* g_bot.c */
-extern int bot_vertex_fuse( struct rt_bot_internal *bot );
-extern int bot_condense( struct rt_bot_internal *bot );
+int rt_bot_vertex_fuse( struct rt_bot_internal *bot );
+int rt_bot_same_orientation( const int *a, const int *b );
+int rt_bot_face_fuse( struct rt_bot_internal *bot );
+int rt_bot_condense( struct rt_bot_internal *bot );
 
 /* From nmg_tri.c */
 extern void nmg_triangulate_shell(struct shell *s, const struct bn_tol  *tol);

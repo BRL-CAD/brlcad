@@ -1667,10 +1667,10 @@ struct db_i	*dbip;
 }
 
 int
-bot_find_v_nearest_pt2( bot, pt2, mat )
-CONST struct rt_bot_internal *bot;
-CONST point_t	pt2;
-CONST mat_t	mat;
+rt_bot_find_v_nearest_pt2(
+	CONST struct rt_bot_internal *bot,
+	CONST point_t	pt2,
+	CONST mat_t	mat)
 {
 	point_t v;
 	int index;
@@ -1699,8 +1699,7 @@ CONST mat_t	mat;
 }
 
 int
-bot_edge_in_list( v1, v2, edge_list, edge_count )
-CONST int v1, v2, edge_count, edge_list[];
+rt_bot_edge_in_list( const int v1, const int v2, const int edge_list[], const int edge_count )
 {
 	int i, ev1, ev2;
 
@@ -1723,11 +1722,12 @@ CONST int v1, v2, edge_count, edge_list[];
  * vertex indices (vert1 and vert2). These vertices are ordered (closest to pt2 is first)
  */
 int
-bot_find_e_nearest_pt2( vert1, vert2, bot, pt2, mat)
-int *vert1, *vert2;
-CONST struct rt_bot_internal *bot;
-CONST point_t	pt2;
-CONST mat_t	mat;
+rt_bot_find_e_nearest_pt2(
+	int *vert1,
+	int *vert2,
+	CONST struct rt_bot_internal *bot,
+	CONST point_t	pt2,
+	CONST mat_t	mat)
 {
 	int i;
 	int v1, v2, v3;
@@ -1750,19 +1750,19 @@ CONST mat_t	mat;
 		v2 = bot->faces[i*3 + 1];
 		v3 = bot->faces[i*3 + 2];
 
-		if( !bot_edge_in_list( v1, v2, edge_list, edge_count ) )
+		if( !rt_bot_edge_in_list( v1, v2, edge_list, edge_count ) )
 		{
 			edge_list[edge_count*2] = v1;
 			edge_list[edge_count*2 + 1] = v2;
 			edge_count++;
 		}
-		if( !bot_edge_in_list( v3, v2, edge_list, edge_count ) )
+		if( !rt_bot_edge_in_list( v3, v2, edge_list, edge_count ) )
 		{
 			edge_list[edge_count*2] = v3;
 			edge_list[edge_count*2 + 1] = v2;
 			edge_count++;
 		}
-		if( !bot_edge_in_list( v1, v3, edge_list, edge_count ) )
+		if( !rt_bot_edge_in_list( v1, v3, edge_list, edge_count ) )
 		{
 			edge_list[edge_count*2] = v1;
 			edge_list[edge_count*2 + 1] = v3;
@@ -2132,21 +2132,6 @@ CONST char			*attr;
 	return( status );
 }
 
-char *
-next_tok( str )
-char *str;
-{
-  char *ret;
-
-  ret = str;
-  while( !isspace( *ret ) && *ret !='\0' )
-    ret++;
-  while( isspace( *ret ) )
-    ret++;
-
-  return( ret );
-}
-
 int
 rt_bot_tcladjust( interp, intern, argc, argv )
 Tcl_Interp		*interp;
@@ -2228,7 +2213,7 @@ char			**argv;
 			      return( TCL_ERROR );
 			    }
 			  bot->vertices[i*3] = atof( v_str );
-			  v_str = next_tok( v_str );
+			  v_str = bu_next_token( v_str );
 			  if( *v_str == '\0' )
 			    {
 			      Tcl_SetResult( interp, "incomplete list of vertices", TCL_STATIC );
@@ -2236,7 +2221,7 @@ char			**argv;
 			      return( TCL_ERROR );
 			    }
 			  bot->vertices[i*3+1] = atof( v_str );
-			  v_str = next_tok( v_str );
+			  v_str = bu_next_token( v_str );
 			  if( *v_str == '\0' )
 			    {
 			      Tcl_SetResult( interp, "incomplete list of vertices", TCL_STATIC );
@@ -2259,7 +2244,7 @@ char			**argv;
 		      v_str = Tcl_GetStringFromObj( list, NULL );
 		       while( isspace( *v_str ) ) v_str++;
 		      bot->vertices[i*3] = atof( v_str );
-		      v_str = next_tok( v_str );
+		      v_str = bu_next_token( v_str );
 		      if( *v_str == '\0' )
 			{
 			  Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
@@ -2267,7 +2252,7 @@ char			**argv;
 			  return( TCL_ERROR );
 			}
 		      bot->vertices[i*3+1] = atof( v_str );
-		      v_str = next_tok( v_str );
+		      v_str = bu_next_token( v_str );
 		      if( *v_str == '\0' )
 			{
 			  Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
@@ -2304,7 +2289,7 @@ char			**argv;
 				return( TCL_ERROR );
 			      }
 			    bot->faces[i*3] = atoi( f_str );
-			    f_str = next_tok( f_str );
+			    f_str = bu_next_token( f_str );
 			    if( *f_str == '\0' )
 			      {
 				Tcl_SetResult( interp, "incomplete list of faces", TCL_STATIC );
@@ -2312,7 +2297,7 @@ char			**argv;
 				return( TCL_ERROR );
 			      }
 			    bot->faces[i*3+1] = atoi( f_str );
-			    f_str = next_tok( f_str );
+			    f_str = bu_next_token( f_str );
 			    if( *f_str == '\0' )
 			      {
 				Tcl_SetResult( interp, "incomplete list of faces", TCL_STATIC );
@@ -2334,7 +2319,7 @@ char			**argv;
 			f_str = Tcl_GetStringFromObj( list, NULL );
 			while( isspace( *f_str ) ) f_str++;
 			bot->faces[i*3] = atoi( f_str );
-			f_str = next_tok( f_str );
+			f_str = bu_next_token( f_str );
 			if( *f_str == '\0' )
 			  {
 			    Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
@@ -2342,7 +2327,7 @@ char			**argv;
 			    return( TCL_ERROR );
 			  }
 			bot->faces[i*3+1] = atoi( f_str );
-			f_str = next_tok( f_str );
+			f_str = bu_next_token( f_str );
 			if( *f_str == '\0' )
 			  {
 			    Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
@@ -2494,14 +2479,19 @@ char			**argv;
 	return( TCL_OK );
 }
 
+/*************************************************************************
+ *
+ *  BoT support routines used by MGED, converters, etc.
+ *
+ *************************************************************************/
+
 /*	This routine adjusts the vertex pointers in each face so that 
  *	pointers to duplicate vertices end up pointing to the same vertex.
  *	The unused vertices are removed.
  *	Returns the number of vertices fused.
  */
 int
-bot_vertex_fuse( bot )
-struct rt_bot_internal *bot;
+rt_bot_vertex_fuse( struct rt_bot_internal *bot )
 {
 	int i,j,k;
 	int count=0;
@@ -2536,8 +2526,7 @@ struct rt_bot_internal *bot;
 }
 
 int
-same_orientation( a, b )
-int *a, *b;
+rt_bot_same_orientation( const int *a, const int *b )
 {
 	int i,j;
 
@@ -2559,8 +2548,7 @@ int *a, *b;
 }
 
 int
-bot_face_fuse( bot )
-struct rt_bot_internal *bot;
+rt_bot_face_fuse( struct rt_bot_internal *bot )
 {
 	int num_faces;
 	int i,j,k,l;
@@ -2616,7 +2604,7 @@ struct rt_bot_internal *bot;
 					else
 					{
 						/* need to check orientation */
-						if( same_orientation( &bot->faces[i*3], &bot->faces[j*3] ) )
+						if( rt_bot_same_orientation( &bot->faces[i*3], &bot->faces[j*3] ) )
 							elim = j;
 					}
 					break;
@@ -2676,8 +2664,7 @@ struct rt_bot_internal *bot;
 }
 
 int
-bot_condense( bot )
-struct rt_bot_internal *bot;
+rt_bot_condense( struct rt_bot_internal *bot )
 {
 	int i,j,k;
 	int num_verts;
