@@ -3,16 +3,24 @@
 pl\(hyps \- convert UnixPlot to PostScript file
 .SH SYNOPSIS
 .B pl-ps
-< unix_plot
+[-ec] [-s square_output_size] [-w output_width] [-n output_height] < unix_plot
 .SH DESCRIPTION
 .I Pl-ps
 converts an extended UnixPlot file to a PostScript file
 suitable for embedding in a larger PostScript document.
 This is especially useful for creating figures for inclusion in TeX
 documents.
-To send this file directly to a printer, a PostScript
-.B showpage
-directive needs to be added to the end of the output file.
+The
+.I -e
+option will produce and encapsulated PostScript file. The
+.I -s
+,
+.I -w
+, and
+.I -n
+options specify the size of the output image in inches (ignored when used with the
+.I -e
+option).
 .P
 All UnixPlot line types are supported.
 .P
