@@ -72,6 +72,10 @@ extern void dgo_zapall();		/* called in wdb_reopen_tcl */
 /* from librt/wdb_comb_std.c */
 extern int wdb_comb_std_tcl();
 
+/* from db5_scan.c */
+HIDDEN int db5_scan();
+
+
 static int wdb_open_tcl();
 static int wdb_close_tcl();
 static int wdb_decode_dbip();
@@ -2102,7 +2106,7 @@ wdb_dir_add5(
 	if( rip->name.ext_buf == NULL )  return;
 
 	if(rt_g.debug&DEBUG_DB) {
-		bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
+		bu_log("wdb_dir_add5(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
 			dbip, (char *)rip->name.ext_buf, rip->object_length );
 	}
 
