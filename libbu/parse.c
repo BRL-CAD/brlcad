@@ -1942,10 +1942,15 @@ struct bu_vls *vls;
 int
 bu_fwrite_external( FILE *fp, const struct bu_external *ep )
 {
+	size_t	got;
+
 	BU_CK_EXTERNAL(ep);
 
-	if( fwrite( ep->ext_buf, ep->ext_nbytes, 1, fp ) != 1 )
+	if( (got = fwrite( ep->ext_buf, 1, ep->ext_nbytes, fp )) != ep->ext_nbytes )  {
+		perror("fwrite");
+		bu_log("bu_fwrite_external() attempted to write %ld, got %ld\n", (long)ep->ext_nbytes, (long)got );
 		return -1;
+	}
 	return 0;
 }
 
