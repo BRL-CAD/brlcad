@@ -29,6 +29,8 @@ struct rb_node *_rb_search
     while (1)
     {
 	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
+	RB_CKORDER(root -> rbn_tree, order_nm);
+
 	if (root == rb_null(root -> rbn_tree))
 	    return (root);
 	if ((result = (*order)(data, rb_data(root, order_nm))) == 0)
@@ -60,6 +62,7 @@ void *rb_search (rb_tree *tree, int order, void *data)
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
+
     compare = rb_order_func(tree, order);
     node = _rb_search(rb_root(tree, order), order, compare, data);
     if (node == rb_null(tree))
