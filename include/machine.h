@@ -177,8 +177,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *  
- *  Distribution Status -
- *	This file is public domain, distribution unlimited.
  *
  *  Include Sequencing -
  *	#include <stdio.h>

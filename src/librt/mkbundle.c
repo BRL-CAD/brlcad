@@ -27,8 +27,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
- *  Distribution Status -
- *	This file is public domain, distribution unlimited.
  */
 #ifndef lint
 static const char RCSmkbundle[] = "@(#)$Header$ (BRL)";

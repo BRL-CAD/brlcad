@@ -25,8 +25,6 @@
  *  Source -
  *	Geometric Solutions, Inc.
  *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

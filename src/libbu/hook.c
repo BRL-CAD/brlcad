@@ -31,8 +31,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimited.
  *
  * Acknowledgements -
  *	This builds on the work in libbu/log.c.

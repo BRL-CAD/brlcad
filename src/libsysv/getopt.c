@@ -5,8 +5,6 @@
  *	If getopt() it going to be used more than once, it is necessary
  *	to reinitialize optind=1 before beginning on the next argument list.
  *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

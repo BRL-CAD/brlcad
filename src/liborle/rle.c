@@ -35,8 +35,6 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimited
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

@@ -28,8 +28,6 @@
  *      Aberdeen Proving Ground, Maryland  21005-5066
  *
  *
- * Distribution Status -
- *      Public Domain, Distribution Unlimitied.
  */
 
 #include "common.h"

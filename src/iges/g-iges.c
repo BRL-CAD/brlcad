@@ -31,8 +31,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimitied.
  *
  *  Some stupid secret codes:
  *	dp->d_uses - contains the negative of the DE number for the object
