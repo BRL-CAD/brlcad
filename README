@@ -337,6 +337,7 @@ _	_
 alliant	Alliant FX/8 (8 CEs, 9 IPs, 64 Mbytes), Concentrix 3.0
 amsaa-seer	Gould PN 9080, w/MACCs, UTX 2.0, 4x4Mb mem boards
 ardec-3	Pyramid 90Mx, Dual-CPU, OSx 2.5, 16 Mbytes
+bob.brl.mil	Cray-2, SN 2009, 4.3ns clock
 brl-patton	Cray X-MP/48, SN213, COS V115BF2, 8.5ns clock
 brl-spark	Gould PN 9050, no MACC, UTX 1.2, 2x4Mb mem boards
 brl-vat	VAX 750, FPA, 4.2 BSD
@@ -378,6 +379,8 @@ _
   83.2	  118.8	  1.00	brl-vgr
  262.8	  375.4	  3.16	brl-vmb, UTX 2.0
  670.9	  958.3	  8.07	brl-vhs, -O2 optimization
+1418.7	 1856.7	 15.63	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
+1851.7	 2423.5	 20.40	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
 2420.2	 3456.5	 29.10	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
@@ -446,6 +449,8 @@ _
   36.0	   64.9	  1.00	brl-vgr
  121.3	  218.6	  3.37	brl-vmb, UTX 2.0
  302.6	  545.6	  9.41	brl-vhs, -O2 optimization
+ 479.3	  801.9	 12.36	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
+ 625.0	 1045.7	 16.11	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
  938.4	 1691.8	 26.07	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
@@ -504,6 +509,8 @@ _
   30.5	   36.5	 1.00	brl-vgr
  156.0	  186.4	 5.11	brl-vmb, UTX 2.0
  374.0	  447.0	12.25	brl-vhs, -O2 optimization
+ 482.2	  574.1	15.73	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
+ 604.2	  719.3	19.71	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
  978.2	 1169.0	32.03	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
@@ -559,10 +566,12 @@ FILE:  "bench/bldg391.log"	Release 2.3
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
-  23.0	   34.2	  1.00	brl-vgr
- 132.0	  196.2	  5.74	brl-vgr, UTX 2.0
+  23.0	   34.2	 1.00	brl-vgr
+ 132.0	  196.2	 5.74	brl-vgr, UTX 2.0
  278.6	  414.1	12.11	brl-vhs, -O2 optimization
- 702.1	 1043.6	 30.51	brl-patton, 1 CPU, no vectors, UNICOS 2.1
+ 383.7	  500.3	15.62	bob.brl.mil, 1 CPU, UNICOS 3.0, CC -O
+ 467.4	  609.4	17.82	bob.brl.mil, 1 CPU, UNICOS 3.0, VCC -O
+ 702.1	 1043.6	30.51	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
 .TS
