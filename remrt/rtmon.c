@@ -92,6 +92,7 @@ FILE		*ifp;
 FILE		*ofp;
 
 char		*start_dir;
+int		main_argc;
 char		**main_argv;
 
 static char	usage[] = "\
@@ -169,8 +170,9 @@ CONST char *prog_paths[] = {
  *			R U N _ R T N O D E
  */
 void
-run_prog(fd, argv, program)
+run_prog(fd, argc, argv, program)
 int	fd;
+int	argc;
 char	**argv;
 char	*program;	/* name of program to run */
 {
@@ -219,16 +221,27 @@ char	*program;	/* name of program to run */
 		if( wait3( &stat, WNOHANG, NULL ) == pid )  {
 			/* It died. */
 			/* Be robust in the face of 'wrong architecture' errors. */
-			if( WIFEXITED(stat) && WEXITSTATUS(stat) == 42 )   {
-				continue;	/* Try another path */
+			if( WIFEXITED(stat) )  {
+				if( WEXITSTATUS(stat) == 42 )   {
+					continue;	/* Try another path */
+				}
+				if( WEXITSTATUS(stat) == 0 )  {
+					/* normal exit, probably detatched */
+					goto ok;
+				}
 			}
-			fprintf(ofp, "FAIL %s/%s died with status=x%x\n",
-				bu_vls_addr(&path), program, stat);
+			bu_vls_putc(&path, ' ');
+			bu_vls_from_argv(&path, argc, argv );
+			fprintf(ofp, "FAIL %s died with status=x%x\n",
+				bu_vls_addr(&path), stat);
 			fflush(ofp);
 			bu_vls_free(&path);
 			return;
 		}
 
+ok:
+		bu_vls_putc(&path, ' ');
+		bu_vls_from_argv(&path, argc, argv );
 		fprintf(ofp, "OK %s\n", bu_vls_addr(&path) );
 		fflush(ofp);
 		bu_vls_free(&path);
@@ -310,6 +323,7 @@ server_process(fd)
 int	fd;
 {
 	struct bu_vls	str;
+	int		argc;
 #define MAX_ARGS	50
 	char	*argv[MAX_ARGS+2];
 	struct ihost	*him;
@@ -340,14 +354,14 @@ int	fd;
 		bu_vls_trunc( &str, 0 );
 		if( bu_vls_gets( &str, ifp ) < 0 )  break;
 
-		(void)bu_argv_from_string( argv, MAX_ARGS, bu_vls_addr(&str) );
+		argc = bu_argv_from_string( argv, MAX_ARGS, bu_vls_addr(&str) );
 
 		if( strcmp( argv[0], "status" ) == 0 )  {
 			send_status(fd);
 			continue;
 		}
 		if( strcmp( argv[0], "rtnode" ) == 0 )  {
-			run_prog(fd, argv, "rtnode");
+			run_prog(fd, argc, argv, "rtnode");
 			continue;
 		}
 		if( strcmp( argv[0], "find" ) == 0 )  {
@@ -439,7 +453,7 @@ int	foo;
 		perror(main_argv[0]);
 	}
 	/* Try to find our executable in one of the usual places. */
-	run_prog( 2, main_argv, "rtmon" );
+	run_prog( 2, main_argc, main_argv, "rtmon" );
 
 	/* If that doesn't work either, just go back to what we were doing. */
 	fprintf(stderr, "rtmon: unable to reload, continuing.\n");
@@ -460,6 +474,7 @@ char	*argv[];
 	int	listenfd;
 	int	on = 1;
 
+	main_argc = argc;
 	main_argv = argv;
 
 	if ( !get_args( argc, argv ) ) {
