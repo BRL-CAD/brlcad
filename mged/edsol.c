@@ -214,6 +214,8 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_BOT_MOVEV		97
 #define	MENU_BOT_MOVEE		98
 #define	MENU_BOT_MOVET		99
+#define	MENU_BOT_MODE		100
+#define	MENU_BOT_ORIENT		101
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -602,6 +604,8 @@ struct menu_item bot_menu[] = {
 	{ "move vertex", bot_ed, ECMD_BOT_MOVEV },
 	{ "move edge", bot_ed, ECMD_BOT_MOVEE },
 	{ "move triangle", bot_ed, ECMD_BOT_MOVET },
+	{ "select mode", bot_ed, ECMD_BOT_MODE },
+	{ "select orientation", bot_ed, ECMD_BOT_ORIENT },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -3033,7 +3037,54 @@ sedit()
 			fgp->mode = atoi( radio_result ) + 1;
 		}
 		break;
+	case ECMD_BOT_MODE:
+	  {
+	    struct rt_bot_internal *bot =
+	      (struct rt_bot_internal *)es_int.idb_ptr;
+	    char *radio_result;
+	    char mode[10];
+	    int ret_tcl;
 
+	    RT_BOT_CK_MAGIC( bot );
+	    sprintf( mode, " %d", bot->mode - 1);
+	    ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_mode_radio ",
+				   bu_vls_addr( &pathName ), " _bot_mode_result",
+				   " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
+				   " { surface volume plate plate/nocosine }",
+				   " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL );
+	    if( ret_tcl != TCL_OK )
+	      {
+		Tcl_AppendResult(interp, "Mode selection failed!!!\n", (char *)NULL );
+		break;
+	      }
+	    radio_result = Tcl_GetVar( interp, "_bot_mode_result", TCL_GLOBAL_ONLY );
+	    bot->mode = atoi( radio_result ) + 1;
+	  }
+	  break;
+	case ECMD_BOT_ORIENT:
+	  {
+	    struct rt_bot_internal *bot =
+	      (struct rt_bot_internal *)es_int.idb_ptr;
+	    char *radio_result;
+	    char orient[10];
+	    int ret_tcl;
+
+	    RT_BOT_CK_MAGIC( bot );
+	    sprintf( orient, " %d", bot->orientation - 1);
+	    ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_orient_radio ",
+				   bu_vls_addr( &pathName ), " _bot_orient_result",
+				   " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
+				   " { none right-hand-rule left-hand-rule }",
+				   " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL );
+	    if( ret_tcl != TCL_OK )
+	      {
+		Tcl_AppendResult(interp, "Face orientation selection failed!!!\n", (char *)NULL );
+		break;
+	      }
+	    radio_result = Tcl_GetVar( interp, "_bot_orient_result", TCL_GLOBAL_ONLY );
+	    bot->orientation = atoi( radio_result ) + 1;
+	  }
+	  break;
 	case ECMD_ARB_MAIN_MENU:
 		/* put up control (main) menu for GENARB8s */
 		menu_state->ms_flag = 0;
@@ -4853,6 +4904,19 @@ sedit()
 				bu_log( "No BOT point selected\n" );
 				break;
 			}
+
+			if( bot_verts[1] >= 0 && bot_verts[2] >= 0 )
+			{
+				bu_log( "A triangle is selected, not a BOT point!!!\n" );
+				break;
+			}
+
+			if( bot_verts[1] >= 0 )
+			{
+				bu_log( "An edge is selected, not a BOT point!!!\n" );
+				break;
+			}
+
 			vert = bot_verts[0];
 			if( es_mvalid )
 				VMOVE( new_pt , es_mparam )
@@ -4893,6 +4957,12 @@ sedit()
 			{
 				Tcl_AppendResult( interp, "No BOT edge selected\n", (char *)NULL );
 				mged_print_result( TCL_ERROR );
+				break;
+			}
+
+			if( bot_verts[2] >= 0 )
+			{
+				bu_log( "A triangle is selected, not a BOT edge!!!\n" );
 				break;
 			}
 			v1 = bot_verts[0];
@@ -5240,18 +5310,23 @@ CONST vect_t	mousevec;
 		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
   		point_t start_pt, tmp;
   		vect_t dir;
-  		int i;
+  		int i, hits, ret_tcl;
   		int v1, v2, v3;
   		point_t pt1, pt2, pt3;
   		fastf_t dist;
+		struct bu_vls vls;
 
   		RT_BOT_CK_MAGIC( bot );
+
+		bu_vls_init( &vls );
 
   		VSET( tmp, mousevec[X], mousevec[Y], 0.0 );
   		MAT4X3PNT( start_pt, view_state->vs_view2model, tmp );
   		VSET( tmp, 0, 0, 1 );
   		MAT4X3VEC( dir, view_state->vs_view2model, tmp );
 
+		bu_vls_strcat( &vls, " {" );
+		hits = 0;
   		for( i=0 ; i<bot->num_faces ; i++ )
   		{
   			v1 = bot->faces[i*3];
@@ -5261,23 +5336,43 @@ CONST vect_t	mousevec;
   			VMOVE( pt2, &bot->vertices[v2*3] );
   			VMOVE( pt3, &bot->vertices[v3*3] );
 
-  			if( bn_isect_ray_tri( &dist, NULL, NULL, NULL, start_pt, dir,
-  				pt1, pt2, pt3 ) )
-  					break;
+  			if( bn_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp ) )
+			  {
+			    hits++;
+			    bu_vls_printf( &vls, " { %d %d %d }", v1, v2, v3 );
+			  }
   		}
+		bu_vls_strcat( &vls, " } " );
 
-  		if( i < bot->num_faces )
-  		{
-	  		bot_verts[0] = v1;
-	  		bot_verts[1] = v2;
-	  		bot_verts[2] = v3;
-  		}
-  		else
+		Tcl_LinkVar( interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT );
+		Tcl_LinkVar( interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT );
+		Tcl_LinkVar( interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT );
+
+		if( hits == 0 )
   		{
 	  		bot_verts[0] = -1;
 	  		bot_verts[1] = -1;
 	  		bot_verts[2] = -1;
   		}
+  		if( hits == 1 )
+  		{
+	  		bot_verts[0] = v1;
+	  		bot_verts[1] = v2;
+	  		bot_verts[2] = v3;
+  		}
+		else
+		  {
+		    ret_tcl = Tcl_VarEval( interp, "bot_face_select ", bu_vls_addr( &vls ), (char *)NULL );
+		    bu_vls_free( &vls );
+		      if( ret_tcl != TCL_OK )
+			{
+			  bu_log( "bot_face_select failed: %s\n", interp->result );
+			  bot_verts[0] = -1;
+			  bot_verts[1] = -1;
+			  bot_verts[2] = -1;
+			  break;
+			}
+		  }
   	}
   	break;
   case ECMD_NMG_EPICK:
@@ -6938,6 +7033,39 @@ sedit_accept()
 
 	/* write editing changes out to disc */
 	dp = illump->s_path[illump->s_last];
+
+	/* make sure that any BOT solid is minimally legal */
+	if( es_int.idb_type == ID_BOT )
+	  {
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+
+	    RT_BOT_CK_MAGIC( bot );
+	    if( bot->mode == RT_BOT_SURFACE || bot->mode == RT_BOT_SOLID )
+	      {
+		/* make sure facemodes and thicknesses have been freed */
+		if( bot->thickness )
+		  {
+		    bu_free( (char *)bot->thickness, "BOT thickness" );
+		    bot->thickness = NULL;
+		  }
+		if( bot->face_mode )
+		  {
+		    bu_free( (char *)bot->face_mode, "BOT face_mode" );
+		    bot->face_mode = NULL;
+		  }
+	      }
+	    else
+	      {
+		/* make sure face_modes and thicknesses exist */
+		if( !bot->thickness )
+		  bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
+		if( !bot->face_mode )
+		  {
+		    bot->face_mode = bu_bitv_new( bot->num_faces );
+		    bu_bitv_clear( bot->face_mode );
+		  }
+	      }
+	  }
 
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0, dbip ) < 0 )  {

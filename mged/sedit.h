@@ -110,6 +110,8 @@
 #define	ECMD_BOT_MOVEV		67	/* move a BOT vertex */
 #define	ECMD_BOT_MOVEE		68	/* move a BOT edge */
 #define	ECMD_BOT_MOVET		69	/* move a BOT triangle */
+#define	ECMD_BOT_MODE		70	/* set BOT mode */
+#define	ECMD_BOT_ORIENT		71	/* set BOT face orientation */
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
