@@ -155,9 +155,9 @@ int y;
 	*op++ = *cp++;
 	for( i=0; i<inbytes; i+=3)  {
 		/* Average previous pixel with current pixel */
-		*op++ = (cp[-3+0] + cp[0])>>1;
-		*op++ = (cp[-3+1] + cp[1])>>1;
-		*op++ = (cp[-3+2] + cp[2])>>1;
+		*op++ = ((int)cp[-3+0] + (int)cp[0])>>1;
+		*op++ = ((int)cp[-3+1] + (int)cp[1])>>1;
+		*op++ = ((int)cp[-3+2] + (int)cp[2])>>1;
 		/* Copy pixel */
 		*op++ = *cp++;
 		*op++ = *cp++;
@@ -178,8 +178,8 @@ int out, i1, i2;
 	op = (unsigned char *)outbuf + (out * outbytes);
 
 	for( i=0; i<outbytes; i+=3 )  {
-		*op++ = (*a++ + *b++)>>1;
-		*op++ = (*a++ + *b++)>>1;
-		*op++ = (*a++ + *b++)>>1;
+		*op++ = ((int)*a++ + (int)*b++)>>1;
+		*op++ = ((int)*a++ + (int)*b++)>>1;
+		*op++ = ((int)*a++ + (int)*b++)>>1;
 	}
 }
