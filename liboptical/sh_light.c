@@ -913,7 +913,7 @@ light_init(struct application *ap)
 	}
 
 
-	if (rt_verbosity & VERBOSE_LIGHTINFO) {
+	if (R_DEBUG) {
 		bu_log("Lighting: Ambient = %d%%\n",
 		       (int)(AmbientIntensity*100));
 

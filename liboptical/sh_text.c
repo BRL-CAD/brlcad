@@ -38,10 +38,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /*#include "../rt/mathtab.h"*/
 #include "rtprivate.h"
 
+struct region	env_region;  /* initialized in the app code view handler */
+
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
 		     struct shadework   *swp);
-extern struct region	env_region;		/* import from view.c */
 
 HIDDEN void rt_binunif_free();
 HIDDEN void	txt_transp_hook();
@@ -58,8 +59,6 @@ HIDDEN void	bmp_print(), bmp_free();
 HIDDEN int tstm_render();
 HIDDEN int star_render();
 HIDDEN int envmap_setup();
-extern int mlib_zero(), mlib_one();
-extern void	mlib_void();
 
 struct mfuncs txt_mfuncs[] = {
 	{MF_MAGIC,	"texture",	0,		MFI_UV,		0,
@@ -1059,4 +1058,41 @@ struct mfuncs	**headp;
 		bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
 
 	return(0);		/* This region should be dropped */
+}
+
+
+
+/*
+ *			M L I B _ Z E R O
+ *
+ *  Regardless of arguments, always return zero.
+ *  Useful mostly as a stub print, and/or free routine.
+ */
+/* VARARGS */
+int
+mlib_zero()
+{
+	return(0);
+}
+
+/*
+ *			M L I B _ O N E
+ *
+ *  Regardless of arguments, always return one.
+ *  Useful mostly as a stub setup routine.
+ */
+/* VARARGS */
+int
+mlib_one()
+{
+	return(1);
+}
+
+/*
+ *			M L I B _ V O I D
+ */
+/* VARARGS */
+void
+mlib_void()
+{
 }
