@@ -119,7 +119,7 @@ register int	xpos, ypos;
 			weight = (fastf_t) sum / sample_sz;
 			if( fb_seek( fbiop, x, ypos + up ) == -1 )
 				continue;
-			if( fb_rpixel( fbiop, pixel ) == -1 )
+			if( fb_rpixel( fbiop, (RGBpixel *) pixel ) == -1 )
 				{
 				rt_log( "\"%s\" (%d) read of pixel from <%d,%d> failed.\n",
 					__FILE__, __LINE__, x, ypos
@@ -131,7 +131,7 @@ register int	xpos, ypos;
 			pixel[BLU] = pixel[BLU]*(1.0-weight) + FONTCOLOR_BLU*weight;
 			if( fb_seek( fbiop, x, ypos + up ) == -1 )
 				continue;
-			if( fb_wpixel( fbiop, pixel ) == -1 )
+			if( fb_wpixel( fbiop, (RGBpixel *) pixel ) == -1 )
 				{
 				rt_log( "\"%s\" (%d) write of pixel to <%d,%d> failed.\n",
 					__FILE__, __LINE__, x, ypos

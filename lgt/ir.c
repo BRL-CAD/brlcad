@@ -95,7 +95,7 @@ int	xmin, ymin;
 					/* LINT: this should be an &ir_table...,
 						allowed by ANSI C, but not current
 						compilers. */
-				(void) fb_wpixel( fbiop, black );
+				(void) fb_wpixel( fbiop, (RGBpixel *) black );
 				}
 			else
 				{

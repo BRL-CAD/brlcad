@@ -1765,7 +1765,7 @@ hl_Postprocess()
 			x++
 			)
 			{
-			if( fb_rpixel( fbiop, rpixp[x] ) == -1 )
+			if( fb_rpixel( fbiop, (RGBpixel *)(rpixp[x]) ) == -1 )
 				{
 				fb_log(
 			"hl_Postprocess: Failed to read pixel <%d,%d>\n",
@@ -1863,7 +1863,8 @@ RGBpixel		scanbuf[];
 				break;
 			case B_PAGE :
 				if(	fb_seek( fbiop, x, y ) == -1
-				    ||	fb_rpixel( fbiop, tpixel ) == -1
+				    ||	fb_rpixel( fbiop, (RGBpixel *)tpixel )
+						== -1
 					)
 					{
 					rt_log( "Read failed from pixel <%d,%d>.\n",
