@@ -29,7 +29,8 @@ NFS=0
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=3.7;	RCS_REVISION=9;		REL_DATE=19-June-89
+RELEASE=3.8;	RCS_REVISION=9;		REL_DATE=Today
+#RELEASE=3.7;	RCS_REVISION=9;		REL_DATE=19-June-89
 #RELEASE=3.6;	RCS_REVISION=9;		REL_DATE=25-May-89	# internal
 #RELEASE=3.5;	RCS_REVISION=9;		REL_DATE=23-May-89	# internal
 #RELEASE=3.4;	RCS_REVISION=8;		REL_DATE=18-May-89	# internal
@@ -113,6 +114,7 @@ BDIRS="bench \
 	libpkg \
 	libfb \
 	rfbd \
+	fbserv \
 	libtermio \
 	libcursor \
 	libplot3 \
@@ -125,12 +127,14 @@ BDIRS="bench \
 	remrt \
 	mged \
 	proc-db \
+	comgeom-g \
 	util \
 	fbed \
 	lgt \
 	vas4 \
 	vdeck \
 	tools \
+	halftone \
 	whetstone dhrystone"
 
 # If there is no TCP networking, eliminate network-only directories.
@@ -138,6 +142,7 @@ if test HAS_TCP = 0
 then
 	BDIRS=`echo ${BDIRS} | sed -e  's/libpkg//
 					s/remrt//
+					s/fbserv//
 					s/rfbd//'`
 fi
 
