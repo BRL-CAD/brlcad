@@ -133,6 +133,9 @@ struct rt_i		*rtip;
 	stp->st_aradius = f;
 	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 
+	/* XXX Should use actual face count (len of list) */
+	stp->st_npieces = bot_ip->num_faces;
+
 	return 0;
 }
 

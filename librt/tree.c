@@ -748,6 +748,17 @@ again:
 			/* The macro makes it hard to regain place, punt */
 			goto again;
 		}
+	} RT_VISIT_ALL_SOLTABS_END
+
+	/*
+	 *  Another pass, no restarting.
+	 *  Assign "piecestate" indices for those solids
+	 *  which contain pieces.
+	 */
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+		if( stp->st_npieces > 1 )  {
+			stp->st_piecestate_num = rtip->rti_nsolids_with_pieces++;
+		}
 		if(rt_g.debug&DEBUG_SOLIDS)
 			rt_pr_soltab( stp );
 	} RT_VISIT_ALL_SOLTABS_END

@@ -50,6 +50,39 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 extern void	rt_plot_cell();		/* at end of file */
 
 /*
+ *			R T _ R E S _ P I E C E S _ I N I T
+ *
+ *  Allocate the per-processor state variables needed
+ *  to support rt_shootray()'s use of 'solid pieces'.
+ */
+void
+rt_res_pieces_init( resp, rtip )
+struct resource	*resp;
+struct rt_i	*rtip;
+{
+	struct rt_piecestate	*psptab;
+	struct rt_piecestate	*psp;
+	struct soltab		*stp;
+
+	RT_CK_RESOURCE(resp);
+	RT_CK_RTI(rtip);
+
+	psptab = bu_calloc( sizeof(struct rt_piecestate),
+		rtip->rti_nsolids_with_pieces, "re_pieces[]" );
+	resp->re_pieces = psptab;
+
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+		RT_CK_SOLTAB(stp);
+		if( stp->st_npieces <= 1 )  continue;
+		psp = &psptab[stp->st_piecestate_num];
+		psp->magic = RT_PIECESTATE_MAGIC;
+		psp->stp = stp;
+		psp->shot = bu_bitv_new(stp->st_npieces);
+		psp->oddhit.hit_dist = INFINITY;	/* mark unused */
+	} RT_VISIT_ALL_SOLTABS_END
+}
+
+/*
  *			R T _ F I N D _ N U G R I D
  *
  *  Along the given axis, find which NUgrid cell this value lies in.
@@ -690,6 +723,11 @@ register struct application *ap;
 		regionbits = BU_LIST_FIRST( bu_ptbl, &resp->re_region_ptbl );
 		BU_LIST_DEQUEUE( &regionbits->l );
 		BU_CK_PTBL(regionbits);
+	}
+
+	if( !resp->re_pieces && rtip->rti_nsolids_with_pieces > 0 )  {
+		/* Initialize this processors 'solid pieces' state */
+		rt_res_pieces_init( resp, rtip );
 	}
 
 	/* Verify that direction vector has unit length */
