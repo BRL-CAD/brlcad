@@ -113,17 +113,17 @@ configbody Command::cmd_prefix {
 	return
     }
 
-    set bad [catch {$itk_option(-cmd_prefix) info function} cmdlist]
+    set bad [catch {eval $itk_option(-cmd_prefix) info function} _cmdlist]
     if {$bad} {
-	return -code error "Bad command prefix: no related functions"
+	error "Bad command prefix: no related functions"
     }
 
-    set bad [catch {$itk_option(-cmd_prefix) info class} class]
+    set bad [catch {eval $itk_option(-cmd_prefix) info class} class]
     if {$bad} {
-	return -code error "Bad command prefix: no class"
+	error "Bad command prefix: no class"
     }
     # strip off class
-    set cmdlist [string map "$class\:: \"\"" $cmdlist]
+    set cmdlist [string map "$class\:: \"\"" $_cmdlist]
 }
 
 configbody Command::selection_color {
@@ -190,29 +190,25 @@ body Command::edit_style {args} {
 	    doKeyBindings
 	}
 	default {
-	    return -code error "Bad edit_style - $args"
+	    error "Bad edit_style - $args"
 	}
     }
 }
 
-############################## Protected/Private Method  ##############################
+############################## Protected/Private Methods  ##############################
 body Command::invoke {} {
     set w $itk_component(text)
 
     set cmd [$w get promptEnd insert]
+    set hcmd $cmd
 
-    if {$itk_option(-cmd_prefix) == ""} {
-	set hcmd $cmd
-    } else {
-	set hcmd $cmd
-
+    if {$itk_option(-cmd_prefix) != ""} {
 	set cname [lindex $cmd 0]
 	set cindex [lsearch $cmdlist $cname]
 	if {$cindex != -1} {
 	    set cmd [concat $itk_option(-cmd_prefix) $cmd]
 	}
     }
-
 
     if [info complete $cmd] {
 	set result [catch {uplevel #0 $cmd} msg]
