@@ -2007,6 +2007,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 	int num_objects=(len - 3);
 	jint ret=0;
 	int rts_load_return=0;
+	int thread_count, queue_count;
 	int i;
 
 	rts_shutdown();
@@ -2015,6 +2016,28 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 	if( len < 4 ) {
 		bu_log( "wrong number of args\n" );
 		return( (jint) 1 );
+	}
+
+	/* get number of queues specified by command line */
+	jstring jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 0 );
+	char *str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
+	queue_count = atoi( str );
+	(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
+
+	/* do not use less than two queues */
+	if( queue_count + num_queues < 2 ) {
+		queue_count = 2 - num_queues;
+	}
+
+	/* get number of threads from comamnd line */
+	jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 1 );
+	str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
+	thread_count = atoi( str );
+	(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
+
+	/* do not use less than one thread */
+	if( num_threads + thread_count < 1 ) {
+		thread_count = 1 - num_threads;
 	}
 
 	/* get the aruments from the JAVA args object array */
@@ -2033,30 +2056,6 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 		bu_log( "Failed to load geometry, rts_load_geometry() returned %d\n", rts_load_return );
 		ret = 2;
 	} else {
-	        int thread_count, queue_count;
-
-		/* get number of queues specified by command line */
-		jstring jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 0 );
-		char *str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
-		queue_count = atoi( str );
-		(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
-
-		/* do not use less than two queues */
-		if( queue_count + num_queues < 2 ) {
-		  queue_count = 2 - num_queues;
-		}
-
-		/* get number of threads from comamnd line */
-		jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 1 );
-		str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
-		thread_count = atoi( str );
-		(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
-
-		/* do not use less than one thread */
-		if( num_threads + thread_count < 1 ) {
-			thread_count = 1 - num_threads;
-		}
-
 		/* start raytrace threads */
 		rts_start_server_threads( thread_count, queue_count );
 	}
