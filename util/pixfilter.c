@@ -155,7 +155,7 @@ int argc; char **argv;
 	top    = &line3[0];
 	fread( bottom, sizeof( char ), 3*width, infp );
 	fread( middle, sizeof( char ), 3*width, infp );
-	fwrite( bottom, sizeof( char ), 3*width, infp );
+	fwrite( bottom, sizeof( char ), 3*width, stdout );
 
 	if(verbose) {
 		for( x = 0; x < 11; x++ )
