@@ -684,8 +684,6 @@ vdraw_open_tcl(clientData, interp, argc, argv)
 		Tcl_AppendResult(interp, "0", (char *)NULL);
 		return TCL_OK;
 	}
-
-	return TCL_OK;
 }
 
 /*
@@ -753,64 +751,4 @@ vdraw_vlist_tcl(clientData, interp, argc, argv)
 		Tcl_AppendResult(interp,"vdraw: unknown option to vdraw vlist", (char *)NULL);
 		return TCL_ERROR;
 	}
-
-	return TCL_OK;
 }
-
-#if 0
-int
-cmd_vdraw(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
-{
-	char *str;
-	static struct vd_curve *dgop->dgo_currVHead;
-	static int initialized = 0;
-	struct rt_vlist *vp, *cp, *wp;
-	struct directory *dp;
-	char result_string[90]; /* make sure there's room */
-	char temp_name[RT_VDRW_MAXNAME+1];
-
-	if(argc < 2 || 7 < argc){
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help vdraw");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	if (!initialized){
-		if (BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
-			BU_LIST_INIT( &rt_g.rtg_vlfree );
-		BU_LIST_INIT( &dgop->dgo_headVDraw );
-		dgop->dgo_currVHead = (struct vd_curve *) NULL;
-		initialized = 1;
-	}
-
-	switch ( argv[1][0] ) {
-	case 'w': /*write*/
-		return TCL_OK;
-	case 'i': /*insert*/
-		return TCL_OK;
-	case 'd': /*delete*/
-		return TCL_OK;
-	case 'r': /*read*/
-		return TCL_OK;
-	case 's': /*send*/
-		return TCL_OK;
-	case 'p':  /* params */
-		break;
-	case 'o': /* open */
-	case 'v':
-	default:
-		Tcl_AppendResult(interp, "vdraw: see vdraw.c for help\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-		
-	return TCL_OK;
-}
-#endif
