@@ -5,7 +5,11 @@
 #									#
 # Use this shell script to build an HTML index file from one or more	#
 # definition files. In this context, a definition file is one that	#
-# contains HTML definition terms (i.e. <DT>some term</DT>).		#
+# contains HTML definition terms of the following forms:		#
+#									#
+#    <DT><a NAME="term_anchor_name"><B>term_name</B></DT>		#
+#				or					#
+#    <DT><a NAME="term_anchor_name"><B>term_name</B> <I>args</I></DT>	#
 #									#
 # Author -								#
 #	Robert G. Parker						#
@@ -17,11 +21,14 @@
 #									#
 #########################################################################
 
-NUM_COLUMNS=7
+NUM_COLUMNS_INDEX=3
+CELLSPACING_INDEX=8
+
+NUM_COLUMNS=5
 CELLSPACING=4
 
 # Note that spaces are not allowed. Here we use comma's instead of spaces.
-DEF_FILES_AND_TITLES="{{mged_cmds.html}{MGED,Commands}}
+DEF_FILES_AND_TITLES="{{mged_cmds.html}{MGED,User,Commands}}
     {{mged_devel_cmds.html}{MGED,Developer,Commands}}"
 TARGET_FILE=mged_cmds_index.html
 
@@ -43,6 +50,32 @@ echo "" >> $TARGET_FILE
 echo "<BODY BGCOLOR=\"#E0D8c8\" TEXT=\"#000000\">" >> $TARGET_FILE
 echo "" >> $TARGET_FILE
 
+# Build index of definition indexes
+DEF_INDEX_INDEX="<TABLE CELLSPACING=$CELLSPACING_INDEX>"
+count=-1
+for DEF_FILE_AND_TITLE in ${DEF_FILES_AND_TITLES}
+do
+	count=`expr $count + 1`
+	if test `expr $count % $NUM_COLUMNS_INDEX` = 0
+	then
+		if test $count -gt 0
+		then
+			DEF_INDEX_INDEX="$DEF_INDEX_INDEX</TR>\n"
+		fi
+
+		DEF_INDEX_INDEX="$DEF_INDEX_INDEX<TR>"
+	fi
+
+	TITLE=`echo $DEF_FILE_AND_TITLE |
+	    sed 's/{{[^{}][^{}]*}{\([^{}][^{}]*\)}}/\1/g
+		s/,/ /g'`
+	ANCHOR_NAME=`echo $DEF_FILE_AND_TITLE |
+	    sed 's/{{[^{}][^{}]*}{\([^{}][^{}]*\)}}/\1/g
+		s/,/_/g'`
+	DEF_INDEX_INDEX="$DEF_INDEX_INDEX\n<TD><a href=\"$TARGET_FILE#$ANCHOR_NAME\">$TITLE</a></TD>"
+done
+DEF_INDEX_INDEX="$DEF_INDEX_INDEX</TR></TABLE>"
+
 for DEF_FILE_AND_TITLE in ${DEF_FILES_AND_TITLES}
 do
 	DEF_FILE=`echo $DEF_FILE_AND_TITLE |
@@ -50,9 +83,14 @@ do
 	TITLE=`echo $DEF_FILE_AND_TITLE |
 	    sed 's/{{[^{}][^{}]*}{\([^{}][^{}]*\)}}/\1/g
 		s/,/ /g'`
+	ANCHOR_NAME=`echo $DEF_FILE_AND_TITLE |
+	    sed 's/{{[^{}][^{}]*}{\([^{}][^{}]*\)}}/\1/g
+		s/,/_/g'`
 
 	DEFS_AND_ANCHORS=`sed -n 's/<DT>[\t ]*<a[\t ][\t ]*NAME="\([a-zA-Z0-9_?%][a-zA-Z0-9_?%]*\)"[\t ]*>[\t ]*<B>[\t ]*\([a-zA-Z0-9_?%][a-zA-Z0-9_?%]*\)[\t ]*<\/B>.*/{{\2}{\1}}/p' $DEF_FILE`
 
+	echo "<a NAME=\"$ANCHOR_NAME\">" >> $TARGET_FILE
+	echo "$DEF_INDEX_INDEX" >> $TARGET_FILE
 	echo "<CENTER><H1>$TITLE</H1></CENTER>" >> $TARGET_FILE
 	echo "<TABLE CELLSPACING=$CELLSPACING>" >> $TARGET_FILE
 	count=-1
@@ -85,5 +123,6 @@ do
 done
 
 echo "" >> $TARGET_FILE
+echo "$DEF_INDEX_INDEX" >> $TARGET_FILE
 echo "</BODY>" >> $TARGET_FILE
 echo "</HTML>" >> $TARGET_FILE
