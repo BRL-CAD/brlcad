@@ -94,7 +94,11 @@ extern void prnt_Menu();
 extern void prnt_Octree();
 extern void prnt_Pixel();
 extern void prnt_Prompt();
+#if __STDC__
+extern void prnt_Scroll( char *, ... );
+#else
 extern void prnt_Scroll();
+#endif
 extern void prnt_Status();
 extern void prnt_Timer();
 extern void prnt_Title();
