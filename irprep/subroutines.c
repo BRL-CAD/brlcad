@@ -2,7 +2,7 @@
  *			S U B R O U T I N E S . C
  *
  *  Author -
- *	S.Coates - 8 July 1991
+ *	S.Coates - 18 November 1991
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -13,14 +13,17 @@
  *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
+
+/*	18 November 1991 - Put /n/walrus/usr/brlcad/include into includes.  */
+
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
-#include "externs.h"
+#include "/n/walrus/usr/brlcad/include/machine.h"
+#include "/n/walrus/usr/brlcad/include/externs.h"
 
 #define PI 3.14159265358979323846264		/*  Pi.  */
 
