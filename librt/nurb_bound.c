@@ -23,9 +23,13 @@
  * homogeneous points (i.e. [XYZW]) then divide out the W first.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 #define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
