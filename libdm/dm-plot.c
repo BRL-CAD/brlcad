@@ -59,6 +59,7 @@ static int	plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fast
 static int      plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 static int	plot_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 static int      plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict);
+static int      plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 static int      plot_setLineAttr(struct dm *dmp, int width, int style);
 static int	plot_setWinBounds(struct dm *dmp, register int *w), plot_debug(struct dm *dmp, int lvl);
 
@@ -73,7 +74,7 @@ struct dm dm_plot = {
   plot_drawPoint2D,
   plot_drawVList,
   plot_setFGColor,
-  Nu_int0,
+  plot_setBGColor,
   plot_setLineAttr,
   Nu_int0,
   plot_setWinBounds,
@@ -547,6 +548,11 @@ static int
 plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict)
 {
 	pl_color(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, (int)r, (int)g, (int)b);
+	return TCL_OK;
+}
+static int
+plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+{
 	return TCL_OK;
 }
 

@@ -57,6 +57,7 @@ static int	ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_
 static int      ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 static int	ps_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 static int      ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict);
+static int      ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 static int      ps_setLineAttr(struct dm *dmp, int width, int style);
 static int	ps_setWinBounds(struct dm *dmp, register int *w), ps_debug(struct dm *dmp, int lvl);
 
@@ -71,7 +72,7 @@ struct dm dm_ps = {
   ps_drawPoint2D,
   ps_drawVList,
   ps_setFGColor,
-  Nu_int0,
+  ps_setBGColor,
   ps_setLineAttr,
   Nu_int0,
   ps_setWinBounds,
@@ -680,6 +681,11 @@ ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 static int
 ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict)
+{
+  return TCL_OK;
+}
+static int
+ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
   return TCL_OK;
 }
