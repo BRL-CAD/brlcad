@@ -2065,6 +2065,85 @@ rt_log("DANGER: nmg_classify_pt_loop() is calling nmg_class_pt_l(), which does n
 	return( closest.class );
 }
 
+/*		N M G _ G E T _ I N T E R I O R _ P T
+ *
+ *	Find any point that is interior to LU
+ *
+ *	Returns:
+ *		0 - All is well
+ *		1 - Couldn't find an interior point
+ */
+int
+nmg_get_interior_pt( pt, lu, tol )
+point_t pt;
+CONST struct loopuse *lu;
+CONST struct rt_tol *tol;
+{
+	struct edgeuse *eu;
+	fastf_t point_count=0.0;
+	double one_over_count;
+	point_t test_pt;
+
+	NMG_CK_LOOPUSE( lu );
+	RT_CK_TOL( tol );
+
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+		return( 1 );
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return( 1 );
+
+	if( nmg_loop_is_a_crack( lu ) )
+		return( 1 );
+
+	/* first try just averaging all the vertices */
+	VSETALL( pt, 0.0 );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+		NMG_CK_EDGEUSE( eu );
+
+		vg = eu->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg );
+
+		VADD2( test_pt, test_pt, vg->coord );
+		point_count++;
+	}
+
+	one_over_count = 1.0/point_count;
+	VSCALE( test_pt, test_pt, one_over_count );
+
+	if( nmg_class_pt_lu_except( test_pt, lu, (struct edge *)NULL, tol ) == NMG_CLASS_AinB )
+	{
+		VMOVE( pt, test_pt );
+		return( 0 );
+	}
+
+	/* Try moving just a little left of an edge */
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		vect_t left;
+		struct vertex_g *vg1,*vg2;
+
+		(void)nmg_find_eu_leftvec( left, eu );
+
+		vg1 = eu->vu_p->v_p->vg_p;
+		vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+
+		VADD2( test_pt, vg1->coord, vg2->coord );
+		VSCALE( test_pt, test_pt, 0.5 );
+
+		VJOIN1( test_pt, test_pt, 3.0*tol->dist, left );
+		if( nmg_class_pt_lu_except( test_pt, lu, (struct edge *)NULL, tol ) == NMG_CLASS_AinB )
+		{
+			VMOVE( pt, test_pt );
+			return( 0 );
+		}
+	}
+
+	return( 1 );
+}
+
 /*	N M G _ C L A S S I F Y _ L U _ L U
  *
  *	Generally available classifier for
@@ -2084,6 +2163,8 @@ CONST struct rt_tol *tol;
 	struct faceuse *fu1,*fu2;
 	struct edgeuse *eu;
 	int same_loop;
+	int lu1_eu_count=0;
+	int lu2_eu_count=0;
 
 	NMG_CK_LOOPUSE( lu1 );
 	NMG_CK_LOOPUSE( lu2 );
@@ -2125,6 +2206,14 @@ CONST struct rt_tol *tol;
 		struct edgeuse *eu1_start,*eu2_start;
 		struct edgeuse *eu1,*eu2;
 
+		/* count EU's in lu1 */
+		for( RT_LIST_FOR( eu, edgeuse, &lu1->down_hd ) )
+			lu1_eu_count++;
+
+		/* count EU's in lu2 */
+		for( RT_LIST_FOR( eu, edgeuse, &lu2->down_hd ) )
+			lu2_eu_count++;
+
 		same_loop = 1;
 		eu1_start = RT_LIST_FIRST( edgeuse , &lu1->down_hd );
 		NMG_CK_EDGEUSE( eu1_start );
@@ -2154,33 +2243,50 @@ CONST struct rt_tol *tol;
 				eu2 = RT_LIST_PNEXT_CIRC( edgeuse , &eu2->l );
 			}
 
-			if( same_loop )
+			if( !same_loop )
 			{
-				if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-					rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshared\n" );
-				return( NMG_CLASS_AonBshared );
-			}
-
-			/* maybe the other way round */
-			same_loop = 1;
-			eu1 = eu1_start;
-			eu2 = eu2_start;
-			while( RT_LIST_NOT_HEAD( eu1 , &lu1->down_hd ) )
-			{
-				if( eu1->vu_p->v_p != eu2->vu_p->v_p )
+				/* maybe the other way round */
+				same_loop = 1;
+				eu1 = eu1_start;
+				eu2 = eu2_start;
+				while( RT_LIST_NOT_HEAD( eu1 , &lu1->down_hd ) )
 				{
-					same_loop = 0;
-					break;
+					if( eu1->vu_p->v_p != eu2->vu_p->v_p )
+					{
+						same_loop = 0;
+						break;
+					}
+					eu1 = RT_LIST_PNEXT( edgeuse , &eu1->l );
+					eu2 = RT_LIST_PPREV_CIRC( edgeuse , &eu2->l );
 				}
-				eu1 = RT_LIST_PNEXT( edgeuse , &eu1->l );
-				eu2 = RT_LIST_PPREV_CIRC( edgeuse , &eu2->l );
+
 			}
 
 			if( same_loop )
 			{
-				if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-					rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshared\n" );
-				return( NMG_CLASS_AonBshared );
+				point_t pt;
+
+				if( lu1_eu_count == lu2_eu_count )
+				{
+					if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+						rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshared\n" );
+					return( NMG_CLASS_AonBshared );
+				}
+
+				/* All of lu1 edges are on lu2, but lu2 must have more
+				 * edges. Need to compare in interior point of lu1
+				 * to lu2
+				 */
+
+				/* Get an interior point of lu1 */
+				if( nmg_get_interior_pt( pt, lu1, tol ) )
+				{
+					rt_log( "nmg_classify_lu_lu: Couldn't get an interior point for lu x%x\n", lu1 );
+					rt_bomb( "nmg_classify_lu_lu: Couldn't get an interior point" );
+				}
+
+				/* classify this point w.r.t. lu2 */
+				return( nmg_class_pt_lu_except( pt, lu2, (struct edge *)NULL, tol ) );
 			}
 		}
 	}
