@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:04  mike
+ * Release_4.0
+ * 
  * Revision 2.5  91/08/30  18:11:07  mike
  * Made explicit that termcap.h to be used is the local version
  * 
@@ -72,9 +75,14 @@ int	CapCol,
 	i_line,
 	i_col;
 
+void	DoPlacur();
+void	cl_scr();
+int	dosputc();
+
 #define sputc(c)	((*cursor != c) ? dosputc(c) : (cursor++, i_col++))
 #define soutputc(c)	if (--n > 0) sputc(c); else { sputc('!'); goto outahere;}
 
+void
 make_scr()
 {
 	register int	i;
@@ -109,6 +117,7 @@ make_scr()
 	cl_scr();
 }
 
+void
 clrline(cp1, cp2)
 register char	*cp1,
 		*cp2;
@@ -117,6 +126,7 @@ register char	*cp1,
 		*cp1++ = ' ';
 }
 
+void
 cl_eol()
 {
 	if (InputPending || cursor > cursend)
@@ -139,6 +149,7 @@ cl_eol()
 	}
 }
 
+void
 cl_scr()
 {
 	register int	i;
@@ -155,7 +166,7 @@ cl_scr()
 }
 
 /* Output one character (if necessary) at the current position */
-
+int
 dosputc(c)
 register char	c;
 {
@@ -169,12 +180,13 @@ register char	c;
 		cursor++;
 		i_col++;
 	}
+	return 0;		/* Called by ?: operation */
 }
 
 /* Write `line' at the current position of `cursor'.  Stop when we
    reach the end of the screen.  Aborts if there is a character
    waiting.  */
-
+int
 swrite(line)
 register char	*line;
 {
@@ -219,7 +231,7 @@ outahere:
  * minimize the amount of copying from one buffer to another buffer.
  * This gets the info directly from ibuff[12].
  */
-
+int
 BufSwrite(linenum)
 {
 	register char	c,
@@ -277,6 +289,7 @@ outahere:
 	return !aborted;		/* Didn't abort */
 }
 
+void
 putstr(str)
 register char	*str;
 {
@@ -286,6 +299,7 @@ register char	*str;
 		outchar(c);
 }
 
+void
 i_set(nline, ncol)
 register int	nline,
 		ncol;
@@ -304,7 +318,7 @@ extern int	diffnum;
  * alone (at least they won't look any different when we are done).
  * This changes the screen array AND does the physical changes.
  */
-
+void
 v_ins_line(num, top, bottom)
 {
 	register int	i;
@@ -365,7 +379,7 @@ v_ins_line(num, top, bottom)
 
 /* Delete `num' lines starting at `top' leaving the lines below `bottom'
    alone.  This updates the internal image as well as the physical image.  */
-
+void
 v_del_line(num, top, bottom)
 {
 	register int	i,
@@ -590,6 +604,7 @@ InitCM()
 
 extern int	InMode;
 
+void
 DoPlacur(line, col)
 {
 	int	dline,		/* Number of lines to move */
