@@ -967,6 +967,7 @@ extrdump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
+	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_extrude_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: extrusion import failure\n");
 		exit(-1);
@@ -1001,6 +1002,7 @@ sketchdump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
+	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_sketch_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
 		fprintf(stderr, "g2asc: sketch import failure\n");
 		exit( -1 );
