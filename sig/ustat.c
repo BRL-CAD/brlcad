@@ -82,7 +82,7 @@ FILE *fd;
 
 	stdev = sqrt( ((num * sum_sq) - (sum*sum)) / (num * (num-1)) );
 
-	(void)printf("num:%g Min:%u Max:%u Sum:%g Mean:%g SStdev:%g\n",
+	(void)printf("   Num: %g\n   Min: %u\n   Max: %u\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
 		num, min, max, sum, sum/num, stdev);
 
 }
