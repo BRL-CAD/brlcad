@@ -30,8 +30,8 @@
 static char RCSid[] = "$Header$ (BRL)";
 #endif
 #include <stdio.h>
+#include "machine.h"
 
-typedef void *genptr_t;
 /*
  * Theses should be moved to a header file soon.
  */
@@ -59,13 +59,6 @@ typedef void *genptr_t;
 #define IND_LITTLE	2
 #define IND_ILL		3		/* PDP-11 */
 #define IND_CRAY	4
-
-#if defined(sun) || (defined(alliant) && ! defined(i860)) || \
-	defined(ardent) || \
-	defined(stellar) || defined(sparc) || defined(mips) || \
-	defined(pyr) || defined(apollo) || defined(aux)
-#	define DOUBLE_FORMAT_IS_IEEE	1
-#endif
 
 /* cv_cookie	Set's a bit vector after parsing an input string.
  *
@@ -350,7 +343,7 @@ register int	cookie;
 
 	switch(fmt)  {
 	case CV_D:
-#		if DOUBLE_FORMAT_IS_IEEE
+#		if IEEE_FLOAT
 			cookie |= CV_HOST_MASK;	/* host uses network fmt */
 #		endif
 		return cookie;
@@ -708,43 +701,43 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 			case CV_SIGNED_MASK | CV_8:
 				for (i=0; i< work_count; i++) {
 					*((double *)to) = *((signed char *)from);
-					to = ((double *)to) + 1;
+					to = (genptr_t)(((double *)to) + 1);
 					from = ((char *)from) + 1;
 				}
 				break;
 			case CV_8:
 				for(i=0; i < work_count; i++) {
 					*((double *)to) = *((unsigned char *)from);
-					to = ((double *)to) + 1;
+					to = (genptr_t)(((double *)to) + 1);
 					from = ((unsigned char *)from) + 1;
 				}
 				break;
 			case CV_SIGNED_MASK | CV_16:
 				for (i=0; i < work_count; i++) {
 					*((double *)to) = *((signed short *)from);
-					to = ((double *)to) + 1;
-					from = ((signed short *)from) + 1;
+					to = (genptr_t)(((double *)to) + 1);
+					from = (genptr_t)(((signed short *)from) + 1);
 				}
 				break;
 			case CV_16:
 				for (i=0; i < work_count; i++) {
 					*((double *)to) = *((unsigned short *)from);
-					to = ((double *)to) + 1;
-					from = ((unsigned short *)from) + 1;
+					to = (genptr_t)(((double *)to) + 1);
+					from = (genptr_t)(((unsigned short *)from) + 1);
 				}
 				break;
 			case CV_SIGNED_MASK | CV_32:
 				for (i=0; i < work_count; i++) {
 					*((double *)to) = *((signed long int *)from);
-					to = ((double *)to) + 1;
-					from =  ((signed long int *)from) + 1;
+					to = (genptr_t)(((double *)to) + 1);
+					from =  (genptr_t)(((signed long int *)from) + 1);
 				}
 				break;
 			case CV_32:
 				for (i=0; i < work_count; i++) {
 					*((double *)to) = *((unsigned long int *) from);
-					to = ((double *)to) + 1;
-					from = ((unsigned long int *)from) + 1;
+					to = (genptr_t)(((double *)to) + 1);
+					from = (genptr_t)(((unsigned long int *)from) + 1);
 				}
 				break;
 			}
@@ -774,8 +767,8 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 			case CV_SIGNED_MASK | CV_8:
 				for (i=0; i<work_count; i++) {
 					*((signed char *)to) = *((double *)from);
-					to = ((signed char *)to) + 1;
-					from = ((double *)from) + 1;
+					to = (genptr_t)(((signed char *)to) + 1);
+					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
 			case CV_8:
@@ -783,39 +776,39 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 					*((unsigned char *)to) =
 					    *((double *)from);
 					to = ((unsigned char *)to) + 1;
-					from = ((double *)from) + 1;
+					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
 			case CV_SIGNED_MASK | CV_16:
 				for (i=0; i<work_count; i++) {
 					*((signed short int *)to) =
 					    *((double *)from);
-					to = ((signed short int *)to) + 1;
-					from = ((double *)from) + 1;
+					to = (genptr_t)(((signed short int *)to) + 1);
+					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
 			case CV_16:
 				for (i=0; i<work_count; i++) {
 					*((unsigned short int *)to) =
 					    *((double *)from);
-					to = ((unsigned short int *)to) + 1;
-					from = ((double *)from) + 1;
+					to = (genptr_t)(((unsigned short int *)to) + 1);
+					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
 			case CV_SIGNED_MASK | CV_32:
 				for (i=0; i<work_count; i++) {
 					*((signed long int *)to) =
 					    *((double *)from);
-					to = ((signed long int *)to) + 1;
-					from = ((double *)from) + 1;
+					to = (genptr_t)(((signed long int *)to) + 1);
+					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
 			case CV_32:
 				for (i=0; i<work_count; i++) {
 					*((unsigned long int *)to) =
 					    *((double *)from);
-					to = ((unsigned long int *)to) + 1;
-					from = ((double *)from) + 1;
+					to = (genptr_t)(((unsigned long int *)to) + 1);
+					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
 			}
