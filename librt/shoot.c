@@ -677,6 +677,7 @@ register struct application *ap;
 	struct resource		*resp;
 	struct rt_i		*rtip;
 	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	fastf_t			pending_hit = 0; /* dist of closest odd hit pending */
 
 	RT_AP_CHECK(ap);
 	if( ap->a_magic )  {
@@ -937,6 +938,7 @@ start_cell:
 		}
 
 		/* Consider all "pieces" of all solids within the box */
+		pending_hit = INFINITY;
 		if( cutp->bn.bn_piecelen > 0 )  {
 			register struct rt_piecelist *plp;
 			plp = &(cutp->bn.bn_piecelist[cutp->bn.bn_piecelen-1]);
@@ -990,6 +992,8 @@ start_cell:
 				if( psp->oddhit.hit_dist < INFINITY )  {
 					/* Restore to proper (absolute) distance */
 					psp->oddhit.hit_dist += ss.dist_corr;
+					if( psp->oddhit.hit_dist < pending_hit )
+						pending_hit = psp->oddhit.hit_dist;
 				}
 			}
 		}
@@ -1067,22 +1071,27 @@ start_cell:
 		 *  All partitions will have valid in and out distances.
 		 *  a_ray_length is treated similarly to a_onehit.
 		 */
-		if( ap->a_onehit != 0 && BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+		if( ap->a_onehit != 0 &&
+		    BU_LIST_NON_EMPTY( &(waiting_segs.l) )
+		)  {
 			int	done;
 
 			/* Weave these segments into partition list */
 			rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 
-			/* Evaluate regions upto box_end */
+			/* Evaluate regions upto end of good segs */
+			if( ss.box_end < pending_hit )  pending_hit = ss.box_end;
 			done = rt_boolfinal( &InitialPart, &FinalPart,
-				last_bool_start, ss.box_end, regionbits, ap, solidbits );
-			last_bool_start = ss.box_end;
+				last_bool_start, pending_hit, regionbits, ap, solidbits );
+			last_bool_start = pending_hit;
 
 			/* See if enough partitions have been acquired */
 			if( done > 0 )  goto hitit;
 		}
 
-		if( ap->a_ray_length > 0.0 && ss.box_end >= ap->a_ray_length )
+		if( ap->a_ray_length > 0.0 &&
+		    ss.box_end >= ap->a_ray_length &&
+		    ap->a_ray_length < pending_hit )
 			goto weave;
 
 		/* Push ray onwards to next box */
