@@ -348,5 +348,25 @@ struct rt_eto_internal {
 #define RT_ETO_INTERNAL_MAGIC	0xaaccee92
 #define RT_ETO_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ETO_INTERNAL_MAGIC,"rt_eto_internal")
 
+/*
+ *	ID_DSP
+ */
+#define DSP_NAME_LEN 128
+struct rt_dsp_internal{
+	long		magic;
+	char		dsp_file[DSP_NAME_LEN];	/* name of data file */
+	unsigned	dsp_xcnt;		/* # samples in row of data */
+	unsigned	dsp_ycnt;		/* # of columns in data */
+	double		dsp_xs;
+	double		dsp_ys;
+	double		dsp_zs;
+	mat_t		dsp_mtos;		/* model to solid space */
+	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
+	mat_t		dsp_stom;		/* solid to model space */
+	struct rt_mapped_file *dsp_mp;	/* actual data */
+};
+#define RT_DSP_INTERNAL_MAGIC	0xde6
+#define RT_DSP_CK_MAGIC(_p)	RT_CKMAG(_p,RT_DSP_INTERNAL_MAGIC,"rt_dsp_internal")
+
 
 #endif /* SEEN_RTGEOM_H */
