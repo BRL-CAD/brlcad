@@ -1,6 +1,6 @@
 /*
- *	@(#) vextern.h		retrieved 8/13/86 at 08:18:48,
- *	@(#) version 1.3		  created 3/29/83 at 10:54:39.
+ *	@(#) vextern.h			retrieved: 8/13/86 at 08:18:54,
+ *	@(#) version 1.4		last edit: 10/11/83 at 09:04:02.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -25,7 +25,7 @@ extern char	*curr_list[];
 extern int	curr_ct;
 extern char	*arg_list[];
 extern int	arg_ct, max_args;
-extern int	*tmp_list[];
+extern char	*tmp_list[];
 extern int	tmp_ct;
 
 extern int	objfd;		extern char	*objfile;
