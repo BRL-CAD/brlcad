@@ -51,18 +51,26 @@ static char RCSid[] = "$Header$";
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
+extern char *optarg;
+extern int optind,opterr,optopt;
+extern int errno;
+
+static char *brlcad_file;	/* name of output file */
 static int polysolid=0;		/* Flag for polysolid output rather than NMG's */
 static int solid_count=0;	/* count of solids converted */
 static struct rt_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
 static int debug=0;		/* Debug flag */
-static char *usage="proe-g [-p] [-d] [-x rt_debug_flag] [-X nmg_debug_flag] < proe_file.brl > output.g\n\
+static char *usage="proe-g [-p] [-d] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
-	and output.g is the name of a BRL-CAD database file.\n\
+	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -p option is to create polysolids rather than NMG's.\n\
 	The -d option prints additional debugging information.\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
 	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
+static FILE *fd_in;		/* input file (from Pro/E) */
+static FILE *fd_out;		/* Resulting BRL-CAD file */
+static struct db_i *dbip;
 
 struct render_verts
 {
@@ -76,6 +84,8 @@ struct name_conv_list
 	char solid_name[NAMESIZE];
 	char name[80];
 	char *obj;
+	int solid_use_no;
+	int comb_use_no;
 	struct name_conv_list *next;
 } *name_root=(struct name_conv_list *)NULL;
 
@@ -106,8 +116,10 @@ int type;
 	ptr->next = (struct name_conv_list *)NULL;
 	strcpy( ptr->name , name );
 	ptr->obj = obj;
-	strncpy( ptr->brlcad_name , name , NAMESIZE-1 );
-	ptr->brlcad_name[NAMESIZE-1] = '\0';
+	strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
+	ptr->brlcad_name[NAMESIZE-2] = '\0';
+	ptr->solid_use_no = 0;
+	ptr->comb_use_no = 0;
 
 	/* make sure brlcad_name is unique */
 	len = strlen( ptr->brlcad_name );
@@ -115,7 +127,7 @@ int type;
 	ptr2 = name_root;
 	while( ptr2 )
 	{
-		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
+		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE-2 ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE-2 ) )
 		{
 			try_char++;
 			if( try_char == '[' )
@@ -141,7 +153,7 @@ int type;
 	else
 	{
 		strcpy( ptr->solid_name , "s." );
-		strncpy( &ptr->solid_name[2] , name , NAMESIZE-3 );
+		strncpy( &ptr->solid_name[2] , name , NAMESIZE-4 );
 		ptr->solid_name[NAMESIZE-1] = '\0';
 	}
 
@@ -151,7 +163,7 @@ int type;
 	ptr2 = name_root;
 	while( ptr2 )
 	{
-		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
+		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE-2 ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE-2 ) )
 		{
 			try_char++;
 			if( try_char == '[' )
@@ -242,6 +254,7 @@ char line[MAX_LINE_LEN];
 	char *memb_obj;
 	char *brlcad_name;
 	double mat_col[4];
+	double conv_factor;
 	int start;
 	int i;
 
@@ -263,19 +276,19 @@ char line[MAX_LINE_LEN];
 	/* get name */
 	i = (-1);
 	start--;
-	while( !isspace( line[++start] ) && line[start] != '\0' )
+	while( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
 		name[++i] = line[start];
 	name[++i] = '\0';
 
-	/* get object pointer */
-	sscanf( &line[start] , "%x" , &obj );
+	/* get object pointer and conversion factor */
+	sscanf( &line[start] , "%x %f" , &obj, &conv_factor );
 
 	rt_log( "Converting Assembly: %s\n" , name );
 
 	if( debug )
 		rt_log( "Convert_assy: %s x%x\n" , name , obj );
 
-	while( gets( line1 ) )
+	while( fgets( line1, MAX_LINE_LEN, fd_in ) )
 	{
 		/* skip leading blanks */
 		start = (-1);
@@ -287,7 +300,7 @@ char line[MAX_LINE_LEN];
 			brlcad_name = Get_unique_name( name , obj , ASSEMBLY_TYPE );
 			if( debug )
 				rt_log( "\tmake assembly ( %s)\n" , brlcad_name );
-			mk_lcomb( stdout , brlcad_name , &head , 0 ,
+			mk_lcomb( fd_out , brlcad_name , &head , 0 ,
 			(char *)NULL , (char *)NULL , (unsigned char *)NULL , 0 );
 			break;
 		}
@@ -297,7 +310,7 @@ char line[MAX_LINE_LEN];
 			while( isspace( line1[++start] ) && line1[start] != '\0' );
 			i = (-1);
 			start--;
-			while( !isspace( line1[++start] ) && line1[start] != '\0' )
+			while( !isspace( line1[++start] ) && line1[start] != '\0' && line1[start] != '\n' )
 				memb_name[++i] = line1[start];
 			memb_name[++i] = '\0';
 
@@ -315,15 +328,17 @@ char line[MAX_LINE_LEN];
 
 			for( j=0 ; j<4 ; j++ )
 			{
-				gets( line1 );
+				fgets( line1, MAX_LINE_LEN, fd_in );
 				sscanf( line1 , "%lf %lf %lf %lf" , &mat_col[0] , &mat_col[1] , &mat_col[2] , &mat_col[3] );
 				for( i=0 ; i<4 ; i++ )
 					wmem->wm_mat[4*i+j] = mat_col[i];
 			}
 
-			wmem->wm_mat[3] *= 25.4;
-			wmem->wm_mat[7] *= 25.4;
-			wmem->wm_mat[11] *= 25.4;
+			for( j=0 ; j<15 ; j++ )
+			{
+				/* element #15 should not be affected by conversion factor */
+				wmem->wm_mat[j] *= conv_factor;
+			}
 		}
 		else
 		{
@@ -353,6 +368,7 @@ char line[MAX_LINE_LEN];
 	char *brlcad_name;
 	struct wmember head;
 	vect_t normal;
+	double conv_factor;
 
 	RT_LIST_INIT( &head.l );
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
@@ -377,19 +393,19 @@ char line[MAX_LINE_LEN];
 	/* get name */
 	i = (-1);
 	start--;
-	while( !isspace( line[++start] ) && line[start] != '\0' )
+	while( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
 		name[++i] = line[start];
 	name[++i] = '\0';
 
-	/* get object id */
-	sscanf( &line[start] , "%x" , &obj );
+	/* get object id and conversion factor */
+	sscanf( &line[start] , "%x %f" , &obj, &conv_factor );
 
 	rt_log( "Converting Part: %s\n" , name );
 
 	if( debug )
 		rt_log( "Conv_part %s x%x\n" , name , obj );
 
-	while( gets( line1 ) != NULL )
+	while( fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
 	{
 		start = (-1);
 		while( isspace( line1[++start] ) );
@@ -424,7 +440,7 @@ char line[MAX_LINE_LEN];
 
 			while( !endloop )
 			{
-				gets( line1 );
+				fgets( line1, MAX_LINE_LEN, fd_in );
 				
 				start = (-1);
 				while( isspace( line1[++start] ) );
@@ -436,7 +452,7 @@ char line[MAX_LINE_LEN];
 					float x,y,z;
 
 					sscanf( &line1[start+6] , "%f%f%f" , &x , &y , &z );
-					VSET( verts[vert_no].pt , x*25.4 , y*25.4 , z*25.4 );
+					VSET( verts[vert_no].pt , x , y , z );
 					vert_no++;
 				}
 			}
@@ -490,15 +506,18 @@ char line[MAX_LINE_LEN];
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
-	if( !polysolid )
+/*	if( !polysolid )
 	{
-		nmg_shell_coplanar_face_merge( s , &tol , 1 );
+		nmg_shell_coplanar_face_merge( s , &tol , 0 );
+
+		nmg_simplify_shell( s );
 
 		nmg_rebound( m , &tol );
 
 		(void)nmg_model_vertex_fuse( m , &tol );
 	}
 	else
+*/
 		nmg_rebound( m , &tol );
 
 	solid_count++;
@@ -510,13 +529,12 @@ char line[MAX_LINE_LEN];
 	if( polysolid )
 	{
 		rt_log( "\tWriting polysolid\n" );
-		write_shell_as_polysolid( stdout , solid_name , s );
+		write_shell_as_polysolid( fd_out , solid_name , s );
 	}
 	else
 	{
-		rt_log( "Writing NMG\n" );
-		nmg_shell_coplanar_face_merge( s , &tol , 1 );
-		mk_nmg( stdout , solid_name , m );
+		rt_log( "\tWriting NMG\n" );
+		mk_nmg( fd_out , solid_name , m );
 	}
 
 	nmg_km( m );
@@ -527,7 +545,7 @@ char line[MAX_LINE_LEN];
 	if( debug )
 		rt_log( "\tMake region (%s)\n" , brlcad_name );
 
-	mk_lrcomb( stdout, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
+	mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 	color, id_no, 0, 1, 100, 0 );
 	id_no++;
 }
@@ -537,7 +555,7 @@ Convert_input()
 {
 	char line[ MAX_LINE_LEN ];
 
-	while( gets( line ) )
+	while( fgets( line, MAX_LINE_LEN, fd_in ) )
 	{
 		if( !strncmp( line , "assembly" , 8 ) )
 			Convert_assy( line );
@@ -565,6 +583,12 @@ char	*argv[];
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
 
+	if( argc < 2 )
+	{
+		fprintf(stderr, usage, argv[0]);
+		exit(1);
+	}
+
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "dx:X:p")) != EOF) {
 		switch (c) {
@@ -587,7 +611,23 @@ char	*argv[];
 		}
 	}
 
-	mk_id_units( stdout , "Conversion from Pro/Engineer" , "in" );
+	if( (fd_in=fopen( argv[optind], "r")) == NULL )
+	{
+		fprintf( stderr, "Cannot open input file (%s)\n" , argv[optind] );
+		perror( argv[0] );
+		exit( 1 );
+	}
+	optind++;
+	brlcad_file = argv[optind];
+	if( (fd_out=fopen( brlcad_file, "w")) == NULL )
+	{
+		fprintf( stderr, "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
+		perror( argv[0] );
+		exit( 1 );
+	}
+
+	mk_id_units( fd_out , "Conversion from Pro/Engineer" , "in" );
 
 	Convert_input();
+
 }
