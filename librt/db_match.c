@@ -192,7 +192,7 @@ struct db_i    *dbip;
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-			if( rt_db_get_internal(&intern, dp, dbip, (matp_t *)NULL) < 0 )
+			if( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0 )
 				continue;
 			if( intern.idb_type != ID_COMBINATION )
 				continue;

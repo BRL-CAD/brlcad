@@ -81,8 +81,8 @@ int		len;
 int
 rt_db_get_internal( ip, dp, dbip, mat )
 struct rt_db_internal	*ip;
-struct directory	*dp;
-struct db_i		*dbip;
+CONST struct directory	*dp;
+CONST struct db_i	*dbip;
 CONST mat_t		mat;
 {
 	struct bu_external	ext;
@@ -127,9 +127,9 @@ CONST mat_t		mat;
  */
 int
 rt_db_put_internal( dp, dbip, ip )
-struct rt_db_internal	*ip;
 struct directory	*dp;
 struct db_i		*dbip;
+struct rt_db_internal	*ip;
 {
 	struct bu_external	ext;
 	int			ret;
@@ -138,7 +138,7 @@ struct db_i		*dbip;
 	RT_CK_DB_INTERNAL( ip );
 
 	/* Scale change on export is 1.0 -- no change */
-	ret = rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0, dbip );
+	ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip );
 	if( ret < 0 )  {
 		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);
