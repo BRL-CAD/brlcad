@@ -108,7 +108,7 @@ struct rt_i		*rtip;
 		VMINMAX( stp->st_min, stp->st_max, p1 );
 		VMINMAX( stp->st_min, stp->st_max, p2 );
 		VMINMAX( stp->st_min, stp->st_max, p3 );
-		if( rt_botface( stp, bot, p1, p2, p3, tri_index, tol ) > 0 )
+		if( rt_botface( stp, bot, p1, p2, p3, ntri, tol ) > 0 )
 			ntri++;
 	}
 
@@ -163,14 +163,13 @@ struct rt_i		*rtip;
 		bu_malloc( sizeof(struct bound_rpp) * ntri,
 			"st_piece_rpps" );
 
-	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
+	{
 		struct bound_rpp	*minmax = stp->st_piece_rpps;
 		CONST struct tri_specific **fap =
 			(CONST struct tri_specific **)bot->bot_facearray;
 		register CONST struct tri_specific *trip = bot->bot_facelist;
-		int	surfno = 0;
 
-		for( ; trip; trip = trip->tri_forw, surfno++ )  {
+		for( ; trip; trip = trip->tri_forw )  {
 			point_t b,c;
 			point_t d,e,f;
 			vect_t offset;
@@ -179,12 +178,17 @@ struct rt_i		*rtip;
 			*fap = trip;
 			fap++;
 
-			if( BU_BITTEST( bot->bot_facemode, surfno ) )  {
-				/* Append full thickness on both sides */
-				los = bot->bot_thickness[surfno];
+			if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
+				if( BU_BITTEST( bot->bot_facemode, trip->tri_surfno ) )  {
+					/* Append full thickness on both sides */
+					los = bot->bot_thickness[trip->tri_surfno];
+				} else {
+					/* Center thickness.  Append 1/2 thickness on both sides */
+					los = bot->bot_thickness[trip->tri_surfno] * 0.51;
+				}
 			} else {
-				/* Center thickness.  Append 1/2 thickness on both sides */
-				los = bot->bot_thickness[surfno] * 0.51;
+				/* Prevent the RPP from being 0 thickness */
+				los = tol->dist;	/* typ 0.005mm */
 			}
 
 			minmax->min[X] = minmax->max[X] = trip->tri_A[X];
@@ -215,27 +219,6 @@ struct rt_i		*rtip;
 
 			minmax++;
 		}
-	} else {
-		struct bound_rpp	*minmax = stp->st_piece_rpps;
-		CONST struct tri_specific **fap =
-			(CONST struct tri_specific **)bot->bot_facearray;
-		register CONST struct tri_specific *trip = bot->bot_facelist;
-		for( ; trip; trip = trip->tri_forw )  {
-			point_t b,c;
-
-			*fap = trip;
-			fap++;
-
-			minmax->min[X] = minmax->max[X] = trip->tri_A[X];
-			minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
-			minmax->min[Z] = minmax->max[Z] = trip->tri_A[Z];
-			VADD2( b, trip->tri_BA, trip->tri_A );
-			VMINMAX( minmax->min, minmax->max, b );
-			VADD2( c, trip->tri_CA, trip->tri_A );
-			VMINMAX( minmax->min, minmax->max, c );
-			minmax++;
-		}
-
 	}
 
 	return 0;
@@ -282,7 +265,8 @@ CONST struct bn_tol	*tol;
 	    m3 < tol->dist || m4 < tol->dist )  {
 		bu_free( (char *)trip, "getstruct tri_specific");
 	    	{
-			bu_log("bot(%s): degenerate facet\n", stp->st_name);
+			bu_log("bot(%s): degenerate facet #%d\n",
+				stp->st_name, face_no);
 	    		bu_log( "\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
 	    			V3ARGS( ap ), V3ARGS( bp ), V3ARGS( cp ) );
 	    	}
