@@ -36,10 +36,10 @@ FBIO	*fbp;
 
 static char *Usage = "usage: pixhist [-v] [file.pix]\n";
 
-long	max;
-double	scale;
-RGBpixel	line[512];
-FILE	*fp;
+static long	max;
+static double	scalefactor;
+static RGBpixel	line[512];
+static FILE	*fp;
 
 main( argc, argv )
 int argc;
@@ -90,10 +90,10 @@ char **argv;
 		if( bin_g[i] > max ) max = bin_g[i];
 		if( bin_b[i] > max ) max = bin_b[i];
 	}
-	scale = 511.0 / ((double)max);
+	scalefactor = 511.0 / ((double)max);
 
 	/* Display the max? */
-	printf("Max bin count=%d.  %g count/pixel\n", max, scale );
+	printf("Max bin count=%d.  %g count/pixel\n", max, scalefactor );
 
 	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
 		fprintf(stderr,"fb_open failed\n");
@@ -106,19 +106,19 @@ char **argv;
 		register int level;
 		register int npix;
 
-		level = (int)((double)bin_r[i]*scale);
+		level = (int)((double)bin_r[i]*scalefactor);
 		if( level > 511 )  level = 511;
 		for( j = 0; j < level; j++ )  line[j][RED] = 255;
 		for( ; j < 512; j++ )  line[j][RED] = 0;
 		npix = level;
 
-		level = (int)((double)bin_g[i]*scale);
+		level = (int)((double)bin_g[i]*scalefactor);
 		if( level > 511 )  level = 511;
 		for( j = 0; j < level; j++ )  line[j][GRN] = 255;
 		for( ; j < 512; j++ )  line[j][GRN] = 0;
 		if( level > npix )  npix = level;
 
-		level = (int)((double)bin_b[i]*scale);
+		level = (int)((double)bin_b[i]*scalefactor);
 		if( level > 511 )  level = 511;
 		for( j = 0; j < level; j++ )  line[j][BLU] = 255;
 		for( ; j < 512; j++ )  line[j][BLU] = 0;
