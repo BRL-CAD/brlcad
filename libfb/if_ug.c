@@ -4,9 +4,14 @@
  *  Ultra Network Technologies "Ultra Graphics" Display Device.
  *  			PRELIMINARY!
  *
+ *  BRL NOTE: This is only the scant beginnings of an Ultra interface.
+ *   We have no way of testing this, and given the changes in LIBFB this
+ *   code may not even compile any longer.  If you make improvements to
+ *   this please let us know. <phil@brl.mil>
+ *
  *  Authors -
  *	Michael John Muuss
- *	Phil Dykstra
+ *	Phillip Dykstra
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -27,8 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 #include <ultra/ugraf.h>
 
-extern int	fb_sim_readrect(), fb_sim_writerect();
-
 #define	FBSAVE	"/usr/tmp/ultrafb"
 
 static struct UG_PARAM	ug_param;
@@ -37,42 +40,37 @@ static char	*ugbuf, *ugbuf2, *ugcurs;
 static int	x_zoom, y_zoom;
 static int	x_window, y_window;	/* upper left of window (4th quad) */
 
-_LOCAL_ int	ug_dopen(),
-		ug_dclose(),
-		ug_dreset(),
-		ug_dclear(),
-		ug_bread(),
-		ug_bwrite(),
-		ug_cmread(),
-		ug_cmwrite(),
-		ug_viewport_set(),
-		ug_window_set(),
-		ug_zoom_set(),
-		ug_curs_set(),
-		ug_cmemory_addr(),
-		ug_cscreen_addr(),
+_LOCAL_ int	ug_open(),
+		ug_close(),
+		ug_clear(),
+		ug_read(),
+		ug_write(),
+		ug_rmap(),
+		ug_wmap(),
+		ug_view(),
+		ug_setcursor(),
+		ug_cursor(),
 		ug_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ug_interface =  {
-	ug_dopen,		/* device_open		*/
-	ug_dclose,		/* device_close		*/
-	ug_dreset,		/* device_reset		*/
-	ug_dclear,		/* device_clear		*/
-	ug_bread,		/* buffer_read		*/
-	ug_bwrite,		/* buffer_write		*/
-	ug_cmread,		/* colormap_read	*/
-	ug_cmwrite,		/* colormap_write	*/
-	ug_viewport_set,	/* viewport_set		*/
-	ug_window_set,		/* window_set		*/
-	ug_zoom_set,		/* zoom_set		*/
-	ug_curs_set,		/* curs_set		*/
-	ug_cmemory_addr,		/* cursor_move_memory_addr */
-	ug_cscreen_addr,		/* cursor_move_screen_addr */
+	ug_open,		/* device_open		*/
+	ug_close,		/* device_close		*/
+	ug_clear,		/* device_clear		*/
+	ug_read,		/* buffer_read		*/
+	ug_write,		/* buffer_write		*/
+	ug_rmap,		/* colormap_read	*/
+	ug_wmap,		/* colormap_write	*/
+	ug_view,		/* set view		*/
+	fb_sim_getview,		/* get view		*/
+	ug_setcursor,		/* curs_set		*/
+	ug_cursor,		/* cursor_move_memory_addr */
+	fb_sim_getcursor,
 	fb_sim_readrect,
 	fb_sim_writerect,
+	fb_null,			/* poll			*/
 	fb_null,			/* flush		*/
-	ug_dclose,			/* free			*/
+	ug_close,			/* free			*/
 	fb_null,			/* XXX add help here	*/
 	"Ultra Graphics",		/* device description	*/
 	1280,				/* max width		*/
@@ -80,7 +78,11 @@ FBIO ug_interface =  {
 	"/dev/ug",			/* short device name	*/
 	512,				/* default/current width  */
 	512,				/* default/current height */
+	-1,				/* select fd		*/
 	-1,				/* file descriptor	*/
+	1, 1,				/* zoom			*/
+	256, 256,			/* window center	*/
+	0, 0, 0,			/* cursor		*/
 	PIXEL_NULL,			/* page_base		*/
 	PIXEL_NULL,			/* page_curp		*/
 	PIXEL_NULL,			/* page_endp		*/
@@ -118,7 +120,7 @@ register struct UG_PARAM *pp;
 }
 
 _LOCAL_ int
-ug_dopen( ifp, file, width, height )
+ug_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -179,7 +181,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-ug_dclose( ifp )
+ug_close( ifp )
 FBIO	*ifp;
 {
 	int	status;
@@ -212,13 +214,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-ug_dreset( ifp )
-FBIO	*ifp;
-{
-}
-
-_LOCAL_ int
-ug_dclear( ifp, pp )
+ug_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
@@ -251,7 +247,7 @@ RGBpixel	*pp;
 }
 
 _LOCAL_ int
-ug_bread( ifp, x, y, pixelp, count )
+ug_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -288,7 +284,7 @@ char *str;
 }
 
 _LOCAL_ int
-ug_bwrite( ifp, x, y, pixelp, count )
+ug_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 register int	x, y;
 register char	*pixelp;
@@ -332,30 +328,24 @@ int	count;
 }
 
 _LOCAL_ int
-ug_cmread( ifp, cmp )
+ug_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
 }
 
 _LOCAL_ int
-ug_cmwrite( ifp, cmp )
+ug_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
 }
 
 _LOCAL_ int
-ug_viewport_set( ifp, left, top, right, bottom )
+ug_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	left, top, right, bottom;
-{
-}
-
-_LOCAL_ int
-ug_window_set( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	int	ugx, ugy;
 
@@ -368,36 +358,30 @@ int	x, y;
 	 *  Then convert from first to fourth for the Ultra.
 	 *  The order of these conversions is significant.
 	 */
-	ugx = x - (ifp->if_width / x_zoom)/2;
-	ugy = y + (ifp->if_height / y_zoom)/2 - 1;
+	ugx = xcenter - (ifp->if_width / x_zoom)/2;
+	ugy = ycenter + (ifp->if_height / y_zoom)/2 - 1;
 	ugy = ifp->if_height-1-ugy;		/* q1 -> q4 */
 
 	/* save q4 upper left */
 	x_window = ugx;
 	y_window = ugy;
 
-	zandw( ifp );
-}
-
-_LOCAL_ int
-ug_zoom_set( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
 	/* Window needs to be set as well XXX */
-	if( x < 1 )  x=1;
-	if( y < 1 )  y=1;
-	if( x > 256 )  x=256;
-	if( y > 256 )  y=256;
+	if( xzoom < 1 )  xzoom=1;
+	if( yzoom < 1 )  yzoom=1;
+	if( xzoom > 256 )  xzoom=256;
+	if( yzoom > 256 )  yzoom=256;
 
-	x_zoom = x;
-	y_zoom = y;
+	x_zoom = xzoom;
+	y_zoom = yzoom;
+
+	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
 
 	zandw( ifp );
 }
 
 _LOCAL_ int
-ug_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+ug_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
 int	xbits, ybits;
@@ -406,7 +390,7 @@ int	xorig, yorig;
 }
 
 _LOCAL_ int
-ug_cmemory_addr( ifp, mode, x, y )
+ug_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -439,47 +423,6 @@ int	x, y;
 	x = x - x_window;
 	x *= x_zoom;
 	y *= y_zoom;
-
-	ug_tblk.tx = x;
-	ug_tblk.tx &= ~03;
-	ug_tblk.ty = y;
-	ug_tblk.npixel = 16;
-	ug_tblk.nline = 16;
-	ug_tblk.addr = (int *)ugcurs;	
-
-	write_ug();
-}
-
-_LOCAL_ int
-ug_cscreen_addr( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
-{
-	int	i;
-	char	*cp;
-
-	/* write a fresh image in both buffers */
-	ug_tblk.tx = 0;
-	ug_tblk.ty = 0;
-	ug_tblk.npixel = ifp->if_width;
-	ug_tblk.nline = ifp->if_height;
-	ug_tblk.addr = (int *)ugbuf;
-
-	write_ug("cursor");
-	write_ug("cursor");
-	
-	/* build a cursor */
-	cp = &ugcurs[0];	
-	
-	for(i = 0; i <= 16 * 16; i++) {
-		cp++;
-		*cp++ = 255;
-		*cp++ = 255;
-		*cp++ = 255;
-	}
-	
-	y = ifp->if_width-1-y;		/* 1st quadrant */
 
 	ug_tblk.tx = x;
 	ug_tblk.tx &= ~03;
