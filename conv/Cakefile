@@ -9,7 +9,7 @@
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
 			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave \
-			nmg-polysolid g-shell.rect stl-g g4-g5
+			nmg-polysolid g-shell.rect stl-g g4-g5 poly-bot
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -110,5 +110,8 @@ g-vrml: g-vrml.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 
 g4-g5: g4-g5.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP	
 	CC LDFLAGS g4-g5.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g4-g5
+
+poly-bot: poly-bot.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP	
+	CC LDFLAGS poly-bot.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o poly-bot
 
 #include "../Cakefile.rules"
