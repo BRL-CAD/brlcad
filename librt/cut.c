@@ -936,7 +936,7 @@ int			ncpu;
 			if( ncpu <= 1 )  {
 				rt_cut_optimize_parallel(0, rtip);
 			} else {
-			bu_parallel( rt_cut_optimize_parallel, ncpu, rtip );
+				bu_parallel( rt_cut_optimize_parallel, ncpu, rtip );
 			}
 		}
 #endif
