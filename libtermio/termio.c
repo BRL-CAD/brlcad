@@ -14,6 +14,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <fcntl.h>
+#ifdef __NetBSD__
+#	include <sys/ioctl_compat.h>
+#	define TAB3 (TAB1|TAB2)
+#endif
 
 #include "machine.h"
 
