@@ -1050,6 +1050,75 @@ struct vertexuse *vu_p;
 }
 
 
+
+static struct pt2d *
+sort_pt(tbl2d, pt1, pt2, tol)
+struct rt_list *tbl2d;
+struct pt2d *pt1, *pt2;
+CONST struct rt_tol *tol;
+{
+	struct pt2d *save_pt, *pt_next, *pt_prev, *pt;
+	vect_t ray_dir, eu_dir;
+	struct vertexuse *vu, *vu1, *vu2;
+	struct faceuse *fu1;
+	double prev_max;
+
+	RT_CK_TOL(tol);
+	NMG_CK_PT2D(pt1);
+	NMG_CK_PT2D(pt2);
+
+	NMG_CK_VERTEXUSE(pt1->vu_p);
+	NMG_CK_VERTEX(pt1->vu_p->v_p);
+	NMG_CK_VERTEX_G(pt1->vu_p->v_p->vg_p);
+
+	NMG_CK_VERTEXUSE(pt2->vu_p);
+	NMG_CK_VERTEX(pt2->vu_p->v_p);
+	NMG_CK_VERTEX_G(pt2->vu_p->v_p->vg_p);
+
+	vu1 = pt1->vu_p;
+	vu2 = pt2->vu_p;
+
+	/* form a vector to represent the cut we want to make */
+	/* XXX what if the points are the same? */
+	VSUB2(ray_dir, pt2->coord, pt1->coord);
+
+	if ((fu1 = nmg_find_fu_of_vu(vu1)) == (struct faceuse *)NULL) {
+		rt_log("no faceuse parent of vertexuse %s %d\n", __FILE__, __LINE__);
+		rt_bomb("help!\n");
+	}
+
+	prev_max = 0.0;
+	save_pt = pt1;
+
+	for (RT_LIST_FOR(vu, vertexuse, &vu1->v_p->vu_hd)) {
+		NMG_CK_VERTEXUSE(vu);
+		NMG_CK_VERTEX(vu->v_p);
+		NMG_CK_VERTEX_g(vu->v_p->vg_p);
+
+		if (nmg_find_fu_of_vu(vu) != fu1 ||
+		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) continue;
+
+		if ((pt = find_pt2d(tbl2d, vu)) == (struct pt2d *)NULL)
+			rt_bomb("I want my mommy\n");
+
+		/* compute the angle of the outbound edgeuse to the ray */
+		pt_next = PT2D_NEXT(tbl2d, pt1);
+		VSUB2(eu_dir, pt_next->coord, pt->coord);
+		if (VDOT(ray_dir, eu_dir) > prev_max)
+			save_pt = pt;
+
+		/* compute the angle of the inbound edgeuse to the ray */
+		pt_prev = PT2D_PREV(tbl2d, pt1);
+		VSUB2(eu_dir, pt_prev->coord, pt->coord);
+		if (VDOT(ray_dir, eu_dir) > prev_max)
+			save_pt = pt;
+	}
+	return save_pt;
+}
+
+
+
+
 static void
 collect_and_sort_vu(tbl2d, p1, p2, tol)
 struct rt_list *tbl2d;
@@ -1058,7 +1127,7 @@ CONST struct rt_tol *tol;
 {
 	struct nmg_ray_state rs;
 	struct nmg_ptbl b;
-	struct pt2d *pt1, *pt2;
+	struct pt2d *pt1, *pt2, sp;
 	point_t pt;
 	vect_t dir;
 	struct faceuse *fu1, *fu2;
@@ -1081,6 +1150,9 @@ CONST struct rt_tol *tol;
 	    rt_log("collect_and_sort_vu(tbl2d,\n\t0x%08x (%g %g),\n\t0x%08x (%g %g))\n",
 		pt1->vu_p, pt1->coord[0], pt1->coord[1],
 		pt2->vu_p, pt2->coord[0], pt2->coord[1]);
+
+	sp = sort_pt(tbl2d, p1, p2, tol);
+	sp = sort_pt(tbl2d, p2, p1, tol);
 
 	nmg_tbl(&b, TBL_INIT, (long *)NULL); 
 	
