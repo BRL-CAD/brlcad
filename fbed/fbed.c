@@ -1763,10 +1763,10 @@ RGBpixel		*color;
 	}
 
 /*	g e n e r a l _ H a n d l e r ( )				*/
-#if defined( BSD ) || defined( sgi )
-_LOCAL_ int
-#else
+#if STD_SIGNAL_DECLS
 _LOCAL_ void
+#else
+_LOCAL_ int
 #endif
 general_Handler( sig )
 int	sig;
@@ -1810,6 +1810,10 @@ int	sig;
 		/*NOTREACHED*/
 	case SIGALRM :
 		break;
+#ifdef SIGWINCH
+	case SIGWINCH :
+		break;
+#endif
 #ifdef SYSV
 	case SIGCLD :
 		break;
