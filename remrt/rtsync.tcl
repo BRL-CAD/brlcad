@@ -21,6 +21,10 @@ set sunx 0
 set suny 0
 set sunz 0
 
+global air_shader1
+set air_shader1 "200 200 255"
+set air_shader2 "air dpm=.01"
+
 puts "running rtsync.tcl"
 ##option add *background #ffffff
 ##. configure -background #ffffff
@@ -31,6 +35,7 @@ frame .logo_fr ; pack .logo_fr -side top
 frame .title_fr ; pack .title_fr -side top
 frame .sunangle_fr -relief ridge -bd 2 ; pack .sunangle_fr -side top -expand 1 -fill x
 frame .suncolor_fr -relief ridge -bd 2 ; pack .suncolor_fr -side top -expand 1 -fill x
+frame .air_fr  -relief ridge -bd 2 ; pack .air_fr -side top -expand 1 -fill x
 frame .button_fr ; pack .button_fr -side top
 
 # Menu bar, acros very top
@@ -139,6 +144,30 @@ proc apply_color {} {
 	#vrmgr_send .inmem adjust $sun_region_name rgb $red $grn $blu ";" \
 	#	redraw_vlist $sun_region_name
 
+	# Use new POV if one receieved, else repeat last POV.
+	refresh
+}
+
+# The air shader
+label .air_title -text "Air Shader"
+entry .air_string1 -width 32 -relief sunken -bd 2 -textvariable air_shader1
+entry .air_string2 -width 32 -relief sunken -bd 2 -textvariable air_shader2
+button .air_apply -text "Apply" -command apply_air
+pack .air_title .air_string1 .air_string2 .air_apply -side top -in .air_fr
+
+proc apply_air {} {
+	global air_shader1
+	global air_shader2
+
+	# send new stuff to servers
+	# XXX region name is hardcoded for now.
+	node_send .inmem adjust air.r rgb "{" $air_shader1 "}" ";" \
+		  .inmem adjust air.r shader "{" $air_shader2 "}"
+	vrmgr_send .inmem adjust air.r rgb "{" $air_shader1 "}" ";" \
+		   .inmem adjust air.r shader "{" $air_shader2 "}"
+
+	# indicate LIBRT re-prep required.
+	reprep
 	# Use new POV if one receieved, else repeat last POV.
 	refresh
 }
