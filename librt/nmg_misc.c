@@ -13,8 +13,9 @@
  *		_pl_ routines use the 3d plot library to create 3d plots of
  *			NMG structs
  *
- *  Author -
+ *  Authors -
  *	Lee A. Butler
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -575,8 +576,10 @@ point_t pt;
 	return(0);
 }
 
-
-static eu_coords(eu, base, tip)
+/*
+ *			N M G _ E U _ C O O R D S
+ */
+static nmg_eu_coords(eu, base, tip)
 struct edgeuse *eu;
 point_t base, tip;
 {
@@ -593,7 +596,7 @@ point_t base, tip;
 
 #define LEE_DIVIDE_TOL	(1.0e-5)	/* sloppy tolerance */
 
-static void eu_coord(eu, base)
+static void nmg_eu_coord(eu, base)
 struct edgeuse *eu;
 point_t base;
 {
@@ -660,14 +663,14 @@ point_t base;
  *
  *	compute a pair of coordinates for representing an edgeuse
  */
-static eu_coords(eu, base, tip)
+static nmg_eu_coords(eu, base, tip)
 struct edgeuse *eu;
 point_t base, tip;
 {
 	vect_t eu_vec;
 
-	eu_coord(eu, base);
-	eu_coord( NMG_LIST_PNEXT_CIRC(edgeuse, eu), tip );
+	nmg_eu_coord(eu, base);
+	nmg_eu_coord( NMG_LIST_PNEXT_CIRC(edgeuse, eu), tip );
 
 	/* compute edgeuse vector */
 	VSUB2SCALE(eu_vec, tip, base, 0.6);
@@ -678,7 +681,7 @@ point_t base, tip;
 
 
 
-static void eu_radial(fp, eu, tip, R, G, B)
+static void nmg_eu_radial(fp, eu, tip, R, G, B)
 FILE *fp;
 struct edgeuse *eu;
 point_t tip;
@@ -692,7 +695,7 @@ unsigned char R, G, B;
 	NMG_CK_VERTEX(eu->radial_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->radial_p->vu_p->v_p->vg_p);
 
-	eu_coords(eu->radial_p, b2, t2);
+	nmg_eu_coords(eu->radial_p, b2, t2);
 
 	/* form vector of other edgeuse and scale down */
 	VSUB2SCALE(v, t2, b2, 0.8);
@@ -705,7 +708,7 @@ unsigned char R, G, B;
 	pl_color(fp, R, G, B);
 }
 
-static void eu_last(fp, eu, base)
+static void nmg_eu_last(fp, eu, base)
 FILE *fp;
 struct edgeuse *eu;
 point_t base;
@@ -721,7 +724,7 @@ point_t base;
 	NMG_CK_VERTEX(eulast->vu_p->v_p);
 	NMG_CK_VERTEX_G(eulast->vu_p->v_p->vg_p);
 
-	eu_coords(eulast->radial_p, b2, t2);
+	nmg_eu_coords(eulast->radial_p, b2, t2);
 
 	/* form vector of last edgeuse's radial edgeuse and scale down */
 	VSUB2SCALE(v, t2, b2, 0.8);
@@ -732,7 +735,7 @@ point_t base;
 	VADD2(p, b2, v);
 
 	/* get coordinates of last edgeuse */
-	eu_coords(eulast, b2, t2);
+	nmg_eu_coords(eulast, b2, t2);
 
 	/* form vector of last edgeuse's radial pointer and scale down */
 	VSUB2SCALE(v, p, t2, 0.2);
@@ -746,7 +749,7 @@ point_t base;
 	pd_3line(fp, base[0], base[1], base[2], p[0], p[1], p[2]);
 }
 
-static void eu_next(fp, eu, tip)
+static void nmg_eu_next(fp, eu, tip)
 FILE *fp;
 struct edgeuse *eu;
 point_t tip;
@@ -761,7 +764,7 @@ point_t tip;
 	NMG_CK_VERTEX(nexteu->vu_p->v_p);
 	NMG_CK_VERTEX_G(nexteu->vu_p->v_p->vg_p);
 
-	eu_coords(nexteu, b2, t2);
+	nmg_eu_coords(nexteu, b2, t2);
 
 	pl_color(fp, 0, 100, 0);
 	pd_3line(fp, tip[0], tip[1], tip[2], b2[0], b2[1], b2[2]);
@@ -838,7 +841,7 @@ unsigned char R, G, B;
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-	    	eu_coords(eu, base, tip);
+	    	nmg_eu_coords(eu, base, tip);
 	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
 	    		R += 50;
 		else if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE)
@@ -852,9 +855,9 @@ unsigned char R, G, B;
 			tip[0], tip[1], tip[2]);
 
 
-	    	eu_radial(fp, eu, tip, R, G, B);
-	    	eu_next(fp, eu, tip);
-/*	    	eu_last(fp, eu, base); */
+	    	nmg_eu_radial(fp, eu, tip, R, G, B);
+	    	nmg_eu_next(fp, eu, tip);
+/*	    	nmg_eu_last(fp, eu, base); */
 	    }
 }
 
