@@ -1056,6 +1056,7 @@ struct rt_tol		*tol;
 	struct shell	*s;
 	struct vertex	**verts;
 	struct faceuse	**faces;
+	vect_t		**norms;
 	struct vertex	**vertp[4];
 	int		nfaces;
 	int		i;
@@ -1111,6 +1112,9 @@ struct rt_tol		*tol;
 	dist_to_rim = tip->r_h/tip->r_a;
 	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_tess pts[]" );
+	norms = (vect_t **)rt_calloc( nlen , sizeof( vect_t *) , "rt_tor_tess: norms" );
+	for( len=0 ; len<nlen ; len++ )
+		norms[len] = (vect_t *)rt_calloc( nw , sizeof( vect_t ) , "rt_tor_tess: norms[len]" );
 
 	for( len = 0; len < nlen; len++ )  {
 		beta = rt_twopi * len / nlen;
@@ -1126,6 +1130,8 @@ struct rt_tol		*tol;
 			sin_alpha = sin(alpha);
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
 			VADD3( PTA(w,len), tip->v, edge, radius );
+
+			VCOMB2( norms[len][w] , cos_alpha , radius , sin_alpha , tip->h );
 		}
 	}
 
@@ -1166,6 +1172,36 @@ struct rt_tol		*tol;
 		if( nmg_fu_planeeqn( faces[i], tol ) < 0 )
 			return -1;		/* FAIL */
 	}
+
+	/* Associate vertexuse normals */
+	for( w=0 ; w<nw ; w++ )
+	{
+		for( len=0 ; len<nlen ; len++ )
+		{
+			struct vertexuse *vu;
+			vect_t rev_norm;
+
+			VREVERSE( rev_norm , norms[len][w] );
+
+			for( RT_LIST_FOR( vu , vertexuse , &verts[PT(w,len)]->vu_hd ) )
+			{
+				struct faceuse *fu;
+
+				NMG_CK_VERTEXUSE( vu );
+
+				fu = nmg_find_fu_of_vu( vu );
+				NMG_CK_FACEUSE( fu );
+
+				if( fu->orientation == OT_SAME )
+					nmg_vertexuse_nv( vu , norms[len][w] );
+				else if( fu->orientation == OT_OPPOSITE )
+					nmg_vertexuse_nv( vu , rev_norm );
+			}
+		}
+	}
+
+	/* Mark edges as real */
+	nmg_mark_edges_real( &s->l );
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
