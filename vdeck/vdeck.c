@@ -490,10 +490,11 @@ next_one: ;
 		addell( &sol, (struct rt_ell_internal *)intern.idb_ptr,
 			dp->d_namep, stp->st_bit+delsol );
 		break;
-#if 0
 	case ID_TGC:
-		addtgc( &rec );
+		addtgc( &sol, (struct rt_tgc_internal *)intern.idb_ptr,
+			dp->d_namep, stp->st_bit+delsol );
 		break;
+#if 0
 	case ID_ARS:
 		addars( &rec );
 		break;
@@ -1245,9 +1246,9 @@ int			num;
 /*	a d d t g c ( )
 	Process generalized truncated cone.
  */
-addtgc( v, tgc, name, num )
+addtgc( v, gp, name, num )
 struct rt_vls		*v;
-struct rt_tgc_internal	*tgc;
+struct rt_tgc_internal	*gp;
 char			*name;
 int			num;
 {
@@ -1255,120 +1256,161 @@ int			num;
 	vect_t	axb, cxd;
 	vect_t	work;
 	double	ma, mb, mc, md, maxb, mcxd, mh;
-	union record	*rec;	/* XXX */
+	int	cgtype;
 
 	/* Check for tec rec trc rcc.					*/
-	rec->s.s_cgtype = TGC;
-	VCROSS( axb, SV2, SV3 );
-	VCROSS( cxd, SV4, SV5 );
-	ma = MAGNITUDE( SV2 );
-	mb = MAGNITUDE( SV3 );
-	mc = MAGNITUDE( SV4 );
-	md = MAGNITUDE( SV5 );
+	cgtype = TGC;
+	VCROSS( axb, gp->a, gp->b );
+	VCROSS( cxd, gp->c, gp->d );
+
+	ma = MAGNITUDE( gp->a );
+	mb = MAGNITUDE( gp->b );
+	mc = MAGNITUDE( gp->c );
+	md = MAGNITUDE( gp->d );
 	maxb = MAGNITUDE( axb );
 	mcxd = MAGNITUDE( cxd );
-	mh = MAGNITUDE( SV1 );
+	mh = MAGNITUDE( gp->h );
 
 	/* Tec if ratio top and bot vectors equal and base parallel to top.
 	 */
-	if( mc == 0.0 )
-		{
+	if( mc == 0.0 )  {
 		(void) fprintf( stderr,
 				"Error in TGC, C vector has zero magnitude!\n"
 				);
 		return;
-		}
-	if( md == 0.0 )
-		{
+	}
+	if( md == 0.0 )  {
 		(void) fprintf( stderr,
 				"Error in TGC, D vector has zero magnitude!\n"
 				);
 		return;
-		}
+	}
 	if(	fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON
 	    &&  fabs( fabs(VDOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON
 		)
-		rec->s.s_cgtype = TEC;
+		cgtype = TEC;
 
 	/* Check for right cylinder.					*/
-	if( fabs( fabs(VDOT(SV1,axb)) - (mh*maxb) ) < CONV_EPSILON )
-		{
-		if( fabs( ma-mb ) < CONV_EPSILON )
-			{
+	if( fabs( fabs(VDOT(gp->h,axb)) - (mh*maxb) ) < CONV_EPSILON )  {
+		if( fabs( ma-mb ) < CONV_EPSILON )  {
 			if( fabs( ma-mc ) < CONV_EPSILON )
-				rec->s.s_cgtype = RCC;
+				cgtype = RCC;
 			else
-				rec->s.s_cgtype = TRC;
-			}
-		else    /* elliptical */
-		if( fabs( ma-mc ) < CONV_EPSILON )
-			rec->s.s_cgtype = REC;
+				cgtype = TRC;
+		} else {
+			/* elliptical */
+			if( fabs( ma-mc ) < CONV_EPSILON )
+				cgtype = REC;
 		}
+	}
 
 	/* Insure that magnitude of A is greater than B, and magnitude of 
 		C is greater than D for the GIFT code (boy, is THIS a shame).
 		This need only be done for the elliptical REC and TEC types.
 	 */
-	if( rec->s.s_cgtype == REC || rec->s.s_cgtype == TEC )
-		{
-		if( ma < mb )
-			{
-			swap_vec( SV2, SV3 );
-			swap_dbl( &ma, &mb );
-			swap_vec( SV4, SV5 );
-			swap_dbl( &mc, &md );
-			}
-		}
+	if( (cgtype == REC || cgtype == TEC) && ma < mb )  {
+		swap_vec( gp->a, gp->b );
+		swap_dbl( &ma, &mb );
+		swap_vec( gp->c, gp->d );
+		swap_dbl( &mc, &md );
+	}
 
 	/* Print the solid parameters.					*/
-	switch( rec->s.s_cgtype )
-		{
+	vls_itoa( v, num, 5 );
+	switch( cgtype )  {
 	case TGC:
-		ewrite( solfd, "tgc  ", 5 );
-		work[0] = mc;
-		work[1] = md;
-		work[2] = 0.0;
-		VMOVE( SV4, work );
-		psp( 5, rec );
+		rt_vls_strcat( v, "tgc  " );		/* 5 */
+		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_cvt( v, mc, 10, 4 );
+		vls_ftoa_cvt( v, md, 10, 4 );
+		vls_blanks( v, 4*10 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
 		break;
 	case RCC:
-		ewrite( solfd, "rcc  ", 5 );
-		work[0] = ma;
-		work[1] = work[2] = 0.0;
-		VMOVE( SV2, work );
-		psp( 3, rec );
+		rt_vls_strcat( v, "rcc  " );		/* 5 */
+		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_cvt( v, ma, 10, 4 );
+		vls_blanks( v, 5*10 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
 		break;
 	case TRC:
-		ewrite( solfd, "trc  ", 5 );
-		work[0] = ma;
-		work[1] = mc;
-		work[2] = 0.0;
-		VMOVE( SV2, work );
-		psp( 3, rec );
+		rt_vls_strcat( v, "trc  " );		/* 5 */
+		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_cvt( v, ma, 10, 4 );
+		vls_ftoa_cvt( v, mc, 10, 4 );
+		vls_blanks( v, 4*10 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
 		break;
 	case TEC:
-		ewrite( solfd, "tec  ", 5 );
-		/* This backwards conversion is to counteract an unnecessary
-			conversion of this ratio in 'psp()'.  Sorry about
-			that.
-		 */
-		work[0] = (ma / mc) / unit_conversion;
-		work[1] = work[2] = 0.0;
-		VMOVE( SV4, work );
-		psp( 5, rec );
+		rt_vls_strcat( v, "tec  " );		/* 5 */
+		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa( v, ma/mc, 10, 4 );	/* dimensionless ratio */
+		vls_blanks( v, 5*10 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
 		break;
 	case REC:
-		ewrite( solfd, "rec  ", 5 );
-		psp( 4, rec );
+		rt_vls_strcat( v, "rec  " );		/* 5 */
+		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
+		vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
 		break;
 	default:
 		(void) fprintf( stderr,
 				"Error in tgc type (%d).\n",
-				rec->s.s_cgtype
+				cgtype
 				);
 		exit( 10 );
-		}
-	return;
+	}
 }
 
 /*	a d d a r s ( )
