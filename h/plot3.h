@@ -11,7 +11,7 @@
 #ifndef	PLOT3_H
 #define	PLOT3_H
 
-#ifdef __STDC__
+#if __STDC__ || USE_PROTOTYPES
 extern void pl_point(  FILE *plotfp, int x, int y);
 extern void pl_line(   FILE *plotfp, int fx, int fy, int tx, int ty);
 extern void pl_linmod( FILE *plotfp, char *s);
@@ -22,7 +22,7 @@ extern void pl_space(  FILE *plotfp, int x1, int y1, int x2, int y2);
 extern void pl_erase(  FILE *plotfp);
 extern void pl_circle( FILE *plotfp, int x, int y, int r);
 extern void pl_arc(    FILE *plotfp, int xc, int yc, int x1, int y1, int x2, int y2);
-extern void pl_box(    FILE *plotfp, int x1, int y2, int x2, int y2);
+extern void pl_box(    FILE *plotfp, int x1, int y1, int x2, int y2);
 /* BRL extensions. */
 extern void pl_color(  FILE *plotfp, int r, int g, int b);
 extern void pl_flush(  FILE *plotfp);
@@ -40,7 +40,7 @@ extern void pd_cont(   FILE *plotfp, double x, double y);
 extern void pd_space(  FILE *plotfp, double x1, double y1, double x2, double y2);
 extern void pd_circle( FILE *plotfp, double x, double y, double r);
 extern void pd_arc(    FILE *plotfp, double xc, double yc, double x1, double y1, double x2, double y2);
-extern void pd_box(    FILE *plotfp, double x1, double y2, double x2, double y2);
+extern void pd_box(    FILE *plotfp, double x1, double y1, double x2, double y2);
 /* Double 3-D both in vector and enumerated versions */
 #ifdef VMATH_H
 extern void pdv_3space(FILE *plotfp, vect_t min, vect_t max);
@@ -48,7 +48,7 @@ extern void pdv_3point(FILE *plotfp, vect_t pt);
 extern void pdv_3move( FILE *plotfp, vect_t pt);
 extern void pdv_3cont( FILE *plotfp, vect_t pt);
 extern void pdv_3line( FILE *plotfp, vect_t a, vect_t b);
-extern void pdv_3box(  FILE *plotfp, vetc_t a, vect_t b);
+extern void pdv_3box(  FILE *plotfp, vect_t a, vect_t b);
 #endif /* VMATH_H */
 extern void pd_3space( FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2);
 extern void pd_3point( FILE *plotfp, double x, double y, double z);
