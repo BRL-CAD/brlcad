@@ -357,6 +357,7 @@ struct rt_dsp_internal{
 	char		dsp_file[DSP_NAME_LEN];	/* name of data file */
 	unsigned	dsp_xcnt;		/* # samples in row of data */
 	unsigned	dsp_ycnt;		/* # of columns in data */
+	int		dsp_smooth;		/* bool: surf normal interp */
 	double		dsp_xs;
 	double		dsp_ys;
 	double		dsp_zs;
