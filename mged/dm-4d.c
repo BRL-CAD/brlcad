@@ -52,6 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "externs.h"
 #include "./solid.h"
+#include "tcl.h"
 
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
@@ -268,6 +269,7 @@ static void
 Ir_configure_window_shape()
 {
 	int		npix;
+	int		monitor;
 
 	xlim_view = 1.0;
 	ylim_view = 1.0;
@@ -294,7 +296,18 @@ Ir_configure_window_shape()
 	} else
 		ir_clear_to_black();
 
-	switch( getmonitor() )  {
+	monitor = getmonitor();
+	{
+		extern Tcl_Interp *interp;	/* cmd.c */
+		char	*val;
+
+		val = Tcl_GetVar2(interp, "sgi_ntsc", NULL, TCL_GLOBAL_ONLY);
+		if( val && atoi(val) != 0 )  {
+			rt_log("dm-4d: setting NTSC size window\n");
+			monitor = NTSC;
+		}
+	}
+	switch( monitor )  {
 	default:
 		break;
 	case NTSC:
