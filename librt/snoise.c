@@ -192,18 +192,12 @@ double d;
 	return table[i];
 }
 
-#define RT_RAND_TABSIZE 4096
-extern float rt_rndtable[RT_RAND_TABSIZE];
-#define RT_RANDSEED( _i, _seed )        _i = _seed % RT_RAND_TABSIZE
-#define RT_RANDOM( _i )         rt_rndtable[ _i = (_i+1) % RT_RAND_TABSIZE ]
-
 /* 
  * This is our table of random numbers.  Rather than calling drand48() or
  * random() or rand() we just pick numbers out of this table.  This table 
- * has 4096 entries.  This version of rndtable was generated via calls to 
- * drand48() on a machine which provided that function.
+ * has 4096 entries.
  */
-float rt_rndtable[RT_RAND_TABSIZE] = {
+CONST float rt_rand_table[RT_RAND_TABSIZE] = {
     0.39646477, 0.84048537, 0.35333610, 0.44658343, 0.31869277, 0.88642843,
     0.01558285, 0.58409022, 0.15936863, 0.38371587, 0.69100437, 0.05885891,
     0.89985431, 0.16354595, 0.15907150, 0.53306471, 0.60414419, 0.58269902,
@@ -889,7 +883,6 @@ float rt_rndtable[RT_RAND_TABSIZE] = {
     0.15166367, 0.76687850, 0.62507295, 0.33458056
 };
 
-
 /*
  *	Value Noise
  *
@@ -1200,7 +1193,7 @@ init_noise_funcs()
 #define REALSCALE ( 2.0 / 65536.0 )
 #define NREALSCALE ( 2.0 / 4096.0 )
 #define Hash3d(a,b,c) \
-	hashTable[  hashTable[  hashTable[(a) & 0xfff] ^ ((b) & 0xfff) ]  ^ ((c) & 0xfff) ]
+	ht.hashTable[  ht.hashTable[  ht.hashTable[(a) & 0xfff] ^ ((b) & 0xfff) ]  ^ ((c) & 0xfff) ]
 
 #define Hash(a,b,c) (xtab[(xtab[(xtab[(a) & 0xff] ^ (b)) & 0xff] ^ (c)) & 0xff] & 0xff)
 
@@ -1212,8 +1205,32 @@ init_noise_funcs()
 #define MAXSIZE 267
 
 double		RTable[MAXSIZE];
-static char	hashTableValid;
-static short	*hashTable;
+
+#define MAGIC_STRHT1	1771561
+#define MAGIC_STRHT2	1651771
+#define MAGIC_TAB1	   9823
+#define MAGIC_TAB2	 784642
+#define CK_HT() { \
+	RT_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht"); \
+	RT_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht"); \
+	RT_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1"); \
+	RT_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 1"); \
+	if (ht.hashTable != (ht.hashTableMagic1 + 1)) \
+		rt_bomb("ht.hashTable changed rel ht.hashTableMagic1"); \
+	if (ht.hashTable != (ht.hashTableMagic2 - 4096)) \
+		rt_bomb("ht.hashTable changed rel ht.hashTableMagic2"); \
+}
+
+struct str_ht {
+	long	magic;	
+	char	hashTableValid;
+	short	*hashTableMagic1;
+	short	*hashTable;
+	short	*hashTableMagic2;
+	long	magic_end;	
+};
+
+static struct str_ht ht;
 
 static unsigned short xtab[256] =
 {
@@ -1296,25 +1313,32 @@ noise_init()
 	
 	RES_ACQUIRE(&rt_g.res_model);
 
-	if (hashTableValid) {
+	if (ht.hashTableValid) {
 		RES_RELEASE(&rt_g.res_model);
 		return;
 	}
 
-	hashTableValid = 1;
+	ht.hashTableValid = 1;
 
 	RT_RANDSEED(rndtabi, (RT_RAND_TABSIZE-1) );
-	hashTable = (short *) rt_malloc(4096*sizeof(short int), "noise hashTable");
+	ht.hashTableMagic1 = (short *) rt_malloc(
+		2*sizeof(long) + 4096*sizeof(short int),
+		"noise hashTable");
+	ht.hashTable = &ht.hashTableMagic1[1];
+	ht.hashTableMagic2 = &ht.hashTableMagic1[4097];
+	ht.magic_end = MAGIC_STRHT2;
+	ht.magic = MAGIC_STRHT1;
+
 	for (i = 0; i < 4096; i++)
-		hashTable[i] = i;
+		ht.hashTable[i] = i;
 
 	/* scramble the hash table */
 	for (k = 0, i = 4095; i > 0; i--, k++) {
 		j = (int)(RT_RANDOM(rndtabi) * 4096.0);
 
-		temp = hashTable[i];
-		hashTable[i] = hashTable[j];
-		hashTable[j] = temp;
+		temp = ht.hashTable[i];
+		ht.hashTable[i] = ht.hashTable[j];
+		ht.hashTable[j] = temp;
 	}
 
 	for (i = 0; i < MAXSIZE; i++) {
@@ -1343,8 +1367,10 @@ point_t point;
 	short	m;
 	point_t	pt;
 
-	if (!hashTableValid) noise_init();
-
+	if (!ht.hashTableValid) noise_init();
+	else {
+		CK_HT();
+	}
 	FILTER_ARGS( point); /* sets x,y,z, ix,iy,iz, fx,fy,fz */
 
 	jx = ix + 1; 
@@ -1409,7 +1435,7 @@ point_t result;
 	point_t		pt;
 
 
-	if ( ! hashTableValid ) noise_init();
+	if ( ! ht.hashTableValid ) noise_init();
 
 
 	FILTER_ARGS( point); /* sets x,y,z, ix,iy,iz, fx,fy,fz */
