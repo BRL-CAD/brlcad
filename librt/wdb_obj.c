@@ -39,6 +39,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "wdb.h"
 
 #include "./debug.h"
 
@@ -83,6 +84,9 @@ HIDDEN int wdb_move_tcl();
 HIDDEN int wdb_move_all_tcl();
 HIDDEN int wdb_concat_tcl();
 HIDDEN int wdb_dup_tcl();
+HIDDEN int wdb_group_tcl();
+HIDDEN int wdb_remove_tcl();
+HIDDEN int wdb_region_tcl();
 
 HIDDEN void wdb_deleteProc();
 HIDDEN void wdb_deleteProc_rt();
@@ -90,11 +94,12 @@ HIDDEN void wdb_deleteProc_rt();
 HIDDEN void wdb_do_trace();
 HIDDEN void wdb_trace();
 
-HIDDEN int wdb_cmpdirname();
-HIDDEN void wdb_vls_col_pr4v();
-HIDDEN void wdb_vls_line_dpp();
-HIDDEN struct directory ** wdb_getspace();
-HIDDEN void wdb_do_list();
+int wdb_cmpdirname();
+void wdb_vls_col_pr4v();
+void wdb_vls_line_dpp();
+void wdb_do_list();
+struct directory ** wdb_getspace();
+struct directory *wdb_combadd();
 
 struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 
@@ -104,6 +109,12 @@ HIDDEN char wdb_prestr[RT_NAMESIZE];
 HIDDEN int wdb_ncharadd;
 HIDDEN int wdb_num_dups;
 HIDDEN struct directory	**wdb_dup_dirp;
+
+/* default region ident codes */
+HIDDEN int wdb_item_default = 1000;	/* GIFT region ID */
+HIDDEN int wdb_air_default = 0;
+HIDDEN int wdb_mat_default = 1;		/* GIFT material code */
+HIDDEN int wdb_los_default = 100;	/* Line-of-sight estimate */
 
 /* input path */
 HIDDEN struct directory *wdb_objects[WDB_MAX_LEVELS];
@@ -140,6 +151,9 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"mvall",	wdb_move_all_tcl,
 	"concat",	wdb_concat_tcl,
 	"dup",		wdb_dup_tcl,
+	"g",		wdb_group_tcl,
+	"rm",		wdb_remove_tcl,
+	"r",		wdb_region_tcl,
 #if 0
 	"c",		wdb_comb_std_tcl,
 	"cat",		wdb_cat_tcl,
@@ -150,7 +164,6 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"copymat",	wdb_copymat_tcl,
 	"copyeval",	wdb_copyeval_tcl,
 	"find",		wdb_find_tcl,
-	"g",		wdb_group_tcl,
 	"i",		wdb_instance_tcl,
 	"inside",	wdb_inside_tcl,
 	"keep",		wdb_keep_tcl,
@@ -158,8 +171,6 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"push",		wdb_push_tcl,
 	"getmat",	wdb_getmat_tcl,
 	"putmat",	wdb_putmat_tcl,
-	"r",		wdb_region_tcl,
-	"rm",		wdb_remove_tcl,
 	"summary",	wdb_summary_tcl,
 	"title",	wdb_title_tcl,
 	"tree",		wdb_tree_tcl,
@@ -1982,17 +1993,17 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 
 HIDDEN void
 wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
-struct db_i		*dbip;
-struct rt_comb_internal *comb;
-union tree		*comb_leaf;
-genptr_t		user_ptr1, user_ptr2, user_ptr3;
+     struct db_i		*dbip;
+     struct rt_comb_internal *comb;
+     union tree		*comb_leaf;
+     genptr_t		user_ptr1, user_ptr2, user_ptr3;
 {
 	char	mref[RT_NAMESIZE+2];
 	char	*prestr;
 	int	*ncharadd;
 
 	if(dbip == DBI_NULL)
-	  return;
+		return;
 
 	RT_CK_DBI(dbip);
 	RT_CK_TREE(comb_leaf);
@@ -2002,8 +2013,8 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 
 	(void)strncpy(mref, prestr, *ncharadd);
 	(void)strncpy(mref+(*ncharadd),
-		comb_leaf->tr_l.tl_name,
-		RT_NAMESIZE-(*ncharadd) );
+		      comb_leaf->tr_l.tl_name,
+		      RT_NAMESIZE-(*ncharadd) );
 	bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
 	comb_leaf->tr_l.tl_name = bu_strdup(mref);
 }
@@ -2118,7 +2129,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags)
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if (wdb_ncharadd && comb->tree) {
 			db_tree_funcleaf(curr_dbip, comb, comb->tree, wdb_do_update,
-					  (genptr_t)&wdb_ncharadd, (genptr_t)wdb_prestr, (genptr_t)NULL);
+					 (genptr_t)&wdb_ncharadd, (genptr_t)wdb_prestr, (genptr_t)NULL);
 		}
 	}
 
@@ -2209,11 +2220,11 @@ wdb_concat_tcl(clientData, interp, argc, argv)
  */
 int
 wdb_dir_check(input_dbip, name, laddr, len, flags)
-register struct db_i	*input_dbip;
-register char		*name;
-long			laddr;
-int			len;
-int			flags;
+     register struct db_i	*input_dbip;
+     register char		*name;
+     long			laddr;
+     int			len;
+     int			flags;
 {
 	struct directory	*dupdp;
 	char			local[RT_NAMESIZE+2];
@@ -2320,6 +2331,232 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+/*
+ * Usage:
+ *        procname group groupname object(s)
+ */
+HIDDEN int
+wdb_group_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register struct directory *dp;
+	register int i;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 4 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_group");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* get objects to add to group */
+	for (i = 3; i < argc; i++) {
+		if ((dp = db_lookup(wdbop->wdb_wp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
+			if (wdb_combadd(interp, wdbop->wdb_wp->dbip, dp, argv[2], 0,
+					WMOP_UNION, 0, 0) == DIR_NULL)
+				return TCL_ERROR;
+		}  else
+			Tcl_AppendResult(interp, "skip member ", argv[i], "\n", (char *)NULL);
+	}
+	return TCL_OK;
+}
+
+/*
+ * Remove members from a combination.
+ *
+ * Usage:
+ *        procname remove comb object(s)
+ */
+HIDDEN int
+wdb_remove_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register struct directory *dp;
+	register int	i;
+	int		num_deleted;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	union tree		*tp;
+	int			ret;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 4 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_remove");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if ((dp = db_lookup(wdbop->wdb_wp->dbip,  argv[2], LOOKUP_NOISY)) == DIR_NULL)
+		return TCL_ERROR;
+
+	if ((dp->d_flags & DIR_COMB) == 0) {
+		Tcl_AppendResult(interp, "rm: ", dp->d_namep,
+				 " is not a combination\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if (rt_db_get_internal(&intern, dp, wdbop->wdb_wp->dbip, (fastf_t *)NULL) < 0) {
+		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
+
+	/* Process each argument */
+	num_deleted = 0;
+	ret = TCL_OK;
+	for (i = 3; i < argc; i++) {
+		if (db_tree_del_dbleaf( &(comb->tree), argv[i] ) < 0) {
+			Tcl_AppendResult(interp, "  ERROR_deleting ",
+					 dp->d_namep, "/", argv[i],
+					 "\n", (char *)NULL);
+			ret = TCL_ERROR;
+		} else {
+			Tcl_AppendResult(interp, "deleted ",
+					 dp->d_namep, "/", argv[i],
+					 "\n", (char *)NULL);
+			num_deleted++;
+		}
+	}
+
+	if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern) < 0) {
+		Tcl_AppendResult(curr_interp, "Database write error, aborting\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	return ret;
+}
+
+/*
+ * Usage:
+ *        procname r object(s)
+ */
+HIDDEN int
+wdb_region_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register struct directory *dp;
+	int i;
+	int ident, air;
+	char oper;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 4 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_region");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+ 	ident = wdb_item_default;
+ 	air = wdb_air_default;
+
+	/* skip past procname */
+	--argc;
+	++argv;
+ 
+	/* Check for even number of arguments */
+	if (argc & 01) {
+		Tcl_AppendResult(interp, "error in number of args!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (db_lookup(wdbop->wdb_wp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+		/* will attempt to create the region */
+		if (wdb_item_default) {
+			struct bu_vls tmp_vls;
+
+			wdb_item_default++;
+			bu_vls_init(&tmp_vls);
+			bu_vls_printf(&tmp_vls, "Defaulting item number to %d\n", wdb_item_default);
+			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
+		}
+	}
+
+	/* Get operation and solid name for each solid */
+	for (i = 2; i < argc; i += 2) {
+		if (argv[i][1] != '\0') {
+			Tcl_AppendResult(interp, "bad operation: ", argv[i],
+					 " skip member: ", argv[i+1], "\n", (char *)NULL);
+			continue;
+		}
+		oper = argv[i][0];
+		if ((dp = db_lookup(wdbop->wdb_wp->dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL ) {
+			Tcl_AppendResult(interp, "skipping ", argv[i+1], "\n", (char *)NULL);
+			continue;
+		}
+
+		if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
+			struct bu_vls tmp_vls;
+
+			bu_vls_init(&tmp_vls);
+			bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
+				      oper, dp->d_namep );
+			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
+			continue;
+		}
+
+		/* Adding region to region */
+		if (dp->d_flags & DIR_REGION) {
+			Tcl_AppendResult(interp, "Note: ", dp->d_namep,
+					 " is a region\n", (char *)NULL);
+		}
+
+		if (wdb_combadd(interp, wdbop->wdb_wp->dbip, dp,
+				argv[1], 1, oper, ident, air) == DIR_NULL) {
+			Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+	}
+
+	if (db_lookup(wdbop->wdb_wp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+		/* failed to create region */
+		if (wdb_item_default > 1)
+			wdb_item_default--;
+		return TCL_ERROR;
+	}
+
+	return TCL_OK;
+}
+
 #if 0
 /*
  * Usage:
@@ -2363,7 +2600,7 @@ wdb_cmpdirname(a, b)
  *  in that list, sort and print that list in column order over four columns.
  *  This routine was lifted from mged/columns.c.
  */
-HIDDEN void
+void
 wdb_vls_col_pr4v(vls, list_of_names, num_in_list)
      struct bu_vls *vls;
      struct directory **list_of_names;
@@ -2430,7 +2667,7 @@ wdb_vls_col_pr4v(vls, list_of_names, num_in_list)
  *  in that list, sort and print that list on the same line.
  *  This routine was lifted from mged/columns.c.
  */
-HIDDEN void
+void
 wdb_vls_line_dpp(vls, list_of_names, num_in_list, aflag, cflag, rflag, sflag)
      struct bu_vls *vls;
      struct directory **list_of_names;
@@ -2485,7 +2722,7 @@ wdb_vls_line_dpp(vls, list_of_names, num_in_list, aflag, cflag, rflag, sflag)
  *  b) the number of entries specified by the argument if > 0.
  *  This routine was lifted from mged/dir.c.
  */
-HIDDEN struct directory **
+struct directory **
 wdb_getspace(dbip, num_entries)
      struct db_i *dbip;
      register int num_entries;
@@ -2542,4 +2779,173 @@ wdb_do_list(dbip, interp, outstrp, dp, verbose)
 				       verbose, dbip->dbi_base2local) < 0)
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_functab[id].ft_ifree(&intern);
+}
+
+/*
+ *			C O M B A D D
+ *
+ * Add an instance of object 'dp' to combination 'name'.
+ * If the combination does not exist, it is created.
+ * region_flag is 1 (region), or 0 (group).
+ */
+struct directory *
+wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air)
+     Tcl_Interp *interp;
+     struct db_i *dbip;
+     register struct directory *objp;
+     char *combname;
+     int region_flag;			/* true if adding region */
+     int relation;			/* = UNION, SUBTRACT, INTERSECT */
+     int ident;				/* "Region ID" */
+     int air;				/* Air code */
+{
+	register struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	union tree *tp;
+	struct rt_tree_array *tree_list;
+	int node_count;
+	int actual_count;
+
+	if (dbip == DBI_NULL)
+		return DIR_NULL;
+
+	/*
+	 * Check to see if we have to create a new combination
+	 */
+	if ((dp = db_lookup(dbip,  combname, LOOKUP_QUIET)) == DIR_NULL) {
+		int flags;
+
+		if (region_flag)
+			flags = DIR_REGION | DIR_COMB;
+		else
+			flags = DIR_COMB;
+
+		/* Update the in-core directory */
+		if ((dp = db_diradd(dbip, combname, -1, 2, flags)) == DIR_NULL ||
+		    db_alloc(dbip, dp, 2) < 0)  {
+			Tcl_AppendResult(interp, "An error has occured while adding '",
+					 combname, "' to the database.\n", (char *)NULL);
+			return DIR_NULL;
+		}
+
+		BU_GETSTRUCT(comb, rt_comb_internal);
+		comb->magic = RT_COMB_MAGIC;
+		bu_vls_init(&comb->shader);
+		bu_vls_init(&comb->material);
+		comb->region_id = -1;
+		comb->tree = TREE_NULL;
+
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_type = ID_COMBINATION;
+		intern.idb_meth = &rt_functab[ID_COMBINATION];
+		intern.idb_ptr = (genptr_t)comb;
+
+		if (region_flag) {
+			struct bu_vls tmp_vls;
+
+			comb->region_flag = 1;
+			comb->region_id = ident;
+			comb->aircode = air;
+			comb->los = wdb_los_default;
+			comb->GIFTmater = wdb_mat_default;
+			bu_vls_init(&tmp_vls);
+			bu_vls_printf(&tmp_vls,
+				      "Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
+				      ident, air, wdb_mat_default, wdb_los_default);
+			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
+		}
+
+		BU_GETUNION( tp, tree );
+		tp->magic = RT_TREE_MAGIC;
+		tp->tr_l.tl_op = OP_DB_LEAF;
+		tp->tr_l.tl_name = bu_strdup( objp->d_namep );
+		tp->tr_l.tl_mat = (matp_t)NULL;
+		comb->tree = tp;
+
+		if (rt_db_put_internal(dp, dbip, &intern) < 0) {
+			Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL );
+			return( DIR_NULL );
+		}
+		return( dp );
+	}
+
+	/* combination exists, add a new member */
+	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
+		Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
+		return DIR_NULL;
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
+
+	if (region_flag && !comb->region_flag) {
+		Tcl_AppendResult(interp, combname, ": not a region\n", (char *)NULL);
+		return DIR_NULL;
+	}
+
+	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+		db_non_union_push(comb->tree);
+		if (db_ck_v4gift_tree(comb->tree) < 0) {
+			Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL);
+			rt_comb_ifree(comb);
+			return DIR_NULL;
+		}
+	}
+
+	/* make space for an extra leaf */
+	node_count = db_tree_nleaves( comb->tree ) + 1;
+	tree_list = (struct rt_tree_array *)bu_calloc( node_count,
+						       sizeof( struct rt_tree_array ), "tree list" );
+
+	/* flatten tree */
+	if (comb->tree) {
+		actual_count = 1 + (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+		if( actual_count > node_count )  bu_bomb("combadd() array overflow!");
+		if( actual_count < node_count )  bu_log("WARNING combadd() array underflow! %d", actual_count, node_count);
+	}
+
+	/* insert new member at end */
+	switch (relation) {
+	case '+':
+		tree_list[node_count - 1].tl_op = OP_INTERSECT;
+		break;
+	case '-':
+		tree_list[node_count - 1].tl_op = OP_SUBTRACT;
+		break;
+	default:
+		Tcl_AppendResult(interp, "unrecognized relation (assume UNION)\n",
+				 (char *)NULL );
+	case 'u':
+		tree_list[node_count - 1].tl_op = OP_UNION;
+		break;
+	}
+
+	/* make new leaf node, and insert at end of list */
+	BU_GETUNION(tp, tree);
+	tree_list[node_count-1].tl_tree = tp;
+	tp->tr_l.magic = RT_TREE_MAGIC;
+	tp->tr_l.tl_op = OP_DB_LEAF;
+	tp->tr_l.tl_name = bu_strdup( objp->d_namep );
+	tp->tr_l.tl_mat = (matp_t)NULL;
+
+	/* rebuild the tree */
+	comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, (struct db_tree_state *)NULL );
+
+	/* increase the length of this record */
+	if (db_grow(dbip, dp, 1) < 0) {
+		Tcl_AppendResult(interp, "db_grow error, aborting\n", (char *)NULL);
+		return DIR_NULL;
+	}
+
+	/* and finally, write it out */
+	if (rt_db_put_internal(dp, dbip, &intern) < 0) {
+		Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL);
+		return DIR_NULL;
+	}
+
+	bu_free((char *)tree_list, "combadd: tree_list");
+
+	return (dp);
 }
