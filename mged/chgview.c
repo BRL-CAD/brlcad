@@ -442,7 +442,10 @@ f_aeview()
 void
 f_attach()
 {
-	attach( cmd_args[1] );
+	if (numargs == 1)
+		get_attached();
+	else
+		attach( cmd_args[1] );
 }
 
 void
@@ -589,11 +592,15 @@ f_knob()
 {
 	fastf_t f;
 
-	f = atof(cmd_args[2]);
-	if( f < -1.0 )
-		f = -1.0;
-	else if( f > 1.0 )
-		f = 1.0;
+	if(numargs == 2)
+		f = 0;
+	else {
+		f = atof(cmd_args[2]);
+		if( f < -1.0 )
+			f = -1.0;
+		else if( f > 1.0 )
+			f = 1.0;
+	}
 	switch( cmd_args[1][0] )  {
 	case 'x':
 		dm_values.dv_xjoy = f;
@@ -617,7 +624,7 @@ f_knob()
 		dm_values.dv_zoom = f;
 		break;
 	default:
-		(void)printf("x,y,z for joystick, Z for zoom, X,Y for slew\n");
+		(void)printf("x,y,z for rotation, S for scale, X,Y,Z for slew\n");
 		return;
 	}
 }
