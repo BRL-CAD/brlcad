@@ -430,7 +430,6 @@ char **argv;
 		else
 			sprintf(nbuf, "pix-fb -w%d -n%d", w, h);
 
-		fprintf(stderr, "pcd-pix | %s\n", nbuf);
 		if( (fout = popen( nbuf, "w" )) == NULL )  {
 			perror(nbuf);
 			exit(42);
