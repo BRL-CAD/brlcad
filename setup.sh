@@ -264,4 +264,7 @@ sh gen.sh mkdir		# Won't have any effect unless NFS is set.
 
 # Congratulations.  Everything is fine.
 echo "BRL-CAD initial setup is complete."
-echo "Run 'make install' next."
+# Just doing "make install" isn't good enough, it doesn't
+# compile things in bench, db, or proc-db.  You may want db.
+echo "Next, run:"
+echo "	make; make install"
