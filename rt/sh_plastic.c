@@ -108,7 +108,7 @@ double rand0to1()
 #endif BENCHMARK
 
 /*
- *			P L A S T I C _ S E T U P
+ *			P H O N G _ S E T U P
  */
 int
 phong_setup( rp )
@@ -131,9 +131,57 @@ register struct region *rp;
 	return(1);
 }
 
+/*
+ *			M I R R O R _ S E T U P
+ */
+int
+mirror_setup( rp )
+register struct region *rp;
+{
+	register struct phong_specific *pp;
+
+	GETSTRUCT( pp, phong_specific );
+	rp->reg_ufunc = phong_render;
+	rp->reg_udata = (char *)pp;
+
+	pp->shine = 4;
+	pp->wgt_specular = 0.6;
+	pp->wgt_diffuse = 0.4;
+	pp->transmit = 0.0;
+	pp->reflect = 0.75;
+	pp->refrac_index = 0.0;
+
+	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (char *)pp );
+	return(1);
+}
 
 /*
- *			P L A S T I C _ R E N D E R
+ *			G L A S S _ S E T U P
+ */
+int
+glass_setup( rp )
+register struct region *rp;
+{
+	register struct phong_specific *pp;
+
+	GETSTRUCT( pp, phong_specific );
+	rp->reg_ufunc = phong_render;
+	rp->reg_udata = (char *)pp;
+
+	pp->shine = 4;
+	pp->wgt_specular = 0.7;
+	pp->wgt_diffuse = 0.3;
+	pp->transmit = 0.8;
+	pp->reflect = 0.4;
+	pp->refrac_index = 1.65;
+
+	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (char *)pp );
+	return(1);
+}
+
+
+/*
+ *			P H O N G _ R E N D E R
  *
 	Color pixel based on the energy of a point light source (Eps)
 	plus some diffuse illumination (Epd) reflected from the point
@@ -281,6 +329,7 @@ register struct partition *pp;
 		sub_ap.a_level = ap->a_level + 1;
 		sub_ap.a_x = ap->a_x;
 		sub_ap.a_y = ap->a_y;
+		sub_ap.a_rt_i = ap->a_rt_i;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 
 		/* Dither light pos for penumbra by +/- 0.5 light radius */
@@ -345,6 +394,7 @@ register struct partition *pp;
 		sub_ap.a_level = ap->a_level+1;
 		sub_ap.a_hit = colorview;
 		sub_ap.a_miss = hit_nothing;
+		sub_ap.a_rt_i = ap->a_rt_i;
 		sub_ap.a_onehit = 1;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 		f = 2 * VDOT( to_eye, hitp->hit_normal );
@@ -360,6 +410,7 @@ register struct partition *pp;
 		sub_ap.a_level = ap->a_level * 100;	/* flag */
 		sub_ap.a_x = ap->a_x;
 		sub_ap.a_y = ap->a_y;
+		sub_ap.a_rt_i = ap->a_rt_i;
 		if( !phg_refract(ap->a_ray.r_dir, /* Incident ray (IN) */
 			hitp->hit_normal,
 			RI_AIR, ps->refrac_index,
@@ -406,6 +457,7 @@ do_inside:
 do_exit:
 		sub_ap.a_hit =  colorview;
 		sub_ap.a_miss = hit_nothing;
+		sub_ap.a_rt_i = ap->a_rt_i;
 		sub_ap.a_level++;
 		(void) rt_shootray( &sub_ap );
 		VJOIN1( ap->a_color, ap->a_color,

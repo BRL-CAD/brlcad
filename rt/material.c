@@ -29,6 +29,9 @@ extern int phong_setup();
 extern int txt_setup();
 extern int tmap_setup();
 extern int cloud_setup();
+extern int mirror_setup();
+extern int glass_setup();
+extern int ckr_setup();
 
 struct matlib {
 	char	*ml_name;
@@ -38,6 +41,9 @@ struct matlib {
 	"texture",	txt_setup,
 	"testmap",	tmap_setup,
 	"cloud",	cloud_setup,
+	"mirror",	mirror_setup,
+	"glass",	glass_setup,
+	"checker",	ckr_setup,
 	(char *)0,	0			/* END */
 };
 
