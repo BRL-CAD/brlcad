@@ -142,6 +142,7 @@ struct rtnode {
 	struct pkg_conn	*pkg;
 	struct ihost	*host;
 	int		ncpus;		/* Ready when > 0, for now */
+	int		busy;
 };
 #define MAX_NODES	32
 struct rtnode	rtnodes[MAX_NODES];
@@ -369,16 +370,15 @@ dispatcher()
 {
 	register int	i;
 	int		ncpu = 0;
-	static int	sent_one = 0;
 	int		start_line;
 	int		lowest_index = 0;
 
 	if( !pending_pov )  return 0;
-	if( sent_one )  return 0;
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd <= 0 )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
+		if( rtnodes[i].busy )  return 0;	/* Still working on last one */
 		ncpu += rtnodes[i].ncpus;
 		lowest_index = i;
 	}
@@ -418,10 +418,12 @@ dispatcher()
 
 		rt_vls_free(&msg);
 		start_line = end_line + 1;
+		rtnodes[i].busy = 1;
 	}
 
 	free( pending_pov );
 	pending_pov = NULL;
+	return 0;
 }
 
 /*
@@ -577,7 +579,6 @@ vrmgr_ph_pov(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
-rt_log("%s %s\n", stamp(), buf);
 	if( pending_pov )  free(pending_pov);
 	pending_pov = buf;
 }
@@ -636,12 +637,18 @@ rtsync_ph_done(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
-	struct ihost	*ihp;
+	register int	i;
 
-	rt_log("It's done! %s\n", buf);
-	ihp = host_lookup_of_fd( pc->pkc_fd );
-	if(ihp) rt_log("  %s is done\n", ihp->ht_name );
-	if( buf )  free(buf);
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].pkg != pc )  continue;
+
+		/* Found it */
+		rt_log("%s DONE %s\n", stamp(), rtnodes[i].host->ht_name );
+		rtnodes[i].busy = 0;
+		if( buf )  free(buf);
+		return;
+	}
+	rt_bomb("DONE Message received from phantom pkg?\n");
 }
 
 /*
