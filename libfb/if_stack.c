@@ -57,11 +57,11 @@ FBIO stk_interface =  {
 	stk_cscreen_addr,	/* cursor_move_screen_addr */
 	stk_help,		/* help function	*/
 	"Multiple Device Stacker", /* device description */
-	1280,			/* max width		*/
-	1024,			/* max height		*/
+	1024*32,		/* max width		*/
+	1024*32,		/* max height		*/
 	"/dev/stack",		/* short device name	*/
-	512,			/* default/current width  */
-	512,			/* default/current height */
+	4,			/* default/current width  */
+	4,			/* default/current height */
 	-1,			/* file descriptor	*/
 	PIXEL_NULL,		/* page_base		*/
 	PIXEL_NULL,		/* page_curp		*/
@@ -113,9 +113,14 @@ int	width, height;
 		return(-1);
 	}
 
+	/* Chamelion mode:  be any size he wants */
+	ifp->if_width = width;
+	ifp->if_height = height;
 	i = 0;
 	while( i < MAXIF && *cp != NULL ) {
-		char	*dp;
+		register char	*dp;
+		register FBIO	*fbp;
+
 		while( *cp != NULL && (*cp == ' ' || *cp == '\t' || *cp == ';') )
 			cp++;	/* skip blanks and separators */
 		if( *cp == NULL )
@@ -124,8 +129,24 @@ int	width, height;
 		while( *cp != NULL && *cp != ';' )
 			*dp++ = *cp++;
 		*dp = NULL;
-		if( (SI(ifp)->if_list[i] = fb_open(devbuf, width, height)) != FBIO_NULL )
-			i++;
+		if( (fbp = fb_open(devbuf, ifp->if_width, ifp->if_height)) != FBIO_NULL )  {
+			/* Use first default size found */
+			if( ifp->if_width == 0 )
+				ifp->if_width = fbp->if_width;
+			if( ifp->if_height == 0 )
+				ifp->if_height = fbp->if_height;
+
+			/* Track the minimum of all the sizes availible */
+			if( fbp->if_width < ifp->if_width )
+				ifp->if_width = fbp->if_width;
+			if( fbp->if_height < ifp->if_height )
+				ifp->if_height = fbp->if_height;
+			if( fbp->if_max_width < ifp->if_max_width )
+				ifp->if_max_width = fbp->if_max_width;
+			if( fbp->if_max_height < ifp->if_max_height )
+				ifp->if_max_height = fbp->if_max_height;
+			SI(ifp)->if_list[i++] = fbp;
+		}
 	}
 	if( i > 0 )
 		return(0);
