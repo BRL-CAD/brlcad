@@ -68,6 +68,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	*out++ = 0xAD; \
 	continue; } \
 
+
+#if defined(sun) || defined(alliant) || defined(ardent) || \
+	defined(stellar) || defined(sparc) || defined(mips)
+
+	/*  These systems already operate in
+	 *  IEEE format internally, using big-endian order.
+	 */
+#	define	NATURAL_IEEE	yes
+#endif
+
 /*
  *			H T O N D
  *
@@ -79,7 +89,7 @@ register unsigned char	*out;
 register unsigned char	*in;
 int			count;
 {
-#if	defined(sun) || defined(alliant)
+#ifdef	NATURAL_IEEE
 	/*
 	 *  First, the case where the system already operates in
 	 *  IEEE format internally, using big-endian order.
@@ -94,10 +104,9 @@ int			count;
 #	define	HTOND	yes
 #endif
 
-#if	defined(sgi)
+#if	defined(sgi) && !defined(mips)
 	/*
 	 *  Silicon Graphics Iris workstation.
-	 *  On the 4-D, a double is a double.
 	 *  On the 2-D and 3-D, a double is type converted to a float
 	 *  (4 bytes), but IEEE single precision has a different
 	 *  number of exponent bits than double precision, so we
@@ -105,36 +114,26 @@ int			count;
 	 */
 	register int	i;
 	for( i=count-1; i >= 0; i-- )  {
-		if( sizeof(double) == 4 )  {
-			/* Brain-damaged 3-D case */
-			float small;
-			long float big;
-			register unsigned char *fp = (unsigned char *)&small;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			big = small;		/* H/W cvt to IEEE double */
-			fp = (unsigned char *)&big;
-			*out++ = *fp++;
-			*out++ = *fp++;
-			*out++ = *fp++;
-			*out++ = *fp++;
-			*out++ = *fp++;
-			*out++ = *fp++;
-			*out++ = *fp++;
-			*out++ = *fp++;
-		} else {
-			/* 4-D case */
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-		}
+		/* Brain-damaged 3-D case */
+		float small;
+		long float big;
+		register unsigned char *fp = (unsigned char *)&small;
+
+		*fp++ = *in++;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		big = small;		/* H/W cvt to IEEE double */
+
+		fp = (unsigned char *)&big;
+		*out++ = *fp++;
+		*out++ = *fp++;
+		*out++ = *fp++;
+		*out++ = *fp++;
+		*out++ = *fp++;
+		*out++ = *fp++;
+		*out++ = *fp++;
+		*out++ = *fp++;
 	}
 	return;
 #	define	HTOND	yes
@@ -397,7 +396,7 @@ register unsigned char	*out;
 register unsigned char	*in;
 int			count;
 {
-#if	defined(sun) || defined(alliant)
+#ifdef NATURAL_IEEE
 	/*
 	 *  First, the case where the system already operates in
 	 *  IEEE format internally, using big-endian order.
@@ -414,43 +413,31 @@ int			count;
 #	define	NTOHD	yes
 #endif
 
-#if	defined(sgi)
+#if	defined(sgi) && !defined(mips)
 	/*
 	 *  Silicon Graphics Iris workstation.
 	 *  See comments in htond() for discussion of the braindamage.
 	 */
 	register int	i;
 	for( i=count-1; i >= 0; i-- )  {
-		if( sizeof(double) == 4 )  {
-			/* Brain-damaged 3-D case */
-			float small;
-			long float big;
-			register unsigned char *fp = (unsigned char *)&big;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			*fp++ = *in++;
-			small = big;		/* H/W cvt to IEEE double */
-			fp = (unsigned char *)&small;
-			*out++ = *fp++;
-			*out++ = *fp++;
-			*out++ = *fp++;
-			*out++ = *fp++;
-		} else {
-			/* 4-D case */
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-		}
+		/* Brain-damaged 3-D case */
+		float small;
+		long float big;
+		register unsigned char *fp = (unsigned char *)&big;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		*fp++ = *in++;
+		small = big;		/* H/W cvt to IEEE double */
+		fp = (unsigned char *)&small;
+		*out++ = *fp++;
+		*out++ = *fp++;
+		*out++ = *fp++;
+		*out++ = *fp++;
 	}
 	return;
 #	define	NTOHD	yes
