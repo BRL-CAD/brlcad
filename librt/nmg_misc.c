@@ -6315,7 +6315,9 @@ CONST struct rt_tol *tol;
 		{
 			rt_log( "nmg_make_faces_at_vert: Failed to calculate plane eqn for face:\n " );
 			rt_log( "\tnew_v is x%x at ( %f %f %f )\n" , new_v , V3ARGS( new_v->vg_p->coord ) );
-			if( rt_3pts_collinear( new_v , vu1->v_p , vu2->v_p , tol ) )
+			if( rt_3pts_collinear( new_v->vg_p->coord,
+			    vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord,
+			    tol ) )
 				rt_log( "\tPoints are collinear\n" );
 			nmg_pr_fu_briefly( new_fu , " " );
 		}
