@@ -180,6 +180,7 @@ set -S2 "/bin/sh"
 #	define	CC_OPTS	-qlanglvl=ansi -D__unix
 #	define	OPTIMIZER	-O
 #	define	HAS_TCP	1
+#	define	LIBTERMLIB	-lcurses
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
 #	if	0
@@ -284,7 +285,7 @@ set -S2 "/bin/sh"
 /*	There is a /usr/bsd/cc as well */
 #	define	CC	/bin/cc
 /*	-Xc for ANSI, otherwise non-ANSI */
-#	define	CC_OPTS	-D__stardent=1 -Xc -D_POSIX_SOURCE=1
+#	define	CC_OPTS	-D__stardent=1 -Xc
 #endif
 
 #ifdef gould
