@@ -14,16 +14,16 @@ PRODUCTS	= fbanim loop pix-fb fb-pix \
 		pixbustup pixdiff pixinterp2x pixtile \
 		pp-fb fbclear fbgrid \
 		rle-fb fb-rle rle-pix pix-rle \
-		fbcmap fbscanplot fbzoom fbpoint fblabel\
+		fbcmap fb-cmap cmap-fb fbgamma \
+		fbscanplot fbzoom fbpoint fblabel\
 		plot-fb fbcolor fbcmrot pixbackgnd fbframe ap-pix \
 		bw-fb bw-pix bw3-pix bwcrop bwdiff bwfilter bw-impress \
 		bwhist bwhisteq bwmod bwrect bwrot bwscale bwstat fb-bw \
 		gencolor pix-bw pix-bw3 pixfilter pixhist \
 		pixhist3d pixhist3d-pl \
 		pixrect pixrot pixscale pixstat \
-		sun-pix mac-pix pixmerge \
+		sun-pix mac-pix pixmerge tiris \
 		dunncolor dunnsnap
-#SYSV# dunncolor & dunnsnap are currently BSD-only, delete above.
 
 SRCDIR		= util
 MANSECTION	= 1
@@ -32,7 +32,8 @@ CFILES		= dunncolor.c dunnsnap.c fbanim.c loop.c pix-fb.c fb-pix.c \
 		pixbustup.c pixdiff.c pixinterp2x.c pixtile.c \
 		pp-fb.c fbclear.c fbgrid.c \
 		rle-fb.c fb-rle.c rle-pix.c pix-rle.c \
-		fbcmap.c fbscanplot.c fbzoom.c fbpoint.c fblabel.c plot-fb.c \
+		fbcmap.c fb-cmap.c cmap-fb.c fbgamma.c \
+		fbscanplot.c fbzoom.c fbpoint.c fblabel.c plot-fb.c \
 		fbcolor.c fbcmrot.c pixbackgnd.c fbframe.c ap-pix.c \
 		bw-fb.c bw-pix.c bw3-pix.c bwcrop.c bwdiff.c bwfilter.c \
 		bw-impress.c bwhist.c bwhisteq.c \
@@ -40,25 +41,25 @@ CFILES		= dunncolor.c dunnsnap.c fbanim.c loop.c pix-fb.c fb-pix.c \
 		gencolor.c pix-bw.c pix-bw3.c pixfilter.c pixhist.c \
 		pixhist3d.c pixhist3d-pl.c \
 		sun-pix.c mac-pix.c pixmerge.c \
-		pixrect.c pixrot.c pixscale.c pixstat.c
+		pixrect.c pixrot.c pixscale.c pixstat.c tiris.c
 
 all:		${PRODUCTS}
 
 # This is how to make the product
 #${PRODUCTS}:	$$@.o
-#	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBFB}
+#	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
-dunncolor:	dunncolor.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+dunncolor:	dunncolor.o dunncomm.o
+	$(CC) ${LDFLAGS} -o $@ $@.o dunncomm.o ${LIBES}
 
-dunnsnap:	dunnsnap.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+dunnsnap:	dunnsnap.o dunncomm.o
+	$(CC) ${LDFLAGS} -o $@ $@.o dunncomm.o ${LIBES}
 
-fbanim:		fbanim.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES} ${LIBFB}
+fbanim:		fbanim.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
-plot-fb:		plot-fb.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBFB}
+plot-fb:	plot-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
 loop:		loop.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
@@ -72,11 +73,11 @@ sun-pix:	sun-pix.o
 pixmerge:	pixmerge.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
 
-pix-fb:		pix-fb.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES} ${LIBFB}
+pix-fb:		pix-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
-fb-pix:		fb-pix.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES} ${LIBFB}
+fb-pix:		fb-pix.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 pixbustup:	pixbustup.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
@@ -90,19 +91,19 @@ pixinterp2x:	pixinterp2x.o
 pixtile:	pixtile.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
 
-pp-fb:		pp-fb.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+pp-fb:		pp-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES}
 
-fbclear:	fbclear.o
+fbclear:	fbclear.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
-fbgrid:		fbgrid.o
+fbgrid:		fbgrid.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
-rle-fb:		rle-fb.o
+rle-fb:		rle-fb.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBRLE} ${LIBES}
 
-fb-rle:		fb-rle.o
+fb-rle:		fb-rle.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBRLE} ${LIBES}
 
 rle-pix:	rle-pix.o
@@ -111,38 +112,47 @@ rle-pix:	rle-pix.o
 pix-rle:	pix-rle.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBRLE} ${LIBES}
 
-fbcmap:		fbcmap.o
+fbcmap:		fbcmap.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
-fbscanplot:	fbscanplot.o
+fb-cmap:	fb-cmap.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+cmap-fb:	cmap-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+fbgamma:	fbgamma.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+fbscanplot:	fbscanplot.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES}
 
-fbzoom:		fbzoom.o
+fbzoom:		fbzoom.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
 
-fbpoint:	fbpoint.o
+fbpoint:	fbpoint.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
 
-fblabel:	fblabel.o
+fblabel:	fblabel.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
 
-fbcolor:	fbcolor.o
+fbcolor:	fbcolor.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
 
 ap-pix:		ap-pix.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
 
-fbcmrot:	fbcmrot.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBFB}
+fbcmrot:	fbcmrot.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 pixbackgnd:	pixbackgnd.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
 
-fbframe:	fbframe.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBFB}
+fbframe:	fbframe.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
-bw-fb:		bw-fb.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES} ${LIBFB}
+bw-fb:		bw-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 bw-impress:	bw-impress.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
@@ -162,11 +172,11 @@ bwdiff:		bwdiff.o
 bwfilter:	bwfilter.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
 
-bwhist:		bwhist.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBFB}
+bwhist:		bwhist.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
 bwhisteq:	bwhisteq.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
 
 bwmod:		bwmod.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
@@ -183,8 +193,8 @@ bwscale:	bwscale.o
 bwstat:		bwstat.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
 
-fb-bw:		fb-bw.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES} ${LIBFB}
+fb-bw:		fb-bw.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 gencolor:	gencolor.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
@@ -198,11 +208,11 @@ pix-bw3:	pix-bw3.o
 pixfilter:	pixfilter.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
 
-pixhist:	pixhist.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBFB}
+pixhist:	pixhist.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
-pixhist3d:	pixhist3d.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBFB}
+pixhist3d:	pixhist3d.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
 pixrect:	pixrect.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
@@ -218,6 +228,9 @@ pixstat:	pixstat.o
 
 pixhist3d-pl:	pixhist3d-pl.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBPLOT}
+
+tiris:	tiris.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
 
 # DO NOT DELETE THIS LINE -- make depend uses it
@@ -254,6 +267,12 @@ pix-rle.o: ../h/fb.h
 pix-rle.o: ../h/rle.h
 fbcmap.o: fbcmap.c
 fbcmap.o: ../h/fb.h
+fb-cmap.o: fb-cmap.c
+fb-cmap.o: ../h/fb.h
+cmap-fb.o: cmap-fb.c
+cmap-fb.o: ../h/fb.h
+fbgamma.o: fbgamma.c
+fbgamma.o: ../h/fb.h
 fbscanplot.o: fbscanplot.c
 fbscanplot.o: ../h/fb.h
 fbzoom.o: fbzoom.c
@@ -306,6 +325,7 @@ pixrect.o: pixrect.c
 pixrot.o: pixrot.c
 pixscale.o: pixscale.c
 pixstat.o: pixstat.c
+tiris.o: tiris.c
 # DEPENDENCIES MUST END AT END OF FILE
 # IF YOU PUT STUFF HERE IT WILL GO AWAY
 # see make depend above
