@@ -224,7 +224,7 @@ benchmark)
 		(cd ${DIRPRE}libpkg${DIRSUF};  cake -k)  # needed for IF_REMOTE
 	fi
 	(cd ${DIRPRE}libfb${DIRSUF};  cake -k)
-	(cd ${DIRPRE}libspl${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libnurb${DIRSUF};  cake -k)
 	(cd ${DIRPRE}librt${DIRSUF};  cake -k)
 	(cd ${DIRPRE}conv${DIRSUF}; cake -k)
 	(cd ${DIRPRE}db${DIRSUF}; cake -k)
