@@ -79,7 +79,6 @@ extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
 extern char	**objtab;		/* array of treetop strings */
-extern char	*beginptr;		/* sbrk() at start of program */
 extern int	matflag;		/* read matrix from stdin */
 extern int	desiredframe;		/* frame to start at */
 extern int	finalframe;		/* frame to halt at */
@@ -97,6 +96,7 @@ extern int	max_ireflect;		/* max internal reflection level */
 void		def_tree();
 void		do_ae();
 void		res_pr();
+void		memory_summary(void);
 
 /*
  *			O L D _ F R A M E
@@ -513,13 +513,7 @@ register struct rt_i	*rtip;
 	if (rt_verbosity & VERBOSE_STATS)
 		bu_log("GETTREE: %s\n", bu_vls_addr(&times));
 	bu_vls_free( &times );
-
-#ifdef HAVE_SBRK
-	if (rt_verbosity & VERBOSE_STATS)
-		bu_log("Additional dynamic memory used=%ld. bytes\n",
-			(long)((char *)sbrk(0)-beginptr) );
-	beginptr = (char *) sbrk(0);
-#endif
+	memory_summary();
 }
 
 /*
@@ -548,12 +542,7 @@ struct rt_i	*rtip;
 			bu_log( "PREP: %s\n", bu_vls_addr(&times) );
 		bu_vls_free( &times );
 	}
-#ifdef HAVE_SBRK
-	if (rt_verbosity & VERBOSE_STATS)
-		bu_log("Additional dynamic memory used=%ld. bytes\n",
-			(long)((char *)sbrk(0)-beginptr) );
-	beginptr = (char *) sbrk(0);
-#endif
+	memory_summary();
 	if (rt_verbosity & VERBOSE_STATS)  {
 		bu_log("%s: %d nu, %d cut, %d box (%d empty)\n",
 			rtip->rti_space_partition == RT_PART_NUGRID ?
@@ -868,12 +857,7 @@ int framenumber;
 	if (rt_verbosity & VERBOSE_STATS)
 		bu_log("SHOT: %s\n", bu_vls_addr( &times ) );
 	bu_vls_free( &times );
-#ifdef HAVE_SBRK
-	if (rt_verbosity & VERBOSE_STATS)
-		bu_log("Additional dynamic memory used=%ld. bytes\n",
-			(long)((char *)sbrk(0)-beginptr) );
-	beginptr = (char *) sbrk(0);
-#endif
+	memory_summary();
 	if (rt_verbosity & VERBOSE_STATS) {
 		bu_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
 			rtip->nshots, rtip->nhits, rtip->nmiss );

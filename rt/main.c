@@ -74,6 +74,9 @@ extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
 extern char	**objtab;		/* array of treetop strings */
 char		*beginptr;		/* sbrk() at start of program */
+long		n_malloc;		/* Totals at last check */
+long		n_free;
+long		n_realloc;
 extern int	matflag;		/* read matrix from stdin */
 extern int	desiredframe;		/* frame to start at */
 extern int	curframe;		/* current frame number,
@@ -111,6 +114,26 @@ int	arg;
 #endif
 }
 
+/*
+ */
+void
+memory_summary()
+{
+#ifdef HAVE_SBRK
+	if (rt_verbosity & VERBOSE_STATS)  {
+		fprintf(stderr,
+			"Additional mem=%ld., #malloc=%ld, #free=%ld, #realloc=%ld\n",
+			(long)((char *)sbrk(0)-beginptr),
+			bu_n_malloc - n_malloc,
+			bu_n_free - n_free,
+			bu_n_realloc - n_realloc );
+	}
+	beginptr = (char *) sbrk(0);
+#endif
+	n_malloc = bu_n_malloc;
+	n_free = bu_n_free;
+	n_realloc = bu_n_realloc;
+}
 
 /*
  *			M A I N
@@ -271,13 +294,7 @@ int main(int argc, char **argv)
 	if (rt_verbosity & VERBOSE_STATS)
 		bu_log("DIRBUILD: %s\n", bu_vls_addr(&times) );
 	bu_vls_free( &times );
-
-#ifdef HAVE_SBRK
-	if (rt_verbosity & VERBOSE_STATS)
-		bu_log("Additional dynamic memory used=%ld. bytes\n",
-			(long)((char *)sbrk(0)-beginptr) );
-	beginptr = (char *) sbrk(0);
-#endif
+	memory_summary();
 
 	/* Copy values from command line options into rtip */
 	rtip->rti_space_partition = space_partition;
@@ -361,13 +378,7 @@ int main(int argc, char **argv)
 		rt_init_resource( &resource[i], i );
 		bn_rand_init( resource[i].re_randptr, i );
 	}
-
-#ifdef HAVE_SBRK
-	if (rt_verbosity & VERBOSE_STATS)
-		fprintf(stderr,"initial dynamic memory use=%ld.\n",
-			(long)((char *)sbrk(0)-beginptr) );
-	beginptr = (char *) sbrk(0);
-#endif
+	memory_summary();
 
 #ifdef SIGUSR1
 	(void)signal( SIGUSR1, siginfo_handler );
