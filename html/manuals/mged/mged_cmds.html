@@ -3685,12 +3685,16 @@ objects.
 </DD>
 <HR>
 
-<DT><a NAME="rt"><B>rt</B> [<I>options</I>]</I></DT>
+<DT><a NAME="rt"><B>rt</B> [<I>options</I>] [-- <I>objects</I>]</I></DT>
 
 <DD>The ``rt'' command executes the <I>BRL&#173CAD</I> <I>rt</I> program with the default
 options of ``-s50 -M''. If perspective is turned on, then the <I>-p</I> option will be
-included with the value of the perspective angle. The current database name and the list
-of currently displayed objects are added to the end of the <I>rt</I> command line. The <I>rt</I>
+included with the value of the perspective angle.
+The current database name is added to the end of the <I>rt</I> command line
+along with either the specified <I>objects</I>
+or, if none is specified,
+the list of currently displayed objects.
+The <I>rt</I>
 program is written such that options may be repeated, and the last occurrence of an option
 will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>)
 options. The <a href="#rrt">rrt</a> command performs a similar function, but may be used to
@@ -3704,6 +3708,11 @@ parameters from standard input. See the <I>man</I> page on <I>rt</I> for details
 	-- run the <I>rt</I> program to produce a color-shaded image of the
 		current view in the <I>mged</I> display. The image will be 1024 pixels
 		square and will be displayed on a lingering <I>X</I> frambuffer.<br>
+	<kbd>mged></kbd> <b>rt -C 200/200/255 -- roof</b><br>
+	-- run the <I>rt</I> program to produce a color-shaded image of the
+		object <I>roof</I> using <I>mged</I>'s current viewing parameters.
+		The image will have a sky-blue background and will be displayed
+		on the framebuffer specified by the FB_FILE shell variable.
 	</DD>
 	</DL>
 </DD>

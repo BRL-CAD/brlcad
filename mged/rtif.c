@@ -463,11 +463,33 @@ char	**argv;
 		(void)sprintf(pstring, "-p%g", mged_variables->mv_perspective);
 		*vp++ = pstring;
 	}
-	for( i=1; i < argc; i++ )
-		*vp++ = argv[i];
+	for( i=1; i < argc; i++ ) {
+	    if( argv[i][0] == '-' && argv[i][1] == '-' &&
+		argv[i][2] == '\0' ) {
+		++i;
+		break;
+	    }
+	    *vp++ = argv[i];
+	}
 	*vp++ = dbip->dbi_filename;
 
-	setup_rt( vp, 1 );
+	/*
+	 * Now that we've grabbed all the options, if no args remain,
+	 * have setup_rt() append the names of all stuff currently displayed.
+	 * Otherwise, simply append the remaining args.
+	 */
+	if ( i == argc )
+	    setup_rt( vp, 1 );
+	else {
+	    while( i < argc )
+		*vp++ = argv[i++];
+	    *vp = 0;
+	    vp = &rt_cmd_vec[0];
+	    while( *vp )
+	      Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
+
+	    Tcl_AppendResult(interp, "\n", (char *)NULL);
+	}
 	retcode = run_rt();
 
 	return TCL_OK;

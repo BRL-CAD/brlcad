@@ -168,7 +168,7 @@ set mged_help_data(rmats)	{{file}	{load view(s) from 'savekey' file}}
 set mged_help_data(rot)		{{x y z} {rotate by x, y, z (degrees)}}
 set mged_help_data(rotobj)	{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set mged_help_data(rrt)		{{prog [options]}	{invoke prog with view}}
-set mged_help_data(rt)		{{[options]}	{do raytrace of view}}
+set mged_help_data(rt)		{{[options] [-- objects]}	{do raytrace of view or specified objects}}
 set mged_help_data(rtcheck)	{{[options]}	{check for overlaps in current view}}
 set mged_help_data(savekey)	{{file [time]}	{save keyframe in file (experimental)}}
 set mged_help_data(saveview)	{{file [args]}	{save view in file for RT}}
