@@ -855,6 +855,7 @@ FILE *fp_dir,*fp_param;
 	int			vert_de;	/* Directory entry sequence # for vertex list */
 	int			edge_de;	/* Directory entry sequence # for edge list */
 	int			outer_shell_count; /* number of outer shells in nmgregion */
+	int			face_count=0;	/* number of faces in nmgregion */
 	int			i;
 
 	NMG_CK_REGION( r );
@@ -871,6 +872,8 @@ FILE *fp_dir,*fp_param;
 
 				if( fu->orientation != OT_SAME )
 					continue;
+
+				face_count++;
 
 				for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 				{
@@ -892,6 +895,9 @@ FILE *fp_dir,*fp_param;
 			}
 		}
 	}
+
+	if( face_count == 0 )
+		return( 0 );
 
 	/* Find outer shells and void shells and their associations */
 	outer_shell_count = nmg_find_outer_and_void_shells( r , &shells , &tol );
@@ -1936,7 +1942,7 @@ FILE *fp_dir,*fp_param;
 		name_de = 0;
 
 	/* write color and attributes entities, if appropriate */
-	if( lookup_props( &props , name ) )
+	if( !name || lookup_props( &props , name ) )
 	{
 		prop_de = 0;
 		color_de = 0;
@@ -2745,6 +2751,15 @@ FILE *fp_dir,*fp_param;
 	}
 	else
 	{
+		if( ip->idb_type == ID_BOT )
+		{
+			struct rt_bot_internal *bot=(struct rt_bot_internal *)ip->idb_ptr;
+			if( bot->mode != RT_BOT_SOLID )
+			{
+				bu_log( "Solid %s is a plate mode solid, and cannot be converted to IGES format!!!\n", name );
+				return( 0 );
+			}
+		}
 		model = nmg_mm();
 		if( rt_functab[ip->idb_type].ft_tessellate( &r , model , ip , &ttol , &tol ) )
 		{
