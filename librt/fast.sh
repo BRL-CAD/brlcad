@@ -101,7 +101,6 @@ cake \
 
 cake \
  nmg_mod.o \
- sphmap.o \
  storage.o \
  table.o \
  timer42.o \
