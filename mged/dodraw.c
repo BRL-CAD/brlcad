@@ -54,7 +54,7 @@ long	nvectors;	/* number of vectors drawn so far */
  *  This avoids confusion with illuminate mode.
  *  Red is a one-gun color, avoiding convergence problems too.
  */
-static struct db_tree_state	mged_initial_tree_state = {
+struct db_tree_state	mged_initial_tree_state = {
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0, 0, 0,		/* region, air, gmater */
