@@ -8,6 +8,8 @@
 		(InputPanel	max_error)
 		(Label		angle_ctrl_l)
 		(InputPanel	angle_ctrl)
+		(Label		log_file_l)
+		(InputPanel	log_file)
 		(Label		curr_proc_l)
 		(Label		curr_proc)
 		(CheckButton	facets_only)
@@ -41,6 +43,9 @@
 		(separator5.BottomOffset	4)
 		(separator6.TopOffset		4)
 		(separator6.BottomOffset	4)
+		(log_file_l.Label		"Log File Name:")
+		(log_file.Value			"")
+		(log_file.HelpText		"Enter a file name here to receive verbose debugging output, or leave blank")
 		(curr_proc_l.Label		"Current status:")
 		(curr_proc.Columns		30)
 		(curr_proc.Label		"Not Processing Yet")
@@ -54,7 +59,7 @@
 		(starting_ident.HelpText	"Enter desired value for first region ident here")
 		(max_error_l.Label		"Max tesellation error(mm):")
 		(max_error.InputType		3)
-		(max_error.Value		"1.5")
+		(max_error.Value		"3.0")
 		(max_error.HelpText		"Enter maximum chord error (in mm) for tessellation of curved surfaces")
 		(angle_ctrl_l.Label		"Angle Control Value:")
 		(angle_ctrl.InputType		3)
@@ -97,9 +102,11 @@
 		(.Label				"Pro/E to BRL-CAD Converter")
 		(.Layout
 			(Grid (Rows 1 1 1 1 1 1 1) (Cols 1)
-				(Grid (Rows 1 1 1 1) (Cols 1 1)
+				(Grid (Rows 1 1 1 1 1) (Cols 1 1)
 					output_file_l
 					output_file
+					log_file_l
+					log_file
 					starting_ident_l
 					starting_ident
 					max_error_l
