@@ -256,7 +256,7 @@ main(int argc, char **argv)
 	scan_buf = (unsigned char *)malloc( sizeof(RGBpixel) * screen_width );
 
 	for( i=0; i < ncolors; i++ )
-		rows[i] = (unsigned char *)malloc(file_width);
+		rows[i] = (unsigned char *)malloc((size_t)file_width);
 	for( ; i < 3; i++ )
 		rows[i] = rows[0];	/* handle monochrome images */
 

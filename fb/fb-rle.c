@@ -65,7 +65,7 @@ Usage: fb-rle [-c -h -d] [-F framebuffer] [-C r/g/b]\n\
 \n\
 If omitted, the .rle file is written to stdout\n";
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap);
+extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *colormap);
 
 /*
  *			G E T _ A R G S
