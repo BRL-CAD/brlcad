@@ -1,4 +1,6 @@
-regress: solids.pix shaders.pix spdi.pix moss.pix lights.pix
+.PHONY : regress moss.pix lights.pix solids.pix shaders.pix spdi.pix
+
+regress: solids.pix shaders.pix spdi.pix moss.pix lights.pix Makefile
 
 moss.pix: solids.sh
 	${SH} solids.sh $(prefix) $(top_srcdir)
