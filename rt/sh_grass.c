@@ -81,6 +81,7 @@ struct grass_ray {
  */
 struct grass_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
+	int	debug;
 	double	cell[2];	/* size of a cell in Region coordinates */
 	double	ppc;		/* mean # plants_per_cell */
 	double	ppcd;		/* deviation of plants_per_cell */
@@ -104,6 +105,7 @@ struct grass_specific {
 static CONST
 struct grass_specific grass_defaults = {
 	grass_MAGIC,
+	0,
 	{300.0, 300.0},			/* cell */
 	2.0,				/* plants_per_cell */
 	1.0,				/* deviation of plants_per_cell */
@@ -114,7 +116,7 @@ struct grass_specific grass_defaults = {
 	2.1753974,			/* lacunarity */
 	1.0,				/* h_val */
 	4.0,				/* octaves */
-	.3,				/* size */
+	.31415926535,			/* size */
 	{ 1.0, 1.0, 1.0 },		/* vscale */
 	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
 	{	0.0, 0.0, 0.0, 0.0,	/* m_to_sh */
@@ -157,7 +159,7 @@ struct bu_structparse grass_parse_tab[] = {
 	{"%f",	1, "w",			SHDR_O(blade_width),	FUNC_NULL },
 	{"%d",	1, "n",			SHDR_O(nsegs),		FUNC_NULL },
 	{"%f",	1, "r",			SHDR_O(seg_ratio),	FUNC_NULL },
-	
+	{"%d",	1, "d",			SHDR_O(debug),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -179,6 +181,26 @@ CONST struct mfuncs grass_mfuncs[] = {
 	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
+
+/* fraction of total allowed returned */
+static double
+plants_this_cell(cell, grass_sp)
+long cell[3];	/* integer cell number */
+struct grass_specific *grass_sp;
+{
+	point_t c;
+	double val;
+
+	VSCALE(c, cell, grass_sp->size);  /* int/float conv */
+
+	val = bn_noise_turb(c, grass_sp->h_val, grass_sp->lacunarity,
+			grass_sp->octaves);
+
+	val *= 1.5;
+	val = CLAMP(val, 0.0, 1.0);
+
+	return val;
+}
 
 static void
 print_plant(str, plant)
@@ -258,31 +280,24 @@ double a;
  *
  */
 static void
-plant_scale(pl, w, val)
+plant_scale(pl, w)
 struct plant *pl;
-double w;	/* -1 .. 1 */
-double val;
+double w;	/* 0..1, */
 {
 	int blade, seg;
 
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("plant_scale(%g)\n", w);
 
-	if ( w < .5) pl->blades--;
-
-	if (w >= 0.0) return;
-
-	w *= 2.0;
-
+	if ( w < .6) pl->blades--;
 
 	for (blade=0 ; blade < pl->blades ; blade++) {
 		pl->b[blade].tot_len = 0.0;
-		pl->b[blade].width +=
-			pl->b[blade].width * w;
+		if (blade != BLADE_MAX-1)
+			pl->b[blade].width *= w;
 
 		for (seg=0; seg < pl->b[blade].segs ; seg++) {
-			pl->b[blade].leaf[seg].len += 
-				pl->b[blade].leaf[seg].len * w;
+			pl->b[blade].leaf[seg].len *= w;
 
 			pl->b[blade].tot_len += pl->b[blade].leaf[seg].len;
 		}
@@ -381,12 +396,11 @@ struct grass_specific *grass_sp;
   /* The central stalk is a bit different.  It's basically a straight tall
    * shaft
    */
-
   blade = BLADE_MAX-1;
   grass_sp->proto.b[blade].magic = BLADE_MAGIC;
   grass_sp->proto.b[blade].tot_len = 0.0;
   grass_sp->proto.b[blade].segs = 3;
-  grass_sp->proto.b[blade].width = grass_sp->blade_width * 2.0;
+  grass_sp->proto.b[blade].width = grass_sp->blade_width * 0.5;
 
   val = .9;
   for (seg=0 ; seg < grass_sp->proto.b[blade].segs ; seg++) {
@@ -400,7 +414,9 @@ struct grass_specific *grass_sp;
 #if 0
 	    100 - seg * 20;
 #else
-    	grass_sp->t*1.35 + seg * grass_sp->t * .75;
+    	grass_sp->t*2.0 + 
+    		(grass_sp->proto.b[blade].segs - seg) *
+    		grass_sp->t * .75;
 #endif
     grass_sp->proto.b[blade].tot_len += grass_sp->proto.b[blade].leaf[seg].len;
 
@@ -520,6 +536,7 @@ double w;		/* cell specific weght for count, height */
 	int blade, seg;
 	double val;
 	double foo;
+	int idx;
 
 
 	if (rdebug&RDEBUG_SHADE)
@@ -528,35 +545,29 @@ double w;		/* cell specific weght for count, height */
 
 	*pl = grass_sp->proto; /* struct copy */
 
+	/* get coordinates for the plant root within the cell */
 	VMOVE(pl->root, cell_pos);
 	pl->root[Z] = 0.0;
 
+	idx = (int)(c[X] + c[Y]);
+	BN_RANDSEED(idx, idx);
+	pl->root[X] += BN_RANDOM(idx) * grass_sp->cell[X];
+
+	idx *= (int)(c[X] + c[Y]);
+	BN_RANDSEED(idx, idx);
+	pl->root[Y] += BN_RANDOM(idx) * grass_sp->cell[Y];
+
+
+	/* set up for bounding box computation */
 	VADD2(pl->pmin, pl->pmin, pl->root);
 	VADD2(pl->pmax, pl->pmax, pl->root);
 
-	VSCALE(pt, c, grass_sp->lacunarity);
-	val = bn_noise_fbm(pt, grass_sp->h_val, grass_sp->lacunarity,
-			grass_sp->octaves);
 
-	VSCALE(pt, pt, grass_sp->lacunarity);
-	foo = bn_noise_fbm(pt, grass_sp->h_val, grass_sp->lacunarity,
-			grass_sp->octaves);
+	VSCALE(pt, pl->root, grass_sp->size);
 
-	if (rdebug&RDEBUG_SHADE)
-		bu_log("val:%g  foo:%g\n", val, foo);
-#if 1
-	pl->root[X] += val * grass_sp->cell[X];
-	pl->root[Y] += foo * grass_sp->cell[Y];
-#endif
-	val = val * .5 + .5;
 
-	CLAMP(val, 0.0, 1.0);
-
-	plant_scale(pl, w, val);	/* must come first */
-
-	foo *= 180.0;
-	foo *= bn_degtorad;
-	plant_rot(pl, foo);	/* computes bounding box */
+	plant_scale(pl, w);	/* must come first */
+	plant_rot(pl, BN_RANDOM(idx) * M_PI * 2.0);/* computes bounding box */
 
 
 	/* set bounding boxes */
@@ -702,13 +713,21 @@ int blade_num;
 		VSUB2(tmp, PCA_grass, PCA_ray);
 		dist = MAGNITUDE(tmp);
 
+
 		/* We want to narrow the blade of grass toward the tip.
 		 * So we scale the width of the blade based upon the 
 		 * fraction of total blade length to PCA.
 		 */
-		fract = (accum_len + ldist[1]) / bl->tot_len;
-		blade_width = bl->width * (1.0 - fract);
-
+		if (blade_num < BLADE_MAX-1) {
+			fract = (accum_len + ldist[1]) / bl->tot_len;
+			blade_width = bl->width * (1.0 - fract);
+		} else {
+			fract = (accum_len + ldist[1]) / bl->tot_len;
+			if (fract > .9)
+				blade_width = bl->width * 1.1;
+			else
+				blade_width = bl->width * .5;
+		}
 
 		if (dist < (PCA_ray_radius+blade_width)) {
 			if (rdebug&RDEBUG_SHADE)
@@ -878,12 +897,11 @@ struct grass_specific	*grass_sp;
 
 
 	/* Figure out how many plants are in this cell */
-	VSCALE(c, cell, grass_sp->size);  /* int/float conv */
-	val = bn_noise_fbm(c, grass_sp->h_val, grass_sp->lacunarity,
-			grass_sp->octaves);
-	ppc = (int) (grass_sp->ppc + grass_sp->ppcd * val * 2.0);
+	val = plants_this_cell(cell, grass_sp);
+	ppc = val * grass_sp->ppc;
 
-	VMOVE(c, cell);
+	VSCALE(c, cell, grass_sp->size);
+
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("cell pos(%g,%g .. %g,%g)\n", V2ARGS(cell_pos),
 			cell_pos[X]+grass_sp->cell[X],
@@ -1230,9 +1248,26 @@ char			*dp;	/* ptr to the shader-specific struct */
 		bu_log("Missed grass blades\n");
 
 	/* Missed everything */
-	/* setting basecolor to 1.0 prevents "filterglass" effect */
-	VSETALL(swp->sw_basecolor, 1.0); 
 
+
+	if (grass_sp->debug && !swp->sw_xmitonly) {
+		/* show the cell positions on the ground */
+		int plants;
+		double bc;
+
+		bc =  plants_this_cell(cell_num, grass_sp);
+		bc = CLAMP(bc, 0.0, 1.0);
+		bc = .25 * bc + .7;
+
+		if ((cell_num[X] + cell_num[Y]) & 1) {
+			VSET(swp->sw_basecolor, bc, bc*.7, bc*.7);
+		} else {
+			VSET(swp->sw_basecolor, bc*.7, bc*.7, bc);
+		}
+	} else {
+		/* setting basecolor to 1.0 prevents "filterglass" effect */
+		VSETALL(swp->sw_basecolor, 1.0); 
+	}
 
 
 	swp->sw_transmit = 1.0;
