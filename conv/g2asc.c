@@ -62,8 +62,10 @@ char *name();
 char *strchop();
 #define CH(x)	strchop(x,sizeof(x))
 
+void	combdump();
 void	idendump(), polyhead(), polydata();
-void	soldump(), combdump(), membdump(), arsadump(), arsbdump();
+void	soldump();
+void	membdump(), arsadump(), arsbdump();
 void	materdump(), bspldump(), bsurfdump();
 void	pipe_dump(), particle_dump(), dump_pipe_segs();
 
@@ -87,6 +89,10 @@ char **argv;
 	    	case ID_COMB:
 			combdump();
 			continue;
+	    	case ID_MEMB:
+	    		/* Just convert them as they are found.  Assume DB is good */
+	    		membdump();
+	    		continue;
 	    	case ID_ARS_A:
 			arsadump();
 	    		continue;
@@ -330,6 +336,10 @@ particle_dump()	/* Print out Particle record information */
 		part.part_vrad, part.part_hrad);
 }
 
+/*
+ *			C O M B D U M P
+ *
+ */
 void
 combdump()	/* Print out Combination record information */
 {
@@ -345,8 +355,13 @@ combdump()	/* Print out Combination record information */
 	(void)printf("%.16s ", name(record.c.c_name) );	/* unique name */
 	(void)printf("%d ", record.c.c_regionid );	/* region ID code */
 	(void)printf("%d ", record.c.c_aircode );	/* air space code */
-	(void)printf("%d ", record.c.c_length );	/* # of members */
-	(void)printf("%d ", record.c.c_num );		/* COMGEOM region # */
+#if 1
+	(void)printf("%d ", 0 );			/* DEPRECATED: # of members */
+	(void)printf("%d ", 0 );			/* DEPRECATED: COMGEOM region # */
+#else
+	(void)printf("%d ", record.c.c_length );        /* DEPRECATED: # of members */
+	(void)printf("%d ", record.c.c_num );           /* DEPRECATED: COMGEOM region # */
+#endif
 	(void)printf("%d ", record.c.c_material );	/* material code */
 	(void)printf("%d ", record.c.c_los );		/* equiv. LOS est. */
 	(void)printf("%d %d %d %d ",
@@ -376,12 +391,6 @@ combdump()	/* Print out Combination record information */
 		(void)printf("%.32s\n", CH(record.c.c_matname) );
 	if( m2 )
 		(void)printf("%.60s\n", CH(record.c.c_matparm) );
-
-	length = (int)record.c.c_length;	/* Get # of member records */
-
-	for( i = 0; i < length; i++ )  {
-		membdump();
-	}
 }
 
 void
@@ -389,8 +398,6 @@ membdump()	/* Print out Member record information */
 {
 	register int i;
 
-	/* Read in a member record for processing */
-	(void)fread( (char *)&record, sizeof record, 1, stdin );
 	(void)printf("%c ", record.M.m_id );		/* M */
 	(void)printf("%c ", record.M.m_relation );	/* Boolean oper. */
 	(void)printf("%.16s ", name(record.M.m_instname) );	/* referred-to obj. */
