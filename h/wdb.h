@@ -118,7 +118,7 @@ WDB_EXTERN(int mk_rcomb, (FILE *fp, char *name, int len, int region_flag,
 			int inherit_flag) );
 WDB_EXTERN(int mk_fcomb, (FILE *fp, char *name, int len, int region_flag) );
 WDB_EXTERN(int mk_memb, (FILE *fp, char *name, mat_t mat, int bool_op) );
-WDB_EXTERN(struct wmember *mk_addmember, (char *name, struct wmember *headp) );
+WDB_EXTERN(struct wmember *mk_addmember, (char *name, struct wmember *headp, int op) );
 WDB_EXTERN(int mk_lcomb, (FILE *fp, char *name, struct wmember *headp,
 			int region_flag,
 			char *matname, char *matparm, char *rgb,
