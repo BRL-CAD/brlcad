@@ -78,9 +78,14 @@ in all countries except the USA.  All rights reserved.";
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
-#if 1
-/* defined in libfb/tcl.c */
-extern void fb_tclInit();
+#ifdef USE_FRAMEBUFFER
+extern void fb_tclInit();  /* from in libfb/tcl.c */
+extern int fb_refresh();
+#endif
+
+#ifdef DO_RUBBER_BAND
+extern void draw_rect();		/* rect.c */
+extern void paint_rect_area();
 #endif
 
 /* defined in predictor.c */
@@ -108,6 +113,7 @@ int bit_bucket();
 int             cmd_stuff_str();
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2(), sig3();
+void		reset_input_strings();
 void		new_mats();
 void		usejoy();
 void            slewview();
@@ -115,8 +121,8 @@ int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
 int		classic_mged=0;
 
-static struct bu_vls input_str, scratchline, input_str_prefix;
-static int input_str_index = 0;
+struct bu_vls input_str, scratchline, input_str_prefix;
+int input_str_index = 0;
 
 static void     mged_insert_char();
 static void	mged_process_char();
@@ -1546,6 +1552,16 @@ refresh()
       DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
       if(dbip != DBI_NULL){
+#ifdef USE_FRAMEBUFFER
+	/* do framebuffer underlay */
+	if(mged_variables->fb && !mged_variables->fb_overlay){
+	  if(mged_variables->fb_all)
+	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+	  else
+	    paint_rect_area();
+	}
+#endif
+
 	/*  Draw each solid in it's proper place on the screen
 	 *  by applying zoom, rotation, & translation.
 	 *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
@@ -1558,6 +1574,21 @@ refresh()
 	  dozoom(1);
 	  dozoom(2);
 	}
+
+#ifdef USE_FRAMEBUFFER
+	/* do framebuffer overlay */
+	if(mged_variables->fb && mged_variables->fb_overlay){
+	  if(mged_variables->fb_all)
+	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+	  else
+	    paint_rect_area();
+	}
+#endif
+
+#ifdef DO_RUBBER_BAND
+	if(rubber_band_active || mged_variables->rubber_band)
+	  draw_rect();
+#endif
 
 	/* Restore to non-rotated, full brightness */
 	DM_NORMAL(dmp);
@@ -1684,17 +1715,7 @@ quit()
 void
 sig2()
 {
-  /* Truncate input string */
-  bu_vls_trunc(&input_str, 0);
-  bu_vls_trunc(&input_str_prefix, 0);
-  bu_vls_trunc(&curr_cmd_list->more_default, 0);
-  input_str_index = 0;
-
-  curr_cmd_list->quote_string = 0;
-
-  bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
-  bu_log("\n");
-  pr_prompt();
+  reset_input_strings();
 
   (void)signal( SIGINT, SIG_IGN );
 }
@@ -1704,6 +1725,30 @@ sig3()
 {
   (void)signal( SIGINT, SIG_IGN );
   longjmp( jmp_env, 1 );
+}
+
+void
+reset_input_strings()
+{
+  if(BU_LIST_IS_HEAD(curr_cmd_list, &head_cmd_list.l)){
+    /* Truncate input string */
+    bu_vls_trunc(&input_str, 0);
+    bu_vls_trunc(&input_str_prefix, 0);
+    bu_vls_trunc(&curr_cmd_list->more_default, 0);
+    input_str_index = 0;
+
+    curr_cmd_list->quote_string = 0;
+    bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+    bu_log("\n");
+    pr_prompt();
+  }else{
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_strcpy(&vls, "reset_input_strings");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+  }
 }
 
 
