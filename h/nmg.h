@@ -1,41 +1,36 @@
-/*
- *			N M G . H
- *
- *	PRELIMINARY VERSION
+/*			N M G . H
  *
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by 
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
- *
- *  Author -
- *	Lee A. Butler
- *  
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimitied.
- *
- *  $Header$
  */
-
 #ifndef FACET_H
 #define FACET_H seen
+
+#ifndef NULL
+#define NULL 0
+#endif
 
 #define OT_UNSPEC   '\0'    /* orientation unspecified */
 #define OT_SAME     '\1'    /* orientation same */
 #define OT_OPPOSITE '\2'    /* orientation opposite */
 
+
+
 /*
- *  ptr types
+ * support for pointer tables
  */
-#define PTR_SHELL   5
-#define PTR_FACEUSE 4
-#define PTR_LOOPUSE 3
-#define PTR_EDGEUSE 2
-#define PTR_VERTEXUSE	1
+#define TBL_INIT 0
+#define TBL_INS	 1
+#define TBL_LOC  2
+#define TBL_FREE 3
+
+struct nmg_ptbl {
+	int next, blen;
+	long **buffer;
+};
+
+
 
 /*
  *  Magic Numbers.
@@ -47,11 +42,11 @@
 #define NMG_SHELL_MAGIC 	34343434
 #define NMG_SHELL_A_MAGIC	0x65207761
 #define NMG_FACE_MAGIC		45454545
-#define NMG_FACE_A_MAGIC	0x726b6e65
+#define NMG_FACE_G_MAGIC	0x726b6e65
 #define NMG_FACEUSE_MAGIC	56565656
 #define NMG_FACEUSE_A_MAGIC	0x20476f64
 #define NMG_LOOP_MAGIC		67676767
-#define NMG_LOOP_A_MAGIC	0x6420224c
+#define NMG_LOOP_G_MAGIC	0x6420224c
 #define NMG_LOOPUSE_MAGIC	78787878
 #define NMG_LOOPUSE_A_MAGIC	0x68657265
 #define NMG_EDGE_MAGIC		89898989
@@ -71,8 +66,8 @@
 	} else if( (_ptr)->magic != (_magic) )  { \
 		rt_log("ERROR: NMG bad %s ptr x%x, s/b x%x, was %s(x%x), file %s, line %d\n", \
 			_str, _ptr, _magic, \
-			nmg_identify_magic( (_ptr)->magic ), (_ptr)->magic, \
-			__FILE__, __LINE__ ); \
+			nmg_identify_magic( (_ptr)->magic ), \
+			 (_ptr)->magic, __FILE__, __LINE__ ); \
 		rt_bomb("Bad NMG pointer"); \
 	}
 
@@ -83,11 +78,11 @@
 #define NMG_CK_SHELL(_p)	NMG_CKMAG(_p, NMG_SHELL_MAGIC, "shell")
 #define NMG_CK_SHELL_A(_p)	NMG_CKMAG(_p, NMG_SHELL_A_MAGIC, "shell_a")
 #define NMG_CK_FACE(_p)		NMG_CKMAG(_p, NMG_FACE_MAGIC, "face")
-#define NMG_CK_FACE_A(_p)	NMG_CKMAG(_p, NMG_FACE_A_MAGIC, "face_a")
+#define NMG_CK_FACE_G(_p)	NMG_CKMAG(_p, NMG_FACE_G_MAGIC, "face_g")
 #define NMG_CK_FACEUSE(_p)	NMG_CKMAG(_p, NMG_FACEUSE_MAGIC, "faceuse")
 #define NMG_CK_FACEUSE_A(_p)	NMG_CKMAG(_p, NMG_FACEUSE_A_MAGIC, "faceuse_a")
 #define NMG_CK_LOOP(_p)		NMG_CKMAG(_p, NMG_LOOP_MAGIC, "loop")
-#define NMG_CK_LOOP_A(_p)	NMG_CKMAG(_p, NMG_LOOP_A_MAGIC, "loop_a")
+#define NMG_CK_LOOP_G(_p)	NMG_CKMAG(_p, NMG_LOOP_G_MAGIC, "loop_g")
 #define NMG_CK_LOOPUSE(_p)	NMG_CKMAG(_p, NMG_LOOPUSE_MAGIC, "loopuse")
 #define NMG_CK_LOOPUSE_A(_p)	NMG_CKMAG(_p, NMG_LOOPUSE_A_MAGIC, "loopuse_a")
 #define NMG_CK_EDGE(_p)		NMG_CKMAG(_p, NMG_EDGE_MAGIC, "edge")
@@ -100,12 +95,31 @@
 #define NMG_CK_VERTEXUSE_A(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_MAGIC, "vertexuse_a")
 
 
+/*	W A R N I N G !
+ *
+ *	We rely on the fact that the first object in a struct is the magic
+ *	number (which we use to identify the struct type).  It is also
+ *	important that the next/last fields have the same offset in all
+ *	structs that have them.
+ *
+ *	To these ends, there is a standard ordering for fields in "object-use"
+ *	structures.  That ordering is:
+ *		1) magic number
+ *		2) pointer to parent
+ *		3) pointer to next
+ *		4) pointer to last
+ *		5) pointer to mate
+ *		6) pointer to geometry
+ *		7) pointer to attributes
+ *		8) pointer to child(ren)
+ */
+
 /*  M O D E L
  */
 struct model {
-    long	    magic;
-    struct nmgregion   *r_p;		/* list of regions in model space */
-    struct model_a  *ma_p;
+    long		magic;
+    struct model_a	*ma_p;
+    struct nmgregion	*r_p;		/* list of regions in model space */
 };
 
 struct model_a {
@@ -119,8 +133,8 @@ struct nmgregion {
     struct model    *m_p;	/* owning model */
     struct nmgregion *next,
 		    *last;	/* regions in model list of regions */
-    struct shell    *s_p;	/* list of shells in region */
     struct nmgregion_a *ra_p;	/* attributes */
+    struct shell    *s_p;	/* list of shells in region */
 };
 
 struct nmgregion_a {
@@ -135,15 +149,17 @@ struct shell {
     struct shell    *next,
 		    *last;	    /* shells in region's list of shells */
     struct shell_a  *sa_p;	    /* attribs */
-    char	    downptr_type;
-    union {
-	struct faceuse	    *fu_p;  /* list of face uses in shell */
-	struct vertexuse    *vu_p;  /* shell is single vertex */
-    } downptr;
+
+    struct faceuse	    *fu_p;  /* list of face uses in shell */
+    struct loopuse	    *lu_p;  /* loop uses (edge groups) in shell */
+    struct edgeuse	    *eu_p;  /* wire list (shell has wires) */
+    struct vertexuse    *vu_p;  /* shell is single vertex */
 };
 
 struct shell_a {
-	long	magic;
+    long	magic;
+    point_t	min_pt;	/* minimums of bounding box */
+    point_t	max_pt;	/* maximums of bounding box */
 };
 
 /*  F A C E
@@ -155,8 +171,10 @@ struct face {
 };
 
 struct face_g {
-    long    magic;
-    double  N[3];	/* Surface Normal */
+    long	magic;
+    plane_t	N;	/* Surface Normal (N[0]x + N[1]y + N[2]z + N[3] = 0)*/
+    point_t	min_pt;	/* minimums of bounding box */
+    point_t	max_pt;	/* maximums of bounding box */
 };
 
 struct faceuse { /* Note: there will always be exactly two uses of a face */
@@ -165,10 +183,10 @@ struct faceuse { /* Note: there will always be exactly two uses of a face */
     struct faceuse  *next,
 		    *last,	    /* fu's in shell's list of fu's */
 		    *fumate_p;	    /* opposite side of face */
-    struct loopuse  *lu_p;	    /* list of loops in face-use */
     char	    orientation;    /* compared to face geom definition */
     struct face     *f_p;	    /* face definition and attributes */
     struct faceuse_a *fua_p;	    /* attributess */
+    struct loopuse  *lu_p;	    /* list of loops in face-use */
 };
 
 struct faceuse_a {
@@ -187,17 +205,27 @@ struct loop {
 
 struct loop_g {
     long    magic;
+    point_t	min_pt;	/* minimums of bounding box */
+    point_t	max_pt;	/* maximums of bounding box */
 };
 
 struct loopuse {
     long	    magic;
-    struct faceuse  *fu_p;	    /* owning face-use */
+    union {
+	struct faceuse  *fu_p;	    /* owning face-use */
+	struct shell	*s_p;
+	long		*magic_p;
+    } up;
     struct loopuse  *next,
 		    *last,	    /* lu's in fu's list of lu's */
 		    *lumate_p;	    /* loopuse on other side of face */
     struct loop     *l_p;	    /* loop definition and attributes */
     struct loopuse_a *lua_p;	    /* attributes */
-    struct edgeuse  *eu_p;	    /* list of eu's in lu */
+    union {
+	struct edgeuse	    *eu_p;  /* list of eu's in lu */
+	struct vertexuse    *vu_p; /* loop is a single vertex */
+	long		    *magic_p /* for those times when we're not sure */
+    } down;
 };
 
 struct loopuse_a {
@@ -219,15 +247,19 @@ struct edge_g {
 
 struct edgeuse {
     long		magic;
-    struct vertexuse	*vu_p;	    /* starting vu of eu in this orient */
-    struct edgeuse	*eumate_p,  /* eu on other face or other end of wire*/
-		  	*eu_radial_p,/* eu on radially adjacent fu */
-    			*lueu_cw_p, /* clockwise/counter-clockwise..*/
-		  	*lueu_ccw_p;/* eu's in lu's ordered eu list */
+    union {
+	struct loopuse	*lu_p;
+	struct shell	*s_p;
+	long	        *magic_p /* for those times when we're not sure */
+    } up;
+    struct edgeuse	*next,	    /* either clockwise/ccw edges in loop */
+    			*last,	    /* or list of edges/faces in shell */
+    			*eumate_p,  /* eu on other face or other end of wire*/
+		  	*radial_p;  /* eu on radially adj. fu (null if wire)*/
     struct edge 	*e_p;	    /* edge definition and attributes */
     struct edgeuse_a	*eua_p;	    /* parametric space geom */
-    char	  	orientation;/* compared to geom */
-    struct loopuse	*lu_p;	    /* owning loop */
+    char	  	orientation;/* compared to geom (null if wire) */
+    struct vertexuse	*vu_p;	    /* starting vu of eu in this orient */
 };
 
 struct edgeuse_a {
@@ -244,43 +276,42 @@ struct vertex {
 };
 
 struct vertex_g {
-    long    magic;
-    double  coord[3];	    /* coordinates of vertex in space */
+    long	magic;
+    point_t	coord;	/* coordinates of vertex in space */
+    char	orientation;	/* for classification purposes */
 };
 
 struct vertexuse {
     long		magic;
+    union {
+	struct shell	*s_p;	/* no fu's or eu's on shell */
+	struct loopuse	*lu_p;	/* loopuse contains single vertex */
+	struct edgeuse	*eu_p;	/* eu causing this vu */
+	long		*magic_p /* for those times when we're not sure */
+    } up;
     struct vertexuse	*next,   /* list of all vu's of vertex */
 			*last;
     struct vertex	*v_p;	    /* vertex definition and attributes */
     struct vertexuse_a	*vua_p;     /* Attributes */
-    char		upptr_type; /* selects pointer type in union upptr */
-    union {
-	struct shell	*s_p;	/* no fu's or eu's on shell */
-	struct edgeuse	*eu_p;	/* eu causing this vu */
-    } upptr;
 };
 
 struct vertexuse_a {
-    long	    magic;
+    long	magic;
+    vect_t	N;	/* optional surface Normal at vertexuse */
 };
 
-/*
- *  Support Function Return codes
- *
- */
-#define SUCCESS		0
-#define ALLOC_FAIL	1	/* memory allocation failed */
-#define PARAM_ERROR	2	/* function parameter error */
-#define NOT_EMPTY	3	/* structure free might cause memory leak */
 
-extern char *malloc();
-#ifdef DEBUG
-#define NMG_GETSTRUCT(ptr, str) \
- ( ((ptr)=(struct str *)nmg_malloc(sizeof(struct str))) == (struct str *)NULL )
+/*
+ * model storage allocation and de-allocation support
+ */
+extern char *rt_calloc();
+
+#if __STDC__ && !alliant && !apollo
+#   define NMG_GETSTRUCT(p,str) \
+	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
 #else
-#define NMG_GETSTRUCT(ptr, str) \
- ( ((ptr)=(struct str *)malloc(sizeof(struct str))) == (struct str *)NULL )
+#   define NMG_GETSTRUCT(p,str) \
+	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
 #endif
 
 #define GET_MODEL(p)	    NMG_GETSTRUCT(p, model)
@@ -306,13 +337,14 @@ extern char *malloc();
 #define GET_VERTEXUSE(p)    NMG_GETSTRUCT(p, vertexuse)
 #define GET_VERTEXUSE_A(p)  NMG_GETSTRUCT(p, vertexuse_a)
 
-#ifdef DEBUG
-#define FREESTRUCT(ptr, str) \
-	{fprintf(stderr, "free(%8x) (%8x)->magic %d\n", ptr, ptr, ptr->magic); \
-	bzero((char *)(ptr), sizeof(struct str)); free((char *)(ptr)); }
+#if __STDC__ && !alliant && !apollo
+# define FREESTRUCT(ptr, str) \
+	{ bzero((char *)(ptr), sizeof(struct str)); \
+	  rt_free((char *)(ptr), "freestruct " #str); }
 #else
-#define FREESTRUCT(ptr, str) \
-	{ bzero((char *)(ptr), sizeof(struct str)); free((char *)(ptr)); }
+# define FREESTRUCT(ptr, str) \
+	{ bzero((char *)(ptr), sizeof(struct str)); \
+	  rt_free((char *)(ptr), "freestruct str"); }
 #endif
 
 #define FREE_MODEL(p)	    FREESTRUCT(p, model)
@@ -351,51 +383,120 @@ struct walker_tbl {
         int     (*fvertexuse)();
 };
 
-/*
- *  Support Function Declarations
- *
- */
-extern struct model * nmg_mkmodel();	/* Make Model & initial region */
-extern int nmg_mkregion();	/* make new region, shell, vertex in model */
-extern int nmg_mkshell();	/* Make Shell, Vertex */
-extern int nmg_mkface1();	/* Promote shell vertex to face */
-extern int nmg_mkfaceN();	/* Make face from/on existing vertex */
-extern int nmg_newfacev();	/* Make new vertex on edge */
-extern int nmg_insfacev();	/* insert existing vertex on edge */
-extern int nmg_wmodel();	/* walk model tree */
-extern int nmg_wregion();	/* walk region tree */
-extern int nmg_wshell();	/* walk shell tree */
-extern int nmg_wfaceuse();	/* walk faceuse tree */
-extern int nmg_wloopuse();	/* walk loopuse tree */
-extern int nmg_wedgeuse();	/* walk edgeuse tree */
-extern int nmg_wvertexuse();	/* walk vertexuse */
-extern int nmg_vertex_g();	/* associate geometry with vertex */
-extern void nmg_movevu();	/* move vertexuse to new vertex */
-extern void nmg_kvu();
-extern void nmg_keu();
-extern void nmg_klu();
-extern void nmg_kfu();
-extern void nmg_kshell();
-extern void nmg_kregion();
-extern void nmg_kmodel();
-extern void nmg_jv();		/* join vertexes */
-extern int nmg_dupface();
-extern int nmg_splitface();
-extern char	*nmg_identify_magic();	/* describe kind of magic */
+
 
 #if defined(SYSV) && !defined(bzero)
 #	define bzero(str,n)		memset( str, '\0', n )
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
-/* insert a node into a doubly linked list */
-#define DLLINS(listp, nodep) {\
-	if (listp) { /* link node into existing list */ \
-		nodep->next = listp; nodep->last = listp->last; \
-		listp->last->next = nodep; listp->last = nodep; \
+/* insert a node into the head of a doubly linked list */
+#define DLLINS(_listp, _nodep) {\
+	if (_listp) { /* link node into existing list */ \
+		_nodep->next = _listp; _nodep->last = _listp->last; \
+		_listp->last->next = _nodep; _listp->last = _nodep; \
 	} else { /* make node the entire list */\
-		nodep->next = nodep->last = nodep; \
+		_nodep->next = _nodep->last = _nodep; \
 	} \
-	listp = nodep; }
+	_listp = _nodep; }
+
+/* remove a node from a doubly linked list and put it's pointer in nodep.
+ * we leave the next and last pointers of the extracted node pointing to the
+ * node.  If it was the last node in the list, we don't actually remove it, 
+ * but we do still copy the pointer.
+ */
+#define DLLRM(_listp, _nodep) if (( (_nodep)=(_listp) ) != (_listp)->next) { \
+				(_listp) = (_listp)->next; \
+				(_nodep)->next->last = (_nodep)->last; \
+				(_nodep)->last->next = (_nodep)->next; \
+				(_nodep)->next = (_nodep)->last = (_nodep); }
+
+
+/* compare value to min/max and do appropriate assignments */
+#define MINMAX(_a, _b, _c) { if (_a < _b) _b = _a; if (_a > _c) _c = _a; }
+
+/* compare two extents and if they overlap, return non-zero */
+#define NMG_EXTENT_OVERLAP(_a, _b) (!(_a[0] > _b[1] || _a[1] < _b[0] || \
+	_a[2] > _b[3] || _a[3] < _b[2] || _a[4] > _b[5] || _a[5] < _b[4]) )
+
+
+/*
+ *  Support Function Declarations
+ *
+ */
+#if __STDC__
+extern struct model	*nmg_mmr();
+extern struct nmgregion	*nmg_mr(struct model *m);
+extern struct shell 	*nmg_msv(struct region *r_p);
+extern struct vertexuse	*nmg_mvu(struct vertex *v, long *upptr);
+extern struct vertexuse	*nmg_mvvu(long *upptr);
+extern struct edgeuse	*nmg_me(struct vertex *v1, *v2, struct shell *s);
+extern struct edgeuse	*nmg_meonvu(struct vertexuse *vu);
+extern struct loopuse	*nmg_ml(struct shell *s);
+extern struct loopuse	*nmg_mlv(struct shell *s);
+extern struct faceuse	*nmg_mf(struct loopuse *lu1);
+extern struct edgeuse	*nmg_esplit(struct vertex *v, struct edgeuse *oldeu);
+extern char		*nmg_identify(long magic);
+extern void		nmg_movevu(struct vertexuse *vu, struct vertex *v);
+extern void		nmg_kfu(struct faceuse *fu1);
+extern void		nmg_klu(struct loopuse *lu1);
+extern void		nmg_evu(struct edgeuse *eu);
+extern void		nmg_kvu(struct vertexuse *vu);
+extern void		nmg_ks(struct shell *s);
+extern void		nmg_pr_m(struct model *m, char *h);
+extern void		nmg_pr_r(struct nmgregion *r, char *h);
+extern void		nmg_pr_s(struct shell *s, char *h);
+extern void		nmg_pr_fg(struct face_g *fg, char *h);
+extern void		nmg_pr_f(struct face *f, char *h);
+extern void		nmg_pr_fu(struct faceuse *fu, char *h);
+extern void		nmg_pr_l(struct loop *l, char *h);
+extern void		nmg_pr_lu(struct loopuse *lu, char *h);
+extern void		nmg_pr_e(struct edge *e, char *h);
+extern void		nmg_pr_eu(struct edgeuse *eu, char *h);
+extern void		nmg_pr_vg(struct vertex_g *vg, char *h);
+extern void		nmg_pr_v(struct vertex *v, char *h);
+extern void		nmg_pr_vu(struct vertexuse *vu, char *h);
+extern void		nmg_unglueedge(struct edgeuse *eu);
+extern void		nmg_glueedge(struct edge *e1, *e2);
+extern void 		nmg_moveltof(struct faceuse *fu, struct shell *s);
+
+#else
+extern struct model	*nmg_mmr();
+extern struct nmgregion	*nmg_mr();
+extern struct shell 	*nmg_msv();
+extern struct vertexuse	*nmg_mvu();
+extern struct vertexuse	*nmg_mvvu();
+extern struct edgeuse	*nmg_me();
+extern struct edgeuse	*nmg_meonvu();
+extern struct loopuse	*nmg_ml();
+extern struct loopuse	*nmg_mlv();
+extern struct faceuse	*nmg_mf();
+extern struct edgeuse	*nmg_esplit();
+extern char		*nmg_identify();
+extern void		nmg_movevu();
+extern void		nmg_kfu();
+extern void		nmg_klu();
+extern void		nmg_keu();
+extern void		nmg_kvu();
+extern void		nmg_ks();
+extern void		nmg_pr_m();
+extern void		nmg_pr_r();
+extern void		nmg_pr_s();
+extern void		nmg_pr_fg();
+extern void		nmg_pr_f();
+extern void		nmg_pr_fu();
+extern void		nmg_pr_l();
+extern void		nmg_pr_lu();
+extern void		nmg_pr_e();
+extern void		nmg_pr_eu();
+extern void		nmg_pr_vg();
+extern void		nmg_pr_v();
+extern void		nmg_pr_vu();
+extern void		nmg_unglueedge();
+extern void		nmg_glueedge();
+extern void 		nmg_moveltof();
+
+#endif
+#define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
 #endif
