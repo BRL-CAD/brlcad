@@ -53,6 +53,7 @@ char	*cmd_args[MAXARGS+2];	/* array of pointers to args */
 extern int	cmd_glob();
 
 static void	f_help(), f_fhelp(), f_comm();
+void	f_labelvert();
 void	f_red();
 void	f_pov();
 void	f_vrmgr();
@@ -211,6 +212,8 @@ static struct funtab {
 	f_knob,2,3,
 "l", "<objects>", "list attributes (verbose)",
 	f_list,2,MAXARGS,
+"labelvert", "object[s]", "label vertices of wireframes of objects",
+	f_labelvert, 2, MAXARGS,
 "listeval", "", "lists 'evaluated' path solids",
 	f_pathsum, 1, MAXARGS,
 "ls", "", "table of contents",
