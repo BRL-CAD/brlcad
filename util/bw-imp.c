@@ -64,23 +64,86 @@ static u_char	dither[8][8] =		/* dither pattern */
 
 static u_char	(*pattern)[8] = dither;	/* -> dither or halftone */
 
-static char	*file_name = "-";	/* name of RLE file, for banner */
-static int	rlesize = 512;		/* "screen" width: 512 or 1024 */
-static int	thresh = 150;		/* Threshold */
+static FILE	*infp;			/* input file handle */
+static char	*file_name = "-";	/* name of input file, for banner */
+
+static int	height;			/* input height */
+static int	width;			/* input width */
+
+static int	thresh = -1;		/* Threshold */
 
 static long		swath[32][64];	/* assumes long has 32 bits */
 
-static unsigned char	line[1024];	/* grey-scale RLE scan */
+static unsigned char	line[4096];	/* grey-scale input buffer */
 
-static int	im_mag;			/* magnification (2 or 4) */
+static int	im_mag;			/* magnification (1, 2 or 4) */
 static int	im_width;		/* image size (in Imagen dots) */
-static int	im_patches;		/* # 32-bit patches needed */
+static int	im_wpatches;		/* # 32-bit patches width */
+static int	im_hpatches;		/* # 32-bit patches height */
 
 bool	get_args();
 bool	im_close();
 bool	im_header();
 void	im_write();
 
+char usage[] = "Usage: bw-impress [-h] [-s squaresize] [-H height] [-W width]\n\
+	[-t thresh] [-D] [file]\n";
+
+bool
+get_args( argc, argv )
+register char	**argv;
+{
+	register int	c;
+
+	while ( (c = getopt( argc, argv, "hs:H:W:t:D" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			height = width = 1024;
+			break;
+		case 's':
+			/* square size */
+			height = width = atoi(optarg);
+			break;
+		case 'H':
+			height = atoi(optarg);
+			break;
+		case 'W':
+			width = atoi(optarg);
+			break;
+		case 't':
+			thresh = atoi(optarg);
+			break;
+		case 'D':
+			/* halftone instead of dither */
+			pattern = halftone;
+			break;
+
+		default:		/* '?' */
+			return false;
+		}
+	}
+
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(false);
+		file_name = "-";
+		infp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (infp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"bw-impress: cannot open \"%s\" for reading\n",
+				file_name );
+			return false;
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "bw-impress: excess argument(s) ignored\n" );
+
+	return true;
+}
 
 main( argc, argv )
 int		argc;
@@ -89,27 +152,34 @@ char		*argv[];
 	register int 	y;
 	int		flags;
 
-#ifdef never
-	if ( !get_args( argc, argv ) )
-	{
-		(void)fputs( "Usage: rle-im [-b (WB)] [-h] [file]\n", stderr );
+	height = width = 512;		/* Defaults */
+
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
 		return 1;
 	}
-#endif
 
-	rlesize = 512;
-/**	rlesize = 1024;		/* high-resolution */
-
-	im_mag = rlesize == 512 ? 4 : 2;
-	im_width  = rlesize * im_mag;
-	im_patches = im_width / 32;
+	if( thresh >= 0 )  {
+		/* Each pixel in gives one bit out, depending on thresh */
+		im_mag = 1;
+	} else {
+		if( width > 512 )  im_mag = 2;
+		else if( width > 256 )  im_mag = 4;
+		else im_mag = 8;
+	}
+	im_width  = (width * im_mag) & (~31);
+	im_wpatches = (im_width+31) / 32;
+	im_hpatches = ((height * im_mag)+31) / 32;
+	if( im_wpatches*32 > 2560 )  {
+		fprintf(stderr,"bw-impress:  output too wide\n");
+		return(1);
+	}
 
 	if ( !im_header() )
 		return 1;
 
-	for( y = 0; y < rlesize; y += 32/im_mag )  {
-fprintf(stderr,"y=%d\n", y);
-		if( feof(stdin) )
+	for( y = 0; y < height; y += 32/im_mag )  {
+		if( feof(infp) )
 			return 1;
 		im_write(y);
 	}
@@ -119,78 +189,6 @@ fprintf(stderr,"y=%d\n", y);
 
 	return 0;
 }
-
-
-#ifdef never
-bool
-get_args( argc, argv )
-register char	**argv;
-{
-	register int	c;
-
-	/* Parse options. */
-
-	while ( (c = getopt( argc, argv, "b:h" )) != EOF )
-	    {
-		switch( c )
-		    {
-		case 'b':		/* user-specified background */
-			bgflag = true;
-
-			switch( toupper( (int)optarg[0] ) )
-			    {
-			case 'W':	/* White */
-				bgpixel.red = bgpixel.green = bgpixel.blue = 255;
-				break;
-
-			case 'B':	/* Black */
-				bgpixel.red = bgpixel.green = bgpixel.blue = 0;
-				break;
-
-			default:
-				(void)fprintf( stderr,
-				"rle-im: background `%c' unknown\n",
-				(int)optarg[0]
-				    );
-				bgflag = false;
-				break;
-			}
-			break;
-
-		case 'h':		/* halftone instead of dither */
-			pattern = halftone;
-			break;
-
-		default:		/* '?' */
-			return false;
-		}
-	}
-
-	if ( argv[optind] == NULL )
-	    file_name = "-";
-	else	{
-		file_name = argv[optind];
-
-		if ( freopen( argv[optind], "r", stdin ) == NULL )
-		    {
-			(void)fprintf( stderr,
-			"rle-im: cannot open \"%s\" for reading\n",
-			argv[optind]
-			    );
-			return false;
-		}
-	}
-
-	if ( argc > ++optind )
-	    {
-		(void)fprintf( stderr, "rle-im: too many arguments\n" );
-		return false;
-	}
-
-	return true;
-}
-#endif
-
 
 bool
 im_header()
@@ -216,8 +214,8 @@ im_header()
 	(void)putchar(0);		/* x 1 */
 	(void)putchar(235);		/* BITMAP */
 	(void)putchar(3);		/* opaque (store) */
-	(void)putchar(im_patches);	/* hsize (# patches across) */
-	(void)putchar(im_patches);	/* vsize (# patches down) */
+	(void)putchar(im_wpatches);	/* hsize (# patches across) */
+	(void)putchar(im_hpatches);	/* vsize (# patches down) */
 
 	return true;
 }
@@ -226,15 +224,21 @@ void
 im_write(y)
 int y;
 {
-	int y1;
-	register int x, x1;
+	int x;
+	register int y1;
+	register int x1;
 	register int mx, my;
 
 	/* Process one 32-bit high output swath */
 	for ( y1 = 0; y1 < 32; y1 += im_mag )  {
 		/* Obtain a single line of 8-bit pixels */
-		if( fread( line, 1, rlesize, stdin ) != rlesize )
-			bzero( line, rlesize );
+		if( fread( line, 1, width, infp ) != width )  {
+#ifdef BSD
+			bzero( line, width );
+#else
+			memset( line, '\0', width );
+#endif
+		}
 
 		/* construct im_mag scans of Imagen swath */
 		for ( x = 0; x < im_width; x += 32 )  {
@@ -243,7 +247,7 @@ int y;
 
 				for ( x1 = 0; x1 < 32; x1 += im_mag )  {
 					register int	level =
-					    line[rlesize-1-((x + x1) / im_mag)];
+					    line[width-1-((x + x1) / im_mag)];
 
 					if( im_mag <= 1 )  {
 						b <<= 1;
@@ -273,7 +277,7 @@ int y;
 	}
 
 	/* output the swath */
-	for ( x1 = 0; x1 < im_patches; ++x1 )  {
+	for ( x1 = 0; x1 < im_hpatches; ++x1 )  {
 		for ( y1 = 0; y1 < 32; ++y1 )  {
 			register long	b = swath[y1][x1];
 
