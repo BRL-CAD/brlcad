@@ -1528,6 +1528,7 @@ proc set_light_defaults { id } {
 	foreach {type name abbrev def_val desc range row col } $light_data {
 		set shader_params(def_light_$abbrev) $def_val
 	}
+	set shader_params(def_light_s) 1
 }
 
 proc assign_light_defaults { id } {
@@ -1537,6 +1538,7 @@ proc assign_light_defaults { id } {
 	foreach {type name abbrev def_val desc range row col } $light_data {
 		set shader_params($id,light_$abbrev) $def_val
 	}
+	set shader_params($id,light_s) $shader_params(def_light_s)
 }
 
 proc do_light { shade_var id } {
