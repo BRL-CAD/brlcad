@@ -5,7 +5,7 @@
 # @(#)$Header$ (BRL)
 SHELL=/bin/sh
 
-# NetBSD systems need LEXOPTS= -l
+# Some systems need LEXOPTS= -l to get yylineno.
 LEXOPTS=
 # LEXOPTS= -l
 
