@@ -960,9 +960,9 @@ char	**argv;
 
     bu_vls_trunc( &str, 0 );
     do_list( &str, dp, 0 );	/* non-verbose */
+    Tcl_AppendResult(interp, bu_vls_addr(&str), "\n", (char *)NULL);
   }
 
-  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
   bu_vls_free( &str );
 
   (void)signal(SIGINT, SIG_IGN);
