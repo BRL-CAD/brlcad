@@ -93,6 +93,11 @@
  *  $Header$
  */
 
+#include "common.h"
+
+#include "bn.h"
+#include "raytrace.h"
+
 /*
  * Routines
  */
@@ -113,7 +118,6 @@ RT_EXPORT BU_EXTERN(void			rt_spect_black_body_fast,
 RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb, 
 		    (struct bn_tabdata		*curve, 
 		     const float		rgb[3]));
-
 
 
 /*
