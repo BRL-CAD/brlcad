@@ -21,6 +21,11 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -38,6 +43,7 @@ HIDDEN int rt_rpp_tree();
 HIDDEN char *rt_basename();
 HIDDEN struct region *rt_getregion();
 HIDDEN void rt_fr_tree();
+extern int rt_id_solid();
 
 extern struct rt_functab	rt_functab[];
 extern int			rt_nfunctab;
@@ -345,6 +351,7 @@ rt_drawobj( rtip, dp, argregion, pathpos, old_xlate, materp )
 struct rt_i	*rtip;
 struct directory *dp;
 struct region	*argregion;
+int		pathpos;
 matp_t		old_xlate;
 struct mater_info *materp;
 {
