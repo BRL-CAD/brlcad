@@ -159,6 +159,7 @@ int		ptno;	/* current point # on face */
 	case 2:
 		VSUB2( P_A, point, afp->A );	/* C-A */
 		/* Pts are given clockwise, so reverse terms of cross prod. */
+		/* peqn = (C-A)x(B-A), which points inwards */
 		VCROSS( afp->peqn, P_A, ofp->arb_U );
 		/* Check for co-linear, ie, |(B-A)x(C-A)| ~= 0 */
 		f = MAGNITUDE( afp->peqn );
@@ -1077,7 +1078,7 @@ double		norm_tol;
 	/* Process each face */
 	for( i=0; i < pa.pa_faces; i++ )  {
 		if( pa.pa_reversed[i] == 0 )  {
-			/* Normal orientation */
+			/* Clockwise orientation (CW) */
 			vertp[0] = &verts[pa.pa_pindex[0][i]];
 			vertp[1] = &verts[pa.pa_pindex[1][i]];
 			vertp[2] = &verts[pa.pa_pindex[2][i]];
@@ -1086,6 +1087,7 @@ double		norm_tol;
 			}
 		} else {
 			register struct vertex	***vertpp = vertp;
+			/* Counter-Clockwise orientation (CCW) */
 			if( pa.pa_npts[i] > 3 ) {
 				*vertpp++ = &verts[pa.pa_pindex[3][i]];
 			}
