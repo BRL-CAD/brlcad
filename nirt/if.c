@@ -1,6 +1,6 @@
 /*      IF.C            */
 #ifndef lint
-static char RCSid[] = "$Header$";
+static const char RCSid[] = "$Header$";
 #endif
 
 /*	INCLUDES	*/
@@ -224,6 +224,7 @@ int if_miss()
  *	Stolen by:	Paul Tanenbaum
  *	Date stolen:	29 March 1990
  */
+int
 if_overlap( ap, pp, reg1, reg2 )
 register struct application	*ap;
 register struct partition	*pp;
@@ -383,6 +384,7 @@ void init_ovlp()
     ovlp_list.forw = ovlp_list.backw = &ovlp_list;
 }
 
+int
 if_boverlap( ap, pp, reg1, reg2 )
 register struct application     *ap;
 register struct partition       *pp;

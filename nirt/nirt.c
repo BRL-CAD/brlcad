@@ -82,7 +82,7 @@ com_table	ComTab[] =
 		    { "!", sh_esc, "escape to the shell" },
 		    { "q", quit, "quit" },
 		    { "?", show_menu, "display this help menu" },
-		    { 0 }
+		    { (char *)NULL, NULL, (char *)NULL, (char *)NULL }
 		};
 int		do_backout = 0;			/* Backout before shooting? */
 int		overlap_claims = OVLP_RESOLVE;	/* Rebuild/retain overlaps? */
@@ -217,7 +217,6 @@ int argc;
 char **argv;
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
-    extern char		*local_unit[];
     extern char		local_u_name[];
     extern double	base2local;
     extern double	local2base;
@@ -304,10 +303,10 @@ char **argv;
 		silent_flag = SILENT_NO;	/* Positively no */
 		break;
             case 'x':
-		sscanf( optarg, "%x", &rt_g.debug );
+		sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
 		break;
             case 'X':
-		sscanf( optarg, "%x", &nirt_debug );
+		sscanf( optarg, "%x", (unsigned int *)&nirt_debug );
 		break;
             case 'u':
                 if (sscanf(optarg, "%d", &use_of_air) != 1)
@@ -502,8 +501,8 @@ void printusage()
     (void) fputs(usage, stderr);
 }
 
-void do_rt_gettrees (rtip, object_name, nm_objects)
-
+void
+do_rt_gettrees (rtip, object_name, nm_objects)
 struct rt_i	*rtip;
 char		*object_name[];
 int		nm_objects;
