@@ -628,13 +628,20 @@ CONST struct rt_tol	*tol;
 		register struct face	*fn;
 		if (rt_g.NMG_debug & DEBUG_MESH)  {
 			rt_log("joining face geometry (opposite dirs)\n");
+
+			rt_log(" f1=x%x, flip=%d", f1, f1->flip);
 			PLPRINT(" fg1", fg1->N);
+
+			rt_log(" f2=x%x, flip=%d", f2, f2->flip);
 			PLPRINT(" fg2", fg2->N);
 		}
 		/* Flip flags of faces using fg2, first! */
 		for( RT_LIST_FOR( fn, face, &fg2->f_hd ) )  {
 			NMG_CK_FACE(fn);
 			fn->flip = !fn->flip;
+			if (rt_g.NMG_debug & DEBUG_MESH)  {
+				rt_log("f=x%x, new flip=%d\n", fn, fn->flip);
+			}
 		}
 		nmg_jfg( f1, f2 );
 	}
