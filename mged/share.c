@@ -279,7 +279,6 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  int rflag;
   struct bu_vls vls;
 
   bu_vls_init(&vls);
