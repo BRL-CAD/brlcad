@@ -300,24 +300,24 @@ puts "about to call plot_tabdata"
 
 puts "disp.tcl: about to define proc do_testing"
 
+#			D O _ T E S T I N G
+#
 proc do_testing {} {
-	# sets ntsc_r, ntsc_g, ntsc_b
-	getntsccurves
-	puts "do_testing: ntsc_r = $ntsc_r"
-	popup_plot_tabdata "NTSC Red, Sampled" $ntsc_r 0 1
-	popup_plot_tabdata "NTSC Green, Sampled" $ntsc_g 0 1
-	popup_plot_tabdata "NTSC Blue, Sampled" $ntsc_b 0 1
+	puts "do_testing: start"
 
-	popup_plot_tabdata "NTSC Red Orig" $ntsc_r_orig 0 1
-	popup_plot_tabdata "NTSC Green Orig" $ntsc_g_orig 0 1
-	popup_plot_tabdata "NTSC Blue Orig" $ntsc_b_orig 0 1
+	set curve_list [getntsccurves]
+	puts "Got these curves: $curve_list"
+
+	for {set i [expr [llength $curve_list]-1]} {$i >= 0} {incr i -1} {
+		set name [lindex $curve_list $i]
+		puts "curve $i is called $name"
+		eval popup_plot_tabdata $name \$$name 0 1
+	}
+	puts "do_testing: end"
 }
 
-puts "disp.tcl: About to run first_command= $first_command"
-
-### XXX Hack:  Last thing:
-##doit1 42
 # This variable is set by C startoff.
+puts "disp.tcl: About to run first_command= $first_command"
 eval $first_command
 
 puts "disp.tcl: finished"
