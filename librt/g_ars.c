@@ -560,6 +560,7 @@ struct seg		*seghead;
 		hp->hit_dist = k;
 		hp->hit_private = (char *)trip;
 		hp->hit_vpriv[X] = dn;
+		hp->hit_rayp = rp;
 
 		if(rt_g.debug&DEBUG_ARB8) bu_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 
@@ -577,6 +578,40 @@ struct seg		*seghead;
 
 	/* Sort hits, Near to Far */
 	rt_hitsort( hits, nhits );
+
+	/* Remove duplicate hits.
+	   We remove one of a pair of hits when they are
+		1) close together, and
+		2) both "entry" or both "exit" occurrences.
+	   Two immediate "entry" or two immediate "exit" hits suggest
+	   that we hit both of two joined faces, while we want to hit only
+	   one.  An "entry" followed by an "exit" (or vice versa) suggests
+	   that we grazed an edge, and thus we should leave both
+	   in the hit list. */
+	
+	{
+		register int i, j;
+
+		if( nhits )
+			RT_HIT_NORM( &hits[0], stp, 0 )
+
+		for( i=0 ; i<nhits-1 ; i++ )
+		{
+			fastf_t dist;
+
+			RT_HIT_NORM( &hits[i+1], stp, 0 )
+			dist = hits[i].hit_dist - hits[i+1].hit_dist;
+			if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
+				VDOT( hits[i].hit_normal, rp->r_dir ) *
+			        VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
+			{
+				for( j=i ; j<nhits-1 ; j++ )
+					hits[j] = hits[j+1];
+				nhits--;
+				i--;
+			}
+		}
+	}
 
 	if( nhits&1 )  {
 		register int i;
