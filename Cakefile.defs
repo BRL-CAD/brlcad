@@ -853,7 +853,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	BUILD_LIBRARY	gcc -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #	else
 /*		Static linked executables */
 #		define	CC	gcc
@@ -867,6 +866,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBRT_TIMER	timer42
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux, RedHat) */
 #	define	LIBTERMLIB	-lncurses
+#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
