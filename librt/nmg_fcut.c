@@ -2296,7 +2296,6 @@ CONST struct rt_tol	*tol;
 {
 	fastf_t		*mag1;
 	fastf_t		*mag2;
-	fastf_t		dist_tol = 0.005;	/* XXX */
 	struct vertexuse **vu1, **vu2;
 	int		i;
 	struct nmg_ray_state	rs1;
@@ -2327,8 +2326,8 @@ top:
 	 *  Sort hit points by increasing distance, vertex ptr, vu ptr,
 	 *  and eliminate any duplicate vu's.
 	 */
-	ptbl_vsort(b1, fu1, fu2, pt, dir, mag1, dist_tol);
-	ptbl_vsort(b2, fu2, fu1, pt, dir, mag2, dist_tol);
+	ptbl_vsort(b1, fu1, fu2, pt, dir, mag1, tol->dist);
+	ptbl_vsort(b2, fu2, fu1, pt, dir, mag2, tol->dist);
 
 	vu1 = (struct vertexuse **)b1->buffer;
 	vu2 = (struct vertexuse **)b2->buffer;
