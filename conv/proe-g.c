@@ -71,6 +71,8 @@ static char *usage="proe-g [-p] [-d] [-x rt_debug_flag] [-X nmg_debug_flag] proe
 static FILE *fd_in;		/* input file (from Pro/E) */
 static FILE *fd_out;		/* Resulting BRL-CAD file */
 static struct nmg_ptbl null_parts; /* Table of NULL solids */
+static float conv_factor=1.0;	/* conversion factor from model units to mm */
+static int top_level=1;		/* flag to catch top level assembly or part */
 
 struct render_verts
 {
@@ -261,7 +263,6 @@ char line[MAX_LINE_LEN];
 	char *memb_obj;
 	char *brlcad_name;
 	float mat_col[4];
-	float conv_factor;
 	int start;
 	int i;
 
@@ -294,8 +295,8 @@ char line[MAX_LINE_LEN];
 		name[++i] = line[start];
 	name[++i] = '\0';
 
-	/* get object pointer and conversion factor */
-	sscanf( &line[start] , "%x %f" , &obj, &conv_factor );
+	/* get object pointer */
+	sscanf( &line[start] , "%x %f" , &obj );
 
 	rt_log( "Converting Assembly: %s\n" , name );
 
@@ -345,6 +346,7 @@ char line[MAX_LINE_LEN];
 		else if( !strncmp( &line1[start] , "matrix" , 6 ) )
 		{
 			int i,j;
+			double scale,inv_scale;
 
 			for( j=0 ; j<4 ; j++ )
 			{
@@ -353,9 +355,20 @@ char line[MAX_LINE_LEN];
 				for( i=0 ; i<4 ; i++ )
 					wmem->wm_mat[4*i+j] = mat_col[i];
 			}
-#if 0
-			wmem->wm_mat[15] /= conv_factor;
-#endif
+
+			/* convert this matrix to seperate scale factor into element #15 */
+			scale = MAGNITUDE( &wmem->wm_mat[0] );
+			if( scale != 1.0 )
+			{
+				inv_scale = 1.0/scale;
+				for( j=0 ; j<3 ; j++ )
+					HSCALE( &wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale )
+
+				if( top_level )
+					wmem->wm_mat[15] *= (inv_scale/conv_factor);
+			}
+			else if( top_level )
+				wmem->wm_mat[15] /= conv_factor;
 		}
 		else
 		{
@@ -369,6 +382,8 @@ char line[MAX_LINE_LEN];
 		if( rt_mem_barriercheck() )
 			rt_bomb( "Barrier check failed!!!\n" );
 	}
+
+	top_level = 0;
 
 }
 
@@ -393,7 +408,6 @@ char line[MAX_LINE_LEN];
 	char *brlcad_name;
 	struct wmember head;
 	vect_t normal;
-	float conv_factor;
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
 		rt_prmem( "At start of Conv_prt():\n" );
@@ -435,8 +449,8 @@ char line[MAX_LINE_LEN];
 		name[++i] = line[start];
 	name[++i] = '\0';
 
-	/* get object id and conversion factor */
-	sscanf( &line[start] , "%x %f" , &obj, &conv_factor );
+	/* get object id */
+	sscanf( &line[start] , "%x %f" , &obj );
 
 	rt_log( "Converting Part: %s\n" , name );
 
@@ -492,8 +506,13 @@ char line[MAX_LINE_LEN];
 				{
 					float x,y,z;
 
-
 					sscanf( &line1[start+6] , "%f%f%f" , &x , &y , &z );
+					if( top_level )
+					{
+						x *= conv_factor;
+						y *= conv_factor;
+						z *= conv_factor;
+					}
 
 					if( vert_no > 2 )
 					{
@@ -682,6 +701,8 @@ char line[MAX_LINE_LEN];
 			rt_bomb( "Barrier check failed!!!\n" );
 	}
 
+	top_level = 0;
+
 	return;
 
 empty_model:
@@ -703,6 +724,11 @@ void
 Convert_input()
 {
 	char line[ MAX_LINE_LEN ];
+
+	if( !fgets( line, MAX_LINE_LEN, fd_in ) )
+		return;
+
+	sscanf( line, "%f", &conv_factor );
 
 	while( fgets( line, MAX_LINE_LEN, fd_in ) )
 	{
