@@ -13,6 +13,7 @@ entire history of the project is available through CVS.
 * fixed aborted benchmark summary bug - Sean Morrison
 * renamed the irprep 'display' tool to 'showtherm' - Sean Morrison
 * quelled XInputExtension warning on mged startup - Sean Morrison
+# output object name when root solver fails to converge - Lee Butler
 * fixed non-square window mged illumination selection - Sean Morrison
 
 
