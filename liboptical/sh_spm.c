@@ -120,7 +120,7 @@ char	**dpp;
 		goto fail;
 	return(1);
 fail:
-	rt_free( (char *)spp, "spm_specific" );
+	spm_mfree( (char *)spp);
 	return(-1);
 }
 
@@ -132,13 +132,24 @@ spm_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint("spm_setup", spm_parse, (char *)dp);
-	/* Should be more here */
+	struct spm_specific	*spm;
+
+	spm = (struct spm_specific *)dp;
+
+	rt_log("spm_print(rp=x%x, dp=x%x)\n", rp, dp);
+	rt_structprint("spm_print", spm_parse, (char *)dp);
+	if( spm->sp_map )  spm_dump( spm->sp_map, 0 );
 }
 
 HIDDEN void
 spm_mfree( cp )
 char *cp;
 {
-	spm_free( (spm_map_t *)cp );
+	struct spm_specific	*spm;
+
+	spm = (struct spm_specific *)cp;
+
+	if( spm->sp_map )  spm_free( spm->sp_map );
+	spm->sp_map = NULL;
+	rt_free( cp, "spm_specific" );
 }
