@@ -1697,7 +1697,7 @@ struct rt_tol *tol;
 /*	N M G _ D E C O M P O S E _ S H E L L
  *
  *	Accepts one shell and breaks it to the minimum number
- *	of disjoint shells. Expects shell to be a 3-manifold (winged-edges)
+ *	of disjoint shells.
  *
  *	explicit returns:
  *		# of resulting shells ( 1 indicates that nothing was done )
@@ -1711,6 +1711,8 @@ struct shell *s;
 {
 	int missed_faces;
 	int no_of_shells=1;
+	int shell_no=1;
+	int i,j;
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *new_s;
@@ -1720,6 +1722,7 @@ struct shell *s;
 	struct edgeuse *eu1;
 	struct faceuse *missed_fu;
 	struct nmg_ptbl stack;
+	struct nmg_ptbl shared_edges;
 	long *flags;
 
 	NMG_CK_SHELL( s );
@@ -1729,11 +1732,12 @@ struct shell *s;
 	NMG_CK_REGION( r );
 	m = r->m_p;
 	NMG_CK_MODEL( m );
-	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_fix_normals: flags" );
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_decompose_shell: flags" );
 
 	nmg_tbl( &stack , TBL_INIT , NULL );
+	nmg_tbl( &shared_edges , TBL_INIT , NULL );
 
-	/* first go through the shell and mark every face we can get to */
+	/* get first faceuse from shell */
 	fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
 	NMG_CK_FACEUSE( fu );
 	if( fu->orientation != OT_SAME )
@@ -1750,10 +1754,30 @@ struct shell *s;
 
 		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 		{
+			int face_count=1;
+
 			NMG_CK_EDGEUSE( eu );
-			nmg_tbl( &stack , TBL_INS , (long *)eu );
+
+			/* count radial faces on this edge */
+			eu1 = eu->eumate_p->radial_p;
+			while( eu1 != eu && eu1 != eu->eumate_p )
+			{
+				/* ignore other shells */
+				if( nmg_find_s_of_eu( eu1 ) == s )
+					face_count++;
+				eu1 = eu1->eumate_p->radial_p;
+			}
+
+			/* build two lists, one of winged edges, the other not */
+			if( face_count > 2 )
+				nmg_tbl( &shared_edges , TBL_INS , (long *)eu );
+			else
+				nmg_tbl( &stack , TBL_INS , (long *)eu );
 		}
 	}
+
+	/* Mark first faceuse with shell number */
+	NMG_INDEX_ASSIGN( flags , fu , shell_no );
 
 	/* now pop edgeuse of the stack and visit faces radial to edgeuse */
 	while( (eu1 = nmg_pop_eu( &stack )) != (struct edgeuse *)NULL )
@@ -1774,21 +1798,46 @@ struct shell *s;
 		fu = nmg_find_fu_of_eu( eu );
 		NMG_CK_FACEUSE( fu );
 
-		/* if this face has already been visited, skip it */
-		if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+
+		/* if this faceuse has already been visited, skip it */
+		if( !NMG_INDEX_TEST( flags , fu ) )
 		{
-                        /* push all edgeuses of "fu" onto the stack */
+                        /* push all "winged" edgeuses of "fu" onto the stack */
                         for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
                         {
                                 NMG_CK_LOOPUSE( lu );
+
                                 if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
                                         continue;
+
                                 for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
                                 {
+                                	int face_count=1;
+
                                 	NMG_CK_EDGEUSE( eu );
-                                        nmg_tbl( &stack , TBL_INS , (long *)eu );
+
+					/* count radial faces on this edge */
+					eu1 = eu->eumate_p->radial_p;
+					while( eu1 != eu && eu1 != eu->eumate_p )
+					{
+						/* ignore other shells */
+						if( nmg_find_s_of_eu( eu1 ) == s )
+							face_count++;
+						eu1 = eu1->eumate_p->radial_p;
+					}
+
+					/* build two lists, one of winged edges, the other not */
+					if( face_count > 2 )
+						nmg_tbl( &shared_edges , TBL_INS , (long *)eu );
+					else
+						nmg_tbl( &stack , TBL_INS , (long *)eu );
                                 }
                         }
+			/* Mark this faceuse and its mate with a shell number */
+			NMG_INDEX_ASSIGN( flags , fu , shell_no );
+			NMG_INDEX_ASSIGN( flags , fu->fumate_p , shell_no );
 		}
 	}
 
@@ -1799,7 +1848,7 @@ struct shell *s;
 		NMG_CK_FACEUSE( fu );
 		if( fu->orientation == OT_SAME )
 		{
-			if( !NMG_INDEX_TEST( flags , fu->f_p ) )
+			if( !NMG_INDEX_TEST( flags , fu ) )
 			{
 				missed_faces++;
 				missed_fu = fu;
@@ -1808,38 +1857,131 @@ struct shell *s;
 	}
 
 	if( !missed_faces )	/* nothing to do, just one shell */
+	{
+		rt_free( (char *)flags , "nmg_decompose_shell: flags " );
+		nmg_tbl( &stack , TBL_FREE , NULL );
+		nmg_tbl( &shared_edges , TBL_FREE , NULL );
 		return( no_of_shells );
+	}
 
 	while( missed_faces )
 	{
+		struct edgeuse *unassigned_eu;
+		int *shells_at_edge;
+		int new_shell_no=0;
+
 		nmg_tbl( &stack , TBL_RST , NULL );
 
-		/* make a new shell */
-		new_s = nmg_msv( r );
-		no_of_shells++;
+		/* Look at the list of shared edges to see if anything can be deduced */
+		shells_at_edge = (int *)rt_calloc( no_of_shells+1 , sizeof( int ) , "nmg_decompose_shell: shells_at_edge" );
 
-		NMG_CK_FACEUSE( missed_fu );
-		fu = missed_fu;
+		for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
+		{
+			int faces_at_edge=0;
 
-		if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
+			unassigned_eu = NULL;
+
+			eu = (struct edgeuse *)NMG_TBL_GET( &shared_edges , i );
+			NMG_CK_EDGEUSE( eu );
+
+			eu1 = eu;
+			do
+			{
+				faces_at_edge++;
+				fu = nmg_find_fu_of_eu( eu1 );
+				if( !NMG_INDEX_TEST( flags , fu ) )
+					unassigned_eu = eu1;
+				shells_at_edge[ NMG_INDEX_GET( flags , fu ) ]++;
+				eu1 = eu1->eumate_p->radial_p;
+			}
+			while( eu1 != eu );
+
+			if( shells_at_edge[0] == 1 && unassigned_eu )
+			{
+				/* Only one face at this edge is unassigned, should be
+				 * able to determine which shell it belongs in */
+
+				/* Make sure everything is O.K. so far */
+				if( faces_at_edge & 1 )
+					rt_bomb( "nmg_decompose_shell: Odd number of faces at edge\n" );
+
+				for( j=1 ; j<no_of_shells ; j++ )
+				{
+					if( shells_at_edge[j] == 1 )
+					{
+						/* the unassigned face could belong to shell number j */
+						if( new_shell_no )
+						{
+							/* more than one shell has only one face here
+							 * cannot determine which to choose */
+							new_shell_no = 0;
+							break;
+						}
+						else
+							new_shell_no = j;
+					}
+				}
+			}
+		}
+
+		rt_free( (char *)shells_at_edge , "nmg_decompose_shell: shells_at_edge" );
+
+		/* make a new shell number */
+		if( new_shell_no )
+		{
+			shell_no = new_shell_no;
+			fu = nmg_find_fu_of_eu( unassigned_eu );
+		}
+		else
+		{
+			shell_no = (++no_of_shells);
+			NMG_CK_FACEUSE( missed_fu );
+			fu = missed_fu;
+		}
+
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+
+		if( !NMG_INDEX_TEST( flags , fu ) )
 		{
 			/* move this missed face to the new shell */
-			nmg_mv_fu_between_shells( new_s , s , fu );
 
                         /* push all edgeuses of "fu" onto the stack */
                         for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
                         {
                                 NMG_CK_LOOPUSE( lu );
+
                                 if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
                                         continue;
+
                                 for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
                                 {
+                                	int face_count = 1;
+
                                 	NMG_CK_EDGEUSE( eu );
-                                        nmg_tbl( &stack , TBL_INS , (long *)eu );
+
+					/* count radial faces on this edge */
+					eu1 = eu->eumate_p->radial_p;
+					while( eu1 != eu && eu1 != eu->eumate_p )
+					{
+						/* ignore other shells */
+						if( nmg_find_s_of_eu( eu1 ) == s )
+							face_count++;
+						eu1 = eu1->eumate_p->radial_p;
+					}
+
+					/* build two lists, one of winged edges, the other not */
+					if( face_count > 2 )
+						nmg_tbl( &shared_edges , TBL_INS , (long *)eu );
+					else
+						nmg_tbl( &stack , TBL_INS , (long *)eu );
                                 }
                         }
-			if( nmg_kvu( new_s->vu_p ) )
-				rt_bomb( "nmg_decompose_shell: killed shell vertex, emptied shell!!\n" );
+
+			/* Mark this faceuse with a shell number */
+			NMG_INDEX_ASSIGN( flags , fu , shell_no );
+			NMG_INDEX_ASSIGN( flags , fu->fumate_p , shell_no );
+
 		}
 		else
 			rt_bomb( "nmg_decompose_shell: Missed face wasn't missed???\n" );
@@ -1864,11 +2006,8 @@ struct shell *s;
 			NMG_CK_FACEUSE( fu );
 
 			/* if this face has already been visited, skip it */
-			if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
+			if( !NMG_INDEX_TEST( flags , fu ) )
 			{
-				/* move this face to the new shell */
-				nmg_mv_fu_between_shells( new_s , s , fu );
-
 	                        /* push all edgeuses of "fu" onto the stack */
 	                        for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 	                        {
@@ -1877,10 +2016,31 @@ struct shell *s;
 	                                        continue;
 	                                for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 	                                {
+	                                	int face_count = 1;
 	                                	NMG_CK_EDGEUSE( eu );
-	                                        nmg_tbl( &stack , TBL_INS , (long *)eu );
+
+						/* count radial faces on this edge */
+						eu1 = eu->eumate_p->radial_p;
+						while( eu1 != eu && eu1 != eu->eumate_p )
+						{
+							/* ignore other shells */
+							if( nmg_find_s_of_eu( eu1 ) == s )
+								face_count++;
+							eu1 = eu1->eumate_p->radial_p;
+						}
+
+						/* build two lists, one of winged edges, the other not */
+						if( face_count > 2 )
+							nmg_tbl( &shared_edges , TBL_INS , (long *)eu );
+						else
+							nmg_tbl( &stack , TBL_INS , (long *)eu );
 	                                }
 	                        }
+
+				/* Mark this faceuse with a shell number */
+				NMG_INDEX_ASSIGN( flags , fu , shell_no );
+				NMG_INDEX_ASSIGN( flags , fu->fumate_p , shell_no );
+
 			}
 		}
 
@@ -1891,7 +2051,7 @@ struct shell *s;
 			NMG_CK_FACEUSE( fu );
 			if( fu->orientation == OT_SAME )
 			{
-				if( !NMG_INDEX_TEST( flags , fu->f_p ) )
+				if( !NMG_INDEX_TEST( flags , fu ) )
 				{
 					missed_faces++;
 					missed_fu = fu;
@@ -1899,7 +2059,30 @@ struct shell *s;
 			}
 		}
 	}
+
+	/* Now build the new shells */
+	for( shell_no=2 ; shell_no<=no_of_shells ; shell_no++ )
+	{
+
+		/* Make a shell */
+		new_s = nmg_msv( r );
+
+		/* Move faces marked with this shell_no to this shell */
+		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		{
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			if( NMG_INDEX_GET( flags , fu ) == shell_no )
+				nmg_mv_fu_between_shells( new_s , s , fu );
+			
+		}
+		if( nmg_kvu( new_s->vu_p ) )
+			rt_bomb( "nmg_decompose_shell: killed shell vertex, emptied shell!!\n" );
+	}
 	rt_free( (char *)flags , "nmg_decompose_shell: flags " );
+	nmg_tbl( &stack , TBL_FREE , NULL );
+	nmg_tbl( &shared_edges , TBL_FREE , NULL );
 	return( no_of_shells );
 }
 
