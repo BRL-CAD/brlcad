@@ -96,6 +96,7 @@ CONST char	*mode;
 		}
 
 		BU_GETSTRUCT( dbip, db_i );
+		dbip->dbi_eof = -1L;
 		dbip->dbi_mf = mfp;
 		dbip->dbi_eof = mfp->buflen;
 		dbip->dbi_inmem = mfp->buf;
@@ -116,6 +117,7 @@ CONST char	*mode;
 	}  else  {
 		/* Read-write mode */
 		BU_GETSTRUCT( dbip, db_i );
+		dbip->dbi_eof = -1L;
 
 #		ifdef HAVE_UNIX_IO
 			if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
@@ -134,7 +136,6 @@ CONST char	*mode;
 	for( i=0; i<RT_DBNHASH; i++ )
 		dbip->dbi_Head[i] = DIR_NULL;
 
-	dbip->dbi_eof = -1L;
 	dbip->dbi_local2base = 1.0;		/* mm */
 	dbip->dbi_base2local = 1.0;
 	dbip->dbi_title = (char *)0;
