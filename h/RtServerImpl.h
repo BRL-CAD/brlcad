@@ -72,6 +72,14 @@ JNIEXPORT void JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_shutdownNat
 JNIEXPORT jobject JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay
   (JNIEnv *, jobject, jobject, jobject, jint);
 
+/*
+ * Class:     mil_army_arl_muves_rtserver_RtServerImpl
+ * Method:    getItemTree
+ * Signature: (I)Lmil/army/arl/muves/rtserver/ItemTree;
+ */
+JNIEXPORT jobject JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree
+  (JNIEnv *, jobject, jint);
+
 #ifdef __cplusplus
 }
 #endif
