@@ -264,24 +264,26 @@ int	kind;
 
 	initial_blank_screen = (HeadSolid.s_forw == &HeadSolid);
 
-	/* First, delete any mention of these objects */
-	f_delobj( argc, argv );
+	/*  First, delete any mention of these objects.
+	 *  Silently skip any leading options (which start with minus signs).
+	 */
+	for( i = 1; i < argc; i++ )  {
+		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_QUIET )) != DIR_NULL )  {
+			eraseobj( dp );
+			no_memory = 0;
+		}
+	}
+
+	dmaflag = 1;
 	if( dmp->dmr_displaylist )  {
 		/* Force displaylist update before starting new drawing */
 		dmaflag = 1;
 		refresh();
 	}
 
-	if( no_memory )  {
-		(void)printf("No memory left\n");
-		drawreg = 0;
-		regmemb = -1;
-		return;
-	}
-
 	nvectors = 0;
 	(void)time( &stime );
-	drawtrees( argc-1, &argv[1], kind );
+	drawtrees( argc, argv, kind );
 	(void)time( &etime );
 	(void)printf("%ld vectors in %ld sec\n", nvectors, etime - stime );
 	

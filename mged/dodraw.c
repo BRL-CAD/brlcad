@@ -39,6 +39,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"	/* XXX */
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
 struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX dm.h */
 
 int	no_memory;	/* flag indicating memory for drawing is used up */
@@ -78,6 +82,8 @@ static struct db_tree_state	mged_initial_tree_state = {
 	0.0, 0.0, 0.0, 1.0,
 };
 
+static int		mged_draw_wireframes;
+static int		mged_draw_normals;
 static struct model	*mged_nmg_model;
 
 /*
@@ -376,8 +382,16 @@ union tree		*curtree;
 		/* Convert NMG to vlist */
 		NMG_CK_REGION(r);
 
-		/* 0 = vectors, 1 = w/polygon markers */
-		nmg_s_to_vlist( &vhead, r->s_p, 1 );
+		if( mged_draw_normals )  {
+			/* 0 = vectors, 1 = w/polygon markers, 2 = polys with normals */
+			nmg_s_to_vlist( &vhead, r->s_p, 2 );
+		} else if( mged_draw_wireframes )  {
+			/* Draw in vector form */
+			nmg_s_to_vlist( &vhead, r->s_p, 0 );
+		} else {
+			/* Default -- draw polygons */
+			nmg_s_to_vlist( &vhead, r->s_p, 1 );
+		}
 
 		drawH_part2( 0, vhead.vh_first, pathp, tsp, SOLID_NULL );
 	}
@@ -391,6 +405,7 @@ union tree		*curtree;
  *
  *  This routine is MGED's analog of rt_gettrees().
  *  Add a set of tree hierarchies to the active set.
+ *  Note that argv[0] should be ignored, it has the command name in it.
  *
  *  Kind =
  *	1	regular wireframes
@@ -407,13 +422,39 @@ int	argc;
 char	**argv;
 int	kind;
 {
-	int			i;
+	int		i;
+	register int	c;
+	int		ncpu;
 
 	RT_CHECK_DBI(dbip);
 
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
-	/* XXX could parse options here.  eg, -P ncpu, etc */
+	/* Initial vaues for options, must be reset each time */
+	ncpu = 1;
+	mged_draw_wireframes = 0;
+	mged_draw_normals = 0;
+
+	/* Parse options. */
+	optind = 1;		/* re-init getopt() */
+	while( (c=getopt(argc,argv,"wnP:")) != EOF )  {
+		switch(c)  {
+		case 'w':
+			mged_draw_wireframes = 1;
+			break;
+		case 'n':
+			mged_draw_normals = 1;
+			break;
+		case 'P':
+			ncpu = atoi(optarg);
+			break;
+		default:
+			printf("option '%c' unknown\n", c);
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	switch( kind )  {
 	default:
@@ -421,7 +462,7 @@ int	kind;
 		return(-1);
 	case 1:		/* Wireframes */
 		i = db_walk_tree( dbip, argc, argv,
-			1,	/* # cpus */
+			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_wireframe_region_end,
@@ -430,7 +471,7 @@ int	kind;
 		break;
 	case 2:		/* Big-E */
 		i = db_walk_tree( dbip, argc, argv,
-			1,	/* # cpus */
+			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_bigE_region_end,
@@ -442,7 +483,7 @@ int	kind;
 		/* NMG */
 	  	mged_nmg_model = nmg_mm();
 		i = db_walk_tree( dbip, argc, argv,
-			1,	/* # cpus */
+			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_nmg_region_end,
@@ -455,7 +496,6 @@ int	kind;
 	  	break;
 	  }
 	}
-
 	return(0);	/* OK */
 }
 
