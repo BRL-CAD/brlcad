@@ -9130,11 +9130,10 @@ f_sedit_apply(clientData, interp, argc, argv)
      int	argc;
      char	**argv;
 {
-	if (dbip == DBI_NULL)
-		return;
+	RT_CK_DBI_TCL(interp, dbip);
 
 	if (not_state(ST_S_EDIT, "Solid edit accept"))
-		return;
+		return TCL_ERROR;
 
 	if (sedraw > 0)
 		sedit();
