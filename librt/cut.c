@@ -516,6 +516,7 @@ int lvl;			/* recursion level */
  *  The strategy we use here is to free everything BELOW the given
  *  node, so as not to clobber rti_CutHead !
  */
+void
 rt_fr_cut( cutp )
 register union cutter *cutp;
 {

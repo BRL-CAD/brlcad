@@ -33,6 +33,8 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
 
 /* Describe algorithm here */
 
+void	pg_hit_sort();
+
 /*
  *			P G _ P R E P
  *  

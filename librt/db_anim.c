@@ -138,6 +138,7 @@ struct mater_info	*materp;
  *
  *  Release chain of animation structures
  */
+void
 rt_fr_anim( rtip )
 register struct rt_i *rtip;
 {

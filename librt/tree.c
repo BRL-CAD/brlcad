@@ -39,29 +39,41 @@ HIDDEN char *rt_basename();
 HIDDEN struct region *rt_getregion();
 HIDDEN void rt_fr_tree();
 
-extern int nul_prep(),	nul_print(), nul_norm(), nul_uv();
-extern int tor_prep(),	tor_print(), tor_norm(), tor_uv();
-extern int tgc_prep(),	tgc_print(), tgc_norm(), tgc_uv();
-extern int ell_prep(),	ell_print(), ell_norm(), ell_uv();
-extern int arb_prep(),	arb_print(), arb_norm(), arb_uv();
-extern int hlf_prep(),	hlf_print(), hlf_norm(), hlf_uv();
-extern int ars_prep(),  ars_print(), ars_norm(), ars_uv();
-extern int rec_prep(),	rec_print(), rec_norm(), rec_uv();
-extern int pg_prep(),	pg_print(),  pg_norm(),  pg_uv();
-extern int spl_prep(),	spl_print(), spl_norm(), spl_uv();
-extern int sph_prep(),	sph_print(), sph_norm(), sph_uv();
+extern int	nul_prep(), nul_class();
+extern int	tor_prep(), tor_class();
+extern int	tgc_prep(), tgc_class();
+extern int	ell_prep(), ell_class();
+extern int	arb_prep(), arb_class();
+extern int	hlf_prep(), hlf_class();
+extern int	ars_prep(), ars_class();
+extern int	rec_prep(), rec_class();
+extern int	pg_prep(), pg_class();
+extern int	spl_prep(), spl_class();
+extern int	sph_prep(), sph_class();
 
-extern int nul_curve(), nul_class(), nul_free(), nul_plot();
-extern int tor_curve(), tor_class(), tor_free(), tor_plot();
-extern int tgc_curve(), tgc_class(), tgc_free(), tgc_plot();
-extern int ell_curve(), ell_class(), ell_free(), ell_plot();
-extern int arb_curve(), arb_class(), arb_free(), arb_plot();
-extern int hlf_curve(), hlf_class(), hlf_free(), hlf_plot();
-extern int ars_curve(), ars_class(), ars_free(), ars_plot();
-extern int rec_curve(), rec_class(), rec_free(), rec_plot();
-extern int pg_curve(),  pg_class(),  pg_free(),  pg_plot();
-extern int spl_curve(), spl_class(), spl_free(), spl_plot();
-extern int sph_curve(), sph_class(), sph_free(), sph_plot();
+extern void	nul_print(), nul_norm(), nul_uv();
+extern void	tor_print(), tor_norm(), tor_uv();
+extern void	tgc_print(), tgc_norm(), tgc_uv();
+extern void	ell_print(), ell_norm(), ell_uv();
+extern void	arb_print(), arb_norm(), arb_uv();
+extern void	hlf_print(), hlf_norm(), hlf_uv();
+extern void	ars_print(), ars_norm(), ars_uv();
+extern void	rec_print(), rec_norm(), rec_uv();
+extern void	pg_print(),  pg_norm(),  pg_uv();
+extern void	spl_print(), spl_norm(), spl_uv();
+extern void	sph_print(), sph_norm(), sph_uv();
+
+extern void	nul_curve(), nul_free(), nul_plot();
+extern void	tor_curve(), tor_free(), tor_plot();
+extern void	tgc_curve(), tgc_free(), tgc_plot();
+extern void	ell_curve(), ell_free(), ell_plot();
+extern void	arb_curve(), arb_free(), arb_plot();
+extern void	hlf_curve(), hlf_free(), hlf_plot();
+extern void	ars_curve(), ars_free(), ars_plot();
+extern void	rec_curve(), rec_free(), rec_plot();
+extern void	pg_curve(),  pg_free(),  pg_plot();
+extern void	spl_curve(), spl_free(), spl_plot();
+extern void	sph_curve(), sph_free(), sph_plot();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -141,11 +153,18 @@ int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 /*
  *  Hooks for unimplemented routines
  */
-#define DEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
+#define DEF(func)	func() { rt_log("func unimplemented\n"); return; }
+#define IDEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
 
-DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm);
-DEF(nul_uv); DEF(nul_curve); DEF(nul_class); DEF(nul_free);
-DEF(nul_plot);
+int IDEF(nul_prep)
+struct seg * IDEF(nul_shot)
+void DEF(nul_print)
+void DEF(nul_norm)
+void DEF(nul_uv)
+void DEF(nul_curve)
+int IDEF(nul_class)
+void DEF(nul_free)
+void DEF(nul_plot)
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
@@ -1507,6 +1526,7 @@ register struct rt_i *rtip;
  *  Release all the dynamic storage associated with a particular rt_i
  *  structure, except for the database directory.
  */
+void
 rt_clean( rtip )
 register struct rt_i *rtip;
 {
@@ -1529,7 +1549,7 @@ register struct rt_i *rtip;
 		rt_free( (char *)stp->st_regions, "st_regions bitv" );
 		if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
 			rt_bomb("rt_clean:  bad st_id");
-		(void)rt_functab[stp->st_id].ft_free( stp );
+		rt_functab[stp->st_id].ft_free( stp );
 		stp->st_name = (char *)0;	/* was ptr to directory */
 		rt_free( (char *)stp, "struct soltab");
 		stp = nextstp;			/* advance to next one */
