@@ -71,7 +71,7 @@ register struct rt_i *rtip;
 		RT_BITV_BITS2WORDS(rtip->nsolids) * sizeof(bitv_t);
 	rtip->rti_bv_bytes = sizeof(bitv_t) *
 		( RT_BITV_BITS2WORDS(rtip->nsolids) +
-		RT_BITV_BITS2WORDS(rtip->nregions) + 2 );
+		RT_BITV_BITS2WORDS(rtip->nregions) + 4 );
 
 	/*
 	 *  Allocate space for a per-solid bit of rtip->nregions length.

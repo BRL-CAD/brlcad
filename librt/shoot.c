@@ -134,7 +134,7 @@ register struct application *ap;
 	GET_BITV( ap->a_rt_i, solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
 	bzero( (char *)solidbits, ap->a_rt_i->rti_bv_bytes );
 	regionbits = &solidbits->be_v[
-		1+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
+		2+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
 
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {

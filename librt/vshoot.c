@@ -141,7 +141,7 @@ register struct application *ap;
 	GET_BITV( rtip, solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
 	bzero( (char *)solidbits, rtip->rti_bv_bytes );
 	regionbits = &solidbits->be_v[
-		1+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
+		2+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
 
 	/* Compute the inverse of the direction cosines */
 	if( !NEAR_ZERO( ap->a_ray.r_dir[X], SQRT_SMALL_FASTF ) )  {
