@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	1.14
- *	Last edit: 	1/12/84 at 10:18:04
- *	Retrieved: 	8/13/86 at 08:08:21
+ *	SCCS id:	@(#) vdeck.c	1.15
+ *	Last edit: 	6/1/84 at 14:00:14
+ *	Retrieved: 	8/13/86 at 08:08:48
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,12 +11,43 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	1.14	last edit 1/12/84 at 10:18:04";
+char	sccsTag[] = "@(#) vdeck.c	1.15	last edit 6/1/84 at 14:00:14";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
  *
- *	To compile	make all
+ *	Generate a COM-GEOM card images suitable for input to gift5
+ *	(also gift(1V)) from a vged(1V) target description.
+ *
+ *      There are 3 files generated at a time, the Solid table, Region table,
+ *      and Ident table, which when concatenated in that order, make a
+ *	COM-GEOM deck.  The record formats in the order that they appear, are
+ *	described below, and are strictly column oriented.
+ *
+ *      Note that the Solid table begins with a Title and a Control card, the
+ *	rest of the record types appear once for each object, that is, one
+ *	Solid record for each Solid, one Region and one
+ *      Ident record for each Region as totaled on the Control card, however,
+ *      the Solid and Region records may span more than 1 card.
+ *
+ * ---------------------------------------------------------------------------
+ * File|Record  :             Contents              :       Format           |
+ * ----|---------------------------------------------------------------------|
+ *  1  |Title   : target_units, title               : a2,3x,a60              |
+ *     |Control : #_of_solids, #_of_regions         : i5,i5                  |
+ *     |Solid   : sol_#,sol_type,params.,comment    : a5,a3,a2,6f10.0,a10    |
+ *     | cont'  : sol_#,parameters,comment          : a5,5x,   6f10.0,a10    |
+ * ----|---------------------------------------------------------------------|
+ *  2  |Region  : reg_#,(op,reg_#),comment          : i5,1x,9(a2,i5),1x,a10  |
+ *     | cont'  : reg_#,(op,reg_#),comment          : i5,1x,9(a2,i5),1x,a10  |
+ * ----|---------------------------------------------------------------------|
+ *  3  |Idents  : number,item,space,mat,            : 5i5,5x,a40             |
+ * --------------------------------------------------------------------------|
+ *
+ *	To compile,
+ *	               $ make 
+ *		   or  $ make install clobber
+ *
  */
 #include <stdio.h>
 #include <signal.h>
@@ -298,11 +329,13 @@ matp_t	old_xlate;
 
 			/* write region ident table
 			 */
-			itoa(	nnr+delreg,	buf,	  10 );
-			itoa(	rec.c.c_regionid,	&buf[10], 10 );
-			itoa(	rec.c.c_aircode,	&buf[20], 10 );
-			write(	ridfd,		buf,	  30 );
-			blank_fill( ridfd,		  10 );
+			itoa( nnr+delreg, buf, 5 );
+			itoa( rec.c.c_regionid,	&buf[5], 5 );
+			itoa( rec.c.c_aircode, &buf[10], 5 );
+/* + */			itoa( rec.c.c_material, &buf[15], 5 );
+/* + */			itoa( rec.c.c_los, &buf[20], 5 );
+			write(	ridfd,		buf,	  25 );
+			blank_fill( ridfd,		  5 );
 			bp = buf;
 			length = strlen( rec.c.c_name );
 			for( j = 0; j < pathpos; j++ ) {
@@ -314,12 +347,12 @@ matp_t	old_xlate;
 				*bp++ = '/';
 			}
 			length += bp - buf;
-			if( length > 34 ) {
-				bp = buf + (length - 34);
+			if( length > 50 ) {
+				bp = buf + (length - 50);
 				*bp = '*';
 				write(	ridfd,
 					bp,
-					34 - strlen( rec.c.c_name )
+					50 - strlen( rec.c.c_name )
 				);
 			} else	write( ridfd, buf, bp - buf );
 			write(	ridfd,
@@ -469,8 +502,8 @@ matp_t	old_xlate;
 	notrans[3]  = notrans[7]  = notrans[11] = 0.0;
 
 	/* Write solid #.						*/
-	itoa( nnt+delsol, buf, 3 );
-	write( solfd, buf, 3 );
+	itoa( nnt+delsol, buf, 5 );
+	write( solfd, buf, 5 );
 
 	/* Process appropriate solid type.				*/
 	switch( rec.s.s_type ) {
@@ -542,11 +575,13 @@ notnew:	/* sent here if solid already in solid table
 		putSpaces( regBufPtr, 56 );
 		sprintf( regBufPtr, rec.s.s_name );
 		regBufPtr += strlen( rec.s.s_name );
-		itoa( nnr+delreg, buf,	  10 );
-		itoa(	item,	&buf[10], 10 );
-		itoa(	space,	&buf[20], 10 );
-		write(	ridfd,	buf,	  30 );
-		blank_fill( ridfd, 10 );
+		itoa( nnr+delreg, buf, 5 );
+		itoa( item, &buf[5], 5 );
+		itoa( space, &buf[10], 5 );
+		itoa( 1, &buf[15], 5 );
+		itoa( 100, &buf[20], 5 );
+		write( ridfd, buf, 25 );
+		blank_fill( ridfd, 5 );
 		printf( "\nREGION %4d    ", nnr+delreg );
 		bp = buf;
 		length = strlen( rec.s.s_name );
@@ -559,12 +594,12 @@ notnew:	/* sent here if solid already in solid table
 			*bp++ = '/';
 		}
 		length += bp - buf;
-		if( length > 34 ) {
-			bp = buf + (length - 34);
+		if( length > 50 ) {
+			bp = buf + (length - 50);
 			*bp = '*';
 			write(	ridfd,
 				bp,
-				34 - strlen( rec.s.s_name )
+				50 - strlen( rec.s.s_name )
 			);
 		} else	write( ridfd, buf, bp - buf );
 
@@ -622,9 +657,9 @@ Record *rec;
 			);
 			write( solfd, LF, 1 );
 			if( i != (npts-1)*3 ) {   /* new line */
-				itoa( nns+delsol, buf, 3 );
-				write( solfd, buf, 3 );
-				blank_fill( solfd, 7 );
+				itoa( nns+delsol, buf, 5 );
+				write( solfd, buf, 5 );
+				blank_fill( solfd, 5 );
 			}
 		}
 	}	
@@ -649,7 +684,7 @@ Record *rec;
 	float	rr1,rr2;
 	vect_t	v_work;
 
-	write( solfd, "tor    ", 7 );
+	write( solfd, "tor  ", 5 );
 
 	/* operate on vertex
 	 */
@@ -714,29 +749,29 @@ Record *rec;
 	/* Print the solid parameters.					*/
 	switch( rec->s.s_cgtype ) {
 	case ARB8:
-		write( solfd, "arb8   ", 7 );
+		write( solfd, "arb8 ", 5 );
 		psp( 8, rec );
 		break;
 	case ARB7:
-		write( solfd, "arb7   ", 7 );
+		write( solfd, "arb7 ", 5 );
 		psp( 7, rec );
 		break;
 	case ARB6:
-		write( solfd, "arb6   ", 7 );
+		write( solfd, "arb6 ", 5 );
 		VMOVE( SV5, SV6 );
 		psp( 6, rec );
 		break;
 	case ARB5:
-		write( solfd, "arb5   ", 7 );
+		write( solfd, "arb5 ", 5 );
 		psp( 5, rec );
 		break;
 	case ARB4:
-		write( solfd, "arb4   ", 7 );
+		write( solfd, "arb4 ", 5 );
 		VMOVE( SV3, SV4 );
 		psp( 4, rec );
 		break;
 	case RAW:
-		write( solfd, "raw    ", 7 );
+		write( solfd, "raw  ", 5 );
 		VSUB2( work, SV1, SV0 );
 		VSUB2( SV1, SV3, SV0);		/* H */
 		VMOVE( SV2, work);		/* W */
@@ -744,7 +779,7 @@ Record *rec;
 		psp( 4, rec );
 		break;
 	case BOX:
-		write( solfd, "box    ", 7 );
+		write( solfd, "box  ", 5 );
 		VSUB2( work, SV1, SV0 );
 		VSUB2( SV1, SV3, SV0);		/* H */
 		VMOVE( SV2, work);		/* W */
@@ -752,7 +787,7 @@ Record *rec;
 		psp( 4, rec );
 		break;
 	case RPP:
-		write( solfd, "rpp    ", 7 );
+		write( solfd, "rpp  ", 5 );
 		xmin = ymin = zmin = 100000000.0;
 		xmax = ymax = zmax = -100000000.0;
 		for(i=0; i<=21; i+=3) {
@@ -839,18 +874,18 @@ Record *rec;
 	 */
 	switch( rec->s.s_cgtype ) {
 	case GENELL:
-		write( solfd, "ellg   ", 7 );
+		write( solfd, "ellg ", 5 );
 		psp( 4, rec );
 		break;
 	case ELL1:
-		write( solfd, "ell1   ", 7 );
+		write( solfd, "ell1 ", 5 );
 		work[0] = MAGNITUDE( SV2 );
 		work[1] = work[2] = 0.0;
 		VMOVE( SV2, work );
 		psp( 3, rec );
 		break;
 	case SPH:
-		write( solfd, "sph    ", 7 );
+		write( solfd, "sph  ", 5 );
 		work[0] = MAGNITUDE( SV1 );
 		work[1] = work[2] = 0.0;
 		VMOVE( SV1, work );
@@ -929,7 +964,7 @@ Record *rec;
 	 */
 	switch( rec->s.s_cgtype ) {
 	case TGC :
-		write( solfd, "tgc    ", 7 );
+		write( solfd, "tgc  ", 5 );
 		work[0] = mc;
 		work[1] = md;
 		work[2] = 0.0;
@@ -937,14 +972,14 @@ Record *rec;
 		psp( 5, rec );
 		break;
 	case RCC :
-		write( solfd, "rcc    ", 7 );
+		write( solfd, "rcc  ", 5 );
 		work[0] = ma;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV2, work );
 		psp( 3, rec );
 		break;
 	case TRC :
-		write( solfd, "trc    ", 7 );
+		write( solfd, "trc  ", 5 );
 		work[0] = ma;
 		work[1] = mc;
 		work[2] = 0.0;
@@ -952,14 +987,14 @@ Record *rec;
 		psp( 3, rec );
 		break;
 	case TEC :
-		write( solfd, "tec    ", 7 );
+		write( solfd, "tec  ", 5 );
 		work[0] = ma / mc;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV4, work );
 		psp( 5, rec );
 		break;
 	case REC :
-		write( solfd, "rec    ", 7 );
+		write( solfd, "rec  ", 5 );
 		psp( 4, rec );
 		break;
 	default:
@@ -990,7 +1025,7 @@ Record *rec;
 
 	/* write ars header line in solid table
 	 */
-	write( solfd, "ars    ", 7 );
+	write( solfd, "ars  ", 5 );
 	itoa( ncurves, buf, 10 );
 	write( solfd, buf, 10 );
 	itoa( npts, buf, 10 );
@@ -1051,8 +1086,8 @@ Record	*rec;
 
 	j = jk = 0;
 
-	itoa( nns+delsol, &bufout[0], 3 );
-	for( i = 3; i < 10; i++ )	bufout[i] = ' ';
+	itoa( nns+delsol, &bufout[0], 5 );
+	for( i = 5; i < 10; i++ )	bufout[i] = ' ';
 	strncpy( &bufout[70], "curve ", 6 );
 	itoa( rec->b.b_n, &bufout[76], 3 );
 	bufout[79] = '\n';
