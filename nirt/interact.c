@@ -35,6 +35,7 @@ FILE	*fPtr;
 
 {
 	int		Ch;	/* individual characters of the input line */
+	int		Prev_ch=0; /* previous character */
 	char    	line_buffer[256]; /* line of text the user types   */
 	int 		i;      /* position on the line_buffer[]           */
 	com_table       *ctp;   /* command table pointer		   */
@@ -55,9 +56,14 @@ FILE	*fPtr;
 		{
 			if (Ch == CMT_CHAR)
 			{
-			    in_cmt = 1;
-			    while (((Ch = fgetc(fPtr)) != EOF) && (Ch != '\n'))
-				;
+			    if( Prev_ch == '\\' )
+				i--;
+			    else
+			    {
+				    in_cmt = 1;
+				    while (((Ch = fgetc(fPtr)) != EOF) && (Ch != '\n'))
+					;
+			    }
 			}
 			if (Ch == '\n')
 			    break;
@@ -69,6 +75,7 @@ FILE	*fPtr;
 		        if (key_len == 0 AND (Ch == ' ' OR Ch == '\t'))
 				key_len = i;      /* length of key word */
 			line_buffer[i] = Ch;
+			Prev_ch = Ch;
 			Ch = fgetc(fPtr);
 		}
 		if (key_len == 0)      /* length of key word */ 
