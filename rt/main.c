@@ -84,7 +84,7 @@ fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 char		*scanbuf;	/*** Output buffering, for parallelism */
 #endif
 
-int		npsw = MAX_PSW;		/* number of worker PSWs to run */
+int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() */
 
