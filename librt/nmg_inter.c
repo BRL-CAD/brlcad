@@ -2977,6 +2977,7 @@ struct nmg_ptbl		*eu2_list;
 	struct edgeuse		*new_eu;
 	int			eu1_index;
 	int			eu2_index;
+	int			class;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACEUSE(fu1);
@@ -3228,11 +3229,24 @@ rt_bomb("nmg_isect_line2_face2pNEW()\n");
 		if( !V3PT_IN_RPP( hit3d, fu1->f_p->min_pt, fu1->f_p->max_pt ) )  {
 			/* Lines intersect outside bounds of this face. */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-				VPRINT("\t\tisect pt outside face RPP:", hit3d );
+				VPRINT("\t\tisect pt outside fu1 face RPP:", hit3d );
 				rt_log("\t\tface RPP: ( %g %g %g ) <-> ( %g %g %g )\n",
 					V3ARGS( fu1->f_p->min_pt ), V3ARGS( fu1->f_p->max_pt ) );
 			}
 			continue;
+		}
+
+		if( (class=nmg_class_pt_fu_except( hit3d, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, &(is->tol) )) == NMG_CLASS_AoutB )
+		{
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			{
+				VPRINT("\t\tisect pt outside face fu1 (nmg_class_pt_fu_except):", hit3d );
+			}
+			continue;
+		}
+		else if(rt_g.NMG_debug & DEBUG_POLYSECT)
+		{
+			rt_log( "\t\tnmg_class_pt_fu_except(fu1) returns %s\n", nmg_class_name(class) );
 		}
 
 		VJOIN1_2D( hit2d, is->pt2d, dist[0], is->dir2d );
