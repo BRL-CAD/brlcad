@@ -62,20 +62,13 @@ in all countries except the USA.  All rights reserved.";
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
-#ifdef NONBLOCK
-#	include <termio.h>
-#	undef VMIN	/* also used in vmath.h */
-#endif
 
-#ifndef XMGED
-#  define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-#  include "tcl.h"
-#  include "tk.h"
+#include "tcl.h"
+#include "tk.h"
 
 /* defined in cmd.c */
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
-#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -148,6 +141,9 @@ void		usejoy();
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
+static struct rt_vls input_str, scratchline, input_str_prefix;
+static int input_str_index = 0;
+
 static int	do_rc();
 static void	log_event();
 extern char	version[];		/* from vers.c */
@@ -169,8 +165,8 @@ static char *units_str[] = {
 	"extra"
 };
 
-
-void pr_prompt();
+struct rt_vls mged_prompt;
+void pr_prompt(), pr_beep();
 Tk_FileProc stdin_input;
 
 /* 
@@ -226,7 +222,10 @@ char **argv;
 		fflush(stdout);
 		
 		if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
- 		    cbreak_mode = 1;
+#ifndef COMMAND_LINE_EDITING
+#define COMMAND_LINE_EDITING 1
+#endif
+ 		    cbreak_mode = COMMAND_LINE_EDITING;
 		}
 
 	    }
@@ -336,6 +335,12 @@ char **argv;
 	/* Reset the lights */
 	dmp->dmr_light( LIGHT_RESET, 0 );
 
+	rt_vls_init(&input_str);
+	rt_vls_init(&input_str_prefix);
+	rt_vls_init(&scratchline);
+	rt_vls_init(&mged_prompt);
+	input_str_index = 0;
+	
 	Tk_CreateFileHandler(fileno(stdin), TK_READABLE, stdin_input,
 			     (ClientData)NULL);
 
@@ -353,7 +358,13 @@ char **argv;
 		RES_RELEASE( &rt_g.res_worker );
 		RES_RELEASE( &rt_g.res_stats );
 		RES_RELEASE( &rt_g.res_results );
+		/* Truncate input string */
+		rt_vls_trunc(&input_str, 0);
+		rt_vls_trunc(&input_str_prefix, 0);
+		input_str_index = 0;
 	}
+
+	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	pr_prompt();
 
 	/****************  M A I N   L O O P   *********************/
@@ -394,7 +405,13 @@ char **argv;
 void
 pr_prompt()
 {
-    rt_log("\rmged> ");
+    rt_log("\r%S", &mged_prompt);
+}
+
+void
+pr_beep()
+{
+    rt_log("\a");
 }
 
 /*
@@ -409,25 +426,7 @@ pr_prompt()
  * by setting up the multi_line_sig routine as the SIGINT handler.
  */
 
-static struct rt_vls input_str;
-static int input_str_init = 0;
-static int input_str_index = 0;
-
-/* multi_line_sig
- * Called when the user hits ^C while typing multiple lines of input
- * (using a backslash at the end of the line, or nested within braces.)
- * Acts like the usual break, except it also truncates the input string.
- */
-
-void
-multi_line_sig()
-{
-    if (input_str_init)
-	rt_vls_trunc(&input_str, 0);
-
-    longjmp( jmp_env, 1 );
-    /* NOTREACHED */
-}
+extern struct rt_vls *history_prev(), *history_cur(), *history_next();
 
 /*
  * stdin_input
@@ -443,11 +442,63 @@ int mask;
 {
     int count;
     char ch;
+    struct rt_vls *vp;
+    struct rt_vls temp;
+    static int escaped = 0;
+    static int bracketed = 0;
+    static int freshline = 1;
 
-    if (!input_str_init) {
-	rt_vls_init(&input_str);
-	input_str_init = 1;
-	input_str_index = 0;
+    /* When not in cbreak mode, just process an entire line of input, and
+       don't do any command-line manipulation. */
+
+    if (!cbreak_mode) {
+	rt_vls_init(&temp);
+	rt_vls_gets(&temp, stdin);  /* Get line from stdin */
+	rt_vls_vlscat(&input_str, &temp);
+
+	/* If there are any characters already in the command string (left
+	   over from a CMD_MORE), then prepend them to the new input. */
+
+	rt_vls_trunc(&temp, 0);
+	rt_vls_vlscat(&temp, &input_str_prefix);  /* Make a backup copy */
+	rt_vls_printf(&input_str_prefix, "%s%S\n",
+		      rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+		      &input_str);
+
+	/* If a complete line was entered, attempt to execute command. */
+	
+	if (Tcl_CommandComplete(rt_vls_addr(&input_str_prefix))) {
+	    cmdline_sig = SIG_IGN; /* Ignore interrupts when command finishes*/
+	    if (cmdline_hook != NULL) {
+		if ((*cmdline_hook)(&input_str))
+		    pr_prompt();
+		rt_vls_trunc(&input_str, 0);
+		rt_vls_trunc(&input_str_prefix, 0);
+		input_str_index = 0;
+	    } else {
+		if (cmdline(&input_str, TRUE) == CMD_MORE) {
+		    /* Remove newline */
+		    rt_vls_trunc(&input_str_prefix,
+				 rt_vls_strlen(&input_str_prefix)-1);
+		    rt_vls_trunc(&input_str, 0);
+		    cmdline_sig = sig2;  /* Still in CMD_MORE; allow ^C. */
+		} else {
+		    rt_vls_trunc(&input_str_prefix, 0);
+		    rt_vls_trunc(&input_str, 0);
+		}
+		pr_prompt();
+	    }
+	    input_str_index = 0;
+	    freshline = 1;
+	} else {
+	    rt_vls_trunc(&input_str_prefix, 0);
+	    rt_vls_vlscat(&input_str_prefix, &temp); /* Restore initial
+							command */
+	    /* Allow the user to hit ^C. */
+	    cmdline_sig = sig2;
+	}
+	rt_vls_free(&temp);
+	return;
     }
 
     /* Grab single character from stdin */
@@ -462,64 +513,254 @@ int mask;
 #define CTRL_D      4
 #define CTRL_E      5
 #define CTRL_F      6
+#define CTRL_K      11
+#define CTRL_L      12
 #define CTRL_N      14
 #define CTRL_P      16
+#define CTRL_U      21
+#define ESC         27
 #define BACKSPACE   '\b'
 #define DELETE      127
+
+#define SPACES "                                                                                                                                                                                                                                                                                                           "
+
+    /* ANSI arrow keys */
     
+    if (escaped && bracketed) {
+	if (ch == 'A') ch = CTRL_P;
+	if (ch == 'B') ch = CTRL_N;
+	if (ch == 'C') ch = CTRL_F;
+	if (ch == 'D') ch = CTRL_B;
+	escaped = bracketed = 0;
+    }
+
     switch (ch) {
-    case '\n':
+    case ESC:           /* Used for building up ANSI arrow keys */
+	escaped = 1;
+	break;
+    case '\n':          /* Carriage return or line feed */
     case '\r':
-	if (cbreak_mode) rt_log("\n");
-	rt_vls_putc(&input_str, '\n');
-	if (Tcl_CommandComplete(rt_vls_addr(&input_str))) {
+	rt_log("\n");   /* Display newline */
+
+	/* If there are any characters already in the command string (left
+	   over from a CMD_MORE), then prepend them to the new input. */
+
+	rt_vls_init(&temp);
+	
+	rt_vls_trunc(&temp, 0);
+	rt_vls_vlscat(&temp, &input_str_prefix);  /* Make a backup copy */
+	rt_vls_printf(&input_str_prefix, "%s%S\n",
+		      rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+		      &input_str);
+
+	/* If this forms a complete command (as far as the Tcl parser is
+	   concerned) then execute it. */
+	
+	if (Tcl_CommandComplete(rt_vls_addr(&input_str_prefix))) {
 	    cmdline_sig = SIG_IGN;
-	    if (cmdline_hook) {
-		if ((*cmdline_hook)(&input_str))
+	    if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
+		reset_Tty(fileno(stdin));
+		if ((*cmdline_hook)(&input_str_prefix))
 		    pr_prompt();
+		set_Cbreak(fileno(stdin));
+		clr_Echo(fileno(stdin));
+		rt_vls_trunc(&input_str, 0);
+		rt_vls_trunc(&input_str_prefix, 0);
 	    } else {
-		if (cbreak_mode) {
-		    reset_Tty(fileno(stdin));
+		reset_Tty(fileno(stdin)); /* Backwards compatibility */
+		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
+		    /* Remove newline */
+		    rt_vls_trunc(&input_str_prefix,
+				 rt_vls_strlen(&input_str_prefix)-1);
+		    rt_vls_trunc(&input_str, 0);
+		    cmdline_sig = sig2; /* Allow ^C */
+       /* *** The mged_prompt vls now contains prompt for more input. *** */
+		} else {
+		    rt_vls_trunc(&input_str_prefix, 0);
+		    rt_vls_trunc(&input_str, 0);
+		    /* All done; clear all strings. */
 		}
-		if (cmdline(&input_str))
-		    pr_prompt();
-		if (cbreak_mode) {
-		    set_Cbreak(fileno(stdin));
-		    clr_Echo(fileno(stdin));
-		}
+		pr_prompt(); /* Print prompt for more input */
+		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
+		clr_Echo(fileno(stdin));
 	    }
-	    rt_vls_trunc(&input_str, 0);
+	    input_str_index = 0;
+	    freshline = 1;
 	} else {
+	    rt_vls_trunc(&input_str_prefix, 0);
+	    rt_vls_vlscat(&input_str_prefix, &temp); /* Restore initial
+							command */
 	    /* Allow the user to hit ^C */
-	    cmdline_sig = multi_line_sig;
+	    cmdline_sig = sig2;
 	}
-	input_str_index = 0;
+	escaped = bracketed = 0;
+	rt_vls_free(&temp);
 	break;
     case BACKSPACE:
     case DELETE:
 	if (input_str_index <= 0) {
-	    rt_log("\a");
+	    pr_beep();
 	    break;
 	}
 
-	if (cbreak_mode) rt_log("\b \b");
-	rt_vls_trunc(&input_str, rt_vls_strlen(&input_str)-1);
+	if (input_str_index == rt_vls_strlen(&input_str)) {
+	    rt_log("\b \b");
+	    rt_vls_trunc(&input_str, rt_vls_strlen(&input_str)-1);
+	} else {
+	    rt_vls_init(&temp);
+	    rt_vls_strcat(&temp, rt_vls_addr(&input_str)+input_str_index);
+	    rt_vls_trunc(&input_str, input_str_index-1);
+	    rt_log("\b%S ", &temp);
+	    pr_prompt();
+	    rt_log("%S", &input_str);
+	    rt_vls_vlscat(&input_str, &temp);
+	    rt_vls_free(&temp);
+	}
 	--input_str_index;
+	escaped = bracketed = 0;
 	break;
-    case CTRL_A:
-    case CTRL_B:
-    case CTRL_D:
-    case CTRL_E:
-    case CTRL_F:
-    case CTRL_N:
-    case CTRL_P:
+    case CTRL_A:                    /* Go to beginning of line */
+	pr_prompt();
+	input_str_index = 0;
+	escaped = bracketed = 0;
 	break;
+    case CTRL_E:                    /* Go to end of line */
+	if (input_str_index < rt_vls_strlen(&input_str)) {
+	    rt_log("%s", rt_vls_addr(&input_str)+input_str_index);
+	    input_str_index = rt_vls_strlen(&input_str);
+	}
+	escaped = bracketed = 0;
+	break;
+    case CTRL_D:                    /* Delete character at cursor */
+	if (input_str_index == rt_vls_strlen(&input_str)) {
+	    pr_beep(); /* Beep if at end of input string */
+	    break;
+	}
+	rt_vls_init(&temp);
+	rt_vls_strcat(&temp, rt_vls_addr(&input_str)+input_str_index+1);
+	rt_vls_trunc(&input_str, input_str_index);
+	rt_log("%S ", &temp);
+	pr_prompt();
+	rt_log("%S", &input_str);
+	rt_vls_vlscat(&input_str, &temp);
+	rt_vls_free(&temp);
+	escaped = bracketed = 0;
+	break;
+    case CTRL_U:
+	pr_prompt();
+	rt_log("%*s", rt_vls_strlen(&input_str), SPACES);
+	pr_prompt();
+	rt_vls_trunc(&input_str, 0);
+	input_str_index = 0;
+	escaped = bracketed = 0;
+	break;
+    case CTRL_K:                    /* Delete to end of line */
+	rt_log("%*s", rt_vls_strlen(&input_str)-input_str_index, SPACES);
+	rt_vls_trunc(&input_str, input_str_index);
+	pr_prompt();
+	rt_log("%S", &input_str);
+	escaped = bracketed = 0;
+	break;
+    case CTRL_L:                   /* Redraw line */
+	rt_log("\n");
+	pr_prompt();
+	rt_log("%S", &input_str);
+	if (input_str_index == rt_vls_strlen(&input_str))
+	    break;
+	pr_prompt();
+	rt_log("%*S", input_str_index, &input_str);
+	escaped = bracketed = 0;
+	break;
+    case CTRL_B:                   /* Back one character */
+	if (input_str_index == 0) {
+	    pr_beep();
+	    break;
+	}
+	--input_str_index;
+	rt_log("\b"); /* hopefully non-destructive! */
+	escaped = bracketed = 0;
+	break;
+    case CTRL_F:                   /* Forward one character */
+	if (input_str_index == rt_vls_strlen(&input_str)) {
+	    pr_beep();
+	    break;
+	}
+
+	rt_log("%c", rt_vls_addr(&input_str)[input_str_index]);
+	++input_str_index;
+	escaped = bracketed = 0;
+	break;
+    case CTRL_N:                  /* Next history command */
+    case CTRL_P:                  /* Last history command */
+	/* Work the history routines to get the right string */
+
+	if (freshline) {
+	    if (ch == CTRL_P) {
+		vp = history_prev();
+		if (vp == NULL) {
+		    pr_beep();
+		    break;
+		}
+		rt_vls_trunc(&scratchline, 0);
+		rt_vls_vlscat(&scratchline, &input_str);
+		freshline = 0;
+	    } else {
+		pr_beep();
+		break;
+	    }
+	} else {
+	    if (ch == CTRL_P) {
+		vp = history_prev();
+		if (vp == NULL) {
+		    pr_beep();
+		    break;
+		}
+	    } else {
+		vp = history_next();
+		if (vp == NULL) {
+		    vp = &scratchline;
+		    freshline = 1;
+		}
+	    }
+	}
+	pr_prompt();
+	rt_log("%*s", rt_vls_strlen(&input_str), SPACES);
+	pr_prompt();
+	rt_vls_trunc(&input_str, 0);
+	rt_vls_vlscat(&input_str, vp);
+	if (rt_vls_addr(&input_str)[rt_vls_strlen(&input_str)-1] == '\n')
+	    rt_vls_trunc(&input_str, rt_vls_strlen(&input_str)-1); /* del \n */
+	rt_log("%S", &input_str);
+	input_str_index = rt_vls_strlen(&input_str);
+	escaped = bracketed = 0;
+	break;
+    case '[':
+	if (escaped) {
+	    bracketed = 1;
+	    break;
+	}
+	/* Fall through if not escaped! */
     default:
 	if (!isprint(ch))
 	    break;
-	if (cbreak_mode) rt_log("%c", (int)ch);
-	rt_vls_putc(&input_str, (int)ch);
-	++input_str_index;
+	if (input_str_index == rt_vls_strlen(&input_str)) {
+	    rt_log("%c", (int)ch);
+	    rt_vls_putc(&input_str, (int)ch);
+	    ++input_str_index;
+	} else {
+	    rt_vls_init(&temp);
+	    rt_vls_strcat(&temp, rt_vls_addr(&input_str)+input_str_index);
+	    rt_vls_trunc(&input_str, input_str_index);
+	    rt_log("%c%S", (int)ch, &temp);
+	    pr_prompt();
+	    rt_vls_putc(&input_str, (int)ch);
+	    rt_log("%S", &input_str);
+	    rt_vls_vlscat(&input_str, &temp);
+	    ++input_str_index;
+	    rt_vls_free(&temp);
+	}
+	
+	escaped = bracketed = 0;
 	break;
     }
 	
@@ -540,6 +781,8 @@ int	non_blocking;
 {
     vect_t		knobvec;	/* knob slew */
 
+    /* Let cool Tk event handler do most of the work */
+
     Tk_DoOneEvent(TK_ALL_EVENTS | (non_blocking ? TK_DONT_WAIT : 0));
     non_blocking = 0;
 
@@ -556,7 +799,7 @@ int	non_blocking;
 	int oldlen;
 again:
 	oldlen = rt_vls_strlen( &dm_values.dv_string );
-	(void)cmdline( &dm_values.dv_string );
+	(void)cmdline( &dm_values.dv_string, FALSE );
 	if( rt_vls_strlen( &dm_values.dv_string ) > oldlen ) {
 	    /* Remove cmds already done, and go again */
 	    rt_vls_nibble( &dm_values.dv_string, oldlen );
@@ -929,10 +1172,6 @@ int	exitcode;
 void
 quit()
 {
-#ifdef NONBLOCK
-	int off = 0;
-	(void)ioctl( 0, FIONBIO, &off );
-#endif
 	mged_finish(0);
 	/* NOTREACHED */
 }
@@ -943,7 +1182,8 @@ quit()
 void
 sig2()
 {
-	longjmp( jmp_env, 1 );
+    rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
+    longjmp( jmp_env, 1 );
 	/* NOTREACHED */
 }
 
@@ -1269,58 +1509,5 @@ char	*argv[];
 	}
 	journal = save_journal;
 	return CMD_BAD;
-}
-#else
-/*
- *			F _ S O U R C E
- *
- *  Open a file/pipe and process the commands within.
- *
- *  argv[1] is the filename.
- *
- */
-int
-f_source (argc, argv)
-int	argc;
-char	**argv;
-{
-    char		*path;
-    int			pipe = 0;	/* Read from pipe (vs. file)? */
-    int			status;
-    FILE		*fp;
-    struct rt_vls	str;
-
-    if (*(path = *++argv) == '|')
-    {
-	pipe = 1;
-	rt_vls_init(&str);
-	while (isspace(*++path))
-	    ;
-	rt_vls_strcpy(&str, path);
-	while (--argc > 1)
-	{
-	    rt_vls_strcat(&str, " ");
-	    rt_vls_strcat(&str, *++argv);
-	}
-	path = rt_vls_addr(&str);
-    }
-
-    if ((pipe && ((fp = popen(path, "r")) == NULL))
-     || (!pipe && ((fp = fopen(path, "r")) == NULL)))
-    {
-	rt_log( "f_source: Cannot open %s '%s'\n", 
-		pipe ? "pipe" : "command file", path );
-	return( CMD_BAD );
-    }
-    mged_source_file(fp);
-    if (pipe)
-    {
-	rt_vls_free(&str);
-	if (status = pclose(fp))
-	    rt_log("f_source: Exit status of pipe: %d\n", status);
-    }
-    else
-	(void) fclose(fp);
-    return(CMD_OK);
 }
 #endif
