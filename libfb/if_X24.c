@@ -5,8 +5,9 @@
  *  displays.
  *
  *  Authors -
- *	Christopher J. Jackson
- *	Timothy G. Smith
+ *	Christopher J. Jackson, Sun
+ *	Timothy G. Smith, Sun
+ *	Michael John Muuss, ARL
  *
  *  Source -
  *	Sun Microsystems, Inc.
@@ -43,6 +44,13 @@
 #define UPD_DBG 0
 #define BLIT_DBG 0
 #define EVENT_DBG 0
+
+/* Print a debug message on first time into a piece of code */
+#if 0
+# define DEBUG1(str)	{static int before=1; if(before) {write(2,str, strlen(str)); before=0;} }
+#else
+# define DEBUG1(str)	/*NIL*/
+#endif
 
 #ifndef lint
 static char sccsid[] = "@(#)if_X24.c version 1.40 (22 Nov 1994)";
@@ -375,6 +383,10 @@ static unsigned long rlumtbl[256];
 static unsigned long glumtbl[256];
 static unsigned long blumtbl[256];
 
+
+/*
+ *			X 2 4 _ O P E N
+ */
 static int
 X24_open(ifp, file, width, height)
 FBIO	*ifp;
@@ -2564,7 +2576,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
 					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
 						if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB1a\n", 5); before=0;} }
+							DEBUG1("FB1a\n")
 							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = 0;
 								*p++ = line_irgb[BLU];
@@ -2573,7 +2585,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 								line_irgb += sizeof (RGBpixel);
 							}
 						} else {
-{static int before=1; if(before) {write(2,"FB1b\n", 5); before=0;} }
+							DEBUG1("FB1b\n")
 							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = 0;
 								*p++ = line_irgb[RED];
@@ -2584,7 +2596,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						}
 					} else {
 						if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB1c\n", 5); before=0;} }
+							DEBUG1("FB1c\n")
 							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = line_irgb[RED];
 								*p++ = line_irgb[GRN];
@@ -2593,7 +2605,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 								line_irgb += sizeof (RGBpixel);
 							}
 						} else {
-{static int before=1; if(before) {write(2,"FB1d\n", 5); before=0;} }
+							DEBUG1("FB1d\n")
 							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = line_irgb[BLU];
 								*p++ = line_irgb[GRN];
@@ -2610,7 +2622,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 
 					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
 						if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB2a\n", 5); before=0;} }
+							DEBUG1("FB2a\n")
 							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = 0;
 								*p++ = blu[line_irgb[BLU]];
@@ -2619,7 +2631,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 								line_irgb += sizeof (RGBpixel);
 							}
 						} else {
-{static int before=1; if(before) {write(2,"FB2b\n", 5); before=0;} }
+							DEBUG1("FB2b\n")
 							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = 0;
 								*p++ = red[line_irgb[RED]];
@@ -2630,7 +2642,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						}
 					} else {
 						if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB2c\n", 5); before=0;} }
+							DEBUG1("FB2c\n")
 							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = red[line_irgb[RED]];
 								*p++ = grn[line_irgb[GRN]];
@@ -2639,7 +2651,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 								line_irgb += sizeof (RGBpixel);
 							}
 						} else {
-{static int before=1; if(before) {write(2,"FB2d\n", 5); before=0;} }
+							DEBUG1("FB2d\n")
 							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = blu[line_irgb[BLU]];
 								*p++ = grn[line_irgb[GRN]];
@@ -2697,7 +2709,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						/* Make as many copies as needed */
 						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
 							if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB3a\n", 5); before=0;} }
+								DEBUG1("FB3a\n")
 								while (pxwd--)   {
 									*p++ = 0;
 									*p++ = line_irgb[BLU];
@@ -2705,7 +2717,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 									*p++ = line_irgb[RED];
 								}
 							} else {
-{static int before=1; if(before) {write(2,"FB3b\n", 5); before=0;} }
+								DEBUG1("FB3b\n")
 								while (pxwd--)   {
 									*p++ = 0;
 									*p++ = line_irgb[RED];
@@ -2715,7 +2727,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 							}
 						} else {
 							if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB3c\n", 5); before=0;} }
+								DEBUG1("FB3c\n")
 								while (pxwd--)   {
 									*p++ = line_irgb[RED];
 									*p++ = line_irgb[GRN];
@@ -2723,7 +2735,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 									*p++ = 0;
 								}
 							} else {
-{static int before=1; if(before) {write(2,"FB3d\n", 5); before=0;} }
+								DEBUG1("FB3d\n")
 								while (pxwd--)   {
 									*p++ = line_irgb[BLU];
 									*p++ = line_irgb[GRN];
@@ -2755,7 +2767,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						/* Make as many copies as needed */
 						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
 							if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB4a\n", 5); before=0;} }
+								DEBUG1("FB4a\n")
 								while (pxwd--)  {
 									*p++ = 0;
 									*p++ = blu[line_irgb[BLU]];
@@ -2763,7 +2775,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 									*p++ = red[line_irgb[RED]];
 								}
 							} else {
-{static int before=1; if(before) {write(2,"FB4b\n", 5); before=0;} }
+								DEBUG1("FB4b\n")
 								while (pxwd--)  {
 									*p++ = 0;
 									*p++ = red[line_irgb[RED]];
@@ -2773,7 +2785,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 							}
 						} else {
 							if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB4c\n", 5); before=0;} }
+								DEBUG1("FB4c\n")
 								while (pxwd--)  {
 									*p++ = red[line_irgb[RED]];
 									*p++ = grn[line_irgb[GRN]];
@@ -2781,7 +2793,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 									*p++ = 0;
 								}
 							} else {
-{static int before=1; if(before) {write(2,"FB4d\n", 5); before=0;} }
+								DEBUG1("FB4d\n")
 								while (pxwd--)  {
 									*p++ = blu[line_irgb[BLU]];
 									*p++ = grn[line_irgb[GRN]];
