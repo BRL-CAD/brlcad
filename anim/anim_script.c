@@ -46,6 +46,7 @@ int first_frame;
 fastf_t  viewsize;
 vect_t centroid, rcentroid, front;
 mat_t m_axes, m_rev_axes; /* rotational analogue of centroid */
+char mat_cmd[10];   /* default is lmul */
 
 main(argc,argv)
 int argc;
@@ -148,7 +149,7 @@ char **argv;
 		else if (go){
 			printf("start %d;\n", frame);
 			printf("clean;\n");
-			printf("anim %s matrix lmul\n", *(argv+optind));
+			printf("anim %s matrix %s\n", *(argv+optind), mat_cmd);
 			anim_mat_print(a,1);
 			printf("end;\n");
 		}
@@ -157,7 +158,7 @@ char **argv;
 
 }
 
-#define OPT_STR	"a:b:c:d:f:pqrstv:"
+#define OPT_STR	"a:b:c:d:f:m:pqrstv:"
 
 int get_args(argc,argv)
 int argc;
@@ -169,6 +170,7 @@ char **argv;
 	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
 	rotate = translate = 1; /* defaults */
 	quaternion = permute = 0;
+	strcpy(mat_cmd, "lmul");
 	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		i=0;
 		switch(c){
@@ -215,6 +217,9 @@ char **argv;
 		case 'f':
 			sscanf(optarg,"%d",&first_frame);
 			break;
+                case 'm':
+               		strncpy(mat_cmd,optarg, 10);
+               		break;
 		case 'p':
 			permute = 1;
 			break;
