@@ -1894,6 +1894,7 @@ struct loopuse *lu;
 				/* Does not meet requirements of nmg_jl(),
 				 * skip it.
 				 */
+			    	eu = RT_LIST_PNEXT(edgeuse, eu);
 				continue;
 			}
 
