@@ -3572,6 +3572,7 @@ CONST char		*title;
 	rt_log("nmg_stash_model_to_file('%s', x%x, %s)\n", filename, m, title);
 
 	NMG_CK_MODEL(m);
+	nmg_vmodel(m);
 
 	if( (fp = fopen(filename, "w")) == NULL )  {
 		perror(filename);
