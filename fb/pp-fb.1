@@ -3,6 +3,9 @@
 pp-fb \- display a GIFT pretty-picture file on a frame buffer
 .SH SYNOPSIS
 .B pp-fb
+.RB [ \-F\ framebuffer]
+.RB [ \-W\ out_width]
+.RB [ \-N\ out_height]
 file.pp
 .SH DESCRIPTION
 .I Pp-fb
@@ -16,6 +19,9 @@ The
 files are the output of the pretty-picture option of the
 .IR gift\^ (1V)
 ray-tracing program.
+The options are standard 
+.IR brlcad\^ (1)
+options specifying framebuffer, output width, and output height.
 Some information pertaining to the color assignment of region identification
 numbers and the background color is prompted for on the standard input.
 The environment
