@@ -13,6 +13,8 @@ puts "running demo.tcl"
 ##option add *background #ffffff
 ##. configure -background #ffffff
 
+tk appname demo
+
 set hostname [exec hostname]
 set mged_is_alive	0
 
@@ -151,67 +153,220 @@ proc start_vrmgr {} {
 # Select machines to run RTNODE on
 label .rtnode_title -text "RTNODE hosts:"
 pack .rtnode_title -side top -in .rtnode_fr
-proc register {host formalname cmd dir} {
+
+
+proc find_db {} {
 	global nodes
-	global	cmds
-	global dirs
+	global	fds
+	global db_path
+	global status
 
-	set dirs($formalname) $dir
-	frame .fr_$host
-	checkbutton .button_$host -variable nodes($formalname)
-	label .title_$host -text "$formalname $cmd"
-	entry .entry_$host -width 20 -relief sunken -bd 2 -textvariable dirs($formalname)
-	pack .button_$host .title_$host .entry_$host -side left -in .fr_$host
-	pack .fr_$host -side top -in .rtnode_fr
-	set cmds($formalname) $cmd
+	# loop through list of nodes selected, starting each one.
+	set j [array startsearch nodes]
+	while { [array anymore nodes $j] } {
+		set host [array nextelement nodes $j]
+		if { $fds($host) == "dead" } continue
+		puts "Finding $host"
+		set code "!error?"
+		if { [ catch {
+			puts $fds($host) "find .db.6d/moss.g"
+			flush $fds($host)
+		} code ] } {
+			# error condition on write
+			puts "$host error $code"
+
+			close $fds($host)
+			set fds($host) "dead"
+			set status($host) "$host -died-"
+			continue
+		}
+		if { [gets $fds($host) reply] <= 0 } {
+			puts "EOF from $host"
+			close $fds($host)
+			set fds($host) "dead"
+			set status($host) "$host -died-"
+			set code "eof"
+			continue
+		}
+		# First word should be OK or FAIL, 2nd word is path.
+		if { [lindex $reply 0] != "OK" }  {
+			continue
+		}
+		set db_path($host) [lindex $reply 1]
+	}
+	array donesearch nodes $j
 }
-register "vapor" "vapor.arl.mil" ssh /m/cad/remrt
-register "wax" "wax.arl.mil" ssh /n/vapor/m/cad/remrt
-# wilson has 100 MHz cpus, slows things down.
-##register wilson "wilson.arl.mil" ssh /n/vapor/m/cad/remrt
-register jewel "jewel.arl.mil" ssh /n/vapor/m/cad/remrt
-register cosm0 "cosm0.arl.hpc.mil" rsh /r/mike/cad/remrt
-register cosm1 "cosm1.arl.hpc.mil" rsh /r/mike/cad/remrt
-register cosm2 "cosm2.arl.hpc.mil" rsh /r/mike/cad/remrt
-register cosm3 "cosm3.arl.hpc.mil" rsh /r/mike/cad/remrt
-register cosm4 "cosm4.arl.hpc.mil" rsh /r/mike/cad/remrt
-register cosm5 "cosm5.arl.hpc.mil" rsh /r/mike/cad/remrt
-register cosm6 "cosm6.arl.hpc.mil" rsh /r/mike/cad/remrt
-register cosm7 "cosm7.arl.hpc.mil" rsh /r/mike/cad/remrt
-register eckert "eckert-ether.arl.hpc.mil" ssh /n/vapor/m/cad/remrt
+
+proc server_sense {host} {
+	global nodes
+	global	fds
+	global db_path
+	global status
+
+	if { $fds($host) == "dead" } continue
+	puts "Sensing $host"
+	set code "!error?"
+	if { [ catch {
+		puts $fds($host) "status"
+		flush $fds($host)
+	} code ] } {
+		# error condition on write
+		puts "$host error $code"
+
+		close $fds($host)
+		set fds($host) "dead"
+		set status($host) "$host -died-"
+		return
+	}
+	if { [gets $fds($host) status($host)] <= 0 } {
+		puts "EOF from $host"
+		close $fds($host)
+		set fds($host) "dead"
+		set status($host) "$host -died-"
+		set code "eof"
+		return
+	}
+}
+
+proc sense_servers {} {
+	global nodes
+	global	fds
+	global db_path
+	global status
+
+	# loop through list of nodes selected, starting each one.
+	set j [array startsearch nodes]
+	while { [array anymore nodes $j] } {
+		set host [array nextelement nodes $j]
+		if { $fds($host) == "dead" } continue
+		server_sense $host
+		##.title_$shost configure -text "$status($host)"
+	}
+	array donesearch nodes $j
+}
+
+proc reconnect {} {
+	global nodes
+	global	fds
+	global db_path
+	global status
+
+	set j [array startsearch nodes]
+	while { [array anymore nodes $j] } {
+		set host [array nextelement nodes $j]
+		if { $fds($host) != "dead" }  continue
+
+		puts "Connecting to $host"
+		set code "!error?"
+		if { [ catch { set fds($host) [socket $host 5353] } code ] }  {
+			set fds($host) dead
+			set status($host) "$host not-responding"
+			puts "  $host : $code, skipping"
+			continue
+		}
+		# fds($host) is now set non-dead, to the actual fd.
+		# establish per-connection state
+		set db_path($host) "unknown"
+
+		server_sense $host
+	}
+	array donesearch nodes $j
+}
+
+proc register {informal_name formalname} {
+	global nodes
+	global	fds
+	global db_path
+	global status
+
+	# Establish connection-invarient state
+	set nodes($formalname) 0
+	set fds($formalname) "dead"
+	set status($formalname) "$formalname : pre-natal"
+
+	frame .fr_$informal_name
+	checkbutton .button_$informal_name -variable nodes($formalname)
+	label .title_$informal_name -textvariable status($formalname)
+	entry .entry_$informal_name -width 20 -relief sunken -bd 2 -textvariable db_path($formalname)
+	pack .button_$informal_name .title_$informal_name .entry_$informal_name -side left -in .fr_$informal_name
+	pack .fr_$informal_name -side top -in .rtnode_fr
+}
+
+register "vapor" "vapor.arl.mil"
+register "wax" "wax.arl.mil"
+register wilson "wilson.arl.mil"
+register jewel "jewel.arl.mil"
+register cosm0 "cosm0.arl.hpc.mil"
+register cosm1 "cosm1.arl.hpc.mil"
+register cosm2 "cosm2.arl.hpc.mil"
+register cosm3 "cosm3.arl.hpc.mil"
+register cosm4 "cosm4.arl.hpc.mil"
+register cosm5 "cosm5.arl.hpc.mil"
+register cosm6 "cosm6.arl.hpc.mil"
+register cosm7 "cosm7.arl.hpc.mil"
+register eckert "eckert-ether.arl.hpc.mil"
 
 
+button .sense_button -text "SENSE" -command sense_servers
+button .reconnect_button -text "RECONNECT" -command reconnect
+button .find_button -text "FIND_DB" -command find_db
 button .rtnode_button -text "Start NODES" -command start_nodes
-pack .rtnode_button -side top -in .button_fr
+pack .sense_button .reconnect_button .find_button .rtnode_button -side left -in .button_fr
 
 proc start_nodes {} {
 	global rtsync_host
 	global rtsync_port
 	global nodes
-	global	cmds
-	global dirs
+	global	fds
+	global db_path
+	global status
 
 	puts "start_nodes"
-	# loop through list of nodes selected, starting each one.
+	# loop through list of nodes selected, starting each one selected.
 	set j [array startsearch nodes]
 	while { [array anymore nodes $j] } {
 		set host [array nextelement nodes $j]
+		if { $fds($host) == "dead" }  continue
 		if { $nodes($host) == 0 }  continue
 		puts "Starting rtnode on $host"
 		set code "!error?"
-		catch {
-			# ssh -f flag means detatch
-			# ssh -n flag means take stdin from /dev/null.
-			exec echo "no" | $cmds($host) $host \
-				cd $dirs($host) \; \
-				../remrt/rtnode \
-				$rtsync_host $rtsync_port &
-		} code
-		puts "$host results = $code"
+		if { [ catch {
+			puts $fds($host) "rtnode $rtsync_host $rtsync_port"
+			flush $fds($host)
+		} code ] } {
+			# error condition on write
+			puts "$host error $code"
+
+			close $fds($host)
+			set fds($host) "dead"
+			set status($host) "$host -died-"
+			set nodes($host) 0
+			continue
+		}
+		if { [gets $fds($host) reply] <= 0 } {
+			puts "EOF from $host"
+			close $fds($host)
+			set fds($host) "dead"
+			set status($host) "$host -died-"
+			set nodes($host) 0
+			continue
+		}
+		# First word should be OK or FAIL, 2nd word is path.
+		if { [lindex $reply 0] != "OK" }  {
+			puts "$host $reply"
+			set status($host) "$host -can't-exec-"
+			set nodes($host) 0
+			continue
+		}
+		set nodes($host) 0
 	}
 	array donesearch nodes $j
 	puts "start_nodes finished"
 }
+
+# main()
+# Automatically try to contact all the registered servers
+reconnect
 
 puts "demo.tcl done"
 
