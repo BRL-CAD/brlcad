@@ -2,8 +2,8 @@
 
 SUBDIRS = include
 
-A2G=$(top_builddir)/conv/asc2g
-G2A=$(top_builddir)/conv/g2asc
+A2G=$(top_builddir)/src/conv/asc2g
+G2A=$(top_builddir)/src/conv/g2asc
 
 .asc.g: ; $(A2G) $(builddir)$< $@
 
@@ -42,7 +42,6 @@ EXTRA_DIST = \
 	db.php
 
 MAINTAINERCLEANFILES = Makefile.in
-
 
 all: ${MODELS:asc=g}
 
