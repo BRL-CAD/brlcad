@@ -305,6 +305,7 @@ char	**argv;
 		def_tree( rtip );		/* Load the default trees */
 		return(0);
 	}
+#define npsw 1		/* XXXXXXXXX Temp. disable parallel prep, it may be buggy XXXXX -M */
 	rt_prep_timer();
 	if( rt_gettrees(rtip, argc, argv, npsw) < 0 )
 		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
@@ -524,6 +525,7 @@ register struct rt_i	*rtip;
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"GETTREE: %s\n", outbuf);
 }
+#undef npsw 		/* XXXXXXXXX end Temp. disable parallel prep, it may be buggy XXXXX -M */
 
 /*
  *			D O _ P R E P
