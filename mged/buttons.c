@@ -36,6 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+extern void stateChange();	/* defined in dm-generic.c */
 extern int mged_svbase();
 extern void set_e_axes_pos();
 extern int mged_zoom();
@@ -776,62 +777,57 @@ chg_state( from, to, str )
 int from, to;
 char *str;
 {
-	if( state != from ) {
-	  Tcl_AppendResult(interp, "Unable to do <", str, "> going from ",
-			   state_str[from], " to ", state_str[to], " state.\n", (char *)NULL);
-	  return(1);	/* BAD */
-	}
-	state = to;
+  register struct dm_list *p;
+  struct dm_list *save_dm_list;
+  point_t new_pos;
+  struct bu_vls vls;
 
-	{
-	  register struct dm_list *p;
-	  struct dm_list *save_dm_list;
-	  point_t new_pos;
+  if(state != from){
+    bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
+    return(1);	/* BAD */
+  }
 
-	  save_dm_list = curr_dm_list;
-	  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-	    curr_dm_list = p;
+  state = to;
+  stateChange(from, to);
 
-	    if(state_hook)
-	      state_hook( from, to );
+  save_dm_list = curr_dm_list;
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
+    curr_dm_list = p;
 
-	    if(to == ST_VIEW){
-	      mat_t o_toViewcenter;
-	      fastf_t o_Viewscale;
+#if 0
+    if(to == ST_VIEW){
+      mat_t o_toViewcenter;
+      fastf_t o_Viewscale;
 
-	      /* save toViewcenter and Viewscale */
-	      bn_mat_copy(o_toViewcenter, toViewcenter);
-	      o_Viewscale = Viewscale;
+      /* save toViewcenter and Viewscale */
+      bn_mat_copy(o_toViewcenter, toViewcenter);
+      o_Viewscale = Viewscale;
 
-	      /* get new orig_pos */
-	      size_reset();
-	      MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
+      /* get new orig_pos */
+      size_reset();
+      MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
 
-	      /* restore old toViewcenter and Viewscale */
-	      bn_mat_copy(toViewcenter, o_toViewcenter);
-	      Viewscale = o_Viewscale;
+      /* restore old toViewcenter and Viewscale */
+      bn_mat_copy(toViewcenter, o_toViewcenter);
+      Viewscale = o_Viewscale;
+    }
+#endif
+    new_mats();
 
-	    }
+#if 0
+    /* recompute absolute_tran */
+    set_absolute_tran();
+#endif
+  }
 
-	    new_mats();
+  curr_dm_list = save_dm_list;
 
-	    /* recompute absolute_tran */
-	    set_absolute_tran();
-	  }
+  bu_vls_init(&vls);
+  bu_vls_strcpy(&vls, "mged_display(state)");
+  Tcl_SetVar(interp, bu_vls_addr(&vls), state_str[state], TCL_GLOBAL_ONLY);
+  bu_vls_free(&vls);
 
-	  curr_dm_list = save_dm_list;
-	}
-
-	{
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_strcpy(&vls, "mged_display(state)");
-	  Tcl_SetVar(interp, bu_vls_addr(&vls), state_str[state], TCL_GLOBAL_ONLY);
-	  bu_vls_free(&vls);
-	}
-
-	return(0);		/* GOOD */
+  return(0);		/* GOOD */
 }
 
 void
