@@ -93,7 +93,7 @@ int	x, y;
 		if( ifp->if_pdirty )
 			if( _fb_pgout( ifp ) == - 1 )
 				return	-1;
-		if( _fb_pgin( ifp, (int) (pixelnum / (long) ifp->if_ppixels)) == -1 )
+		if( _fb_pgin( ifp, (int) (pixelnum / (long) ifp->if_ppixels)) <= -1 )
 			return	-1;
 	}
 	ifp->if_pixcur = pixelnum;
@@ -133,7 +133,7 @@ RGBpixel 	*pixelp;
 #endif /* NEVER */
 
 	if( ifp->if_pno == -1 )
-		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
+		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
 			return	-1;
 
 	COPYRGB( *(ifp->if_pcurp), *pixelp );
@@ -141,7 +141,7 @@ RGBpixel 	*pixelp;
 	ifp->if_pixcur++;	/* position in framebuffer */
 	ifp->if_pdirty = 1;	/* page referenced (dirty) */
 	if( ifp->if_pcurp >= ifp->if_pendp ) {
-		if( _fb_pgout( ifp ) == -1 )
+		if( _fb_pgout( ifp ) <= -1 )
 			return	-1;
 		ifp->if_pno = -1;
 	}
@@ -154,14 +154,14 @@ register FBIO	*ifp;
 RGBpixel	*pixelp;
 {
 	if( ifp->if_pno == -1 )
-		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
+		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
 			return	-1;
 
 	COPYRGB( *pixelp, *(ifp->if_pcurp) );
 	ifp->if_pcurp++;	/* position in page */
 	ifp->if_pixcur++;	/* position in framebuffer */
 	if( ifp->if_pcurp >= ifp->if_pendp ) {
-		if( _fb_pgout( ifp ) == -1 )
+		if( _fb_pgout( ifp ) <= -1 )
 			return	-1;
 		ifp->if_pno = -1;
 	}
@@ -184,7 +184,7 @@ register FBIO	*ifp;
 	_fb_pgflush(ifp);
 
 	/* call device specific flush routine */
-	if( (*ifp->if_flush)( ifp ) == -1 )
+	if( (*ifp->if_flush)( ifp ) <= -1 )
 		return	-1;
 
 	return	0;
@@ -199,7 +199,7 @@ register FBIO	*ifp;
 	}
 
 	if( ifp->if_pdirty ) {
-		if( _fb_pgout( ifp ) == -1 )
+		if( _fb_pgout( ifp ) <= -1 )
 			return	-1;
 		ifp->if_pdirty = 0;
 	}
