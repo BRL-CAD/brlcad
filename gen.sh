@@ -151,7 +151,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		gen.sh setup.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
-ADIRS="h doc pix vfont whetstone awf brlman tclscripts"
+ADIRS="h doc pix vfont awf brlman tclscripts"
 
 # Has no Cakefile, just copy it (and all sub-directories!) verbatim.
 # Only used in "dist" command.
@@ -209,6 +209,7 @@ BDIRS="bench \
 	jove \
 	canon \
 	burst \
+	g_lint \
 	tk \
 "			# This ends the list.
 
