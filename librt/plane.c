@@ -112,7 +112,8 @@ plane_t	a, b, c;
  *  The ray direction vector need not have unit length.
  *
  *  Explicit Return -
- *	-2	missed (ray is outside halfspace)
+ *	-3	missed (ray is outside halfspace)
+ *	-2	"missed" (ray lies on plane)
  *	-1	missed (ray is inside)
  *	 0	hit (ray is entering halfspace)
  *	 1	hit (ray is leaving)
@@ -145,9 +146,11 @@ plane_t	plane;
 	 *  Ray is parallel to plane when dir.N == 0.
 	 */
 	*dist = 0;		/* sanity */
-	if( norm_dist < 0.0 )
-		return(-2);	/* missed, outside */
-	return(-1);		/* missed, inside */
+	if( norm_dist < SQRT_SMALL_FASTF )
+		return(-3);	/* missed, outside */
+	if( norm_dist > SQRT_SMALL_FASTF )
+		return(-1);	/* missed, inside */
+	return(-2);		/* "missed", ray lies on plane */
 }
 
 static plane_t	xpl = { 1, 0, 0, 0 };
