@@ -93,7 +93,7 @@ struct gauss_specific {
 
 
 /* The default values for the variables in the shader specific structure */
-CONST static
+static CONST
 struct gauss_specific gauss_defaults = {
 	gauss_MAGIC,
 	4.0,
@@ -166,7 +166,7 @@ struct tree_bark *tb;
 		if (tp->tr_a.tu_stp->st_matp)
 			mp = tp->tr_a.tu_stp->st_matp;
 		else
-			mp = rt_identity;
+			mp = (matp_t)rt_identity;
 
 		/* Get the internal form of this solid & add it to the list */
 		rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp,
