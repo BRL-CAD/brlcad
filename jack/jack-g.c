@@ -184,7 +184,6 @@ read_psurf_face(fp, lst)
 FILE	*fp;
 int	*lst;
 {
-	char	line[2048];
 	int	i, n;
 
 	for (i = 0; fscanf(fp, "%d", &n) == 1; i++)
@@ -285,4 +284,5 @@ struct model	*m;
 	if (grp_name) {
 		mk_comb1(fpout, grp_name, rname, 1);	/* Region in group. */
 	}
+	return 0;
 }
