@@ -39,16 +39,20 @@ long readfds;
 	fd_set	fdset;
 	int	width;
 	struct	timeval tv;
+	int	ret;
 
 	tv.tv_sec = sec;
 	tv.tv_usec = us;
 
-	width = getdtablesize();
+	if( (width = getdtablesize()) <= 0 )
+		width = 32;
 	FD_ZERO( &fdset );
 	fdset.fds_bits[0] = readfds;	/* peek inside! */
 
-	if( select( width, &fdset, (fd_set *)0, (fd_set *)0, &tv ) <= 0 )
-		return(0);
+	if( (ret = select( width, &fdset, (fd_set *)0, (fd_set *)0, &tv )) <= 0 )  {
+		if( ret < 0 )  perror("bsdselect/select");
+		return(0);		/* no bits ready */
+	}
 
 	readfds = fdset.fds_bits[0];
 	return( readfds );
@@ -61,12 +65,17 @@ long readfds;
 {
 #if defined(BSD) || defined(sgi) || defined(stellar) || defined(CRAY)
 	struct timeval tv;
+	int	ret;
+	long	mask;
 
 	tv.tv_sec = sec;
 	tv.tv_usec = us;
-	if( select( 32, &readfds, 0L, 0L, &tv ) <= 0 )
-		return(0);
-	return( readfds );
+	mask = readfds;
+	if( (ret = select( 32, &mask, 0L, 0L, &tv )) <= 0 )  {
+		if( ret < 0 )  perror("bsdselect/select");
+		return(0);	/* No bits ready */
+	}
+	return( mask );
 #else
 	return(32-1);	/* SYSV always has lots of input */
 #endif
