@@ -253,11 +253,27 @@ register CONST struct rt_comb_internal	*comb;
 			}
 			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_minherit == 0 )  {
+			struct bu_vls tmp_vls;
+
 			/* DB_INH_LOWER -- lower nodes in tree override */
 			if( tsp->ts_mater.ma_shader )
 				bu_free( (genptr_t)tsp->ts_mater.ma_shader, "ma_shader" );
-			tsp->ts_mater.ma_shader = bu_vls_strdup(
-				&comb->shader);
+
+			bu_vls_init( &tmp_vls );
+			if( bu_shader_to_key_eq( bu_vls_addr( &comb->shader ), &tmp_vls ) )
+			{
+				char *sofar = db_path_to_string(pathp);
+
+				bu_log( "db_apply_state_from_comb: Warning: bad shader in %s (ignored):\n", sofar );
+				bu_vls_free( &tmp_vls );
+				bu_free(sofar, "path string");
+				tsp->ts_mater.ma_shader = (char *)NULL;
+			}
+			else
+			{
+				tsp->ts_mater.ma_shader = bu_vls_strdup( &tmp_vls );
+				bu_vls_free( &tmp_vls );
+			}
 		tsp->ts_mater.ma_minherit = comb->inherit;
 		}
 	}
