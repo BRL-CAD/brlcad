@@ -289,10 +289,8 @@ char	*argv[];
     }
     RT_INIT_DB_INTERNAL(&intern);
     if ( rt_db_get_internal5( &intern, dp, dbip, NULL, &rt_uniresource) 
-	!= ID_BINUNIF ) {
-#if 0
-    if ( db_get_external( &ext, dp, dbip ) < 0 )
-#endif
+	!= ID_BINUNIF
+     || db_get_external( &ext, dp, dbip ) < 0 ) {
 	(void)signal( SIGINT, SIG_IGN );
 	TCL_READ_ERR_return;
     }
