@@ -9,7 +9,7 @@
  *  there is a change in region ID, or a significant change in
  *  obliquity or line-of-sight distance.
  *
- *  XXX - Get parallel processing working.
+ *  
  *  XXX - Add support for detecting changes in specified attributes.
  *
  *  Author -
@@ -60,14 +60,18 @@ struct cell {
 	vect_t		c_rdir;		/* ray direction, permits perspective */
 };
 
-#define MISS_DIST	-1
+#define MISS_DIST	MAX_FASTF
 #define MISS_ID		-1
 
 static unsigned char *scanline[MAX_PSW];
+static unsigned char *blendline[MAX_PSW];
+
 int   		nEdges = 0;
 int   		nPixels = 0;
-fastf_t		max_dist;	/* min. distance for drawing pits/mountains */
-fastf_t		maxangle;	/* value of the cosine of the angle bet. surface normals that triggers shading */
+fastf_t		max_dist; /* min. distance for drawing pits/mountains */
+fastf_t		maxangle; /* Value of the cosine of the angle between
+			   * surface normals that triggers shading 
+			   */
 
 typedef int color[3];
 color	foreground = { 255, 255, 255};
@@ -85,6 +89,8 @@ int	detect_regions = 0;
 int	detect_distance = 1;
 int	detect_normals = 1;
 
+RGBpixel bg_color;
+
 /*
  * Overlay Mode
  *
@@ -95,6 +101,21 @@ int	detect_normals = 1;
 int    overlay = 0;
 
 /*
+ * Blend Mode
+ * 
+ * If set, and the fbio points to a readable framebuffer, the edge
+ * pixels are blended (using some HSV manipulations) with the 
+ * original framebuffer pixels. The intent is to produce an effect
+ * similar to the "bugs" on TV networks.
+ */
+int    blend = 0;
+
+/*
+ *
+ */
+int    region_colors = 0;
+
+/*
  * Prototypes for the viewedge edge detection functions
  */
 static int is_edge(struct application *, struct cell *, struct cell *,
@@ -103,10 +124,14 @@ static int rayhit (struct application *, struct partition *, struct seg *);
 static int rayhit2 (struct application *, struct partition *, struct seg *);
 static int raymiss (struct application *);
 static int raymiss2 (struct application *);
-static int handle_main_ray(struct application *, struct partition *, struct seg *);
+static int handle_main_ray(struct application *, struct partition *, 
+			   struct seg *);
+static int diffpixel (RGBpixel a, RGBpixel b);
+static void choose_color (RGBpixel col, struct cell *me,
+			  struct cell *left, struct cell *below);
 
-#define COSTOL          0.91    /* normals differ if dot product < COSTOL */
-#define OBLTOL          0.1     /* high obliquity if cosine of angle < OBLTOL ! */
+#define COSTOL 0.91    /* normals differ if dot product < COSTOL */
+#define OBLTOL 0.1     /* high obliquity if cosine of angle < OBLTOL ! */
 #define is_Odd(_a)      ((_a)&01)
 #define ARCTAN_87       19.08
 
@@ -124,31 +149,35 @@ static int handle_main_ray(struct application *, struct partition *, struct seg 
 #	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
-	/* "Lazy" way.  Works on reasonable machines with byte addressing */
+/* "Lazy" way.  Works on reasonable machines with byte addressing */
 #	define byteoffset(_i)	((int)((char *)&(_i)))
 #    else
-	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
+/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
 #	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
 #    endif
 #  endif
 #endif
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"%d", 1, "detect_regions", byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 1, "dr", byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 1, "detect_distance", byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 1, "dd", byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 1, "detect_normals", byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 1, "dn", byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 1, "detect_ids", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 1, "di", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 3, "foreground", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 3, "fg", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 3, "background", byteoffset(background),	BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 3, "bg", byteoffset(background),	BU_STRUCTPARSE_FUNC_NULL},	
-	{"%d", 1, "overlay", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d", 1, "ov", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
-	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+  {"%d", 1, "detect_regions", byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "dr", byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "detect_distance", byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "dd", byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "detect_normals", byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "dn", byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "detect_ids", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "di", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "foreground", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "fg", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "background", byteoffset(background),	BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "bg", byteoffset(background),	BU_STRUCTPARSE_FUNC_NULL},	
+  {"%d", 1, "overlay", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "ov", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "blend", byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "bl", byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "regcol", byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "rc", byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
+  {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 char usage[] = "\
@@ -169,7 +198,7 @@ Options:\n\
  -T #/#             Tolerance: distance/angular\n\
  -r                 Report overlaps\n\
  -R                 Do not report overlaps\n\
- -c                 Auxillary commands\n";
+ -c                 Auxillary commands (see man page)\n";
  
 
 /*
@@ -179,107 +208,286 @@ Options:\n\
 int
 view_init( struct application *ap, char *file, char *obj, int minus_o )
 {
+  /*
+   *  Allocate a scanline for each processor.
+   */
+  ap->a_hit = rayhit;
+  ap->a_miss = raymiss;
+  ap->a_onehit = 1;
+  
+  if( minus_o ) {
     /*
-     *  Allocate a scanline for each processor.
+     * Output is to a file stream.
+     * Do not open a framebuffer, do not allow parallel
+     * processing since we can't seek to the rows.
      */
-    ap->a_hit = rayhit;
-    ap->a_miss = raymiss;
-    ap->a_onehit = 1;
-
-    if( minus_o ) {
-	/*
-	 * Output is to a file stream.
-	 * Do not open a framebuffer, do not allow parallel
-	 * processing since we can't seek to the rows.
-	 */
-	rt_g.rtg_parallel = 0;
-	bu_log ("view_init: deactivating parallelism due to minus_o.\n");
-	return(0);
-    }
-
-    return(1);		/* we need a framebuffer */
+    rt_g.rtg_parallel = 0;
+    bu_log ("view_init: deactivating parallelism due to minus_o.\n");
+    return(0);
+  }
+  /*
+   * The overlay and blend cannot be used in -o mode.
+   * Note that the overlay directive takes precendence, they
+   * can't be used together.
+   */
+  else if (overlay) {      
+    bu_log ("view_init: will perform simple overlay.\n");
+  }
+  else if (blend) {
+    bu_log ("view_init: will perform blending.\n");
+  }
+  
+  return(1);		/* we need a framebuffer */
 }
 
 /* beginning of a frame */
 void
 view_2init( struct application *ap )
 {
-    int i;
+  int i;
 
-    /*
-     * Per_processor_chuck specifies the number of pixels rendered
-     * per each pass of a worker. By making this value equal to the
-     * width of the image, each worker will render one scanline at
-     * a time.
-     */
-    per_processor_chunk = width;
-
-    /*
-     * Use three bytes per pixel.
-     */
-    pixsize = 3;
-
-    /*
-     * Create a buffer for each scanline.
-     */
-    for ( i = 0; i < npsw; ++i ) {
-	if (scanline[i] == NULL) {
-	    scanline[i] = (unsigned char *)
-		bu_malloc( per_processor_chunk*pixsize, "scanline buffer" );
-	}	
+  /*
+   * Per_processor_chuck specifies the number of pixels rendered
+   * per each pass of a worker. By making this value equal to the
+   * width of the image, each worker will render one scanline at
+   * a time.
+   */
+  per_processor_chunk = width;
+  
+  /*
+   * Use three bytes per pixel.
+   */
+  pixsize = 3;
+  
+  /*
+   * Create a scanline buffer for each processor.
+   */
+  for ( i = 0; i < npsw; ++i ) {
+    if (scanline[i] == NULL) {
+      scanline[i] = (unsigned char *) bu_calloc( per_processor_chunk, 
+						 pixsize, "scanline buffer" );
+    }	
+  }
+  
+  /*
+   * Set the hit distance difference necessary to trigger an edge.
+   * This algorythm was stolen from lgt, I may make it settable later.
+   */
+  max_dist = (cell_width*ARCTAN_87)+2;
+  
+  /*
+   * Determine if the framebuffer is readable.
+   */
+  if (overlay || blend) {
+    
+    if (fb_read(fbp,0,0,bg_color,1) < 0) {
+      bu_log ("rt_edge: specified framebuffer is not readable, cannot merge.\n");
+      overlay = 0;
+      blend = 0;
     }
-
+    
     /*
-     * Set the hit distance difference necessary to trigger an edge.
-     * This algorythm stolen from lgt, I may make it settable later.
+     * If blending is desired, create scanline buffers to hold
+     * the read-in lines from the framebuffer.
      */
-    max_dist = (cell_width*ARCTAN_87)+2;
-
-    /*
-     * Determine if the framebuffer is readable.
-     */
-    if (overlay == 1) {
-      RGBpixel tmp;
-      
-      if (fb_read(fbp,0,0,tmp,1) < 0) {
-	bu_log ("rt_edge: framebuffer is not readable, cannot overlay.\n");
-	overlay = 0;
+    if (blend) {
+      for (i = 0; i < npsw; ++i) {
+	if (blendline[i] == NULL) {
+	  blendline[i] = (unsigned char *) bu_calloc( per_processor_chunk, 
+						      pixsize, 
+						      "blend buffer" );
+	}	
       }
     }
+  }
+
+  return;
 }
 
 /* end of each pixel */
 void view_pixel( struct application *ap ) { }
 
-/* end of each line */
+
+/*
+ * view_eol - action performed at the end of each scanline
+ *
+ */
 void
 view_eol( struct application *ap )
 {
-    int		cpu = ap->a_resource->re_cpu;
+  int cpu = ap->a_resource->re_cpu;
+  int i;
 
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
-    if (overlay) {
-      int i;
-      for (i = 0; i < per_processor_chunk; ++i) {
-	if (scanline[cpu][i*3+RED] == foreground[RED] &&
-	    scanline[cpu][i*3+GRN] == foreground[GRN] &&
-	    scanline[cpu][i*3+BLU] == foreground[BLU]) {
-	  /*
-	   * Write this pixel
-	   */
-	  fb_write(fbp, i, ap->a_y, &scanline[cpu][i*3], 1);	  
-	}
-      }
-    } 
-    else {
-      if( outfp != NULL ) {
-	fwrite( scanline[cpu], pixsize, per_processor_chunk, outfp );
-      } 
-      else if( fbp != FBIO_NULL ) {
-	fb_write( fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk );
+  if (overlay) {
+    /*
+     * Overlay mode. Check if the pixel is an edge.
+     * If so, write it to the framebuffer.
+     */
+    for (i = 0; i < per_processor_chunk; ++i) {
+      if (scanline[cpu][i*3+RED] != background[RED] &&
+	  scanline[cpu][i*3+GRN] != background[GRN] &&
+	  scanline[cpu][i*3+BLU] != background[BLU]) {
+	/*
+	 * Write this pixel
+	 */
+	bu_semaphore_acquire (BU_SEM_SYSCALL);
+	fb_write(fbp, i, ap->a_y, &scanline[cpu][i*3], 1);	  
+	bu_semaphore_release (BU_SEM_SYSCALL);
       }
     }
-    bu_semaphore_release( BU_SEM_SYSCALL );
+  }
+  else if (blend) {
+    /*
+     * Blend mode.
+     *
+     * Read a line from the existing framebuffer,
+     * convert to HSV, manipulate, and put the results
+     * in the scanline as RGB.
+     */
+    int replace_down = 0; /* flag that specifies if the pixel in the
+			   * scanline below must be replaced.
+			   */
+    RGBpixel rgb;
+    fastf_t hsv[3];
+    
+    bu_semaphore_acquire (BU_SEM_SYSCALL);
+    if (fb_read(fbp,0,ap->a_y,blendline[cpu],per_processor_chunk) < 0) {
+      bu_bomb ("rtedge: error reading from framebuffer.\n");
+    }
+    bu_semaphore_release (BU_SEM_SYSCALL);
+    
+    for (i=0; i<per_processor_chunk; ++i) {
+      /*
+       * Is this pixel an edge?
+       */
+      if (scanline[cpu][i*3+RED] == foreground[RED] &&
+	  scanline[cpu][i*3+GRN] == foreground[GRN] &&
+	  scanline[cpu][i*3+BLU] == foreground[BLU]) {
+
+	/*
+	 * The pixel is an edge, retrieve the appropriate
+	 * pixel from the line buffer and convert it to HSV.
+	 */
+	rgb[RED] = blendline[cpu][i*3+RED];
+	rgb[GRN] = blendline[cpu][i*3+GRN];
+	rgb[BLU] = blendline[cpu][i*3+BLU];
+
+	/*
+	 * Is the pixel in the blendline array the
+	 * background color? If so, look left and down
+	 * to determine which pixel is the "source" of the
+	 * edge. Unless, of course, we are on the bottom 
+	 * scanline or the leftmost column (x=y=0)
+	 */
+	if (i != 0 && ap->a_y != 0 && !diffpixel (rgb,bg_color)) {
+	  RGBpixel left;
+	  RGBpixel down;
+	  
+	  left[RED] = blendline[cpu][(i-1)*3+RED];
+	  left[GRN] = blendline[cpu][(i-1)*3+GRN];
+	  left[BLU] = blendline[cpu][(i-1)*3+BLU];
+
+	  bu_semaphore_acquire (BU_SEM_SYSCALL);
+	  fb_read (fbp, i, ap->a_y - 1, down, 1);	  
+	  bu_semaphore_release (BU_SEM_SYSCALL);
+
+	  if (diffpixel (left, bg_color)) {
+	    /* 
+	     * Use this one.
+	     */
+	    rgb[RED] = left[RED];
+	    rgb[GRN] = left[GRN];
+	    rgb[BLU] = left[BLU];
+	  }
+	  else if (diffpixel (down, bg_color)) {
+	    /*
+	     * Use the pixel from the scanline below
+	     */
+	    replace_down = 1;
+
+	    rgb[RED] = down[RED];
+	    rgb[GRN] = down[GRN];
+	    rgb[BLU] = down[BLU];
+	  }
+	}
+	/*
+	 * Convert to HSV
+	 */
+	bu_rgb_to_hsv (rgb, hsv);
+      
+	/*
+	 * Now perform the manipulations.
+	 */
+	hsv[VAL] *= 3.0;
+	hsv[SAT] /= 3.0;
+
+	if (hsv[VAL] > 1.0) {
+	  fastf_t d = hsv[VAL] - 1.0;
+	  
+	  hsv[VAL] = 1.0;
+	  hsv[SAT] -= d;
+	  hsv[SAT] = hsv[SAT] >= 0.0 ? hsv[SAT] : 0.0;
+	}
+
+	/*
+	 * Convert back to RGB.
+	 */
+	bu_hsv_to_rgb(hsv,rgb);
+	
+	if (replace_down) {
+	  /* 
+	   * Write this pixel immediately, do not put it into 
+	   * the blendline since it corresponds to the wrong
+	   * scanline.
+	   */
+	  bu_semaphore_acquire (BU_SEM_SYSCALL);
+	  fb_write (fbp, i, ap->a_y, rgb, 1);
+	  bu_semaphore_release (BU_SEM_SYSCALL);
+
+	  replace_down = 0;
+	} 
+	else {
+	  /* 
+	   * Put this pixel back into the blendline array.
+	   * We'll push it to the buffer when the entire
+	   * scanline has been processed.
+	   */
+	  blendline[cpu][i*3+RED] = rgb[RED];
+	  blendline[cpu][i*3+GRN] = rgb[GRN];
+	  blendline[cpu][i*3+BLU] = rgb[BLU];
+	}
+      } /* end "if this pixel is an edge" */
+    } /* end pixel loop */
+
+    /* 
+     * Write the blendline to the framebuffer.
+     */
+    bu_semaphore_acquire (BU_SEM_SYSCALL);
+    fb_write (fbp, 0, ap->a_y, blendline[cpu], per_processor_chunk);	  
+    bu_semaphore_release (BU_SEM_SYSCALL);
+  } /* end blend */
+  else if( fbp != FBIO_NULL ) {
+    /*
+     * Simple whole scanline write to a framebuffer.
+     */
+    bu_semaphore_acquire (BU_SEM_SYSCALL);
+    fb_write( fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk );
+    bu_semaphore_release (BU_SEM_SYSCALL);
+  }
+  else if( outfp != NULL ) {
+    /*
+     * Write to a file.
+     */
+    bu_semaphore_acquire (BU_SEM_SYSCALL);
+    fwrite( scanline[cpu], pixsize, per_processor_chunk, outfp );
+    bu_semaphore_release (BU_SEM_SYSCALL);
+  }
+  else {
+    bu_log ("rtedge: strange, no end of line actions taken.\n");
+  } 
+  
+  return;
+
 }
 
 void view_setup() { }
@@ -362,46 +570,46 @@ int raymiss2( register struct application *ap )
 }
 
 int is_edge(struct application *ap, struct cell *here,
-    struct cell *left, struct cell *below)
+	    struct cell *left, struct cell *below)
 {
-
-    if( here->c_id == -1 && left->c_id == -1 && below->c_id == -1) {
-	/*
-	 * All misses - catches condtions that would be bad later.
-	 */
-	return 0;
-    }
-
-    if (detect_ids) {
-        if (here->c_id != -1 &&
-            (here->c_id != left->c_id || here->c_id != below->c_id)) {
-	    return 1;
-        }
-    }
-
-    if (detect_regions) {
-        if (here->c_region != 0 &&
-            (here->c_region != left->c_region
-            || here->c_region != below->c_region)) {
-	    return 1;
-        }
-    }
-
-    if (detect_distance) {
-        if (Abs(here->c_dist - left->c_dist) > max_dist ||
-	    Abs(here->c_dist - below->c_dist) > max_dist) {
-	    return 1;
-        }
-    }
-
-    if (detect_normals) {
-    	if ((VDOT(here->c_normal, left->c_normal) < COSTOL) ||
-	    (VDOT(here->c_normal, below->c_normal)< COSTOL)) {
-	     return 1;	
-        }
-    }
-
+  
+  if( here->c_id == -1 && left->c_id == -1 && below->c_id == -1) {
+    /*
+     * All misses - catches condtions that would be bad later.
+     */
     return 0;
+  }
+  
+  if (detect_ids) {
+    if (here->c_id != -1 &&
+	(here->c_id != left->c_id || here->c_id != below->c_id)) {
+      return 1;
+    }
+  }
+  
+  if (detect_regions) {
+    if (here->c_region != 0 &&
+	(here->c_region != left->c_region
+	 || here->c_region != below->c_region)) {
+      return 1;
+    }
+  }
+  
+  if (detect_distance) {
+    if (Abs(here->c_dist - left->c_dist) > max_dist ||
+	Abs(here->c_dist - below->c_dist) > max_dist) {
+      return 1;
+    }
+  }
+
+  if (detect_normals) {
+    if ((VDOT(here->c_normal, left->c_normal) < COSTOL) ||
+	(VDOT(here->c_normal, below->c_normal)< COSTOL)) {
+      return 1;	
+    }
+  }
+  
+  return 0;
 }
 
 
@@ -412,90 +620,150 @@ int is_edge(struct application *ap, struct cell *here,
 
 int
 handle_main_ray( struct application *ap, register struct partition *PartHeadp,
-	struct seg *segp )
+		 struct seg *segp )
 {
-	register struct partition *pp;
-	register struct hit	*hitp;		/* which hit */
-	
-	LOCAL struct application	a2;
-	LOCAL struct cell		me;
-	LOCAL struct cell		below;
-	LOCAL struct cell		left;
-	LOCAL int			edge;
-	LOCAL int			cpu;	
-
-	memset(&a2, 0, sizeof(struct application));
-	memset(&me, 0, sizeof(struct cell));
-	memset(&below, 0, sizeof(struct cell));
-	memset(&left, 0, sizeof(struct cell));
-	
-	cpu = ap->a_resource->re_cpu;	
-	
-	if (PartHeadp == NULL) {
-	    /* The main shotline missed.
-	     * pack the application struct
-	     */
-	    me.c_ishit    = 0;
-	    me.c_dist   = MISS_DIST;
-    	    me.c_id	    = MISS_ID;	
-            VSETALL(me.c_hit, MISS_DIST);
-            VSETALL(me.c_normal, 0);
-            VMOVE(me.c_rdir, ap->a_ray.r_dir);
-	} else {
-	     pp = PartHeadp->pt_forw;
-	     hitp = pp->pt_inhit;	
-            /*
-	     * Stuff the information for this cell.
-	     */
-	    me.c_ishit    = 0;
-	    me.c_id = pp->pt_regionp->reg_regionid;
-	    me.c_dist = hitp->hit_dist;
-	    VMOVE(me.c_rdir, ap->a_ray.r_dir);
-	    VJOIN1(me.c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
-	    RT_HIT_NORMAL(me.c_normal, hitp,
-	        pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);	    		
-	}
-
-	/*
-	 * Now, fire a ray for both the cell below and the
-	 * cell to the left.
-	 */
-	a2.a_hit = rayhit2;
-	a2.a_miss = raymiss2;
-	a2.a_onehit = 1;
-	a2.a_rt_i = ap->a_rt_i;
-	a2.a_resource = ap->a_resource;
-	
-	VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
-	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&below;
-        rt_shootray(&a2);
-	
-	VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
-	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&left;
-        rt_shootray(&a2);
-	
-	/*
-	 * Finally, compare the values. If they differ, record this
-	 * point as lying on an edge.
-	 */
-	if (is_edge (ap, &me, &left, &below)) {
-	    bu_semaphore_acquire (RT_SEM_RESULTS);	
-	    	scanline[cpu][ap->a_x*3+RED] = foreground[RED];
-		scanline[cpu][ap->a_x*3+GRN] = foreground[GRN];
-		scanline[cpu][ap->a_x*3+BLU] = foreground[BLU];
-	    bu_semaphore_release (RT_SEM_RESULTS);
-	    edge = 1;
-	} else {
-	    bu_semaphore_acquire (RT_SEM_RESULTS);
-	       	scanline[cpu][ap->a_x*3+RED] = background[RED];
-		scanline[cpu][ap->a_x*3+GRN] = background[GRN];
-		scanline[cpu][ap->a_x*3+BLU] = background[BLU];
-	    bu_semaphore_release (RT_SEM_RESULTS);
-	    edge = 0;
-	}
-	return edge;
+  register struct partition *pp;
+  register struct hit	*hitp;		/* which hit */
+  
+  LOCAL struct application	a2;
+  LOCAL struct cell		me;
+  LOCAL struct cell		below;
+  LOCAL struct cell		left;
+  LOCAL int			edge;
+  LOCAL int			cpu;	
+  
+  memset(&a2, 0, sizeof(struct application));
+  memset(&me, 0, sizeof(struct cell));
+  memset(&below, 0, sizeof(struct cell));
+  memset(&left, 0, sizeof(struct cell));
+  
+  cpu = ap->a_resource->re_cpu;	
+  
+  if (PartHeadp == NULL) {
+    /* The main shotline missed.
+     * pack the application struct
+     */
+    me.c_ishit    = 0;
+    me.c_dist   = MISS_DIST;
+    me.c_id	    = MISS_ID;
+    me.c_region = 0;
+    VSETALL(me.c_hit, MISS_DIST);
+    VSETALL(me.c_normal, 0);
+    VMOVE(me.c_rdir, ap->a_ray.r_dir);
+  } else {
+    pp = PartHeadp->pt_forw;
+    hitp = pp->pt_inhit;	
+    /*
+     * Stuff the information for this cell.
+     */
+    me.c_ishit    = 0;
+    me.c_id = pp->pt_regionp->reg_regionid;
+    me.c_dist = hitp->hit_dist;
+    me.c_region = pp->pt_regionp;
+    VMOVE(me.c_rdir, ap->a_ray.r_dir);
+    VJOIN1(me.c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
+    RT_HIT_NORMAL(me.c_normal, hitp,
+		  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);	    		
+  }
+  
+  /*
+   * Now, fire a ray for both the cell below and the
+   * cell to the left.
+   */
+  a2.a_hit = rayhit2;
+  a2.a_miss = raymiss2;
+  a2.a_onehit = 1;
+  a2.a_rt_i = ap->a_rt_i;
+  a2.a_resource = ap->a_resource;
+  
+  VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
+  VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+  a2.a_uptr = (genptr_t)&below;
+  rt_shootray(&a2);
+  
+  VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
+  VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+  a2.a_uptr = (genptr_t)&left;
+  rt_shootray(&a2);
+  
+  /*
+   * Finally, compare the values. If they differ, record this
+   * point as lying on an edge.
+   */
+  if (is_edge (ap, &me, &left, &below)) {
+    RGBpixel col;
+    
+    choose_color (col, &me, &left, &below);
+    
+    scanline[cpu][ap->a_x*3+RED] = col[RED];
+    scanline[cpu][ap->a_x*3+GRN] = col[GRN];
+    scanline[cpu][ap->a_x*3+BLU] = col[BLU];
+    edge = 1;
+  } else {
+    scanline[cpu][ap->a_x*3+RED] = background[RED];
+    scanline[cpu][ap->a_x*3+GRN] = background[GRN];
+    scanline[cpu][ap->a_x*3+BLU] = background[BLU];	  
+    edge = 0;
+  }
+  return edge;
 }
 
 void application_init () { }
+
+
+int diffpixel (RGBpixel a, RGBpixel b)
+{
+  if (a[RED] != b[RED]) return 1;
+  if (a[GRN] != b[GRN]) return 1;
+  if (a[BLU] != b[BLU]) return 1;
+  return 0;
+}
+
+/*
+ *
+ *
+ */
+void choose_color (RGBpixel col, struct cell *me,
+		  struct cell *left, struct cell *below)
+{
+  col[RED] = foreground[RED];
+  col[GRN] = foreground[GRN];
+  col[BLU] = foreground[BLU];
+
+  if (region_colors) {
+
+    struct cell *use_this = me;
+
+    /*
+     * Determine the cell with the smallest hit distance.
+     */
+
+    use_this = (me->c_dist < left->c_dist) ? me : left ;
+    use_this = (use_this->c_dist < below->c_dist) ? use_this : below ;
+
+    if (use_this == (struct cell *)NULL) {
+      bu_bomb ("Error: use_this is NULL.\n");
+    }
+
+    col[RED] = 255 * use_this->c_region->reg_mater.ma_color[RED];
+    col[GRN] = 255 * use_this->c_region->reg_mater.ma_color[GRN];
+    col[BLU] = 255 * use_this->c_region->reg_mater.ma_color[BLU];
+
+  }
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
