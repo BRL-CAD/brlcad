@@ -458,12 +458,18 @@ match:		;
 /*
  *			N M G _ L O O P _ I S _ C C W
  *
+ *  Compute the "winding number" for the loop, by calculating all the angles.
+ *  A simple square will have a total of +/- 2*pi.
+ *  However, each "jaunt" into the interior will increase this total
+ *  by pi.
+ *  This information is probably useful, but here the only goal is to
+ *  determine cw/ccw, so just make sure the total has reached +/- 2*pi.
+ *
  *  Returns -
  *	+1	Loop is CCW, should be exterior loop.
  *	-1	Loop is CW, should be interior loop.
  *	 0	Unable to tell, error.
  *
- * XXX Should the return really be a boolean?
  */
 int
 nmg_loop_is_ccw( lu, norm, tol )
@@ -479,6 +485,9 @@ CONST struct rt_tol	*tol;
 	fastf_t		theta = 0;
 	fastf_t		x,y;
 	fastf_t		rad;
+	fastf_t		npi;		/* n * pi, hopefully */
+	double		n;		/* integer part of npi */
+	fastf_t		residue;	/* fractional part of npi */
 	int		n_angles=0;	/* number of edge/edge angles measured */
 
 	NMG_CK_LOOPUSE(lu);
@@ -533,22 +542,30 @@ CONST struct rt_tol	*tol;
 		return 0;
 	}
 
-	rad = theta * rt_inv2pi;	/* "winding number" */
-	x = rad-1;
-	/* "rad" value is normalized -1..+1, tolerance here is 1% */
-	if( NEAR_ZERO( x, 0.05 ) )  {
-		/* theta = two pi, loop is CCW */
+	npi = theta * rt_invpi;		/* n * pi.  n should be >= 2 */
+
+	/*  Check that 'npi' is very nearly an integer,
+	 *  otherwise that is an indicator of trouble in the calculation.
+	 */
+	residue = modf( npi, &n );
+	if( !NEAR_ZERO( residue, 0.05 ) )  {
+		rt_log("nmg_loop_is_ccw(x%x) npi=%g, n=%g, residue=%g\n",
+			lu, npi, n, residue );
+	}
+
+	/* "npi" value is normalized -1..+1, tolerance here is 1% */
+	if( npi >= 2 - 0.05 )  {
+		/* theta >= two pi, loop is CCW */
 		return 1;
 	}
-	x = rad + 1;
-	if( NEAR_ZERO( x, 0.05 ) )  {
-		/* theta = -two pi, loop is CW */
+	if( npi <= -2 + 0.05 )  {
+		/* theta <= -two pi, loop is CW */
 		return -1;
 	}
-	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g, winding=%g\n",
-		theta, rad );
+	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g, winding=%g*pi\n",
+		theta, npi );
 	nmg_pr_lu_briefly(lu, NULL);
-	rt_log(" theta = %g, winding=%g\n", theta, theta / rt_twopi );
+	rt_log(" theta = %g, winding=%g*pi\n", theta, npi );
 	
 	rt_g.NMG_debug |= DEBUG_PLOTEM;
 	nmg_face_lu_plot( lu, this_vu, this_vu );
