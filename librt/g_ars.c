@@ -44,6 +44,13 @@ static const char RCSars[] = "@(#)$Header$ (BRL)";
 
 extern int rt_bot_minpieces;
 
+/* from g_bot.c */
+extern int rt_bot_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip );
+extern void rt_bot_ifree( struct rt_db_internal *ip );
+
+int rt_ars_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
+		 const struct rt_tess_tol *ttol, const struct bn_tol *tol );
+
 void
 rt_ars_free( register struct soltab *stp )
 {
@@ -471,6 +478,48 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
+#if 1
+    struct rt_db_internal intern;
+    struct rt_bot_internal *bot;
+    struct model *m;
+    struct nmgregion *r;
+    struct shell *s;
+    int ret;
+
+    m = nmg_mm();
+    r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+
+    if( rt_ars_tess( &r, m, ip, &rtip->rti_ttol, &rtip->rti_tol) ) {
+	    bu_log( "Failed to tessellate ARS (%s)\n", stp->st_dp->d_namep );
+	    nmg_km( m );
+	    return( -1 );
+    }
+    rt_ars_ifree( ip );
+
+    s = BU_LIST_FIRST( shell, &r->s_hd );
+    bot = nmg_bot( s, &rtip->rti_tol );
+
+    if( !bot ) {
+	    bu_log( "Failed to convert ARS to BOT (%s)\n", stp->st_dp->d_namep );
+	    nmg_km( m );
+	    return( -1 );
+    }
+
+    nmg_km( m );
+
+    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_BOT;
+    intern.idb_meth = &rt_functab[ID_BOT];
+    intern.idb_ptr = (genptr_t)bot;
+    bu_avs_init( &intern.idb_avs, 0, "ARS to a BOT for prep" );
+
+    ret = rt_bot_prep( stp, &intern, rtip );
+
+    rt_bot_ifree( &intern );
+
+    return( ret );
+#else
     LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
     int	i, j, ntri;
     LOCAL fastf_t	f;
@@ -478,7 +527,6 @@ struct rt_i		*rtip;
     struct bot_specific	*bot;
     const struct bn_tol		*tol = &rtip->rti_tol;
     int ncv;
-
 
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
@@ -583,7 +631,9 @@ struct rt_i		*rtip;
 
     rt_ars_ifree( ip );
 
+
     return(0);		/* OK */
+#endif
 }
 
 
