@@ -49,52 +49,42 @@ static char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 
+#define TXT_BUF_LEN	512
+#define TXT_NAME_LEN	128
+
 struct vrml_mat {
+	/* typical shader parameters */
+	char shader[TXT_NAME_LEN];
 	int shininess;
 	double transparency;
-};
 
-struct vrml_light {
+	/* light paramaters */
 	fastf_t lt_fraction;
 	vect_t  lt_dir;
 	fastf_t lt_angle;
-};
 
-#define TXT_BUF_LEN	512
-#define TXT_NAME_LEN	128
-struct vrml_texture {
+	/* texture parameters */
 	char	tx_file[TXT_NAME_LEN];
 	int	tx_w;
 	int	tx_n;
 };
 
-#define LIGHT_O(m)	offsetof(struct vrml_light, m)
-#define LIGHT_OA(m)	offsetofarray(struct vrml_light, m)
-
-#define PL_O(m)	offsetof(struct vrml_mat, m)
-
-#define TX_O(m) offsetof(struct vrml_texture, m)
+#define PL_O(_m)	offsetof(struct vrml_mat, _m)
+#define PL_OA(_m)	offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
+	{"%s", TXT_NAME_LEN, "ma_shader", PL_OA(shader), 	FUNC_NULL },
 	{"%d", 1, "shine",		PL_O(shininess),	FUNC_NULL },
 	{"%d", 1, "sh",			PL_O(shininess),	FUNC_NULL },
 	{"%f", 1, "transmit",		PL_O(transparency),	FUNC_NULL },
 	{"%f", 1, "tr",			PL_O(transparency),	FUNC_NULL },
+	{"%f",	1, "angle",		PL_O(lt_angle),		FUNC_NULL },
+	{"%f",	1, "fract",		PL_O(lt_fraction),	FUNC_NULL },
+	{"%f",	3, "aim",		PL_OA(lt_dir),		FUNC_NULL },
+	{"%d",  1, "w",         	PL_O(tx_w),             FUNC_NULL },
+	{"%d",  1, "n",         	PL_O(tx_n),             FUNC_NULL },
+	{"%s",  TXT_NAME_LEN, "file",	PL_OA(tx_file), 	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
-};
-
-struct bu_structparse vrml_light_parse[] = {
-	{"%f",	1, "angle",	LIGHT_O(lt_angle),	FUNC_NULL },
-	{"%f",	1, "fract",	LIGHT_O(lt_fraction),	FUNC_NULL },
-	{"%f",	3, "aim",	LIGHT_OA(lt_dir),	FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
-};
-
-struct bu_structparse vrml_texture_parse[] = {
-	{"%d",  1, "w",         TX_O(tx_w),             FUNC_NULL },
-	{"%d",  1, "n",         TX_O(tx_n),             FUNC_NULL },
-	{"%s",  TXT_NAME_LEN, "file", offsetofarray(struct vrml_texture, tx_file), FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
@@ -102,6 +92,7 @@ RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
 static char	usage[] = "Usage: %s [-v] [-i] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
+static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	ncpu = 1;		/* Number of processors */
@@ -354,6 +345,9 @@ struct mater_info *mater;
 {
 	struct nmgregion *reg;
 	struct nmg_ptbl verts;
+	struct vrml_mat mat;
+	struct bu_vls vls;
+	char *tok;
 	int i;
 	int first=1;
 	int is_light=0;
@@ -377,26 +371,32 @@ struct mater_info *mater;
 		r = g = b = 0.5;
 	}
 
-	if( strncmp( "light", mater->ma_shader, 5 ) == 0 )
+	tok = strtok( mater->ma_shader, tok_sep );
+	strcpy( mat.shader, tok );
+	mat.shininess = -1;
+	mat.transparency = -1.0;
+	mat.lt_fraction = -1.0;
+	VSETALL( mat.lt_dir, 0.0 );
+	mat.lt_angle = -1.0;
+	mat.tx_file[0] = '\0';
+	mat.tx_w = -1;
+	mat.tx_n = -1;
+	bu_vls_init( &vls );
+	bu_vls_strcpy( &vls, &mater->ma_shader[strlen(mat.shader)] );
+	(void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
+
+	if( strncmp( "light", mat.shader, 5 ) == 0 )
 	{
 		/* this is a light source */
 		is_light = 1;
-		}
-	else if( strcmp( "plastic", mater->ma_shader, 7 ) == 0 )
+	}
+	else if( strncmp( "plastic", mat.shader, 7 ) == 0 )
 	{
-		struct vrml_mat mat;
-		struct rt_vls vls;
+		if( mat.shininess < 0 )
+			mat.shininess = 10;
+		if( mat.transparency < 0.0 )
+			mat.transparency = 0.0;
 
-		mat.shininess = 10;
-		mat.transparency = 0.0;
-
-		if( strlen( mater->ma_matparm ) )
-		{
-			rt_vls_init( &vls );
-			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
-			rt_vls_free( &vls );
-		}
 		fprintf( fp, "Separator { # start of %s\n", full_path );
 		fprintf( fp, "\tMaterial {\n" );
 		fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
@@ -406,21 +406,13 @@ struct mater_info *mater;
 			fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
 		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
 	}
-	else if( strncmp( "glass", mater->ma_shader, 5 ) == 0 )
+	else if( strncmp( "glass", mat.shader, 5 ) == 0 )
 	{
-		struct vrml_mat mat;
-		struct rt_vls vls;
+		if( mat.shininess < 0 )
+			mat.shininess = 4;
+		if( mat.transparency < 0.0 )
+			mat.transparency = 0.8;
 
-		mat.shininess = 4;
-		mat.transparency = 0.8;
-
-		if( strlen( mater->ma_matparm ) )
-		{
-			rt_vls_init( &vls );
-			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
-			rt_vls_free( &vls );
-		}
 		fprintf( fp, "Separator { # start of %s\n", full_path );
 		fprintf( fp, "\tMaterial {\n" );
 		fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
@@ -430,31 +422,15 @@ struct mater_info *mater;
 			fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
 		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
 	}
-	else if( strncmp( "texture", mater->ma_shader, 7 ) == 0 )
+	else if( strncmp( "texture", mat.shader, 7 ) == 0 )
 	{
-		struct vrml_texture tex;
-		struct rt_vls vls;
-
-		tex.tx_file[0] = '\0';
-		tex.tx_w = (-1);
-		tex.tx_n = (-1);
-
-		if( strlen( mater->ma_matparm ) )
-		{
-			rt_vls_init( &vls );
-			rt_vls_strcpy( &vls, mater->ma_matparm );
-			bzero( tex.tx_file, TXT_NAME_LEN );
-			(void)bu_struct_parse( &vls, vrml_texture_parse, (char *)&tex );
-			rt_vls_free( &vls );
-		}
-
-		if( tex.tx_w < 0 )
-			tex.tx_w = 512;
-		if( tex.tx_n < 0 )
-			tex.tx_n = 512;
+		if( mat.tx_w < 0 )
+			mat.tx_w = 512;
+		if( mat.tx_n < 0 )
+			mat.tx_n = 512;
 
 		fprintf( fp, "Separator { # start of %s\n", full_path );
-		if( strlen( tex.tx_file ) )
+		if( strlen( mat.tx_file ) )
 		{
 			int tex_fd;
 			int nbytes;
@@ -463,9 +439,9 @@ struct mater_info *mater;
 			int buf_start=0;
 			unsigned char tex_buf[TXT_BUF_LEN*3];
 
-			if( (tex_fd = open( tex.tx_file, O_RDONLY )) == (-1) )
+			if( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
 			{
-				rt_log( "Cannot open texture file (%s)\n", tex.tx_file );
+				rt_log( "Cannot open texture file (%s)\n", mat.tx_file );
 				perror( "g-vrml: " );
 			}
 			else
@@ -476,8 +452,8 @@ struct mater_info *mater;
 				fprintf( fp, "\tTexture2 {\n" );
 				fprintf( fp, "\t\twrapS REPEAT\n" );
 				fprintf( fp, "\t\twrapT REPEAT\n" );
-				fprintf( fp, "\t\timage %d %d %d\n", tex.tx_w, tex.tx_n, 3 );
-				tex_len = tex.tx_w*tex.tx_n*3;
+				fprintf( fp, "\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3 );
+				tex_len = mat.tx_w*mat.tx_n*3;
 				while( bytes_read < tex_len )
 				{
 					long bytes_to_go=tex_len;
@@ -684,30 +660,20 @@ struct mater_info *mater;
 	}
 	else
 	{
-		struct vrml_light v_light;
-		struct rt_vls vls;
+		mat.lt_fraction = 0.0;
+		mat.lt_angle = 180.0;
+		VSETALL( mat.lt_dir, 0.0 );
 
-		v_light.lt_fraction = 0.0;
-		v_light.lt_angle = 180.0;
-		VSETALL( v_light.lt_dir, 0.0 );
-		if( strlen( mater->ma_matparm ) )
-		{
-			rt_vls_init( &vls );
-			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)bu_struct_parse( &vls, vrml_light_parse, (char *)&v_light );
-			rt_vls_free( &vls );
-		}
-
-		if( v_light.lt_dir[X] != 0.0 || v_light.lt_dir[Y] != 0.0 ||v_light.lt_dir[Z] != 0.0 )
+		if( mat.lt_dir[X] != 0.0 || mat.lt_dir[Y] != 0.0 ||mat.lt_dir[Z] != 0.0 )
 		{
 			fprintf( fp, "SpotLight {\n" );
 			fprintf( fp, "\ton \tTRUE\n" );
-			if( v_light.lt_fraction > 0.0 )
-				fprintf( fp, "\tintensity \t%g\n", v_light.lt_fraction );
+			if( mat.lt_fraction > 0.0 )
+				fprintf( fp, "\tintensity \t%g\n", mat.lt_fraction );
 			fprintf( fp, "\tcolor \t%g %g %g\n", r,g,b );
 			fprintf( fp, "\tlocation \t%g %g %g\n", V3ARGS( ave_pt ) );
-			fprintf( fp, "\tdirection \t%g %g %g\n", V3ARGS( v_light.lt_dir ) );
-			fprintf( fp, "\tcutOffAngle \t%g }\n", v_light.lt_angle );
+			fprintf( fp, "\tdirection \t%g %g %g\n", V3ARGS( mat.lt_dir ) );
+			fprintf( fp, "\tcutOffAngle \t%g }\n", mat.lt_angle );
 		}
 		else
 			fprintf( fp, "PointLight {\n\ton TRUE\n\tintensity 1\n\tcolor %g %g %g\n\tlocation %g %g %g\n}\n",r,g,b,V3ARGS( ave_pt ) );
