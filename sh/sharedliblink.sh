@@ -20,7 +20,7 @@ NONUM=`basename $1 | sed -e 's/\\.so\\..*/.so/`
 
 # If the shared library has a version number, link numbered to unnumbered.
 # If no version number, don't do anything.
-if test "$1" != "$NONUM"
+if test `basename $1` != "$NONUM"
 then
 	rm -f $NONUM
 	ln -s $1 $NONUM
