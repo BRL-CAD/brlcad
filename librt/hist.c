@@ -27,6 +27,17 @@ static char RCShist[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 /*
+ *			R T _ H I S T _ F R E E
+ */
+void
+rt_hist_free( histp )
+struct histogram	*histp;
+{
+	rt_free( (char *)histp->hg_bins, "old histogram bins");
+	histp->hg_bins = (long *)0;
+}
+
+/*
  *			R T _ H I S T _ I N I T
  *
  */
@@ -45,12 +56,16 @@ int			nbins;
 	}
 
 	if( histp->hg_bins != (long *)0 )
-		rt_free( (char *)histp->hg_bins, "old histogram bins");
+		rt_hist_free( histp );
 
 	histp->hg_min = min;
 	histp->hg_max = max;
 	histp->hg_nbins = nbins;
-	histp->hg_clumpsize = ((max-min+1)/nbins)+1;
+
+	/* When max-min <= nbins, clumpsize should be 1 */
+	histp->hg_clumpsize = ((max-min)/nbins)+1;
+	if( histp->hg_clumpsize <= 0 )  histp->hg_clumpsize = 1;
+
 	histp->hg_nsamples = 0L;
 	histp->hg_bins = (long *)rt_calloc( nbins+1, sizeof(long), "histogram bins");
 }
