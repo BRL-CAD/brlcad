@@ -1,7 +1,7 @@
 #
 #		P A T T E R N . T C L
 #
-#	procedures to build duplicates of objecst in a specified pattern
+#	procedures to build duplicates of objects in a specified pattern
 #
 # Author - John R. Anderson
 #
@@ -1193,7 +1193,7 @@ proc pattern_cyl { args } {
 				incr az_index
 				set mat1 [mat_deltas_vec [mat_idn] [vreverse $center_obj]]
 				if { $do_rot } {
-					set mat2 [mat_mul [mat_arb_rot $center_obj $height_dir $az] $mat1]
+					set mat2 [mat_mul [mat_arb_rot [vreverse $center_obj] $height_dir $az] $mat1]
 				} else {
 					set mat2 $mat1
 				}
