@@ -391,7 +391,7 @@ dgo_headSolid_tcl(ClientData	clientData,
 	bu_vls_init(&vls);
 
 	if (argc != 2) {
-		bu_vls_printf(&vls, "helplib dgo_headSolid");
+		bu_vls_printf(&vls, "helplib_alias dgo_headSolid %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -454,7 +454,7 @@ dgo_illum_cmd(struct dg_obj	*dgop,
 
 bad:
 	bu_vls_init(&vls);
-	bu_vls_strcpy(&vls, "helplib dgo_illum");
+	bu_vls_printf(&vls, "helplib_alias dgo_illum %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -529,13 +529,13 @@ dgo_draw_cmd(struct dg_obj	*dgop,
 		switch (kind) {
 		default:
 		case 1:
-			bu_vls_printf(&vls, "helplib dgo_draw");
+			bu_vls_printf(&vls, "helplib_alias dgo_draw %s", argv[0]);
 			break;
 		case 2:
-			bu_vls_printf(&vls, "helplib dgo_E");
+			bu_vls_printf(&vls, "helplib_alias dgo_E %s", argv[0]);
 			break;
 		case 3:
-			bu_vls_printf(&vls, "helplib dgo_ev");
+			bu_vls_printf(&vls, "helplib_alias dgo_ev %s", argv[0]);
 			break;
 		}
 
@@ -619,7 +619,7 @@ dgo_erase_cmd(struct dg_obj	*dgop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_erase");
+		bu_vls_printf(&vls, "helplib_alias dgo_erase %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -665,7 +665,7 @@ dgo_erase_all_cmd(struct dg_obj	*dgop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_erase");
+		bu_vls_printf(&vls, "helplib_alias dgo_erase %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -711,7 +711,7 @@ dgo_who_cmd(struct dg_obj	*dgop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_who");
+		bu_vls_printf(&vls, "helplib_alias dgo_who %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -935,7 +935,7 @@ dgo_autoview_cmd(struct dg_obj		*dgop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_autoview");
+		bu_vls_printf(&vls, "helplib_alias dgo_autoview %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -964,7 +964,7 @@ dgo_autoview_tcl(ClientData	clientData,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_autoview");
+		bu_vls_printf(&vls, "helplib_alias dgo_autoview %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1052,12 +1052,13 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 {
 	register char **vp;
 	register int i;
+	char	pstring[32];
 
 	if (argc < 1 || MAXARGS < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_%s", argv[0]);
+		bu_vls_printf(&vls, "helplib_alias dgo_%s %s", argv[0], argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1071,12 +1072,12 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 #endif
 	*vp++ = "-s50";
 	*vp++ = "-M";
-#if 0
-	if (mged_variables->mv_perspective > 0) {
-		(void)sprintf(pstring, "-p%g", mged_variables->mv_perspective);
+
+	if (vop->vo_perspective > 0) {
+		(void)sprintf(pstring, "-p%g", vop->vo_perspective);
 		*vp++ = pstring;
 	}
-#endif
+
 	for (i=1; i < argc; i++) {
 		if (argv[i][0] == '-' && argv[i][1] == '-' &&
 		    argv[i][2] == '\0') {
@@ -1131,7 +1132,7 @@ char	**argv;
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_%s", argv[0]);
+		bu_vls_printf(&vls, "helplib_alias dgo_%s %s", argv[0], argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1225,7 +1226,7 @@ dgo_zap_tcl(ClientData	clientData,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_%s", argv[1]);
+		bu_vls_printf(&vls, "helplib_alias dgo_%s %s", argv[1], argv[1]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1270,7 +1271,7 @@ dgo_blast_tcl(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_blast");
+		bu_vls_printf(&vls, "helplib_alias dgo_blast %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
@@ -1310,7 +1311,7 @@ dgo_tol_tcl(clientData, interp, argc, argv)
 
 	if (argc < 2 || 4 < argc){
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_tol");
+		bu_vls_printf(&vls, "helplib_alias dgo_tol %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1739,7 +1740,7 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_rtcheck");
+		bu_vls_printf(&vls, "helplib_alias dgo_rtcheck %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
@@ -1809,7 +1810,7 @@ dgo_assoc_tcl(clientData, interp, argc, argv)
 
 	/* return help message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib dgo_assoc");
+	bu_vls_printf(&vls, "helplib_alias dgo_assoc %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1837,7 +1838,7 @@ dgo_observer_tcl(clientData, interp, argc, argv)
 
 		/* return help message */
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_observer");
+		bu_vls_printf(&vls, "helplib_alias dgo_observer %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1859,7 +1860,7 @@ dgo_report_cmd(struct dg_obj	*dgop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_report");
+		bu_vls_printf(&vls, "helplib_alias dgo_report %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3212,62 +3213,61 @@ dgo_rt_set_eye_model(struct dg_obj *dgop,
 		     struct view_obj *vop,
 		     vect_t eye_model)
 {
-#if 0
-	if (dmp->dm_zclip || mged_variables->mv_perspective_mode) {
+	if (vop->vo_zclip || vop->vo_perspective > 0) {
 		vect_t temp;
 
-		VSET( temp, 0.0, 0.0, 1.0 );
-		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-	}
-#endif
-	/* not doing zclipping, so back out of geometry */
-	register struct solid *sp;
-	register int i;
-	double  t;
-	double  t_in;
-	vect_t  direction;
-	vect_t  extremum[2];
-	vect_t  minus, plus;    /* vers of this solid's bounding box */
+		VSET(temp, 0.0, 0.0, 1.0);
+		MAT4X3PNT(eye_model, vop->vo_view2model, temp);
+	} else {
+		/* not doing zclipping, so back out of geometry */
+		register struct solid *sp;
+		register int i;
+		double  t;
+		double  t_in;
+		vect_t  direction;
+		vect_t  extremum[2];
+		vect_t  minus, plus;    /* vers of this solid's bounding box */
 
-	VSET(eye_model, -vop->vo_center[MDX],
-	     -vop->vo_center[MDY], -vop->vo_center[MDZ]);
+		VSET(eye_model, -vop->vo_center[MDX],
+		     -vop->vo_center[MDY], -vop->vo_center[MDZ]);
 
-	for (i = 0; i < 3; ++i) {
-		extremum[0][i] = INFINITY;
-		extremum[1][i] = -INFINITY;
-	}
-
-	FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
-		minus[X] = sp->s_center[X] - sp->s_size;
-		minus[Y] = sp->s_center[Y] - sp->s_size;
-		minus[Z] = sp->s_center[Z] - sp->s_size;
-		VMIN( extremum[0], minus );
-		plus[X] = sp->s_center[X] + sp->s_size;
-		plus[Y] = sp->s_center[Y] + sp->s_size;
-		plus[Z] = sp->s_center[Z] + sp->s_size;
-		VMAX( extremum[1], plus );
-	}
-	VMOVEN(direction, vop->vo_rotation + 8, 3);
-	VSCALE(direction, direction, -1.0);
-	for (i = 0; i < 3; ++i)
-		if (NEAR_ZERO(direction[i], 1e-10))
-			direction[i] = 0.0;
-	if ((eye_model[X] >= extremum[0][X]) &&
-	    (eye_model[X] <= extremum[1][X]) &&
-	    (eye_model[Y] >= extremum[0][Y]) &&
-	    (eye_model[Y] <= extremum[1][Y]) &&
-	    (eye_model[Z] >= extremum[0][Z]) &&
-	    (eye_model[Z] <= extremum[1][Z])) {
-		t_in = -INFINITY;
-		for (i = 0; i < 6; ++i) {
-			if (direction[i%3] == 0)
-				continue;
-			t = (extremum[i/3][i%3] - eye_model[i%3]) /
-				direction[i%3];
-			if ((t < 0) && (t > t_in))
-				t_in = t;
+		for (i = 0; i < 3; ++i) {
+			extremum[0][i] = INFINITY;
+			extremum[1][i] = -INFINITY;
 		}
-		VJOIN1(eye_model, eye_model, t_in, direction);
+
+		FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
+			minus[X] = sp->s_center[X] - sp->s_size;
+			minus[Y] = sp->s_center[Y] - sp->s_size;
+			minus[Z] = sp->s_center[Z] - sp->s_size;
+			VMIN( extremum[0], minus );
+			plus[X] = sp->s_center[X] + sp->s_size;
+			plus[Y] = sp->s_center[Y] + sp->s_size;
+			plus[Z] = sp->s_center[Z] + sp->s_size;
+			VMAX( extremum[1], plus );
+		}
+		VMOVEN(direction, vop->vo_rotation + 8, 3);
+		VSCALE(direction, direction, -1.0);
+		for (i = 0; i < 3; ++i)
+			if (NEAR_ZERO(direction[i], 1e-10))
+				direction[i] = 0.0;
+		if ((eye_model[X] >= extremum[0][X]) &&
+		    (eye_model[X] <= extremum[1][X]) &&
+		    (eye_model[Y] >= extremum[0][Y]) &&
+		    (eye_model[Y] <= extremum[1][Y]) &&
+		    (eye_model[Z] >= extremum[0][Z]) &&
+		    (eye_model[Z] <= extremum[1][Z])) {
+			t_in = -INFINITY;
+			for (i = 0; i < 6; ++i) {
+				if (direction[i%3] == 0)
+					continue;
+				t = (extremum[i/3][i%3] - eye_model[i%3]) /
+					direction[i%3];
+				if ((t < 0) && (t > t_in))
+					t_in = t;
+			}
+			VJOIN1(eye_model, eye_model, t_in, direction);
+		}
 	}
 }
 
