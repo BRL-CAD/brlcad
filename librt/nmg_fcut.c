@@ -1284,8 +1284,11 @@ int				ass;
 /*
  *			N M G _ S P E C I A L _ W E D G E _ P R O C E S S I N G
  *
+ *  If one loop gets cut, then unwind the whole call stack, and reassess
+ *  where things stand.  (The caller needs to re-call in that case).
+ *
  *  Returns -
- *	0	Nothing done
+ *	0	Nothing needed changing, OK to proceed with vertex sorting.
  *	1	Loops were cut or joined, need to reclassify everything
  *		at this vertexuse.
  */
@@ -1383,11 +1386,18 @@ again:
 	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass, exclude, tol ) )
 		return 1;	/* An inner wedge was cut */
 
+#if 0
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 		rt_log("Inner wedge was not cut, need to consider cut/joinhere\n");
 
 	rt_bomb("XXX special wedge processing needed\n");
 	return 1;
+#else
+	/* Can we get by with not doing anything more? */
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("No inner wedges needed cutting, nothing further to do.\n");
+	return 0;
+#endif
 }
 
 /*
