@@ -546,6 +546,7 @@ struct rt_g {
 	int		res_stats;	/* lock on statistics */
 	int		res_results;	/* lock on result buffer */
 	int		res_model;	/* lock on model growth (splines) */
+	struct vlist	*rtg_vlFree;	/* vlist freelist */
 };
 extern struct rt_g rt_g;
 
@@ -590,6 +591,52 @@ struct rt_i {
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x01016580	/* magic # for integrity check */
+
+/*
+ *			V L I S T
+ *
+ *  Definitions for handling lists of vectors (really verticies, or points)
+ *  in 3-space.
+ *  Intented for common handling of wireframe display information.
+ *  XXX For the moment, allocated with individual malloc() calls.
+ */
+struct vlist {
+	point_t		vl_pnt;		/* coordinates in space */
+	int		vl_draw;	/* 1=draw, 0=move */
+	struct vlist	*vl_forw;	/* next structure in list */
+};
+#define VL_NULL		((struct vlist *)0)
+
+struct vlhead {
+	struct vlist	*vh_first;
+	struct vlist	*vh_last;
+};
+
+#define GET_VL(p)	{ \
+			if( ((p) = rt_g.rtg_vlFree) == VL_NULL )  { \
+				(p) = (struct vlist *)rt_malloc(sizeof(struct vlist), "vlist"); \
+			} else { \
+				rt_g.rtg_vlFree = (p)->vl_forw; \
+			} }
+
+/* Free an entire chain of vlist structs */
+#define FREE_VL(p)	{ register struct vlist *_vp = (p); \
+			while( _vp->vl_forw != VL_NULL ) _vp=_vp->vl_forw; \
+			_vp->vl_forw = rt_g.rtg_vlFree; \
+			rt_g.rtg_vlFree = (p);  }
+
+#define ADD_VL(hd,pnt,draw)  { \
+			register struct vlist *_vp; \
+			GET_VL(_vp); \
+			VMOVE( _vp->vl_pnt, pnt ); \
+			_vp->vl_draw = draw; \
+			_vp->vl_forw = VL_NULL; \
+			if( (hd)->vh_first == VL_NULL ) { \
+				(hd)->vh_first = (hd)->vh_last = _vp; \
+			} else { \
+				(hd)->vh_last->vl_forw = _vp; \
+				(hd)->vh_last = _vp; \
+			} }
 
 /*
  *  Replacements for definitions from ../h/vmath.h
