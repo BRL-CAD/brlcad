@@ -548,12 +548,19 @@ dnl ***************************
 
 SAVELIBS="${LIBS}"
 
-dnl need curses, would prefer ncurses
-LIBS=
-AC_SEARCH_LIBS(initscr, ncurses curses,, 
-	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-	       AC_MSG_ERROR([*** Need curses! ***]) )
-CURSES="${LIBS}"
+dnl need curses, would prefer ncurses  (XXX should look for tputs)
+#LIBS=
+AC_CHECK_LIB(ncurses, tputs, CURSES="-lncurses",
+    [AC_CHECK_LIB(curses, tputs, CURSES="-lcurses",
+	[AC_CHECK_LIB(termlib, tputs, CURSES="-ltermlib",
+	    [AC_CHECK_LIB(termcap, tputs, CURSES="-ltermcap")]
+	)]
+    )]
+)
+#AC_SEARCH_LIBS(initscr, ncurses curses termlib termcap,, 
+#	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+#	       AC_MSG_ERROR([*** Need curses! ***]) )
+#CURSES="${LIBS}"
 AC_SUBST(CURSES)
 
 LIBS=
@@ -617,6 +624,7 @@ AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
 	arpa/inet.h \
+	curses.h \
 	errno.h \
 	fcntl.h \
 	float.h \
@@ -627,6 +635,7 @@ AC_CHECK_HEADERS( \
 	malloc.h \
 	math.h \
 	memory.h \
+	ncurses.h \
 	netdb.h \
 	netinet/in.h \
 	pthread.h \
@@ -638,6 +647,7 @@ AC_CHECK_HEADERS( \
 	strings.h \
 	sys/errno.h \
 	sys/file.h \
+	sys/_ioctl.h \
 	sys/ioctl.h \
 	sys/ioctl_compat.h \
 	sys/machd.h \
@@ -653,6 +663,7 @@ AC_CHECK_HEADERS( \
 	sys/types.h \
 	sys/unistd.h \
 	syslog.h \
+	term.h \
 	termcap.h \
 	termio.h \
 	termios.h \
