@@ -1827,8 +1827,6 @@ RT_EXTERN(struct nmgregion	*nmg_mrsv, (struct model *m) );
 RT_EXTERN(struct shell 		*nmg_msv, (struct nmgregion *r_p) );
 RT_EXTERN(struct faceuse	*nmg_mf, (struct loopuse *lu1) );
 RT_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
-RT_EXTERN(struct vertexuse	*nmg_mvu, (struct vertex *v, long *upptr) );
-RT_EXTERN(struct vertexuse	*nmg_mvvu, (long *upptr) );
 RT_EXTERN(struct edgeuse	*nmg_me, (struct vertex *v1, struct vertex *v2, struct shell *s) );
 RT_EXTERN(struct edgeuse	*nmg_meonvu, (struct vertexuse *vu) );
 RT_EXTERN(struct loopuse	*nmg_ml, (struct shell *s) );
@@ -1914,7 +1912,7 @@ RT_EXTERN(struct edgeuse	*nmg_findeu, (struct vertex *v1, struct vertex *v2,
 				int dangling_only) );
 RT_EXTERN(struct vertexuse	*nmg_find_v_in_face, (CONST struct vertex *,
 				CONST struct faceuse *) );
-RT_EXTERN(struct vertexuse	*nmg_find_vu_in_face, (CONST point_t pt,
+RT_EXTERN(struct vertexuse	*nmg_find_pt_in_face, (CONST point_t pt,
 				CONST struct faceuse *fu, CONST struct rt_tol *tol) );
 RT_EXTERN(int			nmg_is_vertex_in_edgelist, (CONST struct vertex *v,
 				CONST struct rt_list *hd) );
