@@ -208,8 +208,10 @@ char **argv;
 		if( setpgrp( n, n ) < 0 )
 			perror("setpgrp");
 
-#ifndef SYSV
-		(void)setpriority( PRIO_PROCESS, getpid(), 20 );
+#ifdef CRAY
+		rt_pri_set(6);		/* highest "free" priority */
+#else
+		rt_pri_set(19);		/* lowest priority */
 #endif
 
 		/* Close off the world */
