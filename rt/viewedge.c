@@ -993,14 +993,12 @@ static int occludes (struct application *ap, struct cell *here)
    * If the second geometry is closer, do not
    * color pixel
    */
-
-  //    configure ray/ap;
   occlusion_apps[cpu]->a_resource = ap->a_resource;
   VMOVE (occlusion_apps[cpu]->a_ray.r_pt, ap->a_ray.r_pt);
   VMOVE (occlusion_apps[cpu]->a_ray.r_dir, ap->a_ray.r_dir);
-  //    shoot;
+
   rt_shootray (occlusion_apps[cpu]);
-  //    compare;
+
   if (occlusion_apps[cpu]->a_dist <= here->c_dist) {
     /* 
      * The second geometry is close than the edge, therefore it
