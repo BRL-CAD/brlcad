@@ -318,6 +318,8 @@ fastf_t exitnorm[3];
 		if( rotangle < 0.0 )
 			rotangle += 360.0;
 		}
+	/* Compute sine of fallback angle.  NB: the Air Force measures the
+		fallback angle from the horizontal (X-Y) plane. */
 	sinfbangle = Dot( exitnorm, zaxis );
 
 	los = (cpp->pt_outhit->hit_dist-cpp->pt_inhit->hit_dist)*unitconv;
