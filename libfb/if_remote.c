@@ -695,10 +695,10 @@ register ColorMap	*cmap;
 	char	buf[NET_LONG_LEN+1];
 	char	cm[REM_CMAP_BYTES+4];
 
-	if( cmap == COLORMAP_NULL )
+	if( cmap == COLORMAP_NULL ) {
 		if( pkg_send( MSG_FBWMAP, (char *)0, 0, PCP(ifp) ) < 0 )
 			return	-2;
-	else {
+	} else {
 		for( i = 0; i < 256; i++ ) {
 			(void)fbputshort( cmap->cm_red[i], cm+2*(0+i) );
 			(void)fbputshort( cmap->cm_green[i], cm+2*(256+i) );
