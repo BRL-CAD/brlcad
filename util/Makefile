@@ -1,10 +1,10 @@
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	85/03/13	Gary S. Moss
+#	last edit:	85/03/14	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.4
+#	SCCS ID:	@(#)Makefile	1.5
 
-PRODUCT	= pp-fb pc-fb fbclear fbgrid rle-fb fb-rle fbcmap fbzoom
+PRODUCT	= pp-fb pc-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
 CFILES	= pp-fb.c pc-fb.c fbclear.c fbgrid.c rle-fb.c fb-rle.c\
 	fbcmap.c fbzoom.c termio.c
@@ -19,17 +19,22 @@ BINPERM	= 755
 MANPERM	= 664
 CFLAGS	= -I${INCDIR} -O
 LDFLAGS = -n
-LIBES	= termio.o ${LIBDIR}/libfb.a -lm
+LIBES	= ${LIBDIR}/libfb.a -lm
 INS	= cp
 
 .DEFAULT:
 	$(GET) $(GFLAGS) -p s.$@ > ${TESTDIR}/$@
 	touch $@
 
-all:	${PRODUCT} ${MANUAL}
+all:	fbzoom ${PRODUCT} ${MANUAL}
 
-${PRODUCT}:	$$@.o termio.o
+${PRODUCT}:	$$@.o
 	$(CC) -o $@ ${LDFLAGS} $@.o ${LIBES} 
+	size $@
+	touch $@
+
+fbzoom: termio.o
+	$(CC) -o $@ ${LDFLAGS} $@.o termio.o ${LIBES} 
 	size $@
 	touch $@
 
