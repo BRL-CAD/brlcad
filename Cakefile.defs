@@ -786,7 +786,6 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	SYSV
 /*	For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #	define	CC		/opt/SUNWspro/bin/cc
-#	define	CC_OPTS		-K PIC
 
 #	define	HAS_TCP		1
 
@@ -795,14 +794,15 @@ set -S2 "/bin/sh"
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	define	CC_DEFS		-Xc -D_REENTRANT -Dsparc -DSUNOS=52
+#	define	CC_OPTS		-Xc -K PIC
+#	define	CC_DEFS		-D_REENTRANT -DSUNOS=52
 
 /*	Shared library support */
 #	define	ARCH_SUF	so
 #	define	LIBVERS		../sharedlibvers.sh
 #	define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
 #	define	RANLIB		true
-#	define	STANDARD_LIBES	-L/usr/ucblib -lucb -lm -R /usr/lib:/usr/ucblib:LIBDIR
+#	define	STANDARD_LIBES	-lm -R /usr/lib:LIBDIR
 
 #	define	XINCDIR		/usr/openwin/include
 #	define	XLIBDIR		/usr/openwin/lib
