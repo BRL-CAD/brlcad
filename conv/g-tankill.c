@@ -687,6 +687,8 @@ char	*argv[];
 		nmg_eue_dist = 2.0;
 	}
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
@@ -717,7 +719,7 @@ char	*argv[];
 			break;
 		case 'P':
 /*			ncpu = atoi( optarg ); */
-			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+			bu_debug = BU_DEBUG_COREDUMP;	/* to get core dumps */
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
@@ -909,7 +911,8 @@ genptr_t		client_data;
 		goto out;
 	}
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
@@ -1002,7 +1005,7 @@ out:
 	 *  A return of TREE_NULL from this routine signals an error,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;

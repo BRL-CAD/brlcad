@@ -128,7 +128,7 @@ genptr_t		client_data;
 		nmg_isect2d_final_cleanup();
 
 		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
+		db_free_tree(curtree, &rt_uniresource);	/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
@@ -144,7 +144,7 @@ genptr_t		client_data;
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
 	BU_UNSETJUMP;		/* Relinquish the protection */
 	if( ret_tree )
@@ -253,7 +253,7 @@ genptr_t		client_data;
 	 *  A return of TREE_NULL from this routine signals an error,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 out:
 
@@ -321,7 +321,7 @@ genptr_t	ptr;
 
 	/* have a combination that is not a region */
 
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 	{
 		bu_log( "Cannot get internal form of combination (%s)\n", dp->d_namep );
 		return;
@@ -334,7 +334,7 @@ genptr_t	ptr;
 
 	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 	{
-		db_non_union_push( comb->tree );
+		db_non_union_push( comb->tree, &rt_uniresource );
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )
 		{
 			bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
@@ -346,7 +346,8 @@ genptr_t	ptr;
 	{
 		tree_list = (struct rt_tree_array *)bu_calloc( node_count,
 			sizeof( struct rt_tree_array ), "tree list" );
-		actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION, 0 ) - tree_list;
+		actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list,
+			comb->tree, OP_UNION, 0, &rt_uniresource ) - tree_list;
 		BU_ASSERT_LONG( actual_count, ==, node_count );
 	}
 	else
@@ -359,7 +360,7 @@ genptr_t	ptr;
 	{
 		bu_log( "Warning: empty combination (%s)\n" , dp->d_namep );
 		dp->d_uses = 0;
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern , &rt_uniresource);
 		return;
 	}
 
@@ -383,7 +384,7 @@ genptr_t	ptr;
 			default:
 				bu_log( "Unrecognized Boolean operator in combination (%s)\n", dp->d_namep );
 				bu_free( (char *)tree_list, "tree_list" );
-				rt_db_free_internal( &intern );
+				rt_db_free_internal( &intern , &rt_uniresource);
 				return;
 		}
 		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name , &headp.l , op );
@@ -451,6 +452,8 @@ char	*argv[];
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
+
+	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "t:a:n:o:r:vx:P:X:")) != EOF) {

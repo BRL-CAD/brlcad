@@ -531,6 +531,8 @@ char	*argv[];
 	tree_state.ts_tol = &tol;
 	tree_state.ts_ttol = &ttol;
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	/* XXX For visualization purposes, in the debug plot files */
 	{
 		extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
@@ -732,7 +734,7 @@ genptr_t		client_data;
 		nmg_isect2d_final_cleanup();
 
 		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
+		db_free_tree(curtree, &rt_uniresource);	/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
@@ -748,7 +750,9 @@ genptr_t		client_data;
 	if( verbose )
 		bu_log( "\tEvaluating region\n" );
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+
+	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
@@ -803,7 +807,7 @@ genptr_t		client_data;
 	 *  A return of TREE_NULL from this routine signals an error,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 out:
 	BU_GETUNION(curtree, tree);

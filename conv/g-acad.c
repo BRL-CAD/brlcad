@@ -117,6 +117,8 @@ char	*argv[];
 	tol.perp = 1e-5;
 	tol.para = 1 - tol.perp;
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	the_model = nmg_mm();
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
@@ -565,7 +567,7 @@ genptr_t		client_data;
 	}
 	printf("Attempting to process region %s\n",db_path_to_string( pathp ));
 	fflush(stdout);
-	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol );	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
 
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
@@ -680,7 +682,7 @@ out:
 		regions_tried, regions_converted, regions_written, npercent,tpercent);
 	}
 
-	db_free_tree(curtree);		/* Does an nmg_kr() */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;

@@ -1174,7 +1174,7 @@ Rm_nulls()
 			if( dp->d_flags & DIR_SOLID )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) < 1 )
+			if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) < 1 )
 			{
 				bu_log( "Cannot get internal form of combination %s\n", dp->d_namep );
 				continue;
@@ -1183,7 +1183,7 @@ Rm_nulls()
 			RT_CK_COMB( comb );
 			if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 			{
-				db_non_union_push( comb->tree );
+				db_non_union_push( comb->tree , &rt_uniresource);
 				if( db_ck_v4gift_tree( comb->tree ) < 0 )
 				{
 					bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
@@ -1195,7 +1195,7 @@ Rm_nulls()
 			{
 				tree_list = (struct rt_tree_array *)bu_calloc( node_count,
 					sizeof( struct rt_tree_array ), "tree list" );
-				actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION, 0 ) - tree_list;
+				actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION, 0, &rt_uniresource ) - tree_list;
 				BU_ASSERT_LONG( actual_count, ==, node_count );
 			}
 			else
@@ -1228,7 +1228,7 @@ Rm_nulls()
 						bu_log( "Deleting reference to null part (%s) from combination %s\n",
 							tree_list[j].tl_tree->tr_l.tl_name, dp->d_namep );
 
-					db_free_tree( tree_list[j].tl_tree );
+					db_free_tree( tree_list[j].tl_tree , &rt_uniresource);
 
 					for( k=j+1 ; k<actual_count ; k++ )
 						tree_list[k-1] = tree_list[k]; /* struct copy */
@@ -1246,14 +1246,14 @@ Rm_nulls()
 				strncpy( name, dp->d_namep, NAMESIZE );
 
 				if( actual_count )
-					comb->tree = (union tree *)db_mkgift_tree( tree_list, actual_count, (struct db_tree_state *)NULL );
+					comb->tree = (union tree *)db_mkgift_tree( tree_list, actual_count, &rt_uniresource );
 				else
 					comb->tree = (union tree *)NULL;
 
-				if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+				if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 				{
 					bu_log( "Unable to write modified combination '%s' to database\n", dp->d_namep );
-					rt_comb_ifree( &intern );
+					rt_comb_ifree( &intern , &rt_uniresource);
 					continue;
 				}
 			}
@@ -1373,6 +1373,8 @@ char	*argv[];
 			break;
 		}
 	}
+
+	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	input_file = argv[optind];
 	if( (fd_in=fopen( input_file, "r")) == NULL )

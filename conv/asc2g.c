@@ -109,6 +109,8 @@ char **argv;
 		return 2;
 	}
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	/* Read ASCII input file, each record on a line */
 	while( ( fgets( buf, BUFSIZE, ifp ) ) != (char *)0 )  {
 
@@ -552,7 +554,7 @@ nmgbld()
 
 	/* Next, import this disk record into memory */
 	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[ID_NMG].ft_import5( &intern, &ext, bn_mat_identity, ofp->dbip ) < 0 )  {
+	if( rt_functab[ID_NMG].ft_import5( &intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource ) < 0 )  {
 		bu_log("ft_import5 failed on NMG %s\n", name );
 		exit( -1 );
 	}
@@ -1196,7 +1198,7 @@ polyhbld()
 	intern.idb_type = ID_POLY;
 	intern.idb_meth = &rt_functab[ID_POLY];
 	intern.idb_ptr = pg;
-	if( rt_pg_to_bot( &intern, &ofp->wdb_tol ) < 0 )
+	if( rt_pg_to_bot( &intern, &ofp->wdb_tol, &rt_uniresource ) < 0 )
 		bu_bomb("rt_pg_to_bot() failed\n");
 	/* The polysolid is freed by the converter */
 

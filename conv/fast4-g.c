@@ -3237,7 +3237,7 @@ genptr_t	ptr;
 	if( !(dp->d_flags & DIR_REGION) )
 		return;
 
-	if( rt_db_get_internal( &internal, dp, dbip, NULL ) < 0 )
+	if( rt_db_get_internal( &internal, dp, dbip, NULL, &rt_uniresource ) < 0 )
 	{
 		bu_log( "Failed to get internal representation of %s\n", dp->d_namep );
 		bu_bomb( "rt_db_get_internal() Failed!!!\n" );
@@ -3260,7 +3260,7 @@ genptr_t	ptr;
 
 	if( tree->tr_op != MKOP(12) )
 	{
-		rt_db_free_internal( &internal );
+		rt_db_free_internal( &internal , &rt_uniresource);
 		return;
 	}
 
@@ -3269,11 +3269,11 @@ genptr_t	ptr;
 	if( (dp2=db_lookup( dbip, tree->tr_l.tl_name, 0 )) == DIR_NULL )
 	{
 		bu_log( "Could not find %s\n", tree->tr_l.tl_name );
-		rt_db_free_internal( &internal );
+		rt_db_free_internal( &internal , &rt_uniresource);
 		return;
 	}
 
-	if( rt_db_get_internal( &internal2, dp2, dbip, NULL ) < 0 )
+	if( rt_db_get_internal( &internal2, dp2, dbip, NULL, &rt_uniresource ) < 0 )
 	{
 		bu_log( "Failed to get internal representation of %s\n", dp2->d_namep );
 		bu_bomb( "rt_db_get_internal() Failed!!!\n" );
@@ -3281,8 +3281,8 @@ genptr_t	ptr;
 
 	if( internal2.idb_type != ID_COMBINATION )
 	{
-		rt_db_free_internal( &internal );
-		rt_db_free_internal( &internal2 );
+		rt_db_free_internal( &internal , &rt_uniresource);
+		rt_db_free_internal( &internal2 , &rt_uniresource);
 		return;
 	}
 
@@ -3295,7 +3295,7 @@ genptr_t	ptr;
 	/* move the second tree into the first */
 	tree2 = comb2->tree;
 	comb->tree = tree2;
-	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 	{
 		bu_log( "Failed to write region %s\n", dp->d_namep );
 		bu_bomb( "rt_db_put_internal() failed!!!\n" );
@@ -3305,7 +3305,7 @@ genptr_t	ptr;
 	db_delete( dbip, dp2 );
 	db_dirdelete( dbip, dp2 );
 
-	db_free_tree( tree );
+	db_free_tree( tree , &rt_uniresource);
 
 }
 
@@ -3425,7 +3425,7 @@ struct db_i *dbip;
 		case OP_DB_LEAF:
 			if( (dp=db_lookup( dbip, ptr->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL )
 			{
-				db_free_tree( ptr );
+				db_free_tree( ptr , &rt_uniresource);
 				ptr = TREE_NULL;
 				return( TREE_NULL );
 			}
@@ -3434,10 +3434,10 @@ struct db_i *dbip;
 				return( ptr );
 
 			/* this is a region */
-			if( rt_db_get_internal( &internal, dp, dbip, NULL ) < 0 )
+			if( rt_db_get_internal( &internal, dp, dbip, NULL, &rt_uniresource ) < 0 )
 			{
 				bu_log( "Failed to get internal representation of %s\n", dp->d_namep );
-				bu_bomb( "rt_db_get_internal() Failed!!!\n" );
+				bu_bomb( "rt_db_get_internal() Failed!!!\n");
 			}
 
 			if( internal.idb_type != ID_COMBINATION )
@@ -3524,7 +3524,7 @@ struct db_i *dbip;
 				if( ptr->tr_op == OP_INTERSECT )
 				{
 					/* intersection with nothing is nothing */
-					db_free_tree( ptr->tr_b.tb_left );
+					db_free_tree( ptr->tr_b.tb_left , &rt_uniresource);
 					ptr->tr_op = 0;
 					bu_free( (char *)ptr, "union tree" );
 					ptr = TREE_NULL;
@@ -3555,7 +3555,7 @@ struct db_i *dbip;
 				else
 				{
 					/* result is nothing */
-					db_free_tree( ptr->tr_b.tb_right );
+					db_free_tree( ptr->tr_b.tb_right , &rt_uniresource);
 					ptr->tr_op = 0;
 					bu_free( (char *)ptr, "union tree" );
 					ptr = TREE_NULL;
@@ -3582,7 +3582,7 @@ char *name;
 		return;
 
 	/* this is a region */
-	if( rt_db_get_internal( &internal, dp, dbip, NULL ) < 0 )
+	if( rt_db_get_internal( &internal, dp, dbip, NULL, &rt_uniresource ) < 0 )
 	{
 		bu_log( "Failed to get internal representation of %s\n", dp->d_namep );
 		bu_bomb( "rt_db_get_internal() Failed!!!\n" );
@@ -3605,7 +3605,7 @@ char *name;
 
 	comb->tree = expand_tree( comb->tree, dbip );
 
-	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
 	{
 		bu_log( "Failed to write region %s\n", dp->d_namep );
 		bu_bomb( "rt_db_put_internal() failed!!!\n" );
@@ -3711,6 +3711,8 @@ char *argv[];
 
 	if( argc-optind != 2 )
 		bu_bomb( usage );
+
+	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	if( (fdin=fopen( argv[optind] , "r" )) == (FILE *)NULL )
 	{

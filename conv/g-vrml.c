@@ -130,7 +130,7 @@ genptr_t			client_data;
 	if( !(dp->d_flags & DIR_COMB) )
 		return( -1 );
 
-	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL , &rt_uniresource);
 	if( id < 0 )
 	{
 		bu_log( "Cannot internal form of %s\n", dp->d_namep );
@@ -149,12 +149,12 @@ genptr_t			client_data;
 
 	if( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
 	{
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern , &rt_uniresource);
 		return( 0 );
 	}
 	else
 	{
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern , &rt_uniresource);
 		return( -1 );
 	}
 }
@@ -231,6 +231,8 @@ char	*argv[];
 		/* XXX This value is specific to the Bradley */
 		nmg_eue_dist = 2.0;
 	}
+
+	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
@@ -438,7 +440,7 @@ struct mater_info *mater;
 	if( !(dp->d_flags & DIR_COMB) )
 		return;
 
-	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL , &rt_uniresource);
 	if( id < 0 )
 	{
 		bu_log( "Cannot internal form of %s\n", dp->d_namep );
@@ -809,7 +811,7 @@ genptr_t clientdata;
 	struct rt_db_internal intern;
 	int id;
 
-	id = rt_db_get_internal( &intern, dp, dbip, bn_mat_identity );
+	id = rt_db_get_internal( &intern, dp, dbip, bn_mat_identity , &rt_uniresource);
 	if( id < 0 )
 	{
 		bu_log( "Error importing solid (%s)\n", dp->d_namep );
@@ -824,7 +826,7 @@ genptr_t clientdata;
 		(*i)++;
 	}
 	else
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern , &rt_uniresource);
 }
 
 void
@@ -846,7 +848,7 @@ genptr_t ptr1, ptr2, ptr3;
 	if( (dp = db_lookup( dbip, tree->tr_l.tl_name, 1 )) == DIR_NULL )
 		bu_bomb( "db_lookup failed!!\n" );
 
-	id = rt_db_get_internal( &intern, dp, dbip, tree->tr_l.tl_mat );
+	id = rt_db_get_internal( &intern, dp, dbip, tree->tr_l.tl_mat , &rt_uniresource);
 	if( id != ID_BOT )
 	{
 		bu_log( "ERROR: %s is not a BOT solid!!!!\n", tree->tr_l.tl_name );
@@ -914,7 +916,7 @@ genptr_t		client_data;
 		return( nmg_region_end(tsp, pathp, curtree, client_data) );
 	else
 	{
-		id = rt_db_get_internal( &intern, dp, dbip, bn_mat_identity );
+		id = rt_db_get_internal( &intern, dp, dbip, bn_mat_identity , &rt_uniresource);
 		if( id != ID_COMBINATION )
 		{
 			bu_log( "ERROR: %s is not a combination????\n", dp->d_namep );
@@ -978,7 +980,7 @@ genptr_t		client_data;
 		nmg_isect2d_final_cleanup();
 
 		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
+		db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
@@ -994,7 +996,7 @@ genptr_t		client_data;
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
@@ -1054,7 +1056,7 @@ genptr_t		client_data;
 	 *  A return of TREE_NULL from this routine signals an error,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 out:
 	BU_GETUNION(curtree, tree);

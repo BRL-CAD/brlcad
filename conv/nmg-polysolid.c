@@ -62,13 +62,13 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
 	{
 		BU_UNSETJUMP;
 		bu_log( "Failed to convert %s\n", name );
-		rt_db_free_internal( intern );
+		rt_db_free_internal( intern, &rt_uniresource );
 		return;
 	}
 	mk_bot_from_nmg( fdout, name, s);
 	BU_UNSETJUMP;
 	if(verbose) bu_log("Wrote %s\n", name);
-	rt_db_free_internal( intern );
+	rt_db_free_internal( intern, &rt_uniresource );
 }
 
 int
@@ -96,6 +96,8 @@ char *argv[];
 		}
 	}
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	dbip = db_open( argv[argc-2], "r" );
 	if( dbip == DBI_NULL )
 	{
@@ -119,7 +121,7 @@ char *argv[];
 		struct rt_db_internal	intern;
 		int id;
 		int ret;
-		id = rt_db_get_internal( &intern, dp, dbip, NULL );
+		id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource );
 		if( id < 0 )  {
 			fprintf(stderr,
 				"%s: rt_db_get_internal(%s) failure, skipping\n",
@@ -134,10 +136,10 @@ char *argv[];
 			fprintf(stderr,
 				"%s: wdb_put_internal(%s) failure, skipping\n",
 				argv[0], dp->d_namep);
-			rt_db_free_internal( &intern );
+			rt_db_free_internal( &intern, &rt_uniresource );
 			continue;
 		}
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 	} FOR_ALL_DIRECTORY_END
 	wdb_close(fdout);
 	return 0;

@@ -185,6 +185,7 @@ char *av[];
 	 */
 	if ((arg_index = parse_args(ac, av)) >= ac) usage("No extra args specified\n");
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	/* open the database */
 	if ((dbip = db_open(av[arg_index], "r")) == DBI_NULL) {
@@ -205,8 +206,8 @@ char *av[];
 		}
 		
 		bn_mat_idn( my_mat );
-		if ((rt_db_get_internal( &ip, dp, dbip, my_mat ))<0) {
-			fprintf(stderr, "%s: rt_db_get_internal() failed\n", progname);
+		if ((rt_db_get_internal( &ip, dp, dbip, my_mat, &rt_uniresource ))<0) {
+			fprintf(stderr, "%s: rt_db_get_internal() failed\n", progname );
 			exit(-1);
 		}
 

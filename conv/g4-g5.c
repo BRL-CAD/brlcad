@@ -31,6 +31,8 @@ char	**argv;
 
 	bu_debug = BU_DEBUG_COREDUMP;
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	if( argc != 3 )  {
 		fprintf(stderr, "Usage: %s v4.g v5.g\n", argv[0]);
 		return 1;
@@ -62,7 +64,7 @@ char	**argv;
 
 		fprintf(stderr, "%s\n", dp->d_namep );
 
-		id = rt_db_get_internal( &intern, dp, dbip, NULL );
+		id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource );
 		if( id < 0 )  {
 			fprintf(stderr,
 				"%s: rt_db_get_internal(%s) failure, skipping\n",
@@ -71,7 +73,7 @@ char	**argv;
 			continue;
 		}
 		if ( id == ID_HF ) {
-			if (rt_hf_to_dsp( &intern )) {
+			if (rt_hf_to_dsp( &intern, &rt_uniresource )) {
 				fprintf(stderr,
 					"%s: Conversion from HF to DSP failed for solid %s\n",
 					argv[0], dp->d_namep );
@@ -81,7 +83,7 @@ char	**argv;
 		}
 		if( id == ID_POLY)
 		{
-			if( rt_pg_to_bot( &intern, &tol ) )
+			if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
 			{
 				fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
 					argv[0], dp->d_namep );
@@ -94,11 +96,11 @@ char	**argv;
 			fprintf(stderr,
 				"%s: wdb_put_internal(%s) failure, skipping\n",
 				argv[0], dp->d_namep);
-			rt_db_free_internal( &intern );
+			rt_db_free_internal( &intern, &rt_uniresource );
 			errors++;
 			continue;
 		}
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, &rt_uniresource );
 	} FOR_ALL_DIRECTORY_END
 
 	wdb_close( fp );

@@ -460,6 +460,8 @@ char	*argv[];
 
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "a:n:r:s:vx:P:X:")) != EOF) {
 		switch (c) {
@@ -625,7 +627,7 @@ genptr_t		client_data;
 		nmg_isect2d_final_cleanup();
 
 		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
+		db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 		rt_vlist_cleanup();
 
@@ -655,7 +657,7 @@ genptr_t		client_data;
 	(void)alarm( alarm_secs );
 
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
@@ -719,7 +721,7 @@ genptr_t		client_data;
 	 *  A return of TREE_NULL from this routine signals an error,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 #if MEMORY_LEAK_CHECKING
 	bu_prmem("After Success:");
