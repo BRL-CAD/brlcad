@@ -1974,7 +1974,8 @@ void
 mged_update(non_blocking)
 int non_blocking;
 {
-  event_check(non_blocking);
+  if(non_blocking >= 0)
+    event_check(non_blocking);
   refresh();
 }
 
