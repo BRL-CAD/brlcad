@@ -37,6 +37,7 @@ extern double AmbientIntensity;
 
 /* Local information */
 struct phong_specific {
+	int	magic;
 	int	shine;
 	double	wgt_specular;
 	double	wgt_diffuse;
@@ -45,6 +46,7 @@ struct phong_specific {
 	double	refrac_index;
 	double	extinction;
 };
+#define PL_MAGIC	0xbeef00d
 #define PL_NULL	((struct phong_specific *)0)
 #define PL_O(m)	offsetof(struct phong_specific, m)
 
@@ -105,6 +107,7 @@ char	**dpp;
 	GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 
+	pp->magic = PL_MAGIC;
 	pp->shine = 10;
 	pp->wgt_specular = 0.7;
 	pp->wgt_diffuse = 0.3;
@@ -134,6 +137,7 @@ char	**dpp;
 	GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 
+	pp->magic = PL_MAGIC;
 	pp->shine = 4;
 	pp->wgt_specular = 0.6;
 	pp->wgt_diffuse = 0.4;
@@ -163,6 +167,7 @@ char	**dpp;
 	GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 
+	pp->magic = PL_MAGIC;
 	pp->shine = 4;
 	pp->wgt_specular = 0.7;
 	pp->wgt_diffuse = 0.3;
@@ -285,6 +290,8 @@ char	*dp;
 	point_t	matcolor;		/* Material color */
 	struct phong_specific *ps =
 		(struct phong_specific *)dp;
+
+	if( ps->magic != PL_MAGIC )  rt_log("phong_render: bad magic\n");
 
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;
