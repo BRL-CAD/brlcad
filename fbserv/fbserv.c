@@ -247,25 +247,29 @@ int argc; char **argv;
 	} else {
 		sprintf(portname,"%s","remotefb");
 	}
+
+	/*init_syslog();/*XXX*/
+printf("permserver start\n");fflush(stdout);
+	while( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 ) {
+		sleep(5);
+		continue;
+		/*exit(1);*/
+	}
+
 	while(1) {
 		int stat;
-		/*
-		 * Listen for PKG connections, no /etc/inetd
-		 */
-		/*init_syslog();/*XXX*/
-/*printf("permserver start\n");fflush(stdout);*/
-		if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 ) {
-			sleep(5);
-			continue;
-			/*exit(1);*/
-		}
-printf("getting client\n");fflush(stdout);
+printf("awaiting client\n");fflush(stdout);
 		rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
-		if( rem_pcp == PKC_ERROR )
+printf("got client\n");fflush(stdout);
+		if( rem_pcp == PKC_ERROR )  {
 			exit(2);	/* continue?! */
+		}
 printf("forking\n");fflush(stdout);
 		if( fork() == 0 )  {
-			/* Child */
+			/* Child Process */
+			(void)close(netfd);	/* Child is not listener */
+
+			/* Create 2nd level child process, "double detatch" */
 			if( fork() == 0 )  {
 				/* 2nd level child -- start work! */
 				do1();
@@ -276,9 +280,9 @@ printf("2nd child back from do1, exiting\n");fflush(stdout);
 				exit(1);
 			}
 		} else {
-			/* Original server daemon */
-printf("parent closing netfd\n");fflush(stdout);
-			(void)close(netfd);
+			/* Parent: lingering server daemon */
+			pkg_close(rem_pcp);	/* Daemon is not the server */
+			/* Collect status from 1st level child */
 			(void)wait( &stat );
 		}
 	}
