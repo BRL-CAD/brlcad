@@ -2169,6 +2169,14 @@ CONST struct bn_tol	*tol;
 		if( !tp->top || !tp->bot )
 		{
 			bu_log( "tp->top and/or tp->bot is/are NULL!!!!!!!\n" );
+		    	if (rt_g.NMG_debug & DEBUG_TRI)
+			{
+				nmg_pr_fu_briefly( fu, "" );
+				if( tp->top )
+					bu_log( "tp->top is (%g %g %g)\n", V3ARGS( tp->top->vu_p->v_p->vg_p->coord ) );
+				if( tp->bot )
+					bu_log( "tp->bot is (%g %g %g)\n", V3ARGS( tp->bot->vu_p->v_p->vg_p->coord ) );
+			}
 			rt_bomb( "tp->top and/or tp->bot is/are NULL" );
 		}
 		if (nmg_find_eu_in_face(tp->top->vu_p->v_p, tp->bot->vu_p->v_p, fu,
