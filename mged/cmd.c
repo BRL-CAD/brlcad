@@ -2095,7 +2095,6 @@ f_bot_face_fuse( clientData, interp, argc, argv)
 	struct directory *old_dp, *new_dp;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
-	int count1=0;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -2123,7 +2122,7 @@ f_bot_face_fuse( clientData, interp, argc, argv)
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC( bot );
 
-	count1 = bot_face_fuse( bot );
+	(void) bot_face_fuse( bot );
 
 	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID)) == DIR_NULL )
 	{
@@ -2149,7 +2148,7 @@ f_bot_fuse(clientData, interp, argc, argv)
 	struct directory *old_dp, *new_dp;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
-	int count1=0, count2=0;
+	int count1=0;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -2179,7 +2178,7 @@ f_bot_fuse(clientData, interp, argc, argv)
 
 	count1 = bot_vertex_fuse( bot );
 	if( count1 )
-		count2 = bot_condense( bot );
+		(void)bot_condense( bot );
 
 	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID)) == DIR_NULL )
 	{
