@@ -74,7 +74,7 @@ typedef struct FBIO_ {
 	/* Static information: per device TYPE.	*/
 	int	(*if_open)FB_ARGS((struct FBIO_ *ifp, char *file, int width, int height));		/* open device		*/
 	int	(*if_close)FB_ARGS((struct FBIO_ *ifp));				/* close device		*/
-	int	(*if_clear)FB_ARGS((struct FBIO_ *ifp, RGBpixel *pp));		/* clear device 	*/
+	int	(*if_clear)FB_ARGS((struct FBIO_ *ifp, RGBpixel pp));		/* clear device 	*/
 	int	(*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, RGBpixel *pp, int count));		/* read pixels		*/
 	int	(*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, RGBpixel *pp, int count));		/* write pixels		*/
 	int	(*if_rmap)FB_ARGS((struct FBIO_ *ifp, ColorMap *cmap));		/* read colormap 	*/
