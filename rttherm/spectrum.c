@@ -372,8 +372,7 @@ CONST struct rt_spect_sample	*ss;
  *  Returns radiant emittance in W/cm**2 for each wavelength interval.
  *
  *  Based upon code kindly provided by Russ Moulton, Jr., EOSoft Inc.
- *  Compute at 'n-1' wavelengths evenly spaces between ax and bx,
- *  taking half of the left and right-most rectangles.
+ *  Compute at 'n-1' wavelengths evenly spaced between ax and bx.
  */
 void
 rt_spect_black_body( ss, temp )
@@ -405,13 +404,12 @@ spect->wavel[spect->nwave] * 0.001	/* nm to um */
 		n = 3;
 		dx = (bx - ax) / (double)n;
 
-		w_sum = 0.50 * PLANCK(ax, temp);
-		wavlen = ax + dx;
-		for (i=1; i<n; i++)  {
+		w_sum = 0;
+		wavlen = ax;
+		for (i=0; i<n; i++)  {
 			w_sum += PLANCK(wavlen, temp);
 			wavlen += dx;
 		}
-		w_sum += 0.50 * PLANCK(bx, temp);
 		w_sum *= dx;
 
 		ss->val[j] = w_sum;
