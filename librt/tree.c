@@ -96,8 +96,6 @@ static struct mater_info rt_no_mater = {
 #define	MAXLEVELS	64
 static struct directory	*path[MAXLEVELS];	/* Record of current path */
 
-double		rt_inv255 = 1.0/255.0;
-
 /*
  *  			R T _ G E T _ T R E E
  *
