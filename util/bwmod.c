@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 double	atof();
 
-static char *Usage = "usage: bwmod offset [gain [\"zero\" (127)]]\n";
+static char *Usage = "usage: bwmod offset [gain [\"zero\" (127) [offset]]]\n";
 
 main( argc, argv )
 int argc;
@@ -39,7 +39,7 @@ char **argv;
 {
 	int	i, n;
 	long	value;
-	double	offset, gain, zero;
+	double	offset, gain, zero, offset2;
 	long	clipped_high, clipped_low;
 	unsigned char buf[1024], out;
 
@@ -51,6 +51,7 @@ char **argv;
 	offset = atof( argv[1] );
 	gain = (argc > 2) ? atof( argv[2] ) : 0.0;
 	zero = (argc > 3) ? atof( argv[3] ) : 127.0;
+	offset2 = (argc > 4) ? atof( argv[4] ) : 0.0;
 
 	clipped_high = clipped_low = 0;
 
@@ -59,6 +60,7 @@ char **argv;
 			value = offset + buf[i];
 			if( gain != 0.0 )
 				value = gain * (value-zero) + zero;
+			value += offset2;
 			if( value > 255.0 ) {
 				out = 255;
 				clipped_high++;
