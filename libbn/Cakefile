@@ -19,7 +19,11 @@
 	qmath \
 	rand \
 	wavelet \
-	asize
+	asize \
+	plot3 fortran \
+	axis list marker number \
+	scale vectfont symbol vector \
+	tplot
 
 #define VERSION_VARIABLE	bn_version
 #define LIBRARY_TITLE		"The BRL-CAD Numerical Computation Library"
