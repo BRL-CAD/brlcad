@@ -321,6 +321,17 @@ CONST char	**argv;
 		    		atof( argv[5+0] ),
 		    		atof( argv[5+1] ),
 		    		atof( argv[5+2] ) );
+		} else if( strcmp( argv[4], "rot" ) == 0 )  {
+			if( argc < 5+2 )  {
+		    		rt_log("db_parse_1anim:  matrix %s rot does not have enough arguments, only %d\n",
+		    			argv[3], argc );
+		    		goto bad;
+		    	}
+		    	mat_idn( anp->an_u.anu_m.anm_mat );
+			mat_angles( anp->an_u.anu_m.anm_mat,
+		    		atof( argv[5+0] ),
+		    		atof( argv[5+1] ),
+		    		atof( argv[5+2] ) );
 		} else {
 			/* No keyword, assume full 4x4 matrix */
 			for( i=0; i<16; i++ )
