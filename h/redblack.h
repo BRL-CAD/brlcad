@@ -183,7 +183,7 @@ BU_EXTERN(void rb_free,		(rb_tree	*tree,
 #define		rb_free1(t,f)						\
 		{							\
 		    RB_CKMAG((t), RB_TREE_MAGIC, "red-black tree");	\
-		    rt_free((char *) ((t) -> rbt_order),		\
+		    bu_free((char *) ((t) -> rbt_order),		\
 				"red-black order function");		\
 		    rb_free(t,f);					\
 		}

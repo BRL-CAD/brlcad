@@ -1234,7 +1234,7 @@ BU_EXTERN(void bu_rb_free,		(bu_rb_tree	*tree,
 #define		bu_rb_free1(t,f)					\
 		{							\
 		    BU_CKMAG((t), BU_RB_TREE_MAGIC, "red-black tree");	\
-		    rt_free((char *) ((t) -> rbt_order),		\
+		    bu_free((char *) ((t) -> rbt_order),		\
 				"red-black order function");		\
 		    bu_rb_free(t,f);					\
 		}
