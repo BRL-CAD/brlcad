@@ -22,10 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
-
-#if !defined(SYSV) && defined(BSD) && BSD < 43
-#defined strchr index
-#endif
+#include "machine.h"
 
 #define		BUF_LEN		512
 #define		FP_IN		0
