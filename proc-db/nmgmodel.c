@@ -202,7 +202,7 @@ struct rt_tol *tol;
 	f_vertl[6] = &vertl[16];
 	f_vertl[7] = &vertl[15];
 	f_vertl[8] = &vertl[2];
-	nmg_merge_2faces(fu, nmg_cmface(s, f_vertl, 9));
+	nmg_jf(fu, nmg_cmface(s, f_vertl, 9));
 	nmg_vertex_g(vertl[10],  25.0,  75.0, 100.0);
 
 
@@ -245,7 +245,7 @@ struct rt_tol *tol;
 	f_vertl[3] = &vertl[20];
 	f_vertl[4] = &vertl[14];
 	f_vertl[5] = &vertl[13];
-	nmg_merge_2faces(fu, nmg_cmface(s, f_vertl, 6));
+	nmg_jf(fu, nmg_cmface(s, f_vertl, 6));
 
 
 	/* make funky bottom */
@@ -263,7 +263,7 @@ struct rt_tol *tol;
 	f_vertl[3] = &vertl[21];
 	f_vertl[4] = &vertl[19];
 	f_vertl[5] = &vertl[17];
-	nmg_merge_2faces(fu, nmg_cmface(s, f_vertl, 6));
+	nmg_jf(fu, nmg_cmface(s, f_vertl, 6));
 
 
 	/* now create the (3manifold) hole through the object */
@@ -292,7 +292,7 @@ struct rt_tol *tol;
 	fu->orientation = OT_OPPOSITE;
 	fu->fumate_p->orientation = OT_SAME;
 
-	nmg_merge_2faces(fu_end, fu->fumate_p);
+	nmg_jf(fu_end, fu->fumate_p);
 
 
 	f_vertl[0] = &vertl[22];
@@ -318,7 +318,7 @@ struct rt_tol *tol;
 	fu->orientation = OT_OPPOSITE;
 	fu->fumate_p->orientation = OT_SAME;
 
-	nmg_merge_2faces(bl_fu, fu->fumate_p);
+	nmg_jf(bl_fu, fu->fumate_p);
 
 
 	/* make the top of the hole */
@@ -439,10 +439,10 @@ struct rt_tol *tol;
 	/* 
 	 * we need to make the 2-manifolds share edge topology
 	 */
-	nmg_mesh_faces(tc_fu, fu);
-	nmg_mesh_faces(fl_fu, fu);
-	nmg_mesh_faces(bl_fu, fu);
-	nmg_mesh_faces(ul_fu, fu);
+	nmg_mesh_faces(tc_fu, fu, tol);
+	nmg_mesh_faces(fl_fu, fu, tol);
+	nmg_mesh_faces(bl_fu, fu, tol);
+	nmg_mesh_faces(ul_fu, fu, tol);
 
 	/* make a dangling internal face */
 	f2_vertl[0] = vertl[9];
@@ -453,9 +453,9 @@ struct rt_tol *tol;
 	(void)nmg_fu_planeeqn(fu, tol);
 
 	/* make faces share edge topology */
-	nmg_mesh_faces(tc_fu, fu);
-	nmg_mesh_faces(fl_fu, fu);
-	nmg_mesh_faces(bl_fu, fu);
+	nmg_mesh_faces(tc_fu, fu, tol);
+	nmg_mesh_faces(fl_fu, fu, tol);
+	nmg_mesh_faces(bl_fu, fu, tol);
 
 
 	/* make an exterior, connected dangling face */
@@ -469,7 +469,7 @@ struct rt_tol *tol;
 	nmg_vertex_g(vertl[30],  150.0, 100.0, 150.0);
 	nmg_vertex_g(vertl[31],  150.0,   0.0, 150.0);
 	(void)nmg_fu_planeeqn(fu, tol);
-	nmg_mesh_faces(fr_fu, fu);
+	nmg_mesh_faces(fr_fu, fu, tol);
 	
 	
 
