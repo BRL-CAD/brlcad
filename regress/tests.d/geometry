@@ -105,7 +105,7 @@ for PRIM in $PRIMITIVES ; do
     set ehy_DB_ARGS ""
 
     #
-    # Elliptical Paraboloid (EPA) Arguments
+    # Elliptical Paraboloid (epa) Arguments
     # 
     # in args =>
     #
