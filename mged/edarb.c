@@ -353,7 +353,7 @@ bu_log("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 /*
 bu_log("intersect: type=%d   point = %d\n",es_type,p1+1);
 */
-		if( rt_arb_3face_intersect( arb->pt[p1], es_peqn, es_type, p1*3 ))
+		if( rt_arb_3face_intersect( arb->pt[p1], (const plane_t *)es_peqn, es_type, p1*3 ))
 			goto err;
 	}
 
