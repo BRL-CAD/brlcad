@@ -370,7 +370,7 @@ proc over_quit { id } {
 		catch [close $over_cont($id,fd)]
 	}
 	catch [destroy $over_cont($id,dialog_window)]
-	unset over_cont($id,glint_ret)
+	catch [unset over_cont($id,glint_ret)]
 	destroy $over_cont($id,top)
 }
 
