@@ -1,4 +1,6 @@
-#!/m/cad/.tk.6d/bwish -f
+#!/bin/sh
+# the next line restarts using bwish \
+exec bwish "$0" "$@"
 #
 # Author -
 #	Glenn Durfee
@@ -23,11 +25,8 @@
 # Note: this utility needs to be run under BRL-CAD's "bwish" environment, as
 # it needs the PIX image type and the pix_common_file_size functions.
 
-# Note: In production version, these should probably be
-#    /usr/brlcad/bin/pixmorph and /usr/brlcad/bin/pix-fb
-
-set PIXFB /m/cad/.fb.6d/pix-fb
-set PIXMORPH /m/cad/.util.6d/pixmorph
+set PIXFB pix-fb
+set PIXMORPH pixmorph
 
 set colors(normal) red
 set colors(highlighted) orange
@@ -60,11 +59,11 @@ set align ""
 while { $argc > 3 } {
     switch -glob -- [lindex $argv 0] {
 	-w { set width [lindex $argv 1];
-   	     decr argc; set argv [lrange $argv 1 end] }
+   	     incr argc -1; set argv [lrange $argv 1 end] }
         -n { set height [lindex $argv 1];
-	     decr argc; set argv [lrange $argv 1 end] }
+	     incr argc -1; set argv [lrange $argv 1 end] }
         -a { set align [lindex $argv 1];
-	     decr argc; set argv [lrange $argv 1 end] }
+	     incr argc -1; set argv [lrange $argv 1 end] }
         -w* { scan [lindex $argv 0] -w%d width }
   	-n* { scan [lindex $argv 0] -n%d height }
 	-a* { scan [lindex $argv 0] -a%s align }
