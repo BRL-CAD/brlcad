@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	1.13
- *	Last edit: 	11/29/83 at 11:23:43
- *	Retrieved: 	8/13/86 at 08:07:56
+ *	SCCS id:	@(#) vdeck.c	1.14
+ *	Last edit: 	1/12/84 at 10:18:04
+ *	Retrieved: 	8/13/86 at 08:08:21
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	1.13	last edit 11/29/83 at 11:23:43";
+char	sccsTag[] = "@(#) vdeck.c	1.14	last edit 1/12/84 at 10:18:04";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
@@ -903,6 +903,14 @@ Record *rec;
 
 	/* tec if ratio top and bot vectors equal and base parallel to top
 	 */
+	if( mc == 0.0 ) {
+		fprintf( stderr, "Error in TGC, C vector has zero magnitude!\n" );
+		return;
+	}
+	if( md == 0.0 ) {
+		fprintf( stderr, "Error in TGC, D vector has zero magnitude!\n" );
+		return;
+	}
 	if(	fabs( (mb/md)-(ma/mc) ) < .0001
 	    &&  fabs( fabs(DOT(axb,cxd)) - (maxb*mcxd) ) < .0001
 	)	rec->s.s_cgtype = TEC;
@@ -922,30 +930,30 @@ Record *rec;
 	switch( rec->s.s_cgtype ) {
 	case TGC :
 		write( solfd, "tgc    ", 7 );
-		work[0] = MAGNITUDE( SV4 );
-		work[1] = MAGNITUDE( SV5 );
+		work[0] = mc;
+		work[1] = md;
 		work[2] = 0.0;
 		VMOVE( SV4, work );
 		psp( 5, rec );
 		break;
 	case RCC :
 		write( solfd, "rcc    ", 7 );
-		work[0] = MAGNITUDE( SV2 );
+		work[0] = ma;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV2, work );
 		psp( 3, rec );
 		break;
 	case TRC :
 		write( solfd, "trc    ", 7 );
-		work[0] = MAGNITUDE( SV2 );
-		work[1] = MAGNITUDE( SV4 );
+		work[0] = ma;
+		work[1] = mc;
 		work[2] = 0.0;
 		VMOVE( SV2, work );
 		psp( 3, rec );
 		break;
 	case TEC :
 		write( solfd, "tec    ", 7 );
-		work[0] = MAGNITUDE( SV2) / MAGNITUDE( SV4 );
+		work[0] = ma / mc;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV4, work );
 		psp( 5, rec );
