@@ -140,6 +140,7 @@ union record  {
 #define EPA	28	/* Elliptical Paraboloid */
 #define EHY	29	/* Elliptical Hyperboloid */
 #define ETO	30	/* Elliptical Torus */
+#define GRP	31	/* Grip pseudo solid */
 		char	s_name[NAMESIZE];	/* unique name */
 		short	s_cgtype;		/* COMGEOM solid type */
 #define RPP	1	/* axis-aligned rectangular parallelopiped */
@@ -184,6 +185,10 @@ union record  {
 
 #define s_half_N s_values[0]
 #define s_half_d s_values[3]
+
+#define s_grip_C s_values[0]
+#define s_grip_N s_values[3]
+#define s_grip_m s_values[6]
 	}  s;
 
 	struct combination  {

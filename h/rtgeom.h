@@ -121,6 +121,19 @@ struct rt_half_internal  {
 #define RT_HALF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"rt_half_internal")
 
 /*
+ *	ID_GRIP
+ */
+struct rt_grip_internal {
+	long	magic;
+	point_t	center;
+	/* Remaining elemnts are used for display purposes only */
+	vect_t	normal;
+	fastf_t	mag;
+};
+#define RT_GRIP_INTERNAL_MAGIC	0x31196205
+#define RT_GRIP_CK_MAGIC(_p)	RT_CKMAG(_p,RT_GRIP_INTERNAL_MAGIC,"rt_grip_internal")
+	
+/*
  *	ID_POLY
  */
 struct rt_pg_internal {
