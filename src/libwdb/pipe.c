@@ -59,9 +59,6 @@ static const char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 
-extern int rt_pipe_ck( const struct bu_list *headp );
-
-
 /*
  *			M K _ P A R T I C L E
  *
