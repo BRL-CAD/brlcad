@@ -358,6 +358,10 @@ proc shift_grip_hints { w hint } {
     global mged_gui
     global win_to_id
 
+    if ![info exists win_to_id($w)] {
+	return
+    }
+
     set id $win_to_id($w)
     set mged_gui($id,illum_label) $hint
 }
