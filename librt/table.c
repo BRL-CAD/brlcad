@@ -425,7 +425,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_SPH", "sph",
-		1,		/* 10 */
+		0,		/* 10 */
 		rt_sph_prep,	rt_sph_shot,	rt_sph_print,	rt_sph_norm,
 		rt_sph_uv,	rt_sph_curve,	rt_sph_class,	rt_sph_free,
 		rt_ell_plot,	rt_sph_vshot,	rt_ell_tess,	rt_ell_tnurb,
@@ -449,7 +449,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_EBM", "ebm",
-		0,		/* 12 */
+		1,		/* 12 */
 		rt_ebm_prep,	rt_ebm_shot,	rt_ebm_print,	rt_ebm_norm,
 		rt_ebm_uv,	rt_ebm_curve,	rt_ebm_class,	rt_ebm_free,
 		rt_ebm_plot,	rt_vstub,	rt_ebm_tess,	rt_nul_tnurb,
@@ -461,7 +461,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_VOL", "vol",
-		0,		/* 13 */
+		1,		/* 13 */
 		rt_vol_prep,	rt_vol_shot,	rt_vol_print,	rt_vol_norm,
 		rt_vol_uv,	rt_vol_curve,	rt_vol_class,	rt_vol_free,
 		rt_vol_plot,	rt_vstub,	rt_vol_tess,	rt_nul_tnurb,
@@ -485,7 +485,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_PIPE", "pipe",
-		0,		/* 15 */
+		1,		/* 15 */
 		rt_pipe_prep,	rt_pipe_shot,	rt_pipe_print,	rt_pipe_norm,
 		rt_pipe_uv,	rt_pipe_curve,	rt_pipe_class,	rt_pipe_free,
 		rt_pipe_plot,	rt_pipe_vshot,	rt_pipe_tess,	rt_nul_tnurb,
@@ -557,7 +557,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_ETO", "eto",
-		0,		/* 21 */
+		1,		/* 21 */
 		rt_eto_prep,	rt_eto_shot,	rt_eto_print,	rt_eto_norm,
 		rt_eto_uv,	rt_eto_curve,	rt_eto_class,	rt_eto_free,
 		rt_eto_plot,	rt_eto_vshot,	rt_eto_tess,	rt_nul_tnurb,
@@ -569,7 +569,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_GRIP", "grip",
-		0,		/* 22 */
+		1,		/* 22 */
 		rt_grp_prep,	rt_grp_shot,	rt_grp_print,	rt_grp_norm,
 		rt_grp_uv,	rt_grp_curve,	rt_grp_class,	rt_grp_free,
 		rt_grp_plot,	rt_grp_vshot,	rt_grp_tess,	rt_nul_tnurb,
