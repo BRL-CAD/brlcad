@@ -17,16 +17,18 @@
 	rt opt do worker \
 	view viewpp viewray viewrad viewcheck viewg3 \
 	regionfix \
-	text cloud mathtab \
-	material refract stack \
-	plastic cook wray spm light \
-	marble stxt points
+	shade sh_text sh_cloud mathtab \
+	material refract sh_stack \
+	sh_plastic sh_cook wray sh_spm sh_light \
+	sh_marble sh_stxt sh_points
 
 /* Explicit composition of each product */
 
-#define	RT_OBJ	rt.o opt.o do.o worker.o text.o cloud.o view.o wray.o \
-		mathtab.o material.o refract.o stack.o plastic.o \
-		cook.o spm.o light.o marble.o stxt.o points.o
+#define	RT_OBJ	rt.o opt.o do.o worker.o sh_text.o sh_cloud.o view.o wray.o \
+		mathtab.o material.o refract.o \
+		shade.o sh_stack.o sh_plastic.o \
+		sh_cook.o sh_spm.o sh_light.o sh_marble.o \
+		sh_stxt.o sh_points.o
 
 #if defined(old_CRAY1)
 /* XMP UNICOS version, sigh */
