@@ -248,19 +248,19 @@ CONST matp_t			matrix;		/* NULL if identity */
 
 			/* See if disk record is identity matrix */
 			rt_mat_dbmat( diskmat, rp[j+1].M.m_mat );
-			if( mat_is_identity( diskmat ) )  {
+			if( bn_mat_is_identity( diskmat ) )  {
 				if( matrix == NULL )  {
 					tp->tr_l.tl_mat = NULL;	/* identity */
 				} else {
-					tp->tr_l.tl_mat = mat_dup( matrix );
+					tp->tr_l.tl_mat = bn_mat_dup( matrix );
 				}
 			} else {
 				if( matrix == NULL )  {
-					tp->tr_l.tl_mat = mat_dup( diskmat );
+					tp->tr_l.tl_mat = bn_mat_dup( diskmat );
 				} else {
 					mat_t	prod;
 					bn_mat_mul( prod, matrix, diskmat );
-					tp->tr_l.tl_mat = mat_dup( prod );
+					tp->tr_l.tl_mat = bn_mat_dup( prod );
 				}
 			}
 /* bu_log("M_name=%s, matp=x%x\n", tp->tr_l.tl_name, tp->tr_l.tl_mat ); */
@@ -361,7 +361,7 @@ double				local2mm;
 	}
 
 	/* Reformat the data into the necessary V4 granules */
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record) * ( 1 + node_count );
 	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "v4 comb external" );
 	rp = (union record *)ep->ext_buf;
@@ -543,7 +543,7 @@ unary:
  */
 void
 db_comb_describe(str, comb, verbose, mm2local)
-struct rt_vls	*str;
+struct bu_vls	*str;
 struct rt_comb_internal	*comb;
 int		verbose;
 double		mm2local;
@@ -600,7 +600,7 @@ double		mm2local;
 int
 rt_comb_import(ip, ep, mat)
 struct rt_db_internal	*ip;
-CONST struct rt_external *ep;
+CONST struct bu_external *ep;
 CONST mat_t		mat;
 {
 	/* XXX Switch out to right routine, based on database version */
@@ -612,7 +612,7 @@ CONST mat_t		mat;
  */
 int
 rt_comb_export(ep, ip, local2mm)
-struct rt_external	*ep;
+struct bu_external	*ep;
 CONST struct rt_db_internal *ip;
 double			local2mm;
 {
@@ -652,7 +652,7 @@ struct rt_db_internal	*ip;
  */
 int
 rt_comb_describe(str, ip, verbose, mm2local)
-struct rt_vls	*str;
+struct bu_vls	*str;
 struct rt_db_internal *ip;
 int		verbose;
 double		mm2local;

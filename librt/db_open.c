@@ -146,7 +146,7 @@ char	*mode;
 #		endif
 
 		if( !dbip->dbi_inmem && sb.st_size <= INMEM_LIM )  {
-			dbip->dbi_inmem = rt_malloc( sb.st_size,
+			dbip->dbi_inmem = bu_malloc( sb.st_size,
 				"in-memory database" );
 			if( read( dbip->dbi_fd, dbip->dbi_inmem,
 			    sb.st_size ) != sb.st_size )
@@ -190,7 +190,7 @@ char	*mode;
 fail:
 	if(rt_g.debug&DEBUG_DB)
 		bu_log("db_open(%s) FAILED\n", name);
-	rt_free( (char *)dbip, "struct db_i" );
+	bu_free( (char *)dbip, "struct db_i" );
 	return DBI_NULL;
 }
 
@@ -263,9 +263,9 @@ register struct db_i	*dbip;
 #endif
 	fclose( dbip->dbi_fp );
 	if( dbip->dbi_title )
-		rt_free( dbip->dbi_title, "dbi_title" );
+		bu_free( dbip->dbi_title, "dbi_title" );
 	if( dbip->dbi_filename )
-		rt_free( dbip->dbi_filename, "dbi_filename" );
+		bu_free( dbip->dbi_filename, "dbi_filename" );
 
 	db_free_anim( dbip );
 	rt_color_free();		/* Free MaterHead list */
@@ -281,13 +281,13 @@ register struct db_i	*dbip;
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
 			RT_CK_DIR(dp);
 			nextdp = dp->d_forw;
-			rt_free( dp->d_namep, "d_namep" );
+			bu_free( dp->d_namep, "d_namep" );
 			dp->d_namep = (char *)NULL;
-			rt_free( (char *)dp, "dir");
+			bu_free( (char *)dp, "dir");
 			dp = nextdp;
 		}
 		dbip->dbi_Head[i] = DIR_NULL;	/* sanity*/
 	}
 
-	rt_free( (char *)dbip, "struct db_i" );
+	bu_free( (char *)dbip, "struct db_i" );
 }

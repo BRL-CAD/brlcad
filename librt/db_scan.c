@@ -344,7 +344,7 @@ int		units;
 	dbip->dbi_localunit = rec.i.i_units = units;
 
 	if( old_title )
-		rt_free( old_title, "old dbi_title" );
+		bu_free( old_title, "old dbi_title" );
 
 	return( db_put( dbip, &dir, &rec, 0, 1 ) );
 }

@@ -112,37 +112,37 @@ struct mater_info	*materp;
 			bu_log("matrix, op=%s (%d)\n",
 				db_anim_matrix_strings[op], op);
 			if( rt_g.debug&DEBUG_ANIM_FULL )  {
-				mat_print("on original arc", arc);
-				mat_print("on original stack", stack);
+				bn_mat_print("on original arc", arc);
+				bn_mat_print("on original stack", stack);
 			}
 		}
 		switch( anp->an_u.anu_m.anm_op )  {
 		case ANM_RSTACK:
-			mat_copy( stack, anp->an_u.anu_m.anm_mat );
+			bn_mat_copy( stack, anp->an_u.anu_m.anm_mat );
 			break;
 		case ANM_RARC:
-			mat_copy( arc, anp->an_u.anu_m.anm_mat );
+			bn_mat_copy( arc, anp->an_u.anu_m.anm_mat );
 			break;
 		case ANM_RBOTH:
-			mat_copy( stack, anp->an_u.anu_m.anm_mat );
-			mat_idn( arc );
+			bn_mat_copy( stack, anp->an_u.anu_m.anm_mat );
+			bn_mat_idn( arc );
 			break;
 		case ANM_LMUL:
 			/* arc = DELTA * arc */
-			mat_mul( temp, anp->an_u.anu_m.anm_mat, arc );
-			mat_copy( arc, temp );
+			bn_mat_mul( temp, anp->an_u.anu_m.anm_mat, arc );
+			bn_mat_copy( arc, temp );
 			break;
 		case ANM_RMUL:
 			/* arc = arc * DELTA */
-			mat_mul( temp, arc, anp->an_u.anu_m.anm_mat );
-			mat_copy( arc, temp );
+			bn_mat_mul( temp, arc, anp->an_u.anu_m.anm_mat );
+			bn_mat_copy( arc, temp );
 			break;
 		default:
 			return(-1);		/* BAD */
 		}
 		if( rt_g.debug&DEBUG_ANIM_FULL )  {
-			mat_print("arc result", arc);
-			mat_print("stack result", stack);
+			bn_mat_print("arc result", arc);
+			bn_mat_print("stack result", stack);
 		}
 		break;
 	case RT_AN_MATERIAL:
@@ -212,7 +212,7 @@ struct animate		*anp;
 	}
 
 	db_free_full_path( &anp->an_path );
-	rt_free( (char *)anp, "animate");
+	bu_free( (char *)anp, "animate");
 }
 
 /*
@@ -281,7 +281,7 @@ CONST char	**argv;
 
 	bzero( (char *)&ts, sizeof(ts) );
 	ts.ts_dbip = dbip;
-	mat_idn( ts.ts_mat );
+	bn_mat_idn( ts.ts_mat );
 	db_full_path_init( &anp->an_path );
 	if( db_follow_path_for_state( &ts, &(anp->an_path), argv[1], LOOKUP_NOISY ) < 0 )
 		goto bad;
@@ -311,7 +311,7 @@ CONST char	**argv;
 		    			argv[3], argc );
 		    		goto bad;
 		    	}
-		    	mat_idn( anp->an_u.anu_m.anm_mat );
+		    	bn_mat_idn( anp->an_u.anu_m.anm_mat );
 		    	MAT_DELTAS( anp->an_u.anu_m.anm_mat,
 		    		atof( argv[5+0] ),
 		    		atof( argv[5+1] ),
@@ -322,8 +322,8 @@ CONST char	**argv;
 		    			argv[3], argc );
 		    		goto bad;
 		    	}
-		    	mat_idn( anp->an_u.anu_m.anm_mat );
-			mat_angles( anp->an_u.anu_m.anm_mat,
+		    	bn_mat_idn( anp->an_u.anu_m.anm_mat );
+			bn_mat_angles( anp->an_u.anu_m.anm_mat,
 		    		atof( argv[5+0] ),
 		    		atof( argv[5+1] ),
 		    		atof( argv[5+2] ) );
@@ -412,7 +412,7 @@ struct animate *anp;
 	}
 
 	fprintf(fop,"anim %s ", thepath);
-	rt_free(thepath, "path string");
+	bu_free(thepath, "path string");
 
 	switch (anp->an_type) {
 	case RT_AN_MATRIX:

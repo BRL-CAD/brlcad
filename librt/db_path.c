@@ -63,7 +63,7 @@ register struct directory	*dp;
 
 	if( pp->fp_maxlen <= 0 )  {
 		pp->fp_maxlen = 32;
-		pp->fp_names = (struct directory **)rt_malloc(
+		pp->fp_names = (struct directory **)bu_malloc(
 			pp->fp_maxlen * sizeof(struct directory *),
 			"db_full_path array");
 	} else if( pp->fp_len >= pp->fp_maxlen )  {
@@ -93,7 +93,7 @@ register CONST struct db_full_path	*oldp;
 		newp->fp_names = (struct directory **)0;
 		return;
 	}
-	newp->fp_names = (struct directory **)rt_malloc(
+	newp->fp_names = (struct directory **)bu_malloc(
 		newp->fp_maxlen * sizeof(struct directory *),
 		"db_full_path array (duplicate)" );
 	bcopy( (char *)oldp->fp_names, (char *)newp->fp_names,
@@ -117,7 +117,7 @@ int				incr;
 	if( pathp->fp_maxlen <= 0 )  {
 		pathp->fp_len = 0;
 		pathp->fp_maxlen = incr;
-		pathp->fp_names = (struct directory **)rt_malloc(
+		pathp->fp_names = (struct directory **)bu_malloc(
 			pathp->fp_maxlen * sizeof(struct directory *),
 			"empty fp_names extension" );
 		return;
@@ -172,7 +172,7 @@ int					start;
 		newp->fp_names = (struct directory **)0;
 		return;
 	}
-	newp->fp_names = (struct directory **)rt_malloc(
+	newp->fp_names = (struct directory **)bu_malloc(
 		newp->fp_maxlen * sizeof(struct directory *),
 		"db_full_path array (duplicate)" );
 	bcopy( (char *)&oldp->fp_names[start], (char *)newp->fp_names,
@@ -204,7 +204,7 @@ register CONST struct db_full_path	*pp;
 			len += 16;
 	}
 
-	buf = rt_malloc( len, "pathname string" );
+	buf = bu_malloc( len, "pathname string" );
 	cp = buf;
 
 	for( i=0; i < pp->fp_len; i++ )  {
@@ -230,7 +230,7 @@ CONST struct db_full_path	*pathp;
 	char	*sofar = db_path_to_string(pathp);
 
 	bu_log("%s %s\n", msg, sofar );
-	rt_free(sofar, "path string");
+	bu_free(sofar, "path string");
 }
 
 /*
@@ -279,7 +279,7 @@ CONST char			*str;
 	/* Make a path structure just big enough */
 	pp->magic = DB_FULL_PATH_MAGIC;
 	pp->fp_maxlen = pp->fp_len = nslash+1;
-	pp->fp_names = (struct directory **)rt_malloc(
+	pp->fp_names = (struct directory **)bu_malloc(
 		pp->fp_maxlen * sizeof(struct directory *),
 		"db_string_to_path path array" );
 
@@ -303,7 +303,7 @@ CONST char			*str;
 		pp->fp_names[nslash++] = dp;
 		cp = slashp+1;
 	}
-	rt_free( copy, "db_string_to_path() rt_strdip");
+	bu_free( copy, "db_string_to_path() rt_strdip");
 	return ret;
 }
 
@@ -317,7 +317,7 @@ register struct db_full_path	*pp;
 	RT_CK_FULL_PATH( pp );
 
 	if( pp->fp_maxlen > 0 )  {
-		rt_free( (char *)pp->fp_names, "db_full_path array" );
+		bu_free( (char *)pp->fp_names, "db_full_path array" );
 		pp->fp_maxlen = pp->fp_len = 0;
 		pp->fp_names = (struct directory **)0;
 	}

@@ -89,5 +89,5 @@ void		(*leaf_func)();
 		bu_log("db_functree:  %s is neither COMB nor SOLID?\n",
 			dp->d_namep );
 	}
-	rt_free( (char *)rp, "db_functree record[]" );
+	bu_free( (char *)rp, "db_functree record[]" );
 }

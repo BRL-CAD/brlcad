@@ -236,18 +236,18 @@ register struct directory	*dp;
 		bu_free( dp->d_un.ptr, "db_dirdelete() inmem ptr" );
 
 	if( *headp == dp )  {
-		rt_free( dp->d_namep, "dir name" );
+		bu_free( dp->d_namep, "dir name" );
 		*headp = dp->d_forw;
-		rt_free( (char *)dp, "struct directory" );
+		bu_free( (char *)dp, "struct directory" );
 		return(0);
 	}
 	for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
 		if( findp->d_forw != dp )
 			continue;
-		rt_free( dp->d_namep, "dir name" );
+		bu_free( dp->d_namep, "dir name" );
 		findp->d_forw = dp->d_forw;
 		bzero( (char *)dp, sizeof(struct directory) );	/* sanity */
-		rt_free( (char *)dp, "struct directory" );
+		bu_free( (char *)dp, "struct directory" );
 		return(0);
 	}
 	return(-1);
@@ -293,7 +293,7 @@ CONST char			*newname;
 
 out:
 	/* Effect new name */
-	rt_free( dp->d_namep, "d_namep" );
+	bu_free( dp->d_namep, "d_namep" );
 	dp->d_namep = bu_strdup( newname );
 
 	/* Add to new linked list */

@@ -189,7 +189,7 @@ hard:
 		return(-1);
 	db_alloc( dbip, dp, dp->d_len + count );	/* fixes addr & len */
 	db_put( dbip, dp, rp, 0, old_len );
-	rt_free( (char *)rp, "db_grow temp records");
+	bu_free( (char *)rp, "db_grow temp records");
 
 	/* Release space that original copy consumed */
 	db_delete( dbip, &olddir );
@@ -328,11 +328,11 @@ int		start;
 	if( todo < 0 )
 		return(-1);
 
-	rp = (union record *)rt_malloc( todo * sizeof(union record), "db_zapper buf");
+	rp = (union record *)bu_malloc( todo * sizeof(union record), "db_zapper buf");
 	bzero( (char *)rp, todo * sizeof(union record) );
 	for( i=0; i < todo; i++ )
 		rp[i].u_id = ID_FREE;
 	i = db_put( dbip, dp, rp, start, todo );
-	rt_free( (char *)rp, "db_zapper buf" );
+	bu_free( (char *)rp, "db_zapper buf" );
 	return i;
 }
