@@ -193,7 +193,7 @@ char	**argv;
 	  ipathpos = illump->s_last - (
 				       (ypos+(int)GED_MAX) * (illump->s_last+1) / (int)GED_RANGE);
 	  if( ipathpos != isave )
-	    view_state->vs_flag++;
+	    view_state->vs_flag = 1;
 	  return TCL_OK;
 
 	} else switch( state )  {

@@ -220,39 +220,28 @@ Ogl_colorchange()
     glDisable(GL_FOG);
   }
 
-  ++view_state->vs_flag;
+  view_state->vs_flag = 1;
 }
 
 static void
 establish_zbuffer()
 {
-#if 0
-  dm_zbuffer(dmp,
-	     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
-#else
   (void)DM_SET_ZBUFFER(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
-#endif
-  ++view_state->vs_flag;
+  view_state->vs_flag = 1;
 }
 
 static void
 establish_lighting()
 {
-#if 0
-  dm_lighting(dmp,
-	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
-#else
   (void)DM_SET_LIGHT(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
-#endif
-  ++view_state->vs_flag;
+  view_state->vs_flag = 1;
 }
 
 static void
 do_fogHint()
 {
-  dm_fogHint(dmp,
-	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog);
-  ++view_state->vs_flag;
+  dm_fogHint(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog);
+  view_state->vs_flag = 1;
 }
 
 static void
