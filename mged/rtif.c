@@ -53,12 +53,10 @@ extern int mged_svbase();
 void		setup_rt();
 
 /* nirt stuff */
-extern struct bu_vls nirt_void_color;
 extern struct bu_vls nirt_even_color;
 extern struct bu_vls nirt_odd_color;
+extern struct bu_vls nirt_void_color;
 extern struct bu_vls nirt_basename;
-extern struct bu_vls nirt_use_air;
-extern struct bu_vls nirt_print_cmd;
 
 struct nirt_fmt {
     struct bu_vls tclName;
@@ -92,6 +90,7 @@ struct nirt_dataList {
 };
 
 struct nirt_dataList HeadNirtData;
+void nirt_data_to_vlist();
 
 /* End nirt format stuff */
 
@@ -1277,7 +1276,6 @@ char	**argv;
 	int pipe_err[2];
 	int use_input_orig = 0;
 	int use_air;
-	int print_cmd;
 	vect_t	center_model;
 	vect_t dir;
 	register int i;
@@ -1286,7 +1284,6 @@ char	**argv;
 	char *val;
 	struct bu_vls vls;
 	struct bu_vls g_vls;
-	struct bu_vls air_vls;
 	struct rt_vlblock *vbp;
 	struct nirt_dataList *ndlp;
 
@@ -1403,24 +1400,16 @@ done:
 	  }
 	}
 
-	val = Tcl_GetVar(interp, bu_vls_addr(&nirt_use_air), TCL_GLOBAL_ONLY);
-	if(sscanf(val, "%d", &use_air) != 1)
-	  use_air = 1;
-
-	*vp++ = "-e";
-	bu_vls_init(&air_vls);
-	bu_vls_printf(&air_vls, "useair %d",  use_air);
-	*vp++ = bu_vls_addr(&air_vls);
+	if(mged_variables->use_air){
+	  *vp++ = "-u";
+	  *vp++ = "1";
+	}
 
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
-	val = Tcl_GetVar(interp, bu_vls_addr(&nirt_print_cmd), TCL_GLOBAL_ONLY);
-	if(sscanf(val, "%d", &print_cmd) != 1)
-	  print_cmd = 0;
-
-	setup_rt( vp, print_cmd );
+	setup_rt( vp, mged_variables->echo_nirt_cmd );
 
 	if(use_input_orig){
 	  bu_vls_init(&vls);
@@ -1479,8 +1468,6 @@ done:
 	rt_write(fp_in, center_model );
 	(void)fclose( fp_in );
 
-	bu_vls_free(&air_vls);
-
 	if(DO_NIRT_GRAPHICS){
 	  if(DO_NIRT_TEXT)
 	    bu_vls_free(&g_vls); /* used to form part of nirt command above */
@@ -1502,7 +1489,7 @@ done:
 	  }
 
 	  vbp = rt_vlblock_init();
-	  (void)nirt_data_to_vlist(vbp, &HeadNirtData, dir);
+	  nirt_data_to_vlist(vbp, &HeadNirtData, dir);
 	  bu_list_free(&HeadNirtData.l);
 	  val = Tcl_GetVar(interp, bu_vls_addr(&nirt_basename), TCL_GLOBAL_ONLY);
 	  if(val == NULL) /* user must have unset nirt_ray_basename */
@@ -1625,7 +1612,7 @@ char    **argv;
   return status;
 }
 
-int
+void
 nirt_data_to_vlist(vbp, headp, dir)
 struct rt_vlblock *vbp;
 struct nirt_dataList *headp;
@@ -1690,7 +1677,6 @@ vect_t dir;
     VMOVE(last_out, out);
     ++i;
   }
-  return 42;
 }
 
 cm_start(argc, argv)
