@@ -5,7 +5,7 @@
  * order and non-alignment problems.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 unsigned short

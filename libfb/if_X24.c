@@ -54,8 +54,8 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)if_X24.c version 1.40 (22 Nov 1994)";
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char sccsid[] = "@(#)if_X24.c version 1.40 (22 Nov 1994)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -67,6 +67,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 # include <sys/time.h>
 #endif
 #include <time.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "fb.h"
@@ -1539,6 +1544,7 @@ struct xinfo *xi;
 }
 
 static
+int
 xsetup(ifp, width, height)
 FBIO	*ifp;
 int	width, height;
@@ -2318,7 +2324,7 @@ Display *dpy;
 
 		visual = vp[i].visual;
 
-		printf("---- Visual 0x%lx (%d)----\n", visual, i);
+		printf("---- Visual 0x%lx (%d)----\n", (unsigned long int)visual, i);
 
 		printf("screen: %d\n", vp[i].screen);
 		printf("depth : %d\n", vp[i].depth);

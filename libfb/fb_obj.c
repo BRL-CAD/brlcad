@@ -38,6 +38,7 @@
 
 /* defined in libfb/tcl.c */
 extern int fb_refresh();
+extern int fb_configureWindow(FBIO *, int, int);
 
 static int fbo_open_tcl();
 static int fbo_cell_tcl();
@@ -70,21 +71,21 @@ struct fb_obj {
 static struct fb_obj HeadFBObj;			/* head of display manager object list */
 
 static struct bu_cmdtab fbo_cmds[] = {
-       "cell",		fbo_cell_tcl,
-       "clear",		fbo_clear_tcl,
-       "close",		fbo_close_tcl,
-       "configure",	fbo_configure_tcl,
-       "cursor",	fbo_cursor_tcl,
-       "pixel",		fbo_pixel_tcl,
-       "flush",		fbo_flush_tcl,
-       "getcursor",	fbo_getcursor_tcl,
-       "getheight",	fbo_getheight_tcl,
-       "getsize",	fbo_getsize_tcl,
-       "getwidth",	fbo_getwidth_tcl,
-       "listen",	fbo_listen_tcl,
-       "rect",		fbo_rect_tcl,
-       "refresh",	fbo_refresh_tcl,
-       (char *)0,	(int (*)())0
+       {"cell",		fbo_cell_tcl},
+       {"clear",	fbo_clear_tcl},
+       {"close",	fbo_close_tcl},
+       {"configure",	fbo_configure_tcl},
+       {"cursor",	fbo_cursor_tcl},
+       {"pixel",	fbo_pixel_tcl},
+       {"flush",	fbo_flush_tcl},
+       {"getcursor",	fbo_getcursor_tcl},
+       {"getheight",	fbo_getheight_tcl},
+       {"getsize",	fbo_getsize_tcl},
+       {"getwidth",	fbo_getwidth_tcl},
+       {"listen",	fbo_listen_tcl},
+       {"rect",		fbo_rect_tcl},
+       {"refresh",	fbo_refresh_tcl},
+       {(char *)0,	(int (*)())0}
 };
 
 /*

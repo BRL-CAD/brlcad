@@ -24,7 +24,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -169,6 +169,7 @@ register char *s;
  *
  *  Return -1 on error, else 0.
  */
+int
 parse_file( file, host, portp, device )
 char *file;	/* input file spec */
 char *host;	/* host part */

@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -27,11 +27,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 #include <math.h>
 #include <time.h>
+#include <fcntl.h>
 
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #ifdef USE_STRING_H
 #include <string.h>
@@ -49,6 +51,7 @@ static int	ab_get_reply();
 static int	ab_mread();
 static void	ab_yuv_to_rgb();
 static void	ab_rgb_to_yuv();
+static int	ab_yuvio(int, char *, char *, int, int, int);
 
 _LOCAL_ int	ab_open(),
 		ab_close(),
@@ -696,6 +699,7 @@ FBIO	*ifp;
  *	-1	error
  *	len	successful count
  */
+int
 ab_yuvio( output, host, buf, len, frame, to_network )
 int	output;		/* 0=read(input), 1=write(output) */
 char	*host;
