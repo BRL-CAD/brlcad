@@ -95,7 +95,44 @@ int		interactive = 0;	/* human is watching results */
 
 static char	*framebuffer;		/* desired framebuffer */
 
-#define MAX_WIDTH	(8*1024)
+#define MAX_WIDTH	(32*1024)
+
+
+extern int	cm_start();
+extern int	cm_vsize();
+extern int	cm_eyept();
+extern int	cm_vrot();
+extern int	cm_end();
+extern int	cm_multiview();
+extern int	cm_anim();
+extern int	cm_tree();
+extern int	cm_clean();
+extern int	cm_set();
+
+static struct command_tab cmdtab[] = {
+	"start", "frame number", "start a new frame",
+		cm_start,	2, 2,
+	"viewsize", "size in mm", "set view size",
+		cm_vsize,	2, 2,
+	"eye_pt", "xyz of eye", "set eye point",
+		cm_eyept,	4, 4,
+	"viewrot", "4x4 matrix", "set view direction from matrix",
+		cm_vrot,	17,17,
+	"end", 	"", "end of frame setup, begin raytrace",
+		cm_end,		1, 1,
+	"multiview", "", "produce stock set of views",
+		cm_multiview,	1, 1,
+	"anim", 	"path type args", "specify articulation animation",
+		cm_anim,	4, 999,
+	"tree", 	"treetop(s)", "specify alternate list of tree tops",
+		cm_tree,	1, 999,
+	"clean", "", "clean articulation from previous frame",
+		cm_clean,	1, 1,
+	"set", 	"", "show or set parameters",
+		cm_set,		1, 999,
+	(char *)0, (char *)0, (char *)0,
+		0,		0, 0	/* END */
+};
 
 /*
  *			G E T _ A R G S
@@ -280,7 +317,6 @@ char **argv;
 	register int x,y;
 	char outbuf[132];
 	char idbuf[132];		/* First ID record info */
-	char cbuf[512];			/* Input command buffer */
 
 #ifdef BSD
 	setlinebuf( stderr );
@@ -397,16 +433,21 @@ char **argv;
 	} else if( !isatty(fileno(stdin)) && old_way( stdin ) )  {
 		; /* All is done */
 	} else {
+		register char	*buf;
+		register int	ret;
 		/*
 		 * New way - command driven.
 		 * Process sequence of input commands.
 		 * All the work happens in the functions
-		 * called by do_cmd().
+		 * called by rt_do_cmd().
 		 */
-		while( read_cmd( stdin, cbuf, sizeof(cbuf) ) >= 0 )  {
+		while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 			if( rdebug&RDEBUG_PARSE )
-				fprintf(stderr,"cmd: %s\n", cbuf );
-			if( do_cmd( cbuf ) < 0 )  break;
+				fprintf(stderr,"cmd: %s\n", buf );
+			ret = rt_do_cmd( rtip, buf, cmdtab );
+			rt_free( buf, "cmd buf" );
+			if( ret < 0 )
+				break;
 		}
 		if( curframe < desiredframe )  {
 			fprintf(stderr,
