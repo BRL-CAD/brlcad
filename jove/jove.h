@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  86/09/23  22:28:20  mike
+ * Externs now declared properly.
+ * I/O fixes for SysV
+ * 
  * Revision 2.1  86/09/23  22:26:10  mike
  * Externs now declared properly.
  * I/O fixes for SysV
@@ -20,8 +24,12 @@
 
 #include <setjmp.h>
 
+#ifdef SYSV
+#define	bcopy(f, t, c)	memcpy((t), (f), (c))
+#endif
+
 /* The following is tailorable */
-#ifdef VMUNIX
+#if defined(VMUNIX) || defined(CRAY)
 
 typedef	long	disk_line;
 #define BSIZ	4096
