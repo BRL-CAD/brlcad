@@ -117,12 +117,13 @@ static struct application ag;	/* Global application structure.	*/
 #ifndef BITSPERBYTE
 #define BITSPERBYTE	8
 #endif
-#define HL_BITVBITS	(sizeof(bitv_t)*BITSPERBYTE)
-#define HL_BITVMASK(_x)	((_x) == 0 ? 1 : 1<<(_x)%HL_BITVBITS)
+#define HL_BITVBITS		(sizeof(bitv_t)*BITSPERBYTE)
+#define HL_BITVMASK(_x)	((_x) == 0 ? 1 : 1L<<(_x)%HL_BITVBITS)
 #define HL_BITVWORD(_x,_y)	hl_bits[_y][(_x)/HL_BITVBITS]
 #define HL_SETBIT(_x,_y)	HL_BITVWORD(_x,_y) |= HL_BITVMASK(_x)
 #define HL_CLRBIT(_x,_y)	HL_BITVWORD(_x,_y) &= ~HL_BITVMASK(_x)
 #define HL_TSTBIT(_x,_y)	(HL_BITVWORD(_x,_y) & HL_BITVMASK(_x))
+#define ZeroPixel(_p)		((_p)[RED]==0 && (_p)[GRN]==0 && (_p)[BLU]==0)
 static bitv_t	hl_bits[1024][1024/HL_BITVBITS];
 static short	*hl_regmap = NULL;
 
@@ -140,9 +141,9 @@ _LOCAL_ fastf_t		correct_Lgt();
 _LOCAL_ fastf_t		*mirror_Reflect();
 
 /* "Hit" application routines to pass to "rt_shootray()".		*/
-_LOCAL_ int		f_Model(), f_Probe(), f_Shadow(), f_HL_Hit();
+_LOCAL_ int		f_Model(), f_Probe(), f_Shadow(), f_HL_Hit(), f_Region();
 /* "Miss" application routines to pass to "rt_shootray()".		*/
-_LOCAL_ int		f_Backgr(), f_Error(), f_Lit(), f_HL_Miss();
+_LOCAL_ int		f_Backgr(), f_Error(), f_Lit(), f_HL_Miss(), f_R_Miss();
 /* "Overlap" application routines to pass to "rt_shootray()".		*/
 _LOCAL_ int		f_Overlap();
 
@@ -196,6 +197,13 @@ render_Model()
 		ag.a_overlap = report_overlaps ? NULL : f_Overlap;
 		}
 	else
+	if( query_region )
+		{
+		ag.a_hit = f_Region;
+		ag.a_miss = f_R_Miss;
+		ag.a_overlap = report_overlaps ? NULL : f_Overlap;
+		}
+	else
 	if( hiddenln_draw )
 		{
 		if( (hl_regmap = (short *) malloc( grid_sz*grid_sz*sizeof(short) ))
@@ -241,7 +249,8 @@ render_Model()
 		}
 	else
 		cell_sz = modl_radius * 2.0/ (fastf_t) a_gridsz * grid_scale;
-	rt_log( "Cell size is %g mm.\n", cell_sz );
+	if( rt_g.debug )
+		rt_log( "Cell size is %g mm.\n", cell_sz );
 
 	Scale2Vec( grid_hor, cell_sz, grid_dh );
 	Scale2Vec( grid_ver, cell_sz, grid_dv );
@@ -425,6 +434,65 @@ int	cpu;
 	}
 
 _LOCAL_ int
+f_R_Miss( ap )
+register struct application *ap;
+	{
+	prnt_Scroll( "Missed model.\n" );
+	return	0;
+	}
+
+_LOCAL_ int
+f_Region( ap, pt_headp )
+register struct application *ap;
+struct partition *pt_headp;
+	{	register struct partition	*pp;
+		register struct region		*regp;
+		register struct xray		*rayp;
+		register struct hit		*ihitp;
+	for(	pp = pt_headp->pt_forw;
+		pp != pt_headp
+	    &&	pp->pt_outhit->hit_dist < 0.1;
+		pp = pp->pt_forw
+		) 
+		;
+	if( pp == pt_headp || pp->pt_outhit->hit_dist < 0.1 )
+		return	ap->a_miss( ap );
+	regp = pp->pt_regionp;
+	rayp = &ap->a_ray;
+	ihitp = pp->pt_inhit;
+	VJOIN1( ihitp->hit_point, rayp->r_pt, ihitp->hit_dist, rayp->r_dir );
+	prnt_Scroll(	"Hit region \"%s\"\n", regp->reg_name );
+	prnt_Scroll(	"\timpact point: <%8.2f,%8.2f,%8.2f>\n",
+			ihitp->hit_point[X],
+			ihitp->hit_point[Y],
+			ihitp->hit_point[Z]
+			);
+	prnt_Scroll(	"\tid: %d, aircode: %d, material: %d, LOS: %d\n",
+			regp->reg_regionid,
+			regp->reg_aircode,
+			regp->reg_gmater,
+			regp->reg_los
+			);
+	if( regp->reg_mater.ma_matname[0] != '\0' )
+		{
+		prnt_Scroll(	"\tmaterial info \"%.32s\"\n",
+				regp->reg_mater.ma_matname
+				);
+		if( regp->reg_mater.ma_override )
+			prnt_Scroll(	"\t\t\tcolor: {%5.2f,%5.2f,%5.2f}\n",
+					regp->reg_mater.ma_color[0],
+					regp->reg_mater.ma_color[1],
+					regp->reg_mater.ma_color[2]
+					);
+		if( regp->reg_mater.ma_matparm[0] != '\0' )
+			prnt_Scroll(	"\t\t\tparameters: \"%.60s\"\n",
+					regp->reg_mater.ma_matparm
+					);
+		}
+	return	1;
+	}
+
+_LOCAL_ int
 f_HL_Miss( ap )
 register struct application *ap;
 	{
@@ -542,13 +610,14 @@ struct partition *pt_headp;
 				int	x = ap->a_x + x_fb_origin - ir_mapx;
 				int	y = ap->a_y + y_fb_origin - ir_mapy;
 			/* Map temperature from IR image using offsets.	*/
+			RES_ACQUIRE( &rt_g.res_stats );
 			if(	x < 0 || y < 0
-			    ||	fb_seek( fbiop, x, y ) == -1
-			    ||	fb_rpixel( fbiop, pixel ) == -1
+			    ||	fb_read( fbiop, x, y, pixel, 1 ) == -1
 				)
 				fahrenheit = AMBIENT-1;
 			else
 				fahrenheit = pixel_To_Temp( pixel );
+			RES_RELEASE( &rt_g.res_stats );
 			}
 		else
 		if( ir_doing_paint )
@@ -566,14 +635,17 @@ struct partition *pt_headp;
 		entry = &mat_tmp_entry;
 		if( ir_mapping & IR_READONLY )
 			{	int	ir_level = 0;
+			RES_ACQUIRE( &rt_g.res_worker );
 			octreep = find_Octant(	&ir_octree,
 						ihitp->hit_point,
 						&ir_level
 						);
+			RES_RELEASE( &rt_g.res_worker );
 			}
 		else
 		if( ir_mapping & IR_EDIT )
 			{
+			RES_ACQUIRE( &rt_g.res_worker );
 			triep = add_Trie( pp->pt_regionp->reg_name, &reg_triep );
 			octreep = add_Region_Octree(	&ir_octree,
 							ihitp->hit_point,
@@ -585,7 +657,11 @@ struct partition *pt_headp;
 				append_Octp( triep, octreep );
 			else
 			if( fatal_error )
+				{
+				RES_RELEASE( &rt_g.res_worker );
 				return	-1;
+				}
+			RES_RELEASE( &rt_g.res_worker );
 			}
 		if( octreep != OCTREE_NULL )
 			{	register int	index;
@@ -1416,9 +1492,11 @@ void
 abort_RT( sig )
 int	sig;
 	{
+RES_ACQUIRE( &rt_g.res_syscall );
 	(void) signal( SIGINT, abort_RT );
 	(void) fb_flush( fbiop );
 	user_interrupt = 1;
+RES_RELEASE( &rt_g.res_syscall );
 #if defined( BSD )
 	return	sig;
 #else
@@ -1448,25 +1526,40 @@ register int	n;
 hl_Reg_Diff( x0, y0, x1, y1 )
 register int	x0, y0, x1, y1;
 	{
+	rt_log( "hl_Reg_Diff({<%4d,%4d>,<%4d,%4d>}) %4d != %4d\n",
+		x0, y0, x1, y1,
+		hl_regmap[y0*grid_sz+x0],
+		hl_regmap[y1*grid_sz+x1]
+		);
 	return	hl_regmap[y0*grid_sz+x0] != hl_regmap[y1*grid_sz+x1];
 	}
 
 hl_Norm_Diff( pix1, pix2 )
-register RGBpixel	pix1, pix2;
+register RGBpixel	*pix1, *pix2;
 	{	fastf_t	dir1[3], dir2[3];
 		static fastf_t	conv = 2.0/255.0;
-	if( ! NonZeroVec( pix1 ) )
+#ifdef cray
+	rt_log( "hl_Norm_Diff(0x%x,0x%x)\n", pix1, pix2 );
+#endif
+	rt_log( "hl_Norm_Diff(<%d,%d,%d>,<%d,%d,%d>)\n",
+		(*pix1)[0], (*pix1)[1], (*pix1)[2],
+		(*pix2)[0], (*pix2)[1], (*pix2)[2] );
+	if( ZeroPixel( *pix1 ) )
 		{
-		if( ! NonZeroVec( pix2 ) )
+		if( ZeroPixel( *pix2 ) )
 			return	0;
 		else
 			return	1;
 		}
 	else
-	if( ! NonZeroVec( pix2 ) )
+	if( ZeroPixel( *pix2 ) )
 		return	1;
-	Scale2Vec( pix1, conv, dir1 );
-	Scale2Vec( pix2, conv, dir2 );
+	dir1[X] = (*pix1)[RED] * conv;
+	dir1[Y] = (*pix1)[GRN] * conv;
+	dir1[Z] = (*pix1)[BLU] * conv;
+	dir2[X] = (*pix2)[RED] * conv;
+	dir2[Y] = (*pix2)[GRN] * conv;
+	dir2[Z] = (*pix2)[BLU] * conv;
 	dir1[X] -= 1.0;
 	dir1[Y] -= 1.0;
 	dir1[Z] -= 1.0;
@@ -1476,6 +1569,21 @@ register RGBpixel	pix1, pix2;
 	return	Dot( dir1, dir2 ) < COSTOL;
 	}
 
+
+void
+prnt_Pixel( pixelp, x, y )
+register RGBpixel	*pixelp;
+int	x, y;
+	{
+	rt_log( "Pixel:<%3d,%3d,%3d>(%4d,%4d)\n",
+		(*pixelp)[RED],
+		(*pixelp)[GRN],
+		(*pixelp)[BLU],
+		x, y
+		);
+	return;
+	}
+
 hl_Postprocess()
 	{	static RGBpixel	black_pixel = { 0, 0, 0 };
 		static RGBpixel	white_pixel = { 255, 255, 255 };
@@ -1483,18 +1591,25 @@ hl_Postprocess()
 		register int	x, y;
 	prnt_Event( "Making hidden-line drawing..." );
 	for( y = 0; y < grid_sz && ! user_interrupt; y++ )
-		{	register RGBpixel	*rpixp = is_Odd(y) ? bufb : bufa;
-			register RGBpixel	*lpixp = is_Odd(y) ? bufa : bufb;
+		{	static RGBpixel	*rpixp;
+			static RGBpixel	*lpixp;
+		rpixp = is_Odd(y) ? bufb : bufa;
+		lpixp = is_Odd(y) ? bufa : bufb;
 		(void) fb_seek( fbiop, 0, y );
-		for( x = 0; x < grid_sz && ! user_interrupt; x++ )
+		for(	x = 0;
+			x < grid_sz && ! user_interrupt;
+			x++
+			)
 			{
 			if( fb_rpixel( fbiop, rpixp[x] ) == -1 )
 				{
 				fb_log( "hl_Postprocess: Failed to read pixel <%d,%d>\n", x, y );
 				return;
 				}
+			/*prnt_Pixel( rpixp[x], x, y );*/
 			if( x == 0 )
 				HL_SETBIT( x, y );
+			else
 			if( y == 0 )
 				if( hl_Norm_Diff( rpixp[x], rpixp[x-1] ) )
 					HL_CLRBIT( x, y );
@@ -1541,11 +1656,8 @@ RGBpixel		scanbuf[];
 	if( rt_g.debug && tty )
 		{
 		RES_ACQUIRE( &rt_g.res_syscall );
+		(void) sprintf( GRID_PIX_PTR, " [%04d-", ap->a_x/aperture_sz );
 		prnt_Timer( (char *) NULL );
-		(void) SetStandout();
-		GRID_PIX_MOVE();
-		(void) printf( " [%04d-", ap->a_x/aperture_sz );
-		(void) ClrStandout();
 		IDLE_MOVE();
 		(void) fflush( stdout );
 		RES_RELEASE( &rt_g.res_syscall );
@@ -1605,6 +1717,8 @@ RGBpixel		scanbuf[];
 			}
 		}
 	/* Write out pixel, depending on buffering scheme.		*/
+	if( query_region )
+		return;
 	switch( pix_buffered )
 		{
 	case B_PIO :
@@ -1647,13 +1761,9 @@ register struct application	*ap;
 	if( tty )
 		{
 		RES_ACQUIRE( &rt_g.res_stats );
-		(void) SetStandout();
-		GRID_SCN_MOVE();
-		(void) printf( "%04d-", ap->a_y/aperture_sz );
-		GRID_PIX_MOVE();
-		(void) printf( " [%04d-", ap->a_x/aperture_sz );
-		(void) ClrStandout();
-		(void) fflush( stdout );
+		(void) sprintf( GRID_SCN_PTR, "%04d-", ap->a_y/aperture_sz );
+		(void) sprintf( GRID_PIX_PTR, " [%04d-", ap->a_x/aperture_sz );
+		update_Screen();
 		RES_RELEASE( &rt_g.res_stats );
 		}
 	return;
@@ -1685,6 +1795,8 @@ RGBpixel			scanbuf[];
 		prnt_Timer( grid_y );
 		RES_RELEASE( &rt_g.res_stats );
 		}
+	if( query_region )
+		return;
 	if( pix_buffered == B_LINE )
 		{
 		RES_ACQUIRE( &rt_g.res_stats );
@@ -1745,11 +1857,10 @@ fastf_t	R;
 
 _LOCAL_ int
 /*ARGSUSED*/
-f_Overlap( ap, pp, name1, name2 )
-register struct application	*ap;
-register struct partition	*pp;
-char				*name1;
-char				*name2;
+f_Overlap( ap, pp, reg1, reg2 )
+struct application	*ap;
+struct partition	*pp;
+struct region		*reg1, *reg2;
 	{
 	return	1;
 	}
