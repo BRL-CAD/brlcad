@@ -6,7 +6,7 @@
 			(301)278-6651 or DSN 298-6651
 */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 /* 
  * squash.c - Filter super-sampled image for one scan line
