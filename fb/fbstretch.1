@@ -1,9 +1,9 @@
 '\"	@(#)$Header$ (BRL)
 '\" Edit the next two lines to configure for your system:
-.ds ms 1\" utility manual section, normally 1B -- alternatives are 1, 1L, etc.
-.ds ls 3\" library manual section, normally 3B -- alternatives are 3, 3L, etc.
-.ds fs 5\" format manual section, normally 4B -- alternatives are 5, 4L, etc.
-.ie t .ds pf B\" "printout" font, normally (CW -- use B if you don't have one
+.ds ms 1B\" utility manual section, normally 1B -- alternatives are 1, 1L, etc.
+.ds ls 3B\" library manual section, normally 3B -- alternatives are 3, 3L, etc.
+.ds fs 4B\" format manual section, normally 4B -- alternatives are 5, 4L, etc.
+.ie t .ds pf (CB\" "printout" font, normally (CW -- use B if you don't have one
 .el .ds pf 1
 '\"
 .de CW
@@ -27,12 +27,12 @@ fbstretch \- stretch a frame buffer image
 ] [
 .CW -w
 .I "input width"
-] [
-.CW -n
-.I "input height"
 ]
 .br
 	[
+.CW -n
+.I "input height"
+] [
 .CW -a
 ] [
 .CW -v
@@ -53,7 +53,9 @@ fbstretch \- stretch a frame buffer image
 ] [
 .CW -N
 .I "output height"
-] [ [
+]
+.br
+	[ [
 .CW -F
 ]
 .I "output frame buffer name"
@@ -62,73 +64,83 @@ fbstretch \- stretch a frame buffer image
 .CW fbstretch
 expands or compresses a frame buffer image,
 in either or both the horizontal and vertical directions.
-The image scaling origin is taken to be
+The image scaling origin (fixed point) is
 the lower left-hand corner of the display.
 When expanding (scale factor greater than 1), pixels are simply replicated;
 when compressing (scale factor less than 1), pixel averaging is performed
-unless sampling is explicitly requested.
+unless sampling is explicitly requested by the
+.CW -a
+option.
 .SS Options
 .TP "\w'\f\*(pf-F\fP \fIoutput frame buffer name\fP\ \ \ 'u"
 .CW -h
 (``high resolution'')\ 
-Assumes 1024 by 1024 pixels for the default input frame buffer size
+Assumes 1024 by 1024 pixels for default input image size
 instead of 512 by 512.
-Explicitly specified sizes override this default,
-and whenever an actual frame buffer size is smaller than requested,
-the actual size is always used.
-The output frame buffer size requested will be the same as
-the actual input image size if
-.CW fbstretch
-determines that the input and output frame buffers are the same.
-Actual sizes depend on details of the specific frame buffers.
-If there are output margins outside the stretched image,
-they will be cleared to the background color;
-if the stretched image would extend beyond the output frame buffer size,
-it will be clipped to fit.
+Explicitly specified sizes override the default,
+and if actual input image size is smaller than requested,
+the actual size will be used.
+If not specified,
+requested output frame buffer size will be the stretched revised input size.
+If there are margins within the requested output beyond the stretched image,
+they will be cleared to background;
+if the stretched image would extend beyond the requested output size,
+it will be clipped to fit,
+even if there is room for it in the actual frame buffer.
+Actual sizes depend on details of specific frame buffers.
 .TP
 \f\*(pf-f\fP \fIinput image name\fP
-Inputs the image to be displayed from the specified frame buffer or pix file,
-instead of modifying the output frame buffer ``in place''.
+Inputs the image to be displayed
+from the specified frame buffer or \fIpix\^\fP(\*(fs) file,
+instead of modifying the output frame buffer in place.
+This option may not work if input and output frame buffers are the same device.
 .TP
 \f\*(pf-s\fP \fIinput square size\fP
-Specifies the input image width and height.
+Specifies input image width and height.
 .TP
 \f\*(pf-w\fP \fIinput width\fP
-Specifies the input image width.
+Specifies input image width.
 .TP
 \f\*(pf-n\fP \fIinput height\fP
-Specifies the input image height.
+Specifies input image height.
 .TP
 .CW -a
 (``no averaging'')\ 
 Specifies that output pixels will be sampled from the input,
-instead of being computed by averaging the RGB values.
+instead of being computed by averaging RGB values.
+.TP
+.CW -v
+(``verbose'')\ 
+Causes actual sizes and scale factors used
+to be printed on the standard error output.
 .TP
 \f\*(pf-x\fP \fIhorizontal scale factor\fP
 Scales the image by the specified factor in the horizontal direction;
-the default is to use the ratio of output to input widths, if specified,
+the default is the ratio of requested output to input widths,
+if specified,
 otherwise 1.
 .TP
 \f\*(pf-y\fP \fIvertical scale factor\fP
 Scales the image by the specified factor in the vertical direction;
-the default is to use the ratio of output to input heights, if specified,
+the default is the ratio of requested output to input heights,
+if specified,
 otherwise 1.
 .TP
 \f\*(pf-S\fP \fIoutput square size\fP
-Specifies the output frame buffer width and height.
+Specifies output frame buffer width and height.
 .TP
 \f\*(pf-W\fP \fIoutput width\fP
-Specifies the output frame buffer width.
+Specifies output frame buffer width.
 .TP
 \f\*(pf-N\fP \fIoutput height\fP
-Specifies the output frame buffer height.
+Specifies output frame buffer height.
 .TP
 \f\*(pf-F\fP \fIoutput frame buffer name\fP
 Outputs to the specified frame buffer
 instead of the one specified by the
 .CW FB_FILE
 environment variable
-(or the default frame buffer, if
+(or the default, if
 .CW FB_FILE
 is not set).
 If this is the last option specified, the
@@ -136,19 +148,21 @@ If this is the last option specified, the
 is optional.
 .SH DISCUSSION
 Pixel averaging may be meaningless for some images or color maps,
-in which case the sampling option should be specified.
-Images of the Mandelbrot set (see \fImandel\fP(\*(ms))
+in which case sampling should be specified.
+Images of the Mandelbrot set (see \fImandel\^\fP(\*(ms))
 are a good example of this.
 .SH EXAMPLE
-The following procedure enlarges an image obtained from a personal computer
+The following procedure enlarges an image,
+obtained from a personal computer
 .I via
 the
 .CW gif-fb
-utility to fill a 1280-by-1024 frame buffer.
+utility,
+to fill a 1280-by-1024 frame buffer.
 .RS
-\fI$\fP \|\f\*(pfgif-fb \|image.gif	# display the small PC image\fP
+\fI$\fP \|\f\*(pfgif-fb \|image.gif	# \fP\fIdisplays the 320x200 PC image\fP
 .br
-\fI$\fP \|\f\*(pffbstretch \|-w 320 \|-n 200 \|| \|-W 1280 \|-N 1024\fP
+\fI$\fP \|\f\*(pffbstretch \|-w 320 \|-n 200 \|-W 1280 \|-N 1024\fP
 .RE
 .SH "SEE ALSO"
 gif-fb(\*(ms), mandel(\*(ms), pixscale(\*(ms), libfb(\*(ls), pix(\*(fs).
