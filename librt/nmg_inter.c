@@ -268,7 +268,7 @@ struct nmg_ptbl	*tbl;
 		} else {
 			rt_log("UNKNOWN");
 		}
-		rt_log("\tv=x%x\n", v);
+		rt_log("\tv=x%x, vu=x%x\n", v , vu);
 	}
 }
 
@@ -745,8 +745,8 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	NMG_CK_VERTEXUSE(vu2b);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x)\n\tvu1a=%x vu1b=%x, vu2a=%x vu2b=%x\n\tv1a=%x v1b=%x,   v2a=%x v2b=%x\n",
-			eu1, eu2,
+		rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x, fu1=x%x, fu2=x%x)\n\tvu1a=%x vu1b=%x, vu2a=%x vu2b=%x\n\tv1a=%x v1b=%x,   v2a=%x v2b=%x\n",
+			eu1, eu2, fu1, fu2,
 			vu1a, vu1b, vu2a, vu2b,
 			vu1a->v_p, vu1b->v_p, vu2a->v_p, vu2b->v_p );
 
@@ -1515,7 +1515,7 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 	NMG_CK_FACEUSE(eu_fu);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x)\n", eu, fu);
+		rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x, eu_fu=x%x)\n", eu, fu, eu_fu);
 
 	if( fu->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() fu not OT_SAME\n");
 	if( eu_fu->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() eu_fu not OT_SAME\n");
@@ -1636,7 +1636,7 @@ nmg_fu_touchingloops(fu);
 nmg_fu_touchingloops(eu_fu);
 nmg_region_v_unique( fu->s_p->r_p, &is->tol );
 nmg_region_v_unique( eu_fu->s_p->r_p, &is->tol );
-	nmg_face_cutjoin(&vert_list1, &vert_list2, fu, eu_fu, is->pt, is->dir, &is->tol);
+	nmg_face_cutjoin(&vert_list1, &vert_list2, eu_fu, fu, is->pt, is->dir, &is->tol);
 nmg_fu_touchingloops(fu);		/* XXX r410 dies here */
 nmg_fu_touchingloops(eu_fu);
 nmg_region_v_unique( fu->s_p->r_p, &is->tol );
@@ -1894,6 +1894,11 @@ CONST struct rt_tol	*tol;
 		rt_log("Planes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
 			pl1[0], pl1[1], pl1[2], pl1[3],
 			pl2[0], pl2[1], pl2[2], pl2[3]);
+		rt_log( "Cosine of angle between planes = %g\n" , VDOT( pl1 , pl2 ) );
+		rt_log( "fu1:\n" );
+		nmg_pr_fu_briefly( fu1 , "\t" );
+		rt_log( "fu2:\n" );
+		nmg_pr_fu_briefly( fu2 , "\t" );
 	}
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
@@ -1924,6 +1929,16 @@ nmg_fu_touchingloops(fu2);
 	VMIN(min_pt, f2->fg_p->min_pt);
 	status = rt_isect_2planes( bs.pt, bs.dir, f1->fg_p->N, f2->fg_p->N,
 		min_pt, tol );
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log( "\tnmg_isect_two_generic_faces: intersect ray start (%f , %f , %f )\n\t\tin direction (%f , %f , %f )\n",
+			bs.pt[X],
+			bs.pt[Y],
+			bs.pt[Z],
+			bs.dir[X],
+			bs.dir[Y],
+			bs.dir[Z] );
+	}
 
 	switch( status )  {
 	case 0:
