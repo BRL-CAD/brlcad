@@ -80,6 +80,20 @@ struct curvature {
 };
 #define CURVE_NULL	((struct curvature *)0)
 
+
+/*
+ *			U V C O O R D
+ *
+ *  Mostly for texture mapping, information about parametric space.
+ */
+struct uvcoord {
+	fastf_t		uv_u;		/* Range 0..1 */
+	fastf_t		uv_v;		/* Range 0..1 */
+	fastf_t		uv_du;		/* delta in u */
+	fastf_t		uv_dv;		/* delta in v */
+};
+
+
 /*
  *			S E G
  *
