@@ -365,10 +365,14 @@ char	**argv;
 		rt_log("The '%s' display manager does not support any local commands.\n", dmp->dmr_name);
 		return CMD_BAD;
 	}
+
+#if 0
+/* mged_cmd already checks for this */
 	if( argc-1 < 1 )  {
 		rt_log("'dm' command requires an argument.\n");
 		return CMD_BAD;
 	}
+#endif
 	return dmp->dmr_cmd( argc-1, argv+1 );
 }
 
