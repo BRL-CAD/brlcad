@@ -648,7 +648,7 @@ char	**args;
 				{
 			case MENUBUTTON :
 				if( ! user_Pop( dopup( main_menu ) ) )
-					return;
+					return 0;
 				prnt_Event( "" );
 				prnt_Prompt( "" );
 				(void) fflush( stdout );
