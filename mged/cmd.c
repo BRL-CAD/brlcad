@@ -204,7 +204,7 @@ static struct funtab funtab[] = {
 	f_comb,4,MAXARGS,TRUE,
 "comb_color", "comb R G B", "assign a color to a combination (like 'mater')",
 	f_comb_color, 5,5,TRUE,
-"copyeval", "new_solid path_to_old_solid (seperate path components with spaces, not /)",
+"copyeval", "new_solid path_to_old_solid (separate path components with spaces, not /)",
 	"copy an 'evaluated' path solid",
 	f_copyeval, 1, 27, TRUE,
 "cp", "from to", "copy [duplicate] object",
@@ -312,7 +312,7 @@ static struct funtab funtab[] = {
 "itran", "x y z", "incremental/relative translate using normalized screen coordinates",
         f_tran, 4, 4,TRUE,
 #endif
-"joint", "command [options]", "articualtion/animation commands",
+"joint", "command [options]", "articulation/animation commands",
 	f_joint, 1, MAXARGS, TRUE,
 "journal", "fileName", "record all commands and timings to journal",
 	f_journal, 1, 2, TRUE,
