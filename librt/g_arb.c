@@ -520,7 +520,7 @@ CONST char			*name;
 	 *  Find all points that are equivalent, within the specified tol.
 	 *  Build the array equiv_pts[] so that it is indexed by
 	 *  vertex number, and returns the lowest numbered equivalent
-	 *  vertex (or it's own vertex number, if non-equivalent).
+	 *  vertex (or its own vertex number, if non-equivalent).
 	 */
 	equiv_pts[0] = 0;
 	for( i=1; i<8; i++ )  {
@@ -1124,9 +1124,29 @@ struct rt_tol			*tol;
  *			R T _ A R B _ C L A S S
  */
 int
-rt_arb_class()
+rt_arb_class( stp, min, max, tol )
+CONST struct soltab    *stp;
+CONST vect_t		min, max;
+CONST struct bn_tol    *tol;
 {
-	return(0);
+	register struct arb_specific *arbp =
+		(struct arb_specific *)stp->st_specific;
+	register int i;
+	
+	if( arbp == (struct arb_specific *)0 ) {
+		rt_log("arb(%s): no faces\n", stp->st_name);
+		return RT_CLASSIFY_UNIMPLEMENTED;
+	}
+
+	for( i=0; i<arbp->arb_nmfaces; i++ ) {
+		if( bn_hlf_class( arbp->arb_face[i].peqn, min, max, tol ) ==
+		    BN_CLASSIFY_OUTSIDE )
+			return RT_CLASSIFY_OUTSIDE;
+	}
+
+	/* We need to test for RT_CLASSIFY_INSIDE vs. RT_CLASSIFY_OVERLAPPING!
+	   XXX Do this soon */
+	return RT_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
 }
 
 /*
