@@ -412,9 +412,17 @@ struct partition *PartHeadp;
 	 *  Don't start using partitions until pt_inhit->hit_dist is
 	 *  slightly larger than zero, i.e., that the partition is not
 	 *  including the start point.
+	 *  The outhit distance needs to be checked too, so that if the
+	 *  partition is heading through the solid toward the light
+	 *  e.g. (-1,+50), then the fact that the light is obscured will
+	 *  not be missed.
 	 */
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_inhit->hit_dist >= ap->a_rt_i->rti_tol.dist )  break;
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+		if( pp->pt_inhit->hit_dist >= ap->a_rt_i->rti_tol.dist )
+			break;
+		if( pp->pt_outhit->hit_dist >= ap->a_rt_i->rti_tol.dist*10 )
+			break;
+	}
 	if( pp == PartHeadp )  {
 		pp=PartHeadp->pt_forw;
 		rt_log("light_hit:  ERROR, nothing hit, sxy=%d,%d, dtol=%e\n",
