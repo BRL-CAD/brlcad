@@ -224,11 +224,172 @@ CONST struct rt_tol	*tol;
 	NMG_CK_MODEL(m);
 	RT_CK_TOL(tol);
 
+/* XXX Change this to nmg_vertex_tabulate( &t1, &m->magic ); */
+	nmg_vertex_tabulate( &t1, &m->magic );
+#if 0
 	nmg_model_vertex_list( &t1, m );
+#endif
 
 	total = nmg_region_self_vfuse( &t1, tol );
 
 	nmg_tbl( &t1, TBL_FREE, 0 );
+
+	return total;
+}
+
+/*
+ *		N M G _ M O D E L _ F A C E _ F U S E
+ *
+ *  A routine to find all face geometry structures in an nmg model that
+ *  have the same plane equation, and have them share face geometry.
+ *  (See also nmg_shell_coplanar_face_merge(), which actually moves
+ *  the loops into one face).
+ *
+ *  The criteria for two face geometry structs being the "same" are:
+ *	1) The plane equations must be the same, within tolerance.
+ *	2) All the vertices on the 2nd face must lie within the
+ *	   distance tolerance of the 1st face's plane equation.
+ */
+int
+nmg_model_face_fuse( m, tol )
+struct model		*m;
+CONST struct rt_tol	*tol;
+{
+	struct nmg_ptbl	ftab;
+	int		total = 0;
+	register int	i,j;
+
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	/* Make a list of all the face structs in the model */
+	nmg_model_face_list( &ftab, m );
+
+	for( i = NMG_TBL_END(&ftab)-1; i >= 0; i-- )  {
+		register struct face	*f1;
+		register struct face_g	*fg1;
+		f1 = (struct face *)NMG_TBL_GET(&ftab, i);
+		NMG_CK_FACE(f1);
+		fg1 = f1->fg_p;
+		if( !fg1 )  continue;
+		NMG_CK_FACE_G(fg1);
+
+		for( j = i-1; j >= 0; j-- )  {
+			register struct face	*f2;
+			register struct face_g	*fg2;
+			FAST fastf_t		dist;
+			struct nmg_ptbl		vtab;
+			int			flip2 = 0;
+			int			k;
+
+			f2 = (struct face *)NMG_TBL_GET(&ftab, j);
+			NMG_CK_FACE(f2);
+			fg2 = f2->fg_p;
+			if( !fg2 )  continue;
+			NMG_CK_FACE_G(fg2);
+
+			if( fg1 == fg2 )  continue;	/* Already shared */
+
+			/* Compare distances from origin */
+			dist = fg1->N[3] - fg2->N[3];
+			if( !NEAR_ZERO(dist, tol->dist) )  {
+				/* How about with reversed normal? */
+				dist = fg1->N[3] + fg2->N[3];
+				if( !NEAR_ZERO(dist, tol->dist) )
+					continue;
+				/* Dist matches, how about direction?
+				 * Dot will be -1 if dirs are opposite.
+				 */
+				dist = -VDOT( fg1->N, fg2->N );
+				if( !(dist >= tol->para) )  continue;
+
+				/* Geometric match, with flipped signs */
+				flip2 = 1;
+			} else {
+				/* Dist matches, how about direction?
+				 * Dot will be +1 if dirs are the same.
+				 */
+				dist = VDOT( fg1->N, fg2->N );
+				if( !(dist >= tol->para) )  continue;
+
+				/* Geometric match, same sign */
+			}
+
+			/*
+			 *  Plane equations match, within tol.
+			 *  Before conducting a merge, verify that
+			 *  all the verts in f2 are within tol->dist
+			 *  of fg1's plane equation.
+			 */
+			nmg_vertex_tabulate( &vtab, &f2->fu_p->l.magic );
+
+			for( k = NMG_TBL_END(&vtab)-1; k >= 0; k-- )  {
+				register struct vertex		*v;
+				register struct vertex_g	*vg;
+				v = (struct vertex *)NMG_TBL_GET(&vtab, k);
+				NMG_CK_VERTEX(v);
+				vg = v->vg_p;
+				if( !vg )  rt_bomb("nmg_model_face_fuse: vertex with no geometry?\n");
+
+				dist = DIST_PT_PLANE(vg->coord, fg1->N);
+				if( dist > tol->dist )  goto next_face;
+			}
+			/* All points are on the plane, it's OK to fuse */
+			if( flip2 == 0 )  {
+				rt_log("joining face geometry (same dir)\n");
+				nmg_jfg( f1, f2 );
+				total++;
+			} else {
+				register struct face	*fn;
+				rt_log("joining face geometry (opposite dirs)\n");
+				/* Flip flags of faces using fg2, first! */
+				for( RT_LIST_FOR( fn, face, &fg2->f_hd ) )  {
+					NMG_CK_FACE(fn);
+					fn->flip = !fn->flip;
+				}
+				nmg_jfg( f1, f2 );
+				total++;
+			}
+
+next_face:		;
+		}
+	}
+}
+
+/*
+ *			N M G _ M O D E L _ F U S E
+ *
+ *  This is the primary application interface to the geometry fusing support.
+ *  Fuse together all data structures that are equal to each other,
+ *  within tolerance.
+ *
+ *  The algorithm is three part:
+ *	1)  Fuse together all vertices.
+ *	2)  Fuse together all face geometry, where appropriate.
+ *	3)  Fuse together all edges.
+ *
+ *  Edge fusing is handled last, because the difficult part there is
+ *  sorting faces radially around the edge.
+ *  It is important to know whether faces are shared or not
+ *  at that point.
+ */
+int
+nmg_model_fuse( m, tol )
+struct model		*m;
+CONST struct rt_tol	*tol;
+{
+	int	total = 0;
+
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	/* Step 1 -- the vertices. */
+	total += nmg_model_vertex_fuse( m, tol );
+
+	/* Step 2 -- the face geometry */
+	total += nmg_model_face_fuse( m, tol );
+
+	/* Step 3 -- edges */
 
 	return total;
 }
