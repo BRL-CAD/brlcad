@@ -1,7 +1,7 @@
 /*
  *			C O M P A T 4 . H
  *
- *  A compatability header file for LIBBU which provides
+ *  A compatability header file for LIBBU and LIBBN which provides
  *  BRL-CAD Release 4.4 style rt_xxx() names for the new bu_xxx() routines.
  *  So that users don't have to struggle with upgrading their source code.
  *
@@ -68,6 +68,7 @@ extern "C" {
 #define rt_mapped_file		bu_mapped_file		/* struct */
 #define rt_open_mapped_file	bu_open_mapped_file
 #define rt_close_mapped_file	bu_close_mapped_file
+#define RT_CK_MAPPED_FILE	BU_CK_MAPPED_FILE
 
 /* parallel.c */
 #define rt_pri_set	bu_nice_set
@@ -169,6 +170,35 @@ extern "C" {
 #define rt_vls_gets		bu_vls_gets
 #define rt_vls_putc		bu_vls_putc
 #define rt_vls_printf		bu_vls_printf
+
+/*----------------------------------------------------------------------*/
+/*
+ *  Macros for LIBBN
+ *  Again in source file order.
+ */
+
+#if 0
+/* complex.c */
+#define complex			bn_complex_t	/* typedef */
+#define	CxCopy			bn_cx_copy
+#define	CxNeg			bn_cx_neg
+#define	CxReal			bn_cx_real
+#define	CxImag			bn_cx_imag
+#define CxAdd			bn_cx_add
+#define CxAmpl			bn_cx_ampl
+#define CxAmplSq		bn_cx_amplsq
+#define CxConj			bn_cx_conj
+#define CxCons			bn_cx_cons
+#define CxPhas			bn_cx_phas
+#define CxScal			bn_cx_scal
+#define CxSub			bn_cx_sub
+#define CxMul			bn_cx_mul
+#define CxMul2			bn_cx_mul2
+#define CxDiv			bn_cx_div
+#define CxSqrt( cp )		bn_cx_sqrt( cp, cp )
+
+
+#endif
 
 #ifdef __cplusplus
 }
