@@ -98,6 +98,9 @@ top:
 	    	case DBID_PIPE:
 	    		pipe_dump();
 	    		continue;
+	    	case DBID_STRSOL:
+	    		strsol_dump();
+	    		continue;
 	    	case DBID_PARTICLE:
 	    		particle_dump();
 	    		continue;
@@ -151,6 +154,39 @@ int			ngran;
 			ngran-1, count);
 		exit(1);
 	}
+}
+
+void
+strsol_dump()	/* print out ebm or vol solid info */
+{
+	union record rec[DB_SS_NGRAN];
+	char *cp;
+	int i;
+
+	/* get all the strsol granules */
+	rec[0] = record;	/* struct copy the current record */
+
+	/* read the rest from stdin */
+	for( i=1 ; i<DB_SS_NGRAN ; i++ )
+	{
+		if( !fread( (char *)&rec[i], sizeof record, 1, stdin ) )
+		{
+			(void)fprintf( stderr , "Error reading strsol granules\n" );
+			exit( -1 );
+		}
+	}
+
+	/* make sure that at least the last byte is null */
+	cp = (char *)&rec[DB_SS_NGRAN-1];
+	cp += (sizeof( union record ) - 1);
+	*cp = '\0';
+
+	(void)printf( "%c %.16s %.16s %s\n",
+		rec[0].ss.ss_id,	/* s */
+		rec[0].ss.ss_keyword,	/* "ebm" or "vol" */
+		rec[0].ss.ss_name,	/* solid name */
+		rec[0].ss.ss_args );	/* everything else */
+
 }
 
 void
