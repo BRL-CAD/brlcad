@@ -84,7 +84,7 @@ struct mfuncs phg_mfuncs[] = {
 	0,		0,		0,		0
 };
 
-extern double ipow();
+extern double phg_ipow();
 
 #define RI_AIR		1.0    /* Refractive index of air.		*/
 
@@ -343,7 +343,7 @@ char	*dp;
 				cosine = 1;
 			}
 			refl = ps->wgt_specular * lp->lt_fraction *
-				ipow(cosine, ps->shine);
+				phg_ipow(cosine, ps->shine);
 			VELMUL( work, lp->lt_color,
 				intensity );
 			VJOIN1( swp->sw_color, swp->sw_color,
@@ -359,7 +359,7 @@ char	*dp;
  *  Raise a floating point number to an integer power
  */
 double
-ipow( d, cnt )
+phg_ipow( d, cnt )
 double d;
 register int cnt;
 {
@@ -367,7 +367,7 @@ register int cnt;
 
 	if( (input=d) < 1e-8 )  return(0.0);
 	if( cnt < 0 || cnt > 200 )  {
-		rt_log("ipow(%g,%d) bad\n", d, cnt);
+		rt_log("phg_ipow(%g,%d) bad\n", d, cnt);
 		return(d);
 	}
 	result = 1;
