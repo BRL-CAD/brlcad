@@ -179,10 +179,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	GETSTRUCT( ell, ell_specific );
 	stp->st_specific = (int *)ell;
 
-	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==1. */
-	VMOVE( work, SP_V );
-	work[3] = 1;
-	matXvec( ell->ell_V, mat, work );
+	/* Apply full 4x4mat to V */
+	MAT4X3PNT( ell->ell_V, mat, SP_V );
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 
