@@ -22,9 +22,9 @@
 #else
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --enable-shared \
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR
-#define PRODUCTS	[[ echo libtcl''TCLTK_VERS.ARCH_SUF]]
-#define SHARED_PRODUCT	libtcl''TCLTK_VERS.ARCH_SUF''[[LIBVERS]]
-#define	AFTER_MAKE	mv -f libtcl''TCLTK_VERS.ARCH_SUF SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT ; rm -f libtcl.ARCH_SUF ; ln -s SHARED_PRODUCT libtcl.ARCH_SUF
+#define PRODUCTS	[[ echo libtcl''TCLTK_VERS.so]]
+#define SHARED_PRODUCT	libtcl''TCLTK_VERS.so''[[LIBVERS]]
+#define	AFTER_MAKE	mv -f libtcl''TCLTK_VERS.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT ; rm -f libtcl.so ; ln -s SHARED_PRODUCT libtcl.so
 #endif
 #define EXTRA_PRODUCTS	tclsh
 
