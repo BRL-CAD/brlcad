@@ -290,6 +290,209 @@ rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
 }
 
 /*
+ *			N M G _ C K _ F U _ V E R T S
+ *
+ *  Check that all the vertices in fu1 are within tol->dist of fu2's surface.
+ *  fu1 and fu2 may be the same face, or different.
+ *
+ *  Returns -
+ *	0	All is well.
+ *	count	Number of verts *not* on fu2's surface.
+ *
+ *  XXX It would be more efficient to use nmg_vist() for this.
+ */
+int
+nmg_ck_fu_verts( fu1, f2, tol )
+struct faceuse	*fu1;
+struct face	*f2;
+CONST struct rt_tol	*tol;
+{
+	CONST struct face_g	*fg2;
+	struct nmg_ptbl		vtab;
+	FAST fastf_t		dist;
+	fastf_t			worst = 0;
+	int			k;
+	int			count = 0;
+
+	NMG_CK_FACEUSE( fu1 );
+	NMG_CK_FACE( f2 );
+	RT_CK_TOL(tol);
+
+	fg2 = f2->fg_p;
+	NMG_CK_FACE_G(fg2);
+
+	nmg_vertex_tabulate( &vtab, &fu1->l.magic );
+
+	for( k = NMG_TBL_END(&vtab)-1; k >= 0; k-- )  {
+		register struct vertex		*v;
+		register struct vertex_g	*vg;
+
+		v = (struct vertex *)NMG_TBL_GET(&vtab, k);
+		NMG_CK_VERTEX(v);
+		vg = v->vg_p;
+		if( !vg )  rt_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
+		NMG_CK_VERTEX_G(vg);
+
+		dist = DIST_PT_PLANE(vg->coord, fg2->N);
+		if( dist > tol->dist )  {
+#if 0
+			if (rt_g.NMG_debug & DEBUG_MESH)
+#endif
+			{
+				rt_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
+					fu1, f2,
+					v, dist );
+				VPRINT(" pt", vg->coord);
+				PLPRINT(" fg2", fg2->N);
+			}
+			count++;
+			if( dist > worst )  worst = dist;
+		}
+	}
+	nmg_tbl( &vtab, TBL_FREE, 0 );
+
+	if ( count != 0 || rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_ck_fu_verts(fu1=x%x, f2=x%x, tol=%g) f1=x%x, ret=%d, worst=%gmm (%e)\n",
+			fu1, f2, tol->dist, fu1->f_p,
+			count, worst, worst );
+	}
+	return count;
+}
+
+/*
+ *			N M G _ T W O _ F A C E _ F U S E
+ *
+ *  Compare the geometry of two faces, and fuse them if they are the
+ *  same within tolerance.
+ *  First compare the plane equations.  If they are "similar" (within tol),
+ *  then check all verts in f2 to make sure that they are within tol->dist
+ *  of f1's geometry.  If they are, then fuse the face geometry.
+ *
+ *  Returns -
+ *	0	Faces were not fused.
+ *	>0	Faces were successfully fused.
+ */
+int
+nmg_two_face_fuse( f1, f2, tol )
+struct face	*f1;
+struct face	*f2;
+CONST struct rt_tol	*tol;
+{
+	register struct face_g	*fg1;
+	register struct face_g	*fg2;
+	FAST fastf_t		dist;
+	int			flip2 = 0;
+
+	NMG_CK_FACE(f1);
+	NMG_CK_FACE(f2);
+	RT_CK_TOL(tol);
+
+	fg1 = f1->fg_p;
+	fg2 = f2->fg_p;
+
+	if( !fg1 || !fg2 )  {
+		if (rt_g.NMG_debug & DEBUG_MESH)  {
+			rt_log("nmg_two_face_fuse(x%x, x%x) null fg fg1=x%x, fg2=x%x\n",
+				f1, f2, fg1, fg2);
+		}
+		return 0;
+	}
+
+	NMG_CK_FACE_G(fg1);
+	NMG_CK_FACE_G(fg2);
+
+	if( fg1 == fg2 )  {
+		if (rt_g.NMG_debug & DEBUG_MESH)  {
+			rt_log("nmg_two_face_fuse(x%x, x%x) fg already shared\n",
+				f1, f2);
+		}
+		return 0;	/* Already shared */
+	}
+
+	/* Compare distances from origin */
+	dist = fg1->N[3] - fg2->N[3];
+	if( !NEAR_ZERO(dist, tol->dist) )  {
+		/* How about with reversed normal? */
+		dist = fg1->N[3] + fg2->N[3];
+		if( !NEAR_ZERO(dist, tol->dist) )  {
+			if (rt_g.NMG_debug & DEBUG_MESH)  {
+				rt_log("nmg_two_face_fuse(x%x, x%x) delta dist from origin=%g \n",
+					f1, f2, dist);
+			}
+			return 0;
+		}
+		/* Dist matches, how about direction?
+		 * Dot will be -1 if dirs are opposite.
+		 */
+		dist = -VDOT( fg1->N, fg2->N );
+		if( !(dist >= tol->para) )  {
+			if (rt_g.NMG_debug & DEBUG_MESH)  {
+				rt_log("nmg_two_face_fuse(x%x, x%x) A vdot=%g, tol=%g \n",
+					f1, f2, dist, tol->para);
+			}
+			return 0;
+		}
+
+		/* Geometric match, with flipped signs */
+		flip2 = 1;
+	} else {
+		/* Dist matches, how about direction?
+		 * Dot will be +1 if dirs are the same.
+		 */
+		dist = VDOT( fg1->N, fg2->N );
+		if( !(dist >= tol->para) )  {
+			if (rt_g.NMG_debug & DEBUG_MESH)  {
+				rt_log("nmg_two_face_fuse(x%x, x%x) B vdot=%g, tol=%g \n",
+					f1, f2, dist, tol->para);
+			}
+			return 0;
+		}
+
+		/* Geometric match, same sign */
+	}
+	if (rt_g.NMG_debug & DEBUG_MESH)  {
+		rt_log("nmg_two_face_fuse: plane eqns match, flip2=%d\n", flip2);
+	}
+
+	/*
+	 *  Plane equations match, within tol.
+	 *  Before conducting a merge, verify that
+	 *  all the verts in f2 are within tol->dist
+	 *  of f1's surface.
+	 */
+	if( nmg_ck_fu_verts( f2->fu_p, f1, tol ) != 0 )  {
+		if (rt_g.NMG_debug & DEBUG_MESH)  {
+			rt_log("nmg_two_face_fuse: f2 verts not within tol of f1's surface, can't fuse\n");
+		}
+		return 0;
+	}
+
+	/* All points are on the plane, it's OK to fuse */
+	if( flip2 == 0 )  {
+		if (rt_g.NMG_debug & DEBUG_MESH)  {
+			rt_log("joining face geometry (same dir) f1=x%x, f2=x%x\n", f1, f2);
+			PLPRINT(" fg1", fg1->N);
+			PLPRINT(" fg2", fg2->N);
+		}
+		nmg_jfg( f1, f2 );
+	} else {
+		register struct face	*fn;
+		if (rt_g.NMG_debug & DEBUG_MESH)  {
+			rt_log("joining face geometry (opposite dirs)\n");
+			PLPRINT(" fg1", fg1->N);
+			PLPRINT(" fg2", fg2->N);
+		}
+		/* Flip flags of faces using fg2, first! */
+		for( RT_LIST_FOR( fn, face, &fg2->f_hd ) )  {
+			NMG_CK_FACE(fn);
+			fn->flip = !fn->flip;
+		}
+		nmg_jfg( f1, f2 );
+	}
+	return 1;
+}
+
+/*
  *			N M G _ M O D E L _ F A C E _ F U S E
  *
  *  A routine to find all face geometry structures in an nmg model that
@@ -326,13 +529,16 @@ CONST struct rt_tol	*tol;
 		if( !fg1 )  continue;
 		NMG_CK_FACE_G(fg1);
 
+		/* Check that all the verts of f1 are within tol of face */
+		if( nmg_ck_fu_verts( f1->fu_p, f1, tol ) != 0 )  {
+			PLPRINT(" f1", f1->fg_p->N);
+			nmg_pr_fu_briefly(f1->fu_p, 0);
+			rt_bomb("nmg_model_face_fuse(): verts not within tol of containing face\n");
+		}
+
 		for( j = i-1; j >= 0; j-- )  {
 			register struct face	*f2;
 			register struct face_g	*fg2;
-			FAST fastf_t		dist;
-			struct nmg_ptbl		vtab;
-			int			flip2 = 0;
-			int			k;
 
 			f2 = (struct face *)NMG_TBL_GET(&ftab, j);
 			NMG_CK_FACE(f2);
@@ -342,84 +548,8 @@ CONST struct rt_tol	*tol;
 
 			if( fg1 == fg2 )  continue;	/* Already shared */
 
-			/* Compare distances from origin */
-			dist = fg1->N[3] - fg2->N[3];
-			if( !NEAR_ZERO(dist, tol->dist) )  {
-				/* How about with reversed normal? */
-				dist = fg1->N[3] + fg2->N[3];
-				if( !NEAR_ZERO(dist, tol->dist) )
-					continue;
-				/* Dist matches, how about direction?
-				 * Dot will be -1 if dirs are opposite.
-				 */
-				dist = -VDOT( fg1->N, fg2->N );
-				if( !(dist >= tol->para) )  continue;
-
-				/* Geometric match, with flipped signs */
-				flip2 = 1;
-			} else {
-				/* Dist matches, how about direction?
-				 * Dot will be +1 if dirs are the same.
-				 */
-				dist = VDOT( fg1->N, fg2->N );
-				if( !(dist >= tol->para) )  continue;
-
-				/* Geometric match, same sign */
-			}
-
-			/*
-			 *  Plane equations match, within tol.
-			 *  Before conducting a merge, verify that
-			 *  all the verts in f2 are within tol->dist
-			 *  of fg1's plane equation.
-			 */
-			nmg_vertex_tabulate( &vtab, &f2->fu_p->l.magic );
-
-			for( k = NMG_TBL_END(&vtab)-1; k >= 0; k-- )  {
-				register struct vertex		*v;
-				register struct vertex_g	*vg;
-				v = (struct vertex *)NMG_TBL_GET(&vtab, k);
-				NMG_CK_VERTEX(v);
-				vg = v->vg_p;
-				if( !vg )  rt_bomb("nmg_model_face_fuse: vertex with no geometry?\n");
-
-				dist = DIST_PT_PLANE(vg->coord, fg1->N);
-				if( dist > tol->dist )  {
-					if (rt_g.NMG_debug & DEBUG_MESH)  {
-						rt_log("nmg_model_face_fuse: plane eqns equal, v x%x off plane by %e, skipping (f1=x%x, f2=x%x)\n", v, dist, f1, f2);
-						VPRINT(" pt", vg->coord);
-						PLPRINT(" fg1", fg1->N);
-						PLPRINT(" fg2", fg2->N);
-					}
-					goto next_face;
-				}
-			}
-			/* All points are on the plane, it's OK to fuse */
-			if( flip2 == 0 )  {
-				if (rt_g.NMG_debug & DEBUG_MESH)  {
-					rt_log("joining face geometry (same dir) f1=x%x, f2=x%x\n", f1, f2);
-					PLPRINT(" fg1", fg1->N);
-					PLPRINT(" fg2", fg2->N);
-				}
-				nmg_jfg( f1, f2 );
+			if( nmg_two_face_fuse( f1, f2, tol ) > 0 )
 				total++;
-			} else {
-				register struct face	*fn;
-
-				if (rt_g.NMG_debug & DEBUG_MESH)  {
-					rt_log("joining face geometry (opposite dirs)\n");
-				}
-				/* Flip flags of faces using fg2, first! */
-				for( RT_LIST_FOR( fn, face, &fg2->f_hd ) )  {
-					NMG_CK_FACE(fn);
-					fn->flip = !fn->flip;
-				}
-				nmg_jfg( f1, f2 );
-				total++;
-			}
-
-next_face:		
-			nmg_tbl( &vtab, TBL_FREE, 0 );
 		}
 	}
 	nmg_tbl( &ftab, TBL_FREE, 0 );
