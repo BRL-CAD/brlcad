@@ -138,7 +138,9 @@ for LAST in \
 	tclscripts tclscripts/mged tclscripts/nirt \
 	tclscripts/pl-dm html html/manuals html/manuals/mged \
 	html/manuals/mged/animmate html/manuals/libdm \
-	html/manuals/shaders html/manuals/Anim_Tutorial
+	html/manuals/shaders html/manuals/Anim_Tutorial \
+	html/ReleaseNotes html/ReleaseNotes/Rel5.0 \
+	html/ReleaseNotes/Rel5.0/Summary
 do
 	if test ! -d $BASEDIR/$LAST
 	then
