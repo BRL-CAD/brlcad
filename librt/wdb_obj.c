@@ -7699,6 +7699,15 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	struct directory *dp;
 	char *cname;
 
+	/* check that we are using a version 5 database */
+	if( wdbp->dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "This is an older database version.\n",
+			"It does not support binary objects.\n",
+			"Use \"dbupgrade\" to upgrade this database to the current version.\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+
 	bu_optind = 1;		/* re-init bu_getopt() */
 	bu_opterr = 0;          /* suppress bu_getopt()'s error message */
 	while ((c=bu_getopt(argc, argv, "iou:")) != EOF) {

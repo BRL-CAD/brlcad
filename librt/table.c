@@ -322,6 +322,14 @@ BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 BU_EXTERN( void rt_binunif_make, (const struct rt_functab *ftp,
 				  struct rt_db_internal	*intern,
 				  double diameter ) );
+BU_EXTERN( int rt_binunif_tclget, (Tcl_Interp *interp,
+				   const struct rt_db_internal *intern,
+				   const char *attr ) );
+BU_EXTERN(int rt_binunif_tcladjust, (Tcl_Interp *interp,
+				     struct rt_db_internal *intern,
+				     int argc,
+				     char **argv,
+				     struct resource *resp ) );
 
 /* from tcl.c */
 BU_EXTERN(int rt_comb_tclget, (Tcl_Interp *interp,
@@ -976,7 +984,7 @@ const struct rt_functab rt_functab[] = {
 		rt_nul_import,	rt_nul_export,	rt_binunif_ifree,
 		rt_binunif_describe, rt_generic_xform, NULL,
 		0,				0,
-		rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
+		rt_binunif_tclget,	rt_binunif_tcladjust, rt_nul_tclform,
 		rt_binunif_make,
 	},
 

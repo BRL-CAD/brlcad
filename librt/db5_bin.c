@@ -54,6 +54,26 @@ const char *binu_types[]={
 	"binary(64bit_int)"
 };
 
+/* size of each element (in bytes) for the different BINUNIF types */
+/* this array depends on the values of the definitions of the DB5_MINORTYPE_BINU_... in db5.h */
+const int binu_sizes[]={
+	0,
+	0,
+	SIZEOF_NETWORK_FLOAT,
+	SIZEOF_NETWORK_DOUBLE,
+	1,
+	2,
+	4,
+	8,
+	0,
+	0,
+	0,
+	0,
+	1,
+	2,
+	4,
+	8
+};
 /*
  * XXX these are the interface routines needed for table.c
  */
@@ -606,11 +626,186 @@ const struct rt_functab	*ftp;
 struct rt_db_internal	*intern;
 double			diameter;
 {
-	intern->idb_type = 0;
+	struct rt_binunif_internal *bip;
+
+	intern->idb_type = DB5_MINORTYPE_BINU_8BITINT;
 	intern->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
-	BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+	BU_ASSERT(&rt_functab[ID_BINUNIF] == ftp);
 
 	intern->idb_meth = ftp;
-	intern->idb_ptr = bu_calloc( ftp->ft_internal_size, 1, "rt_generic_make");
-	*((long *)(intern->idb_ptr)) = ftp->ft_internal_magic;
+	bip = (struct rt_binunif_internal *)bu_calloc( sizeof( struct rt_binunif_internal), 1,
+						       "rt_binunif_make");
+	intern->idb_ptr = (genptr_t) bip;
+	bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
+	bip->type = DB5_MINORTYPE_BINU_8BITINT;
+	bip->count = 0;
+	bip->u.int8 = NULL;
+}
+
+int
+rt_binunif_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr )
+{
+	register struct rt_binunif_internal *bip=(struct rt_binunif_internal *)intern->idb_ptr;
+	struct bu_external	ext;
+	Tcl_DString		ds;
+	struct bu_vls		vls;
+	int			status=TCL_OK;
+	int			i;
+	unsigned char		*c;
+
+	RT_CHECK_BINUNIF( bip );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL )
+	{
+		/* export the object to get machine independent form */
+		if( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL, intern->idb_minor_type ) ) {
+			bu_vls_strcpy( &vls, "Failed to export binary object!!\n" );
+			status = TCL_ERROR;
+		} else {
+			bu_vls_strcpy( &vls, "binunif" );
+			bu_vls_printf( &vls, " T %d D {", bip->type );
+			c = ext.ext_buf;
+			for( i=0 ; i<ext.ext_nbytes ; i++,c++ ) {
+				if( i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
+				bu_vls_printf( &vls, "%2.2x", *c );
+			}
+			bu_vls_strcat( &vls, "}" );
+			bu_free_external( &ext );
+		}
+
+	} else {
+		if( !strcmp( attr, "T" ) ) {
+			bu_vls_printf( &vls, "%d", bip->type );
+		} else if( !strcmp( attr, "D" ) ) {
+			/* export the object to get machine independent form */
+			if( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL,
+						intern->idb_minor_type ) ) {
+				bu_vls_strcpy( &vls, "Failed to export binary object!!\n" );
+				status = TCL_ERROR;
+			} else {
+				c = ext.ext_buf;
+				for( i=0 ; i<ext.ext_nbytes ; i++,c++ ) {
+					if( i != 0 && i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
+					bu_vls_printf( &vls, "%2.2x", *c );
+				}
+				bu_free_external( &ext );
+			}
+		} else {
+			bu_vls_printf( &vls, "Binary object has no attribute '%s'", attr );
+			status = TCL_ERROR;
+		}
+	}
+
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+
+	return( status );
+}
+
+int
+rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv )
+{
+	struct rt_binunif_internal *bip;
+	int i;
+
+	RT_CK_DB_INTERNAL( intern );
+	bip = (struct rt_binunif_internal *)intern->idb_ptr;
+	RT_CHECK_BINUNIF( bip );
+
+	while( argc >= 2 ) {
+		if( !strcmp( argv[0], "T" ) ) {
+			int new_type;
+
+			new_type = atoi( argv[1] );
+			if( new_type < 0 ||
+			    new_type > DB5_MINORTYPE_BINU_64BITINT ||
+			    binu_types[new_type] == NULL ) {
+				/* Illegal value for type */
+				Tcl_AppendResult( interp, "Illegal value for binary type: ", argv[1],
+						  (char *)NULL );
+				return TCL_ERROR;
+			} else {
+				if( bip->u.uint8 ) {
+					int new_count;
+					int old_byte_count, new_byte_count;
+					int remainder;
+
+					old_byte_count = bip->count * binu_sizes[bip->type];
+					new_count = old_byte_count / binu_sizes[new_type];
+					remainder = old_byte_count % binu_sizes[new_type];
+					if( remainder ) {
+						new_count++;
+						new_byte_count = new_count * binu_sizes[new_type];
+					} else {
+						new_byte_count = old_byte_count;
+					}
+
+					if( new_byte_count != old_byte_count ) {
+						bip->u.uint8 = bu_realloc( bip->u.uint8,
+									   new_byte_count,
+									   "new bytes for binunif" );
+						/* zero out the new bytes */
+						for( i=old_byte_count ; i<new_byte_count ; i++ ) {
+							bip->u.uint8[i] = 0;
+						}
+					}
+					bip->count = new_count;
+				}
+				bip->type = new_type;
+				intern->idb_type = new_type;
+			}
+		} else if( !strcmp( argv[0], "D" ) ) {
+			Tcl_Obj *obj, *list, **obj_array;
+			int list_len;
+			unsigned char *buf, *d;
+			char *s;
+			int hexlen;
+			unsigned int h;
+
+			obj = Tcl_NewStringObj( argv[1], -1 );
+			list = Tcl_NewListObj( 0, NULL );
+			Tcl_ListObjAppendList( interp, list, obj );
+			(void)Tcl_ListObjGetElements( interp, list, &list_len, &obj_array );
+
+			hexlen = 0;
+			for( i=0 ; i<list_len ; i++ ) {
+				hexlen += Tcl_GetCharLength( obj_array[i] );
+			}
+
+			if( hexlen % 2 ) {
+				Tcl_AppendResult( interp,
+				    "Hex form of binary data must have an even number of hex digits",
+				    (char *)NULL );
+				return TCL_ERROR;
+			}
+
+			buf = (unsigned char *)bu_malloc( hexlen / 2, "tcladjust binary data" );
+			d = buf;
+			for( i=0 ; i<list_len ; i++ ) {
+				s = Tcl_GetString( obj_array[i] );
+				while( *s ) {
+					sscanf( s, "%2x", &h );
+					*d++ = h;
+					s += 2;
+				}
+			}
+			Tcl_DecrRefCount( list );
+
+			if( bip->u.uint8 ) {
+				bu_free( bip->u.uint8, "binary data" );
+			}
+			bip->u.uint8 = buf;
+			bip->count = hexlen / 2 / binu_sizes[bip->type];
+		}
+
+		argc -= 2;
+		argv += 2;
+	}
+
+	return TCL_OK;
 }
