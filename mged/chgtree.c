@@ -293,7 +293,7 @@ char	**argv;
 }
 
 /* Remove an object or several from the description */
-/* Format: k object1 object2 .... objectn	*/
+/* Format: kill [-f] object1 object2 .... objectn	*/
 int
 f_kill( argc, argv )
 int	argc;
@@ -302,9 +302,16 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 	int	is_phony;
+	int	verbose = LOOKUP_NOISY;
+
+	if( argc > 1 && strcmp( argv[1], "-f" ) == 0 )  {
+		verbose = LOOKUP_QUIET;
+		argc--;
+		argv++;
+	}
 
 	for( i = 1; i < argc; i++ )  {
-		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )  {
+		if( (dp = db_lookup( dbip,  argv[i], verbose )) != DIR_NULL )  {
 			is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
 			eraseobj( dp );
 			/* eraseobj() does db_dirdelete() on phony entries, don't re-do. */
