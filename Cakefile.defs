@@ -459,7 +459,7 @@ set -S2 "/bin/sh"
 #	undef	sgi
 #	define	MTYPE	5d
 /*** WARNING WARNING:  *not* using -O2 on Irix 4.0.4 gives bad code ***/
-#	if 0
+#	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -482,11 +482,12 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	-L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
-#	if 1
+#	if 1	/* PRODUCTION=1 */
 /*		X11 for MGED */
 #		define	MGED_OBJS	dm-4d dm-X
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
+#		define	XMGED_OBJS	dm-4d dm-X Xmgl
 #		define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
 #		define	XMGED_LIBES	-lXirisw -lgl_s -lXm -lXt -lX11_s -lsun -lPW
 #	else
@@ -509,7 +510,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 5.0 */
 #	undef	sgi
 #	define	MTYPE	6d
-#	if 0
+#	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -549,6 +550,7 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-4d dm-X
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
+#	define	XMGED_OBJS	dm-4d dm-X Xmgl
 #	define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
 #	define	XMGED_LIBES	-lXirisw -lgl_s -lXm -lXt -lX11_s -lsun -lPW
 #	define	HAS_TCP	1
@@ -567,7 +569,7 @@ set -S2 "/bin/sh"
 #	define	BSD	42
 #	define	HAS_TCP	1
 /*	Select correct floating point flag, -fswitch if unsure */
-#	if 1
+#	if 1	/* PRODUCTION=1 */
 /*		Using the Sun Compiler (the default) */
 #		if 0
 /*			Generic unoptimized Sun configuration */
@@ -711,7 +713,7 @@ set -S2 "/bin/sh"
 #	define	XINCDIR		/usr/X11/include
 #	define	XLIBDIR		/usr/X11/lib
 
-#	if 0
+#	if 0	/* PRODUCTION=0 */
 /*		Bare Sun configuration */
 #		define	LIBFB_OBJS	if_remote if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
@@ -721,14 +723,14 @@ set -S2 "/bin/sh"
 #		define	MGED_CONFIG	-DDM_SUNPW
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #	else
-#		if 1
+#		if 1	/* PRODUCTION=1 */
 /*			Sun with X11 (aka "openwin") & Suntools.  Default for SunOS 4.1.1 */
 #			define	LIBFB_OBJS	if_remote if_ab if_X
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 				-I/usr/openwin/include -I''XINCDIR -DIF_X
 #			define	LIBFB_LIBES	LIBPKG \
 				-L/usr/openwin/lib -L''XLIBDIR -lX11
-#			if 1
+#			if 1	/* PRODUCTION=1 */
 /*				Sun with X11 only */
 #				define	MGED_OBJS	dm-X
 #				define	MGED_CONFIG	-DDM_X -I/usr/openwin/include -I''XINCDIR
@@ -752,6 +754,9 @@ set -S2 "/bin/sh"
 #			define	MGED_CONFIG	-DDM_X -I/usr/openwin/include -I''XINCDIR
 #			define	MGED_LIBES	-L/usr/openwin/lib -L''XLIBDIR -lX11
 #		endif
+#		define	XMGED_OBJS	dm-X Xmgl
+#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I''XINCDIR
+#		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lX11 -lPW
 #	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
