@@ -25,8 +25,8 @@ lib_LTLIBRARIES = \
 libtk_la_SOURCES =
 libtk_la_LDFLAGS = -version-info 19:1 -static
 
-# XXX tkPanedWindow.o is a hack to make the IRIX linker behave
-libtk_la_LIBADD = unix/libtku.la generic/libtkg.la generic/tkPanedWindow.o ${X_LIBS}
+# XXX tkPanedWindow.lo is a hack to make the IRIX linker behave
+libtk_la_LIBADD = unix/libtku.la generic/libtkg.la generic/tkPanedWindow.lo ${X_LIBS}
 
 libtk@TK_VERSION@_la_SOURCES = $(libtk_la_SOURCES)
 libtk@TK_VERSION@_la_LDFLAGS = $(libtk_la_LDFLAGS)
