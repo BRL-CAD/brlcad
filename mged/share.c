@@ -83,9 +83,9 @@ void free_all_resources();
  *
  * DESCRIPTION
  *	Provides a mechanism to (un)share resources among display managers.
- *	Currently, there are eight different resources that can be shared.
- *	They are as follows:
- *		ADC AXES COLOR_SCHEMES GRID MENU MGED_VARIABLES RUBBER_BAND VIEW
+ *	Currently, there are nine different resources that can be shared.
+ *	They are:
+ *		ADC AXES COLOR_SCHEMES DISPLAY_LISTS GRID MENU MGED_VARIABLES RUBBER_BAND VIEW
  *
  * EXAMPLES
  *	share res_type p1 p2	--->	causes 'p1' to share its resource of type 'res_type' with 'p2'
@@ -218,7 +218,8 @@ char **argv;
     break;
   case 'v':
   case 'V':
-    if (argv[1][1] == 'a' || argv[1][1] == 'A')
+    if ((argv[1][1] == 'a' || argv[1][1] == 'A') &&
+	(argv[1][2] == 'r' || argv[1][2] == 'R'))
       SHARE_RESOURCE(uflag,_mged_variables,dml_mged_variables,mv_rc,dlp1,dlp2,vls,"share: mged_variables")
     else if (argv[1][1] == 'i' || argv[1][1] == 'I') {
       if (uflag) {
@@ -285,19 +286,19 @@ char    **argv;
 
   /* print values for all resources */
   if (argc == 1) {
-    mged_vls_struct_parse(&vls, "Axes", axes_vparse,
+    mged_vls_struct_parse(&vls, "Axes, res_type - ax", axes_vparse,
 			  (CONST char *)axes_state, argc, argv);
     bu_vls_printf(&vls, "\n");
-    mged_vls_struct_parse(&vls, "Color Schemes", color_scheme_vparse,
+    mged_vls_struct_parse(&vls, "Color Schemes, res_type - c", color_scheme_vparse,
 			  (CONST char *)color_scheme, argc, argv);
     bu_vls_printf(&vls, "\n");
-    mged_vls_struct_parse(&vls, "Grid", grid_vparse,
+    mged_vls_struct_parse(&vls, "Grid, res_type - g", grid_vparse,
 			  (CONST char *)grid_state, argc, argv);
     bu_vls_printf(&vls, "\n");
-    mged_vls_struct_parse(&vls, "Rubber Band", rubber_band_vparse,
+    mged_vls_struct_parse(&vls, "Rubber Band, res_type - r", rubber_band_vparse,
 			  (CONST char *)rubber_band, argc, argv);
     bu_vls_printf(&vls, "\n");
-    mged_vls_struct_parse(&vls, "mged variables", mged_vparse,
+    mged_vls_struct_parse(&vls, "MGED Variables, res_type - var", mged_vparse,
 			  (CONST char *)mged_variables, argc, argv);
 
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -332,10 +333,6 @@ char    **argv;
     mged_vls_struct_parse(&vls, "Grid", grid_vparse,
 			  (CONST char *)grid_state, argc-1, argv+1);
     break;
-  case 'm':
-  case 'M':
-    bu_vls_printf(&vls, "rset: no support available for the 'menu' resource");
-    break;
   case 'r':
   case 'R':
     mged_vls_struct_parse(&vls, "Rubber Band", rubber_band_vparse,
@@ -343,7 +340,8 @@ char    **argv;
     break;
   case 'v':
   case 'V':
-    if (argv[1][1] == 'a' || argv[1][1] == 'A')
+    if ((argv[1][1] == 'a' || argv[1][1] == 'A') &&
+	(argv[1][2] == 'r' || argv[1][2] == 'R'))
       mged_vls_struct_parse(&vls, "mged variables", mged_vparse,
 				(CONST char *)mged_variables, argc-1, argv+1);
     else if (argv[1][1] == 'i' || argv[1][1] == 'I')
