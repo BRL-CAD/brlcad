@@ -76,6 +76,7 @@ struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
 
 int		dmaflag;		/* Set to 1 to force new screen DMA */
 double		frametime = 1.0;	/* time needed to draw last frame */
+mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
@@ -208,6 +209,7 @@ char **argv;
 	mat_idn( Viewrot );
 	mat_idn( toViewcenter );
 	mat_idn( modelchanges );
+	mat_idn( ModelDelta );
 
 	new_mats();
 
@@ -531,16 +533,19 @@ printf("cmd: %s", rt_vls_addr(&cmd) );
 		slewview( knobvec );
 	}
 	if( rateflag_zoom )  {
+		fastf_t	factor;
 #define MINVIEW		0.001	/* smallest view.  Prevents runaway zoom */
 
-		Viewscale *= 1.0 - (dm_values.dv_zoom / 10);
+		factor = 1.0 - (dm_values.dv_zoom / 10);
+		Viewscale *= factor;
 		if( Viewscale < MINVIEW )
 			Viewscale = MINVIEW;
 		else  {
 			non_blocking++;
 		}
-		new_mats();
+		ModelDelta[15] /= factor;
 		dmaflag = 1;
+		new_mats();
 	}
 
 	/* Keep a copy of knob values, for later comparison */
@@ -571,7 +576,14 @@ refresh()
 	 * Otherwise, we are happy with the view we have
 	 */
 	if( dmaflag )  {
+		double	this_time;
+
 		rt_prep_timer();
+
+#if 0
+		/* XXX should check a "set" variable */
+		target_frame();
+#endif
 
 		dmp->dmr_prolog();	/* update displaylist prolog */
 
@@ -590,8 +602,12 @@ refresh()
 
 		dmp->dmr_epilog();
 
-		frametime = rt_read_timer( (char *)0, 0 );
-		if( frametime <= 1.0e-5 )  frametime = 0.01;	/* 100 fps */
+		this_time = rt_read_timer( (char *)0, 0 );
+		/* Only use reasonable measurements */
+		if( this_time > 1.0e-5 )  {
+			/* Smoothly transition to new speed */
+			frametime = 0.9 * frametime + 0.1 * this_time;
+		}
 	} else {
 		/* For displaylist machines??? */
 		dmp->dmr_prolog();	/* update displaylist prolog */
@@ -632,6 +648,12 @@ double	xangle, yangle, zangle;
 
 	mat_mul( temp, newrot, Viewrot );
 	mat_copy( Viewrot, temp );
+	{
+		mat_t	newinv;
+		mat_inv( newinv, newrot );
+		mat_mul( temp, newinv, ModelDelta );
+		mat_copy( ModelDelta, temp );
+	}
 	new_mats();
 }
 
@@ -661,12 +683,22 @@ void
 slewview( view_pos )
 vect_t view_pos;
 {
-	static vect_t model_pos;
+	point_t	old_model_center;
+	point_t	new_model_center;
+	vect_t	diff;
+	mat_t	delta;
+	mat_t	temp;
 
-	MAT4X3PNT( model_pos, view2model, view_pos );
-	toViewcenter[MDX] = -model_pos[X];
-	toViewcenter[MDY] = -model_pos[Y];
-	toViewcenter[MDZ] = -model_pos[Z];
+	MAT_DELTAS_GET_NEG( old_model_center, toViewcenter );
+
+	MAT4X3PNT( new_model_center, view2model, view_pos );
+	MAT_DELTAS_VEC_NEG( toViewcenter, new_model_center );
+
+	VSUB2( diff, new_model_center, old_model_center );
+	mat_idn( delta );
+	MAT_DELTAS_VEC( delta, diff );
+	mat_mul( temp, delta, ModelDelta );
+	mat_copy( ModelDelta, temp );
 	new_mats();
 }
 
@@ -856,3 +888,118 @@ void memcpy(to,from,cnt)
 }
 #endif
 
+#define MAX_TRAIL	32
+struct trail {
+	int	cur_index;	/* index of first free entry */
+	int	nused;		/* max index in use */
+	point_t	pt[MAX_TRAIL];
+}
+
+init_trail(tp)
+struct trail	*tp;
+{
+	tp->cur_index = 0;
+	tp->nused = 0;
+}
+
+/*
+ *  Add a new point to the end of the trail.
+ */
+push_trail(tp, pt)
+struct trail	*tp;
+point_t		pt;
+{
+	VMOVE( tp->pt[tp->cur_index], pt );
+	if( tp->cur_index >= tp->nused )  tp->nused++;
+	tp->cur_index++;
+	if( tp->cur_index >= MAX_TRAIL )  tp->cur_index = 0;
+}
+
+/*
+ *  Draw from the most recently added point, backwards.
+ */
+draw_trail(vhead, tp)
+struct rt_list	*vhead;
+struct trail	*tp;
+{
+	int	i;
+	int	todo = tp->nused;
+
+	RT_LIST_INIT( vhead );
+	if( tp->nused <= 0 )  return;
+	if( (i = tp->cur_index-1) < 0 )  i = tp->nused-1;
+	for( ; todo > 0; todo-- )  {
+		if( todo == tp->nused )  {
+			RT_ADD_VLIST( vhead, tp->pt[i], RT_VLIST_LINE_MOVE );
+		}  else  {
+			RT_ADD_VLIST( vhead, tp->pt[i], RT_VLIST_LINE_DRAW );
+		}
+		if( (--i) < 0 )  i = tp->nused-1;
+	}
+}
+
+static struct trail	ll;
+static struct trail	ul;
+static struct trail	lr;
+static struct trail	ur;
+
+target_frame()
+{
+	int	i;
+	int	fps;
+	int	nframes;
+	mat_t	dest;
+	mat_t	temp;
+	point_t	v;		/* view coords */
+	point_t	m;		/* model coords */
+	struct rt_list	vhead;
+	struct rt_list	trail;
+
+	fps = (int)(1.0 / frametime);
+	if( fps < 1 )  fps = 1;
+
+	/* Advance one second into the future */
+	nframes = fps * 1;
+
+	/* Build view2model matrix for the future time */
+/*mat_print("ModelDelta", ModelDelta);*/
+	mat_copy( dest, view2model );
+	for( i=0; i < nframes; i++ )  {
+		mat_mul( temp, ModelDelta, dest );
+		mat_copy( dest, temp );
+	}
+
+	/* Draw frame. */
+#define TF_VL( x, y, z, op ) \
+	VSET( v, x, y, z ); \
+	MAT4X3PNT( m, dest, v ); \
+	RT_ADD_VLIST( &vhead, m, op );
+
+	RT_LIST_INIT( &vhead );
+	TF_VL( -0.1, -0.1, 0.9, RT_VLIST_LINE_MOVE );
+	push_trail( &ll, m );
+	TF_VL(  0.1, -0.1, 0.9, RT_VLIST_LINE_DRAW );
+	push_trail( &lr, m );
+	TF_VL(  0.1,  0.1, 0.9, RT_VLIST_LINE_DRAW );
+	push_trail( &ur, m );
+	TF_VL( -0.1,  0.1, 0.9, RT_VLIST_LINE_DRAW );
+	push_trail( &ul, m );
+	TF_VL( -0.1, -0.1, 0.9, RT_VLIST_LINE_DRAW );
+
+	invent_solid( "_TARGET_FRAME_", &vhead, 0x00FFFFFFL );
+
+	draw_trail( &trail, &ll );
+	invent_solid( "_TARGET_TRAIL_LL_", &trail, 0x00FF00FFL );
+
+	draw_trail( &trail, &lr );
+	invent_solid( "_TARGET_TRAIL_LR_", &trail, 0x0000FFFFL );
+
+	draw_trail( &trail, &ur );
+	invent_solid( "_TARGET_TRAIL_UR_", &trail, 0x00FF00FFL );
+
+	draw_trail( &trail, &ul );
+	invent_solid( "_TARGET_TRAIL_UL_", &trail, 0x0000FFFFL );
+
+	/* Done */
+	mat_idn( ModelDelta );
+}
