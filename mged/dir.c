@@ -912,7 +912,7 @@ char	**argv;
 	for(i = 2; i < argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
-		db_functree( dbip, dp, node_write, node_write, (genptr_t)keepfp );
+		db_functree( dbip, dp, node_write, node_write, &rt_uniresource, (genptr_t)keepfp );
 	}
 
 	wdb_close(keepfp);
@@ -1376,7 +1376,7 @@ f_killtree(
 	for(i=1; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY) ) == DIR_NULL )
 			continue;
-		db_functree( dbip, dp, killtree, killtree, (genptr_t)interp );
+		db_functree( dbip, dp, killtree, killtree, &rt_uniresource, (genptr_t)interp );
 	}
 
 	(void)signal( SIGINT, SIG_IGN );
