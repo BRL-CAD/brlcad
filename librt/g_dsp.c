@@ -3511,6 +3511,7 @@ rt_dsp_import5( ip, ep, mat, dbip )
     cp++;
 
     dsp_ip->dsp_cuttype = *cp;
+    cp++;
 
     /* convert name of data location */
     bu_vls_init( &dsp_ip->dsp_name );
