@@ -18,12 +18,9 @@
  *
  *  refer to the Users Manuals to reconfigure your kernel..
  *
- *  There are 4 different Frame Buffer types supported on the 4D/60T or 4D/70
- *  set your environment FB_FILE to the appropriate Frame buffer type
- *	/dev/sgi0 	Transient window private memory
- *	/dev/sgi1	Transient window shared memory ( default )
- *	/dev/sgi2	Lingering window private memory
- *	/dev/sgi3	Lingering window shared memory
+ *  There are different Frame Buffer types supported on the 4D/60T or 4D/70
+ *  set your environment FB_FILE to the appropriate Frame buffer type.
+ *  See the "fbhelp" table, at the end of this module.
  *
  *  Authors -
  *	Paul R. Stay
@@ -151,6 +148,8 @@ struct gtinfo {
 	int	mi_shmid;
 	int	mi_memwidth;		/* width of scanline in if_mem */
 	long	mi_der1;		/* Saved DE_R1 */
+	short	mi_xoff;		/* X viewport offset, rel. window */
+	short	mi_yoff;		/* Y viewport offset, rel. window */
 };
 #define	GT(ptr)	((struct gtinfo *)((ptr)->u1.p))
 #define	GTL(ptr)	((ptr)->u1.p)		/* left hand side version */
@@ -357,7 +356,7 @@ success:
 		gt_cmwrite( ifp, COLORMAP_NULL );
 	return(0);
 fail:
-	fb_log("gt_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_4d.c for details\n");
+	fb_log("gt_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_gt.c for details\n");
 	if( (sp = malloc( size )) == NULL )  {
 		fb_log("gt_getmem:  malloc failure\n");
 		return(-1);
@@ -449,7 +448,10 @@ register FBIO	*ifp;
 	cpack(0x00000000);	/* clear to black first */
 	clear();
 
-	rectcopy( xmin, ymin, xmax, ymax, xscroff, yscroff);
+	/* All coordinates are window-relative, not viewport-relative */
+	rectcopy( xmin+GT(ifp)->mi_xoff, ymin+GT(ifp)->mi_yoff,
+		xmax+GT(ifp)->mi_xoff, ymax+GT(ifp)->mi_yoff,
+		xscroff+GT(ifp)->mi_xoff, yscroff+GT(ifp)->mi_yoff );
 
  	swapbuffers();	 
 
@@ -521,7 +523,7 @@ int	width, height;
 					}
 				}
 				if( mfp->c == '\0' && *cp != '-' ) {
-					fb_log( "if_4d: unknown option '%c' ignored\n", *cp );
+					fb_log( "if_gt: unknown option '%c' ignored\n", *cp );
 				}
 				cp++;
 			}
@@ -636,6 +638,7 @@ int	width, height;
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		GT(ifp)->mi_curs_on = 1;	/* Mex usually has it on */
 	}  else  {
+		/* MODE_3MASK == MODE_3FULLSCR */
 		prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
 		GT(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	}
@@ -746,25 +749,12 @@ int	width, height;
 	RGBmode();
 	doublebuffer();
 	gconfig();	/* Must be called after doublebuffer().	*/
-			/* Need to clean out images from windows below */
-			/* This hack is necessary until windows persist from
-			 * process to process */
 
-	/* In full screen mode, center the image on the
-	 * usable part of the screen, either high-res, or NTSC
-	 */
-	if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
-		int	xleft, ybot;
-		xleft = (ifp->if_max_width)/2 - ifp->if_width/2;
-		ybot = (ifp->if_max_height)/2 - ifp->if_height/2;
-		viewport( xleft, xleft + ifp->if_width,
-			  ybot, ybot + ifp->if_height );
-		ortho2( (Coord)0, (Coord)ifp->if_width,
-			(Coord)0, (Coord)ifp->if_height );
-		/* set input focus to current window, so that
-		 * we can manipulate the cursor icon */
-		winattach();
-	}
+	/* Need to clean out images from windows below */
+	RGBcolor( (short)0, (short)0, (short)0 );
+	clear();
+	swapbuffers();
+	clear();
 
 	/* Must initialize these window state variables BEFORE calling
 		"gt_getmem", because this function can indirectly trigger
@@ -775,7 +765,34 @@ int	width, height;
 	GT(ifp)->mi_yzoom = 1;	/* for zoom fakeout */
 	GT(ifp)->mi_xcenter = width/2;
 	GT(ifp)->mi_ycenter = height/2;
+	GT(ifp)->mi_xoff = 0;
+	GT(ifp)->mi_yoff = 0;
 
+	/*
+	 *  In full screen mode, center the image on the screen.
+	 *  For the GT machines, this is done via mi_xoff, rather
+	 *  than with viewport/ortho2 calls, because lrectwrite()
+	 *  uses window-relative, NOT viewport-relative addresses.
+	 */
+	if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
+		int	xleft, ybot;
+
+		xleft = (ifp->if_max_width)/2 - ifp->if_width/2;
+		ybot = (ifp->if_max_height)/2 - ifp->if_height/2;
+		/* These may be necessary for cursor aiming? */
+		viewport( xleft, xleft + ifp->if_width,
+			  ybot, ybot + ifp->if_height );
+		ortho2( (Coord)0, (Coord)ifp->if_width,
+			(Coord)0, (Coord)ifp->if_height );
+		/* The real secret:  used to modify args to lrectwrite() */
+		GT(ifp)->mi_xoff = xleft;
+		GT(ifp)->mi_yoff = ybot;
+		/* set input focus to current window, so that
+		 * we can manipulate the cursor icon */
+		winattach();
+	}
+
+	/* Attach to shared memory, potentially with a screen repaint */
 	if( gt_getmem(ifp) < 0 )
 		return(-1);
 
@@ -1097,14 +1114,12 @@ register int	count;
 	cp = (unsigned char *)(pixelp);
 
 	zdraw(TRUE);
-
-
 	if ( !ifp->if_zoomflag )
 	{
 		backbuffer(TRUE);
-		frontbuffer(TRUE);
-	} else
-	{
+		frontbuffer(TRUE);/* ??? could this be a performance problem??? */
+		/* This seems to force lrectwrite to send 3 copies */
+	} else {
 		backbuffer(FALSE);
 		frontbuffer(FALSE);
 	}
@@ -1176,7 +1191,10 @@ register int	count;
 			}
 		}
 
-		lrectwrite(xmem,ymem, xmem+scan_count, ymem, gt_scan);
+		/* Addresses are relative to window, not current viewport! */
+		lrectwrite( xmem+GT(ifp)->mi_xoff, ymem+GT(ifp)->mi_yoff,
+			xmem+GT(ifp)->mi_xoff+scan_count, ymem+GT(ifp)->mi_yoff,
+			gt_scan);
 		ret += scan_count;
 		count -= scan_count;
 		xmem = 0;
@@ -1189,6 +1207,7 @@ register int	count;
 
 	if ( ifp->if_zoomflag )
 	{
+		/* When zoomed, this causes the whole screen to repaint */
 		gt_repaint( ifp );
 	}
 
@@ -1389,7 +1408,7 @@ int	x, y;
  *			M P W _ I N Q U E U E
  *
  *  Called when a qtest() indicates that there is a window event.
- *  Process all events, so that we don't loop on recursion to sgw_bwrite.
+ *  Process all events, so that we don't loop on recursion to gt_bwrite.
  */
 _LOCAL_ void
 mpw_inqueue(ifp)
@@ -1472,7 +1491,10 @@ FBIO * ifp;
 				mp++;
 			}
 		}
-		lrectwrite(0,i, ifp->if_width-1, i, gt_scan);
+		/* Addresses are relative to window, not current viewport! */
+		lrectwrite( GT(ifp)->mi_xoff+0, i+GT(ifp)->mi_yoff,
+			GT(ifp)->mi_xoff+ifp->if_width-1, i+GT(ifp)->mi_yoff,
+			gt_scan);
 	}
 	zdraw(FALSE);
 }
