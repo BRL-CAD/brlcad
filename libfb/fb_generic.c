@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 
 extern char *getenv();
+static int totally_numeric();
 
 /*
  * Disk interface enable flag.  Used so the the remote daemon
@@ -74,11 +75,12 @@ extern FBIO X_interface;
 extern FBIO ptty_interface;
 #endif
 #ifdef IF_AB
-extern FBIO	abekas_interface;
+extern FBIO abekas_interface;
 #endif
 
 /* Always included */
 extern FBIO debug_interface, disk_interface, stk_interface;
+extern FBIO memory_interface, null_interface;
 
 /* First element of list is default device when no name given */
 static
@@ -110,6 +112,8 @@ FBIO *_if_list[] = {
 	&ptty_interface,
 #endif
 	&stk_interface,
+	&memory_interface,
+	&null_interface,
 	(FBIO *) 0
 };
 
@@ -154,9 +158,16 @@ int	width, height;
 		i++;
 	}
 	/* Not in list, check special interfaces or disk files */
+	/* "/dev/" protection! */
+	if( strncmp(file, "/dev/", 5) == 0 ) {
+		fb_log(	"fb_open: no such device \"%s\".\n", file );
+		free( (void *) ifp );
+		return	FBIO_NULL;
+	}
 #ifdef IF_REMOTE
-	if( strchr( file, ':' ) != NULL ) {
-		/* We have a remote file name of the form <host>:<file>.*/
+	if( totally_numeric(file) || strchr( file, ':' ) != NULL ) {
+		/* We have a remote file name of the form <host>:<file>
+		 * or a port number (which assumes localhost) */
 		*ifp = remote_interface;
 		goto found_interface;
 	}
@@ -165,7 +176,7 @@ int	width, height;
 	if( _disk_enable ) {
 		*ifp = disk_interface;
 	} else {
-		fb_log(	"fb_open : no such device \"%s\".\n", file );
+		fb_log(	"fb_open: no such device \"%s\".\n", file );
 		free( (void *) ifp );
 		return	FBIO_NULL;
 	}
@@ -182,8 +193,8 @@ found_interface:
 	}
 	(void) strcpy( ifp->if_name, file );
 
-	if( (*ifp->if_dopen)( ifp, file, width, height ) == -1 )  {
-		fb_log(	"fb_open : can not open device \"%s\".\n", file );
+	if( (*ifp->if_open)( ifp, file, width, height ) == -1 )  {
+		fb_log(	"fb_open: can not open device \"%s\".\n", file );
 		free( (void *) ifp->if_name );
 		free( (void *) ifp );
 		return	FBIO_NULL;
@@ -195,9 +206,9 @@ int
 fb_close( ifp )
 FBIO	*ifp;
 {
-	fb_flush( ifp );
-	if( (*ifp->if_dclose)( ifp ) == -1 )  {
-		fb_log(	"Can not close device \"%s\".\n", ifp->if_name );
+	_fb_pgflush( ifp );
+	if( (*ifp->if_close)( ifp ) == -1 )  {
+		fb_log(	"fb_close: can not close device \"%s\".\n", ifp->if_name );
 		return	-1;
 	}
 	if( ifp->if_pbase != PIXEL_NULL )
@@ -237,4 +248,21 @@ fb_genhelp()
 	}
 
 	return	0;
+}
+
+/* True if the non-null string s is all digits */
+static int
+totally_numeric( s )
+register char *s;
+{
+	if( s == (char *)0 || *s == 0 )
+		return	0;
+
+	while( *s ) {
+		if( *s < '0' || *s > '9' )
+			return 0;
+		s++;
+	}
+
+	return 1;
 }
