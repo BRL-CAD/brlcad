@@ -57,13 +57,13 @@ void describe_president (void *v)
 
     if (*((long *)(p)) != (RECORD_MAGIC))
     {
-	fprintf(stderr,
+	rt_log(
 	    "Error: Bad %s pointer x%x s/b x%x was x%x, file %s, line %d\n", \
 	    "president record", p, RECORD_MAGIC, *((long *)(p)),
 	    __FILE__, __LINE__);
 	exit (0);
     }
-    fprintf(stderr, "%-16s %-16s %s\n",
+    rt_log("%-16s %-16s %s\n",
 	p -> last, p -> first,
 	(p -> party == DEMOCRAT) ? "Democrat" :
 	(p -> party == REPUBLICAN) ? "Republican" :
@@ -75,7 +75,7 @@ void print_last_name (void *v)
 {
     record	*p = v;
 
-    fprintf(stderr, "%-16s\n", p -> last);
+    rt_log("%-16s\n", p -> last);
 }
 
 /* 
@@ -121,12 +121,12 @@ main ()
 	fputs("rb_create() bombed\n", stderr);
 	exit (1);
     }
-    rb_install_print(tree, print_last_name);
+    tree -> rbt_print = print_last_name;
 
     for (i = 0; i < nm_presidents - 1; ++i)
 	rb_insert(tree, (void *) &(pres[i]));
     
-    fprintf(stderr, "Before we begin...\n");
+    rt_log("Before we begin...\n");
     rb_diagnose_tree(tree, ORDER_LASTNAME);
     rb_diagnose_tree(tree, ORDER_FIRSTNAME);
     rb_diagnose_tree(tree, ORDER_PARTY);
@@ -143,14 +143,14 @@ main ()
     if (r != NULL)
 	rb_delete(tree, ORDER_LASTNAME);
 
-    fprintf(stderr, "After deleting Reagan, Nixon, and Roosevelt...\n");
+    rt_log("After deleting Reagan, Nixon, and Roosevelt...\n");
     rb_diagnose_tree(tree, ORDER_LASTNAME);
     rb_diagnose_tree(tree, ORDER_FIRSTNAME);
     rb_diagnose_tree(tree, ORDER_PARTY);
     
     rb_insert(tree, (void *) &(pres[nm_presidents - 1]));
 
-    fprintf(stderr, "After inserting Clinton...\n");
+    rt_log("After inserting Clinton...\n");
     rb_diagnose_tree(tree, ORDER_LASTNAME);
     rb_diagnose_tree(tree, ORDER_FIRSTNAME);
     rb_diagnose_tree(tree, ORDER_PARTY);
