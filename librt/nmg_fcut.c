@@ -1896,6 +1896,10 @@ rt_log("force next eu to ray\n");
 		NMG_CK_LOOPUSE(lu);
 		prev_vu = rs->vu[pos-1];
 		NMG_CK_VERTEXUSE(prev_vu);
+		prev_lu = nmg_lu_of_vu( prev_vu );
+		if( prev_lu != lu )  rt_bomb("nmg_face_state_transition: prev_vu not on same loop\n");
+/* XXX sometimes up is a vu */
+		if( *prev_vu->up.magic_p != NMG_MAGIC_EDGEUSE )  rt_bomb("nmg_face_state_transition: prev_vu->up is not an edge\n");
 		eu = prev_vu->up.eu_p;
 		NMG_CK_EDGEUSE(eu);
 		e_assessment = nmg_assess_eu( eu, 1, rs, pos-1 );	/* forw */
