@@ -93,6 +93,13 @@ dotitles()
 	dmp->dmr_2d_line(XLIM, YPOS, XLIM, 2047, 0);
 #undef YPOS
 
+#ifdef never
+	/* QUESTIONABLE use of machine */
+	/* print region default code numbers */
+	(void)sprintf( &linebuf[0], " Next Region:   item=%d  air=%d  mat=%d  los=%d",
+			item_default,air_default,mat_default,los_default);
+	dmp->dmr_puts(&linebuf[0], TITLE_XBASE, TITLE_YBASE - 3*TEXT1_DY/2, 1, DM_YELLOW);
+#endif
 	/*
 	 * Print information about object illuminated
 	 */
