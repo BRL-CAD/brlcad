@@ -451,7 +451,66 @@ struct rt_tol		*tol;
 	RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
 	return(0);
 }
+/*
+ *			H A L F _ X F O R M
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	success
+ */
+int
+rt_hlf_xform(op, mat, ip, free)
+struct rt_db_internal	*op;
+CONST mat_t		mat;
+struct rt_db_internal *ip;
+CONST int	free;
+{
+	struct rt_half_internal *hip, *hop;
+	point_t			orig_pt, pt;
+	register double		f,t;
 
+	RT_CK_DB_INTERNAL( ip );
+	hip = (struct rt_half_internal *)ip->idb_ptr;
+	RT_HALF_CK_MAGIC(hip);
+	RT_CK_DB_INTERNAL( op );
+	hop = (struct rt_half_internal *)op->idb_ptr;
+	RT_HALF_CK_MAGIC(hop);
+
+	/* Pick a point on the original halfspace */
+	VSCALE( orig_pt, hip->eqn, hip->eqn[1*ELEMENTS_PER_VECT] );
+
+	/* Transform the picked point and the normal */
+	MAT4X3VEC( hop->eqn, mat, hip->eqn);
+	MAT4X3PNT( pt, mat, orig_pt);
+
+	/*
+	 * We are done with the input solid so free it if required.
+	 */
+	if (free && ip != op) {
+		rt_functab[ip->idb_type].ft_ifree( ip );
+		ip->idb_ptr = (genptr_t) 0;
+	}
+	/*
+	 * The transformed normal is all that is required.
+	 * The new distance is found from the transforemd point on the plane.
+	 */
+	hop->eqn[3] = VDOT( pt, hop->eqn );
+
+	/* Now some safety.  Verify that the normal has unit length */
+	f = MAGNITUDE( hop->eqn);
+	if ( f < SMALL ) {
+		rt_log("rt_half_xform: bad normal, len = %g\n", f);
+		return(-1);
+	}
+	t = f - 1.0;
+	if ( !NEAR_ZERO( t, 0.001 ) ) {
+		/* Restore normal to unit length */
+		f = 1/f;
+		VSCALE( hop->eqn, hop->eqn, f );
+		hip->eqn[3] *= f;
+	}
+	return 0;
+}
 /*
  *			H A L F _ I M P O R T
  *
