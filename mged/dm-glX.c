@@ -50,6 +50,7 @@
 #include "externs.h"
 #include "vmath.h"
 #include "mater.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -231,7 +232,7 @@ do_fog()
 	dmaflag = 1;
 }
 
-struct structparse Ogl_vparse[] = {
+struct bu_structparse Ogl_vparse[] = {
 	{
 		"%d",  1, "depthcue",		(int)&cueing_on,	Ogl_colorchange 	},
 	{
@@ -2020,16 +2021,16 @@ char	**argv;
 	bu_vls_init(&vls);
 	if( argc < 2 )  {
 		/* Bare set command, print out current settings */
-		rt_structprint("dm_gl internal variables", Ogl_vparse, (char *)0 );
+		bu_structprint("dm_gl internal variables", Ogl_vparse, (char *)0 );
 		bu_log("%s", bu_vls_addr(&vls) );
 	} else if( argc == 2 ) {
-	        rt_vls_name_print( &vls, Ogl_vparse, argv[1], (char *)0 );
+	        bu_vls_name_print( &vls, Ogl_vparse, argv[1], (char *)0 );
 		bu_log( "%s\n", bu_vls_addr(&vls) );
   	} else {
 	        bu_vls_printf( &vls, "%s=\"", argv[1] );
 	        bu_vls_from_argv( &vls, argc-2, argv+2 );
 		bu_vls_putc( &vls, '\"' );
-		rt_structparse( &vls, Ogl_vparse, (char *)0 );
+		bu_structparse( &vls, Ogl_vparse, (char *)0 );
 	}
 	bu_vls_free(&vls);
 	return CMD_OK;

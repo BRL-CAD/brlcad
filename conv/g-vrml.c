@@ -44,6 +44,7 @@ static char RCSid[] = "$Header$";
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"

@@ -48,6 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -230,7 +231,7 @@ refresh_hook()
 }
 
 #define IR_MV_O(_m) offsetof(struct modifiable_ir_vars, _m)
-struct structparse Ir_vparse[] = {
+struct bu_structparse Ir_vparse[] = {
 	{"%d",  1, "depthcue",		IR_MV_O(cueing_on),	Ir_colorchange },
 	{"%d",  1, "zclip",		IR_MV_O(zclipping_on),	refresh_hook },
 	{"%d",  1, "zbuffer",		IR_MV_O(zbuffer_on),	establish_zbuffer },
@@ -2858,7 +2859,7 @@ char	**argv;
 	        bu_vls_printf( &vls, "%s=\"", argv[1] );
 	        bu_vls_from_argv( &vls, argc-2, argv+2 );
 		bu_vls_putc( &vls, '\"' );
-		rt_structparse( &vls, Ir_vparse, (char *)&mvars );
+		bu_structparse( &vls, Ir_vparse, (char *)&mvars );
 	}
 
 	bu_vls_free(&vls);

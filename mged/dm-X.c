@@ -42,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vmath.h"
 #include "mater.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -147,7 +148,7 @@ struct x_vars {
 };
 
 #define X_MV_O(_m) offsetof(struct modifiable_x_vars, _m)
-struct structparse X_vparse[] = {
+struct bu_structparse X_vparse[] = {
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
   {"%d",  1, "debug",             X_MV_O(debug),            FUNC_NULL },
@@ -1136,7 +1137,7 @@ char *argv[];
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      rt_structprint("dm_X internal variables", X_vparse,
+      bu_structprint("dm_X internal variables", X_vparse,
 		     (CONST char *)&((struct x_vars *)dm_vars)->mvars );
     } else if( argc == 2 ) {
       rt_vls_name_print( &vls, X_vparse, argv[1],
@@ -1146,7 +1147,7 @@ char *argv[];
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
       bu_vls_putc( &vls, '\"' );
-      rt_structparse( &vls, X_vparse, (char *)&((struct x_vars *)dm_vars)->mvars);
+      bu_structparse( &vls, X_vparse, (char *)&((struct x_vars *)dm_vars)->mvars);
     }
 
     bu_vls_free(&vls);
