@@ -498,22 +498,59 @@ struct fu_pt_info *fpi;
 
 	/* compute in/out based upon closest element */
 	if (*fpi->closest == NMG_EDGEUSE_MAGIC) {
+		struct faceuse *fu;
+		struct edgeuse *eu1;
+
 		/* PCA along span of edgeuse */
 		eu = (struct edgeuse *)fpi->closest;
-
-		if( nmg_find_eu_leftvec( left, eu ) < 0 ) {
-			rt_log("%s[line:%d]: bad LEFT vector\n",
+		fu = nmg_find_fu_of_eu( eu );
+		if( !fu )
+		{
+			rt_log("%s[line:%d]: deduce_pt_class: eu not in a fu\n",
 				__FILE__,__LINE__);
 			rt_bomb("");
 		}
-		/* form vector "vupt" from vu to pt, if VDOT(vupt, left)
-		 * is less than 0, pt is on "outside" of edge.
+
+		/* default is point is outside */
+		fpi->pt_class = NMG_CLASS_AoutB;
+
+		/* check all uses of this edge in this fu,
+		 * if any say point is "in", then it must be "in"
 		 */
-		VSUB2(vupt_v, fpi->pt, eu->vu_p->v_p->vg_p->coord);
-		if (VDOT(vupt_v, left) >= 0.0)
-			fpi->pt_class = NMG_CLASS_AinB;
-		else
-			fpi->pt_class = NMG_CLASS_AoutB;
+		eu1 = eu;
+		do
+		{
+			struct edgeuse *next_eu;
+
+			next_eu = eu1->radial_p->eumate_p;
+			/* make sure we stay in this fu */
+			if( nmg_find_fu_of_eu( eu1 ) != fu )
+			{
+				if( nmg_find_fu_of_eu( eu1->eumate_p ) == fu )
+					eu1 = eu1->eumate_p;
+				else
+				{
+					eu1 = next_eu;
+					continue;
+				}
+			}
+			if( nmg_find_eu_leftvec( left, eu1 ) < 0 ) {
+				rt_log("%s[line:%d]: bad LEFT vector\n",
+					__FILE__,__LINE__);
+				rt_bomb("");
+			}
+			/* form vector "vupt" from vu to pt, if VDOT(vupt, left)
+			 * is less than 0, pt is on "outside" of edge.
+			 */
+			VSUB2(vupt_v, fpi->pt, eu1->vu_p->v_p->vg_p->coord);
+			if (VDOT(vupt_v, left) >= 0.0)
+			{
+				fpi->pt_class = NMG_CLASS_AinB;
+				break;
+			}
+
+			eu1 = next_eu;
+		} while( eu1 != eu && eu1 != eu->eumate_p );
 
 	} else if (*fpi->closest == NMG_VERTEXUSE_MAGIC) {
 		vu = (struct vertexuse *)fpi->closest;
