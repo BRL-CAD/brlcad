@@ -67,7 +67,7 @@ void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
 void	f_plot(), f_area(), f_find(), f_edgedir();
 void	f_regdef(), f_aeview(), f_in();
-void	f_rmats(),f_prefix(), f_keep(), f_tree();
+void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside();
 
 static struct funtab {
 	char *ft_name;
@@ -170,8 +170,8 @@ static struct funtab {
 	f_rt,1,MAXARGS,
 "saveview", "file [args]", "save view in file for RT",
 	f_saveview,2,MAXARGS,
-"rmats", "file", "load views from file",
-	f_rmats,2,2,
+"rmats", "file", "load views from file (experimental)",
+	f_rmats,2,MAXARGS,
 "attach", "<device>", "attach to a display processor, or NU",
 	f_attach,2,2,
 "release", "", "release current display processor [attach NU]",
@@ -208,6 +208,8 @@ static struct funtab {
 	f_keep, 3, MAXARGS,
 "tree",	"object(s)", "print out a tree of all members of an object",
 	f_tree, 2, MAXARGS,
+"inside", "", "finds inside solid per specified thicknesses",
+	f_inside, 1, MAXARGS,
 "memprint", "", "print memory maps",
 	f_memprint, 1, 1
 };
