@@ -38,6 +38,7 @@ cake \
  facedef.o \
  ged.o \
  hideline.o \
+ history.o \
  inside.o \
  mater.o &
 
