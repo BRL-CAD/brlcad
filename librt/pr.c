@@ -772,3 +772,15 @@ CONST struct bn_tol	*tol;
 		tol, tol->dist, tol->dist_sq,
 		tol->perp, tol->para );
 }
+
+/*
+ *			R T _ P R _ U V C O O R D
+ */
+void
+rt_pr_uvcoord( uvp )
+CONST struct uvcoord *uvp;
+{
+	bu_log("%8.8x u,v=(%g, %g), du,dv=(%g, %g)\n",
+		uvp->uv_u, uvp->uv_v,
+		uvp->uv_du, uvp->uv_dv );
+}
