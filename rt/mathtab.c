@@ -69,10 +69,16 @@ double rand0to1()
 	return(0.5);
 #else
 	FAST fastf_t f;
-	/* On BSD, might want to use random() */
+
+#ifdef BSD
+	f = ((double)random()) *
 	/* / (double)0x7FFFFFFFL */
-	f = ((double)rand()) *
 		0.00000000046566128752457969241057508271679984532147;
+#else
+	f = ((double)rand()) *
+	/* / (double)0x7FFFL */
+		0.00003051850947599719229712820825;
+#endif
 	if( f > 1.0 || f < 0 )  {
 		rt_log("rand0to1 out of range\n");
 		return(0.42);
