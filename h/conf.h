@@ -106,11 +106,10 @@
 #	define HAVE_MEMORY_H	1				/* XXX */
 #endif
 
-#if defined(sparc) && !defined(SUNOS)
-	/* SunOS 4.X */
+#if defined(sun) && !defined(SUNOS)
+	/* SunOS 4.X on Sun-3 or Sun-4 */
 #	define HAVE_STDLIB_H	1
 #	define HAVE_UNISTD_H	1
-	/* Does not have <X11/Xosdefs.h> */
 #endif
 
 #if SUNOS >= 52
