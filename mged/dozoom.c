@@ -315,11 +315,11 @@ VPRINT("l", l);
 VPRINT("h", h);
 }
 		VSET( eye, 0, 0, to_eye_scr );
-
+#if 0
 		bn_mat_idn(tmat);
 		tmat[11] = -1;
 		bn_mat_mul( tvmat, tmat, model2view );
-
+#endif
 		switch(which_eye)  {
 		case 0:
 			/* Non-stereo case */
@@ -392,7 +392,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  if(sp==illump){
 	    if(!DM_SAME_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B)){
 	      dmp->dm_setColor(dmp, DM_WHITE, 1);
-	      DM_SET_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B);
+	      DM_COPY_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B);
 	    }
 	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK){
 	      sp->s_flag = UP;
@@ -407,7 +407,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 			       (short)sp->s_color[0],
 			       (short)sp->s_color[1],
 			       (short)sp->s_color[2], 0);
-	      DM_SET_COLOR(r,g,b,
+	      DM_COPY_COLOR(r,g,b,
 			      (short)sp->s_color[0],
 			      (short)sp->s_color[1],
 			      (short)sp->s_color[2]);
