@@ -749,7 +749,7 @@ int		ncpus;
 			while( attrs[num_attrs] ) {
 				num_attrs++;
 			}
-			bu_avs_init( &tree_state.ts_attrs, num_attrs, "tree_state" );
+			bu_avs_init( &tree_state.ts_attrs, num_attrs, "avs in tree_state" );
 			num_attrs = 0;
 			while( attrs[num_attrs] ) {
 				tree_state.ts_attrs.avp[num_attrs].name = bu_strdup( attrs[num_attrs] );
@@ -759,7 +759,7 @@ int		ncpus;
 		}
 
 		if( num_attrs == 0 )
-			bu_avs_init( &tree_state.ts_attrs, 1, "tree_state" );
+			bu_avs_init( &tree_state.ts_attrs, 1, "avs in tree_state" );
 
 		/* ifdef this out for now, it is only using memory.
 		 * perhaps a better way of initiating ORCA stuff
@@ -774,8 +774,7 @@ int		ncpus;
 				  rt_gettree_region_end,
 				  rt_gettree_leaf, (genptr_t)tbl );
 
-		if( attrs )
-			bu_avs_free( &tree_state.ts_attrs );
+		bu_avs_free( &tree_state.ts_attrs );
 	}
 
 	/* DEBUG:  Ensure that all region trees are valid */
