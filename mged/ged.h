@@ -49,6 +49,11 @@
 #include <time.h>
 #include "tcl.h"
 
+#ifndef NAMESIZE
+#define NAMESIZE 16
+#define NAMEMOVE(from,to)       (void)strncpy(to, from, NAMESIZE)
+#endif
+
 #if USE_PROTOTYPES
 #	define	MGED_EXTERN(type_and_name,args)	extern type_and_name args
 #	define	MGED_ARGS(args)			args
@@ -165,7 +170,7 @@ extern void		eraseobj(), mged_finish(), slewview(),
 			mmenu_init(), moveHinstance(), moveHobj(),
 			quit(), refresh(), rej_sedit(), sedit(),
 			setview(),
-			adcursor(), mmenu_display(), mmenu_set(),
+			adcursor(), mmenu_display(), mmenu_set(), mmenu_set_all(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
 extern void		sedit_menu();
 #if 0
