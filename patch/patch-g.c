@@ -97,7 +97,8 @@ char	*argv[];
 	fastf_t  x1, y1, z1;
 	int numf = 3;
 	int fd,fl,nread;
-	FILE	*gfp,*mfp;
+	FILE	*gfp=NULL;
+	FILE    *mfp=NULL;
 	char	buf[99],s[132+2];
 	int	c;
 	int j = 1;
@@ -1023,7 +1024,8 @@ struct rt_tol *tol;
 	/* glue all the faces together */
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 
-	nmg_make_faces_within_tol( s, tol );
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		nmg_make_faces_within_tol( s, tol );
 
 	if( !plate_mode )
 	{
@@ -2045,18 +2047,19 @@ int cnt;
 	for(k=0 ; k <= (cnt-1) ; k+=4){
 		VSET( pt8[0], in[k].x,in[k].y,in[k].z );
 		VSET( pt8[1], in[k+1].x,in[k+1].y,in[k+1].z );
-		VSET( pt8[4], in[k+2].x,in[k+2].y,in[k+2].z );
-		VSET( pt8[3], in[k+3].x,in[k+3].y,in[k+3].z );
+		VSET( pt8[3], in[k+2].x,in[k+2].y,in[k+2].z );
+		VSET( pt8[4], in[k+3].x,in[k+3].y,in[k+3].z );
 
 		VSUB2(ab,pt8[4],pt8[0]);
 		VSUB2(ac,pt8[3],pt8[0]);
 		VSUB2(ad,pt8[1],pt8[0]);
 
-		VADD3(pt8[5],ab,ad,pt8[0]);
 		VADD3(pt8[7],ab,ac,pt8[0]);
 
-		VMOVE(pt8[6],pt8[5]);
-		VMOVE(pt8[2],pt8[1]);
+		VADD3(pt8[2],ac,ad,pt8[0]);
+
+		VMOVE(pt8[6],pt8[7]);
+		VMOVE(pt8[5],pt8[4]);
 
 		/* name solids */
 
@@ -2086,21 +2089,22 @@ int cnt;
 	/*   Mirror Processing - duplicates above code!   */
 
 	for(k=0 ; k <= (cnt-1) && in[k].mirror != 0 ; k+=4){
+
 		VSET( pt8[0], in[k].x,-in[k].y,in[k].z );
 		VSET( pt8[1], in[k+1].x,-in[k+1].y,in[k+1].z );
-		VSET( pt8[4], in[k+2].x,-in[k+2].y,in[k+2].z );
-		VSET( pt8[3], in[k+3].x,-in[k+3].y,in[k+3].z );
+		VSET( pt8[3], in[k+2].x,-in[k+2].y,in[k+2].z );
+		VSET( pt8[4], in[k+3].x,-in[k+3].y,in[k+3].z );
 
 		VSUB2(ab,pt8[4],pt8[0]);
 		VSUB2(ac,pt8[3],pt8[0]);
 		VSUB2(ad,pt8[1],pt8[0]);
 
-
-		VADD3(pt8[5],ab,ad,pt8[0]);
 		VADD3(pt8[7],ab,ac,pt8[0]);
 
-		VMOVE(pt8[6],pt8[5]);
-		VMOVE(pt8[2],pt8[1]);
+		VADD3(pt8[2],ac,ad,pt8[0]);
+
+		VMOVE(pt8[6],pt8[7]);
+		VMOVE(pt8[5],pt8[4]);
 
 		mrflg = 'y';
 		ctflg = 'n';
