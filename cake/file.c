@@ -9,16 +9,17 @@ rcs_id[] = "$Header$";
 #include	<errno.h>
 #include	<sys/stat.h>
 #ifndef		ATT
-#include	<sys/dir.h>
+#include	<dirent.h>
+typedef	struct	dirent	Dirent;
 #include	<sys/time.h>
 #else
 #include	<time.h>
+typedef	struct	direct	Dirent;
 #endif
 
 typedef	struct	timeval		Tval;
 typedef	struct	timezone	Tzone;
 typedef	struct	stat		Stat;
-typedef	struct	direct	Dirent;
 
 extern	int	errno;
 
