@@ -1,6 +1,6 @@
 /*
- *	@(#) vextern.h			retrieved: 8/13/86 at 08:19:19,
- *	@(#) version 2.2		last edit: 1/31/85 at 15:00:12.
+ *	@(#) vextern.h			retrieved: 8/13/86 at 08:19:24,
+ *	@(#) version 2.3		last edit: 3/18/85 at 14:25:44.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -56,4 +56,6 @@ extern struct		deck_ident d_ident, idbuf;
 
 #include <setjmp.h>
 extern jmp_buf		env;
+#define EPSILON		0.0001
+#define CONV_EPSILON	0.01
 
