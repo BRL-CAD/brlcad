@@ -2245,6 +2245,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 		bad = 1;	
 		/* Fall through, to close off database */
 	}
+	rt_mempurge( &(newdbp->dbi_freep) );        /* didn't really build a directory */
 
 	/* Free all the directory entries, and close the input database */
 	db_close(newdbp);
@@ -2373,6 +2374,7 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 		db_close(newdbp);
 		return TCL_ERROR;
 	}
+	rt_mempurge( &(newdbp->dbi_freep) );        /* didn't really build a directory */
 
 	bu_vls_init(&vls);
 	wdb_vls_col_pr4v(&vls, dirp0, (int)(dcs.dup_dirp - dirp0));
