@@ -61,7 +61,7 @@ extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al
 void	aexists();
 
 /* Rename an object */
-/* Format: n oldname newname	*/
+/* Format: mv oldname newname	*/
 int
 f_name(clientData, interp, argc, argv)
 ClientData clientData;
@@ -70,7 +70,7 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	union record record;
+	struct rt_db_internal	intern;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -83,21 +83,23 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	/*  Change object name in the directory. */
-	if( db_rename( dbip, dp, argv[2] ) < 0 ||
-	    db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
-	  Tcl_AppendResult(interp, "error in rename to ", argv[2],
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+		TCL_READ_ERR_return;
+	}
+
+	/*  Change object name in the in-memory directory. */
+	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
+		rt_db_free_internal( &intern );
+	  Tcl_AppendResult(interp, "error in db_rename to ", argv[2],
 			   ", aborting\n", (char *)NULL);
 	  TCL_ERROR_RECOVERY_SUGGESTION;
 	  return TCL_ERROR;
 	}
 
-	/* Change name in the file */
-	NAMEMOVE( argv[2], record.c.c_name );
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ){
-	  TCL_WRITE_ERR_return;
+	/* Re-write to the database.  New name is applied on the way out. */
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		TCL_WRITE_ERR_return;
 	}
-
 	return TCL_OK;
 }
 
