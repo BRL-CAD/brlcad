@@ -146,6 +146,7 @@ union record  {
 #define TEC	15	/* truncated elliptic cone */
 #define TOR	16	/* toroid */
 #define TGC	17	/* truncated general cone */
+#define ELLG	23	/* comgeom version of GENELL ellipsoid */
 		float	s_values[24];		/* parameters */
 #define s_tgc_V	s_values[0]
 #define s_tgc_H	s_values[3]
