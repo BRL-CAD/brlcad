@@ -50,7 +50,6 @@
 
 #include "tcl.h"
 #include "machine.h"
-#include "externs.h"
 #include "cmd.h"			/* includes bu.h */
 #include "vmath.h"
 #include "bn.h"

@@ -49,7 +49,6 @@ static const char RCStimer[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 
 /* Standard System V stuff */

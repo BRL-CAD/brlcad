@@ -34,7 +34,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "externs.h"
 #include "./qray.h"
 
 static void qray_print_fmts(struct dg_obj *dgop, Tcl_Interp *interp);

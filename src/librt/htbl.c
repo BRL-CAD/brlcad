@@ -26,7 +26,6 @@ static const char librt_htbl_RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <string.h>
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"

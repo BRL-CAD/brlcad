@@ -97,7 +97,6 @@ Acknowledgements:
 #endif
 
 #include "machine.h"
-#include "externs.h"
 #include "cmd.h"
 #include "vmath.h"
 #include "mater.h"

@@ -34,7 +34,6 @@ static const char RCSgrip[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "nmg.h"

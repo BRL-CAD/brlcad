@@ -39,7 +39,6 @@ static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "externs.h"
 #include "raytrace.h"
 
 #include "./debug.h"

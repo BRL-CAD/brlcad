@@ -53,7 +53,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "externs.h"
 
 #include "./debug.h"
 

@@ -37,7 +37,6 @@ static const char RCSid[] = "";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#include "externs.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
