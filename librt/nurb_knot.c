@@ -80,7 +80,13 @@ register fastf_t	val;
 	n = rt_nurb_kvcheck( val, kv );
 
 	check.k_size = num - n;
-	check.knots = (fastf_t * ) rt_malloc( sizeof(fastf_t) * (num - n),
+	if( check.k_size <= 0 )  {
+		rt_log("rt_nurb_kvmult(new_kv=x%x, kv=x%x, num=%d, val=%g)\n",
+			new_kv, kv, num, val);
+		rt_nurb_pr_kv(kv);
+		rt_bomb("rt_nurb_kvmult\n");
+	}
+	check.knots = (fastf_t * ) rt_malloc( sizeof(fastf_t) * check.k_size,
 	    "rt_nurb_kvmult: check knots");
 
 	for ( i = 0; i < num - n; i++)
