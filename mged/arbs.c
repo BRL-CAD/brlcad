@@ -394,11 +394,11 @@ char	**argv;
 			}
 			solve[i] = X;
 
-			if( argc < 7+3*i+1 ) {
+			if( argc < 7+3*i+2 ) {
 				(void)printf("Enter the Y, Z coordinate values: ");
 				return CMD_MORE;
 			}
-			if( argc < 7+3*i+2 ) {
+			if( argc < 7+3*i+3 ) {
 				(void)printf("Enter the Z coordinate value: ");
 				return CMD_MORE;
 			}
@@ -413,11 +413,11 @@ char	**argv;
 			}
 			solve[i] = Y;
 
-			if( argc < 7+3*i+1 ) {
+			if( argc < 7+3*i+2 ) {
 				(void)printf("Enter the X, Z coordinate values: ");
 				return CMD_MORE;
 			}
-			if( argc < 7+3*i+2 ) {
+			if( argc < 7+3*i+3 ) {
 				(void)printf("Enter the Z coordinate value: ");							
 				return CMD_MORE;
 			}
@@ -432,11 +432,11 @@ char	**argv;
 			}
 			solve[i] = Z;
 
-			if( argc < 7+3*i+1 ) {
+			if( argc < 7+3*i+2 ) {
 				(void)printf("Enter the X, Y coordinate values: ");
 				return CMD_MORE;
 			}
-			if( argc < 7+3*i+2 ) {
+			if( argc < 7+3*i+3 ) {
 				(void)printf("Enter the Y coordinate value: ");
 				return CMD_MORE;
 			}
