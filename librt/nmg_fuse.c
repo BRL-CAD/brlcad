@@ -54,7 +54,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_REGION(r1);
 	RT_CK_TOL(tol);
 
-	nmg_region_vertex_list( &t, r1 );
+	nmg_vertex_tabulate( &t, &r1->l.magic );
 
 	for( i = NMG_TBL_END(&t)-1; i >= 0; i-- )  {
 		register struct vertex	*vi;
@@ -194,8 +194,8 @@ CONST struct rt_tol	*tol;
 
 	if( r1->m_p != r2->m_p )  rt_bomb("nmg_two_region_vertex_fuse:  regions not in same model\n");
 
-	nmg_region_vertex_list( &t1, r1 );
-	nmg_region_vertex_list( &t2, r2 );
+	nmg_vertex_tabulate( &t1, &r1->l.magic );
+	nmg_vertex_tabulate( &t2, &r2->l.magic );
 
 	total = nmg_region_self_vfuse( &t1, tol );
 	total += nmg_region_both_vfuse( &t1, &t2, tol );
@@ -224,11 +224,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_MODEL(m);
 	RT_CK_TOL(tol);
 
-/* XXX Change this to nmg_vertex_tabulate( &t1, &m->magic ); */
 	nmg_vertex_tabulate( &t1, &m->magic );
-#if 0
-	nmg_model_vertex_list( &t1, m );
-#endif
 
 	total = nmg_region_self_vfuse( &t1, tol );
 
@@ -238,7 +234,63 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *		N M G _ M O D E L _ F A C E _ F U S E
+ *			N M G _ M O D E L _ E D G E _ F U S E
+ */
+int
+nmg_model_edge_fuse( m, tol )
+struct model		*m;
+CONST struct rt_tol	*tol;
+{
+	struct nmg_ptbl	eutab;
+	int		total = 0;
+	register int	i,j;
+
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	/* Make a list of all the edgeuse structs in the model */
+	nmg_edgeuse_tabulate( &eutab, m );
+
+	for( i = NMG_TBL_END(&eutab)-1; i >= 0; i-- )  {
+		register struct edgeuse	*eu1;
+		register struct edge	*e1;
+		struct vertex		*v1a, *v1b;
+
+		eu1 = (struct edgeuse *)NMG_TBL_GET(&eutab, i);
+		NMG_CK_EDGEUSE(eu1);
+		e1 = eu1->e_p;
+		NMG_CK_EDGE(e1);
+
+		v1a = eu1->vu_p->v_p;
+		v1b = eu1->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX(v1a);
+		NMG_CK_VERTEX(v1b);
+
+		for( j = i-1; j >= 0; j-- )  {
+			register struct edgeuse	*eu2;
+			register struct edge	*e2;
+
+			eu2 = (struct edgeuse *)NMG_TBL_GET(&eutab,j);
+			NMG_CK_EDGEUSE(eu2);
+			e2 = eu2->e_p;
+			NMG_CK_EDGE(e2);
+
+			if( e1 == e2 )  continue;	/* Already shared */
+			if( (eu2->vu_p->v_p == v1a &&
+			     eu2->eumate_p->vu_p->v_p == v1b) ||
+			    (eu2->eumate_p->vu_p->v_p == v1a &&
+			     eu2->vu_p->v_p == v1b) )  {
+				nmg_radial_join_eu(eu1, eu2, tol);
+			     	total++;
+			 }
+		}
+	}
+rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
+	return total;
+}
+
+/*
+ *			N M G _ M O D E L _ F A C E _ F U S E
  *
  *  A routine to find all face geometry structures in an nmg model that
  *  have the same plane equation, and have them share face geometry.
@@ -263,7 +315,7 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 	/* Make a list of all the face structs in the model */
-	nmg_model_face_list( &ftab, m );
+	nmg_face_tabulate( &ftab, m );
 
 	for( i = NMG_TBL_END(&ftab)-1; i >= 0; i-- )  {
 		register struct face	*f1;
@@ -332,7 +384,13 @@ CONST struct rt_tol	*tol;
 				if( !vg )  rt_bomb("nmg_model_face_fuse: vertex with no geometry?\n");
 
 				dist = DIST_PT_PLANE(vg->coord, fg1->N);
-				if( dist > tol->dist )  goto next_face;
+				if( dist > tol->dist )  {
+					rt_log("nmg_model_face_fuse: plane eqns equal, v x%x off plane by %e, skipping (f1=x%x, f2=x%x)\n", v, dist, f1, f2);
+					VPRINT("pt", vg->coord);
+					PLPRINT("fg1", fg1->N);
+					PLPRINT("fg2", fg2->N);
+					goto next_face;
+				}
 			}
 			/* All points are on the plane, it's OK to fuse */
 			if( flip2 == 0 )  {
@@ -351,9 +409,13 @@ CONST struct rt_tol	*tol;
 				total++;
 			}
 
-next_face:		;
+next_face:		
+			nmg_tbl( &vtab, TBL_FREE, 0 );
 		}
 	}
+	nmg_tbl( &ftab, TBL_FREE, 0 );
+rt_log("nmg_model_face_fuse: %d faces fused\n", total);
+	return total;
 }
 
 /*
@@ -372,6 +434,9 @@ next_face:		;
  *  sorting faces radially around the edge.
  *  It is important to know whether faces are shared or not
  *  at that point.
+ *
+ *  XXX It would be more efficient to build all the ptbl's at once,
+ *  XXX with a single traversal of the model.
  */
 int
 nmg_model_fuse( m, tol )
@@ -390,6 +455,8 @@ CONST struct rt_tol	*tol;
 	total += nmg_model_face_fuse( m, tol );
 
 	/* Step 3 -- edges */
+	total += nmg_model_edge_fuse( m, tol );
 
+rt_log("nmg_model_fuse(): %d entities fused\n", total);
 	return total;
 }
