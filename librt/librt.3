@@ -278,12 +278,27 @@ and is stored in
 and
 .IR rtip\->mdl_max .
 .SH EXAMPLE
-.RS
+.PP
 A program can be loaded as follows:
 .sp
-$ \|\fIcc \|\-I/usr/brlcad/include \|main.c \|/usr/brlcad/lib/librt.a \|\-lm\fP
+$ \|\fIcc \|\-I/usr/brlcad/include \|main.c \|/usr/brlcad/lib/librt.a \|\-l<system-specific> \|\-lm\fP
 .sp
+where
+.I <system-specific>
+indicates libraries required on a particluar architecture.  The table below
+indicates which system specific libraries are necesary on a particular
+architecture.
+.PP
+     Architecture             Librarie(s)
+     Alliant FX/8             -lcvec -lcommon
+     Alliant FX/2800          -lcommon
+     SGI 4D                   -lmpc
+     Cray(X/Y)                -L/lib/multi -lu -lio
+     Cray2                    -lmt
+     Encore Multi-Max         -lpp
+.sp 
 Here is a portion of a hypothetical program which uses the library:
+.RS
 .sp
 .nf
 #include <machine.h>
