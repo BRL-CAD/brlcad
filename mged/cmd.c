@@ -481,7 +481,7 @@ static struct funtab funtab[] = {
 	f_saveview,2,MAXARGS,FALSE,
 "oscale", "factor", "scale object by factor",
 	f_sc_obj,2,2,FALSE,
-"sed", "solid", "solid-edit named solid",
+"sed", "<path>", "solid-edit named solid",
 	f_sed,2,2,FALSE,
 #ifndef XMGED
 "vars",	"[var=opt]", "assign/display mged variables",
