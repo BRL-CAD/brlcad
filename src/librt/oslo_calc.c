@@ -36,9 +36,6 @@
  *     The U.S. Army Ballistic Research Laboratory
  *     Aberdeen Proving Ground, Maryland 21005
  *
- * Copyright Notice -
- *     This software is Copyright (C) 1986-2004 by the United States Army.
- *     All rights reserved.
  *
  * This algorithm was taken from the paper 
  * "Making the Oslo Algorithm More Efficient" by T. Lyche and K. Morken 

@@ -18,9 +18,6 @@
  *  Source -
  *	
  *
- *  Copyright Notice -
- *	This software is Copyright (C) 2001-2004 by the United States Army.
- * All rights reserved.  */
 #ifndef lint
 static const char RCSviewedge[] = "@(#)$Header$ (BRL)";
 #endif

@@ -31,9 +31,6 @@
  *	The U. S. Army Research Laboratory
  *	berdeen Proving Ground, Maryland  21005
  *
- * Copyright Notice -
- *      This software is Copyright (C) 1998-2004 by the United States Army.
- *      All rights reserved.
  */
 
 #include "common.h"

@@ -35,9 +35,6 @@
  * 
  * Date: Mon June 1, 1992
  * 
- * Copyright Notice - 
- * 	This software is Copyright (C) 1990-2004 by the United States Army.
- * 	All rights reserved.
  * 
  */
 #ifndef lint

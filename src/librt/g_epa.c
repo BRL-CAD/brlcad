@@ -150,9 +150,6 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1990-2004 by the United States Army.
- *	All rights reserved.
  */
 #ifndef lint
 static const char RCSepa[] = "@(#)$Header$ (BRL)";

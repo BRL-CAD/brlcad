@@ -31,9 +31,6 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1990-2004 by the United States Army.
- *	All rights reserved.
  */
 
 /*	23 May 1991       - Take out lvpt that wasn't necessary.  */

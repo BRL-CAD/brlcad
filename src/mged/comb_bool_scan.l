@@ -16,9 +16,6 @@
 /*	your "Statement of Terms and Conditions for the Release of	*/
 /*	The BRL-CAD Package" agreement.					*/
 /*									*/
-/*  Copyright Notice -							*/
-/*	This software is Copyright (C) 1995-2004 by the United States Army	*/
-/*	in all countries except the USA.  All rights reserved.		*/
 
 /*	Regular definitions	*/
 open		"("

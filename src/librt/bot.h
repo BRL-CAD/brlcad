@@ -22,9 +22,6 @@
  *  Header file for the "bot" specific structure.  This is shared between
  *  the bot, and ars at the moment.
  *
- *  Copyright Notice -
- *	This software is Copyright (C) 2001-2004 by the United States Army.
- *	All rights reserved.
  */
 
 

@@ -27,9 +27,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1993-2004 by the United States Army.
- *	All rights reserved.
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

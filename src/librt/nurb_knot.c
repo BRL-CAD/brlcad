@@ -36,9 +36,6 @@
  *     The U.S. Army Ballistic Research Laboratory
  *     Aberdeen Proving Ground, Maryland 21005
  *
- * Copyright Notice -
- *     This software is Copyright (C) 1990-2004 by the United States Army.
- *     All rights reserved.
  */
 
 #include "common.h"

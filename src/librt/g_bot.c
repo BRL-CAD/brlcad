@@ -29,9 +29,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1999-2004 by the United States Army.
- *	All rights reserved.
  */
 #ifndef lint
 static const char RCSbot[] = "@(#)$Header$ (BRL)";

@@ -30,9 +30,6 @@
  * Author -
  *      Robert G. Parker
  *
- * Copyright Notice -
- *      This software is Copyright (C) 1998-2004 by the United States Army.
- *      All rights reserved.
  */
 
 #include "common.h"

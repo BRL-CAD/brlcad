@@ -29,9 +29,6 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1990-2004 by the United States Army.
- *	All rights reserved.
  */
 /*	This routine manipulates the boolean tree towards the form
 	that BRLCAD likes, i.e. (((a+b)-c)+d) as opposed to (a+(b-(c-d))).

@@ -28,9 +28,6 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1990-2004 by the United States Army.
- *	All rights reserved.
  */
 
 /*	18 November 1991 - Put /n/walrus/usr/brlcad/include into includes.  */

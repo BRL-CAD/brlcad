@@ -14,9 +14,6 @@
 #	your "Statement of Terms and Conditions for the Release of
 #	The BRL-CAD Package" agreement.
 #
-# Copyright Notice -
-#	This software is Copyright (C) 1996-2004 by the United States Army.
-#	All rights reserved.
 #
 # Description -
 #       Utility for creating lines files for the pixmorph utility.
