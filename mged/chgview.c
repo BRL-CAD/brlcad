@@ -574,6 +574,8 @@ f_rt()
 	/* Wait for rt to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
+	if( retcode != 0 )
+		(void)printf("Abnormal exit status x%x\n", retcode);
 	(void)signal(SIGINT, cur_sigint);
 
 	FOR_ALL_SOLIDS( sp )
