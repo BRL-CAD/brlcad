@@ -33,7 +33,7 @@ extern int	rdebug;
 #define RDEBUG_PARSE	0x00000020	/* 6 Command parsing */
 #define RDEBUG_LIGHT	0x00000040	/* 7 Debug lighting */
 #define RDEBUG_REFRACT	0x00000080	/* 8 Debug reflection & refraction */
-#define RDEBUG_INSTANCE	0x00000100	/* 9 Debug instance revectoring */
+
 #define RDEBUG_STATS	0x00000200	/* 10 Print more statistics */
 #define RDEBUG_RTMEM_END 0x00000400	/* 11 Print librt mem use on 'clean' */
 
@@ -46,5 +46,5 @@ extern int	rdebug;
 #define RDEBUG_FORMAT	\
 "\020\040RAYPLOT\037RAYWRITE\036MISSPLOT\
 \013RTMEM_END\
-\012STATS\011INSTANCE\010REFRACT\
+\012STATS\010REFRACT\
 \7LIGHT\6PARSE\5SHADE\4RTMEM\3SHOWERR\2MATERIAL\1HITS"
