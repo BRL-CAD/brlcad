@@ -1574,7 +1574,7 @@ rt_extrude_xform(
 
 	if( op != ip )
 	{
-		RT_CK_DB_INTERNAL( op );
+		RT_INIT_DB_INTERNAL( op );
 		eop = (struct rt_extrude_internal *)bu_malloc( sizeof( struct rt_extrude_internal ), "eop" );
 		eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 		op->idb_ptr = (genptr_t)eop;
@@ -1593,7 +1593,7 @@ rt_extrude_xform(
 	MAT4X3VEC( tmp_vec, mat, eip->v_vec );
 	VMOVE( eop->v_vec, tmp_vec );
 	eop->keypoint = eip->keypoint;
-	strncpy( eop->sketch_name, eip->sketch_name, 16 );
+	eop->sketch_name = bu_strdup( eip->sketch_name );
 
 	if( free && ip != op )
 	{
