@@ -208,8 +208,9 @@ then
 					s/rfbd//'`
 fi
 
-# If this is not an SGI 4D, eliminate SGI-specific directories
-if test "${MACHINE}" != "4d" -a "${MACHINE}" != "5d" -a "${MACHINE}" != "6d" -a "${MACHINE}" != "7d" -a "${MACHINE}" != "8d"
+# If this is not an SGI 4D with GL, eliminate SGI GL-specific directories
+# The 7d platform (R8000 TFP with Irix 6) does not have GL.
+if test "${MACHINE}" != "4d" -a "${MACHINE}" != "5d" -a "${MACHINE}" != "6d"
 then
 	BDIRS=`echo ${BDIRS} | sed -e  's/edpix//'`
 fi
