@@ -895,8 +895,8 @@ and signal-processing capability, and a large collection of related \
 tools and utilities. \
 Copyright 2000 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
 VENDOR=The U. S. Army Research Laboratory, Aberdeen Proving Ground, MD  USA  21005-5068
-HOTLINE=http://ftp.arl.mil/brlcad/
-EMAIL=acst@arl.mil
+HOTLINE=http://ftp.arl.army.mil/brlcad/
+EMAIL=acst@arl.army.mil
 EOF
 	echo "i pkginfo=./pkginfo" >> ./prototype
 	pkgproto /usr/brlcad/.=/usr/brlcad >> ./prototype
