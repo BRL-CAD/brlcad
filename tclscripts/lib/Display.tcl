@@ -62,17 +62,17 @@ class Display {
     public method slew {x y}
 
     # methods that override methods inherited from Dm
-    public method fb_active {args}
     public method zclip {args}
     public method zbuffer {args}
     public method light {args}
     public method perspective {args}
-    public method toggle_zclip {}
-    public method toggle_zbuffer {}
-    public method toggle_light {}
-    public method toggle_perspective {}
-    public method toggle_perspective_angle {}
+    public method fb_active {args}
 
+    protected method toggle_zclip {}
+    protected method toggle_zbuffer {}
+    protected method toggle_light {}
+    protected method toggle_perspective {}
+    protected method toggle_perspective_angle {}
     protected method idle_mode {}
     protected method rotate_mode {x y}
     protected method translate_mode {x y}
@@ -95,7 +95,6 @@ class Display {
     private variable perspective_angles {90 60 45 30}
 }
 
-########################### ###########################
 ########################### Public/Interface Methods ###########################
 
 body Display::constructor {{type X} args} {
@@ -153,7 +152,7 @@ body Display::rt {args} {
 	return "rt: bad geometry index"
     }
 
-    set v_obj [View::get_name]
+    set v_obj [View::get_viewname]
     eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
 }
 
@@ -176,7 +175,7 @@ body Display::rtcheck {args} {
 	return "rtcheck: bad geometry index"
     }
 
-    set v_obj [View::get_name]
+    set v_obj [View::get_viewname]
     eval $geo rtcheck $v_obj -F $itk_option(-listen) $args
 }
 
@@ -263,15 +262,6 @@ body Display::slew {x1 y1} {
     View::slew $_x $_y
 }
 
-body Display::fb_active {args} {
-    if {$args == ""} {
-	return $itk_option(-fb_active)
-    } else {
-	eval Dm::fb_active $args
-	refresh
-    }
-}
-
 body Display::zclip {args} {
     eval Dm::zclip $args
     refresh
@@ -296,6 +286,16 @@ body Display::perspective {args} {
     return $itk_option(-perspective)
 }
 
+body Display::fb_active {args} {
+    if {$args == ""} {
+	return $itk_option(-fb_active)
+    } else {
+	eval Dm::fb_active $args
+	refresh
+    }
+}
+
+########################### Protected Methods ###########################
 body Display::toggle_zclip {} {
     Dm::toggle_zclip
     refresh
@@ -330,7 +330,6 @@ body Display::toggle_perspective_angle {} {
     View::perspective [lindex $perspective_angles $perspective_angle_index]
 }
 
-########################### Protected Methods ###########################
 body Display::idle_mode {} {
     # stop receiving motion events
     bind $itk_component(dm) <Motion> {}
