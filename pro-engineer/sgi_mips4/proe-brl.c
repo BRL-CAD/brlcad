@@ -530,7 +530,7 @@ make_legal( char *name )
 
 	c = (unsigned char *)name;
 	while( *c ) {
-		if( *c <= ' ' || *c == '/' ) {
+		if( *c <= ' ' || *c == '/' || *c == '[' || *c == ']' ) {
 			*c = '_';
 		} else if( *c > '~' ) {
 			*c = '_';
@@ -1736,15 +1736,15 @@ build_tree( char *sol_name, struct bu_vls *tree )
 		ptr = ptr->next;
 	}
 
-	bu_vls_strcat( tree, "{ l " );
+	bu_vls_strcat( tree, "{ l {" );
 	bu_vls_strcat( tree, sol_name );
-	bu_vls_putc( tree, '}' );
+	bu_vls_strcat( tree, "} }" );
 	ptr = csg_root;
 	while( ptr ) {
 		if( logger ) {
 			fprintf( logger, "Adding %c %s\n", ptr->operator, bu_vls_addr( &ptr->name ) );
 		}
-		bu_vls_printf( tree, " {l %s}}", bu_vls_addr( &ptr->name ) );
+		bu_vls_printf( tree, " {l {%s}}}", bu_vls_addr( &ptr->name ) );
 		ptr = ptr->next;
 	}
 
@@ -1766,7 +1766,7 @@ output_csg_prims()
 				 bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );	 
 		}
 
-		fprintf( outfp, "put %s %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
+		fprintf( outfp, "put {%s} %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
 		ptr = ptr->next;
 	}
 }
@@ -2070,7 +2070,7 @@ output_part( ProMdl model )
 				fprintf( logger, "Creating bot primitive (%s) for part %s\n",
 					 sol_name, brl_name );
 			}
-			fprintf( outfp, "put %s bot mode volume orient no V { ", sol_name );
+			fprintf( outfp, "put {%s} bot mode volume orient no V { ", sol_name );
 			for( i=0 ; i<vert_tree_root->curr_vert ; i++ ) {
 				fprintf( outfp, " {%.12e %.12e %.12e}",
 					 vert_tree_root->the_array[i*3] * proe_to_brl_conv,
@@ -2118,12 +2118,12 @@ output_part( ProMdl model )
 			if( stat == PRODEV_SURF_PROPS_NOT_SET ) {
 				/* no surface properties */
 				fprintf( outfp,
-				   "put %s comb region yes id %d los 100 GIFTmater 1 tree %s\n",
+				   "put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
 					 get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree) );
 			} else if( stat == PRODEV_SURF_PROPS_SET ) {
 				/* use the colors, ... that was set in Pro/E */
 				fprintf( outfp,
-				    "put %s comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
+				    "put {%s} comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
 					 get_brlcad_name( curr_part_name ),
 					 reg_id,
 					 (int)(props.color_rgb[0]*255.0),
@@ -2147,7 +2147,7 @@ output_part( ProMdl model )
 				/* something is wrong, but just ignore the missing properties */
 				fprintf( stderr, "Error getting surface properties for %s\n",
 					 curr_part_name );
-				fprintf( outfp, "put %s comb region yes id %d los 100 GIFTmater 1 tree %s\n",
+				fprintf( outfp, "put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
 					 get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree ) );
 			}
 
@@ -2155,7 +2155,7 @@ output_part( ProMdl model )
 			got_density = 0;
 			status = ProPartMaterialNameGet( ProMdlToPart(model), material );
 			if( status == PRO_TK_NO_ERROR ) {
-				fprintf( outfp, "attr set %s material_name {%s}\n",
+				fprintf( outfp, "attr set {%s} material_name {%s}\n",
 					 get_brlcad_name( curr_part_name ),
 					 ProWstringToString( str, material ) ); 
 
@@ -2163,7 +2163,7 @@ output_part( ProMdl model )
 				status = ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props );
 				if( status == PRO_TK_NO_ERROR ) {
 					got_density = 1;
-					fprintf( outfp, "attr set %s density %g\n",
+					fprintf( outfp, "attr set {%s} density %g\n",
 						 get_brlcad_name( curr_part_name ),
 						 material_props.mass_density );
 				}
@@ -2174,18 +2174,18 @@ output_part( ProMdl model )
 			if( status == PRO_TK_NO_ERROR ) {
 				if( !got_density ) {
 					if( mass_prop.density > 0.0 ) {
-						fprintf( outfp, "attr set %s density %g\n",
+						fprintf( outfp, "attr set {%s} density %g\n",
 							 get_brlcad_name( curr_part_name ),
 							 mass_prop.density );
 					}
 				}
 				if( mass_prop.mass > 0.0 ) {
-					fprintf( outfp, "attr set %s mass %g\n",
+					fprintf( outfp, "attr set {%s} mass %g\n",
 						 get_brlcad_name( curr_part_name ),
 						 mass_prop.mass );
 				}
 				if( mass_prop.volume > 0.0 ) {
-					fprintf( outfp, "attr set %s volume %g\n",
+					fprintf( outfp, "attr set {%s} volume %g\n",
 						 get_brlcad_name( curr_part_name ),
 						 mass_prop.volume );
 				}
@@ -2369,7 +2369,7 @@ output_assembly( ProMdl model )
 				    (ProAppData)&curr_assem );
 
 	/* output the accumulated assembly info */
-	fprintf( outfp, "put %s.c comb region no tree ", get_brlcad_name( curr_assem.name ) );
+	fprintf( outfp, "put {%s.c} comb region no tree ", get_brlcad_name( curr_assem.name ) );
 
 	/* count number of members */
 	member = curr_assem.members;
@@ -2392,9 +2392,9 @@ output_assembly( ProMdl model )
 	while( member ) {
 		/* output the member name */
 		if( member->type == PRO_MDL_ASSEMBLY ) {
-			fprintf( outfp, "{l %s.c", get_brlcad_name( member->name ) );
+			fprintf( outfp, "{l {%s.c}", get_brlcad_name( member->name ) );
 		} else {
-			fprintf( outfp, "{l %s", get_brlcad_name( member->name ) );
+			fprintf( outfp, "{l {%s}", get_brlcad_name( member->name ) );
 		}
 
 		/* if there is an xform matrix, put it here */
@@ -2431,17 +2431,17 @@ output_assembly( ProMdl model )
 	status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
 	if( status == PRO_TK_NO_ERROR ) {
 		if( mass_prop.density > 0.0 ) {
-			fprintf( outfp, "attr set %s.c density %g\n",
+			fprintf( outfp, "attr set {%s.c} density %g\n",
 				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.density );
 		}
 		if( mass_prop.mass > 0.0 ) {
-			fprintf( outfp, "attr set %s.c mass %g\n",
+			fprintf( outfp, "attr set {%s.c} mass %g\n",
 				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.mass );
 		}
 		if( mass_prop.volume > 0.0 ) {
-			fprintf( outfp, "attr set %s.c volume %g\n",
+			fprintf( outfp, "attr set {%s.c} volume %g\n",
 				 get_brlcad_name( curr_asm_name ),
 				 mass_prop.volume );
 		}
