@@ -1335,6 +1335,9 @@ body GeometryBrowser::validateGeometry { } {
 	if [ catch { opendb } notopen ] {
 		set dbNotOpen 1
 	}
+	if { [ string compare $notopen "" ] == 0 } {
+		set dbNotOpen 1
+	}
 
 	# do nothing until a database is open
 	if { $dbNotOpen == 0 } {
