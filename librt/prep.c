@@ -70,14 +70,6 @@ int			ncpu;
 		rt_bomb("rt_prep:  no solids left to prep");
 	}
 
-	/* Compute size of model-specific variable-length data structures */
-	/* -sizeof(bitv_t) == sizeof(struct partition.pt_solhit) */
-	rtip->rti_pt_bytes = sizeof(struct partition) - sizeof(bitv_t) + 1 +
-		RT_BITV_BITS2WORDS(rtip->nsolids) * sizeof(bitv_t);
-	rtip->rti_bv_bytes = sizeof(bitv_t) *
-		( RT_BITV_BITS2WORDS(rtip->nsolids) +
-		RT_BITV_BITS2WORDS(rtip->nregions) + 4 );
-
 	/* In case everything is a halfspace, set a minimum space */
 	if( rtip->mdl_min[X] >= INFINITY )  {
 		rt_log("All solids are halspaces, setting minimum\n");
