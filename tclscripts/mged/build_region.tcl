@@ -143,11 +143,15 @@ proc build_region { args } {
 			set tree [list u $oldtree $tree]
 			if { [catch {db adjust $regname tree $tree} ret ] } {
 				error "failed to update existing region ($regname)"
+			} else {
+				puts "Appended to region $regname"
 			}
 		} else {
 			# specified region does not exist, so create it
 			if { [catch {db put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
 				error "failed to create region!!!\n$ret"
+			} else {
+				puts "Created region $regname"
 			}
 			# increment regdef ident number
 			if { $id > 0 } {
@@ -170,6 +174,8 @@ proc build_region { args } {
 		# create the new region
 		if { [catch {db put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
 			error "failed to create region!!!\n$ret"
+		} else {
+			puts "Created region $regname"
 		}
 
 		# increment regdef ident number
