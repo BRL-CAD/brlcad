@@ -80,42 +80,6 @@ struct half_specific  {
 };
 #define HALF_NULL       ((struct half_specific *)0)
 
-
-/*
- * The tree walker neds to have an initial state.  We could
- * steal it from doview.c but there is no real reason.
- */
-
-static struct db_tree_state E_initial_tree_state = {
-	0,			/* ts_dbip */
-	0,			/* ts_sofar */
-	0,0,0,			/* region, air, gmater */
-	100,			/* GIFT los */
-#if __STDC__
-	{
-#endif
-		/* struct mater_info ts_mater */
-		1.0, 0.0, 0.0,	/* color, RGB */
-		-1.0,		/* Temperature */
-		0,		/* override */
-		0,		/* color inherit */
-		0,		/* mater inherit */
-#if 0
-		""		/* shader */
-#else
-		NULL		/* shader */
-#endif
-#if __STDC__
-	}
-#endif
-	,
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0,
-};
-
-
 /* structures for building a tree corresponding to the region to be drawn
  * uses the same "op" values as "union tree"
  */
@@ -347,7 +311,7 @@ HIDDEN  void
 eliminate_overlaps( seghead )
 struct bu_list *seghead;
 {
-	struct seg *a, *b, *nexta, *nextb;
+	struct seg *a, *b, *nextb;
 
 	a = BU_LIST_FIRST( seg, seghead );
 	while( BU_LIST_NOT_HEAD( &a->l, seghead ) )
@@ -780,7 +744,7 @@ int op;
 {
 	struct seg *sega, *segb, *tmp, *next;
 	struct bu_list ret, ons, ins;
-	int found, inserted;
+	int inserted;
 
 	BU_LIST_INIT( &ret );
 
@@ -1385,7 +1349,6 @@ struct bu_list *vhead;
 {
 	int leaf_no;
 	union E_tree *leaf_ptr;
-	struct ray_data rd;
 	int hit_count=0;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
@@ -1426,7 +1389,6 @@ struct bu_list *vhead;
 		for( edge_no=0 ; edge_no < BU_PTBL_END( &leaf_ptr->l.edge_list ) ; edge_no++ )
 		{
 			struct edge *e;
-			struct edgeuse *eu;
 			struct vertex_g *vg;
 			struct vertex_g *vg2;
 			vect_t dir;
@@ -1496,7 +1458,6 @@ struct bu_list *vhead;
 				for( BU_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )
 				{
 					fastf_t dist;
-					fastf_t old_dist;
 					fastf_t len,start_len;
 					point_t hits[4];
 					point_t start_pt;
@@ -1521,7 +1482,6 @@ struct bu_list *vhead;
 						continue;
 
 					hit_count=0;
-					old_dist = MAX_FASTF;
 					for( BU_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )
 					{
 						if( BU_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
@@ -1555,7 +1515,6 @@ struct bu_list *vhead;
 						if( hit_count == 2 )
 							break;
 					}
-					old_dist = MAX_FASTF;
 					for( BU_LIST_FOR( lu2, loopuse, &fu2->lu_hd ) )
 					{
 						if( BU_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
@@ -1805,7 +1764,6 @@ fix_halfs()
 		{
 			struct edgeuse *eu, *new_eu;
 			struct loopuse *lu, *new_lu;
-			struct vertexuse *vu;
 			plane_t pl;
 			int count;
 			struct vertexuse *vcut[2];
@@ -1828,7 +1786,6 @@ fix_halfs()
 				vect_t dir;
 				struct vertex_g *v1g, *v2g;
 				fastf_t dist;
-				struct edgeuse *new_eu;
 
 				v1g = eu->vu_p->v_p->vg_p;
 				v2g = eu->eumate_p->vu_p->v_p->vg_p;
@@ -1915,11 +1872,9 @@ fix_halfs()
 				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 				{
 					struct vertex_g *vg;
-					fastf_t dist;
 
 					vg = eu->vu_p->v_p->vg_p;
 
-					dist = DIST_PT_PLANE( vg->coord, haf_pl );
 					if( DIST_PT_PLANE( vg->coord, haf_pl ) > mged_tol.dist )
 					{
 						killit = 1;
@@ -2027,7 +1982,6 @@ char	**argv;
 		switch(c) {
 		case 'C':
 			{
-				char		buf[128];
 				int		r,g,b;
 				register char	*cp = bu_optarg;
 
@@ -2077,10 +2031,6 @@ char	**argv;
 			eraseobj( dp );
 		}
 	}
-
-	E_initial_tree_state.ts_ttol = &mged_ttol;
-	E_initial_tree_state.ts_tol  = &mged_tol;
-	E_initial_tree_state.ts_stop_at_regions = 1;
 
 	mged_ttol.magic = RT_TESS_TOL_MAGIC;
 	mged_ttol.abs = mged_abs_tol;
