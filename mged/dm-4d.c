@@ -383,7 +383,7 @@ Ir_open()
 		if( inv->class != INV_GRAPHICS )  continue;
 		switch( inv->type )  {
 		default:
-			printf("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n");
+			printf("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",inv->type);
 			/* Since we recognize all the old devices, be
 			 * optimistic and assume that new devices are plush.
 			 */
