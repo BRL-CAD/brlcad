@@ -49,8 +49,11 @@ extern double   modf();
 #endif
 
 struct half_internal  {
+	long	magic;
 	plane_t	eqn;
 };
+#define RT_HALF_INTERNAL_MAGIC	0xaabbdd87
+#define RT_HALF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"half_internal")
 
 struct half_specific  {
 	plane_t	half_eqn;		/* Plane equation, outward normal */
@@ -95,6 +98,7 @@ struct rt_i	*rtip;
 	RT_CK_DB_INTERNAL( ip );
 #endif
 	hip = (struct half_internal *)ip->idb_ptr;
+	RT_HALF_CK_MAGIC(hip);
 
 	/*
 	 * Process a HALFSPACE, which is represented as a 
@@ -463,6 +467,7 @@ struct directory *dp;
 #endif
 	RT_CK_DB_INTERNAL(ip);
 	hip = (struct half_internal *)ip->idb_ptr;
+	RT_HALF_CK_MAGIC(hip);
 
 	/* Invent a "center" point on the plane -- point closets to origin */
 	VSCALE( cent, hip->eqn, hip->eqn[3] );
@@ -565,11 +570,30 @@ mat_t			mat;
  *			R T _ H L F _ E X P O R T
  */
 int
-rt_hlf_export( ep, ip )
+rt_hlf_export( ep, ip, local2mm )
 struct rt_external	*ep;
 struct rt_db_internal	*ip;
+double			local2mm;
 {
-	return(-1);
+	struct half_internal	*hip;
+	union record		*rec;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_HALF )  return(-1);
+	hip = (struct half_internal *)ip->idb_ptr;
+	RT_HALF_CK_MAGIC(hip);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "half external");
+	rec = (union record *)ep->ext_buf;
+
+	rec->s.s_id = ID_SOLID;
+	rec->s.s_type = HALFSPACE;
+	VMOVE( rec->s.s_values, hip->eqn );
+	rec->s.s_values[3] = hip->eqn[3] * local2mm;
+
+	return(0);
 }
 
 /*
@@ -580,27 +604,31 @@ struct rt_db_internal	*ip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_hlf_describe( str, ip, verbose )
+rt_hlf_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
+double			mm2local;
 {
 	register struct half_internal	*hip =
 		(struct half_internal *)ip->idb_ptr;
 	char	buf[256];
 
+	RT_HALF_CK_MAGIC(hip);
 	rt_vls_strcat( str, "halfspace\n");
 
 	sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
-		V3ARGS(hip->eqn), hip->eqn[3] );
+		V3ARGS(hip->eqn),		/* should have unit length */
+		hip->eqn[3] * mm2local );
 	rt_vls_strcat( str, buf );
 
 	return(0);
 }
 
 /*
+ *			R T _ H L F _ I F R E E
+ *
  *  Free the storage associated with the rt_db_internal version of this solid.
- *  XXX The suffix of this name is temporary.
  */
 void
 rt_hlf_ifree( ip )
