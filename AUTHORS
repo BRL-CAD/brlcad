@@ -1,1 +1,326 @@
+BRL-CAD Contributors
+====================
+
+BRL-CAD was originally conceived and written, for the most part, by
+the late Michael John Muuss.  He is the original primary architect and
+author.  Over the years, the package has been improved upon by many
+others.  While Mike is sadly no longer with us, his work lives on in
+testament to his intellect and indomitable spirit through the
+contributions and improvements by others.  We strive to recognize
+those groups and individuals that have helped make BRL-CAD the package
+that it is today here.
+
+Contributions are separated into a few major sections depending on the
+level of involvement that the individual maintained.  Contributors are
+ordered chronologically for each list with the earliest contributors
+named first.  Likewise, the most recent contributors are listed at the
+bottom.  Names are optionally followed by the organizations that
+supported their involvement, also listed in chronological order.
+
+Active developers are denoted with an "**", meaning that they have
+been involved within the past 12 months.
+
+
+ORIGINAL ARCHITECT AND AUTHOR
+-----------------------------
+
+"The future exists first in the imagination,
+then in the will, then in reality."
+                - Mike Muuss
+
+DEVELOPERS
+----------
+
 Michael John Muuss
+U.S. Army Research Laboratory
+
+Weaver, Earl P
+U.S. Army Research Laboratory
+
+Moss, Gary S
+U.S. Army Research Laboratory
+
+Dykstra, Phillip
+U.S. Army Research Laboratory
+
+Applin, Keith A
+U.S. Army Research Laboratory
+
+Kennedy, Charles Michael  <kermit@brlcad.org>
+U.S. Army Research Laboratory
+
+Gwyn, Douglas A
+U.S. Army Research Laboratory
+
+Stay, Paul Randall
+U.S. Army Research Laboratory
+
+Hanes, Jeff
+U.S. Army Research Laboratory
+
+Butler, Lee A  **
+U.S. Army Research Laboratory
+
+Johnson, Christopher T  <cjohnson@cyberpaladin.com>  **
+Geometric Solutions, Inc.
+JRMTech, Inc.
+Paladin Software, Inc.
+
+Markowski, Michael J
+U.S. Army Research Laboratory
+
+Anderson, John R  <jra@arl.army.mil>  **
+U.S. Army Research Laboratory
+
+Tanenbaum, Paul J
+U.S. Army Research Laboratory
+
+Durfee, Glenn
+ARL Student Hire / Stanford University
+
+Parker, Robert G  **
+U.S. Army Research Laboratory
+Survice Engineering, Inc.
+
+Morrison, Christopher Sean  <morrison@brlcad.org>  **
+ARL Student Hire / Johns Hopkins University
+Quantum Research International, Inc.
+
+Bowers, Ronald A
+U.S. Army Research Laboratory
+
+Hartley, Robert
+ARL Student Hire / Virginia Tech
+
+Christy, TraNese Shantell
+U.S. Army Research Laboratory
+
+Shumaker, Justin  **
+Quantum Research International, Inc.
+
+Greenwald, Erik  **
+U.S. Army Research Laboratory
+
+
+MATHEMATICAL, ALGORITHMIC, AND GEOMETRIC SUPPORT
+------------------------------------------------
+
+Davisson, Edwin
+U.S. Army Research Laboratory
+
+Applin, Keith A
+U.S. Army Research Laboratory
+
+Kregel, Dwayne
+Survice Engineering, Inc.
+
+
+CODE CONTRIBUTIONS
+------------------
+
+Pistritto, Joseph C
+U.S. Army Research Laboratory
+
+Natalie, Ronald B
+U.S. Army Research Laboratory
+
+Mermagen, Jr., William
+U.S. Army Research Laboratory
+
+Barker, Natalie L
+U.S. Army Research Laboratory
+
+Hunt, Jim
+Applied Research Associates, Inc.
+U.S. Army Research Laboratory
+jhunt@ara.com
+jhunt@arl.army.mil
+
+Coates, Sue
+U.S. Army Research Laboratory
+
+Fiori, Jim
+Sun Microsystems, Inc.
+
+Jackson, Chris
+Sun Microsystems, Inc.
+
+Smith, Tim
+Sun Microsystems, Inc.
+
+Gigante, Mike
+Melbourne Institute of Technology
+
+Muuss, Susanne L
+U.S. Army Research Laboratory
+
+Nuzman, Carl J
+ARL Student Hire / Princeton University
+
+McCarty, Corey
+ARL Student Hire / Johns Hopkins University
+
+Owens, Jason
+ARL Student Hire / Johns Hopkins University
+
+Bowman, Keith
+Survice Engineering, Inc.
+
+Anderson, David
+SGI
+
+
+SPECIAL THANKS
+--------------
+
+Deitz, Paul
+U.S. Army Ballistic Research Laboratory
+
+Lorenzo, Max
+CECOM Night Vision & Electronic Sensors Directorate
+
+Monk, Mary
+U.S. Army Reserach Laboratory
+
+Haywood, Heather
+U.S. Army Research Laboratory
+
+Edwards, Eric
+Survice Engineering, Inc.
+
+Bokkers, Wim
+TNO Prins Maurits Laboratory
+
+
+CORPORATE AND ORGANIZATION SUPPORT
+----------------------------------
+
+U.S. Army Research Laboratory
+  formerly named the U.S. Army Ballistic Research Laboratory
+Survivability and Lethality Analysis Directorate
+
+Sun Microsystems, Inc.
+
+U.S. Army Communications-Electronics Command (CECOM)
+Night Vision & Electronic Sensors Directorate
+
+U.S. Naval Academy
+
+U.S. Naval Research Training Center
+
+SGI
+  formerly named Silicon Graphics, Inc.
+
+Geometric Solutions, Inc.
+
+JRMTech, Inc.
+
+Survice Engineering, Inc.
+
+Quantum Research Laboratory, Inc.
+
+Paladin Software, Inc.
+
+Industrieanlagen-Betriebsgesellschaft mbH (IABG)
+
+TNO Prins Maurits Laboratory
+
+
+TO BE FILED
+-----------
+
+Becker, David
+
+Bowden, Mark Huston
+
+Davies, Steve
+
+Dender, Dan
+Survice Engineering, Inc.
+
+DiGiacinto, Tom
+U.S. Army Ballistic Research Laboratory
+
+Dome, John
+CECOM Night Vision & Electronic Sensors Directorate
+
+Florek, David
+CECOM Night Vision & Electronic Sensors Directorate
+
+Hartwig, George W
+U.S. Army Research Laboratory
+
+Henrikson, Bruce
+
+Johnson, Joe
+U.S. Naval Academy
+
+Kekesi, Alex
+CECOM Night Vision & Electronic Sensors Directorate
+
+Laut, Bill
+
+Lindemann, William
+
+Martin, Glenn E
+U.S. Naval Research Training Center
+
+McKie, Jim
+
+Merrit, Don
+U.S. Army Research Laboratory
+
+Miles, Robert S
+U.S. Army Ballistic Research Laboratory
+
+Moulton, Jr., Russ
+EOSoft, Inc.
+
+Musgrave, F Kenton
+
+Reed, Harry
+U.S. Army Ballistic Research Laboratory
+
+Reed, Jr., Harry
+Geometric Solutions, Inc.
+U.S. Army Ballistic Research Laboratory
+
+Reschly, Jr., Robert J
+U.S. Army Research Laboratory
+
+Ross, Brant A
+
+Satterfield, Steve
+U.S. Naval Academy
+
+Sebok, William L
+
+Skinner, Robert
+
+Stoudenmire, Eugene A
+CECOM Night Vision & Electronic Sensors Directorate
+
+Suckling, Bob
+U.S. Army Research Laboratory
+
+Toth, George E
+
+Turkowski, Ken
+
+Willson, Stephen Hunter
+U.S. Naval Research Training Center
+
+Wolff, Stephen
+
+Woo, Alex
+University of Illinois
+
+zum Brunnen, Rick
+U.S. Army Research Laboratory
+
+--- 
+
+If any corrections or additions need to be made, please contact one of
+the active core developers.  Additionally, you may send inquiries,
+suggestions, and comments to the developer mailing list:
+brlcad-devel@lists.sourceforge.net
