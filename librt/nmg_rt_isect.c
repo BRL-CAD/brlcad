@@ -57,7 +57,7 @@ point_t plane_pt;
 		abort();
 	}
 
-	rt_log("\tplotting %s\n", name);
+	rt_log("overlay %s\n", name);
 	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
@@ -98,7 +98,7 @@ point_t plane_pt;
         	abort();
         }
 
-	rt_log("\tplotting %s\n", name);
+	rt_log("overlay %s\n", name);
 	m = nmg_find_model( eu->up.magic_p );
 	b = (long *)rt_calloc( m->maxindex, sizeof(long), "bit vec");
 
@@ -130,40 +130,47 @@ struct vertexuse *vu;
 {
 }
 
+CONST char *
+nmg_rt_inout_str( code )
+int	code;
+{
+	switch(code) {
+	case HMG_HIT_IN_IN:
+		return("IN_IN");
+	case HMG_HIT_IN_OUT:
+		return("IN_OUT");
+	case HMG_HIT_OUT_IN:
+		return("OUT_IN");
+	case HMG_HIT_OUT_OUT:
+		return("OUT_OUT");
+	case HMG_HIT_IN_ON:
+		return("IN_ON");
+	case HMG_HIT_ON_IN:
+		return("ON_IN");
+	case HMG_HIT_OUT_ON:
+		return("OUT_ON");
+	case HMG_HIT_ON_OUT:
+		return("ON_OUT");
+	case HMG_HIT_ANY_ANY:
+		return("ANY_ANY");
+	}
+	return("?_?\n");
+}
+
 void
 nmg_rt_print_hitmiss(a_hit)
 struct hitmiss *a_hit;
 {
 	NMG_CK_HITMISS(a_hit);
-	rt_log("   dist:%12g pt(%g %g %g) %s\n\tstate:",
+	rt_log("   dist:%12g pt=(%g %g %g) %s=x%x\n",
 		a_hit->hit.hit_dist,
 		a_hit->hit.hit_point[0],
 		a_hit->hit.hit_point[1],
 		a_hit->hit.hit_point[2],
-		rt_identify_magic(*(int*)a_hit->hit.hit_private) );
-
-	switch(a_hit->in_out) {
-	case HMG_HIT_IN_IN:
-		rt_log("IN_IN"); break;
-	case HMG_HIT_IN_OUT:
-		rt_log("IN_OUT"); break;
-	case HMG_HIT_OUT_IN:
-		rt_log("OUT_IN"); break;
-	case HMG_HIT_OUT_OUT:
-		rt_log("OUT_OUT"); break;
-	case HMG_HIT_IN_ON:
-		rt_log("IN_ON"); break;
-	case HMG_HIT_ON_IN:
-		rt_log("ON_IN"); break;
-	case HMG_HIT_OUT_ON:
-		rt_log("OUT_ON"); break;
-	case HMG_HIT_ON_OUT:
-		rt_log("ON_OUT"); break;
-	case HMG_HIT_ANY_ANY:
-		rt_log("ANY_ANY"); break;
-	default:
-		rt_log("?_?\n"); break;
-	}
+		rt_identify_magic(*(long *)a_hit->hit.hit_private),
+		*(long *)a_hit->hit.hit_private
+	);
+	rt_log("\tstate:%s", nmg_rt_inout_str(a_hit->in_out));
 
 	switch (a_hit->start_stop) {
 	case NMG_HITMISS_SEG_IN:	rt_log(" SEG_START"); break;
@@ -561,7 +568,7 @@ vect_t leftB;
 		rt_log("Error opening %s\n", name);
 		return;
 	} else
-		rt_log("\t%s\n", name);
+		rt_log("overlay %s\n", name);
 
 
 	/* draw the ray */
@@ -2153,12 +2160,57 @@ struct ray_data *rd;
 }
 
 /*
+ *				N M G _ P L _ H I T M I S S _ L I S T
+ */
+void
+nmg_pl_hitmiss_list( str, num, hd, rp )
+CONST char		*str;
+int			num;
+CONST struct rt_list	*hd;
+CONST struct xray	*rp;
+{
+	FILE		*fp;
+	char		buf[128];
+	struct hitmiss	*hmp;
+	int		count = 0;
+
+	sprintf( buf, "%s%d.pl", str, num );
+
+	if( rt_list_len(hd) <= 0 )  {
+		rt_log("nmg_pl_hitmiss_list(): empty list, no %s written\n", buf);
+		return;
+	}
+
+	if( (fp = fopen(buf, "w")) == (FILE *)NULL )  {
+		perror(buf);
+		return;
+	}
+
+	pl_color( fp, 210, 210, 210 );		/* grey ray */
+
+	for( RT_LIST_FOR( hmp, hitmiss, hd ) )  {
+		point_t		pt;
+		NMG_CK_HITMISS(hmp);
+		VJOIN1( pt, rp->r_pt, hmp->hit.hit_dist, rp->r_dir );
+		if( count++ )
+			pdv_3cont( fp, pt );
+		else
+			pdv_3move( fp, pt );
+	}
+	fclose(fp);
+	rt_log("overlay %s\n", buf);
+}
+
+/*
  *	N M G _ R A Y _ I S E C T _ S H E L L
  *
  *	Intended as a support routine for nmg_class_pt_s() in nmg_class.c
  *
  *	Intersect a ray with a shell and return the number of hitpoints with
  *	positive distance values.
+ *
+ * XXX Really should run some kind of parity checking on the rd_hit list,
+ * XXX to make sure that the ray does not depart with multiple IN_OUT hits, etc.
  */
 int
 nmg_ray_vs_shell(rp, s, tol)
@@ -2231,6 +2283,12 @@ struct rt_tol *tol;
 	/* count the number of hits */
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 		rt_log("%s[%d]: shell Hits:\n", __FILE__, __LINE__);
+	}
+
+	if( (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) &&
+	    (rt_g.NMG_debug & (DEBUG_PLOTEM)) )  {
+	    	static int	num=0;
+		nmg_pl_hitmiss_list( "shell-ray", num++, &rd.rd_hit, rp );
 	}
 
 	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
