@@ -1,6 +1,10 @@
 /*
  *			libmultispectral/Cakefile
  */
+
+/* This shows up in CFLAGS */
+#define CONFIGDEFS	-DRT_MULTISPECTRAL
+
 #define SRCDIR	libmultispectral
 #define PRODUCTS	libmultispectral.ARCH_SUF
 #define	SRCSUFF	.c
@@ -9,7 +13,12 @@
 #include "../Cakefile.defs"
 
 #define FILES	\
-	init
+	init \
+	sh_light
+
+/* Specially compiled versions */
+sh_light.o: ../liboptical/sh_light.c
+	CC CFLAGS -c ../liboptical/sh_light.c
 
 #define VERSION_VARIABLE	libmultispectral_version
 #define LIBRARY_TITLE		"The BRL-CAD Multi-Spectral Shader Library"
