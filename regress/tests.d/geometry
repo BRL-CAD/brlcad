@@ -15,7 +15,7 @@ for PRIM in $PRIMITIVES ; do
     set glob_compat_mode 0
      
     #
-    # Torus Arguments
+    # Torus (tor) Arguments
     #
     # in args => name type xvertex yvertex zvertex xnormal ynormal znormal radius1 radius2
     # db args => 
@@ -43,6 +43,275 @@ for PRIM in $PRIMITIVES ; do
     set ell_IN_ARGS "0 0 0  45 0 0  0 30 0  0 0 15"
     set ell_DB_ARGS "V { 0 0 0 } A {45 0 0} B {0 30 0} C {0 0 15}"
 
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
 
     if { ! [ info exists ${PRIM}_IN_ARGS ] } {
         puts "Error: Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
