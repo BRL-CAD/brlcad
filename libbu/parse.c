@@ -2058,3 +2058,23 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 	op->ext_buf = bu_malloc( ip->ext_nbytes, "bu_copy_external" );
 	bcopy( ip->ext_buf, op->ext_buf, ip->ext_nbytes );
 }
+
+/*
+ *			B U _ N E X T _ T O K E N
+ *
+ *  Advance pointer through string over current token,
+ *  across white space, to beginning of next token.
+ */
+char *
+bu_next_token( char *str )
+{
+  char *ret;
+
+  ret = str;
+  while( !isspace( *ret ) && *ret !='\0' )
+    ret++;
+  while( isspace( *ret ) )
+    ret++;
+
+  return( ret );
+}
