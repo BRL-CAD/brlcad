@@ -30,10 +30,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "externs.h"
 #include "db.h"
-#include "wdb.h"
-#include "rtlist.h"
+#include "bu.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "wdb.h"
 #include "rtgeom.h"
 
 static union record record;
