@@ -498,8 +498,8 @@ char	**argv;
 	register struct directory	*dp;
     	struct rt_db_internal		intern;
 	struct rt_comb_internal		*comb;
-	extern int			optind;
-	extern char			*optarg;
+	extern int			bu_optind;
+	extern char			*bu_optarg;
 	struct tokens			tok_hd;
 	struct tokens			*tok;
 	short				last_tok;
@@ -522,8 +522,8 @@ char	**argv;
 	}
 
 	/* Parse options */
-	optind = 1;	/* re-init getopt() */
-	while ((ch = getopt(argc, argv, "gr?")) != EOF)
+	bu_optind = 1;	/* re-init bu_getopt() */
+	while ((ch = bu_getopt(argc, argv, "gr?")) != EOF)
 	{
 		switch (ch)
 		{
@@ -539,8 +539,8 @@ char	**argv;
 			return TCL_OK;
 		}
 	}
-	argc -= (optind + 1);
-	argv += optind;
+	argc -= (bu_optind + 1);
+	argv += bu_optind;
 
 	comb_name = *argv++;
 	if (argc == -1)

@@ -120,27 +120,27 @@ register char **argv;
 	register int c;
 	register int i;
 
-	optind = 1;		/* restart */
+	bu_optind = 1;		/* restart */
 
 #define GETOPT_STR	\
 	".:,:a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
 
-	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
+	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
 		case '.':
-			nu_gfactor = (double)atof( optarg );
+			nu_gfactor = (double)atof( bu_optarg );
 			break;
 		case ',':
-			space_partition = atoi(optarg);
+			space_partition = atoi(bu_optarg);
 			break;
 		case 'c':
-			(void)rt_do_cmd( (struct rt_i *)0, optarg, rt_cmdtab );
+			(void)rt_do_cmd( (struct rt_i *)0, bu_optarg, rt_cmdtab );
 			break;
 		case 'C':
 			{
 				char		buf[128];
 				int		r,g,b;
-				register char	*cp = optarg;
+				register char	*cp = bu_optarg;
 
 				r = atoi(cp);
 				while( (*cp >= '0' && *cp <= '9') )  cp++;
@@ -165,13 +165,13 @@ register char **argv;
 				double		f;
 				char		*cp;
 				f = 0;
-				if( sscanf( optarg, "%lf", &f ) == 1 )  {
+				if( sscanf( bu_optarg, "%lf", &f ) == 1 )  {
 					if( f > 0 )
 						rt_dist_tol = f;
 				}
 				f = 0;
-				if( (cp = strchr(optarg, '/')) ||
-				    (cp = strchr(optarg, ',')) )  {
+				if( (cp = strchr(bu_optarg, '/')) ||
+				    (cp = strchr(bu_optarg, ',')) )  {
 					if( sscanf( cp+1, "%lf", &f ) == 1 )  {
 						if( f > 0 && f < 1 )
 							rt_perp_tol = f;
@@ -179,7 +179,7 @@ register char **argv;
 				}
 			}
 		case 'U':
-			use_air = atoi( optarg );
+			use_air = atoi( bu_optarg );
 			break;
 		case 'I':
 			interactive = 1;
@@ -191,108 +191,108 @@ register char **argv;
 			stereo = 1;
 			break;
 		case 'J':
-			sscanf( optarg, "%x", &jitter );
+			sscanf( bu_optarg, "%x", &jitter );
 			break;
 		case 'H':
-			hypersample = atoi( optarg );
+			hypersample = atoi( bu_optarg );
 			if( hypersample > 0 )
 				jitter = 1;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'D':
-			desiredframe = atoi( optarg );
+			desiredframe = atoi( bu_optarg );
 			break;
 		case 'K':
-			finalframe = atoi( optarg );
+			finalframe = atoi( bu_optarg );
 			break;
 		case 'N':
-			sscanf( optarg, "%x", &rt_g.NMG_debug);
+			sscanf( bu_optarg, "%x", &rt_g.NMG_debug);
 			rt_log("NMG_debug=0x%x\n", rt_g.NMG_debug);
 			break;
 		case 'M':
 			matflag = 1;
 			break;
 		case 'A':
-			AmbientIntensity = atof( optarg );
+			AmbientIntensity = atof( bu_optarg );
 			break;
 		case 'x':
-			sscanf( optarg, "%x", &rt_g.debug );
+			sscanf( bu_optarg, "%x", &rt_g.debug );
 			break;
 		case 'X':
-			sscanf( optarg, "%x", &rdebug );
+			sscanf( bu_optarg, "%x", &rdebug );
 			break;
 
 		case 's':
 			/* Square size */
-			i = atoi( optarg );
+			i = atoi( bu_optarg );
 			if( i < 2 || i > MAX_WIDTH )
 				fprintf(stderr,"squaresize=%d out of range\n", i);
 			else
 				width = height = i;
 			break;
 		case 'n':
-			i = atoi( optarg );
+			i = atoi( bu_optarg );
 			if( i < 2 || i > MAX_WIDTH )
 				fprintf(stderr,"height=%d out of range\n", i);
 			else
 				height = i;
 			break;
 		case 'w':
-			i = atoi( optarg );
+			i = atoi( bu_optarg );
 			if( i < 2 || i > MAX_WIDTH )
 				fprintf(stderr,"width=%d out of range\n", i);
 			else
 				width = i;
 			break;
 		case 'g':
-			cell_width = atof( optarg );
+			cell_width = atof( bu_optarg );
 			cell_newsize = 1;
 			break;
 		case 'G':
-			cell_height = atof( optarg );
+			cell_height = atof( bu_optarg );
 			cell_newsize = 1;
 			break;
 
 		case 'a':
 			/* Set azimuth */
-			azimuth = atof( optarg );
+			azimuth = atof( bu_optarg );
 			matflag = 0;
 			break;
 		case 'e':
 			/* Set elevation */
-			elevation = atof( optarg );
+			elevation = atof( bu_optarg );
 			matflag = 0;
 			break;
 		case 'l':
 			/* Select lighting model # */
-			lightmodel = atoi( optarg );
+			lightmodel = atoi( bu_optarg );
 			break;
 		case 'O':
 			/* Output pixel file name, double precision format */
-			outputfile = optarg;
+			outputfile = bu_optarg;
 			doubles_out = 1;
 			break;
 		case 'o':
 			/* Output pixel file name, unsigned char format */
-			outputfile = optarg;
+			outputfile = bu_optarg;
 			doubles_out = 0;
 			break;
 		case 'p':
-			rt_perspective = atof( optarg );
+			rt_perspective = atof( bu_optarg );
 			if( rt_perspective < 0 || rt_perspective > 179 ) {
 				fprintf(stderr,"persp=%g out of range\n", rt_perspective);
 				rt_perspective = 0;
 			}
 			break;
 		case 'E':
-			eye_backoff = atof( optarg );
+			eye_backoff = atof( bu_optarg );
 			break;
 
 		case 'P':
 			/* Number of parallel workers */
-			npsw = atoi( optarg );
+			npsw = atoi( bu_optarg );
 			if( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
 				fprintf(stderr,"abs(npsw) out of range 1..%d, using -P%d\n",
 					MAX_PSW, MAX_PSW);
@@ -309,15 +309,15 @@ register char **argv;
 		case 'b':
 			/* Specify a single pixel to be done */
 			/* Actually processed in do_frame() */
-			string_pix_start = optarg;
+			string_pix_start = bu_optarg;
 			break;
 		case 'f':
 			/* set expected playback rate in frames-per-second.
 			 * This actually gets stored as the delta-t per frame.
 			 */
-			if ( (frame_delta_t=atof( optarg )) == 0.0) {
+			if ( (frame_delta_t=atof( bu_optarg )) == 0.0) {
 				fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
-					optarg);
+					bu_optarg);
 				frame_delta_t = 30.0;
 			}
 			frame_delta_t = 1.0 / frame_delta_t;
@@ -327,14 +327,14 @@ register char **argv;
 			/* XXX what letter to use? */
 			/* Specify the pixel to end at */
 			/* Actually processed in do_frame() */
-			string_pix_end = optarg;
+			string_pix_end = bu_optarg;
 			break;
 #endif
 		case 'V':
 			/* View aspect */
 			{
 				fastf_t xx, yy;
-				register char *cp = optarg;
+				register char *cp = bu_optarg;
 
 				xx = atof(cp);
 				while( (*cp >= '0' && *cp <= '9')
@@ -360,7 +360,7 @@ register char **argv;
 			rpt_overlap = 0;
 			break;
 		case 'd':
-			rpt_dist = atoi( optarg );
+			rpt_dist = atoi( bu_optarg );
 			break;
 		default:		/* '?' */
 			fprintf(stderr,"unknown option %c\n", c);

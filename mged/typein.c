@@ -420,8 +420,8 @@ char **argv;
 	}
 
 	/* Parse options. */
-	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"sf")) != EOF )  {
+	bu_optind = 1;		/* re-init bu_getopt() */
+	while( (c=bu_getopt(argc,argv,"sf")) != EOF )  {
 		switch(c)  {
 		case 's':
 			do_solid_edit = 1;
@@ -442,8 +442,8 @@ char **argv;
 		  break;
 		}
 	}
-	argc -= optind-1;
-	argv += optind-1;
+	argc -= bu_optind-1;
+	argv += bu_optind-1;
 
 	vals = 0;
 

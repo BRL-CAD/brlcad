@@ -149,8 +149,8 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	extern char *optarg;
-	extern int optind, opterr, optopt;
+	extern char *bu_optarg;
+	extern int bu_optind, bu_opterr, bu_optopt;
 	int	rateflag = 0;
 	int	c;
 	int	read_only_flag=0;
@@ -164,7 +164,7 @@ char **argv;
 	}
 #endif
 
-	while ((c = getopt(argc, argv, "hnr")) != EOF)
+	while ((c = bu_getopt(argc, argv, "hnr")) != EOF)
 	{
 		switch( c )
 		{
@@ -185,13 +185,13 @@ char **argv;
 		}
 	}
 
-	argc -= (optind - 1);
-	argv += (optind - 1);
+	argc -= (bu_optind - 1);
+	argv += (bu_optind - 1);
 
 #if 0
 	/* Check again for proper invocation */
 	if( argc < 2 )  {
-	  argv -= (optind - 1);
+	  argv -= (bu_optind - 1);
 	  fprintf(stdout, "Usage:  %s [-n] [-r] [database [command]]\n", argv[0]);
 	  fflush(stdout);
 	  return(1);		/* NOT finish() */

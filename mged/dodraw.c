@@ -464,8 +464,8 @@ int	kind;
 	mged_draw_no_surfaces = 0;
 
 	/* Parse options. */
-	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"dnqstuvwSTP:")) != EOF )  {
+	bu_optind = 1;		/* re-init bu_getopt() */
+	while( (c=bu_getopt(argc,argv,"dnqstuvwSTP:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
@@ -492,7 +492,7 @@ int	kind;
 			mged_draw_normals = 1;
 			break;
 		case 'P':
-			ncpu = atoi(optarg);
+			ncpu = atoi(bu_optarg);
 			break;
 		case 'q':
 			mged_do_not_draw_nmg_solids_during_debugging = 1;
@@ -523,8 +523,8 @@ int	kind;
 		break;
 		}
 	}
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	/* Establish upcall interfaces for use by bottom of NMG library */
 	nmg_plot_anim_upcall = mged_plot_anim_upcall_handler;
@@ -1170,11 +1170,11 @@ char	**argv;
 	triangulate = 0;
 
 	/* Parse options. */
-	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"tTP:")) != EOF )  {
+	bu_optind = 1;		/* re-init bu_getopt() */
+	while( (c=bu_getopt(argc,argv,"tTP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
-			ncpu = atoi(optarg);
+			ncpu = atoi(bu_optarg);
 			break;
 		case 'T':
 			triangulate = 1;
@@ -1197,8 +1197,8 @@ char	**argv;
 		  break;
 		}
 	}
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 	if( argc < 0 ){
 	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -1390,11 +1390,11 @@ char	**argv;
 	triangulate = 0;
 
 	/* Parse options. */
-	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"tP:")) != EOF )  {
+	bu_optind = 1;		/* re-init bu_getopt() */
+	while( (c=bu_getopt(argc,argv,"tP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
-			ncpu = atoi(optarg);
+			ncpu = atoi(bu_optarg);
 			break;
 		case 't':
 			triangulate = 1;
@@ -1412,8 +1412,8 @@ char	**argv;
 		  break;
 		}
 	}
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	newname = argv[0];
 	argv++;

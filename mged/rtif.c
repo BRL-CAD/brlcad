@@ -1017,17 +1017,17 @@ char	**argv;
 	rtif_finalframe = 0;
 
 	/* Parse options */
-	optind = 1;			/* re-init getopt() */
-	while( (c=getopt(argc,argv,"d:vD:K:")) != EOF )  {
+	bu_optind = 1;			/* re-init bu_getopt() */
+	while( (c=bu_getopt(argc,argv,"d:vD:K:")) != EOF )  {
 		switch(c)  {
 		case 'd':
-			rtif_delay = atof(optarg);
+			rtif_delay = atof(bu_optarg);
 			break;
 		case 'D':
-			rtif_desiredframe = atof(optarg);
+			rtif_desiredframe = atof(bu_optarg);
 			break;
 		case 'K':
-			rtif_finalframe = atof(optarg);
+			rtif_finalframe = atof(bu_optarg);
 			break;
 		case 'v':
 			rtif_mode = 3;	/* Like "ev" */
@@ -1049,8 +1049,8 @@ char	**argv;
 		  break;
 		}
 	}
-	argc -= optind-1;
-	argv += optind-1;
+	argc -= bu_optind-1;
+	argv += bu_optind-1;
 
 	/* If file is still open from last cmd getting SIGINT, close it */
 	if(rtif_fp)  fclose(rtif_fp);

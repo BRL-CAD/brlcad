@@ -102,7 +102,7 @@ char		*argv[];	/* argument strings */
 	static bool	oflag = false;	/* set if "-o" option found */
 	int		c;		/* option letter */
 
-	while ( (c = getopt( argc, argv, "i:o:" )) != EOF )
+	while ( (c = bu_getopt( argc, argv, "i:o:" )) != EOF )
 		switch ( c )
 		{
 		case 'i':
@@ -115,12 +115,12 @@ char		*argv[];	/* argument strings */
 			}
 			iflag = true;
 
-			if ( strcmp( optarg, "-" ) != 0
-			    && freopen( optarg, "r", stdin ) == NULL
+			if ( strcmp( bu_optarg, "-" ) != 0
+			    && freopen( bu_optarg, "r", stdin ) == NULL
 			    )	{
 				(void)printf(
 				    "cad_parea: can't open \"%s\"\n",
-				    optarg
+				    bu_optarg
 				    );
 				return false;
 			}
@@ -136,12 +136,12 @@ char		*argv[];	/* argument strings */
 			}
 			oflag = true;
 
-			if ( strcmp( optarg, "-" ) != 0
-			    && freopen( optarg, "w", stdout ) == NULL
+			if ( strcmp( bu_optarg, "-" ) != 0
+			    && freopen( bu_optarg, "w", stdout ) == NULL
 			    )	{
 				(void)printf(
 				    "cad_parea: can't create \"%s\"\n",
-				    optarg
+				    bu_optarg
 				    );
 				return false;
 			}

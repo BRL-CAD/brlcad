@@ -144,7 +144,7 @@ char		*argv[];	/* argument strings */
 #ifdef	DEBUG
 	(void)Mess( "\n\t\tGetArgs\n" );
 #endif
-	while ( (c = getopt( argc, argv, "i:o:t:v" )) != EOF )
+	while ( (c = bu_getopt( argc, argv, "i:o:t:v" )) != EOF )
 		switch ( c )
 		{
 		case 'i':
@@ -153,11 +153,11 @@ char		*argv[];	/* argument strings */
 				    Mess( "too many -i options" );
 			iflag = true;
 
-			if ( strcmp( optarg, "-" ) != 0
-			    && freopen( optarg, "r", stdin ) == NULL
+			if ( strcmp( bu_optarg, "-" ) != 0
+			    && freopen( bu_optarg, "r", stdin ) == NULL
 			    )
 				return
-				    Mess( "can't open \"%s\"", optarg );
+				    Mess( "can't open \"%s\"", bu_optarg );
 			break;
 
 		case 'o':
@@ -166,11 +166,11 @@ char		*argv[];	/* argument strings */
 				    Mess( "too many -o options" );
 			oflag = true;
 
-			if ( strcmp( optarg, "-" ) != 0
-			    && freopen( optarg, "w", stdout ) == NULL
+			if ( strcmp( bu_optarg, "-" ) != 0
+			    && freopen( bu_optarg, "w", stdout ) == NULL
 			    )
 				return
-				    Mess( "can't create \"%s\"", optarg );
+				    Mess( "can't create \"%s\"", bu_optarg );
 			break;
 
 		case 't':
@@ -179,9 +179,9 @@ char		*argv[];	/* argument strings */
 				    Mess( "too many -t options" );
 			tflag = true;
 
-			if ( sscanf( optarg, "%le", &tolerance ) != 1 )
+			if ( sscanf( bu_optarg, "%le", &tolerance ) != 1 )
 				return
-				    Mess( "bad tolerance: %s", optarg );
+				    Mess( "bad tolerance: %s", bu_optarg );
 			tolsq = tolerance * tolerance;
 			break;
 

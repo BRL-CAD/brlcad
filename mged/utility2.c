@@ -766,8 +766,8 @@ char **argv;
 #if 0
 	int	levels;	/* XXX levels option on push command not yet implemented */
 #endif
-	extern 	int optind;
-	extern	char *optarg;
+	extern 	int bu_optind;
+	extern	char *bu_optarg;
 	extern	struct bn_tol	mged_tol;	/* from ged.c */
 	extern	struct rt_tess_tol mged_ttol;
 	int	i;
@@ -802,16 +802,16 @@ char **argv;
 	ncpu = 1;
 
 	/* Parse options */
-	optind = 1;	/* re-init getopt() */
-	while ( (c=getopt(argc, argv, "l:P:d")) != EOF) {
+	bu_optind = 1;	/* re-init bu_getopt() */
+	while ( (c=bu_getopt(argc, argv, "l:P:d")) != EOF) {
 		switch(c) {
 		case 'l':
 #if 0
-			levels=atoi(optarg);
+			levels=atoi(bu_optarg);
 #endif
 			break;
 		case 'P':
-			ncpu = atoi(optarg);
+			ncpu = atoi(bu_optarg);
 			if (ncpu<1) ncpu = 1;
 			break;
 		case 'd':
@@ -824,8 +824,8 @@ char **argv;
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	push_error = 0;
 

@@ -1971,8 +1971,8 @@ char **argv;
 	if(dbip == DBI_NULL)
 	  return CMD_OK;
 
-	optind = 1;
-	while ((c=getopt(argc,argv,"uam")) != EOF ) {
+	bu_optind = 1;
+	while ((c=bu_getopt(argc,argv,"uam")) != EOF ) {
 		switch (c) {
 		case 'u': no_unload = 1;break;
 		case 'a': no_apply = 1; break;
@@ -1982,8 +1982,8 @@ char **argv;
 		  break;
 		}
 	}
-	argv += optind;
-	argc -= optind;
+	argv += bu_optind;
+	argc -= bu_optind;
 	if (!no_unload) f_junload(0, (char **)0);
 
 	base2mm = dbip->dbi_base2local;
@@ -2227,8 +2227,8 @@ char **argv;
 	int c;
 	int no_mesh = 0;
 
-	optind=1;
-	while ( (c=getopt(argc,argv, "m")) != EOF) {
+	bu_optind=1;
+	while ( (c=bu_getopt(argc,argv, "m")) != EOF) {
 		switch (c) {
 		case 'm': no_mesh=1;break;
 		default:
@@ -2236,8 +2236,8 @@ char **argv;
 		  break;
 		}
 	}
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		if (argc) {
@@ -2264,8 +2264,8 @@ char **argv;
 	int c;
 	int no_mesh = 0;
 
-	optind=1;
-	while ( (c=getopt(argc,argv, "m")) != EOF) {
+	bu_optind=1;
+	while ( (c=bu_getopt(argc,argv, "m")) != EOF) {
 		switch (c) {
 		case 'm': no_mesh=1;break;
 		default:
@@ -2273,8 +2273,8 @@ char **argv;
 		  break;
 		}
 	}
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		if (argc) {
@@ -3037,23 +3037,23 @@ char **argv;
 	domesh = 1;
 
 	/*
-	 * reset getopt.
+	 * reset bu_getopt.
 	 */
-	optind=1;
-	while ((count=getopt(argc,argv,"l:e:d:m")) != EOF) {
+	bu_optind=1;
+	while ((count=bu_getopt(argc,argv,"l:e:d:m")) != EOF) {
 		switch (count) {
-		case 'l': loops = atoi(optarg);break;
-		case 'e': epsilon = atof(optarg);break;
-		case 'd': delta =  atof(optarg);break;
+		case 'l': loops = atoi(bu_optarg);break;
+		case 'e': epsilon = atof(bu_optarg);break;
+		case 'd': delta =  atof(bu_optarg);break;
 		case 'm': domesh = 1-domesh;
 		}
 	}
 
 	/*
-	 * skip the command and any options that getopt ate.
+	 * skip the command and any options that bu_getopt ate.
 	 */
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	for (BU_LIST_FOR(hp, hold, &hold_head)) hold_clear_flags(hp);
 	found = -1;
