@@ -351,6 +351,7 @@ int			noisy;
 	/* Prime the pumps, and get the starting combination */
 	if( pathp->fp_len > 0 )  {
 		comb_dp = DB_FULL_PATH_CUR_DIR(pathp);
+		oldc = 'X';	/* Anything non-null */
 	}  else  {
 		/* Peel out first path element & look it up. */
 
