@@ -1793,20 +1793,26 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #if	!defined(BINDIR)
 /*	Define places where users can find "installed" copies of things */
 /*	Note that MANDIR is handled separately */
-#	define	BASEDIR	/usr/brlcad
-#	define	BINDIR	/usr/brlcad/bin
-#	define	LIBDIR	/usr/brlcad/lib
-#	define	ETCDIR	/usr/brlcad/etc
-#	define	INCLUDE_DIR	/usr/brlcad/include/brlcad
-#	define	VFONTDIR	/usr/brlcad/vfont
-#	define	TCLLIBDIR	/usr/brlcad/tcl
-#	define	TKLIBDIR	/usr/brlcad/tk
-#if 1	/* PRODUCTION=1 */
-#	define	TCLSCRIPTSDIR	/usr/brlcad/tclscripts
-#else
-/*XXX For development only.  Replaced by libbu/bu_brlcad_path() and BRLCAD_BASEDIR */
-#	define	TCLSCRIPTSDIR	/m/cad/tclscripts
-#endif
+#	if defined(BRLCAD_ROOT)
+		/*
+		 *  The value of BRLCAD_ROOT is passed along by CAKE from
+		 *  the output of "machinetype.sh -d" at the time that
+		 *  CAKE was compiled.
+		 *  If it has become wrong, re-run setup.sh & rebuild all.
+		 */
+#		define BASEDIR BRLCAD_ROOT
+#	else
+#		include "The CAKE program failed to define the variable BRLCAD_ROOT.  Fatal ERROR"
+#		define BASEDIR /very/very/bad/error/
+#	endif
+#	define	BINDIR	BASEDIR/bin
+#	define	LIBDIR	BASEDIR/lib
+#	define	ETCDIR	BASEDIR/etc
+#	define	INCLUDE_DIR	BASEDIR/include/brlcad
+#	define	VFONTDIR	BASEDIR/vfont
+#	define	TCLLIBDIR	BASEDIR/tcl
+#	define	TKLIBDIR	BASEDIR/tk
+#	define	TCLSCRIPTSDIR	BASEDIR/tclscripts
 #endif
 
 #if	!defined(XLIBDIR)
@@ -1818,7 +1824,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #endif
 
 #if !defined(MANDIR)
-#	define	MANDIR	/usr/brlcad/man/man
+#	define	MANDIR	BASEDIR/man/man
 #endif
 
 /* Permissions for "installed" files of various types */
