@@ -770,7 +770,9 @@ ClientData clientData;
 		cpu_count += rtnodes[i].ncpus;
 		lowest_index = i;
 	}
-	bu_log("%s dispatcher() has %d cpus\n", stamp(), cpu_count);
+	if( debug )  {
+		bu_log("%s dispatcher() has %d cpus\n", stamp(), cpu_count);
+	}
 	sprintf(buf, "%d", cpu_count);
 	Tcl_SetVar(interp, "cpu_count", buf, TCL_GLOBAL_ONLY );
 	if( cpu_count <= 0 )  return;
@@ -1204,10 +1206,12 @@ char			*buf;
 		interval = tvdiff( &time_end, &time_start );
 		if( interval <= 0 )  interval = 999;
 
-		bu_log("%s DONE %s (%g ms)\n", stamp(),
-			rtnodes[i].host->ht_name,
-			interval * 1000.0
-			);
+		if( debug )  {
+			bu_log("%s DONE %s (%g ms)\n", stamp(),
+				rtnodes[i].host->ht_name,
+				interval * 1000.0
+				);
+		}
 		rtnodes[i].busy = 0;
 		if( buf )  free(buf);
 		goto check_others;
