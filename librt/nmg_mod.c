@@ -353,6 +353,34 @@ int		orient;
 	}
 }
 
+/*
+ *			N M G _ S _ S P L I T _ T O U C H I N G L O O P S
+ *
+ *  For every loop in a shell, invoke nmg_split_touchingloops() on it.
+ *
+ *  Needed before starting classification, to separate interior (touching)
+ *  loop segments into true interior loops, so each can be processed
+ *  separately.
+ */
+void
+nmg_s_split_touchingloops(s)
+struct shell	*s;
+{
+	struct faceuse	*fu;
+	struct loopuse	*lu;
+
+	NMG_CK_SHELL(s);
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			nmg_split_touchingloops( lu );
+		}
+	}
+	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+		nmg_split_touchingloops( lu );
+	}
+}
+
 /************************************************************************
  *									*
  *				FACE Routines				*
