@@ -214,7 +214,9 @@ plane_t	plane;
  *
  *  Explicit Return -
  *	 0	OK, line of intersection stored in `pt' and `dir'.
- *	-1	FAIL
+ *	-1	FAIL, planes are identical (co-planar)
+ *	-2	FAIL, planes are parallel and distinct
+ *	-3	FAIL, unable to find line of intersection
  *
  *  Implicit Returns -
  *	pt	Starting point of line of intersection
@@ -234,8 +236,16 @@ vect_t	rpp_min;
 
 	/* Check to see if the planes are parallel */
 	d = VDOT( a, b );
-	if( !NEAR_ZERO( d, 0.999999 ) )
-		return(-1);		/* FAIL -- parallel */
+	/* XXX angular tolerance needed */
+	if( !NEAR_ZERO( d, 0.999999 ) )  {
+		/* See if the planes are identical */
+		d = a[3] - b[3];
+		/* XXX need distance tolerance */
+		if( NEAR_ZERO( d, 0.005 ) )  {
+			return(-1);	/* FAIL -- planes are identical */
+		}
+		return(-2);		/* FAIL -- parallel & distinct */
+	}
 
 	/* Direction vector for ray is perpendicular to both plane normals */
 	VCROSS( dir, a, b );
@@ -284,7 +294,7 @@ vect_t	rpp_min;
 
 	/* Intersection of the 3 planes defines ray start point */
 	if( rt_mkpoint_3planes( pt, pl, a, b ) < 0 )
-		return(-1);	/* FAIL -- no intersection */
+		return(-3);	/* FAIL -- no intersection */
 
 	return(0);		/* OK */
 }
