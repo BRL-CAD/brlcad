@@ -821,7 +821,7 @@ dnl *** libz ***
 
 dnl See if zlib library support works
 zlib_works=no
-AC_MSG_CHECKING(for portable network graphics functionality)
+AC_MSG_CHECKING(for zlib compression functionality)
 AC_TRY_RUN([
 #include <zlib.h>
 int main () {
