@@ -3220,7 +3220,7 @@ Note that this may significantly slow the <I>preview</I>.
 </DD>
 <HR>
 
-<DT><a NAME="prj_add"><B>prj_add</B> <I>shaderfile</I> [<I>image_file</I>] [<I>image_width</I>] [<I>image_height</I>]</DT>
+<DT><a NAME="prj_add"><B>prj_add</B> <I>[-t] [-b] [-n]</I> <I>shaderfile</I> [<I>image_file</I>] [<I>image_width</I>] [<I>image_height</I>]</DT>
 
 <DD> The ``prj_add'' command appends information to the specified <I>shaderfile</I>. The information
 appended is in the form required by the ``projection'' shader (<I>prj</I>) and includes the <I>image_file</I>
@@ -3228,7 +3228,8 @@ appended is in the form required by the ``projection'' shader (<I>prj</I>) and i
 frmo the <I>mged</I> display. The resulting <I>shaderfile</I> may then be used as the parameter to the <I>prj</I>
 shader. Before executing this command, the region wireframe display in <I>mged</I> should be aligned with
 the <I>image_file</I> (underlayed in <I>mged</I>'s framebuffer) and the <I>image_file</I> should have the same
-height and width as the <I>mged</I> display.
+height and width as the <I>mged</I> display. The <I>-t</I> option indicates that the image should be projected
+through the object.  The <I>-n</I> option requests that antialiasing not be done.
 </DD>
 <HR>
 
