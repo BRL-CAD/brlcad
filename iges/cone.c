@@ -71,7 +71,7 @@ int entityno;
 	Readcnv( &y2 , "" );
 	Readcnv( &z2 , "" );
 
-	if( scale_height <= 0.0 || rad2 < rad1 || rad2 < 0.0 )
+	if( scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0 )
 	{
 		printf( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
