@@ -23,3 +23,5 @@ include_HEADERS = \
 EXTRA_DIST = itk.decls
 
 MAINTAINERCLEANFILES = Makefile.in
+
+AM_CFLAGS=@X_CFLAGS@
