@@ -302,7 +302,7 @@ long	*up_magic_p;
 
 			if( eu->g.magic_p != eu->eumate_p->g.magic_p )
 				rt_bomb("nmg_veu() edgeuse and mate don't share geometry\n");
-			nmg_veg(eu->g.magic_p);
+			if(eu->g.magic_p) nmg_veg(eu->g.magic_p);
 		}
 		
 		switch (eu->orientation) {
