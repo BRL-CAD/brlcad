@@ -160,6 +160,7 @@
 #	define HAVE_STDLIB_H	1
 #	define HAVE_UNISTD_H	1
 #	define HAVE_FLOAT_H	1
+#	define TK_READ_DATA_PENDING(f)	((f)->_flags & __SRD)
 #endif
 
 #if defined(linux)
@@ -365,7 +366,7 @@
 #	undef	_KERNEL
 #endif
 
-#if !defined(TK_FILE_COUNT) && !defined(TK_FILE_GPTR) && !defined(TK_FILE_READ_PTR)
+#if !defined(TK_FILE_COUNT) && !defined(TK_FILE_GPTR) && !defined(TK_FILE_READ_PTR) && !defined(TK_READ_DATA_PENDING)
 # define TK_FILE_COUNT _cnt
 #endif
 
