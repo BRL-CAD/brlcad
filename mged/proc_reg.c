@@ -2058,8 +2058,18 @@ char	**argv;
 	(void)time( &start_time );
 
 	if( rt_gettrees( rtip, argc, (const char **)argv, 1 ) )
-		bu_bomb( "rt_gettrees failed!!\n" );
+	{
+		bu_ptbl_free( &leaf_list );
+		(void)signal( SIGINT, SIG_IGN );
 
+		/* do not do an rt_free_rti() (closes the database!!!!) */
+		rt_clean( rtip );
+
+		bu_free( (char *)rtip, "rt_i structure for 'E'" );
+
+		Tcl_AppendResult(interp, "Failed to get objects\n", (char *)NULL);
+		return TCL_ERROR;
+	}
 	{
 		struct region *rp;
 		union E_tree *eptr;
