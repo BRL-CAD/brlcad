@@ -27,6 +27,8 @@ static struct rb_node *_rb_extreme (struct rb_node *root, int order,
     while (1)
     {
 	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
+	RB_CKORDER(root -> rbn_tree, order);
+
 	child = (sense == SENSE_MIN) ? rb_left_child(root, order) :
 				       rb_right_child(root, order);
 	if (child == empty_node)
@@ -53,11 +55,9 @@ void *rb_extreme (rb_tree *tree, int order, int sense)
 {
     struct rb_node	*node;
 
-    /* Check data type of the parameter "tree" */
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
-
-    /* Ensure other two parameters are within range */
     RB_CKORDER(tree, order);
+
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
     {
 	fprintf(stderr,
@@ -89,6 +89,9 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
     struct rb_node	*child;
     struct rb_node	*parent;
     struct rb_node	*empty_node = rb_null(node -> rbn_tree);
+
+    RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
+    RB_CKORDER(node -> rbn_tree, order);
 
     printf("_rb_neighbor(<%d>, %d, %d)...\n", (int) node, order, sense);
     fflush(stdout);
@@ -124,10 +127,10 @@ void *rb_neighbor (int order, int sense)
     rb_tree		*tree;
     struct rb_node	*node;
 
-    /* Ensure other two parameters are within range */
     RB_CKMAG(current_node, RB_NODE_MAGIC, "red-black node");
     tree = current_node -> rbn_tree;
     RB_CKORDER(tree, order);
+
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
     {
 	fprintf(stderr,
