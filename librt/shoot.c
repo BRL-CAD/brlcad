@@ -106,7 +106,7 @@ register struct application *ap;
 	if( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
 		rt_uniresource.re_magic = RESOURCE_MAGIC;
-rt_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
+		if(rt_g.debug)rt_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
 	}
 	RT_RESOURCE_CHECK(ap->a_resource);
 
