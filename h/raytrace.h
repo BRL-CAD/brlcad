@@ -668,8 +668,10 @@ struct db_i  {
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
 
-#define RT_CHECK_DBI(_p)	BU_CKMAG(_p,DBI_MAGIC,"struct db_i")
-#define RT_CK_DBI(_p)		BU_CKMAG(_p,DBI_MAGIC,"struct db_i")
+#define RT_CHECK_DBI(_p)		BU_CKMAG(_p,DBI_MAGIC,"struct db_i")
+#define RT_CHECK_DBI_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,DBI_MAGIC,"struct db_i")
+#define RT_CK_DBI(_p)			RT_CHECK_DBI(_p)
+#define RT_CK_DBI_TCL(_interp,_p)	RT_CHECK_DBI_TCL(_interp,_p)
 
 /*
  *			D I R E C T O R Y
@@ -747,7 +749,10 @@ struct rt_wdb  {
 };
 
 #define	RT_WDB_MAGIC			0x5f576462
-#define RT_CK_WDB(_p)		BU_CKMAG( _p , RT_WDB_MAGIC , "rt_wdb" )
+#define RT_CHECK_WDB(_p)		BU_CKMAG(_p,RT_WDB_MAGIC,"rt_wdb")
+#define RT_CHECK_WDB_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,RT_WDB_MAGIC,"rt_wdb")
+#define RT_CK_WDB(_p)			RT_CHECK_WDB(_p)
+#define RT_CK_WDB_TCL(_interp,_p)	RT_CHECK_WDB_TCL(_interp,_p)
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_FILE			1
 #define RT_WDB_TYPE_DB_DISK			2
@@ -1263,8 +1268,10 @@ struct rt_i {
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
 
-#define RT_CHECK_RTI(_p)	BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
-#define RT_CK_RTI(_p)		BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
+#define RT_CHECK_RTI(_p)		BU_CKMAG(_p,RTI_MAGIC,"struct rt_i")
+#define RT_CHECK_RTI_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,RTI_MAGIC,"struct rt_i")
+#define RT_CK_RTI(_p)			RT_CHECK_RTI(_p)
+#define RT_CK_RTI_TCL(_interp,_p)	RT_CHECK_RTI_TCL(_interp,_p)
 
 #define RT_PART_NUGRID	0
 #define	RT_PART_NUBSPT	1
