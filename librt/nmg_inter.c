@@ -41,6 +41,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h (for nmg_ck.c) */
+RT_EXTERN(void		nmg_ck_v_in_2fus, (CONST struct vertex *vp,
+			CONST struct faceuse *fu1, CONST struct faceuse *fu2,
+			CONST struct rt_tol *tol));
+
+
 struct nmg_inter_struct {
 	long		magic;
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
@@ -385,6 +391,7 @@ struct faceuse		*fu;
 			if( rt_pt3_pt3_equal( pt, vu2->v_p->vg_p->coord, &is->tol ) )  {
 				/* Fuse the two verts together */
 				nmg_jv( vu->v_p, vu2->v_p );
+				nmg_ck_v_in_2fus(vu->v_p, nmg_find_fu_of_vu(vu), fu, &is->tol);
 				return;
 			}
 			continue;
@@ -678,7 +685,7 @@ CONST struct faceuse	*fu;
  *  will be achieved.
  */
 void
-nmg_isect_two_colinear_edge2p( dist, l1, l2, vu1a, vu1b, vu2a, vu2b, eu1, eu2, fu1, fu2, str )
+nmg_isect_two_colinear_edge2p( dist, l1, l2, vu1a, vu1b, vu2a, vu2b, eu1, eu2, fu1, fu2, tol, str )
 CONST fastf_t		dist[2];
 struct nmg_ptbl		*l1;
 struct nmg_ptbl		*l2;
@@ -690,6 +697,7 @@ struct edgeuse		*eu1;
 struct edgeuse		*eu2;
 struct faceuse		*fu1;		/* fu of eu1, for plane equation */
 struct faceuse		*fu2;		/* fu of eu2, for error checks */
+CONST struct rt_tol	*tol;
 CONST char		*str;
 {
 	NMG_CK_VERTEXUSE(vu1a);
@@ -700,6 +708,7 @@ CONST char		*str;
 	NMG_CK_EDGEUSE(eu2);
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
+	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_two_colinear_edge2p(x%x, x%x) %s\n", eu1, eu2, str);
@@ -715,12 +724,14 @@ CONST char		*str;
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 		nmg_jv(vu1a->v_p, vu2a->v_p);
+		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
 	} else if( dist[0] == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu1a intersects vu2b\n");
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1a->v_p, vu2b->v_p);
+		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
 	} else if( dist[0] > 0 && dist[0] < 1 )  {
 		/* Break eu1 into two pieces */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -730,6 +741,7 @@ CONST char		*str;
 		 *  the edge as well, it will be this new one.
 		 */
 		eu1 = nmg_ebreak( vu2a->v_p, eu1 );
+		vu1a = eu1->vu_p;
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
 	}
@@ -741,12 +753,14 @@ CONST char		*str;
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1a->v_p, vu2b->v_p);
+		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
 	} else if( dist[1] == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu1b intersects vu2b\n");
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1b->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1b->v_p, vu2b->v_p);
+		nmg_ck_v_in_2fus(vu1b->v_p, fu1, fu2, tol);
 	} else if( dist[1] > 0 && dist[1] < 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu2b=x%x breaks eu1=x%x\n", vu2b, eu1 );
@@ -889,7 +903,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		 */
 		nmg_isect_two_colinear_edge2p( dist, is->l1, is->l2,
 			vu1a, vu1b, vu2a, vu2b,
-			eu1, eu2, fu1, fu2, "eu1/eu2" );
+			eu1, eu2, fu1, fu2, &is->tol, "eu1/eu2" );
 
 		/*
 		 *  If the segments only partially overlap, need to intersect
@@ -919,7 +933,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 
 		nmg_isect_two_colinear_edge2p( eu2dist, is->l2, is->l1,
 			vu2a, vu2b, vu1a, vu1b,
-			eu2, eu1, fu2, fu1, "eu2/eu1" );
+			eu2, eu1, fu2, fu1, &is->tol, "eu2/eu1" );
 
 		return 2;	/* XXX unsure of what happened, be conservative */
 	}
@@ -953,6 +967,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 				rt_log("\tvu2a matches vu1a\n");
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 			nmg_jv(vu1a->v_p, vu2a->v_p);
+			nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
 			return 1;
 		}
 		if( dist[1] == 1 )  {
@@ -960,6 +975,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 				rt_log("\tsecond point of eu2 matches vu1a\n");
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 			nmg_jv(vu1a->v_p, vu2b->v_p);
+			nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
 			return 1;
 		}
 		/* Break eu2 on our first vertex */
@@ -991,6 +1007,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 				rt_log("\tvu2a matches vu1b\n");
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 			nmg_jv(vu1b->v_p, vu2a->v_p);
+			nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
 			return 1;
 		}
 		if( dist[1] == 1 )  {
@@ -998,6 +1015,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 				rt_log("\tsecond point of eu2 matches vu1b\n");
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 			nmg_jv(vu1b->v_p, vu2b->v_p);
+			nmg_ck_v_in_2fus(vu1b->v_p, fu1, fu2, &is->tol);
 			return 1;
 		}
 		/* Break eu2 on our second vertex */
@@ -1386,6 +1404,7 @@ struct faceuse *fu;
 #endif
 			/* Combine the two vertices */
 			nmg_jv(v1, vu_other->v_p);
+			nmg_ck_v_in_2fus(v1, nmg_find_fu_of_vu(eu->vu_p), fu, &bs->tol);
 		} else {
 			/* Insert copy of this vertex into face */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -1433,6 +1452,7 @@ struct faceuse *fu;
 #endif
 			/* Combine the two vertices */
 			nmg_jv(v1mate, vu_other->v_p);
+			nmg_ck_v_in_2fus(v1mate, nmg_find_fu_of_vu(eu->eumate_p->vu_p), fu, &bs->tol);
 		} else {
 			/* Insert copy of this vertex into face */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
