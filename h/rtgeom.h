@@ -8,8 +8,7 @@
  *  generic pointer idb_ptr points at,
  *  based on idb_type indicating a solid id ID_xxx, such as ID_TGC.
  *
- *  Depends on having machine.h, vmath.h, and rtlist.h included first.
- *  RT_xxx_CK_MAGIC() can only be used if raytrace.h is included too.
+ *  Depends on having machine.h, bu.h, vmath.h, and bn.h included first.
  *
  *  The proper order for including them all is:
  *	#include <stdio.h>
@@ -38,6 +37,10 @@
 
 #ifndef SEEN_RTGEOM_H
 #define SEEN_RTGEOM_H seen
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #undef r_a /* defined on alliant in <machine/reg.h> included in signal.h */
 
@@ -496,5 +499,9 @@ struct rt_bot_internal
 
 #define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p,RT_BOT_INTERNAL_MAGIC,"rt_bot_internal")
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SEEN_RTGEOM_H */
