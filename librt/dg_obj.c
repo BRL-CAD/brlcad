@@ -326,7 +326,6 @@ dgo_draw(dgop, interp, argc, argv, kind)
      char    **argv;
      int kind;
 {
-	struct rt_wdb *wdbp;
 	register struct directory *dp;
 	register int i;
 
@@ -698,10 +697,6 @@ char	**argv;
 	struct view_obj *vop;
 	register char **vp;
 	register int i;
-	int retcode;
-	char *dm;
-	char	pstring[32];
-	struct bu_vls cmd;
 
 	if (argc < 3 || MAXARGS < argc) {
 	  struct bu_vls vls;
@@ -766,7 +761,7 @@ char	**argv;
 
 		Tcl_AppendResult(interp, "\n", (char *)NULL);
 	}
-	retcode = dgo_run_rt(dgop, vop);
+	(void)dgo_run_rt(dgop, vop);
 
 	return TCL_OK;
 }
@@ -782,8 +777,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	struct dg_obj *dgop = (struct dg_obj *)clientData;
-
 	return bu_cmd(clientData, interp, argc, argv, vdraw_cmds, 2);
 }
 
@@ -794,7 +787,6 @@ dgo_zap(dgop, interp)
 {
 	register struct solid *sp;
 	register struct solid *nsp;
-	register struct dm_list *dmlp;
 	struct directory *dp;
 
 	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid.l);
@@ -855,7 +847,6 @@ dgo_blast_tcl(clientData, interp, argc, argv)
      char	**argv;
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-	int kind = 1;	    /* wireframe */
 
 	if (argc < 3) {
 		struct bu_vls vls;
@@ -1211,7 +1202,6 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 	register char **vp;
 	register int i;
 	int	pid; 	 
-	int	retcode;
 	int	i_pipe[2];	/* object reads results for building vectors */
 	int	o_pipe[2];	/* object writes view parameters */
 	int	e_pipe[2];	/* object reads textual results */
@@ -1816,7 +1806,6 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 			break;
 		case 'C':
 			{
-				char		buf[128];
 				int		r,g,b;
 				register char	*cp = bu_optarg;
 
@@ -1930,7 +1919,6 @@ dgo_cvt_vlblock_to_solids(dgop, interp, vbp, name, copy)
 	int		i;
 	char		shortname[32];
 	char		namebuf[64];
-	char		*av[2];
 
 	strncpy(shortname, name, 16-6);
 	shortname[16-6] = '\0';
@@ -1965,8 +1953,6 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 {
 	register struct directory	*dp;
 	register struct solid		*sp;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	if (dgop->dgo_wdbp->dbip == DBI_NULL)
 		return 0;
@@ -2101,8 +2087,6 @@ dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp, dgcdp)
 {
 	register struct solid *sp;
 	register int	i;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	if (!existing_sp) {
 		if (pathp->fp_len > MAX_PATH) {
@@ -2482,7 +2466,6 @@ dgo_rt_set_eye_model(dgop, vop, eye_model)
 	vect_t  direction;
 	vect_t  extremum[2];
 	vect_t  minus, plus;    /* vers of this solid's bounding box */
-	vect_t  unit_H, unit_V;
 
 	VSET(eye_model, -vop->vo_center[MDX],
 	     -vop->vo_center[MDY], -vop->vo_center[MDZ]);
@@ -2534,21 +2517,16 @@ dgo_run_rt(dgop, vop)
      struct dg_obj *dgop;
      struct view_obj *vop; 
 {
-	register struct solid *sp;
 	register int i;
-	int pid, rpid;
-	int retcode;
 	FILE *fp_in;
 	int pipe_in[2];
 	int pipe_err[2];
-	char line[RT_MAXLINE];
-	struct bu_vls vls;
 	vect_t eye_model;
 
 	(void)pipe(pipe_in);
 	(void)pipe(pipe_err);
 
-	if ((pid = fork()) == 0) {
+	if ((fork()) == 0) {
 		/* make this a process group leader */
 		setpgid(0, 0);
 

@@ -328,7 +328,6 @@ vo_invSize_tcl(clientData, interp, argc, argv)
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
 	struct bu_vls vls;
-	fastf_t size;
 
 	if (argc == 2) {
 		bu_vls_init(&vls);
@@ -370,8 +369,6 @@ vo_aet_tcl(clientData, interp, argc, argv)
 
 		return TCL_OK;
 	} else if (argc == 3) {  /* set aet */
-		mat_t m;
-
 		if (bn_decode_vect(aet, argv[2]) != 3)
 			return TCL_ERROR;
 
@@ -886,7 +883,6 @@ vo_lookat_tcl(clientData, interp, argc, argv)
 	point_t new_center;
 	vect_t dir;
 	fastf_t new_az, new_el;
-	struct bu_vls vls;
 
 	if (argc != 3) {
 		struct bu_vls vls;
@@ -934,7 +930,6 @@ vo_orientation_tcl(clientData, interp, argc, argv)
      char    **argv;
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
-	register int i;
 	quat_t quat;
 
 	if (argc != 3) {
@@ -1281,7 +1276,6 @@ vo_slew_tcl(clientData, interp, argc, argv)
      char    **argv;
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
-	struct bu_vls vls;
 	vect_t slewvec;
 	point_t model_center;
 

@@ -513,16 +513,9 @@ wdb_get_tcl(clientData, interp, argc, argv)
      int		argc;
      char	      **argv;
 {
-	register struct directory	       *dp;
-	register struct bu_structparse	       *sp = NULL;
-	int			id, status;
+	int			status;
 	struct rt_db_internal	intern;
-	char			objecttype;
-	char		       *objname;
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-	Tcl_DString		ds;
-	struct bu_vls		str;
-	char			*curr_elem;
 
 	/* skip past procname */
 	--argc;
@@ -568,8 +561,7 @@ wdb_put_tcl(clientData, interp, argc, argv)
 {
 	struct rt_db_internal			intern;
 	register CONST struct rt_functab	*ftp;
-	register struct directory	       *dp;
-	int					status, ngran, i;
+	int					i;
 	char				       *name;
 	char				        type[16];
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
@@ -659,12 +651,9 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
      char	      **argv;
 {
 	register struct directory	*dp;
-	register CONST struct bu_structparse	*sp = NULL;
-	int				 status, i;
+	int				 status;
 	char				*name;
 	struct rt_db_internal		 intern;
-	mat_t				 idn;
-	char				 objecttype;
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
 	if (argc < 5) {
@@ -719,7 +708,6 @@ wdb_form_tcl( clientData, interp, argc, argv )
      int argc;
      char **argv;
 {
-	CONST struct bu_structparse	*sp = NULL;
 	CONST struct rt_functab		*ftp;
 
 	--argc;
@@ -1262,7 +1250,7 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
      char    **argv;
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-	int i, flag;
+	int flag;
 	mat_t	wdb_xform;
 	struct db_full_path	desired_path;
 
@@ -1447,8 +1435,6 @@ wdb_kill_tcl(clientData, interp, argc, argv)
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 	register struct directory *dp;
 	register int i;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 	int	is_phony;
 	int	verbose = LOOKUP_NOISY;
 
@@ -1811,7 +1797,7 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
      char    **argv;
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-	register int	i,j,k;	
+	register int	i;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
@@ -2069,9 +2055,6 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
 		dp->d_namep = bu_strdup(local);
 	} else {
-		register int i;
-		char	mref[RT_NAMESIZE+2];
-
 		Tcl_AppendResult(dasp->interp,
 				 "adding  comb '",
 				 local, "'\n", (char *)NULL);
@@ -2360,7 +2343,6 @@ wdb_remove_tcl(clientData, interp, argc, argv)
 	int		num_deleted;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
-	union tree		*tp;
 	int			ret;
 
 	if (wdbp->dbip->dbi_read_only) {
@@ -3223,7 +3205,6 @@ wdb_prcolor_tcl(clientData, interp, argc, argv)
      int     argc;
      char    **argv;
 {
-	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 	register struct mater *mp;
 	int col_count = 0;
 	int col_len = 0;

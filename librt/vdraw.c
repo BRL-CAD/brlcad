@@ -142,7 +142,7 @@ vdraw_write_tcl(clientData, interp, argc, argv)
      char **argv;
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-	int i, index, uind;
+	int index, uind;
 	struct rt_vlist *vp, *cp;
 
 	if (!dgop->dgo_currVHead) {
