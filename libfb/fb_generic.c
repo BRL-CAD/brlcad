@@ -52,9 +52,6 @@ FBIO *ifp;
 #ifdef IF_REMOTE
 extern FBIO remote_interface;	/* not in list[] */
 #endif
-#ifdef IF_PTTY
-extern FBIO ptty_interface;	/* not in list[] */
-#endif
 
 #ifdef IF_ADAGE
 extern FBIO adage_interface;
@@ -74,8 +71,15 @@ extern FBIO rat_interface;
 #ifdef IF_UG
 extern FBIO ug_interface;
 #endif
+#ifdef IF_X
+extern FBIO X_interface;
+#endif
+#ifdef IF_PTTY
+extern FBIO ptty_interface;
+#endif
 
-extern FBIO debug_interface, disk_interface;	/* Always included */
+/* Always included */
+extern FBIO debug_interface, disk_interface, stk_interface;
 
 /* First element of list is default device when no name given */
 static
@@ -99,20 +103,24 @@ FBIO *_if_list[] = {
 	&ug_interface,
 #endif
 	&debug_interface,
+/* never get the following by default */
+#ifdef IF_X
+	&X_interface,
+#endif
+#ifdef IF_PTTY
+	&ptty_interface,
+#endif
+	&stk_interface,
 	(FBIO *) 0
 };
-
-#define	DEVNAMLEN	80
 
 FBIO *
 fb_open( file, width, height )
 char	*file;
 int	width, height;
-{	
+{
 	register FBIO	*ifp;
 	int	i;
-	char	*cp;
-	char	devnambuf[DEVNAMLEN+1];
 
 	if( (ifp = (FBIO *) calloc( sizeof(FBIO), 1 )) == FBIO_NULL ) {
 		Malloc_Bomb( sizeof(FBIO) );
@@ -128,7 +136,7 @@ int	width, height;
 		}
 	}
 	/*
-	 * Determine what type of hardware the device name refers to.
+	 *  Determine what type of hardware the device name refers to.
 	 *
 	 *  "file" can in general look like: hostname:/pathname/devname#
 	 *  If we have a ':' assume the remote interface
@@ -136,45 +144,31 @@ int	width, height;
 	 *  else strip out "/path/devname" and try to look it up in the
 	 *    device array.  If we don't find it assume it's a file.
 	 */
+	i = 0;
+	while( _if_list[i] != (FBIO *)NULL ) {
+		if( strncmp( file, _if_list[i]->if_name,
+		    strlen(_if_list[i]->if_name) ) == 0 ) {
+		    	/* found it, copy its struct in */
+			*ifp = *(_if_list[i]);
+			goto found_interface;
+		}
+		i++;
+	}
+	/* Not in list, check special interfaces or disk files */
 #ifdef IF_REMOTE
-	if( (cp = strchr( file, ':' )) != NULL ) {
+	if( strchr( file, ':' ) != NULL ) {
 		/* We have a remote file name of the form <host>:<file>.*/
 		*ifp = remote_interface;
 		goto found_interface;
 	}
 #endif IF_REMOTE
-	cp = file;
-	i = 0;
-	while( *cp != NULL && !isdigit(*cp) && i < DEVNAMLEN ) {
-		devnambuf[ i++ ] = *cp++;
-	}
-	devnambuf[i] = 0;
-
-#ifdef IF_PTTY
-	if( strncmp( devnambuf, "/dev/tty", 8 ) == 0 && devnambuf[8] != '\0' ) {
-		/* We have a UNIX pseudo-tty presumably (tty[pqr]*).	*/
-		*ifp = ptty_interface;
-		goto found_interface;
-	}
-#endif IF_PTTY
-
-	i = 0;
-	while( _if_list[i] != (FBIO *)NULL ) {
-		if( strcmp( &devnambuf[0], _if_list[i]->if_name ) == 0 )
-			break;
-		i++;
-	}
-	if( _if_list[i] != (FBIO *)NULL )
-		*ifp = *(_if_list[i]);
-	else {
-		/* Assume it's a disk file */
-		if( _disk_enable ) {
-			*ifp = disk_interface;
-		} else {
-			fb_log(	"fb_open : no such device \"%s\".\n", file );
-			free( (void *) ifp );
-			return	FBIO_NULL;
-		}
+	/* Assume it's a disk file */
+	if( _disk_enable ) {
+		*ifp = disk_interface;
+	} else {
+		fb_log(	"fb_open : no such device \"%s\".\n", file );
+		free( (void *) ifp );
+		return	FBIO_NULL;
 	}
 
 found_interface:
