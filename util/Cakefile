@@ -28,7 +28,7 @@
 	pl-asc pl-hpgl \
 	pl-pl pl-tek pl-ps pl-sgi \
 	plcolor pldebug plgetframe plline2 plrot plstat \
-	query rle-pix sgi-pix sun-pix xyz-pl msrandom
+	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -350,5 +350,8 @@ decimate : decimate.o
 
 msrandom: msrandom.o
 	CC LDFLAGS -o msrandom msrandom.o LIBRT LIBRT_LIBES LIBES
+
+pixblend:	pixblend.o
+	CC LDFLAGS -o pixblend pixblend.o LIBES
 
 #include "../Cakefile.rules"
