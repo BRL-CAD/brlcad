@@ -47,9 +47,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct dm	*ps_open();
 static int	ps_close();
 static int	ps_drawBegin(), ps_drawEnd();
-static int	ps_normal(), ps_newrot();
+static int	ps_normal(), ps_loadMatrix();
 static int	ps_drawString2D(), ps_drawLine2D();
-static int      ps_drawVertex2D();
+static int      ps_drawPoint2D();
 static int	ps_drawVList();
 static int      ps_setColor();
 static int      ps_setLineAttr();
@@ -60,10 +60,10 @@ struct dm dm_ps = {
   ps_drawBegin,
   ps_drawEnd,
   ps_normal,
-  ps_newrot,
+  ps_loadMatrix,
   ps_drawString2D,
   ps_drawLine2D,
-  ps_drawVertex2D,
+  ps_drawPoint2D,
   ps_drawVList,
   ps_setColor,
   ps_setLineAttr,
@@ -357,15 +357,33 @@ struct dm *dmp;
 
 /*
  *  			P S _ N E W R O T
- *  Stub.
+ *
+ *  Load a new transformation matrix.  This will be followed by
+ *  many calls to ps_drawVList().
  */
-/* ARGSUSED */
 static int
-ps_newrot(dmp, mat, which_eye)
+ps_loadMatrix(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
 int which_eye;
 {
+  if(((struct ps_vars *)dmp->dm_vars)->debug){
+    struct bu_vls tmp_vls;
+
+    Tcl_AppendResult(interp, "ps_loadMatrix()\n", (char *)NULL);
+
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+    bu_vls_printf(&tmp_vls, "transformation matrix = \n");
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
+  }
+
   bn_mat_copy(psmat, mat);
   return TCL_OK;
 }
@@ -501,7 +519,7 @@ int use_aspect;
 }
 
 /*
- *			P S _ 2 D _ G O T O
+ *			P S _ D R A W L I N E 2 D
  *
  */
 static int
@@ -513,13 +531,6 @@ int x2, y2;
   if( !((struct ps_vars *)dmp->dm_vars)->ps_fp )
     return TCL_ERROR;
 
-#if 0
-  if( dashed )
-    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "DDV ");	/* Dot-dashed vectors */
-  else
-    fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp, "NV ");		/* Normal vectors */
-#endif
-
   fprintf(((struct ps_vars *)dmp->dm_vars)->ps_fp,
 	  "newpath %d %d moveto %d %d lineto stroke\n",
 	  GED_TO_PS(x1), GED_TO_PS(y1),
@@ -529,7 +540,7 @@ int x2, y2;
 }
 
 static int
-ps_drawVertex2D(dmp, x, y)
+ps_drawPoint2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
@@ -576,14 +587,14 @@ struct dm *dmp;
 register int w[];
 {
   /* Compute the clipping bounds */
-  ((struct ps_vars *)dmp->dm_vars)->clipmin[0] = w[1] / 2048.;
-  ((struct ps_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
-  ((struct ps_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
-  ((struct ps_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmin[0] = w[0] / 2048.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmax[0] = w[1] / 2047.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmin[1] = w[2] / 2048.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmax[1] = w[3] / 2047.;
 
   if(((struct ps_vars *)dmp->dm_vars)->zclip){
-    ((struct ps_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
-    ((struct ps_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
+    ((struct ps_vars *)dmp->dm_vars)->clipmin[2] = w[4] / 2048.;
+    ((struct ps_vars *)dmp->dm_vars)->clipmax[2] = w[5] / 2047.;
   }else{
     ((struct ps_vars *)dmp->dm_vars)->clipmin[2] = -1.0e20;
     ((struct ps_vars *)dmp->dm_vars)->clipmax[2] = 1.0e20;
