@@ -86,6 +86,7 @@ typedef struct
 #define RB_DEBUG_UNIQ	0x00000002	/* Uniqueness of inserts */
 #define RB_DEBUG_ROTATE	0x00000004	/* Rotation process */
 #define RB_DEBUG_OS	0x00000008	/* Order-statistic operations */
+#define RB_DEBUG_DELETE	0x00000010	/* Deletion process */
 
 /*
  *			R B _ P A C K A G E
