@@ -378,7 +378,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_tor_uv,	rt_tor_curve,	rt_tor_class,	rt_tor_free,
 		rt_tor_plot,	rt_tor_vshot,	rt_tor_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_tor_import5, rt_tor_export5,
 		rt_tor_import,	rt_tor_export,	rt_tor_ifree,
 		rt_tor_describe,rt_tor_xform,	rt_tor_parse,
 		sizeof(struct rt_tor_internal),	RT_TOR_INTERNAL_MAGIC,	

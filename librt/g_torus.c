@@ -1358,6 +1358,39 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ T O R _ E X P O R T 5
+ */
+int
+rt_tor_export5( ep , ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	fastf_t			vec[2*3+2];
+	struct rt_tor_internal	*tip;
+
+	RT_CK_DB_INTERNAL( ip );
+	if (ip->idb_type != ID_TOR) return -1;
+	tip = (struct rt_tor_internal *)ip->idb_ptr;
+	RT_TOR_CK_MAGIC(tip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (2*3+2);
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "tor external");
+
+	/* scale values into local buffer */
+	VSCALE( &vec[0*3], tip->v, local2mm );
+	VCOPY(  &vec[1*3], tip->h);		/* UNIT vector, not scaled */
+	vec[2*3+0] = tip->r_a*local2mm;
+	vec[2*3+1] = tip->r_h*local2mm;
+
+	/* convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, 2*3+2);
+
+	return 0;
+}
+/*
  *			R T _ T O R _ E X P O R T
  *
  *  The name will be added by the caller.
@@ -1448,6 +1481,17 @@ CONST struct db_i		*dbip;
 
 /*
  *			R T _ T O R _ I M P O R T 5
+ *
+ *	rec:
+ *		v	vertex (point) of center of torus.
+ *		h	unit vector in the normal direction of the torus
+ *		major	radius of ring from 'v' to center of ring
+ *		minor	radius of the ring
+ *
+ *	Calculate:
+ *		2nd radius of ring (==1st radius)
+ *		ring unit vector 1
+ *		ring unit vector 2
  */
 int
 rt_tor_import5( ip, ep, mat, dbip )
@@ -1458,6 +1502,32 @@ CONST struct db_i		*dbip;
 {
 	struct rt_tor_internal	*tip;
 	LOCAL fastf_t		vec[2*3+2];
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_INIT_DB_INTERNAL( ip );
+
+	ip->idb_type = ID_TOR;
+	ip->idb_meth = &rt_functab[ID_TOR];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_tor_internal), "rt_tor_internal");
+	tip = (struct rt_tor_internal *)ip->idb_ptr;
+
+	tip->magic = RT_TOR_INTERNAL_MAGIC;
+
+	ntohd( (unsigned char *)vec, ep->ext_buf, 2*3+2);
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( tip->v, mat, &vec[0*3] );
+	MAT4X3VEC( tip->h, mat, &vec[1*3] );
+
+	tip->r_a = tip->r_b = vec[2*3];
+	tip->r_h = vec[2*3+1];
+
+	/* Calculate two mutually perpendicular vectors, perpendicular to N */
+	bn_vec_ortho( tip->a, tip->h );
+	VCROSS( tip->b, tip->h, tip->a);
+	VUNITIZE( tip->b );
+	return 0;
 }
 /*
  *			R T _ T O R _ D E S C R I B E
