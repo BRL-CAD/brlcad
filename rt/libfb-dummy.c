@@ -10,7 +10,7 @@ fbsetsize( size )  {}
 
 fbopen( file, mode )
 {
-	return( -1 );
+	return( 1 );	/* "Success" */
 }
 
 fbclose()  {}
