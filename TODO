@@ -9,10 +9,12 @@ THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
 * write up initial README
 
-* modify file headers to add license info
+* remove license speak for an immediate preliminary release
 
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
+
+* modify file headers to add license info
 
 * Update libpng to address CERT Technical Cyber Security Alert
   TA04-217A
