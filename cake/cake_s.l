@@ -409,7 +409,11 @@ yycurly()
 
 check_actlen()
 {
+#if 0
 	if (strlen(yytext) >= (unsigned)YYLMAX)
+#else
+	if (strlen(yytext) >= (unsigned)sizeof(yytext)-4)
+#endif
 	{
 		printf("cake: action '%s' too long\n", yytext);
 		exit_cake(FALSE);
