@@ -192,7 +192,8 @@ static char	adc_syntax[] = "\
  adc xyz # # #	reposition in front of a point (model coordinates)\n\
  adc reset	reset angles, location, and tick distance\n\
 ";
-void f_adc (argc, argv)
+int
+f_adc (argc, argv)
 int	argc;
 char	**argv;
 {
@@ -214,7 +215,7 @@ char	**argv;
 			adcflag = 1;
 		}
 		dmaflag = 1;
-		return;
+		return CMD_OK;
 	}
 
 	parameter = argv[1];
@@ -229,47 +230,47 @@ char	**argv;
 		if (argc == 1) {
 			dm_values.dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc a1' command accepts only 1 argument\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp( parameter, "a2" ) == 0 )  {
 		if (argc == 1) {
 			dm_values.dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc a2' command accepts only 1 argument\n");
-		return;
+		return CMD_BAD;
 	}
 	if(strcmp(parameter, "dst") == 0)  {
 		if (argc == 1) {
 			dm_values.dv_distadc = (pt[0] /
 			    (Viewscale * base2local * M_SQRT2) - 1.0) * 2047.0;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc dst' command accepts only 1 argument\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dh" ) == 0 )  {
 		if (argc == 1) {
 			dm_values.dv_xadc += pt[0] * 2047.0 / (Viewscale * base2local);
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc dh' command accepts only 1 argument\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dv" ) == 0 )  {
 		if (argc == 1) {
 			dm_values.dv_yadc += pt[0] * 2047.0 / (Viewscale * base2local);
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc dv' command accepts only 1 argument\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dx" ) == 0 )  {
 		if (argc == 1) {
@@ -278,10 +279,10 @@ char	**argv;
 			dm_values.dv_xadc += pt3[X] * view2dm;
 			dm_values.dv_yadc += pt3[Y] * view2dm;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc dx' command accepts only 1 argument\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dy" ) == 0 )  {
 		if (argc == 1) {
@@ -290,10 +291,10 @@ char	**argv;
 			dm_values.dv_xadc += pt3[X] * view2dm;
 			dm_values.dv_yadc += pt3[Y] * view2dm;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc dy' command accepts only 1 argument\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dz" ) == 0 )  {
 		if (argc == 1) {
@@ -302,10 +303,10 @@ char	**argv;
 			dm_values.dv_xadc += pt3[X] * view2dm;
 			dm_values.dv_yadc += pt3[Y] * view2dm;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc dz' command accepts only 1 argument\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp(parameter, "hv") == 0)  {
 		if (argc == 2) {
@@ -314,10 +315,10 @@ char	**argv;
 			dm_values.dv_xadc = pt3[X] * view2dm;
 			dm_values.dv_yadc = pt3[Y] * view2dm;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc hv' command requires 2 arguments\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp(parameter, "xyz") == 0)  {
 		if (argc == 3) {
@@ -327,10 +328,10 @@ char	**argv;
 			dm_values.dv_xadc = pt3[X] * view2dm;
 			dm_values.dv_yadc = pt3[Y] * view2dm;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc xyz' command requires 2 arguments\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp(parameter, "reset") == 0)  {
 		if (argc == 0) {
@@ -338,19 +339,20 @@ char	**argv;
 			dm_values.dv_1adc = dm_values.dv_2adc = 0;
 			dm_values.dv_distadc = 0;
 			dm_values.dv_flagadc = 1;
-			return;
+			return CMD_OK;
 		}
 		(void)printf("The 'adc reset' command accepts no arguments\n");
-		return;
+		return CMD_BAD;
 	}
 	if( strcmp(parameter, "help") == 0)  {
 		(void) printf("Usage:\n");
 		(void) fputs(adc_syntax, stdout);
-		return;
+		return CMD_OK;
 	} else {
 		(void) printf("ADC: unrecognized command: '%s'\n", argv[1]);
 		(void) printf("Usage:\n");
 		(void) fputs(adc_syntax, stdout);
+		return CMD_BAD;
 	}
-	return;
+	return CMD_BAD;
 }
