@@ -91,11 +91,11 @@
 #define NMG_CLASS_BoutA		7
 
 /* orientations available.  All topological elements are orientable. */
-#define OT_NONE     '\0'    /* no orientation */
-#define OT_SAME     '\1'    /* orientation same */
-#define OT_OPPOSITE '\2'    /* orientation opposite */
-#define OT_UNSPEC   '\3'    /* orientation unspecified */
-#define OT_BOOLPLACE '\4'   /* object is intermediate data for boolean ops */
+#define OT_NONE     0    /* no orientation */
+#define OT_SAME     1    /* orientation same */
+#define OT_OPPOSITE 2    /* orientation opposite */
+#define OT_UNSPEC   3    /* orientation unspecified */
+#define OT_BOOLPLACE 4   /* object is intermediate data for boolean ops */
 
 /* support for pointer tables.  Our table is currently un-ordered, and is
  * merely a list of objects.  The support routine nmg_tbl manipulates the
@@ -314,7 +314,6 @@ struct face {
 
 struct face_g {
 	long			magic;
-	unsigned		ref_cnt;
 	plane_t			N;	/* Plane equation (incl normal) */
 	point_t			min_pt;	/* minimums of bounding box */
 	point_t			max_pt;	/* maximums of bounding box */
@@ -325,7 +324,7 @@ struct faceuse {
 	struct rt_list		l;	/* fu's, in shell's fu_hd list */
 	struct shell		*s_p;	/* owning shell */
 	struct faceuse		*fumate_p;    /* opposite side of face */
-	char			orientation;  /* rel to face geom defn */
+	int			orientation;  /* rel to face geom defn */
 	struct face		*f_p;	/* face definition and attributes */
 	struct faceuse_a	*fua_p;	/* attributess */
 	struct rt_list		lu_hd;	/* list of loops in face-use */
@@ -383,7 +382,7 @@ struct loopuse {
 		long		*magic_p;
 	} up;
 	struct loopuse		*lumate_p; /* loopuse on other side of face */
-	char			orientation;  /* OT_SAME=outside loop */
+	int			orientation;  /* OT_SAME=outside loop */
 	struct loop		*l_p;	/* loop definition and attributes */
 	struct loopuse_a	*lua_p;	/* attributes */
 	struct rt_list		down_hd; /* eu list or vu pointer */
@@ -424,7 +423,7 @@ struct edgeuse {
 	struct edgeuse		*radial_p;  /* eu on radially adj. fu (null if wire)*/
 	struct edge		*e_p;	    /* edge definition and attributes */
 	struct edgeuse_a	*eua_p;	    /* parametric space geom */
-	char	  		orientation;/* compared to geom (null if wire) */
+	int	  		orientation;/* compared to geom (null if wire) */
 	struct vertexuse	*vu_p;	    /* first vu of eu in this orient */
 	long			index;	/* struct # in this model */
 };
