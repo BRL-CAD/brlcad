@@ -2020,7 +2020,7 @@ char **argv;
 				VMINMAX( rpp_min, rpp_max, reg_max );
 			}
 		}
-found:
+found:	;
 	}
 
 	rt_free_rti( rtip );
