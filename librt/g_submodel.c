@@ -117,7 +117,8 @@ struct rt_i		*rtip;
 
 /* XXX How do we match a previous exact use of this file and treetop list,
  * XXX so as to get any sort of efficiency out of instancing it?
- * XXX That would be stilly, because then they would overlap!  Don't bother.
+ * XXX That would be silly, because then they would overlap!  Don't bother.
+ * (This might happen if a submodel is both subtracted and unioned).
  */
 	if( sip->file[0] == '\0' )  {
 		/* No .g file name given, tree is in current .g file */
@@ -163,12 +164,20 @@ struct rt_i		*rtip;
 		return -3;
 	}
 
-	/* OK, it's going to work. */
+	/* OK, it's going to work.  Prep the submodel. */
+	/* Stay on 1 CPU because we're already multi-threaded at this point. */
+	rt_prep_parallel(sub_rtip, 1);
 
 	/*
 	 *  Record the "up" pointer from the sub model.
 	 */
 	sub_rtip->rti_up = stp;
+
+	/*
+	 *  XXX Idea? Here, just rip off the regions and solids from the
+	 *  submodel, and make them part of the main model.
+	 *  Then just stealing segs will be OK.
+	 */
 
 	/*
 	 *  Visit all solids in sub_rtip and change their st_meth
@@ -214,36 +223,6 @@ register CONST struct soltab *stp;
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
 }
 
-/*
- */
-void
-rt_submodel_normal_hook( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
-{
-	struct rt_i	*sub_rtip;
-	struct submodel_specific	*submodel;
-	struct soltab	*up_stp;
-	vect_t		norm;
-
-	sub_rtip = stp->st_rtip;
-#if 0
-	up_stp = (struct soltab *)sub_rtip->rti_up;
-	RT_CK_SOLTAB(up_stp);
-	submodel = (struct submodel_specific *)up_stp->st_specific;
-	RT_CK_SUBMODEL_SPECIFIC(submodel);
-
-	/* Obtain normal for submodel's solid in that coordinate system */
-	up_stp->st_meth->ft_norm(hitp, up_stp, hitp->hit_rayp);
-
-	/* Re-project normal back into our model space */
-	VMOVE( norm, hitp->hit_normal );
-	MAT4X3VEC( hitp->hit_normal, submodel->subm2m, norm );
-#else
-	bu_log("rt_submodel_normal_hook() not implemented (yet)\n");
-#endif
-}
 
 /*
  *			R T _ S U B M O D E L _ A _ M I S S
@@ -255,6 +234,11 @@ struct application	*ap;
 	return 0;
 }
 
+struct submodel_gobetween {
+	struct application	*up_ap;
+	struct seg		*up_seghead;
+};
+
 /*
  *			R T _ S U B M O D E L _ A _ H I T
  */
@@ -265,15 +249,18 @@ struct partition	*PartHeadp;
 struct seg		*segHeadp;
 {
 	register struct partition *pp;
-	register struct application	*oap =
-		(struct application *)ap->a_uptr;
+	struct application	*up_ap;
 	struct seg		*segp;
 	struct soltab		*up_stp;
 	struct region		*up_reg;
+	struct submodel_gobetween *gp;
 
+	RT_AP_CHECK(ap);
 	RT_CK_PT_HD(PartHeadp);
-	RT_AP_CHECK(oap);		/* original ap, in containing  */
-	RT_CK_RTI(oap->a_rt_i);
+	gp = (struct submodel_gobetween *)ap->a_uptr;
+	up_ap = gp->up_ap;
+	RT_AP_CHECK(up_ap);		/* original ap, in containing  */
+	RT_CK_RTI(up_ap->a_rt_i);
 	up_stp = ap->a_rt_i->rti_up;
 	RT_CK_SOLTAB(up_stp);
 	/* Take the first containing region */
@@ -285,18 +272,21 @@ struct seg		*segHeadp;
 		segp = BU_LIST_FIRST( seg, &(segHeadp->l) );
 		RT_CHECK_SEG(segp);
 		BU_LIST_DEQUEUE( &(segp->l) );
-		BU_LIST_INSERT( &(oap->a_finished_segs_hdp->l), &(segp->l) );
 
 		/* Adjust for new start point & matrix scaling */
-		segp->seg_in.hit_dist = oap->a_ray.r_min +
+		segp->seg_in.hit_dist = up_ap->a_ray.r_min +
 			segp->seg_in.hit_dist * ap->a_dist;
-		segp->seg_out.hit_dist = oap->a_ray.r_min +
+		segp->seg_out.hit_dist = up_ap->a_ray.r_min +
 			segp->seg_out.hit_dist * ap->a_dist;
 
-		segp->seg_in.hit_rayp = &oap->a_ray;
-		segp->seg_out.hit_rayp = &oap->a_ray;
+		segp->seg_in.hit_rayp = &up_ap->a_ray;
+		segp->seg_out.hit_rayp = &up_ap->a_ray;
+
+		/* Put this segment on caller's shot routine seglist */
+		BU_LIST_INSERT( &(gp->up_seghead->l), &(segp->l) );
 	}
 
+#if 0
 	/* Steal the partition list */
 	while( (pp=PartHeadp->pt_forw) != PartHeadp )  {
 		RT_CK_PT(pp);
@@ -305,8 +295,9 @@ struct seg		*segHeadp;
 		pp->pt_regionp = up_reg;
 
 	/* XXX These need to be sort/merged into the Final list! */
-		INSERT_PT( pp, oap->a_Final_Part_hdp );
+		INSERT_PT( pp, up_ap->a_Final_Part_hdp );
 	}
+#endif
 	return 1;
 }
 
@@ -334,16 +325,20 @@ struct seg		*seghead;
 	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 	struct application	nap;
 	point_t			startpt;
+	struct submodel_gobetween	gb;
 
 	RT_CK_SOLTAB(stp);
 	RT_CK_RTI(ap->a_rt_i);
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
 
+	gb.up_ap = ap;
+	gb.up_seghead = seghead;
+
 	nap = *ap;		/* struct copy */
 	nap.a_rt_i = submodel->rtip;
 	nap.a_hit = rt_submodel_a_hit;
 	nap.a_miss = rt_submodel_a_miss;
-	nap.a_uptr = (genptr_t)ap;
+	nap.a_uptr = (genptr_t)&gb;
 	nap.a_dist = submodel->m2subm[15];	/* scale, local to world */
 
 /* XXX Need a per-processor place to stash this new ray! (Application struct) */
@@ -359,8 +354,7 @@ struct seg		*seghead;
 
 	/* All the real (sneaky) work is done in the hit routine */
 
-	/* Trick:  We added nothing to seghead, but we signal hit */
-	/* (If a_onehit is set, we may need to cons up a dummy hit) */
+	/* a_hit routine will add segs to seghead */
 	return 1;		/* HIT */
 }
 
