@@ -374,7 +374,7 @@ struct seg {
 #define RT_CK_SEG(_p)		RT_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
 #define RT_GET_SEG(p,res)    { \
-	while( !RT_LIST_WHILE((p),seg,&((res)->re_seg.l)) || !(p) ) \
+	while( !RT_LIST_WHILE((p),seg,&((res)->re_seg)) || !(p) ) \
 		rt_get_seg(res); \
 	RT_LIST_DEQUEUE( &((p)->l) ); \
 	(p)->l.forw = (p)->l.back = RT_LIST_NULL; \
@@ -382,11 +382,11 @@ struct seg {
 
 #define RT_FREE_SEG(p,res)  { \
 	RT_CHECK_SEG(p); \
-	RT_LIST_INSERT( &((res)->re_seg.l), &((p)->l) ); \
+	RT_LIST_INSERT( &((res)->re_seg), &((p)->l) ); \
 	res->re_segfree++; }
 
 /*  This could be
- *	RT_LIST_INSERT_LIST( &((_res)->re_seg.l), &((_segheadp)->l) )
+ *	RT_LIST_INSERT_LIST( &((_res)->re_seg), &((_segheadp)->l) )
  *  except for security of checking & counting each element this way.
  */
 #define RT_FREE_SEG_LIST( _segheadp, _res )	{ \
@@ -545,8 +545,6 @@ struct partition {
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
 	struct bu_ptbl	pt_solids_hit;
-/**	int		pt_len;			/* rti_pt_bytes when created */
-/**	bitv_t		pt_solhit[1];		/* VAR bit array:solids hit */
 };
 #define PT_NULL		((struct partition *)0)
 #define PT_MAGIC	0x87687681
@@ -937,7 +935,8 @@ struct animate {
 struct resource {
 	long		re_magic;	/* Magic number */
 	int		re_cpu;		/* processor number, for ID */
-	struct seg 	re_seg;		/* Head of segment freelist */
+	struct rt_list 	re_seg;		/* Head of segment freelist */
+	struct bu_ptbl	re_seg_blocks;	/* Table of malloc'ed blocks of segs */
 	long		re_seglen;
 	long		re_segget;
 	long		re_segfree;
@@ -946,7 +945,7 @@ struct resource {
 	long		re_partget;
 	long		re_partfree;
 	struct rt_list	re_solid_bitv;	/* head of freelist */
-	struct rt_list	re_region_bitv;	/* head of freelist */
+	struct rt_list	re_region_ptbl;	/* head of freelist */
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	float		*re_randptr;	/* ptr into random number table */
@@ -1104,7 +1103,6 @@ struct rt_g {
 	struct rt_list	rtg_vlfree;	/* head of rt_vlist freelist */
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 	struct rt_list	rtg_mapped_files; /* list of mapped files open */
-	struct rt_list	rtg_resources;	/* list of 'struct resource'es in use */
 };
 extern struct rt_g rt_g;
 
@@ -1167,6 +1165,7 @@ struct rt_i {
 	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
 	struct rt_tol	rti_tol;	/* Tolerances for this model */
 	struct rt_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
+	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
