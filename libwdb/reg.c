@@ -71,10 +71,11 @@ int			inherit;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
+	/* XXX What values to pass for FASTGEN plate and volume regions? */
 	if( region )
-		rec.c.c_flags = 'R';
+		rec.c.c_flags = DBV4_REGION;
 	else
-		rec.c.c_flags = ' ';
+		rec.c.c_flags = DBV4_NON_REGION;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
 	if( matname ) {
@@ -125,7 +126,7 @@ int		inherit;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
 	if( region ){
-		rec.c.c_flags = 'R';
+		rec.c.c_flags = DBV4_REGION;
 		rec.c.c_inherit = inherit;
 		rec.c.c_regionid = id;
 		rec.c.c_aircode = air;
@@ -133,7 +134,7 @@ int		inherit;
 		rec.c.c_los = los;
 	}
 	else
-		rec.c.c_flags = ' ';
+		rec.c.c_flags = DBV4_NON_REGION;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
 	if( matname ) {
@@ -175,9 +176,9 @@ int		region;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
 	if( region )
-		rec.c.c_flags = 'R';
+		rec.c.c_flags = DBV4_REGION;
 	else
-		rec.c.c_flags = ' ';
+		rec.c.c_flags = DBV4_NON_REGION;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
 	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
