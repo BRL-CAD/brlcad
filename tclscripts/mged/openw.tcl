@@ -22,10 +22,22 @@
 
 check_externs "_mged_attach _mged_tie _mged_view_ring"
 
+if ![info exists mged_default(html_dir)] {
+    if [info exists env(BRLCAD_ROOT)] {
+	set mged_default(html_dir) $env(BRLCAD_ROOT)/html/manuals/mged
+    } else {
+	set mged_default(html_dir) /usr/brlcad/html/manuals/mged
+    }
+}
+
 if [info exists env(MGED_HTML_DIR)] {
         set mged_html_dir $env(MGED_HTML_DIR)
 } else {
-        set mged_html_dir [lindex $auto_path 0]/../html/mged
+        set mged_html_dir $mged_default(html_dir)
+}
+
+if ![info exists mged_default(web_browser)] {
+    set mged_default(web_browser) /usr/bin/netscape
 }
 
 if ![info exists mged_color_scheme] {
@@ -45,6 +57,7 @@ if ![info exists mged_default(ggeom)] {
 }
 
 if ![info exists mged_default(geom)] {
+    # Position command window in upper left corner
     set mged_default(geom) +8+32
 }
 
@@ -56,33 +69,32 @@ if ![info exists mged_default(pane)] {
     set mged_default(pane) "ur"
 }
 
-if ![info exists mged_default(multi_view)] {
-    set mged_default(multi_view) 0
+if ![info exists mged_default(multi_pane)] {
+    set mged_default(multi_pane) 0
 }
 
 if ![info exists mged_default(config)] {
     set mged_default(config) g
 }
 
-if ![info exists mged_default(display)] {
-    if [info exists env(DISPLAY)] {
-	set mged_default(display) $env(DISPLAY)
-    } else {
+if [info exists env(DISPLAY)] {
+    set mged_default(display) $env(DISPLAY)
+} else {
+    if ![info exists mged_default(display)] {
 	set mged_default(display) :0
-	set env(DISPLAY) :0
     }
 }
 
 if ![info exists mged_default(gdisplay)] {
-    if [info exists env(DISPLAY)] {
-	set mged_default(gdisplay) $env(DISPLAY)
-    } else {
-	set mged_default(gdisplay) :0
-    }
+    set mged_default(gdisplay) $mged_default(display)
 }
 
-if ![info exists mged_default(dt)] {
-    set mged_default(dt) [dm_bestXType $mged_default(gdisplay)]
+if ![info exists env(DISPLAY)] {
+    set env(DISPLAY) $mged_default(display)
+}
+
+if ![info exists mged_default(dm_type)] {
+    set mged_default(dm_type) [dm_bestXType $mged_default(gdisplay)]
 }
 
 if ![info exists mged_default(comb)] {
@@ -139,7 +151,7 @@ proc gui { args } {
     set save_id [cmd_win get]
     set comb $mged_default(comb)
     set join_c 0
-    set dtype $mged_default(dt)
+    set dtype $mged_default(dm_type)
     set id ""
     set scw 0
     set sgw 0
@@ -283,7 +295,7 @@ set mged_gui($id,show_status) 1
 set mged_gui($id,apply_to) 0
 set mged_gui($id,edit_info_pos) "+0+0"
 set mged_gui($id,num_lines) $mged_default(num_lines)
-set mged_gui($id,multi_view) $mged_default(multi_view)
+set mged_gui($id,multi_pane) $mged_default(multi_pane)
 set mged_gui($id,dm_loc) $mged_default(pane)
 set mged_gui($id,dtype) $dtype
 
@@ -1393,7 +1405,7 @@ hoc_register_menu_data "Modes" "Faceplate" "Faceplate"\
 .$id.menubar.modes add cascade -label "Axes" -underline 1\
 	-menu .$id.menubar.modes.axes
 .$id.menubar.modes add separator
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,multi_view)\
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,multi_pane)\
 	-label "Multipane" -underline 0 -command "setmv $id"
 hoc_register_menu_data "Modes" "Multipane" "Multipane"\
 	{ { summary "
@@ -1690,22 +1702,38 @@ hoc_register_menu_data "Help" "Apropos..." "Apropos"\
 MGED's commands." }
           { see_also "apropos" } }
 
+# First, try to use the browser specified by
+# the WEB_BROWSER environment variable.
 if [info exists env(WEB_BROWSER)] {
     if [ file exists $env(WEB_BROWSER) ] {
-	set web_cmd "exec $env(WEB_BROWSER) -display $screen $mged_html_dir/index.html &"
+	set web_cmd "exec $env(WEB_BROWSER) -display $screen\
+		$mged_html_dir/index.html &"
+    }
+} else {
+# Failing that, use the browser specified by mged_default(web_browser)
+    if [ file exists $mged_default(web_browser) ] {
+	set web_cmd "exec $mged_default(web_browser) -display $screen\
+		$mged_html_dir/index.html &"
     }
 }
 
-# Minimal attempt to locate a browser
+# When all else fails, attempt to locate a browser
 if ![info exists web_cmd] {
-    if [ file exists /usr/X11/bin/netscape ] {
-	set web_cmd "exec /usr/X11/bin/netscape -display $screen $mged_html_dir/index.html &"
-    } elseif [ file exists /usr/X11/bin/Mosaic ] {
-	set web_cmd "exec /usr/X11/bin/Mosaic -display $screen $mged_html_dir/index.html &"
+    if [ file exists /usr/bin/netscape ] {
+	set web_cmd "exec /usr/bin/netscape -display $screen\
+		$mged_html_dir/index.html &"
+    } elseif [ file exists /usr/local/bin/netscape ] {
+	set web_cmd "exec /usr/local/bin/netscape -display $screen\
+		$mged_html_dir/index.html &"
+    } elseif [ file exists /usr/X11/bin/netscape ] {
+	set web_cmd "exec /usr/X11/bin/netscape -display $screen\
+		$mged_html_dir/index.html &"
     } else {
+	# When all else fails use lame built-in browser
 	set web_cmd "ia_man .$id $screen"
     }
 }
+
 .$id.menubar.help add command -label "Manual..." -underline 0 -command $web_cmd
 hoc_register_menu_data "Help" "Manual..." "Manual"\
 	{ { summary "Start a tool for browsing the online MGED manual.
@@ -1930,7 +1958,6 @@ if { $comb } {
 	set_dm_win $id
     }
 } else {
-    # Position command window in upper left corner
     wm geometry .$id $mged_default(geom)
     update
 
@@ -1972,7 +1999,7 @@ proc gui_destroy args {
 	collaborate quit $id
     }
 
-    set mged_gui($id,multi_view) 0
+    set mged_gui($id,multi_pane) 0
     set mged_gui($id,show_edit_info) 0
 
     releasemv $id
@@ -2197,7 +2224,7 @@ proc set_active_dm { id } {
     _mged_tie $id $mged_gui($id,active_dm)
     reconfig_gui_default $id
 
-    if {!$mged_gui($id,multi_view)} {
+    if {!$mged_gui($id,multi_pane)} {
 	setmv $id
     }
 
