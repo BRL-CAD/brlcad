@@ -86,6 +86,7 @@ extern FBIO rat_interface;
 extern FBIO ug_interface;
 #endif
 #ifdef IF_X
+extern FBIO X24_interface;
 extern FBIO X_interface;
 #endif
 #ifdef IF_PTTY
@@ -121,8 +122,9 @@ FBIO *_if_list[] = {
 	&ug_interface,
 #endif
 	&debug_interface,
-/* never get the following by default */
+/* never get any of the following by default */
 #ifdef IF_X
+	&X24_interface,
 	&X_interface,
 #endif
 #ifdef IF_AB
