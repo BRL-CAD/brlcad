@@ -61,6 +61,8 @@ pack .apply_angle -side top -in .sunangle_fr
 proc apply_angle {} {
 	global red grn blu
 	global sun_region_name
+
+	puts "Sun color = $red $grn $blu"
 	# send new stuff to servers
 	node_send rt_wdb_inmem_rgb {$dbip} $sun_region_name $red $grn $blu
 	# indicate re-prep required.
@@ -86,7 +88,7 @@ proc new_suncolor {percent} {
 	set blu [expr int(  0 * $alpha + 238 * $beta)]
 	set hexcolor [format #%02x%02x%02x $red $grn $blu]
 	.suncolor_swatch config -background $hexcolor
-	puts "Sun color $percent percent of yellow = $red $grn $blu"
+	#puts "Sun color $percent percent of yellow = $red $grn $blu"
 }
 
 button .apply_color -text "Apply" -command apply_color
