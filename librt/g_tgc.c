@@ -1481,7 +1481,7 @@ struct directory *dp;
 		ADD_VL( vhead, &top[i*ELEMENTS_PER_VECT], 0 );
 		ADD_VL( vhead, &bottom[i*ELEMENTS_PER_VECT], 1 );
 	}
-	return(-1);
+	return(0);
 }
 
 /*
@@ -1669,6 +1669,9 @@ struct directory *dp;
 
 	/* Glue the edges of different outward pointing face uses together */
 	nmg_gluefaces( outfaceuses, 2*16+2 );
+
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r );
 
 	return(0);
 }

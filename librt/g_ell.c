@@ -784,6 +784,9 @@ struct directory	*dp;
 	/* Glue the edges of different outward pointing face uses together */
 	nmg_gluefaces( outfaceuses, 8 );
 
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r );
+
 	return(0);
 }
 
