@@ -196,6 +196,7 @@ BDIRS="bench \
 	libtermio \
 	libtclcad \
 	conv \
+        unigraphics \
 	db \
 	rt \
 	mged \
