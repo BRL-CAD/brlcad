@@ -205,7 +205,7 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_EBM_FSIZE		80
 #define	MENU_EBM_HEIGHT		81
 #define	MENU_DSP_FNAME		82
-#define	MENU_DSP_FSIZE		83
+#define	MENU_DSP_FSIZE		83	/* Not implemented yet */
 #define	MENU_DSP_SCALE_X	84
 #define	MENU_DSP_SCALE_Y	85
 #define	MENU_DSP_SCALE_ALT	86
@@ -567,7 +567,6 @@ struct menu_item ebm_menu[] = {
 struct menu_item dsp_menu[] = {
 	{"DSP MENU", (void (*)())NULL, 0 },
 	{"file name", dsp_ed, MENU_DSP_FNAME },
-	{"file size (W N)", dsp_ed, MENU_DSP_FSIZE },
 	{"Scale X", dsp_ed, MENU_DSP_SCALE_X },
 	{"Scale Y", dsp_ed, MENU_DSP_SCALE_Y },
 	{"Scale ALT", dsp_ed, MENU_DSP_SCALE_ALT },
@@ -2409,9 +2408,13 @@ int idx;
 	}
 
 	bn_mat_xform_about_pt(scalemat, m, es_keypoint);
-	bn_mat_mul(mat2, scalemat, es_mat);
-	bn_mat_mul(mat, es_invmat, mat2);
-	transform_editing_solid(&es_int, mat, &es_int, 1);
+
+	bn_mat_mul(m, dsp->dsp_stom, scalemat);
+	bn_mat_copy(dsp->dsp_stom, m);
+
+	bn_mat_mul(m, scalemat, dsp->dsp_mtos);
+	bn_mat_copy(dsp->dsp_mtos, m);
+
 }
 /*
  * 			S E D I T
@@ -2460,48 +2463,6 @@ sedit()
 	case ECMD_DSP_SCALE_ALT:
 		dsp_scale( (struct rt_dsp_internal *)es_int.idb_ptr, MSZ);
 		break;
-	case ECMD_DSP_FSIZE:	/* set file size */
-		{
-			struct rt_dsp_internal *dsp =
-				(struct rt_dsp_internal *)es_int.idb_ptr;
-			struct stat stat_buf;
-			off_t need_size;
-
-			RT_DSP_CK_MAGIC( dsp );
-
-			if( inpara == 2 )
-			{
-				if( stat( dsp->dsp_file, &stat_buf ) )
-				{
-					Tcl_AppendResult(interp, "Cannot get status of file ", dsp->dsp_file, (char *)NULL );
-					mged_print_result( TCL_ERROR );
-					return;
-				}
-				need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
-				
-				if( stat_buf.st_size < need_size )
-				{
-					Tcl_AppendResult(interp,
-						"File (", dsp->dsp_file,
-						") is too small, set file name first",
-						(char *)NULL );
-					mged_print_result( TCL_ERROR );
-					return;
-				}
-				dsp->dsp_xcnt = es_para[0];
-				dsp->dsp_ycnt = es_para[1];
-			}
-			else if( inpara > 0 )
-			{
-				Tcl_AppendResult(interp,
-					"width and length of file are required\n",
-					(char *)NULL );
-				mged_print_result( TCL_ERROR );
-				return;
-			}
-		}
-		break;
-
 	case ECMD_DSP_FNAME:
 		{
 			struct rt_dsp_internal *dsp =
