@@ -741,13 +741,13 @@ DoFile( )	/* returns vpl status code */
 
 			case 'W':
 				{
-				char	in[6*8];
+				unsigned char	in[6*8];
 				double	out[6];
 				if( debug )
 					fprintf( stderr,"dspace3\n");
 				if( fread( in, sizeof(in), 1, pfin) != 1 )
 				  	return Foo( -11 );
-				ntohd( out, in, 5 );
+				ntohd( (unsigned char *)out, in, 5 );
 				/* Only need X and Y, ignore Z */
 				space.left  = out[0]; /* x1 */
 				space.bottom= out[1]; /* y1 */
@@ -760,13 +760,13 @@ DoFile( )	/* returns vpl status code */
 				
 			case 'w':	/* space */
 				{
-				char	in[4*8];
+				unsigned char	in[4*8];
 				double	out[4];
 				if( debug )
 					fprintf( stderr,"dspace\n");
 				if( fread( in, sizeof(in), 1, pfin) != 1 )
 				  	return Foo( -11 );
-				ntohd( out, in, 4 );
+				ntohd( (unsigned char *)out, in, 4 );
 				space.left  = out[0]; /* x1 */
 				space.bottom= out[1]; /* y1 */
 				space.right = out[2]; /* x2 */
@@ -1017,14 +1017,14 @@ register coords	*coop;		/* -> input coordinates */
 bool Get3DCoords( coop )
 register coords	*coop;
 {
-	static char	in[3*8];
+	static unsigned char in[3*8];
 	static double	out[2];
 	register double	x,y;
 
 	/* read coordinates */
 	if ( fread( in, sizeof(in), 1, pfin ) != 1 )
 		return false;
-	ntohd( out, in, 2 );
+	ntohd( (unsigned char *)out, in, 2 );
 	x = out[0];
 	y = out[1];
 
@@ -1055,14 +1055,14 @@ bool
 GetDCoords( coop )
 register coords	*coop;		/* -> input coordinates */
 {
-	static char	in[2*8];
+	static unsigned char	in[2*8];
 	static double	out[2];
 	register double	x,y;
 
 	/* read coordinates */
 	if ( fread( in, sizeof(in), 1, pfin ) != 1 )
 		return false;
-	ntohd( out, in, 2 );
+	ntohd( (unsigned char *)out, in, 2 );
 	x = out[0];
 	y = out[1];
 
