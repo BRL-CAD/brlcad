@@ -3548,7 +3548,13 @@ rt_dsp_export5( ep, ip, local2mm, dbip )
     name_len = bu_vls_strlen(&dsp_ip->dsp_name) + 1;
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = 139 + name_len;
+
+    ep->ext_nbytes =
+	    SIZEOF_NETWORK_LONG * 2 +
+	    SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT +
+	    SIZEOF_NETWORK_SHORT +
+	    2 + name_len;
+
     ep->ext_buf = bu_malloc( ep->ext_nbytes, "dsp external");
     cp = (unsigned char *)ep->ext_buf;
 
