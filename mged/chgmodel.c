@@ -562,7 +562,8 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	union record		record;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 	struct bu_vls		args;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -575,24 +576,20 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-	  TCL_READ_ERR_return;
+	if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
+		Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
+			") failure", (char *)NULL );
+		return TCL_ERROR;
 	}
-
-	strncpy( record.c.c_matname, argv[2], sizeof(record.c.c_matname)-1 );
-	record.c.c_matname[sizeof(record.c.c_matname)-1] = '\0';
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	bu_vls_free( &comb->shader );
 
 	/* Bunch up the rest of the args, space separated */
-	bu_vls_init( &args );
-	bu_vls_from_argv( &args, argc-3, argv+3 );
-	bu_vls_trunc( &args, sizeof(record.c.c_matparm)-1 );
-	strcpy( record.c.c_matparm, bu_vls_addr( &args ) );
-	bu_vls_free( &args );
+	bu_vls_from_argv( &comb->shader, argc-2, argv+2 );
 
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-	  TCL_WRITE_ERR_return;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		TCL_WRITE_ERR_return;
 	}
-
 	return TCL_OK;
 }
 
