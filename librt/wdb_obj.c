@@ -42,13 +42,7 @@ extern int rt_tcl_rt();
 extern int rt_tcl_import_from_path();
 extern void rt_generic_make();
 
-struct wdb_obj {
-  struct bu_list	l;
-  struct bu_vls		wdb_name;	/* database name */
-  struct rt_wdb		*wdb_wp;
-};
-
-int wdb_open_tcl();
+HIDDEN int wdb_open_tcl();
 HIDDEN int wdb_decode_dbip();
 HIDDEN struct db_i *wdb_prep_dbip();
 
@@ -73,7 +67,7 @@ HIDDEN void wdb_vls_col_pr4v();
 HIDDEN void wdb_vls_line_dpp();
 HIDDEN struct directory ** wdb_getspace();
 
-HIDDEN struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
+struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 
 HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"match",	wdb_match_tcl,
@@ -186,8 +180,12 @@ wdb_close_tcl(clientData, interp, argc, argv)
  *	set wdbp [wdb_open .inmem inmem $dbip]
  *	.inmem get box.s
  *	.inmem close
+ *
+ *	wdb_open db file "bob.g"
+ *	db get white.r
+ *	db close
  */
-int
+HIDDEN int
 wdb_open_tcl(clientData, interp, argc, argv)
 ClientData	clientData;
 Tcl_Interp	*interp;
