@@ -5,19 +5,14 @@ AC_CANONICAL_SYSTEM
 AM_CONFIG_HEADER(h/config.h)
 AM_INIT_AUTOMAKE(brlcad, 6.0)
 
-dnl options
-dnl tcl prefix
-dnl itcl prefix
-dnl tk prefix
-
 dnl progs
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AM_PROG_LEX
-dnl AC_PROG_YACC
 
 AM_C_PROTOTYPES
+
 
 CFLAGS="$CFLAGS "'-I$(top_srcdir)/h'
 
@@ -29,9 +24,6 @@ case "$target" in
 		PTHREAD_LIBS="-pthread"
 		;;
 esac
-PTHREAD_CFLAGS=
-AC_SUBST(PTHREAD_CFLAGS)
-AC_SUBST(PTHREAD_LIBS)
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
@@ -40,16 +32,14 @@ dnl libs
 dnl need curses, would prefer ncurses
 SAVELIBS="${LIBS}"
 LIBS=
-AC_SEARCH_LIBS(initscr, ncurses curses,,AC_ERROR(Need curses!))
+AC_SEARCH_LIBS(initscr, ncurses curses,, AC_ERROR(Need curses!))
 CURSES="${LIBS}"
-AC_SUBST(CURSES)
 LIBS="${SAVELIBS}"
 
 SAVELIBS="${LIBS}"
 LIBS=
-AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL,1,Irix GL is present.))
+AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL,1, Irix GL is present.))
 SGIGL="${LIBS}"
-AC_SUBST(SGIGL)
 LIBS="${SAVELIBS}"
 
 AC_SEARCH_LIBS(mallopt,malloc)
@@ -58,61 +48,36 @@ AC_SEARCH_LIBS(matherr,mx)
 
 dnl X
 X_LIBS="-L/usr/X11R6/lib -lX11 -lXi"
-AC_SUBST(X_LIBS)
 
-dnl tcl
-dnl try to find a system tcl, otherwise build it?
-dnl case "$target" in
-dnl 	*-*-*bsd*)
-dnl 		TCL_LIBS="-L/usr/local/lib -ltcl84"
-dnl 		;;
-dnl 	*)
-dnl 		TCL_LIBS="-ltcl8.4"
-dnl 		;;
-dnl esac
-TCL_LIBS='${top_builddir}/libtcl8.4/libtcl8.4.la @DL@ @SOCKET@ -lm'
-TCL=libtcl8.4
 TCLVER=8.4
-AC_SUBST(TCL)
-AC_SUBST(TCLVER)
-AC_SUBST(TCL_LIBS)
-
-TCL_LIBRARY="$prefix/tcl8.4"
-AC_SUBST(TCL_LIBRARY)
+TCL=libtcl${TCLVER}
+TCL_LIBS='${top_builddir}/${TCL}/${TCL}.la @DL@ @SOCKET@ -lm'
+TCL_LIBRARY="$prefix/tcl${TCLVER}"
 if test "$FRAMEWORK_BUILD" = "1" ; then
 	dnl this may be wrong
     TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir/Resources/Scripts\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 else
     TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 fi
-AC_SUBST(TCL_BUILD_CFLAGS)
-
-ITCL_LIBS='${top_builddir}/libitcl3.2/itcl/libitcl.la'
-ITCL_VERSION="3.2"
-AC_SUBST(ITCL_LIBS)
-AC_SUBST(ITCL_VERSION)
 
 dnl tk
-TK_LIBS='${top_builddir}/libtk8.4/libtk8.4.la ${TCL_LIBS} ${X_LIBS}'
-TK_LIBRARY="$prefix/tk8.4"
 TKVER="8.4"
-AC_SUBST(TKVER)
-AC_SUBST(TK_LIBS)
-AC_SUBST(TK_LIBRARY)
+TK_LIBS='${top_builddir}/libtk${TKVER}/libtk${TKVER}.la ${TCL_LIBS} ${X_LIBS}'
+TK_LIBRARY="$prefix/tk${TKVER}"
 
-ITK_LIBS='${top_builddir}/libitcl3.2/itk/libitk.la'
-AC_SUBST(ITK_LIBS)
+ITCL_VERSION="3.2"
+ITCL_LIBS='${top_builddir}/libitcl${ITCL_VERSION}/itcl/libitcl.la'
+ITK_LIBS='${top_builddir}/libitcl${ITCL_VERSION}/itk/libitk.la'
 
 PNG_LIBS='${top_builddir}/libpng/libpng.la ${top_builddir}/libz/libz.la'
-AC_SUBST(PNG_LIBS)
 
 dnl headers
 AC_HEADER_STDC
 AC_CHECK_HEADERS(float.h getopt.h limits.h limits.h memory.h stdarg.h stdlib.h string.h sys/ioctl_compat.h sys/machd.h sys/mman.h sys/select.h sys/socket.h sys/stat.h sys/time.h sys/types.h termcap.h termios.h time.h unistd.h varargs.h xosdefs.h)
-AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h)
+AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
+AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
 AC_STRUCT_ST_BLKSIZE
 
-AC_CHECK_DECL(re_comp,AC_DEFINE(HAVE_REGEX_DECL,,BSD regular expressions))
 
 dnl ============================================================
 dnl union wait testing from tcl8.4's configure.in, should be revamped?
@@ -126,46 +91,31 @@ WIFEXITED(x);           /* Generates compiler error if WIFEXITED
     ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
 AC_MSG_RESULT($tcl_cv_union_wait)
 if test $tcl_cv_union_wait = no; then
-    AC_DEFINE(NO_UNION_WAIT,,Lacking a "union wait")
+    AC_DEFINE(NO_UNION_WAIT,, Lacking a "union wait")
 fi
 dnl ============================================================
 
-AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld",AC_ERROR(No dynamic loader found)))])
-AC_SUBST(DL)
-AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_ERROR(No internet socket found))])
-AC_SUBST(SOCKET)
 
-
-X_CFLAGS="-I/usr/X11R6/include"
-AC_SUBST(X_CFLAGS)
 AC_DEFINE(DM_X,,[Display for X])
-
 GL_CFLAGS="-DUSE_MESA_GL"
-AC_SUBST(GL_CFLAGS)
-
 LEX_CFLAGS="-Dyylex=cmd_nop"
-AC_SUBST(LEX_CFLAGS)
+X_CFLAGS="-I/usr/X11R6/include"
 
-TCL_CFLAGS=
-ITCL_CFLAGS=
-TK_CFLAGS=
-ITK_CFLAGS=
-AC_SUBST(TCL_CFLAGS)
-AC_SUBST(ITCL_CFLAGS)
-AC_SUBST(TK_CFLAGS)
-AC_SUBST(ITK_CFLAGS)
-
-dnl ===
+dnl TODO
 AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
 
 dnl typedefs
+AC_CHECK_DECL(sys_errlist, AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),[# include <stdio.h>])
+AC_CHECK_DECL(re_comp, AC_DEFINE(HAVE_REGEX_DECL,, BSD regular expressions))
+
 dnl functions
-AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex)
-AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,,Lacking fstatfs)])
-AC_CHECK_DECL(sys_errlist,AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]),AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),[# include <stdio.h>])
-AC_CHECK_FUNC(popen,AC_DEFINE(HAVE_POPEN_DECL,1,popen))
-AC_CHECK_FUNC(strdup,[AC_DEFINE(HAVE_STRDUP_DECL,1,strdup) AC_DEFINE(HAVE_STRDUP,1,strdup)])
-AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,,Fix this, sys/types.h and sys/stat.h ...))
+AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
+AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
+AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
+AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
+AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld", AC_ERROR(No dynamic loader found)))])
+AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex strdup)
+AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_ERROR(No internet socket found))])
 
 dnl this needs to be fixed to actually test...
 case "$target" in
@@ -180,6 +130,7 @@ esac
 
 AC_DEFINE(USE_PROTOTYPES,1,heh)
 
+dnl === these are things that are defined, but don't seem to be necessary on the 4 supported platforms? ===
 dnl POSIX_REGEXEC
 dnl CALTECH_MALLOC
 dnl DRAND
@@ -219,20 +170,42 @@ RT='${top_builddir}/librt/librt.la ${BN}'
 SYSV='${top_builddir}/libsysv/libsysv.la'
 TERMIO='${top_builddir}/libtermio/libtermio.la'
 WDB='${top_builddir}/libwdb/libwdb.la'
+
 AC_SUBST(BN)
 AC_SUBST(BU)
+AC_SUBST(CURSES)
 AC_SUBST(CURSOR)
+AC_SUBST(DL)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
+AC_SUBST(GL_CFLAGS)
+AC_SUBST(ITCL_LIBS)
+AC_SUBST(ITCL_VERSION)
+AC_SUBST(ITK_LIBS)
+AC_SUBST(LEX_CFLAGS)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
+AC_SUBST(PNG_LIBS)
+AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(RLE)
 AC_SUBST(RT)
+AC_SUBST(SGIGL)
+AC_SUBST(SOCKET)
 AC_SUBST(SYSV)
+AC_SUBST(TCL)
+AC_SUBST(TCLVER)
+AC_SUBST(TCL_BUILD_CFLAGS)
+AC_SUBST(TCL_LIBRARY)
+AC_SUBST(TCL_LIBS)
 AC_SUBST(TERMIO)
+AC_SUBST(TKVER)
+AC_SUBST(TK_LIBRARY)
+AC_SUBST(TK_LIBS)
 AC_SUBST(WDB)
+AC_SUBST(X_CFLAGS)
+AC_SUBST(X_LIBS)
 
 AC_OUTPUT([
 	Makefile
