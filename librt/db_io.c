@@ -121,6 +121,7 @@ int		len;
 #endif
 		return(0);
 	}
+	RES_ACQUIRE( &rt_g.res_syscall );
 #if unix
 	want = len * sizeof(union record);
 	(void)lseek( dbip->dbi_fd,
@@ -132,6 +133,7 @@ int		len;
 		(long)(dp->d_addr + offset * sizeof(union record)), 0 );
 	got = fread( (char *)where, want, sizeof(union record), dbip->dbi_fp );
 #endif
+	RES_RELEASE( &rt_g.res_syscall );
 	if( got != want )  {
 		perror("db_get");
 		rt_log("db_get(%s):  read error.  Wanted %d, got %d bytes\n",
@@ -177,6 +179,7 @@ int		len;
 			dp->d_namep, offset, offset+len, dp->d_len );
 		return(-1);
 	}
+	RES_ACQUIRE( &rt_g.res_syscall );
 #if unix
 	want = len * sizeof(union record);
 	(void)lseek( dbip->dbi_fd,
@@ -189,6 +192,7 @@ int		len;
 	got = fwrite( (char *)where, want, sizeof(union record),
 		dbip->dbi_fp );
 #endif
+	RES_RELEASE( &rt_g.res_syscall );
 	if( got != want )  {
 		perror("db_put");
 		rt_log("db_put(%s):  write error.  Sent %d, achieved %d bytes\n",
