@@ -703,13 +703,13 @@
 </B><FONT SIZE=2><P>-- View from top direction. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ae 270 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ae 270 0</B> <BR>
 -- View from right hand side. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ae 35 25 10</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ae 35 25 10</B> <BR>
 -- View from azimuth 35, elevation 25, with view rotated by 10&#730;. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ae -i 0 0 5</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ae -i 0 0 5</B> <BR>
 -- Rotate the current view through 5&#730; about the viewing direction. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -764,7 +764,7 @@
 </DL>
 </B><FONT SIZE=2><P>-- Create <I>new_arb</I> with a rotation angle of 35&#730; and a fallback angle of 25&#730;. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> </FONT><A HREF="#ae"><B><FONT SIZE=2>ae</B></FONT></A><B><FONT SIZE=2> 35 25</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> </FONT><A HREF="#ae"><B><FONT SIZE=2>ae</B></FONT></A><B><FONT SIZE=2> 35 25</B> <BR>
 -- Rotate view to look straight on at square face of <I>new_arb</I> </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -799,10 +799,10 @@
 <FONT SIZE=2><P>-- Clear the <I>mged</I> display(s). </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> </FONT><A HREF="#E"><B><FONT SIZE=2>E</B></FONT></A><B><FONT SIZE=2> region_1</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> </FONT><A HREF="#E"><B><FONT SIZE=2>E</B></FONT></A><B><FONT SIZE=2> region_1</B> <BR>
 -- <I>E</I> a single region. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>area</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>area</B> <BR>
 -- Calculate the presented area of the enclosing polygon of the region. </P>
 </DIR>
 
@@ -835,22 +835,22 @@
 -- Open an X display window named myX on remote_host that is initialized by myInit. <BR>
 -- myInit might contain user specified bindings like those found in the </FONT><A HREF=""><FONT SIZE=2>default bindings</FONT></A><FONT SIZE=2>. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>toplevel .t</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>toplevel .t</B> <BR>
 -- Create a toplevel window named .t. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>attach -t 0 -S 800 -n .t.ogl ogl</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>attach -t 0 -S 800 -n .t.ogl ogl</B> <BR>
 -- Open a 800x800 OpenGl display window named .t.ogl that is not a top-level window.</P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"</B> <BR>
 -- Create a button to dismiss the display manager etc. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>pack .t.ogl -expand 1 -fill both</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>pack .t.ogl -expand 1 -fill both</B> <BR>
 -- Pack the display manager inside .t. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>pack .t.dismiss</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>pack .t.dismiss</B> <BR>
 -- Pack the Dismiss button inside .t. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>attach</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>attach</B> <BR>
 -- List the help message that includes the valid display types. </P>
 </DIR>
 
@@ -1002,9 +1002,9 @@
 </DL><DIR>
 
 </B><FONT SIZE=2><P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>db adjust sphere.s V [center]</B> </P>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>db adjust sphere.s V [center]</B> </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>redraw_vlist sphere.s</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>redraw_vlist sphere.s</B> <BR>
 -- Update the &quot;V&quot; vertex of shape sphere.s in the database to be located at the current center of the view, and recreate the vector display lists of only those object(s) that were affected by the change. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1116,16 +1116,16 @@
 </B><FONT SIZE=2><P>-- Get a list of all objects in the database that end with &quot;.s&quot;. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>db get cone.s</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>db get cone.s</B> <BR>
 -- Get a list of all the attributes and their values for shape <I>cone.s</I>. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>db get cone.s V</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>db get cone.s V</B> <BR>
 -- Get the value of the <I>V</I> (vertex) attribute of shape <I>cone.s</I>. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>db put new_cone.s tgc V {0 0 0} H {0 0 1} A {1 0 0} B {0 1 0} C {5 0 0} D {0 5 0}</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>db put new_cone.s tgc V {0 0 0} H {0 0 1} A {1 0 0} B {0 1 0} C {5 0 0} D {0 5 0}</B> <BR>
 -- Create a new </FONT><A HREF="#TGC"><FONT SIZE=2>TGC</FONT></A><FONT SIZE=2> shape named <I>new_cone.s</I> with the specified attributes. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>db adjust new_cone.s V {0 0 10}</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>db adjust new_cone.s V {0 0 10}</B> <BR>
 -- Adjust the <I>V</I> (vertex) attribute of <I>new_cone.s</I> to the value {0 0 10}. </P>
 <P><BR>
 mged <B>db form tgc</B> <BR>
@@ -1187,7 +1187,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Get a list of available <I>bu_debug</I> values and the current value. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>debugbu 2</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>debugbu 2</B> <BR>
 -- Set <I>bu_debug</I> to &lt;MEM_CHECK&gt;. </P>
 <P>&nbsp;</P></DIR>
 
@@ -1221,7 +1221,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Get a list of available debug values for <I>librt</I> and the current value. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>debuglib 1</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>debuglib 1</B> <BR>
 -- Set the <I>librt</I> debug flag to &lt;DEBUG_ALLRAYS&gt; (print info about rays). </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1284,31 +1284,31 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Get a list of the available display manager internal variables. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>dm set perspective 1</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm set perspective 1</B> <BR>
 -- Turn on perspective projection in the display. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>dm size</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm size</B> <BR>
 -- Return the size to the display manager. <BR>
 </P>
 </FONT><TT><P>mged</TT><FONT SIZE=2> <B>dm size 900 900</B> <BR>
 -- Request that the display manager window be resized to 900x900. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>dm m 2 100 200</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm m 2 100 200</B> <BR>
 -- Simulate a button2 press at (100, 200) in X screen coordinates. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>dm am r 400 100</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm am r 400 100</B> <BR>
 -- Start an alternate mouse mode rotation. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>dm adc d 300 200</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm adc d 300 200</B> <BR>
 -- Start a tick distance manipulation. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>dm con t z 200 200</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm con t z 200 200</B> <BR>
 -- Start a constrained translation down the Z axis. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>dm con a d 200 100</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm con a d 200 100</B> <BR>
 -- Start a constrained tick distance manipulation. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>dm idle</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm idle</B> <BR>
 -- End drag. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1405,7 +1405,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 </B><FONT SIZE=2><P>-- Make <I>comb1</I> a <I>region</I> and set its <I>ident</I> to 1001, its <I>air code</I> to 0, its <I>LOS</I> to 50, and its <I>material code</I> to 8.</P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>edcomb comb1 0 0 0 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>edcomb comb1 0 0 0 0</B> <BR>
 -- Unset the <I>region</I> flag for combination <I>comb1.</I> </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1445,7 +1445,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <DD></DD>
 <FONT SIZE=4><DT>Examples:  </DT>
 </FONT><DD></DD>
-<DT>&#9;<TT>mged</TT> <B>em engine pilot</DT>
+<DT>&#9;<TT>mged&gt;</TT> <B>em engine pilot</DT>
 </B><DD>-- Display all regions that have MUVES_Component attributes equal to engine or pilot.</DD>
 <DT></DT>
 <FONT FACE="Courier" SIZE=2><DD>mged&gt; </FONT><B>em –C0/255/0 hydraulics</DD><DIR>
@@ -1495,7 +1495,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Display evaluated <I>region1</I> and <I>shapea</I> as shaded polygons. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ev -wT region1</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ev -wT region1</B> <BR>
 -- Display evaluated <I>region1</I> as wireframe without triangulating. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1582,7 +1582,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Move face 1234 such that it is in the <I>yz</I> plane at <I>x</I>=20. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>facedef 5678 b 0 0 10 10 0 10 10 10 10</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>facedef 5678 b 0 0 10 10 0 10 10 10 10</B> <BR>
 -- Move face 5678 such that it is in the plane formed by the three points (0 0 10), (10 0 10), and (10 10 10). </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1803,7 +1803,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 </B><FONT SIZE=2><P>-- Create a shape named <I>in_arb</I> such that each face is 1 </FONT><A HREF="#units"><FONT SIZE=2>unit</FONT></A><FONT SIZE=2> from the corresponding face in <I>out_arb.</I> </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>inside in_arb 1 1 1 1 1 1</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>inside in_arb 1 1 1 1 1 1</B> <BR>
 -- Create a shape named <I>in_arb</I> such that each face is 1 </FONT><A HREF="#units"><FONT SIZE=2>unit</FONT></A><FONT SIZE=2> from the corresponding face in the current </FONT><A HREF="#KEY SOLID"><FONT SIZE=2>key shape</FONT></A><FONT SIZE=2> or the shape currently being edited. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1936,10 +1936,10 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Display details about region1. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>l group1/group2/region1/shape3</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>l group1/group2/region1/shape3</B> <BR>
 -- Display shape parameters for <I>shape3</I> with matrices applied from the <I>path.</I> </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>l -r a/b</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>l -r a/b</B> <BR>
 -- Display all possible paths that start with <I>a/b</I> and end in a primitive <I>shape</I> <BR>
 -- The shape parameters with the accumulated transformation applied will be displayed. </P>
 <P><HR ALIGN="RIGHT"></P></DIR>
@@ -2019,16 +2019,16 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 </B><FONT SIZE=2><P>-- List all objects with names beginning with &quot;shape&quot; (output is formatted). </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ls -a shape*</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ls -a shape*</B> <BR>
 -- List all objects with names beginning with &quot;shape.&quot; </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ls -p wheel*</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ls -p wheel*</B> <BR>
 -- List all primitives with names beginning with &quot;wheel.&quot; </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ls -r wheel*</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ls -r wheel*</B> <BR>
 -- List all regions with names beginning with &quot;wheel.&quot; </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ls -c suspension*</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ls -c suspension*</B> <BR>
 -- List all combinations with names beginning with &quot;suspension.&quot; </P>
 
 </FONT><FONT FACE="Courier" SIZE=2><P>mged</FONT><FONT SIZE=2> <B>ls -A -o -r Comment {First comment} Comment {Second comment}</P>
@@ -2087,7 +2087,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Create a sphere named <I>shapea.</I> </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>make -t</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>make -t</B> <BR>
 -- Return a list of shape types handled by <I>make.</I> </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -2248,7 +2248,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Close the current database file and open <I>model.g.</I> </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>opendb</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>opendb</B> <BR>
 -- Return the name of the current database file. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -2441,7 +2441,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 </B><FONT SIZE=2><P>-- Place a <I>PostScript</I> version of the current MGED display in a file named <I>test.ps</I> and give it the title &quot;Test Title.&quot; </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>ps -l 10 -t "Test Fat Lines" fat_lines.ps</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ps -l 10 -t "Test Fat Lines" fat_lines.ps</B> <BR>
 -- This time use fat lines. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -2513,13 +2513,13 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Print usage message. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>qray fmt o</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>qray fmt o</B> <BR>
 -- Returns the overlap format string. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>qray oddcolor</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>qray oddcolor</B> <BR>
 -- Returns the rgb color used to color odd partitions. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>qray oddcolor 255 0 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>qray oddcolor 255 0 0</B> <BR>
 -- Sets the odd partition color to red. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -2682,7 +2682,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Close the current display manager. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>release .dm_X0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>release .dm_X0</B> <BR>
 -- Close <I>.dm_X0.</I> </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -2734,7 +2734,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Rotate 45&#730; about the Z axis. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>rot 45 45 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>rot 45 45 0</B> <BR>
 -- Rotate 45&#730; about the <I>y</I> axis, then rotate 45&#730; about the <I>x</I> axis. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -2800,7 +2800,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 </B><FONT SIZE=2><P>-- Run the <I>rt</I> program to produce a color-shaded image of the current view in the MGED display.  The image will be 1024 pixels square and will be displayed on a lingering <I>X</I> framebuffer. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>rt -C 200/200/255 -- roof</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>rt -C 200/200/255 -- roof</B> <BR>
 -- Run the <I>rt</I> program to produce a color-shaded image of the object <I>roof</I> using MGED’s current viewing parameters.  The image will have a sky-blue background and will be displayed on the framebuffer specified by the FB_FILE shell variable. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -2973,10 +2973,10 @@ EOF</PRE>
 
 </B><FONT SIZE=2><P>-- Get default information (i.e., state, view size, local2base, toViewcenter, Viewrot, model2view and view2model). </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>status Viewrot</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>status Viewrot</B> <BR>
 -- Get the view rotation matrix. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>status state</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>status state</B> <BR>
 -- Get the edit state. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -2997,7 +2997,7 @@ EOF</PRE>
 </B><FONT SIZE=2><P>-- The view is unchanged. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>sv 1024 0 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>sv 1024 0 0</B> <BR>
 -- The view center is moved half way between the current view center and the right side of the view screen. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -3032,16 +3032,16 @@ EOF</PRE>
 </B><FONT SIZE=2><P>-- List all objects with names beginning with &quot;shape.&quot; <BR>
 (output is formatted) </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>t -a shape*</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>t -a shape*</B> <BR>
 -- List all objects with names beginning with &quot;shape.&quot; </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>t -s wheel*</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>t -s wheel*</B> <BR>
 -- List all shapes with names beginning with &quot;wheel.&quot; </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>t -r wheel*</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>t -r wheel*</B> <BR>
 -- List all regions with names beginning with &quot;wheel.&quot; </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>t -c suspension*</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>t -c suspension*</B> <BR>
 -- List all combinations with names beginning with &quot;suspension.&quot; </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -3159,10 +3159,10 @@ The calculational tolerances are used in evaluating the </FONT><A HREF="#BOOLEAN
 </B><FONT SIZE=2><P>-- Show the structure of the tree rooted at <I>group1</I> down to the primitive shape level. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>tree -i 2 group1</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>tree -i 2 group1</B> <BR>
 -- This time use two spaces for each level of indentation. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>tree -c group1</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>tree -c group1</B> <BR>
 -- No shapes are printed. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -3401,25 +3401,25 @@ All textual arguments may be abbreviated by their first letter. </P>
 </B><FONT SIZE=2><P>-- Open a list named <I>square.</I> </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>vdraw params color ff00</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>vdraw params color ff00</B> <BR>
 -- Set color to green. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>vdraw write next 0 0 0 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>vdraw write next 0 0 0 0</B> <BR>
 -- Start a line at the origin. </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>vdraw write next 1 100 0 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>vdraw write next 1 100 0 0</B> <BR>
 -- Draw line to (100 0 0). </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>vdraw write next 1 100 100 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>vdraw write next 1 100 100 0</B> <BR>
 -- Draw line to (100 100 0). </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>vdraw write next 1 0 100 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>vdraw write next 1 0 100 0</B> <BR>
 -- Draw line to (0 100 0). </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>vdraw write next 1 0 0 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>vdraw write next 1 0 0 0</B> <BR>
 -- Draw line to (0 0 0). </P>
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>vdraw send</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>vdraw send</B> <BR>
 -- Draw the square in the MGED display. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -3444,7 +3444,7 @@ All textual arguments may be abbreviated by their first letter. </P>
 </B><FONT SIZE=2><P>-- Get the view center. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>view center 0 0 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>view center 0 0 0</B> <BR>
 -- Set the view center at the origin of model space. </P></DIR>
 
 <P><A NAME="viewsize"></A></P>
@@ -3493,7 +3493,7 @@ If the display is in rotate-about-center mode, then the rotation will occur abou
 </B><FONT SIZE=2><P>-- Rotate 90&#730; about view <I> x</I> axis. </P><DIR>
 
 <P><BR>
-</FONT><TT>mged</TT><FONT SIZE=2> <B>vrot 0 180 0</B> <BR>
+</FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>vrot 0 180 0</B> <BR>
 -- Rotate 180&#730; about view <I>y</I> axis. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
