@@ -1626,14 +1626,13 @@ mat_t		mat;
 		{
 			struct rt_fgp_internal *plt =
 				(struct rt_fgp_internal *)ip->idb_ptr;
-			int id;
 			struct rt_db_internal in;
 
 			RT_FGP_CK_MAGIC( plt );
 
 			VSETALL( mpt, 0.0 )
 
-			if( (id=rt_db_get_internal( &in, plt->ref_dp, plt->dbip, plt->xform ))  < 0 )
+			if( rt_db_get_internal( &in, plt->ref_dp, plt->dbip, plt->xform )  < 0 )
 			{
 				Tcl_AppendResult(interp, "get_solid_keypoint() Failed for FGP solid referencing ", plt->ref_dp->d_namep, "\n", (char *)NULL );
 				break;
