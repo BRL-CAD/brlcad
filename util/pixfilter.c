@@ -72,7 +72,7 @@ FILE *infp;
 void	select_filter(), dousage();
 
 char	usage[] = "\
-Usage: pixfilter [-f<type>] [-v] [-d#] [-o#]\n\
+Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
         [-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
 
 get_args( argc, argv )

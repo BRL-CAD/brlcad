@@ -54,7 +54,7 @@ int	outy = 512;
 void	init_buffer(), fill_buffer(), binterp(), ninterp();
 
 static	char usage[] = "\
-Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
 get_args( argc, argv )
