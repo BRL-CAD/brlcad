@@ -14,19 +14,19 @@
 
 /* Explicit composition of each product */
 
-tabinterp: tabinterp.o LIBRT_DEP
+tabinterp: tabinterp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS tabinterp.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o tabinterp
 
-tabsub:	tabsub.o  LIBRT_DEP
+tabsub:	tabsub.o  LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS tabsub.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o tabsub
 
-txyz-pl:	txyz-pl.o LIBPLOT_DEP
-	CC LDFLAGS txyz-pl.o LIBPLOT LIBES -o txyz-pl
+txyz-pl:	txyz-pl.o LIBPLOT_DEP LIBBU_DEP
+	CC LDFLAGS txyz-pl.o LIBPLOT LIBBU LIBBU_LIBES LIBES -o txyz-pl
 
-scriptsort:	scriptsort.o script.o LIBBU_DEP
-	CC LDFLAGS scriptsort.o script.o LIBBN LIBBU LIBBU_LIBES LIBES -o scriptsort
+scriptsort:	scriptsort.o script.o LIBBU_DEP LIBRT_DEP LIBBN_DEP
+	CC LDFLAGS scriptsort.o script.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o scriptsort
 
-script-tab:	script-tab.o  LIBRT_DEP
+script-tab:	script-tab.o  LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS script-tab.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o script-tab
 
 #include "../Cakefile.rules"
