@@ -2011,15 +2011,21 @@ double			mm2local;
 {
 	register struct model	*m =
 		(struct model *)ip->idb_ptr;
+	struct nmg_struct_counts	count;
+	long			**ptrs;
 
 	NMG_CK_MODEL(m);
-	rt_vls_strcat( str, "n-Manifold Geometry solid (NMG)\n");
+	rt_vls_printf( str, "n-Manifold Geometry solid (NMG) maxindex=%d\n",
+		m->maxindex);
 
 	if( !verbose )  return(0);
 
-	/* Should print out # of database granules used */
+	ptrs = nmg_m_struct_count( &count, m );
+
 	/* If verbose, should print out structure counts */
-	nmg_pr_m(m);
+	nmg_vls_struct_counts( str, &count );
+
+	rt_free( (char *)ptrs, "struct_count *ptrs[]" );
 
 	return(0);
 }
