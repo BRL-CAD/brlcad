@@ -125,6 +125,7 @@ fastf_t edit_absolute_scale;
 fastf_t edit_rate_scale;
 int edit_rateflag_scale;
 
+struct bu_vls edit_info_vls;
 struct bu_vls edit_rate_tran_vls[3];
 struct bu_vls edit_rate_rotate_vls[3];
 struct bu_vls edit_rate_scale_vls;
