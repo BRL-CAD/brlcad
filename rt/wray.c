@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "raytrace.h"
@@ -61,20 +62,52 @@ struct application *ap;
 FILE *fp;
 {
 	LOCAL struct vldray vldray;
+	register struct hit *hitp= pp->pt_inhit;
 	register int i;
 
-	VMOVE( &(vldray.ox), pp->pt_inhit->hit_point );
+	VMOVE( &(vldray.ox), hitp->hit_point );
 	VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
-		pp->pt_inhit->hit_point );
+		hitp->hit_point );
 
-	/* Check pt_inflip, pt_outflip for normals! */
-	vldray.na = vldray.ne = 0.0;	/* need angle/azim!! */
+	if( pp->pt_inflip )  {
+		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
+	vldray.na = atan2( hitp->hit_normal[Y], hitp->hit_normal[X] );
+	vldray.ne = asin( hitp->hit_normal[Z] );
 
 	i = pp->pt_regionp->reg_regionid;
 	vldray.ob_lo = i & 0xFFFF;
 	vldray.ob_hi = (i>>16) & 0xFFFF;
-	vldray.rt_lo = ap->a_x;
+	vldray.rt_lo = ap->a_level;
 	vldray.rt_hi = ap->a_y;
-	/* Might encode a_level here too, somehow */
+	fwrite( &vldray, sizeof(struct vldray), 1, fp );
+}
+
+/*
+ *  			W R A Y D I S T
+ *  
+ *  Write a VLD-standard ray for a section of a ray specified
+ *  by the "in" and "out" distances along the ray.  This is usually
+ *  used for logging passage through "air" (ie, no solid).
+ */
+void
+wraypts( in, out, ap, fp )
+vect_t in, out;
+struct application *ap;
+FILE *fp;
+{
+	LOCAL struct vldray vldray;
+
+	VMOVE( &(vldray.ox), in );
+	VSUB2( &(vldray.rx), out, in );
+
+	vldray.na = atan2( ap->a_ray.r_dir[Y], ap->a_ray.r_dir[X] );
+	vldray.ne = asin( ap->a_ray.r_dir[Z] );
+
+	vldray.ob_lo = 0;	/* might want to be something special */
+	vldray.ob_hi = 0;
+
+	vldray.rt_lo = ap->a_level;
+	vldray.rt_hi = ap->a_y;
 	fwrite( &vldray, sizeof(struct vldray), 1, fp );
 }
