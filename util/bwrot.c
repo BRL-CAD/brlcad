@@ -44,6 +44,7 @@ unsigned char *obuf;
 unsigned char *obp;
 
 int	xin, yin, xout, yout, nxin, nyin;
+int	plus90, minus90, reverse, invert;
 
 static	char *Usage = "usage: bwrot [-f -b -r -i] nx ny < file.bw > file.bw\n";
 
@@ -54,7 +55,6 @@ int argc; char **argv;
 {
 	int	x, y;
 	int	outbyte, outplace;
-	int	plus90, minus90, reverse, invert;
 
 	/* Check for flags */
 	while( argc > 1 && argv[1][0] == '-' )  {
