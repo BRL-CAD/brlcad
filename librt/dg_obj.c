@@ -90,6 +90,8 @@ static int dgo_build_tops();
 static void dgo_rt_write();
 static void dgo_rt_set_eye_model();
 
+static void dgo_callback();
+
 struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 static struct solid FreeSolid;		/* head of free solid list */
 
@@ -379,6 +381,7 @@ dgo_draw_tcl(clientData, interp, argc, argv)
 		kind = 1;
 
 	dgo_draw(dgop, interp, argc, argv, kind);
+	dgo_callback(dgop, interp);
 
 	return TCL_OK;
 }
@@ -425,6 +428,7 @@ dgo_erase_tcl(clientData, interp, argc, argv)
 	}
 
 	dgo_erase(dgop, interp, argc-2, argv+2);
+	dgo_callback(dgop, interp);
 
 	return TCL_OK;
 }
@@ -468,6 +472,7 @@ dgo_erase_all_tcl(clientData, interp, argc, argv)
 	}
 
 	dgo_erase_all(dgop, interp, argc-2, argv+2);
+	dgo_callback(dgop, interp);
 
 	return TCL_OK;
 }
@@ -620,6 +625,7 @@ char	**argv;
 	}
 
 	dgo_overlay(dgop, interp, fp, name, char_size);
+	dgo_callback(dgop, interp);
 
 	return TCL_OK;
 }
@@ -832,6 +838,7 @@ dgo_zap_tcl(clientData, interp, argc, argv)
 	}
 
 	dgo_zap(dgop, interp);
+	dgo_callback(dgop, interp);
 
 	return TCL_OK;
 }
@@ -866,6 +873,7 @@ dgo_blast_tcl(clientData, interp, argc, argv)
 
 	/* Now, draw the new object(s). */
 	dgo_draw(dgop, interp, argc, argv, 1);
+	dgo_callback(dgop, interp);
 
 	return TCL_OK;
 }
@@ -2578,4 +2586,18 @@ dgo_run_rt(dgop, vop)
 			      dgo_rt_output_handler, (ClientData)pipe_err[0]);
 
 	return 0;
+}
+
+static void
+dgo_callback(dgop, interp)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
+{
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "dgo_callback %s", bu_vls_addr(&dgop->dgo_name));
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	Tcl_ResetResult(interp);
 }
