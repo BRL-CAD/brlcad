@@ -226,13 +226,12 @@ void
 im_write(y)
 int y;
 {
-	int x;
-	register int y1;
-	register int x1;
-	register int mx, my;
+	int y1;
 
 	/* Process one 32-bit high output swath */
 	for ( y1 = 0; y1 < 32; y1 += im_mag )  {
+		int x;
+
 		/* Obtain a single line of 8-bit pixels */
 		if( fread( line, 1, width, infp ) != width )  {
 #ifdef BSD
@@ -244,12 +243,16 @@ int y;
 
 		/* construct im_mag scans of Imagen swath */
 		for ( x = 0; x < im_width; x += 32 )  {
+			int my;
+
 			for ( my = 0; my < im_mag; ++my )  {
 				register long	b = 0L;	/* image bits */
+				int x1;
 
 				for ( x1 = 0; x1 < 32; x1 += im_mag )  {
 					register int	level =
 					    line[width-1-((x + x1) / im_mag)];
+					register int mx;
 
 					if( im_mag <= 1 )  {
 						b <<= 1;
@@ -279,14 +282,17 @@ int y;
 	}
 
 	/* output the swath */
-	for ( x1 = 0; x1 < im_wpatches; ++x1 )  {
-		for ( y1 = 0; y1 < 32; ++y1 )  {
-			register long	b = swath[y1][x1];
+	{
+		register int x, y;
+		for ( x = 0; x < im_wpatches; ++x )  {
+			for ( y = 0; y < 32; ++y )  {
+				register long	b = swath[y][x];
 
-			(void)putchar( (int)(b >> 24) & 0xFF );
-			(void)putchar( (int)(b >> 16) & 0xFF );
-			(void)putchar( (int)(b >> 8) & 0xFF );
-			(void)putchar( (int)b & 0xFF );
+				(void)putchar( (int)(b >> 24) & 0xFF );
+				(void)putchar( (int)(b >> 16) & 0xFF );
+				(void)putchar( (int)(b >> 8) & 0xFF );
+				(void)putchar( (int)b & 0xFF );
+			}
 		}
 	}
 }
