@@ -67,3 +67,7 @@ relink:
 	-@sh gen.sh $@
 rmdir:
 	-@sh gen.sh $@
+tcl:
+	-@sh gen.sh $@
+install-tcl:
+	-@sh gen.sh $@
