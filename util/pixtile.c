@@ -4,7 +4,23 @@
  *  Given multiple .pix files with ordinary lines of pixels,
  *  produce a single image with each image side-by-side,
  *  right to left, top to bottom on STDOUT.
+ *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 
 char ibuf[512*3];		/* Input line */
@@ -70,7 +86,7 @@ char **argv;
 
 			/* Vertical position, recalling bottom-to-top */
 			/* virtual image starting line*/
-			/* First image goes in upper right corner of output,
+			/* First image goes in upper left corner of output,
 			 * which is last part of output buffer. */
 			/*   maxscanline     back up # of images */
 			j = (pix_line) - (((image/im_line)+1)*w);
