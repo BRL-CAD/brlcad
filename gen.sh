@@ -23,14 +23,18 @@
 SHELL=/bin/sh
 export SHELL
 
-# Set to 0 for non-NFS environment (default)
+# Set to 0 for non-NFS environment (default), 1 for NFS configuration.
 NFS=0
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.1;	RCS_REVISION=8;		REL_DATE=dd-mmm-yy
-RELEASE=3.0;	RCS_REVISION=8;		REL_DATE=06-Oct-88
+RELEASE=3.5;	RCS_REVISION=9;		REL_DATE=23-May-89
+#RELEASE=3.4;	RCS_REVISION=8;		REL_DATE=18-May-89	# internal
+#RELEASE=3.3;	RCS_REVISION=8;		REL_DATE=17-May-89	# internal
+#RELEASE=3.2;	RCS_REVISION=8;		REL_DATE=05-May-89	# internal
+#RELEASE=3.1;	RCS_REVISION=8;		REL_DATE=27-Apr-89	# internal
+#RELEASE=3.0;	RCS_REVISION=8;		REL_DATE=10-Oct-88
 #RELEASE=2.10;	RCS_REVISION=7;		REL_DATE=04-Oct-88	# internal
 #RELEASE=2.9;	RCS_REVISION=7;		REL_DATE=31-Sep-88	# internal
 #RELEASE=2.8;	RCS_REVISION=7;		REL_DATE=21-Sep-88	# internal
@@ -48,7 +52,7 @@ RELEASE=3.0;	RCS_REVISION=8;		REL_DATE=06-Oct-88
 # made it into the search path.  Otherwise, nothing will work.
 # For this purpose, specifically exclude "dot" from the check.
 #
-NECESSARY_CMDS="cake cakesub machinetype.sh cakeinclude.sh"
+NECESSARY_CMDS="cake cakesub machinetype.sh cakeinclude.sh ranlib5.sh"
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
@@ -88,7 +92,7 @@ ARCHDIR=/m/.
 ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 
 TOP_FILES="Copyright* README Cakefile* Makefile \
-		cray.sh cray-ar.sh \
+		cray.sh cray-ar.sh ranlib5.sh sgisnap.sh \
 		machinetype.sh gen.sh setup.sh \
 		cakeinclude.sh newbindir.sh"
 
@@ -96,7 +100,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile \
 ADIRS="h doc pix"
 
 # Has no Cakefile, just copy it verbatim
-CDIRS="cake cakeaux papers contributed"
+CDIRS="cake cakeaux papers contributed patch"
 
 # Source directories that will have Machine specific binary directories
 BDIRS="bench \
@@ -171,7 +175,8 @@ help)
 	echo '	noprod		rm products, leave *.o'
 	echo '	clobber		rm products and *.o'
 	echo '	lint		run lint'
-	echo '	install		install all products'
+	echo '	install		install all products, with backups'
+	echo '	install-nobak	install all products, without backups'
 	echo '	uninstall	remove all products'
 	echo '	print		print all sources to stdout'
 	echo '	typeset		troff all manual pages'
@@ -208,6 +213,7 @@ benchmark)
 #  noprod	Remove all products, leave .o files
 #  clobber	clean + noprod
 #  lint
+#  ls		ls -al of all subdirectories
 all)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
@@ -218,6 +224,12 @@ clean|noprod|clobber|lint)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k ${TARGET} )
+	done;;
+
+ls)
+	for dir in ${BDIRS}; do
+		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
+		( cd ${DIRPRE}${dir}${DIRSUF}; ls -al )
 	done;;
 
 # These operate in a mixture of places, treating both source and binary
@@ -300,7 +312,7 @@ checkin)
 #	"make arch"	to create TAR archive
 #
 dist)
-	if test `grep "#define NFS" Cakefile.defs|wc -l` -eq 0
+	if test `grep '#define[ 	]*NFS' Cakefile.defs|wc -l` -eq 0
 	then 	echo "Shipping non-NFS version of Cakefile.defs (this is good)";
 	else
 		echo "ERROR: Update Cakefile.defs for non-NFS before proceeding!"
