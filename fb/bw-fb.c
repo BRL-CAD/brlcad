@@ -29,8 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	MAXSCAN	(16*1024)	/* Largest input file scan line length */
 
-int	fb_fd;
-char	*framebuffer = NULL;	/* Default Framebuffer */
+FBIO	*fbp;
 
 char	ibuf[MAXSCAN];		/* Allow us to see parts of big files */
 Pixel	obuf[1024];
@@ -59,7 +58,6 @@ int argc; char **argv;
 		switch( argv[1][1] )  {
 		case 'h':
 			default_size = 1024;
-			fbsetsize(1024);
 			break;
 		case 'i':
 			inverted++;
@@ -109,7 +107,7 @@ int argc; char **argv;
 	}
 
 	/* Open Display Device */
-	if ((fb_fd = fbopen(framebuffer, APPEND)) < 0) {
+	if ((fbp = fbopen( 0, default_size, default_size )) == NULL ) {
 		perror (framebuffer == NULL ? "$FB_FILE" : framebuffer);
 		exit( 3 );
 	}
@@ -127,9 +125,9 @@ int argc; char **argv;
 		 */
 		if( redflag == 0 || greenflag == 0 || blueflag == 0 ) {
 			if( inverted )
-				fbread( initx, 511-y, &obuf[0], outsize );
+				fb_read( fbp, initx, 511-y, &obuf[0], outsize );
 			else
-				fbread( initx, y, &obuf[0], outsize );
+				fb_read( fbp, initx, y, &obuf[0], outsize );
 		}
 		for( x = 0; x < outsize; x++ ) {
 			if( redflag )
@@ -140,8 +138,10 @@ int argc; char **argv;
 				obuf[x].blue  = ibuf[x];
 		}
 		if( inverted )
-			fbwrite( initx, default_size-1-y, &obuf[0], outsize );
+			fb_write( fbp, initx, default_size-1-y, &obuf[0], outsize );
 		else
-			fbwrite( initx, y, &obuf[0], outsize );
+			fb_write( fbp, initx, y, &obuf[0], outsize );
 	}
+
+	fb_close( fbp );
 }
