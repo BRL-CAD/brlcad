@@ -43,7 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "../librt/debug.h"
 #include "../rt/material.h"
-#include "../rt/mathtab.h"
+#include "../rt/ext.h"
 #include "../rt/rdebug.h"
 
 #include "./list.h"
@@ -59,13 +59,8 @@ extern double atof();
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
-extern int	hex_out;		/* Binary or Hex .pix output file */
-extern double	AmbientIntensity;	/* Ambient light intensity */
-extern double	azimuth, elevation;
-extern int	lightmodel;		/* Select lighting model */
 mat_t		view2model;
 mat_t		model2view;
-extern int	use_air;		/* Handling of air in librt */
 int		srv_startpix;		/* offset for view_pixel */
 int		srv_scanlen = 8*1024;	/* max assignment */
 /***** end of sharing with viewing model *****/
@@ -75,39 +70,11 @@ extern void worker();
 
 /***** variables shared with worker() ******/
 struct application ap;
-extern int	stereo;			/* stereo viewing */
 vect_t		left_eye_delta;
-extern int	hypersample;		/* number of extra rays to fire */
-extern int	jitter;			/* jitter ray starting positions */
-extern double	rt_perspective;		/* perspective view -vs- parallel */
-extern fastf_t	aspect;			/* aspect ratio Y/X */
-extern vect_t	dx_model;		/* view delta-X as model-space vect */
-extern vect_t	dy_model;		/* view delta-Y as model-space vect */
-extern point_t	eye_model;		/* model-space location of eye */
-extern fastf_t	eye_backoff;		/* dist from eye to center */
-extern int	width;			/* # of pixels in X */
-extern int	height;			/* # of lines in Y */
-extern mat_t	Viewrotscale;
-extern fastf_t	viewsize;
-extern char	*scanbuf;		/* For optional output buffering */
-extern int	incr_mode;		/* !0 for incremental resolution */
-extern int	incr_level;		/* current incremental level */
-extern int	incr_nlevel;		/* number of levels */
-extern int	npsw;			/* number of worker PSWs to run */
-extern struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
-extern int	pix_start;		/* pixel to start at */
-extern int	pix_end;		/* pixel to end at */
-extern int	nobjs;			/* Number of cmd-line treetops */
-extern char	**objtab;		/* array of treetop strings */
 char		*beginptr;		/* sbrk() at start of program */
-extern int	matflag;		/* read matrix from stdin */
-extern int	desiredframe;		/* frame to start at */
-extern int	curframe;		/* current frame number */
-extern char	*outputfile;		/* name of base of output file */
-extern int	interactive;		/* human is watching results */
 /***** end variables shared with do.c *****/
 
 /* Variables shared within mainline pieces */
