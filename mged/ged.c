@@ -44,19 +44,22 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States
 #include <signal.h>
 #include <setjmp.h>
 #ifdef BSD
-#include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
+#	include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
 #else
-#include <time.h>
+#	include <time.h>
 #endif
 #ifdef NONBLOCK
-#include <termio.h>
-#undef VMIN	/* also used in vmath.h */
+#	include <termio.h>
+#	undef VMIN	/* also used in vmath.h */
 #endif
 #ifdef sgi
-struct timeval {
-	long	tv_sec;		/* seconds */
-	long 	tv_usec;	/* and microseconds */
-};
+	struct timeval {
+		long	tv_sec;		/* seconds */
+		long 	tv_usec;	/* and microseconds */
+	};
+#endif
+#ifdef stellar
+#	include <sys/timeval.h>
 #endif
 
 #include "machine.h"
@@ -617,7 +620,7 @@ new_mats()
 bsdselect( readfds, sec, us )
 long readfds;
 {
-#if defined(BSD) || defined(sgi)
+#if defined(BSD) || defined(sgi) || defined(stellar)
 	struct timeval tv;
 
 	tv.tv_sec = sec;
