@@ -88,6 +88,8 @@ struct partition 	*part_head;
 	ValTab[VTI_REG_NAME].value.sval =
 	    basename(part -> pt_regionp -> reg_name);
 	ValTab[VTI_REG_ID].value.ival = part -> pt_regionp -> reg_regionid;
+	ValTab[VTI_SURF_NUM_IN].value.ival = part -> pt_inhit -> hit_surfno;
+	ValTab[VTI_SURF_NUM_OUT].value.ival = part -> pt_outhit -> hit_surfno;
 	ValTab[VTI_OBLIQ_IN].value.fval =
 	    get_obliq(ap -> a_ray.r_dir, part -> pt_inhit -> hit_normal);
 	ValTab[VTI_OBLIQ_OUT].value.fval =

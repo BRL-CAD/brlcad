@@ -74,6 +74,8 @@ outval		ValTab[] =
 		    { "ov_y_out", VTI_OV_Y_OUT, OIT_FLOAT },
 		    { "ov_z_out", VTI_OV_Z_OUT, OIT_FLOAT },
 		    { "ov_d_out", VTI_OV_D_OUT, OIT_FLOAT },
+		    { "surf_num_in", VTI_SURF_NUM_IN, OIT_INT },
+		    { "surf_num_out", VTI_SURF_NUM_OUT, OIT_INT },
 		    { 0 }
 		};
 outitem		*oi_list[FMT_NONE];
