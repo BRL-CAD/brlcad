@@ -73,6 +73,8 @@ grasp)
 	xgrasp $FILE;;
 mpg)
 	mpeg_play $FILE;;
+xbm)
+	xloadimage $FILE;;
 *)
 	echo "$SUFFIX is not supported by this script"
 	exit 1
