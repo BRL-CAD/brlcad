@@ -287,7 +287,7 @@ genptr_t seg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
 	fastf_t delta;
-	point_t center, start_pt, end_pt;
+	point_t center, start_pt;
 	fastf_t pt[4];
 	vect_t semi_a, semi_b;
 	fastf_t radius;
@@ -451,7 +451,6 @@ genptr_t seg;
 			sindel = sin( delta );
 			VJOIN2( center, V, center2d[0], u_vec, center2d[1], v_vec );
 			VJOIN2( start_pt, V, start2d[0], u_vec, start2d[1], v_vec );
-			VJOIN2( end_pt, V, end2d[0], u_vec, end2d[1], v_vec );
 			oldu = (start2d[0] - center2d[0]);
 			oldv = (start2d[1] - center2d[1]);
 			RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
@@ -2397,5 +2396,114 @@ char			**argv;
 	}
 
 	return( TCL_OK );
+}
+
+
+void
+rt_curve_reverse_segment( long *lng )
+{
+	struct line_seg *lsg;
+	struct carc_seg *csg;
+	struct bezier_seg *bsg;
+	int tmp, i;
+
+	switch( *lng ) {
+		case CURVE_LSEG_MAGIC:
+			lsg = (struct line_seg *)lng;
+			tmp = lsg->start;
+			lsg->start = lsg->end;
+			lsg->end = tmp;
+			break;
+		case CURVE_CARC_MAGIC:
+			csg = (struct carc_seg *)lng;
+			if( csg->radius < 0.0 ) {
+				/* this is a full circle */
+				csg->orientation = !csg->orientation; /* no real effect, but just for completeness */
+			} else {
+				tmp = csg->start;
+				csg->start = csg->end;
+				csg->end = tmp;
+				csg->center_is_left = !csg->center_is_left;
+				csg->orientation = !csg->orientation;
+			}
+			break;
+		case CURVE_BEZIER_MAGIC:
+			bsg = (struct bezier_seg *)lng;
+			for( i=0 ; i<bsg->degree/2 ; i++ ) {
+				tmp = bsg->ctl_points[i];
+				bsg->ctl_points[i] = bsg->ctl_points[bsg->degree-i];
+				bsg->ctl_points[bsg->degree-i] = tmp;
+			}
+			break;
+	}
+}
+
+
+void
+rt_curve_order_segments( struct curve *crv )
+{
+	int i, j, k;
+	int seg_count;
+	int start1, end1, start2, end2, start3, end3;
+
+	seg_count = crv->seg_count;
+	if( seg_count < 2 ) {
+		return;
+	}
+
+	for( j=1 ; j<seg_count ; j++ ) {
+		i = j - 1;
+
+		get_indices( crv->segments[i], &start1, &end1 );
+		get_indices( crv->segments[j], &start2, &end2 );
+
+		if( end1 != start2 ) {
+			int fixed=0;
+
+			for( k=j+1 ; k<seg_count ; k++ ) {
+				get_indices( crv->segments[k], &start3, &end3 );
+				if( start3 == end1 ) {
+					int tmp_reverse;
+					genptr_t tmp_seg;
+
+					/* exchange j and k segments */
+					tmp_seg = crv->segments[j];
+					crv->segments[j] = crv->segments[k];
+					crv->segments[k] = tmp_seg;
+
+					tmp_reverse = crv->reverse[j];
+					crv->reverse[j] = crv->reverse[k];
+					crv->reverse[k] = tmp_reverse;
+					fixed = 1;
+					break;
+				}
+			}
+			if( !fixed ) {
+				/* try reversing a segment */
+				for( k=j ; k<seg_count ; k++ ) {
+					get_indices( crv->segments[k], &start3, &end3 );
+					if( end3 == end1 ) {
+						int tmp_reverse;	
+						genptr_t tmp_seg;
+
+						rt_curve_reverse_segment( crv->segments[k] );
+
+						if( k != j ) {
+							/* exchange j and k segments */
+							tmp_seg = crv->segments[j];
+							crv->segments[j] = crv->segments[k];
+							crv->segments[k] = tmp_seg;
+
+							tmp_reverse = crv->reverse[j];
+							crv->reverse[j] = crv->reverse[k];
+							crv->reverse[k] = tmp_reverse;
+						}
+						fixed = 1;
+						break;
+					}
+				}
+			}
+		}
+	}
 }
 

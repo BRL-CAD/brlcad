@@ -3188,6 +3188,9 @@ extern int rt_check_curve( struct curve *crv,
 			   struct rt_sketch_internal *skt,
 			   int noisey);
 
+extern void rt_curve_reverse_segment( long *lng );
+extern void rt_curve_order_segments( struct curve *crv );
+
 extern void rt_copy_curve(struct curve *crv_out, const struct curve *crv_in);
 
 BU_EXTERN(int				rt_check_curve,
