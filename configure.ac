@@ -239,9 +239,8 @@ if test "x$warn_only_both" != "xno" ; then
 	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
 fi
 
-
 # force enable/disable building of libregex
-AC_MSG_CHECKING(whether to build the regular expression library)
+dnl build_regex has alias(es)
 build_regex=auto
 AC_ARG_ENABLE(regex-build,
 	AC_HELP_STRING(--enable-regex-build,
@@ -252,10 +251,9 @@ AC_ARG_ENABLE(regex-build,
 		build_regex=yes
 	fi]
 )
-AC_MSG_RESULT($build_regex)
 
 # force enable/disable building of libpng
-AC_MSG_CHECKING(whether to build the PNG library)
+dnl build_png has alias(es)
 build_png=auto
 AC_ARG_ENABLE(png-build,
 	AC_HELP_STRING(--enable-png-build,
@@ -266,10 +264,9 @@ AC_ARG_ENABLE(png-build,
 		build_png=yes
 	fi]
 )
-AC_MSG_RESULT($build_png)
 
 # force enable/disable building of zlib
-AC_MSG_CHECKING(whether to build the data compression library)
+dnl build_zlib has alias(es)
 build_zlib=auto
 AC_ARG_ENABLE(zlib-build,
 	AC_HELP_STRING(--enable-zlib-build,
@@ -280,7 +277,6 @@ AC_ARG_ENABLE(zlib-build,
 		build_zlib=yes
 	fi]
 )
-AC_MSG_RESULT($build_zlib)
 
 # doxygen
 AC_MSG_CHECKING(whether to generate documentation with doxygen)
@@ -308,6 +304,7 @@ AC_MSG_RESULT($use_jove)
 AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
 
 # optimized
+dnl optimized has alias(es)
 use_optimized=no
 AC_ARG_ENABLE(optimized,
 	AC_HELP_STRING(--enable-optimized,
@@ -318,6 +315,7 @@ AC_ARG_ENABLE(optimized,
 )
 
 # warnings
+dnl warnings has alias(es)
 use_warnings=no
 AC_ARG_ENABLE(warnings,
 	AC_HELP_STRING(--enable-warnings,
@@ -327,8 +325,8 @@ AC_ARG_ENABLE(warnings,
 	fi]
 )
 
-# debugging
-AC_MSG_CHECKING(whether to disable debug mode compilation)
+# debug
+dnl debug has alias(es)
 use_debug=yes
 AC_ARG_ENABLE(debug,
 	AC_HELP_STRING(--disable-debug,
@@ -337,13 +335,9 @@ AC_ARG_ENABLE(debug,
 		use_debug=no
 	fi]
 )
-if test "x$use_debug" = "xyes" ; then
-	AC_MSG_RESULT(no)
-else
-	AC_MSG_RESULT(yes)
-fi
 
 # profiling
+dnl profiling has alias(es)
 use_profiling=no
 AC_ARG_ENABLE(profiling,
 	AC_HELP_STRING(--enable-profiling,
@@ -355,7 +349,54 @@ AC_ARG_ENABLE(profiling,
 
 # argument aliases go below here (they should all become a single blank line)
 
-# optimized
+# alias to force building libregex
+AC_ARG_ENABLE(regex,,
+	[if test "x$enableval" = "xno" ; then
+		build_regex=no
+	elif test "x$enableval" = "xyes" ; then
+		build_regex=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to build the regular expression library)
+AC_MSG_RESULT($build_regex)
+
+# alias to force building libpng
+AC_ARG_ENABLE(png,,
+	[if test "x$enableval" = "xno" ; then
+		build_png=no
+	elif test "x$enableval" = "xyes" ; then
+		build_png=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to build the PNG library)
+AC_MSG_RESULT($build_png)
+
+# alias to force building zlib
+AC_ARG_ENABLE(zlib,,
+	[if test "x$enableval" = "xno" ; then
+		build_zlib=no
+	elif test "x$enableval" = "xyes" ; then
+		build_zlib=yes
+	fi]
+)
+AC_ARG_ENABLE(libz,,
+	[if test "x$enableval" = "xno" ; then
+		build_zlib=no
+	elif test "x$enableval" = "xyes" ; then
+		build_zlib=yes
+	fi]
+)
+AC_ARG_ENABLE(libz-build,,
+	[if test "x$enableval" = "xno" ; then
+		build_zlib=no
+	elif test "x$enableval" = "xyes" ; then
+		build_zlib=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to build the data compression library)
+AC_MSG_RESULT($build_zlib)
+
+# optimized alias
 AC_ARG_ENABLE(optimization,,
 	[if test "x$enable_optimization" != "xno" ; then
 		use_optimized=yes
@@ -368,6 +409,15 @@ AC_ARG_ENABLE(optimizations,,
 )
 AC_MSG_CHECKING(whether to enable optimized compilation)
 AC_MSG_RESULT($use_optimized)
+
+# debug alias
+AC_ARG_ENABLE(debugging,,
+	[if test "x$disable_debug" != "xno" ; then
+		use_debug=no
+	fi]
+)
+AC_MSG_CHECKING(whether to disable debug mode compilation)
+AC_MSG_RESULT($use_debug)
 
 # profiling alias
 AC_ARG_ENABLE(profile,,
@@ -808,7 +858,6 @@ CFLAGS="$CFLAGS $pipe_flag"
 LDFLAGS="$LDFLAGS $pipe_flag"
 AC_TRY_COMPILE( [], [], [], [pipe_flag_works=no])
 AC_MSG_RESULT($pipe_flag_works)
-
 if test "x$pipe_flag_works" = "xno" ; then
 	CFLAGS="$PRECFLAGS"
 	LDFLAGS="$PRELDFLAGS"
@@ -824,8 +873,22 @@ CFLAGS="$CFLAGS $fno_strict_aliasing_flag"
 LDFLAGS="$LDFLAGS $fno_strict_aliasing_flag"
 AC_TRY_COMPILE( [], [], [], [fno_strict_aliasing_flag_works=no])
 AC_MSG_RESULT($fno_strict_aliasing_flag_works)
-
 if test "x$fno_strict_aliasing_flag_works" = "xno" ; then
+	CFLAGS="$PRECFLAGS"
+	LDFLAGS="$PRELDFLAGS"
+fi
+
+dnl check for -Wl,-search_paths_first
+search_paths_first_flag="-Wl,-search_paths_first"
+AC_MSG_CHECKING([if the compiler understands $search_paths_first_flag])
+search_paths_first_flag_works=yes
+PRECFLAGS="$CFLAGS"
+PRELDFLAGS="$LDFLAGS"
+CFLAGS="$CFLAGS $search_paths_first_flag"
+LDFLAGS="$LDFLAGS $search_paths_first_flag"
+AC_TRY_COMPILE( [], [], [], [search_paths_first_flag_works=no])
+AC_MSG_RESULT($search_paths_first_flag_works)
+if test "x$search_paths_first_flag_works" = "xno" ; then
 	CFLAGS="$PRECFLAGS"
 	LDFLAGS="$PRELDFLAGS"
 fi
@@ -841,7 +904,6 @@ if test "x$use_optimized" != "xno" ; then
 	LDFLAGS="$LDFLAGS $O3_flag"
 	AC_TRY_COMPILE( [], [], [], [O3_flag_works=no])
 	AC_MSG_RESULT($O3_flag_works)
-
 	if test "x$O3_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to compile optimized with this compiler])
 		CFLAGS="$PRECFLAGS"
@@ -858,7 +920,6 @@ if test "x$use_optimized" != "xno" ; then
 	LDFLAGS="$LDFLAGS $extra_optimization_flag"
 	AC_TRY_COMPILE( [], [], [], [extra_optimization_flag_works=no])
 	AC_MSG_RESULT($extra_optimization_flag_works)
-
 	if test "x$extra_optimization_flag_works" = "xno" ; then
 		CFLAGS="$PRECFLAGS"
 		LDFLAGS="$PRELDFLAGS"
@@ -876,7 +937,6 @@ if test "x$use_debug" != "xno" ; then
 	LDFLAGS="$LDFLAGS $g_flag"
 	AC_TRY_COMPILE( [], [], [], [g_flag_works=no])
 	AC_MSG_RESULT($g_flag_works)
-
 	if test "x$g_flag_works" = "xno" ; then
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		CFLAGS="$PRECFLAGS"
@@ -895,7 +955,6 @@ if test "x$use_profiling" != "xno" ; then
 	LDFLAGS="$LDFLAGS $pg_flag"
 	AC_TRY_COMPILE( [], [], [], [pg_flag_works=no])
 	AC_MSG_RESULT($pg_flag_works)
-
 	if test "x$pg_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to profile with this compiler])
 		CFLAGS="$PRECFLAGS"
@@ -916,7 +975,6 @@ if test "x$use_warnings" != "xno" ; then
 	LDFLAGS="$LDFLAGS $warning_flag"
 	AC_TRY_COMPILE( [], [], [], [warning_flag_works=no])
 	AC_MSG_RESULT($warning_flag_works)
-
 	if test "x$warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
 		CFLAGS="$PRECFLAGS"
