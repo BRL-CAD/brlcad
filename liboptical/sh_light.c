@@ -210,12 +210,14 @@ void
 light_free( cp )
 char *cp;
 {
+	register struct light_specific *light =
+		(struct light_specific *)cp;
 
 	if( LightHeadp == LIGHT_NULL )  {
 		rt_log("light_free(x%x), list is null\n", cp);
 		return;
 	}
-	if( LightHeadp == (struct light_specific *)cp )  {
+	if( LightHeadp == light )  {
 		LightHeadp = LightHeadp->lt_forw;
 	} else {
 		register struct light_specific *lp;	/* current light */
@@ -224,7 +226,7 @@ char *cp;
 		llp = &LightHeadp;
 		lp = LightHeadp;
 		while( lp != LIGHT_NULL )  {
-			if( lp == (struct light_specific *)cp )  {
+			if( lp == light )  {
 				*llp = lp->lt_forw;
 				goto found;
 			}
@@ -234,9 +236,11 @@ char *cp;
 		rt_log("light_free:  unable to find light in list\n");
 	}
 found:
-	if( ((struct light_specific *)cp)->lt_name )
-		rt_free( cp, "light name" );
-	rt_free( cp, "light_specific" );
+	if( light->lt_name )  {
+		rt_free( light->lt_name, "light name" );
+		light->lt_name = (char *)0;
+	}
+	rt_free( (char *)light, "light_specific" );
 }
 
 /*
