@@ -19,8 +19,22 @@
  *
  *  $Header$
  */
+#define RANDTABSIZE	2048
+#define	SINTABSIZE	2048
 
-/* All these should become inline-macros */
-extern double tab_sin();
-extern double rand0to1();
-extern double rand_half();
+extern float *rand_ptr;
+extern float rand_tab[];
+
+extern double sin_scale;
+extern float sin_table[];
+
+#define rand_half()	\
+	(++rand_ptr >= &rand_tab[RANDTABSIZE] ? \
+		*(rand_ptr = rand_tab) : *rand_ptr)
+
+#define rand0to1()	(rand_half()+0.5)
+
+
+#define tab_sin(a)	(((a) > 0) ? \
+	( sin_table[(int)((0.5 + (a) * sin_scale))%SINTABSIZE] ) :\
+	(-sin_table[(int)((0.5 - (a) * sin_scale))%SINTABSIZE] ) )
