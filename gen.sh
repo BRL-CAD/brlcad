@@ -223,6 +223,7 @@ BDIRS="bench \
 TSDIRS=". mged nirt pl-dm"
 TDIRS="libtk libtkGLX"
 HTML_DIRS="manuals manuals/shaders manuals/Anim_Tutorial manuals/libdm manuals/mged manuals/mged/animmate ReleaseNotes ReleaseNotes/Rel5.0 ReleaseNotes/Rel5.0/Summary"
+PROE_DIRS="sun4_solaris sgi_elf2 text text/fullhelp text/menus"
 
 # If there is no TCP networking, eliminate network-only directories.
 if test "${HAS_TCP}" = "0"
@@ -388,6 +389,10 @@ install|install-nobak|uninstall)
 	for dir in ${HTML_DIRS}; do
 		echo -------------------------------- html/${dir};
 		( cd html/${dir} && cake -k ${SILENT} ${TARGET} )
+	done
+	for dir in ${PROE_DIRS}; do
+		echo -------------------------------- pro-engineer/${dir};
+		( cd pro-engineer/${dir} && cake -k ${SILENT} ${TARGET} )
 	done;;
 #  These directives operate in the source directory
 #
