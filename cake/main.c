@@ -400,34 +400,38 @@ char *file;
 void
 build_cppargv()
 {
-	char	buf[128];
-	char	buf2[128*2];
+	static char	buf[512];
+	char	buf2[512*2];
 	int	len;
 	FILE	*fp;
 	Wait	status;
 
-	if( (fp = popen( "machinetype.sh -m", "r" ) ) == NULL )  {
-		fprintf(stderr, "cake:  Unable to run \"machinetype.sh\" to determine system type, aborting.\nCheck your $PATH variable.\n");
-		exit(42);
-	}
-	if( fgets( buf, sizeof(buf)-2, fp ) == NULL )  {
-		fprintf(stderr, "cake:  \"machinetype.sh\" returned null string, unable to determine system type, aborting.\nTry running machinetype.sh -v manually before proceeding.\n");
-		exit(42);
-	}
-	fclose(fp);
+	if( buf[0] == '\0' )  {
+		/* First time through, run shell script */
 
-	/* Slurp up dead process indication from popen() */
+		if( (fp = popen( "machinetype.sh -m", "r" ) ) == NULL )  {
+			fprintf(stderr, "cake:  Unable to run \"machinetype.sh\" to determine system type, aborting.\nCheck your $PATH variable.\n");
+			exit(42);
+		}
+		if( fgets( buf, sizeof(buf)-2, fp ) == NULL )  {
+			fprintf(stderr, "cake:  \"machinetype.sh\" returned null string, unable to determine system type, aborting.\nTry running machinetype.sh -v manually before proceeding.\n");
+			exit(42);
+		}
+		fclose(fp);
+
+		/* Slurp up dead process indication from popen() */
 #if defined(__convexc__) || defined(__bsdi__)
-	while (wait(&status.w_status) != -1) ;
+		while (wait(&status.w_status) != -1) ;
 #else
-	while (wait(&status) != -1) ;
+		while (wait(&status) != -1) ;
 #endif
 
-	/* Ensure proper null termination, even if string overran buffer */
-	buf[sizeof(buf)-1] = '\0';
-	buf[sizeof(buf)-2] = '\0';
-	len = strlen(buf);
-	if( buf[len-1] == '\n' )  buf[len-1] = '\0';
+		/* Ensure proper null termination, even if string overran buffer */
+		buf[sizeof(buf)-1] = '\0';
+		buf[sizeof(buf)-2] = '\0';
+		len = strlen(buf);
+		if( buf[len-1] == '\n' )  buf[len-1] = '\0';
+	}
 
 	/* Trudge through all the possibilities */
 	if( strcmp( buf, "vax" ) == 0 )  {
@@ -542,6 +546,12 @@ and no special built-in support for machine type '%s', aborting.\n",
 out:
 	sprintf( buf2, "-D__CAKE__%s", buf );
 	cppargv[cppargc++] = new_name(buf2);
+
+#if defined(BRLCAD_BASEDIR_STRING)
+	sprintf( buf2, "-DBRLCAD_BASEDIR=%s", BRLCAD_BASEDIR_STRING );
+	cppargv[cppargc++] = new_name(buf2);
+#endif
+
 	return;
 }
 
