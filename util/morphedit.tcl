@@ -45,8 +45,8 @@ proc usage {} {
     puts \
  "Usage: [file tail $argv0] \[-w width\] \[-n height\] \[-a align\] picA.pix picB.pix linesfile"
     puts "   where align is one of the following:"
-    puts "     horizontal   : images are placed horizontally"
-    puts "     vertical     : images are placed vertically"
+    puts "     horizontal   : images are arranged horizontally in a single window"
+    puts "     vertical     : images are arranged vertically in a single window"
     puts "     separate     : images are placed in separate windows"
     exit
 }
@@ -703,5 +703,4 @@ proc save {} {
 
     close $lf
 }
-    
 
