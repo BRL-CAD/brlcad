@@ -423,30 +423,31 @@ set_dlist()
 static void
 set_perspective()
 {
-  if(mged_variables->mv_perspective > 0)
-    mged_variables->mv_perspective_mode = 1;
-  else
-    mged_variables->mv_perspective_mode = 0;
+	/* if perspective is set to something greater than 0, turn perspective mode on */
+	if (mged_variables->mv_perspective > 0)
+		mged_variables->mv_perspective_mode = 1;
+	else
+		mged_variables->mv_perspective_mode = 0;
 
-  /* keep view object in sync */
-  view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
+	/* keep view object in sync */
+	view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
 
-  set_dirty_flag();
+	set_dirty_flag();
 }
 
 static void
 establish_perspective()
 {
-  mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
-    perspective_table[perspective_angle] : -1;
+	mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
+		perspective_table[perspective_angle] : -1;
 
-  /* keep view object in sync */
-  view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
+	/* keep view object in sync */
+	view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
 
-  /* keep display manager in sync */
-  dmp->dm_perspective = mged_variables->mv_perspective_mode;
+	/* keep display manager in sync */
+	dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
-  set_dirty_flag();
+	set_dirty_flag();
 }
 
 /*
