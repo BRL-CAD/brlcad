@@ -72,7 +72,7 @@ char *argv[];
 		}
 	}
 	else {
-		lseek(ifd, 0L, 0);
+		lseek(ifd, (off_t)0L, 0);
 		/* have an old vged file to convert */
 
 		/* units are inportant now because:
@@ -167,7 +167,7 @@ after_read:
 		case ID_ARS_A:
 			if( rec.a.a_name[0] == '\0' )  {
 				/* Skip deleted junk */
-				lseek( ifd, (long)(rec.a.a_totlen) *
+				lseek( ifd, (off_t)(rec.a.a_totlen) *
 					(long)(sizeof rec), 1 );
 				goto top;
 			}
