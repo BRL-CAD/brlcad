@@ -134,7 +134,7 @@ char **argv;
 	vect_t	first_dir;		/* First dir chosen on a step */
 	int	i;
 
-	bu_semaphore_init( BU_SEM_LAST );
+	bu_semaphore_init( RT_SEM_LAST );
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);

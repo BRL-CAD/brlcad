@@ -174,7 +174,7 @@ char **argv;
 		rt_g.rtg_parallel = 0;
 
 	/* Initialize parallel processor support */
-	bu_semaphore_init( BU_SEM_LAST );
+	bu_semaphore_init( RT_SEM_LAST );
 
 	/*
 	 *  Do not use bu_log() or bu_malloc() before this point!

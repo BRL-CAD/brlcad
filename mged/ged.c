@@ -258,12 +258,7 @@ char **argv;
 	 */
 	if( bu_avail_cpus() > 1 )  {
 	  rt_g.rtg_parallel = 1;
-
-	  bu_semaphore_init( 5 );
-	  bu_semaphore_init( 5 );
-	  bu_semaphore_init( 5 );
-	  bu_semaphore_init( 5 );
-	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( RT_SEM_LAST );
 	}
 
 	/* Set up linked lists */

@@ -358,7 +358,7 @@ pcsrv, control_host, tcp_port);
 		rt_g.rtg_parallel = 1;
 	} else
 		rt_g.rtg_parallel = 0;
-	bu_semaphore_init( BU_SEM_LAST );
+	bu_semaphore_init( RT_SEM_LAST );
 
 	bu_log("load average = %f, using %d of %d cpus\n",
 		load,
