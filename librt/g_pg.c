@@ -383,6 +383,6 @@ register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
 {
-	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }

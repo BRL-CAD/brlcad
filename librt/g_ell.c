@@ -395,7 +395,7 @@ struct soltab *stp;
 	 * choose a tangent plane coordinate system
 	 *  (u, v, normal) form a right-handed triple
 	 */
-	rt_orthovec( u, hitp->hit_normal );
+	vec_ortho( u, hitp->hit_normal );
 	VCROSS( v, hitp->hit_normal, u );
 
 	/* get the saved away scale factor */

@@ -583,7 +583,7 @@ struct soltab *stp;
 		break;
 	case 1:
 	case 2:
-		rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+		vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		break;
 	default:

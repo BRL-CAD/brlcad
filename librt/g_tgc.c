@@ -957,7 +957,7 @@ struct soltab *stp;
 
 	if( hitp->hit_private > tgc_compute ) {
 		/* We hit an end plate.  Choose any tangent vector. */
-		rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+		vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		return;
 	}
@@ -1000,7 +1000,7 @@ struct soltab *stp;
 	 * choose a tangent plane coordinate system
 	 *  (u, v, normal) form a right-handed triple
 	 */
-	rt_orthovec( u, hitp->hit_normal );
+	vec_ortho( u, hitp->hit_normal );
 	VCROSS( v, hitp->hit_normal, u );
 
 	/* find the second fundamental form */

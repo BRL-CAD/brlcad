@@ -437,7 +437,7 @@ struct soltab *stp;
 	b = - ( a11 +  a22);
 	c = (a11 * a22) - (a12 * a21);
 
-	rt_orthovec( uvec, hitp->hit_normal );
+	vec_ortho( uvec, hitp->hit_normal );
 	VCROSS( vvec, hitp->hit_normal, uvec );
 
 	eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
