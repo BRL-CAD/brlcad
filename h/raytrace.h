@@ -131,6 +131,7 @@ struct rt_tess_tol  {
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
  *  The setting of USE_PROTOTYPES is done in machine.h
+ *  XXX These have been replaced by BU_EXTERN() and BU_ARGS()
  */
 #if USE_PROTOTYPES
 #	define	RT_EXTERN(type_and_name,args)	extern type_and_name args
@@ -782,17 +783,17 @@ struct db_tree_state {
 	mat_t		ts_mat;		/* transform matrix */
 
 	int		ts_stop_at_regions;	/* else stop at solids */
-	int		(*ts_region_start_func) RT_ARGS((
+	int		(*ts_region_start_func) BU_ARGS((
 				struct db_tree_state * /*tsp*/,
 				struct db_full_path * /*pathp*/,
 				CONST struct rt_comb_internal * /* combp */
 			));
-	union tree *	(*ts_region_end_func) RT_ARGS((
+	union tree *	(*ts_region_end_func) BU_ARGS((
 				struct db_tree_state * /*tsp*/,
 				struct db_full_path * /*pathp*/,
 				union tree * /*curtree*/
 			));
-	union tree *	(*ts_leaf_func) RT_ARGS((
+	union tree *	(*ts_leaf_func) BU_ARGS((
 				struct db_tree_state * /*tsp*/,
 				struct db_full_path * /*pathp*/,
 				struct bu_external * /*ep*/,
@@ -1389,78 +1390,78 @@ struct nurb_seg		/* NURB curve segment */
 struct rt_functab {
 	char	*ft_name;
 	int	ft_use_rpp;
-	int	(*ft_prep) RT_ARGS((struct soltab * /*stp*/,
+	int	(*ft_prep) BU_ARGS((struct soltab * /*stp*/,
 			struct rt_db_internal * /*ip*/,
 			struct rt_i * /*rtip*/ ));
-	int 	(*ft_shot) RT_ARGS((struct soltab * /*stp*/,
+	int 	(*ft_shot) BU_ARGS((struct soltab * /*stp*/,
 			struct xray * /*rp*/,
 			struct application * /*ap*/,
 			struct seg * /*seghead*/ ));
-	void	(*ft_print) RT_ARGS((CONST struct soltab * /*stp*/));
-	void	(*ft_norm) RT_ARGS((struct hit * /*hitp*/,
+	void	(*ft_print) BU_ARGS((CONST struct soltab * /*stp*/));
+	void	(*ft_norm) BU_ARGS((struct hit * /*hitp*/,
 			struct soltab * /*stp*/,
 			struct xray * /*rp*/));
-	void	(*ft_uv) RT_ARGS((struct application * /*ap*/,
+	void	(*ft_uv) BU_ARGS((struct application * /*ap*/,
 			struct soltab * /*stp*/,
 			struct hit * /*hitp*/,
 			struct uvcoord * /*uvp*/));
-	void	(*ft_curve) RT_ARGS((struct curvature * /*cvp*/,
+	void	(*ft_curve) BU_ARGS((struct curvature * /*cvp*/,
 			struct hit * /*hitp*/,
 			struct soltab * /*stp*/));
-	int	(*ft_classify) RT_ARGS((
+	int	(*ft_classify) BU_ARGS((
 			CONST struct soltab * /*stp*/,
 			CONST vect_t /*min*/,
 			CONST vect_t /*max*/,
 			CONST struct bn_tol * /*tol*/));
-	void	(*ft_free) RT_ARGS((struct soltab * /*stp*/));
-	int	(*ft_plot) RT_ARGS((
+	void	(*ft_free) BU_ARGS((struct soltab * /*stp*/));
+	int	(*ft_plot) BU_ARGS((
 			struct bu_list * /*vhead*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tess_tol * /*ttol*/,
 			CONST struct bn_tol * /*tol*/));
-	void	(*ft_vshot) RT_ARGS((struct soltab * /*stp*/[],
+	void	(*ft_vshot) BU_ARGS((struct soltab * /*stp*/[],
 			struct xray *[] /*rp*/,
 			struct seg [] /*segp*/, int /*n*/,
 			struct application * /*ap*/ ));
 #if defined(NMG_H)
-	int	(*ft_tessellate) RT_ARGS((
+	int	(*ft_tessellate) BU_ARGS((
 			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tess_tol * /*ttol*/,
 			CONST struct bn_tol * /*tol*/));
-	int	(*ft_tnurb) RT_ARGS((
+	int	(*ft_tnurb) BU_ARGS((
 			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct bn_tol * /*tol*/));
 #else
-	int	(*ft_tessellate) RT_ARGS((
+	int	(*ft_tessellate) BU_ARGS((
 			genptr_t * /*r*/,
 			genptr_t /*m*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tess_tol * /*ttol*/,
 			CONST struct bn_tol * /*tol*/));
-	int	(*ft_tnurb) RT_ARGS((
+	int	(*ft_tnurb) BU_ARGS((
 			genptr_t * /*r*/,
 			genptr_t /*m*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct bn_tol * /*tol*/));
 #endif
-	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
+	int	(*ft_import) BU_ARGS((struct rt_db_internal * /*ip*/,
 			CONST struct bu_external * /*ep*/,
 			CONST mat_t /*mat*/,
 			CONST struct db_i * /*dbip*/));
-	int	(*ft_export) RT_ARGS((struct bu_external * /*ep*/,
+	int	(*ft_export) BU_ARGS((struct bu_external * /*ep*/,
 			CONST struct rt_db_internal * /*ip*/,
 			double /*local2mm*/,
 			CONST struct db_i * /*dbip*/));
-	void	(*ft_ifree) RT_ARGS((struct rt_db_internal * /*ip*/));
-	int	(*ft_describe) RT_ARGS((struct bu_vls * /*str*/,
+	void	(*ft_ifree) BU_ARGS((struct rt_db_internal * /*ip*/));
+	int	(*ft_describe) BU_ARGS((struct bu_vls * /*str*/,
 			struct rt_db_internal * /*ip*/,
 			int /*verbose*/,
 			double /*mm2local*/));
-	int	(*ft_xform) RT_ARGS((struct rt_db_internal * /*op*/,
+	int	(*ft_xform) BU_ARGS((struct rt_db_internal * /*op*/,
 			CONST mat_t /*mat*/, struct rt_db_internal * /*ip*/,
 			int /*free*/));
 };
@@ -1712,47 +1713,47 @@ struct ray_data {
  *                                                               *
  *****************************************************************/
 					/* Read named MGED db, build toc */
-RT_EXTERN(struct rt_i *rt_dirbuild, (CONST char *filename, char *buf, int len) );
+BU_EXTERN(struct rt_i *rt_dirbuild, (CONST char *filename, char *buf, int len) );
 					/* Prepare for raytracing */
-RT_EXTERN(struct rt_i *rt_new_rti, (struct db_i *dbip));
-RT_EXTERN(void rt_free_rti, (struct rt_i *rtip));
-RT_EXTERN(void rt_prep, (struct rt_i *rtip) );
-RT_EXTERN(void rt_prep_parallel, (struct rt_i *rtip, int ncpu) );
+BU_EXTERN(struct rt_i *rt_new_rti, (struct db_i *dbip));
+BU_EXTERN(void rt_free_rti, (struct rt_i *rtip));
+BU_EXTERN(void rt_prep, (struct rt_i *rtip) );
+BU_EXTERN(void rt_prep_parallel, (struct rt_i *rtip, int ncpu) );
 					/* Handle overlap w/o logging */
-RT_EXTERN(int rt_overlap_quietly, (struct application *ap,
+BU_EXTERN(int rt_overlap_quietly, (struct application *ap,
 	struct partition *pp, struct region *reg1,
 	struct region *reg2, struct partition *pheadp) );
 					/* Shoot a ray */
-RT_EXTERN(int rt_shootray, (struct application *ap) );
+BU_EXTERN(int rt_shootray, (struct application *ap) );
 					/* Get expr tree for object */
-RT_EXTERN(CONST char *	rt_basename, (CONST char *str));
-RT_EXTERN(void rt_free_soltab, (struct soltab   *stp));
-RT_EXTERN(int rt_gettree, (struct rt_i *rtip, CONST char *node) );
-RT_EXTERN(int rt_gettrees, (struct rt_i	*rtip,
+BU_EXTERN(CONST char *	rt_basename, (CONST char *str));
+BU_EXTERN(void rt_free_soltab, (struct soltab   *stp));
+BU_EXTERN(int rt_gettree, (struct rt_i *rtip, CONST char *node) );
+BU_EXTERN(int rt_gettrees, (struct rt_i	*rtip,
 	int argc, CONST char **argv, int ncpus));
 					/* Print seg struct */
-RT_EXTERN(void rt_pr_seg, (CONST struct seg *segp) );
+BU_EXTERN(void rt_pr_seg, (CONST struct seg *segp) );
 					/* Print the partitions */
-RT_EXTERN(void rt_pr_partitions, (CONST struct rt_i *rtip,
+BU_EXTERN(void rt_pr_partitions, (CONST struct rt_i *rtip,
 	CONST struct partition *phead, CONST char *title) );
 					/* Find solid by leaf name */
-RT_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
+BU_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
 	CONST char *name) );
 
-RT_EXTERN(char *rt_read_cmd, (FILE *fp) );	/* Read semi-colon terminated line */
+BU_EXTERN(char *rt_read_cmd, (FILE *fp) );	/* Read semi-colon terminated line */
 					/* do cmd from string via cmd table */
-RT_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) );
+BU_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) );
 					/* Start the timer */
-RT_EXTERN(void rt_prep_timer, (void) );
+BU_EXTERN(void rt_prep_timer, (void) );
 					/* Read timer, return time + str */
-RT_EXTERN(double rt_get_timer, (struct bu_vls *vp, double *elapsed));
+BU_EXTERN(double rt_get_timer, (struct bu_vls *vp, double *elapsed));
 					/* Return CPU time, text, & wall clock time */
-RT_EXTERN(double rt_read_timer, (char *str, int len) );
+BU_EXTERN(double rt_read_timer, (char *str, int len) );
 					/* Plot a solid */
-RT_EXTERN(int rt_plot_solid, (FILE *fp, struct rt_i *rtip, struct soltab *stp) );
+BU_EXTERN(int rt_plot_solid, (FILE *fp, struct rt_i *rtip, struct soltab *stp) );
 					/* Release storage assoc with rt_i */
-RT_EXTERN(void rt_clean, (struct rt_i *rtip) );
-RT_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
+BU_EXTERN(void rt_clean, (struct rt_i *rtip) );
+BU_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
 					/* Tally stats into struct rt_i */
 
 /* The matrix math routines */
@@ -1769,84 +1770,84 @@ RT_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
  *****************************************************************/
 
 					/* Weave segs into partitions */
-RT_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
+BU_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
 	struct partition *PartHeadp, struct application *ap) );
 					/* Eval booleans over partitions */
-RT_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
+BU_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	struct partition *FinalHdp,
 	fastf_t startdist, fastf_t enddist,
 	struct bu_ptbl *regionbits, struct application *ap,
 	CONST struct bu_bitv *solidbits) );
 
-RT_EXTERN(void rt_grow_boolstack, (struct resource *res) );
+BU_EXTERN(void rt_grow_boolstack, (struct resource *res) );
 					/* Approx Floating compare */
-RT_EXTERN(int rt_fdiff, (double a, double b) );
+BU_EXTERN(int rt_fdiff, (double a, double b) );
 					/* Relative Difference */
-RT_EXTERN(double rt_reldiff, (double a, double b) );
+BU_EXTERN(double rt_reldiff, (double a, double b) );
 					/* Print a soltab */
-RT_EXTERN(void rt_pr_soltab, (CONST struct soltab *stp) );
+BU_EXTERN(void rt_pr_soltab, (CONST struct soltab *stp) );
 					/* Print a region */
-RT_EXTERN(void rt_pr_region, (CONST struct region *rp) );
+BU_EXTERN(void rt_pr_region, (CONST struct region *rp) );
 					/* Print an expr tree */
-RT_EXTERN(void rt_pr_tree, (CONST union tree *tp, int lvl) );
+BU_EXTERN(void rt_pr_tree, (CONST union tree *tp, int lvl) );
 					/* Print value of tree for a partition */
-RT_EXTERN(void rt_pr_tree_val, (CONST union tree *tp,
+BU_EXTERN(void rt_pr_tree_val, (CONST union tree *tp,
 	CONST struct partition *partp, int pr_name, int lvl));
 					/* Print a partition */
-RT_EXTERN(void rt_pr_pt, (CONST struct rt_i *rtip, CONST struct partition *pp) );
+BU_EXTERN(void rt_pr_pt, (CONST struct rt_i *rtip, CONST struct partition *pp) );
 					/* Print a bit vector */
-RT_EXTERN(void rt_pr_hit, (CONST char *str, CONST struct hit *hitp) );
+BU_EXTERN(void rt_pr_hit, (CONST char *str, CONST struct hit *hitp) );
 /* rt_fastf_float, rt_mat_dbmat, rt_dbmat_mat
  * declarations moved to h/db.h */
 					/* storage obtainers */
-RT_EXTERN(void rt_get_seg, (struct resource *res) );
-RT_EXTERN(void rt_cut_it, (struct rt_i *rtip, int ncpu) );
+BU_EXTERN(void rt_get_seg, (struct resource *res) );
+BU_EXTERN(void rt_cut_it, (struct rt_i *rtip, int ncpu) );
 					/* print cut node */
-RT_EXTERN(void rt_pr_cut, (CONST union cutter *cutp, int lvl) );
+BU_EXTERN(void rt_pr_cut, (CONST union cutter *cutp, int lvl) );
 					/* free a cut tree */
-RT_EXTERN(void rt_fr_cut, (struct rt_i *rtip, union cutter *cutp) );
+BU_EXTERN(void rt_fr_cut, (struct rt_i *rtip, union cutter *cutp) );
 					/* regionid-driven color override */
-RT_EXTERN(void rt_region_color_map, (struct region *regp) );
+BU_EXTERN(void rt_region_color_map, (struct region *regp) );
 					/* process ID_MATERIAL record */
-RT_EXTERN(void rt_color_addrec, () );
+BU_EXTERN(void rt_color_addrec, () );
 					/* extend a cut box */
-RT_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp) );
+BU_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp) );
 					/* find RPP of one region */
-RT_EXTERN(int rt_rpp_region, (struct rt_i *rtip, CONST char *reg_name,
+BU_EXTERN(int rt_rpp_region, (struct rt_i *rtip, CONST char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp) );
 
 /* The database library */
 
 /* wdb.c */
-RT_EXTERN(struct rt_wdb *wdb_dbopen, (struct db_i *dbip, int mode));
-RT_EXTERN(struct rt_wdb *wdb_fopen, (CONST char *filename));
+BU_EXTERN(struct rt_wdb *wdb_dbopen, (struct db_i *dbip, int mode));
+BU_EXTERN(struct rt_wdb *wdb_fopen, (CONST char *filename));
 
 /* db_anim.c */
-RT_EXTERN(int db_add_anim, (struct db_i *dbip, struct animate *anp, int root) );
-RT_EXTERN(int db_do_anim, (struct animate *anp, mat_t stack, mat_t arc,
+BU_EXTERN(int db_add_anim, (struct db_i *dbip, struct animate *anp, int root) );
+BU_EXTERN(int db_do_anim, (struct animate *anp, mat_t stack, mat_t arc,
 	struct mater_info *materp) );
-RT_EXTERN(void db_free_anim, (struct db_i *dbip) );
-RT_EXTERN(void db_write_anim, (FILE *fop, struct animate *anp));
+BU_EXTERN(void db_free_anim, (struct db_i *dbip) );
+BU_EXTERN(void db_write_anim, (FILE *fop, struct animate *anp));
 
 /* db_path.c */
-RT_EXTERN(void db_add_node_to_full_path, (struct db_full_path *pp,
+BU_EXTERN(void db_add_node_to_full_path, (struct db_full_path *pp,
 	struct directory *dp) );
-RT_EXTERN(void db_dup_full_path, (struct db_full_path *newp,
+BU_EXTERN(void db_dup_full_path, (struct db_full_path *newp,
 	CONST struct db_full_path *oldp) );
-RT_EXTERN(char *db_path_to_string, (CONST struct db_full_path *pp) );
-RT_EXTERN(void db_free_full_path, (struct db_full_path *pp) );
-RT_EXTERN(void db_region_mat, (mat_t m, CONST struct db_i *dbip,
+BU_EXTERN(char *db_path_to_string, (CONST struct db_full_path *pp) );
+BU_EXTERN(void db_free_full_path, (struct db_full_path *pp) );
+BU_EXTERN(void db_region_mat, (mat_t m, CONST struct db_i *dbip,
 				CONST char *name) );
-RT_EXTERN(void db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
+BU_EXTERN(void db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
 				CONST struct region *rp, point_t p_min,
 				point_t p_max) );
 /* db_open.c */
 					/* open an existing model database */
-RT_EXTERN(struct db_i *db_open, ( CONST char *name, CONST char *mode ) );
+BU_EXTERN(struct db_i *db_open, ( CONST char *name, CONST char *mode ) );
 					/* create a new model database */
-RT_EXTERN(struct db_i *db_create, ( CONST char *name ) );
+BU_EXTERN(struct db_i *db_create, ( CONST char *name ) );
 					/* close a model database */
-RT_EXTERN(void db_close, ( struct db_i *dbip ) );
+BU_EXTERN(void db_close, ( struct db_i *dbip ) );
 /* db_io.c */
 /* It is normal to test for __STDC__ when using *_DEFINED tests but in
  * in this case "union record" is used for db_getmrec's return type.  This
@@ -1855,157 +1856,157 @@ RT_EXTERN(void db_close, ( struct db_i *dbip ) );
  */
 #if defined(RECORD_DEFINED)
 					/* malloc & read records */
-RT_EXTERN(union record *db_getmrec, ( CONST struct db_i *, CONST struct directory *dp ) );
+BU_EXTERN(union record *db_getmrec, ( CONST struct db_i *, CONST struct directory *dp ) );
 					/* get several records from db */
-RT_EXTERN(int db_get, (CONST struct db_i *, CONST struct directory *dp,
+BU_EXTERN(int db_get, (CONST struct db_i *, CONST struct directory *dp,
 	union record *where, int offset, int len ) );
 					/* put several records into db */
-RT_EXTERN(int db_put, ( CONST struct db_i *, CONST struct directory *dp, union record *where,
+BU_EXTERN(int db_put, ( CONST struct db_i *, CONST struct directory *dp, union record *where,
 	int offset, int len ) );
 #else /* RECORD_DEFINED */
 					/* malloc & read records */
-RT_EXTERN(genptr_t db_getmrec, ( CONST struct db_i *, CONST struct directory *dp ) );
+BU_EXTERN(genptr_t db_getmrec, ( CONST struct db_i *, CONST struct directory *dp ) );
 					/* get several records from db */
-RT_EXTERN(int db_get, (CONST struct db_i *, CONST struct directory *dp,
+BU_EXTERN(int db_get, (CONST struct db_i *, CONST struct directory *dp,
 	genptr_t where, int offset, int len ) );
 					/* put several records into db */
-RT_EXTERN(int db_put, ( CONST struct db_i *, CONST struct directory *dp,
+BU_EXTERN(int db_put, ( CONST struct db_i *, CONST struct directory *dp,
 	genptr_t where, int offset, int len ) );
 #endif /* RECORD_DEFINED */
-RT_EXTERN(int db_get_external, ( struct bu_external *ep,
+BU_EXTERN(int db_get_external, ( struct bu_external *ep,
 	CONST struct directory *dp, CONST struct db_i *dbip ) );
-RT_EXTERN(int db_put_external, ( struct bu_external *ep,
+BU_EXTERN(int db_put_external, ( struct bu_external *ep,
 	struct directory *dp, struct db_i *dbip ) );
-RT_EXTERN(void db_free_external, ( struct bu_external *ep ) );
+BU_EXTERN(void db_free_external, ( struct bu_external *ep ) );
 
 /* db_scan.c */
 					/* read db (to build directory) */
-RT_EXTERN(int db_scan, ( struct db_i *, int (*handler)(), int do_old_matter ) );
+BU_EXTERN(int db_scan, ( struct db_i *, int (*handler)(), int do_old_matter ) );
 					/* update db unit conversions */
-RT_EXTERN(void db_conversions, ( struct db_i *, int units ) );
+BU_EXTERN(void db_conversions, ( struct db_i *, int units ) );
 
 /* db_lookup.c */
-RT_EXTERN(int db_dirhash, (CONST char *str) );
+BU_EXTERN(int db_dirhash, (CONST char *str) );
 					/* convert name to directory ptr */
-RT_EXTERN(struct directory *db_lookup,( struct db_i *, CONST char *name, int noisy ) );
+BU_EXTERN(struct directory *db_lookup,( struct db_i *, CONST char *name, int noisy ) );
 					/* add entry to directory */
-RT_EXTERN(struct directory *db_diradd, ( struct db_i *, CONST char *name, long laddr,
+BU_EXTERN(struct directory *db_diradd, ( struct db_i *, CONST char *name, long laddr,
 	int len, int flags ) );
 					/* delete entry from directory */
-RT_EXTERN(int db_dirdelete, ( struct db_i *, struct directory *dp ) );
-RT_EXTERN(int db_rename, ( struct db_i *, struct directory *, CONST char *newname) );
-RT_EXTERN(void db_pr_dir, ( CONST struct db_i *dbip ) );
+BU_EXTERN(int db_dirdelete, ( struct db_i *, struct directory *dp ) );
+BU_EXTERN(int db_rename, ( struct db_i *, struct directory *, CONST char *newname) );
+BU_EXTERN(void db_pr_dir, ( CONST struct db_i *dbip ) );
 
 /* db_match.c */
-RT_EXTERN(int db_regexp_match, (CONST char *pattern, CONST char *string));
-RT_EXTERN(int db_regexp_match_all, (struct bu_vls *dest, struct db_i *dbip, CONST char *pattern));
+BU_EXTERN(int db_regexp_match, (CONST char *pattern, CONST char *string));
+BU_EXTERN(int db_regexp_match_all, (struct bu_vls *dest, struct db_i *dbip, CONST char *pattern));
 
 /* db_alloc.c */
 					/* allocate "count" granules */
-RT_EXTERN(int db_alloc, ( struct db_i *, struct directory *dp, int count ) );
+BU_EXTERN(int db_alloc, ( struct db_i *, struct directory *dp, int count ) );
 					/* grow by "count" granules */
-RT_EXTERN(int db_grow, ( struct db_i *, struct directory *dp, int count ) );
+BU_EXTERN(int db_grow, ( struct db_i *, struct directory *dp, int count ) );
 					/* truncate by "count" */
-RT_EXTERN(int db_trunc, ( struct db_i *, struct directory *dp, int count ) );
+BU_EXTERN(int db_trunc, ( struct db_i *, struct directory *dp, int count ) );
 					/* delete "recnum" from entry */
-RT_EXTERN(int db_delrec, ( struct db_i *, struct directory *dp, int recnum ) );
+BU_EXTERN(int db_delrec, ( struct db_i *, struct directory *dp, int recnum ) );
 					/* delete all granules assigned dp */
-RT_EXTERN(int db_delete, ( struct db_i *, struct directory *dp ) );
+BU_EXTERN(int db_delete, ( struct db_i *, struct directory *dp ) );
 					/* write FREE records from 'start' */
-RT_EXTERN(int db_zapper, ( struct db_i *, struct directory *dp, int start ) );
+BU_EXTERN(int db_zapper, ( struct db_i *, struct directory *dp, int start ) );
 
 /* db_tree.c */
-RT_EXTERN(struct combined_tree_state *db_new_combined_tree_state,
+BU_EXTERN(struct combined_tree_state *db_new_combined_tree_state,
 	(CONST struct db_tree_state *tsp, CONST struct db_full_path *pathp));
-RT_EXTERN(struct combined_tree_state *db_dup_combined_tree_state,
+BU_EXTERN(struct combined_tree_state *db_dup_combined_tree_state,
 	(CONST struct combined_tree_state *old));
-RT_EXTERN(void db_free_combined_tree_state,
+BU_EXTERN(void db_free_combined_tree_state,
 	(struct combined_tree_state *ctsp));
-RT_EXTERN(void db_pr_tree_state, (CONST struct db_tree_state *tsp));
-RT_EXTERN(void db_pr_combined_tree_state,
+BU_EXTERN(void db_pr_tree_state, (CONST struct db_tree_state *tsp));
+BU_EXTERN(void db_pr_combined_tree_state,
 	(CONST struct combined_tree_state *ctsp));
-RT_EXTERN(int db_apply_state_from_comb, (struct db_tree_state *tsp,
+BU_EXTERN(int db_apply_state_from_comb, (struct db_tree_state *tsp,
 	CONST struct db_full_path *pathp, CONST struct rt_comb_internal *comb));
-RT_EXTERN(int db_apply_state_from_memb, (struct db_tree_state *tsp,
+BU_EXTERN(int db_apply_state_from_memb, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST union tree *tp));
-RT_EXTERN(int db_follow_path_for_state, (struct db_tree_state *tsp,
+BU_EXTERN(int db_follow_path_for_state, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST char *orig_str, int noisy));
-RT_EXTERN(union tree *db_recurse, (struct db_tree_state	*tsp,
+BU_EXTERN(union tree *db_recurse, (struct db_tree_state	*tsp,
 	struct db_full_path *pathp,
 	struct combined_tree_state **region_start_statepp));
-RT_EXTERN(union tree *db_dup_subtree, (CONST union tree	*tp));
-RT_EXTERN(void db_free_tree, (union tree *tp));
-RT_EXTERN(void db_non_union_push, (union tree *tp));
-RT_EXTERN(int db_count_subtree_regions, (CONST union tree *tp));
-RT_EXTERN(int db_tally_subtree_regions, (union tree *tp,
+BU_EXTERN(union tree *db_dup_subtree, (CONST union tree	*tp));
+BU_EXTERN(void db_free_tree, (union tree *tp));
+BU_EXTERN(void db_non_union_push, (union tree *tp));
+BU_EXTERN(int db_count_subtree_regions, (CONST union tree *tp));
+BU_EXTERN(int db_tally_subtree_regions, (union tree *tp,
 	union tree **reg_trees, int cur, int lim));
-RT_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
+BU_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
 	int ncpu, CONST struct db_tree_state *init_state,
 	int (*reg_start_func)(), union tree * (*reg_end_func)(),
 	union tree * (*leaf_func)() ));
-RT_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
+BU_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
 	mat_t mat, int depth));
-RT_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
+BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct directory *dp, mat_t stck, mat_t arc,
 	struct mater_info *materp));
 
 /* db_comb.c */
 
 /* memalloc.c -- non PARALLEL routines */
-RT_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
-RT_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
+BU_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
+BU_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
 	unsigned int place) );
-RT_EXTERN(void rt_memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
-RT_EXTERN(void rt_mempurge, (struct mem_map **pp) );
-RT_EXTERN(void rt_memprint, (struct mem_map **pp) );
-RT_EXTERN(void rt_memclose,() );
+BU_EXTERN(void rt_memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
+BU_EXTERN(void rt_mempurge, (struct mem_map **pp) );
+BU_EXTERN(void rt_memprint, (struct mem_map **pp) );
+BU_EXTERN(void rt_memclose,() );
 
-RT_EXTERN(struct bn_vlblock *rt_vlblock_init, () );
-RT_EXTERN(void rt_vlblock_free, (struct bn_vlblock *vbp) );
-RT_EXTERN(struct bu_list *rt_vlblock_find, (struct bn_vlblock *vbp,
+BU_EXTERN(struct bn_vlblock *rt_vlblock_init, () );
+BU_EXTERN(void rt_vlblock_free, (struct bn_vlblock *vbp) );
+BU_EXTERN(struct bu_list *rt_vlblock_find, (struct bn_vlblock *vbp,
 	int r, int g, int b) );
 
 /* pr.c */
-RT_EXTERN(void rt_pr_tree_vls, (struct bu_vls *vls, CONST union tree *tp));
-RT_EXTERN(void rt_pr_hit_vls, (struct bu_vls *v, CONST char *str,
+BU_EXTERN(void rt_pr_tree_vls, (struct bu_vls *vls, CONST union tree *tp));
+BU_EXTERN(void rt_pr_hit_vls, (struct bu_vls *v, CONST char *str,
 	CONST struct hit *hitp));
-RT_EXTERN(void rt_pr_pt_vls, (struct bu_vls *v, CONST struct rt_i *rtip,
+BU_EXTERN(void rt_pr_pt_vls, (struct bu_vls *v, CONST struct rt_i *rtip,
 	CONST struct partition *pp));
-RT_EXTERN(void bu_logindent_vls, (struct bu_vls	*v));
-RT_EXTERN(void rt_pr_fallback_angle, (struct bu_vls *str, CONST char *prefix,
+BU_EXTERN(void bu_logindent_vls, (struct bu_vls	*v));
+BU_EXTERN(void rt_pr_fallback_angle, (struct bu_vls *str, CONST char *prefix,
 	CONST double angles[5]));
-RT_EXTERN(void rt_find_fallback_angle, (double angles[5], CONST vect_t vec));
+BU_EXTERN(void rt_find_fallback_angle, (double angles[5], CONST vect_t vec));
 
 /* table.c */
-RT_EXTERN(int rt_id_solid, (struct bu_external *ep));
+BU_EXTERN(int rt_id_solid, (struct bu_external *ep));
 
 
 /* prep.c */
-RT_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
-RT_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
+BU_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
+BU_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
 
 /* vlist.c */
-RT_EXTERN(struct bn_vlblock *	rt_vlblock_init, () );
-RT_EXTERN(void			rt_vlblock_free, (struct bn_vlblock *vbp) );
-RT_EXTERN(struct bu_list *	rt_vlblock_find, (struct bn_vlblock *vbp,
+BU_EXTERN(struct bn_vlblock *	rt_vlblock_init, () );
+BU_EXTERN(void			rt_vlblock_free, (struct bn_vlblock *vbp) );
+BU_EXTERN(struct bu_list *	rt_vlblock_find, (struct bn_vlblock *vbp,
 				int r, int g, int b) );
-RT_EXTERN(void			rt_vlist_cleanup, () );
-RT_EXTERN(void			rt_vlist_export, (struct bu_vls *vls,
+BU_EXTERN(void			rt_vlist_cleanup, () );
+BU_EXTERN(void			rt_vlist_export, (struct bu_vls *vls,
 				struct bu_list *hp,
 				CONST char *name));
-RT_EXTERN(void			rt_vlist_import, (struct bu_list *hp,
+BU_EXTERN(void			rt_vlist_import, (struct bu_list *hp,
 				struct bu_vls *namevls,
 				CONST unsigned char *buf));
-RT_EXTERN(void			rt_plot_vlblock, (FILE *fp,
+BU_EXTERN(void			rt_plot_vlblock, (FILE *fp,
 				CONST struct bn_vlblock	*vbp) );
-RT_EXTERN(void			rt_vlist_to_uplot, (FILE *fp,
+BU_EXTERN(void			rt_vlist_to_uplot, (FILE *fp,
 				CONST struct bu_list *vhead));
-RT_EXTERN(int			rt_uplot_to_vlist, (struct bn_vlblock *vbp,
+BU_EXTERN(int			rt_uplot_to_vlist, (struct bn_vlblock *vbp,
 				FILE *fp, double char_size) );
-RT_EXTERN(void			rt_label_vlist_verts, (struct bn_vlblock *vbp,
+BU_EXTERN(void			rt_label_vlist_verts, (struct bn_vlblock *vbp,
 				struct bu_list *src, mat_t mat,
 				double sz, double mm2local) );
-RT_EXTERN(int			rt_process_uplot_value,
+BU_EXTERN(int			rt_process_uplot_value,
 				(struct bu_list **vhead, struct bn_vlblock *vbp,
 				FILE *fp, int c, double char_size) );
 
@@ -2019,259 +2020,259 @@ RT_EXTERN(int			rt_process_uplot_value,
 
 /* From file nmg_mk.c */
 /*	MAKE routines */
-RT_EXTERN(struct model		*nmg_mm, () );
-RT_EXTERN(struct model		*nmg_mmr, () );
-RT_EXTERN(struct nmgregion	*nmg_mrsv, (struct model *m) );
-RT_EXTERN(struct shell 		*nmg_msv, (struct nmgregion *r_p) );
-RT_EXTERN(struct faceuse	*nmg_mf, (struct loopuse *lu1) );
-RT_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
-RT_EXTERN(struct edgeuse	*nmg_me, (struct vertex *v1, struct vertex *v2, struct shell *s) );
-RT_EXTERN(struct edgeuse	*nmg_meonvu, (struct vertexuse *vu) );
-RT_EXTERN(struct loopuse	*nmg_ml, (struct shell *s) );
+BU_EXTERN(struct model		*nmg_mm, () );
+BU_EXTERN(struct model		*nmg_mmr, () );
+BU_EXTERN(struct nmgregion	*nmg_mrsv, (struct model *m) );
+BU_EXTERN(struct shell 		*nmg_msv, (struct nmgregion *r_p) );
+BU_EXTERN(struct faceuse	*nmg_mf, (struct loopuse *lu1) );
+BU_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
+BU_EXTERN(struct edgeuse	*nmg_me, (struct vertex *v1, struct vertex *v2, struct shell *s) );
+BU_EXTERN(struct edgeuse	*nmg_meonvu, (struct vertexuse *vu) );
+BU_EXTERN(struct loopuse	*nmg_ml, (struct shell *s) );
 /*	KILL routines */
-RT_EXTERN(int			nmg_kvu, (struct vertexuse *vu) );
-RT_EXTERN(int			nmg_kfu, (struct faceuse *fu1) );
-RT_EXTERN(int			nmg_klu, (struct loopuse *lu1) );
-RT_EXTERN(int			nmg_keu, (struct edgeuse *eu) );
-RT_EXTERN(int			nmg_ks, (struct shell *s) );
-RT_EXTERN(int			nmg_kr, (struct nmgregion *r) );
-RT_EXTERN(void			nmg_km, (struct model *m) );
+BU_EXTERN(int			nmg_kvu, (struct vertexuse *vu) );
+BU_EXTERN(int			nmg_kfu, (struct faceuse *fu1) );
+BU_EXTERN(int			nmg_klu, (struct loopuse *lu1) );
+BU_EXTERN(int			nmg_keu, (struct edgeuse *eu) );
+BU_EXTERN(int			nmg_ks, (struct shell *s) );
+BU_EXTERN(int			nmg_kr, (struct nmgregion *r) );
+BU_EXTERN(void			nmg_km, (struct model *m) );
 /*	Geometry and Attribute routines */
-RT_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
-RT_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
-RT_EXTERN(void			nmg_edge_g, (struct edgeuse *eu) );
-RT_EXTERN(int			nmg_use_edge_g, (struct edgeuse *eu, long *eg) );
-RT_EXTERN(void			nmg_loop_g, (struct loop *l, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_face_g, (struct faceuse *fu, CONST plane_t p) );
-RT_EXTERN(void			nmg_face_bb, (struct face *f, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_shell_a, (struct shell *s, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_region_a, (struct nmgregion *r, CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
+BU_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
+BU_EXTERN(void			nmg_edge_g, (struct edgeuse *eu) );
+BU_EXTERN(int			nmg_use_edge_g, (struct edgeuse *eu, long *eg) );
+BU_EXTERN(void			nmg_loop_g, (struct loop *l, CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_face_g, (struct faceuse *fu, CONST plane_t p) );
+BU_EXTERN(void			nmg_face_bb, (struct face *f, CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_shell_a, (struct shell *s, CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_region_a, (struct nmgregion *r, CONST struct bn_tol *tol) );
 /*	DEMOTE routines */
-RT_EXTERN(int			nmg_demote_lu, (struct loopuse *lu) );
-RT_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
+BU_EXTERN(int			nmg_demote_lu, (struct loopuse *lu) );
+BU_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
 /*	MODIFY routines */
-RT_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
+BU_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
 #define nmg_moveeu(a,b)		nmg_je(a,b)
-RT_EXTERN(void			nmg_je, (struct edgeuse *eudst, struct edgeuse *eusrc) );
-RT_EXTERN(void			nmg_unglueedge, (struct edgeuse *eu) );
-RT_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
-RT_EXTERN(void			nmg_jeg, (struct edge_g_lseg *dest_eg,
+BU_EXTERN(void			nmg_je, (struct edgeuse *eudst, struct edgeuse *eusrc) );
+BU_EXTERN(void			nmg_unglueedge, (struct edgeuse *eu) );
+BU_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
+BU_EXTERN(void			nmg_jeg, (struct edge_g_lseg *dest_eg,
 				struct edge_g_lseg *src_eg) );
 
 /* From nmg_mod.c */
 /*	SHELL Routines */
-RT_EXTERN(int			nmg_simplify_shell, (struct shell *s) );
-RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s, CONST struct bn_tol *tol ) );
-RT_EXTERN(void			nmg_sanitize_s_lv, (struct shell *s,
+BU_EXTERN(int			nmg_simplify_shell, (struct shell *s) );
+BU_EXTERN(void			nmg_rm_redundancies, (struct shell *s, CONST struct bn_tol *tol ) );
+BU_EXTERN(void			nmg_sanitize_s_lv, (struct shell *s,
 				int orient) );
-RT_EXTERN(void			nmg_s_split_touchingloops, (struct shell *s,
+BU_EXTERN(void			nmg_s_split_touchingloops, (struct shell *s,
 				CONST struct bn_tol *tol) );
 /*	FACE Routines */
-RT_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
-RT_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
-RT_EXTERN(struct faceuse	*nmg_add_loop_to_face, (struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir) );
-RT_EXTERN(int			nmg_fu_planeeqn, (struct faceuse *fu, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_gluefaces, (struct faceuse *fulist[], int n, CONST struct bn_tol *tol) );
-RT_EXTERN(int			nmg_simplify_face, (struct faceuse *fu) );
-RT_EXTERN(void			nmg_reverse_face, (struct faceuse *fu) );
-RT_EXTERN(void			nmg_mv_fu_between_shells, (struct shell *dest,
+BU_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
+BU_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
+BU_EXTERN(struct faceuse	*nmg_add_loop_to_face, (struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir) );
+BU_EXTERN(int			nmg_fu_planeeqn, (struct faceuse *fu, CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_gluefaces, (struct faceuse *fulist[], int n, CONST struct bn_tol *tol) );
+BU_EXTERN(int			nmg_simplify_face, (struct faceuse *fu) );
+BU_EXTERN(void			nmg_reverse_face, (struct faceuse *fu) );
+BU_EXTERN(void			nmg_mv_fu_between_shells, (struct shell *dest,
 				struct shell *src, struct faceuse *fu) );
-RT_EXTERN(void			nmg_jf, (struct faceuse *dest_fu,
+BU_EXTERN(void			nmg_jf, (struct faceuse *dest_fu,
 				struct faceuse *src_fu) );
-RT_EXTERN(struct faceuse	*nmg_dup_face, (struct faceuse *fu, struct shell *s) );
+BU_EXTERN(struct faceuse	*nmg_dup_face, (struct faceuse *fu, struct shell *s) );
 /*	LOOP Routines */
-RT_EXTERN(void			nmg_jl, (struct loopuse *lu, struct edgeuse *eu) );
-RT_EXTERN(struct vertexuse	*nmg_join_2loops, (struct vertexuse *vu1, struct vertexuse *vu2) );
-RT_EXTERN(struct vertexuse	*nmg_join_singvu_loop, (struct vertexuse *vu1, struct vertexuse *vu2) );
-RT_EXTERN(struct vertexuse	*nmg_join_2singvu_loops, (struct vertexuse *vu1, struct vertexuse *vu2) );
-RT_EXTERN(struct loopuse	*nmg_cut_loop, (struct vertexuse *vu1, struct vertexuse *vu2) );
-RT_EXTERN(struct loopuse	*nmg_split_lu_at_vu, (struct loopuse *lu, struct vertexuse *vu) );
-RT_EXTERN(void			nmg_split_touchingloops, (struct loopuse *lu,
+BU_EXTERN(void			nmg_jl, (struct loopuse *lu, struct edgeuse *eu) );
+BU_EXTERN(struct vertexuse	*nmg_join_2loops, (struct vertexuse *vu1, struct vertexuse *vu2) );
+BU_EXTERN(struct vertexuse	*nmg_join_singvu_loop, (struct vertexuse *vu1, struct vertexuse *vu2) );
+BU_EXTERN(struct vertexuse	*nmg_join_2singvu_loops, (struct vertexuse *vu1, struct vertexuse *vu2) );
+BU_EXTERN(struct loopuse	*nmg_cut_loop, (struct vertexuse *vu1, struct vertexuse *vu2) );
+BU_EXTERN(struct loopuse	*nmg_split_lu_at_vu, (struct loopuse *lu, struct vertexuse *vu) );
+BU_EXTERN(void			nmg_split_touchingloops, (struct loopuse *lu,
 				CONST struct bn_tol *tol) );
-RT_EXTERN(int			nmg_join_touchingloops, (struct loopuse *lu) );
-RT_EXTERN(void			nmg_simplify_loop, (struct loopuse *lu) );
-RT_EXTERN(int			nmg_kill_snakes, (struct loopuse *lu) );
-RT_EXTERN(void			nmg_mv_lu_between_shells, (struct shell *dest,
+BU_EXTERN(int			nmg_join_touchingloops, (struct loopuse *lu) );
+BU_EXTERN(void			nmg_simplify_loop, (struct loopuse *lu) );
+BU_EXTERN(int			nmg_kill_snakes, (struct loopuse *lu) );
+BU_EXTERN(void			nmg_mv_lu_between_shells, (struct shell *dest,
 				struct shell *src, struct loopuse *lu) );
-RT_EXTERN(void	 		nmg_moveltof, (struct faceuse *fu, struct shell *s) );
-RT_EXTERN(struct loopuse	*nmg_dup_loop, (struct loopuse *lu,
+BU_EXTERN(void	 		nmg_moveltof, (struct faceuse *fu, struct shell *s) );
+BU_EXTERN(struct loopuse	*nmg_dup_loop, (struct loopuse *lu,
 				long *parent, long **trans_tbl) );
-RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse *lu, int is_opposite) );
-RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu ) );
+BU_EXTERN(void			nmg_set_lu_orientation, (struct loopuse *lu, int is_opposite) );
+BU_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu ) );
 /*	EDGE Routines */
-RT_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu, int share_geom) );
-RT_EXTERN(struct edgeuse	*nmg_esplit, (struct vertex *v, struct edgeuse *eu, int share_geom) );
-RT_EXTERN(struct edgeuse	*nmg_ebreak, (struct vertex *v, struct edgeuse *eu));
-RT_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
+BU_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu, int share_geom) );
+BU_EXTERN(struct edgeuse	*nmg_esplit, (struct vertex *v, struct edgeuse *eu, int share_geom) );
+BU_EXTERN(struct edgeuse	*nmg_ebreak, (struct vertex *v, struct edgeuse *eu));
+BU_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
 				struct edgeuse *eu, CONST struct bn_tol *tol));
-RT_EXTERN(struct vertex		*nmg_e2break, (struct edgeuse *eu1, struct edgeuse *eu2) );
-RT_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
-RT_EXTERN(void			nmg_mv_eu_between_shells, (struct shell *dest,
+BU_EXTERN(struct vertex		*nmg_e2break, (struct edgeuse *eu1, struct edgeuse *eu2) );
+BU_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
+BU_EXTERN(void			nmg_mv_eu_between_shells, (struct shell *dest,
 				struct shell *src, struct edgeuse *eu) );
 /*	VERTEX Routines */
-RT_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
+BU_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
 				struct shell *src, struct vertexuse *vu) );
 
 /* From nmg_info.c */
 	/* Model routines */
-RT_EXTERN(struct model		*nmg_find_model, (CONST long *magic_p) );
-RT_EXTERN(void			nmg_model_bb, (point_t min_pt, point_t max_pt, CONST struct model *m) );
+BU_EXTERN(struct model		*nmg_find_model, (CONST long *magic_p) );
+BU_EXTERN(void			nmg_model_bb, (point_t min_pt, point_t max_pt, CONST struct model *m) );
 
 
 	/* Shell routines */
-RT_EXTERN(int			nmg_shell_is_empty, (CONST struct shell *s) );
-RT_EXTERN(struct shell		*nmg_find_s_of_lu, (CONST struct loopuse *lu) );
-RT_EXTERN(struct shell		*nmg_find_s_of_eu, (CONST struct edgeuse *eu) );
-RT_EXTERN(struct shell		*nmg_find_s_of_vu, (CONST struct vertexuse *vu) );
+BU_EXTERN(int			nmg_shell_is_empty, (CONST struct shell *s) );
+BU_EXTERN(struct shell		*nmg_find_s_of_lu, (CONST struct loopuse *lu) );
+BU_EXTERN(struct shell		*nmg_find_s_of_eu, (CONST struct edgeuse *eu) );
+BU_EXTERN(struct shell		*nmg_find_s_of_vu, (CONST struct vertexuse *vu) );
 
 	/* Face routines */
-RT_EXTERN(struct faceuse	*nmg_find_fu_of_eu, (CONST struct edgeuse *eu));
-RT_EXTERN(struct faceuse	*nmg_find_fu_of_lu, (CONST struct loopuse *lu));
-RT_EXTERN(struct faceuse	*nmg_find_fu_of_vu, (CONST struct vertexuse *vu) );
-RT_EXTERN(struct faceuse	*nmg_find_fu_with_fg_in_s, (CONST struct shell *s1,
+BU_EXTERN(struct faceuse	*nmg_find_fu_of_eu, (CONST struct edgeuse *eu));
+BU_EXTERN(struct faceuse	*nmg_find_fu_of_lu, (CONST struct loopuse *lu));
+BU_EXTERN(struct faceuse	*nmg_find_fu_of_vu, (CONST struct vertexuse *vu) );
+BU_EXTERN(struct faceuse	*nmg_find_fu_with_fg_in_s, (CONST struct shell *s1,
 				CONST struct faceuse *fu2));
-RT_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
+BU_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
 				CONST vect_t xvec, CONST vect_t yvec,
 				CONST vect_t zvec) );
 
 	/* Loop routines */
-RT_EXTERN(struct loopuse	*nmg_find_lu_of_vu, (CONST struct vertexuse *vu) );
-RT_EXTERN(int			nmg_loop_is_a_crack, (CONST struct loopuse *lu) );
-RT_EXTERN(int			nmg_loop_is_ccw, (CONST struct loopuse *lu,
+BU_EXTERN(struct loopuse	*nmg_find_lu_of_vu, (CONST struct vertexuse *vu) );
+BU_EXTERN(int			nmg_loop_is_a_crack, (CONST struct loopuse *lu) );
+BU_EXTERN(int			nmg_loop_is_ccw, (CONST struct loopuse *lu,
 				CONST plane_t norm, CONST struct bn_tol *tol) );
-RT_EXTERN(CONST struct vertexuse *nmg_loop_touches_self, (CONST struct loopuse *lu));
-RT_EXTERN(int			nmg_2lu_identical, (CONST struct edgeuse *eu1,
+BU_EXTERN(CONST struct vertexuse *nmg_loop_touches_self, (CONST struct loopuse *lu));
+BU_EXTERN(int			nmg_2lu_identical, (CONST struct edgeuse *eu1,
 				CONST struct edgeuse *eu2));
 
 	/* Edge routines */
-RT_EXTERN(struct edgeuse	*nmg_findeu, (CONST struct vertex *v1, CONST struct vertex *v2,
+BU_EXTERN(struct edgeuse	*nmg_findeu, (CONST struct vertex *v1, CONST struct vertex *v2,
 				CONST struct shell *s, CONST struct edgeuse *eup,
 				int dangling_only) );
-RT_EXTERN(struct edgeuse	*nmg_find_eu_in_face, (CONST struct vertex *v1,
+BU_EXTERN(struct edgeuse	*nmg_find_eu_in_face, (CONST struct vertex *v1,
 				CONST struct vertex *v2, CONST struct faceuse *fu,
 				CONST struct edgeuse *eup, int dangling_only));
-RT_EXTERN(struct edgeuse	*nmg_find_e, (CONST struct vertex *v1,
+BU_EXTERN(struct edgeuse	*nmg_find_e, (CONST struct vertex *v1,
 				CONST struct vertex *v2,
 				CONST struct shell *s,
 				CONST struct edge *ep));
-RT_EXTERN(struct edgeuse	*nmg_find_eu_of_vu, (CONST struct vertexuse *vu) );
-RT_EXTERN(struct edgeuse	*nmg_find_eu_with_vu_in_lu, (CONST struct loopuse *lu,
+BU_EXTERN(struct edgeuse	*nmg_find_eu_of_vu, (CONST struct vertexuse *vu) );
+BU_EXTERN(struct edgeuse	*nmg_find_eu_with_vu_in_lu, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu) );
-RT_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
-RT_EXTERN(CONST struct edgeuse	*nmg_radial_face_edge_in_shell, (CONST struct edgeuse *eu) );
-RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1,
+BU_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
+BU_EXTERN(CONST struct edgeuse	*nmg_radial_face_edge_in_shell, (CONST struct edgeuse *eu) );
+BU_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1,
 				CONST struct faceuse *fu2, CONST struct bn_tol *tol));
-RT_EXTERN(struct edge		*nmg_find_e_nearest_pt2, (long *magic_p,
+BU_EXTERN(struct edge		*nmg_find_e_nearest_pt2, (long *magic_p,
 				CONST point_t pt2, CONST mat_t mat,
 				CONST struct bn_tol *tol) );
-RT_EXTERN(struct edgeuse	*nmg_find_matching_eu_in_s, (
+BU_EXTERN(struct edgeuse	*nmg_find_matching_eu_in_s, (
 				CONST struct edgeuse *eu1, CONST struct shell *s2));
-RT_EXTERN(void			nmg_eu_2vecs_perp, (vect_t xvec, vect_t yvec,
+BU_EXTERN(void			nmg_eu_2vecs_perp, (vect_t xvec, vect_t yvec,
 				vect_t zvec, CONST struct edgeuse *eu,
 				CONST struct bn_tol *tol) );
-RT_EXTERN(int			nmg_find_eu_leftvec, (vect_t left,
+BU_EXTERN(int			nmg_find_eu_leftvec, (vect_t left,
 				CONST struct edgeuse *eu) );
 
 	/* Vertex routines */
-RT_EXTERN(struct vertexuse	*nmg_find_v_in_face, (CONST struct vertex *,
+BU_EXTERN(struct vertexuse	*nmg_find_v_in_face, (CONST struct vertex *,
 				CONST struct faceuse *) );
-RT_EXTERN(struct vertexuse	*nmg_find_v_in_shell, (CONST struct vertex *v,
+BU_EXTERN(struct vertexuse	*nmg_find_v_in_shell, (CONST struct vertex *v,
 				CONST struct shell *s, int edges_only));
-RT_EXTERN(struct vertexuse	*nmg_find_pt_in_lu, (CONST struct loopuse *lu,
+BU_EXTERN(struct vertexuse	*nmg_find_pt_in_lu, (CONST struct loopuse *lu,
 				CONST point_t pt, CONST struct bn_tol *tol));
-RT_EXTERN(struct vertexuse	*nmg_find_pt_in_face, (CONST struct faceuse *fu,
+BU_EXTERN(struct vertexuse	*nmg_find_pt_in_face, (CONST struct faceuse *fu,
 				CONST point_t pt,
 				CONST struct bn_tol *tol) );
-RT_EXTERN(struct vertex		*nmg_find_pt_in_shell, (CONST struct shell *s,
+BU_EXTERN(struct vertex		*nmg_find_pt_in_shell, (CONST struct shell *s,
 				CONST point_t pt, CONST struct bn_tol *tol) );
-RT_EXTERN(struct vertex		*nmg_find_pt_in_model, (CONST struct model *m,
+BU_EXTERN(struct vertex		*nmg_find_pt_in_model, (CONST struct model *m,
 				CONST point_t pt, CONST struct bn_tol *tol));
-RT_EXTERN(int			nmg_is_vertex_in_edgelist, (CONST struct vertex *v,
+BU_EXTERN(int			nmg_is_vertex_in_edgelist, (CONST struct vertex *v,
 				CONST struct bu_list *hd) );
-RT_EXTERN(int			nmg_is_vertex_in_looplist, (CONST struct vertex *v,
+BU_EXTERN(int			nmg_is_vertex_in_looplist, (CONST struct vertex *v,
 				CONST struct bu_list *hd, int singletons) );
-RT_EXTERN(int			nmg_is_vertex_a_selfloop_in_shell, (CONST struct vertex *v,
+BU_EXTERN(int			nmg_is_vertex_a_selfloop_in_shell, (CONST struct vertex *v,
 				CONST struct shell *s) );
-RT_EXTERN(int			nmg_is_vertex_in_facelist, (CONST struct vertex *v,
+BU_EXTERN(int			nmg_is_vertex_in_facelist, (CONST struct vertex *v,
 				CONST struct bu_list *hd) );
-RT_EXTERN(int			nmg_is_edge_in_edgelist, (CONST struct edge *e,
+BU_EXTERN(int			nmg_is_edge_in_edgelist, (CONST struct edge *e,
 				CONST struct bu_list *hd) );
-RT_EXTERN(int			nmg_is_edge_in_looplist, (CONST struct edge *e,
+BU_EXTERN(int			nmg_is_edge_in_looplist, (CONST struct edge *e,
 				CONST struct bu_list *hd) );
-RT_EXTERN(int			nmg_is_edge_in_facelist, (CONST struct edge *e,
+BU_EXTERN(int			nmg_is_edge_in_facelist, (CONST struct edge *e,
 				CONST struct bu_list *hd) );
-RT_EXTERN(int			nmg_is_loop_in_facelist, (CONST struct loop *l,
+BU_EXTERN(int			nmg_is_loop_in_facelist, (CONST struct loop *l,
 				CONST struct bu_list *fu_hd) );
 
-RT_EXTERN(void			nmg_edgeuse_tabulate, (struct bu_ptbl *tab,
+BU_EXTERN(void			nmg_edgeuse_tabulate, (struct bu_ptbl *tab,
 				CONST long *magic_p));
-RT_EXTERN(void			nmg_vertex_tabulate, (struct bu_ptbl *tab,
+BU_EXTERN(void			nmg_vertex_tabulate, (struct bu_ptbl *tab,
 				CONST long *magic_p));
-RT_EXTERN(void			nmg_face_tabulate, (struct bu_ptbl *tab,
+BU_EXTERN(void			nmg_face_tabulate, (struct bu_ptbl *tab,
 				CONST long *magic_p));
 
 /* From nmg_pr.c */
-RT_EXTERN(char *		nmg_orientation, (int orientation) );
-RT_EXTERN(void			nmg_pr_orient, (int orientation, CONST char *h) );
-RT_EXTERN(void			nmg_pr_m, (CONST struct model *m) );
-RT_EXTERN(void			nmg_pr_r, (CONST struct nmgregion *r, char *h) );
-RT_EXTERN(void			nmg_pr_sa, (CONST struct shell_a *sa, char *h) );
-RT_EXTERN(void			nmg_pr_lg, (CONST struct loop_g *lg, char *h) );
-RT_EXTERN(void			nmg_pr_fg, (CONST long *magic, char *h) );
-RT_EXTERN(void			nmg_pr_s, (CONST struct shell *s, char *h) );
-RT_EXTERN(void			nmg_pr_f, (CONST struct face *f, char *h) );
-RT_EXTERN(void			nmg_pr_fu, (CONST struct faceuse *fu, char *h) );
-RT_EXTERN(void			nmg_pr_fu_briefly, (CONST struct faceuse *fu,	char *h) );
-RT_EXTERN(void			nmg_pr_l, (CONST struct loop *l, char *h) );
-RT_EXTERN(void			nmg_pr_lu, (CONST struct loopuse *lu, char *h) );
-RT_EXTERN(void			nmg_pr_lu_briefly, (CONST struct loopuse *lu, char *h) );
-RT_EXTERN(void			nmg_pr_eg, (CONST long *eg, char *h) );
-RT_EXTERN(void			nmg_pr_e, (CONST struct edge *e, char *h) );
-RT_EXTERN(void			nmg_pr_eu, (CONST struct edgeuse *eu, char *h) );
-RT_EXTERN(void			nmg_pr_eu_briefly, (CONST struct edgeuse *eu, char *h) );
-RT_EXTERN(void			nmg_pr_vg, (CONST struct vertex_g *vg, char *h) );
-RT_EXTERN(void			nmg_pr_v, (CONST struct vertex *v, char *h) );
-RT_EXTERN(void			nmg_pr_vu, (CONST struct vertexuse *vu, char *h) );
-RT_EXTERN(void			nmg_pr_vu_briefly, (CONST struct vertexuse *vu, char *h) );
-RT_EXTERN(void			nmg_pr_vua, (CONST long *magic_p, char *h) );
-RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
+BU_EXTERN(char *		nmg_orientation, (int orientation) );
+BU_EXTERN(void			nmg_pr_orient, (int orientation, CONST char *h) );
+BU_EXTERN(void			nmg_pr_m, (CONST struct model *m) );
+BU_EXTERN(void			nmg_pr_r, (CONST struct nmgregion *r, char *h) );
+BU_EXTERN(void			nmg_pr_sa, (CONST struct shell_a *sa, char *h) );
+BU_EXTERN(void			nmg_pr_lg, (CONST struct loop_g *lg, char *h) );
+BU_EXTERN(void			nmg_pr_fg, (CONST long *magic, char *h) );
+BU_EXTERN(void			nmg_pr_s, (CONST struct shell *s, char *h) );
+BU_EXTERN(void			nmg_pr_f, (CONST struct face *f, char *h) );
+BU_EXTERN(void			nmg_pr_fu, (CONST struct faceuse *fu, char *h) );
+BU_EXTERN(void			nmg_pr_fu_briefly, (CONST struct faceuse *fu,	char *h) );
+BU_EXTERN(void			nmg_pr_l, (CONST struct loop *l, char *h) );
+BU_EXTERN(void			nmg_pr_lu, (CONST struct loopuse *lu, char *h) );
+BU_EXTERN(void			nmg_pr_lu_briefly, (CONST struct loopuse *lu, char *h) );
+BU_EXTERN(void			nmg_pr_eg, (CONST long *eg, char *h) );
+BU_EXTERN(void			nmg_pr_e, (CONST struct edge *e, char *h) );
+BU_EXTERN(void			nmg_pr_eu, (CONST struct edgeuse *eu, char *h) );
+BU_EXTERN(void			nmg_pr_eu_briefly, (CONST struct edgeuse *eu, char *h) );
+BU_EXTERN(void			nmg_pr_vg, (CONST struct vertex_g *vg, char *h) );
+BU_EXTERN(void			nmg_pr_v, (CONST struct vertex *v, char *h) );
+BU_EXTERN(void			nmg_pr_vu, (CONST struct vertexuse *vu, char *h) );
+BU_EXTERN(void			nmg_pr_vu_briefly, (CONST struct vertexuse *vu, char *h) );
+BU_EXTERN(void			nmg_pr_vua, (CONST long *magic_p, char *h) );
+BU_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
 
 /* From nmg_misc.c */
-RT_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p) );
-RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct bu_ptbl *vert_list, fastf_t *mag, CONST struct faceuse *fu, CONST struct bn_tol *tol));
-RT_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct bu_ptbl *b) );
-RT_EXTERN(void			nmg_rebound, (struct model *m, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
-RT_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
+BU_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p) );
+BU_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct bu_ptbl *vert_list, fastf_t *mag, CONST struct faceuse *fu, CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct bu_ptbl *b) );
+BU_EXTERN(void			nmg_rebound, (struct model *m, CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
+BU_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
 				CONST struct model *m, CONST char *title) );
 
 /* From nmg_tri.c */
-RT_EXTERN(void			nmg_triangulate_model, (struct model *m, CONST struct bn_tol   *tol) );
-RT_EXTERN(void			nmg_triangulate_fu, (struct faceuse *fu, CONST struct bn_tol   *tol) );
+BU_EXTERN(void			nmg_triangulate_model, (struct model *m, CONST struct bn_tol   *tol) );
+BU_EXTERN(void			nmg_triangulate_fu, (struct faceuse *fu, CONST struct bn_tol   *tol) );
 
 /* nmg_manif.c */
-RT_EXTERN(int			nmg_dangling_face, (CONST struct faceuse *fu,
+BU_EXTERN(int			nmg_dangling_face, (CONST struct faceuse *fu,
 				CONST char *manifolds));
 /* static paint_face */
 /* static set_edge_sub_manifold */
 /* static set_loop_sub_manifold */
 /* static set_face_sub_manifold */
-RT_EXTERN(char 			*nmg_shell_manifolds, (struct shell *sp, char *tbl) );
-RT_EXTERN(char	 		*nmg_manifolds, (struct model *m) );
+BU_EXTERN(char 			*nmg_shell_manifolds, (struct shell *sp, char *tbl) );
+BU_EXTERN(char	 		*nmg_manifolds, (struct model *m) );
 
 /* g_nmg.c */
 
 /* nmg_class.c */
-RT_EXTERN(int			nmg_class_pt_f, (CONST point_t pt,
+BU_EXTERN(int			nmg_class_pt_f, (CONST point_t pt,
 				CONST struct faceuse *fu,
 				CONST struct bn_tol *tol) );
-RT_EXTERN(int			nmg_class_pt_s, (CONST point_t pt,
+BU_EXTERN(int			nmg_class_pt_s, (CONST point_t pt,
 				CONST struct shell *s,
 				CONST int in_or_out_only,
 				CONST struct bn_tol *tol) );
 
 /* From nmg_pt_fu.c */
-RT_EXTERN(int			nmg_class_pt_fu_except, (CONST point_t pt,
+BU_EXTERN(int			nmg_class_pt_fu_except, (CONST point_t pt,
 				CONST struct faceuse *fu,
 				CONST struct loopuse *ignore_lu,
 				void (*eu_func)(), void (*vu_func)(),
@@ -2282,105 +2283,105 @@ RT_EXTERN(int			nmg_class_pt_fu_except, (CONST point_t pt,
 
 /* From nmg_plot.c */
 /* add nmg_xxx_to_vlist routines here */
-RT_EXTERN(void			nmg_pl_v, (FILE	*fp, CONST struct vertex *v,
+BU_EXTERN(void			nmg_pl_v, (FILE	*fp, CONST struct vertex *v,
 				long *b) );
-RT_EXTERN(void			nmg_pl_e, (FILE *fp, CONST struct edge *e,
+BU_EXTERN(void			nmg_pl_e, (FILE *fp, CONST struct edge *e,
 				long *b, int red, int green, int blue) );
-RT_EXTERN(void			nmg_pl_eu, (FILE *fp, CONST struct edgeuse *eu,
+BU_EXTERN(void			nmg_pl_eu, (FILE *fp, CONST struct edgeuse *eu,
 				long *b, int red, int green, int blue) );
-RT_EXTERN(void			nmg_pl_lu, (FILE *fp, CONST struct loopuse *fu, 
+BU_EXTERN(void			nmg_pl_lu, (FILE *fp, CONST struct loopuse *fu, 
 				long *b, int red, int green, int blue) );
-RT_EXTERN(void			nmg_pl_fu, (FILE *fp, CONST struct faceuse *fu,
+BU_EXTERN(void			nmg_pl_fu, (FILE *fp, CONST struct faceuse *fu,
 				long *b, int red, int green, int blue ) );
-RT_EXTERN(void			nmg_pl_s, (FILE *fp, CONST struct shell *s) );
-RT_EXTERN(void			nmg_pl_r, (FILE *fp, CONST struct nmgregion *r) );
-RT_EXTERN(void			nmg_pl_m, (FILE *fp, CONST struct model *m) );
-RT_EXTERN(void			nmg_vlblock_v, (struct bn_vlblock *vbp,
+BU_EXTERN(void			nmg_pl_s, (FILE *fp, CONST struct shell *s) );
+BU_EXTERN(void			nmg_pl_r, (FILE *fp, CONST struct nmgregion *r) );
+BU_EXTERN(void			nmg_pl_m, (FILE *fp, CONST struct model *m) );
+BU_EXTERN(void			nmg_vlblock_v, (struct bn_vlblock *vbp,
 				CONST struct vertex *v, long *tab) );
-RT_EXTERN(void			nmg_vlblock_e, (struct bn_vlblock *vbp,
+BU_EXTERN(void			nmg_vlblock_e, (struct bn_vlblock *vbp,
 				CONST struct edge *e, long *tab,
 				int red, int green, int blue, int fancy) );
-RT_EXTERN(void			nmg_vlblock_eu, (struct bn_vlblock *vbp,
+BU_EXTERN(void			nmg_vlblock_eu, (struct bn_vlblock *vbp,
 				CONST struct edgeuse *eu, long *tab,
 				int red, int green, int blue,
 				int fancy, int loopnum) );
-RT_EXTERN(void			nmg_vlblock_lu, (struct bn_vlblock *vbp,
+BU_EXTERN(void			nmg_vlblock_lu, (struct bn_vlblock *vbp,
 				CONST struct loopuse *lu, long *tab,
 				int red, int green, int blue,
 				int fancy, int loopnum) );
-RT_EXTERN(void			nmg_vlblock_fu, (struct bn_vlblock *vbp,
+BU_EXTERN(void			nmg_vlblock_fu, (struct bn_vlblock *vbp,
 				CONST struct faceuse *fu, long *tab, int fancy) );
-RT_EXTERN(void			nmg_vlblock_s, (struct bn_vlblock *vbp,
+BU_EXTERN(void			nmg_vlblock_s, (struct bn_vlblock *vbp,
 				CONST struct shell *s, int fancy) );
-RT_EXTERN(void			nmg_vlblock_r, (struct bn_vlblock *vbp,
+BU_EXTERN(void			nmg_vlblock_r, (struct bn_vlblock *vbp,
 				CONST struct nmgregion *r, int fancy) );
-RT_EXTERN(void			nmg_vlblock_m, (struct bn_vlblock *vbp,
+BU_EXTERN(void			nmg_vlblock_m, (struct bn_vlblock *vbp,
 				CONST struct model *m, int fancy) );
-RT_EXTERN(void			nmg_pl_around_edge, (FILE *fd,
+BU_EXTERN(void			nmg_pl_around_edge, (FILE *fd,
 				long *b, CONST struct edgeuse *eu) );
-RT_EXTERN(void			nmg_pl_isect, (CONST char *filename,
+BU_EXTERN(void			nmg_pl_isect, (CONST char *filename,
 				CONST struct shell *s, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_pl_comb_fu, (int num1, int num2,
+BU_EXTERN(void			nmg_pl_comb_fu, (int num1, int num2,
 				CONST struct faceuse *fu1) );
-RT_EXTERN(void			nmg_pl_2fu, (CONST char *str, int num,
+BU_EXTERN(void			nmg_pl_2fu, (CONST char *str, int num,
 				CONST struct faceuse *fu1, CONST struct faceuse *fu2,
 				int show_mates) );
-RT_EXTERN(void			nmg_face_plot, (CONST struct faceuse *fu) );
-RT_EXTERN(void			nmg_2face_plot, (CONST struct faceuse *fu1,
+BU_EXTERN(void			nmg_face_plot, (CONST struct faceuse *fu) );
+BU_EXTERN(void			nmg_2face_plot, (CONST struct faceuse *fu1,
 				CONST struct faceuse *fu2) );
-RT_EXTERN(void			nmg_face_lu_plot, (CONST struct loopuse *lu,
+BU_EXTERN(void			nmg_face_lu_plot, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu1, CONST struct vertexuse *vu2) );
-RT_EXTERN(void			nmg_cnurb_to_vlist, (struct bu_list *vhead,
+BU_EXTERN(void			nmg_cnurb_to_vlist, (struct bu_list *vhead,
 				CONST struct edgeuse *eu,int n_interior,
 				int cmd) );
 
 
 /* from nmg_mesh.c */
-RT_EXTERN(void			nmg_radial_join_eu, (struct edgeuse *eu1,
+BU_EXTERN(void			nmg_radial_join_eu, (struct edgeuse *eu1,
 				struct edgeuse *eu2, CONST struct bn_tol *tol));
-RT_EXTERN(void			nmg_mesh_faces, (struct faceuse *fu1,
+BU_EXTERN(void			nmg_mesh_faces, (struct faceuse *fu1,
 				struct faceuse *fu2, CONST struct bn_tol *tol) );
-RT_EXTERN(int			nmg_mesh_face_shell, (struct faceuse *fu1,
+BU_EXTERN(int			nmg_mesh_face_shell, (struct faceuse *fu1,
 				struct shell *s, CONST struct bn_tol *tol));
-RT_EXTERN(int			nmg_mesh_shell_shell, (struct shell *s1,
+BU_EXTERN(int			nmg_mesh_shell_shell, (struct shell *s1,
 				struct shell *s2, CONST struct bn_tol *tol));
-RT_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
+BU_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
 				CONST vect_t xvec, CONST vect_t yvec,
 				CONST vect_t zvec));
 
 /* from nmg_bool.c */
-RT_EXTERN(struct nmgregion	*nmg_do_bool, (struct nmgregion *s1,
+BU_EXTERN(struct nmgregion	*nmg_do_bool, (struct nmgregion *s1,
 				struct nmgregion *s2,
 				CONST int oper, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_shell_coplanar_face_merge,
+BU_EXTERN(void			nmg_shell_coplanar_face_merge,
 				(struct shell *s, CONST struct bn_tol *tol,
 				CONST int simplify) );
-RT_EXTERN(int			nmg_two_region_vertex_fuse, (struct nmgregion *r1,
+BU_EXTERN(int			nmg_two_region_vertex_fuse, (struct nmgregion *r1,
 				struct nmgregion *r2, CONST struct bn_tol *tol));
-RT_EXTERN(union tree		*nmg_booltree_leaf_tess, (struct db_tree_state *tsp,
+BU_EXTERN(union tree		*nmg_booltree_leaf_tess, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
 				struct bu_external *ep, int id));
-RT_EXTERN(union tree		*nmg_booltree_leaf_tnurb, (struct db_tree_state *tsp,
+BU_EXTERN(union tree		*nmg_booltree_leaf_tnurb, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
 				struct bu_external *ep, int id));
-RT_EXTERN(union tree		*nmg_booltree_evaluate, (union tree *tp,
+BU_EXTERN(union tree		*nmg_booltree_evaluate, (union tree *tp,
 				CONST struct bn_tol *tol));
-RT_EXTERN(void			nmg_region_v_unique, (struct nmgregion *r1,
+BU_EXTERN(void			nmg_region_v_unique, (struct nmgregion *r1,
 				CONST struct bn_tol *tol));
 
 /* from nmg_class.c */
-RT_EXTERN(void			nmg_class_shells, (struct shell *sA,
+BU_EXTERN(void			nmg_class_shells, (struct shell *sA,
 				struct shell *sB, long *classlist[4],
 				CONST struct bn_tol *tol) );
 
 /* from nmg_fcut.c */
-RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse	*lu,
+BU_EXTERN(void			nmg_set_lu_orientation, (struct loopuse	*lu,
 				int is_opposite) );
 /* static void ptbl_vsort */
-RT_EXTERN(double		nmg_vu_angle_measure, (struct vertexuse	*vu,
+BU_EXTERN(double		nmg_vu_angle_measure, (struct vertexuse	*vu,
 				vect_t x_dir, vect_t y_dir, int assessment,
 				int in) );
-RT_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
+BU_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 				struct bu_ptbl *b1, struct bu_ptbl *b2,
 				fastf_t *mag1, fastf_t *mag2,
 				struct faceuse *fu1, struct faceuse *fu2,
@@ -2391,22 +2392,22 @@ RT_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
 /* From nmg_eval.c */
-RT_EXTERN(CONST char		*nmg_class_name, (int class_no) );
+BU_EXTERN(CONST char		*nmg_class_name, (int class_no) );
 #if 0
 /* These can't be included because struct nmg_bool_state is in nmg_eval.c */
-RT_EXTERN(void			nmg_eval_shell, (struct shell *s,
+BU_EXTERN(void			nmg_eval_shell, (struct shell *s,
 				struct nmg_bool_state *bs ) );
-RT_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs,
+BU_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs,
 				int num, int delay) );
 #endif
 
 
 /* From nmg_rt_isect.c */
 #if 0
-RT_EXTERN(void nmg_isect_ray_model, (struct ray_data *rd) );
+BU_EXTERN(void nmg_isect_ray_model, (struct ray_data *rd) );
 
 /* From nmg_rt_segs.c */
-RT_EXTERN(int			nmg_ray_isect_segs, (struct soltab *stp,
+BU_EXTERN(int			nmg_ray_isect_segs, (struct soltab *stp,
 					struct xray *rp,
 					struct application *ap,
 					struct seg *seghead,
@@ -2414,46 +2415,46 @@ RT_EXTERN(int			nmg_ray_isect_segs, (struct soltab *stp,
 #endif
 /* From nmg_ck.c */
 /* XXX many others here */
-RT_EXTERN(void			nmg_ck_list_magic, (CONST struct bu_list *hd,
+BU_EXTERN(void			nmg_ck_list_magic, (CONST struct bu_list *hd,
 				CONST char *str, CONST long magic) );
-RT_EXTERN(void			nmg_ck_list, (struct bu_list *hd, CONST char *str) );
-RT_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
-RT_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct bn_tol *tol));
-RT_EXTERN(int			nmg_ck_closed_surf, (CONST struct shell *s, CONST struct bn_tol *tol) );
-RT_EXTERN(int			nmg_ck_closed_region, (CONST struct nmgregion *r, CONST struct bn_tol *tol) );
-RT_EXTERN(void			nmg_ck_v_in_2fus, (CONST struct vertex *vp,
+BU_EXTERN(void			nmg_ck_list, (struct bu_list *hd, CONST char *str) );
+BU_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
+BU_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_ck_closed_surf, (CONST struct shell *s, CONST struct bn_tol *tol) );
+BU_EXTERN(int			nmg_ck_closed_region, (CONST struct nmgregion *r, CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_ck_v_in_2fus, (CONST struct vertex *vp,
 				CONST struct faceuse *fu1, CONST struct faceuse *fu2,
 				CONST struct bn_tol *tol));
 
 /* From nmg_inter.c */
-RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct bn_tol *tol) );
 
 /* From nmg_index.c */
-RT_EXTERN(int			nmg_index_of_struct, (long *p) );
-RT_EXTERN(void			nmg_m_reindex, (struct model *m, long newindex) );
-RT_EXTERN(void			nmg_vls_struct_counts, (struct bu_vls *str,
+BU_EXTERN(int			nmg_index_of_struct, (long *p) );
+BU_EXTERN(void			nmg_m_reindex, (struct model *m, long newindex) );
+BU_EXTERN(void			nmg_vls_struct_counts, (struct bu_vls *str,
 				CONST struct nmg_struct_counts *ctr));
-RT_EXTERN(void			nmg_pr_struct_counts, 
+BU_EXTERN(void			nmg_pr_struct_counts, 
 				(CONST struct nmg_struct_counts *ctr,
 				CONST char *str) );
-RT_EXTERN(long			**nmg_m_struct_count,
+BU_EXTERN(long			**nmg_m_struct_count,
 				(struct nmg_struct_counts *ctr,
 				CONST struct model *m) );
-RT_EXTERN(void			nmg_merge_models, (struct model *m1,
+BU_EXTERN(void			nmg_merge_models, (struct model *m1,
 							struct model *m2) );
 /* From nmg_rt.c */
 
 /* From rt_dspline.c */
-RT_EXTERN(void			rt_dspline_matrix, (mat_t m,CONST char *type,
+BU_EXTERN(void			rt_dspline_matrix, (mat_t m,CONST char *type,
 					CONST double	tension,
 					CONST double	bias) );
-RT_EXTERN(double		rt_dspline4, (mat_t m, double a, double b,
+BU_EXTERN(double		rt_dspline4, (mat_t m, double a, double b,
 					double c, double d, double alpha) );
-RT_EXTERN(void			rt_dspline4v, (double *pt, CONST mat_t m,
+BU_EXTERN(void			rt_dspline4v, (double *pt, CONST mat_t m,
 					CONST double *a, CONST double *b,
 					CONST double *c, CONST double *d,
 					CONST int depth, CONST double alpha) );
-RT_EXTERN(void			rt_dspline_n, (double *r, CONST mat_t m,
+BU_EXTERN(void			rt_dspline_n, (double *r, CONST mat_t m,
 					CONST double *knots, CONST int n,
 					CONST int depth, CONST double alpha));
 
