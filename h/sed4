@@ -187,7 +187,7 @@ g/&rt_g.res_worker/s//RT_SEM_WORKER/
 g/&rt_g.res_stats/s//RT_SEM_STATS/
 g/&rt_g.res_results/s//RT_SEM_RESULTS/
 g/&rt_g.res_model/s//RT_SEM_MODEL/
-g/RES_INIT(/s/RES_INIT.*;/bu_semaphore_init( BU_SEM_LAST );/p
+g/RES_INIT(/s/RES_INIT.*;/bu_semaphore_init( RT_SEM_LAST );/p
 g/RT_VLS_CHECK/s//BU_CK_VLS/g
 g/RT_VLS_ADDR/s//bu_vls_addr/g
 g/RT_VLS_INIT/s//bu_vls_init/g
