@@ -1,5 +1,7 @@
 /*
  *  			P I X M O R P H . C
+ *
+ *  Utility for morphing two BRL-CAD pix files.
  *  
  *  Author -
  *      Glenn Durfee
@@ -8,10 +10,29 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
+ *  Distribution Notice -
+ * 	Re-distribution of this software is restricted, as described in
+ * 	your "Statement of Terms and Conditions for the Release of
+ * 	The BRL-CAD Package" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1995 by the United States Army.
+ *	This software is Copyright (C) 1996 by the United States Army.
  *      All rights reserved.
+ *
+ *  Description -
+ *      Morphs two pix files.  Performs the morph according to the given line
+ *      segment correspondence file and two values in [0,1]: the first,
+ *      warpfrac, is a value which describes how far each image is warped;
+ *      the second, dissolvefrac, specifies how much of a cross-dissolve
+ *      is performed on the two resulting warped images to produce an
+ *      output.  Typically, the user sets warpfrac = dissolvefrac.
+ *      See the man page for more details.
+ *      
+ *  For details of the morph algorithm, see
+ *        T. Beier and S. Neely.  Feature-Based Image Metamorphosis.  In
+ *        "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
+ *        (Chicago, July 26-31, 1992).
  */
 
 #include "conf.h"
@@ -24,10 +45,13 @@
 
 #include "machine.h"
 #include "externs.h"			/* For malloc and getopt */
+#include "fb.h"
 
-struct pixel {
-    unsigned char r, g, b;
-};
+/* Adapted from an assignment for
+ *    15-463 Advanced Computer Graphics
+ *    Professor Paul Heckbert
+ *    Carnegie Mellon University
+ */
 
 /* CBLEND is for interpolating characters.  Useful for dissolve. */
 #define CBLEND(a, b, cfrac) (unsigned char)(((256-cfrac)*(int)(a)+\
@@ -42,8 +66,9 @@ struct pixel {
 
 #define EPSILON 10e-8
 
-/* Hopefully the distance between two points in the image will be less
-   than the following value. */
+/* Hopefully the distance between two pixels in the image will be less
+   than the following value.  If not, cap it at this value in the
+   computations.*/
 #define MAXLEN 65536
 
 /* gprof tells me that 73% of the time to execute was spent in those two
@@ -79,15 +104,15 @@ struct lineseg {
 
 void
 cross_dissolve(morph, wa, wb, dissolvefrac, numpixels)
-struct pixel *morph, *wa, *wb;
+unsigned char *morph, *wa, *wb;
 int dissolvefrac, numpixels;
 {
     register int i;
 
-    for (i = 0; i < numpixels; i++, morph++, wa++, wb++) {
-	morph->r = CBLEND(wa->r, wb->r, dissolvefrac);
-	morph->g = CBLEND(wa->g, wb->g, dissolvefrac);
-	morph->b = CBLEND(wa->b, wb->b, dissolvefrac);
+    for (i = 0; i < numpixels; i++, morph += 3, wa += 3, wb += 3) {
+	morph[RED] = CBLEND(wa[RED], wb[RED], dissolvefrac);
+	morph[GRN] = CBLEND(wa[GRN], wb[GRN], dissolvefrac);
+	morph[BLU] = CBLEND(wa[BLU], wb[BLU], dissolvefrac);
     }
 }
 
@@ -102,18 +127,19 @@ int dissolvefrac, numpixels;
 
 void
 warp_image(dest, src, lines, which, width, height, numlines, a, b, p)
-struct pixel *dest, *src;
+unsigned char *dest, *src;
 struct lineseg *lines;
 int which, width, height, numlines;
 double a, b, p;
 {
-    register int i, j, k;
+    register int i, j, k, width3;
     struct lineseg *tlines;
 
+    width3 = width*3;
     for (i = 0; i < height; i++) {
 	fprintf(stderr, "line %d   \r", height-i);
-	fflush(stdout);
-	for (j = 0; j < width; j++, dest++) {
+	fflush(stderr);
+	for (j = 0; j < width; j++, dest += 3) {
 	    double dsum_x, dsum_y, weightsum, x_x, x_y, new_x, new_y,
 	           frac_x, frac_y, newcolor;
 	    int fin_x, fin_y, findex;
@@ -199,7 +225,7 @@ double a, b, p;
 
 	    /* End of unnecessary stuff. */
 
-	    findex = fin_x + fin_y*width;
+	    findex = 3*(fin_x + fin_y*width);
 
 	    frac_x = new_x - (double)fin_x;
 	    frac_y = new_y - (double)fin_y;
@@ -210,24 +236,23 @@ double a, b, p;
 	       It's the somewhat more expensive than it needs to be.
 	       I'm going for clarity, here. */
 	    
-	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex].r +
-			(1-frac_y)*frac_x*(double)src[findex+1].r +
-			frac_y*frac_x*(double)src[findex+width+1].r +
-			frac_y*(1-frac_x)*(double)src[findex+width].r);
-	    dest->r = CLAMP(newcolor, 0, 255);
+	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+RED] +
+			(1-frac_y)*frac_x*(double)src[findex+3+RED] +
+			frac_y*frac_x*(double)src[findex+width3+3+RED] +
+			frac_y*(1-frac_x)*(double)src[findex+width3+RED]);
+	    dest[RED] = CLAMP(newcolor, 0, 255);
 	    
-	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex].g +
-			     (1-frac_y)*frac_x*(double)src[findex+1].g +
-			     frac_y*frac_x*(double)src[findex+width+1].g +
-			     frac_y*(1-frac_x)*(double)src[findex+width].g);
-	    dest->g = CLAMP(newcolor, 0, 255);
+	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+GRN] +
+			     (1-frac_y)*frac_x*(double)src[findex+3+GRN] +
+			     frac_y*frac_x*(double)src[findex+width3+3+GRN] +
+			     frac_y*(1-frac_x)*(double)src[findex+width3+GRN]);
+	    dest[GRN] = CLAMP(newcolor, 0, 255);
 	    
-	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex].b +
-			     (1-frac_y)*frac_x*(double)src[findex+1].b +
-			     frac_y*frac_x*(double)src[findex+width+1].b +
-			     frac_y*(1-frac_x)*(double)src[findex+width].b);
-	    dest->b = CLAMP(newcolor, 0, 255);
-
+	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+BLU] +
+			     (1-frac_y)*frac_x*(double)src[findex+3+BLU] +
+			     frac_y*frac_x*(double)src[findex+width3+3+BLU] +
+			     frac_y*(1-frac_x)*(double)src[findex+width3+BLU]);
+	    dest[BLU] = CLAMP(newcolor, 0, 255);
 	}
     }
 }
@@ -257,13 +282,13 @@ double warpfrac, pb;
     for (i = 0; i < numlines; i++, lines++) {
 	if (fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf ",
 		   &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4) < 4) {
-	    fprintf(stderr, "morph: lines_read: failure\n");
+	    fprintf(stderr, "pixmorph: lines_read: failure\n");
 	    exit(1);
 	}
 
 	if ((fabs(x1-x2) < EPSILON && fabs(y1-y2) < EPSILON) ||
 	    (fabs(x3-x4) < EPSILON && fabs(y3-y4) < EPSILON)) {
-	    fprintf(stderr, "morph: warning: zero-length line segment\n");
+	    fprintf(stderr, "pixmorph: warning: zero-length line segment\n");
 	    --numlines;
 	    continue;
 	}
@@ -312,7 +337,7 @@ void
 lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, int *np)
 {
     if (fscanf(fp, "%lf %lf %lf %d ", ap, bp, pp, np) < 4) {
-	fprintf(stderr, "morph: cannot read header info in lines file\n");
+	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
 	exit(1);
     }
 }
@@ -362,17 +387,17 @@ int
 pix_readpixels(fp, numpix, pixarray)
 FILE *fp;
 int numpix;
-struct pixel *pixarray;
+unsigned char *pixarray;
 {
-    return fread((void *)pixarray, 3, numpix, fp);
+    return fread(pixarray, 3, numpix, fp);
 }
 
 int
 pix_writepixels(numpix, pixarray)
 int numpix;
-struct pixel *pixarray;
+unsigned char *pixarray;
 {
-    return fwrite((void *)pixarray, 3, numpix, stdout);
+    return fwrite(pixarray, 3, numpix, stdout);
 }
     
 int
@@ -385,7 +410,7 @@ char **argv;
     int pa_width = 0, pa_height = 0;
     int dissolvefrac;
     double warpfrac;
-    struct pixel *pa, *pb, *wa, *wb, *morph;
+    unsigned char *pa, *pb, *wa, *wb, *morph;
     double a, b, p;
     int numlines;
     struct lineseg *lines;
@@ -457,28 +482,14 @@ char **argv;
 	    return 1;
 	}
     }
-#if 0
-    
-#ifndef PARALLEL
-    npsw = 1;
-#endif
 
-    if (npsw < 0) {
-	npsw = rt_avail_cpus() + npsw;
-    }
-
-    if (npsw > MAX_PSW) npsw = MAX_PSW;
-    if (npsw > 1) {
-	rt_g.rtg_paral
-    
-#endif
     /* Allocate memory for our bag o' pixels. */
     
-    pa = (struct pixel *)malloc(pa_width*pa_height*sizeof(struct pixel));
-    pb = (struct pixel *)malloc(pa_width*pa_height*sizeof(struct pixel));
-    wa = (struct pixel *)malloc(pa_width*pa_height*sizeof(struct pixel));
-    wb = (struct pixel *)malloc(pa_width*pa_height*sizeof(struct pixel));
-    morph = (struct pixel *)malloc(pa_width*pa_height*sizeof(struct pixel));
+    pa = (unsigned char *)malloc(pa_width*pa_height*3);
+    pb = (unsigned char *)malloc(pa_width*pa_height*3);
+    wa = (unsigned char *)malloc(pa_width*pa_height*3);
+    wb = (unsigned char *)malloc(pa_width*pa_height*3);
+    morph = (unsigned char *)malloc(pa_width*pa_height*3);
     
     if (pa == NULL || pb == NULL || wa == NULL ||  wb == NULL ||
 	morph == NULL) {
@@ -486,9 +497,7 @@ char **argv;
 	return 1;
     }
 
-    /* The following is our memoizing table for weight calculation.
-       I don't trust the "zeroness" of global data.
-       Besides, we might have to put a zero in one of these. */
+    /* The following is our memoizing table for weight calculation. */
        
     for (i = 0; i < MAXLEN; i++)
 	weightlookup[i] = -1.0;
@@ -537,6 +546,8 @@ char **argv;
     pix_writepixels(pa_width*pa_height, morph);
 
     fprintf(stderr, "pixmorph: Morph complete.\n");
+
+    /* System takes care of memory deallocation. */
 
     return 0;
 }
