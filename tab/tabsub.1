@@ -223,6 +223,26 @@ routine
 where the 'from' argument is derived from the
 .I axis
 given, and the 'to' argument is the unit-length difference 'next'-'cur'.
+.SH "RT SCRIPT-LANGUAGE BUILT-INS"
+.PP
+It is worth noting that the "anim" command in the
+.IR rt (1)
+animation scripting language
+also offers some of these capabilities via built-in shortcuts.
+In addition to being able to provide the full 4x4 matrix as an
+argument to the "anim ... matrix" command, there are special
+keywords:
+"xlate", "translate" which take 3 arguments
+and pass them to the macro MAT_DELTAS,
+"rot" which takes 3 arguments and passes them to bn_mat_angles(),
+and
+"scale_about" which passes 4 arguments (point and scale factor)
+and calls bn_mat_scale_about_pt().
+An example looks like this:
+.sp .5
+   anim ellipse.r/ellipse.s matrix rarc
+      scale_about 16.1309 46.6556 -3.72252    0.2;
+.sp .5
 .SH EXAMPLE1
 .PP
 Based upon the example started in the manual page for
