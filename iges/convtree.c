@@ -25,11 +25,22 @@
 #include "./iges_extern.h"
 #include "wdb.h"
 
+void Read_att();
+
 Convtree()
 {
 
-	int i,notdone=2,conv=0,tottrees=0;
-	struct node *ptr,*Readtree(),*oldptr,*Copytree();
+	int			notdone=2;
+	int			conv=0;
+	int			tottrees=0;
+	struct node		*ptr,*oldptr;
+	struct node		*Readtree(),*Copytree();
+	int			no_of_assoc;
+	int			no_of_props;
+	int			att_de;
+	char 			*rgb;
+	struct brlcad_att	brl_att;
+	int			i,j,k;
 
 	printf( "\nConverting boolean tree entities:\n" );
 
@@ -48,6 +59,29 @@ Convtree()
 
 		Readrec( dir[i]->param ); /* read first record into buffer */
 		ptr = Readtree(); /* construct the tree */
+
+		/* skip over the associativities */
+		Readint( &no_of_assoc , "" );
+		for( k=0 ; k<no_of_assoc ; k++ )
+			Readint( &j , "" );
+
+		/* get property entity DE's */
+		Readint( &no_of_props , "" );
+		for( k=0 ; k<no_of_props ; k++ )
+		{
+			Readint( &j , "" );
+			if( dir[(j-1)/2]->type == 422 &&
+				 dir[(j-1)/2]->referenced == brlcad_att_de )
+			{
+				/* this is one of our attribute instances */
+				att_de = j;
+			}
+		}
+
+		Read_att( att_de , &brl_att );
+		/* Read_att will supply defaults if att_de is 0 */
+		if( att_de == 0 )
+			brl_att.region_flag = 1;
 
 		oldptr = Copytree( ptr , (struct node *)NULL ); /* save a copy */
 
@@ -71,16 +105,24 @@ Convtree()
 			/* make member records */
 			Makemembers( ptr , &head );
 
-			/* Make the object (Not using regions to take advantage of nesting) */
-			if( dir[i]->colorp != 0 )  {
-				mk_lcomb( fdout , dir[i]->name , &head , 0 ,
-					(char *)NULL , (char *)NULL ,
-					(char *)(dir[i]->rgb) , 1 );
-			}  else  {
-				mk_lcomb( fdout , dir[i]->name , &head , 0 ,
-					(char *)NULL , (char *)NULL ,
-					(char *)0 , 1 );
-			}
+			/* Make the object */
+			if( dir[i]->colorp != 0 )
+				rgb = (char*)dir[i]->rgb;
+			else
+				rgb = (char *)0;
+
+			mk_lrcomb( fdout , 
+				dir[i]->name,		/* name */
+				&head,			/* members */
+				brl_att.region_flag,	/* region flag */
+				brl_att.material_name,	/* material name */
+				brl_att.material_params, /* material parameters */
+				rgb,			/* color */
+				brl_att.ident,		/* ident */
+				brl_att.air_code,	/* air code */
+				brl_att.material_code,	/* GIFT material */
+				brl_att.los_density,	/* los density */
+				brl_att.inherit );	/* inherit */
 
 			conv++;
 		}

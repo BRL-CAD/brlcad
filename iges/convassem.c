@@ -25,6 +25,8 @@
 #include "./iges_extern.h"
 #include "wdb.h"
 
+void Read_att();
+
 /* Linked list to hold needed data for the group members */
 struct solid_list
 {
@@ -37,11 +39,15 @@ struct solid_list
 
 Convassem()
 {
-
-	int i,j,comblen,conv=0,totass=0;
-	struct solid_list *root,*ptr;
-	struct wmember head,*wmem;
-	fastf_t *flt;
+	int			i,j,k,comblen,conv=0,totass=0;
+	struct solid_list	*root,*ptr;
+	struct wmember		head,*wmem;
+	int			no_of_assoc;
+	int			no_of_props;
+	int			att_de;
+	char 			*rgb;
+	struct brlcad_att	brl_att;
+	fastf_t			*flt;
 
 	printf( "\nConverting solid assembly entities:\n" );
 
@@ -125,6 +131,25 @@ Convassem()
 			ptr = ptr->next;
 		}
 
+		/* skip over the associativities */
+		Readint( &no_of_assoc , "" );
+		for( k=0 ; k<no_of_assoc ; k++ )
+			Readint( &j , "" );
+
+		/* get property entity DE's */
+		Readint( &no_of_props , "" );
+		for( k=0 ; k<no_of_props ; k++ )
+		{
+			Readint( &j , "" );
+			if( dir[(j-1)/2]->type == 422 &&
+				 dir[(j-1)/2]->referenced == brlcad_att_de )
+			{
+				/* this is one of our attribute instances */
+				att_de = j;
+			}
+		}
+
+		Read_att( att_de , &brl_att );
 
 		/* Make the members */
 		ptr = root;
@@ -148,15 +173,25 @@ Convassem()
 			ptr = ptr->next;
 		}
 
-		if( dir[i]->colorp != 0 )  {
-			mk_lcomb( fdout , dir[i]->name , &head , 0 ,
-				(char *)0 , (char *)0 ,
-				(char *)dir[i]->rgb , 0 );
-		}  else  {
-			mk_lcomb( fdout , dir[i]->name , &head , 0 ,
-				(char *)0 , (char *)0 ,
-				(char *)0 , 0 );
-		}
+		/* Make the object */
+		if( dir[i]->colorp != 0 )
+			rgb = (char*)dir[i]->rgb;
+		else
+			rgb = (char *)0;
+
+		mk_lrcomb( fdout , 
+			dir[i]->name,		/* name */
+			&head,			/* members */
+			brl_att.region_flag,	/* region flag */
+			brl_att.material_name,	/* material name */
+			brl_att.material_params, /* material parameters */
+			rgb,			/* color */
+			brl_att.ident,		/* ident */
+			brl_att.air_code,	/* air code */
+			brl_att.material_code,	/* GIFT material */
+			brl_att.los_density,	/* los density */
+			brl_att.inherit );	/* inherit */
+
 
 		/* Increment the count of successful conversions */
 		conv++;

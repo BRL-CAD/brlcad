@@ -72,6 +72,10 @@ Convsolids()
 				totsolids++;
 				conv += ell( i );
 				break;
+			case 186:
+				totsolids++;
+				conv += brep( i );
+				break;
 		}
 	}
 	printf( "Converted %d solids successfully out of %d total solids\n" , conv , totsolids );

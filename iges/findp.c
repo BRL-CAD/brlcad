@@ -70,23 +70,14 @@ Findp()
 	/* make space for directory entries */
 	totentities = (pstart - dstart)/2;
 	dirarraylen = totentities;
-	dir = (struct iges_directory **)malloc( totentities*sizeof( struct iges_directory *) );
-	if( dir == NULL )
-	{
-		fprintf( stderr , "Cannot allocate space for directory\n" );
-		perror( "Findp" );
-		exit( 1 );
-	}
+	dir = (struct iges_directory **)rt_calloc( totentities ,
+		sizeof( struct iges_directory *),
+		"IGES directory*" );
+
 	for( i=0 ; i<totentities ; i++ )
 	{
-		dir[i] = (struct iges_directory *)malloc( sizeof( struct iges_directory ) );
-		if( dir[i] == NULL )
-		{
-			fprintf( stderr , "Cannot allocate space for entire directory\n" );
-			fprintf( stderr , "\t there is space for %d out of the total %d entities\n" , i , totentities );
-			perror( "Findp" );
-			exit( 1 );
-		}
+		dir[i] = (struct iges_directory *)rt_malloc( sizeof( struct iges_directory ) , "IGES directory" );
+		dir[i]->name = (char *)NULL;
 	}
 
 	return( pstart );

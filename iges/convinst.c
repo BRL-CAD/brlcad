@@ -24,8 +24,16 @@
 Convinst()
 {
 
-	int i,type,pointer,conv=0,totinst=0;
-	mat_t *rot;
+	int			i,j,k;
+	int			type;
+	int			pointer;
+	int			conv=0;
+	int			totinst=0;
+	int			no_of_assoc;
+	int			no_of_props;
+	int			att_de=0;
+	struct brlcad_att	brl_att;
+	mat_t			*rot;
 
 	for( i=0 ; i<totentities ; i++ )
 	{
@@ -46,37 +54,88 @@ Convinst()
 		Readint( &pointer , "" );
 
 		/* convert pointer to a "dir" index */
-		pointer = (-pointer - 1)/2;
+		pointer = (pointer - 1)/2;
 		if( pointer < 0 || pointer >= totentities )
 		{
 			printf( "Solid instance D%07d (%s) does not point to a legal solid\n",
 				dir[i]->direct , dir[i]->name );
 			continue;
 		}
-		
 
-		/* copy pointed to object info to replace instance entity */
-		dir[i]->type = dir[pointer]->type;
-		dir[i]->form = dir[pointer]->form;
-		dir[i]->param = dir[pointer]->param;
+		/* skip over the associativities */
+		Readint( &no_of_assoc , "" );
+		for( k=0 ; k<no_of_assoc ; k++ )
+			Readint( &j , "" );
 
-		/* increment reference count for pointed to entity */
-		dir[pointer]->referenced++;
-
-		/* fix up transformation matrix if needed */
-		if( dir[i]->trans == 0 && dir[pointer]->trans == 0 )
-			continue;	/* nothing to do */
-		else if( dir[i]->trans == 0 )
-			dir[i]->trans = dir[pointer]->trans;	/* same as instanced */
-		else if( dir[i]->trans != 0 )
+		/* get property entity DE's */
+		Readint( &no_of_props , "" );
+		for( k=0 ; k<no_of_props ; k++ )
 		{
-			/* this instance refers to a transformation entity
-			   but the original instanced object does too,
-			   these matrices need to be combined */
+			Readint( &j , "" );
+			if( dir[(j-1)/2]->type == 422 &&
+				 dir[(j-1)/2]->referenced == brlcad_att_de )
+			{
+				/* this is one of our attribute instances */
+				att_de = j;
+			}
+		}
 
-			rot = (mat_t *)malloc( sizeof( mat_t ) );
-			Matmult( rot , *(dir[i]->rot) , dir[pointer]->rot );
-			dir[i]->rot = rot;
+		Read_att( att_de , &brl_att );
+
+		if( att_de )
+		{
+			/* This is actually a region or a group with just one member */
+			struct wmember head;
+			struct wmember *wmem;
+			char *rgb;
+
+			RT_LIST_INIT( &head.l );
+			wmem = mk_addmember( dir[pointer]->name , &head , WMOP_INTERSECT );
+			/* Make the object */
+			if( dir[i]->colorp != 0 )
+				rgb = (char*)dir[i]->rgb;
+			else
+				rgb = (char *)0;
+
+			mk_lrcomb( fdout , 
+				dir[i]->name,		/* name */
+				&head,			/* members */
+				brl_att.region_flag,	/* region flag */
+				brl_att.material_name,	/* material name */
+				brl_att.material_params, /* material parameters */
+				rgb,			/* color */
+				brl_att.ident,		/* ident */
+				brl_att.air_code,	/* air code */
+				brl_att.material_code,	/* GIFT material */
+				brl_att.los_density,	/* los density */
+				brl_att.inherit );	/* inherit */
+
+		}
+		else
+		{
+			/* copy pointed to object info to replace instance entity */
+			dir[i]->type = dir[pointer]->type;
+			dir[i]->form = dir[pointer]->form;
+			dir[i]->param = dir[pointer]->param;
+
+			/* increment reference count for pointed to entity */
+			dir[pointer]->referenced++;
+
+			/* fix up transformation matrix if needed */
+			if( dir[i]->trans == 0 && dir[pointer]->trans == 0 )
+				continue;	/* nothing to do */
+			else if( dir[i]->trans == 0 )
+				dir[i]->trans = dir[pointer]->trans;	/* same as instanced */
+			else if( dir[i]->trans != 0 )
+			{
+				/* this instance refers to a transformation entity
+				   but the original instanced object does too,
+				   these matrices need to be combined */
+
+				rot = (mat_t *)malloc( sizeof( mat_t ) );
+				Matmult( rot , *(dir[i]->rot) , dir[pointer]->rot );
+				dir[i]->rot = rot;
+			}
 		}
 		conv++;
 	}
