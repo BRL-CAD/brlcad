@@ -137,7 +137,7 @@ register struct combined_tree_state	*ctsp;
 	db_free_full_path( &(ctsp->cts_p) );
 	db_free_db_tree_state( &(ctsp->cts_s) );
 	bzero( (char *)ctsp, sizeof(*ctsp) );		/* sanity */
-	rt_free( (char *)ctsp, "combined_tree_state");
+	bu_free( (char *)ctsp, "combined_tree_state");
 }
 
 /*
@@ -160,7 +160,7 @@ register CONST struct db_tree_state	*tsp;
 		tsp->ts_mater.ma_color[1],
 		tsp->ts_mater.ma_color[2] );
 	bu_log(" ts_mater.ma_shader=%s\n", tsp->ts_mater.ma_shader ? tsp->ts_mater.ma_shader : "" );
-	mat_print("ts_mat", tsp->ts_mat );
+	bn_mat_print("ts_mat", tsp->ts_mat );
 }
 
 /*
@@ -177,7 +177,7 @@ register CONST struct combined_tree_state	*ctsp;
 	db_pr_tree_state( &(ctsp->cts_s) );
 	str = db_path_to_string( &(ctsp->cts_p) );
 	bu_log(" path='%s'\n", str);
-	rt_free( str, "path string" );
+	bu_free( str, "path string" );
 }
 
 /*
@@ -207,7 +207,7 @@ register CONST struct rt_comb_internal	*comb;
 
 				bu_log("db_apply_state_from_comb(): WARNING: color override in combination within region '%s', ignored\n",
 					sofar );
-				rt_free(sofar, "path string");
+				bu_free(sofar, "path string");
 			}
 			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_cinherit == 0 )  {
@@ -230,7 +230,7 @@ register CONST struct rt_comb_internal	*comb;
 
 				bu_log("db_apply_state_from_comb(): WARNING: material property spec in combination below region '%s', ignored\n",
 					sofar );
-				rt_free(sofar, "path string");
+				bu_free(sofar, "path string");
 			}
 			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_minherit == 0 )  {
@@ -250,7 +250,7 @@ register CONST struct rt_comb_internal	*comb;
 				char	*sofar = db_path_to_string(pathp);
 				bu_log("Warning:  region unioned into region at '%s', lower region info ignored\n",
 					sofar);
-				rt_free(sofar, "path string");
+				bu_free(sofar, "path string");
 			}
 			/* Go on as if it was not a region */
 		} else {
@@ -292,23 +292,23 @@ CONST union tree	*tp;
 	if( (mdp = db_lookup( tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_QUIET )) == DIR_NULL )  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_lookup(%s) failed in %s\n", tp->tr_l.tl_name, sofar);
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 		return -1;
 	}
 
 	db_add_node_to_full_path( pathp, mdp );
 
-	mat_copy( old_xlate, tsp->ts_mat );
+	bn_mat_copy( old_xlate, tsp->ts_mat );
 	if( tp->tr_l.tl_mat )
-		mat_copy( xmat, tp->tr_l.tl_mat );
+		bn_mat_copy( xmat, tp->tr_l.tl_mat );
 	else
-		mat_idn( xmat );
+		bn_mat_idn( xmat );
 
 	/* Check here for animation to apply */
 	if ((mdp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("Animate %s with...\n", sofar);
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 	/*
 	 *  For each of the animations attached to the mentioned object,
@@ -330,7 +330,7 @@ CONST union tree	*tp;
 
 			str = db_path_to_string( &(anp->an_path) );
 			bu_log( "\t%s\t", str );
-			rt_free( str, "path string" );
+			bu_free( str, "path string" );
 			bu_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
 				i, j);
 
@@ -352,7 +352,7 @@ CONST union tree	*tp;
 		}
 	}
 
-	mat_mul(tsp->ts_mat, old_xlate, xmat);
+	bn_mat_mul(tsp->ts_mat, old_xlate, xmat);
 	return(0);		/* Success */
 }
 
@@ -673,7 +673,7 @@ CONST mat_t	mat;
 
 	case OP_DB_LEAF:
 		if( tp->tr_l.tl_mat == NULL )  {
-			tp->tr_l.tl_mat = mat_dup(mat);
+			tp->tr_l.tl_mat = bn_mat_dup(mat);
 			return;
 		}
 		bn_mat_mul( temp, mat, tp->tr_l.tl_mat );
@@ -775,7 +775,7 @@ int			noisy;
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
 			sofar, tsp, orig_str, noisy );
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 	if( *orig_str == '\0' )  return(0);		/* Null string */
@@ -811,10 +811,10 @@ int			noisy;
 				RT_CK_ANIMATE(anp);
 				if( dp != anp->an_path.fp_names[0] )
 					continue;
-				mat_copy( old_xlate, tsp->ts_mat );
-				mat_idn( xmat );
+				bn_mat_copy( old_xlate, tsp->ts_mat );
+				bn_mat_idn( xmat );
 				db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
-				mat_mul( tsp->ts_mat, old_xlate, xmat );
+				bn_mat_mul( tsp->ts_mat, old_xlate, xmat );
 			}
 		}
 
@@ -888,7 +888,7 @@ is_leaf:
 				char	*sofar = db_path_to_string(pathp);
 				bu_log("db_follow_path_for_state(%s) ERROR: found leaf early at '%s'\n",
 					cp, sofar );
-				rt_free(sofar, "path string");
+				bu_free(sofar, "path string");
 			}
 			goto fail;
 		}
@@ -910,17 +910,17 @@ is_leaf:
 
 out:
 	db_free_external( &ext );
-	rt_free( str, "bu_strdup (dup'ed path)" );
+	bu_free( str, "bu_strdup (dup'ed path)" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_follow_path_for_state() returns pathp='%s'\n",
 			sofar);
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 	return(0);		/* SUCCESS */
 fail:
 	db_free_external( &ext );
-	rt_free( str, "bu_strdup (dup'ed path)" );
+	bu_free( str, "bu_strdup (dup'ed path)" );
 	return(-1);		/* FAIL */
 }
 
@@ -949,10 +949,10 @@ struct combined_tree_state	**region_start_statepp;
 		if( db_apply_state_from_memb( &memb_state, pathp, tp ) < 0 )  {
 			/* Lookup of this leaf failed, NOP it out. */
 			if( tp->tr_l.tl_mat )  {
-				rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+				bu_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
 				tp->tr_l.tl_mat = NULL;
 			}
-			rt_free( tp->tr_l.tl_name, "tl_name" );
+			bu_free( tp->tr_l.tl_name, "tl_name" );
 			tp->tr_l.tl_name = NULL;
 			tp->tr_op = OP_NOP;
 			goto out;
@@ -974,10 +974,10 @@ struct combined_tree_state	**region_start_statepp;
 		} else {
 			/* Processing of this leaf failed, NOP it out. */
 			if( tp->tr_l.tl_mat )  {
-				rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+				bu_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
 				tp->tr_l.tl_mat = NULL;
 			}
-			rt_free( tp->tr_l.tl_name, "tl_name" );
+			bu_free( tp->tr_l.tl_name, "tl_name" );
 			tp->tr_l.tl_name = NULL;
 			tp->tr_op = OP_NOP;
 		}
@@ -1047,7 +1047,7 @@ struct combined_tree_state	**region_start_statepp;
 		bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x, tsp->ts_sofar=%d\n",
 			sofar, tsp,
 			*region_start_statepp, tsp->ts_sofar );
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 	/*
@@ -1094,7 +1094,7 @@ struct combined_tree_state	**region_start_statepp;
 					char	*sofar = db_path_to_string(pathp);
 					bu_log("db_recurse() ts_region_start_func deletes %s\n",
 						sofar);
-					rt_free(sofar, "path string");
+					bu_free(sofar, "path string");
 				}
 				db_free_db_tree_state( &nts );
 				curtree = TREE_NULL;		/* FAIL */
@@ -1179,7 +1179,7 @@ region_end:
 		    ! NEAR_ZERO(fz, 0.0001) )  {
 			bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
 				dp->d_namep, fx, fy, fz );
-			mat_print("bad matrix", tsp->ts_mat);
+			bn_mat_print("bad matrix", tsp->ts_mat);
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
@@ -1212,7 +1212,7 @@ region_end:
 					sofar, ctsp );
 				db_pr_combined_tree_state(ctsp);
 			}
-		    	rt_free( sofar, "path string" );
+		    	bu_free( sofar, "path string" );
 		}
 
 		/* Hand the solid off for leaf processing */
@@ -1235,7 +1235,7 @@ out:
 		bu_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
 			curtree, sofar,
 			*region_start_statepp );
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 	if(curtree) RT_CK_TREE(curtree);
 	return(curtree);
@@ -1364,7 +1364,7 @@ union tree	*tp;
 		{
 			struct nmgregion *r = tp->tr_d.td_r;
 			if( tp->tr_d.td_name )  {
-				rt_free( (char *)tp->tr_d.td_name, "region name" );
+				bu_free( (char *)tp->tr_d.td_name, "region name" );
 				tp->tr_d.td_name = (CONST char *)NULL;
 			}
 			if( r == (struct nmgregion *)NULL )  {
@@ -1394,10 +1394,10 @@ union tree	*tp;
 
 	case OP_DB_LEAF:
 		if( tp->tr_l.tl_mat )  {
-			rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+			bu_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
 			tp->tr_l.tl_mat = NULL;
 		}
-		rt_free( tp->tr_l.tl_name, "tl_name" );
+		bu_free( tp->tr_l.tl_name, "tl_name" );
 		tp->tr_l.tl_name = NULL;
 		break;
 
@@ -1427,7 +1427,7 @@ union tree	*tp;
 		rt_bomb("db_free_tree\n");
 	}
 	tp->tr_op = 0;		/* sanity */
-	rt_free( (char *)tp, "union tree" );
+	bu_free( (char *)tp, "union tree" );
 }
 
 /*			D B _ L E F T _ H V Y _ N O D E
@@ -1567,7 +1567,7 @@ top:
 		A = tp->tr_b.tb_right->tr_b.tb_left;
 		B = tp->tr_b.tb_right->tr_b.tb_right;
 		tp->tr_op = OP_UNION;
-		GETUNION( tmp, tree );
+		BU_GETUNION( tmp, tree );
 		tmp->tr_regionp = tp->tr_regionp;
 		tmp->magic = RT_TREE_MAGIC;
 		tmp->tr_op = OP_INTERSECT;
@@ -1839,7 +1839,7 @@ union tree		 *(*leaf_func)();
 			char	*str;
 			str = db_path_to_string( &(ctsp->cts_p) );
 			bu_log("db_walk_subtree() FAIL on '%s'\n", str);
-			rt_free( str, "path string" );
+			bu_free( str, "path string" );
 
 			db_free_combined_tree_state( ctsp );
 			/* Result is an empty tree */
@@ -1850,7 +1850,7 @@ union tree		 *(*leaf_func)();
 		/* replace *tp with new subtree */
 		*tp = *curtree;		/* struct copy */
 		db_free_combined_tree_state( ctsp );
-		rt_free( (char *)curtree, "replaced tree node" );
+		bu_free( (char *)curtree, "replaced tree node" );
 		return;
 
 	case OP_NOT:
@@ -2063,7 +2063,7 @@ union tree *	(*leaf_func)();
 	 *  for parallel processing below.
 	 */
 	new_reg_count = db_count_subtree_regions( whole_tree );
-	reg_trees = (union tree **)rt_calloc( sizeof(union tree *),
+	reg_trees = (union tree **)bu_calloc( sizeof(union tree *),
 		(new_reg_count+1), "*reg_trees[]" );
 	new_reg_count = db_tally_subtree_regions( whole_tree, reg_trees, 0,
 		new_reg_count );
@@ -2097,7 +2097,7 @@ union tree *	(*leaf_func)();
 		 	RT_CK_CTS(ctsp);
 			str = db_path_to_string( &(ctsp->cts_p) );
 			bu_log("%d '%s'\n", i, str);
-			rt_free( str, "path string" );
+			bu_free( str, "path string" );
 		}
 		bu_log("end of waiting regions\n");
 	}
@@ -2123,7 +2123,7 @@ union tree *	(*leaf_func)();
 		if( reg_trees[i] != TREE_NULL )
 			db_free_tree( reg_trees[i] );
 	}
-	rt_free( (char *)reg_trees, "*reg_trees[]" );
+	bu_free( (char *)reg_trees, "*reg_trees[]" );
 
 	return(0);	/* OK */
 }
@@ -2163,7 +2163,7 @@ int depth;			/* number of arcs */
 	 */
 	if (depth > pathp->fp_len-1) depth = pathp->fp_len-1;
 
-	mat_idn(mat);
+	bn_mat_idn(mat);
 	/*
 	 * if there is no arc, return ident matrix now
 	 */
@@ -2176,7 +2176,7 @@ int depth;			/* number of arcs */
 			char *sofar = db_path_to_string(pathp);
 			bu_log("db_path_to_mat: '%s' of '%s' not a combination.\n",
 			    parentp->d_namep, sofar);
-			rt_free(sofar, "path string");
+			bu_free(sofar, "path string");
 			return 0;
 		}
 
@@ -2197,10 +2197,10 @@ int depth;			/* number of arcs */
 		pathp->fp_len = i+2;
 		if( tp->tr_l.tl_mat )  {
 			db_apply_anims(pathp, kidp, mat, tp->tr_l.tl_mat, 0);
-			mat_mul(tmat, mat, tp->tr_l.tl_mat);
-			mat_copy(mat, tmat);
+			bn_mat_mul(tmat, mat, tp->tr_l.tl_mat);
+			bn_mat_copy(mat, tmat);
 		} else {
-			mat_idn( tmat );
+			bn_mat_idn( tmat );
 			db_apply_anims(pathp, kidp, mat, tmat, 0);
 		}
 		pathp->fp_len = holdlength;
@@ -2228,7 +2228,7 @@ struct mater_info *materp;
 	if ((dp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("Animate %s with...\n", sofar);
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 	/*
@@ -2252,7 +2252,7 @@ struct mater_info *materp;
 
 			str = db_path_to_string( &(anp->an_path) );
 			bu_log( "\t%s\t", str );
-			rt_free( str, "path string" );
+			bu_free( str, "path string" );
 		}
 
 		for( ; i>=0 && j>=0; i--, j-- )  {
@@ -2304,7 +2304,7 @@ CONST char *name;
 	/* get matrix to map points from model (world) space
 	 * to "region" space
 	 */
-	mat_inv(m, region_to_model);
+	bn_mat_inv(m, region_to_model);
 }
 
 
@@ -2343,7 +2343,7 @@ point_t p_max;	/* shader/region max point */
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
 #ifdef DEBUG_SHADER_MAT
-	mat_print("model_to_region", model_to_region);
+	bn_mat_print("model_to_region", model_to_region);
 #endif
 	if (VEQUAL(p_min, p_max)) {
 		/* User/shader did not specify bounding box,
@@ -2372,10 +2372,10 @@ point_t p_max;	/* shader/region max point */
 	/*
 	 * Translate bounding box to origin
 	 */
-	mat_idn(m_xlate);
+	bn_mat_idn(m_xlate);
 	VSCALE(v_tmp, p_min, -1);
 	MAT_DELTAS_VEC(m_xlate, v_tmp);
-	mat_mul(m_tmp, m_xlate, model_to_region);
+	bn_mat_mul(m_tmp, m_xlate, model_to_region);
 
 
 	/* 
@@ -2383,7 +2383,7 @@ point_t p_max;	/* shader/region max point */
 	 */
 	VSUB2(v_tmp, p_max, p_min);
 	VINVDIR(v_tmp, v_tmp);
-	mat_idn(m_scale);
+	bn_mat_idn(m_scale);
 	MAT_SCALE_VEC(m_scale, v_tmp);
-	mat_mul(model_to_shader, m_scale, m_tmp);
+	bn_mat_mul(model_to_shader, m_scale, m_tmp);
 }
