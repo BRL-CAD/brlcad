@@ -207,7 +207,9 @@ struct rt_i		*rtip;
 {
 	struct rt_rpc_internal		*xip;
 	register struct rpc_specific	*rpc;
-	const struct bn_tol		*tol = &rtip->rti_tol;
+#ifndef NO_BOMBING_MACROS
+	const struct bn_tol		*tol = &rtip->rti_tol;  /* only used to check a if tolerance is valid */
+#endif
 	LOCAL fastf_t	magsq_b, magsq_h, magsq_r;
 	LOCAL fastf_t	mag_b, mag_h, mag_r;
 	LOCAL fastf_t	f;
