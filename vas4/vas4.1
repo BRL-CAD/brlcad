@@ -1,17 +1,23 @@
-.TH VAS4 1 "20 May 1987"
+.TH VAS4 1 BRL/CAD
+.SH NAME
+vas4 \- control Lyon Lamb Video Animation System VAS4 to record videotape
 .SH SYNOPSIS
-vas4   keyword   [options]
-
+.B vas4
+.B keyword
+.RB [ options ]
 .SH DESCRIPTION
-The VAS IV is a video animation controller designed specifically for frame
-by frame recording and editing.
-This command performs a variety of actions to the 
-VAS IV controller and associated Video Tape Recorder (VTR) allowing
-the user to create an animated sequence.
+The Lyon Lamb VAS IV
+is a video animation controller designed specifically for frame
+by frame recording and editing of video tape.
+The
+.I vas4
+command initiates a variety of actions within both the
+VAS IV controller and associated Video Tape Recorder (VTR),
+allowing the animated sequences to be recorded on video tape.
 The specified 
-keyword determines the action to be performed.  The options specified are 
+keyword determines the action to be performed.
+Additional options specified are
 dependent upon the keyword selected.
-
 .SH KEYWORDS
 .TP
 init\ \ \ \ 
@@ -46,9 +52,6 @@ number of video frames (nf) to record.  A default value of 1 is used if
 the option is not specified.  The \fInew\fR option must be executed to initiate
 the scene.  This option may be repeated for each image as required.
 .TP
-rs170
-Set the Ikonas parameters to RS-170 appropriate for NTSC encoder.
-.TP
 sequence [n nf] [start]
 Provides an automated method for recording a sequence of images.  The option
 n specifies the number of images and nf specifies the number of frames per
@@ -58,8 +61,7 @@ be specified unless n and nf are also specified.  For more details of this
 option, see SEQUENCE RECORDING below.
 .TP
 status
-Queries the VAS and prints its current status.
-
+Queries the VAS and the VTR, and prints their current status.
 .SH EXAMPLES
 .nf
 vas4	init
@@ -68,7 +70,6 @@ vas4	new		will start a new recording with scene 1
 vas4	new	2	will start a new recording of scene 2
 vas4	record	3	will record 3 video frames of the currently displayed image
 .fi
-
 .SH TYPICAL SEQUENCE
 The following example illustrates a typical recording sequence using 
 the \fIvas4\fR command.  Suppose the user wants to produce a video consisting 
@@ -77,23 +78,26 @@ of 10 seconds of color bars, 4 seconds for title, 1 second for each of a
 of commands would be used.  Comments indicated by "/* */" are explanations not 
 to be included in the command.  Statements enclosed in "( )" describe an
 action to perform, but not a precise command.
-
 .nf
-	vas4 rs170		/*Set Ikonas to NTSC*/
-	vas4 init		/*Initialize VAS IV*/
-	ikcolorbars		/*Display color bars on the Ikonas*/
-	vas4 new		/*Initiate new scene 1*/
-	vas4 record 300		/*Record 10 seconds of color bars*/
+	FB_FILE=/dev/ik0v
+	export FB_FILE
+	cbars-fb		# Display color bars, switch to RS-170
+	vas4 init		# Initialize VAS IV
+	vas4 new 1		# Initiate new scene 1, record title matte
+	vas4 reset_time		# Set VTR time counter to 00:00:00
+	vas4 record 10sec	# Record 10 seconds (of color bars)
 	(display title image)
-	vas4 record 120		/*Record 4 seconds of title image*/
+	vas4 record 4sec	/*Record 4 seconds of title image*/
 	(display image #1)
-	vas4 record 30		/*Record 1 second of image #1*/
+	vas4 record 1sec	/*Record 1 second of image #1*/
 	(display image #2)
-	vas4 record 30		/*Record 1 second of image #2*/
+	vas4 record 1sec	/*Record 1 second of image #2*/
 	(repeat display/record sequence for remaining images)
 	(display credits image)
-	vas4 record 150		/*Record 5 seconds of credits image*/
-	vas4 init		/*Use init to stop the recording*/
+	vas4 record 5sec	/*Record 5 seconds of credits image*/
+	vas4 time0		# Return VTR to time 00:00:00
+	vas4 stop		# Stop VTR
+	vas4 init		# Force VAS-IV out of record mode
 .fi
 
 .SH SEQUENCE RECORDING
@@ -108,12 +112,10 @@ images to record and nf specifies the number of frames per recording.
 .LP
 Note that the following is a description of the steps performed
 by "sequence", not commands to be entered.
-
 .nf
-	vas4 rs170		/*Set Ikonas for NTSC*/
 	vas4 init		/*Initialize VAS IV*/
-	ikcolorbars		/*Display color bars*/
-	vas4 new		/*Initiate new scene*/
+	cbars-fb		/*Display color bars*/
+	vas4 new 1		/*Initiate new scene*/
 	vas4 record 300		/*Record 10 seconds of color bars*/
 	for (i=start; i<n; i++){
 		display_image i
@@ -131,7 +133,7 @@ image101.rle, image102.rle, . . . image129.rle, then the following could be
 used as the contents to a shell script named \fIdisplay_image\fR.
 .sp
 .ce
-rleik image$1.rle
+rle-fb image$1.rle
 
 .LP
 In this case, the integer command line parameter supplied by the
@@ -156,34 +158,47 @@ present at the input connector J4. Also the sync portion of the video
 signal must be in accordance with EIA RS-170 or RS-170A specification.
 .LP
 This statement plus experience indicates that the video source must be a
-stable RS-170 during the entire recording process. For example, rle-ik
-resets the Ikonas registers so it should not be used. An alternate to
-\fIrle-ik\fR is \fIrleik\fR which is the same command except that the
-Ikonas is not reset.
-.LP
+stable RS-170 during the entire recording process.
 This sync dependency further implies that communication with the VAS IV
 controller may not be reliable unless correct video is supplied.
-Therefore, the "vas4 rs170" command should be used prior to other vas4
-commands and Ikonas commands which will change the RS170 setting
+Therefore, the associated framebuffer should be placed into EXTERNAL SYNC
+operation before beginning operations with the VAS IV.
+For an Ikonas framebuffer, this is done by setting FB_FILE to /dev/ik0v,
+(where ``0'' is the unit number, and ``v'' specifies RS-170 style video),
+and then running
+.I fbclear
+or
+.I cbars-fb
+Any operations which will change the RS170 setting
 should be avioded during the recording process.
-
 .SH TAPE PREPARATION
-Before using a new tape to record an animation sequence, it must be
-prepared by recording a black signal. To do this preparation, set the
-encoder switches to 'VIDEO INT' & 'BLACK', insert the new tape, press
+Before using a new tape to record an animation sequence, it \fImust\fR be
+prepared by recording any signal on the VTR, to establish valid time codes.
+The best way to do this preparation is to set the
+ENC-6 encoder switches to 'VIDEO INT' & 'BLACK', insert the new tape,
+simultaneously press
 the 'RECORD' & 'PLAY' buttons on the VTR and wait until the entire tape
 has been recorded with the black signal.
-
 .SH FILES
 .nf
 /dev/vas	tty port connected to the VAS IV
 .fi
-
 .SH SEE ALSO
-ikcolorbars(1), rleik(1), ik-rle(1), rle-ik(1); VAS IV Operations Manual, 
+brlcad(1), cbars-fb(1), rle-fb(1), pix-fb(1), rle-ik(1)
+.br
+VAS IV Operations Manual, 
 Lyon-Lamb Video Animation Systems, Inc., 4531 Empire Avenue, Burbank, 
 CA, 91505, (818) 843-4831
-
-.SH AUTHOR
-Steven G. Satterfield, Computer Aided Design/Interactive Graphics (CADIG) 
-Group, U.S. Naval Academy, Annapolis, MD.
+.SH AUTHORS
+Steven G. Satterfield, U.S. Naval Academy
+.br
+Michael John Muuss, BRL
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
