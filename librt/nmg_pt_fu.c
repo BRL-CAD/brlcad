@@ -66,7 +66,7 @@ struct fpi {
 	CONST struct faceuse	*fu_p;
 	struct rt_list	ve_dh;		/* ve_dist list head */
 	plane_t		norm;		/* surface normal for face(use) */
-	pointp_t	pt;		/* pt in plane of face to classify */
+	point_t		pt;		/* pt in plane of face to classify */
 	void		(*eu_func)();	/* call w/eu when pt on edgeuse */
 	void		(*vu_func)();	/* call w/vu when pt on vertexuse */
 	CONST char	*priv;		/* caller's private data */
@@ -176,7 +176,7 @@ struct edge_info *ei;
 		fpi->fu_p->f_p->max_pt[1]+1.0,
 		fpi->fu_p->f_p->max_pt[2]+1.0);
 	
-	nmg_pl_fu(fd, fpi->fu_p, b, 255, 255, 255);
+	nmg_pl_eu(fd, ei->eu_p, b, 255, 255, 255);
 
 	pl_color(fd, 255, 255, 50);
 	pdv_3line(fd, ei->ved_p->pca, fpi->pt);
@@ -461,7 +461,61 @@ rt_log("\tdist:%g class:%s status:%d pca(%g %g %g)\n\t\tv1(%g %g %g) v2(%g %g %g
 
 
 
+static void
+pl_pt_lu(fpi, lu, ei)
+struct fpi *fpi;
+struct loopuse *lu;
+struct edge_info *ei;
+{
+	FILE *fd;
+	char name[25];
+	long *b;
+	static int plot_file_number=0;
+	int i;
+	point_t p1, p2;
 
+	NMG_CK_FPI(fpi);	
+	NMG_CK_FACEUSE(fpi->fu_p);
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_EI(ei);
+
+	sprintf(name, "pt_lu%02d.pl", plot_file_number++);
+	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+		perror(name);
+		abort();
+	}
+
+	rt_log("\toverlay %s\n", name);
+	b = (long *)rt_calloc( fpi->fu_p->s_p->r_p->m_p->maxindex,
+		sizeof(long), "bit vec"),
+
+	pl_erase(fd);
+	pd_3space(fd,
+		fpi->fu_p->f_p->min_pt[0]-1.0,
+		fpi->fu_p->f_p->min_pt[1]-1.0,
+		fpi->fu_p->f_p->min_pt[2]-1.0,
+		fpi->fu_p->f_p->max_pt[0]+1.0,
+		fpi->fu_p->f_p->max_pt[1]+1.0,
+		fpi->fu_p->f_p->max_pt[2]+1.0);
+	
+	nmg_pl_lu(fd, lu, b, 255, 255, 255);
+
+	pl_color(fd, 255, 255, 50);
+	pdv_3line(fd, ei->ved_p->pca, fpi->pt);
+
+	pl_color(fd, 255, 64, 255);
+
+	for (i=0 ; i < 3 ; i++) {
+		VMOVE(p1, fpi->pt);
+		p1[i] -= 1.0;
+		VMOVE(p2, fpi->pt);
+		p2[i] += 1.0;
+		pdv_3line(fd, p1, p2);
+	}
+
+	rt_free((char *)b, "bit vec");
+	fclose(fd);
+}
 
 
 
@@ -540,6 +594,8 @@ rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n"
 		case 1: /* pt is on ei->ved_p->v1 */
 		case 2:	/* pt is on ei->ved_p->v2 */
 			lu_class = NMG_CLASS_AonBshared;
+			if (rt_g.NMG_debug & DEBUG_PT_FU )
+				pl_pt_lu(fpi, lu, ei);
 			goto departure;
 			break;
 		case 3: /* pt pca is v1 */
@@ -576,6 +632,8 @@ rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n"
 				rt_log("found status 5 edge, loop class is %s\n", 
 					nmg_class_name(lu_class));
 			}
+			if (rt_g.NMG_debug & DEBUG_PT_FU )
+				pl_pt_lu(fpi, lu, ei);
 			goto departure;
 			break;
 		default:
@@ -585,7 +643,14 @@ rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n"
 			break;
 		}
 	}
-
+	if (ei_vdot_max) {
+		if (rt_g.NMG_debug & DEBUG_PT_FU)
+			pl_pt_lu(fpi, lu, ei_vdot_max);
+	} else {
+		rt_log("%s:%d ei_vdot_max not set\n",
+			__FILE__, __LINE__);
+		rt_bomb("How does this happen?\n");
+	}
 departure:
 
 	/* the caller will get whatever is left of the edge_list, but
@@ -775,7 +840,7 @@ CONST struct rt_tol     *tol;
 	fpi.fu_p = fu;
 	fpi.tol = tol;
 	RT_LIST_INIT(&fpi.ve_dh);
-	fpi.pt = pt;
+	VMOVE(fpi.pt, pt);
 	fpi.eu_func = eu_func;
 	fpi.vu_func = vu_func;
 	fpi.priv = priv;
