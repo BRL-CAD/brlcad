@@ -114,7 +114,7 @@ FILE *fp_out;
 		NMG_CK_EDGEUSE( eu );
 		v = eu->vu_p->v_p;
 		NMG_CK_VERTEX( v );
-		fprintf( fp_out , "%10d%8.1f%8.1f%8.1f" , ++vertex_count , V3ARGS( v->vg_p->coord ) );
+		fprintf( fp_out , "%10d%8f%8f%8f" , ++vertex_count , V3ARGS( v->vg_p->coord ) );
 	}
 
 	fu = lu->up.fu_p;

@@ -78,7 +78,7 @@ main()
 		printf( "%11.6f%11.6f%11.6f%13.6f\n" , V4ARGS( pl ) );
 
 		for( i=0 ; i<npts ; i++ )
-			printf( "%8.1f  %8.1f  %8.1f  \n" , V3ARGS( pts[i] ) );
+			printf( "%8f  %8f  %8f  \n" , V3ARGS( pts[i] ) );
 
 		rt_free( (char *)pts , "pts" );
 	}
