@@ -728,6 +728,14 @@ char	**args;
 #endif
 	}
 
+#ifdef UP
+#undef UP
+#endif
+
+#ifdef DOWN
+#undef DOWN
+#endif
+
 #define UP	'k'
 #define DOWN	'j'
 #define LEFT	'h'
