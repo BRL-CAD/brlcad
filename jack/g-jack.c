@@ -99,8 +99,6 @@ char	*argv[];
 	the_model = nmg_mm();
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
-/**	rt_g.debug = 1;			/* DEBUG_ALLRAYS -- to get core dumps */
-
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "a:dn:p:r:vx:P:X:")) != EOF) {
 		switch (c) {
@@ -124,6 +122,7 @@ char	*argv[];
 			break;
 		case 'P':
 			ncpu = atoi( optarg );
+			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
