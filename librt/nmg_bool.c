@@ -39,8 +39,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern int nmg_class_nothing_broken;
 
-RT_EXTERN( struct vertexuse *nmg_find_vertex_in_lu, ( struct vertex *v1, struct loopuse *lu2 ) );
-
 /* XXX Move to nmg_manif.c or nmg_ck.c */
 struct dangling_faceuse_state {
 	char		*visited;
