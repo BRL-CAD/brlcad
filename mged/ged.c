@@ -1552,7 +1552,7 @@ do_rc()
 	bu_vls_init( &str );
 
 #define ENVRC	"MGED_RCFILE"
-#define RCFILE	".gedrc"
+#define RCFILE	".mgedrc"
 
 	if( (path = getenv(ENVRC)) != (char *)NULL ) {
 		if ((fp = fopen(path, "r")) != NULL ) {
@@ -1566,9 +1566,10 @@ do_rc()
 			bu_vls_strcpy( &str, path );
 			bu_vls_strcat( &str, "/" );
 			bu_vls_strcat( &str, RCFILE );
+
+			if( (fp = fopen(bu_vls_addr(&str), "r")) != NULL )
+			  found = 1;
 		}
-		if( (fp = fopen(bu_vls_addr(&str), "r")) != NULL )
-			found = 1;
 	}
 
 	if( !found ) {
@@ -1580,8 +1581,10 @@ do_rc()
 
     /* At this point, if none of the above attempts panned out, give up. */
 
-	if( !found )
-		return -1;
+	if( !found ){
+	  bu_vls_free(&str);
+	  return -1;
+	}
 
 	bogus = 0;
 	while( !feof(fp) ) {
@@ -1591,8 +1594,10 @@ do_rc()
 	    fgets( buf, 80, fp );
     /* If the user has a set command with an equal sign, remember to warn */
 	    if( strstr(buf, "set") != NULL )
-		if( strchr(buf, '=') != NULL )
+	      if( strchr(buf, '=') != NULL ){
 		    bogus = 1;
+		    break;
+	      }
 	}
 	
 	fclose( fp );
@@ -1607,8 +1612,8 @@ do_rc()
 		Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 	}
 
+	bu_vls_free(&str);
 	return 0;
-
 }
 
 /*
