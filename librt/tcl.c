@@ -171,8 +171,6 @@ int
 rt_tcl_a_miss( ap )
 struct application	*ap;
 {
-	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
-
 	return 0;
 }
 
@@ -347,7 +345,6 @@ char **argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
-	char			buf[64];
 
 	if( argc != 2 )  {
 		Tcl_AppendResult( interp,
@@ -604,8 +601,6 @@ char		*str;
 	int	argc;
 	char	**argv;
 	union tree	*tp = TREE_NULL;
-	union tree	*lhs;
-	union tree	*rhs;
 
 	/* Skip over leading spaces in input */
 	while( *str && isspace(*str) ) str++;

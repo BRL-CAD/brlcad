@@ -177,7 +177,6 @@ CONST struct bn_tol *tol;
 	if( t < B_A_sq - tol->dist_sq )  {
 		/* PCA falls between A and B */
 		register fastf_t	dsq;
-		fastf_t			param_dist;	/* parametric dist */
 
 		/* Find distance from PCA to line segment (Pythagorus) */
 		if( (dsq = P_A_sq - t ) <= tol->dist_sq )  {
@@ -208,7 +207,7 @@ struct fpi *fpi;
 struct vertexuse *vu;
 {
 	vect_t delta;
-	struct ve_dist	*ve_d, *ved;
+	struct ve_dist	*ved;
 
 	NMG_CK_VERTEXUSE(vu);
 
@@ -621,7 +620,6 @@ CONST int		in_or_out_only;
 	struct edge_info	*ei;
 	pointp_t		eu_pt;
 	vect_t		left;
-	vect_t		pt_vec;
 	vect_t		v_to_pt;
 	int		found_data = 0;
 
@@ -1003,13 +1001,7 @@ struct loopuse *lu;
 struct edge_info *edge_list;
 {
 	struct edge_info *ei;
-	struct edge_info *ei_p;
 	struct edge_info *ei_vdot_max;
-	double		vdot_max;
-	double		vdot_val;
-	vect_t		v_pt;
-	vect_t		left;
-	double		dist;
 	struct bu_list	near;
 	int 		lu_class = NMG_CLASS_Unknown;
 
@@ -1052,7 +1044,6 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 	}
 
 
-	vdot_max = 0.0;
 	ei_vdot_max = (struct edge_info *)NULL;
 
 	for (BU_LIST_FOR(ei, edge_info, &near)) {
@@ -1277,7 +1268,6 @@ struct faceuse *fu;
 point_t pt;
 {
 	long *b;
-	char name[80];
 	FILE *fp; 
 	point_t p1, p2;
 	int i;
