@@ -392,8 +392,6 @@ wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.leafbytes, tcs.non_union_seen, max_s
 		bu_avs_add_vls( avsp, "los", &value );
 	}
 
-if(getuid()==53)bu_avs_print( avsp, "comb v5 attributes");
-
 	bu_vls_free( &value );
 	return 0;	/* OK */
 }
@@ -597,7 +595,6 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 
 finish:
 	if( ip->idb_avs.magic != BU_AVS_MAGIC )  return 0;	/* OK */
-if(getuid()==53) bu_avs_print( &ip->idb_avs, "comb5" );
 
 	/* Unpack the attributes */
 	if( (ap = bu_avs_get( &ip->idb_avs, "rgb" )) != NULL )  {
