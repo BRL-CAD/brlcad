@@ -1010,6 +1010,7 @@ char	**argv;
 		return;
 	}
 
+	rt_log("facetize:  tessellating primitives\n");
 	mged_facetize_tree = (union tree *)0;
   	mged_nmg_model = nmg_mm();
 	i = db_walk_tree( dbip, argc, argv,
@@ -1027,6 +1028,7 @@ char	**argv;
 	}
 
 	/* Now, evaluate the boolean tree into ONE region */
+	rt_log("facetize:  evaluating boolean expressions\n");
 	r = mged_nmg_doit( mged_facetize_tree );
 	if( r == 0 )  {
 		rt_log("facetize:  no resulting region, aborting\n");
@@ -1035,6 +1037,8 @@ char	**argv;
 	}
 	/* New region remains part of this nmg "model" */
 	NMG_CK_REGION( r );
+
+	rt_log("facetize:  exporting NMG to database\n");
 
 	/* Free boolean tree */
 	db_free_tree( mged_facetize_tree );
