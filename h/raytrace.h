@@ -187,16 +187,8 @@ struct rt_tess_tol  {
  *  the first entry in the structure is a magic number.
  */
 #define RT_CKMAG(_ptr, _magic, _str)	\
-	if( !(_ptr) )  { \
-		rt_log("ERROR: null %s ptr, file %s, line %d\n", \
-			_str, __FILE__, __LINE__ ); \
-		rt_bomb("NULL pointer"); \
-	} else if( *((long *)(_ptr)) != (_magic) )  { \
-		rt_log("ERROR: bad %s ptr x%x, s/b x%x, was %s(x%x), file %s, line %d\n", \
-			_str, _ptr, _magic, \
-			rt_identify_magic( *((long *)(_ptr)) ), \
-			*((long *)(_ptr)), __FILE__, __LINE__ ); \
-		rt_bomb("Bad pointer"); \
+	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
+		rt_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
 
 /*
@@ -1743,6 +1735,9 @@ RT_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
 RT_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
 RT_EXTERN(void rt_vlist_to_uplot, (FILE *fp, struct rt_list *vhead));
 
+/* bomb.c */
+RT_EXTERN(void rt_badmagic, (long *ptr, long magic, char *str,
+	char *file, int line));
 
 /************************************************************************
  *									*

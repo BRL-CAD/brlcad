@@ -155,16 +155,8 @@ struct nmg_ptbl {
 /* macros to check/validate a structure pointer
  */
 #define NMG_CKMAG(_ptr, _magic, _str)	\
-	if( !(_ptr) )  { \
-		rt_log("ERROR: NMG null %s ptr, file %s, line %d\n", \
-			_str, __FILE__, __LINE__ ); \
-		rt_bomb("NULL NMG pointer"); \
-	} else if( *((long *)(_ptr)) != (_magic) )  { \
-		rt_log("ERROR: NMG bad %s ptr x%x, s/b x%x, was %s(x%x), file %s, line %d\n", \
-			_str, _ptr, _magic, \
-			rt_identify_magic( *((long *)(_ptr)) ), \
-			*((long *)(_ptr)), __FILE__, __LINE__ ); \
-		rt_bomb("Bad NMG pointer"); \
+	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
+		rt_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
 
 #define NMG_CK_MODEL(_p)	NMG_CKMAG(_p, NMG_MODEL_MAGIC, "model")
