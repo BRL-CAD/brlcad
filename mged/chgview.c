@@ -97,9 +97,9 @@ char	**argv;
 		}
 	}
 	if (autosize) {
-		(void)fputs("Auto-center/size On\n", stdout );
+		(void)fputs("Auto-size/center On\n", stdout );
 	} else {
-		(void)fputs("Auto-center/size Off\n", stdout );
+		(void)fputs("Auto-size/center Off\n", stdout );
 	}
 }
 
