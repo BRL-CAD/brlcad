@@ -34,6 +34,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "externs.h"			/* For getopt() */
+#include "bu.h"
 #include "fb.h"
 #include "vfont-if.h"
 
