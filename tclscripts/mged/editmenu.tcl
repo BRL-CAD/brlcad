@@ -136,23 +136,29 @@ proc build_solid_menu { type id paths } {
 
     switch $type {
 	s {
+	    bind_listbox $top "<B1-Motion>"\
+		    "set item \[get_listbox_entry %W %x %y\];\
+		    solid_illum \$item"
 	    bind_listbox $top "<ButtonPress-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
-		    solid_illum \$item; break"
+		    solid_illum \$item"
 	    bind_listbox $top "<Double-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
 		    _mged_press sill;\
 		    _mged_ill \$item;\
-		    destroy $top; break"
+		    destroy $top"
 	}
 	o {
+	    bind_listbox $top "<B1-Motion>"\
+		    "set item \[get_listbox_entry %W %x %y\];\
+		    solid_illum \$item"
 	    bind_listbox $top "<ButtonPress-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
-		    solid_illum \$item; break"
+		    solid_illum \$item"
 	    bind_listbox $top "<Double-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
 		    build_matrix_menu $id \$item;\
-		    destroy $top; break"
+		    destroy $top"
 	}
 	default {
 	    destroy $top
@@ -160,7 +166,7 @@ proc build_solid_menu { type id paths } {
 	}
     }
 
-    bind_listbox $top "<ButtonRelease-1>" "%W selection clear 0 end; _mged_press reject; break"
+    bind_listbox $top "<ButtonRelease-1>" "%W selection clear 0 end; _mged_press reject"
 }
 
 proc build_matrix_menu { id path } {
@@ -188,16 +194,19 @@ proc build_matrix_menu { id path } {
     create_listbox $top $screen Matrix $path_components "_mged_press reject; destroy $top"
     set mged_gui($id,edit_menu) $top
 
+    bind_listbox $top "<B1-Motion>"\
+	    "set path_pos \[%W index @%x,%y\];\
+	    matrix_illum $path \$path_pos"
     bind_listbox $top "<ButtonPress-1>"\
 	    "set path_pos \[%W index @%x,%y\];\
-	    matrix_illum $path \$path_pos; break"
+	    matrix_illum $path \$path_pos"
     bind_listbox $top "<Double-1>"\
 	    "set path_pos \[%W index @%x,%y\];\
 	    _mged_press oill;\
 	    _mged_ill $path;\
 	    _mged_matpick \$path_pos;\
-	    destroy $top; break"
+	    destroy $top"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
-	    _mged_press reject; break"
+	    _mged_press reject"
 }
