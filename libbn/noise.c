@@ -808,8 +808,7 @@ double offset;
 
 /***********************************************************************
  *
- *
- *
+ *	From "Texturing and Modeling, A Procedural Approach" 2nd ed
  *
  */
 
@@ -821,7 +820,7 @@ double lacunarity;
 double octaves;
 double offset;
 {
-	double 			frequency;
+	double 			frequency = 1.0;
 	struct fbm_spec		*ep;
 	double			result, weight, signal, *spec_wgts;
 	point_t			pt;
