@@ -25,6 +25,7 @@
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 #define MAXSEG 10		/*  Maximum number of segments.  The  */
