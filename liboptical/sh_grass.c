@@ -41,9 +41,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
 		     struct shadework   *swp);
-#ifndef M_PI
-#define M_PI            3.14159265358979323846
-#endif
 
 #define SHADE_CONT	0
 #define SHADE_ABORT_GRASS	1	/* bit_flag */
