@@ -92,15 +92,22 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
-
-
-#if defined(unix) && defined(i386) && !defined(__bsdi__) && !defined(__386BSD__) && !defined(__NetBSD__)
+#if defined(unix) && defined(i386) && !defined(__bsdi__) && \
+	!defined(__386BSD__) && !defined(__NetBSD__) && !defined(linux)
 /* PC/AT with Interactive Systems Unix V/386 3.2 */
 #	undef	at
 	MACHINE=at;
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
 	HAS_SYMLINKS=0;
+#endif
+
+#if defined(unix) && defined(i386) && defined(linux)
+/* IBM PC with Linux */
+	MACHINE=li;
+	UNIXTYPE=SYSV;
+	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #if defined(__unix__) && defined(__i386__) && defined(__386BSD__)
