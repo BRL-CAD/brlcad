@@ -746,16 +746,23 @@ int		ncpus;
 		tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
 
 		if( attrs ) {
-			while( attrs[num_attrs] ) {
-				num_attrs++;
-			}
-			bu_avs_init( &tree_state.ts_attrs, num_attrs, "avs in tree_state" );
-			num_attrs = 0;
-			while( attrs[num_attrs] ) {
-				tree_state.ts_attrs.avp[num_attrs].name = bu_strdup( attrs[num_attrs] );
-				num_attrs++;
-			}
-			tree_state.ts_attrs.count = num_attrs;
+                       if( rtip->rti_dbip->dbi_version < 5 ) {
+                               bu_log( "WARNING: requesting attributes from an old database version (ignored)\n" );
+                               tree_state.ts_attrs.count = 0;
+                       } else {
+			       while( attrs[num_attrs] ) {
+				       num_attrs++;
+			       }
+			       bu_avs_init( &tree_state.ts_attrs, num_attrs, "avs in tree_state" );
+			       num_attrs = 0;
+			       while( attrs[num_attrs] ) {
+				       tree_state.ts_attrs.avp[num_attrs].name = bu_strdup( attrs[num_attrs] );
+				       num_attrs++;
+			       }
+			       tree_state.ts_attrs.count = num_attrs;
+		       }
+		} else {
+			tree_state.ts_attrs.count = 0;
 		}
 
 		if( num_attrs == 0 )
