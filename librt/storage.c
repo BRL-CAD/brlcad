@@ -75,18 +75,15 @@ rt_strdup( cp )
 register char *cp;
 {
 	register char	*base;
-	register char	*current;
+	register int	len;
 
-	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
-	if( (base = malloc( strlen(cp)+1 )) == (char *)0 )
+	if(rt_g.debug&DEBUG_MEM) rt_log("rt_strdup(%s) x%x\n", cp, cp);
+
+	len = strlen( cp )+2;
+	if( (base = rt_malloc( len, "rt_strdup" )) == (char *)0 )
 		rt_bomb("rt_strdup:  unable to allocate memory");
-	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
 
-	current = base;
-	do  {
-		*current++ = *cp;
-	}  while( *cp++ != '\0' );
-
+	bcopy( cp, base, len );
 	return(base);
 }
 
