@@ -112,7 +112,7 @@ char	**dpp;
 	lp->lt_fraction = -1.0;		/* Recomputed later */
 	lp->lt_explicit = 1;		/* explicitly modeled */
 	lp->lt_shadows = 1;		/* by default, casts shadows */
-	lp->lt_angle = 90;		/* hemisphere emission by default */
+	lp->lt_angle = 180;		/* spherical emission by default */
 	lp->lt_name = rt_strdup( rp->reg_name );
 	mlib_parse( matparm, light_parse, (mp_off_ty)lp );
 
