@@ -6,10 +6,10 @@
  *  'dither' and 'movie' in /usr/people/gifts/mextools/imgtools.
  */
 #include <stdio.h>
-#include "gl.h"
-#include "device.h"
-#include "image.h"
-#include "math.h"
+#include <math.h>
+#include <gl.h>
+#include <device.h>
+#include <image.h>
 
 unsigned char rgb[1024*3];
 
