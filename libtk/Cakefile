@@ -26,7 +26,7 @@
 			 --x-includes=XINCDIR --x-libraries=XLIBDIR \
 			 --with-tcl=../TCL_DIR --quiet
 #define PRODUCTS	[[echo libtk''TCLTK_VERS.a]]
-#define	AFTER_MAKE	ln -s PRODUCTS libtk.a
+#define	AFTER_MAKE	rm -f libtk.a ; ln -s PRODUCTS libtk.a
 #else
 #define TK_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --enable-shared \
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR \
@@ -34,7 +34,7 @@
 			 --with-tcl=../TCL_DIR --quiet
 #define PRODUCTS	[[echo libtk''TCLTK_VERS.so]]
 #define	SHARED_PRODUCT  libtk''TCLTK_VERS.so''[[LIBVERS]]
-#define	AFTER_MAKE	mv -f libtk''TCLTK_VERS.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT ; ln -s SHARED_PRODUCT libtk.so
+#define	AFTER_MAKE	mv -f libtk''TCLTK_VERS.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT ; rm -f libtk.so ; ln -s SHARED_PRODUCT libtk.so
 #endif
 #define EXTRA_PRODUCTS	wish
 
