@@ -554,7 +554,6 @@ typedef long	bitv_t;		/* largest integer type */
 #	define MAX_PSW		32     	/* they can go 32-way per single image */
 #	define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are configured by default */
 #	define	PARALLEL	1
-#	define	HAS_POSIX_THREADS	1
 #	define	MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 #else	/* 1 CPU SP3 build */
 #	define MAX_PSW		1	/* only one processor, max */
@@ -586,7 +585,6 @@ typedef long bitv_t;          /* could use long long */
 # define MAX_PSW         16
 # define DEFAULT_PSW     bu_avail_cpus()	/* use as many processors as are available */
 # define PARALLEL        1
-# define HAS_POSIX_THREADS 1    /* formerly in conf.h */
 # define MALLOC_NOT_MP_SAFE 1   /* uncertain, but this is safer for now */
 
 # else  /* 1 CPU Linux build */
