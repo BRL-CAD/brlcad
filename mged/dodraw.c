@@ -1010,7 +1010,8 @@ char	**argv;
 		return;
 	}
 
-	rt_log("facetize:  tessellating primitives\n");
+	rt_log("facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
+		mged_abs_tol, mged_rel_tol, mged_nrm_tol );
 	mged_facetize_tree = (union tree *)0;
   	mged_nmg_model = nmg_mm();
 	i = db_walk_tree( dbip, argc, argv,
@@ -1038,7 +1039,7 @@ char	**argv;
 	/* New region remains part of this nmg "model" */
 	NMG_CK_REGION( r );
 
-	rt_log("facetize:  exporting NMG to database\n");
+	rt_log("facetize:  converting NMG to database format\n");
 
 	/* Free boolean tree */
 	db_free_tree( mged_facetize_tree );
@@ -1074,6 +1075,8 @@ char	**argv;
 		ERROR_RECOVERY_SUGGESTION;
 		WRITE_ERR_return;
 	}
+	rt_log("facetize:  wrote %.2f Kbytes to database\n",
+		ext.ext_nbytes / 1024.0 );
 	db_free_external( &ext );
 	return;					/* OK */
 }
