@@ -187,11 +187,12 @@ int		order;
 	(node -> rbn_package)[order] = (y -> rbn_package)[order];
 	((node -> rbn_package)[order] -> rbp_node)[order] = node;
     }
-    if (--(y -> rbn_pkg_refs) == 0)
-	rb_free_node(y);
     
     if (rb_get_color(y, order) == RB_BLACK)
 	rb_fixup(tree, only_child, order);
+
+    if (--(y -> rbn_pkg_refs) == 0)
+	rb_free_node(y);
 }
 
 /*		        R B _ D E L E T E ( )
