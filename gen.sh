@@ -29,8 +29,9 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.20;	RCS_REVISION=9;		REL_DATE=Today
-RELEASE=3.21;	RCS_REVISION=9;		REL_DATE=25-July-91	# Beta+8
+#RELEASE=3.23;	RCS_REVISION=9;		REL_DATE=Today
+RELEASE=3.22;	RCS_REVISION=9;		REL_DATE=26-July-91	# Beta+9
+#RELEASE=3.21;	RCS_REVISION=9;		REL_DATE=25-July-91	# Beta+8
 #RELEASE=3.20;	RCS_REVISION=9;		REL_DATE=25-July-91	# Beta+7
 #RELEASE=3.19;	RCS_REVISION=9;		REL_DATE=24-July-91	# Beta+6
 #RELEASE=3.17;	RCS_REVISION=9;		REL_DATE=23-July-91	# Beta+5
@@ -415,14 +416,15 @@ arch)
 	echo "${ARCHIVE} created"
 
 	FTP_ARCHIVE=/usr/spool/ftp/tmp/cad${RELEASE}.tar
-	rm -f /tmp/cad-exclude
-	echo 'papers/*' >> /tmp/cad-exclude
-	echo 'vfont/*' >> /tmp/cad-exclude
-	echo 'contributed/*' >> /tmp/cad-exclude
-	echo 'dmdfb/*' >> /tmp/cad-exclude
-	echo 'doc/*' >> /tmp/cad-exclud
-	echo 'pix/*' >> /tmp/cad-exclude
-	/usr/gnu/bin/tar -cvf - -X /tmp/cad-exclude * |\
+	echo "encryption key is /$KEY/"
+	EXCLUDE=/tmp/cad-exclude
+	rm -f ${EXCLUDE}
+	echo 'papers/*' >> ${EXCLUDE}
+	echo 'vfont/*' >> ${EXCLUDE}
+	echo 'dmdfb/*' >> ${EXCLUDE}
+	echo 'contributed/*' >> ${EXCLUDE}
+	echo 'html/*' >> ${EXCLUDE}
+	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} * |\
 		crypt alphabeta | compress > ${FTP_ARCHIVE}-a.Z
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-a.Z
 	echo "${FTP_ARCHIVE}-a.Z created"
@@ -437,6 +439,7 @@ arch)
 		crypt alphabeta | compress > ${FTP_ARCHIVE}-c.Z
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-c.Z
 	echo "${FTP_ARCHIVE}-c.Z created"
+
 	rm -f ${EXCLUDE}
 	;;
 
