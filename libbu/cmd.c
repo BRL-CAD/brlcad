@@ -15,6 +15,8 @@
 #include "conf.h"
 #ifdef HAVE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
 #include "tcl.h"
@@ -75,4 +77,21 @@ bu_register_cmds(interp, cmds)
   for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++)
     (void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
 			    (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+}
+
+/*
+ * Builds a command string in the provided vls.
+ */
+void
+bu_build_cmd_vls(vls, cmd, argc, argv)
+     struct bu_vls	*vls;
+     CONST char		*cmd;
+     int		argc;
+     char		**argv;
+{
+	register int i;
+
+	bu_vls_strcpy(vls, cmd);
+	for (i = 0; i < argc; ++i)
+		bu_vls_printf(vls, " %s", argv[i]);
 }
