@@ -113,7 +113,7 @@ char	**argv;
 
 	if (mged_variables.faceplate) {
 
-	if(!ignore_scroll_and_menu){
+	if(mged_variables.show_menu){
         /*
 	 * If mouse press is in scroll area, see if scrolling, and if so,
 	 * divert this mouse press.

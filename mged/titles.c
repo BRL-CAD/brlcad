@@ -47,9 +47,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./dm.h"
 
-/* Used to ignore the old scrollbars and menus */
-int ignore_scroll_and_menu = 0;
-
 int	state;
 char	*state_str[] = {
 	"-ZOT-",
@@ -296,7 +293,7 @@ int call_dm;
 	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
 			  TITLE_YBASE-TEXT1_DY, 0 );
 
-	if(!ignore_scroll_and_menu){
+	if(mged_variables.show_menu){
 	  /* Enclose window in decorative box.  Mostly for alignment. */
 	  dmp->dmr_2d_line( XMIN, YMIN, XMAX, YMIN, 0 );
 	  dmp->dmr_2d_line( XMAX, YMIN, XMAX, YMAX, 0 );
@@ -337,7 +334,7 @@ int call_dm;
 		}
 	}
 
-	if(!ignore_scroll_and_menu){
+	if(mged_variables.show_menu){
 	  /*
 	   * The top of the menu (if any) begins at the Y value specified.
 	   */
@@ -369,7 +366,7 @@ int call_dm;
 	 */
 	create_text_overlay( &vls );
 
-	if(!ignore_scroll_and_menu){
+	if(mged_variables.show_menu){
 	  screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, &vls );
 	}else{
 	  screen_vls( x, y, &vls );
