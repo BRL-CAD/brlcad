@@ -39,7 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern int X_drawString2D();
 #endif
 
-#define W_AXES 0
+#define M_AXES 0
 #define V_AXES 1
 #define E_AXES 2
 
@@ -419,8 +419,8 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  }
 	}
 
-  if(mged_variables.w_axes)
-    draw_axes(W_AXES);  /* draw world view axis */
+  if(mged_variables.m_axes)
+    draw_axes(M_AXES);  /* draw world view axis */
 
   if(mged_variables.v_axes)
     draw_axes(V_AXES);  /* draw view axis */
@@ -508,7 +508,7 @@ int axes;
       b = DM_WHITE_B;
       index = 1;
       break;
-    case W_AXES:
+    case M_AXES:
       r = 150;
       g = 230;
       b = 150;
@@ -550,7 +550,7 @@ int axes;
       }
     }
 
-    if(axes == W_AXES){ /* world axes */
+    if(axes == M_AXES){ /* world axes */
       m1[X] = Viewscale*a1[X];
       m1[Y] = Viewscale*a1[Y];
       m1[Z] = Viewscale*a1[Z];
