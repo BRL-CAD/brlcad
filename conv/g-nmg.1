@@ -3,19 +3,24 @@
 g-nmg \- Perform Boolean evaluations to produce NMG objects
 .SH SYNOPSIS
 .B g-nmg
-[-t calc_dist_tol] [-a abs_tess_tol] [-n norm_tess_tol] [-r rel_tess_tol]
+[-v] [-b] [-t calc_dist_tol] [-a abs_tess_tol] [-n norm_tess_tol] [-r rel_tess_tol]
 [-x librt_debug_flag] [-X NMG_debug_flag] [-o outfile.g] infile.g object(s)
 .SH DESCRIPTION
 .I g-nmg
 performs the Boolean operations specified in any regions in the specified
 .I object(s)
-and writes the resulting NMG objects to
+and writes the resulting NMG objects (or BOT primitives, if the
+.I
+-b
+option is specified) to
 .I outfile.g
 or to
 .I stdout
 if the
 .I -o
 option is not used. The
+.I -v
+option requests additional logging output. The
 .I -t
 option specifies a calculational distance tolerance (in millimeters). This
 tolerance is used to distinguish neighboring vertices. Any two vertices less than
