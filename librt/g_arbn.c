@@ -1209,7 +1209,7 @@ char			**argv;
 		}
 		else if( !strcmp( argv[0], "P" ) ) {
 			/* eliminate all the '{' and '}' chars */
-			c = argv[1];
+			c = (unsigned char *)argv[1];
 			while( *c != '\0' ) {
 				if( *c == '{' || *c == '}' )
 					*c = ' ';

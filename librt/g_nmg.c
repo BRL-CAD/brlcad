@@ -3019,6 +3019,7 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 
 	while( argc >= 2 ) {
 		struct vertex ***face_verts;
+		struct faceuse *fu;
 
 		if( !strcmp( argv[0], "V" ) ) {
 			/* vertex list handled above */
@@ -3046,9 +3047,9 @@ rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 				Tcl_DecrRefCount( obj );
 				return( TCL_ERROR );
 			}
-			for( i=0 ; i<num_loops ; i++ ) {
-				struct faceuse *fu;
+			for( i=0, fu=NULL ; i<num_loops ; i++ ) {
 				struct vertex **loop_verts;
+				/* struct faceuse fu is initialized in earlier scope */
 
 				loop_len = 0;
 				(void)tcl_obj_to_int_array( interp, obj_array[i],
