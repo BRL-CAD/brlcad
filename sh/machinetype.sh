@@ -29,6 +29,9 @@
 # With thanks to Terry Slattery and Bob Reschly for assistance
 # $Revision$
 
+# Ensure /bin/sh.  Make no remarks here, just do it.
+export PATH || (sh $0 $*; kill $$)
+
 FILE=/tmp/machtype$$
 trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 
