@@ -1560,7 +1560,7 @@ register struct uvcoord	*uvp;
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
 	vect_t delta;
-	fastf_t r;
+	fastf_t r = 0;
 
 	VSUB2(delta, hitp->hit_point, hf->hf_V);
 #if 0
@@ -1577,10 +1577,9 @@ register struct uvcoord	*uvp;
 	if (uvp->uv_u > 1.0) uvp->uv_u=1.0;
 	if (uvp->uv_v < 0.0) uvp->uv_v=0.0;
 	if (uvp->uv_v > 1.0) uvp->uv_v=1.0;
-#if 0
+
 	uvp->uv_du = r;
 	uvp->uv_dv = r;
-#endif /* 0 */
 }
 
 /*
