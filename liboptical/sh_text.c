@@ -85,10 +85,12 @@ struct txt_specific {
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_n;		/* Number of scanlines */
 	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
+	fastf_t	tx_scale[2];	/* replication factors in U, V */
 	struct bu_mapped_file	*mp;
 };
 #define TX_NULL	((struct txt_specific *)0)
 #define TX_O(m)	offsetof(struct txt_specific, m)
+#define TX_AO(m)	bu_offsetofarray(struct txt_specific, m)
 
 struct bu_structparse txt_parse[] = {
 	{"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
@@ -96,7 +98,9 @@ struct bu_structparse txt_parse[] = {
 	{"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL }, /*compat*/
-	{"%d",	1, "trans_valid",	TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "trans_valid",TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "t",		TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -144,46 +148,71 @@ char	*dp;
 	fastf_t xmin, xmax, ymin, ymax;
 	int dx, dy;
 	register fastf_t r,g,b;
+	struct uvcoord uvc;
+	long tmp;
 
 	RT_CK_AP(ap);
 	RT_CHECK_PT(pp);
 
-	if( rdebug & RDEBUG_SHADE )
+	uvc = swp->sw_uv;
+
+	if (rdebug & RDEBUG_SHADE )
 		bu_log( "in txt_render(): du=%g, dv=%g\n", 
-			swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
+			uvc.uv_du, uvc.uv_dv );
+
+	/* take care of scaling U,V coordinates to get the desired amount
+	 * of replication of the texture
+	 */
+	uvc.uv_u *= tp->tx_scale[X];
+	tmp = uvc.uv_u;
+	uvc.uv_u -= tmp;
+
+	uvc.uv_v *= tp->tx_scale[Y];
+	tmp = uvc.uv_v;
+	uvc.uv_v -= tmp;
+
+	uvc.uv_du *= tp->tx_scale[X];
+	tmp = uvc.uv_du;
+	uvc.uv_du -= tmp;
+
+	uvc.uv_dv *= tp->tx_scale[X];
+	tmp = uvc.uv_dv;
+	uvc.uv_dv -= tmp;
+
+
 	/*
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
-	if( tp->tx_file[0] == '\0' || !tp->mp )  {
-		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (tp->tx_file[0] == '\0' || !tp->mp )  {
+		VSET( swp->sw_color, uvc.uv_u, 0, uvc.uv_v );
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 
 	/* u is left->right index, v is line number bottom->top */
 	/* Don't filter more than 1/8 of the texture for 1 pixel! */
-	if( swp->sw_uv.uv_du > 0.125 )  swp->sw_uv.uv_du = 0.125;
-	if( swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
+	if (uvc.uv_du > 0.125 )  uvc.uv_du = 0.125;
+	if (uvc.uv_dv > 0.125 )  uvc.uv_dv = 0.125;
 
-	if( swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
+	if (uvc.uv_du < 0 || uvc.uv_dv < 0 )  {
 		bu_log("txt_render uv=%g,%g, du dv=%g %g seg=%s\n",
-			swp->sw_uv.uv_u, swp->sw_uv.uv_v, swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
+			uvc.uv_u, uvc.uv_v, uvc.uv_du, uvc.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
-		swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
+		uvc.uv_du = uvc.uv_dv = 0;
 	}
 
-	xmin = swp->sw_uv.uv_u - swp->sw_uv.uv_du;
-	xmax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
-	ymin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;
-	ymax = swp->sw_uv.uv_v + swp->sw_uv.uv_dv;
-	if( xmin < 0 )  xmin = 0;
-	if( ymin < 0 )  ymin = 0;
-	if( xmax > 1 )  xmax = 1;
-	if( ymax > 1 )  ymax = 1;
+	xmin = uvc.uv_u - uvc.uv_du;
+	xmax = uvc.uv_u + uvc.uv_du;
+	ymin = uvc.uv_v - uvc.uv_dv;
+	ymax = uvc.uv_v + uvc.uv_dv;
+	if (xmin < 0 )  xmin = 0;
+	if (ymin < 0 )  ymin = 0;
+	if (xmax > 1 )  xmax = 1;
+	if (ymax > 1 )  ymax = 1;
 
-	if( rdebug & RDEBUG_SHADE )
+	if (rdebug & RDEBUG_SHADE )
 		bu_log( "footprint in texture space is (%g %g) <-> (%g %g)\n",
 			xmin * (tp->tx_w-1), ymin * (tp->tx_n-1),
 			xmax * (tp->tx_w-1), ymax * (tp->tx_n-1) );
@@ -192,9 +221,9 @@ char	*dp;
 	dx = (int)(xmax * (tp->tx_w-1)) - (int)(xmin * (tp->tx_w-1));
 	dy = (int)(ymax * (tp->tx_n-1)) - (int)(ymin * (tp->tx_n-1));
 
-	if( rdebug & RDEBUG_SHADE )
+	if (rdebug & RDEBUG_SHADE )
 		bu_log( "\tdx = %d, dy = %d\n", dx, dy );
-	if( dx == 0 && dy == 0 )
+	if (dx == 0 && dy == 0 )
 	{
 		/* No averaging necessary */
 
@@ -229,9 +258,9 @@ char	*dp;
 
 		r = g = b = 0.0;
 
-		if( rdebug & RDEBUG_SHADE )
+		if (rdebug & RDEBUG_SHADE )
 		{
-			bu_log( "\thit in texture space = (%g %g)\n", swp->sw_uv.uv_u * (tp->tx_w-1), swp->sw_uv.uv_v * (tp->tx_n-1) );
+			bu_log( "\thit in texture space = (%g %g)\n", uvc.uv_u * (tp->tx_w-1), uvc.uv_v * (tp->tx_n-1) );
 			bu_log( "\t averaging from  (%g %g) to (%g %g)\n", xstart, ystart, xstop, ystop );
 			bu_log( "\tcontributions to average:\n" );
 		}
@@ -243,10 +272,10 @@ char	*dp;
 			fastf_t line_upper, line_lower;
 
 			line_upper = line + 1.0;
-			if( line_upper > ystop )
+			if (line_upper > ystop )
 				line_upper = ystop;
 			line_lower = line;
-			if( line_lower < ystart )
+			if (line_lower < ystart )
 				line_lower = ystart;
 			line_factor = line_upper - line_lower;
 			cp = ((unsigned char *)(tp->mp->buf)) +
@@ -257,15 +286,15 @@ char	*dp;
 				fastf_t col_upper, col_lower;
 
 				col_upper = col + 1.0;
-				if( col_upper > xstop )
+				if (col_upper > xstop )
 					col_upper = xstop;
 				col_lower = col;
-				if( col_lower < xstart )
+				if (col_lower < xstart )
 					col_lower = xstart;
 				cell_area = line_factor * (col_upper - col_lower);
 				tot_area += cell_area;
 
-				if( rdebug & RDEBUG_SHADE )
+				if (rdebug & RDEBUG_SHADE )
 					bu_log( "\t %d %d %d weight=%g (from col=%d line=%d)\n", *cp, *(cp+1), *(cp+2), cell_area, col, line );
 
 				r += (*cp++) * cell_area;
@@ -278,17 +307,17 @@ char	*dp;
 		b /= tot_area;
 	}
 	
-	if( rdebug & RDEBUG_SHADE )
+	if (rdebug & RDEBUG_SHADE )
 		bu_log( " average: %g %g %g\n", r, g, b );
 #else
 	x = xmin * (tp->tx_w-1);
 	y = ymin * (tp->tx_n-1);
 	dx = (xmax - xmin) * (tp->tx_w-1);
 	dy = (ymax - ymin) * (tp->tx_n-1);
-	if( dx < 1 )  dx = 1;
-	if( dy < 1 )  dy = 1;
+	if (dx < 1 )  dx = 1;
+	if (dy < 1 )  dy = 1;
 
-	if( rdebug & RDEBUG_SHADE )
+	if (rdebug & RDEBUG_SHADE )
 		bu_log(" in txt_render(): x=%d y=%d, dx=%d, dy=%d\n", x, y, dx, dy);
 
 	r = g = b = 0;
@@ -299,19 +328,19 @@ char	*dp;
 		     (y+line) * tp->tx_w * 3  +  x * 3;
 		ep = cp + 3*dx;
 		while( cp < ep )  {
-			if( rdebug & RDEBUG_SHADE )
+			if (rdebug & RDEBUG_SHADE )
 				bu_log( "\tAdding %d %d %d\n", *cp, *(cp+1), *(cp+2) );
 			r += *cp++;
 			g += *cp++;
 			b += *cp++;
 		}
 	}
-	if( rdebug & RDEBUG_SHADE )
+	if (rdebug & RDEBUG_SHADE )
 		bu_log( "Totals: %d %d %d,", r, g, b );
 	r /= (dx*dy);
 	g /= (dx*dy);
 	b /= (dx*dy);
-	if( rdebug & RDEBUG_SHADE )
+	if (rdebug & RDEBUG_SHADE )
 		bu_log( " average: %d %d %d\n", r, g, b );
 #endif
 
@@ -321,16 +350,16 @@ opaque:
 			r * bn_inv255,
 			g * bn_inv255,
 			b * bn_inv255 );
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 	/* This circumlocution needed to keep expression simple for Cray,
 	 * and others
 	 */
-	if( r != ((long)tp->tx_transp[0]) )  goto opaque;
-	if( g != ((long)tp->tx_transp[1]) )  goto opaque;
-	if( b != ((long)tp->tx_transp[2]) )  goto opaque;
+	if (r != ((long)tp->tx_transp[0]) )  goto opaque;
+	if (g != ((long)tp->tx_transp[1]) )  goto opaque;
+	if (b != ((long)tp->tx_transp[2]) )  goto opaque;
 
 	/*
 	 *  Transparency mapping is enabled, and we hit a transparent spot.
@@ -338,7 +367,7 @@ opaque:
 	 */
 	swp->sw_transmit = 1.0;
 	swp->sw_reflect = 0.0;
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 	return(1);
 }
@@ -371,19 +400,19 @@ char	*dp;
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
-	if( tp->tx_file[0] == '\0' || !tp->mp )  {
+	if (tp->tx_file[0] == '\0' || !tp->mp )  {
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 
 	/* u is left->right index, v is line number bottom->top */
 	/* Don't filter more than 1/8 of the texture for 1 pixel! */
-	if( swp->sw_uv.uv_du > 0.125 )  swp->sw_uv.uv_du = 0.125;
-	if( swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
+	if (swp->sw_uv.uv_du > 0.125 )  swp->sw_uv.uv_du = 0.125;
+	if (swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
 
-	if( swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
+	if (swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
 		bu_log("bwtxt_render uv=%g,%g, du dv=%g %g seg=%s\n",
 			swp->sw_uv.uv_u, swp->sw_uv.uv_v, swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
@@ -393,16 +422,16 @@ char	*dp;
 	xmax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
 	ymin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;
 	ymax = swp->sw_uv.uv_v + swp->sw_uv.uv_dv;
-	if( xmin < 0 )  xmin = 0;
-	if( ymin < 0 )  ymin = 0;
-	if( xmax > 1 )  xmax = 1;
-	if( ymax > 1 )  ymax = 1;
+	if (xmin < 0 )  xmin = 0;
+	if (ymin < 0 )  ymin = 0;
+	if (xmax > 1 )  xmax = 1;
+	if (ymax > 1 )  ymax = 1;
 	x = xmin * (tp->tx_w-1);
 	y = ymin * (tp->tx_n-1);
 	dx = (xmax - xmin) * (tp->tx_w-1);
 	dy = (ymax - ymin) * (tp->tx_n-1);
-	if( dx < 1 )  dx = 1;
-	if( dy < 1 )  dy = 1;
+	if (dx < 1 )  dx = 1;
+	if (dy < 1 )  dy = 1;
 	bw = 0;
 	for( line=0; line<dy; line++ )  {
 		register unsigned char *cp;
@@ -419,14 +448,14 @@ char	*dp;
 opaque:
 		VSETALL( swp->sw_color,
 			bw * bn_inv255 / (dx*dy) );
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 	/* This circumlocution needed to keep expression simple for Cray,
 	 * and others
 	 */
-	if( bw / (dx*dy) != ((long)tp->tx_transp[0]) )  goto opaque;
+	if (bw / (dx*dy) != ((long)tp->tx_transp[0]) )  goto opaque;
 
 	/*
 	 *  Transparency mapping is enabled, and we hit a transparent spot.
@@ -434,7 +463,7 @@ opaque:
 	 */
 	swp->sw_transmit = 1.0;
 	swp->sw_reflect = 0.0;
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 	return(1);
 }
@@ -460,24 +489,26 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_n = -1;
 	tp->tx_trans_valid = 0;
-	if( bu_struct_parse( matparm, txt_parse, (char *)tp ) < 0 )  {
+	tp->tx_scale[X] = 1.0;
+	tp->tx_scale[Y] = 1.0;
+	if (bu_struct_parse( matparm, txt_parse, (char *)tp ) < 0 )  {
 		bu_free( (char *)tp, "txt_specific" );
 		return(-1);
 	}
-	if( tp->tx_w < 0 )  tp->tx_w = 512;
-	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
+	if (tp->tx_w < 0 )  tp->tx_w = 512;
+	if (tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 
-	if( tp->tx_trans_valid )
+	if (tp->tx_trans_valid )
 		rp->reg_transmit = 1;
 
-	if( tp->tx_file[0] == '\0' )  return -1;	/* FAIL, no file */
-	if( !(tp->mp = bu_open_mapped_file( tp->tx_file, NULL )) )
+	if (tp->tx_file[0] == '\0' )  return -1;	/* FAIL, no file */
+	if (!(tp->mp = bu_open_mapped_file( tp->tx_file, NULL )) )
 		return -1;				/* FAIL */
 
 	/* Ensure file is large enough */
-	if( strcmp( mfp->mf_name, "bwtexture" ) == 0 )
+	if (strcmp( mfp->mf_name, "bwtexture" ) == 0 )
 		pixelbytes = 1;
-	if( tp->mp->buflen < tp->tx_w * tp->tx_n * pixelbytes )  {
+	if (tp->mp->buflen < tp->tx_w * tp->tx_n * pixelbytes )  {
 		bu_log("\ntxt_setup() ERROR %s %s needs %d bytes, '%s' only has %d\n",
 			rp->reg_name,
 			mfp->mf_name,
@@ -486,7 +517,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 			tp->mp->buflen );
 		return -1;				/* FAIL */
 	}
-	if( rdebug & RDEBUG_SHADE )
+	if (rdebug & RDEBUG_SHADE )
 		bu_struct_print("texture", txt_parse, (char *)tp);
 
 	return 1;				/* OK */
@@ -512,7 +543,7 @@ char *cp;
 	struct txt_specific *tp =
 		(struct txt_specific *)cp;
 
-	if( tp->mp )  bu_close_mapped_file( tp->mp );
+	if (tp->mp )  bu_close_mapped_file( tp->mp );
 	bu_free( cp, "txt_specific" );
 }
 
@@ -556,7 +587,7 @@ char	*dp;
 	}
 
 #if 0
-	if( (swp->sw_uv.uv_u < 0.5 && swp->sw_uv.uv_v < 0.5) ||
+	if ((swp->sw_uv.uv_u < 0.5 && swp->sw_uv.uv_v < 0.5) ||
 	    (swp->sw_uv.uv_u >=0.5 && swp->sw_uv.uv_v >=0.5) )  {
 		cp = ckp->ckr_a;
 	} else {
@@ -569,7 +600,7 @@ char	*dp;
 		(unsigned char)cp[1] * bn_inv255,
 		(unsigned char)cp[2] * bn_inv255 );
 
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);
@@ -594,7 +625,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
 	ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;
 	ckp->ckr_scale = 2.0;
-	if( bu_struct_parse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
+	if (bu_struct_parse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
 		bu_free( (char *)ckp, "ckr_specific" );
 		return(-1);
 	}
@@ -642,7 +673,7 @@ char	*dp;
 {
 	VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);
@@ -678,7 +709,7 @@ struct shadework	*swp;
 char	*dp;
 {
 	/* Probably want to diddle parameters based on what part of sky */
-	if( bn_rand0to1(ap->a_resource->re_randptr) >= 0.98 )  {
+	if (bn_rand0to1(ap->a_resource->re_randptr) >= 0.98 )  {
 		register int i;
 		FAST fastf_t f;
 		i = (sizeof(star_colors)-1) / sizeof(star_colors[0]);
@@ -693,7 +724,7 @@ char	*dp;
 		VSETALL( swp->sw_color, 0 );
 	}
 
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);
@@ -730,20 +761,20 @@ char	*dp;
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug color.
 	 */
-	if( tp->tx_file[0] == '\0' || !tp->mp )  {
+	if (tp->tx_file[0] == '\0' || !tp->mp )  {
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 	/* u is left->right index, v is line number bottom->top */
-	if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 || swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
+	if (swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 || swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
 		bu_log("bmp_render:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
 			swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 			swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
 		VSET( swp->sw_color, 0, 1, 0 );
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
@@ -762,7 +793,7 @@ char	*dp;
 	pertU = ((fastf_t)(*cp) - 128.0) / 128.0;
 	pertV = ((fastf_t)(*(cp+2)) - 128.0) / 128.0;
 
-	if( rdebug&RDEBUG_LIGHT ) {
+	if (rdebug&RDEBUG_LIGHT ) {
 		VPRINT("normal", swp->sw_hit.hit_normal);
 		VPRINT("u", u );
 		VPRINT("v", v );
@@ -771,11 +802,11 @@ char	*dp;
 	}
 	VJOIN2( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, pertU, u, pertV, v );
 	VUNITIZE( swp->sw_hit.hit_normal );
-	if( rdebug&RDEBUG_LIGHT ) {
+	if (rdebug&RDEBUG_LIGHT ) {
 		VPRINT("after", swp->sw_hit.hit_normal);
 	}
 
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);
@@ -796,7 +827,7 @@ struct mfuncs	**headp;
 
 	BU_CK_VLS( matparm );
 	RT_CK_RTI(rtip);
-	if( env_region.reg_mfuncs )  {
+	if (env_region.reg_mfuncs )  {
 		bu_log("envmap_setup:  second environment map ignored\n");
 		return(0);		/* drop region */
 	}
@@ -810,7 +841,7 @@ struct mfuncs	**headp;
 
 	env_region.reg_mater.ma_shader = bu_vls_strdup( matparm );
 
-	if( mlib_setup( headp, &env_region, rtip ) < 0 )
+	if (mlib_setup( headp, &env_region, rtip ) < 0 )
 		bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
 
 	return(0);		/* This region should be dropped */
