@@ -691,9 +691,9 @@ or <a href="#ev">ev</a> comands.
 </DD>
 <HR>
 
-<DT><a NAME="binary"><B>binary</B> [<I>-i</I>|<I>-o</I>] <I>-u</I> <I>type dest source</I></DT>
+<DT><a NAME="dbbinary"><B>dbbinary</B> [<I>-i</I>|<I>-o</I>] <I>-u</I> <I>type dest source</I></DT>
 
-<DD> The ``binary'' command is used to create or retrieve binary opaque objects.
+<DD> The ``dbbinary'' command is used to create or retrieve binary opaque objects.
 Currently only uniform binary objects (arrays of values) are supported.
 One of <I>-i</I> or <I>-o</I> must be specified. The <I>-i</I> is for ``input'', or creating
 a binary object, and the <I>-o</I> option is used for ``output"", or retrieving a binary object.
@@ -716,10 +716,10 @@ whos name appears in <I>source</I>. The <I>type</I> may be one of:<br>
 <DL>
 <DT><big>Examples:</big></DT>
 <DD>
-<kbd>mged></kbd> <b>binary -i -u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</b><br>
+<kbd>mged></kbd> <b>dbbinary -i -u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</b><br>
 -- create an opaque uniform binary object of characters with the name <I>cmds</I> which contains<br>
 -- the contents of the file <I>/usr/brlcad/html/manuals/mged/mged_cmds.html</I>.<br>
-<kbd>mged></kbd> <b>binary -o /home/jim/cmds.html cmds</b><br>
+<kbd>mged></kbd> <b>dbbinary -o /home/jim/cmds.html cmds</b><br>
 -- copy the contents of the binary object named <I>cmds</I> into the file named <I>/home/jim/cmds.html</I><br>
 </DD>
 </DL>
