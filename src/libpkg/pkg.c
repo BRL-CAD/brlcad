@@ -126,8 +126,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #if !HAVE_SYS_ERRLIST_DECL
+#ifdef WIN32
+extern int      _sys_nerr;
+extern char     *_sys_errlist[];
+#else
 extern int      sys_nerr;
 extern char     *sys_errlist[];
+#endif
 #endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
@@ -1557,8 +1562,13 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
 			sprintf(errbuf, "%s: errno=%d\n", s, errno);
 		}
 #else
+#ifdef WIN32
+	if ( errno >= 0 && errno < _sys_nerr ) {
+		sprintf( errbuf, "%s: %s\n", s, _sys_errlist[errno] );
+#else
 	if ( errno >= 0 && errno < sys_nerr ) {
 		sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
+#endif
 #endif
 		errlog( errbuf );
 	} else {
