@@ -1338,11 +1338,12 @@ char	**argv;
 
 	if( argc < 2 )  {
 	  str = bu_units_string(dbip->dbi_local2base);
+	  if(!str) str = "Unknown_unit";
 
 	  if(sflag)
 	    bu_vls_printf(&vls, "%s", str);
 	  else
-	    bu_vls_printf(&vls, "You are currently editing in '%s'.  1 %s = %g mm \n",
+	    bu_vls_printf(&vls, "You are editing in '%s'.  1 %s = %g mm \n",
 			  str, str, dbip->dbi_local2base );
 
 	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -1351,7 +1352,17 @@ char	**argv;
 	}
 
 	sf = dbip->dbi_base2local;
-	if( (new_unit = db_v4_get_units_code(argv[1])) >= 0 ) {
+
+	/* Allow inputs of the form "25cm" or "3ft" */
+	if( (loc2mm = bu_mm_value(argv[1]) ) <= 0 )  {
+		  Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
+			   "valid units: <um|mm|cm|m|km|in|ft|yd|mi>\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* See if this is a known v4 database unit */
+
+	if( (new_unit = db_v4_get_units_code(bu_units_string(loc2mm))) >= 0 ) {
 		/* One of the recognized db.h units */
 		/* change to the new local unit */
 		db_conversions( dbip, new_unit );
@@ -1359,27 +1370,19 @@ char	**argv;
 		if( dbip->dbi_read_only ||
 		 db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
 		  Tcl_AppendResult(interp,
-				   "Warning: unable to stash working units into database\n",
-				   (char *)NULL);
-
+			   "Warning: unable to stash working units into database\n",
+			   (char *)NULL);
 	} else {
-		/* Allows inputs of the form "25cm" */
-		if( (loc2mm = bu_mm_value(argv[1]) ) <= 0 )  {
-			  Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
-				   "valid units: <um|mm|cm|m|km|in|ft|yd|mi>\n", (char *)NULL);
-			return TCL_ERROR;
-		} else {
-			/*
-			 *  Can't stash requested units into the database for next session,
-			 *  but there is no problem with the user editing in these units.
-			 */
-			dbip->dbi_localunit = ID_MM_UNIT;
-			dbip->dbi_local2base = loc2mm;
-			dbip->dbi_base2local = 1.0 / loc2mm;
-			Tcl_AppendResult(interp, "\
+		/*
+		 *  Can't stash requested units into the database for next session,
+		 *  but there is no problem with the user editing in these units.
+		 */
+		dbip->dbi_localunit = ID_MM_UNIT;
+		dbip->dbi_local2base = loc2mm;
+		dbip->dbi_base2local = 1.0 / loc2mm;
+		Tcl_AppendResult(interp, "\
 Due to a database restriction in the current format of .g files,\n\
 this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
-		}
 	}
 
 	set_localunit_TclVar();
@@ -1387,7 +1390,8 @@ this choice of units will not be remembered on your next editing session.\n", (c
 	update_grids(sf);
 
 	str = bu_units_string(dbip->dbi_local2base);
-	bu_vls_printf(&vls, "You will now be editing in '%s'.  1 %s = %g mm \n",
+	if(!str) str = "Unknown_unit";
+	bu_vls_printf(&vls, "You are now editing in '%s'.  1 %s = %g mm \n",
 			str, str, dbip->dbi_local2base );
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
