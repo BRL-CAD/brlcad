@@ -84,7 +84,6 @@ for PRIM in $PRIMITIVES ; do
     # (dsp) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set dsp_IN_ARGS ""
     set dsp_DB_ARGS ""
@@ -93,7 +92,6 @@ for PRIM in $PRIMITIVES ; do
     # (ebm) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set ebm_IN_ARGS ""
     set ebm_DB_ARGS ""
@@ -102,7 +100,6 @@ for PRIM in $PRIMITIVES ; do
     # (ehy) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set ehy_IN_ARGS ""
     set ehy_DB_ARGS ""
@@ -111,7 +108,6 @@ for PRIM in $PRIMITIVES ; do
     # Elliptical Paraboloid (EPA) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set epa_IN_ARGS "0 0 0  0 0 10  5 0 0 2"
     set epa_DB_ARGS "epa V {0 0 0} H {0 0 10} A {1 0 0} r_1 5 r_2 2"
@@ -120,7 +116,6 @@ for PRIM in $PRIMITIVES ; do
     # (eto) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -156,7 +151,6 @@ for PRIM in $PRIMITIVES ; do
     # (extrude) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set extrude_IN_ARGS ""
     set extrude_DB_ARGS ""
@@ -165,7 +159,6 @@ for PRIM in $PRIMITIVES ; do
     # (grip) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set grip_IN_ARGS ""
     set grip_DB_ARGS ""
@@ -174,7 +167,6 @@ for PRIM in $PRIMITIVES ; do
     # (half) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set half_IN_ARGS ""
     set half_DB_ARGS ""
@@ -183,7 +175,6 @@ for PRIM in $PRIMITIVES ; do
     # (hf) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set hf_IN_ARGS ""
     set hf_DB_ARGS ""
@@ -192,7 +183,6 @@ for PRIM in $PRIMITIVES ; do
     # (nmg) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set nmg_IN_ARGS ""
     set nmg_DB_ARGS ""
@@ -201,7 +191,6 @@ for PRIM in $PRIMITIVES ; do
     # (nurb) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set nurb_IN_ARGS ""
     set nurb_DB_ARGS ""
@@ -210,7 +199,6 @@ for PRIM in $PRIMITIVES ; do
     # (part) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -219,7 +207,6 @@ for PRIM in $PRIMITIVES ; do
     # (pg) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -228,7 +215,6 @@ for PRIM in $PRIMITIVES ; do
     # (pipe) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -237,7 +223,6 @@ for PRIM in $PRIMITIVES ; do
     # (rec) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -246,7 +231,6 @@ for PRIM in $PRIMITIVES ; do
     # (rhc) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -255,7 +239,6 @@ for PRIM in $PRIMITIVES ; do
     # (rpc) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -264,7 +247,6 @@ for PRIM in $PRIMITIVES ; do
     # (sketch) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -273,7 +255,6 @@ for PRIM in $PRIMITIVES ; do
     # (submodel) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -282,7 +263,6 @@ for PRIM in $PRIMITIVES ; do
     # (tgc) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -291,7 +271,6 @@ for PRIM in $PRIMITIVES ; do
     # (vol) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
@@ -300,10 +279,13 @@ for PRIM in $PRIMITIVES ; do
     # (xxx) Arguments
     # 
     # in args =>
-    # db args =>
     #
     set _IN_ARGS ""
     set _DB_ARGS ""
+
+    #
+    # Done
+    ###
 
     if { ! [ info exists ${PRIM}_IN_ARGS ] } {
         puts "Error: Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
