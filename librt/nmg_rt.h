@@ -164,6 +164,12 @@ struct ray_data {
 	 * suffice.
 	 */
 	int		face_subhit;	
+
+	/* the "classifying_ray" flag indicates that this ray is being used to
+	 * classify a point, so that the "eu_touch" and "vu_touch" functions
+	 * should not be called.
+	 */
+	int		classifying_ray;
 };
 
 
