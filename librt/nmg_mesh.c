@@ -29,6 +29,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h */
+RT_EXTERN(double nmg_measure_2fu_angle, (CONST struct edgeuse *eu1, CONST struct edgeuse *eu2));
+
+
 /*
  *			N M G _ M E A S U R E _ 2 F U _ A N G L E
  *
@@ -42,11 +46,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *
  *  Calling this routine with two common edgeuses of one face
  *  (different faceuses) should always return PI (180 degrees).
+ *
+ *  The return will be the same, regardless of whether eu2 or eu2->eumate_p
+ *  is passed, because the interior of that face(use) is the same.
  */
 double nmg_measure_2fu_angle(eu1, eu2)
 CONST struct edgeuse *eu1, *eu2;
 {
- 	plane_t Norm1, Norm2;
+ 	vect_t		Norm1, Norm2;
  	CONST fastf_t	*pt, *ptmate;
  	point_t		test_pt;
  	vect_t		edgevect1;
@@ -94,7 +101,8 @@ CONST struct edgeuse *eu1, *eu2;
 	v2b = eu2->eumate_p->vu_p->v_p;
 	NMG_CK_VERTEX(v2b);
 
-	if (rt_g.NMG_debug & DEBUG_MESH) {
+#if 0
+	if (rt_g.NMG_debug & DEBUG_MESH_EU) {
 		NMG_CK_VERTEX_G(v1a->vg_p);
 		pt = v1a->vg_p->coord;
 
@@ -135,20 +143,19 @@ CONST struct edgeuse *eu1, *eu2;
 		nmg_pr_orient(fu1->orientation, "\teu1");
 		nmg_pr_orient(fu2->orientation, "\teu2");
 	}
+#endif
 
-	/* get Normal vectors for edgeuse faces */
+	/* get Normal vectors for edgeuse faceUSEs */
 	if (fu1->orientation == OT_SAME) {
-		VMOVEN(Norm1, fu1->f_p->fg_p->N, 4);
+		VMOVE(Norm1, fu1->f_p->fg_p->N);
 	} else if (fu1->orientation == OT_OPPOSITE){
 		VREVERSE(Norm1, fu1->f_p->fg_p->N);
-		Norm1[3] = -fu1->f_p->fg_p->N[3];
 	} else rt_bomb("bad fu1 orientation\n");
 
 	if (fu2->orientation == OT_SAME) {
-		VMOVEN(Norm2, fu2->f_p->fg_p->N, 4);
+		VMOVE(Norm2, fu2->f_p->fg_p->N);
 	} else if (fu2->orientation == OT_OPPOSITE){
 		VREVERSE(Norm2, fu2->f_p->fg_p->N);
-		Norm2[3] = -fu2->f_p->fg_p->N[3];
 	} else rt_bomb("bad fu2 orientation\n");
 
 	/*
@@ -170,7 +177,7 @@ CONST struct edgeuse *eu1, *eu2;
 	 * XXX edgevect1 and edgevect2 dot to either 1 or -1.  What dot tol to use?
 	 */
 	ret = fabs(VDOT(edgevect1, edgevect2)) - 1;
-	if( !NEAR_ZERO(ret, 1.0e-8) )
+	if( !NEAR_ZERO(ret, 1.0e-6) )
 		rt_log("nmg_measure_2fu_angle() WARNING: bad edge dot=%g\n", ret);
 
 	/*
@@ -182,18 +189,27 @@ CONST struct edgeuse *eu1, *eu2;
 	VCROSS(left1, Norm1, edgevect1);
 	VCROSS(left2, Norm2, edgevect2);
 
-	/* Use right as +X, Norm as +Y, to ensure angle is measured CCW */
 	VREVERSE( right1, left1 );
 	VREVERSE( right2, left2 );
 
-	/* Calculate the angle between the two faces */
-	/* Use normal as +X, left as +Y to ensure angle is CCW, from 0 */
-	ret = rt_angle_measure( right2, Norm1, left1 );
+	/*
+	 *  Define the plane of rotation about the edge.
+	 *    +X = right1
+	 *    +Y = face1 normal
+	 *   (+Z = edge1 vector)
+	 *
+	 *  The angle to the other face is the angle from right1 to right2,
+	 *  lieing in the plane defined by right1 and the normal.
+	 */
+	ret = rt_angle_measure( right2, right1, fu1->f_p->fg_p->N );
 
-	if (rt_g.NMG_debug & DEBUG_MESH)  {
+#if 0
+/* Put this one back in */
+	if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
 		rt_log("\tnmg_measure_2fu_angle(x%x, x%x) = %g radians (%g deg)\n",
 			eu1, eu2, ret, ret * rt_radtodeg);
 	}
+#endif
 	return ret;
 }
 
@@ -217,10 +233,10 @@ void
 nmg_radial_join_eu(eu1, eu2)
 struct edgeuse *eu1, *eu2;
 {
-	struct edgeuse *nexteu;
+	struct edgeuse	*original_eu1 = eu1;
+	struct edgeuse	*nexteu;
 	fastf_t angle1, angle2;
 	int	iteration1, iteration2;
-	int	flip = 0;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu1->radial_p);
@@ -234,12 +250,10 @@ struct edgeuse *eu1, *eu2;
 	if( eu1->vu_p->v_p == eu2->vu_p->v_p && 
 	    eu1->eumate_p->vu_p->v_p == eu2->eumate_p->vu_p->v_p )  {
 	    	/* Both edgeuses are oriented in the same direction */
-	    	flip = 0;
 	} else if( eu1->vu_p->v_p == eu2->eumate_p->vu_p->v_p &&
 	    eu1->eumate_p->vu_p->v_p == eu2->vu_p->v_p )  {
 	    	/* Edgeuses are oriented in opposite directions */
-rt_log("nmg_radial_join_eu() FLIP eu2\n");
-	    	flip = 1;
+		rt_log("nmg_radial_join_eu() FLIP eu2\n");
 	    	eu2 = eu2->eumate_p;
 	} else {
 		rt_bomb("nmg_radial_join_eu(): edgeuses don't share both vertices\n");
@@ -258,6 +272,7 @@ rt_log("nmg_radial_join_eu() FLIP eu2\n");
 	}
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
 		struct edgeuse	*first_eu1 = eu1;
+		/* Resume where we left off from last eu2 insertion */
 
 		/* because faces are always created with counter-clockwise
 		 * exterior loops and clockwise interior loops, radial
@@ -276,8 +291,12 @@ rt_log("nmg_radial_join_eu() FLIP eu2\n");
 			rt_log("  angle1=%g, angle2=%g\n" , angle1 , angle2 );
 
 
+		/* XXX I believe the problem here is with this (non-circular)
+		 * relation ('if' test).
+		 * How about (angle1>angle2) && (angle1<angle2+2pi)
+		 */
 		for ( iteration2=0; (angle1 > angle2) && iteration2 < 10000; iteration2++ ) {
-			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH;
+			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH_EU;
 			/* If eu1 is only one pair of edgeuses, done */
 			if( eu1 == eu1->radial_p->eumate_p )  break;
 			eu1 = eu1->radial_p->eumate_p;
@@ -287,8 +306,10 @@ rt_log("nmg_radial_join_eu() FLIP eu2\n");
 			}
 			angle1 = nmg_measure_2fu_angle(eu1, eu2);
 			angle2 = nmg_measure_2fu_angle(eu1, eu1->radial_p);
-			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )
-				rt_log("  angle1=%g, angle2=%g\n" , angle1 , angle2 );
+			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) ) {
+				rt_log("  angle1=%g, angle2=%g\n",
+					angle1*rt_radtodeg , angle2*rt_radtodeg );
+			}
 		}
 		if(iteration2 >= 10000)  {
 			rt_log("angle1=%e, angle2=%e\n", angle1, angle2);
@@ -315,16 +336,16 @@ rt_log("nmg_radial_join_eu() FLIP eu2\n");
 		if (nexteu == eu2->eumate_p)
 			nexteu = (struct edgeuse *)NULL;
 
-		if (rt_g.NMG_debug & DEBUG_MESH)
+		if (rt_g.NMG_debug & DEBUG_MESH_EU)
 			rt_log("joining edgeuses with angle1(to eu2):%g angle2(to eu1->radial):%g\n",
 				angle1, angle2);
 
 		/* make eu2 radial to eu1 */
 		nmg_moveeu(eu1, eu2);
 
-		if (rt_g.NMG_debug & DEBUG_MESH)  {
-			rt_log("Now, faces around eu1:\n");
-			nmg_pr_fu_around_eu( eu1 );
+		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
+			rt_log("Now, faces around original_eu1:\n");
+			nmg_pr_fu_around_eu( original_eu1 );
 		}
 		/* This will catch the errors, anyway */
 		if( nmg_check_radial(eu1) )
@@ -336,6 +357,7 @@ rt_log("nmg_radial_join_eu() FLIP eu2\n");
 		eu2 = nexteu;
 	}
 	if( iteration1 >= 10000 )  rt_bomb("nmg_radial_join_eu:  infinite loop (1)\n");
+	if (rt_g.NMG_debug & DEBUG_MESH_EU)  rt_log("nmg_radial_join_eu: END\n");
 }
 
 /*
@@ -380,7 +402,7 @@ register struct faceuse *fu1, *fu2;
 			NMG_CK_VERTEX(v1b);
 			e1 = eu1->e_p;
 			NMG_CK_EDGE(e1);
-			if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
+			if (rt_g.NMG_debug & DEBUG_MESH)  {
 				pt1 = v1a->vg_p->coord;
 				pt2 = v1b->vg_p->coord;
 				rt_log("ref_e=%8x v:%8x--%8x (%g, %g, %g)->(%g, %g, %g)\n",
@@ -396,7 +418,7 @@ register struct faceuse *fu1, *fu2;
 				/* Visit all the edgeuses in loopuse2 */
 				for( RT_LIST_FOR(eu2, edgeuse, &lu2->down_hd) )  {
 					NMG_CK_EDGEUSE(eu2);
-					if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+					if (rt_g.NMG_debug & DEBUG_MESH) {
 						pt1 = eu2->vu_p->v_p->vg_p->coord;
 						pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
 						rt_log("\te:%8x v:%8x--%8x (%g, %g, %g)->(%g, %g, %g)\n",
