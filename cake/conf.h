@@ -54,7 +54,8 @@ typedef	long	Cast;
 
 #if __MACHINETYPE__xmp
 #	define	CPP		"/lib/cpp"
-#	define	CPP_OPTIONS	"-D__CAKE__xmp"
+#	define	CPP_OPTIONS	"-N"
+#	define	CPP_OPTIONS2	"-D__CAKE__xmp"
 #endif
 
 #if __MACHINETYPE__bsdi
