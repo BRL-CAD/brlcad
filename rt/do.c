@@ -417,7 +417,7 @@ struct structparse set_parse[] = {
 	"%d",	1, "height",	byteoffset(height),		FUNC_NULL,
 	"%f",	1, "angle",	byteoffset(rt_perspective),	FUNC_NULL,
 	"indir",(int)view_parse,"View_Module-Specific Parameters", 0, FUNC_NULL,
-	(char *)0,(char *)0,	0,				FUNC_NULL
+	(char *)0,0,(char *)0,	0,				FUNC_NULL
 };
 
 /*
@@ -490,6 +490,10 @@ register struct rt_i	*rtip;
 		rt_log("rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	rt_log("GETTREE: %s\n", outbuf);
+
+	rt_log("Additional dynamic memory used=%d. bytes\n",
+		sbrk(0)-beginptr );
+	beginptr = sbrk(0);
 }
 #undef npsw 		/* XXXXXXXXX end Temp. disable parallel prep, it may be buggy XXXXX -M */
 
