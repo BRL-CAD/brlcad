@@ -130,8 +130,10 @@ char **argv;
 		exit(1);
 	}
 
-	if( (fbp = fb_open( framebuffer, file_width, file_height )) == NULL )
+	if( (fbp = fb_open( framebuffer, file_width, file_height )) == NULL )  {
+		fprintf(stderr, "fblabel:  Unable to open framebuffer %s\n", framebuffer);
 		exit(12);
+	}
 
 	if( clear ) {
 		fb_clear( fbp, PIXEL_NULL);
