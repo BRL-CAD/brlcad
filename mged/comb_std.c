@@ -69,9 +69,9 @@ char *object_name;
     bt_opn(b) = OPN_NULL;
     sp = bu_malloc(strlen(object_name) + 1, "Bool-tree leaf name");
 
-    bu_semaphore_acquire( &rt_g.res_syscall );		/* lock */
+    bu_semaphore_acquire( (unsigned int)(&rt_g.res_syscall - &rt_g.res_syscall) );		/* lock */
     sprintf(sp, "%s", object_name);
-    bu_semaphore_release( &rt_g.res_syscall );		/* unlock */
+    bu_semaphore_release( (unsigned int)(&rt_g.res_syscall - &rt_g.res_syscall) );		/* unlock */
 
     bt_leaf_name(b) = sp;
 

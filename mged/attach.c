@@ -567,8 +567,9 @@ char *name;
   bcopy((void *)&default_mged_variables, (void *)&mged_variables,
 	sizeof(struct _mged_variables));
 
-  strcpy(dname, name);
-  bn_mat_copy(Viewrot, identity);
+  if(name)
+    strcpy(dname, name);
+  bn_mat_copy(Viewrot, bn_mat_identity);
   size_reset();
   new_mats();
   (void)f_load_dv((ClientData)NULL, interp, 0, NULL);

@@ -195,11 +195,19 @@ char **argv;
 	 */
 	if( bu_avail_cpus() > 1 )  {
 		rt_g.rtg_parallel = 1;
-		bu_semaphore_init( &rt_g.res_syscall );
-		bu_semaphore_init( &rt_g.res_worker );
-		bu_semaphore_init( &rt_g.res_stats );
-		bu_semaphore_init( &rt_g.res_results );
-		bu_semaphore_init( &rt_g.res_model );
+#if 0
+		RES_INIT( &rt_g.res_syscall );
+		RES_INIT( &rt_g.res_worker );
+		RES_INIT( &rt_g.res_stats );
+		RES_INIT( &rt_g.res_results );
+		RES_INIT( &rt_g.res_model );
+#else
+		bu_semaphore_init( 5 );
+		bu_semaphore_init( 5 );
+		bu_semaphore_init( 5 );
+		bu_semaphore_init( 5 );
+		bu_semaphore_init( 5 );
+#endif
 	}
 
 	/* Set up linked lists */

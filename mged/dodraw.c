@@ -728,9 +728,9 @@ struct solid		*existing_sp;
 	/* Solid is successfully drawn */
 	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
-		bu_semaphore_acquire( &rt_g.res_model );
+		bu_semaphore_acquire( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
 		BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
-		bu_semaphore_release( &rt_g.res_model );
+		bu_semaphore_release( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
 #if 0
 		dmp->dm_viewchange( dmp, DM_CHGV_ADD, sp );
 #endif
@@ -1077,7 +1077,7 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	bu_semaphore_acquire( &rt_g.res_model );
+	bu_semaphore_acquire( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
 	if( mged_facetize_tree )  {
 		union tree	*tr;
 		tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
@@ -1090,7 +1090,7 @@ union tree		*curtree;
 	} else {
 		mged_facetize_tree = curtree;
 	}
-	bu_semaphore_release( &rt_g.res_model );
+	bu_semaphore_release( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
 
 	/* Tree has been saved, and will be freed later */
 	return( TREE_NULL );
