@@ -44,7 +44,7 @@ extern int tor_prep(),	tor_print(), tor_norm(), tor_uv();
 extern int tgc_prep(),	tgc_print(), tgc_norm(), tgc_uv();
 extern int ell_prep(),	ell_print(), ell_norm(), ell_uv();
 extern int arb_prep(),	arb_print(), arb_norm(), arb_uv();
-extern int hlf_prep(),	hlf_print(),hlf_norm(),hlf_uv();
+extern int hlf_prep(),	hlf_print(), hlf_norm(), hlf_uv();
 extern int ars_prep(),  ars_print(), ars_norm(), ars_uv();
 extern int rec_prep(),	rec_print(), rec_norm(), rec_uv();
 extern int pg_prep(),	pg_print(),  pg_norm(),  pg_uv();
@@ -86,7 +86,7 @@ struct rt_functab rt_functab[] = {
 	1,	ars_prep,	ars_shot,	ars_print,	ars_norm,
 		ars_uv,		ars_curve,	ars_class,	"ID_ARS",
 	0,	hlf_prep,	hlf_shot,	hlf_print,	hlf_norm,
-		hlf_uv,	hlf_curve,	hlf_class,	"ID_HALF",
+		hlf_uv,		hlf_curve,	hlf_class,	"ID_HALF",
 	1,	rec_prep,	rec_shot,	rec_print,	rec_norm,
 		rec_uv,		rec_curve,	rec_class,	"ID_REC",
 	1,	pg_prep,	pg_shot,	pg_print,	pg_norm,
@@ -105,7 +105,7 @@ struct rt_functab rt_functab[] = {
 DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nul_uv);
 
 DEF(nul_curve); DEF(nul_class);
-DEF(tor_curve); DEF(tor_class);
+DEF(tor_class);
 DEF(tgc_curve); DEF(tgc_class);
 DEF(ell_class);
 DEF(arb_class);
