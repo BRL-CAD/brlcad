@@ -758,8 +758,61 @@ struct faceuse *fu;
 	}
 	else
 	{
-		rt_log( "nmg_calc_face_g: Cannot calculate plane for fu x%x\n" , fu );
-		failed = 1;
+		struct vertex *v,*v0;
+		int x_same=1;
+		int y_same=1;
+		int z_same=1;
+
+		/* singular matrix, may occur if all vertices have the same zero
+		 * component.
+		 */
+		v0 = (struct vertex *)NMG_TBL_GET( &verts , 0 );
+		for( i=1 ; i<NMG_TBL_END( &verts ) ; i++ )
+		{
+			v = (struct vertex *)NMG_TBL_GET( &verts , i );
+
+			if( v->vg_p->coord[X] != v0->vg_p->coord[X] )
+				x_same = 0;
+			if( v->vg_p->coord[Y] != v0->vg_p->coord[Y] )
+				y_same = 0;
+			if( v->vg_p->coord[Z] != v0->vg_p->coord[Z] )
+				z_same = 0;
+
+			if( !x_same && !y_same && !z_same )
+				break;
+		}
+
+		if( x_same )
+		{
+			VSET( pl , 1.0 , 0.0 , 0.0 );
+		}
+		else if( y_same )
+		{
+			VSET( pl , 0.0 , 1.0 , 0.0 );
+		}
+		else if( z_same )
+		{
+			VSET( pl , 0.0 , 0.0 , 1.0 );
+		}
+
+		if( x_same || y_same || z_same )
+		{
+			pl[H] = VDOT( pl , vsum )/(fastf_t)(NMG_TBL_END( &verts));
+
+			/* make sure it points in the correct direction */
+			if( VDOT( pl , old_pl ) < 0.0 )
+				HREVERSE( pl , pl );
+
+			/* assign new geometry to face */
+			nmg_face_g( fu , pl );
+		}
+		else
+		{
+			rt_log( "nmg_calc_face_g: Cannot calculate plane for fu x%x\n" , fu );
+			nmg_pr_fu_briefly( fu , (char *)NULL );
+			rt_log( "%d verts\n" , NMG_TBL_END( &verts ) );
+			failed = 1;
+		}
 	}
 
 	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
