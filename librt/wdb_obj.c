@@ -1244,7 +1244,6 @@ wdb_showmats_cmd(struct rt_wdb	*wdbp,
 	char *parent;
 	struct directory *dp;
 	int max_count=1;
-	mat_t acc_matrix;
 
 	if (argc != 2) {
 		struct bu_vls vls;
@@ -6490,7 +6489,6 @@ int wdb_attr_rm_cmd(struct rt_wdb	*wdbp,
 	int			i;
 	struct directory	*dp;
 	struct bu_attribute_value_set avs;
-	struct bu_attribute_value_pair	*avpp;
 
 	/* this is only valid for v5 databases */
 	if( wdbp->dbip->dbi_version < 5 ) {
