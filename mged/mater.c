@@ -38,12 +38,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "externs.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
-#ifdef USE_LIBDM
 extern void color_soltab();
-#endif
-
 /*
  *  It is expected that entries on this mater list will be sorted
  *  in strictly ascending order, with no overlaps (ie, monotonicly
@@ -139,11 +136,7 @@ char	**argv;
 		newp = next_mater;
 	}
 
-#ifdef USE_LIBDM
 	dmp->dmr_colorchange(dmp);
-#else
-	dmp->dmr_colorchange();
-#endif
 
 	return TCL_OK;
 }
@@ -236,11 +229,7 @@ char	**argv;
 	}
 	(void)fclose(fp);
 	(void)unlink( tempfile );
-#ifdef USE_LIBDM
 	dmp->dmr_colorchange(dmp);
-#else
-	dmp->dmr_colorchange();
-#endif
 
 	return TCL_OK;
 }

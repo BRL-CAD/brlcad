@@ -37,7 +37,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./titles.h"
 #include "./menu.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 #include "./mgedtcl.h"
 
@@ -174,42 +174,24 @@ int y_top;
 	register int y = y_top;
 
 	menu_top = y - MENU_DY / 2;
-#ifdef USE_LIBDM
 	dmp->dmr_2d_line(dmp, MENUXLIM, menu_top, XMIN, menu_top, 0);
-#else
-	dmp->dmr_2d_line(MENUXLIM, menu_top, XMIN, menu_top, 0);
-#endif
 
 	for( menu=0, m = menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
 		if( *m == MENU_NULL )  continue;
 		for( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
 		     mptr++, y += MENU_DY, item++ )  {
-#ifdef USE_LIBDM
 			dmp->dmr_puts( dmp, mptr->menu_string, MENUX, y-15, 0,
 				mptr == *m ? DM_RED : DM_YELLOW );
 			dmp->dmr_2d_line(dmp, MENUXLIM, y+(MENU_DY/2), XMIN, y+(MENU_DY/2), 0);
-#else
-			dmp->dmr_puts( mptr->menu_string, MENUX, y-15, 0,
-				mptr == *m ? DM_RED : DM_YELLOW );
-			dmp->dmr_2d_line(MENUXLIM, y+(MENU_DY/2), XMIN, y+(MENU_DY/2), 0);
-#endif
 			if( cur_item == item && cur_menu == menu && menuflag )  {
 				/* prefix item selected with "==>" */
-#ifdef USE_LIBDM
 				dmp->dmr_puts(dmp, "==>", XMIN, y-15, 0, DM_WHITE);
-#else
-				dmp->dmr_puts("==>", XMIN, y-15, 0, DM_WHITE);
-#endif
 			}
 		}
 	}
 	if( y == y_top )  return;	/* no active menus */
-#ifdef USE_LIBDM
 	dmp->dmr_2d_line( dmp, MENUXLIM, menu_top-1, MENUXLIM, y-(MENU_DY/2), 0 );
-#else
-	dmp->dmr_2d_line( MENUXLIM, menu_top-1, MENUXLIM, y-(MENU_DY/2), 0 );
-#endif
 }
 
 /*
