@@ -49,6 +49,8 @@ extern int arb_prep(),	arb_print(), arb_norm(), arb_uv();
 extern int haf_prep(),	haf_print(), haf_norm(), haf_uv();
 extern int ars_prep(),  ars_print(), ars_norm(), ars_uv();
 extern int rec_prep(),	rec_print(), rec_norm(), rec_uv();
+extern int pg_prep(),	pg_print(),  pg_norm(),  pg_uv();
+extern int spl_prep(),	spl_print(), spl_norm(), spl_uv();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -58,6 +60,8 @@ extern struct seg *arb_shot();
 extern struct seg *ars_shot();
 extern struct seg *haf_shot();
 extern struct seg *rec_shot();
+extern struct seg *pg_shot();
+extern struct seg *spl_shot();
 
 struct functab functab[] = {
 	nul_prep, nul_shot, nul_print, nul_norm, nul_uv, "ID_NULL",
@@ -68,6 +72,8 @@ struct functab functab[] = {
 	ars_prep, ars_shot, ars_print, ars_norm, ars_uv, "ID_ARS",
 	haf_prep, haf_shot, haf_print, haf_norm, haf_uv, "ID_HALF",
 	rec_prep, rec_shot, rec_print, rec_norm, rec_uv, "ID_REC",
+	pg_prep,  pg_shot,  pg_print,  pg_norm,  pg_uv,  "ID_POLY",
+	spl_prep, spl_shot, spl_print, spl_norm, spl_uv, "ID_BSPLINE",
 	nul_prep, nul_shot, nul_print, nul_norm, nul_uv, ">ID_NULL"
 };
 
@@ -80,7 +86,9 @@ DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nu
 
 /* To be replaced with code someday */
 DEF(haf_prep); struct seg * DEF(haf_shot); DEF(haf_print); DEF(haf_norm); DEF(haf_uv);
+DEF(spl_prep); struct seg * DEF(spl_shot); DEF(spl_print); DEF(spl_norm); DEF(spl_uv);
 
+/* Map for database solidrec objects to internal objects */
 static char idmap[] = {
 	ID_NULL,	/* undefined, 0 */
 	ID_NULL,	/*  RPP	1 axis-aligned rectangular parallelopiped */
@@ -103,7 +111,7 @@ static char idmap[] = {
 	ID_TGC,		/* GENTGC 18 supergeneralized TGC; internal form */
 	ID_ELL,		/* GENELL 19: V,A,B,C */
 	ID_ARB8,	/* GENARB8 20:  V, and 7 other vectors */
-	ID_ARS,		/* ARS 21: arbitrary triangular-surfaced polyhedron */
+	ID_NULL,	/* ARS 21: arbitrary triangular-surfaced polyhedron */
 	ID_NULL,	/* ARSCONT 22: extension record type for ARS solid */
 	ID_NULL		/* n+1 */
 };
@@ -218,11 +226,27 @@ matp_t	mat;
 next_one: ;
 	}
 
-	/* Convert from database (float) to fastf_t */
-	fastf_float( v, rec->s.s_values, 8 );
-
 	GETSTRUCT(stp, soltab);
-	stp->st_id = idmap[rec->s.s_type];	/* PUN for a.a_type, too */
+	switch( rec->u_id )  {
+	case ID_SOLID:
+		stp->st_id = idmap[rec->s.s_type];
+		/* Convert from database (float) to fastf_t */
+		fastf_float( v, rec->s.s_values, 8 );
+		break;
+	case ID_ARS_A:
+		stp->st_id = ID_ARS;
+		break;
+	case ID_P_HEAD:
+		stp->st_id = ID_POLY;
+		break;
+	case ID_B_SPL_HEAD:
+		stp->st_id = ID_BSPLINE;
+		break;
+	default:
+		rtlog("add_solid:  u_id=x%x unknown\n", rec->u_id);
+		free(stp);
+		return( SOLTAB_NULL );		/* BAD */
+	}
 	stp->st_name = name;
 	stp->st_specific = (int *)0;
 
@@ -308,7 +332,8 @@ matp_t old_xlate;
 	(void)lseek( ged_fd, dp->d_addr, 0 );
 	(void)read( ged_fd, (char *)&rec, sizeof rec );
 
-	if( rec.u_id == ID_SOLID || rec.u_id == ID_ARS_A )  {
+	if( rec.u_id == ID_SOLID || rec.u_id == ID_ARS_A ||
+	    rec.u_id == ID_P_HEAD || rec.u_id == ID_B_SPL_HEAD )  {
 		register struct soltab *stp;		/* XXX */
 
 		/* Draw a solid */
