@@ -102,7 +102,7 @@ register struct application *ap;
 	double			fraction;
 	int			exponent;
 
-
+	RT_AP_CHECK(ap);
 	if( ap->a_resource == RESOURCE_NULL )
 		ap->a_resource = &rt_uniresource;
 
