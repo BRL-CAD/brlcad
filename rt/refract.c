@@ -713,14 +713,20 @@ struct partition *PartHeadp;
 	 *
 	 *  Because this error has not yet been encountered, it is
 	 *  considered dreadful.  Some recovery may be possible.
+	 *
+	 * For now, this seems to happen when a reflected ray starts outside
+	 * the glass and doesn't even intersect the glass, so treat it as
+	 * an escaping ray.
 	 */
+
 	if( pp->pt_inhit->hit_dist > 10 )  {
 		stp = pp->pt_inseg->seg_stp;
-		bu_log("rr_hit: %d,%d %s inhit %g > 10.0!\n",
-			ap->a_x, ap->a_y,
-			pp->pt_regionp->reg_name,
-			pp->pt_inhit->hit_dist);
-		ret = 0;		/* dreadful error */
+		if( rdebug&RDEBUG_REFRACT )
+			bu_log("rr_hit: %d,%d %s inhit %g > 10.0! (treating as escaping ray)\n",
+				ap->a_x, ap->a_y,
+				pp->pt_regionp->reg_name,
+				pp->pt_inhit->hit_dist);
+		ret = 1;	/* treat as escaping ray */
 		goto out;
 	}
 

@@ -689,11 +689,11 @@ struct seg *finished_segs;
 		 * Sometimes, after refraction and starting a new ray at the glass exit,
 		 * the new ray hits a sliver of the same glass, and gets confused. This bit
 		 * of code attempts to spot this behavior and skip over the glass sliver.
-		 * Any sliver less than 0.02mm thick will be skipped (0.02 is a SWAG).
+		 * Any sliver less than 0.05mm thick will be skipped (0.05 is a SWAG).
 		 */
 		if( pp->pt_regionp == ap->a_uptr &&
-			pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.02 &&
-			pp->pt_forw != PartHeadp )
+			pp->pt_forw != PartHeadp &&
+			pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05 )
 				pp = pp->pt_forw;
 	}
 
