@@ -29,7 +29,7 @@
 	g_submodel g_cline g_bot \
 	db5_types db5_bin \
 	cmd mater roots spectrum \
-	rtlex vlist regionfix htbl \
+	vlist regionfix htbl \
 	nmg_mk nmg_misc nmg_bool nmg_eval nmg_inter nmg_plot nmg_ck \
 	nmg_mesh nmg_fcut nmg_class nmg_mod nmg_index \
 	nmg_rt_isect nmg_rt_segs nmg_manif \
