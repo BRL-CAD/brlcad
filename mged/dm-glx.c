@@ -154,7 +154,7 @@ struct modifiable_glx_vars {
   int max_scr_z;       /* based on getgdesc(GD_ZMAX) */
   int debug;
   int linewidth;
-  int virtual_trackball;
+  int alt_mouse_mode;
 };
 
 struct glx_vars {
@@ -274,7 +274,7 @@ static void     establish_perspective();
 static void     set_perspective();
 static void	establish_lighting();
 static void	establish_zbuffer();
-static void     establish_vtb();
+static void     establish_am();
 
 static void
 refresh_hook()
@@ -297,7 +297,7 @@ struct structparse Glx_vparse[] = {
 	{"%d",  1, "max_scr_z",		GLX_MV_O(max_scr_z),	refresh_hook },
 	{"%d",  1, "debug",		GLX_MV_O(debug),	FUNC_NULL },
 	{"%d",  1, "linewidth",		GLX_MV_O(linewidth),	refresh_hook },
-	{"%d",  1, "virtual_trackball",	GLX_MV_O(virtual_trackball),establish_vtb },
+	{"%d",  1, "alt_mouse_mode",	GLX_MV_O(alt_mouse_mode),establish_am },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
@@ -1221,9 +1221,9 @@ XEvent *eventPtr;
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch(mvars.virtual_trackball){
-    case VIRTUAL_TRACKBALL_OFF:
-    case VIRTUAL_TRACKBALL_ON:
+    switch(mvars.alt_mouse_mode){
+    case ALT_MOUSE_MODE_OFF:
+    case ALT_MOUSE_MODE_ON:
       if(scroll_active && eventPtr->xmotion.state & mb_mask)
 	rt_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
       else if(state == ST_S_PICK || state == ST_O_PICK ||
@@ -1235,11 +1235,11 @@ XEvent *eventPtr;
 	goto end;
 
       break;
-    case VIRTUAL_TRACKBALL_ROTATE:
+    case ALT_MOUSE_MODE_ROTATE:
       rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		     (my - omy)/512.0, (mx - omx)/512.0 );
       break;
-    case VIRTUAL_TRACKBALL_TRANSLATE:
+    case ALT_MOUSE_MODE_TRANSLATE:
       {
 	fastf_t fx, fy;
 
@@ -1255,7 +1255,7 @@ XEvent *eventPtr;
 	}
       }	     
       break;
-    case VIRTUAL_TRACKBALL_ZOOM:
+    case ALT_MOUSE_MODE_ZOOM:
       rt_vls_printf( &cmd, "iknob aS %f\n", (omy - my)/(fastf_t)winy_size);
       break;
     }
@@ -1730,7 +1730,7 @@ Glx_statechange( a, b )
    */
  	switch( b )  {
 	case ST_VIEW:
-	  if(!mvars.virtual_trackball)
+	  if(!mvars.alt_mouse_mode)
 	  /* constant tracking OFF */
 	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
 		       KeyPressMask|StructureNotifyMask);
@@ -1745,7 +1745,7 @@ Glx_statechange( a, b )
 	  break;
 	case ST_O_EDIT:
 	case ST_S_EDIT:
-	  if(!mvars.virtual_trackball)
+	  if(!mvars.alt_mouse_mode)
 	  /* constant tracking OFF */
 	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
 		       KeyPressMask|StructureNotifyMask);
@@ -2077,9 +2077,9 @@ establish_zbuffer()
 }
 
 static void
-establish_vtb()
+establish_am()
 {
-  if(mvars.virtual_trackball){
+  if(mvars.alt_mouse_mode){
     if(state != ST_S_PICK && state != ST_O_PICK &&
        state != ST_O_PATH && state != ST_S_VPICK)
       /* turn constant tracking ON */
@@ -2621,12 +2621,12 @@ char	**argv;
     return TCL_OK;
   }
 
-  if( !strcmp( argv[0], "mouse" )){
+  if( !strcmp( argv[0], "m" )){
     scroll_active = 0;
 
     if( argc < 5){
-      Tcl_AppendResult(interp, "dm mouse: need more parameters\n",
-		       "mouse mouse 1|0 xpos ypos\n", (char *)NULL);
+      Tcl_AppendResult(interp, "dm m: need more parameters\n",
+		       "m button 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -2642,7 +2642,7 @@ char	**argv;
       mb_mask = Button3Mask;
       break;
     default:
-      Tcl_AppendResult(interp, "dm mouse: bad button value - ", argv[1], "\n", (char *)NULL);
+      Tcl_AppendResult(interp, "dm m: bad button value - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -2659,56 +2659,52 @@ char	**argv;
   }
 
   status = TCL_OK;
-  if(mvars.virtual_trackball){
-    if( !strcmp( argv[0], "vtb" )){
-      int buttonpress;
+  if( !strcmp( argv[0], "am" )){
+    int buttonpress;
 
-      scroll_active = 0;
+    scroll_active = 0;
     
-      if( argc < 5){
-	Tcl_AppendResult(interp, "dm: need more parameters\n",
-			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+    if( argc < 5){
+      Tcl_AppendResult(interp, "dm am: need more parameters\n",
+		       "am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    buttonpress = atoi(argv[2]);
+    omx = atoi(argv[3]);
+    omy = atoi(argv[4]);
+
+    if(buttonpress){
+      switch(*argv[1]){
+      case 'r':
+	mvars.alt_mouse_mode = ALT_MOUSE_MODE_ROTATE;
+	break;
+      case 't':
+	mvars.alt_mouse_mode = ALT_MOUSE_MODE_TRANSLATE;
+	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
+	   (edobj || es_edflag > 0)){
+	  fastf_t fx, fy;
+
+	  rt_vls_init(&vls);
+	  fx = (omx/(fastf_t)winx_size - 0.5) * 2;
+	  fy = (0.5 - omy/(fastf_t)winy_size) * 2;
+	  rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
+	  (void)cmdline(&vls, FALSE);
+	  rt_vls_free(&vls);
+	}
+
+	break;
+      case 'z':
+	mvars.alt_mouse_mode = ALT_MOUSE_MODE_ZOOM;
+	break;
+      default:
+	Tcl_AppendResult(interp, "dm am: need more parameters\n",
+			 "am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
 	return TCL_ERROR;
       }
+    }else
+      mvars.alt_mouse_mode = ALT_MOUSE_MODE_ON;
 
-      buttonpress = atoi(argv[2]);
-      omx = atoi(argv[3]);
-      omy = atoi(argv[4]);
-
-      if(buttonpress){
-	switch(*argv[1]){
-	case 'r':
-	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
-	  break;
-	case 't':
-	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-	  if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
-	                (edobj || es_edflag > 0)){
-	    fastf_t fx, fy;
-
-	    rt_vls_init(&vls);
-	    fx = (omx/(fastf_t)winx_size - 0.5) * 2;
-	    fy = (0.5 - omy/(fastf_t)winy_size) * 2;
-	    rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
-	    (void)cmdline(&vls, FALSE);
-	    rt_vls_free(&vls);
-	  }
-
-	  break;
-	case 'z':
-	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
-	  break;
-	default:
-	  Tcl_AppendResult(interp, "dm: need more parameters\n",
-			   "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-      }else
-	mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
-
-      return status;
-    }
-  }else{
     return status;
   }
 
@@ -2742,7 +2738,7 @@ glx_var_init()
   mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
   mvars.linewidth = 1;      /* Line drawing width */
   mvars.dummy_perspective = 1;
-  mvars.virtual_trackball = 1;
+  mvars.alt_mouse_mode = 1;
 }
 
 

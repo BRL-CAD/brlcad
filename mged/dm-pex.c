@@ -78,7 +78,7 @@ static void	label();
 static void	draw();
 static void     establish_perspective();
 static void     set_perspective();
-static void     establish_vtb();
+static void     establish_am();
 
 /* Display Manager package interface */
 
@@ -134,7 +134,7 @@ struct modifiable_pex_vars {
 #endif
   int perspective_mode;
   int dummy_perspective;
-  int virtual_trackball;
+  int alt_mouse_mode;
 };
 
 struct pex_vars {
@@ -169,7 +169,7 @@ struct structparse Pex_vparse[] = {
 #endif
   {"%d",  1, "perspective",     Pex_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective", Pex_MV_O(dummy_perspective),  set_perspective },
-  {"%d",  1, "virtual_trackball", Pex_MV_O(virtual_trackball),establish_vtb },
+  {"%d",  1, "alt_mouse_mode", Pex_MV_O(alt_mouse_mode),establish_am },
   {"",    0,  (char *)0,          0,                      FUNC_NULL }
 };
 
@@ -610,6 +610,7 @@ XEvent *eventPtr;
   XWindowAttributes xwa;
   struct rt_vls cmd;
   register struct dm_list *save_dm_list;
+  int status = CMD_OK;
 
   save_dm_list = curr_dm_list;
 
@@ -679,9 +680,9 @@ XEvent *eventPtr;
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch(((struct pex_vars *)dm_vars)->mvars.virtual_trackball){
-    case VIRTUAL_TRACKBALL_OFF:
-    case VIRTUAL_TRACKBALL_ON:
+    switch(((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode){
+    case ALT_MOUSE_MODE_OFF:
+    case ALT_MOUSE_MODE_ON:
       if(scroll_active && eventPtr->xmotion.state & ((struct pex_vars *)dm_vars)->mb_mask)
 	rt_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
       else if(XdoMotion)
@@ -692,12 +693,12 @@ XEvent *eventPtr;
 	goto end;
 
       break;
-    case VIRTUAL_TRACKBALL_ROTATE:
+    case ALT_MOUSE_MODE_ROTATE:
       rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		     (my - ((struct pex_vars *)dm_vars)->omy)/512.0,
 		     (mx - ((struct pex_vars *)dm_vars)->omx)/512.0);
       break;
-    case VIRTUAL_TRACKBALL_TRANSLATE:
+    case ALT_MOUSE_MODE_TRANSLATE:
       {
 	fastf_t fx, fy;
 
@@ -715,7 +716,7 @@ XEvent *eventPtr;
 	}
       }	     
       break;
-    case VIRTUAL_TRACKBALL_ZOOM:
+    case ALT_MOUSE_MODE_ZOOM:
       rt_vls_printf( &cmd, "iknob aS %f\n",
 		     (((struct pex_vars *)dm_vars)->omy - my)/
 		     (fastf_t)((struct pex_vars *)dm_vars)->height);
@@ -732,11 +733,15 @@ XEvent *eventPtr;
     goto end;
   }
 
-  (void)cmdline(&cmd, FALSE);
+  status = cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
 end:
   curr_dm_list = save_dm_list;
-  return TCL_OK;
+
+  if(status == CMD_OK)
+    return TCL_OK;
+
+  return TCL_ERROR;
 }
 	    
 /*
@@ -1251,9 +1256,9 @@ set_perspective()
 }
 
 static void
-establish_vtb()
+establish_am()
 {
-  if(((struct pex_vars *)dm_vars)->mvars.virtual_trackball){
+  if(((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode){
     if(state != ST_S_PICK && state != ST_O_PICK &&
        state != ST_O_PATH && state != ST_S_VPICK){
 
@@ -1312,15 +1317,15 @@ char *argv[];
     return TCL_OK;
   }
 
-  if( !strcmp( argv[0], "mouse")){
+  if( !strcmp( argv[0], "m")){
     int up;
     int xpos, ypos;
 
     scroll_active = 0;
 
     if( argc < 5){
-      Tcl_AppendResult(interp, "dm mouse: need more parameters\n",
-		       "mouse button 1|0 xpos ypos\n", (char *)NULL);
+      Tcl_AppendResult(interp, "dm m: need more parameters\n",
+		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -1336,7 +1341,7 @@ char *argv[];
       ((struct pex_vars *)dm_vars)->mb_mask = Button3Mask;
       break;
     default:
-      Tcl_AppendResult(interp, "dm mouse: bad button value - ", argv[1], "\n", (char *)NULL);
+      Tcl_AppendResult(interp, "dm m: bad button value - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -1353,15 +1358,14 @@ char *argv[];
   }
 
   status = TCL_OK;
-  if(((struct pex_vars *)dm_vars)->mvars.virtual_trackball){
-  if( !strcmp( argv[0], "vtb" )){
+  if( !strcmp( argv[0], "am" )){
     int buttonpress;
 
     scroll_active = 0;
 
     if( argc < 5){
-      Tcl_AppendResult(interp, "dm: need more parameters\n",
-		       "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+      Tcl_AppendResult(interp, "dm am: need more parameters\n",
+		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -1372,10 +1376,10 @@ char *argv[];
     if(buttonpress){
       switch(*argv[1]){
       case 'r':
-	((struct pex_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
+	((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ROTATE;
 	break;
       case 't':
-	((struct pex_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
+	((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_TRANSLATE;
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	              (edobj || es_edflag > 0)){
 	  fastf_t fx, fy;
@@ -1393,20 +1397,17 @@ char *argv[];
 
 	break;
       case 'z':
-	((struct pex_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
+	((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ZOOM;
 	break;
       default:
-	Tcl_AppendResult(interp, "dm: need more parameters\n",
-			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	Tcl_AppendResult(interp, "dm am: need more parameters\n",
+			 "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
 	return TCL_ERROR;
       }
     }else{
-      ((struct pex_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
+      ((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ON;
     }
 
-    return status;
-  }
-  }else{
     return status;
   }
 
@@ -1425,7 +1426,7 @@ Pex_var_init()
   /* initialize the modifiable variables */
 
   ((struct pex_vars *)dm_vars)->mvars.dummy_perspective = 1;
-  ((struct pex_vars *)dm_vars)->mvars.virtual_trackball = 1;
+  ((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = 1;
 }
 
 
