@@ -1432,6 +1432,42 @@ char **argv;
 	return TCL_OK;
 }
 
+HIDDEN void
+Do_showmats( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	matp_t	acc_matrix;
+	int	*count;
+	char	*child;
+	mat_t	matrix;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	acc_matrix = (matp_t)user_ptr1;
+	count = (int *)user_ptr2;
+	child = (char *)user_ptr3;
+
+	if( strncmp( comb_leaf->tr_l.tl_name, child, NAMESIZE ) )
+		return;
+
+	(*count)++;
+	if( *count > 1 )
+		bu_log( "\n\tOccurrence #%d:\n", *count );
+
+	bn_mat_print( "", comb_leaf->tr_l.tl_mat );
+	if( *count == 1 )
+	{
+		mat_t tmp_mat;
+		bn_mat_mul( tmp_mat, acc_matrix, comb_leaf->tr_l.tl_mat );
+		MAT_COPY( acc_matrix, tmp_mat );
+	}
+
+}
+
 int
 f_showmats(clientData, interp, argc, argv )
 ClientData clientData;
@@ -1459,46 +1495,34 @@ char **argv;
 		int j;
 		int found;
 		int count;
+		struct rt_db_internal	intern;
+		struct rt_comb_internal *comb;
 
 		if( (dp = db_lookup( dbip, parent, LOOKUP_NOISY )) == DIR_NULL)
 		  return TCL_ERROR;
 
 		Tcl_AppendResult(interp, parent, "\n", (char *)NULL);
 
-		if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+		if( !(dp->d_flags & DIR_COMB) )
 		{
-		  TCL_READ_ERR_return;
+			Tcl_AppendResult( interp, "\tThis is not a combination\n", (char *)NULL );
+			break;
 		}
 
-		found = 0;
+		if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+			TCL_READ_ERR_return;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+
 		count = 0;
+
 		start_catching_output(&tmp_vls);
-		for( j=1 ; j<dp->d_len ; j++ )
-		{
-			if( !strncmp( rp[j].M.m_instname, child, NAMESIZE ) )
-			{
-				mat_t matrix;
-
-				count++;
-				if( count > 1 )
-				  bu_log( "\n\tOccurrence #%d:\n", count );
-
-				rt_mat_dbmat( matrix, rp[j].M.m_mat );
-				bn_mat_print( "", matrix );
-				if( count == 1 )
-				{
-					mat_t tmp_mat;
-					bn_mat_mul( tmp_mat, acc_matrix, matrix );
-					MAT_COPY( acc_matrix, tmp_mat );
-				}
-				found = 1;
-			}
-		}
+		db_tree_funcleaf( dbip, comb, comb->tree, Do_showmats, (genptr_t)acc_matrix, (genptr_t)&count, (genptr_t)child );
+		rt_comb_ifree( &intern );
 		stop_catching_output(&tmp_vls);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 
-		if( !found )
+		if( !count )
 		{
 		  Tcl_AppendResult(interp, child, " is not a member of ",
 				   parent, "\n", (char *)NULL);
@@ -1507,7 +1531,6 @@ char **argv;
 		if( count > max_count )
 			max_count = count;
 
-		bu_free( (genptr_t)rp, "f_showmats: rp" );
 		parent = child;
 	}
 	Tcl_AppendResult(interp, parent, "\n", (char *)NULL);
