@@ -52,6 +52,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #endif
 
+#include <ctype.h>
+
 _LOCAL_ int	adage_device_open(),
 		adage_device_close(),
 		adage_device_clear(),
@@ -174,8 +176,9 @@ char	*file;
 int	width, height;
 {
 	register int	i;
-	char	ourfile[16];
+	char	ourfile[20], *cp;
 	long	xbsval[34];
+	int	oflen;
 
 	/* Only 512 and 1024 opens are available */
 	if( width > 512 || height > 512 )
@@ -185,17 +188,34 @@ int	width, height;
 
 	/*
 	 * Determine the device name to open:
-	 *   /dev/ik0l
-	 *   012345678
+	 *   /dev/ik0l		(name)
+	 *   /dev/ik0noinitl	(name for no-init device)
+	 *   01234567890123456	(character offset)
+	 *
+	 * The device name MUST begin with a string which matches
+	 * the generic name of the device as defined in the FBIO
+	 * structure, followed by the unit number of the desired
+	 * interface, followed by other sub-designations.  In this
+	 * case, "/dev/ik" as the generic name, "0" as the unit,
+	 * then "h", "l", "noinith" or "noinitl" as appropriate
+	 * for high or low resolution - with or without device
+	 * initialization.
 	 */
-	if( strlen( file ) > 12 )
+	(void)strncpy(ourfile,file,20);
+	if((oflen = strlen(ourfile)) > 15)
 		return -1;
-	(void)sprintf( ourfile, "%s0l", file );
-	if( width > 512 || height > 512 )
-		ourfile[8] = 'h';
-	else
-		ourfile[8] = 'l';
-	ourfile[9] = '\0';
+	oflen--;
+	if( width > 512 || height > 512 ){
+		if(ourfile[oflen] != 'h'){
+			ourfile[oflen++] = 'h';
+			ourfile[oflen] = '\0';
+		}
+	}else{
+		if(ourfile[oflen] != 'l'){
+			ourfile[oflen++] = 'l';
+			ourfile[oflen] = '\0';
+		}
+	}
 
 	if( (ifp->if_fd = open( ourfile, O_RDWR, 0 )) == -1 )
 		return	-1;
@@ -222,6 +242,15 @@ int	width, height;
 		fb_log( "Bad fbsize %d.\n", ifp->if_width );
 		return	-1;
 	}
+
+
+	/* Don't initialize the Ikonas if opening the 'noinit' device */
+	for(cp=ourfile; !isdigit(*cp); cp++)
+		;
+	cp++;
+	if(strncmp(cp,"noinit",6) != 0){
+		/* No indent to simplify the diff with old driver */
+
 	if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
 		fb_log( "adage_device_open : lseek failed.\n" );
 		return	-1;
@@ -263,6 +292,9 @@ int	width, height;
 	    default_cursor.xbits, default_cursor.ybits,
 	    default_cursor.xorig, default_cursor.yorig ) == -1 )
 		return	-1;
+
+	}	/* End of initialization */
+
 	/* seek to start of pixels */
 	if( lseek( ifp->if_fd, 0L, 0 ) == -1 ) {
 		fb_log( "adage_device_open : lseek failed.\n" );
@@ -409,6 +441,7 @@ long	count;
 	}
 	/* Do the full scanlines */
 	if( fullscans > 0 ) {
+#ifndef GM256
 		maxikscans =  ADAGE_DMA_BYTES / (ifp->if_width*sizeof(IKONASpixel));
 		out = (char *) &(pixelp[count-tailfrag-width][RED]);
 		IKSEEK( 0, topiky );
@@ -431,6 +464,27 @@ long	count;
 			}
 			fullscans -= doscans;
 		}
+#else
+		out = (char *) &(pixelp[count-tailfrag-width][RED]);
+		IKSEEK( 0, topiky );
+		topiky += fullscans;
+		while( fullscans > 0 ) {
+			in = _pixbuf;
+			/* Read a single scan line */
+			if( read( ifp->if_fd, _pixbuf, width*sizeof(IKONASpixel) )
+			    != width*sizeof(IKONASpixel) )
+				return	-1;
+			for( i = width; i > 0; i-- ) {
+				/* VAX subscripting faster than ++ */
+				*out++ = *in;
+				*out++ = in[1];
+				*out++ = in[2];
+				in += sizeof(IKONASpixel);
+			}
+			out -= (width << 1) * sizeof(RGBpixel);
+			fullscans--;
+		}
+#endif
 	}
 headin:
 	if( headfrag != 0 ) {
@@ -506,6 +560,7 @@ long	count;
 	}
 	/* Do the full scanlines */
 	if( fullscans > 0 ) {
+#ifndef GM256
 		maxikscans =  ADAGE_DMA_BYTES / (ifp->if_width*sizeof(IKONASpixel));
 		in = (char *) &(pixelp[count-tailfrag-width][RED]);
 		IKSEEK( 0, topiky );
@@ -528,6 +583,27 @@ long	count;
 				return	-1;
 			fullscans -= doscans;
 		}
+#else
+		in = (char *) &(pixelp[count-tailfrag-width][RED]);
+		IKSEEK( 0, topiky );
+		topiky += fullscans;
+		while( fullscans > 0 ) {
+			out = _pixbuf;
+			/* Read a single scan line */
+			for( i = width; i > 0; i-- ) {
+				/* VAX subscripting faster than ++ */
+				*out = *in++;
+				out[1] = *in++;
+				out[2] = *in++;
+				out += sizeof(IKONASpixel);
+			}
+			in -= (width << 1) * sizeof(RGBpixel);
+			if( write( ifp->if_fd, _pixbuf, width*sizeof(IKONASpixel) )
+			    != width*sizeof(IKONASpixel) )
+				return	-1;
+			fullscans--;
+		}
+#endif
 	}
 headout:
 	if( headfrag != 0 ) {
