@@ -42,7 +42,6 @@ int entityno;
 	fastf_t		y2;
 	fastf_t		z2;
 	int		sol_num;		/* IGES solid type number */
-	void		vec_ortho();
 
 	/* Default values */
 	x1 = 0.0;
@@ -95,27 +94,7 @@ int entityno;
 	VSET(hdir, x2, y2, z2);
 	VUNITIZE(hdir);
 
-	/* Multiply the hdir * scale to obtain height. */
-
-	VSCALE(height, hdir, scale);
-
-	/* Now make the a, b, c, and d vectors. */
-
-	inp = hdir;
-	outp = a;
-	vec_ortho(outp, inp);
-	VUNITIZE(a);
-	VCROSS(b, hdir, a);
-	VSCALE(avec, a, rad1);
-	VSCALE(bvec, b, rad1);
-	outp = c;
-	vec_ortho(outp, inp);
-	VUNITIZE(c);
-	VCROSS(d, hdir, c);
-	VSCALE(cvec, c, rad2);
-	VSCALE(dvec, d, rad2);
-		
-	mk_tgc(fdout, dir[entityno]->name, base, height, avec, bvec, cvec, dvec);
+	mk_cone( fdout, dir[entityno]->name, base, hdir, scale, rad1, rad2 );
 
 	return( 1 );
 } 
