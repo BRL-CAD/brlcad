@@ -116,6 +116,26 @@ If the grid cell width is specified and
 the grid cell height is \fInot\fR specified,
 the grid cell height defaults to be the same as the width.
 .TP
+.B \-h density,r,g,b
+enables an exponential shading of the void between the eye and the 
+first hit location.  This allows a cheap simulation of atmospheric haze
+with lower performance impact that explicit modeling of the air volume.
+The haze is computed using the form: 
+.sp
+.br
+f = e^(-dist * density)
+.br
+g = 1.0 - f
+.br
+color = color * f + hazeRGB * g
+.sp
+.br
+The color values are optional.  If not specified they will have the passable
+values 0.8 .9 .99.
+.sp
+.br
+Example usage: -h '2.5e-8,.75,.95,.99'
+.TP
 .B \-i
 enables \fIincremental mode\fR processing.
 First a single ray is fired.
