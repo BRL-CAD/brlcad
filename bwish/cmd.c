@@ -42,13 +42,13 @@
 #include "cmd.h"
 #include "libtermio.h"
 
-extern Tcl_Interp *interp;
+/* defined in tcl.c */
+extern void Cad_Exit();
 
 HIDDEN void historyInit();
 HIDDEN int cmd_history();
 HIDDEN int cmd_hist();
 HIDDEN int cmd_quit();
-void quit();
 
 HIDDEN struct bu_cmdhist histHead;
 HIDDEN struct bu_cmdhist *currHist;
@@ -92,20 +92,9 @@ cmd_quit(clientData, interp, argc, argv)
      int argc;
      char **argv;
 {
-	quit(0);
+	Cad_Exit(interp, 0);
 	/* NOTREACHED */
 	return TCL_OK;
-}
-
-void
-quit(status)
-     int status;
-{
-	reset_Tty(fileno(stdin)); 
-#if 0
-	Tcl_DeleteInterp(interp);
-#endif
-	Tcl_Exit(status);
 }
 
 /***************************** BWISH COMMAND HISTORY *****************************/
