@@ -4,13 +4,15 @@ rpatch \- convert FASTGEN ASCII databases into a format suitable for
 .I patch-g.
 .SH SYNOPSIS
 .I rpatch
--D < FASTGEN_FILE > OUTPUT_FILE
+[-D] [-3] < FASTGEN_FILE > OUTPUT_FILE
 .SH DESCRIPTION
 This program reformats FASTGEN files to a form usable by
 .I patch-g.
 The
 .I -D
-option handles type 3 components as donuts rather than triangles.
+option handles type 3 components as donuts rather than triangles. The
+.I -3
+option reads FASTGEN3 format files (coordinates are each 10 columns wide).
 .SH EXAMPLE
 .I
 rpatch < fastgen_file > file.rpatch
