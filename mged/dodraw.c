@@ -113,15 +113,15 @@ union record *recordp;
 				break;
 
 			case GENTGC:
-				draw_tgc( recordp->s.s_values, xform );
+				draw_tgc( &recordp->s, xform );
 				break;
 
 			case GENELL:
-				draw_ell( recordp->s.s_values, xform );
+				draw_ell( &recordp->s, xform );
 				break;
 
 			case TOR:
-				draw_tor( recordp->s.s_values, xform );
+				draw_tor( &recordp->s, xform );
 				break;
 
 			default:
