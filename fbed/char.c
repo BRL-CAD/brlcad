@@ -3,7 +3,7 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6651 or AV-298-6651
+			(301)278-6651 or DSN 298-6651
 */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -17,21 +17,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* 
 	char.c - routines for displaying a string on a frame buffer.
  */
-extern void	fudge_Pixel();
-extern void	fill_buf(), clear_buf();
-extern void	squash();
+extern void fudge_Pixel();
+extern void fill_buf(), clear_buf();
+extern void squash();
 
-_LOCAL_ void	do_Char();
-void		menu_char();
+STATIC void do_Char();
+void menu_char();
 
 void
 do_line( xpos, ypos, line, menu_border )
-int		xpos, ypos;
-register char	*line;
-RGBpixel	*menu_border; /* Menu outline color, if NULL, do filtering. */
+int xpos, ypos;
+register char *line;
+RGBpixel *menu_border; /* Menu outline color, if NULL, do filtering. */
 	{	register int    currx;
 		register int    char_count, char_id;
-		register int	len = strlen( line );
+		register int len = strlen( line );
 #if DEBUG_STRINGS
 	fb_log( "do_line: xpos=%d ypos=%d line=\"%s\" menu_border=0x%x\n",
 		xpos, ypos, line, (int) menu_border );
@@ -91,19 +91,19 @@ RGBpixel	*menu_border; /* Menu outline color, if NULL, do filtering. */
 	return;
 	}
 
-/* Shared by do_Char() and menu_char().					*/
-static int		filterbuf[FONTBUFSZ][FONTBUFSZ];
+/* Shared by do_Char() and menu_char(). */
+static int filterbuf[FONTBUFSZ][FONTBUFSZ];
 
-_LOCAL_ void
+STATIC void
 do_Char( c, xpos, ypos, odd )
 int c;
 int xpos, ypos, odd;
 	{	register int    i, j;
-		int		base;
+		int base;
 		int     	totwid = width;
 		int     	up, down;
 		static float	resbuf[FONTBUFSZ];
-		static RGBpixel	fbline[FONTBUFSZ];
+		static RGBpixel fbline[FONTBUFSZ];
 #if DEBUG_STRINGS
 	fb_log( "do_Char: c='%c' xpos=%d ypos=%d odd=%d\n",
 		c, xpos, ypos, odd );
@@ -137,10 +137,10 @@ int xpos, ypos, odd;
 			);
 		fb_read( fbp, xpos, ypos - down + i, fbline, totwid+3);
 		for (j = 0; j < (totwid + 3) - 1; j++)
-			{	register int	tmp;
+			{	register int tmp;
 			/* EDITOR'S NOTE : do not rearrange this code,
 				the SUN compiler can't handle more
-				complex expressions.			*/
+				complex expressions. */
 			tmp = fbline[j][RED] & 0377;
 			fbline[j][RED] =
 				(int)(paint[RED]*resbuf[j]+(1-resbuf[j])*tmp);
@@ -163,11 +163,11 @@ void
 menu_char( x_adjust, menu_wid, odd, menu_border )
 int x_adjust, menu_wid, odd;
 register
-RGBpixel	menu_border;
+RGBpixel menu_border;
 	{	register int    i, j, k;
-		int		embold = 1;
-		int		base;
-		int		totwid = width;
+		int embold = 1;
+		int base;
+		int totwid = width;
 	/* Read in the character bit map, with two blank lines on each end. */
 	for (i = 0; i < 2; i++)
 		clear_buf (totwid, filterbuf[i]);
@@ -184,9 +184,9 @@ RGBpixel	menu_border;
 	/* Initial base line for filtering depends on odd flag. */
 	base = (odd ? 1 : 2);
 
-	/* Change bits in menu that correspond to character bitmap.	*/
+	/* Change bits in menu that correspond to character bitmap. */
 	for (i = height + base, k = 0; i >= base; i--, k++)
-		{	register RGBpixel	*menu;
+		{	register RGBpixel *menu;
 		menu = menu_addr + k * menu_wid + x_adjust;
 		for (j = 0; j < (totwid + 3) - 1; j++, menu++ )
 			if( filterbuf[i][j] )
@@ -215,9 +215,9 @@ register int posn;
 		;
 #if defined( CANT_DO_ZERO_SHIFT )
 	if( posn == 0 )
-		return	(int)(*bitstring) & 1;
+		return (int)(*bitstring) & 1;
 	else
 #endif
-	return	(int)(*bitstring) & (1<<posn);
+	return (int)(*bitstring) & (1<<posn);
 #endif
 	}

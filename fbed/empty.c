@@ -8,11 +8,11 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
+char sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
 #endif
 #if defined( BSD ) || defined( CRAY ) || defined( sun )
 #	include <sys/types.h>
@@ -62,26 +62,26 @@ typedef	long	fd_set;
  */
 int
 empty( fd )
-int	fd;
+int fd;
 	{
 #if defined( sgi ) && 0
-		extern FBIO	*fbp;
+		extern FBIO *fbp;
 	if( fbp != FBIO_NULL && strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0 )
-		return	sgi_Empty();
+		return sgi_Empty();
 	else
 #endif
 #if defined( sgi )
 		{	static struct timeval	timeout = { 0L, 600L };
 			fd_set		readfds;
-			register int	nfound;
+			register int nfound;
 		FD_ZERO( &readfds );
 		FD_SET( fd, &readfds );
 		nfound = select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &timeout );
-		return	nfound == -1 ? 1 : (nfound == 0);
+		return nfound == -1 ? 1 : (nfound == 0);
 		}
 #else
 	/* On most machines we aren't supporting the mouse, so no need to
 		not block on keyboard input. */
-	return	0;
+	return 0;
 #endif
 	}
