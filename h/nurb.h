@@ -247,9 +247,11 @@ RT_EXTERN(void rt_nurb_solve, (fastf_t *mat_1, fastf_t *mat_2,
 			fastf_t *solution, int dim, int coords));
 RT_EXTERN(void rt_nurb_doolittle, (fastf_t *mat_1, fastf_t *mat_2,
 			int row, int coords));
-RT_EXTERN(void rt_nurb_forw_solve, (fastf_t *lu, fastf_t *b, fastf_t *y, int n));
-RT_EXTERN(void rt_nurb_back_solve, (fastf_t *lu, fastf_t *y, fastf_t *x, int n));
-RT_EXTERN(int rt_nurb_p_mat, (fastf_t * mat, int dim));
+RT_EXTERN(void rt_nurb_forw_solve, (CONST fastf_t *lu, CONST fastf_t *b,
+			fastf_t *y, int n));
+RT_EXTERN(void rt_nurb_back_solve, (CONST fastf_t *lu, CONST fastf_t *y,
+			fastf_t *x, int n));
+RT_EXTERN(int rt_nurb_p_mat, (CONST fastf_t * mat, int dim));
 
 /* nurb_split.c */
 RT_EXTERN(void rt_nurb_s_split, (struct rt_list *split_hd, CONST struct snurb *srf, int dir));
