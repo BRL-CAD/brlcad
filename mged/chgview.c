@@ -542,6 +542,13 @@ f_saveview()
 		sp->s_iflag = DOWN;
 }
 
+/* set view using azimuth and elevation angles */
+void
+f_aeview()
+{
+	setview( 270 + atoi(cmd_args[2]), 0, 270 - atoi(cmd_args[1]) );
+}
+
 void
 f_attach()
 {
