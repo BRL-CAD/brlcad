@@ -53,10 +53,12 @@ install:	cake
 		if test -f $${BINDIR}/cake; then \
 			mv -f $${BINDIR}/cake $${BINDIR}/cake.bak; fi; \
 		mv cake $${BINDIR}/cake; \
+		chmod 555  $${BINDIR}/cake; \
 		rm -f $${BINDIR}/fake; \
 		ln -s $${BINDIR}/cake $${BINDIR}/fake; \
 		rm -f $${MANDIR}/cake.1 $${MANDIR}/fake.1; \
 		cp cake.1 $${MANDIR}; \
+		chmod 444 $${MANDIR}/cake.1; \
 		ln -s $${MANDIR}/cake.1 $${MANDIR}/fake.1
 
 $(OBJ):		$(HDR)
