@@ -170,6 +170,7 @@ static struct cmdtab cmdtab[] = {
 	{"export_body", cmd_export_body},
 	{"dbbinary", f_binary},
 	{"bot_face_fuse", f_bot_face_fuse},
+	{"bot_face_sort", cmd_bot_face_sort},
 	{"bot_vertex_fuse", f_bot_fuse},
 	{"bot_condense", f_bot_condense},
 	{"bottom",	bv_bottom},
@@ -3298,4 +3299,13 @@ cmd_E(ClientData	clientData,
 	curr_cmd_list = save_cmd_list;
 
 	return TCL_OK;
+}
+
+int
+cmd_bot_face_sort( ClientData	clientData,
+	Tcl_Interp	*interp,
+	int     	argc,
+	char    	**argv)
+{
+	return wdb_bot_face_sort_cmd( wdbp, interp, argc, argv );
 }

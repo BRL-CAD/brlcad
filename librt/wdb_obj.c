@@ -163,6 +163,9 @@ extern void rt_generic_make();
 /* from librt/wdb_comb_std.c */
 extern int wdb_comb_std_tcl();
 
+/* from librt/g_bot.c */
+extern int rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece );
+
 /* from db5_scan.c */
 HIDDEN int db5_scan();
 
@@ -235,6 +238,7 @@ static int wdb_pathlist_tcl();
 static int wdb_lt_tcl();
 static int wdb_version_tcl();
 static int wdb_binary_tcl();
+static int wdb_bot_face_sort_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -261,6 +265,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"attr",	wdb_attr_tcl},
 	{"attr_rm",	wdb_attr_rm_tcl},
 	{"binary",	wdb_binary_tcl},
+	{"bot_face_sort", wdb_bot_face_sort_tcl},
 	{"c",		wdb_comb_std_tcl},
 	{"cat",		wdb_cat_tcl},
 #if 0
@@ -7676,6 +7681,116 @@ wdb_binary_tcl(ClientData	clientData,
 
 	return wdb_binary_cmd(wdbp, interp, argc-1, argv+1);
 }
+
+int wdb_bot_face_sort_cmd(struct rt_wdb	*wdbp,
+	     Tcl_Interp		*interp,
+	     int		argc,
+	     char 		**argv)
+{
+	int i;
+	int tris_per_piece=0;
+	struct bu_vls vls;
+	int warnings=0;
+
+	if( argc < 3 ) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_bot_face_sort %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	tris_per_piece = atoi( argv[1] );
+	if( tris_per_piece < 1 ) {
+		Tcl_AppendResult(interp, "Illegal value for triangle per piece (",
+				 argv[1],
+				 ")\n",
+				 (char *)NULL );
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_bot_face_sort %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	bu_vls_init( &vls );
+	for( i=2 ; i<argc ; i++ ) {
+		struct directory *dp;
+		struct rt_db_internal intern;
+		struct rt_bot_internal *bot;
+		int id;
+
+		if( (dp=db_lookup( wdbp->dbip, argv[i], LOOKUP_NOISY ) ) == DIR_NULL ) {
+			continue;
+		}
+
+		if( (id=rt_db_get_internal( &intern, dp, wdbp->dbip, bn_mat_identity, wdbp->wdb_resp )) < 0 ) {
+			bu_vls_printf( &vls,
+			   "Failed to get internal form of %s, not sorting this one\n",
+			    dp->d_namep ); 
+			warnings++;
+			continue;
+		}
+
+		if( id != ID_BOT ) {
+			rt_db_free_internal( &intern, wdbp->wdb_resp );
+			bu_vls_printf( &vls,
+				       "%s is not a BOT primitive, skipped\n",
+				       dp->d_namep );
+			warnings++;
+			continue;
+		}
+
+		bot = (struct rt_bot_internal *)intern.idb_ptr;
+		RT_BOT_CK_MAGIC( bot );
+
+		bu_log( "processing %s (%d triangles)\n", dp->d_namep, bot->num_faces );
+		while( Tcl_DoOneEvent( TCL_DONT_WAIT | TCL_FILE_EVENTS ) );
+		if( rt_bot_sort_faces( bot, tris_per_piece ) ) {
+			rt_db_free_internal( &intern, wdbp->wdb_resp );
+			bu_vls_printf( &vls,
+				       "Face sort failed for %s, this BOT not sorted\n",
+				       dp->d_namep );
+			warnings++;
+			continue;
+		}
+
+		if( rt_db_put_internal( dp, wdbp->dbip, &intern, wdbp->wdb_resp ) ) {
+			if( warnings ) {
+				Tcl_AppendResult(interp, bu_vls_addr( &vls ),
+						 (char *)NULL );
+			}
+			Tcl_AppendResult(interp, "Failed to write sorted BOT (",
+					 dp->d_namep,
+					 ") to database!!! (This is very bad)\n" );
+			rt_db_free_internal( &intern, wdbp->wdb_resp );
+			bu_vls_free( &vls );
+			return( TCL_ERROR );
+		}
+	}
+
+	if( warnings ) {
+		Tcl_AppendResult(interp, bu_vls_addr( &vls ), (char *)NULL );
+	}
+	bu_vls_free( &vls );
+	return( TCL_OK );
+}
+
+/*
+ * Usage:
+ *        procname 
+ */
+static int
+wdb_bot_face_sort_tcl(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_bot_face_sort_cmd(wdbp, interp, argc-1, argv+1);
+}
+
 
 #if 0
 /* skeleton functions for wdb_obj methods */
