@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "raytrace.h"
 
-#define made_it()	rt_log("Made it to %s:%d\n", __FILE__, __LINE__);
+#define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
 #define	OPT_STRING	"a:ce:g:opr:t:ux:?"
 #define	RAND_NUM	((fastf_t)random()/MAXINT)
@@ -125,7 +125,7 @@ void printusage ()
     char	**u;
 
     for (u = usage; *u != 0; ++u)
-	rt_log("%s", *u);
+	bu_log("%s", *u);
 }
 
 unsigned char *get_color (unsigned char *ucp, unsigned long x)
@@ -276,10 +276,10 @@ struct partition	*ph;
 			pp -> pt_back -> pt_outhit -> hit_point);
 		    if (debug & G_LINT_A_UNCONF)
 		    {
-			rt_log("inhit (%g,%g,%g) - back outhit (%g,%g,%g) ",
+			bu_log("inhit (%g,%g,%g) - back outhit (%g,%g,%g) ",
 			    V3ARGS(pp -> pt_inhit -> hit_point),
 			    V3ARGS(pp -> pt_back -> pt_outhit -> hit_point));
-			rt_log(" = (%g,%g,%g), mag=%g\n",
+			bu_log(" = (%g,%g,%g), mag=%g\n",
 			    V3ARGS(delta), MAGNITUDE(delta));
 		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance)
@@ -348,10 +348,10 @@ struct partition	*ph;
 			pp -> pt_outhit -> hit_point);
 		    if (debug & G_LINT_A_UNCONF)
 		    {
-			rt_log("forw inhit (%g,%g,%g) - outhit (%g,%g,%g) ",
+			bu_log("forw inhit (%g,%g,%g) - outhit (%g,%g,%g) ",
 			    V3ARGS(pp -> pt_forw -> pt_inhit -> hit_point),
 			    V3ARGS(pp -> pt_outhit -> hit_point));
-			rt_log(" = (%g,%g,%g), mag=%g\n",
+			bu_log(" = (%g,%g,%g), mag=%g\n",
 			    V3ARGS(delta), MAGNITUDE(delta));
 		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance)
@@ -398,10 +398,10 @@ struct partition	*ph;
 		pp -> pt_back -> pt_outhit -> hit_point);
 	    if (debug & G_LINT_VAC)
 	    {
-		rt_log("inhit (%g,%g,%g) - back outhit (%g,%g,%g) ",
+		bu_log("inhit (%g,%g,%g) - back outhit (%g,%g,%g) ",
 		    V3ARGS(pp -> pt_inhit -> hit_point),
 		    V3ARGS(pp -> pt_back -> pt_outhit -> hit_point));
-		rt_log(" = (%g,%g,%g), mag=%g\n",
+		bu_log(" = (%g,%g,%g), mag=%g\n",
 		    V3ARGS(delta), MAGNITUDE(delta));
 	    }
 	    if ((mag_del = MAGNITUDE(delta)) > tolerance)
@@ -579,7 +579,7 @@ char	**argv;
 
     extern int		getopt();
 
-    rt_log("%s\n", rt_version);
+    bu_log("%s\n", rt_version);
 
     control.glc_magic = G_LINT_CTRL_MAGIC;
     control.glc_debug = 0;
@@ -597,7 +597,7 @@ char	**argv;
 	    case 'a':
 		if (sscanf(optarg, "%lf", &azimuth) != 1)
 		{
-		    rt_log("Invalid azimuth specification: '%s'\n", optarg);
+		    bu_log("Invalid azimuth specification: '%s'\n", optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -608,26 +608,26 @@ char	**argv;
 	    case 'e':
 		if (sscanf(optarg, "%lf", &elevation) != 1)
 		{
-		    rt_log("Invalid elevation specification: '%s'\n", optarg);
+		    bu_log("Invalid elevation specification: '%s'\n", optarg);
 		    printusage();
 		    exit (1);
 		}
 		if ((elevation < -90.0) || (elevation > 90.0))
 		{
-		    rt_log("Illegal elevation: '%g'\n", elevation);
+		    bu_log("Illegal elevation: '%g'\n", elevation);
 		    exit (1);
 		}
 		break;
 	    case 'g':
 		if (sscanf(optarg, "%lf", &celsiz) != 1)
 		{
-		    rt_log("Invalid grid-size specification: '%s'\n", optarg);
+		    bu_log("Invalid grid-size specification: '%s'\n", optarg);
 		    printusage();
 		    exit (1);
 		}
 		if (celsiz < 0.0)
 		{
-		    rt_log("Illegal grid size: '%g'\n", celsiz);
+		    bu_log("Illegal grid size: '%g'\n", celsiz);
 		    exit (1);
 		}
 		break;
@@ -650,7 +650,7 @@ char	**argv;
 		control.glc_what_to_report = strtoul(optarg, &sp, 0);
 		if (sp == optarg)
 		{
-		    rt_log("Invalid report specification: '%s'\n", optarg);
+		    bu_log("Invalid report specification: '%s'\n", optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -664,14 +664,14 @@ char	**argv;
 	    case 't':
 		if (sscanf(optarg, "%lf", &(control.glc_tol)) != 1)
 		{
-		    rt_log("Invalid tolerance specification: '%s'\n",
+		    bu_log("Invalid tolerance specification: '%s'\n",
 			optarg);
 		    printusage();
 		    exit (1);
 		}
 		if (control.glc_tol < 0.0)
 		{
-		    rt_log("Illegal tolerance: '%g'\n", control.glc_tol);
+		    bu_log("Illegal tolerance: '%g'\n", control.glc_tol);
 		    exit (1);
 		}
 		break;
@@ -682,7 +682,7 @@ char	**argv;
 		control.glc_debug = strtoul(optarg, &sp, 16);
 		if (sp == optarg)
 		{
-		    rt_log("Invalid debug-flag specification: '%s'\n", optarg);
+		    bu_log("Invalid debug-flag specification: '%s'\n", optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -697,30 +697,30 @@ char	**argv;
 	printusage();
 	exit (1);
     }
-    rt_log("OK, use_air=%d, what_to_report=0x%x\n",
+    bu_log("OK, use_air=%d, what_to_report=0x%x\n",
 	use_air, control.glc_what_to_report);
     if (control.glc_what_to_report & ~G_LINT_ALL)
-	rt_log("WARNING: Ignoring undefined bits of report specification\n");
+	bu_log("WARNING: Ignoring undefined bits of report specification\n");
 
     /* Read in the geometry model */
-    rt_log("Database file:  '%s'\n", argv[optind]);
-    rt_log("Building the directory... ");
+    bu_log("Database file:  '%s'\n", argv[optind]);
+    bu_log("Building the directory... ");
     if ((rtip = rt_dirbuild(argv[optind] , db_title, TITLE_LEN)) == RTI_NULL)
     {
-	rt_log("Could not build directory for file '%s'\n", argv[optind]);
+	bu_log("Could not build directory for file '%s'\n", argv[optind]);
 	exit(1);
     }
     rtip -> useair = use_air;
-    rt_log("\nPreprocessing the geometry... ");
+    bu_log("\nPreprocessing the geometry... ");
     while (++optind < argc)
     {
 	if (rt_gettree(rtip, argv[optind]) == -1)
 	    exit (1);
-	rt_log("\nObject '%s' processed", argv[optind]);
+	bu_log("\nObject '%s' processed", argv[optind]);
     }
-    rt_log("\nPrepping the geometry... ");
+    bu_log("\nPrepping the geometry... ");
     rt_prep(rtip);
-    rt_log("\n");
+    bu_log("\n");
 
     /* Initialize the application structure */
     ap.a_hit =
@@ -781,6 +781,7 @@ char	**argv;
 	init_plot3(&ap);
 
     /* Do the actual gridding */
+    bu_log("Firing rays... ");
     VSCALE(ap.a_ray.r_dir, unit_D, -1.0);
     cell[2] = 0.0;
     for (cell[1] = g_max[2]; cell[1] >= g_min[2]; cell[1] -= celsiz)
