@@ -255,99 +255,22 @@ register CONST struct soltab *stp;
 }
 
 /*
- *  			R T _ B O T _ S H O T
- *  
- *  Intersect a ray with a bot.
- *  If an intersection occurs, a struct seg will be acquired
- *  and filled in.
- *
- *	Notes for rt_bot_norm():
- *		hit_private contains pointer to the tri_specific structure
- *		hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific
- *		hit_vpriv[Y] contains the BOT solid orientation
- *		hit_vpriv[Z] contains the +1 if the hit is a entrance, or -1 for an exit
- *  
- *  Returns -
- *  	0	MISS
- *	>0	HIT
+ *			R T _ B O T _ M A K E S E G S
  */
-#define MAXHITS 128
-int
-rt_bot_shot( stp, rp, ap, seghead )
+HIDDEN int
+rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, pieces_flag )
+struct hit		*hits;
+int			nhits;
 struct soltab		*stp;
-register struct xray	*rp;
+struct xray		*rp;
 struct application	*ap;
 struct seg		*seghead;
+int			pieces_flag;	/* !0 if more pieces still to come */
 {
 	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-	register struct tri_specific *trip = bot->bot_facelist;
-	LOCAL struct hit hits[MAXHITS];
-	register struct hit *hp;
-	LOCAL int	nhits;
 
-	nhits = 0;
-	hp = &hits[0];
+	RT_CK_SOLTAB(stp);
 
-	/* consider each face */
-	for( ; trip; trip = trip->tri_forw )  {
-		FAST fastf_t	dn;		/* Direction dot Normal */
-		LOCAL fastf_t	abs_dn;
-		FAST fastf_t	k;
-		LOCAL fastf_t	alpha, beta;
-		LOCAL vect_t	wxb;		/* vertex - ray_start */
-		LOCAL vect_t	xp;		/* wxb cross ray_dir */
-
-		/*
-		 *  Ray Direction dot N.  (N is outward-pointing normal)
-		 *  wn points inwards, and is not unit length.
-		 */
-		dn = VDOT( trip->tri_wn, rp->r_dir );
-
-		/*
-		 *  If ray lies directly along the face, (ie, dot product
-		 *  is zero), drop this face.
-		 */
-		abs_dn = dn >= 0.0 ? dn : (-dn);
-		if( abs_dn < SQRT_SMALL_FASTF )
-			continue;
-		VSUB2( wxb, trip->tri_A, rp->r_pt );
-		VCROSS( xp, wxb, rp->r_dir );
-
-		/* Check for exceeding along the one side */
-		alpha = VDOT( trip->tri_CA, xp );
-		if( dn < 0.0 )  alpha = -alpha;
-		if( alpha < 0.0 || alpha > abs_dn )
-			continue;
-
-		/* Check for exceeding along the other side */
-		beta = VDOT( trip->tri_BA, xp );
-		if( dn > 0.0 )  beta = -beta;
-		if( beta < 0.0 || beta > abs_dn )
-			continue;
-		if( alpha+beta > abs_dn )
-			continue;
-		k = VDOT( wxb, trip->tri_wn ) / dn;
-
-		/* HIT is within planar face */
-		hp->hit_magic = RT_HIT_MAGIC;
-		hp->hit_dist = k;
-		hp->hit_private = (genptr_t)trip;
-		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
-		hp->hit_vpriv[Y] = bot->bot_orientation;
-		hp->hit_surfno = trip->tri_surfno;
-		if( ++nhits >= MAXHITS )  {
-			bu_log("rt_bot_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
-			break;
-		}
-		hp++;
-	}
-	if( nhits == 0 )
-		return(0);		/* MISS */
-
-	/* Sort hits, Near to Far */
-	rt_hitsort( hits, nhits );
-
-	/* build segments */
 	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
 	{
 		register struct seg *segp;
@@ -641,6 +564,103 @@ struct seg		*seghead;
 }
 
 /*
+ *  			R T _ B O T _ S H O T
+ *  
+ *  Intersect a ray with a bot.
+ *  If an intersection occurs, a struct seg will be acquired
+ *  and filled in.
+ *
+ *	Notes for rt_bot_norm():
+ *		hit_private contains pointer to the tri_specific structure
+ *		hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific
+ *		hit_vpriv[Y] contains the BOT solid orientation
+ *		hit_vpriv[Z] contains the +1 if the hit is a entrance, or -1 for an exit
+ *  
+ *  Returns -
+ *  	0	MISS
+ *	>0	HIT
+ */
+#define MAXHITS 128
+int
+rt_bot_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
+{
+	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+	register struct tri_specific *trip = bot->bot_facelist;
+	LOCAL struct hit hits[MAXHITS];
+	register struct hit *hp;
+	LOCAL int	nhits;
+
+	nhits = 0;
+	hp = &hits[0];
+
+	/* consider each face */
+	for( ; trip; trip = trip->tri_forw )  {
+		FAST fastf_t	dn;		/* Direction dot Normal */
+		LOCAL fastf_t	abs_dn;
+		FAST fastf_t	k;
+		LOCAL fastf_t	alpha, beta;
+		LOCAL vect_t	wxb;		/* vertex - ray_start */
+		LOCAL vect_t	xp;		/* wxb cross ray_dir */
+
+		/*
+		 *  Ray Direction dot N.  (N is outward-pointing normal)
+		 *  wn points inwards, and is not unit length.
+		 */
+		dn = VDOT( trip->tri_wn, rp->r_dir );
+
+		/*
+		 *  If ray lies directly along the face, (ie, dot product
+		 *  is zero), drop this face.
+		 */
+		abs_dn = dn >= 0.0 ? dn : (-dn);
+		if( abs_dn < SQRT_SMALL_FASTF )
+			continue;
+		VSUB2( wxb, trip->tri_A, rp->r_pt );
+		VCROSS( xp, wxb, rp->r_dir );
+
+		/* Check for exceeding along the one side */
+		alpha = VDOT( trip->tri_CA, xp );
+		if( dn < 0.0 )  alpha = -alpha;
+		if( alpha < 0.0 || alpha > abs_dn )
+			continue;
+
+		/* Check for exceeding along the other side */
+		beta = VDOT( trip->tri_BA, xp );
+		if( dn > 0.0 )  beta = -beta;
+		if( beta < 0.0 || beta > abs_dn )
+			continue;
+		if( alpha+beta > abs_dn )
+			continue;
+		k = VDOT( wxb, trip->tri_wn ) / dn;
+
+		/* HIT is within planar face */
+		hp->hit_magic = RT_HIT_MAGIC;
+		hp->hit_dist = k;
+		hp->hit_private = (genptr_t)trip;
+		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
+		hp->hit_vpriv[Y] = bot->bot_orientation;
+		hp->hit_surfno = trip->tri_surfno;
+		if( ++nhits >= MAXHITS )  {
+			bu_log("rt_bot_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
+			break;
+		}
+		hp++;
+	}
+	if( nhits == 0 )
+		return(0);		/* MISS */
+
+	/* Sort hits, Near to Far */
+	rt_hitsort( hits, nhits );
+
+	/* build segments */
+	return rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, 0 );
+}
+
+/*
  *			R T _ B O T _ P I E C E _ S H O T
  *
  *  Intersect a ray with a list of "pieces" of a BoT.
@@ -757,12 +777,12 @@ bu_log("rt_bot_piece_shot %d,%d\n", ap->a_x, ap->a_y);
 	if( nhits == 0 )
 		return(0);		/* MISS */
 
-	/* Now, drop into all that gore to sort hits and build segs */
+	/* Sort hits, Near to Far */
+	rt_hitsort( hits, nhits );
+bu_log("rt_bot_piece_shot(): nhits = %d\n", nhits );
 
-	bu_log("rt_bot_piece_shot(): nhits = %d\n", nhits );
-	bu_bomb("rt_bot_piece_shot(): got a hit, oops, need more code\n");
-
-	return 0;	/* MISS */
+	/* build segments */
+	return rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, 1 );
 }
 
 #define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
