@@ -9,13 +9,6 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 /*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) error.c	2.2
-		Modified: 	1/30/87 at 17:22:25	G S M
-		Retrieved: 	2/4/87 at 08:53:34
-		SCCS archive:	/vld/moss/src/lgt/s.error.c
-*/
-/*
  *			E R R O R
  *
  *  Ray Tracing library and Framebuffer library, error handling routines.
@@ -148,7 +141,12 @@ va_dcl
 		hmredraw();
 		}
 	else
+		{
 		(void) _doprnt( fmt, ap, stderr );
+#ifdef sun
+		(void) fflush( stderr );
+#endif
+		}
 	va_end( ap );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
@@ -209,12 +207,18 @@ va_dcl
 			}
 		else
 			(void) _doprnt( fmt, ap, stdout );
+		(void) fflush( stdout );
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
 		hmredraw();
 		}
 	else
+		{
 		(void) _doprnt( fmt, ap, stderr );
+#ifdef sun
+		(void) fflush( stderr );
+#endif
+		}
 	va_end( ap );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
