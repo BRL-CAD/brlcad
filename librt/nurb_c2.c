@@ -24,14 +24,13 @@
 #include "nurb.h"
 #include "raytrace.h"
 
-struct curvature *
-rt_nurb_curvature(srf, u, v)
-struct snurb * srf;
-fastf_t u;
+void
+rt_nurb_curvature(cvp, srf, u, v)
+struct curvature *cvp;
+CONST struct snurb * srf;
+fastf_t	u;
 fastf_t v;
 {
-
-	struct curvature *cvp;
 	struct snurb * us, *vs, * uus, * vvs, *uvs;
 	fastf_t *ue, *ve, *uue, *vve, *uve, *se;
         fastf_t         E, F, G;                /* First Fundamental Form */
@@ -43,21 +42,18 @@ fastf_t v;
         vect_t          norm;
 	int 		i;
 
-	cvp = (struct curvature *) rt_malloc(sizeof( struct curvature),
-		"rt_nurb_curvature: struct curvature");
-
-	us = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
-	vs = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
-	uus = (struct snurb *) rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
-	vvs = (struct snurb *) rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
-	uvs = (struct snurb *) rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
+	us = rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	vs = rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	uus = rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
+	vvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
+	uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 	
-	se = (fastf_t *) rt_nurb_s_eval(srf, u, v);
-	ue = (fastf_t *) rt_nurb_s_eval(us, u,v);
-	ve = (fastf_t *) rt_nurb_s_eval(vs, u,v);
-	uue = (fastf_t *) rt_nurb_s_eval(uus, u,v);
-	vve = (fastf_t *) rt_nurb_s_eval(vvs, u,v);
-	uve = (fastf_t *) rt_nurb_s_eval(uvs, u,v);
+	se = rt_nurb_s_eval(srf, u, v);
+	ue = rt_nurb_s_eval(us, u,v);
+	ve = rt_nurb_s_eval(vs, u,v);
+	uue = rt_nurb_s_eval(uus, u,v);
+	vve = rt_nurb_s_eval(vvs, u,v);
+	uve = rt_nurb_s_eval(uvs, u,v);
 
 	rt_nurb_free_snurb( us);
 	rt_nurb_free_snurb( vs);
@@ -132,8 +128,9 @@ fastf_t v;
 
 	if( APX_EQ( ( E*G - F*F), 0.0 ))
 	{
-		rt_log("first fundamental form is singular E = %g F= %g G = %g\n",
+		rt_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
 			E,F,G);
+		vec_ortho(cvp->crv_pdir, norm);	/* sanity */
 		goto cleanup;
 	}
 
@@ -158,7 +155,6 @@ fastf_t v;
                 }
         }
 
-        VSET( cvp->crv_pdir, 0.0, 0.0, 0.0 );
 	cvp->crv_pdir[0] = evec[0] * ue[0] + evec[1] * ve[0];
         cvp->crv_pdir[1] = evec[0] * ue[1] + evec[1] * ve[1];
         cvp->crv_pdir[2] = evec[0] * ue[2] + evec[1] * ve[2];
@@ -171,6 +167,4 @@ cleanup:
 	rt_free( (char *) uue, "rt_nurb_curv:uue");
 	rt_free( (char *) vve, "rt_nurb_curv:vve");
 	rt_free( (char *) uve, "rt_nurb_curv:uve");
-
-	return (struct curvature *) cvp;
 }
