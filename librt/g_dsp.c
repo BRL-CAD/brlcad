@@ -93,7 +93,7 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
 
 /* access to the array */
 #define DSP(_p,_x,_y) ( \
-	((unsigned short *)(((struct rt_dsp_internal *)_p)->dsp_mp->buf))[ \
+	((unsigned short *)(((struct rt_dsp_internal *)_p)->dsp_buf))[ \
 		(_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ] )
 
 #define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
@@ -2675,6 +2675,9 @@ register CONST mat_t		mat;
 	union record			*rp;
 	struct bu_vls			str;
 	mat_t tmp;
+	struct bu_mapped_file		*mf;
+	int				count;
+	int				in_cookie, out_cookie;
 
 #define IMPORT_FAIL(_s) \
 	bu_log("rt_dsp_import(%d) '%s' %s\n", __LINE__, dsp_ip->dsp_file,_s);\
@@ -2734,11 +2737,39 @@ register CONST mat_t		mat;
 	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
 	/* get file */
-	if (!(dsp_ip->dsp_mp = bu_open_mapped_file( dsp_ip->dsp_file, "dsp"))) {
+	mf = dsp_ip->dsp_mp = bu_open_mapped_file(dsp_ip->dsp_file, "dsp");
+
+	if (!mf) {
 		IMPORT_FAIL("unable to open");
 	}
 	if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
 		IMPORT_FAIL("buffer wrong size");
+	}
+
+	in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
+	out_cookie = bu_cv_cookie("hus");
+
+	if ( bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
+		int got;
+		/* if we're on a little-endian machine we convert the
+		 * input file from network to host format
+		 */
+		bu_log("doing net-host conversion\n");
+#if 1
+		count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
+		mf->apbuflen = count * sizeof(unsigned short);
+		mf->apbuf = bu_malloc(mf->apbuflen, "apbuf");
+
+		got = bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen,
+				     mf->buf,    in_cookie, count);
+		if (got != count) {
+			bu_log("got %d != count %d", got, count);
+			bu_bomb("\n");
+		}
+#endif
+		dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
+	} else {
+		dsp_ip->dsp_buf = dsp_ip->dsp_mp->buf;
 	}
 
 	if (rt_g.debug & DEBUG_HF) {

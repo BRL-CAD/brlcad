@@ -369,6 +369,7 @@ struct rt_dsp_internal{
 	mat_t		dsp_mtos;		/* model to solid space */
 	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
 	mat_t		dsp_stom;		/* solid to model space */
+	unsigned short	*dsp_buf;
 	struct bu_mapped_file *dsp_mp;	/* actual data */
 };
 #define RT_DSP_INTERNAL_MAGIC	0xde6
