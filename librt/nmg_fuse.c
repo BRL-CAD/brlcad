@@ -1554,6 +1554,7 @@ CONST struct rt_tol	*tol;
 	CONST struct edge	*e;
 	point_t			midpt;
 	vect_t			diff;
+	fastf_t			diff_len;
 	CONST fastf_t		*a, *b;
 	int			class;
 
@@ -1574,13 +1575,25 @@ CONST struct rt_tol	*tol;
 
 	/* Ensure edge is long enough so midpoint is not within tol of verts */
 	VSUB2( diff, a, b );
-	if( MAGNITUDE(diff) < 3 * tol->dist )  {
+	diff_len = MAGNITUDE(diff);
+	if( diff_len < 3 * tol->dist )  {
+#if 1
+		/* all we want here is a classification of the midpoint,
+		 * so let's create a temporary tolerance that will work!!! */
+
+		struct rt_tol tmp_tol;
+
+		tmp_tol = (*tol);
+		tmp_tol.dist = diff_len/3.0;
+		class = nmg_class_pt_lu_except( midpt, lu, e, &tmp_tol );
+#else
 		rt_pr_tol(tol);
 		rt_log(" eu=x%x, len=%g\n", eu, MAGNITUDE(diff) );
 		rt_bomb("nmg_is_crack_outie() edge is too short to bisect.  Increase tolerance and re-run.\n");
+#endif
 	}
-	
-	class = nmg_class_pt_lu_except( midpt, lu, e, tol );
+	else
+		class = nmg_class_pt_lu_except( midpt, lu, e, tol );
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )  {
 		rt_log("nmg_is_crack_outie(eu=x%x) lu=x%x, e=x%x, class=%s\n",
