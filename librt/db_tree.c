@@ -74,7 +74,7 @@ CONST struct combined_tree_state	*old;
 	GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
 	new->cts_s = old->cts_s;	/* struct copy */
-	db_dup_full_path( &(new->cts_p), &(new->cts_p) );
+	db_dup_full_path( &(new->cts_p), &(old->cts_p) );
 	return new;
 }
 
@@ -1174,6 +1174,14 @@ union tree		 *(*leaf_func)();
 		/* Flesh out remainder of subtree */
 		ctsp = tp->tr_c.tc_ctsp;
 	 	RT_CK_CTS(ctsp);
+		if( ctsp->cts_p.fp_len <= 0 )  {
+			rt_log("db_walk_subtree() REGION with null path?\n");
+			db_free_combined_tree_state( ctsp );
+			/* Result is an empty tree */
+			tp->tr_op = OP_NOP;
+			tp->tr_a.tu_stp = 0;
+			return;
+		}
 		ctsp->cts_s.ts_dbip = db_dbip;
 		ctsp->cts_s.ts_stop_at_regions = 0;
 		/* All regions will be accepted, in this 2nd pass */
@@ -1251,10 +1259,11 @@ db_walk_dispatcher()
 		if( rt_g.debug&DEBUG_TREEWALK )
 			rt_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
 
-		/* Walk the full subtree now */
-		region_start_statep = (struct combined_tree_state *)0;
 		if( (curtree = db_reg_trees[mine]) == TREE_NULL )
 			continue;
+
+		/* Walk the full subtree now */
+		region_start_statep = (struct combined_tree_state *)0;
 		db_walk_subtree( curtree, &region_start_statep, db_reg_leaf_func );
 
 		/*  curtree->tr_op may be OP_NOP here.
@@ -1262,8 +1271,12 @@ db_walk_dispatcher()
 		 *  either by discarding it, or making a null region.
 		 */
 
-		if( !region_start_statep )
-			rt_bomb("ERROR db_walk_dispatcher() region started with no state?\n");
+		if( !region_start_statep )  {
+			rt_log("ERROR: db_walk_dispatcher() region %d started with no state\n", mine);
+			if( rt_g.debug&DEBUG_TREEWALK )			
+				rt_pr_tree( curtree, 0 );
+			continue;
+		}
 		RT_CK_CTS( region_start_statep );
 
 		/* This is a new region */
@@ -1330,6 +1343,10 @@ union tree *	(*leaf_func)();
 		/* First, establish context from given path */
 		if( db_follow_path_for_state( &ts, &path, argv[i], LOOKUP_NOISY ) < 0 )
 			continue;	/* ERROR */
+
+		if( path.fp_len <= 0 )  {
+			continue;	/* e.g., null combination */
+		}
 
 		/*
 		 *  Second, walk tree from root to start of all regions.
