@@ -395,7 +395,7 @@ char	**argv;
 }
 
 /* viewing module specific variables */
-extern struct structparse view_parse[];
+extern struct struct_desc view_parse[];
 
 /*
  *  Generic settable parameters.
@@ -412,12 +412,12 @@ extern struct structparse view_parse[];
 #else
 #	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
 #endif
-struct structparse set_parse[] = {
-	"%d",	"width",	byteoffset(width),		FUNC_NULL,
-	"%d",	"height",	byteoffset(height),		FUNC_NULL,
-	"%f",	"angle",	byteoffset(rt_perspective),	FUNC_NULL,
-	"indir", "View_Module-Specific Parameters", (int)view_parse, FUNC_NULL,
-	(char *)0,(char *)0,	0,				FUNC_NULL
+struct struct_desc set_parse[] = {
+	"%d",	"width",	byteoffset(width),		1, FUNC_NULL,
+	"%d",	"height",	byteoffset(height),		1, FUNC_NULL,
+	"%f",	"angle",	byteoffset(rt_perspective),	1, FUNC_NULL,
+	"indir", "View_Module-Specific Parameters", (int)view_parse, 1, FUNC_NULL,
+	(char *)0,(char *)0,	0,				0, FUNC_NULL
 };
 
 /*
