@@ -57,7 +57,7 @@ char	**argv;
 	}
 
 	vbp = rt_vlblock_init();
-	ret = rt_uplot_to_vlist( vbp, fp );
+	ret = rt_uplot_to_vlist( vbp, fp, Viewscale * 0.01 );
 	fclose(fp);
 	if( ret < 0 )  {
 		rt_vlblock_free(vbp);
