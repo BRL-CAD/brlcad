@@ -126,11 +126,11 @@ set -S2 "/bin/sh"
 #define BUILD_SHARED            1
 #define BUILD_XWINDOWS          1
 #define BUILD_OPENGL            0
-#define BUILD_PRODUCTION        0
+#define BUILD_PRODUCTION        1
 
 
 /* This is the version of Tcl/Tk distributed with BRL-CAD */
-#define	TCLTK_VERS	8.3
+#define	TCLTK_VERS	8.4
 
 /* This is the version of [incr Tcl] distributed with BRL-CAD */
 #define ITCL_VERS	3.2
@@ -330,12 +330,14 @@ set -S2 "/bin/sh"
  *	to BRL-CAD converter and you have the unigraphics ugopen module installed.
  *	This probably will not work if you are compiling 64 bit
  */
-/* #	define	UGOPEN_DIR	/p/ugs180
- * #	define	UGOPEN_LIB_DIR	UGOPEN_DIR/ugii/uglibs
- * #	define	UGOPEN_LIBES	-L UGOPEN_LIB_DIR -lufun
- * #	define	UGOPEN_INC	-I''UGOPEN_DIR/ugopen -I''UGOPEN_DIR/ugopenpp
- * #	define	LIBUGOPEN_DEP	UGOPEN_LIB_DIR/libufun.so
- */
+#if 0
+#	define	UGOPEN_DIR	/p/ugs180
+#	define	UGOPEN_LIB_DIR	UGOPEN_DIR/ugii/uglibs
+#	define	UGOPEN_LIBES	-L UGOPEN_LIB_DIR -lufun
+#	define	UGOPEN_INC	-I''UGOPEN_DIR/ugopen -I''UGOPEN_DIR/ugopenpp
+#	define	LIBUGOPEN_DEP	UGOPEN_LIB_DIR/libufun.so
+#endif
+
 
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 UGOPEN_INC
 #	define	LGT_CONFIG	GFLAG
@@ -618,7 +620,7 @@ set -S2 "/bin/sh"
 #if defined(__CAKE__m4i65)
 /*	Silicon Graphics 4D, running IRIX64 6.5 (on a MIPS4 machine) */
 #	undef	sgi
-#	if 1
+#	if 0
 #		define M4I65_USE_64_BIT
 #	else
 /*		Old versions of MUVES can't use the 64-bit compiler */
@@ -717,17 +719,19 @@ set -S2 "/bin/sh"
  *	This will not work if you are compiling 64 bit
  */
 
-/* #	ifdef M4I65_USE_N32
- * #		define	UGOPEN_DIR	/p/ugs180
- * #		define	UGOPEN_LIB_DIR	UGOPEN_DIR/ugii/uglibs
- * #		define	UGOPEN_LIBES	-L UGOPEN_LIB_DIR -lufun
- * #		define	UGOPEN_INC	-I''UGOPEN_DIR/ugopen -I''UGOPEN_DIR/ugopenpp
- * #		define	LIBUGOPEN_DEP	UGOPEN_LIB_DIR/libufun.so
- * #		define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65  UGOPEN_INC
- * #	else
- * #		define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65
- * #	endif
- */
+#	ifdef M4I65_USE_N32
+#if 0
+#		define	UGOPEN_DIR	/p/ugs180
+#		define	UGOPEN_LIB_DIR	UGOPEN_DIR/ugii/uglibs
+#		define	UGOPEN_LIBES	-L UGOPEN_LIB_DIR -lufun
+#		define	UGOPEN_INC	-I''UGOPEN_DIR/ugopen -I''UGOPEN_DIR/ugopenpp
+#		define	LIBUGOPEN_DEP	UGOPEN_LIB_DIR/libufun.so
+#		define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65  UGOPEN_INC
+#endif
+#	else
+#		define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65
+#	endif
+
 
 
 #	define	LGT_CONFIG	GFLAG
@@ -1034,13 +1038,12 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	define	CC	gcc
-#	define	CC_DEFS -pipe -fPIC -Wall -pedantic
+#	define	CC_DEFS -pipe -fPIC -Wall
 /*			-std=iso9899:199409 */
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
 #		define	OPTIMIZER	-g
-#		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
 #	endif
 #	if BUILD_SHARED	
 /*		Shared library version support.  Requires ELF for Linux. */
@@ -1199,7 +1202,7 @@ set -S2 "/bin/sh"
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3  -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations /* -faltivec */
 #	else
-#		define	OPTIMIZER	-g -pg -O -fno-common
+#		define	OPTIMIZER	-g -fno-common
 #	endif
 #	if BUILD_SHARED	
 /*		Shared library version support.  */
@@ -1217,6 +1220,7 @@ set -S2 "/bin/sh"
 /*		Static linked executables */
 #		define	CC_DEFS -pipe -Wall
 #		define  RANLIB	ranlib
+#		define	STANDARD_LIBES -lm -lc -framework Foundation
 #	endif
 
 #	define	LIBTERMLIB	-lcurses
