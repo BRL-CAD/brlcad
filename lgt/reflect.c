@@ -1519,11 +1519,13 @@ register int	n;
 hl_Reg_Diff( x0, y0, x1, y1 )
 register int	x0, y0, x1, y1;
 	{
+#if 0
 	rt_log( "hl_Reg_Diff({<%4d,%4d>,<%4d,%4d>}) %4d != %4d\n",
 		x0, y0, x1, y1,
 		hl_regmap[y0*grid_sz+x0],
 		hl_regmap[y1*grid_sz+x1]
 		);
+#endif
 	return	hl_regmap[y0*grid_sz+x0] != hl_regmap[y1*grid_sz+x1];
 	}
 
@@ -1531,12 +1533,14 @@ hl_Norm_Diff( pix1, pix2 )
 register RGBpixel	*pix1, *pix2;
 	{	fastf_t	dir1[3], dir2[3];
 		static fastf_t	conv = 2.0/255.0;
+#if 0
 #ifdef cray
 	rt_log( "hl_Norm_Diff(0x%x,0x%x)\n", pix1, pix2 );
 #endif
 	rt_log( "hl_Norm_Diff(<%d,%d,%d>,<%d,%d,%d>)\n",
 		(*pix1)[0], (*pix1)[1], (*pix1)[2],
 		(*pix2)[0], (*pix2)[1], (*pix2)[2] );
+#endif
 	if( ZeroPixel( *pix1 ) )
 		{
 		if( ZeroPixel( *pix2 ) )
