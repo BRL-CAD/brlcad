@@ -576,13 +576,16 @@ struct rt_i	*rtip;
 	beginptr = (char *) sbrk(0);
 #endif
 	if (rt_verbosity & VERBOSE_STATS)  {
-		bu_log("%s: %8d nu, %8d cut, %8d box (%8d empty)\n",
+		bu_log("%s: %d nu, %d cut, %d box (%d empty)\n",
 			rtip->rti_space_partition == RT_PART_NUGRID ?
 				"NUGrid" : "NUBSP",
 			rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
 			rtip->rti_ncut_by_type[CUT_CUTNODE],
 			rtip->rti_ncut_by_type[CUT_BOXNODE],
 			rtip->nempty_cells );
+#if 0
+rt_pr_cut_info( rtip, "main" );
+#endif
 	}
 }
 
