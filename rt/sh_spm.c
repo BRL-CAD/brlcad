@@ -28,9 +28,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sph.h"
 #include "./material.h"
 #include "./mathtab.h"
+#include "./rdebug.h"
 
-char *malloc();
-char *calloc();
+char	*malloc();
+char	*calloc();
 
 /*
  *		S P H _ I N I T
@@ -360,10 +361,12 @@ struct sph_specific {
 
 struct matparse sph_parse[] = {
 #ifndef cray
-	"file",		(int)(SP_NULL->sp_file),	"%s",
+	"file",		(mp_off_ty)(SP_NULL->sp_file),	"%s",
+#else
+	"file",		(mp_off_ty)0,			"%s",
 #endif
-	"n",		(int)&(SP_NULL->sp_n),		"%d",
-	(char *)0,	0,				(char *)0
+	"n",		(mp_off_ty)&(SP_NULL->sp_n),	"%d",
+	(char *)0,	(mp_off_ty)0,			(char *)0
 };
 
 
@@ -416,11 +419,12 @@ register struct region *rp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_n = -1;
-	mlib_parse( rp->reg_mater.ma_matparm, sph_parse, (char *)spp );
+	mlib_parse( rp->reg_mater.ma_matparm, sph_parse, (mp_off_ty)spp );
 	if( spp->sp_n < 0 )  spp->sp_n = 512;
 	if( spp->sp_file[0] == '\0' )
 		goto fail;
-mlib_print("sph_setup", sph_parse, (char *)spp);
+	if(rdebug&RDEBUG_MATERIAL)
+		mlib_print("sph_setup", sph_parse, (mp_off_ty)spp);
 	if( (spp->sp_map = sph_init( spp->sp_n )) == SPH_NULL )
 		goto fail;
 	if( sph_load( spp->sp_map, spp->sp_file ) < 0 )

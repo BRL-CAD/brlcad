@@ -27,6 +27,7 @@ static char RCScloud[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./material.h"
 #include "./mathtab.h"
+#include "./rdebug.h"
 
 struct cloud_specific {
 	float	cl_thresh;
@@ -35,9 +36,9 @@ struct cloud_specific {
 #define CL_NULL	((struct cloud_specific *)0)
 
 struct matparse cloud_parse[] = {
-	"thresh",	(int)&(CL_NULL->cl_thresh),	"%f",
-	"range",	(int)&(CL_NULL->cl_range),	"%f",
-	(char *)0,	0,				(char *)0
+	"thresh",	(mp_off_ty)&(CL_NULL->cl_thresh),	"%f",
+	"range",	(mp_off_ty)&(CL_NULL->cl_range),	"%f",
+	(char *)0,	(mp_off_ty)0,				(char *)0
 };
 
 
@@ -50,12 +51,12 @@ struct matparse cloud_parse[] = {
  */
 double
 cloud_texture(x,y,Contrast,initFx,initFy)
-double x, y;
+register float x, y;
 float Contrast, initFx, initFy;
 {
-	LOCAL float	t1, t2, k;
-	LOCAL double	Px, Py, Fx, Fy, C;
 	register int	i;
+	FAST fastf_t	Px, Py, Fx, Fy, C;
+	FAST fastf_t	t1, t2, k;
 
 	t1 = t2 = 0;
 
@@ -108,7 +109,9 @@ register struct region *rp;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
-	mlib_parse( rp->reg_mater.ma_matparm, cloud_parse, (char *)cp );
+	mlib_parse( rp->reg_mater.ma_matparm, cloud_parse, (mp_off_ty)cp );
+	if(rdebug&RDEBUG_MATERIAL)
+		mlib_print(rp->reg_name, cloud_parse, (mp_off_ty)cp);
 	return(1);
 }
 

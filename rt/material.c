@@ -25,6 +25,7 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
+#include "./rdebug.h"
 
 extern int phong_setup();
 extern int txt_setup();
@@ -116,7 +117,7 @@ register char *str;
 mlib_parse( cp, parsetab, base )
 register char *cp;
 struct matparse *parsetab;
-char *base;		/* base address of users structure */
+int *base;		/* base address of users structure */
 {
 	register struct matparse *mp;
 	char *name;
@@ -149,13 +150,16 @@ char *base;		/* base address of users structure */
 
 		/* Lookup name in parsetab table */
 		for( mp = parsetab; mp->mp_name != (char *)0; mp++ )  {
+			register char *loc;
+
 			if( strcmp( mp->mp_name, name ) != 0 )
 				continue;
+			loc = (char *)(((mp_off_ty)base) +
+					((int)mp->mp_offset));
 			if( mp->mp_fmt[1] == 'C' )
-				mlib_rgb( base + mp->mp_offset, value );
+				mlib_rgb( loc, value );
 			else
-				(void)sscanf( value,
-					mp->mp_fmt, base + mp->mp_offset );
+				(void)sscanf( value, mp->mp_fmt, loc );
 			goto out;
 		}
 		rt_log("mlib_parse:  %s=%s not a valid arg\n", name, value);
@@ -169,29 +173,39 @@ out:		;
 mlib_print( title, parsetab, base )
 char *title;
 struct matparse *parsetab;
-char *base;		/* base address of users structure */
+int *base;		/* base address of users structure */
 {
 	register struct matparse *mp;
+	register char *loc;
+	register mp_off_ty lastoff = (mp_off_ty)(-1);
 
 	rt_log( "%s\n", title );
 	for( mp = parsetab; mp->mp_name != (char *)0; mp++ )  {
+
+		/* Skip alternate keywords for same value */
+		if( lastoff == mp->mp_offset )
+			continue;
+		lastoff = mp->mp_offset;
+
+		loc = (char *)(((mp_off_ty)base) +
+				((int)mp->mp_offset));
+
 		switch( mp->mp_fmt[1] )  {
 		case 's':
-			rt_log( " %s=%s\n", mp->mp_name,
-				base + mp->mp_offset );
+			rt_log( " %s=%s\n", mp->mp_name, (char *)loc );
 			break;
 		case 'd':
 			rt_log( " %s=%d\n", mp->mp_name,
-				*((int *)(base + mp->mp_offset)) );
+				*((int *)loc) );
 			break;
 		case 'f':
 			rt_log( " %s=%f\n", mp->mp_name,
-				*((double *)(base + mp->mp_offset)) );
+				*((double *)loc) );
 			break;
 		case 'C':
 			{
 				register unsigned char *cp =
-					(unsigned char *)(base+mp->mp_offset);
+					(unsigned char *)loc;
 				rt_log(" %s=%d/%d/%d(%d)\n", mp->mp_name,
 					cp[0], cp[1], cp[2], cp[3] );
 				break;
