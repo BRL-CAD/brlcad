@@ -2,11 +2,7 @@
 .SH NAME
 patch\(hyg \- convert FASTGEN ASCII databases into binary MGED databases.
 .SH SYNOPSIS
-.B patch-g 
-.RB [ \-sn ]
-.RB [ \-d\  debuglevel]
-.RB [ \-f\  pre-processed_fastgen_file]
->\ file.g
+.B patch-g [options] > output.g
 .SH DESCRIPTION
 This program converts FASTGEN geometry into BRL-CAD 
 .IR mged (1)
@@ -32,6 +28,64 @@ file.
 will provide messages when encountering problems in the conversion of FASTGEN
 geometry. For further debugging information, the -d flag with levels 1-3 of
 debugging can be provided. 
+.PP
+The available options are:
+.TP
+.B -T tolerance_distance
+The
+.IR tolerance_distance
+is specified in inches. Any two vertices within this distance
+from each other will be considered the same vertex.
+.TP
+.B -A perp_tolerance
+the
+.IR perp_tolerance
+is specified as the cosine of an angle (0.0 through 1.0). If the
+cosine of the angle between two vectors is less than the specified
+tolerance, then the vectors are considered perpendicular.
+.TP
+.B -x librt_debug_flag
+Specifies a flag for debugging the
+.IR librt
+package.
+.TP
+.B -X NMG_debug_flag
+Specifies a flag for NMG routine debugging.
+.TP
+.B -p
+Produce polysolid output rather than the default NMG solids.
+.TP
+.B -f preprocessed_input_file
+Use the specified file as the input for conversion.
+.TP
+.B -i labels_file
+Specifies desired group names to override defaults.
+.TP
+.B -m materials_file
+Specifies material properties to be assigned to components.
+.TP
+.B -a
+Process phantom armor.
+.TP
+.B -n
+Process volume mode as plate mode.
+.TP
+.B -t title
+Specifies a title for the output model.
+.TP
+.B -o top_level_name
+Specifies a name for the top level object (default is
+.B all
+).
+.TP
+.B -r
+Reverse normals for plate mode triangles.
+.TP
+.B -c ``X Y Z''
+Specifies centroid for some plate mode surface normal calulations.
+.TP
+.B -d debug_level
+Specifies a debug level (1-3).
 .SH EXAMPLE
 .I
 rpatch < fastgen_file > file.rpatch
