@@ -701,13 +701,12 @@ proc text_paste { w } {
 
     if {!$moveView($w)} {
 	catch {$w insert insert [selection get -displayof $w]}
+	$w see insert
     }
 
     if {[$w cget -state] == "normal"} {
 	focus $w
     }
-
-    $w see insert
 }
 
 proc text_scroll { w x y } {
