@@ -3092,7 +3092,7 @@ Process_hole_wall()
 void
 do_chgcomp()
 {
-	int id1 id2 id3;
+	int id1, id2, id3;
 
 	if( !pass )
 		return;
