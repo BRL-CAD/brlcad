@@ -32,9 +32,11 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 
 struct region	env_region;			/* share with view.c */
 
+HIDDEN int	bwtxt_render();
 HIDDEN int	txt_setup(), txt_render();
 HIDDEN int	ckr_setup(), ckr_render();
 HIDDEN int	bmp_setup(), bmp_render();
+HIDDEN void	bwtxtprint(), bwtxtfree();
 HIDDEN void	txt_print(), txt_free();
 HIDDEN void	ckr_print(), ckr_free();
 HIDDEN void	bmp_print(), bmp_free();
@@ -48,6 +50,9 @@ extern void	mlib_void();
 struct mfuncs txt_mfuncs[] = {
 	"texture",	0,		0,		MFI_UV,
 	txt_setup,	txt_render,	txt_print,	txt_free,
+
+	"bwtexture",	0,		0,		MFI_UV,
+	txt_setup,	bwtxt_render,	txt_print,	txt_free,
 
 	"checker",	0,		0,		MFI_UV,
 	ckr_setup,	ckr_render,	ckr_print,	ckr_free,
@@ -82,14 +87,8 @@ struct txt_specific {
 #define TX_O(m)	offsetof(struct txt_specific, m)
 
 struct structparse txt_parse[] = {
-#if CRAY && !__STDC__
-	/* Hack for old Cray compilers */
-	{"%d",	1, "transp",	0,			txt_transp_hook },
-	{"%s",	TXT_NAME_LEN, "file",	3,		FUNC_NULL },
-#else
 	{"%d",	1, "transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
 	{"%s",	TXT_NAME_LEN, "file", offsetofarray(struct txt_specific, tx_file),		FUNC_NULL },
-#endif
 	{"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL },
 	{"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL },
 	{"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL }, /*compat*/
@@ -211,6 +210,96 @@ opaque:
 	if( r != ((long)tp->tx_transp[0]) )  goto opaque;
 	if( g != ((long)tp->tx_transp[1]) )  goto opaque;
 	if( b != ((long)tp->tx_transp[2]) )  goto opaque;
+
+	/*
+	 *  Transparency mapping is enabled, and we hit a transparent spot.
+	 *  Let higher level handle it in reflect/refract code.
+	 */
+	swp->sw_transmit = 1.0;
+	swp->sw_reflect = 0.0;
+	return(1);
+}
+
+/*
+ *  			B W T X T _ R E N D E R
+ *  
+ *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
+ *  return the filtered intensity.
+ *
+ *  Note that .bw files are stored left-to-right, bottom-to-top,
+ *  which works out very naturally for the indexing scheme.
+ */
+HIDDEN int
+bwtxt_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
+{
+	register struct txt_specific *tp =
+		(struct txt_specific *)dp;
+	fastf_t xmin, xmax, ymin, ymax;
+	int line;
+	int dx, dy;
+	int x,y;
+	register long bw;
+
+	/*
+	 * If no texture file present, or if
+	 * texture isn't and can't be read, give debug colors
+	 */
+	if( tp->tx_file[0] == '\0' || !tp->mp )  {
+		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
+		return(1);
+	}
+
+	/* u is left->right index, v is line number bottom->top */
+	/* Don't filter more than 1/8 of the texture for 1 pixel! */
+	if( swp->sw_uv.uv_du > 0.125 )  swp->sw_uv.uv_du = 0.125;
+	if( swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
+
+	if( swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
+		rt_log("bwtxt_render uv=%g,%g, du dv=%g %g seg=%s\n",
+			swp->sw_uv.uv_u, swp->sw_uv.uv_v, swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
+			pp->pt_inseg->seg_stp->st_name );
+		swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
+	}
+	xmin = swp->sw_uv.uv_u - swp->sw_uv.uv_du;
+	xmax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
+	ymin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;
+	ymax = swp->sw_uv.uv_v + swp->sw_uv.uv_dv;
+	if( xmin < 0 )  xmin = 0;
+	if( ymin < 0 )  ymin = 0;
+	if( xmax > 1 )  xmax = 1;
+	if( ymax > 1 )  ymax = 1;
+	x = xmin * (tp->tx_w-1);
+	y = ymin * (tp->tx_n-1);
+	dx = (xmax - xmin) * (tp->tx_w-1);
+	dy = (ymax - ymin) * (tp->tx_n-1);
+	if( dx < 1 )  dx = 1;
+	if( dy < 1 )  dy = 1;
+	bw = 0;
+	for( line=0; line<dy; line++ )  {
+		register unsigned char *cp;
+		register unsigned char *ep;
+		cp = ((unsigned char *)(tp->mp->buf)) +
+		     (y+line) * tp->tx_w  +  x;
+		ep = cp + dx;
+		while( cp < ep )  {
+			bw += *cp++;
+		}
+	}
+
+	if (!tp->tx_trans_valid) {
+opaque:
+		VSETALL( swp->sw_color,
+			bw * rt_inv255 / (dx*dy) );
+		return(1);
+	}
+	/* This circumlocution needed to keep expression simple for Cray,
+	 * and others
+	 */
+	if( bw / (dx*dy) != ((long)tp->tx_transp[0]) )  goto opaque;
 
 	/*
 	 *  Transparency mapping is enabled, and we hit a transparent spot.
