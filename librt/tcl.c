@@ -1389,7 +1389,7 @@ const char			*attr;
 		} else {
 			status = TCL_OK;
 		}
-		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
+		Tcl_DStringAppend( &ds, bu_vls_addr(&str), -1 );
 	}
 
 	Tcl_DStringResult( interp, &ds );
