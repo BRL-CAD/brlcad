@@ -712,70 +712,15 @@ register long	magic;
 	return -1;
 }
 
-int
-rt_nmg_index_of_struct( p )
-register long	*p;
-{
-	switch(*p)  {
-	case NMG_MODEL_MAGIC:
-		return ((struct model *)p)->index;
-	case NMG_MODEL_A_MAGIC:
-		return ((struct model_a *)p)->index;
-	case NMG_REGION_MAGIC:
-		return ((struct nmgregion *)p)->index;
-	case NMG_REGION_A_MAGIC:
-		return ((struct nmgregion_a *)p)->index;
-	case NMG_SHELL_MAGIC:
-		return ((struct shell *)p)->index;
-	case NMG_SHELL_A_MAGIC:
-		return ((struct shell_a *)p)->index;
-	case NMG_FACEUSE_MAGIC:
-		return ((struct faceuse *)p)->index;
-	case NMG_FACEUSE_A_MAGIC:
-		return ((struct faceuse_a *)p)->index;
-	case NMG_FACE_MAGIC:
-		return ((struct face *)p)->index;
-	case NMG_FACE_G_MAGIC:
-		return ((struct face_g *)p)->index;
-	case NMG_LOOPUSE_MAGIC:
-		return ((struct loopuse *)p)->index;
-	case NMG_LOOPUSE_A_MAGIC:
-		return ((struct loopuse_a *)p)->index;
-	case NMG_LOOP_MAGIC:
-		return ((struct loop *)p)->index;
-	case NMG_LOOP_G_MAGIC:
-		return ((struct loop_g *)p)->index;
-	case NMG_EDGEUSE_MAGIC:
-		return ((struct edgeuse *)p)->index;
-	case NMG_EDGEUSE_A_MAGIC:
-		return ((struct edgeuse_a *)p)->index;
-	case NMG_EDGE_MAGIC:
-		return ((struct edge *)p)->index;
-	case NMG_EDGE_G_MAGIC:
-		return ((struct edge_g *)p)->index;
-	case NMG_VERTEXUSE_MAGIC:
-		return ((struct vertexuse *)p)->index;
-	case NMG_VERTEXUSE_A_MAGIC:
-		return ((struct vertexuse_a *)p)->index;
-	case NMG_VERTEX_MAGIC:
-		return ((struct vertex *)p)->index;
-	case NMG_VERTEX_G_MAGIC:
-		return ((struct vertex_g *)p)->index;
-	case RT_LIST_HEAD_MAGIC:
-		/* indicate special list head encountered */
-		return -1;
-	}
-	/* default */
-	rt_log("rt_nmg_index_of_struct: magicp = x%x, magic = x%x\n", p, *p);
-	return -2;	/* indicate error */
-}
-
 struct nmg_exp_counts {
 	long	new_subscript;
 	long	per_struct_index;
 	int	kind;
 };
 
+/*
+ *			R T _ N M G _ R E I N D E X
+ */
 int
 rt_nmg_reindex(p, ecnt)
 genptr_t		p;
@@ -789,7 +734,7 @@ struct nmg_exp_counts	*ecnt;
 		ret = 0;
 		index = 0;	/* sanity */
 	} else {
-		index = rt_nmg_index_of_struct((long *)(p));
+		index = nmg_index_of_struct((long *)(p));
 		if( index == -1 )  {
 			ret = -1;	/* FLAG:  special list head */
 		} else if( index < -1 ) {
@@ -1670,10 +1615,10 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 #if DEBUG
 rt_log("   disk_index=%d, kind=%s, ptr=x%x, final_index=%d\n",
 subscript, rt_nmg_kind_names[kind],
-ptrs[subscript], rt_nmg_index_of_struct(ptrs[subscript]) );
+ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
 #endif
 			/* new_subscript unused on import except for printf()s */
-			ecnt[subscript].new_subscript = rt_nmg_index_of_struct(ptrs[subscript]);
+			ecnt[subscript].new_subscript = nmg_index_of_struct(ptrs[subscript]);
 			subscript++;
 		}
 	}
@@ -1844,9 +1789,9 @@ rt_log("Mapping of old index to new index, and kind\n");
 			i, ecnt[i].new_subscript,
 			rt_nmg_kind_names[ecnt[i].kind], ecnt[i].kind);
 #endif
-		if( rt_nmg_index_of_struct(ptrs[i]) != i )  {
+		if( nmg_index_of_struct(ptrs[i]) != i )  {
 			rt_log("***ERROR, ptrs[%d]->index = %d\n",
-				i, rt_nmg_index_of_struct(ptrs[i]) );
+				i, nmg_index_of_struct(ptrs[i]) );
 		}
 		if( rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind )  {
 			rt_log("@@@ERROR, ptrs[%d] kind(%d) != %d\n",
