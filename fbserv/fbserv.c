@@ -417,6 +417,7 @@ main_loop()
 		}
 
 		/* Process arrivals from existing clients */
+		/* First, pull the data out of the kernel buffers */
 		for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
 			if( clients[i].fd == 0 )  continue;
 			if( pkg_process( clients[i].pkg ) < 0 ) {
@@ -429,6 +430,10 @@ main_loop()
 				ncloses++;
 				continue;
 			}
+		}
+		/* Second, process all the finished ones that we just got */
+		for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
+			if( clients[i].fd == 0 )  continue;
 			if( pkg_process( clients[i].pkg ) < 0 ) {
 				fprintf(stderr,"pkg_process error encountered (2)\n");
 			}
