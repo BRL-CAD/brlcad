@@ -598,6 +598,7 @@ int framenumber;
 	{
 		mat_t	rotscale, xlate;
 		mat_t	new;
+		quat_t	newquat;
 
 		mat_print("model2view", model2view);
 		quat_quat2mat( rotscale, quat );
@@ -606,6 +607,8 @@ int framenumber;
 		MAT_DELTAS( xlate, -eye_model[X], -eye_model[Y], -eye_model[Z] );
 		mat_mul( new, rotscale, xlate );
 		mat_print("reconstructed m2v", new);
+		quat_mat2quat( newquat, new );
+		HPRINT( "reconstructed orientation:", newquat );
 	}
 #endif
 	rt_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
