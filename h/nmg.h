@@ -605,7 +605,7 @@ struct vertexuse_a_cnurb {
 	  rt_free((char *)(ptr), "freestruct str"); }
 #endif
 
-#if defined(SYSV) && !defined(bzero)
+#if defined(SYSV) && !defined(bzero) && !defined(HAVE_BZERO)
 #	define bzero(str,n)		memset( str, '\0', n )
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
