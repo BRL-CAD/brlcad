@@ -33,8 +33,10 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 struct matparse light_parse[] = {
 	"inten",	(mp_off_ty)&(LIGHT_NULL->lt_intensity),	"%f",
 	"angle",	(mp_off_ty)&(LIGHT_NULL->lt_angle),	"%f",
-	"shadows",	(mp_off_ty)&(LIGHT_NULL->lt_shadows),	"%d",
 	"fract",	(mp_off_ty)&(LIGHT_NULL->lt_fraction),	"%f",
+	"shadows",	(mp_off_ty)&(LIGHT_NULL->lt_shadows),	"%d",
+	"infinite",	(mp_off_ty)&(LIGHT_NULL->lt_infinite),	"%d",
+	"implicit",	(mp_off_ty)&(LIGHT_NULL->lt_implicit),	"%d",
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
 
@@ -104,15 +106,18 @@ char	**dpp;
 	register struct light_specific *lp;
 	register struct soltab *stp;
 	vect_t	work;
+	fastf_t	f;
 
 	GETSTRUCT( lp, light_specific );
 	*dpp = (char *)lp;
 
 	lp->lt_intensity = 1000.0;	/* Lumens */
 	lp->lt_fraction = -1.0;		/* Recomputed later */
-	lp->lt_explicit = 1;		/* explicitly modeled */
+	lp->lt_implicit = 0;		/* explicitly modeled */
 	lp->lt_shadows = 1;		/* by default, casts shadows */
 	lp->lt_angle = 180;		/* spherical emission by default */
+	lp->lt_infinite = 0;
+	lp->lt_rp = rp;
 	lp->lt_name = rt_strdup( rp->reg_name );
 	mlib_parse( matparm, light_parse, (mp_off_ty)lp );
 
@@ -162,11 +167,20 @@ char	**dpp;
 		lp->lt_angle );
 
 	VMOVE( lp->lt_vec, lp->lt_pos );
-	VUNITIZE( lp->lt_vec );
+	f = MAGNITUDE( lp->lt_vec );
+	if( f < SQRT_SMALL_FASTF ) {
+		/* light at the origin, make its direction vector up */
+		VSET( lp->lt_vec, 0, 0, 1 );
+	} else {
+		VSCALE( lp->lt_vec, lp->lt_vec, f );
+	}
 
 	/* Add to linked list of lights */
 	lp->lt_forw = LightHeadp;
 	LightHeadp = lp;
+
+	if( lp->lt_implicit )
+		return(0);	/* don't show it */
 
 	return(1);
 }
@@ -269,10 +283,12 @@ mat_t	v2m;
 		VSET( lp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
 		lp->lt_intensity = 1000.0;
 		lp->lt_radius = 10.0;		/* 10 mm */
-		lp->lt_explicit = 0;		/* NOT explicitly modeled */
+		lp->lt_implicit = 1;		/* NOT explicitly modeled */
 		lp->lt_shadows = 1;		/* casts shadows */
 		lp->lt_angle = 180;		/* spherical emission */
 		lp->lt_cosangle = -1;		/* cos(180) */
+		lp->lt_infinite = 0;
+		lp->lt_rp = REGION_NULL;
 		lp->lt_forw = LightHeadp;
 		LightHeadp = lp;
 	}
@@ -353,6 +369,7 @@ struct partition *PartHeadp;
 	register struct region	*regp;
 	struct application	sub_ap;
 	struct shadework	sw;
+	struct light_specific	*lp;
 	extern int	light_render();
 	vect_t	filter_color;
 	int	light_visible;
@@ -366,11 +383,23 @@ struct partition *PartHeadp;
 	}
 	regp = pp->pt_regionp;
 
-	/* Check to see if we hit a light source */
-	if( ((struct mfuncs *)(regp->reg_mfuncs))->mf_render == light_render )  {
+	/* Check to see if we hit the light source */
+	lp = (struct light_specific *)(ap->a_user);
+	if( lp->lt_rp == regp )  {
 		VSETALL( ap->a_color, 1 );
 		light_visible = 1;
 		goto out;
+	}
+
+	/* or something futher away than a finite implicit light */
+	if( lp->lt_implicit && !(lp->lt_infinite) ) {
+		vect_t	tolight;
+		VSUB2( tolight, lp->lt_pos, ap->a_ray.r_pt );
+		if( pp->pt_inhit->hit_dist >= MAGNITUDE(tolight) ) {
+			VSETALL( ap->a_color, 1 );
+			light_visible = 1;
+			goto out;
+		}
 	}
 
 	/* If we hit an entirely opaque object, this light is invisible */
@@ -443,13 +472,19 @@ register struct application *ap;
 struct partition *PartHeadp;
 {
 	extern struct light_specific *LightHeadp;
+	struct light_specific *lp = (struct light_specific *)(ap->a_user);
 
+	if( lp->lt_implicit || lp->lt_infinite ) {
+		VSETALL( ap->a_color, 1 );
+		return( 1 );
+	}
 	if( LightHeadp )  {
 		/* Explicit lights exist, somehow we missed (dither?) */
 		VSETALL( ap->a_color, 0 );
 		return(0);		/* light_visible = 0 */
 	}
 	/* No explicit light -- it's hard to hit */
+	rt_log( "light: warning - implicit light not on list?!\n" );
 	VSETALL( ap->a_color, 1 );
 	return(1);			/* light_visible = 1 */
 }
