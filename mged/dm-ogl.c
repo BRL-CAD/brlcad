@@ -203,6 +203,8 @@ static float light2_diffuse[] = {0.10, 0.30, 0.10, 1.0}; /* green */
 static float light3_diffuse[] = {0.10, 0.10, 0.30, 1.0}; /* blue */
 
 /* functions */
+void print_cmap();
+
 
 static void
 refresh_hook()
@@ -1048,6 +1050,9 @@ R		Rear view\n\
 <F7>,F		Toggle faceplate\n\
 " );
 		break;
+	case 'w':
+		print_cmap();
+		break;
 	case '0':
 		rt_vls_printf( &dm_values.dv_string, "knob zero\n" );
 		break;
@@ -1432,7 +1437,7 @@ char	*name;
 	 * the font */
 	fontstruct = NULL;
 
-	width = height = 900;
+	width = height = 976;
 
 	xinterp = Tcl_CreateInterp(); /* Dummy interpreter */
 	xtkwin = Tk_CreateMainWindow(xinterp, name, "MGED", "MGED");
@@ -1451,7 +1456,7 @@ char	*name;
 	}
 
 	Tk_GeometryRequest(xtkwin, width+10, height+10);
-	Tk_MoveToplevelWindow(xtkwin, 376, 0);
+	Tk_MoveToplevelWindow(xtkwin, 1276 - 976, 0);
 	Tk_MakeWindowExist(xtkwin);
 
 	win = Tk_WindowId(xtkwin);
@@ -1525,7 +1530,7 @@ char	*name;
 	if (ogl_has_rgb)
 		glFogfv(GL_FOG_COLOR, backgnd);
 	else
-		glFogi(GL_FOG_INDEX, 1 - CMAP_RAMP_WIDTH);
+		glFogi(GL_FOG_INDEX, CMAP_RAMP_WIDTH - 1);
 	glFogf(GL_FOG_DENSITY, VIEWFACTOR);
 	
 
@@ -1834,6 +1839,10 @@ char	**argv;
 void	
 establish_lighting()
 {
+	/* no lighting in index mode yet */
+	if (!ogl_has_rgb)
+		lighting_on = 0;
+
 	if (!lighting_on) {
 		/* Turn it off */
 		glDisable(GL_LIGHTING);
@@ -1952,25 +1961,28 @@ int c;
 			register int i, j;
 			fastf_t r_inc, g_inc, b_inc;
 			fastf_t red, green, blue;
-			XColor cells[16];
+			XColor cells[CMAP_RAMP_WIDTH];
 
-			r_inc = ogl_rgbtab[c].r * 16;
-			g_inc = ogl_rgbtab[c].g * 16;
-			b_inc = ogl_rgbtab[c].b * 16;
+			red = r_inc = ogl_rgbtab[c].r * (256/CMAP_RAMP_WIDTH);
+			green = g_inc = ogl_rgbtab[c].g * (256/CMAP_RAMP_WIDTH);
+			blue = b_inc = ogl_rgbtab[c].b * (256/CMAP_RAMP_WIDTH);
 
+#if 0
 			red = ogl_rgbtab[c].r * 256;
 			green = ogl_rgbtab[c].g * 256;
 			blue = ogl_rgbtab[c].b * 256;
+#endif
 
-			for(i = 15, j = MAP_ENTRY(c); i >= 0;
-			    i--, j--, red -= r_inc, green -= g_inc, blue -= b_inc){
+			for(i = 0, j = MAP_ENTRY(c) + CMAP_RAMP_WIDTH - 1; 
+				i < CMAP_RAMP_WIDTH;
+			    i++, j--, red += r_inc, green += g_inc, blue += b_inc){
 			    	cells[i].pixel = j;
 			    	cells[i].red = (short)red;
 			    	cells[i].green = (short)green;
 			    	cells[i].blue = (short)blue;
 			    	cells[i].flags = DoRed|DoGreen|DoBlue;
 			}
-			XStoreColors(dpy, cmap, cells, 16);
+			XStoreColors(dpy, cmap, cells, CMAP_RAMP_WIDTH);
 		}
 	} else {
 		XColor cell, celltest;
@@ -1982,5 +1994,18 @@ int c;
 		cell.flags = DoRed|DoGreen|DoBlue;
 		XStoreColor(dpy, cmap, &cell);
 
+	}
+}
+
+void
+print_cmap()
+{
+	int i;
+	XColor cell;
+
+	for (i=0; i<112; i++){
+		cell.pixel = i;
+		XQueryColor(dpy, cmap, &cell);
+		printf("%d  = %d %d %d\n",i,cell.red,cell.green,cell.blue);
 	}
 }
