@@ -57,116 +57,6 @@ double nmg_eue_dist = 0.05;
 
 /************************************************************************
  *									*
- *			Generic VLBLOCK routines			*
- *									*
- ************************************************************************/
-
-struct rt_vlblock *
-rt_vlblock_init()
-{
-	struct rt_vlblock *vbp;
-	int	i;
-
-	if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
-		RT_LIST_INIT( &rt_g.rtg_vlfree );
-
-	GETSTRUCT( vbp, rt_vlblock );
-	vbp->magic = RT_VLBLOCK_MAGIC;
-	vbp->max = 32;
-	vbp->head = (struct rt_list *)rt_calloc( vbp->max,
-		sizeof(struct rt_list), "head[]" );
-	vbp->rgb = (long *)rt_calloc( vbp->max,
-		sizeof(long), "rgb[]" );
-
-	for( i=0; i < vbp->max; i++ )  {
-		vbp->rgb[i] = 0;	/* black, unused */
-		RT_LIST_INIT( &(vbp->head[i]) );
-	}
-	vbp->rgb[0] = 0xFFFF00L;	/* Yellow, default */
-	vbp->rgb[1] = 0xFFFFFFL;	/* White */
-	vbp->nused = 2;
-
-	return(vbp);
-}
-
-void
-rt_vlblock_free(vbp)
-struct rt_vlblock *vbp;
-{
-	int	i;
-
-	RT_CK_VLBLOCK(vbp);
-	for( i=0; i < vbp->nused; i++ )  {
-		/* Release any remaining vlist storage */
-		if( vbp->rgb[i] == 0 )  continue;
-		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
-		RT_FREE_VLIST( &(vbp->head[i]) );
-	}
-
-	rt_free( (char *)(vbp->head), "head[]" );
-	rt_free( (char *)(vbp->rgb), "rgb[]" );
-	rt_free( (char *)vbp, "rt_vlblock" );
-}
-
-struct rt_list *
-rt_vlblock_find( vbp, r, g, b )
-struct rt_vlblock *vbp;
-int	r, g, b;
-{
-	long	new;
-	int	n;
-
-	RT_CK_VLBLOCK(vbp);
-
-	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
-
-	/* Map black plots into default color (yellow) */
-	if( new == 0 ) return( &(vbp->head[0]) );
-
-	for( n=0; n < vbp->nused; n++ )  {
-		if( vbp->rgb[n] == new )
-			return( &(vbp->head[n]) );
-	}
-	if( vbp->nused < vbp->max )  {
-		/* Allocate empty slot */
-		n = vbp->nused++;
-		vbp->rgb[n] = new;
-		return( &(vbp->head[n]) );
-	}
-	/*  RGB does not match any existing entry, and table is full.
-	 *  Eventually, enlarge table.
-	 *  For now, just default to yellow.
-	 */
-	return( &(vbp->head[0]) );
-}
-
-/*
- *			R T _ P L O T _ V L B L O C K
- *
- *  Output a rt_vlblock object in extended UNIX-plot format.
- */
-void
-rt_plot_vlblock( fp, vbp )
-FILE			*fp;
-CONST struct rt_vlblock	*vbp;
-{
-	int	i;
-
-	RT_CK_VLBLOCK(vbp);
-
-	for( i=0; i < vbp->nused; i++ )  {
-		if( vbp->rgb[i] == 0 )  continue;
-		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
-		pl_color( fp,
-			(vbp->rgb[i]>>16) & 0xFF,
-			(vbp->rgb[i]>> 8) & 0xFF,
-			(vbp->rgb[i]    ) & 0xFF );
-		rt_vlist_to_uplot( fp, &(vbp->head[i]) );
-	}
-}
-
-/************************************************************************
- *									*
  *		NMG to VLIST routines, for MGED "ev" command.		*
  * XXX should take a flags array, to ensure each item done only once!   *
  *									*
@@ -436,7 +326,8 @@ int		poly_markers;
 #define LEE_DIVIDE_TOL	(1.0e-5)	/* sloppy tolerance */
 
 
-/*	N M G _ O F F S E T _ E U _ V E R T
+/*
+ *			N M G _ O F F S E T _ E U _ V E R T
  *
  *	Given an edgeuse, find an offset for its vertexuse which will place
  *	it "above" and "inside" the area of the face.
@@ -977,9 +868,11 @@ long				*tab;
 	vh = rt_vlblock_find( vbp, 255, 255, 255 );
 #if 0
 	if (rt_g.NMG_debug & DEBUG_LABEL_PTS) {
+		mat_t	mat;
+		mat_idn(mat);
 		(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
-		pdv_3move( vbp, p );
-		pl_label(vbp, label);
+		/* XXX What size characters to use? */
+		rt_vlist_3string( vh, label, p, mat, scale );
 	}
 #endif
 	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_MOVE );
@@ -1104,26 +997,122 @@ int				fancy;
 }
 
 /*
+ *			N M G _ V L B L O C K _ E U L E F T
+ *
+ *  Draw the left vector for this edgeuse.
+ *  At the tip, write the angle around the edgeuse, in degrees.
+ *
+ *  Color is determined by caller.
+ */
+void
+nmg_vlblock_euleft( vh, eu, center, mat, xvec, yvec, len, tol )
+struct rt_list			*vh;
+CONST struct edgeuse		*eu;
+CONST point_t			center;
+CONST mat_t			mat;
+CONST vect_t			xvec;
+CONST vect_t			yvec;
+double				len;
+CONST struct rt_tol		*tol;
+{
+	vect_t		left;
+	point_t		tip;
+	fastf_t		fan_len;
+	fastf_t		char_scale;
+	double		ang;
+	char		str[128];
+
+	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
+
+	if( nmg_find_eu_leftvec( left, eu ) < 0 )  return;
+
+	/* fan_len is baed on length of eu */
+	fan_len = len * 0.2;
+	VJOIN1( tip, center, fan_len, left );
+
+	RT_ADD_VLIST( vh, center, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_DRAW );
+
+	ang = rt_angle_measure( left, xvec, yvec ) * rt_radtodeg;
+	sprintf( str, "%g", ang );
+
+	/* char_scale is based on length of eu */
+	char_scale = len * 0.05;
+	rt_vlist_3string( vh, str, tip, mat, char_scale );
+}
+
+/*
  *			N M G _ V L B L O C K _ A R O U N D _ E U
  *
  *  Given an edgeuse, plot all the edgeuses around the common edge.
  *  A graphical parallel to nmg_pr_fu_around_eu_vecs().
+ *
+ *  If the "fancy" flag is set, draw an angle fan around the edge midpoint,
+ *  using the same angular reference as nmg_pr_fu_around_eu_vecs(), so
+ *  that the printed output can be cross-referenced to this display.
  */
 void
-nmg_vlblock_around_eu(vbp, orig_eu, tab )
+nmg_vlblock_around_eu(vbp, arg_eu, tab, fancy, tol )
 struct rt_vlblock		*vbp;
-CONST struct edgeuse		*orig_eu;
+CONST struct edgeuse		*arg_eu;
 long				*tab;
+int				fancy;
+CONST struct rt_tol		*tol;
 {
+	CONST struct edgeuse		*orig_eu;
 	register CONST struct edgeuse	*eu;
+	vect_t			xvec, yvec, zvec;
+	point_t			center;
+	mat_t			mat;
+	struct rt_list		*vh;
+	fastf_t			len;
 
 	RT_CK_VLBLOCK(vbp);
-	orig_eu = orig_eu->eumate_p;
+	NMG_CK_EDGEUSE(arg_eu);
+	RT_CK_TOL(tol);
+
+	if( fancy )  {
+		VSUB2( xvec, arg_eu->eumate_p->vu_p->v_p->vg_p->coord,
+			arg_eu->vu_p->v_p->vg_p->coord );
+		len = MAGNITUDE( xvec );
+
+		/* Erect coordinate system around eu */
+		nmg_eu_2vecs_perp( xvec, yvec, zvec, arg_eu, tol );
+
+		/*  Construct matrix to rotate characters from 2D drawing space
+		 *  into model coordinates, oriented in plane perpendicular to eu.
+		 */
+		mat_zero( mat );
+		mat[0] = xvec[X];
+		mat[4] = xvec[Y];
+		mat[8] = xvec[Z];
+
+		mat[1] = yvec[X];
+		mat[5] = yvec[Y];
+		mat[9] = yvec[Z];
+
+		mat[2] = zvec[X];
+		mat[6] = zvec[Y];
+		mat[10] = zvec[Z];
+		mat[15] = 1;
+
+		VADD2SCALE( center, arg_eu->vu_p->v_p->vg_p->coord,
+			arg_eu->eumate_p->vu_p->v_p->vg_p->coord, 0.5 );
+
+		/* Yellow, for now */
+		vh = rt_vlblock_find( vbp, 255, 200, 0 );
+	}
+
+	orig_eu = arg_eu->eumate_p;
 
 	eu = orig_eu;
 	do {
+		if(fancy) nmg_vlblock_euleft( vh, eu, center, mat, xvec, yvec, len, tol );
+
 		nmg_vlblock_eu(vbp, eu, tab, 80, 100, 170, 3 );
 		eu = eu->eumate_p;
+
 		nmg_vlblock_eu(vbp, eu, tab, 80, 100, 170, 3 );
 		eu = eu->radial_p;
 	} while( eu != orig_eu );
@@ -1290,14 +1279,17 @@ int			fancy;
  *  uses around this edge.
  */
 void
-nmg_pl_edges_in_2_shells(vbp, b, eu)
+nmg_pl_edges_in_2_shells(vbp, b, eu, fancy, tol)
 struct rt_vlblock	*vbp;
 long			*b;
 CONST struct edgeuse	*eu;
+int			fancy;
+CONST struct rt_tol	*tol;
 {
 	CONST struct edgeuse	*eur;
 	CONST struct shell	*s;
 
+	RT_CK_TOL(tol);
 	eur = eu;
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_LOOPUSE(eu->up.lu_p);
@@ -1311,7 +1303,7 @@ CONST struct edgeuse	*eu;
 		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
 		    eur->up.lu_p->up.fu_p->s_p != s) {
-		    	nmg_vlblock_around_eu(vbp, eu, b);
+		    	nmg_vlblock_around_eu(vbp, eu, b, fancy, tol);
 		    	break;
 		    }
 
@@ -1319,10 +1311,16 @@ CONST struct edgeuse	*eu;
 	} while (eur != eu);
 }
 
+/*
+ *			N M G _ P L _ I S E C T
+ *
+ *  Called by nmg_bool.c
+ */
 void
-nmg_pl_isect(filename, s)
+nmg_pl_isect(filename, s, tol)
 CONST char		*filename;
 CONST struct shell	*s;
+CONST struct rt_tol	*tol;
 {
 	struct faceuse		*fu;
 	struct loopuse		*lu;
@@ -1333,6 +1331,7 @@ CONST struct shell	*s;
 	struct rt_vlblock	*vbp;
 
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
 
 	if ((fp=fopen(filename, "w")) == (FILE *)NULL) {
 		(void)perror(filename);
@@ -1360,7 +1359,7 @@ CONST struct shell	*s;
 			if (magic1 == NMG_EDGEUSE_MAGIC) {
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
-					nmg_pl_edges_in_2_shells(vbp, b, eu);
+					nmg_pl_edges_in_2_shells(vbp, b, eu, 0, tol);
 				}
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				;
