@@ -67,13 +67,18 @@ proc mouse_get_spath { x y } {
     bind_listbox $top "<B1-Motion>"\
 	    "set item \[get_listbox_entry %W %x %y\];\
 	    solid_illum \$item"
+if 0 {
     bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[get_listbox_entry %W %x %y\];\
 	    solid_illum \$item"
     bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgs_path) \[get_listbox_entry %W %x %y\];\
 	    destroy $top"
-    bind_listbox $top "<ButtonRelease-1>"\
+} else {
+    bind_listbox $top "<ButtonPress-1>" \
+	    "lbdcHack %W %x %y %t $id s junkpath"
+}
+    bind_listbox $top "<ButtonRelease-1>" \
 	    "%W selection clear 0 end; _mged_press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_destroy $id $top"
@@ -126,6 +131,7 @@ proc mouse_get_spath_and_pos { x y } {
 	    _mged_press oill;\
 	    _mged_ill -i 1 \$mged_gui($id,mgs_path);\
 	    _mged_matpick -n \$item"
+if 0 {
     bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[%W index @%x,%y\];\
 	    _mged_press oill;\
@@ -134,7 +140,11 @@ proc mouse_get_spath_and_pos { x y } {
     bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgs_pos) \[%W index @%x,%y\];\
 	    destroy $top"
-    bind_listbox $top "<ButtonRelease-1>"\
+} else {
+    bind_listbox $top "<ButtonPress-1>" \
+	    "lbdcHack %W %x %y %t $id m \$mged_gui($id,mgs_path)"
+}
+    bind_listbox $top "<ButtonRelease-1>" \
 	    "%W selection clear 0 end; _mged_press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_and_pos_destroy $id $top"
@@ -206,6 +216,7 @@ proc mouse_get_comb { x y } {
 	    set spath \[comb_get_solid_path \$comb\];\
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
 	    matrix_illum \$spath \$path_pos"
+if 0 {
     bind_listbox $top "<ButtonPress-1>"\
 	    "set comb \[%W get @%x,%y\];\
 	    set spath \[comb_get_solid_path \$comb\];\
@@ -214,6 +225,10 @@ proc mouse_get_comb { x y } {
     bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgc_comb) \[%W get @%x,%y\];\
 	    destroy $top"
+} else {
+    bind_listbox $top "<ButtonPress-1>" \
+	    "lbdcHack %W %x %y %t $id c junkpath"
+}
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
 	    _mged_press reject"
@@ -247,8 +262,12 @@ proc mouse_solid_edit_select { x y } {
 	return
     }
 
-    _mged_press sill
-    _mged_ill -i 1 $spath
+    set sol_type [lindex [db get $spath] 0]
+    if {$sol_type == "sketch"} {
+	Sketch_editor .#auto $spath
+    } else {
+	_mged_sed -i 1 $spath
+    }
 
     mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
