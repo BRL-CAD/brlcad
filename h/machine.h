@@ -147,8 +147,8 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 /* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines */
-#define MAX_PSW		4
-#define DEFAULT_PSW	1
+#define MAX_PSW		8
+#define DEFAULT_PSW	1	/* until libgl runs in parallel */
 #define PARALLEL	1
 #endif
 
