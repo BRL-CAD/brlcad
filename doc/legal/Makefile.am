@@ -4,6 +4,7 @@ EXTRA_DIST = \
 	bsd.txt \
 	fdl.txt \
 	gpl.txt \
-	lgpl.txt
+	lgpl.txt \
+	nosa.txt
 
 MAINTAINERCLEANFILES = Makefile.in
