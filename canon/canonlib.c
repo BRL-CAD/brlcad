@@ -37,7 +37,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 int ipu_debug = 0;
-#if !defined(__sgi) && !defined(sgi)
+#if !(defined(IRIX) && (IRIX == 4 || IRIX == 5))
 int dsdebug = 0;
 #endif
 
@@ -59,7 +59,7 @@ int	src;
 	dest[2] = (u_char)(src >> 8);
 	dest[3] = (u_char)src;
 }
-#if defined(__sgi) || defined(sgi)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
 /*	I P U _ A C Q U I R E
  *
  *	Wait for the IPU to finish what it was doing.  Exit program if IPU

@@ -52,7 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
-#if defined(__sgi) || defined(sgi)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>

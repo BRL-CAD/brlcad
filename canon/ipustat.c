@@ -12,7 +12,7 @@
 #include <strings.h>
 #endif
 
-#if defined(__sgi) || defined(sgi)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -28,7 +28,7 @@ int main(ac,av)
 int ac;
 char *av[];
 {
-#if defined(__sgi) || defined(sgi)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
 	struct dsreq *dsp;
 	char *p;
 
@@ -64,4 +64,3 @@ char *av[];
 	return(-1);
 #endif
 }
-

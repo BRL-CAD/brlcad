@@ -41,6 +41,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "machine.h"
 #include "externs.h"
+
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
 #include "./canon.h"
 
 
@@ -154,3 +156,14 @@ char *av[];
 	(void)chmod(av[arg_index], 0444);
 	return(0);
 }
+#else
+int
+main(ac, av)
+int ac;
+char *av[];
+{
+	fprintf(stderr,
+		"%s only works on SGI(tm) systems with dslib support\n", *av);
+	return(-1);
+}
+#endif
