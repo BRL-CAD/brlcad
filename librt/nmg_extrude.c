@@ -297,6 +297,8 @@ struct rt_tol	*tol;
 			}
 		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
 			== NMG_VERTEXUSE_MAGIC) {
+			v = RT_LIST_FIRST(vertexuse, &lu->down_hd)->v_p;
+			NMG_CK_VERTEX(v);
 			VADD2(v->vg_p->coord, v->vg_p->coord, Vec);
 		} else
 			rt_bomb("translate_nmg_face: bad loopuse\n");
