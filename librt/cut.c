@@ -1890,3 +1890,60 @@ struct rt_i	*rtip;
 	}
 	bu_ptbl_free( &rtip->rti_busy_cutter_nodes );
 }
+
+/*
+ */
+void
+rt_pr_cut_info( rtip, str )
+CONST struct rt_i	*rtip;
+CONST char		*str;
+{
+	CONST struct nugridnode	*nugnp;
+	int			i;
+
+	RT_CK_RTI(rtip);
+
+	bu_log("%s %s: %d nu, %d cut, %d box (%d empty)\n",
+		str,
+		rtip->rti_space_partition == RT_PART_NUGRID ?
+			"NUGrid" : "NUBSP",
+		rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+		rtip->rti_ncut_by_type[CUT_CUTNODE],
+		rtip->rti_ncut_by_type[CUT_BOXNODE],
+		rtip->nempty_cells );
+	bu_log( "Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
+		rtip->rti_cut_maxdepth,
+		rtip->rti_ncut_by_type[CUT_BOXNODE],
+		rtip->rti_cut_maxlen,
+		((double)rtip->rti_cut_totobj) /
+		rtip->rti_ncut_by_type[CUT_BOXNODE] );
+	bu_hist_pr( &rtip->rti_hist_cellsize,
+		    "cut_tree: Number of solids per leaf cell");
+	bu_hist_pr( &rtip->rti_hist_cutdepth,
+		    "cut_tree: Depth (height)");
+
+	switch( rtip->rti_space_partition )  {
+	case RT_PART_NUGRID:
+		nugnp = &rtip->rti_CutHead.nugn;
+		if( nugnp->nu_type != CUT_NUGRIDNODE )
+			bu_bomb( "rt_pr_cut_info: passed non-nugridnode" );
+
+		for( i=0; i<3; i++ ) {
+			register int j;
+			bu_log( "NUgrid %c axis:  %d cells\n", "XYZ*"[i],
+				nugnp->nu_cells_per_axis[i] );
+			for( j=0; j<nugnp->nu_cells_per_axis[i]; j++ ) {
+				bu_log( "  %g .. %g, w=%g\n",
+					nugnp->nu_axis[i][j].nu_spos,
+					nugnp->nu_axis[i][j].nu_epos,
+					nugnp->nu_axis[i][j].nu_width );
+			}
+		}
+		break;
+	case RT_PART_NUBSPT:
+		/* Anything good to print here? */
+		break;
+	default:
+		bu_bomb("rt_pr_cut_info() bad rti_space_partition\n");
+	}
+}
