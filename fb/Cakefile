@@ -10,7 +10,7 @@
 	fbfade fbframe fbfree fbgamma fbgrid fbhelp \
 	fblabel fbline fbpoint fbscanplot fbstretch fbzoom \
 	gif-fb gif2fb orle-fb pix-fb pixflip-fb \
-	pl-fb polar-fb pp-fb rle-fb spm-fb pixautosize
+	pl-fb polar-fb pp-fb rle-fb spm-fb pixautosize png-fb fb-png
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -28,6 +28,12 @@ pl-fb:		pl-fb.o LIBFB_DEP LIBBU_DEP LIBBN_DEP
 
 fbcbars:	fbcbars.o LIBFB_DEP
 	CC LDFLAGS -o fbcbars fbcbars.o LIBFB LIBFB_LIBES LIBES
+
+png-fb:		png-fb.o LIBFB_DEP LIBRT_DEP LIBBU_DEP LIBBN_DEP LIBZ_DEP LIBPNG_DEP
+	CC LDFLAGS -o png-fb png-fb.o LIBPNG LIBZ LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN LIBES
+
+fb-png:		fb-png.o cmap-crunch.o LIBFB_DEP LIBRT_DEP LIBBU_DEP LIBBN_DEP LIBZ_DEP LIBPNG_DEP
+	CC LDFLAGS -o fb-png fb-png.o cmap-crunch.o LIBPNG LIBZ LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN LIBES
 
 pix-fb:		pix-fb.o LIBFB_DEP LIBRT_DEP LIBBU_DEP LIBBN_DEP
 	CC LDFLAGS -o pix-fb pix-fb.o LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN LIBES
