@@ -335,7 +335,7 @@ char **argv;
 
 	CHECK_DBI_NULL;
 
-	if (wdb_edge_collapse_cmd(wdbp, interp, argc, argv) == TCL_ERROR)
+	if (wdb_nmg_collapse_cmd(wdbp, interp, argc, argv) == TCL_ERROR)
 		return TCL_ERROR;
 
 	av[0] = "e";

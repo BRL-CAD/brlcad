@@ -141,6 +141,7 @@ static struct cmdtab cmdtab[] = {
 	{"45,45",	bv_45_45},
 	{"accept",	be_accept},
 	{"adc", f_adc},
+	{"adjust",	cmd_adjust},
 	{"ae", f_aetview},
 	{"aip", f_aip},
 	{"analyze", f_analyze},
@@ -151,6 +152,7 @@ static struct cmdtab cmdtab[] = {
 #ifdef DM_X
 	{"attach", f_attach},
 #endif
+	{"attr",	cmd_attr},
 	{"autoview", f_autoview},
 	{"B", f_blast},
 	{"bev", f_bev},
@@ -176,6 +178,8 @@ static struct cmdtab cmdtab[] = {
 	{"db_glob", cmd_mged_glob},
 	{"dbconcat", f_concat},
 	{"dbfind", f_find},
+	{"dbip",	cmd_dbip},
+	{"dump",	cmd_dump},
 	{"debugbu", f_debugbu},
 	{"debugdir", f_debugdir},
 	{"debuglib", f_debuglib},
@@ -212,9 +216,11 @@ static struct cmdtab cmdtab[] = {
 	{"e_muves", f_e_muves},
 	{"facedef", f_facedef},
 	{"facetize", f_facetize},
+	{"form",	cmd_form},
 	{"fracture", f_fracture},
 	{"front",	bv_front},
 	{"g", f_group},
+	{"get",		cmd_get},
 	{"get_comb", cmd_get_comb},
 	{"get_dbip", cmd_get_ptr},
 	{"get_dm_list", f_get_dm_list},
@@ -258,6 +264,7 @@ static struct cmdtab cmdtab[] = {
 	{"make", f_make},
 	{"make_bb", f_make_bb},
 	{"make_name", f_make_name},
+	{"match",	cmd_match},
 	{"mater", f_mater},
 	{"matpick", f_matpick},
 	{"memprint", f_memprint},
@@ -314,6 +321,7 @@ static struct cmdtab cmdtab[] = {
 	{"preview", f_preview},
 	{"ps", f_ps},
 	{"push", f_push},
+	{"put",		cmd_put},
 	{"put_comb", cmd_put_comb},
 	{"put_sed", f_put_sedit},
 	{"putmat", f_putmat},
@@ -2340,3 +2348,75 @@ f_test_bomb_hook(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 #endif
+
+static int
+cmd_adjust(ClientData	clientData,
+	   Tcl_Interp	*interp,
+	   int		argc,
+	   char		**argv)
+{
+	return wdb_adjust_cmd(wdbp, interp, argc, argv);
+}
+
+static int
+cmd_attr(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	return wdb_attr_cmd(wdbp, interp, argc, argv);
+}
+
+static int
+cmd_dbip(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	return wdb_dbip_cmd(wdbp, interp, argc, argv);
+}
+
+static int
+cmd_dump(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	return wdb_dump_cmd(wdbp, interp, argc, argv);
+}
+
+static int
+cmd_form(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	return wdb_form_cmd(wdbp, interp, argc, argv);
+}
+
+static int
+cmd_get(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
+{
+	return wdb_get_cmd(wdbp, interp, argc, argv);
+}
+
+static int
+cmd_match(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
+{
+	return wdb_match_cmd(wdbp, interp, argc, argv);
+}
+
+static int
+cmd_put(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
+{
+	return wdb_put_cmd(wdbp, interp, argc, argv);
+}
