@@ -109,6 +109,13 @@ f_copy()
 		 */
 		NAMEMOVE( cmd_args[2], record.s.s_name );
 		db_putrec( dp, &record, 0 );
+
+		/* draw the new solid */
+		drawHobj(dp, ROOT, 0, identity);
+		dmaflag = 1;
+
+		/* color the solid */
+		dmp->dmr_colorchange();
 	} else if(record.u_id == ID_ARS_A)  {
 		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
 			return;
