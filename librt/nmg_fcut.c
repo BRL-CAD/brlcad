@@ -120,7 +120,7 @@ struct nmg_ray_state {
 	vect_t			ang_y_dir;	/* y axis for angle measure */
 };
 
-RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct nmg_ray_state *rs) );
+RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct vertexuse *vu1, struct vertexuse *vu2) );
 
 /*
  *			P T B L _ V S O R T
@@ -1334,11 +1334,17 @@ int			other_rs_state;
 		break;
 	}
 
-	/* If no loop has been entered in other face, don't do any cutting */
 	action = stp->action;
 	new_state = stp->new_state;
 #if 0
-	/* XXX This is the new part */
+	/*
+	 *  Major optimization here.
+	 *  If the state machine for the other face is still in OUT state,
+	 *  then take no actions in this face,
+	 *  because any cutting or joining done here will have no effect
+	 *  on the final result of the boolean, it's just extra work.
+	 *  This can reduce the amount of unnecessary topology by 75% or more.
+	 */
 	if( other_rs_state == NMG_STATE_OUT )  {
 		action = NMG_ACTION_NONE;
 	}
@@ -1350,7 +1356,7 @@ int			other_rs_state;
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
 		rt_log("This loopuse, before action:\n");
-		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs);
+		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs->vu[0], rs->vu[rs->nvu-1] );
 	}
 
 	/*
@@ -1394,7 +1400,7 @@ rt_log("force next eu to ray\n");
 		nmg_pr_lu_briefly(lu, (char *)0);
 		rt_log("The whole face\n");
 		nmg_pr_fu(lu->up.fu_p, (char *)0);
-		nmg_face_lu_plot(lu, rs);
+		nmg_face_lu_plot(lu, rs->vu[0], rs->vu[rs->nvu-1] );
 		{
 			FILE	*fp = fopen("error.pl", "w");
 			nmg_pl_m(fp, nmg_find_model((long *)lu));
@@ -1499,7 +1505,7 @@ rt_log("force next eu to ray\n");
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After LONE_V_ESPLIT, the final loop:\n");
 			nmg_pr_lu(nmg_lu_of_vu(rs->vu[pos]), "   ");
-			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
 		}
 		break;
 	case NMG_ACTION_LONE_V_JAUNT:
@@ -1535,7 +1541,7 @@ rt_log("force next eu to ray\n");
 
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After LONE_V_JAUNT, the final loop:\n");
-			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
 		}
 		break;
 	case NMG_ACTION_CUTJOIN:
@@ -1562,7 +1568,7 @@ rt_log("force next eu to ray\n");
 			if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 				rt_log("After CUT, the final loop:\n");
 				nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
-				nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+				nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
 			}
 			break;
 		}
@@ -1628,132 +1634,11 @@ rt_log("force next eu to ray\n");
 
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After JOIN, the final loop:\n");
-			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
 		}
 		break;
 	}
 
 	rs->state = new_state;
-}
-
-/*
- *			N M G _ F A C E _ P L O T
- */
-void
-nmg_face_plot( fu )
-struct faceuse	*fu;
-{
-	extern void (*nmg_vlblock_anim_upcall)();
-	struct model		*m;
-	struct rt_vlblock	*vbp;
-	struct face_g	*fg;
-	long		*tab;
-	int		fancy;
-
-	if( ! (rt_g.NMG_debug & DEBUG_PL_ANIM) )  return;
-
-	NMG_CK_FACEUSE(fu);
-
-	m = nmg_find_model( (long *)fu );
-	NMG_CK_MODEL(m);
-
-	/* get space for list of items processed */
-	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
-		"nmg_face_plot tab[]");
-
-	vbp = rt_vlblock_init();
-
-	fancy = 3;	/* show both types of edgeuses */
-	nmg_vlblock_fu(vbp, fu, tab, fancy );
-
-	/* Cause animation of boolean operation as it proceeds! */
-	if( nmg_vlblock_anim_upcall )  {
-		/* if requested, delay 3/4 second */
-		(*nmg_vlblock_anim_upcall)( vbp,
-			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
-			0 );
-	} else {
-		rt_log("null nmg_vlblock_anim_upcall, no animation\n");
-	}
-	rt_vlblock_free(vbp);
-	rt_free( (char *)tab, "nmg_face_plot tab[]" );
-
-}
-
-/*
- *			N M G _ F A C E _ P L O T
- *
- *  Just like nmg_face_plot, except it draws two faces each iteration.
- */
-void
-nmg_2face_plot( fu1, fu2 )
-struct faceuse	*fu1, *fu2;
-{
-	extern void (*nmg_vlblock_anim_upcall)();
-	struct model		*m;
-	struct rt_vlblock	*vbp;
-	struct face_g	*fg;
-	long		*tab;
-	int		fancy;
-
-	if( ! (rt_g.NMG_debug & DEBUG_PL_ANIM) )  return;
-
-	NMG_CK_FACEUSE(fu1);
-	NMG_CK_FACEUSE(fu2);
-
-	m = nmg_find_model( (long *)fu1 );
-	NMG_CK_MODEL(m);
-
-	/* get space for list of items processed */
-	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
-		"nmg_2face_plot tab[]");
-
-	vbp = rt_vlblock_init();
-
-	fancy = 3;	/* show both types of edgeuses */
-	nmg_vlblock_fu(vbp, fu1, tab, fancy );
-	nmg_vlblock_fu(vbp, fu2, tab, fancy );
-
-	/* Cause animation of boolean operation as it proceeds! */
-	if( nmg_vlblock_anim_upcall )  {
-		/* if requested, delay 3/4 second */
-		(*nmg_vlblock_anim_upcall)( vbp,
-			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
-			0 );
-	} else {
-		rt_log("null nmg_vlblock_anim_upcall, no animation\n");
-	}
-	rt_vlblock_free(vbp);
-	rt_free( (char *)tab, "nmg_2face_plot tab[]" );
-
-}
-
-void
-nmg_face_lu_plot( lu, rs )
-struct loopuse		*lu;
-struct nmg_ray_state	*rs;
-{
-	FILE	*fp;
-	struct model	*m;
-	long		*b;
-	char		buf[128];
-	static int	num = 0;
-
-	if(!(rt_g.NMG_debug&DEBUG_PLOTEM)) return;
-
-	NMG_CK_LOOPUSE(lu);
-	m = nmg_find_model((long *)lu);
-	sprintf(buf, "loop%d.pl", num++ );
-
-	fp = fopen(buf, "w");
-	b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]" );
-	nmg_pl_lu(fp, lu, b, 255, 0, 0);
-	/* A yellow line for the ray */
-	pl_color(fp, 255, 255, 0);
-	pdv_3line(fp, rs->vu[0]->v_p->vg_p->coord,
-		rs->vu[rs->nvu-1]->v_p->vg_p->coord );
-	fclose(fp);
-	rt_log("wrote %s\n", buf);
-	rt_free( (char *)b, "nmg_face_lu_plot flag[]" );
 }
                                                                                                                                       
