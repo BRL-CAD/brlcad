@@ -985,7 +985,6 @@ char	**argv;
 	if( cmd[1] == '\0' )  {
 		switch( cmd[0] )  {
 		case 'x':
-			dm_values.dv_xjoy = f;
 			if( mged_variables.rateknobs )  {
 				rate_rotate[X] = f;
 			} else {
@@ -995,7 +994,6 @@ char	**argv;
 			}
 			break;
 		case 'y':
-			dm_values.dv_yjoy = f;
 			if( mged_variables.rateknobs )  {
 				rate_rotate[Y] = f;
 			} else {
@@ -1005,7 +1003,6 @@ char	**argv;
 			}
 			break;
 		case 'z':
-			dm_values.dv_zjoy = f;
 			if( mged_variables.rateknobs )  {
 				rate_rotate[Z] = f;
 			} else {
@@ -1015,21 +1012,20 @@ char	**argv;
 			}
 			break;
 		case 'X':
-			dm_values.dv_xslew = f;
 			if( mged_variables.rateknobs )
 				rate_slew[X] = f;
 			break;
 		case 'Y':
-			dm_values.dv_yslew = f;
-			rate_slew[Y] = f;
+			if( mged_variables.rateknobs )
+				rate_slew[Y] = f;
 			break;
 		case 'Z':
-			dm_values.dv_zslew = f;
-			rate_slew[Z] = f;
+			if( mged_variables.rateknobs )
+				rate_slew[Z] = f;
 			break;
 		case 'S':
-			dm_values.dv_zoom = f;
-			rate_zoom = f;
+			if( mged_variables.rateknobs )
+				rate_zoom = f;
 			break;
 		default:
 			goto usage;
@@ -1050,18 +1046,16 @@ char	**argv;
 		dm_values.dv_distadc = i;
 		dm_values.dv_flagadc = 1;
 	} else if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
+		char	*av[3];
+
 		VSETALL( rate_rotate, 0 );
-		dm_values.dv_xjoy = 0;
-		dm_values.dv_yjoy = 0;
-		dm_values.dv_zjoy = 0;
-
 		VSETALL( rate_slew, 0 );
-		dm_values.dv_xslew = 0;
-		dm_values.dv_yslew = 0;
-		dm_values.dv_zslew = 0;
-
 		rate_zoom = 0;
-		dm_values.dv_zoom = 0;
+
+		av[0] = "adc";
+		av[1] = "reset";
+		av[2] = (char *)NULL;
+		(void)f_adc( 2, av );
 	} else {
 usage:
 		rt_log("knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n");
