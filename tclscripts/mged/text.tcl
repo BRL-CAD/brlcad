@@ -50,34 +50,6 @@ proc distribute_text { w cmd str} {
     }
 }
 
-proc insert_char { c } {
-    global mged_edit_style
-    global dm_insert_char_flag
-
-    set win [winset]
-    set id [get_player_id_dm $win]
-
-    if {$id == "mged"} {
-	return "mged"
-    } else {
-	set dm_insert_char_flag 1
-	set w .$id.t
-	cmd_set $id
-	winset $win
-
-	switch $mged_edit_style($id) {
-	    vi {
-		vi_style $w $c
-	    }
-	    emacs {
-		emacs_style $w $c
-	    }
-	}
-
-	set dm_insert_char_flag 0
-    }
-}
-
 proc get_player_id_dm { win } {
     global win_to_id
 
@@ -86,224 +58,6 @@ proc get_player_id_dm { win } {
     }
 
     return "mged"
-}
-
-proc vi_style { w c } {
-    global vi_mode
-    global vi_debug_char
-
-    set vi_debug_char $c
-
-    switch $vi_mode($w) {
-	insert {
-	    switch $c {
-		"\r"
-		    -
-		"\n" {
-		    # <Return>
-		    execute_cmd $w
-		}
-		"\a" {
-		    # <Control-g>
-		}
-		"\b" {
-		    # <Control-h> or <Backspace>
-		    backward_delete_char $w
-		}
-		"\f" {
-		    # <Control-l>
-		}
-		"\v" {
-		    # <Control-k>
-		}
-		"\x01" {
-		    # <Control-a>
-		}
-		"\x02" {
-		    # <Control-b>
-		}
-		"\x03" {
-		    # <Control-c>
-		}
-		"\x04" {
-		    # <Control-d>
-		}
-		"\x05" {
-		    # <Control-e>
-		}
-		"\x06" {
-		    # <Control-f>
-		}
-		"\x0e" {
-		    # <Control-n>
-		}
-		"\x0f" {
-		    # <Control-o>
-		}
-		"\x10" {
-		    # <Control-p>
-		}
-		"\x11" {
-		    # <Control-q>
-		}
-		"\x12" {
-		    # <Control-r>
-		}
-		"\x13" {
-		    # <Control-s>
-		}
-		"\x14" {
-		    # <Control-t>
-		}
-		"\x15" {
-		    # <Control-u>
-		}
-		"\x16" {
-		    # <Control-v>
-		}
-		"\x17" {
-		    # <Control-w>
-		}
-		"\x18" {
-		    # <Control-x>
-		}
-		"\x19" {
-		    # <Control-y>
-		}
-		"\x1a" {
-		    # <Control-z>
-		}
-		"\x1b" {
-		    # <Escape>
-		    vi_edit_mode $w
-		}
-		"\x7f" {
-		    # <Delete>
-		    delete_char $w
-		}
-		default {
-		    $w insert insert $c
-		}
-	    }
-	}
-	edit {
-	    switch $c {
-		"\r"
-		    -
-		"\n" {
-		    # <Return>
-		    execute_cmd $w
-		}
-		default {
-		    vi_process_edit_cmd $w $c
-		}
-	    }
-	}
-    }
-}
-
-proc emacs_style { w c } {
-    switch $c {
-	"\r"
-	     -
-	"\n" {
-	    # <Return>
-	    execute_cmd $w
-	}
-	"\a" {
-	    # <Control-g>
-	}
-	"\b" {
-	    # <Control-h> or <Backspace>
-	    backward_delete_char $w
-	}
-	"\f" {
-	    # <Control-l>
-	}
-	"\v" {
-	    # <Control-k>
-	    delete_end_of_line $w
-	}
-	"\x01" {
-	    # <Control-a>
-	    beginning_of_line $w
-	}
-	"\x02" {
-	    # <Control-b>
-	    backward_char $w
-	}
-	"\x03" {
-	    # <Control-c>
-	    interrupt_cmd $w
-	}
-	"\x04" {
-	    # <Control-d>
-	    delete_char $w
-	}
-	"\x05" {
-	    # <Control-e>
-	    end_of_line $w
-	}
-	"\x06" {
-	    # <Control-f>
-	    forward_char $w
-	}
-	"\x0e" {
-	    # <Control-n>
-	    next_command $w
-	}
-	"\x0f" {
-	    # <Control-o>
-	}
-	"\x10" {
-	    # <Control-p>
-	    prev_command $w
-	}
-	"\x11" {
-	    # <Control-q>
-	}
-	"\x12" {
-	    # <Control-r>
-	}
-	"\x13" {
-	    # <Control-s>
-	}
-	"\x14" {
-	    <Control-t>
-	    transpose $w
-	}
-	"\x15" {
-	    # <Control-u>
-	    delete_line $w
-	}
-	"\x16" {
-	    # <Control-v>
-	}
-	"\x17" {
-	    # <Control-w>
-	    backward_delete_word $w
-	}
-	"\x18" {
-	    # <Control-x>
-	}
-	"\x19" {
-	    # <Control-y>
-	}
-	"\x1a" {
-	    # <Control-z>
-	}
-	"\x1b" {
-	    # <Escape>
-	    vi_edit_mode $w
-	}
-	"\x7f" {
-	    # <Delete>
-	    delete_char $w
-	}
-	default {
-	    $w insert insert $c
-	}
-    }
 }
 
 proc first_char_in_line { w } {
@@ -502,7 +256,7 @@ proc transpose { w } {
 }
 
 proc execute_cmd { w } {
-    global mged_edit_style
+#    global mged_edit_style
     global freshline
 
     $w mark set insert {end - 2c}
@@ -511,11 +265,11 @@ proc execute_cmd { w } {
     set freshline($w) 1
     cursor_highlight $w
 
-    set win [winset]
-    set id [get_player_id_dm $win]
-    if {$id != "mged" && $mged_edit_style($id) == "vi"} {
-	vi_insert_mode $w
-    }
+#    set win [winset]
+#    set id [get_player_id_dm $win]
+#    if {$id != "mged" && $mged_edit_style($id) == "vi"} {
+#	vi_insert_mode $w
+#    }
 }
 
 proc interrupt_cmd { w } {
@@ -536,10 +290,6 @@ proc interrupt_cmd { w } {
 #                                                                                #
 ##################################################################################
 proc vi_edit_mode { w } {
-    global vi_mode
-
-    set vi_mode($w) edit
-
     bind $w <BackSpace> {
 	backward_char %W
 	break
@@ -551,36 +301,67 @@ proc vi_edit_mode { w } {
     }
 
     bind $w <KeyPress> {
-	vi_process_edit_cmd %W %A
+	vi_process_edit_cmd %W %A %s
+	break
+    }
+}
+
+proc vi_overwrite_mode { w } {
+    bind $w <BackSpace> {
+	backward_delete_char %W
+	break
+    }
+
+    bind $w <space> {
+	delete_char %W
+	%W insert insert %A
+	break
+    }
+
+    bind $w <KeyPress> {
+	vi_process_overwrite %W %A %s
 	break
     }
 }
 
 proc vi_insert_mode { w } {
-    global vi_mode
-
-    set vi_mode($w) insert
-
     bind $w <BackSpace> {
 	backward_delete_char %W
 	break
     }
 
     bind $w <space> {}
+
     bind $w <KeyPress> {}
 }
 
-proc vi_process_edit_cmd { w c } {
+proc vi_process_edit_cmd { w c state } {
+    global vi_overwrite_flag
     global vi_change_flag
     global vi_delete_flag
     global vi_search_flag
     global vi_search_char
+    global vi_search_dir
     global vi_debug
 
     set vi_debug($w) $c
 
+    # Throw away all non-visible characters
+    if {![string match \[!-~\] $c] || $state > 1} {
+	return
+    }
+
+    if {$vi_overwrite_flag($w)} {
+	delete_char $w
+	$w insert insert $c
+	set vi_overwrite_flag($w) 0
+
+	return
+    }
+
     switch $vi_search_flag($w) {
 	f {
+	    set vi_search_dir($w) forward
 	    set vi_search_char($w) $c
 	    set newindex [$w search $c {insert + 1c} {end - 2c}]
 	    if {$newindex != ""} {
@@ -603,6 +384,7 @@ proc vi_process_edit_cmd { w c } {
 	    return
 	}
 	F {
+	    set vi_search_dir($w) backward
 	    set vi_search_char($w) $c
 	    set newindex [$w search -backwards $c {insert - 1c} promptEnd]
 	    if {$newindex != ""} {
@@ -632,19 +414,40 @@ proc vi_process_edit_cmd { w c } {
 	    if {$vi_search_char($w) == ""} {
 		return
 	    }
-	    set newindex [$w search $vi_search_char($w) {insert + 1c} {end - 2c}]
-	    if {$newindex != ""} {
-		if {$vi_delete_flag($w)} {
-		    $w delete insert $newindex+1c
-		    set vi_delete_flag($w) 0
-		} elseif {$vi_change_flag($w)} {
-		    $w delete insert $newindex+1c
-		    vi_insert_mode $w
-		    set vi_change_flag($w) 0
-		} else {
-		    $w mark set insert $newindex
+
+	    switch $vi_search_dir($w) {
+		forward {
+		    set newindex [$w search $vi_search_char($w) {insert + 1c} {end - 2c}]
+		    if {$newindex != ""} {
+			if {$vi_delete_flag($w)} {
+			    $w delete insert $newindex+1c
+			    set vi_delete_flag($w) 0
+			} elseif {$vi_change_flag($w)} {
+			    $w delete insert $newindex+1c
+			    vi_insert_mode $w
+			    set vi_change_flag($w) 0
+			} else {
+			    $w mark set insert $newindex
+			}
+			cursor_highlight $w
+		    }
 		}
-		cursor_highlight $w
+		backward {
+		    set newindex [$w search -backwards $vi_search_char($w) {insert - 1c} promptEnd]
+		    if {$newindex != ""} {
+			if {$vi_delete_flag($w)} {
+			    $w delete $newindex insert
+			    set vi_delete_flag($w) 0
+			} elseif {$vi_change_flag($w)} {
+			    $w delete $newindex insert
+			    vi_insert_mode $w
+			    set vi_change_flag($w) 0
+			} else {
+			    $w mark set insert $newindex
+			}
+			cursor_highlight $w
+		    }
+		}
 	    }
 	}
 	, {
@@ -652,19 +455,40 @@ proc vi_process_edit_cmd { w c } {
 	    if {$vi_search_char($w) == ""} {
 		return
 	    }
-	    set newindex [$w search -backwards $vi_search_char($w) {insert - 1c} promptEnd]
-	    if {$newindex != ""} {
-		if {$vi_delete_flag($w)} {
-		    $w delete $newindex insert
-		    set vi_delete_flag($w) 0
-		} elseif {$vi_change_flag($w)} {
-		    $w delete $newindex insert
-		    vi_insert_mode $w
-		    set vi_change_flag($w) 0
-		} else {
-		    $w mark set insert $newindex
+
+	    switch $vi_search_dir($w) {
+		backward {
+		    set newindex [$w search $vi_search_char($w) {insert + 1c} {end - 2c}]
+		    if {$newindex != ""} {
+			if {$vi_delete_flag($w)} {
+			    $w delete insert $newindex+1c
+			    set vi_delete_flag($w) 0
+			} elseif {$vi_change_flag($w)} {
+			    $w delete insert $newindex+1c
+			    vi_insert_mode $w
+			    set vi_change_flag($w) 0
+			} else {
+			    $w mark set insert $newindex
+			}
+			cursor_highlight $w
+		    }
 		}
-		cursor_highlight $w
+		forward {
+		    set newindex [$w search -backwards $vi_search_char($w) {insert - 1c} promptEnd]
+		    if {$newindex != ""} {
+			if {$vi_delete_flag($w)} {
+			    $w delete $newindex insert
+			    set vi_delete_flag($w) 0
+			} elseif {$vi_change_flag($w)} {
+			    $w delete $newindex insert
+			    vi_insert_mode $w
+			    set vi_change_flag($w) 0
+			} else {
+			    $w mark set insert $newindex
+			}
+			cursor_highlight $w
+		    }
+		}
 	    }
 	}
 	0 {
@@ -770,6 +594,11 @@ proc vi_process_edit_cmd { w c } {
 		forward_char $w
 	    }
 	}
+	r {
+	    set vi_overwrite_flag($w) 1
+	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
+	}
 	s {
 	    delete_char $w
 	    vi_insert_mode $w
@@ -819,6 +648,11 @@ proc vi_process_edit_cmd { w c } {
 	    set vi_delete_flag($w) 0
 	    set vi_change_flag($w) 0
 	}
+	R {
+	    vi_overwrite_mode $w
+	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
+	}
 	X {
 	    backward_delete_char $w
 	    set vi_delete_flag($w) 0
@@ -836,12 +670,21 @@ proc vi_process_edit_cmd { w c } {
 		end_of_line $w
 	    }
 	}
-	"" {
-	}
 	default {
 	    set vi_delete_flag($w) 0
+	    set vi_change_flag($w) 0
 	}
     }
+}
+
+proc vi_process_overwrite { w c state } {
+    # Throw away all non-visible characters
+    if {![string match \[!-~\] $c] || $state > 1} {
+	return
+    }
+
+    delete_char $w
+    $w insert insert $c
 }
 # End - VI Specific Callbacks
 
@@ -971,7 +814,7 @@ proc cursor_highlight { w } {
 
 proc set_text_key_bindings { id } {
     global mged_edit_style
-    global vi_mode
+    global vi_debug_char
 
     set w .$id.t
     switch $mged_edit_style($id) {
@@ -1049,7 +892,7 @@ proc set_text_key_bindings { id } {
 	    }
 
 	    bind $w <Delete> {
-		delete_char %W
+		backward_delete_char %W
 		break
 	    }
 
@@ -1057,6 +900,8 @@ proc set_text_key_bindings { id } {
 		execute_cmd %W
 		break
 	    }
+
+	    bind $w <space> {}
 
 	    bind $w <KeyPress> {}
 	}
