@@ -61,7 +61,7 @@ class Display {
     public method remove {glist}
 
     # methods that override methods inherited from View
-    public method slew {x y}
+    public method slew {args}
     public method perspective_angle {args}
 
     # methods that override methods inherited from Dm
@@ -283,16 +283,21 @@ body Display::contents {} {
 }
 
 ########################### Public Methods That Override ###########################
-body Display::slew {x1 y1} {
-    set x2 [expr $width * 0.5]
-    set y2 [expr $height * 0.5]
-    set sf [expr 2.0 * $invWidth]
+body Display::slew {args} {
+    if {[llength $args] == 2} {
+	set x1 [lindex $args 0]
+	set y1 [lindex $args 1]
 
-    set _x [expr ($x1 - $x2) * $sf]
-    set _y [expr ($y2 - $y1) * $sf]
-#    set _y [expr (-1.0 * $y1 + $y2) * $sf]
-	
-    View::slew $_x $_y
+	set x2 [expr $width * 0.5]
+	set y2 [expr $height * 0.5]
+	set sf [expr 2.0 * $invWidth]
+
+	set _x [expr ($x1 - $x2) * $sf]
+	set _y [expr ($y2 - $y1) * $sf]
+	View::slew $_x $_y
+    } else {
+	eval View::slew $args
+    }
 }
 
 body Display::perspective_angle {args} {
