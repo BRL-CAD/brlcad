@@ -36,7 +36,6 @@ static char RCSid[] = "$Header$";
 #include <errno.h>
 
 #include "machine.h"
-#include "db.h"
 #include "externs.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -44,6 +43,8 @@ static char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"
+
+#define		NAMESIZE	16	/* from db.h */
 
 #define		LINELEN		128	/* Length of char array for input line */
 

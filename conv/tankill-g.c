@@ -36,7 +36,6 @@ static char RCSid[] = "$Header$";
 #include <errno.h>
 
 #include "machine.h"
-#include "db.h"
 #include "externs.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -50,6 +49,8 @@ static int verbose=0;		/* verbosity flag */
 
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
+
+#define	NAMESIZE	16	/* from db.h */
 
 struct tankill_verts
 {

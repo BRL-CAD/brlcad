@@ -36,7 +36,6 @@
 #include <errno.h>
 
 #include "machine.h"
-#include "db.h"
 #include "externs.h"
 #include "vmath.h"
 #include "nmg.h"
