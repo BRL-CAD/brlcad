@@ -76,7 +76,7 @@ typedef long	bitv_t;		/* largest integer type */
 #ifdef cray
 /********************************
  *				*
- *  Cray-X/MP under COS		*
+ *  Cray-X/MP, COS or UNICOS	*
  *  Cray-2 under "UNICOS"	*
  *				*
  ********************************/
@@ -86,20 +86,31 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
-/**
-#define RES_INIT(ptr)		LOCKASGN(ptr);
-#define RES_ACQUIRE(ptr)	LOCKON(ptr);
-#define RES_RELEASE(ptr)	LOCKOFF(ptr);
-**/
-
 #define MAX_PSW		4	/* Max number of processors */
-
-/**buggy #define bzero(str,n)		memset( str, '\0', n ) ***/
-#define bcopy(from,to,count)	memcpy( to, from, count )
 
 /**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
 
 #endif cray
+
+
+#ifdef convex
+/********************************
+ *				*
+ *  Convex C1			*
+ *				*
+ ********************************/
+typedef double		fastf_t;/* double|float, "Fastest" float type */
+#define LOCAL		auto	/* static|auto, for serial|parallel cpu */
+#define FAST		register /* LOCAL|register, for fastest floats */
+typedef long long	bitv_t;	/* largest integer type */
+#define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
+
+#define RES_INIT(ptr)		;
+#define RES_ACQUIRE(ptr)	;
+#define RES_RELEASE(ptr)	;
+#define MAX_PSW	1		/* only one processor, max */
+
+#endif
 
 
 #ifndef LOCAL
@@ -133,6 +144,14 @@ typedef long	bitv_t;		/* largest integer type */
 #define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
 #define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
 #define SMALL			SQRT_SMALL_FASTF
+
+/*
+ *  Some very common BSD --> SYSV conversion aids
+ */
+#if defined(SYSV) && !defined(bzero)
+#	define bzero(str,n)		memset( str, '\0', n )
+#	define bcopy(from,to,count)	memcpy( to, from, count )
+#endif
 
 /* To aid in using ADB, for now */
 #ifdef lint
