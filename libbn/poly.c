@@ -294,8 +294,12 @@ register const struct bn_poly	*quadrat;
  */
 static int	bn_expecting_fpe = 0;
 static jmp_buf	bn_abort_buf;
+#ifndef WIN32
 HIDDEN void bn_catch_FPE(sig)
 int	sig;
+#else
+HIDDEN void bn_catch_FPE(int sig)
+#endif
 {
 	if( !bn_expecting_fpe )
 		bu_bomb("bn_catch_FPE() unexpected SIGFPE!");

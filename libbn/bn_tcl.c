@@ -203,12 +203,21 @@ point_t e;
  * Tcl support for the LIBBN math routines.
  */
 
+#ifndef WIN32
 int
 bn_math_cmd(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
 char **argv;
+#else
+int bn_math_cmd(
+ClientData clientData,
+Tcl_Interp *interp,
+int argc,
+char **argv)
+#endif
+
 {
 	void (*math_func)();
 	struct bu_vls result;
@@ -610,12 +619,21 @@ static struct math_func_link {
 /*
  *			B N _ C M D _ C O M M O N _ F I L E _ S I Z E
  */
+#ifndef WIN32
 int
 bn_cmd_common_file_size(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
 char **argv;
+#else
+int
+bn_cmd_common_file_size(
+ClientData clientData,
+Tcl_Interp *interp,
+int argc,
+char **argv)
+#endif
 {
     int width, height;
     int pixel_size = 3;
