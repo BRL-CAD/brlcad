@@ -278,7 +278,7 @@ int entityno;
 						ht2 = hb2;
 						hb2 = tmpp;
 					}
-					if( hb2 <= ht1 && hb2 >= hb1 )
+					if( hb2 < ht1 && hb2 > hb1 )
 					{
 						/* These TRC's overlap */
 						/* Calculate radius at hb2 */
@@ -289,8 +289,14 @@ int entityno;
 							Addsub( trcptr , ptr2 );
 							ptr2->op = 1;
 						}
+						else if( rtmp < ptr2->r1 )
+						{
+							/* trcptr must be an inside solid */
+							Addsub( ptr2 , trcptr );
+							trcptr->op = 1;
+						}
 					}
-					else if( ht2 <= ht1 && ht2 >= hb1 )
+					else if( ht2 < ht1 && ht2 > hb1 )
 					{
 						/* These TRC's overlap */
 						/* Calculate radius at ht2 */
@@ -300,6 +306,12 @@ int entityno;
 							/* ptr2 must be an inside solid, so subtract it */
 							Addsub( trcptr , ptr2 );
 							ptr2->op = 1;
+						}
+						else if( rtmp < ptr2->r1 )
+						{
+							/* trcptr must be an inside solid */
+							Addsub( ptr2 , trcptr );
+							trcptr->op = 1;
 						}
 					}
 					ptr2 = ptr2->next;
