@@ -262,7 +262,7 @@ char	*argv[];
     register struct directory	*dp;
     int				fd;
     void			*bufp;
-    size_t			nbytes;
+    size_t			nbytes = 0;
     int				written;
     struct bu_external		ext;
     struct db5_raw_internal	raw;

@@ -198,7 +198,9 @@ struct rt_i		*rtip;
 {
 	struct rt_epa_internal		*xip;
 	register struct epa_specific	*epa;
+#ifndef NO_MAGIC_CHECKING
 	const struct bn_tol		*tol = &rtip->rti_tol;
+#endif
 	LOCAL fastf_t	magsq_h;
 	LOCAL fastf_t	mag_a, mag_h;
 	LOCAL fastf_t	f, r1, r2;
@@ -206,8 +208,10 @@ struct rt_i		*rtip;
 	LOCAL mat_t	Rinv;
 	LOCAL mat_t	S;
 
+#ifndef NO_MAGIC_CHECKING
 	RT_CK_DB_INTERNAL(ip);
 	BN_CK_TOL(tol);
+#endif
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
 	RT_EPA_CK_MAGIC(xip);
 
@@ -648,7 +652,10 @@ const struct bn_tol	*tol;
 	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	vect_t		A, Au, B, Bu, Hu, V, Work;
 	
+#ifndef NO_MAGIC_CHECKING
 	RT_CK_DB_INTERNAL(ip);
+#endif
+
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
 	RT_EPA_CK_MAGIC(xip);
 

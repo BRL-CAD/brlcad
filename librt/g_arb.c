@@ -801,6 +801,8 @@ struct seg		*seghead;
 		FAST fastf_t	dxbdn;
 		FAST fastf_t	s;
 
+		/* XXX some of this math should be prep work 
+		 * (including computing dxbdn/dn ?) *$*/
 		dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[3];
 		dn = -VDOT( afp->peqn, rp->r_dir );
 

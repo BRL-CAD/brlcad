@@ -142,6 +142,7 @@ int entityno;
 	hmax = VDOT( v1 , adir );
 	hmin = hmax;
 
+	trcptr = NULL;
 	while( ptr->next != NULL )
 	{
 		struct trclist *prev;

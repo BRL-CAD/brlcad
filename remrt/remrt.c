@@ -245,7 +245,7 @@ struct frame *FreeFrame;
 		} else { \
 			FreeFrame = (p)->fr_forw; (p)->fr_forw = FRAME_NULL; \
 		} \
-		bzero( (char *)(p), sizeof(struct frame) ); \
+		memset( (char *)(p), 0, sizeof(struct frame) ); \
 		(p)->fr_magic = FRAME_MAGIC; \
 		bu_vls_init( &(p)->fr_cmd ); \
 		bu_vls_init( &(p)->fr_after_cmd ); \
@@ -850,7 +850,7 @@ struct pkg_conn *pc;
 	FD_SET( fd, &clients );
 
 	sp = &servers[fd];
-	bzero( (char *)sp, sizeof(*sp) );
+	memset( (char *)sp, 0, sizeof(*sp) );
 	sp->sr_pc = pc;
 	BU_LIST_INIT( &sp->sr_work );
 	sp->sr_curframe = FRAME_NULL;

@@ -384,10 +384,10 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	LOCAL int			edge;
 	LOCAL int			cpu;	
 
-	bzero (&a2, sizeof(struct application));
-	bzero (&me, sizeof(struct cell));
-	bzero (&below, sizeof(struct cell));
-	bzero (&left, sizeof(struct cell));
+	memset(&a2, 0, sizeof(struct application));
+	memset(&me, 0, sizeof(struct cell));
+	memset(&below, 0, sizeof(struct cell));
+	memset(&left, 0, sizeof(struct cell));
 	
 	cpu = ap->a_resource->re_cpu;	
 	

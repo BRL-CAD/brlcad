@@ -202,6 +202,7 @@ char **argv;
 		exit(10);
 	}
 
+	title = NULL;
 	switch( version )  {
 	case 1:
 		title = ctitle;

@@ -274,7 +274,7 @@ int argc; char **argv;
 
 	/* No disk files on remote machine */
 	_fb_disk_enable = 0;
-	bzero((void *)clients, sizeof(struct pkg_conn *) * MAX_CLIENTS);
+	memset((void *)clients, 0, sizeof(struct pkg_conn *) * MAX_CLIENTS);
 
 	(void)signal( SIGPIPE, SIG_IGN );
 	(void)signal( SIGALRM, sigalarm );

@@ -2214,11 +2214,13 @@ const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
+#ifndef NO_MAGIC_CHECKING
 	register struct rt_hf_internal	*xip =
 		(struct rt_hf_internal *)ip->idb_ptr;
 
 	BU_CK_VLS(str);
 	RT_HF_CK_MAGIC(xip);
+#endif
 	bu_vls_printf( str, "Height Field (HF)  mm2local=%g\n", mm2local);
 	bu_vls_struct_print( str, rt_hf_parse, ip->idb_ptr );
 	bu_vls_strcat( str, "\n" );

@@ -68,7 +68,7 @@ struct bu_ptbl	*b;
 	b->end = 0;
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_reset(%8x)\n", b);
-	bzero( (char *)b->buffer, b->blen*sizeof(long *) );	/* no peeking */
+	memset( (char *)b->buffer, 0, b->blen*sizeof(long *) );	/* no peeking */
 }
 
 /*
@@ -307,7 +307,7 @@ struct bu_ptbl	*b;
 	BU_CK_PTBL(b);
 
 	bu_free((genptr_t)b->buffer, "bu_ptbl.buffer[]");
-	bzero((char *)b, sizeof(struct bu_ptbl));	/* sanity */
+	memset((char *)b, 0, sizeof(struct bu_ptbl));	/* sanity */
 
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_free(%8x)\n", b);

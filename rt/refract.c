@@ -794,7 +794,7 @@ struct partition *PartHeadp;
 			 */
 			appl = *ap;			/* struct copy */
 
-			bzero( (char *)&sw, sizeof(sw) );
+			memset( (char *)&sw, 0, sizeof(sw) );
 			sw.sw_transmit = sw.sw_reflect = 0.0;
 
 			/* Set default in case shader doesn't fill this in. */

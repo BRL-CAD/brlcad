@@ -623,9 +623,11 @@ ph_matrix(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
+#ifndef NO_MAGIC_CHECKING
 	register struct rt_i *rtip = ap.a_rt_i;
 
 	RT_CK_RTI(rtip);
+#endif
 
 	if( debug )  fprintf(stderr, "ph_matrix: %s\n", buf );
 

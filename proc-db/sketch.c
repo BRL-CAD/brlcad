@@ -51,7 +51,6 @@ char *argv[];
 	struct carc_seg *csg;
 	point_t V;
 	vect_t u_vec, v_vec;
-	struct curve *crv;
 	point2d_t verts[] = {
 		{ 250, 0 },	/* 0 */
 		{ 500, 0 },	/* 1 */

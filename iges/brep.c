@@ -55,6 +55,7 @@ int entityno;
 	Readint( &shell_de , "" );
 	Readint( &orient , "" );
 	Readint( &num_of_voids , "" );
+
 	if( num_of_voids )
 	{
 		void_shell_de = (int *)bu_calloc( num_of_voids , sizeof( int ) , "BREP: void shell DE's" );
@@ -65,6 +66,11 @@ int entityno;
 			Readint( &void_shell_de[i] , "" );
 			Readint( &void_orient[i] , "" );
 		}
+	}
+	else {
+		void_shell_de = NULL;
+		void_orient = NULL;
+		void_shells = NULL;
 	}
 
 	/* start building */

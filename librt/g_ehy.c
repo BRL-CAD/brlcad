@@ -199,7 +199,9 @@ struct rt_i		*rtip;
 {
 	struct rt_ehy_internal		*xip;
 	register struct ehy_specific	*ehy;
+#ifndef NO_MAGIC_CHECKING
 	const struct bn_tol		*tol = &rtip->rti_tol;
+#endif
 	LOCAL fastf_t	magsq_h;
 	LOCAL fastf_t	mag_a, mag_h;
 	LOCAL fastf_t	c, f, r1, r2;
@@ -207,8 +209,10 @@ struct rt_i		*rtip;
 	LOCAL mat_t	Rinv;
 	LOCAL mat_t	S;
 
+#ifndef NO_MAGIC_CHECKING
 	RT_CK_DB_INTERNAL(ip);
 	BN_CK_TOL(tol);
+#endif
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	RT_EHY_CK_MAGIC(xip);
 

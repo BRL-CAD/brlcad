@@ -2764,9 +2764,9 @@ double epsilon;
 	register int i;
 	int	j;
 	register struct hold *hp;
-	struct hold *test_hold;
 	struct jointH *jh;
 	struct solve_stack *ssp;
+	struct hold *test_hold = NULL;
 
 	if (pri < 0) return 1;
 

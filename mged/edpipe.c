@@ -349,7 +349,7 @@ add_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t 
 
 	RT_PIPE_CK_MAGIC( pipe );
 	if( pp )
-		BU_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" )
+		BU_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" );
 
 	if( pp )
 		last = pp;
@@ -403,7 +403,7 @@ ins_pipept( struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t 
 
 	RT_PIPE_CK_MAGIC( pipe );
 	if( pp )
-		BU_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" )
+		BU_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" );
 
 	if( pp )
 		first = pp;

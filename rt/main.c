@@ -186,6 +186,10 @@ int main(int argc, char **argv)
 			bu_version+5
 		      );	/* +5 to skip @(#) */
 	}
+#ifdef PRODUCTION
+	(void)fprintf(stderr, "Running with production compilation\n");
+#endif
+
 	/* Identify what host we're running on */
 	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 		char	hostname[512];

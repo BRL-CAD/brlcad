@@ -743,6 +743,7 @@ register struct application *ap;
 			V3ARGS(ap->a_ray.r_pt),
 			V3ARGS(ap->a_ray.r_dir) );
 	}
+#ifndef NO_BADRAY_CHECKING
 	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
 		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
@@ -753,6 +754,7 @@ register struct application *ap;
 		VPRINT("r_dir", ap->a_ray.r_dir);
 		rt_bomb("rt_shootray() bad ray\n");
 	}
+#endif
 
 	if( rtip->needprep )
 		rt_prep_parallel(rtip, 1);	/* Stay on our CPU */
@@ -1353,6 +1355,7 @@ int	n;		/* First cell is #0 */
 			ap->a_onehit );
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
+#ifndef NO_BADRAY_CHECKING
 	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
 		bu_log("\n**********cell_n_on_ray cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
@@ -1363,6 +1366,7 @@ int	n;		/* First cell is #0 */
 		VPRINT("r_dir", ap->a_ray.r_dir);
 		rt_bomb("rt_cell_n_on_ray() bad ray\n");
 	}
+#endif
 
 	if( rtip->needprep )
 		rt_prep_parallel(rtip, 1);	/* Stay on our CPU */

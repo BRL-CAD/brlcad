@@ -134,6 +134,8 @@ top:
 			cp = rcard + 6;
 		}
 
+		op = WMOP_UNION; /* default */
+
 		/* Scan each of the 9 fields on the card */
 		for( i=0; i<9; i++, cp += 7 )  {
 			char	nbuf[32];

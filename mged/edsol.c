@@ -8339,9 +8339,11 @@ label_edited_solid(
 	case ID_NMG:
 		/* New way only */
 		{
+#ifndef NO_MAGIC_CHECKING
 			register struct model *m =
 				(struct model *) es_int.idb_ptr;
 			NMG_CK_MODEL(m);
+#endif
 
 			if( es_eu )  {
 				point_t	cent;
@@ -8357,10 +8359,12 @@ label_edited_solid(
 		break;
 	case ID_PIPE:
 		{
+#ifndef NO_MAGIC_CHECKING
 			register struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)es_int.idb_ptr;
 
 			RT_PIPE_CK_MAGIC( pipe );
+#endif
 
 			if( es_pipept ) {
 				BU_CKMAG( es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept" );

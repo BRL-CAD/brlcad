@@ -628,7 +628,7 @@ register struct application *ap;
 			struct shadework sw;
 		} u;
 
-		bzero( (char *)&u, sizeof(u) );
+		memset( (char *)&u, 0, sizeof(u) );
 		/* Make "miss" hit the environment map */
 		/* Build up the fakery */
 		u.part.pt_magic = PT_MAGIC;
@@ -845,7 +845,7 @@ vdraw o iray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g
 		}
 	}
 
-	bzero( (char *)&sw, sizeof(sw) );
+	memset( (char *)&sw, 0, sizeof(sw) );
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
 	sw.sw_extinction = 0;
