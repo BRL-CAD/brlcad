@@ -472,7 +472,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define	const	/**/
 #endif
 
-#if defined(sparc) && defined(SYSV)
+#if SUNOS >= 50
 /********************************
  *				*
  *   Sun Running Solaris 2.X    *
@@ -491,12 +491,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		20	/* need to increase this for Super Dragon? */
 #define DEFAULT_PSW	20
 #define PARALLEL	1
-
-# if __STDC__ == 0
-	/* == 0 -Xt in partial ANSI (transition) mode */
-#	undef __STDC__
-#	define __STDC__	1
-# endif
 
 #endif
 
