@@ -764,7 +764,7 @@ int TR;
 char *ts;
 int cell[3];
 {
-	if (NdotD < 0.0) { \
+	if (NdotD < 0.0) {
 		/* Entering Solid */
 		if (*inside) {
 			bu_log("NdotD:%g\n", NdotD);
@@ -2016,8 +2016,8 @@ register CONST mat_t		mat;
 	memset(&dsp_ip->dsp_file[0], 0, DSP_NAME_LEN); 
 	dsp_ip->dsp_xcnt = dsp_ip->dsp_ycnt = 0;
 	dsp_ip->dsp_xs = dsp_ip->dsp_ys = dsp_ip->dsp_zs = 0.0;
-	mat_idn(&dsp_ip->dsp_stom);
-	mat_idn(&dsp_ip->dsp_mtos);
+	mat_idn(dsp_ip->dsp_stom);
+	mat_idn(dsp_ip->dsp_mtos);
 
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );
