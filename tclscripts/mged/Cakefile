@@ -28,4 +28,13 @@ all&:
 tclIndex:
 	../ami.tcl ../../tclscripts/mged
 
+clean&:
+	@echo "" > /dev/null
+
+noprod&:
+	rm -f tclIndex
+
+clobber&:
+	@echo "" > /dev/null
+
 #include "../../Cakefile.rules"

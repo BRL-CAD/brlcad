@@ -26,4 +26,13 @@ all&:
 tclIndex:
 	../ami.tcl ../../tclscripts/pl-dm
 
+clean&:
+	@echo "" > /dev/null
+
+noprod&:
+	rm -f tclIndex
+
+clobber&:
+	@echo "" > /dev/null
+
 #include "../../Cakefile.rules"

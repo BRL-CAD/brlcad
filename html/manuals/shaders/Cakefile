@@ -25,4 +25,13 @@
 all&:
 	@echo "SRCDIR:  all done"
 
+clean&:
+	@echo "" > /dev/null
+
+noprod&:
+	@echo "" > /dev/null
+
+clobber&:
+	@echo "" > /dev/null
+
 #include "../../../Cakefile.rules"
