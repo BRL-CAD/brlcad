@@ -196,7 +196,7 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 # 		define  XMGED_ALLOCA    alloca
 #		define	XMGED_OBJS	dm-4d dm-X Xmgl
-#		define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
+#		define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11
 #		define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lXm_s \
 					-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
 					-lxmalloc -ll
@@ -268,7 +268,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #       define  XMGED_ALLOCA    alloca
 #	define	XMGED_OBJS	dm-4d dm-X Xmgl
-#	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
+#	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11
 #	define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lXm_s \
 				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
 				-lxmalloc -ll
@@ -333,7 +333,7 @@ set -S2 "/bin/sh"
 #       define  XMGED_ALLOCA    alloca
 #	define	XMGED_OBJS	dm-X
 #	define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D \
-				-DDM_X -DDMX_SIGNALS -I/usr/include/X11
+				-DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11
 #	define	XMGED_LIBES	-L''XLIBDIR -lXm_s \
 				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
 				-lxmalloc -ll
@@ -443,7 +443,7 @@ set -S2 "/bin/sh"
 /*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
 #		define  XMGED_ALLOCA
 #		define	XMGED_OBJS	dm-X
-#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS -I''XINCDIR
+#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS -DXMGED -I''XINCDIR
 #		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lXi -lX11 -ll
 #	endif
 #	if 0
@@ -502,7 +502,7 @@ set -S2 "/bin/sh"
 #			define  XMGED_ALLOCA
 #			define	XMGED_OBJS	dm-X
 #			define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS \
-						-I''XINCDIR
+						-DXMGED -I''XINCDIR
 #			define	XMGED_LIBES	-L''XLIBDIR -lXm -lXt -lXi \
 						-lXext -lX11 -ll
 #		endif
@@ -576,7 +576,7 @@ set -S2 "/bin/sh"
 /*	/usr/dt is where Motif lives, starting with SunOS 5.4 */
 #	define  XMGED_ALLOCA
 #	define	XMGED_OBJS	dm-X
-#	define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I''XINCDIR -I/usr/dt/include
+#	define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -DXMGED -I''XINCDIR -I/usr/dt/include
 #	define	XMGED_LIBES	-L/usr/dt/lib -R/usr/dt/lib -lXm \
 				-L''XLIBDIR -R''XLIBDIR -lXt -lXi -lXext \
 				-lX11 -ll -lnsl -lsocket
@@ -688,7 +688,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #	define  XMGED_ALLOCA    alloca
 #	define	XMGED_OBJS	dm-X
-#	define	XMGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	XMGED_CONFIG	-DDM_X -DXMGED -I''XINCDIR
 #	define	XMGED_LIBES	-L''XLIBDIR -lXm -lXt -lXext -lX11
 #	define	FC	/usr/convex/fc
 /*	Must run in IEEE mode, not native mode */
@@ -1186,7 +1186,7 @@ set -S2 "/bin/sh"
 /* XXX MGED_LIBES shouldn't need Motif stuff at all. */
 #	define  MGED_LIBES      -L/usr/lib/Motif1.2 -L''XLIBDIR  -lXm  -lXt -lX11 -lm
 #	define	XMGED_OBJS	dm-X
-#	define	XMGED_CONFIG	-DDM_X /* -DDMX_SIGNALS -I''XINCDIR */
+#	define	XMGED_CONFIG	-DDM_X -DXMGED /* -DDMX_SIGNALS -I''XINCDIR */
 #	define	XMGED_LIBES	-L/usr/lib/Motif1.2 -L''XLIBDIR  -lXm  -lXt -lX11 -lm
 #	define	XMGED_ALLOC 
 #endif
