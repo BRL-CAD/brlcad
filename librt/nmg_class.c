@@ -587,15 +587,19 @@ again:
 
 /* Ray direction vectors for Jordan curve algorithm */
 static CONST point_t nmg_good_dirs[10] = {
-	3, 2, 1,
-	-3,-2,-1,
+#if 1
+	3, 2, 1,	/* Normally the first dir */
+#else
+	1, 0, 0,	/* Make this first dir to wring out ray-tracer XXX */
+#endif
 	1, 0, 0,
 	0, 1, 0,
 	0, 0, 1,
+	1, 1, 1,
+	-3,-2,-1,
 	-1,0, 0,
 	0,-1, 0,
 	0, 0,-1,
-	1, 1, 1,
 	-1,-1,-1
 };
 
@@ -638,13 +642,6 @@ CONST struct rt_tol	*tol;
 	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
 
-	/* Choose an unlikely direction */
-	try = 0;
-retry:
-	VMOVE( projection_dir, nmg_good_dirs[try] );
-	try++;
-	VUNITIZE(projection_dir);
-
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		rt_log("nmg_class_pt_s:\tpt=(%g, %g, %g), s=x%x\n",
 			V3ARGS(pt), s );
@@ -658,13 +655,6 @@ retry:
 	m = s->r_p->m_p;
 	NMG_CK_MODEL(m);
 	faces_seen = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]" );
-	NMG_CK_REGION_A(s->r_p->ra_p);
-	VSUB2( region_diagonal, s->r_p->ra_p->max_pt, s->r_p->ra_p->min_pt );
-	region_diameter = MAGNITUDE(region_diagonal);
-
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("\tPt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
-			V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
 
 	/*
 	 *  First pass:  Try hard to see if point is ON a face.
@@ -715,19 +705,34 @@ retry:
 	 * If that number is even, we're outside the shell, otherwise we're
 	 * inside the shell.
 	 */
+	NMG_CK_REGION_A(s->r_p->ra_p);
+	VSUB2( region_diagonal, s->r_p->ra_p->max_pt, s->r_p->ra_p->min_pt );
+	region_diameter = MAGNITUDE(region_diagonal);
+
+	/* Choose an unlikely direction */
+	try = 0;
+retry:
+	VMOVE( projection_dir, nmg_good_dirs[try] );
+	if( ++try > 10 )  rt_bomb("nmg_class_pt_s() retry count exhausted\n");
+	VUNITIZE(projection_dir);
+
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY || try > 1)
+		rt_log("\tPt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
+			V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
 	
 	VMOVE(rp.r_pt, pt);
 	VMOVE(rp.r_dir, projection_dir);
 
 
-	/* get the ray-tracer to tell us if we're inside or outside */
+	/* get NMG ray-tracer to tell us if start point is inside or outside */
 	class = nmg_class_ray_vs_shell(&rp, s, tol);
+	if( class == NMG_CLASS_Unknown )  goto retry;
 
 out:
 	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY || try > 1)
-		rt_log("nmg_class_pt_s: returning %s, s=x%x\n",
-			nmg_class_name(class), s );
+		rt_log("nmg_class_pt_s: returning %s, s=x%x, try=%d\n",
+			nmg_class_name(class), s, try );
 	return class;
 }
 
