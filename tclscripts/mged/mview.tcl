@@ -1,30 +1,26 @@
-set extern_commands "attach"
-foreach cmd $extern_commands {
-    if {[string compare [info command $cmd] $cmd] != 0} {
-	puts stderr "Application fails to provide command '$cmd'"
-	return
-    }
-}
+# Author - Bob Parker
 
-proc openmv { w id dtype S } {
-#puts "openmv $w $id $dtype $S"
-    frame $w.u
-    frame $w.l
-    frame $w.u.l -relief sunken -borderwidth 2
-    frame $w.u.r -relief sunken -borderwidth 2
-    frame $w.l.l -relief sunken -borderwidth 2
-    frame $w.l.r -relief sunken -borderwidth 2
+check_externs "_mged_attach"
 
-    attach -t 0 -S $S -n $w.u.l.ul$id $dtype
-    attach -t 0 -S $S -n $w.u.r.ur$id $dtype
-    attach -t 0 -S $S -n $w.l.l.ll$id $dtype
-#    attach -t 0 -W $S -N $S -n $w.l.r.lr$id $dtype
+proc openmv { w wc dtype S } {
+    frame $wc.u
+    frame $wc.l
+    frame $wc.u.l -relief sunken -borderwidth 2
+    frame $wc.u.r -relief sunken -borderwidth 2
+    frame $wc.l.l -relief sunken -borderwidth 2
+    frame $wc.l.r -relief sunken -borderwidth 2
 
-#    pack $w.u.l.ul$id $w.u.r.ur$id $w.l.l.ll$id $w.l.r.lr$id -expand 1 -fill both
-    pack $w.u.l.ul$id $w.u.r.ur$id $w.l.l.ll$id -expand 1 -fill both
-    pack $w.u.l $w.u.r -side left -anchor w -expand 1 -fill both
-    pack $w.l.l $w.l.r -side left -anchor w -expand 1 -fill both
-#puts "openmv: leave"
+    attach -t 0 -S $S -n $w.ul $dtype
+    attach -t 0 -S $S -n $w.ur $dtype
+    attach -t 0 -S $S -n $w.ll $dtype
+    attach -t 0 -S $S -n $w.lr $dtype
+
+    pack $w.ul -in $wc.u.l -expand 1 -fill both
+    pack $w.ur -in $wc.u.r -expand 1 -fill both
+    pack $w.ll -in $wc.l.l -expand 1 -fill both
+    pack $w.lr -in $wc.l.r -expand 1 -fill both
+    pack $wc.u.l $wc.u.r -side left -anchor w -expand 1 -fill both
+    pack $wc.l.l $wc.l.r -side left -anchor w -expand 1 -fill both
 }
 
 
@@ -43,12 +39,12 @@ proc unpackmv { id } {
 
 
 proc releasemv { id } {
-    global mged_dmc
+    global mged_top
 
-    catch { release $mged_dmc($id).u.l.ul$id }
-    catch { release $mged_dmc($id).u.r.ur$id }
-    catch { release $mged_dmc($id).l.l.ll$id }
-#    catch { release $mged_dmc($id).l.r.lr$id }
+    catch  { release $mged_top($id).ul }
+    catch  { release $mged_top($id).ur }
+    catch  { release $mged_top($id).ll }
+    catch  { release $mged_top($id).lr }
 }
 
 
@@ -65,25 +61,26 @@ proc setupmv { id } {
     global mged_dmc
     global faceplate
 
-    winset $mged_dmc($id).u.l.ul$id
+    winset $mged_top($id).ul
+    press top
+    set faceplate 0
+
+    winset $mged_top($id).ur
     press 35,25
     set faceplate 0
 
-    winset $mged_dmc($id).u.r.ur$id
-    press right
-    set faceplate 0
-
-    winset $mged_dmc($id).l.l.ll$id
+    winset $mged_top($id).ll
     press front
     set faceplate 0
 
-    winset $mged_top($id).$id
+    winset $mged_top($id).lr
+    press right
     set faceplate 0
 
-    bind $mged_top($id).$id m "togglemv $id"
-    bind $mged_dmc($id).u.l.ul$id m "togglemv $id"
-    bind $mged_dmc($id).u.r.ur$id m "togglemv $id"
-    bind $mged_dmc($id).l.l.ll$id m "togglemv $id"
+    bind $mged_top($id).ul m "togglemv $id"
+    bind $mged_top($id).ur m "togglemv $id"
+    bind $mged_top($id).ll m "togglemv $id"
+    bind $mged_top($id).lr m "togglemv $id"
 }
 
 
@@ -92,18 +89,32 @@ proc setmv { id } {
     global mged_dmc
     global win_size
     global multi_view
+    global mged_active_dm
+    global mged_small_dmc
 
-    winset $mged_top($id).$id
     if $multi_view($id) {
+	unpackmv $id
+
 	set mv_size [expr $win_size($id) / 2 - 4]
-	pack forget $mged_top($id).$id
+
+# In case of resize/reconfiguration --- resize everybody
+	winset $mged_top($id).ul
 	dm size $mv_size $mv_size
-	pack $mged_top($id).$id -in $mged_dmc($id).l.r
+	winset $mged_top($id).ur
+	dm size $mv_size $mv_size
+	winset $mged_top($id).ll
+	dm size $mv_size $mv_size
+	winset $mged_top($id).lr
+	dm size $mv_size $mv_size
+
+	pack $mged_active_dm($id) -in $mged_small_dmc($id) -expand 1 -fill both
+
 	packmv $id
     } else {
+	winset $mged_active_dm($id)
 	unpackmv $id
 	dm size $win_size($id) $win_size($id)
-	pack $mged_top($id).$id -in $mged_dmc($id)
+	pack $mged_active_dm($id) -in $mged_dmc($id)
     }
 }
 
