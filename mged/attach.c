@@ -258,7 +258,7 @@ char    **argv;
 {
   register struct w_dm *wp;
 
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -269,6 +269,7 @@ char    **argv;
     return TCL_ERROR;
   }
 
+  /* Look at last argument, skipping over any options which preceed it */
   for( wp = &which_dm[2]; wp->type != -1; wp++ )
     if( strcmp(argv[argc - 1], wp->name ) == 0 )
       break;
@@ -519,7 +520,7 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);

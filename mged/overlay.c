@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -100,7 +100,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

@@ -819,6 +819,7 @@ cmd_setup()
 	bu_vls_free(&temp);
 }
 
+int
 cmd_cmd_win(clientData, interp, argc, argv)
 	ClientData clientData;
 	Tcl_Interp *interp;
@@ -1724,7 +1725,7 @@ cmd_echo(clientData, interp, argc, argv)
 {
 	register int i;
 
-	if(argc < 1 || MAXARGS < argc){
+	if(argc < 1){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1937,7 +1938,7 @@ f_ps(clientData, interp, argc, argv)
 	struct dm_list *dml;
 	struct _view_state *vsp;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1993,7 +1994,7 @@ f_pl(clientData, interp, argc, argv)
 	struct dm_list *dml;
 	struct _view_state *vsp;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);

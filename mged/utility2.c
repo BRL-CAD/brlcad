@@ -176,7 +176,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 1 || MAXARGS < argc){
+	if(argc < 1){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -774,7 +774,7 @@ char **argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1874,7 +1874,7 @@ char **argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -2057,7 +2057,7 @@ char **argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -2102,7 +2102,7 @@ char **argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -2199,7 +2199,7 @@ char **argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 5 || MAXARGS < argc){
+	if(argc < 5){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

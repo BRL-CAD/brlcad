@@ -22,12 +22,17 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -66,7 +71,7 @@ struct db_tree_state	mged_initial_tree_state = {
 	{
 #endif
 		/* struct mater_info ts_mater */
-		1.0, 0.0, 0.0,		/* color, RGB */
+		{1.0, 0.0, 0.0},		/* color, RGB */
 		-1.0,			/* Temperature */
 		0,			/* ma_color_valid=0 --> use default */
 		0,			/* color inherit */
@@ -76,10 +81,10 @@ struct db_tree_state	mged_initial_tree_state = {
 	}
 #endif
 	,
-	1.0, 0.0, 0.0, 0.0,
+	{1.0, 0.0, 0.0, 0.0,
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0,
+	0.0, 0.0, 0.0, 1.0},
 };
 
 static int		mged_draw_nmg_only;
@@ -308,6 +313,7 @@ static struct bn_vlblock	*mged_draw_edge_uses_vbp;
  *  further processing of this region.
  *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
+int
 mged_nmg_region_start( tsp, pathp, combp, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
@@ -1126,7 +1132,6 @@ struct solid	*sp;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
 	mat_t			mat;
-	int			id;
 
 	if(dbip == DBI_NULL)
 	  return 0;
@@ -1407,7 +1412,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1627,7 +1632,7 @@ char	**argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

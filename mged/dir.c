@@ -127,7 +127,7 @@ char	**argv;
 
   CHECK_DBI_NULL;
 
-  if(argc < 1 || MAXARGS < argc){
+  if(argc < 1){
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "help %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -535,7 +535,7 @@ char **argv;
 
     CHECK_DBI_NULL;
 
-    if(argc < 1 || MAXARGS < argc){
+    if(argc < 1){
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -651,7 +651,7 @@ char	**argv;
 
   CHECK_DBI_NULL;
 
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -756,7 +756,7 @@ char	**argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -866,7 +866,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -939,7 +939,7 @@ f_tree(clientData, interp, argc, argv)
 
 	CHECK_DBI_NULL;
 
-	if (argc < 2 || MAXARGS < argc) {
+	if (argc < 2) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1265,7 +1265,7 @@ char	**argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1356,7 +1356,7 @@ char	**argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

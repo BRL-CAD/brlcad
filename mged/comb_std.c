@@ -508,7 +508,7 @@ char	**argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

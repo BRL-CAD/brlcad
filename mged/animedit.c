@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$";
+static const char RCSid[] = "@(#)$Header$";
 #endif
 
 #include "conf.h"
@@ -75,18 +75,7 @@ int f_jhold();
 int f_jsolve();
 int f_jtest();
 
-#if 0
-static struct funtab {
-	char *ft_name;
-	char *ft_parms;
-	char *ft_comment;
-	int (*ft_func)MGED_ARGS((int, char **));
-	int  ft_min;
-	int  ft_max;
-} joint_tab[] = {
-#else
 static struct funtab joint_tab[] = {
-#endif
 "joint ", "", "Joint command table",
 	0, 0, 0, FALSE,
 "?", "[commands]", "summary of available joint commands",
@@ -158,7 +147,7 @@ char **argv;
 {
   int status;
 
-  if(argc < 1 || MAXARGS < argc){
+  if(argc < 1){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -2280,7 +2269,6 @@ struct hold_point *hp;
 	struct joint *jp;
 	struct rt_grip_internal *gip;
 	struct rt_db_internal	intern;
-	int id;
 
 	if(dbip == DBI_NULL)
 	  return 1;
@@ -2392,6 +2380,7 @@ joint_clear()
 	}
 }
 
+int
 part_solve(hp, limits, tol)
 struct hold *hp;
 double limits;
@@ -3627,24 +3616,20 @@ static struct db_tree_state mesh_initial_tree_state = {
 	0,			/* ts_sofar */
 	0,0,0,			/* region, air, gmater */
 	100,			/* GIFT los */
-#if __STDC__
 	{
-#endif
 		/* struct mater_info ts_mater */
-		1.0, 0.0, 0.0,	/* color, RGB */
+		{1.0, 0.0, 0.0},	/* color, RGB */
 		-1.0,		/* Temperature */
 		0,		/* override */
 		0,		/* color inherit */
 		0,		/* mater inherit */
 		(char *)NULL	/* shader */
-#if __STDC__
 	}
-#endif
 	,
-	1.0, 0.0, 0.0, 0.0,
+	{1.0, 0.0, 0.0, 0.0,
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0,
+	0.0, 0.0, 0.0, 1.0},
 };
 int
 f_jmesh(argc, argv)

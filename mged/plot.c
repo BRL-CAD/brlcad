@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -63,7 +63,7 @@ char	**argv;
 	int floating;			/* 3-D floating point plot */
 	int	is_pipe = 0;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

@@ -21,7 +21,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -81,7 +81,7 @@ struct identt identt, idbuf;
 
 char operate;
 int regflag, numreg, lastmemb, numsol, old_or_new, oper_ok;
-int discr[MAXARGS], idfd, rd_idfd;
+int idfd, rd_idfd;
 int flag;	/* which type of table to make */
 FILE	*tabptr;
 
@@ -112,7 +112,7 @@ char	*argv[];
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -182,7 +182,7 @@ char	*argv[];
 
   CHECK_DBI_NULL;
 
-  if(argc < 3 || MAXARGS < argc){
+  if(argc < 3){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -390,6 +390,7 @@ int pathpos;
 							 0 otherwise
  */
 
+int
 check( a, b )
 register char *a, *b;
 {
@@ -434,7 +435,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -611,7 +612,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1115,7 +1116,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

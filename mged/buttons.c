@@ -240,7 +240,7 @@ f_press(ClientData clientData,
 {
 	register int i;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);

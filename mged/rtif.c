@@ -25,7 +25,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -380,6 +380,7 @@ vect_t eye_model;
 /*
  *			R U N _ R T
  */
+int
 run_rt()
 {
 	register struct solid *sp;
@@ -771,7 +772,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -865,7 +866,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1031,7 +1032,7 @@ char	**argv;
 	vect_t	eye_model;
 	vect_t temp;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1173,7 +1174,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1264,7 +1265,7 @@ char	**argv;
 		/* Hack to prevent running framedone scripts prematurely */
 		if( cmd[0] == '!' )  {
 			if( rtif_currentframe < rtif_desiredframe ||
-			    rtif_finalframe && rtif_currentframe > rtif_finalframe )  {
+			    (rtif_finalframe && rtif_currentframe > rtif_finalframe) )  {
 				bu_free( (genptr_t)cmd, "preview ! cmd" );
 			    	continue;
 			}
@@ -1637,7 +1638,7 @@ char    **argv;
 
   CHECK_DBI_NULL;
 
-  if(argc < 3 || MAXARGS < argc){
+  if(argc < 3){
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "help %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1700,6 +1701,7 @@ char    **argv;
   return status;
 }
 
+int
 cm_start(argc, argv)
 char	**argv;
 int	argc;
@@ -1711,6 +1713,7 @@ int	argc;
 	return(0);
 }
 
+int
 cm_vsize(argc, argv)
 char	**argv;
 int	argc;
@@ -1721,6 +1724,7 @@ int	argc;
 	return(0);
 }
 
+int
 cm_eyept(argc, argv)
 char	**argv;
 int	argc;
@@ -1734,6 +1738,7 @@ int	argc;
 	return(0);
 }
 
+int
 cm_lookat_pt(argc, argv)
 int	argc;
 char	**argv;
@@ -1771,6 +1776,7 @@ char	**argv;
 	return(0);
 }
 
+int
 cm_vrot(argc, argv)
 char	**argv;
 int	argc;
@@ -1785,6 +1791,7 @@ int	argc;
 	return(0);
 }
 
+int
 cm_orientation( argc, argv )
 int	argc;
 char	**argv;
@@ -1876,6 +1883,7 @@ int	argc;
 	return(0);
 }
 
+int
 cm_multiview(argc, argv)
 char	**argv;
 int	argc;
@@ -1938,6 +1946,7 @@ int	argc;
  *
  *  Clear current view.
  */
+int
 cm_clean(argc, argv)
 char	**argv;
 int	argc;
@@ -1954,6 +1963,7 @@ int	argc;
 	return 0;
 }
 
+int
 cm_set(argc, argv)
 char	**argv;
 int	argc;

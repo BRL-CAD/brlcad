@@ -1988,7 +1988,7 @@ char	**argv;
 	register struct dm_list *save_dmlp;
 	register struct cmd_list *save_cmd_list;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

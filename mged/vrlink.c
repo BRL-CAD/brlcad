@@ -14,7 +14,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -190,7 +190,7 @@ char	*argv[];
 {
 	quat_t		orient;
 
-	if(argc < 8 || MAXARGS < argc){
+	if(argc < 8){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -245,7 +245,7 @@ char	*argv[];
 	struct bu_vls	str;
 	char		*role;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

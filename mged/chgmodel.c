@@ -32,7 +32,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -320,7 +320,7 @@ color_prompt:
 	  Tcl_AppendResult(interp, "Unknown response ignored\n", (char *)NULL);
 	  break;
 	}		
-out:
+
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
@@ -345,7 +345,7 @@ char    *argv[];
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -408,7 +408,7 @@ char    *argv[];
 
   CHECK_DBI_NULL;
 
-  if(argc < 3 || MAXARGS < argc){
+  if(argc < 3){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -668,7 +668,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2 || MAXARGS < argc){
+	if(argc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1400,7 +1400,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 1 || MAXARGS < argc){
+	if(argc < 1){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1920,7 +1920,6 @@ char	**argv;
 		f_make( clientData, interp, 3, av );
 	} else if( strcmp( argv[2], "sketch" ) == 0 ) {
 		struct carc_seg *csg;
-		struct nurb_seg *nsg;
 		struct line_seg *lsg;
 
 		internal.idb_type = ID_SKETCH;

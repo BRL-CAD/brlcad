@@ -448,7 +448,7 @@ int argc;
 char **argv;
 {
 	register struct directory *dp;
-	char			name[NAMESIZE+2];
+	char			*name;
 	struct rt_db_internal	internal;
 	char			*new_cmd[3], **menu;
 	int			c;
@@ -464,7 +464,7 @@ char **argv;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 1 || MAXARGS < argc){
+	if(argc < 1){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -512,16 +512,16 @@ char **argv;
 	  aexists( argv[1] );
 	  return TCL_ERROR;
 	}
-	if( (int)strlen(argv[1]) >= NAMESIZE )  {
+	if( dbip->dbi_version <= 4 && (int)strlen(argv[1]) >= NAMESIZE )  {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "ERROR, names are limited to %d characters\n", NAMESIZE-1);
+	  bu_vls_printf(&tmp_vls, "ERROR, v4 names are limited to %d characters\n", NAMESIZE-1);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  return TCL_ERROR;
 	}
-	/* Save the solid name since argv[] might get bashed */
-	strcpy( name, argv[1] );
+	/* Save the solid name */
+	name = argv[1];
 
 	/* Get the solid type to be created and make it */
 	if( argc < 3 )  {

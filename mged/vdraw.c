@@ -78,6 +78,11 @@ Example Use -
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include <signal.h>
 #include "tcl.h"
@@ -806,7 +811,7 @@ char **argv;
 	vect_t dir, norm, temp;
 	mat_t mymat;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 3){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);

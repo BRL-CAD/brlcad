@@ -53,12 +53,17 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include "conf.h"
 
-#include <signal.h>
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <signal.h>
 #include <math.h>
 
 #include "machine.h"
@@ -244,7 +249,7 @@ char    **argv;
 
 	CHECK_DBI_NULL;
 
-	if (argc < 2 || MAXARGS < argc) {
+	if (argc < 2) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -271,7 +276,7 @@ char    **argv;
 
   CHECK_DBI_NULL;
 
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -396,7 +401,7 @@ char	**argv;
   av[0] = "Z";
   av[1] = (char *)NULL;
 
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -421,7 +426,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -442,7 +447,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -474,7 +479,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -992,7 +997,7 @@ char	**argv;
 
   CHECK_DBI_NULL;
 
-  if(MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1082,7 +1087,7 @@ char	**argv;
 
   CHECK_DBI_NULL;
 
-  if(argc < 2 || MAXARGS < argc){
+  if(argc < 2){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -2378,7 +2383,7 @@ char	**argv;
 
   CHECK_DBI_NULL;
 
-  if(argc < 1 || MAXARGS < argc){
+  if(argc < 1){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -5316,6 +5321,7 @@ char	**argv;
   return mged_vrot_xyz(mged_variables->mv_rotate_about, 'v', rvec);
 }
 
+int
 mged_rot(origin, newrot)
 char origin;
 mat_t newrot;
