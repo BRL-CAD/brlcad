@@ -113,24 +113,44 @@ void
 vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_list)
 {
   int lines, i, j, namelen, this_one;
+  int k,
+      maxnamelen,      /* longest name in list */
+      cwidth,          /* column width */
+      numcol;         /* number of columns */
 
   qsort( (genptr_t)list_of_names,
 	 (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	 (int (*)())cmpdirname);
 
+  /* 
+   * Traverse the list of names, find the longest name and set the
+   * the column width and number of columns accordingly.
+   * If the longest name is greater than 80 characters, the number of columns
+   * will be one.
+   */
+  maxnamelen = 0;
+  for( k=0; k < num_in_list; k++) {
+    namelen = strlen(list_of_names[k]->d_namep);
+    if(namelen > maxnamelen)
+      maxnamelen = namelen;
+  }
+  if(maxnamelen <= 16) 
+    maxnamelen = 16;
+  cwidth = maxnamelen + 4;
+  if(cwidth > 80)
+    cwidth = 80;
+  numcol = TERMINAL_WIDTH / cwidth;
+     
   /*
    * For the number of (full and partial) lines that will be needed,
    * print in vertical format.
    */
-  lines = (num_in_list + 3) / 4;
+  lines = (num_in_list + (numcol - 1)) / numcol;
   for( i=0; i < lines; i++) {
-    for( j=0; j < 4; j++) {
+    for(j=0; j < numcol; j++) {
       this_one = j * lines + i;
-      /* Restrict the print to 16 chars per spec. */
-      bu_vls_printf(vls,  "%.16s", list_of_names[this_one]->d_namep);
+      bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
       namelen = strlen( list_of_names[this_one]->d_namep);
-      if( namelen > 16)
-	namelen = 16;
       /*
        * Region and ident checks here....  Since the code
        * has been modified to push and sort on pointers,
@@ -159,7 +179,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
 	 * Pad to next boundary as there will be
 	 * another entry to the right of this one. 
 	 */
-	while( namelen++ < 20)
+        while( namelen++ < cwidth)
 	  bu_vls_putc(vls, ' ');
       }
     }
