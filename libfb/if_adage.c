@@ -1,22 +1,23 @@
 /*
-  Authors -
-	Mike J. Muuss
-	Gary S. Moss
-
-  Source -
-	SECAD/VLD Computing Consortium, Bldg 394
-	The U. S. Army Ballistic Research Laboratory
-	Aberdeen Proving Ground, Maryland  21005-5066
-  
-  Copyright Notice -
-	This software is Copyright (C) 1986 by the United States Army.
-	All rights reserved.
-
-	$Header$ (BRL)
+ *			I F _ A D A G E . C
+ *
+ *  Authors -
+ *	Mike J. Muuss
+ *	Gary S. Moss
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *
+ * Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
 /*
  * This module is used when pre-setting the Ikonas FBC
  * (Frame Buffer Controller) to a known state.
