@@ -27,11 +27,11 @@
 #define REMRT_PIECES	\
 		RTDIR/opt.o \
 		-lbsd \
-		LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES
+		LIBFB LIBFB_LIBES LIBRT LIBRT_LIBES LIBMALLOC LIBES
 #else
 #define REMRT_PIECES	\
 		RTDIR/opt.o \
-		LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES
+		LIBFB LIBFB_LIBES LIBRT LIBRT_LIBES LIBMALLOC LIBES
 #endif
 
 #define	RTSRV_PIECES	\
@@ -51,7 +51,7 @@
 /* Explicit composition of each product */
 
 /* LIBRT is needed to get htond, parser, etc */
-remrt:	remrt.o OBJS LIBFB LIBRT LIBMALLOC
+remrt:	remrt.o OBJS
 	sh ../newvers.sh version "Network-Distributed RT (REMRT)"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS -o remrt remrt.o vers.o OBJS REMRT_PIECES
@@ -60,7 +60,7 @@ remrt:	remrt.o OBJS LIBFB LIBRT LIBMALLOC
 view.o:	../rt/view.c
 	CC CFLAGS -DRTSRV -c ../rt/view.c
 
-rtsrv:	rtsrv.o view.o OBJS LIBRT LIBFB LIBMALLOC
+rtsrv:	rtsrv.o view.o OBJS
 	CC LDFLAGS -o rtsrv rtsrv.o view.o OBJS RTSRV_PIECES
 
 #include "../Cakefile.rules"
