@@ -18,7 +18,7 @@
 <a name="summary"><h2>Summary</h2></a><tiny><a href="index.html">[back]</a></tiny>
 
 <ul>
-  <li>New Macintosh OS X architecture build capability</li>
+  <li>New Macintosh OS X architecture support</li>
   <li>Improved raytrace performance</li>
   <li>New database file format and migration tools</li>
   <li>New ascii database file format</li>
@@ -28,17 +28,18 @@
   <li>General bug fixes, security enhancements, and speed improvements</li>
   <li>Multi-device Geometry Editor (MGED) improvements
   <ul>
-    <li>New accelerators to automatically generate new primitevs from existing ones</li>
+    <li>New "accelerators" to automatically generate more complex primitives from existing ones: rcc-blend, rcc-cap, rcc-tgc, rpp-arch, rpp-cap, rpp-arch, tor-rcc, sph-part</li>
     <li>Improved menu and interface layout</li>
     <li>New "Introduction to MGED" user manual</li>
     <li>'in' command support for kinematics control (grip), sketch extrusion (extrude), arbitrary regular polyhedron (arbn), and binary object (binunif) primitives</li>
     <li>'make' command support for rectangular parallelopipeds (rpp), arbitrary faceted (ars), and arbitrary regular polyhedron (arbn) primitives</li>
-    <li>New commands include: adjust, autoview, attr, attr_rm, copyeval, hide, lt, nmg_collapse, nmg_simplify, pathlist, shells, showmats, summary, unhide, version, xpush, rtedge, E</li>
+    <li>New commands include: adjust, autoview, attr, attr_rm, copyeval, hide, lt, nmg_collapse, nmg_simplify, pathlist, shells, showmats, summary, unhide, version, xpush, rtedge, E, bot_face_sort</li>
     <li>Bezier curves are interactive display support</li>
     <li>New "Build Pattern Tool" for duplicating geometry in a pattern</li>
+		<li>New attribute editor panel</li>
   </ul>
   <li>Supported architectures include Linux, FreeBSD, SGI IRIX, and Sun</li>
-  <li>Improve Pro-Engineer conversion support
+  <li>Improved Pro-Engineer conversion support (new converters)</li>
   <ul>
     <li>Oriented and non-oriented triangle support</li>
     <li>Unlimited name length support<li>
@@ -50,10 +51,10 @@
   <li>Improved raytracer edge detection performance</li>
   <li>Initial support for multiply represented objects (MROs)</li>
   <li>Improved Bezier curve support for sketch extrusion (extrude) primitive</li>
+	<li>Binary object support for Height field (dsp) primitive and texture shader</li>
 	<li>New flat and invisible shaders</li>
 </ul>
 
-!!! stop at 2001-03-02
 
 <a name="new_util"><h2>New Utilities</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
