@@ -15,6 +15,8 @@ static char RCSid[] = "@(#) $Header$";
 #include <math.h>
 #include "machine.h"
 #include "rtlist.h"
+#include "bu.h"
+#include "compat4.h"
 #include "redblack.h"
 #include "./rb_internals.h"
 
