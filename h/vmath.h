@@ -103,71 +103,234 @@ typedef fastf_t hpoint_t[HPT_LEN];
 			(a)[1] = (b)[1];\
 			(a)[2] = (b)[2]
 
+/* Transfer vector of length `n' at `b' to vector at `a' */
+#define VMOVEN(a,b,n) \
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i]; \
+	}
+
 /* Reverse the direction of b and store it in a */
 #define VREVERSE(a,b)	(a)[0] = -(b)[0]; \
 			(a)[1] = -(b)[1]; \
 			(a)[2] = -(b)[2];
 
 /* Add vectors at `b' and `c', store result at `a' */
+#ifdef VECTORIZE
+#define VADD2(a,b,c) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] + (c)[_i]; \
+	}
+#else
 #define VADD2(a,b,c)	(a)[0] = (b)[0] + (c)[0];\
 			(a)[1] = (b)[1] + (c)[1];\
 			(a)[2] = (b)[2] + (c)[2]
+#endif VECTORIZE
+
+/* Add vectors of length `n' at `b' and `c', store result at `a' */
+#define VADD2N(a,b,c,n) \
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i] + (c)[_i]; \
+	}
 
 /* Subtract vector at `c' from vector at `b', store result at `a' */
+#ifdef VECTORIZE
+#define VSUB2(a,b,c) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] - (c)[_i]; \
+	}
+#else
 #define VSUB2(a,b,c)	(a)[0] = (b)[0] - (c)[0];\
 			(a)[1] = (b)[1] - (c)[1];\
 			(a)[2] = (b)[2] - (c)[2]
+#endif VECTORIZE
+
+/* Subtract `n' length vector at `c' from vector at `b', store result at `a' */
+#define VSUB2N(a,b,c,n) \
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i] - (c)[_i]; \
+	}
 
 /* Vectors:  A = B - C - D */
+#ifdef VECTORIZE
+#define VSUB3(a,b,c,d) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] - (c)[_i] - (d)[_i]; \
+	}
+#else
 #define VSUB3(a,b,c,d)	(a)[0] = (b)[0] - (c)[0] - (d)[0];\
 			(a)[1] = (b)[1] - (c)[1] - (d)[1];\
 			(a)[2] = (b)[2] - (c)[2] - (d)[2]
+#endif VECTORIZE
+
+/* Vectors:  A = B - C - D for vectors of length `n' */
+#define VSUB3N(a,b,c,d,n) \
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i] - (c)[_i] - (d)[_i]; \
+	}
 
 /* Add 3 vectors at `b', `c', and `d', store result at `a' */
+#ifdef VECTORIZE
+#define VADD3(a,b,c,d) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] + (c)[_i] + (d)[_i]; \
+	}
+#else
 #define VADD3(a,b,c,d)	(a)[0] = (b)[0] + (c)[0] + (d)[0];\
 			(a)[1] = (b)[1] + (c)[1] + (d)[1];\
 			(a)[2] = (b)[2] + (c)[2] + (d)[2]
+#endif VECTORIZE
+
+/* Add 3 vectors of length `n' at `b', `c', and `d', store result at `a' */
+#define VADD3N(a,b,c,d,n) \
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i] + (c)[_i] + (d)[_i]; \
+	}
 
 /* Add 4 vectors at `b', `c', `d', and `e', store result at `a' */
+#ifdef VECTORIZE
+#define VADD4(a,b,c,d,e) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] + (c)[_i] + (d)[_i] + (e)[_i];\
+	}
+#else
 #define VADD4(a,b,c,d,e) (a)[0] = (b)[0] + (c)[0] + (d)[0] + (e)[0];\
 			(a)[1] = (b)[1] + (c)[1] + (d)[1] + (e)[1];\
 			(a)[2] = (b)[2] + (c)[2] + (d)[2] + (e)[2]
+#endif VECTORIZE
+
+/* Add 4 `n' length vectors at `b', `c', `d', and `e', store result at `a' */
+#define VADD4N(a,b,c,d,e,n) \
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i] + (c)[_i] + (d)[_i] + (e)[_i];\
+	}
 
 /* Scale vector at `b' by scalar `c', store result at `a' */
+#ifdef VECTORIZE
+#define VSCALE(a,b,c) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] * (c); \
+	}
+#else
 #define VSCALE(a,b,c)	(a)[0] = (b)[0] * (c);\
 			(a)[1] = (b)[1] * (c);\
 			(a)[2] = (b)[2] * (c)
+#endif VECTORIZE
 
-/* Normalize vector 'a' to be a unit vector */
-#define VUNITIZE(a)	{FAST double f; f = MAGNITUDE(a); \
+/* Scale vector of length `n' at `b' by scalar `c', store result at `a' */
+#define VSCALEN(a,b,c,n) \
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i] * (c); \
+	}
+
+/* Normalize vector `a' to be a unit vector */
+#ifdef VECTORIZE
+#define VUNITIZE(a) \
+	{ register double f; register int _i; \
+	f = MAGNITUDE(a); \
+	if( f < 1.0e-10 ) f = 0.0; else f = 1.0/f; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] *= f; \
+	}
+#else
+#define VUNITIZE(a)	{ register double f; f = MAGNITUDE(a); \
 			if( f < 1.0e-10 ) f = 0.0; else f = 1.0/f; \
 			(a)[0] *= f; (a)[1] *= f; (a)[2] *= f; }
+#endif VECTORIZE
 
 /* Combine together several vectors, scaled by a scalar */
+#ifdef VECTORIZE
+#define VCOMB3(o, a,b, c,d, e,f)	{\
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(o)[_i] = (a) * (b)[_i] + (c) * (d)[_i] + (e) * (f)[_i]; \
+	} }
+#else
 #define VCOMB3(o, a,b, c,d, e,f)	{\
 	(o)[X] = (a) * (b)[X] + (c) * (d)[X] + (e) * (f)[X];\
 	(o)[Y] = (a) * (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y];\
 	(o)[Z] = (a) * (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z];}
+#endif VECTORIZE
 
+#define VCOMB3N(o, a,b, c,d, e,f, n)	{\
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(o)[_i] = (a) * (b)[_i] + (c) * (d)[_i] + (e) * (f)[_i]; \
+	} }
+
+#ifdef VECTORIZE
+#define VCOMB2(o, a,b, c,d)	{\
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(o)[_i] = (a) * (b)[_i] + (c) * (d)[_i]; \
+	} }
+#else
 #define VCOMB2(o, a,b, c,d)	{\
 	(o)[X] = (a) * (b)[X] + (c) * (d)[X];\
 	(o)[Y] = (a) * (b)[Y] + (c) * (d)[Y];\
 	(o)[Z] = (a) * (b)[Z] + (c) * (d)[Z];}
+#endif VECTORIZE
+
+#define VCOMB2N(o, a,b, c,d, n)	{\
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(o)[_i] = (a) * (b)[_i] + (c) * (d)[_i]; \
+	} }
 
 /* Compose vector at `a' of:
  *	Vector at `b' plus
  *	scalar `c' times vector at `d' plus
  *	scalar `e' times vector at `f'
  */
+#ifdef VECTORIZE
+#define VJOIN2(a,b,c,d,e,f)	\
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] + (c) * (d)[_i] + (e) * (f)[_i]; \
+	}
+#else
 #define VJOIN2(a,b,c,d,e,f)	\
 	(a)[0] = (b)[0] + (c) * (d)[0] + (e) * (f)[0];\
 	(a)[1] = (b)[1] + (c) * (d)[1] + (e) * (f)[1];\
 	(a)[2] = (b)[2] + (c) * (d)[2] + (e) * (f)[2]
+#endif VECTORIZE
 
+#define VJOIN2N(a,b,c,d,e,f,n)	\
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i] + (c) * (d)[_i] + (e) * (f)[_i]; \
+	}
+
+#ifdef VECTORIZE
+#define VJOIN1(a,b,c,d) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] + (c) * (d)[_i]; \
+	}
+#else
 #define VJOIN1(a,b,c,d) \
 	(a)[0] = (b)[0] + (c) * (d)[0];\
 	(a)[1] = (b)[1] + (c) * (d)[1];\
 	(a)[2] = (b)[2] + (c) * (d)[2];
+#endif VECTORIZE
+
+#define VJOIN1N(a,b,c,d,n) \
+	{ register int _i; \
+	for(_i = 0; _i < n; _i++) \
+		(a)[_i] = (b)[_i] + (c) * (d)[_i]; \
+	}
 
 /* Return scalar magnitude squared of vector at `a' */
 #define MAGSQ(a)	( (a)[0]*(a)[0] + (a)[1]*(a)[1] + (a)[2]*(a)[2] )
@@ -188,75 +351,156 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define HPRINT(a,b)	(void)fprintf(stderr,"%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /* Vector element multiplication.  Really: diagonal matrix X vect */
+#ifdef VECTORIZE
+#define VELMUL(a,b,c) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] * (c)[_i]; \
+	}
+#else
 #define VELMUL(a,b,c) \
 	(a)[0] = (b)[0] * (c)[0];\
 	(a)[1] = (b)[1] * (c)[1];\
 	(a)[2] = (b)[2] * (c)[2];
+#endif VECTORIZE
 
 /* Apply the 3x3 part of a mat_t to a 3-tuple. */
+#ifdef VECTORIZE
+#define MAT3X3VEC(o,mat,vec) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(o)[_i] = (mat)[4*_i+0]*(vec)[0] + \
+			  (mat)[4*_i+1]*(vec)[1] + \
+			  (mat)[4*_i+2]*(vec)[2]; \
+	}
+#else
 #define MAT3X3VEC(o,mat,vec) \
 	(o)[0] = (mat)[0]*(vec)[0]+(mat)[1]*(vec)[1] + (mat)[ 2]*(vec)[2]; \
 	(o)[1] = (mat)[4]*(vec)[0]+(mat)[5]*(vec)[1] + (mat)[ 6]*(vec)[2]; \
 	(o)[2] = (mat)[8]*(vec)[0]+(mat)[9]*(vec)[1] + (mat)[10]*(vec)[2];
+#endif VECTORIZE
 
 /* Multiply a 3-tuple by the 3x3 part of a mat_t. */
+#ifdef VECTORIZE
+#define VEC3X3MAT(o,i,m) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(o)[_i] = (i)[X]*(m)[_i] + (i)[Y]*(m)[4+_i] + (i)[Z]*(m)[8+_i]; \
+	}
+#else
 #define VEC3X3MAT(o,i,m) \
 	(o)[X] = (i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]; \
 	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10];
+#endif VECTORIZE
 
 /* Apply the 3x3 part of a mat_t to a 2-tuple (Z part=0). */
+#ifdef VECTORIZE
+#define MAT3X2VEC(o,mat,vec) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(o)[_i] = (mat)[4*_i]*(vec)[0] + (mat)[4*_i+1]*(vec)[1]; \
+	}
+#else
 #define MAT3X2VEC(o,mat,vec) \
 	(o)[0] = (mat)[0]*(vec)[0] + (mat)[1]*(vec)[1]; \
 	(o)[1] = (mat)[4]*(vec)[0] + (mat)[5]*(vec)[1]; \
 	(o)[2] = (mat)[8]*(vec)[0] + (mat)[9]*(vec)[1];
+#endif VECTORIZE
 
 /* Multiply a 2-tuple (Z=0) by the 3x3 part of a mat_t. */
+#ifdef VECTORIZE
+#define VEC2X3MAT(o,i,m) \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(o)[_i] = (i)[X]*(m)[_i] + (i)[Y]*(m)[2*_i]; \
+	}
+#else
 #define VEC2X3MAT(o,i,m) \
 	(o)[X] = (i)[X]*(m)[0] + (i)[Y]*(m)[4]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5]; \
 	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6];
+#endif VECTORIZE
 
-/* Apply a 4x4 matrix to a 3-tuple which is a absolue Point in space */
+/* Apply a 4x4 matrix to a 3-tuple which is an absolute Point in space */
+#ifdef VECTORIZE
 #define MAT4X3PNT(o,m,i) \
-	{ FAST fastf_t f; \
+	{ register double f; \
+	register int _i, _j; \
+	f = 0.0; \
+	for(_j = 0; _j < 3; _j++)  f+= (m)[12+_j] * (i)[_j]; \
+	f = 1.0/(f + (m)[15]); \
+	for(_i = 0; _i < 3; _i++)  { \
+		(o)[_i] = 0.0; \
+		for(_j = 0; _j < 3; _j++) \
+			(o)[_i] += (m)[4*_i+_j] * (i)[_j]; \
+		(o)[_i] += (m)[4*_i+3]; \
+		(o)[_i] *=f; \
+	} }
+#else
+#define MAT4X3PNT(o,m,i) \
+	{ register double f; \
 	f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]);\
 	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * f;\
 	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * f;\
 	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* f;}
+#endif VECTORIZE
 
 /* Multiply an Absolute 3-Point by a full 4x4 matrix. */
 #define PNT3X4MAT(o,i,m) \
-	{ FAST fastf_t f; \
+	{ register double f; \
 	f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]);\
 	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * f;\
 	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * f;\
 	(o)[Z]=((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10] + (m)[14])* f;}
 
 /* Multiply an Absolute hvect_t 4-Point by a full 4x4 matrix. */
+#ifdef VECTORIZE
+#define MAT4X4PNT(o,m,i) \
+	{ register int _i, _j; \
+	for(_i = 0; _i < 4; _i++) (o)[_i] = 0.0; \
+	for(_i = 0; _i < 4; _i++) \
+		for(_j = 0; _j < 4; _j++) \
+			(o)[_i] += (m)[4*_i+_j] * (i)[_j]; \
+	}
+#else
 #define MAT4X4PNT(o,m,i) \
 	(o)[X]=(m)[ 0]*(i)[X] + (m)[ 1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[ 3]*(i)[H];\
 	(o)[Y]=(m)[ 4]*(i)[X] + (m)[ 5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[ 7]*(i)[H];\
 	(o)[Z]=(m)[ 8]*(i)[X] + (m)[ 9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11]*(i)[H];\
 	(o)[H]=(m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]*(i)[H];
+#endif VECTORIZE
 
 /* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
+#ifdef VECTORIZE
 #define MAT4X3VEC(o,m,i) \
-	{ FAST fastf_t f;	f = 1.0/((m)[15]);\
+	{ register double f; \
+	register int _i, _j; \
+	f = 1.0/((m)[15]); \
+	for(_i = 0; _i < 3; _i++) { \
+		(o)[_i] = 0.0; \
+		for(_j = 0; _j < 3; _j++) \
+			(o)[_i] += (m)[4*_i+_j] * (i)[_j]; \
+		(o)[_i] *= f; \
+	} }
+#else
+#define MAT4X3VEC(o,m,i) \
+	{ register double f;	f = 1.0/((m)[15]);\
 	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * f; \
 	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * f; \
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * f; }
+#endif VECTORIZE
 
 /* Multiply a Relative 3-Vector by most of a 4x4 matrix */
 #define VEC3X4MAT(o,i,m) \
-	{ FAST fastf_t f; 	f = 1.0/((m)[15]); \
+	{ register double f; 	f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]) * f; }
 
 /* Multiply a Relative 2-Vector by most of a 4x4 matrix */
 #define VEC2X4MAT(o,i,m) \
-	{ FAST fastf_t f; 	f = 1.0/((m)[15]); \
+	{ register double f; 	f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * f; }
@@ -272,9 +516,17 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VMINMAX( min, max, pt )	{ VMIN( min, pt ); VMAX( max, pt ); }
 
 /* Divide out homogeneous parameter from hvect_t, creating vect_t */
+#ifdef VECTORIZE
+#define HDIVIDE(a,b)  \
+	{ register int _i; \
+	for(_i = 0; _i < 3; _i++) \
+		(a)[_i] = (b)[_i] / (b)[H]; \
+	}
+#else
 #define HDIVIDE(a,b)  \
 	(a)[X] = (b)[X] / (b)[H];\
 	(a)[Y] = (b)[Y] / (b)[H];\
 	(a)[Z] = (b)[Z] / (b)[H];
+#endif VECTORIZE
 
 #endif VMATH_H
