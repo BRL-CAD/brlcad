@@ -63,6 +63,11 @@ typedef float dbfloat_t;
 #define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
 extern char *strncpy();
 
+#if defined(sgi) || defined(alliant) || defined(sun)
+#define DB_MINREC	126
+#else
+#define DB_MINREC	128
+#endif
 
 union record  {
 
@@ -80,7 +85,7 @@ union record  {
 #define ID_BSURF	'D'     /* d_spline surface header */
 #define ID_MATERIAL	'm'	/* Material description record */
 
-	char	u_size[126];	/* Minimum record size */
+	char	u_size[DB_MINREC];	/* Minimum record size */
 
 	struct ident  {
 		char	i_id;		/* I */
@@ -89,11 +94,22 @@ union record  {
 #define ID_MM_UNIT	1		/* milimeters (preferred) */
 #define ID_CM_UNIT	2		/* centimeters */
 #define ID_M_UNIT	3		/* meters */
-#define ID_IN_UNIT	4		/* inches (deprecated) */
-#define ID_FT_UNIT	5		/* feet (deprecated) */
+#define ID_IN_UNIT	4		/* inches */
+#define ID_FT_UNIT	5		/* feet */
 		char	i_version[6];	/* Version code of Database format */
 #define ID_VERSION	"v4"		/* Current Version */
 		char	i_title[72];	/* Title or description */
+		/* For the future */
+		char	i_byteorder;	/* Byte ordering */
+#define ID_BY_UNKNOWN	0		/* unknown */
+#define ID_BY_VAX	1		/* VAX (Little Endian) */
+#define ED_BY_IBM	2		/* IBM (Big Endian) */
+		char	i_floattype;	/* Floating point type */
+#define ID_FT_UNKNOWN	0		/* unknown */
+#define ID_FT_VAX	1		/* VAX */
+#define ID_FT_IBM	2		/* IBM */
+#define ID_FT_IEEE	3		/* IEEE */
+#define ID_FT_CRAY	4		/* Cray */
 	} i;
 
 	struct solidrec  {
@@ -118,7 +134,7 @@ union record  {
 #define ARB7	7	/* weird 7-vertex shape */
 #define ARB8	8	/* hexahedron */
 #define ELL	9	/* ellipsoid */
-#define ELL1	10	/* ? another ellipsoid ? */
+#define ELL1	10	/* another ellipsoid definition */
 #define SPH	11	/* sphere */
 #define RCC	12	/* right circular cylinder */
 #define REC	13	/* right elliptic sylinder */
@@ -159,7 +175,7 @@ union record  {
 		char	c_name[NAMESIZE];	/* unique name */
 		short	c_regionid;		/* region ID code */
 		short	c_aircode;		/* air space code */
-		short	c_length;		/* # of members */
+		short	c_length;		/* # of members (depricated) */
 		short	c_num;			/* DEPRECATED */
 		short	c_material;		/* (GIFT) material code */
 		short	c_los;			/* equivalent LOS estimate */
@@ -167,6 +183,9 @@ union record  {
 		unsigned char c_rgb[3];		/* 0..255 color override */
 		char	c_matname[32];		/* Reference: Material name */
 		char	c_matparm[60];		/* String Material parms */
+		char	c_inherit;		/* Inheritance property */
+#define DB_INH_LOWER	0			/* Lower nodes override */
+#define DB_INH_HIGHER	1			/* Higher nodes override */
 	}  c;
 	struct member  {
 		char	m_id;		/* M */
@@ -235,6 +254,7 @@ union record  {
 		short	a_n;			/* # of points per curve */
 		short	a_curlen;		/* # of granules per curve */
 		short	a_totlen;		/* # of granules for ARS */
+		/* Remainder are unused, and exist for ?compatability */
 		short	a_pad;
 		dbfloat_t a_xmax;		/* max x coordinate */
 		dbfloat_t a_xmin;		/* min x coordinate */
