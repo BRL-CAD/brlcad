@@ -127,6 +127,8 @@ int argc; char **argv;
 
 	if( fbp != FBIO_NULL )
 		fb_close(fbp);
+	if( rem_pcp != PKC_NULL )
+		pkg_close( rem_pcp );
 	exit(0);
 }
 
@@ -135,7 +137,8 @@ int argc; char **argv;
  *
  *  Communication error.  An error occured on the PKG link.
  *  It may be local, or it may be between us and the client we are serving.
- *  We send a copy down the wire, and another to syslog.
+ *  We send a copy to syslog or stderr.
+ *  Don't send one down the wire, this can cause loops.
  */
 static void
 comm_error( str )
@@ -146,7 +149,6 @@ char *str;
 #else
 	fprintf( stderr, "%s\n", str );
 #endif
-/**	(void)pkg_send( MSG_ERROR, str, strlen(str)+1, rem_pcp ); **/
 }
 
 /*
@@ -176,6 +178,7 @@ char *buf;
 {
 	int	height, width;
 	char	rbuf[5*NET_LONG_LEN+1];
+	int	want, did;
 
 	width = pkg_glong( &buf[0*NET_LONG_LEN] );
 	height = pkg_glong( &buf[1*NET_LONG_LEN] );
@@ -209,7 +212,9 @@ fb_log(s);
 		(void)pkg_plong( &rbuf[4*NET_LONG_LEN], fbp->if_height );
 	}
 
-	pkg_send( MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp );
+	want = 5*NET_LONG_LEN;
+	if( (did = pkg_send( MSG_RETURN, rbuf, want, pcp )) != want )
+		comm_error("pkg_send fb_open reply\n");
 	if( buf ) (void)free(buf);
 }
 
@@ -221,7 +226,8 @@ char *buf;
 	char	rbuf[NET_LONG_LEN+1];
 
 	(void)pkg_plong( &rbuf[0], fb_close( fbp ) );
-	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp ) != NET_LONG_LEN )
+		comm_error("pkg_send fb_close reply\n");
 	if( buf ) (void)free(buf);
 	fbp = FBIO_NULL;
 }
@@ -537,6 +543,7 @@ va_dcl
 	char	nfmt[256];
 	char	outbuf[4096];			/* final output string */
 	char	*op;				/* output buf pointer */
+	int	want, got;
 
 	/* prefix all messages with "hostname: " */
 	gethostname( outbuf, sizeof(outbuf) );
@@ -621,6 +628,10 @@ va_dcl
 	va_end(ap);
 
 	*op = NULL;
-	pkg_send( MSG_ERROR, outbuf, strlen(outbuf)+1, rem_pcp );
+	want = strlen(outbuf)+1;
+	if( (got = pkg_send( MSG_ERROR, outbuf, want, rem_pcp )) != want )  {
+		comm_error("pkg_send error in fb_log, message was:\n");
+		comm_error(outbuf);
+	}
 	return;
 }
