@@ -1,5 +1,8 @@
 /*		U S R F M T . H
 */
+#ifndef lint
+static char RCSid[] = "$Header$";
+#endif
 
 #define			OUTITEM_NULL		((outitem *) 0)
 #define			OVERLAP_NULL		((overlap *) 0)

@@ -1,4 +1,7 @@
 /*      IF.C            */
+#ifndef lint
+static char RCSid[] = "$Header$";
+#endif
 
 /*	INCLUDES	*/
 #include <stdio.h>
@@ -94,16 +97,7 @@ struct partition 	*part_head;
     }
     report(FMT_FOOT);
     if (ovlp_list.forw != &ovlp_list)
-    {
-	overlap	*op;
-
 	fprintf(stderr, "Previously unreported overlaps.  Shouldn't happen\n");
-	for (op = ovlp_list.forw; op != &ovlp_list; op = op -> forw)
-	    fprintf(stderr, "... '%s'--'%s' (%g, %g)\n",
-		    op -> reg1 -> reg_name,
-		    op -> reg2 -> reg_name,
-		    op -> in_dist, op -> out_dist);
-    }
     return( HIT );
 }
 
@@ -113,8 +107,6 @@ int if_miss()
     report(FMT_MISS);
     return ( MISS );
 }
-
-#include <string.h>
 
 /*
  *			I F _ O V E R L A P
@@ -136,21 +128,6 @@ struct region			*reg2;
 
 {
     overlap	*new_ovlp;
-
-    /* If two overlaps have the same reg1 and reg2 and the
-     * out_dist of one is the in_dist of the other,
-     * then combine the two overlaps into one.
-     */
-    if ((ovlp_list.forw && ovlp_list.forw -> reg1)
-	&& ((strcmp(ovlp_list.forw -> reg1 -> reg_name, reg1 -> reg_name) == 0)
-    	&&  (strcmp(ovlp_list.forw -> reg2 -> reg_name, reg2 -> reg_name) == 0))
-	&& (ovlp_list.forw -> out_dist ==  pp -> pt_inhit -> hit_dist))
-    {
-	ovlp_list.forw -> out_dist == pp -> pt_outhit -> hit_dist;
-	VJOIN1(ovlp_list.forw -> out_point, ap->a_ray.r_pt,
-	    pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-	return (1);
-    }
 
     if ((new_ovlp = (overlap *) malloc(sizeof(overlap))) == OVERLAP_NULL)
     {
@@ -175,15 +152,6 @@ struct region			*reg2;
     new_ovlp -> backw = &ovlp_list;
     new_ovlp -> forw -> backw = new_ovlp;
     ovlp_list.forw = new_ovlp;
-    { overlap	*op;
-    fprintf(stderr, "if_overlap(%d, '%s', '%s') done... the list is now\n",
-	pp, reg1 -> reg_name, reg2 -> reg_name);
-    for (op = ovlp_list.forw; op != &ovlp_list; op = op -> forw)
-	fprintf(stderr, "... '%s'--'%s' (%g, %g)\n",
-		op -> reg1 -> reg_name,
-		op -> reg2 -> reg_name,
-		op -> in_dist, op -> out_dist);
-    }
 
     return(1);
 }

@@ -1,4 +1,7 @@
 /*      NIRT.H          */
+#ifndef lint
+static char RCSid[] = "$Header$";
+#endif
 
 #include   <machine.h>
 #include   <vmath.h>
