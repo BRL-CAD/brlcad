@@ -2,6 +2,7 @@
 #define		CARDLEN		71 /* length of data portion in Global records */
 #define		PARAMLEN	63 /* length of data portion in Parameter records */
 
+extern int do_projection;
 extern char eor; /* IGES end of record delimeter */
 extern char eof; /* IGES end of field delimeter */
 extern char card[256]; /* input buffer, filled by readrec */

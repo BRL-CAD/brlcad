@@ -3,7 +3,7 @@
 iges-g \- IGES Translator (IGES CSG to BRL-CAD)
 .SH SYNOPSIS
 .B iges-g
-[-X NMG_debug_flag] [-x rt_debug_flag] [-N solid_name] [-n|d|t] -o database.g file.iges
+[-X NMG_debug_flag] [-x rt_debug_flag] [-N solid_name] [-n|d|3|t] -o database.g file.iges
 .SH DESCRIPTION
 .I iges-g\^
 converts the specified
@@ -19,6 +19,12 @@ The
 .I -d
 option indicates that IGES drawings should be converted to BRL-CAD NMG objects.
 Theses objects will be two-dimensional drawings, not solids.
+The
+.I -3
+option is the same as the
+.I -d
+option except the final projection into 2D is not performed. This may produce 3D drawings
+in cases where the drawings have been produced from a 3D model.
 The
 .I -t
 option requests all the trimmed surfaces in the IGES file be converted to

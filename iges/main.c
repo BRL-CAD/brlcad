@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern char *optarg;
 extern int optind, opterr, optopt;
 
+int do_projection=1;
 char eor,eof,card[256];
 fastf_t scale,inv_scale,conv_factor;
 int units,counter,pstart,dstart,totentities,dirarraylen;
@@ -68,7 +69,8 @@ convert the solid model elements\n";
 static char *msg2=
 "\nThis IGES file contains drawing entities, but no solid model entities. You may\n\
 convert the drawing to BRL-CAD by 'iges-g -d -o file.g %s'. Note that the resulting\n\
-BRL-CAD object will be a 2D drawing, not a solid object\n";
+BRL-CAD object will be a 2D drawing, not a solid object. You might also try the\n\
+'-3' option to get 3D drawings\n";
 
 static char *msg3=
 "\nThis IGES file contains spline surfaces, but no solid model entities. All the spline\n\
@@ -134,10 +136,14 @@ char *argv[];
 	int file_count=0;
 	char *output_file=(char *)NULL;
 
-	while( (c=getopt( argc , argv , "dntpo:x:X:N:" )) != EOF )
+	while( (c=getopt( argc , argv , "3dntpo:x:X:N:" )) != EOF )
 	{
 		switch( c )
 		{
+			case '3':
+				do_drawings = 1;
+				do_projection = 0;
+				break;
 			case 'd':
 				do_drawings = 1;
 				break;

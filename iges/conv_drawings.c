@@ -129,7 +129,7 @@ struct rt_list *vhead;
 		fastf_t rot_ang=0.0;
 		int mirror=0;
 		int internal_rot=0;
-		double scale;
+		double local_scale;
 		char one_char[2];
 		point_t loc,tmp;
 		char *str;
@@ -152,15 +152,15 @@ struct rt_list *vhead;
 		MAT4X3PNT( loc , *dir[entno]->rot , tmp );
 
 
-		scale = width/str_len;
-		if( height < scale )
-			scale = height;
+		local_scale = width/str_len;
+		if( height < local_scale )
+			local_scale = height;
 
-		if( scale < height )
-			loc[Y] += (height - scale)/2.0;
+		if( local_scale < height )
+			loc[Y] += (height - local_scale)/2.0;
 
-		if( scale*str_len < width )
-			loc[X] += (width - (scale*str_len))/2.0;
+		if( local_scale*str_len < width )
+			loc[X] += (width - (local_scale*str_len))/2.0;
 
 		if( internal_rot )	/* vertical text */
 		{
@@ -169,8 +169,8 @@ struct rt_list *vhead;
 			double tmp_x,tmp_y;
 			double xdel,ydel;
 
-			xdel = scale * sin( rot_ang );
-			ydel = scale * cos( rot_ang );
+			xdel = local_scale * sin( rot_ang );
+			ydel = local_scale * cos( rot_ang );
 
 			tmp_y = loc[Y];
 			tmp_x = loc[X];
@@ -182,12 +182,12 @@ struct rt_list *vhead;
 				tmp_y -= ydel;
 				one_char[0] = str[j];
 
-				rt_vlist_2string( vhead , one_char , tmp_x , tmp_y , scale,
+				rt_vlist_2string( vhead , one_char , tmp_x , tmp_y , local_scale,
 					(double)(rot_ang*180.0*rt_invpi) );
 			}
 		}
 		else
-			rt_vlist_2string( vhead , str , (double)loc[X] , (double)loc[Y] , scale,
+			rt_vlist_2string( vhead , str , (double)loc[X] , (double)loc[Y] , local_scale,
 				(double)(rot_ang*180.0*rt_invpi) );
 
 		rt_free( str, "Note_to_vlist: str" );
@@ -400,12 +400,12 @@ struct rt_list *vhead;
 }
 
 void
-Draw_entities( m , view_number , de_list , no_of_des , x , y , ang , scale , clip , xform )
+Draw_entities( m , view_number , de_list , no_of_des , x , y , ang , local_scale , clip , xform )
 struct model *m;
 int view_number;
 int de_list[];
 int no_of_des;
-fastf_t x , y , scale , ang;
+fastf_t x , y , local_scale , ang;
 plane_t clip[6];
 mat_t *xform;
 {
@@ -432,8 +432,12 @@ mat_t *xform;
 
 	for( entno=0 ; entno<totentities ; entno++ )
 	{
+		int status;
+
+		status = (dir[entno]->status/10000)%100;
+
 		/* only draw those entities that are independent and belong to this view */
-		if( (dir[entno]->status/10000)%100 ) /* not independent */
+		if( status && status != 2 ) /* not independent */
 			continue;
 
 		if( dir[entno]->view ) /* this entitiy doesn't always get drawn */
@@ -498,18 +502,23 @@ mat_t *xform;
 				/* XXXX should do clipping here */
 
 				/* project to XY plane */
-				vp->pt[i][Z] = 0.0;
+				if( do_projection )
+					vp->pt[i][Z] = 0.0;
 
 				/* scale, rotate, and translate */
 				if( ang == 0.0 )
 				{
-					vp->pt[i][X] = scale * tmp_pt[X] + x;
-					vp->pt[i][Y] = scale * tmp_pt[Y] + y;
+					vp->pt[i][X] = local_scale * tmp_pt[X] + x;
+					vp->pt[i][Y] = local_scale * tmp_pt[Y] + y;
+					if( !do_projection )
+						vp->pt[i][Z] = local_scale * tmp_pt[Z];
 				}
 				else
 				{
-					vp->pt[i][X] = scale*(cosa*tmp_pt[X] - sina*tmp_pt[Y]) + x;
-					vp->pt[i][Y] = scale*(sina*tmp_pt[X] + cosa*tmp_pt[Y]) + y;
+					vp->pt[i][X] = local_scale*(cosa*tmp_pt[X] - sina*tmp_pt[Y]) + x;
+					vp->pt[i][Y] = local_scale*(sina*tmp_pt[X] + cosa*tmp_pt[Y]) + y;
+					if( !do_projection )
+						vp->pt[i][Z] = local_scale * tmp_pt[Z];
 				}
 			}
 		}
@@ -578,7 +587,7 @@ fastf_t x,y,ang;
 	int *de_list;			/* list of possible view field entries for this view */
 	int no_of_des;			/* length of above list */
 	int view_number;
-	float scale=1.0;
+	fastf_t local_scale=1.0;
 	int clip_de[6];
 	plane_t clip[6];
 	mat_t *xform;
@@ -595,7 +604,7 @@ fastf_t x,y,ang;
 	}
 
 	Readint( &view_number , "\tView number: " );
-	Readflt( &scale , "" );
+	Readflt( &local_scale , "" );
 
 	for( i=0 ; i<6 ; i++ )
 	{
@@ -674,7 +683,7 @@ fastf_t x,y,ang;
 		}
 	}
 
-	Draw_entities( m , view_number , de_list , no_of_des , x , y , ang , (fastf_t)scale , clip , xform );
+	Draw_entities( m , view_number , de_list , no_of_des , x , y , ang , (fastf_t)local_scale , clip , xform );
 
 	rt_free( (char *)de_list , "Do_view: de_list" );
 }
