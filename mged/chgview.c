@@ -66,6 +66,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern long	nvectors;	/* from dodraw.c */
 
+extern struct rt_tol mged_tol;	/* from ged.c */
+
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
@@ -1109,6 +1111,8 @@ usage:
  *  "tol abs #"	sets absolute tolerance.  # > 0.0
  *  "tol rel #"	sets relative tolerance.  0.0 < # < 1.0
  *  "tol norm #" sets normal tolerance, in degrees.
+ *  "tol dist #" sets calculational distance tolerance
+ *  "tol perp #" sets calculational normal tolerance.
  */
 int
 f_tol( argc, argv )
@@ -1116,9 +1120,11 @@ int	argc;
 char	**argv;
 {
 	double	f;
+	int argind=1;
 
 	if( argc < 3 )  {
 		rt_log("Current tolerance settings are:\n");
+		rt_log( "Tesselation tolerances:\n" );
 		if( mged_abs_tol > 0.0 )  {
 			rt_log("\tabs %g %s\n",
 				mged_abs_tol * base2local,
@@ -1148,41 +1154,71 @@ char	**argv;
 		} else {
 			rt_log("\tnorm None\n");
 		}
+
+		rt_log( "Calculational tolerances:\n" );
+		rt_log( "\tdistance = %g\n\tperpendicularity = %g\n", mged_tol.dist, mged_tol.perp );
 		return CMD_OK;
 	}
 
-	f = atof(argv[2]);
-	if( argv[1][0] == 'a' )  {
-		/* Absolute tol */
-		if( f <= 0.0 )  {
-			mged_abs_tol = 0.0;	/* None */
+	while( argind < argc )
+	{
+
+		f = atof(argv[argind+1]);
+		if( argv[argind][0] == 'a' )  {
+			/* Absolute tol */
+			if( f <= 0.0 )  {
+				mged_abs_tol = 0.0;	/* None */
+				return CMD_OK;
+			}
+			mged_abs_tol = f * local2base;
 			return CMD_OK;
 		}
-		mged_abs_tol = f * local2base;
-		return CMD_OK;
-	}
-	if( argv[1][0] == 'r' )  {
-		/* Relative */
-		if( f < 0.0 || f >= 1.0 )  {
-			rt_log("relative tolerance must be between 0 and 1, not changed\n");
-			return CMD_BAD;
+		else if( argv[argind][0] == 'r' )  {
+			/* Relative */
+			if( f < 0.0 || f >= 1.0 )  {
+				rt_log("relative tolerance must be between 0 and 1, not changed\n");
+				return CMD_BAD;
+			}
+			/* Note that a value of 0.0 will disable relative tolerance */
+			mged_rel_tol = f;
+			return CMD_OK;
 		}
-		/* Note that a value of 0.0 will disable relative tolerance */
-		mged_rel_tol = f;
-		return CMD_OK;
-	}
-	if( argv[1][0] == 'n' )  {
-		/* Normal tolerance, in degrees */
-		if( f < 0.0 || f > 90.0 )  {
-			rt_log("Normal tolerance must be in positive degrees, < 90.0\n");
-			return CMD_BAD;
+		else if( argv[argind][0] == 'n' )  {
+			/* Normal tolerance, in degrees */
+			if( f < 0.0 || f > 90.0 )  {
+				rt_log("Normal tolerance must be in positive degrees, < 90.0\n");
+				return CMD_BAD;
+			}
+			/* Note that a value of 0.0 or 360.0 will disable this tol */
+			mged_nrm_tol = f * rt_degtorad;
+			return CMD_OK;
 		}
-		/* Note that a value of 0.0 or 360.0 will disable this tol */
-		mged_nrm_tol = f * rt_degtorad;
-		return CMD_OK;
+		else if( argv[argind][0] == 'd' ) {
+			/* Calculational distance tolerance */
+			if( f < 0.0 ) {
+				rt_log("Calculational distance tolerance must be positive\n");
+				return CMD_BAD;
+			}
+			mged_tol.dist = f;
+			mged_tol.dist_sq = f*f;
+			return CMD_OK;
+		}
+		else if( argv[argind][0] == 'p' ) {
+			/* Calculational perpendicularity tolerance */
+			if( f < 0.0 || f > 1.0 ) {
+				rt_log("Calculational perpendicular tolerance must be fromn 0 to 1\n");
+				return CMD_BAD;
+			}
+			mged_tol.perp = f;
+			mged_tol.para = 1.0 - f;
+			return CMD_OK;
+		}
+		else
+			rt_log("Error, tolerance '%s' unknown\n", argv[argind] );
+
+		argind += 2;
 	}
-	rt_log("Error, tolerance '%s' unknown\n", argv[1] );
-	return CMD_BAD;
+	return CMD_OK;
 }
 
 /*
