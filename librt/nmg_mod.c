@@ -2653,6 +2653,131 @@ struct edgeuse	*eu2;
 
 	return v;
 }
+/*
+ *			N M G _ U N B R E A K _ E D G E
+ *
+ *  Undoes the effect of an unwanted nmg_ebreak().
+ *
+ *  Eliminate the vertex between this edgeuse and the next edge,
+ *  on all edgeuses radial to this edgeuse's edge.
+ *  The edge geometry must be shared, and all uses of the vertex
+ *  to be disposed of must originate from this edge pair.
+ *
+ *		     eu1          eu2
+ *		*----------->*----------->*
+ *		A.....e1.....B.....e2.....C
+ *		*<-----------*<-----------*
+ *		    eu1mate      eu2mate
+ *
+ *  If successful, the vertex B, the edge e2, and all the edgeuses
+ *  radial to eu2 (including eu2) will have all been killed.
+ *  The radial ordering around e1 will not change.
+ *
+ *		     eu1
+ *		*------------------------>*
+ *		A.....e1..................C
+ *		*<------------------------*
+ *		    eu1mate
+ *
+ *
+ *  No new topology structures are created by this operation.
+ *
+ *  Returns -
+ *	0	OK, edge unbroken
+ *	<0	failure, nothing changed
+ */
+int
+nmg_unbreak_edge( eu1_first )
+struct edgeuse	*eu1_first;
+{
+	struct edgeuse	*eu1;
+	struct edgeuse	*eu2;
+	struct edge	*e1;
+	struct edge_g	*eg;
+	struct vertexuse *vu;
+	struct vertex	*vb = 0;
+	struct vertex	*vc;
+	struct shell	*s1;
+	int		ret = 0;
+
+	NMG_CK_EDGEUSE( eu1_first );
+	e1 = eu1_first->e_p;
+	NMG_CK_EDGE( e1 );
+
+	eg = e1->eg_p;
+	if( !eg )  {
+		rt_log( "nmg_unbreak_edge: no geometry for edge1 x%x\n" , e1 );
+		ret = -1;
+		goto out;
+	}
+	NMG_CK_EDGE_G(eg);
+
+	/* if the edge geometry doesn't have at least two uses, this
+	 * is not a candidate for unbreaking */		
+	if( eg->usage < 2 )  {
+		ret = -2;
+		goto out;
+	}
+
+	s1 = nmg_find_s_of_eu(eu1_first);
+	NMG_CK_SHELL(s1);
+
+	eu1 = eu1_first;
+	eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
+	if( eu2->e_p->eg_p != eg )  {
+		rt_log( "nmg_unbreak_edge: second eu geometry x%x does not match geometry x%x of edge1 x%x\n" ,
+			eu2->e_p->eg_p, eg, e1 );
+		ret = -3;
+		goto out;
+	}
+
+	vb = eu2->vu_p->v_p;		/* middle vertex (B) */
+	vc = eu2->eumate_p->vu_p->v_p;	/* end vertex (C) */
+
+	/* all uses of this vertex must be for this edge geometry, otherwise
+	 * it is not a candidate for deletion */
+	for( RT_LIST_FOR( vu , vertexuse , &vb->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )  {
+			/* vertex is referred to by a self-loop */
+			if( vu->up.lu_p->orientation == OT_BOOLPLACE )  {
+				/* This kind is transient, and safe to ignore */
+				continue;
+			}
+			ret = -4;
+			goto out;
+		}
+		NMG_CK_EDGE(vu->up.eu_p->e_p);
+		if( vu->up.eu_p->e_p->eg_p != eg )  {
+			ret = -5;
+			goto out;
+		}
+	}
+
+	/* visit all the edgeuse pairs radial to eu1 */
+	for(;;)  {
+		/* revector eu1mate's start vertex from B to C */
+		nmg_movevu( eu1->eumate_p->vu_p , vc );
+
+		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
+		eu2 = RT_LIST_PNEXT_CIRC( edgeuse, eu1 );
+		NMG_CK_EDGEUSE(eu2);
+		if( eu2->e_p->eg_p != eg )  {
+			rt_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
+		}
+		if( nmg_keu( eu2 ) )
+			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
+
+		eu1 = eu1->eumate_p->radial_p;
+		if( eu1 == eu1_first )  break;
+	}
+out:
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		rt_log("nmg_unbreak_edge(eu=x%x, vb=x%x) ret = %d\n",
+			eu1_first, vb, ret);
+	}
+	return ret;
+}
 
 /*
  *			N M G _ E I N S
