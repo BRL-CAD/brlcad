@@ -116,6 +116,8 @@ char	**argv;
 	mousevec[Y] =  ypos / 2047.0;
 	mousevec[Z] = 0;
 
+	if (mged_variables.faceplate) {
+
 #ifdef XMGED
 	if(!ignore_scroll_and_menu){
 #endif
@@ -157,7 +159,9 @@ char	**argv;
 #ifdef XMGED
       }
 #endif
-	
+
+
+    }
 	/*
 	 *  In the best of all possible worlds, nothing should happen
 	 *  when the mouse is not pressed;  this would relax the requirement
