@@ -107,6 +107,32 @@ top:
 	return( (struct model *)NULL );
 }
 
+void
+nmg_model_bb( min_pt, max_pt, m )
+point_t min_pt, max_pt;
+CONST struct model *m;
+{
+	struct nmgregion *r;
+	register int i;
+
+	NMG_CK_MODEL(m);
+
+	min_pt[0] = min_pt[1] = min_pt[2] = MAX_FASTF;
+	max_pt[0] = max_pt[1] = max_pt[2] = -MAX_FASTF;
+
+	for (RT_LIST_FOR(r, nmgregion, &m->r_hd)) {
+		NMG_CK_REGION(r);
+		NMG_CK_REGION_A(r->ra_p);
+
+		for (i=0 ; i < 3 ; i++) {
+			if (min_pt[i] > r->ra_p->min_pt[i])
+				min_pt[i] = r->ra_p->min_pt[i];
+			if (max_pt[i] < r->ra_p->max_pt[i])
+				max_pt[i] = r->ra_p->max_pt[i];
+		}
+	}
+}
+
 /************************************************************************
  *									*
  *				SHELL Routines				*
