@@ -1084,6 +1084,8 @@ struct ray_data *rd;
 	register long **b;
 
 	bu_log("Unable to fix state transition--->\n");
+	bu_log( "\tray start = (%f %f %f) dir = (%f %f %f)\n",
+		V3ARGS( rd->rp->r_pt ), V3ARGS( rd->rp->r_dir ) );
 	for (BU_LIST_FOR(hm, hitmiss, &hd->l)) {
 		if (hm == next_hit) {
 			bu_log("======= ======\n");
