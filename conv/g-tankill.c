@@ -11,8 +11,14 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimitied.
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 
 #ifndef lint
@@ -33,14 +39,17 @@ static char RCSid[] = "$Header$";
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
-static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-o out_file] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	debug_plots;		/* Make debugging plots */
 static int	ncpu = 1;		/* Number of processors */
-static char	*out_file = NULL;	/* output filename */
+static int	surr_code = 1000;	/* Surroundings code */
+static int	curr_id;		/* Current region ident code */
+static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
+static struct nmg_ptbl		idents;	/* Table of region ident numbers */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct rt_tol		tol;
@@ -52,10 +61,57 @@ static int	regions_tried = 0;
 static int	regions_converted = 0;
 static int	regions_written = 0;
 
+/* macro to determine if one bounding box is within another */
 #define V3RPP1_IN_RPP2( _lo1 , _hi1 , _lo2 , _hi2 )	( \
 	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
+
+/* routine used in tree walker to select regions with the current ident number */
+static int
+select_region( tsp, pathp, curtree )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	if( tsp->ts_regionid == curr_id )
+		return( 0 );
+	else
+		return( -1 );
+}
+
+/* routine used in tree walker to collect region ident numbers */
+static int
+get_reg_id( tsp, pathp, curtree )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	nmg_tbl( &idents , TBL_INS_UNIQUE , (long *)tsp->ts_regionid );
+	return( -1 );
+}
+
+/* stubs to warn of the unexpected */
+static union tree *
+region_stub( tsp, pathp, curtree )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	rt_log( "region stub called, this shouldn't happen\n" );
+	rt_bomb( "region_stub\n" );
+}
+
+static union tree *
+leaf_stub( tsp, pathp, ep, id )
+struct db_tree_state    *tsp;
+struct db_full_path     *pathp;
+struct rt_external      *ep;
+int                     id;
+{
+	rt_log( "leaf stub called, this shouldn't happen\n" );
+	rt_bomb( "leaf_stub\n" );
+}
 
 /* Routine to identify external/void shells
  *	Marks external shells with a +1 in the flags array
@@ -255,11 +311,10 @@ struct db_tree_state *tsp;
 	/* Now triangulate the entire model */
 	nmg_triangulate_model( the_model , &tol );
 
-	/* Output each shell as a TANKILL object */
 	/* Need a flag array to insure that no loops are missed */
 	flags = (long *)rt_calloc( (*tsp->ts_m)->maxindex , sizeof( long ) , "g-tankill: flags" );
 
-	/* XXXXXX Need to worry about external/void shells here
+	/* Worry about external/void shells here
 	 * void shells should be merged back into their respective external shells
 	 * first mark all shells as external or void
 	 */
@@ -297,6 +352,7 @@ struct db_tree_state *tsp;
 			rt_log( "Shell x%x is incorrectly marked as %d\n" , s , NMG_INDEX_GET( flags , s ) );
 	}
 
+	/* Output each shell as a TANKILL object */
 	nmg_tbl( &vertices , TBL_INIT , NULL );
 	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
 	{
@@ -307,8 +363,6 @@ struct db_tree_state *tsp;
 		int missed_loops;
 
 		NMG_CK_SHELL( s );
-
-nmg_pr_s_briefly( s , (char *)NULL );
 
 		/* Make the "patch" style list of vertices */
 
@@ -341,13 +395,10 @@ nmg_pr_s_briefly( s , (char *)NULL );
 		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 		{
 			NMG_CK_EDGEUSE( eu );
-rt_log( "vertex: ( %g %g %g ) (first loop x%x eu = x%x)\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) , lu , eu );
 			nmg_tbl( &vertices , TBL_INS , (long *)eu->vu_p->v_p );
 		}
 		eu1 = RT_LIST_PLAST_PLAST( edgeuse , &lu->down_hd );
 		NMG_CK_EDGEUSE( eu1 );
-rt_log( "edgeuse: ( %g %g %g ) -> ( %g %g %g ) x%x\n" , V3ARGS( eu1->vu_p->v_p->vg_p->coord ) , 
-V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) , eu1 );
 
 		/* mark this loopuse as processed */
 		NMG_INDEX_SET( flags , lu );
@@ -357,8 +408,6 @@ V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) , eu1 );
 		missed_loops = 1;
 		while( missed_loops )
 		{
-struct vertex *v;
-rt_log( "In loop loop\n" );
 			NMG_CK_EDGEUSE( eu1 );
 
 			/* move to the radial */
@@ -372,28 +421,26 @@ rt_log( "In loop loop\n" );
 				&& *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
 					eu = eu->eumate_p->radial_p;
 
-			if( eu == eu1 || eu == eu1->eumate_p )
-				continue;
-
 			if( nmg_find_s_of_eu( eu ) != s )
 			{
 				rt_log( "g-tankill: different shells are connected via radials\n" );
 				goto outt;
 			}
 
+			/* get the loopuse containing this edgeuse */
 			lu = eu->up.lu_p;
 			NMG_CK_LOOPUSE( lu );
+
+			/* if this loop hasn't been processed, put it on the list */
 			if( NMG_INDEX_TEST_AND_SET( flags , lu ) )
 			{
 				NMG_INDEX_SET( flags , lu->lumate_p );
 				eu1 = RT_LIST_PNEXT_CIRC( edgeuse , eu );
 				nmg_tbl( &vertices , TBL_INS , (long *)eu1->eumate_p->vu_p->v_p );
-rt_log( "vertex: ( %g %g %g ) (makes another face lu = x%x, eu = x%x)\n" , V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) , lu , eu1 );
-rt_log( "edgeuse: ( %g %g %g ) -> ( %g %g %g ) x%x\n" , V3ARGS( eu1->vu_p->v_p->vg_p->coord ) , 
-V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) , eu1 );
 			}
 			else
 			{
+				/* back to a loop that was already done */
 				fastf_t dist_to_loop=MAX_FASTF;
 				vect_t to_loop;
 				struct loopuse *next_lu=NULL;
@@ -408,12 +455,15 @@ V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) , eu1 );
 					{
 						fastf_t tmp_dist;
 
+						/* if this loop was done continue looking */
 						if( NMG_INDEX_TEST( flags , lu ) )
 							continue;
 
+						/* skips loops of a single vertex */
 						if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 							continue;
 
+						/* shouldn't be any holes!!! */
 						if( lu->orientation != OT_SAME )
 						{
 							rt_log( "g-tankill: Found a hole in a triangulated face!!!\n" );
@@ -433,32 +483,26 @@ V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) , eu1 );
 				}
 				if( next_lu == NULL )
 				{
+					/* we're done */
 					missed_loops = 0;
 					break;
 				}
 
 				/* repeat the last vertex */
 				nmg_tbl( &vertices , TBL_INS , NMG_TBL_GET( &vertices , NMG_TBL_END( &vertices ) - 1 ) );
-v = (struct vertex *)NMG_TBL_GET( &vertices , NMG_TBL_END( &vertices ) - 1 );
-rt_log( "vertex: ( %g %g %g ) (repeat of previous)\n" , V3ARGS( v->vg_p->coord ) );
 
 				/* put first vertex of next loop on list twice */
 				lu = next_lu;
 				eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
 				NMG_CK_EDGEUSE( eu );
 				nmg_tbl( &vertices , TBL_INS , (long *)eu->vu_p->v_p );
-rt_log( "vertex: ( %g %g %g ) (extra copy of first vertex in loop)\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
 
 				/* put loop on list */
 				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-				{
 					nmg_tbl( &vertices , TBL_INS , (long *)eu->vu_p->v_p );
-rt_log( "vertex: ( %g %g %g ) (new loop) lu = x%x , eu = x%x\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) , lu , eu );
-				}
+
 				eu1 = RT_LIST_PLAST_PLAST( edgeuse , &lu->down_hd );
 				NMG_CK_EDGEUSE( eu1 );
-rt_log( "edgeuse: ( %g %g %g ) -> ( %g %g %g )\n" , V3ARGS( eu1->vu_p->v_p->vg_p->coord ) , 
-V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) , eu1 );
 
 				/* mark loopuse as processed */
 				NMG_INDEX_SET( flags , lu );
@@ -467,8 +511,8 @@ V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) , eu1 );
 		}
 
 		/* Now write the data out */
-		fprintf( fp_out , "%11d%7d   1000           " ,
-			NMG_TBL_END( &vertices ), tsp->ts_regionid );
+		fprintf( fp_out , "%11d%7d%7d           " ,
+			NMG_TBL_END( &vertices ), tsp->ts_regionid , surr_code );
 		for( i=0 ; i<NMG_TBL_END( &vertices ) ; i++ )
 		{
 			struct vertex *v;
@@ -498,11 +542,9 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	char		*dot;
-	int		i, ret;
+	int		i,j,ret;
 	register int	c;
 	double		percent;
-	struct rt_vls	fig_file;
 
 #ifdef BSD
 	setlinebuf( stderr );
@@ -539,6 +581,9 @@ char	*argv[];
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
+	/* Initialize ident table */
+	nmg_tbl( &idents , TBL_INIT , NULL );
+
 	/* XXX For visualization purposes, in the debug plot files */
 	{
 		extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
@@ -549,7 +594,7 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:o:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:dn:o:r:s:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
@@ -565,6 +610,9 @@ char	*argv[];
 			break;
 		case 'r':		/* Relative tolerance. */
 			ttol.rel = atof(optarg);
+			break;
+		case 's':		/* Surroundings Code */
+			surr_code = atoi(optarg);
 			break;
 		case 'v':
 			verbose++;
@@ -614,13 +662,41 @@ char	*argv[];
 	}
 	optind++;
 
-	/* Walk indicated tree(s).  Each region will be output separately */
+	/* First produce a list of region ident codes */
 	ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
-		1,			/* ncpu */
+		1,				/* ncpu */
 		&tree_state,
-		0,			/* take all regions */
-		do_region_end,
-		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+		get_reg_id,			/* put id in table */
+		region_stub,			/* do nothing */
+		leaf_stub );			/* do nothing */
+
+
+	/* Process regions in ident order */
+	curr_id = 0;
+	for( i=0 ; i<NMG_TBL_END( &idents ) ; i++ )
+	{
+		int next_id = 99999999;
+		for( j=0 ; j<NMG_TBL_END( &idents ) ; j++ )
+		{
+			int test_id;
+
+			test_id = (int)NMG_TBL_GET( &idents , j );
+			if( test_id > curr_id && test_id < next_id )
+				next_id = test_id;
+		}
+		curr_id = next_id;
+
+		/* give user something to look at */
+		rt_log( "Processing id %d\n" , curr_id );
+
+		/* Walk indicated tree(s).  Each region will be output separately */
+		ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+			1,				/* ncpu */
+			&tree_state,
+			select_region,			/* selects regions with curr_id */
+			do_region_end,			/* calls Write_tankill_region */
+			nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+	}
 
 	percent = 0;
 	if( regions_tried > 0 )
