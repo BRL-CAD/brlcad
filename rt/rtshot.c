@@ -204,16 +204,19 @@ struct partition *PartHeadp;
 	fastf_t out;
 	vect_t inhit, outhit;
 
+	if( (pp=PartHeadp->pt_forw) == PartHeadp )
+		return(0);		/* Nothing hit?? */
+
 	/* First, plot ray start to inhit */
 	if( rdebug&RDEBUG_RAYPLOT )  {
-		if( hitp->hit_dist > 0.0001 )  {
+		if( pp->pt_inhit->hit_dist > 0.0001 )  {
 			VJOIN1( inhit, ap->a_ray.r_pt,
-				hitp->hit_dist, ap->a_ray.r_dir );
+				pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 			pl_color( plotfp, 0, 0, 255 );
 			pdv_3line( plotfp, ap->a_ray.r_pt, inhit );
 		}
 	}
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
 		rt_log("\n--- Hit region %s (in %s, out %s)\n",
 			pp->pt_regionp->reg_name,
 			pp->pt_inseg->seg_stp->st_name,
