@@ -1,5 +1,5 @@
 .\" $Header$
-.\" tbl benchmark.doc | troff -t -ms | ...
+.\" tbl benchmark.doc | troff -t -ms | catimp -P imt1
 .TL
 The BRL-CAD Benchmark Test
 .AU
@@ -175,6 +175,9 @@ and for statistics on the differences, use
 .NH 1
 THE COMPETITION
 .PP
+The full benchmark takes about 9 CPU hours on a VAX-11/780,
+so you should scale your expectations accordingly.
+.PP
 Here is the list of systems that have been tested so far,
 with as much information about the configuration as could be obtained.
 Some systems have a great many options for small things that can
@@ -217,7 +220,9 @@ MIPS Mseries, Release 0.6, UMIPS 2.1, 16 MB of R2350 RAM.
 R2000 CPU rev 5.0, R2010 FP rev 2.0
 T}
 multiflow	Multiflow Trace 7/200 (PRELIMINARY)
-nova	Sun SPARCserver 490, 32 Mb, 33 MHz clock, 33 MHz TI 8847 FPU, SunOS 4.1.1B
+nova	T{
+Sun SPARCserver 490, 32 Mb, 33 MHz clock, 33 MHz TI 8847 FPU, SunOS 4.1.1B
+T}
 rh2	Tektronix, Motorola 88000
 snm2	Cray 1-M, SN2, UNICOS 2.0
 sws1	Convex C1, ConvexOS 9.1 48MB memory
@@ -629,6 +634,12 @@ _
 Abs	taylor	4730.05	2225.56	1742.09	1590.57	1551.78	2368.01	2
 *vgr	taylor	36.76	40.85	38.56	39.41	31.65	37.44	
 _
+Abs	worm	10072.1	5016.57	4032.60	3855.90	4043.11	5404.06	5
+*vgr	worm	78.29	92.09	89.27	95.56	82.47	87.53
+_
+Abs	worm	11678.4	5752.20	4758.80	4493.16	4700.52	6276.60	6
+*vgr	worm	90.78	105.60	105.35	111.35	95.88	101.79
+_
 Abs	worm	12282.3	6021.31	5394.36	4908.98	5141.71	6749.72	7
 *vgr	worm	95.47	110.54	119.42	121.65	104.89	110.39
 _
@@ -678,8 +689,8 @@ _
 Abs	whiz	7159.01	3655.65	3355.85	3132.36	3655.02	4191.57 4
 *vgr	whiz	52.25	54.51	59.85	58.70	51.70	55.40
 _
-Abs	walrus	8783.56	4908.54	5031.68	5069.78	5572.58	5873.22 8
-*vgr	walrus	64.10	73.19	89.73	95.01	78.83	80.17
+Abs	walrus	9300.31	5136.17	5243.14	5112.23	5318.45	6022.06	8
+*vgr	walrus	67.88	76.59	93.51	95.80	75.23	81.80
 _
 .TE
 .bp
@@ -687,10 +698,12 @@ _
 ADDITIONAL STATISTICS
 .PP
 It would be greatly appreciated if you would return to BRL any
-statistics that you gather, including:	which BRL CAD release
+statistics that you gather, including:
+the ``summary'' file produced by the benchmark script,
+which BRL CAD release
 was used, the manufacturer of the machine,
 hardware model name/number,
-OS/compiler software version numbers,
+software version numbers (OS and compiler),
 presence or absence of floating point hardware,
-and the local name (preferably InterNet or UUCP) of the
+and the local host name (preferably InterNet or UUCP host name) of the
 specific machine used.
