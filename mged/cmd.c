@@ -57,7 +57,7 @@ void	f_region(), f_itemair(), f_modify(), f_kill(), f_list();
 void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
 void	f_rm(), f_arbdef(), f_comm(), f_quit();
 void	f_edcomb(), f_status(), f_vrot();
-void	f_refresh(), f_fix(), f_rt(), f_saveview();
+void	f_refresh(), f_fix(), f_rt(), f_saveview(), f_savekey();
 void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
 void	f_mirface(), f_units(), f_title();
@@ -67,7 +67,7 @@ void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
 void	f_plot(), f_area(), f_find(), f_edgedir();
 void	f_regdef(), f_aeview(), f_in();
-void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside();
+void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall();
 
 static struct funtab {
 	char *ft_name;
@@ -172,6 +172,8 @@ static struct funtab {
 	f_saveview,2,MAXARGS,
 "rmats", "file", "load views from file (experimental)",
 	f_rmats,2,MAXARGS,
+"savekey", "file [time]", "save keyframe in file (experimental)",
+	f_savekey,2,MAXARGS,
 "attach", "<device>", "attach to a display processor, or NU",
 	f_attach,2,2,
 "release", "", "release current display processor [attach NU]",
@@ -210,6 +212,8 @@ static struct funtab {
 	f_tree, 2, MAXARGS,
 "inside", "", "finds inside solid per specified thicknesses",
 	f_inside, 1, MAXARGS,
+"mvall", "oldname newname", "rename object everywhere",
+	f_mvall, 3, 3,
 "memprint", "", "print memory maps",
 	f_memprint, 1, 1
 };
@@ -362,6 +366,7 @@ f_param()
 			if(es_para[0] <= 0.0) {
 				(void)printf("ERROR: SCALE FACTOR <= 0\n");
 				inpara = 0;
+				sedraw = 0;
 				return;
 			}
 		}
