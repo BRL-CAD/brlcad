@@ -2092,6 +2092,63 @@ CONST long		*magic_p;
 }
 
 /*
+ *			N M G _ V E R T _ A _ H A N D L E R
+ *
+ *  A private support routine for nmg_vertexuse_normal_tabulate().
+ *  Having just visited a vertexuse-a, if this is the first time,
+ *  add it to the bu_ptbl array.
+ */
+static void
+nmg_vert_a_handler( vp, state, first )
+long		*vp;
+genptr_t	state;
+int		first;
+{
+	register struct vf_state *sp = (struct vf_state *)state;
+	register struct vertexuse_a_plane	*va;
+
+	if( *vp != NMG_VERTEXUSE_A_PLANE_MAGIC )
+		return;
+
+	va = (struct vertexuse_a_plane *)vp;
+	/* If this vertex normal has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, va) )  return;
+
+	bu_ptbl_ins( sp->tabl, vp );
+}
+
+/*
+ *			N M G _ V E R T E X U S E_ N O R M A L _ T A B U L A T E
+ *
+ *  Given a pointer to any nmg data structure,
+ *  build an bu_ptbl list which has every vertexuse normal
+ *  pointer from there on "down" in the model, each one listed exactly once.
+ */
+void
+nmg_vertexuse_normal_tabulate( tab, magic_p )
+struct bu_ptbl		*tab;
+CONST long		*magic_p;
+{
+	struct model		*m;
+	struct vf_state		st;
+	struct nmg_visit_handlers	handlers;
+
+	m = nmg_find_model( magic_p );
+	NMG_CK_MODEL(m);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.tabl = tab;
+
+	(void)bu_ptbl_init( tab, 64, " tab");
+
+	handlers = nmg_visit_handlers_null;		/* struct copy */
+	handlers.vis_vertexuse_a = nmg_vert_a_handler;
+	nmg_visit( magic_p, &handlers, (genptr_t)&st );
+
+	rt_free( (char *)st.visited, "visited[]");
+}
+
+/*
  *			N M G _ 2 E D G E U S E _ H A N D L E R
  *
  *  A private support routine for nmg_edgeuse_tabulate().
