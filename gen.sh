@@ -155,14 +155,12 @@ CDIRS="cake cakeaux html papers contributed pro-engineer"
 # db depends on conv, conv depends on libwdb, libwdb depends on librt
 BDIRS="bench \
 	libsysv \
-	libbu \
-	libplot3 \
+	libbu libbn \
 	libwdb \
 	libpkg \
 	libfb \
 	rfbd \
 	fbserv \
-	libbn \
 	librt \
 	libredblack \
 	libtermio \
