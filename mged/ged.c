@@ -235,8 +235,10 @@ char **argv;
 	BU_GETSTRUCT(dmp, dm);
 	*dmp = dm_Null;
 	bu_vls_init(&pathName);
-	bu_vls_init(&dname);
+	bu_vls_init(&tkName);
+	bu_vls_init(&dName);
 	bu_vls_strcpy(&pathName, "nu");
+	bu_vls_strcpy(&tkName, "nu");
 	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
 	mged_variables = default_mged_variables;
 	am_mode = ALT_MOUSE_MODE_IDLE;
@@ -286,6 +288,9 @@ char **argv;
 
 	/* Get set up to use Tcl */
 	mged_setup();
+#if TRY_NEW_MGED_VARS
+	mged_variable_setup(curr_dm_list);
+#endif
 	mged_slider_link_vars(curr_dm_list);
 
 	setview( 0.0, 0.0, 0.0 );
