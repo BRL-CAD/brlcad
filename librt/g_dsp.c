@@ -408,6 +408,9 @@ register struct isect_stuff *isect;
 	double dist;
 	register int i;
 
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("isect_ray_bbox()\n");
+
 	isect->bbox.in_dist = - (isect->bbox.out_dist = MAX_FASTF);
 	isect->bbox.in_surf = isect->bbox.out_surf = -1;
 
@@ -1934,7 +1937,7 @@ register struct xray	*rp;
 				Xfrac = SMOOTHSTEP( Xfrac );
 
 				Yfrac = SMOOTHSTEP( Yfrac );
-#undef SMOOTHSTEP(x)
+#undef SMOOTHSTEP
 		     	}
 
 			VSCALE(Anorm, Anorm, (1.0-Xfrac) );
