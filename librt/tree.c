@@ -92,6 +92,7 @@ matp_t	mat;
 struct region *regp;
 {
 	register struct soltab *stp;
+	static vect_t v[8];
 	FAST fastf_t f;
 
 	/* Eliminate any [15] scaling */
@@ -106,6 +107,7 @@ struct region *regp;
 		mat[10]*= f;
 		mat[15] = 1;
 	}
+	fastf_float( v, rec->s.s_values, 8 );
 
 	GETSTRUCT(stp, soltab);
 	stp->st_id = idmap[rec->s.s_type];	/* PUN for a.a_type, too */
@@ -113,7 +115,7 @@ struct region *regp;
 	stp->st_specific = (int *)0;
 	stp->st_regionp = regp;
 
-	if( functab[stp->st_id].ft_prep( &rec->s, stp, mat ) )  {
+	if( functab[stp->st_id].ft_prep( v, stp, mat ) )  {
 		/* Error, solid no good */
 		free(stp);
 		return( SOLTAB_NULL );		/* continue */
@@ -136,6 +138,8 @@ struct region *regp;
 
 #define	MAXLEVELS	8
 struct directory	*path[MAXLEVELS];	/* Record of current path */
+
+static mat_t xmat;				/* temporary fastf_t matrix */
 
 /*
  *			D R A W H O B J
@@ -235,14 +239,12 @@ matp_t old_xlate;
 			else
 				nextdp=dir_add(rec.M.m_brname,nextdp->d_addr);
 		}
-#ifdef never
-		/* Don't Fix horrid GED mistake */
-		rec.M.m_mat[12] = rec.M.m_mat[3];
-		rec.M.m_mat[13] = rec.M.m_mat[7];
-		rec.M.m_mat[14] = rec.M.m_mat[11];
-		rec.M.m_mat[3] = rec.M.m_mat[7] = rec.M.m_mat[11] = 0.0;
-#endif
-		mat_mul(new_xlate, rec.M.m_mat, old_xlate);
+		{
+			register int i;
+			for( i=0; i<4*4; i++ )
+				xmat[i] = rec.M.m_mat[i];	/* cvt */
+		}
+		mat_mul(new_xlate, xmat, old_xlate);
 
 		/* Recursive call */
 		subtree = drawHobj( nextdp, regionp, pathpos+1, new_xlate );
@@ -361,4 +363,17 @@ int lvl;			/* recursion level */
 	/* BINARY TYPE */
 	pr_tree( tp->tr_left, lvl+1 );
 	pr_tree( tp->tr_right, lvl+1 );
+}
+
+/* Convert TO 4xfastf_t FROM 3xfloats (for database)  */
+fastf_float( ff, fp, n )
+register fastf_t *ff;
+register float *fp;
+register int n;
+{
+	while( n-- )  {
+		VMOVE( ff, fp );
+		fp += 3;
+		ff += ELEMENTS_PER_VECT;
+	}
 }

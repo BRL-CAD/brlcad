@@ -45,14 +45,14 @@ struct tgc_specific {
 	mat_t	tgc_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
 };
 
-#define SP_V	&sp->s_values[0]
-#define SP_H	&sp->s_values[3]
-#define SP_A	&sp->s_values[6]
-#define SP_B	&sp->s_values[9]
-#define SP_C	&sp->s_values[12]
-#define SP_D	&sp->s_values[15]
+#define SP_V	&vec[0*ELEMENTS_PER_VECT]
+#define SP_H	&vec[1*ELEMENTS_PER_VECT]
+#define SP_A	&vec[2*ELEMENTS_PER_VECT]
+#define SP_B	&vec[3*ELEMENTS_PER_VECT]
+#define SP_C	&vec[4*ELEMENTS_PER_VECT]
+#define SP_D	&vec[5*ELEMENTS_PER_VECT]
 
-#define MINMAX(a,b,c)	{ static float ftemp;\
+#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
@@ -73,8 +73,8 @@ struct tgc_specific {
  *  	stp->st_specific for use by rec_shot() or tgc_shot().
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
-tgc_prep( sp, stp, mat )
-register struct solidrec *sp;
+tgc_prep( vec, stp, mat )
+register fastf_t *vec;
 struct soltab *stp;
 matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 {
@@ -83,11 +83,11 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static mat_t	R;
 	static mat_t	Rinv;
 	static mat_t	S;
-	static vect_t	H, V, A, B, C, D;
+	static vect_t	H, A, B, C, D;
 	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|H|**2) ] */
 	static vect_t	work;
 	static vect_t	temp;
-	static double	f;
+	static fastf_t	f;
 
 	/* Apply 3x3 rotation portion of mat to H, A,B,C,D */
 	MAT3XVEC( H, mat, SP_H );
@@ -158,7 +158,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	VUNITIZE( rec->rec_Hunit );
 
 	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==0. */
-	VMOVE( work, SP_V );		/* float to fastf_t */
+	VMOVE( work, SP_V );
 	matXvec( rec->rec_V, mat, work );
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_h );
@@ -202,12 +202,12 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		MINMAX( ymin, ymax, v[Y] ); \
 		MINMAX( zmin, zmax, v[Z] )
 
-		VADD2( work, V, A ); MM( work );
-		VSUB2( work, V, A ); MM( work );
-		VADD2( work, V, B ); MM( work );
-		VSUB2( work, V, B ); MM( work );
+		VADD2( work, rec->rec_V, A ); MM( work );
+		VSUB2( work, rec->rec_V, A ); MM( work );
+		VADD2( work, rec->rec_V, B ); MM( work );
+		VSUB2( work, rec->rec_V, B ); MM( work );
 
-		VADD2( temp, V, H );
+		VADD2( temp, rec->rec_V, H );
 		VADD2( work, temp, A );  MM( work );
 		VSUB2( work, temp, A );  MM( work );
 		VADD2( work, temp, B );  MM( work );

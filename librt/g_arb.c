@@ -22,30 +22,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "vmath.h"
 #include "ray.h"
-#include "db.h"
 #include "debug.h"
 #include "plane.h"
 
 /* Describe algorithm here */
 
-#define MINMAX(a,b,c)	{ FAST float ftemp;\
+#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
 /*
  *  			A R B 8 _ P R E P
  */
-arb8_prep( sp, stp, mat )
-struct solidrec *sp;
+arb8_prep( vec, stp, mat )
+fastf_t *vec;
 struct soltab *stp;
 matp_t mat;
 {
-	register float *op;		/* Used for scanning vectors */
-	static float xmax, ymax, zmax;	/* For finding the bounding spheres */
-	static float xmin, ymin, zmin;	/* For finding the bounding spheres */
+	register fastf_t *op;		/* Used for scanning vectors */
+	static fastf_t xmax, ymax, zmax;/* For finding the bounding spheres */
+	static fastf_t xmin, ymin, zmin;/* For finding the bounding spheres */
 	static fastf_t dx, dy, dz;	/* For finding the bounding spheres */
 	static vect_t	work;		/* Vector addition work area */
-	static vect_t	homog;		/* Vect/Homog.Vect conversion buf */
 	static int	faces;		/* # of faces produced */
 	static fastf_t	scale;		/* width across widest axis */
 	static int	i;
@@ -59,31 +57,30 @@ matp_t mat;
 	 * from the origin to the first point, and 7 vectors
 	 * from the first point to the remaining points.
 	 *
-	 * Convert from vector to point notation IN PLACE in s_values[]
+	 * Convert from vector to point notation IN PLACE
 	 * by rotating vectors and adding base vector.
 	 */
-	VMOVE( homog, &sp->s_values[0] );		/* cvt to fastf_t */
-	homog[3] = 1;					/* & to homog vec */
-	matXvec( work, mat, homog );			/* 4x4: xlate, too */
-	htov_move( homog, work );			/* divide out W */
-	VMOVE( &sp->s_values[0], homog );		/* cvt to float */
+	vec[3] = 1;					/* cvt to homog vec */
+	matXvec( work, mat, vec );			/* 4x4: xlate, too */
+	htov_move( vec, work );				/* divide out W */
 
-	op = &sp->s_values[1*3];
+	op = &vec[1*3];
 	for( i=1; i<8; i++ )  {
-		MAT3XVEC( homog, mat, op );		/* 3x3: rot only */
-		VADD2( op, &sp->s_values[0], homog );
-		op += 3;
+		MAT3XVEC( work, mat, op );		/* 3x3: rot only */
+		VADD2( op, &vec[0], work );
+		op += ELEMENTS_PER_VECT;
 	}
 
 	/*
 	 * Compute bounding sphere.
 	 * Find min and max of the point co-ordinates
 	 */
-	op = &sp->s_values[0];
+	op = &vec[0];
 	for( i=0; i< 8; i++ ) {
 		MINMAX( xmin, xmax, *op++ );
 		MINMAX( ymin, ymax, *op++ );
 		MINMAX( zmin, zmax, *op++ );
+		op++;		/* Depends on ELEMENTS_PER_VECT */
 	}
 	VSET( stp->st_center,
 		(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2 );
@@ -94,7 +91,7 @@ matp_t mat;
 	stp->st_radsq = dx*dx + dy*dy + dz*dz;
 	stp->st_specific = (int *) 0;
 
-#define P(x)	(&sp->s_values[(x)*3])
+#define P(x)	(&vec[(x)*ELEMENTS_PER_VECT])
 	faces = 0;
 	if( face( stp, 3, 2, 1, 0, P(3), P(2), P(1), P(0), 1 ) )
 		faces++;					/* 1234 */
@@ -124,7 +121,7 @@ matp_t mat;
  *  This function is called with pointers to 4 points,
  *  and is used to prepare both ARS and ARB8 faces.
  *  a,b,c,d are "index" values, merely decorative.
- *  ap, bp, cp, dp point to float[3] (NOT fastf_t) points.
+ *  ap, bp, cp, dp point to vect_t points.
  *  noise is non-zero for ARB8, for non-planar face complaints.
  *
  * Return -
@@ -134,7 +131,7 @@ matp_t mat;
 face( stp, a, b, c, d, ap, bp, cp, dp, noise )
 struct soltab *stp;
 int a, b, c, d;
-float *ap, *bp, *cp, *dp;			/* not pointp_t */
+pointp_t ap, bp, cp, dp;
 int noise;
 {
 	register struct plane_specific *plp;
@@ -182,7 +179,7 @@ int noise;
  *  a warning message.  noise=1 for ARB8's, and noise=0 for ARS's.
  */
 add_pt( point, stp, plp, a, noise )
-register float *point;
+register pointp_t point;
 struct soltab *stp;
 register struct plane_specific *plp;
 int a;
@@ -191,7 +188,7 @@ int noise;			/* non-0: check 4,> pts for being planar */
 	register int i;
 	static vect_t work;
 	static vect_t P_A;		/* new point - A */
-	static float f;
+	static fastf_t f;
 
 	/* Verify that this point is not the same as an earlier point */
 	for( i=0; i < plp->pl_npts; i++ )  {

@@ -120,8 +120,8 @@ struct ell_specific {
  *  	A struct ell_specific is created, and it's address is stored in
  *  	stp->st_specific for use by ellg_shot().
  */
-ellg_prep( sp, stp, mat )
-register struct solidrec *sp;
+ellg_prep( vec, stp, mat )
+register fastf_t *vec;
 struct soltab *stp;
 matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 {
@@ -136,10 +136,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static vect_t	work;
 	static fastf_t	f;
 
-#define SP_V	&sp->s_values[0]
-#define SP_A	&sp->s_values[3]
-#define SP_B	&sp->s_values[6]
-#define SP_C	&sp->s_values[9]
+#define SP_V	&vec[0*ELEMENTS_PER_VECT]
+#define SP_A	&vec[1*ELEMENTS_PER_VECT]
+#define SP_B	&vec[2*ELEMENTS_PER_VECT]
+#define SP_C	&vec[3*ELEMENTS_PER_VECT]
 
 	/*
 	 * Apply 3x3 rotation mat only to A,B,C
@@ -180,7 +180,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_specific = (int *)ell;
 
 	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==1. */
-	VMOVE( work, &sp->s_values[0] );	/* float to fastf_t */
+	VMOVE( work, SP_V );
 	work[3] = 1;
 	matXvec( ell->ell_V, mat, work );
 
@@ -260,7 +260,6 @@ register struct ray *rp;
 	static fastf_t	root;		/* root of radical */
 	static fastf_t	k1, k2;		/* distance constants of solution */
 	static vect_t	xlated;		/* translated vector */
-	extern struct seg *HeadSeg;	/* Pointer to segment list */
 
 	/* out, Mat, vect */
 	MAT3XVEC( dprime, ell->ell_SoR, rp->r_dir );

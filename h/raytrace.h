@@ -91,6 +91,7 @@ struct soltab {
 #define ID_ARB8		4	/* Generalized ARB.  V + 7 vectors */
 #define ID_ARS		5	/* ARS */
 #define ID_HALF		6	/* Half-space */
+#define ID_REC		7	/* Right Elliptical Cylinder [TGC special] */
 
 struct functab {
 	int		(*ft_prep)();

@@ -68,7 +68,7 @@ struct seg *segp_in;
 	if(debug&DEBUG_PARTITION) printf("-------------------BOOL_REGIONS\n");
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
 		register struct partition *newpp;		/* XXX */
-		register float dist;				/* XXX */
+		FAST fastf_t dist;				/* XXX */
 
 		if(debug&DEBUG_PARTITION) pr_seg(segp);
 		/* Make sure seg's solid's region is on active list */
@@ -388,9 +388,9 @@ register struct region *headp;
  */
 int
 fdiff( a, b )
-float a, b;
+double a, b;
 {
-	register float diff;
+	FAST double diff;
 
 	diff = a - b;
 	if( NEAR_ZERO(diff) )

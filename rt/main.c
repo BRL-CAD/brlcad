@@ -25,16 +25,17 @@ extern int tor_prep(),	tor_print();
 extern int tgc_prep(),	tgc_print();
 extern int ellg_prep(),	ellg_print();
 extern int arb8_prep(),	arb8_print();
-extern int ars_prep(),	ars_print();
 extern int half_prep(),	half_print();
+extern int ars_prep();
+extern int rec_print();
 
 extern struct seg *null_shot();
 extern struct seg *tor_shot();
 extern struct seg *tgc_shot();
 extern struct seg *ellg_shot();
 extern struct seg *arb8_shot();
-extern struct seg *ars_shot();
 extern struct seg *half_shot();
+extern struct seg *rec_shot();
 
 struct functab functab[] = {
 	null_prep,	null_shot,	null_print,	"ID_NULL",
@@ -42,10 +43,29 @@ struct functab functab[] = {
 	tgc_prep,	tgc_shot,	tgc_print,	"ID_TGC",
 	ellg_prep,	ellg_shot,	ellg_print,	"ID_ELL",
 	arb8_prep,	arb8_shot,	arb8_print,	"ID_ARB8",
-	ars_prep,	ars_shot,	ars_print,	"ID_ARS",
+	ars_prep,	arb8_shot,	arb8_print,	"ID_ARS",
 	half_prep,	half_shot,	half_print,	"ID_HALF",
+	null_prep,	rec_shot,	rec_print,	"ID_REC",
 	null_prep,	null_shot,	null_print,	">ID_NULL"
 };
+
+/*
+ *  Hooks for unimplemented routines
+ */
+
+static char unimp[] = "Unimplemented Routine";
+
+#define UNIMPLEMENTED(type) \
+	DEF(type/**/_prep) \
+	struct seg * DEF(type/**/_shot) \
+	DEF(type/**/_print)
+
+#define DEF(func)	func() { printf("func unimplemented\n"); }
+
+UNIMPLEMENTED(null);
+UNIMPLEMENTED(tor);
+UNIMPLEMENTED(half);
+
 
 extern struct partition *bool_regions();
 
@@ -134,12 +154,8 @@ char **argv;
 	/* Determine a view */
 	GETSTRUCT(rayp, ray);
 
-	mat_idn( invview );
-/**	mat_angles( invview, 290.0, 0.0, 310.0 ); */
-	mat_angles( invview, 295.0, 0.0, 235.0 );
-/**	mat_ae( invview, 360.-35.0, 360.-25.0 ); * */
-/**	mat_ae( invview, -35.0, -25.0 ); * */
-/**	mat_ae( invview, 180.0+35.0, 180.0+25.0 ); ** */
+	mat_angles( invview, 295.0, 0.0, 235.0 );	/* GIFT 35,25 */
+
 	mat_trn( viewrot, invview );		/* inverse */
 	mat_print( "View Rotation", viewrot );
 
@@ -155,7 +171,6 @@ char **argv;
 		VSET( tempdir, 0, 0, 1 );
 	}
 	MAT3XVEC( rayp->r_dir, viewrot, tempdir );
-VPRINT("Direction", rayp->r_dir);
 	/* Sanity check */
 	distsq = MAGSQ(rayp->r_dir) - 1.0;
 	if( !NEAR_ZERO(distsq) )
@@ -163,7 +178,6 @@ VPRINT("Direction", rayp->r_dir);
 
 	VSET( tempdir, 	xbase, ybase, zbase );
 	MAT3XVEC( rayp->r_pt, viewrot, tempdir );
-VPRINT("Starting point", tempdir );
 
 	/* Determine the Light location(s) in model space, xlate to view */
 	/* 0:  Blue, at left edge, 1/2 high */
@@ -247,6 +261,7 @@ VPRINT("Light2 Vec", l2vec);
 			}
 		}
 	}
+	return(0);
 }
 
 shootray( rayp )
@@ -310,9 +325,9 @@ matp_t rot;
 int npts;
 {
 	register struct soltab *stp;
-	static float xmin, xmax;
-	static float ymin, ymax;
-	static float zmin, zmax;
+	static fastf_t xmin, xmax;
+	static fastf_t ymin, ymax;
+	static fastf_t zmin, zmax;
 	static vect_t xlated;
 	static mat_t invrot;
 

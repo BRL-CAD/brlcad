@@ -42,9 +42,9 @@ struct ray *rayp;
 int xscreen, yscreen;
 {
 	static long inten;
-	static float diffuse2, cosI2;
-	static float diffuse1, cosI1;
-	static float diffuse0, cosI0;
+	static double diffuse2, cosI2;
+	static double diffuse1, cosI1;
+	static double diffuse0, cosI0;
 	static vect_t work0, work1;
 	static int r,g,b;
 	register struct partition *pp;

@@ -390,7 +390,7 @@ double elev;
 }
 
 /*
- *			B U I L D H R O T
+ *			M A T _ A N G L E S
  *
  * This routine builds a Homogeneous rotation matrix, given
  * alpha, beta, and gamma as angles of rotation, in degrees.
