@@ -15,6 +15,8 @@
  *  $Header$
  */
 
+#include "rtstring.h"		/* for vls string support */
+
 #define DV_PICK		1	/* dv_penpress for pick function */
 #define DV_INZOOM	2	/* dv_penpress for zoom in */
 #define DV_OUTZOOM	4	/* dv_penpress for zoom out */
@@ -37,6 +39,7 @@ struct device_values  {
 	int	dv_2adc;		/* angle 2 for A/D cursor */
 	int	dv_distadc;		/* Tick distance */
 	int	dv_flagadc;		/* A/D cursor "changed" flag */
+	struct rt_vls	dv_string;	/* newline-separated "commands" from dm */
 };
 extern struct device_values dm_values;
 
