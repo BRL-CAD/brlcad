@@ -279,20 +279,21 @@ reattach()
  *
  *  Run a display manager specific command(s).
  */
-void
+int
 f_dm(argc, argv)
 int	argc;
 char	**argv;
 {
 	if( !dmp->dmr_cmd )  {
 		printf("The '%s' display manager does not support any local commands.\n", dmp->dmr_name);
-		return;
+		return CMD_BAD;
 	}
 	if( argc-1 < 1 )  {
 		printf("'dm' command requires an argument.\n");
-		return;
+		return CMD_BAD;
 	}
 	(void)dmp->dmr_cmd( argc-1, argv+1 );
+	return CMD_OK;
 }
 
 /*
