@@ -12,6 +12,10 @@
  *      P.O. Box 420  Mail Code O01
  *	Indianapolis, IN  46206-0420
  *
+ *  BRL NOTE: We have not been able to test this interface in a long
+ *   time.  LIBFB has changed several times since then so this code
+ *   may not even compile any longer.  If you make changes to this
+ *   please let us know. <phil@brl.mil>
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -22,8 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/types.h>
 #include "fb.h"
 #include "./fblocal.h"
-
-extern int	fb_sim_readrect(), fb_sim_writerect();
 
 /* typedef unsigned char	u_char;	*/
 int	_fbfd;
@@ -54,41 +56,40 @@ static int	cload(),
 		rgbtru(), scrorg(), value(), vidform(),
 		warm(), wrmask(), xhair(), zoom();
 
-_LOCAL_ int	rat_dopen(),
-		rat_dclose(),
-		rat_dclear(),
-		rat_bread(),
-		rat_bwrite(),
-		rat_cmread(),
-		rat_cmwrite(),
-		rat_viewport_set(),
-		rat_window_set(),
-		rat_zoom_set(),
-		rat_curs_set(),
-		rat_cmemory_addr(),
-		rat_cscreen_addr(),
+_LOCAL_ int	rat_open(),
+		rat_close(),
+		rat_clear(),
+		rat_read(),
+		rat_write(),
+		rat_rmap(),
+		rat_wmap(),
+		rat_view(),
+		rat_window_set(),	/* OLD */
+		rat_zoom_set(),		/* OLD */
+		rat_setcursor(),
+		rat_cursor(),
+		rat_getcursor(),
 		rat_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO rat_interface =  {
-	rat_dopen,			/* device_open		*/
-	rat_dclose,			/* device_close		*/
-	fb_null,			/* device_reset		*/
-	rat_dclear,			/* device_clear		*/
-	rat_bread,			/* buffer_read		*/
-	rat_bwrite,			/* buffer_write		*/
-	rat_cmread,			/* colormap_read	*/
-	rat_cmwrite,			/* colormap_write	*/
-	rat_viewport_set,		/* viewport_set		*/
-	rat_window_set,			/* window_set		*/
-	rat_zoom_set,			/* zoom_set		*/
-	rat_curs_set,			/* curs_set		*/
-	rat_cmemory_addr,		/* cursor_move_memory_addr */
-	rat_cscreen_addr,		/* cursor_move_screen_addr */
-	fb_sim_readrect,
-	fb_sim_writerect,
+	rat_open,			/* device_open		*/
+	rat_close,			/* device_close		*/
+	rat_clear,			/* device_clear		*/
+	rat_read,			/* buffer_read		*/
+	rat_write,			/* buffer_write		*/
+	rat_rmap,			/* colormap_read	*/
+	rat_wmap,			/* colormap_write	*/
+	rat_view,			/* set view		*/
+	fb_sim_getview,			/* get view		*/
+	rat_setcursor,			/* define cursor	*/
+	rat_cursor,			/* set cursor		*/
+	fb_sim_getcursor,		/* get cursor		*/
+	fb_sim_readrect,		/* read rectangle	*/
+	fb_sim_writerect,		/* write rectangle	*/
+	fb_null,			/* handle events	*/
 	fb_null,			/* flush output		*/
-	rat_dclose,			/* free resources	*/
+	rat_close,			/* free resources	*/
 	rat_help,			/* help function	*/
 	"Raster Technology One/80",	/* device description	*/
 	1024,				/* max width		*/
@@ -96,7 +97,11 @@ FBIO rat_interface =  {
 	"/dev/rt",			/* short device name	*/
 	512,				/* default/current width  */
 	512,				/* default/current height */
+	-1,				/* select fd		*/
 	-1,				/* file descriptor	*/
+	1, 1,				/* zoom			*/
+	256, 256,			/* window center	*/
+	0, 0, 0,			/* cursor		*/
 	PIXEL_NULL,			/* page_base		*/
 	PIXEL_NULL,			/* page_curp		*/
 	PIXEL_NULL,			/* page_endp		*/
@@ -108,7 +113,7 @@ FBIO rat_interface =  {
 };
 
 _LOCAL_ int
-rat_dopen( ifp, file, width, height )
+rat_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -127,7 +132,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-rat_dclose( ifp )
+rat_close( ifp )
 FBIO	*ifp;
 /*	_ r a t _ c l o s e ( )
 	Issue quit command, and close connection.
@@ -145,7 +150,7 @@ FBIO	*ifp;
 
 
 _LOCAL_ int
-rat_dclear( ifp, pp )
+rat_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 /*	_ r a t _ c l e a r ( )
@@ -163,7 +168,7 @@ RGBpixel	*pp;
 }
 
 _LOCAL_ int
-rat_bread( ifp, x, y, pixelp, count )
+rat_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -293,7 +298,7 @@ int	count;
 }
 
 _LOCAL_ int
-rat_bwrite( ifp, x, y, pixelp, count )
+rat_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -368,7 +373,7 @@ int	count;
 }
 
 _LOCAL_ int
-rat_cmread( ifp, cmp )
+rat_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -376,7 +381,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-rat_cmwrite( ifp, cmp )
+rat_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 /*	_ r a t _ w m a p ( )
@@ -408,13 +413,16 @@ ColorMap	*cmp;
 	}
 }
 
-
-
 _LOCAL_ int
-rat_viewport_set( ifp, left, top, right, bottom )
+rat_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	left, top, right, bottom;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
+	rat_window_set(ifp, xcenter, ycenter);
+	rat_zoom_set(ifp, xzoom, yzoom);
+	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
+	return	0;
 }
 
 _LOCAL_ int
@@ -451,7 +459,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-rat_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+rat_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
 int	xbits, ybits;
@@ -461,28 +469,14 @@ int	xorig, yorig;
 }
 
 _LOCAL_ int
-rat_cmemory_addr( ifp, mode, x, y )
+rat_cursor( ifp, mode, x, y )
 /*	Place cursor at image (pixel) coordinates x & y
  */
 FBIO	*ifp;
 int	mode;
 int	x, y;
 {
-/*	if(   !	cload( 5, x, y )  ||  ! xhair( 0, mode ) )
-		return	-1;	*/
-	if(   !	cload(17, x, y )  ||  ! cursor( 0, mode ) )
-		return	-1;
-	return	0;
-}
-
-_LOCAL_ int
-rat_cscreen_addr( ifp, mode, x, y )
-/*	Place cursor at Screen Coordinates x & y
- */
-FBIO	*ifp;
-int	mode;
-int	x, y;
-{
+	fb_sim_cursor(ifp, mode, x, y);
 /*	if(   !	cload( 5, x, y )  ||  ! xhair( 0, mode ) )
 		return	-1;	*/
 	if(   !	cload(17, x, y )  ||  ! cursor( 0, mode ) )
