@@ -162,7 +162,7 @@ set helplib_data(quat_make_nearest)	{{quatA quatB}	{set quaternion quatA to the 
 set helplib_data(quat_exp)		{{quat}	{exponentiate a quaternion}}
 set helplib_data(quat_log)		{{quat}	{take the natural logarithm of a unit quaternion}}
 
-proc helplib args {
+proc helplib {args} {
 	global helplib_data
 
 	if {[llength $args] > 0} {
@@ -179,8 +179,26 @@ proc ?lib {} {
 }
 
 
-proc aproposlib key {
+proc aproposlib {key} {
 	global helplib_data
 
 	return [apropos_comm helplib_data $key]
+}
+
+## - helplib_alias
+#
+# This routine replaces the command name in the string
+# returned by helplib with the alias. Each of the
+# tcl_object's methods in the libraries should use
+# this instead of helplib. That way applications and/or
+# widgets that use these methods can get the same
+# help using their respective names.
+#
+proc helplib_alias {libcmd alias} {
+    set info [helplib $libcmd]
+
+    set pattern "Usage: $libcmd"
+    regsub $pattern $info "Usage: $alias" info
+
+    return $info
 }
