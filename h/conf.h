@@ -163,9 +163,17 @@
 #	define	HAVE_VPRINTF	1
 #	define	HAVE_WRITEV	1
 #	define	HAVE_SBRK	1
+#	define	HAVE_SBRK_DECL	1
 
 #	define	HAVE_SYS_ERRLIST_DECL	1
 #	define	USE_REGCOMP	1
+#	define HAVE_REGEX_DECL	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_SYS_MMAN_H	1
+#       define HAVE_FLOAT_H     1
+#       define HAVE_LIMITS_H    1
+#	define HAVE_BZERO	1
 #endif
 
 #if defined(__bsdi__)
@@ -193,16 +201,6 @@
 #	define HAVE_GETOPT_H	1
 #	define HAVE_XOSDEFS_H	1
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
-#endif
-
-#if defined(__FreeBSD__)
-#	define HAVE_STDLIB_H	1
-#	define HAVE_UNISTD_H	1
-#	define HAVE_GETHOSTNAME	1
-#	define HAVE_SYS_MMAN_H	1
-#       define HAVE_FLOAT_H     1
-#       define HAVE_LIMITS_H    1
-#	define HAVE_BZERO	1
 #endif
 
 #if defined(__NetBSD__)
