@@ -91,6 +91,8 @@ static int wdb_group_tcl();
 static int wdb_remove_tcl();
 static int wdb_region_tcl();
 static int wdb_comb_tcl();
+static int wdb_find_tcl();
+static int wdb_which_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -132,6 +134,9 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"r",		wdb_region_tcl,
 	"c",		wdb_comb_std_tcl,
 	"comb",		wdb_comb_tcl,
+	"find",		wdb_find_tcl,
+	"whichair",	wdb_which_tcl,
+	"whichid",	wdb_which_tcl,
 #if 0
 	"cat",		wdb_cat_tcl,
 	"color",	wdb_color_tcl,
@@ -139,7 +144,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"comb_color",	wdb_comb_color_tcl,
 	"copymat",	wdb_copymat_tcl,
 	"copyeval",	wdb_copyeval_tcl,
-	"find",		wdb_find_tcl,
 	"i",		wdb_instance_tcl,
 	"inside",	wdb_inside_tcl,
 	"keep",		wdb_keep_tcl,
@@ -152,8 +156,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"tree",		wdb_tree_tcl,
 	"units",	wdb_units_tcl,
 	"whatid",	wdb_whatid_tcl,
-	"whichair",	wdb_which_tcl,
-	"whichid",	wdb_which_tcl,
 	"which_shader",	wdb_which_shader_tcl,
 	"xpush",	wdb_xpush_tcl,
 	"rcodes",	wdb_rcodes_tcl,
@@ -2575,6 +2577,231 @@ wdb_comb_tcl(clientData, interp, argc, argv)
 		Tcl_AppendResult(interp, "Error:  ", comb_name,
 				 " not created\n", (char *)NULL);
 		return TCL_ERROR;
+	}
+
+	return TCL_OK;
+}
+
+static void
+wdb_find_ref(dbip, comb, comb_leaf, object, comb_name_ptr, user_ptr3)
+     struct db_i		*dbip;
+     struct rt_comb_internal	*comb;
+     union tree		*comb_leaf;
+     genptr_t		object;
+     genptr_t		comb_name_ptr;
+     genptr_t		user_ptr3;
+{
+	char *obj_name;
+	char *comb_name;
+	Tcl_Interp *interp = (Tcl_Interp *)user_ptr3;
+
+	RT_CK_TREE(comb_leaf);
+
+	obj_name = (char *)object;
+	if (strcmp(comb_leaf->tr_l.tl_name, obj_name))
+		return;
+
+	comb_name = (char *)comb_name_ptr;
+
+	Tcl_AppendElement(interp, comb_name);
+}
+
+/*
+ * Usage:
+ *        procname find object(s)
+ */
+static int
+wdb_find_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	register int	i,k;
+	register struct directory *dp;
+	struct rt_db_internal intern;
+	register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
+
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_find");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* Examine all COMB nodes */
+	for (i = 0; i < RT_DBNHASH; i++) {
+		for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+			if (!(dp->d_flags & DIR_COMB))
+				continue;
+
+			if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
+				Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+				return TCL_ERROR;
+			}
+
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			for (k=2; k<argc; k++)
+				db_tree_funcleaf(wdbp->dbip, comb, comb->tree, wdb_find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)interp);
+
+			rt_comb_ifree(&intern);
+		}
+	}
+
+	return TCL_OK;
+}
+
+struct wdb_id_names {
+	struct bu_list l;
+	struct bu_vls name;		/* name associated with region id */
+};
+
+struct wdb_id_to_names {
+	struct bu_list l;
+	int id;				/* starting id (i.e. region id or air code) */
+	struct wdb_id_names headName;	/* head of list of names */
+};
+
+/*
+ * Usage:
+ *        procname whichair/whichid id(s)
+ */
+static int
+wdb_which_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	register int	i,j;
+	register struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	struct wdb_id_to_names headIdName;
+	struct wdb_id_to_names *itnp;
+	struct wdb_id_names *inp;
+	int isAir;
+
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_%s", argv[1]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (!strcmp(argv[1], "whichair"))
+		isAir = 1;
+	else
+		isAir = 0;
+
+	BU_LIST_INIT(&headIdName.l);
+
+	/* Build list of id_to_names */
+	for (j=2; j<argc; j++) {
+		int n;
+		int start, end;
+		int range;
+		int k;
+
+		n = sscanf(argv[j], "%d%*[:-]%d", &start, &end);
+		switch (n) {
+		case 1:
+			for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l))
+				if (itnp->id == start)
+					break;
+
+			/* id not found */
+			if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
+				BU_GETSTRUCT(itnp,wdb_id_to_names);
+				itnp->id = start;
+				BU_LIST_INSERT(&headIdName.l,&itnp->l);
+				BU_LIST_INIT(&itnp->headName.l);
+			}
+
+			break;
+		case 2:
+			if (start < end)
+				range = end - start + 1;
+			else if (end < start) {
+				range = start - end + 1;
+				start = end;
+			} else
+				range = 1;
+
+			for (k = 0; k < range; ++k) {
+				int id = start + k;
+
+				for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l))
+					if (itnp->id == id)
+						break;
+
+				/* id not found */
+				if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
+					BU_GETSTRUCT(itnp,wdb_id_to_names);
+					itnp->id = id;
+					BU_LIST_INSERT(&headIdName.l,&itnp->l);
+					BU_LIST_INIT(&itnp->headName.l);
+				}
+			}
+
+			break;
+		}
+	}
+
+	/* Examine all COMB nodes */
+	for (i = 0; i < RT_DBNHASH; i++) {
+		for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+			if (!(dp->d_flags & DIR_REGION))
+				continue;
+
+			if (rt_db_get_internal( &intern, dp, wdbp->dbip, (fastf_t *)NULL ) < 0) {
+				Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+				return TCL_ERROR;
+			}
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			if (comb->region_id != 0 && comb->aircode != 0) {
+				Tcl_AppendResult(interp, "ERROR: ", dp->d_namep,
+						 " has id and aircode!!!\n", (char *)NULL);
+				continue;
+			}
+
+			/* check to see if the region id or air code matches one in our list */
+			for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l)) {
+				if ((!isAir && comb->region_id == itnp->id) ||
+				    (isAir && comb->aircode == itnp->id)) {
+					/* add region name to our name list for this region */
+					BU_GETSTRUCT(inp,wdb_id_names);
+					bu_vls_init(&inp->name);
+					bu_vls_strcpy(&inp->name, dp->d_namep);
+					BU_LIST_INSERT(&itnp->headName.l,&inp->l);
+					break;
+				}
+			}
+
+			rt_comb_ifree(&intern);
+		}
+	}
+
+	/* place data in interp and free memory */
+	 while (BU_LIST_WHILE(itnp,wdb_id_to_names,&headIdName.l)) {
+		 while (BU_LIST_WHILE(inp,wdb_id_names,&itnp->headName.l)) {
+			 Tcl_AppendElement(interp, bu_vls_addr(&inp->name));
+			 BU_LIST_DEQUEUE(&inp->l);
+			 bu_vls_free(&inp->name);
+			 bu_free((genptr_t)inp, "f_which: inp");
+		}
+
+		BU_LIST_DEQUEUE(&itnp->l);
+		bu_free((genptr_t)itnp, "f_which: itnp");
 	}
 
 	return TCL_OK;
