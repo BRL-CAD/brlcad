@@ -19,7 +19,7 @@
 # Description -
 #	The Drawable class wraps LIBRT's drawable geometry object.
 #
-class Drawable {
+::itcl::class Drawable {
     protected variable dg ""
 
     constructor {db} {}
@@ -68,150 +68,150 @@ class Drawable {
     }
 }
 
-body Drawable::constructor {db} {
+::itcl::body Drawable::constructor {db} {
     set dg [subst $this]_dg
     dg_open $dg $db
     Drawable::help_init
 }
 
-body Drawable::destructor {} {
+::itcl::body Drawable::destructor {} {
     rename $dg ""
     catch {delete object $help}
 }
 
-body Drawable::assoc {args} {
+::itcl::body Drawable::assoc {args} {
     eval $dg assoc $args
 }
 
-body Drawable::autoview {args} {
+::itcl::body Drawable::autoview {args} {
     eval $dg autoview $args
 }
 
-body Drawable::blast {args} {
+::itcl::body Drawable::blast {args} {
     eval $dg blast $args
 }
 
-body Drawable::clear {args} {
+::itcl::body Drawable::clear {args} {
     eval $dg clear $args
 }
 
-body Drawable::draw {args} {
+::itcl::body Drawable::draw {args} {
     eval $dg draw $args
 }
 
-body Drawable::E {args} {
+::itcl::body Drawable::E {args} {
     eval $dg E $args
 }
 
-body Drawable::erase {args} {
+::itcl::body Drawable::erase {args} {
     eval $dg erase $args
 }
 
-body Drawable::erase_all {args} {
+::itcl::body Drawable::erase_all {args} {
     eval $dg erase_all $args
 }
 
-body Drawable::ev {args} {
+::itcl::body Drawable::ev {args} {
     eval $dg ev $args
 }
 
-body Drawable::get_autoview {} {
+::itcl::body Drawable::get_autoview {} {
     $dg get_autoview
 }
 
-body Drawable::get_dgname {} {
+::itcl::body Drawable::get_dgname {} {
     return $dg
 }
 
-body Drawable::get_eyemodel {viewObj} {
+::itcl::body Drawable::get_eyemodel {viewObj} {
     return [$dg get_eyemodel $viewObj]
 }
 
-body Drawable::how {args} {
+::itcl::body Drawable::how {args} {
     eval $dg how $args
 }
 
-body Drawable::illum {args} {
+::itcl::body Drawable::illum {args} {
     eval $dg illum $args
 }
 
-body Drawable::label {args} {
+::itcl::body Drawable::label {args} {
     eval $dg label $args
 }
 
-body Drawable::nirt {args} {
+::itcl::body Drawable::nirt {args} {
     eval $dg nirt $args
 }
 
-body Drawable::observer {args} {
+::itcl::body Drawable::observer {args} {
     eval $dg observer $args
 }
 
-body Drawable::overlay {args} {
+::itcl::body Drawable::overlay {args} {
     eval $dg overlay $args
 }
 
-body Drawable::report {args} {
+::itcl::body Drawable::report {args} {
     eval $dg report $args
 }
 
-body Drawable::qray {args} {
+::itcl::body Drawable::qray {args} {
     eval $dg qray $args
 }
 
-body Drawable::rt {args} {
+::itcl::body Drawable::rt {args} {
     eval $dg rt $args
 }
 
-body Drawable::rtabort {} {
+::itcl::body Drawable::rtabort {} {
     $dg rtabort
 }
 
-body Drawable::rtcheck {args} {
+::itcl::body Drawable::rtcheck {args} {
     eval $dg rtcheck $args
 }
 
-body Drawable::rtedge {args} {
+::itcl::body Drawable::rtedge {args} {
     eval $dg rtedge $args
 }
 
-body Drawable::set_transparency {args} {
+::itcl::body Drawable::set_transparency {args} {
     eval $dg set_transparency $args
 }
 
-body Drawable::shaded_mode {args} {
+::itcl::body Drawable::shaded_mode {args} {
     eval $dg shaded_mode $args
 }
 
-body Drawable::vdraw {args} {
+::itcl::body Drawable::vdraw {args} {
     eval $dg vdraw $args
 }
 
-body Drawable::who {args} {
+::itcl::body Drawable::who {args} {
     eval $dg who $args
 }
 
-body Drawable::zap {args} {
+::itcl::body Drawable::zap {args} {
     eval $dg zap $args
 }
 
-body Drawable::help {args} {
+::itcl::body Drawable::help {args} {
     return [eval $help get $args]
 }
 
-body Drawable::? {} {
+::itcl::body Drawable::? {} {
     return [$help ? 20 4]
 }
 
-body Drawable::apropos {key} {
+::itcl::body Drawable::apropos {key} {
     return [$help apropos $key]
 }
 
-body Drawable::getUserCmds {} {
+::itcl::body Drawable::getUserCmds {} {
     return [$help getCmds]
 }
 
-body Drawable::help_init {} {
+::itcl::body Drawable::help_init {} {
     set help [cadwidgets::Help #auto]
 
     $help add autoview		{{view_obj} {set the view object's size and center}}

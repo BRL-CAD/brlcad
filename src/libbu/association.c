@@ -45,7 +45,10 @@ static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
  *
  *	and returns the rest of the line beyond the field separator.
  */
-struct bu_vls *bu_association (const char *fname, const char *value, int field_sep)
+struct bu_vls *
+bu_association (const char *fname,
+		const char *value,
+		int        field_sep)
 {
     char		*cp;
     FILE		*fp;

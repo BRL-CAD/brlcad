@@ -25,11 +25,11 @@
 #
 # Usual options.
 #
-itk::usual CellPlot {
+::itk::usual CellPlot {
     keep -range -plotWidth -plotHeight
 }
 
-class cadwidgets::CellPlot {
+::itcl::class cadwidgets::CellPlot {
     inherit iwidgets::Scrolledcanvas
 
     constructor {args} {}
@@ -51,7 +51,7 @@ class cadwidgets::CellPlot {
     private variable sf 1.0
 }
 
-configbody cadwidgets::CellPlot::range {
+::itcl::configbody cadwidgets::CellPlot::range {
     if {[llength $itk_option(-range)] != 2} {
 	error "range: two arguments are required"
     }
@@ -76,10 +76,10 @@ configbody cadwidgets::CellPlot::range {
     set sf [expr {1.0 / double($max - $min)}]
 }
 
-body cadwidgets::CellPlot::constructor {args} {
+::itcl::body cadwidgets::CellPlot::constructor {args} {
     eval itk_initialize $args
     ::bind [childsite] <Configure> \
-	    [code $this configure -width %w -height %h]
+	    [::itcl::code $this configure -width %w -height %h]
 }
 
 ## - createCell
@@ -87,11 +87,11 @@ body cadwidgets::CellPlot::constructor {args} {
 # Transform the data coodinates into canvas coordinates,
 # then draw the cell in the specified color.
 #
-body cadwidgets::CellPlot::createCell {x1 y1 x2 y2 args} {
+::itcl::body cadwidgets::CellPlot::createCell {x1 y1 x2 y2 args} {
     eval cadwidgets::CellPlot::createCellInCanvas $this $x1 $y1 $x2 $y2 $args
 }
 
-body cadwidgets::CellPlot::createCellInCanvas {c x1 y1 x2 y2 args} {
+::itcl::body cadwidgets::CellPlot::createCellInCanvas {c x1 y1 x2 y2 args} {
     eval $c create rectangle [transform $x1 $y1 $x2 $y2] $args
 }
 
@@ -99,7 +99,7 @@ body cadwidgets::CellPlot::createCellInCanvas {c x1 y1 x2 y2 args} {
 #
 # Transform data coordinates into canvas coordinates.
 #
-body cadwidgets::CellPlot::transform {x1 y1 x2 y2} {
+::itcl::body cadwidgets::CellPlot::transform {x1 y1 x2 y2} {
     set tx1 [expr {($x1 - $min) * $sf * $itk_option(-plotWidth)}]
     set tx2 [expr {($x2 - $min) * $sf * $itk_option(-plotWidth)}]
     set ty1 [expr {$itk_option(-plotHeight) - \

@@ -22,7 +22,7 @@
 #include "dm.h"
 #include "cmd.h"
 
-#ifdef DM_X
+#if defined(DM_X) || defined(WIN32)
 /* from libdm/query.c */
 extern int dm_validXType();
 extern char *dm_bestXType();
@@ -37,7 +37,7 @@ HIDDEN int dm_bestXType_tcl();
 int vectorThreshold = 100000;
 
 HIDDEN struct bu_cmdtab cmdtab[] = {
-#ifdef DM_X
+#if defined(DM_X) || defined(WIN32)
 	{"dm_validXType",	dm_validXType_tcl},
 	{"dm_bestXType",	dm_bestXType_tcl},
 #endif
@@ -70,7 +70,7 @@ Dm_Init(Tcl_Interp *interp)
 	return TCL_OK;
 }
 
-#ifdef DM_X
+#if defined(DM_X) || defined(WIN32)
 HIDDEN int
 dm_validXType_tcl(clientData, interp, argc, argv)
      ClientData clientData;

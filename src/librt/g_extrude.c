@@ -2090,9 +2090,9 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 		else if( fdir == OT_OPPOSITE && dot > 0.0 )
 			rev = 1;
 
-		vertsa = (struct vertex **)bu_calloc( pt_count, sizeof( struct vertex *), "verts" );
+		vertsa = (struct vertex **)bu_calloc((int)pt_count, sizeof( struct vertex *), "verts" );
 
-		fu = nmg_add_loop_to_face( s, fu, vertsa, pt_count, fdir );
+		fu = nmg_add_loop_to_face( s, fu, vertsa, (int)pt_count, fdir );
 
 		k = 0;
 		for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {

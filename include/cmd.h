@@ -27,7 +27,24 @@ struct bu_cmdhist_obj {
   struct bu_cmdhist *cho_curr;
 };
 
-extern int bu_cmd();
-extern void bu_register_cmds();
+BU_EXPORT BU_EXTERN(int bu_cmd,
+		    ());
+BU_EXPORT BU_EXTERN(void bu_register_cmds,
+		    ());
+
+/* bu_cmdhist routines are defined in libbu/cmdhist.c */
+BU_EXPORT BU_EXTERN(int bu_cmdhist_history,
+		    ());
+BU_EXPORT BU_EXTERN(int bu_cmdhist_add,
+		    ());
+BU_EXPORT BU_EXTERN(int bu_cmdhist_curr,
+		    ());
+BU_EXPORT BU_EXTERN(int bu_cmdhist_next,
+		    ());
+BU_EXPORT BU_EXTERN(int bu_cmdhist_prev,
+		    ());
+
+BU_EXPORT BU_EXTERN(int cho_open_tcl,
+		    ());
 
 #endif /* SEEN_CMD_H */

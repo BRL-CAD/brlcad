@@ -167,11 +167,8 @@ struct wdb_killtree_data {
   int		notify;
 };
 
-/* defined in libbn/bn_tcl.c */
-BU_EXTERN(void		bn_tcl_mat_print, (Tcl_Interp *interp, const char *title, const mat_t m));
-
 /* from librt/tcl.c */
-extern int rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
+extern int rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 extern int rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb);
 extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter);
 
@@ -185,17 +182,18 @@ extern int rt_bot_decimate( struct rt_bot_internal *bot, fastf_t max_chord_error
 /* from db5_scan.c */
 HIDDEN int db5_scan(struct db_i *dbip, void (*handler) (struct db_i *, const struct db5_raw_internal *, long int, genptr_t), genptr_t client_data);
 
-int wdb_init_obj(Tcl_Interp *interp, struct rt_wdb *wdbp, char *oname);
+int wdb_init_obj(Tcl_Interp *interp, struct rt_wdb *wdbp, const char *oname);
 int wdb_get_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int wdb_get_type_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int wdb_attr_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int wdb_pathsum_cmd(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv);
 
-static int wdb_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 #if 0
 static int wdb_close_tcl();
 #endif
-static int wdb_decode_dbip(Tcl_Interp *interp, char *dbip_string, struct db_i **dbipp);
-static struct db_i *wdb_prep_dbip(Tcl_Interp *interp, char *filename);
+static int wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp);
+static struct db_i *wdb_prep_dbip(Tcl_Interp *interp, const char *filename);
 
 static int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_match_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -258,6 +256,9 @@ static int wdb_version_tcl(ClientData clientData, Tcl_Interp *interp, int argc, 
 static int wdb_binary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_bot_face_sort_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_bot_decimate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_move_arb_edge_tcl();
+static int wdb_move_arb_face_tcl();
+static int wdb_rotate_arb_face_tcl();
 
 static void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
@@ -278,6 +279,7 @@ void wdb_identitize(struct directory *dp, struct db_i *dbip, Tcl_Interp *interp)
 static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
 static struct directory ** wdb_dir_getspace(struct db_i *dbip, register int num_entries);
 static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
+HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 
 static struct bu_cmdtab wdb_cmds[] = {
@@ -305,6 +307,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"form",	wdb_form_tcl},
 	{"g",		wdb_group_tcl},
 	{"get",		wdb_get_tcl},
+	{"get_type",	wdb_get_type_tcl},
 	{"hide",	wdb_hide_tcl},
 	{"i",		wdb_instance_tcl},
 	{"keep",	wdb_keep_tcl},
@@ -318,6 +321,8 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"make_bb",	wdb_make_bb_tcl},
 	{"make_name",	wdb_make_name_tcl},
 	{"match",	wdb_match_tcl},
+	{"move_arb_edge",	wdb_move_arb_edge_tcl},
+	{"move_arb_face",	wdb_move_arb_face_tcl},
 	{"mv",		wdb_move_tcl},
 	{"mvall",	wdb_move_all_tcl},
 	{"nmg_collapse",	wdb_nmg_collapse_tcl},
@@ -331,6 +336,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"put",		wdb_put_tcl},
 	{"r",		wdb_region_tcl},
 	{"rm",		wdb_remove_tcl},
+	{"rotate_arb_face",	wdb_rotate_arb_face_tcl},
 	{"rt_gettrees",	wdb_rt_gettrees_tcl},
 	{"shells",	wdb_shells_tcl},
 	{"showmats",	wdb_showmats_tcl},
@@ -368,7 +374,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 int
 Wdb_Init(Tcl_Interp *interp)
 {
-	(void)Tcl_CreateCommand(interp, "wdb_open", wdb_open_tcl,
+	(void)Tcl_CreateCommand(interp, (const char *)"wdb_open", wdb_open_tcl,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	return TCL_OK;
@@ -416,7 +422,7 @@ wdb_deleteProc(ClientData clientData)
 int
 wdb_init_obj(Tcl_Interp		*interp,
 	     struct rt_wdb	*wdbp,	/* pointer to object */
-	     char		*oname)	/* object name */
+	     const char		*oname)	/* object name */
 {
 	if (wdbp == RT_WDB_NULL) {
 		Tcl_AppendResult(interp, "wdb_open ", oname, " failed", NULL);
@@ -500,7 +506,7 @@ static int
 wdb_open_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     const char	**argv)
 {
 	struct rt_wdb *wdbp;
 
@@ -578,7 +584,7 @@ Usage: wdb_open\n\
 }
 
 int
-wdb_decode_dbip(Tcl_Interp *interp, char *dbip_string, struct db_i **dbipp)
+wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp)
 {
 
 	*dbipp = (struct db_i *)atol(dbip_string);
@@ -592,8 +598,8 @@ wdb_decode_dbip(Tcl_Interp *interp, char *dbip_string, struct db_i **dbipp)
 /*
  * Open/Create the database and build the in memory directory.
  */
-struct db_i *
-wdb_prep_dbip(Tcl_Interp *interp, char *filename)
+static struct db_i *
+wdb_prep_dbip(Tcl_Interp *interp, const char *filename)
 {
 	struct db_i *dbip;
 
@@ -840,6 +846,179 @@ wdb_get_tcl(ClientData	clientData,
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
 	return wdb_get_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_get_type_cmd(struct rt_wdb	*wdbp,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char 		**argv)
+{
+    struct rt_db_internal	intern;
+    int type;
+
+    if (argc != 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias wdb_get_type %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (wdbp->dbip == 0) {
+	Tcl_AppendResult(interp,
+			 "db does not support lookup operations",
+			 (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (rt_tcl_import_from_path(interp, &intern, argv[1], wdbp) == TCL_ERROR)
+	return TCL_ERROR;
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
+	Tcl_AppendResult(interp, "unknown", (char *)NULL);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_OK;
+    }
+
+    switch (intern.idb_minor_type) {
+    case DB5_MINORTYPE_BRLCAD_TOR:
+	Tcl_AppendResult(interp, "tor", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_TGC:
+	Tcl_AppendResult(interp, "tgc", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_ELL:
+	Tcl_AppendResult(interp, "ell", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_ARB8:
+	type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
+
+	switch (type) {
+	case 4:
+	    Tcl_AppendResult(interp, "arb4", (char *)NULL);
+	    break;
+	case 5:
+	    Tcl_AppendResult(interp, "arb5", (char *)NULL);
+	    break;
+	case 6:
+	    Tcl_AppendResult(interp, "arb6", (char *)NULL);
+	    break;
+	case 7:
+	    Tcl_AppendResult(interp, "arb7", (char *)NULL);
+	    break;
+	case 8:
+	    Tcl_AppendResult(interp, "arb8", (char *)NULL);
+	    break;
+	default:
+	    Tcl_AppendResult(interp, "invalid", (char *)NULL);
+	    break;
+	}
+
+	break;
+    case DB5_MINORTYPE_BRLCAD_ARS:
+	Tcl_AppendResult(interp, "ars", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_HALF:
+	Tcl_AppendResult(interp, "half", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_REC:
+	Tcl_AppendResult(interp, "rec", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_POLY:
+	Tcl_AppendResult(interp, "poly", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_BSPLINE:
+	Tcl_AppendResult(interp, "spline", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_SPH:
+	Tcl_AppendResult(interp, "sph", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_NMG:
+	Tcl_AppendResult(interp, "nmg", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_EBM:
+	Tcl_AppendResult(interp, "ebm", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_VOL:
+	Tcl_AppendResult(interp, "vol", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_ARBN:
+	Tcl_AppendResult(interp, "arbn", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_PIPE:
+	Tcl_AppendResult(interp, "pipe", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_PARTICLE:
+	Tcl_AppendResult(interp, "part", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_RPC:
+	Tcl_AppendResult(interp, "rpc", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_RHC:
+	Tcl_AppendResult(interp, "rhc", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_EPA:
+	Tcl_AppendResult(interp, "epa", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_EHY:
+	Tcl_AppendResult(interp, "ehy", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_ETO:
+	Tcl_AppendResult(interp, "eto", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_GRIP:
+	Tcl_AppendResult(interp, "grip", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_JOINT:
+	Tcl_AppendResult(interp, "joint", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_HF:
+	Tcl_AppendResult(interp, "hf", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_DSP:
+	Tcl_AppendResult(interp, "dsp", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_SKETCH:
+	Tcl_AppendResult(interp, "sketch", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+	Tcl_AppendResult(interp, "extrude", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_SUBMODEL:
+	Tcl_AppendResult(interp, "submodel", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_CLINE:
+	Tcl_AppendResult(interp, "cline", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_BOT:
+	Tcl_AppendResult(interp, "bot", (char *)NULL);
+	break;
+    case DB5_MINORTYPE_BRLCAD_COMBINATION:
+	Tcl_AppendResult(interp, "comb", (char *)NULL);
+	break;
+    default:
+	Tcl_AppendResult(interp, "other", (char *)NULL);
+	break;
+    }
+
+    rt_db_free_internal(&intern, &rt_uniresource);
+    return TCL_OK;
+}
+
+int
+wdb_get_type_tcl(ClientData	clientData,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_get_type_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 int
@@ -6823,6 +7002,11 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 			} else if( Tcl_GetVar2Ex( interp, "tk_version", NULL, TCL_GLOBAL_ONLY ) ) {
 				struct bu_vls vls;
 
+/*
+ * We should give the user some credit here
+ * and not annoy them with a message dialog.
+*/
+#if 0
 				/* Tk is active, we can pop-up a window */
 				bu_vls_init( &vls );
 				bu_vls_printf( &vls, "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep );
@@ -6843,6 +7027,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 					}
 					(void)Tcl_ResetResult( interp );
 				}
+#endif
 			}
 			if( no_hide )
 				continue;
@@ -9272,4 +9457,515 @@ wdb_bot_decimate_tcl(ClientData	clientData,
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
 	return wdb_bot_decimate_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+
+int
+wdb_move_arb_edge_cmd(struct rt_wdb	*wdbp,
+		      Tcl_Interp	*interp,
+		      int		argc,
+		      char 		**argv)
+{
+    struct rt_db_internal intern;
+    struct rt_arb_internal *arb;
+    fastf_t planes[7][4];		/* ARBs defining plane equations */
+    int arb_type;
+    int edge;
+    int bad_edge_id = 0;
+    point_t pt;
+
+    if (argc != 4) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias wdb_move_arb_edge %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (wdbp->dbip == 0) {
+	Tcl_AppendResult(interp,
+			 "db does not support lookup operations",
+			 (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (rt_tcl_import_from_path(interp, &intern, argv[1], wdbp) == TCL_ERROR)
+	return TCL_ERROR;
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
+	Tcl_AppendResult(interp, "Object not an ARB", (char *)NULL);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[2], "%d", &edge) != 1) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad edge - %s", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+    edge -= 1;
+
+    if (sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad point - %s", argv[3]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    arb = (struct rt_arb_internal *)intern.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
+
+    /* check the arb type */
+    switch (arb_type) {
+    case ARB4:
+	if (edge < 0 || 4 < edge)
+	    bad_edge_id = 1;
+	break;
+    case ARB5:
+	if (edge < 0 || 8 < edge)
+	    bad_edge_id = 1;
+	break;
+    case ARB6:
+	if (edge < 0 || 9 < edge)
+	    bad_edge_id = 1;
+	break;
+    case ARB7:
+	if (edge < 0 || 11 < edge)
+	    bad_edge_id = 1;
+	break;
+    case ARB8:
+	if (edge < 0 || 11 < edge)
+	    bad_edge_id = 1;
+	break;
+    default:
+	Tcl_AppendResult(interp, "unrecognized arb type", (char *)NULL);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    /* check the edge id */
+    if (bad_edge_id) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad edge - %s", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    if (rt_arb_calc_planes(interp, arb, arb_type, planes, &wdbp->wdb_tol)) {
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    if (rt_arb_edit(interp, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    {
+	register int i;
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+
+	for (i = 0; i < 8; ++i) {
+	    bu_vls_printf(&vls, "V%d {%g %g %g} ",
+			  i + 1,
+			  arb->pt[i][X],
+			  arb->pt[i][Y],
+			  arb->pt[i][Z]);
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+    }
+
+    rt_db_free_internal(&intern, &rt_uniresource);
+    return TCL_OK;
+}
+
+/*
+ * Move an arb's edge so that it intersects the
+ * given point. The new vertices are returned
+ * in interp->result.
+ *
+ * Usage:
+ *        procname move_arb_face arb face pt
+ */
+static int
+wdb_move_arb_edge_tcl(ClientData	clientData,
+		      Tcl_Interp	*interp,
+		      int		argc,
+		      char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_move_arb_edge_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_move_arb_face_cmd(struct rt_wdb	*wdbp,
+		      Tcl_Interp	*interp,
+		      int		argc,
+		      char 		**argv)
+{
+    struct rt_db_internal intern;
+    struct rt_arb_internal *arb;
+    fastf_t planes[7][4];		/* ARBs defining plane equations */
+    int arb_type;
+    int face;
+    point_t pt;
+
+    if (argc != 4) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias wdb_move_arb_face %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (wdbp->dbip == 0) {
+	Tcl_AppendResult(interp,
+			 "db does not support lookup operations",
+			 (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (rt_tcl_import_from_path(interp, &intern, argv[1], wdbp) == TCL_ERROR)
+	return TCL_ERROR;
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
+	Tcl_AppendResult(interp, "Object not an ARB", (char *)NULL);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_OK;
+    }
+
+    if (sscanf(argv[2], "%d", &face) != 1) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad face - %s", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    /*XXX need better checking of the face */
+    face -= 1;
+    if (face < 0 || 5 < face) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad face - %s", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad point - %s", argv[3]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    arb = (struct rt_arb_internal *)intern.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
+
+    if (rt_arb_calc_planes(interp, arb, arb_type, planes, &wdbp->wdb_tol)) {
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    /* change D of planar equation */
+    planes[face][3] = VDOT(&planes[face][0], pt);
+
+    /* calculate new points for the arb */
+    (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
+
+    {
+	register int i;
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+
+	for (i = 0; i < 8; ++i) {
+	    bu_vls_printf(&vls, "V%d {%g %g %g} ",
+			  i + 1,
+			  arb->pt[i][X],
+			  arb->pt[i][Y],
+			  arb->pt[i][Z]);
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+    }
+
+    rt_db_free_internal(&intern, &rt_uniresource);
+    return TCL_OK;
+}
+
+/*
+ * Move an arb's face so that its plane intersects
+ * the given point. The new vertices are returned
+ * in interp->result.
+ *
+ * Usage:
+ *        procname move_arb_face arb face pt
+ */
+static int
+wdb_move_arb_face_tcl(ClientData	clientData,
+		      Tcl_Interp	*interp,
+		      int		argc,
+		      char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_move_arb_face_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+
+static short int rt_arb_vertices[5][24] = {
+	{ 1,2,3,0, 1,2,4,0, 2,3,4,0, 1,3,4,0, 0,0,0,0, 0,0,0,0 },	/* arb4 */
+	{ 1,2,3,4, 1,2,5,0, 2,3,5,0, 3,4,5,0, 1,4,5,0, 0,0,0,0 },	/* arb5 */
+	{ 1,2,3,4, 2,3,6,5, 1,5,6,4, 1,2,5,0, 3,4,6,0, 0,0,0,0 },	/* arb6 */
+	{ 1,2,3,4, 5,6,7,0, 1,4,5,0, 2,3,7,6, 1,2,6,5, 4,3,7,5 },	/* arb7 */
+	{ 1,2,3,4, 5,6,7,8, 1,5,8,4, 2,3,7,6, 1,2,6,5, 4,3,7,8 }	/* arb8 */
+};
+
+int
+wdb_rotate_arb_face_cmd(struct rt_wdb	*wdbp,
+			Tcl_Interp	*interp,
+			int		argc,
+			char 		**argv)
+{
+    struct rt_db_internal intern;
+    struct rt_arb_internal *arb;
+    fastf_t planes[7][4];		/* ARBs defining plane equations */
+    int arb_type;
+    int face;
+    int vi;
+    point_t pt;
+    register int i;
+    int pnt5;		/* special arb7 case */
+
+    if (argc != 5) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias wdb_move_arb_face %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (wdbp->dbip == 0) {
+	Tcl_AppendResult(interp,
+			 "db does not support lookup operations",
+			 (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (rt_tcl_import_from_path(interp, &intern, argv[1], wdbp) == TCL_ERROR)
+	return TCL_ERROR;
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
+	Tcl_AppendResult(interp, "Object not an ARB", (char *)NULL);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_OK;
+    }
+
+    if (sscanf(argv[2], "%d", &face) != 1) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad face - %s", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    /*XXX need better checking of the face */
+    face -= 1;
+    if (face < 0 || 5 < face) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad face - %s", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[3], "%d", &vi) != 1) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad vertex index - %s", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+
+    /*XXX need better checking of the vertex index */
+    vi -= 1;
+    if (vi < 0 || 7 < vi) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad vertex - %s", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "bad point - %s", argv[3]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    arb = (struct rt_arb_internal *)intern.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
+
+    if (rt_arb_calc_planes(interp, arb, arb_type, planes, &wdbp->wdb_tol)) {
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_ERROR;
+    }
+
+    /* check if point 5 is in the face */
+    pnt5 = 0;
+    for(i=0; i<4; i++)  {
+	if (rt_arb_vertices[arb_type-4][face*4+i]==5)
+	    pnt5=1;
+    }
+		
+    /* special case for arb7 */
+    if (arb_type == ARB7  && pnt5)
+	vi = 4;
+
+    {
+	/* Apply incremental changes */
+	vect_t tempvec;
+	vect_t work;
+	fastf_t	*plane;
+	mat_t rmat;
+
+	bn_mat_angles(rmat, pt[X], pt[Y], pt[Z]);
+
+	plane = &planes[face][0];
+	VMOVE(work, plane);
+	MAT4X3VEC(plane, rmat, work);
+
+	/* point notation of fixed vertex */
+	VMOVE(tempvec, arb->pt[vi]);
+
+	/* set D of planar equation to anchor at fixed vertex */
+	planes[face][3]=VDOT(plane, tempvec);	
+    }
+
+    /* calculate new points for the arb */
+    (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
+
+    {
+	register int i;
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+
+	for (i = 0; i < 8; ++i) {
+	    bu_vls_printf(&vls, "V%d {%g %g %g} ",
+			  i + 1,
+			  arb->pt[i][X],
+			  arb->pt[i][Y],
+			  arb->pt[i][Z]);
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+    }
+
+    rt_db_free_internal(&intern, &rt_uniresource);
+    return TCL_OK;
+}
+
+/*
+ * Rotate an arb's face to the given point. The new
+ * vertices are returned in interp->result.
+ *
+ * Usage:
+ *        procname rotate_arb_face arb face pt
+ */
+static int
+wdb_rotate_arb_face_tcl(ClientData	clientData,
+			Tcl_Interp	*interp,
+			int		argc,
+			char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_rotate_arb_face_cmd(wdbp, interp, argc-1, argv+1);
 }

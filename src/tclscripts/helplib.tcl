@@ -81,6 +81,7 @@ set helplib_data(wdb_expand)		{{expression}	{globs expression against database o
 set helplib_data(wdb_find)		{{<objects>} {find combinations that reference objects}}
 set helplib_data(wdb_form)		{{type} {returns form for objects of type "type"}}
 set helplib_data(wdb_get)		{{object ?attr?} {get object attributes}}
+set helplib_data(wdb_get_type)		{{object} {get the object's type}}
 set helplib_data(wdb_group)		{{gname object(s)} {create or append object(s) to a group}}
 set helplib_data(wdb_hide)              {{<objects>} {set the "hidden" flag for the specified objects so they do not appear in an "ls" command output}}
 set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
@@ -95,6 +96,9 @@ set helplib_data(wdb_lt)		{{object} {list object's tree as a tcl list of {operat
 set helplib_data(wdb_make_bb)		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
 set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occuring in the database}}
 set helplib_data(wdb_match)		{{expression}	{globs expression against database objects, does not return tokens that match nothing}}
+set helplib_data(wdb_move_arb_edge)	{{arb edge pt} {move an arb's edge through pt}}
+set helplib_data(wdb_move_arb_face)	{{arb face pt} {move an arb's face through pt}}
+set helplib_data(wdb_rotate_arb_face)	{{arb face pt} {rotate an arb's face through pt}}
 set helplib_data(wdb_move)		{{from to} {rename a database object}}
 set helplib_data(wdb_moveall)		{{from to} {rename all occurences of object}}
 set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
@@ -111,7 +115,6 @@ set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
 set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
-set helplib_data(wdb_smooth_bot)        {{[-t norm_tolerance_degrees] new_bot_name old_bot_name} {calculate vertex normals for BOT primitive}}
 set helplib_data(wdb_summary)		{{[p r g]}	{count/list primitives/regions/groups}}
 set helplib_data(wdb_title)		{{description} {Set/get database title}}
 set helplib_data(wdb_tol)		{{[abs|rel|norm|dist|perp [#]} {Set/get tessellation and calculation tolerances}}
@@ -169,7 +172,7 @@ set helplib_data(dgo_erase_all)		{{<objects>} {erase all occurrences of objects 
 set helplib_data(dgo_ev)		{{[-dfnstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
 set helplib_data(dgo_get_autoview)	{{}	{get view size and center such that all displayed solids would be in view}}
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}
-set helplib_data(dgo_how)		{{obj}	{returns how an object is being displayed}}
+set helplib_data(dgo_how)		{{[-b] obj}	{returns how an object is being displayed}}
 set helplib_data(dgo_illum)		{{[-n] obj} {illuminate/highlight obj}}
 set helplib_data(dgo_nirt)		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
 set helplib_data(dgo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}

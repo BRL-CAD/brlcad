@@ -730,7 +730,7 @@
 
     if {![$table isValidCol $j]} {
 	error "TableView::shiftColTracesLeft: bad column value - $j, must be in the range 1-$vcols"
-		}
+    }
 
     # now shift traces left
     for {set j1 [expr {$j - 1}]; set j2 $j} {$j1 < $vcols} {incr j1; incr j2} {
@@ -911,6 +911,7 @@
 	    } elseif {$vhidden < $args} {
 		set args $vhidden
 	    }
+
 	    scroll [expr {int($args * $drows) - $firstrow + 1}]
 	}
 	scroll {
@@ -1170,15 +1171,15 @@
 
 		    set evar($gi,$j) $val
 		    incr j
-	}
+		}
 
 #		grid forget $itk_component(sl$gi)
 	    } else {
-	set j 1
-	foreach val $row {
+		set j 1
+		foreach val $row {
 		    set evar($gi,$j) $val
-	    incr j
-	}
+		    incr j
+		}
 	    }
 
 	    # use the selectcolors to highlight the row
@@ -1418,7 +1419,7 @@
     for {set j 1} {$j <= $vcols} {incr j} {
 	grid $itk_component(e$i,$j) \
 	    -row $i -col $j -sticky nw
-	}
+    }
 }
 
 ::itcl::body TableView::packAll {} {
@@ -1446,7 +1447,7 @@
 }
 
 ::itcl::body TableView::buildColLabel {j} {
-	itk_component add cl$j {
+    itk_component add cl$j {
 	::label $itk_component(table).cl$j -text [lindex $labels $j]
     } {
 	keep -borderwidth
@@ -1463,22 +1464,22 @@
 }
 
 ::itcl::body TableView::buildEntry {i j} {
-	    itk_component add e$i,$j {
-		# activate the text variable
-		set evar($i,$j) ""
+    itk_component add e$i,$j {
+	# activate the text variable
+	set evar($i,$j) ""
 
 	::entry $itk_component(table).e$i,$j -textvariable [::itcl::scope evar($i,$j)]
-	    } {
-		keep -borderwidth -cursor -foreground -highlightcolor \
-		     -highlightthickness -insertbackground -insertborderwidth \
-		     -insertofftime -insertontime -insertwidth -justify \
-		     -relief -selectbackground -selectborderwidth \
-		     -selectforeground -show
+    } {
+	keep -borderwidth -cursor -foreground -highlightcolor \
+	    -highlightthickness -insertbackground -insertborderwidth \
+	    -insertofftime -insertontime -insertwidth -justify \
+	    -relief -selectbackground -selectborderwidth \
+	    -selectforeground -show
 
 	rename -font -rowfont rowfont Font
-		rename -highlightbackground -background background Background
-		rename -background -entrybackground entryBackground Background
-	    }
+	rename -highlightbackground -background background Background
+	rename -background -entrybackground entryBackground Background
+    }
 }
 
 ::itcl::body TableView::buildRow {i} {
@@ -1494,7 +1495,7 @@
 	rename -borderwidth -rlborderwidth rlborderwidth Rlborderwidth
 	#rename -width -rlwidth rlwidth Rlwidth
 	rename -font -rowfont rowfont Font
-	}
+    }
 
     # create separator label
     itk_component add sl$i {
@@ -1570,7 +1571,7 @@
     for {set j 1} {$j <= $vcols} {incr j} {
 	buildColLabel $j
 	grid $itk_component(cl$j) -row 0 -col $j -sticky nsew
-	}
+    }
 
     for {set i 1} {$i <= $vrows} {incr i} {
 	buildRow $i

@@ -19,7 +19,7 @@
 # Description -
 #	The Db class wraps LIBRT's database object.
 #
-class Db {
+::itcl::class Db {
     protected variable db ""
     public variable dbfile ""
 
@@ -44,6 +44,7 @@ class Db {
     public method form {args}
     public method g {args}
     public method get {args}
+    public method get_type {args}
     public method get_dbname {}
     public method hide {args}
     public method i {args}
@@ -58,6 +59,8 @@ class Db {
     public method make_bb {name args}
     public method make_name {args}
     public method match {args}
+    public method move_arb_edge {args}
+    public method move_arb_face {args}
     public method mv {args}
     public method mvall {args}
     public method nmg_collapse {args}
@@ -71,6 +74,7 @@ class Db {
     public method put {args}
     public method r {args}
     public method rm {args}
+    public method rotate_arb_face {args}
     public method rt_gettrees {args}
     public method shells {args}
     public method showmats {args}
@@ -98,283 +102,299 @@ class Db {
     private variable help
 }
 
-configbody Db::dbfile {
+::itcl::configbody Db::dbfile {
     Db::open $dbfile
 }
 
-body Db::constructor {filename} {
+::itcl::body Db::constructor {filename} {
     set dbfile $filename
     set db [subst $this]_db
     wdb_open $db $dbfile
     Db::help_init
 }
 
-body Db::destructor {} {
+::itcl::body Db::destructor {} {
     rename $db ""
     catch {delete object $help}
 }
 
-body Db::open {args} {
+::itcl::body Db::open {args} {
     set dbfile [eval $db open $args]
 }
 
-body Db::observer {args} {
+::itcl::body Db::observer {args} {
     eval $db observer $args
 }
 
-body Db::match {args} {
+::itcl::body Db::match {args} {
     eval $db match $args
 }
 
-body Db::get {args} {
+::itcl::body Db::get {args} {
     eval $db get $args
 }
 
-body Db::put {args} {
+::itcl::body Db::get_type {args} {
+    eval $db get_type $args
+}
+
+::itcl::body Db::put {args} {
     eval $db put $args
 }
 
-body Db::adjust {args} {
+::itcl::body Db::adjust {args} {
     eval $db adjust $args
 }
 
-body Db::form {args} {
+::itcl::body Db::form {args} {
     eval $db form $args
 }
 
-body Db::rt_gettrees {args} {
+::itcl::body Db::rt_gettrees {args} {
     eval $db rt_gettrees $args
 }
 
-body Db::shells {args} {
+::itcl::body Db::shells {args} {
     eval $db shells $args
 }
 
-body Db::showmats {args} {
+::itcl::body Db::showmats {args} {
     eval $db showmats $args
 }
 
-body Db::summary {args} {
+::itcl::body Db::summary {args} {
     eval $db summary $args
 }
 
-body Db::tops {args} {
+::itcl::body Db::tops {args} {
     eval $db tops $args
 }
 
-body Db::dump {args} {
+::itcl::body Db::dump {args} {
     eval $db dump $args
 }
 
-body Db::dbip {args} {
+::itcl::body Db::dbip {args} {
     eval $db dbip $args
 }
 
-body Db::l {args} {
+::itcl::body Db::l {args} {
     eval $db l $args
 }
 
-body Db::listeval {args} {
+::itcl::body Db::listeval {args} {
     eval $db listeval $args
 }
 
-body Db::ls {args} {
+::itcl::body Db::ls {args} {
     eval $db ls $args
 }
 
-body Db::lt {args} {
+::itcl::body Db::lt {args} {
     eval $db lt $args
 }
 
-body Db::pathlist {args} {
+::itcl::body Db::pathlist {args} {
     eval $db pathlist $args
 }
 
-body Db::paths {args} {
+::itcl::body Db::paths {args} {
     eval $db paths $args
 }
 
-body Db::expand {args} {
+::itcl::body Db::expand {args} {
     eval $db expand $args
 }
 
-body Db::kill {args} {
+::itcl::body Db::kill {args} {
     eval $db kill $args
 }
 
-body Db::killall {args} {
+::itcl::body Db::killall {args} {
     eval $db killall $args
 }
 
-body Db::killtree {args} {
+::itcl::body Db::killtree {args} {
     eval $db killtree $args
 }
 
-body Db::cp {args} {
+::itcl::body Db::cp {args} {
     eval $db cp $args
 }
 
-body Db::mv {args} {
+::itcl::body Db::move_arb_edge {args} {
+    eval $db move_arb_edge $args
+}
+
+::itcl::body Db::move_arb_face {args} {
+    eval $db move_arb_face $args
+}
+
+::itcl::body Db::mv {args} {
     eval $db mv $args
 }
 
-body Db::mvall {args} {
+::itcl::body Db::mvall {args} {
     eval $db mvall $args
 }
 
-body Db::nmg_collapse {args} {
+::itcl::body Db::nmg_collapse {args} {
     eval $db nmg_collapse $args
 }
 
-body Db::nmg_simplify {args} {
+::itcl::body Db::nmg_simplify {args} {
     eval $db nmg_simplify $args
 }
 
-body Db::concat {args} {
+::itcl::body Db::concat {args} {
     eval $db concat $args
 }
 
-body Db::copyeval {args} {
+::itcl::body Db::copyeval {args} {
     eval $db copyeval $args
 }
 
-body Db::dup {args} {
+::itcl::body Db::dup {args} {
     eval $db dup $args
 }
 
-body Db::g {args} {
+::itcl::body Db::g {args} {
     eval $db g $args
 }
 
-body Db::rm {args} {
+::itcl::body Db::rm {args} {
     eval $db rm $args
 }
 
-body Db::r {args} {
+::itcl::body Db::rotate_arb_face {args} {
+    eval $db rotate_arb_face $args
+}
+
+::itcl::body Db::r {args} {
     eval $db r $args
 }
 
-body Db::c {args} {
+::itcl::body Db::c {args} {
     eval $db c $args
 }
 
-body Db::comb {args} {
+::itcl::body Db::comb {args} {
     eval $db comb $args
 }
 
-body Db::find {args} {
+::itcl::body Db::find {args} {
     eval $db find $args
 }
 
-body Db::whichair {args} {
+::itcl::body Db::whichair {args} {
     eval $db whichair $args
 }
 
-body Db::whichid {args} {
+::itcl::body Db::whichid {args} {
     eval $db whichid $args
 }
 
-body Db::xpush {args} {
+::itcl::body Db::xpush {args} {
     eval $db xpush $args
 }
 
-body Db::title {args} {
+::itcl::body Db::title {args} {
     eval $db title $args
 }
 
-body Db::track {args} {
+::itcl::body Db::track {args} {
     eval $db track $args
 }
 
-body Db::tree {args} {
+::itcl::body Db::tree {args} {
     eval $db tree $args
 }
 
-body Db::unhide {args} {
+::itcl::body Db::unhide {args} {
     eval $db unhide $args
 }
 
-body Db::units {args} {
+::itcl::body Db::units {args} {
     eval $db units $args
 }
 
-body Db::color {args} {
+::itcl::body Db::color {args} {
     eval $db color $args
 }
 
-body Db::prcolor {args} {
+::itcl::body Db::prcolor {args} {
     eval $db prcolor $args
 }
 
-body Db::tol {args} {
+::itcl::body Db::tol {args} {
     eval $db tol $args
 }
 
-body Db::push {args} {
+::itcl::body Db::push {args} {
     eval $db push $args
 }
 
-body Db::whatid {args} {
+::itcl::body Db::whatid {args} {
     eval $db whatid $args
 }
 
-body Db::keep {args} {
+::itcl::body Db::keep {args} {
     eval $db keep $args
 }
 
-body Db::cat {args} {
+::itcl::body Db::cat {args} {
     eval $db cat $args
 }
 
-body Db::hide {args} {
+::itcl::body Db::hide {args} {
     eval $db hide $args
 }
 
-body Db::i {args} {
+::itcl::body Db::i {args} {
     eval $db i $args
 }
 
-body Db::get_dbname {} {
+::itcl::body Db::get_dbname {} {
     return $db
 }
 
-body Db::make_bb {name args} {
+::itcl::body Db::make_bb {name args} {
     eval $db make_bb $name $args
 }
 
-body Db::make_name {args} {
+::itcl::body Db::make_name {args} {
     eval $db make_name $args
 }
 
-body Db::attr {args} {
+::itcl::body Db::attr {args} {
     eval $db attr $args
 }
 
-body Db::version {args} {
+::itcl::body Db::version {args} {
     eval $db version $args
 }
 
-body Db::binary {args} {
+::itcl::body Db::binary {args} {
     eval $db binary $args
 }
 
-body Db::help {args} {
+::itcl::body Db::help {args} {
     return [eval $help get $args]
 }
 
-body Db::? {} {
+::itcl::body Db::? {} {
     return [$help ? 20 4]
 }
 
-body Db::apropos {key} {
+::itcl::body Db::apropos {key} {
     return [$help apropos $key]
 }
 
-body Db::getUserCmds {} {
+::itcl::body Db::getUserCmds {} {
     return [$help getCmds]
 }
 
-body Db::help_init {} {
+::itcl::body Db::help_init {} {
     set help [cadwidgets::Help #auto]
 
     $help add adjust	{{} {adjust database object parameters}}

@@ -22,15 +22,17 @@ struct bot_specific {
     
 };
 
-void rt_bot_prep_pieces(struct bot_specific	*bot,
-			struct soltab		*stp,
-			int			ntri,
-			const struct bn_tol	*tol);
+RT_EXPORT BU_EXTERN(void rt_bot_prep_pieces,
+		    (struct bot_specific	*bot,
+		     struct soltab		*stp,
+		     int			ntri,
+		     const struct bn_tol	*tol));
 
-extern int rt_botface(struct soltab		*stp,
-		      struct bot_specific	*bot,
-		      fastf_t			*ap,
-		      fastf_t			*bp,
-		      fastf_t			*cp,
-		      int			face_no,
-		      const struct bn_tol	*tol);
+RT_EXPORT BU_EXTERN(int rt_botface,
+		    (struct soltab		*stp,
+		     struct bot_specific	*bot,
+		     fastf_t			*ap,
+		     fastf_t			*bp,
+		     fastf_t			*cp,
+		     int			face_no,
+		     const struct bn_tol	*tol));

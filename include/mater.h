@@ -19,6 +19,20 @@
  *  $Header$
  */
 
+#include "bu.h"
+
+#ifndef RT_EXPORT
+#if defined(WIN32) && !defined(__CYGWIN__)
+#ifdef RT_EXPORT_DLL
+#define RT_EXPORT __declspec(dllexport)
+#else
+#define RT_EXPORT __declspec(dllimport)
+#endif
+#else
+#define RT_EXPORT
+#endif
+#endif
+
 struct mater {
 	short		mt_low;		/* bounds of region IDs, inclusive */
 	short		mt_high;
@@ -31,4 +45,6 @@ struct mater {
 #define MATER_NULL	((struct mater *)0)
 #define MATER_NO_ADDR	(-1L)		/* invalid mt_daddr */
 
-extern struct mater *rt_material_head;		/* defined in mater.c */
+RT_EXPORT extern struct mater *rt_material_head; /* defined in mater.c */
+RT_EXPORT BU_EXTERN(void rt_insert_color,
+		       (struct mater *newp));

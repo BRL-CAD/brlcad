@@ -79,23 +79,21 @@ struct dg_client_data {
 #define DGO_SHADED_MODE_BOTS 1
 #define DGO_SHADED_MODE_ALL 2
 #define DGO_BOOL_EVAL 3
-static union tree *dgo_bot_check_region_end();
-static union tree *dgo_bot_check_leaf();
+static union tree *
+dgo_bot_check_region_end(register struct db_tree_state *tsp,
+			 struct db_full_path	*pathp,
+			 union tree		*curtree,
+			 genptr_t		client_data);
+static union tree *
+dgo_bot_check_leaf(struct db_tree_state		*tsp,
+		   struct db_full_path		*pathp,
+		   struct rt_db_internal	*ip,
+		   genptr_t			client_data);
 
 int dgo_shaded_mode_cmd();
 static int dgo_how_tcl();
 static int dgo_set_transparency_tcl();
 static int dgo_shaded_mode_tcl();
-
-/* XXX this should be done else where? */
-int rt_pg_plot(struct bu_list *, struct rt_db_internal *,
-	       const struct rt_tess_tol *, const struct bn_tol *);
-int rt_pg_plot_poly(struct bu_list *, struct rt_db_internal *,
-		    const struct rt_tess_tol *, const struct bn_tol *);
-int rt_bot_plot(struct bu_list *, struct rt_db_internal *,
-		    const struct rt_tess_tol *, const struct bn_tol *);
-int rt_bot_plot_poly(struct bu_list *, struct rt_db_internal *,
-		    const struct rt_tess_tol *, const struct bn_tol *);
 
 #include "./debug.h"
 
@@ -830,18 +828,28 @@ dgo_how_cmd(struct dg_obj	*dgop,
 	int i;
 	struct directory **dpp;
 	register struct directory **tmp_dpp;
+	int both = 0;
 
 	bu_vls_init(&vls);
 
-	if (argc != 2) {
+	if (argc < 2 || 3 < argc) {
 		bu_vls_printf(&vls, "helplib_alias dgo_how %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
-	if ((dpp = dgo_build_dpp(dgop, interp, argv[1])) == NULL)
-	  goto good;
+	if (argc == 3 &&
+	    argv[1][0] == '-' &&
+	    argv[1][1] == 'b') {
+	    both = 1;
+
+	    if ((dpp = dgo_build_dpp(dgop, interp, argv[2])) == NULL)
+		goto good;
+	} else {
+	    if ((dpp = dgo_build_dpp(dgop, interp, argv[1])) == NULL)
+		goto good;
+	}
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	  for (i = 0, tmp_dpp = dpp;
@@ -855,7 +863,11 @@ dgo_how_cmd(struct dg_obj	*dgop,
 	    continue;
 
 	  /* found a match */
-	  bu_vls_printf(&vls, "%d", sp->s_dmode);
+	  if (both)
+	      bu_vls_printf(&vls, "%d %g", sp->s_dmode, sp->s_transparency);
+	  else
+	      bu_vls_printf(&vls, "%d", sp->s_dmode);
+
 	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	  goto good;
 	}
@@ -1948,8 +1960,8 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 {
 	register char **vp;
 	register int i;
-	int	pid; 	 
 #ifndef WIN32
+	int	pid; 	 
 	int	i_pipe[2];	/* object reads results for building vectors */
 	int	o_pipe[2];	/* object writes view parameters */
 	int	e_pipe[2];	/* object reads textual results */
@@ -1958,10 +1970,10 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	HANDLE	o_pipe[2],hSaveo,pipe_oDup;	/* MGED writes view parameters */
 	HANDLE	e_pipe[2],hSavee,pipe_eDup;	/* MGED reads textual results */
 	STARTUPINFO si = {0};
-    PROCESS_INFORMATION pi = {0};
-    SECURITY_ATTRIBUTES sa          = {0};
-    char line[2048];
-    char name[256];
+	PROCESS_INFORMATION pi = {0};
+	SECURITY_ATTRIBUTES sa          = {0};
+	char line[2048];
+	char name[256];
 #endif
 	FILE	*fp;
 	struct rtcheck *rtcp;
@@ -4119,10 +4131,10 @@ dgo_run_rt(struct dg_obj *dgop,
     char name[256];
 #endif
 	vect_t		eye_model;
-	int		pid; 	 
 	struct run_rt	*run_rtp;
-
 #ifndef WIN32
+	int		pid; 	 
+
 	(void)pipe(pipe_in);
 	(void)pipe(pipe_err);
 

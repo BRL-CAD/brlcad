@@ -74,7 +74,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	db_i *		success
  */
 struct db_i *
-db_open(const char *name, const char *mode)
+db_open(const char *name,
+	const char *mode)
 {
 	register struct db_i	*dbip = DBI_NULL;
 	register int		i;
@@ -111,8 +112,13 @@ db_open(const char *name, const char *mode)
 		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
 			goto fail;
 #else /* HAVE_UNIX_IO */
+#if defined(WIN32) && !defined(__CYGWIN__)
+		if( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
+			goto fail;
+#else
 		if( (dbip->dbi_fp = fopen( name, "r")) == NULL )
 			goto fail;
+#endif
 		dbip->dbi_fd = -1;
 #endif
 		dbip->dbi_read_only = 1;
@@ -127,8 +133,13 @@ db_open(const char *name, const char *mode)
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
 				goto fail;
 #		else /* HAVE_UNIX_IO */
+#if defined(WIN32) && !defined(__CYGWIN__)
+			if( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
+				goto fail;
+#else
 			if( (dbip->dbi_fp = fopen( name, "r+w")) == NULL )
 				goto fail;
+#endif
 			dbip->dbi_fd = -1;
 #		endif
 		dbip->dbi_read_only = 0;
@@ -187,17 +198,25 @@ fail:
  *	db_i *		success
  */
 struct db_i *
-db_create( const char *name, int version )
+db_create(const char *name,
+	  int	     version)
 {
 	FILE	*fp;
 	struct db_i	*dbip;
 
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_create(%s, %d)\n", name, version );
 
+#if defined(WIN32) && !defined(__CYGWIN__)
+	if( (fp = fopen( name, "w+b" )) == NULL )  {
+		perror(name);
+		return(DBI_NULL);
+	}
+#else
 	if( (fp = fopen( name, "w" )) == NULL )  {
 		perror(name);
 		return(DBI_NULL);
 	}
+#endif
 
 	switch( version )  {
 	default:
@@ -407,13 +426,13 @@ db_sync(struct db_i *dbip)
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-#  ifdef WIN32
+#ifdef WIN32
 	fflush(dbip->dbi_fp);
-#  elif defined(HAVE_UNIX_IO)
+#elif defined(HAVE_UNIX_IO)
 	fsync(dbip->dbi_fd);
-#  else
+#else
 	sync();
-#  endif /* WIN32 */
+#endif /* WIN32 */
 
 	bu_semaphore_release(BU_SEM_SYSCALL);
 }

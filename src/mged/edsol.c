@@ -8685,6 +8685,7 @@ label_edited_solid(
 	pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
+#ifndef HIDE_MGEDS_ARB_ROUTINES
 /* -------------------------------- */
 /*
  *			R T _ A R B _ C A L C _ P L A N E S
@@ -8731,6 +8732,7 @@ rt_arb_calc_planes(
 	}
 	return 0;
 }
+#endif
 
 /* -------------------------------- */
 void

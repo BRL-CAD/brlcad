@@ -86,12 +86,11 @@ bu_open_mapped_file(const char *name, const char *appl)
 	struct bu_mapped_file	*mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_UNIX_IO
 	struct stat		sb;
-#endif
-	int			ret;
 	int			fd;	/* unix file descriptor */
-#ifndef HAVE_UNIX_IO
+#else
 	FILE			*fp;	/* stdio file pointer */
 #endif
+	int			ret;
 
 	if( bu_debug&BU_DEBUG_MAPPED_FILE )
 		bu_log("bu_open_mapped_file(%s, %s) sbrk=x%lx\n",
@@ -223,7 +222,11 @@ dont_reuse:
 
 	/* Read it in with stdio, with no clue how big it is */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
+#if defined(WIN32) && !defined(__CYGWIN__)
+	fp = fopen( name, "rb");
+#else
 	fp = fopen( name, "r");
+#endif
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	if( fp == NULL )  {

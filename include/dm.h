@@ -1,6 +1,20 @@
 #ifndef SEEN_DM_H
 #define SEEN_DM_H
 
+#if defined(WIN32) && !defined(__CYGWIN__)
+#ifdef DM_EXPORT_DLL
+#define DM_EXPORT __declspec(dllexport)
+#else
+#define DM_EXPORT __declspec(dllimport)
+#endif
+#else
+#define DM_EXPORT
+#endif
+
+#ifndef SEEN_BU_H
+#include <bu.h>
+#endif
+
 #include "fbserv_obj.h"
 
 #define DM_NULL (struct dm *)NULL
@@ -180,7 +194,7 @@ struct dm {
   int dm_perspective;		/* !0 means perspective on */
   int dm_light;			/* !0 means lighting on */
   int dm_transparency;		/* !0 means transparency on */
-  int dm_depthMask;		/* !0 means depth mask is writable */
+  int dm_depthMask;		/* !0 means depth buffer is writable */
   int dm_zbuffer;		/* !0 means zbuffer on */
   int dm_zclip;			/* !0 means zclipping */
   int dm_clearBufferAfter;	/* 1 means clear back buffer after drawing and swap */
@@ -228,53 +242,84 @@ struct dm_obj {
 #define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
 #define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
 
-extern int Dm_Init();
-extern struct dm *dm_open();
-extern int dm_share_dlist();
-extern fastf_t dm_Xx2Normal();
-extern int dm_Normal2Xx();
-extern fastf_t dm_Xy2Normal();
-extern int dm_Normal2Xy();
-extern void dm_fogHint();
-extern int dm_processOptions();
-extern int dm_limit();
-extern int dm_unlimit();
-extern fastf_t dm_wrap();
-extern void Nu_void();
-extern int Nu_int0();
-extern unsigned Nu_unsign();
-#if 0
-extern void dm_configureWindowShape();
-extern void dm_zbuffer();
-extern void dm_lighting();
-extern Tcl_Interp *interp;   /* This must be defined by the application */
-#endif
+DM_EXPORT BU_EXTERN(int Dm_Init,
+		    ());
+DM_EXPORT BU_EXTERN(struct dm *dm_open,
+		    (Tcl_Interp *interp,
+		     int type,
+		     int argc,
+		     char *argv[]));
+DM_EXPORT BU_EXTERN(int dm_share_dlist,
+		    (struct dm *dmp1,
+		     struct dm *dmp2));
+DM_EXPORT BU_EXTERN(fastf_t dm_Xx2Normal,
+		    (struct dm *dmp,
+		     register int x));
+DM_EXPORT BU_EXTERN(int dm_Normal2Xx,
+		    (struct dm *dmp,
+		     register fastf_t f));
+DM_EXPORT BU_EXTERN(fastf_t dm_Xy2Normal,
+		    (struct dm *dmp,
+		     register int y,
+		     int use_aspect));
+DM_EXPORT BU_EXTERN(int dm_Normal2Xy,
+		    (struct dm *dmp,
+		     register fastf_t f,
+		     int use_aspect));
+DM_EXPORT BU_EXTERN(void dm_fogHint,
+		    (struct dm *dmp,
+		     int fastfog));
+DM_EXPORT BU_EXTERN(int dm_processOptions,
+		    ());
+DM_EXPORT BU_EXTERN(int dm_limit,
+		    (int i));
+DM_EXPORT BU_EXTERN(int dm_unlimit,
+		    (int i));
+DM_EXPORT BU_EXTERN(fastf_t dm_wrap,
+		    (fastf_t f));
+DM_EXPORT BU_EXTERN(void Nu_void,
+		    ());
+DM_EXPORT BU_EXTERN(struct dm *Nu_open,
+		    ());
+DM_EXPORT BU_EXTERN(int Nu_int0,
+		    ());
+DM_EXPORT BU_EXTERN(unsigned Nu_unsign,
+		    ());
 
 /* vers.c (created by libdm/Cakefile) */
-extern char dm_version[];
+DM_EXPORT extern char dm_version[];
 
 /* clip.c */
-extern int clip(vect_t, vect_t, vect_t, vect_t);
-extern int vclip(vect_t, vect_t, register fastf_t *, register fastf_t *);
+DM_EXPORT BU_EXTERN(int clip,
+		    (vect_t,
+		     vect_t,
+		     vect_t,
+		     vect_t));
+DM_EXPORT BU_EXTERN(int vclip,
+		    (vect_t,
+		     vect_t,
+		     register fastf_t *,
+		     register fastf_t *));
 
 /* axes.c */
-extern void dmo_drawAxes_cmd(struct dm *dmp,
-			     fastf_t viewSize,
-			     mat_t rmat,
-			     point_t axesPos,
-			     fastf_t axesSize,
-			     int *axesColor,
-			     int *labelColor,
-			     int lineWidth,
-			     int posOnly,
-			     int threeColor,
-			     int tickEnable,
-			     int tickLen,
-			     int majorTickLen,
-			     fastf_t tickInterval,
-			     int ticksPerMajor,
-			     int *tickColor,
-			     int *majorTickColor,
-			     int tickThreshold);
+DM_EXPORT BU_EXTERN(void dmo_drawAxes_cmd,
+		    (struct dm *dmp,
+		     fastf_t viewSize,
+		     mat_t rmat,
+		     point_t axesPos,
+		     fastf_t axesSize,
+		     int *axesColor,
+		     int *labelColor,
+		     int lineWidth,
+		     int posOnly,
+		     int threeColor,
+		     int tickEnable,
+		     int tickLen,
+		     int majorTickLen,
+		     fastf_t tickInterval,
+		     int ticksPerMajor,
+		     int *tickColor,
+		     int *majorTickColor,
+		     int tickThreshold));
 
 #endif /* SEEN_DM_H */

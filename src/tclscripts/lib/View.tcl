@@ -19,7 +19,7 @@
 # Description -
 #	The View class wraps LIBRT's view object.
 #
-class View {
+::itcl::class View {
     public variable center {0 0 0}
     public variable ae "0 90 0"
     public variable perspective_angle 0
@@ -77,35 +77,35 @@ class View {
     private variable help
 }
 
-configbody View::center {
+::itcl::configbody View::center {
     eval View::center $center
 }
 
-configbody View::ae {
+::itcl::configbody View::ae {
     eval View::ae $ae
 }
 
-configbody View::perspective_angle {
+::itcl::configbody View::perspective_angle {
     View::perspective $perspective_angle
 }
 
-configbody View::coord {
+::itcl::configbody View::coord {
     View::coord $coord
 }
 
-configbody View::rotate_about {
+::itcl::configbody View::rotate_about {
     View::rotate_about $rotate_about
 }
 
-configbody View::keypoint {
+::itcl::configbody View::keypoint {
     eval View::keypoint $keypoint
 }
 
-configbody View::units {
+::itcl::configbody View::units {
     View::units $units
 }
 
-body View::constructor {args} {
+::itcl::body View::constructor {args} {
     # first create view object
     set view [v_open $this\_view]
 
@@ -115,16 +115,16 @@ body View::constructor {args} {
     View::init
 }
 
-body View::destructor {} {
+::itcl::body View::destructor {} {
     rename $view ""
     catch {delete object $help}
 }
 
-body View::get_viewname {} {
+::itcl::body View::get_viewname {} {
     return $view
 }
 
-body View::ae {args} {
+::itcl::body View::ae {args} {
     # get ae
     if {$args == ""} {
 	return $ae
@@ -136,7 +136,7 @@ body View::ae {args} {
     return
 }
 
-body View::arot {args} {
+::itcl::body View::arot {args} {
     eval $view arot $args
 
     set ae [$view ae]
@@ -144,14 +144,14 @@ body View::arot {args} {
     return
 }
 
-body View::base2local {} {
+::itcl::body View::base2local {} {
     $view base2local
 }
 
-body View::center {args} {
+::itcl::body View::center {args} {
     # get center
     if {$args == ""} {
-      return [$view center]
+	return [$view center]
     }
 
     # set center
@@ -160,7 +160,7 @@ body View::center {args} {
     return
 }
 
-body View::coord {args} {
+::itcl::body View::coord {args} {
     # get coord
     if {$args == ""} {
 	return $coord
@@ -171,7 +171,7 @@ body View::coord {args} {
     return
 }
 
-body View::eye {args} {
+::itcl::body View::eye {args} {
     # get eye
     if {$args == ""} {
 	return [$view eye]
@@ -184,7 +184,7 @@ body View::eye {args} {
     return
 }
 
-body View::eye_pos {args} {
+::itcl::body View::eye_pos {args} {
     eval $view eye_pos $args
 
     set ae [$view ae]
@@ -192,14 +192,14 @@ body View::eye_pos {args} {
     return
 }
 
-body View::invSize {args} {
+::itcl::body View::invSize {args} {
     eval $view invSize $args
 }
 
-body View::keypoint {args} {
+::itcl::body View::keypoint {args} {
     # get keypoint
     if {$args == ""} {
-        return [list [$view keypoint]]
+	return [list [$view keypoint]]
     }
 
     eval $view keypoint $args
@@ -207,11 +207,11 @@ body View::keypoint {args} {
     return
 }
 
-body View::local2base {} {
+::itcl::body View::local2base {} {
     $view local2base
 }
 
-body View::lookat {args} {
+::itcl::body View::lookat {args} {
     eval $view lookat $args
 
     set ae [$view ae]
@@ -219,11 +219,11 @@ body View::lookat {args} {
     return
 }
 
-body View::model2view {args} {
+::itcl::body View::model2view {args} {
     eval $view model2view $args
 }
 
-body View::mrot {args} {
+::itcl::body View::mrot {args} {
     eval $view mrot $args
 
     set ae [$view ae]
@@ -231,11 +231,11 @@ body View::mrot {args} {
     return
 }
 
-body View::observer {args} {
+::itcl::body View::observer {args} {
     eval $view observer $args
 }
 
-body View::orientation {args} {
+::itcl::body View::orientation {args} {
     eval $view orientation $args
 
     set ae [$view ae]
@@ -243,7 +243,7 @@ body View::orientation {args} {
     return
 }
 
-body View::perspective {args} {
+::itcl::body View::perspective {args} {
     # get perspective angle
     if {$args == ""} {
 	return $perspective_angle
@@ -254,15 +254,15 @@ body View::perspective {args} {
     return
 }
 
-body View::pmat {args} {
+::itcl::body View::pmat {args} {
     eval $view pmat $args
 }
 
-body View::pmodel2view {args} {
+::itcl::body View::pmodel2view {args} {
     eval $view pmodel2view $args
 }
 
-body View::pov {args} {
+::itcl::body View::pov {args} {
     eval $view pov $args
 
     set ae [$view ae]
@@ -270,7 +270,7 @@ body View::pov {args} {
     return
 }
 
-body View::rmat {args} {
+::itcl::body View::rmat {args} {
     # get rotation matrix
     if {$args == ""} {
 	return [$view rmat]
@@ -283,7 +283,7 @@ body View::rmat {args} {
     return
 }
 
-body View::rot {args} {
+::itcl::body View::rot {args} {
     # rotate view
     eval $view rot $args
 
@@ -292,7 +292,7 @@ body View::rot {args} {
     return
 }
 
-body View::rotate_about {args} {
+::itcl::body View::rotate_about {args} {
     # get rotate_about
     if {$args == ""} {
 	return $rotate_about
@@ -303,13 +303,13 @@ body View::rotate_about {args} {
     return
 }
 
-body View::sca {args} {
+::itcl::body View::sca {args} {
     eval $view sca $args
     set size [$view size]
     return
 }
 
-body View::setview {args} {
+::itcl::body View::setview {args} {
     eval $view setview $args
 
     set ae [$view ae]
@@ -317,12 +317,12 @@ body View::setview {args} {
     return
 }
 
-body View::size {args} {
-    # eval $view size $args
+::itcl::body View::size {args} {
+#    eval $view size $args
     return [eval $view size $args]
 }
 
-body View::slew {args} {
+::itcl::body View::slew {args} {
     # slew the view
     eval $view slew $args
 
@@ -330,7 +330,7 @@ body View::slew {args} {
     return
 }
 
-body View::tra {args} {
+::itcl::body View::tra {args} {
     # translate view
     eval $view tra $args
 
@@ -338,7 +338,7 @@ body View::tra {args} {
     return
 }
 
-body View::units {args} {
+::itcl::body View::units {args} {
     # get units
     if {$args == ""} {
 	return $units
@@ -349,11 +349,11 @@ body View::units {args} {
     set units $args
 }
 
-body View::view2model {args} {
+::itcl::body View::view2model {args} {
     eval $view view2model
 }
 
-body View::vrot {args} {
+::itcl::body View::vrot {args} {
     # rotate view
     eval $view rot -v $args
 
@@ -362,7 +362,7 @@ body View::vrot {args} {
     return
 }
 
-body View::vtra {args} {
+::itcl::body View::vtra {args} {
     # translate view
     eval $view tra -v $args
 
@@ -370,30 +370,30 @@ body View::vtra {args} {
     return
 }
 
-body View::zoom {args} {
+::itcl::body View::zoom {args} {
     eval $view zoom $args
 
     set size [$view size]
     return
 }
 
-body View::? {} {
+::itcl::body View::? {} {
     return [$help ? 20 4]
 }
 
-body View::apropos {key} {
+::itcl::body View::apropos {key} {
     return [$help apropos $key]
 }
 
-body View::getUserCmds {} {
+::itcl::body View::getUserCmds {} {
     return [$help getCmds]
 }
 
-body View::help {args} {
+::itcl::body View::help {args} {
     return [eval $help get $args]
 }
 
-body View::init {} {
+::itcl::body View::init {} {
     eval View::center $center
     eval View::ae $ae
     View::perspective $perspective_angle
@@ -404,7 +404,7 @@ body View::init {} {
     View::help_init
 }
 
-body View::help_init {} {
+::itcl::body View::help_init {} {
     set help [cadwidgets::Help #auto]
 
     $help add ae		{{["az el tw"]} {set/get the azimuth, elevation and twist}}

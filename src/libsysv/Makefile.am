@@ -5,6 +5,7 @@ lib_LTLIBRARIES = libsysv.la
 libsysv_la_SOURCES = \
 	redata.c \
 	regex.c \
+	tcl.c \
 	vers.c
 
 libsysv_la_LDFLAGS = -version-info 19:1

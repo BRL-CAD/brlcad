@@ -133,6 +133,15 @@ const struct bu_structparse rt_arb_parse[] = {
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
+/* face definitions for each arb type */
+const int rt_arb_faces[5][24] = {
+    {0,1,2,3, 0,1,4,5, 1,2,4,5, 0,2,4,5, -1,-1,-1,-1, -1,-1,-1,-1},	/* ARB4 */
+    {0,1,2,3, 4,0,1,5, 4,1,2,5, 4,2,3,5, 4,3,0,5, -1,-1,-1,-1},		/* ARB5 */
+    {0,1,2,3, 1,2,4,6, 0,4,6,3, 4,1,0,5, 6,2,3,7, -1,-1,-1,-1},		/* ARB6 */
+    {0,1,2,3, 4,5,6,7, 0,3,4,7, 1,2,6,5, 0,1,5,4, 3,2,6,4},		/* ARB7 */
+    {0,1,2,3, 4,5,6,7, 0,4,7,3, 1,2,6,5, 0,1,5,4, 3,2,6,7},		/* ARB8 */
+};
+
 /*  rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid() 
  *  stolen from mged/arbs.c */
 #define NO	0
@@ -1752,4 +1761,469 @@ rt_arb_3face_intersect(
 	i3 = rt_arb_planes[j][loc+2];
 
 	return bn_mkpoint_3planes( point, planes[i1], planes[i2], planes[i3] );
+}
+
+
+/*
+ *			R T _ A R B _ C A L C _ P L A N E S
+ *
+ *	Calculate the plane (face) equations for an arb
+ *	output previously went to es_peqn[i].
+ *
+ *  Returns -
+ *	-1	Failure
+ *	 0	OK
+ *
+ *  Note - 
+ *	 This function migrated from mged/edsol.c.
+ */
+int
+rt_arb_calc_planes(Tcl_Interp			*interp,
+		   struct rt_arb_internal	*arb,
+		   int				type,
+		   plane_t			planes[6],
+		   const struct bn_tol		*tol)
+{
+    register int i, p1, p2, p3;
+
+    RT_ARB_CK_MAGIC(arb);
+    BN_CK_TOL(tol);
+
+    type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
+
+    for (i=0; i<6; i++) {
+	if(rt_arb_faces[type][i*4] == -1)
+	    break;	/* faces are done */
+
+	p1 = rt_arb_faces[type][i*4];
+	p2 = rt_arb_faces[type][i*4+1];
+	p3 = rt_arb_faces[type][i*4+2];
+
+	if (bn_mk_plane_3pts(planes[i],
+			     arb->pt[p1],
+			     arb->pt[p2],
+			     arb->pt[p3],
+			     tol) < 0) {
+	    struct bu_vls tmp_vls;
+
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "%d %d%d%d%d (bad face)\n",
+			  i+1, p1+1, p2+1, p3+1, rt_arb_faces[type][i*4+3]+1);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    return -1;
+	}
+    }
+
+    return 0;
+}
+
+
+/*  MV_EDGE:
+ *	Moves an arb edge (end1,end2) with bounding
+ *	planes bp1 and bp2 through point "thru".
+ *	The edge has (non-unit) slope "dir".
+ *	Note that the fact that the normals here point in rather than
+ *	out makes no difference for computing the correct intercepts.
+ *	After the intercepts are found, they should be checked against
+ *	the other faces to make sure that they are always "inside".
+ */
+int
+rt_arb_move_edge(Tcl_Interp		*interp,
+		 struct rt_arb_internal	*arb,
+		 vect_t			thru,
+		 int			bp1, 
+		 int			bp2, 
+		 int			end1,
+		 int			end2,
+		 const vect_t		dir,
+		 plane_t		planes[6],
+		 const struct bn_tol	*tol)
+{
+    fastf_t	t1, t2;
+
+    if (bn_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
+	bn_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
+	Tcl_AppendResult(interp, "edge (direction) parallel to face normal\n", (char *)NULL);
+	return (1);
+    }
+
+    RT_ARB_CK_MAGIC(arb);
+
+    VJOIN1(arb->pt[end1], thru, t1, dir);
+    VJOIN1(arb->pt[end2], thru, t2, dir);
+
+    return(0);
+}
+
+/*
+ *  			E D I T A R B
+ *  
+ *  An ARB edge is moved by finding the direction of
+ *  the line containing the edge and the 2 "bounding"
+ *  planes.  The new edge is found by intersecting the
+ *  new line location with the bounding planes.  The
+ *  two "new" planes thus defined are calculated and the
+ *  affected points are calculated by intersecting planes.
+ *  This keeps ALL faces planar.
+ *
+ *  Note -
+ *	 This code came from mged/edarb.c (written mostly by Keith Applin)
+ *	 and was modified to live here.
+ *
+ */
+
+/*  The storage for the "specific" ARB types is :
+ *
+ *	ARB4	0 1 2 0 3 3 3 3
+ *	ARB5	0 1 2 3 4 4 4 4
+ *	ARB6	0 1 2 3 4 4 5 5
+ *	ARB7	0 1 2 3 4 5 6 4
+ *	ARB8	0 1 2 3 4 5 6 7
+ */
+
+/*
+ *	ARB6	0 1 2 3 4 5 5 4
+ */
+
+/* Another summary of how the vertices of ARBs are stored:
+ *
+ * Vertices:	1	2	3	4	5	6	7	8
+ * Location----------------------------------------------------------------
+ *	ARB8	0	1	2	3	4	5	6	7
+ *	ARB7	0	1	2	3	4,7	5	6
+ *	ARB6	0	1	2	3	4,5	6,7
+ * 	ARB5	0	1	2	3	4,5,6,7
+ *	ARB4	0,3	1	2	4,5,6,7
+ */
+
+/* The following arb editing arrays generally contain the following:
+ *
+ *	location 	comments
+ *------------------------------------------------------------------------
+ *	0,1		edge end points
+ * 	2,3		bounding planes 1 and 2
+ *	4, 5,6,7	plane 1 to recalculate, using next 3 points
+ *	8, 9,10,11	plane 2 to recalculate, using next 3 points
+ *	12, 13,14,15	plane 3 to recalculate, using next 3 points
+ *	16,17		points (vertices) to recalculate
+ *
+ *
+ * Each line is repeated for each edge (or point) to move
+*/
+
+/* edit array for arb8's */
+#if 1
+short earb8[12][18] = {
+#else
+static short earb8[12][18] = {
+#endif
+	{0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
+	{1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
+	{2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,7},	/* edge 34 */
+	{0,3, 4,5, 0,0,1,3, 2,0,3,4, -1,0,0,0, 2,7},	/* edge 14 */
+	{0,4, 0,1, 2,0,4,3, 4,0,1,4, -1,0,0,0, 7,5},	/* edge 15 */
+	{1,5, 0,1, 4,0,1,5, 3,1,2,5, -1,0,0,0, 4,6},	/* edge 26 */
+	{4,5, 2,3, 4,0,5,4, 1,4,5,6, -1,0,0,0, 1,7},	/* edge 56 */
+	{5,6, 4,5, 3,1,5,6, 1,4,5,6, -1,0,0,0, 2,7},	/* edge 67 */
+	{6,7, 3,2, 5,2,7,6, 1,4,6,7, -1,0,0,0, 3,4},	/* edge 78 */
+	{4,7, 4,5, 2,0,7,4, 1,4,5,7, -1,0,0,0, 3,6},	/* edge 58 */
+	{2,6, 0,1, 3,1,2,6, 5,2,3,6, -1,0,0,0, 5,7},	/* edge 37 */
+	{3,7, 0,1, 2,0,3,7, 5,2,3,7, -1,0,0,0, 4,6},	/* edge 48 */
+};
+
+/* edit array for arb7's */
+#if 1
+short earb7[12][18] = {
+#else
+static short earb7[12][18] = {
+#endif
+	{0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
+	{1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
+	{2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,4},	/* edge 34 */
+	{0,3, 4,5, 0,0,1,3, 2,0,3,4, -1,0,0,0, 2,-1},	/* edge 41 */
+	{0,4, 0,5, 4,0,5,4, 2,0,3,4, 1,4,5,6, 1,-1},	/* edge 15 */
+	{1,5, 0,1, 4,0,1,5, 3,1,2,5, -1,0,0,0, 4,6},	/* edge 26 */
+	{4,5, 5,3, 2,0,3,4, 4,0,5,4, 1,4,5,6, 1,-1},	/* edge 56 */
+	{5,6, 4,5, 3,1,6,5, 1,4,5,6, -1,0,0,0, 2, -1},	/* edge 67 */
+	{2,6, 0,1, 5,2,3,6, 3,1,2,6, -1,0,0,0, 4,5},	/* edge 37 */
+	{4,6, 4,3, 2,0,3,4, 5,3,4,6, 1,4,5,6, 2,-1},	/* edge 57 */
+	{3,4, 0,1, 4,0,1,4, 2,0,3,4, 5,2,3,4, 5,6},	/* edge 45 */
+	{-1,-1, -1,-1, 5,2,3,4, 4,0,1,4, 8,2,1,-1, 6,5},	/* point 5 */
+};
+
+/* edit array for arb6's */
+#if 1
+short earb6[10][18] = {
+#else
+static short earb6[10][18] = {
+#endif
+	{0,1, 2,1, 3,0,1,4, 0,0,1,2, -1,0,0,0, 3,-1},	/* edge 12 */
+	{1,2, 3,4, 1,1,2,5, 0,0,1,2, -1,0,0,0, 3,4},	/* edge 23 */
+	{2,3, 1,2, 4,2,3,5, 0,0,2,3, -1,0,0,0, 1,-1},	/* edge 34 */
+	{0,3, 3,4, 2,0,3,5, 0,0,1,3, -1,0,0,0, 4,2},	/* edge 14 */
+	{0,4, 0,1, 3,0,1,4, 2,0,3,4, -1,0,0,0, 6,-1},	/* edge 15 */
+	{1,4, 0,2, 3,0,1,4, 1,1,2,4, -1,0,0,0, 6,-1},	/* edge 25 */
+	{2,6, 0,2, 4,6,2,3, 1,1,2,6, -1,0,0,0, 4,-1},	/* edge 36 */
+	{3,6, 0,1, 4,6,2,3, 2,0,3,6, -1,0,0,0, 4,-1},	/* edge 46 */
+	{-1,-1, -1,-1, 2,0,3,4, 1,1,2,4, 3,0,1,4, 6,-1},/* point 5 */
+	{-1,-1, -1,-1, 2,0,3,6, 1,1,2,6, 4,2,3,6, 4,-1},/* point 6 */
+};
+
+/* edit array for arb5's */
+#if 1
+short earb5[9][18] = {
+#else
+static short earb5[9][18] = {
+#endif
+	{0,1, 4,2, 0,0,1,2, 1,0,1,4, -1,0,0,0, 3,-1},	/* edge 12 */
+	{1,2, 1,3, 0,0,1,2, 2,1,2,4, -1,0,0,0, 3,-1},	/* edge 23 */
+	{2,3, 2,4, 0,0,2,3, 3,2,3,4, -1,0,0,0, 1,-1},	/* edge 34 */
+	{0,3, 1,3, 0,0,1,3, 4,0,3,4, -1,0,0,0, 2,-1},	/* edge 14 */
+	{0,4, 0,2, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 15 */
+	{1,4, 0,3, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 25 */
+	{2,4, 0,4, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1}, 	/* edge 35 */
+	{3,4, 0,1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 45 */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 5 */
+};
+
+/* edit array for arb4's */
+#if 1
+short earb4[5][18] = {
+#else
+static short earb4[5][18] = {
+#endif
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 1 */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 2 */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 3 */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* dummy */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 4 */
+};
+
+#define RT_ARB_EDIT_EDGE 0
+#define RT_ARB_EDIT_POINT 1
+#define RT_ARB7_MOVE_POINT_5 11
+#define RT_ARB6_MOVE_POINT_5 8
+#define RT_ARB6_MOVE_POINT_6 9
+#define RT_ARB5_MOVE_POINT_5 8
+#define RT_ARB4_MOVE_POINT_4 3
+
+int
+rt_arb_edit(Tcl_Interp			*interp,
+	    struct rt_arb_internal	*arb,
+	    int				arb_type,
+	    int				edit_type,
+	    vect_t			pos_model,
+	    plane_t			planes[6],
+	    const struct bn_tol		*tol)
+{
+    int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
+    short *edptr;		/* pointer to arb edit array */
+    short *final;		/* location of points to redo */
+    int i, *iptr;
+    int edit_class = RT_ARB_EDIT_EDGE;
+
+    RT_ARB_CK_MAGIC(arb);
+
+    /* set the pointer */
+    switch (arb_type) {
+    case ARB4:
+	edptr = &earb4[edit_type][0];
+	final = &earb4[edit_type][16];
+
+	if (edit_type == RT_ARB4_MOVE_POINT_4)
+	    edit_type = 4;
+
+	edit_class = RT_ARB_EDIT_POINT;
+
+	break;
+    case ARB5:
+	edptr = &earb5[edit_type][0];
+	final = &earb5[edit_type][16];
+
+	if (edit_type == RT_ARB5_MOVE_POINT_5) {
+	    edit_class = RT_ARB_EDIT_POINT;
+	    edit_type = 4;
+	}
+
+	if (edit_class == RT_ARB_EDIT_POINT) {
+	    edptr = &earb5[8][0];
+	    final = &earb5[8][16];
+	}
+
+	break;
+    case ARB6:
+	edptr = &earb6[edit_type][0];
+	final = &earb6[edit_type][16];
+
+	if (edit_type == RT_ARB6_MOVE_POINT_5) {
+	    edit_class = RT_ARB_EDIT_POINT;
+	    edit_type = 4;
+	} else if (edit_type == RT_ARB6_MOVE_POINT_6) {
+	    edit_class = RT_ARB_EDIT_POINT;
+	    edit_type = 6;
+	}
+
+	if (edit_class == RT_ARB_EDIT_POINT) {
+	    i = 9;
+	    if(edit_type == 4)
+		i = 8;
+	    edptr = &earb6[i][0];
+	    final = &earb6[i][16];
+	}
+
+	break;
+    case ARB7:
+	edptr = &earb7[edit_type][0];
+	final = &earb7[edit_type][16];
+
+	if (edit_type == RT_ARB7_MOVE_POINT_5) {
+	    edit_class = RT_ARB_EDIT_POINT;
+	    edit_type = 4;
+	}
+
+	if (edit_class == RT_ARB_EDIT_POINT) {
+	    edptr = &earb7[11][0];
+	    final = &earb7[11][16];
+	}
+
+	break;
+    case ARB8:
+	edptr = &earb8[edit_type][0];
+	final = &earb8[edit_type][16];
+
+	break;
+    default:
+	Tcl_AppendResult(interp, "rt_arb_edit: unknown ARB type\n", (char *)NULL);
+
+	return(1);
+    }
+
+    /* do the arb editing */
+    if (edit_class == RT_ARB_EDIT_POINT) {
+	/* moving a point - not an edge */
+	VMOVE(arb->pt[edit_type] , pos_model);
+	edptr += 4;
+    } else if (edit_class == RT_ARB_EDIT_EDGE) {
+	vect_t	edge_dir;
+
+	/* moving an edge */
+	pt1 = *edptr++;
+	pt2 = *edptr++;
+
+	/* calculate edge direction */
+	VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
+
+	if (MAGNITUDE(edge_dir) == 0.0) 
+	    goto err;
+
+	/* bounding planes bp1,bp2 */
+	bp1 = *edptr++;
+	bp2 = *edptr++;
+
+	/* move the edge */
+	if (rt_arb_move_edge(interp, arb, pos_model, bp1, bp2, pt1, pt2,
+			     edge_dir, planes, tol))
+	    goto err;
+    }
+
+    /* editing is done - insure planar faces */
+    /* redo plane eqns that changed */
+    newp = *edptr++; 	/* plane to redo */
+
+    if (newp == 9)	/* special flag --> redo all the planes */
+	if (rt_arb_calc_planes(interp, arb, arb_type, planes, tol))
+	    goto err;
+
+    if (newp >= 0 && newp < 6) {
+	for (i=0; i<3; i++) {
+	    /* redo this plane (newp), use points p1,p2,p3 */
+	    p1 = *edptr++;
+	    p2 = *edptr++;
+	    p3 = *edptr++;
+
+	    if (bn_mk_plane_3pts(planes[newp], arb->pt[p1], arb->pt[p2],
+				 arb->pt[p3], tol))
+		goto err;
+
+	    /* next plane */
+	    if ((newp = *edptr++) == -1 || newp == 8)
+		break;
+	}
+    }
+
+    if (newp == 8) {
+	/* special...redo next planes using pts defined in faces */
+	for (i=0; i<3; i++) {
+	    if ((newp = *edptr++) == -1)
+		break;
+
+	    iptr = &rt_arb_faces[arb_type-4][4*newp];
+	    p1 = *iptr++;
+	    p2 = *iptr++;
+	    p3 = *iptr++;
+
+	    if (bn_mk_plane_3pts(planes[newp], arb->pt[p1], arb->pt[p2],
+				 arb->pt[p3], tol))
+		goto err;
+	}
+    }
+
+    /* the changed planes are all redone
+     *	push necessary points back into the planes
+     */
+    edptr = final;	/* point to the correct location */
+    for (i=0; i<2; i++) {
+	if ((p1 = *edptr++) == -1)
+	    break;
+
+	/* intersect proper planes to define vertex p1 */
+
+	if (rt_arb_3face_intersect(arb->pt[p1], (const plane_t *)planes, arb_type, p1*3))
+	    goto err;
+    }
+
+    /* Special case for ARB7: move point 5 .... must
+     *	recalculate plane 2 = 456
+     */
+    if (arb_type == ARB7 && edit_class == RT_ARB_EDIT_POINT) {
+	if (bn_mk_plane_3pts( planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
+	    goto err;
+    }
+
+    /* carry along any like points */
+    switch (arb_type) {
+    case ARB8:
+	break;
+    case ARB7:
+	VMOVE(arb->pt[7], arb->pt[4]);
+	break;
+    case ARB6:
+	VMOVE(arb->pt[5], arb->pt[4]);
+	VMOVE(arb->pt[7], arb->pt[6]);
+	break;
+    case ARB5:
+	for (i=5; i<8; i++)
+	    VMOVE(arb->pt[i], arb->pt[4]);
+	break;
+    case ARB4:
+	VMOVE(arb->pt[3] , arb->pt[0]);
+	for(i=5; i<8; i++)
+	    VMOVE(arb->pt[i], arb->pt[4])
+		break;
+    }
+
+    return(0);		/* OK */
+
+err:
+    /* Error handling */
+    {
+	struct bu_vls tmp_vls;
+
+	bu_vls_init(&tmp_vls);
+	bu_vls_printf(&tmp_vls, "cannot move edge: %d%d\n", pt1+1,pt2+1);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
+    }
+
+    return(1);		/* BAD */
 }

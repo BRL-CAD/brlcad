@@ -333,7 +333,9 @@ bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
  *			B U _ C A L L O C
  */
 genptr_t
-bu_calloc(unsigned int nelem, unsigned int elsize, const char *str)
+bu_calloc(unsigned int nelem,
+	  unsigned int elsize,
+	  const char *str)
 {
 	unsigned	len;
 	genptr_t	ret;

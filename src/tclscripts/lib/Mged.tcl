@@ -24,10 +24,11 @@
 option add *Mged.width 400 widgetDefault
 option add *Mged.height 400 widgetDefault
 
-itcl::class Mged {
+::itcl::class Mged {
     inherit QuadDisplay
 
     itk_option define -unitsCallback unitsCallback UnitsCallback ""
+    itk_option define -autoViewEnable autoViewEnable AllowAutoView 1
 
     constructor {file args} {
 	eval QuadDisplay::constructor
@@ -64,6 +65,7 @@ itcl::class Mged {
 	method form {args}
 	method g {args}
 	method get {args}
+	method get_type {args}
 	method get_eyemodel {viewObj}
 	method hide {args}
 	method how {args}
@@ -81,6 +83,8 @@ itcl::class Mged {
 	method make_bb {name args}
 	method make_name {args}
 	method match {args}
+	method move_arb_edge {args}
+	method move_arb_face {args}
 	method mv {args}
 	method mvall {args}
 	method nmg_collapse {args}
@@ -95,6 +99,7 @@ itcl::class Mged {
 	method r {args}
 	method report {args}
 	method rm {args}
+	method rotate_arb_face {args}
 	method rt_gettrees {args}
 	method set_transparency {args}
 	method shaded_mode {args}
@@ -128,7 +133,7 @@ itcl::class Mged {
     }
 }
 
-itcl::body Mged::constructor {file args} {
+::itcl::body Mged::constructor {file args} {
     set db [Database #auto $file]
     set dg [$db Drawable::get_dgname]
     addAll $dg
@@ -139,243 +144,259 @@ itcl::body Mged::constructor {file args} {
     catch {eval itk_initialize $args}
 }
 
-itcl::body Mged::destructor {} {
-    ::delete object $db
+::itcl::body Mged::destructor {} {
+    ::::itcl::delete object $db
 }
 
 #----------------------------------#
 # Commands related to the Database #
 #----------------------------------#
 #
-itcl::body Mged::opendb {args} {
+::itcl::body Mged::opendb {args} {
     eval $db open $args
 }
 
-itcl::body Mged::match {args} {
+::itcl::body Mged::match {args} {
     eval $db match $args
 }
 
-itcl::body Mged::get {args} {
+::itcl::body Mged::get {args} {
     eval $db get $args
 }
 
-itcl::body Mged::put {args} {
+::itcl::body Mged::get_type {args} {
+    eval $db get_type $args
+}
+
+::itcl::body Mged::put {args} {
     eval $db put $args
 }
 
-itcl::body Mged::adjust {args} {
+::itcl::body Mged::adjust {args} {
     eval $db adjust $args
 }
 
-itcl::body Mged::attr {args} {
+::itcl::body Mged::attr {args} {
     eval $db attr $args
 }
 
-itcl::body Mged::form {args} {
+::itcl::body Mged::form {args} {
     eval $db form $args
 }
 
-itcl::body Mged::tops {args} {
+::itcl::body Mged::tops {args} {
     eval $db tops $args
 }
 
-itcl::body Mged::shells {args} {
+::itcl::body Mged::shells {args} {
     eval $db shells $args
 }
 
-itcl::body Mged::showmats {args} {
+::itcl::body Mged::showmats {args} {
     eval $db showmats $args
 }
 
-itcl::body Mged::summary {args} {
+::itcl::body Mged::summary {args} {
     eval $db summary $args
 }
 
-itcl::body Mged::rt_gettrees {args} {
+::itcl::body Mged::rt_gettrees {args} {
     eval $db rt_gettrees $args
 }
 
-itcl::body Mged::set_transparency {args} {
+::itcl::body Mged::set_transparency {args} {
     eval $db set_transparency $args
 }
 
-itcl::body Mged::shaded_mode {args} {
+::itcl::body Mged::shaded_mode {args} {
     eval $db shaded_mode $args
 }
 
-itcl::body Mged::dump {args} {
+::itcl::body Mged::dump {args} {
     eval $db dump $args
 }
 
-itcl::body Mged::dbip {args} {
+::itcl::body Mged::dbip {args} {
     eval $db dbip $args
 }
 
-itcl::body Mged::l {args} {
+::itcl::body Mged::l {args} {
     eval $db l $args
 }
 
-itcl::body Mged::listeval {args} {
+::itcl::body Mged::listeval {args} {
     eval $db listeval $args
 }
 
-itcl::body Mged::ls {args} {
+::itcl::body Mged::ls {args} {
     eval $db ls $args
 }
 
-itcl::body Mged::lt {args} {
+::itcl::body Mged::lt {args} {
     eval $db lt $args
 }
 
-itcl::body Mged::pathlist {args} {
+::itcl::body Mged::pathlist {args} {
     eval $db pathlist $args
 }
 
-itcl::body Mged::paths {args} {
+::itcl::body Mged::paths {args} {
     eval $db paths $args
 }
 
-itcl::body Mged::expand {args} {
+::itcl::body Mged::expand {args} {
     eval $db expand $args
 }
 
-itcl::body Mged::kill {args} {
+::itcl::body Mged::kill {args} {
     eval $db kill $args
 }
 
-itcl::body Mged::killall {args} {
+::itcl::body Mged::killall {args} {
     eval $db killall $args
 }
 
-itcl::body Mged::killtree {args} {
+::itcl::body Mged::killtree {args} {
     eval $db killtree $args
 }
 
-itcl::body Mged::cp {args} {
+::itcl::body Mged::cp {args} {
     eval $db cp $args
 }
 
-itcl::body Mged::mv {args} {
+::itcl::body Mged::move_arb_edge {args} {
+    eval $db move_arb_edge $args
+}
+
+::itcl::body Mged::move_arb_face {args} {
+    eval $db move_arb_face $args
+}
+
+::itcl::body Mged::mv {args} {
     eval $db mv $args
 }
 
-itcl::body Mged::mvall {args} {
+::itcl::body Mged::mvall {args} {
     eval $db mvall $args
 }
 
-itcl::body Mged::nmg_collapse {args} {
+::itcl::body Mged::nmg_collapse {args} {
     eval $db nmg_collapse $args
 }
 
-itcl::body Mged::nmg_simplify {args} {
+::itcl::body Mged::nmg_simplify {args} {
     eval $db nmg_simplify $args
 }
 
-itcl::body Mged::copyeval {args} {
+::itcl::body Mged::copyeval {args} {
     eval $db copyeval $args
 }
 
-itcl::body Mged::concat {args} {
+::itcl::body Mged::concat {args} {
     eval $db concat $args
 }
 
-itcl::body Mged::dup {args} {
+::itcl::body Mged::dup {args} {
     eval $db dup $args
 }
 
-itcl::body Mged::g {args} {
+::itcl::body Mged::g {args} {
     eval $db g $args
 }
 
-itcl::body Mged::rm {args} {
+::itcl::body Mged::rm {args} {
     eval $db rm $args
 }
 
-itcl::body Mged::c {args} {
+::itcl::body Mged::rotate_arb_face {args} {
+    eval $db rotate_arb_face $args
+}
+
+::itcl::body Mged::c {args} {
     eval $db c $args
 }
 
-itcl::body Mged::comb {args} {
+::itcl::body Mged::comb {args} {
     eval $db comb $args
 }
 
-itcl::body Mged::find {args} {
+::itcl::body Mged::find {args} {
     eval $db find $args
 }
 
-itcl::body Mged::whichair {args} {
+::itcl::body Mged::whichair {args} {
     eval $db whichair $args
 }
 
-itcl::body Mged::whichid {args} {
+::itcl::body Mged::whichid {args} {
     eval $db whichid $args
 }
 
-itcl::body Mged::title {args} {
+::itcl::body Mged::title {args} {
     eval $db title $args
 }
 
-itcl::body Mged::track {args} {
+::itcl::body Mged::track {args} {
     eval $db track $args
 }
 
-itcl::body Mged::tree {args} {
+::itcl::body Mged::tree {args} {
     eval $db tree $args
 }
 
-itcl::body Mged::unhide {args} {
+::itcl::body Mged::unhide {args} {
     eval $db unhide $args
 }
 
-itcl::body Mged::color {args} {
+::itcl::body Mged::color {args} {
     eval $db color $args
 }
 
-itcl::body Mged::prcolor {args} {
+::itcl::body Mged::prcolor {args} {
     eval $db prcolor $args
 }
 
-itcl::body Mged::tol {args} {
+::itcl::body Mged::tol {args} {
     eval $db tol $args
 }
 
-itcl::body Mged::push {args} {
+::itcl::body Mged::push {args} {
     eval $db push $args
 }
 
-itcl::body Mged::whatid {args} {
+::itcl::body Mged::whatid {args} {
     eval $db whatid $args
 }
 
-itcl::body Mged::keep {args} {
+::itcl::body Mged::keep {args} {
     eval $db keep $args
 }
 
-itcl::body Mged::cat {args} {
+::itcl::body Mged::cat {args} {
     eval $db cat $args
 }
 
-itcl::body Mged::hide {args} {
+::itcl::body Mged::hide {args} {
     eval $db hide $args
 }
 
-itcl::body Mged::how {args} {
+::itcl::body Mged::how {args} {
     eval $db how $args
 }
 
-itcl::body Mged::i {args} {
+::itcl::body Mged::i {args} {
     eval $db i $args
 }
 
-itcl::body Mged::make_bb {name args} {
+::itcl::body Mged::make_bb {name args} {
     eval $db make_bb $name $args
 }
 
-itcl::body Mged::make_name {args} {
+::itcl::body Mged::make_name {args} {
     eval $db make_name $args
 }
 
-itcl::body Mged::units {args} {
+::itcl::body Mged::units {args} {
     set rval [eval QuadDisplay::units $args]
 
     # must be a "get"
@@ -394,11 +415,11 @@ itcl::body Mged::units {args} {
 # get_eyemodel - returns a list containing the viewsize, orientation,
 #                and eye_pt strings. Useful for constructing Rt scripts
 #
-itcl::body Mged::get_eyemodel {viewObj} {
+::itcl::body Mged::get_eyemodel {viewObj} {
     return [eval $db get_eyemodel $viewObj]
 }
 
-itcl::body Mged::draw {args} {
+::itcl::body Mged::draw {args} {
     set who [who]
 
     if {$who == ""} {
@@ -407,7 +428,7 @@ itcl::body Mged::draw {args} {
 	set blank 0
     }
 
-    if {$blank} {
+    if {$blank && $itk_option(-autoViewEnable)} {
 	# stop observing the Drawable
 	detach_drawableAll $dg
 	set result [eval $db draw $args]
@@ -431,7 +452,7 @@ itcl::body Mged::draw {args} {
     return $result
 }
 
-itcl::body Mged::E {args} {
+::itcl::body Mged::E {args} {
     set who [who]
 
     if {$who == ""} {
@@ -468,75 +489,75 @@ itcl::body Mged::E {args} {
     return $result
 }
 
-itcl::body Mged::erase {args} {
+::itcl::body Mged::erase {args} {
     eval $db erase $args
 }
 
-itcl::body Mged::who {args} {
+::itcl::body Mged::who {args} {
     eval $db who $args
 }
 
-itcl::body Mged::xpush {args} {
+::itcl::body Mged::xpush {args} {
     eval $db xpush $args
 }
 
-itcl::body Mged::zap {args} {
+::itcl::body Mged::zap {args} {
     eval $db zap $args
 }
 
-itcl::body Mged::binary {args} {
+::itcl::body Mged::binary {args} {
     eval $db binary $args
 }
 
-itcl::body Mged::blast {args} {
+::itcl::body Mged::blast {args} {
     eval $db blast $args
 }
 
-itcl::body Mged::clear {args} {
+::itcl::body Mged::clear {args} {
     eval $db clear $args
 }
 
-itcl::body Mged::ev {args} {
+::itcl::body Mged::ev {args} {
     eval $db ev $args
 }
 
-itcl::body Mged::erase_all {args} {
+::itcl::body Mged::erase_all {args} {
     eval $db erase_all $args
 }
 
-itcl::body Mged::overlay {args} {
+::itcl::body Mged::overlay {args} {
     eval $db overlay $args
 }
 
-itcl::body Mged::vdraw {args} {
+::itcl::body Mged::vdraw {args} {
     eval $db vdraw $args
 }
 
-itcl::body Mged::illum {args} {
+::itcl::body Mged::illum {args} {
     eval $db illum $args
 }
 
-itcl::body Mged::label {args} {
+::itcl::body Mged::label {args} {
     eval $db label $args
 }
 
-itcl::body Mged::r {args} {
+::itcl::body Mged::r {args} {
     eval $db r $args
 }
 
-itcl::body Mged::report {args} {
+::itcl::body Mged::report {args} {
     eval $db report $args
 }
 
-itcl::body Mged::? {} {
+::itcl::body Mged::? {} {
     return "[QuadDisplay::?]\n[$db ?]"
 }
 
-itcl::body Mged::apropos {key} {
+::itcl::body Mged::apropos {key} {
     return "[QuadDisplay::apropos $key] [$db apropos $key]"
 }
 
-itcl::body Mged::help {args} {
+::itcl::body Mged::help {args} {
     if {[llength $args] && [lindex $args 0] != {}} {
 	if {[catch {eval QuadDisplay::help $args} result]} {
 	    set result [eval $db help $args]
@@ -549,6 +570,6 @@ itcl::body Mged::help {args} {
     return "[QuadDisplay::help][$db help]"
 }
 
-itcl::body Mged::getUserCmds {} {
+::itcl::body Mged::getUserCmds {} {
     return "? apropos help [QuadDisplay::getUserCmds] [$db getUserCmds]"
 }

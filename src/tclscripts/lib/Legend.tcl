@@ -22,7 +22,7 @@
 
 option add *Legend.height 30 widgetDefault
 
-class cadwidgets::Legend {
+::itcl::class cadwidgets::Legend {
     inherit itk::Widget
 
     constructor {args} {}
@@ -71,7 +71,7 @@ class cadwidgets::Legend {
     private variable yoff 15
 }
 
-configbody cadwidgets::Legend::range {
+::itcl::configbody cadwidgets::Legend::range {
     if {[llength $itk_option(-range)] != 2} {
 	error "range: must specify min and max"
     }
@@ -99,7 +99,7 @@ configbody cadwidgets::Legend::range {
     cadwidgets::Legend::update
 }
 
-configbody cadwidgets::Legend::rgbRange {
+::itcl::configbody cadwidgets::Legend::rgbRange {
     if {[llength $itk_option(-rgbRange)] != 2} {
 	error "rgbRange: must specify two RGB's"
     }
@@ -162,7 +162,7 @@ configbody cadwidgets::Legend::rgbRange {
     cadwidgets::Legend::update
 }
 
-configbody cadwidgets::Legend::slots {
+::itcl::configbody cadwidgets::Legend::slots {
     if {$itk_option(-slots) < 2} {
 	error "Must be 2 or greater"
     }
@@ -170,7 +170,7 @@ configbody cadwidgets::Legend::slots {
     cadwidgets::Legend::update
 }
 
-body cadwidgets::Legend::constructor {args} {
+::itcl::body cadwidgets::Legend::constructor {args} {
     itk_component add canvas {
 	::canvas $itk_interior.canvas
     } {
@@ -179,14 +179,14 @@ body cadwidgets::Legend::constructor {args} {
     }
 
     eval itk_initialize $args
-    ::bind $itk_component(canvas) <Configure> [code $this update]
+    ::bind $itk_component(canvas) <Configure> [::itcl::code $this update]
     pack $itk_component(canvas) -expand yes -fill both
 }
 
-body cadwidgets::Legend::destructor {} {
+::itcl::body cadwidgets::Legend::destructor {} {
 }
 
-body cadwidgets::Legend::drawToCanvas {c x y w h tags} {
+::itcl::body cadwidgets::Legend::drawToCanvas {c x y w h tags} {
     # calculate slot increment
     set si [expr {$w / double($itk_option(-slots))}]
 
@@ -213,14 +213,14 @@ body cadwidgets::Legend::drawToCanvas {c x y w h tags} {
     return
 }
 
-body cadwidgets::Legend::update {} {
+::itcl::body cadwidgets::Legend::update {} {
     $itk_component(canvas) delete all
     set w [expr {[winfo width $itk_component(canvas)] - (2 * $xoff)}]
     set h [expr {[winfo height $itk_component(canvas)] - $yoff}]
     drawToCanvas $itk_component(canvas) $xoff $yoff $w $h legend
 }
 
-body cadwidgets::Legend::getColor {val} {
+::itcl::body cadwidgets::Legend::getColor {val} {
     if {$itk_option(-colorFunc) != ""} {
 	return [$itk_option(-colorFunc) $low $high $val]
     } else {
@@ -228,7 +228,7 @@ body cadwidgets::Legend::getColor {val} {
     }
 }
 
-body cadwidgets::Legend::rampRGB {val} {
+::itcl::body cadwidgets::Legend::rampRGB {val} {
     set sv [expr {($val - $low) * $invDv}]
     set r [expr {int($r1 + $sv * $dR)}]
     set g [expr {int($g1 + $sv * $dG)}]
@@ -256,11 +256,11 @@ body cadwidgets::Legend::rampRGB {val} {
     return "$r $g $b"
 }
 
-body cadwidgets::Legend::postscript {args} {
+::itcl::body cadwidgets::Legend::postscript {args} {
     eval $itk_component(canvas) postscript $args
 }
 
-body cadwidgets::Legend::rgbValid {r g b} {
+::itcl::body cadwidgets::Legend::rgbValid {r g b} {
     if {![string is integer $r]} {
 	    return 0
     }

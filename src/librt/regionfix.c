@@ -24,10 +24,15 @@ static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
 
 
 
+#include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
 #if HAVE_REGEX_H
-#include <regex.h>
+#if defined(WIN32)
+#  include <brlregex.h>
+#else
+#  include <regex.h>
+#endif
 #endif
 #ifdef USE_STRING_H
 #include <string.h>

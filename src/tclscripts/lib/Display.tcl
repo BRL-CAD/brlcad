@@ -27,7 +27,7 @@
 #
 # Usual options.
 #
-itk::usual Display {
+::itk::usual Display {
     keep -linewidth
     keep -rscale
     keep -sscale
@@ -62,7 +62,7 @@ itk::usual Display {
     keep -viewAxesTripleColor
 }
 
-class Display {
+::itcl::class Display {
     inherit Dm View
 
     itk_option define -rscale rscale Rscale 0.4
@@ -131,11 +131,13 @@ class Display {
     public method bounds {args}
     public method depthMask {args}
     public method perspective {args}
-    public method fb_active {args}
     public method light {args}
     public method transparency {args}
     public method zbuffer {args}
     public method zclip {args}
+    if {$tcl_platform(os) != "Windows NT"} {
+	public method fb_active {args}
+    }
 
     public method toggle_modelAxesEnable {}
     public method toggle_modelAxesTickEnable {}
@@ -187,7 +189,7 @@ class Display {
 
 ########################### Public/Interface Methods ###########################
 
-body Display::constructor {args} {
+::itcl::body Display::constructor {args} {
     attach_view
     doBindings
     handle_configure
@@ -195,19 +197,19 @@ body Display::constructor {args} {
     set doingInit 0
 }
 
-configbody Display::rscale {
+::itcl::configbody Display::rscale {
     if {$itk_option(-rscale) < $minScale} {
 	error "rscale must be >= $minScale"
     }
 }
 
-configbody Display::sscale {
+::itcl::configbody Display::sscale {
     if {$itk_option(-sscale) < $minScale} {
 	error "sscale must be >= $minScale"
     }
 }
 
-configbody Display::centerDotEnable {
+::itcl::configbody Display::centerDotEnable {
     if {$itk_option(-centerDotEnable) != 0 &&
         $itk_option(-centerDotEnable) != 1} {
 	error "value must be 0, 1"
@@ -216,7 +218,7 @@ configbody Display::centerDotEnable {
     refresh
 }
 
-configbody Display::centerDotColor {
+::itcl::configbody Display::centerDotColor {
     if {[llength $itk_option(-centerDotColor)] != 3} {
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -239,7 +241,7 @@ configbody Display::centerDotColor {
     refresh
 }
 
-configbody Display::viewAxesEnable {
+::itcl::configbody Display::viewAxesEnable {
     if {$itk_option(-viewAxesEnable) != 0 &&
         $itk_option(-viewAxesEnable) != 1} {
 	error "value must be 0, 1"
@@ -248,7 +250,7 @@ configbody Display::viewAxesEnable {
     refresh
 }
 
-configbody Display::modelAxesEnable {
+::itcl::configbody Display::modelAxesEnable {
     if {$itk_option(-modelAxesEnable) != 0 &&
         $itk_option(-modelAxesEnable) != 1} {
 	error "value must be 0, 1"
@@ -257,7 +259,7 @@ configbody Display::modelAxesEnable {
     refresh
 }
 
-configbody Display::viewAxesSize {
+::itcl::configbody Display::viewAxesSize {
     # validate size
     if {![string is double $itk_option(-viewAxesSize)] ||
         $itk_option(-viewAxesSize) < $minAxesSize} {
@@ -267,7 +269,7 @@ configbody Display::viewAxesSize {
     refresh
 }
 
-configbody Display::modelAxesSize {
+::itcl::configbody Display::modelAxesSize {
     # validate size
     if {![string is double $itk_option(-modelAxesSize)] ||
         $itk_option(-modelAxesSize) < $minAxesSize} {
@@ -277,7 +279,7 @@ configbody Display::modelAxesSize {
     refresh
 }
 
-configbody Display::viewAxesPosition {
+::itcl::configbody Display::viewAxesPosition {
     if {[llength $itk_option(-viewAxesPosition)] != 3} {
 	error "values must be {x y z} where x, y and z are numeric"
     }
@@ -297,7 +299,7 @@ configbody Display::viewAxesPosition {
     refresh
 }
 
-configbody Display::modelAxesPosition {
+::itcl::configbody Display::modelAxesPosition {
     if {[llength $itk_option(-modelAxesPosition)] != 3} {
 	error "values must be {x y z} where x, y and z are numeric"
     }
@@ -323,7 +325,7 @@ configbody Display::modelAxesPosition {
     refresh
 }
 
-configbody Display::viewAxesLineWidth {
+::itcl::configbody Display::viewAxesLineWidth {
     # validate line width
     if {![string is digit $itk_option(-viewAxesLineWidth)] ||
         $itk_option(-viewAxesLineWidth) < $minAxesLineWidth} {
@@ -333,7 +335,7 @@ configbody Display::viewAxesLineWidth {
     refresh
 }
 
-configbody Display::modelAxesLineWidth {
+::itcl::configbody Display::modelAxesLineWidth {
     # validate line width
     if {![string is digit $itk_option(-modelAxesLineWidth)] ||
         $itk_option(-modelAxesLineWidth) < $minAxesLineWidth} {
@@ -343,7 +345,7 @@ configbody Display::modelAxesLineWidth {
     refresh
 }
 
-configbody Display::viewAxesTripleColor {
+::itcl::configbody Display::viewAxesTripleColor {
     if {$itk_option(-viewAxesTripleColor) != 0 &&
         $itk_option(-viewAxesTripleColor) != 1} {
 	error "value must be 0 or 1"
@@ -352,7 +354,7 @@ configbody Display::viewAxesTripleColor {
     refresh
 }
 
-configbody Display::modelAxesTripleColor {
+::itcl::configbody Display::modelAxesTripleColor {
     if {$itk_option(-modelAxesTripleColor) != 0 &&
         $itk_option(-modelAxesTripleColor) != 1} {
 	error "value must be 0 or 1"
@@ -361,7 +363,7 @@ configbody Display::modelAxesTripleColor {
     refresh
 }
 
-configbody Display::viewAxesColor {
+::itcl::configbody Display::viewAxesColor {
     if {[llength $itk_option(-viewAxesColor)] != 3} {
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -384,7 +386,7 @@ configbody Display::viewAxesColor {
     refresh
 }
 
-configbody Display::modelAxesColor {
+::itcl::configbody Display::modelAxesColor {
     if {[llength $itk_option(-modelAxesColor)] != 3} {
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -407,7 +409,7 @@ configbody Display::modelAxesColor {
     refresh
 }
 
-configbody Display::viewAxesLabelColor {
+::itcl::configbody Display::viewAxesLabelColor {
     if {[llength $itk_option(-viewAxesLabelColor)] != 3} {
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -430,7 +432,7 @@ configbody Display::viewAxesLabelColor {
     refresh
 }
 
-configbody Display::modelAxesLabelColor {
+::itcl::configbody Display::modelAxesLabelColor {
     if {[llength $itk_option(-modelAxesLabelColor)] != 3} {
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -453,7 +455,7 @@ configbody Display::modelAxesLabelColor {
     refresh
 }
 
-configbody Display::modelAxesTickEnable {
+::itcl::configbody Display::modelAxesTickEnable {
     if {$itk_option(-modelAxesTickEnable) != 0 &&
         $itk_option(-modelAxesTickEnable) != 1} {
 	error "value must be 0, 1"
@@ -462,7 +464,7 @@ configbody Display::modelAxesTickEnable {
     refresh
 }
 
-configbody Display::modelAxesTickLength {
+::itcl::configbody Display::modelAxesTickLength {
     # validate tick length
     if {![string is digit $itk_option(-modelAxesTickLength)] ||
         $itk_option(-modelAxesTickLength) < $minAxesTickLength} {
@@ -472,7 +474,7 @@ configbody Display::modelAxesTickLength {
     refresh
 }
 
-configbody Display::modelAxesTickMajorLength {
+::itcl::configbody Display::modelAxesTickMajorLength {
     # validate major tick length
     if {![string is digit $itk_option(-modelAxesTickMajorLength)] ||
         $itk_option(-modelAxesTickMajorLength) < $minAxesTickMajorLength} {
@@ -482,7 +484,7 @@ configbody Display::modelAxesTickMajorLength {
     refresh
 }
 
-configbody Display::modelAxesTickInterval {
+::itcl::configbody Display::modelAxesTickInterval {
     if {![string is double $itk_option(-modelAxesTickInterval)] ||
         $itk_option(-modelAxesTickInterval) <= 0} {
 	error "-modelAxesTickInterval must be > 0"
@@ -493,7 +495,7 @@ configbody Display::modelAxesTickInterval {
     refresh
 }
 
-configbody Display::modelAxesTicksPerMajor {
+::itcl::configbody Display::modelAxesTicksPerMajor {
     if {![string is digit $itk_option(-modelAxesTicksPerMajor)]} {
 	error "-modelAxesTicksPerMajor must be > 0"
     }
@@ -501,7 +503,7 @@ configbody Display::modelAxesTicksPerMajor {
     refresh
 }
 
-configbody Display::modelAxesTickColor {
+::itcl::configbody Display::modelAxesTickColor {
     if {[llength $itk_option(-modelAxesTickColor)] != 3} {
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -524,7 +526,7 @@ configbody Display::modelAxesTickColor {
     refresh
 }
 
-configbody Display::modelAxesTickMajorColor {
+::itcl::configbody Display::modelAxesTickMajorColor {
     if {[llength $itk_option(-modelAxesTickMajorColor)] != 3} {
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -547,7 +549,7 @@ configbody Display::modelAxesTickMajorColor {
     refresh
 }
 
-configbody Display::modelAxesTickThreshold {
+::itcl::configbody Display::modelAxesTickThreshold {
     if {![string is digit $itk_option(-modelAxesTickThreshold)]} {
 	error "-modelAxesTickThreshold must be > 1"
     }
@@ -555,11 +557,13 @@ configbody Display::modelAxesTickThreshold {
     refresh
 }
 
-body Display::update {obj} {
+::itcl::body Display::update {obj} {
     refresh
 }
 
-body Display::refresh {} {
+::itcl::body Display::refresh {} {
+    global tcl_platform
+
     if {$doingInit} {
 	return
     }
@@ -572,10 +576,13 @@ body Display::refresh {} {
 	Dm::loadmat [View::model2view] 0
     }
 
-    if {$itk_option(-fb_active) < 2} {
-	if {$itk_option(-fb_active)} {
-	    # underlay
-	    Dm::refreshfb
+    if {![info exists itk_option(-fb_active)] || $itk_option(-fb_active) < 2} {
+
+	if {$tcl_platform(os) != "Windows NT"} {
+	    if {$itk_option(-fb_active)} {
+		# underlay
+		Dm::refreshfb
+	    }
 	}
 
 	foreach geo $geolist {
@@ -624,14 +631,15 @@ body Display::refresh {} {
 	    Dm::drawCenterDot $itk_option(-centerDotColor)
 	}
 
-    } else {
+    } elseif {$tcl_platform(os) != "Windows NT"} {
 	# overlay
 	Dm::refreshfb
     }
+
     Dm::drawEnd
 }
 
-body Display::mouse_nirt {_x _y {gi 0}} {
+::itcl::body Display::mouse_nirt {_x _y {gi 0}} {
     set geo [lindex $geolist $gi]
 
     if {$geo == ""} {
@@ -651,7 +659,7 @@ body Display::mouse_nirt {_x _y {gi 0}} {
     eval $geo nirt $v_obj -b $mc
 }
 
-body Display::nirt {args} {
+::itcl::body Display::nirt {args} {
     set len [llength $args]
 
     if {$len > 1 && [lindex $args 0] == "-geo"} {
@@ -671,7 +679,7 @@ body Display::nirt {args} {
     eval $geo nirt $v_obj $args
 }
 
-body Display::vnirt {vx vy {gi 0}} {
+::itcl::body Display::vnirt {vx vy {gi 0}} {
     set geo [lindex $geolist $gi]
 
     if {$geo == ""} {
@@ -683,7 +691,7 @@ body Display::vnirt {vx vy {gi 0}} {
     eval $geo vnirt $v_obj -b $vx $vy
 }
 
-body Display::qray {args} {
+::itcl::body Display::qray {args} {
     set len [llength $args]
 
     if {$len > 1 && [lindex $args 0] == "-geo"} {
@@ -701,7 +709,7 @@ body Display::qray {args} {
     eval $geo qray $args
 }
 
-body Display::rt {args} {
+::itcl::body Display::rt {args} {
 #    if {$itk_option(-listen) < 0} {
 #	return "rt: not listening"
 #    }
@@ -724,7 +732,7 @@ body Display::rt {args} {
     eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
 }
 
-body Display::rtabort {{gi 0}} {
+::itcl::body Display::rtabort {{gi 0}} {
     set geo [lindex $geolist $gi]
 
     if {$geo == ""} {
@@ -734,7 +742,7 @@ body Display::rtabort {{gi 0}} {
     $geo rtabort
 }
 
-body Display::rtcheck {args} {
+::itcl::body Display::rtcheck {args} {
     if {$itk_option(-listen) < 0} {
 	return "rtcheck: not listening"
     }
@@ -757,7 +765,7 @@ body Display::rtcheck {args} {
     eval $geo rtcheck $v_obj -F $itk_option(-listen) $args
 }
 
-body Display::rtedge {args} {
+::itcl::body Display::rtedge {args} {
     set len [llength $args]
 
     if {$len > 1 && [lindex $args 0] == "-geo"} {
@@ -776,7 +784,7 @@ body Display::rtedge {args} {
     eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
 }
 
-body Display::autoview {{g_index 0}} {
+::itcl::body Display::autoview {{g_index 0}} {
     if {$g_index < [llength $geolist]} {
 	set geo [lindex $geolist $g_index]
 	set aview [$geo get_autoview]
@@ -785,23 +793,23 @@ body Display::autoview {{g_index 0}} {
     }
 }
 
-body Display::attach_view {} {
+::itcl::body Display::attach_view {} {
     View::observer attach $this
 }
 
-body Display::attach_drawable {dg} {
+::itcl::body Display::attach_drawable {dg} {
     $dg observer attach $this
 }
 
-body Display::detach_view {} {
+::itcl::body Display::detach_view {} {
     View::observer detach $this
 }
 
-body Display::detach_drawable {dg} {
+::itcl::body Display::detach_drawable {dg} {
     $dg observer detach $this
 }
 
-body Display::add {glist} {
+::itcl::body Display::add {glist} {
     if [llength $geolist] {
 	set blank 0
     } else {
@@ -829,7 +837,7 @@ body Display::add {glist} {
     refresh
 }
 
-body Display::remove {glist} {
+::itcl::body Display::remove {glist} {
     foreach geo $glist {
 	set index [lsearch $geolist $geo]
 	if {$index == -1} {
@@ -843,12 +851,12 @@ body Display::remove {glist} {
     refresh
 }
 
-body Display::contents {} {
+::itcl::body Display::contents {} {
     return $geolist
 }
 
 ########################### Public Methods That Override ###########################
-body Display::slew {args} {
+::itcl::body Display::slew {args} {
     if {[llength $args] == 2} {
 	set x1 [lindex $args 0]
 	set y1 [lindex $args 1]
@@ -865,7 +873,7 @@ body Display::slew {args} {
     }
 }
 
-body Display::perspective_angle {args} {
+::itcl::body Display::perspective_angle {args} {
     if {$args == ""} {
 	# get perspective angle
 	return $perspective_angle
@@ -886,7 +894,7 @@ body Display::perspective_angle {args} {
     return $perspective_angle
 }
 
-body Display::perspective {args} {
+::itcl::body Display::perspective {args} {
     eval Dm::perspective $args
 
     if {$itk_option(-perspective)} {
@@ -899,28 +907,30 @@ body Display::perspective {args} {
     return $itk_option(-perspective)
 }
 
-body Display::fb_active {args} {
-    if {$args == ""} {
-	return $itk_option(-fb_active)
-    } else {
-	eval Dm::fb_active $args
-	refresh
+if {$tcl_platform(os) != "Windows NT"} {
+    ::itcl::body Display::fb_active {args} {
+	if {$args == ""} {
+	    return $itk_option(-fb_active)
+	} else {
+	    eval Dm::fb_active $args
+	    refresh
+	}
     }
 }
 
-body Display::light {args} {
+::itcl::body Display::light {args} {
     eval Dm::light $args
     refresh
     return $itk_option(-light)
 }
 
-body Display::transparency {args} {
+::itcl::body Display::transparency {args} {
     eval Dm::transparency $args
     refresh
     return $itk_option(-transparency)
 }
 
-body Display::bounds {args} {
+::itcl::body Display::bounds {args} {
     if {$args == ""} {
 	return [Dm::bounds]
     }
@@ -929,26 +939,26 @@ body Display::bounds {args} {
     refresh
 }
 
-body Display::depthMask {args} {
+::itcl::body Display::depthMask {args} {
     eval Dm::depthMask $args
     refresh
     return $itk_option(-depthMask)
 }
 
-body Display::zbuffer {args} {
+::itcl::body Display::zbuffer {args} {
     eval Dm::zbuffer $args
     refresh
     return $itk_option(-zbuffer)
 }
 
-body Display::zclip {args} {
+::itcl::body Display::zclip {args} {
     eval Dm::zclip $args
     refresh
     return $itk_option(-zclip)
 }
 
 ########################### Protected Methods ###########################
-body Display::toggle_modelAxesEnable {} {
+::itcl::body Display::toggle_modelAxesEnable {} {
     if {$itk_option(-modelAxesEnable)} {
 	set itk_option(-modelAxesEnable) 0
     } else {
@@ -958,7 +968,7 @@ body Display::toggle_modelAxesEnable {} {
     refresh
 }
 
-body Display::toggle_modelAxesTickEnable {} {
+::itcl::body Display::toggle_modelAxesTickEnable {} {
     if {$itk_option(-modelAxesTickEnable)} {
 	set itk_option(-modelAxesTickEnable) 0
     } else {
@@ -968,7 +978,7 @@ body Display::toggle_modelAxesTickEnable {} {
     refresh
 }
 
-body Display::toggle_viewAxesEnable {} {
+::itcl::body Display::toggle_viewAxesEnable {} {
     if {$itk_option(-viewAxesEnable)} {
 	set itk_option(-viewAxesEnable) 0
     } else {
@@ -978,7 +988,7 @@ body Display::toggle_viewAxesEnable {} {
     refresh
 }
 
-body Display::toggle_centerDotEnable {} {
+::itcl::body Display::toggle_centerDotEnable {} {
     if {$itk_option(-centerDotEnable)} {
 	set itk_option(-centerDotEnable) 0
     } else {
@@ -988,15 +998,15 @@ body Display::toggle_centerDotEnable {} {
     refresh
 }
 
-body Display::? {} {
+::itcl::body Display::? {} {
     return "[View::?][Dm::?]"
 }
 
-body Display::apropos {key} {
+::itcl::body Display::apropos {key} {
     return "[View::apropos $key] [Dm::apropos $key]"
 }
 
-body Display::help {args} {
+::itcl::body Display::help {args} {
     if {[llength $args] && [lindex $args 0] != {}} {
 	if {[catch {eval View::help $args} result]} {
 	    set result [eval Dm::help $args]
@@ -1009,30 +1019,30 @@ body Display::help {args} {
     return "[View::help][Dm::help]"
 }
 
-body Display::getUserCmds {} {
+::itcl::body Display::getUserCmds {} {
     eval lappend cmds [View::getUserCmds] [Dm::getUserCmds]
     return $cmds
 }
 
-body Display::toggle_zclip {} {
+::itcl::body Display::toggle_zclip {} {
     Dm::toggle_zclip
     refresh
     return $itk_option(-zclip)
 }
 
-body Display::toggle_zbuffer {} {
+::itcl::body Display::toggle_zbuffer {} {
     Dm::toggle_zbuffer
     refresh
     return $itk_option(-zbuffer)
 }
 
-body Display::toggle_light {} {
+::itcl::body Display::toggle_light {} {
     Dm::toggle_light
     refresh
     return $itk_option(-light)
 }
 
-body Display::toggle_perspective {} {
+::itcl::body Display::toggle_perspective {} {
     Dm::toggle_perspective
 
     if {$itk_option(-perspective)} {
@@ -1045,7 +1055,7 @@ body Display::toggle_perspective {} {
     return $itk_option(-perspective)
 }
 
-body Display::toggle_perspective_angle {} {
+::itcl::body Display::toggle_perspective_angle {} {
     if {$perspective_angle_index == 3} {
 	set perspective_angle_index 0
     } else {
@@ -1057,58 +1067,58 @@ body Display::toggle_perspective_angle {} {
     }
 }
 
-body Display::toggle_transparency {} {
+::itcl::body Display::toggle_transparency {} {
     Dm::toggle_transparency
     refresh
     return $itk_option(-transparency)
 }
 
-body Display::idle_mode {} {
+::itcl::body Display::idle_mode {} {
     # stop receiving motion events
     bind $itk_component(dm) <Motion> {}
 }
 
-body Display::rotate_mode {_x _y} {
+::itcl::body Display::rotate_mode {_x _y} {
     set x $_x
     set y $_y
 
     # start receiving motion events
-    bind $itk_component(dm) <Motion> "[code $this handle_rotation %x %y]; break"
+    bind $itk_component(dm) <Motion> "[::itcl::code $this handle_rotation %x %y]; break"
 }
 
-body Display::translate_mode {_x _y} {
+::itcl::body Display::translate_mode {_x _y} {
     set x $_x
     set y $_y
 
     # start receiving motion events
-    bind $itk_component(dm) <Motion> "[code $this handle_translation %x %y]; break"
+    bind $itk_component(dm) <Motion> "[::itcl::code $this handle_translation %x %y]; break"
 }
 
-body Display::scale_mode {_x _y} {
+::itcl::body Display::scale_mode {_x _y} {
     set x $_x
     set y $_y
 
     # start receiving motion events
-    bind $itk_component(dm) <Motion> "[code $this handle_scale %x %y]; break"
+    bind $itk_component(dm) <Motion> "[::itcl::code $this handle_scale %x %y]; break"
 }
 
-body Display::constrain_rmode {coord _x _y} {
+::itcl::body Display::constrain_rmode {coord _x _y} {
     set x $_x
     set y $_y
 
     # start receiving motion events
-    bind $itk_component(dm) <Motion> "[code $this handle_constrain_rot $coord %x %y]; break"
+    bind $itk_component(dm) <Motion> "[::itcl::code $this handle_constrain_rot $coord %x %y]; break"
 }
 
-body Display::constrain_tmode {coord _x _y} {
+::itcl::body Display::constrain_tmode {coord _x _y} {
     set x $_x
     set y $_y
 
     # start receiving motion events
-    bind $itk_component(dm) <Motion> "[code $this handle_constrain_tran $coord %x %y]; break"
+    bind $itk_component(dm) <Motion> "[::itcl::code $this handle_constrain_tran $coord %x %y]; break"
 }
 
-body Display::handle_rotation {_x _y} {
+::itcl::body Display::handle_rotation {_x _y} {
     set dx [expr ($y - $_y) * $itk_option(-rscale)]
     set dy [expr ($x - $_x) * $itk_option(-rscale)]
     vrot $dx $dy 0
@@ -1118,7 +1128,7 @@ body Display::handle_rotation {_x _y} {
     set y $_y
 }
 
-body Display::handle_translation {_x _y} {
+::itcl::body Display::handle_translation {_x _y} {
     set dx [expr {($x - $_x) * $invWidth * [View::size]}]
     set dy [expr {($_y - $y) * $invWidth * [View::size]}]
     vtra $dx $dy 0
@@ -1128,7 +1138,7 @@ body Display::handle_translation {_x _y} {
     set y $_y
 }
 
-body Display::handle_scale {_x _y} {
+::itcl::body Display::handle_scale {_x _y} {
     set dx [expr {($_x - $x) * $invWidth * $itk_option(-sscale)}]
     set dy [expr {($y - $_y) * $invWidth * $itk_option(-sscale)}]
 
@@ -1145,7 +1155,7 @@ body Display::handle_scale {_x _y} {
     set y $_y
 }
 
-body Display::handle_constrain_rot {coord _x _y} {
+::itcl::body Display::handle_constrain_rot {coord _x _y} {
     set dx [expr {($x - $_x) * $itk_option(-rscale)}]
     set dy [expr {($_y - $y) * $itk_option(-rscale)}]
 
@@ -1171,7 +1181,7 @@ body Display::handle_constrain_rot {coord _x _y} {
     set y $_y
 }
 
-body Display::handle_constrain_tran {coord _x _y} {
+::itcl::body Display::handle_constrain_tran {coord _x _y} {
     set dx [expr {($x - $_x) * $invWidth * [View::size]}]
     set dy [expr {($_y - $y) * $invWidth * [View::size]}]
 
@@ -1197,19 +1207,24 @@ body Display::handle_constrain_tran {coord _x _y} {
     set y $_y
 }
 
-body Display::handle_configure {} {
+::itcl::body Display::handle_configure {} {
     Dm::handle_configure
     refresh
 }
 
-body Display::handle_expose {} {
+::itcl::body Display::handle_expose {} {
     refresh
 }
 
-body Display::doBindings {} {
-    bind $itk_component(dm) <Enter> "focus $itk_component(dm);"
-    bind $itk_component(dm) <Configure> "[code $this handle_configure]; break"
-    bind $itk_component(dm) <Expose> "[code $this handle_expose]; break"
+::itcl::body Display::doBindings {} {
+    global tcl_platform
+
+    if {$tcl_platform(os) != "Windows NT"} {
+	bind $itk_component(dm) <Enter> "focus $itk_component(dm);"
+    }
+
+    bind $itk_component(dm) <Configure> "[::itcl::code $this handle_configure]; break"
+    bind $itk_component(dm) <Expose> "[::itcl::code $this handle_expose]; break"
 
     # Mouse Bindings
     bind $itk_component(dm) <1> "$this zoom 0.5; break"
@@ -1217,43 +1232,43 @@ body Display::doBindings {} {
     bind $itk_component(dm) <3> "$this zoom 2.0; break"
 
     # Idle Mode
-    bind $itk_component(dm) <ButtonRelease> "[code $this idle_mode]; break"
-    bind $itk_component(dm) <KeyRelease-Control_L> "[code $this idle_mode]; break"
-    bind $itk_component(dm) <KeyRelease-Control_R> "[code $this idle_mode]; break"
-    bind $itk_component(dm) <KeyRelease-Shift_L> "[code $this idle_mode]; break"
-    bind $itk_component(dm) <KeyRelease-Shift_R> "[code $this idle_mode]; break"
-    bind $itk_component(dm) <KeyRelease-Alt_L> "[code $this idle_mode]; break"
-    bind $itk_component(dm) <KeyRelease-Alt_R> "[code $this idle_mode]; break"
+    bind $itk_component(dm) <ButtonRelease> "[::itcl::code $this idle_mode]; break"
+    bind $itk_component(dm) <KeyRelease-Control_L> "[::itcl::code $this idle_mode]; break"
+    bind $itk_component(dm) <KeyRelease-Control_R> "[::itcl::code $this idle_mode]; break"
+    bind $itk_component(dm) <KeyRelease-Shift_L> "[::itcl::code $this idle_mode]; break"
+    bind $itk_component(dm) <KeyRelease-Shift_R> "[::itcl::code $this idle_mode]; break"
+    bind $itk_component(dm) <KeyRelease-Alt_L> "[::itcl::code $this idle_mode]; break"
+    bind $itk_component(dm) <KeyRelease-Alt_R> "[::itcl::code $this idle_mode]; break"
 
     # Rotate Mode
-    bind $itk_component(dm) <Control-ButtonPress-1> "[code $this rotate_mode %x %y]; break"
-    bind $itk_component(dm) <Control-ButtonPress-2> "[code $this rotate_mode %x %y]; break"
-    bind $itk_component(dm) <Control-ButtonPress-3> "[code $this rotate_mode %x %y]; break"
+    bind $itk_component(dm) <Control-ButtonPress-1> "[::itcl::code $this rotate_mode %x %y]; break"
+    bind $itk_component(dm) <Control-ButtonPress-2> "[::itcl::code $this rotate_mode %x %y]; break"
+    bind $itk_component(dm) <Control-ButtonPress-3> "[::itcl::code $this rotate_mode %x %y]; break"
 
     # Translate Mode
-    bind $itk_component(dm) <Shift-ButtonPress-1> "[code $this translate_mode %x %y]; break"
-    bind $itk_component(dm) <Shift-ButtonPress-2> "[code $this translate_mode %x %y]; break"
-    bind $itk_component(dm) <Shift-ButtonPress-3> "[code $this translate_mode %x %y]; break"
+    bind $itk_component(dm) <Shift-ButtonPress-1> "[::itcl::code $this translate_mode %x %y]; break"
+    bind $itk_component(dm) <Shift-ButtonPress-2> "[::itcl::code $this translate_mode %x %y]; break"
+    bind $itk_component(dm) <Shift-ButtonPress-3> "[::itcl::code $this translate_mode %x %y]; break"
 
     # Scale Mode
-    bind $itk_component(dm) <Control-Shift-ButtonPress-1> "[code $this scale_mode %x %y]; break"
-    bind $itk_component(dm) <Control-Shift-ButtonPress-2> "[code $this scale_mode %x %y]; break"
-    bind $itk_component(dm) <Control-Shift-ButtonPress-3> "[code $this scale_mode %x %y]; break"
+    bind $itk_component(dm) <Control-Shift-ButtonPress-1> "[::itcl::code $this scale_mode %x %y]; break"
+    bind $itk_component(dm) <Control-Shift-ButtonPress-2> "[::itcl::code $this scale_mode %x %y]; break"
+    bind $itk_component(dm) <Control-Shift-ButtonPress-3> "[::itcl::code $this scale_mode %x %y]; break"
 
     # Constrained Rotate Mode
-    bind $itk_component(dm) <Alt-Control-ButtonPress-1> "[code $this constrain_rmode x %x %y]; break"
-    bind $itk_component(dm) <Alt-Control-ButtonPress-2> "[code $this constrain_rmode y %x %y]; break"
-    bind $itk_component(dm) <Alt-Control-ButtonPress-3> "[code $this constrain_rmode z %x %y]; break"
+    bind $itk_component(dm) <Alt-Control-ButtonPress-1> "[::itcl::code $this constrain_rmode x %x %y]; break"
+    bind $itk_component(dm) <Alt-Control-ButtonPress-2> "[::itcl::code $this constrain_rmode y %x %y]; break"
+    bind $itk_component(dm) <Alt-Control-ButtonPress-3> "[::itcl::code $this constrain_rmode z %x %y]; break"
 
     # Constrained Translate Mode
-    bind $itk_component(dm) <Alt-Shift-ButtonPress-1> "[code $this constrain_tmode x %x %y]; break"
-    bind $itk_component(dm) <Alt-Shift-ButtonPress-2> "[code $this constrain_tmode y %x %y]; break"
-    bind $itk_component(dm) <Alt-Shift-ButtonPress-3> "[code $this constrain_tmode z %x %y]; break"
+    bind $itk_component(dm) <Alt-Shift-ButtonPress-1> "[::itcl::code $this constrain_tmode x %x %y]; break"
+    bind $itk_component(dm) <Alt-Shift-ButtonPress-2> "[::itcl::code $this constrain_tmode y %x %y]; break"
+    bind $itk_component(dm) <Alt-Shift-ButtonPress-3> "[::itcl::code $this constrain_tmode z %x %y]; break"
 
     # Constrained Scale Mode
-    bind $itk_component(dm) <Alt-Control-Shift-ButtonPress-1> "[code $this scale_mode %x %y]; break"
-    bind $itk_component(dm) <Alt-Control-Shift-ButtonPress-2> "[code $this scale_mode %x %y]; break"
-    bind $itk_component(dm) <Alt-Control-Shift-ButtonPress-3> "[code $this scale_mode %x %y]; break"
+    bind $itk_component(dm) <Alt-Control-Shift-ButtonPress-1> "[::itcl::code $this scale_mode %x %y]; break"
+    bind $itk_component(dm) <Alt-Control-Shift-ButtonPress-2> "[::itcl::code $this scale_mode %x %y]; break"
+    bind $itk_component(dm) <Alt-Control-Shift-ButtonPress-3> "[::itcl::code $this scale_mode %x %y]; break"
 
     # Key Bindings
     bind $itk_component(dm) 3 "$this ae \"35 25 0\"; break"
@@ -1264,18 +1279,18 @@ body Display::doBindings {} {
     bind $itk_component(dm) l "$this ae \"90 0 0\"; break"
     bind $itk_component(dm) t "$this ae \"0 90 0\"; break"
     bind $itk_component(dm) b "$this ae \"0 270 0\"; break"
-    bind $itk_component(dm) m "[code $this toggle_modelAxesEnable]; break"
-    bind $itk_component(dm) T "[code $this toggle_modelAxesTickEnable]; break"
-    bind $itk_component(dm) v "[code $this toggle_viewAxesEnable]; break"
-    bind $itk_component(dm) <F2> "[code $this toggle_zclip]; break"
-    bind $itk_component(dm) <F3> "[code $this toggle_perspective]; break"
-    bind $itk_component(dm) <F4> "[code $this toggle_zbuffer]; break"
-    bind $itk_component(dm) <F5> "[code $this toggle_light]; break"
-    bind $itk_component(dm) <F6> "[code $this toggle_perspective_angle]; break"
-    bind $itk_component(dm) <F10> "[code $this toggle_transparency]; break"
+    bind $itk_component(dm) m "[::itcl::code $this toggle_modelAxesEnable]; break"
+    bind $itk_component(dm) T "[::itcl::code $this toggle_modelAxesTickEnable]; break"
+    bind $itk_component(dm) v "[::itcl::code $this toggle_viewAxesEnable]; break"
+    bind $itk_component(dm) <F2> "[::itcl::code $this toggle_zclip]; break"
+    bind $itk_component(dm) <F3> "[::itcl::code $this toggle_perspective]; break"
+    bind $itk_component(dm) <F4> "[::itcl::code $this toggle_zbuffer]; break"
+    bind $itk_component(dm) <F5> "[::itcl::code $this toggle_light]; break"
+    bind $itk_component(dm) <F6> "[::itcl::code $this toggle_perspective_angle]; break"
+    bind $itk_component(dm) <F10> "[::itcl::code $this toggle_transparency]; break"
 }
 
-body Display::resetBindings {} {
+::itcl::body Display::resetBindings {} {
     Dm::doBindings
     doBindings
 }

@@ -18,7 +18,7 @@
 #
 # Description -
 #
-class cadwidgets::Help {
+::itcl::class cadwidgets::Help {
     constructor {args} {}
     destructor {}
 
@@ -32,12 +32,12 @@ class cadwidgets::Help {
     private variable data
 }
 
-body cadwidgets::Help::constructor {args} {
+::itcl::body cadwidgets::Help::constructor {args} {
     # process options
     eval configure $args
 }
 
-body cadwidgets::Help::? {cwidth ncol} {
+::itcl::body cadwidgets::Help::? {cwidth ncol} {
     set i 1
     foreach cmd [lsort [array names data]] {
 	append info [format "%-[subst $cwidth]s" $cmd]
@@ -50,11 +50,11 @@ body cadwidgets::Help::? {cwidth ncol} {
     return $info
 }
 
-body cadwidgets::Help::add {name desc} {
+::itcl::body cadwidgets::Help::add {name desc} {
     set data($name) $desc
 }
 
-body cadwidgets::Help::apropos {key} {
+::itcl::body cadwidgets::Help::apropos {key} {
     set info ""
     foreach cmd [lsort [array names data]] {
 	if {[string first $key $cmd] != -1} {
@@ -67,11 +67,11 @@ body cadwidgets::Help::apropos {key} {
     return $info
 }
 
-body cadwidgets::Help::delete {name} {
+::itcl::body cadwidgets::Help::delete {name} {
     unset data($name)
 }
 
-body cadwidgets::Help::get {args} {
+::itcl::body cadwidgets::Help::get {args} {
     if {[llength $args] && [lindex $args 0] != {}} {
 	set cmd [lindex $args 0]
 	if [info exists data($cmd)] {
@@ -88,6 +88,6 @@ body cadwidgets::Help::get {args} {
     }
 }
 
-body cadwidgets::Help::getCmds {} {
+::itcl::body cadwidgets::Help::getCmds {} {
     return [lsort [array names data]]
 }

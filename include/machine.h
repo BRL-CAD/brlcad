@@ -213,11 +213,26 @@ typedef double fastf_t;
 #define FAST register	
 typedef long bitv_t;	
 #define BITV_SHIFT	5
-// assume only one processor for now
+/* assume only one processor for now */
 #define MAX_PSW	4
 #define DEFAULT_PSW	1
+#if 0
 #define PARALLEL	1
+#endif
 #define MALLOC_NOT_MP_SAFE 1
+
+#if 0
+#define const const
+#define CONST const	 
+#define IEEE_FLOAT 	1
+#define LITTLE_ENDIAN	1
+#define MAX_FASTF	1.00E+74
+#define SQRT_MAX_FASTF	1.00E+37
+#define SMALL_FASTF	1.00E-74
+#define SQRT_SMALL_FASTF	1.00E-37
+#define SMALL SQRT_SMALL_FASTF
+#define hypot _hypot
+#endif
 #endif
 
 

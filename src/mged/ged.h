@@ -61,6 +61,8 @@
 /* Needed to define struct solid - RFH */
 #include "solid.h"
 
+#define HIDE_MGEDS_ARB_ROUTINES 1
+
 /* A hack around a compilation issue.  No need in fixing it now as the build
    process is about to be redone - RFH */
 #ifndef SEEN_RT_NURB_INTERNAL
@@ -850,11 +852,16 @@ void label_edited_solid(
 	struct rt_db_internal	*ip);
 void init_oedit(void);
 void init_sedit(void);
+#ifdef HIDE_MGEDS_ARB_ROUTINES
+#  define rt_arb_calc_planes(planes,arb,type,tol) \
+rt_arb_calc_planes(interp,arb,type,planes,tol)
+#else
 int rt_arb_calc_planes(
 	plane_t			planes[6],
 	struct rt_arb_internal	*arb,
 	int			type,
 	const struct bn_tol	*tol);
+#endif
 
 
 /* share.c */

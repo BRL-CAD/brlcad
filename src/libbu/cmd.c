@@ -90,8 +90,11 @@ bu_cmd(ClientData	clientData,
 	}
 
 	Tcl_AppendResult(interp,
-			 "unknown command; must be one of:",
+			 "unknown command: ",
+			 argv[cmd_index], ";",
+			 " must be one of: ",
 			 (char *)NULL);
+
 missing_cmd:
 	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
 		Tcl_AppendResult(interp, " ", ctp->ct_name, (char *)NULL);

@@ -30,11 +30,7 @@
 #endif
 #include <math.h>
 
-#ifdef DM_X
-#if 1
-#define USE_FBSERV
-#endif
-
+#if defined(DM_X) || defined(WIN32)
 #include "tk.h"
 #include <X11/Xutil.h>
 #else
@@ -43,6 +39,10 @@
 
 #ifdef WIN32
 #include <tkwinport.h>
+#else
+#if 1
+#define USE_FBSERV
+#endif
 #endif
 
 #include "machine.h"
@@ -55,7 +55,7 @@
 #include "png.h"
 #include "zlib.h"
 
-#ifdef DM_X
+#if defined(DM_X) || defined(WIN32)
 #include "dm-X.h"
 #include "dm_xvars.h"
 
@@ -125,7 +125,9 @@ static int dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 static int dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#ifndef WIN32
 static int dmo_png_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#endif
 static int dmo_clearBufferAfter_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 
@@ -165,7 +167,9 @@ static struct bu_cmdtab dmo_cmds[] = {
 	{"normal",		dmo_normal_tcl},
 	{"observer",		dmo_observer_tcl},
 	{"perspective",		dmo_perspective_tcl},
+#ifndef WIN32
 	{"png",		        dmo_png_tcl},
+#endif
 #ifdef USE_FBSERV
 	{"refreshfb",		dmo_refreshFb_tcl},
 #endif
@@ -304,6 +308,7 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	}
 
+#ifndef WIN32
 #ifdef DM_X
 	/* find display manager type */
 	if (argv[2][0] == 'X' || argv[2][0] == 'x')
@@ -335,6 +340,10 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_SetObjResult(interp, obj);
 	return TCL_ERROR;
 #endif /* DM_X */
+#else
+    if (!strcmp(argv[2], "ogl"))
+	type = DM_TYPE_OGL;
+#endif
 
 	{
 		int i;
@@ -1937,6 +1946,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 }
 
 
+#ifndef WIN32
 static int
 dmo_png_cmd(struct dm_obj	*dmop,
 	    Tcl_Interp		*interp,
@@ -2235,6 +2245,7 @@ dmo_png_tcl(ClientData	clientData,
 
     return dmo_png_cmd(dmop, interp, argc-1, argv+1);
 }
+#endif
 
 /*
  * Get/set the clearBufferAfter flag.

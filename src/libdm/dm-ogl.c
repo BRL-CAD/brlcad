@@ -153,6 +153,7 @@ struct dm dm_ogl = {
   0,				/* no perspective */
   0,				/* no lighting */
   0,				/* no transparency */
+  1,				/* depth buffer is writable */
   1,				/* zbuffer */
   0,				/* no zclipping */
   1,                            /* clear back buffer after drawing and swap */

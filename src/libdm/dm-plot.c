@@ -115,8 +115,10 @@ struct dm dm_plot = {
   0,				/* no perspective */
   0,				/* no lighting */
   0,				/* no transparency */
+  0,				/* depth buffer is not writable */
   0,				/* no zbuffer */
   0,				/* no zclipping */
+  1,                            /* clear back buffer after drawing and swap */
   0				/* Tcl interpreter */
 };
 

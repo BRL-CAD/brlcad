@@ -19,7 +19,7 @@
 # Description -
 #	The Database class inherits from Db and Drawable.
 #
-class Database {
+::itcl::class Database {
     inherit Db Drawable
 
     constructor {file} {
@@ -35,15 +35,15 @@ class Database {
     public method getUserCmds {}
 }
 
-body Database::? {} {
+::itcl::body Database::? {} {
     return "[Db::?]\n[Drawable::?]"
 }
 
-body Database::apropos {key} {
+::itcl::body Database::apropos {key} {
     return "[Db::apropos $key] [Drawable::apropos $key]"
 }
 
-body Database::help {args} {
+::itcl::body Database::help {args} {
     if {[llength $args] && [lindex $args 0] != {}} {
 	if {[catch {eval Db::help $args} result]} {
 	    set result [eval Drawable::help $args]
@@ -56,6 +56,6 @@ body Database::help {args} {
     return "[Db::help][Drawable::help]"
 }
 
-body Database::getUserCmds {} {
+::itcl::body Database::getUserCmds {} {
     return "[Db::getUserCmds] [Drawable::getUserCmds]"
 }

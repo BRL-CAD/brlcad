@@ -86,7 +86,7 @@ HIDDEN int      ogl_beginDList(), ogl_endDList();
 HIDDEN int      ogl_drawDList();
 HIDDEN int      ogl_freeDLists();
 
-struct dm dm_ogl = {
+ dm dm_ogl = {
   ogl_close,
   ogl_drawBegin,
   ogl_drawEnd,
@@ -102,6 +102,8 @@ struct dm dm_ogl = {
   ogl_configureWin,
   ogl_setWinBounds,
   ogl_setLight,
+  ogl_setTransparency,
+  ogl_setDepthMask,
   ogl_setZBuffer,
   ogl_debug,
   ogl_beginDList,
@@ -111,10 +113,10 @@ struct dm dm_ogl = {
   0,
   1,				/* has displaylist */
   0,                            /* no stereo by default */
-  IRBOUND,			/* zoom-in limit */
+  1.0,				/* zoom-in limit */
   1,				/* bound flag */
   "ogl",
-  "Microsoft Windows with OpenGL graphics",
+  "X Windows with OpenGL graphics",
   DM_TYPE_OGL,
   1,
   0,
@@ -129,13 +131,16 @@ struct dm dm_ogl = {
   {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
   {0, 0, 0},			/* bg color */
   {0, 0, 0},			/* fg color */
-  {0.0, 0.0, 0.0},		/* clipmin */
-  {0.0, 0.0, 0.0},		/* clipmax */
+  {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+  {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
+  0,				/* no transparency */
+  1,				/* depth buffer is writable */
   1,				/* zbuffer */
   0,				/* no zclipping */
+  1,                            /* clear back buffer after drawing and swap */
   0				/* Tcl interpreter */
 };
 

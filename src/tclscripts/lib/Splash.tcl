@@ -26,13 +26,13 @@ option add *Splash.borderWidth 2 widgetDefault
 option add *Splash.relief raised widgetDefault
 option add *Splash.cursor watch widgetDefault
 
-class Splash {
+::itcl::class Splash {
     inherit iwidgets::Shell
 
     constructor {args} {}
 }
 
-body Splash::constructor {args} {
+::itcl::body Splash::constructor {args} {
     wm overrideredirect $itk_component(hull) 1
 
     # revive a few ignored options

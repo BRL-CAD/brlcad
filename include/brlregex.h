@@ -44,6 +44,18 @@
 
 #include "common.h"
 
+#ifndef SYSV_EXPORT
+#  if defined(WIN32) && !defined(__CYGWIN__)
+#    ifdef SYSV_EXPORT_DLL
+#      define SYSV_EXPORT __declspec(dllexport)
+#    else
+#      define SYSV_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define SYSV_EXPORT
+#  endif
+#endif
+
 /* From #include <sys/cdefs.h> */
 #if !defined(__P)
 #  if defined(USE_PROTOTYPES)
@@ -116,11 +128,11 @@ typedef struct {
 #define	REG_BACKR	02000	/* force use of backref code */
 
 __BEGIN_DECLS
-int	regcomp __P((regex_t *, const char *, int));
-size_t	regerror __P((int, const regex_t *, char *, size_t));
-int	regexec __P((const regex_t *,
+SYSV_EXPORT int	regcomp __P((regex_t *, const char *, int));
+SYSV_EXPORT size_t	regerror __P((int, const regex_t *, char *, size_t));
+SYSV_EXPORT int	regexec __P((const regex_t *,
 	    const char *, size_t, regmatch_t [], int));
-void	regfree __P((regex_t *));
+SYSV_EXPORT void	regfree __P((regex_t *));
 __END_DECLS
 
 #endif /* !_REGEX_H_ */

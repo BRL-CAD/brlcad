@@ -579,7 +579,7 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
  *	.rt shootray {0 0 0} dir {0 0 -1}
  */
 int
-rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
 	struct dbcmdstruct	*dbcmd;
 
