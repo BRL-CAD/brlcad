@@ -115,7 +115,9 @@ fastf_t *min, *max;
 	struct internal_line l1;
 	fastf_t norm;
 	fastf_t value;
-	int	i, j, k;
+	int	i;
+	register int	j;
+	int	k;
 	int	coords;
 	int	stride;
 	int col_size, row_size;
@@ -210,7 +212,9 @@ fastf_t *min, *max;
 			*max = 1.0;
 		if ( SIGN(ch[0].min) != SIGN(ch[0].max))
 			*min = 0.0;
-		if ( SIGN(ch[col_size -1].min) != SIGN(ch[col_size -1].max))
+		i = SIGN(ch[col_size -1].min);
+		j = SIGN(ch[col_size -1].max);
+		if ( i != j)
 			*max = 1.0;
 	} else
 	{
@@ -267,7 +271,9 @@ fastf_t *min, *max;
 			*max = 1.0;
 		if ( SIGN(ch[0].min) != SIGN(ch[0].max))
 			*min = 0.0;
-		if ( SIGN(ch[row_size-1 ].min) != SIGN(ch[row_size -1].max))
+		i = SIGN(ch[row_size-1 ].min);
+		j = SIGN(ch[row_size -1].max);
+		if ( i != j )
 			*max = 1.0;	}
 
 	rt_free( (char *)ch, "rt_nurb_clip_srf:convex_hull");
