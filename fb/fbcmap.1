@@ -1,55 +1,87 @@
-.TH FBCMAP 1V VMB
-'\"	last edit:	86/07/28	D A Gwyn
-'\"	SCCS ID:	@(#)fbcmap.1	1.4
+.TH FBCMAP 1 BRL/CAD
 .SH NAME
 fbcmap \- change the color map of a frame buffer
 .SH SYNOPSIS
 .B fbcmap
-[
-.B \-h
-] [ map_number ]
+.RB [ \-h ]
+[map_number]
 .SH DESCRIPTION
 .I Fbcmap
 is used to change the color map of a frame buffer.
-By default, the device
-.B /dev/ik0l
-is assumed.
-This may be changed by setting the environment
+The environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name
-and exporting it before execution of 
-.IR fbclear .
+is used to select the display device (see
+.IR brlcad (1)).
+If this variable is not set, the default device for your system will
+be used.
 If the
 .B \-h
-option is used, the
+option is used, a
 .SM
 .B HIRES
-(1024x1024x24) color map is written; otherwise a
+(1024x1024x24) framebuffer is written; otherwise a
 .SM
 .B LORES
 (512x512x24) device is assumed.
+This size distinction is important only for devices like the Adage
+framebuffers which have different operating modes based on the
+display size.
+.PP
 If an optional color
 .I map_number
 is given, that map is used;
 the default is the standard linear map.
-There are currently five other maps supplied
-numbered 1 through 5 in the following order:
-a reverse-linear (negative) map,
-one corrected for Polaroid 809/891 film,
-a linear mapping in which the first 100 values are black,
-a linear map with values 1-192 incremented by 64 to boost dim pictures,
-and the color map used by the University of Utah Alpha_1 project.
+There are currently six other maps supplied
+numbered 1 through 6 as follows:
+.TP
+1
+reverse-linear (negative) map.
+.TP
+2
+one corrected for Polaroid 809/891 film.
+.TP
+3
+a linear mapping in which the first 100 values are black.
+.TP
+4
+a linear map with values 1->191 incremented by 64 to boost dim pictures.
+The values at 191 and above are all full on.  Zero remains at zero.
+.TP
+5
+a gamma correcting color map used by the University of Utah Alpha_1 project.
+.TP
+6
+a map with a series of color deltas.
+This map is mostly black with the following colors,
+appearing at multiples of 32,
+having values full on:
+white (0), magenta (32), red (64), yellow (96), green (128),
+cyan (160), blue (192).  This map is most useful in conjunction
+with
+.IR fbcmrot (1)
+and will show which pixels have the same intensities in one, two, or
+all three color planes.
+.PP
 There are also three special maps used to quickly change the display
 to a solid color for adjusting a camera without losing image memory,
 numbered 10 through 12 for
 black,
 white,
 and 18% neutral grey, respectively.
-.SH FILE
-/vld/lib/libfb.a
+.SH "SEE ALSO"
+brlcad(1), fbcmrot(1), cmap-fb(1), fb-cmap(1), cmap(5)
 .SH AUTHORS
-Gary S. Moss, BRL/VLD-VMB
+Gary S. Moss
 .br
-Michael John Muuss, BRL/SECAD
+Michael John Muuss
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
