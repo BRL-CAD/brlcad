@@ -343,42 +343,92 @@ register FBIO	*ifp;
 			l = xscroff;
 			b = yscroff + (y-ymin)*SGI(ifp)->si_yzoom;
 			t = b + SGI(ifp)->si_yzoom;
-			for( i=xwidth; i > 0; i--)  {
-				switch( SGI(ifp)->si_mode ) {
-				case MODE_RGB:
-					PASSCMD(hole,3,FBCrgbcolor);
-					hole->s = (ip[RED]);
-					hole->s = (ip[GRN]);
-					hole->s = (ip[BLU]);
-					break;
-				case MODE_FIT:
-					PASSCMD(hole,1,FBCcolor);
-					hole->s = get_Color_Index( ifp, ip );
-					break;
-				case MODE_APPROX:
-					PASSCMD(hole,1,FBCcolor);
-					hole->s = COLOR_APPROX(ip);
-					break;
+			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
+				for( i=xwidth; i > 0; i--)  {
+					switch( SGI(ifp)->si_mode ) {
+					case MODE_RGB:
+						PASSCMD(hole,3,FBCrgbcolor);
+						hole->s = (ip[RED]);
+						hole->s = (ip[GRN]);
+						hole->s = (ip[BLU]);
+						break;
+					case MODE_FIT:
+						PASSCMD(hole,1,FBCcolor);
+						hole->s = get_Color_Index( ifp, ip );
+						break;
+					case MODE_APPROX:
+						PASSCMD(hole,1,FBCcolor);
+						hole->s = COLOR_APPROX(ip);
+						break;
+					}
+					r = l + SGI(ifp)->si_xzoom;
+					/* left bottom right top: rectfs( l, b, r, t ); */
+					hole->s = GEmovepoly | GEPA_2S;
+					hole->s = l;
+					hole->s = b;
+					hole->s = GEdrawpoly | GEPA_2S;
+					hole->s = r;
+					hole->s = b;
+					hole->s = GEdrawpoly | GEPA_2S;
+					hole->s = r;
+					hole->s = t;
+					hole->s = GEdrawpoly | GEPA_2S;
+					hole->s = l;
+					hole->s = t;
+					hole->s = GEclosepoly;	/* Last? */
+					l = r;
+					ip += sizeof(RGBpixel);
 				}
-				r = l + SGI(ifp)->si_xzoom;
-				/* left bottom right top: rectfs( l, b, r, t ); */
-				hole->s = GEmovepoly | GEPA_2S;
-				hole->s = l;
-				hole->s = b;
-				hole->s = GEdrawpoly | GEPA_2S;
-				hole->s = r;
-				hole->s = b;
-				hole->s = GEdrawpoly | GEPA_2S;
-				hole->s = r;
-				hole->s = t;
-				hole->s = GEdrawpoly | GEPA_2S;
-				hole->s = l;
-				hole->s = t;
-				hole->s = GEclosepoly;	/* Last? */
-				l = r;
-				ip += sizeof(RGBpixel);
+				continue;
+			} else {
+				for( i=xwidth; i > 0; i--)  {
+					static RGBpixel new;
+
+					switch( SGI(ifp)->si_mode ) {
+					case MODE_RGB:
+						PASSCMD(hole,3,FBCrgbcolor);
+						hole->s = _sgi_cmap.cm_red[
+							ip[RED]];
+						hole->s = _sgi_cmap.cm_green[
+							ip[GRN]];
+						hole->s = _sgi_cmap.cm_blue[
+							ip[BLU]];
+						break;
+					case MODE_FIT:
+						new[RED] = _sgi_cmap.cm_red[ip[RED]];
+						new[GRN] = _sgi_cmap.cm_green[ip[GRN]];
+						new[BLU] = _sgi_cmap.cm_blue[ip[BLU]];
+						PASSCMD(hole,1,FBCcolor);
+						hole->s = get_Color_Index( ifp, new );
+						break;
+					case MODE_APPROX:
+						new[RED] = _sgi_cmap.cm_red[ip[RED]];
+						new[GRN] = _sgi_cmap.cm_green[ip[GRN]];
+						new[BLU] = _sgi_cmap.cm_blue[ip[BLU]];
+						PASSCMD(hole,1,FBCcolor);
+						hole->s = COLOR_APPROX(new);
+						break;
+					}
+					r = l + SGI(ifp)->si_xzoom;
+					/* left bottom right top: rectfs( l, b, r, t ); */
+					hole->s = GEmovepoly | GEPA_2S;
+					hole->s = l;
+					hole->s = b;
+					hole->s = GEdrawpoly | GEPA_2S;
+					hole->s = r;
+					hole->s = b;
+					hole->s = GEdrawpoly | GEPA_2S;
+					hole->s = r;
+					hole->s = t;
+					hole->s = GEdrawpoly | GEPA_2S;
+					hole->s = l;
+					hole->s = t;
+					hole->s = GEclosepoly;	/* Last? */
+					l = r;
+					ip += sizeof(RGBpixel);
+				}
+				continue;
 			}
-			continue;
 		}
 
 		/* Non-zoomed case */
@@ -386,49 +436,116 @@ register FBIO	*ifp;
 
 		switch( SGI(ifp)->si_mode )  {
 		case MODE_RGB:
-			for( i=xwidth; i > 0; )  {
-				register short chunk;
+			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
+				for( i=xwidth; i > 0; )  {
+					register short chunk;
 
-				if( i <= (127/3) )
-					chunk = i;
-				else
-					chunk = 127/3;
-				PASSCMD(hole, chunk*3, FBCdrawpixels);
-				i -= chunk;
-				for( ; chunk>0; chunk--)  {
-					hole->us = *ip++;
-					hole->us = *ip++;
-					hole->us = *ip++;
+					if( i <= (127/3) )
+						chunk = i;
+					else
+						chunk = 127/3;
+					PASSCMD(hole, chunk*3, FBCdrawpixels);
+					i -= chunk;
+					for( ; chunk>0; chunk--)  {
+						hole->us = *ip++;
+						hole->us = *ip++;
+						hole->us = *ip++;
+					}
+				}
+			} else {
+				for( i=xwidth; i > 0; )  {
+					register short chunk;
+
+					if( i <= (127/3) )
+						chunk = i;
+					else
+						chunk = 127/3;
+					PASSCMD(hole, chunk*3, FBCdrawpixels);
+					i -= chunk;
+					for( ; chunk>0; chunk--)  {
+						hole->s = _sgi_cmap.cm_red[
+							*ip++];
+						hole->s = _sgi_cmap.cm_green[
+							*ip++];
+						hole->s = _sgi_cmap.cm_blue[
+							*ip++];
+					}
 				}
 			}
 			break;
 		case MODE_FIT:
-			for( i=xwidth; i > 0; )  {
-				register short chunk;
+			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
+				for( i=xwidth; i > 0; )  {
+					register short chunk;
 
-				if( i <= 127 )
-					chunk = i;
-				else
-					chunk = 127;
-				PASSCMD(hole, chunk, FBCdrawpixels);
-				i -= chunk;
-				for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
-					hole->s = get_Color_Index( ifp, ip );
+					if( i <= 127 )
+						chunk = i;
+					else
+						chunk = 127;
+					PASSCMD(hole, chunk, FBCdrawpixels);
+					i -= chunk;
+					for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
+						hole->s = get_Color_Index( ifp, ip );
+					}
+				}
+			} else {
+				for( i=xwidth; i > 0; )  {
+					register short chunk;
+
+					if( i <= 127 )
+						chunk = i;
+					else
+						chunk = 127;
+					PASSCMD(hole, chunk, FBCdrawpixels);
+					i -= chunk;
+					for( ; chunk > 0; chunk-- )  {
+						static RGBpixel new;
+						new[RED] = _sgi_cmap.cm_red[
+							*ip++];
+						new[GRN] = _sgi_cmap.cm_green[
+							*ip++];
+						new[BLU] = _sgi_cmap.cm_blue[
+							*ip++];
+						hole->s = get_Color_Index( ifp, new );
+					}
 				}
 			}
 			break;
 		case MODE_APPROX:
-			for( i=xwidth; i > 0; )  {
-				register short chunk;
+			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
+				for( i=xwidth; i > 0; )  {
+					register short chunk;
 
-				if( i <= 127 )
-					chunk = i;
-				else
-					chunk = 127;
-				PASSCMD(hole, chunk, FBCdrawpixels);
-				i -= chunk;
-				for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
-					hole->s = COLOR_APPROX(ip);
+					if( i <= 127 )
+						chunk = i;
+					else
+						chunk = 127;
+					PASSCMD(hole, chunk, FBCdrawpixels);
+					i -= chunk;
+					for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
+						hole->s = COLOR_APPROX(ip);
+					}
+				}
+			} else {
+				for( i=xwidth; i > 0; )  {
+					register short chunk;
+
+					if( i <= 127 )
+						chunk = i;
+					else
+						chunk = 127;
+					PASSCMD(hole, chunk, FBCdrawpixels);
+					i -= chunk;
+					for( ; chunk > 0; chunk-- )  {
+						static RGBpixel new;
+						new[RED] = _sgi_cmap.cm_red[
+							*ip++];
+						new[GRN] = _sgi_cmap.cm_green[
+							*ip++];
+						new[BLU] = _sgi_cmap.cm_blue[
+							*ip++];
+						hole->s = COLOR_APPROX(new);
+					}
 				}
 			}
 			break;
@@ -987,6 +1104,7 @@ register ColorMap	*cmp;
 
 	}
 	SGI(ifp)->si_cmap_flag = TRUE;
+	sgi_repaint( ifp );
 	return(0);
 }
 
