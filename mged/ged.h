@@ -124,7 +124,6 @@ extern char	memb_oper;	/* op for present member of proc region */
 extern int	reg_pathpos;	/* pathpos of a processed region */
 
 /* defined in dodraw.c */
-extern int	reg_error;	/* error encountered in region processing */
 extern int	no_memory;	/* flag indicating memory for drawing is used up */
 
 /* defined in menu.c */
@@ -162,10 +161,10 @@ extern void		attach(), release(), get_attached();
 extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern void		aexists(), f_quit();
 extern char		*addname(), *strdup();
-extern int		clip(), getname(), use_pen(), drawHsolid();
-extern struct directory	*combadd(), *dir_add(), *lookup(), **dir_getspace();
-extern struct solid *redraw();
-extern void		ellipse(), memfree(), mempurge();
+extern int		clip(), getname(), use_pen();
+extern struct directory	*combadd(), **dir_getspace();
+extern void		ellipse();
+extern void		memfree(), mempurge();
 extern unsigned long	memalloc(), memget();
 
 #ifndef	NULL
@@ -203,8 +202,8 @@ extern int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
 extern int	edobj;		/* object editing options */
 
 /* Flags for line type decisions */
-#define ROOT	UP
-#define INNER	DOWN
+#define ROOT	0
+#define INNER	1
 
 /*
  *  Editor States
@@ -223,10 +222,17 @@ extern char *state_str[];		/* identifying strings */
 
 #ifndef GETSTRUCT
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#define GETSTRUCT(p,str) \
-	p = (struct str *)malloc((unsigned)sizeof(struct str)); \
-	if( p == (struct str *)0 ) \
-		(void)printf("getstruct( p, str ): malloc failed\n");/* cpp magic */
+#if __STDC__ && !alliant && !apollo
+# define GETSTRUCT(p,str) \
+	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
+# define GETUNION(p,unn) \
+	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct " #unn)
+#else
+# define GETSTRUCT(p,str) \
+	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
+# define GETUNION(p,unn) \
+	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct unn")
+#endif
 #endif
 
 #define	MAXLINE		10240	/* Maximum number of chars per line */
