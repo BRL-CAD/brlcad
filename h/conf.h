@@ -41,6 +41,12 @@
 #	define HAVE_UNISTD_H	1
 #endif
 
+#if defined(__convex__)
+#	define HAVE_STRING_H	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#endif
+
 #if defined(_GNU_SOURCE)
 #	define _POSIX_SOURCE	1
 #	define HAVE_TERMIOS_H	1
