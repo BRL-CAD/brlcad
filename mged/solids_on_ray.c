@@ -214,6 +214,13 @@ struct solid	*sp;
  *	rpt_solids() stashes the complete path name for each solid,
  *	otherwise, just its basename.  It returns 1.
  */
+/* If this is defined inside the body of rpt_solids(), it causes
+ * the IRIX 6 compilers to segmentation fault in WHIRL file phase. Ugh. */
+static int			(*rpt_solids_orders[])() =
+				{
+				    sol_comp_name,
+				    sol_comp_dist
+				};
 
 static int
 rpt_solids(ap, ph, finished_segs)
@@ -235,18 +242,13 @@ struct seg		*finished_segs;
     struct sol_name_dist	*sol;
     struct soltab		*stp;
     struct bu_vls		sol_path_name;
-    static int			(*orders[])() =
-				{
-				    sol_comp_name,
-				    sol_comp_dist
-				};
 
     full_path = ap -> a_user;
 
     /*
      *	Initialize the solid list
      */
-    if ((solids = rb_create("Solid list", 2, orders)) == RB_TREE_NULL)
+    if ((solids = rb_create("Solid list", 2, rpt_solids_orders)) == RB_TREE_NULL)
     {
 	bu_log("%s: %d: rb_create() bombed\n", __FILE__, __LINE__);
 	exit (1);
