@@ -181,6 +181,8 @@ char **argv;
 	if( rt_g.debug & DEBUG_PARALLEL )  bu_debug |= BU_DEBUG_PARALLEL;
 	if( rt_g.debug & DEBUG_MATH )  bu_debug |= BU_DEBUG_MATH;
 
+	if( rdebug & RDEBUG_RTMEM_END )  bu_debug |= BU_DEBUG_MEM_CHECK;
+
 	if( bu_debug )  {
 		bu_printb( "libbu bu_debug", bu_debug, BU_DEBUG_FORMAT );
 		bu_log("\n");
