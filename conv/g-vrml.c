@@ -91,7 +91,7 @@ struct bu_structparse vrml_mat_parse[]={
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 BU_EXTERN(union tree *nmg_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
-static char	usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char   usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
@@ -177,7 +177,6 @@ struct rt_db_internal   *ip;
 genptr_t                client_data;
 {
 	struct rt_bot_internal *bot;
-	struct directory *dp;
 
 	if( ip->idb_type != ID_BOT )
 		return( nmg_booltree_leaf_tess(tsp, pathp, ip, client_data) );
@@ -186,10 +185,7 @@ genptr_t                client_data;
 	RT_BOT_CK_MAGIC( bot );
 
 	if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_SURFACE )
-	{
-		/* bot2vrml( bot ); */
 		return( (union tree *)NULL );
-	}
 
 	return( nmg_booltree_leaf_tess(tsp, pathp, ip, client_data) );
 }
@@ -810,7 +806,6 @@ struct db_i *dbip;
 struct directory *dp;
 genptr_t clientdata;
 {
-	struct rt_bot_internal *bot, **abot;
 	struct rt_db_internal intern;
 	int id;
 
