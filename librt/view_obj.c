@@ -295,7 +295,9 @@ vo_size_cmd(struct view_obj	*vop,
 
 	/* set view size */
 	if (argc == 2) {
-		if (sscanf(argv[1], "%lf", &size) != 1) {
+		if (sscanf(argv[1], "%lf", &size) != 1 ||
+		    size <= 0 ||
+		    NEAR_ZERO(size, SMALL_FASTF)) {
 			Tcl_AppendResult(interp, "bad size - ",
 					 argv[1], (char *)NULL);
 			return TCL_ERROR;
