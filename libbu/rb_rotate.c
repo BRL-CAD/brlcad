@@ -1,9 +1,11 @@
 /*			R B _ R O T A T E . C
  *
- *	Written by:	Paul Tanenbaum
+ *	    Routines to perform rotations on a red-black tree
  *
- *  $Header$
  */
+#ifndef lint
+static char RCSid[] = "@(#) $Header$";
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,16 +13,15 @@
 #include "redblack.h"
 #include "rb_internals.h"
 
-/*		    L E F T _ R O T A T E ( )
+/*		    _ R B _ R O T _ L E F T ( )
  *
  *		Perfrom left rotation on a red-black tree
  *
  *	This function has two parameters: the node about which to rotate
- *	and the order to be rotated.  The bulk of this code is from
- *	T. H. Cormen, C. E. Leiserson, and R. L. Rivest.  _Introduction
- *	to Algorithms_.  Cambridge, MA: MIT Press, 1990. p. 266.
+ *	and the order to be rotated.  _rb_rot_left() is an implementation
+ *	of the routine called LEFT-ROTATE on p. 266 of Cormen et al.
  */
-void left_rotate (struct rb_node *x, int order)
+void _rb_rot_left (struct rb_node *x, int order)
 {
     struct rb_node	*y;		/* x's child to pivot up */
     struct rb_node	*beta;		/* y's child in direction of rot. */
@@ -49,15 +50,15 @@ void left_rotate (struct rb_node *x, int order)
     rb_parent(x, order) = y;
 }
 
-/*		    R I G H T _ R O T A T E ( )
+/*		    _ R B _ R O T _ R I G H T ( )
  *
  *		Perfrom right rotation on a red-black tree
  *
  *	This function has two parameters: the node about which to rotate
- *	and the order to be rotated.  This function is hacked from
- *	left_rotate() above.
+ *	and the order to be rotated.  _rb_rot_right() is hacked from
+ *	_rb_rot_left() above.
  */
-void right_rotate (struct rb_node *y, int order)
+void _rb_rot_right (struct rb_node *y, int order)
 {
     struct rb_node	*x;		/* y's child to pivot up */
     struct rb_node	*beta;		/* x's child in direction of rot. */
