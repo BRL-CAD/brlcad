@@ -1572,7 +1572,7 @@ Tk_Window tkwin;
 	}
 
 	m_double = 1;
-	m_rgba = 1;
+	m_rgba = 0;
 	
 	/* Try to satisfy the above desires with a color visual of the
 	 * greatest depth */
