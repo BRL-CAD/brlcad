@@ -253,7 +253,7 @@ TEA_PROG_TCLSH
 # A wish shell is needed to run the test suite.
 #--------------------------------------------------------------------
 
-TEA_PROG_WISH
+# TEA_PROG_WISH
 
 #--------------------------------------------------------------------
 # Finally, substitute all of the various values into the Makefile.
