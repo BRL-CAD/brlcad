@@ -36,6 +36,7 @@ struct histogram	*histp;
 int			min, max;
 int			nbins;
 {
+
 	if( max <= min )  max = min+1;
 	if( nbins < 2 )  {
 		nbins = 2;
@@ -49,9 +50,9 @@ int			nbins;
 	histp->hg_min = min;
 	histp->hg_max = max;
 	histp->hg_nbins = nbins;
-	histp->hg_clumpsize = (max-min+1)/nbins+1;
+	histp->hg_clumpsize = ((max-min+1)/nbins)+1;
 	histp->hg_nsamples = 0L;
-	histp->hg_bins = (long *)rt_malloc( sizeof(long)*(nbins+1), "histogram bins");
+	histp->hg_bins = (long *)rt_calloc( nbins+1, sizeof(long), "histogram bins");
 }
 
 /*
