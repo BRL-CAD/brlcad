@@ -88,6 +88,7 @@ int		matflag = 0;		/* read matrix from stdin */
 int		desiredframe = 0;	/* frame to start at */
 int		curframe = 0;		/* current frame number */
 char		*outputfile = (char *)0;/* name of base of output file */
+int		interactive = 0;	/* human is watching results */
 /***** end variables shared with do.c *****/
 
 static char	*framebuffer;		/* desired framebuffer */
@@ -103,8 +104,11 @@ register char **argv;
 	register int c;
 	register int i;
 
-	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:i" )) != EOF )  {
+	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iI" )) != EOF )  {
 		switch( c )  {
+		case 'I':
+			interactive = 1;
+			break;
 		case 'i':
 			incr_mode = 1;
 			break;
