@@ -293,20 +293,25 @@ of being consistent.
 
 1) Whitespace
 
-Indents are 2 characters, tabs are 8 characters.  There should be an
-emacs and vi setting at the end of each file to adopt, enforce, and
-remind this convention.  The following lines should be in all source
-and header files at the end of the file:
+Indents are 4 characters, tabs are 8 characters.  There should be an
+emacs and vi local variables block setting at the end of each file to
+adopt, enforce, and otherwise remind this convention.  The following
+lines should be in all C source and header files at the end of the
+file:
 
 /*
- * Local Variables: ***
- * mode:C++ ***
- * tab-width: 2 ***
- * c-basic-offset: 2 ***
- * indent-tabs-mode: t ***
- * End: ***
- * ex: shiftwidth=2 tabstop=8
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
  */
+
+A similar block can be used on source and script files in other
+languages (such as Tcl, Shell, Perl, etc).  See the local variable
+footer script in sh/footer.sh to automatically set/update files.
 
 Space around operators.
   a = (b + c) * d;  /* ok */
