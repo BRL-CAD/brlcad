@@ -36,6 +36,18 @@
 #define NULL 0
 #endif
 
+/*
+ *  A macro for providing function prototypes, regardless of whether
+ *  the compiler understands them or not.
+ *  It is vital that the argument list given for "args" be enclosed
+ *  in parens.
+ */
+#if USE_PROTOTYPES
+#	define	NMG_EXTERN(type_and_name,args)	extern type_and_name args
+#else
+#	define	NMG_EXTERN(type_and_name,args)	extern type_and_name()
+#endif
+
 #define DEBUG_INS	0x00000001	/* 1 nmg_tbl table insert */
 #define DEBUG_FINDEU	0x00000002	/* 2 findeu (find edge[use]) */
 #define DEBUG_CMFACE	0x00000004	/* 3 nmg_cmface() */
@@ -321,7 +333,7 @@ struct nmg_list  {
 /*
  *			M O D E L
  */
-#if !defined(MODEL_DEFINED) || !defined(__STDC__)
+#if !defined(MODEL_DEFINED)
 #define MODEL_DEFINED
 struct model {
 	long			magic;
@@ -330,7 +342,7 @@ struct model {
 	long			index;	/* struct # in this model */
 	long			maxindex; /* # of structs so far */
 };
-#endif /* !MODEL_DEFINED || !__STDC__ */
+#endif /* !MODEL_DEFINED */
 
 struct model_a {
 	long			magic;
@@ -340,7 +352,7 @@ struct model_a {
 /*
  *			R E G I O N
  */
-#if !defined(NMGREGION_DEFINED) || !defined(__STDC__)
+#if !defined(NMGREGION_DEFINED)
 #define NMGREGION_DEFINED
 struct nmgregion {
 	struct nmg_list		l;	/* regions, in model's r_hd list */
@@ -349,7 +361,7 @@ struct nmgregion {
 	struct nmg_list		s_hd;	/* list of shells in region */
 	long			index;	/* struct # in this model */
 };
-#endif /* !NMGREGION_DEFINED || !__STDC__ */
+#endif /* !NMGREGION_DEFINED */
 
 struct nmgregion_a {
 	long			magic;
@@ -559,12 +571,14 @@ struct vertexuse_a {
 /*
  * storage allocation and de-allocation support
  */
+NMG_EXTERN(char *rt_malloc, (unsigned int cnt, char *str) );
+NMG_EXTERN(char *rt_calloc,(unsigned nelem, unsigned elsize, char *str));
+NMG_EXTERN(void rt_free, (char *ptr, char *str) );
+
 #if __STDC__ && !alliant && !apollo
-    extern char *rt_calloc(unsigned nelem, unsigned elsize, char *str);
 #   define NMG_GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
 #else
-    extern char *rt_calloc();
 #   define NMG_GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
 #endif
@@ -690,18 +704,6 @@ struct nmg_boolstruct {
  *			Support Function Declarations			*
  *									*
  ************************************************************************/
-
-/*
- *  A macro for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
- */
-#if __STDC__
-#	define	NMG_EXTERN(type_and_name,args)	extern type_and_name args
-#else
-#	define	NMG_EXTERN(type_and_name,args)	extern type_and_name()
-#endif
 
 /* From file nmg_mk.c */
 NMG_EXTERN(struct model		*nmg_find_model, (long *magic_p) );
