@@ -155,19 +155,14 @@ static char	*kn2_knobs[] = {
 static int GlxdoMotion = 0;
 
 int
-Glx_dm_init(argc, argv)
-int argc;
-char *argv[];
+Glx_dm_init()
 {
   /* register application provided routines */
   dmp->dm_eventHandler = Glx_doevent;
   cmd_hook = Glx_dm;
   state_hook = Glx_statechange;
 
-  if(dmp->dm_init(dmp, argc, argv) == TCL_ERROR)
-    return TCL_ERROR;
-
-  return dmp->dm_open(dmp);
+  return TCL_OK;
 }
 
 /*
@@ -188,7 +183,7 @@ XEvent *eventPtr;
   register struct dm_list *save_dm_list;
   struct bu_vls cmd;
   struct glx_vars *p;
-  int status = CMD_OK;
+  int status = TCL_OK;
 
   GET_DM(p, glx_vars, eventPtr->xany.window, &head_glx_vars.l);
   if(p == (struct glx_vars *)NULL || eventPtr->type == DestroyNotify)
@@ -257,8 +252,8 @@ XEvent *eventPtr;
       break;
     case ALT_MOUSE_MODE_ROTATE:
       bu_vls_printf( &cmd, "knob -i ax %f ay %f\n",
-		     (my - ((struct glx_vars *)dmp->dm_vars)->omy)/512.0,
-		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx)/512.0 );
+		     (my - ((struct glx_vars *)dmp->dm_vars)->omy)/4.0,
+		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx)/4.0 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
       {
@@ -380,11 +375,11 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * absolute_rotate[Z])) +
+	      dm_unlimit((int)(2.85 * absolute_rotate[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
-	  bu_vls_printf( &cmd , "knob az %f\n", dm_wrap(f));
+	  bu_vls_printf( &cmd , "knob az %f\n", dm_wrap(f) * 180.0);
 	}
       }
       break;
@@ -465,11 +460,11 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * absolute_rotate[Y])) +
+	      dm_unlimit((int)(2.85 * absolute_rotate[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
-	  bu_vls_printf( &cmd , "knob ay %f\n", dm_wrap(f));
+	  bu_vls_printf( &cmd , "knob ay %f\n", dm_wrap(f) * 180.0);
 	}
       }
       break;
@@ -536,11 +531,11 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * absolute_rotate[X])) +
+	      dm_unlimit((int)(2.85 * absolute_rotate[X])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
-	  bu_vls_printf( &cmd , "knob ax %f\n", dm_wrap(f));
+	  bu_vls_printf( &cmd , "knob ax %f\n", dm_wrap(f) * 180.0);
 	}
       }
       break;
@@ -614,15 +609,12 @@ XEvent *eventPtr;
   else
     goto end;
 
-  status = cmdline(&cmd, FALSE);
+  status = Tcl_Eval(interp, bu_vls_addr(&cmd));
 end:
   bu_vls_free(&cmd);
   curr_dm_list = save_dm_list;
 
-  if(status == CMD_OK)
-    return TCL_OK;
-
-  return TCL_ERROR;
+  return status;
 }
 
 
@@ -781,7 +773,16 @@ char	**argv;
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
-
+#if 1
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "knob aX %f aY %f\n",
+			(((struct glx_vars *)dmp->dm_vars)->omx /
+			 (fastf_t)((struct glx_vars *)dmp->dm_vars)->width - 0.5) * 2,
+			(0.5 - ((struct glx_vars *)dmp->dm_vars)->omy /
+			 (fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2);
+	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+#else
 	  av[0] = "knob";
 	  av[1] = "aX";
 	  av[2] = xstr;
@@ -794,6 +795,7 @@ char	**argv;
 	  sprintf(ystr, "%f", (0.5 - ((struct glx_vars *)dmp->dm_vars)->omy/
 			       (fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2);
 	  status = f_knob((ClientData)NULL, interp, 5, av);
+#endif
 	}
 
 	break;

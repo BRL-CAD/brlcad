@@ -78,19 +78,14 @@ struct bu_structparse X_vparse[] = {
 static int XdoMotion = 0;
 
 int
-X_dm_init(argc, argv)
-int argc;
-char *argv[];
+X_dm_init()
 {
   /* register application provided routines */
   dmp->dm_eventHandler = X_doevent;
   cmd_hook = X_dm;
   state_hook = X_statechange;
 
-  if(dmp->dm_init(dmp, argc, argv) == TCL_ERROR)
-    return TCL_ERROR;
-
-  return dmp->dm_open(dmp);
+  return TCL_OK;
 }
 
 static int
@@ -106,7 +101,7 @@ XEvent *eventPtr;
   struct bu_vls cmd;
   struct x_vars *p;
   register struct dm_list *save_dm_list;
-  int status = CMD_OK;
+  int status = TCL_OK;
 
   GET_DM(p, x_vars, eventPtr->xany.window, &head_x_vars.l);
   if(p == (struct x_vars *)NULL || eventPtr->type == DestroyNotify)
@@ -166,8 +161,8 @@ XEvent *eventPtr;
       break;
     case ALT_MOUSE_MODE_ROTATE:
        bu_vls_printf( &cmd, "knob -i ax %f ay %f\n",
-		      (my - ((struct x_vars *)dmp->dm_vars)->omy)/512.0,
-		      (mx - ((struct x_vars *)dmp->dm_vars)->omx)/512.0 );
+		      (my - ((struct x_vars *)dmp->dm_vars)->omy)/4.0,
+		      (mx - ((struct x_vars *)dmp->dm_vars)->omx)/4.0 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
       {
@@ -205,15 +200,12 @@ XEvent *eventPtr;
     goto end;
   }
 
-  status = cmdline(&cmd, FALSE);
+  status = Tcl_Eval(interp, bu_vls_addr(&cmd));
   bu_vls_free(&cmd);
 end:
   curr_dm_list = save_dm_list;
 
-  if(status == CMD_OK)
-    return TCL_OK;
-
-  return TCL_ERROR;
+  return status;
 }
 	    
 static void
@@ -328,7 +320,6 @@ char *argv[];
     sprintf(ystr, "%d", Xy_TO_GED(dmp, atoi(argv[4])));
     status = f_mouse((ClientData)NULL, interp, 4, av);
     mged_print_result(status);
-
     return status;
   }
 
@@ -359,7 +350,16 @@ char *argv[];
 
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
-
+#if 1
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "knob aX %f aY %f\n",
+			(((struct x_vars *)dmp->dm_vars)->omx /
+			 (fastf_t)((struct x_vars *)dmp->dm_vars)->width - 0.5) * 2,
+			(0.5 - ((struct x_vars *)dmp->dm_vars)->omy /
+			 (fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2);
+	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+#else
 	  av[0] = "knob";
 	  av[1] = "aX";
 	  av[2] = xstr;
@@ -372,6 +372,7 @@ char *argv[];
 	  sprintf(ystr, "%f", (0.5 - ((struct x_vars *)dmp->dm_vars)->omy/
 			       (fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2);
 	  status = f_knob((ClientData)NULL, interp, 5, av);
+#endif
 	}
 
 	break;
