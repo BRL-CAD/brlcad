@@ -1232,7 +1232,7 @@ CONST int wires;
 
 	ret_eu = eu->radial_p->eumate_p;
 	while( ( !wires & (nmg_find_fu_of_eu( ret_eu ) == (struct faceuse *)NULL)) ||
-		( (s != (struct shell *)NULL) & nmg_find_s_of_eu( ret_eu ) != s  ) )
+		( (s != (struct shell *)NULL) && nmg_find_s_of_eu( ret_eu ) != s  ) )
 			ret_eu = ret_eu->radial_p->eumate_p;
 
 	return( ret_eu );
