@@ -1,6 +1,8 @@
 #ifndef SEEN_DM_H
 #define SEEN_DM_H
 
+#include "fbserv_obj.h"
+
 #define DM_NULL (struct dm *)NULL
 #define DM_MIN (-2048)
 #define DM_MAX (2047)
@@ -134,7 +136,10 @@ struct dm {
   int (*dm_setFGColor)();
   int (*dm_setBGColor)();
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
+  int (*dm_configureWin)();
   int (*dm_setWinBounds)();
+  int (*dm_setLight)();
+  int (*dm_setZBuffer)();
   int (*dm_debug)();		/* Set DM debug level */
   int (*dm_beginDList)();
   int (*dm_endDList)();
@@ -165,7 +170,23 @@ struct dm {
   vect_t dm_clipmax;		/* maximum clipping vector */
   int dm_debugLevel;		/* !0 means debugging */
   int dm_perspective;		/* !0 means perspective on */
+  int dm_light;			/* !0 means lighting on */
+  int dm_zbuffer;		/* !0 means zbuffer on */
   int dm_zclip;			/* !0 means zclipping */
+};
+
+/*
+ *			D M _ O B J
+ *
+ * A display manager object is used for interacting with a display manager.
+ */
+struct dm_obj {
+  struct bu_list	l;
+  struct bu_vls		dmo_name;		/* display manager object name/cmd */
+  struct dm		*dmo_dmp;		/* display manager pointer */
+#ifdef USE_FBSERV
+  struct fbserv_obj	dmo_fbs;		/* fbserv object */
+#endif
 };
 
 #define DM_OPEN(_type,_argc,_argv) dm_open(_type,_argc,_argv)
@@ -182,7 +203,10 @@ struct dm {
 #define DM_SET_FGCOLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setFGColor(_dmp,_r,_g,_b,_strict)
 #define DM_SET_BGCOLOR(_dmp,_r,_g,_b) _dmp->dm_setBGColor(_dmp,_r,_g,_b)
 #define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
+#define DM_CONFIGURE_WIN(_dmp) _dmp->dm_configureWin(_dmp)
 #define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
+#define DM_SET_LIGHT(_dmp,_on) _dmp->dm_setLight(_dmp,_on)
+#define DM_SET_ZBUFFER(_dmp,_on) _dmp->dm_setZBuffer(_dmp,_on)
 #define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
 #define DM_BEGINDLIST(_dmp,_list) _dmp->dm_beginDList(_dmp,_list)
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
