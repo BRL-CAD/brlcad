@@ -566,7 +566,7 @@ int waittime;
 	}
 	if( val==0 )  {
 		/* At this point, ibits==0 */
-		if(debug) rt_log("select timed out after %d seconds\n", waittime);
+		if(debug>1) rt_log("select timed out after %d seconds\n", waittime);
 		return;
 	}
 
