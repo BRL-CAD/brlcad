@@ -438,7 +438,7 @@ char *argv[];
 	BU_LIST_INIT( &reg_head.l );
 	for( i=0 ; i<BU_PTBL_END( &names ) ; i++ )
 	{
-		if( mk_addmember( (char *)BU_PTBL_GET( &names , i ) , &reg_head.l , WMOP_UNION ) == WMEMBER_NULL )
+		if( mk_addmember( (char *)BU_PTBL_GET( &names , i ) , &reg_head.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
 		{
 			bu_log( "Cannot make top level group\n" );
 			exit( 1 );

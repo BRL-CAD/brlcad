@@ -160,7 +160,7 @@ Convassem()
 			if( ptr->matrix > (-1) )
 				Matmult( ptr->rot , *(dir[ptr->matrix]->rot)  , ptr->rot );
 
-			wmem = mk_addmember( ptr->name , &head.l, operator[Union] );
+			wmem = mk_addmember( ptr->name , &head.l, NULL, operator[Union] );
 			flt = (fastf_t *)ptr->rot;
 			for( j=0 ; j<16 ; j++ )
 			{

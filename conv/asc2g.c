@@ -1038,7 +1038,7 @@ struct bu_list	*headp;
 
 	cp = nxt_spc( cp );
 
-	memb = mk_addmember( inst_name, headp, relation );
+	memb = mk_addmember( inst_name, headp, NULL, relation );
 
 	for( i = 0; i < 16; i++ )  {
 		memb->wm_mat[i] = atof( cp );

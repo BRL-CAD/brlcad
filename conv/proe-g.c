@@ -447,7 +447,7 @@ char line[MAX_LINE_LEN];
 			brlcad_name = Get_unique_name( memb_name , memb_obj , PART_TYPE );
 			if( debug )
 				bu_log( "\tmember (%s)\n" , brlcad_name );
-			wmem = mk_addmember( brlcad_name , &head.l , WMOP_UNION );
+			wmem = mk_addmember( brlcad_name , &head.l , NULL, WMOP_UNION );
 		}
 		else if( !strncmp( &line1[start] , "matrix" , 6 ) || !strncmp( &line1[start] , "MATRIX" , 6 ) )
 		{
@@ -642,7 +642,7 @@ point_t min, max;
 			else
 			{
 				/* Add this cut to the region */
-				wmem = mk_addmember( ptr->solid_name, &(head->l),
+				wmem = mk_addmember( ptr->solid_name, &(head->l), NULL, 
 						WMOP_SUBTRACT );
 
 				if( top_level && do_reorient )
@@ -965,7 +965,7 @@ char line[MAX_LINE_LEN];
 		{
 			if( face_count )
 			{
-				wmem = mk_addmember( solid_name , &head.l , WMOP_UNION );
+				wmem = mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
 				if( top_level && do_reorient )
 				{
 					/* apply re_orient transformation here */
@@ -1009,7 +1009,7 @@ char line[MAX_LINE_LEN];
 
 	if( face_count && !solid_in_region )
 	{
-		wmem = mk_addmember( solid_name , &head.l , WMOP_UNION );
+		wmem = mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
 		if( top_level && do_reorient )
 		{
 			/* apply re_orient transformation here */
@@ -1040,14 +1040,14 @@ char line[MAX_LINE_LEN];
 			mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 			color, const_id, 0, mat_code, 100, 0 );
 			if( stl_format && face_count )
-				(void)mk_addmember( brlcad_name, &all_head.l, WMOP_UNION );
+				(void)mk_addmember( brlcad_name, &all_head.l, NULL, WMOP_UNION );
 		}
 		else
 		{
 			mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 			color, id_no, 0, mat_code, 100, 0 );
 			if( stl_format && face_count )
-				(void)mk_addmember( brlcad_name, &all_head.l, WMOP_UNION );
+				(void)mk_addmember( brlcad_name, &all_head.l, NULL, WMOP_UNION );
 			id_no++;
 		}
 	}

@@ -751,7 +751,7 @@ struct bu_ptbl *view_vis_list;
 				{
 					nmg_rebound( m , &tol );
 					mk_nmg( fdout , dir[view_entno[i]]->name , m );
-					(void)mk_addmember( dir[view_entno[i]]->name , &headp.l , WMOP_UNION );
+					(void)mk_addmember( dir[view_entno[i]]->name , &headp.l , NULL, WMOP_UNION );
 				}
 			}
 		}
@@ -859,7 +859,7 @@ Conv_drawings()
 						{
 							nmg_rebound( m , &tol );
 							mk_nmg( fdout , dir[i]->name , m );
-							(void)mk_addmember( dir[i]->name , &headp.l , WMOP_UNION );
+							(void)mk_addmember( dir[i]->name , &headp.l , NULL, WMOP_UNION );
 						}
 					}
 				}

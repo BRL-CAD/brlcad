@@ -282,7 +282,7 @@ int		reg_id;
 
 	sprintf(rname, "%s.r", id);
 
-	if( mk_addmember( sname, &head.l, WMOP_UNION ) == WMEMBER_NULL )
+	if( mk_addmember( sname, &head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 	{
 		bu_log( "add_nmg_to_db: mk_addmember failed for solid %s\n" , sname );
 		rt_bomb( "add_nmg_to_db: FAILED\n" );
@@ -323,7 +323,7 @@ struct rt_wdb *fpout;
 			char *region_name;
 
 			region_name = (char *)BU_PTBL_GET( &groups[i] , j );
-			if( mk_addmember( region_name , &head.l , WMOP_UNION ) == WMEMBER_NULL )
+			if( mk_addmember( region_name , &head.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
 			{
 				bu_log( "build_groups: mk_addmember failed for region %s\n" , region_name );
 				rt_bomb( "build_groups: FAILED\n" );
@@ -342,7 +342,7 @@ struct rt_wdb *fpout;
 			rt_bomb( "build_groups: mk_lcomb FAILED\n" );
 		}
 
-		if( mk_addmember( group_name , &head_all.l , WMOP_UNION ) == WMEMBER_NULL )
+		if( mk_addmember( group_name , &head_all.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
 		{
 			bu_log( "build_groups: mk_addmember failed for group %s\n" , group_name );
 			rt_bomb( "build_groups: FAILED\n" );
@@ -445,7 +445,7 @@ int reg_id;
 		solid_no++;
 		sprintf( sol_name , "%d.%d.s", reg_id, solid_no );
 
-		if( mk_addmember( sol_name, &head.l, WMOP_UNION ) == WMEMBER_NULL )
+		if( mk_addmember( sol_name, &head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 		{
 			bu_log( "add_shells_to_db: mk_addmember failed for solid %s\n" , sol_name );
 			rt_bomb( "add_shells_to_db: FAILED\n" );

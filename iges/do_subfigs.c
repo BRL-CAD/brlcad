@@ -100,7 +100,7 @@ Do_subfigs()
 		Readint( &j, "" );	/* ignore depth */
 		Readstrg( "");		/* ignore subfigure name */
 
-		wmem = mk_addmember( dir[subfigdef_index]->name, &head1.l, WMOP_UNION );
+		wmem = mk_addmember( dir[subfigdef_index]->name, &head1.l, NULL, WMOP_UNION );
 		non_unit = 0;
 		for( j=0 ; j<3 ; j++ )
 		{
@@ -227,7 +227,7 @@ Do_subfigs()
 
 			if( no_of_members > 1 )
 			{
-				wmem = mk_addmember( name, &head2.l, WMOP_UNION );
+				wmem = mk_addmember( name, &head2.l, NULL, WMOP_UNION );
 				bcopy( dir[index]->rot, wmem->wm_mat, sizeof( mat_t ) );
 			}
 		}

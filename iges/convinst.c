@@ -88,7 +88,7 @@ Convinst()
 			struct wmember head;
 
 			BU_LIST_INIT( &head.l );
-			(void)mk_addmember( dir[pointer]->name , &head.l , WMOP_INTERSECT );
+			(void)mk_addmember( dir[pointer]->name , &head.l , NULL, WMOP_INTERSECT );
 
 			/* Make the object */
 			if( dir[i]->colorp != 0 )

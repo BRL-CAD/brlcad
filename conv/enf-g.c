@@ -628,7 +628,7 @@ Part_import( int id_start )
 
 		/* then a region */
 		BU_LIST_INIT( &reg_head.l );
-		if( mk_addmember( part->brlcad_solid, &reg_head.l, WMOP_UNION ) == WMEMBER_NULL ) {
+		if( mk_addmember( part->brlcad_solid, &reg_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL ) {
 			bu_log( "ERROR: Failed to add solid (%s), to region (%s)\n",
 				part->brlcad_solid, part->brlcad_comb );
 			exit( 1 );
@@ -732,7 +732,7 @@ Assembly_import( int id_start )
 
 	for( i=0 ; i<this_assem->part_count ; i++ ) {
 		if( mk_addmember( this_assem->members[i]->brlcad_comb,
-				  &assem_head.l, WMOP_UNION ) == WMEMBER_NULL ) {
+				  &assem_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL ) {
 				bu_log( "ERROR: Failed to add region %s to assembly %s\n",
 					this_assem->members[i]->brlcad_comb,
 					this_assem->brlcad_comb );

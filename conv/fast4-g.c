@@ -283,7 +283,7 @@ add_to_holes( name, reg_id )
 char *name;
 int reg_id;
 {
-	if( mk_addmember( name , &hole_head.l , WMOP_UNION ) == (struct wmember *)NULL )
+	if( mk_addmember( name , &hole_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 		bu_log( "add_to_holes: mk_addmember failed for region %s\n" , name );
 }
 
@@ -426,7 +426,7 @@ int group_id;
 					if( debug )
 						bu_log( "\tSubtracting %s\n", ptr->name );
 
-					if( mk_addmember( ptr->name , &(head->l) , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+					if( mk_addmember( ptr->name , &(head->l) , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 						rt_bomb( "Subtract_holes: mk_addmember failed\n" );
 
 					ptr = ptr->rright;
@@ -1045,7 +1045,7 @@ int reg_id;
 		return;
 	}
 
-	if( mk_addmember( name , &group_head[group_id].l , WMOP_UNION ) == (struct wmember *)NULL )
+	if( mk_addmember( name , &group_head[group_id].l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 		bu_log( "add_to_series: mk_addmember failed for region %s\n" , name );
 }
 
@@ -1076,7 +1076,7 @@ make_comp_group()
 
 		if(ptr->region_id == region_id && !ptr->inner && !ptr->in_comp_group )
 		{
-			if( mk_addmember( ptr->name , &g_head.l , WMOP_UNION ) == (struct wmember *)NULL )
+			if( mk_addmember( ptr->name , &g_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 			{
 				bu_log( "make_comp_group: Could not add %s to group for ident %d\n" , ptr->name , ptr->region_id );
 				break;
@@ -1137,7 +1137,7 @@ Add_stragglers_to_groups()
 		if( !ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole( ptr->region_id ) )
 		{
 			/* add this component to a series */
-			(void)mk_addmember( ptr->name, &group_head[ptr->region_id/1000].l, WMOP_UNION );
+			(void)mk_addmember( ptr->name, &group_head[ptr->region_id/1000].l, NULL, WMOP_UNION );
 			ptr->in_comp_group = 1;
 		}
 
@@ -1168,7 +1168,7 @@ do_groups()
 		sprintf( name , "%dxxx_series" , group_no );
 		mk_lfcomb( fdout , name , &group_head[group_no] , 0 );
 
-		if( mk_addmember( name , &head_all.l , WMOP_UNION ) == (struct wmember *)NULL )
+		if( mk_addmember( name , &head_all.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 			bu_log( "do_groups: mk_addmember failed to add %s to group all\n" , name );
 	}
 
@@ -1418,7 +1418,7 @@ do_sphere()
 
 		BU_LIST_INIT( &sphere_group.l );
 
-		if( mk_addmember( name ,  &sphere_group.l , WMOP_UNION ) == (struct wmember *)NULL )
+		if( mk_addmember( name ,  &sphere_group.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 		{
 			bu_log( "do_sphere: Error in adding %s to sphere group\n" , name );
 			rt_bomb( "do_sphere" );
@@ -1436,7 +1436,7 @@ do_sphere()
 		name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 2 );
 		mk_sph( fdout , name , grid_pts[center_pt] , inner_radius );
 
-		if( mk_addmember( name , &sphere_group.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+		if( mk_addmember( name , &sphere_group.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 		{
 			bu_log( "do_sphere: Error in subtracting %s from sphere region\n" , name );
 			rt_bomb( "do_sphere" );
@@ -1664,7 +1664,7 @@ do_ccone1()
 		mk_trc_h( fdout , outer_name , grid_pts[pt1] , height , r1 , r2 );
 
 		BU_LIST_INIT( &r_head.l );
-		if( mk_addmember( outer_name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
+		if( mk_addmember( outer_name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 			rt_bomb( "CCONE1: mk_addmember failed\n" );
 		bu_free( outer_name, "solid_name" );
 
@@ -1737,7 +1737,7 @@ do_ccone1()
 			inner_name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 2 );
 			mk_trc_h( fdout , inner_name , base , inner_height , inner_r1 , inner_r2 );
 
-			if( mk_addmember( inner_name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+			if( mk_addmember( inner_name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				rt_bomb( "CCONE1: mk_addmember failed\n" );
 			bu_free( inner_name, "solid_name" );
 		}
@@ -1852,7 +1852,7 @@ do_ccone2()
 		name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 1 );
 		mk_trc_h( fdout , name , grid_pts[pt1] , height , ro1 , ro2 );
 
-		if( mk_addmember( name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
+		if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 			rt_bomb( "mk_addmember failed!\n" );
 		bu_free( name, "solid_name" );
 
@@ -1865,7 +1865,7 @@ do_ccone2()
 		name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 2 );
 		mk_trc_h( fdout , name , grid_pts[pt1] , height , ri1 , ri2 );
 
-		if( mk_addmember( name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+		if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 			rt_bomb( "mk_addmember failed!\n" );
 		bu_free( name, "solid_name" );
 
@@ -2036,7 +2036,7 @@ do_ccone3()
 		{
 			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 1 );
 			mk_trc_h( fdout, name, grid_pts[pt1], diff, ro[0], ro[1] );
-			if( mk_addmember( name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
+			if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 				bu_bomb( "mk_addmember failed!\n" );
 			bu_free( name, "solid_name" );
 
@@ -2045,7 +2045,7 @@ do_ccone3()
 			{
 				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 11 );
 				mk_trc_h( fdout, name, grid_pts[pt1], diff, ri[0], ri[1] );
-				if( mk_addmember( name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+				if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_bomb( "mk_addmember failed!\n" );
 				bu_free( name, "solid_name" );
 			}
@@ -2061,7 +2061,7 @@ do_ccone3()
 		{
 			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 2 );
 			mk_trc_h( fdout, name, grid_pts[pt2], diff, ro[1], ro[2] );
-			if( mk_addmember( name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
+			if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 				bu_bomb( "mk_addmember failed!\n" );
 			bu_free( name, "solid_name" );
 
@@ -2070,7 +2070,7 @@ do_ccone3()
 			{
 				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 22 );
 				mk_trc_h( fdout, name, grid_pts[pt2], diff, ri[1], ri[2] );
-				if( mk_addmember( name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+				if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_bomb( "mk_addmember failed!\n" );
 				bu_free( name, "solid_name" );
 			}
@@ -2086,7 +2086,7 @@ do_ccone3()
 		{
 			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 3 );
 			mk_trc_h( fdout, name, grid_pts[pt3], diff, ro[2], ro[3] );
-			if( mk_addmember( name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
+			if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 				bu_bomb( "mk_addmember failed!\n" );
 			bu_free( name, "solid_name" );
 
@@ -2095,7 +2095,7 @@ do_ccone3()
 			{
 				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 33 );
 				mk_trc_h( fdout, name, grid_pts[pt3], diff, ri[2], ri[3] );
-				if( mk_addmember( name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+				if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_bomb( "mk_addmember failed!\n" );
 				bu_free( name, "solid_name" );
 			}
@@ -3283,7 +3283,7 @@ void make_regions()
 
 			if( ptr2->region_id == -ptr1->region_id && ptr2->inner == 0 )
 			{
-				if( mk_addmember( ptr2->name, &solids.l, WMOP_UNION ) == (struct wmember *)NULL )
+				if( mk_addmember( ptr2->name, &solids.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", ptr1->name, ptr2->name );
 			}
 
@@ -3302,7 +3302,7 @@ void make_regions()
 		if( is_a_hole( ptr1->region_id ) )
 		{
 			/* just add it to the "holes" group */
-			if( mk_addmember( solids_name, &holes.l, WMOP_UNION ) == (struct wmember *)NULL )
+			if( mk_addmember( solids_name, &holes.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to holes group\n", ptr1->name );
 			goto cont1;
 		}
@@ -3336,16 +3336,16 @@ void make_regions()
 
 			/* intersect halfspace with current region */
 			BU_LIST_INIT( &region.l );
-			if( mk_addmember( solids_name, &region.l, WMOP_UNION ) == (struct wmember *)NULL )
+			if( mk_addmember( solids_name, &region.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to %s\n", solids_name, ptr1->name );
 
-			if( mk_addmember( splt_name, &region.l, WMOP_INTERSECT ) == (struct wmember *)NULL )
+			if( mk_addmember( splt_name, &region.l, NULL, WMOP_INTERSECT ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to %s\n", splt_name, ptr1->name );
 
 			while( lptr )
 			{
 				sprintf( hole_name, "solids_%d", (lptr->group * 1000 + lptr->component) );
-				if( mk_addmember( hole_name, &region.l, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+				if( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
 			}
@@ -3353,16 +3353,16 @@ void make_regions()
 
 			/* create new region by subtracting halfspace */
 			BU_LIST_INIT( &region.l );
-			if( mk_addmember( solids_name, &region.l, WMOP_UNION ) == (struct wmember *)NULL )
+			if( mk_addmember( solids_name, &region.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to %s\n", solids_name, ptr1->name );
 
-			if( mk_addmember( splt_name, &region.l, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+			if( mk_addmember( splt_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to %s\n", splt_name, ptr1->name );
 
 			while( lptr )
 			{
 				sprintf( hole_name, "solids_%d", (lptr->group * 1000 + lptr->component) );
-				if( mk_addmember( hole_name, &region.l, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+				if( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
 			}
@@ -3377,13 +3377,13 @@ void make_regions()
 		else
 		{
 			BU_LIST_INIT( &region.l );
-			if( mk_addmember( solids_name, &region.l, WMOP_UNION ) == (struct wmember *)NULL )
+			if( mk_addmember( solids_name, &region.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 				bu_log( "make_regions: mk_addmember failed to add %s to %s\n", solids_name, ptr1->name );
 
 			while( lptr )
 			{
 				sprintf( hole_name, "solids_%d", (lptr->group * 1000 + lptr->component) );
-				if( mk_addmember( hole_name, &region.l, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+				if( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
 			}

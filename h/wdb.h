@@ -305,6 +305,7 @@ int mk_write_color_table( struct rt_wdb *ofp );
 struct wmember *mk_addmember(
 	const char	*name,
 	struct bu_list	*headp,
+	mat_t mat,
 	int		op);
 
 #define mk_lcomb(_fp,_name,_headp,_rf,_shadername,_shaderargs,_rgb,_inh)	\
