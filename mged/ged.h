@@ -58,17 +58,6 @@ extern char	cur_title[];		/* current model title */
 extern int	dmaflag;		/* Set !0 to force a new screen DMA */
 extern int	regdebug;		/* Device register debugging flag */
 
-extern int	inten_offset;		/* Intensity offset */
-extern int	inten_scale;		/* Intensity scale */
-
-/*
- *	The position of the tracking cross - defined in e1.c
- *
- * NOTE that xcross == 0 means draw no cross.
- */
-extern int	xcross;
-extern int	ycross;
-
 /*
  *  Definitions.
  *
@@ -134,7 +123,6 @@ extern int	reg_error;	/* error encountered in region processing */
 extern int	no_memory;	/* flag indicating memory for drawing is used up */
 
 /* defined in menu.c */
-extern int	menuyy;		/* y-location of selected menu item */
 extern int	menuflag;	/* flag indicating if a menu item is selected */
 
 /*
@@ -181,7 +169,7 @@ extern unsigned long	memalloc(), memget();
 #define DOWN	1
 
 /*
- * Entry number of solid in solid table to be illuminated. - defined in usepen.c
+ * Pointer to solid in solid table to be illuminated. - defined in usepen.c
  */
 extern struct solid	*illump;/* == 0 if none, else points to ill. solid */
 extern int	sedraw;		/* apply solid editing changes */
