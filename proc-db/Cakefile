@@ -81,7 +81,7 @@ fence:	fence.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS fence.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o fence
 
 pickett_fence: pickett_fence.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
-	CC LDFLAGS pickett_fence.o LIBWDB LIBRT LIBBN LIBBU LIBU_LIBES LIBES -o pickett_fence
+	CC LDFLAGS pickett_fence.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pickett_fence
 
 #include "../Cakefile.rules"
 
