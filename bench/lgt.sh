@@ -10,7 +10,7 @@ if test -f ../.lgt.$MACHINE/lgt
 then
 	LGT=../.lgt.$MACHINE/lgt
 	DB=../.db.$MACHINE
-	LD_LIBRARY_PATH=../.libcursor.$MACHINE:../.libtermio.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+	LD_LIBRARY_PATH=../.libcursor.$MACHINE:../.libtermio.$MACHINE:../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
 else
 	if test -f ../lgt/lgt
 	then
@@ -19,7 +19,7 @@ else
 	fi
 	LGT=../lgt/lgt
 	DB=../db
-	LD_LIBRARY_PATH=../libcursor:../libtermio:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+	LD_LIBRARY_PATH=../libcursor:../libtermio:../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
 fi
 export LD_LIBRARY_PATH
 

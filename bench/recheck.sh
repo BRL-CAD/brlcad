@@ -10,7 +10,7 @@ if test -f ../.util.$MACHINE/pixdiff
 then
 	PIXDIFF=../.util.$MACHINE/pixdiff
 	PIX_FB=../.fb.$MACHINE/pix-fb
-	LD_LIBRARY_PATH=../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+	LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
 else
 	if test -f ../util/pixdiff
 	then
@@ -20,7 +20,7 @@ else
 		echo "Can't find pixdiff"
 		exit 1
 	fi
-	LD_LIBRARY_PATH=../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+	LD_LIBRARY_PATH=../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
 fi
 export LD_LIBRARY_PATH
 
