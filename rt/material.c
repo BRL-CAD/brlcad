@@ -177,6 +177,8 @@ pr_shadework( str, swp )
 char *str;
 register struct shadework *swp;
 {
+	int	i;
+
 	rt_log( "Shadework %s: 0x%x\n", str, swp );
 	rt_log( " sw_transmit %f\n", swp->sw_transmit );
 	rt_log( " sw_reflect %f\n", swp->sw_reflect );
@@ -186,5 +188,14 @@ register struct shadework *swp;
 	VPRINT( " sw_basecolor", swp->sw_basecolor );
 	rt_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
 	rt_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
-	rt_log( " sw_inputs 0x%x\n", swp->sw_inputs );
+	rt_printb( " sw_inputs", swp->sw_inputs,
+		"\020\4HIT\3LIGHT\2UV\1NORMAL" );
+	rt_log( "\n");
+	for( i=0; i < SW_NLIGHTS; i++ )  {
+		if( swp->sw_visible[i] == (char *)0 )  continue;
+		printf("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
+			i,
+			swp->sw_intensity[i],
+			V3ARGS(&swp->sw_tolight[i*3]) );
+	}
 }
