@@ -1347,15 +1347,19 @@ struct loopuse *lu1;
  *  If the edgeuse mate has geometry to be killed, make a second call.
  *  Sometimes only one of the two needs to release the geometry.
  *
+ *  Returns -
+ *	0	If the old edge geometry (eu->g.magic_p) has other uses.
+ *	1	If the old edge geometry has been destroyed. Caller beware!
+ *
  *  NOT INTENDED FOR GENERAL USE!  However, nmg_mod.c needs it.  (Drat!)
  */
-/**static**/ void
+/**static**/ int
 nmg_keg( eu )
 struct edgeuse	*eu;
 {
 	NMG_CK_EDGEUSE(eu);
 
-	if( !eu->g.magic_p )  return;
+	if( !eu->g.magic_p )  return 0;	/* ??? what to return here */
 
 	switch( *eu->g.magic_p )  {
 	case NMG_EDGE_G_LSEG_MAGIC:
@@ -1363,7 +1367,7 @@ struct edgeuse	*eu;
 			struct edge_g_lseg	*lp;
 			lp = eu->g.lseg_p;
 			eu->g.magic_p = (long *)NULL;
-			if( RT_LIST_NON_EMPTY( &lp->eu_hd2 ) )  return;
+			if( RT_LIST_NON_EMPTY( &lp->eu_hd2 ) )  return 0;
 			FREE_EDGE_G_LSEG(lp);
 		}
 		break;
@@ -1372,12 +1376,13 @@ struct edgeuse	*eu;
 			struct edge_g_cnurb	*cp;
 			cp = eu->g.cnurb_p;
 			eu->g.magic_p = (long *)NULL;
-			if( RT_LIST_NON_EMPTY( &cp->eu_hd2 ) )  return;
+			if( RT_LIST_NON_EMPTY( &cp->eu_hd2 ) )  return 0;
 			/* XXX */ rt_bomb("nmg_keg() cnurb internals?\n");
 			FREE_EDGE_G_CNURB(cp);
 		}
 		break;
 	}
+	return 1;		/* edge geometry has been destroyed */
 }
 
 /*
@@ -1800,40 +1805,81 @@ struct edgeuse *eu;
  *
  *  Associate edgeuse 'eu' with the edge_g_X structure given as 'magic_p'.
  *  If the edgeuse is already associated with some geometry, release
- *  that first.
+ *  that first.  Note that, to start with, the two edgeuses may be
+ *  using different original geometries.
+ *
  *  Also do the edgeuse mate.
+ *
+ *  Returns -
+ *	0	If the old edge geometry (eu->g.magic_p) has other uses.
+ *	1	If the old edge geometry has been destroyed. Caller beware!
  */
-void
+int
 nmg_use_edge_g( eu, magic_p )
 struct edgeuse	*eu;
 long		*magic_p;
 {
-	long	*old;
+	struct edge_g_lseg	*old;
 	/* eg->eu_hd2 is a pun for eu_hd2 in either _lseg or _cnurb */
 	struct edge_g_lseg	*eg = (struct edge_g_lseg *)magic_p;
+	int			ndead = 0;
 
 	if( !magic_p )  return;	/* Don't use a null new geom */
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE_G_LSEG(eg);
+	if( eu == eu->eumate_p )  rt_bomb("nmg_use_edge_g() eu == eumate_p!\n");
 
-	old = eu->g.magic_p;
+	nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 A" );
 
-	RT_LIST_DEQUEUE( &eu->l2 );
-	RT_LIST_DEQUEUE( &eu->eumate_p->l2 );
-	nmg_keg( eu );
-	nmg_keg( eu->eumate_p );
+	old = eu->g.lseg_p;	/* This may be NULL.  For printing only. */
 
-	eu->g.magic_p = magic_p;
-	eu->eumate_p->g.magic_p = magic_p;
+	if( eu->g.lseg_p != eg && eu->g.lseg_p )  {
+		NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);
+nmg_ck_list( &eu->g.lseg_p->eu_hd2, "nmg_use_edge_g() old->eu_hd2 A" );
 
-	RT_LIST_INSERT( &eg->eu_hd2, &(eu->l2) );
-	RT_LIST_INSERT( &eg->eu_hd2, &(eu->eumate_p->l2) );
+		RT_LIST_DEQUEUE( &eu->l2 );
+nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 B" );
+nmg_ck_list( &eu->g.lseg_p->eu_hd2, "nmg_use_edge_g() old->eu_hd2 C" );
+		ndead += nmg_keg( eu );
+		eu->g.magic_p = (long *)NULL;
+nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 D" );
+	}
+	if( eu->g.lseg_p != eg )  {
+nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 E" );
+		RT_LIST_INSERT( &eg->eu_hd2, &(eu->l2) );
+nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 F" );
+		eu->g.magic_p = magic_p;
+	}
+
+	if( eu->eumate_p->g.lseg_p != eg && eu->eumate_p->g.lseg_p )  {
+		struct edgeuse	*mate = eu->eumate_p;
+		NMG_CK_EDGEUSE(mate);
+
+		NMG_CK_EDGE_G_LSEG(mate->g.lseg_p);
+nmg_ck_list( &mate->g.lseg_p->eu_hd2, "nmg_use_edge_g() old->eu_hd2 P" );
+
+		RT_LIST_DEQUEUE( &mate->l2 );
+nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 Q" );
+nmg_ck_list( &mate->g.lseg_p->eu_hd2, "nmg_use_edge_g() old->eu_hd2 R" );
+		ndead += nmg_keg( mate );
+		mate->g.magic_p = (long *)NULL;
+nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 S" );
+	}
+
+	if( eu->eumate_p->g.lseg_p != eg )  {
+nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 T" );
+		RT_LIST_INSERT( &eg->eu_hd2, &(eu->eumate_p->l2) );
+nmg_ck_list( &eg->eu_hd2, "nmg_use_edge_g() eg->eu_hd2 U" );
+		eu->eumate_p->g.magic_p = magic_p;
+	}
+	if( eu->g.magic_p != eu->eumate_p->g.magic_p )  rt_bomb("nmg_use_edge_g() eu and mate not using same geometry?\n");
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_use_egde_g(eu=x%x, magic_p=x%x) old_eg=x%x\n",
-			eu, magic_p, old);
+		rt_log("nmg_use_edge_g(eu=x%x, magic_p=x%x) old_eg=x%x, ret=%d\n",
+			eu, magic_p, old, ndead);
 	}
+	return ndead;
 }
 
 /*			N M G _ L O O P _ G
