@@ -1081,6 +1081,7 @@ int	non_blocking;
     vect_t		knobvec;	/* knob slew */
     register struct dm_list *p;
     struct dm_list *save_dm_list;
+    int save_edflag;
 
     /* Let cool Tk event handler do most of the work */
 
@@ -1121,10 +1122,9 @@ int	non_blocking;
     save_dm_list = curr_dm_list;
     if( edit_rateflag_model_rotate ) {
       struct bu_vls vls;
-      int save_edflag;
       char save_coords;
 
-      curr_dm_list = edit_dm_list;
+      curr_dm_list = edit_rate_mr_dm_list;
       save_coords = mged_variables.coords;
       mged_variables.coords = 'm';
 
@@ -1157,10 +1157,9 @@ int	non_blocking;
     }
     if( edit_rateflag_object_rotate ) {
       struct bu_vls vls;
-      int save_edflag;
       char save_coords;
 
-      curr_dm_list = edit_dm_list;
+      curr_dm_list = edit_rate_or_dm_list;
       save_coords = mged_variables.coords;
       mged_variables.coords = 'o';
 
@@ -1193,10 +1192,9 @@ int	non_blocking;
     }
     if( edit_rateflag_view_rotate ) {
       struct bu_vls vls;
-      int save_edflag;
       char save_coords;
 
-      curr_dm_list = edit_dm_list;
+      curr_dm_list = edit_rate_vr_dm_list;
       save_coords = mged_variables.coords;
       mged_variables.coords = 'v';
 
@@ -1228,11 +1226,10 @@ int	non_blocking;
 	edobj = save_edflag;
     }
     if( edit_rateflag_model_tran ) {
-      int save_edflag;
       char save_coords;
       struct bu_vls vls;
 
-      curr_dm_list = edit_dm_list;
+      curr_dm_list = edit_rate_mt_dm_list;
       save_coords = mged_variables.coords;
       mged_variables.coords = 'm';
 
@@ -1263,11 +1260,10 @@ int	non_blocking;
 	edobj = save_edflag;
     }
     if( edit_rateflag_view_tran ) {
-      int save_edflag;
       char save_coords;
       struct bu_vls vls;
 
-      curr_dm_list = edit_dm_list;
+      curr_dm_list = edit_rate_vt_dm_list;
       save_coords = mged_variables.coords;
       mged_variables.coords = 'v';
 
@@ -1300,12 +1296,27 @@ int	non_blocking;
     if( edit_rateflag_scale ) {
       struct bu_vls vls;
 
+      if(state == ST_S_EDIT){
+	save_edflag = es_edflag;
+	if(!SEDIT_SCALE)
+	  es_edflag = SSCALE;
+      }else{
+	save_edflag = edobj;
+	if(!OEDIT_SCALE)
+	  edobj = BE_O_SCALE;
+      }
+
       non_blocking++;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
 	
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
+
+      if(state == ST_S_EDIT)
+	es_edflag = save_edflag;
+      else
+	edobj = save_edflag;
     }
 
     for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
