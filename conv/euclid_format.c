@@ -29,6 +29,7 @@ main()
 	float tmp_a;
 	float a,b,c,d;
 	int old_id=(-1);
+	int face_count;
 
 	if( scanf( "%s" , str ) == EOF )
 		rt_bomb( "Unexpected EOF\n" );
@@ -62,13 +63,17 @@ main()
 
 		if( ident != old_id )
 		{
+			face_count = 1;
 			printf( "%5d%5d%5d    0    %8d      %5.2f               \n" ,
-				face_no , npts , face_type , ident , 0.0 );
+				face_count , npts , face_type , ident , 0.0 );
 			old_id = ident;
 		}
 		else
+		{
+			face_count++;
 			printf( "%5d%5d%5d    0                                              \n" ,
-				face_no , npts , face_type );
+				face_count , npts , face_type );
+		}
 
 		printf( "%11.6f%11.6f%11.6f%13.6f\n" , V4ARGS( pl ) );
 
