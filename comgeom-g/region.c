@@ -193,7 +193,7 @@ top:
 				namecvt( inst_num, inst_name, 's' );
 			reg_reg_flag = 0;
 
-			(void)mk_addmember( inst_name, &wmp[reg_num].l, op );
+			(void)mk_addmember( inst_name, &wmp[reg_num].l, NULL, op );
 		}
 	}
 
@@ -356,7 +356,7 @@ char		*name;
 	i = 0;
 
 add:
-	(void)mk_addmember( name, &groups[i].grp_wm.l, WMOP_UNION );
+	(void)mk_addmember( name, &groups[i].grp_wm.l, NULL, WMOP_UNION );
 }
 
 void
@@ -377,7 +377,7 @@ group_write()
 		mk_lfcomb( outfp, wp->wm_name, wp, 0 );
 
 		/* Add it to "all.g" */
-		(void)mk_addmember( wp->wm_name, &allhead.l, WMOP_UNION );
+		(void)mk_addmember( wp->wm_name, &allhead.l, NULL, WMOP_UNION );
 
 		if(verbose) col_pr( wp->wm_name );
 	}
