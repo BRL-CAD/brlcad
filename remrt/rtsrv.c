@@ -77,6 +77,7 @@ int ph_options();
 int ph_lines();
 int ph_end();
 int ph_restart();
+int ph_loglvl();
 struct pkg_switch pkg_switch[] = {
 	{ MSG_START, ph_start, "Startup" },
 	{ MSG_MATRIX, ph_matrix, "Set Matrix" },
@@ -84,6 +85,7 @@ struct pkg_switch pkg_switch[] = {
 	{ MSG_LINES, ph_lines, "Compute lines" },
 	{ MSG_END, ph_end, "End" },
 	{ MSG_PRINT, ph_unexp, "Log Message" },
+	{ MSG_LOGLVL, ph_loglvl, "Change log level" },
 	{ MSG_RESTART, ph_restart, "Restart" }
 };
 int pkg_swlen = sizeof(pkg_switch)/sizeof(struct pkg_switch);
@@ -441,22 +443,41 @@ register struct application *ap;
 	}
 }
 
+int print_on = 1;
+ph_loglvl(pc, buf)
+register struct pkg_conn *pc;
+char *buf;
+{
+	if( buf[0] == '0' )
+		print_on = 0;
+	else	print_on = 1;
+	(void)free(buf);
+}
+
 /*
  *			R T L O G
  *
  *  Log an error.
+ *  This version buffers a full line, to save network traffic.
  */
 /* VARARGS */
 void
 rt_log( str, a, b, c, d, e, f, g, h )
 char *str;
 {
-	char buf[256];		/* a generous output line */
+	static char buf[512];		/* a generous output line */
+	static char *cp = buf+1;
 
-	(void)sprintf( buf, str, a, b, c, d, e, f, g, h );
-	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )
+	if( print_on == 0 )  return;
+	(void)sprintf( cp, str, a, b, c, d, e, f, g, h );
+	while( *cp++ )  ;		/* leave at null */
+	if( cp[-1] != '\n' )
+		return;
+	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )
 		exit(12);
+	cp = buf+1;
 }
+
 void
 rt_bomb(str)
 char *str;
