@@ -748,6 +748,9 @@ mail ( ) {
     if [ "x$2" = x ] ; then __SUBJECT="" ; else __SUBJECT="$2" ; fi
     if [ "x$3" = x ] ; then __BODY="" ; else __BODY="$3" ; fi
     if [ ! "x$4" = x ] ; then __MULTI="yes"; __FILES="$4" ; else __MULTI="no"; __FILES="" ; fi
+    BOUNDARY="xxxxqwertyxxxx.${HOSTNAME}.$$"
+
+
     # need sendmail to properly give mime types
     for __MAILER in /bin/sendmail /usr/lib/sendmail /usr/bin/sendmail /usr/sbin/sendmail ; do
 	if [ -f "$__MAILER" ] && [ -x "$__MAILER" ] ; then
@@ -842,7 +845,7 @@ mail ( ) {
 		if [ ! "x$DEBUG" = "x" ] ; then log "Processing attachment: [${__FILE}]" ; fi
 		__FILEBASE=`basename "$__FILE"`
 		__ATTACH="${__ATTACH}
---xxxxqwertyxxxx
+--${BOUNDARY}
 Content-Type: text/plain; charset=US-ASCII; name=\"$__FILEBASE\"
 Content-Description: ${__LABEL}
 Content-Disposition: attachment; filename=\"$__FILEBASE\"
@@ -861,14 +864,14 @@ Content-Transfer-Encoding: 7bit
 	    $__MAILER $__ADDR <<EOF
 Subject: ${__SUBJECT}
 MIME-Version: 1.0
-Content-type: multipart/mixed; boundary="xxxxqwertyxxxx"
+Content-type: multipart/mixed; boundary="${BOUNDARY}"
 Content-Transfer-Encoding: 7bit
 
 This message is in MIME format.  The first part should be readable text,
 while the remaining parts are likely unreadable without MIME-aware tools.
 Send mail to lamas@arl.army.mil for more info.
 
---xxxxqwertyxxxx
+--${BOUNDARY}
 Content-Type: text/plain; charset=US-ASCII; name="e-mail.body"
 Content-Description: ${__SUBJECT}
 Content-Disposition: inline; filename="e-mail.body"
@@ -878,7 +881,7 @@ ${__BODY}
 
 ${__ATTACH}
 
---xxxxqwertyxxxx--
+--${BOUNDARY}--
 EOF
         done
 
