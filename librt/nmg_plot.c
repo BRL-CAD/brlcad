@@ -28,6 +28,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nmg.h"
 
+void		(*nmg_plot_anim_upcall)();	/* For I/F with MGED */
+void		(*nmg_vlblock_anim_upcall)();	/* For I/F with MGED */
+
 /************************************************************************
  *									*
  *			Generic VLBLOCK routines			*
@@ -883,7 +886,7 @@ unsigned char R, G, B;
 
 	VADD2(end1, p1, v);
 
-	vh = rt_vlblock_find( vbp, 255, 255, 255 );
+	vh = rt_vlblock_find( vbp, R, G, B );
 	ADD_VL( vh, end0, VL_CMD_LINE_MOVE );
 	ADD_VL( vh, end1, VL_CMD_LINE_DRAW );
 
@@ -1170,4 +1173,128 @@ struct shell *s;
 	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 
 	(void)fclose(fp);
+}
+
+/*
+ *			N M G _ P L _ C O M B _ F U
+ *
+ *  Called from nmg_bool.c/nmg_face_combine()
+ */
+nmg_pl_comb_fu( num1, num2, fu1 )
+int	num1;
+int	num2;
+struct faceuse	*fu1;
+{
+	FILE	*fp;
+	char	name[64];
+	int	do_plot = 0;
+	int	do_anim = 0;
+	struct nmg_ptbl	tbl;
+
+	if(rt_g.NMG_debug & DEBUG_PLOTEM &&
+	   rt_g.NMG_debug & DEBUG_COMBINE ) do_plot = 1;
+	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  do_anim = 1;
+
+	if( !do_plot && !do_anim )  return;
+
+	if( do_plot )  {
+	    	(void)sprintf(name, "comb%d.%d.pl", num1, num2);
+		if ((fp=fopen(name, "w")) == (FILE *)NULL) {
+			(void)perror(name);
+			return;
+		}
+		rt_log("Plotting %s\n", name);
+		(void)nmg_tbl(&tbl, TBL_INIT, (long *)NULL);
+
+		nmg_pl_fu(fp, fu1, &tbl, 200, 200, 200);
+
+		(void)fclose(fp);
+		(void)nmg_tbl(&tbl, TBL_FREE, (long *)NULL);
+	}
+
+	if( do_anim )  {
+		extern void (*nmg_vlblock_anim_upcall)();
+		struct vlblock *vbp;
+
+		(void)nmg_tbl(&tbl, TBL_INIT, (long *)NULL);
+		vbp = rt_vlblock_init();
+
+		nmg_vlblock_fu(vbp, fu1, &tbl, 200, 200, 200);
+
+		(void)nmg_tbl(&tbl, TBL_FREE, (long *)NULL);
+
+		if( nmg_vlblock_anim_upcall )  {
+			(*nmg_vlblock_anim_upcall)( vbp, 0 );
+		} else {
+			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
+		}
+		rt_vlblock_free(vbp);
+	}
+
+}
+
+/*
+ *			N M G _ P L _ 2 F U
+ *
+ *  Note that 'str' is expected to contain a %d to place the frame number.
+ *
+ *  Called from nmg_isect_2faces and other places.
+ */
+void
+nmg_pl_2fu( str, num, fu1, fu2, show_mates )
+char		*str;
+int		num;
+struct faceuse	*fu1;
+struct faceuse	*fu2;
+int		show_mates;
+{
+	FILE		*fp;
+	char		name[32];
+	struct nmg_ptbl	b;
+
+	if( rt_g.NMG_debug & DEBUG_PLOTEM )  {
+		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
+
+		(void)sprintf(name, str, num);
+		rt_log("plotting to %s\n", name);
+		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
+			perror(name);
+			return;
+		}
+
+		(void)nmg_pl_fu(fp, fu1, &b, 100, 100, 180);
+		if( show_mates )
+			(void)nmg_pl_fu(fp, fu1->fumate_p, &b, 100, 100, 180);
+
+		(void)nmg_pl_fu(fp, fu2, &b, 100, 100, 180);
+		if( show_mates )
+			(void)nmg_pl_fu(fp, fu2->fumate_p, &b, 100, 100, 180);
+
+		(void)fclose(fp);
+		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+	}
+
+	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  {
+		struct vlblock *vbp;
+
+		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
+		vbp = rt_vlblock_init();
+
+		nmg_vlblock_fu( vbp, fu1, &b, 100, 100, 180);
+		if( show_mates )
+			nmg_vlblock_fu( vbp, fu1->fumate_p, &b, 100, 100, 180);
+
+		nmg_vlblock_fu( vbp, fu2, &b, 100, 100, 180);
+		if( show_mates )
+			nmg_vlblock_fu( vbp, fu2->fumate_p, &b, 100, 100, 180);
+
+		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+
+		/* Cause animation of boolean operation as it proceeds! */
+		if( nmg_vlblock_anim_upcall )  {
+			(*nmg_vlblock_anim_upcall)( vbp, 0 );
+		}
+
+		rt_vlblock_free(vbp);
+	}
 }
