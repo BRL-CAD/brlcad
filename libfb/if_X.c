@@ -84,6 +84,7 @@ FBIO X_interface = {
 	fb_sim_writerect,
 #if NEWLIBFB
 	X_flush,		/* flush		*/
+	X_close,		/* free			*/
 #endif
 	X_help,			/* help message		*/
 	"X Window System (X11)",/* device description	*/
