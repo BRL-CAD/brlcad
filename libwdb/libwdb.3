@@ -42,6 +42,12 @@ char	*name;
 point_t	center;
 vect_t	a, b, c;
 .sp
+mk_tgc( fp, name, center, a, b, c, d )
+FILE	*fp;
+char	*name;
+point_t	center;
+vect_t	a, b, c, d;
+.sp
 mk_tor( fp, name, center, n, r1, r2 )
 FILE	*fp;
 char	*name;
@@ -170,6 +176,14 @@ makes an ellipsoid called ``name'' centered at point ``center''
 with three perpendicular radius vectors.
 The eccentricity of the ellipsoid is controlled by the relative
 lengths of the three radius vectors.
+.PP
+.I mk_tgc\^
+makes a truncated general cone called ``name'' with the base plate
+centered at ``center'' and a height vector ``height'', which is
+perpendicular to the two end plates.  The length of the height vector
+defines the location of the top plate.  The vectors ``a'' and ``b''
+are the base radius vectors, and the vectors ``c'' and ``d'' are the
+nose vectors.
 .PP
 .I mk_tor\^
 makes a torus called ``name'' centered at point ``center'',
