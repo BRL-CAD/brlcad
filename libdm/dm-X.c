@@ -235,9 +235,7 @@ char *argv[];
   }
 
   if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL){
-    Tcl_AppendResult(interp, "dm-X: Failed to open ",
-		     bu_vls_addr(&dmp->dm_pathName),
-		     "\n", (char *)NULL);
+    bu_log("X_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
     (void)X_close(dmp);
     return DM_NULL;
   }
@@ -299,7 +297,7 @@ char *argv[];
 
   /* must do this before MakeExist */
   if((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip = X_choose_visual(dmp)) == NULL){
-    Tcl_AppendResult(interp, "X_open: Can't get an appropriate visual.\n", (char *)NULL);
+    bu_log("X_open: Can't get an appropriate visual.\n");
     (void)X_close(dmp);
     return DM_NULL;
   }
@@ -379,9 +377,7 @@ char *argv[];
       if(!strcmp(list->name, "dial+buttons")){
 	if((dev = XOpenDevice(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			      list->id)) == (XDevice *)NULL){
-	  Tcl_AppendResult(interp,
-			   "X_open: Couldn't open the dials+buttons\n",
-			   (char *)NULL);
+	  bu_log("X_open: Couldn't open the dials+buttons\n");
 	  goto Done;
 	}
 
@@ -486,7 +482,7 @@ struct dm *dmp;
   XGCValues       gcv;
 
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_drawBegin()\n", (char *)NULL);
+    bu_log("X_drawBegin()\n");
 
   /* clear pixmap */
   gcv.foreground = ((struct x_vars *)dmp->dm_vars.priv_vars)->bg;
@@ -510,7 +506,7 @@ X_drawEnd(dmp)
 struct dm *dmp;
 {
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_drawEnd()\n", (char *)NULL);
+    bu_log("X_drawEnd()\n");
 
   XCopyArea(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	    ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -539,20 +535,21 @@ mat_t mat;
 int which_eye;
 {
   if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
-    struct bu_vls tmp_vls;
+    bu_log("X_loadMatrix()\n");
 
-    Tcl_AppendResult(interp, "X_loadMatrix()\n", (char *)NULL);
-
-    bu_vls_init(&tmp_vls);
-    bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
-    bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    bu_vls_free(&tmp_vls);
+    bu_log("which eye = %d\t", which_eye);
+    bu_log("transformation matrix = \n");
+#if 1
+    bu_log("%g %g %g %g\n", mat[0], mat[1], mat[2], mat[3]);
+    bu_log("%g %g %g %g\n", mat[4], mat[5], mat[6], mat[7]);
+    bu_log("%g %g %g %g\n", mat[8], mat[9], mat[10], mat[11]);
+    bu_log("%g %g %g %g\n", mat[12], mat[13], mat[14], mat[15]);
+#else
+    bu_log("%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
+    bu_log("%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
+    bu_log("%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
+    bu_log("%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
+#endif
   }
 
   bn_mat_copy(xmat, mat);
@@ -577,8 +574,8 @@ register struct rt_vlist *vp;
     XGCValues gcv;
     int	nseg;			        /* number of segments */
 
-    if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-      Tcl_AppendResult(interp, "X_drawVList()\n", (char *)NULL);
+    if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+      bu_log("X_drawVList()\n");
 
     nseg = 0;
     segp = segbuf;
@@ -600,6 +597,11 @@ register struct rt_vlist *vp;
 	    case RT_VLIST_POLY_MOVE:
 	    case RT_VLIST_LINE_MOVE:
 		/* Move, not draw */
+		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+		  bu_log("before transformation:\n");
+		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
+		}
+
 		MAT4X3PNT( lpnt, xmat, *pt );
 #if 0
 		if( lpnt[0] < -1e6 || lpnt[0] > 1e6 ||
@@ -607,14 +609,24 @@ register struct rt_vlist *vp;
 		  continue; /* omit this point (ugh) */
 #endif
 
+#ifdef USE_RT_ASPECT
+		lpnt[0] *= 2047;
+		lpnt[1] *= 2047 * dmp->dm_aspect;
+#else
 		lpnt[0] *= 2047 * dmp->dm_aspect;
 		lpnt[1] *= 2047;
+#endif
 		lpnt[2] *= 2047;
 		continue;
 	    case RT_VLIST_POLY_DRAW:
 	    case RT_VLIST_POLY_END:
 	    case RT_VLIST_LINE_DRAW:
 		/* draw */
+		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+		  bu_log("before transformation:\n");
+		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
+		}
+
 		MAT4X3PNT( pnt, xmat, *pt );
 #if 0
 		if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
@@ -622,12 +634,31 @@ register struct rt_vlist *vp;
 		  continue; /* omit this point (ugh) */
 #endif
 
+#ifdef USE_RT_ASPECT
+		pnt[0] *= 2047;
+		pnt[1] *= 2047 * dmp->dm_aspect;
+#else
 		pnt[0] *= 2047 * dmp->dm_aspect;
 		pnt[1] *= 2047;
+#endif
 		pnt[2] *= 2047;
 
 		/* save pnt --- it might get changed by clip() */
 		VMOVE(spnt, pnt);
+
+		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+		  bu_log("before clipping:\n");
+		  bu_log("clipmin - %lf %lf %lf\n",
+			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[X],
+			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[Y],
+			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[Z]);
+		  bu_log("clipmax - %lf %lf %lf\n",
+			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[X],
+			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[Y],
+			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[Z]);
+		  bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
+		  bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
+		}
 
 		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip){
 		  if(vclip(lpnt, pnt,
@@ -651,6 +682,12 @@ register struct rt_vlist *vp;
 		      continue;
 		    }
 		  }
+		}
+
+		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+		  bu_log("after clipping:\n");
+		  bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
+		  bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		}
 
 		/* convert to X window coordinates */
@@ -695,7 +732,7 @@ X_normal(dmp)
 struct dm *dmp;
 {
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_normal()\n", (char *)NULL);
+    bu_log("X_normal()\n");
 
   return TCL_OK;
 }
@@ -729,8 +766,13 @@ int use_aspect;
       bu_log("\tuse_aspect - 0");
   }
 
+#ifdef USE_RT_ASPECT
+  sx = dm_Normal2Xx(dmp, x);
+  sy = dm_Normal2Xy(dmp, y, use_aspect);
+#else
   sx = dm_Normal2Xx(dmp, x, use_aspect);
   sy = dm_Normal2Xy(dmp, y);
+#endif
 
   XDrawString( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -749,7 +791,7 @@ fastf_t x2, y2;
   int	sx1, sy1, sx2, sy2;
 
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_drawLine2D()\n", (char *)NULL);
+    bu_log("X_drawLine2D()\n");
 
   sx1 = dm_Normal2Xx(dmp, x1, 0);
   sx2 = dm_Normal2Xx(dmp, x2, 0);
@@ -772,7 +814,7 @@ fastf_t x, y;
   int   sx, sy;
 
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_drawPoint2D()\n", (char *)NULL);
+    bu_log("X_drawPoint2D()\n");
 
   sx = dm_Normal2Xx(dmp, x, 0);
   sy = dm_Normal2Xy(dmp, y);
@@ -793,7 +835,7 @@ int strict;
   XGCValues gcv;
 
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_setColor()\n", (char *)NULL);
+    bu_log("X_setColor()\n");
 
   if(((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor){
     XColor color;
@@ -825,7 +867,7 @@ int style;
   int linestyle;
 
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_setLineAttr()\n", (char *)NULL);
+    bu_log("X_setLineAttr()\n");
 
   dmp->dm_lineWidth = width;
   dmp->dm_lineStyle = style;
@@ -853,7 +895,7 @@ int lvl;
 {
   ((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug = lvl;
   XFlush(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
-  Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
+  bu_log("flushed\n");
 
   return TCL_OK;
 }
@@ -864,7 +906,7 @@ struct dm *dmp;
 register int w[6];
 {
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_setWinBounds()\n", (char *)NULL);
+    bu_log("X_setWinBounds()\n");
 
   ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[0] = w[0];
   ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[1] = w[2];
@@ -885,15 +927,19 @@ struct dm *dmp;
   XGCValues       gcv;
 
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "X_configureWindowShape()\n", (char *)NULL);
+    bu_log("X_configureWindowShape()\n");
 
   XGetWindowAttributes( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa );
   dmp->dm_height = xwa.height;
   dmp->dm_width = xwa.width;
+#ifdef USE_RT_ASPECT
+  dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+#else
   dmp->dm_aspect =
     (fastf_t)dmp->dm_height /
     (fastf_t)dmp->dm_width;
+#endif
 
   Tk_FreePixmap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		((struct x_vars *)dmp->dm_vars.priv_vars)->pix);
@@ -911,8 +957,7 @@ struct dm *dmp;
       /* Try hardcoded backup font */
       if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 	   XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, FONTBACK)) == NULL) {
-	Tcl_AppendResult(interp, "dm-X: Can't open font '", FONT9,
-			 "' or '", FONTBACK, "'\n", (char *)NULL);
+	bu_log("dm-X: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
 	return;
       }
     }
