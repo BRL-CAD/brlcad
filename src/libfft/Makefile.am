@@ -16,13 +16,11 @@ BUILT_SOURCES = \
 	irfft16.c \
 	irfft256.c \
 	irfft32.c \
-	irfft512.c \
 	irfft64.c \
 	rfft128.c \
 	rfft16.c \
 	rfft256.c \
 	rfft32.c \
-	rfft512.c \
 	rfft64.c \
 	vers.c
 
