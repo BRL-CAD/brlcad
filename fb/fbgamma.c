@@ -23,8 +23,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "fb.h"
 
-double	atof();
-
 void	checkgamma();
 
 static char usage[] = "\

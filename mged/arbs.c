@@ -39,7 +39,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./objdir.h"
 #include "./dm.h"
 
-extern double atof();
 extern char *strcat(), *strcpy();
 
 extern int 	numargs;
