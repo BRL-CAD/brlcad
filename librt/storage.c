@@ -311,15 +311,17 @@ void
 rt_prmem(str)
 char *str;
 {
-	register struct memdebug *mp = &rt_memdebug[rt_memdebug_len-1];
+	register struct memdebug *mp;
 	register int *ip;
 
-	rt_log("\nLIBRT memory use\t\t%s\n", str);
+	rt_log("\nrt_prmem(): LIBRT memory use (%s)\n", str);
 	if( rt_g.debug&DEBUG_MEM_FULL == 0 )  {
-		rt_log("\tMemory debugging is off\n");
-		return;
+		rt_log("\tMemory debugging is now off\n");
 	}
 	rt_log("\t%d elements in memdebug table\n", rt_memdebug_len);
+	if( rt_memdebug_len <= 0 )  return;
+
+	mp = &rt_memdebug[rt_memdebug_len-1];
 	for( ; mp >= rt_memdebug; mp-- )  {
 		if( mp->mdb_len <= 0 )  continue;
 		ip = (int *)(mp->mdb_addr+mp->mdb_len-sizeof(int));
