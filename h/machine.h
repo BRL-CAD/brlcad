@@ -132,10 +132,10 @@ typedef long	bitv_t;		/* largest integer type */
 #define PARALLEL	1
 #endif
 
-#ifdef SGI4D
+#if	(defined(sgi) && defined(mips) && !defined(SGI4D_Rel2))
 /********************************
  *				*
- *	SGI 4D102GTX		*
+ *	SGI 4D, multi-processor	*
  *				*
  ********************************/
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
@@ -147,14 +147,13 @@ typedef long	bitv_t;		/* largest integer type */
 
 #ifdef PARALLEL
 # define MAX_PSW		4	/* Max number of processors */
-# define DEFAULT_PSW	MAX_PSW
 #else
 # define RES_RELEASE(ptr)	;
 # define RES_ACQUIRE(ptr)	;
 # define MAX_PSW		1
-# define DEFAULT_PSW	MAX_PSW
 #endif
 
+#define DEFAULT_PSW		MAX_PSW
 #endif SGI4D
 
 
