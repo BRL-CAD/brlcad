@@ -95,12 +95,12 @@ set glob_compat_mode 0
     set arg_DB_ARGS ""
 
     #
-    # (bot) Arguments
+    # Bag O'Triangles (bot) Arguments
     # 
-    # in args =>
+    # in args => name num_vertices num_triangles mode orientation vertex1 vertex2... face1 face2 ...
     #
-    set bot_IN_ARGS ""
-    set bot_DB_ARGS ""
+    set bot_IN_ARGS "4 4 2 1 0 0 0 50 0 0 50 50 0 50 50 50 0 1 2 1 2 3 0 1 3 0 2 3 "
+    set bot_DB_ARGS "mode volume orient no V { { 0 0 0 } { 50 0 0 } { 50 50 0 } { 50 50 50 } } F { { 0 1 2 } { 1 2 3 } { 0 1 3 } { 0 2 3 } }"
 
     #
     # (cline) Arguments
