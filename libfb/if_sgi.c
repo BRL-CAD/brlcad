@@ -256,14 +256,21 @@ FBIO	*ifp;
 	char	*old_brk;
 	char	*new_brk;
 	char	*sp;
+	int	new = 0;
 
 	errno = 0;
 	pixsize = 1024 * 768 * sizeof(RGBpixel);
 	size = pixsize + sizeof(struct sgi_cmap);
 	size = (size + 4096-1) & ~(4096-1);
-	if( (SGI(ifp)->si_shmid = shmget( SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
-		fb_log("shmget returned %d, errno=%d\n", SGI(ifp)->si_shmid, errno);
-		goto fail;
+	/* First try to attach to an existing one */
+	if( (SGI(ifp)->si_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
+		/* No existing one, create a new one */
+		if( (SGI(ifp)->si_shmid = shmget(
+		    SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
+			fb_log("if_sgi: shmget failed, errno=%d\n", errno);
+			goto fail;
+		}
+		new = 1;
 	}
 
 	/* Move up the existing break, to leave room for later malloc()s */
@@ -291,6 +298,10 @@ FBIO	*ifp;
 
 	ifp->if_mem = sp;
 	ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
+
+	/* Provide non-black colormap on creation of new shared mem */
+	if(new)
+		sgi_cmwrite( ifp, COLORMAP_NULL );
 	return(0);
 fail:
 	fb_log("sgi_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sgi.c for details\n");
@@ -597,7 +608,7 @@ int	width, height;
 		/* "/dev/sgi###" gives optional mode */
 		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
 		mode = 0;
-		if( isdigit(*cp) )
+		if( *cp && isdigit(*cp) )
 			(void)sscanf( cp, "%d", &mode );
 		if( mode >= 99 )  {
 			/* Attempt to release shared memory segment */
@@ -646,10 +657,10 @@ int	width, height;
 	SGI(ifp)->si_yzoom = 1;
 	SGI(ifp)->si_xcenter = width/2;
 	SGI(ifp)->si_ycenter = height/2;
-	SGI(ifp)->si_cmap_flag = !is_linear_cmap(ifp);
 	ifp->if_mode = MODE_RGB;
 	if( sgi_getmem(ifp) < 0 )
 		return(-1);
+	SGI(ifp)->si_cmap_flag = !is_linear_cmap(ifp);
 
 	/* Setup default cursor.					*/
 	defcursor( 1, cursor );
