@@ -1,6 +1,6 @@
 /*
-	@(#) vproc.c			retrieved: 8/13/86 at 08:25:34,
-	@(#) version 2.3		last edit: 1/31/85 at 14:59:56.
+	@(#) vproc.c			retrieved: 8/13/86 at 08:25:53,
+	@(#) version 2.4		last edit: 2/1/85 at 13:53:02.
 
 	Written by Gary S. Moss.
 	All rights reserved, Ballistic Research Laboratory.
@@ -332,7 +332,7 @@ builddir()
 					(void) fprintf( stdout,
 						"Units = milimeters.\n"
 							);
-					unit_conversion = 25.4;
+					unit_conversion = 1.0;
 					units_set_flag = true;
 					strcpy( db_units, "mm" );
 					break;
@@ -340,7 +340,7 @@ builddir()
 					(void) fprintf( stdout,
 						"Units = centimeters.\n"
 							);
-					unit_conversion = 2.54;
+					unit_conversion = 0.1;
 					units_set_flag = true;
 					strcpy( db_units, "cm" );
 					break;
@@ -348,7 +348,7 @@ builddir()
 					(void) fprintf( stdout,
 							"Units = meters.\n"
 							);
-					unit_conversion = 0.0254;
+					unit_conversion = 0.001;
 					units_set_flag = true;
 					strcpy( db_units, "m " );
 					break;
@@ -356,6 +356,7 @@ builddir()
 					(void) fprintf( stdout,
 							"Units = inches.\n"
 							);
+					unit_conversion = 0.03937008;
 					units_set_flag = true;
 					strcpy( db_units, "in" );
 					break;
@@ -363,7 +364,7 @@ builddir()
 					(void) fprintf( stdout,
 							"Units = feet.\n"
 							);
-					unit_conversion = 0.0833333333;
+					unit_conversion = 0.00328084;
 					units_set_flag = true;
 					strcpy( db_units, "ft" );
 					break;
