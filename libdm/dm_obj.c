@@ -35,8 +35,8 @@
 #include <GL/glx.h>
 #include <GL/gl.h>
 #include "dm-ogl.h"
-#include "dm_xvars.h"
 #endif
+#include "dm_xvars.h"
 #include "./fbserv_obj.h"
 #endif
 
