@@ -252,7 +252,8 @@ dim width,height;
 /*
  *			M A I N
  */
-void main(argc,argv)
+int
+main(argc,argv)
 int argc;
 char **argv;
 #define ASKIP { argc--; argv ++;}
@@ -676,7 +677,7 @@ char **argv;
 			clipped_low, clipped_high );
 	}
 
-	exit(0);
+	return 0;
 }
 #undef ASKIP
 
