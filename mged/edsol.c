@@ -73,8 +73,6 @@ fastf_t	es_m[3];		/* edge(line) slope */
 int	es_menu;		/* item selected from menu */
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
-int	es_nlines;		/* # lines in printed display */
-char	es_display[ES_LINELEN*10];/* buffer for lines of display */
 
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */
@@ -1175,21 +1173,6 @@ register vect_t		unitv;
 }
 
 #define EPSILON 1.0e-7
-
-#define PR_STR(ln,str)	(void)strcpy(&es_display[ln*ES_LINELEN], str);
-
-#define PR_PT(ln,title,base)	(void)sprintf( &es_display[ln*ES_LINELEN],\
-		"\t%c (%.4f, %.4f, %.4f)%c", \
-		title, (base)[X], (base)[Y], (base)[Z], '\0' )
-
-#define PR_VECM(ln,title,base,mag)	(void)sprintf( &es_display[ln*ES_LINELEN],\
-		"\t%c (%.4f, %.4f, %.4f) Mag=%f%c", \
-		title, (base)[X], (base)[Y], (base)[Z], mag, '\0' )
-
-#define PR_ANG(ln,str,base)	(void)sprintf( &es_display[ln*ES_LINELEN],\
-		"\t%s dir cos=(%.1f, %.1f, %.1f), rot=%.1f, fb=%.1f%c", \
-		str, (base)[0], (base)[1], (base)[2], \
-		(base)[3], (base)[4], '\0' )
 
 void
 vls_solid( vp, sp, mat )

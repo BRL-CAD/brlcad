@@ -72,9 +72,6 @@ extern int	es_menu;		/* item selected from menu */
 #define ROTMENU		19
 extern mat_t	es_mat;			/* accumulated matrix of path */ 
 extern mat_t 	es_invmat;		/* inverse of es_mat   KAA */
-extern int	es_nlines;		/* # lines in printed display */
-#define ES_LINELEN	128		/* len of display text lines */
-extern char	es_display[ES_LINELEN*10];/* buffer for lines of display */
 
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */
