@@ -112,6 +112,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	mag_b = sqrt( magsq_b = MAGSQ( B ) );
 	mag_c = sqrt( magsq_c = MAGSQ( C ) );
 	mag_d = sqrt( magsq_d = MAGSQ( D ) );
+
 	if( NEAR_ZERO( magsq_h ) ) {
 		fprintf(stderr,"tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
@@ -200,6 +201,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	tgc->tgc_CA_H = tgc->tgc_C/tgc->tgc_A - 1.0;
 	tgc->tgc_DB_H = tgc->tgc_D/tgc->tgc_B - 1.0;
+	if( NEAR_ZERO( tgc->tgc_CA_H ) )
+		tgc->tgc_CA_H = 0.0;
+	if( NEAR_ZERO( tgc->tgc_DB_H ) )
+		tgc->tgc_DB_H = 0.0;
 
 	/*
 	 *	Added iShr parameter to tgc_shear().
@@ -492,7 +497,7 @@ register struct xray	*rp;
 	tgc_sort( k, npts );
 
 	/* Now, t[0] > t[npts-1].  See if this is an easy out. */
-	if( k[0] <= 0.0 )
+	if( npts > 0 && k[0] <= 0.0 )
 		return(SEG_NULL);		/* No hit out front. */
 
 	/* General Cone may have 4 intersections, but	*
@@ -774,6 +779,7 @@ double		t[];
 	R.cf[0] = dprime[Z] * tgc->tgc_CA_H;
 	/* A vector is unitized (tgc->tgc_A == 1.0) */
 	R.cf[1] = (pprime[Z] * tgc->tgc_CA_H) + 1.0;
+
 	(void) polyMul( &R, &R, &Rsqr );
 
 	/*  If the eccentricities of the two ellipses are the same,
