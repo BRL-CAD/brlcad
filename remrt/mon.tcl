@@ -22,6 +22,7 @@ proc server_sense {} {
 	global nodes
 	global	fds
 	global dirs
+	global status
 
 	puts "start server_sense"
 	# loop through list of nodes selected, starting each one.
@@ -41,10 +42,10 @@ proc server_sense {} {
 			unset nodes($host)
 			continue
 		}
-		puts "status=$status($host)"
-		set shost $nodes($host)
+		##puts "status=$status($host)"
+		##set shost $nodes($host)
 		##puts "cget=[.title_$shost configure]"
-		.title_$shost configure -text "$host $status($host)"
+		##.title_$shost configure -text "$status($host)"
 	}
 	puts "done"
 }
@@ -53,6 +54,7 @@ proc register {host formalname _cmd_ dir} {
 	global nodes
 	global	fds
 	global dirs
+	global status
 
 	puts "Connecting to $host"
 	set code "!error?"
@@ -63,9 +65,10 @@ proc register {host formalname _cmd_ dir} {
 
 	set dirs($formalname) $dir
 	set nodes($formalname) $host
+	set status($formalname) "???"
 	frame .fr_$host
 	checkbutton .button_$host -variable nodes($formalname)
-	label .title_$host -text "$formalname ???"
+	label .title_$host -textvariable status($formalname)
 	entry .entry_$host -width 20 -relief sunken -bd 2 -textvariable dirs($formalname)
 	pack .button_$host .title_$host .entry_$host -side left -in .fr_$host
 	pack .fr_$host -side top -in .rtnode_fr
@@ -73,3 +76,4 @@ proc register {host formalname _cmd_ dir} {
 
 register "vapor" "vapor.arl.mil" ssh /m/cad/remrt
 register "wax" "wax.arl.mil" ssh /n/vapor/m/cad/remrt
+server_sense
