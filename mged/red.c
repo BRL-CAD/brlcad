@@ -49,7 +49,7 @@ int clear_comb(),build_comb(),save_comb();
 static int ident;
 static int air;
 
-void
+int
 f_red( argc , argv )
 int argc;
 char **argv;
@@ -61,20 +61,20 @@ char **argv;
 	if( argc != 2 )
 	{
 		(void)printf( "Usage:\n\tred object_name\n" );
-		return;
+		return CMD_BAD;
 	}
 
 	if( (dp=db_lookup( dbip , argv[1] , LOOKUP_NOISY )) == DIR_NULL )
 	{
 		(void)printf( " Cannot edit: %s\n" , argv[1] );
-		return;
+		return CMD_BAD;
 	}
 
 	if( db_get( dbip , dp , &record , 0 , 1 ) < 0 ) READ_ERR_return;
 	if( record.u_id != ID_COMB )	/* Not a combination */
 	{
 		(void)printf( " %s is not a combination, so cannot be edited this way\n", argv[1] );
-		return;
+		return CMD_BAD;
 	}
 
 	/* Save for later use in rebuilding */
@@ -90,7 +90,7 @@ char **argv;
 	{
 		(void)printf( "Unable to edit %s\n" , argv[1] );
 		unlink( red_tmpfil );
-		return;
+		return CMD_BAD;
 	}
 
 	/* Edit the file */
@@ -100,27 +100,27 @@ char **argv;
 		{
 			(void)printf( "Error in edited region, no changes made\n" );
 			(void)unlink( red_tmpfil );
-			return;
+			return CMD_BAD;
 		}
 		if( save_comb( dp ) )	/* Save combination to a temp name */
 		{
 			(void)printf( "No changes made\n" );
 			(void)unlink( red_tmpfil );
-			return;
+			return CMD_OK;
 		}
 		if( clear_comb( dp ) )	/* Empty this combination */
 		{
 			(void)printf( "Unable to empty %s, original restored\n" , dp->d_namep );
 			restore_comb( dp );
 			(void)unlink( red_tmpfil );
-			return;
+			return CMD_BAD;
 		}
 		if( build_comb( dp ) )	/* Use comb_add() to rebuild combination */
 		{
 			(void)printf( "Unable to construct new %s, original restored\n" , dp->d_namep );
 			restore_comb( dp );
 			(void)unlink( red_tmpfil );
-			return;
+			return CMD_BAD;
 		}
 		else			/* eliminate the temporary combination */
 		{
@@ -136,6 +136,7 @@ char **argv;
 	}
 
 	(void)unlink( red_tmpfil );
+	return CMD_OK;
 }
 
 int
