@@ -52,11 +52,6 @@ static char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
-
-/* XXX move to vmath.h */
-#define MAT4XSCALOR(o,m,i) \
-	{(o) = (i) / (m)[15];}
 
 #define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
 
@@ -107,6 +102,7 @@ struct rt_i		*rtip;
 	struct rt_i			*sub_rtip;
 	struct db_i			*sub_dbip;
 	struct soltab			*sub_stp;
+	struct region			*rp;
 	vect_t	radvec;
 	vect_t	diam;
 	char	*argv[2];
@@ -178,6 +174,17 @@ struct rt_i		*rtip;
 	 *  submodel, and make them part of the main model.
 	 *  Then just stealing segs will be OK.
 	 */
+	while( BU_LIST_NON_EMPTY( &sub_rtip->HeadRegion ) )  {
+		rp = BU_LIST_FIRST( region, &sub_rtip->HeadRegion );
+		BU_LIST_DEQUEUE( &(rp->l) );
+
+		bu_semaphore_acquire( RT_SEM_RESULTS );	/* enter critical section */
+		/* Add to up_rtip's list */
+		BU_LIST_INSERT( &rtip->HeadRegion, &(rp->l) );
+		rp->reg_bit = rtip->nregions++;	/* Assign bit vector pos. */
+		bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
+
+	}
 
 	/*
 	 *  Visit all solids in sub_rtip and change their st_meth
@@ -254,6 +261,7 @@ struct seg		*segHeadp;
 	struct soltab		*up_stp;
 	struct region		*up_reg;
 	struct submodel_gobetween *gp;
+	int			count = 0;
 
 	RT_AP_CHECK(ap);
 	RT_CK_PT_HD(PartHeadp);
@@ -284,21 +292,9 @@ struct seg		*segHeadp;
 
 		/* Put this segment on caller's shot routine seglist */
 		BU_LIST_INSERT( &(gp->up_seghead->l), &(segp->l) );
+		count++;
 	}
-
-#if 0
-	/* Steal the partition list */
-	while( (pp=PartHeadp->pt_forw) != PartHeadp )  {
-		RT_CK_PT(pp);
-		DEQUEUE_PT(pp);
-
-		pp->pt_regionp = up_reg;
-
-	/* XXX These need to be sort/merged into the Final list! */
-		INSERT_PT( pp, up_ap->a_Final_Part_hdp );
-	}
-#endif
-	return 1;
+	return count;
 }
 
 /*
@@ -341,8 +337,6 @@ struct seg		*seghead;
 	nap.a_uptr = (genptr_t)&gb;
 	nap.a_dist = submodel->m2subm[15];	/* scale, local to world */
 
-/* XXX Need a per-processor place to stash this new ray! (Application struct) */
-/* Need to malloc it, and queue it for destruction in caller's application struct */
 	/* shootray already computed a_ray.r_min & r_max for us */
 	/* Construct the ray in submodel coords. */
 	/* Do this in a repeatable way */
@@ -350,11 +344,15 @@ struct seg		*seghead;
 	MAT4X3PNT( nap.a_ray.r_pt, submodel->m2subm, ap->a_ray.r_pt );
 	MAT4X3VEC( nap.a_ray.r_dir, submodel->m2subm, ap->a_ray.r_dir );
 
+	/* set flag indicating not to bother with boolean computation. */
+/* XXX rt_shootray() doesn't pay attention yet. */
+	submodel->rtip->rti_nobool = 1;
+
 	if( rt_shootray( &nap ) <= 0 )  return 0;	/* MISS */
 
 	/* All the real (sneaky) work is done in the hit routine */
+	/* a_hit routine will have added the segs to seghead */
 
-	/* a_hit routine will add segs to seghead */
 	return 1;		/* HIT */
 }
 
