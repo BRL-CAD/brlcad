@@ -7,13 +7,9 @@
 			Maryland 21005-5066
 			(301)278-6651 or AV-298-6651
 */
-#include "machine.h"
-#include "./lgt.h"
-
 #ifndef DEBUG
 #define NDEBUG
 #endif
-#include <assert.h>
 
 #ifndef STATIC
 #define STATIC static
@@ -56,13 +52,6 @@ extern int abort_RT();
 extern int stop_sig();
 #endif
 
-/* C library functions. */
-#include "externs.h"
-extern char     *sbrk();
-#ifdef BSD
-extern char *tmpnam(), *gets(), *strtok();
-#endif
-
 /* other functions */
 extern char *get_Input();
 
@@ -94,7 +83,7 @@ extern void prnt_Menu();
 extern void prnt_Octree();
 extern void prnt_Pixel();
 extern void prnt_Prompt();
-#if __STDC__
+#if HAVE_STDARG_H
 extern void prnt_Scroll( char *, ... );
 #else
 extern void prnt_Scroll();

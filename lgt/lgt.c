@@ -9,10 +9,21 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
+#include <assert.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./screen.h"
@@ -149,7 +160,7 @@ tty_sig:
 		case SIGCHLD :
 			break; /* Leave SIGCHLD alone. */
 #endif
-#ifdef SIGCLD
+#if defined(SIGCLD) && (SIGCLD != SIGCHLD)
 		case SIGCLD :
 			break; /* Leave SIGCLD alone. */
 #endif

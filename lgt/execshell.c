@@ -9,10 +9,23 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <assert.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
+
 #define DFL_SHELL	"/bin/sh"
 #define CSH		"/bin/csh"
 #define TCSH		"/usr/brl/bin/tcsh"
@@ -20,12 +33,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	(void) sprintf( error_buf, "\"%s\" (%d)", __FILE__, __LINE__ ); \
 	loc_Perror( error_buf ); \
 	return	-1;
-
-#include <errno.h>
-/* These aren't defined in BSD errno.h.					*/
-extern int	errno;
-extern int	sys_nerr;
-extern char	*sys_errlist[];
 
 void
 loc_Perror( msg )

@@ -9,11 +9,6 @@
 */
 #ifndef INCL_LGT
 #define INCL_LGT
-#include "machine.h"	/* has once-only latch */
-#include "vmath.h"	/* has once-only latch */
-#include "raytrace.h"	/* has once-only latch */
-#include "fb.h"		/* has once-only latch */
-#include "./hmenu.h"	/* has once-only latch */
 
 #define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported. */
 #define MAX_SCANSIZE	2048	/* Longest output scanline. */

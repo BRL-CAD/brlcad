@@ -21,15 +21,24 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *	Idea originated by Mike John Muuss
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 #include <stdarg.h>
-#else
+#elif defined(HAVE_VARARGS_H)
 #include <varargs.h>
 #endif
+#include <assert.h>
+
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./screen.h"
-extern int	_doprnt();
 /*
  *  		R T _ B O M B
  *  
@@ -48,7 +57,7 @@ char *str;
 	exit(12);
 	}
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 void
 rt_log( char *fmt, ... )
 	{
@@ -92,9 +101,7 @@ rt_log( char *fmt, ... )
 	else
 		{
 		(void) vfprintf( stderr, fmt, ap );
-#ifdef sun
 		(void) fflush( stderr );
-#endif
 		}
 	va_end( ap );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
@@ -102,7 +109,7 @@ rt_log( char *fmt, ... )
 	}
 #else /* __STDC__ */
 
-#if defined( CRAY1 )
+#if !defined(HAVE_VARARGS_H)
 /* VARARGS */
 void
 rt_log(fmt, a,b,c,d,e,f,g,h,i)
@@ -146,7 +153,7 @@ char *fmt;
 		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	}
-#else /* CRAY1 */
+#else
 
 /*
  *  		R T _  L O G
@@ -198,18 +205,16 @@ va_dcl
 	else
 		{
 		(void) _doprnt( fmt, ap, stderr );
-#ifdef sun
 		(void) fflush( stderr );
-#endif
 		}
 	va_end( ap );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
-#endif /* CRAY1 */
-#endif /* __STDC__ */
+#endif
+#endif /* HAVE_STDARG_H */
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 void
 fb_log( char *fmt, ... )
 	{
@@ -253,17 +258,15 @@ fb_log( char *fmt, ... )
 	else
 		{
 		(void) vfprintf( stderr, fmt, ap );
-#ifdef sun
 		(void) fflush( stderr );
-#endif
 		}
 	va_end( ap );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
-#else /* __STDC__ */
+#else 
 
-#if defined( CRAY1 )
+#if !defined( HAVE_VARARGS_H )
 /* VARARGS */
 void
 fb_log(fmt, a,b,c,d,e,f,g,h,i)
@@ -307,7 +310,7 @@ char *fmt;
 		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	}
-#else /* CRAY1 */
+#else 
 
 /*
  *  		R T _  L O G
@@ -359,13 +362,11 @@ va_dcl
 	else
 		{
 		(void) _doprnt( fmt, ap, stderr );
-#ifdef sun
 		(void) fflush( stderr );
-#endif
 		}
 	va_end( ap );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
-#endif /* CRAY1 */
-#endif /* __STDC__ */
+#endif
+#endif /* HAVE_STDARG_H */

@@ -9,8 +9,18 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
+#include <assert.h>
+
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./screen.h"
 int		zoom;	/* Current zoom factor of frame buffer.		*/

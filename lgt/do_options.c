@@ -8,17 +8,27 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <setjmp.h>
 #include <math.h>
 #include <signal.h>
-#ifdef BSD
+#ifdef USE_STRING_H
+#include <string.h>
+#else
 #include <strings.h>
 #endif
-#ifdef SYSV
-#include <string.h>
-#endif
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./mat_db.h"
 #include "./vecmath.h"
@@ -629,22 +639,14 @@ f_Grid_Roll( itemp, args )
 HMitem	*itemp;
 char	**args;
 	{	static char	promptbuf[17];
-#if defined( sgi ) && ! defined( mips )
-	if( args == NULL || args[1] == NULL || sscanf( args[1], "%f", &grid_roll ) != 1 )
-#else 
 	if( args == NULL || args[1] == NULL || sscanf( args[1], "%lf", &grid_roll ) != 1 )
-#endif
 		{
 		if( tty )
 			{
 			(void) sprintf( prompt, "Grid roll ? (%g) ", grid_roll*DEGRAD );
 			if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 				{
-#if defined( sgi ) && ! defined( mips )
-			   	if( sscanf( input_ln, "%f", &grid_roll ) != 1 )
-#else
 			   	if( sscanf( input_ln, "%lf", &grid_roll ) != 1 )
-#endif
 					return	-1;
 				else
 					grid_roll /= DEGRAD;
@@ -801,11 +803,7 @@ setCellSize()
 	{
 	(void) sprintf( prompt, "Cell size (mm) ? (%g) ", cell_sz );
 	if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
-#if defined( sgi ) && ! defined( mips )
-	   &&	sscanf( input_ln, "%f", &cell_sz ) != 1
-#else
 	   &&	sscanf( input_ln, "%lf", &cell_sz ) != 1
-#endif
 		)
 		return	FALSE;
 	return	TRUE;
@@ -833,11 +831,7 @@ setViewSize()
 	{
 	(void) sprintf( prompt, "View size (mm) ? (%g) ", view_size );
 	if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
-#if defined( sgi ) && ! defined( mips )
-	   &&	sscanf( input_ln, "%f", &view_size ) != 1
-#else
 	   &&	sscanf( input_ln, "%lf", &view_size ) != 1
-#endif
 		)
 		return	FALSE;
 	return	TRUE;
@@ -1038,7 +1032,7 @@ keybd_input :
 				mx = XSCR2MEM( x );
 				my = YSCR2MEM( y );
 				if(	fb_seek( fbiop, mx, my ) == -1
-				    ||	fb_rpixel( fbiop, (RGBpixel *) pixel )
+				    ||	fb_rpixel( fbiop, (unsigned char *) pixel )
 						== -1
 					)
 					rt_log( "Read from <%d,%d> failed.", mx, my );
@@ -1276,7 +1270,7 @@ char	**args;
 			prnt_Status();
 			for( y = 0; y < grid_sz; y++ )
 				{	RGBpixel	pixels[1024];
-				if( fb_read( movie_fbiop, 0, y, pixels, grid_sz ) == -1 )
+				if( fb_read( movie_fbiop, 0, y, (unsigned char *)pixels, grid_sz ) == -1 )
 					{
 					fb_log( "Read from <%d,%d> failed on file \"%s\".\n", 0, y, movie_file );
 					(void) signal( SIGINT, norml_sig );
@@ -1284,7 +1278,7 @@ char	**args;
 					(void) fb_close( movie_fbiop );
 					return	-1;
 					}
-				if( fb_write( fbiop, 0, y, pixels, grid_sz ) == -1 )
+				if( fb_write( fbiop, 0, y, (unsigned char *)pixels, grid_sz ) == -1 )
 					{
 					fb_log( "Write to <%d,%d> failed on \"%s\".\n", 0, y, fb_file );
 					(void) signal( SIGINT, norml_sig );
@@ -1509,14 +1503,14 @@ char	**args;
 		}
 	for( y = 0; y < grid_sz; y++ )
 		{	RGBpixel	pixels[1024];
-		if( fb_read( fbiop, 0, y, pixels, grid_sz ) == -1 )
+		if( fb_read( fbiop, 0, y, (unsigned char *)pixels, grid_sz ) == -1 )
 			{
 			fb_log( "Read from <%d,%d> failed.\n", 0, y );
 			close_Output_Device( 0 );
 			(void) fb_close( save_fbiop );
 			return	-1;
 			}
-		if( fb_write( save_fbiop, 0, y, pixels, grid_sz ) == -1 )
+		if( fb_write( save_fbiop, 0, y, (unsigned char *)pixels, grid_sz ) == -1 )
 			{
 			fb_log( "Write to <%d,%d> failed.\n", 0, y );
 			close_Output_Device( 0 );
@@ -1583,14 +1577,14 @@ char	**args;
 		}
 	for( y = 0; y < grid_sz; y++ )
 		{	RGBpixel	pixels[1024];
-		if( fb_read( save_fbiop, 0, y, pixels, grid_sz ) == -1 )
+		if( fb_read( save_fbiop, 0, y, (unsigned char *)pixels, grid_sz ) == -1 )
 			{
 			fb_log( "Read from <%d,%d> failed.\n", 0, y );
 			close_Output_Device( 0 );
 			(void) fb_close( save_fbiop );
 			return	-1;
 			}
-		if( fb_write( fbiop, 0, y, pixels, grid_sz ) == -1 )
+		if( fb_write( fbiop, 0, y, (unsigned char *)pixels, grid_sz ) == -1 )
 			{
 			fb_log( "Write to <%d,%d> failed.\n", 0, y );
 			close_Output_Device( 0 );
@@ -2054,15 +2048,6 @@ char	**args;
 		rt_log( "Multiple bounces disallowed during IR mapping.\n" );
 		return	-1;
 		}
-#if defined( sgi ) && ! defined( mips )
-	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
-		{	extern long	two_digit_menu;
-			int		rc;
-		if( (rc = dopup( two_digit_menu )) >= 0 )
-			max_bounce = rc;
-		}
-	else
-#endif
 	if( args == NULL )
 		{
 		(void) sprintf( prompt,
@@ -2149,11 +2134,7 @@ char	**args;
 		}
 	/* Insure that error log is truncated. */
 	if(	(err_fd =
-#ifdef BSD
-		creat( err_file, 0644 )) == -1
-#else
 		open( err_file, O_TRUNC|O_CREAT|O_WRONLY, 0644 )) == -1
-#endif
 		)
 		{
 		loc_Perror( err_file );
@@ -3703,11 +3684,7 @@ char	*file;
 		return	-1;
 		}
 	{	int	tmp_fd;
-#ifdef BSD
-	if( (tmp_fd = creat( script_file, 0755 )) == -1 )
-#else
 	if( (tmp_fd = open( script_file, O_CREAT, 0755 )) == -1 )
-#endif
 		{
 		loc_Perror( script_file );
 		return	-1;
@@ -3929,7 +3906,7 @@ int	sig;
 	{	int	pid = getpid();
 	EVENT_MOVE();
 	(void) signal( sig, SIG_DFL );
-#if defined( BSD )
+#if defined( SIGSTOP )
 	(void) kill( pid, SIGSTOP );
 #else
 	(void) kill( pid, sig );

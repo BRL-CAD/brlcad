@@ -9,7 +9,19 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
+#include <assert.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./screen.h"
@@ -156,31 +168,19 @@ int	id;
 				entry->azim*DEGRAD );
 		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 			{
-#if defined( sgi ) && ! defined( mips )
-			(void) sscanf( input_buf, "%f", &entry->azim );
-#else
 			(void) sscanf( input_buf, "%lf", &entry->azim );
-#endif
 			entry->azim /= DEGRAD;
 			}
 		(void) sprintf( prompt, "elevation ? (%g) ",
 				entry->elev*DEGRAD );
 		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 			{
-#if defined( sgi ) && ! defined( mips )
-			(void) sscanf( input_buf, "%f", &entry->elev );
-#else
 			(void) sscanf( input_buf, "%lf", &entry->elev );
-#endif
 			entry->elev /= DEGRAD;
 			}
 		(void) sprintf( prompt, "distance ? (%g) ", entry->dist );
 		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-#if defined( sgi ) && ! defined( mips )
-			(void) sscanf( input_buf, "%f", &entry->dist );
-#else
 			(void) sscanf( input_buf, "%lf", &entry->dist );
-#endif
 		}
 	(void) sprintf( prompt, "gaussian beam ? [y|n](%c) ",
 			entry->beam ? 'y' : 'n' );
@@ -191,20 +191,12 @@ int	id;
 		(void) sprintf( prompt, "radius of beam ? (%g) ",
 				entry->radius );
 		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-#if defined( sgi ) && ! defined( mips )
-			(void) sscanf( input_buf, "%f", &entry->radius );
-#else
 			(void) sscanf( input_buf, "%lf", &entry->radius );
-#endif
 		}
 	(void) sprintf( prompt, "intensity ? [0.0 to 1.0](%g) ",
 			entry->energy );
 	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-#if defined( sgi ) && ! defined( mips )
-		(void) sscanf( input_buf, "%f", &entry->energy );
-#else
 		(void) sscanf( input_buf, "%lf", &entry->energy );
-#endif
 	(void) sprintf( prompt, "color ? [0 to 255](%d %d %d) ",
 			entry->rgb[RED],
 			entry->rgb[GRN],
@@ -244,11 +236,7 @@ FILE			*fp;
 	entry->rgb[1] = grn;
 	entry->rgb[2] = blu;
 	if(	fscanf(	fp,
-#if defined( sgi ) && ! defined( mips )
-			"%f %f %f %f %f",
-#else
 			"%lf %lf %lf %lf %lf",
-#endif
 			&entry->azim,
 			&entry->elev,
 			&entry->dist,

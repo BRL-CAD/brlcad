@@ -8,7 +8,25 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+#include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
+#include <assert.h>
+#if defined(HAVE_STDARG_H)
+#include <stdarg.h>
+#elif defined(HAVE_VARARGS_H)
+#include <varargs.h>
+#endif
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./tree.h"
@@ -370,8 +388,7 @@ prnt_Usage()
 	return;
 	}
 
-#if __STDC__
-# include <stdarg.h>
+#if defined(HAVE_STDARG_H)
 /*	p r n t _ S c r o l l ( )					*/
 /* VARARGS */
 void
@@ -419,10 +436,8 @@ prnt_Scroll( char *fmt, ... )
 	return;
 	}
 
-#else /* !__STDC__ */
+#elif !defined(HAVE_VARARGS_H)
 
-#if defined( CRAY1 )
-/* VARARGS */
 void
 prnt_Scroll(fmt, a,b,c,d,e,f,g,h,i)
 char *fmt;
@@ -465,7 +480,6 @@ char *fmt;
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 }
 #else
-# include <varargs.h>
 /*	p r n t _ S c r o l l ( )					*/
 /* VARARGS */
 void
@@ -514,5 +528,4 @@ va_dcl
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
-#endif /* !CRAY */
-#endif /* !__STDC__ */
+#endif /* HAVE_STDARG_H */

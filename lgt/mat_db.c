@@ -9,11 +9,24 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
+#include <assert.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./mat_db.h"
 #include "./screen.h"
+
 static Mat_Db_Entry	mat_db_table[MAX_MAT_DB];
 static int		mat_db_size = 0;
 Mat_Db_Entry		mat_dfl_entry =
@@ -197,43 +210,24 @@ int	id;
 	(void) sprintf( prompt, "specular weighting ? [0.0 to 1.0](%g) ",
 			entry->wgt_specular );
 	if( get_Input( input_buf, MAX_LN, prompt  ) != NULL )
-#if defined( sgi ) && ! defined( mips )
-		(void) sscanf( input_buf, "%f", &entry->wgt_specular );
-#else
 		(void) sscanf( input_buf, "%lf", &entry->wgt_specular );
-#endif
 	(void) sprintf( prompt, "diffuse weighting ? [0.0 to 1.0](%g) ",
 			entry->wgt_diffuse );
 	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-#if defined( sgi ) && ! defined( mips )
-		(void) sscanf( input_buf, "%f", &entry->wgt_diffuse );
-#else
 		(void) sscanf( input_buf, "%lf", &entry->wgt_diffuse );
-#endif
 	(void) sprintf( prompt, "transparency ? [0.0 to 1.0](%g) ",
 			entry->transparency );
 	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-#if defined( sgi ) && ! defined( mips )
-		(void) sscanf( input_buf, "%f", &entry->transparency );
-#else	
 		(void) sscanf( input_buf, "%lf", &entry->transparency );
-#endif
 	(void) sprintf( prompt, "reflectivity ? [0.0 to 1.0](%g) ",
 			entry->reflectivity );
 	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-#if defined( sgi ) && ! defined( mips )
-		(void) sscanf( input_buf, "%f", &entry->reflectivity );
-#else
 		(void) sscanf( input_buf, "%lf", &entry->reflectivity );
-#endif
 	(void) sprintf( prompt, "refractive index ? [0.9 to 5.0](%g) ",
 			entry->refrac_index );
 	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
-#if defined( sgi ) && ! defined( mips )
-		(void) sscanf( input_buf, "%f", &entry->refrac_index );
-#else
 		(void) sscanf( input_buf, "%lf", &entry->refrac_index );
-#endif
+
 	if( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
 		{
 		(void) sprintf( prompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
@@ -306,11 +300,7 @@ FILE	*fp;
 		return	0;
 		}
 	if(	fscanf(	fp,
-#if defined( sgi ) && ! defined( mips )
-			"%f %f %f %f %f",
-#else
 			"%lf %lf %lf %lf %lf",
-#endif
 			&entry->wgt_specular,
 			&entry->wgt_diffuse,
 			&entry->transparency,

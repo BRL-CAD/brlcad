@@ -20,14 +20,24 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
-#include "./extern.h"
+#include <assert.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
 #include "./hmenu.h"
+#include "./lgt.h"
+#include "./extern.h"
 extern int	LI, CO;
 #ifndef STATIC
 #define STATIC static
