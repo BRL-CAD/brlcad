@@ -6,18 +6,22 @@
  *
  *  Author -
  *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1997 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -60,6 +64,9 @@ unsigned char	*pp;
  *
  *  A routine to simulate the effect of fb_writerect() when a
  *  particular display does not handle it.
+ *
+ *  Returns number of pixels actually written.
+ *  Clipping to the screen may reduce the total if caller was sloppy.
  */
 int
 fb_sim_writerect( ifp, xmin, ymin, width, height, pp )
@@ -71,13 +78,91 @@ CONST unsigned char	*pp;
 	register int	y;
 	register int	tot;
 	int		got;
+	int		xlen;
+
+	xlen = width;
+	if( xmin + width > fb_getwidth(ifp) )
+		xlen = fb_getwidth(ifp) - xmin;
 
 	tot = 0;
 	for( y=ymin; y < ymin+height; y++ )  {
-		got = fb_write( ifp, xmin, y, pp, width );
+		got = fb_write( ifp, xmin, y, pp, xlen );
 		tot += got;
-		if( got != width )  break;
+		if( got != xlen )  break;
 		pp += width * sizeof(RGBpixel);
 	}
 	return(tot);
+}
+
+/*
+ *			F B _ S I M _ B W R E A D R E C T
+ */
+int
+fb_sim_bwreadrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+unsigned char	*pp;
+{
+	register int	y;
+	register int	tot;
+	int		got;
+	unsigned char	buf[4096*3];
+
+	if( width > 4096 )  return -4096;	/* FAIL */
+
+	tot = 0;
+	for( y=ymin; y < ymin+height; y++ )  {
+		register int	x;
+
+		got = fb_read( ifp, xmin, y, buf, width );
+
+		/* Extract green chan */
+		for( x=0; x < width; x++ )
+			*pp++ = buf[x*3+GRN];
+
+		tot += got;
+		if( got != width )  break;
+	}
+	return tot;
+}
+
+/*
+ *			F B _ S I M _ B W W R I T E R E C T
+ */
+int
+fb_sim_bwwriterect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+CONST unsigned char	*pp;
+{
+	register int	y;
+	register int	tot;
+	int		got;
+	int		xlen;
+	unsigned char	buf[4096*3];
+
+	if( width > 4096 )  return -4096;	/* FAIL */
+
+	xlen = width;
+	if( xmin + width > fb_getwidth(ifp) )
+		xlen = fb_getwidth(ifp) - xmin;
+
+	tot = 0;
+	for( y=ymin; y < ymin+height; y++ )  {
+		register int	x;
+		register unsigned char	*bp;
+
+		/* Copy monochrome (b&w) intensity into all three chans */
+		bp = buf;
+		for( x=0; x < width; x++ )  {
+			*bp++ = *bp++ = *bp++ = *pp++;
+		}
+
+		got = fb_write( ifp, xmin, y, buf, xlen );
+		tot += got;
+		if( got != xlen )  break;
+	}
+	return tot;
 }

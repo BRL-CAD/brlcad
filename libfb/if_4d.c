@@ -127,6 +127,8 @@ FBIO sgi_interface =
 		fb_sim_getcursor,
 		fb_sim_readrect,
 		sgi_writerect,
+		fb_sim_bwreadrect,
+		fb_sim_bwwriterect,
 		sgi_poll,		/* handle events */
 		sgi_flush,		/* flush */
 		sgi_free,		/* free*/

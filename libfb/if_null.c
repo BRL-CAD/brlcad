@@ -64,6 +64,8 @@ FBIO null_interface =  {
 	null_getcursor,		/* get cursor		*/
 	null_readrect,		/* rectangle read	*/
 	null_writerect,		/* rectangle write	*/
+	null_readrect,		/* bw rectangle read	*/
+	null_writerect,		/* bw rectangle write	*/
 	null_poll,		/* handle events	*/
 	null_flush,		/* flush output		*/
 	null_free,		/* free resources	*/

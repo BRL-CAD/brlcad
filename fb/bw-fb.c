@@ -246,6 +246,36 @@ int argc; char **argv;
 			fb_window( fbp, scr_xoff+xout/2, scr_yoff+yout/2 );
 	}
 
+	/* Test for simplest case */
+	if( inverse == 0 &&
+		file_xoff == 0 && file_yoff == 0 &&
+		scr_xoff+file_width <= fb_getwidth(fbp)
+	)  {
+		unsigned char	*buf;
+		int		npix = file_width * yout;
+
+		if( (buf = malloc(npix)) == NULL )  {
+			perror("bw-fb malloc");
+			goto general;
+		}
+		n = mread( infd, buf, npix );
+		if( n != npix )  {
+			fprintf(stderr, "bw-fb: read got %d, s/b %d\n", n, npix );
+			if( n <= 0 )  exit(7);
+			npix = n;	/* show what we got */
+		}
+		n = (npix+file_width-1)/file_width;	/* num lines got */
+		n = fb_bwwriterect(fbp, scr_xoff, scr_yoff, file_width, n, buf);
+		if( npix != n )  {
+			fprintf(stderr, "bw-fb: fb_bwwriterect() got %d, s/b %d\n", n, npix );
+			exit(8);
+		}
+		fb_close( fbp );
+		exit(0);
+	}
+
+	/* Begin general case */
+general:
 	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width );
 
 	for( y = scr_yoff; y < scr_yoff + yout; y++ ) {
@@ -267,7 +297,8 @@ int argc; char **argv;
 				n = fb_read( fbp, scr_xoff, scr_height-1-y,
 					(unsigned char *)obuf, xout );
 			else
-				n = fb_read( fbp, scr_xoff, y, (unsigned char *)obuf, xout );
+				n = fb_read( fbp, scr_xoff, y,
+					(unsigned char *)obuf, xout );
 			if( n < 0 )  break;
 		}
 		for( x = 0; x < xout; x++ ) {

@@ -41,6 +41,8 @@ _LOCAL_ int	DEVNAME_open(),
 		DEVNAME_getcursor(),
 		DEVNAME_readrect(),
 		DEVNAME_writerect(),
+		DEVNAME_bwreadrect(),
+		DEVNAME_bwwriterect(),
 		DEVNAME_poll(),
 		DEVNAME_flush(),
 		DEVNAME_free(),
@@ -63,6 +65,8 @@ FBIO DEVNAME_interface =  {
 	DEVNAME_getcursor,	/* get cursor		*/
 	DEVNAME_readrect,	/* read rectangle	*/
 	DEVNAME_writerect,	/* write rectangle	*/
+	DEVNAME_bwreadrect,	/* read bw rectangle	*/
+	DEVNAME_bwwriterect,	/* write bw rectangle	*/
 	DEVNAME_poll,		/* process events	*/
 	DEVNAME_flush,		/* flush output		*/
 	DEVNAME_free,		/* free resources	*/

@@ -79,6 +79,8 @@ FBIO abekas_interface = {
 	ab_getcursor,
 	fb_sim_readrect,
 	fb_sim_writerect,
+	fb_sim_bwreadrect,
+	fb_sim_bwwriterect,
 	fb_null,			/* poll */
 	fb_null,			/* flush */
 	ab_close,			/* free */
@@ -306,7 +308,7 @@ int		width, height;
 	}
 
 	if( ifp->if_xyoff )  {
-		sprintf(message,"ab_open %d*%d xoff=%d yoff=%d",
+		sprintf(message,"ab_open %d*%d xoff=%ld yoff=%ld",
 			ifp->if_width, ifp->if_height,
 			ifp->if_xyoff>>16, ifp->if_xyoff&0xFFFF );
 	} else {

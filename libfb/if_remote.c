@@ -80,6 +80,8 @@ _LOCAL_ int	rem_open(),
 		rem_setcursor(),
 		rem_readrect(),
 		rem_writerect(),
+		rem_bwreadrect(),
+		rem_bwwriterect(),
 		rem_poll(),
 		rem_flush(),
 		rem_free(),
@@ -101,6 +103,8 @@ FBIO remote_interface = {
 	rem_getcursor,
 	rem_readrect,
 	rem_writerect,
+	rem_bwreadrect,
+	rem_bwwriterect,
 	rem_poll,
 	rem_flush,
 	rem_free,
@@ -531,6 +535,77 @@ CONST unsigned char	*pp;
 	if( ret < 0 )
 		return	-4;	/* Error from libpkg */
 	return	ret/sizeof(RGBpixel);
+	/* No reading an error return package, sacrificed for speed. */
+}
+
+/*
+ *			R E M _ B W R E A D R E C T
+ *
+ *  Issue:  Determining if other end has support for this yet.
+ */
+_LOCAL_ int
+rem_bwreadrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+unsigned char	*pp;
+{
+	int	num;
+	int	ret;
+	char	buf[4*NET_LONG_LEN+1];
+
+	num = width*height;
+	if( num <= 0 )
+		return(0);
+	/* Send Read Command */
+	(void)fbputlong( xmin, &buf[0*NET_LONG_LEN] );
+	(void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
+	(void)fbputlong( width, &buf[2*NET_LONG_LEN] );
+	(void)fbputlong( height, &buf[3*NET_LONG_LEN] );
+	if( pkg_send( MSG_FBBWREADRECT, buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
+		return	-2;
+
+	/* Get response;  0 len means failure */
+	ret = pkg_waitfor( MSG_RETURN, (char *)pp, num, PCP(ifp) );
+	if( ret <= 0 )  {
+		fb_log( "rem_bwrectread: read %d at <%d,%d> failed, ret=%d.\n",
+			num, xmin, ymin, ret );
+		return	-3;
+	}
+	return ret;
+}
+
+/*
+ *			R E M _ B W W R I T E R E C T
+ */
+_LOCAL_ int
+rem_bwwriterect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+CONST unsigned char	*pp;
+{
+	int	num;
+	int	ret;
+	char	buf[4*NET_LONG_LEN+1];
+
+	num = width*height;
+	if( num <= 0 )
+		return(0);
+
+	/* Send Write Command */
+	(void)fbputlong( xmin, &buf[0*NET_LONG_LEN] );
+	(void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
+	(void)fbputlong( width, &buf[2*NET_LONG_LEN] );
+	(void)fbputlong( height, &buf[3*NET_LONG_LEN] );
+	ret = pkg_2send( MSG_FBBWWRITERECT+MSG_NORETURN,
+		buf, 4*NET_LONG_LEN,
+		(char *)pp, num,
+		PCP(ifp) );
+	ret -= 4*NET_LONG_LEN;
+	if( ret < 0 )
+		return	-4;	/* Error from libpkg */
+	return	ret;
 	/* No reading an error return package, sacrificed for speed. */
 }
 

@@ -63,6 +63,8 @@ FBIO ap_interface =  {
 	fb_sim_getcursor,	/* get cursor		*/
 	fb_sim_readrect,
 	fb_sim_writerect,
+	fb_sim_bwreadrect,
+	fb_sim_bwwriterect,
 	fb_null,			/* poll */
 	fb_null,			/* flush */
 	fb_null,			/* free */

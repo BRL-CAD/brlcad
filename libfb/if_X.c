@@ -99,6 +99,8 @@ FBIO X_interface = {
 	X_getcursor,		/* get cursor		*/
 	fb_sim_readrect,	/* read rectangle	*/
 	fb_sim_writerect,	/* write rectangle	*/
+	fb_sim_bwreadrect,
+	fb_sim_bwwriterect,
 	X_poll,			/* handle events	*/
 	X_flush,		/* flush		*/
 	X_close,		/* free			*/

@@ -62,6 +62,8 @@ FBIO memory_interface =  {
 	mem_getcursor,		/* get cursor		*/
 	fb_sim_readrect,	/* rectangle read	*/
 	fb_sim_writerect,	/* rectangle write	*/
+	fb_sim_bwreadrect,
+	fb_sim_bwwriterect,
 	mem_poll,		/* poll			*/
 	mem_flush,		/* flush		*/
 	mem_close,		/* free			*/

@@ -46,6 +46,7 @@ void	fb_server_fb_cursor(), fb_server_fb_getcursor();
 void	fb_server_fb_rmap(), fb_server_fb_wmap();
 void	fb_server_fb_help();
 void	fb_server_fb_readrect(), fb_server_fb_writerect();
+void	fb_server_fb_bwreadrect(), fb_server_fb_bwwriterect();
 void	fb_server_fb_poll(), fb_server_fb_flush(), fb_server_fb_free();
 void	fb_server_fb_view(), fb_server_fb_getview();
 void	fb_server_fb_setcursor();
@@ -85,6 +86,9 @@ CONST struct pkg_switch fb_server_pkg_switch[] = {
   { MSG_FBREADRECT, 		fb_server_fb_readrect,	"Read Rectangle" },
   { MSG_FBWRITERECT,		fb_server_fb_writerect,	"Write Rectangle" },
   { MSG_FBWRITERECT+MSG_NORETURN, fb_server_fb_writerect,"Write Rectangle" },
+  { MSG_FBBWREADRECT, 		fb_server_fb_bwreadrect,"Read BW Rectangle" },
+  { MSG_FBBWWRITERECT,		fb_server_fb_bwwriterect,"Write BW Rectangle" },
+  { MSG_FBBWWRITERECT+MSG_NORETURN, fb_server_fb_bwwriterect,"Write BW Rectangle" },
   { MSG_FBFLUSH,		fb_server_fb_flush,	"Flush Output" },
   { MSG_FBFLUSH + MSG_NORETURN, fb_server_fb_flush,	 "Flush Output" },
   { MSG_FBFREE,			fb_server_fb_free,	"Free Resources" },
@@ -399,6 +403,81 @@ char *buf;
 
 	type = pcp->pkc_type;
 	ret = fb_writerect( fb_server_fbp, x, y, width, height,
+		(unsigned char *)&buf[4*NET_LONG_LEN] );
+
+	if( type < MSG_NORETURN ) {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	}
+	if( buf ) (void)free(buf);
+}
+
+/*
+ *			F B _ S E R V E R _ F B _ B W R E A D R E C T
+ */
+void
+fb_server_fb_bwreadrect(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	xmin, ymin;
+	int	width, height;
+	int	num;
+	int	ret;
+	static unsigned char	*scanbuf = NULL;
+	static int	buflen = 0;
+
+	xmin = pkg_glong( &buf[0*NET_LONG_LEN] );
+	ymin = pkg_glong( &buf[1*NET_LONG_LEN] );
+	width = pkg_glong( &buf[2*NET_LONG_LEN] );
+	height = pkg_glong( &buf[3*NET_LONG_LEN] );
+	num = width * height;
+
+	if( num > buflen ) {
+		if( scanbuf != NULL )
+			free( (char *)scanbuf );
+		buflen = num;
+		if( buflen < 1024 )
+			buflen = 1024;
+		if( (scanbuf = (unsigned char *)malloc( buflen )) == NULL ) {
+			fb_log("fb_bwreadrect: malloc failed!");
+			if( buf ) (void)free(buf);
+			buflen = 0;
+			return;
+		}
+	}
+
+	ret = fb_bwreadrect( fb_server_fbp, xmin, ymin, width, height, scanbuf );
+	if( ret < 0 )  ret = 0;		/* map error indications */
+	/* sending a 0-length package indicates error */
+	pkg_send( MSG_RETURN, scanbuf, ret, pcp );
+	if( buf ) (void)free(buf);
+}
+
+
+/*
+ *			F B _ S E R V E R _ F B _ B W W R I T E R E C T
+ *
+ *  A whole rectangle of monochrome pixels at once, probably large.
+ */
+void
+fb_server_fb_bwwriterect(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	x, y;
+	int	width, height;
+	char	rbuf[NET_LONG_LEN+1];
+	int	ret;
+	int	type;
+
+	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+	y = pkg_glong( &buf[1*NET_LONG_LEN] );
+	width = pkg_glong( &buf[2*NET_LONG_LEN] );
+	height = pkg_glong( &buf[3*NET_LONG_LEN] );
+
+	type = pcp->pkc_type;
+	ret = fb_bwwriterect( fb_server_fbp, x, y, width, height,
 		(unsigned char *)&buf[4*NET_LONG_LEN] );
 
 	if( type < MSG_NORETURN ) {

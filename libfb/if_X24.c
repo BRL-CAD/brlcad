@@ -155,6 +155,8 @@ FBIO X24_interface =  {
 	X24_getcursor,		/* get cursor		*/
 	X24_readrect,		/* read rectangle	*/
 	X24_writerect,		/* write rectangle	*/
+	fb_sim_bwreadrect,
+	fb_sim_bwwriterect,
 	X24_poll,		/* process events	*/
 	X24_flush,		/* flush output		*/
 	X24_free,		/* free resources	*/

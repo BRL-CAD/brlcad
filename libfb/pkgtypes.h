@@ -38,6 +38,8 @@
 #define	MSG_FBGETCURSOR	19		/* NEW */
 #define	MSG_FBPOLL	30		/* NEW */
 #define MSG_FBSETCURSOR	31		/* NEW in Release 4.4 */
+#define	MSG_FBBWREADRECT 32		/* NEW in Release 4.6 */
+#define	MSG_FBBWWRITERECT 33		/* NEW in Release 4.6 */
 
 #define	MSG_DATA	20
 #define	MSG_RETURN	21

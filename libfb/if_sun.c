@@ -132,6 +132,8 @@ FBIO sun_interface = {
 		sun_getcursor,
 		fb_sim_readrect,
 		fb_sim_writerect,
+		fb_sim_bwreadrect,
+		fb_sim_bwwriterect,
 		sun_poll,
 		fb_null,		/* flush */
 		sun_free,		/* free */

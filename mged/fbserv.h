@@ -7,6 +7,7 @@ void	rfbcursor(), rfbgetcursor();
 void	rfbrmap(), rfbwmap();
 void	rfbhelp();
 void	rfbreadrect(), rfbwriterect();
+void	rfbbwreadrect(), rfbbwwriterect();
 void	rfbpoll(), rfbflush(), rfbfree();
 void	rfbview(), rfbgetview();
 void	rfbsetcursor();
@@ -35,6 +36,9 @@ static struct pkg_switch pkg_switch[] = {
 	{ MSG_FBREADRECT, 	rfbreadrect,	"Read Rectangle" },
 	{ MSG_FBWRITERECT,	rfbwriterect,	"Write Rectangle" },
 	{ MSG_FBWRITERECT + MSG_NORETURN, rfbwriterect,"Write Rectangle" },
+	{ MSG_FBBWREADRECT, 	rfbbwreadrect,"Read BW Rectangle" },
+	{ MSG_FBBWWRITERECT,	rfbbwwriterect,"Write BW Rectangle" },
+	{ MSG_FBBWWRITERECT+MSG_NORETURN, rfbbwwriterect,"Write BW Rectangle" },
 	{ MSG_FBFLUSH,		rfbflush,	"Flush Output" },
 	{ MSG_FBFLUSH + MSG_NORETURN, rfbflush, "Flush Output" },
 	{ MSG_FBFREE,		rfbfree,	"Free Resources" },

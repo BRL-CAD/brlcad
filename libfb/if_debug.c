@@ -30,6 +30,8 @@ _LOCAL_ int	deb_open(),
 		deb_getcursor(),
 		deb_readrect(),
 		deb_writerect(),
+		deb_bwreadrect(),
+		deb_bwwriterect(),
 		deb_poll(),
 		deb_flush(),
 		deb_free(),
@@ -52,6 +54,8 @@ FBIO debug_interface = {
 	deb_getcursor,
 	deb_readrect,
 	deb_writerect,
+	deb_bwreadrect,
+	deb_bwwriterect,
 	deb_poll,
 	deb_flush,
 	deb_free,
@@ -312,6 +316,34 @@ RGBpixel	*pp;
 {
 	FB_CK_FBIO(ifp);
 	fb_log( "fb_writerect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
+		(unsigned long)ifp, xmin, ymin, width, height,
+		(unsigned long)pp );
+	return( width*height );
+}
+
+_LOCAL_ int
+deb_bwreadrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	FB_CK_FBIO(ifp);
+	fb_log( "fb_bwreadrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
+		(unsigned long)ifp, xmin, ymin, width, height,
+		(unsigned long)pp );
+	return( width*height );
+}
+
+_LOCAL_ int
+deb_bwwriterect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	FB_CK_FBIO(ifp);
+	fb_log( "fb_bwwriterect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
 		(unsigned long)ifp, xmin, ymin, width, height,
 		(unsigned long)pp );
 	return( width*height );

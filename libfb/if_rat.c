@@ -91,6 +91,8 @@ FBIO rat_interface =  {
 	fb_sim_getcursor,		/* get cursor		*/
 	fb_sim_readrect,		/* read rectangle	*/
 	fb_sim_writerect,		/* write rectangle	*/
+	fb_sim_bwreadrect,
+	fb_sim_bwwriterect,
 	fb_null,			/* handle events	*/
 	fb_null,			/* flush output		*/
 	rat_close,			/* free resources	*/

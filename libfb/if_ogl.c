@@ -100,6 +100,7 @@ _LOCAL_ int	ogl_open(),
 		ogl_getcursor(),
 		ogl_readrect(),
 		ogl_writerect(),
+		ogl_bwwriterect(),
 		ogl_poll(),
 		ogl_flush(),
 		ogl_free(),
@@ -124,6 +125,8 @@ FBIO ogl_interface =
 	fb_sim_getcursor,	/* get cursor		*/
 	fb_sim_readrect,	/* read rectangle	*/
 	ogl_writerect,		/* write rectangle	*/
+	fb_sim_bwreadrect,
+	ogl_bwwriterect,	/* write rectangle	*/
 	ogl_poll,		/* process events	*/
 	ogl_flush,		/* flush output		*/
 	ogl_free,		/* free resources	*/
@@ -1706,6 +1709,79 @@ CONST unsigned char	*pp;
 			oglp->blue  = cp[BLU];
 			oglp++;
 			cp += 3;
+		}
+	}
+
+	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
+		return width*height;
+
+	if(!OGL(ifp)->use_ext_ctrl){
+	if (multiple_windows) {
+	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
+	}
+	}
+
+	if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
+		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+		glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
+	}
+	else { /* just write rectangle*/
+		ogl_xmit_scanlines( ifp, ymin, height, xmin, width );
+		if (OGL(ifp)->copy_flag){
+			backbuffer_to_screen(ifp,-1);
+		}
+	}
+
+	if (multiple_windows) {
+	/* unattach context for other threads to use */
+	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
+	}
+
+	return(width*height);
+}
+
+
+/*
+ *			O G L _ B W W R I T E R E C T
+ *
+ *  The task of this routine is to reformat the pixels into
+ *  SGI internal form, and then arrange to have them sent to
+ *  the screen separately.
+ */
+_LOCAL_ int
+ogl_bwwriterect( ifp, xmin, ymin, width, height, pp )
+FBIO		*ifp;
+int		xmin, ymin;
+int		width, height;
+CONST unsigned char	*pp;
+{
+	register int		x;
+	register int		y;
+	register unsigned char	*cp;
+	register struct ogl_pixel	*oglp;
+
+	if(CJDEBUG) printf("entering ogl_bwwriterect\n");
+
+
+	if( width <= 0 || height <= 0 )
+		return(0);  /* do nothing */
+	if( xmin < 0 || xmin+width > ifp->if_width ||
+	    ymin < 0 || ymin+height > ifp->if_height )
+		return(-1); /* no can do */
+
+	cp = (unsigned char *)(pp);
+	for( y = ymin; y < ymin+height; y++ )  {
+		oglp = (struct ogl_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
+		for( x = xmin; x < xmin+width; x++ )  {
+			register int	val;
+			/* alpha channel is always zero */
+			oglp->red   = (val = *cp++);
+			oglp->green = val;
+			oglp->blue  = val;
+			oglp++;
 		}
 	}
 

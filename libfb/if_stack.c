@@ -42,6 +42,8 @@ _LOCAL_ int	stk_open(),
 		stk_getcursor(),
 		stk_readrect(),
 		stk_writerect(),
+		stk_bwreadrect(),
+		stk_bwwriterect(),
 		stk_poll(),
 		stk_flush(),
 		stk_free(),
@@ -64,6 +66,8 @@ FBIO stk_interface =  {
 	stk_getcursor,		/* get cursor		*/
 	stk_readrect,		/* read rectangle	*/
 	stk_writerect,		/* write rectangle	*/
+	stk_bwreadrect,		/* read bw rectangle	*/
+	stk_bwwriterect,	/* write bw rectangle	*/
 	stk_poll,		/* handle events	*/
 	stk_flush,		/* flush output		*/
 	stk_free,		/* free resources	*/
@@ -232,6 +236,8 @@ int	count;
 
 /*
  *			S T K _ R E A D R E C T
+ *
+ *  Read only from the first source on the stack.
  */
 _LOCAL_ int
 stk_readrect( ifp, xmin, ymin, width, height, pp )
@@ -249,6 +255,11 @@ unsigned char	*pp;
 	return( width*height );
 }
 
+/*
+ *			S T K _ W R I T E R E C T
+ *
+ *  Write to all destinations on the stack
+ */
 _LOCAL_ int
 stk_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
@@ -264,6 +275,49 @@ CONST unsigned char	*pp;
 	}
 
 	return( width*height );
+}
+
+/*
+ *			S T K _ B W R E A D R E C T
+ *
+ *  Read only from the first source on the stack.
+ */
+_LOCAL_ int
+stk_bwreadrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+unsigned char	*pp;
+{
+	register FBIO **ip = SI(ifp)->if_list;
+
+	if( *ip != (FBIO *)NULL ) {
+		(void)fb_bwreadrect( (*ip), xmin, ymin, width, height, pp );
+	}
+
+	return width*height;
+}
+
+/*
+ *			S T K _ B W W R I T E R E C T
+ *
+ *  Write to all destinations on the stack
+ */
+_LOCAL_ int
+stk_bwwriterect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+CONST unsigned char	*pp;
+{
+	register FBIO **ip = SI(ifp)->if_list;
+
+	while( *ip != (FBIO *)NULL ) {
+		(void)fb_bwwriterect( (*ip), xmin, ymin, width, height, pp );
+		ip++;
+	}
+
+	return width*height;
 }
 
 _LOCAL_ int
