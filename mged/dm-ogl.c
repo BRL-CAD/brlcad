@@ -101,7 +101,7 @@ char *argv[];
 
   eventHandler = Ogl_doevent;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-  dm_configureWindowShape(dmp);
+  (void)DM_CONFIGURE_WIN(dmp);
 
   bu_vls_init(&vls);
   bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
@@ -230,16 +230,24 @@ Ogl_colorchange()
 static void
 establish_zbuffer()
 {
+#if 0
   dm_zbuffer(dmp,
 	     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
+#else
+  (void)DM_SET_ZBUFFER(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
+#endif
   ++view_state->vs_flag;
 }
 
 static void
 establish_lighting()
 {
+#if 0
   dm_lighting(dmp,
 	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
+#else
+  (void)DM_SET_LIGHT(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
+#endif
   ++view_state->vs_flag;
 }
 
