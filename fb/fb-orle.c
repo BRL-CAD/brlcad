@@ -41,9 +41,10 @@ static int	cmflag = 1;
 static int	crunch = 0;
 static int	xpos = 0, ypos = 0, xlen = 0, ylen = 0;
 static int	parsArgv();
-static void	do_Crunch();
 static void	prntUsage();
 static int	width = 512;
+
+extern void	cmap_crunch();
 
 /*	m a i n ( )							*/
 main( argc, argv )
@@ -123,7 +124,7 @@ char	*argv[];
 				return	1;
 		}
 		if( crunch )
-			do_Crunch( scan_buf, xlen, &cmap );
+			cmap_crunch( scan_buf, xlen, &cmap );
 
 		if( rle_encode_ln( fp, scan_buf ) == -1 )
 			return	1;
@@ -235,22 +236,6 @@ prntUsage()
 	while( *p )
 	{
 		(void) fprintf( stderr, "%s\n", *p++ );
-	}
-	return;
-}
-
-/*	d o _ C r u n c h ( )						*/
-static void
-do_Crunch( scan_buf, pixel_ct, cmap )
-register RGBpixel	*scan_buf;
-register int		pixel_ct;
-register ColorMap	*cmap;
-{
-	for( ; pixel_ct > 0; pixel_ct--, scan_buf++ )
-	{
-		(*scan_buf)[RED] = cmap->cm_red[(*scan_buf)[RED]]>>8;
-		(*scan_buf)[GRN] = cmap->cm_green[(*scan_buf)[GRN]]>>8;
-		(*scan_buf)[BLU] = cmap->cm_blue[(*scan_buf)[BLU]]>>8;
 	}
 	return;
 }
