@@ -744,7 +744,7 @@ cmd_setup()
 
     bu_vls_init(&temp);
 
-    for (ctp = cmdtab+1; ctp->ct_name != NULL; ctp++) {
+    for (ctp = cmdtab; ctp->ct_name != NULL; ctp++) {
 #if 0
 	bu_vls_strcpy(&temp, "info commands ");
 	bu_vls_strcat(&temp, ctp->ct_name);
@@ -1803,7 +1803,7 @@ char *argv[];
 {
   int i;
   int status;
-  char **av;
+  char *av[2];
   struct dm_list *dml;
   struct shared_info *sip;
 
@@ -1813,23 +1813,25 @@ char *argv[];
   }
 
   dml = curr_dm_list;
-  av = (char **)bu_malloc(sizeof(char *) * (argc + 2), "f_ps: av");
-
-  /* Load the argument vector */
-  av[0] = "attach";
-  for(i = 1; i < argc + 1; ++i)
-    av[i] = argv[i - 1];
-  av[i] = "ps";
-  av[++i] = NULL;
-
-  status = f_attach(clientData, interp, i - 1, av);
-  if(status == TCL_ERROR){
-    bu_free((genptr_t)av, "f_ps: av");
+  status = mged_attach(&which_dm[DM_PS_INDEX], argc, argv);
+  if(status == TCL_ERROR)
     return TCL_ERROR;
-  }
 
   sip = curr_dm_list->s_info;  /* save state info pointer */
   curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
+  mged_variables = dml->_mged_variables; /* struct copy */
+  bcopy((void *)dml->_menu_array, (void *)menu_array,
+	sizeof(struct menu_item *) * NMENU);
+  menuflag = dml->_menuflag;
+  menu_top = dml->_menu_top;
+  cur_menu = dml->_cur_menu;
+  cur_item = dml->_cur_menu_item;
+  scroll_top = dml->_scroll_top;
+  scroll_active = dml->_scroll_active;
+  scroll_y = dml->_scroll_y;
+  scroll_edit = dml->_scroll_edit;
+  bcopy((void *)dml->_scroll_array, (void *)scroll_array,
+	sizeof(struct scroll_item *) * 6);
 
   dirty = 1;
   refresh();
@@ -1838,8 +1840,8 @@ char *argv[];
   av[0] = "release";
   av[1] = NULL;
   status = f_release(clientData, interp, 1, av);
+  curr_dm_list = dml;
 
-  bu_free((genptr_t)av, "f_ps: av");
   return status;
 }
 
@@ -1856,7 +1858,7 @@ char *argv[];
 {
   int i;
   int status;
-  char **av;
+  char *av[2];
   struct dm_list *dml;
   struct shared_info *sip;
 
@@ -1866,23 +1868,25 @@ char *argv[];
   }
 
   dml = curr_dm_list;
-  av = (char **)bu_malloc(sizeof(char *) * (argc + 2), "f_pl: av");
-
-  /* Load the argument vector */
-  av[0] = "attach";
-  for(i = 1; i < argc + 1; ++i)
-    av[i] = argv[i - 1];
-  av[i] = "plot";
-  av[++i] = NULL;
-
-  status = f_attach(clientData, interp, i - 1, av);
-  if(status == TCL_ERROR){
-    bu_free((genptr_t)av, "f_pl: av");
+  status = mged_attach(&which_dm[DM_PLOT_INDEX], argc, argv);
+  if(status == TCL_ERROR)
     return TCL_ERROR;
-  }
 
   sip = curr_dm_list->s_info;  /* save state info pointer */
   curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
+  mged_variables = dml->_mged_variables; /* struct copy */
+  bcopy((void *)dml->_menu_array, (void *)menu_array,
+	sizeof(struct menu_item *) * NMENU);
+  menuflag = dml->_menuflag;
+  menu_top = dml->_menu_top;
+  cur_menu = dml->_cur_menu;
+  cur_item = dml->_cur_menu_item;
+  scroll_top = dml->_scroll_top;
+  scroll_active = dml->_scroll_active;
+  scroll_y = dml->_scroll_y;
+  scroll_edit = dml->_scroll_edit;
+  bcopy( (void *)dml->_scroll_array, (void *)scroll_array,
+	sizeof(struct scroll_item *) * 6);
 
   dirty = 1;
   refresh();
@@ -1891,8 +1895,8 @@ char *argv[];
   av[0] = "release";
   av[1] = NULL;
   status = f_release(clientData, interp, 1, av);
+  curr_dm_list = dml;
 
-  bu_free((genptr_t)av, "f_pl: av");
   return status;
 }
 
