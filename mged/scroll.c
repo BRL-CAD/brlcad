@@ -308,7 +308,7 @@ scroll_display( int y_top )
   struct scroll_item	**m;
   int		xpos;
   int second_menu = -1;
-  fastf_t f;
+  fastf_t f = 0;
 
   scroll_top = y_top;
   y = y_top;
