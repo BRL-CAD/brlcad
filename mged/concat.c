@@ -312,7 +312,8 @@ int			flags;
 			bu_log("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
 				prestr,name, local);
 
-		NAMEMOVE( local, dp->d_namep );
+		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
+		dp->d_namep = bu_strdup(local);
 	}
 	else
 	{
@@ -320,7 +321,8 @@ int			flags;
 		char	mref[NAMESIZE+2];
 
 		bu_log("adding  comb '%s'\n", local );
-		NAMEMOVE( local, dp->d_namep );
+		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
+		dp->d_namep = bu_strdup(local);
 
 		/* Update all the member records */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
