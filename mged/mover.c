@@ -266,9 +266,12 @@ int air;				/* Air code */
 		sizeof( struct rt_tree_array ), "tree list" );
 
 	/* flatten tree */
-	actual_count = 1 + (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
-	if( actual_count > node_count )  bu_bomb("combadd() array overflow!");
-	if( actual_count < node_count )  bu_log("WARNING combadd() array underflow! %d", actual_count, node_count);
+	if( comb->tree )
+	{
+		actual_count = 1 + (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+		if( actual_count > node_count )  bu_bomb("combadd() array overflow!");
+		if( actual_count < node_count )  bu_log("WARNING combadd() array underflow! %d", actual_count, node_count);
+	}
 
 	/* insert new member at end */
 	switch( relation )
