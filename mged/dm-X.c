@@ -82,6 +82,7 @@ static int	height, width;
 static Display	*dpy;			/* X display pointer */
 static Window	win;			/* X window */
 static GC	gc;			/* X Graphics Context */
+static unsigned long	black,gray,white,yellow,red,blue;
 static XFontStruct *fontstruct;		/* X Font */
 
 /*
@@ -204,16 +205,15 @@ double ratio;
 	int useful = 0;
 	XSegment segbuf[1024];		/* XDrawSegments list */
 	XSegment *segp;			/* current segment */
+	XGCValues gcv;
 	int	nseg;			/* number of segments */
 	int	x, y, lastx, lasty;
 
-#ifdef SOMEDAY
 	if( sp->s_soldash ) {
 		XSetLineAttributes( dpy, gc, 1, LineOnOffDash, CapButt, JoinMiter );
 	} else {
 		XSetLineAttributes( dpy, gc, 1, LineSolid, CapButt, JoinMiter );
 	}
-#endif
 
 	nseg = 0;
 	segp = segbuf;
@@ -228,6 +228,8 @@ double ratio;
 		/* Integerize and let the X server do the clipping */
 		/*vclip( start, fin, clipmin, clipmax ) == 0 continue;*/
 		/*XXX Color */
+		gcv.foreground = black;
+		XChangeGC( dpy, gc, GCForeground, &gcv );
 
 		pt[0] *= 2047;
 		pt[1] *= 2047;
@@ -304,25 +306,28 @@ void
 X_puts( str, x, y, size, color )
 register u_char *str;
 {
-#ifdef XXX
+	XGCValues gcv;
+	unsigned long fg;
+
 	switch( color )  {
 	case DM_BLACK:
-		pl_color( up_fp,  0, 0, 0 );
+		fg = black;
 		break;
 	case DM_RED:
-		pl_color( up_fp,  255, 0, 0 );
+		fg = red;
 		break;
 	case DM_BLUE:
-		pl_color( up_fp,  0, 255, 0 );
+		fg = blue;
 		break;
 	case DM_YELLOW:
-		pl_color( up_fp,  255, 255, 0 );
+		fg = yellow;
 		break;
 	case DM_WHITE:
-		pl_color( up_fp,  255, 255, 255 );
+		fg = gray;
 		break;
 	}
-#endif
+	gcv.foreground = fg;
+	XChangeGC( dpy, gc, GCForeground, &gcv );
 	label( (double)x, (double)y, str );
 }
 
@@ -336,16 +341,15 @@ int x1, y1;
 int x2, y2;
 int dashed;
 {
-#ifdef XXX
-	pl_color( up_fp,  255, 255, 0 );	/* Yellow */
-#endif
-#ifdef SOMEDAY
+	XGCValues gcv;
+
+	gcv.foreground = yellow;
+	XChangeGC( dpy, gc, GCForeground, &gcv );
 	if( dashed ) {
 		XSetLineAttributes( dpy, gc, 1, LineOnOffDash, CapButt, JoinMiter );
 	} else {
 		XSetLineAttributes( dpy, gc, 1, LineSolid, CapButt, JoinMiter );
 	}
-#endif
 	draw( x1, y1, x2, y2 );
 }
 
@@ -566,6 +570,9 @@ char	*name;
 	XSizeHints xsh;
 	XEvent	event;
 	XGCValues gcv;
+	XColor a_color;
+	int a_screen;
+	Colormap  a_cmap;
 
 	width = height = 512;
 
@@ -602,6 +609,56 @@ char	*name;
 		return -1;
 	}
 #endif
+
+	/* Get color map inddices for the colors we use. */
+	black = BlackPixel( dpy, DefaultScreen(dpy) );
+	white = WhitePixel( dpy, DefaultScreen(dpy) );
+
+	a_screen = DefaultScreen(dpy);
+	a_cmap = DefaultColormap(dpy, a_screen);
+	a_color.red = 255<<8;
+	a_color.green=0;
+	a_color.blue=0;
+	a_color.flags = DoRed | DoGreen| DoBlue;
+	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
+		fprintf( stderr, "dm-X: Can't Allocate red\n");
+		return -1;
+	}
+	red = a_color.pixel;
+	if ( red == white ) red = black;
+
+	a_color.red = 200<<8;
+	a_color.green=200<<8;
+	a_color.blue=0<<8;
+	a_color.flags = DoRed | DoGreen| DoBlue;
+	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
+		fprintf( stderr, "dm-X: Can't Allocate yellow\n");
+		return -1;
+	}
+	yellow = a_color.pixel;
+	if (yellow == white) yellow = black;
+
+	a_color.red = 0;
+	a_color.green=0;
+	a_color.blue=255<<8;
+	a_color.flags = DoRed | DoGreen| DoBlue;
+	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
+		fprintf( stderr, "dm-X: Can't Allocate blue\n");
+		return -1;
+	}
+	blue = a_color.pixel;
+	if (blue == white) blue = black;
+
+	a_color.red = 128<<8;
+	a_color.green=128<<8;
+	a_color.blue=128<<8<<8;
+	a_color.flags = DoRed | DoGreen| DoBlue;
+	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
+		fprintf( stderr, "dm-X: Can't Allocate gray\n");
+		return -1;
+	}
+	gray = a_color.pixel;
+	if (gray == white) gray = black;
 
 	/* Select border, background, foreground colors,
 	 * and border width.
