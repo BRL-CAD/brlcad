@@ -1845,28 +1845,6 @@ if test "x$build_runtime_debug" = "xno" ; then
 	AC_DEFINE(NO_DEBUG_CHECKING, 1, [Define to not provide run-time debug facilities via rt_g.debug])
 fi
 
-dnl XXX - These defines are available but not presently necessary
-dnl CALTECH_MALLOC
-dnl DRAND
-dnl DLOPEN
-dnl GETHOSTNAME
-dnl SHELL_ESCAPE
-dnl VPRINTF
-dnl SBRK
-dnl VFORK
-dnl SBRK_DECL
-dnl POPEN_DECL
-dnl GETOPT_DECL
-dnl XOPEN
-dnl BZERO
-dnl STRCHR
-dnl MATHERR
-dnl UNIX_DOMAIN_SOCKETS
-dnl FLOAT
-dnl GETOPT
-dnl OFF_T
-dnl WRITEV
-dnl BSDGETTIMEOFDAY
 
 BN='${top_builddir}/src/libbn/libbn.la'
 AC_SUBST(BN)
