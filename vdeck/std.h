@@ -21,11 +21,27 @@
 #define NULL	0			/* null pointer, all types */
 #endif
 
-typedef int	bool;			/* Boolean data */
+typedef int bool;			/* Boolean data */
 #define 	false	0
 #define 	true	1
 
-typedef char	*pointer;		/* generic pointer (void *) */
+#if defined(mips) && ! defined(IRIX3_3)
+#define IRIX3_3		1	/* Assume running release 3.3 or later. */
+#endif
+
+#if ! IRIX3_3 || ! defined(__SYS_TYPES_H__)
+/* Defined in <sys/types.h> under IRIX3.3. */
+typedef unsigned char u_char;		/* unsigned integer types */
+typedef unsigned short	u_short;
+
+#ifdef	pdp11
+typedef long		u_long;		/* (not in Ritchie compiler) */
+#else
+typedef unsigned long	u_long;
+#endif
+#endif
+
+typedef char *pointer;		/* generic pointer (void *) */
 
 #define	const		/* nothing */	/* (undefine for ANSI C) */
 #define	signed		/* nothing */	/* (undefine for ANSI C) */
@@ -68,6 +84,8 @@ typedef char	*pointer;		/* generic pointer (void *) */
 #define todigit( n )	((n) + '0')	/* convt digit number to char */
 
 /* other kludges for deficient C implementations etc.: */
-/*#define	void	int		/* K&R Appendix A followers */
+/*#define	strchr	index		/* 7th Edition UNIX, 4.2BSD */
+/*#define	strrchr	rindex		/* 7th Edition UNIX, 4.2BSD */
+/*#define	void int /* K&R Appendix A followers */
 
 #endif	/* _VLD_STD_H_ */
