@@ -241,11 +241,11 @@ f_area()
 		for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
 			if( vp->vl_pen == PEN_UP )  {
 				/* Move, not draw */
-				MAT3XVEC( last, Viewrot, vp->vl_pnt );
+				MAT4X3VEC( last, Viewrot, vp->vl_pnt );
 				continue;
 			}
-			/* draw */
-			MAT3XVEC( fin, Viewrot, vp->vl_pnt );
+			/* draw.  */
+			MAT4X3VEC( fin, Viewrot, vp->vl_pnt );
 
 			fprintf(fp, "%.9e %.9e %.9e %.9e\n",
 				last[X] * base2local,
