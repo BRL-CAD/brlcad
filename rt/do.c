@@ -411,6 +411,8 @@ char	**argv;
 
 	rt_prmem( "After _closedb" );
 	exit(0);
+
+	return( 1 );	/* for compiler */
 }
 
 /* viewing module specific variables */
