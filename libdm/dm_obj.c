@@ -391,7 +391,7 @@ dmo_open_tcl(clientData, interp, argc, argv)
 
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&dmop->dmo_name),
-				dmo_cmd,
+				(Tcl_CmdProc *)dmo_cmd,
 				(ClientData)dmop,
 				dmo_deleteProc);
 

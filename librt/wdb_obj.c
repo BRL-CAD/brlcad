@@ -450,7 +450,7 @@ wdb_init_obj(Tcl_Interp		*interp,
 
 	/* Instantiate the newprocname, with clientData of wdbp */
 	/* Beware, returns a "token", not TCL_OK. */
-	(void)Tcl_CreateCommand(interp, oname, wdb_cmd,
+	(void)Tcl_CreateCommand(interp, oname, (Tcl_CmdProc *)wdb_cmd,
 				(ClientData)wdbp, wdb_deleteProc);
 
 	/* Return new function name as result */
