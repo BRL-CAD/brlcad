@@ -19,6 +19,7 @@
 #define SHADE_ABORT_GRASS	1	/* bit_flag */
 #define SHADE_ABORT_STACK	2	/* bit_flag */
 
+#define CLAMP(_x,_a,_b)     (_x < _a ? _a : (_x > _b ? _b : _x))
 
 #define grass_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_grass_SP(_p) RT_CKMAG(_p, grass_MAGIC, "grass_specific")
@@ -62,7 +63,7 @@ struct grass_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-CONST static
+static CONST
 struct grass_specific grass_defaults = {
 	grass_MAGIC,
 	{300.0, 300.0},			/* cell */
@@ -253,11 +254,11 @@ struct blade {
 #define BLADE_MAX 4
 struct plant {
 	long		magic;
-	point_t			root;	/* location of base of blade */
+	point_t		root;	/* location of base of blade */
 	int 		blades;
 	struct blade	b[BLADE_MAX];
-	point_t			pmin;
-	point_t			pmax;
+	point_t		pmin;
+	point_t		pmax;
 };
 /*
  *
@@ -271,13 +272,12 @@ point_t		c;	/* derived from cell_num */
 CONST point_t	cell_pos;
 CONST struct grass_specific *grass_sp;
 {
-	CONST static point_t z_axis = { 0.0, 0.0, 1.0 };
+	static CONST point_t z_axis = { 0.0, 0.0, 1.0 };
 	point_t cl;	/* our local copy of the cell_pos for changing */
 	vect_t	left;
 	int t;
 	double val;
 	vect_t v;
-	point_t pmin, pmax;
 	point_t seg_start;
 
 	CK_grass_SP(grass_sp);
@@ -374,7 +374,7 @@ point_t				c;	/* derived from cell_num */
 CONST point_t			cell_pos;
 CONST struct grass_specific 	*grass_sp;
 {
-	int i;
+	int i, j;
 	point_t pt;
 	double f, g;
 
@@ -389,6 +389,8 @@ CONST struct grass_specific 	*grass_sp;
 	g = f * (BLADE_MAX - 1);
 
 	pl->blades = 1 + (g + .5);
+	CLAMP(pl->blades, 0, (BLADE_MAX-1));
+
 	
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("%g means %d blades on plant\n", f, pl->blades);
@@ -421,6 +423,8 @@ CONST struct grass_specific 	*grass_sp;
 	}
 	for (i = pl->blades ; i < BLADE_MAX ; i++) {
 		pl->b[i].magic = 0;
+		for (j=0 ; j < BLADE_SEGS_MAX ; j++)
+			pl->b[i].leaf[i].magic = 0;
 	}
 
 	if (rdebug&RDEBUG_SHADE) {
@@ -439,16 +443,14 @@ CONST struct grass_specific 	*grass_sp;
  *		1	hit something
  */
 static int
-hit_blade(pl, r, swp, grass_sp, seg, ldist)
-CONST struct blade *pl;
+hit_blade(bl, r, swp, grass_sp, seg, ldist)
+CONST struct blade *bl;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
 CONST struct grass_specific *grass_sp;
 int seg;
 double ldist[2];
 {
-	point_t PCA;
-
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 
@@ -463,7 +465,7 @@ double ldist[2];
 		/* we're the closest hit on the cell */
 		r->hit.hit_dist = ldist[0];
 		VJOIN1(r->hit.hit_point, r->r.r_pt, ldist[0], r->r.r_dir);
-		VMOVE(r->hit.hit_normal, pl->leaf[seg].N);
+		VMOVE(r->hit.hit_normal, bl->leaf[seg].N);
 
 		if (rdebug&RDEBUG_SHADE) {
 			bu_log("  New closest hit %g < %g\n",
@@ -493,7 +495,7 @@ static int
 isect_blade(bl, root, r, swp, grass_sp)
 CONST struct blade *bl;
 point_t root;
-CONST struct grass_ray *r;
+struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
 CONST struct grass_specific *grass_sp;
 {
@@ -638,8 +640,7 @@ struct grass_specific	*grass_sp;
 struct shadework	*swp;
 double dist_to_cell;
 {
-	double val;
-	point_t tmp;
+
 	/* the ray is "large" so just pick something appropriate */
 
 	CK_grass_SP(grass_sp);
@@ -735,7 +736,14 @@ struct grass_specific	*grass_sp;
 	/* intersect the ray with each plant */
 	for (p=0 ;  p < ppc ; p++) {
 
+		CK_grass_SP(grass_sp);
+		BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
+
 		make_plant(&pl, c, cell_pos, grass_sp);
+
+		CK_grass_SP(grass_sp);
+		BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
+		BU_CKMAG(&pl, PLANT_MAGIC, "plant");
 
 		hit |= isect_plant(&pl, r, swp, grass_sp);
 
