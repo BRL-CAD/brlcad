@@ -1,0 +1,239 @@
+/*
+ *			V R L I N K . C
+ *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1992 by the United States Army.
+ *	All rights reserved.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
+#include <stdio.h>
+#include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "rtstring.h"
+#include "raytrace.h"
+#include "externs.h"
+#include "pkg.h"
+#include "./ged.h"
+#include "./dm.h"
+
+extern int		(*cmdline_hook)();	/* cmd.c */
+extern void		(*viewpoint_hook)();	/* ged.c */
+extern void		(*extrapoll_hook)();	/* ged.c */
+extern int		extrapoll_fd;
+
+static struct pkg_conn	*vrmgr;			/* PKG connection to VR mgr */
+static char		*vr_host = "None";	/* host running VR mgr */
+static char		*tcp_port = "5555";	/* "gedd", remote mged */
+
+#define VRMSG_ROLE	1	/* from MGED: Identify role of machine */
+#define VRMSG_CMD	2	/* to MGED: Command to process */
+#define VRMSG_EVENT	3	/* from MGED: device event */
+#define VRMSG_POV	4	/* from MGED: point of view info */
+
+void	ph_cmd();
+static struct pkg_switch pkgswitch[] = {
+	{ VRMSG_CMD,		ph_cmd,		"Command" },
+	{ 0,			0,		(char *)0 }
+};
+
+
+/*
+ *  Called from cmdline() for now.
+ *  Returns -
+ *	!0	Print prompt for user.  Should always be this.
+ *	 0	Don't print a prompt
+ */
+int
+vr_event_hook(vp)
+struct rt_vls	*vp;
+{
+	RT_VLS_CHECK(vp);
+
+	if( vrmgr == PKC_NULL )  {
+		cmdline_hook = 0;	/* Relinquish this hook */
+		return 1;
+	}
+
+	if( pkg_send( VRMSG_EVENT, rt_vls_addr(vp), rt_vls_strlen(vp)+1, vrmgr ) < 0 )  {
+		fprintf(stderr,"event: pkg_send VRMSG_EVENT failed, disconnecting\n");
+		pkg_close(vrmgr);
+		vrmgr = PKC_NULL;
+		cmdline_hook = 0;	/* Relinquish this hook */
+	}
+	return 1;
+}
+
+/*
+ *  Called from ged.c event_check().
+ */
+void
+vr_input_hook()
+{
+	int	val;
+
+	val = pkg_suckin(vrmgr);
+	if( val < 0 ) {
+		rt_log("pkg_suckin() error\n");
+	} else if( val == 0 )  {
+		rt_log("vrmgr sent us an EOF\n");
+	}
+	if( val <= 0 )  {
+		pkg_close(vrmgr);
+		vrmgr = PKC_NULL;
+		extrapoll_fd = 0;
+		extrapoll_hook = NULL;	/* Relinquish this hook */
+		return;
+	}
+	if( pkg_process( vrmgr ) < 0 )
+		rt_log("vrmgr:  pkg_process error encountered\n");
+}
+
+/*
+ *  Called from ged.c refresh().
+ */
+void
+vr_viewpoint_hook()
+{
+	struct rt_vls	str;
+	quat_t		orient;
+
+	rt_vls_init(&str);
+
+	quat_mat2quat( orient, Viewrot );
+
+	/* Need to send current viewpoint to VR mgr */
+	/* XXX more will be needed */
+	/* Eye point, quaturnion for orientation */
+	rt_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e\n", 
+		-toViewcenter[MDX],
+		-toViewcenter[MDY],
+		-toViewcenter[MDZ],
+		V4ARGS(orient),
+		Viewscale );
+
+	if( pkg_send( VRMSG_POV, rt_vls_addr(&str), rt_vls_strlen(&str)+1, vrmgr ) < 0 )  {
+		fprintf(stderr,"viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
+		pkg_close(vrmgr);
+		vrmgr = PKC_NULL;
+		viewpoint_hook = 0;	/* Relinquish this hook */
+	}
+	rt_vls_free( &str );
+}
+
+/*
+ *			F _ P O V
+ *
+ *  Process the "pov" command generated above.
+ *  XXX this should move to chgview.c when finished.
+ */
+void
+f_pov( argc, argv )
+int	argc;
+char	*argv[];
+{
+	quat_t		orient;
+
+	if( argc < 1+3+4+1 )  {
+		printf("pov: insufficient args\n");
+		return;
+	}
+	toViewcenter[MDX] = -atof(argv[1]);
+	toViewcenter[MDY] = -atof(argv[2]);
+	toViewcenter[MDZ] = -atof(argv[3]);
+	orient[0] = atof(argv[4]);
+	orient[1] = atof(argv[5]);
+	orient[2] = atof(argv[6]);
+	orient[3] = atof(argv[7]);
+	quat_quat2mat( Viewrot, orient );
+	Viewscale = atof(argv[8]);
+	new_mats();
+}
+
+/*
+ *			F _ V R M G R
+ *
+ *  Establish a network link to the VR manager, using libpkg.
+ *
+ *  Syntax:  vrmgr host role
+ */
+void
+f_vrmgr( argc, argv )
+int	argc;
+char	*argv[];
+{
+	char	*role;
+
+	if( vrmgr != PKC_NULL )  {
+		fprintf(stderr,"Closing link to VRmgr %s\n", vr_host);
+		pkg_close( vrmgr );
+		vrmgr = PKC_NULL;
+		vr_host = "none";
+	}
+
+	vr_host = rt_strdup(argv[1]);
+	role = argv[2];
+
+	if( strcmp( role, "master" ) == 0 )  {
+	} else if( strcmp( role, "slave" ) == 0 )  {
+	} else if( strcmp( role, "overview" ) == 0 )  {
+	} else {
+		fprintf(stderr,"role '%s' unknown, must be master/slave/overview\n");
+		return;
+	}
+
+	vrmgr = pkg_open( vr_host, tcp_port, "tcp", "", "",
+		pkgswitch, NULL );
+	if( vrmgr == PKC_ERROR )  {
+		fprintf(stderr, "mged/f_vrmgr: unable to contact %s, port %s\n",
+			vr_host, tcp_port);
+		vrmgr = PKC_NULL;
+		return;
+	}
+
+	/* Send initial message declaring our role */
+	(void)pkg_send( VRMSG_ROLE, role, strlen(role)+1, vrmgr );
+
+	/* Establish appropriate hooks */
+	if( strcmp( role, "master" ) == 0 )  {
+		viewpoint_hook = vr_viewpoint_hook;
+	} else if( strcmp( role, "slave" ) == 0 )  {
+		cmdline_hook = vr_event_hook;
+	} else if( strcmp( role, "overview" ) == 0 )  {
+		/* No hooks required, just listen */
+	}
+	extrapoll_fd = vrmgr->pkc_fd;
+	extrapoll_hook = vr_input_hook;
+}
+
+/*
+ *			P H _ C M D
+ *
+ *  Package handler for incomming commands.  Do whatever he says.
+ */
+void
+ph_cmd(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
+{
+	struct rt_vls	str;
+
+	rt_vls_init(&str);
+
+	rt_vls_strcpy( &str, buf );
+
+	(void)cmdline( &str );
+
+	rt_vls_free( &str );
+}
