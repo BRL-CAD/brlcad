@@ -2,8 +2,10 @@
  *
  *	Written by:	Paul Tanenbaum
  *
- *  $Header$
  */
+#ifndef lint
+static char RCSid[] = "@(#) $Header$";
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,15 +13,16 @@
 #include "redblack.h"
 #include "rb_internals.h"
 
+static int d_order;	/* Used by describe_node() */
+
 /*		    D E S C R I B E _ N O D E ( )
  *
  *		Print out the contents of a red-black node
  *
- *	This function has three parameters:  the node to describe,
- *	its depth from an ancestor, and the order to describe.
+ *	This function has one parameter:  the node to describe.
  *	Describe_node() is intended to be called by rb_diagnose_tree().
  */
-static void describe_node (struct rb_node *node, int depth, int order)
+static void describe_node (struct rb_node *node, int depth)
 {
     rb_tree		*tree;
     struct rb_package	*package;
@@ -27,56 +30,35 @@ static void describe_node (struct rb_node *node, int depth, int order)
 
     RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
     tree = node -> rbn_tree;
-    RB_CKORDER(tree, order);
+    RB_CKORDER(tree, d_order);
 
-    package = (node -> rbn_package)[order];
+    package = (node -> rbn_package)[d_order];
     pp = tree -> rbt_print;
 
+#if 0
     fprintf(stderr, "%*snode <%x>...\n",
 			depth * 2, "", node);
     fprintf(stderr, "%*s  tree:   <%x>\n",
 			depth * 2, "", node -> rbn_tree);
     fprintf(stderr, "%*s  parent: <%x>\n",
-			depth * 2, "", rb_parent(node, order));
+			depth * 2, "", rb_parent(node, d_order));
     fprintf(stderr, "%*s  left:   <%x>\n",
-			depth * 2, "", rb_left_child(node, order));
+			depth * 2, "", rb_left_child(node, d_order));
     fprintf(stderr, "%*s  right:  <%x>\n",
-			depth * 2, "", rb_right_child(node, order));
+			depth * 2, "", rb_right_child(node, d_order));
     fprintf(stderr, "%*s  color:  %s\n",
 			depth * 2, "",
-			(rb_get_color(node, order) == RB_RED) ? "RED"
+			(rb_get_color(node, d_order) == RB_RED) ? "RED"
 							      : "BLACK");
     fprintf(stderr, "%*s  package: <%x> ",
 			depth * 2, "", package);
+#else
+    fprintf(stderr, "%*s", depth * 8, "");
+#endif
     if ((pp != 0) && (package != RB_PKG_NULL))
 	(*pp)(package -> rbp_data);
     else
 	fprintf(stderr, "\n");
-}
-
-/*		    I N T E R N A L _ W A L K ( )
- *
- *	    Perform an inorder tree walk on a red-black tree
- *
- *	This function has four parameters: the root of the tree
- *	to traverse, the depth of this root from the ancestor at
- *	which we began, the order on which to do the walking, and the
- *	function to apply to each node.  Internal_walk() is entirely
- *	analogous to _rb_walk(), except that instead of visiting
- *	rbn_data in each node, it visits the node itself.
- */
-static void internal_walk (struct rb_node *root, int depth,
-			   int order, void (*visit)())
-{
-
-    RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(root -> rbn_tree, order);
-
-    if (root == rb_null(root -> rbn_tree))
-	return;
-    visit(root, depth, order);
-    internal_walk (rb_left_child(root, order), depth + 1, order, visit);
-    internal_walk (rb_right_child(root, order), depth + 1, order, visit);
 }
 
 /*		    R B _ D I A G N O S E _ T R E E ( )
@@ -99,7 +81,8 @@ void rb_diagnose_tree (rb_tree *tree, int order)
     if (rb_root(tree, order) == rb_null(tree))
 	fprintf(stderr, "Empty tree!  %x %x\n",
 	    rb_root(tree, order), rb_null(tree));
-    internal_walk(rb_root(tree, order), 0, order, describe_node);
+    d_order = order;
+    _rb_walk(tree, order, describe_node, WALK_NODES, INORDER);
     fprintf(stderr, "--------------------------------------------------\n");
 }
 
