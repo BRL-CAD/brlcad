@@ -870,7 +870,7 @@ sgi_Init_Popup_Menu()
 	materials_menu = defpup( "material attributes %t|print entry %x109|modify entry %x77|read database %x119|write database %x87" );
 	infrared_menu = defpup( "infrared module %t|set flags %x115|read real IR data %x73|read IR data base %x117|write IR data base %x85|automatic mapping offsets %x100|specify noise threshold %x105|set temperature %x78|assign temperature by region %x81|print temperatures by region %x80|display color assignment legend %x90" );
 #endif
-	file_name_menu = defpup( "files %t|frame buffer %x111|error/debug log %x79|write script %x83|save image %x72|read image %x104|texture map %x84" );
+	file_name_menu = defpup( "files %t|frame buffer %x111|error/debug log %x79|write script %x83|save image %x72|read image %x104" );
 	raytracer_menu = defpup( "raytrace %t|go %x82|submit batch run %x66" );
 	special_menu = defpup( "special applications %t|infrared modeling %m %x35|hidden-line drawing %x107",
 				infrared_menu
