@@ -854,9 +854,8 @@ register struct soltab *stp;
  *  XXX No checking for degenerate faces is done, but probably should be.
  */
 int
-rt_arb_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+rt_arb_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
-mat_t		mat;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -1045,11 +1044,10 @@ struct rt_db_internal	*ip;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+rt_arb_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-register mat_t		mat;
 double		abs_tol;
 double		rel_tol;
 double		norm_tol;

@@ -222,13 +222,12 @@ rt_spl_class()
  *			R T _ S P L _ P L O T
  */
 int
-rt_spl_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
-mat_t		mat;
-struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+rt_spl_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead		*vhead;
+struct rt_db_internal	*ip;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	struct rt_spl_internal	*sip;
 	register int	i;
@@ -1063,14 +1062,13 @@ struct spl_poly * p1;
  *			R T _ S P L _ T E S S
  */
 int
-rt_spl_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+rt_spl_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-register mat_t		mat;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	struct rt_spl_internal	*sip;
 	int	i;

@@ -397,9 +397,8 @@ rt_hlf_class()
  *  drawn shorter.
  */
 int
-rt_hlf_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+rt_hlf_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
-mat_t		mat;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -590,11 +589,10 @@ struct rt_db_internal	*ip;
  *			R T _ H L F _ T E S S
  */
 int
-rt_hlf_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+rt_hlf_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-register mat_t		mat;
 double		abs_tol;
 double		rel_tol;
 double		norm_tol;

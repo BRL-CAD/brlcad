@@ -758,19 +758,21 @@ rt_vol_class()
  *			R T _ V O L _ P L O T
  */
 int
-rt_vol_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
-mat_t		mat;
-struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+rt_vol_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead		*vhead;
+struct rt_db_internal	*ip;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	register struct rt_vol_internal *vip;
 	register short	x,y,z;
 	register short	v1,v2;
 	point_t		a,b,c,d;
 	int		i;
+	mat_t		mat;
+
+	mat_idn(mat);	/* XXX hack */
 
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
@@ -893,14 +895,13 @@ register struct rt_vol_internal	*vip;
  *			R T _ V O L _ T E S S
  */
 int
-rt_vol_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+rt_vol_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-register mat_t		mat;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	struct rt_vol_internal	*vip;
 	register int	i;

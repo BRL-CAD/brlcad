@@ -324,9 +324,8 @@ register struct soltab *stp;
  *  Note that the vectors will be drawn in no special order.
  */
 int
-rt_arbn_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+rt_arbn_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
-mat_t		mat;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -417,11 +416,10 @@ rt_arbn_class()
  *  into another.
  */
 int
-rt_arbn_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+rt_arbn_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-register mat_t		mat;
 double		abs_tol;
 double		rel_tol;
 double		norm_tol;

@@ -1624,13 +1624,12 @@ struct rt_db_internal	*ip;
  *			R T _ T G C _ P L O T
  */
 int
-rt_tgc_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
-mat_t		mat;
-struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+rt_tgc_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead		*vhead;
+struct rt_db_internal	*ip;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	LOCAL struct rt_tgc_internal	*tip;
 	register int		i;
@@ -1756,14 +1755,13 @@ struct soltab *stp;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_tgc_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+rt_tgc_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-register mat_t		mat;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	struct shell		*s;
 	register int		i;

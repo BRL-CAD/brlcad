@@ -697,6 +697,7 @@ struct rt_i		*rtip;
 	ebmp->ebm_i = *eip;		/* struct copy */
 	eip->map = (unsigned char *)0;	/* "steal" the bitmap storage */
 
+	/* XXX this should be handled in import, not here XXX */
 	/* build Xform matrix from model(world) to ideal(local) space */
 	mat_inv( ebmp->ebm_mat, stp->st_pathmat );
 
@@ -914,9 +915,8 @@ rt_ebm_class()
  *			R T _ E B M _ P L O T
  */
 int
-rt_ebm_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+rt_ebm_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
-mat_t		mat;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -927,6 +927,9 @@ double		norm_tol;
 	register int	following;
 	register int	base;
 	int		i;
+	mat_t		mat;
+
+	mat_idn(mat);	/* XXX hack */
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -1007,11 +1010,10 @@ register struct vlhead	*vhead;
  *			R T _ E B M _ T E S S
  */
 int
-rt_ebm_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+rt_ebm_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-register mat_t		mat;
 double		abs_tol;
 double		rel_tol;
 double		norm_tol;

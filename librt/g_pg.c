@@ -397,13 +397,12 @@ rt_pg_class()
  *			R T _ P G _ P L O T
  */
 int
-rt_pg_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
-mat_t		mat;
-struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+rt_pg_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead		*vhead;
+struct rt_db_internal	*ip;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	register int	i;
 	register int	p;	/* current polygon number */
@@ -605,14 +604,13 @@ double		tol_sq;
  *			R T _ P G _ T E S S
  */
 int
-rt_pg_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+rt_pg_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-register mat_t		mat;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	register int	i;
 	struct shell	*s;

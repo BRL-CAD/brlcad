@@ -257,9 +257,8 @@ rt_nurb_class()
  *			R T _ N U R B _ P L O T
  */
 int
-rt_nurb_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
+rt_nurb_plot( rp, vhead, dp, abs_tol, rel_tol, norm_tol )
 union record	*rp;
-mat_t		mat;
 struct vlhead	*vhead;
 struct directory *dp;
 double		abs_tol;
@@ -273,11 +272,10 @@ double		norm_tol;
  *			R T _ N U R B _ T E S S
  */
 int
-rt_nurb_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
+rt_nurb_tess( r, m, rp, dp, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 union record		*rp;
-mat_t			mat;
 struct directory	*dp;
 double			abs_tol;
 double			rel_tol;

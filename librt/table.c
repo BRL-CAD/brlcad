@@ -45,14 +45,13 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(int rt_##name##_class, ()); \
 	RT_EXTERN(void rt_##name##_free, (struct soltab *stp)); \
 	RT_EXTERN(int rt_##name##_plot, (struct vlhead *vhead, \
-			mat_t mat, struct rt_db_internal *ip, \
+			struct rt_db_internal *ip, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], \
 			struct xray *rp[], \
 			struct seg segp[], int n, struct resource *resp)); \
 	RT_EXTERN(int rt_##name##_tess, (struct nmgregion **r, \
 			struct model *m, struct rt_db_internal *ip, \
-			mat_t mat, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
 			struct rt_external *ep, mat_t mat)); \
@@ -80,14 +79,13 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(int rt_/**/name/**/_class, ()); \
 	RT_EXTERN(void rt_/**/name/**/_free, (struct soltab *stp)); \
 	RT_EXTERN(int rt_/**/name/**/_plot, (struct vlhead *vhead, \
-			mat_t mat, struct rt_db_internal *ip, \
+			struct rt_db_internal *ip, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(void rt_/**/name/**/_vshot, (struct soltab *stp[], \
 			struct xray *rp[], \
 			struct seg segp[], int n, struct resource *resp)); \
 	RT_EXTERN(int rt_/**/name/**/_tess, (struct nmgregion **r, \
 			struct model *m, struct rt_db_internal *ip, \
-			mat_t mat, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
 			struct rt_external *ep, mat_t mat)); \
@@ -280,7 +278,6 @@ void DEF(rt_nul_curve,(struct curvature *cvp,
 int IDEF(rt_nul_class,())
 void DEF(rt_nul_free,(struct soltab *stp))
 int NDEF(rt_nul_plot,(struct vlhead *vhead,
-			mat_t mat,
 			struct rt_db_internal *ip,
 			double abs_tol, double rel_tol, double norm_tol))
 void DEF(rt_nul_vshot,(struct soltab *stp[],
@@ -290,7 +287,6 @@ void DEF(rt_nul_vshot,(struct soltab *stp[],
 int NDEF(rt_nul_tess,(struct nmgregion **r,
 			struct model *m,
 			struct rt_db_internal *ip,
-			mat_t mat,
 			double abs_tol, double rel_tol, double norm_tol))
 int NDEF(rt_nul_import,(struct rt_db_internal *ip,
 			struct rt_external *ep,
