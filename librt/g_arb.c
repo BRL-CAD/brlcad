@@ -83,11 +83,14 @@ struct arb_specific  {
 #define ARB_MAXPTS	4		/* All we need are 4 points */
 struct prep_arb {
 	point_t		pa_points[ARB_MAXPTS];	/* Actual points on plane */
+	vect_t		pa_center;	/* center point */
 	int		pa_npts;	/* number of points on plane */
 	int		pa_faces;	/* Number of faces done so far */
 	struct aface	pa_face[6];	/* required face info work area */
 	struct oface	pa_opt[6];	/* optional face info work area */
+	/* These elements must be initialized before using */
 	int		pa_doopt;	/* compute pa_opt[] stuff */
+	char		*pa_name;	/* string for error messages */
 };
 
 HIDDEN void	arb_add_pt();
@@ -110,29 +113,19 @@ static struct arb_info {
 };
 
 /*
- *  			A R B _ P R E P
- */
-int
-arb_prep( stp, rec, rtip )
-struct soltab	*stp;
-union record	*rec;
-struct rt_i	*rtip;
-{
-	return( arb_setup( stp, rec, rtip, 0 ) );
-}
-
-/*
- *			A R B _ S E T U P
+ *			A R B _ M K _ P L A N E S
+ *
+ *  Given an arb_internal structure with 8 points in it,
+ *  compute the face information.
  *
  *  Returns -
  *	 0	OK
- *	!0	failure
+ *	<0	failure
  */
-arb_setup( stp, rec, rtip, uv_wanted )
-struct soltab	*stp;
-union record	*rec;
-struct rt_i	*rtip;
-int		uv_wanted;
+HIDDEN int
+arb_mk_planes( pap, aip )
+register struct prep_arb	*pap;
+struct arb_internal		*aip;
 {
 	register fastf_t *op;		/* Used for scanning vectors */
 	LOCAL vect_t	work;		/* Vector addition work area */
@@ -141,6 +134,97 @@ int		uv_wanted;
 	register int	j;
 	register int	k;
 	LOCAL fastf_t	f;
+
+	/*
+	 *  Determine a point which is guaranteed to be within the solid.
+	 *  This is done by averaging all the vertices.  This center is
+	 *  needed for arb_add_pt, which demands a point inside the solid.
+	 *  The center of the enclosing RPP strategy used for the bounding
+	 *  sphere can be tricked by thin plates which are non-axis aligned,
+	 *  so this dual-strategy is required.  (What a bug hunt!).
+	 */
+	VSETALL( sum, 0 );
+	op = &aip->arbi_pt[0*ELEMENTS_PER_VECT];
+#	include "noalias.h"
+	for( i=0; i<8; i++ )  {
+		VADD2( sum, sum, op );
+		op += ELEMENTS_PER_VECT;
+	}
+	VSCALE( pap->pa_center, sum, 0.125 );	/* sum/8 */
+
+	pap->pa_faces = 0;
+	for( i=0; i<6; i++ )  {
+		pap->pa_npts = 0;
+		for( j=0; j<4; j++ )  {
+			register pointp_t point;
+
+			point = &aip->arbi_pt[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT];
+
+			/* Verify that this point is not the same
+			 * as an earlier point
+			 */
+#			include "noalias.h"
+			for( k=0; k < pap->pa_npts; k++ )  {
+				VSUB2( work, point, pap->pa_points[k] );
+				if( MAGSQ( work ) < 0.005 )  {
+					/* the same -- skip it */
+					goto next_pt;
+				}
+			}
+			VMOVE( pap->pa_points[pap->pa_npts], point );
+
+			arb_add_pt(
+				point,
+				arb_info[i].ai_title, pap );
+next_pt:		;
+		}
+
+		if( pap->pa_npts < 3 )  {
+			/* This face is BAD */
+			continue;
+		}
+
+		if( pap->pa_doopt )  {
+			register struct oface	*ofp;
+
+			ofp = &pap->pa_opt[pap->pa_faces];
+			/* Scale U and V basis vectors by
+			 * the inverse of Ulen and Vlen
+			 */
+			ofp->arb_Ulen = 1.0 / ofp->arb_Ulen;
+			ofp->arb_Vlen = 1.0 / ofp->arb_Vlen;
+			VSCALE( ofp->arb_U, ofp->arb_U, ofp->arb_Ulen );
+			VSCALE( ofp->arb_V, ofp->arb_V, ofp->arb_Vlen );
+		}
+
+		pap->pa_faces++;
+	}
+	if( pap->pa_faces < 4  || pap->pa_faces > 6 )  {
+		rt_log("arb(%s):  only %d faces present\n",
+			pap->pa_name, pap->pa_faces);
+		return(-1);			/* Error */
+	}
+	return(0);			/* OK */
+}
+
+/*
+ *			A R B _ S E T U P
+ *
+ *  This is packaged as a separate function, so that it can also be
+ *  called "on the fly" from the UV mapper.
+ *
+ *  Returns -
+ *	 0	OK
+ *	!0	failure
+ */
+HIDDEN int
+arb_setup( stp, rec, rtip, uv_wanted )
+struct soltab	*stp;
+union record	*rec;
+struct rt_i	*rtip;
+int		uv_wanted;
+{
+	register int	i;
 	struct arb_internal ai;
 	struct prep_arb	pa;
 
@@ -157,75 +241,10 @@ int		uv_wanted;
 	}
 
 	pa.pa_doopt = uv_wanted;
+	pa.pa_name = stp->st_name;
 
-	/*
-	 *  Determine a point which is guaranteed to be within the solid.
-	 *  This is done by averaging all the vertices.  This center is
-	 *  needed for arb_add_pt, which demands a point inside the solid.
-	 *  The center of the enclosing RPP strategy used for the bounding
-	 *  sphere can be tricked by thin plates which are non-axis aligned,
-	 *  so this dual-strategy is required.  (What a bug hunt!).
-	 */
-	VSETALL( sum, 0 );
-	op = &ai.arbi_pt[0*ELEMENTS_PER_VECT];
-#	include "noalias.h"
-	for( i=0; i<8; i++ )  {
-		VADD2( sum, sum, op );
-		op += ELEMENTS_PER_VECT;
-	}
-	VSCALE( stp->st_center, sum, 0.125 );	/* sum/8 */
-
-	pa.pa_faces = 0;
-	for( i=0; i<6; i++ )  {
-		pa.pa_npts = 0;
-		for( j=0; j<4; j++ )  {
-			register pointp_t point;
-
-			point = &ai.arbi_pt[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT];
-
-			/* Verify that this point is not the same
-			 * as an earlier point
-			 */
-#			include "noalias.h"
-			for( k=0; k < pa.pa_npts; k++ )  {
-				VSUB2( work, point, pa.pa_points[k] );
-				if( MAGSQ( work ) < 0.005 )  {
-					/* the same -- skip it */
-					goto next_pt;
-				}
-			}
-			VMOVE( pa.pa_points[pa.pa_npts], point );
-
-			arb_add_pt(
-				point,
-				stp, arb_info[i].ai_title, &pa );
-next_pt:		;
-		}
-
-		if( pa.pa_npts < 3 )  {
-			/* This face is BAD */
-			continue;
-		}
-
-		if( uv_wanted )  {
-			register struct oface	*ofp;
-
-			ofp = &pa.pa_opt[pa.pa_faces];
-			/* Scale U and V basis vectors by
-			 * the inverse of Ulen and Vlen
-			 */
-			ofp->arb_Ulen = 1.0 / ofp->arb_Ulen;
-			ofp->arb_Vlen = 1.0 / ofp->arb_Vlen;
-			VSCALE( ofp->arb_U, ofp->arb_U, ofp->arb_Ulen );
-			VSCALE( ofp->arb_V, ofp->arb_V, ofp->arb_Vlen );
-		}
-
-		pa.pa_faces++;
-	}
-	if( pa.pa_faces < 4  || pa.pa_faces > 6 )  {
-		rt_log("arb(%s):  only %d faces present\n",
-			stp->st_name, pa.pa_faces);
-		return(1);			/* Error */
+	if( arb_mk_planes( &pa, &ai ) < 0 )  {
+		return(-2);		/* Error */
 	}
 
 	/*
@@ -249,6 +268,7 @@ next_pt:		;
 
 		if( uv_wanted )  {
 			register struct oface	*ofp;
+
 			/*
 			 * To avoid a multi-processor race here,
 			 * copy the data first, THEN update arb_opt,
@@ -270,20 +290,26 @@ next_pt:		;
 	 * bounding RPP.  Note that this center is NOT guaranteed
 	 * to be contained within the solid!
 	 */
-	op = &ai.arbi_pt[0];
-#	include "noalias.h"
-	for( i=0; i< 8; i++ ) {
-		VMINMAX( stp->st_min, stp->st_max, op );
-		op += ELEMENTS_PER_VECT;
-	}
-	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
-	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
+	{
+		register fastf_t	*op;
+		LOCAL vect_t		work;
+		register fastf_t	f;
 
-	f = work[X];
-	if( work[Y] > f )  f = work[Y];
-	if( work[Z] > f )  f = work[Z];
-	stp->st_aradius = f;
-	stp->st_bradius = MAGNITUDE(work);
+		op = &ai.arbi_pt[0];
+#		include "noalias.h"
+		for( i=0; i< 8; i++ ) {
+			VMINMAX( stp->st_min, stp->st_max, op );
+			op += ELEMENTS_PER_VECT;
+		}
+		VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
+		VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
+
+		f = work[X];
+		if( work[Y] > f )  f = work[Y];
+		if( work[Z] > f )  f = work[Z];
+		stp->st_aradius = f;
+		stp->st_bradius = MAGNITUDE(work);
+	}
 	return(0);		/* OK */
 }
 
@@ -298,16 +324,15 @@ next_pt:		;
  *  Static externs are used to build up the state of the current faces.
  */
 HIDDEN void
-arb_add_pt( point, stp, title, pap )
+arb_add_pt( point, title, pap )
 register pointp_t point;
-struct soltab	*stp;
 char		*title;
 struct prep_arb	*pap;
 {
-	register int i;
-	LOCAL vect_t work;
-	LOCAL vect_t P_A;		/* new point - A */
-	FAST fastf_t f;
+	register int	i;
+	LOCAL vect_t	work;
+	LOCAL vect_t	P_A;		/* new point minus A */
+	FAST fastf_t	f;
 	register struct aface	*afp;
 	register struct oface	*ofp;
 
@@ -373,7 +398,7 @@ struct prep_arb	*pap;
 		 *  If C-A is clockwise from B-A, then the normal
 		 *  points inwards, so we need to fix it here.
 		 */
-		VSUB2( work, afp->A, stp->st_center );
+		VSUB2( work, afp->A, pap->pa_center );
 		f = VDOT( work, afp->N );
 		if( f < 0.0 )  {
 			VREVERSE(afp->N, afp->N);	/* "fix" normal */
@@ -409,7 +434,7 @@ struct prep_arb	*pap;
 		if( ! NEAR_ZERO(f,0.005) )  {
 			/* Non-planar face */
 			rt_log("arb(%s): face %s non-planar, dot=%g\n",
-				stp->st_name, title, f );
+				pap->pa_name, title, f );
 #ifdef CONSERVATIVE
 			pap->pa_npts--;
 			return;				/* BAD */
@@ -417,6 +442,24 @@ struct prep_arb	*pap;
 		}
 		return;					/* OK */
 	}
+}
+
+/*
+ *  			A R B _ P R E P
+ *
+ *  This is the actual LIBRT "prep" interface.
+ *
+ *  Returns -
+ *	 0	OK
+ *	!0	failure
+ */
+int
+arb_prep( stp, rec, rtip )
+struct soltab	*stp;
+union record	*rec;
+struct rt_i	*rtip;
+{
+	return( arb_setup( stp, rec, rtip, 0 ) );
 }
 
 /*
