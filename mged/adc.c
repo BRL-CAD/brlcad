@@ -272,12 +272,16 @@ adcursor()
 		 color_scheme->cs_adc_line[1],
 		 color_scheme->cs_adc_line[2], 1);
   DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
+
+  /* Horizontal */
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(GED_MIN), GED2PM1(adc_state->adc_dv_y),
-		  GED2PM1(GED_MAX), GED2PM1(adc_state->adc_dv_y)); /* Horizontal */
+		  GED2PM1(GED_MIN), GED2PM1(adc_state->adc_dv_y) * dmp->dm_aspect,
+		  GED2PM1(GED_MAX), GED2PM1(adc_state->adc_dv_y) * dmp->dm_aspect);
+
+  /* Vertical */
   DM_DRAW_LINE_2D(dmp,
 		  GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MAX),
-		  GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MIN));  /* Vertical */
+		  GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MIN));
 
   angle1 = adc_state->adc_a1 * DEG2RAD;
   angle2 = adc_state->adc_a2 * DEG2RAD;
@@ -709,20 +713,18 @@ char	**argv;
 
       return TCL_OK;
     }else if(argc == 3) {
-      if(!adc_state->adc_anchor_pos){
-	VSCALE(user_pt, user_pt, local2base);
+      VSCALE(user_pt, user_pt, local2base);
 
-	if(incr_flag){
-	  VADD2(adc_state->adc_pos_model, adc_state->adc_pos_model, user_pt);
-	}else{
-	  VMOVE(adc_state->adc_pos_model, user_pt);
-	}
-
-	adc_model_To_adc_view();
-	adc_view_To_adc_grid();
-
-	adc_set_dirty_flag();
+      if(incr_flag){
+	VADD2(adc_state->adc_pos_model, adc_state->adc_pos_model, user_pt);
+      }else{
+	VMOVE(adc_state->adc_pos_model, user_pt);
       }
+
+      adc_model_To_adc_view();
+      adc_view_To_adc_grid();
+
+      adc_set_dirty_flag();
 
       return TCL_OK;
     }
