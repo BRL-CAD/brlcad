@@ -27,13 +27,14 @@ FILE	*out2;
 char	*buf;
 int	file_width = 720;
 int	bytes_per_sample = 3;
+int	doubleit = 0;
 
 char	*even_file = "even.pix";
 char	*odd_file = "odd.pix";
 
 static char usage[] = "\
 Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\
-	[even.pix odd.pix]\n";
+	[-d] [even.pix odd.pix]\n";
 
 get_args( argc, argv )
 int	argc;
@@ -41,8 +42,11 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "s:w:#:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "ds:w:#:" )) != EOF )  {
 		switch( c )  {
+		case 'd':
+			doubleit = 1;
+			break;
 		case '#':
 			bytes_per_sample = atoi(optarg);
 			break;
@@ -76,6 +80,7 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
+	register int	i;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -97,16 +102,20 @@ char	*argv[];
 		/* Even line */
 		if( fread( buf, bytes_per_sample, file_width, stdin ) != file_width )
 			break;
-		if( fwrite( buf, bytes_per_sample, file_width, out1 ) != file_width )  {
-			perror("fwrite even");
-			exit(1);
+		for( i=0; i <= doubleit; i++ )  {
+			if( fwrite( buf, bytes_per_sample, file_width, out1 ) != file_width )  {
+				perror("fwrite even");
+				exit(1);
+			}
 		}
 		/* Odd line */
 		if( fread( buf, bytes_per_sample, file_width, stdin ) != file_width )
 			break;
-		if( fwrite( buf, bytes_per_sample, file_width, out2 ) != file_width )  {
-			perror("fwrite odd");
-			exit(1);
+		for( i=0; i <= doubleit; i++ )  {
+			if( fwrite( buf, bytes_per_sample, file_width, out2 ) != file_width )  {
+				perror("fwrite odd");
+				exit(1);
+			}
 		}
 	}
 	exit(0);
