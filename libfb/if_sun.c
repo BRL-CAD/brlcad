@@ -218,9 +218,7 @@ struct sun_cmap {
 	unsigned char	cmb[256];
 };
 
-static int	dither_flg = FALSE;   /* dither output */
-
-/* dither pattern (threshold level) */
+/* dither pattern (threshold level) for Black & white dithering */
 static short	dither[MAXDITHERSZ][MAXDITHERSZ] = {
 	  6,  51,  14,  78,   8,  57,  16,  86,
 	118,  22, 178,  34, 130,  25, 197,  37,
@@ -232,25 +230,6 @@ static short	dither[MAXDITHERSZ][MAXDITHERSZ] = {
 	254,  49, 169,  32, 230,  44, 152,  29
 };
 
-#define NDITHER   8
-#define LNDITHER  3
-#define EXTERN extern
-
-unsigned char   red8Amat[NDITHER][NDITHER];	/* red dither matrix */
-unsigned char   grn8Amat[NDITHER][NDITHER];	/* green matrix */
-unsigned char   blu8Amat[NDITHER][NDITHER];	/* blue  matrix */
-
-typedef unsigned char uchar;
-
-#ifdef DIT
-EXTERN struct pixrect *redscr;	/* red screen */
-EXTERN struct pixrect *grnscr;	/* green screen */
-EXTERN struct pixrect *bluscr;	/* blue screen */
-#endif
-
-unsigned char   red8Amap[256];	/* red 8bit dither color map */
-unsigned char   grn8Amap[256];	/* green 8bit dither color map */
-unsigned char   blu8Amap[256];	/* blue 8bit dither color map */
 /*
  *	Sun Hardware colormap support
  *
@@ -263,10 +242,6 @@ unsigned char   blu8Amap[256];	/* blue 8bit dither color map */
  *	entries 236 -> 245 are extra "blue" values
  *	entries 246 -> 255 are extra "grey" values
  *
- *	Sun wants the first entry in the colormap to be white (all 255)
- *	and the last entry to be black (all 0).  In order to maintain some
- *	compatibility here, we store our colorcube and "extras" backwards
- *	from what makes sense so that our map is compatible with Sun's
  */
 /* Our copy of the *hardware* colormap */
 static unsigned char redmap[256], grnmap[256], blumap[256];
@@ -276,40 +251,79 @@ static unsigned char cubevec[6] = { 0, 51, 102, 153, 204, 255 };
 
 /* additional values for primaries */
 static unsigned char primary[10] = {
-/*	238, 221, 187, 170, 136, 119, 85, 68, 34, 17 */
 	17, 34, 68, 85, 119, 136, 170, 187, 221, 238
 };
 
-/* indicies of the primary colors and grey values in the color map */
+/* Arrays containing the indicies of the primary colors and grey values
+ * in the color map
+ */
 static unsigned char redvec[16] = {
-/* 215, 225, 224, 214, 223, 222, 213, 221, 
-   220, 212, 219, 218, 211, 217, 216, 210 */
 0,  216, 217, 1, 218, 219, 2, 220, 221, 3, 222, 223, 4, 224, 225, 5
 };
 static unsigned char grnvec[16] = {
-/* 215, 235, 234, 209, 233, 232, 203, 231,
-   230, 197, 229, 228, 191, 227, 226, 185 */
 0, 226, 227, 6, 228, 229, 12, 230, 231, 18, 232, 233, 24, 234, 235, 30
 };
 static unsigned char bluvec[16] = {
-/* 215, 245, 244, 179, 243, 242, 143, 241,
-   240, 107, 239, 238, 71, 237, 236, 35 */
 0, 236, 237, 36, 238, 239, 72, 240, 241, 108, 242, 243, 144, 244, 245, 180
 };
 static unsigned char greyvec[16] = {
-/* 215, 255, 254, 172, 253, 252, 129, 251,
-   250, 86, 249, 248, 43, 247, 246, 0 */
 0, 246, 247, 43, 248, 249, 86, 250, 251, 129, 252, 253, 172, 254, 255, 215
 };
 
+static 
+double table[10] = {0.0, 0.1, -0.4, 0.2, -0.3, 0.3, -0.2, 0.4, -0.1, 0.5};
+static double *noise_ptr = table, *end_table = &table[10];
+#define NOISE() (noise_ptr < end_table ? *noise_ptr++ : *(noise_ptr=table) )
+#define MAG1 51.0
+#define MAG2 17.0
+#define DITHER(d, v, noise, mag) { \
+	if ( (d = v + noise * mag) > 255 ) d = 255; \
+	else if (d < 0) d = 0; }
 
+/*	c o n v D I T H E R G B
+ *
+ *	Convert a single RGBpixel to its corresponding entry in the Sun
+ *	colormap, dithering as we go.
+ */
+_LOCAL_ unsigned char convDITHERGB(v)
+register RGBpixel *v;
+{
+	register int r, g, b;
+	double dr, dg, db;
+	dr = NOISE(); DITHER(r, (*v)[RED], dr, MAG1); r = (r+26) / 51;
+	dg = NOISE(); DITHER(g, (*v)[GRN], dg, MAG1); g = (g+26) / 51;
+	db = NOISE(); DITHER(b, (*v)[BLU], db, MAG1); b = (b+26) / 51;
+	if (r == g) {
+		if (r == b) {
+			DITHER(r, (*v)[RED], dr, MAG2);
+			DITHER(g, (*v)[GRN], dg, MAG2);
+			DITHER(b, (*v)[BLU], db, MAG2);
+			return (greyvec[ ( (r + g + b)/3) >> 4]);
+		}else if (r == 0) {
+			DITHER(r, (*v)[RED], dr, MAG2);
+			DITHER(g, (*v)[GRN], dg, MAG2);
+			DITHER(b, (*v)[BLU], db, MAG2);
+			return (bluvec[ b >> 4]);
+		}else return ( r + g * 6 + b * 36 );
+	}else if (g == b && g == 0) {
+		DITHER(r, (*v)[RED], dr, MAG2);
+		DITHER(g, (*v)[GRN], dg, MAG2);
+		DITHER(b, (*v)[BLU], db, MAG2);
+		return (redvec [ r >> 4]);
+	}else if (r == b && r == 0) {
+		DITHER(r, (*v)[RED], dr, MAG2);
+		DITHER(g, (*v)[GRN], dg, MAG2);
+		DITHER(b, (*v)[BLU], db, MAG2);
+		return (grnvec[ g >> 4]);
+	}else return ( r + g * 6 + b * 36 );
+}
 /*
  *	c o n v R G B
  *
  *	convert a single RGBpixel to its corresponding entry in the Sun
  *	colormap.
  */
-_LOCAL_ unsigned char convRGB(v)
+unsigned char convRGB(v)
 register RGBpixel *v;
 {
 	register int r, g, b;
@@ -323,10 +337,11 @@ register RGBpixel *v;
 			/* all grey, take average */
 			return greyvec[( ((*v)[RED]+(*v)[GRN]+(*v)[BLU]) / 3 ) /16];
 		}
-		if (r == 0)  {
+		else if (r == 0)  {
 			/* r=g=0, all blue */
 			return bluvec[((*v)[BLU])/16];
 		}
+		else	return r + g * 6 + b * 36;
 	}
 	else if (g == b && g == 0)  {
 		/* all red */
@@ -336,7 +351,7 @@ register RGBpixel *v;
 		/* all green */
 		return grnvec[((*v)[GRN])/16];
 	}
-	return r + g * 6 + b * 36;
+	else	return r + g * 6 + b * 36;
 }
 
 
@@ -345,8 +360,8 @@ register RGBpixel *v;
  *
  *	initialize the Sun harware colormap
  */
-void genmap(redmap, grnmap, blumap)
-unsigned char redmap[], grnmap[], blumap[];
+void genmap(rmap, gmap, bmap)
+unsigned char rmap[], gmap[], bmap[];
 {
 	register r, g, b;
 
@@ -354,40 +369,35 @@ unsigned char redmap[], grnmap[], blumap[];
 	for (r=0 ; r < 6 ; r++)
 		for (g=0 ; g < 6 ; g ++)
 			for (b=0 ; b < 6 ; b++) {
-				redmap[r + g * 6 + b * 36] = cubevec[r];
-				grnmap[r + g * 6 + b * 36] = cubevec[g];
-				blumap[r + g * 6 + b * 36] = cubevec[b];
+				rmap[r + g * 6 + b * 36] = cubevec[r];
+				gmap[r + g * 6 + b * 36] = cubevec[g];
+				bmap[r + g * 6 + b * 36] = cubevec[b];
 			}
 
 	/* put in the linear sections */
 	for (r=216 ; r < 226 ; ++r) {
-		redmap[r] = primary[r-216];	/* red */
-		grnmap[r] = blumap[r] = 0;
+		rmap[r] = primary[r-216];	/* red */
+		gmap[r] = bmap[r] = 0;
 	}
 
 	for (g=226 ; g < 236 ; ++g) {
-		grnmap[g] = primary[g-226];	/* green */
-		redmap[g] = blumap[g] = 0;
+		gmap[g] = primary[g-226];	/* green */
+		rmap[g] = bmap[g] = 0;
 	}
 	
 	for (b=236 ; b < 246 ; ++b) {
-		blumap[b] = primary[b-236];	/* blue */
-		redmap[b] = grnmap[b] = 0;
+		bmap[b] = primary[b-236];	/* blue */
+		rmap[b] = gmap[b] = 0;
 	}
 
 	for (r=246 ; r < 256 ; ++r) {		/* grey */
-		redmap[r] = grnmap[r] = 
-		blumap[r] = primary[r-246];
+		rmap[r] = gmap[r] = 
+		bmap[r] = primary[r-246];
 	}
 }
 
 
 
-
-
-#ifdef DIT
-static int      biggest = RR * GR * BR - 1;
-#endif
 
 #define SUN_CMAPVAL( p, o )\
 	if( SUN(ifp)->su_cmap_flag )\
@@ -402,6 +412,7 @@ static int      biggest = RR * GR * BR - 1;
  *  The mode has several independent bits:
  *	SHARED -vs- MALLOC'ed memory for the image
  *	TRANSIENT -vs- LINGERING windows
+ *	DitheredColor -vs- UnDitheredColor
  */
 #define MODE_1MASK	(1<<0)
 #define MODE_1SHARED	(0<<0)		/* Use Shared memory */
@@ -410,6 +421,10 @@ static int      biggest = RR * GR * BR - 1;
 #define MODE_2MASK	(1<<1)
 #define MODE_2TRANSIENT	(0<<1)
 #define MODE_2LINGERING (1<<1)
+
+#define MODE_3MASK	(1<<2)
+#define MODE_3UNDITHERGB (0<<2)
+#define MODE_3DITHERGB	(1<<2)		/* dithered colors on color display */
 
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
@@ -425,6 +440,8 @@ struct modeflags {
 		"Private memory - else shared" },
 	{ 'l',	MODE_2MASK, MODE_2LINGERING,
 		"Lingering window - else transient" },
+	{ 'd',  MODE_3MASK, MODE_3DITHERGB,
+		"Color dithering - else undithered colors" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
 		"Zap (free) shared memory" },
 	{ '\0', 0, 0, "" }
@@ -656,15 +673,21 @@ RGBpixel	*pp;
 		/* Grey-scale or color image. */
 		register int	x;
 		register int	sx = xl;
-
+		unsigned char	(*convf)();
+		if( (SUN(ifp)->su_mode & MODE_3MASK) == MODE_3DITHERGB )
+			convf = convDITHERGB;
+		else
+			convf = convRGB;
+		
 		for( x = xlft; x <= xrgt; x++, pp++, sx += xzoom ) {
 			register int	dx, value, r, g, b;
 			RGBpixel	v;
 
 
-			/* Get color map value for pixel. */
+			/* Get Software color map value for pixel. */
 			SUN_CMAPVAL( pp, v );
-			value = convRGB(v);
+			/* Convert RGBpixel to 8 bit Sun pixel */
+			value = (*convf)(v);
 
 			for( dx = 0; dx < xzoom; dx++ )
 				scan_mpr_buf[sx+dx] = value; 
@@ -865,7 +888,7 @@ int	width, height;
 {
 	char		sun_parentwinname[WIN_NAMESIZE];
 	Rect		winrect;
-	int		x, r, g, b;
+	int		x;
 	struct pr_prpos	where;
 	struct pixfont	*myfont;
 	int	mode;
@@ -880,9 +903,6 @@ int	width, height;
 
 	if( file != NULL )  {
 		register char *cp;
-		char	modebuf[80];
-		char	*mp;
-		int	alpha;
 		struct	modeflags *mfp;
 
 		if( strncmp(file, "/dev/sun", 8) ) {
@@ -890,31 +910,22 @@ int	width, height;
 			mode = 0;
 		}
 		else {
-			/* Parse the options */
-			alpha = 0;
-			mp = &modebuf[0];
-			cp = &file[8];
-			while( *cp != '\0' && !isspace(*cp) ) {
-				*mp++ = *cp;	/* copy it to buffer */
-				if( isdigit(*cp) ) {
-					cp++;
-					continue;
+			/* Parse the options as either ascii mnemonics or
+			 * as decimal bit representation
+			 */
+			if ( isdigit(*(cp= &file[8])) || *cp == '-') mode = atoi(cp);
+			else {
+				for ( ;*cp != '\0' && !isspace(*cp) ; ++cp) {
+					/* look for character in mode list */
+					for( mfp = modeflags; mfp->c != '\0'; mfp++ )
+						if( mfp->c == *cp ) {
+							mode = (mode&~mfp->mask)|mfp->value;
+							break;
+						}
+					if( mfp->c == '\0' && *cp != '-' )
+						fb_log( "if_sun: unknown option '%c' ignored\n", *cp );
 				}
-				alpha++;
-				for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
-					if( mfp->c == *cp ) {
-						mode = (mode&~mfp->mask)|mfp->value;
-						break;
-					}
-				}
-				if( mfp->c == '\0' && *cp != '-' ) {
-					fb_log( "if_sun: unknown option '%c' ignored\n", *cp );
-				}
-				cp++;
 			}
-			*mp = '\0';
-			if( !alpha )
-				mode = atoi( modebuf );
 		}
 
 		if( (mode & MODE_15MASK) == MODE_15ZAP ) {
@@ -924,7 +935,7 @@ int	width, height;
 		}
 
 		/* Pick off just the mode bits of interest here */
-		mode &= (MODE_1MASK | MODE_2MASK);
+		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK);
 	}
 
 	if( width <= 0 )
@@ -1006,19 +1017,10 @@ int	width, height;
 		(void) notify_dispatch();		/* process event */
 
 		if( SUN(ifp)->su_depth == 8 ) {
-			if( dither_flg ) {
-#ifdef DIT
-				draw8Ainit();
-				dither8Ainit();
-				pw_set8Amap(imagepw, &sun_cmap);
-#endif DIT
-			}
-			else {
-				/* set a new cms name; initialize it */
-				x = pw_setcmsname(imagepw, "libfb");
-				x = pw_putcolormap(imagepw, 0, 256, 
-						redmap, grnmap, blumap);
-			}
+			/* set a new cms name; initialize it */
+			x = pw_setcmsname(imagepw, "libfb");
+			x = pw_putcolormap(imagepw, 0, 256, 
+					redmap, grnmap, blumap);
 		}
 	}
 	else {
@@ -1449,203 +1451,6 @@ register ColorMap	*cmp;
 	sun_repaint( ifp );
 	return	0;
 }
-
-/* --------------------------------------------------------------- */
-
-#ifdef DIT
-/*
- * draw8Abit.c 
- *
- * By: David H. Elrod;  Sun Microsystems; September 1986 
- *
- * Draw a pixel in 8 bit color space using a color cube that is 6values red, 
- * 7values green and 6values blue. 
- *
- * External Variables Used: redscr, grnscr, bluscr	- red, green and blue
- * pixrects red8Amap, grn8Amap, blue8Amap	- software color map 
- *
- * Bugs: 
- *
- */
-
-draw8Abit(x, y, r, g, b)
-	int             x, y;	/* pixel location */
-	unsigned char   r, g, b;/* red, green, blue pixel values */
-{
-	int             red, green, blue;	/* return values */
-	int             v;	/* 8 bit value */
-
-	v = biggest - (((((r * (RR)) >> 8) * GR) + ((g * (GR)) >> 8)) * BR
-		       + ((b * (BR)) >> 8));
-
-	/* deal with 24 bit frame buffer */
-	red = pr_put(redscr, x, y, red8Amap[v]);
-	green = pr_put(grnscr, x, y, grn8Amap[v]);
-	blue = pr_put(bluscr, x, y, blu8Amap[v]);
-
-	if ((red == PIX_ERR) || (green == PIX_ERR) || (blue == PIX_ERR))
-		return (PIX_ERR);
-	return (0);
-}
-
-draw8Ainit()
-{
-	int             i, r, g, b;	/* loop counters */
-
-	/* ordered dither matrix (6 reds, 7 greens and 6 blues) */
-	i = 0;
-	for (r = 0; r < RR; r++)
-		for (g = 0; g < GR; g++)
-			for (b = 0; b < BR; b++) {
-				red8Amap[i] = 255 - (r * 255 / (RR - 1));
-				grn8Amap[i] = 255 - (g * 255 / (GR - 1));
-				blu8Amap[i] = 255 - (b * 255 / (BR - 1));
-				i++;
-			}
-}
-
-
-/*
- * pw_dither8Abit.c 
- *
- * Modified:	Bill Lindemann;	Sun Microsystems; September 1986 From
- * original by: David H. Elrod;  Sun Microsystems; September 1986 
- *
- * Display a pixel using an ordered dither algoritm to approximate the 24 bit
- * rgb value supplied.  Convert this value to an 8 bit system, and display in
- * the given pixwin.  Assume the colormap is already set. 
- *
- * External Variables Used: red8Amat, grn8Amat, blu8Amat	- dither matricies; 
- *
- * Bugs: 
- *
- */
-
-pw_dither8Abit(pw, x, y, r, g, b)
-	Pixwin         *pw;
-	int             x, y;	/* pixel location */
-	unsigned char   r, g, b;/* red, green, blue pixel values */
-{
-	int             red, green, blue;	/* return values */
-	int             v;	/* 8 bit value */
-
-	v = biggest - ((dit8A(r, red8Amat, RR - 1, x, y) * GR +
-			dit8A(g, grn8Amat, GR - 1, x, y)) * BR +
-		       dit8A(b, blu8Amat, BR - 1, x, y));
-
-	pw_put(pw, x, y, v);
-
-	if ((red == PIX_ERR) || (green == PIX_ERR) || (blue == PIX_ERR))
-		return (PIX_ERR);
-	return (0);
-}
-
-get_dither8Abit(x, y, r, g, b)
-	int             x, y;	/* pixel location */
-	unsigned char   r, g, b;/* red, green, blue pixel values */
-{
-	int             v;	/* 8 bit value */
-
-	v = biggest - ((dit8A(r, red8Amat, RR - 1, x, y) * GR +
-			dit8A(g, grn8Amat, GR - 1, x, y)) * BR +
-		       dit8A(b, blu8Amat, BR - 1, x, y));
-
-	return (v);
-}
-
-pw_set8Amap(pw, cmap)
-	Pixwin         *pw;
-	colormap_t     *cmap;
-{
-	pw_setcmsname(pw, "dith8Amap");
-	pw_putcolormap(pw, 0, biggest + 1, red8Amap, grn8Amap, blu8Amap);
-	if (cmap != (colormap_t *) 0) {
-		cmap->type = RMT_EQUAL_RGB;
-		cmap->length = biggest + 1;
-		cmap->map[0] = red8Amap;
-		cmap->map[1] = grn8Amap;
-		cmap->map[2] = blu8Amap;
-	}
-}
-
-pw_dither8Abit_rop(ifp, pr_red, pr_grn, pr_blu, size)
-	FBIO		*ifp;
-	Pixrect        *pr_red, *pr_grn, *pr_blu;
-	int             size;
-{
-	register unsigned char *redP, *grnP, *bluP, *compP;
-	register int    x, y;
-	Pixrect        *pr_comp;
-	struct mpr_data *mpr_red, *mpr_grn, *mpr_blu, *mpr_comp;
-	unsigned char  *red_base, *grn_base, *blu_base, *comp_base;
-
-	pr_comp = mem_create(size, size, 8);
-	if (pr_comp == (Pixrect *) 0) {
-		(void) printf(stderr, "mem_create failed\n");
-		exit(1);
-	}
-	mpr_red = mpr_d(pr_red);
-	mpr_grn = mpr_d(pr_grn);
-	mpr_blu = mpr_d(pr_blu);
-	mpr_comp = mpr_d(pr_comp);
-	red_base = (unsigned char *) mpr_red->md_image;
-	grn_base = (unsigned char *) mpr_grn->md_image;
-	blu_base = (unsigned char *) mpr_blu->md_image;
-	comp_base = (unsigned char *) mpr_comp->md_image;
-
-	for (y = size; --y >= 0;) {
-		redP = red_base + (y * mpr_red->md_linebytes);
-		grnP = grn_base + (y * mpr_grn->md_linebytes);
-		bluP = blu_base + (y * mpr_blu->md_linebytes);
-		compP = comp_base + (y * mpr_comp->md_linebytes);
-		for (x = 0; x < size; x++) {
-			*compP++ = biggest - ((dit8A(*redP++, red8Amat, RR - 1, x, y) * GR +
-			      dit8A(*grnP++, grn8Amat, GR - 1, x, y)) * BR +
-				    dit8A(*bluP++, blu8Amat, BR - 1, x, y));
-		}
-	}
-	sunrop( 0, 0, size, size, PIX_SRC, pr_comp, 0, 0 );
-	pr_destroy(pr_comp);
-}
-
-pw_24dither8Abit_rop(ifp, pr_24, size)
-	FBIO		*ifp;
-	Pixrect        *pr_24;
-	int             size;
-{
-	register unsigned char *pr24P, *compP;
-	register int    red, grn, blu;
-	register int    x, y;
-	Pixrect        *pr_comp;
-	struct mpr_data *mpr_24, *mpr_comp;
-	unsigned char  *pr24_base, *comp_base;
-
-	pr_comp = mem_create(size, size, 8);
-	if (pr_comp == (Pixrect *) 0) {
-		(void) printf(stderr, "mem_create failed\n");
-		exit(1);
-	}
-	mpr_24 = mpr_d(pr_24);
-	mpr_comp = mpr_d(pr_comp);
-	pr24_base = (unsigned char *) mpr_24->md_image;
-	comp_base = (unsigned char *) mpr_comp->md_image;
-
-	for (y = size; --y >= 0;) {
-		pr24P = pr24_base + (y * mpr_24->md_linebytes);
-		compP = comp_base + (y * mpr_comp->md_linebytes);
-		for (x = 0; x < size; x++) {
-			red = *pr24P++;
-			grn = *pr24P++;
-			blu = *pr24P++;
-			*compP++ = biggest - ((dit8A(red, red8Amat, RR - 1, x, y) * GR +
-				  dit8A(grn, grn8Amat, GR - 1, x, y)) * BR +
-					dit8A(blu, blu8Amat, BR - 1, x, y));
-		}
-	}
-	sunrop( 0, 0, size, size, PIX_SRC, pr_comp, 0, 0 );
-	pr_destroy(pr_comp);
-}
-#endif DIT
 
 _LOCAL_ int
 sun_help( ifp )
