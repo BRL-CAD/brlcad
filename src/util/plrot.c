@@ -28,6 +28,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
                                                                                                                                                                             
 
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h> /* atof() */
+#endif
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
