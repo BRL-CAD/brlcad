@@ -212,6 +212,7 @@ char **argv;
 	FreeSolid = SOLID_NULL;
 	RT_LIST_INIT( &rt_g.rtg_vlfree );
 
+	bzero((void *)&head_dm_list, sizeof(struct dm_list));
 	RT_LIST_INIT( &head_dm_list.l );
 	head_dm_list._dmp = &dm_Null;
 	curr_dm_list = &head_dm_list;
@@ -221,6 +222,8 @@ char **argv;
 	mged_variables = default_mged_variables;
 	rt_vls_init(&pathName);
 	rt_vls_strcpy(&pathName, "nu");
+	rc = 1;
+	owner = 1;
 
 	state = ST_VIEW;
 	es_edflag = -1;
@@ -265,8 +268,6 @@ char **argv;
 	mmenu_init();
 	btn_head_menu(0,0,0);		/* unlabeled menu */
 
-	dmaflag = 1;
-
 	windowbounds[0] = XMAX;		/* XHR */
 	windowbounds[1] = XMIN;		/* XLR */
 	windowbounds[2] = YMAX;		/* YHR */
@@ -306,7 +307,12 @@ char **argv;
 		/* NOTREACHED */
 	}
 
+#if 0
 	refresh();			/* Put up faceplate */
+#else
+	/* Force mged_display variables to be initialized */
+	dotitles(1);
+#endif
 
 	/* Reset the lights */
 	dmp->dmr_light( LIGHT_RESET, 0 );
@@ -1376,7 +1382,9 @@ char	**argv;
 		 * Ask this question BEFORE the db_scan, because
 		 * that can take a long time for large models.
 		 */
+#if 0
 		get_attached();
+#endif
 	}
 
 	/* --- Scan geometry database and build in-memory directory --- */
