@@ -1,6 +1,6 @@
 /*
- *	@(#) vproc.c			retrieved: 8/13/86 at 08:23:47,
- *	@(#) version 1.6		last edit: 10/11/83 at 10:02:55.
+ *	@(#) vproc.c			retrieved: 8/13/86 at 08:24:02,
+ *	@(#) version 1.7		last edit: 10/11/83 at 10:57:48.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -18,9 +18,6 @@
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
-#include "./ged_types.h"
-#include "./3d.h"
-#include "./vdeck.h"
 #include "./vextern.h"
 char		*addname(), getarg();
 Directory	*lookup(), *diradd();
@@ -262,6 +259,9 @@ char  *args[];
  */
 builddir()
 { register Directory *dp;
+	(void) printf( "Building the directory.\n" );
+	(void) fflush( stdout );
+
 	dp = &directory[0];
 	while( 1 ) {
 		dp->d_addr = lseek( objfd, 0L, 1 );
@@ -334,6 +334,8 @@ toc() {
 	static Directory	*dp, *ep;
 	register int		i;
 
+	(void) printf( "Making the Table of Contents.\n" );
+	(void) fflush( stdout );
 	dp = &directory[0];
 	ep = &directory[ndir];
 
