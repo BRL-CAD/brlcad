@@ -581,4 +581,5 @@ vect_t *pos;
 	if( rec.u_id != ID_SOLID )
 		return(-1);	/* BAD:  too hard */
 	fastf_float( pos, rec.s.s_values, 1 );
+	return(0);		/* OK */
 }
