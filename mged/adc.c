@@ -41,11 +41,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * These variables are global for the benefit of
  * the display portion of dotitles.
  */
+#ifndef MULTI_ATTACH
 fastf_t	curs_x;		/* cursor X position */
 fastf_t	curs_y;		/* cursor Y position */
 fastf_t	c_tdist;		/* Cursor tick distance */
 fastf_t	angle1;		/* Angle to solid wiper */
 fastf_t	angle2;		/* Angle to dashed wiper */
+#endif
 
 #ifdef XMGED
 extern void (*adc_hook)();

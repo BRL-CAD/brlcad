@@ -95,6 +95,7 @@ double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
 
+#ifndef MULTI_ATTACH
 int		rateflag_slew;
 vect_t		rate_slew;
 vect_t		absolute_slew;
@@ -106,6 +107,7 @@ vect_t		absolute_rotate;	/* selected by mged_variables.rateknobs */
 int		rateflag_zoom;
 fastf_t		rate_zoom;
 fastf_t		absolute_zoom;
+#endif
 
 RT_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
 int		f_zap();

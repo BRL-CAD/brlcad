@@ -889,7 +889,11 @@ static mat_t	rtif_viewrot;
 static struct rt_vlblock	*rtif_vbp;
 static FILE	*rtif_fp;
 static double	rtif_delay;
+#ifdef MULTI_ATTACH
+static struct _mged_variables    rtif_saved_state;       /* saved state variable\s */
+#else
 static struct mged_variables	rtif_saved_state;	/* saved state variables */
+#endif
 static int	rtif_mode;
 static int	rtif_desiredframe;
 static int	rtif_finalframe;
