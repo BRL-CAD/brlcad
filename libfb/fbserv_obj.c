@@ -282,6 +282,9 @@ int mask;
       dirty = 1;
 #endif
   }
+
+  if (fbsp->fbs_callback != FBS_CALLBACK_NULL)
+    fbsp->fbs_callback(fbsp->fbs_clientData);
 }
 
 HIDDEN void
