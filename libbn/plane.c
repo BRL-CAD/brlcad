@@ -734,6 +734,115 @@ struct rt_tol	*tol;
 }
 
 /*
+ *			R T _ I S E C T _ L S E G 3  _ L S E G 3
+ *
+ *  Intersect two 3D line segments, defined by two points and two vectors.
+ *  The vectors are unlikely to be unit length.
+ *
+ *  Explicit Return -
+ *	-2	missed (line segments are parallel)
+ *	-1	missed (colinear and non-overlapping)
+ *	 0	hit (line segments colinear and overlapping)
+ *	 1	hit (normal intersection)
+ *
+ *  Implicit Return -
+ *	The value at dist[] is set to the parametric distance of the intercept
+ *	dist[0] is parameter along p, range 0 to 1, to intercept.
+ *	dist[1] is parameter along q, range 0 to 1, to intercept.
+ *	If within distance tolerance of the endpoints, these will be
+ *	exactly 0.0 or 1.0, to ease the job of caller.
+ *
+ *  Special note:  when return code is "0" for co-linearity, dist[1] has
+ *  an alternate interpretation:  it's the parameter along p (not q)
+ *  which takes you from point p to the point (q + qdir), i.e., it's
+ *  the endpoint of the q linesegment, since in this case there may be
+ *  *two* intersections, if q is contained within span p to (p + pdir).
+ *  And either may be -10 if the point is outside the span.
+ */
+int
+rt_isect_lseg3_lseg3( dist, p, pdir, q, qdir, tol )
+fastf_t		*dist;
+CONST point_t	p;
+CONST vect_t	pdir;
+CONST point_t	q;
+CONST vect_t	qdir;
+struct rt_tol	*tol;
+{
+	fastf_t	dx, dy;
+	fastf_t	det;		/* determinant */
+	fastf_t	det1, det2;
+	fastf_t	b,c;
+	fastf_t	hx, hy;		/* H = Q - P */
+	fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
+	fastf_t	pmag, qmag;
+	int	status;
+
+	RT_CK_TOL(tol);
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_isect_lseg3_lseg3() p=(%g,%g), pdir=(%g,%g)\n\t\tq=(%g,%g), qdir=(%g,%g)\n",
+			V2ARGS(p), V2ARGS(pdir), V2ARGS(q), V2ARGS(qdir) );
+	}
+
+	status = rt_isect_line3_line3( &dist[0], &dist[1], p, pdir, q, qdir, tol );
+	if( status < 0 )  {
+		/* Lines are parallel, non-colinear */
+		return -1;	/* No intersection */
+	}
+	pmag = MAGNITUDE(pdir);
+	if( pmag < SQRT_SMALL_FASTF )
+		rt_bomb("rt_isect_lseg3_lseg3: |p|=0\n");
+	if( status == 0 )  {
+		int	nogood = 0;
+		/* Lines are colinear */
+		/*  If P within tol of either endpoint (0, 1), make exact. */
+		ptol = tol->dist / pmag;
+		if( rt_g.debug & DEBUG_MATH )  {
+			rt_log("ptol=%g\n", ptol);
+		}
+		if( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
+		else if( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
+
+		if( dist[1] > -ptol && dist[1] < ptol )  dist[1] = 0;
+		else if( dist[1] > 1-ptol && dist[1] < 1+ptol ) dist[1] = 1;
+
+		if( dist[1] < 0 || dist[1] > 1 )  nogood = 1;
+		if( dist[0] < 0 || dist[0] > 1 )  nogood++;
+		if( nogood >= 2 )
+			return -1;	/* colinear, but not overlapping */
+		if( rt_g.debug & DEBUG_MATH )  {
+			rt_log("  HIT colinear!\n");
+		}
+		return 0;		/* colinear and overlapping */
+	}
+	/* Lines intersect */
+	/*  If within tolerance of an endpoint (0, 1), make exact. */
+	ptol = tol->dist / pmag;
+	if( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
+	else if( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
+
+	qmag = MAGNITUDE(qdir);
+	if( qmag < SQRT_SMALL_FASTF )
+		rt_bomb("rt_isect_lseg3_lseg3: |q|=0\n");
+	qtol = tol->dist / qmag;
+	if( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
+	else if( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
+
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("ptol=%g, qtol=%g\n", ptol, qtol);
+	}
+	if( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 ) {
+		if( rt_g.debug & DEBUG_MATH )  {
+			rt_log("  MISS\n");
+		}
+		return -1;		/* missed */
+	}
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("  HIT!\n");
+	}
+	return 1;			/* hit, normal intersection */
+}
+
+/*
  *			R T _ I S E C T _ L I N E 3 _ L I N E 3
  *
  *  Intersect two lines, each in given in parametric form:
@@ -760,6 +869,8 @@ struct rt_tol	*tol;
  *		line parameters of the intersection point on the 2 rays.
  *		The actual intersection coordinates can be found by
  *		substituting either of these into the original ray equations.
+ *
+ * XXX It would be sensible to change the t,u pair to dist[2].
  */
 int
 rt_isect_line3_line3( t, u, p, d, a, c, tol )
