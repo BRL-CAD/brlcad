@@ -1812,7 +1812,6 @@ RT_EXTERN(CONST char *rt_units_string, (CONST double mm) );
 /* prep.c */
 RT_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
 RT_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
-RT_EXTERN(void rt_vlist_to_uplot, (FILE *fp, struct rt_list *vhead));
 
 /* bomb.c */
 RT_EXTERN(void rt_badmagic, (long *ptr, long magic, char *str,
@@ -1831,10 +1830,27 @@ RT_EXTERN( int rt_struct_export, (struct rt_external *ext, CONST genptr_t base,
 				CONST struct rt_imexport *imp));
 
 /* vlist.c */
-RT_EXTERN(void rt_vlist_export, (struct rt_vls *vls, struct rt_list *hp,
+RT_EXTERN(struct rt_vlblock *	rt_vlblock_init, () );
+RT_EXTERN(void			rt_vlblock_free, (struct rt_vlblock *vbp) );
+RT_EXTERN(struct rt_list *	rt_vlblock_find, (struct rt_vlblock *vbp,
+				int r, int g, int b) );
+RT_EXTERN(void			rt_vlist_cleanup, () );
+RT_EXTERN(void			rt_vlist_export, (struct rt_vls *vls,
+				struct rt_list *hp,
 				CONST char *name));
-RT_EXTERN(void rt_vlist_import, (struct rt_list *hp, struct rt_vls *namevls,
+RT_EXTERN(void			rt_vlist_import, (struct rt_list *hp,
+				struct rt_vls *namevls,
 				CONST unsigned char *buf));
+RT_EXTERN(void			rt_plot_vlblock, (FILE *fp,
+				CONST struct rt_vlblock	*vbp) );
+RT_EXTERN(void			rt_vlist_to_uplot, (FILE *fp,
+				CONST struct rt_list *vhead));
+RT_EXTERN(int			rt_uplot_to_vlist, (struct rt_vlblock *vbp,
+				FILE *fp, double char_size) );
+RT_EXTERN(void			rt_label_vlist_verts, (struct rt_vlblock *vbp,
+				struct rt_list *src, mat_t mat,
+				double sz) );
+
 
 /************************************************************************
  *									*
@@ -1951,6 +1967,9 @@ RT_EXTERN(struct faceuse	*nmg_find_fu_of_lu, (CONST struct loopuse *lu));
 RT_EXTERN(struct faceuse	*nmg_find_fu_of_vu, (CONST struct vertexuse *vu) );
 RT_EXTERN(struct faceuse	*nmg_find_fu_with_fg_in_s, (CONST struct shell *s1,
 				CONST struct faceuse *fu2));
+RT_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
+				CONST vect_t xvec, CONST vect_t yvec,
+				CONST vect_t zvec) );
 
 	/* Loop routines */
 RT_EXTERN(struct loopuse	*nmg_find_lu_of_vu, (CONST struct vertexuse *vu) );
@@ -1976,6 +1995,11 @@ RT_EXTERN(struct edge		*nmg_find_e_nearest_pt2, (long *magic_p,
 				CONST struct rt_tol *tol) );
 RT_EXTERN(struct edgeuse	*nmg_find_matching_eu_in_s, (
 				CONST struct edgeuse *eu1, CONST struct shell *s2));
+RT_EXTERN(void			nmg_eu_2vecs_perp, (vect_t xvec, vect_t yvec,
+				vect_t zvec, CONST struct edgeuse *eu,
+				CONST struct rt_tol *tol) );
+RT_EXTERN(int			nmg_find_eu_leftvec, (vect_t left,
+				CONST struct edgeuse *eu) );
 
 	/* Vertex routines */
 RT_EXTERN(struct vertexuse	*nmg_find_v_in_face, (CONST struct vertex *,
@@ -2073,10 +2097,6 @@ RT_EXTERN(int			nmg_class_pt_s, (CONST point_t pt,
 				CONST struct rt_tol *tol) );
 
 /* From nmg_plot.c */
-RT_EXTERN(struct rt_vlblock *	rt_vlblock_init, () );
-RT_EXTERN(void			rt_vlblock_free, (struct rt_vlblock *vbp) );
-RT_EXTERN(struct rt_list *	rt_vlblock_find, (struct rt_vlblock *vbp,
-				int r, int g, int b) );
 /* add nmg_xxx_to_vlist routines here */
 RT_EXTERN(void			nmg_pl_v, (FILE	*fp, CONST struct vertex *v,
 				long *b) );
@@ -2113,7 +2133,7 @@ RT_EXTERN(void			nmg_vlblock_m, (struct rt_vlblock *vbp,
 RT_EXTERN(void			nmg_pl_around_edge, (FILE *fd,
 				long *b, CONST struct edgeuse *eu) );
 RT_EXTERN(void			nmg_pl_isect, (CONST char *filename,
-				CONST struct shell *s) );
+				CONST struct shell *s, CONST struct rt_tol *tol) );
 RT_EXTERN(void			nmg_pl_comb_fu, (int num1, int num2,
 				CONST struct faceuse *fu1) );
 RT_EXTERN(void			nmg_pl_2fu, (CONST char *str, int num,
