@@ -52,6 +52,7 @@ static const char RCSwray[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "optical.h"
 
 
 /* /vld/include/ray.h -- ray segment data format (D A Gwyn) */
