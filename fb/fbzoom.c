@@ -109,7 +109,7 @@ r	Reset to normal\r\n\
 q	Exit\r\n\
 RETURN	Exit\r\n";
 
-#define ctl(x)	('x'&037)
+#define ctl(x)	(x&037)
 
 doKeyPad()
 	{ 
@@ -146,7 +146,7 @@ doKeyPad()
 		xPan = fb_getwidth(fbp)/2;
 		yPan = fb_getheight(fbp)/2;
 		break;
-	case ctl(v) :
+	case ctl('v') :
 	case 'b' :				/* zoom BIG binary */
 		if( fb_zoom(fbp, zoom*2, zoom*2 ) >= 0 )
 			zoom *= 2;
@@ -170,7 +170,7 @@ doKeyPad()
 		if( ++xPan > MaxXPan )
 			xPan = MaxXPan;
 		break;
-	case ctl(f) :
+	case ctl('f') :
 	case 'L' :
 		if( (xPan += PanFactor) > MaxXPan )
 			xPan = MaxXPan;
@@ -180,7 +180,7 @@ doKeyPad()
 		if( --yPan < MinPan )
 			yPan = MinPan;
 		break;
-	case ctl(n) :
+	case ctl('n') :
 	case 'K' :
 		if( (yPan -= PanFactor) < MinPan )
 			yPan = MinPan;
@@ -190,7 +190,7 @@ doKeyPad()
 		if( ++yPan > MaxYPan )
 			yPan = MaxYPan;
 		break;
-	case ctl(p) :
+	case ctl('p') :
 	case 'J' :
 		if( (yPan += PanFactor) > MaxYPan )
 			yPan = MaxYPan;
@@ -200,7 +200,7 @@ doKeyPad()
 		if( --xPan < MinPan )
 			xPan = MinPan;
 		break;
-	case ctl(b) :
+	case ctl('b') :
 	case 'H' :
 		if( (xPan -= PanFactor) < MinPan )
 			xPan = MinPan;

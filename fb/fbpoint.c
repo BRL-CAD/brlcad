@@ -56,6 +56,8 @@ L ^F	Right (many)\r\n\
 q Q cr	QUIT\r\n\
 ";
 
+#define ctl(x)	(x&037)
+
 void
 SimpleInput()	/* ==== get keyboard input.	*/
 {
@@ -83,7 +85,6 @@ SimpleInput()	/* ==== get keyboard input.	*/
 	case '\r':
 		Run = 0;
 		return;
-#define ctl(x)	('x'&037)
 
 	case 'B':
 	case 'h':
@@ -101,19 +102,19 @@ SimpleInput()	/* ==== get keyboard input.	*/
 	case 'l':
 		++curX;		/* Go right.	*/
 		return;
-	case ctl(b):
+	case ctl('b'):
 	case 'H':
 		curX -= JumpSpeed;	/* Go LEFT.	*/
 		return;
-	case ctl(n):
+	case ctl('n'):
 	case 'J':
 		curY -= JumpSpeed;	/* Go DOWN.	*/
 		return;
-	case ctl(p):
+	case ctl('p'):
 	case 'K':
 		curY += JumpSpeed;	/* Go UP.	*/
 		return;
-	case ctl(f):
+	case ctl('f'):
 	case 'L':
 		curX += JumpSpeed;	/* Go RIGHT.	*/
 		return;
