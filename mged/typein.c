@@ -408,17 +408,17 @@ f_in()
 			return;
 		}
 	} else if( strcmp( cmd_args[2], "ebm" ) == 0 )  {
-		if( strsol_in( &record, "ebm" ) < 0 )  {
+		if( strsol_in( &external, "ebm" ) < 0 )  {
 			(void)printf("ERROR, EBM solid not made!\n");
 			return;
 		}
-		goto do_update;
+		goto do_extern_update;
 	} else if( strcmp( cmd_args[2], "vol" ) == 0 )  {
-		if( strsol_in( &record, "vol" ) < 0 )  {
+		if( strsol_in( &external, "vol" ) < 0 )  {
 			(void)printf("ERROR, VOL solid not made!\n");
 			return;
 		}
-		goto do_update;
+		goto do_extern_update;
 	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
 		if (ars_in(numargs, cmd_args, &internal) != 0)  {
 			(void)printf("ERROR, ars not made!\n");
@@ -467,9 +467,6 @@ do_update:
 	return;
 
 do_new_update:
-	/* don't allow interrupts while we update the database! */
-	(void)signal( SIGINT, SIG_IGN);
-
 	RT_CK_DB_INTERNAL( &internal );
 	id = internal.idb_type;
 	if( rt_functab[id].ft_export( &external, &internal, local2base ) < 0 )  {
@@ -478,6 +475,10 @@ do_new_update:
 		return;
 	}
 	rt_functab[id].ft_ifree( &internal );	/* free internal rep */
+
+do_extern_update:
+	/* don't allow interrupts while we update the database! */
+	(void)signal( SIGINT, SIG_IGN);
 
 	/* Add name to database record */
 	{
@@ -512,14 +513,12 @@ do_new_update:
  *  "in" name ebm|vol arg(s)
  */
 int
-strsol_in( rp, sol )
-union record	*rp;
-char		*sol;
+strsol_in( ep, sol )
+struct rt_external	*ep;
+char			*sol;
 {
-	int	left;
-	register char	*cp;
-	int	i;
-	int	len;
+	struct rt_vls	str;
+	union record	*rec;
 
 	/* Read at least one "arg(s)" */
 	while( args < (3 + 1) )  {
@@ -530,28 +529,19 @@ char		*sol;
 		args += argcnt;
 	}
 
-	/* Up to DB_SS_LEN chars of arg, space separated, null terminated */
-	left = DB_SS_LEN-1;
-	cp = &rp->ss.ss_str[0];
-	len = strlen(sol);
-	strncpy( cp, sol, len );
-	cp += len;
-	*cp++ = ' ';
-	left -= len+1;
-	for( i = 3; i < args; i++ )  {
-		len = strlen( cmd_args[i] );
-		if( len > left )  {
-			(void)printf("Too long, truncating\n");
-			break;
-		}
-		if( i > 3 ) *cp++ = ' ';
-		strncpy( cp, cmd_args[i], len );
-		cp += len;
-		left -= len+1;
-	}
-	*cp++ = '\0';
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ebm external");
+	rec = (union record *)ep->ext_buf;
 
-	rp->ss.ss_id = DBID_STRSOL;
+	RT_VLS_INIT( &str );
+	rt_vls_from_argv( &str, args-3, &cmd_args[3] );
+
+	rec->ss.ss_id = DBID_STRSOL;
+	strncpy( rec->ss.ss_keyword, "ebm", NAMESIZE-1 );
+	strncpy( rec->ss.ss_args, rt_vls_addr(&str), DB_SS_LEN-1 );
+	rt_vls_free( &str );
+
 	return(0);		/* OK */
 }
 
