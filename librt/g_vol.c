@@ -548,12 +548,34 @@ double			mm2local;
 {
 	register struct rt_vol_internal	*vip =
 		(struct rt_vol_internal *)ip->idb_ptr;
+	register int i;
+	struct bu_vls substr;
+	vect_t local;
 
 	RT_VOL_CK_MAGIC(vip);
+
+	VSCALE( local, vip->cellsize, mm2local )
 	bu_vls_strcat( str, "thresholded volumetric solid (VOL)\n\t");
 
-	bu_vls_struct_print( str, rt_vol_parse, (char *)vip );
-	bu_vls_strcat( str, "\n" );
+/*	bu_vls_struct_print( str, rt_vol_parse, (char *)vip );
+	bu_vls_strcat( str, "\n" ); */
+
+	bu_vls_init( &substr );
+	bu_vls_printf( &substr, "  file=\"%s\" w=%d n=%d d=%d lo=%d hi=%d size=%g %g %g\n   mat=",
+		vip->file, vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
+		V3ARGS( local ) );
+	bu_vls_vlscat( str, &substr );
+	for( i=0 ; i<15 ; i++ )
+	{
+		bu_vls_trunc2( &substr, 0 );
+		bu_vls_printf( &substr, "%g,", vip->mat[i] );
+		bu_vls_vlscat( str, &substr );
+	}
+	bu_vls_trunc2( &substr, 0 );
+	bu_vls_printf( &substr, "%g\n", vip->mat[i] );
+	bu_vls_vlscat( str, &substr );
+
+	bu_vls_free( &substr );
 
 	return(0);
 }
