@@ -80,9 +80,8 @@ struct pkg_conn	*pcp;
     clients[i].fd = pcp->pkc_fd;
     setup_socket(pcp->pkc_fd);
 
-    Tcl_CreateFileHandler(Tcl_GetFile((ClientData)clients[i].fd, TCL_UNIX_FD),
-			  TCL_READABLE, existing_client_handler,
-			  (ClientData)clients[i].fd);
+    Tcl_CreateFileHandler(clients[i].fd, TCL_READABLE,
+			  existing_client_handler, (ClientData)clients[i].fd);
 
     return;
   }
@@ -104,8 +103,7 @@ int sub;
   }
 
   if(clients[sub].fd != 0)  {
-    Tcl_DeleteFileHandler(Tcl_GetFile((ClientData)clients[sub].fd, TCL_UNIX_FD));
-    Tcl_FreeFile(Tcl_GetFile((ClientData)clients[sub].fd, TCL_UNIX_FD));
+    Tcl_DeleteFileHandler(clients[sub].fd);
     close(clients[sub].fd);
     clients[sub].fd = 0;
   }
@@ -127,8 +125,7 @@ set_port()
     for(i = 0; i < MAX_CLIENTS; ++i)
       drop_client(i);
 
-    Tcl_DeleteFileHandler(Tcl_GetFile((ClientData)netfd, TCL_UNIX_FD));
-    Tcl_FreeFile(Tcl_GetFile((ClientData)netfd, TCL_UNIX_FD));
+    Tcl_DeleteFileHandler(netfd);
     close(netfd);
     netfd = 0;
   }
@@ -192,8 +189,8 @@ set_port()
     bu_log("set_port: failed to hang a listen on ports %d - %d\n",
 	   mged_variables->port, mged_variables->port + MAX_PORT_TRIES - 1);
   }else
-    Tcl_CreateFileHandler(Tcl_GetFile((ClientData)netfd, TCL_UNIX_FD),
-			  TCL_READABLE, new_client_handler, (ClientData)netfd);
+    Tcl_CreateFileHandler(netfd, TCL_READABLE,
+			  new_client_handler, (ClientData)netfd);
 }
 
 /*

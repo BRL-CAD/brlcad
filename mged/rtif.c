@@ -333,8 +333,7 @@ int mask;
 
   /* Get data from rt */
   if((count = read((int)fd, line, MAXLINE)) == 0){
-    Tcl_DeleteFileHandler(Tcl_GetFile((ClientData)fd, TCL_UNIX_FD));
-    Tcl_FreeFile(Tcl_GetFile((ClientData)fd, TCL_UNIX_FD));
+    Tcl_DeleteFileHandler(fd);
     return;
   }
 
@@ -450,8 +449,8 @@ run_rt()
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
-	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)pipe_err[0], TCL_UNIX_FD),
-			      TCL_READABLE, rt_output_handler, (ClientData)pipe_err[0]);
+	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
+			      rt_output_handler, (ClientData)pipe_err[0]);
 
 	return 0;
 }
