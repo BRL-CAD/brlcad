@@ -142,6 +142,9 @@ struct rt_db_internal	*ip;
 	BU_INIT_EXTERNAL(&ext);
 	RT_CK_DB_INTERNAL( ip );
 
+	if( dbip->dbi_version > 4 )
+		return  rt_db_put_internal5( dp, dbip, ip );
+
 	/* Scale change on export is 1.0 -- no change */
 	ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip );
 	if( ret < 0 )  {
