@@ -1305,7 +1305,7 @@ EXTERN Tcl_DriverFlushProc * Tcl_ChannelFlushProc _ANSI_ARGS_((
 EXTERN Tcl_DriverHandlerProc * Tcl_ChannelHandlerProc _ANSI_ARGS_((
 				Tcl_ChannelType * chanTypePtr));
 /* 412 */
-EXTERN int		Tcl_JoinThread _ANSI_ARGS_((Tcl_ThreadId id, 
+EXTERN int		Tcl_JoinThread _ANSI_ARGS_((Tcl_ThreadId threadId, 
 				int* result));
 /* 413 */
 EXTERN int		Tcl_IsChannelShared _ANSI_ARGS_((Tcl_Channel channel));
@@ -2035,7 +2035,7 @@ typedef struct TclStubs {
     Tcl_DriverGetHandleProc * (*tcl_ChannelGetHandleProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 409 */
     Tcl_DriverFlushProc * (*tcl_ChannelFlushProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 410 */
     Tcl_DriverHandlerProc * (*tcl_ChannelHandlerProc) _ANSI_ARGS_((Tcl_ChannelType * chanTypePtr)); /* 411 */
-    int (*tcl_JoinThread) _ANSI_ARGS_((Tcl_ThreadId id, int* result)); /* 412 */
+    int (*tcl_JoinThread) _ANSI_ARGS_((Tcl_ThreadId threadId, int* result)); /* 412 */
     int (*tcl_IsChannelShared) _ANSI_ARGS_((Tcl_Channel channel)); /* 413 */
     int (*tcl_IsChannelRegistered) _ANSI_ARGS_((Tcl_Interp* interp, Tcl_Channel channel)); /* 414 */
     void (*tcl_CutChannel) _ANSI_ARGS_((Tcl_Channel channel)); /* 415 */
