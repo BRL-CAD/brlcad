@@ -3329,6 +3329,57 @@ BU_EXTERN(void			nmg_r_radial_check,
 
 BU_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g, (struct edgeuse *eu1,
 				struct edgeuse *eu2, CONST struct bn_tol *tol));
+
+/* nmg_visit.c */
+BU_EXTERN(void			nmg_visit_vertex,
+				(struct vertex			*v,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_vertexuse,
+				(struct vertexuse		*vu,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_edge,
+				(struct edge			*e,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_edgeuse,
+				(struct edgeuse			*eu,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_loop,
+				(struct loop			*l,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_loopuse,
+				(struct loopuse			*lu,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_face,
+				(struct face			*f,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_faceuse,
+				(struct faceuse			*fu,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_shell,
+				(struct shell			*s,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_region,
+				(struct nmgregion		*r,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit_model,
+				(struct model			*model,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+BU_EXTERN(void			nmg_visit,
+				(long				*magicp,
+				struct nmg_visit_handlers	*htab,
+				genptr_t			*state));
+
 #endif
 
 /*
