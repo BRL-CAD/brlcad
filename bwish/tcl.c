@@ -29,15 +29,16 @@
 #include "conf.h"
 #include <stdio.h>
 #include <ctype.h>
+#ifdef BWISH
 #include "tk.h"
-
+#else
+#include "tcl.h"
+#endif
+#include "tclInt.h"
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "libtermio.h"
-
-/* defined in cmd.c */
-extern void quit();
 
 /* defined in input.c */
 extern void initInput();
@@ -98,7 +99,6 @@ Cad_Main(argc, argv, appInitProc, interp)
 	Tcl_SetVar(interp, "argv", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
 	Tcl_DStringFree(&argString);
 	ckfree(args);
-	sprintf(buf, "%d", argc-1);
 
 	if (filename == NULL) {
 		(void)Tcl_ExternalToUtfDString(NULL, argv[0], -1, &argString);
@@ -106,6 +106,7 @@ Cad_Main(argc, argv, appInitProc, interp)
 		filename = Tcl_ExternalToUtfDString(NULL, filename, -1, &argString);
 	}
 
+	TclFormatInt(buf, argc-1);
 	Tcl_SetVar(interp, "argc", buf, TCL_GLOBAL_ONLY);
 	Tcl_SetVar(interp, "argv0", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
 
@@ -114,10 +115,10 @@ Cad_Main(argc, argv, appInitProc, interp)
 	 */
 	if ((*appInitProc)(interp) != TCL_OK) {
 #ifdef BWISH
-	  TkpDisplayWarning(Tcl_GetStringResult(interp),
-			    "Application initialization failed");
+		TkpDisplayWarning(Tcl_GetStringResult(interp),
+				  "Application initialization failed");
 #else
-	  bu_log( "Application initialization failed: %s", Tcl_GetStringResult(interp));
+		bu_log( "Application initialization failed: %s", Tcl_GetStringResult(interp));
 #endif
 	}
 
@@ -133,10 +134,13 @@ Cad_Main(argc, argv, appInitProc, interp)
 			TkpDisplayWarning(Tcl_GetVar(interp, "errorInfo",
 						     TCL_GLOBAL_ONLY), "Error in startup script");
 #else
-			bu_log("Error in startup script: %s", Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
+			bu_log("Error in startup script: %s\n", Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
 #endif
-			quit(status);
 		}
+
+#ifndef BWISH
+		Cad_Exit(status);
+#endif
 	} else { /* We're running interactively. */
 		/* Set up to handle commands from user as well as
 		   provide a command line editing capability. */
@@ -148,10 +152,10 @@ Cad_Main(argc, argv, appInitProc, interp)
 		/* Source the startup file if it exists. */
 		Tcl_SourceRCFile(interp);
 	}
-	Tcl_DStringFree(&argString);
 
+	Tcl_DStringFree(&argString);
 	Cad_MainLoop();
-	Cad_Exit();
+	Cad_Exit(TCL_OK);
 }
 
 void
@@ -167,9 +171,8 @@ Cad_MainLoop()
 }
 
 void
-Cad_Exit(Tcl_Interp *interp)
+Cad_Exit(int status)
 {
 	reset_Tty(fileno(stdin)); 
-	Tcl_DeleteInterp(interp);
-	Tcl_Exit(0);
+	Tcl_Exit(status);
 }
