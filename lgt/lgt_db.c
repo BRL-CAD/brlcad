@@ -30,6 +30,7 @@ STATIC int	get_Lgt_Entry(), put_Lgt_Entry();
 /*	l g t _ P r i n t _ D b ( )
 	Print light source database entry.
  */
+int
 lgt_Print_Db( id )
 int		id;
 	{	register Lgt_Source	*entry;
@@ -147,6 +148,7 @@ char	*file;
 /*	l g t _ E d i t _ D b _ E n t r y ( )
 	Create or overwrite entry in light source table.
  */
+int
 lgt_Edit_Db_Entry( id )
 int	id;
 	{	register Lgt_Source	*entry;

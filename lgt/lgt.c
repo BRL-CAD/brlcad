@@ -84,6 +84,11 @@ char	*argv[];
 #endif
 	beginptr = (char *) sbrk(0);
 
+	bu_log( "\n\nThis program is deprecated and will not be supported in future release\n" );
+	bu_log( "\tPlease use \"rtedge\" instead\n" );
+	bu_log( "\tPlease notify \"cad@arl.army.mil\" if you need enhancements to \"rtedge\"\n" );
+	bu_log( "\nPress \"Enter\" to continue\n\n" );
+	(void)getchar();
 	npsw = bu_avail_cpus();
 	if( npsw > MAX_PSW )
 		npsw = MAX_PSW;

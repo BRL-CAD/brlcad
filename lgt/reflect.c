@@ -95,7 +95,7 @@ static Mat_Db_Entry mat_tmp_entry =
 				0.0,		/* Reflectivity. */
 				0.0,		/* Transmission. */
 				1.0,		/* Refractive index. */
-				255, 255, 255,	/* Diffuse RGB values. */
+				{255, 255, 255},/* Diffuse RGB values. */
 				MF_USED,	/* Mode flag. */
 				"(default)"	/* Material name. */
 				};
@@ -776,7 +776,7 @@ struct partition *pt_headp;
 	if( ir_mapping )
 		{ /* We are mapping temperatures into an octree. */
 			Trie *triep;
-			Octree *octreep;
+			Octree *octreep=NULL;
 			int fahrenheit;
 		if( ! ir_Chk_Table() )
 			{
@@ -1747,7 +1747,7 @@ register int n;
 		result *= d;
 	return	result;
 	}
-
+int
 hl_Dst_Diff( x0, y0, x1, y1, maxdist )
 register int x0, y0, x1, y1;
 register unsigned short	maxdist;
@@ -1756,13 +1756,13 @@ register unsigned short	maxdist;
 	distance = Abs( distance );
 	return (unsigned short)(distance) > maxdist;
 	}
-
+int
 hl_Reg_Diff( x0, y0, x1, y1 )
 register int x0, y0, x1, y1;
 	{
 	return	hl_regmap[y0*a_gridsz+x0] != hl_regmap[y1*a_gridsz+x1];
 	}
-
+int
 hl_Norm_Diff( pix1, pix2 )
 register RGBpixel *pix1, *pix2;
 	{	fastf_t	dir1[3], dir2[3];

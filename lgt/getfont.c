@@ -36,7 +36,7 @@ struct dispatch	dir[256];	/* Directory for character font.	*/
 int		width = 0,	/* Size of current character.		*/
 		height = 0;
 
-
+int
 get_Font( fontname )
 char *fontname;
 	{	FILE		*newff;

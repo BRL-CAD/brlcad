@@ -17,7 +17,6 @@
 */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
-static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #endif
 
 #include "conf.h"
@@ -47,7 +46,7 @@ extern int	LI, CO;
 		if( ((p_) = (t_ *) malloc((unsigned)(s_))) == (t_ *) 0 )\
 		{\
 		(void) fprintf( stderr, "\"%s\"(%d): Alloc of %ld bytes failed.\n",\
-				__FILE__, __LINE__, s_ );\
+				__FILE__, __LINE__, (long int)s_ );\
 		exit( 1 );\
 		} else	 ;
 #ifndef Max
@@ -101,12 +100,12 @@ HMitem	*itemp;
 		return;
 	(void) fprintf( stderr, "text=\"%s\"\n", itemp->text );
 	(void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
-	(void) fprintf( stderr, "next=0x%lx\n", itemp->next );
+	(void) fprintf( stderr, "next=0x%lx\n", (long unsigned int)itemp->next );
 #ifndef sgi
-	(void) fprintf( stderr, "dfn=0x%x\n", itemp->dfn );
-	(void) fprintf( stderr, "bfn=0x%x\n", itemp->bfn );
+	(void) fprintf( stderr, "dfn=0x%x\n", (unsigned int)itemp->dfn );
+	(void) fprintf( stderr, "bfn=0x%x\n", (unsigned int)itemp->bfn );
 #endif
-	(void) fprintf( stderr, "hfn=0x%lx\n", itemp->hfn );
+	(void) fprintf( stderr, "hfn=0x%lx\n", (long unsigned int)itemp->hfn );
 	(void) fprintf( stderr, "data=%ld\n--\n", itemp->data );
 	return;
 	}
@@ -427,7 +426,7 @@ int	menux, menuy;
 	/* If generator function is provided, dynamically allocate the
 		menu items.
 	 */
-	if( dynamic = menup->item == (HMitem *) 0 )
+	if( (dynamic = (menup->item == (HMitem *) 0)) )
 		{	register int	i;
 			register HMitem	*gitemp;
 			HMllist	llhead, **listp;

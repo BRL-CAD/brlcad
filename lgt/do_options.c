@@ -11,14 +11,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -65,25 +61,6 @@ char	template[][TEMPLATE_COLS] = {
 };
 
 static int	noframes = 1;
-
-char		*get_Input();
-int		setup_Lgts();
-void		user_Input();
-int		interpolate_Frame();
-int		ready_Output_Device();
-int		exec_Shell();
-void		set_Cbreak();
-void		clr_Echo();
-int		pixel_To_Temp();
-void		reset_Tty();
-int		read_IR();
-int		write_Trie();
-int		lgt_Save_Db();
-int		read_Trie();
-int		lgt_Rd_Db();
-int		ClrText();
-int		MvCursor();
-int		InitTermCap();
 
 STATIC int	make_Script();
 STATIC int	f_Nop();		/* default */
@@ -710,6 +687,23 @@ char	**args;
 		anti_aliasing = FALSE;
 	return	1;
 	}
+/* Disgusting hack to avoid the compiler warnings about tmpnam(),
+ * and yet not rewrite lgt.
+ */
+char *
+lgt_tmp_name()
+{
+	char *template;
+	int tmp_fd;
+
+	template = bu_strdup( "/tmp/lgt_tmp.XXXXXX" );
+	if( (tmp_fd=mkstemp( template ) ) == -1 ) {
+		bu_bomb( "Unable to open tmp file!!!\n" );
+	}
+
+	close( tmp_fd );
+	return( template );
+}
 
 #ifndef L_tmpnam /* Alliant has bogus "tmpnam" implementation. */
 #define L_tmpnam	20
@@ -720,13 +714,14 @@ STATIC int
 f_Batch( itemp, args )
 HMitem	*itemp;
 char	**args;
-	{	static char	tmp_file[L_tmpnam];
+{
 		static char	*batch_com[8];
-		char		*script = tmpnam( tmp_file );
+		char		*script;
 #ifdef cray
 	bu_log( "Sorry, no batch queue on the Cray yet.\n" );
 	return	1;
 #else
+	script = lgt_tmp_name();
 	batch_com[0] = "batch";
 	batch_com[1] = "-m";
 	batch_com[2] = "-t";
@@ -739,6 +734,7 @@ char	**args;
 		return	-1;
 	(void) exec_Shell( batch_com );
 	(void) unlink( script );
+	bu_free( (char *)script, "lgt temporary file name" );
 	return	1;
 #endif
 	}

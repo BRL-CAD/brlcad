@@ -209,7 +209,7 @@ int		level;
 		return	OCTREE_NULL;
 	return	newp;
 	}
-
+int
 append_PtList( pt, ptlist )
 fastf_t	*pt;
 PtList	*ptlist;
@@ -434,7 +434,7 @@ int			level;
 	/* No more octants at this level.				*/
 	return;
 	}
-
+int
 ir_shootray_octree( ap )
 struct application	*ap;
 	{	vect_t	inv_dir;	/* Inverses of ap->a_ray.r_dir	*/

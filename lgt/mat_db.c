@@ -38,7 +38,7 @@ Mat_Db_Entry		mat_dfl_entry =
 				0.0,		/* Reflectivity.	*/
 				0.0,		/* Transmission.	*/
 				1.0,		/* Refractive index.	*/
-				255, 255, 255,	/* Diffuse RGB values.	*/
+				{255, 255, 255},/* Diffuse RGB values.	*/
 				MF_USED,	/* Mode flag.		*/
 				"(default)"	/* Material name.	*/
 				};
@@ -51,7 +51,7 @@ Mat_Db_Entry		mat_nul_entry =
 				0.0,		/* Reflectivity.	*/
 				0.0,		/* Transmission.	*/
 				0.0,		/* Refractive index.	*/
-				0, 0, 0,	/* Diffuse RGB values.	*/
+				{0, 0, 0},	/* Diffuse RGB values.	*/
 				MF_NULL,	/* Mode flag.		*/
 				"(null)"	/* Material name.	*/
 				};
@@ -61,6 +61,7 @@ STATIC int	get_Mat_Entry(), put_Mat_Entry();
 	Open material database and read entries into table,
 	return number of entries successfully read.
  */
+int
 mat_Rd_Db( file )
 char	*file;
 	{	register Mat_Db_Entry	*entry;
@@ -84,6 +85,7 @@ char	*file;
 /*	m a t _ P r i n t _ D b ( )
 	Print material database entry.
  */
+int
 mat_Print_Db( material_id )
 int		material_id;
 	{	register Mat_Db_Entry	*entry;
@@ -160,6 +162,7 @@ int		material_id;
 	Write ASCII material database from table.
 	Return 1 for success, 0 for failure.
  */
+int
 mat_Save_Db( file )
 char	*file;
 	{	register Mat_Db_Entry	*entry;
@@ -183,6 +186,7 @@ char	*file;
 /*	m a t _ E d i t _ D b _ E n t r y ( )
 	Create or overwrite entry in material table.
  */
+int
 mat_Edit_Db_Entry( id )
 int	id;
 	{	register Mat_Db_Entry	*entry;
@@ -278,7 +282,7 @@ int	id;
 		return	MAT_DB_NULL;
 	}
 
-STATIC
+STATIC int
 get_Mat_Entry( entry, fp )
 register Mat_Db_Entry	*entry;
 FILE	*fp;
@@ -333,7 +337,7 @@ FILE	*fp;
 	return	1;
 	}
 
-STATIC
+STATIC int
 put_Mat_Entry( entry, fp )
 register Mat_Db_Entry	*entry;
 register FILE		*fp;
