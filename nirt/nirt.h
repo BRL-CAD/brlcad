@@ -30,6 +30,12 @@
 #define	READING_STRING	2
 #define	deg2rad		0.01745329
 
+/*	FLAG VALUES FOR overlap_claims	*/
+#define	OVLP_RESOLVE		0
+#define	OVLP_REBUILD_FASTGEN	1
+#define	OVLP_REBUILD_ALL	2
+#define	OVLP_RETAIN		3
+
 /*	FLAG VALUES FOR nirt_debug	*/
 #define	DEBUG_INTERACT	0x001
 #define	DEBUG_SCRIPTS	0x002
@@ -42,7 +48,7 @@
 #define DEBUG_FMT	"\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 /*	STRING FOR USE WITH GETOPT(3)	*/
-#define	OPT_STRING      "bEe:f:Msu:vx:X:?"
+#define	OPT_STRING      "bEe:f:MO:su:vx:X:?"
 
 #define	made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
@@ -85,6 +91,7 @@ extern void		show_menu();
 extern void		format_output();
 extern void		direct_output();
 extern void		nirt_units();
+extern void		do_overlap_claims();
 extern void		use_air();
 extern void		state_file();
 extern void		dump_state();

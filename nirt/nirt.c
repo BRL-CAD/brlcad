@@ -43,7 +43,7 @@ extern char	version[];		/* from vers.c */
 extern void	cm_libdebug();
 extern void	cm_debug();
 
-char		*db_name;	/* the name of the MGED file      */
+char		*db_name;	/* the name of the BRL-CAD geometry file */
 com_table	ComTab[] =
 		{
 		    { "ae", az_el, "set/query azimuth and elevation", 
@@ -60,6 +60,9 @@ com_table	ComTab[] =
 			"<0|1|2|...>" },
 		    { "units", nirt_units, "set/query local units",
 			"<mm|cm|m|in|ft>" },
+		    { "overlap_claims", do_overlap_claims,
+			"set/query overlap rebuilding/retention",
+			"<0|1|2|3>" },
 		    { "fmt", format_output, "set/query output formats",
 			"{rhpfmo} format item item ..." },
 		    { "dest", direct_output, "set/query output destination",
@@ -82,6 +85,8 @@ com_table	ComTab[] =
 		    { 0 }
 		};
 int		do_backout = 0;			/* Backout before shooting? */
+int		overlap_claims = OVLP_RESOLVE;	/* Rebuild/retain overlaps? */
+char		*ocname[4];
 int		silent_flag = SILENT_UNSET;	/* Refrain from babbling? */
 int		nirt_debug = 0;			/* Control of diagnostics */
 
@@ -219,6 +224,7 @@ char **argv;
     int			Ch;		/* Option name */
     int			mat_flag = 0;	/* Read matrix from stdin? */
     int			use_of_air = 0;
+    char		ocastring[1024];
     struct bu_list	script_list;	/* For -e and -f options */
     struct script_rec	*srp;
     extern outval	ValTab[];
@@ -250,6 +256,11 @@ char **argv;
 
     BU_LIST_INIT(&script_list);
 
+    ocname[OVLP_RESOLVE] = "resolve";
+    ocname[OVLP_REBUILD_FASTGEN] = "rebuild_fastgen";
+    ocname[OVLP_REBUILD_ALL] = "rebuild_all";
+    ocname[OVLP_RETAIN] = "retain";
+
     /* Handle command-line options */
     while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
         switch (Ch)
@@ -280,6 +291,9 @@ char **argv;
 		break;
 	    case 'M':
 		mat_flag = 1;
+		break;
+	    case 'O':
+		sscanf(optarg, "%s", ocastring);
 		break;
 	    case 's':
 		silent_flag = SILENT_YES;	/* Positively yes */
@@ -330,6 +344,48 @@ char **argv;
 	    "Warning: useair=%d specified, will set to 1\n", use_of_air);
 	use_of_air = 1;
     }
+
+    switch (*ocastring)
+    {
+	case '\0':
+	    overlap_claims = OVLP_RESOLVE;
+	    break;
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	    if (ocastring[1] == '\0')
+		sscanf(ocastring, "%d", &overlap_claims);
+	    else
+	    {
+		(void) fprintf(stderr,
+		    "Illegal overlap_claims specification: '%s'\n", ocastring);
+		exit (1);
+	    }
+	    break;
+	case 'r':
+	    if (strcmp(ocastring, "resolve") == 0)
+		overlap_claims = OVLP_RESOLVE;
+	    else if (strcmp(ocastring, "rebuild_fastgen") == 0)
+		overlap_claims = OVLP_REBUILD_FASTGEN;
+	    else if (strcmp(ocastring, "rebuild_all") == 0)
+		overlap_claims = OVLP_REBUILD_ALL;
+	    else if (strcmp(ocastring, "retain") == 0)
+		overlap_claims = OVLP_RETAIN;
+	    else
+	    {
+		(void) fprintf(stderr,
+		    "Illegal overlap_claims specification: '%s'\n", ocastring);
+		exit (1);
+	    }
+	    break;
+	default:
+	    (void) fprintf(stderr,
+		"Illegal overlap_claims specification: '%s'\n", ocastring);
+	    exit (1);
+    }
+    printf("... overlap_claims = %d ...\n", overlap_claims);
+
     db_name = argv[optind];
 
     /* build directory for target object */
@@ -347,6 +403,7 @@ char **argv;
     rti_tab[use_of_air] = rtip;
     rti_tab[1 - use_of_air] = RTI_NULL;
     rtip -> useair = use_of_air;
+    rtip -> rti_save_overlaps = (overlap_claims > 0);
 
     if (silent_flag != SILENT_YES)
 	printf("\nPrepping the geometry...");
@@ -361,6 +418,7 @@ char **argv;
     ap.a_hit = if_hit;        /* branch to if_hit routine            */
     ap.a_miss = if_miss;      /* branch to if_miss routine           */
     ap.a_overlap = if_overlap;/* branch to if_overlap routine        */
+    ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_onehit = 0;          /* continue through shotline after hit */
     ap.a_resource = &res_tab[use_of_air];
     ap.a_purpose = "NIRT ray";
@@ -430,6 +488,7 @@ Options:\n\
  -e script run script before interacting\n\
  -f sfile  run script sfile before interacting\n\
  -M        read matrix, cmds on stdin\n\
+ -O action handle overlap claims via action\n\
  -s        run in short (non-verbose) mode\n\
  -u n      set use_air=n (default 0)\n\
  -v        run in verbose mode\n\
