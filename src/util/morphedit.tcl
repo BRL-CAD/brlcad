@@ -9,10 +9,6 @@
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005-5066
 #  
-# Distribution Notice -
-#	Re-distribution of this software is restricted, as described in
-#	your "Statement of Terms and Conditions for the Release of
-#	The BRL-CAD Package" agreement.
 #
 #
 # Description -

@@ -36,10 +36,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Distribution Notice -
- *	Re-distribution of this software is restricted, as described in
- *	your "Statement of Terms and Conditions for the Release of
- *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
  *	This software is Copyright (C) 2000-2004 by the United States Army
