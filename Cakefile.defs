@@ -838,7 +838,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
 
-#	if 0
+#	if 1	/* PRODUCTION=0 */
 /*		Static linked executables */
 #		define	CC	gcc
 #		define	GFLAG	/**/
