@@ -5,7 +5,8 @@
  *  framebuffer, an entire image worth of memory is saved using SysV
  *  shared memory.  This image exists across invocations of frame buffer
  *  utilities, and allows the full resolution of an image to be retained,
- *  and captured, even with the 1-bit deep 3/50 displays.
+ *  and captured, even with the 1-bit deep 3/50 displays.  Be sure to
+ *  set the BITSDEEP parameter below under CONFIGURATION NOTES.
  *
  *  In order to use this large a chunk of memory with the shared memory
  *  system, it is necessary to reconfigure your kernel to authorize this.
@@ -29,7 +30,7 @@
  *  Note that this has been tested on release 3.2 of the 3/50 kernel.
  *  If you have more than 4 Megs of memory on your system, you may want
  *  to increase [XY]MAXWINDOW to be as big as [XY]MAXSCREEN (see CON-
- *  FIGURATION NOTE below) and increase SHMPOOL appropriately.  If you
+ *  FIGURATION NOTES below) and increase SHMPOOL appropriately.  If you
  *  do not reconfigure your kernel, the attempt to acquire shared memory
  *  will fail, and the image will be stored in the process's address space
  *  instead, with the only penalty being lack of persistance of the image
@@ -63,44 +64,56 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "fb.h"
 #include "./fblocal.h"
-
-extern char	*sbrk();
 extern char	*calloc(), *malloc();
 extern int	errno;
 extern char	*shmat();
-extern int	brk();
 
-/* CONFIGURATION NOTE:  If you have 4 Megabytes of memory, best limit the
-	window sizes to 512-by-512 (whether or not your using shared memory)
-	because a 24-bit image is stored in memory and we don't want our
-	systems to thrash do we). */
+/* CONFIGURATION NOTES:
+
+	1] If you have 4 Megabytes of memory, best limit the window sizes
+	to 512-by-512 (whether or not your using shared memory) because a
+	24-bit image is stored in memory and we don't want our systems to
+	thrash do we).
+
+	2] Change the BITSDEEP parameter below to match your particular
+	Sun.
+ */
 #define XMAXSCREEN	1152	/* Physical screen width in pixels. */
 #define YMAXSCREEN	896	/* Physical screen height in pixels. */
 #define XMAXWINDOW	512	/* Max. width of frame buffer in pixels. */
 #define YMAXWINDOW	512	/* Max. height of frame buffer in pixels. */
+#ifndef BITSDEEP
 #define BITSDEEP	1	/* No. of bit planes, same as su_depth. */
+#endif
 #define BANNER		18	/* Height of title bar at top of window. */
 #define BORDER		2	/* Border thickness of window. */
 #define PARENTBORDER	4	/* Border thickness of parent window. */
 #define TITLEXOFFSET	20	/* Indentation for text within title bar. */
 #define TITLEYOFFSET	4	/* Vertical padding of text within title bar. */
-#define RESTXMOUSE	BORDER	/* Out of way position for mouse while */
-#define RESTYMOUSE	BORDER	/*	doing pixel writes. */
+#define TIMEOUT		15	/* Seconds between check for window repaint. */
+#define MAXDITHERSZ	8	/* Dimensions of dithering threshold matrix. */
+#define DITHERSZ	8	/* Size of dither pattern used. */
+#define DITHMASK(ii) ((ii)&07)	/* Masks of DITHERSZ bits. */
 
-_LOCAL_ int 
-sun_dopen(),
-sun_dclose(),
-sun_dclear(),
-sun_bread(),
-sun_bwrite(),
-sun_cmread(),
-sun_cmwrite(),
-sun_viewport_set(),
-sun_window_set(),
-sun_zoom_set(),
-sun_curs_set(),
-sun_cmemory_addr(),
-sun_cscreen_addr();
+#define EQUALRGB(aa,bb) \
+	((aa)[RED]==(bb)[RED]&&(aa)[GRN]==(bb)[GRN]&&(aa)[BLU]==(bb)[BLU])
+#define XIMAGE2SCR( x ) \
+ ((x)*SUN(ifp)->su_xzoom-(SUN(ifp)->su_xcenter*SUN(ifp)->su_xzoom-ifp->if_width/2))
+#define YIMAGE2SCR( y ) \
+ ((ifp->if_height-1)-((y)*SUN(ifp)->su_yzoom-(SUN(ifp)->su_ycenter*SUN(ifp)->su_yzoom - ifp->if_height/2)))
+_LOCAL_ int	sun_dopen(),
+		sun_dclose(),
+		sun_dclear(),
+		sun_bread(),
+		sun_bwrite(),
+		sun_cmread(),
+		sun_cmwrite(),
+		sun_viewport_set(),
+		sun_window_set(),
+		sun_zoom_set(),
+		sun_curs_set(),
+		sun_cmemory_addr(),
+		sun_cscreen_addr();
 
 /* This is the ONLY thing that we "export" */
 FBIO            sun_interface = {
@@ -150,11 +163,13 @@ struct suninfo
 	short	su_xcursor;
 	short	su_ycursor;
 	short	su_depth;
+	int	su_shmid;	/* shared memory ID */
+	Pixwin	*su_windowpw;	/* f. b. window Pixwin pointer under SUNTOOLS. */
 	};
 #define if_mem		u2.p	/* shared memory pointer */
 #define if_cmap		u3.p	/* color map in shared memory */
-#define if_windowfd	u4.l	/* window file descriptor under SUNTOOLS */
-#define if_shmid	u6.l	/* shared memory ID */
+#define if_windowfd	u4.l	/* f. b. window file descriptor under SUNTOOLS */
+#define if_parentfd	u6.l	/* parent window file descriptor under SUNTOOLS */
 #define sunrop(dx,dy,w,h,op,pix,sx,sy) \
 		if( sun_pixwin ) \
 			pw_rop(SUNPW(ifp),dx,dy,w,h,op,pix,sx,sy); \
@@ -167,6 +182,12 @@ struct suninfo
 		else \
 			pr_put(SUNPR(ifp),dx,dy,v);
 
+#define sunreplrop(dx,dy,dw,dh,op,spr,sx,sy) \
+		if( sun_pixwin ) \
+			pw_replrop(SUNPW(ifp),dx,dy,dw,dh,op,spr,sx,sy); \
+		else \
+			pr_replrop(SUNPR(ifp),dx,dy,dw,dh,op,spr,sx,sy);
+
 #define SUNPW(ptr)	((Pixwin *)((ptr)->u5.p))
 #define SUNPWL(ptr)	((ptr)->u5.p)	/* left hand side version. */
 #define SUNPR(ptr)	((Pixrect *)((ptr)->u5.p))
@@ -177,10 +198,9 @@ struct suninfo
 #define CMG(x)		((struct sun_cmap *)((x)->if_cmap))->cmg
 #define CMB(x)		((struct sun_cmap *)((x)->if_cmap))->cmb
 
-static int	sun_redraw = FALSE;  /* Doing a sun_repaint. */
-static int	sun_damaged = FALSE; /* SIGWINCH fired, need sun_repair. */
+static int	sun_damaged = FALSE; /* SIGWINCH fired, need to repair damage. */
 static int	sun_pixwin = FALSE;  /* Running under SUNTOOLS. */
-
+static RGBpixel black = { 0, 0, 0 };
 struct sun_cmap
 	{
 	unsigned char	cmr[256];
@@ -190,13 +210,8 @@ struct sun_cmap
 
 static int	dither_flg = FALSE;   /* dither output */
 
-/* One scanline wide buffer */
-extern struct pixrectops mem_ops;
-char		sun_mpr_buf[1024];
-mpr_static( sun_mpr, 1024, 1, BITSDEEP, (short *)sun_mpr_buf );
-
 /* dither pattern (threshold level) */
-static short	dither[8][8] =
+static short	dither[MAXDITHERSZ][MAXDITHERSZ] =
 	{
 	6,  51,  14,  78,   8,  57,  16,  86,
 	118,  22, 178,  34, 130,  25, 197,  37,
@@ -250,6 +265,18 @@ static int      biggest = RR * GR * BR - 1;
 	(((*p)[GRN] * GR ) / 256) * BR  + \
 	(((*p)[BLU] * BR ) / 256) + 1
 
+#define SUN_CMAPVAL( p, o )\
+	if( SUN(ifp)->su_cmap_flag )\
+		{\
+		(*o)[RED] = CMR(ifp)[(*p)[RED]];\
+		(*o)[GRN] = CMG(ifp)[(*p)[GRN]];\
+		(*o)[BLU] = CMB(ifp)[(*p)[BLU]];\
+		}\
+	else	COPYRGB( *o, *p );
+
+static Pixwin	*windowpw;
+static Pixwin	*imagepw;
+
 _LOCAL_ int
 sun_sigwinch( sig )
 	{
@@ -257,13 +284,24 @@ sun_sigwinch( sig )
 	return	sig;
 	}
 
-sun_repair( pw )
-Pixwin	*pw;
+_LOCAL_ int
+sun_sigalarm( sig )
 	{
-	pw_damaged( pw );
-	pw_repairretained( pw );
-	pw_donedamaged( pw );
-	sun_damaged = FALSE;
+	if( windowpw == (Pixwin *) NULL || imagepw == (Pixwin *) NULL )
+		return	sig;
+	(void) signal( SIGALRM, sun_sigalarm );
+	if( sun_damaged )
+		{
+		pw_damaged( windowpw );
+		pw_damaged( imagepw );
+		pw_repairretained( windowpw );
+		pw_repairretained( imagepw );
+		pw_donedamaged( windowpw );
+		pw_donedamaged( imagepw );
+		sun_damaged = FALSE;
+		}
+	alarm( TIMEOUT );
+	return	sig;
 	}
 
 _LOCAL_ void
@@ -279,9 +317,7 @@ register int		count;
 		memp++, p++, count--
 		)
 		{
-		(*memp)[RED] = (*p)[RED];
-		(*memp)[GRN] = (*p)[GRN];
-		(*memp)[BLU] = (*p)[BLU];
+		COPYRGB( *memp, *p );
 		}
 	return;
 	}
@@ -299,25 +335,198 @@ register int		count;
 		memp++, count--
 		)
 		{
-		(*memp)[RED] = (*p)[RED];
-		(*memp)[GRN] = (*p)[GRN];
-		(*memp)[BLU] = (*p)[BLU];
+		COPYRGB( *memp, *p );
 		}
+	return;
+	}
+
+/* These lock routines are unused.  They do not seem to provide any speedup when
+bracketing raster op routines.  This may pan out differently when other processes
+are actively competing for raster ops. */
+_LOCAL_ void
+sun_lock( ifp )
+FBIO	*ifp;
+	{
+	if( sun_pixwin )
+		{ /* Lock the display and get the cursor out of the way. */
+		pw_lock( SUNPW(ifp), SUNPW(ifp)->pw_pixrect );
+		}
+	return;
+	}
+
+_LOCAL_ void
+sun_unlock( ifp )
+FBIO	*ifp;
+	{
+	if( sun_pixwin )
+		{ /* Release display lock and restore cursor. */
+		pw_unlock( SUNPW(ifp) );
+		}
+	return;
+	}
+
+/* Dither pattern pixrect for fast raster ops. */
+static char	dither_mpr_buf[8*BITSDEEP];
+mpr_static( dither_mpr, DITHERSZ, DITHERSZ, BITSDEEP, (short *)dither_mpr_buf );
+
+/* Scanline dither pattern pixrect, if DITHERSZ or BITSDEEP > sizeof(char)
+	you must extend the length of scan_mpr_buf accordingly. */
+static char	scan_mpr_buf[XMAXWINDOW];
+mpr_static( scan_mpr, XMAXWINDOW, DITHERSZ, BITSDEEP, (short *)scan_mpr_buf );
+
+/* Straight pixrect for grey-scale and color devices. */
+static char	pixel_mpr_buf[1];
+mpr_static( pixel_mpr, 1, 1, BITSDEEP, (short *)pixel_mpr_buf );
+
+_LOCAL_ void
+sun_rectclear( ifp, xlft, ytop, width, height, pp )
+FBIO		*ifp;
+int		xlft, ytop, width, height;
+RGBpixel	*pp;
+	{	static int		lastvalue = 0;
+		register int		value;
+		register RGBpixel	*vp;
+	/*fb_log( "sun_rectclear(%d,%d,%d,%d)\n", xlft, ytop, width, height ); /* XXX-debug */
+	/* Get color map value for pixel. */
+	SUN_CMAPVAL( pp, vp );
+
+ 	if( SUN(ifp)->su_depth == 1 )
+		{ /* Construct dither pattern in memory pixrect. */
+		value = ((*vp)[RED] + (*vp)[GRN] + (*vp)[BLU]);
+		if( value == 0 )
+			{
+			sunrop( xlft, ytop, width, height,
+				PIX_SET, (Pixrect *) 0, 0, 0
+				);
+			return;
+			}
+		if( value != lastvalue )
+			{	register int	i, j;
+			for( i = 0; i < DITHERSZ; i++ )
+				for( j = 0; j < DITHERSZ; j++ )
+					{	register int	op;
+					op = (value < dither[j][i]*3) ?
+						PIX_SET : PIX_CLR;
+					pr_rop( &dither_mpr, j, i, 1, 1, op,
+						(Pixrect *) NULL, 0, 0 );
+					}
+			lastvalue = value;
+			}
+		/* Blat out dither pattern. */
+		sunreplrop( xlft, ytop, width, height,
+			PIX_SRC, &dither_mpr, DITHMASK(xlft), DITHMASK(ytop) );
+		}
+	else
+		{ /* Grey-scale or color image. */
+		pixel_mpr_buf[0] = COLOR_APPROX(vp);
+		sunreplrop( xlft, ytop, width, height,
+			PIX_SRC, &pixel_mpr, 0, 0
+			);
+		}
+	return;
+	}
+
+_LOCAL_ void
+sun_scanwrite( ifp, xlft, ybtm, xrgt, pp )
+FBIO		*ifp;
+int		xlft;
+int		ybtm;
+register int	xrgt;
+RGBpixel	*pp;
+	{	register int	sy = YIMAGE2SCR( ybtm+1 ) + 1;
+		register int	xzoom = SUN(ifp)->su_xzoom;
+		int		xl = XIMAGE2SCR( xlft );
+	/*fb_log( "sun_scanwrite(%d,%d,%d,0x%x)\n", xlft, ybtm, xrgt, pp );
+		/* XXX-debug */
+ 	if( SUN(ifp)->su_depth == 1 )
+		{	register int	x;
+			register int	sx = xl;
+			int		yzoom = SUN(ifp)->su_yzoom;
+		/* Clear buffer to black. */
+		(void) memset( scan_mpr_buf, 0xff, XMAXWINDOW );
+		for( x = xlft; x <= xrgt; x++, sx += xzoom, pp++ )
+			{	register int		value;
+				register RGBpixel	*vp;
+			/* Get color map value for pixel. */
+			SUN_CMAPVAL( pp, vp );
+			value = (*vp)[RED] + (*vp)[GRN] + (*vp)[BLU];
+			if( value != 0 )
+				{ register int	maxdy = yzoom < DITHERSZ ?
+							yzoom : DITHERSZ;
+				  register int	dy;
+				  register int	yoffset = sx;
+				/* Construct dither pattern. */
+				value /= 3;
+				for( dy = 0; dy < maxdy; dy++, yoffset += XMAXWINDOW )
+					{ register int dx;
+					  register int ydit = DITHMASK(sy+dy);
+					for( dx = 0; dx < xzoom; dx++ )
+						{ register int xdit =
+							DITHMASK(sx+dx);
+						if( value >= dither[xdit][ydit] )
+							scan_mpr_buf[(yoffset+dx)>>3] &= ~(0x80>>xdit);
+						}
+					}
+				}
+			}
+		sunreplrop( xl, sy,
+			(xrgt-xlft+1)*xzoom, yzoom,
+			PIX_SRC, &scan_mpr,
+			xl, 0
+			);
+		}
+	else /* Grey-scale or color image. */
+		{	register int	x;
+			register int	sx = xl;
+		for( x = xlft; x <= xrgt; x++, pp++, sx += xzoom )
+			{	register int		dx;
+				register RGBpixel	*vp;
+				register int		value;
+			/* Get color map value for pixel. */
+			SUN_CMAPVAL( pp, vp );
+			value = COLOR_APPROX(vp);
+			for( dx = 0; dx < xzoom; dx++ )
+				scan_mpr_buf[sx+dx] = value; 
+			}
+		sunreplrop( xl, sy,
+			(xrgt-xlft+1)*xzoom, SUN(ifp)->su_yzoom,
+			PIX_SRC, &scan_mpr,
+			xl, 0
+			);
+		}
+	return;
+	}
+
+_LOCAL_ void
+sun_rectwrite( ifp, xmin, ymin, xmax, ymax, buf, offset )
+register FBIO		*ifp;
+int			xmin, ymin;
+int			xmax;
+register int		ymax;
+RGBpixel		*buf;
+register int		offset;
+	{	register int		y;
+		register RGBpixel	*p;
+	/*fb_log( "sun_rectwrite(xmin=%d,ymin=%d,xmax=%d,ymax=%d,buf=0x%x,offset=%d)\n",
+		xmin, ymin, xmax, ymax, buf, offset ); /* XXX--debug */
+	p = buf-offset+ymin*ifp->if_width+xmin;
+	for( y = ymin; y <= ymax; y++, p += ifp->if_width )
+		sun_scanwrite(	ifp, xmin, y, xmax, p );
 	return;
 	}
 
 _LOCAL_ void
 sun_repaint( ifp )
 register FBIO	*ifp;
-	{	register int	y;
-		register int	i;
+	{	register int	i;
 		register int	ymin, ymax;
 		int		xmin, xmax;
 		int		xwidth;
 		int		xscroff, yscroff;
 		int		xscrpad, yscrpad;
 	/*fb_log( "sun_repaint: xzoom=%d yzoom=%d xcenter=%d ycenter=%d\n",
-		SUN(ifp)->su_xzoom, SUN(ifp)->su_yzoom, SUN(ifp)->su_xcenter, SUN(ifp)->su_ycenter );*/
+		SUN(ifp)->su_xzoom, SUN(ifp)->su_yzoom,
+		SUN(ifp)->su_xcenter, SUN(ifp)->su_ycenter ); /* XXX-debug */
 	xscroff = yscroff = 0;
 	xscrpad = yscrpad = 0;
 	xwidth = ifp->if_width/SUN(ifp)->su_xzoom;
@@ -349,44 +558,24 @@ register FBIO	*ifp;
 		}
 	/* Blank out area left of image.			*/
 	if( xscroff > 0 )
-		sunrop(	0, 0,
-			xscroff,
-			ifp->if_height,
-			PIX_SET,
-			(Pixrect *) NULL, 0, 0
-			);
+		sun_rectclear(	ifp, 0, 0, xscroff, ifp->if_height,
+				(RGBpixel *) black );
 	/* Blank out area below image.			*/
 	if( yscroff > 0 )
-		sunrop(	0, ifp->if_height-yscroff,
-			ifp->if_width, yscroff,
-			PIX_SET,
-			(Pixrect *) NULL, 0, 0
-			);
+		sun_rectclear(	ifp, 0, ifp->if_height-yscroff,
+				ifp->if_width, yscroff,
+				(RGBpixel *) black );
 	/* Blank out area right of image.			*/
 	if( xscrpad > 0 )
-		sunrop(	ifp->if_width-xscrpad, 0,
-			xscrpad, ifp->if_height,
-			PIX_SET,
-			(Pixrect *) NULL, 0, 0
-			);
+		sun_rectclear(	ifp, ifp->if_width-xscrpad, 0,
+				xscrpad, ifp->if_height,
+				(RGBpixel *) black );
 	/* Blank out area above image.			*/
 	if( yscrpad > 0 )
-		sunrop(	0, 0,
-			ifp->if_width, yscrpad,
-			PIX_SET,
-			(Pixrect *) NULL, 0, 0
-			);
-	sun_redraw = TRUE;
-	for( y = ymin; y <= ymax; y++ )
-		if( sun_bwrite(	ifp,
-				xmin, y,
-				(RGBpixel *)(ifp->if_mem+(y*ifp->if_width+xmin)*sizeof(RGBpixel)),
-				xwidth
-				)
-		     <	xwidth
-			)
-			fb_log( "sun_repaint: Write of %d pixels to <%d,%d> failed.\n", xwidth, xmin, y );
-	sun_redraw = FALSE;
+		sun_rectclear(	ifp, 0, 0,
+				ifp->if_width, yscrpad,
+				(RGBpixel *) black );
+	sun_rectwrite( ifp, xmin, ymin, xmax, ymax, (RGBpixel *)ifp->if_mem, 0 );
 	return;
 	}
 
@@ -404,70 +593,60 @@ register FBIO	*ifp;
  *  until explicitly killed, so this also means that under SUNTOOLS, the
  *  previous contents of the frame buffer still exist, and can be again
  *  accessed, even though the windows are transient, per-process.
- * 
- *  There are a few oddities, however.  The worst is that System V will
- *  not allow the break (see sbrk(2)) to be set above a shared memory
- *  segment, and shmat(2) does not seem to allow the selection of any
- *  reasonable memory address (like 6 Mbytes up) for the shared memory.
- *  In the initial version of this routine, that prevented subsequent
- *  calls to malloc() from succeeding, quite a drawback.  The work-around
- *  used here is to increase the current break to a large value,
- *  attach to the shared memory, and then return the break to it's
- *  original value.  This should allow most reasonable requests for
- *  memory to be satisfied.  In special cases, the values used here
- *  might need to be increased.
  */
 _LOCAL_ int
 sun_getmem( ifp )
 FBIO	*ifp;
-	{
-		int	pixsize;
+	{	int	pixsize;
 		int	size;
-		int	i;
 		int	new = 0;
-		char	*sp;
+		static char	*sp = NULL;
+		extern caddr_t	sbrk();
 
 	errno = 0;
 	pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
 	size = pixsize + sizeof(struct sun_cmap);
 	size = (size + 4096-1) & ~(4096-1);
-
 #define SHMEM_KEY	42
-	/* First try to attach to an existing one */
-	if( (ifp->if_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )
-		{ /* No existing one, create a new one */
-		if( (ifp->if_shmid = shmget(
-		    SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )
+	if( sp == (char *) NULL ) /* Do once per process. */
+		{
+		/* First try to attach to an existing one */
+		if( (SUN(ifp)->su_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )
+			{ /* No existing one, create a new one */
+			if(	(SUN(ifp)->su_shmid =
+				shmget( SHMEM_KEY, size, IPC_CREAT|0666 ))
+				< 0 )
+				{
+				fb_log( "if_sun: shmget failed, errno=%d\n", errno );
+				goto fail;
+				}
+			new = 1;
+			}
+		/* Open the segment Read/Write, near the current break */
+		if( (sp = shmat( SUN(ifp)->su_shmid, 0, 0 )) < 0 )
 			{
-			fb_log( "if_sun: shmget failed, errno=%d\n", errno );
+			fb_log("shmat returned x%x, errno=%d\n", sp, errno );
 			goto fail;
+			}
+		goto	common;
+fail:
+		fb_log("sun_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sun.c for details\n");
+		if( (sp = malloc( size )) == NULL )
+			{
+			fb_log( "sun_getmem:  malloc failure, couldn't allocate %d bytes\n", size );
+			return	-1;
 			}
 		new = 1;
 		}
-
-	/* Open the segment Read/Write, near the current break */
-	if( (sp = shmat( ifp->if_shmid, 0, 0 )) == (char *)(-1) )
-		{
-		fb_log("shmat returned x%x, errno=%d\n", sp, errno );
-		goto fail;
-		}
+common:
 	ifp->if_mem = sp;
 	ifp->if_cmap = sp + pixsize;	/* Color map at end of area */
-
+	
 	/* Provide non-black colormap on creation of new shared mem */
 	if( new )
-		{	static RGBpixel black = { 0, 0, 0 };
+		{
 		sun_cmwrite( ifp, COLORMAP_NULL );
 		sun_storebackground( ifp, 0, 0, black, ifp->if_max_width*ifp->if_max_height );
-		}
-	return	0;
-fail:
-	fb_log("sun_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sun.c for details\n");
-	if(	ifp->if_mem == (char *) NULL
-	    ||	(ifp->if_mem = malloc( size )) == NULL )
-		{
-		fb_log( "sun_getmem:  malloc failure, couldn't allocate %d bytes\n", size );
-		return	-1;
 		}
 	return	0;
 	}
@@ -495,6 +674,36 @@ sun_zapmem()
 	return;
 	}
 
+#ifdef SUN_USE_AGENT
+_LOCAL_ Notify_value
+event_func( client, event, arg, when )
+Notify_client		client;
+Event			*event;
+Notify_arg		arg;
+Notify_event_type	when;
+	{
+	fb_log( "event_func(%s)\n", client );
+	switch( event_id( event ) )
+		{
+	case WIN_REPAINT :
+		sun_repair( win_get_pixwin( client ) );
+		break;
+	default :
+		break;
+		}
+	return	NOTIFY_DONE;
+	}
+
+_LOCAL_ Notify_value
+destroy_func( client, status )
+Notify_client	client;
+Destroy_status	status;
+	{
+	fb_log( "destroy_func(%s)\n", client );
+	return	NOTIFY_DONE;
+	}
+#endif
+
 /*
  *			S U N _ D O P E N 
  */
@@ -505,7 +714,6 @@ char	*file;
 int	width, height;
 	{	char		sun_parentwinname[WIN_NAMESIZE];
 		Rect		winrect;
-		int		i;
 		int		x;
 		struct pr_prpos	where;
 		struct pixfont	*myfont;
@@ -542,7 +750,6 @@ int	width, height;
 		fb_log( "sun_dopen:  suninfo calloc failed\n" );
 		return	-1;
 		}
-
 	myfont = pf_open( "/usr/lib/fonts/fixedwidthfonts/screen.b.14" );
 
 	/* Create window. */
@@ -550,8 +757,7 @@ int	width, height;
 		{	int	parentno;
 			int	parentfd;
 			Rect	parentrect;
-			int	sun_windowfd;
-			Pixwin	*sun_windowpw;
+			int	windowfd;
 		if( (parentfd = open( sun_parentwinname, 2 )) < 0 )
 			{
 			fb_log( "sun_dopen, couldn't open parent window.\n" );
@@ -560,7 +766,7 @@ int	width, height;
 		win_getrect( parentfd, &parentrect );
 
         	/* Running under SunView, with windows */
-		if( (sun_windowfd = win_getnewwindow()) == -1 )
+		if( (windowfd = win_getnewwindow()) == -1 )
 			{
 			fb_log("sun_dopen:  win_getnewwindow failed\n");
 			return	-1;     /* FAIL */
@@ -571,25 +777,47 @@ int	width, height;
 				(height+BANNER+BORDER*3+PARENTBORDER+13);
 		winrect.r_width = width+BORDER*2;
 		winrect.r_height = height+BANNER+BORDER*3;
-		win_setrect( sun_windowfd, &winrect );
+		win_setrect( windowfd, &winrect );
 		parentno = win_nametonumber( sun_parentwinname );
-		win_setlink( sun_windowfd, WL_PARENT, parentno );
-		win_insert( sun_windowfd );
-		sun_windowpw = pw_open(sun_windowfd);
-		SUNPWL(ifp) = (char *)
-			pw_region(	sun_windowpw,
+		win_setlink( windowfd, WL_PARENT, parentno );
+		win_insert( windowfd );
+		windowpw = pw_open(windowfd);
+		imagepw = pw_region(	windowpw,
 					BORDER, BANNER+BORDER*2,
 					width, height
 					);
+		SUNPWL(ifp) = (char *) imagepw;
 		if( width > winrect.r_width )
 			width = winrect.r_width;
 		if( height > winrect.r_height )
 			height = winrect.r_height;
 
-		ifp->if_windowfd = sun_windowfd;
+		ifp->if_windowfd = windowfd;
+		ifp->if_parentfd = parentfd;
+		SUN(ifp)->su_windowpw = windowpw;
 		SUN(ifp)->su_depth = SUNPW(ifp)->pw_pixrect->pr_depth;
-		SUNPW(ifp)->pw_prretained = mem_create( width, height, SUN(ifp)->su_depth );
-		sun_mpr.pr_depth = SUN(ifp)->su_depth;
+#ifdef SUN_USE_AGENT
+		/* Register pixwin with Agent so it can manage repaints. */
+		win_register(	(Notify_client) ifp->if_type,
+				SUNPW(ifp),
+				event_func, destroy_func,
+				PW_RETAIN | PW_REPAINT_ALL
+				);
+#else
+		imagepw->pw_prretained = mem_create(	width,
+							height,
+							SUN(ifp)->su_depth
+							);
+		windowpw->pw_prretained = mem_create(	winrect.r_width,
+							winrect.r_height,
+							SUN(ifp)->su_depth
+							);
+		pw_exposed( imagepw ); /* is this REALLY necessary??? */
+		pw_exposed( windowpw ); /* is this REALLY necessary??? */
+		(void) signal( SIGWINCH, sun_sigwinch );
+		(void) signal( SIGALRM, sun_sigalarm );
+		alarm( TIMEOUT );
+#endif
 		if( SUN(ifp)->su_depth == 8 )
 			{
 			if( dither_flg )
@@ -597,17 +825,16 @@ int	width, height;
 #ifdef DIT
 				draw8Ainit();
 				dither8Ainit();
-				pw_set8Amap(SUN(ifp), &sun_cmap);
+				pw_set8Amap(imagepw, &sun_cmap);
 #endif DIT
 				}
 			else
 				{
 				/* r | g | b, values = RR, GR, BR */
 				/* set a new cms name; initialize it */
-				x = pw_setcmsname(SUN(ifp), "libfb");
+				x = pw_setcmsname(imagepw, "libfb");
 				for (x = 0; x < (RR * GR * BR); x++)
-					{	int             new;
-						RGBpixel        q;
+					{	RGBpixel        q;
 						RGBpixel       *qq = (RGBpixel *) q;
 
 					blumap[x + 1] = ((x % BR)) * (255 / (BR - 1));
@@ -616,62 +843,61 @@ int	width, height;
 					q[RED] = redmap[x + 1];
 					q[GRN] = grnmap[x + 1];
 					q[BLU] = blumap[x + 1];
-					new = COLOR_APPROX(qq);
 					}
-				x = pw_putcolormap(SUN(ifp), 0, 256, redmap, grnmap, blumap);
+				x = pw_putcolormap(imagepw, 0, 256, redmap, grnmap, blumap);
 				}
 			}
 		/* Outer border is black. */
-		pw_rop( sun_windowpw, 0, 0,
+		pw_rop( windowpw, 0, 0,
 			winrect.r_width, winrect.r_height,
 			PIX_SET, (Pixrect *) NULL, 0, 0 );
 		/* Inner border is white. */
-		pw_rop( sun_windowpw, 1, 1,
+		pw_rop( windowpw, 1, 1,
 			winrect.r_width-2, winrect.r_height-2,
 			PIX_CLR, (Pixrect *) NULL, 0, 0 );
 		/* Black out title bar. */
-		pw_rop( sun_windowpw, BORDER, BORDER,
+		pw_rop( windowpw, BORDER, BORDER,
 			width, BANNER,
 			PIX_SET, (Pixrect *) NULL, 0, 0 );
 		/* Draw title in title bar (banner). */
-		pw_ttext( sun_windowpw, TITLEXOFFSET, BANNER - TITLEYOFFSET,
+		pw_ttext( windowpw, TITLEXOFFSET, BANNER - TITLEYOFFSET,
 			  PIX_CLR,
 			  myfont, "BRL libfb Frame Buffer" );
 		}
 	else
-		{	static Pixrect	*myscreen = NULL;
-			static Pixrect	*mywindow;
-		if( myscreen == (Pixrect *) NULL )
+		{	static Pixrect	*screenpr = NULL;
+			static Pixrect	*windowpr;
+		if( screenpr == (Pixrect *) NULL )
 			{
-			myscreen = pr_open( "/dev/fb" );
-			mywindow = pr_region(	myscreen,
+			screenpr = pr_open( "/dev/fb" );
+			windowpr = pr_region(	screenpr,
 					XMAXSCREEN-width-BORDER*2,
 					YMAXSCREEN-(height+BANNER+BORDER*3),
 					width+BORDER*2, height+BANNER+BORDER*3
 					);
 			}
 		SUNPRL(ifp) = (char *)
-			pr_region(	mywindow,
+			pr_region(	windowpr,
 					BORDER, BANNER+BORDER*2,
 					width, height
 					);
 		/* Outer border is black. */
-		pr_rop( mywindow, 0, 0,
+		pr_rop( windowpr, 0, 0,
 			width+BORDER*2, height+BANNER+BORDER*3,
 			PIX_DONTCLIP | PIX_SET,
 			(Pixrect *) NULL, 0, 0 );
 		/* Inner border is white. */
-		pr_rop( mywindow, 1, 1,
+		pr_rop( windowpr, 1, 1,
 			width+2, height+BANNER+BORDER*2,
 			PIX_DONTCLIP | PIX_CLR,
 			(Pixrect *) NULL, 0, 0 );
 		/* Black out title bar. */
-		pr_rop( mywindow, BORDER, BORDER,
+		pr_rop( windowpr, BORDER, BORDER,
 			width, BANNER,
 			PIX_DONTCLIP | PIX_SET,
 			(Pixrect *) NULL, 0, 0 );
 		/* Draw title in title bar (banner). */
-		where.pr = mywindow;
+		where.pr = windowpr;
 		where.pos.x = TITLEXOFFSET;
 		where.pos.y = BANNER - TITLEYOFFSET;
 		pf_ttext(	where,
@@ -692,7 +918,9 @@ int	width, height;
 		space for the color map.				*/
 	SUN(ifp)->su_cmap_flag = !is_linear_cmap(ifp);
 
-	(void) signal( SIGWINCH, sun_sigwinch );
+	/* Redraw 24-bit image from memory. */
+	sun_repaint( ifp );
+
 	return	0;		/* "Success" */
 	}
 
@@ -703,15 +931,23 @@ _LOCAL_ int
 sun_dclose(ifp)
 FBIO	*ifp;
 	{
-	if( SUNL(ifp) == (struct suninfo *) NULL )
+	if( SUNL(ifp) == (char *) NULL )
 		{
 		fb_log( "sun_dclose: frame buffer not open.\n" );
 		return	-1;
 		}
 	if( sun_pixwin )
 		{
+#ifdef SUN_USE_AGENT
+		win_unregister( ifp->if_type );
+#endif
+		alarm( 0 ); /* Turn off window redraw daemon. */
 		pw_close( SUNPW(ifp) );
+		pw_close( SUN(ifp)->su_windowpw );
 		win_remove( ifp->if_windowfd );
+		(void) close( ifp->if_windowfd );
+		(void) close( ifp->if_parentfd );
+		windowpw = imagepw = NULL;
 		}
 	else
 		{
@@ -730,11 +966,14 @@ sun_dclear(ifp, pp)
 FBIO			*ifp;
 register RGBpixel	*pp;
 	{
-	if( sun_damaged )
-		sun_repair( SUNPW(ifp) );
+	if( pp == (RGBpixel *) NULL )
+		pp = (RGBpixel *) black;
 
+	/* Clear 24-bit image in shared memory. */
 	sun_storebackground( ifp, 0, 0, pp, ifp->if_width*ifp->if_height );
-	sun_repaint( ifp );
+
+	/* Clear entire screen. */
+	sun_rectclear( ifp, 0, 0, ifp->if_width, ifp->if_height, pp );
 	return	0;
 	}
 
@@ -747,8 +986,6 @@ FBIO	*ifp;
 int     xcenter, ycenter;
 	{
 	/*fb_log( "sun_window_set(0x%x,%d,%d)\n", ifp, xcenter , ycenter );*/
-	if( sun_damaged )
-		sun_repair( SUNPW(ifp) );
 	if( SUN(ifp)->su_xcenter == xcenter && SUN(ifp)->su_ycenter == ycenter )
 		return	0;
 	if( xcenter < 0 || xcenter >= ifp->if_width )
@@ -772,8 +1009,6 @@ FBIO	*ifp;
 int	xzoom, yzoom;
 	{
 	/*fb_log( "sun_zoom_set(0x%x,%d,%d)\n", ifp, xzoom, yzoom );*/
-	if( sun_damaged )
-		sun_repair( SUNPW(ifp) );
 	if( SUN(ifp)->su_xzoom == xzoom && SUN(ifp)->su_yzoom == yzoom )
 		return	0;
 	if( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
@@ -795,8 +1030,8 @@ FBIO		*ifp;
 unsigned char	*bits;
 int		xbits, ybits;
 int		xorig, yorig;
-	{	register int	y;
-		register int	xbytes;
+	{	register int	xbytes;
+		register int	y;
 		Cursor		newcursor;
 	/* Check size of cursor.					*/
 	if( xbits < 0 )
@@ -905,35 +1140,15 @@ int			x, y;
 register RGBpixel	*p;
 register int		count;
 	{	register RGBpixel	*memp;
-	if( sun_damaged )
-		sun_repair( SUNPW(ifp) );
 	for(	memp =	(RGBpixel *)
 			(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
 		count > 0;
 		memp++, p++, count--
 		)
 		{
-		(*p)[RED] = (*memp)[RED];
-		(*p)[GRN] = (*memp)[GRN];
-		(*p)[BLU] = (*memp)[BLU];
+		COPYRGB( *p, *memp );
 		}
 	return	count;
-	}
-
-_LOCAL_ RGBpixel *
-sun_cmapval( ifp, p )
-register FBIO		*ifp;
-register RGBpixel	*p;
-	{	static RGBpixel	cmval;
-	if( SUN(ifp)->su_cmap_flag )
-		{
-		cmval[RED] = CMR(ifp)[(*p)[RED]];
-		cmval[GRN] = CMG(ifp)[(*p)[GRN]];
-		cmval[BLU] = CMB(ifp)[(*p)[BLU]];
-		return	(RGBpixel *) cmval;
-		}
-	else
-		return	p;
 	}
 
 /*
@@ -941,130 +1156,21 @@ register RGBpixel	*p;
  */
 _LOCAL_ int
 sun_bwrite(ifp, x, y, p, count)
-register FBIO		*ifp;
-int			x, y;
-register RGBpixel	*p;
-register int		count;
-	{	register	scrx, scry;
-		register	value;
-		register	i, j;
-		register	cnt;
-		register	cury;
-		RGBpixel	*base = p;
-	/*fb_log( "sun_bwrite(0x%x,%d,%d,0x%x,%d)\n", ifp, x, y, p, count );*/
-	if( sun_damaged )
-		sun_repair( SUNPW(ifp) );
-	scrx =	(x*SUN(ifp)->su_xzoom -
-		(SUN(ifp)->su_xcenter*SUN(ifp)->su_xzoom - ifp->if_width/2));
-	scry =	(ifp->if_height-1) -
-		(y*SUN(ifp)->su_yzoom -
-		(SUN(ifp)->su_ycenter*SUN(ifp)->su_yzoom - ifp->if_height/2));
-	if( scrx < 0 || scrx >= ifp->if_width )
-		return	0;
-	if( scry < 0 || scry >= ifp->if_height )
-		return	0;
-
+register FBIO	*ifp;
+int		x, y;
+RGBpixel	*p;
+register int	count;
+	{	int		xmax, ymax;
+		register int	xwidth;
+	/*fb_log( "sun_bwrite(0x%x,%d,%d,0x%x,%d)\n", ifp, x, y, p, count );
+		/* XXX--debug */
 	/* Store pixels in memory. */
-	if( ! sun_redraw )
-		sun_storepixel( ifp, x, y, p, count );
+	sun_storepixel( ifp, x, y, p, count );
 
-	if( sun_pixwin )
-		{ /* Lock the display and get the cursor out of the way. */
-		pw_lock( SUNPW(ifp), SUNPW(ifp)->pw_pixrect );
-		win_setmouseposition(	ifp->if_windowfd,
-					RESTXMOUSE,
-					RESTYMOUSE
-					);
-		}
-
-	/* Take care of single-pixel case. */
-	if( count == 1 )
-		{	register RGBpixel *vp = sun_cmapval( ifp, p );
-		if( SUN(ifp)->su_depth < 8 )
-			value = ((*vp)[RED] + (*vp)[GRN] + (*vp)[BLU]);
-		else
-			value = COLOR_APPROX(vp);
-		for(	i = 0, cury = scry;
-			i < SUN(ifp)->su_yzoom && cury > 0;
-			i++, cury-- )
-			{	register curx;
-			for(	j = 0, curx = scrx+j;
-				j < SUN(ifp)->su_xzoom
-			     &&	curx < ifp->if_width;
-				j++, curx++ )
-				{	register int	val;
-				/* 0 gives white, 1 gives black */
-				val = (value < dither[curx&07][cury&07]*3);
-				sunput( curx, cury, val );
-				}
-			}
-		if( sun_pixwin )
-			{ /* Release display lock and restore cursor. */
-			pw_unlock( SUNPW(ifp) );
-			win_setmouseposition(	ifp->if_windowfd,
-						SUN(ifp)->su_xcursor,
-						SUN(ifp)->su_ycursor
-						);
-			}
-		return	count;
-		}
-
-	/* Multiple pixels. */
-	bzero( sun_mpr_buf, ifp->if_width * SUN(ifp)->su_depth / sizeof(char) );
-
-	/* Need to write out each scanline YZOOM times. */
-	for(	i = 0, cury = scry;
-		i < SUN(ifp)->su_yzoom
-	    &&	cury >= 0
-	    &&	cury < ifp->if_height;
-		i++, cury--, p = base )
-		{	register int	curx;
-		curx = 0;
-		for( cnt = 0; cnt < count; cnt++, p++ )
-			{	register RGBpixel *vp = sun_cmapval( ifp, p );
-			/* Write pixel to memory pixrect. */
-			if( SUN(ifp)->su_depth < 8 )
-				{ /* Must build pixel from dither pattern,
-					whose dimensions are based on the
-					zoom factors. */
-				value = ((*vp)[RED] + (*vp)[GRN] + (*vp)[BLU]);
-				for( j = 0; j < SUN(ifp)->su_xzoom; j++ )
-					{
-					if( SUN(ifp)->su_depth < 8 )
-						{ /* 0 gives white, 1 gives black */
-						if( value < dither[curx+j&07][cury&07]*3 )
-							sun_mpr_buf[curx+j>>3] |= (0x80>>(curx+j&07));
-						}
-					}
-				}
-			else
-				{
-				value = COLOR_APPROX(vp);
-				for( j = 0; j < SUN(ifp)->su_xzoom; j++ )
-					sun_mpr_buf[curx+j] = value;
-				}
-			curx += SUN(ifp)->su_xzoom;
-	
-			/* Output full scan-line. */
-			if (curx >= ifp->if_width)
-				{
-				sunrop( scrx, cury,
-					ifp->if_width, 1,
-					PIX_SRC, &sun_mpr, 0, 0	);
-				bzero( (char *) sun_mpr_buf,
-					ifp->if_width * SUN(ifp)->su_depth
-					/ sizeof(char) );
-				}
-			} /* all pixels done */
-		}
-	if( sun_pixwin )
-		{ /* Release display lock and restore cursor. */
-		pw_unlock( SUNPW(ifp) );
-		win_setmouseposition(	ifp->if_windowfd,
-					SUN(ifp)->su_xcursor,
-					SUN(ifp)->su_ycursor
-					);
-		}
+	xwidth = ifp->if_width/SUN(ifp)->su_xzoom;
+	xmax = count >= xwidth-x ? xwidth-1 : x+count-1;
+	ymax = y + (count-1)/ ifp->if_width;
+	sun_rectwrite( ifp, x, y, xmax, ymax, p, y*ifp->if_width+x );
 	return	count;
 	}
 
@@ -1075,8 +1181,6 @@ _LOCAL_ int
 sun_viewport_set( ifp )
 FBIO	*ifp;
 	{
-	if( sun_damaged )
-		sun_repair( SUNPW(ifp) );
 	return	0;
 	}
 
@@ -1088,9 +1192,6 @@ sun_cmread( ifp, cmp )
 register FBIO		*ifp;
 register ColorMap	*cmp;
 	{	register int i;
-	if( sun_damaged )
-		sun_repair( SUNPW(ifp) );
-
 	/* Just parrot back the stored colormap */
 	for( i = 0; i < 256; i++)
 		{
@@ -1129,9 +1230,6 @@ sun_cmwrite(ifp, cmp)
 register FBIO		*ifp;
 register ColorMap	*cmp;
 	{	register int i;
-	if( sun_damaged )
-		sun_repair( SUNPW(ifp) );
-
 	if( cmp == COLORMAP_NULL )
 		{
 		for( i = 0; i < 256; i++)
