@@ -28,7 +28,7 @@
  *	earlier work by Beckmann, Torrance, and Cook).
  */
 #ifndef lint
-static char RCSplastic[] = "@(#)$Header$ (BRL)";
+static char RCSbrdf[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -94,6 +94,8 @@ struct mfuncs brdf_mfuncs[] = {
 	0,		0,		0,		0 }
 };
 
+#define RI_AIR		1.0    /* Refractive index of air.		*/
+
 /*
  *			B R D F _ S E T U P
  */
@@ -112,6 +114,10 @@ char	**dpp;
 	pp->magic = BRDF_MAGIC;
 	pp->specular_refl = 0.7;
 	pp->diffuse_refl = 0.3;
+	pp->transmit = 0.0;
+	pp->reflect = 0.0;
+	pp->refrac_index = RI_AIR;
+	pp->extinction = 0.0;
 	pp->rms_slope = 0.05;
 
 	if( rt_structparse( matparm, brdf_parse, (char *)pp ) < 0 )  {
@@ -120,7 +126,7 @@ char	**dpp;
 	}
 
 	pp->rms_sq = pp->rms_slope * pp->rms_slope;
-	pp->denom = 4.0 * pp->rms_sq;
+	pp->denom = 4.0 * M_PI * pp->rms_sq;
 
 	return(1);
 }
@@ -234,8 +240,8 @@ char	*dp;
 				ap->a_x, ap->a_y, ap->a_level);
 			cosr = 1;
 		}
-		cosr *= AmbientIntensity;
-		VSCALE( swp->sw_color, matcolor, cosr );
+		refl = cosr * AmbientIntensity;
+		VSCALE( swp->sw_color, matcolor, refl );
 	} else {
 		VSETALL( swp->sw_color, 0 );
 	}
@@ -255,40 +261,46 @@ char	*dp;
 		intensity = swp->sw_intensity+3*i;
 		to_light = swp->sw_tolight+3*i;
 
-		/* Diffuse reflectance from this light source. */
 		if( (cosi = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
 			if( cosi > 1.00001 )  {
 				rt_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosi-1,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosi = 1;
 			}
+
+			/* Diffuse reflectance from this light source. */
 			refl = cosi * lp->lt_fraction * ps->diffuse_refl;
 			VELMUL( work, lp->lt_color,
 				intensity );
 			VELMUL( cprod, matcolor, work );
 			VJOIN1( swp->sw_color, swp->sw_color,
 				refl, cprod );
+
+			/* Calculate specular reflectance. */
+			if( NEAR_ZERO( ps->rms_sq, SMALL_FASTF ) )
+				continue;
+			VADD2( h_dir, to_eye, to_light )
+			VUNITIZE( h_dir );
+			cos_tmp = VDOT( h_dir, swp->sw_hit.hit_normal );
+			if( cos_tmp <= 0.0 )
+				continue;
+			cos_tmp *= cos_tmp;
+			if( NEAR_ZERO( cos_tmp, SMALL_FASTF ) )
+				continue;
+
+			tan_sq = (1.0-cos_tmp)/cos_tmp;
+			exponent = (-tan_sq/ps->rms_sq );
+			refl = ps->specular_refl * lp->lt_fraction * exp( exponent ) /
+				sqrt( cosi * cosr ) / ps->denom;
+			if( refl > 1.0 )
+				refl = 1.0;
+
+			VELMUL( work, lp->lt_color, intensity );
+			VJOIN1( swp->sw_color, swp->sw_color, refl, work );
+
 		}
-
-		/* Calculate specular reflectance. */
-		if( NEAR_ZERO( ps->rms_sq, SMALL_FASTF ) )
-			continue;
-		VADD2( h_dir, to_eye, to_light )
-		VUNITIZE( h_dir );
-		cos_tmp = VDOT( h_dir, swp->sw_hit.hit_normal );
-		cos_tmp *= cos_tmp;
-		if( NEAR_ZERO( cos_tmp, SMALL_FASTF ) )
-			continue;
-
-		tan_sq = (1.0-cos_tmp)/cos_tmp;
-		exponent = (-tan_sq/ps->rms_sq );
-		refl = ps->specular_refl * lp->lt_fraction * exp( exponent ) /
-			sqrt( VDOT( to_light, swp->sw_hit.hit_normal ) *
-			      VDOT( to_eye, swp->sw_hit.hit_normal ) ) / ps->denom;
-
-		VELMUL( work, lp->lt_color, intensity );
-		VJOIN1( swp->sw_color, swp->sw_color, refl, work );
 	}
+
 	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 	return(1);
