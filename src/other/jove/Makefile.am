@@ -36,8 +36,11 @@ tune.c:	$(top_srcdir)/src/other/jove/jove_tune.c
 	rm -f tune.c
 	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/src/other/jove/jove_tune.c > tune.c
 
-version.c:
+version.c: Makefile
 	sh $(top_srcdir)/src/other/jove/mkversion.sh
+
+version.o: version.c
+	$(COMPILE) -c version.c
 
 teach-jove:	$(top_srcdir)/src/other/jove/teach-jove.sh
 	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/src/other/jove/teach-jove.sh > teach-jove
