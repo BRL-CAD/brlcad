@@ -375,12 +375,20 @@ indicates the device number.
 .BI /dev/sgi [num]
 Silicon Graphics IRIS Workstation
 .br
+When the display is running the window-manager MEX, the default
+is to open a window in 12-bit mode, with RGB converted to
+a 10x10x10 color-cube approximation.
 A non-zero
 .I num
-will select the pre-allocated colormap.  The default is to dynamically
-allocate the colors of the colormap, which is slower but usually of
-higher quality.  Note that both forms of colormapping occur only in
-window mode, not RGB mode.
+will select a dynamically allocated colormap, which is slower but sometimes of
+higher quality.
+When MEX is not running, the full 24-bits of color are used
+on systems with that deep a display.
+Regardless of mode, the full 24-bits of color are
+stored in a shared memory segment, allowing it to be operated on in
+the "frame buffer" in MEX mode without loss of color accuracy when
+the image is read back.
+To release the shared memory segment, open /dev/sgi99.
 .TP
 .B /dev/rat
 RasterTek 1/80 (untested)
@@ -388,7 +396,14 @@ RasterTek 1/80 (untested)
 .BI hostname: devicename
 TCP-based network links to a remote framebuffer, where
 .I devicename
-is any from this list.
+is any from this list, for example,
+brl-vgr.arpa:/dev/ik0 or video.brl.mil:/dev/sgi.
+A
+.B hostname
+with a null
+.I devicename
+will select the default display device on that host.
+(Be careful not to omit the colon, or a disk file will result).
 .SH EXAMPLE
 .I Libfb\^
 can be loaded with any
