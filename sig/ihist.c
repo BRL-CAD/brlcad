@@ -11,7 +11,7 @@ int	verbose = 0;
 static char usage[] = "\
 Usage: ihist [-v] < shorts\n";
 
-main( argc, argv )
+int main( argc, argv )
 int argc; char **argv;
 {
 	register long i, bit;
@@ -73,4 +73,6 @@ int argc; char **argv;
 			}
 		}
 	}
+
+	return 0;
 }

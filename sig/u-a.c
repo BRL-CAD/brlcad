@@ -2,7 +2,7 @@
 
 unsigned short ibuf[1024];
 
-main()
+int main()
 {
 	int n, i;
 
@@ -11,5 +11,5 @@ main()
 			printf("%hd\n", ibuf[i]);
 	}
 
-
+	return 0;
 }

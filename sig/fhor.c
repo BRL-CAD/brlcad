@@ -8,6 +8,12 @@
  */
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include <math.h>		/* XXX - temp debug */
 #include "machine.h"
@@ -323,7 +329,7 @@ int	x1, y1, x2, y2;
 }
 
 #ifdef SOMBRERO
-main()
+int main()
 {
 	int	f[500];
 	int	x, y, z;
@@ -346,13 +352,15 @@ main()
 		}
 		fhnewz( f, 500 );
 	}
+
+	return 0;
 }
 #endif
 
 static char usage[] = "\
 Usage: fhor [width] < doubles\n";
 
-main( argc, argv )
+int main( argc, argv )
 int	argc;
 char	**argv;
 {
@@ -400,4 +408,6 @@ char	**argv;
 		fhnewz( f, 512 );
 		z++;
 	}
+
+	return 0;
 }

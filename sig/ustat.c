@@ -121,5 +121,5 @@ char *av[];
 
 	comp_stats(stdin);
 
-	return(0);
+	return 0;
 }

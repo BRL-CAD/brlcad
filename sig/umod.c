@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -196,5 +197,6 @@ char **argv;
 			progname,
 			clip_high, clip_low );
 	}
-	return(0);
+
+	return0;
 }

@@ -8,6 +8,12 @@
  */
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -42,7 +48,7 @@ Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
   -A     ascii output\n\
 ";
 
-main( argc, argv )
+int main( argc, argv )
 int argc;
 char **argv;
 {
@@ -107,6 +113,8 @@ char **argv;
 		else
 			fftdisp(data, L);
 	}
+
+	return 0;
 }
 
 void

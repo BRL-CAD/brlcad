@@ -12,6 +12,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include "machine.h"
 
@@ -23,7 +29,7 @@ void	open_file();
 static char usage[] = "\
 Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n";
 
-main( argc, argv )
+int main( argc, argv )
 int argc;
 char **argv;
 {
@@ -60,6 +66,7 @@ char **argv;
 		}
 		fwrite( obuf, sizeof( double ), num*2, stdout );
 	}
+	return 0;
 }
 
 void

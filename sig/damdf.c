@@ -6,6 +6,12 @@
  */
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -17,7 +23,7 @@ double	r[BSIZE];
 static char usage[] = "\
 Usage: damdf [window_size (512)] < doubles\n";
 
-main( argc, argv )
+int main( argc, argv )
 int	argc;
 char	**argv;
 {
@@ -56,4 +62,6 @@ char	**argv;
 		}
 		fwrite( r, sizeof(*r), L, stdout );
 	}
+
+	return 0;
 }

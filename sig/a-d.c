@@ -1,5 +1,12 @@
 /* Ascii to double */
 #include "conf.h"
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -10,7 +17,7 @@
 static char usage[] = "\
 Usage: a-d [values] < ascii > doubles\n";
 
-main( argc, argv )
+int main( argc, argv )
 int	argc;
 char	**argv;
 {
@@ -62,5 +69,5 @@ char	**argv;
 		    }
 		}
 	}
-	return(0);
+	return 0;
 }

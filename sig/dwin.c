@@ -6,6 +6,12 @@
  */
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include <math.h>
 
@@ -52,7 +58,7 @@ Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
   -m  start first sample at middle of buffer\n\
 ";
 
-main( argc, argv )
+int main( argc, argv )
 int argc;
 char **argv;
 {
@@ -165,6 +171,8 @@ char **argv;
 		xform_start += step;
 		xform_end = xform_start + L-1;
 	}
+
+	return 0;
 }
 
 /*

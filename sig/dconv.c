@@ -13,6 +13,12 @@
  */
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -29,7 +35,7 @@ static char usage[] = "\
 Usage: dconv filter < doubles > doubles\n\
  XXX Warning: kernal size must be 2^i - 1\n";
 
-main( argc, argv )
+int main( argc, argv )
 int	argc;
 char	**argv;
 {
@@ -108,6 +114,8 @@ M += 1;
 
 		fwrite( &xbuf[M-1], sizeof(*xbuf), L, stdout );
 	}
+
+	return 0;
 }
 
 /*
