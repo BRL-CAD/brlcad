@@ -317,7 +317,6 @@ long addr;
 	mp->mt_r = recp->md.md_r;
 	mp->mt_g = recp->md.md_g;
 	mp->mt_b = recp->md.md_b;
-	mp->mt_handle = strdup( recp->md.md_material );
 	mp->mt_daddr = addr;
 	insert_color( mp );
 }
@@ -338,13 +337,11 @@ register struct mater *mp;
 	if( read_only )
 		return;
 	rec.md.md_id = ID_MATERIAL;
-	rec.md.md_flags = 0;		/* not used yet */
 	rec.md.md_low = mp->mt_low;
 	rec.md.md_hi = mp->mt_high;
 	rec.md.md_r = mp->mt_r;
 	rec.md.md_g = mp->mt_g;
 	rec.md.md_b = mp->mt_b;
-	strncpy(rec.md.md_material,mp->mt_handle,sizeof(rec.md.md_material));
 
 	/* Fake up a directory entry for db_* routines */
 	dir.d_namep = "color_putrec";
