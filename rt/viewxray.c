@@ -232,7 +232,7 @@ struct partition *PartHeadp;
 		break;
 	case LGT_BW:
 		fvalue = 1.0 - contrast_boost*totdist/viewsize;
-		if( fvalue > 1.0 ) fvalue == 1.0;
+		if( fvalue > 1.0 ) fvalue = 1.0;
 		else if( fvalue <= 0.0 ) fvalue = 0.0;
 		value = 1.0 + 254.99 * fvalue;
 		RES_ACQUIRE( &rt_g.res_results );
