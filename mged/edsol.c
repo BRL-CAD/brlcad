@@ -3343,7 +3343,9 @@ sedit()
 			bu_vls_free( &tcl_cmd );
 
 			sketch_name = Tcl_GetVar( interp, "final_sketch_name", TCL_GLOBAL_ONLY );
-			NAMEMOVE( sketch_name, extr->sketch_name );
+			if( extr->sketch_name )
+				bu_free( (char *)extr->sketch_name, "extr->sketch_name" );
+			extr->sketch_name = bu_strdup( sketch_name );
 
 			if( extr->skt )
 			{
