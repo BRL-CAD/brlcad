@@ -91,6 +91,8 @@ char *aliases[] = {
 	"put",
 	"title",
 	"units",
+	"find",
+	"rm",
 	(char *)0
 };
 
@@ -181,7 +183,7 @@ char **argv;
 
 		if( Tcl_EvalFile( safe_interp, argv[1] ) != TCL_OK ) {
 			bu_log( "Failed to process input file (%s)!!\n", argv[1] );
-			bu_log( "%s\n", Tcl_GetStringResult(interp) );
+			bu_log( "%s\n", Tcl_GetStringResult(safe_interp) );
 			exit( 1 );
 		}
 
