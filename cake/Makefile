@@ -33,7 +33,8 @@ cake:		$(OBJ) $(GOBJ)
 all:		cake lint tags
 
 install:	cake
-		-mv -f $(BINDIR)/cake $(BINDIR)/cake.bak
+		-if test $(BINDIR)/cake; then \
+			mv -f $(BINDIR)/cake $(BINDIR)/cake.bak; fi
 		mv cake $(BINDIR)/cake
 
 $(OBJ):		$(HDR)
