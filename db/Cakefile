@@ -63,22 +63,27 @@ everything&::	PRODUCTS
 #if defined(NFS)
 #	if defined(__CAKE__sun3) || defined(__CAKE__sun4)
 #		define	CONV	../.conv.MTYPE/asc2g
+#		define	CONV_EX	../.conv.MTYPE/asc2g
 #	else
 #		define	CONV	\
 		LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBBN_DIR:LIBBU_DIR:LIBTCL_DIR:LIBITCL_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
 		../.conv.MTYPE/asc2g
+#		define	CONV_EX	../.conv.MTYPE/asc2g
 #	endif
 #else
 #	if defined(__CAKE__sun3) || defined(__CAKE__sun4)
 #		define	CONV	../conv/asc2g
+#		define	CONV_EX	../conv/asc2g
 #	else
 #		define	CONV	\
 		LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBBN_DIR:LIBBU_DIR:LIBTCL_DIR:LIBITCL_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
 		../conv/asc2g
+#		define	CONV_EX	../conv/asc2g
 #	endif
 #endif
 
-%.g:	../SRCDIR/%.asc				if exist ../SRCDIR/%.asc
-	CONV ../SRCDIR/%.asc %.g
+/* If converter program changed, be sure to re-convert the .g files */
+%.g:	../SRCDIR/%.asc CONV_EX			if exist ../SRCDIR/%.asc
+	rm -f %.g; CONV ../SRCDIR/%.asc %.g
 
 #include "../Cakefile.rules"
