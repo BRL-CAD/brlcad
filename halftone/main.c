@@ -3,7 +3,6 @@ static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
 #include <ctype.h>
-int Debug=0;
 /*	halftone	given a bw file, generate a ht file.
  *
  * Usage:
@@ -38,12 +37,15 @@ int Debug=0;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.2  90/04/09  17:12:26  cjohnson
+ * Finished parameter cracking and processing threshold halftoning.
+ * 
  * Revision 1.1  90/04/09  16:13:04  cjohnson
  * Initial revision
  * 
  */
-int width;	/* width of pixture */
-int height;	/* height of pixture */
+int width=512;	/* width of pixture */
+int height=512;	/* height of pixture */
 double Beta;	/* Beta for sharpening */
 #define	M_FLOYD	0
 #define	M_CLASSIC 1
@@ -52,7 +54,11 @@ double Beta;	/* Beta for sharpening */
 int Method=M_FLOYD;	/* Method of halftoning */
 int Surpent=0;		/* use serpentine scan lines */
 int Levels=2;		/* Number of levels */
-main(argc,argv)
+int Debug=0;
+
+
+void
+setup(argc,argv)
 int argc;
 char **argv;
 {
@@ -61,9 +67,8 @@ char **argv;
 	int c;
 	int i,j;
 	int *Xlist, *Ylist;
-	unsigned int pixel;
 
-	while ((c = getopt(argc, argv, "s:n:w:B:m:SI:T:")) != EOF) {
+	while ((c = getopt(argc, argv, "D:s:n:w:B:m:SI:T:")) != EOF) {
 		switch(c) {
 		case 's':
 			width = height = atoi(optarg);
@@ -107,19 +112,48 @@ char **argv;
 			free(Xlist);
 			free(Ylist);
 		break;
+		case 'D':
+			Debug = atoi(optarg);
+		break;
 		case '?':
 			fprintf(stderr,"Read the usage message.\n");
 			exit(1);
 		break;
 		}
 	}
+}
+main(argc,argv)
+int argc;
+char **argv;
+{
+	int pixel,x,y;
+	unsigned char *Line;
+	int NewFlag = 1;
 
+	setup(argc,argv);
 	
-	while((pixel = (unsigned int) getchar()) != (unsigned) EOF) {
-		if (tone_simple(pixel,0,0,0,0,0)) {
-			putchar('\255');
-		} else {
-			putchar('\0');
+	Line = (unsigned char *) malloc(width);
+
+	for (y=0; y<height; y++) {
+		int NextX;
+		NewFlag =1;
+(void)		fread(Line,1,width,stdin);
+		for (x=0; x<width; x++) {
+			NextX = (x == width-1) ? 0 : x+1;
+			pixel = Line[x];
+			switch (Method) {
+			case M_FLOYD:
+			case M_FOLLY:
+			case M_THRESH:
+				putchar(255*tone_simple(pixel, x, y, NextX,
+				    y+1, NewFlag));
+			break;
+			case M_CLASSIC:
+				putchar(255*tone_classic(pixel, x, y, NextX,
+				    y+1, NewFlag));
+			break;
+			}
+			NewFlag=0;
 		}
 	}
 }
