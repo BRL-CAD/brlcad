@@ -129,6 +129,8 @@ long *flags;
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		NMG_CK_FACEUSE( fu );
+
+		/* skip flagged faceuses */
 		if( NMG_INDEX_TEST( flags , fu->f_p ) )
 			continue;
 		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
@@ -168,54 +170,60 @@ long *flags;
 	/* find edge from vp_top with extreme slope in "dir" direction */
 	for( RT_LIST_FOR( vu , vertexuse , &vp_top->vu_hd ) )
 	{
+		struct vertexuse *vu1;
+
 		NMG_CK_VERTEXUSE( vu );
-		if( *vu->up.magic_p == NMG_EDGEUSE_MAGIC )
+
+		/* only consider edgeuses */
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		eu = vu->up.eu_p;
+		NMG_CK_EDGEUSE( eu );
+
+		/* skip wire edges */
+		if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+			continue;
+
+		/* skip wire loops */
+		if( *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
+			continue;
+
+		/* skip finished faces */
+		if( NMG_INDEX_TEST( flags , eu->up.lu_p->up.fu_p->f_p ) )
+			continue;
+
+		/* skip edges from other shells */
+		if( nmg_find_s_of_eu( eu ) != s )
+			continue;
+
+		/* skip zero length edges */
+		if( eu->eumate_p->vu_p->v_p == vp_top )
+			continue;
+
+		/* get vertex at other end of this edge */
+		vu1 = eu->eumate_p->vu_p;
+		NMG_CK_VERTEXUSE( vu1 );
+
+		/* make a unit vector in direction of edgeuse */
+		VSUB2( edge , vu1->v_p->vg_p->coord , vu->v_p->vg_p->coord );
+		VUNITIZE( edge );
+
+		/* check against current maximum slope */
+		if( bottommost )
 		{
-			struct vertexuse *vu1;
-
-			eu = vu->up.eu_p;
-			NMG_CK_EDGEUSE( eu );
-
-			/* skip wire edges */
-			if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
-				continue;
-
-			/* skip wire loops */
-			if( *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
-				continue;
-
-			/* skip finished faces */
-			if( NMG_INDEX_TEST( flags , eu->up.lu_p->up.fu_p->f_p ) )
-				continue;
-
-			/* skip edges from other shells */
-			if( nmg_find_s_of_eu( eu ) != s )
-				continue;
-
-			/* get vertex at other end of this edge */
-			vu1 = eu->eumate_p->vu_p;
-			NMG_CK_VERTEXUSE( vu1 );
-
-			/* make a unit vector in direction of edgeuse */
-			VSUB2( edge , vu1->v_p->vg_p->coord , vu->v_p->vg_p->coord );
-			VUNITIZE( edge );
-
-			/* check against current maximum slope */
-			if( bottommost )
+			if( edge[dir] < extreme_slope )
 			{
-				if( edge[dir] < extreme_slope )
-				{
-					extreme_slope = edge[dir];
-					e_top = eu->e_p;
-				}
+				extreme_slope = edge[dir];
+				e_top = eu->e_p;
 			}
-			else
+		}
+		else
+		{
+			if( edge[dir] > extreme_slope )
 			{
-				if( edge[dir] > extreme_slope )
-				{
-					extreme_slope = edge[dir];
-					e_top = eu->e_p;
-				}
+				extreme_slope = edge[dir];
+				e_top = eu->e_p;
 			}
 		}
 	}
@@ -255,8 +263,8 @@ long *flags;
 				fu = lu->up.fu_p;
 				NMG_CK_FACEUSE( fu );
 
-				/* skip faces from other shells */
-				if( fu->s_p != s )
+				/* skip faces from other shells and flagged faceuses */
+				if( fu->s_p != s || NMG_INDEX_TEST( flags, fu->f_p ) )
 				{
 					/* go on to next radial face */
 					eu1 = eu1->eumate_p->radial_p;
@@ -381,7 +389,6 @@ CONST struct rt_tol *ttol;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	struct face *ext_f;
 	long *flags;
 	struct top_face *top_faces;
 	int total_shells=0;
@@ -408,7 +415,6 @@ CONST struct rt_tol *ttol;
 	top_faces[0].s = outer_shell;
 	top_faces[0].f = nmg_find_top_face( outer_shell, &dir , flags );
 	top_faces[0].dir = dir;
-	ext_f = top_faces[0].f;
 	fu = top_faces[0].f->fu_p;
 	if( fu->orientation != OT_SAME )
 		fu = fu->fumate_p;
@@ -3305,6 +3311,8 @@ CONST struct rt_tol *tol;
 
 		/* find the top face */
 		f_top = nmg_find_top_face( s, &dir , flags );
+		if( NMG_INDEX_TEST( flags, f_top ) )
+			rt_log(" nmg_find_top_face returned a flagged face %x\n" , f_top );
 		if( f_top == (struct face *)NULL )
 		{
 			rt_log( "nmg_fix_normals: Could not get a top face from nmg_find_top_face()\n" );
@@ -8173,15 +8181,8 @@ struct shell *s;
 
 		fu_next = RT_LIST_PNEXT( faceuse, &fu->l );
 		while( RT_LIST_NOT_HEAD( fu_next, &s->fu_hd )
-			&& fu_next == fu->fumate_p
-			&& fu_next->orientation != OT_SAME )
+			&& fu_next == fu->fumate_p )
 				fu_next = RT_LIST_PNEXT( faceuse, &fu_next->l );
-
-		if( fu->orientation != OT_SAME )
-		{
-			fu = fu_next;
-			continue;
-		}
 
 		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 		while( RT_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
@@ -8194,8 +8195,6 @@ struct shell *s;
 			NMG_CK_LOOPUSE( lu );
 
 			lu_next = RT_LIST_PNEXT( loopuse, &lu->l );
-			while( lu_next != lu->lumate_p && RT_LIST_NOT_HEAD( lu_next, &fu->lu_hd ) )
-				lu_next = RT_LIST_PNEXT( loopuse, &lu_next->l );
 
 			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			{
@@ -8210,7 +8209,6 @@ struct shell *s;
 
 				eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
 				NMG_CK_EDGEUSE( eu_next );
-
 				/* check if eu and eu_next form a jaunt */
 				if( eu->vu_p->v_p != eu_next->eumate_p->vu_p->v_p )
 				{
@@ -8379,4 +8377,113 @@ struct model *m;
 		return( 1 );
 	else
 		return( 0 );
+}
+
+/*	N M G _ M A K E _ F A C E S _ W I T H I N _ T O L
+ *
+ * Check all vertices on faces of specified shell. Any face containing
+ * vertices more than tol->dist off the plane of the face will be
+ * triangulated and broken into seperate faces
+ */
+void
+nmg_make_faces_within_tol( s, tol )
+struct shell *s;
+CONST struct rt_tol *tol;
+{
+	struct nmg_ptbl faceuses;
+	struct faceuse *fu;
+	int i;
+
+	NMG_CK_SHELL( s );
+	RT_CK_TOL( tol );
+
+	nmg_tbl( &faceuses, TBL_INIT, (long *)NULL );
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		nmg_tbl( &faceuses, TBL_INS, (long *)fu );
+	}
+
+	for (i = 0; i < NMG_TBL_END( &faceuses ); i++)
+	{
+		plane_t pl;
+		struct loopuse *lu;
+		struct edgeuse *eu;
+		struct vertexuse *vu;
+		fastf_t dist_to_plane;
+		int triangulate=0;
+
+		fu = (struct faceuse *)NMG_TBL_GET( &faceuses, i );
+
+		NMG_GET_FU_PLANE( pl, fu );
+
+		/* check if all the vertices for this face lie on the plane */
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+			{
+				vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+				dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
+				if( dist_to_plane > tol->dist || dist_to_plane < -tol->dist )
+				{
+					triangulate = 1;
+					break;
+				}
+			}
+			else
+			{
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+					vu = eu->vu_p;
+					dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
+					if( dist_to_plane > tol->dist || dist_to_plane < -tol->dist )
+					{
+						triangulate = 1;
+						break;
+					}
+				}
+				if( triangulate )
+					break;
+			}
+		}
+
+		if( triangulate )
+		{
+			/* Need to triangulate this face */
+			nmg_triangulate_fu( fu, tol );
+
+			/* split each triangular loop into its own face */
+			(void)nmg_split_loops_into_faces( &fu->l.magic, tol );
+			if( nmg_calc_face_g( fu ) )
+			{
+				rt_log( "cvt_euclid_region: nmg_calc_face_g failed!!\n" );
+				rt_bomb( "euclid-g: Could not calculate new face geometry\n" );
+			}
+
+		}
+	}
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		plane_t pl;
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		if( nmg_tbl( &faceuses, TBL_LOC, (long *)fu ) != (-1) )
+			continue;
+
+		nmg_calc_face_g( fu );
+
+	}
+
+	nmg_tbl( &faceuses, TBL_FREE, (long *)NULL );
 }
