@@ -68,8 +68,13 @@ struct vldray
  *
  *	_ray.ne = mat_atan2( _norm[Z], hypot( _norm[X], _norm[Y] ) );
  *
+ *  Note that the hypot() return is always positive, restricting the
+ *  range of return values for elevation to between -pi/2 and +pi/2,
+ *  while the range of return values for azimuth is between -pi and +pi.
+ *
  *  Because the normal vector has unit length (in 3-space, not necessarily
- *  in the XY plane), the hypot() function can safely be expanded inline
+ *  in the XY plane), the magnitude of the X and Y elements will be <= 1.0,
+ *  so the hypot() function can safely be expanded inline
  *  using a sqrt() call.  This will often be more efficient, especially
  *  on machines with hardware sqrt().
  */
