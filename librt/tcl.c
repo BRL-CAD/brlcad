@@ -57,36 +57,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)RTI_MAGIC,"struct rt_i")
 #define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)RT_WDB_MAGIC,"struct rt_wdb")
 
-extern struct bu_structparse rt_tor_parse[];
-extern struct bu_structparse rt_tgc_parse[];
-extern struct bu_structparse rt_ell_parse[];
-extern struct bu_structparse rt_arb_parse[];
-/* ARS -- not supported yet */
-extern struct bu_structparse rt_hlf_parse[];
-/* REC -- subsumed by TGC */
-/* POLY -- not supported yet */
-/* BSPLINE -- not supported yet */
-/* SPH -- not supported yet */
-/* NMG -- not supported yet */
-extern struct bu_structparse rt_ebm_parse[];
-extern struct bu_structparse rt_vol_parse[];
-/* ARBN -- not supported yet */
-/* PIPE -- not supported yet */
-extern struct bu_structparse rt_part_parse[];
-extern struct bu_structparse rt_rpc_parse[];
-extern struct bu_structparse rt_rhc_parse[];
-extern struct bu_structparse rt_epa_parse[];
-extern struct bu_structparse rt_ehy_parse[];
-extern struct bu_structparse rt_eto_parse[];
-/* GRIP -- not supported yet */
-/* JOINT -- not supported yet */
-extern struct bu_structparse rt_hf_parse[];
-extern struct bu_structparse rt_dsp_parse[];
-extern struct bu_structparse rt_fgp_parse[];
-/* COMB -- supported below */
-
-static struct db_i *dbip = DBI_NULL;
-
 struct dbcmdstruct {
 	char *cmdname;
 	int (*cmdfunc)();
@@ -1110,6 +1080,7 @@ char	      **argv;
  *
  *  Report on a particular object from the database.
  *  Used to support "db get".
+ *  Also used in MGED for get_edit_solid.
  */
 int
 rt_db_report( interp, intern, attr )
@@ -2046,6 +2017,9 @@ char		**argv;
 	return TCL_OK;
 }
 
+/*
+ *  XXX This interface is deprecated.  Used "wdb_open" instead.
+ */
 int
 rt_tcl_db_open( clientData, interp, argc, argv )
 ClientData	clientData;
@@ -2054,6 +2028,7 @@ int		argc;
 char		**argv;
 {
   char buf[128];
+  struct db_i *dbip = DBI_NULL;
 
   if(argc != 2)
     return TCL_ERROR;
