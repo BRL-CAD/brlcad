@@ -199,6 +199,7 @@
 #endif
 
 #if defined(linux)
+#	define _BSD_SOURCE	1	/* for sys/types.h to define caddr_t */
 #       define STDIN_FILENO    0
 #	define HAVE_GETOPT_H	1
 #	define HAVE_XOSDEFS_H	1
