@@ -60,6 +60,7 @@ MGED_EXTERN(int f_fhelp, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int f_find, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_fix, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_fracture, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_get_dm_list, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_get_rect, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_get_view, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_goto_view, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
