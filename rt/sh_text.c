@@ -27,11 +27,14 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+struct region	env_region;
+
 HIDDEN int txt_setup(), txt_render(), txt_print(), txt_free();
 HIDDEN int ckr_setup(), ckr_render(), ckr_print(), ckr_free();
 HIDDEN int bmp_setup(), bmp_render(), bmp_print(), bmp_free();
 HIDDEN int tstm_render();
 HIDDEN int star_render();
+HIDDEN int envmap_setup();
 extern int mlib_zero(), mlib_one();
 
 struct mfuncs txt_mfuncs[] = {
@@ -49,6 +52,9 @@ struct mfuncs txt_mfuncs[] = {
 
 	"bump",		0,		0,		MFI_UV|MFI_NORMAL,
 	txt_setup,	bmp_render,	txt_print,	txt_free,
+
+	"envmap",	0,		0,		0,
+	envmap_setup,	mlib_zero,	mlib_zero,	mlib_zero,
 
 	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
@@ -484,4 +490,35 @@ char	*dp;
 
 	/*phong_render( ap, pp, swp, &junk );*/
 	return(1);
+}
+
+/*
+ *			E N V M A P _ S E T U P
+ */
+HIDDEN int
+envmap_setup( rp, matparm, dpp )
+register struct region *rp;
+char	*matparm;
+char	**dpp;
+{
+	register char	*cp;
+
+	if( env_region.reg_mfuncs )  {
+		rt_log("envmap_setup:  second environment map ignored\n");
+		return(0);		/* drop region */
+	}
+	env_region = *rp;		/* struct copy */
+	env_region.reg_mfuncs = (char *)0;
+
+	/* Expect "material SPACE args", find space */
+	cp = matparm;
+	while( *cp != '\0' && *cp != ' ' )
+		cp++;
+	*cp++ = '\0';
+	strncpy( env_region.reg_mater.ma_matname, matparm,
+		sizeof(rp->reg_mater.ma_matname) );
+	strncpy( env_region.reg_mater.ma_matparm, cp,
+		sizeof(rp->reg_mater.ma_matparm) );
+	(void)mlib_setup( &env_region );
+	return(0);		/* This region should be dropped */
 }

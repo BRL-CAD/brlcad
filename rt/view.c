@@ -80,6 +80,8 @@ extern int	incr_nlevel;		/* number of levels */
 
 extern int	max_bounces;		/* from refract.c */
 
+extern struct region	env_region;	/* from text.c */
+
 extern int light_hit(), light_miss();	/* in light.c */
 extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
@@ -321,6 +323,41 @@ struct partition *PartHeadp;
 		pl_color( stdout, 190, 0, 0 );
 		pdv_3line( stdout, ap->a_ray.r_pt, out );
 	}
+
+	if( env_region.reg_mfuncs  /* && ap->a_level > 0 */ )  {
+		struct partition part;
+		struct hit	hit;
+		struct shadework sw;
+
+		/* Make "miss" hit the environment map */
+		/* Build up the fakery */
+		part.pt_inhit = part.pt_outhit = &hit;
+		part.pt_regionp = &env_region;
+		hit.hit_dist = 0.0;
+
+		sw.sw_transmit = sw.sw_reflect = 0.0;
+		sw.sw_refrac_index = 1.0;
+		sw.sw_extinction = 0;
+		sw.sw_xmitonly = 1;		/* don't shade env map! */
+
+		/* "Surface" Normal points inward, UV is azim/elev of ray */
+		sw.sw_inputs = MFI_NORMAL|MFI_UV;
+		VREVERSE( sw.sw_hit.hit_normal, ap->a_ray.r_dir );
+		sw.sw_uv.uv_u = mat_atan2( ap->a_ray.r_dir[Y],
+			ap->a_ray.r_dir[X] ) * rt_inv2pi + 0.5;
+		sw.sw_uv.uv_v = asin( ap->a_ray.r_dir[Z] ) * rt_invpi + 0.5;
+		sw.sw_uv.uv_du = sw.sw_uv.uv_dv = 0;
+
+		VSETALL( sw.sw_color, 1 );
+		VSETALL( sw.sw_basecolor, 1 );
+
+		(void)viewshade( ap, &part, &sw );
+
+		VMOVE( ap->a_color, sw.sw_color );
+		ap->a_user = 1;		/* Signal view_pixel:  HIT */
+		return(1);
+	}
+
 	ap->a_user = 0;		/* Signal view_pixel:  MISS */
 	VMOVE( ap->a_color, background );	/* In case someone looks */
 	return(0);
