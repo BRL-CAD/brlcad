@@ -504,10 +504,10 @@ struct edge_info	*edge_list;
 	RT_CK_TOL(fpi->tol);
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU) {
-		rt_log("pt (%g %g %g) vs_edge (%g %g %g) (%g %g %g)\n",
+		rt_log("pt (%g %g %g) vs_edge (%g %g %g) (%g %g %g) (eu=x%x)\n",
 			V3ARGS(fpi->pt),
 			V3ARGS(eu->vu_p->v_p->vg_p->coord),
-			V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
+			V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord), eu);
 	}
 #if 0
 	/* try to find this edge in the list of ve_dist's */
@@ -1404,7 +1404,7 @@ struct rt_tol	*tol;
 				V3ARGS(pt));
 
 		if (lu->orientation == OT_SAME) return NMG_CLASS_AoutB;
-		else if (lu->orientation == OT_SAME) return NMG_CLASS_AinB;
+		else if (lu->orientation == OT_OPPOSITE) return NMG_CLASS_AinB;
 		else {
 			rt_log("What kind of loop is this anyway? %s?\n",
 				nmg_orientation(lu->orientation) );
