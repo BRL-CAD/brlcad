@@ -40,6 +40,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987,1990 by the United States Army";
 
 #include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include <fcntl.h>
 #include <signal.h>
 #include <setjmp.h>
@@ -49,8 +54,8 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987,1990 by the United S
 #	undef VMIN	/* also used in vmath.h */
 #endif
 
-#include "externs.h"
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtstring.h"
