@@ -134,14 +134,11 @@ set -S2 "/bin/sh"
 #	define	BSD	43
 #	define	HAS_TCP	1
 /*	On Ultrix & 4.1 systems, #define	CC_DEFS	-Dvoid=int */
-#	define	LIBFB_OBJS	if_remote if_ptty if_adage
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_ADAGE
+#	define	LIBFB_OBJS	if_remote if_adage
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_ADAGE
 /*	At USNA, add -DGM256 to LIBFB_CONFIG */
 #	define	LIBFB_LIBES	LIBPKG
 #	define	LIBRT_TIMER	timer42
-#	define	MGED_OBJS	dm-mg dm-vg
-#	define	MGED_CONFIG	-DDM_MG -DDM_VG
-#	define	MGED_LIBES	/**/
 #endif
 
 #if defined(unix) && defined(m68k)
@@ -338,7 +335,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timerunix
 #endif
 
-#if defined(sgi) && defined(mips)
+#if defined(sgi) && defined(mips) && !defined(__sgi)
 /*	Silicon Graphics 4D, which uses the MIPS chip.
  *	NOTE:  "IRIX 3.3 and 3.3.1" are the ONLY software releases supported.
  *	NOTE:  If the shared library is used, then all machine types can
@@ -347,14 +344,14 @@ set -S2 "/bin/sh"
  */
 #	undef	sgi
 #	define	MTYPE	4d
-#	if 1
+#	if 0
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
 #		define	SHARED	_s
 #	else
 /*		This version for debugging/profiling:  DBX or PIXIE */
-#		if 0
+#		if 1
 /*			DBX works OK with shared libraries */
 #			define	OPTIMIZER	-g
 #			define	SHARED	_s
@@ -395,6 +392,52 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L/usr/X11/lib -lX11 -lgl''SHARED
 # endif
 #endif
+#	define	HAS_TCP	1
+#	define	CC	/usr/bin/cc
+#	define	LD_OPTS		GFLAG
+#	define	RANLIB	ranlib5.sh
+#	define	GETHOST	hostname
+#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
+#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
+#	define	LIBRT_TIMER	timerunix
+#endif
+
+#if defined(sgi) && defined(mips) && defined(__sgi)
+/*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
+#	undef	sgi
+#	define	MTYPE	5d
+#	if 1
+/*		This version for production: optimization & shared libraries */
+#		define	OPTIMIZER	-O2
+/*		Use shared libraries */
+#		define	SHARED	_s
+#	else
+/*		This version for debugging with DBX */
+#		define	OPTIMIZER	-g
+#		define	SHARED	_s
+#	endif
+#	define	GFLAG		-G 15
+/*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
+#	define  CC_OPTS		GFLAG -ansiposix
+#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
+#	define	LIBRT_LIBES	-lmpc
+#	define	LGT_CONFIG	GFLAG -lmpc
+#	define	LIBMALLOC	/* needs malloc() from -lmpc */
+/*		X11 Configuration */
+#	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I/usr/X11/include -DIF_X
+#	define	LIBFB_LIBES	-lX11''SHARED LIBPKG -lgl''SHARED
+#	if 1
+/*		X11 for MGED */
+#		define	MGED_OBJS	dm-4d dm-X
+#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
+#		define	MGED_LIBES	-lX11''SHARED -lgl''SHARED
+#	else
+/*		Lee Butler experimental version */
+#		define	MGED_OBJS	dm-4d mged_widget dm-X
+#		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
+#		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -lX11''SHARED -lgl''SHARED
+#	endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	LD_OPTS		GFLAG
