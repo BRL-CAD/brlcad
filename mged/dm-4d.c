@@ -67,6 +67,7 @@ static int cueing_on = 1;	/* Depth cueing flag - for colormap work */
 static int zclipping_on = 1;	/* Z Clipping flag */
 static int zbuffer_on = 1;	/* Hardware Z buffer is on */
 static int perspective_on = 0;	/* Perspective flag */
+static int lighting_on = 0;	/* Lighting model on */
 static int ovec = -1;		/* Old color map entry number */
 static mat_t perspect_mat;
 static mat_t nozclip_mat;
@@ -314,6 +315,7 @@ Ir_open()
 	qdevice(F2KEY);	/* pf2 for Z clipping */
 	qdevice(F3KEY);	/* pf3 for perspective */
 	qdevice(F4KEY);	/* pf4 for Z buffering */
+	qdevice(F5KEY);	/* pf5 for lighting */
 	
 	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
 		printf("IRIS_open:  mouse button stuck\n");
@@ -480,6 +482,17 @@ double ratio;
 	int i,j;	
 	mat_t	mtmp, newm;
 
+	/* It seems that this needs to be done before the loadmatrix() */
+	if( ir_is_gt && lighting_on )  {
+		/* Separate projection matrix from
+		 * modeling and viewing xforms.
+		 */
+		mmode(MVIEWING);
+		/* Select the material */
+		lmbind(MATERIAL, 20);
+	}
+
+
 	/*
 	 *  It is claimed that the "dancing vector disease" of the
 	 *  4D GT processors is due to the array being passed to v3f()
@@ -570,6 +583,7 @@ double ratio;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	if( ir_is_gt )  {
+
 		if( sp->s_vlist != VL_NULL && sp->s_vlist->vl_draw == 2 )  {
 			/* Draw as polygons, with header markers */
 			first = 1;
@@ -582,7 +596,7 @@ double ratio;
 						first = 0;
 					else
 						endpolygon();
-					concave(TRUE);
+					/* concave(TRUE); */
 					bgnpolygon();
 					/* Set surface normal (vl_pnt points outward) */
 					norm[X] = vp->vl_pnt[X];
@@ -619,7 +633,14 @@ double ratio;
 			}
 			if( !first )  endline();
 		}
+
+
+		if( lighting_on )  {
+			/* Return to no-lighting mode */
+			mmode(MSINGLE);
+		}
 	} else {
+		/* Non-GT system */
 		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 			/* Viewing region is from -1.0 to +1.0 */
 			if( vp->vl_draw == 0 )
@@ -815,7 +836,7 @@ checkevents()  {
 #if IR_BUTTONS
 		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
 		  || ret == F1KEY || ret == F2KEY || ret == F3KEY
-		  || ret == F4KEY
+		  || ret == F4KEY || ret == F5KEY
 		) {
 			register int	i;
 
@@ -926,6 +947,41 @@ checkevents()  {
 				if( zbuffer_on) lsetdepth(0, 768);
 				dmaflag = 1;
 				kblights();
+				continue;
+			} else if(ret == F5KEY)  {
+				if(!valp[1]) continue; /* Ignore release */
+				/*  Help mode */
+				if(button0)  {
+					ir_dbtext("Lighting");
+					continue;
+				}
+				/* toggle status */
+				if( lighting_on )  {
+					/* Turn it off */
+					mmode(MSINGLE);
+					lmbind(MATERIAL,0);
+					lmbind(LMODEL,0);
+					lighting_on = 0;
+				} else {
+					/* Turn it on */
+					if( cueing_on )  {
+						/* Has to be off for lighting */
+						cueing_on = 0;
+						Ir_colorchange();
+					}
+					make_materials();
+
+					lmbind(LMODEL, 2);	/* infinite */
+
+					lmbind(LIGHT2,2);
+					lmbind(LIGHT3,3);
+					lmbind(LIGHT4,4);
+					lmbind(LIGHT5,5);
+
+					lighting_on = 1;
+				}
+				kblights();
+				dmaflag = 1;
 				continue;
 			}
 			/*
@@ -1466,3 +1522,274 @@ usinit()	{ printf("usinit\n"); }
 usnewlock()	{ printf("usnewlock\n"); }
 taskcreate()	{ printf("taskcreate\n"); }
 #endif
+
+/*
+ *  Some initial lighting model stuff
+ *  Really, MGED needs to derrive it's lighting from the database,
+ *  but for now, this hack will suffice.
+ *
+ *  For materials, the definitions are:
+ *	ALPHA		opacity.  1.0=opaque
+ *	AMBIENT		ambient reflectance of the material  0..1
+ *	DIFFUSE		diffuse reflectance of the material  0..1
+ *	SPECULAR	specular reflectance of the material  0..1
+ *	EMISSION	emission color ???
+ *	SHININESS	specular scattering exponent, integer 0..128
+ */
+static float material_default[] = {
+			ALPHA,		1.0,
+			AMBIENT,	0.2, 0.2, 0.2,
+			DIFFUSE,	0.8, 0.8, 0.8,
+			EMISSION,	0.0, 0.0, 0.0,
+			SHININESS,	0.0,
+			SPECULAR,	0.0, 0.0, 0.0,
+			LMNULL   };
+
+/* Something like the RT default phong material */
+static float material_rtdefault[] = {
+			ALPHA,		1.0,	
+			AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
+			DIFFUSE,	0.6, 0.6, 0.6,
+			SPECULAR,	0.2, 0.2, 0.2,
+			EMISSION,	0.0, 0.0, 0.0,
+			SHININESS,	10.0,
+			LMNULL   };
+
+/* This was the "default" material in the demo */
+static float material_xdefault[] = {AMBIENT, 0.35, 0.25,  0.1,
+			DIFFUSE, 0.1, 0.5, 0.1,
+			SPECULAR, 0.0, 0.0, 0.0,
+			SHININESS, 5.0,
+			LMNULL   };
+
+static float mat_brass[] = {AMBIENT, 0.35, 0.25,  0.1,
+			DIFFUSE, 0.65, 0.5, 0.35,
+			SPECULAR, 0.0, 0.0, 0.0,
+			SHININESS, 5.0,
+			LMNULL   };
+
+static float mat_shinybrass[] = {AMBIENT, 0.25, 0.15, 0.0,
+			DIFFUSE, 0.65, 0.5, 0.35,
+			SPECULAR, 0.9, 0.6, 0.0,
+			SHININESS, 10.0,
+			LMNULL   };
+
+static float mat_pewter[] = {AMBIENT, 0.0, 0.0,  0.0,
+			DIFFUSE, 0.6, 0.55 , 0.65,
+			SPECULAR, 0.9, 0.9, 0.95,
+			SHININESS, 10.0,
+			LMNULL   };
+
+static float mat_silver[] = {AMBIENT, 0.4, 0.4,  0.4,
+			DIFFUSE, 0.3, 0.3, 0.3,
+			SPECULAR, 0.9, 0.9, 0.95,
+			SHININESS, 30.0,
+			LMNULL   };
+
+static float mat_gold[] = {AMBIENT, 0.4, 0.2, 0.0,
+			DIFFUSE, 0.9, 0.5, 0.0,
+			SPECULAR, 0.7, 0.7, 0.0,
+			SHININESS, 10.0,
+			LMNULL   };
+
+static float mat_shinygold[] = {AMBIENT, 0.4, 0.2,  0.0,
+			DIFFUSE, 0.9, 0.5, 0.0,
+			SPECULAR, 0.9, 0.9, 0.0,
+			SHININESS, 20.0,
+			LMNULL   };
+
+static float mat_plaster[] = {AMBIENT, 0.2, 0.2,  0.2,
+			DIFFUSE, 0.95, 0.95, 0.95,
+			SPECULAR, 0.0, 0.0, 0.0,
+			SHININESS, 1.0,
+			LMNULL   };
+
+static float mat_redplastic[] = {AMBIENT, 0.3, 0.1, 0.1,
+			DIFFUSE, 0.5, 0.1, 0.1,
+			SPECULAR, 0.45, 0.45, 0.45,
+			SHININESS, 30.0,
+			LMNULL   };
+
+static float mat_greenplastic[] = {AMBIENT, 0.1, 0.3, 0.1,
+			DIFFUSE, 0.1, 0.5, 0.1,
+			SPECULAR, 0.45, 0.45, 0.45,
+			SHININESS, 30.0,
+			LMNULL   };
+
+static float mat_blueplastic[] = {AMBIENT, 0.1, 0.1, 0.3,
+			DIFFUSE, 0.1, 0.1, 0.5,
+			SPECULAR, 0.45, 0.45, 0.45,
+			SHININESS, 30.0,
+			LMNULL   };
+
+static float mat_greenflat[] = {
+			EMISSION,   0.0, 0.4, 0.0,
+			AMBIENT,    0.0, 0.0, 0.0,
+			DIFFUSE,    0.0, 0.0, 0.0,
+			SPECULAR,   0.0, 0.6, 0.0,
+			SHININESS, 10.0,
+			LMNULL
+			};
+
+static float mat_greenshiny[]= {
+			EMISSION, 0.0, 0.4, 0.0,
+			AMBIENT,  0.1, 0.25, 0.1,
+			DIFFUSE,  0.5, 0.5, 0.5,
+			SPECULAR,  0.25, 0.9, 0.25,
+			SHININESS, 10.0,
+			LMNULL
+			};
+
+static float mat_blueflat[] = {
+		       EMISSION, 0.0, 0.0, 0.4,
+		       AMBIENT,  0.1, 0.25, 0.1,
+		       DIFFUSE,  0.0, 0.5, 0.5,
+		       SPECULAR,  0.0, 0.0, 0.9,
+		       SHININESS, 10.0,
+		       LMNULL
+		       };
+
+static float mat_blueshiny[] = {
+			EMISSION, 0.0, 0.0, 0.6,
+			AMBIENT,  0.1, 0.25, 0.5,
+			DIFFUSE,  0.5, 0.5, 0.5,
+			SPECULAR,  0.5, 0.0, 0.0,
+			SHININESS, 10.0,
+			LMNULL
+			};
+
+static float mat_redflat[] = {
+			EMISSION, 0.60, 0.0, 0.0,
+			AMBIENT,  0.1, 0.25, 0.1,
+			DIFFUSE,  0.5, 0.5, 0.5,
+			SPECULAR,  0.5, 0.0, 0.0,
+			SHININESS, 1.0,
+			LMNULL
+			};
+
+static float mat_redshiny[] = {
+			EMISSION, 0.60, 0.0, 0.0,
+			AMBIENT,  0.1, 0.25, 0.1,
+			DIFFUSE,  0.5, 0.5, 0.5,
+			SPECULAR,  0.5, 0.0, 0.0,
+			SHININESS, 10.0,
+			LMNULL
+			};
+
+static float mat_beigeshiny[] = {
+			EMISSION, 0.5, 0.5, 0.6,
+			AMBIENT,  0.35, 0.35, 0.0,
+			DIFFUSE,  0.5, 0.5, 0.0,
+			SPECULAR,  0.5, 0.5, 0.0,
+			SHININESS, 10.0,
+			LMNULL
+			};
+
+/*
+ *  Meanings of the parameters:
+ *	AMBIENT		ambient light associated with this source ???, 0..1
+ *	LCOLOR		light color, 0..1
+ *	POSITION	position of light.  w=0 for infinite lights
+ */
+static float default_light[] = {
+			AMBIENT,	0.0, 0.0, 0.0, 
+			LCOLOR,		1.0, 1.0, 1.0, 
+			POSITION,	0.0, 0.0, 1.0, 0.0,
+			LMNULL};
+		    
+static float white_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			   LCOLOR,   0.70, 0.70, 0.70, 
+			   POSITION, 10.0, 50.0, 50.0, 0.0, 
+			   LMNULL};
+
+static float red_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			   LCOLOR,   0.5, 0.1, 0.1, 
+			   POSITION, -100.0, 50.0, 0.0, 0.0, 
+			   LMNULL};
+
+static float blue_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			   LCOLOR,   0.1, 0.1, 0.5, 
+			   POSITION, 0.0, 50.0, 0.0, 0.0, 
+			   LMNULL};
+
+static float green_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			   LCOLOR,   0.1, 0.5, 0.1, 
+			   POSITION, 100.0, 50.0, 0.0, 0.0, 
+			   LMNULL};
+
+static float orange_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			    LCOLOR,	0.35, 0.175, 0.0, 
+			    POSITION, -50.0, 50.0, 10.0, 0.0, 
+			    LMNULL};
+
+static float white_local_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			     LCOLOR,   0.75, 0.75, 0.75, 
+			     POSITION, 0.0, 10.0, 10.0, 5.0, 
+			     LMNULL};
+			   
+/*
+ *  Lighting model parameters
+ *	AMBIENT		amount of ambient light present in the scene, 0..1
+ *	ATTENUATION	fixed and variable attenuation factor, 0..1
+ *	LOCALVIEWER	1=eye at (0,0,0), 0=eye at (0,0,+inf)
+ */
+static float	default_lmodel[] = {
+			AMBIENT,	0.2,  0.2,  0.2,
+			ATTENUATION,	1.0, 0.0, 
+			LOCALVIEWER,	0.0, 
+			LMNULL};
+
+static float infinite[] = {AMBIENT, 0.3,  0.3, 0.3, 
+	            LOCALVIEWER, 0.0, 
+	            LMNULL};
+
+static float local[] = {AMBIENT, 0.3,  0.3, 0.3, 
+	         LOCALVIEWER, 1.0, 
+	         ATTENUATION, 1.0, 0.0, 
+	         LMNULL};
+
+
+make_materials()
+{
+    /* define material properties */
+    lmdef (DEFMATERIAL, 1, 0, material_default);
+
+    lmdef (DEFMATERIAL, 2, 0, mat_brass);
+    lmdef (DEFMATERIAL, 3, 0, mat_shinybrass);
+    lmdef (DEFMATERIAL, 4, 0, mat_pewter);
+    lmdef (DEFMATERIAL, 5, 0, mat_silver);
+    lmdef (DEFMATERIAL, 6, 0, mat_gold);
+    lmdef (DEFMATERIAL, 7, 0, mat_shinygold);
+    lmdef (DEFMATERIAL, 8, 0, mat_plaster);
+    lmdef (DEFMATERIAL, 9, 0, mat_redplastic);
+    lmdef (DEFMATERIAL, 10, 0, mat_greenplastic);
+    lmdef (DEFMATERIAL, 11, 0, mat_blueplastic);
+
+    lmdef (DEFMATERIAL, 12, 0, mat_greenflat);
+    lmdef (DEFMATERIAL, 13, 0, mat_greenshiny);
+
+    lmdef (DEFMATERIAL, 14, 0, mat_blueflat);
+    lmdef (DEFMATERIAL, 15, 0, mat_blueshiny);
+
+    lmdef (DEFMATERIAL, 16, 0, mat_redflat);
+    lmdef (DEFMATERIAL, 17, 0, mat_redshiny);
+
+    lmdef (DEFMATERIAL, 18, 0, mat_beigeshiny);
+
+	lmdef( DEFMATERIAL, 19, 0, material_xdefault );
+	lmdef( DEFMATERIAL, 20, 0, material_rtdefault );
+
+    lmdef (DEFLIGHT, 1, 0, default_light);
+    lmdef (DEFLIGHT, 2, 0, white_inf_light);
+    lmdef (DEFLIGHT, 3, 0, red_inf_light);
+    lmdef (DEFLIGHT, 4, 0, green_inf_light);
+    lmdef (DEFLIGHT, 5, 0, blue_inf_light);
+    lmdef (DEFLIGHT, 6, 0, orange_inf_light);
+    lmdef (DEFLIGHT, 7, 0, white_local_light);
+
+    lmdef (DEFLMODEL, 1, 0, default_lmodel);
+    lmdef (DEFLMODEL, 2, 0, infinite);
+    lmdef (DEFLMODEL, 3, 0, local);
+
+
+}
