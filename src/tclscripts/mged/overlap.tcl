@@ -217,7 +217,7 @@ proc read_output { id } {
 		if { [string length $inn] > 0 } {
 			append over_cont($id,glint_ret) $inn
 		}
-		catch "exec rm /tmp/g_lint_error"
+		catch "file delete /tmp/g_lint_error"
 		$over_cont($id,top).status configure -text "Processing output..."
 		update
 		set over_cont($id,length) [llength $over_cont($id,glint_ret)]
@@ -268,7 +268,7 @@ proc fix_overlaps { id } {
 			set fd [open /tmp/g_lint_error]
 			set mess [read $fd]
 			close $fd
-			exec rm /tmp/g_lint_error
+			file delete /tmp/g_lint_error
 			tk_messageBox -icon error -message $mess -title "g_lint error" -type ok
 			$over_cont($id,top).status configure -text "ready"
 			$over_cont($id,top).go_quit.go configure -state normal

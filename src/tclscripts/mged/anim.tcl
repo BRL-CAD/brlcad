@@ -635,7 +635,7 @@ proc sketch_do_spline { mode } {
 	puts $fo "interp $cmdstr 0 1 2;"
 	# catch can be removed when tabinterp -q option is installed
 	catch {close $fo}
-	exec rm $mged_sketch_temp2
+	file delete $mged_sketch_temp2
 
 	#read results into curve
 	set fi [open $mged_sketch_temp1 r]
@@ -649,7 +649,7 @@ proc sketch_do_spline { mode } {
 	#vdraw params c $oldcolor
 	vdraw send
 	sketch_open_curve $oldname
-	exec rm $mged_sketch_temp1
+	file delete $mged_sketch_temp1
 	return $num_read
 }
 
@@ -1105,7 +1105,7 @@ proc sketch_set_vparams { newlist } {
 			sketch_text_col_arith $text all {@0 @1 @2 @3 @4}
 			sketch_text_from_fd $text $fd all right
 			close $fd
-			exec rm $mged_sketch_temp1
+			file delete $mged_sketch_temp1
 		}
 		{eye center} {
 			
@@ -1116,7 +1116,7 @@ proc sketch_set_vparams { newlist } {
 			set fd [open $mged_sketch_temp1 r]
 			sketch_text_from_fd $text $fd all replace
 			close $fd
-			exec rm $mged_sketch_temp1
+			file delete $mged_sketch_temp1
 		}
 		{size center ypr} {
 			set fd [open "| ${mged_sketch_anim_path}anim_cascade -ry 0 0 0 > $mged_sketch_temp1" w]
@@ -1128,7 +1128,7 @@ proc sketch_set_vparams { newlist } {
 			close $fd
 			$text delete 1.0 end
 			sketch_text_do_script $text $buffer all {@0 {-2.0*@7} @10 @11 @12 @4 @5 @6}
-			exec rm $mged_sketch_temp1
+			file delete $mged_sketch_temp1
 		}
 		{size center quat} {
 			set fd [open "| ${mged_sketch_anim_path}anim_orient qv y > $mged_sketch_temp1" w]
@@ -1143,7 +1143,7 @@ proc sketch_set_vparams { newlist } {
 			sketch_text_do_script $text $buffer all {@0 {-2.0*@4} }
 			sketch_text_from_fd $text $fd "1,2,3,4,5,6" right
 			close $fd
-			exec rm $mged_sketch_temp1 $mged_sketch_temp2
+			file delete $mged_sketch_temp1 $mged_sketch_temp2
 		}
 		{size eye ypr} -
 		default {}
@@ -1162,7 +1162,7 @@ proc sketch_set_vparams { newlist } {
 			sketch_text_col_arith $text all {@0 @1 @2 @3 @4}
 			sketch_text_from_fd $text $fd all right
 			close $fd
-			exec rm $mged_sketch_temp1
+			file delete $mged_sketch_temp1
 		}
 		{eye center} {
 			sketch_text_do_script $buffer $text all \
@@ -1175,7 +1175,7 @@ proc sketch_set_vparams { newlist } {
 			set fd [open $mged_sketch_temp2 r]
 			sketch_text_from_fd $text $fd "1,2,3" right
 			close $fd
-			exec rm $mged_sketch_temp2
+			file delete $mged_sketch_temp2
 		}
 		{size center ypr} {
 			set fd [open "| ${mged_sketch_anim_path}anim_cascade -ry 0 0 0 > $mged_sketch_temp1" w]
@@ -1187,7 +1187,7 @@ proc sketch_set_vparams { newlist } {
 			close $fd
 			$text delete 1.0 end
 			sketch_text_do_script $text $buffer all {@0 {2.0*@7} @10 @11 @12 @4 @5 @6}
-			exec rm $mged_sketch_temp1
+			file delete $mged_sketch_temp1
 		}
 		{size center quat} {
 			set fd [open "| ${mged_sketch_anim_path}anim_cascade -ry 0 0 0 > $mged_sketch_temp1" w]
@@ -1199,7 +1199,7 @@ proc sketch_set_vparams { newlist } {
 			sketch_text_do_script $text $buffer all {@0 {2.0*@7}}
 			sketch_text_from_fd $text $fd all right
 			close $fd
-			exec rm $mged_sketch_temp1
+			file delete $mged_sketch_temp1
 		}
 		{size eye ypr} -
 		default {}
@@ -1871,7 +1871,7 @@ proc sketch_table_time {w v0 v1 cols } {
 	sketch_text_from_fd $w $f1 0 left
 	close $f1
 	sketch_text_from_text $w $w "0,2-" replace
-	exec rm $mged_sketch_temp1
+	file delete $mged_sketch_temp1
 	#set mged_sketch_table_lmode $temp
 	catch {destroy ._sketch_input}
 }
@@ -2268,7 +2268,7 @@ proc sketch_text_interpolate { w start stop fps slist } {
 	sketch_text_from_fd $w $fd all replace
 	#catch can be removed when -q option added to tabinterp
 	catch {close $fd}
-	catch {exec rm $mged_sketch_temp1 $mged_sketch_temp2}
+	catch {file delete $mged_sketch_temp1 $mged_sketch_temp2}
 	return 0	
 }
 	
@@ -2964,9 +2964,9 @@ proc sketch_objanim { objorview } {
 			
 		if { $type == "curve" } {
 			sketch_open_curve $oldcurve
-			exec rm $sfile
+			file delete $sfile
 		} elseif { $type == "text" } {
-			exec rm $sfile
+			file delete $sfile
 		} elseif { $type == "file"} {
 			catch {rm $mged_sketch_temp1}
 		}
@@ -3206,7 +3206,7 @@ proc sketch_track_get_length { tid } {
 	gets $fd length
 	catch {close $fd}
 	set mged_sketch_track_len $length
-	exec rm $mged_sketch_temp1
+	file delete $mged_sketch_temp1
 }
 	
 
@@ -3343,7 +3343,7 @@ proc sketch_do_track { } {
 		$myargs	$mged_sketch_temp1 > $outfile" w]
 	sketch_text_to_fd $vtext $fd all
 	close $fd
-	exec rm $mged_sketch_temp1
+	file delete $mged_sketch_temp1
 	if { $g_except } {
 		destroy $vtext
 	}
