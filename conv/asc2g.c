@@ -73,6 +73,9 @@ Usage: asc2g file.asc file.g\n\
  Convert an ASCII v4 BRL-CAD database to binary form\n\
 ";
 
+/*
+ *			M A I N
+ */
 int
 main(argc, argv)
 int argc;
@@ -89,8 +92,12 @@ char **argv;
 	}
 
 	if( argc == 3 ) {
-		ifp = fopen(argv[1],"r");
+		if( strcmp(argv[1], "-") == 0 )
+			ifp = stdin;
+		else
+			ifp = fopen(argv[1],"r");
 		if( !ifp )  perror(argv[1]);
+
 		ofp = wdb_fopen(argv[2]);
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
