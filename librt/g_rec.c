@@ -401,14 +401,14 @@ register struct xray *rp;
 	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 		hitp->hit_dist = k1;
-		hitp->hit_private = (char *)1;		/* flag */
+		hitp->hit_private = (char *)0;	/* compute */
 		hitp++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 		hitp->hit_dist = k2;
-		hitp->hit_private = (char *)1;		/* flag */
+		hitp->hit_private = (char *)0;		/* compute */
 		hitp++;
 	}
 
@@ -425,8 +425,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k1;
-			hitp->hit_private = (char *)0;	/* flag */
-			VREVERSE( hitp->hit_normal, rec->rec_Hunit ); /* -H */
+			hitp->hit_private = (char *)2;	/* -H */
 			hitp++;
 		}
 
@@ -434,8 +433,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k2;
-			hitp->hit_private = (char *)0;	/* flag */
-			VMOVE( hitp->hit_normal, rec->rec_Hunit ); /* H */
+			hitp->hit_private = (char *)1;	/* H */
 			hitp++;
 		}
 	}
@@ -499,12 +497,20 @@ register struct xray *rp;
 		(struct rec_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	if( hitp->hit_private == (char *)1 )  {
+	switch( (int)hitp->hit_private )  {
+	case 0:
+		/* compute it */
 		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS,
 			hitp->hit_vpriv );
 		VUNITIZE( hitp->hit_normal );
+		break;
+	case 1:
+		VMOVE( hitp->hit_normal, rec->rec_Hunit );
+		break;
+	case 2:
+		VREVERSE( hitp->hit_normal, rec->rec_Hunit );
+		break;
 	}
-	/* Otherwise, normal is already filled in */
 }
 
 /*
@@ -512,8 +518,7 @@ register struct xray *rp;
  *  
  *  For a hit on the surface of an REC, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
- *  For now, u,v = 0 on the end plates of the REC.
- *  On the skin of the cylinder itself,
+ *
  *  u is the rotation around the cylinder, and
  *  v is the displacement along H.
  */
@@ -536,27 +541,25 @@ register fastf_t *uvp;
 	VSUB2( work, hitp->hit_point, rec->rec_V );
 	MAT4X3VEC( pprime, rec->rec_SoR, work );
 
-	/* See if this is top or bottom plate */
-	if( VEQUAL( hitp->hit_normal, rec->rec_Hunit ) )  {
+	switch( (int)hitp->hit_private )  {
+	case 0:
+		/* Skin.  x,y coordinates define rotation.  radius = 1 */
+		uvp[0] = acos(pprime[Y]) * inv2pi;
+		uvp[1] = pprime[Z];		/* height */
+		break;
+	case 1:
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		uvp[0] = acos(pprime[Y]/len) * inv2pi;
 		uvp[1] = len;		/* rim v = 1 */
-		goto out;
-	}
-	VREVERSE( work, rec->rec_Hunit );
-	if( VEQUAL( hitp->hit_normal, work ) )  {
+		break;
+	case 2:
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		uvp[0] = acos(pprime[Y]/len) * inv2pi;
 		uvp[1] = 1 - len;	/* rim v = 0 */
-		goto out;
+		break;
 	}
-
-	/* Skin.  x,y coordinates define rotation.  radius = 1 */
-	uvp[0] = acos(pprime[Y]) * inv2pi;
-	uvp[1] = pprime[Z];		/* height */
-out:
 	/* Handle other half of acos() domain */
 	if( pprime[X] < 0 )
 		uvp[0] = 1.0 - uvp[0];
