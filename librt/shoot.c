@@ -991,6 +991,19 @@ start_cell:
 					register struct seg *s2;
 					while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
 						BU_LIST_DEQUEUE( &(s2->l) );
+#if 0
+						/* This code catches NaNs */
+						if( !(s2->seg_in.hit_dist >= -INFINITY &&
+						    s2->seg_out.hit_dist <= INFINITY) )  {
+						    	bu_log("rt_shootray:  Defective %s segment %s (%.18e,%.18e) %d,%d\n",
+						    		rt_functab[s2->seg_stp->st_id].ft_name,
+								s2->seg_stp->st_name,
+								s2->seg_in.hit_dist,
+								s2->seg_out.hit_dist,
+								s2->seg_in.hit_surfno,
+								s2->seg_out.hit_surfno );
+						}
+#endif
 						/* Restore to original distance */
 						s2->seg_in.hit_dist += ss.dist_corr;
 						s2->seg_out.hit_dist += ss.dist_corr;
@@ -1108,22 +1121,29 @@ start_cell:
 		 *  All partitions will have valid in and out distances.
 		 *  a_ray_length is treated similarly to a_onehit.
 		 */
-		if( ap->a_onehit != 0 &&
-		    BU_LIST_NON_EMPTY( &(waiting_segs.l) )
-		)  {
-			int	done;
+		if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+			if(debug_shoot)  {
+				struct seg *segp;
+				bu_log("Waiting segs:\n");
+				for( BU_LIST_FOR( segp, seg, &(waiting_segs.l) ) )  {
+					rt_pr_seg(segp);
+				}
+			}
+			if( ap->a_onehit != 0 )  {
+				int	done;
 
-			/* Weave these segments into partition list */
-			rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
+				/* Weave these segments into partition list */
+				rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 
-			/* Evaluate regions upto end of good segs */
-			if( ss.box_end < pending_hit )  pending_hit = ss.box_end;
-			done = rt_boolfinal( &InitialPart, &FinalPart,
-				last_bool_start, pending_hit, regionbits, ap, solidbits );
-			last_bool_start = pending_hit;
+				/* Evaluate regions upto end of good segs */
+				if( ss.box_end < pending_hit )  pending_hit = ss.box_end;
+				done = rt_boolfinal( &InitialPart, &FinalPart,
+					last_bool_start, pending_hit, regionbits, ap, solidbits );
+				last_bool_start = pending_hit;
 
-			/* See if enough partitions have been acquired */
-			if( done > 0 )  goto hitit;
+				/* See if enough partitions have been acquired */
+				if( done > 0 )  goto hitit;
+			}
 		}
 
 		if( ap->a_ray_length > 0.0 &&
