@@ -152,6 +152,8 @@ int		count;
 		return(-1);
 	}
 
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
+
 	/* Easy case -- see if at end-of-file */
 	old_len = dp->d_len;
 	extra_start = dp->d_addr + dp->d_len * sizeof(union record);
@@ -226,6 +228,8 @@ int			 count;
 		bu_log("db_trunc on READ-ONLY file\n");
 		return(-1);
 	}
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
+
 	i = db_zapper( dbip, dp, dp->d_len - count );
 	rt_memfree( &(dbip->dbi_freep), (unsigned)count,
 		(dp->d_addr/(sizeof(union record)))+dp->d_len-count );
@@ -279,6 +283,7 @@ struct directory *dp;
 		dp->d_len = 0;
 		return 0;
 	}
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
 
 	i = db_zapper( dbip, dp, 0 );
 
@@ -320,6 +325,8 @@ int		start;
 
 	if( dbip->dbi_read_only )
 		return(-1);
+
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
 
 	if( (todo = dp->d_len - start) == 0 )
 		return(0);		/* OK -- trivial */
