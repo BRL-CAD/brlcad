@@ -575,6 +575,15 @@ struct rt_i	*rtip;
 			(char *)sbrk(0)-beginptr );
 	beginptr = (char *) sbrk(0);
 #endif
+	if (rt_verbosity & VERBOSE_STATS)  {
+		bu_log("%s: %8d nu, %8d cut, %8d box (%8d empty)\n",
+			rtip->rti_space_partition == RT_PART_NUGRID ?
+				"NUGrid" : "NUBSP",
+			rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+			rtip->rti_ncut_by_type[CUT_CUTNODE],
+			rtip->rti_ncut_by_type[CUT_BOXNODE],
+			rtip->nempty_cells );
+	}
 }
 
 /*
@@ -880,9 +889,6 @@ int framenumber;
 		bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 			rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
 			rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid );
-		bu_log("%8d empty boxnodes (%s)\n", rtip->nempty_cells,
-		       rtip->rti_space_partition == RT_PART_NUGRID ? "NUGrid" :
-		       "NUBSPT" );
 		bu_log(
 			"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
 			framenumber,
