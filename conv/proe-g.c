@@ -46,20 +46,17 @@ static const char RCSid[] = "$Header$";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "regex.h"
+#include <regex.h>
 
 extern char *optarg;
 extern int optind,opterr,optopt;
 extern int errno;
 
-#define NAME_LENGTH	79
-#define NAMESIZE	16	/* from db.h */
-
 static	struct wmember all_head;
 static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
-static char ret_name[NAMESIZE]; /* unique name built by Build_unique_name() */
-static char forced_name[NAME_LENGTH+1];	/* name specified on command line */
+static struct bu_vls ret_name;	/* unique name built by Build_unique_name() */
+static char *forced_name=NULL;	/* name specified on command line */
 static int stl_format=0;	/* Flag, non-zero indocates raw Stereolithography format input */
 static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
@@ -135,9 +132,9 @@ struct render_verts
 
 struct name_conv_list
 {
-	char brlcad_name[NAMESIZE];
-	char solid_name[NAMESIZE];
-	char name[80];
+	char *brlcad_name;
+	char *solid_name;
+	char *name;
 	unsigned int obj;
 	int solid_use_no;
 	int comb_use_no;
@@ -183,39 +180,22 @@ char *
 Build_unique_name( name )
 char *name;
 {
-	char suff[NAMESIZE];
 	struct name_conv_list *ptr;
-	int name_len, suff_len;
+	int name_len;
 	int tries=0;
 
 	name_len = strlen( name );
-	strncpy( ret_name, name, NAMESIZE );
-	ret_name[NAMESIZE-1] = '\0';
+	bu_vls_strcpy( &ret_name, name );
 	ptr = name_root;
 	while( ptr )
 	{
-		if( !strncmp( ret_name , ptr->brlcad_name , NAMESIZE ) || !strncmp( ret_name , ptr->solid_name , NAMESIZE ) )
+		if( !strcmp( bu_vls_addr( &ret_name ) , ptr->brlcad_name ) ||
+		    (ptr->solid_name && !strcmp( bu_vls_addr( &ret_name ) , ptr->solid_name ) ) )
 		{
 			/* this name already exists, build a new one */
 			++tries;
-			sprintf( suff, "_%d", tries );
-			suff_len = strlen( suff );
-			if( suff_len >= NAMESIZE-1 )
-			{
-				bu_log( "Cannot build unique name for '%s'\n", name );
-				bu_log( "Conversion aborted\n" );
-				exit( 1 );
-			}
-			if( name_len + suff_len < NAMESIZE )
-			{
-				strcpy( ret_name, name );
-				strcat( ret_name, suff );
-			}
-			else
-			{
-				strncpy( ret_name, name, NAMESIZE );
-				sprintf( &ret_name[NAMESIZE-suff_len-1], "%s", suff );
-			}
+			bu_vls_trunc( &ret_name, name_len );
+			bu_vls_printf( &ret_name, "_%d", tries );
 
 			ptr = name_root;
 		}
@@ -223,7 +203,7 @@ char *name;
 		ptr = ptr->next;
 	}
 
-	return( ret_name );
+	return( bu_vls_addr( &ret_name ) );
 }
 
 static struct name_conv_list *
@@ -233,8 +213,6 @@ unsigned int obj;
 int type;
 {
 	struct name_conv_list *ptr;
-	char tmp_name[NAMESIZE];
-	int suffix_insert;
 
 	if( debug )
 		bu_log( "Add_new_name( %s, x%x, %d )\n", name, obj, type );
@@ -249,69 +227,67 @@ int type;
 	/* Add a new name */
 	ptr = (struct name_conv_list *)bu_calloc( 1, sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
 	ptr->next = (struct name_conv_list *)NULL;
-	strncpy( ptr->name , name, 80 );
+	ptr->brlcad_name = bu_strdup( name );
 	ptr->obj = obj;
 	if( do_regex && type != CUT_SOLID_TYPE )
 	{
 		regmatch_t pmatch;
 
-		if( !regexec( &reg_cmp, ptr->name, 1, &pmatch, 0  ) )
+		if( regexec( &reg_cmp, ptr->brlcad_name, 1, &pmatch, 0  ) == 0 )
 		{
-			char *c=ptr->brlcad_name;
-			int i=(-1);
-
 			/* got a match */
-			while( ptr->name[++i] )
-			{
-				if( i < pmatch.rm_so || i >= pmatch.rm_eo )
-					*c++ = ptr->name[i];
-			}
-			*c++ = '\0';
+			strcpy( &ptr->brlcad_name[pmatch.rm_so], &ptr->brlcad_name[pmatch.rm_eo] );
 		}
-		else
-			strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
 		if( debug )
 			bu_log( "\tafter reg_ex, name is %s\n", ptr->brlcad_name );
 	}
-	else if( type == CUT_SOLID_TYPE )
-		ptr->brlcad_name[0] = '\0';
-	else
-		strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
-	ptr->brlcad_name[NAMESIZE-2] = '\0';
+	else if( type == CUT_SOLID_TYPE ) {
+		bu_free( (char *)ptr->brlcad_name, "brlcad_name" );
+		ptr->brlcad_name = NULL;
+	}
 	ptr->solid_use_no = 0;
 	ptr->comb_use_no = 0;
 
 	if( type != CUT_SOLID_TYPE )
 	{
 		/* make sure brlcad_name is unique */
-		strncpy( ptr->brlcad_name, Build_unique_name( name ), NAMESIZE );
+		char *tmp;
+
+		tmp = ptr->brlcad_name;
+		ptr->brlcad_name = bu_strdup( Build_unique_name( ptr->brlcad_name ) );
+		bu_free( (char *)tmp, "brlcad_name" );
 	}
 
 	if( type == ASSEMBLY_TYPE )
 	{
-		ptr->solid_name[0] = '\0';
+		ptr->solid_name = NULL;
 		return( ptr );
 	}
 	else if( type == PART_TYPE )
 	{
-		strcpy( ptr->solid_name , "s." );
-		strncpy( &ptr->solid_name[2] , ptr->brlcad_name , NAMESIZE-4 );
-		ptr->solid_name[NAMESIZE-1] = '\0';
+		struct bu_vls vls;
+
+		bu_vls_init( &vls );
+
+		bu_vls_strcpy( &vls , "s." );
+		bu_vls_strcat( &vls, ptr->brlcad_name );
+
+		ptr->solid_name = bu_vls_strgrab( &vls );
 	}
 	else
 	{
-		strcpy( ptr->solid_name , "s." );
-		strncpy( &ptr->solid_name[2] , name , NAMESIZE-4 );
-		ptr->solid_name[NAMESIZE-1] = '\0';
+		struct bu_vls vls;
+
+		bu_vls_init( &vls );
+
+		bu_vls_strcpy( &vls , "s." );
+		bu_vls_strcat( &vls, ptr->brlcad_name );
+
+		ptr->solid_name = bu_vls_strgrab( &vls );
 	}
 
 	/* make sure solid name is unique */
-	suffix_insert = strlen( ptr->solid_name );
-	if( suffix_insert > NAMESIZE - 3 )
-		suffix_insert = NAMESIZE - 3;
-
-	strncpy( tmp_name, ptr->solid_name, NAMESIZE );
-	strncpy( ptr->solid_name, Build_unique_name( ptr->solid_name ), NAMESIZE );
+	ptr->solid_name = bu_strdup( Build_unique_name( ptr->solid_name ) );
 	return( ptr );
 }
 
@@ -564,7 +540,7 @@ point_t min, max;
 		if( !strncmp( &line1[*start], "plane", 5 ) || !strncmp( &line1[*start], "PLANE", 5 ) )
 		{
 			struct name_conv_list *ptr;
-			char haf_name[NAMESIZE+1];
+			char haf_name[80];
 			fastf_t dist;
 			fastf_t tmp_dist;
 			point_t origin;
@@ -751,7 +727,7 @@ Convert_part( line )
 char line[MAX_LINE_LEN];
 {
 	char line1[MAX_LINE_LEN];
-	char name[NAME_LENGTH + 1];
+	char name[MAX_LINE_LEN + 1];
 	unsigned int obj=0;
 	char *solid_name;
 	int start;
@@ -810,7 +786,7 @@ char line[MAX_LINE_LEN];
 		/* get object id */
 		sscanf( &line[start] , "%x" , &obj );
 	}
-	else if( stl_format && forced_name[0] != '\0' )
+	else if( stl_format && forced_name )
 		strcpy( name, forced_name );
 	else if( stl_format ) /* build a name from the file name */
 	{
@@ -841,15 +817,15 @@ char line[MAX_LINE_LEN];
 			ptr++;
 
 		/* now copy what is left to the name */
-		strncpy( name, ptr, NAMESIZE-1 );
-		name[NAMESIZE-1] = '\0';
+		strncpy( name, ptr, MAX_LINE_LEN );
+		name[MAX_LINE_LEN] = '\0';
 		sprintf( tmp_str, "_%d", obj_count );
 		len = strlen( name );
 		suff_len = strlen( tmp_str );
-		if( len + suff_len < NAMESIZE-3 )
+		if( len + suff_len < MAX_LINE_LEN )
 			strcat( name, tmp_str );
 		else
-			sprintf( &name[NAMESIZE-suff_len-4], tmp_str );
+			sprintf( &name[MAX_LINE_LEN-suff_len-1], tmp_str );
 	}
 	else
 		strcpy( name, "noname" );
@@ -1014,9 +990,8 @@ char line[MAX_LINE_LEN];
 			bu_log( "\t%d faces were degenerate\n", degenerate_count );
 		if( small_count )
 			bu_log( "\t%d faces were too small\n", small_count );
-		save_name = (char *)bu_malloc( NAMESIZE*sizeof( char ), "save_name" );
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
-		strncpy( save_name, brlcad_name, NAMESIZE );
+		save_name = bu_strdup( brlcad_name );
 		bu_ptbl_ins( &null_parts, (long *)save_name );
 		return;
 	}
@@ -1196,7 +1171,7 @@ Rm_nulls()
 					char *save_name;
 
 					save_name = (char *)BU_PTBL_GET( &null_parts, k );
-					if( !strncmp( save_name, tree_list[j].tl_tree->tr_l.tl_name, NAMESIZE ) )
+					if( !strcmp( save_name, tree_list[j].tl_tree->tr_l.tl_name ) )
 					{
 						found = 1;
 						break;
@@ -1222,10 +1197,6 @@ Rm_nulls()
 
 			if( changed )
 			{
-				char name[NAMESIZE+1];
-
-				strncpy( name, dp->d_namep, NAMESIZE );
-
 				if( actual_count )
 					comb->tree = (union tree *)db_mkgift_tree( tree_list, actual_count, &rt_uniresource );
 				else
@@ -1264,8 +1235,9 @@ char	*argv[];
         tol.para = 1 - tol.perp;
 
 	bu_ptbl_init( &null_parts, 64, " &null_parts");
+	bu_vls_init( &ret_name );
 
-	forced_name[0] = '\0';
+	forced_name = NULL;
 
 	if( strstr( argv[0], "stl-g" ) )
 	{
@@ -1298,9 +1270,7 @@ char	*argv[];
 				bu_log( "Converting units from %s to mm (conversion factor is %g)\n", optarg, conv_factor );
 			break;
 		case 'N':	/* force a name on this object */
-			strncpy( forced_name, optarg, NAME_LENGTH );
-			if( strlen( optarg ) > NAME_LENGTH )
-				forced_name[NAME_LENGTH] = '\0';
+			forced_name = optarg;
 			break;
 
 		case 'S':	/* raw stl_format format */
@@ -1332,7 +1302,7 @@ char	*argv[];
 			break;
 		case 'u':
 			do_regex = 1;
-			if( regcomp( &reg_cmp, optarg, REG_BASIC ) )
+			if( regcomp( &reg_cmp, optarg, 0 ) )
 			{
 				bu_log( "Bad regular expression (%s)\n", optarg );
 				bu_log( usage, argv[0] );
