@@ -55,6 +55,8 @@ int	inpara;			/* parameter input from keyboard */
 
 extern int	cmd_glob();
 
+int	f_matpick();
+
 int	mged_cmd();
 int	f_sync();
 #ifdef MGED_TCL
@@ -216,6 +218,8 @@ static struct funtab funtab[] = {
 	f_make,3,3,
 "mater", "comb [material]", "assign/delete material to combination",
 	f_mater,2,3,
+"matpick", "# or a/b", "select arc which has matrix to be edited, in O_PATH state",
+	f_matpick, 2,2,
 "memprint", "", "print memory maps",
 	f_memprint, 1, 1,
 "mirface", "#### axis", "mirror an ARB face",
