@@ -519,7 +519,7 @@ int flag;
 
 	if( dp->d_flags & DIR_COMB )
 	{
-		if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 			READ_ERR_return;
 
 		path[pathpos] = dp;
@@ -968,7 +968,7 @@ struct directory *dp;
 
 	if( dp->d_flags & DIR_SOLID )
 		return;
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 		READ_ERR_return;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if( comb->tree )
@@ -1311,7 +1311,7 @@ mat_t xform;
 	}
 
 	/* if we can't get records for this combination, just leave it alone */
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 		return( dp );
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -1437,7 +1437,7 @@ char **argv;
 			if( dp->d_flags & DIR_SOLID )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 				TCL_READ_ERR_return;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 			if( comb->tree )
@@ -1582,7 +1582,7 @@ char **argv;
 			break;
 		}
 
-		if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 			TCL_READ_ERR_return;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -2128,7 +2128,7 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 		return TCL_ERROR;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	sprintf( id, "%d\n", comb->region_id );
@@ -2192,7 +2192,7 @@ char **argv;
 				if( !(dp->d_flags & DIR_REGION) )
 					continue;
 
-				if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+				if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 					TCL_READ_ERR_return;
 				comb = (struct rt_comb_internal *)intern.idb_ptr;
 				if( comb->region_id != 0 ||

@@ -101,7 +101,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 
@@ -546,7 +546,7 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -615,7 +615,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( (id = rt_db_get_internal( &internal, proto, dbip, (mat_t *)NULL )) < 0 )  {
+	if( (id = rt_db_get_internal( &internal, proto, dbip, (fastf_t *)NULL )) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	/* make sure it is a TGC */
@@ -747,7 +747,7 @@ char	**argv;
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		db_free_1anim( anp );
 		TCL_READ_ERR_return;
 	}

@@ -198,7 +198,7 @@ char    *argv[];
 			if( !(dp->d_flags & DIR_REGION) )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 			{
 				(void)signal( SIGINT, SIG_IGN );
 				TCL_READ_ERR_return;

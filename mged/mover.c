@@ -109,7 +109,7 @@ matp_t xlate;
 	if(dbip == DBI_NULL)
 	  return;
 
-	if( rt_db_get_internal( &intern, cdp, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, cdp, dbip, (fastf_t *)NULL ) < 0 )
 		READ_ERR_return;
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -237,7 +237,7 @@ int air;				/* Air code */
 	}
 
 	/* combination exists, add a new member */
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 	{
 		Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
 		TCL_ERROR_RECOVERY_SUGGESTION;

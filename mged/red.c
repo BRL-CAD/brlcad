@@ -93,7 +93,7 @@ char **argv;
 		  return TCL_ERROR;
 		}
 
-		if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 			TCL_READ_ERR_return;
 
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -641,7 +641,7 @@ char **argv;
       return TCL_ERROR;
     }
 
-    if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+    if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
       TCL_READ_ERR_return;
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -800,7 +800,7 @@ char **argv;
       return TCL_ERROR;
     }
     
-    if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+    if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
       TCL_READ_ERR_return;
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -1727,7 +1727,7 @@ struct directory *dpold;
 	/* Make a new name */
 	mktemp_comb( red_tmpcomb );
 
-	if( rt_db_get_internal( &intern, dpold, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dpold, dbip, (fastf_t *)NULL ) < 0 )
 		TCL_READ_ERR_return;
 
 	if( (dp=db_diradd( dbip, red_tmpcomb, -1, dpold->d_len, dpold->d_flags)) == DIR_NULL ||

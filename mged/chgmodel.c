@@ -130,7 +130,7 @@ char	**argv;
 		los_set = 1;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -185,7 +185,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -431,7 +431,7 @@ char    *argv[];
       status = TCL_ERROR;
       continue;
     }
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR;
 		status = TCL_ERROR;
 		continue;
@@ -503,7 +503,7 @@ char    *argv[];
 		continue;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR;
 		status = TCL_ERROR;
 	}
@@ -621,7 +621,7 @@ char	**argv;
       return TCL_ERROR;
     }
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -683,7 +683,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -1278,7 +1278,7 @@ char	**argv;
 	los = atoi( argv[5] );
 	mat = atoi( argv[6] );
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;

@@ -291,7 +291,7 @@ int			flags;
 	if( db_alloc( dbip, dp, len ) < 0 )
 		return(-1);
 
-	if( rt_db_get_internal( &intern, input_dp, input_dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, input_dp, input_dbip, (fastf_t *)NULL ) < 0 )
 	{
 		READ_ERR;
 		if( db_delete( dbip, dp ) < 0 ||

@@ -561,7 +561,7 @@ char	**argv;
 			return TCL_ERROR;
 		}
 
-		if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 			TCL_READ_ERR_return;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB( comb );
@@ -751,7 +751,7 @@ char	**argv;
 					if( !strcmp( tok->tp->tr_l.tl_name, comb_name ) )
 					{
 						db_free_tree( tok->tp );
-						if( rt_db_get_internal( &intern1, dp, dbip, (mat_t *)NULL ) < 0 )
+						if( rt_db_get_internal( &intern1, dp, dbip, (fastf_t *)NULL ) < 0 )
 						{
 							Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n" );
 							TCL_READ_ERR_return;

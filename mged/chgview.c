@@ -847,7 +847,7 @@ int	verbose;
 	if(dbip == DBI_NULL)
 	  return;
 
-	if( (id = rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL )) < 0 )  {
+	if( (id = rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL )) < 0 )  {
 		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 			") failure\n", (char *)NULL );
 		return;

@@ -689,7 +689,7 @@ char	**argv;
       if( !(dp->d_flags & DIR_COMB) )
 	continue;
 
-    	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+    	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 	{
 		(void)signal( SIGINT, SIG_IGN );
 		TCL_READ_ERR_return;
@@ -806,7 +806,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 				TCL_READ_ERR_return;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -839,7 +839,7 @@ register struct directory *dp;
 	if( dp->d_nref++ > 0 )
 		return;		/* already written */
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 		READ_ERR_return;
 	if( mk_export_fwrite( keepfp, dp->d_namep, intern.idb_ptr, intern.idb_type ) )
 		WRITE_ERR_return;
@@ -1030,7 +1030,7 @@ char prefix;
    *  Process all the arcs (eg, directory members).
    */
 
-  if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+  if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 	READ_ERR_return;
   comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -1183,7 +1183,7 @@ char	**argv;
 	}
 
 	/* Change name in the file */
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 		TCL_READ_ERR_return;
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 ) {
 		TCL_WRITE_ERR_return;
@@ -1201,7 +1201,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 				continue;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -1303,7 +1303,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )  {
 				Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 					") failure", (char *)NULL );
 				ret = TCL_ERROR;

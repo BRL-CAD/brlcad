@@ -1086,7 +1086,7 @@ matp_t matp;
 		  return;		/* ERROR */
 		}
 
-		if( rt_db_get_internal( &intern, parentp, dbip, (mat_t *)NULL ) < 0 )
+		if( rt_db_get_internal( &intern, parentp, dbip, (fastf_t *)NULL ) < 0 )
 			READ_ERR_return;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if( comb->tree )
