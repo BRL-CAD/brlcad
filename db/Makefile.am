@@ -1,5 +1,7 @@
 # $Id$
 
+SUBDIRS = include
+
 A2G=$(top_builddir)/conv/asc2g
 G2A=$(top_builddir)/conv/g2asc
 
