@@ -101,12 +101,12 @@ HMitem	*itemp;
 		return;
 	(void) fprintf( stderr, "text=\"%s\"\n", itemp->text );
 	(void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
-	(void) fprintf( stderr, "next=0x%x\n", (int) itemp->next );
+	(void) fprintf( stderr, "next=0x%x\n", itemp->next );
 #ifndef sgi
-	(void) fprintf( stderr, "dfn=0x%x\n", (int) itemp->dfn );
-	(void) fprintf( stderr, "bfn=0x%x\n", (int) itemp->bfn );
+	(void) fprintf( stderr, "dfn=0x%x\n", itemp->dfn );
+	(void) fprintf( stderr, "bfn=0x%x\n", itemp->bfn );
 #endif
-	(void) fprintf( stderr, "hfn=0x%x\n", (int) itemp->hfn );
+	(void) fprintf( stderr, "hfn=0x%x\n", itemp->hfn );
 	(void) fprintf( stderr, "data=%d\n--\n", itemp->data );
 	return;
 	}
@@ -578,7 +578,7 @@ int	menux, menuy;
 			break;
 		case '?' :
 		case M_HELP :
-			hm_Help( win, ENTRY );
+			hm_Help( win, (int)ENTRY );
 			break;
 		case M_SELECT :
 		case M_RETURN :

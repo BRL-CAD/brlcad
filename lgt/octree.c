@@ -233,6 +233,7 @@ PtList	*ptlist;
 	return	1;
 	}
 
+void
 delete_PtList( ptlistp )
 PtList	**ptlistp;
 	{	register PtList	*pp = *ptlistp, *np;
@@ -299,7 +300,7 @@ prnt_Node_Octree( parentp, level )
 Octree	*parentp;
 int	level;
 	{	register PtList	*ptp;
-		register ptcount = 0;
+		register int ptcount = 0;
 	rt_log( "%s[%2d](%8.3f,%8.3f,%8.3f)bits=0%o temp=%04d trie=%05x sibling=%05x child=%05x\n",
 		parentp->o_child != OCTREE_NULL ? "NODE" : "LEAF",
 		level,
