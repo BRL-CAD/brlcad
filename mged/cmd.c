@@ -910,7 +910,7 @@ char **argv;
 	}
 
 	if( fp == NULL ) {
-		rt_log( rt_vls_addr(which_history) );
+		rt_log( "%s", rt_vls_addr(which_history) );
 	} else {
 		rt_vls_fwrite( fp, which_history );
 		fclose( fp );

@@ -522,7 +522,7 @@ int flag;
 	/* do_list will print actual solid name */
 	rt_log("/");
 	do_list( &str, dp, 1 );
-	rt_log( rt_vls_addr(&str) );
+	rt_log( "%s", rt_vls_addr(&str) );
 }
 
 /*

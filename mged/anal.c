@@ -124,11 +124,11 @@ char	*argv[];
 
 		rt_vls_trunc( &v, 0 );		
 		do_list( &v, ndp, 1 );
-		rt_log( rt_vls_addr(&v) );
+		rt_log( "%s", rt_vls_addr(&v) );
 		rt_vls_trunc( &v, 0 );
 
 		do_anal(&v, &intern);
-		rt_log( rt_vls_addr(&v) );
+		rt_log( "%s", rt_vls_addr(&v) );
 		rt_vls_free(&v);
 		rt_db_free_internal( &intern );
 	}

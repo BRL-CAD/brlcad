@@ -659,7 +659,7 @@ char	**argv;
 
 		rt_vls_trunc( &str, 0 );
 		do_list( &str, dp, 99 );	/* very verbose */
-		rt_log( rt_vls_addr(&str) );
+		rt_log( "%s", rt_vls_addr(&str) );
 	}
 
 	rt_vls_free( &str );
@@ -687,7 +687,7 @@ char	**argv;
 
 		rt_vls_trunc( &str, 0 );
 		do_list( &str, dp, 0 );	/* non-verbose */
-		rt_log( rt_vls_addr(&str) );
+		rt_log( "%s", rt_vls_addr(&str) );
 	}
 
 	rt_vls_free( &str );
