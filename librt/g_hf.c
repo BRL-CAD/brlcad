@@ -127,7 +127,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 	struct rt_dsp_internal	*dsp;
 	mat_t 			tmp, mat, matA, matB, matC;
 
-	GETSTRUCT( dsp, rt_dsp_internal );
+	BU_GETSTRUCT( dsp, rt_dsp_internal );
 	dsp->dsp_xcnt = hip->w;
 	dsp->dsp_ycnt = hip->n;
 
