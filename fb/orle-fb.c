@@ -41,7 +41,6 @@ static FBIO	*fbp;
 static FILE	*fp;
 static RGBpixel	bgpixel;
 static int	bgflag = 0;
-static int	cmflag = 0;
 static int	olflag = 0;
 static int	pars_Argv();
 static int	xlen = -1, ylen = -1;

@@ -107,7 +107,7 @@ int argc;
 char **argv;
 {
 	int	c;
-	char *cp,*fbfile=NULL;
+	char *cp;
 	char cs[4];
 	int i,j,k,lclr,iquit=0,ichg=0,gclr(),cclr();
 	int il,iu,iclr,iskp,jclr,bsp();
@@ -125,10 +125,9 @@ char **argv;
 		printf("  -N screen_height\n");
 		exit(10);
 	}
-	fbfile=NULL;
 	for(i=1;i<argc;i++){
 		if(strcmp("-F",argv[i])==0){
-			fbfile=argv[++i];
+			argv[++i];
 		} else if(strcmp("-W",argv[i])==0){
 			sscanf(argv[++i],"%d",&scr_w);
 			scr_set=1;
@@ -192,7 +191,7 @@ view:	printf("Title: ");
 /*	printf("min_w %d min_h %d\n",min_w,min_h); */
 
 /* find item - color table (default color = silver) */
-	while((c=gc())!='/') if(c=0) exit(1);
+	while((c=gc())!='/') if(c==0) exit(1);
 	gc();
 	loci=loct;
 	for(ni=0;;ni++) {

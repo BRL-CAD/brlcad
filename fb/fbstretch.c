@@ -117,7 +117,6 @@ static int	src_width = 0,
 		src_height = 0;		/* source image size */
 static int	dst_width = 0,
 		dst_height = 0;		/* destination image size */
-static RGBpixel	bg = { 0, 0, 0 };	/* background */
 static unsigned char	*src_buf;		/* calloc()ed input scan line buffer */
 static unsigned char	*dst_buf;		/* calloc()ed output scan line buffer */
 

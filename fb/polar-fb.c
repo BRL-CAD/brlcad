@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "externs.h"
 #include "fb.h"
 
 /* Program constants */
@@ -121,7 +122,6 @@ char	*argv[];
 {
     bool	clr_fb = FALSE;	/* Clear the frame buffer first? */
     bool	draw_grid = TRUE;	/* Plot the plolar axes? */
-    bool	hi_res = FALSE;	/* High resolution? */
     bool	merge = FALSE;	/* Overlay data on current contents FB? */
     bool	NoWarnings = FALSE;	/* Abort if any irregular input? */
     bool	perimeter = FALSE;	/* Plot perimeter of function? */

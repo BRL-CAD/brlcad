@@ -135,9 +135,6 @@ int argc;
 char **argv;
 {
 	struct coords	start, end;
-	register int	i;
-	register char	*filename = NULL;
-	char		*cp;
 
 	if ( !get_args( argc, argv ) ) {
 		fputs( usage, stderr);

@@ -963,8 +963,6 @@ main( argc, argv )
 					}
 				}
 			else	{
-				register int	i;
-
 				/* Use default global color map. */
 
 				if ( verbose )

@@ -250,8 +250,6 @@ void
 showframe(i)
 register int i;
 {
-	register int	y;
-
 	if( verbose )  {
 		fprintf(stderr, " %d", i);
 		fflush( stderr );
