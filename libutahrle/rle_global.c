@@ -83,7 +83,7 @@ rle_hdr rle_dflt_hdr = {
     8,				/* cmaplen (log2 of length of color map) */
     NULL,			/* pointer to color map */
     NULL,			/* pointer to comment strings */
-#if defined(__linux__)
+#if defined(__linux__) || ( defined(__FreeBSD__) && __FreeBSD__ >=5 )
     NULL,			/* In LINUX, now "extern FILE *stdout" */
 #elif defined(stdout)
     stdout,			/* output file */
