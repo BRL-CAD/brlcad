@@ -1694,6 +1694,7 @@ CONST struct rt_tol	*tol;
 			rt_log( "\tLOOPUSE x%x:\n" , lu );
 			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 			{
+				vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 				nmg_pr_vu_briefly( vu , "\tVertex Loop: " );
 			}
 			else
