@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  92/01/31  16:56:12  mike
+ * Must do chown() *after* close(), so that on NFS clients, we don't
+ * loose write permission on the file before we write any data into it.
+ * 
  * Revision 10.1  91/10/12  06:54:00  mike
  * Release_4.0
  * 
@@ -70,6 +74,7 @@ static char RCSid[] = "@(#)$Header$";
   
    Commands to read/write files/regions.  */
 
+#include <stdio.h>
 #include "./jove.h"
 #include "./termcap.h"
 
@@ -110,8 +115,21 @@ disk_line	tline;		/* Pointer to end of tmp file */
 
 char	*tfname;
 
+extern int	read(), write();
+
+void	dofread();
+void	DoWriteReg();
+void	file_write();
+void	setcmode();
+void	dolseek();
+void	blkio();
+void	lsave();
+void	getDOT();
+void	SavLine();
+
 /***********************************/
 
+void
 IOclose()
 {
 	if (io > 0)
@@ -122,6 +140,7 @@ IOclose()
 
 /* This reads a line from the input file into buf. */
 
+int
 getfline(buf)
 char	*buf;
 {
@@ -165,6 +184,7 @@ char	*buf;
 
 int	EndWNewline = 1;
 
+void
 putreg(line1, char1, line2, char2)
 LINE	*line1,
 	*line2;
@@ -223,6 +243,7 @@ char	*err, *file;
 	return sprint("Couldn't %s \"%s\"", err, file);
 }
 
+void
 read_file(file)
 char	*file;
 {
@@ -246,6 +267,7 @@ char	*file;
 		SetReadOnly(curbuf);
 }
 
+void
 FileMess(file, lines, chars)
 char	*file;
 long	chars;
@@ -253,6 +275,7 @@ long	chars;
 	s_mess("\"%s\" %d lines %ld characters", file, lines, chars);
 }
 
+void
 dofread(file)
 char	*file;
 {
@@ -283,6 +306,7 @@ char	*file;
 	FileMess(file, nlines, count);
 }
 
+void
 bufname(bp)
 BUFFER	*bp;
 {
@@ -309,6 +333,7 @@ BUFFER	*bp;
 	setbname(bp, tmp);
 }
 
+void
 SaveFile()
 {
 	if (IsModified(curbuf)) {
@@ -318,6 +343,7 @@ SaveFile()
 		message("No changes need be written");
 }
 
+void
 filemunge(fname)
 char	*fname;
 {
@@ -331,16 +357,19 @@ char	*fname;
 		confirm("\"%s\" already exist; are you sure? ", fname);
 }
 
+void
 WrtReg()
 {
 	DoWriteReg(0);
 }
 
+void
 AppReg()
 {
 	DoWriteReg(1);
 }
 
+void
 DoWriteReg(app)
 {
 	char	fname[100];
@@ -372,6 +401,7 @@ DoWriteReg(app)
 	IOclose();
 }
 
+void
 WriteFile()
 {
 	char	*fname,
@@ -389,6 +419,7 @@ WriteFile()
 
 char	*SaveName();
 
+void
 file_write(fname, app)
 char	*fname;
 {
@@ -513,6 +544,7 @@ char *fname;
 	return (cp);
 }
 
+void
 initlist(bp)
 BUFFER	*bp;
 {
@@ -528,6 +560,7 @@ BUFFER	*bp;
 	initwinds(bp);
 }
 
+void
 setcmode()
 {
 	register int	len;
@@ -540,6 +573,7 @@ setcmode()
 		OnFlag(globflags, CMODE);
 }
 
+void
 ReadFile()
 {
 	char	*fname;
@@ -554,6 +588,7 @@ ReadFile()
 	read_file(curbuf->b_fname);
 }
 
+void
 InsFile()
 {
 	char	*fname;
@@ -563,6 +598,7 @@ InsFile()
 	SetModified(curbuf);
 }
 
+void
 dolseek(fd, offset, whence)
 long	offset;
 {
@@ -583,10 +619,12 @@ int	DOLsave = 0;	/* Do Lsave flag.  If lines aren't being save
 			   flag is probably not being set, or is being
 			   cleared before lsave() was called. */
 
+void
 tmpinit()
 {
-#ifdef SYS5_SGI
-	tfname = (char *) xtempnam(NULL, TempFile);
+#if defined(L_tmpnam)	/* From modern stdio.h */
+	/* Honor $TMPDIR in user's environment */
+	tfname = (char *) tempnam(NULL, "jove");
 #else
 	tfname = mktemp(TempFile);
 #endif
@@ -670,8 +708,6 @@ char *
 getblock(atl, iof)
 disk_line	atl;
 {
-	extern int	read(),
-			write();
 	register int	bno,
 			off;
 
@@ -723,6 +759,7 @@ char	incorb[(INCORB+1)*BSIZ];
 #define	pageround(a)	((a) & ~(BSIZ-1))
 #endif
 
+void
 blkio(b, buf, iofcn)
 short	b;
 char	*buf;
@@ -759,7 +796,7 @@ bcopy(from, to, count)
 /*
  * Save the current contents of linebuf, if it has changed.
  */
-
+void
 lsave()
 {
 	char	tmp[LBSIZE];
@@ -773,11 +810,13 @@ lsave()
 	DOLsave = 0;
 }
 
+void
 getDOT()
 {
 	ignore(getline(curline->l_dline, linebuf));
 }
 
+void
 SavLine(addr, buf)
 LINE	*addr;
 char	*buf;
