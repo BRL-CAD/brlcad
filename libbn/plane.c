@@ -352,7 +352,7 @@ CONST struct rt_tol	*tol;
 	if( (mag1 = MAGNITUDE(d1)) < SMALL_FASTF )  rt_bomb("rt_2line3_colinear() mag1 zero\n");
 	if( (mag2 = MAGNITUDE(d2)) < SMALL_FASTF )  rt_bomb("rt_2line3_colinear() mag2 zero\n");
 
-	/* Impose a general angular tolerance to reject 
+	/* Impose a general angular tolerance to reject "obviously" non-parallel lines */
 	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
 	if( fabs(VDOT(d1, d2)) < 0.9 * mag1 * mag2  )  goto fail;
 
@@ -460,7 +460,6 @@ CONST plane_t	b;
 CONST vect_t	rpp_min;
 CONST struct rt_tol	*tol;
 {
-	register fastf_t	d;
 	LOCAL vect_t		abs_dir;
 	LOCAL plane_t		pl;
 	int			i;
@@ -959,11 +958,6 @@ CONST point_t	q;
 CONST vect_t	qdir;
 struct rt_tol	*tol;
 {
-	fastf_t	dx, dy;
-	fastf_t	det;		/* determinant */
-	fastf_t	det1, det2;
-	fastf_t	b,c;
-	fastf_t	hx, hy;		/* H = Q - P */
 	fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
 	int	status;
 
@@ -1061,11 +1055,6 @@ CONST point_t	q;
 CONST vect_t	qdir;
 struct rt_tol	*tol;
 {
-	fastf_t	dx, dy;
-	fastf_t	det;		/* determinant */
-	fastf_t	det1, det2;
-	fastf_t	b,c;
-	fastf_t	hx, hy;		/* H = Q - P */
 	fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
 	fastf_t	pmag, qmag;
 	int	status;
@@ -1882,7 +1871,6 @@ CONST struct rt_tol *tol;
 	fastf_t	P_A_sq;		/* |P-A|**2 */
 	fastf_t	P_B_sq;		/* |P-B|**2 */
 	fastf_t	B_A;		/* |B-A| */
-	fastf_t	B_A_sq;
 	fastf_t	t;		/* distance along ray of projection of P */
 
 	RT_CK_TOL(tol);
@@ -1916,7 +1904,7 @@ CONST struct rt_tol *tol;
 	}
 
 	VSUB2(AtoB, b, a);
-	B_A = sqrt( B_A_sq = MAGSQ(AtoB) );
+	B_A = sqrt( MAGSQ(AtoB) );
 
 	/* compute distance (in actual units) along line to PROJECTION of
 	 * point p onto the line: point pca
@@ -2003,7 +1991,6 @@ CONST struct rt_tol *tol;
 	fastf_t	P_A_sq;		/* |P-A|**2 */
 	fastf_t	P_B_sq;		/* |P-B|**2 */
 	fastf_t	B_A;		/* |B-A| */
-	fastf_t	B_A_sq;
 	fastf_t	t;		/* distance along ray of projection of P */
 
 	RT_CK_TOL(tol);
@@ -2038,7 +2025,7 @@ CONST struct rt_tol *tol;
 	}
 
 	VSUB2_2D(AtoB, b, a);
-	B_A = sqrt( B_A_sq = MAGSQ_2D(AtoB) );
+	B_A = sqrt( MAGSQ_2D(AtoB) );
 
 	/* compute distance (in actual units) along line to PROJECTION of
 	 * point p onto the line: point pca

@@ -257,7 +257,6 @@ CONST char				*value;	/* string containing value */
 			rt_log("rt_struct_lookup(%s): unknown format '%s'\n",
 				name, sdp->sp_fmt );
 			return(-1);
-			break;
 		}
 		if( sdp->sp_hook )  {
 			sdp->sp_hook( sdp, name, base, value );
