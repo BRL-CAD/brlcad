@@ -36,8 +36,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "./rdebug.h"
-#include "../librt/debug.h"
 
 #undef rt_bomb		/* in case compat4.h defines one */
 
