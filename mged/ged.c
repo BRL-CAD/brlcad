@@ -181,6 +181,7 @@ char **argv;
 		(void)printf("\nAborted.\n");
 	}
 	(void)signal( SIGINT, SIG_IGN );
+	(void)signal( SIGPIPE, SIG_IGN );
 	pr_prompt();
 
 	/****************  M A I N   L O O P   *********************/
