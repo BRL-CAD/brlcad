@@ -221,7 +221,7 @@ clean|noprod|clobber|lint)
 	done;;
 
 # These operate in a mixture of places, treating both source and binary
-install|uninstall)
+install|install-nobak|uninstall)
 	for dir in ${ADIRS}; do
 		echo -------------------------------- ${dir};
 		( cd ${dir}; cake -k ${TARGET} )
