@@ -983,6 +983,8 @@ FILE	*fp;
 	int		frame = 0;
 	struct frame	*fr;
 
+	rt_log("%s Starting to scan animation script\n", stamp() );
+
 	rt_vls_init( &prelude );
 	rt_vls_init( &body );
 	rt_vls_init( &finish );
@@ -1061,6 +1063,9 @@ out:
 	rt_vls_free( &prelude );
 	rt_vls_free( &body );
 	rt_vls_free( &finish );
+
+	/* For a few hundred frames, it all can take a little while */
+	rt_log("%s Animation script loaded\n", stamp() );
 }
 
 /*
