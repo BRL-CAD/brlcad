@@ -28,49 +28,49 @@
 /* Explicit composition of each product */
 
 pipe:	pipe.o
-	CC LDFLAGS  pipe.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o pipe
+	CC LDFLAGS  pipe.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pipe
 
 tube:	tube.o 
-	CC LDFLAGS  tube.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o tube
+	CC LDFLAGS  tube.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o tube
 
 spltest:	spltest.o 
-	CC LDFLAGS  spltest.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o spltest
+	CC LDFLAGS  spltest.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o spltest
 
 room:	room.o common.o
-	CC LDFLAGS  room.o common.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o room
+	CC LDFLAGS  room.o common.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o room
 
 clutter:	clutter.o common.o mathtab.o
-	CC LDFLAGS  clutter.o common.o LIBWDB LIBRT LIBBU LIBBU_LIBES mathtab.o LIBES -o clutter
+	CC LDFLAGS  clutter.o common.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES mathtab.o LIBES -o clutter
 
 kurt:		kurt.o
-	CC LDFLAGS  kurt.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o kurt
+	CC LDFLAGS  kurt.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o kurt
 
 pyramid:	pyramid.o
-	CC LDFLAGS  pyramid.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o pyramid
+	CC LDFLAGS  pyramid.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pyramid
 
 molecule:	molecule.o 
-	CC LDFLAGS  molecule.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o molecule
+	CC LDFLAGS  molecule.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o molecule
 
 teapot:		tea.o
-	CC LDFLAGS tea.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o teapot
+	CC LDFLAGS tea.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o teapot
 
 terrain: terrain.o
-	CC LDFLAGS terrain.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o terrain
+	CC LDFLAGS terrain.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o terrain
 
-tea_nmg:	tea_nmg.o LIBWDB_DEP LIBRT_DEP
-	CC LDFLAGS tea_nmg.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o tea_nmg
+tea_nmg:	tea_nmg.o LIBWDB_DEP LIBRT_DEP LIBBN_DEP
+	CC LDFLAGS tea_nmg.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o tea_nmg
 
 pipetest:	pipetest.o
-	CC LDFLAGS pipetest.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o pipetest
+	CC LDFLAGS pipetest.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pipetest
 
 nmgmodel:	nmgmodel.o
-	CC LDFLAGS nmgmodel.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o nmgmodel
+	CC LDFLAGS nmgmodel.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o nmgmodel
 
 brickwall:	brickwall.o
-	CC LDFLAGS brickwall.o LIBRT LIBBU LIBBU_LIBES LIBES -o brickwall
+	CC LDFLAGS brickwall.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o brickwall
 
 wall:	wall.o
-	CC LDFLAGS wall.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o wall
+	CC LDFLAGS wall.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o wall
 
 /*
  *  Special rules for additions from other directories

@@ -25,7 +25,7 @@
 
 #define REMRT_PIECES	\
 		ihost.o RTDIR/opt.o \
-		LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBES
+		LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 #define	RTSRV_PIECES	\
 		RTDIR/opt.o \
@@ -42,7 +42,7 @@
 		RTDIR/sh_air.o \
 		RTDIR/sh_spm.o RTDIR/sh_light.o RTDIR/do.o \
 		LIBPKG LIBPKG_LIBES \
-		LIBRT LIBBU LIBBU_LIBES LIBES
+		LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 #define OBJS	/**/
 
@@ -62,7 +62,7 @@ rtsrv:	rtsrv.o view.o OBJS
 	CC LDFLAGS -o rtsrv rtsrv.o view.o OBJS RTSRV_PIECES
 
 rtsync:  rtsync.o ihost.o
-	CC LDFLAGS -o rtsync rtsync.o ihost.o LIBFB LIBFB_LIBES LIBRT LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o rtsync rtsync.o ihost.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 /* Uses standard view.o */
 rtnode:  rtnode.o RTDIR/view.o
