@@ -43,7 +43,6 @@ plane_t plane1, plane2;
 	    srf->mesh->s_size[0], srf->mesh->s_size[1], n_pt_type);
 
 	psrf->next = (struct snurb *)0;
-	psrf->trim = (struct cnurb *)0;
 	psrf->dir = COL;
 
 	for ( i = 0; i < srf->u_knots->k_size; i++) {
