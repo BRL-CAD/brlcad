@@ -109,6 +109,18 @@ int		len;
 		where->u_id = '\0';	/* undefined id */
 		return;
 	}
+	if( dbip->dbi_inmem )  {
+		register int	start;
+
+		want = len * sizeof(union record);
+		start = dp->d_addr + offset * sizeof(union record);
+#if defined(SYSV)
+		memcpy( (char *)where, dbip->dbi_inmem + start, want );
+#else
+		bcopy( dbip->dbi_inmem + start, (char *)where, want );
+#endif
+		return;
+	}
 #if unix
 	want = len * sizeof(union record);
 	(void)lseek( dbip->dbi_fd,

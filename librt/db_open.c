@@ -32,12 +32,44 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
+#ifdef unix
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
 
 #include "./debug.h"
+
+/*
+ *  This constant determines what the maximum size database is that
+ *  will be buffered entirely in memory.
+ *  Architecture constraints suggest different values for each vendor.
+ */
+#ifdef CRAY1
+#	define	INMEM_LIM	1*8*1024*1024	/* includes XMP */
+#endif
+#ifdef CRAY2
+#	define	INMEM_LIM	32*8*1024*1024
+#endif
+#ifdef sun
+#	define	INMEM_LIM	1*1024*1024
+#endif
+#ifdef gould
+#	define	INMEM_LIM	1*1024*1024
+#endif
+#ifdef vax
+#	define	INMEM_LIM	8*1024*1024
+#endif
+#ifdef mips
+#	define	INMEM_LIM	2*1024*1024
+#endif
+#if !defined(INMEM_LIM)
+#	define	INMEM_LIM	1*1024*1024	/* default */
+#endif
 
 /*
  *  			D B _ O P E N
@@ -56,11 +88,19 @@ char	*mode;
 {
 	register struct db_i	*dbip;
 	register int		i;
+#if unix
+	struct stat		sb;
+#endif
 
 	if(rt_g.debug&DEBUG_DB) rt_log("db_open(%s, %s)\n", name, mode );
 
 	GETSTRUCT( dbip, db_i );
 	dbip->dbi_magic = DBI_MAGIC;
+
+#if unix
+	if( stat( name, &sb ) < 0 )
+		goto fail;
+#endif
 
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
 		/* Read-only mode */
@@ -69,6 +109,13 @@ char	*mode;
 				goto fail;
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
 				goto fail;
+			if( sb.st_size <= INMEM_LIM )  {
+				dbip->dbi_inmem = rt_malloc( sb.st_size,
+					"in-memory database" );
+				if( read( dbip->dbi_fd, dbip->dbi_inmem,
+				    sb.st_size ) != sb.st_size )
+					goto fail;
+			}
 #		else
 			if( (dbip->dbi_fp = fopen( name, "r")) == NULL )
 				goto fail;
