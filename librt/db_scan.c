@@ -390,7 +390,7 @@ int		units;
 void
 db_conversions( dbip, local )
 struct db_i	*dbip;
-int local;
+int local;					/* one of ID_??_UNIT */
 {
 	RT_CK_DBI(dbip);
 
@@ -460,4 +460,42 @@ int local;
 		break;
 	}
 	dbip->dbi_base2local = 1.0 / dbip->dbi_local2base;
+}
+
+/*
+ *			D B _ V 4 _ G E T _ U N I T S _ C O D E
+ *
+ *  Given a string, return the V4 database code representing
+ *  the user's preferred editing units.
+ *  The v4 database format does not have many choices.
+ *
+ *  Returns -
+ *	-1	Not a legal V4 database code
+ *	#	The V4 database code number
+ */
+int
+db_v4_get_units_code( str )
+CONST char *str;
+{
+
+	if( strcmp(str, "mm") == 0 || strcmp(str, "millimeters") == 0 ) 
+		return ID_MM_UNIT;
+	if( strcmp(str, "um") == 0 || strcmp(str, "micrometers") == 0) 
+		return ID_UM_UNIT;
+	if( strcmp(str, "cm") == 0 || strcmp(str, "centimeters") == 0) 
+		return ID_CM_UNIT;
+	if( strcmp(str,"m")==0 || strcmp(str,"meters")==0 ) 
+		return ID_M_UNIT;
+	if( strcmp(str, "km") == 0 || strcmp(str, "kilometers") == 0) 
+		return ID_KM_UNIT;
+	if( strcmp(str,"in")==0 || strcmp(str,"inches")==0 || strcmp(str,"inch")==0 ) 
+		return ID_IN_UNIT;
+	if( strcmp(str,"ft")==0 || strcmp(str,"feet")==0 || strcmp(str,"foot")==0 ) 
+		return ID_FT_UNIT;
+	if( strcmp(str,"yd")==0 || strcmp(str,"yards")==0 || strcmp(str,"yard")==0 ) 
+		return ID_YD_UNIT;
+	if( strcmp(str,"mi")==0 || strcmp(str,"miles")==0 || strcmp(str,"mile")==0 ) 
+		return ID_MI_UNIT;
+
+	return -1;		/* error */
 }
