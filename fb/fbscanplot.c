@@ -35,12 +35,14 @@ int	scr_width = 0;		/* framebuffer width */
 int	scr_height = 0;		/* framebuffer height */
 int	verbose = 0;		/* output scanline values to stdout */
 int	fb_overlay = 0;		/* plot on background, else black with grid */
+int	cmap_crunch = 0;	/* Plot values after passing through color map */
 int	reverse = 0;		/* highlight chosen line by inverting it */
 char	*outframebuffer = NULL;
 FBIO	*fbp, *fboutp;
+ColorMap map;
 
 char usage[] = "\
-Usage: fbscanplot [-h] [-v] [-o] [-r]\n\
+Usage: fbscanplot [-h] [-v] [-c] [-o] [-r]\n\
 	[-W scr_width] [-F outframebuffer] yline\n";
 
 get_args( argc, argv )
@@ -48,8 +50,11 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "vhorW:F:" )) != EOF ) {
+	while ( (c = getopt( argc, argv, "cvhorW:F:" )) != EOF ) {
 		switch( c )  {
+		case 'c':
+			cmap_crunch++;
+			break;
 		case 'v':
 			verbose++;
 			break;
@@ -117,6 +122,12 @@ int argc; char **argv;
 	if( fb_read( fbp, 0, yline, scan+3, scr_width ) != scr_width )
 		exit(4);
 
+	fb_make_linear_cmap(&map);
+	if( cmap_crunch )  {
+		if( fb_rmap( fbp, &map ) < 0 )
+			fprintf(stderr,"fbscanplot: error reading colormap\n");
+	}
+
 	/* extend the edges with one duplicate pixel each way */
 	scan[0*3+RED] = scan[1*3+RED];
 	scan[0*3+GRN] = scan[1*3+GRN];
@@ -151,28 +162,34 @@ int argc; char **argv;
 		ip = &scan[1*3+RED];
 		op = &outline[0*3+RED];
 		for( x = 0; x < scr_width; x++, op += 3, ip += 3 ) {
-			if( y > (int)ip[RED] ) {
+			if( y > (int)map.cm_red[ip[RED]]>>8 ) {
 				op[RED] = 0;
 			} else {
-				if( y >= (int)ip[RED-3] || y >= (int)ip[RED+3] || y == ip[RED] )
+				if( y >= (int)map.cm_red[ip[RED-3]]>>8 ||
+				    y >= (int)map.cm_red[ip[RED+3]]>>8 ||
+				    y == (int)map.cm_red[ip[RED]]>>8 )
 					op[RED] = 255;
 				else
 					op[RED] = 0;
 			}
 
-			if( y > (int)ip[GRN] ) {
+			if( y > (int)map.cm_green[ip[GRN]]>>8 ) {
 				op[GRN] = 0;
 			} else {
-				if( y >= (int)ip[GRN-3] || y >= (int)ip[GRN+3] || y == ip[GRN] )
+				if( y >= (int)map.cm_green[ip[GRN-3]]>>8 ||
+				    y >= (int)map.cm_green[ip[GRN+3]]>>8 ||
+				    y == (int)map.cm_green[ip[GRN]]>>8 )
 					op[GRN] = 255;
 				else
 					op[GRN] = 0;
 			}
 
-			if( y > (int)ip[BLU] ) {
+			if( y > (int)map.cm_blue[ip[BLU]]>>8 ) {
 				op[BLU] = 0;
 			} else {
-				if( y >= (int)ip[BLU-3] || y >= (int)ip[BLU+3] || y == ip[BLU] )
+				if( y >= (int)map.cm_blue[ip[BLU-3]]>>8 ||
+				    y >= (int)map.cm_blue[ip[BLU+3]]>>8 ||
+				    y == (int)map.cm_blue[ip[BLU]]>>8 )
 					op[BLU] = 255;
 				else
 					op[BLU] = 0;
