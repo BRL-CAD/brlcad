@@ -86,6 +86,9 @@ test cmdAH-2.5 {Tcl_CdObjCmd} {
 test cmdAH-2.6 {Tcl_CdObjCmd} {
     list [catch {cd _foobar} msg] $msg
 } {1 {couldn't change working directory to "_foobar": no such file or directory}}
+test cmdAH-2.6.1 {Tcl_CdObjCmd} {
+    list [catch {cd ""} msg] $msg
+} {1 {couldn't change working directory to "": no such file or directory}}
 
 test cmdAH-2.7 {Tcl_ConcatObjCmd} {
     concat
@@ -180,7 +183,7 @@ test cmdAH-5.4 {Tcl_FileObjCmd} {
 #volume
 
 test cmdAH-6.1 {Tcl_FileObjCmd: volumes} {
-    list [catch {file volumes x} msg] $msg	
+    list [catch {file volumes x} msg] $msg
 } {1 {wrong # args: should be "file volumes"}}
 test cmdAH-6.2 {Tcl_FileObjCmd: volumes} {
 	set volumeList [file volumes]
@@ -188,13 +191,13 @@ test cmdAH-6.2 {Tcl_FileObjCmd: volumes} {
 		set result 0
 	} else {
 		set result 1
-	}	
+	}
 } {1}
 test cmdAH-6.3 {Tcl_FileObjCmd: volumes} {macOrUnix} {
     set volumeList [file volumes]
     catch [list glob -nocomplain [lindex $volumeList 0]*]
 } {0}
-test cmdAH-6.4 {Tcl_FileObjCmd: volumes} {pcOnly} {
+test cmdAH-6.4 {Tcl_FileObjCmd: volumes} winOnly {
     set volumeList [string tolower [file volumes]]
     list [catch {lsearch $volumeList "c:/"} element] [expr $element != -1] [catch {list glob -nocomplain [lindex $volumeList $element]*}]
 } {0 1 0}
@@ -396,12 +399,12 @@ test cmdAH-8.42 {Tcl_FileObjCmd: dirname} {
 test cmdAH-8.43 {Tcl_FileObjCmd: dirname} {
     global env
     set temp $env(HOME)
-    set env(HOME) "/home/test"
+    set env(HOME) "/homewontexist/test"
     testsetplatform unix
     set result [list [catch {file dirname ~} msg] $msg]
     set env(HOME) $temp
     set result
-} {0 /home}
+} {0 /homewontexist}
 test cmdAH-8.44 {Tcl_FileObjCmd: dirname} {
     global env
     set temp $env(HOME)
@@ -414,12 +417,12 @@ test cmdAH-8.44 {Tcl_FileObjCmd: dirname} {
 test cmdAH-8.45 {Tcl_FileObjCmd: dirname} {
     global env
     set temp $env(HOME)
-    set env(HOME) "/home/test"
+    set env(HOME) "/homewontexist/test"
     testsetplatform windows
     set result [list [catch {file dirname ~} msg] $msg]
     set env(HOME) $temp
     set result
-} {0 /home}
+} {0 /homewontexist}
 test cmdAH-8.46 {Tcl_FileObjCmd: dirname} {
     global env
     set temp $env(HOME)
@@ -1066,8 +1069,8 @@ test cmdAH-18.2 {Tcl_FileObjCmd: executable} {testchmod} {
 } 0
 test cmdAH-18.3 {Tcl_FileObjCmd: executable} {unixOnly testchmod} {
     # Only on unix will setting the execute bit on a regular file
-    # cause that file to be executable.   
-    
+    # cause that file to be executable.
+
     testchmod 0775 $gorpfile
     file exe $gorpfile
 } 1
@@ -1075,13 +1078,13 @@ test cmdAH-18.3 {Tcl_FileObjCmd: executable} {unixOnly testchmod} {
 test cmdAH-18.4 {Tcl_FileObjCmd: executable} {macOnly testchmod} {
     # On mac, the only executable files are of type APPL.
 
-    set x [file exe $gorpfile]    
+    set x [file exe $gorpfile]
     file attrib $gorpfile -type APPL
     lappend x [file exe $gorpfile]
 } {0 1}
-test cmdAH-18.5 {Tcl_FileObjCmd: executable} {pcOnly testchmod} {
+test cmdAH-18.5 {Tcl_FileObjCmd: executable} {winOnly testchmod} {
     # On pc, must be a .exe, .com, etc.
-    
+
     set x [file exe $gorpfile]
     set gorpexe [makeFile foo gorp.exe]
     lappend x [file exe $gorpexe]
@@ -1090,7 +1093,7 @@ test cmdAH-18.5 {Tcl_FileObjCmd: executable} {pcOnly testchmod} {
 } {0 1}
 test cmdAH-18.6 {Tcl_FileObjCmd: executable} {testchmod} {
     # Directories are always executable.
-    
+
     file exe $dirfile
 } 1
 
@@ -1299,8 +1302,27 @@ test cmdAH-23.10 {Tcl_FileObjCmd: mkdir} {
     set res
 } {1 1}
 
-# mtime 
+# mtime
 
+proc waitForEvenSecondForFAT {} {
+    # Windows 9x uses filesystems (the FAT* family of FSes) without
+    # enough data in its timestamps for even per-second-accurate
+    # timings.  :^(
+    # This procedure based on work by Helmut Giese
+
+    global tcl_platform
+    if {$tcl_platform(platform) ne "windows"} {return}
+    if {[lindex [file system [temporaryDirectory]] 1] == "NTFS"} {return}
+    # Assume non-NTFS means FAT{12,16,32} and hence in need of special help
+    set start [clock seconds]
+    while {1} {
+	set now [clock seconds]
+	if {$now!=$start && !($now & 1)} {
+	    return
+	}
+	after 50
+    }
+}
 set file [makeFile "data" touch.me]
 
 test cmdAH-24.1 {Tcl_FileObjCmd: mtime} {
@@ -1314,20 +1336,22 @@ test cmdAH-24.1 {Tcl_FileObjCmd: mtime} {
 # completely horrible "keep on trying to write until you managed to do
 # it all in less than a second."  - DKF
 test cmdAH-24.2 {Tcl_FileObjCmd: mtime} {
+    waitForEvenSecondForFAT
     set f [open $gorpfile w]
     puts $f "More text"
-    set localOld [clock seconds]
     close $f
-    set old [file mtime $gorpfile]
+    set clockOld [clock seconds]
+    set fileOld [file mtime $gorpfile]
     after 2000
     set f [open $gorpfile w]
     puts $f "More text"
-    set localNew [clock seconds]
     close $f
-    set new [file mtime $gorpfile]
+    set clockNew [clock seconds]
+    set fileNew [file mtime $gorpfile]
     expr {
-	($new > $old) && ($localNew > $localOld) &&
-	(abs(($new-$old) - ($localNew-$localOld)) <= 1)
+	(($fileNew > $fileOld) && ($clockNew > $clockOld) &&
+	(abs(($fileNew-$fileOld) - ($clockNew-$clockOld)) <= 1)) ? "1" :
+	"file:($fileOld=>$fileNew) clock:($clockOld=>$clockNew)"
     }
 } {1}
 test cmdAH-24.3 {Tcl_FileObjCmd: mtime} {
@@ -1350,7 +1374,7 @@ test cmdAH-24.5 {Tcl_FileObjCmd: mtime} {
 	set name [file join [temporaryDirectory] tf]
     }
 
-    # Make sure that a new file's time is correct.  10 seconds variance 
+    # Make sure that a new file's time is correct.  10 seconds variance
     # is allowed used due to slow networks or clock skew on a network drive.
 
     file delete -force $name
@@ -1362,14 +1386,14 @@ test cmdAH-24.5 {Tcl_FileObjCmd: mtime} {
 test cmdAH-24.7 {Tcl_FileObjCmd: mtime} {
     list [catch {file mtime $file notint} msg] $msg
 } {1 {expected integer but got "notint"}}
-test cmdAH-24.8 {Tcl_FileObjCmd: mtime touch} {
+test cmdAH-24.8 {Tcl_FileObjCmd: mtime touch} macOrUnix {
     set mtime [file mtime $file]
     after 1100; # pause a sec to notice change in mtime
     set newmtime [clock seconds]
     set modmtime [file mtime $file $newmtime]
     expr {$newmtime == $modmtime ? 1 : "$newmtime != $modmtime"}
 } 1
-test cmdAH-24.9 {Tcl_FileObjCmd: mtime touch with non-ascii chars} {
+test cmdAH-24.9 {Tcl_FileObjCmd: mtime touch with non-ascii chars} macOrUnix {
     set oldfile $file
     # introduce some non-ascii characters.
     append file \u2022
@@ -1385,7 +1409,33 @@ test cmdAH-24.9 {Tcl_FileObjCmd: mtime touch with non-ascii chars} {
     }
     expr {$newmtime == $modmtime ? 1 : "$newmtime != $modmtime"}
 } 1
+test cmdAH-24.10 {Tcl_FileObjCmd: mtime touch} winOnly {
+    waitForEvenSecondForFAT
+    set mtime [file mtime $file]
+    after 2100; # pause two secs to notice change in mtime on FAT fs'es
+    set newmtime [clock seconds]
+    set modmtime [file mtime $file $newmtime]
+    expr {$newmtime == $modmtime ? 1 : "$newmtime != $modmtime"}
+} 1
+test cmdAH-24.11 {Tcl_FileObjCmd: mtime touch with non-ascii chars} winOnly {
+    waitForEvenSecondForFAT
+    set oldfile $file
+    # introduce some non-ascii characters.
+    append file \u2022
+    file delete -force $file
+    file rename $oldfile $file
+    set mtime [file mtime $file]
+    after 2100; # pause two secs to notice change in mtime on FAT fs'es
+    set newmtime [clock seconds]
+    set err [catch {file mtime $file $newmtime} modmtime]
+    file rename $file $oldfile
+    if {$err} {
+	error $modmtime
+    }
+    expr {$newmtime == $modmtime ? 1 : "$newmtime != $modmtime"}
+} 1
 removeFile touch.me
+rename waitForEvenSecondForFAT {}
 
 # owned
 
@@ -1415,7 +1465,7 @@ test cmdAH-26.4 {Tcl_FileObjCmd: readlink errors} {macOnly nonPortable} {
     list [catch {file readlink _bogus_} msg] [string tolower $msg] \
 	    [string tolower $errorCode]
 } {1 {could not readlink "_bogus_": no such file or directory} {posix enoent {no such file or directory}}}
-test cmdAH-26.5 {Tcl_FileObjCmd: readlink errors} {pcOnly nonPortable} {
+test cmdAH-26.5 {Tcl_FileObjCmd: readlink errors} {winOnly nonPortable} {
     list [catch {file readlink _bogus_} msg] [string tolower $msg] \
 	    [string tolower $errorCode]
 } {1 {could not readlink "_bogus_": invalid argument} {posix einval {invalid argument}}}
@@ -1484,14 +1534,14 @@ test cmdAH-28.8 {Tcl_FileObjCmd: stat} {
     removeFile $filename
     set x
 } 1
-test cmdAH-28.9 {Tcl_FileObjCmd: stat} {pcOnly} {
+test cmdAH-28.9 {Tcl_FileObjCmd: stat} winOnly {
     # stat of root directory was failing.
     # don't care about answer, just that test runs.
 
     # relative paths that resolve to root
     set old [pwd]
     cd c:/
-    file stat c: stat	    
+    file stat c: stat
     file stat c:. stat
     file stat . stat
     cd $old
@@ -1500,15 +1550,15 @@ test cmdAH-28.9 {Tcl_FileObjCmd: stat} {pcOnly} {
     file stat c:/ stat
     file stat c:/. stat
 } {}
-test cmdAH-28.10 {Tcl_FileObjCmd: stat} {pcOnly nonPortable} {
+test cmdAH-28.10 {Tcl_FileObjCmd: stat} {winOnly nonPortable} {
     # stat of root directory was failing.
     # don't care about answer, just that test runs.
 
     file stat //pop/$env(USERNAME) stat
     file stat //pop/$env(USERNAME)/ stat
     file stat //pop/$env(USERNAME)/. stat
-} {}    
-test cmdAH-28.11 {Tcl_FileObjCmd: stat} {pcOnly nonPortable} {
+} {}
+test cmdAH-28.11 {Tcl_FileObjCmd: stat} {winOnly nonPortable} {
     # stat of network directory was returning id of current local drive.
 
     set old [pwd]

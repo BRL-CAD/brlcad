@@ -5757,3 +5757,126 @@ packages in multiple interps.
 2003-02-27 (bug fix)[694232] stop [lsearch -start 0 {} x] segfault
 
 --- Released 8.4.2, March 3, 2003 --- See ChangeLog for details ---
+
+2003-03-06 (bug fix)[699042] Correct case-insensitive unicode string
+comparison in Tcl_UniCharNcasecmp
+
+2003-03-11 (bug fix) Corrected loading of tclpip8x.dll on Win9x
+
+2003-03-12 (bug fix)[702383] Corrected parsing of interp create --
+
+2003-03-12 (bug fix)[685106] Correct Tcl_SubstObj handling of \x00 bytes
+
+2003-03-14 (bug fix)[702622 699060] Correct wide int issues in 'format'
+
+2003-03-14 (bug fix)[698146] Remove assumption that file times and longs
+are the same size.
+
+2003-03-18 (bug fix)[697862] Allow Tcl to differentiate between reparse
+points which are symlinks and mounted drives on Windows
+
+2003-03-19 (bug fix)[705406] Bad command count on TCL_OUT_LINE_COMPILE
+
+2003-03-20 (bug fix)[707174] Store pointers to notifier funcs in a struct
+to work around some platform linker issues
+
+2003-03-22 (bug fix)[708218] Load correct (non-)debug dll for dde or
+registry
+
+2003-03-24 (bug fix)[631741 696893] Fixing ObjMakeUpvar's lookup algorithm
+for the created local variable
+
+2003-04-07 (bug fix)[713562] Make sure that tclWideIntType is defined and
+somewhat sensible everywhere
+
+2003-04-07 (bug fix)[711371] Corrected string limits of arguments
+interpolated in error messages for 'if'
+
+2003-04-11 (bug fix)[718878] Corrected inconsistent results of
+[string is integer] observed on systems where sizeof(long) != sizeof(int)
+
+2003-04-12 (bug fix) Substantial changes to the Windows clock synch
+phase-locked loop in a quest for improved loop stability
+
+2003-04-16 [713562] Made changes so that the "wideInt" Tcl_ObjType is
+defined on all platforms, even those where TCL_WIDE_INT_IS_LONG is defined.
+Also made the Tcl_Value struct have a wideValue field on all platforms.
+Potential incompatibility for TCL_WIDE_INT_IS_LONG platforms because that
+struct changes size.
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2003-04-25 (bug fix)[727271] Catch any errors returned by the Windows
+functions handling TLS ASAP instead of waiting to get some mysterious crash
+later on due to bogus pointers.
+
+2003-04-29 (bug fix) Correct 'glob -path {[tcl]} *', where leading
+special character instead lists files in '/'.  Bug only occurs on Windows
+where '\' is also a directory separator.
+
+2003-05-09 (bug fix)[731754] Fixed memory leak in threaded allocator on
+Windows caused by treating cachePtr as a TLS index
+
+2003-05-10 (bug fix)[710642] Ensure cd is thread-safe
+
+2003-05-10 (bug fix)[718002] Correct mem leak on closing a Windows serial
+port
+
+2003-05-10 (bug fix)[714106] Prevent string repeat crash when overflow
+sizes were given (throws error).
+
+2003-05-13 (feature enhancement)[736774] Use new versioned bundle resource
+API to get tcl runtime library for TCL_VERSION on Mac OS X.
+
+2003-05-13 (bug fix)[711232] Worked around the issue of realpath() not
+being thread-safe on Mac OS X by defining NO_REALPATH for threaded builds
+on Mac OS X.
+
+2003-05-14 (bug fix)[557030] Correct handling of the gb2312 encoding by
+making it an alias of the euc-cn encoding and creating a gb2312-raw
+encoding for the original.  Most uses of gb2312 really mean euc-cn.
+
+2003-05-14 (bug fix)[736421] Corrected another putenv() copy behavior
+problem when compiling on Windows and using Microsoft's runtime.
+
+--- Released 8.4.3, May 20, 2003 --- See ChangeLog for details ---
+
+2003-05-23 (bug fix)[726018] reverted internals change to the
+'cmdName' Tcl_ObjType that broke several extensions (TclBlend, e4graph...)
+in the 8.4.3 release.
+
+2003-06-10 (bug fix)[495830] stop eval of bytecode in deleted interp.
+
+2003-06-17 (bug fix) corrections to regexp when matching emtpy string.
+
+2003-06-25 (bug fix)[748957] -*ieee compiler flags for Tru64 builds.
+
+2003-07-11 (bug fix) [pkg_mkIndex] indexes provided packages, not indexed ones.
+
+2003-07-15 (feature enhancement) MacOSX build system rewrite.
+
+2003-07-15 (bug fix)[771613] corrected segfault in [if] (buffer overflow)
+
+2003-07-16 (bug fix)[756791] corrected assumption that Tcl_Free == free
+
+2003-07-16 (feature enhancement) -DTCL_UTF_MAX=6 compile option forces 
+internal UCS-4 representation of Unicode (default is recommended UCS-2).
+
+2003-07-16 (bug fix)[767578] 64-bit corrections in thread notifier.
+
+2003-07-16 (bug fix)[759607] Safe Base tests normalized paths.
+
+2003-07-16 (feature enhancement)[Patch 679315] improved Cygwin path support
+
+2003-07-18 (bug fix)[706359] corrected broken -output option of [tcltest::test]
+=> tcltest 2.4.4
+
+2003-07-18 (bug fix)[753315] MT-safety of VFS records.
+
+2003-07-18 (bug fix)[759888] support for user:pass in URL by [http::geturl]
+=> http 2.4.4
+
+Improved documentation, new tests, and some code cleanup.
+[655300, 720634, 735364, 748700, 756112, 756744, 756951, 758488, 760768,
+763312, 769895, 771539, 771840, 771947, 771949, 772333]
+
+--- Released 8.4.4, July 22, 2003 --- See ChangeLog for details ---

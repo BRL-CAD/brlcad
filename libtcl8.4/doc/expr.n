@@ -194,14 +194,15 @@ the Tcl parser will evaluate both \fB[a]\fR and \fB[b]\fR before
 invoking the \fBexpr\fR command.
 .SH "MATH FUNCTIONS"
 .PP
-Tcl supports the following mathematical functions in expressions:
+Tcl supports the following mathematical functions in expressions, all
+of which work solely with floating-point numbers unless otherwise noted:
 .DS
 .ta 3c 6c 9c
 \fBabs\fR	\fBcosh\fR	\fBlog\fR	\fBsqrt\fR
 \fBacos\fR	\fBdouble\fR	\fBlog10\fR	\fBsrand\fR
 \fBasin\fR	\fBexp\fR	\fBpow\fR	\fBtan\fR
 \fBatan\fR	\fBfloor\fR	\fBrand\fR	\fBtanh\fR
-\fBatan2\fR	\fBfmod\fR	\fBround\fR
+\fBatan2\fR	\fBfmod\fR	\fBround\fR	\fBwide\fR
 \fBceil\fR	\fBhypot\fR	\fBsin\fR
 \fBcos\fR	\fBint\fR	\fBsinh\fR
 .DE
@@ -229,7 +230,7 @@ radians.  \fIx\fR and \fIy\fR cannot both be 0.  If \fIx\fR is greater
 than \fI0\fR, this is equivalent to \fBatan(\fIy/x\fB)\fR.
 .TP
 \fBceil(\fIarg\fB)\fR
-Returns the smallest integral floating point value (i.e. with a zero
+Returns the smallest integral floating-point value (i.e. with a zero
 fractional part) not less than \fIarg\fR.
 .TP
 \fBcos(\fIarg\fB)\fR
@@ -240,15 +241,15 @@ Returns the hyperbolic cosine of \fIarg\fR.  If the result would cause
 an overflow, an error is returned.
 .TP
 \fBdouble(\fIarg\fB)\fR
-If \fIarg\fR is a floating value, returns \fIarg\fR, otherwise converts
-\fIarg\fR to floating and returns the converted value.
+If \fIarg\fR is a floating-point value, returns \fIarg\fR, otherwise converts
+\fIarg\fR to floating-point and returns the converted value.
 .TP
 \fBexp(\fIarg\fB)\fR
 Returns the exponential of \fIarg\fR, defined as \fIe\fR**\fIarg\fR.
 If the result would cause an overflow, an error is returned.
 .TP
 \fBfloor(\fIarg\fB)\fR
-Returns the largest integral floating point value (i.e. with a zero
+Returns the largest integral floating-point value (i.e. with a zero
 fractional part) not greater than \fIarg\fR.
 .TP
 \fBfmod(\fIx, y\fB)\fR
@@ -261,7 +262,8 @@ Computes the length of the hypotenuse of a right-angled triangle
 .TP
 \fBint(\fIarg\fB)\fR
 .VS 8.4
-If \fIarg\fR is an integer value, returns \fIarg\fR, otherwise
+If \fIarg\fR is an integer value of the same width as the machine
+word, returns \fIarg\fR, otherwise
 converts \fIarg\fR to an integer (of the same size as a machine word,
 i.e. 32-bits on 32-bit systems, and 64-bits on 64-bit systems) by
 truncation and returns the converted value.
@@ -280,7 +282,7 @@ Computes the value of \fIx\fR raised to the power \fIy\fR.  If \fIx\fR
 is negative, \fIy\fR must be an integer value.
 .TP
 \fBrand()\fR
-Returns a pseudo-random floating point value in the range (\fI0\fR,\fI1\fR).  
+Returns a pseudo-random floating-point value in the range (\fI0\fR,\fI1\fR).  
 The generator algorithm is a simple linear congruential generator that
 is not cryptographically secure.  Each result from \fBrand\fR completely
 determines all future results from subsequent calls to \fBrand\fR, so
@@ -305,7 +307,7 @@ Returns the square root of \fIarg\fR.  \fIArg\fR must be non-negative.
 \fBsrand(\fIarg\fB)\fR
 The \fIarg\fR, which must be an integer, is used to reset the seed for
 the random number generator of \fBrand\fR.  Returns the first random
-number from that seed.  Each interpreter has its own seed.
+number (see \fBrand()\fR) from that seed.  Each interpreter has its own seed.
 .TP
 \fBtan(\fIarg\fB)\fR
 Returns the tangent of \fIarg\fR, measured in radians.
@@ -315,8 +317,8 @@ Returns the hyperbolic tangent of \fIarg\fR.
 .TP
 \fBwide(\fIarg\fB)\fR
 .VS 8.4
-Converts \fIarg\fR to a value at least 64-bits wide (by sign-extension
-if \fIarg\fR is a 32-bit number.)
+Converts \fIarg\fR to an integer value at least 64-bits wide (by sign-extension
+if \fIarg\fR is a 32-bit number) if it is not one already.
 .VE 8.4
 .PP
 In addition to these predefined functions, applications may

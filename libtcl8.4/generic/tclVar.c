@@ -21,6 +21,7 @@
 #include "tclInt.h"
 #include "tclPort.h"
 
+
 /*
  * The strings below are used to indicate what went wrong when a
  * variable access is denied.
@@ -55,7 +56,7 @@ static void		DisposeTraceResult _ANSI_ARGS_((int flags,
 static int              ObjMakeUpvar _ANSI_ARGS_((Tcl_Interp *interp, 
                             CallFrame *framePtr, Tcl_Obj *otherP1Ptr, 
                             CONST char *otherP2, CONST int otherFlags,
-		            CONST char *myName, CONST int myFlags, int index));
+		            CONST char *myName, int myFlags, int index));
 static Var *		NewVar _ANSI_ARGS_((void));
 static ArraySearch *	ParseSearchId _ANSI_ARGS_((Tcl_Interp *interp,
 			    CONST Var *varPtr, CONST char *varName,
@@ -550,6 +551,17 @@ TclObjLookupVar(interp, part1Ptr, part2, flags, msg, createPart1, createPart2,
 	procPtr->refCount++;
 	part1Ptr->internalRep.twoPtrValue.ptr1 = (VOID *) procPtr;
 	part1Ptr->internalRep.twoPtrValue.ptr2 = (VOID *) index;
+#if 0
+    /*
+     * TEMPORARYLY DISABLED tclNsVarNameType
+     *
+     * This is a stop-gap fix for [Bug 735335]; it may not address the 
+     * real issue (which I haven't pinned down yet), but it avoids the 
+     * segfault in the test case.
+     * This optimisation will hopefully be turned back on soon.
+     *      Miguel Sofer, 2003-05-12
+     */
+
     } else if (index > -3) {
 	Namespace *nsPtr;
     
@@ -558,6 +570,7 @@ TclObjLookupVar(interp, part1Ptr, part2, flags, msg, createPart1, createPart2,
 	part1Ptr->typePtr = &tclNsVarNameType;
 	part1Ptr->internalRep.twoPtrValue.ptr1 = (VOID *) nsPtr;
 	part1Ptr->internalRep.twoPtrValue.ptr2 = (VOID *) varPtr;
+#endif
     } else {
 	/*
 	 * At least mark part1Ptr as already parsed.
@@ -595,6 +608,16 @@ TclObjLookupVar(interp, part1Ptr, part2, flags, msg, createPart1, createPart2,
     return varPtr;
 }
 
+/*
+ * This flag bit should not interfere with TCL_GLOBAL_ONLY, TCL_NAMESPACE_ONLY,
+ * or TCL_LEAVE_ERR_MSG; it signals that the variable lookup is performed for 
+ * upvar (or similar) purposes, with slightly different rules:
+ *   - Bug #696893 - variable is either proc-local or in the current
+ *     namespace; never follow the second (global) resolution path 
+ *   - Bug #631741 - do not use special namespace or interp resolvers
+ */
+#define LOOKUP_FOR_UPVAR 0x400
+
 /*
  *----------------------------------------------------------------------
  *
@@ -642,7 +665,8 @@ TclLookupSimpleVar(interp, varName, flags, create, errMsgPtr, indexPtr)
     CONST char *varName;        /* This is a simple variable name that could
 				 * representa scalar or an array. */
     int flags;		        /* Only TCL_GLOBAL_ONLY, TCL_NAMESPACE_ONLY,
-				 * and TCL_LEAVE_ERR_MSG bits matter. */
+				 * LOOKUP_FOR_UPVAR and TCL_LEAVE_ERR_MSG bits 
+				 * matter. */
     CONST int create;		/* If 1, create hash table entry for varname,
 				 * if it doesn't already exist. If 0, return 
 				 * error if it doesn't exist. */
@@ -669,19 +693,21 @@ TclLookupSimpleVar(interp, varName, flags, create, errMsgPtr, indexPtr)
     varNsPtr = NULL;		/* set non-NULL if a nonlocal variable */
     *indexPtr = -3;
 
-    /*
-     * If this namespace has a variable resolver, then give it first
-     * crack at the variable resolution.  It may return a Tcl_Var
-     * value, it may signal to continue onward, or it may signal
-     * an error.
-     */
     if ((flags & TCL_GLOBAL_ONLY) || iPtr->varFramePtr == NULL) {
         cxtNsPtr = iPtr->globalNsPtr;
     } else {
         cxtNsPtr = iPtr->varFramePtr->nsPtr;
     }
 
-    if (cxtNsPtr->varResProc != NULL || iPtr->resolverPtr != NULL) {
+    /*
+     * If this namespace has a variable resolver, then give it first
+     * crack at the variable resolution.  It may return a Tcl_Var
+     * value, it may signal to continue onward, or it may signal
+     * an error.
+     */
+
+    if ((cxtNsPtr->varResProc != NULL || iPtr->resolverPtr != NULL) 
+	    && !(flags & LOOKUP_FOR_UPVAR)) {
         resPtr = iPtr->resolverPtr;
 
         if (cxtNsPtr->varResProc) {
@@ -736,10 +762,15 @@ TclLookupSimpleVar(interp, varName, flags, create, errMsgPtr, indexPtr)
 	    || ((*varName == ':') && (*(varName+1) == ':'));
 	if (lookGlobal) {
 	    *indexPtr = -1;
-	    flags = (flags | TCL_GLOBAL_ONLY) & ~TCL_NAMESPACE_ONLY;
-	} else if (flags & TCL_NAMESPACE_ONLY) {
-	    *indexPtr = -2;
-	}
+	    flags = (flags | TCL_GLOBAL_ONLY) & ~(TCL_NAMESPACE_ONLY|LOOKUP_FOR_UPVAR);
+	} else {
+	    if (flags & LOOKUP_FOR_UPVAR) {
+		flags = (flags | TCL_NAMESPACE_ONLY) & ~LOOKUP_FOR_UPVAR;
+	    }
+	    if (flags & TCL_NAMESPACE_ONLY) {
+		*indexPtr = -2;
+	    }
+	} 
 
 	/*
 	 * Don't pass TCL_LEAVE_ERR_MSG, we may yet create the variable,
@@ -1820,17 +1851,9 @@ TclPtrIncrVar(interp, varPtr, arrayPtr, part1, part2, incrAmount, flags)
 	varValuePtr = Tcl_DuplicateObj(varValuePtr);
 	createdNewObj = 1;
     }
-#ifdef TCL_WIDE_INT_IS_LONG
-    if (Tcl_GetLongFromObj(interp, varValuePtr, &i) != TCL_OK) {
-	if (createdNewObj) {
-	    Tcl_DecrRefCount(varValuePtr); /* free unneeded copy */
-	}
-	return NULL;
-    }
-    Tcl_SetLongObj(varValuePtr, (i + incrAmount));
-#else
     if (varValuePtr->typePtr == &tclWideIntType) {
-	Tcl_WideInt wide = varValuePtr->internalRep.wideValue;
+	Tcl_WideInt wide;
+	TclGetWide(wide,varValuePtr);
 	Tcl_SetWideIntObj(varValuePtr, wide + Tcl_LongAsWide(incrAmount));
     } else if (varValuePtr->typePtr == &tclIntType) {
 	i = varValuePtr->internalRep.longValue;
@@ -1853,7 +1876,6 @@ TclPtrIncrVar(interp, varPtr, arrayPtr, part1, part2, incrAmount, flags)
 	    Tcl_SetWideIntObj(varValuePtr, wide + Tcl_LongAsWide(incrAmount));
 	}
     }
-#endif
 
     /*
      * Store the variable's new value and run any write traces.
@@ -3458,7 +3480,7 @@ ObjMakeUpvar(interp, framePtr, otherP1Ptr, otherP2, otherFlags, myName, myFlags,
 				 * indicates scope of "other" variable. */
     CONST char *myName;		/* Name of variable which will refer to
 				 * otherP1/otherP2. Must be a scalar. */
-    CONST int myFlags;		/* 0, TCL_GLOBAL_ONLY or TCL_NAMESPACE_ONLY:
+    int myFlags;		/* 0, TCL_GLOBAL_ONLY or TCL_NAMESPACE_ONLY:
 				 * indicates scope of myName. */
     int index;                  /* If the variable to be linked is an indexed
 				 * scalar, this is its index. Otherwise, -1. */
@@ -3490,7 +3512,7 @@ ObjMakeUpvar(interp, framePtr, otherP1Ptr, otherP2, otherFlags, myName, myFlags,
 
     if (index >= 0) {
 	if (!varFramePtr->isProcCallFrame) {
-	    panic("ObjMakeUpVar called with an index outside from a proc.\n");
+	    panic("ObjMakeUpvar called with an index outside from a proc.\n");
 	}
 	varPtr = &(varFramePtr->compiledLocals[index]);
     } else {
@@ -3513,11 +3535,16 @@ ObjMakeUpvar(interp, framePtr, otherP1Ptr, otherP2, otherFlags, myName, myFlags,
 	}
 	
 	/*
-	 * Lookup and eventually create the new variable.
+	 * Lookup and eventually create the new variable. Set the flag bit
+	 * LOOKUP_FOR_UPVAR to indicate the special resolution rules for 
+	 * upvar purposes: 
+	 *   - Bug #696893 - variable is either proc-local or in the current
+	 *     namespace; never follow the second (global) resolution path 
+	 *   - Bug #631741 - do not use special namespace or interp resolvers
 	 */
 	
-	varPtr = TclLookupSimpleVar(interp, myName, myFlags, /*create*/ 1, 
-				    &errMsg, &index);
+	varPtr = TclLookupSimpleVar(interp, myName, (myFlags | LOOKUP_FOR_UPVAR), 
+	        /* create */ 1, &errMsg, &index);
 	if (varPtr == NULL) {
 	    VarErrMsg(interp, myName, NULL, "create", errMsg);
 	    return TCL_ERROR;

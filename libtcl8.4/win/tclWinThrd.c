@@ -187,13 +187,13 @@ Tcl_CreateThread(idPtr, proc, clientData, stackSize, flags)
  */
 
 int
-Tcl_JoinThread(id, result)
-    Tcl_ThreadId id;	/* Id of the thread to wait upon */
-    int*     result;	/* Reference to the storage the result
-			 * of the thread we wait upon will be
-			 * written into. */
+Tcl_JoinThread(threadId, result)
+    Tcl_ThreadId threadId;  /* Id of the thread to wait upon */
+    int*     result;	    /* Reference to the storage the result
+			     * of the thread we wait upon will be
+			     * written into. */
 {
-    return TclJoinThread (id, result);
+    return TclJoinThread (threadId, result);
 }
 
 /*
@@ -539,11 +539,17 @@ TclpThreadDataKeyInit(keyPtr)
 				 * really (DWORD **) */
 {
     DWORD *indexPtr;
+    DWORD newKey;
 
     MASTER_LOCK;
     if (*keyPtr == NULL) {
 	indexPtr = (DWORD *)ckalloc(sizeof(DWORD));
-	*indexPtr = TlsAlloc();
+	newKey = TlsAlloc();
+        if (newKey != TLS_OUT_OF_INDEXES) {
+            *indexPtr = newKey;
+        } else {
+            panic("TlsAlloc failed from TclpThreadDataKeyInit!"); /* this should be a fatal error */
+        }
 	*keyPtr = (Tcl_ThreadDataKey)indexPtr;
 	TclRememberDataKey(keyPtr);
     }
@@ -573,10 +579,15 @@ TclpThreadDataKeyGet(keyPtr)
 				 * really (DWORD **) */
 {
     DWORD *indexPtr = *(DWORD **)keyPtr;
+    LPVOID result;
     if (indexPtr == NULL) {
 	return NULL;
     } else {
-	return (VOID *) TlsGetValue(*indexPtr);
+        result = TlsGetValue(*indexPtr);
+        if ((result == NULL) && (GetLastError() != NO_ERROR)) {
+            panic("TlsGetValue failed from TclpThreadDataKeyGet!");
+        }
+	return result;
     }
 }
 
@@ -604,7 +615,11 @@ TclpThreadDataKeySet(keyPtr, data)
     VOID *data;			/* Thread local storage */
 {
     DWORD *indexPtr = *(DWORD **)keyPtr;
-    TlsSetValue(*indexPtr, (void *)data);
+    BOOL success;
+    success = TlsSetValue(*indexPtr, (void *)data);
+    if (!success) {
+        panic("TlsSetValue failed from TclpThreadDataKeySet!");
+    }
 }
 
 /*
@@ -630,6 +645,7 @@ TclpFinalizeThreadData(keyPtr)
 {
     VOID *result;
     DWORD *indexPtr;
+    BOOL success;
 
 #ifdef USE_THREAD_ALLOC
     TclWinFreeAllocCache();
@@ -639,7 +655,14 @@ TclpFinalizeThreadData(keyPtr)
 	result = (VOID *)TlsGetValue(*indexPtr);
 	if (result != NULL) {
 	    ckfree((char *)result);
-	    TlsSetValue(*indexPtr, (void *)NULL);
+	    success = TlsSetValue(*indexPtr, (void *)NULL);
+            if (!success) {
+                panic("TlsSetValue failed from TclpFinalizeThreadData!");
+            }
+	} else {
+            if (GetLastError() != NO_ERROR) {
+                panic("TlsGetValue failed from TclpFinalizeThreadData!");
+            }
 	}
     }
 }
@@ -669,9 +692,13 @@ TclpFinalizeThreadDataKey(keyPtr)
     Tcl_ThreadDataKey *keyPtr;
 {
     DWORD *indexPtr;
+    BOOL success;
     if (*keyPtr != NULL) {
 	indexPtr = *(DWORD **)keyPtr;
-	TlsFree(*indexPtr);
+	success = TlsFree(*indexPtr);
+        if (!success) {
+            panic("TlsFree failed from TclpFinalizeThreadDataKey!");
+        }
 	ckfree((char *)indexPtr);
 	*keyPtr = NULL;
     }
@@ -1001,6 +1028,7 @@ void *
 TclpGetAllocCache(void)
 {
     static int once = 0;
+    VOID *result;
 
     if (!once) {
 	/*
@@ -1014,24 +1042,41 @@ TclpGetAllocCache(void)
 	    panic("could not allocate thread local storage");
 	}
     }
-    return TlsGetValue(key);
+
+    result = TlsGetValue(key);
+    if ((result == NULL) && (GetLastError() != NO_ERROR)) {
+        panic("TlsGetValue failed from TclpGetAllocCache!");
+    }
+    return result;
 }
 
 void
 TclpSetAllocCache(void *ptr)
 {
-    TlsSetValue(key, ptr);
+    BOOL success;
+    success = TlsSetValue(key, ptr);
+    if (!success) {
+        panic("TlsSetValue failed from TclpSetAllocCache!");
+    }
 }
 
 void
 TclWinFreeAllocCache(void)
 {
     void *ptr;
+    BOOL success;
 
     ptr = TlsGetValue(key);
     if (ptr != NULL) {
-	TlsSetValue(key, NULL);
+	success = TlsSetValue(key, NULL);
+        if (!success) {
+            panic("TlsSetValue failed from TclWinFreeAllocCache!");
+        }
 	TclFreeAllocCache(ptr);
+    } else {
+      if (GetLastError() != NO_ERROR) {
+          panic("TlsGetValue failed from TclWinFreeAllocCache!");
+      }
     }
 }
 

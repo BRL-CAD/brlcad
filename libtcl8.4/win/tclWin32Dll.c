@@ -88,7 +88,7 @@ static TclWinProcs asciiProcs = {
     (BOOL (WINAPI *)(CONST TCHAR *)) SetCurrentDirectoryA,
     (BOOL (WINAPI *)(CONST TCHAR *, DWORD)) SetFileAttributesA,
     /* 
-     * These two function pointers will only be set when
+     * The three NULL function pointers will only be set when
      * Tcl_FindExecutable is called.  If you don't ever call that
      * function, the application will crash whenever WinTcl tries to call
      * functions through these null pointers.  That is not a bug in Tcl
@@ -97,6 +97,8 @@ static TclWinProcs asciiProcs = {
     NULL,
     NULL,
     (int (__cdecl*)(CONST TCHAR *, struct _utimbuf *)) _utime,
+    NULL,
+    NULL,
 };
 
 static TclWinProcs unicodeProcs = {
@@ -135,7 +137,7 @@ static TclWinProcs unicodeProcs = {
     (BOOL (WINAPI *)(CONST TCHAR *)) SetCurrentDirectoryW,
     (BOOL (WINAPI *)(CONST TCHAR *, DWORD)) SetFileAttributesW,
     /* 
-     * These two function pointers will only be set when
+     * The three NULL function pointers will only be set when
      * Tcl_FindExecutable is called.  If you don't ever call that
      * function, the application will crash whenever WinTcl tries to call
      * functions through these null pointers.  That is not a bug in Tcl
@@ -144,6 +146,8 @@ static TclWinProcs unicodeProcs = {
     NULL,
     NULL,
     (int (__cdecl*)(CONST TCHAR *, struct _utimbuf *)) _wutime,
+    NULL,
+    NULL,
 };
 
 TclWinProcs *tclWinProcs;
@@ -156,6 +160,28 @@ static Tcl_Encoding tclWinTCharEncoding;
 BOOL APIENTRY		DllMain(HINSTANCE hInst, DWORD reason, 
 				LPVOID reserved);
 
+/*
+ * The following structure and linked list is to allow us to map between
+ * volume mount points and drive letters on the fly (no Win API exists
+ * for this).
+ */
+typedef struct MountPointMap {
+    CONST WCHAR* volumeName;       /* Native wide string volume name */
+    char driveLetter;              /* Drive letter corresponding to
+                                    * the volume name. */
+    struct MountPointMap* nextPtr; /* Pointer to next structure in list,
+                                    * or NULL */
+} MountPointMap;
+
+/* 
+ * This is the head of the linked list, which is protected by the
+ * mutex which follows, for thread-enabled builds.
+ */
+MountPointMap *driveLetterLookup = NULL;
+TCL_DECLARE_MUTEX(mountPointMap)
+
+/* We will need this below */
+extern Tcl_FSDupInternalRepProc NativeDupInternalRep;
 
 #ifdef __WIN32__
 #ifndef STATIC_BUILD
@@ -531,6 +557,14 @@ TclWinSetInterfaces(
 		  (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR*, 
 		  LPSECURITY_ATTRIBUTES)) GetProcAddress(hInstance, 
 		  "CreateHardLinkW");
+	        tclWinProcs->findFirstFileExProc = 
+		  (HANDLE (WINAPI *)(CONST TCHAR*, UINT,
+		  LPVOID, UINT, LPVOID, DWORD)) GetProcAddress(hInstance, 
+		  "FindFirstFileExW");
+	        tclWinProcs->getVolumeNameForVMPProc = 
+		  (BOOL (WINAPI *)(CONST TCHAR*, TCHAR*, 
+		  DWORD)) GetProcAddress(hInstance, 
+		  "GetVolumeNameForVolumeMountPointW");
 		FreeLibrary(hInstance);
 	    }
 	}
@@ -547,6 +581,14 @@ TclWinSetInterfaces(
 		  (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR*, 
 		  LPSECURITY_ATTRIBUTES)) GetProcAddress(hInstance, 
 		  "CreateHardLinkA");
+		tclWinProcs->findFirstFileExProc = 
+		  (HANDLE (WINAPI *)(CONST TCHAR*, UINT,
+		  LPVOID, UINT, LPVOID, DWORD)) GetProcAddress(hInstance, 
+		  "FindFirstFileExA");
+		tclWinProcs->getVolumeNameForVMPProc = 
+		  (BOOL (WINAPI *)(CONST TCHAR*, TCHAR*, 
+		  DWORD)) GetProcAddress(hInstance, 
+		  "GetVolumeNameForVolumeMountPointA");
 		FreeLibrary(hInstance);
 	    }
 	}
@@ -562,6 +604,11 @@ TclWinSetInterfaces(
  *	The tclWinProcs-> look up table is still ok to use after
  *	this call, provided no encoding conversion is required.
  *
+ *      We also clean up any memory allocated in our mount point
+ *      map which is used to follow certain kinds of symlinks.
+ *      That code should never be used once encodings are taken
+ *      down.
+ *      
  * Results:
  *	None.
  *
@@ -573,10 +620,21 @@ TclWinSetInterfaces(
 void
 TclWinResetInterfaceEncodings()
 {
+    MountPointMap *dlIter, *dlIter2;
     if (tclWinTCharEncoding != NULL) {
 	Tcl_FreeEncoding(tclWinTCharEncoding);
 	tclWinTCharEncoding = NULL;
     }
+    /* Clean up the mount point map */
+    Tcl_MutexLock(&mountPointMap);
+    dlIter = driveLetterLookup; 
+    while (dlIter != NULL) {
+	dlIter2 = dlIter->nextPtr;
+	ckfree((char*)dlIter->volumeName);
+	ckfree((char*)dlIter);
+	dlIter = dlIter2;
+    }
+    Tcl_MutexUnlock(&mountPointMap);
 }
 
 /*
@@ -600,6 +658,135 @@ void
 TclWinResetInterfaces()
 {
     tclWinProcs = &asciiProcs;
+}
+
+/*
+ *--------------------------------------------------------------------
+ *
+ * TclWinDriveLetterForVolMountPoint
+ *
+ * Unfortunately, Windows provides no easy way at all to get hold
+ * of the drive letter for a volume mount point, but we need that
+ * information to understand paths correctly.  So, we have to 
+ * build an associated array to find these correctly, and allow
+ * quick and easy lookup from volume mount points to drive letters.
+ * 
+ * We assume here that we are running on a system for which the wide
+ * character interfaces are used, which is valid for Win 2000 and WinXP
+ * which are the only systems on which this function will ever be called.
+ * 
+ * Result: the drive letter, or -1 if no drive letter corresponds to
+ * the given mount point.
+ * 
+ *--------------------------------------------------------------------
+ */
+char 
+TclWinDriveLetterForVolMountPoint(CONST WCHAR *mountPoint)
+{
+    MountPointMap *dlIter, *dlPtr2;
+    WCHAR Target[55];         /* Target of mount at mount point */
+    WCHAR drive[4] = { L'A', L':', L'\\', L'\0' };
+    
+    /* 
+     * Detect the volume mounted there.  Unfortunately, there is no
+     * simple way to map a unique volume name to a DOS drive letter.  
+     * So, we have to build an associative array.
+     */
+    
+    Tcl_MutexLock(&mountPointMap);
+    dlIter = driveLetterLookup; 
+    while (dlIter != NULL) {
+	if (wcscmp(dlIter->volumeName, mountPoint) == 0) {
+	    /* 
+	     * We need to check whether this information is
+	     * still valid, since either the user or various
+	     * programs could have adjusted the mount points on
+	     * the fly.
+	     */
+	    drive[0] = L'A' + (dlIter->driveLetter - 'A');
+	    /* Try to read the volume mount point and see where it points */
+	    if ((*tclWinProcs->getVolumeNameForVMPProc)((TCHAR*)drive, 
+					       (TCHAR*)Target, 55) != 0) {
+		if (wcscmp((WCHAR*)dlIter->volumeName, Target) == 0) {
+		    /* Nothing has changed */
+		    Tcl_MutexUnlock(&mountPointMap);
+		    return dlIter->driveLetter;
+		}
+	    }
+	    /* 
+	     * If we reach here, unfortunately, this mount point is
+	     * no longer valid at all
+	     */
+	    if (driveLetterLookup == dlIter) {
+		dlPtr2 = dlIter;
+		driveLetterLookup = dlIter->nextPtr;
+	    } else {
+		for (dlPtr2 = driveLetterLookup; 
+		     dlPtr2 != NULL; dlPtr2 = dlPtr2->nextPtr) {
+		    if (dlPtr2->nextPtr == dlIter) {
+			dlPtr2->nextPtr = dlIter->nextPtr;
+			dlPtr2 = dlIter;
+			break;
+		    }
+		}
+	    }
+	    /* Now dlPtr2 points to the structure to free */
+	    ckfree((char*)dlPtr2->volumeName);
+	    ckfree((char*)dlPtr2);
+	    /* 
+	     * Restart the loop --- we could try to be clever
+	     * and continue half way through, but the logic is a 
+	     * bit messy, so it's cleanest just to restart
+	     */
+	    dlIter = driveLetterLookup;
+	    continue;
+	}
+	dlIter = dlIter->nextPtr;
+    }
+   
+    /* We couldn't find it, so we must iterate over the letters */
+    
+    for (drive[0] = L'A'; drive[0] <= L'Z'; drive[0]++) {
+	/* Try to read the volume mount point and see where it points */
+	if ((*tclWinProcs->getVolumeNameForVMPProc)((TCHAR*)drive, 
+					   (TCHAR*)Target, 55) != 0) {
+	    int alreadyStored = 0;
+	    for (dlIter = driveLetterLookup; dlIter != NULL; 
+		 dlIter = dlIter->nextPtr) {
+		if (wcscmp((WCHAR*)dlIter->volumeName, Target) == 0) {
+		    alreadyStored = 1;
+		    break;
+		}
+	    }
+	    if (!alreadyStored) {
+		dlPtr2 = (MountPointMap*) ckalloc(sizeof(MountPointMap));
+		dlPtr2->volumeName = NativeDupInternalRep(Target);
+		dlPtr2->driveLetter = 'A' + (drive[0] - L'A');
+		dlPtr2->nextPtr = driveLetterLookup;
+		driveLetterLookup  = dlPtr2;
+	    }
+	}
+    }
+    /* Try again */
+    for (dlIter = driveLetterLookup; dlIter != NULL; 
+					dlIter = dlIter->nextPtr) {
+	if (wcscmp(dlIter->volumeName, mountPoint) == 0) {
+	    Tcl_MutexUnlock(&mountPointMap);
+	    return dlIter->driveLetter;
+	}
+    }
+    /* 
+     * The volume doesn't appear to correspond to a drive letter -- we
+     * remember that fact and store '-1' so we don't have to look it
+     * up each time.
+     */
+    dlPtr2 = (MountPointMap*) ckalloc(sizeof(MountPointMap));
+    dlPtr2->volumeName = NativeDupInternalRep((ClientData)mountPoint);
+    dlPtr2->driveLetter = -1;
+    dlPtr2->nextPtr = driveLetterLookup;
+    driveLetterLookup  = dlPtr2;
+    Tcl_MutexUnlock(&mountPointMap);
+    return -1;
 }
 
 /*

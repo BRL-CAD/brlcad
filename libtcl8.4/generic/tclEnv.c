@@ -429,6 +429,11 @@ TclUnsetEnv(name)
 
     if (environ[index] == string) {
 	ReplaceString(oldValue, string);
+#ifdef HAVE_PUTENV_THAT_COPIES
+    } else {
+	/* This putenv() copies instead of taking ownership */
+	ckfree(string);
+#endif
     }
 #else
     for (envPtr = environ+index+1; ; envPtr++) {

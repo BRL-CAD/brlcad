@@ -132,7 +132,7 @@ test basic-12.1 {Tcl_HideCommand, names of hidden cmds can't have namespace qual
     list [catch {test_interp hide test_ns_basic::p x} msg] $msg \
 	 [catch {test_interp hide x test_ns_basic::p} msg1] $msg1 \
          [interp delete test_interp]
-} {1 {can only hide global namespace commands (use rename then hide)} 1 {cannot use namespace qualifiers as hidden commandtoken (rename)} {}}
+} {1 {can only hide global namespace commands (use rename then hide)} 1 {cannot use namespace qualifiers in hidden command token (rename)} {}}
 
 test basic-12.2 {Tcl_HideCommand, a hidden cmd remembers its containing namespace} {
     catch {namespace delete test_ns_basic}

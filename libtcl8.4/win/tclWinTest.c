@@ -27,6 +27,10 @@ static int      TestwinclockCmd _ANSI_ARGS_(( ClientData dummy,
 					      Tcl_Interp* interp,
 					      int objc,
 					      Tcl_Obj *CONST objv[] ));
+static int      TestwinsleepCmd _ANSI_ARGS_(( ClientData dummy,
+					      Tcl_Interp* interp,
+					      int objc,
+					      Tcl_Obj *CONST objv[] ));
 static Tcl_ObjCmdProc TestExceptionCmd;
 
 
@@ -61,6 +65,11 @@ TclplatformtestInit(interp)
             (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateObjCommand(interp, "testwinclock", TestwinclockCmd,
             (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateObjCommand( interp,
+			  "testwinsleep",
+			  TestwinsleepCmd,
+			  (ClientData) 0,
+			  (Tcl_CmdDeleteProc *) NULL );
     Tcl_CreateObjCommand(interp, "testexcept", TestExceptionCmd, NULL, NULL);
     return TCL_OK;
 }
@@ -202,7 +211,7 @@ TestvolumetypeCmd(clientData, interp, objc, objv)
 /*
  *----------------------------------------------------------------------
  *
- * TestclockCmd --
+ * TestwinclockCmd --
  *
  *	Command that returns the seconds and microseconds portions of
  *	the system clock and of the Tcl clock so that they can be
@@ -242,11 +251,14 @@ TestwinclockCmd( ClientData dummy,
     FILETIME sysTime;		/* System clock */
     Tcl_Obj* result;		/* Result of the command */
     LARGE_INTEGER t1, t2;
+    LARGE_INTEGER p1, p2;
 
     if ( objc != 1 ) {
 	Tcl_WrongNumArgs( interp, 1, objv, "" );
 	return TCL_ERROR;
     }
+
+    QueryPerformanceCounter( &p1 );
 
     Tcl_GetTime( &tclTime );
     GetSystemTimeAsFileTime( &sysTime );
@@ -255,6 +267,8 @@ TestwinclockCmd( ClientData dummy,
     t2.LowPart = sysTime.dwLowDateTime;
     t2.HighPart = sysTime.dwHighDateTime;
     t2.QuadPart -= t1.QuadPart;
+
+    QueryPerformanceCounter( &p2 );
 
     result = Tcl_NewObj();
     Tcl_ListObjAppendElement
@@ -265,11 +279,59 @@ TestwinclockCmd( ClientData dummy,
     Tcl_ListObjAppendElement( interp, result, Tcl_NewIntObj( tclTime.sec ) );
     Tcl_ListObjAppendElement( interp, result, Tcl_NewIntObj( tclTime.usec ) );
 
+    Tcl_ListObjAppendElement( interp, result, Tcl_NewWideIntObj( p1.QuadPart ) );
+    Tcl_ListObjAppendElement( interp, result, Tcl_NewWideIntObj( p2.QuadPart ) );
+
     Tcl_SetObjResult( interp, result );
 
     return TCL_OK;
 }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Testwinsleepcmd --
+ *
+ *	Causes this process to wait for the given number of milliseconds
+ *	by means of a direct call to Sleep.
+ *
+ * Usage:
+ *	testwinsleep <n>
+ *
+ * Parameters:
+ *	n - the number of milliseconds to sleep
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Sleeps for the requisite number of milliseconds.
+ *
+ *----------------------------------------------------------------------
+ */
 
+static int
+TestwinsleepCmd( ClientData clientData,
+				/* Unused */
+		 Tcl_Interp* interp,
+				/* Tcl interpreter */
+		 int objc,
+				/* Parameter count */
+		 Tcl_Obj * CONST * objv )
+				/* Parameter vector */
+{
+    int ms;
+    if ( objc != 2 ) {
+	Tcl_WrongNumArgs( interp, 1, objv, "ms" );
+	return TCL_ERROR;
+    }
+    if ( Tcl_GetIntFromObj( interp, objv[1], &ms ) != TCL_OK ) {
+	return TCL_ERROR;
+    }
+    Sleep( (DWORD) ms );
+    return TCL_OK;
+}
+
 /*
  *----------------------------------------------------------------------
  *

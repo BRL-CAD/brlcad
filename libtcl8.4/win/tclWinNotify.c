@@ -45,6 +45,8 @@ typedef struct ThreadSpecificData {
 static Tcl_ThreadDataKey dataKey;
 
 extern TclStubs tclStubs;
+extern Tcl_NotifierProcs tclOriginalNotifier;
+
 /*
  * The following static indicates the number of threads that have
  * initialized notifiers.  It controls the lifetime of the TclNotifier
@@ -267,7 +269,7 @@ Tcl_SetTimer(
      * on Windows, but mirrors the UNIX hook.
      */
 
-    if (tclStubs.tcl_SetTimer != Tcl_SetTimer) {
+    if (tclStubs.tcl_SetTimer != tclOriginalNotifier.setTimerProc) {
 	tclStubs.tcl_SetTimer(timePtr);
 	return;
     }
@@ -433,7 +435,7 @@ Tcl_WaitForEvent(
      * sense on windows, but mirrors the UNIX hook.
      */
 
-    if (tclStubs.tcl_WaitForEvent != Tcl_WaitForEvent) {
+    if (tclStubs.tcl_WaitForEvent != tclOriginalNotifier.waitForEventProc) {
 	return tclStubs.tcl_WaitForEvent(timePtr);
     }
 

@@ -245,7 +245,7 @@ RANLIB			= @RANLIB@
 SRC_DIR			= @srcdir@
 TOP_DIR			= @srcdir@/..
 GENERIC_DIR		= $(TOP_DIR)/generic
-COMPAT_DIR		= $(TOP_DIR)/../h/compat
+COMPAT_DIR		= $(TOP_DIR)/compat
 TOOL_DIR		= $(TOP_DIR)/tools
 UNIX_DIR		= $(TOP_DIR)/unix
 MAC_OSX_DIR		= $(TOP_DIR)/macosx
@@ -1211,10 +1211,8 @@ DISTROOT = /tmp/dist
 DISTNAME = tcl${VERSION}${PATCH_LEVEL}
 ZIPNAME	 = tcl${MAJOR_VERSION}${MINOR_VERSION}${PATCH_LEVEL}-src.zip
 DISTDIR	 = $(DISTROOT)/$(DISTNAME)
-$(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in
-	autoconf $(UNIX_DIR)/configure.in > $(UNIX_DIR)/configure
 
-dist: $(UNIX_DIR)/configure mklinks
+dist: mklinks
 	rm -rf $(DISTDIR)
 	mkdir -p $(DISTDIR)/unix
 	cp -p $(UNIX_DIR)/*.c $(UNIX_DIR)/*.h $(DISTDIR)/unix
@@ -1345,9 +1343,12 @@ allpatch: dist
 # TOOL_DIR.
 #
 
-html: 
+html-tcl: EXTRA_HTML_ARGS=--tcl
+html-tk:  EXTRA_HTML_ARGS=--tk
+
+html html-tcl html-tk: 
 	$(TCL_EXE) $(TOOL_DIR)/tcltk-man2html.tcl --htmldir=$(DISTDIR)/html \
-		--srcdir=$(TOP_DIR)/..
+		--srcdir=$(TOP_DIR)/.. $(EXTRA_HTML_ARGS)
 
 #
 # Target to create a Macintosh version of the distribution.  This will

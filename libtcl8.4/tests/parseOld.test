@@ -321,6 +321,7 @@ test parseOld-10.4 {syntax errors} {
 	catch {set a "bcd} msg
 	set msg
 } {missing "}
+#" Emacs formatting >:^(
 test parseOld-10.5 {syntax errors} {catch {set a "bcd"xy} msg} 1
 test parseOld-10.6 {syntax errors} {
 	catch {set a "bcd"xy} msg
@@ -419,8 +420,7 @@ set i 0
 foreach j [concat 0000 1111 2222 3333 4444 5555 6666 7777 8888 9999 aaaa bbbb cccc dddd eeee ffff gggg hhhh iiii jjjj kkkk llll mmmm nnnn oooo pppp qqqq rrrr ssss tttt uuuu vvvv wwww xxxx yyyy zzzz AAAA BBBB CCCC DDDD EEEE FFFF GGGG HHHH IIII JJJJ KKKK LLLL MMMM NNNN OOOO PPPP QQQQ RRRR SSSS TTTT UUUU VVVV WWWW XXXX YYYY ZZZZ] {
     set test [string index 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ $i]
     set test $test$test$test$test
-    set i [expr $i+1]
-    test parseOld-11.10 {long values} {
+    test parseOld-11.10-[incr i] {long values} {
 	set j
     } $test
 }
@@ -468,6 +468,7 @@ test parseOld-14.3 {TclWordEnd procedure} {testwordend} {
 test parseOld-14.4 {TclWordEnd procedure} {testwordend} {
     testwordend {"abc"}
 } {"}
+#" Emacs formatting >:^(
 test parseOld-14.5 {TclWordEnd procedure} {testwordend} {
     testwordend {{xyz}}
 } \}
@@ -513,6 +514,7 @@ test parseOld-14.18 {TclWordEnd procedure} {testwordend} {
 test parseOld-14.19 {TclWordEnd procedure} {testwordend} {
     testwordend \"a\000\"
 } {"}
+#" Emacs formatting >:^(
 test parseOld-14.20 {TclWordEnd procedure} {testwordend} {
     testwordend a{\000}b
 } {b}
@@ -542,15 +544,3 @@ test parseOld-15.5 {TclScriptEnd procedure} {
 set argv $savedArgv
 ::tcltest::cleanupTests
 return
-
-
-
-
-
-
-
-
-
-
-
-

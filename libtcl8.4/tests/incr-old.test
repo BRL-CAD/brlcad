@@ -34,7 +34,7 @@ test incr-old-1.3 {basic incr operation} {
     set x "  -106"
     list [incr x 1] $x
 } {-105 -105}
-test incr-old-1.3 {basic incr operation} {
+test incr-old-1.4 {basic incr operation} {
     set x "  +106"
     list [incr x 1] $x
 } {107 107}
@@ -94,15 +94,3 @@ test incr-old-2.10 {incr errors} {
 # cleanup
 ::tcltest::cleanupTests
 return
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,3 +1,807 @@
+2003-07-21  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	*** 8.4.4 TAGGED FOR RELEASE ***
+
+	* changes: updated for 8.4.4 release
+
+2003-07-18  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Makefile: added option to allow installing manpages
+	in addition to default html help.
+
+2003-07-18  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/Utf.3: Tightened up documentation of Tcl_UtfNext and
+	Tcl_UtfPrev to better match the behaviour. [Bug 769895]
+
+2003-07-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tclIOUtil.c: correct MT-safety issues with filesystem
+	records. [Bug 753315] (vasiljevic)
+
+	* library/http/pkgIndex.tcl: merged to v2.4.4 from head
+	* library/http/http.tcl: add support for user:pass info in URL.
+	* tests/http.test:       [Bug 759888] (shiobara)
+
+2003-07-18  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tclBasic.c:	Corrected several instances of unsafe
+	* generic/tclCompile.c:	truncation of UTF-8 strings that might
+	* generic/tclProc.c:	break apart a multi-byte character.
+	* library/init.tcl:	[Bug 760872]
+	* tests/init.test:
+
+	* doc/tcltest.n:		Restored the [Eval] proc to replace
+	* library/tcltest/tcltest.tcl:	the [::puts] command when either the
+	-output or -error option for [test] is in use, in order to capture
+	data written to the output or error channels for comparison against
+	what is expected.  This is easier to document and agrees better with
+	most user expectations than the previous attempt to replace [puts]
+	only in the caller's namespace.  Documentation made more precise on
+	the subject.  [Bug 706359]
+
+	* doc/AddErrInfo.3:     Improved consistency of documentation
+	* doc/CrtTrace.3:       by using "null" everywhere to refer to
+	* doc/Encoding.3:       the character '\0', and using "NULL"
+	* doc/Eval.3:           everywhere to refer to the value of a
+	* doc/GetIndex.3:       pointer that points to nowhere.
+	* doc/Hash.3:           Also dropped references to ASCII that
+	* doc/LinkVar.3:        are no longer true, and standardized on
+	* doc/Macintosh.3:      the hyphenated spelling of "null-terminated".
+	* doc/OpenFileChnl.3:
+	* doc/SetVar.3:
+	* doc/StringObj.3:
+	* doc/Utf.3:
+
+	* doc/CrtSlave.3 (Tcl_MakeSafe):  Removed warning about possible
+	deprecation (no TIP on that).
+
+2003-07-17  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Makefile: added var to allow overriding of tclsh used
+	during html help building (Landon Fuller).
+
+2003-07-16  Mumit Khan  <khan@nanotech.wisc.edu>
+
+	* generic/tclIOUtil.c (SetFsPathFromAny): Add Cygwin specific
+	code to convert POSIX filename to native format.
+	* generic/tclFileName.c (Tcl_TranslateFileName): And remove from here.
+	(TclDoGlob): Adjust for cygwin and append / for dirs instead of \
+	* win/tclWinFile.c (TclpObjChdir): Use chdir on Cygwin.
+	[Patch 679315]
+
+2003-07-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/safe.tcl (FileInAccessPath): normalize paths before
+	comparison. [Bug 759607] (myers)
+
+	* unix/tclUnixNotfy.c (NotifierThreadProc): correct size of found
+	and word vars from int to long. [Bug 767578] (hgo)
+
+2003-07-16  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/CrtSlave.3 (Tcl_MakeSafe): Updated documentation to strongly
+	discourage use.  IMHO code outside the core that uses this
+	function is a bug...  [Bug 655300]
+
+2003-07-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tcl.h:       add recognition of -DTCL_UTF_MAX=6 on the
+	* generic/regcustom.h: make line to support UCS-4 mode.  No config
+	arg at this time, as it is not the recommended build mode.
+
+	* generic/tclPreserve.c: In Result and Preserve'd routines, do not
+	* generic/tclUtil.c:     assume that ckfree == free, as that is not
+	* generic/tclResult.c:   always true. [Bug 756791] (fuller)
+
+2003-07-16  Mo DeJong  <mdejong@users.sourceforge.net>
+
+	* win/Makefile.in: Don't define TCL_DBGX
+	symbol for every compile. Instead, define
+	TCL_PIPE_DLL only when compiling tclWinPipe.c.
+	This will break other build systems, so
+	they will need to remove the TCL_DBGX define
+	and replace it with a define for TCL_PIPE_DLL.
+	* win/makefile.vc: Ditto.
+	* win/tclWinPipe.c (TclpCreateProcess):
+	Remove PREFIX_IDENT and DEBUG_IDENT from
+	top of file. Use TCL_PIPE_DLL passed in
+	from build env instead of trying to construct
+	the dll name from already defined symbols.
+	This approach is more flexible and better
+	in the long run.
+
+2003-07-16  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tclFileName.c (Tcl_GlobObjCmd):	[Bug 771840]
+	* generic/tclIOUtil.c (Tcl_FSConvertToPathType):[Bug 771947]
+	* unix/tclUnixFCmd.c (GetModeFromPermString):	[Bug 771949]
+	Silence compiler warnings about unreached lines.
+
+	* library/tcltest/tcltest.tcl (ProcessFlags):	Corrected broken call
+	* library/tcltest/pkgIndex.tcl:			to [lrange].  Bumped
+	to version 2.2.4. [Bug 772333]
+
+2003-07-15  Mo DeJong  <mdejong@users.sourceforge.net>
+
+	* unix/dltest/pkga.c (Pkga_EqObjCmd): Fix typo
+	that was causing a crash in load.test.
+
+2003-07-15  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/array.n: Added some examples from David Welton [Patch 763312]
+
+2003-07-15  Don Porter  <dgp@users.sourceforge.net>
+
+	* doc/http.n:  Updated SYNOPSIS to match actual syntax of
+	commands.  [Bug 756112]
+
+	* unix/dltest/pkga.c:	Updated to not use Tcl_UtfNcmp and counted
+	strings instead of strcmp (not defined in any #include'd header)
+	and presumed NULL-terminated strings.
+
+	* README:		Bumped patch level to 8.4.4 in anticipation
+	* generic/tcl.h:	of another patch release.
+	* tools/tcl.wse.in:
+	* unix/configure.in:
+	* unix/tcl.spec:
+	* win/README.binary:
+	* win/configure.in:
+
+	* unix/configure:	autoconf (2.13)
+	* win/configure:
+
+	* generic/tclCompCmds.c (TclCompileIfCmd):  Prior fix of Bug 711371
+	on 2003-04-07 introduced a buffer overflow.  Corrected.  [Bug 771613]
+
+2003-07-15  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* generic/tclCmdIL.c (SortCompare): Cleared up confusing error
+	message. [Bug 771539]
+
+2003-07-15  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Makefile: Rewrote buildsystem for Mac OS X framework build
+	to be purely make driven; in order to become independent of Apple's
+	closed-source IDE and build tool. The changes are intended to be
+	transparent to the Makefile user, all existing make targets and
+	cmd line variable overrides should continue to work.
+	Changed build to only include tcl specific html help in Tcl.framework,
+	the tk specific html help is now included in Tk.framework.
+
+	* macosx/Tcl.pbproj/project.pbxproj:
+	* macosx/Tcl.pbproj/jingham.pbxuser: Changed to purely call through
+	to the make driven buildsystem; Tcl.framework is no longer assembled
+	by ProjectBuilder.
+	Set default SYMROOT in target options to simplify setting up PB
+	(manually setting common build folder for tcl & tk no longer needed).
+
+	* tools/tcltk-man2html.tcl: Added options to allow building only the
+	tcl or tk html help files; the default behaviour with none of the new
+	options is to build both, as before.
+
+	* unix/Makefile.in: Added targets for building only the tcl or tk help.
+
+	* macosx/README (new): Tcl specific excerpts of tk/macosx/README. 
+
+	* generic/tcl.h: Updated reminder comment about editing
+	macosx/Tcl.pbproj/project.pbxproj when version number changes.
+
+2003-07-11  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* tests/binary.test (binary-46.*): Tests to help enforce the
+	current behaviour.
+	* doc/binary.n: Documented that [binary format a] and [binary scan a]
+	do encoding conversion by dropping high bytes, unlike the rest of
+	the core.  [Bug 735364]
+
+2003-07-11  Don Porter	<dgp@users.sourceforge.net>
+
+	* library/package.tcl:	Corrected [pkg_mkIndex] bug reported on
+	comp.lang.tcl.	The indexer was searching for newly indexed packages
+	instead of newly provided packages.
+
+2003-07-04  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/expr.n: Tighten up the wording of some operations. [Bug 758488]
+
+	* tests/cmdAH.test: Made tests of [file mtime] work better on FAT
+	filesystems. [Patch 760768]  Also a little general cleanup.
+
+2003-06-25  Mo DeJong  <mdejong@users.sourceforge.net>
+
+	* unix/configure: Regen.
+	* unix/tcl.m4 (SC_CONFIG_CFLAGS): Add -ieee when
+	compiling with cc and add -mieee when compiling
+	with gcc under OSF1-V5 "Tru64" systems.
+	[Bug 748957]
+
+2003-06-24  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/encoding.n: Corrected the docs to say that [source] uses the
+	system encoding, which it always did anyway (since 8.1) [Bug 742100]
+
+2003-06-23  Vince Darley  <vincentdarley@users.sourceforge.net>
+
+	* generic/tclFCmd.c: fix to bad error message when trying to
+	do 'file copy foo ""'. [Bug 756951]
+	* tests/fCmd.test: added two new tests for the bug.
+
+	* doc/FileSystem.3: documentation fix [Bug 720634]
+
+2003-06-18  Miguel Sofer <msofer@users.sf.net>
+
+	* generic/tclNamesp.c (Tcl_Export): removed erroneous comments
+	[Bug 756744]
+
+2003-06-17  Vince Darley  <vincentdarley@users.sourceforge.net>
+
+	* generic/tclCmdMZ.c:
+	* tests/regexp.test: fixing of bugs related to regexp and regsub
+	matching of empty strings.  Addition of a number of new tests.
+
+2003-06-10  Miguel Sofer <msofer@users.sf.net>
+
+	* generic/tclBasic.c:
+	* generic/tclExecute.c: let TclEvalObjvInternal call
+	TclInterpReady instead of relying on its callers to do so; fix for
+	the part of [Bug 495830] that is new in 8.4. 
+	* tests/interp.test: Added tests 18.9 (knownbug) and 18.10
+
+2003-06-09  Don Porter	<dgp@users.sourceforge.net>
+
+	* tests/string.test (string-4.15): Added test for [string first] bug
+	reported in Tcl 8.3, where test for all-single-byte-encoded strings
+	was not reliable.
+
+2003-06-04  Joe Mistachkin  <joe@mistachkin.com>
+
+	* tools/man2help.tcl: Added duplicate help section checking	      
+	* tools/index.tcl:    and corrected a comment typo for the 
+	getTopics proc in index.tcl [Bug #748700].
+
+2003-05-23  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tclObj.c (tclCmdNameType):  Converted internal rep
+	management of the cmdName Tcl_ObjType the opposite way, to always
+	use the twoPtrValue instead of always using the otherValuePtr.
+	Previous fix on 2003-05-12 broke several extensions that wanted
+	to poke around with the twoPtrValue.ptr2 value of a cmdName
+	Tcl_Obj, like TclBlend and e4graph.  [Bug 726018]
+	Thanks to George Petasis for the bug report and Jacob Levy for
+	testing assistance.
+
+2003-05-22  Daniel Steffen  <das@users.sourceforge.net>
+
+	*** 8.4.3 TAGGED FOR RELEASE ***
+
+	* macosx/tclMacOSXBundle.c: fixed a problem that caused only the
+	first call to Tcl_MacOSXOpenVersionedBundleResources() for a given
+	bundle identifier to succeed. This caused the tcl runtime library
+	not to be found in all interps created after the inital one.
+	
+2003-05-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* changes: updated for 8.4.3
+
+	* unix/Makefile.in: do not run autoconf during 'make dist' as the
+	configure is now a CVS-maintained file and should be up-to-date.
+
+2003-05-19  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Tcl.pbproj/project.pbxproj: changed tclConfig.sh location
+	in versioned framework subdirectories to be identical to location
+	in framework toplevel; fixed stub library symbolic links to be
+	tcl version specific.
+
+2003-05-16  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Tcl.pbproj/project.pbxproj: updated copyright year.
+	
+2003-05-15  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* win/tclWinFile.c (TclpMatchInDirectory): revert glob code to
+	r1.44 as 2003-04-14 optimizations broke Windows98 glob'ing.
+
+	* README:           bumped version to 8.4.3
+	* generic/tcl.h:
+	* macosx/Tcl.pbproj/project.pbxproj:
+	* tools/tcl.wse.in:
+	* unix/configure:
+	* unix/configure.in:
+	* unix/tcl.spec:
+	* win/README.binary:
+	* win/configure:
+	* win/configure.in:
+
+	* doc/socket.n: nroff font handling correction.
+
+	* library/encoding/gb2312-raw.enc (new): This is the original
+	gb2312.enc renamed to allow for it to still be used.  This is
+	needed by Tk (unix) because X fonts with gb2312* charsets really
+	do want the original gb2312 encoding. [Bug 557030]
+
+2003-05-14  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* generic/tclCmdAH.c (Tcl_FormatObjCmd): Values which can't be
+	anything but wide shouldn't be demoted to long.  [consequence of
+	HEAD fixes for Bug 699060]
+
+2003-05-14  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/encoding/gb2312.enc: copy euc-cn.enc over original
+	gb2312.enc.  gb2312.enc appeared to not work as expected, and most
+	uses of gb2312 really mean euc-cn (which may be the cause of the
+	problem). [Bug 557030]
+
+	* generic/tclEnv.c (TclUnsetEnv): Another putenv() copy behavior
+	problem repaired when compiling on windows and using microsoft's
+	runtime. [Bug 736421] (gravereaux)
+
+2003-05-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tclIOUtil.c: add decl for FsThrExitProc to suppress
+	warnings.
+
+2003-05-13  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* generic/tclEvent.c (Tcl_Finalize): Removed unused variable to
+	reduce compiler warnings.  [Bug 664745]
+
+2003-05-13  Joe Mistachkin  <joe@mistachkin.com>
+
+	* generic/tcl.decls:  Changed Tcl_JoinThread parameter name from 
+	* generic/tclDecls.h: "id" to "threadId". [Bug 732477]
+	* unix/tclUnixThrd.c:
+	* win/tclWinThrd.c: 
+	* mac/tclMacThrd.c:
+
+2003-05-13  Daniel Steffen  <das@users.sourceforge.net>
+
+	* generic/tcl.decls:
+	* macosx/tclMacOSXBundle.c: added extended version of the 
+	Tcl_MacOSXOpenBundleResources() API taking an extra version number
+	argument: Tcl_MacOSXOpenVersionedBundleResources().
+	This is needed to be able to access bundle resources in versioned
+	frameworks such as Tcl and Tk, otherwise if multiple versions were
+	installed, only the latest version's resources could be accessed.
+	[Bug 736774]
+	
+	* unix/tclUnixInit.c (Tcl_MacOSXGetLibraryPath): use new versioned
+	bundle resource API to get tcl runtime library for TCL_VERSION.
+	[Bug 736774]
+	
+	* generic/tclPlatDecls.h:
+	* generic/tclStubInit.c: regen.
+
+	* unix/tclUnixPort.h: worked around the issue of realpath() not
+	being thread-safe on Mac OS X by defining NO_REALPATH for threaded
+	builds on Mac OS X. [Bug 711232]
+
+2003-05-12  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tclInterp.c: (AliasObjCmd):	Added refCounting of the words
+	* tests/interp.test (interp-33.1):	of the target of an interp
+	alias during its execution.  Also added test. [Bug 730244].
+
+	* generic/tclBasic.c (TclInvokeObjectCommand):  objv[argc] is no
+	longer set to NULL (Tcl_CreateObjCommand docs already say that it
+	should not be accessed).
+
+	* generic/tclObj.c (tclCmdNameType):  Corrected variable use of the
+	otherValuePtr or the twoPtrValue.ptr1 fields to store a
+	(ResolvedCmdName *) as the internal rep.  [Bug 726018].
+
+	* doc/Eval.3:  Corrected prototype for Tcl_GlobalEvalObj [Bug 727622].
+
+2003-05-12  Miguel Sofer <msofer@users.sf.net>
+
+	* generic/tclVar.c (TclObjLookupVar): [Bug 735335] temporary fix,
+	disabling usage of tclNsVarNameType.
+	* tests/var.test (var-15.1): test for [Bug 735335]
+
+2003-05-10  Zoran Vasiljevic <zoran@archiware.com>
+
+	* unix/tclUnixThrd.c: corrected Tcl Bug #723502
+
+2003-05-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tclIOUtil.c: ensure cd is thread-safe.
+	[Bug #710642] (vasiljevic)
+
+	* win/tclWinSerial.c (SerialCloseProc): correct mem leak on
+	closing a Windows serial port [Bug #718002] (schroedter)
+
+	* generic/tclCmdMZ.c (Tcl_StringObjCmd): prevent string repeat
+	crash when overflow sizes were given (throws error). [Bug #714106]
+
+2003-05-09  Joe Mistachkin <joe@mistachkin.com>
+
+	* generic/tclThreadAlloc.c (TclFreeAllocCache): Fixed memory leak
+	caused by treating cachePtr as a TLS index [Bug 731754].
+
+	* win/tclAppInit.c (Tcl_AppInit): Fixed memory leaks caused by not
+	freeing the memory allocated by setargv and the async handler created
+	by Tcl_AppInit. An exit handler has been created that takes care of
+	both leaks. In addition, Tcl_AppInit now uses ckalloc instead of
+	Tcl_Alloc to allow for easier leak tracking and to be more consistent
+	with the rest of the Tcl core [Bugs 733156, 733221].
+
+	* tools/encoding/txt2enc.c (main): Fixed memory leak caused by failing
+	to free the memory used by the toUnicode array of strings [Bug 733221].
+
+2003-05-05  Don Porter  <dgp@users.sourceforge.net>
+
+	* library/tcltest/tcltest.tcl: The -returnCodes option to [test]
+	failed to recognize the symbolic name "ok" for return code 0.
+
+2003-05-05  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* generic/tclBasic.c (Tcl_HideCommand): Fixed error message
+	grammar and spelling.
+
+2003-04-29  Vince Darley  <vincentdarley@users.sourceforge.net>
+
+	* generic/tclFileName.c: fix to bug reported privately by
+	Jeff where, for example, 'glob -path {[tcl]} *' gets confused
+	by the leading special character (which is escaped internally),
+	and instead lists files in '/'.  Bug only occurs on Windows 
+	where '\' is also a directory separator.  (Bug has been around
+	at least since Tcl 8.3).
+	* tests/fileName.test: added test for the above bug.
+	
+2003-04-25  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tclBasic.c:  Tcl_EvalObjv() failed to honor the
+	TCL_EVAL_GLOBAL flag when resolving command names.  Tcl_EvalEx
+	passed a string rep including leading whitespace and comments
+	to TclEvalObjvInternal().
+
+2003-04-25  Andreas Kupries  <andreask@activestate.com>
+
+	* win/tclWinThrd.c: Applied SF patch #727271. This patch changes
+	  the code to catch any errors returned by the windows functions
+	  handling TLS ASAP instead of waiting to get some mysterious
+	  crash later on due to bogus pointers. Patch provided by Joe
+	  Mistachkin.
+
+	  This is a stop-gap measure to deal with the low number of ?TLS
+	  slots provided by some of the variants of Windows (60-80).
+
+2003-04-21  Don Porter  <dgp@users.sourceforge.net>
+
+	* library/tcltest/tcltest.tcl:  When the return code of a test does
+	not meet expectations, report that as the reason for test failure,
+	and do not attempt to check the test result for correctness.
+	[Bug 725253]
+
+2003-04-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tclExecute.c (ExprCallMathFunc): remove incorrect
+	extraneous cast from Tcl_WideAsDouble.
+
+2003-04-18  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/open.n:		Moved serial port options from [fconfigure]
+	* doc/fconfigure.n:	to [open] as it is up to the creator of a
+				channel to describe the channel's special
+				config options. [Bug 679010] 
+
+2003-04-16  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tcl.h		Made changes so that the "wideInt" Tcl_ObjType
+	* generic/tclObj.c	is defined on all platforms, even those where
+	* generic/tclPort.h	TCL_WIDE_INT_IS_LONG is defined.  Also made
+	the Tcl_Value struct have a wideValue field on all platforms.  This is
+	a ***POTENTIAL INCOMPATIBILITY*** for TCL_WIDE_INT_IS_LONG platforms
+	because that struct changes size.  This is the same TIP 72
+	incompatibility that was seen on other platforms at the 8.4.0 release,
+	when this change should have happened as well.  [Bug 713562]
+
+	* generic/tclInt.h:  New internal macros TclGetWide() and
+	TclGetLongFromWide() to deal with both forms of the "wideInt"
+	Tcl_ObjType, so that conditional TCL_WIDE_INT_IS_LONG code
+	is confined to the header file.
+
+	* generic/tclCmdAH.c:	Replaced most coding that was conditional
+	* generic/tclCmdIL.c:	on TCL_WIDE_INT_IS_LONG with code that
+	* generic/tclExecute.c: works across platforms, sometimes using
+	* generic/tclTest.c:	the new macros above to do it.
+	* generic/tclUtil.c:
+	* generic/tclVar.c:
+	
+2003-04-17  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/socket.n: Added a paragraph to remind people to specify
+	their encodings when using sockets. [Bug 630621]
+
+2003-04-16  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/CrtMathFnc.3: Functions also have to deal with wide ints,
+	but this was not documented. [Bug 709720]
+
+2003-04-15  Kevin Kenny  <kennykb@acm.org>
+	
+	* win/tclWinTime.c: Corrected use of types to make compilation
+	compatible with VC++5.
+
+2003-04-14  Kevin Kenny  <kennykb@acm.org>
+
+	* win/tclWinFile.c: added conditionals to restore compilation on
+	VC++6, which was broken by recent changes.
+	
+2003-04-14  Vince Darley  <vincentdarley@users.sourceforge.net>
+
+	Merged various bug fixes from current cvs head:
+	
+	* tests/cmdAH.test: better fix to test suite problem 
+	if /home is a symlink [Bug #703264]
+	
+	* generic/tclIOUtil.c: fix bad error message with 'cd ""'
+	[Bug #704917]
+	* win/tclWinFile.c: 
+	* win/tclWin32Dll.c: 
+	* win/tclWinInt.h: allow Tcl to differentiate between reparse
+	points which are symlinks and mounted volumes, and correctly
+	handle the latter. This involves some elaborate code to find
+	the actual drive letter (if possible) corresponding to a mounted
+	volume.  [Bug #697862]
+	* tests/fileSystem.test: add constraints to stop tests running
+	in ordinary tcl interpreter. [Bug #705675]
+	* generic/tclIOUtil.c: Some re-arrangement of code to bring it
+	closer to cvs head.  No functional changes.
+	
+	* tests/fCmd.test: 
+	* win/tclWinFile.c: added some filesystem optimisation to the
+	'glob' implementation, and some new tests.
+	
+	* tests/winFile.test:
+	* tests/ioUtil.test:
+	* tests/unixFCmd.test: renumbered tests with duplicate numbers.
+	(Bug #710361)
+	
+2003-04-12  Kevin Kenny  <kennykb@acm.org>
+
+	* tests/clock.test: Renumbered test cases to avoid 
+	duplicates [Bug 710310].
+	* tests/winTime.test:
+	* win/tclWinTest.c (TestwinclockCmd, TestwinsleepCmd):
+	* win/tclWinTime.c (Tcl_WinTime, UpdateTimeEachSecond,
+	                    ResetCounterSamples, AccumulateSample,
+	                    SAMPLES, TimeInfo): Made substantial changes
+	to the phase-locked loop (replaced an IIR filter with an FIR one)
+	in a quest for improved loop stability (Bug not logged at SF, but
+	cited in private communication from Jeff Hobbs).
+	
+2003-04-11  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tclCmdMZ.c (Tcl_StringObjCmd,STR_IS_INT):  Corrected
+	inconsistent results of [string is integer] observed on systems
+	where sizeof(long) != sizeof(int).  [Bug 718878]
+	* tests/string.test: Added tests for Bug 718878.
+	* doc/string.n: Clarified that [string is integer] accepts
+	32-bit integers.
+
+2003-04-11  Andreas Kupries  <andreask@activestate.com>
+
+	* generic/tclIO.c (UpdateInterest): When dropping interest in
+	  TCL_READABLE now dropping interest in TCL_EXCEPTION too. This
+	  fixes a bug where Expect detects eof on a file prematurely on
+	  solaris 2.6 and higher. A much more complete explanation is in
+	  the code itself (40 lines of comments for a one-line change :)
+
+2003-04-10  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/binary.n: Fixed typo in [binary format w] desc. [Bug 718543]
+
+2003-04-08  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* generic/tclCmdAH.c (Tcl_ErrorObjCmd): Strings are only empty if
+	they have zero length, not if their first byte is zero, so fix
+	test guarding Tcl_AddObjErrorInfo to take this into account.  [Bug
+	reported by Don Porter; no bug-id.]
+
+2003-04-07  Don Porter	<dgp@users.sourceforge.net>
+
+	* generic/tclCompCmds.c (TclCompileIfCmd):  Corrected string limits of
+	arguments interpolated in error messages. [Bug 711371]
+
+	* generic/tclCmdMZ.c (TraceExecutionProc):  Added missing
+	Tcl_DiscardResult() call to avoid memory leak.
+
+2003-04-07  Donal K. Fellows  <zzcgudf@ernie.mvc.mcc.ac.uk>
+
+	* generic/tclObj.c (tclWideIntType, TclInitObjSubsystem):
+	(SetBooleanFromAny): Make sure that tclWideIntType is defined and
+	somewhat sensible everywhere.  [Bug 713562]
+
+2003-04-02  Mo DeJong  <mdejong@users.sourceforge.net>
+
+	* win/configure: Regen.
+	* win/configure.in: Set stub lib flag based
+	on new LIBFLAGSUFFIX variable.
+	* win/tcl.m4 (SC_CONFIG_CFLAGS): Set new
+	LIBFLAGSUFFIX that works like LIBSUFFIX,
+	it is used when creating library names.
+	The previous implementation would generate
+	-ltclstub85 instead of -ltclstub85s when
+	configured with --disable-shared.
+
+2003-04-01  Don Porter	<dgp@users.sourceforge.net>
+
+	* tests/README:	 Direct [source] of *.test files is no longer
+	recommended.  The tests/*.test files should only be evaluated under
+	the control of the [runAllTests] command in tests/all.tcl.
+
+2003-03-27  Miguel Sofer <msofer@users.sf.net>
+
+	* tests/encoding.test:
+	* tests/proc-old.test:
+	* tests/set-old.test: Altered test numers to eliminate duplicates,
+	[Bugs 710313, 710320, 710352]
+
+2003-03-27  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* tests/parseOld.test:	Altered test numers to eliminate duplicates.
+	* tests/parse.test:	[Bugs 710365, 710369]
+	* tests/expr-old.test:
+	* tests/expr.test:
+
+	* tests/utf.test:	Altered test numers to eliminate duplicates.
+	* tests/trace.test:	[Bugs 710322, 710327, 710349, 710363]
+	* tests/lsearch.test:
+	* tests/list.test:
+	* tests/info.test:
+	* tests/incr-old.test:
+	* tests/if-old.test:
+	* tests/format.test:
+	* tests/foreach.test:
+
+2003-03-26  Don Porter	<dgp@users.sourceforge.net>
+
+	* doc/tcltest.n:
+	* library/tcltest/tcltest.tcl:	Added reporting during
+	[configure -debug 1] operations to warn about multiple uses of
+	the same test name.  [FR 576693]  Replaced [regexp] and [regsub]
+	with [string map] where possible.  Thanks to David Welton.
+	[Bugs 667456,667558]
+	* library/tcltest/pkgIndex.tcl: Bumped to tcltest 2.2.3
+
+	* tests/msgcat.test (msgcat-2.2.1): changed test name to avoid
+	duplication.  [Bug 710356]
+
+	* unix/dltest/pkg?.c:  Changed all Tcl_InitStubs calls to pass
+	argument exact = 0, so that rebuilds are not required when Tcl
+	bumps to a new version.	 [Bug 701926]
+
+2003-03-24  Miguel Sofer <msofer@users.sf.net>
+
+	* generic/tclVar.c:
+	* tests/var.test: fixing ObjMakeUpvar's lookup algorithm for the
+	created local variable, bugs #631741 (Chris Darroch) and #696893
+	(David Hilker). 
+
+2003-03-22  Kevin Kenny  <kennykb@acm.org>
+
+	* library/dde/pkgIndex.tcl:
+	* library/reg/pkgIndex.tcl: Fixed a bug where [package require dde]
+	or [package require registry] attempted to load the release version
+	of the DLL into a debug build. [Bug 708218] Thanks to Joe Mistachkin
+	for the patch.
+	* win/makefile.vc: Added quoting around the script name in the
+	'test' target; Joe Mistachkin insists that he has a configuration
+	that fails to launch tcltest without it, and it appears harmless 
+	otherwise.
+	
+2003-03-20  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tclInt.h (tclOriginalNotifier):
+	* generic/tclStubInit.c (tclOriginalNotifier):
+	* mac/tclMacNotify.c (Tcl_SetTimer,Tcl_WaitForEvent):
+	* unix/tclUnixNotfy.c (Tcl_SetTimer,Tcl_WaitForEvent,
+		Tcl_CreateFileHandler,Tcl_DeleteFileHandler):
+	* win/tclWinNotify.c (Tcl_SetTimer,Tcl_WaitForEvent):  Some linkers
+	apparently use a different representation for a pointer to a function
+	within the same compilation unit and a pointer to a function in a
+	different compilation unit.  This causes checks like those in the
+	original notifier procedures to fall into infinite loops.  The fix
+	is to store pointers to the original notifier procedures in a struct
+	defined in the same compilation unit as the stubs tables, and compare
+	against those values.  [Bug 707174]
+
+	* generic/tclInt.h:  Removed definition of ParseValue struct that
+	is no longer used.
+
+2003-03-19  Miguel Sofer <msofer@users.sf.net>
+
+	* generic/tclCompile.c:
+	* tests/compile.test: bad command count on TCL_OUT_LINE_COMPILE
+	[Bug 705406] (Don Porter).
+
+2003-03-19  Don Porter  <dgp@users.sourceforge.net>
+
+	* doc/Eval.3 (Tcl_EvalObjEx):			Corrected CONST and
+	* doc/ParseCmd.3 (Tcl_EvalTokensStandard):	return type errors
+	in documentation.  [Bug 683994]
+
+2003-03-18  Kevin Kenny  <kennykb@users.sourceforge.net>
+
+	* tests/registry.test: Changed the conditionals to avoid an
+	abort if [testlocale] is missing, as when running the test in
+	tclsh rather than tcltest. [Bug #705677]
+	
+2003-03-18  Daniel Steffen  <das@users.sourceforge.net>
+
+	* tools/tcltk-man2html.tcl: added support for building 'make html'
+	from inside distribution directories named with 8.x.x version
+	numbers. tcltk-man2html now uses the latest tcl8.x.x resp. tk8.x.x
+	directories found inside its --srcdir argument.
+
+2003-03-18  Vince Darley  <vincentdarley@users.sourceforge.net>
+
+	* tests/cmdAH.test: fix test suite problem if /home is a symlink
+	* generic/tclIOUtil.c: fix bad error message with 'cd ""'
+	* win/tclWinFile.c: allow Tcl to differentiate between reparse
+	points which are symlinks and mounted drives.
+	
+	These changes fix [Bug #703264], [Bug #704917], [Bug #697862]
+	respectively.
+
+2003-03-17  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/lsearch.n:	Altered documentation of -ascii options so
+	* doc/lsort.n:		they don't specify that they operate on
+				ASCII strings, which they never did
+				anyway.  [Bug #703807]
+
+2003-03-14  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* generic/tclCmdAH.c (Tcl_FileObjCmd): Remove assumption that file
+	times and longs are the same size.  [Bug #698146]
+	(Tcl_FormatObjCmd): Stop surprising type conversions from
+	happening when working with integer and wide values.  [Bug #699060]
+
+	* generic/tclCmdAH.c (Tcl_FormatObjCmd): Only add the modifier
+	that indicates we've got a wide int when we're formatting in an
+	integer style.  Stops some libc's from going mad.  [Bug #702622]
+	Also tidied whitespace.
+
+2003-03-13  Kevin Kenny  <kennykb@users.sourceforge.net>
+
+	* win/makefile.vc: Backed the version to 8.4 on the 8.4 branch.
+	(I just loathe sticky tags).
+	
+2003-03-12  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tcl.h:	Removed TCL_PREFIX_IDENT and TCL_DEBUG_IDENT
+	* win/tclWinPipe.c:	from tcl.h -- they are not part of Tcl's
+	public interface.  Put them in win/tclWinPipe.c where they are used.
+
+	* generic/tclCmdMZ.c (Tcl_SubstObj):	Corrected and added test for
+	* tests/subst.test (subst-2.4):		Tcl_SubstObj's incorrect
+	halting of substitution at the first \x00 byte.  [Bug 685106]
+
+	* generic/tclInterp.c (Tcl_InterpObjCmd):	Corrected and added
+	* tests/interp.test (interp-2.13):  		test for option
+	parsing beyond objc for [interp create --].  Thanks to Marco Maggi.
+	[Bug 702383]
+
+2003-03-11  Kevin Kenny  <kennykb@users.sourceforge.net>
+
+	* win/makefile.vc: Added two missing uses of $(DBGX) so that
+	tclpip8x.dll loads without panicking on Win9x.
+
+2003-03-08  Don Porter	<dgp@users.sourceforge.net>
+
+	* doc/tcltest.n:  Added missing "-body" to example.  Thanks to
+	Helmut Giese.  [Bug 700011]
+
+2003-03-06  Don Porter	<dgp@users.sourceforge.net>
+
+	* generic/TclUtf.c (Tcl_UniCharNcasecmp):	Corrected failure to
+	* tests/utf.test (utf-25.*):	properly compare Unicode strings of
+	different case in a case insensitive manner.  [Bug 699042]
+
 2003-03-03  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	*** 8.4.2 TAGGED FOR RELEASE ***
@@ -362,7 +1166,7 @@
 	does not build and people are filing bug reports
 	under the mistaken impression that someone is
 	actually maintaining the Cygwin port. A post to
- 	comp.lang.tcl asking someone to volunteer as an
+	comp.lang.tcl asking someone to volunteer as an
 	area maintainer has generated no results.
 	Closing bugs 680840, 630199, and 634772 and
 	marking as "Won't fix".
@@ -567,7 +1371,7 @@
 	mysterious error that would show up when
 	exec'ing a 16 bit application under Win95
 	or Win98 when Tcl was compiled with symbols.
- 	The error seemed to indicate that the executable
+	The error seemed to indicate that the executable
 	could not be found, but it was actually the
 	Tcl pipe dll that could not be found.
 
@@ -654,7 +1458,7 @@
 	* generic/tclIO.c: Add 'Tcl_GetString()' to ensure the object has
 	a valid 'objPtr->bytes' field before manipulating it directly.
 	
-        This fixes [Bug 635200] and [Bug 671138], but may reduce performance
+	This fixes [Bug 635200] and [Bug 671138], but may reduce performance
 	of Unicode string handling in some cases. A further patch will
 	be applied to address this, once the code is known to be correct.
 
@@ -2156,14 +2960,14 @@
 2002-07-29  Reinhard Max  <max@suse.de>
 
 	* unix/tcl.m4 (SC_SERIAL_PORT): Fixed detection for cases when
-                                        configure's stdin is not a tty.
+					configure's stdin is not a tty.
 	
 	* unix/tclUnixPort.h: 
-	* generic/tclIOSock.c:          Changed size_t to socklen_t in
-                                        socket-related function calls.
+	* generic/tclIOSock.c:		Changed size_t to socklen_t in
+					socket-related function calls.
 
-	* unix/configure.in:            Added test and fallback definition
-                                        for socklen_t.
+	* unix/configure.in:		Added test and fallback definition
+					for socklen_t.
 	
 	* unix/configure:               generated.
 

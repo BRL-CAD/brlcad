@@ -13,7 +13,7 @@
 # RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2.1
     namespace import -force ::tcltest::*
 }
 
@@ -118,6 +118,9 @@ test interp-2.12 {anonymous interps vs existing procs} {
     regexp "interp(\[0-9]+)" $x dummy anothernum
     expr $anothernum - $thenum
 } 1    
+test interp-2.13 {correct default when no $path arg is given} -body {
+    interp create --
+} -match regexp -result {interp[0-9]+}
     
 foreach i [interp slaves] {
     interp delete $i
@@ -756,6 +759,16 @@ if {[info commands testinterpdelete] == ""} {
 	list [catch {a eval foo} msg] $msg
     } {1 {attempt to call eval in deleted interpreter}}
 }
+test interp-18.9 {eval in deleted interp, bug 495830} {knownbug} {
+    interp create tst
+    interp alias tst suicide {} interp delete tst
+    list [catch {tst eval {suicide; set a 5}} msg] $msg
+} {1 {attempt to call eval in deleted interpreter}}     
+test interp-18.10 {eval in deleted interp, bug 495830} {
+    interp create tst
+    interp alias tst suicide {} interp delete tst
+    list [catch {tst eval {set set set; suicide; $set a 5}} msg] $msg
+} {1 {attempt to call eval in deleted interpreter}}     
 
 # Test alias deletion
 
@@ -1495,7 +1508,7 @@ test interp-20.45 {interp hide vs namespaces} {
     set l [list [catch {interp hide a foo::x} msg] $msg]
     interp delete a
     set l
-} {1 {cannot use namespace qualifiers as hidden commandtoken (rename)}}
+} {1 {cannot use namespace qualifiers in hidden command token (rename)}}
 test interp-20.46 {interp hide vs namespaces} {
     catch {interp delete a}
     interp create a
@@ -1516,7 +1529,7 @@ test interp-20.47 {interp hide vs namespaces} {
     set l [list [catch {interp hide a x foo::x} msg] $msg]
     interp delete a
     set l
-} {1 {cannot use namespace qualifiers as hidden commandtoken (rename)}}
+} {1 {cannot use namespace qualifiers in hidden command token (rename)}}
 test interp-20.48 {interp hide vs namespaces} {
     catch {interp delete a}
     interp create a
@@ -1527,7 +1540,7 @@ test interp-20.48 {interp hide vs namespaces} {
     set l [list [catch {interp hide a foo::x bar::x} msg] $msg]
     interp delete a
     set l
-} {1 {cannot use namespace qualifiers as hidden commandtoken (rename)}}
+} {1 {cannot use namespace qualifiers in hidden command token (rename)}}
 
 test interp-21.1 {interp hidden} {
     interp hidden {}
@@ -2915,6 +2928,15 @@ test interp-32.1 { parent's working directory should
     expr {[string equal $parent $child] ? 1 :
              "\{$parent\} != \{$child\}"}
 } 1
+
+test interp-33.1 {refCounting for target words of alias [Bug 730244]} {
+    # This test will panic if Bug 730244 is not fixed.
+    interp create i
+    proc test args {return $args}
+    trace add execution test enter {interp alias i alias {} ;#}
+    interp alias i alias {} test this
+    i eval alias 
+} this
 
 # cleanup
 foreach i [interp slaves] {

@@ -285,7 +285,7 @@ test unixFCmd-17.3 {SetPermissionsAttribute} {unixOnly notRoot} {
     list [catch {file attributes foo.test -permissions foo} msg] $msg \
 	    [file delete -force -- foo.test]
 } {1 {unknown permission string format "foo"} {}}
-test unixFCmd-17.3 {SetPermissionsAttribute} {unixOnly notRoot} {
+test unixFCmd-17.4 {SetPermissionsAttribute} {unixOnly notRoot} {
     catch {file delete -force -- foo.test}
     close [open foo.test w]
     list [catch {file attributes foo.test -permissions ---rwx} msg] $msg \
@@ -300,14 +300,14 @@ proc permcheck {testnum permstr expected} {
 	file attributes foo.test -permissions
     } $expected
 }
-permcheck unixFCmd-17.4   rwxrwxrwx	00777
-permcheck unixFCmd-17.5   r--r---w-	00442
-permcheck unixFCmd-17.6   0		00000
-permcheck unixFCmd-17.7   u+rwx,g+r	00740
-permcheck unixFCmd-17.8   u-w		00540
-permcheck unixFCmd-17.9   o+rwx		00547
-permcheck unixFCmd-17.10  --x--x--x	00111
-permcheck unixFCmd-17.11  a+rwx		00777
+permcheck unixFCmd-17.5   rwxrwxrwx	00777
+permcheck unixFCmd-17.6   r--r---w-	00442
+permcheck unixFCmd-17.7   0		00000
+permcheck unixFCmd-17.8   u+rwx,g+r	00740
+permcheck unixFCmd-17.9   u-w		00540
+permcheck unixFCmd-17.10   o+rwx	00547
+permcheck unixFCmd-17.11  --x--x--x	00111
+permcheck unixFCmd-17.12  a+rwx		00777
 file delete -force -- foo.test
 
 test unixFCmd-18.1 {Unix pwd} {nonPortable unixOnly notRoot} {

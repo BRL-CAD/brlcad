@@ -171,8 +171,8 @@ test foreach-4.1 {noncompiled foreach and shared variable or value list objects 
 
 # Check "continue".
 
-test foreach-4.1 {continue tests} {catch continue} 4
-test foreach-4.2 {continue tests} {
+test foreach-5.1 {continue tests} {catch continue} 4
+test foreach-5.2 {continue tests} {
     set a {}
     foreach i {a b c d} {
 	if {[string compare $i "b"] == 0} continue
@@ -180,7 +180,7 @@ test foreach-4.2 {continue tests} {
     }
     set a
 } {a c d}
-test foreach-4.3 {continue tests} {
+test foreach-5.3 {continue tests} {
     set a {}
     foreach i {a b c d} {
 	if {[string compare $i "b"] != 0} continue
@@ -188,16 +188,16 @@ test foreach-4.3 {continue tests} {
     }
     set a
 } {b}
-test foreach-4.4 {continue tests} {catch {continue foo} msg} 1
-test foreach-4.5 {continue tests} {
+test foreach-5.4 {continue tests} {catch {continue foo} msg} 1
+test foreach-5.5 {continue tests} {
     catch {continue foo} msg
     set msg
 } {wrong # args: should be "continue"}
 
 # Check "break".
 
-test foreach-5.1 {break tests} {catch break} 3
-test foreach-5.2 {break tests} {
+test foreach-6.1 {break tests} {catch break} 3
+test foreach-6.2 {break tests} {
     set a {}
     foreach i {a b c d} {
 	if {[string compare $i "c"] == 0} break
@@ -205,13 +205,13 @@ test foreach-5.2 {break tests} {
     }
     set a
 } {a b}
-test foreach-5.3 {break tests} {catch {break foo} msg} 1
-test foreach-5.4 {break tests} {
+test foreach-6.3 {break tests} {catch {break foo} msg} 1
+test foreach-6.4 {break tests} {
     catch {break foo} msg
     set msg
 } {wrong # args: should be "break"}
 # Check for bug #406709 
-test foreach-5.5 {break tests} {
+test foreach-6.5 {break tests} {
     proc a {} {
 	set a 1
 	foreach b b {list [concat a; break]; incr a}
@@ -222,7 +222,7 @@ test foreach-5.5 {break tests} {
 
 # Test for incorrect "double evaluation" semantics
 
-test foreach-6.1 {delayed substitution of body} {
+test foreach-7.1 {delayed substitution of body} {
     proc foo {} {
        set a 0
        foreach a [list 1 2 3] "
@@ -238,15 +238,3 @@ catch {unset a}
 catch {unset x}
 ::tcltest::cleanupTests
 return
-
-
-
-
-
-
-
-
-
-
-
-

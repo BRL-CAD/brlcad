@@ -48,33 +48,28 @@ test list-1.24 {basic tests} {list} {}
 # For the next round of tests create a list and then pick it apart
 # with "index" to make sure that we get back exactly what went in.
 
-test list-2.1 {placeholder} {
-} {}
-set num 1
-proc lcheck {a b c} {
+set num 0
+proc lcheck {testid a b c} {
     global num d
     set d [list $a $b $c]
-;   test list-2.$num {what goes in must come out} {lindex $d 0} $a
-    set num [expr $num+1]
-;   test list-2.$num {what goes in must come out} {lindex $d 1} $b
-    set num [expr $num+1]
-;   test list-2.$num {what goes in must come out} {lindex $d 2} $c
-    set num [expr $num+1]
+    test ${testid}-0 {what goes in must come out} {lindex $d 0} $a
+    test ${testid}-1 {what goes in must come out} {lindex $d 1} $b
+    test ${testid}-2 {what goes in must come out} {lindex $d 2} $c
 }
-lcheck a b c
-lcheck "a b" c\td e\nf
-lcheck {{a b}} {} {  }
-lcheck \$ \$ab ab\$
-lcheck \; \;ab ab\;
-lcheck \[ \[ab ab\[
-lcheck \\ \\ab ab\\
-lcheck {"} {"ab} {ab"}
-lcheck {a b} { ab} {ab }
-lcheck a{ a{b \{ab
-lcheck a} a}b }ab
-lcheck a\\} {a \}b} {a \{c}
-lcheck xyz \\ 1\\\n2
-lcheck "{ab}\\" "{ab}xy" abc
+lcheck list-2.1  a b c
+lcheck list-2.2  "a b" c\td e\nf
+lcheck list-2.3  {{a b}} {} {  }
+lcheck list-2.4  \$ \$ab ab\$
+lcheck list-2.5  \; \;ab ab\;
+lcheck list-2.6  \[ \[ab ab\[
+lcheck list-2.7  \\ \\ab ab\\
+lcheck list-2.8  {"} {"ab} {ab"}	;#" Stupid emacs highlighting!
+lcheck list-2.9  {a b} { ab} {ab }
+lcheck list-2.10 a{ a{b \{ab
+lcheck list-2.11 a} a}b }ab
+lcheck list-2.12 a\\} {a \}b} {a \{c}
+lcheck list-2.13 xyz \\ 1\\\n2
+lcheck list-2.14 "{ab}\\" "{ab}xy" abc
 
 concat {}
 
@@ -113,15 +108,3 @@ test list-3.1 {SetListFromAny and lrange/concat results} {
 # cleanup
 ::tcltest::cleanupTests
 return
-
-
-
-
-
-
-
-
-
-
-
-

@@ -11,7 +11,7 @@
 # RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
@@ -290,28 +290,49 @@ test utf-24.2 {unicode digit char in regc_locale.c} {
     list [regexp {^[[:digit:]]+$} \u1040] [regexp {^\d+$} \u1040]
 } {1 1}
 
-test utf-24.1 {TclUniCharIsSpace} {
+test utf-24.3 {TclUniCharIsSpace} {
     # this returns 1 with Unicode 3 compliance
     string is space \u1680
 } {1}
-test utf-24.2 {unicode space char in regc_locale.c} {
+test utf-24.4 {unicode space char in regc_locale.c} {
     # this returns 1 with Unicode 3 compliance
     list [regexp {^[[:space:]]+$} \u1680] [regexp {^\s+$} \u1680]
 } {1 1}
 
+testConstraint teststringobj [llength [info commands teststringobj]]
+test utf-25.1 {Tcl_UniCharNcasecmp} teststringobj {
+    testobj freeallvars
+    teststringobj set 1 a
+    teststringobj set 2 b
+    teststringobj getunicode 1
+    teststringobj getunicode 2
+    string compare -nocase [teststringobj get 1] [teststringobj get 2]
+} -1
+test utf-25.2 {Tcl_UniCharNcasecmp} teststringobj {
+    testobj freeallvars
+    teststringobj set 1 b
+    teststringobj set 2 a
+    teststringobj getunicode 1
+    teststringobj getunicode 2
+    string compare -nocase [teststringobj get 1] [teststringobj get 2]
+} 1
+test utf-25.3 {Tcl_UniCharNcasecmp} teststringobj {
+    testobj freeallvars
+    teststringobj set 1 B
+    teststringobj set 2 a
+    teststringobj getunicode 1
+    teststringobj getunicode 2
+    string compare -nocase [teststringobj get 1] [teststringobj get 2]
+} 1
+test utf-25.4 {Tcl_UniCharNcasecmp} teststringobj {
+    testobj freeallvars
+    teststringobj set 1 aBcB
+    teststringobj set 2 abca
+    teststringobj getunicode 1
+    teststringobj getunicode 2
+    string compare -nocase [teststringobj get 1] [teststringobj get 2]
+} 1
+
 # cleanup
 ::tcltest::cleanupTests
 return
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -468,7 +468,7 @@ and exists for backwards compatibility with non-internationalized Tcl
 extensions.  It consumes bytes from \fIchannel\fR and stores them in
 \fIreadBuf\fR, performing end-of-line translations on the way.  The return value
 of \fBTcl_Read\fR is the number of bytes, up to \fIbytesToRead\fR, written in
-\fIreadBuf\fR.  The buffer produced by \fBTcl_Read\fR is not NULL terminated.
+\fIreadBuf\fR.  The buffer produced by \fBTcl_Read\fR is not null-terminated.
 Its contents are valid from the zeroth position up to and excluding the
 position indicated by the return value.  
 .PP
@@ -524,7 +524,7 @@ added to the input queue.  \fBTcl_Ungets\fR returns \fIinputLen\fR or
 \fIcharBuf\fR.  The UTF-8 characters in the buffer are converted to the
 channel's encoding and queued for output to \fIchannel\fR.  If
 \fIbytesToWrite\fR is negative, \fBTcl_WriteChars\fR expects \fIcharBuf\fR
-to be NULL terminated and it outputs everything up to the NULL.
+to be null-terminated and it outputs everything up to the null.
 .PP
 Data queued for output may not appear on the output device immediately, due
 to internal buffering.  If the data should appear immediately, call
@@ -562,7 +562,7 @@ deprecated and exists for backwards compatibility with non-internationalized
 Tcl extensions.  It accepts \fIbytesToWrite\fR bytes of data at
 \fIbyteBuf\fR and queues them for output to \fIchannel\fR.  If
 \fIbytesToWrite\fR is negative, \fBTcl_Write\fR expects \fIbyteBuf\fR to be
-NULL terminated and it outputs everything up to the NULL.
+null-terminated and it outputs everything up to the null.
 .PP
 \fBTcl_WriteRaw\fR is the same as \fBTcl_Write\fR but does not
 compensate for stacking. While \fBTcl_Write\fR (and the other

@@ -368,7 +368,10 @@ Tcl_RegexpObjCmd(dummy, interp, objc, objv)
 
     while (1) {
 	match = Tcl_RegExpExecObj(interp, regExpr, objPtr,
-		offset /* offset */, numMatchesSaved, eflags);
+		offset /* offset */, numMatchesSaved, eflags 
+		| ((offset > 0 &&
+		   (Tcl_GetUniChar(objPtr,offset-1) != (Tcl_UniChar)'\n'))
+		   ? TCL_REG_NOTBOL : 0));
 
 	if (match < 0) {
 	    return TCL_ERROR;
@@ -719,11 +722,14 @@ Tcl_RegsubObjCmd(dummy, interp, objc, objv)
      * The following loop is to handle multiple matches within the
      * same source string;  each iteration handles one match and its
      * corresponding substitution.  If "-all" hasn't been specified
-     * then the loop body only gets executed once.
+     * then the loop body only gets executed once.  We must use
+     * 'offset <= wlen' in particular for the case where the regexp
+     * pattern can match the empty string - this is useful when
+     * doing, say, 'regsub -- ^ $str ...' when $str might be empty.
      */
 
     numMatches = 0;
-    for ( ; offset < wlen; ) {
+    for ( ; offset <= wlen; ) {
 
 	/*
 	 * The flags argument is set if string is part of a larger string,
@@ -731,7 +737,9 @@ Tcl_RegsubObjCmd(dummy, interp, objc, objv)
 	 */
 
 	match = Tcl_RegExpExecObj(interp, regExpr, objPtr, offset,
-		10 /* matches */, ((offset > 0) ? TCL_REG_NOTBOL : 0));
+		10 /* matches */, ((offset > 0 &&
+		   (Tcl_GetUniChar(objPtr,offset-1) != (Tcl_UniChar)'\n'))
+		   ? TCL_REG_NOTBOL : 0));
 
 	if (match < 0) {
 	    result = TCL_ERROR;
@@ -819,7 +827,9 @@ Tcl_RegsubObjCmd(dummy, interp, objc, objv)
 	     * in order to prevent infinite loops.
 	     */
 
-	    Tcl_AppendUnicodeToObj(resultPtr, wstring + offset, 1);
+	    if (offset < wlen) {
+		Tcl_AppendUnicodeToObj(resultPtr, wstring + offset, 1);
+	    }
 	    offset++;
 	} else {
 	    offset += end;
@@ -1659,23 +1669,20 @@ Tcl_StringObjCmd(dummy, interp, objc, objv)
 		    break;
 		case STR_IS_INT: {
 		    char *stop;
+		    long int l = 0;
 
-		    if ((objPtr->typePtr == &tclIntType) ||
-			(Tcl_GetInt(NULL, string1, &i) == TCL_OK)) {
+		    if (TCL_OK == Tcl_GetIntFromObj(NULL, objPtr, &i)) {
 			break;
 		    }
 		    /*
 		     * Like STR_IS_DOUBLE, but we use strtoul.
-		     * Since Tcl_GetInt already failed, we set result to 0.
+		     * Since Tcl_GetIntFromObj already failed,
+		     * we set result to 0.
 		     */
 		    result = 0;
 		    errno = 0;
-#ifdef TCL_WIDE_INT_IS_LONG
-		    strtoul(string1, &stop, 0); /* INTL: Tcl source. */
-#else
-		    strtoull(string1, &stop, 0); /* INTL: Tcl source. */
-#endif
-		    if (errno == ERANGE) {
+		    l = strtol(string1, &stop, 0); /* INTL: Tcl source. */
+		    if ((errno == ERANGE) || (l > INT_MAX) || (l < INT_MIN)) {
 			/*
 			 * if (errno == ERANGE), then it was an over/underflow
 			 * problem, but in this method, we only want to know
@@ -1683,6 +1690,7 @@ Tcl_StringObjCmd(dummy, interp, objc, objv)
 			 * the failVarObj to the string length.
 			 */
 			failat = -1;
+
 		    } else if (stop == string1) {
 			/*
 			 * In this case, nothing like a number was found
@@ -2106,8 +2114,17 @@ Tcl_StringObjCmd(dummy, interp, objc, objv)
 		     * Only build up a string that has data.  Instead of
 		     * building it up with repeated appends, we just allocate
 		     * the necessary space once and copy the string value in.
+		     * Check for overflow with back-division. [Bug #714106]
 		     */
 		    length2		= length1 * count;
+		    if ((length2 / count) != length1) {
+			char buf[TCL_INTEGER_SPACE+1];
+			sprintf(buf, "%d", INT_MAX);
+			Tcl_AppendStringsToObj(resultPtr,
+				"string size overflow, must be less than ",
+				buf, (char *) NULL);
+			return TCL_ERROR;
+		    }
 		    /*
 		     * Include space for the NULL
 		     */
@@ -2526,17 +2543,12 @@ Tcl_SubstObj(interp, objPtr, flags)
 {
     Tcl_Obj *resultObj;
     char *p, *old;
+    int length;
 
-    old = p = Tcl_GetString(objPtr);
+    old = p = Tcl_GetStringFromObj(objPtr, &length);
     resultObj = Tcl_NewStringObj("", 0);
-    while (1) {
+    while (length) {
 	switch (*p) {
-	case 0:
-	    if (p != old) {
-		Tcl_AppendToObj(resultObj, old, p-old);
-	    }
-	    return resultObj;
-
 	case '\\':
 	    if (flags & TCL_SUBST_BACKSLASHES) {
 		char buf[TCL_UTF_MAX];
@@ -2547,10 +2559,10 @@ Tcl_SubstObj(interp, objPtr, flags)
 		}
 		Tcl_AppendToObj(resultObj, buf,
 				Tcl_UtfBackslash(p, &count, buf));
-		p += count;
+		p += count; length -= count;
 		old = p;
 	    } else {
-		p++;
+		p++; length--;
 	    }
 	    break;
 
@@ -2577,13 +2589,14 @@ Tcl_SubstObj(interp, objPtr, flags)
 		     * There isn't a variable name after all: the $ is
 		     * just a $.
 		     */
-		    p++;
+		    p++; length--;
 		    break;
 		}
 		if (p != old) {
 		    Tcl_AppendToObj(resultObj, old, p-old);
 		}
 		p += parse.tokenPtr->size;
+		length -= parse.tokenPtr->size;
 		code = Tcl_EvalTokensStandard(interp, parse.tokenPtr,
 		        parse.numTokens);
 		if (code == TCL_ERROR) {
@@ -2599,7 +2612,7 @@ Tcl_SubstObj(interp, objPtr, flags)
 		Tcl_ResetResult(interp);
 		old = p;
 	    } else {
-		p++;
+		p++; length--;
 	    }
 	    break;
 
@@ -2624,16 +2637,21 @@ Tcl_SubstObj(interp, objPtr, flags)
 		case TCL_CONTINUE:
 		    Tcl_ResetResult(interp);
 		    old = p = (p+1 + iPtr->termOffset + 1);
+		    length -= (iPtr->termOffset + 2);
 		}
 	    } else {
-		p++;
+		p++; length--;
 	    }
 	    break;
 	default:
-	    p++;
+	    p++; length--;
 	    break;
 	}
     }
+    if (p != old) {
+	Tcl_AppendToObj(resultObj, old, p-old);
+    }
+    return resultObj;
 
  errorResult:
     Tcl_DecrRefCount(resultObj);
@@ -2978,7 +2996,6 @@ Tcl_TraceObjCmd(dummy, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    return (traceSubCmds[typeIndex])(interp, optionIndex, objc, objv);
-	    break;
 	}
 #ifndef TCL_REMOVE_OBSOLETE_TRACES
         case TRACE_OLD_VARIABLE: {
@@ -4533,7 +4550,9 @@ TraceExecutionProc(ClientData clientData, Tcl_Interp *interp,
 		/* Restore result if trace execution was successful */
 		Tcl_RestoreResult(interp, &state);
 		iPtr->returnCode = stateCode;
-            }
+            } else {
+		Tcl_DiscardResult(&state);
+	    }
 
 	    Tcl_DStringFree(&cmd);
 	}

@@ -175,7 +175,7 @@ namespace eval ::msgcat::test {
 	namespace eval :: ::msgcat::mcset foo_BAR text3
     } {text3}
 
-    test msgcat-2.2 {mcset, namespace overlap} {
+    test msgcat-2.2.1 {mcset, namespace overlap} {
 	namespace eval baz {::msgcat::mcset  foo_BAR con1 con1baz}
     } {con1baz}
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * tclAppInit.c --
  *
  *	Provides a default version of the main program and Tcl_AppInit
@@ -31,9 +31,11 @@ extern int		TclThread_Init _ANSI_ARGS_((Tcl_Interp *interp));
 static void		setargv _ANSI_ARGS_((int *argcPtr, char ***argvPtr));
 static BOOL __stdcall	sigHandler (DWORD fdwCtrlType);
 static Tcl_AsyncProc	asyncExit;
+static void		AppInitExitHandler(ClientData clientData);
 
-Tcl_AsyncHandler	exitToken;
-DWORD			exitErrorCode;
+static char **          argvSave = NULL;
+static Tcl_AsyncHandler exitToken = NULL;
+static DWORD            exitErrorCode = 0;
 
 
 /*
@@ -64,18 +66,18 @@ main(argc, argv)
      * of rewriting this entire file.  The #if checks for that
      * #define and uses Tcl_AppInit if it doesn't exist.
      */
-    
+
 #ifndef TCL_LOCAL_APPINIT
-#define TCL_LOCAL_APPINIT Tcl_AppInit    
+#define TCL_LOCAL_APPINIT Tcl_AppInit
 #endif
     extern int TCL_LOCAL_APPINIT _ANSI_ARGS_((Tcl_Interp *interp));
-    
+
     /*
      * The following #if block allows you to change how Tcl finds the startup
      * script, prime the library or encoding paths, fiddle with the argv,
      * etc., without needing to rewrite Tcl_Main()
      */
-    
+
 #ifdef TCL_LOCAL_MAIN_HOOK
     extern int TCL_LOCAL_MAIN_HOOK _ANSI_ARGS_((int *argc, char ***argv));
 #endif
@@ -89,6 +91,11 @@ main(argc, argv)
 
     setlocale(LC_ALL, "C");
     setargv(&argc, &argv);
+
+    /*
+     * Save this for later, so we can free it.
+     */
+    argvSave = argv;
 
     /*
      * Replace argv[0] with full pathname of executable, and forward
@@ -143,8 +150,14 @@ Tcl_AppInit(interp)
     /*
      * Install a signal handler to the win32 console tclsh is running in.
      */
-    SetConsoleCtrlHandler(sigHandler, TRUE); 
-    exitToken = Tcl_AsyncCreate(asyncExit, NULL); 
+    SetConsoleCtrlHandler(sigHandler, TRUE);
+    exitToken = Tcl_AsyncCreate(asyncExit, NULL);
+
+    /*
+     * This exit handler will be used to free the
+     * resources allocated in this file.
+     */
+    Tcl_CreateExitHandler(AppInitExitHandler, NULL);
 
 #ifdef TCL_TEST
     if (Tcltest_Init(interp) == TCL_ERROR) {
@@ -212,12 +225,48 @@ Tcl_AppInit(interp)
 }
 
 /*
+ *----------------------------------------------------------------------
+ *
+ * AppInitExitHandler --
+ *
+ *	This function is called to cleanup the app init resources before
+ *	Tcl is unloaded.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Frees the saved argv and deletes the async exit handler.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+AppInitExitHandler(
+    ClientData clientData)
+{
+    if (argvSave != NULL) {
+        ckfree((char *)argvSave);
+        argvSave = NULL;
+    }
+
+    if (exitToken != NULL) {
+        /*
+         * This should be safe to do even if we
+         * are in an async exit right now.
+         */
+        Tcl_AsyncDelete(exitToken);
+        exitToken = NULL;
+    }
+}
+
+/*
  *-------------------------------------------------------------------------
  *
  * setargv --
  *
  *	Parse the Windows command line string into argc/argv.  Done here
- *	because we don't trust the builtin argument parser in crt0.  
+ *	because we don't trust the builtin argument parser in crt0.
  *	Windows applications are responsible for breaking their command
  *	line into arguments.
  *
@@ -246,7 +295,7 @@ setargv(argcPtr, argvPtr)
     char *cmdLine, *p, *arg, *argSpace;
     char **argv;
     int argc, size, inquote, copy, slashes;
-    
+
     cmdLine = GetCommandLine();	/* INTL: BUG */
 
     /*
@@ -327,7 +376,7 @@ setargv(argcPtr, argvPtr)
     *argcPtr = argc;
     *argvPtr = argv;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -352,7 +401,7 @@ asyncExit (ClientData clientData, Tcl_Interp *interp, int code)
     /* NOTREACHED */
     return code;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -385,16 +434,16 @@ sigHandler(DWORD fdwCtrlType)
     exitErrorCode = fdwCtrlType;
     Tcl_AsyncMark(exitToken);
 
-    /* 
-     * This will cause Tcl_Gets in Tcl_Main() to drop-out with an <EOF> 
-     * should it be blocked on input and our Tcl_AsyncMark didn't grab 
-     * the attention of the interpreter. 
+    /*
+     * This will cause Tcl_Gets in Tcl_Main() to drop-out with an <EOF>
+     * should it be blocked on input and our Tcl_AsyncMark didn't grab
+     * the attention of the interpreter.
      */
     hStdIn = GetStdHandle(STD_INPUT_HANDLE);
     if (hStdIn) {
 	CloseHandle(hStdIn);
     }
 
-    /* indicate to the OS not to call the default terminator */ 
-    return TRUE; 
-} 
+    /* indicate to the OS not to call the default terminator */
+    return TRUE;
+}

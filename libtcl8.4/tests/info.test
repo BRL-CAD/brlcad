@@ -162,16 +162,16 @@ test info-5.1 {info complete option} {
 test info-5.2 {info complete option} {
     info complete abc
 } 1
-test info-5.2 {info complete option} {
+test info-5.3 {info complete option} {
     info complete "\{abcd "
 } 0
-test info-5.3 {info complete option} {
+test info-5.4 {info complete option} {
     info complete {# Comment should be complete command}
 } 1
-test info-5.4 {info complete option} {
+test info-5.5 {info complete option} {
     info complete {[a [b] }
 } 0
-test info-5.5 {info complete option} {
+test info-5.6 {info complete option} {
     info complete {[a [b]}
 } 0
 

@@ -315,37 +315,37 @@ test lsearch-13.2 {search for all matches} {
     lsearch -all {a b a c a d} a
 } {0 2 4}
 
-test lsearch-13.1 {combinations: -all and -inline} {
+test lsearch-14.1 {combinations: -all and -inline} {
     lsearch -all -inline -glob {a1 b2 a3 c4 a5 d6} a*
 } {a1 a3 a5}
-test lsearch-13.2 {combinations: -all, -inline and -not} {
+test lsearch-14.2 {combinations: -all, -inline and -not} {
     lsearch -all -inline -not -glob {a1 b2 a3 c4 a5 d6} a*
 } {b2 c4 d6}
-test lsearch-13.3 {combinations: -all and -not} {
+test lsearch-14.3 {combinations: -all and -not} {
     lsearch -all -not -glob {a1 b2 a3 c4 a5 d6} a*
 } {1 3 5}
-test lsearch-13.4 {combinations: -inline and -not} {
+test lsearch-14.4 {combinations: -inline and -not} {
     lsearch -inline -not -glob {a1 b2 a3 c4 a5 d6} a*
 } {b2}
-test lsearch-13.5 {combinations: -start, -all and -inline} {
+test lsearch-14.5 {combinations: -start, -all and -inline} {
     lsearch -start 2 -all -inline -glob {a1 b2 a3 c4 a5 d6} a*
 } {a3 a5}
-test lsearch-13.6 {combinations: -start, -all, -inline and -not} {
+test lsearch-14.6 {combinations: -start, -all, -inline and -not} {
     lsearch -start 2 -all -inline -not -glob {a1 b2 a3 c4 a5 d6} a*
 } {c4 d6}
-test lsearch-13.7 {combinations: -start, -all and -not} {
+test lsearch-14.7 {combinations: -start, -all and -not} {
     lsearch -start 2 -all -not -glob {a1 b2 a3 c4 a5 d6} a*
 } {3 5}
-test lsearch-13.8 {combinations: -start, -inline and -not} {
+test lsearch-14.8 {combinations: -start, -inline and -not} {
     lsearch -start 2 -inline -not -glob {a1 b2 a3 c4 a5 d6} a*
 } {c4}
 
-test lsearch-14.1 {make sure no shimmering occurs} {
+test lsearch-15.1 {make sure no shimmering occurs} {
     set x [expr int(sin(0))]
     lsearch -start $x $x $x
 } 0
 
-test lsearch-15.1 {lsearch -regexp shared object} {
+test lsearch-16.1 {lsearch -regexp shared object} {
     set str a
     lsearch -regexp $str $str
 } 0

@@ -1587,7 +1587,6 @@ GetModeFromPermString(interp, modeStringPtr, modePtr)
 			continue;
 		    default  :
 			return TCL_ERROR;
-			break;
 		}
 	    }
 	    /* what */
@@ -1611,7 +1610,6 @@ GetModeFromPermString(interp, modeStringPtr, modePtr)
 		    break;
 		default  :
 		    return TCL_ERROR;
-		    break;
 	    }
 	    if (*(modeStringPtr+n+i) == ',') {
 		i++;

@@ -119,7 +119,7 @@ false.
 .IP \fBgraph\fR 10
 Any Unicode printing character, except space.
 .IP \fBinteger\fR 10
-Any of the valid forms for an integer in Tcl, with optional
+Any of the valid forms for a 32-bit integer in Tcl, with optional
 surrounding whitespace.  In case of under/overflow in the value, 0 is
 returned and the \fIvarname\fR will contain \-1.
 .IP \fBlower\fR 10

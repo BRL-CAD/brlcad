@@ -213,6 +213,13 @@ test string-4.13 {string first, start index} {
 test string-4.14 {string first, negative start index} {
     string first b abc -1
 } 1
+test string-4.15 {string first, ability to two-byte encoded utf-8 chars} {
+    # Test for a bug in Tcl 8.3 where test for all-single-byte-encoded
+    # strings was incorrect, leading to an index returned by [string first] 
+    # which pointed past the end of the string.
+    set uchar \u057e    ;# character with two-byte encoding in utf-8
+    string first % %#$uchar$uchar#$uchar$uchar#% 3
+} 8
 
 test string-5.1 {string index} {
     list [catch {string index} msg] $msg
@@ -591,6 +598,22 @@ test string-6.91 {string is double, bad doubles} {
     }
     set result
 } {1 1 0 0 0 1 0 0}
+test string-6.92 {string is double, 32-bit overflow} {
+    # Bug 718878
+    set x 0x100000000
+    list [string is integer -failindex var $x] $var
+} {0 -1}
+test string-6.93 {string is double, 32-bit overflow} {
+    # Bug 718878
+    set x 0x100000000
+    append x ""
+    list [string is integer -failindex var $x] $var
+} {0 -1}
+test string-6.94 {string is double, 32-bit overflow} {
+    # Bug 718878
+    set x 0x100000000
+    list [string is integer -failindex var [expr {$x}]] $var
+} {0 -1}
 
 catch {rename largest_int {}}
 

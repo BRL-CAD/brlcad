@@ -67,10 +67,6 @@ interp eval $testInterp [list namespace import -force ::tcltest::*]
 
 interp eval $testInterp {
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
-}
-
 auto_reset
 catch {rename parray {}}
 
@@ -154,7 +150,7 @@ test init-3.0 {random stuff in the auto_index, should still work} {
 # should be the same.
 
 set count 0
-foreach arg {
+foreach arg [subst -nocommands -novariables {
 		c
                 {argument
                 which spans
@@ -174,7 +170,8 @@ foreach arg {
 		error stack cannot be uniquely determined.
 		foo bar
 "}
-	} {
+		{argument that contains non-ASCII character, \u20ac, and which is of such great length that it will be longer than 150 bytes so it will be truncated by the Tcl C library}
+	}] {
 
     test init-4.$count.0 {::errorInfo produced by [unknown]} {
 	auto_reset
@@ -200,6 +197,7 @@ foreach arg {
     incr count
 }
 
+cleanupTests
 }	;#  End of [interp eval $testInterp]
 
 # cleanup

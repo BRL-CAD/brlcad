@@ -93,9 +93,9 @@ Filled with the Tcl_UniChar represented by the head of the UTF-8 string.
 .AP "CONST char" *src in
 Pointer to a UTF-8 string.
 .AP "CONST Tcl_UniChar" *uniStr in
-A NULL-terminated Unicode string.
+A null-terminated Unicode string.
 .AP "CONST Tcl_UniChar" *uniPattern in
-A NULL-terminated Unicode string.
+A null-terminated Unicode string.
 .AP int len in
 The length of the UTF-8 string in bytes (not UTF-8 characters).  If
 negative, all bytes up to the first null byte are used.
@@ -143,7 +143,7 @@ and stores it as a Tcl_UniChar in \fI*chPtr\fR.  The return value is the
 number of bytes read from \fIsrc\fR..  The caller must ensure that the
 source buffer is long enough such that this routine does not run off the
 end and dereference non-existent or random memory; if the source buffer
-is known to be null terminated, this will not happen.  If the input is
+is known to be null-terminated, this will not happen.  If the input is
 not in proper UTF-8 format, \fBTcl_UtfToUniChar\fR will store the first
 byte of \fIsrc\fR in \fI*chPtr\fR as a Tcl_UniChar between 0x0000 and
 0x00ff and return 1.  
@@ -162,15 +162,15 @@ in which case \fBTcl_UtfToUniCharDString\fR uses \fBstrlen\fR to
 calculate the length.  The return value is a pointer to the Unicode
 representation of the UTF-8 string.  Storage for the return value
 is appended to the end of the \fBTcl_DString\fR.  The Unicode string
-is terminated with a Unicode NULL character.
+is terminated with a Unicode null character.
 .PP
 \fBTcl_UniCharLen\fR corresponds to \fBstrlen\fR for Unicode
-characters.  It accepts a NULL-terminated Unicode string and returns
+characters.  It accepts a null-terminated Unicode string and returns
 the number of Unicode characters (not bytes) in that string.
 .PP
 \fBTcl_UniCharNcmp\fR and \fBTcl_UniCharNcasecmp\fR correspond to
 \fBstrncmp\fR and \fBstrncasecmp\fR, respectively, for Unicode characters.
-They accepts two NULL-terminated Unicode strings and the number of characters
+They accepts two null-terminated Unicode strings and the number of characters
 to compare.  Both strings are assumed to be at least \fIlen\fR characters
 long. \fBTcl_UniCharNcmp\fR  compares the two strings character-by-character
 according to the Unicode character ordering.  It returns an integer greater
@@ -180,13 +180,13 @@ is the Unicode case insensitive version.
 .PP
 .VS 8.4
 \fBTcl_UniCharCaseMatch\fR is the Unicode equivalent to
-\fBTcl_StringCaseMatch\fR.  It accepts a NULL-terminated Unicode string,
+\fBTcl_StringCaseMatch\fR.  It accepts a null-terminated Unicode string,
 a Unicode pattern, and a boolean value specifying whether the match should
 be case sensitive and returns whether the string matches the pattern.
 .VE 8.4
 .PP
 \fBTcl_UtfNcmp\fR corresponds to \fBstrncmp\fR for UTF-8 strings. It
-accepts two NULL-terminated UTF-8 strings and the number of characters
+accepts two null-terminated UTF-8 strings and the number of characters
 to compare.  (Both strings are assumed to be at least \fIlen\fR
 characters long.)  \fBTcl_UtfNcmp\fR compares the two strings
 character-by-character according to the Unicode character ordering.
@@ -209,26 +209,29 @@ full Tcl_UniChar has been seen.
 \fBTcl_NumUtfChars\fR corresponds to \fBstrlen\fR for UTF-8 strings.  It
 returns the number of Tcl_UniChars that are represented by the UTF-8 string
 \fIsrc\fR.  The length of the source string is \fIlen\fR bytes.  If the
-length is negative, all bytes up to the first NULL byte are used.
+length is negative, all bytes up to the first null byte are used.
 .PP
 \fBTcl_UtfFindFirst\fR corresponds to \fBstrchr\fR for UTF-8 strings.  It
 returns a pointer to the first occurrence of the Tcl_UniChar \fIch\fR
-in the NULL-terminated UTF-8 string \fIsrc\fR.  The NULL terminator is
+in the null-terminated UTF-8 string \fIsrc\fR.  The null terminator is
 considered part of the UTF-8 string.  
 .PP
 \fBTcl_UtfFindLast\fR corresponds to \fBstrrchr\fR for UTF-8 strings.  It
 returns a pointer to the last occurrence of the Tcl_UniChar \fIch\fR
-in the NULL terminated UTF-8 string \fIsrc\fR.  The NULL terminator is
+in the null-terminated UTF-8 string \fIsrc\fR.  The null terminator is
 considered part of the UTF-8 string.  
 .PP
 Given \fIsrc\fR, a pointer to some location in a UTF-8 string,
 \fBTcl_UtfNext\fR returns a pointer to the next UTF-8 character in the
 string.  The caller must not ask for the next character after the last
-character in the string.
+character in the string if the string is not terminated by a null
+character.
 .PP
-Given \fIsrc\fR, a pointer to some location in a UTF-8 string,
-\fBTcl_UtfPrev\fR returns a pointer to the previous UTF-8 character in the
-string.  This function will not back up to a position before \fIstart\fR,
+Given \fIsrc\fR, a pointer to some location in a UTF-8 string (or to a
+null byte immediately following such a string), \fBTcl_UtfPrev\fR
+returns a pointer to the closest preceding byte that starts a UTF-8
+character.
+This function will not back up to a position before \fIstart\fR,
 the start of the UTF-8 string.  If \fIsrc\fR was already at \fIstart\fR, the
 return value will be \fIstart\fR.
 .PP

@@ -207,7 +207,7 @@ test cmdIL-3.17 {SortCompare procedure, -command option, non-integer result} {
 	return foow
     }
     list [catch {lsort -command cmp {48 6}} msg] $msg
-} {1 {-compare command returned non-numeric result}}
+} {1 {-compare command returned non-integer result}}
 test cmdIL-3.18 {SortCompare procedure, -command option} {
     proc cmp {a b} {
 	expr {$b - $a}

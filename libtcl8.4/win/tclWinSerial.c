@@ -647,6 +647,8 @@ SerialCloseProc(
 	}
 
         CloseHandle(serialPtr->writeThread);
+	CloseHandle(serialPtr->osWrite.hEvent);
+	DeleteCriticalSection(&serialPtr->csWrite);
         CloseHandle(serialPtr->evWritable);
         CloseHandle(serialPtr->evStartWriter);
         CloseHandle(serialPtr->evStopWriter);

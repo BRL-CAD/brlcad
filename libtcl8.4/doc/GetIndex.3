@@ -34,11 +34,11 @@ The string value of this object is used to search through \fItablePtr\fR.
 The internal representation is modified to hold the index of the matching
 table entry.
 .AP "CONST char" **tablePtr in
-An array of null-terminated ASCII strings.  The end of the array is marked
+An array of null-terminated strings.  The end of the array is marked
 by a NULL string pointer.
 .AP "CONST VOID" *structTablePtr in
 An array of arbitrary type, typically some \fBstruct\fP type.
-The first member of the structure must be a null-terminated ASCII string.
+The first member of the structure must be a null-terminated string.
 The size of the structure is given by \fIoffset\fP.
 .VS
 .AP int offset in

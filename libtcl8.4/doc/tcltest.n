@@ -18,7 +18,7 @@
 tcltest \- Test harness support code and utilities
 .SH SYNOPSIS
 .nf
-\fBpackage require tcltest ?2.2?\fR
+\fBpackage require tcltest ?2.2.3?\fR
 .sp
 \fBtcltest::test \fIname description ?option value ...?\fR
 \fBtcltest::test \fIname description ?constraints? body result\fR
@@ -32,12 +32,10 @@ tcltest \- Test harness support code and utilities
 \fBtcltest::cleanupTests \fI?runningMultipleTests?\fR
 \fBtcltest::runAllTests\fR
 .sp
-.VS 2.1
 \fBtcltest::configure\fR
 \fBtcltest::configure \fIoption\fR
 \fBtcltest::configure \fIoption value ?option value ...?\fR
 \fBtcltest::customMatch \fImode command\fR
-.VE
 \fBtcltest::testConstraint \fIconstraint ?value?\fR
 \fBtcltest::outputChannel \fI?channelID?\fR
 \fBtcltest::errorChannel \fI?channelID?\fR
@@ -200,7 +198,6 @@ the configurable options of \fBtcltest\fR.  See \fBRUNNING ALL TESTS\fR
 below for a complete description of the many variations possible
 with [\fBrunAllTests\fR].
 .SH "CONFIGURATION COMMANDS"
-.VS
 .TP
 \fBconfigure\fR
 Returns the list of configurable options supported by \fBtcltest\fR.
@@ -238,7 +235,6 @@ is evaluated in the global namespace.
 The completed script is expected to return a boolean value indicating
 whether or not the results match.  The built-in matching modes of
 [\fBtest\fR] are \fBexact\fR, \fBglob\fR, and \fBregexp\fR.
-.VE
 .TP
 \fBtestConstraint \fIconstraint ?boolean?\fR
 Sets or returns the boolean value associated with the named \fIconstraint\fR.
@@ -480,7 +476,7 @@ an empty string.
 The \fB-output\fR attribute supplies the \fIexpectedValue\fR against which
 any output sent to \fBstdout\fR or [\fBoutputChannel\fR] during evaluation
 of the script(s) will be compared.  Note that only output printed using
-[\fBputs\fR] is used for comparison.  If \fB-output\fR is not specified,
+[\fB::puts\fR] is used for comparison.  If \fB-output\fR is not specified,
 output sent to \fBstdout\fR and [\fBoutputChannel\fR] is not processed for
 comparison.
 .TP
@@ -488,7 +484,7 @@ comparison.
 The \fB-errorOutput\fR attribute supplies the \fIexpectedValue\fR against
 which any output sent to \fBstderr\fR or [\fBerrorChannel\fR] during 
 evaluation of the script(s) will be compared. Note that only output
-printed using [\fBputs\fR] is used for comparison.  If \fB-errorOutput\fR
+printed using [\fB::puts\fR] is used for comparison.  If \fB-errorOutput\fR
 is not specified, output sent to \fBstderr\fR and [\fBerrorChannel\fR] is
 not processed for comparison.
 .TP
@@ -516,7 +512,7 @@ In default operation, a successful test produces no output.  The output
 messages produced by [\fBtest\fR] are controlled by the
 [\fBconfigure -verbose\fR] option as described in \fBCONFIGURABLE OPTIONS\fR
 below.  Any output produced by the test scripts themselves should be
-produced using [\fBputs\fR] to [\fBoutputChannel\fR] or
+produced using [\fB::puts\fR] to [\fBoutputChannel\fR] or
 [\fBerrorChannel\fR], so that users of the test suite may
 easily capture output with the [\fBconfigure -outfile\fR] and
 [\fBconfigure -errfile\fR] options, and so that the \fB-output\fR
@@ -754,6 +750,7 @@ doesn't match any of the tests that were specified using by
 [\fBconfigure -match\fR] (userSpecifiedNonMatch) or matches any of
 the tests specified by [\fBconfigure -skip\fR] (userSpecifiedSkip).  Also
 print warnings about possible lack of cleanup or balance in test files.
+Also print warnings about any re-use of test names.
 .IP 2
 Display the flag array parsed by the command line processor, the
 contents of the ::env array, and all user-defined variables that exist
@@ -976,10 +973,10 @@ namespace eval ::example::test {
     testConstraint X [expr {...}]
     variable SETUP {#common setup code}
     variable CLEANUP {#common cleanup code}
-    test example-1 {} -setup $SETUP {
+    test example-1 {} -setup $SETUP -body {
 	# First test
     } -cleanup $CLEANUP -result {...}
-    test example-2 {} -constraints X -setup $SETUP {
+    test example-2 {} -constraints X -setup $SETUP -body {
 	# Second test; constrained
     } -cleanup $CLEANUP -result {...}
     test example-3 {} {
@@ -1053,13 +1050,13 @@ where 'm', 'n', 'o', and 'p' refer to tests that were run at the
 same test level as test level-1.1. 
 .PP
 Implementation of output and error comparison in the test command
-depends on usage of puts in your application code.  Output is
-intercepted by redefining the puts command while the defined test
+depends on usage of ::puts in your application code.  Output is
+intercepted by redefining the ::puts command while the defined test
 script is being run.  Errors thrown by C procedures or printed
 directly from C applications will not be caught by the test command.
 Therefore, usage of the \fB-output\fR and \fB-errorOuput\fR
 options to [\fBtest\fR] is useful only for pure Tcl applications
-that use [\fBputs\fR] to produce output. 
+that use [\fB::puts\fR] to produce output. 
 
 .SH KEYWORDS
 test, test harness, test suite

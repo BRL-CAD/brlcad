@@ -85,7 +85,7 @@ CFLAGS_OPTIMIZE	= @CFLAGS_OPTIMIZE@
 #CFLAGS = 		$(CFLAGS_DEBUG)
 #CFLAGS = 		$(CFLAGS_OPTIMIZE)
 #CFLAGS = 		$(CFLAGS_DEBUG) $(CFLAGS_OPTIMIZE)
-CFLAGS = 		@CFLAGS@ @CFLAGS_DEFAULT@ -DTCL_DBGX=$(TCL_DBGX)
+CFLAGS = 		@CFLAGS@ @CFLAGS_DEFAULT@
 
 # To enable compilation debugging reverse the comment characters on
 # one of the following lines.
@@ -382,6 +382,10 @@ ${PIPE_DLL_FILE}: ${PIPE_OBJS}
 
 tclWinInit.${OBJEXT}: tclWinInit.c
 	$(CC) -c $(CC_SWITCHES) -DBUILD_tcl $(EXTFLAGS) @DEPARG@ $(CC_OBJNAME)
+
+tclWinPipe.${OBJEXT}: tclWinPipe.c
+	$(CC) -c $(CC_SWITCHES) -DBUILD_tcl -DTCL_PIPE_DLL=\"$(PIPE_DLL_FILE)\" \
+	    $(EXTFLAGS) @DEPARG@ $(CC_OBJNAME)
 
 testMain.${OBJEXT}: tclAppInit.c
 	$(CC) -c $(CC_SWITCHES) -DTCL_TEST @DEPARG@ $(CC_OBJNAME)

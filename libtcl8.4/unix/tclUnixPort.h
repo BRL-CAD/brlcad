@@ -571,6 +571,13 @@ EXTERN char *          	TclpInetNtoa(struct in_addr);
 #define inet_ntoa(x)	TclpInetNtoa(x)
 #undef TclOSreaddir
 #define TclOSreaddir(x) TclpReaddir(x)
+#ifdef MAC_OSX_TCL
+/* 
+ * On Mac OS X, realpath is currently not
+ * thread safe, c.f. SF bug # 711232.
+ */
+#define NO_REALPATH
+#endif
 #else
 typedef int TclpMutex;
 #define	TclpMutexInit(a)

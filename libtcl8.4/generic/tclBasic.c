@@ -1166,8 +1166,8 @@ Tcl_HideCommand(interp, cmdName, hiddenCmdToken)
 
     if (strstr(hiddenCmdToken, "::") != NULL) {
         Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                "cannot use namespace qualifiers as hidden command",
-		"token (rename)", (char *) NULL);
+                "cannot use namespace qualifiers in hidden command",
+		" token (rename)", (char *) NULL);
         return TCL_ERROR;
     }
 
@@ -1837,9 +1837,9 @@ TclInvokeObjectCommand(clientData, interp, argc, argv)
      * end-of-objv word.
      */
 
-    if ((argc + 1) > NUM_ARGS) {
+    if (argc > NUM_ARGS) {
 	objv = (Tcl_Obj **)
-	    ckalloc((unsigned)(argc + 1) * sizeof(Tcl_Obj *));
+	    ckalloc((unsigned)(argc * sizeof(Tcl_Obj *)));
     }
 
     for (i = 0;  i < argc;  i++) {
@@ -1849,7 +1849,6 @@ TclInvokeObjectCommand(clientData, interp, argc, argv)
 	Tcl_IncrRefCount(objPtr);
 	objv[i] = objPtr;
     }
-    objv[argc] = 0;
 
     /*
      * Invoke the command's object-based Tcl_ObjCmdProc.
@@ -2920,7 +2919,7 @@ TclInterpReady(interp)
      * it's probably because of an infinite loop somewhere.
      */
 
-    if (((iPtr->numLevels) >= iPtr->maxNestingDepth) 
+    if (((iPtr->numLevels) > iPtr->maxNestingDepth) 
 	    || (TclpCheckStackSpace() == 0)) {
 	Tcl_AppendToObj(Tcl_GetObjResult(interp),
 		"too many nested evaluations (infinite loop?)", -1); 
@@ -2937,9 +2936,7 @@ TclInterpReady(interp)
  *
  *	This procedure evaluates a Tcl command that has already been
  *	parsed into words, with one Tcl_Obj holding each word. The caller
- *      is responsible for checking that the interpreter is ready to
- *      evaluate (by calling TclInterpReady), and also to manage the
- *      iPtr->numLevels.
+ *      is responsible for managing the iPtr->numLevels.
  *
  * Results:
  *	The return value is a standard Tcl completion code such as
@@ -2987,6 +2984,10 @@ TclEvalObjvInternal(interp, objc, objv, command, length, flags)
     int traceCode = TCL_OK;
     int checkTraces = 1;
 
+    if (TclInterpReady(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+
     if (objc == 0) {
 	return TCL_OK;
     }
@@ -3003,10 +3004,14 @@ TclEvalObjvInternal(interp, objc, objv, command, length, flags)
          * word array with "unknown" as the first word and the original
          * command words as arguments.  Then call ourselves recursively
          * to execute it.
+	 *
+	 * If caller requests, or if we're resolving the target end of
+	 * an interpeter alias (TCL_EVAL_INVOKE), be sure to do command
+	 * name resolution in the global namespace.
          */
 
 	savedVarFramePtr = iPtr->varFramePtr;
-	if (flags & TCL_EVAL_INVOKE) {
+	if (flags & (TCL_EVAL_INVOKE | TCL_EVAL_GLOBAL)) {
 	    iPtr->varFramePtr = NULL;
 	}
         cmdPtr = (Command *) Tcl_GetCommandFromObj(interp, objv[0]);
@@ -3025,8 +3030,6 @@ TclEvalObjvInternal(interp, objc, objv, command, length, flags)
 	        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
 		    "invalid command name \"", Tcl_GetString(objv[0]), "\"",
 		    (char *) NULL);
-	        code = TCL_ERROR;
-	    } else if (TclInterpReady(interp) == TCL_ERROR) {
 	        code = TCL_ERROR;
 	    } else {
 	        iPtr->numLevels++;
@@ -3188,13 +3191,9 @@ Tcl_EvalObjv(interp, objc, objv, flags)
 	}
     }
 
-    code = TclInterpReady(interp);
-    if (code == TCL_OK) {
-	iPtr->numLevels++;
-	code = TclEvalObjvInternal(interp, objc, objv, cmdString, cmdLen,
-		flags);
-	iPtr->numLevels--;
-    }
+    iPtr->numLevels++;
+    code = TclEvalObjvInternal(interp, objc, objv, cmdString, cmdLen, flags);
+    iPtr->numLevels--;
 
     /*
      * If we are again at the top level, process any unusual 
@@ -3303,6 +3302,14 @@ Tcl_LogCommandInfo(interp, script, command, length)
     }
     if (length > 150) {
 	length = 150;
+	ellipsis = "...";
+    }
+    while ( (command[length] & 0xC0) == 0x80 ) {
+	/*
+	 * Back up truncation point so that we don't truncate in the
+	 * middle of a multi-byte character (in UTF-8)
+	 */
+	length--;
 	ellipsis = "...";
     }
     if (!(iPtr->flags & ERR_IN_PROGRESS)) {
@@ -3663,14 +3670,10 @@ Tcl_EvalEx(interp, script, numBytes, flags)
 	     * Execute the command and free the objects for its words.
 	     */
 
-	    if (TclInterpReady(interp) == TCL_ERROR) {
-		code = TCL_ERROR;
-	    } else {
-		iPtr->numLevels++;    
-		code = TclEvalObjvInternal(interp, objectsUsed, objv, p, 
-		        parse.commandStart + parse.commandSize - p, 0);
-		iPtr->numLevels--;
-	    }
+	    iPtr->numLevels++;    
+	    code = TclEvalObjvInternal(interp, objectsUsed, objv, 
+	            parse.commandStart, parse.commandSize, 0);
+	    iPtr->numLevels--;
 	    if (code != TCL_OK) {
 		if (iPtr->numLevels == 0) {
 		    if (code == TCL_RETURN) {
@@ -4567,8 +4570,7 @@ TclObjInvoke(interp, objc, objv, flags)
     int localObjc;		/* Used to invoke "unknown" if the */
     Tcl_Obj **localObjv = NULL;	/* command is not found. */
     register int i;
-    int length, result;
-    char *bytes;
+    int result;
 
     if (interp == (Tcl_Interp *) NULL) {
         return TCL_ERROR;
@@ -4661,29 +4663,41 @@ TclObjInvoke(interp, objc, objv, flags)
     if ((result == TCL_ERROR)
 	    && ((flags & TCL_INVOKE_NO_TRACEBACK) == 0)
 	    && ((iPtr->flags & ERR_ALREADY_LOGGED) == 0)) {
-        Tcl_DString ds;
+	Tcl_Obj *msg;
         
-        Tcl_DStringInit(&ds);
         if (!(iPtr->flags & ERR_IN_PROGRESS)) {
-            Tcl_DStringAppend(&ds, "\n    while invoking\n\"", -1);
+            msg = Tcl_NewStringObj("\n    while invoking\n\"", -1);
         } else {
-            Tcl_DStringAppend(&ds, "\n    invoked from within\n\"", -1);
+            msg = Tcl_NewStringObj("\n    invoked from within\n\"", -1);
         }
+	Tcl_IncrRefCount(msg);
         for (i = 0;  i < objc;  i++) {
-	    bytes = Tcl_GetStringFromObj(objv[i], &length);
-            Tcl_DStringAppend(&ds, bytes, length);
-            if (i < (objc - 1)) {
-                Tcl_DStringAppend(&ds, " ", -1);
-            } else if (Tcl_DStringLength(&ds) > 100) {
-                Tcl_DStringSetLength(&ds, 100);
-                Tcl_DStringAppend(&ds, "...", -1);
-                break;
-            }
+	    CONST char *bytes;
+	    int length;
+
+	    Tcl_AppendObjToObj(msg, objv[i]);
+	    bytes = Tcl_GetStringFromObj(msg, &length);
+	    if (length > 100) {
+		/*
+		 * Back up truncation point so that we don't truncate
+		 * in the middle of a multi-byte character.
+		 */
+		length = 100;
+		while ( (bytes[length] & 0xC0) == 0x80 ) {
+		    length--;
+		}
+		Tcl_SetObjLength(msg, length);
+		Tcl_AppendToObj(msg, "...", -1);
+		break;
+	    }
+	    if (i != (objc - 1)) {
+		Tcl_AppendToObj(msg, " ", -1);
+	    }
         }
-        
-        Tcl_DStringAppend(&ds, "\"", -1);
-        Tcl_AddObjErrorInfo(interp, Tcl_DStringValue(&ds), -1);
-        Tcl_DStringFree(&ds);
+
+	Tcl_AppendToObj(msg, "\"", -1);
+        Tcl_AddObjErrorInfo(interp, Tcl_GetString(msg), -1);
+	Tcl_DecrRefCount(msg);
 	iPtr->flags &= ~ERR_ALREADY_LOGGED;
     }
 

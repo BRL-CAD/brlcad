@@ -34,6 +34,10 @@ test subst-2.2 {simple strings} {
 test subst-2.3 {simple strings} {
     subst abcdefg
 } abcdefg
+test subst-2.4 {simple strings} {
+    # Tcl Bug 685106
+    subst [bytestring bar\x00soom]
+} [bytestring bar\x00soom]
 
 test subst-3.1 {backslash substitutions} {
     subst {\x\$x\[foo bar]\\}

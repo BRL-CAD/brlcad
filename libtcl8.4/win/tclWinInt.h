@@ -102,7 +102,11 @@ typedef struct TclWinProcs {
 				      LPSECURITY_ATTRIBUTES);
     
     INT (__cdecl *utimeProc)(CONST TCHAR*, struct _utimbuf *);
-    
+    /* These two are also NULL at start; see comment above */
+    HANDLE (WINAPI *findFirstFileExProc)(CONST TCHAR*, UINT,
+					 LPVOID, UINT,
+					 LPVOID, DWORD);
+    BOOL (WINAPI *getVolumeNameForVMPProc)(CONST TCHAR*, TCHAR*, DWORD);
 } TclWinProcs;
 
 EXTERN TclWinProcs *tclWinProcs;
@@ -119,6 +123,7 @@ EXTERN int              TclWinSymLinkCopyDirectory(CONST TCHAR* LinkOriginal,
 						   CONST TCHAR* LinkCopy);
 EXTERN int              TclWinSymLinkDelete(CONST TCHAR* LinkOriginal, 
 					    int linkOnly);
+EXTERN char TclWinDriveLetterForVolMountPoint(CONST WCHAR *mountPoint);
 #if defined(TCL_THREADS) && defined(USE_THREAD_ALLOC)
 EXTERN void		TclWinFreeAllocCache(void);
 EXTERN void		TclFreeAllocCache(void *);

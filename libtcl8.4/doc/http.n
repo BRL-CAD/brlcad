@@ -20,9 +20,9 @@ http \- Client-side implementation of the HTTP/1.0 protocol.
 .sp
 \fB::http::geturl \fIurl ?options?\fR
 .sp
-\fB::http::formatQuery \fIlist\fR
+\fB::http::formatQuery\fP \fIkey value\fP ?\fIkey value\fP ...?
 .sp
-\fB::http::reset \fItoken\fR
+\fB::http::reset\fP \fItoken\fP ?\fIwhy\fP?
 .sp
 \fB::http::wait \fItoken\fR
 .sp

@@ -25,7 +25,7 @@
 package require Tcl 8.2
 # keep this in sync with pkgIndex.tcl
 # and with the install directories in Makefiles
-package provide http 2.4.2
+package provide http 2.4.4
 
 namespace eval http {
     variable http
@@ -119,7 +119,7 @@ proc http::config {args} {
 	}
 	return $result
     }
-    regsub -all -- - $options {} options
+    set options [string map {- ""} $options]
     set pat ^-([join $options |])$
     if {[llength $args] == 1} {
 	set flag [lindex $args 0]
@@ -260,7 +260,7 @@ proc http::geturl { url args } {
 	    -progress -query -queryblocksize -querychannel -queryprogress\
 	    -validate -timeout -type}
     set usage [join $options ", "]
-    regsub -all -- - $options {} options
+    set options [string map {- ""} $options]
     set pat ^-([join $options |])$
     foreach {flag value} $args {
 	if {[regexp $pat $flag]} {
@@ -288,9 +288,11 @@ proc http::geturl { url args } {
     }
 
     # Validate URL, determine the server host and port, and check proxy case
+    # Recognize user:pass@host URLs also, although we do not do anything
+    # with that info yet.
 
-    if {![regexp -nocase {^(([^:]*)://)?([^/:]+)(:([0-9]+))?(/.*)?$} $url \
-	    x prefix proto host y port srvurl]} {
+    set exp {^(([^:]*)://)?([^@]+@)?([^/:]+)(:([0-9]+))?(/.*)?$}
+    if {![regexp -nocase $exp $url x prefix proto user host y port srvurl]} {
 	unset $token
 	return -code error "Unsupported URL: $url"
     }
@@ -414,7 +416,7 @@ proc http::geturl { url args } {
 	}
 	puts $s "User-Agent: $http(-useragent)"
 	foreach {key value} $state(-headers) {
-	    regsub -all \[\n\r\]  $value {} value
+	    set value [string map [list \n "" \r ""] $value]
 	    set key [string trim $key]
 	    if {[string equal $key "Content-Length"]} {
 		set contDone 1
@@ -678,8 +680,9 @@ proc http::Event {token} {
 	} elseif {$n == 0} {
 	    variable encodings
 	    set state(state) body
-	    if {$state(-binary) || ![regexp -nocase ^text $state(type)] || \
-		    [regexp gzip|compress $state(coding)]} {
+	    if {$state(-binary) || ![string match -nocase text* $state(type)]
+		    || [string match *gzip* $state(coding)]
+		    || [string match *compress* $state(coding)]} {
 		# Turn off conversions for non-text data
 		fconfigure $s -translation binary
 		if {[info exists state(-channel)]} {
@@ -716,7 +719,7 @@ proc http::Event {token} {
 	    }
 	    if {[regexp -nocase {^([^:]+):(.+)$} $line x key value]} {
 		lappend state(meta) $key [string trim $value]
-	    } elseif {[regexp ^HTTP $line]} {
+	    } elseif {[string match HTTP* $line]} {
 		set state(http) $line
 	    }
 	}

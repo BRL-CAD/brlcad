@@ -1398,31 +1398,12 @@ Tcl_TranslateFileName(interp, name, bufferPtr)
      */
 
     if (tclPlatform == TCL_PLATFORM_WINDOWS) {
-#if defined(__CYGWIN__) && defined(__WIN32__)
-
-	extern int cygwin_conv_to_win32_path 
-	    _ANSI_ARGS_((CONST char *, char *));
-	char winbuf[MAX_PATH];
-
-	/*
-	 * In the Cygwin world, call conv_to_win32_path in order to use the
-	 * mount table to translate the file name into something Windows will
-	 * understand.  Take care when converting empty strings!
-	 */
-	if (Tcl_DStringLength(bufferPtr)) {
-	    cygwin_conv_to_win32_path(Tcl_DStringValue(bufferPtr), winbuf);
-	    Tcl_DStringFree(bufferPtr);
-	    Tcl_DStringAppend(bufferPtr, winbuf, -1);
-	}
-#else /* __CYGWIN__ && __WIN32__ */
-
 	register char *p;
 	for (p = Tcl_DStringValue(bufferPtr); *p != '\0'; p++) {
 	    if (*p == '/') {
 		*p = '\\';
 	    }
 	}
-#endif /* __CYGWIN__ && __WIN32__ */
     }
     return Tcl_DStringValue(bufferPtr);
 }
@@ -1680,7 +1661,6 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
 	    case GLOB_LAST:				/* -- */
 	        i++;
 		goto endOfForLoop;
-		break;
 	}
     }
     endOfForLoop:
@@ -2330,8 +2310,19 @@ TclDoGlob(interp, separators, headPtr, tail, types)
     count = 0;
     name = tail;
     for (; *tail != '\0'; tail++) {
-	if ((*tail == '\\') && (strchr(separators, tail[1]) != NULL)) {
-	    tail++;
+	if (*tail == '\\') {
+	    /* 
+	     * If the first character is escaped, either we have a directory
+	     * separator, or we have any other character.  In the latter case
+	     * the rest of tail is a pattern, and we must break from the loop.
+	     * This is particularly important on Windows where '\' is both
+	     * the escaping character and a directory separator.
+	     */
+	    if (strchr(separators, tail[1]) != NULL) {
+		tail++;
+	    } else {
+		break;
+	    }
 	} else if (strchr(separators, *tail) == NULL) {
 	    break;
 	}
@@ -2377,25 +2368,6 @@ TclDoGlob(interp, separators, headPtr, tail, types)
 	     * this is the first absolute element, or a later relative
 	     * element.  Add an extra slash if this is a UNC path.
 	     */
-
-#if defined(__CYGWIN__) && defined(__WIN32__)
-	    {
-
-	    extern int cygwin_conv_to_win32_path 
-	    	_ANSI_ARGS_((CONST char *, char *));
-	    char winbuf[MAX_PATH];
-
-	    /*
-	     * In the Cygwin world, call conv_to_win32_path in order to use
-	     * the mount table to translate the file name into something
-	     * Windows will understand.
-	     */
-	    cygwin_conv_to_win32_path(Tcl_DStringValue(headPtr), winbuf);
-	    Tcl_DStringFree(headPtr);
-	    Tcl_DStringAppend(headPtr, winbuf, -1);
-
-	    }
-#endif /* __CYGWIN__ && __WIN32__ */
 
 	    if (*name == ':') {
 		Tcl_DStringAppend(headPtr, ":", 1);
@@ -2609,11 +2581,22 @@ TclDoGlob(interp, separators, headPtr, tail, types)
 		if (Tcl_DStringLength(headPtr) == 0) {
 		    if (((*name == '\\') && (name[1] == '/' || name[1] == '\\'))
 			    || (*name == '/')) {
-			Tcl_DStringAppend(headPtr, "\\", 1);
+			Tcl_DStringAppend(headPtr, "/", 1);
 		    } else {
 			Tcl_DStringAppend(headPtr, ".", 1);
 		    }
 		}
+#if defined(__CYGWIN__) && defined(__WIN32__)
+		{
+		extern int cygwin_conv_to_win32_path 
+		    _ANSI_ARGS_((CONST char *, char *));
+		char winbuf[MAX_PATH+1];
+
+		cygwin_conv_to_win32_path(Tcl_DStringValue(headPtr), winbuf);
+		Tcl_DStringFree(headPtr);
+		Tcl_DStringAppend(headPtr, winbuf, -1);
+		}
+#endif /* __CYGWIN__ && __WIN32__ */
 		/* 
 		 * Convert to forward slashes.  This is required to pass
 		 * some Tcl tests.  We should probably remove the conversions

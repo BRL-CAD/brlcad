@@ -779,18 +779,18 @@ representations.
 .SH PATHINFILESYSTEMPROC
 .PP
 The \fIpathInFilesystemProc\fR field contains the address of a function
-which is called to determine whether a given path object belongs to
-this filesystem or not.  Tcl will only call the rest of the filesystem
-functions with a path for which this function has returned
-\fBTCL_OK\fR. If the path does not belong, \fBTCL_ERROR\fR should be
-returned.  If \fBTCL_OK\fR is returned, then the optional
-\fBclientDataPtr\fR output parameter can be used to return an internal
-(filesystem specific) representation of the path, which will be cached
-inside the path object, and may be retrieved efficiently by the other
-filesystem functions.  Tcl will simultaneously cache the fact that this
-path belongs to this filesystem.  Such caches are invalidated when
-filesystem structures are added or removed from Tcl's internal list of
-known filesystems.
+which is called to determine whether a given path object belongs to this
+filesystem or not.  Tcl will only call the rest of the filesystem
+functions with a path for which this function has returned \fBTCL_OK\fR.
+If the path does not belong, -1 should be returned (the behaviour of Tcl
+for any other return value is not defined).  If \fBTCL_OK\fR is returned,
+then the optional \fBclientDataPtr\fR output parameter can be used to
+return an internal (filesystem specific) representation of the path,
+which will be cached inside the path object, and may be retrieved
+efficiently by the other filesystem functions.  Tcl will simultaneously
+cache the fact that this path belongs to this filesystem.  Such caches
+are invalidated when filesystem structures are added or removed from
+Tcl's internal list of known filesystems.
 .PP
 .CS
 typedef int Tcl_FSPathInFilesystemProc(

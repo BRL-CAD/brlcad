@@ -837,7 +837,15 @@ proc ::safe::setLogCmd {args} {
 	    error "\"$file\": is a directory"
 	}
 	set parent [file dirname $file]
-	if {[lsearch -exact $access_path $parent] == -1} {
+
+	# Normalize paths for comparison since lsearch knows nothing of
+	# potential pathname anomalies.
+	set norm_parent [file normalize $parent]
+	foreach path $access_path {
+	    lappend norm_access_path [file normalize $path]
+	}
+
+	if {[lsearch -exact $norm_access_path $norm_parent] == -1} {
 	    error "\"$file\": not in access_path"
 	}
     }

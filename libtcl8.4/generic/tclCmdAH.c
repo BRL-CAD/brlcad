@@ -559,7 +559,7 @@ Tcl_ErrorObjCmd(dummy, interp, objc, objv)
     
     if (objc >= 3) {		/* process the optional info argument */
 	info = Tcl_GetStringFromObj(objv[2], &infoLen);
-	if (*info != 0) {
+	if (infoLen > 0) {
 	    Tcl_AddObjErrorInfo(interp, info, infoLen);
 	    iPtr->flags |= ERR_ALREADY_LOGGED;
 	}
@@ -835,11 +835,12 @@ Tcl_FileObjCmd(dummy, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    if (objc == 4) {
-		if (Tcl_GetLongFromObj(interp, objv[3],
-			(long*)(&buf.st_atime)) != TCL_OK) {
+		long newTime;
+
+		if (Tcl_GetLongFromObj(interp, objv[3], &newTime) != TCL_OK) {
 		    return TCL_ERROR;
 		}
-		tval.actime = buf.st_atime;
+		tval.actime = newTime;
 		tval.modtime = buf.st_mtime;
 		if (Tcl_FSUtime(objv[2], &tval) != 0) {
 		    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
@@ -1071,12 +1072,13 @@ Tcl_FileObjCmd(dummy, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    if (objc == 4) {
-		if (Tcl_GetLongFromObj(interp, objv[3],
-			(long*)(&buf.st_mtime)) != TCL_OK) {
+		long newTime;
+
+		if (Tcl_GetLongFromObj(interp, objv[3], &newTime) != TCL_OK) {
 		    return TCL_ERROR;
 		}
 		tval.actime = buf.st_atime;
-		tval.modtime = buf.st_mtime;
+		tval.modtime = newTime;
 		if (Tcl_FSUtime(objv[2], &tval) != 0) {
 		    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
 			    "could not set modification time for file \"",
@@ -1937,10 +1939,8 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
 				 * it's a one-word value. */
     double doubleValue;		/* Used to hold value to pass to sprintf if
 				 * it's a double value. */
-#ifndef TCL_WIDE_INT_IS_LONG
     Tcl_WideInt wideValue;	/* Used to hold value to pass to sprintf if
 				 * it's a 'long long' value. */
-#endif /* TCL_WIDE_INT_IS_LONG */
     int whichValue;		/* Indicates which of intValue, ptrValue,
 				 * or doubleValue has the value to pass to
 				 * sprintf, according to the following
@@ -1955,12 +1955,12 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
 
     Tcl_Obj *resultPtr;  	/* Where result is stored finally. */
     char staticBuf[MAX_FLOAT_SIZE + 1];
-                                /* A static buffer to copy the format results 
+				/* A static buffer to copy the format results 
 				 * into */
     char *dst = staticBuf;      /* The buffer that sprintf writes into each
 				 * time the format processes a specifier */
     int dstSize = MAX_FLOAT_SIZE;
-                                /* The size of the dst buffer */
+				/* The size of the dst buffer */
     int noPercent;		/* Special case for speed:  indicates there's
 				 * no field specifier, just a string to copy.*/
     int objIndex;		/* Index of argument to substitute next. */
@@ -1979,9 +1979,7 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
 				 * been set for the current field. */
     int gotZero;		/* Non-zero indicates that a zero flag has
 				 * been seen in the current field. */
-#ifndef TCL_WIDE_INT_IS_LONG
     int useWide;		/* Value to be printed is Tcl_WideInt. */
-#endif /* TCL_WIDE_INT_IS_LONG */
 
     /*
      * This procedure is a bit nasty.  The goal is to use sprintf to
@@ -1998,7 +1996,7 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
      */
 
     if (objc < 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "formatString ?arg arg ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "formatString ?arg arg ...?");
 	return TCL_ERROR;
     }
 
@@ -2012,9 +2010,7 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
 
 	width = precision = noPercent = useShort = 0;
 	gotZero = gotMinus = gotPrecision = 0;
-#ifndef TCL_WIDE_INT_IS_LONG
 	useWide = 0;
-#endif /* TCL_WIDE_INT_IS_LONG */
 	whichValue = PTR_VALUE;
 
 	/*
@@ -2158,11 +2154,21 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
 	    }
 	}
 	if (*format == 'l') {
-#ifndef TCL_WIDE_INT_IS_LONG
 	    useWide = 1;
-	    strcpy(newPtr, TCL_LL_MODIFIER);
-	    newPtr += TCL_LL_MODIFIER_SIZE;
-#endif /* TCL_WIDE_INT_IS_LONG */
+	    /*
+	     * Only add a 'll' modifier for integer values as it makes
+	     * some libc's go into spasm otherwise.  [Bug #702622]
+	     */
+	    switch (format[1]) {
+	    case 'i':
+	    case 'd':
+	    case 'o':
+	    case 'u':
+	    case 'x':
+	    case 'X':
+		strcpy(newPtr, TCL_LL_MODIFIER);
+		newPtr += TCL_LL_MODIFIER_SIZE;
+	    }
 	    format++;
 	} else if (*format == 'h') {
 	    useShort = 1;
@@ -2177,95 +2183,130 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
 	    goto badIndex;
 	}
 	switch (*format) {
-	    case 'i':
-		newPtr[-1] = 'd';
-	    case 'd':
-	    case 'o':
-	    case 'u':
-	    case 'x':
-	    case 'X':
-#ifndef TCL_WIDE_INT_IS_LONG
+	case 'i':
+	    newPtr[-1] = 'd';
+	case 'd':
+	case 'o':
+	case 'u':
+	case 'x':
+	case 'X':
+	    size = 40 + precision;
+
+	    /*
+	     * Peek what kind of value we've got so as not to be
+	     * converting stuff unduly.  [Bug #699060]
+	     */
+	    if (objv[objIndex]->typePtr == &tclWideIntType) {
+		Tcl_GetWideIntFromObj(NULL, objv[objIndex], &wideValue);
+		if (useWide) {
+		    whichValue = WIDE_VALUE;
+		    break;
+		} else {
+		    whichValue = INT_VALUE;
+		    if (wideValue>ULONG_MAX || wideValue<LONG_MIN) {
+			/*
+			 * Value too big for type.  Generate an error.
+			 */
+			Tcl_GetLongFromObj(interp, objv[objIndex], &intValue);
+			goto fmtError;
+		    }
+		    intValue = Tcl_WideAsLong(wideValue);
+		}
+	    } else if (objv[objIndex]->typePtr == &tclIntType) {
+		Tcl_GetLongFromObj(NULL, objv[objIndex], &intValue);
+		if (useWide) {
+		    whichValue = WIDE_VALUE;
+		    wideValue = Tcl_LongAsWide(intValue);
+		    break;
+		} else {
+		    whichValue = INT_VALUE;
+		}
+	    } else {
+		/*
+		 * No existing numeric interpretation, so we can
+		 * coerce to whichever is convenient.
+		 */
 		if (useWide) {
 		    if (Tcl_GetWideIntFromObj(interp, /* INTL: Tcl source. */
 			    objv[objIndex], &wideValue) != TCL_OK) {
 			goto fmtError;
 		    }
 		    whichValue = WIDE_VALUE;
-		    size = 40 + precision;
 		    break;
 		}
-#endif /* TCL_WIDE_INT_IS_LONG */
 		if (Tcl_GetLongFromObj(interp,	      /* INTL: Tcl source. */
 			objv[objIndex], &intValue) != TCL_OK) {
 		    goto fmtError;
 		}
+	    }
 #if (LONG_MAX > INT_MAX)
-		/*
-		 * Add the 'l' for long format type because we are on
-		 * an LP64 archtecture and we are really going to pass
-		 * a long argument to sprintf.
-		 */
-		newPtr++;
-		*newPtr = 0;
-		newPtr[-1] = newPtr[-2];
-		newPtr[-2] = 'l';
+	    /*
+	     * Add the 'l' for long format type because we are on an
+	     * LP64 archtecture and we are really going to pass a long
+	     * argument to sprintf.
+	     */
+	    newPtr++;
+	    *newPtr = 0;
+	    newPtr[-1] = newPtr[-2];
+	    newPtr[-2] = 'l';
 #endif /* LONG_MAX > INT_MAX */
-		whichValue = INT_VALUE;
-		size = 40 + precision;
-		break;
-	    case 's':
-		/*
-		 * Compute the length of the string in characters and add
-		 * any additional space required by the field width.  All of
-		 * the extra characters will be spaces, so one byte per
-		 * character is adequate.
-		 */
+	    whichValue = INT_VALUE;
+	    break;
+	case 's':
+	    /*
+	     * Compute the length of the string in characters and add
+	     * any additional space required by the field width.  All
+	     * of the extra characters will be spaces, so one byte per
+	     * character is adequate.
+	     */
 
-		whichValue = STRING_VALUE;
-		ptrValue = Tcl_GetStringFromObj(objv[objIndex], &size);
-		stringLen = Tcl_NumUtfChars(ptrValue, size);
-		if (gotPrecision && (precision < stringLen)) {
-		    stringLen = precision;
-		}
-		size = Tcl_UtfAtIndex(ptrValue, stringLen) - ptrValue;
-		if (width > stringLen) {
-		    size += (width - stringLen);
-		}
-		break;
-	    case 'c':
-		if (Tcl_GetLongFromObj(interp,	/* INTL: Tcl source. */
-			objv[objIndex], &intValue) != TCL_OK) {
-		    goto fmtError;
-		}
-		whichValue = CHAR_VALUE;
-		size = width + TCL_UTF_MAX;
-		break;
-	    case 'e':
-	    case 'E':
-	    case 'f':
-	    case 'g':
-	    case 'G':
-		if (Tcl_GetDoubleFromObj(interp, /* INTL: Tcl source. */
-			objv[objIndex], &doubleValue) != TCL_OK) {
-		    goto fmtError;
-		}
-		whichValue = DOUBLE_VALUE;
-		size = MAX_FLOAT_SIZE;
-		if (precision > 10) {
-		    size += precision;
-		}
-		break;
-	    case 0:
-		Tcl_SetResult(interp,
-		        "format string ended in middle of field specifier",
-			TCL_STATIC);
-		goto fmtError;
-	    default: {
-		char buf[40];
-		sprintf(buf, "bad field specifier \"%c\"", *format);
-		Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	    whichValue = STRING_VALUE;
+	    ptrValue = Tcl_GetStringFromObj(objv[objIndex], &size);
+	    stringLen = Tcl_NumUtfChars(ptrValue, size);
+	    if (gotPrecision && (precision < stringLen)) {
+		stringLen = precision;
+	    }
+	    size = Tcl_UtfAtIndex(ptrValue, stringLen) - ptrValue;
+	    if (width > stringLen) {
+		size += (width - stringLen);
+	    }
+	    break;
+	case 'c':
+	    if (Tcl_GetLongFromObj(interp,	/* INTL: Tcl source. */
+		    objv[objIndex], &intValue) != TCL_OK) {
 		goto fmtError;
 	    }
+	    whichValue = CHAR_VALUE;
+	    size = width + TCL_UTF_MAX;
+	    break;
+	case 'e':
+	case 'E':
+	case 'f':
+	case 'g':
+	case 'G':
+	    if (Tcl_GetDoubleFromObj(interp, /* INTL: Tcl source. */
+		    objv[objIndex], &doubleValue) != TCL_OK) {
+		goto fmtError;
+	    }
+	    whichValue = DOUBLE_VALUE;
+	    size = MAX_FLOAT_SIZE;
+	    if (precision > 10) {
+		size += precision;
+	    }
+	    break;
+	case 0:
+	    Tcl_SetResult(interp,
+		    "format string ended in middle of field specifier",
+		    TCL_STATIC);
+	    goto fmtError;
+	default:
+	{
+	    char buf[40];
+
+	    sprintf(buf, "bad field specifier \"%c\"", *format);
+	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	    goto fmtError;
+	}
 	}
 	objIndex++;
 	format++;
@@ -2290,103 +2331,97 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
 		dstSize = size;
 	    }
 	    switch (whichValue) {
-		case DOUBLE_VALUE: {
-		    sprintf(dst, newFormat, doubleValue); /* INTL: user locale. */
-		    break;
+	    case DOUBLE_VALUE:
+		sprintf(dst, newFormat, doubleValue); /* INTL: user locale. */
+		break;
+	    case WIDE_VALUE:
+		sprintf(dst, newFormat, wideValue);
+		break;
+	    case INT_VALUE:
+		if (useShort) {
+		    sprintf(dst, newFormat, (short) intValue);
+		} else {
+		    sprintf(dst, newFormat, intValue);
 		}
-#ifndef TCL_WIDE_INT_IS_LONG
-		case WIDE_VALUE: {
-		    sprintf(dst, newFormat, wideValue);
-		    break;
-		}
-#endif /* TCL_WIDE_INT_IS_LONG */
-		case INT_VALUE: {
-		    if (useShort) {
-			sprintf(dst, newFormat, (short) intValue);
-		    } else {
-			sprintf(dst, newFormat, intValue);
-		    }
-		    break;
-		}
-		case CHAR_VALUE: {
-		    char *ptr;
-		    char padChar = (gotZero ? '0' : ' ');
-		    ptr = dst;
-		    if (!gotMinus) {
-			for ( ; --width > 0; ptr++) {
-			    *ptr = padChar;
-			}
-		    }
-		    ptr += Tcl_UniCharToUtf(intValue, ptr);
+		break;
+	    case CHAR_VALUE: {
+		char *ptr;
+		char padChar = (gotZero ? '0' : ' ');
+		ptr = dst;
+		if (!gotMinus) {
 		    for ( ; --width > 0; ptr++) {
 			*ptr = padChar;
 		    }
-		    *ptr = '\0';
-		    break;
 		}
-		case STRING_VALUE: {
-		    char *ptr;
-		    char padChar = (gotZero ? '0' : ' ');
-		    int pad;
+		ptr += Tcl_UniCharToUtf(intValue, ptr);
+		for ( ; --width > 0; ptr++) {
+		    *ptr = padChar;
+		}
+		*ptr = '\0';
+		break;
+	    }
+	    case STRING_VALUE: {
+		char *ptr;
+		char padChar = (gotZero ? '0' : ' ');
+		int pad;
 
-		    ptr = dst;
-		    if (width > stringLen) {
-			pad = width - stringLen;
-		    } else {
-			pad = 0;
-		    }
+		ptr = dst;
+		if (width > stringLen) {
+		    pad = width - stringLen;
+		} else {
+		    pad = 0;
+		}
 
-		    if (!gotMinus) {
-			while (pad > 0) {
-			    *ptr++ = padChar;
-			    pad--;
-			}
-		    }
-
-		    size = Tcl_UtfAtIndex(ptrValue, stringLen) - ptrValue; 
-		    if (size) {
-			memcpy(ptr, ptrValue, (size_t) size);
-			ptr += size;
-		    }
+		if (!gotMinus) {
 		    while (pad > 0) {
 			*ptr++ = padChar;
 			pad--;
 		    }
-		    *ptr = '\0';
-		    break;
 		}
-		default: {
-		    sprintf(dst, newFormat, ptrValue);
-		    break;
+
+		size = Tcl_UtfAtIndex(ptrValue, stringLen) - ptrValue; 
+		if (size) {
+		    memcpy(ptr, ptrValue, (size_t) size);
+		    ptr += size;
 		}
+		while (pad > 0) {
+		    *ptr++ = padChar;
+		    pad--;
+		}
+		*ptr = '\0';
+		break;
+	    }
+	    default:
+		sprintf(dst, newFormat, ptrValue);
+		break;
 	    }
 	    Tcl_AppendToObj(resultPtr, dst, -1);
 	}
     }
 
     Tcl_SetObjResult(interp, resultPtr);
-    if(dst != staticBuf) {
-        ckfree(dst);
+    if (dst != staticBuf) {
+	ckfree(dst);
     }
     return TCL_OK;
 
     mixedXPG:
     Tcl_SetResult(interp, 
-            "cannot mix \"%\" and \"%n$\" conversion specifiers", TCL_STATIC);
+	    "cannot mix \"%\" and \"%n$\" conversion specifiers", TCL_STATIC);
     goto fmtError;
 
     badIndex:
     if (gotXpg) {
-        Tcl_SetResult(interp, 
-                "\"%n$\" argument index out of range", TCL_STATIC);
+	Tcl_SetResult(interp, 
+		"\"%n$\" argument index out of range", TCL_STATIC);
     } else {
-        Tcl_SetResult(interp, 
-                "not enough arguments for all format specifiers", TCL_STATIC);
+	Tcl_SetResult(interp, 
+		"not enough arguments for all format specifiers", TCL_STATIC);
     }
 
     fmtError:
-    if(dst != staticBuf) {
-        ckfree(dst);
+    if (dst != staticBuf) {
+	ckfree(dst);
     }
     Tcl_DecrRefCount(resultPtr);
     return TCL_ERROR;

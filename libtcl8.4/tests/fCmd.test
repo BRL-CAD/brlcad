@@ -673,6 +673,11 @@ test fCmd-8.2 {FileBasename: basename of ~user: argc == 1 && *path == ~} \
 	{unixOnly notRoot} {
     file tail ~$user
 } "$user"
+test fCmd-8.3 {file copy and path translation: ensure correct error} {
+    list [catch {file copy ~ [file join this file doesnt exist]} res] $res
+} [list 1 \
+  "error copying \"~\" to \"[file join this file doesnt exist]\":\
+  no such file or directory"]
 
 test fCmd-9.1 {file rename: comprehensive: EACCES} {unixOnly notRoot} {
     cleanup
@@ -996,6 +1001,16 @@ test fCmd-10.10 {file copy: comprehensive: source and target incompatible} \
     createfile tf1
     list [catch {file copy -force tf1 td1} msg] $msg
 } [subst {1 {can't overwrite directory "[file join td1 tf1]" with file "tf1"}}]
+test fCmd-10.11 {file copy: copy to empty file name} {
+    cleanup
+    createfile tf1
+    list [catch {file copy tf1 ""} msg] $msg
+} {1 {error copying "tf1" to "": no such file or directory}}
+test fCmd-10.12 {file rename: rename to empty file name} {
+    cleanup
+    createfile tf1
+    list [catch {file rename tf1 ""} msg] $msg
+} {1 {error renaming "tf1" to "": no such file or directory}}
 cleanup    
 
 # old tests    
