@@ -222,7 +222,6 @@ struct partition *PartHeadp;
 	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 	if( pp->pt_inflip ) {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-		pp->pt_inflip = 0;
 	}
 
 	if(rdebug&RDEBUG_HITS)  {
@@ -233,9 +232,10 @@ struct partition *PartHeadp;
 	rayp->dist = hitp->hit_dist;
 	rayp->reg = pp->pt_regionp->reg_regionid;
 	rayp->sol = pp->pt_inseg->seg_stp->st_id;
-	rayp->surf = 1;	/* XXX no surface numbers in RT */
-	RT_CURVE( &(rayp->curvature), hitp, pp->pt_inseg->seg_stp );
+	rayp->surf = hitp->hit_surfno;
+	RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
 	if( VDOT( hitp->hit_normal, ap->a_ray.r_dir ) < 0 ) {
+		rt_log(" debug: flipping curvature\n");
 		rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
 		rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
 	}

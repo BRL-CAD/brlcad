@@ -237,7 +237,7 @@ struct partition *PartHeadp;
 			VREVERSE( inhit.hit_normal, inhit.hit_normal );
 		}
 		rt_pr_hit( "  In", &inhit );
-		RT_CURVE( &cur, &inhit, stp );
+		RT_CURVATURE( &cur, &inhit, pp->pt_inflip, stp );
 		rt_log("    PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
@@ -249,7 +249,7 @@ struct partition *PartHeadp;
 			VREVERSE( outhit.hit_normal, outhit.hit_normal );
 		}
 		rt_pr_hit( " Out", &outhit );
-		RT_CURVE( &cur, &outhit, stp );
+		RT_CURVATURE( &cur, &outhit, pp->pt_outflip, stp );
 		rt_log("    PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 

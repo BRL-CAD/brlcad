@@ -649,6 +649,7 @@ struct partition *PartHeadp;
 	LOCAL fastf_t	cosI0 = 0;
 	LOCAL vect_t work0, work1;
 	LOCAL struct light_specific *lp;
+	vect_t		normal;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -663,14 +664,16 @@ struct partition *PartHeadp;
 	 * Diffuse reflectance from each light source
 	 */
 	if( pp->pt_inflip )  {
-		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+		VREVERSE( normal, hitp->hit_normal );
+	} else {
+		VMOVE( normal, hitp->hit_normal );
 	}
 	switch( lightmodel )  {
 	case 1:
 		/* Light from the "eye" (ray source).  Note sign change */
 		lp = RT_LIST_FIRST( light_specific, &(LightHead.l) );
 		diffuse0 = 0;
-		if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) >= 0.0 )
+		if( (cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0 )
 			diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
 		VSCALE( work0, lp->lt_color, diffuse0 );
 
@@ -681,16 +684,16 @@ struct partition *PartHeadp;
 	case 2:
 		/* Store surface normals pointing inwards */
 		/* (For Spencer's moving light program) */
-		ap->a_color[0] = (hitp->hit_normal[0] * (-.5)) + .5;
-		ap->a_color[1] = (hitp->hit_normal[1] * (-.5)) + .5;
-		ap->a_color[2] = (hitp->hit_normal[2] * (-.5)) + .5;
+		ap->a_color[0] = (normal[0] * (-.5)) + .5;
+		ap->a_color[1] = (normal[1] * (-.5)) + .5;
+		ap->a_color[2] = (normal[2] * (-.5)) + .5;
 		break;
 	case 4:
 	 	{
 			LOCAL struct curvature cv;
 			FAST fastf_t f;
 
-			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
+			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
 	
 			f = cv.crv_c1;
 			f *= 10;
@@ -710,7 +713,7 @@ struct partition *PartHeadp;
 	 	{
 			LOCAL struct curvature cv;
 
-			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
+			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
 
 			ap->a_color[0] = (cv.crv_pdir[0] * (-.5)) + .5;
 			ap->a_color[1] = (cv.crv_pdir[1] * (-.5)) + .5;

@@ -148,7 +148,7 @@ struct partition *PartHeadp;
 		 * and perpendicular to it.  Positive curvature bends
 		 * toward the outward pointing normal.
 		 */
-		RT_CURVE( &cur, &ihit, stp );
+		RT_CURVATURE( &cur, &ihit, pp->pt_inflip, stp );
 		VPRINT("PDir", cur.crv_pdir );
 		rt_log(" c1=%g\n", cur.crv_c1);
 		rt_log(" c2=%g\n", cur.crv_c2);
