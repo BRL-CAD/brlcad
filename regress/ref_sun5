@@ -1,35 +1,4 @@
-client_build.sh
-===============
-./client_build.sh: starting on widest.arl.army.mil
-
-PATH = /tmp/brlcad/bin:/vld/morrison/brlcad.sun5/bin:/vld/morrison/bin:/usr/brlcad/bin:/usr/gnu/bin:/usr/brl/bin:/usr/freeware/bin:/usr/pine/bin:/usr/ccs/bin:/opt/sfw/bin:/usr/ucb:/usr/sbin:/usr/bin:/sbin:/bin:/etc:/usr/etc:/usr/local/bin:/usr/brl/bin
-HOME = /vld/morrison
-
 ./setup.sh -s
-Is it OK to delete the following directories:
-   /tmp/brlcad/bin
-   /tmp/brlcad/etc
-   /tmp/brlcad/html
-   /tmp/brlcad/include
-   /tmp/brlcad/itcl3.2
-   /tmp/brlcad/itk3.2
-   /tmp/brlcad/lib
-   /tmp/brlcad/man
-   /tmp/brlcad/pro-engineer
-   /tmp/brlcad/sample_applications
-   /tmp/brlcad/tcl8.3
-   /tmp/brlcad/tclscripts
-   /tmp/brlcad/tk8.3
-   /tmp/brlcad/vfont
-(yes|no)[no]
-BINPERM=555, MANPERM=444
-cake -f /tmp/verify_in12450 /tmp/verify_out12450
-echo C_MACHINE=sun5 ';' > /tmp/verify_out12450
-echo C_UNIXTYPE='SYSV' ';' >> /tmp/verify_out12450
-echo C_HAS_TCP=1 >> /tmp/verify_out12450
-echo C_BRLCAD_ROOT=/tmp/brlcad >> /tmp/verify_out12450
-machinetype.sh root: /tmp/brlcad
-Cakefile.defs  root: /tmp/brlcad
 ./gen.sh -s all
 -------------------------------- .bench.sun5
 -------------------------------- .libsysv.sun5
@@ -4977,4 +4946,4 @@ cake: base file ../.libtcl8.3.sun5/libtcl8.3.so.15 does not exist
 -------------------------------- pro-engineer/text/menus
 ......checking intf_exprt.aux
 ++++++INSTALLED /tmp/brlcad/pro-engineer/text/menus/intf_exprt.aux
-widest.arl.army.mil .regress.sun5 installation complete
+Regression Testing Completed

@@ -1,28 +1,4 @@
-client_build.sh
-===============
-/n/cad/vld/regress/brlcad/regress/client_build.sh: starting on wider.arl.army.mil
-
-PATH = /n/cad/c/regress/brlcad.li/bin:/usr/bin:/bin
-HOME = /n/cad/vld/regress
-
 ./setup.sh -s
-Is it OK to delete the following directories:
-   /n/cad/c/regress/brlcad.li/bin
-   /n/cad/c/regress/brlcad.li/etc
-   /n/cad/c/regress/brlcad.li/html
-   /n/cad/c/regress/brlcad.li/include
-   /n/cad/c/regress/brlcad.li/itcl3.2
-   /n/cad/c/regress/brlcad.li/itk3.2
-   /n/cad/c/regress/brlcad.li/lib
-   /n/cad/c/regress/brlcad.li/man
-   /n/cad/c/regress/brlcad.li/pro-engineer
-   /n/cad/c/regress/brlcad.li/sample_applications
-   /n/cad/c/regress/brlcad.li/tcl8.3
-   /n/cad/c/regress/brlcad.li/tclscripts
-   /n/cad/c/regress/brlcad.li/tk8.3
-   /n/cad/c/regress/brlcad.li/vfont
-(yes|no)[no]
-BINPERM=555, MANPERM=444
 make: *** Warning: File `Makefile' has modification time in the future (2001-09-10 02:36:07 > 2001-09-10 02:34:01)
 make: warning:  Clock skew detected.  Your build may be incomplete.
 make: *** Warning: File `Makefile' has modification time in the future (2001-09-10 02:36:07 > 2001-09-10 02:34:02)
@@ -44,13 +20,6 @@ make: warning:  Clock skew detected.  Your build may be incomplete.
 make: *** Warning: File `Makefile' has modification time in the future (2001-09-10 02:36:12 > 2001-09-10 02:34:08)
 make: warning:  Clock skew detected.  Your build may be incomplete.
 Done making cake and cakeaux
-cake -f /tmp/verify_in3191 /tmp/verify_out3191
-echo C_MACHINE=li ';' > /tmp/verify_out3191
-echo C_UNIXTYPE='BSD' ';' >> /tmp/verify_out3191
-echo C_HAS_TCP=1 >> /tmp/verify_out3191
-echo C_BRLCAD_ROOT=/n/cad/c/regress/brlcad.li >> /tmp/verify_out3191
-machinetype.sh root: /n/cad/c/regress/brlcad.li
-Cakefile.defs  root: /n/cad/c/regress/brlcad.li
 ./gen.sh -s all
 -------------------------------- .bench.li
 -------------------------------- .libsysv.li

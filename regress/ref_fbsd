@@ -1,28 +1,4 @@
-client_build.sh
-===============
-/vld/regress/brlcad/regress/client_build.sh: starting on wide.arl.army.mil
-
-PATH = /c/regress/brlcad.fbsd/bin:/usr/bin:/bin
-HOME = /vld/regress
-
 ./setup.sh -s
-Is it OK to delete the following directories:
-   /c/regress/brlcad.fbsd/bin
-   /c/regress/brlcad.fbsd/etc
-   /c/regress/brlcad.fbsd/html
-   /c/regress/brlcad.fbsd/include
-   /c/regress/brlcad.fbsd/itcl3.2
-   /c/regress/brlcad.fbsd/itk3.2
-   /c/regress/brlcad.fbsd/lib
-   /c/regress/brlcad.fbsd/man
-   /c/regress/brlcad.fbsd/pro-engineer
-   /c/regress/brlcad.fbsd/sample_applications
-   /c/regress/brlcad.fbsd/tcl8.3
-   /c/regress/brlcad.fbsd/tclscripts
-   /c/regress/brlcad.fbsd/tk8.3
-   /c/regress/brlcad.fbsd/vfont
-(yes|no)[no]
-BINPERM=555, MANPERM=444
 main.o: In function `main':
 main.o(.text+0x1710): warning: tempnam() possibly used unsafely; consider using mkstemp()
 file.o: In function `dir_start':
@@ -30,13 +6,6 @@ file.o(.text+0x10): warning: mktemp() possibly used unsafely; consider using mks
 BRLCAD_BINDIR=/c/regress/brlcad.fbsd/bin
 cake installed
 Done making cake and cakeaux
-cake -f /tmp/verify_in5872 /tmp/verify_out5872
-echo C_MACHINE=fbsd ';' > /tmp/verify_out5872
-echo C_UNIXTYPE='BSD' ';' >> /tmp/verify_out5872
-echo C_HAS_TCP=1 >> /tmp/verify_out5872
-echo C_BRLCAD_ROOT=/c/regress/brlcad.fbsd >> /tmp/verify_out5872
-machinetype.sh root: /c/regress/brlcad.fbsd
-Cakefile.defs  root: /c/regress/brlcad.fbsd
 ./gen.sh -s all
 -------------------------------- .bench.fbsd
 -------------------------------- .libsysv.fbsd
@@ -2637,4 +2606,4 @@ Creating region id=1000, air=0, GIFTmaterial=1, los=100
 Defaulting item number to 1027
 Creating region id=1026, air=0, GIFTmaterial=1, los=100
 rendering...
-wide.arl.army.mil regression complete at Mon Sep 10 03:24:08 EDT 2001
+Regression Testing Completed

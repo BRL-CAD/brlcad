@@ -1,26 +1,4 @@
-/vld/regress/brlcad_scripts/client.sh: starting on whiz.arl.army.mil at Thu Aug 31 05:30:03 EDT 2000
-
-PATH = /usr/sbin:/usr/bsd:/sbin:/usr/bin:/etc:/usr/etc:/usr/bin/X11:/usr/brlcad/bin
-HOME = /vld/regress
-
 ./setup.sh -s
-Is it OK to delete the following directories:
-   /usr/brlcad/bin
-   /usr/brlcad/etc
-   /usr/brlcad/html
-   /usr/brlcad/include
-   /usr/brlcad/itcl3.0
-   /usr/brlcad/itk3.0
-   /usr/brlcad/lib
-   /usr/brlcad/man
-   /usr/brlcad/pro-engineer
-   /usr/brlcad/sample_applications
-   /usr/brlcad/tcl8.2
-   /usr/brlcad/tclscripts
-   /usr/brlcad/tk8.2
-   /usr/brlcad/vfont
-(yes|no)[no]
-BINPERM=555, MANPERM=444
 "cake_s.l", line 84: warning(1110): statement is unreachable
   break;
   ^
@@ -4621,4 +4599,4 @@ moss.pix       0 off by many
 shaders.sh
 rendering shaders...
 shaders.pix       0 off by many
-whiz.arl.army.mil regression complete at Thu Aug 31 07:41:22 EDT 2000
+Regression Testing completed
