@@ -14,7 +14,7 @@ proc init_red { id } {
     global red_isRegion
     global red_id
     global red_air
-    global red_gift
+    global red_material
     global red_los
     global red_color
     global red_shader
@@ -32,7 +32,7 @@ proc init_red { id } {
     set red_isRegion($id) "Yes"
     set red_id($id) ""
     set red_air($id) ""
-    set red_gift($id) ""
+    set red_material($id) ""
     set red_los($id) ""
     set red_color($id) ""
     set red_shader($id) ""
@@ -51,8 +51,8 @@ proc init_red { id } {
     frame $top.idFF -relief sunken -bd 2
     frame $top.airF
     frame $top.airFF -relief sunken -bd 2
-    frame $top.giftF
-    frame $top.giftFF -relief sunken -bd 2
+    frame $top.materialF
+    frame $top.materialFF -relief sunken -bd 2
     frame $top.losF
     frame $top.losFF -relief sunken -bd 2
     frame $top.colorF
@@ -71,8 +71,8 @@ proc init_red { id } {
     label $top.airL -text "Air Code" -anchor w
     entry $top.airE -relief flat -width 12 -textvar red_air($id)
 
-    label $top.giftL -text "Gift Material" -anchor w
-    entry $top.giftE -relief flat -width 12 -textvar red_gift($id)
+    label $top.materialL -text "Material" -anchor w
+    entry $top.materialE -relief flat -width 12 -textvar red_material($id)
 
     label $top.losL -text "LOS" -anchor w
     entry $top.losE -relief flat -width 12 -textvar red_los($id)
@@ -121,8 +121,8 @@ proc init_red { id } {
 	    -yscrollcommand "$top.gridF3.s set" -setgrid true
     scrollbar $top.gridF3.s -relief flat -command "$top.combT yview"
 
-#    button $top.selectGiftB -relief raised -text "Select Gift Material"\
-#	    -command "red_select_gift $id"
+#    button $top.selectMaterialB -relief raised -text "Select Material"\
+#	    -command "red_select_material $id"
 
     checkbutton $top.isRegionCB -relief raised -text "Is Region"\
 	    -offvalue No -onvalue Yes -variable red_isRegion($id)\
@@ -173,13 +173,13 @@ proc init_red { id } {
     grid columnconfigure $top.losF 0 -weight 1
     grid columnconfigure $top.losFF 0 -weight 1
 
-    grid $top.giftL -sticky "ew" -in $top.giftF
-    grid $top.giftE -sticky "ew" -in $top.giftFF
-    grid $top.giftFF -sticky "ew" -in $top.giftF
-    grid $top.giftF x x -sticky "ew" -in $top.gridF -pady 8
-#    grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady 8
-    grid columnconfigure $top.giftF 0 -weight 1
-    grid columnconfigure $top.giftFF 0 -weight 1
+    grid $top.materialL -sticky "ew" -in $top.materialF
+    grid $top.materialE -sticky "ew" -in $top.materialFF
+    grid $top.materialFF -sticky "ew" -in $top.materialF
+    grid $top.materialF x x -sticky "ew" -in $top.gridF -pady 8
+#    grid $top.selectMaterialB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady 8
+    grid columnconfigure $top.materialF 0 -weight 1
+    grid columnconfigure $top.materialFF 0 -weight 1
 
     grid $top.isRegionCB $top.inheritCB x -sticky "ew" -in $top.gridF2\
 	    -ipadx 4 -ipady 4
@@ -223,7 +223,7 @@ proc red_apply { id } {
     global red_isRegion
     global red_id
     global red_air
-    global red_gift
+    global red_material
     global red_los
     global red_color
     global red_shader
@@ -258,7 +258,7 @@ proc red_apply { id } {
 	}
 
 	set result [catch {put_comb $red_name($id) $red_isRegion($id)\
-		$red_id($id) $red_air($id) $red_gift($id) $red_los($id)\
+		$red_id($id) $red_air($id) $red_material($id) $red_los($id)\
 		$red_color($id) $red_shader($id) $red_inherit($id)\
 		$red_comb($id)} comb_error]
 
@@ -284,7 +284,7 @@ proc red_reset { id } {
     global red_isRegion
     global red_id
     global red_air
-    global red_gift
+    global red_material
     global red_los
     global red_color
     global red_shader
@@ -316,7 +316,7 @@ proc red_reset { id } {
     if {$red_isRegion($id) == "Yes"} {
 	set red_id($id) [lindex $comb_defs 2]
 	set red_air($id) [lindex $comb_defs 3]
-	set red_gift($id) [lindex $comb_defs 4]
+	set red_material($id) [lindex $comb_defs 4]
 	set red_los($id) [lindex $comb_defs 5]
 	set red_color($id) [lindex $comb_defs 6]
 	set red_shader($id) [lindex $comb_defs 7]
@@ -351,8 +351,8 @@ proc red_toggle_isRegion { id } {
 	frame $top.idFF -relief sunken -bd 2
 	frame $top.airF
 	frame $top.airFF -relief sunken -bd 2
-	frame $top.giftF
-	frame $top.giftFF -relief sunken -bd 2
+	frame $top.materialF
+	frame $top.materialFF -relief sunken -bd 2
 	frame $top.losF
 	frame $top.losFF -relief sunken -bd 2
 
@@ -362,14 +362,14 @@ proc red_toggle_isRegion { id } {
 	label $top.airL -text "Air Code" -anchor w
 	entry $top.airE -relief flat -width 12 -textvar red_air($id)
 
-	label $top.giftL -text "Gift Material" -anchor w
-	entry $top.giftE -relief flat -width 12 -textvar red_gift($id)
+	label $top.materialL -text "Material" -anchor w
+	entry $top.materialE -relief flat -width 12 -textvar red_material($id)
 
 	label $top.losL -text "LOS" -anchor w
 	entry $top.losE -relief flat -width 12 -textvar red_los($id)
 
-#	button $top.selectGiftB -relief raised -text "Select Gift Material"\
-#		-command "red_select_gift $id"
+#	button $top.selectMaterialB -relief raised -text "Select Material"\
+#		-command "red_select_material $id"
 
 	grid $top.idL -sticky "ew" -in $top.idF
 	grid $top.idE -sticky "ew" -in $top.idFF
@@ -392,27 +392,27 @@ proc red_toggle_isRegion { id } {
 	grid columnconfigure $top.losF 0 -weight 1
 	grid columnconfigure $top.losFF 0 -weight 1
 
-	grid $top.giftL -sticky "ew" -in $top.giftF
-	grid $top.giftE -sticky "ew" -in $top.giftFF
-	grid $top.giftFF -sticky "ew" -in $top.giftF
-	grid $top.giftF x x -sticky "ew" -in $top.gridF -pady 8
-#	grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady 8
-	grid columnconfigure $top.giftF 0 -weight 1
-	grid columnconfigure $top.giftFF 0 -weight 1
+	grid $top.materialL -sticky "ew" -in $top.materialF
+	grid $top.materialE -sticky "ew" -in $top.materialFF
+	grid $top.materialFF -sticky "ew" -in $top.materialF
+	grid $top.materialF x x -sticky "ew" -in $top.gridF -pady 8
+#	grid $top.selectMaterialB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady 8
+	grid columnconfigure $top.materialF 0 -weight 1
+	grid columnconfigure $top.materialFF 0 -weight 1
     } else {
-	grid forget $top.nameF $top.idF $top.airF $top.giftF $top.losF\
+	grid forget $top.nameF $top.idF $top.airF $top.materialF $top.losF\
 		$top.colorF $top.shaderF
-#	grid forget $top.nameF $top.idF $top.airF $top.giftF $top.losF\
-#		$top.colorF $top.shaderF $top.selectGiftB
+#	grid forget $top.nameF $top.idF $top.airF $top.materialF $top.losF\
+#		$top.colorF $top.shaderF $top.selectMaterialB
 
 	destroy $top.idL $top.idE
 	destroy $top.airL $top.airE
-	destroy $top.giftL $top.giftE
+	destroy $top.materialL $top.materialE
 	destroy $top.losL $top.losE
-#	destroy $top.selectGiftB
+#	destroy $top.selectMaterialB
 	destroy $top.idF $top.idFF
 	destroy $top.airF $top.airFF
-	destroy $top.giftF $top.giftFF
+	destroy $top.materialF $top.materialFF
 	destroy $top.losF $top.losFF
 
 	grid $top.nameF x x -sticky "ew" -in $top.gridF -pady 8
@@ -453,12 +453,12 @@ proc red_set_colorMB { id } {
     set_WidgetRGBColor $top.colorMB $red_color($id)
 }
 
-#proc red_select_gift { id } {
+#proc red_select_material { id } {
 #    global player_screen
-#    global red_gift
-#    global red_gift_list
+#    global red_material
+#    global red_material_list
 #
-#    set top .$id.sel_gift
+#    set top .$id.sel_material
 #
 #    if [winfo exists $top] {
 #	raise $top
@@ -471,23 +471,23 @@ proc red_set_colorMB { id } {
 #    frame $top.gridF2
 #    frame $top.gridF3 -relief groove -bd 2
 #
-#    listbox $top.giftLB -selectmode single -yscrollcommand "$top.giftS set"
-#    scrollbar $top.giftS -relief flat -command "$top.giftLB yview"
+#    listbox $top.materialLB -selectmode single -yscrollcommand "$top.materialS set"
+#    scrollbar $top.materialS -relief flat -command "$top.materialLB yview"
 #
-#    label $top.giftL -text "Gift List:" -anchor w
-#    entry $top.giftE -width 12 -textvar red_gift_list($id)
+#    label $top.materialL -text "Material List:" -anchor w
+#    entry $top.materialE -width 12 -textvar red_material_list($id)
 #
 #    button $top.resetB -relief raised -text "Reset"\
-#	    -command "load_gift_material $id"
+#	    -command "load_material $id"
 #    button $top.dismissB -relief raised -text "Dismiss"\
 #	    -command "catch { destroy $top }"
 #
-#    grid $top.giftLB $top.giftS -sticky "nsew" -in $top.gridF
+#    grid $top.materialLB $top.materialS -sticky "nsew" -in $top.gridF
 #    grid rowconfigure $top.gridF 0 -weight 1
 #    grid columnconfigure $top.gridF 0 -weight 1
 #
-#    grid $top.giftL x -sticky "ew" -in $top.gridF2
-#    grid $top.giftE $top.resetB -sticky "nsew" -in $top.gridF2
+#    grid $top.materialL x -sticky "ew" -in $top.gridF2
+#    grid $top.materialE $top.resetB -sticky "nsew" -in $top.gridF2
 #    grid columnconfigure $top.gridF2 0 -weight 1
 #
 #    grid $top.dismissB -in $top.gridF3 -pady 8
@@ -498,10 +498,10 @@ proc red_set_colorMB { id } {
 #    grid rowconfigure $top 0 -weight 1
 #    grid columnconfigure $top 0 -weight 1
 #
-#    wm title $top "Select Gift Material"
+#    wm title $top "Select Material"
 #}
 #
-#proc load_gift_material { id } {
-#    global red_gift
-#    global red_gift_list
+#proc load_material { id } {
+#    global red_material
+#    global red_material_list
 #}
