@@ -1683,134 +1683,10 @@ char *argv[];
 	return TCL_ERROR;
 }
 
-static void
-Get_region_rpp( rtip,  pathp, reg_min, reg_max )
-struct rt_i	*rtip;
-struct db_full_path *pathp;
-point_t reg_min;
-point_t reg_max;
-{
-	struct region *regp;
-	char *path;
-
-	VSETALL( reg_min, MAX_FASTF );
-	VREVERSE( reg_max, reg_min );
-
-	path = db_path_to_string( pathp );
-	for( regp = rtip->HeadRegion ; regp != REGION_NULL; regp = regp->reg_forw )
-	{
-		if( !strcmp( path, regp->reg_name ) )
-			break;
-	}
-
-	if( !regp )
-	{
-	  Tcl_AppendResult(interp, "Could not find region ", path, "\n", (char *)NULL);
-	  return;
-	}
-
-	if( rt_bound_tree( regp->reg_treetop, reg_min, reg_max ) )
-	{
-	  Tcl_AppendResult(interp, "rt_bound_tree failed for ", path, "\n", (char *)NULL);
-	  return;
-	}
-	rt_free( path, "Get_region_rpp: path" );
-}
-
-static void
-Get_comb_rpp( rtip, dp, pathp, comb_min, comb_max )
-struct rt_i		*rtip;
-struct directory	*dp;
-struct db_full_path	*pathp;
-vect_t			comb_min;
-vect_t			comb_max;
-{
-	union record *rec;
-	int i;
-	vect_t tmp_min, tmp_max;
-
-	if( (dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION ) )
-	{
-	  Tcl_AppendResult(interp, "Get_comb_rpp called for region or solid (",
-			   dp->d_namep, ")\n", (char *)NULL);
-	  rt_bomb(  "Get_comb_rpp called for region or solid" );
-	}
-
-	VSETALL( comb_min, MAX_FASTF );
-	VREVERSE( comb_max, comb_min );
-	VSETALL( tmp_min, MAX_FASTF );
-	VREVERSE( tmp_max, tmp_min );
-
-	rec = db_getmrec( dbip, dp );
-	for( i=1 ; i<dp->d_len ; i++ )
-	{
-		struct directory *dp2;
-		struct db_full_path tmp_pathp;
-		vect_t sub_min, sub_max;
-
-		if( rec[i].u_id != ID_MEMB )
-		{
-		  Tcl_AppendResult(interp, "didn't get member records for ",
-				   dp->d_namep, "\n", (char *)NULL);
-		  continue;
-		}
-
-		dp2 = db_lookup( dbip, rec[i].M.m_instname, LOOKUP_NOISY );
-		if( dp2 == DIR_NULL )
-			rt_bomb( "db_lookup failed" );
-
-		db_full_path_init( &tmp_pathp );
-		db_dup_full_path( &tmp_pathp, pathp );
-		db_add_node_to_full_path( &tmp_pathp, dp2 );
-
-		if( rec[i].M.m_relation != '-' )
-		{
-			if( (dp2->d_flags & DIR_SOLID) || (dp2->d_flags & DIR_REGION) )
-				Get_region_rpp( rtip, &tmp_pathp, sub_min, sub_max );
-			else
-				Get_comb_rpp( rtip, dp2, &tmp_pathp, sub_min, sub_max );
-
-		}
-		db_free_full_path( &tmp_pathp );
-
-		switch( rec[i].M.m_relation )
-		{
-			case 'u':
-				VMIN( tmp_min, sub_min );
-				VMAX( tmp_max, sub_max );
-				VMIN( comb_min, tmp_min );
-				VMAX( comb_max, tmp_max );
-				VSETALL( tmp_min, MAX_FASTF );
-				VREVERSE( tmp_max, tmp_min );
-				break;
-			case '-':
-				break;
-			case '+':
-				VMAX( tmp_min, sub_min );
-				VMIN( tmp_max, sub_max );
-				break;
-			default:
-			  {
-			    struct rt_vls tmp_vls;
-
-			    rt_vls_init(&tmp_vls);
-			    rt_vls_printf(&tmp_vls, "Illegal operation (%c) in combination (%s) for member (%s)\n", rec[i].M.m_relation, dp->d_namep, rec[i].M.m_instname );
-			    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-			    rt_vls_free(&tmp_vls);
-			  }
-
-			  break;
-		}
-		if( sub_min[X] < MAX_FASTF )
-		{
-			VMIN( tmp_min, sub_min );
-			VMAX( tmp_max, sub_max );
-			VMIN( comb_min, tmp_min );
-			VMAX( comb_max, tmp_max );
-		}
-	}
-	rt_free( (char *)rec, "Get_comb_rpp: rec" );
-}
+/*			F _ M A K E _ B B
+ *
+ *	Build an RPP bounding box for the list of objects and/or paths passed to this routine
+ */
 
 int
 f_make_bb(clientData, interp, argc, argv)
@@ -1820,18 +1696,26 @@ int argc;
 char **argv;
 {
 	struct rt_i		*rtip;
-	int			i;
+	int			i,j;
 	point_t			rpp_min,rpp_max;
 	struct db_full_path	path;
 	struct directory	*dp;
 	struct rt_arb_internal	arb;
 	struct rt_db_internal	new_intern;
 	struct rt_external	new_extern;
+	struct region		*regp;
 	int			ngran;
 	char			*new_name;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
+
+	/* Since arguments may be paths, make sure first argument isn't */
+	if( strchr( argv[1], '/' ) )
+	{
+	  Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[1], "\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
 
 	new_name = argv[1];
 	if( db_lookup( dbip, new_name, LOOKUP_QUIET ) != DIR_NULL )
@@ -1840,54 +1724,135 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
+	/* Make a new rt_i instance from the exusting db_i sructure */
 	if( (rtip=rt_new_rti( dbip ) ) == RTI_NULL )
 	{
-	  Tcl_AppendResult(interp, "rt_dirbuild failure for ", dbip->dbi_filename,
+	  Tcl_AppendResult(interp, "rt_new_rti failure for ", dbip->dbi_filename,
 			   "\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	if( rt_gettrees( rtip, argc-2, (CONST char **)&argv[2], 1 ) )
+	/* Get trees for list of objects/paths */
+	for( i=2 ; i<argc ; i++  )
 	{
-	  Tcl_AppendResult(interp, "rt_gettrees failed\n", (char *)NULL);
-	  rt_clean( rtip );
-	  rt_free( (char *)rtip, "f_make_bb: rtip" );
-	  return TCL_ERROR;
+		int gottree;
+
+		/* Get full_path structure for argument */
+		db_full_path_init( &path );
+		if( db_string_to_path( &path,  rtip->rti_dbip, argv[i] ) )
+		{
+			Tcl_AppendResult(interp, "db_string_to_path failed for ",
+				argv[i], "\n", (char *)NULL );
+			rt_clean( rtip );
+			rt_free( (char *)rtip, "f_make_bb: rtip" );
+			return TCL_ERROR;
+		}
+
+		/* check if we alerady got this tree */
+		gottree = 0;
+		for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )
+		{
+			struct db_full_path tmp_path;
+
+			db_full_path_init( &tmp_path );
+			if( db_string_to_path( &tmp_path, rtip->rti_dbip, regp->reg_name ) )
+			{
+				Tcl_AppendResult(interp, "db_string_to_path failed for ",
+					regp->reg_name, "\n", (char *)NULL );
+				rt_clean( rtip );
+				rt_free( (char *)rtip, "f_make_bb: rtip" );
+				return TCL_ERROR;
+			}
+			if( path.fp_names[0] == tmp_path.fp_names[0] )
+				gottree = 1;
+			db_free_full_path( &tmp_path );
+			if( gottree )
+				break;
+		}
+
+		/* if we don't already have it, get it */
+		if( !gottree && rt_gettree( rtip, path.fp_names[0]->d_namep ) )
+		{
+			Tcl_AppendResult(interp, "rt_gettree failed for ",
+				argv[i], "\n", (char *)NULL );
+			rt_clean( rtip );
+			rt_free( (char *)rtip, "f_make_bb: rtip" );
+			return TCL_ERROR;
+		}
+		db_free_full_path( &path );
 	}
 
+	/* prep calculates bounding boxes of solids */
+	rt_prep( rtip );
+
+	/* initialize RPP bounds */
 	VSETALL( rpp_min, MAX_FASTF );
 	VREVERSE( rpp_max, rpp_min );
 	for( i=2 ; i<argc ; i++ )
 	{
-		union tree *final_tree;
+		vect_t reg_min, reg_max;
+		struct region *regp;
+		CONST char *reg_name;
 
-		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY ) ) == DIR_NULL )
-			exit( 1 );
-
-		if( (dp->d_flags & DIR_REGION) || (dp->d_flags & DIR_SOLID) )
+		/* check if input name is a region */
+		for( regp = rtip->HeadRegion; regp != REGION_NULL; regp = regp->reg_forw )
 		{
-			vect_t reg_min, reg_max;
+			reg_name = regp->reg_name;
+			if( *argv[i] != '/' && *reg_name == '/' )
+				reg_name++;
 
-			db_full_path_init( &path );
-			db_add_node_to_full_path( &path, dp );
-			Get_region_rpp( rtip, &path, reg_min, reg_max );
-			db_free_full_path( &path );
+			if( !strcmp( reg_name, argv[i] ) )
+				break;
+				
+		}
+
+		if( regp != REGION_NULL )
+		{
+			/* input name was a region  */
+			if( rt_bound_tree( regp->reg_treetop, reg_min, reg_max ) )
+			{
+				Tcl_AppendResult(interp, "rt_bound_tree failed for ",
+					regp->reg_name, "\n", (char *)NULL );
+				rt_clean( rtip );
+				rt_free( (char *)rtip, "f_make_bb: rtip" );
+				return TCL_ERROR;
+			}
 			VMINMAX( rpp_min, rpp_max, reg_min );
 			VMINMAX( rpp_min, rpp_max, reg_max );
 		}
 		else
 		{
-			vect_t comb_min,comb_max;
+			int name_len;
 
-			db_full_path_init( &path );
-			db_add_node_to_full_path( &path, dp );
-			Get_comb_rpp( rtip, dp, &path, comb_min, comb_max );
-			VMINMAX( rpp_min, rpp_max, comb_min );
-			VMINMAX( rpp_min, rpp_max, comb_max );
-			db_free_full_path( &path );
+			/* input name may be a group, need to check all regions under
+			 * that group
+			 */
+			name_len = strlen( argv[i] );
+			for( regp = rtip->HeadRegion; regp != REGION_NULL; regp = regp->reg_forw )
+			{
+				reg_name = regp->reg_name;
+				if( *argv[i] != '/' && *reg_name == '/' )
+					reg_name++;
+
+				if( strncmp( argv[i], reg_name, name_len ) )
+					continue;
+
+				/* This is part of the group */
+				if( rt_bound_tree( regp->reg_treetop, reg_min, reg_max ) )
+				{
+					Tcl_AppendResult(interp, "rt_bound_tree failed for ",
+						regp->reg_name, "\n", (char *)NULL );
+					rt_clean( rtip );
+					rt_free( (char *)rtip, "f_make_bb: rtip" );
+					return TCL_ERROR;
+				}
+				VMINMAX( rpp_min, rpp_max, reg_min );
+				VMINMAX( rpp_min, rpp_max, reg_max );
+			}
 		}
 	}
 
+	/* build bounding RPP */
 	VMOVE( arb.pt[0], rpp_min );
 	VSET( arb.pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z] );
 	VSET( arb.pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z] );
@@ -1898,11 +1863,13 @@ char **argv;
 	VSET( arb.pt[7], rpp_max[X], rpp_max[Y], rpp_min[Z] );
 	arb.magic = RT_ARB_INTERNAL_MAGIC;
 
+	/* set up internal structure */
 	RT_INIT_DB_INTERNAL( &new_intern );
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_ptr = (genptr_t)(&arb);
 	RT_INIT_EXTERNAL( &new_extern );
 
+	/* export it */
 	if( rt_functab[new_intern.idb_type].ft_export( &new_extern, &new_intern, 1.0 ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "f_make_bb: export failure\n", (char *)NULL);
@@ -1910,6 +1877,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
+	/* Add this new solid to the directory */
 	ngran = (new_extern.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
 	if( (dp = db_diradd( dbip, new_name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
 		db_alloc( dbip, dp, 1 ) < 0 )
@@ -1918,16 +1886,20 @@ char **argv;
 	  TCL_ALLOC_ERR_return;
 	}
 
+	/* and finally, write it to disk */
 	if (db_put_external( &new_extern, dp, dbip ) < 0 )
 	{
 	  db_free_external( &new_extern );
 	  TCL_WRITE_ERR_return;
 	}
+
+	/* clean up */
 	db_free_external( &new_extern );
 
 	rt_clean( rtip );
 	rt_free( (char *)rtip, "f_make_bb: rtip" );
 
+	/* use "e" command to get new solid displayed */
 	{
 	  char *av[] = {"e", NULL, NULL};
 
