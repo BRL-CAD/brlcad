@@ -24,8 +24,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	MAXLINELEN	256
 
-static char *usage="Usage:\n\trpatch [-D] < fastgen_input_file > file.rp\n\
-	where -D means that type 3 components are donuts (rather than triangles)\n";
+static char *usage="Usage:\n\trpatch [-D] [-3] < fastgen_input_file > file.rp\n\
+	where -D means that type 3 components are donuts (rather than triangles)\n\
+	and -3 indicates that the input is in FASTGEN3 format\n";
+
+static int fast3;
 
 double
 get_ftn_float( str , start_col , format )
@@ -187,6 +190,7 @@ char *argv[];
 	int type3_is_donut=0;
 	int c;
 
+	fast3 = 0;
 	if( argc > 2 )
 	{
 		fprintf( stderr, usage );
@@ -194,14 +198,16 @@ char *argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "D")) != EOF)
+	while ((c = getopt(argc, argv, "D3")) != EOF)
 	{
 		switch (c)
 		{
 			case 'D':  /* donuts */
 				type3_is_donut = 1;
 				break;
-
+			case '3':	/* FASTGEN3 format?? */
+				fast3 = 1;
+				break;
 			default:
 				fprintf( stderr, "Illegal option (%c)\n", c );
 			case '?':
@@ -216,18 +222,36 @@ char *argv[];
 			continue;
 		line[strlen(line)-1] = '\0';	/* eliminate \n */
 
-		x = get_ftn_float( line , 0 , "f8.3" );
-		y = get_ftn_float( line , 8 , "f8.3" );
-		z = get_ftn_float( line , 16 , "f9.3" );
-		tmp = get_ftn_int( line , 25 , "i6" );
-		cc = get_ftn_int( line , 31 , "i4" );
-		isq[0] = get_ftn_int( line , 35 , "i11" );
+		if( fast3 )
+		{
+			x = get_ftn_float( line , 0 , "f10.3" );
+			y = get_ftn_float( line , 10 , "f10.3" );
+			z = get_ftn_float( line , 20 , "f10.3" );
+			tmp = get_ftn_int( line , 30 , "i6" );
+			cc = get_ftn_int( line , 36 , "i4" );
+			isq[0] = get_ftn_int( line , 40 , "i10" );
 
-		for( i=1 ; i<8 ; i++ )
-			isq[i] = get_ftn_int( line , 46 + (i-1)*4 , "i4" );
+			for( i=1 ; i<8 ; i++ )
+				isq[i] = get_ftn_int( line , 50 + (i-1)*4 , "i4" );
 
-		m = get_ftn_int( line , 74 , "i3" );
-		n = get_ftn_int( line , 77 , "i3" );
+			m = get_ftn_int( line , 74 , "i3" );
+			n = get_ftn_int( line , 77 , "i3" );
+		}
+		else
+		{
+			x = get_ftn_float( line , 0 , "f8.3" );
+			y = get_ftn_float( line , 8 , "f8.3" );
+			z = get_ftn_float( line , 16 , "f9.3" );
+			tmp = get_ftn_int( line , 25 , "i6" );
+			cc = get_ftn_int( line , 31 , "i4" );
+			isq[0] = get_ftn_int( line , 35 , "i11" );
+
+			for( i=1 ; i<8 ; i++ )
+				isq[i] = get_ftn_int( line , 46 + (i-1)*4 , "i4" );
+
+			m = get_ftn_int( line , 74 , "i3" );
+			n = get_ftn_int( line , 77 , "i3" );
+		}
 
 		/* get plate mode flag */
 		minus = '+';
