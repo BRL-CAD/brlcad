@@ -232,6 +232,7 @@ extern char	*realloc();
  */
 #define SIZEOF_NETWORK_SHORT	2	/* htons(), bu_gshort(), bu_pshort() */
 #define SIZEOF_NETWORK_LONG	4	/* htonl(), bu_glong(), bu_plong() */
+#define SIZEOF_NETWORK_FLOAT	4	/* htonf() */
 #define SIZEOF_NETWORK_DOUBLE	8	/* htond() */
 
 /*----------------------------------------------------------------------*/

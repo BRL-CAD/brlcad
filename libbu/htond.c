@@ -110,7 +110,7 @@ int			count;
 		*out++ = in[2];
 		*out++ = in[1];
 		*out++ = in[0];
-		in += 8;
+		in += SIZEOF_NETWORK_DOUBLE;
 	}
 #	define	HTOND	yes2
 
@@ -414,12 +414,12 @@ int			count;
 	 *  IEEE format internally, using big-endian order.
 	 *  These are the lucky ones.
 	 */
-	if( sizeof(double) != 8 )
-		fprintf(stderr, "ntohd:  sizeof(double) != 8\n");
+	if( sizeof(double) != SIZEOF_NETWORK_DOUBLE )
+		bu_bomb("ntohd:  sizeof(double) != SIZEOF_NETWORK_DOUBLE\n");
 #	if BSD
-		bcopy( in, out, count*8 );
+		bcopy( in, out, count*SIZEOF_NETWORK_DOUBLE );
 #	else
-		memcpy( out, in, count*8 );
+		memcpy( out, in, count*SIZEOF_NETWORK_DOUBLE );
 #	endif
 	return;
 #	define	NTOHD	yes1
@@ -436,7 +436,7 @@ int			count;
 		*out++ = in[2];
 		*out++ = in[1];
 		*out++ = in[0];
-		in += 8;
+		in += SIZEOF_NETWORK_DOUBLE;
 	}
 #	define	NTOHD	yes2
 #endif
