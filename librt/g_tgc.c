@@ -64,6 +64,7 @@ struct  tgc_specific {
 };
 
 struct tgc_internal {
+	long	magic;
 	vect_t	v;
 	vect_t	h;
 	vect_t	a;
@@ -71,6 +72,8 @@ struct tgc_internal {
 	vect_t	c;
 	vect_t	d;
 };
+#define RT_TGC_INTERNAL_MAGIC	0xaabbdd87
+#define RT_TGC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TGC_INTERNAL_MAGIC,"tgc_internal")
 
 #define VLARGE		1000000.0
 #define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
@@ -142,6 +145,7 @@ struct rt_i		*rtip;
 	RT_CK_DB_INTERNAL( ip );
 #endif
 	tip = (struct tgc_internal *)ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
 	mag_h = sqrt( magsq_h = MAGSQ( tip->h ) );
@@ -1508,6 +1512,7 @@ register mat_t		mat;
 	ip->idb_type = ID_TGC;
 	ip->idb_ptr = rt_malloc( sizeof(struct tgc_internal), "tgc_internal");
 	tip = (struct tgc_internal *)ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
 
 	/* Convert from database to internal format */
 	rt_fastf_float( vec, rp->s.s_values, 6 );
@@ -1532,7 +1537,31 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	return(-1);
+	struct tgc_internal	*tip;
+	union record		*rec;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_TGC )  return(-1);
+	tip = (struct tgc_internal *)ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "tgc external");
+	rec = (union record *)ep->ext_buf;
+
+	rec->s.s_id = ID_SOLID;
+	rec->s.s_type = GENTGC;
+
+	/* NOTE: This also converts to dbfloat_t */
+	VSCALE( &rec->s.s_values[0], tip->v, local2mm );
+	VSCALE( &rec->s.s_values[3], tip->h, local2mm );
+	VSCALE( &rec->s.s_values[6], tip->a, local2mm );
+	VSCALE( &rec->s.s_values[9], tip->b, local2mm );
+	VSCALE( &rec->s.s_values[12], tip->c, local2mm );
+	VSCALE( &rec->s.s_values[15], tip->d, local2mm );
+
+	return(0);
 }
 
 /*
@@ -1556,6 +1585,7 @@ double			mm2local;
 	vect_t	unitv;
 	fastf_t	Hmag;
 
+	RT_TGC_CK_MAGIC(tip);
 	rt_vls_strcat( str, "truncated general cone (TGC)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
@@ -1617,8 +1647,9 @@ double			mm2local;
 }
 
 /*
+ *			R T _ T G C _ I F R E E
+ *
  *  Free the storage associated with the rt_db_internal version of this solid.
- *  XXX The suffix of this name is temporary.
  */
 void
 rt_tgc_ifree( ip )
@@ -1675,6 +1706,7 @@ struct directory *dp;
 #endif
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct tgc_internal *)ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
 
 	ell_16pts( bottom, tip->v, tip->a, tip->b );
 	VADD2( work, tip->v, tip->h );
@@ -1843,6 +1875,7 @@ struct directory *dp;
 #endif
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct tgc_internal *)ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
 
 	/* Create two 16 point ellipses
 	 *  Note that in both cases the points go counterclockwise.
