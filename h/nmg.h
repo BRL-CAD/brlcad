@@ -62,6 +62,16 @@
 #define NMG_BOOL_ADD 2		/* addition/union */
 #define NMG_BOOL_ISECT 4	/* intsersection */
 
+/* Boolean classifications */
+#define NMG_CLASS_AinB		0
+#define NMG_CLASS_AonBshared	1
+#define NMG_CLASS_AonBanti	2
+#define NMG_CLASS_AoutB		3
+#define NMG_CLASS_BinA		4
+#define NMG_CLASS_BonAshared	5
+#define NMG_CLASS_BonAanti	6
+#define NMG_CLASS_BoutA		7
+
 /* orientations available.  All topological elements are orientable. */
 #define OT_NONE     '\0'    /* no orientation */
 #define OT_SAME     '\1'    /* orientation same */
