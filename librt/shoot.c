@@ -2,6 +2,8 @@
  *			S H O O T . C
  *
  *	Ray Tracing program shot coordinator.
+ *
+ *  This is the heart of LIBRT's ray-tracing capability.
  *  
  *  Given a ray, shoot it at all the relevant parts of the model,
  *  (building the finished_segs chain), and then call rt_boolregions()
@@ -17,17 +19,22 @@
  *
  *  for K ranging from 0 to +infinity.  There is no looking backwards.
  *
- *  Author -
+ *  Authors -
  *	Michael John Muuss
+ *	Glenn Durfee
  *
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1985,1991 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 2000 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
 static char RCSshoot[] = "@(#)$Header$ (BRL)";
@@ -531,7 +538,7 @@ push:				;
 					bu_log( "rt_advance_to_next_cell(): INTERNAL ERROR: infinite loop aborted, ray %d,%d truncated\n",
 						ap->a_x, ap->a_y );
 					cutp = CUTTER_NULL;
-					break;
+					goto escaped_from_model;
 				}
 				t0 = ssp->box_start + OFFSET_DIST;
 				goto top;
