@@ -98,11 +98,11 @@ FBIO abekas_interface = {
 };
 
 #define if_frame	u1.l		/* frame number on A60 disk */
-#define if_mode		u2.l		/* see MODE_ defines */
+#define if_mode		u2.l		/* see MODE_ and STATE_ defines */
 #define if_yuv		u3.p		/* YUV image, 4th quadrant */
 #define if_rgb		u4.p		/* RGB image, 1st quadrant */
-#define if_state	u5.l		/* see STATE_ defines */
-#define if_host		u6.p		/* Hostname */
+#define if_host		u5.p		/* Hostname */
+#define if_xyoff	u6.l		/* (x<<16) | y pixel offsets */
 
 /*
  *  The mode has several independent bits:
@@ -131,9 +131,9 @@ struct modeflags {
 	{ '\0', 0, 0, "" }
 };
 
-#define STATE_FRAME_WAS_READ	(1<<1)
-#define STATE_USER_HAS_READ	(1<<2)
-#define STATE_USER_HAS_WRITTEN	(1<<3)
+#define STATE_FRAME_WAS_READ	(1<<8)
+#define STATE_USER_HAS_READ	(1<<9)
+#define STATE_USER_HAS_WRITTEN	(1<<10)
 
 
 /*
@@ -237,9 +237,20 @@ int		width, height;
 		return(-1);
 	}
 
-	/* X and Y offsets if centering & non-full size? */
+	/* X and Y offsets if centering & non-full size */
+	ifp->if_xyoff = 0;
+	if( (ifp->if_mode & MODE_1MASK) == MODE_1CENTER )  {
+		if( width < ifp->if_max_width )  {
+			i = (ifp->if_max_width - width)/2;
+			ifp->if_xyoff = i<<16;
+		}
+		if( height < ifp->if_max_height )  {
+			i = (ifp->if_max_height - height)/2;
+			ifp->if_xyoff |= i;
+		}
+	}
 
-	ifp->if_state = 0;
+	/* If not in output-only mode, read the frame first */
 	if( (ifp->if_mode & MODE_2MASK) == MODE_2READFIRST )  {
 		if( ab_readframe(ifp) < 0 )  return(-1);
 	}
@@ -264,7 +275,7 @@ FBIO	*ifp;
 	/* convert YUV to RGB */
 fb_log("Unable to convert YUV to RGB, gak\n");
 
-	ifp->if_state |= STATE_FRAME_WAS_READ;
+	ifp->if_mode |= STATE_FRAME_WAS_READ;
 	return(0);			/* OK */
 }
 
@@ -277,8 +288,8 @@ FBIO	*ifp;
 {
 	int	ret = 0;
 
-fb_log("ab_dclose, state=x%x\n", ifp->if_state);
-	if( ifp->if_state & STATE_USER_HAS_WRITTEN )  {
+fb_log("ab_dclose, state=x%x\n", ifp->if_mode);
+	if( ifp->if_mode & STATE_USER_HAS_WRITTEN )  {
 		register int y;		/* in Abekas coordinates */
 
 		/* Convert RGB to YUV */
@@ -336,7 +347,7 @@ fb_log("ab_dclear\n");
 		}
 	}
 
-	ifp->if_state |= STATE_USER_HAS_WRITTEN;
+	ifp->if_mode |= STATE_USER_HAS_WRITTEN;
 	return(0);
 }
 
@@ -354,7 +365,7 @@ int		count;
 	register short		scan_count;	/* # pix on this scanline */
 	register char		*cp;
 	int			ret;
-	int			ybase;
+	int			xoff, yoff;
 
 	if( count <= 0 )
 		return(0);
@@ -363,8 +374,8 @@ int		count;
 	    y < 0 || y > ifp->if_height)
 		return(-1);
 
-	if( (ifp->if_state & STATE_FRAME_WAS_READ) == 0 )  {
-		if( (ifp->if_state & STATE_USER_HAS_WRITTEN) != 0 )  {
+	if( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 )  {
+		if( (ifp->if_mode & STATE_USER_HAS_WRITTEN) != 0 )  {
 			fb_log("ab_bread:  WARNING out-only mode set & pixels were written.  Subsequent read operation is unsafe\n");
 			/* Give him whatever is in the buffer */
 		} else {
@@ -373,8 +384,12 @@ int		count;
 		}
 	}
 
+	xoff = ifp->if_xyoff>>16;
+	yoff = ifp->if_xyoff & 0xFFFF;
+
 	/* Copy from if_rgb[] */
-	ybase = y;
+	x += xoff;
+	y += yoff;
 	ret = 0;
 	cp = (char *)(pixelp);
 
@@ -391,12 +406,12 @@ int		count;
 		cp += scan_count * 3;
 		ret += scan_count;
 		count -= scan_count;
-		x = 0;
+		x = xoff;
 		/* Advance upwards */
 		if( ++y >= ifp->if_height )
 			break;
 	}
-	ifp->if_state |= STATE_USER_HAS_READ;
+	ifp->if_mode |= STATE_USER_HAS_READ;
 	return(ret);
 }
 
@@ -413,7 +428,7 @@ int		count;
 	register short		scan_count;	/* # pix on this scanline */
 	register char		*cp;
 	int			ret;
-	int			ybase;
+	int			xoff, yoff;
 
 	if( count <= 0 )
 		return(0);
@@ -427,8 +442,8 @@ int		count;
 	 *  be a "well behaved" sequential write, read the frame first.
 	 *  Otherwise, just 
 	 */
-	if( (ifp->if_state & STATE_FRAME_WAS_READ) == 0 &&
-	    (ifp->if_state & STATE_USER_HAS_WRITTEN) == 0 )  {
+	if( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 &&
+	    (ifp->if_mode & STATE_USER_HAS_WRITTEN) == 0 )  {
 fb_log("Initial check, x=%d, y=%d\n", x, y );
 		if( x != 0 || y != 0 )  {
 	    		/* Try to read in the frame */
@@ -440,8 +455,12 @@ fb_log("clear to black\n");
 		}
 	}
 
+	xoff = ifp->if_xyoff>>16;
+	yoff = ifp->if_xyoff & 0xFFFF;
+
 	/* Copy from if_rgb[] */
-	ybase = y;
+	x += xoff;
+	y += yoff;
 	ret = 0;
 	cp = (char *)(pixelp);
 
@@ -458,12 +477,12 @@ fb_log("clear to black\n");
 		cp += scan_count * 3;
 		ret += scan_count;
 		count -= scan_count;
-		x = 0;
+		x = xoff;
 		/* Advance upwards */
 		if( ++y >= ifp->if_height )
 			break;
 	}
-	ifp->if_state |= STATE_USER_HAS_WRITTEN;
+	ifp->if_mode |= STATE_USER_HAS_WRITTEN;
 	return(ret);
 }
 
@@ -719,8 +738,7 @@ fprintf(stderr,"after write, did %d\n", got);
 			}
 		}
 		*cp++ = '\0';
-		/* buffer will contain old permission, ??? (size, old name) */
-		fprintf(stderr,"got '%s'\n", xmit_buf);
+		/* buffer will contain old permission, size, old name */
 		src_size = 0;
 		if( sscanf( xmit_buf, "C%o %d", &perm, &src_size ) != 2 )  {
 			fprintf(stderr,"sscanf error\n");
