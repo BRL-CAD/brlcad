@@ -70,6 +70,7 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./solid.h"
 #include "./sedit.h"
@@ -91,9 +92,11 @@ extern char	*sprintf();
 extern int	sprintf();
 #endif
 
+struct db_i	*dbip;			/* database instance pointer */
+
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
 
-int	dmaflag;			/* Set to 1 to force new screen DMA */
+int		dmaflag;		/* Set to 1 to force new screen DMA */
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
@@ -139,17 +142,22 @@ char **argv;
 		(void)fprintf(outfile, "%s\n", version+5);	/* skip @(#) */
 
 	/* Get input file */
-	if( db_open( argv[1] ) < 0 )  {
+	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
+	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
 		char line[128];
+
+	    	perror( argv[1] );
 		if( !isatty(0) )
-			exit(2);		/* NOT finish */
+			exit(2);		/* NOT finish() */
 		(void)fprintf(outfile, "Create new database (y|n)[n]? ");
 		fflush(outfile);
 		(void)fgets(line, sizeof(line), infile);
 		if( line[0] != 'y' && line[0] != 'Y' )
-			exit(0);		/* NOT finish */
-		if( db_create( argv[1] ) < 0 )
-			exit(2);		/* NOT finish */
+			exit(0);		/* NOT finish() */
+		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
+			perror( argv[1] );
+			exit(2);		/* NOT finish() */
+		}
 	}
 
 	/* Quick -- before he gets away -- write a logfile entry! */
@@ -166,7 +174,7 @@ char **argv;
 
 	/* init rotation matrix */
 	mat_idn( identity );		/* Handy to have around */
-	Viewscale = .125;		/* also in chgview.c */
+	Viewscale = 0.5;		/* => viewsize of 1 */
 	mat_idn( Viewrot );
 	mat_idn( toViewcenter );
 	mat_idn( modelchanges );
@@ -198,7 +206,7 @@ char **argv;
 	/* Here we should print out a "message of the day" file */
 
 	/*	 Scan input file and build the directory	 */
-	dir_build();
+	db_scan( dbip, (int (*)())db_diradd);
 
 	/* Initialize the menu mechanism to be off, but ready. */
 	mmenu_init();
@@ -216,7 +224,7 @@ char **argv;
 			argc--; argv++;
 		}
 		cmd_args[numargs] = (char *)0;
-		do_cmd();
+		mged_cmd();
 		f_quit();
 		/* NOTREACHED */
 	}
@@ -343,10 +351,7 @@ char **argv;
 			if( Viewscale < MINVIEW )
 				Viewscale = MINVIEW;
 			else  {
-				if( Viewscale > maxview * 15.0 )
-					Viewscale = maxview * 15.0;
-				else
-					rateflag++;
+				rateflag++;
 			}
 			new_mats();
 			dmaflag = 1;
