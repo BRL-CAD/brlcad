@@ -349,8 +349,6 @@ register struct resource *res;
 	}
 
 	bytes = rtip->rti_pt_bytes;
-/* XXX there is a memory leak in partition structures */
-rt_log("rt_get_pt(), %d bytes\n", bytes);
 
 	/* First, march through the free queue, discarding wrong sizes */
 	for( pp = res->re_parthead.pt_forw; pp != &(res->re_parthead); )  {
