@@ -775,7 +775,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_cline_uv,	rt_cline_curve,	rt_cline_class,	rt_cline_free,
 		rt_cline_plot,	rt_cline_vshot,	rt_cline_tess,	rt_cline_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_cline_import5, rt_cline_export5,
 		rt_cline_import,	rt_cline_export,	rt_cline_ifree,
 		rt_cline_describe,rt_cline_xform,	rt_cline_parse,
 		sizeof(struct rt_cline_internal), RT_CLINE_INTERNAL_MAGIC,
