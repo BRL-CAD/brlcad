@@ -52,6 +52,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
+#ifndef SEEK_SET
+# define SEEK_SET	0
+#endif
+
 /*
  *  This constant determines what the maximum size database is that
  *  will be buffered entirely in memory.
