@@ -205,7 +205,7 @@ end:
 	y = fy * GED_MAX;
       }
       
-      bu_vls_printf(&vls, "mouse_object_edit_select %d %d", x, y);
+      bu_vls_printf(&vls, "mouse_matrix_edit_select %d %d", x, y);
     }else if(mged_variables->mv_mouse_behavior == 'c' && !stolen){
       if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
