@@ -1,6 +1,6 @@
 /*
- *	@(#) vdeck.c		retrieved 8/13/86 at 08:04:19,
- *	@(#) version 1.3		  created 2/24/83 at 13:07:51.
+ *	@(#) vdeck.c		retrieved 8/13/86 at 08:04:41,
+ *	@(#) version 1.4		  created 2/25/83 at 13:33:18.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -757,12 +757,19 @@ Record *rec;
 		break;
 	case RPP:
 		write( solfd, "rpp    ", 7 );
-		work[0] = rec->s.s_values[18];	/* xmin */
-		work[1] = rec->s.s_values[0];	/* xmax */
-		work[2] = rec->s.s_values[1];	/* ymin */
-		worc[0] = rec->s.s_values[19];	/* ymax */
-		worc[1] = rec->s.s_values[2];	/* zmin */
-		worc[2] = rec->s.s_values[20];	/* zmax */
+		xmin = ymin = zmin = 100000000.0;
+		xmax = ymax = zmax = -100000000.0;
+		for(i=0; i<=21; i+=3) {
+			MINMAX(xmin, xmax, rec->s.s_values[i]);
+			MINMAX(ymin, ymax, rec->s.s_values[i+1]);
+			MINMAX(zmin, zmax, rec->s.s_values[i+2]);
+		}
+		work[0] = xmin;
+		work[1] = xmax;
+		work[2] = ymin;
+		worc[0] = ymax;
+		worc[1] = zmin;
+		worc[2] = zmax;
 		VMOVE( SV0, work );
 		VMOVE( SV1, worc );
 		psp( 2, rec );
@@ -801,19 +808,36 @@ Record *rec;
 
 	/* check for ell1 or sph
 	 */
-	rec->s.s_num = GENELL;
-
-	/* ell1 if mag B = mag C
-	 */
-	if( fabs( MAGNITUDE( SV2 ) - MAGNITUDE( SV3 ) ) < .0001 )
+	if( fabs( MAGNITUDE(SV1) - MAGNITUDE(SV2) ) < .0001 ) {
+		/* vector A == vector B */
 		rec->s.s_num = ELL1;
-		
-	/* sph if ell1 and mag A = mag B
-	 */
-	if(	rec->s.s_num == ELL1
-	    &&	fabs( MAGNITUDE( SV1 ) - MAGNITUDE( SV2 ) ) < .0001
-	)
-		rec->s.s_num = SPH;
+		/* SPH if vector B == vector C also */
+		if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < .0001)
+			rec->s.s_num = SPH;
+		if(rec->s.s_num != SPH) {
+			/* switch A and C */
+			VMOVE(work, SV1);
+			VMOVE(SV1, SV3);
+			VMOVE(SV3, work);
+		}
+	}
+
+	else
+	if(fabs(MAGNITUDE(SV1) - MAGNITUDE(SV3)) < .0001) {
+		/* vector A == vector C */
+		rec->s.s_num = ELL1;
+		/* switch vector A and vector B */
+		VMOVE(work, SV1);
+		VMOVE(SV1, SV2);
+		VMOVE(SV2, work);
+	}
+
+	else
+	if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < .0001) 
+		rec->s.s_num = ELL1;
+
+	else
+		rec->s.s_num = GENELL;
 
 	/* print the solid parameters
 	 */
@@ -884,12 +908,12 @@ Record *rec;
 	/* tec if ratio top and bot vectors equal and base parallel to top
 	 */
 	if(	fabs( (mb/md)-(ma/mc) ) < .0001
-	    &&	fabs( DOT( axb, cxd )) < .0001
+	    &&  fabs( fabs(DOT(axb,cxd)) - (maxb*mcxd) ) < .0001
 	)	rec->s.s_num = TEC;
 
 	/* check for right cylinder
 	 */
-	if( fabs( DOT( SV1, axb )) < .0001 ) {
+	if( fabs( fabs(DOT(SV1,axb)) - (mh*maxb) ) < .0001 ) {
 		if( fabs( ma-mb ) < .0001 ) {
 			if( fabs( ma-mc ) < .0001 )	rec->s.s_num = RCC;
 			else				rec->s.s_num = TRC;
