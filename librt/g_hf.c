@@ -437,7 +437,12 @@ int			xCell, yCell;
 		if (dn < 0.0) alpha = -alpha;
 
 		/* if pt before CA1st or beyond end of CA1st pt is
-		 * outside triangle
+		 * outside triangle.
+		 *
+		 * XXX Can someone explain the "alpha <= abs_dn" part? -- Lee
+		 *  I know it's supposed to be determining if the point
+		 * is beyond the end of CA1st, but I don't see how the math
+		 * here does that.
 		 */
 		if (alpha >= 0.0 && alpha <= abs_dn) {
 
@@ -460,6 +465,8 @@ int			xCell, yCell;
 
 
 other_half:
+
+	/* XXX This is really hard to read.  Need to fix this like above */
 	dn = VDOT(tri_wn2nd, rp->r_dir);
 	abs_dn = ( dn >= 0.0) ? dn : (-dn);
 	if (abs_dn < SQRT_SMALL_FASTF) goto leave;
