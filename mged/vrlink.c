@@ -127,8 +127,10 @@ void
 vr_viewpoint_hook()
 {
 	struct bu_vls	str;
+	static struct bu_vls	old_str;
 	quat_t		orient;
 
+	bu_vls_init_if_uninit(&old_str);
 	bu_vls_init(&str);
 
 	quat_mat2quat( orient, Viewrot );
@@ -146,12 +148,19 @@ vr_viewpoint_hook()
 		mged_variables.perspective
 		);
 
+	if( strcmp( bu_vls_addr(&old_str), bu_vls_addr(&str) ) == 0 )  {
+		bu_vls_free( &str );
+		return;
+	}
+
 	if( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
 		bu_log("viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
 		viewpoint_hook = 0;	/* Relinquish this hook */
 	}
+	bu_vls_trunc( &old_str, 0 );
+	bu_vls_vlscat( &old_str, &str );
 	bu_vls_free( &str );
 }
 
