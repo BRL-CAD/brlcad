@@ -155,12 +155,12 @@ grip_IN_ARGS=""
 grip_DB_ARGS=""
 
 #
-# (half) Arguments
+# HALFSPACE (half) Arguments
 # 
 # in args =>
 #
-half_IN_ARGS=""
-half_DB_ARGS=""
+half_IN_ARGS="0 0 1  0"
+half_DB_ARGS="N {0 0 1} d 0"
 
 #
 # (hf) Arguments
