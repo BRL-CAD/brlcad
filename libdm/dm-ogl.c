@@ -277,7 +277,7 @@ char *argv[];
   }
 
   bu_vls_init(&str);
-  bu_vls_printf(&str, "init_dm_win %s %s\n",
+  bu_vls_printf(&str, "_init_dm %s %s\n",
 		bu_vls_addr(&dmp->dm_initWinProc),
 		bu_vls_addr(&dmp->dm_pathName));
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
