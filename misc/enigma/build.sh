@@ -2,9 +2,6 @@
 # configures and builds enigma
 ###
 
-if ! test -f NEWS ; then
-    touch NEWS
-fi
 if ! test -f AUTHORS ; then
     touch AUTHORS
 fi
@@ -13,6 +10,9 @@ if ! test -f ChangeLog ; then
 fi
 if ! test -f INSTALL ; then
     touch INSTALL
+fi
+if ! test -f NEWS ; then
+    touch NEWS
 fi
 aclocal && \
 autoheader && \
