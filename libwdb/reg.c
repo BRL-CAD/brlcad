@@ -126,7 +126,16 @@ int		inherit;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
 	if( region ){
-		rec.c.c_flags = DBV4_REGION;
+		switch( region )  {
+		case DBV4_NON_REGION:	/* sanity, fixes a non-bool arg */
+		case DBV4_REGION:
+		case DBV4_REGION_FASTGEN_PLATE:
+		case DBV4_REGION_FASTGEN_VOLUME:
+			rec.c.c_flags = region;
+			break;
+		default:
+			rec.c.c_flags = DBV4_REGION;
+		}
 		rec.c.c_inherit = inherit;
 		rec.c.c_regionid = id;
 		rec.c.c_aircode = air;
