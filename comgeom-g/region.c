@@ -19,6 +19,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 
+#include "externs.h"
 #include "machine.h"
 #include "vmath.h"
 #include "wdb.h"
@@ -185,25 +186,23 @@ top:
  *
  * Load the region ID information into the structures
  */
+void
 getid()
 {
-	register int	i;
 	int reg_num;
 	int id;
 	int air;
 	int mat= -1;
 	int los= -2;
-	char buff[11];
-	int	buflen;
 	char	idcard[132];
 
 	while(1)  {
 		if( getline( idcard, sizeof(idcard), "region ident card" ) == EOF )  {
 			printf("\ngetid:  EOF\n");
-			return(0);
+			return;
 		}
 		if( idcard[0] == '\n' )
-			return( 0 );
+			return;
 
 		if( version == 5 )  {
 			reg_num = getint( idcard, 0, 5 );
@@ -221,7 +220,7 @@ getid()
 
 		if( reg_num <= 0 )  {
 			printf("\ngetid:  region_id %d encountered, stoping\n", reg_num);
-			return(0);
+			return;
 		}
 
 		region_register( reg_num, id, air, mat, los );

@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <math.h>
 
+#include "externs.h"
 #include "machine.h"
 #include "vmath.h"
 
@@ -245,7 +246,7 @@ getsolid()
 			} else if( isupper(c) )  {
 				*cp++ = tolower(c);
 			} else {
-				*cp++;
+				cp++;
 			}
 		}
 	}
@@ -692,24 +693,24 @@ bad:
 		}
 		for( j=0; j<2; j++ )  {
 			double	az, el;
-			int	vertex;
+			int	vert_no;
 			double	cos_el;
 			point_t	pt;
 
 			az = getdouble( scard, 10+j*30+0*10, 10 ) * DEG2RAD;
 			el = getdouble( scard, 10+j*30+1*10, 10 ) * DEG2RAD;
-			vertex = getint( scard, 10+j*30+2*10, 10 );
-			if( vertex == 0 )  break;
+			vert_no = getint( scard, 10+j*30+2*10, 10 );
+			if( vert_no == 0 )  break;
 			cos_el = cos(el);
 			eqn[cur_eq][X] = cos(az)*cos_el;
 			eqn[cur_eq][Y] = sin(az)*cos_el;
 			eqn[cur_eq][Z] = sin(el);
 
-			if( vertex < 0 )  {
-				VMOVE( pt, &input_points[((-vertex)-1)*3] );
+			if( vert_no < 0 )  {
+				VMOVE( pt, &input_points[((-vert_no)-1)*3] );
 				pt[Y] = -pt[Y];
 			} else {
-				VMOVE( pt, &input_points[((vertex)-1)*3] );
+				VMOVE( pt, &input_points[((vert_no)-1)*3] );
 			}
 			eqn[cur_eq][3] = VDOT(pt, eqn[cur_eq]);
 			cur_eq++;
@@ -858,6 +859,6 @@ int	count;
 	int	i;
 
 	for( i=0; i<count; i++ )  {
-		getline( lbuf, sizeof(lbuf), "eaten card" );
+		(void)getline( lbuf, sizeof(lbuf), "eaten card" );
 	}
 }

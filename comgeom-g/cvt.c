@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #include <math.h>
 
+#include "externs.h"
 #include "machine.h"
 #include "vmath.h"
 #include "wdb.h"
@@ -52,11 +53,14 @@ FILE	*outfp;		/* Output file descriptor */
 int	sol_total, sol_work;	/* total num solids, num solids processed */
 int	reg_total;
 
+extern void	getid();
+
 
 static char usage[] = "\
 Usage: comgeom-g [-d debug_lvl] [-v version#] [-s name_suffix]\n\
 	input_file output_file\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -121,11 +125,11 @@ register char **argv;
 /*
  *			M A I N
  */
+int
 main( argc, argv )
 char **argv;
 {
 	register int i;
-	register float *op;
 	char	ctitle[132];
 	char	*title;
 	char	units[16];
@@ -283,7 +287,6 @@ char **argv;
 	if( getregion() < 0 )  exit(10);
 
 	if( version == 1 )  {
-		register int i;
 		for( i=1; i < reg_total; i++ )  {
 			region_register( i, 0, 0, 0, 0 );
 		}
@@ -291,7 +294,7 @@ char **argv;
 		if( version == 4 )  {
 			char	dummy[88];
 			/* read the blank card (line) */
-			getline( dummy, sizeof(dummy), "blank card" );
+			(void)getline( dummy, sizeof(dummy), "blank card" );
 		}
 
 		if(verbose) printf("\nRegion ident table\n");
@@ -303,7 +306,7 @@ char **argv;
 	group_write();
 	if(verbose) printf("\n");
 
-	exit(0);
+	return(0);		/* exit(0) */
 }
 
 /*
