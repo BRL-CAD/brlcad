@@ -63,7 +63,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define STATIC	/* nothing, for debugging */
+#if DEBUG
+# define STATIC	/* nothing, for debugging */
+#else
+# define STATIC	static
+#endif
 
 #include <signal.h>
 #include <stdio.h>
@@ -141,6 +145,7 @@ typedef struct {
 } coords; 				/* Cartesian coordinates */
 
 typedef struct descr {
+	long		magic;
 	struct descr	*next;		/* next in list, or NULL */
 	coords		pixel;		/* starting scan, nib */
 	tiny		xsign;		/* 0 or +1 */
@@ -153,6 +158,15 @@ typedef struct descr {
 	RGBpixel	col;		/* COLOR of this vector */
 	struct descr	*freep;		/* next in free list, or NULL */
 } stroke; 				/* rasterization descriptor */
+#define STROKE_MAGIC	0x12997601	/* Magic number */
+
+#define	CK_STROKE(_sp)	{ \
+	if((_sp)->magic != STROKE_MAGIC)  {  \
+		fprintf(stderr,"Bad stroke struct, ptr=x%x, magic was x%x, s/b=x%x, at file %s, line %d\n",  \
+			(_sp), (_sp)->magic, STROKE_MAGIC,  \
+			__FILE__, __LINE__ );  \
+		abort();  \
+	} }
 
 /*	Global data allocations:	*/
 
@@ -292,7 +306,7 @@ void		edgelimit(), put_vector_char();
  */
 #define	STROKE_NULL	((stroke *)0)
 
-struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
+STATIC struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
 
 /* allocate new strokes to the free list */
 STATIC void
@@ -316,6 +330,7 @@ get_strokes()
 	sp = (stroke *)cp;
 	while( bytes >= sizeof(stroke) ) {
 		sp->freep = freep;
+		sp->magic = STROKE_MAGIC;
 		freep = sp++;
 		bytes -= sizeof(stroke);
 	}
@@ -325,9 +340,11 @@ get_strokes()
 			while( ((vp)=freep) == STROKE_NULL ) \
 				get_strokes(); \
 			freep = (vp)->freep; \
+			CK_STROKE(vp); \
 			(vp)->freep = STROKE_NULL; }
 
 #define FREE_STROKE(vp)  { \
+			CK_STROKE(vp); \
 			(vp)->freep = freep; \
 			freep = (vp); }
 
@@ -938,7 +955,7 @@ register coords *ppos;
 /*
 	GetCoords - input x,y coordinates and scale into pixels
 */
-STATIC bool Get3Coords( coop )
+bool Get3Coords( coop )
 register coords	*coop;
 {
 	char	trash[2];
@@ -988,7 +1005,7 @@ register coords	*coop;		/* -> input coordinates */
 }
 
 /* IEEE coordinates */
-STATIC bool Get3DCoords( coop )
+bool Get3DCoords( coop )
 register coords	*coop;
 {
 	static char	in[3*8];
@@ -1025,7 +1042,7 @@ register coords	*coop;
 	return( true );
 }
 
-STATIC bool
+bool
 GetDCoords( coop )
 register coords	*coop;		/* -> input coordinates */
 {
@@ -1086,6 +1103,7 @@ Requeue( bp, vp )
 register struct band *bp;
 register stroke	     *vp;
 {
+	CK_STROKE(vp);
 	vp->next = NULL;
 	if( bp->last )
 		bp->last->next = vp;
@@ -1142,6 +1160,7 @@ prep_dda( vp, pt1, pt2 )
 register stroke	*vp;
 register coords	*pt1, *pt2;
 {
+	CK_STROKE(vp);
 	vp->pixel = *pt1;		/* initial pixel */
 	vp->major = pt2->y - vp->pixel.y;	/* always nonnegative */
 	vp->ysign = vp->major ? 1 : 0;
@@ -1301,6 +1320,7 @@ register struct band *np;	/* *np -> next band 1st descr */
 {
 	register short	dy;		/* raster within active band */
 
+	CK_STROKE(vp);
 	/*
 	 *  Draw the portion within this band.
 	 */
