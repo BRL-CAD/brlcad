@@ -560,15 +560,15 @@ TkpDisplayButton(clientData)
 		y += offset;
 	    }
 	    imageXOffset += x;
-	    imageXOffset += y;
+	    imageYOffset += y;
 	    if (butPtr->image != NULL) {
 		if ((butPtr->selectImage != NULL) &&
 			(butPtr->flags & SELECTED)) {
 		    Tk_RedrawImage(butPtr->selectImage, 0, 0, width, height,
-			    pixmap, x, y);
+			    pixmap, imageXOffset, imageYOffset);
 		} else {
 		    Tk_RedrawImage(butPtr->image, 0, 0, width, height, pixmap,
-			    x, y);
+			    imageXOffset, imageYOffset);
 		}
 	    } else {
 		XSetClipOrigin(butPtr->display, gc, x, y);

@@ -425,6 +425,29 @@ XGetImageZPixmap(display, d, x, y, width, height, plane_mask, format)
 	for (i = 0; i < bmInfo->bmiHeader.biSizeImage; i++, p++) {
 	    *p = (unsigned char) palette[*p];
 	}
+    } else if (depth == 16) {
+	GetDIBits(hdcMem, hbmp, 0, height, NULL, bmInfo, DIB_RGB_COLORS);
+	data = ckalloc(bmInfo->bmiHeader.biSizeImage);
+	if (!data) {
+	    /* printf("Failed to allocate data area for XImage.\n"); */
+	    ret_image = NULL;
+	    goto cleanup;
+	}
+	ret_image = XCreateImage(display, NULL, 16, ZPixmap, 0, data,
+		width, height, 16, 0 /* will be calc'ed from bitmap_pad */);
+	if (ret_image == NULL) {
+	    ckfree((char *) data);
+	    goto cleanup;
+	}
+
+	/* Get the BITMAP info directly into the Image. */
+	if (GetDIBits(hdcMem, hbmp, 0, height, ret_image->data, bmInfo,
+		    DIB_RGB_COLORS) == 0) {
+	    ckfree((char *) ret_image->data);
+	    ckfree((char *) ret_image);
+	    ret_image = NULL;
+	    goto cleanup;
+	}
     } else {
 	GetDIBits(hdcMem, hbmp, 0, height, NULL, bmInfo, DIB_RGB_COLORS);
 	data = ckalloc(width * height * 4);
@@ -441,6 +464,10 @@ XGetImageZPixmap(display, d, x, y, width, height, plane_mask, format)
 	}
 
 	if (depth <= 24) {
+	    /*
+	     * This used to handle 16 and 24 bpp, but now just handles 24.
+	     * It can likely be optimized for that. -- hobbs
+	     */
 	    unsigned char *smallBitData, *smallBitBase, *bigBitData;
 	    unsigned int byte_width, h, w;
 
@@ -456,19 +483,18 @@ XGetImageZPixmap(display, d, x, y, width, height, plane_mask, format)
 
 	    /* Get the BITMAP info into the Image. */
 	    if (GetDIBits(hdcMem, hbmp, 0, height, smallBitData, bmInfo,
-		    DIB_RGB_COLORS) == 0) {
+			DIB_RGB_COLORS) == 0) {
 		ckfree((char *) ret_image->data);
 		ckfree((char *) ret_image);
 		ckfree((char *) smallBitBase);
 		ret_image = NULL;
 		goto cleanup;
 	    }
-
 	    /* Copy the 24 Bit Pixmap to a 32-Bit one. */
 	    for (h = 0; h < height; h++) {
 		bigBitData   = ret_image->data + h * ret_image->bytes_per_line;
 		smallBitData = smallBitBase + h * byte_width;
-		
+
 		for (w = 0; w < width; w++) {
 		    *bigBitData++ = ((*smallBitData++));
 		    *bigBitData++ = ((*smallBitData++));

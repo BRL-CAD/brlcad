@@ -1942,25 +1942,58 @@ ChooseDirectoryValidateProc (
                 SendMessage(hwnd, BFFM_SETSTATUSTEXT, 0, (LPARAM) selDir);
                 // enable the OK button
                 SendMessage(hwnd, BFFM_ENABLEOK, 0, (LPARAM) 1);
-                //EnableWindow(GetDlgItem(hwnd, IDOK), TRUE);
                 SetCurrentDirectory(selDir);
             } else {
                 // disable the OK button
                 SendMessage(hwnd, BFFM_ENABLEOK, 0, (LPARAM) 0);
-                //EnableWindow(GetDlgItem(hwnd, IDOK), FALSE);
             }
             UpdateWindow(hwnd);
             return 1;
 
-        case BFFM_INITIALIZED:
+        case BFFM_INITIALIZED: {
             /*
              * Directory browser intializing - tell it where to start from,
              * user specified parameter.
              */
-            SetCurrentDirectory((char *) lpData);
-            SendMessage(hwnd, BFFM_SETSELECTION, TRUE, (LPARAM)lpData);
-            SendMessage(hwnd, BFFM_ENABLEOK, 0, (LPARAM) 1);
+	    char *initDir = chooseDirSharedData->utfInitDir;
+
+	    SetCurrentDirectory(initDir);
+	    if (*initDir == '\\') {
+		/*
+		 * BFFM_SETSELECTION only understands UNC paths as pidls,
+		 * so convert path to pidl using IShellFolder interface.
+		 */
+		LPMALLOC pMalloc;
+		LPSHELLFOLDER psfFolder;
+
+		if (SUCCEEDED(SHGetMalloc(&pMalloc))) {
+		    if (SUCCEEDED(SHGetDesktopFolder(&psfFolder))) {
+			LPITEMIDLIST pidlMain;
+			ULONG ulCount, ulAttr;
+			Tcl_DString ds;
+
+			Tcl_UtfToExternalDString(TkWinGetUnicodeEncoding(),
+				initDir, -1, &ds);
+			if (SUCCEEDED(psfFolder->lpVtbl->ParseDisplayName(
+					  psfFolder, hwnd, NULL,
+					  (WCHAR *) Tcl_DStringValue(&ds),
+					  &ulCount, &pidlMain, &ulAttr))
+				&& (pidlMain != NULL)) {
+			    SendMessage(hwnd, BFFM_SETSELECTION, FALSE,
+				    (LPARAM)pidlMain);
+			    pMalloc->lpVtbl->Free(pMalloc, pidlMain);
+			}
+			psfFolder->lpVtbl->Release(psfFolder);
+			Tcl_DStringFree(&ds);
+		    }
+		    pMalloc->lpVtbl->Release(pMalloc);
+		}
+	    } else {
+		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, (LPARAM)initDir);
+	    }
+	    SendMessage(hwnd, BFFM_ENABLEOK, 0, (LPARAM) 1);
             break;
+	}
 
     }
     return 0;

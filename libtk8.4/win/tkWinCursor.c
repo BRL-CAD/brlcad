@@ -25,6 +25,14 @@ typedef struct {
 } TkWinCursor;
 
 /*
+ * The HAND cursor is only present when WINVER >= 0x0500. If this is
+ * not available at runtime, it will default to the unix-style cursor.
+ */
+#ifndef IDC_HAND
+#define IDC_HAND MAKEINTRESOURCE(32649)
+#endif
+
+/*
  * The table below is used to map from the name of a predefined cursor
  * to its resource identifier.
  */
@@ -38,7 +46,7 @@ static struct CursorName {
     {"ibeam",			IDC_IBEAM},
     {"icon",			IDC_ICON},
     {"no",			IDC_NO},
-    {"size",			IDC_SIZE},
+    {"size",			IDC_SIZEALL},
     {"size_ne_sw",		IDC_SIZENESW},
     {"size_ns",			IDC_SIZENS},
     {"size_nw_se",		IDC_SIZENWSE},
@@ -46,12 +54,13 @@ static struct CursorName {
     {"uparrow",			IDC_UPARROW},
     {"wait",			IDC_WAIT},
     {"crosshair",		IDC_CROSS},
-    {"fleur",			IDC_SIZE},
+    {"fleur",			IDC_SIZEALL},
     {"sb_v_double_arrow",	IDC_SIZENS},
     {"sb_h_double_arrow",	IDC_SIZEWE},
     {"center_ptr",		IDC_UPARROW},
     {"watch",			IDC_WAIT},
     {"xterm",			IDC_IBEAM},
+    {"hand2",			IDC_HAND},
     {NULL,			0}
 };
 

@@ -591,27 +591,34 @@ Tk_MeasureChars(
 				 * ignored. */
     int flags,			/* Various flag bits OR-ed together:
 				 * TK_PARTIAL_OK means include the last char
-				 * which only partially fit on this line.
+				 * which only partially fits on this line.
 				 * TK_WHOLE_WORDS means stop on a word
 				 * boundary, if possible.
-				 * TK_AT_LEAST_ONE means return at least one
-				 * character even if no characters fit. */
+                                 * TK_AT_LEAST_ONE means return at least one
+				 * character (or at least the first partial
+				 * word in case TK_WHOLE_WORDS is also set)
+				 * even if no characters (words) fit. */
     int *lengthPtr)		/* Filled with x-location just after the
 				 * terminating character. */
 {
     HDC hdc;
     HFONT oldFont;
     WinFont *fontPtr;
-    int curX, curByte;
+    int curX;
+    Tcl_UniChar ch;
+    SIZE size;
+    int moretomeasure;
+    FontFamily *familyPtr;
+    Tcl_DString runString;
+    SubFont *thisSubFontPtr;
     SubFont *lastSubFontPtr;
+    CONST char *p, *end, *next, *start;
 
-    /*
-     * According to Microsoft tech support, Windows does not use kerning
-     * or fractional character widths when displaying text on the screen.
-     * So that means we can safely measure individual characters or spans
-     * of characters and add up the widths w/o any "off-by-one-pixel" 
-     * errors.  
-     */
+
+    if (numBytes == 0) {
+        *lengthPtr = 0;
+        return 0;
+    }
 
     fontPtr = (WinFont *) tkfont;
 
@@ -619,161 +626,165 @@ Tk_MeasureChars(
     lastSubFontPtr = &fontPtr->subFontArray[0];
     oldFont = SelectObject(hdc, lastSubFontPtr->hFont);
 
-    if (numBytes == 0) {
-	curX = 0;
-	curByte = 0;
-    } else if (maxLength < 0) {				 
-	Tcl_UniChar ch;
-	SIZE size;
-	FontFamily *familyPtr;
-	Tcl_DString runString;
-	SubFont *thisSubFontPtr;
-	CONST char *p, *end, *next;
+    /*
+     * A three step process:
+     * 1. Find a contiguous range of characters that can all be
+     *    represented by a single screen font.
+     * 2. Convert those chars to the encoding of that font.
+     * 3. Measure converted chars.
+     */
 
-    	/*
-    	 * A three step process:
-    	 * 1. Find a contiguous range of characters that can all be 
-    	 *    represented by a single screen font.
-    	 * 2. Convert those chars to the encoding of that font.
-	 * 3. Measure converted chars.
-    	 */
-
-        curX = 0;
-        end = source + numBytes;
-        for (p = source; p < end; ) {
-            next = p + Tcl_UtfToUniChar(p, &ch);
-            thisSubFontPtr = FindSubFontForChar(fontPtr, ch);
-            if (thisSubFontPtr != lastSubFontPtr) {
-		familyPtr = lastSubFontPtr->familyPtr;
-		Tcl_UtfToExternalDString(familyPtr->encoding, source, 
-			(int) (p - source), &runString);
-		(*familyPtr->getTextExtentPoint32Proc)(hdc, 
-			Tcl_DStringValue(&runString),
-			Tcl_DStringLength(&runString) >> familyPtr->isWideFont,
-			&size);
-		curX += size.cx;
-		Tcl_DStringFree(&runString);
-                lastSubFontPtr = thisSubFontPtr;
-                source = p;
-
-		SelectObject(hdc, lastSubFontPtr->hFont);
+    moretomeasure = 0;
+    curX = 0;
+    start = source;
+    end = start + numBytes;
+    for (p = start; p < end; ) {
+        next = p + Tcl_UtfToUniChar(p, &ch);
+        thisSubFontPtr = FindSubFontForChar(fontPtr, ch);
+        if (thisSubFontPtr != lastSubFontPtr) {
+            familyPtr = lastSubFontPtr->familyPtr;
+            Tcl_UtfToExternalDString(familyPtr->encoding, start, 
+                    (int) (p - start), &runString);
+            size.cx = 0;
+            (*familyPtr->getTextExtentPoint32Proc)(hdc, 
+                    Tcl_DStringValue(&runString),
+                    Tcl_DStringLength(&runString) >> familyPtr->isWideFont,
+                    &size);
+            Tcl_DStringFree(&runString);
+            if (maxLength >= 0 && (curX+size.cx) > maxLength) {
+                moretomeasure = 1;
+                break;
             }
-            p = next;
+            curX += size.cx;
+            lastSubFontPtr = thisSubFontPtr;
+            start = p;
+                
+            SelectObject(hdc, lastSubFontPtr->hFont);
         }
+        p = next;
+    }
+
+    if (!moretomeasure) {
+        /*
+         * We get here if the previous loop was just finished
+         * normally, without a break.  Just measure the last run and
+         * that's it.
+         */
+
 	familyPtr = lastSubFontPtr->familyPtr;
-	Tcl_UtfToExternalDString(familyPtr->encoding, source,
-		(int) (p - source), &runString);
+        Tcl_UtfToExternalDString(familyPtr->encoding, start,
+                (int) (p - start), &runString);
+        size.cx = 0;
 	(*familyPtr->getTextExtentPoint32Proc)(hdc,
 		Tcl_DStringValue(&runString),
 		Tcl_DStringLength(&runString) >> familyPtr->isWideFont, 
 		&size);
-	curX += size.cx;
-	Tcl_DStringFree(&runString);
-	curByte = numBytes;
-    } else {
-	Tcl_UniChar ch;
-	SIZE size;
-	char buf[16];
-	FontFamily *familyPtr;
-	SubFont *thisSubFontPtr;
-	CONST char *term, *end, *p, *next;
-	int newX, termX, sawNonSpace, dstWrote;
+        Tcl_DStringFree(&runString);
+        if (maxLength >= 0 && (curX+size.cx) > maxLength) {
+            moretomeasure = 1;
+        } else {
+	    curX += size.cx;
+            p = end;
+        }
+    }
 
+    if (moretomeasure) {
 	/*
-	 * How many chars will fit in the space allotted? 
-	 * This first version may be inefficient because it measures
-	 * every character individually.  There is a function call that
-	 * can measure multiple characters at once and return the
-	 * offset of each of them, but it only works on NT, even though
-	 * the documentation claims it works for 95.
-	 * TODO: verify that GetTextExtentExPoint is still broken in '95, and
-	 * possibly use it for NT anyway since it should be much faster and
-	 * more accurate.
+         * We get here if the measurement of the last run was over the
+         * maxLength limit.  We need to restart this run and do it
+         * char by char, but always in context with the previous text
+         * to account for kerning (especially italics).
 	 */
 
-	next = source + Tcl_UtfToUniChar(source, &ch);
-	newX = curX = termX = 0;
-	
-	term = source;
-	end = source + numBytes;
+        char buf[16];
+        int dstWrote;
+        int lastSize = 0;
 
-	sawNonSpace = (ch > 255) || !isspace(ch);
-	for (p = source; ; ) {
-	    if (ch < BASE_CHARS) {
-		newX += fontPtr->widths[ch];
-	    } else {
-		thisSubFontPtr = FindSubFontForChar(fontPtr, ch);
-		if (thisSubFontPtr != lastSubFontPtr) {
-		    SelectObject(hdc, thisSubFontPtr->hFont);
-		    lastSubFontPtr = thisSubFontPtr;
-		}
-		familyPtr = lastSubFontPtr->familyPtr;
-		Tcl_UtfToExternal(NULL, familyPtr->encoding, p,
-			(int) (next - p), 0, NULL, buf, sizeof(buf), NULL,
-			&dstWrote, NULL);
-		(*familyPtr->getTextExtentPoint32Proc)(hdc, buf, 
-			dstWrote >> familyPtr->isWideFont, &size);
-		newX += size.cx;
-	    }
-	    if (newX > maxLength) {
+	familyPtr = lastSubFontPtr->familyPtr;
+        Tcl_DStringInit(&runString);
+        for (p = start; p < end; ) {
+            next = p + Tcl_UtfToUniChar(p, &ch);
+            Tcl_UtfToExternal(NULL, familyPtr->encoding, p,
+                    (int) (next - p), 0, NULL, buf, sizeof(buf), NULL,
+                    &dstWrote, NULL);
+            Tcl_DStringAppend(&runString,buf,dstWrote);
+            size.cx = 0;
+            (*familyPtr->getTextExtentPoint32Proc)(hdc, 
+                    Tcl_DStringValue(&runString),
+                    Tcl_DStringLength(&runString) >> familyPtr->isWideFont,
+                    &size);
+            if ((curX+size.cx) > maxLength) {
 		break;
 	    }
-	    curX = newX;
+            lastSize = size.cx;
 	    p = next;
-	    if (p >= end) {
-		term = end;
-		termX = curX;
-		break;
-	    }
-
-	    next += Tcl_UtfToUniChar(next, &ch);
-	    if ((ch < 256) && isspace(ch)) {
-		if (sawNonSpace) {
-		    term = p;
-		    termX = curX;
-		    sawNonSpace = 0;
-		}
-	    } else {
-		sawNonSpace = 1;
-	    }
 	}
+        Tcl_DStringFree(&runString);
 
-	/*
-	 * P points to the first character that doesn't fit in the desired
-	 * span.  Use the flags to figure out what to return.
-	 */
+        /*
+         * "p" points to the first character that doesn't fit in the
+         * desired span.  Look at the flags to figure out whether to
+         * include this next character.
+         */
 
-	if ((flags & TK_PARTIAL_OK) && (p < end) && (curX < maxLength)) {
-	    /*
-	     * Include the first character that didn't quite fit in the desired
-	     * span.  The width returned will include the width of that extra
-	     * character.
-	     */
+        if ((p < end)
+                && (((flags & TK_PARTIAL_OK) && (curX != maxLength))
+                        || ((p == source) && (flags & TK_AT_LEAST_ONE)
+                                && (curX == 0)))) {
 
-	    curX = newX;
-	    p += Tcl_UtfToUniChar(p, &ch);
+            /*
+             * Include the first character that didn't quite fit in
+             * the desired span.  The width returned will include the
+             * width of that extra character.
+             */
+
+            p = next;
+            curX += size.cx;
+	} else {
+	    curX += lastSize;
 	}
-	if ((flags & TK_AT_LEAST_ONE) && (term == source) && (p < end)) {
-	    term = p;
-	    termX = curX;
-	    if (term == source) {
-		term += Tcl_UtfToUniChar(term, &ch);
-		termX = newX;
-	    }
-	} else if ((p >= end) || !(flags & TK_WHOLE_WORDS)) {
-	    term = p;
-	    termX = curX;
-	}
-
-	curX = termX;
-	curByte = (int) (term - source);	
     }
 
     SelectObject(hdc, oldFont);
     ReleaseDC(fontPtr->hwnd, hdc);
 
+    if ((flags & TK_WHOLE_WORDS) && (p < end)) {
+
+        /*
+         * Scan the string for the last word break and than repeat the
+         * whole procedure without the maxLength limit or any flags.
+         */
+
+        CONST char *lastWordBreak = NULL;
+        Tcl_UniChar ch2;
+
+        end = p;
+        p = source;
+        ch = 0;
+        while (p < end) {
+            next = p + Tcl_UtfToUniChar(p, &ch2);
+            if ((ch != ' ') && (ch2 == ' ')) {
+                lastWordBreak = p;
+            }
+            p = next;
+            ch = ch2;
+        }
+
+        if (lastWordBreak != NULL) {
+            return Tk_MeasureChars(
+                tkfont, source, lastWordBreak-source, -1, 0, lengthPtr);
+        } else {
+            if (flags & TK_AT_LEAST_ONE) {
+                p = end;
+            } else {
+                p = source;
+                curX = 0;
+            }
+        }
+    }
+
     *lengthPtr = curX;
-    return curByte;
+    return p - source;
 }
 
 /*
@@ -841,7 +852,7 @@ Tk_DrawChars(
 	SIZE size;
 
 	if (twdPtr->type != TWD_BITMAP) {
-	    panic("unexpected drawable type in stipple");
+	    Tcl_Panic("unexpected drawable type in stipple");
 	}
 
 	/*
@@ -976,9 +987,11 @@ MultiFontTextOut(
     Tcl_DString runString;
     CONST char *p, *end, *next;
     SubFont *lastSubFontPtr, *thisSubFontPtr;
+    TEXTMETRIC tm;
 
     lastSubFontPtr = &fontPtr->subFontArray[0];
     oldFont = SelectObject(hdc, lastSubFontPtr->hFont);
+    GetTextMetrics(hdc, &tm);
 
     end = source + numBytes;
     for (p = source; p < end; ) {
@@ -989,7 +1002,7 @@ MultiFontTextOut(
 		familyPtr = lastSubFontPtr->familyPtr;
  		Tcl_UtfToExternalDString(familyPtr->encoding, source,
 			(int) (p - source), &runString);
-		(*familyPtr->textOutProc)(hdc, x, y, 
+		(*familyPtr->textOutProc)(hdc, x-(tm.tmOverhang/2), y, 
 			Tcl_DStringValue(&runString),
 			Tcl_DStringLength(&runString) >> familyPtr->isWideFont);
 		(*familyPtr->getTextExtentPoint32Proc)(hdc, 
@@ -1002,6 +1015,7 @@ MultiFontTextOut(
             lastSubFontPtr = thisSubFontPtr;
             source = p;
 	    SelectObject(hdc, lastSubFontPtr->hFont);
+            GetTextMetrics(hdc, &tm);
 	}
 	p = next;
     }
@@ -1009,7 +1023,8 @@ MultiFontTextOut(
 	familyPtr = lastSubFontPtr->familyPtr;
  	Tcl_UtfToExternalDString(familyPtr->encoding, source,
 		(int) (p - source), &runString);
-	(*familyPtr->textOutProc)(hdc, x, y, Tcl_DStringValue(&runString),
+	(*familyPtr->textOutProc)(hdc, x-(tm.tmOverhang/2), y,
+                Tcl_DStringValue(&runString),
 		Tcl_DStringLength(&runString) >> familyPtr->isWideFont);
 	Tcl_DStringFree(&runString);
     }
