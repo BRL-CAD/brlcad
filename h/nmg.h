@@ -1,5 +1,17 @@
 /*			N M G . H
  *
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1989 by the United States Army.
+ *	All rights reserved.
+ *
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by 
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
@@ -11,10 +23,10 @@
 #define NULL 0
 #endif
 
-#define OT_UNSPEC   '\0'    /* orientation unspecified */
+#define OT_NONE     '\0'    /* no orientation */
 #define OT_SAME     '\1'    /* orientation same */
 #define OT_OPPOSITE '\2'    /* orientation opposite */
-
+#define OT_UNSPEC   '\3'    /* orientation unspecified */
 
 
 /*
@@ -78,7 +90,13 @@ struct nmg_ptbl {
 #define NMG_CK_SHELL(_p)	NMG_CKMAG(_p, NMG_SHELL_MAGIC, "shell")
 #define NMG_CK_SHELL_A(_p)	NMG_CKMAG(_p, NMG_SHELL_A_MAGIC, "shell_a")
 #define NMG_CK_FACE(_p)		NMG_CKMAG(_p, NMG_FACE_MAGIC, "face")
-#define NMG_CK_FACE_G(_p)	NMG_CKMAG(_p, NMG_FACE_G_MAGIC, "face_g")
+#define NMG_CK_FACE_G(_p)	{NMG_CKMAG(_p, NMG_FACE_G_MAGIC, "face_g") \
+if ( (_p)->N[X] == 0.0 && (_p)->N[Y] == 0.0 && (_p)->N[Z] == 0.0 && \
+	(_p)->N[H] != 0.0) { rt_log( \
+"ERROR: in file %s, line %d\nbad NMG plane equation %fX + %fY + %fZ = %f\n", \
+	__FILE__, __LINE__, (_p)->N[X], (_p)->N[Y], (_p)->N[Z], (_p)->N[H]); \
+	rt_bomb("Bad NMG geometry\n"); \
+     } }
 #define NMG_CK_FACEUSE(_p)	NMG_CKMAG(_p, NMG_FACEUSE_MAGIC, "faceuse")
 #define NMG_CK_FACEUSE_A(_p)	NMG_CKMAG(_p, NMG_FACEUSE_A_MAGIC, "faceuse_a")
 #define NMG_CK_LOOP(_p)		NMG_CKMAG(_p, NMG_LOOP_MAGIC, "loop")
@@ -416,9 +434,28 @@ struct walker_tbl {
 #define MINMAX(_a, _b, _c) { if (_a < _b) _b = _a; if (_a > _c) _c = _a; }
 
 /* compare two extents and if they overlap, return non-zero */
-#define NMG_EXTENT_OVERLAP(_a, _b) (!(_a[0] > _b[1] || _a[1] < _b[0] || \
-	_a[2] > _b[3] || _a[3] < _b[2] || _a[4] > _b[5] || _a[5] < _b[4]) )
+#define NMG_EXTENT_OVERLAP(_l1, _h1, _l2, _h2) \
+    (! ((_l1)[0] > (_h2)[0] || (_l1)[1] > (_h2)[1] || (_l1)[2] > (_h2)[2] || \
+	(_l2)[0] > (_h1)[0] || (_l2)[1] > (_h1)[1] || (_l2)[2] > (_h1)[2]) )
 
+/* two edges share same vertices */
+#define EDGESADJ(_e1, _e2) (((_e1)->vu_p->v_p == (_e2)->vu_p->v_p && \
+		 (_e1)->eumate_p->vu_p->v_p == (_e2)->eumate_p->vu_p->v_p) || \
+		 ((_e1)->vu_p->v_p == (_e2)->eumate_p->vu_p->v_p && \
+		 (_e1)->eumate_p->vu_p->v_p == (_e2)->vu_p->v_p ) )
+
+/* Minimum distance from a point to a plane */
+#define NMG_DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[H])
+
+/* Believe it or not, not every system has these macros somewhere
+ * in the include files
+ */
+#ifndef max
+# define max(_a, _b) ((_a) > (_b) ? (_a) : (_b))
+#endif
+#ifndef min
+# define min(_a, _b) ((_a) < (_b) ? (_a) : (_b))
+#endif
 
 /*
  *  Support Function Declarations
@@ -426,23 +463,29 @@ struct walker_tbl {
  */
 #if __STDC__
 extern struct model	*nmg_mmr();
-extern struct nmgregion	*nmg_mr(struct model *m);
 extern struct shell 	*nmg_msv(struct region *r_p);
+extern struct nmgregion	*nmg_mrsv(struct model *m);
 extern struct vertexuse	*nmg_mvu(struct vertex *v, long *upptr);
 extern struct vertexuse	*nmg_mvvu(long *upptr);
 extern struct edgeuse	*nmg_me(struct vertex *v1, *v2, struct shell *s);
 extern struct edgeuse	*nmg_meonvu(struct vertexuse *vu);
+extern struct edgeuse	*nmg_eins(struct edgeuse *eu);
 extern struct loopuse	*nmg_ml(struct shell *s);
-extern struct loopuse	*nmg_mlv(struct shell *s);
+extern struct loopuse	*nmg_mlv(long *magic, struct vertex *v);
 extern struct faceuse	*nmg_mf(struct loopuse *lu1);
-extern struct edgeuse	*nmg_esplit(struct vertex *v, struct edgeuse *oldeu);
-extern char		*nmg_identify(long magic);
+extern struct faceuse	*nmg_cface(struct shell *s, struct vertex **vt,	unsigned n);
+extern struct edgeuse	*nmg_eusplit(struct vertex *v, struct edgeuse *oldeu);
+extern struct edge	*nmg_esplit(struct vertex *v, struct edge *e);
+extern char		*nmg_identify_magic(long magic);
+extern int		nmg_tbl(nmg_ptbl *b, int func, long **p);
 extern void		nmg_movevu(struct vertexuse *vu, struct vertex *v);
 extern void		nmg_kfu(struct faceuse *fu1);
 extern void		nmg_klu(struct loopuse *lu1);
 extern void		nmg_evu(struct edgeuse *eu);
 extern void		nmg_kvu(struct vertexuse *vu);
 extern void		nmg_ks(struct shell *s);
+extern void		nmg_kr(struct nmgregion *r);
+extern void		nmg_km(struct model *m);
 extern void		nmg_pr_m(struct model *m, char *h);
 extern void		nmg_pr_r(struct nmgregion *r, char *h);
 extern void		nmg_pr_s(struct shell *s, char *h);
@@ -457,28 +500,46 @@ extern void		nmg_pr_vg(struct vertex_g *vg, char *h);
 extern void		nmg_pr_v(struct vertex *v, char *h);
 extern void		nmg_pr_vu(struct vertexuse *vu, char *h);
 extern void		nmg_unglueedge(struct edgeuse *eu);
-extern void		nmg_glueedge(struct edge *e1, *e2);
+extern void		nmg_moveeu(struct edgeuse *eudst, *eusrc);
 extern void 		nmg_moveltof(struct faceuse *fu, struct shell *s);
+extern void		nmg_face_g(struct faceuse *fu);
+extern void		nmg_face_bb(struct face *f);
+extern void		nmg_vertex_gv(struct vertex *v, pointp_t pt);
+extern void		nmg_loop_g(loop *l);
+extern void		nmg_shell_a(shell *s);
+extern void		nmg_jv(struct vertex *v1, *v2);
+extern void		nmg_moveltof(struct faceuse *fu, struct shell *s);
+extern void		nmg_pl_s(FILE fp, struct shell *s);
+extern void		nmg_pl_r(FILE fp, struct nmgregion *r);
+extern void		nmg_pl_m(FILE fp, struct model *m);
+
+extern struct shell	*nmg_do_bool(struct shell *s1, *s2, int oper);
 
 #else
 extern struct model	*nmg_mmr();
-extern struct nmgregion	*nmg_mr();
 extern struct shell 	*nmg_msv();
+extern struct nmgregion	*nmg_mrsv();
 extern struct vertexuse	*nmg_mvu();
 extern struct vertexuse	*nmg_mvvu();
 extern struct edgeuse	*nmg_me();
 extern struct edgeuse	*nmg_meonvu();
+extern struct edgeuse	*nmg_eins();
 extern struct loopuse	*nmg_ml();
 extern struct loopuse	*nmg_mlv();
 extern struct faceuse	*nmg_mf();
-extern struct edgeuse	*nmg_esplit();
-extern char		*nmg_identify();
+extern struct faceuse	*nmg_cface();
+extern struct edgeuse	*nmg_eusplit();
+extern struct edge	*nmg_esplit();
+extern char		*nmg_identify_magic();
+extern int		nmg_tbl();
 extern void		nmg_movevu();
 extern void		nmg_kfu();
 extern void		nmg_klu();
 extern void		nmg_keu();
 extern void		nmg_kvu();
 extern void		nmg_ks();
+extern void		nmg_kr();
+extern void		nmg_km();
 extern void		nmg_pr_m();
 extern void		nmg_pr_r();
 extern void		nmg_pr_s();
@@ -493,8 +554,20 @@ extern void		nmg_pr_vg();
 extern void		nmg_pr_v();
 extern void		nmg_pr_vu();
 extern void		nmg_unglueedge();
-extern void		nmg_glueedge();
+extern void		nmg_moveeu();
 extern void 		nmg_moveltof();
+extern void		nmg_face_g();
+extern void		nmg_face_bb();
+extern void		nmg_vertex_gv();
+extern void		nmg_loop_g();
+extern void		nmg_shell_a();
+extern void		nmg_jv();
+extern void		nmg_moveltof();
+extern void		nmg_pl_s();
+extern void		nmg_pl_r();
+extern void		nmg_pl_m();
+
+extern struct shell	*nmg_do_bool();
 
 #endif
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
