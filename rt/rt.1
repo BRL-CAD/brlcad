@@ -192,7 +192,9 @@ through the -l parameter in the following format: -l7,Num_Photons,Caustics_Perce
 Irradiance_Rays,Angular_Tolerance,Random_Seed,Importance_Mapping_Toggle,
 Irradiance_Hypersampling_Toggle,Visual_Irradiance_Toggle,Scale_Lumens,Load_Save_File
 Example: -l7,16384,0,10,60.0,0,0,0,0,1.0,scene.pm.
-Note: If just -l7 is used then the default values above will be applied.
+Note: If just -l7 is used then the default values above will be applied.  Light sources
+must also be explicitly defined with lumens defined for each source, i.e default light
+sources will not work.
 .TP
 .B \-n#
 defines the height of the image as a number of scanlines.
