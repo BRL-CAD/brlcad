@@ -48,6 +48,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtlist.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "tabdata.h"
 #include "spectrum.h"
 #include "./ext.h"
 #include "./rdebug.h"

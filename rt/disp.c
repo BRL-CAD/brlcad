@@ -23,6 +23,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "rtstring.h"
 #include "raytrace.h"
+#include "tabdata.h"
 #include "spectrum.h"
 #include "fb.h"
 #include "tcl.h"
@@ -453,6 +454,7 @@ int	off;
 		sp = (struct rt_tabdata *)cp;
 		RT_CK_TABDATA(sp);
 
+		/* XXX For efficiency, these two steps could be done together */
 		rt_tabdata_mul( xyzsamp, sp, cie_x );
 		xyz[X] = rt_tabdata_area1( xyzsamp );
 
