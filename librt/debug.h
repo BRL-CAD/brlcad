@@ -40,6 +40,7 @@
 #define DEBUG_BOXING	0x00008000	/* Object/box checking details */
 #define DEBUG_MEM	0x00010000	/* Debug dynamic memory operations */
 #define DEBUG_TESTING	0x00020000	/* One-shot debugging flag */
+#define DEBUG_FDIFF	0x00040000	/* bool/fdiff debugging */
 
 /* These will cause binary debugging output */
 #define DEBUG_PLOTBOX	0x80000000	/* Plot(3) bounding boxes to stdout */
