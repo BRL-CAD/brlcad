@@ -337,7 +337,7 @@ struct vertexuse *vu_p;
 		return(myhit);
 	}
 
-	GET_HITMISS(myhit);
+	GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, vu_p->v_p, myhit);
 	myhit->outbound_use = (long *)vu_p;
 	myhit->inbound_use = (long *)vu_p;
@@ -809,6 +809,7 @@ struct hitmiss *myhit;
 
 	South_min = North_min = MAX_FASTF;
 	found_faces = 0;
+	myhit->in_out = 0;
 
 	/* for every use of this vertex */
 	for ( BU_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd) ) {
@@ -1025,7 +1026,7 @@ int status;
 		/* oops, we have to change a MISS into a HIT */
 		BU_LIST_DEQUEUE(&myhit->l);
 	} else {
-		GET_HITMISS(myhit);
+		GET_HITMISS(myhit, rd->ap);
 		NMG_INDEX_ASSIGN(rd->hitmiss, vu_p->v_p, myhit);
 		myhit->outbound_use = (long *)vu_p;
 		myhit->inbound_use = (long *)vu_p;
@@ -1174,7 +1175,7 @@ struct edgeuse *eu_p;
 	vhit1->other = vhit2;
 	vhit2->other = vhit1;
 
-	GET_HITMISS(myhit);
+	GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 	myhit->hit.hit_private = (genptr_t)eu_p->e_p;
 	BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC);
@@ -1215,7 +1216,7 @@ struct edgeuse *eu_p;
 		ray_hit_vertex(rd, vu_p, NMG_VERT_ENTER_LEAVE); \
 	else \
 		ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN); \
-	GET_HITMISS(myhit); \
+	GET_HITMISS(myhit, rd->ap); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit); \
 	myhit->hit.hit_private = (genptr_t)eu_p->e_p; \
 	BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
@@ -1497,7 +1498,7 @@ point_t pt;
 			break;
 		}
 	} else {
-		GET_HITMISS(myhit);
+		GET_HITMISS(myhit, rd->ap);
 	}
 
 	/* create hit structure for this edge */
@@ -1570,7 +1571,7 @@ struct edgeuse *eu_p;
 		vhit1 = isect_ray_vertexuse(rd, eu_p->vu_p);
 		vhit2 = isect_ray_vertexuse(rd, eu_p->eumate_p->vu_p);
 
-		GET_HITMISS(myhit);
+		GET_HITMISS(myhit, rd->ap);
 		NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 
 		myhit->hit.hit_private = (genptr_t)eu_p->e_p;
@@ -1602,7 +1603,7 @@ struct edgeuse *eu_p;
 		(void)ray_miss_vertex(rd, eu_p->eumate_p->vu_p);
 
 		/* record the fact that we missed the edge */
-		GET_HITMISS(myhit);
+		GET_HITMISS(myhit, rd->ap);
 		NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 		myhit->hit.hit_private = (genptr_t)eu_p->e_p;
 
@@ -1620,7 +1621,7 @@ struct edgeuse *eu_p;
 		ray_miss_vertex(rd, eu_p->vu_p);
 		ray_miss_vertex(rd, eu_p->eumate_p->vu_p);
 
-		GET_HITMISS(myhit);
+		GET_HITMISS(myhit, rd->ap);
 		NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 		myhit->hit.hit_private = (genptr_t)eu_p->e_p;
 
@@ -1770,7 +1771,7 @@ struct loopuse *lu_p;
 #ifndef FAST_NMG
 #define FACE_MISS(rd, f_p) {\
 	struct hitmiss *myhit; \
-	GET_HITMISS(myhit); \
+	GET_HITMISS(myhit, rd->ap); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, f_p, myhit); \
 	myhit->hit.hit_private = (genptr_t)f_p; \
 	BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
@@ -1780,7 +1781,7 @@ struct loopuse *lu_p;
 #else
 #define FACE_MISS(rd, f_p) {\
 	struct hitmiss *myhit; \
-	GET_HITMISS(myhit); \
+	GET_HITMISS(myhit, rd->ap); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, f_p, myhit); \
 	myhit->hit.hit_private = (genptr_t)f_p; \
 	BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
@@ -2049,7 +2050,7 @@ struct face_g_plane *fg_p;
 			rd->tol);
 
 
-	GET_HITMISS(myhit);
+	GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 	myhit->inbound_use = myhit->outbound_use = &fu_p->l.magic;
@@ -2178,7 +2179,7 @@ struct faceuse *fu_p;
 		code = bn_isect_line3_plane( &dist, rd->rp->r_pt, rd->rp->r_dir, fgp->N, rd->tol );
 		if( code < 1 )
 		{
-			GET_HITMISS(myhit);
+			GET_HITMISS(myhit, rd->ap);
 			NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 			BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
@@ -2194,7 +2195,7 @@ struct faceuse *fu_p;
 		VJOIN1( hit_pt, rd->rp->r_pt, dist, rd->rp->r_dir )
 		if( !V3PT_IN_RPP( hit_pt, fp->min_pt, fp->max_pt ) )
 		{
-			GET_HITMISS(myhit);
+			GET_HITMISS(myhit, rd->ap);
 			NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 			BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
@@ -2213,7 +2214,7 @@ struct faceuse *fu_p;
 	}
 	else if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 	    fu_p->f_p->min_pt, fu_p->f_p->max_pt) ) {
-		GET_HITMISS(myhit);
+		GET_HITMISS(myhit, rd->ap);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
@@ -2646,6 +2647,9 @@ struct bn_tol *tol;
 	ap.a_resource = &rt_uniresource;
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
 
+	if( BU_LIST_UNINITIALIZED( &rt_uniresource.re_nmgfree ) )
+		BU_LIST_INIT( &rt_uniresource.re_nmgfree );
+
 	rd.rd_m = nmg_find_model( &s->l.magic );
 	rd.manifolds = nmg_manifolds(rd.rd_m);
 
@@ -2703,6 +2707,8 @@ struct bn_tol *tol;
 		BU_LIST_DEQUEUE( &a_hit->l );
 		rt_free( (char *)a_hit, "Miss list hitmiss struct" );
 	}
+#else
+	NMG_FREE_HITLIST( &rd.rd_miss, &ap );
 #endif
 	/* count the number of hits */
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
@@ -2792,7 +2798,20 @@ out:
 		BU_LIST_DEQUEUE( &a_hit->l );
 		rt_free( (char *)a_hit, "hit list hitmiss struct" );
 	}
+#else
+	NMG_FREE_HITLIST( &rd.rd_hit, &ap );
 #endif
+
+	/* free the hitmiss freelist */
+	if( !BU_LIST_UNINITIALIZED( &rt_uniresource.re_nmgfree ) )  {
+		struct hitmiss *hitp;
+		while( BU_LIST_WHILE( hitp, hitmiss, &rt_uniresource.re_nmgfree ) )  {
+			NMG_CK_HITMISS(hitp);
+			BU_LIST_DEQUEUE( (struct bu_list *)hitp );
+			bu_free( (genptr_t)hitp, "struct hitmiss" );
+		}
+	}
+
 	/* free the hitmiss table */
 	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
 
