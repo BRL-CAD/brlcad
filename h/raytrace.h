@@ -2125,6 +2125,14 @@ RT_EXTERN(int			nmg_class_pt_s, (CONST point_t pt,
 				CONST struct shell *s,
 				CONST struct rt_tol *tol) );
 
+/* From nmg_pt_fu.c */
+RT_EXTERN(struct fu_pt_info *	nmg_class_pt_fu_except, (point_t pt,
+				CONST struct faceuse *fu,
+				CONST struct loopuse *ignore_lu,
+				void (*eu_func)(), void (*vu_func)(),
+				char *priv, CONST int allhits,
+				CONST struct rt_tol *tol) );
+
 /* From nmg_plot.c */
 /* add nmg_xxx_to_vlist routines here */
 RT_EXTERN(void			nmg_pl_v, (FILE	*fp, CONST struct vertex *v,
