@@ -255,6 +255,17 @@ typedef long	bitv_t;		/* largest integer type */
 #define PARALLEL	1
 #endif
 
+#ifdef ipsc860
+/********************************
+ *				*
+ *   Intel iPSC/860 Hypercube	*
+ *				*
+ ********************************/
+/* icc compiler gets confused on const typedefs */
+#define	CONST	/**/
+#define	const	/**/
+#endif
+
 #ifndef LOCAL
 /********************************
  *				*
