@@ -26,6 +26,9 @@ overlap			*find_ovlp();
 void			del_ovlp();
 void			init_ovlp();
 
+extern int	rt_defoverlap( struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp );
+	
+
 int if_hit(ap, part_head, finished_segs)
 struct application	*ap;
 struct partition 	*part_head;
@@ -225,11 +228,12 @@ int if_miss()
  *	Date stolen:	29 March 1990
  */
 int
-if_overlap( ap, pp, reg1, reg2 )
+if_overlap( ap, pp, reg1, reg2, InputHdp )
 register struct application	*ap;
 register struct partition	*pp;
 struct region			*reg1;
 struct region			*reg2;
+struct partition		*InputHdp;
 
 {
     overlap	*new_ovlp;
@@ -254,9 +258,8 @@ struct region			*reg2;
     new_ovlp -> forw -> backw = new_ovlp;
     ovlp_list.forw = new_ovlp;
 
-    /* Match BRL-CAD 4.4's accidental behavior: take lower bit */
-    if( reg1->reg_bit < reg2->reg_bit )  return 1;
-    else return 2;
+    /* Match current BRL-CAD default behavior */
+    return( rt_defoverlap (ap, pp, reg1, reg2, InputHdp ) );
 }
 
 /*
