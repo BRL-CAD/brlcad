@@ -342,6 +342,7 @@ register struct rt_i *rtip;
 
 	/* Free array of solid table pointers indexed by solid ID */
 	for( i=0; i <= ID_MAXIMUM; i++ )  {
+		if( rtip->rti_nsol_by_type[i] <= 0 )  continue;
 		rt_free( (char *)rtip->rti_sol_by_type[i], "sol_by_type" );
 		rtip->rti_sol_by_type[i] = (struct soltab **)0;
 	}
