@@ -180,6 +180,7 @@
 #endif
 
 #if SUNOS > 55
+#	define USE_PROTOTYPES   1	
 #	define HAVE_SBRK_DECL	1
 #	define HAVE_GETOPT_DECL	1
 #	define HAVE_MEMORY_H	1
