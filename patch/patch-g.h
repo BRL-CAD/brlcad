@@ -80,6 +80,7 @@ char *title = "Untitled MGED database";	/* database title */
 char *top_level = "all"; /* top-level node name in the database */
 int rev_norms = 0;	/* reverse normals for plate mode triangles */
 int polysolid = 0;	/* convert triangle-facetted objects to polysolids */
+int arb6 = 0;		/* flag: convert plate-mode objects to arb6s */
 
 mat_t	m;
 char *patchfile;
