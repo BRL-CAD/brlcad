@@ -25,5 +25,5 @@ dist_tcl_SCRIPTS = \
 	ViewAxesControl.tcl
 
 install-data-hook:
-	${top_builddir}/bwish/btclsh $(top_srcdir)/tclscripts/ami.tcl $(tcldir)
+	${top_builddir}/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(tcldir)
 
