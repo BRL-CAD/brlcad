@@ -278,7 +278,15 @@ set -S2 "/bin/sh"
  *	necessary.  However, this prevents PIXIE from working...
  */
 #	undef	sgi
-#	define	GFLAG		-G 16
+#	if 0
+/*		This version for production optimization */
+#		define	OPTIMIZER	-O2
+#		define	GFLAG		-G 16
+#	else
+/*		This version for DBX */
+#		define	OPTIMIZER	-g
+#		define	GFLAG		-G 16
+#	endif
 #	define	MTYPE	4d
 #	define  CC_OPTS		GFLAG
 #	if 1
@@ -333,7 +341,6 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	LD_OPTS		GFLAG
-#	define	OPTIMIZER	-O2
 #	define	RANLIB	ranlib5.sh
 #	define	GETHOST	hostname
 #	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
@@ -488,9 +495,9 @@ set -S2 "/bin/sh"
 #	define	RT_LIBES	-L/lib/multi -lu -lio
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DOLDTCP
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
 #	define	LIBFB_OBJS	if_remote pkg if_ab
-#	if 1
+#	if 0
 /*		On XMP UNICOS 4.0, archives finally end in .a */
 #		define	ARCH_SUF	a
 #		define	FC	/bin/cf77
