@@ -975,7 +975,10 @@ int flag;
 	}
 	else if( dp->d_flags & DIR_COMB )
 	{
+		int cur_length;
+
 		bu_ptbl_ins( cur_path, (long *)dp );
+		cur_length = BU_PTBL_END( cur_path );
 
 		for( i=0 ; i<actual_count ; i++ )
 		{
@@ -992,6 +995,7 @@ int flag;
 			/* recurse */
 			bn_mat_mul( new_mat, old_mat, tree_list[i].tl_tree->tr_l.tl_mat );
 			new_tables( nextdp, cur_path, new_mat, flag );
+			bu_ptbl_trunc( cur_path, cur_length );
 		}
 	}
 	else
