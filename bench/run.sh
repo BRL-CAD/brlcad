@@ -10,16 +10,18 @@ if test -f ../.rt.$MACHINE/rt
 then
 	RT=../.rt.$MACHINE/rt
 	DB=../.db.$MACHINE
+	LD_LIBRARY_PATH=../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
 else
-	if test -f ../rt/rt
+	if test ! -f ../rt/rt
 	then
-		RT=../rt/rt
-		DB=../db
-	else
 		echo "Can't find RT"
 		exit 1
 	fi
+	RT=../rt/rt
+	DB=../db
+	LD_LIBRARY_PATH=../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
 fi
+export LD_LIBRARY_PATH
 
 CMP=./pixcmp
 if test ! -f $CMP
