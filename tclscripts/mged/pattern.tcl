@@ -57,7 +57,7 @@ proc create_new_name { leaf sstr rstr increment } {
 }
 
 proc copy_tree { args } {
-	set usage "Usage:\n\t copy_tree  \[-s source_string replacement_string | -i increment\] \[-solids\] tree_to_be_copied"
+	set usage "Usage:\n\t copy_tree  \[-s source_string replacement_string | -i increment\] \[-primitives\] tree_to_be_copied"
 	set sstr ""
 	set rstr ""
 	set increment 0
@@ -87,9 +87,9 @@ proc copy_tree { args } {
 				set increment [lindex $args $index]
 				set opt_str "$opt_str -i $increment"
 			}
-			"-solids" {
-				set depth "solids"
-				set opt_str "$opt_str -solids"
+			"-primitives" {
+				set depth "primitives"
+				set opt_str "$opt_str -primitives"
 			}
 			"-regions" {
 				set depth "regions"
@@ -112,8 +112,8 @@ proc copy_tree { args } {
 				return [list "l" $leaf]
 			}
 			set type [lindex $leaf_db 0]
-			if { $type != "comb" && $depth != "solids" } {
-				# we have reached a leaf solid, but we don't want to copy the solids
+			if { $type != "comb" && $depth != "primitives" } {
+				# we have reached a leaf primitive, but we don't want to copy the primitives
 				return $tree
 			}
 			if { [llength $tree] == 3 } {
@@ -126,7 +126,7 @@ proc copy_tree { args } {
 			set new_name [create_new_name $leaf $sstr $rstr $increment]
 
 			if { $type != "comb" } {
-				# this is a solid
+				# this is a primitive
 				if { [catch {eval db put $new_name $leaf_db} ret] } {
 					error "Cannot create copy of primitive $leaf as $new_name\n\t$ret"
 				}
@@ -171,7 +171,7 @@ proc copy_tree { args } {
 					# set region ident according to regdef
 					set regdef [regdef]
 					set id [lindex $regdef 1]
-					if { [catch {db adjust $new_name id $id} ret] } {
+				    if { [catch {db adjust $new_name id $id} ret] } {
 						error "Cannot adjust ident number for region ($new_name)!!!!\n\t$ret"
 					}
 					incr id
@@ -194,7 +194,7 @@ proc copy_tree { args } {
 }
 
 proc copy_obj { args } {
-	set usage "Usage:\n\tcopy_obj \[-s source_string replacement_string | -i increment\] \[-solids\] object_to_be_copied"
+	set usage "Usage:\n\tcopy_obj \[-s source_string replacement_string | -i increment\] \[-primitives\] object_to_be_copied"
 	set sstr ""
 	set rstr ""
 	set increment 0
@@ -225,9 +225,9 @@ proc copy_obj { args } {
 				set increment [lindex $args $index]
 				set opt_str "$opt_str -i $increment"
 			}
-			"-solids" {
-				set depth "solids"
-				set opt_str "$opt_str -solids"
+			"-primitives" {
+				set depth "primitives"
+				set opt_str "$opt_str -primitives"
 			}
 			"-regions" {
 				set depth "regions"
@@ -247,11 +247,11 @@ proc copy_obj { args } {
 
 	set type [lindex $obj_db 0]
 	if { $type != "comb" } {
-		# object is a primitive solid
-		if { $depth != "solids" } {
-			error "Trying to copy a primitive solid ($obj) with depth at regions!!!!"
+		# object is a primitive
+		if { $depth != "primitives" } {
+			error "Trying to copy a primitive ($obj) with depth at regions!!!!"
 		}
-		# just copy the solid to a new name
+		# just copy the primitive to a new name
 		set new_name [create_new_name $obj $sstr $rstr $increment]
 		if { [catch {eval db put $new_name $obj_db} ret] } {
 			error "cannot copy $obj to $new_name!!!\n\t$ret"
@@ -307,7 +307,7 @@ proc copy_obj { args } {
 		# set region ident according to regdef
 		set regdef [regdef]
 		set id [lindex $regdef 1]
-		if { [catch {db adjust new_name id $id} ret] } {
+		if { [catch {db adjust $new_name id $id} ret] } {
 			error "Cannot adjust ident number for region ($new_name)!!!!\n\t$ret"
 		}
 		incr id
@@ -327,7 +327,7 @@ proc obj_exists { obj_name } {
 
 
 proc pattern_rect { args } {
-    	set usage "Usage:\n\tpattern_rect \[-top|-regions|-solids\] \[-g group_name\] \
+    	set usage "Usage:\n\tpattern_rect \[-top|-regions|-primitives\] \[-g group_name\] \
 		 \[-xdir { x y z }\] \[-ydir { x y z }\] \[-zdir { x y z }\] \
 		\[-nx num_x -dx delta_x | -lx list_of_x_values\]\n\t\t \
 		\[-ny num_y -dy delta_y | -ly list_of_y_values\] \[-nz num_z -dz delta_z | -lz list_of_z_values\] \
@@ -370,9 +370,9 @@ proc pattern_rect { args } {
 				set opt_str "$opt_str -regions"
 				incr index
 			}
-			"-solids" {
-				set depth solids
-				set opt_str "$opt_str -solids"
+			"-primitives" {
+				set depth primitives
+				set opt_str "$opt_str -primitives"
 				incr index
 			}
 			"-g" {
@@ -566,7 +566,7 @@ proc pattern_rect { args } {
 								lappend group_list $new_name
 							}
 						}
-						"solids" {
+						"primitives" {
 							set new_name [eval copy_obj $opt_str -i $increment $obj]
 							apply_mat -$depth $mat $new_name
 							if { $group_name != "" } {
@@ -595,7 +595,7 @@ proc pattern_sph { args } {
 	global M_PI M_PI_2
 
 	init_vmath
-	set usage "pattern_sph \[-top | -regions | -solids\] \[-g group_name\] \[-s source_string replacement_string\] \
+	set usage "pattern_sph \[-top | -regions | -primitives\] \[-g group_name\] \[-s source_string replacement_string\] \
 		\[-i tag_number_increment\] \[-center_pat {x y z}\] \[-center_obj {x y z}\] \[-rotaz\] \[-rotel\] \
 		\[-naz num_az -daz delta_az | -laz list_of_azimuths\] \
 		\[-nel num_el -del delta_el | -lel list_of_elivations\] \
@@ -649,9 +649,9 @@ proc pattern_sph { args } {
 				set opt_str "$opt_str -regions"
 				incr index
 			}
-			"-solids" {
-				set depth solids
-				set opt_str "$opt_str -solids"
+			"-primitives" {
+				set depth primitives
+				set opt_str "$opt_str -primitives"
 				incr index
 			}
 			"-g" {
@@ -879,7 +879,7 @@ proc pattern_sph { args } {
 								lappend group_list $new_name
 							}
 						}
-						"solids" {
+						"primitives" {
 							set new_name [eval copy_obj $opt_str -i $increment $obj]
 							apply_mat -$depth $mat $new_name
 							if { $group_name != "" } {
@@ -916,7 +916,7 @@ proc pattern_cyl { args } {
 
 	init_vmath
 
-	set usage "pattern_cyl \[-top | -region | -solids\] \[-g group_name]\ \[-s source_string replacemrnt_string\] \
+	set usage "pattern_cyl \[-top | -region | -primitives\] \[-g group_name]\ \[-s source_string replacemrnt_string\] \
 		\[-i tag_number_increment\] \[-rot\] \[-center_obj {x y z}\] \[-center_base {x y z}\] \[-height_dir {x y z}\] \
 		\[-start_az_dir {x y z}\] \
 		\[-naz num_az -daz delta_az | -laz list_of_azimuths\] \
@@ -968,9 +968,9 @@ proc pattern_cyl { args } {
 				set opt_str "$opt_str -regions"
 				incr index
 			}
-			"-solids" {
-				set depth solids
-				set opt_str "$opt_str -solids"
+			"-primitives" {
+				set depth primitives
+				set opt_str "$opt_str -primitives"
 				incr index
 			}
 			"-g" {
@@ -1199,7 +1199,7 @@ proc pattern_cyl { args } {
 								lappend group_list $new_name
 							}
 						}
-						"solids" {
+						"primitives" {
 							set new_name [eval copy_obj $opt_str -i $increment $obj]
 							apply_mat -$depth $mat $new_name
 							if { $group_name != "" } {

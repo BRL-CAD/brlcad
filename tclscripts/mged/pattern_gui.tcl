@@ -160,7 +160,7 @@ body pattern_control::constructor {} {
 
     $itk_component(m_combo_r) add command -label Top -command "set combovar_r Top ; $windowtag update_depth r top"
     $itk_component(m_combo_r) add command -label Regions -command "set combovar_r Regions ; $windowtag update_depth r regions"
-    $itk_component(m_combo_r) add command -label Primitives -command "set combovar_r Primitives ; $windowtag update_depth r solids"
+    $itk_component(m_combo_r) add command -label Primitives -command "set combovar_r Primitives ; $windowtag update_depth r primitives"
 
     $itk_component(b_combo_r) configure -menu $itk_component(m_combo_r)
 
@@ -519,7 +519,7 @@ body pattern_control::constructor {} {
 
     $itk_component(m_combo_s) add command -label Top -command "set combovar_s Top ; $windowtag update_depth s top"
     $itk_component(m_combo_s) add command -label Regions -command "set combovar_s Regions ; $windowtag update_depth s regions"
-    $itk_component(m_combo_s) add command -label Primitives -command "set combovar_s Primitives ; $windowtag update_depth s solids"
+    $itk_component(m_combo_s) add command -label Primitives -command "set combovar_s Primitives ; $windowtag update_depth s primitives"
 
     $itk_component(b_combo_s) configure -menu $itk_component(m_combo_s)
 
@@ -911,7 +911,7 @@ body pattern_control::constructor {} {
 
     $itk_component(m_combo_c) add command -label Top -command "set combovar_c Top ; $windowtag update_depth c top"
     $itk_component(m_combo_c) add command -label Regions -command "set combovar_c Regions ; $windowtag update_depth c regions"
-    $itk_component(m_combo_c) add command -label Primitives -command "set combovar_c Primitives ; $windowtag update_depth c solids"
+    $itk_component(m_combo_c) add command -label Primitives -command "set combovar_c Primitives ; $windowtag update_depth c primitives"
 
     $itk_component(b_combo_c) configure -menu $itk_component(m_combo_c)
 

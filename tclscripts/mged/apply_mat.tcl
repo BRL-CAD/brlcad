@@ -11,7 +11,7 @@
 #
 # procedure to apply the provided matrix to the provided tree
 # recurses until a region is encountered, where the matrix is applied at each leaf arc of the region.
-# The matrix is not applied to any solid encountered above the region level.
+# The matrix is not applied to any primitive encountered above the region level.
 # 
 # Returns a new tree with the matrix applied
 
@@ -24,7 +24,7 @@ proc apply_mat_to_regions { tree mat } {
 			set new_leaf [db get $leaf]
 			set type [lindex $new_leaf 0]
 			if { $type != "comb" } {
-				puts "WARNING: encountered solid ($leaf) above region level!!!, ignoring"
+				puts "WARNING: encountered primitive ($leaf) above region level!!!, ignoring"
 				return $tree
 			}
 			if { [llength $tree] == 3 } {
@@ -111,13 +111,13 @@ proc apply_mat_comb { tree mat } {
 #	A P P L Y _ M A T
 #
 # This procedure applies the provided matrix to the list of objects specified.
-# One of the "-solids", "-regions", or "-top" options may be provided to specify
+# One of the "-primitives", "-regions", or "-top" options may be provided to specify
 # where the matrix is to be applied (the default is "-top").
 #
-# If an object specified is a primitive solid, the matrix is pushed into the solid.
+# If an object specified is a primitive, the matrix is pushed into the primitive.
 #
-# If "-solids" is specified, then the matrix is applied at the top level object
-# and "xpush" is used to push the changes to the solid level.
+# If "-primitives" is specified, then the matrix is applied at the top level object
+# and "xpush" is used to push the changes to the primitive level.
 #
 # If "-regions" is specified, then the matrix is applied to each leaf in the first regions
 # encountered as the tree is descended (matrices along the way are incorporated).
@@ -128,7 +128,7 @@ proc apply_mat_comb { tree mat } {
 # Returns TCL_ERROR or TCL_OK
 
 proc apply_mat { args } {
-	set usage "Usage:\n\tapply_mat \[-solids | -regions | -top\] matrix object1 \[object2 object3 ...\]"
+	set usage "Usage:\n\tapply_mat \[-primitives | -regions | -top\] matrix object1 \[object2 object3 ...\]"
 	set argc [llength $args]
 	if { $argc < 1 } {
 		error $usage
@@ -140,8 +140,8 @@ proc apply_mat { args } {
 	while { $index < $argc } {
 		set opt [lindex $args $index]
 		switch -- $opt {
-			"-solids" {
-				set depth "solids"
+			"-primitives" {
+				set depth "primitives"
 				incr index
 			}
 			"-regions" {
@@ -175,7 +175,7 @@ proc apply_mat { args } {
 
 		set type [lindex $obj_db 0]
 		if { $type != "comb" } {
-			# this is a primitive solid, so just apply the matrix
+			# this is a primitive, so just apply the matrix
 			# using a temporary combination and a "push"
 			set tmp [make_name ____]
 			db put $tmp comb region no tree [list l $obj $mat]
@@ -193,7 +193,7 @@ proc apply_mat { args } {
 		set obj_tree [lindex $obj_db $indx]
 
 		switch $depth {
-			"solids" {
+			"primitives" {
 				set new_tree [apply_mat_comb $obj_tree $mat]
 				db adjust $obj tree $new_tree
 				xpush $obj
