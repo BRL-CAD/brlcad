@@ -1,5 +1,7 @@
 /*
  *			remrt/Cakefile
+ *
+ *  $Header$
  */
 
 #define CONFIGDEFS	RFBD_CONFIG
@@ -50,7 +52,9 @@
 
 /* LIBRT is needed to get htond, parser, etc */
 remrt:	remrt.o OBJS LIBFB LIBRT LIBMALLOC
-	CC LDFLAGS -o remrt remrt.o OBJS REMRT_PIECES
+	sh ../newvers.sh version "Network-Distributed RT (REMRT)"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS -o remrt remrt.o vers.o OBJS REMRT_PIECES
 
 /* Specially compiled version of RT view.c */
 view.o:	../rt/view.c
