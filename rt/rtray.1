@@ -1,0 +1,109 @@
+.TH RTRAY 1B BRL/CAD
+.UC 4
+.SH NAME
+rtray \- raytrace an \fBmged\fP model, writing a VLD rayfile
+.SH SYNOPSIS
+.B rtray
+[ options ... ]
+model.g
+objects ...
+> model.ray
+.SH DESCRIPTION
+.I Rtray
+operates on the indicated
+.I objects
+in the input
+.I model.g
+and produces a VLD standard
+.I ray(5V)
+format ray file on standard output.
+The orientation of the rays to be fired may be specified by
+the
+.B \-a
+and
+.B \-e
+options, in which case the model will be autosized, and the grid
+will be centered on the centroid of the model, with ray spacing
+chosen to span the entire set of
+.I objects.
+Alternatively,
+with the
+.B \-M
+option, a transformation matrix may be provided on standard input
+which maps model-space to view-space.
+In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space,
+with the size of the grid (number of rays fired) specified with
+.B \-f
+This option is most useful when
+.B rtray
+is being invoked from a shell script created by an
+.I mged(1)
+\fIsaveview\fR command.
+.LP
+The following options are recognized.
+.TP
+.B \-f#
+Number of rays to fire in X and Y directions (square grid).
+Default is 512 (512x512), maximum is 1024 (1024x1024).
+.TP
+.B \-a#
+Select azimuth in degrees.  Used with
+.B \-e
+and conflicts With
+.B \-M
+.TP
+.B \-e#
+Select elevation in degrees.  Used with
+.B \-a
+and conflicts with
+.B \-M
+.TP
+.B \-M
+Read model2view matrix from standard input.
+Conflicts with
+.B \-a
+and
+.B \-e
+.TP
+.B \-x#
+Set debug flags to (hexadecimal) number.  Not generally useful.
+.LP
+The
+.B rtray
+program is a simple front-end to
+.I rtlib(3)
+which is most useful when used with
+.I mged(1)
+and the VLD ray filters.
+In order to convert a ray file into a minimal monochrome
+UNIX-plot image for viewing, run
+  /vld/bin/rayvect -mMM < file.ray > file.vect
+  /vld/bin/vectplot -mMM < file.vect > file.plot
+  tplot -Tmeg file.plot		# or equivalent UNIX-plot filter
+
+.SH "SEE ALSO"
+gift(1V), mged(1), rt(1), rayplot(1), rayvect(1), rtray(1), rtpp(1),
+rtlib(3), ray(5V)
+.SH DIAGNOSTICS
+Numerous error conditions are possible.
+Descriptive messages are printed on standard error (file descriptor 2).
+.SH AUTHOR
+Michael John Muuss
+.SH SOURCE
+ SECAD/VLD Computing Consortium, Bldg 394
+ The U. S. Army Ballistic Research Laboratory
+ Aberdeen Proving Ground, Maryland  21005
+.SH COPYRIGHT
+This software is Copyright (C) 1985 by the United States Army.
+All rights reserved.
+.SH BUGS
+The upper limit of 1024x1024 is pointless, and should be removed.
+.LP
+Most deficiencies observed while using the
+.B rtray
+program are usually with the
+.I rtlib(3)
+package instead.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <GED@BRL.ARPA> or ...!decvax!brl-bmd!ged
