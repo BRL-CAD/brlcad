@@ -339,13 +339,35 @@ struct db_full_path *pathp;
 	for( i=0 ; i<NMG_TBL_END( &shells ) ; i++ )
 	{
 		s = (struct shell *)NMG_TBL_GET( &shells , i );
-		(void)nmg_decompose_shell( s );
+		(void)nmg_decompose_shell( s , &tol );
 	}
 
 	nmg_tbl( &shells , TBL_FREE , NULL );
 
 	/* Now triangulate the entire model */
 	nmg_triangulate_model( the_model , &tol );
+
+	/* XXXXX temporary fix for OT_UNSPEC loops */
+	for( RT_LIST_FOR( r , nmgregion , &the_model->r_hd ) )
+	{
+		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		{
+			struct faceuse *fu;
+
+			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+			{
+				struct loopuse *lu;
+
+				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				{
+					if( lu->orientation == OT_UNSPEC )
+						lu->orientation = OT_SAME;
+				}
+			}
+		}
+	}
+
+	r = RT_LIST_FIRST( nmgregion , &the_model->r_hd );
 
 	/* Need a flag array to insure that no loops are missed */
 	flags = (long *)rt_calloc( (*tsp->ts_m)->maxindex , sizeof( long ) , "g-tankill: flags" );
