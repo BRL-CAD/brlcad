@@ -38,6 +38,8 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "./complex.h"
 #include "./polyno.h"
 
+extern int	rec_prep();
+
 static void	tgc_rotate(), tgc_shear();
 static void	tgc_scale();
 void rt_pt_sort();
@@ -829,6 +831,7 @@ struct application	*ap;
 void
 rt_pt_sort( t, npts )
 register fastf_t t[];
+int npts;
 {
 	FAST fastf_t	u;
 	register short	lim, n;
