@@ -140,6 +140,7 @@ bind Menubutton <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Radiobutton <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Canvas <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Frame <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
+bind Listbox <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
 proc gui { args } {
     global tmp_hoc
