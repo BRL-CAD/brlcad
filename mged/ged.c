@@ -211,6 +211,8 @@ char **argv;
 	mat_idn( modelchanges );
 	mat_idn( ModelDelta );
 
+	rt_prep_timer();		/* Initialize timer */
+
 	new_mats();
 
 	setview( 0.0, 0.0, 0.0 );
@@ -537,7 +539,23 @@ int	non_blocking;
 		else  {
 			non_blocking++;
 		}
-		ModelDelta[15] /= factor;
+		{
+			/* Scaling (zooming) takes place around view center */
+			mat_t	scale_mat;
+			mat_t	from_Viewcenter;
+			mat_t	temp;
+
+			mat_idn( scale_mat );
+			scale_mat[15] = 1/factor;
+
+			mat_idn( from_Viewcenter );
+			from_Viewcenter[MDX] = -toViewcenter[MDX];
+			from_Viewcenter[MDY] = -toViewcenter[MDY];
+			from_Viewcenter[MDZ] = -toViewcenter[MDZ];
+			mat_mul( temp, scale_mat, toViewcenter );
+			mat_mul2( from_Viewcenter, temp );
+			mat_mul2( temp, ModelDelta );
+		}
 		dmaflag = 1;
 		new_mats();
 	}
@@ -570,14 +588,12 @@ refresh()
 	 * Otherwise, we are happy with the view we have
 	 */
 	if( dmaflag )  {
-		double	this_time;
+		double	elapsed_time;
 
 		rt_prep_timer();
 
-#if 0
-		/* XXX should check a "set" variable */
-		target_frame();
-#endif
+		if( mged_variables.predictor )
+			predictor_frame();
 
 		dmp->dmr_prolog();	/* update displaylist prolog */
 
@@ -597,11 +613,11 @@ refresh()
 
 		dmp->dmr_epilog();
 
-		this_time = rt_read_timer( (char *)0, 0 );
+		(void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
 		/* Only use reasonable measurements */
-		if( this_time > 1.0e-5 )  {
+		if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
 			/* Smoothly transition to new speed */
-			frametime = 0.9 * frametime + 0.1 * this_time;
+			frametime = 0.9 * frametime + 0.1 * elapsed_time;
 		}
 	} else {
 		/* For displaylist machines??? */
@@ -622,7 +638,6 @@ usejoy( xangle, yangle, zangle )
 double	xangle, yangle, zangle;
 {
 	mat_t	newrot;		/* NEW rot matrix, from joystick */
-	mat_t	temp;
 
 	dmaflag = 1;
 
@@ -641,13 +656,11 @@ double	xangle, yangle, zangle;
 	mat_idn( newrot );
 	buildHrot( newrot, xangle, yangle, zangle );
 
-	mat_mul( temp, newrot, Viewrot );
-	mat_copy( Viewrot, temp );
+	mat_mul2( newrot, Viewrot );
 	{
 		mat_t	newinv;
 		mat_inv( newinv, newrot );
-		mat_mul( temp, newinv, ModelDelta );
-		mat_copy( ModelDelta, temp );
+		mat_mul2( newinv, ModelDelta );
 	}
 	new_mats();
 }
@@ -692,8 +705,7 @@ vect_t view_pos;
 	VSUB2( diff, new_model_center, old_model_center );
 	mat_idn( delta );
 	MAT_DELTAS_VEC( delta, diff );
-	mat_mul( temp, delta, ModelDelta );
-	mat_copy( ModelDelta, temp );
+	mat_mul2( delta, ModelDelta );
 	new_mats();
 }
 
@@ -914,63 +926,149 @@ static struct trail	ul;
 static struct trail	lr;
 static struct trail	ur;
 
-target_frame()
+#define PREDICTOR_NAME	"_PREDIC_FRAME_"
+
+predictor_kill()
+{
+	struct rt_vls	str;
+
+	rt_vls_init( &str );
+	rt_vls_printf( &str, "kill %s\n", PREDICTOR_NAME );
+	(void)cmdline( &str );
+	rt_vls_trunc( &str, 0 );
+
+	rt_vls_strcat( &str, "kill _PREDIC_TRAIL_*\n" );
+	(void)cmdline( &str );
+	rt_vls_free( &str );
+
+	init_trail( &ll );
+	init_trail( &ul );
+	init_trail( &lr );
+	init_trail( &ur );
+}
+
+#define TF_X	0.14
+#define TF_Y	0.07
+#define TF_Z	(1.0-0.15)	/* To prevent Z clipping of TF_X */
+
+#define TF_VL( _m, _v, _op ) \
+	{ vect_t edgevect_m; \
+	MAT4X3VEC( edgevect_m, predictorXv2m, _v ); \
+	VADD2( _m, framecenter_m, edgevect_m ); \
+	RT_ADD_VLIST( &vhead, _m, _op ); }
+
+/*
+ *			P R E D I C T O R _ F R A M E
+ * 
+ *  Note that the first time through, PREDICTOR_NAME won't be found yet,
+ *  so the frame will be drawn.  As soon as motion starts & stops, it
+ *  will vanish.  Consider this a user feedback cue, acknowledging
+ *  the "set predictor=1" command.
+ */
+predictor_frame()
 {
 	int	i;
-	int	fps;
 	int	nframes;
-	mat_t	dest;
-	mat_t	temp;
+	mat_t	predictor;
+	mat_t	predictorXv2m;
 	point_t	v;		/* view coords */
 	point_t	m;		/* model coords */
 	struct rt_list	vhead;
 	struct rt_list	trail;
+	point_t	framecenter_m;
+	point_t	framecenter_v;
+	point_t	center_m;
+	vect_t	delta_v;
 
-	fps = (int)(1.0 / frametime);
-	if( fps < 1 )  fps = 1;
-
-	/* Advance one second into the future */
-	nframes = fps * 1;
-
-	/* Build view2model matrix for the future time */
-/*mat_print("ModelDelta", ModelDelta);*/
-	mat_copy( dest, view2model );
-	for( i=0; i < nframes; i++ )  {
-		mat_mul( temp, ModelDelta, dest );
-		mat_copy( dest, temp );
+	if( rateflag_rotate == 0 && rateflag_slew == 0 && rateflag_zoom == 0 )  {
+		if( db_lookup( dbip, PREDICTOR_NAME, LOOKUP_QUIET ) != DIR_NULL )  {
+			predictor_kill();
+			dmaflag = 1;
+		}
+		return;
 	}
 
-	/* Draw frame. */
-#define TF_VL( x, y, z, op ) \
-	VSET( v, x, y, z ); \
-	MAT4X3PNT( m, dest, v ); \
-	RT_ADD_VLIST( &vhead, m, op );
+	/* Advance into the future */
+	nframes = (int)(mged_variables.predictor_advance / frametime);
+	if( nframes < 1 )  nframes = 1;
 
+	/* Build view2model matrix for the future time */
+	mat_idn( predictor );
+	for( i=0; i < nframes; i++ )  {
+		mat_mul2( ModelDelta, predictor );
+	}
+	mat_mul( predictorXv2m, predictor, view2model );
+
+	MAT_DELTAS_GET_NEG( center_m, toViewcenter );
+	MAT4X3PNT( framecenter_m, predictor, center_m );
+	MAT4X3PNT( framecenter_v, model2view, framecenter_m );
+#if 0
+VPRINT("\ncenter_m", center_m);
+mat_print("ModelDelta", ModelDelta);
+VPRINT("framecenter_m", framecenter_m);
+VPRINT("framecenter_v", framecenter_v);
+	framecenter_v[Z] = TF_Z;
+VPRINT("framecenter_v", framecenter_v);
+	MAT4X3PNT( framecenter_m, view2model, framecenter_v );
+VPRINT("framecenter_m", framecenter_m);
+#endif
+
+	/* Draw frame around point framecenter_v. */
 	RT_LIST_INIT( &vhead );
-	TF_VL( -0.1, -0.1, 0.9, RT_VLIST_LINE_MOVE );
-	push_trail( &ll, m );
-	TF_VL(  0.1, -0.1, 0.9, RT_VLIST_LINE_DRAW );
-	push_trail( &lr, m );
-	TF_VL(  0.1,  0.1, 0.9, RT_VLIST_LINE_DRAW );
-	push_trail( &ur, m );
-	TF_VL( -0.1,  0.1, 0.9, RT_VLIST_LINE_DRAW );
-	push_trail( &ul, m );
-	TF_VL( -0.1, -0.1, 0.9, RT_VLIST_LINE_DRAW );
 
-	invent_solid( "_TARGET_FRAME_", &vhead, 0x00FFFFFFL );
+	VSETALL( delta_v, 0 );		/* Centering dot */
+	TF_VL( m, delta_v, RT_VLIST_LINE_MOVE );
+	TF_VL( m, delta_v, RT_VLIST_LINE_DRAW );
+
+	VSET( delta_v, -TF_X, -TF_Y, 0 );
+	TF_VL( m, delta_v, RT_VLIST_LINE_MOVE );
+#if 0
+VPRINT("delta_v", delta_v );
+VPRINT("ll_m", m );
+#endif
+	push_trail( &ll, m );
+
+	VSET( delta_v,  TF_X, -TF_Y, 0 );
+	TF_VL( m, delta_v, RT_VLIST_LINE_DRAW );
+	push_trail( &lr, m );
+
+	VSET( delta_v,  TF_X,  TF_Y, 0 );
+	TF_VL( m, delta_v, RT_VLIST_LINE_DRAW );
+	push_trail( &ur, m );
+
+	VSET( delta_v, -TF_X,  TF_Y, 0 );
+	TF_VL( m, delta_v, RT_VLIST_LINE_DRAW );
+	push_trail( &ul, m );
+
+	VSET( delta_v, -TF_X, -TF_Y, 0 );
+	TF_VL( m, delta_v, RT_VLIST_LINE_DRAW );
+
+	invent_solid( PREDICTOR_NAME, &vhead, 0x00FFFFFFL );
 
 	draw_trail( &trail, &ll );
-	invent_solid( "_TARGET_TRAIL_LL_", &trail, 0x00FF00FFL );
+	invent_solid( "_PREDIC_TRAIL_LL_", &trail, 0x00FF00FFL );
 
 	draw_trail( &trail, &lr );
-	invent_solid( "_TARGET_TRAIL_LR_", &trail, 0x0000FFFFL );
+	invent_solid( "_PREDIC_TRAIL_LR_", &trail, 0x0000FFFFL );
 
 	draw_trail( &trail, &ur );
-	invent_solid( "_TARGET_TRAIL_UR_", &trail, 0x00FF00FFL );
+	invent_solid( "_PREDIC_TRAIL_UR_", &trail, 0x00FF00FFL );
 
 	draw_trail( &trail, &ul );
-	invent_solid( "_TARGET_TRAIL_UL_", &trail, 0x0000FFFFL );
+	invent_solid( "_PREDIC_TRAIL_UL_", &trail, 0x0000FFFFL );
 
 	/* Done */
 	mat_idn( ModelDelta );
+}
+
+void
+predictor_hook()
+{
+	if( mged_variables.predictor > 0 )  {
+		/* Allocate storage? */
+	} else {
+		/* Release storage? */
+		predictor_kill();
+	}
+	dmaflag = 1;
 }
