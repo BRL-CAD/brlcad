@@ -200,7 +200,7 @@ char **argv;
 		exit(0);
 	}
 
-	if( (fbp = fb_open( "vj:0", 0, 0 ) ) == 0 )  {
+	if( (fbp = fb_open( NULL, 0, 0 ) ) == 0 )  {
 		fprintf(stderr,"rtnode: fb_open() failed\n");
 		exit(1);
 	}
