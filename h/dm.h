@@ -222,6 +222,7 @@ extern fastf_t dm_Xx2Normal();
 extern int dm_Normal2Xx();
 extern fastf_t dm_Xy2Normal();
 extern int dm_Normal2Xy();
+extern void dm_fogHint();
 extern int dm_processOptions();
 extern int dm_limit();
 extern int dm_unlimit();
@@ -229,10 +230,10 @@ extern fastf_t dm_wrap();
 extern void Nu_void();
 extern int Nu_int0();
 extern unsigned Nu_unsign();
+#if 0
 extern void dm_configureWindowShape();
 extern void dm_zbuffer();
 extern void dm_lighting();
-#if 0
 extern Tcl_Interp *interp;   /* This must be defined by the application */
 #endif
 
