@@ -1808,8 +1808,17 @@ char *buf;
 		goto out;
 	}
 
-	if( (sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime )) < 0.1 )
-		sp->sr_l_elapsed = 0.1;
+	/*
+	 *  If the elapsed time is less than MIN_ELAPSED_TIME, the package
+	 *  was probably waiting in either the kernel's or libraries
+	 *  input buffer.  Don't use these statistics.
+	 */
+#define MIN_ELAPSED_TIME	0.1
+	if( (sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime )) < MIN_ELAPSED_TIME )
+		sp->sr_l_elapsed = MIN_ELAPSED_TIME;
+
+	/* Consider the next assignment to have been sent "now" */
+	(void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
 
 	i = struct_import( (char *)&info, desc_line_info, buf );
 	if( i < 0 || i != info.li_len )  {
@@ -1898,22 +1907,26 @@ char *buf;
 			info.li_startpix, info.li_endpix+1 );
 	}
 
-	/* Stash the statistics that came back */
+	/*
+	 *  Stash the statistics that came back.
+	 *  Only perform weighted averages if elapsed times are reasonable.
+	 */
 	fr->fr_nrays += info.li_nrays;
 	fr->fr_cpu += info.li_cpusec;
-	sp->sr_l_el_rate = npix / sp->sr_l_elapsed;
-#define BLEND	0.8
-	sp->sr_w_elapsed = BLEND * sp->sr_w_elapsed +
-		(1.0-BLEND) * sp->sr_l_el_rate;
-	sp->sr_w_rays = BLEND * sp->sr_w_rays +
-		(1.0-BLEND) * (info.li_nrays/sp->sr_l_elapsed);
-	sp->sr_sendtime = tvnow;		/* struct copy */
-	sp->sr_l_cpu = info.li_cpusec;
-	sp->sr_s_cpu += info.li_cpusec;
-	sp->sr_s_elapsed += sp->sr_l_el_rate;
-	sp->sr_sq_elapsed += sp->sr_l_el_rate * sp->sr_l_el_rate;
-	sp->sr_nsamp++;
 	sp->sr_l_percent = info.li_percent;
+	if( sp->sr_l_elapsed > MIN_ELAPSED_TIME )  {
+		sp->sr_l_el_rate = npix / sp->sr_l_elapsed;
+#define BLEND	0.8
+		sp->sr_w_elapsed = BLEND * sp->sr_w_elapsed +
+			(1.0-BLEND) * sp->sr_l_el_rate;
+		sp->sr_w_rays = BLEND * sp->sr_w_rays +
+			(1.0-BLEND) * (info.li_nrays/sp->sr_l_elapsed);
+		sp->sr_l_cpu = info.li_cpusec;
+		sp->sr_s_cpu += info.li_cpusec;
+		sp->sr_s_elapsed += sp->sr_l_el_rate;
+		sp->sr_sq_elapsed += sp->sr_l_el_rate * sp->sr_l_el_rate;
+		sp->sr_nsamp++;
+	}
 
 	/* Remove from work list */
 	list_remove( &(sp->sr_work), info.li_startpix, info.li_endpix );
