@@ -180,7 +180,7 @@ struct nmg_ptbl {
 #define NMG_LOOPUSE_MAGIC	0x78787878
 #define NMG_LOOPUSE_A_MAGIC	bogus_nmg_loopuse_a_magic;
 #define NMG_EDGE_MAGIC		0x33333333
-#define NMG_EDGE_G_MAGIC	0x6c696768
+#define NMG_EDGE_G_MAGIC	bogus_nmg_edge_g_magic;
 #define NMG_EDGE_G_LSEG_MAGIC	0x6c696768
 #define NMG_EDGE_G_CNURB_MAGIC	0x636e7262	/* was RT_CNURB_MAGIC */
 #define NMG_EDGEUSE_MAGIC	0x90909090
@@ -218,7 +218,7 @@ struct nmg_ptbl {
 #define NMG_CK_LOOPUSE(_p)	NMG_CKMAG(_p, NMG_LOOPUSE_MAGIC, "loopuse")
 #define NMG_CK_LOOPUSE_A(_p)	bogus_ck_loopuse_a;
 #define NMG_CK_EDGE(_p)		NMG_CKMAG(_p, NMG_EDGE_MAGIC, "edge")
-#define NMG_CK_EDGE_G(_p)	NMG_CKMAG(_p, NMG_EDGE_G_MAGIC, "edge_g")
+#define NMG_CK_EDGE_G(_p)	bogus_ck_edge_g;
 #define NMG_CK_EDGE_G_LSEG(_p)	NMG_CKMAG(_p, NMG_EDGE_G_LSEG_MAGIC, "edge_g_lseg")
 #define NMG_CK_EDGE_G_CNURB(_p)	NMG_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "edge_g_cnurb")
 #define NMG_CK_EDGEUSE(_p)	NMG_CKMAG(_p, NMG_EDGEUSE_MAGIC, "edgeuse")
@@ -511,11 +511,7 @@ struct loopuse {
  *  geometry's parameter space.  (cnurbs only)
  */
 struct edge {
-#if OLD_NMG
 	long			magic;
-#else
-	struct rt_list		l;
-#endif
 	struct edgeuse		*eu_p;	/* Ptr to one use of this edge */
 #if OLD_NMG
 	struct edge_g		*eg_p;  /* geometry */
@@ -526,22 +522,21 @@ struct edge {
 
 struct edge_g_lseg {
 	long			magic;
-#if OLD_NMG
+#if 0
 	long			usage;	/* # of uses of this geometry */
 #else
-	struct rt_list		e_hd;	/* heads list of edges on this line */
+	struct rt_list		eu_hd2;	/* heads l2 list of edgeuses on this line */
 #endif
 	point_t			e_pt;	/* parametric equation of the line */
 	vect_t			e_dir;
 	long			index;	/* struct # in this model */
 };
 
-/* !OLD_NMG */
 /* The ctl_points on this curve are (u,v) values on the face's surface */
 /* If order <= 0, cnurb is straight line seg in param space, with null knots and ctl_points */
 struct edge_g_cnurb {
 	long			magic;
-	struct rt_list		e_hd;	/* heads list of edges on this curve */
+	struct rt_list		eu_hd2;	/* heads l2 list of edgeuses on this curve */
 	int			order;	/* Curve Order */
 	struct knot_vector	knot;	/* curve knot vector */
 	/* curve control polygon */
@@ -551,8 +546,21 @@ struct edge_g_cnurb {
 	long			index;	/* struct # in this model */
 };
 
+/* XXX move to rtlist.h */
+/*
+ *  When a structure of type '_type' contains more than one rt_list structure
+ *  within it (such as the NMG edgeuse), this macro can be used to convert
+ *  a pointer '_ptr2' to a "midway" rt_list structure (an element called
+ *  '_name2' in structure '_type') back into a pointer to the overall
+ *  enclosing structure.  For example:
+ *		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
+ */  
+#define RT_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
+	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
+
 struct edgeuse {
 	struct rt_list		l;	/* cw/ccw edges in loop or wire edges in shell */
+	struct rt_list		l2;	/* member of edge_g's eu_hd2 list */
 	union {
 		struct loopuse	*lu_p;
 		struct shell	*s_p;
@@ -677,7 +685,7 @@ struct vertexuse_a_cnurb {
 #define GET_LOOPUSE(p,m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p,m);}
 #define GET_LOOPUSE_A(p,m)  bogus_get_loopuse_a;
 #define GET_EDGE(p,m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE_G(p,m)	    {NMG_GETSTRUCT(p, edge_g); (p)->usage = 1; NMG_INCR_INDEX(p,m);}
+#define GET_EDGE_G(p,m)	    bogus_get_edge_g;
 #define GET_EDGE_G_LSEG(p,m)  {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p,m);}
 #define GET_EDGE_G_CNURB(p,m) {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p,m);}
 #define GET_EDGEUSE(p,m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p,m);}
@@ -706,7 +714,7 @@ struct vertexuse_a_cnurb {
 #define FREE_LOOPUSE(p)	    NMG_FREESTRUCT(p, loopuse)
 #define FREE_LOOPUSE_A(p)   NMG_FREESTRUCT(p, loopuse_a)
 #define FREE_EDGE(p)	    NMG_FREESTRUCT(p, edge)
-#define FREE_EDGE_G(p)	    if (--((p)->usage) <= 0)  NMG_FREESTRUCT(p, edge_g)
+#define FREE_EDGE_G(p)	    bogus_free_edge_g;
 #define FREE_EDGE_G_LSEG(p)  NMG_FREESTRUCT(p, edge_g_lseg)
 #define FREE_EDGE_G_CNURB(p) NMG_FREESTRUCT(p, edge_g_cnurb)
 #define FREE_EDGEUSE(p)	    NMG_FREESTRUCT(p, edgeuse)

@@ -3642,15 +3642,15 @@ struct vertex	*v;
 struct edgeuse	*eu;
 {
 	struct edgeuse	*new_eu;
-	struct edge_g	*eg;
+	struct edge_g_lseg	*eg;
 
 	NMG_CK_EDGEUSE(eu);
 	eg = eu->e_p->eg_p;
 
 	/* nmg_esplit() will delete eu->e_p, so if geom is present, save it! */
 	if( eg )  {
-		NMG_CK_EDGE_G(eg);
-		eg->usage++;
+		NMG_CK_EDGE_G_LSEG(eg);
+		/* eg->usage++; */	/* ??? */
 	}
 
 	new_eu = nmg_esplit(v, eu);	/* Do the hard work */
@@ -3669,7 +3669,7 @@ struct edgeuse	*eu;
 	}
 
 	/* Make sure the two edges share the same geometry. */
-	NMG_CK_EDGE_G(eg);
+	NMG_CK_EDGE_G_LSEG(eg);
 
 	/* Both these edges should be fresh, without geometry yet. */
 	if( eu->e_p->eg_p )   {
@@ -3821,7 +3821,7 @@ struct edgeuse	*eu1_first;
 	struct edgeuse	*eu1;
 	struct edgeuse	*eu2;
 	struct edge	*e1;
-	struct edge_g	*eg;
+	struct edge_g_lseg	*eg;
 	struct vertexuse *vu;
 	struct vertex	*vb = 0;
 	struct vertex	*vc;
@@ -3838,11 +3838,11 @@ struct edgeuse	*eu1_first;
 		ret = -1;
 		goto out;
 	}
-	NMG_CK_EDGE_G(eg);
+	NMG_CK_EDGE_G_LSEG(eg);
 
-	/* if the edge geometry doesn't have at least two uses, this
+	/* if the edge geometry doesn't have at least four edgeuses, this
 	 * is not a candidate for unbreaking */		
-	if( eg->usage < 2 )  {
+	if( rt_list_len( &eg->eu_hd2 ) < 2*2 )  {
 		ret = -2;
 		goto out;
 	}
@@ -4049,45 +4049,41 @@ register struct edgeuse	*eu;
  *  XXX In keeping with other names, this should probably be called nmg_jeg().
  *
  *  XXX The algorithm needs to be changed when edge_g get linked lists of edges.
+ *
+ *  This algorithm does not make sense to use on edge_g_cnurb's;  they
+ *  only make sense in the parameter space of their associated face.
  */
 void
 nmg_move_eg( old_eg, new_eg, s )
-struct edge_g	*old_eg;
-struct edge_g	*new_eg;
+struct edge_g_lseg	*old_eg;
+struct edge_g_lseg	*new_eg;
 struct shell	*s;
 {
-	struct  faceuse		*fu;
-	struct face		*f;
-	struct loopuse		*lu;
-	struct loop		*l;
 	register struct edgeuse		*eu;
 	register struct edge		*e;
-	register struct edgeuse	**eup;
-	struct nmg_ptbl		eutab;
 
-	NMG_CK_EDGE_G(old_eg);
-	NMG_CK_EDGE_G(new_eg);
+	NMG_CK_EDGE_G_LSEG(old_eg);
+	NMG_CK_EDGE_G_LSEG(new_eg);
 	NMG_CK_SHELL(s);
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_move_eg( old_eg=x%x, new_eg=x%x, s=x%x )\n",
 			old_eg, new_eg, s );
 	}
 
-	/* XXX Replace with walk of eg eu list */
-	nmg_edgeuse_with_eg_tabulate( &eutab, nmg_find_model(&s->l.magic), old_eg );
+	while( RT_LIST_NON_EMPTY( &old_eg->eu_hd2 ) )  {
+		struct rt_list	*midway;	/* &eu->l2, midway into edgeuse */
+		midway = RT_LIST_FIRST(rt_list, &old_eg->eu_hd2 );
+		RT_LIST_DEQUEUE( midway );
+		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
+		NMG_CK_EDGEUSE(eu);
 
-	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
-	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab);
-	     eup--
-	)  {
-		NMG_CK_EDGEUSE(*eup);
-		e = (*eup)->e_p;
+		e = eu->e_p;
 		NMG_CK_EDGE(e);
-		/* Another use of this edge may have fix things already */
-		if( e->eg_p != old_eg )  continue;
-		nmg_use_edge_g( e, new_eg );
+		e->eg_p = new_eg;
+
+		RT_LIST_INSERT( &new_eg->eu_hd2, &eu->l2 );
 	}
-	nmg_tbl( &eutab, TBL_FREE, (long *)0 );
+	nmg_keg( (long *)old_eg );
 }
 
 /************************************************************************

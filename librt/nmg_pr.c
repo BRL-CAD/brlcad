@@ -512,16 +512,17 @@ char *h;
  */
 void
 nmg_pr_eg(eg, h)
-CONST struct edge_g *eg;
+CONST struct edge_g_lseg	*eg;
+/*  CONST long *eg;  */
 char *h;
 {
 	MKPAD(h);
-	NMG_CK_EDGE_G(eg);
+	NMG_CK_EDGE_G_LSEG(eg);
 	
 	rt_log("%sEDGE_G %8x pt:(%f %f %f)\n",
 		h, eg, V3ARGS(eg->e_pt));
-	rt_log("%s       use %d  dir:(%f %f %f)\n",
-		h, eg->usage, V3ARGS(eg->e_dir));
+	rt_log("%s       eu uses=%d  dir:(%f %f %f)\n",
+		h, rt_list_len( &eg->eu_hd2 ), V3ARGS(eg->e_dir));
 
 	Return;
 }

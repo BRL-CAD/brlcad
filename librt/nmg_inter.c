@@ -78,7 +78,7 @@ struct nmg_inter_struct {
 	struct faceuse	*fu2;		/* null if l2 comes from a wire */
 	struct rt_tol	tol;
 	int		coplanar;	/* a flag */
-	struct edge_g	*on_eg;		/* edge_g for line of intersection */
+	struct edge_g_lseg	*on_eg;		/* edge_g for line of intersection */
 	point_t		pt;		/* 3D line of intersection */
 	vect_t		dir;
 	point_t		pt2d;		/* 2D projection of isect line */
@@ -413,8 +413,8 @@ bad:
  *  that slot has not been filled yet, and 0 when it has been.
  */
 /* XXX Set this up so that it can take either an edge pointer
- * or a face pointer.  In case of edge, make edge_g->dir unit, and
- * rotate that to +X axis.  Make edge_g->pt be the origin.
+ * or a face pointer.  In case of edge, make edge_g_lseg->dir unit, and
+ * rotate that to +X axis.  Make edge_g_lseg->pt be the origin.
  * This will allow the 2D routines to operate on wires.
  */
 void
@@ -487,13 +487,13 @@ CONST long		*assoc_use;
 	} else if( *assoc_use == NMG_EDGEUSE_MAGIC )  {
 		struct edgeuse	*eu1 = (struct edgeuse *)assoc_use;
 		struct edge	*e1;
-		struct edge_g	*eg;
+		struct edge_g_lseg	*eg;
 
 		rt_log("2d prep for edgeuse\n");
 		e1 = eu1->e_p;
 		NMG_CK_EDGE(e1);
 		eg = e1->eg_p;
-		NMG_CK_EDGE_G(eg);
+		NMG_CK_EDGE_G_LSEG(eg);
 		is->twod = &e1->magic;
 
 		/*
@@ -1001,7 +1001,7 @@ out:
  */
 void
 nmg_break_eg_on_v( eg, v, tol )
-CONST struct edge_g	*eg;
+CONST struct edge_g_lseg	*eg;
 struct vertex		*v;
 CONST struct rt_tol	*tol;
 {
@@ -1010,7 +1010,7 @@ CONST struct rt_tol	*tol;
 	vect_t		dir;
 	double		vdist;
 
-	NMG_CK_EDGE_G(eg);
+	NMG_CK_EDGE_G_LSEG(eg);
 	NMG_CK_VERTEX(v);
 	RT_CK_TOL(tol);
 
@@ -2254,7 +2254,7 @@ f1_again:
 			continue;
 		}
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			struct edge_g	*eg;
+			struct edge_g_lseg	*eg;
 
 			NMG_CK_EDGEUSE(eu);
 			eg = eu->e_p->eg_p;
@@ -2293,7 +2293,7 @@ f2_again:
 			continue;
 		}
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			struct edge_g	*eg;
+			struct edge_g_lseg	*eg;
 
 			NMG_CK_EDGEUSE(eu);
 			eg = eu->e_p->eg_p;
@@ -2610,10 +2610,10 @@ enlist:
 /*
  *			N M G _ F I N D _ E G _ O N _ L I N E
  *
- *  Do a geometric search to find an edge_g on the given line.
+ *  Do a geometric search to find an edge_g_lseg on the given line.
  *  If the fuser did it's job, there should be only one.
  */
-struct edge_g *
+struct edge_g_lseg *
 nmg_find_eg_on_line( magic_p, pt, dir, tol )
 CONST long		*magic_p;
 CONST point_t		pt;
@@ -2622,7 +2622,7 @@ CONST struct rt_tol	*tol;
 {
 	struct nmg_ptbl	eutab;
 	struct edgeuse	**eup;
-	struct edge_g	*ret = (struct edge_g *)NULL;
+	struct edge_g_lseg	*ret = (struct edge_g_lseg *)NULL;
 
 	RT_CK_TOL(tol);
 
@@ -2632,12 +2632,12 @@ CONST struct rt_tol	*tol;
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
 	)  {
 		if( !ret )  {
-			/* No edge_g found yet, use this one. */
+			/* No edge_g_lseg found yet, use this one. */
 			ret = (*eup)->e_p->eg_p;
 			continue;
 		}
 		if( (*eup)->e_p->eg_p == ret ) continue;	/* OK */
-		/* Found different edge_g, claimed to be colinear */
+		/* Found different edge_g_lseg, claimed to be colinear */
 		rt_log("*eup=x%x, eg_p=x%x, ret=x%x\n", *eup, (*eup)->e_p->eg_p, ret );
 		rt_bomb("nmg_find_eg_on_line() 2 different eg's, fuser failure.\n");
 	}
@@ -2660,15 +2660,15 @@ struct vertex *
 nmg_repair_v_near_v( hit_v, v, eg1, eg2, bomb, tol )
 struct vertex		*hit_v;
 struct vertex		*v;
-struct edge_g		*eg1;		/* edge_g of hit_v */
-struct edge_g		*eg2;		/* edge_g of v */
+struct edge_g_lseg		*eg1;		/* edge_g_lseg of hit_v */
+struct edge_g_lseg		*eg2;		/* edge_g_lseg of v */
 int			bomb;
 CONST struct rt_tol	*tol;
 {
 	NMG_CK_VERTEX(hit_v);
 	NMG_CK_VERTEX(v);
-	NMG_CK_EDGE_G(eg1);
-	NMG_CK_EDGE_G(eg2);
+	NMG_CK_EDGE_G_LSEG(eg1);
+	NMG_CK_EDGE_G_LSEG(eg2);
 	RT_CK_TOL(tol);
 
 	rt_log("nmg_repair_v_near_v(hit_v=x%x, v=x%x)\n", hit_v, v );
@@ -2728,8 +2728,8 @@ struct vertex *
 nmg_search_v_eg( eu, second, eg1, eg2, hit_v, tol )
 CONST struct edgeuse		*eu;
 int				second;		/* 2nd vu on eu, not 1st */
-CONST struct edge_g		*eg1;
-CONST struct edge_g		*eg2;
+CONST struct edge_g_lseg		*eg1;
+CONST struct edge_g_lseg		*eg2;
 struct vertex			*hit_v;		/* often will be NULL */
 CONST struct rt_tol		*tol;
 {
@@ -2740,8 +2740,8 @@ CONST struct rt_tol		*tol;
 	int			seen2 = 0;
 
 	NMG_CK_EDGEUSE(eu);
-	NMG_CK_EDGE_G(eg1);
-	NMG_CK_EDGE_G(eg2);
+	NMG_CK_EDGE_G_LSEG(eg1);
+	NMG_CK_EDGE_G_LSEG(eg2);
 	RT_CK_TOL(tol);
 
 	if( second )  {
@@ -2789,8 +2789,8 @@ CONST struct rt_tol		*tol;
  */
 struct vertex *
 nmg_isect_2eg( eg1, eg2, tol, m )
-struct edge_g		*eg1;
-struct edge_g		*eg2;
+struct edge_g_lseg		*eg1;
+struct edge_g_lseg		*eg2;
 CONST struct rt_tol	*tol;
 struct model		*m;		/* XXX */
 {
@@ -2798,8 +2798,8 @@ struct model		*m;		/* XXX */
 	struct edgeuse		**eu1;
 	struct vertex		*hit_v = (struct vertex *)NULL;
 
-	NMG_CK_EDGE_G(eg1);
-	NMG_CK_EDGE_G(eg2);
+	NMG_CK_EDGE_G_LSEG(eg1);
+	NMG_CK_EDGE_G_LSEG(eg2);
 	RT_CK_TOL(tol);
 	NMG_CK_MODEL(m);
 
@@ -2884,8 +2884,8 @@ fail:
 /*
  * HEART
  *
- *  For each distinct edge_g LINE on the face (composed of potentially many
- *  edgeuses and many different edges), intersect the edge_g LINE with
+ *  For each distinct edge_g_lseg LINE on the face (composed of potentially many
+ *  edgeuses and many different edges), intersect the edge_g_lseg LINE with
  *  the face/face intersection line passed in is->pt and is->dir.
  *  Go to great pains to ensure that two non-colinear lines intersect
  *  at either 0 or 1 points, and no more.
@@ -2898,7 +2898,7 @@ struct nmg_ptbl		*eu1_list;
 struct nmg_ptbl		*eu2_list;
 {
 	struct nmg_ptbl		eg_list;
-	struct edge_g		**eg1;
+	struct edge_g_lseg		**eg1;
 	struct edgeuse		**eu1;
 	struct edgeuse		**eu2;
 	fastf_t			dist[2];
@@ -2924,17 +2924,17 @@ struct nmg_ptbl		*eu2_list;
 	MAT4X3PNT( is->pt2d, is->proj, is->pt );
 	MAT4X3VEC( is->dir2d, is->proj, is->dir );
 
-	/* Build list of all edge_g's in fu1 */
+	/* Build list of all edge_g_lseg's in fu1 */
 	/* XXX This could be more cheaply done by cooking down eu1_list */
 	nmg_edge_g_tabulate( &eg_list, &fu1->l.magic );
 
 	/* Process each distinct line in the face */
-	for( eg1 = (struct edge_g **)NMG_TBL_LASTADDR(&eg_list);
-	     eg1 >= (struct edge_g **)NMG_TBL_BASEADDR(&eg_list); eg1--
+	for( eg1 = (struct edge_g_lseg **)NMG_TBL_LASTADDR(&eg_list);
+	     eg1 >= (struct edge_g_lseg **)NMG_TBL_BASEADDR(&eg_list); eg1--
 	)  {
 		struct vertex		*hit_v = (struct vertex *)NULL;
 
-		NMG_CK_EDGE_G(*eg1);
+		NMG_CK_EDGE_G_LSEG(*eg1);
 
 		if( *eg1 == is->on_eg )  {
 colinear:
@@ -3293,13 +3293,13 @@ CONST point_t		pt;
 CONST vect_t		dir;
 CONST struct rt_tol	*tol;
 {
-	struct edge_g	*eg;
+	struct edge_g_lseg	*eg;
 
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
 
 	eg = eu->e_p->eg_p;
-	NMG_CK_EDGE_G(eg);
+	NMG_CK_EDGE_G_LSEG(eg);
 
 	/* Ensure direction vectors are generally parallel */
 	/* These are not unit vectors */
@@ -3333,7 +3333,7 @@ CONST struct rt_tol	*tol;
  *
  *  NULL is returned if no common edge geometry could be found.
  */
-struct edge_g *
+struct edge_g_lseg *
 nmg_find_eg_between_2fg(ofu1, fu2, tol)
 CONST struct faceuse	*ofu1;
 CONST struct faceuse	*fu2;
@@ -3440,7 +3440,7 @@ CONST struct rt_tol	*tol;
 	}
 	if( ret )
 		return ret->e_p->eg_p;
-	return (struct edge_g *)NULL;
+	return (struct edge_g_lseg *)NULL;
 }
 
 /*
@@ -3496,7 +3496,7 @@ struct faceuse		*fu1, *fu2;
 	/* Topology search */
 	/* See if 2 faces share an edge already.  If so, get edge_geom line */
 	if( (is->on_eg = nmg_find_eg_between_2fg(fu1, fu2, &(is->tol))) )  {
-		NMG_CK_EDGE_G(is->on_eg);
+		NMG_CK_EDGE_G_LSEG(is->on_eg);
 #if 0
 		/* Check this edge w.r.t. the line geometry */
 		if( !nmg_is_eu_on_line3( on_eu, is->pt, is->dir, &(is->tol) ) )  {

@@ -3602,7 +3602,7 @@ int	after;
 {
 	struct edgeuse *eu1,*eu2;
 	struct edge *e;
-	struct edge_g *eg;
+	struct edge_g_lseg *eg;
 	struct nmg_unbreak_state *ub_state;
 	struct vertex	*vb;
 	struct vertexuse *vu;
@@ -3624,8 +3624,8 @@ int	after;
 
 	/* if the edge geometry doesn't have at least two uses, this
 	 * is not a candidate for unbreaking */		
-	if( eg->usage < 2 )  {
-		/* rt_log("nmg_unbreak_handler: usage < 2\n"); */
+	if( rt_list_len( &eg->eu_hd2 ) < 2*2 )  {
+		/* rt_log("nmg_unbreak_handler: usage < 4\n"); */
 		return;
 	}
 

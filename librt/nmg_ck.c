@@ -129,9 +129,16 @@ long		*up_magic_p;
 /* Verify edge geometry */
 void
 nmg_veg(eg)
-struct edge_g *eg;
+long *eg;
 {
-	NMG_CK_EDGE_G(eg);
+	if( !eg )  rt_bomb("nmg_veg() null eg\n");
+	switch( *eg )  {
+	case NMG_EDGE_G_LSEG_MAGIC:
+		return;
+	case NMG_EDGE_G_CNURB_MAGIC:
+		return;
+	}
+	rt_bomb("nmg_veg() bad magic\n");
 }
 
 /*

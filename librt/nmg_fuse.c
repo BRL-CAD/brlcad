@@ -376,7 +376,7 @@ if(total>0)rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
  *  Returns -
  *	0	two edge geometries are not coincident
  *	1	edges geometries are everywhere coincident.
- *		(For linear edge_g, the 2 are the same line, within tol.)
+ *		(For linear edge_g_lseg, the 2 are the same line, within tol.)
  */
 int
 nmg_2edge_g_coincident( e1, e2, tol )
@@ -384,8 +384,8 @@ CONST struct edge	*e1;
 CONST struct edge	*e2;
 CONST struct rt_tol	*tol;
 {
-	struct edge_g	*eg1;
-	struct edge_g	*eg2;
+	struct edge_g_lseg	*eg1;
+	struct edge_g_lseg	*eg2;
 	fastf_t		t, u;
 
 	NMG_CK_EDGE(e1);
@@ -393,8 +393,8 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 	eg1 = e1->eg_p;
 	eg2 = e2->eg_p;
-	NMG_CK_EDGE_G(eg1);
-	NMG_CK_EDGE_G(eg2);
+	NMG_CK_EDGE_G_LSEG(eg1);
+	NMG_CK_EDGE_G_LSEG(eg2);
 
 	if( eg1 == eg2 )  return 1;
 
@@ -453,29 +453,29 @@ CONST struct rt_tol	*tol;
 
 	for( i = NMG_TBL_END(&etab)-1; i >= 0; i-- )  {
 		register struct edge	*e1;
-		struct edge_g		*eg1;
+		struct edge_g_lseg		*eg1;
 
 		e1 = (struct edge *)NMG_TBL_GET(&etab, i);
 		NMG_CK_EDGE(e1);
 		eg1 = e1->eg_p;
-		NMG_CK_EDGE_G(eg1);
+		NMG_CK_EDGE_G_LSEG(eg1);
 
 		for( j = i-1; j >= 0; j-- )  {
 			register struct edge	*e2;
-			struct edge_g		*eg2;
+			struct edge_g_lseg		*eg2;
 			register struct edge	**ep;
 
 			e2 = (struct edge *)NMG_TBL_GET(&etab,j);
 			NMG_CK_EDGE(e2);
 			eg2 = e2->eg_p;
-			NMG_CK_EDGE_G(eg2);
+			NMG_CK_EDGE_G_LSEG(eg2);
 
 			if( e1 == e2 )  rt_bomb("nmg_model_edge_g_fuse() two incidences of edge?\n");
 			if( eg1 == eg2 )  continue;
 
 			if( !nmg_2edge_g_coincident( e1, e2, tol ) )  continue;
 
-			/* Comitted to fusing two edge_g's.
+			/* Comitted to fusing two edge_g_lseg's.
 			 * Make all instances of eg2 become eg1.
 			 * XXX really should check ALL edges using eg1
 			 * XXX against ALL edges using eg2 for coincidence.
@@ -492,7 +492,7 @@ CONST struct rt_tol	*tol;
 		}
 	}
 	nmg_tbl( &etab, TBL_FREE, (long *)0 );
-if(total>0)rt_log("nmg_model_edge_g_fuse(): %d edge_g's fused\n", total);
+if(total>0)rt_log("nmg_model_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
 	return total;
 }
 

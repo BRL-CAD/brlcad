@@ -402,6 +402,8 @@ CONST struct rt_tol	*tol;
 #define DISK_INDEX_NULL		0
 #define DISK_INDEX_LISTHEAD	-1
 
+#define DISK_MODEL_VERSION	1	/* V0 was Release 4.0 */
+
 typedef	unsigned char	disk_index_t[4];
 struct disk_rt_list  {
 	disk_index_t		forw;
@@ -409,10 +411,9 @@ struct disk_rt_list  {
 };
 
 #define DISK_MODEL_MAGIC	0x4e6d6f64	/* Nmod */
-#define DISK_MODEL_VERSION	0x656c2032	/* el 2 */
 struct disk_model {
 	unsigned char		magic[4];
-	unsigned char		version[4];
+	unsigned char		version[4];	/* unused */
 	disk_index_t		ma_p;
 	struct disk_rt_list	r_hd;
 };
@@ -534,9 +535,10 @@ struct disk_edge {
 };
 
 #define DISK_EDGE_G_MAGIC	0x4e655f67	/* Ne_g */
-struct disk_edge_g {
+struct disk_edge_g_lseg {
 	unsigned char		magic[4];
-	unsigned char		usage[4];
+	/* usage is gone */
+	struct disk_rt_list	eu_hd2;
 	unsigned char		e_pt[3*8];
 	unsigned char		e_dir[3*8];
 };
@@ -545,6 +547,7 @@ struct disk_edge_g {
 struct disk_edgeuse {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
+	struct disk_rt_list	l2;
 	disk_index_t		up;
 	disk_index_t		eumate_p;
 	disk_index_t		radial_p;
@@ -612,14 +615,17 @@ struct disk_vertexuse_a_cnurb {
 #define NMG_KIND_EDGEUSE	14
 #define NMG_KIND_EDGEUSE_A	15		/* XXX */
 #define NMG_KIND_EDGE		16
-#define NMG_KIND_EDGE_G		17
+#define NMG_KIND_EDGE_G_LSEG		17
+#define NMG_KIND_EDGE_G_CNURB		0	/* XXX reuse */
 #define NMG_KIND_VERTEXUSE	18
 #define NMG_KIND_VERTEXUSE_A_PLANE	19
 #define NMG_KIND_VERTEXUSE_A_CNURB	0	/* XXX reuse */
 #define NMG_KIND_VERTEX		20
 #define NMG_KIND_VERTEX_G	21
 
-#define NMG_N_KINDS		22		/* number of kinds */
+/* This number must have some extra space, for upwards compatability */
+/* 26 is the limit, in the current incarnation of db.h */
+#define NMG_N_KINDS		26		/* number of kinds */
 
 int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_model),
@@ -639,7 +645,7 @@ int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_edgeuse),
 	sizeof(struct disk_edgeuse_a),
 	sizeof(struct disk_edge),
-	sizeof(struct disk_edge_g),
+	sizeof(struct disk_edge_g_lseg),
 	sizeof(struct disk_vertexuse),
 	sizeof(struct disk_vertexuse_a_plane),
 	sizeof(struct disk_vertex),
@@ -655,7 +661,7 @@ char	rt_nmg_kind_names[NMG_N_KINDS][18] = {
 	"faceuse",
 	"faceuse_a",
 	"face",
-	"face_g",
+	"face_g_plane",
 	"loopuse",
 	"loopuse_a",
 	"loop",
@@ -663,7 +669,7 @@ char	rt_nmg_kind_names[NMG_N_KINDS][18] = {
 	"edgeuse",
 	"edgeuse_a",
 	"edge",
-	"edge_g",
+	"edge_g_lseg",
 	"vertexuse",
 	"vertexuse_a_plane",
 	"vertex",
@@ -707,8 +713,8 @@ register long	magic;
 		return NMG_KIND_EDGEUSE;
 	case NMG_EDGE_MAGIC:
 		return NMG_KIND_EDGE;
-	case NMG_EDGE_G_MAGIC:
-		return NMG_KIND_EDGE_G;
+	case NMG_EDGE_G_LSEG_MAGIC:
+		return NMG_KIND_EDGE_G_LSEG;
 	case NMG_VERTEXUSE_MAGIC:
 		return NMG_KIND_VERTEXUSE;
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
@@ -802,7 +808,7 @@ double		local2mm;
 			d = &((struct disk_model *)op)[oindex];
 			NMG_CK_MODEL(m);
 			PUTMAGIC( DISK_MODEL_MAGIC );
-			rt_plong( d->version, DISK_MODEL_VERSION );
+			rt_plong( d->version, 0 );
 			INDEX( d, m, ma_p );
 			INDEXL( d, m, r_hd );
 		}
@@ -972,6 +978,7 @@ double		local2mm;
 			NMG_CK_EDGEUSE(eu);
 			PUTMAGIC( DISK_EDGEUSE_MAGIC );
 			INDEXL( d, eu, l );
+			INDEXL( d, eu, l2 );
 			rt_plong( d->up, rt_nmg_reindex((genptr_t)(eu->up.magic_p), ecnt) );
 			INDEX( d, eu, eumate_p );
 			INDEX( d, eu, radial_p );
@@ -995,14 +1002,14 @@ double		local2mm;
 			INDEX( d, e, eg_p );
 		}
 		return;
-	case NMG_KIND_EDGE_G:
+	case NMG_KIND_EDGE_G_LSEG:
 		{
-			struct edge_g	*eg = (struct edge_g *)ip;
-			struct disk_edge_g	*d;
-			d = &((struct disk_edge_g *)op)[oindex];
-			NMG_CK_EDGE_G(eg);
+			struct edge_g_lseg	*eg = (struct edge_g_lseg *)ip;
+			struct disk_edge_g_lseg	*d;
+			d = &((struct disk_edge_g_lseg *)op)[oindex];
+			NMG_CK_EDGE_G_LSEG(eg);
 			PUTMAGIC( DISK_EDGE_G_MAGIC );
-			rt_plong( d->usage, eg->usage );
+			INDEXL( d, eg, eu_hd2 );
 			htond( d->e_pt, eg->e_pt, 3);
 			htond( d->e_dir, eg->e_dir, 3);
 		}
@@ -1111,15 +1118,6 @@ mat_t		mat;
 			d = &((struct disk_model *)ip)[iindex];
 			NMG_CK_MODEL(m);
 			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_MAGIC );
-			/*
-			 * In the future, it may be necessary to be able to
-			 * read older versions as well.  This is the hook.
-			 */
-			if( rt_glong( d->version ) != DISK_MODEL_VERSION )  {
-				rt_log("rt_nmg_idisk() NMG version number mis-match, got x%x, s/b x%x\n",
-					rt_glong(d->version), DISK_MODEL_MAGIC );
-				return -1;
-			}
 			INDEX( d, m, model_a, ma_p );
 			INDEXL_HD( d, m, r_hd, m->r_hd );
 		}
@@ -1324,6 +1322,8 @@ mat_t		mat;
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			NMG_CK_EDGEUSE(eu->radial_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
+			NMG_CK_EDGE_G_LSEG(eu->e_p->eg_p);
+			INDEXL_HD( d, eu, l2, eu->e_p->eg_p->eu_hd2 );
 		}
 		return 0;
 	case NMG_KIND_EDGEUSE_A:
@@ -1338,20 +1338,21 @@ mat_t		mat;
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_MAGIC );
 			e->is_real = rt_glong( d->is_real );
 			INDEX( d, e, edgeuse, eu_p );
-			INDEX( d, e, edge_g, eg_p );
+			INDEX( d, e, edge_g_lseg, eg_p );
 			NMG_CK_EDGEUSE(e->eu_p);
 		}
 		return 0;
-	case NMG_KIND_EDGE_G:
+	case NMG_KIND_EDGE_G_LSEG:
 		{
-			struct edge_g	*eg = (struct edge_g *)op;
-			struct disk_edge_g	*d;
-			d = &((struct disk_edge_g *)ip)[iindex];
-			NMG_CK_EDGE_G(eg);
+			struct edge_g_lseg	*eg = (struct edge_g_lseg *)op;
+			struct disk_edge_g_lseg	*d;
+			d = &((struct disk_edge_g_lseg *)ip)[iindex];
+			NMG_CK_EDGE_G_LSEG(eg);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_MAGIC );
-			eg->usage = rt_glong( d->usage );
+			/* usage is gone */
 			ntohd(eg->e_pt, d->e_pt, 3);
 			ntohd(eg->e_dir, d->e_dir, 3);
+			INDEXL_HD( d, eg, eu_hd2, eg->eu_hd2 );
 		}
 		return 0;
 	case NMG_KIND_VERTEXUSE:
@@ -1574,11 +1575,11 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					ptrs[subscript] = (long *)e;
 				}
 				break;
-			case NMG_KIND_EDGE_G:
+			case NMG_KIND_EDGE_G_LSEG:
 				{
-					struct edge_g	*eg;
-					GET_EDGE_G( eg, m );
-					eg->magic = NMG_EDGE_G_MAGIC;
+					struct edge_g_lseg	*eg;
+					GET_EDGE_G_LSEG( eg, m );
+					eg->magic = NMG_EDGE_G_LSEG_MAGIC;
 					ptrs[subscript] = (long *)eg;
 				}
 				break;
@@ -1681,6 +1682,17 @@ CONST struct rt_tol		*tol;
 	if( rp->u_id != DBID_NMG )  {
 		rt_log("rt_nmg_import: defective record\n");
 		return(-1);
+	}
+
+	/*
+	 *  Check for proper version.
+	 *  In the future, this will be the backwards-compatability hook.
+	 */
+	if( rp->nmg.N_version != DISK_MODEL_VERSION )  {
+		rt_log("rt_nmg_import:  expected NMG '.g' format version %d, got version %d, aborting.\n",
+			DISK_MODEL_VERSION,
+			rp->nmg.N_version );
+		return -1;
 	}
 
 	/* Obtain counts of each kind of structure */
@@ -1870,6 +1882,7 @@ rt_log("Mapping of old index to new index, and kind\n");
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "nmg external");
 	rp = (union record *)ep->ext_buf;
 	rp->nmg.N_id = DBID_NMG;
+	rp->nmg.N_version = DISK_MODEL_VERSION;
 	(void)rt_plong( rp->nmg.N_count, additional_grans );
 
 	/* Record counts of each kind of structure */

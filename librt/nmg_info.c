@@ -1116,7 +1116,7 @@ CONST struct edgeuse *eu;
  *  in fu1 of that edge.
  *
  *  If there are multiple edgeuses in common, ensure that they all refer
- *  to the same edge_g geometry structure.  The intersection of two planes
+ *  to the same edge_g_lseg geometry structure.  The intersection of two planes
  *  (non-coplanar) must be a single line.
  *
  *  Calling this routine when the two faces share face geometry
@@ -1165,7 +1165,7 @@ CONST struct rt_tol	*tol;
 				    			ret = eur->eumate_p;
 				    		}
 				    	} else {
-				    		/* Previous edge found, check edge_g */
+				    		/* Previous edge found, check edge_g_lseg */
 				    		if( eur->e_p->eg_p != ret->e_p->eg_p )  {
 				    			rt_log("eur=x%x, eg_p=x%x;  ret=x%x, eg_p=x%x\n",
 				    				eur, eur->e_p->eg_p,
@@ -2075,7 +2075,7 @@ CONST long		*magic_p;
  *			N M G _ E D G E _ G _ H A N D L E R
  *
  *  A private support routine for nmg_edge_g_tabulate().
- *  Having just visited an edge_g, if this is the first time,
+ *  Having just visited an edge_g_lseg, if this is the first time,
  *  add it to the nmg_ptbl array.
  */
 static void
@@ -2085,9 +2085,9 @@ genptr_t	state;
 int		first;
 {
 	register struct vf_state *sp = (struct vf_state *)state;
-	register struct edge_g	*eg = (struct edge_g *)ep;
+	register struct edge_g_lseg	*eg = (struct edge_g *)ep;
 
-	NMG_CK_EDGE_G(eg);
+	NMG_CK_EDGE_G_LSEG(eg);
 	/* If this edge has been processed before, do nothing more */
 	if( !NMG_INDEX_FIRST_TIME(sp->visited, eg) )  return;
 
@@ -2182,7 +2182,7 @@ CONST long		*magic_p;
 struct eg_state {
 	char			*visited;
 	struct nmg_ptbl		*tabl;
-	CONST struct edge_g	*eg;
+	CONST struct edge_g_lseg	*eg;
 };
 
 /*
@@ -2223,7 +2223,7 @@ void
 nmg_edgeuse_with_eg_tabulate( tab, magic_p, eg )
 struct nmg_ptbl		*tab;
 CONST long		*magic_p;
-CONST struct edge_g	*eg;
+CONST struct edge_g_lseg	*eg;
 {
 	struct model		*m;
 	struct eg_state		st;
@@ -2231,7 +2231,7 @@ CONST struct edge_g	*eg;
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
-	NMG_CK_EDGE_G(eg);
+	NMG_CK_EDGE_G_LSEG(eg);
 
 	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
@@ -2280,7 +2280,7 @@ int		first;
 	 *  which are colinear only by virtue of being very small.
 	 */
 	RT_CK_TOL(sp->tol);
-	NMG_CK_EDGE_G(eu->e_p->eg_p);
+	NMG_CK_EDGE_G_LSEG(eu->e_p->eg_p);
 #if 1
 	/* XXX This assumes unit vectors.  These are not.  Fixing this causes lots of error messages, though. */
 	/* ERROR: vu=x10063d54 v=x10050578 is on isect line, tvu=x10063614 eu=x10081b30 isn't */

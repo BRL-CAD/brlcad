@@ -73,8 +73,10 @@ register long	*p;
 		return ((struct edgeuse *)p)->index;
 	case NMG_EDGE_MAGIC:
 		return ((struct edge *)p)->index;
-	case NMG_EDGE_G_MAGIC:
-		return ((struct edge_g *)p)->index;
+	case NMG_EDGE_G_LSEG_MAGIC:
+		return ((struct edge_g_lseg *)p)->index;
+	case NMG_EDGE_G_CNURB_MAGIC:
+		return ((struct edge_g_cnurb *)p)->index;
 	case NMG_VERTEXUSE_MAGIC:
 		return ((struct vertexuse *)p)->index;
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
@@ -190,7 +192,7 @@ struct model	*m;
 						NMG_CK_EDGE(e);
 						NMG_MARK_INDEX(e);
 						if(e->eg_p)  {
-							NMG_CK_EDGE_G(e->eg_p);
+							NMG_CK_EDGE_G_LSEG(e->eg_p);
 							NMG_MARK_INDEX(e->eg_p);
 						}
 						vu = eu->vu_p;
@@ -242,7 +244,7 @@ struct model	*m;
 					NMG_CK_EDGE(e);
 					NMG_MARK_INDEX(e);
 					if(e->eg_p)  {
-						NMG_CK_EDGE_G(e->eg_p);
+						NMG_CK_EDGE_G_LSEG(e->eg_p);
 						NMG_MARK_INDEX(e->eg_p);
 					}
 					vu = eu->vu_p;
@@ -265,7 +267,7 @@ struct model	*m;
 				NMG_CK_EDGE(e);
 				NMG_MARK_INDEX(e);
 				if(e->eg_p)  {
-					NMG_CK_EDGE_G(e->eg_p);
+					NMG_CK_EDGE_G_LSEG(e->eg_p);
 					NMG_MARK_INDEX(e->eg_p);
 				}
 				vu = eu->vu_p;
@@ -637,7 +639,7 @@ CONST struct model			*m;
 						NMG_CK_EDGE(e);
 						NMG_UNIQ_INDEX(e, edge);
 						if(e->eg_p)  {
-							NMG_CK_EDGE_G(e->eg_p);
+							NMG_CK_EDGE_G_LSEG(e->eg_p);
 							NMG_UNIQ_INDEX(e->eg_p, edge_g);
 						}
 						vu = eu->vu_p;
@@ -691,7 +693,7 @@ CONST struct model			*m;
 					NMG_CK_EDGE(e);
 					NMG_UNIQ_INDEX(e, edge);
 					if(e->eg_p)  {
-						NMG_CK_EDGE_G(e->eg_p);
+						NMG_CK_EDGE_G_LSEG(e->eg_p);
 						NMG_UNIQ_INDEX(e->eg_p, edge_g);
 					}
 					vu = eu->vu_p;
@@ -716,7 +718,7 @@ CONST struct model			*m;
 				NMG_CK_EDGE(e);
 				NMG_UNIQ_INDEX(e, edge);
 				if(e->eg_p)  {
-					NMG_CK_EDGE_G(e->eg_p);
+					NMG_CK_EDGE_G_LSEG(e->eg_p);
 					NMG_UNIQ_INDEX(e->eg_p, edge_g);
 				}
 				vu = eu->vu_p;

@@ -175,7 +175,7 @@ struct nmg_ray_state {
 	int			nvu;		/* len of vu[] */
 	point_t			pt;		/* The ray */
 	vect_t			dir;
-	struct edge_g		*eg_p;		/* Edge geom of the ray */
+	struct edge_g_lseg		*eg_p;		/* Edge geom of the ray */
 	struct shell		*sA;
 	struct shell		*sB;
 	struct faceuse		*fu1;
@@ -1916,7 +1916,7 @@ struct faceuse	*fu1;		/* face being worked */
 struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
-struct edge_g		*eg;	/* may be null.  Geom of isect line. */
+struct edge_g_lseg		*eg;	/* may be null.  Geom of isect line. */
 CONST struct rt_tol	*tol;
 {
 	plane_t	n1;
@@ -2312,7 +2312,7 @@ rt_bomb("nmg_onon_fix(): check the intersector\n");
  *  one may have multiple uses of a vertex, while the other has only
  *  a single use of that same vertex.
  */
-struct edge_g *
+struct edge_g_lseg *
 nmg_face_cutjoin(b1, b2, fu1, fu2, pt, dir, eg, tol)
 struct nmg_ptbl	*b1;		/* table of vertexuses in fu1 on intercept line */
 struct nmg_ptbl	*b2;		/* table of vertexuses in fu2 on intercept line */
@@ -2320,7 +2320,7 @@ struct faceuse	*fu1;		/* face being worked */
 struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
-struct edge_g		*eg;	/* may be null.  geometry of isect line */
+struct edge_g_lseg		*eg;	/* may be null.  geometry of isect line */
 CONST struct rt_tol	*tol;
 {
 	fastf_t		*mag1;
@@ -2463,7 +2463,7 @@ top:
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_face_cutjoin(fu1=x%x, fu2=x%x) eg=x%x END\n", fu1, fu2, rs1.eg_p);
 	}
-	if( eg && !rs1.eg_p )  rt_bomb("nmg_face_cutjoin() lost edge_g?\n");
+	if( eg && !rs1.eg_p )  rt_bomb("nmg_face_cutjoin() lost edge_g_lseg?\n");
 	if( eg && eg != rs1.eg_p )  rt_log("nmg_face_cutjoin() changed from eg=x%x to rs1.eg_p=x%x\n", eg, rs1.eg_p);
 	return rs1.eg_p;
 }
@@ -2480,7 +2480,7 @@ nmg_edge_geom_isect_line( e, rs )
 struct edge		*e;
 struct nmg_ray_state	*rs;
 {
-	register struct edge_g	*eg;
+	register struct edge_g_lseg	*eg;
 
 	NMG_CK_EDGE(e);
 	NMG_CK_RAYSTATE(rs);
@@ -2494,7 +2494,7 @@ struct nmg_ray_state	*rs;
 		if( !rs->eg_p )  {
 			nmg_edge_g( e );
 			eg = e->eg_p;
-			NMG_CK_EDGE_G(eg);
+			NMG_CK_EDGE_G_LSEG(eg);
 			VMOVE( eg->e_pt, rs->pt );
 			VMOVE( eg->e_dir, rs->dir );
 			rs->eg_p = eg;
@@ -2508,7 +2508,7 @@ struct nmg_ray_state	*rs;
 	if( !rs->eg_p )  {
 		/* Smash edge geom with isect line geom, and remember it */
 		eg = e->eg_p;
-		NMG_CK_EDGE_G(eg);
+		NMG_CK_EDGE_G_LSEG(eg);
 		VMOVE( eg->e_pt, rs->pt );
 		VMOVE( eg->e_dir, rs->dir );
 		rs->eg_p = eg;
@@ -2872,7 +2872,7 @@ nmg_fu_touchingloops(rs->fu2);
 
 	/*
 	 *  Force edge geometry that lies on the intersection line
-	 *  to use the edge_g structure of the intersection line (ray).
+	 *  to use the edge_g_lseg structure of the intersection line (ray).
 	 */
 	if( NMG_V_ASSESSMENT_PREV(assessment) == NMG_E_ASSESSMENT_ON_REV )  {
 		eu = nmg_find_eu_of_vu(vu);
