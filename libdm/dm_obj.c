@@ -12,10 +12,6 @@
  * Author -
  *	Robert G. Parker
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
  *  Distribution Notice -
  *	Re-distribution of this software is restricted, as described in
  *	your "Statement of Terms and Conditions for the Release of
