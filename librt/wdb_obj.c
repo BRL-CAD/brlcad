@@ -2549,13 +2549,16 @@ wdb_dir_check5( input_dbip, rip, addr, ptr )
 	RT_CK_DBI(input_dbip);
 	RT_CK_RIP( rip );
 
-	if( !rip->h_name_present )
-		return;
+	if( rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT ) return;
+	if( rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE ) return;
 
 	name = (char *)rip->name.ext_buf;
 
+	if( name == (char *)NULL ) return;
+
 	/* do not compare _GLOBAL */
-	if( !strcmp( name, "_GLOBAL" ) )
+	if( rip->major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
+	    rip->minor_type == 0 )
 		return;
 
 	/* Add the prefix, if any */
