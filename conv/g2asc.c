@@ -54,7 +54,7 @@ void	soldump();
 void	membdump(), arsadump(), arsbdump();
 void	materdump(), bspldump(), bsurfdump();
 void	pipe_dump(), particle_dump(), dump_pipe_segs();
-void	arbn_dump(), fgp_dump();
+void	arbn_dump(), fgp_dump(), bot_dump();
 void	nmg_dump();
 void	strsol_dump();
 
@@ -114,6 +114,9 @@ top:
 	    		continue;
 	    	case DBID_FGP:
 	    		fgp_dump();
+	    		continue;
+	    	case DBID_BOT:
+	    		bot_dump();
 	    		continue;
 	    	case ID_BSOLID:
 			bspldump();
@@ -340,6 +343,65 @@ fgp_dump()
 	(void)printf("%.12e ", plt->thickness );	/* fgp thickness */
 	(void)printf("%d ", plt->mode );		/* fgp mode */
 	(void)printf("\n");			/* Terminate w/ a newline */
+
+	rt_fgp_ifree( &intern );
+	db_free_external( &ext );
+}
+
+void
+bot_dump()
+{
+	int				ngranules;
+	char				*name;
+	struct rt_bot_internal		*bot;
+	struct bu_external		ext;
+	struct rt_db_internal		intern;
+	int				i;
+
+	name = record.bot.bot_name;
+	ngranules = bu_glong( record.bot.bot_nrec) + 1;
+	get_ext( &ext, ngranules );
+
+	/* Hand off to librt's import() routine */
+	if( (rt_bot_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+		fprintf(stderr, "g2asc: bot import failure\n");
+		exit(-1);
+	}
+
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC(bot);
+
+	(void)printf("%c ", DBID_BOT );	/* t */
+	(void)printf("%.16s ", name );	/* unique name */
+	(void)printf("%d ", bot->mode );
+	(void)printf("%d ", bot->orientation );
+	(void)printf("%d ", bot->error_mode );
+	(void)printf("%d ", bot->num_vertices );
+	(void)printf("%d ", bot->num_faces );
+	(void)printf("\n");
+
+	for( i=0 ; i<bot->num_vertices ; i++ )
+		printf( "	%d: %26.20e %26.20e %26.20e\n", i, V3ARGS( &bot->vertices[i*3] ) );
+	if( bot->mode == RT_BOT_PLATE )
+	{
+		struct bu_vls vls;
+
+		for( i=0 ; i<bot->num_faces ; i++ )
+			printf( "	%d: %d %d %d %26.20e\n", i, V3ARGS( &bot->faces[i*3] ),
+				bot->thickness[i] );
+		bu_vls_init( &vls );
+		bu_bitv_to_hex( &vls, bot->face_mode );
+		printf( "	%s\n", bu_vls_addr( &vls ) );
+		bu_vls_free( &vls );
+	}
+	else
+	{
+		for( i=0 ; i<bot->num_faces ; i++ )
+			printf( "	%d: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
+	}
+
+	rt_bot_ifree( &intern );
+	db_free_external( &ext );
 }
 
 void

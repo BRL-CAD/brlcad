@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define NAME_LEN			20
 
 void		identbld(), polyhbld(), polydbld(), pipebld(), particlebld();
-void		solbld(), arbnbld(), fgpbld();
+void		solbld(), arbnbld(), fgpbld(), botbld();
 int		combbld();
 void		membbld(), arsabld(), arsbbld();
 void		materbld(), bsplbld(), bsurfbld(), zap_nl();
@@ -180,6 +180,10 @@ after_read:
 
 		case DBID_FGP:
 			fgpbld();
+			continue;
+
+		case DBID_BOT:
+			botbld();
 			continue;
 
 		default:
@@ -1099,6 +1103,93 @@ fgpbld()
 	mode = atoi( cp );
 
 	mk_fgp( ofp, my_name, ref_name, thickness, mode );
+}
+
+/*		B O T B L D
+ *
+ */
+void
+botbld()
+{
+	char			my_name[NAME_LEN];
+	int			type, mode, orientation, error_mode, num_vertices, num_faces;
+	int			i,j;
+	double			a[3];
+	fastf_t			*vertices;
+	fastf_t			*thick=NULL;
+	int			*faces;
+	struct bu_bitv		*facemode=NULL;
+
+	sscanf( buf, "%c %s %d %d %d %d %d", &type, my_name, &mode, &orientation,
+		&error_mode, &num_vertices, &num_faces );
+
+	/* get vertices */
+	vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "botbld: vertices" );
+	for( i=0 ; i<num_vertices ; i++ )
+	{
+		fgets( buf, BUFSIZE, ifp);
+		sscanf( buf, "%d: %le %le %le", &j, &a[0], &a[1], &a[2] );
+		if( i != j )
+		{
+			bu_log( "Vertices out of order in solid %s (expecting %d, found %d)\n",
+				my_name, i, j );
+			bu_free( (char *)vertices, "botbld: vertices" );
+			bu_log( "Skipping this solid!!!\n" );
+			while( buf[0] == '\t' )
+				fgets( buf, BUFSIZE, ifp);
+			return;
+		}
+		VMOVE( &vertices[i*3], a );
+	}
+
+	/* get faces (and possibly thicknesses */
+	faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "botbld: faces" );
+	if( mode == RT_BOT_PLATE )
+		thick = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "botbld thick" );
+	for( i=0 ; i<num_faces ; i++ )
+	{
+		fgets( buf, BUFSIZE, ifp);
+		if( mode == RT_BOT_PLATE )
+			sscanf( buf, "%d: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0] );
+		else
+			sscanf( buf, "%d: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2] );
+
+		if( i != j )
+		{
+			bu_log( "Faces out of order in solid %s (expecting %d, found %d)\n",
+				my_name, i, j );
+			bu_free( (char *)vertices, "botbld: vertices" );
+			bu_free( (char *)faces, "botbld: faces" );
+			if( mode == RT_BOT_PLATE )
+				bu_free( (char *)thick, "botbld thick" );
+			bu_log( "Skipping this solid!!!\n" );
+			while( buf[0] == '\t' )
+				fgets( buf, BUFSIZE, ifp);
+			return;
+		}
+
+		if( mode == RT_BOT_PLATE )
+			thick[i] = a[0];
+	}
+
+	if( mode == RT_BOT_PLATE )
+	{
+		/* get bit vector */
+		fgets( buf, BUFSIZE, ifp);
+		facemode = bu_hex_to_bitv( &buf[1] );
+	}
+
+	mk_bot( ofp, my_name, mode, orientation, error_mode, num_vertices, num_faces,
+		vertices, faces, thick, facemode );
+
+	bu_free( (char *)vertices, "botbld: vertices" );
+	bu_free( (char *)faces, "botbld: faces" );
+	if( mode == RT_BOT_PLATE )
+	{
+		bu_free( (char *)thick, "botbld thick" );
+		bu_free( (char *)facemode, "botbld facemode" );
+	}
+
 }
 
 /*		P I P E B L D
