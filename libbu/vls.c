@@ -1122,3 +1122,21 @@ struct bu_vls	*vp;
 	}
 	bu_vls_free( &src );
 }
+
+/*		B U _ V L S _ P R E P E N D
+ *
+ *  Add a string to the begining of the vls.
+ */
+void
+bu_vls_prepend(struct bu_vls *vp, char *str)
+{
+	int len = strlen(str);
+
+	bu_vls_extend(vp, len);
+
+	/* memmove is supposed to be safe even if strings overlap */
+	memmove( vp->vls_str+vp->vls_offset+len, vp->vls_str+vp->vls_offset, vp->vls_len );
+
+	/* insert the data at the head of the string */
+	memcpy( vp->vls_str+vp->vls_offset, str, len);
+}
