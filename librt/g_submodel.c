@@ -627,19 +627,18 @@ struct goodies {
  *  This routine must be prepared to run in parallel.
  *  This routine should be generally exported for other uses.
  */
-HIDDEN union tree *rt_submodel_wireframe_leaf( tsp, pathp, ep, id, client_data )
+HIDDEN union tree *rt_submodel_wireframe_leaf( tsp, pathp, ip, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct bu_external	*ep;
-int			id;
+struct rt_db_internal	*ip;
 genptr_t		client_data;
 {
-	struct rt_db_internal	intern;
 	union tree	*curtree;
 	struct goodies	*gp;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
+	RT_CK_DB_INTERNAL(ip );
 
 	gp = (struct goodies *)tsp->ts_m;	/* hack */
 	RT_CK_DBI(gp->dbip);
@@ -651,34 +650,18 @@ genptr_t		client_data;
 		char	*sofar = db_path_to_string(pathp);
 
 		bu_log("rt_submodel_wireframe_leaf(%s) path=%s\n",
-			rt_functab[id].ft_name, sofar );
+			ip->idb_meth->ft_name, sofar );
 		bu_free((genptr_t)sofar, "path string");
 	}
 
-    	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat, gp->dbip ) < 0 )  {
-		bu_log("rt_submodel_wireframe_leaf(%s): %s solid import failure\n",
-			rt_functab[id].ft_name,
-			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
-
-		rt_db_free_internal( &intern );
-		return(TREE_NULL);		/* ERROR */
-	}
-	RT_CK_DB_INTERNAL( &intern );
-
-	if( rt_functab[id].ft_plot(
-	    gp->vheadp,
-	    &intern,
+	if( ip->idb_meth->ft_plot(
+	    gp->vheadp, ip,
 	    tsp->ts_ttol, tsp->ts_tol ) < 0 )  {
 		bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
-			rt_functab[id].ft_name,
+			ip->idb_meth->ft_name,
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
-
-		rt_db_free_internal( &intern );
 		return(TREE_NULL);		/* ERROR */
 	}
-
-	rt_db_free_internal( &intern );
 
 	/* Indicate success by returning something other than TREE_NULL */
 	BU_GETUNION( curtree, tree );
