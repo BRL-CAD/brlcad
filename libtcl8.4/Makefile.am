@@ -18,7 +18,7 @@ all-am:
 	if [ ! -e build/Makefile ] ; then rm -rf build && $(MAKE) configure ; fi
 	(cd build && $(MAKE) -$(MAKEFLAGS))
 
-install-am:
+install-am: all-am
 	(cd build && $(MAKE) -$(MAKEFLAGS) install)
 
 clean-am:
