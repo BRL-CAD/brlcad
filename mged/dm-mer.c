@@ -6,6 +6,15 @@
  *  interface.
  *  Based on dm-ps.c
  *
+ *  Display structure -
+ *	ROOT LIST = { wrld }
+ *	wrld = { face, Mvie, Medi }
+ *	face = { faceplate stuff, 2d lines and text }
+ *	Mvie = { model2view matrix, view }
+ *	view = { (all non-edit solids) }
+ *	Medi = { model2objview matrix, edit }
+ *	edit = { (all edit solids) }
+ *
  *  Authors -
  *	Michael John Muuss
  *  
@@ -31,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged.h"
 #include "dm.h"
 #include "../h/vmath.h"
+#include "../h/mater.h"
 #include "solid.h"
 
 typedef unsigned char u_char;
@@ -131,6 +141,18 @@ char *Net_DRreasons[] = {
 #define TY_LINE		0x06
 #define TY_BOUNDEDA	0x07	/* polygon areas bounded by points */
 
+/* Geometric type mask for coloring */
+#define MASK_BACKGROUND	(1<<0)
+#define MASK_CHAR	(1<<1)
+#define MASK_POINT	(1<<2)
+#define MASK_LINES	(1<<3)	/* And rows */
+#define MASK_COLS	(1<<4)
+#define MASK_CCW_SURF	(1<<8)
+#define MASK_CW_SURF	(1<<9)
+#define MASK_VIEWPORT	(1<<11)
+#define MASK_GEOM	(MASK_CHAR|MASK_POINT|MASK_LINES|MASK_COLS| \
+			MASK_CCW_SURF|MASK_CW_SURF)
+
 #define DB_SIZE		4096
 #define DB_START	(&db_buf[HDR_OFFSET])	/* start of non-header */
 u_char db_buf[DB_SIZE+HDR_OFFSET+32];
@@ -138,6 +160,8 @@ u_char *db_next = DB_START;
 int insert_mode = 0;
 
 #define mer_debug	regdebug	/* 2 for basic, 3 for full */
+
+u_char crap[8196];	/* temp, for uploading into */
 
 /*
  *			M E R _ O P E N
@@ -232,10 +256,17 @@ Mer_open()
 
 	EdOpen( 'face', 0, 1000, 0 );	/* a null object, for starters */
 	EdClose();
+	EdOpen( 'colr', 0, 8000, 0 );
+	EdClose();
+
+	Mer_colorchange();	/* to load color map into 'colr' */
 
 	EdOpen( 'wrld', 8, 600, 0 );	/* make a root object */
 	EdInsert();
+	DbFrameBufferErase();
+	DbRefer( 'colr' );
 	DbRefer( 'face' );
+	DbFrameBufferCopy();
 	EdClose();
 	edflush();
 
@@ -268,6 +299,30 @@ Mer_close()
 void
 Mer_restart()
 {
+	dumpEntity( 'sav1' );	/* DEBUG */
+}
+
+dumpEntity( name )
+long name;
+{
+	register u_char *cp = crap;
+	int len;
+
+	printf("Dumping %c%c%c%c:\n", name>>24, (name>>16)&0xFF,
+		(name>>8)&0xFF, name&0xFF );
+	len = EdUploadNamedEntity( name, crap );
+	while( len > 0 )  {
+		printf(" %2.2x", *cp++ );
+		printf(" %2.2x", *cp++ );
+		printf(" %2.2x", *cp++ );
+		printf(" %2.2x", *cp++ );
+		printf("\t%2.2x", *cp++ );
+		printf(" %2.2x", *cp++ );
+		printf(" %2.2x", *cp++ );
+		printf(" %2.2x", *cp++ );
+		printf("\n");
+		len -= 8;
+	}
 }
 
 /*
@@ -285,47 +340,32 @@ Mer_prolog()
 	if( !dmaflag )
 		return;
 
-#ifdef never
-	m[0][0] = model2view[0];
-	m[1][0] = model2view[1];
-	m[2][0] = model2view[2];
-	m[3][0] = model2view[3];
-	m[0][1] = model2view[4];
-	m[1][1] = model2view[5];
-	m[2][1] = model2view[6];
-	m[3][1] = model2view[7];
-	m[0][2] = model2view[8];
-	m[1][2] = model2view[9];
-	m[2][2] = model2view[10];
-	m[3][2] = model2view[11];
-	m[0][3] = model2view[12];
-	m[1][3] = model2view[13];
-	m[2][3] = model2view[14];
-	m[3][3] = model2view[15];
+	EdOpen( 'Mvie', 0, 100, 0 );
+	EdDeleteOpenEntity();
+	EdInsert();
+	DbReplaceMatrix();
+	DbCorrectAspectRatio(0);	/* shrink picture to fit */
+	Db4x4Matrix( model2view );
+DbCaptureTransformationState( 'sav1');
+	DbRefer( 'view' );
+	EdClose();
 
-	PSndM4d( m, 1, "world.mmat" );
+	if( state == ST_VIEW )
+		return;
 
-	if( state == ST_VIEW )  return;
-
-	m[0][0] = model2objview[0];
-	m[1][0] = model2objview[1];
-	m[2][0] = model2objview[2];
-	m[3][0] = model2objview[3];
-	m[0][1] = model2objview[4];
-	m[1][1] = model2objview[5];
-	m[2][1] = model2objview[6];
-	m[3][1] = model2objview[7];
-	m[0][2] = model2objview[8];
-	m[1][2] = model2objview[9];
-	m[2][2] = model2objview[10];
-	m[3][2] = model2objview[11];
-	m[0][3] = model2objview[12];
-	m[1][3] = model2objview[13];
-	m[2][3] = model2objview[14];
-	m[3][3] = model2objview[15];
-
-	PSndM4d( m, 1, "world.smat" );
-#endif
+	EdOpen( 'Medi', 0, 100, 0 );
+	EdDeleteOpenEntity();
+	EdInsert();
+	DbReplaceMatrix();
+	DbCorrectAspectRatio(0);	/* shrink picture to fit */
+	Db4x4Matrix( model2objview );
+	DbRefer( 'edit' );
+	EdClose();
+}
+mer_cvt_mat( m )
+register mat_t *m;
+{
+	/* TODO */
 }
 
 /*
@@ -404,7 +444,6 @@ Mer_update()
 		return;
 
 	/* Get changes onto the screen */
-	EdClear();			/* really?? */
 	EdDisplayRootList();		/* traverse tree */
 	edflush();		/* flush output buffers */
 }
@@ -420,7 +459,8 @@ Mer_puts( str, x, y, size, color )
 register u_char *str;
 {
 	DbPos2A( GED2MERLIN(x), GED2MERLIN(y) );
-	/* Size?  Color? */
+	DbMaskedHueSelect( color, MASK_GEOM );
+	/* Size?  */
 	DbBegin( TY_STRING );
 	DbBlock( strlen(str), 0x71 );	/* system stroke char opcode */
 	while( *str )
@@ -439,6 +479,7 @@ int x2, y2;
 int dashed;
 {
 	/* Dashed? */
+	DbMaskedHueSelect( DM_YELLOW, MASK_LINES );
 	DbBegin( TY_LINE );
 	DbPos2A( GED2MERLIN(x1), GED2MERLIN(y1) );
 	DbPos2A( GED2MERLIN(x2), GED2MERLIN(y2) );
@@ -544,11 +585,6 @@ int func;			/* BE_ or BV_ function */
 {
 }
 
-#ifdef never
-#define BUFSIZE		10000		/* # of displaylist elements */
-static P_VectorType	storage[BUFSIZE];/* Building area for solids */
-#endif
-
 /*
  *			M E R _ C V T V E C S
  *
@@ -565,54 +601,86 @@ static P_VectorType	storage[BUFSIZE];/* Building area for solids */
  * gives delta * full scale * 2 / scale
  *
  */
-#ifdef never
-#define XCVT(x)		( (((x) - sp->s_center[0]) * factor ))
-#define YCVT(y)		( (((y) - sp->s_center[1]) * factor ))
-#define ZCVT(z)		( (((z) - sp->s_center[2]) * factor ))
-#endif
-
 unsigned
 Mer_cvtvecs( sp )
 register struct solid *sp;
 {
-#ifdef never
-	register P_VectorType	*output;
 	register struct veclist *vp;
 	register int nvec;
-	char oname[32];
-
-	sprintf( oname,"O%x%c", sp, '\0' );
-
-	output = &storage[0];
 
 	nvec = sp->s_vlen;
+	EdOpen( sp, 0, 1000, 0 );	/* need better size est */
+	EdDeleteOpenEntity();
+	EdInsert();
+	DbBegin( TY_LINE );
+
 	for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
-		/* PS300 is Left-Handed.  Z sign is wrong, but ... */
-		output->V4[0] = ( vp->vl_pnt[0] );
-		output->V4[1] = ( vp->vl_pnt[1] );
-		output->V4[2] = ( vp->vl_pnt[2] );
-		output->V4[3] = 1.0;
 		if( vp->vl_pen == PEN_UP )  {
 			/* Move, not draw */
-			output->Draw = 0;
+			DbEnd();
+/* Need to interact with INSERT command here! */
+/***			dbflush();	/* conservative */
+			DbBegin( TY_LINE );
 		}  else  {
 			/* draw */
-			output->Draw = 1;
 		}
-		if( output++ >= &storage[BUFSIZE-4] )  {
-			(void)printf("Mer_cvtvecs:  Displaylist truncated\n");
-			break;
-		}
+		/* Z sign may be wrong */
+		homog( vp );		/* Does DbPos4A() */
+		/* Worry about overflow of 1000 byte buffer here */
 	}
+	DbEnd();			/* End line definition */
+	EdClose();			/* End EdInsert */
 
-	PVecBegn( oname, sp->s_vlen, 0, 0, 3, P_Item );
-	PVecList( sp->s_vlen, storage );
-	PVecEnd();
+#ifdef never
 	if( sp->s_soldash )
 		PPatWith( oname, "dotdashed" );
-
 #endif
 	return( 0 );	/* No "displaylist" consumed */
+}
+
+homog( vp )
+register struct veclist *vp;
+{
+	static double big, temp;
+	static double mul;
+	static int x, y, z, w;
+	static int exp;
+
+#define abs(a)	(((a)<0)?(-(a)):(a))
+	big = abs( vp->vl_pnt[0] );
+	temp = abs( vp->vl_pnt[1] );
+	if( temp > big )  big = temp;
+	temp = abs( vp->vl_pnt[2] );
+	if( temp > big )  big = temp;
+
+	big = abs( big );
+	if( big < 1.0 )  {
+		w = 16384;
+		mul = 16384.0;
+	} else {
+		temp = frexp( big, &exp );	/* big = temp * 2^exp */
+		if( exp > 14 )  {
+			printf("dm-mer/homog: big %f, dropped\n", big);
+			return;
+		}
+		w = 1<<(14-exp);
+		mul = 16384.0/(1<<exp);
+		if( big * mul > 16384.0 )  {
+			printf(" big=%f * mul=%f > 1.0\n", big, mul, big*mul);
+			return;
+		}
+	}
+#define SCALE_GED2MER	0.75	/* implication of GED2MERLIN() */
+	x = SCALE_GED2MER * vp->vl_pnt[0] * mul + 0.999;
+	y = SCALE_GED2MER * vp->vl_pnt[1] * mul + 0.999;
+	z = SCALE_GED2MER * vp->vl_pnt[2] * mul + 0.999;
+#ifdef never
+printf("X: %f ?= %f\n", vp->vl_pnt[0], ((double)x)/w );
+printf("Y: %f ?= %f\n", vp->vl_pnt[1], ((double)y)/w );
+printf("Z: %f ?= %f\n", vp->vl_pnt[2], ((double)z)/w );
+#endif
+
+	DbPos4A( x, y, z, w );
 }
 
 /*
@@ -685,7 +753,85 @@ com:
 		(void)printf("Mer_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
+#endif
+}
 
+void
+Mer_viewchange( cmd, sp )
+register int cmd;
+register struct solid *sp;
+{
+	printf("Mer_viewchange(%d,x%x)\n", cmd, sp);
+	switch( cmd )  {
+	case DM_CHGV_ADD:
+		EdOpen( 'view', 0, 10000, 0 );
+		EdInsert();
+		if( sp->s_materp != (char *)0 )  {
+			DbMaskedHueSelect(
+				((struct mater *)sp->s_materp)->mt_dm_int,
+				MASK_GEOM );
+		}
+		/* else it just re-uses last color */
+		DbRefer( sp );
+		EdClose();
+		edflush();
+		break;
+	case DM_CHGV_REDO:
+	case DM_CHGV_DEL:
+		/* Need to erase and rebuild 'view' and 'edit' */
+		EdOpen( 'view', 0, 10000, 0 );
+		EdDeleteOpenEntity();
+		EdInsert();
+		FOR_ALL_SOLIDS( sp )  {
+			/* Ignore all objects being rotated */
+			if( sp->s_iflag == UP )
+				continue;
+			if( sp->s_materp != (char *)0 )  {
+				DbMaskedHueSelect(
+				    ((struct mater *)sp->s_materp)->mt_dm_int,
+				    MASK_GEOM );
+			}
+			DbRefer( sp );
+		}
+		EdClose();
+		EdOpen( 'edit', 0, 10000, 0 );
+		EdDeleteOpenEntity();
+		EdInsert();
+		FOR_ALL_SOLIDS( sp )  {
+			/* Ignore all objects not being rotated */
+			if( sp->s_iflag != UP )
+				continue;
+			if( sp->s_materp != (char *)0 )  {
+				DbMaskedHueSelect(
+				    ((struct mater *)sp->s_materp)->mt_dm_int,
+				    MASK_GEOM );
+			}
+			DbRefer( sp );
+		}
+		EdClose();
+		break;
+	case DM_CHGV_REPL:
+		return;
+	case DM_CHGV_ILLUM:
+		break;
+	}
+	EdOpen( 'wrld', 8, 600, 0 );	/* the root object */
+	EdDeleteOpenEntity();
+	EdInsert();
+	DbFrameBufferErase();
+	DbCorrectAspectRatio(0);	/* shrink picture to fit */
+	DbMaskedVisibilityEnable( MASK_GEOM|MASK_VIEWPORT );
+	DbShadingMix( 0 );		/* 7bits hue, 5 bits intensity */
+	DbShadingType( 1 );		/* 1=depth cue, 2=constant inten */
+	DbRefer( 'colr' );
+	DbRefer( 'face' );
+	DbRefer( 'Mvie' );		/* Matrix_view intermediate */
+	if( state != ST_VIEW )
+		DbRefer( 'Medi' );	/* Matrix_edit intermediate */
+	DbFrameBufferCopy();
+	EdClose();
+	edflush();
+#ifdef never
 	/*
 	 *  This is the top-level node in the PS300 display tree
 	 *  (whatever E&S calls it).  Note that the matrixes
@@ -707,16 +853,83 @@ com:
 #endif
 }
 
-void
-Mer_viewchange()
-{
-	Mer_statechange();	/* HACK */
-}
 
+/*
+ * Color Map table
+ */
+#define NSLOTS		128	/* shading mix 0: 7hue, 5inten */
+static struct rgbtab {
+	unsigned char	r;
+	unsigned char	g;
+	unsigned char	b;
+} mer_rgbtab[NSLOTS];
+
+/*
+ *  			M E R _ C O L O R C H A N G E
+ *  
+ *  Go through the mater table, and allocate color map slots.
+ *  With 4096, we shouldn't often run out.
+ */
+static int slotsused;
 void
 Mer_colorchange()
 {
+	register struct mater *mp;
+
 	printf("Mer_colorchange\n");
+	mer_rgbtab[0].r=0; mer_rgbtab[0].g=0; mer_rgbtab[0].b=0;/* Black */
+	mer_rgbtab[1].r=255; mer_rgbtab[1].g=0; mer_rgbtab[1].b=0;/* Red */
+	mer_rgbtab[2].r=0; mer_rgbtab[2].g=0; mer_rgbtab[2].b=255;/* Blue */
+	mer_rgbtab[3].r=255; mer_rgbtab[3].g=255;mer_rgbtab[3].b=0;/*Yellow */
+	mer_rgbtab[4].r = mer_rgbtab[4].g = mer_rgbtab[4].b = 255; /* White */
+	slotsused = 5;
+	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )
+		mer_colorit( mp );
+
+	color_soltab();		/* apply colors to the solid table */
+
+	EdOpen( 'colr', 0, 8000, 0 );
+	EdDeleteOpenEntity();
+	DbColorData( mer_rgbtab, slotsused );
+	EdClose();
+}
+
+int
+mer_colorit( mp )
+struct mater *mp;
+{
+	register struct rgbtab *rgb;
+	register int i;
+	register int r,g,b;
+
+	r = mp->mt_r;
+	g = mp->mt_g;
+	b = mp->mt_b;
+	if( (r == 255 && g == 255 && b == 255) ||
+	    (r == 0 && g == 0 && b == 0) )  {
+		mp->mt_dm_int = DM_WHITE;
+		return;
+	}
+
+	/* First, see if this matches an existing color map entry */
+	rgb = mer_rgbtab;
+	for( i = 0; i < slotsused; i++, rgb++ )  {
+		if( rgb->r == r && rgb->g == g && rgb->b == b )  {
+			 mp->mt_dm_int = i;
+			 return;
+		}
+	}
+
+	/* If slots left, create a new color map entry, first-come basis */
+	if( slotsused < NSLOTS )  {
+		rgb = &mer_rgbtab[i=(slotsused++)];
+		rgb->r = r;
+		rgb->g = g;
+		rgb->b = b;
+		mp->mt_dm_int = i;
+		return;
+	}
+	mp->mt_dm_int = DM_YELLOW;	/* Default color */
 }
 
 /****************************************+=+=+=+=+=+=+=+=+=********** */
@@ -780,6 +993,8 @@ register u_char *ptr;
 	Network_Send( net_remote, ptr-5, cnt+5 );
 }
 
+int Message_data_len;	/* length of message returned by eat_chars() */
+
 /*
  *  			M E S S A G E _ R E C E I V E
  *  
@@ -802,8 +1017,8 @@ int count;
 	case 0xF:
 		/* Data */
 		/* Might also need to check EOM bit here? */
-		/* data_len = count - 1 - hlen; */
-		return( ptr+1+hlen );		/* hope he knows how much! */
+		Message_data_len = count - 1 - hlen;	/* extern, sorry */
+		return( ptr+1+hlen );		/* hope he checks how much! */
 	case 0xE:
 		/* Connect Request */
 	case 0xD:
@@ -1092,6 +1307,9 @@ u_char packetbuf[4096];
  *  are characters from the Merlin waiting to be read.
  *  The return is the return of Dlink_Receive (indicating that
  *  there is application data to be read), else return is 0.
+ *
+ *  Note that the length of the data availible is stashed in
+ *  Message_data_len by Message_Receive().
  */
 u_char *
 eat_chars()
@@ -1262,6 +1480,8 @@ Network_Confirm_Disconnect(d0,d1,s0,s1)
 }
 
 /*********** Database Editor Interfaces ******** */
+#define GET_LONG(p)	(((p)[3]<<24)|((p)[2]<<16)|((p)[1]<<8)|*(p))
+#define GET_SHORT(p)	(((p)[1]<<8)|*(p))
 
 /* 4.2 General Control Commands */
 EdInit()  {
@@ -1287,19 +1507,25 @@ long name;
 	op2( misc );
 }
 
-EdClose()
-{
-	/* Flush Insert mode */
-	if( insert_mode )  {
-		register int len = db_next - DB_START - 3;
+end_insert_mode()  {
+	register int len = db_next - DB_START - 3;
+	if( len <= 0 )  {
+		/* Nothing to insert */
+		db_next = DB_START;	/* reset to front */
+	} else {
 		if( len > DB_SIZE )
 			(void)printf("EdClose: buffer overflow\n");
 		if( DB_START[0] != 0x21 )
 			(void)printf("EdClose: EdInsert botch\n");
 		DB_START[1] = len & 0xFF;
 		DB_START[2] = (len>>8) & 0xFF;
-		insert_mode = 0;
 	}
+	insert_mode = 0;
+}
+EdClose()
+{
+	if( insert_mode )
+		end_insert_mode();
 	op1( 0x11 );		/* Close Named Entity */
 }
 
@@ -1371,7 +1597,43 @@ long name;
 
 /* 4.8 cut and paste commands */
 /* 4.9 Modify database and current edit position */
+
 /* 4.10 List and Upload commands */
+long
+EdUploadNamedEntity(iname, buf)
+long iname;
+register u_char *buf;
+{
+	register u_char *cp;
+	register long left;
+	long name, len;
+
+	op1( 0xBA );
+	op4( iname );
+	op1( 1 );		/* format */
+	edflush();
+	/* The name and length come back in the first message. */
+	/* The actual data is sent along in subsequent messages. */
+	if( !ck_input(1) || (cp = eat_chars()) == (u_char *)0 )  {
+		printf("EdUploadNamedEntity:  no header\n");
+		return(0L);
+	}
+	name = GET_LONG(cp);
+	len = GET_LONG(cp+4);
+	printf("name x%x got x%x, len=x%x\n", iname, name, len );
+	left = len;
+	while( left > 0 )  {
+		if( !ck_input(1) || (cp = eat_chars()) == (u_char *)0 )  {
+			printf("EdUploadNamedEntity:  short reply\n");
+			return(0L);
+		}
+		bcopy( cp, buf, Message_data_len );
+		buf += Message_data_len;
+		left -= Message_data_len;
+	}
+	return(len);
+}
+
 /* 4.11 Miscellaneous Commands */
 EdNoop()  {
 	op1( 0x00 );
@@ -1389,8 +1651,6 @@ EdEnquireMem()  {
 		cp = eat_chars();
 		if( cp == (u_char *)0 )
 			return( 0L );		/* Assume none */
-#define GET_LONG(p)	(((p)[3]<<24)|((p)[2]<<16)|((p)[1]<<8)|*(p))
-#define GET_SHORT(p)	(((p)[1]<<8)|*(p))
 		total = GET_LONG(cp);
 		unalloc = GET_LONG(cp+4);
 		percent = GET_SHORT(cp+8);
@@ -1446,6 +1706,149 @@ DbPos2A( x, y )
 	db2( x );
 	db2( y );
 }
+DbPos4A( x, y, z, w )
+{
+	db1( 0x38 );
+	db2( x );
+	db2( y );
+	db2( z );
+	db2( w );
+}
+/* Graphic Transformations */
+DbReplaceMatrix()  {
+	db1( 0x64 );
+}
+DbXRot( a )  {
+	db1( 0x5C );
+	db2( a );
+}
+DbYRot( a )  {
+	db1( 0x5D );
+	db2( a );
+}
+DbZRot( a )  {
+	db1( 0x5E );
+	db2( a );
+}
+DbScale( s, w )  {
+	db1( 0x60 );
+	db2( s );
+	db2( w );
+}
+
+Db4x4Matrix( m )
+register mat_t m;
+{
+	op1( 0x65 );
+/* 256.0 */
+#define CV(x)	((int)(m[x] * 128.0))
+	op2( CV(0) );
+	op2( CV(4) );
+	op2( CV(8) );
+	op2( CV(12) );
+
+	op2( CV(1) );
+	op2( CV(5) );
+	op2( CV(9) );
+	op2( CV(13) );
+
+	op2( CV(2) );
+	op2( CV(6) );
+	op2( CV(10) );
+	op2( CV(14) );
+
+	op2( CV(3) );
+	op2( CV(7) );
+	op2( CV(11) );
+	op2( CV(15) );
+#undef CV
+}
+DbCorrectAspectRatio(mode) {
+	if( !mode )  db1( 0x58 );	/* shrink picture to fit */
+	else  db1( 0x59 );		/* enlarge picture */
+}
+DbCaptureTransformationState( name )
+long name;
+{
+	db1( 0x6F );
+	db4( name );
+}
+
+/* Section 6: Graphic Attributes */
+DbVisibilityEnableAll()  {
+	db1( 0x93 );
+}
+DbMaskedVisibilityDisable(mask)  {
+	db1( 0x94 );
+	db2( mask );
+}
+DbMaskedVisibilityEnable(mask)  {
+	db1( 0x95 );
+	db2( mask );
+}
+DbColorSelectAll( c )  {
+	db1( 0x96 );
+	db2( c );
+}
+DbHueSelectAll( h )  {
+	db1( 0x97 );
+	db1( h );
+}
+DbMaskedColorSelect( c, mask )  {
+	db1( 0x98 );
+	db2( c );
+	db2( mask );
+}
+DbMaskedHueSelect( h, mask )  {
+	db1( 0x99 );
+	db1( h );
+	db2( mask );
+}
+DbColorData( rgb, len )
+register struct rgbtab *rgb;
+int len;
+{
+	register int i, j;
+
+	/* We assume shading mix 0:  7 bits hue, 5 bits inten */
+	for( i=0; i < len; i++ )  {
+		EdInsert();
+		db1( 0x90 );
+		db2( i<<5 );	/* starting index */
+		db2( 32 );	/* 5 bits worth */
+		for( j=0; j < 32; j++ )  {
+			register int c;
+#define FOLD(p)		 {c = p - ((32-j)<<1); \
+			if( c < 0 )  c = 0; \
+			db1( c ); }
+			FOLD( rgb->r );
+			FOLD( rgb->g );
+			FOLD( rgb->b );
+		}
+		edflush();
+		rgb++;
+	}
+}
+DbShadingType( t )  {
+	db1( 0xB0 );
+	db1( t );
+}
+DbShadingMix( m )  {
+	db1( 0xB1 );
+	db1( m );
+}
+
+/* Section 10: Frame Buffer control */
+DbFrameBufferErase()  {
+	db1( 0xFD );
+}
+DbViewportErase()  {
+	db1( 0xFE );
+}
+DbFrameBufferCopy()  {
+	db1( 0xFC );
+}
+
 /* Many many more */
 
 /*** some quick hacks ** */
@@ -1477,6 +1880,8 @@ dbflush()
 		(void)printf("dbflush(%d) > %d, Overrun!\n", count, DB_SIZE);
 	if(mer_debug>=3) (void)printf("dbflush(%d)\n",count);
 	if( count > 0 )  {
+		if( insert_mode )
+			end_insert_mode();
 		/* Sanity check -- see if any input leftover */
 		if( ck_input(0) )  {
 			(void)printf("dbflush:  eat_chars(): x%x\n", eat_chars() );
