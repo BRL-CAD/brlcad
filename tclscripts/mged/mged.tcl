@@ -19,6 +19,12 @@
 # Description -
 #       Sample user interface for MGED
 
+#==============================================================================
+# Ensure that tk.tcl has been loaded already via mged command 'loadtk'.
+#==============================================================================
+if { [info exists tk_strictMotif] == 0 } {
+	loadtk
+}
 
 #==============================================================================
 # PHASE 0: Support routines: MGED dialog boxes
@@ -187,7 +193,7 @@ menu .ia.m.file.m
 	}
     }
 }
-    
+
 .ia.m.file.m add command -label "Quit" -command quit -underline 0
 
 menubutton .ia.m.tools -text "Tools" -menu .ia.m.tools.m -underline 0
@@ -214,16 +220,18 @@ menubutton .ia.m.help -text "Help" -menu .ia.m.help.m -underline 0
 menu .ia.m.help.m
 .ia.m.help.m add command -label "About MGED" -underline 6 -command {
     mged_dialog .ia_about "About MGED..." \
-	    "MGED: Multidisplay \[combinatorial solid\] Geometry EDitor\n\
+	    "MGED: Multi-device Geometry EDitor\n\
 \n\
-MGED is a part of the BRL-CAD package developed at the Army\n\
-Research Laboratory at Aberdeen Proving Ground, Maryland, U.S.A." \
+MGED is a part of The BRL-CAD Package.\n\n\
+Developed by The U. S. Army Research Laboratory\n\
+Aberdeen Proving Ground, Maryland  21005-5068  USA\n\
+" \
 	    {} 0 OK
 
     
 }
 .ia.m.help.m add command -label "On command..." -underline 0 \
-	-command [list ia_help [lrange [?] 5 end]]
+	-command [list ia_help [?]]
 .ia.m.help.m add command -label "Apropos" -underline 0 -command ia_apropos
 .ia.m.help.m add command -label "MGED Manual" -underline 0 -command ia_man
 
