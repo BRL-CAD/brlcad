@@ -797,10 +797,10 @@ void
 rt_fastgen_plate_vol_overlap( fr1, fr2, pp, ap )
 struct region **fr1;
 struct region **fr2;
-CONST struct partition *pp;
+struct partition *pp;
 struct application *ap;
 {
-	CONST struct partition *prev;
+	struct partition *prev;
 	fastf_t depth;
 
 	RT_CK_REGION(*fr1);
@@ -966,6 +966,26 @@ struct partition	*InputHdp;
 	lastregion = (struct region *)BU_PTBL_GET(regiontable, 0);
 	RT_CK_REGION(lastregion);
 
+	if( BU_PTBL_LEN(regiontable) > 1 )  {
+		/*
+		 *  Snapshot current state of overlap list,
+		 *  so that downstream application code can resolve any
+		 *  FASTGEN plate/plate overlaps.
+		 *  The snapshot is not taken at the top of the routine
+		 *  because nobody is interested in FASTGEN vol/plate
+		 *  or vol/vol overlaps.
+		 *  The list is terminated with a NULL pointer,
+		 *  placed courtesy of bu_calloc().
+		 */
+		pp->pt_overlap_reg = (struct region **)bu_calloc(
+			BU_PTBL_LEN(regiontable)+1, sizeof(struct region *),
+			"pt_overlap_reg" );
+		bcopy( (char *)BU_PTBL_BASEADDR(regiontable),
+			(char *)pp->pt_overlap_reg,
+			BU_PTBL_LEN(regiontable) * sizeof(struct region *) );
+	}
+
+	/* Examine the overlapping regions, pairwise */
 	for( i=1; i < BU_PTBL_LEN(regiontable); i++ )  {
 		struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
 		if( regp == REGION_NULL ) continue;	/* empty slot in table */
@@ -987,6 +1007,18 @@ struct partition	*InputHdp;
 			goto code1;
 		}
 
+		/*
+		 *  If a FASTGEN region overlaps a non-FASTGEN region,
+		 *  the non-FASTGEN ("traditional BRL-CAD") region wins.
+		 *  No mixed-mode geometry like this will be built by the
+		 *  fastgen-to-BRL-CAD converters, only by human editors.
+		 */
+		if( lastregion->reg_is_fastgen != regp->reg_is_fastgen )  {
+			if( lastregion->reg_is_fastgen )
+				goto code2;		/* keep regp */
+			if( regp->reg_is_fastgen )
+				goto code1;		/* keep lastregion */
+		}
 
 		/*
 		 *  To support ray bundles, find partition with the lower

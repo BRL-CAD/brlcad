@@ -583,8 +583,8 @@ struct partition {
 	struct region	*pt_regionp;		/* ptr to containing region */
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
-	struct bu_ptbl	pt_seglist;		/* all segs in this partition */
 	struct region	**pt_overlap_reg;	/* NULL-terminated array of overlapping regions.  NULL if no overlap. */
+	struct bu_ptbl	pt_seglist;		/* all segs in this partition */
 };
 #define PT_NULL		((struct partition *)0)
 #define PT_MAGIC	0x87687681
@@ -604,6 +604,7 @@ struct partition {
 #define RT_DUP_PT(ip,new,old,res)	{ \
 	GET_PT(ip,new,res); \
 	bcopy((char *)(&(old)->RT_PT_MIDDLE_START), (char *)(&(new)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old) ); \
+	(new)->pt_overlap_reg = NULL; \
 	bu_ptbl_cat( &(new)->pt_seglist, &(old)->pt_seglist );  }
 
 /* Clear out the pointers, empty the hit list */
@@ -625,6 +626,10 @@ struct partition {
 
 #define FREE_PT(p,res)  { \
 	BU_LIST_APPEND( &(res->re_parthead), (struct bu_list *)(p) ); \
+	if( (p)->pt_overlap_reg )  { \
+		bu_free( (genptr_t)((p)->pt_overlap_reg), "pt_overlap_reg" );\
+		(p)->pt_overlap_reg = NULL; \
+	} \
 	res->re_partfree++; }
 
 #define RT_FREE_PT_LIST( _headp, _res )		{ \
