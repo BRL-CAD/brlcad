@@ -210,6 +210,10 @@ char	*program;	/* name of program to run */
 		if( (pid = fork()) == 0 )  {
 			/* Child process */
 			close(fd);
+			for(fd=0; fd<=32; fd++) (void)close(fd);
+			if( open("/dev/null", 0) < 0 ) perror("/dev/null fd0");
+			if( open("/dev/null", 1) < 0 ) perror("/dev/null fd1");
+			if( open("/dev/null", 1) < 0 ) perror("/dev/null fd2");
 			(void)execv( bu_vls_addr(&path), argv );
 			/* If execv() succeeds, there is no return and
 			 * Process will be reaped in wait3() in main(),
