@@ -437,54 +437,6 @@ FILE	*fp;
 }
 
 /*
- *			R O T A T E _ B B O X
- *
- *  Transform a bounding box (RPP) by the given 4x4 matrix.
- *  There are 8 corners to the bounding RPP.
- *  Each one needs to be transformed and min/max'ed.
- *  This is not minimal, but does fully contain any internal object,
- *  using an axis-aligned RPP.
- */
-void
-rotate_bbox( omin, omax, mat, imin, imax )
-point_t		omin;
-point_t		omax;
-CONST mat_t	mat;
-CONST point_t	imin;
-CONST point_t	imax;
-{
-	point_t		rmin, rmax;
-	point_t		pt;
-
-	MAT4X3PNT( rmin, mat, imin );
-	MAT4X3PNT( rmax, mat, imax );
-
-	VSET( omin, rmin[X], rmin[Y], rmin[Z] );
-	VMOVE( omax, omin );
-
-	VSET( pt, rmax[X], rmin[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmax[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmax[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmin[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmin[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmax[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmax[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-}
-
-/*
  *			M O D E L _ R P P
  *
  *  Process a space command.
@@ -493,6 +445,7 @@ CONST point_t	imax;
  *  Implicit Returns -
  *	In all cases, sets space_min and space_max.
  */
+int
 model_rpp( min, max )
 CONST point_t	min, max;
 {
@@ -544,7 +497,7 @@ CONST point_t	min, max;
 			/* re-bound the space() rpp with a tighter one
 			 * after rotating & scaling it.
 			 */
-			rotate_bbox( space_min, space_max, rmat, min, max );
+			rt_rotate_bbox( space_min, space_max, rmat, min, max );
 		}
 		space_set = 1;
 	} else {
