@@ -495,29 +495,24 @@ BU_EXTERN(unsigned char *	bu_pshort, (register unsigned char *msgp,
 				register int s));
 BU_EXTERN(unsigned char *	bu_plong, (register unsigned char *msgp,
 				register unsigned long l));
-BU_EXTERN(void			bu_struct_buf, (struct bu_external *ext,
-				genptr_t buf));
+BU_EXTERN(void			bu_struct_wrap_buf,
+				(struct bu_external *ext, genptr_t buf));
 BU_EXTERN(int			bu_struct_parse, (CONST struct bu_vls *in_vls,
 				CONST struct bu_structparse *desc, 
 				char *base));
-BU_EXTERN(void			bu_vls_item_print, (struct bu_vls *vp,
+BU_EXTERN(void			bu_struct_print, ( CONST char *title,
+				CONST struct bu_structparse	*parsetab,
+				CONST char			*base));
+BU_EXTERN(void			bu_vls_struct_item, (struct bu_vls *vp,
 				CONST struct bu_structparse *sdp,
-				CONST char *base ));
-BU_EXTERN(void			bu_vls_item_print_nc, (struct bu_vls *vp,
+				CONST char *base,
+				int sep_char));
+BU_EXTERN(int			bu_vls_struct_item_named, (struct bu_vls *vp,
 				CONST struct bu_structparse *sdp,
-				CONST char *base ));
-BU_EXTERN(int			bu_vls_name_print, (struct bu_vls *vp,
-				CONST struct bu_structparse *parsetab,
-				CONST char *name, CONST char *base ));
-BU_EXTERN(int			bu_vls_name_print_nc, (struct bu_vls *vp,
-				CONST struct bu_structparse *parsetab,
-				CONST char *name, CONST char *base ));
-BU_EXTERN(void			bu_struct_print, (CONST char *title,
-				CONST struct bu_structparse *parsetab,
-				CONST char *base));
-BU_EXTERN(void			bu_vls_struct_print, (struct  bu_vls *vls,
-				register CONST struct bu_structparse *sdp,
-				CONST char *base));
+				CONST char *name,
+				CONST char *base,
+				int sep_char));
+
 
 
 
