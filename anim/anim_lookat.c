@@ -37,18 +37,24 @@
 #define RTOD	(180/M_PI)
 #endif
 
+
+#define LOOKAT_SCRIPT	0
+#define	LOOKAT_YPR	1
+#define LOOKAT_QUAT	2
+
 extern int optind;
 extern char *optarg;
 
 int frame = 0;
-int print_ypr = 0;
+int print_mode = LOOKAT_SCRIPT;
 
 main(argc,argv)
 int argc;
 char **argv;
 {
 	fastf_t time;
-	vect_t eye,look,dir,prev_dir, angles;
+	vect_t eye,look,dir,prev_dir, angles, norm;
+	quat_t quat;
 	mat_t mat;
 	int val = 0;
 
@@ -58,6 +64,7 @@ char **argv;
 	if (argc > 1)
 		get_args(argc,argv);
 
+	VSET(norm, 0.0, 1.0, 0.0);
 	while (!feof(stdin)){
 		VMOVE(prev_dir,dir);
 		val=scanf("%lf %lf %lf %lf %lf %lf %lf",&time,eye,eye+1,eye+2,look,look+1,look+2);
@@ -66,8 +73,10 @@ char **argv;
 		}
 
 		VSUBUNIT(dir,look,eye);
-		anim_dir2mat(mat,dir,prev_dir);
-		if (!print_ypr){
+		anim_dirn2mat(mat,dir,norm);
+		VSET(norm, mat[1],mat[5], 0.0); 
+		switch (print_mode) {
+		case LOOKAT_SCRIPT:
 			printf("start %d;\n",frame++);
 			printf("clean;\n");
 	                printf("eye_pt %f %f %f;\n",eye[0],eye[1],eye[2]);
@@ -76,20 +85,27 @@ char **argv;
 	                printf("%f %f %f 0\n", -mat[0], -mat[4], -mat[8]);
 	                printf("0 0 0 1;\n");
 			printf("end;\n");
-		}
-		else {
+			break;
+		case LOOKAT_YPR:
 			anim_mat2ypr(angles,mat);
 			angles[0] *= RTOD;
 			angles[1] *= RTOD;
 			angles[2] *= RTOD;
 			printf("%g\t%g\t%g\t%g\t",time,eye[0],eye[1],eye[2]);
 			printf("%g\t%g\t%g\n",angles[0],angles[1],angles[2]);
+			break;
+		case LOOKAT_QUAT:
+			anim_mat2quat(quat,mat);
+			printf("%g\t%g\t%g\t%g\t",time,eye[0],eye[1],eye[2]);
+			printf("%g\t%g\t%g\t%g\n",quat[0],quat[1],quat[2],quat[3]);
+			break;
 		}
+
 
 	}
 }
 
-#define OPT_STR "f:y"
+#define OPT_STR "f:yq"
 
 int get_args(argc,argv)
 int argc;
@@ -102,7 +118,10 @@ char **argv;
 			sscanf(optarg,"%d",&frame);
 			break;
 		case 'y':
-			print_ypr=1;
+			print_mode = LOOKAT_YPR;
+			break;
+		case 'q':
+			print_mode = LOOKAT_QUAT;
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);
