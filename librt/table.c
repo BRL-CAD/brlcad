@@ -111,8 +111,11 @@ const struct bu_structparse rt_nul_parse[] = {
 	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip, \
 			struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, \
-			const struct rt_db_internal *ip, int verbose, \
-			double mm2local, struct resource *resp)); \
+			const struct rt_db_internal *ip, \
+		        int verbose, \
+			double mm2local, \
+			struct resource *resp, \
+			struct db_i *db_i)); \
 	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, \
 			const mat_t mat, struct rt_db_internal *ip, \
 			int free, struct db_i *dbip, \
