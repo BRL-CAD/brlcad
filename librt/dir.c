@@ -29,10 +29,7 @@ static char RCSdir[] = "@(#)$Header$";
 #include "../h/vmath.h"
 #include "../h/db.h"
 #include "../h/raytrace.h"
-#include "rtdir.h"
 #include "debug.h"
-
-static struct directory *DirHead = DIR_NULL;	/* rt_i, eventually */
 
 /*
  *			R T _ D I R B U I L D
@@ -42,27 +39,40 @@ static struct directory *DirHead = DIR_NULL;	/* rt_i, eventually */
  * named access to objects.
  *
  * Returns -
- *	0	Success
- *	-1	Fatal Error
+ *	(struct rt_i *)	Success
+ *	RTI_NULL	Fatal Error
  */
-int
+struct rt_i *
 rt_dirbuild(filename, buf, len)
 char *filename;
 char *buf;
 int len;
 {
 	static union record	record;
-	static long	addr;
+	register long	addr;
 
+	/*
+	 *  Allocate and initialize information for this
+	 *  instance of an RT model.
+	 *
+	 *  (Here we will allocate an rt_i struct, someday)
+	 */
 	bzero( (char *)&rt_i, sizeof(rt_i) );
 	if( (rt_i.fp = fopen(filename, "r")) == NULL )  {
 		perror(filename);
-		return(-1);
+		return(RTI_NULL);
 	}
 	rt_i.needprep = 1;
 	rt_i.file = rt_strdup( filename );
-	buf[0] = '\0';
 
+	/* In case everything is a halfspace, set a minimum space */
+	VSET( rt_i.mdl_min, -10, -10, -10 );
+	VSET( rt_i.mdl_max,  10,  10,  10 );
+	VMOVE( rt_i.rti_inf_box.bn.bn_min, rt_i.mdl_min );
+	VMOVE( rt_i.rti_inf_box.bn.bn_max, rt_i.mdl_max );
+	rt_i.rti_inf_box.bn.bn_type = CUT_BOXNODE;
+
+	buf[0] = '\0';
 	addr = ftell(rt_i.fp);
 	(void)fread( (char *)&record, sizeof record, 1, rt_i.fp );
 	if( record.u_id != ID_IDENT )  {
@@ -153,7 +163,8 @@ int len;
 			(long)record.c.c_length * (long)sizeof record,
 			1 );
 	}
-	return(0);	/* OK */
+	/* Eventually, we will malloc() this on a per-db basis */
+	return( &rt_i );	/* OK */
 }
 
 /*
@@ -173,7 +184,7 @@ register char *str;
 {
 	register struct directory *dp;
 
-	for( dp = DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
+	for( dp = rt_i.rti_DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
 		if(
 			str[0] == dp->d_namep[0]  &&	/* speed */
 			str[1] == dp->d_namep[1]  &&	/* speed */
@@ -202,7 +213,7 @@ long laddr;
 	GETSTRUCT( dp, directory );
 	dp->d_namep = rt_strdup( name );
 	dp->d_addr = laddr;
-	dp->d_forw = DirHead;
-	DirHead = dp;
+	dp->d_forw = rt_i.rti_DirHead;
+	rt_i.rti_DirHead = dp;
 	return( dp );
 }
