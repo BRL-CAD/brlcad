@@ -163,8 +163,8 @@ grid_setup()
 		fastf_t		ang;	/* radians */
 		fastf_t		dx, dy;
 
-		ang = curframe * frame_delta_t * rt_pi;	/* 2 sec period */
-		dx = cos(ang) * 0.5;	/* 1/2 width amplitude */
+		ang = curframe * frame_delta_t * rt_twopi / 10;	/* 10 sec period */
+		dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
 		dy = sin(ang) * 0.5;
 		VJOIN2( viewbase_model, viewbase_model,
 			dx, dx_model,
