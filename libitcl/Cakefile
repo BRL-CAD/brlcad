@@ -15,7 +15,7 @@
 			 --with-tcl=[[pwd]]/LIBTCL_DIR \
 			 --with-tk=[[pwd]]/LIBTK_DIR
 #define PRODUCTS	libitcl3.0.a& itclsh& libitk3.0.a& itkwish&
-#define	AFTER_MAKE	rm -f libitcl.a ; ln -s libitcl3.0.a libitcl.a
+#define	AFTER_MAKE	rm -f libitcl.a libitk.a ; ln -s libitcl3.0.a libitcl.a ; ln -s libitk3.0.a libitk.a
 #else
 /* Shared library case */
 #define ITCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/ --enable-shared --quiet \
