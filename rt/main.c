@@ -333,9 +333,6 @@ register struct application *ap;
 	LOCAL vect_t tempdir;
 	register int com;
 
-	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
-	a.a_hit = ap->a_hit;
-	a.a_miss = ap->a_miss;
 	a.a_onehit = 1;
 #ifndef HEP
 	{
@@ -343,9 +340,13 @@ register struct application *ap;
 #else
 	while(1)  {
 		com = Diaread( &work_word );
+		/* Note: ap->... not valid until first time here */
 #endif
 		a.a_x = (com>>16)&0xFFFF;
 		a.a_y = (com&0xFFFF);
+		a.a_hit = ap->a_hit;
+		a.a_miss = ap->a_miss;
+	 	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
 		VJOIN2( a.a_ray.r_pt, viewbase_model,
 			a.a_x, dx_model, 
 			(npts-a.a_y-1), dy_model );
