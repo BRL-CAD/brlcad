@@ -7,7 +7,7 @@
 .SH NAME
 nirt \- interactively ray trace an MGED model
 .SH SYNOPSIS
-.BR "nirt  [ -M ] [-sv] [ -u " n " ] [ -x " v " ] " "model.g objects ..."
+.BR "nirt  [ -M ] [-sv] [-b] [ -u " n " ] [ -x " v " ] " "model.g objects ..."
 .SH DESCRIPTION
 .I Nirt
 operates on the specified
@@ -44,6 +44,18 @@ to be called directly from within
 using the
 .BR nirt " and " rrt
 commands.
+The
+.B -b
+option causes
+.I nirt
+to perform a
+.B backout
+command before the first
+.B shoot
+command (see the description of these two commands below).
+This is probably only useful with the
+.B -M
+option.
 Given the
 .B -s
 option,

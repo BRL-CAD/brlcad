@@ -53,7 +53,7 @@ com_table	ComTab[] =
 		    { "xyz", target_coor, "set/query target coordinates", 
 			"X Y Z" },
 		    { "s", shoot, "shoot a ray at the target" },
-		    { "backout", backout, "Back out of model" },
+		    { "backout", backout, "back out of model" },
 		    { "useair", use_air, "set/query use of air",
 			"<0|1|2|...>" },
 		    { "units", nirt_units, "set/query local units",
@@ -77,6 +77,7 @@ com_table	ComTab[] =
 		    { "?", show_menu, "display this help menu" },
 		    { 0 }
 		};
+int		do_backout = 0;			/* Backout before shooting? */
 int		silent_flag = SILENT_UNSET;	/* Refrain from babbling? */
 
 /* Parallel structures needed for operation w/ and w/o air */
@@ -134,6 +135,9 @@ char **argv;
     while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
         switch (Ch)
         {
+	    case 'b':
+		do_backout = 1;
+		break;
 	    case 'M':
 		mat_flag = 1;
 		break;
@@ -276,17 +280,13 @@ char **argv;
 char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
+ -b      back out of geometry before first shot\n\
  -M      read matrix, cmds on stdin\n\
  -s      run in short (non-verbose) mode\n\
  -u n    set use_air=n (default 0)\n\
  -v      run in verbose mode\n\
  -x v    set librt(3) diagnostic flag=v\n\
 ";
-#if 0
-char	usage[] = "\
-Usage: 'nirt [-u n] [-x f] model.g objects...'\n\
-";
-#endif
 
 void printusage() 
 {
