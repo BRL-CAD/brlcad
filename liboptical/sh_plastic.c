@@ -71,6 +71,9 @@ HIDDEN void	phong_print();
 HIDDEN void	phong_free();
 
 struct mfuncs phg_mfuncs[] = {
+	"default",	0,		0,		MFI_NORMAL|MFI_LIGHT,
+	phong_setup,	phong_render,	phong_print,	phong_free,
+
 	"plastic",	0,		0,		MFI_NORMAL|MFI_LIGHT,
 	phong_setup,	phong_render,	phong_print,	phong_free,
 
