@@ -52,17 +52,21 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 
 
 clean&:	Makefile.MTYPE
-	make -f Makefile.MTYPE clean
+	make -f Makefile.MTYPE distclean
 
 noprod&:
 	rm -rf libtcl''TCLTK_VERS.*
 
+#ifdef NFS
 clobber&: Makefile.MTYPE
-	make -f Makefile.MTYPE clean
+	make -f Makefile.MTYPE distclean
 	rm -f *.MTYPE *.o libtcl* config.log config.status tclConfig.sh tclsh Makefile
-	#ifdef NFS
 	rm -rf dltest
-	#endif
+#else
+clobber&: Makefile.MTYPE
+	make -f Makefile.MTYPE distclean
+	rm -f *.MTYPE *.o libtcl* config.log config.status tclConfig.sh tclsh Makefile
+#endif
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
