@@ -270,8 +270,8 @@ char **argv;
 
 				fprintf( ofp, "attr set {%s}", tclify_name( dp->d_namep ) );
 				for( i=0 ; i<avs->count ; i++ ) {
-					fprintf( ofp, " {%s}", tclify_name( avs->avp[i].name ) );
-					fprintf( ofp, " {%s}", tclify_name( avs->avp[i].value ) );
+					fprintf( ofp, " {%s}", avs->avp[i].name );
+					fprintf( ofp, " {%s}", avs->avp[i].value );
 				}
 				fprintf( ofp, "\n" );
 			}
