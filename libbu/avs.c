@@ -117,6 +117,21 @@ CONST char	*value;
 }
 
 /*
+ *			B U _ A V S _ A D D _ V L S
+ */
+int
+bu_avs_add_vls( avp, attribute, value_vls )
+struct bu_attribute_value_set	*avp;
+CONST char		*attribute;
+CONST struct bu_vls	*value_vls;
+{
+	BU_CK_AVS(avp);
+	BU_CK_VLS(value_vls);
+
+	return bu_avs_add( avp, attribute, bu_vls_addr(&value_vls) );
+}
+
+/*
  *			B U _ A V S _ R E M O V E
  *
  *  Returns -
@@ -165,4 +180,19 @@ struct bu_attribute_value_set	*avp;
 	}
 	bu_free( avp->avp, "avp->avp" );
 	avp->magic = -1L;
+}
+
+/*
+ *			B U _ A V S _ P R I N T
+ */
+void
+bu_avs_print( const struct bu_attribute_value_set *avp, const char *title )
+{
+	BU_CK_AVS(avp);
+
+	bu_log("%s\n", title);
+
+	for( i = 0; i < avp->count; i++, avp++ )  {
+		bu_log(" %s = %s\n", avp->avp->name, avp->avp->value );
+	}
 }
