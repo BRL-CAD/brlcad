@@ -1180,7 +1180,11 @@ int mask;
   char line[MAXLINE];
 
   /* Get data from stdout or stderr */
+#if 0
   if((count = read((int)fd, line, MAXLINE)) == 0)
+#else
+  if((count = read((int)fd, line, 5120)) == 0)
+#endif
     return;
 
   line[count] = '\0';
