@@ -248,7 +248,8 @@ register struct partition *pp;
 				rp->reg_mater.ma_rgb[1]/255.,
 				rp->reg_mater.ma_rgb[2]/255. );
 		} else {
-			VSET( mcolor, 1.0, 0.0, 0.0 );	/* default: red */
+			/* Default color is white (uncolored) */
+			VSETALL( mcolor, 1.0 );
 		}
 	}
 
