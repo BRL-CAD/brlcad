@@ -215,7 +215,7 @@ int IDEF(nul_class)
 void DEF(nul_free)
 void DEF(nul_plot)
 void DEF(nul_vshot)
-void DEF(nul_tess);
+void DEF(nul_tess)
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
