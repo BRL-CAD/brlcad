@@ -57,7 +57,6 @@ extern double tran_z;
 int ignore_scroll_and_menu = 0;
 
 #endif
-int f_aip();
 
 /*	Degree <-> Radian conversion factors	*/
 double	degtorad =  0.01745329251994329573;
