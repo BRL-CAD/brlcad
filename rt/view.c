@@ -11,6 +11,8 @@
  *	1	1-light, from the eye.
  *	2	Spencer's surface-normals-as-colors display
  *	3	3-light debugging model
+ *	4	curvature debugging display (inv radius of curvature)
+ *	5	curvature debugging (principal direction)
  *
  *  Notes -
  *	The normals on all surfaces point OUT of the solid.
@@ -111,7 +113,8 @@ struct partition *PartHeadp;
 	if( pp->pt_inflip )  {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
 	}
-	if( lightmodel == 1 )  {
+	switch( lightmodel )  {
+	case 1:
 		/* Light from the "eye" (ray source).  Note sign change */
 		diffuse0 = 0;
 		if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) >= 0.0 )
@@ -121,7 +124,8 @@ struct partition *PartHeadp;
 		/* Add in contribution from ambient light */
 		VSCALE( work1, ambient_color, AmbientIntensity );
 		VADD2( ap->a_color, work0, work1 );
-	}  else if( lightmodel == 3 )  {
+		break;
+	case 3:
 		/* Simple attempt at a 3-light model. */
 		diffuse0 = 0;
 		if( (cosI0 = VDOT(hitp->hit_normal, l0vec)) >= 0.0 )
@@ -153,13 +157,49 @@ struct partition *PartHeadp;
 		/* Add in contribution from ambient light */
 		VSCALE( work1, ambient_color, AmbientIntensity );
 		VADD2( ap->a_color, work0, work1 );
-	} else {
-		/* lightmodel == 2 */
+		break;
+	case 2:
 		/* Store surface normals pointing inwards */
 		/* (For Spencer's moving light program */
 		ap->a_color[0] = (hitp->hit_normal[0] * (-.5)) + .5;
 		ap->a_color[1] = (hitp->hit_normal[1] * (-.5)) + .5;
 		ap->a_color[2] = (hitp->hit_normal[2] * (-.5)) + .5;
+		break;
+	case 4:
+	 	{
+			LOCAL struct curvature cv;
+			FAST fastf_t f;
+			auto int ival;
+
+			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+	
+			f = cv.crv_c1;
+			f /= 64;
+			if( f<0 )  f = -f;
+			if( f > 1 )  f = 1;
+			ap->a_color[0] = 1.0 - f;
+			ap->a_color[1] = 0;
+
+			f = cv.crv_c2;
+			f /= 64;
+			if( f<0 )  f = -f;
+			if( f > 1 )  f = 1;
+			ap->a_color[2] = 1.0 - f;
+		}
+		break;
+	case 5:
+	 	{
+			LOCAL struct curvature cv;
+			FAST fastf_t f;
+			auto int ival;
+
+			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+
+			ap->a_color[0] = (cv.crv_pdir[0] * (-.5)) + .5;
+			ap->a_color[1] = (cv.crv_pdir[1] * (-.5)) + .5;
+			ap->a_color[2] = (cv.crv_pdir[2] * (-.5)) + .5;
+	 	}
+		break;
 	}
 
 	if(rdebug&RDEBUG_HITS)  {
@@ -373,6 +413,8 @@ register struct application *ap;
 	case 1:
 	case 2:
 	case 3:
+	case 4:
+	case 5:
 		ap->a_hit = viewit;
 debug_lighting:
 		/* Determine the Light location(s) in view space */
