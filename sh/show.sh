@@ -78,6 +78,14 @@ jpg|jpeg)
 	else
 		jpeg-fb $FLAGS $FILE
 	fi;;
+png)
+	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
+	then
+		png-fb -F"/dev/mem -" $FLAGS $FILE | \
+		decimate 3 $WIDTH $HEIGHT $FB_WIDTH $FB_HEIGHT | pix-fb -w$FB_WIDTH -n$FB_HEIGHT
+	else
+		png-fb $FLAGS $FILE
+	fi;;
 gif)
 	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
 	then
