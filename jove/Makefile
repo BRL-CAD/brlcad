@@ -22,6 +22,11 @@ LB=	-lcurses
 #CFLAGS = -O -i -Xc -xstrconst -DSYS5 -DHAS_TERMIOS
 #LB = -lcurses
 
+# For BSD/OS
+CC = cc
+CFLAGS= -O2 -DBSD=42 -DHAS_TERMIOS
+LB=	-ltermlib
+
 DESTDIR=
 BINDIR=${DESTDIR}/usr/brl/bin
 LIBDIR=${DESTDIR}/usr/brl/lib/jove
