@@ -228,7 +228,11 @@ else
 	    startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
 	    echo "start3 is $startyear"
 	    if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
-		startyear="$currentyear"
+		startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\)[^0-9].*/\1/'`"
+		echo "start4 is $startyear"
+		if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+		    startyear="$currentyear"
+		fi
 	    fi
 	fi
     fi
@@ -371,7 +375,7 @@ else
     foundfileheader="`head -50 $FILE | grep "$licline" | wc | awk '{print $1}'`"
     if [ "x$foundfileheader" = "x0" ] ; then
 	prepend=yes
-	echo "WARNING: $FILE already has a title"
+	echo "$FILE already has a title"
     fi
 fi
 
@@ -392,11 +396,22 @@ echo "$FILE ... appending"
 
 mv -f $FILE ${FILE}.backup
 
+closeit=0
 skip=1
 lineone="`cat ${FILE}.backup | head -1`"
 linetwo="`cat ${FILE}.backup | head -2 | tail -1`"
 linethree="`cat ${FILE}.backup | head -3 | tail -1`"
 case "$lineone" in 
+    "/*"*${title})
+        echo "Found C comment start with file header"
+	skip=2
+	case "$linetwo" in
+	    " *")
+	        echo "Found empty comment line"
+		skip=3
+		;;
+	esac
+	;;
     "/*")
         echo "Found C comment start"
 	skip=2
@@ -419,15 +434,10 @@ case "$lineone" in
 		;;
 	esac
 	;;
-    "/*"*${title})
-        echo "Found C comment start with file header"
-	skip=2
-	case "$linetwo" in
-	    " *")
-	        echo "Found empty comment line"
-		skip=3
-		;;
-	esac
+    "/*"*)
+        echo "WARNING: Found C comment start with stuff trailing"
+	skip=0
+	closeit=1
 	;;
     "#!/bin/"*)
         echo "Found script exec line"
@@ -443,10 +453,12 @@ case "$lineone" in
     "")
         echo "Found empty line"
 	skip=2
+	closeit=1
 	case "$linetwo" in
 	    "/*")
 	        echo "Found C comment start"
 		skip=3
+		closeit=0
 		case "$linethree" in
 		    " *"*${title})
 		        echo "Found old file header"
@@ -468,26 +480,39 @@ case "$lineone" in
 		esac
 		;;
 	    "/*"*${title})
-	    echo "Found C comment start with file header"
-	    skip=3
-	    case "$linetwo" in
-		" *")
-	            echo "Found empty comment line"
-		    skip=4
-		    ;;
-	    esac
-	    ;;
+	        echo "Found C comment start with file header"
+		skip=3
+		closeit=0
+		case "$linetwo" in
+		    " *")
+	                echo "Found empty comment line"
+			skip=4
+			;;
+		esac
+		;;
 	esac
 	;;
+    [a-z]*)
+        echo "found code"
+	skip=0
+	closeit=1
+	;;
     *)
-        echo "ERROR: Found unknown line one: $lineone"
+        echo "${FILE}:1 ERROR: Unknown line one: $lineone"
 	mv -f ${FILE}.backup $FILE
 	exit 9
 	;;
 esac
 
 if [ "x$wrap" = "x1" ] ; then
-    echo "/${block}/** @file $basefilename" >> $FILE
+    if [ "x$closeit" = "x1" ] ; then
+	echo "/${block}/** @file $basefilename
+ *
+ */
+" >> $FILE
+    else
+	echo "/${block}/** @file $basefilename" >> $FILE
+    fi
 else
     echo "${block}" >> $FILE
 fi
