@@ -53,7 +53,7 @@ Options:\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
  -o model.pix	Specify output file, .pix format (default=framebuffer)\n\
  -x#		Set debug flags\n\
- -p[#]		Perspective viewing, optional focal length scaling\n\
+ -p[#]		Perspective viewing, focal length scaling\n\
  -l#		Select lighting model\n\
  	0	Two lights, one at eye (default)\n\
 	1	One light, from eye\n\
@@ -86,8 +86,11 @@ vect_t l2vec;			/* 2st light vector */
 vect_t l0pos;			/* pos of light0 (overrides l0vec) */
 extern double AmbientIntensity;
 
+#define MAX_IREFLECT	3	/* Maximum internal reflection level */
+#define MAX_BOUNCE	3	/* Maximum recursion level */
+
 HIDDEN int	rfr_hit(), rfr_miss();
-HIDDEN void	refract();
+HIDDEN int	refract();
 
 #define RI_AIR		1.0    /* Refractive index of air.		*/
 #define RI_GLASS	1.3    /* Refractive index of glass.		*/
@@ -135,23 +138,29 @@ register int cnt;
 }
 
 /* These shadow functions return a boolean "light_visible" */
-func_hit(ap, PartHeadp)
+light_hit(ap, PartHeadp)
 struct application *ap;
 struct partition *PartHeadp;
 {
-	register struct soltab *stp;
-	register char *cp;
-
 	/* Check to see if we hit the light source */
-	if( (stp = PartHeadp->pt_forw->pt_inseg->seg_stp) == l0stp )
+	if( PartHeadp->pt_forw->pt_inseg->seg_stp == l0stp )
 		return(1);		/* light_visible = 1 */
-	if( *(cp=stp->st_name) == 'L' && strncmp( cp, "LIGHT", 5 )==0 )  {
-		l0stp = stp;
-		return(1);		/* light_visible = 1 */
-	}
 	return(0);			/* light_visible = 0 */
 }
-func_miss() {return(1);}
+
+/*
+ *  			L I G H T _ M I S S
+ *  
+ *  If there is no explicit light solid in the model, we will always "miss"
+ *  the light, so return light_visible = TRUE.
+ */
+/* ARGSUSED */
+light_miss(ap, PartHeadp)
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	return(1);			/* light_visible = 1 */
+}
 
 /* Null function */
 nullf() { ; }
@@ -288,7 +297,7 @@ register struct application *ap;
 }
 
 
-/*	l g t _ P i x e l ( )
+/*
 	Color pixel based on the energy of a point light source (Eps)
 	plus some diffuse illumination (Epd) reflected from the point
 	<x,y> :
@@ -326,7 +335,31 @@ register struct application *ap;
 		W returns the specular reflection coefficient as a function
 	of the angle of incidence.
 		n (roughly 1 to 10) represents the shininess of the surface.
+ *
+	This is the heart of the lighting model which is based on a model
+	developed by Bui-Tuong Phong, [see Wm M. Newman and R. F. Sproull,
+	"Principles of Interactive Computer Graphics", 	McGraw-Hill, 1979]
 
+	Er = Ra(m)*cos(Ia) + Rd(m)*cos(I1) + W(I1,m)*cos(s)^^n
+	where,
+ 
+	Er	is the energy reflected in the observer's direction.
+	Ra	is the diffuse reflectance coefficient at the point
+		of intersection due to ambient lighting.
+	Ia	is the angle of incidence associated with the ambient
+		light source (angle between ray direction (negated) and
+		surface normal).
+	Rd	is the diffuse reflectance coefficient at the point
+		of intersection due to primary lighting.
+	I1	is the angle of incidence associated with the primary
+		light source (angle between light source direction and
+		surface normal).
+	m	is the material identification code.
+	W	is the specular reflectance coefficient,
+		a function of the angle of incidence, range 0.0 to 1.0,
+		for the material.
+	s	is the angle between the reflected ray and the observer.
+	n	'Shininess' of the material,  range 1 to 10.
  */
 
 /*	d i f f R e f l e c ( )
@@ -359,8 +392,9 @@ struct partition *PartHeadp;
 	auto vect_t	work;
 	auto vect_t	reflected;
 	auto vect_t	to_eye;
+	auto vect_t	to_light;
 	auto point_t	mcolor;		/* Material color */
-	Mat_Db_Entry	*entry;
+	Mat_Db_Entry	*entry = &mat_dfl_entry;
 
 	if(debug&DEBUG_HITS)  {
 		pr_pt(pp);
@@ -376,14 +410,20 @@ struct partition *PartHeadp;
 		goto finish;
 	}
 
+	if( debug&DEBUG_RAYWRITE )  {
+		/* Record the approach path */
+		if( hitp->hit_dist > EPSILON )
+			wraypts( ap->a_ray.r_pt,
+				hitp->hit_point,
+				ap, stdout );
+	}
+
 	/* Check to see if we hit something special */
 	{
 		register struct soltab *stp;
 		register char *cp;
 		cp = (stp = pp->pt_inseg->seg_stp)->st_name;
-		if( stp == l0stp ||
-		    (*cp == 'L'  &&  strncmp( cp, "LIGHT", 5 )==0 ) )  {
-			l0stp = stp;
+		if( stp == l0stp )  {
 			VSET( ap->a_color, 1, 1, 1 );	/* White */
 			goto finish;
 		}
@@ -453,13 +493,13 @@ colorit:
 /**	dist_gradient = kCons / (hitp->hit_dist + cCons);  */
 
 	/* Diffuse reflectance from primary light source. */
-	VSUB2( l0vec, l0pos, hitp->hit_point );
-	VUNITIZE( l0vec );
+	VSUB2( to_light, l0pos, hitp->hit_point );
+	VUNITIZE( to_light );
 #define illum_pri_src	0.7
-	Rd1 = diffReflec( hitp->hit_normal, l0vec, illum_pri_src, &cosI1 );
+	Rd1 = diffReflec( hitp->hit_normal, to_light, illum_pri_src, &cosI1 );
 
 	/* Diffuse reflectance from secondary light source (at eye) */
-#define illum_sec_src	0.5
+#define illum_sec_src	0.4
 	d_a = diffReflec( hitp->hit_normal, to_eye, illum_sec_src, &cosI2 );
 
 	/* Apply secondary (ambient) (white) lighting. */
@@ -467,8 +507,8 @@ colorit:
 
 	/* Fire ray at light source to check for shadowing */
 	/* This SHOULD actually return an energy value */
-	sub_ap.a_hit = func_hit;
-	sub_ap.a_miss = func_miss;
+	sub_ap.a_hit = light_hit;
+	sub_ap.a_miss = light_miss;
 	sub_ap.a_onehit = 1;
 	sub_ap.a_level = ap->a_level + 1;
 	sub_ap.a_x = ap->a_x;
@@ -501,7 +541,7 @@ colorit:
 		 */
 		cosI1 *= 2;
 		VSCALE( work, hitp->hit_normal, cosI1 );
-		VSUB2( reflected, work, l0vec );
+		VSUB2( reflected, work, to_light );
 		if( (cosS = VDOT( reflected, to_eye )) > 0 )  {
 			specular = entry->wgt_specular *
 				ipow(cosS,(int)entry->shine);
@@ -510,7 +550,15 @@ colorit:
 	}
 
 	if( (entry->transmission <= 0 && entry->transparency <= 0) ||
-	    ap->a_level > 3 )  {
+	    ap->a_level > MAX_BOUNCE )  {
+		if( debug&DEBUG_RAYWRITE )  {
+			register struct soltab *stp;
+			/* Record passing through the solid */
+			stp = pp->pt_outseg->seg_stp;
+			functab[stp->st_id].ft_norm(
+				pp->pt_outhit, stp, &(ap->a_ray) );
+			wray( pp, ap, stdout );
+		}
 		/* Nothing more to do for this ray */
 		goto finish;
 	}
@@ -519,6 +567,7 @@ colorit:
 	f = 1 - (entry->transmission + entry->transparency);
 	VSCALE( ap->a_color, ap->a_color, f );
 	if( entry->transmission > 0 )  {
+		/* Mirror reflection */
 		sub_ap.a_level = ap->a_level+1;
 		sub_ap.a_hit = colorview;
 		sub_ap.a_miss = hit_nothing;
@@ -534,31 +583,52 @@ colorit:
 	}
 	if( entry->transparency > 0 )  {
 		/* Calculate refraction at entrance. */
-		refract(ap->a_ray.r_dir, /* Incident ray.*/
+		sub_ap.a_level = ap->a_level * 100;	/* flag */
+		sub_ap.a_x = ap->a_x;
+		sub_ap.a_y = ap->a_y;
+		if( !refract(ap->a_ray.r_dir, /* Incident ray (IN) */
 			hitp->hit_normal,
-			RI_AIR,		/* Ref. index of air.*/
-			entry->refrac_index,
-			sub_ap.a_ray.r_dir	/* Refracted ray. */
-			);
-		/* Find new exit point. */
+			RI_AIR, entry->refrac_index,
+			sub_ap.a_ray.r_dir	/* Refracted ray (OUT) */
+		) )  {
+			/* Reflected back outside solid */
+			VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
+			goto do_exit;
+		}
+		/* Find new exit point from the inside. */
+		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
+do_inside:
 		sub_ap.a_hit =  rfr_hit;
 		sub_ap.a_miss = rfr_miss;
-		sub_ap.a_level = ap->a_level + 1;
-		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 		(void) shootray( &sub_ap );
-		/* HACK:  modifies sub_ap.a_ray.r_pt to be EXIT point! */
-		/* returns EXIT normal in sub_ap.a_color, leaves r_dir */
+		/* NOTE: rfr_hit returns EXIT point in sub_ap.a_uvec,
+		 *  and returns EXIT normal in sub_ap.a_color.
+		 */
+		if( debug&DEBUG_RAYWRITE )  {
+			wraypts( sub_ap.a_ray.r_pt, sub_ap.a_uvec,
+				ap, stdout );
+		}
+		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
 
 		/* Calculate refraction at exit. */
-		refract( sub_ap.a_ray.r_dir,	/* input direction */
-			sub_ap.a_color,		/* exit normal */
-			entry->refrac_index,
-			RI_AIR,
-			sub_ap.a_ray.r_dir	/* output direction */
-			);
+		if( !refract( sub_ap.a_ray.r_dir,	/* input direction */
+			sub_ap.a_color,			/* exit normal */
+			entry->refrac_index, RI_AIR,
+			sub_ap.a_ray.r_dir		/* output direction */
+		) )  {
+			/* Reflected internally -- keep going */
+			if( ++sub_ap.a_level > 100+MAX_IREFLECT )  {
+				rtlog("Excessive internal reflection (x%d,y%d, lvl%d)\n",
+					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
+				VSET( ap->a_color, 0, 1, 0 );	/* green */
+				goto finish;
+			}
+			goto do_inside;
+		}
+do_exit:
 		sub_ap.a_hit =  colorview;
 		sub_ap.a_miss = hit_nothing;
-		sub_ap.a_level = ap->a_level + 1;
+		sub_ap.a_level++;
 		(void) shootray( &sub_ap );
 		VJOIN1( ap->a_color, ap->a_color,
 			entry->transparency, sub_ap.a_color );
@@ -567,7 +637,8 @@ finish:
 	return(1);
 }
 
-/*	d o _ E r r o r ( )
+/*
+ *			R F R _ M I S S
  */
 HIDDEN int
 /*ARGSUSED*/
@@ -575,38 +646,56 @@ rfr_miss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	static int	ref_missed = 0;
-
 	rtlog("rfr_miss: Refracted ray missed!\n" );
-	/* Return entry point as exit point in a_ray.r_pt */
+	/* Return entry point as exit point */
 	VREVERSE( ap->a_color, ap->a_ray.r_dir );	/* inward pointing */
+	VMOVE( ap->a_uvec, ap->a_ray.r_pt );
 	return(0);
 }
 
-/*	d o _ P r o b e ( )
+/*
+ *			R F R _ H I T
  */
 HIDDEN int
-/*ARGSUSED*/
 rfr_hit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
 	register struct hit	*hitp = PartHeadp->pt_forw->pt_outhit;
+	register struct soltab *stp;
 
-	VMOVE( ap->a_ray.r_pt, hitp->hit_point );
+	stp = PartHeadp->pt_forw->pt_outseg->seg_stp;
+	functab[stp->st_id].ft_norm(
+		hitp, stp, &(ap->a_ray) );
+	VMOVE( ap->a_uvec, hitp->hit_point );
 	/* For refraction, want exit normal to point inward. */
 	VREVERSE( ap->a_color, hitp->hit_normal );
-	return	1;
+	return(1);
 }
 
-/*	r e f r a c t ( )
+/*
+ *			R E F R A C T
  *
  *	Compute the refracted ray 'v_2' from the incident ray 'v_1' with
  *	the refractive indices 'ri_2' and 'ri_1' respectively.
+ *	Using Schnell's Law:
+ *
+ *		theta_1 = angle of v_1 with surface normal
+ *		theta_2 = angle of v_2 with reversed surface normal
+ *		ri_1 * sin( theta_1 ) = ri_2 * sin( theta_2 )
+ *
+ *		sin( theta_2 ) = ri_1/ri_2 * sin( theta_1 )
+ *		
+ *	The above condition is undefined for ri_1/ri_2 * sin( theta_1 )
+ *	being greater than 1, and this represents the condition for total
+ *	reflection, the 'critical angle' is the angle theta_1 for which
+ *	ri_1/ri_2 * sin( theta_1 ) equals 1.
+ *
+ *  Returns TRUE if refracted, FALSE if reflected.
  *
  *  Note:  output (v_2) can be same storage as an input.
  */
-HIDDEN void
+HIDDEN int
 refract( v_1, norml, ri_1, ri_2, v_2 )
 register vect_t	v_1;
 register vect_t	norml;
@@ -616,9 +705,18 @@ register vect_t	v_2;
 	LOCAL vect_t	w, u;
 	FAST fastf_t	beta;
 
-	beta = ri_1/ri_2;		/* temp */
+	if( NEAR_ZERO(ri_1) || NEAR_ZERO( ri_2 ) )  {
+		rtlog("refract:ri1=%f, ri2=%f\n", ri_1, ri_2 );
+		beta = 1;
+	} else {
+		beta = ri_1/ri_2;		/* temp */
+	}
 	VSCALE( w, v_1, beta );
 	VCROSS( u, w, norml );
+	/*
+	 *	|w X norml| = |w||norml| * sin( theta_1 )
+	 *	        |u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
+	 */
 	if( (beta = VDOT( u, u )) > 1.0 )  {
 		/*  Past critical angle, total reflection.
 		 *  Calculate reflected (bounced) incident ray.
@@ -627,12 +725,19 @@ register vect_t	v_2;
 		beta = 2 * VDOT( u, norml );
 		VSCALE( w, norml, beta );
 		VSUB2( v_2, w, u );
-		return;
+		return(0);		/* reflected */
 	} else {
+		/*
+		 * 1 - beta = 1 - sin( theta_2 )^^2
+		 *	    = cos( theta_2 )^^2.
+		 *     beta = -1.0 * cos( theta_2 ) - Dot( w, norml ).
+		 */
 		beta = -sqrt( 1.0 - beta) - VDOT( w, norml );
 		VSCALE( u, norml, beta );
 		VADD2( v_2, w, u );
+		return(1);		/* refracted */
 	}
+	/* NOTREACHED */
 }
 
 /*
@@ -717,8 +822,8 @@ register struct application *ap;
 	case 0:
 		ap->a_hit = colorview;
 		/* If present, use user-specified light solid */
-		if( solid_pos( "LIGHT", l0pos ) >= 0 )  {
-			/* NEED A WAY TO FIND l0stp here! */
+		if( (l0stp=find_solid("LIGHT")) != SOLTAB_NULL )  {
+			VMOVE( l0pos, l0stp->st_center );
 			VPRINT("LIGHT0 at", l0pos);
 			break;
 		}
