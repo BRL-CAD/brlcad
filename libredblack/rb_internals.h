@@ -60,6 +60,7 @@
  *	Access functions for fields of rb_tree and (struct rb_node)
  */
 #define	rb_order_func(t, o)	(((t) -> rbt_order)[o])
+#define	rb_root(t, o)		(((t) -> rbt_root)[o])
 #define	rb_parent(n, o)		(((n) -> rbn_parent)[o])
 #define	rb_left_child(n, o)	(((n) -> rbn_left)[o])
 #define	rb_right_child(n, o)	(((n) -> rbn_right)[o])
