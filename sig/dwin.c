@@ -7,6 +7,11 @@
 #include <stdio.h>
 #include <math.h>
 
+#if defined(SYSV) && !defined(bzero)
+#	define bzero(str,n)		memset( str, '\0', n )
+#	define bcopy(from,to,count)	memcpy( to, from, count )
+#endif
+
 double	atof();
 
 /*
@@ -107,13 +112,13 @@ char **argv;
 #ifdef DEBUG
 		fprintf(stderr,"\nWant to xform [%d %d]\n", xform_start, xform_end );
 		fprintf(stderr,"Buffer contains %d samples, from [%d (%d)]\n", buf_num, buf_start, buf_start+buf_num-1 );
-#endif DEBUG
+#endif /* DEBUG */
 		if( START_IN_BUFFER ) {
 			buf_index = xform_start - buf_start;
 			if( END_NOT_IN_BUFFER ) {
 #ifdef DEBUG
 				fprintf(stderr,"\tend isn't in buffer.\n");
-#endif DEBUG
+#endif /* DEBUG */
 				/* Move start to origin */
 				bcopy( &buf[buf_index], &buf[0], (buf_num-buf_index)*sizeof(*buf) );
 				buf_start = xform_start;
@@ -124,7 +129,7 @@ char **argv;
 		} else {
 #ifdef DEBUG
 			fprintf(stderr,"\tstart isn't in buffer.\n");
-#endif DEBUG
+#endif /* DEBUG */
 			if( input_sample != xform_start )
 				seek_sample( xform_start );
 			buf_start = xform_start;
@@ -137,7 +142,7 @@ char **argv;
 
 #ifdef DEBUG
 		fprintf(stderr, "Did samples %d to %d (buf_index = %d)\n", xform_start, xform_end, buf_index );
-#endif DEBUG
+#endif /* DEBUG */
 		if( window ) {
 			bcopy( &buf[buf_index], temp, L*sizeof(*temp) );
 			if( hamming )
@@ -188,7 +193,7 @@ fill_buffer()
 #ifdef DEBUG
 fprintf(stderr, "fillbuffer: buf_start = %d, buf_num = %d, numtoread = %d, buf_index = %d\n",
 buf_start, buf_num, num_to_read, buf_index );
-#endif DEBUG
+#endif /* DEBUG */
 	n = fread( &buf[buf_num], sizeof(*buf), num_to_read, stdin );
 	if( n == 0 ) {
 		/*fprintf( stderr, "EOF\n" );*/
@@ -206,7 +211,7 @@ buf_start, buf_num, num_to_read, buf_index );
 
 #ifdef DEBUG
 	fprintf(stderr,"filled buffer now has %d samples, [%d (%d)].  Input at %d\n", buf_num, buf_start, buf_start+buf_num-1, input_sample );
-#endif DEBUG
+#endif /* DEBUG */
 }
 
 /* Bias window (half triangle) */
