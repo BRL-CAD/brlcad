@@ -48,7 +48,8 @@ struct bot_specific
 	struct tri_specific **bot_facearray;	/* head of face array */
 };
 
-int rt_bot_minpieces = 32;
+/* XXX Set this to 32 to enable pieces by default */
+int rt_bot_minpieces = 0;
 
 /*
  *  			R T _ B O T _ P R E P
