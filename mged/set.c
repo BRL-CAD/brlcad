@@ -1,7 +1,8 @@
 /*
  *			S E T . C
- *  Author -
+ *  Authors -
  *	Lee A. Butler
+ *      Glenn Durfee
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -24,6 +25,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
+
+#ifndef XMGED
+#include "tcl.h"
+#endif
 
 #ifdef XMGED
 extern int update_views;
@@ -59,6 +64,7 @@ refresh_hook()
 {
 	dmaflag = 1;
 }
+
 static void
 nmg_eu_dist_set()
 {
@@ -89,6 +95,127 @@ struct structparse mged_vparse[] = {
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
+#ifndef XMGED
+
+/**
+ **            R E A D _ V A R
+ **
+ ** Callback used when an MGED variable is read with either the Tcl "set"
+ ** command or the Tcl dereference operator '$'.
+ **
+ **/
+
+char *
+read_var(clientData, interp, name1, name2, flags)
+ClientData clientData;       /* Contains pointer to structparse entry */
+Tcl_Interp *interp;
+char *name1, *name2;
+int flags;
+{
+    struct structparse *sp = (struct structparse *)clientData;
+    struct rt_vls str;
+    char *curvalue;
+
+    /* Ask the librt structparser for the value of the variable */
+
+    rt_vls_init( &str );
+    rt_vls_item_print( &str, sp, (CONST char *)&mged_variables );
+
+    /* Next, set the Tcl variable to this value */
+
+    (void)Tcl_SetVar(interp, sp->sp_name, rt_vls_addr(&str),
+		     (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+    return NULL;
+}
+
+/**
+ **            W R I T E _ V A R
+ **
+ ** Callback used when an MGED variable is set with the Tcl "set" command.
+ **
+ **/
+
+char *
+write_var(clientData, interp, name1, name2, flags)
+ClientData clientData;
+Tcl_Interp *interp;
+char *name1, *name2;
+int flags;
+{
+    struct structparse *sp = (struct structparse *)clientData;
+    struct rt_vls str;
+    char *newvalue;
+
+    newvalue = Tcl_GetVar(interp, sp->sp_name,
+			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+    rt_vls_init( &str );
+    rt_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
+    if( rt_structparse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
+	rt_log("ERROR OCCURED WHEN SETTING %s TO %s\n",
+	       name1, newvalue);
+    }
+    return read_var(clientData, interp, name1, name2,
+		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
+}
+
+/**
+ **            U N S E T _ V A R
+ **
+ ** Callback used when an MGED variable is unset.  This function undoes that.
+ **
+ **/
+
+char *
+unset_var(clientData, interp, name1, name2, flags)
+ClientData clientData;
+Tcl_Interp *interp;
+char *name1, *name2;
+int flags;
+{
+    struct structparse *sp = (struct structparse *)clientData;
+
+    if( flags & TCL_INTERP_DESTROYED )
+	return NULL;
+
+    rt_log( "mged variables cannot be unset\n" );
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS, read_var,
+		  (ClientData)sp );
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES, write_var,
+		  (ClientData)sp );
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS, unset_var,
+ 		  (ClientData)sp );
+    read_var(clientData, interp, name1, name2,
+	     (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
+    return NULL;
+}
+
+/**
+ **           M G E D _ V A R I A B L E _ S E T U P
+ **
+ ** Sets the variable traces for each of the MGED variables so they can be
+ ** accessed with the Tcl "set" and "$" operators.
+ **
+ **/
+
+void
+mged_variable_setup(interp)
+Tcl_Interp *interp;    
+{
+    register struct structparse *sp;
+
+    for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
+	read_var( (ClientData)sp, interp, sp->sp_name, NULL, 0 );
+	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		      read_var, (ClientData)sp );
+	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		      write_var, (ClientData)sp );
+	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		      unset_var, (ClientData)sp );
+    }
+}
+
+#endif
+
 int
 f_set(ac,av)
 int ac;
@@ -116,3 +243,5 @@ char *av[];
 #endif
 	return bad ? CMD_BAD : CMD_OK;
 }
+
+
