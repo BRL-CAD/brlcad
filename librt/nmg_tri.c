@@ -2144,8 +2144,10 @@ CONST struct rt_tol	*tol;
 			NMG_CK_LOOPUSE(toplu);
 		}
 
-		if (rt_g.NMG_debug & DEBUG_TRI)		
+		if (rt_g.NMG_debug & DEBUG_TRI) {
 			plfu( nmg_find_fu_of_vu(tp->top->vu_p),  tbl2d );
+			print_tlist(tbl2d, tlist);
+		}
 	}
 
 }
