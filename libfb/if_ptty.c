@@ -64,6 +64,8 @@ FBIO ptty_interface =
 		fb_null,			/* screen addr cursor move */
 		fb_sim_readrect,
 		fb_sim_writerect,
+		fb_null,			/* flush */
+		ptty_device_close,		/* free */
 		ptty_help,
 		"Unix pseudo-tty Interface",
 		800,

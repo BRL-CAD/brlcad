@@ -87,6 +87,8 @@ FBIO rat_interface =  {
 	rat_cscreen_addr,		/* cursor_move_screen_addr */
 	fb_sim_readrect,
 	fb_sim_writerect,
+	fb_null,			/* flush output		*/
+	rat_dclose,			/* free resources	*/
 	rat_help,			/* help function	*/
 	"Raster Technology One/80",	/* device description	*/
 	1024,				/* max width		*/
