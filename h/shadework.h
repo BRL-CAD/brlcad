@@ -47,6 +47,7 @@ struct mfuncs {
 #define MFI_NORMAL	0x01		/* Need normal */
 #define MFI_UV		0x02		/* Need uv */
 #define MFI_LIGHT	0x04		/* Need light visibility */
+#define MFI_HIT		0x08		/* Need just hit point */
 
 
 #define SW_NLIGHTS	16		/* Max # of light sources */

@@ -501,7 +501,7 @@ register struct shadework *swp;
 
 	if( swp->sw_hit.hit_dist < 0.0 )
 		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
-	if( mfp->mf_inputs )  {
+	if( mfp->mf_inputs & (MFI_HIT|MFI_NORMAL|MFI_LIGHT|MFI_UV) )  {
 		VJOIN1( swp->sw_hit.hit_point, ap->a_ray.r_pt,
 			swp->sw_hit.hit_dist, ap->a_ray.r_dir );
 	}
