@@ -36,10 +36,10 @@ ir-X:	ir-X.o
 	CC LDFLAGS ir-X.o -L''XLIBDIR -lX11 LIBES -o ir-X
 
 ir-sgi:	ir-sgi.o
-	CC LDFLAGS ir-sgi.o LIBFB_LIBES -o ir-sgi
+	CC LDFLAGS ir-sgi.o LIBFB_LIBES LIBES -o ir-sgi
 
 irdisp:	irdisp.o
-	CC LDFLAGS irdisp.o LIBFB_LIBES -o irdisp
+	CC LDFLAGS irdisp.o LIBFB_LIBES LIBES -o irdisp
 
 lint:
 	lint LFLAGS -I''INCDIR ../irprep/firpass.c ../irprep/subroutines.c > SRCDIR.lint
