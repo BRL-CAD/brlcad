@@ -199,3 +199,5 @@ int sp1, sp2;
 	mk_memb( stdout, s2->s_name, m, SUBTRACT);
 
 }
+
+rt_log(str) {fprintf(stderr,"rt_log: %s\n", str);}

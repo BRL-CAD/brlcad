@@ -188,3 +188,5 @@ int	level;
 		do_tree( nm, lname, level-1 );
 	}
 }
+
+rt_log(str) {fprintf(stderr,"rt_log: %s\n", str);}
