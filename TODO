@@ -7,10 +7,6 @@ items are on top, older topics are on the bottom.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-* Update libpng to address CERT Technical Cyber Security Alert
-  TA04-217A
-  http://www.us-cert.gov/cas/techalerts/TA04-217A.html
-
 * write up the history of brlcad
 
 * revise cvs policy document to reflect desired and practical public
