@@ -138,6 +138,7 @@ CONST struct rt_db_internal	*intern;
  *			W D B _ I M P O R T
  *
  *  Returns -
+ *	0	and modified *internp;
  *	-1	ft_import failure (from rt_db_get_internal)
  *	-2	db_get_external failure (from rt_db_get_internal)
  *	-3	Attempt to import from write-only (stream) file.
@@ -146,7 +147,7 @@ CONST struct rt_db_internal	*intern;
 int
 wdb_import( wdbp, internp, name, mat )
 struct rt_wdb			*wdbp;
-CONST struct rt_db_internal	*internp;
+struct rt_db_internal		*internp;
 CONST char			*name;
 CONST mat_t			mat;
 {
