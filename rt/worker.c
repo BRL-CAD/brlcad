@@ -39,6 +39,8 @@ fastf_t		gift_grid_rounding = 0;		/* set to 25.4 for inches */
 
 point_t		viewbase_model;	/* model-space location of viewplane corner */
 
+extern int	fullfloat_mode;
+
 /* Local communication with worker() */
 HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
 HIDDEN int last_pixel;		/* last pixel number */
@@ -297,6 +299,14 @@ genptr_t	arg;
 				if( a.a_y < sub_ymin || a.a_y > sub_ymax )
 					continue;
 			}
+#if 0
+			if( fullfloat_mode )  {
+				register struct floatpixel	*fp;
+				fp = &curr_float_frame[a.a_y*width + a.a_x];
+				if( fp->ff_frame >= 0 )
+					continue;	/* pixel was reprojected */
+			}
+#endif
 
 			VSETALL( colorsum, 0 );
 			for( samplenum=0; samplenum<=hypersample; samplenum++ )  {

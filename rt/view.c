@@ -126,9 +126,11 @@ struct floatpixel {
 	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
 	float	ff_hitpt[3];
 	char	ff_color[3];
+	int	ff_frame;		/* >= 0 means pixel was reprojected */
 };
 struct floatpixel	*curr_float_frame;	/* buffer of full frame */
 struct floatpixel	*prev_float_frame;
+/* XXX should record width&height, in case size changes on-the-fly */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -200,6 +202,7 @@ register struct application *ap;
 			/* No output semaphores required for word-width memory writes */
 			register struct floatpixel	*fp;
 			fp = &curr_float_frame[ap->a_y*width + ap->a_x];
+			fp->ff_frame = curframe;
 			fp->ff_color[0] = r;
 			fp->ff_color[1] = g;
 			fp->ff_color[2] = b;
@@ -432,13 +435,12 @@ view_end(ap)
 struct application *ap;
 {
 	if( buf_mode == BUFMODE_FULLFLOAT )  {
-		if( prev_float_frame )  {
-			bu_free( (genptr_t)prev_float_frame, "floatpixel frame");
-		}
+		struct floatpixel	*tmp;
+		/* Transmit scanlines, if not done by rtsync? */
+		/* Exchange previous and current buffers.  No freeing. */
+		tmp = prev_float_frame;
 		prev_float_frame = curr_float_frame;
-		curr_float_frame = (struct floatpixel *)bu_malloc(
-			width * height * sizeof(struct floatpixel),
-			"floatpixel frame");
+		curr_float_frame = tmp;
 	}
 
 	if( scanline )  free_scanlines();
@@ -1000,6 +1002,42 @@ char	*framename;
 			curr_float_frame = (struct floatpixel *)bu_malloc(
 				width * height * sizeof(struct floatpixel),
 				"floatpixel frame");
+		}
+
+		/* Mark entire current frame as "not computed" */
+		{
+			register struct floatpixel	*fp;
+
+			for( fp = &curr_float_frame[width*height-1];
+			     fp >= curr_float_frame; fp--
+			) {
+				fp->ff_frame = -1;
+			}
+		}
+
+		/* Reproject previous frame */
+		if( prev_float_frame )  {
+			register struct floatpixel	*ip, *op;
+			for( ip = &prev_float_frame[width*height-1];
+			     ip >= prev_float_frame; ip--
+			) {
+				point_t	new_view_pt;
+				int	ix, iy;
+
+				if( ip->ff_dist <= -INFINITY )
+					continue;	/* was a miss */
+/* XXX has new model2view been computed yet? */
+				MAT4X3PNT( new_view_pt, model2view, ip->ff_hitpt );
+				ix = new_view_pt[X];
+				iy = new_view_pt[Y];
+				/* See if reprojects off of screen */
+				if( ix < 0 || ix >= width )  continue;
+				if( iy < 0 || iy >= height )  continue;
+				op = &curr_float_frame[iy*width + ix];
+				/* See if old pixel is more then N frames old */
+				/* re-use old pixel as new pixel */
+				*op = *ip;	/* struct copy */
+			}
 		}
 		break;
 #ifdef RTSRV
