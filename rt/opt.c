@@ -52,6 +52,8 @@ fastf_t		rt_perspective=0;	/* presp (degrees X) 0 => ortho */
 fastf_t		aspect = 1;		/* view aspect ratio X/Y */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
+fastf_t		cell_width;		/* model space grid cell width */
+fastf_t		cell_height;		/* model space grid cell height */
 point_t		eye_model;		/* model-space location of eye */
 fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
 int		width;			/* # of pixels in X */
@@ -95,7 +97,10 @@ register char **argv;
 
 	optind = 1;		/* restart */
 
-	while( (c=getopt( argc, argv, "E:SJ:H:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:" )) != EOF )  {
+#define GETOPT_STR	\
+	"E:SJ:H:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:g:G:"
+
+	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
 		case 'U':
 			use_air = atoi( optarg );
@@ -159,6 +164,12 @@ register char **argv;
 				fprintf(stderr,"width=%d out of range\n", i);
 			else
 				width = i;
+			break;
+		case 'g':
+			cell_width = atof( optarg );
+			break;
+		case 'G':
+			cell_height = atof( optarg );
 			break;
 
 		case 'a':
