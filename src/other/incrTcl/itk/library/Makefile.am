@@ -10,7 +10,7 @@ itkscripts =\
 	$(top_srcdir)/src/other/incrTcl/itk/library/tclIndex
 
 install-data-hook:
-	@mkdir -p $(DESTDIR)$(pklibdir)
+	@mkdir -p $(DESTDIR)$(pkglibdir)
 	@for i in $(itkscripts) ; do \
 	    echo "Installing $$i" ; \
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir)/. ; \
