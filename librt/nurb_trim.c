@@ -215,7 +215,6 @@ fastf_t u, v;
 {
 
 	struct cnurb * clip;
-	point_t max_uv, min_uv;
 	int jordan_hit;
 	struct rt_list	plist;
 	int trim_flag = 0;
@@ -326,7 +325,6 @@ fastf_t u,v;
 	int zero_changed;
 	fastf_t *ptr;
 	fastf_t dist[10];
-	fastf_t ftmp1, ftmp2;
 
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type);
 	
@@ -454,7 +452,6 @@ fastf_t u, v;
 
 	fastf_t dist;
 	fastf_t * ptr;
-	int i;
 	int coords;
 	int rat;
 	fastf_t u2, v2;

@@ -39,7 +39,6 @@ int n;
 	fastf_t * interp_mat;
 	fastf_t * nodes;
 	struct knot_vector * kv;
-	int i,j;
 
 	/* Create Data memory and fill in curve structs */
 

@@ -343,7 +343,6 @@ nmg_vloop(l, lup)
 struct loop *l;
 struct loopuse *lup;
 {
-	struct loopuse *lu;
 
 	NMG_CK_LOOP(l);
 	NMG_CK_LOOPUSE(lup);
@@ -351,12 +350,15 @@ struct loopuse *lup;
 	if (!l->lu_p) rt_bomb("nmg_vloop() null loopuse pointer\n");
 
 #if 0
+	{
+	struct loopuse *lu;
 	for (lu=lup ; lu && lu != l->lu_p && lu->next != lup ; lu = lu->next);
 	
 	if (l->lu_p != lu)
 		for (lu=lup->lumate_p ; lu && lu != l->lu_p && lu->next != lup->lumate_p ; lu = lu->next);
 
 	if (l->lu_p != lu) rt_bomb("nmg_vloop() can't get to parent loopuse from loop\n");
+	}
 #endif
 
 	if (l->lg_p) nmg_vlg(l->lg_p);
@@ -462,7 +464,6 @@ nmg_vface(f, fup)
 struct face *f;
 struct faceuse *fup;
 {
-	struct faceuse *fu;
 	int		i;
 
 	NMG_CK_FACE(f);
@@ -1005,7 +1006,6 @@ CONST struct faceuse	*fu;
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		struct edgeuse	*eu;
-		struct vertexuse *vu2;
 
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
@@ -1097,14 +1097,11 @@ CONST long		magic;
 {
 	register CONST struct rt_list	*cur;
 	int	head_count = 0;
-	int	in_head;
 
 	cur = hd;
 	do  {
-		in_head = 0;
 		if( cur->magic == RT_LIST_HEAD_MAGIC )  {
 			head_count++;
-			in_head = 1;
 		} else if( cur->magic != magic ) {
 			rt_log("nmg_ck_list(%s) cur magic=(%s)x%x, cur->forw magic=(%s)x%x, hd magic=(%s)x%x\n",
 				str, rt_identify_magic(cur->magic), cur->magic,
