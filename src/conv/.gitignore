@@ -5,6 +5,7 @@ Makefile.in
 asc-nmg
 asc2g
 asc2pix
+bot-bldxf
 bot_shell-vtk
 conv-vg2g
 cy-g
