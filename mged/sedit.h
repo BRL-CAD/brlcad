@@ -121,6 +121,8 @@
 #define ECMD_CLINE_MOVE_H	77	/* move end of height vector */
 #define	ECMD_CLINE_SCALE_R	78	/* scale radius */
 #define	ECMD_CLINE_SCALE_T	79	/* scale thickness */
+#define ECMD_TGC_MV_H_CD	80	/* move end of tgc, while scaling CD */
+#define ECMD_TGC_MV_H_V_AB	81	/* move vertex end of tgc, while scaling AB */
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \

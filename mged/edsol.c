@@ -223,6 +223,9 @@ int	es_menu;		/* item selected from menu */
 #define MENU_CLINE_SCALE_R	108
 #define	MENU_CLINE_SCALE_T	109
 
+#define MENU_TGC_SCALE_H_CD	110
+#define	MENU_TGC_SCALE_H_V_AB	111
+
 extern int arb_faces[5][24];	/* from edarb.c */
 
 struct menu_item cline_menu[] = {
@@ -347,10 +350,12 @@ struct menu_item  tgc_menu[] = {
 	{ "TGC MENU", (void (*)())NULL, 0 },
 	{ "Set H",	tgc_ed, MENU_TGC_SCALE_H },
 	{ "Set H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
+	{ "Set H,C,D",	tgc_ed, MENU_TGC_SCALE_H_CD },
+	{ "Set H,A,B (move V)", tgc_ed, MENU_TGC_SCALE_H_V_AB },
 	{ "Set A",	tgc_ed, MENU_TGC_SCALE_A },
 	{ "Set B",	tgc_ed, MENU_TGC_SCALE_B },
-	{ "Set c",	tgc_ed, MENU_TGC_SCALE_C },
-	{ "Set d",	tgc_ed, MENU_TGC_SCALE_D },
+	{ "Set C",	tgc_ed, MENU_TGC_SCALE_C },
+	{ "Set D",	tgc_ed, MENU_TGC_SCALE_D },
 	{ "Set A,B",	tgc_ed, MENU_TGC_SCALE_AB },
 	{ "Set C,D",	tgc_ed, MENU_TGC_SCALE_CD },
 	{ "Set A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
@@ -6551,6 +6556,83 @@ pscale()
 			VADD2( old_top, tgc->v, tgc->h );
 			VSCALE(tgc->h, tgc->h, es_scale);
 			VSUB2( tgc->v, old_top, tgc->h );
+		}
+		break;
+
+	case MENU_TGC_SCALE_H_CD:
+		{
+			vect_t vec1, vec2;
+			vect_t c, d;
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+
+			RT_TGC_CK_MAGIC(tgc);
+
+			if (inpara) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->h);
+			}
+
+			/* calculate new c */
+			VSUB2(vec1, tgc->a, tgc->c);
+			VSCALE(vec2, vec1, 1-es_scale);
+			VADD2(c, tgc->c, vec2);
+
+			/* calculate new d */
+			VSUB2(vec1, tgc->b, tgc->d);
+			VSCALE(vec2, vec1, 1-es_scale);
+			VADD2(d, tgc->d, vec2);
+
+			if (0 <= VDOT(tgc->c, c) &&
+			    0 <= VDOT(tgc->d, d) &&
+			    !NEAR_ZERO(MAGNITUDE(c), SMALL_FASTF) &&
+			    !NEAR_ZERO(MAGNITUDE(d), SMALL_FASTF)) {
+				/* adjust c, d and h */
+				VMOVE(tgc->c, c);
+				VMOVE(tgc->d, d);
+				VSCALE(tgc->h, tgc->h, es_scale);
+			}
+		}
+		break;
+
+	case MENU_TGC_SCALE_H_V_AB:
+		{
+			vect_t vec1, vec2;
+			vect_t a, b;
+			point_t old_top;
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+
+			RT_TGC_CK_MAGIC(tgc);
+
+			if (inpara) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->h);
+			}
+
+			/* calculate new a */
+			VSUB2(vec1, tgc->c, tgc->a);
+			VSCALE(vec2, vec1, 1-es_scale);
+			VADD2(a, tgc->a, vec2);
+
+			/* calculate new b */
+			VSUB2(vec1, tgc->d, tgc->b);
+			VSCALE(vec2, vec1, 1-es_scale);
+			VADD2(b, tgc->b, vec2);
+
+			if (0 <= VDOT(tgc->a, a) &&
+			    0 <= VDOT(tgc->b, b) &&
+			    !NEAR_ZERO(MAGNITUDE(a), SMALL_FASTF) &&
+			    !NEAR_ZERO(MAGNITUDE(b), SMALL_FASTF)) {
+				/* adjust a, b, v and h */
+				VMOVE(tgc->a, a);
+				VMOVE(tgc->b, b);
+				VADD2( old_top, tgc->v, tgc->h );
+				VSCALE(tgc->h, tgc->h, es_scale);
+				VSUB2( tgc->v, old_top, tgc->h );
+			}
 		}
 		break;
 
