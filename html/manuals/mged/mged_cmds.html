@@ -1703,16 +1703,19 @@ If <I>EDITOR</I> is not set, then <I>/bin/ed</I> is used.
 </DD>
 <HR>
 
-<DT><a NAME="em"><B>em</B> <I>value [value value ...]</I></DT>
+<DT><a NAME="em"><B>em</B> <I>[-C#/#/#] value [value value ...]</I></DT>
 
 <DD> The ``em'' command displays all regions that have a <I>MUVES_Component</I>
-attribute that is set to any of the specified <I>value</I> arguments.
+attribute that is set to any of the specified <I>value</I> arguments. The <I>-C</I>
+option specifies a color to draw the regions.
 
         <DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kdb>mged></kbd> <b>em engine pilot</b><br>
 	-- display all regions that have <I>MUVES_Component</I> attributes equal to <I>engine</I> or <I>pilot</I>.<br>
+	<kdb>mged></kbd> <b>em -C0/255/0 hydraulics</b><br>
+	-- display all regions that have <I>MUVES_Component</I> attributes equal to <I>hydraulics</I> in green.<br>
 	</DD>
 	</DL>
 </DD>
@@ -2688,6 +2691,27 @@ from the indicated <I>path</I> to any <I>primitive solid</I> will be evaluated a
 	-- display the parameters for <I>solidb</I> after applying the
 		transformation matrix from <I>group1</I> for <I>region1</I> and
 		the transformation matrix from <I>region1</I> for <I>solidb</I><br>
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="lm"><B>lm</B> [<I>-l</I>]  [<I>values</I>]</DT>
+
+<DD>The ``lm'' command with no <I>values</I> argument lists the name of
+     every region in the
+     database (in alphabetical order), except for those marked as hidden with the
+     <a href="#hide">hide</a> command . If the <I>values</I> argument is supplied,
+     only those regions with a ``MUVES_Component'' attribute having one of the <I>values</I>
+     are listed. The <I>-l</I> option specifies to use a long format showing object name,
+     object type, major type, minor type, and length.
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>lm engine</b><br>
+	     -- list all regions with ``MUVES_Component'' attribute having a value of ``engine''<br>
+	<kbd>mged></kbd> <b>lm -l engine pilot</b><br>
+	     -- list all regions with ``MUVES_Component'' attribute having a value of ``engine'' or ``pilot'', and use the long format<br>
 	</DD>
 	</DL>
 </DD>
