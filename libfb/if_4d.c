@@ -916,6 +916,9 @@ int	width, height;
 		case INV_GMDEV:
 			SGI(ifp)->mi_is_gt = 1;
 			break;
+		case INV_GR2:
+			SGI(ifp)->mi_is_gt = 1;
+			break;
 		}
 	}
 	endinvent();		/* frees internal inventory memory */
