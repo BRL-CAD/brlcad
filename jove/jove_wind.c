@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:07  mike
+ * Release_4.0
+ * 
  * Revision 2.4  91/09/23  03:15:30  mike
  * two  return / return(expr) warnings
  * 
@@ -41,8 +44,12 @@ static char RCSid[] = "@(#)$Header$";
 char	onlyone[] = "You only have one window!";
 char	toosmall[] = "too small";
 
-/* First line in a window */
+void	winit();
+void	PrevWindow();
+void	SetWind();
 
+/* First line in a window */
+int
 FLine(w)
 WINDOW	*w;
 {
@@ -186,7 +193,7 @@ WINDOW	*wp;
  * screen.  There is no buffer with this window.  See parse for the
  * setting of this window.
  */
-
+void
 winit()
 {
 	curwind = fwind = getwind();
@@ -200,7 +207,7 @@ winit()
 /* Change window into the previous window.  curwind becomes the new
  * window
  */
-
+void
 PrevWindow()
 {
 	WINDOW	*new = prev_wind(curwind);
@@ -211,7 +218,7 @@ PrevWindow()
 }
 
 /* Make new the current window */
-
+void
 SetWind(new)
 WINDOW	*new;
 {
