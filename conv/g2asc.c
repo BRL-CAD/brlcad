@@ -85,12 +85,12 @@ char **argv;
 void
 idendump()	/* Print out Ident record information */
 {
-	(void)printf( "%c %d %s\n",
+	(void)printf( "%c %d %.6s\n",
 		record.i.i_id,			/* I */
 		record.i.i_units,		/* units */
 		record.i.i_version		/* version */
 	);
-	(void)printf( "%s\n",
+	(void)printf( "%.72s\n",
 		record.i.i_title	/* title or description */
 	);
 
@@ -105,7 +105,7 @@ void
 polyhead()	/* Print out Polyhead record information */
 {
 	(void)printf("%c ", record.p.p_id );		/* P */
-	(void)printf("%s", record.p.p_name );		/* unique name */
+	(void)printf("%.16s", record.p.p_name );	/* unique name */
 	(void)printf("\n");			/* Terminate w/ a newline */
 }
 
@@ -118,12 +118,12 @@ polydata()	/* Print out Polydata record information */
 	(void)printf("%d ", record.q.q_count );		/* # of vertices <= 5 */
 	for( i = 0; i < 5; i++ )  {			/* [5][3] vertices */
 		for( j = 0; j < 3; j++ ) {
-			(void)printf("%.9e ", record.q.q_verts[i][j] );
+			(void)printf("%.12e ", record.q.q_verts[i][j] );
 		}
 	}
 	for( i = 0; i < 5; i++ )  {			/* [5][3] normals */
 		for( j = 0; j < 3; j++ ) {
-			(void)printf("%.9e ", record.q.q_norms[i][j] );
+			(void)printf("%.12e ", record.q.q_norms[i][j] );
 		}
 	}
 	(void)printf("\n");			/* Terminate w/ a newline */
@@ -136,10 +136,10 @@ soldump()	/* Print out Solid record information */
 
 	(void)printf("%c ", record.s.s_id );	/* S */
 	(void)printf("%d ", record.s.s_type );	/* GED primitive type */
-	(void)printf("%s ", record.s.s_name );	/* unique name */
+	(void)printf("%.16s ", record.s.s_name );	/* unique name */
 	(void)printf("%d ", record.s.s_cgtype );/* COMGEOM solid type */
 	for( i = 0; i < 24; i++ )
-		(void)printf("%.9e ", record.s.s_values[i] ); /* parameters */
+		(void)printf("%.12e ", record.s.s_values[i] ); /* parameters */
 	(void)printf("\n");			/* Terminate w/ a newline */
 }
 
@@ -154,7 +154,7 @@ combdump()	/* Print out Combination record information */
 		(void)printf("Y ");			/* Y if `R' */
 	else
 		(void)printf("N ");			/* N if ` ' */
-	(void)printf("%s ", record.c.c_name );		/* unique name */
+	(void)printf("%.16s ", record.c.c_name );	/* unique name */
 	(void)printf("%d ", record.c.c_regionid );	/* region ID code */
 	(void)printf("%d ", record.c.c_aircode );	/* air space code */
 	(void)printf("%d ", record.c.c_length );	/* # of members */
@@ -174,9 +174,9 @@ combdump()	/* Print out Combination record information */
 	(void)printf("\n");			/* Terminate w/ a newline */
 
 	if( record.c.c_matname[0] )  {
-		(void)printf("%s\n", record.c.c_matname );
+		(void)printf("%.32s\n", record.c.c_matname );
 		if( record.c.c_matparm[0] )
-			(void)printf("%s\n", record.c.c_matparm );
+			(void)printf("%.60s\n", record.c.c_matparm );
 	}
 
 	length = (int)record.c.c_length;	/* Get # of member records */
@@ -195,9 +195,9 @@ membdump()	/* Print out Member record information */
 	(void)fread( (char *)&record, sizeof record, 1, stdin );
 	(void)printf("%c ", record.M.m_id );		/* M */
 	(void)printf("%c ", record.M.m_relation );	/* Boolean oper. */
-	(void)printf("%s ", record.M.m_instname );	/* referred-to obj. */
+	(void)printf("%.16s ", record.M.m_instname );	/* referred-to obj. */
 	for( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
-		(void)printf("%.9e ", record.M.m_mat[i] );
+		(void)printf("%.12e ", record.M.m_mat[i] );
 	(void)printf("%d ", record.M.m_num );		/* COMGEOM solid # */
 	(void)printf("\n");				/* Terminate w/ nl */
 }
@@ -210,17 +210,17 @@ arsadump()	/* Print out ARS record information */
 
 	(void)printf("%c ", record.a.a_id );	/* A */
 	(void)printf("%d ", record.a.a_type );	/* primitive type */
-	(void)printf("%s ", record.a.a_name );	/* unique name */
+	(void)printf("%.16s ", record.a.a_name );	/* unique name */
 	(void)printf("%d ", record.a.a_m );	/* # of curves */
 	(void)printf("%d ", record.a.a_n );	/* # of points per curve */
 	(void)printf("%d ", record.a.a_curlen );/* # of granules per curve */
 	(void)printf("%d ", record.a.a_totlen );/* # of granules for ARS */
-	(void)printf("%.9e ", record.a.a_xmax );	/* max x coordinate */
-	(void)printf("%.9e ", record.a.a_xmin );	/* min x coordinate */
-	(void)printf("%.9e ", record.a.a_ymax );	/* max y coordinate */
-	(void)printf("%.9e ", record.a.a_ymin );	/* min y coordinate */
-	(void)printf("%.9e ", record.a.a_zmax );	/* max z coordinate */
-	(void)printf("%.9e ", record.a.a_zmin );	/* min z coordinate */
+	(void)printf("%.12e ", record.a.a_xmax );	/* max x coordinate */
+	(void)printf("%.12e ", record.a.a_xmin );	/* min x coordinate */
+	(void)printf("%.12e ", record.a.a_ymax );	/* max y coordinate */
+	(void)printf("%.12e ", record.a.a_ymin );	/* min y coordinate */
+	(void)printf("%.12e ", record.a.a_zmax );	/* max z coordinate */
+	(void)printf("%.12e ", record.a.a_zmin );	/* min z coordinate */
 	(void)printf("\n");			/* Terminate w/ a newline */
 			
 	length = (int)record.a.a_totlen;	/* Get # of ARS B records */
@@ -242,7 +242,7 @@ arsbdump()	/* Print out ARS B record information */
 	(void)printf("%d ", record.b.b_n );		/* current curve # */
 	(void)printf("%d ", record.b.b_ngranule );	/* current granule */
 	for( i = 0; i < 24; i++ )  {			/* [8*3] vectors */
-		(void)printf("%.9e ", record.b.b_values[i] );
+		(void)printf("%.12e ", record.b.b_values[i] );
 	}
 	(void)printf("\n");			/* Terminate w/ a newline */
 }
@@ -263,7 +263,7 @@ materdump()	/* Print out material description record information */
 void
 bspldump()	/* Print out B-spline solid description record information */
 {
-	(void)printf( "%c %s %d %.9e\n",
+	(void)printf( "%c %.16s %d %.12e\n",
 		record.B.B_id,		/* b */
 		record.B.B_name,	/* unique name */
 		record.B.B_nsurf,	/* # of surfaces in this solid */
@@ -321,7 +321,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	/* Print the knot vector information */
 	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
 	for( i = 0; i < count; i++ )  {
-		(void)printf("%.9e\n", *vp++);
+		(void)printf("%.12e\n", *vp++);
 	}
 	/* Free the knot data memory */
 	(void)free( (char *)fp );
@@ -343,7 +343,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
 		record.d.d_geom_type;
 	for( i = 0; i < count; i++ )  {
-		(void)printf("%.9e\n", *vp++);
+		(void)printf("%.12e\n", *vp++);
 	}
 	/* Free the control mesh memory */
 	(void)free( (char *)fp );
