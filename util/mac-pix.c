@@ -62,8 +62,8 @@ int	file_height = MAC_HEIGHT;	/* generally constant */
 int	file_width = MAC_WIDTH;
 int	file_xoff;
 int	file_yoff;
-int	scr_width = 0;		/* "screen" tracks input file if not given */
-int	scr_height = 0;
+int	scr_width = 1024;		/* "screen" tracks input file if zero */
+int	scr_height = 1024;
 int	scr_xoff;
 int	scr_yoff;
 
@@ -72,7 +72,7 @@ char	*file_name;
 FILE	*infp;
 
 static char usage[] = "\
-Usage: mac-pix [-h -B]\n\
+Usage: mac-pix [-c -l -B]\n\
 	[-s squareMacsize] [-w Mac_width] [-n Mac_height]\n\
 	[-x Mac_xoff] [-y Mac_yoff] [-X outp_xoff] [-Y outp_yoff]\n\
 	[-S squareoutpsize] [-W outp_width] [-N outp_height] [file.mac]\n";
@@ -82,17 +82,19 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "Bhs:w:n:x:y:X:Y:S:W:N:r:g:b:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "clBs:w:n:x:y:X:Y:S:W:N:r:g:b:" )) != EOF )  {
 		switch( c )  {
+		case 'c':
+			/* Center in output */
+			scr_xoff = (scr_width-file_width)/2;
+			scr_yoff = (scr_height-file_height)/2;
+			break;
 		case 'B':
 			bwflag = 1;
 			break;
-		case 'h':
-			/* high-res OUTPUT */
-			scr_height = scr_width = 1024;
-			/* overloading: also gets it centered */
-			scr_xoff = (scr_width-MAC_WIDTH)/2;
-			scr_yoff = (scr_height-MAC_HEIGHT)/2;
+		case 'l':
+			/* "low"-res output -- track file size */
+			scr_height = scr_width = 0;
 			break;
 		case 's':
 			/* square file size */
