@@ -1164,7 +1164,7 @@ hoc_register_menu_data "Framebuffer" "Framebuffer Active" "Framebuffer Active"\
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,listen)\
 	-label "Listen For Clients" -underline 0\
-	-command "set_listen $id" -state disabled
+	-command "set_listen $id"
 hoc_register_menu_data "Framebuffer" "Listen For Clients" "Listen For Clients"\
 	{ { summary "This activates/deactivates listening for clients.
 If the framebuffer is listening for clients, new
@@ -1473,7 +1473,7 @@ hoc_register_menu_data "Modes" "Framebuffer Active" "Framebuffer Active"\
           { see_also "rset, vars" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,listen)\
 	-label "Listen For Clients" -underline 0\
-	-command "set_listen $id" -state disabled
+	-command "set_listen $id"
 hoc_register_menu_data "Modes" "Listen For Clients" "Listen For Clients"\
 	{ { summary "
 This activates/deactivates listening for clients. If
@@ -2261,14 +2261,7 @@ proc update_mged_vars { id } {
 	set mged_gui($id,lighting) [dm set lighting]
     }
 
-    if {$mged_gui($id,fb)} {
-	.$id.menubar.settings.fb entryconfigure 8 -state normal
-	set mged_gui($id,listen) $listen
-    } else {
-	.$id.menubar.settings.fb entryconfigure 8 -state disabled
-	set mged_gui($id,listen) $listen
-    }
-
+    set mged_gui($id,listen) $listen
     set_mged_v_axes_pos $id
 }
 
@@ -2813,18 +2806,10 @@ proc set_fb { id } {
 
     mged_apply $id "set fb \$mged_gui($id,fb)"
     if {$fb && !$listen} {
-	mged_apply $id "set listen \$mged_gui($id,listen)"
+	mged_apply $id "set listen 1"
     }
 
-    if {$mged_gui($id,fb)} {
-	set mged_gui($id,listen) 1
-	.$id.menubar.settings.fb entryconfigure 8 -state normal
-	.$id.menubar.modes entryconfigure 4 -state normal
-    } else {
-	set mged_gui($id,listen) 0
-	.$id.menubar.settings.fb entryconfigure 8 -state disabled
-	.$id.menubar.modes entryconfigure 4 -state disabled
-    }
+    set mged_gui($id,listen) $listen
 
     # update raytrace control panel
     rt_update_dest $id

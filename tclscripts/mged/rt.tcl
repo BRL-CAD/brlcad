@@ -1104,8 +1104,6 @@ proc rt_cook_dest { id raw_dest } {
     if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb) $fb
 	set mged_gui($id,listen) $listen
-	.$id.menubar.settings.fb entryconfigure 7 -state normal
-	.$id.menubar.modes entryconfigure 4 -state normal
     }
 }
 
@@ -1163,16 +1161,7 @@ proc rt_set_fb { id } {
 
     if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb) $rt_control($id,fb)
-
-	if {$mged_gui($id,fb)} {
-	    set mged_gui($id,listen) 1
-	    .$id.menubar.settings.fb entryconfigure 8 -state normal
-	    .$id.menubar.modes entryconfigure 4 -state normal
-	} else {
-	    .$id.menubar.settings.fb entryconfigure 8 -state disabled
-	    .$id.menubar.modes entryconfigure 4 -state disabled
-	    set mged_gui($id,listen) 0
-	}
+	set mged_gui($id,listen) $listen
     }
 }
 
