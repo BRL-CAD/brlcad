@@ -1186,6 +1186,12 @@ int	width, height;
 		gt_zbuf_to_screen( ifp, -1 );
 	}
 
+	qdevice(RIGHTMOUSE);
+	qdevice(LEFTMOUSE);
+	tie(LEFTMOUSE, MOUSEX, MOUSEY);
+	qdevice(MIDDLEMOUSE);
+	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
+
 	/* Make the file descriptor available for selecting on */
 	ifp->if_selfd = qgetfd();
 	if( ifp->if_selfd < 0 )
@@ -1310,12 +1316,12 @@ FBIO	*ifp;
 	short val;
 	int k;
 	FILE *fp = NULL;
-	long	win_lx, win_ly;
-	long	win_hx, win_hy;
-	int 	mousex;
-	int 	mousey;
-	int	pending_middlemouse;
-	int	pending_leftmouse;
+	static long	win_lx, win_ly;
+	static long	win_hx, win_hy;
+	static int 	mousex;
+	static int 	mousey;
+	static int	pending_middlemouse = 0;
+	static int	pending_leftmouse = 0;
 
 	winset(ifp->if_fd);
 
@@ -1361,12 +1367,6 @@ FBIO	*ifp;
 	kill(SGI(ifp)->mi_parent, SIGUSR1);	/* zap the lurking parent */
 
 	menu = defpup("framebuffer %t|close|reset view");
-	qdevice(RIGHTMOUSE);
-	qdevice(LEFTMOUSE);
-	tie(LEFTMOUSE, MOUSEX, MOUSEY);
-	qdevice(MIDDLEMOUSE);
-	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
-	qdevice(REDRAW);
 	
 	while(1)  {
 
@@ -1407,8 +1407,8 @@ FBIO	*ifp;
 			mousex = val - win_lx;
 			break;
 		case MOUSEY:
+			mousey = val - win_ly;
 			if (pending_middlemouse) {
-				mousey = val - win_ly;
 				pending_middlemouse = !pending_middlemouse;
 				mousex = (mousex - ifp->if_width/2)
 						/ ifp->if_xzoom;
@@ -1420,9 +1420,11 @@ FBIO	*ifp;
 					ifp->if_xzoom, ifp->if_yzoom);
 			} else if (pending_leftmouse) {
 				pending_leftmouse = !pending_leftmouse;
+				mousex = (mousex * 32) / win_hx;
+
 				sgi_view(ifp,
 					ifp->if_xcenter, ifp->if_ycenter,
-					mousex/16, mousex/16);
+					mousex, mousex);
 			}
 			break;
 		case REDRAW:
@@ -2029,6 +2031,17 @@ register FBIO *ifp;
 	short val;
 	int redraw = 0;
 	register int ev;
+	static long	win_lx, win_ly;
+	static long	win_hx, win_hy;
+	static int 	mousex;
+	static int 	mousey;
+	static int	pending_middlemouse = 0;
+	static int	pending_leftmouse = 0;
+	static int	menu = 0;
+	int menuval = 0;
+
+	if (!menu)
+		menu = defpup("framebuffer %t|<close>|reset view");
 
 	winset(ifp->if_fd);
 
@@ -2045,8 +2058,58 @@ register FBIO *ifp;
 			 * the color map? */
 			fb_log("sgi_inqueue:  modechange?\n");
 			break;
-		case MOUSEX :
-		case MOUSEY :
+		case RIGHTMOUSE:
+			menuval = dopup( menu );
+			if (menuval == 2)
+				sgi_view(ifp, ifp->if_width/2,
+					ifp->if_height/2, 1, 1);
+			break;
+		case MIDDLEMOUSE:
+			/* will also get MOUSEX and MOUSEY so we remember
+			 * this event until MOUSEY
+			 */
+			if (val) {
+				pending_middlemouse = 1;
+				getorigin( &win_lx, &win_ly );
+				getsize( &win_hx, &win_hy );
+			}
+			break;
+		case LEFTMOUSE:
+			/* will also get MOUSEX and MOUSEY so we remember
+			 * this event until MOUSEY
+			 */
+			if (val == 1) {
+				pending_leftmouse = 1;
+				getorigin( &win_lx, &win_ly );
+				getsize( &win_hx, &win_hy );
+			}
+			break;
+		case MOUSEX:
+			mousex = val - win_lx;
+			break;
+		case MOUSEY:
+			mousey = val - win_ly;
+			if (pending_middlemouse) {
+				pending_middlemouse = !pending_middlemouse;
+				mousex = (mousex - ifp->if_width/2)
+						/ ifp->if_xzoom;
+				mousey = (mousey - ifp->if_height/2)
+						/ ifp->if_xzoom;
+				sgi_view(ifp,
+					ifp->if_xcenter + mousex,
+					ifp->if_ycenter + mousey,
+					ifp->if_xzoom, ifp->if_yzoom);
+				redraw = 1;
+			} else if (pending_leftmouse) {
+				pending_leftmouse = !pending_leftmouse;
+				mousex = (mousex * 32) / win_hx;
+
+				sgi_view(ifp,
+					ifp->if_xcenter, ifp->if_ycenter,
+					mousex, mousex);
+				redraw = 1;
+			}
+			break;
 		case KEYBD :
 			break;
 		default:
