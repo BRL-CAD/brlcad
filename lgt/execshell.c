@@ -51,7 +51,7 @@ exec_Shell( args )
 char	*args[];
 	{	register int child_pid;
 		static char error_buf[32];
-#if __STDC__ || defined( SYSV )
+#if STD_SIGNAL_DECLS
 		void (*intr_sig)(), (*quit_sig)();
 #else
 		int (*intr_sig)(), (*quit_sig)();

@@ -19,17 +19,27 @@
 #include "./hmenu.h"
 #endif
 
+/* Set pre-processor switch for getting signal() handler declarations right.
+ */
+#if __STDC__ || defined(SYSV)
+#define STD_SIGNAL_DECLS 1
+#else
+#define STD_SIGNAL_DECLS 0
+#endif
+
 /* Functions.								*/
 #if defined( BSD )
 extern char		*tmpnam(), *gets(), *strtok();
 #endif
-#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
-extern int		(*norml_sig)(), (*abort_sig)();
-extern int		abort_RT();
-#else
+
+#if STD_SIGNAL_DECLS
 extern void		(*norml_sig)(), (*abort_sig)();
 extern void		abort_RT();
+#else
+extern int		(*norml_sig)(), (*abort_sig)();
+extern int		abort_RT();
 #endif
+
 extern char		*getenv();
 extern char		*malloc();
 extern char		*sbrk();

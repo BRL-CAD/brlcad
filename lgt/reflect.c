@@ -205,12 +205,6 @@ _LOCAL_ void		view_pix(), view_bol(), view_eol(), view_end();
 
 void			cons_Vector();
 void			render_Model();
-#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
-int	abort_RT();
-#else
-void	abort_RT();
-#endif
-
 
 #if defined( cray ) && 0
 #define BYTE_OFFSET(p)	(((long)(p)&0xE000000000000000)>>61)
@@ -1579,11 +1573,11 @@ fastf_t	azim, elev;
 	}
 
 /*	a b o r t _ R T ( )						*/
-#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
-int
-#else
 /*ARGSUSED*/
+#if STD_SIGNAL_DECLS
 void
+#else
+int
 #endif
 abort_RT( sig )
 int	sig;
@@ -1593,10 +1587,10 @@ int	sig;
 	(void) fb_flush( fbiop );
 	user_interrupt = 1;
 	RES_RELEASE( &rt_g.res_syscall );
-#if defined( BSD )
-	return	sig;
-#else
+#if STD_SIGNAL_DECLS
 	return;
+#else
+	return	sig;
 #endif
 	}
 

@@ -34,14 +34,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 int	ready_Output_Device();
 void	close_Output_Device();
-#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
-_LOCAL_ int	intr_sig();
-int		(*norml_sig)(), (*abort_sig)();
-extern int	stop_sig();
-#else
+#if STD_SIGNAL_DECLS
 _LOCAL_ void	intr_sig();
 void		(*norml_sig)(), (*abort_sig)();
 extern void	stop_sig();
+#else
+_LOCAL_ int	intr_sig();
+int		(*norml_sig)(), (*abort_sig)();
+extern int	stop_sig();
 #endif
 _LOCAL_ void	init_Lgts();
 void		exit_Neatly();
@@ -257,20 +257,20 @@ close_Output_Device()
 	return;
 	}
 
-#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
-_LOCAL_ int
-#else
+#if STD_SIGNAL_DECLS
 _LOCAL_ void
+#else
+_LOCAL_ int
 #endif
 /*ARGSUSED*/
 intr_sig( sig )
 int	sig;
 	{
 	(void) signal( SIGINT, intr_sig );
-#if defined( BSD )
-	return	sig;
-#else
+#if STD_SIGNAL_DECLS
 	return;
+#else
+	return	sig;
 #endif
 	}
 
