@@ -25,6 +25,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./nmg_rt.h"
 
+static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
+RT_EXTERN(void	nmg_isect_ray_model, (struct ray_data *rd));
 
 static void print_hitlist(hl)
 struct hitmiss *hl;
@@ -172,7 +174,6 @@ N       R
 | /    |
 |/     V
 .----->Q
-
 
 
  */
