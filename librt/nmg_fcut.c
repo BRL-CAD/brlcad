@@ -1350,21 +1350,10 @@ again:
 		rt_log("wedge at vu[%d] is inside wedge at vu[%d]\n", inner_wedge, outer_wedge);
 
 	if( outer_lu->orientation == inner_lu->orientation )  {
-		/* Different loops with same orientation.  If they are exactly
-		 * the same wedge, then join them.
-		 * Otherwise, this is an error condition.
+		/*
+		 *  Two loops meet at this vu.  Joining them will impose
+		 *  a natural edgeuse ordering onto the vu's.
 		 */
-		int	other_way_round;
-		not_these[outer_wedge] = 0;	/* temporary reset */
-		not_these[inner_wedge] = 1;
-		other_way_round = nmg_find_vu_in_wedge( vs, start, end,
-			vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang,
-			wclass, not_these );
-		if( other_way_round != outer_wedge )  {
-			rt_log("outer=%d, inner=%d, other_way_round=%d\n",
-				outer_wedge, inner_wedge, other_way_round);
-			rt_bomb("nmg_special_wedge_processing: touching loops have same orientation, but are not exactly the same wedge\n");
-		}
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
 			rt_log("joining loops\n");
 		vs[inner_wedge].vu = nmg_join_2loops( vs[outer_wedge].vu,
