@@ -950,6 +950,8 @@ int		lvl;			/* debug level */
 	}
 }
 
+static char ** path_parse ();
+
 /* Illuminate the named object */
 /* TODO:  allow path specification on cmd line */
 int
@@ -962,10 +964,10 @@ char	**argv;
 	struct solid *lastfound = SOLID_NULL;
 	register int i;
 	int nmatch;
-	char	**path_pieces;
+	char	**path_piece;
 
-	path_pieces = path_parse(argv[1]);
-	while (*path_pieces != 0)
+	path_piece = path_parse(argv[1]);
+	while (*path_piece != 0)
 	    rt_log("OK, next piece is '%s'\n", *path_piece++);
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
@@ -1579,7 +1581,9 @@ char	*path;
 
 {
     int		nm_constituents;
+    int		i;
     char	*pp;
+    char	*start_addr;
     char	**result;
     char	*copy;
 
@@ -1588,7 +1592,7 @@ char	*path;
 
     nm_constituents = 1;
     for (pp = path; *pp != '\0'; ++pp)
-	if (pp == '/')
+	if (*pp == '/')
 	    ++nm_constituents;
     
     result = (char **) rt_malloc((nm_constituents + 1) * sizeof(char *),
