@@ -95,6 +95,7 @@ struct faceuse	*fu;
  *
  *	Translate a face using a vector's magnitude and direction.
  */
+void
 nmg_translate_face(fu, Vec, tol)
 struct faceuse	*fu;
 vect_t		Vec;
@@ -187,6 +188,7 @@ struct rt_tol	*tol;
  *	Duplicate a given NMG face, move it by specified vector,
  *	and create a solid bounded by these faces.
  */
+int
 nmg_extrude_face(fu, Vec, tol)
 struct faceuse	*fu;	/* Face to extrude. */
 vect_t		Vec;	/* Magnitude and direction of extrusion. */
@@ -266,6 +268,8 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 	nmg_gluefaces( outfaces , face_count );
 
 	rt_free( (char *)outfaces , "nmg_extrude_face: outfaces" );
+
+	return( 0 );
 }
 
 /*	N M G _ F I N D _ V E R T E X _ I N _ L U

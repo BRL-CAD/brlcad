@@ -979,6 +979,7 @@ CONST fastf_t		*mag;
  *  Common formatting code for edgeuses and edgeuse mates.
  *  Does not mind wire edges.
  */
+void
 nmg_pr_one_eu_vecs( eu, xvec, yvec, zvec, tol )
 CONST struct edgeuse	*eu;
 CONST vect_t		xvec;

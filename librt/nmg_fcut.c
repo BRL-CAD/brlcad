@@ -1848,13 +1848,13 @@ got_loop:
 	/* XXX */
 
 	/* Here is where the special wedge-breaking code goes */
-	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, 0, rs->tol ) )  {
+	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, (int *)0, rs->tol ) )  {
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
 			rt_log("*** nmg_face_coincident_vu_sort(, %d, %d) restarting after 0--180 wedge\n", start, end);
 		goto top;
 	}
 	/* XXX reclass on/on edges from WEDGE_RIGHT to WEDGE_LEFT here? */
-	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, 0, rs->tol ) ) {
+	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, (int *)0, rs->tol ) ) {
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
 			rt_log("*** nmg_face_coincident_vu_sort(, %d, %d) restarting after 180-360 wedge\n", start, end);
 		goto top;

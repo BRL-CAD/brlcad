@@ -1528,7 +1528,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	if( status == 0 )  {
 		/* Lines are co-linear and on line of intersection. */
 		/* Perform full mutual intersection, and vu enlisting. */
-		if( nmg_isect_2colinear_edge2p( eu1, eu2, fu2, is, 0, 0 ) > 2 )  {
+		if( nmg_isect_2colinear_edge2p( eu1, eu2, fu2, is, (struct nmg_ptbl *)0, (struct nmg_ptbl *)0 ) > 2 )  {
 			/* Can't tell which edgeuse(s) got split */
 			ret = ISECT_SPLIT1 | ISECT_SPLIT2;
 		} else {
@@ -2551,8 +2551,8 @@ struct faceuse		*fu1, *fu2;
 
 		VSUB2( vt1_3d, vg1b->coord, vg1a->coord );
 
-		nmg_get_2d_vertex( pt1a, eu1->vu_p->v_p, is, fu1 );
-		nmg_get_2d_vertex( pt1b, eu1->eumate_p->vu_p->v_p, is, fu1 );
+		nmg_get_2d_vertex( pt1a, eu1->vu_p->v_p, is, (long *)fu1 );
+		nmg_get_2d_vertex( pt1b, eu1->eumate_p->vu_p->v_p, is, (long *)fu1 );
 		VSUB2( vt1, pt1b, pt1a );
 
 		for( j=0 ; j<NMG_TBL_END( &eu2_list ) ; j++ )
@@ -2570,8 +2570,8 @@ struct faceuse		*fu1, *fu2;
 
 			eu2 = (struct edgeuse *)NMG_TBL_GET( &eu2_list, j );
 			NMG_CK_EDGEUSE( eu2 );
-			nmg_get_2d_vertex( pt2a, eu2->vu_p->v_p, is, fu1 );
-			nmg_get_2d_vertex( pt2b, eu2->eumate_p->vu_p->v_p, is, fu1 );
+			nmg_get_2d_vertex( pt2a, eu2->vu_p->v_p, is, (long *)fu1 );
+			nmg_get_2d_vertex( pt2b, eu2->eumate_p->vu_p->v_p, is, (long *)fu1 );
 			VSUB2( vt2, pt2b, pt2a );
 
 			code = rt_isect_lseg2_lseg2( dist, pt1a, vt1,
@@ -2643,7 +2643,7 @@ struct faceuse		*fu1, *fu2;
 					vg1b = eu1->eumate_p->vu_p->v_p->vg_p;
 					VSUB2( vt1_3d, vg1b->coord, vg1a->coord );
 					nmg_tbl( &eu1_list, TBL_INS, (long *)new_eu );
-					nmg_get_2d_vertex( pt1b, eu1->eumate_p->vu_p->v_p, is, fu1 );
+					nmg_get_2d_vertex( pt1b, eu1->eumate_p->vu_p->v_p, is, (long *)fu1 );
 					VSUB2( vt1, pt1b, pt1a );
 				}
 				if( code == 1 && hitv != eu2->vu_p->v_p && hitv != eu2->eumate_p->vu_p->v_p )
@@ -5595,10 +5595,7 @@ struct nmg_inter_struct *is;
 	vcut1 = (struct vertex *)NULL;
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
-		fastf_t dist1,dist2;
-
 		vg1 = vg2;
-		dist1 = dist2;
 		class1 = class2;
 
 		vg2 = eu->eumate_p->vu_p->v_p->vg_p;
@@ -7656,7 +7653,7 @@ struct edgeuse		*eu2;
 		nmg_isect2d_prep( is, &eu1->l.magic );
 		/* 3rd arg has to be a faceuse.  Tried to send it eu1->e_p */
 		/* XXX This will rt_bomb() when faceuse is checked. */
-		(void)nmg_isect_2colinear_edge2p( eu1, eu2, (struct faceuse *)NULL, is, 0, 0 );
+		(void)nmg_isect_2colinear_edge2p( eu1, eu2, (struct faceuse *)NULL, is, (struct nmg_ptbl *)0, (struct nmg_ptbl *)0 );
 		return;
 	}
 

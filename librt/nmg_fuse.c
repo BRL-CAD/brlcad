@@ -45,6 +45,7 @@ RT_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g, (struct edgeuse *eu1,
 				struct edgeuse *eu2, CONST struct rt_tol *tol));
 RT_EXTERN(void			nmg_pr_radial_list, (CONST struct rt_list *hd,
 				CONST struct rt_tol *tol));
+void nmg_pr_radial();
 
 RT_EXTERN( fastf_t mat_determinant, ( mat_t matrix ) );
 
@@ -113,9 +114,9 @@ CONST struct face	*f;
 	NMG_CK_FACE(f);
 
 	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
-		CONST register struct edgeuse	*eu;
-		CONST register struct loopuse	*lu;
-		CONST register struct faceuse	*fu;
+		register CONST struct edgeuse	*eu;
+		register CONST struct loopuse	*lu;
+		register CONST struct faceuse	*fu;
 
 		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
 		if( *(eu = vu->up.eu_p)->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
@@ -789,7 +790,7 @@ CONST struct rt_tol *tol;
 
 void
 nmg_eval_trim_to_tol( cnrb, snrb, t0, t1, head, tol )
-CONST struct egde_g_cnurb *cnrb;
+CONST struct edge_g_cnurb *cnrb;
 CONST struct face_g_snurb *snrb;
 CONST fastf_t t0,t1;
 struct rt_list *head;
@@ -2873,6 +2874,8 @@ CONST struct rt_tol	*tol;
 		V3ARGS(midpt) );
 	nmg_pr_lu_briefly( lu, 0 );
 	rt_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pt_lu_except()\n");
+
+	return( -1 ); /* make the compiler happy */
 }
 
 /*
@@ -2894,6 +2897,8 @@ CONST struct edgeuse	*eu;
 	}
 	rt_log("nmg_find_radial_eu() eu=x%x\n", eu);
 	rt_bomb("nmg_find_radial_eu() given edgeuse not found on list\n");
+
+	return( (struct nmg_radial *)NULL );
 }
 
 /*
@@ -2908,8 +2913,8 @@ CONST struct edgeuse	*eu;
 CONST struct edge	*e1;
 CONST struct edge	*e2;		/* may be NULL */
 {
-	CONST register struct edgeuse	*neu;
-	CONST register struct edge	*e;
+	register CONST struct edgeuse	*neu;
+	register CONST struct edge	*e;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_LOOPUSE(eu->up.lu_p);	/* sanity */
@@ -3125,6 +3130,8 @@ CONST struct rt_tol	*tol;
 	rt_log("nmg_radial_find_an_original() shell=x%x\n", s);
 	nmg_pr_radial_list( hd, tol );
 	rt_bomb("nmg_radial_find_an_original() No entries from indicated shell\n");
+
+	return( (struct nmg_radial *)NULL );
 }
 
 /*
@@ -3224,6 +3231,8 @@ CONST struct rt_tol	*tol;
 		count, s, expected_ot);
 	nmg_pr_radial_list( hd, tol );
 	rt_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
+
+	return( 0 ); /* for compiler */
 }
 
 /*
@@ -3331,8 +3340,8 @@ again:
 		if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
 			rt_log("Before -- ");
 			nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
-			nmg_pr_radial("prev:", prev);
-			nmg_pr_radial(" rad:", rad);
+			nmg_pr_radial("prev:", (CONST struct nmg_radial *)prev);
+			nmg_pr_radial(" rad:", (CONST struct nmg_radial *)rad);
 		}
 		dest = prev->eu;
 		if( rad->needs_flip )  {
@@ -3364,7 +3373,7 @@ again:
 /*
  *			N M G _ P R _ R A D I A L
  */
-int		/* XXX should be void */
+void
 nmg_pr_radial( title, rad )
 CONST char		*title;
 CONST struct nmg_radial	*rad;
@@ -3509,7 +3518,7 @@ struct rt_list *hd;
 			else if( same == end_same )
 			{
 				/* already in correct place, just move end_same */
-				end_same == RT_LIST_PPREV_CIRC( nmg_radial, &end_same->l );
+				end_same = RT_LIST_PPREV_CIRC( nmg_radial, &end_same->l );
 			}
 			else
 			{
@@ -3750,11 +3759,11 @@ CONST struct rt_tol	*tol;
 		nmg_pr_ptbl( "Participating shells", &shell_tbl, 1 );
 	}
 
+#if 0
 	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
 	count2 = nmg_radial_check_parity( &list2, &shell_tbl, tol );
 	if( count1 || count2 ) rt_log("nmg_radial_join_eu_NEW() bad parity at the outset, %d, %d\n", count1, count2);
 
-#if 0
 	best_eg = nmg_pick_best_edge_g( eu1, eu2, tol );
 #else
 	best_eg = eu1->g.lseg_p;
@@ -3780,7 +3789,7 @@ CONST struct rt_tol	*tol;
 		rt_free( (char *)rad, "nmg_radial" );
 	}
 	return;
-#endif
+#else
 
 	nmg_radial_mark_cracks( &list1, eu1->e_p, eu2->e_p, tol );
 
@@ -3808,22 +3817,9 @@ CONST struct rt_tol	*tol;
 	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
 	if( count1 )  rt_log("nmg_radial_join_eu_NEW() bad parity at completion, %d\n", count1);
 	nmg_radial_verify_pointers( &list1, tol );
-#if 0
+
 	nmg_eu_radial_check( eu1ref, nmg_find_s_of_eu(eu1), tol );	/* expensive */
 #endif
-	/* Ensure that all edgeuses are using the "best_eg" line */
-	for( RT_LIST_FOR( rad, nmg_radial, &list1 ) )  {
-		if( rad->eu->g.lseg_p != best_eg )  {
-			nmg_use_edge_g( rad->eu, &best_eg->l.magic );
-		}
-	}
-
-	/* Clean up */
-	nmg_tbl( &shell_tbl, TBL_FREE, 0 );
-	while( RT_LIST_WHILE( rad, nmg_radial, &list1 ) )  {
-		RT_LIST_DEQUEUE( &rad->l );
-		rt_free( (char *)rad, "nmg_radial" );
-	}
 }
 
 /*
@@ -3913,7 +3909,7 @@ CONST struct rt_tol	*tol;
 
 		RT_LIST_INIT( &list );
 
-		nmg_radial_build_list( &list, NULL, 1, eu, xvec, yvec, zvec, tol );
+		nmg_radial_build_list( &list, (struct nmg_ptbl *)NULL, 1, eu, xvec, yvec, zvec, tol );
 		nflip = nmg_radial_mark_flips( &list, s, tol );
 		if( nflip )  {
 			if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
@@ -3959,6 +3955,9 @@ CONST struct rt_tol	*tol;
 	struct nmg_radial	*rad;
 	int	nflip;
 	struct faceuse	*fu;
+#if 1
+	return( 0 );
+#else
 
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
@@ -4007,6 +4006,7 @@ CONST struct rt_tol	*tol;
 		rt_free( (char *)rad, "nmg_radial" );
 	}
 	return nflip;
+#endif
 }
 
 /*

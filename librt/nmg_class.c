@@ -1607,7 +1607,7 @@ CONST struct rt_tol *tol;
 			}
 			lu_tmp = eu_tmp->up.lu_p;
 			if( fu_tmp->fumate_p == fu_of_lu )
-				lu_tmp == lu_tmp->lumate_p;
+				lu_tmp = lu_tmp->lumate_p;
 
 			if( lu_tmp == lu )
 			{
@@ -2736,4 +2736,11 @@ CONST struct rt_tol *tol;
 			rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
 		return( class );
 	}
+	else if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_VERTEXUSE_MAGIC )
+		return( NMG_CLASS_AoutB );
+
+	rt_log( "nmg_classify_lu_lu: ERROR, Should not get here!!!\n" );
+	rt_bomb(  "nmg_classify_lu_lu: ERROR, Should not get here!!!\n" );
+
+	return( -1); /* to make the compilers happy */
 }

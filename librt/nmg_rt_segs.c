@@ -72,7 +72,7 @@ jmp_buf env;
 
 
 
-static
+static void
 print_seg_list(seghead, seg_count, s)
 struct seg *seghead;
 int seg_count;

@@ -1498,11 +1498,15 @@ point_t pt;
 	NMG_CK_HITMISS(myhit);
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 }
+
+void
 isect_ray_cnurb(rd, eu_p)
 struct ray_data *rd;
 struct edgeuse *eu_p;
 {
 }
+
+void
 isect_ray_lseg(rd, eu_p)
 struct ray_data *rd;
 struct edgeuse *eu_p;

@@ -239,7 +239,7 @@ CONST struct rt_tol	*tol;
 #if 1
 nmg_radial_join_eu_NEW(eu1, eu2, tol);
 return;
-#endif
+#else
 
 	/* Ensure faces are of same orientation, if both eu's have faces */
 	fu1 = nmg_find_fu_of_eu(eu1);
@@ -476,6 +476,7 @@ insert:
 	}
 
 	if (rt_g.NMG_debug & DEBUG_MESH_EU)  rt_log("nmg_radial_join_eu: END\n");
+#endif
 }
 
 /*

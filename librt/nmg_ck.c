@@ -1409,7 +1409,7 @@ CONST struct rt_tol	*tol;
 #if 1
 	/* Just use the new checker */
 	return nmg_eu_radial_check( eu, s, tol );
-#endif
+#else
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_check_radial(eu=x%x, tol)\n", eu);
 	}
@@ -1504,6 +1504,7 @@ CONST struct rt_tol	*tol;
 		eur = eu1->radial_p;
 	} while (eur != eurstart);
 	return(0);
+#endif
 }
 
 /*

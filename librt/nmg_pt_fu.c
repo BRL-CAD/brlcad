@@ -224,7 +224,6 @@ struct vertexuse *vu;
 	for (RT_LIST_FOR(ved, ve_dist, &fpi->ve_dh)){
 		NMG_CK_VED(ved);
 		if (ved->magic_p == &vu->v_p->magic) {
-			ved->dist;
 			goto found;
 		}
 	}
@@ -1053,7 +1052,6 @@ rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n"
 			if (rt_g.NMG_debug & DEBUG_PT_FU )
 				pl_pt_lu(fpi, lu, ei);
 			goto departure;
-			break;
 		case 3: /* pt pca is v1 */
 		case 4: /* pt pca is v2 */
 		case 5: /* pt pca between v1 and v2 */
@@ -1065,7 +1063,6 @@ rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n"
 			if (rt_g.NMG_debug & DEBUG_PT_FU )
 				pl_pt_lu(fpi, lu, ei);
 			goto departure;
-			break;
 		default:
 			rt_log("%s:%d status = %d\n",
 				__FILE__, __LINE__, ei->ved_p->status);

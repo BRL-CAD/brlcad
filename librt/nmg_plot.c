@@ -2481,7 +2481,7 @@ int				n_interior;	/* typ. 10 */
 	rt_nurb_kvmerge(&tau1, &tkv1, &fg->u);
 	rt_nurb_kvmerge(&tau2, &tkv2, &fg->v);
 
-/**	nmg_hack_snurb( &n, fg );	/* XXX */
+/**	nmg_hack_snurb( &n, fg );	/ XXX */
 
 	r = rt_nurb_s_refine( fg, RT_NURB_SPLIT_COL, &tau2);
 	NMG_CK_SNURB(r);
