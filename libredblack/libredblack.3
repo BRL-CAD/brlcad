@@ -21,6 +21,13 @@ libredblack \- red-black tree subroutines
 .B int (**order_funcs)();
 .\"
 .PP
+.B rb_tree *rb_create1 (description, order_func)
+.br
+.B char *description;
+.br
+.B int (*order_func)();
+.\"
+.PP
 .B void rb_extreme (tree, order, sense)
 .br
 .B rb_tree *tree;
@@ -111,6 +118,11 @@ Otherwise, it returns
 .I RB_TREE_NULL.
 This pointer must be saved,
 as it is a required argument to all the other subroutines.
+.I rb_create1
+is similar,
+except that it creates a tree that supports only the single order
+specified by
+.I order_func.
 .PP
 .I rb_insert
 creates a new node containing
@@ -163,6 +175,12 @@ returns a pointer to the data in the
 matching node.
 Otherwise, it returns
 .I NULL.
+The macro
+.I rb_search1(tree, data),
+available in
+\fI"redblack.h"\fR,
+is similar,
+except that it searches the first (perhaps only) order.
 .PP
 .I rb_walk
 traverses
