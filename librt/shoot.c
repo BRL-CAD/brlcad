@@ -234,22 +234,33 @@ register struct application *ap;
 	 *  The interesting part of the ray starts at distance 0.
 	 *  If the ray enters the model at a negative distance,
 	 *  (ie, the ray starts within the model RPP),
-	 *  we only look at little bit behind to see if we are just
-	 *  coming out of something, but never further back than dist 0.
+	 *  we only look at little bit behind (BACKING_DIST) to see if we are
+	 *  just coming out of something, but never further back than
+	 *  the intersection with the model RPP.
 	 *  If the ray enters the model at a positive distance,
 	 *  we always start there.
 	 *  It is vital that we never pick a start point outside the
 	 *  model RPP, or the space partitioning tree will pick the
 	 *  wrong box and the ray will miss it.
+	 *
+	 *  BACKING_DIST should probably be determined by floating point
+	 *  noise factor due to model RPP size -vs- number of bits of
+	 *  floating point mantissa significance, rather than a constant,
+	 *  but that is too hideous to think about here.
+	 *  Also note that applications that really depend on knowing
+	 *  what region they are leaving from should probably back their
+	 *  own start-point up, rather than depending on it here, but
+	 *  it isn't much trouble here.
 	 */
+#define BACKING_DIST	(-2.0)		/* mm to look behind start point */
+#define OFFSET_DIST	0.75		/* mm to advance point into box */
 	box_start = ap->a_ray.r_min;
-	if( box_start < 0.0 )
-		box_start = 0.0;
-#define OFFSET_DIST	0.75		/* mm */
+	if( box_start < BACKING_DIST )
+		box_start = BACKING_DIST; /* Only look a little bit behind */
 	box_start -= OFFSET_DIST;	/* Compensate for OFFSET_DIST below on 1st loop */
 	box_end = model_end = ap->a_ray.r_max;
 	lastcut = CUTTER_NULL;
-	last_bool_start = -10.0;
+	last_bool_start = BACKING_DIST;
 	trybool = 0;
 	newray = ap->a_ray;		/* struct copy */
 	odist_corr = obox_start = obox_end = -99;
@@ -393,16 +404,19 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 			/* Shoot a ray */
 			BITSET( solidbits->be_v, stp->st_bit );
 
-			/* If ray does not strike the bounding RPP, skip on */
-			if(
-			   rt_functab[stp->st_id].ft_use_rpp &&
-			   ( !rt_in_rpp( &newray, inv_dir,
-			      stp->st_min, stp->st_max ) ||
-			      dist_corr + newray.r_max < -10.0 )
-			)  {
-				if(rt_g.debug&DEBUG_SHOOT)rt_log("rpp skip %s\n", stp->st_name);
-				ap->a_rt_i->nmiss_solid++;
-				continue;	/* MISS */
+			/* Check against bounding RPP, if desired by solid */
+			if( rt_functab[stp->st_id].ft_use_rpp )  {
+				if( !rt_in_rpp( &newray, inv_dir,
+				    stp->st_min, stp->st_max ) )  {
+					if(rt_g.debug&DEBUG_SHOOT)rt_log("rpp miss %s\n", stp->st_name);
+					ap->a_rt_i->nmiss_solid++;
+					continue;	/* MISS */
+				}
+				if( dist_corr + newray.r_max < BACKING_DIST )  {
+					if(rt_g.debug&DEBUG_SHOOT)rt_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, dist_corr, newray.r_max);
+					ap->a_rt_i->nmiss_solid++;
+					continue;	/* MISS */
+				}
 			}
 
 			if(rt_g.debug&DEBUG_SHOOT)rt_log("shooting %s\n", stp->st_name);
@@ -499,7 +513,7 @@ weave:
 	 *  All intersections of the ray with the model have
 	 *  been computed.  Evaluate the boolean trees over each partition.
 	 */
-	rt_boolfinal( &InitialPart, &FinalPart, -10.0,
+	rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
 		ap->a_rt_i->rti_inf_box.bn.bn_len > 0 ? INFINITY : model_end,
 		regionbits, ap);
 
