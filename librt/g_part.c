@@ -365,7 +365,7 @@ struct seg		*seghead;
 	LOCAL point_t	xlated;		/* translated ray start point */
 	LOCAL fastf_t	t1, t2;		/* distance constants of solution */
 	LOCAL fastf_t	f;
-	LOCAL struct hit hits[3];	/* 4 potential hit points */
+	LOCAL struct hit hits[4];	/* 4 potential hit points */
 	register struct hit *hitp = &hits[0];
 	int		check_v, check_h;
 
@@ -593,13 +593,17 @@ do_check_h:
 		}
 	}
 out:
-	if( (hitp - &hits[0]) & 1 )  {
+	if( hitp == &hits[0] )
+		return(0);	/* MISS */
+	if( hitp == &hits[1] )  {
+		/* Only one hit, make it a 0-thickness segment */
+		hits[1] = hits[0];		/* struct copy */
+		hitp++;
+	} else if( hitp > &hits[2] )  {
 		rt_log("rt_part_shot(%s): %d hits? surf0=%d\n",
 			stp->st_name, hitp - &hits[0],
 			hits[0].hit_surfno );
 	}
-	if( hitp != &hits[2] )
-		return(0);	/* MISS */
 
 	if( hits[0].hit_dist < hits[1].hit_dist )  {
 		/* entry is [0], exit is [1] */
