@@ -97,7 +97,7 @@ proc plot_overlaps { id } {
 	draw -C 0/255/0 $obj1
 	draw -C 0/255/255 $obj2
 	vdraw send
-	mged_update 0
+	mged_update 1
 }
 
 # go to the next overlap and display the available options for fixing it
