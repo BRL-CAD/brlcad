@@ -901,11 +901,25 @@ fastf_t			*mag2;
 	nmg_face_plot( rs1->fu1 );
 	nmg_face_plot( rs2->fu1 );
 
-	/* Handle next block of coincident vertexuses */
+	/*  Handle next block of coincident vertexuses.
+	 *  Sometimes only one list has a block in it.
+	 */
 	cur1 = cur2 = 0;
 	for( ; cur1 < rs1->nvu && cur2 < rs2->nvu; cur1=nxt1, cur2=nxt2 )  {
-		nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
-		nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, rs1->state );
+		int	old_rs1_state = rs1->state;
+
+		if( mag1[cur1] < mag2[cur2] )  {
+			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
+			nxt2 = cur2;
+		} else if( mag1[cur1] > mag2[cur2] )  {
+			nxt1 = cur1;
+			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
+		} else {
+			if( rs1->vu[cur1]->v_p != rs2->vu[cur2]->v_p )
+				rt_bomb("nmg_face_combineX: vertex lists scrambled");
+			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
+			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
+		}
 	}
 
 	if( rs1->state != NMG_STATE_OUT || rs2->state != NMG_STATE_OUT )  {
@@ -1285,7 +1299,8 @@ int			multi;
 int			other_rs_state;
 {
 	int			assessment;
-	int			old;
+	int			old_state;
+	int			new_state;
 	CONST struct state_transitions	*stp;
 	struct vertexuse	*prev_vu;
 	struct edgeuse		*eu;
@@ -1298,8 +1313,8 @@ int			other_rs_state;
 
 	NMG_CK_VERTEXUSE(vu);
 	assessment = nmg_assess_vu( rs, pos );
-	old = rs->state;
-	switch( old )  {
+	old_state = rs->state;
+	switch( old_state )  {
 	default:
 	case NMG_STATE_ERROR:
 		rt_bomb("nmg_face_state_transition: was in ERROR state\n");
@@ -1320,11 +1335,21 @@ int			other_rs_state;
 		break;
 	}
 
+	/* If no loop has been entered in other face, don't do any cutting */
+	action = stp->action;
+	new_state = stp->new_state;
+#if 0
+	/* XXX This is the new part */
+	if( other_rs_state == NMG_STATE_OUT )  {
+		action = NMG_ACTION_NONE;
+	}
+#endif
+
 	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
 			vu, pos,
-			nmg_state_names[old], nmg_v_assessment_names[assessment],
-			nmg_state_names[stp->new_state], action_names[stp->action] );
+			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
+			nmg_state_names[new_state], action_names[action] );
 		rt_log("This loopuse, before action:\n");
 		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs);
 	}
@@ -1351,22 +1376,14 @@ rt_log("force next eu to ray\n");
 		}
 	}
 
-	/* If no loop has been entered in other face, don't do any cutting */
-	action = stp->action;
-#if 0
-	/* XXX This is the new part */
-	if( other_rs_state == NMG_STATE_OUT )
-		action = NMG_ACTION_NONE;
-#endif
-
 	switch( action )  {
 	default:
 	case NMG_ACTION_ERROR:
 	bomb:
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
 			vu, pos,
-			nmg_state_names[old], nmg_v_assessment_names[assessment],
-			nmg_state_names[stp->new_state], action_names[action] );
+			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
+			nmg_state_names[new_state], action_names[action] );
 #if 0	/* XXX turn this on only for debugging */
 		/* First, print this faceuse */
 		lu = nmg_lu_of_vu( vu );
@@ -1502,7 +1519,7 @@ rt_log("force next eu to ray\n");
 		    	/* Set orientation */
 			lu = nmg_lu_of_vu(rs->vu[pos]);
 			NMG_CK_LOOPUSE(lu);
-			if( old == NMG_STATE_IN )  {
+			if( old_state == NMG_STATE_IN )  {
 				/* Interior (crack) loop */
 				lu->orientation = OT_OPPOSITE;
 			} else {
@@ -1580,7 +1597,7 @@ rt_log("force next eu to ray\n");
 			    	/* Set orientation */
 				lu = nmg_lu_of_vu(vu);
 				NMG_CK_LOOPUSE(lu);
-				if( old == NMG_STATE_IN )  {
+				if( old_state == NMG_STATE_IN )  {
 					/* Interior (crack) loop */
 					lu->orientation = OT_OPPOSITE;
 				} else {
@@ -1617,7 +1634,7 @@ rt_log("force next eu to ray\n");
 		break;
 	}
 
-	rs->state = stp->new_state;
+	rs->state = new_state;
 }
 
 void
