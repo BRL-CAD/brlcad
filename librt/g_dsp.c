@@ -890,9 +890,9 @@ int *inside;
 	int hit2;
 	char *reason1;
 	char *reason2;
-	int tri1, tri2;
+	int tria1, tria2;
 
-	set_and_permute(isect, cell, A, B, C, D, &tri1, &tri2);
+	set_and_permute(isect, cell, A, B, C, D, &tria1, &tria2);
 
 	if (rt_g.debug & DEBUG_HF) {
 		point_t t;
@@ -936,7 +936,7 @@ int *inside;
 	abs_NdotD = NdotD1 >= 0.0 ? NdotD1 : (-NdotD1);
 
 	if (alpha < 0.0 || alpha > abs_NdotD ) {
-		reason1 = "miss tri1 (alpha)\n";
+		reason1 = "miss tria1 (alpha)\n";
 		goto tri2;
 	}
 
@@ -946,11 +946,11 @@ int *inside;
 	if ( NdotD1 < 0.0 ) beta = -beta;
 
 	if( beta < 0.0 || beta > abs_NdotD ) {
-		reason1 = "miss tri1 (beta)\n";
+		reason1 = "miss tria1 (beta)\n";
 		goto tri2;
 	}
 	if ( alpha+beta > abs_NdotD ) {
-		reason1 = "miss tri1 (alpha+beta > NdotD)\n";
+		reason1 = "miss tria1 (alpha+beta > NdotD)\n";
 		goto tri2;
 	}
 	hit1 = 1;
@@ -958,7 +958,7 @@ int *inside;
 
 tri2:
 	if (rt_g.debug & DEBUG_HF && reason1 != (char *)NULL)
-		bu_log("missed tri1 %s\n", reason1);
+		bu_log("missed tria1 %s\n", reason1);
 		
 
 
@@ -977,7 +977,7 @@ tri2:
 	if (NdotD2 > 0.0) alpha = -alpha;
 	abs_NdotD = NdotD2 >= 0.0 ? NdotD2 : (-NdotD2);
 	if (alpha < 0.0 || alpha > abs_NdotD ) {
-		reason2 = "miss tri2 (alpha)\n";
+		reason2 = "miss tria2 (alpha)\n";
 		goto done;
 	}
 
@@ -985,12 +985,12 @@ tri2:
 	beta = VDOT( AC, PAxD );
 	if ( NdotD2 < 0.0 ) beta = -beta;
 	if( beta < 0.0 || beta > abs_NdotD ) {
-		reason2 = "miss tri2 (beta)\n";
+		reason2 = "miss tria2 (beta)\n";
 		goto done;
 	}
 
 	if ( alpha+beta > abs_NdotD ) {
-		reason2 = "miss tri2 (alpha+beta > NdotD)\n";
+		reason2 = "miss tria2 (alpha+beta > NdotD)\n";
 		goto done;
 	}
 
@@ -999,7 +999,7 @@ tri2:
 
 done:
 	if (rt_g.debug & DEBUG_HF && reason2 != (char *)NULL)
-		bu_log("missed tri2 %s\n", reason2);
+		bu_log("missed tria2 %s\n", reason2);
 
 	/* plot some diagnostic overlays */
 	if (rt_g.debug & DEBUG_HF && plot_em)
@@ -1030,22 +1030,22 @@ done:
 		if (dist1 < dist2) {
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("hit triangles: ss_dist1:%g ss_dist2:%g line:%d\n", dist1, dist2, __LINE__);
-			first_tri = tri1;
+			first_tri = tria1;
 			firstND = NdotD1;
 			first = dist1;
 			firstN = N1;
-			second_tri = tri2;
+			second_tri = tria2;
 			secondND = NdotD2;
 			second = dist2;
 			secondN = N2;
 		} else {
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("hit triangles: ss_dist2:%g ss_dist1:%g line:%d\n", dist2, dist1, __LINE__);
-			first_tri = tri2;
+			first_tri = tria2;
 			firstND = NdotD2;
 			first = dist2;
 			firstN = N2;
-			second_tri = tri1;
+			second_tri = tria1;
 			secondND = NdotD1;
 			second = dist1;
 			secondN = N1;
@@ -1106,7 +1106,7 @@ done:
 				bu_bomb("");
 			}
 
-			INHIT(isect, dist1, tri1, cell);
+			INHIT(isect, dist1, tria1, cell);
 			*inside = 1;
 		} else {
 			/* leaving */
@@ -1119,7 +1119,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, dist1, tri1, cell);
+			OUTHIT(isect, dist1, tria1, cell);
 			HIT_COMMIT(isect);
 			*inside = 0;
 		}
@@ -1138,7 +1138,7 @@ done:
 				bu_bomb("");
 			}
 
-			INHIT(isect, dist2, tri2, cell);
+			INHIT(isect, dist2, tria2, cell);
 			*inside = 1;
 		} else {
 			/* leaving */
@@ -1151,7 +1151,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, dist2, tri2, cell);
+			OUTHIT(isect, dist2, tria2, cell);
 			HIT_COMMIT(isect);
 			*inside = 0;
 		}
@@ -1608,7 +1608,7 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_surf, curr_dist);
 		if (tX < tY) {
 
 			cell_isect(isect, tX, outsurfX, &cs, &inside, rising,
-				&isect_cell_x_wall);
+				isect_cell_x_wall);
 
 			curr_surf = insurfX;
 			grid_cell[X] += stepX;
@@ -1618,7 +1618,7 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_surf, curr_dist);
 		} else {
 
 			cell_isect(isect, tY, outsurfY, &cs, &inside, rising,
-				&isect_cell_y_wall);
+				isect_cell_y_wall);
 
 			curr_surf = insurfY;
 			grid_cell[Y] += stepY;
