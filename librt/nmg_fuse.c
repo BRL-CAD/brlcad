@@ -33,6 +33,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 #include "./debug.h"
 
 /* XXX Move to raytrace.h */
@@ -43,8 +44,10 @@ RT_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g, (struct edgeuse *eu1,
 RT_EXTERN(void			nmg_pr_radial_list, (CONST struct rt_list *hd,
 				CONST struct rt_tol *tol));
 
+RT_EXTERN( fastf_t mat_determinant, ( mat_t matrix ) );
 
 /* XXX Move to nmg.h */
+
 #define NMG_TBL_LEN(p)	((p)->end)
 
 /* XXX move to rtlist.h */
@@ -385,6 +388,856 @@ CONST struct rt_tol	*tol;
 }
 
 /*
+ *		N M G _ C N U R B _ I S _ L I N E A R
+ *
+ *	Checks if cnurb is linear
+ *
+ *	Returns:
+ *		1 - cnurb is linear
+ *		0 - either cnurb is not linear, or it's not obvious
+ */
+
+int
+nmg_cnurb_is_linear( cnrb )
+CONST struct edge_g_cnurb *cnrb;
+{
+	int i;
+	int coords;
+	int last_index;
+	int linear=0;
+
+	NMG_CK_EDGE_G_CNURB( cnrb );
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+	{
+		rt_log( "nmg_cnurb_is_linear( x%x )\n", cnrb );
+		rt_nurb_c_print( cnrb );
+	}
+
+	if( cnrb->order <= 0 )
+	{
+		linear = 1;
+		goto out;
+	}
+
+	if( cnrb->order == 2 )
+	{
+		if( cnrb->c_size == 2 )
+		{
+			linear = 1;
+			goto out;
+		}
+	}
+
+	coords = RT_NURB_EXTRACT_COORDS( cnrb->pt_type );
+	last_index = (cnrb->c_size - 1)*coords;
+
+	/* Check if all control points are either the start point or end point */
+	for( i=1 ; i<cnrb->c_size-2 ; i++ )
+	{
+		int index;
+
+		index = i*coords;
+
+		if( VEQUAL( &cnrb->ctl_points[0], &cnrb->ctl_points[i] ) )
+			continue;
+		if( VEQUAL( &cnrb->ctl_points[last_index], &cnrb->ctl_points[i] ) )
+			continue;
+
+		goto out;
+	}
+
+	linear = 1;
+
+out:
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_cnurb_is_linear( x%x ) returning %d\n", cnrb, linear );
+
+	return( linear );
+}
+
+/*
+ *			N M G _ S N U R B _ I S _ P L A N A R
+ *
+ *	Checks if snurb surface is planar
+ *
+ *	Returns:
+ *		0 - surface is not planar
+ *		1 - surface is planar (within tolerance)
+ */
+
+int
+nmg_snurb_is_planar( srf, tol )
+CONST struct face_g_snurb *srf;
+CONST struct rt_tol *tol;
+{
+	plane_t pl;
+	int i;
+	int coords;
+	mat_t matrix;
+	mat_t inverse;
+	vect_t vsum;
+	double det;
+	double one_over_vertex_count;
+	int planar=0;
+
+	NMG_CK_FACE_G_SNURB( srf );
+	RT_CK_TOL( tol );
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+	{
+		rt_log( "nmg_snurb_is_planar( x%x )\n", srf );
+#if 1
+		rt_nurb_s_print( "", srf );
+#endif
+	}
+
+	if( srf->order[0] == 2 && srf->order[1] == 2 )
+	{
+		if( srf->s_size[0] == 2 && srf->s_size[1] == 2 )
+		{
+			planar = 1;
+			goto out;
+		}
+	}
+
+	/* build matrix */
+	mat_zero( matrix );
+	VSET( vsum , 0.0 , 0.0 , 0.0 );
+
+	one_over_vertex_count = 1.0/(double)(srf->s_size[0]*srf->s_size[1]);
+	coords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
+
+	/* calculate an average plane for all control points */
+	for( i=0 ; i<srf->s_size[0]*srf->s_size[1] ; i++ )
+	{
+		fastf_t *pt;
+
+		pt = &srf->ctl_points[ i*coords ];
+
+		matrix[0] += pt[X] * pt[X];
+		matrix[1] += pt[X] * pt[Y];
+		matrix[2] += pt[X] * pt[Z];
+		matrix[5] += pt[Y] * pt[Y];
+		matrix[6] += pt[Y] * pt[Z];
+		matrix[10] += pt[Z] * pt[Z];
+
+		vsum[X] += pt[X];
+		vsum[Y] += pt[Y];
+		vsum[Z] += pt[Z];
+	}
+	matrix[4] = matrix[1];
+	matrix[8] = matrix[2];
+	matrix[9] = matrix[6];
+	matrix[15] = 1.0;
+		
+	/* Check that we don't have a singular matrix */
+	det = mat_determinant( matrix );
+
+	if( !NEAR_ZERO( det , SMALL_FASTF ) )
+	{
+		fastf_t inv_len_pl;
+
+		/* invert matrix */
+		mat_inv( inverse , matrix );
+
+		/* get normal vector */
+		MAT4X3PNT( pl , inverse , vsum );
+
+		/* unitize direction vector */
+		inv_len_pl = 1.0/(MAGNITUDE( pl ));
+		HSCALE( pl , pl , inv_len_pl );
+
+		/* get average vertex coordinates */
+		VSCALE( vsum, vsum, one_over_vertex_count );
+
+		/* get distance from plane to orgin */
+		pl[H] = VDOT( pl , vsum );
+
+	}
+	else
+	{
+		int x_same=1;
+		int y_same=1;
+		int z_same=1;
+
+		/* singular matrix, may occur if all vertices have the same zero
+		 * component.
+		 */
+		for( i=1 ; i<srf->s_size[0]*srf->s_size[1] ; i++ )
+		{
+			if( srf->ctl_points[i*coords+X] != srf->ctl_points[X] )
+				x_same = 0;
+			if( srf->ctl_points[i*coords+Y] != srf->ctl_points[Y] )
+				y_same = 0;
+			if( srf->ctl_points[i*coords+Z] != srf->ctl_points[Z] )
+				z_same = 0;
+
+			if( !x_same && !y_same && !z_same )
+				break;
+		}
+
+		if( x_same )
+		{
+			VSET( pl , 1.0 , 0.0 , 0.0 );
+		}
+		else if( y_same )
+		{
+			VSET( pl , 0.0 , 1.0 , 0.0 );
+		}
+		else if( z_same )
+		{
+			VSET( pl , 0.0 , 0.0 , 1.0 );
+		}
+
+		if( x_same || y_same || z_same )
+		{
+			/* get average vertex coordinates */
+			VSCALE( vsum, vsum, one_over_vertex_count );
+
+			/* get distance from plane to orgin */
+			pl[H] = VDOT( pl , vsum );
+
+		}
+		else
+		{
+			rt_log( "nmg_snurb_is_plana: Cannot calculate plane for snurb x%x\n" , srf );
+			rt_nurb_s_print( "", srf );
+			rt_bomb( "nmg_snurb_is_plana: Cannot calculate plane for snurb\n" );
+		}
+	}
+
+	/* Now verify that every control point is on this plane */
+	for( i=0 ; i<srf->s_size[0]*srf->s_size[1] ; i++ )
+	{
+		fastf_t *pt;
+		fastf_t dist;
+
+		pt = &srf->ctl_points[ i*coords ];
+
+		dist = DIST_PT_PLANE( pt, pl );
+		if( dist > tol->dist )
+			goto out;
+	}
+
+	planar = 1;
+out:
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_snurb_is_planar( x%x ) returning %d\n", srf, planar );
+
+	return( planar );
+
+}
+
+struct pt_list
+{
+	struct rt_list l;
+	point_t xyz;
+	fastf_t t;
+};
+
+void
+nmg_eval_linear_trim_curve( snrb, uvw, xyz )
+CONST struct face_g_snurb *snrb;
+CONST fastf_t uvw[3];
+point_t xyz;
+{
+	int coords;
+	hpoint_t xyz1;
+
+	if( snrb )
+	{
+		NMG_CK_FACE_G_SNURB( snrb );
+		rt_nurb_s_eval( snrb, uvw[0], uvw[1], xyz1 );
+		if( RT_NURB_IS_PT_RATIONAL( snrb->pt_type ) )
+		{
+			fastf_t inverse_weight;
+
+			coords = RT_NURB_EXTRACT_COORDS( snrb->pt_type );
+			inverse_weight = 1.0/xyz1[coords-1];
+
+			VSCALE( xyz, xyz1, inverse_weight );
+		}
+		else
+			VMOVE( xyz, xyz1 )
+	}
+	else
+		VMOVE( xyz, uvw )
+
+}
+
+void
+nmg_eval_trim_curve( cnrb, snrb, t, xyz )
+CONST struct edge_g_cnurb *cnrb;
+CONST struct face_g_snurb *snrb;
+CONST fastf_t t;
+point_t xyz;
+{
+	hpoint_t uvw;
+	hpoint_t xyz1;
+	int coords;
+
+	NMG_CK_EDGE_G_CNURB( cnrb );
+	if( snrb )
+	{
+		NMG_CK_FACE_G_SNURB( snrb )
+	}
+
+	rt_nurb_c_eval( cnrb, t, uvw );
+
+	if( RT_NURB_IS_PT_RATIONAL( cnrb->pt_type ) )
+	{
+		fastf_t inverse_weight;
+
+		coords = RT_NURB_EXTRACT_COORDS( cnrb->pt_type );
+		inverse_weight = 1.0/uvw[coords-1];
+
+		VSCALE( uvw, uvw, inverse_weight );
+	}
+
+	if( snrb )
+	{
+		rt_nurb_s_eval( snrb, uvw[0], uvw[1], xyz1 );
+		if( RT_NURB_IS_PT_RATIONAL( snrb->pt_type ) )
+		{
+			fastf_t inverse_weight;
+
+			coords = RT_NURB_EXTRACT_COORDS( snrb->pt_type );
+			inverse_weight = 1.0/xyz1[coords-1];
+
+			VSCALE( xyz, xyz1, inverse_weight );
+		}
+		else
+			VMOVE( xyz, xyz1 )
+	}
+	else
+		VMOVE( xyz, uvw )
+
+#if 0
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_eval_trim_curve returning (%g %g %g )\n", V3ARGS( xyz ) );
+#endif
+
+}
+
+void
+nmg_split_trim( cnrb, snrb, t, pt0, pt1, tol )
+CONST struct edge_g_cnurb *cnrb;
+CONST struct face_g_snurb *snrb;
+fastf_t t;
+struct pt_list *pt0,*pt1;
+CONST struct rt_tol *tol;
+{
+	struct pt_list *pt_new;
+	fastf_t t_sub;
+	vect_t seg;
+
+	NMG_CK_EDGE_G_CNURB( cnrb );
+	NMG_CK_FACE_G_SNURB( snrb );
+	RT_CK_TOL( tol );
+#if 0
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_split_trim( cnrb=x%x, snrb=x%x, t=%g, pt0=x%x, pt1=x%x )START\n",
+			cnrb, snrb, t, pt0, pt1 );
+#endif
+	pt_new = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "g_split_trim: pt_new" );
+	pt_new->t = t;
+
+	if( pt_new->t < pt0->t || pt_new->t > pt1->t )
+	{
+		rt_log( "nmg_split_trim: split parameter (%g) is not between ends (%g and %g)\n",
+			t, pt0->t, pt1->t );
+		rt_bomb( "nmg_split_trim: split parameteris not between ends\n" );
+	}
+
+	nmg_eval_trim_curve( cnrb, snrb, pt_new->t, pt_new->xyz );
+
+	RT_LIST_INSERT( &pt1->l, &pt_new->l );
+
+	VSUB2( seg, pt0->xyz, pt_new->xyz );
+	if( MAGSQ( seg ) > tol->dist_sq )
+	{
+		t_sub = (pt0->t + pt_new->t)/2.0;
+#if 0
+		if( rt_g.NMG_debug & DEBUG_MESH )
+			rt_log( "nmg_split_trim: recursing at t=%g (%g,%g)\n",
+					t_sub, pt0->t, pt_new->t );
+#endif
+		nmg_split_trim( cnrb, snrb, t_sub, pt0, pt_new, tol );
+	}
+
+	VSUB2( seg, pt_new->xyz, pt1->xyz );
+	if( MAGSQ( seg ) > tol->dist_sq )
+	{
+		t_sub = (pt_new->t + pt1->t)/2.0;
+#if 0
+		if( rt_g.NMG_debug & DEBUG_MESH )
+			rt_log( "nmg_split_trim: recursing at t=%g (%g,%g)\n",
+					t_sub, pt_new->t, pt1->t );
+#endif
+		nmg_split_trim( cnrb, snrb, t_sub, pt_new, pt1, tol );
+	}
+#if 0
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_split_trim( cnrb=x%x, snrb=x%x, t=%g, pt0=x%x, pt1=x%x ) END\n",
+			cnrb, snrb, t, pt0, pt1 );
+#endif
+
+}
+
+void
+nmg_eval_trim_to_tol( cnrb, snrb, t0, t1, head, tol )
+CONST struct egde_g_cnurb *cnrb;
+CONST struct face_g_snurb *snrb;
+CONST fastf_t t0,t1;
+struct rt_list *head;
+CONST struct rt_tol *tol;
+{
+	fastf_t t;
+	int done=0;
+	point_t xyz;
+	struct pt_list *pt0,*pt1;
+
+	NMG_CK_EDGE_G_CNURB( cnrb );
+	NMG_CK_FACE_G_SNURB( snrb );
+	RT_CK_TOL( tol );
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_eval_trim_to_tol( cnrb=x%x, snrb=x%x, t0=%g, t1=%g ) START\n",
+				cnrb, snrb, t0, t1 );
+
+	pt0 = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "nmg_eval_trim_to_tol: pt0 " );
+	pt0->t = t0;
+	nmg_eval_trim_curve( cnrb, snrb, pt0->t, pt0->xyz );
+	RT_LIST_INSERT( head, &pt0->l );
+
+	pt1 = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "nmg_eval_trim_to_tol: pt1 " );
+	pt1->t = t1;
+	nmg_eval_trim_curve( cnrb, snrb, pt1->t, pt1->xyz );
+	RT_LIST_INSERT( head, &pt1->l );
+
+	t = (t0 + t1)/2.0;
+	nmg_split_trim( cnrb, snrb, t, pt0, pt1, tol );
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_eval_trim_to_tol( cnrb=x%x, snrb=x%x, t0=%g, t1=%g ) END\n",
+				cnrb, snrb, t0, t1 );
+}
+
+void
+nmg_split_linear_trim( snrb, uvw1, uvw, uvw2, pt0, pt1, tol )
+CONST struct face_g_snurb *snrb;
+CONST fastf_t uvw1[3];
+CONST fastf_t uvw[3];
+CONST fastf_t uvw2[3];
+struct pt_list *pt0;
+struct pt_list *pt1;
+CONST struct rt_tol *tol;
+{
+	struct pt_list *pt_new;
+	fastf_t t_sub;
+	fastf_t uvw_sub[3];
+	vect_t seg;
+
+	if( snrb )
+		NMG_CK_FACE_G_SNURB( snrb );
+	RT_CK_TOL( tol );
+#if 0
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_split_linear_trim( snrb=x%x, pt0=x%x, pt1=x%x )START\n",
+			snrb, pt0, pt1 );
+#endif
+	pt_new = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "g_split_trim: pt_new" );
+	pt_new->t = 0.5*(pt0->t + pt1->t);
+
+	VBLEND2( uvw_sub, 1.0 - pt_new->t, uvw1, pt_new->t, uvw2 );
+	nmg_eval_linear_trim_curve( snrb, uvw_sub, pt_new->xyz );
+
+	RT_LIST_INSERT( &pt1->l, &pt_new->l );
+
+#if 0
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_split_linear_trim: new segments (%g %g %g) <-> (%g %g %g) <-> (%g %g %g)\n",
+			V3ARGS( pt0->xyz ), V3ARGS( pt_new->xyz ), V3ARGS( pt1->xyz ) );
+#endif
+
+	VSUB2( seg, pt0->xyz, pt_new->xyz );
+	if( MAGSQ( seg ) > tol->dist_sq )
+	{
+		t_sub = (pt0->t + pt_new->t)/2.0;
+		VBLEND2( uvw_sub, 1.0 - t_sub, uvw1, t_sub, uvw2 );
+#if 0
+		if( rt_g.NMG_debug & DEBUG_MESH )
+			rt_log( "nmg_split_linear_trim: recursing at t=%g (%g,%g)\n",
+					t_sub, pt0->t, pt_new->t );
+#endif
+		nmg_split_linear_trim( snrb, uvw1, uvw_sub, uvw2, pt0, pt_new, tol );
+	}
+
+	VSUB2( seg, pt_new->xyz, pt1->xyz );
+	if( MAGSQ( seg ) > tol->dist_sq )
+	{
+		t_sub = (pt_new->t + pt1->t)/2.0;
+		VBLEND2( uvw_sub, 1.0 - t_sub, uvw1, t_sub, uvw2 );
+#if 0
+		if( rt_g.NMG_debug & DEBUG_MESH )
+			rt_log( "nmg_split_linear_trim: recursing at t=%g (%g,%g)\n",
+					t_sub, pt_new->t, pt1->t );
+#endif
+		nmg_split_linear_trim( snrb, uvw1, uvw_sub, uvw2, pt0, pt_new, tol );
+	}
+#if 0
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_split_linear_trim( snrb=x%x, pt0=x%x, pt1=x%x ) END\n",
+			snrb, pt0, pt1 );
+#endif
+
+}
+
+void
+nmg_eval_linear_trim_to_tol( cnrb, snrb, uvw1, uvw2, head, tol )
+CONST struct edge_g_cnurb *cnrb;
+CONST struct face_g_snurb *snrb;
+CONST fastf_t uvw1[3];
+CONST fastf_t uvw2[3];
+struct rt_list *head;
+CONST struct rt_tol *tol;
+{
+	int done=0;
+	point_t xyz;
+	fastf_t uvw[3];
+	struct pt_list *pt0,*pt1;
+
+	NMG_CK_EDGE_G_CNURB( cnrb );
+	NMG_CK_FACE_G_SNURB( snrb );
+	RT_CK_TOL( tol );
+
+	NMG_CK_EDGE_G_CNURB( cnrb );
+	NMG_CK_FACE_G_SNURB( snrb );
+	RT_CK_TOL( tol );
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_eval_linear_trim_to_tol( cnrb=x%x, snrb=x%x, uvw1=( %g %g %g), uvw2=( %g %g %g ) ) START\n",
+				cnrb, snrb, V3ARGS( uvw1 ), V3ARGS( uvw2 ) );
+
+	pt0 = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "nmg_eval_linear_trim_to_tol: pt0 " );
+	pt0->t = 0.0;
+	nmg_eval_linear_trim_curve( snrb, uvw1, pt0->xyz );
+	RT_LIST_INSERT( head, &pt0->l );
+
+	pt1 = (struct pt_list *)rt_malloc( sizeof( struct pt_list ), "nmg_eval_linear_trim_to_tol: pt1 " );
+	pt1->t = 1.0;
+	nmg_eval_linear_trim_curve( snrb, uvw2, pt1->xyz );
+	RT_LIST_INSERT( head, &pt1->l );
+
+
+	VBLEND2( uvw, 0.5, uvw1, 0.5, uvw2 )
+	nmg_split_linear_trim( snrb, uvw1, uvw, uvw2, pt0, pt1, tol );
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_eval_linear_trim_to_tol( cnrb=x%x, snrb=x%x ) END\n",
+				cnrb, snrb );
+}
+
+/* check for coincidence at twenty interior points along a cnurb */
+#define		CHECK_NUMBER	20
+
+/*		N M G _ C N U R B _ L S E G _ C O I N C I D E N T
+ *
+ *	Checks if CNURB is coincident with line segment from pt1 to pt2
+ *	by calculating a number of points along the CNURB and checking
+ *	if they lie on the line between pt1 and pt2 (within tolerance).
+ *		NOTE: eu1 must be the EU referencing cnrb!!!!
+ *
+ *	Returns:
+ *		0 - not coincident
+ *		1 - coincident
+ */
+int
+nmg_cnurb_lseg_coincident( eu1, cnrb, snrb, pt1, pt2, tol )
+CONST struct edgeuse *eu1;
+CONST struct edge_g_cnurb *cnrb;
+CONST struct face_g_snurb *snrb;
+CONST point_t pt1;
+CONST point_t pt2;
+CONST struct rt_tol *tol;
+{
+	fastf_t t0,t1,t;
+	fastf_t delt;
+	int coincident=0;
+	int i;
+
+
+	NMG_CK_EDGEUSE( eu1 );
+	NMG_CK_EDGE_G_CNURB( cnrb );
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_cnurb_lseg_coincident( eu1=x%x, cnrb=x%x, snrb=x%x, pt1=(%g %g %g), pt2=(%g %g %g)\n",
+			eu1, cnrb, snrb, V3ARGS( pt1 ), V3ARGS( pt2 ) );
+
+	if( eu1->g.cnurb_p != cnrb )
+	{
+		rt_log( "nmg_cnurb_lseg_coincident: cnrb x%x isn't from eu x%x\n",
+			cnrb, eu1 );
+		rt_bomb( "nmg_cnurb_lseg_coincident: cnrb and eu1 disagree\n" );
+	}
+
+	if( snrb )
+		NMG_CK_FACE_G_SNURB( snrb );
+
+	RT_CK_TOL( tol );
+
+	if( cnrb->order <= 0 )
+	{
+		/* cnrb is linear in parameter space */
+		struct vertexuse *vu1;
+		struct vertexuse *vu2;
+		struct vertexuse_a_cnurb *vua1;
+		struct vertexuse_a_cnurb *vua2;
+
+		if( !snrb )
+			rt_bomb( "nmg_cnurb_lseg_coincident: No CNURB nor SNURB!!\n" );
+
+		vu1 = eu1->vu_p;
+		NMG_CK_VERTEXUSE( vu1 );
+		if( !vu1->a.magic_p )
+		{
+			rt_log( "nmg_cnurb_lseg_coincident: vu (x%x) has no attributes\n",
+				vu1 );
+			rt_bomb( "nmg_cnurb_lseg_coincident: vu has no attributes\n" );
+		}
+
+		if( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+		{
+			rt_log( "nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n", 
+				vu1, eu1 );
+			rt_bomb( "nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n" );
+		}
+
+		vua1 = vu1->a.cnurb_p;
+		NMG_CK_VERTEXUSE_A_CNURB( vua1 );
+
+		vu2 = eu1->eumate_p->vu_p;
+		NMG_CK_VERTEXUSE( vu2 );
+		if( !vu2->a.magic_p )
+		{
+			rt_log( "nmg_cnurb_lseg_coincident: vu (x%x) has no attributes\n",
+				vu2 );
+			rt_bomb( "nmg_cnurb_lseg_coincident: vu has no attributes\n" );
+		}
+
+		if( *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+		{
+			rt_log( "nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n", 
+				vu2, eu1 );
+			rt_bomb( "nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n" );
+		}
+
+		vua2 = vu2->a.cnurb_p;
+		NMG_CK_VERTEXUSE_A_CNURB( vua2 );
+
+		coincident = 1;
+		for( i=0 ; i<CHECK_NUMBER ; i++ )
+		{
+			point_t uvw;
+			point_t xyz;
+			fastf_t blend;
+			fastf_t dist;
+			point_t pca;
+
+			blend = (double)(i+1)/(double)(CHECK_NUMBER+1);
+			VBLEND2( uvw, blend, vua1->param, (1.0-blend), vua2->param );
+
+			nmg_eval_linear_trim_curve( snrb, uvw, xyz );
+
+			if( rt_dist_pt3_lseg3( &dist, pca, pt1, pt2, xyz, tol ) > 2 )
+			{
+				coincident = 0;
+				break;
+			}
+		}
+		if( rt_g.NMG_debug & DEBUG_MESH )
+			rt_log( "nmg_cnurb_lseg_coincident returning %d\n", coincident );
+		return( coincident );
+	}
+
+	t0 = cnrb->k.knots[0];
+	t1 = cnrb->k.knots[cnrb->k.k_size-1];
+	delt = (t1 - t0)/(double)(CHECK_NUMBER+1);
+
+	coincident = 1;
+	for( i=0 ; i<CHECK_NUMBER ; i++ )
+	{
+		point_t xyz;
+		fastf_t dist;
+		point_t pca;
+
+		t = t0 + (double)(i+1)*delt;
+
+		nmg_eval_trim_curve( cnrb, snrb, t, xyz );
+
+		if( rt_dist_pt3_lseg3( &dist, pca, pt1, pt2, xyz, tol ) > 2 )
+		{
+			coincident = 0;
+			break;
+		}
+	}
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_cnurb_lseg_coincident returning %d\n", coincident );
+	return( coincident );
+}
+
+/*		N M G _ C N U R B _ I S _ O N _ C R V
+ *
+ *	Checks if CNURB eu lies on curve contained in list headed at "head"
+ *	"Head" must contain a list of points (struct pt_list) each within
+ *	tolerance of the next. (Just checks at "CHECK_NUMBER" points for now).
+ *
+ *	Returns:
+ *		 0 - cnurb is not on curve;
+ *		 1 - cnurb is on curve
+ */
+int
+nmg_cnurb_is_on_crv( eu, cnrb, snrb, head, tol )
+CONST struct edgeuse *eu;
+CONST struct edge_g_cnurb *cnrb;
+CONST struct face_g_snurb *snrb;
+CONST struct rt_list *head;
+CONST struct rt_tol *tol;
+{
+	int i;
+	int coincident;
+	fastf_t t, t0, t1;
+	fastf_t delt;
+
+	NMG_CK_EDGEUSE( eu );
+	NMG_CK_EDGE_G_CNURB( cnrb );
+	if( snrb )
+		NMG_CK_FACE_G_SNURB( snrb );
+	RT_CK_LIST_HEAD( head );
+	RT_CK_TOL( tol );
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_cnurb_is_on_crv( eu=x%x, cnrb=x%x, snrb=x%x, head=x%x )\n",
+			eu, cnrb, snrb, head );
+	if( cnrb->order <= 0 )
+	{
+		struct vertexuse *vu1,*vu2;
+		struct vertexuse_a_cnurb *vu1a,*vu2a;
+		fastf_t blend;
+		point_t uvw;
+		point_t xyz;
+
+		/* cnurb is linear in parameter space */
+
+		vu1 = eu->vu_p;
+		NMG_CK_VERTEXUSE( vu1 );
+		vu2 = eu->eumate_p->vu_p;
+		NMG_CK_VERTEXUSE( vu2 );
+
+		if( !vu1->a.magic_p )
+		{
+			rt_log( "nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) has no attributes\n",
+				vu1, eu );
+			rt_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU has no attributes\n" );
+		}
+		if( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+		{
+			rt_log( "nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) is not CNURB\n",
+				vu1, eu );
+			rt_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU is not CNURB\n" );
+		}
+		vu1a = vu1->a.cnurb_p;
+		NMG_CK_VERTEXUSE_A_CNURB( vu1a );
+
+		if( !vu2->a.magic_p )
+		{
+			rt_log( "nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) has no attributes\n",
+				vu2, eu->eumate_p );
+			rt_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU has no attributes\n" );
+		}
+		if( *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+		{
+			rt_log( "nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) is not CNURB\n",
+				vu2, eu->eumate_p );
+			rt_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU is not CNURB\n" );
+		}
+		vu2a = vu2->a.cnurb_p;
+		NMG_CK_VERTEXUSE_A_CNURB( vu2a );
+
+		coincident = 1;
+		for( i=0 ; i<CHECK_NUMBER ; i++ )
+		{
+			struct pt_list *pt;
+			int found=0;
+
+			blend = (double)(i+1)/(double)(CHECK_NUMBER+1);
+
+			VBLEND2( uvw, blend, vu1a->param, (1.0-blend), vu2a->param );
+
+			nmg_eval_linear_trim_curve( snrb, uvw, xyz );
+
+			for( RT_LIST_FOR( pt, pt_list, head ) )
+			{
+				vect_t diff;
+
+				VSUB2( diff, xyz, pt->xyz );
+				if( MAGSQ( diff ) <= tol->dist_sq )
+				{
+					found = 1;
+					break;
+				}
+			}
+			if( !found )
+			{
+				coincident = 0;
+				break;
+			}
+		}
+		if( rt_g.NMG_debug & DEBUG_MESH )
+			rt_log( "nmg_cnurb_is_on_crv() returning %d\n", coincident );
+		return( coincident );
+	}
+
+	coincident = 1;
+	t0 = cnrb->k.knots[0];
+	t1 = cnrb->k.knots[cnrb->k.k_size-1];
+	delt = (t1 - t0)/(double)(CHECK_NUMBER+1);
+	for( i=0 ; i<CHECK_NUMBER ; i++ )
+	{
+		point_t xyz;
+		struct pt_list *pt;
+		int found;
+
+		t = t0 + (double)(i+1)*delt;
+
+		nmg_eval_trim_curve( cnrb, snrb, t, xyz );
+
+		found = 0;
+		for( RT_LIST_FOR( pt, pt_list, head ) )
+		{
+			vect_t diff;
+
+			VSUB2( diff, xyz, pt->xyz );
+			if( MAGSQ( diff ) <= tol->dist_sq )
+			{
+				found = 1;
+				break;
+			}
+		}
+		if( !found )
+		{
+			coincident = 0;
+			break;
+		}
+	}
+
+	if( rt_g.NMG_debug & DEBUG_MESH )
+		rt_log( "nmg_cnurb_is_on_crv returning %d\n", coincident );
+	return( coincident );
+}
+
+/*
  *			N M G _ M O D E L _ E D G E _ F U S E
  */
 int
@@ -408,6 +1261,11 @@ again:
 		struct edgeuse		*eu1;
 		struct edge		*e1;
 		register struct vertex	*v1a, *v1b;
+		struct pt_list		pt_head;
+		struct face_g_snurb	*snrb1;
+		struct edge_g_cnurb	*cnrb1;
+		int			lseg1=0;
+		int lseg2;
 
 		eu1 = (struct edgeuse *)NMG_TBL_GET(&eutab, i);
 		NMG_CK_EDGEUSE(eu1);
@@ -419,6 +1277,8 @@ again:
 		v1b = eu1->eumate_p->vu_p->v_p;
 		NMG_CK_VERTEX(v1a);
 		NMG_CK_VERTEX(v1b);
+
+		RT_LIST_INIT( &pt_head.l );
 
 		if( v1a == v1b )  {
 			if( *eu1->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )  {
@@ -435,24 +1295,271 @@ again:
 			/* For g_cnurb edges, could check for distinct param values on either end of edge */
 		}
 
+		if( !eu1->g.magic_p )
+		{
+			rt_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has no geometry\n" , eu1 );
+			continue;
+		}
+
+		/* Check if eu1 is a line segment */
+		if( *eu1->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )
+			lseg1 = 1;
+		else if( *eu1->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
+		{
+			struct faceuse *fu1;
+			struct face *f1;
+			int planar1=0;
+			int linear1=0;
+
+			cnrb1 = eu1->g.cnurb_p;
+			NMG_CK_EDGE_G_CNURB( cnrb1 );
+
+			if( cnrb1->order <= 0 )
+				linear1 = 1;
+			else
+				linear1 = nmg_cnurb_is_linear( cnrb1 );
+
+			fu1 = nmg_find_fu_of_eu( eu1 );
+			if( !fu1 )
+			{
+				rt_log( "nmg_model_edge_fuse() WARNING: CNURB eu (x%x) is not in a FU\n", eu1 );
+				continue;
+			}
+
+			f1 = fu1->f_p;
+			NMG_CK_FACE( f1 );
+
+			if( !f1->g.magic_p )
+			{
+				rt_log( "nmg_model_edge_fuse() WARNING: FU (x%x) of CNURB EU (x%x) has no geometry\n",
+						fu1, eu1 );
+				continue;
+			}
+
+			if( *f1->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+				planar1 = 1;
+			else if( *f1->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+			{
+				snrb1 = f1->g.snurb_p;
+				NMG_CK_FACE_G_SNURB( snrb1 );
+
+				planar1 = nmg_snurb_is_planar( snrb1, tol );
+			}
+
+			if( linear1 && planar1 )
+				lseg1 = 1;
+		}
+		else
+		{
+			rt_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has unknown geometry\n" , eu1 );
+			continue;
+		}
+
 		/* For performance, don't recheck pointers here */
 		for( j = i-1; j >= 0; j-- )  {
 			register struct edgeuse	*eu2;
 			register struct vertex	*v2a, *v2b;
+			struct face_g_snurb *snrb2;
+			struct edge_g_cnurb *cnrb2;
+			int eus_are_coincident=0;
+
 
 			eu2 = (struct edgeuse *)NMG_TBL_GET(&eutab,j);
+
+			if( rt_g.NMG_debug & DEBUG_MESH )
+				rt_log( "nmg_mode_edge_fuse: checking eus x%x and x%x\n", eu1, eu2 );
 
 			/* Do this vertex test first, to reduce memory loads */
 			v2a = eu2->vu_p->v_p;
 			if( v2a != v1a && v2a != v1b )  continue;
 
 			if( e1 == eu2->e_p )  continue;	/* Already shared */
+
 			v2b = eu2->eumate_p->vu_p->v_p;
-			if( (v2a == v1a && v2b == v1b) ||
-			    (v2b == v1a && v2a == v1b) )  {
+			if( (v2a != v1a || v2b != v1b) &&
+			    (v2b != v1a || v2a != v1b) )
+				continue;
+
+			if( !eu2->g.magic_p )
+			{
+				rt_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has no geometry\n" , eu2 );
+				continue;
+			}
+
+			/* check if eu2 is a line segment */
+			lseg2 = 0;
+			if( *eu2->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )
+				lseg2 = 1;
+			else if( *eu2->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
+			{
+				struct faceuse *fu2;
+				struct face *f2;
+				int planar2=0;
+				int linear2=0;
+
+				cnrb2 = eu2->g.cnurb_p;
+				NMG_CK_EDGE_G_CNURB( cnrb2 );
+
+				if( cnrb2->order <= 0 )
+					linear2 = 1;
+				else
+					linear2 = nmg_cnurb_is_linear( cnrb2 );
+
+				fu2 = nmg_find_fu_of_eu( eu2 );
+				if( !fu2 )
+				{
+					rt_log( "nmg_model_edge_fuse() WARNING: CNURB eu (x%x) is not in a FU\n", eu2 );
+					continue;
+				}
+
+				f2 = fu2->f_p;
+				NMG_CK_FACE( f2 );
+
+				if( !f2->g.magic_p )
+				{
+					rt_log( "nmg_model_edge_fuse() WARNING: FU (x%x) of CNURB EU (x%x) has no geometry\n",
+							fu2, eu2 );
+					continue;
+				}
+
+				if( *f2->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+					planar2 = 1;
+				else if( *f2->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+				{
+					snrb2 = f2->g.snurb_p;
+					NMG_CK_FACE_G_SNURB( snrb2 );
+
+					planar2 = nmg_snurb_is_planar( snrb2, tol );
+				}
+
+				if( linear2 && planar2 )
+					lseg2 = 1;
+			}
+			else
+			{
+				rt_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has unknown geometry\n" , eu2 );
+				continue;
+			}
+
+			/* EU's share endpoints */
+			if( lseg1 && lseg2 )
+			{
+				/* both are line segments */
 				nmg_radial_join_eu(eu1, eu2, tol);
 			     	total++;
-			 }
+			}
+			else
+			{
+				struct face *f2;
+				struct faceuse *fu2;
+				point_t pt1;
+				point_t pt2;
+
+				/* at least one EU is cnurb */
+				if( lseg1 )
+				{
+					NMG_CK_VERTEX_G( v1a->vg_p );
+					NMG_CK_VERTEX_G( v1b->vg_p );
+
+					VMOVE( pt1 , v1a->vg_p->coord );
+					VMOVE( pt2 , v1b->vg_p->coord );
+
+					/* Evaluate eu2 at some points and compare with linear eu1 */
+					eus_are_coincident = nmg_cnurb_lseg_coincident(
+						eu2, cnrb2, snrb2, pt1, pt2, tol );
+				}
+				else if( lseg2 )
+				{
+					NMG_CK_VERTEX_G( v2a->vg_p );
+					NMG_CK_VERTEX_G( v2b->vg_p );
+
+					VMOVE( pt1 , v2a->vg_p->coord );
+					VMOVE( pt2 , v2b->vg_p->coord );
+					/* Evaluate eu1 at some points and compare with linear eu2 */
+					eus_are_coincident = nmg_cnurb_lseg_coincident(
+						eu1, cnrb1, snrb1, pt1, pt2, tol );
+				}
+				else
+				{
+					/* neither EU is a line segment */
+					if( RT_LIST_IS_EMPTY( &pt_head.l ) )
+					{
+						if( cnrb1->order > 0 )
+						{
+							fastf_t t0, t1;
+
+							t0 = cnrb1->k.knots[0];
+							t1 = cnrb1->k.knots[cnrb1->k.k_size-1];
+
+							nmg_eval_trim_to_tol( cnrb1, snrb1,
+								t0, t1, &pt_head.l, tol );
+						}
+						else
+						{
+							point_t uvw1,uvw2;
+							struct vertexuse *vu1a,*vu1b;
+							struct vertexuse_a_cnurb *vu1a_a,*vu1b_a;
+
+							vu1a = eu1->vu_p;
+							NMG_CK_VERTEXUSE( vu1a );
+							if( !vu1a->a.magic_p )
+							{
+								rt_log( "nmg_model_edge_fuse: VU (x%x) of CNURB EU (x%x) has no attributes\n",
+									vu1a, eu1 );
+								rt_bomb( "nmg_model_edge_fuse: VU of CNURB EU has no attributes\n" );
+							}
+							if( *vu1a->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+							{
+								rt_log( "nmg_model_edge_fuse: VU (x%x) of CNURB EU (x%x) is not CNURB\n",
+									vu1a, eu1 );
+								rt_bomb( "nmg_model_edge_fuse: VU of CNURB EU is not CNURB\n" );
+							}
+							vu1a_a = vu1a->a.cnurb_p;
+							NMG_CK_VERTEXUSE_A_CNURB( vu1a_a );
+
+							vu1b = eu1->eumate_p->vu_p;
+							NMG_CK_VERTEXUSE( vu1b );
+							if( !vu1b->a.magic_p )
+							{
+								rt_log( "nmg_model_edge_fuse: VU (x%x) of CNURB EU (x%x) has no attributes\n",
+									vu1b, eu1->eumate_p );
+								rt_bomb( "nmg_model_edge_fuse: VU of CNURB EU has no attributes\n" );
+							}
+							if( *vu1b->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+							{
+								rt_log( "nmg_model_edge_fuse: VU (x%x) of CNURB EU (x%x) is not CNURB\n",
+									vu1b, eu1->eumate_p );
+								rt_bomb( "nmg_model_edge_fuse: VU of CNURB EU is not CNURB\n" );
+							}
+							vu1b_a = vu1b->a.cnurb_p;
+							NMG_CK_VERTEXUSE_A_CNURB( vu1b_a );
+
+							nmg_eval_linear_trim_to_tol( cnrb1, snrb1,
+								 vu1a_a->param, vu1b_a->param,
+								 &pt_head.l, tol );
+						}
+					}
+
+					/* Evaluate some points on eu2 and compare to evaluated eu1 */
+					eus_are_coincident = nmg_cnurb_is_on_crv( eu2,
+						cnrb2, snrb2, &pt_head.l, tol );
+				}
+
+				if( eus_are_coincident )
+				{
+					nmg_radial_join_eu(eu1, eu2, tol);
+				     	total++;
+				}
+			}
+		}
+
+		while( RT_LIST_NON_EMPTY( &pt_head.l ) )
+		{
+			struct pt_list *pt;
+
+			pt = RT_LIST_FIRST( pt_list, &pt_head.l );
+			RT_LIST_DEQUEUE( &pt->l );
+			rt_free( (char *)pt, "nmg_model_edge_fuse: pt" );
 		}
 	}
 	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
@@ -981,6 +2088,8 @@ CONST struct rt_tol		*tol;
 
 			eu = *eup;
 			NMG_CK_EDGEUSE(eu);
+			if( eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
+				continue;
 			va = eu->vu_p->v_p;
 			vb = eu->eumate_p->vu_p->v_p;
 			NMG_CK_VERTEX(va);
@@ -2215,6 +3324,13 @@ CONST struct rt_tol	*tol;
 			if( fu1->orientation != fu2->orientation )
 				rt_bomb( "nmg_radial_join_eu_NEW(): Cannot find matching orientations for faceuses\n" );
 		}
+	}
+
+	if( eu1->eumate_p->radial_p == eu1 && eu2->eumate_p->radial_p == eu2 )
+	{
+		/* Only joining two edges, let's keep it simple */
+		nmg_je( eu1, eu2 );
+		return;
 	}
 
 	/* XXX This angle-based algorithm can't yet handle snurb faces! */
