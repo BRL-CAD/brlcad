@@ -22,9 +22,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+
 #ifdef sgi
-#include "gl.h"
-#include "device.h"
+# include "gl.h"
+# include "device.h"
 
 #define Min( x1, x2 )	((x1) < (x2) ? (x1) : (x2))
 #define Max( x1, x2 )	((x1) > (x2) ? (x1) : (x2))
