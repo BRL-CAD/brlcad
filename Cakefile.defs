@@ -322,19 +322,20 @@ set -S2 "/bin/sh"
  */
 #	undef	sgi
 #	define	MTYPE	4d
-#	if 0
+#	if 1
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
 #		define	SHARED	_s
 #	else
-/*		This version for debugging:  DBX & PIXIE */
-#		define	OPTIMIZER	-g
-#		if 1
-/*			DBX seems to work OK with shared libraries */
+/*		This version for debugging/profiling:  DBX or PIXIE */
+#		if 0
+/*			DBX works OK with shared libraries */
+#			define	OPTIMIZER	-g
 #			define	SHARED	_s
 #		else
 /*			To use PIXIE, you have to use the non-shared libraries */
+#			define	OPTIMIZER	-O2
 #			define	SHARED	/**/
 #		endif
 #	endif
@@ -344,36 +345,29 @@ set -S2 "/bin/sh"
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
-#	if 1
-/*		Normal configuration.  Permits shared binaries, but no
- *		automatic PostScript startoff for rfbd when not logged in */
-#		define	SGI_AUTO	/**/
-#	else
-/*		Automatic PostScript startoff for rfbd (not found in shared libraries!) */
-/*		This still can't be the default, even in 3.3.1 */
-#		define	SGI_AUTO	-DIF_4D_AUTO_POSTSCRIPT
-#	endif
 #if	0
 /*		Non-X11 Configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_4d
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 SGI_AUTO
-#		define	LIBFB_LIBES	LIBPKG -lbsd -lgl''SHARED
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43
+#		define	LIBFB_LIBES	LIBPKG -lgl''SHARED
 #		define	MGED_OBJS	dm-4d mged_widget
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
-#		define	MGED_LIBES	-lbsd -lgl''SHARED
+#		define	MGED_LIBES	-lgl''SHARED
 #else
 /*		X11 Configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_4d if_X
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 SGI_AUTO -I/usr/X11/include -DIF_X
-#		define	LIBFB_LIBES	-L/usr/X11/lib -lX11 LIBPKG -lbsd -lgl''SHARED
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I/usr/X11/include -DIF_X
+#		define	LIBFB_LIBES	-L/usr/X11/lib -lX11 LIBPKG -lgl''SHARED
 # if 1
+/*		X11 for MGED */
 #		define	MGED_OBJS	dm-4d dm-X
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
-#		define	MGED_LIBES	-L/usr/X11/lib -lX11 -lbsd -lgl''SHARED
+#		define	MGED_LIBES	-L/usr/X11/lib -lX11 -lgl''SHARED
 # else
+/*		Lee Butler experimental version */
 #		define	MGED_OBJS	dm-4d mged_widget dm-X
 #		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
-#		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L/usr/X11/lib -lX11 -lbsd -lgl''SHARED
+#		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L/usr/X11/lib -lX11 -lgl''SHARED
 # endif
 #endif
 #	define	HAS_TCP	1
@@ -825,10 +819,20 @@ set -S2 "/bin/sh"
 
 #if	!defined(BINDIR)
 /*	Define places where users can find "installed" copies of things */
+/*	Note that MANDIR is handled separately */
 #	define	BINDIR	/usr/brlcad/bin
 #	define	LIBDIR	/usr/brlcad/lib
 #	define	ETCDIR	/usr/brlcad/etc
 #	define	INCLUDE_DIR	/usr/brlcad/include
+#	define	VFONTDIR	/usr/brlcad/vfont
+#endif
+
+#if !defined(MANDIR)
+#	ifdef BSD
+#		define	MANDIR	/usr/man/man
+#	else
+#		define	MANDIR	/usr/brlcad/man/man
+#	endif
 #endif
 
 /* Permissions for "installed" files of various types */
@@ -912,14 +916,6 @@ set -S2 "/bin/sh"
 
 #if !defined(LIBTERMLIB)
 #	define	LIBTERMLIB	-ltermlib
-#endif
-
-#if !defined(MANDIR)
-#	ifdef BSD
-#		define	MANDIR	/usr/man/man
-#	else
-#		define	MANDIR	/usr/brlcad/man/man
-#	endif
 #endif
 
 /*****/
@@ -1006,7 +1002,7 @@ set -S2 "/bin/sh"
  *  Even if you have lots of disk space, you don't want that	
  *  to happen.							
  */
-#define	MASTERHOST	spark.brl.mil
+#define	MASTERHOST	wolf.brl.mil
 #define	DISTRIBUTION	/m/dist
 
 /* Symbols that should be defined in individual Cakefiles */
