@@ -1483,12 +1483,11 @@ struct partition *pt_headp;
 	Get_Partition( ap, pp, pt_headp, "f_Shadow" );
 	if( rt_g.debug & DEBUG_SHADOW )
 		{	register struct hit *ihitp, *ohitp;
-			register struct soltab *istp, *ostp;
+			register struct soltab *istp;
 			point_t inormal;
 		bu_log( "Shadowed by :\n" );
 		istp = pp->pt_inseg->seg_stp;
 		ihitp = pp->pt_inhit;
-		ostp = pp->pt_outseg->seg_stp;
 		ohitp = pp->pt_outhit;
 		RT_HIT_NORMAL( inormal, ihitp, istp, &(ap->a_ray), pp->pt_inflip );
 		V_Print( "entry normal", inormal, bu_log );
