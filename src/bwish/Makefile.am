@@ -15,17 +15,13 @@ bwish_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS)
 bwish_CFLAGS = -DBWISH=1 ${X_CFLAGS}
 
 bwish_LDADD = \
-	${ITCL_LIBS} \
-	${TCL} \
-	${TK} \
-	${ITK_LIBS} \
 	${TCLCAD} \
-	${FB} \
 	${DM} \
-	${SYSV} \
-	${TERMIO} \
-	${WDB} \
-	${PNG}
+	${FB} \
+	${LIBRT} \
+	${ITK_LIBS} \
+	${ITCL_LIBS} \
+	${TERMIO}
 
 btclsh_SOURCES = \
 	cmd.c \
@@ -34,11 +30,6 @@ btclsh_SOURCES = \
 	tcl.c
 
 btclsh_LDADD = \
-	${ITCL_LIBS} \
-	${TCL} \
-	${PKG} \
 	${LIBRT} \
-	${SYSV} \
-	${TERMIO} \
-	${WDB}
-
+	${ITCL_LIBS} \
+	${TERMIO}
