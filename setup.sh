@@ -102,7 +102,7 @@ echo "OK"
 ############################################################################
 echo
 echo "Cleaning out ${BASEDIR}."
-echo "OK to run  rm -fr ${BASEDIR}  ? (yes|no)[no]"
+echo "OK to run  \"rm -fr ${BASEDIR}/*\"  ? (yes|no)[no]"
 read ANS
 if test "$ANS" != "yes"
 then
@@ -118,7 +118,9 @@ echo Creating the necessary directories
 
 for LAST in \
 	bin include include/brlcad html lib vfont \
-	man man/man1 man/man3 man/man5 etc tcl tk tclscripts
+	man man/man1 man/man3 man/man5 etc tcl tk \
+	tclscripts tclscripts/mged tclscripts/nirt \
+	tclscripts/pl-dm
 do
 	if test ! -d $BASEDIR/$LAST
 	then
