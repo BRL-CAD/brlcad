@@ -9,13 +9,13 @@
  *
  *	The surfaces of the bounding box of the dsp (in dsp coordinates)
  *	are 0 .. 6 where:
- *		0	XMIN
+ *		0	X == 0
  *		1	XMAX
- *		2	YMIN
+ *		2	Y == 0
  *		3	YMAX
- *		4	ZMIN
+ *		4	Z == 0
  *		5	DSP_MAX
- *		6	DSP_MIN
+ *		6	DSP_MIN	up
  *
  *	The top surfaces of the dsp are numbered 0 .. wid*len*2
  *	(2 triangles per ``cell'')
@@ -52,57 +52,79 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
 
 
 #define BBOX_PLANES	7	/* 2 tops & 5 other sides */
+#define XMIN 0
+#define XMAX 1
+#define YMIN 2
+#define YMAX 3
+#define ZMIN 4
+#define ZMAX 5
+#define ZMID 6
+
+/* access to the array */
+#define DSP(_p,_x,_y) ( \
+	((unsigned short *)(((struct rt_dsp_internal *)_p)->dsp_mp->buf))[ \
+		(_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ] )
+
+#define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
+#define YCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_ycnt)
+
+#define XSIZ(_p) (((struct dsp_specific *)_p)->xsiz)
+#define YSIZ(_p) (((struct dsp_specific *)_p)->ysiz)
 
 
 /* per-solid ray tracing form of solid, including precomputed terms */
 struct dsp_specific {
-	struct rt_dsp_internal dsp_i;
+	struct rt_dsp_internal dsp_i;	/* MUST BE FIRST */
+	unsigned short	*cell_min;
+	unsigned short	*cell_max;
 	double		dsp_pl_dist[BBOX_PLANES];
+	int		xsiz;
+	int		ysiz;
 };
+
+struct bbox_isect {
+	double	in_dist;
+	double	out_dist;
+	int	in_surf;
+	int	out_surf;
+};
+
 
 /* per-ray ray tracing information */
 struct isect_stuff {
+	struct dsp_specific	*dsp;	/* MUST BE FIRST */
 	struct bu_list		seglist;
 	struct xray		r;
 	struct application	*ap;
 	struct soltab		*stp;
 	struct bn_tol		*tol;
-	struct dsp_specific	*dsp;
 
-	char	NdotDbits;	/* bit field of non-perpendicular faces */
+	char	NdotDbits;	/* bit field of perpendicular faces */
 	double	NdotD[8];	/* array of VDOT(plane, dir) values */
 	double	recipNdotD[8];
 	double	NdotPt[8];	/* array of VDOT(plane, pt) values */
 
-	double  minbox_dist[2];
-	int  minbox_surf[2];
-
-	double	bbox_dist[2];	/* in/out distances for bounding box */
-	int	bbox_surf[2];	/* in/out surfaces for bounding box */
+	struct bbox_isect bbox;
+	struct bbox_isect minbox;
 };
 
 
 
 
 /* plane equations (minus offset distances) for bounding RPP */
-static CONST plane_t	dsp_pl[BBOX_PLANES] = {
-	{-1.0, 0.0, 0.0, 0.0},
-	{ 1.0, 0.0, 0.0, 0.0},
+static CONST vect_t	dsp_pl[BBOX_PLANES] = {
+	{-1.0, 0.0, 0.0},
+	{ 1.0, 0.0, 0.0},
 
-	{0.0, -1.0, 0.0, 0.0},
-	{0.0,  1.0, 0.0, 0.0},
+	{0.0, -1.0, 0.0},
+	{0.0,  1.0, 0.0},
 
-	{0.0, 0.0, -1.0, 0.0},
-	{0.0, 0.0,  1.0, 0.0},
-	{0.0, 0.0,  1.0, 0.0},
+	{0.0, 0.0, -1.0},
+	{0.0, 0.0,  1.0},
+	{0.0, 0.0,  1.0},
 };
 
 
-/* access to the array */
-#define DSP(_dsp,_x,_y) \
-	(((unsigned short *)(_dsp->dsp_mp->buf))[ \
-				(_y) * _dsp->dsp_xcnt + (_x) \
-				])
 
 #define DSP_O(m) offsetof(struct rt_dsp_internal, m)
 #define DSP_AO(a) offsetofarray(struct rt_dsp_internal, a)
@@ -204,10 +226,15 @@ struct rt_i		*rtip;
 	register struct dsp_specific	*dsp;
 	CONST struct rt_tol		*tol = &rtip->rti_tol;
 	int x, y;
-	register unsigned short t, dsp_min, dsp_max;
+	unsigned short dsp_min, dsp_max;
+	unsigned short left_min, left_max;
+	unsigned short right_min, right_max;
+	unsigned short *cell_min, *cell_max;
 	point_t pt, bbpt;
 	vect_t work;
 	fastf_t f;
+	int cells;
+
 
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_prep()\n");
@@ -217,30 +244,75 @@ struct rt_i		*rtip;
 	RT_DSP_CK_MAGIC(dsp_ip);
 
 	GETSTRUCT( dsp, dsp_specific );
-	dsp->dsp_i = *dsp_ip; /* struct copy */
 	stp->st_specific = (genptr_t) dsp;
+	dsp->dsp_i = *dsp_ip;		/* struct copy */
+	dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
+	dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
+	cells = dsp->xsiz * dsp->ysiz;	/* Total # cells in map */
 
-	/* find min/max values in displacement map */
+	/* build two maps:
+	 *	Cell min values
+	 *	Cell max values
+	 * and compute min/max values for entire map
+	 */
+	cell_min = dsp->cell_min = (unsigned short *)
+		rt_malloc( sizeof(*dsp->cell_min) * cells * 2, "min/max map" );
+	cell_max = dsp->cell_max = & dsp->cell_min[cells];
+
 	dsp_min = 0xffff;
 	dsp_max = 0;
-	for (y=0 ; y < dsp_ip->dsp_ycnt ; y++) {
-		for (x=0 ; x < dsp_ip->dsp_xcnt ; x++) {
-			t = DSP(dsp_ip, x, y);
-			if ( t > dsp_max ) dsp_max = t;
-			if ( t < dsp_min ) dsp_min = t;
+
+	for (y=0 ; y < YSIZ(dsp) ; y++) {
+
+		if (DSP(dsp, 0, y) < DSP(dsp, 0, y+1)) {
+			left_min = DSP(dsp, 0, y);
+			left_max = DSP(dsp, 0, y+1);
+		} else {
+			left_min = DSP(dsp, 0, y+1);
+			left_max = DSP(dsp, 0, y);
+		}
+
+		for (x=1 ; x < XCNT(dsp) ; x++) {
+
+			if (DSP(dsp, x, y) < DSP(dsp, x, y+1)) {
+				right_min = DSP(dsp, x, y);
+				right_max = DSP(dsp, x, y+1);
+			} else {
+				right_min = DSP(dsp, x, y+1);
+				right_max = DSP(dsp, x, y);
+			}
+
+			if (left_min < right_min)
+				*cell_min = left_min;
+			else
+				*cell_min = right_min;
+
+			if (left_max > right_max)
+				*cell_max = left_max;
+			else
+				*cell_max = right_max;
+
+			if (*cell_min < dsp_min) dsp_min = *cell_min;
+			if (*cell_max > dsp_max) dsp_max = *cell_max;
+
+			left_min = right_min;
+			left_max = right_max;
+			cell_max++;
+			cell_min++;
 		}
 	}
 
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("min %d max %d\n", dsp_min, dsp_max);
 
-	dsp->dsp_pl_dist[0] = 0.0;
-	dsp->dsp_pl_dist[1] = (fastf_t)dsp_ip->dsp_xcnt;
-	dsp->dsp_pl_dist[2] = 0.0;
-	dsp->dsp_pl_dist[3] = (fastf_t)dsp_ip->dsp_ycnt;
-	dsp->dsp_pl_dist[4] = 0.0;
-	dsp->dsp_pl_dist[5] = (fastf_t)dsp_max;
-	dsp->dsp_pl_dist[6] = (fastf_t)dsp_min;
+	/* record the distance to each of the bounding planes */
+	dsp->dsp_pl_dist[XMIN] = 0.0;
+	dsp->dsp_pl_dist[XMAX] = (fastf_t)dsp->xsiz;
+	dsp->dsp_pl_dist[YMIN] = 0.0;
+	dsp->dsp_pl_dist[YMAX] = (fastf_t)dsp->ysiz;
+	dsp->dsp_pl_dist[ZMIN] = 0.0;
+	dsp->dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
+	dsp->dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
 
 	/* compute bounding box and spere */
 
@@ -259,7 +331,6 @@ struct rt_i		*rtip;
 	BBOX_PT(0,		  dsp_ip->dsp_ycnt, dsp_max);
 
 #undef BBOX_PT
-
 
 	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
 	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
@@ -280,65 +351,287 @@ struct rt_i		*rtip;
 }
 
 
+static int
+isect_cell_bb(isect, d, bbi)
+register struct isect_stuff *isect;
+double	d[6];	/* xmin, xmax, ymin, ymax, zmin, zmax plane distances */
+register struct bbox_isect *bbi;
+{
+	register double dist;
+	register int i;
 
-void
+	bbi->in_dist = - ( bbi->out_dist = MAX_FASTF );
+
+	for (i=0 ; i < 6 ; i++) {
+		if (isect->NdotDbits & (1<<i)) continue;
+
+		dist = - ((isect->NdotPt[i] - d[i]) * isect->recipNdotD[i]);
+
+		if (isect->NdotD[i] < 0.0) {
+			if (dist > bbi->in_dist) {
+				bbi->in_dist = dist;
+				bbi->in_surf = i;
+			}
+		} else {
+			if (dist < bbi->out_dist) {
+				bbi->out_dist = dist;
+				bbi->out_surf = i;
+			}
+		}
+	}
+
+	if (bbi->in_dist >= bbi->out_dist ||
+	    bbi->in_dist <= -MAX_FASTF || bbi->out_dist >= MAX_FASTF)
+	    	return 0;
+
+	return 1;
+}
+
+static void
 isect_ray_dsp(isect)
 struct isect_stuff *isect;
 {
 	register struct seg *segp;
+	int inside = 0;	/* flag:  We're inside the solid */
+	vect_t pDX, pDY;	/* vector for 1 cell change in x, y */
+	int outX, outY;		/* cell index which idicates we're outside */
+	double tDX, tDY;	/* dist from cell start to next cell */
+	double tX, tY;		/* dist to end of first cell */
+	int stepX, stepY;
+	int rising; /* boolean: ray Z positive */
+	int xcnt, ycnt;
+	int grid_cell[3];
+	point_t curr_pt;
+	point_t next_pt;
+	point_t out_pt;
+	double dist;
 
-	if (isect->minbox_surf[0] < 5 && isect->minbox_surf[1] < 5 ) {
-		/* we actually hit and exit the dsp BELOW the min value
-		 *
-		 *		     ray origin
-		 *	dsp	    o
-		 *    /\    /\     /
-		 *   /	\/\/  \_  / ray
-		 *  |		|/
-		 *  |		*in point
-		 *  |	       /|
-		 *  |	      /	|
-		 *  |	     /	|
-		 *  +-------*---+
-		 *         / out point
-		 *        /
-		 */
 
+	if (isect->minbox.in_surf < 5) {
+
+		inside = 1;
 
 		RT_GET_SEG( segp, isect->ap->a_resource );
 		segp->seg_stp = isect->stp;
-		segp->seg_in.hit_dist = isect->bbox_dist[0];
-		segp->seg_in.hit_surfno = isect->bbox_surf[0];
+		segp->seg_in.hit_dist = isect->bbox.in_dist;
+		segp->seg_in.hit_surfno = -isect->bbox.in_surf;
 
-		segp->seg_out.hit_dist = isect->bbox_dist[1];
-		segp->seg_out.hit_surfno = isect->bbox_surf[1];
-		BU_LIST_INSERT( &isect->seglist, &(segp->l) );
+		if ( isect->minbox.out_surf < 5 ) {
+			/* we actually hit and exit the dsp 
+			 * BELOW the min value.  For example:
+			 *			     o ray origin
+			 *	     /\dsp	    /
+			 *	   _/  \__   /\     /
+			 *	_ |       \_/  \  / ray
+			 *	| |		|/
+			 * Minbox |		*in point
+			 *	| |	       /|
+			 *	- +-----------*-+
+			 *		     / out point
+			 */
 
-		return;
+			segp->seg_out.hit_dist = isect->bbox.out_dist;
+			segp->seg_out.hit_surfno = -isect->bbox.out_surf;
+			BU_LIST_INSERT( &isect->seglist, &(segp->l) );
+
+			return;
+		}
+	}
+
+
+	/* compute BBox entry point and starting grid cell */
+	VJOIN1(curr_pt, isect->r.r_pt, isect->bbox.in_dist, isect->r.r_dir);
+	VMOVE(grid_cell, curr_pt);	/* int/float conversion */
+
+	/* compute BBox exit point */
+	VJOIN1(out_pt, isect->r.r_pt, isect->bbox.out_dist, isect->r.r_dir);
+
+
+	if (isect->r.r_dir[X] < 0.0) {
+		outX = out_pt[X];
+		stepX = -1;
+
+		/* dist from start of cell to get X cell change */
+		tDX = -1 / isect->r.r_dir[X];
+
+		/* dist from current point to get first X cell change */
+		tX = grid_cell[X] - curr_pt[X] / isect->r.r_dir[X];
+	} else if (isect->r.r_dir[X] > 0.0) {
+		outX = out_pt[X] + 1;
+		stepX = 1;
+
+		/* dist from start of cell to get X cell change */
+		tDX = 1 / isect->r.r_dir[X];
+
+		/* dist from current point to get first X cell change */
+		tX = (grid_cell[X]+1) - curr_pt[X] / isect->r.r_dir[X];
+	} else {
+		tX = MAX_FASTF;
+	}
+
+	if (isect->r.r_dir[Y] < 0.0) {
+		outY = out_pt[Y];
+		stepY = -1;
+
+		/* dist from start of cell to get Y cell change */
+		tDY = -1 / isect->r.r_dir[Y];
+
+		/* dist from curr pt to get Y cell change */
+		tY = grid_cell[Y] - curr_pt[Y] / isect->r.r_dir[Y];
+	} else if (isect->r.r_dir[Y] > 0.0) {
+		outY = out_pt[Y] + 1;
+		stepY = 1;
+
+		/* dist from start of cell to get Y cell change */
+		tDY = 1 / isect->r.r_dir[Y];
+
+		/* dist from curr pt to get Y cell change */
+		tY = (grid_cell[Y]+1)  - curr_pt[Y] / isect->r.r_dir[Y];
+	} else {
+		tY = MAX_FASTF;
+	}
+
+	
+	VSCALE(pDX, isect->r.r_dir, tDX);
+	VSCALE(pDY, isect->r.r_dir, tDY);
+
+	rising = (isect->r.r_dir[Z] > 0.0);
+#if 0
+	VJOIN1(next_Xpt, curr_pt, tX, isect->r.r_dir);
+	VJOIN1(next_Ypt, curr_pt, tY, isect->r.r_dir);
+
+#define CELL_MAX
+
+	dsp(x,y) > dsp(x+1,y) ?
+
+
+	do {
+		if (tX < ty) {
+			if (
+( rising && curr_pt[Z] <= cell_max(cell) && next_Xpt[Z] >= cell_min(cell)) ||
+(!rising && curr_pt[Z] >= cell_min(cell) && next_Xpt[Z] <= cell_max(cell))
+			) {
+				isect_ray_triangles();
+			}
+			cell[X] += stepX;
+			tX += tDX;
+			VMOVE(curr_pt, next_Xpt);
+			VADD2(next_Xpt, next_Xpt, pDX);
+		} else {
+			if (
+( rising && curr_pt[Z] <= cell_max(cell) && next_Ypt[Z] >= cell_min(cell)) ||
+(!rising && curr_pt[Z] >= cell_min(cell) && next_Ypt[Z] <= cell_max(cell))
+			) {
+				isect_ray_triangles();
+			}
+			cell[Y] += stepY;
+			tY += tDY;
+			VMOVE(curr_pt, next_pt);
+			VADD2(next_Ypt, next_Ypt, pDY);
+		}
+	} while (cell[X] != outX && cell[Y] != outY);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	dist = isect->bbox.in_dist ; 
+	VJOIN1(in_pt, isect->r.r_pt, dist, isect->r.r_dir);
+	VMOVE(cell, in_pt);	/* int/float conversion */
+
+	while (dist < isect->bbox.out_dist) { 
+
+
+		d[0] = cell[X];
+		d[1] = cell[X]+1;
+		d[2] = cell[Y];
+		d[3] = cell[Y]+1;
+		d[4] = 0.0;
+		d[5] = max_dsp(cell);
+
+		if (isect_cell_bb(isect, d, &bbi)) {
+			/* hit cell */
+		}
+
+
+		next_step:
+		/* update dist */
+		dist += bbi->out_dist;
+
+		switch (bbi->out_surf) {
+		case XMIN: cell[X] -= 1;
+			break;
+		case XMAX: cell[X] += 1;
+			break;
+		case YMIN: cell[Y] -= 1;
+			break;
+		case YMAX: cell[Y] += 1;
+			break;
+		case ZMIN: /* Done */
+		case ZMAX: dist = isect->bbox.out_dist;
+			break;
+		}
 
 	}
 
 
+----------------------------------------------------------------------
 
+	{
+		point_t	in_pt;
+		int cell[3];
+		double d[6];
+		strucct bbox_isect bbi;
 
-#if 0
+		VJOIN1(in_pt, rp->r_pt, dist[0], rp->r_dir);
 
-	point_t	in_pt;
-	int cell[3];
+		VMOVE(cell, in_pt);	/* int/float conversion */
 
-	/* 
-	VJOIN1(in_pt, rp->r_pt, dist[0], rp->r_dir);
-
-
-	VMOVE(cell, in_pt);	/* int/float conversion */
-
-	while (cell[X] 
-
-
-#define	CELL_MINMAX(min, max, cell) {
-
-}
-
+		do {	
+		} while ();
+	}
+----------------------------------------------------------------------
 
 	if we don't hit the cell bounding box
 		if "inside"
@@ -354,11 +647,6 @@ struct isect_stuff *isect;
 			mark us as "inside"
 		go to next cell
 	
-
-	
-
-
-
 #endif
 
 
@@ -366,15 +654,24 @@ struct isect_stuff *isect;
 }
 
 
-int
+
+
+
+/*
+ *  Intersect the ray with the bounding box of the dsp solid.
+ *  We also pre-compute some per-ray things that will be useful later.
+ */
+static int
 isect_ray_bbox(isect)
-struct isect_stuff *isect;
+register struct isect_stuff *isect;
 {
 	register double NdotD;
 	double dist;
-	int i;
-	double *dt = isect->bbox_dist;
-	int *surf = isect->bbox_surf;
+	register int i;
+
+	isect->NdotDbits = 0;
+	isect->bbox.in_dist = - (isect->bbox.out_dist = MAX_FASTF);
+	isect->bbox.in_surf = isect->bbox.out_surf = -1;
 	
 	/* intersect the ray with the bounding box */
 	for (i=0 ; i < BBOX_PLANES ; i++) {
@@ -382,12 +679,13 @@ struct isect_stuff *isect;
 		NdotD = VDOT(dsp_pl[i], isect->r.r_dir);
 
 		/* if N/ray vectors are perp, ray misses plane */
-		if (BN_VECT_ARE_PERP(NdotD, isect->tol)) continue;
+		if (BN_VECT_ARE_PERP(NdotD, isect->tol)) {
+			isect->NdotDbits |= 1 << i;
+			continue;
+		}
 
-		isect->NdotDbits |= 1 << i;
 		isect->NdotD[i] = NdotD;
 		isect->recipNdotD[i] = 1.0 / NdotD;
-
 		isect->NdotPt[i] = VDOT(dsp_pl[i], isect->r.r_pt);
 
 		/* ray hits plane, compute distance along ray to plane */
@@ -405,15 +703,15 @@ struct isect_stuff *isect;
 
 		if (NdotD < 0.0) {
 			/* entering */
-			if (dist > dt[0]) {
-				dt[0] = dist;
-				surf[0] = i;
+			if (dist > isect->bbox.in_dist) {
+				isect->bbox.in_dist = dist;
+				isect->bbox.in_surf = i;
 			}
 		} else { /*  (NdotD > 0.0) */
 			/* leaving */
-			if (dist < dt[1]) {
-				dt[1] = dist;
-				surf[1] = i;
+			if (dist < isect->bbox.out_dist) {
+				isect->bbox.out_dist = dist;
+				isect->bbox.out_surf = i;
 			}
 		}
 	}
@@ -421,45 +719,45 @@ struct isect_stuff *isect;
 
 	if (rt_g.debug & DEBUG_HF) {
 		bu_log("solid rpp in  surf[%d] dist:%g\n",
-			isect->bbox_surf[0], dt[0]);
+			isect->bbox.in_surf, isect->bbox.in_dist);
 		bu_log("solid rpp out surf[%d] dist:%g\n",
-			isect->bbox_surf[1], dt[1]);
+			isect->bbox.out_surf, isect->bbox.out_dist);
 	}
 	/* validate */
 
 
-	if (dt[0] >= dt[1] || isect->bbox_surf[0] == -1 || isect->bbox_surf[1] == -1 ||
-	    dt[1] >= INFINITY)
+	if (isect->bbox.in_dist >= isect->bbox.out_dist ||
+	    isect->bbox.out_dist >= MAX_FASTF ) 
 		return 0; /* MISS */
 
 	/* copmute "minbox" the bounding box of the rpp under the lowest
 	 * displacement height
 	 */
 
-	isect->minbox_dist[0] = isect->bbox_dist[0];
-	isect->minbox_surf[0] = isect->bbox_surf[0];
-	isect->minbox_dist[1] = isect->bbox_dist[1];
-	isect->minbox_surf[1] = isect->bbox_surf[1];
+	isect->minbox.in_dist = isect->bbox.in_dist;
+	isect->minbox.in_surf = isect->bbox.in_surf;
+	isect->minbox.out_dist = isect->bbox.out_dist;
+	isect->minbox.out_surf = isect->bbox.out_surf;
 
 	if (NdotD < 0.0) {
 		/* entering */
-		if (dist > isect->bbox_dist[0]) {
-			isect->minbox_dist[0] = dist;
-			isect->minbox_surf[0] = 6;
+		if (dist > isect->bbox.in_dist) {
+			isect->minbox.in_dist = dist;
+			isect->minbox.in_surf = 6;
 		}
 	} else { /*  (NdotD > 0.0) */
 		/* leaving */
-		if (dist < isect->bbox_dist[1]) {
-			isect->minbox_dist[1] = dist;
-			isect->minbox_surf[1] = 6;
+		if (dist < isect->bbox.out_dist) {
+			isect->minbox.out_dist = dist;
+			isect->minbox.out_surf = 6;
 		}
 	}
 
 	if (rt_g.debug & DEBUG_HF) {
 		bu_log("solid minbox rpp in  surf[%d] dist:%g\n",
-			isect->minbox_surf[0], isect->minbox_dist[0]);
+			isect->minbox.in_surf, isect->minbox.in_dist);
 		bu_log("solid minbox rpp out surf[%d] dist:%g\n",
-			isect->minbox_surf[1], isect->minbox_dist[1]);
+			isect->minbox.out_surf, isect->minbox.out_dist);
 	}
 
 	return 1;
@@ -517,10 +815,6 @@ struct seg		*seghead;
 	isect.stp = stp;
 	isect.dsp = (struct dsp_specific *)stp->st_specific;
 	isect.tol = &ap->a_rt_i->rti_tol;
-	isect.NdotDbits = 0;
-	isect.bbox_dist[0] = - (isect.bbox_dist[1] = MAX_FASTF);
-	isect.bbox_surf[0] = 
-	isect.bbox_surf[1] = -1;
 
 	/* intersect ray with bounding cube */
 	if ( isect_ray_bbox(&isect) == 0)
@@ -697,6 +991,7 @@ register struct soltab *stp;
 	RT_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	rt_close_mapped_file(dsp->dsp_i.dsp_mp);
 
+	rt_free( (char *)dsp->cell_min, "min/max map" );
 	rt_free( (char *)dsp, "dsp_specific" );
 }
 
