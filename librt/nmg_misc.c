@@ -148,11 +148,10 @@ long *p;
 
 				end -= j - l;
 #				include "noalias.h"
-				for(k=l ; j <= end ;)
+				for(k=l ; j < b->end ;)
 					b->buffer[k++] = b->buffer[j++];
+				b->end = end;
 			}
-
-		b->end = end;
 		return(0);
 	} else if (func == TBL_CAT) {
 		union {
