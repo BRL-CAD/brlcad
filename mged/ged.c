@@ -2095,6 +2095,9 @@ char	**argv;
     /* Clear out anything in the display */
     f_zap(clientData, interp, 1, av);
 
+    /* Close the Tcl database objects */
+    Tcl_Eval(interp, "db close; .inmem close");
+
     /* Close current database.  Releases MaterHead, etc. too. */
     db_close(save_dbip);
 
