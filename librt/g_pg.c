@@ -740,6 +740,30 @@ CONST struct db_i		*dbip;
 	return(0);
 }
 
+int
+rt_pg_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+CONST mat_t			mat;
+CONST struct db_i		*dbip;
+{
+	bu_log( "Import of polysolids from a version 5 database is not allowed\n" );
+	bu_log( "\tPolysolids should be converted to BOT solids using the pg_bot() routine or g4-g5 utility.\n" );
+	return -1;
+}
+
+int
+rt_pg_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	bu_log( "Export of polysolids to a version 5 database is not allowed\n" );
+	bu_log( "\tPolysolids should be converted to BOT solids using the pg_bot() routine or g4-g5 utility.\n" );
+	return -1;
+}
+
 /*
  *			R T _ P G _ D E S C R I B E
  *
@@ -836,4 +860,104 @@ struct rt_db_internal	*ip;
 	pgp->npoly = 0;
 	bu_free( (char *)pgp, "pg ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
+}
+
+int
+pg_bot( ip, tol )
+struct rt_db_internal *ip;
+CONST struct bn_tol *tol;
+{
+	struct rt_pg_internal *ip_pg;
+	struct rt_bot_internal *ip_bot;
+	int max_pts;
+	int max_tri;
+	int p, i;
+
+	if( ip->idb_type != ID_POLY )
+	{
+		bu_log( "ERROR: pg_bot() called with a non-polysolid!!!\n" );
+		return -1;
+	}
+	ip_pg = (struct rt_pg_internal *)ip->idb_ptr;
+
+	RT_PG_CK_MAGIC( ip_pg );
+	RT_CK_TOL( tol );
+
+	ip_bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "BOT internal" );
+	ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
+	ip_bot->mode = RT_BOT_SOLID;
+	ip_bot->orientation = RT_BOT_CCW;
+	ip_bot->error_mode = '\0';
+
+	/* maximum possible vertices */
+	max_pts = ip_pg->npoly * ip_pg->max_npts;
+
+	/* maximum possible triangular faces */
+	max_tri = ip_pg->npoly * 3;
+
+	ip_bot->num_vertices = 0;
+	ip_bot->num_faces = 0;
+	ip_bot->thickness = (fastf_t *)NULL;
+	ip_bot->face_mode = (struct bu_bitv *)NULL;
+
+	ip_bot->vertices = (fastf_t *)bu_calloc( max_pts * 3, sizeof( fastf_t ), "BOT vertices" );
+	ip_bot->faces = (int *)bu_calloc( max_tri * 3, sizeof( int ), "BOT faces" );
+
+	for( p=0 ; p<ip_pg->npoly ; p++ )
+	{
+		LOCAL vect_t work[3], tmp;
+		LOCAL struct tri_specific trip;
+		LOCAL fastf_t m1, m2, m3, m4;
+
+
+		VMOVE( work[0], &ip_pg->poly[p].verts[0*3] );
+		VMOVE( work[1], &ip_pg->poly[p].verts[1*3] );
+
+		for( i=2; i < ip_pg->poly[p].npts; i++ )  {
+			VMOVE( work[2], &ip_pg->poly[p].verts[i*3] );
+
+			VSUB2( trip.tri_BA, work[1], work[0] );
+			VSUB2( trip.tri_CA, work[2], work[0] );
+			VCROSS( trip.tri_wn, trip.tri_BA, trip.tri_CA );
+
+			/* Check to see if this plane is a line or pnt */
+			m1 = MAGNITUDE( trip.tri_BA );
+			m2 = MAGNITUDE( trip.tri_CA );
+			VSUB2( tmp, work[1], work[2] );
+			m3 = MAGNITUDE( tmp );
+			m4 = MAGNITUDE( trip.tri_wn );
+			if( m1 >= tol->dist && m2 >= tol->dist &&
+			    m3 >= tol->dist && m4 >= tol->dist )  {
+
+			    	/* add this triangle to the BOT */
+			    	VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[0] );
+			    	ip_bot->faces[ip_bot->num_faces * 3] = ip_bot->num_vertices;
+			    	ip_bot->num_vertices++;
+			    	VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[1] );
+			    	ip_bot->faces[ip_bot->num_faces * 3 + 1] = ip_bot->num_vertices;
+			    	ip_bot->num_vertices++;
+			    	VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[2] );
+			    	ip_bot->faces[ip_bot->num_faces * 3 + 2] = ip_bot->num_vertices;
+			    	ip_bot->num_vertices++;
+
+			    	ip_bot->num_faces++;
+			}		
+
+			/* Chop off a triangle, and continue */
+			VMOVE( work[1], work[2] );
+		}
+	}
+
+	(void)bot_vertex_fuse( ip_bot );
+	(void)bot_condense( ip_bot );
+
+	ip_bot->faces = (int *)bu_realloc( ip_bot->faces, ip_bot->num_faces * 3 * sizeof( int ), "BOT faces" );
+
+	rt_db_free_internal( ip );
+
+	ip->idb_type = ID_BOT;
+	ip->idb_meth = &rt_functab[ID_BOT];
+	ip->idb_ptr = ip_bot;
+
+	return 0;
 }
