@@ -212,7 +212,7 @@ int			flags;
 	}
 
 	/* First, register this object in input database */
-	if( (input_dp = db_diradd( input_dbip, local, laddr, len, flags)) == DIR_NULL )
+	if( (input_dp = db_diradd( input_dbip, name, laddr, len, flags)) == DIR_NULL )
 		return(-1);
 
 	/* Then, register a new object in the main database */
@@ -222,8 +222,15 @@ int			flags;
 		return(-1);
 
 	/* Read in all the records for this object */
-	if( (rec = db_getmrec( input_dbip, input_dp )) == (union record *)0 )
-		return(-1);
+	if( (rec = db_getmrec( input_dbip, input_dp )) == (union record *)0 )  {
+		READ_ERR;
+		if( db_delete( dbip, dp ) < 0 ||
+		    db_dirdelete( dbip, dp ) < 0 )  {
+		    	DELETE_ERR(local);
+		}
+	    	/* Abort processing on first error */
+		return -1;
+	}
 
 	/* Update the name, and any references */
 	if( flags & DIR_SOLID )  {
@@ -257,6 +264,7 @@ int			flags;
 	if( db_put( dbip, dp, rec, 0, len ) < 0 )
 		return(-1);
 
+	rt_free( (char *)rec, "db_getmrec rec" );
 	return 0;
 }
 
@@ -282,10 +290,18 @@ char	**argv;
 	int bad = 0;
 
 	/* get any prefix */
-	if( argc < 3 )
+	if( argc < 3 )  {
+		(void)fprintf(stderr,
+			"concat: Enter prefix string or / for no prefix: ");
+		return CMD_MORE;
+	}
+
+	if( strcmp( argv[2], "/" ) == 0 )  {
+		/* No prefix desired */
 		(void)strcpy(prestr, "\0");
-	else
+	} else {
 		(void)strcpy(prestr, argv[2]);
+	}
 
 	if( (ncharadd = strlen( prestr )) > 12 )  {
 		ncharadd = 12;
