@@ -70,7 +70,7 @@ typedef __uint64_t k_sigset_t;  /* signal set type */
 #include <sys/wait.h>
 #if IRIX >= 6
 # include <sched.h>
-struct sched_param param;
+static struct sched_param bu_param;
 #endif
 
 #endif /* SGI_4D */
@@ -336,11 +336,11 @@ bu_set_realtime()
 				return 1;
 		}
 
-		sched_getparam( 0, &param );
+		sched_getparam( 0, &bu_param );
 
 		if ( sched_setscheduler( 0,
 			SCHED_RR,		/* policy */
-			&param
+			&bu_param
 		    ) >= 0 )  {
 		    	return 1;		/* realtime */
 		}
