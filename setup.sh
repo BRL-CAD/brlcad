@@ -84,14 +84,26 @@ do
 	fi
 
 	# Make sure that there are no conflicting files earlier in path.
-	if test -f ${PREFIX}/machinetype.sh -o -f ${PREFIX}/cake
-	then
-		echo " "
-		echo "$0 ERROR: Different version of BRL-CAD detected in ${PREFIX},"
-		echo " which is earlier in your search path than ${BINDIR}."
-		echo " Please place ${BINDIR} earlier in your PATH."
-		exit 2
-	fi
+	# These might be due to a previous verion of BRL-CAD being
+	# in the search path, or a user with old copies of these
+	# programs in a personal "bin" directory.
+	# Either way, we can't depend on it having the proper definitions
+	# suitable for the latest release
+	for i in machinetype.sh cake brlcad-check.sh
+	do
+		if test -f ${PREFIX}/$i
+		then
+			echo " "
+			echo "$0 ERROR: detected presence of ${PREFIX}/$i"
+			echo " "
+			echo " Different version of BRL-CAD detected in ${PREFIX},"
+			echo " which is earlier in your search path than ${BINDIR}."
+			echo " "
+			echo " Please place ${BINDIR} earlier in your PATH"
+			echo " at least while you are installing BRL-CAD."
+			exit 2
+		fi
+	done
 done
 if test ${not_found} -ne 0
 then
@@ -120,6 +132,7 @@ do
 	if test ! -f $i
 	then
 		echo "ERROR: Current directory for setup.sh isn't top of source tree."
+		echo "Can't locate file $i"
 		exit 1
 	fi
 done
