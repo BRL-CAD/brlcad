@@ -74,7 +74,7 @@ static int	get_3pts();
  * which plane to redefine and gets input, then shuttles the process over to
  * one of four functions before calculating new vertices.
  */
-void
+int
 f_facedef()
 {
 	short int 	i;
@@ -95,11 +95,11 @@ f_facedef()
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 	if( state != ST_S_EDIT ){
 		(void)printf("Facedef: must be in solid edit mode\n");
-		return;
+		return CMD_BAD;
 	}
 	if( es_int.idb_type != ID_ARB8 )  {
 		(void)printf("Facedef: solid type must be ARB\n");
-		return;
+		return CMD_BAD;
 	}	
 
 	/* apply es_mat editing to parameters */
@@ -111,7 +111,7 @@ f_facedef()
 	/* find new planes to account for any editing */
 	if( rt_arb_calc_planes( planes, arb, es_type, &tol ) < 0 )  {
 		rt_log("Unable to determine plane equations\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* get face, initialize args and argcnt */
@@ -166,7 +166,7 @@ f_facedef()
 			  break;
 		default:
 			  (void)printf("bad face\n");
-			  return;
+			  return CMD_BAD;
 	}
 
 	while( args < 3 ){
@@ -189,13 +189,13 @@ f_facedef()
 		if( es_type == 7 )
 			if( plane!=0 && plane!=3 ){
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
-				return;
+				return CMD_BAD;
 			}
 		while( args < 7 ){  	/* total # of args under this option */
 			(void)printf("%s",p_pleqn[args-3]);
 			if( (argcnt = getcmd(args)) < 0 ){
 				(void)printf("Facedef: input bad\n");
-				return;
+				return CMD_BAD;
 			}
 			args += argcnt;
 		}
@@ -206,18 +206,18 @@ f_facedef()
 		if( es_type == 7 )
 			if( plane!=0 && plane!=3 ){
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
-				return;
+				return CMD_BAD;
 			}
 		while( args < 12 ){           /* total # of args under this option */
 			(void)printf("%s %d: ", p_3pts[(args-3)%3] ,args/3);
 			if( (argcnt = getcmd(args)) < 0 ){
 				(void)printf("Facedef: input bad\n");
-				return;
+				return CMD_BAD;
 			}
 			args += argcnt;
 		}
 		if( get_3pts( planes[plane], &cmd_args[3], &tol) ){
-			return;				/* failure */
+			return CMD_BAD;			/* failure */
 		}
 		break;
 	case 'c': 
@@ -227,7 +227,7 @@ f_facedef()
 				(void)printf("%s",p_rotfb[args-3]);
 				if( (argcnt = getcmd(args)) < 0){
 					(void)printf("Facedef: input bad\n");
-					return;
+					return CMD_BAD;
 				}
 				args += argcnt;
 			}
@@ -240,7 +240,7 @@ f_facedef()
 			(void)printf("%s",p_rotfb[args-3]);
 			if( (argcnt = getcmd(args)) < 0 ){
 				(void)printf("Facedef: input bad\n");
-				return;
+				return CMD_BAD;
 			}
 			args += argcnt;
 		}
@@ -251,29 +251,29 @@ f_facedef()
 		if( es_type == 7 )
 			if( plane!=0 && plane!=3 ){
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
-				return;
+				return CMD_BAD;
 			}
 		while( args < 6 ){  	/* total # of args under this option */
 			(void)printf("%s",p_nupnt[args-3]);
 			if( (argcnt = getcmd(args)) < 0 ){
 				(void)printf("Facedef: input bad\n");
-				return;
+				return CMD_BAD;
 			}
 			args += argcnt;
 		}
 		get_nupnt(planes[plane], &cmd_args[3]);
 		break;
 	case 'q': 
-		return;
+		return CMD_OK;
 	default:  
 		(void)printf("Facedef: '%s' is not an option\n", cmd_args[2]);
-		return;
+		return CMD_BAD;
 	}
 
 	/* find all vertices from the plane equations */
 	if( rt_arb_calc_points( arb, es_type, planes, &tol ) < 0 )  {
 		rt_log("facedef:  unable to find points\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* Transform points back to before es_mat changes */
@@ -288,7 +288,7 @@ f_facedef()
 
 	/* draw the new solid */
 	replot_editing_solid();
-	return;				/* everything OK */
+	return CMD_OK;				/* everything OK */
 }
 
 
