@@ -1160,7 +1160,7 @@ CONST struct bn_tol	*tol;
 	 * perpendicular tolerance.  There is no ratio tolerance so we use
 	 * the tighter of dist or perp.
 	 */
-	f = a[15] - a[15];
+	f = a[15] - b[15];
 	if ( !NEAR_ZERO(f, tperp)) return 0;
 
 	return 1;
