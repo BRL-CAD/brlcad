@@ -455,7 +455,7 @@ vect_t		face_normal;
  *  Return the base point, and a point 60% along the way towards the
  *  other end.
  */
-static nmg_eu_coords(eu, base, tip60)
+static void nmg_eu_coords(eu, base, tip60)
 struct edgeuse *eu;
 point_t base, tip60;
 {
@@ -858,7 +858,7 @@ long		*tab;
 /*
  *			N M G _ V L B L O C K _ E
  */
-static nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
+static void nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
 struct vlblock	*vbp;
 struct edge	*e;
 long		*tab;
@@ -1204,6 +1204,7 @@ struct shell *s;
  *
  *  Called from nmg_bool.c/nmg_face_combine()
  */
+void
 nmg_pl_comb_fu( num1, num2, fu1 )
 int	num1;
 int	num2;

@@ -67,7 +67,7 @@ char	**argv;
 	bwgt = BINTLUM*(1.0-sat);
 
 	while( (nby = fread( buf, 1, sizeof(buf), stdin )) > 0 )  {
-		cp = buf;
+		cp = (unsigned char *)buf;
 		for( n = nby ; n > 0; n -= 3 )  {
 			rt = cp[0];
 			gt = cp[1];
@@ -88,4 +88,5 @@ char	**argv;
 			exit(1);
 		}
 	}
+	return(0);
 }
