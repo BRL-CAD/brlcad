@@ -24,40 +24,85 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-FBIO	*fbp;
-int	fbsize = 0;		/* Use FB's "default" size */
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+static char	*framebuffer = NULL;
+static FBIO	*fbp;
+static int	scr_width = 0;		/* use default size */
+static int	scr_height = 0;
 
 #define u_char	unsigned char
 
-main(argc, argv)
-char	**argv;
-int	argc;
+
+static char usage[] = "\
+Usage: fbclear [-h] [-F framebuffer]\n\
+	[-S squarescrsize] [-W scr_width] [-N scr_height] [r g b]\n";
+
+get_args( argc, argv )
+register char **argv;
 {
-	if( argc > 1 && strcmp (argv[1], "-h") == 0 )
-	{
-		fbsize = 1024;
-		argv++;
-		argc--;
+	register int c;
+
+	while ( (c = getopt( argc, argv, "hF:s:w:n:S:W:N:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			scr_height = scr_width = 1024;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 's':
+		case 'S':
+			scr_height = scr_width = atoi(optarg);
+			break;
+		case 'w':
+		case 'W':
+			scr_width = atoi(optarg);
+			break;
+		case 'n':
+		case 'N':
+			scr_height = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
 	}
-	if( argc != 4 && argc > 1 )
-	{
-		(void) fprintf( stderr, "Usage:  fbclear [r g b]\n" );
-		return	1;
+	return(1);		/* OK */
+}
+
+main(argc, argv)
+int argc;
+char **argv;
+{
+
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
-	if(	(fbp = fb_open( NULL, fbsize, fbsize )) == NULL
-	    ||	fb_wmap( fbp, COLORMAP_NULL ) == -1
-	    )
-	{
-		return	1;
-	}
-	if( argc == 4 )  { 
-		static RGBpixel	pixel;
-		pixel[RED] = (u_char) atoi( argv[1] );
-		pixel[GRN] = (u_char) atoi( argv[2] );
-		pixel[BLU] = (u_char) atoi( argv[3] );
-		fb_clear( fbp, pixel );
-	} else {
+
+	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
+		exit(2);
+
+	/* Get the screen size we were given */
+	scr_width = fb_getwidth(fbp);
+	scr_height = fb_getheight(fbp);
+
+	if( fb_wmap( fbp, COLORMAP_NULL ) == -1 )
+		exit(3);
+
+	if( optind+2 >= argc )  {
 		fb_clear( fbp, PIXEL_NULL );
+	} else {
+		static RGBpixel	pixel;
+		pixel[RED] = (u_char) atoi( argv[optind+0] );
+		pixel[GRN] = (u_char) atoi( argv[optind+1] );
+		pixel[BLU] = (u_char) atoi( argv[optind+2] );
+		fb_clear( fbp, pixel );
 	}
-	return	fb_close( fbp ) == -1;
+	(void)fb_close( fbp );
+	return(0);
 }
