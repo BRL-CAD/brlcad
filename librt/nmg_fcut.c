@@ -514,6 +514,7 @@ int			pos;
 	struct edgeuse		*othereu;
 	vect_t			heading;
 	int			ret;
+	int			ret2;
 	register int		i;
 
 	NMG_CK_EDGEUSE(eu);
@@ -548,8 +549,8 @@ int			pos;
 		/* Edge is on the ray.  Which way does it go? */
 /* XXX How to detect leaving the current vertex groups? */
 		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n",
-				pos, rs->vu[pos], otherv, i );
+			rt_log("eu ON ray: vu[%d]=x%x, other:vu[%d]=x%x\n",
+				pos, rs->vu[pos], i, otherv );
 
 		/* Compute edge vector, for purposes of orienting answer */
 		if( forw )  {
@@ -565,6 +566,30 @@ int			pos;
 			ret = NMG_E_ASSESSMENT_ON_REV;
 		} else {
 			ret = NMG_E_ASSESSMENT_ON_FORW;
+		}
+		/*
+		 *  There are 2 ways of determining the assessment:
+		 *  edge direction DOT ray direction, above, and
+		 *  comparing the subscripts of the two vertexuses
+		 *  (which translates to comparing dists along ray).
+		 */
+		if( i > pos )  {
+			if( forw )
+				ret2 = NMG_E_ASSESSMENT_ON_FORW;
+			else
+				ret2 = NMG_E_ASSESSMENT_ON_REV;
+		} else {
+			/* i < pos  (They can't be equal) */
+			if( forw )
+				ret2 = NMG_E_ASSESSMENT_ON_REV;
+			else
+				ret2 = NMG_E_ASSESSMENT_ON_FORW;
+		}
+		if( ret != ret2 )  {
+			rt_log("ret=%s, ret2=%s?\n",
+				nmg_e_assessment_names[ret],
+				nmg_e_assessment_names[ret2]);
+			rt_bomb("nmg_assess_eu() assessment inconsistency\n");
 		}
 		goto out;
 	}
@@ -633,13 +658,15 @@ int			pos;
 		prev = RT_LIST_PLAST_CIRC( edgeuse, this_eu );
 		next = RT_LIST_PNEXT_CIRC( edgeuse, this_eu );
 		if( prev->vu_p->v_p != next->vu_p->v_p )  {
-			rt_log("nmg_assess_vu() %s, prev_v=x%x, next_v=x%x\n",
+			rt_log("nmg_assess_vu() %s, v=x%x, prev_v=x%x, next_v=x%x\n",
 				nmg_v_assessment_names[ass],
+				this_eu->vu_p->v_p,
 				prev->vu_p->v_p, next->vu_p->v_p );
 			rt_log("nmg_assess_vu() ON/ON edgeuse ends on different vertices.\n");
 			VPRINT("vu  ", this_eu->vu_p->v_p->vg_p->coord);
 			VPRINT("prev", prev->vu_p->v_p->vg_p->coord);
 			VPRINT("next", next->vu_p->v_p->vg_p->coord);
+/* See how far off the line they are */
 rt_log("vu dist=%e, next dist=%e, tol=%e\n",
 rt_dist_line_point( rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord ),
 rt_dist_line_point( rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord ),
