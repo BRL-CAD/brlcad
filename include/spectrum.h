@@ -96,21 +96,23 @@
 /*
  * Routines
  */
-BU_EXTERN( void			rt_spect_make_CIE_XYZ, (
-					struct bn_tabdata **x,
-					struct bn_tabdata **y,
-					struct bn_tabdata **z,
-					const struct bn_table *tabp));
+RT_EXPORT BU_EXTERN(void			rt_spect_make_CIE_XYZ,
+		    (struct bn_tabdata		**x,
+		     struct bn_tabdata		**y,
+		     struct bn_tabdata		**z,
+		     const struct bn_table	*tabp));
 
-BU_EXTERN( void			rt_spect_black_body, (struct bn_tabdata *data,
-					double temp, unsigned int n));
-BU_EXTERN( void			rt_spect_black_body_fast, (
-					struct bn_tabdata *data,
-					double temp));
+RT_EXPORT BU_EXTERN(void			rt_spect_black_body,
+		    (struct bn_tabdata		*data,
+		     double			temp,
+		     unsigned int		n));
+RT_EXPORT BU_EXTERN(void			rt_spect_black_body_fast,
+		    (struct bn_tabdata		*data,
+		     double			temp));
 
-BU_EXTERN(void			rt_spect_reflectance_rgb, 
-	  (struct bn_tabdata	*curve, 
-	   const float		rgb[3]));
+RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb, 
+		    (struct bn_tabdata		*curve, 
+		     const float		rgb[3]));
 
 
 
