@@ -30,7 +30,7 @@ fastf_t cnv[]={
 		10.0,0.0000254	};
 
 /* IGES Version */
-char *version[]={
+char *iges_version[]={
 	" ",
 	"1.0 [NBS80]",
 	"ANSI Y14.26M -1981 [ANSI81]",
@@ -157,7 +157,7 @@ Readglobal()
 				if( i<1 || i>6 )
 					printf( "Unrecognized IGES version\n" );
 				else
-					printf( "IGES version: %s\n" , version[i] );
+					printf( "IGES version: %s\n" , iges_version[i] );
 				break;
 		}
 	}
