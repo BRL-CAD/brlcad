@@ -89,7 +89,7 @@ struct rt_i		*rtip;
 	VSCALE( stp->st_center, halfp->half_eqn, halfp->half_eqn[3] );
 
 	/* X and Y basis for uv map */
-	bn_vec_perp( halfp->half_Xbase, stp->st_center );
+	bn_vec_perp( halfp->half_Xbase, halfp->half_eqn );
 	VCROSS( halfp->half_Ybase, halfp->half_Xbase, halfp->half_eqn );
 	VUNITIZE( halfp->half_Xbase );
 	VUNITIZE( halfp->half_Ybase );
@@ -455,7 +455,7 @@ CONST struct bn_tol		*tol;
 	VSCALE( cent, hip->eqn, hip->eqn[3] );
 
 	/* The use of "x" and "y" here is not related to the axis */
-	bn_vec_perp( xbase, cent );
+	bn_vec_perp( xbase, &hip->eqn[0] );
 	VCROSS( ybase, xbase, hip->eqn );
 
 	/* Arrange for the cross to be 2 meters across */
