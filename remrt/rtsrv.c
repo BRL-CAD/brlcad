@@ -103,6 +103,8 @@ int numargs;
 struct pkg_conn *pcsrv;		/* PKG connection to server */
 char *control_host;	/* name of host running controller */
 
+int debug = 0;
+
 char srv_usage[] = "Usage: rtsrv [-d] control-host\n";
 
 /*
@@ -113,7 +115,6 @@ int argc;
 char **argv;
 {
 	register int n;
-	int debug = 0;
 
 	if( argc < 2 )  {
 		fprintf(stderr, srv_usage);
@@ -185,6 +186,7 @@ char *buf;
 {
 	register char *cp;
 
+	if( debug )  rt_log("ph_options: %s\n", buf);
 	/* Start options in a known state */
 	hypersample = 0;
 	perspective = 0;
@@ -243,6 +245,7 @@ char *buf;
 	register int i;
 	register struct region *regp;
 
+	if( debug )  rt_log( "ph_start: %s\n", buf );
 	if( parse_cmd( buf ) > 0 )  {
 		(void)free(buf);
 		return;	/* was nop */
@@ -347,6 +350,7 @@ char *buf;
 	register int i;
 	register char *cp = buf;
 
+	if( debug )  rt_log( "ph_matrix: %s\n", buf );
 	/* Visible part is from -1 to +1 in view space */
 	viewsize = atof(cp);
 	while( *cp && *cp++ != ' ') ;
@@ -482,6 +486,7 @@ ph_end(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
+	if( debug )  rt_log( "ph_end\n");
 	pkg_close(pcsrv);
 	exit(0);
 }
