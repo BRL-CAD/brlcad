@@ -92,8 +92,6 @@ void    glx_set_perspective();
 void	glx_establish_lighting();
 void	glx_establish_zbuffer();
 void glx_clear_to_black();
-int glx_irisX2ged();
-int glx_irisY2ged();
 
 struct glx_vars head_glx_vars;
 /* End of functions and variables that are available to applications */
@@ -167,32 +165,6 @@ struct dm dm_glx = {
   0,
   0
 };
-
-/*
- *  Mouse coordinates are in absolute screen space, not relative to
- *  the window they came from.  Convert to window-relative,
- *  then to MGED-style +/-2048 range.
- */
-int
-glx_irisX2ged(dmp, x, use_aspect)
-struct dm *dmp;
-register int x;
-int use_aspect;
-{
-  if(use_aspect)
-    return ((x / (double)dmp->dm_width - 0.5) /
-	    dmp->dm_aspect * 4095);
-  else
-    return ((x / (double)dmp->dm_width - 0.5) * 4095);
-}
-
-int
-glx_irisY2ged(dmp, y)
-struct dm *dmp;
-register int y;
-{
-  return ((0.5 - y/(double)dmp->dm_height) * 4095);
-}
 
 /*
  *			I R _ O P E N
