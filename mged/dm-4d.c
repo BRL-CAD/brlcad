@@ -31,7 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define state	inv_state	/* Map Irix 4 name into Irix 5 name */
 
 #include <stdio.h>
-#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <math.h>
 #include <termio.h>
 #undef VMIN		/* is used in vmath.h, too */
