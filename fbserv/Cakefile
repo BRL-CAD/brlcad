@@ -4,24 +4,19 @@
 
 #define CONFIGDEFS	RFBD_CONFIG
 
-#define SRCDIR	rfbd
-#define PRODUCTS	rfbd
+#define SRCDIR	fbserv
+#define PRODUCTS	fbserv
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-#define FILES	rfbd
+#define FILES	fbserv
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
 
-rfbd:	OBJ LIBFB
-	CC LDFLAGS -o rfbd OBJ LIB_PRE''LIBFB RFBD_LIBES LIBES
-
-
-/* Override the installation directory */
-#undef	BINDIR
-#define	BINDIR	ETCDIR
+fbserv:	OBJ LIBFB
+	CC LDFLAGS -o fbserv OBJ LIB_PRE''LIBFB RFBD_LIBES LIBES
 
 #include "../Cakefile.rules"
