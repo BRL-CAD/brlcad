@@ -283,6 +283,7 @@ char **argv;
 	mat_idn( toViewcenter );
 	mat_idn( modelchanges );
 	mat_idn( ModelDelta );
+	mat_idn( acc_rot_sol );
 
 	/* These values match old GED.  Use 'tol' command to change them. */
 	mged_tol.magic = RT_TOL_MAGIC;
