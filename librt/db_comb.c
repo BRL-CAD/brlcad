@@ -537,6 +537,7 @@ unary:
 /*
  *			D B _ C O M B _ D E S C R I B E
  */
+void
 db_comb_describe(str, comb, verbose, mm2local)
 struct rt_vls	*str;
 struct rt_comb_internal	*comb;
