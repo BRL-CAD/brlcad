@@ -26,7 +26,7 @@ static char RCSnurb[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-#include "../libnurb/nurb.h"
+#include "nurb.h"
 #include "./debug.h"
 
 struct rt_nurb_internal {
