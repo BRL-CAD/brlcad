@@ -1132,28 +1132,33 @@ CONST struct rt_tol	*tol;
 	CONST struct edgeuse	*eur;
 	CONST struct edgeuse	*eu1;
 	CONST struct edgeuse	*eurstart;
+	CONST struct faceuse	*fu;
 	CONST struct shell	*s;
 	pointp_t p, q;
 
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
-
-	NMG_CK_LOOPUSE(eu->up.lu_p);
-	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
-	s = eu->up.lu_p->up.fu_p->s_p;
+	s = nmg_find_s_of_eu(eu);
 	NMG_CK_SHELL(s);
 
-	curr_orient = eu->up.lu_p->up.fu_p->orientation;
+	eu1 = eu;
+
+	/* If this eu is a wire, advance to first non-wire. */
+	while( (fu = nmg_find_fu_of_eu(eu)) == (struct faceuse *)NULL )  {
+		eu = eu->radial_p->eumate_p;
+		if( eu == eu1 )  return 0;	/* wires all around */
+	}
+
+	curr_orient = fu->orientation;
 	eur = eu->radial_p;
 
-	/* skip the wire edges */
-	while (*eur->up.magic_p == NMG_SHELL_MAGIC) {
+	/* skip the wire edges in the radial direction from eu. */
+	while( (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL )  {
 		eur = eur->eumate_p->radial_p;
 	}
 
 	eurstart = eur;
 
-	eu1 = eu;
 	NMG_CK_EDGEUSE(eur);
 	do {
 		/*
@@ -1161,8 +1166,9 @@ CONST struct rt_tol	*tol;
 		 *  Continue search if it is a wire edge.
 		 */
 		while( nmg_find_s_of_eu((struct edgeuse *)eur) != s  ||
-			*eur->up.magic_p == NMG_SHELL_MAGIC
+		       (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL
 		)  {
+			/* Advance to next eur */
 			NMG_CK_EDGEUSE(eur->eumate_p);
 			if (eur->eumate_p->eumate_p != eur) {
 				p = eur->vu_p->v_p->vg_p->coord;
@@ -1189,8 +1195,9 @@ CONST struct rt_tol	*tol;
 		 * then it's ok, a mis-match is to be expected.
 		 */
 		NMG_CK_LOOPUSE(eur->up.lu_p);
-		NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
-		if (eur->up.lu_p->up.fu_p->orientation != curr_orient &&
+		fu = eur->up.lu_p->up.fu_p;
+		NMG_CK_FACEUSE(fu);
+		if (fu->orientation != curr_orient &&
 		    eur != eu1->eumate_p ) {
 			p = eu1->vu_p->v_p->vg_p->coord;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
@@ -1216,7 +1223,8 @@ CONST struct rt_tol	*tol;
 		NMG_CK_FACEUSE(eu1->up.lu_p->up.fu_p);
 		curr_orient = eu1->up.lu_p->up.fu_p->orientation;
 		eur = eu1->radial_p;
-		while (*eur->up.magic_p == NMG_SHELL_MAGIC) {
+		/* Skip wires */
+		while( nmg_find_fu_of_eu(eur) == (struct faceuse *)NULL )  {
 			eur = eur->eumate_p->radial_p;
 		}
 
