@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"	/* XXX */
 
+void		drawH_part2();
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
 extern void	(*nmg_mged_debug_display_hack)();
@@ -568,6 +569,7 @@ register struct solid *sp;
  *
  *  This routine must be prepared to run in parallel.
  */
+void
 drawH_part2( dashflag, vhead, pathp, tsp, existing_sp )
 int			dashflag;
 struct rt_list		*vhead;
@@ -580,6 +582,13 @@ struct solid		*existing_sp;
 	register int	i;
 
 	if( !existing_sp )  {
+		if (pathp->fp_len > MAX_PATH) {
+			char *cp = db_path_to_string(pathp);
+			rt_log("dodraw: path too long, solid ignored.\n\t%s\n",
+			    cp);
+			rt_free(cp, "Path string");
+			return;
+		}
 		/* Handling a new solid */
 		GET_SOLID( sp );
 	} else {
@@ -614,8 +623,9 @@ struct solid		*existing_sp;
 		sp->s_last = pathp->fp_len-1;
 
 		/* Copy path information */
-		for( i=0; i<=sp->s_last; i++ )
+		for( i=0; i<=sp->s_last; i++ ) {
 			sp->s_path[i] = pathp->fp_names[i];
+		}
 		sp->s_regionid = tsp->ts_regionid;
 	}
 	sp->s_addr = 0;
