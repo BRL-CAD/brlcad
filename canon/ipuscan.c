@@ -55,12 +55,12 @@ int ac;
 char *av[];
 {
 	int arg_index;
-	u_char *red, *green, *blue;
+	unsigned char *red, *green, *blue;
 	struct dsreq *dsp;
 	int	fd;
 	int i;
 	int bufpos;
-	u_char buf[3*10240];
+	unsigned char	*buf = (unsigned char *)NULL;
 	int	canon_y;
 	int	pix_y;
 	int	buf_y;
@@ -114,9 +114,11 @@ char *av[];
 	 * while .pix files are quadrant I.
 	 */
 	for( pix_y=0; pix_y < height; )  {
+		register unsigned char	*cp;
 		int	todo;	/* # scanlines to do */
 
 		todo = 255*1024 / (3*width);	/* Limit 255 Kbytes */
+		if( !buf )  buf = (unsigned char *)malloc(todo*3*width);
 		if( height - pix_y < todo )  todo = height - pix_y;
 
 		canon_y = height - (pix_y+todo);
@@ -125,24 +127,26 @@ char *av[];
 
 		green = &red[width*todo];
 		blue = &red[width*todo*2];
+		cp = buf;
 
 		for( buf_y = todo-1; buf_y >= 0; buf_y-- )  {
 			int	offset;
-			register unsigned char	*cp;
-			cp = buf;
+
 			offset = buf_y * width;
 			for( x=0; x < width; x++ )  {
 				*cp++ = red[offset+x];
 				*cp++ = green[offset+x];
 				*cp++ = blue[offset+x];
 			}
-			if (write(fd, buf, width*3) != width*3) {
-				fprintf(stderr, "buffer write error, line %d\n", pix_y);
-				return(-1);
-			}
 			pix_y++;	/* Record our progress */
 		}
 		(void)free(red);
+
+		/* Large buffer write */
+		if (write(fd, buf, todo*width*3) != todo*width*3) {
+			fprintf(stderr, "buffer write error, line %d\n", pix_y);
+			return(-1);
+		}
 	}
 
 	(void)dsclose(dsp);
