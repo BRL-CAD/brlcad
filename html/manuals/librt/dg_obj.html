@@ -1,0 +1,174 @@
+<HTML>
+<HEAD>
+<TITLE>Drawable Geometry Object Documentation</TITLE>
+</HEAD>
+<BODY>
+<A HREF="#toc">Table of Contents</A><P>
+_________________________________________________________________
+<P>
+
+<H2><A NAME="sect1" HREF="#toc1"><B>NAME</B></A></H2>
+dg_open - create and manipulate a drawable geometry object.
+<P>
+
+<H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
+<B>dg_open</B> [<I>dgName dbName</I>]
+<P>
+
+<H2><A NAME="sect8" HREF="#toc8"><B>DESCRIPTION</B></A></H2>
+The <B>dg_open</B> command creates a new drawable geometry object
+(given by the <I>dgName</I> argument) and is associated with
+the database object (given by the <I>dbName</I> argument).
+The <B>dg_open</B> command returns its <I>dgName</I> argument.
+At the time this command is invoked, there must not exist a
+drawable geometry object named <I>dgName</I>.
+<P>
+
+<H2><A NAME="sect9" HREF="#toc9"><B>METHODS</B></A></H2>
+The <B>dg_open</B> command creates a new Tcl command whose name
+is <I>dgName</I>. This command may be used to invoke various
+operations on the drawable geometry object. It has the following general
+form: 
+<P>
+<I>dgName</I> <I>option</I> ?<I>arg</I> <I>arg</I> ...?
+<P>
+<I>Option</I> and the <I>arg</I>s determine the exact behavior of the command.
+The following commands are possible for drawable geometry objects:
+<P>
+<DL>
+<DT><I>dgName</I> <A NAME="assoc"><B>assoc</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="blast"><B>blast</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="clear"><B>clear</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="close"><B>close</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="draw"><B>draw</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="erase"><B>erase</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="erase_all"><B>erase_all</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="ev"><B>ev</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="get_autoview"><B>get_autoview</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="headSolid"><B>headSolid</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="illum"><B>illum</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="label"><B>label</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="observer"><B>observer</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="overlay"><B>overlay</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="rt"><B>rt</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="rtcheck"><B>rtcheck</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="vdraw"><B>vdraw</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="who"><B>who</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dgName</I> <A NAME="zap"><B>zap</B></A></DT>
+<DD>
+</DD>
+<P>
+</DL>
+
+<H2><A NAME="sect16" HREF="#toc16"><B>EXAMPLE</B></A></H2>
+The following sequence creates a database object and
+a drawable geometry object.
+And then draws some geometry from the associated database object.
+<P>
+cwish> wdb_open db moss moss.g
+<BR>
+moss
+<BR>
+cwish> dg_open dg moss
+<BR>
+dg
+<BR>
+cwish> moss ls
+<PRE>
+LIGHT               cone.r/R            light.r/R           tor.r/R
+all.g/              cone.s              platform.r/R
+box.r/R             ellipse.r/R         platform.s
+box.s               ellipse.s           tor
+</PRE>
+cwish> dg draw all.g
+<BR>
+cwish> dg who
+<BR>
+all.g
+<BR>
+cwish> dg zap
+<BR>
+cwish> dg who
+<BR>
+cwish> dg
+<BR>
+<P>
+
+<H2><A NAME="sect17" HREF="#toc17"><B>ACKNOWLEDGEMENTS:</B></A></H2>
+
+Mark L. Ulferts &lt;mulferts@austin.dsccc.com&gt;
+<PRE>        Basic layout for documenting classes.</PRE>
+<P>
+
+<H2><A NAME="sect18" HREF="#toc18"><B>AUTHOR</B></A></H2>
+<P>
+Robert G. Parker
+<P>
+
+<HR><P>
+<A NAME="toc"><B>Table of Contents</B></A><P>
+<UL>
+<LI><A NAME="toc1" HREF="#sect1">NAME</A></LI>
+<LI><A NAME="toc2" HREF="#sect2">SYNOPSIS</A></LI>
+<LI><A NAME="toc8" HREF="#sect8">DESCRIPTION</A></LI>
+<LI><A NAME="toc9" HREF="#sect9">METHODS</A></LI>
+<LI><A NAME="toc16" HREF="#sect16">EXAMPLE</A></LI>
+<LI><A NAME="toc17" HREF="#sect17">ACKNOWLEDGEMENTS</A></LI>
+<LI><A NAME="toc18" HREF="#sect18">AUTHOR</A></LI>
+</UL>
+</BODY>
+</HTML>
