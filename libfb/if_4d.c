@@ -42,6 +42,9 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#define class	inv_class	/* Map Irix 4 name into Irix 5 name */
+#define type	inv_type	/* Map Irix 4 name into Irix 5 name */
+
 #include <stdio.h>
 #include <ctype.h>
 #include <gl.h>
@@ -82,9 +85,9 @@ static int	sgi_nwindows = 0;
 /* Internal routines */
 _LOCAL_ void	sgi_cminit();
 #if __STDC__
-_LOCAL_ int	gt_zbuf_to_screen(FBIO	*ifp, int one_y);
+_LOCAL_ void	gt_zbuf_to_screen(FBIO	*ifp, int one_y);
 #else
-_LOCAL_ int	gt_zbuf_to_screen();
+_LOCAL_ void	gt_zbuf_to_screen();
 #endif
 
 /* Exported routines */
@@ -478,7 +481,7 @@ sgi_zapmem()
  *  Normally, xbase=0 and npix = if_width.  For transmissions of
  *  less than one scanline, these may be different.
  */
-_LOCAL_ int
+_LOCAL_ void
 sgi_xmit_scanlines( ifp, ybase, nlines, xbase, npix )
 register FBIO	*ifp;
 int		ybase;
@@ -2051,7 +2054,7 @@ FBIO	*ifp;
  *  The parameter "one_y" is set to -1 to repaint the entire screen,
  *  or to the Y coordinate of the single scanline to be repainted.
  */
-_LOCAL_ int
+_LOCAL_ void
 gt_zbuf_to_screen( ifp, one_y )
 register FBIO	*ifp;
 int		one_y;
