@@ -48,6 +48,8 @@ _LOCAL_ int	X_dopen(),
 		X_cscreen_addr(),
 		X_help();
 
+_LOCAL_ int	X_multiwrite();
+
 /* This is the ONLY thing that we normally "export" */
 FBIO X_interface =  {
 	X_dopen,		/* device_open		*/
@@ -55,7 +57,7 @@ FBIO X_interface =  {
 	X_dreset,		/* device_reset		*/
 	X_dclear,		/* device_clear		*/
 	X_bread,		/* buffer_read		*/
-	X_bwrite,		/* buffer_write		*/
+	X_multiwrite,		/* buffer_write		*/
 	X_cmread,		/* colormap_read	*/
 	X_cmwrite,		/* colormap_write	*/
 	X_viewport_set,		/* viewport_set		*/
@@ -339,6 +341,34 @@ register count, line;
     return(onoff);
 }
 
+/*
+ * Decompose a write of more than one scanline into multiple single
+ * scanline writes.
+ */
+_LOCAL_ int
+X_multiwrite( ifp, x, y, pixelp, count )
+FBIO	*ifp;
+int	x, y;
+RGBpixel	*pixelp;
+int	count;
+{
+	int	todo = count;
+	int	num;
+
+	while( todo > 0 ) {
+		if( x + todo > ifp->if_width )
+			num = ifp->if_width - x;
+		else
+			num = todo;
+		if( X_bwrite( ifp, x, y, pixelp, num ) == 0 )
+			return( 0 );
+		x = 0;
+		y++;
+		todo -= num;
+	}
+	return( count );
+}
+
 _LOCAL_ int
 X_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
@@ -416,6 +446,7 @@ done:
 	XPutImage(XI(ifp)->dpy, XI(ifp)->win, XI(ifp)->gc, XI(ifp)->image,
 		x, y, x, y,
 		count, 1 );
+    	return	count;
 }
 
 _LOCAL_ int
