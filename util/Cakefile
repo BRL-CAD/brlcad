@@ -62,8 +62,8 @@ png-bw:		png-bw.o LIBBU_DEP LIBPNG_DEP LIBZ_DEP
 dunncolor:	dunncolor.o dunncomm.o
 	CC LDFLAGS -o dunncolor dunncolor.o dunncomm.o LIBES
 
-dunnsnap:	dunnsnap.o dunncomm.o LIBFB_DEP
-	CC LDFLAGS -o dunnsnap dunnsnap.o dunncomm.o LIBFB LIBFB_LIBES LIBES
+dunnsnap:	dunnsnap.o dunncomm.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o dunnsnap dunnsnap.o dunncomm.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
 loop:		loop.o
 	CC LDFLAGS -o loop loop.o LIBES
@@ -108,8 +108,8 @@ pixuntile:	pixuntile.o
 
 /* Old RLE Programs (Utah format Edition 2) */
 
-orle-pix:	orle-pix.o LIBFB_DEP LIBORLE_DEP
-	CC LDFLAGS -o orle-pix orle-pix.o LIBORLE LIBFB LIBFB_LIBES LIBES
+orle-pix:	orle-pix.o LIBFB_DEP LIBORLE_DEP LIBBU_DEP
+	CC LDFLAGS -o orle-pix orle-pix.o LIBORLE LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
 pix-orle:	pix-orle.o LIBORLE_DEP
 	CC LDFLAGS -o pix-orle pix-orle.o LIBORLE LIBES
@@ -160,8 +160,8 @@ bwdiff:		bwdiff.o
 bwfilter:	bwfilter.o
 	CC LDFLAGS -o bwfilter bwfilter.o LIBES
 
-bwhist:		bwhist.o LIBFB_DEP
-	CC LDFLAGS -o bwhist bwhist.o LIBFB LIBFB_LIBES LIBES
+bwhist:		bwhist.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o bwhist bwhist.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
 bwhisteq:	bwhisteq.o
 	CC LDFLAGS -o bwhisteq bwhisteq.o LIBES
@@ -193,11 +193,11 @@ pix-bw3:	pix-bw3.o
 pixfilter:	pixfilter.o
 	CC LDFLAGS -o pixfilter pixfilter.o LIBES
 
-pixhist:	pixhist.o LIBFB_DEP
-	CC LDFLAGS -o pixhist pixhist.o LIBFB LIBFB_LIBES LIBES
+pixhist:	pixhist.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o pixhist pixhist.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
-pixhist3d:	pixhist3d.o LIBFB_DEP
-	CC LDFLAGS -o pixhist3d pixhist3d.o LIBFB LIBFB_LIBES LIBES
+pixhist3d:	pixhist3d.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o pixhist3d pixhist3d.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
 pixrect:	pixrect.o
 	CC LDFLAGS -o pixrect pixrect.o LIBES
@@ -286,8 +286,8 @@ pixcolors:	pixcolors.o
 hd:	hd.o
 	CC LDFLAGS -o hd hd.o LIBES
 
-sgi-pix:	sgi-pix.o LIBFB_DEP
-	CC LDFLAGS -o sgi-pix sgi-pix.o LIBFB LIBFB_LIBES LIBES
+sgi-pix:	sgi-pix.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o sgi-pix sgi-pix.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
 pixsaturate:	pixsaturate.o
 	CC LDFLAGS -o pixsaturate pixsaturate.o LIBES
@@ -394,7 +394,7 @@ pixborder:	pixborder.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
 pixclump:	pixclump.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	CC LDFLAGS -o pixclump pixclump.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
 
-imgdims:	imgdims.o LIBBN_DEP LIBBU_DEP
-	CC LDFLAGS -o imgdims imgdims.o LIBBN LIBBU LIBES
+imgdims:	imgdims.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
+	CC LDFLAGS -o imgdims imgdims.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
 
 #include "../Cakefile.rules"
