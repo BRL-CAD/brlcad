@@ -631,6 +631,7 @@ int local;
 dir_units( new_unit )
 int new_unit;
 {
+	conversions( new_unit );	/* Change local unit first */
 
 	if( read_only ) {
 		(void)printf("Read only file\n");
@@ -646,15 +647,9 @@ int new_unit;
 	}
 
 	(void)lseek(objfd, 0L, 0);
-
 	record.i.i_units = new_unit;
-	conversions( new_unit );
-
 	(void)write(objfd, (char *)&record, sizeof record);
-
 }
-
-
 
 /* change the title of the description */
 dir_title( )
