@@ -77,6 +77,49 @@ static int debug;
 static char	usage[] = "Usage: %s [-v] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
 static struct rt_tol  tol;
 
+void
+Find_loop_crack( s )
+struct shell *s;
+{
+	struct faceuse *fu;
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+			struct vertex_g *vg;
+			int found=1;
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			vg = RT_LIST_FIRST( edgeuse, &lu->down_hd )->vu_p->v_p->vg_p;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct vertex_g *vg1;
+
+				vg1 = eu->vu_p->v_p->vg_p;
+
+				if( vg1->coord[Y] != vg->coord[Y] || vg1->coord[Z] != vg->coord[Z] )
+				{
+					found = 0;
+					break;
+				}
+			}
+
+			if( !found )
+				continue;
+
+			rt_log( "Found a crack:\n" );
+			nmg_pr_fu_briefly( fu, "" );
+		}
+	}
+}
+
 main(argc, argv)
 int	argc;
 char	*argv[];
@@ -492,7 +535,7 @@ int	reg_id;
 				{
 					rt_log( "Making simple face:\n" );
 					for( i=0; i<np; i++ )
-						rt_log( "\( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						rt_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				outfaceuses[face] = nmg_cface(s, vertlist, np);
 				face++;
@@ -503,7 +546,7 @@ int	reg_id;
 				{
 					rt_log( "Making a hole:\n" );
 					for( i=0; i<np; i++ )
-						rt_log( "\( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						rt_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				nmg_add_loop_to_face(s, outfaceuses[hole_face],
 					vertlist, np, OT_OPPOSITE);
@@ -514,7 +557,7 @@ int	reg_id;
 				{
 					rt_log( "Making face which will get a hole:\n" );
 					for( i=0; i<np; i++ )
-						rt_log( "\( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						rt_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				outfaceuses[face] = nmg_cface(s, vertlist, np);
 				hole_face = face;
@@ -549,6 +592,7 @@ int	reg_id;
 		}
 	}
 
+Find_loop_crack( s );
 	/* kill zero length edgeuses */
 	if( nmg_kill_zero_length_edgeuses( m ) )
 	{
@@ -596,15 +640,41 @@ int	reg_id;
 		}
 	}
 
+	/* Compute "geometry" for model, region, and shell */
+	if( debug )
+		rt_log( "Rebound\n" );
+	nmg_rebound( m , &tol );
+
+Find_loop_crack( s );
 	/* Break edges on vertices */
 	if( debug )
 		rt_log( "Calling nmg_model_break_e_on_v()\n" );
 	(void)nmg_model_break_e_on_v( m, &tol );
 
+Find_loop_crack( s );
 	/* Glue edges of outward pointing face uses together. */
+#if 0
 	if( debug )
 		rt_log( "Glueing faces\n" );
 	nmg_gluefaces(outfaceuses, face);
+#else
+	(void)nmg_model_edge_fuse( m, &tol );
+#endif
+
+	/* kill cracks */
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	if( nmg_kill_cracks( s ) )
+	{
+		if( nmg_ks( s ) )
+		{
+			nmg_km( m );
+			m = (struct model *)0;
+		}
+		s = (struct shell *)0;
+	}
+
+	if( !m )
+		return( cur_id );
 
 	/* Compute "geometry" for model, region, and shell */
 	if( debug )
@@ -658,143 +728,24 @@ int	reg_id;
 	if( !m )
 		return( cur_id );
 
+Find_loop_crack( s );
+	if( debug )
+		rt_log( "nmg_s_join_touchingloops( %x )\n", s );
 	nmg_s_join_touchingloops( s, &tol );
+	if( debug )
+		rt_log( "nmg_s_split_touchingloops( %x )\n", s );
+
 	nmg_s_split_touchingloops( s, &tol);
 
+Find_loop_crack( s );
 	/* verify face plane calculations */
 	if( debug )
 	{
 		nmg_stash_model_to_file( "before_tri.g", m, "before_tri" );
 		rt_log( "Verify plane equations:\n" );
 	}
-	for (i = 0; i < face; i++)
-	{
-		plane_t pl;
-		struct loopuse *lu;
-		struct edgeuse *eu;
-		struct vertexuse *vu;
-		fastf_t dist_to_plane;
-		int triangulate=0;
 
-		NMG_GET_FU_PLANE( pl, outfaceuses[i] );
-
-		/* check if all the vertices for this face lie on the plane */
-		for( RT_LIST_FOR( lu, loopuse, &outfaceuses[i]->lu_hd ) )
-		{
-			NMG_CK_LOOPUSE( lu );
-			if( debug )
-				rt_log( "Checking fu x%x ( %g %g %g %g )\n", outfaceuses[i], V4ARGS( pl ) );
-
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
-			{
-				vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-				dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
-				if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
-				{
-					if( debug )
-						rt_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
-							vu->v_p,
-							V3ARGS( vu->v_p->vg_p->coord ),
-							dist_to_plane );
-					triangulate = 1;
-					break;
-				}
-			}
-			else
-			{
-				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-				{
-					NMG_CK_EDGEUSE( eu );
-					vu = eu->vu_p;
-					dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
-					if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
-					{
-						if( debug )
-							rt_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
-								vu->v_p,
-								V3ARGS( vu->v_p->vg_p->coord ),
-								dist_to_plane );
-						triangulate = 1;
-						break;
-					}
-				}
-				if( triangulate )
-					break;
-			}
-		}
-
-		if( triangulate )
-		{
-			/* Need to triangulate this face */
-			if( debug )
-			{
-				rt_log( "\tTriangulating fu x%x (mate is x%x)\n",
-					outfaceuses[i], outfaceuses[i]->fumate_p );
-				nmg_pr_fu_briefly( outfaceuses[i], "" );
-			}
-
-			nmg_triangulate_fu( outfaceuses[i], &tol );
-
-			/* split each triangular loop into its own face */
-			fu = outfaceuses[i];
-			if( fu->orientation != OT_SAME )
-				fu = fu->fumate_p;
-			if( fu->orientation != OT_SAME )
-			{
-				rt_log( "cvt_euclid_region: face (fu = x%x) with no OT_SAME use!!\n", fu );
-				nmg_pr_fu_briefly( fu , "" );
-				rt_bomb( "cvt_euclid_region: face with no OT_SAME use\n" );
-			}
-
-			if( debug )
-				rt_log( "\tSplitting loops into face for fu x%x\n", fu );
-
-			(void)nmg_split_loops_into_faces( &fu->l.magic, &tol );
-			if( nmg_calc_face_g( fu ) )
-			{
-				rt_log( "cvt_euclid_region: nmg_calc_face_g failed!!\n" );
-				rt_bomb( "euclid-g: Could not calculate new face geometry\n" );
-			}
-
-			if( debug )
-			{
-				NMG_GET_FU_PLANE( pl, fu );
-				rt_log( "\tNew face geometry for fu x%x ( %g %g %g %g )\n", fu, V4ARGS( pl ) );
-			}
-		}
-	}
-
-	if( debug )
-		rt_log( "Looking for new faces:\n" );
-
-	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-	{
-		int found=0;
-
-		if( fu->orientation != OT_SAME )
-			continue;
-
-		for( j=0; j<face; j++ )
-		{
-			if( fu == outfaceuses[j] || fu->fumate_p == outfaceuses[j] )
-			{
-				found = 1;
-				break;
-			}
-		}
-		if( !found )
-		{
-			plane_t pl;
-			nmg_calc_face_g( fu );
-
-			if( debug )
-			{
-				NMG_GET_FU_PLANE( pl, fu );
-				rt_log( "\tnew geometry for fu x%x ( %g %g %g %g )\n", fu, V4ARGS( pl ) );
-			}
-		}
-	}
-
+	nmg_make_faces_within_tol( s, &tol );
 	if( debug )
 	{
 		rt_log( "Checking faceuses:\n" );
@@ -848,6 +799,38 @@ int	reg_id;
 	if( debug )
 		rt_log( "%d vertices out of tolerance after fixing out of tolerance faces\n" , nmg_ck_geometry( m , &tol ) );
 
+Find_loop_crack( s );
+	/* Break edges on vertices */
+	if( debug )
+		rt_log( "Calling nmg_model_break_e_on_v()\n" );
+	(void)nmg_model_break_e_on_v( m, &tol );
+
+Find_loop_crack( s );
+	/* Get rid of cracks */
+	if( debug )
+		rt_log( "Kill cracks\n" );
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	if( nmg_kill_cracks( s ) )
+	{
+		if( nmg_ks( s ) )
+		{
+			nmg_km( m );
+			m = (struct model *)0;
+		}
+		s = (struct shell *)0;
+	}
+
+	if( !m )
+		return( cur_id );
+
+	/* kill zero length edgeuses */
+	if( nmg_kill_zero_length_edgeuses( m ) )
+	{
+		nmg_km( m );
+		m = (struct model *)NULL;
+		return( cur_id );
+	}
+
 #if 1
 	/* Fuse */
 	if( debug )
@@ -855,12 +838,15 @@ int	reg_id;
 		nmg_stash_model_to_file( "before_fuse.g", m, "before_fuse" );
 		rt_log( "Fuse model:\n" );
 	}
+Find_loop_crack( s );
 	i = nmg_model_fuse( m, &tol );
 	if( debug )
 		rt_log( "\t%d objects fused\n" , i );
 
+Find_loop_crack( s );
 	nmg_s_join_touchingloops( s, &tol );
 	nmg_s_split_touchingloops( s, &tol);
+Find_loop_crack( s );
 
 #endif
 
