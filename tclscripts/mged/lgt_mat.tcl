@@ -101,12 +101,12 @@ proc apply_lgt_mat { args } {
 	    set shader [db get $comb shader]
 	} elseif { $mode == 1 } {
 	    # reapply, find "mid" in attribute "lgt_mdb_params"
-	    if { [catch {attr $comb "lgt_mdb_params"} shader] } continue
+	    if { [catch {attr get $comb "lgt_mdb_params"} shader] } continue
 	} elseif { $mode == 2 } {
 	    # undo, restore the saved parameters from attributes
-	    if { [catch {attr $comb "lgt_mdb_params"} shader] } continue
-	    if { [catch {attr $comb "old_inherit"} inherit] } continue
-	    if { [catch {attr $comb "old_rgb"} rgb] } {set rgb "none"}
+	    if { [catch {attr get $comb "lgt_mdb_params"} shader] } continue
+	    if { [catch {attr get $comb "old_inherit"} inherit] } continue
+	    if { [catch {attr get $comb "old_rgb"} rgb] } {set rgb "none"}
 	    puts " restoring saved values to $comb"
 	    db adjust $comb shader $shader inherit $inherit rgb $rgb
 	    continue
@@ -127,7 +127,7 @@ proc apply_lgt_mat { args } {
 	    puts " Adjusting $comb"
 	    if { $mode == 0 } {
 		# initial application, save the current settings in attributes
-		if { ![catch {attr $comb lgt_mdb_params} old_attr ] } {
+		if { ![catch {attr get $comb lgt_mdb_params} old_attr ] } {
 		    if { [string compare $old_attr $shader] != 0 } {
 			puts "WARNING: $comb already has LGT parameters saved"
 			puts "\tand they are different from the current settings"
@@ -137,10 +137,10 @@ proc apply_lgt_mat { args } {
 		}
 		set old_rgb [db get $comb "rgb"]
 		if { [string compare $old_rgb "invalid"] == 0 } {
-		    attr $comb "lgt_mdb_params" $shader \
+		    attr set $comb "lgt_mdb_params" $shader \
 			    "old_inherit" [db get $comb "inherit"]
 		} else {
-		    attr $comb "lgt_mdb_params" $shader "old_rgb"\
+		    attr set $comb "lgt_mdb_params" $shader "old_rgb"\
 			    $old_rgb "old_inherit" [db get $comb "inherit"]
 		}
 	    }

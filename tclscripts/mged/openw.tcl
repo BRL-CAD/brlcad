@@ -719,6 +719,8 @@ hoc_register_menu_data "Edit" "Prim Editor" "Prim Editor"\
 	-command "init_comb $id"
 hoc_register_menu_data "Edit" "Combination Editor" "Combination Editor"\
 	{ { summary "A tool for editing/creating combinations." } }
+.$id.menubar.edit add command -label "Attribute Editor" -underline 0 \
+	-command "Attr_editor::start_editor $id"
 
 
 menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
