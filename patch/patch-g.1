@@ -12,6 +12,11 @@ descriptions. FASTGEN databases consist of the following primitives which
 can be converted by 
 .IR patch-g
 : polygons, plates, boxes, wedges, cylinders, spheres, and rods.
+It is recommended that
+.IR patch-g
+be run with the
+.B -p
+option for most uses.
 .PP
 .IR patch-g 
 requires that the FASTGEN file be run through the pre-processor 
@@ -55,6 +60,9 @@ Specifies a flag for NMG routine debugging.
 .B -p
 Produce polysolid output rather than the default NMG solids.
 .TP
+.B -6
+Convert plate-mode triangles using ARB6 solids.
+.TP
 .B -f preprocessed_input_file
 Use the specified file as the input for conversion.
 .TP
@@ -91,7 +99,7 @@ Specifies a debug level (1-3).
 rpatch < fastgen_file > file.rpatch
 .br
 .I
-patch-g -f file.rpatch > file.g
+patch-g -p -f file.rpatch > file.g
 .SH DIAGNOSTICS
 The diagnostics are intended to be self-explanatory.
 .SH SEE ALSO

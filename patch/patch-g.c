@@ -84,6 +84,7 @@ Usage: patch-g [options] > model.g\n\
 	-t title	optional title (default \"Untitled MGED database\")\n\
 	-o object_name	optional top-level name (no spaces)(default \"all\")\n\
 	-p		write volume and plate mode components as polysolids\n\
+	-6		process plate mode triangles as ARB6 solids (overrides '-p' for triangles)\n\
 	-i group.file	specify group labels source file\n\
 	-m mat.file	specify materials information source file\n\
 	-r		reverse normals for plate mode triangles\n\
@@ -146,10 +147,13 @@ char	*argv[];
 	/*     This section checks usage options given at run command time.   */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "A:T:x:X:pf:i:m:anu:t:o:rc:d:")) != EOF)
+	while ((c = getopt(argc, argv, "6A:T:x:X:pf:i:m:anu:t:o:rc:d:")) != EOF)
 	{
 		switch (c)
 		{
+			case '6':  /* use arb6 solids for plate mode */
+				arb6 = 1;
+				break;
 			case 'T':  /* tolerance distance */
 
 				tol.dist = atof( optarg );
@@ -999,6 +1003,69 @@ struct rt_tol *tol;
 		VSET( verts[k].coord , x[k] , y[k] , z[k] );
 	}
 
+	if( arb6 && plate_mode )
+	{
+		fastf_t pts[24];
+		char tmp_name[16];
+		struct wmember tmp_head, mir_head;
+
+		RT_LIST_INIT( &tmp_head.l );
+		RT_LIST_INIT( &mir_head.l );
+
+		for (k=1 ; k<l-3 ; k++ )
+		{
+			if( !rt_3pts_distinct ( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
+			{
+
+				;	/* do nothing */
+				/* rt_log( "Repeated Vertice, no face made\n"); */
+			}
+			else if( rt_3pts_collinear( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
+			{
+
+				;	/* do nothing */
+				/* rt_log( "%s: collinear points, face not made.\n", name); */
+
+			}
+			else
+			{
+				vect_t v1, v2, norm;
+
+				VSUB2( v1, verts[k].coord, verts[k+1].coord );
+				VSUB2( v2, verts[k].coord, verts[k+2].coord );
+				VCROSS( norm, v1, v2 );
+				VUNITIZE( norm );
+
+				/* build an ARB6 */
+				VMOVE( &pts[0*3], verts[k].coord );
+				VMOVE( &pts[1*3], verts[k+1].coord );
+				VMOVE( &pts[4*3], verts[k+2].coord );
+				VMOVE( &pts[5*3], &pts[4*3] );
+				VJOIN1( &pts[3*3], &pts[0*3], thickness, norm )
+				VJOIN1( &pts[2*3], &pts[1*3], thickness, norm )
+				VJOIN1( &pts[6*3], &pts[4*3], thickness, norm )
+				VMOVE( &pts[7*3], &pts[6*3] );
+				sprintf( tmp_name, "%s_%d", name, k );
+				mk_arb8( stdout, tmp_name, pts );
+				mk_addmember( tmp_name, &tmp_head, WMOP_UNION );
+				if( mirror_name[0] )
+				{
+					for( i=0 ; i<8 ; i++ )
+						pts[i*3 + 1] = -pts[i*3 + 1];
+					sprintf( tmp_name, "%s_%dm", name, k );
+					mk_arb8( stdout, tmp_name, pts );
+					mk_addmember( tmp_name, &mir_head, WMOP_UNION );
+				}
+			}
+		}
+
+		mk_lcomb( stdout, name, &tmp_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+		if( mirror_name[0] )
+			mk_lcomb( stdout, mirror_name, &mir_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+
+		return( 0 );
+
+	}
 
 	/* make a model, region and shell to hold the component */
 	m = nmg_mm();
