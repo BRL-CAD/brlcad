@@ -124,12 +124,12 @@ grid_setup()
 
 	/* Create basis vectors dx and dy for emanation plane (grid) */
 	VSET( temp, 1, 0, 0 );
-	MAT3X3VEC( dx_model, view2model, temp );	/* rotate only */
-	VSCALE( dx_model, dx_model, cell_width );
+	MAT3X3VEC( dx_unit, view2model, temp );	/* rotate only */
+	VSCALE( dx_model, dx_unit, cell_width );
 
 	VSET( temp, 0, 1, 0 );
-	MAT3X3VEC( dy_model, view2model, temp );	/* rotate only */
-	VSCALE( dy_model, dy_model, cell_height );
+	MAT3X3VEC( dy_unit, view2model, temp );	/* rotate only */
+	VSCALE( dy_model, dy_unit, cell_height );
 
 	if( stereo )  {
 		/* Move left 2.5 inches (63.5mm) */
