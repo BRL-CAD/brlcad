@@ -47,7 +47,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *
  *  returns:
  *	the area of the loop
- *	less tha zero indicates an error
+ *	less than zero indicates an error
  *
  *  pl is assigned the plane equation for the loop
  *
@@ -5095,7 +5095,8 @@ CONST struct rt_tol *tol;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu,*eu1,*eu2;
-	vect_t old_normal,new_normal;
+	vect_t old_normal;
+	plane_t new_plane;
 	vect_t a,b;
 	point_t pa,pb,pc;
 
@@ -5105,6 +5106,9 @@ CONST struct rt_tol *tol;
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		int done=0;
+		fastf_t area;
+
+		NMG_CK_FACEUSE( fu );
 
 		/* only check OT_SAME faseuses */
 		if( fu->orientation != OT_SAME )
@@ -5113,59 +5117,25 @@ CONST struct rt_tol *tol;
 		/* get current normal */
 		NMG_GET_FU_NORMAL( old_normal , fu );
 
-		/* find a good loop */
-		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-		while( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC && RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
-			lu = RT_LIST_PNEXT( loopuse , &lu->l );
-
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-			continue;
-
-		/* find two edgeuse in the loop for calculating a new normal */
-		eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
-		eu1 = RT_LIST_PNEXT_CIRC( edgeuse , &eu->l );
-		while( !done )
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
-			VMOVE( pa , eu->vu_p->v_p->vg_p->coord );
-			VMOVE( pb , eu1->vu_p->v_p->vg_p->coord );
-			eu2 = RT_LIST_PNEXT_CIRC( edgeuse , &eu1->l );
-			VMOVE( pc , eu2->vu_p->v_p->vg_p->coord );
-			VSUB2( a , pa , pb );
-			VSUB2( b , pc , pb );
+			NMG_CK_LOOPUSE( lu );
 
-			/* calculate new normal */
-			VCROSS( new_normal , b , a );
-			if( MAGSQ( new_normal ) > tol->dist_sq )
-			{
-				/* reverse normal if needed */
-				if( lu->orientation == OT_OPPOSITE )
-				{
-					VREVERSE( new_normal , new_normal );
-				}
-				else if( lu->orientation != OT_SAME )
-					rt_log( "nmg_bad_face_normals: found loopuse with %s orientation\n" , nmg_orientation( lu->orientation ) );
+			if( lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE )
+				continue;
 
-				/* check if old and new agree */
-				if( VDOT( old_normal , new_normal ) < 0.0 )
-					return( 1 );
-				else
-					break;
-			}
-			else
+			if( (area = nmg_loop_plane_area( lu , new_plane )) > 0.0 )
 			{
-				/* tried the whole loop, give up */
-				if( eu1 == RT_LIST_FIRST( edgeuse , &lu->down_hd ) )
-				{
-					rt_log( "nmg_bad_face_normals: Couldn't calculate new normal for faceuse\n" );
-					done = 1;
-				}
-				else
-				{
-					/* step along loop */
-					eu = eu1;
-					eu1 = eu2;
-				}
+				if( lu->orientation != OT_SAME )
+					VREVERSE( new_plane , new_plane )
+				break;
 			}
+		}
+
+		if( area > 0.0 )
+		{
+			if( VDOT( old_normal , new_plane ) < 0.0 )
+				return( 1 );
 		}
 	}
 	return( 0 );
