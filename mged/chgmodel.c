@@ -64,8 +64,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct bn_tol mged_tol;
 
-extern void update_grids();
-void set_localunit_TclVar();
 void set_tran();
 void	aexists();
 

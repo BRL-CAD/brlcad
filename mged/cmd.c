@@ -102,6 +102,8 @@ extern int f_hide(), f_unhide();
 #ifndef HAVE_UNISTD_H
 extern void sync();
 #endif
+extern void update_grids();			/* in grid.c */
+extern void set_localunit_TclVar();		/* in chgmodel.c */
 extern void init_qray();			/* in qray.c */
 extern int gui_setup();				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
@@ -1734,7 +1736,7 @@ f_fhelp2( argc, argv, functions)
 }
 
 int
-wdb_summary(clientData, interp, argc, argv )
+cmd_summary(clientData, interp, argc, argv )
 	ClientData clientData;
 	Tcl_Interp *interp;
 	int	argc;
@@ -2314,7 +2316,7 @@ f_test_bomb_hook(clientData, interp, argc, argv)
 }
 #endif
 
-static int
+int
 cmd_adjust(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
@@ -2323,7 +2325,7 @@ cmd_adjust(ClientData	clientData,
 	return wdb_adjust_cmd(wdbp, interp, argc, argv);
 }
 
-static int
+int
 cmd_attr(ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,
@@ -2332,7 +2334,7 @@ cmd_attr(ClientData	clientData,
 	return wdb_attr_cmd(wdbp, interp, argc, argv);
 }
 
-static int
+int
 cmd_dbip(ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,
@@ -2341,7 +2343,7 @@ cmd_dbip(ClientData	clientData,
 	return wdb_dbip_cmd(wdbp, interp, argc, argv);
 }
 
-static int
+int
 cmd_dump(ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,
@@ -2350,7 +2352,7 @@ cmd_dump(ClientData	clientData,
 	return wdb_dump_cmd(wdbp, interp, argc, argv);
 }
 
-static int
+int
 cmd_form(ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,
@@ -2359,7 +2361,7 @@ cmd_form(ClientData	clientData,
 	return wdb_form_cmd(wdbp, interp, argc, argv);
 }
 
-static int
+int
 cmd_get(ClientData	clientData,
 	Tcl_Interp	*interp,
 	int		argc,
@@ -2368,7 +2370,7 @@ cmd_get(ClientData	clientData,
 	return wdb_get_cmd(wdbp, interp, argc, argv);
 }
 
-static int
+int
 cmd_match(ClientData	clientData,
 	  Tcl_Interp	*interp,
 	  int		argc,
@@ -2377,7 +2379,7 @@ cmd_match(ClientData	clientData,
 	return wdb_match_cmd(wdbp, interp, argc, argv);
 }
 
-static int
+int
 cmd_put(ClientData	clientData,
 	Tcl_Interp	*interp,
 	int		argc,
@@ -2386,7 +2388,7 @@ cmd_put(ClientData	clientData,
 	return wdb_put_cmd(wdbp, interp, argc, argv);
 }
 
-static int
+int
 cmd_rt_gettrees(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,

@@ -40,6 +40,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include <ctype.h>
 
+extern int cmd_name();
+
 static char	red_tmpfil[17];
 static char	*red_tmpfil_init = "/tmp/GED.aXXXXXX";
 static char	red_tmpcomb[16];
