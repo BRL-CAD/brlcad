@@ -232,7 +232,7 @@
 #	define HAVE_POPEN_DECL 1
 #endif
 
-#if (defined(BSD) && !defined(__bsdi__)) || defined(__GNUC__)
+#if !defined(__bsdi__) && (defined(BSD) || defined(__GNUC__) )
 #	define HAVE_REGEX	1
 #endif
 
