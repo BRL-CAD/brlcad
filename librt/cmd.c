@@ -158,6 +158,8 @@ register char	*lp;
 	register int	nwords;			/* number of words seen */
 	register char	*lp1;
 
+	argv[0] = "_NIL_";		/* sanity */
+
 	while( *lp != '\0' && isspace( *lp ) )
 		lp++;
 
