@@ -202,7 +202,7 @@ extern int	sys_nerr;
 extern char *	sys_errlist[];
 #endif
 
-#ifndef HAVE_SBRK_DECL
+#ifndef HAVE_SBRK
 extern char *	sbrk();
 extern int	brk();
 #endif
