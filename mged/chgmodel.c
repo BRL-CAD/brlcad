@@ -379,8 +379,7 @@ char    *argv[];
       continue;
     }
 
-    /*XXX Still need to handle matparm that contains spaces */
-    fprintf(fp, "%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\n", argv[i],
+    fprintf(fp, "\"%s\"\t\"%s\"\t\"%s\"\t%d\t%d\t%d\t%d\t%d\n", argv[i],
 	    record.c.c_matname[0] ? record.c.c_matname : "-",
 	    record.c.c_matparm[0] ? record.c.c_matparm : "-",
 	    (int)record.c.c_rgb[0], (int)record.c.c_rgb[1], (int)record.c.c_rgb[2],
@@ -423,9 +422,8 @@ char    *argv[];
   }
 
   while(fgets( line , LINELEN, fp ) != NULL){
-    /*XXX Still need to handle a matparm that contains spaces */
-    if(sscanf(line, "%s%s%s%d%d%d%d%d", name, matname, parm, &r, &g, &b,
-	      &override, &inherit) != 8)
+    if((extract_mater_from_line(line, name, matname, parm,
+			    &r, &g, &b, &override, &inherit)) == TCL_ERROR)
       continue;
 
     if( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ){
@@ -464,6 +462,55 @@ char    *argv[];
 
   (void)fclose(fp);
   return status;
+}
+
+int
+extract_mater_from_line(line, name, matname, parm, r, g, b, override, inherit)
+char *line;
+char *name;
+char *matname;
+char *parm;
+int *r, *g, *b;
+int *override;
+int *inherit;
+{
+  int i,j,k;
+  char *str[3];
+
+  str[0] = name;
+  str[1] = matname;
+  str[2] = parm;
+
+  /* Extract first 3 strings. */
+  for(i=j=0; i < 3; ++i){
+
+    /* skip white space */
+    while(line[j] == ' ' || line[j] == '\t')
+      ++j;
+
+    if(line[j] == '\0')
+      return TCL_ERROR;
+
+    /* We found a double quote, so use everything between the quotes */
+    if(line[j] == '"'){
+      for(k = 0, ++j; line[j] != '"' && line[j] != '\0'; ++j, ++k)
+	str[i][k] = line[j];
+    }else{
+      for(k = 0; line[j] != ' ' && line[j] != '\t' && line[j] != '\0'; ++j, ++k)
+	str[i][k] = line[j];
+    }
+
+    if(line[j] == '\0')
+      return TCL_ERROR;
+
+    str[i][k] = '\0';
+    ++j;
+  }
+
+  if((sscanf(line + j, "%d%d%d%d%d", r, g, b, override, inherit)) != 5)
+    return TCL_ERROR;
+
+  return TCL_OK;
 }
 
 
