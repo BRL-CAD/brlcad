@@ -2414,11 +2414,16 @@ BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct mater_info *materp));
 
 /* dir.c */
+extern struct rt_i *rt_dirbuild( const char *filename, char *buf, int len );
 BU_EXTERN(int rt_db_get_internal, (struct rt_db_internal *ip,
 	CONST struct directory *dp,
 	CONST struct db_i *dbip, CONST mat_t mat));
 BU_EXTERN(int rt_db_put_internal, (struct directory *dp, struct db_i *dbip,
 	struct rt_db_internal *ip));
+extern int rt_fwrite_internal( FILE *fp, const char *name, const struct rt_db_internal *ip, double conv2mm );
+extern void rt_db_free_internal( struct rt_db_internal *ip );
+extern int rt_db_lookup_internal( struct db_i *dbip, const char *obj_name,
+	struct directory **dpp, struct rt_db_internal *ip, int noisy );
 
 /* db_comb.c */
 

@@ -43,10 +43,7 @@ static char RCSdir[] = "@(#)$Header$";
  *	RTI_NULL	Fatal Error
  */
 struct rt_i *
-rt_dirbuild(filename, buf, len)
-CONST char	*filename;
-char		*buf;
-int		len;
+rt_dirbuild( const char *filename, char *buf, int len )
 {
 	register struct rt_i	*rtip;
 	register struct db_i	*dbip;		/* Database instance ptr */
@@ -178,11 +175,11 @@ struct rt_db_internal	*ip;
  *	<0	error
  */
 int
-rt_fwrite_internal( fp, name, ip, conv2mm )
-FILE				*fp;
-CONST char			*name;
-CONST struct rt_db_internal	*ip;
-double				conv2mm;
+rt_fwrite_internal(
+	FILE *fp,
+	const char *name,
+	const struct rt_db_internal *ip,
+	double conv2mm )
 {
 	struct bu_external	ext;
 
@@ -212,8 +209,7 @@ double				conv2mm;
  *			R T _ D B _ F R E E _ I N T E R N A L
  */
 void
-rt_db_free_internal( ip )
-struct rt_db_internal	*ip;
+rt_db_free_internal( struct rt_db_internal *ip )
 {
 	RT_CK_DB_INTERNAL( ip );
 	RT_CK_FUNCTAB( ip->idb_meth );
@@ -232,14 +228,12 @@ struct rt_db_internal	*ip;
  *	ID_NULL on error, otherwise returns the type of the object.
  */
 int
-rt_db_lookup_internal (dbip, obj_name, dpp, ip, noisy)
-
-struct db_i		*dbip;
-char			*obj_name;
-struct directory	**dpp;
-struct rt_db_internal	*ip;
-int			noisy;
-
+rt_db_lookup_internal (
+	struct db_i *dbip,
+	const char *obj_name,
+	struct directory **dpp,
+	struct rt_db_internal *ip,
+	int noisy )
 {
     struct directory		*dp;
 
