@@ -31,7 +31,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "./nmg_rt.h"
 
 static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
 RT_EXTERN(void	nmg_isect_ray_model, (struct ray_data *rd));

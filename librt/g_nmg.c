@@ -34,7 +34,6 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nurb.h"
 #include "./debug.h"
-#include "./nmg_rt.h"
 
 /* rt_nmg_internal is just "model", from nmg.h */
 

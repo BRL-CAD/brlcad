@@ -27,7 +27,6 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "./nmg_rt.h"
 
 
 /* vertex/edge distance 

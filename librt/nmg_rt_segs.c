@@ -26,7 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "./nmg_rt.h"
 
 /*	EDGE-FACE correlation data
  * 	used in edge_hit() for 3manifold case
