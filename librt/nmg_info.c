@@ -2019,3 +2019,90 @@ CONST struct edge_g	*eg;
 
 	rt_free( (char *)st.visited, "visited[]");
 }
+
+struct edge_line_state {
+	char			*visited;
+	struct nmg_ptbl		*tabl;
+	point_t			pt;
+	vect_t			dir;
+	CONST struct rt_tol	*tol;
+};
+
+/*
+ *			N M G _ L I N E _ H A N D L E R
+ *
+ *  A private support routine for nmg_edgeuse_on_line_tabulate.
+ *  Having just visited an edgeuse, if this is the first time,
+ *  and both vertices of this edgeuse lie within tol of the line,
+ *  add it to the nmg_ptbl array.
+ */
+static void
+nmg_line_handler( longp, state, first )
+long		*longp;
+genptr_t	state;
+int		first;
+{
+	register struct edge_line_state *sp = (struct edge_line_state *)state;
+	register struct edgeuse	*eu = (struct edgeuse *)longp;
+
+	NMG_CK_EDGEUSE(eu);
+	/* If this edgeuse has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, eu) )  return;
+
+	/*  If the lines are not generally parallel, don't bother with
+	 *  checking the endpoints.  This helps reject very short edges
+	 *  which are colinear only by virtue of being very small.
+	 */
+	RT_CK_TOL(sp->tol);
+	NMG_CK_EDGE_G(eu->e_p->eg_p);
+	if( fabs( VDOT( eu->e_p->eg_p->e_dir, sp->dir ) ) < sp->tol->para )
+		return;
+	if( rt_distsq_line3_pt3( sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord )
+	    > sp->tol->dist_sq )
+		return;
+	if( rt_distsq_line3_pt3( sp->pt, sp->dir, eu->eumate_p->vu_p->v_p->vg_p->coord )
+	    > sp->tol->dist_sq )
+		return;
+
+	/* Both points are within tolerance, add edgeuse to the list */
+	nmg_tbl( sp->tabl, TBL_INS, longp );
+}
+
+/*
+ *			N M G _ E D G E U S E _ O N _ L I N E _ T A B U L A T E
+ *
+ *  Given a pointer to any nmg data structure,
+ *  build an nmg_ptbl list which cites every edgeuse
+ *  pointer from there on "down" in the model
+ *  that has both edgeuses within tolerance of the given line.
+ */
+void
+nmg_edgeuse_on_line_tabulate( tab, magic_p, pt, dir, tol )
+struct nmg_ptbl		*tab;
+CONST long		*magic_p;
+CONST point_t		pt;
+CONST vect_t		dir;
+CONST struct rt_tol	*tol;
+{
+	struct model		*m;
+	struct edge_line_state		st;
+	struct nmg_visit_handlers	handlers;
+
+	m = nmg_find_model( magic_p );
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.tabl = tab;
+	VMOVE( st.pt, pt );
+	VMOVE( st.dir, dir );
+	st.tol = tol;
+
+	(void)nmg_tbl( tab, TBL_INIT, 0 );
+
+	handlers = nmg_visit_handlers_null;		/* struct copy */
+	handlers.bef_edgeuse = nmg_line_handler;
+	nmg_visit( magic_p, &handlers, (genptr_t)&st );
+
+	rt_free( (char *)st.visited, "visited[]");
+}
