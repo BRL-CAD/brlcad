@@ -81,8 +81,8 @@ proc do_rtScript { id } {
     if {$rts_control($id,file) != ""} {
 	if [file exists $rts_control($id,file)] {
 	    set result [cad_dialog .$id.rtsDialog $mged_gui($id,screen)\
-		    "Overwrite $rts_control($id,file)?"\
-		    "Overwrite $rts_control($id,file)?"\
+		    "Append $rts_control($id,file)?"\
+		    "Append $rts_control($id,file)?"\
 		    "" 0 OK CANCEL]
 
 	    if {$result} {
