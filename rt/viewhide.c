@@ -187,6 +187,10 @@ raymiss( ap )
 register struct application	*ap;
 {
 
+	struct	cell	*posp;		/* store the current cell position */
+
+	posp = &(topp[ap->a_x + 1]);
+
 	/*
 	 * cleanline() zero-fills a buffer.  Therefore, it is possible to
 	 * let this "line scrubber" do all the zero-filling for raymiss()
@@ -197,10 +201,10 @@ register struct application	*ap;
 	 * "smeared".
 	 */
 
-	topp[ap->a_x + 1].c_id = 0;
-	topp[ap->a_x + 1].c_dist = 0;
-	VSET(topp[ap->a_x +1].c_hit, 0, 0, 0);
-	VSET(topp[ap->a_x + 1].c_normal, 0, 0, 0);
+	posp->c_id = 0;
+	posp->c_dist = 0;
+	VSET(posp->c_hit, 0, 0, 0);
+	VSET(posp->c_normal, 0, 0, 0);
 
 
 	return(0);
@@ -233,6 +237,7 @@ struct application *ap;
 register struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
+	struct	cell	*posp;			/* stores current cell position */
 	fastf_t			dist;   	/* ray distance */
 	int			region_id;	/* solid region's id */
 
@@ -249,6 +254,7 @@ register struct partition *PartHeadp;
 
 	dist = pp->pt_inhit->hit_dist;
 	region_id = pp->pt_regionp->reg_regionid;
+	posp = &(topp[ap->a_x + 1]);
 
 	/* Calculate the hit normal and the hit distance.  This is done
 	 * by giving RT_HIT_NORM() the address of the hit partition so it
@@ -269,10 +275,10 @@ register struct partition *PartHeadp;
 	 * to vitiate the need to recompute this value repeatedly. LATER.
 	 */
 
-	topp[ap->a_x + 1].c_id = region_id;
-	topp[ap->a_x + 1].c_dist = dist;
-	VMOVE(topp[ap->a_x + 1].c_hit, pp->pt_inhit->hit_point);
-	VMOVE(topp[ap->a_x + 1].c_normal, pp->pt_inhit->hit_normal);
+	posp->c_id = region_id;
+	posp->c_dist = dist;
+	VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
+	VMOVE(posp->c_normal, pp->pt_inhit->hit_normal);
 	return(0);
 }
 
