@@ -46,7 +46,7 @@ extern	int	_disk_enable;
 
 static	void	comm_error();
 void		fb_log();
-#ifdef cray
+#ifdef CRAY
 void		rfbd_log();
 #endif
 
@@ -143,7 +143,7 @@ pkgfoo(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-#ifdef cray
+#ifdef CRAY
 	rfbd_log( "rfbd: unable to handle message type %d\n",
 		pcp->pkc_type );
 #else
@@ -175,7 +175,7 @@ char *buf;
 #if 0
 	{	char s[81];
 sprintf( s, "Device: \"%s\"", &buf[8] );
-#ifdef cray
+#ifdef CRAY
 rfbd_log(s);
 #else
 fb_log(s);
@@ -244,11 +244,11 @@ char *buf;
 		if( buflen < 1024*sizeof(RGBpixel) )
 			buflen = 1024*sizeof(RGBpixel);
 		if( (scanbuf = malloc( buflen )) == NULL ) {
-#ifdef cray
+#ifdef CRAY
 			rfbd_log("fb_read: malloc failed!");
 #else
 			fb_log("fb_read: malloc failed!");
-#endif cray
+#endif
 			if( buf ) (void)free(buf);
 			buflen = 0;
 			return;
@@ -425,8 +425,8 @@ char *buf;
  */
 /* VARARGS */
 void
-#ifdef cray
-/* Segloader can't handle the multiple defines */
+#ifdef CRAY
+/* Segldr can't handle the multiple defines of fb_log here & in libfb */
 rfbd_log( va_alist )
 #else
 fb_log( va_alist )
