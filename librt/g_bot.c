@@ -45,6 +45,8 @@ int rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
 
 #define MAXHITS 128
 
+#define BOT_MIN_DN	1.0e-9
+
 /*
  *			R T _ B O T F A C E
  *
@@ -282,6 +284,8 @@ struct rt_i		*rtip;
 		bot->bot_facemode = bu_bitv_dup( bot_ip->face_mode );
 	bot->bot_facelist = (struct tri_specific *)NULL;
 
+	VSETALL( stp->st_min, MAX_FASTF );
+	VREVERSE( stp->st_max, stp->st_min );
 	for( tri_index=0 ; tri_index < bot_ip->num_faces ; tri_index++ )
 	{
 		point_t p1, p2, p3;
@@ -589,35 +593,97 @@ struct rt_piecestate	*psp;
 	 *  From this point on, process very similar to a polysolid
 	 */
 
-	/* Remove duplicate hits.
-	 *  We remove one of a pair of hits when they are
-	 *	1) close together, and
-	 *	2) both "entry" or both "exit" occurrences.
-	 *   Two immediate "entry" or two immediate "exit" hits suggest
-	 *   that we hit both of two joined faces, while we want to hit only
-	 *   one.  An "entry" followed by an "exit" (or vice versa) suggests
-	 *   that we grazed an edge, and thus we should leave both
-	 *   in the hit list.
-	 */
+    /* Remove duplicate hits */
     {
-	register int j;
+	register int j,k,l;
 
 	for( i=0 ; i<nhits-1 ; i++ )
 	    {
 		FAST fastf_t dist;
+		FAST fastf_t dn=hits[i].hit_vpriv[X];
 
-		dist = hits[i].hit_dist - hits[i+1].hit_dist;
-		if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
-		    hits[i].hit_vpriv[X] * hits[i+1].hit_vpriv[X] > 0)
-		    {
+		k = i + 1;
+		dist = hits[i].hit_dist - hits[k].hit_dist;
+
+		/* count number of hits at this distance */
+		while( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) ) {
+			k++;
+			if( k > nhits - 1 )
+				break;
+			dist = hits[i].hit_dist - hits[k].hit_dist;
+		}
+
+		if( (k - i) == 2 && dn * hits[i+1].hit_vpriv[X] > 0) {
+			/* a pair of hits at the same distance and both are exits or entrances,
+			 * likely an edge hit, remove one */
 			for( j=i ; j<nhits-1 ; j++ )
-			    hits[j] = hits[j+1];
+				hits[j] = hits[j+1];
 			if( psp ) {
 				psp->htab.end--;
 			}
 			nhits--;
 			i--;
-		    }
+			continue;
+		} else if( (k - i) > 2 ) {
+			int keep1=-1, keep2=-1;
+			int enters=0, exits=0;
+			/* more than two hits at the same distance, likely a vertex hit
+			 * try to keep just two, one entrance and one exit.
+			 * unless they are all entrances or all exits, then just keep one */
+
+			if( i == 0 ) {
+				dn = 1,0;
+			} else {
+				dn = hits[i-1].hit_vpriv[X];
+			}
+			for( j=i ; j<k ; j++ ) {
+				if( hits[j].hit_vpriv[X] > 0 )
+					exits++;
+				else
+					enters++;
+				if( dn * hits[j].hit_vpriv[X] < 0 ) {
+					if( keep1 < 0 ) {
+						keep1 = j;
+						dn = hits[j].hit_vpriv[X];
+					} else if( keep2 < 0 ) {
+						keep2 = j;
+						dn = hits[j].hit_vpriv[X];
+						break;
+					}
+				}
+			}
+
+			if( keep2 == -1 ) {
+				/* did not find two keepers, perhaps they were all entrances or all exits */
+				if( exits == k - i || enters == k - i ) {
+					/* eliminate all but one entrance or exit */
+					for( j=k-1 ; j>i ; j-- ) {
+						/* delete this hit */
+						for( l=j ; l<nhits-1 ; l++ )
+							hits[l] = hits[l+1];
+						if( psp ) {
+							psp->htab.end--;
+						}
+						nhits--;
+					}
+					i--;
+				}
+			} else if( keep2 >= 0 ) {
+				/* found an entrance and an exit to keep */
+				for( j=k-1 ; j>=i ; j-- ) {
+					if( j != keep1 && j != keep2 ) {
+						/* delete this hit */
+						for( l=j ; l<nhits-1 ; l++ )
+							hits[l] = hits[l+1];
+						if( psp ) {
+							psp->htab.end--;
+						}
+						nhits--;
+					}
+				}
+				i--;
+			}
+		}
 	    }
     }
 
@@ -793,7 +859,7 @@ struct seg		*seghead;
 		 *  is zero), drop this face.
 		 */
 		abs_dn = dn >= 0.0 ? dn : (-dn);
-		if( abs_dn < SQRT_SMALL_FASTF ) {
+		if( abs_dn < BOT_MIN_DN ) {
 			continue;
 		}
 		VSUB2( wxb, trip->tri_A, rp->r_pt );
@@ -818,7 +884,6 @@ struct seg		*seghead;
 			continue;
 		}
 		k = VDOT( wxb, trip->tri_wn ) / dn;
-
 		/* HIT is within planar face */
 		hp->hit_magic = RT_HIT_MAGIC;
 		hp->hit_dist = k;
@@ -951,7 +1016,7 @@ struct seg		*seghead;
 		     *  is zero), drop this face.
 		     */
 		    abs_dn = dn >= 0.0 ? dn : (-dn);
-		    if( abs_dn < SQRT_SMALL_FASTF ) {
+		    if( abs_dn < BOT_MIN_DN ) {
 			continue;
 		    }
 		    VSUB2( wxb, trip->tri_A, rp->r_pt );
