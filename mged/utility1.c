@@ -250,7 +250,6 @@ f_edcodes( )
  *
  *
  */
-
 char new_name[NAMESIZE];
 char prestr[15];
 int ncharadd;
@@ -321,6 +320,7 @@ f_dup( )
 	dirp0 = dirp;
 
 	while( fread( (char *)&record, sizeof record, 1, dupfp ) == 1 && ! feof(dupfp) ) {
+		tmpdp = DIR_NULL;
 
 		switch( record.u_id ) {
 
