@@ -25,6 +25,8 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
+#include "bn.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -301,14 +303,14 @@ struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
 	register struct bu_list *head;
-	struct bn_pipe_internal	*pip;
+	struct rt_pipe_internal	*pip;
 	struct wdb_pipept *pp1,*pp2,*pp3;
 	point_t curr_pt;
 	fastf_t curr_id, curr_od;
 	fastf_t dx,dy,dz,f;
 
 	RT_CK_DB_INTERNAL( ip );
-	pip = (struct bn_pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
 	head = (struct bu_list *)bu_malloc( sizeof( struct bu_list ), "bn_pipe_prep:head" );
@@ -447,13 +449,13 @@ int seg_no;
 CONST struct rt_db_internal *ip;
 double mm2local;
 {
-	struct bn_pipe_internal *pint;
+	struct rt_pipe_internal *pint;
 	struct wdb_pipept *pipe;
 	int seg_count=0;
 	char buf[256];
 	point_t p1;
 
-	pint = (struct bn_pipe_internal *)ip->idb_ptr;
+	pint = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC( pint );
 
 	pipe = BU_LIST_FIRST( wdb_pipept, &pint->pipe_segs_head );
@@ -1672,7 +1674,7 @@ struct bn_tol		*tol;
 	register struct wdb_pipept		*prevp;
 	register struct wdb_pipept		*curp;
 	register struct wdb_pipept		*nextp;
-	LOCAL struct bn_pipe_internal		*pip;
+	LOCAL struct rt_pipe_internal		*pip;
 	LOCAL point_t				current_point;
 	LOCAL point_t				last_pt;
 	LOCAL fastf_t				delta_ang;
@@ -1680,7 +1682,7 @@ struct bn_tol		*tol;
 	LOCAL vect_t				f1,f2,f3;
 
 	RT_CK_DB_INTERNAL(ip);
-	pip = (struct bn_pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
 	if( BU_LIST_IS_EMPTY( &pip->pipe_segs_head ) )
@@ -3250,7 +3252,7 @@ struct bn_tol		*tol;
 	struct wdb_pipept	*pp3;
 	point_t			curr_pt;
 	struct shell *s;
-	struct bn_pipe_internal *pip;
+	struct rt_pipe_internal *pip;
 	int arc_segs=6;			/* minimum number of segments for a circle */
 	int tol_segs;
 	fastf_t max_diam=0.0;
@@ -3267,7 +3269,7 @@ struct bn_tol		*tol;
 	struct vertex **inner_loop;
 
 	RT_CK_DB_INTERNAL(ip);
-	pip = (struct bn_pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC( pip );
 
 	BN_CK_TOL( tol );
@@ -3440,7 +3442,7 @@ register CONST mat_t		mat;
 	register struct exported_pipept *exp;
 	register struct wdb_pipept	*ptp;
 	struct wdb_pipept		tmp;
-	struct bn_pipe_internal		*pipe;
+	struct rt_pipe_internal		*pipe;
 	union record			*rp;
 	int				count;
 
@@ -3454,8 +3456,8 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_PIPE;
-	ip->idb_ptr = bu_malloc( sizeof(struct bn_pipe_internal), "bn_pipe_internal");
-	pipe = (struct bn_pipe_internal *)ip->idb_ptr;
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal");
+	pipe = (struct rt_pipe_internal *)ip->idb_ptr;
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	pipe->pipe_count = bu_glong( rp->pwr.pwr_pt_count);
 
@@ -3493,7 +3495,7 @@ struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
-	struct bn_pipe_internal	*pip;
+	struct rt_pipe_internal	*pip;
 	struct bu_list		*headp;
 	register struct exported_pipept *epp;
 	register struct wdb_pipept	*ppt;
@@ -3505,7 +3507,7 @@ double				local2mm;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_PIPE )  return(-1);
-	pip = (struct bn_pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
 	headp = &pip->pipe_segs_head;
@@ -3563,13 +3565,13 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register struct bn_pipe_internal	*pip;
+	register struct rt_pipe_internal	*pip;
 	register struct wdb_pipept	*ptp;
 	char	buf[256];
 	int	segno = 0;
 
 	RT_CK_DB_INTERNAL(ip);
-	pip = (struct bn_pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
 	sprintf(buf, "pipe with %d points\n", pip->pipe_count );
@@ -3612,11 +3614,11 @@ void
 bn_pipe_ifree( ip )
 struct rt_db_internal	*ip;
 {
-	register struct bn_pipe_internal	*pipe;
+	register struct rt_pipe_internal	*pipe;
 	register struct wdb_pipept	*ptp;
 
 	RT_CK_DB_INTERNAL(ip);
-	pipe = (struct bn_pipe_internal*)ip->idb_ptr;
+	pipe = (struct rt_pipe_internal*)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pipe);
 
 	while( BU_LIST_WHILE( ptp, wdb_pipept, &pipe->pipe_segs_head ) )  {
