@@ -1189,9 +1189,9 @@ register CONST mat_t		mat;
 	tip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
 	/* Apply modeling transformations */
-	VMOVE( tip->eto_V, &rp->s.s_values[0*3] );
-	VMOVE( tip->eto_N, &rp->s.s_values[1*3] );
-	VMOVE( tip->eto_C, &rp->s.s_values[2*3] );
+	MAT4X3PNT( tip->eto_V, mat, &rp->s.s_values[0*3] );
+	MAT4X3VEC( tip->eto_N, mat, &rp->s.s_values[1*3] );
+	MAT4X3VEC( tip->eto_C, mat, &rp->s.s_values[2*3] );
 	tip->eto_r  = rp->s.s_values[3*3];
 	tip->eto_rd = rp->s.s_values[3*3+1];
 

@@ -1385,9 +1385,9 @@ register CONST mat_t		mat;
 	xip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
 	/* Warning:  type conversion */
-	VMOVE( xip->epa_V, &rp->s.s_values[0*3] );
-	VMOVE( xip->epa_H, &rp->s.s_values[1*3] );
-	VMOVE( xip->epa_Au, &rp->s.s_values[2*3] );
+	MAT4X3PNT( xip->epa_V, mat, &rp->s.s_values[0*3] );
+	MAT4X3VEC( xip->epa_H, mat, &rp->s.s_values[1*3] );
+	MAT4X3VEC( xip->epa_Au, mat, &rp->s.s_values[2*3] );
 	xip->epa_r1 = rp->s.s_values[3*3];
 	xip->epa_r2 = rp->s.s_values[3*3+1];
 

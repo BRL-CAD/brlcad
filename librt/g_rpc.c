@@ -660,14 +660,14 @@ struct rt_tol		*tol;
 	/* Check for |H| > 0, |B| > 0, |R| > 0 */
 	if( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	 || NEAR_ZERO(rh, RT_LEN_TOL) )  {
-		rt_log("rt_rpc_tess():  zero length H, B, or rh\n");
+		rt_log("rt_rpc_plot():  zero length H, B, or rh\n");
 		return(-2);		/* BAD */
 	}
 
 	/* Check for B.H == 0 */
 	f = VDOT( xip->rpc_B, xip->rpc_H ) / (b * h);
 	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
-		rt_log("rt_rpc_tess(): B not perpendicular to H, f=%f\n", f);
+		rt_log("rt_rpc_plot(): B not perpendicular to H, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 
@@ -1131,9 +1131,9 @@ register CONST mat_t		mat;
 	xip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
 	/* Warning:  type conversion */
-	VMOVE( xip->rpc_V, &rp->s.s_values[0*3] );
-	VMOVE( xip->rpc_H, &rp->s.s_values[1*3] );
-	VMOVE( xip->rpc_B, &rp->s.s_values[2*3] );
+	MAT4X3PNT( xip->rpc_V, mat, &rp->s.s_values[0*3] );
+	MAT4X3VEC( xip->rpc_H, mat, &rp->s.s_values[1*3] );
+	MAT4X3VEC( xip->rpc_B, mat, &rp->s.s_values[2*3] );
 	xip->rpc_r = rp->s.s_values[3*3];
 
 	return(0);			/* OK */

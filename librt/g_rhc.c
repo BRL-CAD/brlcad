@@ -1127,9 +1127,9 @@ register CONST mat_t		mat;
 	xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
 	/* Warning:  type conversion */
-	VMOVE( xip->rhc_V, &rp->s.s_values[0*3] );
-	VMOVE( xip->rhc_H, &rp->s.s_values[1*3] );
-	VMOVE( xip->rhc_B, &rp->s.s_values[2*3] );
+	MAT4X3PNT( xip->rhc_V, mat, &rp->s.s_values[0*3] );
+	MAT4X3VEC( xip->rhc_H, mat, &rp->s.s_values[1*3] );
+	MAT4X3VEC( xip->rhc_B, mat, &rp->s.s_values[2*3] );
 	xip->rhc_r = rp->s.s_values[3*3];
 	xip->rhc_c = rp->s.s_values[3*3+1];
 
