@@ -108,15 +108,20 @@ FBIO abekas_interface = {
  *  The mode has several independent bits:
  *	Center -vs- lower-left
  *	Output-only (or well-behaved read-write) -vs- conservative read-write
+ *
+ *  Also, the state bits ride in some of the upper bits.
  */
 #define MODE_1MASK	(1<<0)
-#define MODE_1LOWERLEFT	(0<<0)
-#define MODE_1CENTER	(1<<0)
+#define MODE_1CENTER	(0<<0)
+#define MODE_1LOWERLEFT	(1<<0)
 
 #define MODE_2MASK	(1<<1)
 #define MODE_2READFIRST	(0<<1)
 #define MODE_2OUTONLY	(1<<1)
 
+#define STATE_FRAME_WAS_READ	(1<<8)
+#define STATE_USER_HAS_READ	(1<<9)
+#define STATE_USER_HAS_WRITTEN	(1<<10)
 
 struct modeflags {
 	char	c;
@@ -124,16 +129,12 @@ struct modeflags {
 	long	value;
 	char	*help;
 } modeflags[] = {
-	{ 'c',	MODE_1MASK, MODE_1CENTER,
-		"Center;  default=lower-left " },
+	{ 'l',	MODE_1MASK, MODE_1LOWERLEFT,
+		"Lower left;  default=center" },
 	{ 'o',	MODE_2MASK, MODE_2OUTONLY,
 		"Output only (in before out); default=always read first" },
 	{ '\0', 0, 0, "" }
 };
-
-#define STATE_FRAME_WAS_READ	(1<<8)
-#define STATE_USER_HAS_READ	(1<<9)
-#define STATE_USER_HAS_WRITTEN	(1<<10)
 
 
 /*
@@ -265,6 +266,8 @@ static int
 ab_readframe(ifp)
 FBIO	*ifp;
 {
+	register int	y;
+
 	if( ab_yuvio( 0, ifp->if_host, ifp->if_yuv,
 	    720*486*2, ifp->if_frame ) != 720*486*2 )  {
 		fb_log("ab_readframe(%d): unable to get frame from %s!\n",
@@ -273,7 +276,14 @@ FBIO	*ifp;
 	}
 
 	/* convert YUV to RGB */
-fb_log("Unable to convert YUV to RGB, gak\n");
+fb_log("Converting YUV to RGB\n");
+	for( y=0; y < 486; y++ )  {
+		ab_yuv_to_rgb(
+		    &ifp->if_rgb[(486-1-y)*720*3],
+		    &ifp->if_yuv[y*720*2],
+		    720 );
+	}
+fb_log("Conversion done\n");
 
 	ifp->if_mode |= STATE_FRAME_WAS_READ;
 	return(0);			/* OK */
@@ -292,13 +302,14 @@ FBIO	*ifp;
 		register int y;		/* in Abekas coordinates */
 
 		/* Convert RGB to YUV */
-fb_log("Starting conversion\n");
+fb_log("Converting RGB to YUV\n");
 		for( y=0; y < 486; y++ )  {
 			ab_rgb_to_yuv(
 			    &ifp->if_yuv[y*720*2],
 			    &ifp->if_rgb[(486-1-y)*720*3],
 			    720 );
 		}
+fb_log("Conversion done\n");
 
 		if( ab_yuvio( 1, ifp->if_host, ifp->if_yuv,
 		    720*486*2, ifp->if_frame ) != 720*486*2 )  {
@@ -306,7 +317,6 @@ fb_log("Starting conversion\n");
 		    	ret = -1;
 		}
 	}
-fb_log("Conversion done\n");
 
 	/* Free dynamic memory */
 	free( ifp->if_yuv );
@@ -329,8 +339,6 @@ RGBpixel	*bgpp;
 	register int	count;
 	register char	*cp;
 
-fb_log("ab_dclear\n");
-	/* send a clear package to remote */
 	if( bgpp == PIXEL_NULL )  {
 		/* Clear to black */
 		bzero( ifp->if_rgb, 720*486*3 );
@@ -597,7 +605,7 @@ int	frame;		/* frame number */
 	bzero((char *)&sinme, sizeof(sinme));
 
 	if( (rlogin_service = getservbyname("shell", "tcp")) == NULL )  {
-		fprintf(stderr,"getservbyname(shell,tcp) fail\n");
+		fb_log("getservbyname(shell,tcp) fail\n");
 		return(-1);
 	}
 	sinhim.sin_port = rlogin_service->s_port;
@@ -613,7 +621,7 @@ int	frame;		/* frame number */
 #endif
 	} else {
 		if( (hp = gethostbyname(host)) == NULL )  {
-			fprintf(stderr,"gethostbyname(%s) fail\n", host);
+			fb_log("gethostbyname(%s) fail\n", host);
 			return(-1);
 		}
 		sinhim.sin_family = hp->h_addrtype;
@@ -682,21 +690,19 @@ int	frame;		/* frame number */
 		}
 		if( ab_get_reply(netfd) < 0 )  goto err;
 
-fprintf(stderr,"before write\n");
 		if( (got = write( netfd, buf, len )) != len )  {
 			perror("write()");
 			goto err;
 		}
-fprintf(stderr,"after write, did %d\n", got);
 
 		/* Send final go-ahead */
 		if( (got = write( netfd, "\0", 1 )) != 1 )  {
-			fprintf(stderr,"go-ahead write got %d\n", got);
+			fb_log("go-ahead write got %d\n", got);
 			perror("write()");
 			goto err;
 		}
 		if( (got = ab_get_reply(netfd)) < 0 )  {
-			fprintf(stderr,"get_reply got %d\n", got);
+			fb_log("get_reply got %d\n", got);
 			goto err;
 		}
 
@@ -731,7 +737,7 @@ fprintf(stderr,"after write, did %d\n", got);
 			if( *cp == '\n' )  break;
 			cp++;
 			if( (cp - xmit_buf) >= sizeof(xmit_buf) )  {
-				fprintf(stderr,"cmd buffer overrun\n");
+				fb_log("cmd buffer overrun\n");
 				goto err;
 			}
 		}
@@ -739,7 +745,7 @@ fprintf(stderr,"after write, did %d\n", got);
 		/* buffer will contain old permission, size, old name */
 		src_size = 0;
 		if( sscanf( xmit_buf, "C%o %d", &perm, &src_size ) != 2 )  {
-			fprintf(stderr,"sscanf error\n");
+			fb_log("sscanf error\n");
 			goto err;
 		}
 
@@ -750,12 +756,10 @@ fprintf(stderr,"after write, did %d\n", got);
 		}
 
 		/* Read data */
-fprintf(stderr,"before ab_mread\n");
 		if( (got = ab_mread( netfd, buf, len )) != len )  {
-			fprintf(stderr,"ab_mread len=%d, got %d\n", len, got );
+			fb_log("ab_mread len=%d, got %d\n", len, got );
 			goto err;
 		}
-fprintf(stderr,"after ab_mread, got %d\n", got);
 
 		/* Send go-ahead */
 		if( write( netfd, "\0", 1 ) != 1 )  {
@@ -780,12 +784,12 @@ int	fd;
 
 	if( (got = read( fd, rep_buf, sizeof(rep_buf) )) < 0 )  {
 		perror("ab_get_reply()/read()");
-		fprintf(stderr,"ab_get_reply() read error\n");
+		fb_log("ab_get_reply() read error\n");
 		return(-1);
 	}
 
 	if( got == 0 )  {
-		fprintf(stderr,"ab_get_reply() unexpected EOF\n");
+		fb_log("ab_get_reply() unexpected EOF\n");
 		return(-2);		/* EOF seen */
 	}
 
@@ -794,12 +798,12 @@ int	fd;
 		return(0);		/* OK */
 
 	if( got == 1 )  {
-		fprintf(stderr,"ab_get_reply() error reply code, no attached message\n");
+		fb_log("ab_get_reply() error reply code, no attached message\n");
 		return(-3);
 	}
 
 	/* Print error code received from other end */
-	fprintf(stderr,"ab_get_reply() error='%s'\n", &rep_buf[1] );
+	fb_log("ab_get_reply() error='%s'\n", &rep_buf[1] );
 	return(-4);
 }
 
@@ -855,6 +859,7 @@ int	n;
 #define	V5DOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
 #define	SHIFTUP(v,n)	{v[4]=v[3]; v[3]=v[2]; v[2]=v[1]; v[1]=v[0]; v[0]=n;}
 #define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
+#define	CLIP(v)		(v<0?0:v>255?255:v)
 
 #define	LINE_LENGTH	720
 #define	FRAME_LENGTH	486
@@ -869,6 +874,7 @@ static double	v_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
 
 static double	y_buf[5], u_buf[5], v_buf[5];
 
+
 /*
  */
 ab_rgb_to_yuv( yuv_buf, rgb_buf, len )
@@ -880,13 +886,12 @@ int	len;
 	double	rgb[3];
 	double	y, u, v;
 	unsigned char tmp;
-
 	register unsigned char *rgbp;
 	register unsigned char *yuvp;
-	static int first=1;
+	register int	i;
+	static int	first=1;
 
 	if(first)  {
-		register int i;
 		/* SETUP */
 		for( i = 0; i < 5; i++ ) {
 			y_filter[i] *= 219.0/255.0;
@@ -895,6 +900,9 @@ int	len;
 		}
 		first = 0;
 	}
+
+	for( i=0; i<5; i++ )
+		y_buf[i] = u_buf[i] = v_buf[i] = 0;
 
 	rgbp = rgb_buf;
 	yuvp = yuv_buf;
@@ -928,5 +936,68 @@ int	len;
 		SHIFTUP( v_buf, v );
 
 		*yuvp++ = V5DOT(y_filter,y_buf) + 16.0;
+	}
+}
+
+
+/* YUV to RGB */
+/*  A 4:2:2 framestore uses 2 bytes per pixel.  The even bytes (from 0)
+ *  hold Cb and Y, the odd bytes Cr and Y.  Thus a scan line has:
+ *      Cb Y Cr Y Cb Y Cr Y ...
+ *  If we are at an even pixel, we use the Cr value following it.  If
+ *  we are at an odd pixel, we use the Cb value following it.
+ *
+ *  Y:      16 .. 235 range, offset by 16
+ *  U, V: -112 .. +112 range, centered on 128
+ *
+ *  Ideas:
+ *    Premultiply filter by final multiplier
+ *    Add final range shift before floor.  Then it's all >0 so floor = (int)
+ *    Don't bother normallizing before filtering.
+ */
+ab_yuv_to_rgb( rgb_buf, yuv_buf, len )
+unsigned char *rgb_buf;
+unsigned char *yuv_buf;
+{
+	int	pixel;
+	double	y, u, v;
+	double	r, g, b;
+
+	register unsigned char *rgbp;
+	register unsigned char *yuvp;
+
+	/*  uy  vy  uy  vy  */
+
+	rgbp = rgb_buf;
+	yuvp = yuv_buf;
+	for( pixel = len/2; pixel; pixel-- ) {
+		/* even pixel */
+		if( pixel == len/2 ) {
+			u = (*yuvp++ - 128.0) * 255.0/224.0;
+		}
+		y = (*yuvp++ - 16.0) * 255.0/219.0;
+		v = (*yuvp++ - 128.0) * 255.0/224.0;
+
+		r = y + 1.4026 * v;		/* R */
+		g = y - 0.3444 * u -0.7144 * v;	/* G */
+		b = y + 1.7730 * u;		/* B */
+
+		*rgbp++ = CLIP(r);
+		*rgbp++ = CLIP(g);
+		*rgbp++ = CLIP(b);
+
+		/* odd pixel, got v already, get y and next u */
+		y = (*yuvp++ - 16.0) * 255.0/219.0;
+		if( pixel != 1 ) {
+			u = (*yuvp++ - 128.0) * 255.0/224.0;
+		}
+
+		r = y + 1.4026 * v;		/* R */
+		g = y - 0.3444 * u -0.7144 * v;	/* G */
+		b = y + 1.7730 * u;		/* B */
+
+		*rgbp++ = CLIP(r);
+		*rgbp++ = CLIP(g);
+		*rgbp++ = CLIP(b);
 	}
 }
