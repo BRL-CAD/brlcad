@@ -1,8 +1,11 @@
 #!/bin/sh
 #			  V E R S . S H
 #
-# Update the "version" file, and create a new "vers.c" from it.
-# May be run in any subdirectory of the source tree.
+# Update the "version" file for creation of a new "vers.c" from it.
+# May be run in any subdirectory of the source tree.  Output goes to
+# stdout now so you'll likely need to run:
+#
+#	sh vers.sh variable_name "this is a title" > vers.c
 #
 #  Optional args:
 #	variable name to put version string in (default="version")
