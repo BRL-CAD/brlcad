@@ -198,7 +198,7 @@ end:
       }
       
       bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
-    }else if(mged_variables->mv_mouse_behavior == 'o' && !stolen){
+    }else if(mged_variables->mv_mouse_behavior == 'm' && !stolen){
       if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
