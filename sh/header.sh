@@ -183,6 +183,7 @@ if [ "x$length" = "x" ] ; then
     echo "ERROR: could not determine title length??"
     exit 5
 fi
+titlesansext="`echo $title | sed 's/ \..*//'`"
 
 prefixlen="`echo "$commentprefix " | wc | awk '{print $3}'`"
 position=0
@@ -355,8 +356,7 @@ $c information.
 esac
 
 if [ "x$wrap" = "x1" ] ; then
-    block="${block}${c}
-${c}/"
+    block="${block}${c}/"
 else
     block="${block}${c}
 ${c}${c}${c}"
@@ -412,6 +412,16 @@ case "$lineone" in
 		;;
 	esac
 	;;
+    "/*"*${titlesansext})
+        echo "Found C comment start with file header sans extension"
+	skip=2
+	case "$linetwo" in
+	    " *")
+	        echo "Found empty comment line"
+		skip=3
+		;;
+	esac
+	;;
     "/*")
         echo "Found C comment start"
 	skip=2
@@ -420,15 +430,23 @@ case "$lineone" in
 	        echo "Found old file header"
 		skip=3
 		;;
+	    " *"*${titlesansext})
+	        echo "Found old file header sans extension"
+		skip=3
+		;;
 	    " *")
 	        echo "Found empty comment line"
 		skip=3
 		if [ "x$foundtitle" = "x1" ] ; then
 		    case "$linethree" in
 			" *"*${title})
-			echo "Found old file header"
-			skip=4
-			;;
+			    echo "Found old file header"
+			    skip=4
+			    ;;
+			" *"*${titlesansext})
+			    echo "Found old file header sans extension"
+			    skip=4
+			    ;;
 		    esac
 		fi
 		;;
@@ -448,6 +466,10 @@ case "$lineone" in
 	        echo "Found old file header"
 		skip=3
 		;;
+	    "# "*${titlesansext})
+	        echo "Found old file header sans extension"
+		skip=3
+		;;
 	esac
 	;;
     "# !/bin/"*)
@@ -457,6 +479,10 @@ case "$lineone" in
 	case "$linetwo" in
 	    "# "*${title})
 	        echo "Found old file header"
+		skip=3
+		;;
+	    "# "*${titlesansext})
+	        echo "Found old file header sans extension"
 		skip=3
 		;;
 	esac
@@ -475,6 +501,10 @@ case "$lineone" in
 		        echo "Found old file header"
 			skip=4
 			;;
+		    " *"*${titlesansext})
+		        echo "Found old file header sans extension"
+			skip=4
+			;;
 		    " *")
 		        echo "Found empty comment line"
 			skip=4
@@ -482,6 +512,10 @@ case "$lineone" in
 			    case "$linethree" in
 				" *"*${title})
 				    echo "Found old file header"
+				    skip=5
+				    ;;
+				" *"*${titlesansext})
+				    echo "Found old file header sans extension"
 				    skip=5
 				    ;;
 			    esac
@@ -492,6 +526,17 @@ case "$lineone" in
 		;;
 	    "/*"*${title})
 	        echo "Found C comment start with file header"
+		skip=3
+		closeit=0
+		case "$linetwo" in
+		    " *")
+	                echo "Found empty comment line"
+			skip=4
+			;;
+		esac
+		;;
+	    "/*"*${titlesansext})
+	        echo "Found C comment start with file header sans extension"
 		skip=3
 		closeit=0
 		case "$linetwo" in
