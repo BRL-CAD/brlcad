@@ -175,6 +175,7 @@ typedef	long	Cast;
  *  Use this fact to pass a flag on to Cakefile.defs.
  *  cc -E appends a bloody space after each substitution.
  */
+/* 32-bit IRIX */
 #if __MACHINETYPE__4d
 #	define	CPP		"/lib/cpp"
 #	define	CPP_OPTIONS	"-D__CAKE__4d"
@@ -195,11 +196,23 @@ typedef	long	Cast;
 #	define	CPP_OPTIONS	"-D__CAKE__7d"
 #	define	CPP_OPTIONS2	"-D__CAKE__irix6"
 #endif
-#if __MACHINETYPE__8d
+
+/* IRIX64 variations */
+#if __MACHINETYPE__m3i62
 #	define	CPP		"/lib/cpp"
-#	define	CPP_OPTIONS	"-D__CAKE__8d"
-#	define	CPP_OPTIONS2	"-D__CAKE__irix7"
+#	define	CPP_OPTIONS	"-D__CAKE__m3i62"
 #endif
+
+#if __MACHINETYPE__m4i62
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__m4i62"
+#endif
+
+#if __MACHINETYPE__m4i64
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__m4i64"
+#endif
+
 
 #if !defined(CPP)
 #    if 1
