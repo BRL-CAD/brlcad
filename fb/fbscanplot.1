@@ -6,6 +6,7 @@ fbscanplot \- plot the intensities of a framebuffer scanline
 .RB [ \-h ]
 .RB [ \-v ]
 .RB [ \-o ]
+.RB [ \-c ]
 .RB [ \-r ]
 .RB [ \-W\  scr_width]
 .RB [ \-F\  outframebuffer]
@@ -65,6 +66,12 @@ The
 .B \-v
 flag causes the pixel values to be output to the terminal as
 well as displayed.
+.PP
+The
+.B \-c
+flag causes the current colormap of the framebuffer to be applied
+to the pixel values ("crunched") before plotting them.
+This allows the effects of the color map to be readily viewed.
 .SH EXAMPLE
 .I fbscanplot -r 37
 .br
@@ -81,6 +88,10 @@ to select a y scanline, then plot 512 pixel values
 in overlay mode.  These values will also be saved in the file
 .I scan.out
 for closer examination.
+.PP
+A handy C-shell alias is:
+.br
+.I "alias fbsp 'fbscanplot \-r `fbpoint \-y`'"
 .SH "SEE ALSO"
 brlcad(1), fbgrid(1), fbzoom(1)
 .SH AUTHOR
