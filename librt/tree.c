@@ -40,42 +40,8 @@ HIDDEN union tree *rt_mkbool_tree();
 HIDDEN int rt_rpp_tree();
 extern char	*rt_basename();
 HIDDEN struct region *rt_getregion();
-extern int rt_id_solid();
+extern int	rt_id_solid();
 extern void	rt_pr_soltab();
-
-extern struct rt_functab	rt_functab[];
-extern int			rt_nfunctab;
-
-/* Map for database solidrec objects to internal objects */
-static char idmap[] = {
-	ID_NULL,	/* undefined, 0 */
-	ID_NULL,	/* RPP	1 axis-aligned rectangular parallelopiped */
-	ID_NULL,	/* BOX	2 arbitrary rectangular parallelopiped */
-	ID_NULL,	/* RAW	3 right-angle wedge */
-	ID_NULL,	/* ARB4	4 tetrahedron */
-	ID_NULL,	/* ARB5	5 pyramid */
-	ID_NULL,	/* ARB6	6 extruded triangle */
-	ID_NULL,	/* ARB7	7 weird 7-vertex shape */
-	ID_NULL,	/* ARB8	8 hexahedron */
-	ID_NULL,	/* ELL	9 ellipsoid */
-	ID_NULL,	/* ELL1	10 another ellipsoid ? */
-	ID_NULL,	/* SPH	11 sphere */
-	ID_NULL,	/* RCC	12 right circular cylinder */
-	ID_NULL,	/* REC	13 right elliptic cylinder */
-	ID_NULL,	/* TRC	14 truncated regular cone */
-	ID_NULL,	/* TEC	15 truncated elliptic cone */
-	ID_TOR,		/* TOR	16 toroid */
-	ID_NULL,	/* TGC	17 truncated general cone */
-	ID_TGC,		/* GENTGC 18 supergeneralized TGC; internal form */
-	ID_ELL,		/* GENELL 19: V,A,B,C */
-	ID_ARB8,	/* GENARB8 20:  V, and 7 other vectors */
-	ID_NULL,	/* HACK: ARS 21: arbitrary triangular-surfaced polyhedron */
-	ID_NULL,	/* HACK: ARSCONT 22: extension record type for ARS solid */
-	ID_NULL,	/* ELLG 23:  gift-only */
-	ID_HALF,	/* HALFSPACE 24:  halfspace */
-	ID_NULL,	/* HACK: SPLINE 25 */
-	ID_NULL		/* n+1 */
-};
 
 HIDDEN char *rt_path_str();
 
@@ -281,58 +247,6 @@ next_one: ;
 	stp->st_bit = rtip->nsolids++;
 	if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
 	return( stp );
-}
-
-/*
- *			R T _ I D _ S O L I D
- *
- *  Given a database record, determine the proper rt_functab subscript.
- *  Used by MGED as well as internally to librt.
- *
- *  Returns ID_xxx if successful, or ID_NULL upon failure.
- */
-int
-rt_id_solid( rec )
-register union record *rec;
-{
-	register int id;
-
-	switch( rec->u_id )  {
-	case ID_SOLID:
-		id = idmap[rec->s.s_type];
-		break;
-	case ID_ARS_A:
-		id = ID_ARS;
-		break;
-	case ID_P_HEAD:
-		id = ID_POLY;
-		break;
-	case ID_BSOLID:
-		id = ID_BSPLINE;
-		break;
-	case ID_STRSOL:
-		/* XXX This really needs to be some kind of table */
-		if( strncmp( rec->ss.ss_str, "ebm", 3 ) == 0 )  {
-			id = ID_EBM;
-			break;
-		} else if( strncmp( rec->ss.ss_str, "vol", 3 ) == 0 )  {
-			id = ID_VOL;
-			break;
-		}
-		rt_log("rt_id_solid(%s):  String solid type '%s' unknown\n",
-			rec->ss.ss_name, rec->ss.ss_str );
-		id = ID_NULL;		/* BAD */
-		break;
-	default:
-		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
-		id = ID_NULL;		/* BAD */
-		break;
-	}
-	if( id < ID_NULL || id > ID_MAXIMUM )  {
-		rt_log("rt_id_solid: internal error, id=%d?\n", id);
-		id = ID_NULL;		/* very BAD */
-	}
-	return(id);
 }
 
 struct tree_list {
