@@ -11,7 +11,7 @@
  *  screen pixel widths and troff line lengths:
  *	 512	2.56i
  *	1024	5.12i	(4.7i)
- *	1280	6.4i
+ *	1280	6.4i	(6.0i)
  *
  *  Authors -
  *	Ronald B. Natalie
@@ -52,11 +52,12 @@ FBIO		*fbp;
 
 RGBpixel	writing_color = {255, 255, 255};
 
-/* Single-bit wide typesetting buffer */
-#define RASTER_LENGTH		2048
-#define BYTES_PER_LINE		(RASTER_LENGTH/8)
-#define NLINES			110
-#define BUFFER_SIZE		(NLINES*BYTES_PER_LINE)
+/* Single-bit wide typesetting buffer.
+ * NLINES limits maximum backward vertical motion (eg, in tables).
+ */
+int	bytes_per_line;		/* # bytes of bitmap per line */
+#define NLINES			1024
+#define BUFFER_SIZE		(NLINES*1280/8)
 
 char	buffer[BUFFER_SIZE];	/* Big bitmap line buffers  */
 char	*buf0p = &buffer[0];	/* Zero origin in circular buffer  */
@@ -439,6 +440,7 @@ main(argc, argv)
 	if( (cp = malloc(scr_width*sizeof(RGBpixel))) == (char *)0 )
 		exit(42);
 	scanline = (RGBpixel *)cp;
+	bytes_per_line = (scr_width+7)/8;
 
 	cur_fb_line = scr_height-1;	/* start at top of screen */
 
@@ -782,11 +784,11 @@ outc(code)
 	nlines = vdp->vd_up + vdp->vd_down;
 	if (xpos+vdp->vd_down >= NLINES)
 		slop_lines(xpos + vdp->vd_down - NLINES + 1);
-	scanp = ( (xpos-vdp->vd_up-1)*BYTES_PER_LINE+
+	scanp = ( (xpos-vdp->vd_up-1)*bytes_per_line+
 		(ypos-vdp->vd_left)/8 ) + buf0p;
 	if (scanp < &buffer[0])
 		scanp += BUFFER_SIZE;
-	scanp_inc = BYTES_PER_LINE-llen;
+	scanp_inc = bytes_per_line-llen;
 	offset = (ypos-vdp->vd_left)&07;
 	off8 = 8-offset;
 	for (i = 0; i < nlines; i++) {
@@ -814,11 +816,11 @@ slop_lines(nlines)
 	register int i, rlines;
 	
   	/* cur_fb_line += nlines;  */
-	rlines = (&buffer[BUFFER_SIZE] - buf0p) / BYTES_PER_LINE;
+	rlines = (&buffer[BUFFER_SIZE] - buf0p) / bytes_per_line;
 	if (rlines < nlines) {
 		if (writelines(rlines, buf0p) < 0)
 			exit(1);
-		bzero(buf0p, rlines * BYTES_PER_LINE);
+		bzero(buf0p, rlines * bytes_per_line);
 		buf0p = buffer;
 		nlines -= rlines;
 		xpos -= rlines;
@@ -826,8 +828,8 @@ slop_lines(nlines)
 	}
 	if (writelines(nlines, buf0p) < 0)
 		exit(1);
-	bzero(buf0p, BYTES_PER_LINE * nlines);
-	buf0p += BYTES_PER_LINE * nlines;
+	bzero(buf0p, bytes_per_line * nlines);
+	buf0p += bytes_per_line * nlines;
 	if (buf0p >= &buffer[BUFFER_SIZE])
 		buf0p -= BUFFER_SIZE;
 	xpos -= nlines;
@@ -863,7 +865,7 @@ writelines(nlines, buf)
 		} else
 			fb_read( fbp, 0, cur_fb_line, scanline, scr_width );
 		pp = scanline;
-		for( lpos = 0; lpos < BYTES_PER_LINE; lpos++)  {
+		for( lpos = 0; lpos < bytes_per_line; lpos++)  {
 			if( (bufval = *buf) == 0 )  {
 				pp += 8;
 				buf++;
