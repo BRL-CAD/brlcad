@@ -540,10 +540,10 @@ proc set_rt_fb { id loc } {
     }
 
     if {$mged_fb($id)} {
-	.$id.m.settings.m.cm_fb entryconfigure 6 -state normal
+	.$id.m.settings.m.cm_fb entryconfigure 7 -state normal
 	set mged_listen($id) $listen
     } else {
-	.$id.m.settings.m.cm_fb entryconfigure 6 -state disabled
+	.$id.m.settings.m.cm_fb entryconfigure 7 -state disabled
 	set mged_listen($id) $listen
     }
 
