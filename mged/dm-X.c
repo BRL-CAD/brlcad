@@ -68,7 +68,7 @@ struct dm dm_X = {
 	0,				/* no displaylist */
 	0,				/* multi-window */
 	PLOTBOUND,
-	"X", "X Window"
+	"X", "X Window System (X11)"
 };
 
 extern struct device_values dm_values;	/* values read from devices */
@@ -385,8 +385,7 @@ X_input( cmd_fd, noblock )
 		if( noblock ) {
 			readfds = bsdselect( readfds, 0, 0 );
 		} else {
-			/* 1/20th second */
-			readfds = bsdselect( readfds, 0, 50000 );
+			readfds = bsdselect( readfds, 30*60, 0 );
 		}
 		if( readfds != 0 )
 			break;
@@ -590,10 +589,15 @@ char	*name;
 		cp = line;
 	else
 		cp = FONT;
+#ifndef CRAY2
+/* The Cray2 never returns from this call.  sigh.
+ * Use the default font until the Cray libX11 is fixed.
+ */
 	if( (fontstruct = XLoadQueryFont(dpy, cp)) == NULL ) {
 		fprintf( stderr, "dm-X: Can't open font\n" );
 		return -1;
 	}
+#endif
 
 	/* Select border, background, foreground colors,
 	 * and border width.
@@ -624,10 +628,16 @@ char	*name;
 	XSetWMHints( dpy, win, &xwmh );
 
 	/* Create a Graphics Context for drawing */
+#ifndef CRAY2
 	gcv.font = fontstruct->fid;
+#endif
 	gcv.foreground = fg;
 	gcv.background = bg;
+#ifndef CRAY2
 	gc = XCreateGC( dpy, win, (GCFont|GCForeground|GCBackground), &gcv );
+#else
+	gc = XCreateGC( dpy, win, (GCForeground|GCBackground), &gcv );
+#endif
 
 	XSelectInput( dpy, win, ExposureMask|ButtonPressMask|KeyPressMask );
 	XMapWindow( dpy, win );
