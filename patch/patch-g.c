@@ -2,10 +2,26 @@
  *			P A T C H - G . C
  *
  *	Converts FASTGEN format target descriptions to MGED format.
+ *	  This version assumes the following FASTGEN primitives:
+ *		0 - triangle (< 0.99" thick for plate mode)
+ *		1 - triangle (< 1.99" thick but > 0.99")
+ *		2 - triangle (< 2.99" thick but > 1.99")
+ *		3 - triangle (< 3.99" thick but > 2.99")
+ *		4 - donut / torus (not supported - new type 3)
+ *		5 - wedge
+ *		6 - sphere
+ *		7 - box
+ *		8 - cylinder (24pt type-4's converted by rpatch)
+ *		9 - rod
+ *	  The target is also assumed to be pointing forward along the
+ *	  positive X-axis and positive Y on the left side of the target.
  *
  *  Author -
  *	Bill Mermagen Jr.
  *      Dan Dender
+ *  Revisions -
+ *	Robert L. Strausser, The SURVICE Engineering Co.; Jul. '93
+ *
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -218,17 +234,19 @@ char	*argv[];
 	/*     This is the primary processing section to input fastgen data and
 	     manufacture related mged elements.  Previous editions of PATCH failed
 	     to process the final element after hitting EOF so I moved the read
-	     statement into the while loop and made a check flag "done" to verify
-	     that all elements are processed prior to falling out of the "while".      */
+	     statement into the for loop and made a check flag "done" to verify
+	     that all elements are processed prior to falling out of the "for".      */
 
 	mat_idn(m);
 
 	mk_id(stdout,title);
 
-	/*
- *	This section loads the label file into an array
- *	 needed to label processed solids, regions, and groups.
-*/
+ /*
+  *      This section loads the label file into an array
+  *       needed to label processed solids, regions, and groups.
+  *       The file should be limited to a 4 digit component number and two
+  *       group labels (<15 characters) separated by "white space".
+  */
 	done = 1;
 	if( labelfile != NULL ){
 
@@ -340,9 +358,9 @@ char	*argv[];
 
 		if( i == 0 )
 			continue;
-		if ( done || (in[i].cc != in[i-1].cc) ||
-		    ((in[i].surf_type > 3) &&
-		    (in[i].surf_type != in[i-1].surf_type)) ) {
+                if ( done || (in[i].cc != in[i-1].cc) ||
+                    ((in[i].surf_type > 3 || in[i-1].surf_type > 3) &&
+                    (in[i].surf_type != in[i-1].surf_type)) ) {
 
 			if( debug > 2 ) {
 				for( j=0; j<i; j++ )
@@ -364,8 +382,8 @@ char	*argv[];
 				}
 				break;
 
-			case 4: 	/* 24 pt cylinder (not processed) */
-				fprintf(stderr,"component %.4d: 24 pt cylinder not implemented\n",in[i-1].cc);
+			case 4: 	/* new "donut/torus" (not processed) */
+				fprintf(stderr,"component %.4d: donut / torus not implemented\n",in[i-1].cc);
 				break;
 
 			case 5:		/* wedge */
@@ -439,10 +457,10 @@ char	*argv[];
 }	/* END MAIN PROGRAM  */
 
 
-
 /*  Throughout these procedures, the following naming conventions are used.
- *   For non-mirrored solids:	surface type code . component code number . "S"count
- *   For mirrorred solids:	side identifier & surface type code . component code number . "S"count
+ *   For unique id# solids:	surface type code . component code number . "s"count
+ *   For "neg" mirror solids:	side identifier & surface type code . component code number . "s"count
+ *   For internal solids:	external name format, replacing "s" with "c" (for: cut out)
  *   For regions:		solid name with "s cnt" replaced by "r cnt"
  *   For groups:		text nomenclature identification from labelfile
  */
@@ -452,7 +470,7 @@ char	*argv[];
  *	 Process Volume Mode triangular facetted solids  
  */
 proc_triangle(in,cnt)
-struct input in[500];
+struct input in[5000];
 int cnt;
 {
 	vect_t	ab,bc,ca;
@@ -460,19 +478,15 @@ int cnt;
 	int	index;
 	int	count = 0;
 	int	cpts;
-	vect_t	norm,out;
+	vect_t  norm,out;
+	char	shflg,mrflg,ctflg;
 
+	/* assign solid's name */
 
-	/* assign solids name */
-
-	if(in[0].mirror != 0) {
-
-		sprintf(name,"Lf.%.4d.s%.2d",in[0].cc,(count + 1));
-	}
-
-	else {
-		sprintf(name,"f.%.4d.s%.2d",in[0].cc,(count + 1));
-	}
+	shflg = 'f';
+	mrflg = 'n';
+	ctflg = 'n';
+	proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 	/* make solid */
 
@@ -619,16 +633,10 @@ int cnt;
 
 	if(in[0].mirror != 0){
 
-		count = 0;
-
-		if(in[0].mirror >= 1) {
-
-			sprintf(name,"Rf.%.4d.s%.2d",(in[0].cc + in[0].mirror),(count + 1));
-		}
-
-		else {
-			sprintf(name,"Rf.%.4d.s%.2d",in[0].cc,(count + 1));
-		}
+	  count = 0;
+	  mrflg = 'y';
+	  ctflg = 'n';
+	  proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 		mk_polysolid(stdout,name);
 		count++;
@@ -740,7 +748,7 @@ int cnt;
  *	 Process Plate Mode triangular surfaces 
  */
 proc_plate(in,cnt)
-struct input in[500];
+struct input in[5000];
 int cnt;
 {
 	point_t arb6pt[8];
@@ -752,8 +760,10 @@ int cnt;
 	int index;
 	int count = 0;
 	int cpts;
+	char	shflg,mrflg,ctflg;
 
-	if ((in[0].rsurf_thick > 0)||(aflg > 0)){  /* check for phantom armor */
+	/* include the check for phantom armor */
+	if ((in[0].rsurf_thick > 0)||(aflg > 0)) {
 
 		for(k=0 ; k < (cnt) ; k++){
 			for(l=0; l<= 7; l++){
@@ -897,14 +907,10 @@ int cnt;
 
 				/* name solids */
 
-				if(in[0].mirror != 0) {
-
-					sprintf(name,"Lt.%.4d.s%.2d",in[0].cc,(count + 1));
-				}
-
-				else {
-					sprintf(name,"t.%.4d.s%.2d",in[0].cc,(count + 1));
-				}
+				shflg = 't';
+				mrflg = 'n';
+				ctflg = 'n';
+				proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 				/* make solids */
 
@@ -1034,16 +1040,9 @@ int cnt;
 					VMOVE(arb6pt[7],arb6pt[6]);
 
 
-					if(in[0].mirror >= 1) {
-
-						sprintf(name,"Rt.%.4d.s%.2d",(in[0].cc + in[0].mirror),(count + 1));
-					}
-
-					else {
-						sprintf(name,"Rt.%.4d.s%.2d",in[0].cc,(count + 1));
-					}
-
-
+					mrflg = 'y';
+					ctflg = 'n';
+					proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 					mk_arb8(stdout,name,arb6pt);
 					count++;
@@ -1075,7 +1074,7 @@ int cnt;
  *	Process fastgen wedge shape - this does not process hollows
  */
 proc_wedge(in,cnt)
-struct input in[500];
+struct input in[5000];
 int cnt;
 {
 	point_t	pts[1];
@@ -1084,6 +1083,7 @@ int cnt;
 	vect_t	ab, ac , ad;
 	vect_t	v1,v2,v3,v4;
 	int count = 0;
+	char	shflg,mrflg,ctflg;
 
 	for(k=0 ; k <= (cnt-1) ; k+=4){
 		VSET( pt8[0], in[k].x,in[k].y,in[k].z );
@@ -1096,20 +1096,17 @@ int cnt;
 		VSUB2(ad,pt8[1],pt8[0]);
 
 		VADD3(pt8[5],ab,ad,pt8[0]);
-		VADD4(pt8[6],ab,ac,ad,pt8[0]);
+		VADD3(pt8[7],ab,ac,pt8[0]);
 
-		VMOVE(pt8[7],pt8[6]);
+		VMOVE(pt8[6],pt8[5]);
 		VMOVE(pt8[2],pt8[1]);
 
 		/* name solids */
 
-		if(in[k].mirror != 0) {
-
-			sprintf(name,"Lw.%.4d.s%.2d",in[k].cc,(count + 1));
-		}
-		else {
-			sprintf(name,"w.%.4d.s%.2d",in[k].cc,(count + 1));
-		}
+		shflg = 'w';
+		mrflg = 'n';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 		/* make solids */
 
@@ -1145,18 +1142,14 @@ int cnt;
 
 
 		VADD3(pt8[5],ab,ad,pt8[0]);
-		VADD4(pt8[6],ab,ac,ad,pt8[0]);
+		VADD3(pt8[7],ab,ac,pt8[0]);
 
-		VMOVE(pt8[7],pt8[6]);
+		VMOVE(pt8[6],pt8[5]);
 		VMOVE(pt8[2],pt8[1]);
 
-		if(in[k].mirror >= 1) {
-
-			sprintf(name,"Rw.%.4d.s%.2d",(in[k].cc + in[k].mirror),(count + 1));
-		}
-		else {
-			sprintf(name,"Rw.%.4d.s%.2d",in[k].cc,(count + 1));
-		}
+		mrflg = 'y';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 		mk_arb8( stdout, name, pt8 );
 		count++;
@@ -1175,26 +1168,22 @@ int cnt;
  *	 Process fastgen spheres - can handle hollowness 
  */
 proc_sphere(in,cnt)
-struct input in[500];
+struct input in[5000];
 int cnt;
 {
 	fastf_t rad;
 	point_t center;
 	int i,count;
+	char    shflg,mrflg,ctflg;
 
 	for( i=count=0 ; i < cnt ; i+=2 ){
 
 		/* name solids */
+		shflg = 's';
+		mrflg = 'n';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
 		count++;
-
-		if(in[i].mirror != 0) {
-
-			sprintf(name,"Ls.%.4d.s%.2d",in[i].cc,count);
-		}
-
-		else {
-			sprintf(name,"s.%.4d.s%.2d",in[i].cc,count);
-		}
 
 		VSET(center,in[i].x,in[i].y,in[i].z);
 
@@ -1213,20 +1202,14 @@ int cnt;
 
 				/* name inside solid */
 
-				if(in[i].mirror != 0) {
-
-					sprintf(tname,"Ls.%.4d.s%.2din",in[i].cc,count);
-				}
-
-				else {
-					sprintf(tname,"s.%.4d.s%.2din",in[i].cc,count);
-				}
+				ctflg = 'y';
+				proc_sname (in,shflg,mrflg,count,ctflg);
 
 				/* make inside solid */
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
-					mk_sph(stdout,tname,center,rad);
-					mk_addmember(tname, &head,WMOP_SUBTRACT);
+					mk_sph(stdout,name,center,rad);
+					mk_addmember(name, &head,WMOP_SUBTRACT);
 				}
 				else {
 					/* add to check group */
@@ -1252,19 +1235,15 @@ int cnt;
 		if( in[i].mirror == 0 )
 			continue;
 
-		count++;
-		if(in[i].mirror >= 1) {
-
-			sprintf(name,"Rs.%.4d.s%.2d",in[i].cc + in[i].mirror,count);
-		}
-		else {
-			sprintf(name,"Rs.%.4d.s%.2d",in[i].cc,count);
-		}
+		mrflg = 'y';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 		VSET(center,in[i].x,-in[i].y,in[i].z);
 
 		if( in[i+1].x > 0.0 ) {
 			mk_sph(stdout,name,center,in[i+1].x);
+			count++;
 
 			(void) mk_addmember(name,&head,WMOP_UNION);
 
@@ -1273,17 +1252,12 @@ int cnt;
 
 			if (in[i].surf_mode== '-'){
 
-				if(in[i].mirror > 0) {
-
-					sprintf(tname,"Rs.%.4d.s%.2din",in[i].cc + in[i].mirror,count);
-				}
-				else {
-					sprintf(tname,"Rs.%.4d.s%.2din",in[i].cc,count);
-				}
+				ctflg = 'y';
+				proc_sname (in,shflg,mrflg,count,ctflg);
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
-					mk_sph(stdout,tname,center,rad);
-					mk_addmember(tname, &head,WMOP_SUBTRACT);
+					mk_sph(stdout,name,center,rad);
+					mk_addmember(name, &head,WMOP_SUBTRACT);
 				}
 				else {
 					/* add to check group */
@@ -1309,7 +1283,7 @@ int cnt;
  *	Process fastgen box code
  */
 proc_box(in,cnt)
-struct input in[500];
+struct input in[5000];
 int cnt;
 {
 	point_t	pts[1];
@@ -1320,6 +1294,7 @@ int cnt;
 	fastf_t len,leni;			/* box edge lengths */
 	int valid;				/* valid inside box? */
 	int count = 0;
+	char    shflg,mrflg,ctflg;
 
 	for(k=0 ; k <= (cnt-1) ; k+=4){
 		VSET( pt8[0], in[k].x,in[k].y,in[k].z );
@@ -1338,14 +1313,10 @@ int cnt;
 
 		/* name solids */
 
-		if(in[k].mirror != 0) {
-
-			sprintf(name,"Lb.%.4d.s%.2d",in[k].cc,(count + 1));
-		}
-
-		else {
-			sprintf(name,"b.%.4d.s%.2d",in[k].cc,(count + 1));
-		}
+		shflg = 'b';
+		mrflg = 'n';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 		/* make solid */
 
@@ -1356,15 +1327,8 @@ int cnt;
 
 		if( in[k].surf_mode == '-' ){
 
-			if(in[k].mirror != 0) {
-
-				sprintf(tname,"Lb.%.4d.s%.2din",in[k].cc,count);
-			}
-
-			else {
-
-				sprintf(tname,"b.%.4d.s%.2din",in[k].cc,count);
-			}
+			ctflg = 'y';
+			proc_sname (in,shflg,mrflg,count,ctflg);
 
 			valid = 1;
 			len = MAGNITUDE( ab );
@@ -1405,8 +1369,8 @@ int cnt;
 				VADD3(pt8[2],aci,adi,pt8[0]);
 				VADD4(pt8[6],abi,aci,adi,pt8[0]);
 
-				mk_arb8( stdout, tname, pt8 );
-				mk_addmember(tname,&head,WMOP_SUBTRACT);
+				mk_arb8( stdout, name, pt8 );
+				mk_addmember(name,&head,WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
@@ -1445,13 +1409,9 @@ int cnt;
 		VADD3(pt8[2],ac,ad,pt8[0]);
 		VADD4(pt8[6],ab,ac,ad,pt8[0]);
 
-		if(in[k].mirror >= 1) {
-
-			sprintf(name,"Rb.%.4d.s%.2d",(in[k].cc + in[k].mirror),(count + 1));
-		}
-		else {
-			sprintf(name,"Rb.%.4d.s%.2d",in[k].cc,(count + 1));
-		}
+		mrflg = 'y';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 		mk_arb8( stdout, name, pt8 );
 		count++;
@@ -1460,15 +1420,8 @@ int cnt;
 
 		if( in[k].surf_mode == '-' ){
 
-			if(in[k].mirror != 0) {
-
-				sprintf(tname,"Rb.%.4d.s%.2din",in[k].cc,count);
-			}
-
-			else {
-
-				sprintf(tname,"b.%.4d.s%.2din",in[k].cc,count);
-			}
+			ctflg = 'y';
+			proc_sname (in,shflg,mrflg,count+1,ctflg);
 
 			valid = 1;
 			len = MAGNITUDE( ab );
@@ -1509,8 +1462,8 @@ int cnt;
 				VADD3(pt8[2],aci,adi,pt8[0]);
 				VADD4(pt8[6],abi,aci,adi,pt8[0]);
 
-				mk_arb8( stdout, tname, pt8 );
-				mk_addmember(tname,&head,WMOP_SUBTRACT);
+				mk_arb8( stdout, name, pt8 );
+				mk_addmember(name,&head,WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
@@ -1540,7 +1493,7 @@ int cnt;
  *
  */
 proc_cylin(in,cnt)
-struct input in[500];
+struct input in[5000];
 int cnt;
 {
 	point_t base;
@@ -1554,6 +1507,7 @@ int cnt;
 	int count = 0;		/* count for sub-regions, <=num_unions per region */
 	struct subtract_list *slist,*get_subtract();
 	double	thick,ht,sht;
+	char    shflg,mrflg,ctflg;
 
 	slist = get_subtract(in,cnt);
 	if( debug>2 ){
@@ -1567,16 +1521,13 @@ int cnt;
 
 	for(k=0 ; k < (cnt-1) ; k+=3){	 /* For all sub-cylinders in this cc */
 
-		count++;
-
 		/* name solids */
-		if(in[k].mirror != 0) {
-			sprintf(name,"Lc.%.4d.s%.2d",in[k].cc,count);
-		}
-		else {
-			sprintf(name,"c.%.4d.s%.2d",in[k].cc,count);
-		}
+		shflg = 'c';
+		mrflg = 'n';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
 
+		count++;
 
 		/* Test for a cylinder with no length, all conditions must be true to fail. */
 
@@ -1585,166 +1536,147 @@ int cnt;
 			VSET(base,in[k].x,in[k].y,in[k].z);
 			VSET(top,in[k+1].x,in[k+1].y,in[k+1].z);
 
-			if((in[k+2].x > 0)&&(in[k+2].y > 0)){
+			/* change valid 0 radius cone pts to very small radii,
+			 * also treat negative value radii as positive.
+			 */
+			if(in[k+2].x == 0) 
+			  in[k+2].x = .00001;
+			if(in[k+2].x < 0)
+			  in[k+2].x = -in[k+2].x;
+			if(in[k+2].y == 0) 
+			  in[k+2].y = .00001;
+			if(in[k+2].y < 0)
+			  in[k+2].y = -in[k+2].y;
 
-				/* make solid */
+			/* make solid */
 
-				mk_trc_top(stdout,name,base,top,in[k+2].x,in[k+2].y);
-				mk_cyladdmember(name,&head,slist,0);
+			mk_trc_top(stdout,name,base,top,in[k+2].x,in[k+2].y);
+			mk_cyladdmember(name,&head,slist,0);
 
-				/* mk_trc_top destroys the values of base,top */
-				VSET(base,in[k].x,in[k].y,in[k].z);
-				VSET(top,in[k+1].x,in[k+1].y,in[k+1].z);
+			/* mk_trc_top destroys the values of base,top */
+			VSET(base,in[k].x,in[k].y,in[k].z);
+			VSET(top,in[k+1].x,in[k+1].y,in[k+1].z);
 
-				j = (int)(in[k+2].z/mmtin);
+			j = (int)(in[k+2].z/mmtin);
 
-				if (in[k].surf_mode== '-'){     /* Plate mode */
-					switch(j){
+			if (in[k].surf_mode== '-'){     /* Plate mode */
+				ctflg = 'y';
+				proc_sname (in,shflg,mrflg,count,ctflg);
 
-					case 0: /* Both ends open */
+				switch(j){
 
-						if(in[k].mirror != 0) {
-							sprintf(tname,"Lc.%.4d.s%.2din",in[k].cc,count);
-						}
+				case 0: /* Both ends open */
 
-						else {
-							sprintf(tname,"c.%.4d.s%.2din",in[k].cc,count);
-						}
+					rad1 = in[k+2].x;
+					rad2 = in[k+2].y;
+					VSUB2(ab,top,base);
+					ht = MAGNITUDE( ab );
+					thick = in[k+2].rsurf_thick / ht * 
+					    hypot( ht, rad2-rad1 );
+					srad1 = rad1 - thick;
+					srad2 = rad2 - thick;
 
-						rad1 = in[k+2].x;
-						rad2 = in[k+2].y;
-						VSUB2(ab,top,base);
-						ht = MAGNITUDE( ab );
-						thick = in[k+2].rsurf_thick / ht * 
-						    hypot( ht, rad2-rad1 );
-						srad1 = rad1 - thick;
-						srad2 = rad2 - thick;
+					if( srad1 > 0.0 && srad2 > 0.0 ) {
+						mk_trc_top(stdout,name,base,top,srad1,srad2);
+						mk_addmember(name,&head,WMOP_SUBTRACT);
+					}
+					else {
+						mk_addmember(name,&headf,WMOP_UNION);
+					}
+					break;
 
-						if( srad1 > 0.0 && srad2 > 0.0 ) {
-							mk_trc_top(stdout,tname,base,top,srad1,srad2);
-							mk_addmember(tname,&head,WMOP_SUBTRACT);
-						}
-						else {
-							mk_addmember(name,&headf,WMOP_UNION);
-						}
-						break;
+				case 1: /* Base closed, top open */
 
-					case 1: /* Base closed, top open */
-						if(in[k].mirror != 0) {
+					VSUB2(ab,top,base);
+					ht = MAGNITUDE( ab );
+					VUNITIZE(ab);
+					VSCALE(ab,ab,in[k].rsurf_thick);
+					VADD2(sbase,base,ab);
 
-							sprintf(tname,"Lc.%.4d.s%.2din",in[k].cc,count);
-						}
+					rad1 = in[k+2].x;
+					rad2 = in[k+2].y;
+					VSUB2(ab,top,sbase);
+					sht = MAGNITUDE( ab );
+					srad1 = rad2 - sht / ht * (rad2 - rad1);
+					thick = in[k+2].rsurf_thick / ht * 
+					    hypot( ht, rad2-rad1 );
+					srad1 = srad1 - thick;
+					srad2 = rad2 - thick;
 
-						else {
-							sprintf(tname,"c.%.4d.s%.2din",in[k].cc,count);
-						}
-						VSUB2(ab,top,base);
-						ht = MAGNITUDE( ab );
-						VUNITIZE(ab);
-						VSCALE(ab,ab,in[k].rsurf_thick);
-						VADD2(sbase,base,ab);
+					if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(sbase,top) ) {
+						mk_trc_top(stdout,name,sbase,top,srad1,srad2);
+						mk_addmember(name,&head,WMOP_SUBTRACT);
+					}
+					else {
+						mk_addmember(name,&headf,WMOP_UNION);
+					}
+					break;
+				case 2: /* Base open, top closed */
 
-						rad1 = in[k+2].x;
-						rad2 = in[k+2].y;
-						VSUB2(ab,top,sbase);
-						sht = MAGNITUDE( ab );
-						srad1 = rad2 - sht / ht * (rad2 - rad1);
-						thick = in[k+2].rsurf_thick / ht * 
-						    hypot( ht, rad2-rad1 );
-						srad1 = srad1 - thick;
-						srad2 = rad2 - thick;
+					VSUB2(ab,base,top);
+					ht = MAGNITUDE( ab );
+					VUNITIZE(ab);
+					VSCALE(ab,ab,in[k].rsurf_thick);
+					VADD2(stop,top,ab);
 
-						if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(sbase,top) ) {
-							mk_trc_top(stdout,tname,sbase,top,srad1,srad2);
-							mk_addmember(tname,&head,WMOP_SUBTRACT);
-						}
-						else {
-							mk_addmember(name,&headf,WMOP_UNION);
-						}
-						break;
-					case 2: /* Base open, top closed */
-						if(in[k].mirror != 0) {
+					rad1 = in[k+2].x;
+					rad2 = in[k+2].y;
+					VSUB2(ab,stop,base);
+					sht = MAGNITUDE( ab );
+					srad2 = rad1 - sht / ht * (rad1 - rad2);
+					thick = in[k+2].rsurf_thick / ht * 
+					    hypot( ht, rad2-rad1 );
+					srad1 = rad1 - thick;
+					srad2 = srad2 - thick;
 
-							sprintf(tname,"Lc.%.4d.s%.2din",in[k].cc,count);
-						}
+					if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(base,stop) ) {
+						mk_trc_top(stdout,name,base,stop,srad1,srad2);
+						mk_addmember(name,&head,WMOP_SUBTRACT);
+					}
+					else {
+						mk_addmember(name,&headf,WMOP_UNION);
+					}
+					break;
 
-						else {
-							sprintf(tname,"c.%.4d.s%.2din",in[k].cc,count);
-						}
-						VSUB2(ab,base,top);
-						ht = MAGNITUDE( ab );
-						VUNITIZE(ab);
-						VSCALE(ab,ab,in[k].rsurf_thick);
-						VADD2(stop,top,ab);
+				case 3: /* Both closed */
 
-						rad1 = in[k+2].x;
-						rad2 = in[k+2].y;
-						VSUB2(ab,stop,base);
-						sht = MAGNITUDE( ab );
-						srad2 = rad1 - sht / ht * (rad1 - rad2);
-						thick = in[k+2].rsurf_thick / ht * 
-						    hypot( ht, rad2-rad1 );
-						srad1 = rad1 - thick;
-						srad2 = srad2 - thick;
+					VSUB2(ab,top,base);
+					VSUB2(bc,base,top);
+					ht = MAGNITUDE( ab );
+					VUNITIZE(ab);
+					VUNITIZE(bc);
+					VSCALE(ab,ab,in[k].rsurf_thick);
+					VSCALE(bc,bc,in[k].rsurf_thick);
+					VADD2(sbase,base,ab);
+					VADD2(stop,top,bc);
 
-						if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(base,stop) ) {
-							mk_trc_top(stdout,tname,base,stop,srad1,srad2);
-							mk_addmember(tname,&head,WMOP_SUBTRACT);
-						}
-						else {
-							mk_addmember(name,&headf,WMOP_UNION);
-						}
-						break;
+					rad1 = in[k+2].x;
+					rad2 = in[k+2].y;
+					VSUB2(ab,stop,base);
+					sht = MAGNITUDE( ab );
+					srad1 = rad2 - sht / ht * (rad2 - rad1);
+					srad2 = rad1 - sht / ht * (rad1 - rad2);
+					thick = in[k+2].rsurf_thick / ht * 
+					    hypot( ht, rad2-rad1 );
+					srad1 = srad1 - thick;
+					srad2 = srad2 - thick;
 
-					case 3: /* Both closed */
-						if(in[k].mirror != 0) {
+					if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(sbase,stop) ) {
+						mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
+						mk_addmember(name,&head,WMOP_SUBTRACT);
+					}
+					else {
+						mk_addmember(name,&headf,WMOP_UNION);
+					}
+					break;
 
-							sprintf(tname,"Lc.%.4d.s%.2din",in[k].cc,count);
-						}
+				default:
+					fprintf(stderr,"Unknown cylinder mode\n");
+					break;
 
-						else {
-							sprintf(tname,"c.%.4d.s%.2din",in[k].cc,count);
-						}
-						VSUB2(ab,top,base);
-						VSUB2(bc,base,top);
-						ht = MAGNITUDE( ab );
-						VUNITIZE(ab);
-						VUNITIZE(bc);
-						VSCALE(ab,ab,in[k].rsurf_thick);
-						VSCALE(bc,bc,in[k].rsurf_thick);
-						VADD2(sbase,base,ab);
-						VADD2(stop,top,bc);
-
-						rad1 = in[k+2].x;
-						rad2 = in[k+2].y;
-						VSUB2(ab,stop,base);
-						sht = MAGNITUDE( ab );
-						srad1 = rad2 - sht / ht * (rad2 - rad1);
-						srad2 = rad1 - sht / ht * (rad1 - rad2);
-						thick = in[k+2].rsurf_thick / ht * 
-						    hypot( ht, rad2-rad1 );
-						srad1 = srad1 - thick;
-						srad2 = srad2 - thick;
-
-						if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(sbase,stop) ) {
-							mk_trc_top(stdout,tname,sbase,stop,srad1,srad2);
-							mk_addmember(tname,&head,WMOP_SUBTRACT);
-						}
-						else {
-							mk_addmember(name,&headf,WMOP_UNION);
-						}
-						break;
-
-					default:
-						fprintf(stderr,"Unknown cylinder mode\n");
-						break;
-
-					}         /* end switch */
-				}     		  /* end - plate mode modifications */
-			} else {
-				fprintf(stderr,"Bad Cylinder Radius for %s\n",name);
-			}
-		}         			  /* Degenerate case check */
+				}         /* end switch */
+			}     		  /* end - plate mode modifications */
+		}         			  /* Degenerate length check */
 		else {
 			fprintf(stderr,"Bad Cylinder Length for %s\n",name);
 		}
@@ -1759,7 +1691,7 @@ int cnt;
 	/* catch missed solids into final region */
 
 	/* due to solid subtractions, this might be a null region */
-	if ((count % num_unions) == 0 && (RT_LIST_NEXT_NOT_HEAD(&head, &head.l)))
+	if ((count % num_unions) != 0 && (RT_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 		proc_region(in,name);
 
 	/*    Mirror Processing - duplicates above code!   */
@@ -1770,178 +1702,152 @@ int cnt;
 		if( in[k].mirror == 0 )
 			continue;
 
+		mrflg = 'y';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
 		count++;
-
-		if(in[k].mirror >= 1) {
-
-			sprintf(name,"Rc.%.4d.s%.2d",(in[k].cc + in[k].mirror),count);
-		}
-		else {
-			sprintf(name,"Rc.%.4d.s%.2d",in[k].cc,count);
-		}
 
 		if(!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))){
 
 			VSET(base,in[k].x,-in[k].y,in[k].z);
 			VSET(top,in[k+1].x,-in[k+1].y,in[k+1].z);
 
-			if((in[k+2].x > 0)&&(in[k+2].y > 0)){
+			if(in[k+2].x == 0) 
+				in[k+2].x = .00001;
+			if(in[k+2].x < 0)
+				in[k+2].x = -in[k+2].x;
+			if(in[k+2].y == 0) 
+				in[k+2].y = .00001;
+			if(in[k+2].y < 0)
+				in[k+2].y = -in[k+2].y;
 
-				mk_trc_top(stdout,name,base,top,in[k+2].x,in[k+2].y);
-				mk_cyladdmember(name,&head,slist,1);
+			mk_trc_top(stdout,name,base,top,in[k+2].x,in[k+2].y);
+			mk_cyladdmember(name,&head,slist,1);
 
-				/* mk_trc_top destroys the values of base,top */
-				VSET(base,in[k].x,-in[k].y,in[k].z);
-				VSET(top,in[k+1].x,-in[k+1].y,in[k+1].z);
+			/* mk_trc_top destroys the values of base,top */
+			VSET(base,in[k].x,-in[k].y,in[k].z);
+			VSET(top,in[k+1].x,-in[k+1].y,in[k+1].z);
 
-				j = (int)(in[k+2].z/mmtin);
+			j = (int)(in[k+2].z/mmtin);
 
-				if (in[k].surf_mode== '-'){ 	/* Plate mode */
-					switch(j){
+			if (in[k].surf_mode== '-'){ 	/* Plate mode */
+				ctflg = 'y';
+				proc_sname (in,shflg,mrflg,count,ctflg);
 
-					case 0: /* Both ends open */
+				switch(j){
 
-						if(in[k].mirror >= 1) {
-							sprintf(tname,"Rc.%.4d.s%.2din",(in[k].cc + in[k].mirror),count);
-						}
-						else {
-							sprintf(tname,"Rc.%.4d.s%.2din",in[k].cc,count);
-						}
+				case 0: /* Both ends open */
 
-						rad1 = in[k+2].x;
-						rad2 = in[k+2].y;
-						VSUB2(ab,top,base);
-						ht = MAGNITUDE( ab );
-						thick = in[k+2].rsurf_thick / ht * 
-						    hypot( ht, rad2-rad1 );
-						srad1 = rad1 - thick;
-						srad2 = rad2 - thick;
+					rad1 = in[k+2].x;
+					rad2 = in[k+2].y;
+					VSUB2(ab,top,base);
+					ht = MAGNITUDE( ab );
+					thick = in[k+2].rsurf_thick / ht * 
+					    hypot( ht, rad2-rad1 );
+					srad1 = rad1 - thick;
+					srad2 = rad2 - thick;
 
-						if( srad1 > 0.0 && srad2 > 0.0 ) {
-							mk_trc_top(stdout,tname,base,top,srad1,srad2);
-							mk_addmember(tname,&head,WMOP_SUBTRACT);
-						}
-						else {
-							mk_addmember(name,&headf,WMOP_UNION);
-						}
-						break;
+					if( srad1 > 0.0 && srad2 > 0.0 ) {
+						mk_trc_top(stdout,name,base,top,srad1,srad2);
+						mk_addmember(name,&head,WMOP_SUBTRACT);
+					}
+					else {
+						mk_addmember(name,&headf,WMOP_UNION);
+					}
+					break;
 
-					case 1: /* Base closed, top open */
-						if(in[k].mirror >= 1) {
+				case 1: /* Base closed, top open */
 
-							sprintf(tname,"Rc.%.4d.s%.2din",(in[k].cc + in[k].mirror),count);
-						}
-						else {
-							sprintf(tname,"Rc.%.4d.s%.2din",in[k].cc,count);
-						}
-						VSUB2(ab,top,base);
-						ht = MAGNITUDE( ab );
-						VUNITIZE(ab);
-						VSCALE(ab,ab,in[k].rsurf_thick);
-						VADD2(sbase,base,ab);
+					VSUB2(ab,top,base);
+					ht = MAGNITUDE( ab );
+					VUNITIZE(ab);
+					VSCALE(ab,ab,in[k].rsurf_thick);
+					VADD2(sbase,base,ab);
 
-						rad1 = in[k+2].x;
-						rad2 = in[k+2].y;
-						VSUB2(ab,top,sbase);
-						sht = MAGNITUDE( ab );
-						srad1 = rad2 - sht / ht * (rad2 - rad1);
-						thick = in[k+2].rsurf_thick / ht * 
-						    hypot( ht, rad2-rad1 );
-						srad1 = srad1 - thick;
-						srad2 = rad2 - thick;
+					rad1 = in[k+2].x;
+					rad2 = in[k+2].y;
+					VSUB2(ab,top,sbase);
+					sht = MAGNITUDE( ab );
+					srad1 = rad2 - sht / ht * (rad2 - rad1);
+					thick = in[k+2].rsurf_thick / ht * 
+					    hypot( ht, rad2-rad1 );
+					srad1 = srad1 - thick;
+					srad2 = rad2 - thick;
 
-						if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(sbase,top) ) {
-							mk_trc_top(stdout,tname,sbase,top,srad1,srad2);
-							mk_addmember(tname,&head,WMOP_SUBTRACT);
-						}
-						else {
-							mk_addmember(name,&headf,WMOP_UNION);
-						}
+					if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(sbase,top) ) {
+						mk_trc_top(stdout,name,sbase,top,srad1,srad2);
+						mk_addmember(name,&head,WMOP_SUBTRACT);
+					}
+					else {
+						mk_addmember(name,&headf,WMOP_UNION);
+					}
 
-						break;
+					break;
 
-					case 2: /* Base open, top closed */
-						if(in[k].mirror >= 1) {
+				case 2: /* Base open, top closed */
 
-							sprintf(tname,"Rc.%.4d.s%.2din",(in[k].cc + in[k].mirror),count);
-						}
-						else {
-							sprintf(tname,"Rc.%.4d.s%.2din",in[k].cc,count);
-						}
-						VSUB2(ab,base,top);
-						ht = MAGNITUDE( ab );
-						VUNITIZE(ab);
-						VSCALE(ab,ab,in[k].rsurf_thick);
-						VADD2(stop,top,ab);
+					VSUB2(ab,base,top);
+					ht = MAGNITUDE( ab );
+					VUNITIZE(ab);
+					VSCALE(ab,ab,in[k].rsurf_thick);
+					VADD2(stop,top,ab);
 
-						rad1 = in[k+2].x;
-						rad2 = in[k+2].y;
-						VSUB2(ab,stop,base);
-						sht = MAGNITUDE( ab );
-						srad2 = rad1 - sht / ht * (rad1 - rad2);
-						thick = in[k+2].rsurf_thick / ht * 
-						    hypot( ht, rad2-rad1 );
-						srad1 = rad1 - thick;
-						srad2 = srad2 - thick;
+					rad1 = in[k+2].x;
+					rad2 = in[k+2].y;
+					VSUB2(ab,stop,base);
+					sht = MAGNITUDE( ab );
+					srad2 = rad1 - sht / ht * (rad1 - rad2);
+					thick = in[k+2].rsurf_thick / ht * 
+					    hypot( ht, rad2-rad1 );
+					srad1 = rad1 - thick;
+					srad2 = srad2 - thick;
 
-						if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(base,stop) ) {
-							mk_trc_top(stdout,tname,base,stop,srad1,srad2);
-							mk_addmember(tname,&head,WMOP_SUBTRACT);
-						}
-						else {
-							mk_addmember(name,&headf,WMOP_UNION);
-						}
-						break;
+					if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(base,stop) ) {
+						mk_trc_top(stdout,name,base,stop,srad1,srad2);
+						mk_addmember(name,&head,WMOP_SUBTRACT);
+					}
+					else {
+						mk_addmember(name,&headf,WMOP_UNION);
+					}
+					break;
 
-					case 3: /* Both closed */
-						if(in[k].mirror >= 1) {
+				case 3: /* Both closed */
 
-							sprintf(tname,"Rc.%.4d.s%.2din",(in[k].cc + in[k].mirror),count);
-						}
-						else {
-							sprintf(tname,"Rc.%.4d.s%.2din",in[k].cc,count);
-						}
-						VSUB2(ab,top,base);
-						VSUB2(bc,base,top);
-						ht = MAGNITUDE( ab );
-						VUNITIZE(ab);
-						VUNITIZE(bc);
-						VSCALE(ab,ab,in[k].rsurf_thick);
-						VSCALE(bc,bc,in[k].rsurf_thick);
-						VADD2(sbase,base,ab);
-						VADD2(stop,top,bc);
+					VSUB2(ab,top,base);
+					VSUB2(bc,base,top);
+					ht = MAGNITUDE( ab );
+					VUNITIZE(ab);
+					VUNITIZE(bc);
+					VSCALE(ab,ab,in[k].rsurf_thick);
+					VSCALE(bc,bc,in[k].rsurf_thick);
+					VADD2(sbase,base,ab);
+					VADD2(stop,top,bc);
 
-						rad1 = in[k+2].x;
-						rad2 = in[k+2].y;
-						VSUB2(ab,stop,base);
-						sht = MAGNITUDE( ab );
-						srad1 = rad2 - sht / ht * (rad2 - rad1);
-						srad2 = rad1 - sht / ht * (rad1 - rad2);
-						thick = in[k+2].rsurf_thick / ht * 
-						    hypot( ht, rad2-rad1 );
-						srad1 = srad1 - thick;
-						srad2 = srad2 - thick;
+					rad1 = in[k+2].x;
+					rad2 = in[k+2].y;
+					VSUB2(ab,stop,base);
+					sht = MAGNITUDE( ab );
+					srad1 = rad2 - sht / ht * (rad2 - rad1);
+					srad2 = rad1 - sht / ht * (rad1 - rad2);
+					thick = in[k+2].rsurf_thick / ht * 
+					    hypot( ht, rad2-rad1 );
+					srad1 = srad1 - thick;
+					srad2 = srad2 - thick;
 
-						if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(sbase,stop) ) {
-							mk_trc_top(stdout,tname,sbase,stop,srad1,srad2);
-							mk_addmember(tname,&head,WMOP_SUBTRACT);
-						}
-						else {
-							mk_addmember(name,&headf,WMOP_UNION);
-						}
-						break;
+					if( srad1 > 0.0 && srad2 > 0.0 && !VEQUAL(sbase,stop) ) {
+						mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
+						mk_addmember(name,&head,WMOP_SUBTRACT);
+					}
+					else {
+						mk_addmember(name,&headf,WMOP_UNION);
+					}
+					break;
 
-					default:
-						fprintf(stderr,"Unknown cylinder mode\n");
-						break;
-
-					}/* switch */
-				}/* plate mode */
-
-			}
-			else {
-				fprintf(stderr,"Bad Cylinder Radius for %s\n",name);
-			}
+				default:
+					fprintf(stderr,"Unknown cylinder mode\n");
+					break;
+				}/* switch */
+			}/* plate mode */
 		}
 		else {
 			fprintf(stderr,"Bad Cylinder Length for %s\n",name);
@@ -1949,10 +1855,10 @@ int cnt;
 		/* due to solid subtractions, this might be a null region */
 		if ((count % num_unions) == 0 && (RT_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 			proc_region(in,name);
-	}
+	}	/* end for k loop */
 	/* due to solid subtractions, this might be a null region */
 
-	if ((count % num_unions) == 0 && (RT_LIST_NEXT_NOT_HEAD(&head, &head.l)))
+	if ((count % num_unions) != 0 && (RT_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 		proc_region(in,name);
 
 }
@@ -1961,7 +1867,7 @@ int cnt;
  *	Process fastgen rod mode
  */
 proc_rod(in,cnt)
-struct input in[500];
+struct input in[5000];
 int cnt;
 {
 
@@ -1970,7 +1876,7 @@ int cnt;
 	point_t	top;
 	fastf_t tmp;
 	fastf_t tmp1;
-
+	char    shflg,mrflg,ctflg;
 
 	for(k=0 ; k < cnt ; k++){
 		for(l=0; l<= 7; l++){
@@ -2027,19 +1933,14 @@ int cnt;
 			continue;
 		}
 
+		/* name solids */
+		shflg = 'r';
+		mrflg = 'n';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
+
 		/* make solids */
 		count++;
-
-		/* name solids */
-		if(mirror[k] != 0) {
-
-			sprintf(name,"Lr.%.4d.s%.2d",in[0].cc,count);
-		}
-
-		else {
-			sprintf(name,"r.%.4d.s%.2d",in[0].cc,count);
-		}
-
 
 		VSET(base,x[k],y[k],z[k]);
 		VSET(top,x[k+1],y[k+1],z[k+1]);
@@ -2083,17 +1984,13 @@ int cnt;
 			continue;
 		}
 
+
+		mrflg = 'y';
+		ctflg = 'n';
+		proc_sname (in,shflg,mrflg,count+1,ctflg);
+
 		/* make solids */
-
 		count++;
-
-		if( mirror[k] >= 1) {
-
-			sprintf(name,"Rr.%.4d.s%.2d",(in[0].cc + mirror[k]),count);
-		}
-		else {
-			sprintf(name,"Rr.%.4d.s%.2d",in[0].cc,count);
-		}
 
 		VSET(base,x[k],-y[k],z[k]);
 		VSET(top,x[k+1],-y[k+1],z[k+1]);
@@ -2173,6 +2070,58 @@ int	npts;
 }
 
 /*
+ *     This subroutine generates solid names with annotations for sidedness as
+ *      required.
+ */
+proc_sname(in,shflg,mrflg,cnt,ctflg)
+struct input in[5000];
+char shflg,mrflg,ctflg;
+int  cnt;
+
+{
+	char side;
+
+	/* shflg == identifies shape process which called this function
+	 * mrflg == indicates called by "as-modeled" pass or mirrored pass
+	 * cnt   == suffix indentifier for the name
+	 * ctflg == isolates internal cutting solids from regular solids
+	 * name == solid name
+	 * side  == left or right sidedness
+	 */
+rt_log( "In proc_sname; %c %c %c %d\n" , shflg,mrflg,ctflg,cnt );
+
+	if (((mrflg == 'n') && (in[0].y >= 0)) ||
+	    ((mrflg == 'y') && (in[0].y < 0))) {
+	  side = 'l';
+	}
+	else {
+	  side = 'r';
+	}
+
+	if (in[0].mirror >= 0) {
+	  if ((mrflg == 'n') && (ctflg == 'n')) {
+	    sprintf(name,"%c.%.4d.s%.2d",shflg,in[0].cc,cnt);
+	  }
+	  else if ((mrflg == 'n') && (ctflg == 'y')) {
+	    sprintf(name,"%c.%.4d.c%.2d",shflg,in[0].cc,cnt);
+	  }
+	  else if ((mrflg == 'y') && (ctflg == 'n')) {
+	    sprintf(name,"%c.%.4d.s%.2d",shflg,(in[0].cc+in[0].mirror),cnt);
+	  }
+	  else {
+	    sprintf(name,"%c.%.4d.c%.2d",shflg,(in[0].cc+in[0].mirror),cnt);
+	  }
+	}
+	else if (ctflg == 'n') {
+	  sprintf(name,"%c%c.%.4d.s%.2d",side,shflg,in[0].cc,cnt);
+	}
+	else {
+	  sprintf(name,"%c%c.%.4d.c%.2d",side,shflg,in[0].cc,cnt);
+	}
+rt_log( "\tname = %s\n" , name );
+}
+
+/*
  *     This subroutine takes previously generated solid names and combines them
  *	into a common region identity.  Format of the make_region command call
  *	requires in order: output file name, input region name, link file of solids,
@@ -2180,32 +2129,39 @@ int	npts;
  *	aircode, material code, LOS, and inheritance flag.  The region is then 
  *	added to a hold file for combination into groups in another process.        
  */
-proc_region(in,name)
-struct input in[500];
-char *name;
+proc_region(in,name1)
+struct input in[5000];
+char *name1;
 
 {
-	char cname[16+1];
 	char *tmpname,*chkroot;
 	int cnt,cc;
+	struct  wmember *wp;
+rt_log( "In proc_region: name1 = %s\n" , name1 );
 
 	/* tmpname == region name - '.s#'
 	 * chkroot == component code number
-	 * name    == solid number
+	 * name1    == solid number
 	 */
-	tmpname = chkroot = name;
-	while( *name++ != '.' )
+	tmpname = chkroot = name1;
+	while( *name1++ != '.' )
 		;
-	chkroot = name;
+	chkroot = name1;
 	cc = atoi( chkroot );
 
-	while( *name != '.' )
-		name++;
-	*name = '\0';
-	name += 2;
-	cnt = (atoi(name) - 1) / num_unions + 1;
+	while( *name1 != '.' )
+		name1++;
+	*name1 = '\0';
+	name1 += 2;
+	cnt = (atoi(name1) - 1) / num_unions + 1;
 
 	sprintf(cname,"%s.r%.2d",tmpname,cnt);
+rt_log( "\tcname = %s\n" , cname );
+
+	for( RT_LIST_FOR( wp, wmember, &head.l ) )
+	{
+		rt_log( "\t\t%c %s\n" , wp->wm_op , wp->wm_name );
+	}
 
 	if( nm[cc].matcode != 0 ) {
 		mk_lrcomb(stdout, cname, &head, 1, 0, 0, 0, cc, 0, nm[cc].matcode, nm[cc].eqlos, 0);
@@ -2221,8 +2177,8 @@ char *name;
 		(void) mk_addmember(cname,&headb,WMOP_UNION);
 	}
 
-	name -= 2;
-	*name = '.';
+	name1 -= 2;
+	*name1 = '.';
 }
 
 /*
@@ -2237,29 +2193,28 @@ char *name;
  * 	a change to take the region numbering from the input parameters for
  *	the special case of rods.
  */
-proc_rod_region(in,name,regnum)
-struct input in[500];
-char *name;
+proc_rod_region(in,name1,regnum)
+struct input in[5000];
+char *name1;
 int regnum;
 
 {
-	char cname[16+1];
 	char *tmpname,*chkroot;
 	int cnt,cc;
 
 	/* tmpname == region name - '.s#'
 	 * chkroot == component code number
-	 * name    == solid number
+	 * name1    == solid number
 	 */
-	tmpname = chkroot = name;
-	while( *name++ != '.' )
+	tmpname = chkroot = name1;
+	while( *name1++ != '.' )
 		;
-	chkroot = name;
+	chkroot = name1;
 	cc = atoi( chkroot );
 
-	while( *name != '.' )
-		name++;
-	*name = '\0';
+	while( *name1 != '.' )
+		name1++;
+	*name1 = '\0';
 
 	sprintf(cname,"%s.r%.2d",tmpname,regnum);
 	if( nm[cc].matcode != 0 ) {
@@ -2276,7 +2231,7 @@ int regnum;
 		(void) mk_addmember(cname,&headb,WMOP_UNION);
 	}
 
-	*name = '.';
+	*name1 = '.';
 }
 
 /*
@@ -2289,9 +2244,9 @@ int regnum;
  *	heade == linked list of over-all group
  */
 void
-proc_label(in,name,labelfile)
-struct input in[500];
-char *name;
+proc_label(in,name1,labelfile)
+struct input in[5000];
+char *name1;
 char *labelfile;
 {
 	char gname[16+1], mgname[16+1];	/* group, mirrored group names */
@@ -2301,15 +2256,15 @@ char *labelfile;
 	if( cur_series == -1 ) {		/* first time */
 		cur_series = in[0].cc / 1000;
 		set_color( cur_series );
-		proc_label(in,name,labelfile);
+		proc_label(in,name1,labelfile);
 		return;
 	}
 
 	if( cur_series == (in[0].cc / 1000)){
 
-		while( *name++ != '.' )
+		while( *name1++ != '.' )
 			;
-		cc = name;
+		cc = name1;
 
 		if ((atoi(cc)) == in[0].cc){
 
@@ -2346,7 +2301,7 @@ char *labelfile;
 
 		cur_series = in[0].cc/1000 ;
 		set_color( cur_series );
-		proc_label(in,name,labelfile);
+		proc_label(in,name1,labelfile);
 	}
 
 }
@@ -2396,8 +2351,8 @@ int color;
 
 	case 4:      /* 4XXX_series */
 
-		rgb[0] = 255;
-		rgb[1] = 255;
+		rgb[0] = 245;
+		rgb[1] = 245;
 		rgb[2] =   0;
 
 		break;
@@ -2459,7 +2414,7 @@ int color;
  * within the first.
  */
 inside_cyl(in,i,j)
-struct input in[500];
+struct input in[5000];
 int i,j;
 {
 	point_t	outbase,outtop,inbase,intop;
@@ -2537,7 +2492,7 @@ fastf_t rad1,rad2;
 
 /* 			M K _ C Y L A D D M E M B E R
  *
- * For the cylinder given by 'name', determine whether it has any
+ * For the cylinder given by 'name1', determine whether it has any
  * volume mode subtractions from it by looking at the subtraction list
  * for this component number. If we find that this cylinder is one
  * of the subtracting cylinders inside, don't do anything. Otherwise,
@@ -2546,8 +2501,8 @@ fastf_t rad1,rad2;
  * subtracted solids will be eventually be made.
  */
 void
-mk_cyladdmember(name,head,slist,mirflag)
-char *name;
+mk_cyladdmember(name1,head,slist,mirflag)
+char *name1;
 struct wmember *head;
 struct subtract_list *slist;
 int mirflag;
@@ -2557,12 +2512,15 @@ int mirflag;
 	int			cc,solnum;
 	struct subtract_list	*hold;
 
+rt_log( "In mk_cyladdmember: name1 = %s\n" , name1 );
 	if( !slist ) {
-		mk_addmember( name, head, WMOP_UNION );
+rt_log( "\tjust add to list\n" );
+		mk_addmember( name1, head, WMOP_UNION );
 		return;
 	}
 
-	sscanf( name,"%*[^0-9]%d%*[^0-9]%d", &cc, &solnum );
+	sscanf( name1,"%*[^0-9]%d%*[^0-9]%d", &cc, &solnum );
+rt_log( "\tcc = %d , solnum = %d\n" , cc , solnum );
 
 	/* check to see whether this solid shows up in the subtract 
 	 * list as a volume mode solid being subtracted
@@ -2573,15 +2531,18 @@ int mirflag;
 	if( slist->insolid == solnum )
 		return;
 
-	mk_addmember( name, head, WMOP_UNION );
+	mk_addmember( name1, head, WMOP_UNION );
 
 	for( slist = hold; slist; slist = slist->next ) {
 		if( slist->outsolid == solnum ){
+#if 0
 			if( slist->inmirror != 0 )
 				sprintf(tmpname,"%cc.%.4d.s%.2d",
 				    (mirflag ? 'R' : 'L'),cc,slist->insolid );
 			else
+#endif
 				sprintf(tmpname,"c.%.4d.s%.2d",cc,slist->insolid );
+rt_log( "\t\tSubtract %s\n" , tmpname );
 			mk_addmember( tmpname, head, WMOP_SUBTRACT );
 		}
 	}
@@ -2604,7 +2565,7 @@ int mirflag;
  */
 struct subtract_list *
 get_subtract( in, cnt )
-struct input in[500];
+struct input in[5000];
 int cnt;
 {
 	static struct subtract_list	*slist = NULL;
