@@ -82,6 +82,8 @@ extern struct bu_structparse rt_hf_parse[];
 extern struct bu_structparse rt_dsp_parse[];
 /* COMB -- supported below */
 
+/* XXX This should probably become part of the rt_functab in librt/table.c */
+
 struct rt_solid_type_lookup {
 	char			id;
 	size_t			db_internal_size;
@@ -155,7 +157,8 @@ char *s_type;
  *
  * A tree 't' is represented in the following manner:
  *
- *	t := { l dbobjname mat }
+ *	t := { l dbobjname { mat } }
+ *	   | { l dbobjname }
  *	   | { u t1 t2 }
  * 	   | { n t1 t2 }
  *	   | { - t1 t2 }
@@ -182,15 +185,17 @@ union tree		*tp;
 
 	RT_CK_TREE(tp);
 	switch( tp->tr_op ) {
-	case OP_DB_LEAF: {
-		struct bu_vls vls;
+	case OP_DB_LEAF:
 		Tcl_DStringAppendElement( dsp, "l" );
 		Tcl_DStringAppendElement( dsp, tp->tr_l.tl_name );
-		bu_vls_init( &vls );
-		bn_encode_mat( &vls, tp->tr_l.tl_mat );
-		Tcl_DStringAppendElement( dsp, bu_vls_addr(&vls) );
-		bu_vls_free( &vls );
-		break; }
+		if( tp->tr_l.tl_mat )  {
+			struct bu_vls vls;
+			bu_vls_init( &vls );
+			bn_encode_mat( &vls, tp->tr_l.tl_mat );
+			Tcl_DStringAppendElement( dsp, bu_vls_addr(&vls) );
+			bu_vls_free( &vls );
+		}
+		break;
 
 		/* This node is known to be a binary op */
 	case OP_UNION:
