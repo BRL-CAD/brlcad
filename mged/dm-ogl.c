@@ -12,7 +12,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "";
+static char RCSid[] = "@(#)$Header";
 #endif
 
 #include "conf.h"
@@ -241,7 +241,7 @@ XEvent *eventPtr;
     dirty = 1;
     goto end;
   } else if( eventPtr->type == ConfigureNotify ) {
-    ogl_configure_window_shape(curr_dm_list->_dmp);
+    ogl_configure_window_shape(dmp);
 
     dirty = 1;
     goto end;
@@ -267,12 +267,12 @@ XEvent *eventPtr;
     case AMM_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct ogl_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n",
-		       ogl_irisX2ged(dmp, mx, 0), ogl_irisY2ged(dmp, my));
+		       dm_X2Normal(dmp, mx, 0) * 2047.0, dm_Y2Normal(dmp, my) * 2047.0 );
       else if(OgldoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	bu_vls_printf( &cmd, "M 0 %d %d\n",
-		       ogl_irisX2ged(dmp, mx, 1), ogl_irisY2ged(dmp, my));
+		       dm_X2Normal(dmp, mx, 1) * 2047.0, dm_Y2Normal(dmp, my) * 2047.0 );
       else /* not doing motion */
 	goto end;
 
@@ -395,26 +395,26 @@ XEvent *eventPtr;
 
       break;
     case AMM_ADC_ANG1:
-      fx = ogl_irisX2ged(dmp, mx, 1) - dv_xadc;
-      fy = ogl_irisY2ged(dmp, my) - dv_yadc;
-      bu_vls_printf(&cmd, "adc a1 %lf\n", -DEGRAD*atan2(fx, fy));
+      fx = dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc;
+      bu_vls_printf(&cmd, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
 
       break;
     case AMM_ADC_ANG2:
-      fx = ogl_irisX2ged(dmp, mx, 1) - dv_xadc;
-      fy = ogl_irisY2ged(dmp, my) - dv_yadc;
-      bu_vls_printf(&cmd, "adc a2 %lf\n", -DEGRAD*atan2(fx, fy));
+      fx = dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc;
+      bu_vls_printf(&cmd, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
 
       break;
     case AMM_ADC_TRAN:
       bu_vls_printf(&cmd, "adc hv %lf %lf\n",
-		    ogl_irisX2ged(dmp, mx, 1) * Viewscale * base2local / 2047.0,
-		    ogl_irisY2ged(dmp, my) * Viewscale * base2local / 2047.0);
+		    dm_X2Normal(dmp, mx, 1) * Viewscale * base2local,
+		    dm_Y2Normal(dmp, my) * Viewscale * base2local);
 
       break;
     case AMM_ADC_DIST:
-      fx = (ogl_irisX2ged(dmp, mx, 1) - dv_xadc) * Viewscale * base2local / 2047.0;
-      fy = (ogl_irisY2ged(dmp, my) - dv_yadc) * Viewscale * base2local / 2047.0;;
+      fx = (dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc) * Viewscale * base2local / 2047.0;
+      fy = (dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc) * Viewscale * base2local / 2047.0;
       td = sqrt(fx * fx + fy * fy);
       bu_vls_printf(&cmd, "adc dst %lf\n", td);
 
@@ -1550,8 +1550,8 @@ char	**argv;
 
       old_orig_gui = mged_variables.orig_gui;
 
-      x = ogl_irisX2ged(dmp, atoi(argv[3]), 0);
-      y = ogl_irisY2ged(dmp, atoi(argv[4]));
+      x = dm_X2Normal(dmp, atoi(argv[3]), 0) * 2047.0;
+      y = dm_Y2Normal(dmp, atoi(argv[4])) * 2047.0;
 
       if(mged_variables.faceplate &&
 	 mged_variables.orig_gui &&
@@ -1568,7 +1568,7 @@ char	**argv;
       }
 
       mged_variables.orig_gui = 0;
-      x = ogl_irisX2ged(dmp, atoi(argv[3]), 1);
+      x = dm_X2Normal(dmp, atoi(argv[3]), 1) * 2047.0;
 
 end:
       bu_vls_init(&vls);
@@ -1588,7 +1588,7 @@ end:
 
     if( argc < 5){
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
-		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+		       "dm am <r|t|s> 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -1605,7 +1605,6 @@ end:
 	am_mode = AMM_TRAN;
 
 	if(EDIT_TRAN && mged_variables.transform == 'e'){
-#if 1
 	  char save_coords;
 	  point_t mouse_view_pos;
 	  point_t ea_view_pos;
@@ -1615,10 +1614,15 @@ end:
 	  mged_variables.coords = 'v';
 
 	  MAT4X3PNT(ea_view_pos, model2view, e_axes_pos);
+#if 1
+	  mouse_view_pos[X] = dm_X2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1);
+	  mouse_view_pos[Y] = dm_Y2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy);
+#else
 	  mouse_view_pos[X] = (((struct ogl_vars *)dmp->dm_vars)->omx /
 			       (fastf_t)dmp->dm_width - 0.5) / dmp->dm_aspect * 2.0;
 	  mouse_view_pos[Y] = (0.5 - ((struct ogl_vars *)dmp->dm_vars)->omy /
 			       (fastf_t)dmp->dm_height) * 2.0;
+#endif
 	  mouse_view_pos[Z] = ea_view_pos[Z];
 	  VSUB2(diff, mouse_view_pos, ea_view_pos);
 	  VSCALE(diff, diff, Viewscale * base2local);
@@ -1628,20 +1632,6 @@ end:
 	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  mged_variables.coords = save_coords;
-#else
-	  point_t view_pos;
-
-	  view_pos[X] = (((struct ogl_vars *)dmp->dm_vars)->omx /
-			 (fastf_t)dmp->dm_width - 0.5) / dmp->dm_aspect * 2.0;
-	  view_pos[Y] = (0.5 - ((struct ogl_vars *)dmp->dm_vars)->omy /
-			 (fastf_t)dmp->dm_height) * 2.0;
-	  view_pos[Z] = 0.0;
-
-	  if(state == ST_S_EDIT)
-	    sedit_mouse(view_pos);
-	  else
-	    objedit_mouse(view_pos);
-#endif
 	}
 
 	break;
@@ -1659,7 +1649,7 @@ end:
 	break;
       default:
 	Tcl_AppendResult(interp, "dm am: need more parameters\n",
-			 "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+			 "dm am <r|t|s> 1|0 xpos ypos\n", (char *)NULL);
 	return TCL_ERROR;
       }
 
@@ -1690,20 +1680,20 @@ end:
     if(buttonpress){
       switch(*argv[1]){
       case '1':
-	fx = ogl_irisX2ged(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1) - dv_xadc;
-	fy = ogl_irisY2ged(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy) - dv_yadc;
+	fx = dm_X2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
+	fy = dm_Y2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "adc a1 %lf\n", -DEGRAD*atan2(fx, fy));
+	bu_vls_printf(&vls, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	am_mode = AMM_ADC_ANG1;
 	break;
       case '2':
-	fx = ogl_irisX2ged(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1) - dv_xadc;
-	fy = ogl_irisY2ged(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy) - dv_yadc;
+	fx = dm_X2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
+	fy = dm_Y2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "adc a2 %lf\n", -DEGRAD*atan2(fx, fy));
+	bu_vls_printf(&vls, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1712,20 +1702,20 @@ end:
       case 't':
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "adc hv %lf %lf\n",
-		      ogl_irisX2ged(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1) *
-		      Viewscale * base2local / 2047.0,
-		      ogl_irisY2ged(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy) *
-		      Viewscale * base2local / 2047.0);
+		      dm_X2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1) *
+		      Viewscale * base2local,
+		      dm_Y2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy) *
+		      Viewscale * base2local);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	am_mode = AMM_ADC_TRAN;
 	break;
       case 'd':
-	fx = (ogl_irisX2ged(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1) - dv_xadc) *
-	  Viewscale * base2local / 2047.0;
-	fy = (ogl_irisY2ged(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy) - dv_yadc) *
-	  Viewscale * base2local / 2047.0;;
+	fx = (dm_X2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omx, 1) * 2047.0 -
+	      dv_xadc) * Viewscale * base2local / 2047.0;
+	fy = (dm_Y2Normal(dmp, ((struct ogl_vars *)dmp->dm_vars)->omy) * 2047.0 -
+	      dv_yadc) * Viewscale * base2local / 2047.0;
 
 	td = sqrt(fx * fx + fy * fy);
 	bu_vls_init(&vls);
