@@ -28,7 +28,7 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
-extern struct region	env_region;		/* in do.c */
+struct region	env_region;			/* share with view.c */
 
 HIDDEN int	txt_setup(), txt_render();
 HIDDEN int	ckr_setup(), ckr_render();
@@ -583,15 +583,28 @@ char	**dpp;
 		return(0);		/* drop region */
 	}
 	env_region = *rp;		/* struct copy */
+	/* Get copies of, or eliminate, references to dynamic structures */
+	env_region.reg_name = rt_strdup( rp->reg_name );
+	env_region.reg_treetop = TREE_NULL;
+	env_region.reg_forw = REGION_NULL;
 	env_region.reg_mfuncs = (char *)0;
 
 	rt_vls_init( &material );
 	rt_vls_vlscat( &material, matparm );
 	/* Expect "material SPACE args", find space */
 	cp = RT_VLS_ADDR( &material );
-	while( *cp != '\0' && isascii(*cp) && !isspace(*cp) )
+	while( *cp != '\0' )  {
+		if( !isascii(*cp) || isspace(*cp) )  break;
 		cp++;
-	*cp++ = '\0';
+	}
+	if( *cp == '\0' )  {
+		/*  Null was encountered while searching for space,
+		 *  leave "cp" pointing at null, e.g., no parameter string.
+		 */
+	} else {
+		/* Replace space with null, advance "cp" to parameter */
+		*cp++ = '\0';
+	}
 
 	strncpy( env_region.reg_mater.ma_matname, RT_VLS_ADDR(&material),
 		sizeof(rp->reg_mater.ma_matname) );

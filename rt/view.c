@@ -404,6 +404,8 @@ struct rt_i	*rtip;
 		mlib_free( regp );
 	}
 	if( env_region.reg_mfuncs )  {
+		rt_free( env_region.reg_name, "env_region.reg_name" );
+		env_region.reg_name = (char *)0;
 		mlib_free( &env_region );
 	}
 
@@ -431,7 +433,7 @@ struct partition *PartHeadp;
 		pdv_3line( stdout, ap->a_ray.r_pt, out );
 	}
 
-	if( env_region.reg_mfuncs  /* && ap->a_level > 0 */ )  {
+	if( env_region.reg_mfuncs )  {
 		struct gunk {
 			struct partition part;
 			struct hit	hit;
@@ -443,7 +445,7 @@ struct partition *PartHeadp;
 		/* Build up the fakery */
 		u.part.pt_inhit = u.part.pt_outhit = &u.hit;
 		u.part.pt_regionp = &env_region;
-		u.hit.hit_dist = 0.0;	/* XXX should be = 1 model diameter */
+		u.hit.hit_dist = ap->a_rt_i->rti_radius * 2;	/* model diam */
 
 		u.sw.sw_transmit = u.sw.sw_reflect = 0.0;
 		u.sw.sw_refrac_index = 1.0;
