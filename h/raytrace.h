@@ -448,7 +448,7 @@ struct partition {
 		for( _pp = (_headp)->pt_forw; _pp != (_headp);  )  { \
 			_zap = _pp; \
 			_pp = _pp->pt_forw; \
-			FREE_PT(_zap, ap->a_resource); \
+			FREE_PT(_zap, _res); \
 		} \
 		(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
 	}
