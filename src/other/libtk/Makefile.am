@@ -3,6 +3,7 @@
 SUBDIRS = \
 	doc \
 	generic \
+	library \
 	unix
 
 EXTRA_DIST = \
@@ -10,7 +11,6 @@ EXTRA_DIST = \
 	bitmaps \
 	changes \
 	compat \
-	library \
 	license.terms \
 	mac \
 	macosx \
