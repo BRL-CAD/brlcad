@@ -1,11 +1,11 @@
 .\" $Header$
 .\" tbl install.doc | troff -t -ms | ...
 .TL
-Installing The BRL-CAD Package
+Installing the BRL-CAD Package
 .br
 Release 3.0
 .sp
-8-Sept-1988
+22-Sept-1988
 .AU
 Michael John Muuss
 .AI
@@ -21,6 +21,30 @@ The printed copies are usually somewhat older than the version on
 the actual distribution tape.
 When installing the software, please refer to the version from
 the distribution tape.
+.NH 1
+GOING QUICKLY
+.PP
+This document exists to help you install the BRL-CAD Package. With
+approximately 150,000 lines of source code, and support for over a dozen
+systems, the configuration is important. It would be best if you read
+these directions first. However, it would be quite understandable if
+you were more eager to press ahead than to read this long paper.
+If you choose to start compiling now,
+the commands to run are presented here.
+Please, if anything seems wrong, pause to finish reading the directions.
+.sp .5
+.nf
+.ft B
+	mkdir /usr/brlcad/bin
+	mkdir cad
+	cd cad
+	tar x                      # tar xo   on System V
+	sh machinetype.sh -v
+	sh setup.sh
+	sh gen.sh
+.ft R
+.fi
+.sp .5
 .NH 1
 DISTRIBUTION TERMS
 .PP
@@ -59,7 +83,7 @@ For the RT ray tracing benchmark, or
 For exploration, to get acquainted with the software.
 .PP
 Each of these different types of use will require slightly different
-treatment of the software as it is configured.
+configuration of the software.
 By default, the software is pre-configured for production use,
 to make installation most convenient for the primary user community.
 However, the modifications required for non-production use are
@@ -86,7 +110,7 @@ _
 fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
 c1	Convex C1	UNIX 6.2.32.2	net	-
 xmp	Cray X-MP	UNICOS 3.0.10	net	-
-cr2	Cray-2	UNICOS 3.0, 4.0	net	-
+cr2	Cray-2	UNICOS 4.0	net,X11	X11
 vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	mg, vg
 sel	Gould PN6080, PN9080	UTX/32 Rel 2.0	net	-
 pyr	Pyramid 9820	OSx Version 4.1	-	-
@@ -95,6 +119,7 @@ pyr	Pyramid 9820	OSx Version 4.1	-	-
 4d	SGI 4D	Version 3.1+4Sight	sgi, net	sgi
 4gt	SGI 4D/GT	Version 3.1+4Sight	sgi, net	sgi
 sun3	Sun-3/*	SunOS 3.4	sun, net	sun
+sun4	Sun-4/*	SunOS 4.0	sun, net	sun
 .TE
 .IP b)
 With slight modifications to the configuration files, these
@@ -107,8 +132,11 @@ center box;
 l l l.
 MTYPE	Hardware	Software
 _
+ard	Ardent	System V
+eta	ETA-10	System V
 vax	DEC VAX-11	Berkeley 4.1 BSD
 3d	SGI 3030	Version 3.4 (TCP or XNS)
+stl	Stellar	System V
 .TE
 .IP c)
 Porting this software to a machine which is not
@@ -158,7 +186,8 @@ dm-mg	Megatek 7250
 dm-rat	Raster Tech One/180,380
 dm-rat80	Raster Tech One/80
 dm-ps300	E&S Picture System 300
-dm-X	X Window System (X11R2 or X10R4)
+dm-X	X Window System (X11R2)
+dm-X10	X Window System (X10R4)
 .TE
 .NH 1
 LOADING THE SOFTWARE
@@ -587,7 +616,7 @@ by running:
 	sh machinetype.sh -v
 .sp .5
 .ft R
-Be certain that the three values which are printed are reasonable.
+Be certain that the values which are printed are reasonable.
 First, make sure that the MACHINE variable is appropriate
 for your machine; see the table of supported machine types, above.
 If the MACHINE variable is set properly, 
@@ -788,6 +817,24 @@ GID of -2 is intentional):
 .ft B
 nobody:*:-2:-2:NFS Unprivileged user:/nonexistent:/dev/null
 .ft R
+.NH 3
+Special RFBD Considerations on an SGI running 4Sight
+.PP
+If your SGI is running 4Sight (also known as MAX) rather than MEX,
+and you desire to run the remote frame buffer daemon, so that remote
+machines can display images on your workstation,
+you will need to run these additional commands:
+.sp .5
+.nf
+.ft B
+	mkdir /usr/brlcad/etc/NeWS
+	cp contributed/init.ps /usr/brlcad/etc/NeWS/init.ps
+.ft R
+.fi
+.sp .5
+This will allow
+.B rfbd
+to start the 4Sight window system when a remote connection is made.
 .NH 2
 Special Considerations on an SGI 3-D
 .PP
@@ -1395,9 +1442,6 @@ On an SGI 4-D, warning messages from the compiler of the form:
 .sp .5
 .nf
 .ft B
-ccom: Warning: ../lgt/./vecmath.h, line 18: inconsistent prototypes for function sqrt
-      extern double     sqrt();
-.sp
 uopt: Warning: main: parts of procedure have no exit point
 .ft R
 .fi
@@ -1420,6 +1464,12 @@ to /etc/passwd:
 .ft B
 gclear::4:5::/tmp:/usr/bin/gclear
 .ft R
+.NH 2
+CRAY WARNINGS
+.PP
+The \fBrfbd\fR program will no longer compile on Cray UNICOS.
+For now, this is not much of a problem, because most Crays
+do not have direct attached framebuffers.
 .NH 1
 ENHANCEMENTS
 .PP
