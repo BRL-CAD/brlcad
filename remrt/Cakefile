@@ -46,7 +46,8 @@
 		RTDIR/sh_marble.o RTDIR/sh_stxt.o \
 		RTDIR/sh_points.o RTDIR/sh_toyota.o \
 		RTDIR/sh_spm.o RTDIR/sh_light.o RTDIR/do.o \
-		LIBPKG LIBRT LIBRT_LIBES LIBES
+		LIBPKG LIBPKG_LIBES \
+		LIBRT LIBRT_LIBES LIBES
 
 #define OBJS	/**/
 
