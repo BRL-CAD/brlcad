@@ -30,14 +30,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	In the process, the name was changed to fbzoom from ikzoom.
 	Gary S. Moss, BRL. 03/13/85.
 
-	SCCS id:	@(#) fbzoom.c	1.4
-	Last edit: 	3/13/85 at 22:13:44
-	Retrieved: 	8/13/86 at 03:14:56
+	SCCS id:	@(#) fbzoom.c	1.5
+	Last edit: 	3/14/85 at 17:58:12
+	Retrieved: 	8/13/86 at 03:15:02
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbzoom.c
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbzoom.c	1.4	last edit 3/13/85 at 22:13:44";
+char	sccsTag[] = "@(#) fbzoom.c	1.5	last edit 3/14/85 at 17:58:12";
 #endif
 #include <stdio.h>	
 #include <fb.h>
