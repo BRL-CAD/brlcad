@@ -385,8 +385,6 @@ put_tree_into_comb(comb, dp, old_name, new_name, str)
 	int			node_count = 0;
 	int			tree_index = 0;
 	union tree		*tp;
-	union tree		*final_tree;
-	struct rt_db_internal	intern;
 	matp_t			matrix;
 	struct bu_vls		vls;
 	int			result;
