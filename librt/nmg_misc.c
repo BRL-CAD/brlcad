@@ -53,7 +53,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 struct face *
 nmg_find_top_face( s , flags )
-struct shell *s;
+CONST struct shell *s;
 long *flags;
 {
 	fastf_t max_z=(-MAX_FASTF);
@@ -6188,7 +6188,7 @@ CONST struct rt_tol *tol;
 
 	if( pl_count > 2 )
 	{
-		if( rt_isect_planes( new_v->vg_p->coord , planes , pl_count ) )
+		if( rt_isect_planes( new_v->vg_p->coord , (CONST plane_t *)planes , pl_count ) )
 		{
 			rt_log( "nmg_cacl_new_v: Cannot solve for new geometry at ( %f %f %f )\n",
 				V3ARGS( new_v->vg_p->coord ) );
@@ -6300,7 +6300,7 @@ CONST struct rt_tol *tol;
 			NMG_GET_FU_PLANE( planes[i] , fu );
 		}
 
-		if( rt_isect_planes( new_v->vg_p->coord , planes , NMG_TBL_END( faces ) ) )
+		if( rt_isect_planes( new_v->vg_p->coord , (CONST plane_t *)planes , NMG_TBL_END( faces ) ) )
 		{
 			rt_log( "nmg_complex_vertex_solve: Could not calculate new geometry at ( %f %f %f )\n",
 				V3ARGS( new_v->vg_p->coord ) );
