@@ -407,7 +407,7 @@ CONST struct rt_tol	*tol;
 		/* catch some (but not all) non-voters before they reach
 		 * the polling booth
 		 */
-		if (!nmg_manifold_face(fu)) {
+		if (nmg_dangling_face(fu)) {
 			NMG_INDEX_SET(novote, fu->f_p);
 /***			(void)nmg_tbl(&novote, TBL_INS, &fu->f_p->magic);**/
 
@@ -452,7 +452,7 @@ CONST struct rt_tol	*tol;
 			    	 */
 			    	VJOIN1(plane_pt, pt, dist,projection_dir);
 
-				if (nmg_manifold_face(fu)) {
+				if (!nmg_dangling_face(fu)) {
 					hitcount += nmg_pt_hitmis_f(plane_pt,
 						fu, tol, novote);
 				} else {
