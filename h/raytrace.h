@@ -1917,7 +1917,7 @@ RT_EXTERN(struct rt_mapped_file *rt_open_mapped_file, (CONST char *name,
 RT_EXTERN(void			rt_close_mapped_file, (struct rt_mapped_file *mp));
 
 /* rtassoc.c */
-RT_EXTERN(struct rt_vls *rt_assoc, (char *fname, char *value, char field_sep));
+RT_EXTERN(struct rt_vls *rt_assoc, (char *fname, char *value, int field_sep));
 
 /* pr.c */
 RT_EXTERN(void rt_pr_tree_vls, (struct rt_vls *vls, CONST union tree *tp));
