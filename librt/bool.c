@@ -44,6 +44,7 @@ RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
  *  going through some solid an odd number of times,
  *  or hitting an NMG wire edge or NMG lone vertex.
  */
+void
 rt_weave0seg( segp, PartHdp, ap )
 struct seg		*segp;
 struct partition	*PartHdp;
