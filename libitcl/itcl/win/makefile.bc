@@ -1,0 +1,212 @@
+# Borland C++ 4.52 makefile
+#
+# Copyright (c) 1993-1996 Lucent Technologies
+# based on original from
+# Copyright (c) 1995-1996 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+
+!include "..\..\Makefile.bc"
+
+#
+# Project directories
+#
+# ROOT = top of source tree
+# TMPDIR = location where .obj files should be stored during build
+
+ROOT    	= ..
+TMPDIR  	= .
+TARGET_LIB_ITCL	= $(TARGET_LIB)\Itcl2.2
+TARGET_DOC_ITCL	= $(TARGET_DOC)\Itcl
+
+# uncomment the following line to compile with symbols
+#DEBUG=1
+
+# uncomment the following two lines to compile with TCL_MEM_DEBUG
+#DEBUGDEFINES   =TCL_MEM_DEBUG
+
+INCLUDES	=$(BORLAND)\include;$(ROOT)\generic;$(ROOT)\win;$(TCLDIR)\generic
+LIBDIRS		=$(BORLAND)\lib;$(ROOT)\win
+
+!ifndef DEBUG
+
+# these macros cause maximum optimization and no symbols
+DEBUGLDFLAGS	=
+DEBUGCCFLAGS	= -v- -vi- -O2
+DEBUGLDFLAGS16	= -Oc -Oi -Oa -Or
+!else
+
+# these macros enable debugging
+DEBUGLDFLAGS	= -v
+DEBUGCCFLAGS	= -k -Od -v
+DEBUGLDFLAGS16	=
+!endif
+
+DEFINES		= _RTLDLL;USE_TCLALLOC=0;$(DEBUGDEFINES);NO_DLFCN_H=1;ITCL_NAMESPACES=1
+PROJECTCCFLAGS	= $(DEBUGCCFLAGS) -w-par -w-stu
+
+CFLAGS16_dll	= $(PROJECTCCFLAGS) -I$(INCLUDES) -D$(DEFINES) -WD -ml -c -3 -d -w
+
+LNFLAGS_exe		= -Tpe -aa -c $(DEBUGLDFLAGS) $(BORLAND)\lib\c0w32
+LNFLAGS_CONSOLE_exe	= -Tpe -ap -c $(DEBUGLDFLAGS) $(BORLAND)\lib\c0x32
+LNFLAGS_dll		= -Tpd -aa -c $(DEBUGLDFLAGS) $(BORLAND)\lib\c0d32
+LNFLAGS16_dll		= -Twd -c -C -A=16 $(DEBUGLDFLAGS16) $(BORLAND)\lib\c0dl.obj
+
+LNLIBS_exe	= $(ITCLLIB) $(TCLLIBDIR)\$(TCLLIB) import32 cw32i
+LNLIBS_dll	= $(TCLLIBDIR)\$(TCLLIB) import32 cw32i
+LNLIBS16_dll	= import cwl
+
+#
+# Global makefile settings
+#
+
+.AUTODEPEND
+.CACHEAUTODEPEND
+
+.suffixes: .c .dll .lib .obj .exe
+
+.path.c=$(ROOT)\win;$(ROOT)\generic
+.path.obj=$(TMPDIR)
+.path.dll=$(ROOT)\win;$(WINDIR);$(WINDIR)\SYSTEM32;$(WINDIR)\SYSTEM
+
+ITCLSHOBJS = \
+	$(TMPDIR)\tclAppInit.obj
+
+ITCLOBJS = \
+	$(TMPDIR)\itcl_bicmds.obj \
+	$(TMPDIR)\itcl_class.obj \
+	$(TMPDIR)\itcl_cmds.obj \
+	$(TMPDIR)\itcl_linkage.obj \
+	$(TMPDIR)\itcl_methods.obj \
+	$(TMPDIR)\itcl_objects.obj \
+	$(TMPDIR)\itcl_obsolete.obj \
+	$(TMPDIR)\itcl_parse.obj \
+	$(TMPDIR)\itcl_util.obj \
+	$(TMPDIR)\dllEntryPoint.obj
+
+
+DUMPEXTS = $(TCLLIBDIR)\dumpexts.exe
+ITCLSH = itclsh.exe
+
+#
+# Targets
+#
+
+all:  cfgcln cfgdll $(ITCLDLL) cfgexe $(ITCLSH) cfgcln
+test: $(ITCLSH)
+	$(CP) $(TCLLIBDIR)\*.dll
+	$(ITCLSH) <<|
+		cd ../tests
+		source all
+|
+
+install: all
+	$(MKDIR) "$(TARGET_ROOT)"
+	$(MKDIR) "$(TARGET_BIN)"
+	$(MKDIR) "$(TARGET_LIB_ROOT)"
+	$(MKDIR) "$(TARGET_LIB)"
+	$(MKDIR) "$(TARGET_LIB_ITCL)"
+	$(MKDIR) "$(TARGET_INCLUDE_ROOT)"
+	$(MKDIR) "$(TARGET_INCLUDE)"
+	$(MKDIR) "$(TARGET_DOC)"
+	$(MKDIR) "$(TARGET_DOC_ITCL)"
+	$(CP) $(TMPDIR)\$(ITCLSH) "$(TARGET_BIN)"
+	$(CP) $(TMPDIR)\$(ITCLDLL) "$(TARGET_BIN)"
+	$(CP) $(ROOT)\generic\itcl.h "$(TARGET_INCLUDE)"
+	$(CP) $(ROOT)\library\*.* "$(TARGET_LIB_ITCL)"
+	$(CP) $(ROOT)\win\*.tcl "$(TARGET_LIB_ITCL)"
+	$(CP) $(ROOT)\..\html\Itcl\*.* "$(TARGET_DOC_ITCL)"
+
+# Implicit Targets
+
+.c.obj:
+	@$(BCC32) {$< }
+
+.dll.lib:
+	$(IMPLIB) -c $@ $<
+
+#.rc.res:
+#	$(RC) -i$(INCLUDES) -d__WIN32__;$(DEFINES) $<
+
+.rc.res:
+	$(RC) -i$(INCLUDES) -d__WIN32__; $<
+
+
+#
+# Configuration file targets - these files are implicitly used by the compiler
+#
+
+cfgdll:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -WD
+		-D$(DEFINES) -3 -d -w $(PROJECTCCFLAGS)
+| bcc32.cfg >NUL
+
+cfgexe:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -W
+		-D$(DEFINES) -3 -d -w $(PROJECTCCFLAGS)
+| bcc32.cfg >NUL
+
+cfgcln:
+	-@$(RM) *.cfg
+
+#
+# Executable targets
+#
+
+$(ITCLDLL): $(ITCLOBJS) itcl.def itcl.res
+	$(TLINK32) $(LNFLAGS_dll) @&&|
+		$(ITCLOBJS)
+$@
+-x
+$(LNLIBS_dll)
+|, itcl.def, itcl.res
+
+$(ITCLSH): $(ITCLSHOBJS) $(ITCLLIB) itclsh.res
+	$(TLINK32) $(LNFLAGS_CONSOLE_exe) @&&|
+		$(ITCLSHOBJS)
+$@
+-x
+$(LNLIBS_exe)
+|, &&|
+EXETYPE WINDOWS
+CODE PRELOAD MOVEABLE DISCARDABLE
+DATA PRELOAD MOVEABLE MULTIPLE
+|, itclsh.res
+
+
+# The following rule automatically generates a tcl.def file containing
+# an export entry for every public symbol in the tcl.dll library.
+
+itcl.def: $(ITCLOBJS)
+	$(DUMPEXTS) -o itcl.def $(ITCLDLL) @&&|
+		$(ITCLOBJS)
+|
+
+
+# debugging rules, the .dll and .exe files must be in the same
+# directory as the object files for debugging purposes
+
+$(TMPDIR)\$(ITCLDLL): $(ITCLDLL)
+	$(CP) $(ITCLDLL) $(TMPDIR)
+
+$(TMPDIR)\$(TCLDLL): $(TCLLIBDIR)\$(TCLDLL)
+	$(CP) $(TCLLIBDIR)\$(TCLDLL) $(TMPDIR)
+
+$(TMPDIR)\$(ITCLSH): $(ITCLSH)
+	$(CP) $(ITCLSH) $(TMPDIR)
+
+debug: $(TMPDIR)\$(ITCLDLL) $(TMPDIR)\$(TCLDLL)
+
+# remove all generated files
+
+clean:
+	-@$(RM) *.exe
+	-@$(RM) *.lib
+	-@$(RM) *.dll
+	-@$(RM) *.res
+	-@$(RM) itcl.def
+	-@$(RM) $(TMPDIR)\*.obj
+	-@$(RM) *.cfg
