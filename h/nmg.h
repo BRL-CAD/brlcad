@@ -671,6 +671,7 @@ extern char *rt_calloc();
 
 NMG_EXTERN(struct model		*nmg_mmr, () );
 NMG_EXTERN(struct model		*nmg_mm, () );
+NMG_EXTERN(struct model		*nmg_find_model, (long *magic_p) );
 NMG_EXTERN(struct shell 	*nmg_msv, (struct nmgregion *r_p) );
 NMG_EXTERN(struct nmgregion	*nmg_mrsv, (struct model *m) );
 NMG_EXTERN(struct vertexuse	*nmg_mvu, (struct vertex *v, long *upptr) );
