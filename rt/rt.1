@@ -249,6 +249,26 @@ Turns on stereo viewing.
 The left-eye image is drawn in red,
 and the right-eye image is drawn in blue.
 .TP
+.B \-T#
+or
+.B \-T#,#
+or
+.B \-T#/#
+Sets the calculation tolerances used by
+.IR librt (3).
+If only one number is given, it specifies the distance tolerance.
+Any two entities closer than this distance are considered to be the same.
+The default distance tolerance is 0.005mm.
+If the second number is given, it specifies the value of the dot product
+below which two lines are to be considered perpendicular.
+This number should be near zero, but in any case should be less than 1.
+The default perpendicular tolerance is 1e-6.
+If both calculation tolerances are provided, they shall be separated
+by either a slash ("/") or a comma (","), with no white space between them.
+For example, the default tolerances would be specified as
+.B \-T0.005/1e-6
+on the command line.
+.TP
 .B \-U#
 Sets the "use_air" value.
 Default is 0, which ignores regions that have non-zero aircode values.
@@ -265,8 +285,7 @@ or
 Turns on the
 .I rt (1)
 program debugging flags.  See rt/rdebug.h for the meaning of these bits.
-.TP
-.LP
+.PP
 The
 .B rt
 program is a simple front-end to
@@ -286,11 +305,11 @@ Michael John Muuss
 .SH SOURCE
 SECAD/VLD Computing Consortium, Bldg 394
 .br
-The U. S. Army Ballistic Research Laboratory
+The U. S. Army Research Laboratory
 .br
 Aberdeen Proving Ground, Maryland  21005
 .SH COPYRIGHT
-This software is Copyright (C) 1985 by the United States Army.
+This software is Copyright (C) 1985-1995 by the United States Army.
 All rights reserved.
 .SH BUGS
 Most deficiencies observed while using the
@@ -300,4 +319,4 @@ program are usually with the
 package instead.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.MIL>.
+mail to <CAD@ARL.MIL>, or via the "cadbug.sh" script.
