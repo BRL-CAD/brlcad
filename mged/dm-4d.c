@@ -601,67 +601,54 @@ double ratio;
 	}
 
 	/* Viewing region is from -1.0 to +1.0 */
-	if( ir_is_gt )  {
-
-		first = 1;
-		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-			float	norm[3];
-			switch( vp->vl_draw )  {
-			case VL_CMD_LINE_MOVE:
-				/* Move, start line */
-				if( first == 0 )
-					endline();
-				first = 0;
-				bgnline();
-				v3d( vp->vl_pnt );
-				break;
-			case VL_CMD_LINE_DRAW:
-				/* Draw line */
-				v3d( vp->vl_pnt );
-				break;
-			case VL_CMD_POLY_START:
-				/* Start poly marker & normal */
-				if( first == 0 )
-					endline();
-				/* concave(TRUE); */
-				bgnpolygon();
-				/* Set surface normal (vl_pnt points outward) */
-				norm[X] = vp->vl_pnt[X];
-				norm[Y] = vp->vl_pnt[Y];
-				norm[Z] = vp->vl_pnt[Z];
-				n3f(norm);
-				break;
-			case VL_CMD_POLY_MOVE:
-				/* Polygon Move */
-				v3d( vp->vl_pnt );
-				break;
-			case VL_CMD_POLY_DRAW:
-				/* Polygon Draw */
-				v3d( vp->vl_pnt );
-				break;
-			case VL_CMD_POLY_END:
-				/* Draw, End Polygon */
-				v3d( vp->vl_pnt );
-				endpolygon();
-				first = 1;
-				break;
-			}
+	first = 1;
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+		float	norm[3];
+		switch( vp->vl_draw )  {
+		case VL_CMD_LINE_MOVE:
+			/* Move, start line */
+			if( first == 0 )
+				endline();
+			first = 0;
+			bgnline();
+			v3d( vp->vl_pnt );
+			break;
+		case VL_CMD_LINE_DRAW:
+			/* Draw line */
+			v3d( vp->vl_pnt );
+			break;
+		case VL_CMD_POLY_START:
+			/* Start poly marker & normal */
+			if( first == 0 )
+				endline();
+			/* concave(TRUE); */
+			bgnpolygon();
+			/* Set surface normal (vl_pnt points outward) */
+			norm[X] = vp->vl_pnt[X];
+			norm[Y] = vp->vl_pnt[Y];
+			norm[Z] = vp->vl_pnt[Z];
+			n3f(norm);
+			break;
+		case VL_CMD_POLY_MOVE:
+			/* Polygon Move */
+			v3d( vp->vl_pnt );
+			break;
+		case VL_CMD_POLY_DRAW:
+			/* Polygon Draw */
+			v3d( vp->vl_pnt );
+			break;
+		case VL_CMD_POLY_END:
+			/* Draw, End Polygon */
+			v3d( vp->vl_pnt );
+			endpolygon();
+			first = 1;
+			break;
 		}
-		if( first == 0 ) endline();
-
-		if( lighting_on )  {
-			/* Return to no-lighting mode */
-			mmode(MSINGLE);
-		}
-	} else {
-		/* Non-GT system */
-		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-			/* Viewing region is from -1.0 to +1.0 */
-			if( vp->vl_draw == 0 )
-				move( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
-			else
-				draw( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
-		}
+	}
+	if( first == 0 ) endline();
+	if( lighting_on )  {
+		/* Return to no-lighting mode */
+		mmode(MSINGLE);
 	}
 
 	if (sp->s_soldash)
