@@ -498,6 +498,10 @@ register float *angles, *unitv;
 	angles[4] *= radtodeg;
 }
 
+#define EPSILON 1.0e-7
+
+#define PR_STR(ln,str)	(void)strcpy(&es_display[ln*ES_LINELEN], str);
+
 #define PR_PT(ln,title,base)	(void)sprintf( &es_display[ln*ES_LINELEN],\
 		" %c (%.4f, %.4f, %.4f)%c", \
 		title, (base)[X], (base)[Y], (base)[Z], '\0' )
@@ -527,106 +531,121 @@ register struct solidrec *sp;
 	static float r1, r2;
 	static vect_t unitv;
 	static float ang[5];
+	static struct solidrec local;
 
-	/* convert to local units */
+	/* make a private copy in local units */
 	for(i=0; i<24; i+=3) {
 		VSCALE(work, &sp->s_values[i], base2local);
-		VMOVE(&sp->s_values[i], work);
+		VMOVE(&local.s_values[i], work);
 	}
 
 	switch( sp->s_type ) {
 
 	case TOR:
-		r1 = MAGNITUDE(&sp->s_tor_A);
-		r2 = MAGNITUDE(&sp->s_tor_H);
-		PR_PT( 0, 'V', &sp->s_tor_V );
+		r1 = MAGNITUDE(&local.s_tor_A);
+		r2 = MAGNITUDE(&local.s_tor_H);
+		PR_PT( 0, 'V', &local.s_tor_V );
 
 		(void)sprintf( &es_display[1*ES_LINELEN],
 			" r1=%f, r2=%f%c", r1, r2, '\0' );
 
-		VSCALE( unitv, &sp->s_tor_H, 1.0/r2 );	/* N == H^ */
-		PR_PT( 2, 'N', unitv );
+		if( r2 < EPSILON )  {
+			PR_STR( 2, "N too small");
+		} else {
+			VSCALE( unitv, &local.s_tor_H, 1.0/r2 );/* N == H^ */
+			PR_PT( 2, 'N', unitv );
+		}
 
 		findang( ang, unitv );
 		PR_ANG( 3, "N", ang );
 
-		PR_PT( 4, 'I', &sp->s_tor_C );
-		PR_PT( 5, 'O', &sp->s_tor_E );
-		PR_PT( 6, 'H', &sp->s_tor_H );
+		PR_PT( 4, 'I', &local.s_tor_C );
+		PR_PT( 5, 'O', &local.s_tor_E );
+		PR_PT( 6, 'H', &local.s_tor_H );
 		es_nlines = 7;
 		break;
 
 	case GENARB8:
-		PR_PT( 0, '1', &sp->s_values[0] );
+		PR_PT( 0, '1', &local.s_values[0] );
 		for(i=3; i<=21; i+=3) {
-			VADD2( work, &sp->s_values[i], &sp->s_values[0] );
+			VADD2( work, &local.s_values[i], &local.s_values[0] );
 			PR_PT( i/3, '1'+(i/3), work );
 		}
 		es_nlines = 8;
 		break;
 
 	case GENELL:
-		PR_PT( 0, 'V', &sp->s_ell_V );
+		PR_PT( 0, 'V', &local.s_ell_V );
 
-		ma = MAGNITUDE( &sp->s_ell_A );
-		PR_VECM( 1, 'A', &sp->s_ell_A, ma );
+		ma = MAGNITUDE( &local.s_ell_A );
+		PR_VECM( 1, 'A', &local.s_ell_A, ma );
 
-		VSCALE( unitv, &sp->s_ell_A, 1.0/ma );
-		findang( ang, unitv );
-		PR_ANG( 2, "A", ang );
+		if( ma < EPSILON )  {
+			PR_STR( 2, "A too small");
+		} else {
+			VSCALE( unitv, &local.s_ell_A, 1.0/ma );
+			findang( ang, unitv );
+			PR_ANG( 2, "A", ang );
+		}
 
-		ma = MAGNITUDE( &sp->s_ell_B );
-		PR_VECM( 3, 'B', &sp->s_ell_B, ma );
+		ma = MAGNITUDE( &local.s_ell_B );
+		PR_VECM( 3, 'B', &local.s_ell_B, ma );
 
-		VSCALE( unitv, &sp->s_ell_B, 1.0/ma );
-		findang( ang, unitv );
-		PR_ANG( 4, "B", ang );
+		if( ma < EPSILON )  {
+			PR_STR( 4, "B too small");
+		} else {
+			VSCALE( unitv, &local.s_ell_B, 1.0/ma );
+			findang( ang, unitv );
+			PR_ANG( 4, "B", ang );
+		}
 
-		ma = MAGNITUDE( &sp->s_ell_C );
-		PR_VECM( 5, 'C', &sp->s_ell_C, ma );
+		ma = MAGNITUDE( &local.s_ell_C );
+		PR_VECM( 5, 'C', &local.s_ell_C, ma );
 
-		VSCALE( unitv, &sp->s_ell_C, 1.0/ma );
-		findang( ang, unitv );
-		PR_ANG( 6, "C", ang );
+		if( ma < EPSILON )  {
+			PR_STR( 6, "C too small");
+		} else {
+			VSCALE( unitv, &local.s_ell_C, 1.0/ma );
+			findang( ang, unitv );
+			PR_ANG( 6, "C", ang );
+		}
 
 		es_nlines = 7;
 		break;
 
 	case GENTGC:
-		PR_PT( 0, 'V', &sp->s_tgc_V );
+		PR_PT( 0, 'V', &local.s_tgc_V );
 
-		ma = MAGNITUDE( &sp->s_tgc_H );
-		PR_VECM( 1, 'H', &sp->s_tgc_H, ma );
+		ma = MAGNITUDE( &local.s_tgc_H );
+		PR_VECM( 1, 'H', &local.s_tgc_H, ma );
 
-		VSCALE( unitv, &sp->s_tgc_H, 1.0/ma );
-		findang( ang, unitv );
-		PR_ANG( 2, "H", ang );
+		if( ma < EPSILON )  {
+			PR_STR( 2, "H magnitude too small");
+		} else {
+			VSCALE( unitv, &local.s_tgc_H, 1.0/ma );
+			findang( ang, unitv );
+			PR_ANG( 2, "H", ang );
+		}
 
-		ma = MAGNITUDE( &sp->s_tgc_A );
-		PR_VECM( 3, 'A', &sp->s_tgc_A, ma );
+		ma = MAGNITUDE( &local.s_tgc_A );
+		PR_VECM( 3, 'A', &local.s_tgc_A, ma );
 
-		ma = MAGNITUDE( &sp->s_tgc_B );
-		PR_VECM( 4, 'B', &sp->s_tgc_B, ma );
+		ma = MAGNITUDE( &local.s_tgc_B );
+		PR_VECM( 4, 'B', &local.s_tgc_B, ma );
 
 		(void)sprintf( &es_display[5*ES_LINELEN],
 			" c = %f, d = %f%c",
-			MAGNITUDE( &sp->s_tgc_C ),
-			MAGNITUDE( &sp->s_tgc_D ), '\0' );
+			MAGNITUDE( &local.s_tgc_C ),
+			MAGNITUDE( &local.s_tgc_D ), '\0' );
 
 		/* AxB */
-		VCROSS( unitv, &sp->s_tgc_C, &sp->s_tgc_D );
+		VCROSS( unitv, &local.s_tgc_C, &local.s_tgc_D );
 		VUNITIZE( unitv );
 		findang( ang, unitv );
 		PR_ANG( 6, "AxB", ang );
 
 		es_nlines = 7;
 		break;
-	}
-
-	/* convert back to base units */
-	for(i=0; i<24; i+=3) {
-		VSCALE(work, &sp->s_values[i], local2base);
-		VMOVE(&sp->s_values[i], work);
 	}
 }
 
