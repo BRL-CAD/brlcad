@@ -48,6 +48,7 @@ is different from the factory default.
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
 #include "./solid.h"
