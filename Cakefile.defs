@@ -486,7 +486,7 @@ set -S2 "/bin/sh"
 				-woff 1429,1203,1048,1110,1412,1167,1209 \
 				-Wl,-w
 #			else
-#				define	OPTIMIZER	-O2 \
+#				define	OPTIMIZER	-O2 -Olimit 2000 \
 				-use_readonly_const \
 				-woff 1429,1203,1048,1110,1412,1167,1209 \
 				-Wl,-w
