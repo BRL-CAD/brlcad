@@ -57,7 +57,7 @@ char **argv;
 	struct nmgregion *r_tmp,*r;
 	struct shell *s_tmp,*s;
 	int shell_count=0;
-	char shell_name[NAMESIZE];
+	struct bu_vls shell_name;
 	long **trans_tbl;
 
 	CHECK_DBI_NULL;
@@ -91,6 +91,7 @@ char **argv;
 	m = (struct model *)old_intern.idb_ptr;
 	NMG_CK_MODEL(m);
 
+	bu_vls_init( &shell_name );
 	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 	{
 		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
@@ -107,14 +108,15 @@ char **argv;
 			nmg_m_reindex( m_tmp, 0 );
 			nmg_m_reindex( m, 0 );
 
-			sprintf( shell_name, "shell.%d", shell_count );
-			while( db_lookup( dbip, shell_name, 0 ) != DIR_NULL )
+			bu_vls_printf( &shell_name, "shell.%d", shell_count );
+			while( db_lookup( dbip, bu_vls_addr( &shell_name ), 0 ) != DIR_NULL )
 			{
+				bu_vls_trunc( &shell_name, 0 );
 				shell_count++;
-				sprintf( shell_name, "shell.%d", shell_count );
+				bu_vls_printf( &shell_name, "shell.%d", shell_count );
 			}
 
-			if( (new_dp=db_diradd( dbip, shell_name, -1, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
+			if( (new_dp=db_diradd( dbip, bu_vls_addr( &shell_name ), -1, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
 			  TCL_ALLOC_ERR_return;
 			}
 
@@ -139,7 +141,7 @@ char **argv;
 
 		}
 	}
-
+	bu_vls_free( &shell_name );
 	return TCL_OK;
 }
 
@@ -1051,8 +1053,10 @@ genptr_t	ptr;
 	int suffix_start;
 	int name_length;
 	int j;
-	char format[25];
-	char name[NAMESIZE];
+	char format_v4[25], format_v5[25];
+	struct bu_vls name_v5;
+	char name_v4[NAMESIZE];
+	char *name;
 
 	if(dbip == DBI_NULL)
 	  return;
@@ -1066,7 +1070,8 @@ genptr_t	ptr;
 		return;
 
 	digits = log10( (double)dp->d_uses ) + 2.0;
-	sprintf( format, "_%%0%dd", digits );
+	sprintf( format_v5, "%%s_%%0%dd", digits );
+	sprintf( format_v4, "_%%0%dd", digits );
 
 	name_length = strlen( dp->d_namep );
 	if( name_length + digits + 1 > NAMESIZE - 1 )
@@ -1074,6 +1079,8 @@ genptr_t	ptr;
 	else
 		suffix_start = name_length;
 
+	if( dbip->dbi_version >= 5 )
+		bu_vls_init( &name_v5 );
 	j = 0;
 	for( use_no=0 ; use_no<dp->d_uses ; use_no++ )
 	{
@@ -1083,8 +1090,10 @@ genptr_t	ptr;
 		/* set xform for this object_use to all zeros */
 		bn_mat_zero( use->xform );
 		use->used = 0;
-		NAMEMOVE( dp->d_namep, name );
-		name[NAMESIZE-1] = '\0';                /* ensure null termination */
+		if( dbip->dbi_version < 5 ) {
+			NAMEMOVE( dp->d_namep, name_v4 );
+			name_v4[NAMESIZE-1] = '\0';                /* ensure null termination */
+		}
 
 		/* Add an entry for the original at the end of the list
 		 * This insures that the original will be last to be modified
@@ -1094,13 +1103,33 @@ genptr_t	ptr;
 			use->dp = dp;
 		else
 		{
-			sprintf( &name[suffix_start], format, j );
+			if( dbip->dbi_version < 5 )
+			{
+				sprintf( &name_v4[suffix_start], format_v4, j );
+				name = name_v4;
+			}
+			else
+			{
+				bu_vls_trunc( &name_v5, 0 );
+				bu_vls_printf( &name_v5, format_v5, dp->d_namep, j );
+				name = bu_vls_addr( &name_v5 );
+			}
 
 			/* Insure that new name is unique */
 			while( db_lookup( dbip, name, 0 ) != DIR_NULL )
 			{
 				j++;
-				sprintf( &name[suffix_start], format, j );
+				if( dbip->dbi_version < 5 )
+				{
+					sprintf( &name_v4[suffix_start], format_v4, j );
+					name = name_v4;
+				}
+				else
+				{
+					bu_vls_trunc( &name_v5, 0 );
+					bu_vls_printf( &name_v5, format_v5, dp->d_namep, j );
+					name = bu_vls_addr( &name_v5 );
+				}
 			}
 
 			/* Add new name to directory */
@@ -1114,6 +1143,8 @@ genptr_t	ptr;
 		/* Add new directory pointer to use list for this object */
 		BU_LIST_INSERT( &dp->d_use_hd, &use->l );
 	}
+	if( dbip->dbi_version >= 5 )
+		bu_vls_free( &name_v5 );
 }
 
 static struct directory *
@@ -1139,7 +1170,17 @@ mat_t xform;
 
 	/* If no transformation is to be applied, just use the original */
 	if( bn_mat_is_identity( xform ) )
-		return( dp );
+	{
+		/* find original in the list */
+		for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+		{
+			if( use->dp == dp && use->used == 0 )
+			{
+				use->used = 1;
+				return( dp );
+			}
+		}
+	}
 
 	/* Look for a copy that already has this transform matrix */
 	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
@@ -1152,8 +1193,8 @@ mat_t xform;
 		}
 	}
 
-	found = DIR_NULL;
 	/* get a fresh use */
+	found = DIR_NULL;
 	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
 	{
 		if( use->used )
@@ -1523,7 +1564,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	count = (int *)user_ptr2;
 	child = (char *)user_ptr3;
 
-	if( strncmp( comb_leaf->tr_l.tl_name, child, NAMESIZE ) )
+	if( strcmp( comb_leaf->tr_l.tl_name, child ) )
 		return;
 
 	(*count)++;
