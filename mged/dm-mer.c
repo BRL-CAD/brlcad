@@ -74,7 +74,9 @@ struct dm dm_Mer = {
 	Mer_window, Mer_debug,
 	0,			/* no "displaylist", per. se. */
 	MERBOUND,
-	"mer", "Megatek MERLIN 9200"
+	"mer", "Megatek MERLIN 9200",
+	0,
+	0
 };
 
 extern struct device_values dm_values;	/* values read from devices */

@@ -81,7 +81,9 @@ struct dm dm_X = {
 	0,				/* no displaylist */
 	0,				/* multi-window */
 	PLOTBOUND,
-	"X", "X Window System (X11)"
+	"X", "X Window System (X11)",
+	0,
+	0
 };
 
 extern struct device_values dm_values;	/* values read from devices */
