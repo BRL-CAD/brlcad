@@ -262,7 +262,6 @@ AC_OUTPUT([
 	iwidgets4.0.1/iwidgets.tcl
 	iwidgets4.0.1/pkgIndex.tcl
 	jack/Makefile
-	jove/Makefile
 	lgt/Makefile
 	libbn/Makefile
 	libbu/Makefile

@@ -40,7 +40,6 @@ SUBDIRS=\
 	iges\
 	irprep\
 	jack\
-	jove\
 	lgt\
 	mged\
 	mk\
