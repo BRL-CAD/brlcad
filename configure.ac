@@ -53,7 +53,7 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.52)
 
 AC_INIT(BRL-CAD, 7.0, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
