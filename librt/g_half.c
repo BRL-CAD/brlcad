@@ -159,29 +159,28 @@ register struct xray *rp;
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
-	LOCAL struct half_specific *iplane, *oplane;
-	FAST fastf_t	dn;		/* Direction dot Normal */
-	FAST fastf_t	dxbdn;
 	LOCAL fastf_t	in, out;	/* ray in/out distances */
 
 	in = -INFINITY;
 	out = INFINITY;
-	iplane = oplane = HALF_NULL;
 
-	dxbdn = VDOT( halfp->half_N, rp->r_pt ) - halfp->half_d;
-	if( (dn = -VDOT( halfp->half_N, rp->r_dir )) < -1.0e-10 )  {
-		/* exit point, when dir.N < 0.  out = min(out,s) */
-		out = dxbdn/dn;
-		oplane = halfp;
-	} else if ( dn > 1.0e-10 )  {
-		/* entry point, when dir.N > 0.  in = max(in,s) */
-		in = dxbdn/dn;
-		iplane = halfp;
-	}  else  {
-		/* ray is parallel to plane when dir.N == 0.
-		 * If it is outside the solid, stop now */
-		if( dxbdn > 0.0 )
-			return( SEG_NULL );	/* MISS */
+	{
+		FAST fastf_t	dn;		/* Direction dot Normal */
+		FAST fastf_t	dxbdn;
+
+		dxbdn = VDOT( halfp->half_N, rp->r_pt ) - halfp->half_d;
+		if( (dn = -VDOT( halfp->half_N, rp->r_dir )) < -1.0e-10 )  {
+			/* exit point, when dir.N < 0.  out = min(out,s) */
+			out = dxbdn/dn;
+		} else if ( dn > 1.0e-10 )  {
+			/* entry point, when dir.N > 0.  in = max(in,s) */
+			in = dxbdn/dn;
+		}  else  {
+			/* ray is parallel to plane when dir.N == 0.
+			 * If it is outside the solid, stop now */
+			if( dxbdn > 0.0 )
+				return( SEG_NULL );	/* MISS */
+		}
 	}
 	if( rt_g.debug & DEBUG_TESTING )
 		rt_log("half: in=%f, out=%f\n", in, out);
@@ -191,11 +190,14 @@ register struct xray *rp;
 
 		GET_SEG( segp );
 		segp->seg_stp = stp;
+		/* At most one normal is really defined, but whichever one
+		 * it is, it has value half_N.  Set them both and forget it.
+		 */
 		segp->seg_in.hit_dist = in;
-		segp->seg_in.hit_private = (char *)iplane;
+		VMOVE( segp->seg_in.hit_normal, halfp->half_N );
 
 		segp->seg_out.hit_dist = out;
-		segp->seg_out.hit_private = (char *)oplane;
+		VMOVE( segp->seg_out.hit_normal, halfp->half_N );
 		return(segp);			/* HIT */
 	}
 	/* NOTREACHED */
@@ -205,21 +207,15 @@ register struct xray *rp;
  *  			H L F _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
+ *  The normal is already filled in.
  */
 hlf_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
 {
-	register struct half_specific *halfp =
-		(struct half_specific *)hitp->hit_private;
-
+	/* We are expected to compute hit_point here */
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	if( hitp->hit_private == (char *)0 )  {
-		VREVERSE( hitp->hit_normal, halfp->half_N );	/* "exit" */
-	}  else  {
-		VMOVE( hitp->hit_normal, halfp->half_N );
-	}
 }
 
 /*
