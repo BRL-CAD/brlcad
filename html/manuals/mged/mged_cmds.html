@@ -1790,7 +1790,7 @@ Other commands to build
 	[<I>-gd graphics_display_string</I>] [<I>-dt graphics_type</I>]
 	[<I>-id name</I>] [<I>-c -h -j -s</I>]</DT>
 <DD> This command is used to create an instance of MGED's default Tcl/Tk
-graphical user interface (GUI). The following options are allowed:
+     graphical user interface (GUI). The following options are allowed:
 
 	<table>
 	<tr>
@@ -2433,18 +2433,40 @@ a similar function, but moves the eye_pt without changing the viewing direction.
 </DD>
 <HR>
 
-<DT><a NAME="ls"><B>ls</B> [<I>objects</I>]</DT>
+<DT><a NAME="ls"><B>ls</B> [<I>-a -c -r -s</I>]  [<I>objects</I>]</DT>
 
-<DD>The ``ls'' command with no argument lists the name of every object in the
-database (in alphabetical order). If an argument is supplied, only those <I>objects</I>
-are listed. The argument may include regular expressions for matching.  The <I>ls</I>
-command is a synonym for the <a href="#t">t</a> command.
+<DD>The ``ls'' command with no <I>object</I> argument lists the name of
+     every object in the
+     database (in alphabetical order). If the <I>object</I> argument is supplied,
+     only those <I>objects</I> are listed. The <I>object</I> argument may include
+     regular expressions
+     for matching. The following options are also allowed:
+     <ul>
+       <li> a - list all objects in the database
+       <li> c - list all combinations in the database
+       <li> r - list all regions in the database
+       <li> s - list all solids in the database
+     </ul>
+
+     The <I>ls</I>
+     command is a synonym for the <a href="#t">t</a> command.
+     Note - when any of the above options are used, the output is not
+     formatted.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kbd>mged></kbd> <b>ls solid*</b><br>
-	-- list all objects with names beginning with ``solid''<br>
+	     -- list all objects with names beginning with ``solid''<br>
+	        (output is formatted) <br>
+	<kbd>mged></kbd> <b>ls -a solid*</b><br>
+	     -- list all objects with names beginning with ``solid''<br>
+	<kbd>mged></kbd> <b>ls -s wheel*</b><br>
+	     -- list all solids with names beginning with ``wheel''<br>
+	<kbd>mged></kbd> <b>ls -r wheel*</b><br>
+	     -- list all regions with names beginning with ``wheel''<br>
+	<kbd>mged></kbd> <b>ls -c suspension*</b><br>
+	     -- list all combinations with names beginning with ``suspension''
 	</DD>
 	</DL>
 </DD>
@@ -4190,20 +4212,40 @@ written out.
 </DD>
 <HR>
 
-<DT><a NAME="t"><B>t</B> [&lt;<I>object_names</I>&gt]</DT>
+<DT><a NAME="t"><B>t</B> [<I>-a -c -r -s</I>]  [<I>objects</I>]</DT>
 
-<DD>The ``t'' command with no options displays a table of contents for the current database. This will
-list the name of every object in the database (in alphabetical order). A list of <I>object_names</I> may be supplied,
-and only those names will be listed. The list of <I>object_names</I> may include regular
-expressions that will be matched to object names in the database. This is a synonym for the
-<a href="#ls">ls</a> command.
- 
+<DD>The ``t'' command with no <I>object</I> argument lists the name of
+     every object in the
+     database (in alphabetical order). If the <I>object</I> argument is supplied,
+     only those <I>objects</I> are listed. The <I>object</I> argument may include
+     regular expressions
+     for matching. The following options are also allowed:
+     <ul>
+       <li> a - list all objects in the database
+       <li> c - list all combinations in the database
+       <li> r - list all regions in the database
+       <li> s - list all solids in the database
+     </ul>
+
+     The <I>t</I>
+     command is a synonym for the <a href="#ls">ls</a> command.
+     Note - when any of the above options are used, the output is not
+     formatted.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
-	<kbd>mged></kbd> <b>t r[0-2]*</b><br>
-	-- list the names of all objects that start with ``r0'', ``r1'', or ``r2''<br>
+	<kbd>mged></kbd> <b>t solid*</b><br>
+	     -- list all objects with names beginning with ``solid''<br>
+	        (output is formatted) <br>
+	<kbd>mged></kbd> <b>t -a solid*</b><br>
+	     -- list all objects with names beginning with ``solid''<br>
+	<kbd>mged></kbd> <b>t -s wheel*</b><br>
+	     -- list all solids with names beginning with ``wheel''<br>
+	<kbd>mged></kbd> <b>t -r wheel*</b><br>
+	     -- list all regions with names beginning with ``wheel''<br>
+	<kbd>mged></kbd> <b>t -c suspension*</b><br>
+	     -- list all combinations with names beginning with ``suspension''
 	</DD>
 	</DL>
 </DD>
