@@ -636,10 +636,6 @@ double		t[];
 	 *  has no solution, so 0 is a valid result.
 	 */
 	npts = polyRoots( &C , val );
-	if ( npts != 0 && npts != 2 && npts != 4 ){
-		fprintf(stderr,"stdCone:  polyRoots() returned %d?\n", npts);
-		return (-1);
-	}
 
 	/*  Only real roots indicate an intersection in real space.
 	 *
@@ -653,6 +649,9 @@ double		t[];
 			t[i++] = val[l].re;
 		else
 			--npts;
+	}
+	if ( npts != 0 && npts != 2 && npts != 4 ){
+		fprintf(stderr,"stdCone:  polyRoots() returned %d real roots\n", npts);
 	}
 	return npts;
 }
