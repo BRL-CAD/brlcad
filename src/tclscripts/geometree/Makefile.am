@@ -1,17 +1,24 @@
 # $Id$
 
-tcldir = $(prefix)/tclscripts/geometree
+this_dir = tclscripts/geometree
+tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
 	GeometryBrowser.tcl \
 	geometree.tcl
 
-TCLSH=${top_builddir}/src/other/libtcl/tclsh
+BUILT_SOURCES = \
+	pkgIndex.tcl \
+	tclIndex
 
-install-data-hook:
-	${TCLSH} $(top_srcdir)/src/tclscripts/ami.tcl $(tcldir)
-	${TCLSH} $(top_srcdir)/src/tclscripts/ampi.tcl $(tcldir)
+pkgIndex.tcl:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
 
-uninstall-hook:
-	${RM} -f $(tcldir)/tclIndex
-	${RM} -f $(tcldir)/pkgIndex.tcl
+tclIndex:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
+
+EXTRA_DIST = $(dist_tcl_SCRIPTS)
+
+DISTCLEANFILES = $(BUILT_SOURCES)
+
+MAINTAINERCLEANFILES = Makefile.in

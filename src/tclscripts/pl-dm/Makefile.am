@@ -1,10 +1,25 @@
 # $Id$
 
-tcldir = $(prefix)/tclscripts/pl-dm
-dist_tcl_SCRIPTS = bindings.tcl help.tcl menu.tcl
+this_dir = tclscripts/pl-dm
+tcldir = $(prefix)/$(this_dir)
 
-install-data-hook:
-	${top_builddir}/src/other/libtcl/tclsh $(top_srcdir)/src/tclscripts/ami.tcl $(tcldir)
+dist_tcl_SCRIPTS = \
+	bindings.tcl \
+	help.tcl \
+	menu.tcl
 
-uninstall-hook:
-	${RM} -f $(tcldir)/tclIndex
+BUILT_SOURCES = \
+	pkgIndex.tcl \
+	tclIndex
+
+pkgIndex.tcl:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
+
+tclIndex:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
+
+EXTRA_DIST = $(dist_tcl_SCRIPTS)
+
+DISTCLEANFILES = $(BUILT_SOURCES)
+
+MAINTAINERCLEANFILES = Makefile.in

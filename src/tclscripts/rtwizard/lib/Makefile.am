@@ -1,6 +1,7 @@
 # $Id$
 
-tcldir = $(prefix)/tclscripts/rtwizard/lib
+this_dir = tclscripts/rtwizard/lib
+tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
 	DbPage.itk \
@@ -24,10 +25,18 @@ dist_tcl_SCRIPTS = \
 	PictureTypeF.itcl \
 	Wizard.itk
 
-install-data-hook:
-	${top_builddir}/src/other/libtcl/tclsh $(top_srcdir)/src/tclscripts/ami.tcl $(tcldir)
-	${top_builddir}/src/other/libtcl/tclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(tcldir)
+BUILT_SOURCES = \
+	pkgIndex.tcl \
+	tclIndex
 
-uninstall-hook:
-	${RM} -f $(tcldir)/tclIndex
-	${RM} -f $(tcldir)/pkgIndex.tcl
+pkgIndex.tcl:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
+
+tclIndex:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
+
+EXTRA_DIST = $(dist_tcl_SCRIPTS)
+
+DISTCLEANFILES = $(BUILT_SOURCES)
+
+MAINTAINERCLEANFILES = Makefile.in

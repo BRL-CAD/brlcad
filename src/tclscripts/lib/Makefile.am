@@ -1,6 +1,7 @@
 # $Id$
 
-tcldir = $(prefix)/tclscripts/lib
+this_dir = tclscripts/lib
+tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
 	CellPlot.tcl \
@@ -24,8 +25,18 @@ dist_tcl_SCRIPTS = \
 	View.tcl \
 	ViewAxesControl.tcl
 
-install-data-hook:
-	${top_builddir}/src/other/libtcl/tclsh $(top_srcdir)/src/tclscripts/ami.tcl $(tcldir)
+BUILT_SOURCES = \
+	pkgIndex.tcl \
+	tclIndex
 
-uninstall-hook:
-	${RM} -f $(tcldir)/tclIndex
+pkgIndex.tcl:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
+
+tclIndex:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
+
+EXTRA_DIST = $(dist_tcl_SCRIPTS)
+
+DISTCLEANFILES = $(BUILT_SOURCES)
+
+MAINTAINERCLEANFILES = Makefile.in

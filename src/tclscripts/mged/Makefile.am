@@ -1,6 +1,7 @@
 # $Id$
 
-tcldir = $(prefix)/tclscripts/mged
+this_dir = tclscripts/mged
+tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
 	accel.tcl \
@@ -115,8 +116,20 @@ dist_tcl_DATA = \
 	mike-dedication.txt \
 	mike-tux.ppm
 
-install-data-hook:
-	${top_builddir}/src/other/libtcl/tclsh $(top_srcdir)/src/tclscripts/ami.tcl $(tcldir)
+#	pkgIndex.tcl 
+BUILT_SOURCES = \
+	tclIndex
 
-uninstall-hook:
-	${RM} -f $(tcldir)/tclIndex
+pkgIndex.tcl:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
+
+tclIndex:
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
+
+EXTRA_DIST = \
+	$(dist_tcl_DATA) \
+	$(dist_tcl_SCRIPTS)
+
+DISTCLEANFILES = $(BUILT_SOURCES)
+
+MAINTAINERCLEANFILES = Makefile.in

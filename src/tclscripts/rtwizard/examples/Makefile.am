@@ -1,2 +1,9 @@
 # $Id$
-SUBDIRS = PictureTypeA PictureTypeB PictureTypeC PictureTypeD PictureTypeE PictureTypeF
+
+SUBDIRS = \
+	PictureTypeA \
+	PictureTypeB \
+	PictureTypeC \
+	PictureTypeD \
+	PictureTypeE \
+	PictureTypeF
