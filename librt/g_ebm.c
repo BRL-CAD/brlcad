@@ -49,15 +49,15 @@ struct rt_ebm_specific {
 
 struct structparse rt_ebm_parse[] = {
 #if CRAY && !__STDC__
-	"%s",	RT_EBM_NAME_LEN, "file",	1,	FUNC_NULL,
+	{"%s",	RT_EBM_NAME_LEN, "file",	1,	FUNC_NULL },
 #else
-	"%s",	RT_EBM_NAME_LEN, "file", offsetofarray(struct rt_ebm_internal, file), FUNC_NULL,
+	{"%s",	RT_EBM_NAME_LEN, "file", offsetofarray(struct rt_ebm_internal, file), FUNC_NULL },
 #endif
-	"%d",	1, "w",		RT_EBM_O(xdim),		FUNC_NULL,
-	"%d",	1, "n",		RT_EBM_O(ydim),		FUNC_NULL,
-	"%f",	1, "d",		RT_EBM_O(tallness),	FUNC_NULL,
-	"%f",	16, "mat", offsetofarray(struct rt_ebm_internal,mat), FUNC_NULL,
-	"",	0, (char *)0, 0,			FUNC_NULL
+	{"%d",	1, "w",		RT_EBM_O(xdim),		FUNC_NULL },
+	{"%d",	1, "n",		RT_EBM_O(ydim),		FUNC_NULL },
+	{"%f",	1, "d",		RT_EBM_O(tallness),	FUNC_NULL },
+	{"%f",	16, "mat", offsetofarray(struct rt_ebm_internal,mat), FUNC_NULL },
+	{"",	0, (char *)0, 0,			FUNC_NULL }
 };
 
 RT_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
