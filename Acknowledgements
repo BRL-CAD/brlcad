@@ -57,3 +57,9 @@ Bill Laut (Gull Island Consultants, Inc.)
 	rt/sh_wood.c -- a completely new shader
 	rt/light.h enhancements
 	rt/sh_light.c enhancements for more easily aimable lights.
+
+Henry Spencer
+	Regular expression library
+
+John Ousterhout <john.ousterhout@eng.sun.com>
+	Tcl/Tk
