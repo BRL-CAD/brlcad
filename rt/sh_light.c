@@ -34,7 +34,8 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	offsetofarray(struct light_specific, m)
 
-HIDDEN int	aim_set (struct structparse *, char *, char *, char *);
+RT_EXTERN(HIDDEN void	aim_set, (CONST struct structparse *sdp, CONST char *name,
+			CONST char *base, char *value));
 
 struct structparse light_parse[] = {
 	{"%f",	1, "inten",	LIGHT_O(lt_intensity),	FUNC_NULL },
