@@ -932,7 +932,8 @@ struct rt_tol		*tol;
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
 	struct edgeuse	*eu, *eu2;
-	struct vertex	*vertp[3], ***vells;
+	struct vertex	*vertp[3];
+	struct vertex	***vells = (struct vertex ***)NULL;
 	vect_t		A, Au, B, Bu, Hu, V;
 
 	RT_CK_DB_INTERNAL(ip);
