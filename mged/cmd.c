@@ -237,18 +237,20 @@ static struct funtab funtab[] = {
 	f_evedit,2,MAXARGS,TRUE,
 "e", "<objects>", "edit objects",
 	f_edit,2,MAXARGS,TRUE,
+"eac", "Air_code(s)", "display all regions with given air code",
+	f_eac, 2, MAXARGS,TRUE,
 "echo", "[text]", "echo arguments back",
 	cmd_echo, 1, MAXARGS, TRUE,
 "edcodes", "object(s)", "edit region ident codes",
 	f_edcodes, 2, MAXARGS, TRUE,
+"edmater", "comb(s)", "edit combination materials",
+	f_edmater, 2, MAXARGS, TRUE,
 "edcolor", "", "text edit color table",
 	f_edcolor, 1, 1, TRUE,
 "edcomb", "combname Regionflag regionid air los [GIFTmater]", "edit combination record info",
 	f_edcomb,6,7,TRUE,
 "edgedir", "[delta_x delta_y delta_z]|[rot fb]", "define direction of ARB edge being moved",
 	f_edgedir, 3, 4, TRUE,
-"eac", "Air_code(s)", "display all regions with given air code",
-	f_eac, 2, MAXARGS,TRUE,
 "eid", "ident(s)", "display all regions with given ident code",
 	f_eid, 2, MAXARGS,TRUE,
 "ev",	"[-dnqstuvwT] [-P #] <objects>", "evaluate objects via NMG tessellation",
@@ -438,6 +440,8 @@ static struct funtab funtab[] = {
 	f_rfarb, 1, 27,TRUE,
 "rm", "comb <members>", "remove members from comb",
 	f_rm,3,MAXARGS,TRUE,
+"rmater", "filename", "read combination materials from filename",
+        f_rmater, 2, 2, TRUE,
 "rmats", "file", "load views from file (experimental)",
 	f_rmats,2,MAXARGS,TRUE,
 "rotobj", "xdeg ydeg zdeg", "rotate object being edited",
@@ -542,6 +546,8 @@ static struct funtab funtab[] = {
 	cmd_who,1,2,TRUE,
 "winset", "pathname", "sets the current display manager to pathname",
         f_winset, 1, 2, TRUE,
+"wmater", "filename comb(s)", "write combination materials to filename",
+        f_wmater, 3, MAXARGS, TRUE,
 "x", "lvl", "print solid table & vector list",
 	f_debug, 1,2,TRUE,
 "xpush", "object", "Experimental Push Command",
@@ -1519,7 +1525,7 @@ int record;
 	  struct rt_vls tmp_vls;
 
 	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "distribute_text \{\} \{%s\} \{%s\}",
+	  rt_vls_printf(&tmp_vls, "distribute_text {} {%s} {%s}",
 			rt_vls_addr(&globbed), interp->result);
 	  Tcl_Eval(interp, rt_vls_addr(&tmp_vls));
 	  Tcl_SetResult(interp, "", TCL_STATIC);
@@ -1671,6 +1677,8 @@ struct funtab in_functions[];
 
 	return 1;    /* Bad */
     }
+
+    return 0; /* Good */
 }
 
 
