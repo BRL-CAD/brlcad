@@ -888,7 +888,7 @@ int	interactive;
 {
 #ifdef MGED_TCL
         register struct funtab *ftp;
-	char	buf[512];
+	char	buf[1024];
 #endif
 
 	rt_vls_init( &history );
@@ -939,7 +939,7 @@ int	interactive;
 
 	/* Finally, add in all the MGED commands, if they don't conflict */
         for (ftp = funtab+1; ftp->ft_name != NULL; ftp++)  {
-        	rt_log(buf, "info commands %s", ftp->ft_name);
+        	sprintf(buf, "info commands %s", ftp->ft_name);
         	if( Tcl_Eval(interp, buf) != TCL_OK ||
 		    interp->result[0] != '\0' )  {
         	rt_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name, interp->result);
@@ -1115,7 +1115,9 @@ struct rt_vls	*vp;
 #endif
 			rt_vls_free( &str );
 		}
+#ifndef MGED_TCL
 		if( i < 0 )  continue;	/* some kind of error */
+#endif
 		need_prompt = 1;
 
 		cp = ep+1;
@@ -1526,8 +1528,8 @@ char	*argv[];
 static char rcsid[] = "$Header$ SPRITE (Berkeley)";
 #endif
 
-#include "/m/tcl/tk3.6/tkConfig.h"
-#include "/m/tcl/tk3.6/tkInt.h"
+#include "../libtk/tkConfig.h"
+#include "../libtk/tkInt.h"
 #include <errno.h>
 #include <signal.h>
 
