@@ -89,6 +89,7 @@ int b_flag = 0;			/* use mread() */
 void prep_timer();
 double read_timer();
 double cput, realt;		/* user, real time (seconds) */
+int delay(int us);
 
 void
 err(s)
@@ -162,7 +163,7 @@ prep_timer()
 double
 read_timer(str,len)
 char *str;
-int len;
+unsigned long len;
 {
 #ifdef SYSV
 	long now;
@@ -236,13 +237,17 @@ prusage(r0, r1, e, b, outp)
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-			sprintf(outp,"%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			sprintf(outp,"%ld.%01ld",
+				(long)tdiff.tv_sec,
+				(long)(tdiff.tv_usec/100000));
 			END(outp);
 			break;
 
 		case 'S':
 			tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-			sprintf(outp,"%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			sprintf(outp,"%ld.%01ld",
+				(long)tdiff.tv_sec,
+				(long)(tdiff.tv_usec/100000));
 			END(outp);
 			break;
 
@@ -263,50 +268,53 @@ prusage(r0, r1, e, b, outp)
 			break;
 
 		case 'X':
-			sprintf(outp,"%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+			sprintf(outp,"%ld", (t == 0) ? 0L :
+				(long)((r1->ru_ixrss-r0->ru_ixrss)/t));
 			END(outp);
 			break;
 
 		case 'D':
-			sprintf(outp,"%d", t == 0 ? 0 :
-			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
+			sprintf(outp,"%ld", (t == 0) ? 0L :
+			    (long)((r1->ru_idrss+r1->ru_isrss -
+			    (r0->ru_idrss+r0->ru_isrss))/t));
 			END(outp);
 			break;
 
 		case 'K':
-			sprintf(outp,"%d", t == 0 ? 0 :
-			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
-			    (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
+			sprintf(outp,"%ld", (t == 0) ? 0L :
+			    (long)(((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
+			    (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t));
 			END(outp);
 			break;
 
 		case 'M':
-			sprintf(outp,"%d", r1->ru_maxrss/2);
+			sprintf(outp,"%ld", (long)(r1->ru_maxrss/2));
 			END(outp);
 			break;
 
 		case 'F':
-			sprintf(outp,"%d", r1->ru_majflt-r0->ru_majflt);
+			sprintf(outp,"%ld", (long)r1->ru_majflt-r0->ru_majflt);
 			END(outp);
 			break;
 
 		case 'R':
-			sprintf(outp,"%d", r1->ru_minflt-r0->ru_minflt);
+			sprintf(outp,"%ld", (long)r1->ru_minflt-r0->ru_minflt);
 			END(outp);
 			break;
 
 		case 'I':
-			sprintf(outp,"%d", r1->ru_inblock-r0->ru_inblock);
+			sprintf(outp,"%ld", (long)r1->ru_inblock-r0->ru_inblock);
 			END(outp);
 			break;
 
 		case 'O':
-			sprintf(outp,"%d", r1->ru_oublock-r0->ru_oublock);
+			sprintf(outp,"%ld", (long)r1->ru_oublock-r0->ru_oublock);
 			END(outp);
 			break;
 		case 'C':
-			sprintf(outp,"%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
-				r1->ru_nivcsw-r0->ru_nivcsw );
+			sprintf(outp,"%ld+%ld",
+				(long)(r1->ru_nvcsw-r0->ru_nvcsw),
+				(long)(r1->ru_nivcsw-r0->ru_nivcsw) );
 			END(outp);
 			break;
 		}
@@ -442,7 +450,7 @@ again:
 }
 
 int
-delay(us)
+delay(int us)
 {
 	struct timeval tv;
 
