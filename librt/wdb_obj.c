@@ -518,6 +518,7 @@ wdb_reopen_tcl( clientData, interp, argc, argv )
 		/* --- Scan geometry database and build in-memory directory --- */
 		db_scan(wdbp->dbip, (int (*)())db_diradd, 1, NULL);
 
+		Tcl_AppendResult(interp, wdbp->dbip->dbi_filename, (char *)NULL);
 		return TCL_OK;
 	}
 
