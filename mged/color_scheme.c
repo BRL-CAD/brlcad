@@ -28,6 +28,8 @@
 #include "./ged.h"
 #include "./mged_dm.h"
 
+extern void mged_vls_struct_parse(); /* defined in vparse.c */
+
 void cs_set_dirty_flag();
 void cs_update();
 void cs_set_bg();
