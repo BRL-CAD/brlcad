@@ -532,7 +532,8 @@ Use this path string as BINDIR.
 Using the \fIfull\fR path name of your "bin" directory,
 update the definitions for BINDIR,
 LIBDIR, MANDIR, INCDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
-"cray.sh", "cake/Makefile", and "cakeaux/Makefile".
+"cray.sh", "cake/Makefile", "cakeaux/Makefile",
+"brlman/awf", and "brlman/brlman".
 The shell script "newbindir.sh" can be used to simplify this process
 for you;  just run it with the first argument being
 the full path name of the new BINDIR.
