@@ -59,6 +59,8 @@ proc init_comb { id } {
     frame $top.combF
     frame $top.combFF -relief sunken -bd 2
 
+    set comb_control($id,shader_frame) $top.shaderF
+
     label $top.nameL -text "Name" -anchor w
     entry $top.nameE -relief flat -width 12 -textvar comb_control($id,name)
     menubutton $top.nameMB -relief raised -bd 2\
@@ -112,11 +114,13 @@ proc init_comb { id } {
 	    -menu $top.shaderMB.m -indicatoron 1
     menu $top.shaderMB.m -tearoff 0
     $top.shaderMB.m add command -label plastic\
-	    -command "comb_shader_gui $id plastic"
+	    -command "comb_shader_gui $id plastic $top.shaderF"
     $top.shaderMB.m add command -label mirror\
-	    -command "comb_shader_gui $id mirror"
+	    -command "comb_shader_gui $id mirror $top.shaderF"
     $top.shaderMB.m add command -label glass\
-	    -command "comb_shader_gui $id glass"
+	    -command "comb_shader_gui $id glass $top.shaderF"
+    $top.shaderMB.m add command -label texture\
+	    -command "comb_shader_gui $id texture $top.shaderF"
 
     label $top.combL -text "Boolean Expression:" -anchor w
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
@@ -163,25 +167,25 @@ proc init_comb { id } {
     grid columnconfigure $top.airF 0 -weight 1
     grid columnconfigure $top.airFF 0 -weight 1
 
-    grid $top.shaderL -sticky "ew" -in $top.shaderF
-    grid $top.shaderE $top.shaderMB -sticky "ew" -in $top.shaderFF
-    grid $top.shaderFF -sticky "ew" -in $top.shaderF
-    grid $top.losL -sticky "ew" -in $top.losF
-    grid $top.losE -sticky "ew" -in $top.losFF
-    grid $top.losFF -sticky "ew" -in $top.losF
-    grid $top.shaderF x $top.losF -sticky "ew" -in $top.gridF -pady $pady
-    grid columnconfigure $top.shaderF 0 -weight 1
-    grid columnconfigure $top.shaderFF 0 -weight 1
-    grid columnconfigure $top.losF 0 -weight 1
-    grid columnconfigure $top.losFF 0 -weight 1
-
     grid $top.giftL -sticky "ew" -in $top.giftF
     grid $top.giftE -sticky "ew" -in $top.giftFF
     grid $top.giftFF -sticky "ew" -in $top.giftF
-    grid $top.giftF x x -sticky "ew" -in $top.gridF -pady $pady
-#    grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady $pady
+    grid $top.losL -sticky "ew" -in $top.losF
+    grid $top.losE -sticky "ew" -in $top.losFF
+    grid $top.losFF -sticky "ew" -in $top.losF
+    grid $top.giftF x $top.losF -sticky "ew" -in $top.gridF -pady $pady
     grid columnconfigure $top.giftF 0 -weight 1
     grid columnconfigure $top.giftFF 0 -weight 1
+    grid columnconfigure $top.losF 0 -weight 1
+    grid columnconfigure $top.losFF 0 -weight 1
+
+    grid $top.shaderL -sticky "ew" -in $top.shaderF
+    grid $top.shaderE $top.shaderMB -sticky "ew" -in $top.shaderFF
+    grid $top.shaderFF -sticky "ew" -in $top.shaderF
+    grid $top.shaderF - - -sticky "ew" -in $top.gridF -pady $pady
+#    grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady $pady
+    grid columnconfigure $top.shaderF 0 -weight 1
+    grid columnconfigure $top.shaderFF 0 -weight 1
 
     grid $top.isRegionCB $top.inheritCB x -sticky "ew" -in $top.gridF2\
 	    -ipadx 4 -ipady 4
@@ -226,6 +230,9 @@ proc comb_apply { id } {
 
     set top .$id.comb
     set comb_control($id,comb) [$top.combT get 0.0 end]
+
+# apply the parameters in the shader frame to the shader string
+    do_shader_apply comb_control($id,shader) $id
 
     if {$comb_control($id,isRegion)} {
 	if {$comb_control($id,id) < 0} {
@@ -321,6 +328,12 @@ proc comb_reset { id } {
     if {$save_isRegion != $comb_control($id,isRegion)} {
 	comb_toggle_isRegion $id
     }
+
+    if { [llength $comb_control($id,shader)] > 0 } {
+	do_shader comb_control($id,shader) $id $comb_control($id,shader_frame)
+    } else {
+	catch { destroy $comb_control($id,shader_gui) }
+    }
 }
 
 proc comb_dismiss { id top } {
@@ -332,9 +345,6 @@ proc comb_dismiss { id top } {
 
 proc comb_toggle_isRegion { id } {
     global comb_control
-
-    set padx 4
-    set pady 2
 
     set top .$id.comb
     grid remove $top.gridF
@@ -449,7 +459,7 @@ proc comb_set_colorMB { id } {
     set_WidgetRGBColor $top.colorMB $comb_control($id,color)
 }
 
-proc comb_shader_gui { id shader_type } {
+proc comb_shader_gui { id shader_type shader_frame } {
     global comb_control
 
     set current_shader_type [lindex $comb_control($id,shader) 0]
@@ -458,7 +468,7 @@ proc comb_shader_gui { id shader_type } {
 	set comb_control($id,shader) $shader_type
     }
 
-    set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id]
+    set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id $shader_frame]
 }
 
 #proc comb_select_gift { id } {
@@ -471,9 +481,6 @@ proc comb_shader_gui { id shader_type } {
 #	raise $top
 #	return
 #    }
-#
-#    set padx 4
-#    set pady 2
 #
 #    toplevel $top -screen $player_screen($id)
 #
