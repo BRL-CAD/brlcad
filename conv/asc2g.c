@@ -647,6 +647,7 @@ polyhbld()
 	while( *cp != '\n' && *cp != '\0' )  {
 		*np++ = *cp++;
 	}
+	*np = '\0';
 
 	mk_polysolid(ofp, name);
 }
