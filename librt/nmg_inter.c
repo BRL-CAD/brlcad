@@ -179,6 +179,7 @@ rt_log("parallel\n");
 			dist[0] = hy / pdir[Y];
 			dist[1] = (hy + qdir[Y]) / pdir[Y];
 		}
+rt_log("dist[0] = %g, dist[1] = %g\n", dist[0], dist[1] );
 
 		/*  If within tolerance of an endpoint (0, 1), make exact. */
 		ptol = tol->dist / sqrt( pdir[X]*pdir[X] + pdir[Y]*pdir[Y] );
@@ -293,7 +294,12 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	v2d[0] = pt2d[0] = pt[0];
 	v2d[1] = pt2d[1] = pt[1];
 	v2d[2] = pt2d[2] = 0;		/* flag */
-rt_log("%d (%g,%g,%g) becomes (%g,%g) %g\n", v->index, V3ARGS(vg->coord), V3ARGS(pt) );
+
+#if 0
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+#endif
+		rt_log("%d (%g,%g,%g) becomes (%g,%g) %g\n",
+			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
 }
 
 /*
@@ -348,11 +354,8 @@ HPRINT("fg->N", fg->N);
 	mat_fromto( is->proj, fg->N, to );
 	VADD2SCALE( centroid, fg->max_pt, fg->min_pt, 0.5 );
 	MAT4X3PNT( centroid_proj, is->proj, centroid );
-VPRINT("centroid", centroid);
-VPRINT("centroid_proj", centroid_proj);
 	centroid_proj[Z] = fg->N[3];	/* pull dist from origin off newZ */
 	MAT_DELTAS_VEC_NEG( is->proj, centroid_proj );
-mat_print("3d->2d xform matrix", is->proj);
 
 	/* Clear out the 2D vertex array, setting flag in [2] to -1 */
 	for( i = words-1-2; i >= 0; i -= 3 )  {
@@ -464,11 +467,20 @@ struct vertexuse	*vu;
 {
 	fastf_t		dist;
 	int		status;
+	point_t		endpt;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(vu);
+
 	/* Perhaps a 2d formulation would be better? */
+#if 0
+	/* This needs to be done every pass:  it changes as edges are cut */
+	nmg_get_2d_vertex( is->pt, eu->vu_p->v_p, is, fu );
+	nmg_get_2d_vertex( endpt, eu->eumate_p->vu_p->v_p, is, fu );
+	VSUB2( is->dir, endpt, is->pt );
+#endif
+
 	status = rt_isect_pt_lseg( &dist,
 		eu->vu_p->v_p->vg_p->coord,
 		eu->eumate_p->vu_p->v_p->vg_p->coord,
@@ -781,31 +793,92 @@ struct vertex	*v1mate;
 }
 
 /*
- *  Actual 2d intersector, called from nmg_isect_2edge_2face via nmg_visit()
+ *  For the moment, a quick hack to see if breaking an edge at a given
+ *  vertex results in a null edge being created.
+ */
+static void
+nmg_ck_face_worthless_edges( fu )
+CONST struct faceuse	*fu;
+{
+	CONST struct loopuse	*lu;
+
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+		struct edgeuse	*eu;
+		struct vertexuse *vu2;
+
+		NMG_CK_LOOPUSE(lu);
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+			continue;
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+			struct edgeuse		*neu;
+			neu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
+			if( eu->vu_p == neu->vu_p )
+				rt_bomb("edge runs between two copies of vu??\n");
+			if( eu->vu_p->v_p == neu->vu_p->v_p )  {
+#if 0
+				nmg_pr_eu( eu, NULL );
+				nmg_pr_eu( neu, NULL );
+#endif
+				rt_log("eu=x%x, neu=x%x, v=x%x\n", eu, neu, eu->vu_p->v_p);
+				rt_log("eu=x%x, neu=x%x, v=x%x\n", eu->eumate_p, neu->eumate_p, eu->eumate_p->vu_p->v_p);
+				rt_bomb("edge runs from&to same vertex\n");
+			}
+		}
+	}
+}
+
+/*
+ *			N M G _ I S E C T _ E D G E 2 P _ E D G E 2 P
+ *
+ *  Actual 2d edge/edge intersector
  */
 void
-nmg_isect_edge2p_edge2p( is, eu1, eu2, fu )
+nmg_isect_edge2p_edge2p( is, eu1, eu2, fu1, fu2 )
 struct nmg_inter_struct	*is;
 struct edgeuse		*eu1;
 struct edgeuse		*eu2;
-CONST struct faceuse	*fu;		/* for plane equation */
+struct faceuse		*fu1;		/* fu of eu1, for plane equation */
+struct faceuse		*fu2;		/* fu of eu2, for error checks */
 {
 	point_t	other_start;
 	point_t	other_end;
 	vect_t	other_dir;
 	vect_t	dir;
-	register fastf_t	*pt2d;
 	fastf_t	dist[2];
 	int	status;
 	point_t	hit_pt;
 	struct vertexuse	*vu;
+	point_t		endpt;
+	struct vertexuse	*vu1a, *vu1b;
+	struct vertexuse	*vu2a, *vu2b;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
+	vu1a = eu1->vu_p;
+	vu1b = eu1->eumate_p->vu_p;
+	vu2a = eu2->vu_p;
+	vu2b = eu2->eumate_p->vu_p;
+	NMG_CK_VERTEXUSE(vu1a);
+	NMG_CK_VERTEXUSE(vu1b);
+	NMG_CK_VERTEXUSE(vu2a);
+	NMG_CK_VERTEXUSE(vu2b);
 
-	nmg_get_2d_vertex( other_start, eu2->vu_p->v_p, is, fu );
-	nmg_get_2d_vertex( other_end, eu2->eumate_p->vu_p->v_p, is, fu );
+	/* First, a topology check. */
+	if( vu1a->v_p == vu2a->v_p || vu1a->v_p == vu2b->v_p || vu2a->v_p == vu1b->v_p || vu2b->v_p == vu1b->v_p )  {
+		/* These edges intersect, topologically.  No work. */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("edge2p_edge2p: shared topology x%x--x%x, x%x--x%x\n", vu1a->v_p, vu1b->v_p, vu2a->v_p, vu2b->v_p);
+		goto topo;
+	}
+
+	/* This needs to be done every pass:  it changes as edges are cut */
+	nmg_get_2d_vertex( is->pt, vu1a->v_p, is, fu1 );
+	nmg_get_2d_vertex( endpt, vu1b->v_p, is, fu1 );
+	VSUB2( is->dir, endpt, is->pt );
+
+	nmg_get_2d_vertex( other_start, vu2a->v_p, is, fu2 );
+	nmg_get_2d_vertex( other_end, vu2b->v_p, is, fu2 );
 	VSUB2( other_dir, other_end, other_start );
 
 	status = rt_isect_2dlseg_2dlseg(&dist[0], is->pt, is->dir,
@@ -825,116 +898,237 @@ CONST struct faceuse	*fu;		/* for plane equation */
 	if( status == 0 )  {
 		/* Need to handle special case of colinear overlapping
 		 * edges.  There may be 2 intersect points.
+		 * dist[1] has special meaning for this return status:
+		 * it's distance w.r.t. eu1's 1st point, not eu2's 1st.
 		 */
-		rt_bomb("2d overlapping edges\n");
+rt_log("2d overlapping edges\n");
+nmg_ck_face_worthless_edges( fu1 );
+nmg_ck_face_worthless_edges( fu2 );
+		if( dist[0] == 0 )  {
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log("\tfirst pt of eu1 intersects first pt of eu2\n");
+			(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1a->l.magic);
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
+			nmg_jv(vu1a->v_p, vu2a->v_p);
+		} else if( dist[0] == 1 )  {
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log("\tfirst pt of eu1 intersects second pt of eu2\n");
+			(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1a->l.magic);
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
+			nmg_jv(vu1a->v_p, vu2b->v_p);
+		} else if( dist[0] > 0 && dist[0] < 1 )  {
+			/* Break eu1 into two pieces */
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+/*YYY*/
+				rt_log("\tvu=x%x first pt of eu2=x%x breaks eu1=x%x\n",
+					vu2a, eu2, eu1 );
+				rt_log("before nmg_ebreak(v=x%x, e=x%x)\n", vu2a->v_p, eu1->e_p );
+				nmg_pr_v( vu2a->v_p, NULL );
+				nmg_pr_eu( eu1, NULL );
+				nmg_pr_eu( eu1->eumate_p, NULL );
+			}
+			(void)nmg_ebreak( vu2a->v_p, eu1->e_p );
+			nmg_ck_face_worthless_edges( fu1 );
+			nmg_ck_face_worthless_edges( fu2 );
+		}
+		if( dist[1] == 0 )  {
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log("\tfirst pt of eu1 intersects second pt of eu2\n");
+			(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1a->l.magic);
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
+			nmg_jv(vu1a->v_p, vu2b->v_p);
+		} else if( dist[1] == 1 )  {
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log("\tsecond pt of eu1 intersects second pt of eu2\n");
+			(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
+			nmg_jv(vu1b->v_p, vu2b->v_p);
+		} else if( dist[1] > 0 && dist[1] < 1 )  {
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+				rt_log("\tvu=x%x second pt of eu2=x%x breaks eu1=x%x\n", vu2b, eu2, eu1 );
+				nmg_pr_eu( eu1, NULL );
+				nmg_pr_eu( eu2, NULL );
+			}
+			(void)nmg_ebreak( vu2b->v_p, eu1->e_p );
+			nmg_ck_face_worthless_edges( fu1 );
+			nmg_ck_face_worthless_edges( fu2 );
+		}
+		/* XXX What about intersecting the other way, to make sure
+		 * XXX that eu2 is broken in the right place too.
+		 */
+		return;
 	}
 
 	/* There is only one intersect point.  Break one or both edges. */
 
 
-	/* The ray defined by the edgeuse intersects the other edge.
+	/* The ray defined by the edgeuse intersects the eu2.
 	 * Tolerances have already been factored in.
 	 * The edge exists over values of 0 <= dist <= 1.
 	 */
 	VJOIN1( hit_pt, is->pt, dist[0], is->dir );	/* 3d */
 
 	if ( dist[0] == 0 )  {
-		/* First point of ref edge is on other edge, by geometry */
+		/* First point of eu1 is on eu2, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\tfirst point of ref edge is intersect point\n");
-		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &eu1->vu_p->l.magic);
+			rt_log("\tvu=x%x first point of eu1 is intersect point\n", vu1a);
+		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 
 		/* Edges not colinear. Either join up with a matching vertex,
-		 * or break other edge on our vert.
+		 * or break eu2 on our vert.
 		 */
 		if( dist[1] == 0 )  {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("\tfirst point of other edge matches first point of ref edge\n");
-			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &eu2->vu_p->l.magic);
-			nmg_jv(eu1->vu_p->v_p, eu2->vu_p->v_p);
+				rt_log("\tfirst point of eu2 matches first point of eu1\n");
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
+			nmg_jv(vu1a->v_p, vu2a->v_p);
 			return;
 		}
 		if( dist[1] >= 1 )  {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("\tsecond point of other edge matches first point of ref edge\n");
-			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &eu2->eumate_p->vu_p->l.magic);
-			nmg_jv(eu1->vu_p->v_p, eu2->eumate_p->vu_p->v_p);
+				rt_log("\tsecond point of eu2 matches first point of eu1\n");
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
+			nmg_jv(vu1a->v_p, vu2b->v_p);
 			return;
 		}
-		/* Break other edge on our first vertex */
+		/* Break eu2 on our first vertex */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\tbreaking other edge on first point of ref edge\n");
-		(void)nmg_ebreak( eu1->vu_p->v_p, eu2->e_p );
-		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &eu2->eumate_p->vu_p->l.magic);
+			rt_log("\tbreaking eu2 on first point of eu1\n");
+		(void)nmg_ebreak( vu1a->v_p, eu2->e_p );
+		nmg_ck_face_worthless_edges( fu1 );
+		nmg_ck_face_worthless_edges( fu2 );
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		return;
 	}
 
 	if ( dist[0] >= 1 )  {
-		/* Second point of ref edge is on other edge, by geometry */
+		/* Second point of eu1 is on eu2, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\tsecond point of ref edge is intersect point\n");
-		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &eu1->eumate_p->vu_p->l.magic);
+			rt_log("\tvu=x%x second point of eu1 is intersect point\n", vu1b);
+		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
 
 		/* Edges not colinear. Either join up with a matching vertex,
-		 * or break other edge on our vert.
+		 * or break eu2 on our vert.
 		 */
 		if( dist[1] == 0 )  {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("\tfirst point of other edge matches second point of ref edge\n");
-			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &eu2->vu_p->l.magic);
-			nmg_jv(eu1->eumate_p->vu_p->v_p, eu2->vu_p->v_p);
+				rt_log("\tfirst point of eu2 matches second point of eu1\n");
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
+			nmg_jv(vu1b->v_p, vu2a->v_p);
 			return;
 		}
 		if( dist[1] >= 1 )  {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("\tsecond point of other edge matches second point of ref edge\n");
-			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &eu2->eumate_p->vu_p->l.magic);
-			nmg_jv(eu1->eumate_p->vu_p->v_p, eu2->eumate_p->vu_p->v_p);
+				rt_log("\tsecond point of eu2 matches second point of eu1\n");
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
+			nmg_jv(vu1b->v_p, vu2b->v_p);
 			return;
 		}
-		/* Break other edge on our second vertex */
+		/* Break eu2 on our second vertex */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\tbreaking other edge on second point of ref edge\n");
-		(void)nmg_ebreak( eu1->eumate_p->vu_p->v_p, eu2->e_p );
-		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &eu2->eumate_p->vu_p->l.magic);
+			rt_log("\tbreaking eu2 on second point of eu1\n");
+		(void)nmg_ebreak( vu1b->v_p, eu2->e_p );
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
+		nmg_ck_face_worthless_edges( fu1 );
+		nmg_ck_face_worthless_edges( fu2 );
 		return;
 	}
 
 	/* Intersection is in the middle of the reference edge */
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("\tintersect is in middle of ref edge, breaking it\n");
+		rt_log("\tintersect is in middle of eu1, breaking it\n");
 
 	/* Edges not colinear. Either join up with a matching vertex,
-	 * or break other edge on our vert.
+	 * or break eu2 on our vert.
 	 */
 	if( dist[1] == 0 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\tintersect point is start of other edge\n");
-		vu = eu2->vu_p;
+			rt_log("\t\tintersect point is first pt of eu2\n");
+		vu = vu2a;
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
 		nmg_ebreak( vu->v_p, eu1->e_p );
-		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &eu1->eumate_p->vu_p->l.magic);
+		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
+		nmg_ck_face_worthless_edges( fu1 );
+		nmg_ck_face_worthless_edges( fu2 );
 	} else if( dist[1] >= 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\tintersect point is end of other edge\n");
-		vu = eu2->eumate_p->vu_p;
+			rt_log("\t\tintersect point is second pt of eu2\n");
+		vu = vu2b;
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
 		nmg_ebreak( vu->v_p, eu1->e_p );
-		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &eu1->eumate_p->vu_p->l.magic);
+		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
+		nmg_ck_face_worthless_edges( fu1 );
+		nmg_ck_face_worthless_edges( fu2 );
 	} else {
 		/* Intersection is in the middle of both, split edge */
 		struct vertex	*new_v;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		    	VPRINT("Breaking both edges at intersect point", hit_pt);
+		    	VPRINT("\t\tBreaking both edges at intersect point", hit_pt);
 		new_v = nmg_e2break( eu1->e_p, eu2->e_p );
 		nmg_vertex_gv( new_v, hit_pt );	/* 3d geometry */
 
+		/* new_v is at far end of eu1 */
 		if( eu1->eumate_p->vu_p->v_p != new_v ) rt_bomb("new_v 1\n");
-		if( eu2->eumate_p->vu_p->v_p != new_v ) rt_bomb("new_v 2\n");
+/*???*/		if( eu2->eumate_p->vu_p->v_p != new_v ) rt_bomb("new_v 2\n");
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &eu1->eumate_p->vu_p->l.magic);
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &eu2->eumate_p->vu_p->l.magic);
+		nmg_ck_face_worthless_edges( fu1 );
+		nmg_ck_face_worthless_edges( fu2 );
 	}
-	return;
+
+	/*
+	 *  Now that processing is done and edges may have been shortened,
+	 *  enrole any shared topology (representing edge intersections)
+	 *  in the list of vu's encountered along this edge.
+	 *  Note that either (or both) vu's may be shared in the case
+	 *  of co-linear edges.
+	 */
+topo:
+	vu1a = eu1->vu_p;
+	vu1b = eu1->eumate_p->vu_p;
+	vu2a = eu2->vu_p;
+	vu2b = eu2->eumate_p->vu_p;
+	/*
+	 *  vu1a and vu1b and their duals MUST be listed on
+	 *  the intersection line.
+	 *  Given that the edges are coplanar, if each vu does not
+	 *  have a (dual) reference in the other face, then we need to
+	 *  create a self-loop vu over there.
+	 */
+	(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1a->l.magic);
+	(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
+
+	/* Find dual of vu1a in fu2 */
+	if( vu1a->v_p == vu2a->v_p )  {
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
+	} else if( vu1a->v_p == vu2b->v_p )  {
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
+	} else if( vu=nmg_find_vertexuse_on_face(vu1a->v_p, fu2) )  {
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
+	} else {
+		struct loopuse *plu;
+		plu = nmg_mlv(&fu2->l.magic, vu1a->v_p, OT_UNSPEC);
+		nmg_loop_g(plu->l_p);
+		vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
+		NMG_CK_VERTEXUSE(vu);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
+	}
+
+	/* Find dual of vu1b in fu2 */
+	if( vu1b->v_p == vu2a->v_p )  {
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
+	} else if( vu1b->v_p == vu2b->v_p )  {
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
+	} else if( vu=nmg_find_vertexuse_on_face(vu1b->v_p, fu2) )  {
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
+	} else {
+		struct loopuse *plu;
+		plu = nmg_mlv(&fu2->l.magic, vu1a->v_p, OT_UNSPEC);
+		nmg_loop_g(plu->l_p);
+		vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
+		NMG_CK_VERTEXUSE(vu);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
+	}
 }
 
 /*
@@ -1302,6 +1496,8 @@ struct faceuse	*fu2;
  *  intersect with all the other edges of that face.
  *  This edge represents a line of intersection, and so a
  *  cutjoin/mesh pass will be needed for each one.
+ * XXX How to really treat this edge as a ray, so that the state machine
+ * XXX knows how to get in and out of loops?
  */
 static void
 nmg_isect_edge2p_face2p( is, eu, fu, eu_fu )
@@ -1312,7 +1508,6 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 {
 	struct nmg_ptbl vert_list1, vert_list2;
 	struct loopuse	*lu;
-	point_t		endpt;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu);
@@ -1324,14 +1519,6 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 	/* See if this edge is topologically on other face already */
 	if( nmg_find_vertexuse_on_face( eu->vu_p->v_p, fu ) &&
 	    nmg_find_vertexuse_on_face( eu->eumate_p->vu_p->v_p, fu ) )  return;
-
-	nmg_get_2d_vertex( is->pt, eu->vu_p->v_p, is, fu );
-	nmg_get_2d_vertex( endpt, eu->eumate_p->vu_p->v_p, is, fu );
-	VSUB2( is->dir, endpt, is->pt );
-	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		VPRINT("isect ray 2d is->pt ", is->pt);
-		VPRINT("isect ray 2d is->dir", is->dir);
-	}
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
@@ -1347,6 +1534,7 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		struct edgeuse	*eu2;
+
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			struct vertexuse	*vu;
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
@@ -1359,7 +1547,7 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 		for( RT_LIST_FOR( eu2, edgeuse, &lu->down_hd ) )  {
 			/* isect eu with eu */
 			/* XXX same question here */
-			nmg_isect_edge2p_edge2p( is, eu, eu2, fu );
+			nmg_isect_edge2p_edge2p( is, eu, eu2, eu_fu, fu );
 		}
 	}
 
@@ -1409,8 +1597,10 @@ struct faceuse		*fu1, *fu2;
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
-	/* r71 is a useful demonstration */
-/*	rt_g.NMG_debug |= DEBUG_POLYSECT; */
+#if 1
+	/* r71, r23 are useful demonstrations */
+	rt_g.NMG_debug |= DEBUG_POLYSECT;
+#endif
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
@@ -1572,7 +1762,9 @@ CONST struct rt_tol	*tol;
 		/* co-planar */
 		rt_log("co-planar faces.\n");
 		bs.coplanar = 1;
+#if 0
 		nmg_isect_two_face2p( &bs, fu1, fu2 );
+#endif
 		break;
 	case -2:
 		/* parallel and distinct, no intersection */
