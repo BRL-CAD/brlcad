@@ -105,8 +105,8 @@ struct rt_tol *tol;
 	plane_t plane;
 	struct faceuse *fu_end;
 
-	bzero(vertl, sizeof(vertl));
-	bzero(f_vertl, sizeof(f_vertl));
+	bzero((char *)vertl, sizeof(vertl));
+	bzero((char *)f_vertl, sizeof(f_vertl));
 
 	/* front right */
 	f_vertl[0] = &vertl[0];

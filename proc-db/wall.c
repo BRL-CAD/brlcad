@@ -116,7 +116,7 @@ char *s;
     	if (!trans_matrix) {
     		trans_matrix = (matp_t)rt_calloc(sizeof(mat_t), 1,
     					"transformation matrix");
-    		bcopy(rt_identity, trans_matrix, sizeof(mat_t));
+    		bcopy( (char *)rt_identity, (char *)trans_matrix, sizeof(mat_t));
     	}
 	
     	MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
@@ -196,7 +196,7 @@ char *s;
     	if (!trans_matrix) {
     		trans_matrix = (matp_t)rt_calloc(sizeof(mat_t), 1,
 	    		"rotation matrix");
-    		bcopy(rt_identity, trans_matrix, sizeof(mat_t));
+    		bcopy((char *)rt_identity, (char *)trans_matrix, sizeof(mat_t));
     	}
 	buildHrot(trans_matrix,
 		rx * degtorad,
@@ -482,7 +482,7 @@ struct wmember *wm_hd;
 	wm = mk_addmember(sol_name, wm_hd, WMOP_UNION);
 
 	if (trans_matrix)
-		bcopy(trans_matrix, wm->wm_mat, sizeof(mat_t));
+		bcopy((char *)trans_matrix, (char *)wm->wm_mat, sizeof(mat_t));
 }
 
 mk_h_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
