@@ -33,7 +33,7 @@
 static char rcs_ident[] = "$Id$";
 #endif
 
-#include "stdio.h"
+#include <stdio.h>
 #include "rle.h"
 #include "rle_code.h"
 #ifdef USE_STDLIB_H

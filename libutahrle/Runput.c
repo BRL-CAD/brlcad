@@ -90,7 +90,7 @@
  * 		    follow the last byte in the run.
  */
 
-#include	"stdio.h"
+#include	<stdio.h>
 #include	"rle_put.h"
 #include	"rle.h"
 #include	"rle_code.h"

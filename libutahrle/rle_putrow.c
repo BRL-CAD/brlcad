@@ -30,7 +30,7 @@
  * $Id$
  */
  
-#include "stdio.h"
+#include <stdio.h>
 #include "rle_put.h"
 #include "rle.h"
 #ifdef USE_STDLIB_H
