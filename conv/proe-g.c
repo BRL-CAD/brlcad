@@ -791,6 +791,8 @@ char line[MAX_LINE_LEN];
 	int start;
 	int i;
 	int face_count=0;
+	int degenerate_count=0;
+	int small_count=0;
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
@@ -842,15 +844,20 @@ char line[MAX_LINE_LEN];
 	start += 4;
 	while( isspace( line[++start] ) && line[start] != '\0' );
 
-	/* get name */
-	i = (-1);
-	start--;
-	while( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
-		name[++i] = line[start];
-	name[++i] = '\0';
+	if( line[start] != '\0' )
+	{
+		/* get name */
+		i = (-1);
+		start--;
+		while( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
+			name[++i] = line[start];
+		name[++i] = '\0';
 
-	/* get object id */
-	sscanf( &line[start] , "%x" , &obj );
+		/* get object id */
+		sscanf( &line[start] , "%x" , &obj );
+	}
+	else
+		strcpy( name, "noname" );
 
 	rt_log( "Converting Part: %s\n" , name );
 
@@ -954,6 +961,31 @@ char line[MAX_LINE_LEN];
 					rt_log( "Unrecognized line: %s\n", line1 );
 			}
 
+			/* check for degenerate faces */
+			if( verts[0].pt[X] == verts[1].pt[X] &&
+			    verts[0].pt[Y] == verts[1].pt[Y] &&
+			    verts[0].pt[Z] == verts[1].pt[Z] )
+			{
+				degenerate_count++;
+				continue;
+			}
+
+			if( verts[0].pt[X] == verts[2].pt[X] &&
+			    verts[0].pt[Y] == verts[2].pt[Y] &&
+			    verts[0].pt[Z] == verts[2].pt[Z] )
+			{
+				degenerate_count++;
+				continue;
+			}
+
+			if( verts[1].pt[X] == verts[2].pt[X] &&
+			    verts[1].pt[Y] == verts[2].pt[Y] &&
+			    verts[1].pt[Z] == verts[2].pt[Z] )
+			{
+				degenerate_count++;
+				continue;
+			}
+
 			if( normal[X] != 0.0 || normal[Y] != 0.0 || normal[Z] != 0.0 )
 			{
 				vect_t v1, v2;
@@ -1003,6 +1035,7 @@ char line[MAX_LINE_LEN];
 				nmg_edge_g( eu );
 
 			area = nmg_loop_plane_area( lu , pl );
+
 			if( area > 0.0 )
 			{
 				if( normal[X] != 0.0 || normal[Y] != 0.0 || normal[Z] != 0.0 )
@@ -1017,6 +1050,7 @@ char line[MAX_LINE_LEN];
 			}
 			else
 			{
+				small_count++;
 				bu_log( "Ignoring small face:\n" );
 				bu_log( "\t(%g %g %g)\n", V3ARGS( verts[0].pt ) );
 				bu_log( "\t(%g %g %g)\n", V3ARGS( verts[1].pt ) );
@@ -1051,12 +1085,23 @@ char line[MAX_LINE_LEN];
 		char *save_name;
 
 		rt_log( "\t%s has no solid parts, ignoring\n" , name );
+		if( degenerate_count )
+			rt_log( "\t%d faces were degenerate\n", degenerate_count );
+		if( small_count )
+			rt_log( "\t%d faces were too small\n", small_count );
 		save_name = (char *)rt_malloc( NAMESIZE*sizeof( char ), "save_name" );
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
 		strncpy( save_name, brlcad_name, NAMESIZE );
 		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
 		nmg_km( m );
 		return;
+	}
+	else
+	{
+		if( degenerate_count )
+			rt_log( "\t%d faces were degenerate\n", degenerate_count );
+		if( small_count )
+			rt_log( "\t%d faces were too small\n", small_count );
 	}
 
 	if( !polysolid || (do_simplify && face_count < 175) )
