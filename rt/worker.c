@@ -24,7 +24,7 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "../rt/mathtab.h"
+#include "./mathtab.h"
 #include "./rdebug.h"
 
 /***** view.c variables imported from rt.c *****/
@@ -251,13 +251,13 @@ int cpu;
 
 				right = CRT_BLEND(a.a_color);
 
-				VADD2(  point, point,
+				VSUB2(  point, point,
 					left_eye_delta );
 				if( perspective )  {
 					VSUB2( a.a_ray.r_dir,
 						point, eye_model );
 					VUNITIZE( a.a_ray.r_dir );
-					VMOVE( a.a_ray.r_pt, eye_model );
+					VADD2( a.a_ray.r_pt, eye_model, left_eye_delta );
 				} else {
 					VMOVE( a.a_ray.r_pt, point );
 				}
