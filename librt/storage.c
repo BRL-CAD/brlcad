@@ -61,14 +61,18 @@ char *str;
 #ifdef MEMDEBUG
 	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
 #endif MEMDEBUG
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	if( rt_g.rtg_parallel )  {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	}
 	ptr = malloc(cnt);
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	if( rt_g.rtg_parallel ) {
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	}
 
 	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )
-		rt_log("%7x malloc%5d %s\n", ptr, cnt, str);
+		rt_log("%7x malloc%6d %s\n", ptr, cnt, str);
 	if( ptr==(char *)0 )  {
-		rt_log("rt_malloc: Insufficient memory available, using %d\n", sbrk(0));
+		rt_log("rt_malloc: Insufficient memory available, sbrk(0)=x%x\n", sbrk(0));
 		rt_bomb("rt_malloc: malloc failure");
 	}
 #ifdef MEMDEBUG
@@ -123,10 +127,14 @@ ok:	;
 #endif MEMDEBUG
 
 	if(rt_g.debug&DEBUG_MEM) rt_log("%7x free %s\n", ptr, str);
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	if( rt_g.rtg_parallel ) {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	}
 	*((int *)ptr) = -1;	/* zappo! */
 	free(ptr);
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	if( rt_g.rtg_parallel ) {
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	}
 }
 
 /*
@@ -145,12 +153,16 @@ char *str;
 	savedptr = ptr;
 	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
 #endif MEMDEBUG
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	if( rt_g.rtg_parallel ) {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	}
 	ptr = realloc(ptr,cnt);
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	if( rt_g.rtg_parallel ) {
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	}
 
 	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )
-		rt_log("%7x realloc%5d %s\n", ptr, cnt, str);
+		rt_log("%7x realloc%6d %s\n", ptr, cnt, str);
 	if( ptr==(char *)0 )  {
 		rt_log("rt_realloc: Insufficient memory available, using %d\n", sbrk(0));
 		rt_bomb("rt_realloc: malloc failure");
