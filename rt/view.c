@@ -262,9 +262,13 @@ struct partition *PartHeadp;
 		struct application sub_ap;
 		FAST fastf_t f;
 
-		if( rt_g.debug || pp->pt_outhit->hit_dist >= INFINITY ||
+		if( pp->pt_outhit->hit_dist >= INFINITY ||
 		    ap->a_level > MAX_BOUNCE )  {
-			VSET( ap->a_color, 1, 0, 0 );
+		    	if( rt_g.debug )  {
+				VSET( ap->a_color, 9, 0, 0 );	/* RED */
+		    	} else {
+		    		VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
+		    	}
 			rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 				pp->pt_inseg->seg_stp->st_name,
 				ap->a_x, ap->a_y, ap->a_level);

@@ -443,9 +443,9 @@ rt_g.debug = odebug;
 					pp->pt_inseg->seg_stp->st_name,
 					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
 				if(rt_g.debug) {
-					VSET( ap->a_color, 0, 1, 0 );	/* green */
+					VSET( ap->a_color, 0, 9, 0 );	/* green */
 				} else {
-					VSET( ap->a_color, .16, .16, .16 );	/* grey */
+					VSETALL( ap->a_color, .18 ); /* 18% grey */
 				}
 				goto finish;
 			}
