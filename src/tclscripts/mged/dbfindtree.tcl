@@ -1,8 +1,8 @@
 #                  D B F I N D T R E E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004 United States Government as represented by the
-# U.S. Army Research Laboratory.
+# Copyright (C) 2004-2005 United States Government as represented by
+# the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License

@@ -1,7 +1,7 @@
 /*              D Y N A M I C _ G E O M E T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2004 United States Government as represented by
+ * Copyright (C) 2003-2005 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

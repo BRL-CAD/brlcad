@@ -1,7 +1,7 @@
 /*                           G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2004 United States Government as represented by
+ * Copyright (C) 1993-2005 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 char MGEDCopyRight_Notice[] = "@(#) \
 BRL-CAD is Open Source software. \
-This software is Copyright (C) 1985-2004 by the United States Government \
+This software is Copyright (C) 1985-2005 by the United States Government \
 as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 #include "common.h"

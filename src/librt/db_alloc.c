@@ -1,7 +1,7 @@
 /*                      D B _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2004 United States Government as represented by
+ * Copyright (C) 1988-2005 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

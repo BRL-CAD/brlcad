@@ -2,8 +2,8 @@
 #                S H A R E D L I B L I N K . S H
 # BRL-CAD
 #
-# Copyright (c) 2004 United States Government as represented by the
-# U.S. Army Research Laboratory.
+# Copyright (C) 2004-2005 United States Government as represented by
+# the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
