@@ -182,16 +182,14 @@ extern int              tran(), irot();
 extern void             mged_setup();
 extern void		dir_build(), buildHrot(), dozoom(),
 			pr_schain(), itoa();
-extern void		eraseobj(), mged_finish(), slewview(),
+extern void		eraseobj(), eraseobjall(), mged_finish(), slewview(),
 			mmenu_init(), moveHinstance(), moveHobj(),
 			quit(), refresh(), rej_sedit(), sedit(),
 			setview(),
 			adcursor(), mmenu_display(), mmenu_set(), mmenu_set_all(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
 extern void		sedit_menu();
-#if 0
 extern void		attach(), get_attached();
-#endif
 extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern void		sig2(), sig3();
 
