@@ -53,3 +53,25 @@ CONST struct face_g_snurb * srf;
 
 	return (struct face_g_snurb *) n;
 }
+
+struct edge_g_cnurb *
+rt_nurb_crv_copy( crv )
+CONST struct edge_g_cnurb * crv;
+{
+	register struct edge_g_cnurb * n;
+	int i;
+
+	NMG_CK_CNURB( crv );
+
+	n = (struct edge_g_cnurb *) rt_nurb_new_cnurb( crv->order, 
+		crv->k.k_size, crv->c_size, crv->pt_type);
+
+	for( i = 0; i < crv->k.k_size; i++)
+		n->k.knots[i] = crv->k.knots[i];
+
+	for( i = 0; i < crv->c_size * 
+		RT_NRUB_EXTRACT_COORDS(crv->pt_type); i++)
+		n->ctl_points[i] = crv->ctl_points[i];
+
+	return (struct edge_g_cnurb *) n;
+}
