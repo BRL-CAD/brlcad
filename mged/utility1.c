@@ -611,7 +611,7 @@ int pathpos;
 			return;
 		}
 		regflag = 0;
-		nparts = dp->d_len-1;;
+		nparts = dp->d_len-1;
 		if(record.c.c_flags == 'R') {
 			/* first region in this path */
 			regflag = 1;
