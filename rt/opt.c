@@ -105,8 +105,9 @@ int		sub_ymax = 0;
 fastf_t		frame_delta_t = 1./30.; /* 1.0 / frames_per_second_playback */
 /***** end variables shared with view.c *****/
 
+/* temporary kludge to get rt to use a tighter tolerance for raytracing */
+fastf_t		rt_dist_tol = 0.0005;	/* Value for rti_tol.dist */
 
-fastf_t		rt_dist_tol = 0;	/* Value for rti_tol.dist */
 fastf_t		rt_perp_tol = 0;	/* Value for rti_tol.perp */
 char		*framebuffer;		/* desired framebuffer */
 
