@@ -176,7 +176,7 @@ int	flag;
 	{
 	ir_doing_paint = flag;
 	if( ir_doing_paint )
-		{	char	input_ln[MAX_LN];
+		{
 		get_Input( input_ln, MAX_LN, "Enter temperature : " );
 		if( sscanf( input_ln, "%d", &ir_paint ) != 1 )
 			ir_doing_paint = FALSE;
@@ -1185,8 +1185,7 @@ char	*msg;
 _LOCAL_ void
 sgi_Read_Keyboard( args )
 char	**args;
-	{	char		input_ln[BUFSIZ];
-		register int	i;
+	{	register int	i;
 		register char	*eof_flag;
 	(void) get_Input( input_ln, BUFSIZ, ": " );
 	if( (args[0] = strtok( input_ln, " \t" )) == NULL )

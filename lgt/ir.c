@@ -34,7 +34,7 @@ int
 ir_Chk_Table()
 	{
 	if( ir_table == PIXEL_NULL )
-		{	char	input_ln[MAX_LN];
+		{
 		get_Input( input_ln, MAX_LN, "Enter minimum temperature : " );
 		if( sscanf( input_ln, "%d", &ir_min ) != 1 )
 			{
