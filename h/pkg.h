@@ -65,7 +65,7 @@ struct pkg_conn {
 	char		*pkc_curpos;	/* current position in pkg_buf */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
-#define PKC_ERROR	((struct pkg_conn *)(-1))
+#define PKC_ERROR	((struct pkg_conn *)(-1L))
 
 extern struct pkg_conn *pkg_open();
 extern struct pkg_conn *pkg_transerver();
