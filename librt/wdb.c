@@ -52,6 +52,9 @@ wdb_fopen( const char *filename )
 {
 	struct db_i	*dbip;
 
+	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
+		rt_init_resource( &rt_uniresource, 0 );
+
 	if( (dbip = db_create( filename )) == DBI_NULL )
 		return RT_WDB_NULL;
 
@@ -87,6 +90,9 @@ wdb_dbopen( struct db_i *dbip, int mode )
 		bu_log("wdb_dbopen(%s): read-only\n",
 			dbip->dbi_filename );
 	}
+
+	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
+		rt_init_resource( &rt_uniresource, 0 );
 
 	BU_GETSTRUCT(wdbp, rt_wdb);
 	wdbp->l.magic = RT_WDB_MAGIC;
