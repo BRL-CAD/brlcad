@@ -44,9 +44,9 @@ static char RCSstorage[] = "@(#)$Header$";
 
 #define MDB_MAGIC	0x12348969
 struct memdebug {
-	char	*mdb_addr;
-	char	*mdb_str;
-	int	mdb_len;
+	char		*mdb_addr;
+	CONST char	*mdb_str;
+	int		mdb_len;
 };
 static struct memdebug	*rt_memdebug;
 static int		rt_memdebug_len = 0;
@@ -59,9 +59,9 @@ static int		rt_memdebug_len = 0;
  */
 HIDDEN void
 rt_memdebug_add( ptr, cnt, str )
-char	*ptr;
-unsigned int cnt;
-char	*str;
+char		*ptr;
+unsigned int	cnt;
+CONST char	*str;
 {
 	register struct memdebug *mp;
 top:
@@ -113,7 +113,7 @@ top:
 HIDDEN struct memdebug *
 rt_memdebug_check( ptr, str )
 register char	*ptr;
-char		*str;
+CONST char	*str;
 {
 	register struct memdebug *mp = &rt_memdebug[rt_memdebug_len-1];
 	register long	*ip;
@@ -181,7 +181,7 @@ rt_memdebug_move( old_ptr, new_ptr, new_cnt, new_str )
 char	*old_ptr;
 char	*new_ptr;
 int	new_cnt;
-char	*new_str;
+CONST char	*new_str;
 {
 	register struct memdebug *mp = &rt_memdebug[rt_memdebug_len-1];
 
