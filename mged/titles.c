@@ -332,9 +332,9 @@ struct bu_vls *overlay_vls;
 		for( i=0 ; i<num_lines ; i++ )
 			DM_DRAW_LINE_2D( dmp,
 			   GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
-			   GED2PM1(((int)(lines[i*2][Y]*GED_MAX))),
+			   GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dmp->dm_aspect),
 			   GED2PM1(((int)(lines[i*2+1][X]*GED_MAX))),
-			   GED2PM1(((int)(lines[i*2+1][Y]*GED_MAX))) );
+			   GED2PM1(((int)(lines[i*2+1][Y]*GED_MAX)) * dmp->dm_aspect) );
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
 			DM_DRAW_STRING_2D( dmp, pl[i].str,
