@@ -211,9 +211,12 @@ char *argv[];
 	else
 		png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
 
-	if( verbose )
-		if( png_get_gAMA( png_p, info_p, &gamma ) )
+	if( png_get_gAMA( png_p, info_p, &gamma ) )
+	{
+		if( verbose )
 			bu_log( "gamma: %g\n", gamma );
+		png_set_gAMA( png_p, info_p, gamma );
+	}
 
 	if( verbose )
 	{
@@ -313,4 +316,24 @@ char *argv[];
 		fprintf( stderr, "png-bw: clipped %d high, %d, low\n",
 			clip_high, clip_low );
 	}
+
+	if( verbose )
+	{
+		png_timep mod_time;
+		png_textp text;
+		int num_text;
+
+		png_read_end(png_p, info_p );
+		if( png_get_text( png_p, info_p, &text, &num_text ) )
+		{
+			int i;
+
+			for( i=0 ; i<num_text ; i++ )
+				bu_log( "%s: %s\n", text[i].key, text[i].text );
+		}
+		if( png_get_tIME( png_p, info_p, &mod_time ) )
+			bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
+				mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
+	}
+
 }
