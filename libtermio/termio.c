@@ -31,6 +31,10 @@ char	sccsTag[] = "@(#) termio.c	1.5	last edit 6/18/86 at 09:57:54";
 #define	XTABS	(TAB1 | TAB2)
 #endif
 
+#ifndef _NFILE
+#define _NFILE	32
+#endif
+
 static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
 #else		/* USG derivatives */
 static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
