@@ -839,7 +839,7 @@ register struct application *ap;
 		 *  All partitions will have valid in and out distances.
 		 *  a_ray_length is treated similarly to a_onehit.
 		 */
-		if( (ap->a_onehit > 0 || ap->a_ray_length > 0.0) && RT_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+		if( ap->a_onehit > 0 && RT_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 			int	done;
 
 			/* Weave these segments into partition list */
@@ -852,6 +852,19 @@ register struct application *ap;
 
 			/* See if enough partitions have been acquired */
 			if( done > 0 )  goto hitit;
+		}
+
+		if( ap->a_ray_length > 0.0 && ss.box_end >= ap->a_ray_length )
+		{
+			/* Weave these segments into partition list */
+			rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
+
+			/* Evaluate regions upto box_end */
+			(void)rt_boolfinal( &InitialPart, &FinalPart,
+				last_bool_start, ss.box_end, regionbits, ap );
+			last_bool_start = ss.box_end;
+
+			goto hitit;
 		}
 
 		/* Push ray onwards to next box */
