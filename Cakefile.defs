@@ -1941,9 +1941,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBORLE_DIR	../liborle
 #	define	LIBORLE		-L''LIBORLE_DIR -lorle
 #	define	LIBORLE_DEP	[[LIBVERS ../liborle/liborle.ARCH_SUF]]
-#	define	LIBRLE_DIR	../librle
+#	define	LIBRLE_DIR	../libutahrle
 #	define	LIBRLE		-L''LIBRLE_DIR -lrle
-#	define	LIBRLE_DEP	[[LIBVERS ../librle/librle.ARCH_SUF]]
+#	define	LIBRLE_DEP	[[LIBVERS ../libutahrle/libutahrle.ARCH_SUF]]
 #	define  LIBFFT		-L../libfft -lfft
 #	define	LIBFFT_DEP	[[LIBVERS ../libfft/libfft.ARCH_SUF]]
 #	define	LIBWDB_DIR	../libwdb
@@ -2030,9 +2030,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBORLE_DIR	../.liborle.MTYPE
 #	define	LIBORLE		-L''LIBORLE_DIR -lorle
 #	define	LIBORLE_DEP	[[LIBVERS ../.liborle.MTYPE/liborle.ARCH_SUF]]
-#	define	LIBRLE_DIR	../.librle.MTYPE
+#	define	LIBRLE_DIR	../.libutahrle.MTYPE
 #	define	LIBRLE		-L''LIBRLE_DIR -lrle
-#	define	LIBRLE_DEP	[[LIBVERS ../.librle.MTYPE/librle.ARCH_SUF]]
+#	define	LIBRLE_DEP	[[LIBVERS ../.libutahrle.MTYPE/libutahrle.ARCH_SUF]]
 #	define	LIBFFT_DIR	../.libfft.MTYPE
 #	define	LIBFFT		-L''LIBFFT_DIR -lfft
 #	define	LIBFFT_DEP	[[LIBVERS ../.libfft.MTYPE/libfft.ARCH_SUF]]

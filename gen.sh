@@ -192,7 +192,7 @@ BDIRS="bench \
 	remrt \
 	libcursor \
 	liborle \
-	librle \
+	libutahrle \
 	libfft \
 	proc-db \
 	jack \
