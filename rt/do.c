@@ -32,6 +32,11 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
+#ifdef unix
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
 #ifdef HEP
 # include <synch.h>
 # undef stderr
@@ -531,7 +536,45 @@ int framenumber;
 		}  else  {
 			sprintf( framename, "%s.%d", outputfile, framenumber );
 		}
-		if( (outfp = fopen( framename, "w" )) == NULL )  {
+#ifdef unix
+		/*
+		 *  This code allows the computation of a particular frame
+		 *  to a disk file to be resumed automaticly.
+		 *  This is worthwhile crash protection.
+		 */
+		{
+			struct stat sb;
+			if( stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
+				/* File exists, with partial results */
+				register int pixoff, byteoff;
+				pixoff = sb.st_size / sizeof(RGBpixel);
+				byteoff = pixoff * sizeof(RGBpixel);
+				if( pix_start == 0 && pix_end > pixoff )  {
+					fprintf(stderr, "Continuing with pixel %d (%d, %d)\n",
+						pixoff,
+						pixoff % width,
+						pixoff / width );
+					pix_start = pixoff;
+					/* Append to existing file */
+					if( (outfp = fopen( framename, "a" )) == NULL )  {
+						perror( framename );
+						if( matflag )  return(0);	/* OK */
+						return(-1);			/* Bad */
+					}
+					/*  Ensure that positioning is precisely right.
+					 *  The file size is almost certainly not
+					 *  an exact multiple of three bytes.
+					 */
+					if( fseek( outfp, (long)byteoff, 0 ) != 0 )  {
+						perror("fseek");
+						fclose( outfp );
+						outfp = NULL;
+					}
+				}
+			}
+		}
+#endif
+		if( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )  {
 			perror( framename );
 			if( matflag )  return(0);	/* OK */
 			return(-1);			/* Bad */
