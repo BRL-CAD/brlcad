@@ -1,13 +1,15 @@
-
 /*
  *	Solids structure definition
  */
+#define MAX_PATH	8	/* Maximum depth of path */
 struct solid  {
 	float	s_size;		/* Distance across solid, in model space */
 	vect_t	s_center;	/* Center point of solid, in model space */
 	unsigned s_addr;	/* Display processor's core address */
 	unsigned s_bytes;	/* Display processor's core length */
-	struct directory *s_path[8];	/* Full `path' name */
+	struct veclist *s_vlist;/* Pointer to vector list */
+	int	s_vlen;		/* Length of vector list (structs) */
+	struct directory *s_path[MAX_PATH];	/* Full `path' name */
 	char	s_last;		/* index of last path element */
 	char	s_flag;		/* UP = object visible, DOWN = obj invis */
 	char	s_iflag;	/* UP = illuminated, DOWN = regular */
@@ -30,7 +32,9 @@ extern int		ndrawn;
 			} else { \
 				FreeSolid = (p)->s_forw; \
 			} }
-#define FREE_SOLID(p) {(p)->s_forw = FreeSolid; FreeSolid = (p);}
+#define FREE_SOLID(p) {(p)->s_forw = FreeSolid; FreeSolid = (p); \
+	if((p)->s_vlist) (void)free((char *)(p)->s_vlist); \
+	(p)->s_vlist = 0; }
 
 #define FOR_ALL_SOLIDS(p)  \
 	for( p=HeadSolid.s_forw; p != &HeadSolid; p = p->s_forw )

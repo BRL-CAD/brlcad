@@ -142,7 +142,7 @@ eedit()
 
 	(void)time( &stime );
 	for( i=1; i < numargs; i++ )  {
-		if( (dp = lookup( cmd_args[i], NOISY )) == DIR_NULL )
+		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
 		/*
@@ -189,7 +189,7 @@ f_delobj()
 	register int i;
 
 	for( i = 1; i < numargs; i++ )  {
-		if( (dp = lookup( cmd_args[i], NOISY )) != DIR_NULL )
+		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) != DIR_NULL )
 			eraseobj( dp );
 	}
 	dmaflag = 1;
@@ -213,7 +213,7 @@ f_list()
 	register int i;
 	union record record;
 	
-	if( (dp = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	db_getrec( dp, &record, 0 );
@@ -318,7 +318,7 @@ f_status()
 /* Fix the display processor after a hardware error, as best we can */
 f_fix()
 {
-	dm_restart();
+	dmp->dmr_restart();
 	dmaflag = 1;		/* causes refresh() */
 }
 
@@ -419,9 +419,11 @@ f_rt()
 void
 f_attach()
 {
+	attach( cmd_args[1] );
 }
 
 void
 f_release()
 {
+	release();
 }

@@ -15,12 +15,10 @@
 #include "ged.h"
 
 int	regmemb;	/* # of members left to process in a region */
-long	memb_loc;	/* disk loc of present member of processed region */
 char	memb_oper;	/* operation for present member of processed region */
 int	reg_pathpos;	/* pathpos of a processed region */
 
-#define	MAXLEVELS	8
-struct directory	*path[MAXLEVELS];	/* Record of current path */
+struct directory	*path[MAX_PATH];	/* Record of current path */
 
 /*
  *			D R A W H O B J
@@ -39,9 +37,9 @@ matp_t old_xlate;
 	auto mat_t new_xlate;		/* Accumulated xlation matrix */
 	auto int i;
 
-	if( pathpos >= MAXLEVELS )  {
-		(void)printf("nesting exceeds %d levels\n", MAXLEVELS );
-		for(i=0; i<MAXLEVELS; i++)
+	if( pathpos >= MAX_PATH )  {
+		(void)printf("nesting exceeds %d levels\n", MAX_PATH );
+		for(i=0; i<MAX_PATH; i++)
 			(void)printf("/%s", path[i]->d_namep );
 		(void)putchar('\n');
 		return;			/* ERROR */
@@ -64,7 +62,6 @@ matp_t old_xlate;
 		 * Enter new solid (or processed region) into displaylist.
 		 */
 		path[pathpos] = dp;
-		memb_loc = dp->d_addr;
 
 		GET_SOLID( sp );
 		if( sp == SOLID_NULL )
@@ -112,7 +109,7 @@ matp_t old_xlate;
 			regmemb--;
 			memb_oper = rec.M.m_relation;
 		}
-		if( (nextdp = lookup( mp->m_instname, NOISY )) == DIR_NULL )
+		if( (nextdp = lookup( mp->m_instname, LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		if( mp->m_brname[0] != '\0' )  {
 			register struct directory *tdp;		/* XXX */
@@ -121,7 +118,7 @@ matp_t old_xlate;
 			 * branch naming.  User is responsible for his
 			 * branch names being unique.
 			 */
-			tdp = lookup( mp->m_brname, QUIET );
+			tdp = lookup( mp->m_brname, LOOKUP_QUIET );
 			if( tdp != DIR_NULL )
 				nextdp = tdp; /* use existing alias */
 			else

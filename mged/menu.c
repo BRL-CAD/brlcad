@@ -1,6 +1,5 @@
-/*	SCCSID	%W%	%E%	*/
 /*
- *			E 1 1 . C
+ *			M E N U . C
  *
  * Functions -
  *	menu_init		Clear global menu data
@@ -9,14 +8,6 @@
  *
  * Authors -
  *	Bob Suckling
- *
- *		R E V I S I O N   H I S T O R Y
- *
- *	05/27/83  MJM	Adapted code to run on VAX;  numerous cleanups.
- *
- *	09-Sep-83 DAG	Overhauled.
- *
- *	11/02/83  MJM	Changed to use display manager.
  */
 
 #include	"ged_types.h"
@@ -64,7 +55,7 @@ int			y;	/*=== points @ the tube. */
 	if( menu_list == (struct menu_item *)NULL )
 		return;
 
-	dm_puts(menu_list->menu_string, XLIM, y, 0, DM_YELLOW );
+	dmp->dmr_puts(menu_list->menu_string, XLIM, y, 0, DM_YELLOW );
 	if( menu_on == FALSE )
 		return;
 
@@ -72,11 +63,11 @@ int			y;	/*=== points @ the tube. */
 	menu_y = y + MENU_DY / 2;
 	y += MENU_DY;		/* skip space for first item.*/
 	for( i = 1; (str = (menu_list + i)->menu_string)[0] != '\0'; ++i )  {
-		dm_puts( str, MENUX, y, 0, DM_YELLOW );
+		dmp->dmr_puts( str, MENUX, y, 0, DM_YELLOW );
 		if( i == i_menu_pen )  {
 			/* pen is near, intensify */
-			dm_puts(str,MENUX,y,0, DM_WHITE );
-			dm_puts(str,MENUX,y,0, DM_WHITE );
+			dmp->dmr_puts(str,MENUX,y,0, DM_WHITE );
+			dmp->dmr_puts(str,MENUX,y,0, DM_WHITE );
 		}
 		y += MENU_DY; /* skip space for next item.*/
 	}

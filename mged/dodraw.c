@@ -4,10 +4,15 @@
  * Functions -
  *	drawHsolid	Manage the drawing of a COMGEOM solid
  *	freevgcore	De-allocate display processor memory
- *
- *	Ballistic Research Laboratory
- *	U. S. Army
+ *  
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include "ged_types.h"
 #include "3d.h"
@@ -15,15 +20,22 @@
 #include "solid.h"
 #include "dir.h"
 #include "vmath.h"
-#include "commo.h"
 #include "dm.h"
+#ifdef BSD42
+extern void bcopy();
+#define	memcpy(to,from,cnt)	bcopy(from,to,cnt)
+#else
+extern char *memcpy();
+#endif
 
 extern void	perror();
 extern int	printf(), write();
 
-#define MAX(a,b)	if( (b) > (a) )  a = b
+#define NVL	1000
+static struct veclist veclist[NVL];
 
-struct commi	commi;		/* Structure to be rcvd from GED2 */
+struct veclist *vlp;		/* pointer to first free veclist element */
+struct veclist *vlend = &veclist[NVL]; /* pntr to 1st inval veclist element */
 
 int	reg_error;	/* error encountered in region processing */
 int	no_memory;	/* flag indicating memory for drawing is used up */
@@ -44,12 +56,18 @@ int pathpos;
 matp_t xform;
 union record *recordp;
 {
+	register struct veclist *vp;
 	register int i;
+	int dashflag;		/* draw with dashed lines */
+	int count;
+	static float xmax, ymax, zmax;
+	static float xmin, ymin, zmin;
 
 	if( recordp->u_id != ID_SOLID )  {
 		printf("dodraw: non-solid, id=%c\n", recordp->u_id );
 		return(-1);	/* ERROR */
 	}
+	vlp = &veclist[0];
 	if( regmemb >= 0 ) {
 		/* processing a member of a processed region */
 		/* regmemb  =>  number of members left */
@@ -77,7 +95,6 @@ union record *recordp;
 				regmemb = -1;
 				reg_error = 0;
 			}
-			commi.i_type = MS_DRAW;
 			return(-1);		/* ERROR */
 		}
 		reg_error = 0;		/* reset error flag */
@@ -86,19 +103,10 @@ union record *recordp;
 		 */
 		if( i > 0 )
 			return(0);		/* NOP */
-
-		/* See if write to display memory succeeded */
-		if( commi.i_size == 0 )  {
-			no_memory = 1;
-			return(-1);		/* ERROR */
-		}
-		sp->s_addr = commi.i_addr;
-		sp->s_bytes = commi.i_size;
-		VMOVE( sp->s_center, commi.i_center );
-		sp->s_size = commi.i_scale;
+		dashflag = 0;
 	}  else  {
 		/* Doing a normal solid */
-		dmp->dmr_Spreamble( flag == ROOT );
+		dashflag = (flag != ROOT);
 	
 		switch( recordp->u_id )  {
 
@@ -141,33 +149,57 @@ union record *recordp;
 				recordp->u_id );
 			return(-1);			/* ERROR */
 		}
-
-		/* Finish off the display subroutine */
-		dmp->dmr_Sepilogue();
-
-		sp->s_center[X] = dl_xcent;
-		sp->s_center[Y] = dl_ycent;
-		sp->s_center[Z] = dl_zcent;
-		sp->s_center[H] = 1;
-		sp->s_size = dl_scale;
-
-		/* Determine displaylist memory requirement */
-		sp->s_bytes = dmp->dmr_size();
-
-		/* Allocate displaylist storage for object */
-		sp->s_addr = memalloc( sp->s_bytes );
-		if( sp->s_addr == 0 )  {
-			no_memory = 1;
-			(void)printf("draw: out of Displaylist\n");
-			return(-1);		/* ERROR */
-		}
-		sp->s_bytes = dmp->dmr_load( sp->s_addr, sp->s_bytes );
 	}
+
+	/*
+	 * The vector list is now safely stored in veclist[].
+	 * Compute the min, max, and center points.
+	 */
+#define INFINITY	100000000.0
+	xmax = ymax = zmax = -INFINITY;
+	xmin = ymin = zmin =  INFINITY;
+	for( vp = &veclist[0]; vp < vlp; vp++ )  {
+		MIN( xmin, vp->vl_pnt[X] );
+		MAX( xmax, vp->vl_pnt[X] );
+		MIN( ymin, vp->vl_pnt[Y] );
+		MAX( ymax, vp->vl_pnt[Y] );
+		MIN( zmin, vp->vl_pnt[Z] );
+		MAX( zmax, vp->vl_pnt[Z] );
+	}
+	VSET( sp->s_center,
+		(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2 );
+
+	sp->s_size = xmax - xmin;
+	MAX( sp->s_size, ymax - ymin );
+	MAX( sp->s_size, zmax - zmin );
+
+	/* Make a private copy of the vector list */
+	sp->s_vlen = vlp - &veclist[0];		/* # of structs */
+	count = sp->s_vlen * sizeof(struct veclist);
+	if( (sp->s_vlist = (struct veclist *)malloc(count)) == VLIST_NULL )  {
+		no_memory = 1;
+		printf("draw: malloc error\n");
+		return(-1);		/* ERROR */
+	}
+	(void)memcpy( (char *)sp->s_vlist, (char *)veclist, count );
+
+	/* Cvt to displaylist, determine displaylist memory requirement. */
+	sp->s_bytes = dmp->dmr_cvtvecs( &veclist[0],
+		sp->s_center, sp->s_size, dashflag );
+
+	/* Allocate displaylist storage for object */
+	sp->s_addr = memalloc( sp->s_bytes );
+	if( sp->s_addr == 0 )  {
+		no_memory = 1;
+		(void)printf("draw: out of Displaylist\n");
+		return(-1);		/* ERROR */
+	}
+	sp->s_bytes = dmp->dmr_load( sp->s_addr, sp->s_bytes );
 
 	/* set solid/dashed line flag */
 	if( sp != illump )  {
 		sp->s_iflag = DOWN;
-		sp->s_soldash = flag;
+		sp->s_soldash = dashflag;
 
 		if(regmemb == 0) {
 			/* done processing a region */

@@ -1,6 +1,5 @@
-/*	SCCSID	%W%	%E%	*/
 /*
- *			G E D 1 0 . C
+ *			C L I P . C
  *
  * Functions -
  *	clip	clip a line segment against the size of the display

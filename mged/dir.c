@@ -15,6 +15,7 @@
  *	db_putrec	Put record to database
  */
 
+#include	<fcntl.h>
 #include	<stdio.h>
 #include	<string.h>
 #include "ged_types.h"
@@ -31,7 +32,7 @@ extern char	*malloc();
 static struct directory *DirHead = DIR_NULL;
 
 static long	objfdend;		/* End+1 position of object file */
-extern int	objfd;			/* FD of object file */
+int		objfd;			/* FD of object file */
 
 union record	record;
 
@@ -44,9 +45,26 @@ static char *units_str[] = {
 	"feet",
 	"extra"
 };
+char	*filename;			/* Name of database file */
 
 /*
- *			B U I L D D I R
+ *  			D B _ O P E N
+ */
+db_open( name )
+char *name;
+{
+	if( (objfd = open( name, O_RDWR )) < 0 )  {
+		if( (objfd = open( name, O_RDONLY )) < 0 )  {
+			perror( name );
+			exit(2);		/* NOT finish */
+		}
+		(void)printf("%s: READ ONLY\n", name);
+	}
+	filename = name;
+}
+
+/*
+ *			D I R _ B U I L D
  *
  * This routine reads through the 3d object file and
  * builds a directory of the object names, to allow rapid

@@ -222,9 +222,9 @@ init_sedit()
 	}
 
 	/* Finally, enter solid edit state */
-	dm_light( LIGHT_ON, BE_ACCEPT );
-	dm_light( LIGHT_ON, BE_REJECT );
-	dm_light( LIGHT_OFF, BE_S_ILLUMINATE );
+	dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
+	dmp->dmr_light( LIGHT_ON, BE_REJECT );
+	dmp->dmr_light( LIGHT_OFF, BE_S_ILLUMINATE );
 
 	state = ST_S_EDIT;
 	es_edflag = IDLE;

@@ -3,7 +3,16 @@
  *
  * Functions -
  *	dozoom		Compute new zoom/rotation perspectives
+ *  
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include "ged_types.h"
 #include "ged.h"
 #include "solid.h"
@@ -56,12 +65,12 @@ dozoom()
 
 		/*
 		 * Check for this object being bigger than 
-		 * dm_bound * the window size, or smaller than a speck.
+		 * dmp->dmr_bound * the window size, or smaller than a speck.
 		 */
-		 if( ratio >= dm_bound || ratio < 0.001 )
+		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
-		if( dm_object( sp->s_center, model2view, ratio, sp->s_addr, sp==illump ) )  {
+		if( dmp->dmr_object( sp->s_center, model2view, ratio, sp->s_addr, sp==illump ) )  {
 			sp->s_flag = UP;
 			ndrawn++;
 		}
@@ -75,7 +84,7 @@ dozoom()
 		return;
 
 	/* Output special Rotation matrix, when needed */
-	dm_newrot( model2objview );
+	dmp->dmr_newrot( model2objview );
 
 	FOR_ALL_SOLIDS( sp )  {
 		/* Ignore all objects not being rotated */
@@ -87,12 +96,12 @@ dozoom()
 
 		/*
 		 * Check for this object being bigger than 
-		 * dm_bound * the window size, or smaller than a speck.
+		 * dmp->dmr_bound * the window size, or smaller than a speck.
 		 */
-		 if( ratio >= dm_bound || ratio < 0.001 )
+		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
-		if( dm_object( sp->s_center, model2objview, ratio, sp->s_addr, 1 ) )  {
+		if( dmp->dmr_object( sp->s_center, model2objview, ratio, sp->s_addr, 1 ) )  {
 			sp->s_flag = UP;
 			ndrawn++;
 		}

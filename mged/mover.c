@@ -207,7 +207,7 @@ int air;				/* Air code */
 	/*
 	 * Check to see if we have to create a new combination
 	 */
-	if( (dp = lookup( combname, QUIET )) == DIR_NULL )  {
+	if( (dp = lookup( combname, LOOKUP_QUIET )) == DIR_NULL )  {
 
 		/* Update the in-core directory */
 		dp = dir_add( combname, -1, DIR_COMB, 2 );

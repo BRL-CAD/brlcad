@@ -8,16 +8,20 @@
  * Authors -
  *	Keith Applin
  *	Gary Kuehl
- *
- *	Ballistic Research Laboratory
- *	U. S. Army
+ *  
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include "ged_types.h"
 #include "3d.h"
-#include "commo.h"
-#include "ged2.h"
+#include "ged.h"
 #include "vmath.h"
 #include "dm.h"
 
@@ -611,39 +615,21 @@ dwreg()
 	static float lenwb;
 	static unsigned	count;
 	static unsigned	addr;
-	static float xmin,ymin,zmin,xmax,ymax,zmax;
 	static float c1[3*4]={1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.};
-
-	xmin = ymin = zmin = 100000000.0;
-	xmax = ymax = zmax = -100000000.0;
-
-	/* set up for drawing with VECTOR ABSOLUTE Solid Lines */
-	dmp->dmr_Spreamble( 1 );
 
 	/* calculate center and scale for COMPLETE REGION since may have ORs */
 	lmemb = umemb = 0;
 	savesp = &m_param[0];
 	while( 1 ) {
+		/* Perhaps this can be eliminated?  Side effects? */
 		for(umemb = lmemb+1; (umemb < nmemb && m_op[umemb] != 'u'); umemb++)
 			;
 		lc = 0;
 		regin(1);
-		MIN(xmin, rmn[0]);
-		MIN(ymin, rmn[1]);
-		MIN(zmin, rmn[2]);
-		MAX(xmax, rmx[0]);
-		MAX(ymax, rmx[1]);
-		MAX(zmax, rmx[2]);
 		lmemb = umemb;
 		if(umemb >= nmemb)
 			break;
 	}
-	dl_scale = xmax - xmin;
-	MAX(dl_scale, ymax - ymin);
-	MAX(dl_scale, zmax - zmin);
-	dl_xcent = (xmax + xmin) / 2.0;
-	dl_ycent = (ymax + ymin) / 2.0;
-	dl_zcent = (zmax + zmin) / 2.0;
 
 	lmemb = 0;
 	savesp = &m_param[0];
@@ -729,8 +715,8 @@ noskip:
 									 pi[k]=xb[k]+wb[k]*regi[n];
 									 po[k]=xb[k]+wb[k]*rego[n];
 								}
-								dmp->dmr_goto(&pi[0], UP);
-								dmp->dmr_goto(&po[0], DOWN);
+								DM_GOTO(&pi[0], PEN_UP);
+								DM_GOTO(&po[0], PEN_DOWN);
 							}
 						}
 					}
@@ -750,32 +736,7 @@ skipid:
 		goto orregion;
 
 	nmemb = 0;
-
-	/* Finish off the display subroutine */
-	dmp->dmr_Sepilogue();
-
-	/* Build output record */
-	commi.i_center[X] = dl_xcent;
-	commi.i_center[Y] = dl_ycent;
-	commi.i_center[Z] = dl_zcent;
-	commi.i_center[H] = 1;
-	commi.i_scale = dl_scale;
-
-	/* Determine VG memory requirement */
-	count = dmp->dmr_size();
-
-	/* Allocate VG storage for object */
-	addr = memalloc( count );
-
-	commi.i_addr = addr;
-	commi.i_type = MS_DREG;
-
-	if( addr == 0 )  {
-		(void)printf("dwreg: no more Displaylist memory\n");
-		commi.i_size = 0;	/* FLAG:  error */
-	} else {
-		commi.i_size = dmp->dmr_load( addr, count );
-	}
+	/* The finishing touches are done by drawHsolid() */
 }
 
 

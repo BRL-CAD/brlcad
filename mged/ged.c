@@ -53,13 +53,11 @@ extern int	close(), dup(), execl(), fork(), getuid(), open(), pipe(),
 		printf(), sprintf(), unlink(), write();
 extern long	time();
 
-extern struct device_values dm_values;	/* Values from devs, from dm-XX.c */
+extern struct dm dm_Mg;
+struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
+struct dm *dmp = &dm_Mg;		/* Ptr to Display Manager package */
 
-int	objfd;				/* ged database file descriptor */
-char	*filename;			/* Name of database file */
 int	dmaflag;			/* Set to 1 to force new screen DMA */
-
-extern char	part2_base[];	/* from dm-??.c, name of GED2 binary */
 
 /**** Begin global display information, used by dm.c *******/
 int		xcross = 0;
@@ -88,14 +86,7 @@ char **argv;
 	}
 
 	/* Get input file */
-	filename = argv[1];
-	if( (objfd = open( filename, O_RDWR )) < 0 )  {
-		if( (objfd = open( filename, O_RDONLY )) < 0 )  {
-			perror( argv[1] );
-			exit(2);		/* NOT finish */
-		}
-		(void)printf("%s: READ ONLY\n", filename);
-	}
+	db_open( argv[1] );
 
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
@@ -105,8 +96,9 @@ char **argv;
 	HeadSolid.s_back = &HeadSolid;
 	FreeSolid = SOLID_NULL;
 
-	/* Have the display manager attach to the display processor */
-	dm_open();
+	/* Fire up the display manager, and the display processor */
+	(void)printf("attach %s (%s)\n", dmp->dmr_name, dmp->dmr_lname);
+	dmp->dmr_open();
 
 	/* init rotation matrix */
 	mat_idn( identity );		/* Handy to have around */
@@ -128,8 +120,6 @@ char **argv;
 	windowbounds[0] = 2047;		/* XHR */
 	windowbounds[3] = -925;		/* YLR */
 
-	/* Fire up the display manager, and the display processor */
-	dm_init();
 	dmaflag = 1;
 
 	/* Here we should print out a "message of the day" file */
@@ -155,11 +145,11 @@ char **argv;
 		static int rateflag;	/* != 0 means change RATE */
 
 		/*
-		 * dm_input() will suspend until some change has occured,
+		 * dmr_input() will suspend until some change has occured,
 		 * either on the device peripherals, or a command on the
 		 * keyboard.
 		 */
-		i = dm_input( 0, rateflag );		/* fd 0 for commands */
+		i = dmp->dmr_input( 0, rateflag );	/* fd 0 for cmds */
 		if( i )
 			cmdline();			/* e8.c */
 
@@ -275,7 +265,7 @@ char **argv;
 void
 refresh()
 {
-	dm_prolog();		/* update displaylist prolog */
+	dmp->dmr_prolog();	/* update displaylist prolog */
 	/*
 	 * if something has changed, then go update the display.
 	 * Otherwise, we are happy with the view we have
@@ -285,7 +275,7 @@ refresh()
 		dozoom();
 
 		/* Restore to non-rotated, full brightness */
-		dm_normal();
+		dmp->dmr_normal();
 
 		/* Compute and display angle/distance cursor */
 		if (adcflag)
@@ -300,11 +290,11 @@ refresh()
 		/* Display titles, etc */
 		dotitles();
 
-		dm_epilog();
+		dmp->dmr_epilog();
 
 		dmaflag = 0;
 	}
-	dm_update();
+	dmp->dmr_update();
 }
 
 /*
@@ -416,7 +406,7 @@ char *arg;
 
 	(void)sprintf( line, "%s [%s] time=%ld uid=%d (%s) %s\n",
 			event,
-			part2_base,
+			dmp->dmr_name,
 			now,
 			getuid(),
 			timep,
@@ -444,7 +434,7 @@ int	exitcode;
 
 	(void)sprintf( place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
-
+	dmp->dmr_close();
 	exit( exitcode );
 }
 
@@ -458,8 +448,7 @@ void
 quit()
 {
 	(void)signal(SIGINT, SIG_IGN);
-	dm_finish();	/* halt the display processor */
-	finish(0);	/* log termination and exit */
+	finish(0);		/* log termination and exit */
 }
 
 /*			S I G 3

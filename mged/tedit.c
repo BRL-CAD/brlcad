@@ -43,20 +43,28 @@ f_tedit()
 	(void)close(i);
 
 
-	/* convert to point notation in temporary buffer */
-	VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
-	for( i = 3; i <= 21; i += 3 )  {  
-		VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
+	if( es_rec.s.s_type == GENARB8 )  {
+		/* convert to point notation in temporary buffer */
+		VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
+		for( i = 3; i <= 21; i += 3 )  {  
+			VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
+		}
+		writesolid( &lsolid );
+	} else {
+		writesolid( &es_rec.s );
 	}
-	writesolid( &lsolid );
 
 	if (editit())  {
-		readsolid( &lsolid );
+		if( es_rec.s.s_type == GENARB8 )  {
+			readsolid( &lsolid );
 
-		/* Convert back to point&vector notation */
-		VMOVE( &es_rec.s.s_values[0], &lsolid.s_values[0] );
-		for( i = 3; i <= 21; i += 3 )  {  
-			VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
+			/* Convert back to point&vector notation */
+			VMOVE( &es_rec.s.s_values[0], &lsolid.s_values[0] );
+			for( i = 3; i <= 21; i += 3 )  {  
+				VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
+			}
+		}  else  {
+			readsolid( &es_rec.s );
 		}
 
 		/* Update the display */

@@ -1,6 +1,5 @@
-/*	SCCSID	%W%	%E%	*/
 /*
- *			G E D 1 2 . C
+ *			A D C . C
  *
  * Functions -
  *	adcursor	implement the angle/distance cursor
@@ -11,28 +10,15 @@
  *	Ballistic Research Laboratory
  *	U. S. Army
  *	December, 1981
- *
- *		R E V I S I O N   H I S T O R Y
- *
- *	12/01/81  Moss	Add the angle/distance cursor.
- *
- *	12/02/81  MJM	Modified to take parameters as arguments.
- *
- *	05/27/83  MJM	Adapted code to run on VAX;  numerous cleanups.
- *
- *	09-Sep-83 DAG	Overhauled.
- *
- *	11/02/83  MJM	Changed to use display manager, plus cleanups
- *			for adding Megatek support.
  */
-
 #include <math.h>
 #include "ged_types.h"
 #include "ged.h"
+#include "dm.h"
 
 /*
  * These variables are global for the benefit of
- * the display portion of dozoom.
+ * the display portion of dotitles.
  */
 float	curs_x;		/* cursor X position */
 float	curs_y;		/* cursor Y position */
@@ -69,8 +55,8 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	idxy[1] = (idxy[1] < MINVAL ? MINVAL : idxy[1]);
 	idxy[1] = (idxy[1] > MAXVAL ? MAXVAL : idxy[1]);
 
-	dm_2d_line( MINVAL, idxy[1], MAXVAL, idxy[1], 0 );	/* Horiz */
-	dm_2d_line( idxy[0], MAXVAL, idxy[0], MINVAL, 0);	/* Vert */
+	dmp->dmr_2d_line( MINVAL, idxy[1], MAXVAL, idxy[1], 0 ); /* Horiz */
+	dmp->dmr_2d_line( idxy[0], MAXVAL, idxy[0], MINVAL, 0);  /* Vert */
 
 	curs_x = (float) (idxy[0]);
 	curs_y = (float) (idxy[1]);
@@ -98,8 +84,8 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	y4 = curs_y + d1;
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
-	dm_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-	dm_2d_line( (int)x3, (int)y3, (int)x4, (int)y4, 0 );
+	dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+	dmp->dmr_2d_line( (int)x3, (int)y3, (int)x4, (int)y4, 0 );
 
 	d1 = cos (angle2) * 8000.0;
 	d2 = sin (angle2) * 8000.0;
@@ -116,8 +102,8 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
 	/* Dashed lines */
-	dm_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 1 );
-	dm_2d_line( (int)x3, (int)y3, (int)x4, (int)y4, 1 );
+	dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 1 );
+	dmp->dmr_2d_line( (int)x3, (int)y3, (int)x4, (int)y4, 1 );
 
 	/*
 	 * Position tic marks from dial 9.
@@ -136,7 +122,7 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	x2 = curs_x + d1 -t1;
 	y2 = curs_y + d2 + t2;
 	if (clip ( &x1, &Y1, &x2, &y2 ) == 0) {
-		dm_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
 	}
 
 	/* Quadrant 2 */
@@ -145,7 +131,7 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	x2 = curs_x - d2 - t2;
 	y2 = curs_y + d1 - t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-		dm_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
 	}
 
 	/* Quadrant 3 */
@@ -154,7 +140,7 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	x2 = curs_x - d1 + t1;
 	y2 = curs_y - d2 - t2;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-		dm_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
 	}
 
 	/* Quadrant 4 */
@@ -163,6 +149,6 @@ adcursor( pos_x, pos_y, rot1, rot2, tick_dist )
 	x2 = curs_x + d2 + t2;
 	y2 = curs_y - d1 + t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-		dm_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
 	}
 }

@@ -1,5 +1,5 @@
 /*
- *			G E D 4 . C
+ *			U S E P E N . C
  *
  * Functions -
  *	usepen		Use x,y data from data tablet
@@ -140,9 +140,9 @@ register int x, y;
 			 * vector drawing time), but all the objects should
 			 * move/scale in unison.
 			 */
-			dm_light( LIGHT_ON, BE_ACCEPT );
-			dm_light( LIGHT_ON, BE_REJECT );
-			dm_light( LIGHT_OFF, BE_O_ILLUMINATE );
+			dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
+			dmp->dmr_light( LIGHT_ON, BE_REJECT );
+			dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
 
 			/* Include all solids with same tree top */
 			FOR_ALL_SOLIDS( sp )  {

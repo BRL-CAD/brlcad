@@ -37,10 +37,10 @@ f_name()
 	register struct directory *dp;
 	union record record;
 
-	if( (dp = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	if( lookup( cmd_args[2], QUIET ) != DIR_NULL )  {
+	if( lookup( cmd_args[2], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( cmd_args[2] );
 		return;
 	}
@@ -63,10 +63,10 @@ f_copy()
 	union record record;
 	int i, ngran;
 
-	if( (proto = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (proto = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	if( lookup( cmd_args[2], QUIET ) != DIR_NULL )  {
+	if( lookup( cmd_args[2], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( cmd_args[2] );
 		return;
 	}
@@ -121,7 +121,7 @@ f_instance()
 	register struct directory *dp;
 	char oper;
 
-	if( (dp = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	oper = UNION;
@@ -163,7 +163,7 @@ f_region()
 			continue;
 		}
 		oper = cmd_args[i][0];
-		if( (dp = lookup( cmd_args[i + 1], NOISY )) == DIR_NULL )  {
+		if( (dp = lookup( cmd_args[i + 1], LOOKUP_NOISY )) == DIR_NULL )  {
 			(void)printf("skipping %s\n", cmd_args[i + 1] );
 			continue;
 		}
@@ -201,7 +201,7 @@ f_itemair()
 	int ident, air;
 	union record record;
 
-	if( (dp = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	air = ident = 0;
@@ -235,7 +235,7 @@ f_modify()
 	register int mat, los;
 	union record record;
 
-	if( (dp = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	mat = los = 0;
@@ -266,7 +266,7 @@ f_kill()
 	register int i;
 
 	for( i = 1; i < numargs; i++ )  {
-		if( (dp = lookup( cmd_args[i], NOISY )) != DIR_NULL )  {
+		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) != DIR_NULL )  {
 			eraseobj( dp );
 			db_delete( dp );
 			dir_delete( dp );
@@ -286,7 +286,7 @@ f_group()
 
 	/* get objects to add to group */
 	for( i = 2; i < numargs; i++ )  {
-		if( (dp = lookup( cmd_args[i], NOISY)) != DIR_NULL )  {
+		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )  {
 			if( combadd( dp, cmd_args[1], (char *)NULL, 'g',
 				UNION, 0, 0) == DIR_NULL )
 				return;
@@ -307,10 +307,10 @@ f_mirror()
 	struct directory *proto;
 	int i, j, k, ngran;
 
-	if( (proto = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (proto = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	if( lookup( cmd_args[2], QUIET ) != DIR_NULL )  {
+	if( lookup( cmd_args[2], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( cmd_args[2] );
 		return;
 	}
@@ -544,7 +544,7 @@ f_delmem()
 	register int i, rec;
 	union record record;
 
-	if( (dp = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	/* Examine all the Member records, one at a time */
@@ -577,7 +577,7 @@ f_arbdef()
 	float rota, fb;
 	vect_t	norm;
 
-	if( lookup( cmd_args[1] , QUIET ) != DIR_NULL )  {
+	if( lookup( cmd_args[1] , LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( cmd_args[1] );
 		return;
 	}
@@ -589,7 +589,7 @@ f_arbdef()
 	fb = atof( cmd_args[3] ) * degtorad;
 
 	/* copy arb8 to the new name */
-	if( (dp = lookup( "arb8", NOISY )) == DIR_NULL )
+	if( (dp = lookup( "arb8", LOOKUP_NOISY )) == DIR_NULL )
 		return;
 	db_getrec( dp, &record, 0 );
 	if( (dp = dir_add( cmd_args[1], -1, DIR_SOLID, 1 )) == DIR_NULL )
@@ -655,7 +655,7 @@ f_edcomb()
 	union record record;
 	int ident, air, mat, los;
 
-	if( (dp = lookup( cmd_args[1], NOISY )) == DIR_NULL )
+	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	ident = air = mat = los = 0;
