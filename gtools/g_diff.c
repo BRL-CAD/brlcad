@@ -76,6 +76,7 @@ compare_colors()
 {
 	struct mater *mp1, *mp2;
 	int found1=0, found2=0;
+	int is_diff=0;
 
 	for( mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw )  {
 		found1 = 0;
@@ -113,7 +114,41 @@ compare_colors()
 		if( !found2 )
 			break;
 	}
-	if( !found1 || !found2 ) {
+	if( !found1 && !found2 ) {
+		return;
+	} else if( !found1 || !found2 ) {
+		is_diff = 1;
+	} else {
+		/* actually compare two color tables */
+		mp1 = mater_hd1;
+		mp2 = mater_hd2;
+		while( mp1 != MATER_NULL && mp2 != MATER_NULL ) {
+			if( mp1->mt_low != mp2->mt_low ) {
+				is_diff = 1;
+				break;
+			}
+			if( mp1->mt_high != mp2->mt_high ) {
+				is_diff = 1;
+				break;
+			}
+			if( mp1->mt_r != mp2->mt_r ) {
+				is_diff = 1;
+				break;
+			}
+			if( mp1->mt_g != mp2->mt_g ) {
+				is_diff = 1;
+				break;
+			}
+			if( mp1->mt_b != mp2->mt_b ) {
+				is_diff = 1;
+				break;
+			}
+			mp1 = mp1->mt_forw;
+			mp2 = mp2->mt_forw;
+		}
+	}
+
+	if( is_diff ) {
 		if( mode == HUMAN ) {
 			printf( "Color table has changed from:\n" );
 			for( mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw )  {
@@ -127,7 +162,7 @@ compare_colors()
 			}
 		} else {
 			if( version2 > 4 )
-				printf( "attr_rm _GLOBAL regionid_colortable\n" );
+				printf( "attr rm _GLOBAL regionid_colortable\n" );
 			for( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
 				printf( "color %d %d %d %d %d\n", mp2->mt_low, mp2->mt_high,
 					mp2->mt_r, mp2->mt_g, mp2->mt_b );
@@ -335,7 +370,7 @@ char *obj_name;
 						int val_len;
 
 						if( type == ATTRS ) {
-							bu_vls_printf( vls, "attr %s ", obj_name );
+							bu_vls_printf( vls, "attr set %s ", obj_name );
 						} else {
 							bu_vls_strcat( vls, " " );
 						}
@@ -381,7 +416,7 @@ char *obj_name;
 			else
 			{
 				if( type == ATTRS ) {
-					bu_vls_printf( vls, "attr_rm %s %s\n", obj_name,
+					bu_vls_printf( vls, "attr rm %s %s\n", obj_name,
 						       Tcl_GetStringFromObj( key1, &junk ) );
 				} else {
 					bu_vls_strcat( vls, " " );
@@ -453,7 +488,7 @@ char *obj_name;
 			int val_len;
 
 			if( type == ATTRS ) {
-				bu_vls_printf( vls, "attr %s ", obj_name );
+				bu_vls_printf( vls, "attr set %s ", obj_name );
 			} else {
 				bu_vls_strcat( vls, " " );
 			}
@@ -679,7 +714,7 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 	bu_vls_init( &vls );
 
 	if( dbip1->dbi_version > 4 ) {
-		bu_vls_printf( &vls, "db1 attr %s", dp1->d_namep );
+		bu_vls_printf( &vls, "db1 attr get %s", dp1->d_namep );
 		if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
 			fprintf( stderr, "Cannot get attributes for %s\n", dp1->d_namep );
 			fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
@@ -697,7 +732,7 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 
 	if( dbip2->dbi_version > 4 ) {
 		bu_vls_trunc( &vls, 0 );
-		bu_vls_printf( &vls, "db2 attr %s", dp1->d_namep );
+		bu_vls_printf( &vls, "db2 attr get %s", dp1->d_namep );
 		if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
 			fprintf( stderr, "Cannot get attributes for %s\n", dp1->d_namep );
 			fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
