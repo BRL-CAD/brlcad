@@ -1,30 +1,28 @@
 #	Makefile -- for vdeck
 
-#	last edit:	86/06/17	G S Moss
+#	last edit:	86/07/10	G S Moss
 
-#	SCCSID	@(#)Makefile	2.7
+#	SCCSID	@(#)Makefile	2.8
 
 PRODUCT = vdeck
 HEADERS = ${PRODUCT}.h ged_types.h 3d.h vextern.h
 CFILES	= ${PRODUCT}.c cgarbs.c match.c parsarg.c vproc.c vglobal.c vsort.c
 OBJS	= ${PRODUCT}.o cgarbs.o match.o parsarg.o vproc.o vglobal.o vsort.o
-VMBLIB	= # /vld/lib/libVMB.a
-LIBES	= ${VMBLIB} -lm
+VMBLIB	= /vld/lib/libVMB.a
+LIBES	= -lm
 LDFLAGS = -n# -m 6 # NEED -m flag on GOULDS.
 TFILES	= ${PRODUCT}.in ${PRODUCT}.exp
 BINDIR	= /vld/bin
 LIBDIR	= /vld/lib
 INCDIR	= /vld/include
-VAXMAN	= /usr/5lib/man/local/man1
-PDPMAN	= /usr/man/s5/local/man1
-TESTDIR = .
+MANDIR	= /usr/5lib/man/local/man1
 INS	= cp
 RM	= /bin/rm
 GET	= get
 SHELL	= /usr/5bin/sh
 
 .DEFAULT:
-	$(GET) $(GFLAGS) -p s.$@ > ${TESTDIR}/$@
+	$(GET) $(GFLAGS) -p s.$@ > $@
 	touch $@
 
 .c.o:
@@ -38,57 +36,58 @@ SHELL	= /usr/5bin/sh
 all:		${PRODUCT} ${PRODUCT}.1
 
 ${PRODUCT}:	${OBJS}
-	$(CC) -o ${TESTDIR}/$@ ${LDFLAGS} ${OBJS} ${LIBES} 
-	size ${TESTDIR}/$@
+	$(CC) -o $@ ${LDFLAGS} ${OBJS} ${LIBES} 
+	size $@
 	touch $@
 
 ${OBJS}:	${HEADERS}
 
 print:		${PRODUCT}.1 Makefile ${HEADERS} ${CFILES}
-	( nroff -Tlp -man ${TESTDIR}/${PRODUCT}.1 ; \
+	( nroff -Tlp -man ${PRODUCT}.1 ; \
 	  pr Makefile ${HEADERS} ${CFILES} \
-				${TESTDIR}/${PRODUCT}.1 ) | lpr
+				${PRODUCT}.1 ) | lpr
 
 lint:		${HEADERS} ${CFILES}
-	lint -I${INCDIR} ${CFILES} ${LIBES} > ${TESTDIR}/${PRODUCT}.lint
+	lint -I${INCDIR} ${CFILES} ${LIBES} > ${PRODUCT}.lint
 
 flow:		${HEADERS} ${CFILES}
-	cflow ${CFILES} > ${TESTDIR}/${PRODUCT}.flow
+	cflow ${CFILES} > ${PRODUCT}.flow
 
 xref:		${HEADERS} ${CFILES}
-	cxref -c -s -w132 ${CFILES} > ${TESTDIR}/${PRODUCT}.xref
+	cxref -c -s -w132 ${CFILES} > ${PRODUCT}.xref
 
 test:		${PRODUCT} # ${TFILES}
-	${TESTDIR}/${PRODUCT} < ${PRODUCT}.in \
-		> ${TESTDIR}/${PRODUCT}.out 2> ${TESTDIR}/${PRODUCT}.err
-	@if cmp ${PRODUCT}.exp ${TESTDIR}/${PRODUCT}.out ; \
+	${PRODUCT} < ${PRODUCT}.in \
+		> ${PRODUCT}.out 2> ${PRODUCT}.err
+	@if cmp ${PRODUCT}.exp ${PRODUCT}.out ; \
 	then	echo 'Tested okay' ; \
 	else	echo 'Test failed; differences:' ; \
-		diff ${PRODUCT}.exp ${TESTDIR}/${PRODUCT}.out ; \
+		diff ${PRODUCT}.exp ${PRODUCT}.out ; \
 		exit 1 ; \
 	fi
 
-compare:	all # test
-	cmp ${BINDIR}/${PRODUCT} ${TESTDIR}/${PRODUCT}
-	cmp ${MANDIR}/${PRODUCT}.1 ${TESTDIR}/${PRODUCT}.1
+compare:	all
+	cmp ${BINDIR}/${PRODUCT} ${PRODUCT}
+	cmp ${MANDIR}/${PRODUCT}.1 ${PRODUCT}.1
 
-install:	all # test
-	${INS} ${TESTDIR}/${PRODUCT} ${BINDIR}
-	chmod 775 ${BINDIR}/${PRODUCT}
-	-if vax || gould; then \
-		${INS} ${TESTDIR}/${PRODUCT}.1 ${VAXMAN}/${PRODUCT}.1; \
-		chmod 664 ${VAXMAN}/${PRODUCT}.1; \
-	else \
-		${INS} ${TESTDIR}/${PRODUCT}.1 ${PDPMAN}/${PRODUCT}.1; \
-		chmod 644 ${PDPMAN}/${PRODUCT}.1; \
-	fi
+install:	all
+	@if cmp -s ${PRODUCT} ${BINDIR}/${PRODUCT}; \
+	 then	echo "${PRODUCT} unchanged."; \
+	 else	${INS} ${PRODUCT} ${BINDIR} && \
+		echo "${PRODUCT} installed in ${BINDIR}."; \
+		chmod 775 ${BINDIR}/${PRODUCT}; \
+	 fi
+	@if cmp -s ${PRODUCT}.1 ${MANDIR}/${PRODUCT}.1; \
+	 then	echo "${PRODUCT}.1 unchanged."; \
+	 else	${INS} ${PRODUCT}.1 ${MANDIR}/${PRODUCT}.1 && \
+		echo "${PRODUCT}.1 installed in ${MANDIR}."; \
+		chmod 664 ${MANDIR}/${PRODUCT}.1; \
+	 fi
 
 clean:
-	-if vax; then rm -f ${HEADERS} ${CFILES} ; fi
-	-rm -f ${OBJS} ${TESTDIR}/${PRODUCT}.lint \
-		${TESTDIR}/${PRODUCT}.flow ${TESTDIR}/${PRODUCT}.xref \
-		${TESTDIR}/${PRODUCT}.out ${TESTDIR}/${PRODUCT}.err
+	-rm -f ${OBJS} ${PRODUCT}.lint \
+		${PRODUCT}.flow ${PRODUCT}.xref \
+		${PRODUCT}.out ${PRODUCT}.err
 
 clobber:	clean
-	-if vax; then rm -f ${TESTDIR}/${PRODUCT}.1; fi
-	-rm -f ${TESTDIR}/${PRODUCT}
+	-rm -f ${PRODUCT}
