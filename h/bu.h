@@ -147,7 +147,7 @@ extern char	*realloc();
  *  be a pointer to the "struct bu_list" located either			*
  *  in a user-provided structure, e.g. &((p)->l),			*
  *  or for the case of "old" it may also be in the list head, e.g.	*
- *	RT_LIST_INSERT( &(head.l), &((p)->l) );				*
+ *	BU_LIST_INSERT( &(head.l), &((p)->l) );				*
  *									*
  *  Dequeueing the head of a list is a valid and			*
  *  well defined operation which should be performed with caution.	*
