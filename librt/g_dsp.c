@@ -1485,12 +1485,11 @@ permute_cell(point_t A,
 	     point_t B, 
 	     point_t C, 
 	     point_t D, 
-	     struct isect_stuff *isect, 
-	     struct dsp_bb *dsp_bb)
+	     struct dsp_specific *dsp,
+	     struct dsp_rpp *dsp_rpp)
 {
     int x, y;
 
-    DSP_BB_CK(dsp_bb);
 
 #ifdef FULL_DSP_DEBUGGING
     if (RT_G_DEBUG & DEBUG_HF) {
@@ -1501,7 +1500,7 @@ permute_cell(point_t A,
     }
 #endif
 
-    switch (isect->dsp->dsp_i.dsp_cuttype) {
+    switch (dsp->dsp_i.dsp_cuttype) {
     case DSP_CUT_DIR_llUR:
 	return  DSP_CUT_DIR_llUR;
 	break;
@@ -1514,8 +1513,8 @@ permute_cell(point_t A,
 
 	if (RT_G_DEBUG & DEBUG_HF)
 	    bu_log("cell %d,%d adaptive triangulation... ",
-		   dsp_bb->dspb_rpp.dsp_min[X],
-		   dsp_bb->dspb_rpp.dsp_min[Y]);
+		   dsp_rpp->dsp_min[X],
+		   dsp_rpp->dsp_min[Y]);
 
 	/*
 	 *  We look at the points in the diagonal next cells to determine
@@ -1535,34 +1534,34 @@ permute_cell(point_t A,
 	 *	*  *  *	 *
 	 */
 
-	lo[X] = dsp_bb->dspb_rpp.dsp_min[X] - 1;
-	lo[Y] = dsp_bb->dspb_rpp.dsp_min[Y] - 1;
-	hi[X] = dsp_bb->dspb_rpp.dsp_max[X] + 1;
-	hi[Y] = dsp_bb->dspb_rpp.dsp_max[Y] + 1;
+	lo[X] = dsp_rpp->dsp_min[X] - 1;
+	lo[Y] = dsp_rpp->dsp_min[Y] - 1;
+	hi[X] = dsp_rpp->dsp_max[X] + 1;
+	hi[Y] = dsp_rpp->dsp_max[Y] + 1;
 
 	/* a little bounds checking */
 	if (lo[X] < 0) lo[X] = 0;
 	if (lo[Y] < 0) lo[Y] = 0;
-	if (hi[X] > isect->dsp->xsiz) 
-	    hi[X] = isect->dsp->xsiz;
+	if (hi[X] > dsp->xsiz) 
+	    hi[X] = dsp->xsiz;
 
-	if (hi[Y] > isect->dsp->ysiz)
-	    hi[Y] = isect->dsp->ysiz;
+	if (hi[Y] > dsp->ysiz)
+	    hi[Y] = dsp->ysiz;
 
 	/* compute curvature along the A->D direction */
-	h1 = DSP(&isect->dsp->dsp_i, lo[X], lo[Y]);
+	h1 = DSP(&dsp->dsp_i, lo[X], lo[Y]);
 	h2 = A[Z];
 	h3 = D[Z];
-	h4 = DSP(&isect->dsp->dsp_i, hi[X], hi[Y]);
+	h4 = DSP(&dsp->dsp_i, hi[X], hi[Y]);
 
 	cAD = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
 
 
 	/* compute curvature along the B->C direction */
-	h1 = DSP(&isect->dsp->dsp_i, hi[X], lo[Y]);
+	h1 = DSP(&dsp->dsp_i, hi[X], lo[Y]);
 	h2 = B[Z];
 	h3 = C[Z];
-	h4 = DSP(&isect->dsp->dsp_i, lo[X], hi[Y]);
+	h4 = DSP(&dsp->dsp_i, lo[X], hi[Y]);
 
 	cBC = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
 
@@ -1597,24 +1596,24 @@ permute_cell(point_t A,
 	 *  |    |
 	 *  B----A
 	 */
-	x = dsp_bb->dspb_rpp.dsp_min[X];
-	y = dsp_bb->dspb_rpp.dsp_min[Y];
-	VSET(B, x, y, DSP(&isect->dsp->dsp_i, x, y) );
+	x = dsp_rpp->dsp_min[X];
+	y = dsp_rpp->dsp_min[Y];
+	VSET(B, x, y, DSP(&dsp->dsp_i, x, y) );
 
-	x = dsp_bb->dspb_rpp.dsp_max[X];
-	VSET(A, x, y, DSP(&isect->dsp->dsp_i, x, y) );
+	x = dsp_rpp->dsp_max[X];
+	VSET(A, x, y, DSP(&dsp->dsp_i, x, y) );
 
-	y = dsp_bb->dspb_rpp.dsp_max[Y];
-	VSET(C, x, y, DSP(&isect->dsp->dsp_i, x, y) );
+	y = dsp_rpp->dsp_max[Y];
+	VSET(C, x, y, DSP(&dsp->dsp_i, x, y) );
 
-	x = dsp_bb->dspb_rpp.dsp_min[X];
-	VSET(D, x, y, DSP(&isect->dsp->dsp_i, x, y) );
+	x = dsp_rpp->dsp_min[X];
+	VSET(D, x, y, DSP(&dsp->dsp_i, x, y) );
 
 	return DSP_CUT_DIR_ULlr;
 	break;
     }
     bu_log("%s:%d Unknown DSP cut direction: %d\n",
-	   __FILE__, __LINE__, isect->dsp->dsp_i.dsp_cuttype);
+	   __FILE__, __LINE__, dsp->dsp_i.dsp_cuttype);
     bu_bomb("");
     /* not reached */
     return -1;
@@ -1853,7 +1852,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 
 
-    (void)permute_cell(A, B, C, D, isect, dsp_bb);
+    (void)permute_cell(A, B, C, D, isect->dsp, &dsp_bb->dspb_rpp);
 
     if ((cond=isect_ray_triangle(isect, B, D, A, &hits[1], ab_first)) > 0.0){
 	/* hit triangle */
@@ -4244,6 +4243,270 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
 }
+
+/*	S W A P _ C E L L _ P T S
+ *
+ */
+static int
+swap_cell_pts(int A[3],
+	      int B[3],
+	      int C[3],
+	      int D[3],
+	      struct dsp_specific *dsp)
+
+{
+    switch (dsp->dsp_i.dsp_cuttype) {
+    case DSP_CUT_DIR_llUR:
+	return  0;
+	break;
+
+    case DSP_CUT_DIR_ADAPT: {
+	int lo[2], hi[2];
+	double h1, h2, h3, h4;
+	double cAD, cBC;  /* curvature in direction AD, and BC */
+
+
+	/*
+	 *  We look at the points in the diagonal next cells to determine
+	 *  the curvature along each diagonal of this cell.  This cell is
+	 *  divided into two triangles by cutting across the cell in the
+	 *  direction of least curvature.
+	 *
+	 *	*  *  *	 *
+	 *	 \      /
+	 *	  \C  D/
+	 *	*  *--*  *
+	 *	   |\/|
+	 *	   |/\|
+	 *	*  *--*  *
+	 *	  /A  B\
+	 *	 /	\
+	 *	*  *  *	 *
+	 */
+
+	lo[X] = A[X] - 1;
+	lo[Y] = A[Y] - 1;
+	hi[X] = D[X] + 1;
+	hi[Y] = D[Y] + 1;
+
+	/* a little bounds checking */
+	if (lo[X] < 0) lo[X] = 0;
+	if (lo[Y] < 0) lo[Y] = 0;
+	if (hi[X] > dsp->xsiz) 
+	    hi[X] = dsp->xsiz;
+
+	if (hi[Y] > dsp->ysiz)
+	    hi[Y] = dsp->ysiz;
+
+	/* compute curvature along the A->D direction */
+	h1 = DSP(&dsp->dsp_i, lo[X], lo[Y]);
+	h2 = A[Z];
+	h3 = D[Z];
+	h4 = DSP(&dsp->dsp_i, hi[X], hi[Y]);
+
+	cAD = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
+
+
+	/* compute curvature along the B->C direction */
+	h1 = DSP(&dsp->dsp_i, hi[X], lo[Y]);
+	h2 = B[Z];
+	h3 = C[Z];
+	h4 = DSP(&dsp->dsp_i, lo[X], hi[Y]);
+
+	cBC = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
+
+	if ( cAD < cBC ) {
+	    /* A-D cut is fine, no need to permute */
+	    if (RT_G_DEBUG & DEBUG_HF)
+		bu_log("A-D cut (no swap)\n");
+
+	    return 0;
+	}
+
+	/* fallthrough */
+
+    }
+    case DSP_CUT_DIR_ULlr:
+	{
+	/* prefer the B-C cut */
+	int tmp[3];
+
+	VMOVE(tmp, A);
+	VMOVE(A, B);
+	VMOVE(B, tmp);
+
+	VMOVE(tmp, D);
+	VMOVE(D, C);
+	VMOVE(C, tmp);
+
+	if (RT_G_DEBUG & DEBUG_HF)
+	    bu_log("B-C cut (swap)\n");
+	}
+	return 0;
+	break;
+    }
+    bu_log("%s:%d Unknown DSP cut direction: %d\n",
+	   __FILE__, __LINE__, dsp->dsp_i.dsp_cuttype);
+    bu_bomb("");
+    /* not reached */
+    return -1;
+}
+
+
+
+/* 
+ *
+ *
+ *
+ * triangle with origin at A, X axis along AB, Y axis along AC
+ *
+ *	B--A	C	A--B	   C
+ *	   |	|	|	   |
+ *	   C	A--B	C	B--A
+ */
+int
+project_pt(point_t out,
+	   int A[3],
+	   int B[3],
+	   int C[3],
+	   point_t pt)
+{
+    int dx, dy;
+    double alpha, beta, x, y;
+    vect_t AB, AC;
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("     pt %g %g %g\n", V3ARGS(pt));
+	bu_log(" origin %d %d %d\n", V3ARGS(A));
+	bu_log("    Bpt %d %d %d\n", V3ARGS(B));
+	bu_log("    Cpt %d %d %d\n", V3ARGS(C));
+    }
+    if ((B[X] - A[X]) < 0) dx = -1;
+    else dx = 1;
+    if ((C[Y] - A[Y]) < 0) dy = -1;
+    else dy = 1;
+
+    x = pt[X] - A[X];
+    y = pt[Y] - A[Y];
+
+    alpha = x * dx;
+    beta = y * dy;
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("alpha:%g beta:%g\n", alpha, beta); 
+    }
+    if (alpha < -SMALL_FASTF) {
+	bu_log ("Alpha negative: %g  x:%g  dx:%d\n", alpha, x, dx);
+    }
+    if (beta < -SMALL_FASTF) {
+	bu_log ("Beta negative: %g  x:%g  dx:%d\n", beta, y, dy);
+    }
+    CLAMP(alpha, 0.0, 1.0);
+    CLAMP(beta, 0.0, 1.0);
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("x:%g y:%g dx:%d dy:%d alpha:%g beta:%g\n", 
+	       x, y, dx, dy, alpha, beta);
+    }
+    if ((alpha+beta) > (1.0+SMALL_FASTF)) {
+	if (RT_G_DEBUG & DEBUG_HF) bu_log("Not this triangle\n");
+	return 1;
+    }
+
+    VSUB2(AB, B, A);
+    VSUB2(AC, C, A);
+
+    VJOIN2(out, A, alpha, AB, beta, AC);
+    if (RT_G_DEBUG & DEBUG_HF) bu_log("out: %g %g %g\n", V3ARGS(out));
+
+    return 0;
+}
+/*	D S P _ P O S
+ *
+ *
+ *	Given an arbitrary point return the projection of that point onto
+ * 	the surface of the DSP.  If the point is outside the bounds of the DSP
+ *	then it will be projected to the nearest edge of the DSP.
+ *	Return the cell number and the height above/below the plane
+ */
+int
+dsp_pos(point_t out, /* return value */
+	struct soltab *stp, /* pointer to soltab for dsp */
+	point_t p)	/* model space point */
+{
+    struct dsp_specific *dsp;
+    point_t pt, tri_pt;
+    int x, y;
+    int A[3], B[3], C[3], D[3];
+
+    struct dsp_rpp dsp_rpp;
+
+    RT_CK_SOLTAB(stp);
+
+    if (stp->st_id != ID_DSP) return 1;
+
+    dsp = (struct dsp_specific *)stp->st_specific;
+
+    MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, p);
+
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	VPRINT("user_point", p);
+	VPRINT("dsp_point", pt);
+    }
+    x = pt[X];
+    y = pt[Y];
+
+    CLAMP(x, 0, XSIZ(dsp)-1);
+    CLAMP(y, 0, YSIZ(dsp)-1);
+
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("x:%d y:%d\n", x, y);
+
+    VSET(dsp_rpp.dsp_min, x, y, 0);
+    VSET(dsp_rpp.dsp_max, x+1, y+1, 0);
+
+    VSET(A, x, y, DSP(&dsp->dsp_i, x, y) );
+    x += 1;
+    VSET(B, x, y, DSP(&dsp->dsp_i, x, y) );
+    y += 1;
+    VSET(D, x, y, DSP(&dsp->dsp_i, x, y) );
+    x -= 1;
+    VSET(C, x, y, DSP(&dsp->dsp_i, x, y) );
+    y -= 1;
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log(" A: %d %d %d\n", V3ARGS(A));
+	bu_log(" B: %d %d %d\n", V3ARGS(B));
+	bu_log(" C: %d %d %d\n", V3ARGS(C));
+	bu_log(" D: %d %d %d\n", V3ARGS(D));
+    }
+
+    swap_cell_pts(A, B, C, D, dsp);
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log(" A: %d %d %d\n", V3ARGS(A));
+	bu_log(" B: %d %d %d\n", V3ARGS(B));
+	bu_log(" C: %d %d %d\n", V3ARGS(C));
+	bu_log(" D: %d %d %d\n", V3ARGS(D));
+    }
+
+    if (project_pt(tri_pt, B, A, D, pt)) {
+	if (project_pt(tri_pt, C, D, A, pt)) {
+	    bu_log("Now what???\n");
+	}
+    }
+
+    MAT4X3PNT(out, dsp->dsp_i.dsp_stom, tri_pt);
+    if (RT_G_DEBUG & DEBUG_HF) {
+	VPRINT("user_pt", p);
+	VPRINT("tri_pt", tri_pt);
+	VPRINT("model_space", out);
+	bu_log("X: %d Y:%d\n",x, y);
+    }
+
+    return 0;
+}
+
+
 /* Important when concatenating source files together */
 #undef dlog
 #undef XMIN
