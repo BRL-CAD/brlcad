@@ -627,7 +627,8 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 	((a)[Y]-(b)[Y])*((a)[Y]-(b)[Y]) + \
 	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]) )
 	{
-		struct rt_tol	t2 = is->tol;	/* Struct copy */
+		struct rt_tol	t2;
+		t2 = is->tol;	/* Struct copy */
 
 		t2.dist = is->tol.dist * 4;
 		t2.dist_sq = t2.dist * t2.dist;
