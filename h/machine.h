@@ -606,8 +606,8 @@ typedef long	bitv_t;		/* largest integer type */
 #define CONST deprecated
 
 /* Even in C++ not all compilers know the "bool" keyword yet */
-#if !defined(BOOL)
-# define BOOL	int
+#if !defined(BOOL_T)
+# define BOOL_T	int
 #endif
 
 /* A portable way of handling pre-ANSI C: remove signed keyword */
