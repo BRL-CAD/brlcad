@@ -1953,9 +1953,10 @@ XEvent *event;
        * when we get the expose event)
        */
       X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight, BLIT_RESIZE);
-    default:
       break;
     }
+  default:
+    break;
   }
 
   return;
