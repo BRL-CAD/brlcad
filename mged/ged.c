@@ -461,8 +461,10 @@ char **argv;
 	      (void)dup(pipe_err[1]);
 	      (void)close(pipe_err[1]);
 
+#if 0
 	      /* close stdin */
 	      (void)close(0);
+#endif
 
 	      bu_vls_init(&vls);
 	      bu_vls_strcpy(&vls, "gui");
