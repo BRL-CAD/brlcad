@@ -128,6 +128,7 @@ set -S2 "/bin/sh"
  *  library.  Thus, they should not occur in dependency		*
  *  lists.							*
  *								*
+ * XXX We really need defines for X11.  e.g. irprep dir, etc.	*
  ****************************************************************/
 
 #ifdef vax
@@ -733,7 +734,8 @@ set -S2 "/bin/sh"
 # if 1
 #	define	ARCH_SUF	so
 #	define	LIBVERS		[[../sharedlibvers.sh]]
-#	define	BUILD_LIBRARY	ld -Bdynamic -dp -o
+/* Does -dp help? */
+#	define	BUILD_LIBRARY	ld -Bdynamic -o
 #	define	RANLIB		/**/
 # endif
 #	define	LIBMALLOC	/* use vendor library */
@@ -1267,50 +1269,50 @@ set -S2 "/bin/sh"
 
 #if !NFS
 /*	Local style, binaries in source directories */
-#	define	LIBFB	-L../libfb -L''LIBDIR -lfb
-#	define	LIBRT	-L../librt -L''LIBDIR -lrt
-#	define	LIBPLOT	-L../libplot3 -L''LIBDIR -lplot3
-#	define	LIBORLE	-L../liborle -L''LIBDIR -lorle
-#	define	LIBRLE	-L../librle -L''LIBDIR -lrle
-#	define  LIBFFT	-L../libfft -L''LIBDIR -lfft
-#	define	LIBWDB	-L../libwdb -L''LIBDIR -lwdb
-#	define	LIBNURB	-L../libnurb -L''LIBDIR -lnurb
-#	define	LIBMSR	-L../libmsr -L''LIBDIR -lmsr
-#	define	LIBRAD	-L../librad -L''LIBDIR -lrad
-#	define	LIBTERMIO	-L../libtermio -L''LIBDIR -ltermio
-#	define	LIBCURSOR	-L../libcursor -L''LIBDIR -lcursor
-#	define	LIBFONT	-L../libfont -L''LIBDIR -lfont
-#	define	LIBSYSV	-L../libsysv -L''LIBDIR -lsysv
+#	define	LIBFB	-L../libfb -lfb
+#	define	LIBRT	-L../librt -lrt
+#	define	LIBPLOT	-L../libplot3 -lplot3
+#	define	LIBORLE	-L../liborle -lorle
+#	define	LIBRLE	-L../librle -lrle
+#	define  LIBFFT	-L../libfft -lfft
+#	define	LIBWDB	-L../libwdb -lwdb
+#	define	LIBNURB	-L../libnurb -lnurb
+#	define	LIBMSR	-L../libmsr -lmsr
+#	define	LIBRAD	-L../librad -lrad
+#	define	LIBTERMIO	-L../libtermio -ltermio
+#	define	LIBCURSOR	-L../libcursor -lcursor
+#	define	LIBFONT	-L../libfont -lfont
+#	define	LIBSYSV	-L../libsysv -lsysv
 #	ifndef	LIBMALLOC
-#		define	LIBMALLOC	-L../libmalloc -L''LIBDIR -lmalloc
+#		define	LIBMALLOC	-L../libmalloc -lmalloc
 #	endif
 #	if HAS_TCP
-#		define	LIBPKG	-L../libpkg -L''LIBDIR -lpkg
+#		define	LIBPKG	-L../libpkg -lpkg
 #	else
 #		define	LIBPKG	/**/
 #	endif
 
 #else
 /*	NFS style, append machine name */
-#	define	LIBFB	-L../.libfb.MTYPE -L''LIBDIR -lfb
-#	define	LIBRT	-L../.librt.MTYPE -L''LIBDIR -lrt
-#	define	LIBPLOT	-L../.libplot3.MTYPE -L''LIBDIR -lplot3
-#	define	LIBORLE	-L../.liborle.MTYPE -L''LIBDIR -lorle
-#	define	LIBRLE	-L../.librle.MTYPE -L''LIBDIR -lrle
-#	define	LIBFFT	-L../.libfft.MTYPE -L''LIBDIR -lfft
-#	define	LIBWDB	-L../.libwdb.MTYPE -L''LIBDIR -lwdb
-#	define	LIBNURB	-L../.libnurb.MTYPE -L''LIBDIR -lnurb
-#	define	LIBMSR	-L../.libmsr.MTYPE -L''LIBDIR -lmsr
-#	define	LIBRAD	-L../.librad.MTYPE -L''LIBDIR -lrad
-#	define	LIBTERMIO	-L../.libtermio.MTYPE -L''LIBDIR -ltermio
-#	define	LIBCURSOR	-L../.libcursor.MTYPE -L''LIBDIR -lcursor
-#	define	LIBFONT	-L../.libfont.MTYPE -L''LIBDIR -lfont
-#	define	LIBSYSV	-L../.libsysv.MTYPE -L''LIBDIR -lsysv
+#	define	LIBFB	-L../.libfb.MTYPE -lfb
+#	define	LIBRT	-L../.librt.MTYPE -lrt
+#	define	LIBPLOT	-L../.libplot3.MTYPE -lplot3
+#	define	LIBORLE	-L../.liborle.MTYPE -lorle
+#	define	LIBRLE	-L../.librle.MTYPE -lrle
+#	define	LIBFFT	-L../.libfft.MTYPE -lfft
+#	define	LIBWDB	-L../.libwdb.MTYPE -lwdb
+#	define	LIBNURB	-L../.libnurb.MTYPE -lnurb
+#	define	LIBMSR	-L../.libmsr.MTYPE -lmsr
+#	define	LIBRAD	-L../.librad.MTYPE -lrad
+#	define	LIBTERMIO	-L../.libtermio.MTYPE -ltermio
+#	define	LIBCURSOR	-L../.libcursor.MTYPE -lcursor
+#	define	LIBFONT	-L../.libfont.MTYPE -lfont
+#	define	LIBSYSV	-L../.libsysv.MTYPE -lsysv
 #	ifndef	LIBMALLOC
-#		define	LIBMALLOC	-L../.libmalloc.MTYPE -L''LIBDIR -lmalloc
+#		define	LIBMALLOC	-L../.libmalloc.MTYPE -lmalloc
 #	endif
 #	if HAS_TCP
-#		define	LIBPKG	-L../.libpkg.MTYPE -L''LIBDIR -lpkg
+#		define	LIBPKG	-L../.libpkg.MTYPE -lpkg
 #	else
 #		define	LIBPKG	/**/
 #	endif
@@ -1373,7 +1375,7 @@ set -S2 "/bin/sh"
 #if !defined(STANDARD_LIBES)
 #	define	STANDARD_LIBES	-lm
 #endif
-#define LIBES	LIBSYSV STANDARD_LIBES
+#define LIBES	LIBSYSV -L''LIBDIR STANDARD_LIBES
 #define LLIBES	STANDARD_LIBES
 
 /* Program to install executables */
