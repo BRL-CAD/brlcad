@@ -700,7 +700,7 @@ char **argv;
 			ms_rt_min,
 			ms_rt_max,
 			ms_total_min,
-			ms_total_max,
+			ms_total_max
 		    );
 		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
 		bu_vls_free(&str);
