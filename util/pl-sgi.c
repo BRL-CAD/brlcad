@@ -39,6 +39,8 @@ Matrix	centermat;	/* center screen matrix */
 Coord	viewsize;
 
 int	axis = 0;	/* display coord axis */
+int	minobj = 1;	/* lowest active object number */
+int	maxobj = 1;	/* next available object number */
 
 /*
  *  Color Map:
@@ -84,14 +86,14 @@ char	**argv;
 
 	init_display();
 
-	makeobj( 1 );
+	makeobj( maxobj );
 	/* set the default drawing color to white */
 	if( ismex() )
 		color( COLOR_APPROX(255,255,255) );
 	else
 		color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
 	uplot( max, min );
-	closeobj( 1 );
+	closeobj( maxobj++ );	/* it's for real now */
 
 	/* scale to the largest X, Y, or Z interval */
 	viewsize = max[0] - min[0];
@@ -149,7 +151,7 @@ view_loop()
 	Device          event;
 	short           val;
 	int             end_it = 0;
-	int 		obj_num = 1;
+	int 		o = 1;
 	float		fval;
 
 	/* Initial translate/rotate/scale matrix */
@@ -162,7 +164,7 @@ view_loop()
 	ident[2][0] = ident[0][1] = ident[2][3] = 0.0;
 	ident[3][0] = ident[3][1] = ident[3][2] = 0.0;
 
-/*	depthcue(1);*/
+	/*depthcue(1);*/
 	cursoff();
 
 	/*
@@ -271,8 +273,16 @@ view_loop()
 		clear();
 		if( axis )
 			draw_axis();
-		callobj(obj_num);
+		for( o = minobj; o < maxobj; o++ )
+			callobj( o );
 		swapbuffers();
+
+		if( !feof(stdin) && select() ) {
+			double	max[3], min[3];
+			makeobj( maxobj );
+			uplot( max, min );
+			closeobj( maxobj++ );
+		}
 	}
 	/*depthcue( 0 );*/
 	curson();
@@ -415,11 +425,23 @@ Coord max[3], min[3];
 		switch( c ) {
 		/* One of a kind functions */
 		case 'e':
+#ifdef never	/* what's the point? */
 			l = getcolor();
 			color( BLACK );
 			clear();
 			color( l );
+#endif
+			/*XXX*/
+			/* remove any objects, start a new one */
+			closeobj( maxobj );
+			for( o = minobj; o <= maxobj; o++ )
+				delobj( o );
+			minobj = maxobj;
+			makeobj( maxobj );
 			break;
+		case 'F':
+			/* display everything up to here */
+			return;
 		case 'f':
 			eat_string();
 			break;
