@@ -235,29 +235,7 @@ init_sedit()
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
 
-	/* put up menu header */
-	MENU_ON( FALSE );
-	switch( es_gentype ) {
-
-	case GENARB8:
-		MENU_INSTALL( arb_menu );
-		break;
-	case GENTGC:
-		MENU_INSTALL( tgc_menu );
-		break;
-	case TOR:
-		MENU_INSTALL( tor_menu );
-		break;
-	case GENELL:
-		MENU_INSTALL( ell_menu );
-		break;
-	case ARS:
-		MENU_INSTALL( ars_menu );
-		break;
-	case SPLINE:
-		MENU_INSTALL( spline_menu );
-		break;
-	}
+	sedit_menu();		/* put up menu header */
 
 	/* Finally, enter solid edit state */
 	dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
@@ -269,6 +247,38 @@ init_sedit()
 	sedraw = 1;
 
 	button( BE_S_EDIT );	/* Drop into edit menu right away */
+}
+
+/* put up menu header */
+void
+sedit_menu()  {
+
+	menuflag = 0;		/* No menu item selected yet */
+
+	menu_array[MENU_L1] = MENU_NULL;
+	menu_array[MENU_L2] = MENU_NULL;
+
+	switch( es_gentype ) {
+
+	case GENARB8:
+		menu_array[MENU_L1] = arb_menu;
+		break;
+	case GENTGC:
+		menu_array[MENU_L1] = tgc_menu;
+		break;
+	case TOR:
+		menu_array[MENU_L1] = tor_menu;
+		break;
+	case GENELL:
+		menu_array[MENU_L1] = ell_menu;
+		break;
+	case ARS:
+		menu_array[MENU_L1] = ars_menu;
+		break;
+	case SPLINE:
+		menu_array[MENU_L1] = spline_menu;
+		break;
+	}
 }
 
 /*

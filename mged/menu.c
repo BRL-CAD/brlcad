@@ -29,8 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	"dm.h"
 
 int	menuflag;	/* flag indicating if a menu item is selected */
-int	menu_on;
-struct menu_item *menu_list;	/* base of array of menu items */
+struct menu_item *menu_array[NMENU];	/* base of array of menu items */
 
 static int	menu_current;	/* y-location of selected menu item */
 static int	menu_top;	/* screen loc of the first menu item */
@@ -40,9 +39,10 @@ static int	menu_top;	/* screen loc of the first menu item */
 void
 menu_init()
 {
-	menu_on = 0;
 	menuflag = 0;
-	menu_list = MENU_NULL;
+	menu_array[MENU_L1] = MENU_NULL;
+	menu_array[MENU_L2] = MENU_NULL;
+	menu_array[MENU_GEN] = MENU_NULL;
 }
 
 /* MENU_DISPLAY(y) ==== Add a list of items to the display list. */
@@ -51,22 +51,24 @@ void
 menu_display( y_top )
 int y_top;
 { 
+	register struct menu_item	**m;
 	register struct menu_item	*mptr;
 	register int y = y_top;
 
-	if( menu_list == MENU_NULL || menu_on == 0 )
-		return;
-
 	menu_top = y - MENU_DY / 2;
 
-	for( mptr = &menu_list[0];
-	     mptr->menu_string[0] != '\0';
-	     mptr++, y += MENU_DY )  {
-		dmp->dmr_puts( mptr->menu_string, MENUX, y, 0, DM_YELLOW );
-		dmp->dmr_2d_line(XLIM, y+(MENU_DY/2), 2047, y+(MENU_DY/2), 0);
+	for( m = menu_array; m < &menu_array[NMENU]; m++ )  {
+		if( *m == MENU_NULL )  continue;
+		for( mptr = *m;
+		     mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
+		     mptr++, y += MENU_DY )  {
+			dmp->dmr_puts( mptr->menu_string, MENUX, y, 0, DM_YELLOW );
+			dmp->dmr_2d_line(XLIM, y+(MENU_DY/2), 2047, y+(MENU_DY/2), 0);
+		}
 	}
+	if( y == y_top )  return;	/* no active menus */
 
-	dmp->dmr_2d_line( XLIM, menu_top, XLIM, y-(MENU_DY/2), 0 );
+	dmp->dmr_2d_line( XLIM, menu_top-1, XLIM, y-(MENU_DY/2), 0 );
 
 	/* prefix item selected with "==>" to let user know it is selected */
 	if( menuflag ) {
@@ -76,37 +78,44 @@ int y_top;
 
 /* MENU_SELECT(x,y)
  *
- * Returns: 1 if menu claims these pen co-ordinates, 0 otherwise.
+ * Returns:	1 if menu claims these pen co-ordinates,
+ *		0 if pen is BELOW menu
+ *		-1 if pen is ABOVE menu	(error)
  */
 int
 menu_select( pen_y )
 register int pen_y;
 { 
+	struct menu_item	**m;
 	register struct menu_item	*mptr;
 	register int			yy;
 
 	if( pen_y > menu_top )
-		return(0);	/* pen above menu area */
+		return(-1);	/* pen above menu area */
 
 	/*
 	 * Start at the top of the list and see if the pen is
 	 * above here.
 	 */
 	yy = menu_top;
-	for( mptr = &menu_list[0];
-	     mptr->menu_string[0] != '\0';
-	     mptr++ )  {
-		yy += MENU_DY;
-		if( pen_y <= yy )
-			continue;	/* pen is below this item */
-		if( mptr != &menu_list[0] )  {
-			menu_current = yy - (MENU_DY / 2);
-			menuflag = 1;	/* tag a non-title item */
+
+	for( m = menu_array; m < &menu_array[NMENU]; m++ )  {
+		if( *m == MENU_NULL )  continue;
+		for( mptr = *m;
+		     mptr->menu_string[0] != '\0';
+		     mptr++ )  {
+			yy += MENU_DY;
+			if( pen_y <= yy )
+				continue;	/* pen is below this item */
+			if( mptr != *m )  {
+				menu_current = yy - (MENU_DY / 2);
+				menuflag = 1;	/* tag a non-title item */
+			}
+			if( mptr->menu_func != ((void (*)())0) )
+				(*(mptr->menu_func))(mptr->menu_arg);
+			dmaflag = 1;
+			return( 1 );		/* menu claims pen value */
 		}
-		if( mptr->menu_func != ((void (*)())0) )
-			(*(mptr->menu_func))(mptr->menu_arg);
-		dmaflag = 1;
-		return( 1 );		/* menu claims pen value */
 	}
 	return( 0 );		/* pen below menu area */
 }

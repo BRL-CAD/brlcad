@@ -112,7 +112,7 @@ static int	vsaved = 0;	/* set iff view saved */
  */
 void
 button( bnum )
-register long bnum;
+register int bnum;
 {
 	register struct buttons *bp;
 
@@ -276,7 +276,6 @@ static int ill_common()  {
 	edsol = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
 	mat_idn( modelchanges );	/* No changes yet */
-	new_mats();
 	dmaflag++;
 	return(1);		/* OK */
 }
@@ -286,8 +285,10 @@ static void be_o_illuminate()  {
 		return;
 
 	dmp->dmr_light( LIGHT_ON, BE_O_ILLUMINATE );
-	if( ill_common() )
+	if( ill_common() )  {
 		(void)chg_state( ST_VIEW, ST_O_PICK, "Object Illuminate" );
+		new_mats();
+	}
 }
 
 static void be_s_illuminate()  {
@@ -295,8 +296,10 @@ static void be_s_illuminate()  {
 		return;
 
 	dmp->dmr_light( LIGHT_ON, BE_S_ILLUMINATE );
-	if( ill_common() )
+	if( ill_common() )  {
 		(void)chg_state( ST_VIEW, ST_S_PICK, "Solid Illuminate" );
+		new_mats();
+	}
 }
 
 static void be_o_scale()  {
@@ -362,8 +365,8 @@ static void be_accept()  {
 
 		dmp->dmr_light( LIGHT_OFF, edsol );
 		edsol = 0;
-		MENU_ON(FALSE);
-		MENU_INSTALL( (struct menu_item *)NULL );
+		menu_array[MENU_L1] = MENU_NULL;
+		menu_array[MENU_L2] = MENU_NULL;
 		dmp->dmr_light( LIGHT_OFF, BE_S_EDIT );
 		es_edflag = -1;
 		menuflag = 0;
@@ -441,8 +444,8 @@ static void be_reject()  {
 		/* Reject a solid edit */
 		if( edsol )
 			dmp->dmr_light( LIGHT_OFF, edsol );
-		MENU_ON( FALSE );
-		MENU_INSTALL( (struct menu_item *)NULL );
+		menu_array[MENU_L1] = MENU_NULL;
+		menu_array[MENU_L2] = MENU_NULL;
 
 		/* Restore the saved original solid */
 		illump = redraw( illump, &es_orig );
@@ -478,6 +481,8 @@ static void be_reject()  {
 }
 
 static void bv_slicemode() {
+	extern int inten_scale;
+
 	if( sliceflag )  {
 		/* depth cue mode */
 		sliceflag = 0;
@@ -500,8 +505,7 @@ static void be_s_edit()  {
 		dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_EDIT );
 	es_edflag = MENU;
-	menuflag = 0;		/* No menu item selected yet */
-	MENU_ON(TRUE);
+	sedit_menu();		/* Install appropriate menu */
 	dmaflag++;
 }
 
@@ -513,7 +517,8 @@ static void be_s_rotate()  {
 	dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_ROTATE );
 	menuflag = 0;
-	MENU_ON( FALSE );
+	menu_array[MENU_L1] = MENU_NULL;
+	menu_array[MENU_L2] = MENU_NULL;
 	es_edflag = SROT;
 	mat_idn(acc_rot_sol);
 	dmaflag++;
@@ -529,7 +534,8 @@ static void be_s_trans()  {
 	menuflag = 0;
 	es_edflag = STRANS;
 	movedir = UARROW | RARROW;
-	MENU_ON( FALSE );
+	menu_array[MENU_L1] = MENU_NULL;
+	menu_array[MENU_L2] = MENU_NULL;
 	dmaflag++;
 }
 
@@ -542,7 +548,8 @@ static void be_s_scale()  {
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_SCALE );
 	menuflag = 0;
 	es_edflag = SSCALE;
-	MENU_ON( FALSE );
+	menu_array[MENU_L1] = MENU_NULL;
+	menu_array[MENU_L2] = MENU_NULL;
 	acc_sc_sol = 1.0;
 	dmaflag++;
 }
@@ -593,4 +600,44 @@ char *str;
 {
 	(void)printf("Unable to do <%s> from %s state.\n",
 		str, state_str[state] );
+}
+
+
+/*
+ *  "Button Menu" stuff
+ */
+void button_menu();
+void button_hit_menu(arg)  {
+	button(arg);
+	menuflag = 0;
+}
+
+static struct menu_item first_menu[] = {
+	{ "BUTTON MENU", button_menu, 5 },
+	{ "", (void (*)())NULL, 0 }
+};
+static struct menu_item second_menu[] = {
+	{ "***BUTTON MENU***", button_menu, 0 },
+	{ "REJECT Edit", button_hit_menu, BE_REJECT },
+	{ "Top", button_hit_menu, BV_TOP },
+	{ "Right", button_hit_menu, BV_RIGHT },
+	{ "Front", button_hit_menu, BV_FRONT },
+	{ "35,25", button_hit_menu, BV_35_25 },
+	{ "90,90", button_hit_menu, BV_90_90 },
+	{ "Restore View", button_hit_menu, BV_VRESTORE },
+	{ "Reset Viewsize", button_hit_menu, BV_RESET },
+	{ "Angle/Dist Cursor", button_hit_menu, BV_ADCURSOR },
+	{ "Solid Illum", button_hit_menu, BE_S_ILLUMINATE },
+	{ "Object Illum", button_hit_menu, BE_O_ILLUMINATE },
+	{ "", (void (*)())NULL, 0 }
+};
+
+void
+button_menu(i)  {
+	if( i == 0 )
+		menu_array[MENU_GEN] = first_menu;
+	else
+		menu_array[MENU_GEN] = second_menu;
+	menuflag = 0;	/* no selected menu item */
+	dmaflag = 1;
 }

@@ -36,7 +36,7 @@ typedef unsigned char u_char;
 
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
 int	Tek_open();
-void	Tek_close(), Tek_restart();
+void	Tek_close();
 int	Tek_input();
 void	Tek_prolog(), Tek_epilog();
 void	Tek_normal(), Tek_newrot();
@@ -45,9 +45,10 @@ void	Tek_puts(), Tek_2d_line(), Tek_light();
 int	Tek_object();
 unsigned Tek_cvtvecs(), Tek_load();
 void	Tek_statechange(), Tek_viewchange(), Tek_colorchange();
+void	Tek_window(), Tek_debug();
 
 struct dm dm_Tek = {
-	Tek_open, Tek_close, Tek_restart,
+	Tek_open, Tek_close,
 	Tek_input,
 	Tek_prolog, Tek_epilog,
 	Tek_normal, Tek_newrot,
@@ -59,6 +60,7 @@ struct dm dm_Tek = {
 	Tek_statechange,
 	Tek_viewchange,
 	Tek_colorchange,
+	Tek_window, Tek_debug,
 	0,				/* no displaylist */
 	TEKBOUND,
 	"tek", "Tektronix 4014"
@@ -71,19 +73,6 @@ struct timeval	{			/* needed for select() */
 
 
 extern struct device_values dm_values;	/* values read from devices */
-
-/**** Begin global display information, used by dm.c *******/
-extern int	inten_offset;		/* Intensity offset */
-extern int	inten_scale;		/* Intensity scale */
-extern int	xcross;
-extern int	ycross;			/* tracking cross position */
-extern int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
-/**** End global display information ******/
-
-/**** Global mode information ****/
-extern int	regdebug;		/* toggled by "X" command */
-extern int	adcflag;		/* A/D cursor on/off */
-/**** End Global mode information ****/
 
 static vect_t clipmin, clipmax;		/* for vector clipping */
 
@@ -180,14 +169,6 @@ Tek_prolog()
 
 	/* Put the center point up */
 	point( 0, 0 );
-
-	/* Compute the clipping bounds */
-	clipmin[0] = windowbounds[1] / 2048.;
-	clipmin[1] = windowbounds[3] / 2048.;
-	clipmin[2] = windowbounds[5] / 2048.;
-	clipmax[0] = windowbounds[0] / 2047.;
-	clipmax[1] = windowbounds[2] / 2047.;
-	clipmax[2] = windowbounds[4] / 2047.;
 }
 
 /*
@@ -621,4 +602,22 @@ register char *s;
 point(xi,yi){
 	move(xi,yi);
 	cont(xi,yi);
+}
+
+void
+Tek_debug(lvl)
+{
+}
+
+void
+Tek_window(w)
+register int w[];
+{
+	/* Compute the clipping bounds */
+	clipmin[0] = w[1] / 2048.;
+	clipmin[1] = w[3] / 2048.;
+	clipmin[2] = w[5] / 2048.;
+	clipmax[0] = w[0] / 2047.;
+	clipmax[1] = w[2] / 2047.;
+	clipmax[2] = w[4] / 2047.;
 }

@@ -87,12 +87,10 @@ usepen()
 	 * If menu is active, and pen press is in menu area,
 	 * divert this pen press for menu purposes.
 	 */
-	if(  menu_on == TRUE  &&
-		dm_values.dv_xpen > XLIM &&
-		dm_values.dv_penpress &&
-		menu_list != (struct menu_item *) NULL
+	if( dm_values.dv_xpen > XLIM &&
+		dm_values.dv_penpress
 	)  {
-		if( menu_select( dm_values.dv_ypen ) == 0 )
+		if( menu_select( dm_values.dv_ypen ) < 0 )
 			(void)printf("pen press outside valid menu\n");
 		return;
 	}

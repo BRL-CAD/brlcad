@@ -49,7 +49,7 @@ typedef unsigned char u_char;
 
 #define MERBOUND	4095.9	/* Max magnification in Rot matrix */
 int	Mer_open();
-void	Mer_close(), Mer_restart();
+void	Mer_close();
 int	Mer_input();
 void	Mer_prolog(), Mer_epilog();
 void	Mer_normal(), Mer_newrot();
@@ -58,9 +58,10 @@ void	Mer_puts(), Mer_2d_line(), Mer_light();
 int	Mer_object();
 unsigned Mer_cvtvecs(), Mer_load();
 void	Mer_statechange(), Mer_viewchange(), Mer_colorchange();
+void	Mer_window(), Mer_debug();
 
 struct dm dm_Mer = {
-	Mer_open, Mer_close, Mer_restart,
+	Mer_open, Mer_close,
 	Mer_input,
 	Mer_prolog, Mer_epilog,
 	Mer_normal, Mer_newrot,
@@ -72,6 +73,7 @@ struct dm dm_Mer = {
 	Mer_statechange,
 	Mer_viewchange,
 	Mer_colorchange,
+	Mer_window, Mer_debug,
 	0,			/* no "displaylist", per. se. */
 	MERBOUND,
 	"mer", "Megatek MERLIN 9200"
@@ -79,19 +81,7 @@ struct dm dm_Mer = {
 
 extern struct device_values dm_values;	/* values read from devices */
 
-/**** Begin global display information, used by dm.c *******/
-extern int	inten_offset;		/* Intensity offset */
-extern int	inten_scale;		/* Intensity scale */
-extern int	xcross;
-extern int	ycross;			/* tracking cross position */
-extern mat_t	rot;			/* viewing rotation */
-extern int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
-/**** End global display information ******/
-
-/**** Global mode information ****/
-extern int	regdebug;		/* toggled by "X" command */
-extern int	adcflag;		/* A/D cursor on/off */
-/**** End Global mode information ****/
+static int	mer_debug;		/* 2 for basic, 3 for full */
 
 /* Map +/-2048 GED space into +/-16k MERLIN space */
 #define GED2MERLIN(x)	((x)*6)
@@ -159,7 +149,6 @@ u_char db_buf[DB_SIZE+HDR_OFFSET+32];
 u_char *db_next = DB_START;
 int insert_mode = 0;
 
-#define mer_debug	regdebug	/* 2 for basic, 3 for full */
 
 u_char crap[8196];	/* temp, for uploading into */
 
@@ -289,17 +278,6 @@ Mer_close()
 	(void)ioctl( input_fd, TIOCLSET, &Mer_oldloc );
 	(void)close( input_fd );
 	input_fd = -1;
-}
-
-/*
- *			M E R _ R E S T A R T
- *
- * Used when the display processor wanders off.
- */
-void
-Mer_restart()
-{
-	dumpEntity( 'sav1' );	/* DEBUG */
 }
 
 dumpEntity( name )
@@ -851,6 +829,18 @@ register struct solid *sp;
 	}
 	PEndS();
 #endif
+}
+
+void
+Mer_debug(lvl)
+{
+	mer_debug = lvl;
+}
+
+void
+Mer_window(w)
+int w[];
+{
 }
 
 

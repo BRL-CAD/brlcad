@@ -68,14 +68,11 @@ extern char	*sprintf();
 extern int	sprintf();
 #endif
 
-extern struct dm dm_Mg;
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
 
 int	dmaflag;			/* Set to 1 to force new screen DMA */
 
-/**** Begin global display information, used by dm.c *******/
-int		windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
-/**** End global display information ******/
+static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
 static jmp_buf	jmp_env;		/* For non-local gotos */
 void		(*cur_sigint)();	/* Current SIGINT status */
@@ -148,6 +145,7 @@ char **argv;
 	windowbounds[3] = -2048;	/* YLR */
 	windowbounds[4] = 2047;		/* ZHR */
 	windowbounds[5] = -2048;	/* ZLR */
+	dmp->dmr_window(windowbounds);
 
 	dmaflag = 1;
 
@@ -161,6 +159,7 @@ char **argv;
 
 	/* Initialize the menu mechanism to be off, but ready. */
 	menu_init();
+	button_menu(0);			/* unlabeled menu */
 
 	refresh();			/* Put up faceplate */
 
@@ -174,7 +173,6 @@ char **argv;
 	} else {
 		(void)printf("\nAborted.\n");
 	}
-	(void)signal( SIGINT, SIG_IGN );
 	(void)signal( SIGPIPE, SIG_IGN );
 	pr_prompt();
 
@@ -182,6 +180,8 @@ char **argv;
 	while(1) {
 		static vect_t knobvec;	/* knob slew */
 		static int rateflag;	/* != 0 means change RATE */
+
+		(void)signal( SIGINT, SIG_IGN );
 
 		/*
 		 * dmr_input() will suspend until some change has occured,
@@ -198,7 +198,7 @@ char **argv;
 
 		/* Process any function button presses */
 		if( dm_values.dv_buttonpress )
-			button( (long)dm_values.dv_buttonpress );
+			button( dm_values.dv_buttonpress );
 
 		/* Process any joystick activity */
 		if(	dmaflag
@@ -260,8 +260,8 @@ char **argv;
 		windowbounds[0] = 2047;		/* XHR */
 		if( illump != SOLID_NULL )
 			windowbounds[0] = XLIM;
-
 		windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
+		dmp->dmr_window(windowbounds);	/* hack */
 
 		/* Apply the knob slew factor to the view center */
 		if( dm_values.dv_xslew != 0.0 || dm_values.dv_yslew != 0.0 )  {

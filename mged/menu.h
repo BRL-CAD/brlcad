@@ -1,8 +1,9 @@
 /*
  *			M E N U . H
  *
- *  Author -
+ *  Authors -
  *	Bob Suckling
+ *	Mike Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -17,7 +18,8 @@
  */
 
 /*
- * If a menu is installed, menu_on is true, and menu_list is a pointer
+ * Each active menu is installed by haveing a non-null entry in
+ * menu_array[] which is a pointer
  * to an array of menu items.  The first ([0]) menu item is the title
  * for the menu, and the remaining items are individual menu entries.
  */
@@ -26,15 +28,12 @@ struct	menu_item  {
 	void	(*menu_func)();
 	int	menu_arg;
 };
-	
-/* defined in menu.c */
-extern int	menu_on;
-extern struct menu_item	*menu_list;	/* Pointer to current menu array */
 
 #define MENU_NULL		((struct menu_item *)0)
-#define	MENU_ON(setting)	menu_on = (setting); dmaflag = 1;
-#define MENU_INSTALL(ptr)	menu_list = (ptr)
+	
+#define NMENU	3
+extern struct menu_item	*menu_array[NMENU];	/* Active menus (menu.c) */
 
-/* Helpful macros.*/
-#define TRUE	1
-#define FALSE	0
+#define MENU_L1		0	/* top-level solid-edit menu */
+#define MENU_L2		1	/* second-level menu (unused) */
+#define MENU_GEN	2	/* general features (mouse buttons) */

@@ -93,7 +93,7 @@ dotitles()
 	dmp->dmr_2d_line(XLIM, YPOS, XLIM, 2047, 0);
 #undef YPOS
 
-#ifdef never
+#ifndef never
 	/* QUESTIONABLE use of machine */
 	/* print region default code numbers */
 	(void)sprintf( &linebuf[0], " Next Region:   item=%d  air=%d  mat=%d  los=%d",

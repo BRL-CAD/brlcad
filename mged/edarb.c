@@ -33,7 +33,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "solid.h"
 #include "objdir.h"
 #include "dm.h"
-#include "menu.h"
 
 extern int	printf();
 

@@ -231,11 +231,14 @@ f_debug()
 void
 f_regdebug()
 {
+	static int regdebug = 0;
+
 	if( numargs <= 1 )
 		regdebug = !regdebug;	/* toggle */
 	else
 		regdebug = atoi( cmd_args[1] );
 	(void)printf("regdebug=%d\n", regdebug);
+	dmp->dmr_debug(regdebug);
 }
 
 void
