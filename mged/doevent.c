@@ -229,12 +229,23 @@ XMotionEvent *xmotion;
   switch(am_mode){
   case AMM_IDLE:
     if(scroll_active)
+#ifdef USE_RT_ASPECT
+      bu_vls_printf( &cmd, "M 1 %d %d\n",
+		     (int)(dm_Xx2Normal(dmp, mx) * 2047.0),
+		     (int)(dm_Xy2Normal(dmp, my, 0) * 2047.0) );
+#else
       bu_vls_printf( &cmd, "M 1 %d %d\n",
 		     (int)(dm_Xx2Normal(dmp, mx, 0) * 2047.0),
 		     (int)(dm_Xy2Normal(dmp, my) * 2047.0) );
+#endif
     else if(rubber_band_active){
+#ifdef USE_RT_ASPECT
+      fastf_t x = dm_Xx2Normal(dmp, mx);
+      fastf_t y = dm_Xy2Normal(dmp, my, 1);
+#else
       fastf_t x = dm_Xx2Normal(dmp, mx, 1);
       fastf_t y = dm_Xy2Normal(dmp, my);
+#endif
 
       rect_width = x - rect_x;
       rect_height = y - rect_y;
@@ -244,9 +255,15 @@ XMotionEvent *xmotion;
     }else if(doMotion)
       /* do the regular thing */
       /* Constant tracking (e.g. illuminate mode) bound to M mouse */
+#ifdef USE_RT_ASPECT
+      bu_vls_printf( &cmd, "M 0 %d %d\n",
+		     (int)(dm_Xx2Normal(dmp, mx) * 2047.0),
+		     (int)(dm_Xy2Normal(dmp, my, 1) * 2047.0) );
+#else
       bu_vls_printf( &cmd, "M 0 %d %d\n",
 		     (int)(dm_Xx2Normal(dmp, mx, 1) * 2047.0),
 		     (int)(dm_Xy2Normal(dmp, my) * 2047.0) );
+#endif
     else /* not doing motion */
       goto handled;
 
@@ -291,8 +308,13 @@ XMotionEvent *xmotion;
 
     break;
   case AMM_TRAN:
+#ifdef USE_RT_ASPECT
+    fx = dx / (fastf_t)dmp->dm_width * 2.0;
+    fy = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
+#else
     fx = dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0;
     fy = -dy / (fastf_t)dmp->dm_height * 2.0;
+#endif
       
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
        mged_variables->transform == 'e'){
@@ -322,8 +344,13 @@ XMotionEvent *xmotion;
 	  dml_mouse_dx += dx;
 	  dml_mouse_dy += dy;
 
+#ifdef USE_RT_ASPECT
+	  view_pt[X] = dml_mouse_dx / (fastf_t)dmp->dm_width * 2.0;
+	  view_pt[Y] = -dml_mouse_dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
+#else
 	  view_pt[X] = dml_mouse_dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0;
 	  view_pt[Y] = -dml_mouse_dy / (fastf_t)dmp->dm_height * 2.0;
+#endif
 	  view_pt[Z] = 0.0;
 	  round_to_grid(&view_pt[X], &view_pt[Y]);
 
@@ -353,8 +380,13 @@ XMotionEvent *xmotion;
 	dml_mouse_dx += dx;
 	dml_mouse_dy += dy;
 
+#ifdef USE_RT_ASPECT
+	snap_view_to_grid(dml_mouse_dx / (fastf_t)dmp->dm_width * 2.0,
+			  -dml_mouse_dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0);
+#else
 	snap_view_to_grid(dml_mouse_dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0,
 			  -dml_mouse_dy / (fastf_t)dmp->dm_height * 2.0);
+#endif
 
 	goto handled;
       }else
@@ -387,26 +419,47 @@ XMotionEvent *xmotion;
 
     break;
   case AMM_ADC_ANG1:
+#ifdef USE_RT_ASPECT
+    fx = dm_Xx2Normal(dmp, mx) * 2047.0 - dv_xadc;
+    fy = dm_Xy2Normal(dmp, my, 1) * 2047.0 - dv_yadc;
+#else
     fx = dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
     fy = dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc;
-    bu_vls_printf(&cmd, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
+#endif
+    bu_vls_printf(&cmd, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 
     break;
   case AMM_ADC_ANG2:
+#ifdef USE_RT_ASPECT
+    fx = dm_Xx2Normal(dmp, mx) * 2047.0 - dv_xadc;
+    fy = dm_Xy2Normal(dmp, my, 1) * 2047.0 - dv_yadc;
+#else
     fx = dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
     fy = dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc;
-    bu_vls_printf(&cmd, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
+#endif
+    bu_vls_printf(&cmd, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 
     break;
   case AMM_ADC_TRAN:
-    bu_vls_printf(&cmd, "adc hv %lf %lf\n",
-		  dm_Xx2Normal(dmp, mx, 1) * Viewscale * base2local,
-		  dm_Xy2Normal(dmp, my) * Viewscale * base2local);
+    {
+      point_t model_pt;
+      point_t view_pt;
+
+      VSET(view_pt, dm_Xx2Normal(dmp, mx), dm_Xy2Normal(dmp, my, 1), 0.0);
+      MAT4X3PNT(model_pt, view2model, view_pt);
+      VSCALE(model_pt, model_pt, base2local);
+      bu_vls_printf(&cmd, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
+    }
 
     break;
   case AMM_ADC_DIST:
+#ifdef USE_RT_ASPECT
+    fx = (dm_Xx2Normal(dmp, mx) * 2047.0 - dv_xadc) * Viewscale * base2local / 2047.0;
+    fy = (dm_Xy2Normal(dmp, my, 1) * 2047.0 - dv_yadc) * Viewscale * base2local / 2047.0;
+#else
     fx = (dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc) * Viewscale * base2local / 2047.0;
     fy = (dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc) * Viewscale * base2local / 2047.0;
+#endif
     td = sqrt(fx * fx + fy * fy);
     bu_vls_printf(&cmd, "adc dst %lf\n", td);
 
@@ -499,10 +552,17 @@ XMotionEvent *xmotion;
       }
     }
 
+#ifdef USE_RT_ASPECT
+    if(abs(dx) >= abs(dy))
+      f = dx / (fastf_t)dmp->dm_width * 2.0;
+    else
+      f = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
+#else
     if(abs(dx) >= abs(dy))
       f = dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0;
     else
       f = -dy / (fastf_t)dmp->dm_height * 2.0;
+#endif
 
     if(mged_variables->rateknobs)
       bu_vls_printf( &cmd, "knob -i X %f\n", f);
@@ -523,10 +583,17 @@ XMotionEvent *xmotion;
       }
     }
 
+#ifdef USE_RT_ASPECT
+    if(abs(dx) >= abs(dy))
+      f = dx / (fastf_t)dmp->dm_width * 2.0;
+    else
+      f = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
+#else
     if(abs(dx) >= abs(dy))
       f = dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0;
     else
       f = -dy / (fastf_t)dmp->dm_height * 2.0;
+#endif
 
     if(mged_variables->rateknobs)
       bu_vls_printf( &cmd, "knob -i Y %f\n", f);
@@ -547,10 +614,17 @@ XMotionEvent *xmotion;
       }
     }
 
+#ifdef USE_RT_ASPECT
+    if(abs(dx) >= abs(dy))
+      f = dx / (fastf_t)dmp->dm_width * 2.0;
+    else
+      f = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
+#else
     if(abs(dx) >= abs(dy))
       f = dx / (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0;
     else
       f = -dy / (fastf_t)dmp->dm_height * 2.0;
+#endif
 
     if(mged_variables->rateknobs)
       bu_vls_printf( &cmd, "knob -i Z %f\n", f);
@@ -636,8 +710,13 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
+#ifdef USE_RT_ASPECT
+    bu_vls_printf( &cmd, "knob -i xadc %f\n",
+		   f / (fastf_t)dmp->dm_width * 4095.0 );
+#else
     bu_vls_printf( &cmd, "knob -i xadc %f\n",
 		   f / (fastf_t)dmp->dm_width / dmp->dm_aspect * 4095.0 );
+#endif
     break;
   case AMM_CON_YADC:
     if(abs(dx) >= abs(dy))
@@ -672,8 +751,13 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
+#ifdef USE_RT_ASPECT
+    bu_vls_printf( &cmd, "knob -i distadc %f\n",
+		   f / (fastf_t)dmp->dm_width * 4095.0 );
+#else
     bu_vls_printf( &cmd, "knob -i distadc %f\n",
 		   f / (fastf_t)dmp->dm_width / dmp->dm_aspect * 4095.0 );
+#endif
     break;
   }
 
