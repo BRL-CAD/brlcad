@@ -230,7 +230,6 @@ dnl autosearch fink paths
 AC_MSG_CHECKING([for fink])
 if test -d /sw ; then
 	AC_MSG_RESULT([found, adding /sw to search paths])
-	CFLAGS="$CFLAGS -I/sw/include"
 	CPPFLAGS="$CPPFLAGS -I/sw/include"
 	LDFLAGS="$LDFLAGS -L/sw/lib"
 else
@@ -407,13 +406,11 @@ if test "x$found_jni_h" = "xno" ; then
 fi
 if ! test "x$search_for_jni_h_more" = "xno" ; then
 	# darwin systems may have a prior jni.h stashed away elsewhere
-	pre_cflags="$CFLAGS"
 	pre_cppflags="$CPPFLAGS"
 	macjvmdir=/System/Library/Frameworks/JavaVM.framework/Versions
 	if test -d "$macjvmdir"  ; then
 		for dir in `ls $macjvmdir` ; do
 			if test -d "$macjvmdir/$dir" ; then
-				CFLAGS="-I$macjvmdir/$dir/Headers $CFLAGS"
 				CPPFLAGS="-I$macjvmdir/$dir/Headers $CPPFLAGS"
 			fi
 		done
@@ -436,7 +433,6 @@ if ! test "x$search_for_jni_h_more" = "xno" ; then
 		AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
 		AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
 	else
-		CFLAGS="$pre_cflags"
 		CPPFLAGS="$pre_cppflags"
 		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_WARN([Code dependant upon java and jni.h will not be built])
@@ -483,8 +479,9 @@ dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
 
-# XXX these flags are presently GCC-specific
-CFLAGS="$CFLAGS -I$(top_srcdir)/h -fno-strict-aliasing"
+# XXX some of these flags are presently GCC-specific
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/h"
+CFLAGS="$CFLAGS -fno-strict-aliasing"
 
 if ! test "x$use_optimized" = "xno" ; then
 	CFLAGS="$CFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
