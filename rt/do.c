@@ -391,7 +391,7 @@ char	**argv;
 		fprintf(stderr,"cm_anim:  type %s unknown\n", argv[2]);
 		goto bad;
 	}
-	if( db_add_anim( rtip, anp, at_root ) < 0 )  {
+	if( db_add_anim( rtip->rti_dbip, anp, at_root ) < 0 )  {
 		fprintf(stderr,"cm_anim:  %s %s failed\n", argv[1], argv[2]);
 		goto bad;
 	}
