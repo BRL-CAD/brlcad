@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern char usage[];
 
+extern void wray(), wraypts();
 extern double atof();
 
 /***** Variables shared with viewing model *** */
@@ -74,7 +75,7 @@ char **argv;
 	char *title_file, *title_obj;	/* name of file and first object */
 	char *outputfile = (char *)0;	/* name of base of output file */
 	static float	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
-	static int outfd = -1;		/* fd of optional pixel output file */
+	static FILE *outfp = NULL;	/* optional pixel output file */
 	register int x,y;
 	char framename[128];		/* File name to hold current frame */
 	char outbuf[132];
@@ -286,10 +287,11 @@ do_more:
 			sprintf( framename, outputfile );
 		else
 			sprintf( framename, "%s.%d", outputfile, framenumber-1 );
-		if( (outfd = creat( framename, 0444 )) <= 0 )  {
+		if( (outfp = fopen( framename, "w" )) == NULL )  {
 			perror( framename );
 			goto do_more;
 		}
+		chmod( framename, 0444 );
 		fprintf(stderr,"Output file is %s\n", framename);
 	}
 
@@ -324,7 +326,7 @@ do_more:
 	MAT4X3PNT( viewbase_model, view2model, temp );
 
 	/* initialize lighting */
-	view_2init( &ap, outfd );
+	view_2init( &ap, outfp );
 
 	fflush(stdout);
 	fflush(stderr);
@@ -362,14 +364,16 @@ do_more:
 		framenumber-1,
 		npts*npts, utime, (double)(npts*npts/utime) );
 #ifdef HEP
-	if( write( outfd, scanbuf, npts*npts*3 ) != npts*npts*3 )  {
+	if( write( fileno(outfp), scanbuf, npts*npts*3 ) != npts*npts*3 )  {
 		perror("pixel output write");
 		goto out;
 	}
 #endif
 
-	(void)close(outfd);
-	outfd = -1;
+	if( outfp != NULL )  {
+		(void)fclose(outfp);
+		outfp = NULL;
+	}
 	if( matflag )  goto do_more;
 out:
 #ifdef HEP
@@ -450,3 +454,17 @@ register struct application *ap;
 #endif
 	}
 }
+
+#ifdef cray
+/* Routines that seem to be missing under COS on the XMP. */
+perror(str)
+char *str;
+{
+	fprintf(stderr,"%s:  file access failure\n");
+}
+chmod(str,val)
+char *str;
+{
+	;
+}
+#endif
