@@ -1,0 +1,47 @@
+.TH DECK 1 VMB
+'\"	last edit:	5/4/83	G S Moss
+'\"	SCCSID		@(#)vdeck.1	1.1
+.SH NAME
+Deck \- Generate COM-GEOM decks from a GED database file
+.SH SYNOPSIS
+.B deck
+{file}.g
+[
+.BI object...
+]
+.SH DESCRIPTION
+.nf
+Deck allows the user to select a list of objects (solids,  regions,  or
+groups) from a GED database file and generate a COM-GEOM deck for them.
+A list of objects  can be specified when invoking the program or a list
+can be selected interactively from the table of contents. String match-
+ing operators  like  those used to specify file or directory names from
+the UNIX shell are provided for this purpose,  as well as to search for
+names in the table of contents.   A list of objects can be edited using
+the 'delete' and 'insert' operators.  A deck consists of  three  tables
+(solid, region and region-id) and are saved as seperate files. Multiple
+decks can be created by specifying unique file name prefixes,  in which
+case the tables are suffixed by a ".st", ".rt" and ".id".
+.sp
+On-line documentation is provided.
+.sp
+.SH FILES
+.nf
+Output files:
+
+	solids, regions, region_ids		Default file names
+	*.st,   *.rt,    *.id			Unique file names
+
+Temporary files:
+
+        /tmp/disXXXXXX
+        /tmp/regXXXXXX
+.fi
+.sp
+.SH "SEE ALSO"
+ged, gedu, view
+.sp
+.SH AUTHORS
+.nf
+        Gary S. Moss, BRL/VLD-VMB
+        Keith Applin, BRL/VLD-TAB
