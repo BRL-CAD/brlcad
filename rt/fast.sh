@@ -35,26 +35,29 @@ cake ${SILENT} \
  rtshot.o \
  rtwalk.o &
 
-wait
-if test "${SILENT}" = ""
-then
-	echo --- Building the programs
-fi
-
-cake ${SILENT} \
- rt &
-
-cake ${SILENT} \
- rtrad rtpp rtray rtweight &
-
-cake ${SILENT} \
- rtshot rtwalk rtcheck rtg3 &
-
-cake ${SILENT} \
- rtcell rtxray rthide rtfrac &
-
-cake ${SILENT} \
- rtrange rtregis rtscale rtsil &
+#  NOTE!!!  The programs can't be built in parallel,
+#  because the newvers.sh script always writes to vers.o
+#
+#wait
+#if test "${SILENT}" = ""
+#then
+#	echo --- Building the programs
+#fi
+#
+#cake ${SILENT} \
+# rt &
+#
+#cake ${SILENT} \
+# rtrad rtpp rtray rtweight &
+#
+#cake ${SILENT} \
+# rtshot rtwalk rtcheck rtg3 &
+#
+#cake ${SILENT} \
+# rtcell rtxray rthide rtfrac &
+#
+#cake ${SILENT} \
+# rtrange rtregis rtscale rtsil &
 
 
 wait
