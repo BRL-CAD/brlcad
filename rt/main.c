@@ -34,6 +34,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "./ext.h"
@@ -96,14 +97,16 @@ char **argv;
 	char *title_file, *title_obj;	/* name of file and first object */
 	register int	x;
 	char idbuf[132];		/* First ID record info */
-
 	void	application_init();
 
 	port_setlinebuf( stderr );
 
-	(void)fprintf(stderr, "%s%s\n",
+	/* Identify the versions of the libraries we are using. */
+	(void)fprintf(stderr, "%s%s%s\n",
 		version+5,
-		rt_version+5 );	/* +5 to skip @(#) */
+		rt_version+5,
+		bu_version+5
+	      );	/* +5 to skip @(#) */
 
 #ifdef HAVE_SBRK
 	beginptr = (char *) sbrk(0);
