@@ -81,6 +81,9 @@ struct taskcontrol {
 
 char scanbuf[8*1024*3];		/* generous scan line */
 
+#ifndef MAX_PSW
+#define MAX_PSW 1
+#endif
 /* Variables shared within mainline pieces */
 int npsw = MAX_PSW;
 static char outbuf[132];
@@ -134,8 +137,9 @@ char **argv;
 	}
 
 	control_host = argv[1];
-	if( (pcsrv = pkg_open( control_host, "rtsrv", pkgswitch, rt_log )) == 0 &&
-	    (pcsrv = pkg_open( control_host, "4446", pkgswitch, rt_log )) == 0 )  {
+	pcsrv = pkg_open( control_host, "rtsrv", pkgswitch, rt_log );
+	if( pcsrv == PKC_ERROR &&
+	    (pcsrv = pkg_open( control_host, "4446", pkgswitch, rt_log )) == PKC_ERROR )  {
 		fprintf(stderr, "unable to contact %s\n", control_host);
 		exit(1);
 	}
@@ -606,3 +610,5 @@ register int *p;
 	asm("	tas	a5@");
 	asm("	bne	loop");
 }
+#endif
+#endif
