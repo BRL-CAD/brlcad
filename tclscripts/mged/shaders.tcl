@@ -40,6 +40,83 @@ proc vec_compare { v1 v2 n } {
 	return 0
 }
 
+# extern routines (the "extern" shader)
+proc do_extern { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	label $shader_params($id,window).fr.file -text File
+	entry $shader_params($id,window).fr.file_e -width 20 -textvariable shader_params($id,extern_file)
+	bind $shader_params($id,window).fr.file_e <KeyRelease> "do_shader_apply $shade_var $id"
+
+	hoc_register_data $shader_params($id,window).fr.file "File" {
+		{summary "The 'extern' shader is merely another way of assigning shaders to combinations.\n\
+			In this shader, all the parameters are stored in an outboard file. The format of the file\n\
+			is:\n\
+				shader_name key_word1=value keyword2=value...\n\
+			This shader is actually a variant of the stack shader, so you can supply more than one\n\
+			shader in the file by using the ';' as a separator. For example:\n\
+			\n\
+				camo s=200 t1=-.3 t2=.125;plastic di=.8\n\
+			will apply the 'camo' shader, then the 'plastic' shader."}
+	}
+	hoc_register_data $shader_params($id,window).fr.file_e "File" {
+		{summary "The 'extern' shader is merely another way of assigning shaders to combinations.\n\
+			In this shader, all the parameters are stored in an outboard file. The format of the file\n\
+			is:\n\
+				shader_name key_word1=value keyword2=value...\n\
+			This shader is actually a variant of the stack shader, so you can supply more than one\n\
+			shader in the file by using the ';' as a separator. For example:\n\
+			\n\
+				camo s=200 t1=-.3 t2=.125;plastic di=.8\n\
+			will apply the 'camo' shader, then the 'plastic' shader."}
+	}
+
+	set_extern_values $shader_str $id
+
+	grid $shader_params($id,window).fr.file -row 0 -column 0 -sticky e
+	grid $shader_params($id,window).fr.file_e -row 0 -column 1 -sticky w
+	grid $shader_params($id,window).fr -ipadx 3 -ipady 3 -sticky ew
+	return $shader_params($id,window).fr
+}
+
+proc set_extern_values { shader_str id } {
+	global shader_params
+
+	if { [llength $shader_str] > 1 } then {
+		set params [lindex $shader_str 1]
+	} else {
+		set params ""
+	}
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set list_len 0}
+	if { $list_len > 0 } then {
+		set shader_params($id,extern_file) [lindex $params 0]
+	}
+
+}
+
+proc do_extern_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shade_str
+
+	set params ""
+	if { [string length $shader_params($id,extern_file) ] > 0 } then {
+		lappend params $shader_params($id,extern_file)
+	}
+
+	set shade_str [list extern $params]
+}
+
+proc set_extern_defaults { id } {
+	global shader_params
+
+	set shader_params($id,extern_file) ""
+}
+
 # camouflage routines
 
 proc color_trigger { shade_var id name1 name2 op } {

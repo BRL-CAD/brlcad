@@ -276,6 +276,10 @@ the form of the selected shader type." } }
 	-command "comb_shader_gui $id air"
     hoc_register_menu_data "Shader" "air" "Shader - air" \
 	{ { summary "Apply the air shader to this object." } }
+    $top.shaderMB.m add command -label "extern" \
+	-command "comb_shader_gui $id extern"
+    hoc_register_menu_data "Shader" "extern" "Shader - extern" \
+	{ { summary "Use the extern shader (shader parameters in an external file)." } }
     $top.shaderMB.m add command -label "Unknown" \
 	-command "comb_shader_gui $id unknown"
     hoc_register_menu_data "Shader" "Unknown" "Shader - unknown" \
