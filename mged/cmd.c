@@ -1667,9 +1667,8 @@ struct funtab *functions;
 #endif
 
 	if( argc == 0 )  {
-		rt_log("no command entered, type '%s?' for help\n",
-		    functions->ft_name);
-		return CMD_BAD;
+		/* No command entered, that's fine */
+		return CMD_OK;
 	}
 #ifdef XMGED
 /* check for aliases first */
