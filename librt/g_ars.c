@@ -390,7 +390,11 @@ struct application	*ap;
 		hp->hit_vpriv[X] = dn;
 
 		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
-		if( nhits++ >= MAXHITS )  {
+
+		/* Bug fix: next line was "nhits++".  This caused ars_hitsort
+			to exceed bounds of "hits" array by one member and
+			clobber some stack variables i.e. "stp" -- GSM */
+		if( ++nhits >= MAXHITS )  {
 			rt_log("ars(%s): too many hits\n", stp->st_name);
 			break;
 		}
