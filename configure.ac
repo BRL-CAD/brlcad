@@ -5,16 +5,20 @@ dnl $Id$
 dnl
 dnl Herein lies the venerable GNU Autotools configure script for BRL-CAD.
 dnl As best is reasonably possible, proper ordering and separation of tests
-dnl and settings should be maintained.  The tests should be added to the 
-dnl rather clearly labeled sections below so that they are as follows:
+dnl and settings should be maintained per the recommended standard layout.
+dnl The tests should be added to the rather clearly labeled sections below so
+dnl that they are as follows:
 dnl
+dnl      0) information on the package
 dnl	 1) check command-line arguments
 dnl	 2) check programs
 dnl	 3) check libraries
 dnl	 4) check headers
-dnl	 5) check types
-dnl	 6) check functions
-dnl	 7) output a summary
+dnl	 5) check types/structures
+dnl      6) check compiler characteristics
+dnl	 7) check functions
+dnl	 8) check system services
+dnl	 9) output a summary
 dnl
 dnl Any useful build arguments should be added to the output summary at the
 dnl end.  Although it may be possible to check for certain features of command
@@ -112,23 +116,21 @@ else
 fi
 
 JAVA_CFLAGS=
-have_java=no
+with_java=no
 AC_ARG_WITH(jdk,
         [  --with-jdk=path         Specify location of Java Development Kit],[
         JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
-        have_java=yes
+        with_java=yes
         ])
 case "$target" in
 	*-*-darwin*)
 		JAVA_CFLAGS="-framework JavaVM"
 		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
-		have_java=yes
+		with_java=yes
 		;;
 esac
-AM_CONDITIONAL(JAVA, test x$have_java = xyes)
 AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(JAVA_LDFLAGS)
-AC_SUBST(JAVARTSERVER)
 
 AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
@@ -146,9 +148,21 @@ AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), AC
 AC_DEFINE(USE_PROTOTYPES,1,heh)
 AC_DEFINE(USE_REGCOMP,1,new regex stuff)
 
+# debugging
+AC_ARG_ENABLE(debug, AC_HELP_STRING(--enable-debug,
+		     [enable debug mode compilation [default=no]]))
+
+# profile
+AC_ARG_ENABLE(profile, AC_HELP_STRING(--enable-profile,
+		       [enable profiling [default=no]]))
+
+# warnings
+AC_ARG_ENABLE(warnings, AC_HELP_STRING(--enable-warnings,
+			[enable verbose compilation warnings [default=automatic]]))
+
 # doxygen
 AC_ARG_ENABLE(doxygen, AC_HELP_STRING(--enable-doxygen,
-		       [enable documentation generation with doxygen \[default=automatic\]]))
+		       [enable documentation generation with doxygen [default=automatic]]))
 
 # only build benchmark
 only_benchmark="no"
@@ -306,10 +320,8 @@ dnl *************************
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS( \
-	JavaVM/jni.h \
 	float.h \
 	getopt.h \
-	jni.h \
 	limits.h \
 	limits.h \
 	memory.h \
@@ -334,10 +346,24 @@ AC_CHECK_HEADERS( \
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
 
+found_jni_h=no
+AC_CHECK_HEADER(JavaVM/jni.h, 
+		AC_DEFINE(HAVE_JAVAVM_JNI_H,1,[Define to 1 if you have the `<JavaVM/jni.h>' header file])
+		found_jni_h=yes	)
+AC_CHECK_HEADER(jni.h,
+		AC_DEFINE(HAVE_JNI_H,1,[Define to 1 if you have the `<jni.h>' header file])
+		found_jni_h=yes )
+if ! test "x$found_jni_h" = "xyes" ; then
+	if test "x$with_java" = "xyes" ; then
+		AC_MSG_WARN([Code dependant upon java and jni.h will not be built])
+	fi
+	with_java=no
+fi
 
-dnl ***********************
-dnl *** Check for types ***
-dnl ***********************
+
+dnl **********************************
+dnl *** Check for types/structures ***
+dnl **********************************
 
 AC_C_CONST
 AC_STRUCT_TM
@@ -365,6 +391,13 @@ AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1, [the ol
 
 AC_CHECK_DECL(sys_errlist, AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),[# include <stdio.h>])
 AC_CHECK_DECL(re_comp, AC_DEFINE(HAVE_REGEX_DECL,, BSD regular expressions))
+
+
+dnl ******************************************
+dnl *** Check for compiler characteristics ***
+dnl ******************************************
+
+# nothing to do compiler-wise yet
 
 
 dnl ***************************
@@ -401,6 +434,19 @@ AC_SUBST(SOCKET)
 
 dnl AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
 AC_SUBST(REGEX_LIB)
+
+
+dnl *********************************
+dnl *** Check for system services ***
+dnl *********************************
+
+if test "x$only_rts" = "xyes" ; then
+	if ! test "x$with_java" = "xyes" ; then
+		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
+		AC_MSG_ERROR([Cannot locate jni.h for building librtserver])
+	fi
+fi
+AM_CONDITIONAL(JAVA, test "x$with_java" = "xyes")
 
 
 dnl ***************************
@@ -478,7 +524,6 @@ AC_SUBST(TERMIO)
 
 WDB='${top_builddir}/libwdb/libwdb.la'
 AC_SUBST(WDB)
-
 
 AC_CONFIG_FILES([
 	Makefile
@@ -590,8 +635,12 @@ AC_CONFIG_FILES([
 	vas4/Makefile
 	vdeck/Makefile
 	vfont/Makefile
-	brlcad.spec
+ 	brlcad.spec
 ])
+#AC_CONFIG_SUBDIRS([
+#	libtcl8.4/unix
+#	libtk8.4/unix
+#])
 AC_OUTPUT
 
 dnl
@@ -633,16 +682,16 @@ echo Build libregex .......................: yes
 echo Build libpng .........................: yes
 echo Build libz ...........................: yes
 echo 
-echo Java Developer Kit support ...........: $have_java
+echo Java Developer Kit support ...........: $with_java
 echo X11 support ..........................: yes
 echo Open GL support ......................: yes
 echo Enable run-time debugging ............: yes
 echo
 echo Build static libraries ...............: $enable_static
 echo Build shared/dynamic libraries .......: $enable_shared
-echo Build debug release ..................: no
-echo Build profile release ................: no
-echo Print verbose compilation warnings ...: no
+echo Build debug release ..................: $enable_debug
+echo Build profile release ................: $enable_profile
+echo Print verbose compilation warnings ...: $enable_warnings
 echo
 echo Only build benchmark suite ...........: $only_benchmark
 echo Only build librtserver ...............: $only_rts
