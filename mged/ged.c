@@ -1266,7 +1266,7 @@ refresh()
      * Otherwise, we are happy with the view we have
      */
     curr_dm_list = p;
-    if(update_views || dmaflag || dirty) {
+    if(mapped && (update_views || dmaflag || dirty)) {
       if(do_overlay){
 	bu_vls_init(&overlay_vls);
 	bu_vls_init(&tmp_vls);
