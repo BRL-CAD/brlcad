@@ -80,6 +80,8 @@
  *
  *	HAVE_DLOPEN		Dynamic library loading support.
  *
+ *      HAVE_STRCASECMP		Has stricmp()
+ *
  *  $Header$
  */
 
@@ -463,6 +465,7 @@
 #       define HAVE_VFORK                       1
 #       define HAVE_VPRINTF             1
 #       define HAVE_WRITEV              1
+#	define HAVE_STRCASECMP		1
 #endif
 
 #if defined(__sp3__)
