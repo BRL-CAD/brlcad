@@ -147,7 +147,12 @@ static long cursor[32] =
 #include "./adagecursor.h"
 	};
 
-static char *_pixbuf;		/* RGBpixel -> Ikonas pixel buffer */
+/*
+ * RGBpixel -> Ikonas pixel buffer
+ * Used by both buffer_read & write, AND adage_color_clear
+ * so be sure it holds ADAGE_DMA_BYTES.
+ */
+static char *_pixbuf = NULL;
 typedef unsigned char IKONASpixel[4];
 
 #define	ADAGE_DMA_BYTES	(63*1024)
@@ -262,9 +267,11 @@ int	width, height;
 		return	-1;
 	}
 	/* Create pixel buffer */
-	if( (_pixbuf = malloc( ADAGE_DMA_BYTES )) == NULL ) {
-		fb_log( "adage_device_open : pixbuf malloc failed.\n" );
-		return	-1;
+	if( _pixbuf == NULL ) {
+		if( (_pixbuf = malloc( ADAGE_DMA_BYTES )) == NULL ) {
+			fb_log( "adage_device_open : pixbuf malloc failed.\n" );
+			return	-1;
+		}
 	}
 	IKI(ifp)->x_zoom = 1;
 	IKI(ifp)->y_zoom = 1;
@@ -939,20 +946,13 @@ adage_color_clear( ifp, bpp )
 register FBIO	*ifp;
 register RGBpixel	*bpp;
 {
-	static RGBpixel	*pix_buf = NULL;
 	register IKONASpixel *pix_to;
 	register long	i;
 	long	pixelstodo;
 	int	fd;
 
-	if( pix_buf == NULL )
-		if( (pix_buf = (IKONASpixel *) malloc(ADAGE_DMA_BYTES)) == PIXEL_NULL ) {
-			Malloc_Bomb(ADAGE_DMA_BYTES);
-			return	-1;
-		}
-
 	/* Fill buffer with background color. */
-	for( i = ADAGE_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
+	for( i = ADAGE_DMA_PIXELS, pix_to = (IKONASpixel *)_pixbuf; i > 0; i-- ) {
 		COPYRGB( *pix_to, *bpp );
 		pix_to++;
 	}
@@ -968,7 +968,7 @@ register RGBpixel	*bpp;
 	pixelstodo = ifp->if_height * ifp->if_width;
 	while( pixelstodo > 0 ) {
 		i = pixelstodo > ADAGE_DMA_PIXELS ? ADAGE_DMA_PIXELS : pixelstodo;
-		if( write( fd, pix_buf, i*sizeof(IKONASpixel) ) == -1 )
+		if( write( fd, _pixbuf, i*sizeof(IKONASpixel) ) == -1 )
 			return	-1;
 		pixelstodo -= i;
 	}
