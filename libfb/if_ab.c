@@ -475,19 +475,13 @@ int		count;
 		return(-1);
 
 	/*
-	 *  If "output-only" mode was set and this does not seem to
-	 *  be a "well behaved" sequential write, read the frame first.
-	 *  Otherwise, just 
+	 *  If "output-only" mode was set and this is the first
+	 *  time we have written anything, then clear the frame
+	 *  to black.
 	 */
 	if( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 &&
 	    (ifp->if_mode & STATE_USER_HAS_WRITTEN) == 0 )  {
-		if( x != 0 || y != 0 )  {
-	    		/* Try to read in the frame */
-			(void)ab_readframe(ifp);
-		} else {
-			/* Just clear to black and proceed */
-			(void)ab_clear( ifp, PIXEL_NULL );
-		}
+		(void)ab_clear( ifp, PIXEL_NULL );
 	}
 
 	xoff = ifp->if_xyoff>>16;
