@@ -338,7 +338,8 @@ struct rt_i	*rtip;
 	 *  may be clear how to repackage this operation.
 	 */
 #if NO_MATER
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
+	regp = BU_LIST_FIRST( region, &rtip->HeadRegion );
+	while( BU_LIST_NOT_HEAD( regp, &rtip->HeadRegion ) )  {
 		switch( mlib_setup( &mfHead, regp, rtip ) )  {
 		case -1:
 		default:
@@ -348,7 +349,7 @@ struct rt_i	*rtip;
 			if(rdebug&RDEBUG_MATERIAL)
 				rt_log("mlib_setup: drop region %s\n", regp->reg_name);
 			{
-				struct region *r = regp->reg_forw;
+				struct region *r = BU_LIST_NEXT( region, &regp->l );
 				/* zap reg_udata? beware of light structs */
 				rt_del_regtree( rtip, regp );
 				regp = r;
@@ -364,7 +365,7 @@ struct rt_i	*rtip;
 			/* Perhaps this should be a function? */
 			break;
 		}
-		regp = regp->reg_forw;
+		regp = BU_LIST_NEXT( region, &regp->l );
 	}
 #endif
 }
@@ -382,7 +383,7 @@ struct rt_i	*rtip;
 
 	RT_CHECK_RTI(rtip);
 #if NO_MATER
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		mlib_free( regp );
 	}
 	if( env_region.reg_mfuncs )  {
