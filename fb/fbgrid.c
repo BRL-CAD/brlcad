@@ -23,8 +23,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-static RGBpixel	white_line[1024], grey_line[1024], dark_line[1024];
-static FBIO *fbp;
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+extern char	*malloc();
+
+static RGBpixel	*white_line, *grey_line, *dark_line;
+static FBIO	*fbp;
+static char	*framebuffer = NULL;
 
 #define OLD	0
 #define	BINARY	1
@@ -38,15 +44,67 @@ static int	clear = 0;
 void		grid(), oldflavor();
 
 static char usage[] = "\
-Usage: fbgrid [-h -c] [-b | -d | -o]\n";
+Usage: fbgrid [-h -c] [-b | -d | -o] [-F framebuffer]\n\
+	[-S squaresize] [-W width] [-N height]\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "hcbdoF:s:w:n:S:W:N:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			fbheight = fbwidth = 1024;
+			break;
+		case 'c':
+			clear = 1;
+			break;
+		case 'b':
+			flavor = BINARY;
+			break;
+		case 'd':
+			flavor = DECIMAL;
+			break;
+		case 'o':
+			flavor = OLD;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 'S':
+		case 's':
+			/* square size */
+			fbheight = fbwidth = atoi(optarg);
+			break;
+		case 'W':
+		case 'w':
+			fbwidth = atoi(optarg);
+			break;
+		case 'N':
+		case 'n':
+			fbheight = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "fbgrid: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
 
 main( argc, argv )
 int argc; char **argv;
 {
 	int	i;
 
-	if( ! parse_argv( argc, argv ) ) {
-		(void) fprintf( stderr, usage );
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
@@ -58,8 +116,11 @@ int argc; char **argv;
 
 	fbwidth = fb_getwidth( fbp );
 	fbheight = fb_getheight( fbp );
-	if( fbwidth > 1024 ) fbwidth = 1024;	/* XXX */
 
+	/* Initialize the color lines */
+	white_line = (RGBpixel *)malloc( fbwidth * sizeof(RGBpixel) );
+	grey_line  = (RGBpixel *)malloc( fbwidth * sizeof(RGBpixel) );
+	dark_line  = (RGBpixel *)malloc( fbwidth * sizeof(RGBpixel) );
 	for( i = 0; i < fbwidth; i++ ) {
 		white_line[i][RED] = white_line[i][GRN] = white_line[i][BLU] = 255;
 		grey_line[i][RED] = grey_line[i][GRN] = grey_line[i][BLU] = 128;
@@ -146,40 +207,4 @@ oldflavor()
 	}
 	fb_close( fbp );
 	exit( 0 );
-}
-
-/*
- *	P A R S E _ A R G V
- */
-int
-parse_argv( argc, argv )
-register char	**argv;
-{
-	register int	c;
-	extern int	optind;
-
-	while( (c = getopt( argc, argv, "hcbdo" )) != EOF ) {
-		switch( c ) {
-		case 'h':
-			/* High resolution frame buffer */
-			fbheight = fbwidth = 1024;
-			break;
-		case 'c':
-			clear++;
-			break;
-		case 'b':
-			flavor = BINARY;
-			break;
-		case 'd':
-			flavor = DECIMAL;
-			break;
-		case 'o':
-			flavor = OLD;
-			break;
-		case '?':
-		default:
-			return	0;
-		}
-	}
-	return	1;
 }
