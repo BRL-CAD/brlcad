@@ -5,7 +5,6 @@ proc mged_bind_dm { w } {
     global hot_key
     global mged_rotate_factor
     global mged_tran_factor
-    global slidersflag
     global forwarding_key
 
     set hot_key 65478
