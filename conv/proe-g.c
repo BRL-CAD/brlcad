@@ -75,7 +75,7 @@ static char *usage="proe-g [-p] [-s] [-d] [-a] [-u reg_exp] [-x rt_debug_flag] [
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -p option is to create polysolids rather than NMG's.\n\
-	The -s option is to simplify the objects to ARB's or TGC's where possible.\n\
+	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -u option indicates that portions of object names that match the regular expression\n\
 		'reg_exp' shouold be ignored.\n\
@@ -986,7 +986,7 @@ char line[MAX_LINE_LEN];
 			}
 			rt_log( "\t%s written as an ARB\n", solid_name );
 		}
-		else if( solid_is_written = nmg_to_tgc( m, &tgc_int, &tol ) )
+/*		else if( solid_is_written = nmg_to_tgc( m, &tgc_int, &tol ) )
 		{
 			if( mk_tgc( fd_out, solid_name, tgc_int.v, tgc_int.h, tgc_int.a,
 					tgc_int.b, tgc_int.c, tgc_int.d ) )
@@ -995,7 +995,7 @@ char line[MAX_LINE_LEN];
 				rt_bomb( "proe-g: failed to write to database" );
 			}
 			rt_log( "\t%s written as a TGC\n", solid_name );
-		}
+		} */
 	}
 
 	if( polysolid && !solid_is_written )
