@@ -368,7 +368,7 @@ proc pkg_mkIndex {args} {
 	    set cmds [lsort [$c eval array names ::tcl::newCmds]]
 	    set pkgs [$c eval set ::tcl::newPkgs]
 	    if {$doVerbose} {
-		if { !$::tcl::direct } {
+		if { !$direct } {
 		    tclLog "commands provided were $cmds"
 		}
 		tclLog "packages provided were $pkgs"

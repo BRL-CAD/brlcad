@@ -26,7 +26,7 @@ BINDIR			?= ${PREFIX}/bin
 MANDIR			?= ${PREFIX}/man
 
 # set to non-empty value to install manpages in addition to html help:
-INSTALL_MANPAGES ?= 
+INSTALL_MANPAGES 	?= 
 
 TCL_PACKAGE_PATH	?= "~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl \
 			    ~/Library/Frameworks /Library/Frameworks /Network/Library/Frameworks \
@@ -35,7 +35,7 @@ TCL_PACKAGE_PATH	?= "~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Lib
 #-------------------------------------------------------------------------------------------------------
 # meta targets
 
-meta 			:= all install embedded install-embedded clean distclean
+meta 			:= all install embedded install-embedded clean distclean test
 
 styles			:= develop deploy
 
@@ -58,6 +58,10 @@ distclean		:= ${styles:%=distclean-%}
 distclean		: ${distclean}
 distclean-%:		action := distclean-
 
+test			:= ${styles:%=test-%}
+test			: ${test}
+test-%:			action := test-
+
 targets			:= $(foreach v,${meta},${$v})
 
 #-------------------------------------------------------------------------------------------------------
@@ -66,7 +70,8 @@ targets			:= $(foreach v,${meta},${$v})
 develop_make_args	:= BUILD_STYLE=Development CONFIGURE_ARGS=--enable-symbols
 deploy_make_args	:= BUILD_STYLE=Deployment \
 			   MAKE_ARGS=INSTALL_PROGRAM="'$$\$${INSTALL} $$\$${INSTALL_STRIP_PROGRAM}'" \
-			   MAKE_ARGS+=INSTALL_LIBRARY="'$$\$${INSTALL} $$\$${INSTALL_STRIP_LIBRARY}'"
+			   MAKE_ARGS+=INSTALL_LIBRARY="'$$\$${INSTALL} $$\$${INSTALL_STRIP_LIBRARY}'" \
+			   MAKE_ARGS+=MEM_DEBUG_FLAGS="-DNDEBUG"
 embedded_make_args	:= EMBEDDED_BUILD=1
 install_make_args	:= INSTALL_BUILD=1
 
@@ -87,6 +92,7 @@ PRODUCT_VERSION		:= $(shell eval $$(grep '^TCL_VERSION=' ${UNIX_DIR}/configure.i
 				echo "$${TCL_VERSION}")
 PRODUCT_LONGVERSION	:= $(shell eval $$(grep '^TCL_PATCH_LEVEL=' ${UNIX_DIR}/configure.in); \
 				echo "${PRODUCT_VERSION}$${TCL_PATCH_LEVEL}")
+YEAR                    := $(shell date +%Y)
 
 PRIVATE_HEADERS		:= tclInt.h tclIntDecls.h tclIntPlatDecls.h tclMath.h
 TARGETS			:= tclsh tcltest
@@ -131,7 +137,7 @@ build-${PROJECT}: ${OBJ_DIR}/Makefile
 # symolic link hackery to trick
 # 'make install INSTALL_ROOT=${OBJ_DIR}'
 # into building Tcl.framework and tclsh in ${SYMROOT}
-	cd ${OBJ_DIR}; mkdir -p $(dir ./${INSTALL_PATH}) $(dir ./${BINDIR}); \
+	cd ${OBJ_DIR}; mkdir -p $(dir ./${INSTALL_PATH}) $(dir ./${BINDIR}) ${SYMROOT}; \
 	rm -f ./${INSTALL_PATH}; ln -fs ${SYMROOT} ./${INSTALL_PATH}; \
 	rm -f ./${BINDIR}; ln -fs ${SYMROOT} ./${BINDIR}; \
 	ln -fs ${OBJ_DIR}/tcltest ${SYMROOT}
@@ -143,6 +149,9 @@ distclean-${PROJECT}:
 	${MAKE} -C ${OBJ_DIR} distclean ${EXTRA_MAKE_ARGS}
 	rm -rf ${OBJ_DIR} ${PRODUCT_NAME}.framework tclsh${PRODUCT_VERSION} tcltest
 	
+test-${PROJECT}: build-${PROJECT}
+	${MAKE} -C ${OBJ_DIR} test ${EXTRA_MAKE_ARGS}
+
 install-${PROJECT}: build-${PROJECT}
 # install to ${INSTALL_ROOT} with optional stripping
 	${MAKE} -C ${OBJ_DIR} install-binaries install-libraries \
@@ -164,19 +173,18 @@ endif
 ifeq (${INSTALL_BUILD},1)
 ifeq (${EMBEDDED_BUILD},1)
 # if we are embedding frameworks, don't install tclsh
-	rm -f "${INSTALL_ROOT}/${BINDIR}/${TCLSH}"
-	-rmdir -p "${INSTALL_ROOT}/${BINDIR}" 2>&-
+	rm -f "${INSTALL_ROOT}${BINDIR}/${TCLSH}"
+	-rmdir -p "${INSTALL_ROOT}${BINDIR}" 2>&-
 else
 # redo prebinding
-	cd ${INSTALL_ROOT}; \
+	cd ${INSTALL_ROOT}/; \
 	if [ ! -d usr/lib ]; then mkdir -p usr; ln -fs /usr/lib usr/; RM_USRLIB=1; fi; \
 	if [ ! -d System ]; then ln -fs /System .; RM_SYSTEM=1; fi; \
 	redo_prebinding -r . "./${BINDIR}/${TCLSH}"; \
 	if [ -n "$${RM_USRLIB:-}" ]; then rm -f usr/lib; rmdir -p usr 2>&-; fi; \
 	if [ -n "$${RM_SYSTEM:-}" ]; then rm -f System; fi
 # install tclsh symbolic link
-	mkdir -p ${INSTALL_ROOT}/usr/bin && \
-	ln -fs ${TCLSH} ${INSTALL_ROOT}/${BINDIR}/tclsh
+	ln -fs ${TCLSH} ${INSTALL_ROOT}${BINDIR}/tclsh
 ifeq (${BUILD_STYLE},Deployment)
 ifneq (${INSTALL_MANPAGES},)
 # install manpages
@@ -203,7 +211,7 @@ endif
 		<key>CFBundleExecutable</key>\n\
 		<string>Tcl</string>\n\
 		<key>CFBundleGetInfoString</key>\n\
-		<string>Tcl Library ${PRODUCT_VERSION}, Copyright © 2003 Tcl Core Team.\n\
+		<string>Tcl Library ${PRODUCT_VERSION}, Copyright © ${YEAR} Tcl Core Team.\n\
 	MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright\
 	© 2001-2002, Apple Computer, Inc.</string>\n\
 		<key>CFBundleIdentifier</key>\n\

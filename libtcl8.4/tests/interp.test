@@ -759,7 +759,7 @@ if {[info commands testinterpdelete] == ""} {
 	list [catch {a eval foo} msg] $msg
     } {1 {attempt to call eval in deleted interpreter}}
 }
-test interp-18.9 {eval in deleted interp, bug 495830} {knownbug} {
+test interp-18.9 {eval in deleted interp, bug 495830} {knownBug} {
     interp create tst
     interp alias tst suicide {} interp delete tst
     list [catch {tst eval {suicide; set a 5}} msg] $msg

@@ -738,7 +738,7 @@ Tcl_RegsubObjCmd(dummy, interp, objc, objv)
 
 	match = Tcl_RegExpExecObj(interp, regExpr, objPtr, offset,
 		10 /* matches */, ((offset > 0 &&
-		   (Tcl_GetUniChar(objPtr,offset-1) != (Tcl_UniChar)'\n'))
+		   (wstring[offset-1] != (Tcl_UniChar)'\n'))
 		   ? TCL_REG_NOTBOL : 0));
 
 	if (match < 0) {
@@ -833,6 +833,17 @@ Tcl_RegsubObjCmd(dummy, interp, objc, objv)
 	    offset++;
 	} else {
 	    offset += end;
+	    if (start == end) {
+		/*
+		 * We matched an empty string, which means we must go 
+		 * forward one more step so we don't match again at the
+		 * same spot.
+		 */
+		if (offset < wlen) {
+		    Tcl_AppendUnicodeToObj(resultPtr, wstring + offset, 1);
+		}
+		offset++;
+	    }
 	}
 	if (!all) {
 	    break;
@@ -3257,8 +3268,10 @@ TclTraceExecutionObjCmd(interp, optionIndex, objc, objv)
 		tcmdPtr->length = length;
 		tcmdPtr->refCount = 1;
 		flags |= TCL_TRACE_DELETE;
-		if (flags & (TRACE_EXEC_ENTER_STEP | TRACE_EXEC_LEAVE_STEP)) {
-		    flags |= (TCL_TRACE_ENTER_EXEC | TCL_TRACE_LEAVE_EXEC);
+		if (flags & (TCL_TRACE_ENTER_DURING_EXEC |
+			     TCL_TRACE_LEAVE_DURING_EXEC)) {
+		    flags |= (TCL_TRACE_ENTER_EXEC | 
+			      TCL_TRACE_LEAVE_EXEC);
 		}
 		strcpy(tcmdPtr->command, command);
 		name = Tcl_GetString(objv[3]);
@@ -3299,8 +3312,8 @@ TclTraceExecutionObjCmd(interp, optionIndex, objc, objv)
 			    && (strncmp(command, tcmdPtr->command,
 				    (size_t) length) == 0)) {
 			flags |= TCL_TRACE_DELETE;
-			if (flags & (TRACE_EXEC_ENTER_STEP | 
-				     TRACE_EXEC_LEAVE_STEP)) {
+			if (flags & (TCL_TRACE_ENTER_DURING_EXEC |
+				     TCL_TRACE_LEAVE_DURING_EXEC)) {
 			    flags |= (TCL_TRACE_ENTER_EXEC | 
 				      TCL_TRACE_LEAVE_EXEC);
 			}
@@ -3321,7 +3334,11 @@ TclTraceExecutionObjCmd(interp, optionIndex, objc, objv)
 			    /* Postpone deletion */
 			    tcmdPtr->flags = 0;
 			}
-			if ((--tcmdPtr->refCount) <= 0) {
+			tcmdPtr->refCount--;
+			if (tcmdPtr->refCount < 0) {
+			    Tcl_Panic("TclTraceExecutionObjCmd: negative TraceCommandInfo refCount");
+			}
+			if (tcmdPtr->refCount == 0) {
 			    ckfree((char*)tcmdPtr);
 			}
 			break;
@@ -3350,10 +3367,9 @@ TclTraceExecutionObjCmd(interp, optionIndex, objc, objv)
 	    resultListPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 	    while ((clientData = Tcl_CommandTraceInfo(interp, name, 0,
 		    TraceCommandProc, clientData)) != NULL) {
+		int numOps = 0;
 
 		TraceCommandInfo *tcmdPtr = (TraceCommandInfo *) clientData;
-
-		eachTraceObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 
 		/*
 		 * Build a list with the ops list as the first obj
@@ -3363,6 +3379,7 @@ TclTraceExecutionObjCmd(interp, optionIndex, objc, objv)
 		 */
 
 		elemObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
+		Tcl_IncrRefCount(elemObjPtr);
 		if (tcmdPtr->flags & TCL_TRACE_ENTER_EXEC) {
 		    Tcl_ListObjAppendElement(NULL, elemObjPtr,
 			    Tcl_NewStringObj("enter",5));
@@ -3379,7 +3396,14 @@ TclTraceExecutionObjCmd(interp, optionIndex, objc, objv)
 		    Tcl_ListObjAppendElement(NULL, elemObjPtr,
 			    Tcl_NewStringObj("leavestep",9));
 		}
+		Tcl_ListObjLength(NULL, elemObjPtr, &numOps);
+		if (0 == numOps) {
+		    Tcl_DecrRefCount(elemObjPtr);
+                    continue;
+                }
+		eachTraceObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 		Tcl_ListObjAppendElement(NULL, eachTraceObjPtr, elemObjPtr);
+		Tcl_DecrRefCount(elemObjPtr);
 		elemObjPtr = NULL;
 		
 		Tcl_ListObjAppendElement(NULL, eachTraceObjPtr, 
@@ -3516,7 +3540,11 @@ TclTraceCommandObjCmd(interp, optionIndex, objc, objv)
 				flags | TCL_TRACE_DELETE,
 				TraceCommandProc, clientData);
 			tcmdPtr->flags |= TCL_TRACE_DESTROYED;
-			if ((--tcmdPtr->refCount) <= 0) {
+			tcmdPtr->refCount--;
+			if (tcmdPtr->refCount < 0) {
+			    Tcl_Panic("TclTraceCommandObjCmd: negative TraceCommandInfo refCount");
+			}
+			if (tcmdPtr->refCount == 0) {
 			    ckfree((char *) tcmdPtr);
 			}
 			break;
@@ -3545,10 +3573,9 @@ TclTraceCommandObjCmd(interp, optionIndex, objc, objv)
 	    resultListPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 	    while ((clientData = Tcl_CommandTraceInfo(interp, name, 0,
 		    TraceCommandProc, clientData)) != NULL) {
+		int numOps = 0;
 
 		TraceCommandInfo *tcmdPtr = (TraceCommandInfo *) clientData;
-
-		eachTraceObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 
 		/*
 		 * Build a list with the ops list as
@@ -3558,6 +3585,7 @@ TclTraceCommandObjCmd(interp, optionIndex, objc, objv)
 		 */
 
 		elemObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
+		Tcl_IncrRefCount(elemObjPtr);
 		if (tcmdPtr->flags & TCL_TRACE_RENAME) {
 		    Tcl_ListObjAppendElement(NULL, elemObjPtr,
 			    Tcl_NewStringObj("rename",6));
@@ -3566,7 +3594,14 @@ TclTraceCommandObjCmd(interp, optionIndex, objc, objv)
 		    Tcl_ListObjAppendElement(NULL, elemObjPtr,
 			    Tcl_NewStringObj("delete",6));
 		}
+		Tcl_ListObjLength(NULL, elemObjPtr, &numOps);
+		if (0 == numOps) {
+		    Tcl_DecrRefCount(elemObjPtr);
+                    continue;
+                }
+		eachTraceObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 		Tcl_ListObjAppendElement(NULL, eachTraceObjPtr, elemObjPtr);
+		Tcl_DecrRefCount(elemObjPtr);
 
 		elemObjPtr = Tcl_NewStringObj(tcmdPtr->command, -1);
 		Tcl_ListObjAppendElement(NULL, eachTraceObjPtr, elemObjPtr);
@@ -3722,7 +3757,6 @@ TclTraceVariableObjCmd(interp, optionIndex, objc, objv)
 
 		TraceVarInfo *tvarPtr = (TraceVarInfo *) clientData;
 
-		eachTraceObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 		/*
 		 * Build a list with the ops list as
 		 * the first obj element and the tcmdPtr->command string
@@ -3747,6 +3781,7 @@ TclTraceVariableObjCmd(interp, optionIndex, objc, objv)
 		    Tcl_ListObjAppendElement(NULL, elemObjPtr,
 			    Tcl_NewStringObj("unset", 5));
 		}
+		eachTraceObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 		Tcl_ListObjAppendElement(NULL, eachTraceObjPtr, elemObjPtr);
 
 		elemObjPtr = Tcl_NewStringObj(tvarPtr->command, -1);
@@ -4080,6 +4115,8 @@ TraceCommandProc(clientData, interp, oldName, newName, flags)
      * because command deletes are unconditional, so the trace must go away.
      */
     if (flags & (TCL_TRACE_DESTROYED | TCL_TRACE_DELETE)) {
+	int untraceFlags = tcmdPtr->flags;
+
 	if (tcmdPtr->stepTrace != NULL) {
 	    Tcl_DeleteTrace(interp, tcmdPtr->stepTrace);
 	    tcmdPtr->stepTrace = NULL;
@@ -4091,13 +4128,38 @@ TraceCommandProc(clientData, interp, oldName, newName, flags)
 	    /* Postpone deletion, until exec trace returns */
 	    tcmdPtr->flags = 0;
 	}
-	/* 
-	 * Decrement the refCount since the command which held our
-	 * reference (ever since we were created) has just gone away
+
+	/*
+	 * We need to construct the same flags for Tcl_UntraceCommand
+	 * as were passed to Tcl_TraceCommand.  Reproduce the processing
+	 * of [trace add execution/command].  Be careful to keep this
+	 * code in sync with that.
 	 */
+
+	if (untraceFlags & TCL_TRACE_ANY_EXEC) {
+	    untraceFlags |= TCL_TRACE_DELETE;
+	    if (untraceFlags & (TCL_TRACE_ENTER_DURING_EXEC 
+		    | TCL_TRACE_LEAVE_DURING_EXEC)) {
+		untraceFlags |= (TCL_TRACE_ENTER_EXEC | TCL_TRACE_LEAVE_EXEC);
+	    }
+	} else if (untraceFlags & TCL_TRACE_RENAME) {
+	    untraceFlags |= TCL_TRACE_DELETE;
+	}
+
+	/* 
+	 * Remove the trace since TCL_TRACE_DESTROYED tells us to, or the
+	 * command we're tracing has just gone away.  Then decrement the
+	 * clientData refCount that was set up by trace creation.
+	 */
+	Tcl_UntraceCommand(interp, oldName, untraceFlags,
+		TraceCommandProc, clientData);
 	tcmdPtr->refCount--;
     }
-    if ((--tcmdPtr->refCount) <= 0) {
+    tcmdPtr->refCount--;
+    if (tcmdPtr->refCount < 0) {
+	Tcl_Panic("TraceCommandProc: negative TraceCommandInfo refCount");
+    }
+    if (tcmdPtr->refCount == 0) {
         ckfree((char*)tcmdPtr);
     }
     return;
@@ -4181,7 +4243,11 @@ TclCheckExecutionTraces(interp, command, numChars, cmdPtr, code,
 	    tcmdPtr->refCount++;
 	    traceCode = TraceExecutionProc((ClientData)tcmdPtr, interp, 
 	          curLevel, command, (Tcl_Command)cmdPtr, objc, objv);
-	    if ((--tcmdPtr->refCount) <= 0) {
+	    tcmdPtr->refCount--;
+	    if (tcmdPtr->refCount < 0) {
+		Tcl_Panic("TclCheckExecutionTraces: negative TraceCommandInfo refCount");
+	    }
+	    if (tcmdPtr->refCount == 0) {
 	        ckfree((char*)tcmdPtr);
 	    }
 	}
@@ -4239,7 +4305,7 @@ TclCheckInterpTraces(interp, command, numChars, cmdPtr, code,
 	return(traceCode);
     }
     
-    curLevel = ((iPtr->varFramePtr == NULL) ? 0 : iPtr->varFramePtr->level);
+    curLevel = iPtr->numLevels;
     
     active.nextPtr = iPtr->activeInterpTracePtr;
     iPtr->activeInterpTracePtr = &active;
@@ -4388,8 +4454,12 @@ CallTraceProcedure(interp, tracePtr, cmdPtr, command, numChars, objc, objv)
 static void 
 CommandObjTraceDeleted(ClientData clientData) {
     TraceCommandInfo* tcmdPtr = (TraceCommandInfo*)clientData;
-    if ((--tcmdPtr->refCount) <= 0) {
-	ckfree((char*)tcmdPtr);
+    tcmdPtr->refCount--;
+    if (tcmdPtr->refCount < 0) {
+	Tcl_Panic("CommandObjTraceDeleted: negative TraceCommandInfo refCount");
+    }
+    if (tcmdPtr->refCount == 0) {
+        ckfree((char*)tcmdPtr);
     }
 }
 
@@ -4448,8 +4518,8 @@ TraceExecutionProc(ClientData clientData, Tcl_Interp *interp,
 	 * operations, but with either of the step operations.
 	 */
 	if (flags & TCL_TRACE_EXEC_DIRECT) {
-	    call = flags & tcmdPtr->flags & (TCL_TRACE_ENTER_EXEC | 
-					     TCL_TRACE_LEAVE_EXEC);
+	    call = flags & tcmdPtr->flags 
+		    & (TCL_TRACE_ENTER_EXEC | TCL_TRACE_LEAVE_EXEC);
 	} else {
 	    call = 1;
 	}
@@ -4589,7 +4659,11 @@ TraceExecutionProc(ClientData clientData, Tcl_Interp *interp,
 	}
     }
     if (call) {
-	if ((--tcmdPtr->refCount) <= 0) {
+	tcmdPtr->refCount--;
+	if (tcmdPtr->refCount < 0) {
+	    Tcl_Panic("TraceExecutionProc: negative TraceCommandInfo refCount");
+	}
+	if (tcmdPtr->refCount == 0) {
 	    ckfree((char*)tcmdPtr);
 	}
     }

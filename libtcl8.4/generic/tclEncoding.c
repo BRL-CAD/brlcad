@@ -2801,7 +2801,6 @@ unilen(src)
     }
     return (char *) p - src;
 }
-
 
 /*
  *-------------------------------------------------------------------------
@@ -2827,10 +2826,6 @@ TclFindEncodings(argv0)
     CONST char *argv0;		/* Name of executable from argv[0] to main()
 				 * in native multi-byte encoding. */
 {
-    char *native;
-    Tcl_Obj *pathPtr;
-    Tcl_DString libPath, buffer;
-
     if (encodingsInitialized == 0) {
 	/* 
 	 * Double check inside the mutex.  There may be calls
@@ -2839,6 +2834,10 @@ TclFindEncodings(argv0)
 
 	TclpInitLock();
 	if (encodingsInitialized == 0) {
+	    char *native;
+	    Tcl_Obj *pathPtr;
+	    Tcl_DString libPath, buffer;
+
 	    /*
 	     * Have to set this bit here to avoid deadlock with the
 	     * routines below us that call into TclInitSubsystems.
@@ -2881,4 +2880,3 @@ TclFindEncodings(argv0)
 	TclpInitUnlock();
     }
 }
-	

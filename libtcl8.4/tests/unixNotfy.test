@@ -17,7 +17,7 @@
 # the "testthread" command indicates that this is the case.
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
@@ -73,7 +73,7 @@ test unixNotfy-1.2 {Tcl_DeleteFileHandler} \
     }
 
 test unixNotfy-2.1 {Tcl_DeleteFileHandler} \
-    -constraints {unixOnly && testthread} \
+    -constraints {unixOnly testthread} \
     -body {
 	update
 	set f [open [makeFile "" foo] w]
@@ -93,7 +93,7 @@ test unixNotfy-2.1 {Tcl_DeleteFileHandler} \
     }
 
 test unixNotfy-2.2 {Tcl_DeleteFileHandler} \
-    -constraints {unixOnly && testthread} \
+    -constraints {unixOnly testthread} \
     -body {
 	update
 	set f1 [open [makeFile "" foo] w]

@@ -546,14 +546,22 @@ not require additional conversions.
 \fBTcl_FSGetTranslatedPath\fR attempts to extract the translated path
 from the given Tcl_Obj.  
 .PP
-If the translation succeeds (i.e. the object is a valid path), then it
-is returned.  Otherwise NULL will be returned, and an error message may
-be left in the interpreter.  A "translated" path is one which
-contains no "~" or "~user" sequences (these have been expanded to
-their current representation in the filesystem).
+If the translation succeeds (i.e. the object is a valid path), then it is
+returned.  Otherwise NULL will be returned, and an error message may be
+left in the interpreter.  A "translated" path is one which contains no
+"~" or "~user" sequences (these have been expanded to their current
+representation in the filesystem).  The object returned is owned by the
+caller, which must store it or call Tcl_DecrRefCount to ensure memory is
+freed.  This function is of little practical use, and
+\fBTcl_FSGetNormalizedPath\fR or \fBTcl_GetNativePath\fR are usually
+better functions to use for most purposes.
 .PP
-\fBTcl_FSGetTranslatedStringPath\fR does the same as 
+\fBTcl_FSGetTranslatedStringPath\fR does the same as
 \fBTcl_FSGetTranslatedPath\fR, but returns a character string or NULL.
+The string returned is dynamically allocated and owned by the caller,
+which must store it or call ckfree to ensure it is freed.  Again,
+\fBTcl_FSGetNormalizedPath\fR or \fBTcl_GetNativePath\fR are usually
+better functions to use for most purposes.
 .PP
 \fBTcl_FSNewNativePath\fR performs something like that reverse of the
 usual obj->path->nativerep conversions.  If some code retrieves a path

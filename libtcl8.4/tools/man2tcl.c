@@ -32,7 +32,14 @@ static char sccsid[] = "@(#) man2tcl.c 1.3 95/08/12 17:34:08";
  * Imported things that aren't defined in header files:
  */
 
+/*
+ * Some <errno.h> define errno to be something complex and
+ * thread-aware; in that case we definitely do not want to declare
+ * errno ourselves!
+ */
+#ifndef errno
 extern int errno;
+#endif
 
 /*
  * Current line number, used for error messages.

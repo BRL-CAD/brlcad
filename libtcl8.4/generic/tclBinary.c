@@ -61,7 +61,8 @@ static Tcl_Obj *	ScanNumber _ANSI_ARGS_((unsigned char *buffer,
 static int		SetByteArrayFromAny _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *objPtr));
 static void		UpdateStringOfByteArray _ANSI_ARGS_((Tcl_Obj *listPtr));
-
+static void		DeleteScanNumberCache _ANSI_ARGS_((
+			    Tcl_HashTable *numberCachePtr));
 
 /*
  * The following object type represents an array of bytes.  An array of
@@ -751,7 +752,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 		    }
 		    default: {
 			errorString = str;
-			goto badfield;
+			goto badField;
 		    }
 		}
 	    }
@@ -1050,9 +1051,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 			unsigned char *src;
 
 			if (arg >= objc) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    goto badIndex;
 			}
 			if (count == BINARY_ALL) {
@@ -1086,9 +1085,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 				NULL, valuePtr, TCL_LEAVE_ERR_MSG);
 			arg++;
 			if (resultPtr == NULL) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    Tcl_DecrRefCount(valuePtr);	/* unneeded */
 			    return TCL_ERROR;
 			}
@@ -1101,9 +1098,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 			char *dest;
 
 			if (arg >= objc) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    goto badIndex;
 			}
 			if (count == BINARY_ALL) {
@@ -1145,9 +1140,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 				NULL, valuePtr, TCL_LEAVE_ERR_MSG);
 			arg++;
 			if (resultPtr == NULL) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    Tcl_DecrRefCount(valuePtr);	/* unneeded */
 			    return TCL_ERROR;
 			}
@@ -1162,9 +1155,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 			static char hexdigit[] = "0123456789abcdef";
 
 			if (arg >= objc) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    goto badIndex;
 			}
 			if (count == BINARY_ALL) {
@@ -1206,9 +1197,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 				NULL, valuePtr, TCL_LEAVE_ERR_MSG);
 			arg++;
 			if (resultPtr == NULL) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    Tcl_DecrRefCount(valuePtr);	/* unneeded */
 			    return TCL_ERROR;
 			}
@@ -1246,9 +1235,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 			
 			scanNumber:
 			if (arg >= objc) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    goto badIndex;
 			}
 			if (count == BINARY_NOCOUNT) {
@@ -1281,9 +1268,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 				NULL, valuePtr, TCL_LEAVE_ERR_MSG);
 			arg++;
 			if (resultPtr == NULL) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    Tcl_DecrRefCount(valuePtr);	/* unneeded */
 			    return TCL_ERROR;
 			}
@@ -1314,9 +1299,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 		    }
 		    case '@': {
 			if (count == BINARY_NOCOUNT) {
-			    if (numberCachePtr != NULL) {
-				Tcl_DeleteHashTable(numberCachePtr);
-			    }
+			    DeleteScanNumberCache(numberCachePtr);
 			    goto badCount;
 			}
 			if ((count == BINARY_ALL) || (count > length)) {
@@ -1327,11 +1310,9 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 			break;
 		    }
 		    default: {
-			if (numberCachePtr != NULL) {
-			    Tcl_DeleteHashTable(numberCachePtr);
-			}
+			DeleteScanNumberCache(numberCachePtr);
 			errorString = str;
-			goto badfield;
+			goto badField;
 		    }
 		}
 	    }
@@ -1343,9 +1324,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
 	    done:
 	    Tcl_ResetResult(interp);
 	    Tcl_SetLongObj(Tcl_GetObjResult(interp), arg - 4);
-	    if (numberCachePtr != NULL) {
-		Tcl_DeleteHashTable(numberCachePtr);
-	    }
+	    DeleteScanNumberCache(numberCachePtr);
 	    break;
 	}
     }
@@ -1365,7 +1344,8 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
     errorString = "not enough arguments for all format specifiers";
     goto error;
 
-    badfield: {
+    badField:
+    {
 	Tcl_UniChar ch;
 	char buf[TCL_UTF_MAX + 1];
 
@@ -1667,16 +1647,22 @@ ScanNumber(buffer, type, numberCachePtrPtr)
 		     * Note that anyone just using the 'c' conversion
 		     * (for bytes) cannot trigger this.
 		     */
-		    Tcl_DeleteHashTable(tablePtr);
+		    DeleteScanNumberCache(tablePtr);
 		    *numberCachePtrPtr = NULL;
 		    return Tcl_NewLongObj(value);
 		} else {
 		    register Tcl_Obj *objPtr = Tcl_NewLongObj(value);
-		    /* Don't need to fiddle with refcount... */
+
+		    Tcl_IncrRefCount(objPtr);
 		    Tcl_SetHashValue(hPtr, (ClientData) objPtr);
 		    return objPtr;
 		}
 	    }
+
+	    /*
+	     * Do not cache wide values; they are already too large to
+	     * use as keys.
+	     */
 	case 'w':
 	    uwvalue =  ((Tcl_WideUInt) buffer[0])
 		    | (((Tcl_WideUInt) buffer[1]) << 8)
@@ -1697,6 +1683,12 @@ ScanNumber(buffer, type, numberCachePtrPtr)
 		    | (((Tcl_WideUInt) buffer[1]) << 48)
 		    | (((Tcl_WideUInt) buffer[0]) << 56);
 	    return Tcl_NewWideIntObj((Tcl_WideInt) uwvalue);
+
+	    /*
+	     * Do not cache double values; they are already too large
+	     * to use as keys and the values stored are utterly
+	     * incompatible too.
+	     */
 	case 'f': {
 	    float fvalue;
 	    memcpy((VOID *) &fvalue, (VOID *) buffer, sizeof(float));
@@ -1709,4 +1701,45 @@ ScanNumber(buffer, type, numberCachePtrPtr)
 	}
     }
     return NULL;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * DeleteScanNumberCache --
+ * 
+ *	Deletes the hash table acting as a scan number cache.
+ *
+ * Results:
+ *	None
+ *
+ * Side effects:
+ *	Decrements the reference counts of the objects in the cache.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+DeleteScanNumberCache(numberCachePtr)
+    Tcl_HashTable *numberCachePtr;	/* Pointer to the hash table, or
+					 * NULL (when the cache has already
+					 * been deleted due to overflow.) */
+{
+    Tcl_HashEntry *hEntry;
+    Tcl_HashSearch search;
+
+    if (numberCachePtr == NULL) {
+	return;
+    }
+
+    hEntry = Tcl_FirstHashEntry(numberCachePtr, &search);
+    while (hEntry != NULL) {
+	register Tcl_Obj *value = (Tcl_Obj *) Tcl_GetHashValue(hEntry);
+
+	if (value != NULL) {
+	    Tcl_DecrRefCount(value);
+	}
+	hEntry = Tcl_NextHashEntry(&search);
+    }
+    Tcl_DeleteHashTable(numberCachePtr);
 }

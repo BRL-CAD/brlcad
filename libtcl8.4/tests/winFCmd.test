@@ -598,8 +598,11 @@ test winFCmd-6.10 {TclpRemoveDirectory: attr == -1} {pcOnly 95} {
 } {1 {nul EACCES}}
 test winFCmd-6.11 {TclpRemoveDirectory: attr == -1} {pcOnly nt} {
     cleanup
-    list [catch {testfile rmdir /} msg] $msg
-} {1 {/ EACCES}}
+    set res [list [catch {testfile rmdir /} msg] $msg]
+    # WinXP returns EEXIST, WinNT seems to return EACCES.  No policy
+    # decision has been made as to which is correct.
+    regsub {E(ACCES|EXIST)} $res "EACCES or EEXIST"
+} {1 {C:/ EACCES or EEXIST}}
 test winFCmd-6.12 {TclpRemoveDirectory: errno == EACCES} {pcOnly 95} {
     cleanup
     createfile tf1
@@ -968,6 +971,52 @@ test winFCmd-15.10 {SetWinFileAttributes - failing} {pcOnly cdrom} {
 test winFCmd-16.1 {Windows file normalization} {pcOnly} {
     list [file normalize c:/] [file normalize C:/]
 } {C:/ C:/}
+test winFCmd-16.2 {Windows file normalization} {pcOnly} {
+    close [open td1... w]
+    set res [file tail [file normalize td1]]
+    file delete td1...
+    set res
+} {td1}
+
+set pwd [pwd]
+set d [string index $pwd 0]
+
+test winFCmd-16.3 {Windows file normalization} {pcOnly} {
+    file norm ${d}:foo
+} [file join $pwd foo]
+test winFCmd-16.4 {Windows file normalization} {pcOnly} {
+    file norm [string tolower ${d}]:foo
+} [file join $pwd foo]
+test winFCmd-16.5 {Windows file normalization} {pcOnly} {
+    file norm ${d}:foo/bar
+} [file join $pwd foo/bar]
+test winFCmd-16.6 {Windows file normalization} {pcOnly} {
+    file norm ${d}:foo\\bar
+} [file join $pwd foo/bar]
+test winFCmd-16.7 {Windows file normalization} {pcOnly} {
+    file norm /bar
+} "${d}:/bar"
+test winFCmd-16.8 {Windows file normalization} {pcOnly} {
+    file norm ///bar
+} "${d}:/bar"
+test winFCmd-16.9 {Windows file normalization} {pcOnly} {
+    file norm /bar/foo
+} "${d}:/bar/foo"
+if {$d eq "C"} { set dd "D" } else { set dd "C" }
+test winFCmd-16.10 {Windows file normalization} {pcOnly} {
+    file norm ${dd}:foo
+} "${dd}:/foo"
+test winFCmd-16.11 {Windows file normalization} {pcOnly cdrom} {
+    cd ${d}:
+    cd $cdrom
+    cd ${d}:
+    cd $cdrom
+    # Must not crash
+    set result "no crash"
+} {no crash}
+
+cd $pwd
+unset d dd pwd
 
 # This block of code used to occur after the "return" call, so I'm
 # commenting it out and assuming that this code is still under construction.

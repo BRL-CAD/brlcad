@@ -200,6 +200,8 @@ If \fIpattern\fR is a qualified name,
 the resulting list of variable names
 has each matching namespace variable qualified with the name
 of its namespace.
+Note that a currently-visible variable may not yet "exist" if it has not
+been set (e.g. a variable declared but not set by \fBvariable\fR).
 
 .SH "SEE ALSO"
 global(n), proc(n)

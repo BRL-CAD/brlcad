@@ -14,7 +14,7 @@
 # RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
@@ -593,11 +593,15 @@ test regexp-14.2 {CompileRegexp: regexp cache, different flags} {
 } 1
 
 testConstraint exec [llength [info commands exec]]
-test regexp-14.3 {CompileRegexp: regexp cache, empty regexp and empty cache} {
+test regexp-14.3 {CompileRegexp: regexp cache, empty regexp and empty cache} -constraints {
 	exec
-} {
-    exec [interpreter] [makeFile {puts [regexp {} foo]} junk.tcl]
-} 1
+} -setup {
+    set junk [makeFile {puts [regexp {} foo]} junk.tcl]
+} -body {
+    exec [interpreter] $junk
+} -cleanup {
+    removeFile junk.tcl
+} -result 1
 
 test regexp-15.1 {regexp -start} {
     catch {unset x}

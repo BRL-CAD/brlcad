@@ -285,6 +285,14 @@ test pkgMkIndex-2.3 {simple package - direct loading is default} {
     pkgtest::runIndex $fullPkgPath simple.tcl
 } "0 {{simple:1.0 {[list source [file join $fullPkgPath simple.tcl]]}}}"
 
+test pkgMkIndex-2.4 {simple package - use -verbose} -body {
+    pkgtest::runIndex -verbose $fullPkgPath simple.tcl
+} -result "0 {{simple:1.0 {[list source [file join $fullPkgPath simple.tcl]]}}}" \
+    -errorOutput {successful sourcing of simple.tcl
+packages provided were {simple 1.0}
+processed simple.tcl
+}
+
 removeFile [file join pkg simple.tcl]
 
 makeFile {

@@ -95,6 +95,8 @@ proc contents {file} {
     set r
 }
 
+cd [temporaryDirectory]
+
 set ::tcltest::testConstraints(fileSharing) 0
 set ::tcltest::testConstraints(notFileSharing) 1
 
@@ -669,10 +671,9 @@ test fCmd-8.1 {FileBasename: basename of ~user: argc == 1 && *path == ~} \
     file delete -force td1
     set result
 } "1 {error renaming \"~$user\" to \"td1/[file tail ~$user]\": permission denied}"
-test fCmd-8.2 {FileBasename: basename of ~user: argc == 1 && *path == ~} \
-	{unixOnly notRoot} {
-    file tail ~$user
-} "$user"
+test fCmd-8.2 {FileBasename: basename of ~user: argc == 1 && *path == ~} {
+    string equal [file tail ~$user] ~$user
+} 0
 test fCmd-8.3 {file copy and path translation: ensure correct error} {
     list [catch {file copy ~ [file join this file doesnt exist]} res] $res
 } [list 1 \
@@ -2226,6 +2227,7 @@ test fCmd-28.3 {file link} {
 test fCmd-28.4 {file link} {
     list [catch {file link -abc b c} msg] $msg
 } {1 {bad switch "-abc": must be -symbolic or -hard}}
+cd [workingDirectory]
 
 makeDirectory abc.dir
 makeDirectory abc2.dir

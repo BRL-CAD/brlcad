@@ -2550,16 +2550,17 @@ CallCommandTraces(iPtr, cmdPtr, oldName, newName, flags)
                                  * must get the name from cmdPtr */
     CONST char *newName;        /* Command's new name, or NULL if
                                  * the command is not being renamed */
-    int flags;			/* Flags passed to trace procedures:
-				 * indicates what's happening to command,
-				 * plus other stuff like TCL_GLOBAL_ONLY,
-				 * TCL_NAMESPACE_ONLY, and
-				 * TCL_INTERP_DESTROYED. */
+    int flags;			/* Flags indicating the type of traces
+				 * to trigger, either TCL_TRACE_DELETE
+				 * or TCL_TRACE_RENAME. */
 {
     register CommandTrace *tracePtr;
     ActiveCommandTrace active;
     char *result;
     Tcl_Obj *oldNamePtr = NULL;
+    int mask = (TCL_TRACE_DELETE | TCL_TRACE_RENAME);	/* Safety */
+
+    flags &= mask;
 
     if (cmdPtr->flags & CMD_TRACE_ACTIVE) {
 	/* 
@@ -2595,11 +2596,13 @@ CallCommandTraces(iPtr, cmdPtr, oldName, newName, flags)
     
     for (tracePtr = cmdPtr->tracePtr; tracePtr != NULL;
 	 tracePtr = active.nextTracePtr) {
+	int traceFlags = (tracePtr->flags & mask);
+
 	active.nextTracePtr = tracePtr->nextPtr;
-	if (!(tracePtr->flags & flags)) {
+	if (!(traceFlags & flags)) {
 	    continue;
 	}
-	cmdPtr->flags |= tracePtr->flags;
+	cmdPtr->flags |= traceFlags;
 	if (oldName == NULL) {
 	    TclNewObj(oldNamePtr);
 	    Tcl_IncrRefCount(oldNamePtr);
@@ -2610,7 +2613,7 @@ CallCommandTraces(iPtr, cmdPtr, oldName, newName, flags)
 	tracePtr->refCount++;
 	(*tracePtr->traceProc)(tracePtr->clientData,
 		(Tcl_Interp *) iPtr, oldName, newName, flags);
-	cmdPtr->flags &= ~tracePtr->flags;
+	cmdPtr->flags &= ~traceFlags;
 	if ((--tracePtr->refCount) <= 0) {
 	    ckfree((char*)tracePtr);
 	}
@@ -3092,6 +3095,8 @@ TclEvalObjvInternal(interp, objc, objv, command, length, flags)
      * Call 'leave' command traces
      */
     if (!(cmdPtr->flags & CMD_IS_DELETED)) {
+	int saveErrFlags = iPtr->flags 
+		& (ERR_IN_PROGRESS | ERR_ALREADY_LOGGED | ERROR_CODE_SET);
         if ((cmdPtr->flags & CMD_HAS_EXEC_TRACES) && (traceCode == TCL_OK)) {
             traceCode = TclCheckExecutionTraces (interp, command, length,
                    cmdPtr, code, TCL_TRACE_LEAVE_EXEC, objc, objv);
@@ -3100,6 +3105,9 @@ TclEvalObjvInternal(interp, objc, objv, command, length, flags)
             traceCode = TclCheckInterpTraces(interp, command, length,
                    cmdPtr, code, TCL_TRACE_LEAVE_EXEC, objc, objv);
         }
+	if (traceCode == TCL_OK) {
+	    iPtr->flags |= saveErrFlags;
+	}
     }
     TclCleanupCommand(cmdPtr);
 

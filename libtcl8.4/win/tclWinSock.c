@@ -869,7 +869,7 @@ SocketEventProc(evPtr, flags)
 
 	Tcl_Time blockTime = { 0, 0 };
 	Tcl_SetMaxBlockTime(&blockTime);
-	mask |= TCL_READABLE;
+	mask |= TCL_READABLE|TCL_WRITABLE;
     } else if (events & FD_READ) {
 	fd_set readFds;
 	struct timeval timeout;
@@ -2254,7 +2254,7 @@ TcpWatchProc(instanceData, mask)
 	    infoPtr->watchEvents |= (FD_READ|FD_CLOSE|FD_ACCEPT);
 	}
 	if (mask & TCL_WRITABLE) {
-	    infoPtr->watchEvents |= (FD_WRITE|FD_CONNECT);
+	    infoPtr->watchEvents |= (FD_WRITE|FD_CLOSE|FD_CONNECT);
 	}
       
 	/*

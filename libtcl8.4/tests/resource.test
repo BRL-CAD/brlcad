@@ -273,7 +273,7 @@ test resource-8.5 {resource delete tests} {macOnly} {
     file delete rsrc2.file
     lappend result $mssg
 } {1 {expected Macintosh OS type but got "_bad_type_"}}
-test resource-8.5 {resource delete tests} {macOnly} {
+test resource-8.5.1 {resource delete tests} {macOnly} {
     catch {file delete rsrc2.file}
     set id [resource open rsrc2.file w]
     set result [catch {resource delete -id 128 -file $id TEXT} mssg]

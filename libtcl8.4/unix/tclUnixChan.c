@@ -1889,8 +1889,8 @@ Tcl_MakeFileChannel(handle, mode)
 #ifdef DEPRECATED
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 #endif /* DEPRECATED */
-    int socketType = 0;
-    socklen_t argLength = sizeof(int);
+    struct sockaddr sockaddr;
+    socklen_t sockaddrLen = sizeof(sockaddr);
 
     if (mode == 0) {
 	return NULL;
@@ -1911,6 +1911,8 @@ Tcl_MakeFileChannel(handle, mode)
     }
 #endif /* DEPRECATED */
 
+    sockaddr.sa_family = AF_UNSPEC;
+
 #ifdef SUPPORTS_TTY
     if (isatty(fd)) {
 	fsPtr = TtyInit(fd, 0);
@@ -1918,13 +1920,14 @@ Tcl_MakeFileChannel(handle, mode)
 	sprintf(channelName, "serial%d", fd);
     } else
 #endif /* SUPPORTS_TTY */
-    if (getsockopt(fd, SOL_SOCKET, SO_TYPE, (VOID *)&socketType,
-		   &argLength) == 0  &&	 socketType == SOCK_STREAM) {
-	return MakeTcpClientChannelMode((ClientData) fd, mode);
+    if (getsockname(fd, (struct sockaddr *)&sockaddr, &sockaddrLen) == 0
+            && sockaddrLen > 0
+            && sockaddr.sa_family == AF_INET) {
+        return MakeTcpClientChannelMode((ClientData) fd, mode);
     } else {
-	channelTypePtr = &fileChannelType;
-	fsPtr = (FileState *) ckalloc((unsigned) sizeof(FileState));
-	sprintf(channelName, "file%d", fd);
+        channelTypePtr = &fileChannelType;
+        fsPtr = (FileState *) ckalloc((unsigned) sizeof(FileState));
+        sprintf(channelName, "file%d", fd);
     }
 
 #ifdef DEPRECATED
@@ -2286,6 +2289,7 @@ TcpGetOptionProc(instanceData, interp, optionName, dsPtr)
 
 		Tcl_ExternalToUtfDString(NULL, hostEntPtr->h_name, -1, &ds);
 		Tcl_DStringAppendElement(dsPtr, Tcl_DStringValue(&ds));
+		Tcl_DStringFree(&ds);
 	    } else {
 		Tcl_DStringAppendElement(dsPtr, inet_ntoa(peername.sin_addr));
 	    }
@@ -2332,6 +2336,7 @@ TcpGetOptionProc(instanceData, interp, optionName, dsPtr)
 
 		Tcl_ExternalToUtfDString(NULL, hostEntPtr->h_name, -1, &ds);
 		Tcl_DStringAppendElement(dsPtr, Tcl_DStringValue(&ds));
+		Tcl_DStringFree(&ds);
 	    } else {
 		Tcl_DStringAppendElement(dsPtr, inet_ntoa(sockname.sin_addr));
 	    }

@@ -818,7 +818,8 @@ TclpMatchInDirectory(interp, resultPtr, pathPtr, pattern, types)
 	    }
 	}
 	dirName = Tcl_DStringValue(&dirString);
-
+	Tcl_DecrRefCount(fileNamePtr);
+	
 	/*
 	 * First verify that the specified path is actually a directory.
 	 */
@@ -1556,9 +1557,13 @@ TclpObjStat(pathPtr, statPtr)
 
     transPtr = Tcl_FSGetTranslatedPath(NULL, pathPtr);
     if (transPtr == NULL || (strpbrk(Tcl_GetString(transPtr), "?*") != NULL)) {
+	if (transPtr != NULL) {
+	    Tcl_DecrRefCount(transPtr);
+	}
 	Tcl_SetErrno(ENOENT);
 	return -1;
     }
+    Tcl_DecrRefCount(transPtr);
 #endif
     
     /*

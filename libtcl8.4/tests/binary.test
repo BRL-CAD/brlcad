@@ -1516,6 +1516,14 @@ test binary-46.5 {Tcl_BinaryObjCmd: handling of non-ISO8859-1 chars} {
     list $x $y [encoding convertfrom iso8859-15 $y]
 } "1 \u00a4 \u20ac"
 
+test binary-47.1 {Tcl_BinaryObjCmd: number cache reference count handling} {
+    # This test is only reliable when memory debugging is turned on,
+    # but without even memory debugging it should still generate the
+    # expected answers and might therefore still pick up memory corruption
+    # caused by [Bug 851747].
+    list [binary scan aba ccc x x x] $x
+} {3 97}
+
 # cleanup
 ::tcltest::cleanupTests
 return

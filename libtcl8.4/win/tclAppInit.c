@@ -426,6 +426,12 @@ BOOL __stdcall
 sigHandler(DWORD fdwCtrlType)
 {
     HANDLE hStdIn;
+
+    if (!exitToken) {
+	/* Async token must have been destroyed, punt gracefully. */
+	return FALSE;
+    }
+
     /*
      * If Tcl is currently executing some bytecode or in the eventloop,
      * this will cause Tcl to enter asyncExit at the next command

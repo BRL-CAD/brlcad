@@ -2001,42 +2001,64 @@ TclNeedSpace(start, end)
     CONST char *end;		/* End of string (place where space will
 				 * be added, if appropriate). */
 {
-    Tcl_UniChar ch;
-
     /*
      * A space is needed unless either
      * (a) we're at the start of the string, or
-     * (b) the trailing characters of the string consist of one or more
-     *     open curly braces preceded by a space or extending back to
-     *     the beginning of the string.
-     * (c) the trailing characters of the string consist of a space
-     *	   preceded by a character other than backslash.
      */
-
     if (end == start) {
 	return 0;
     }
+
+    /*
+     * (b) we're at the start of a nested list-element, quoted with an
+     *     open curly brace; we can be nested arbitrarily deep, so long
+     *     as the first curly brace starts an element, so backtrack over
+     *     open curly braces that are trailing characters of the string; and
+     */
+
     end = Tcl_UtfPrev(end, start);
-    if (*end != '{') {
-	Tcl_UtfToUniChar(end, &ch);
-	/*
-	 * Direct char comparison on next line is safe as it is with
-	 * a character in the ASCII subset, and so single-byte in UTF8.
-	 */
-	if (Tcl_UniCharIsSpace(ch) && ((end == start) || (end[-1] != '\\'))) {
-	    return 0;
-	}
-	return 1;
-    }
-    do {
+    while (*end == '{') {
 	if (end == start) {
 	    return 0;
 	}
 	end = Tcl_UtfPrev(end, start);
-    } while (*end == '{');
-    Tcl_UtfToUniChar(end, &ch);
-    if (Tcl_UniCharIsSpace(ch)) {
-	return 0;
+    }
+
+    /*
+     * (c) the trailing character of the string is already a list-element
+     *     separator (according to TclFindElement); that is, one of these
+     *     characters:
+     *     	\u0009	\t	TAB
+     *     	\u000A	\n	NEWLINE
+     *     	\u000B	\v	VERTICAL TAB
+     *     	\u000C	\f	FORM FEED
+     *     	\u000D	\r	CARRIAGE RETURN
+     *     	\u0020		SPACE
+     *     with the condition that the penultimate character is not a
+     *     backslash.
+     */
+
+    if (*end > 0x20) {
+	/*
+	 * Performance tweak.  All ASCII spaces are <= 0x20. So get
+	 * a quick answer for most characters before comparing against
+	 * all spaces in the switch below.
+	 *
+	 * NOTE: Remove this if other Unicode spaces ever get accepted
+	 * as list-element separators.
+	 */
+	return 1;
+    }
+    switch (*end) {
+	case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+        case '\v':
+        case '\f':
+	    if ((end == start) || (end[-1] != '\\')) {
+		return 0;
+	    }
     }
     return 1;
 }

@@ -58,6 +58,12 @@ typedef struct {
 #ifndef PROCESSOR_ARCHITECTURE_MSIL
 #define PROCESSOR_ARCHITECTURE_MSIL  8
 #endif
+#ifndef PROCESSOR_ARCHITECTURE_AMD64
+#define PROCESSOR_ARCHITECTURE_AMD64 9
+#endif
+#ifndef PROCESSOR_ARCHITECTURE_IA32_ON_WIN64
+#define PROCESSOR_ARCHITECTURE_IA32_ON_WIN64 10
+#endif
 #ifndef PROCESSOR_ARCHITECTURE_UNKNOWN
 #define PROCESSOR_ARCHITECTURE_UNKNOWN 0xFFFF
 #endif
@@ -68,14 +74,15 @@ typedef struct {
  */
 
 
-#define NUMPLATFORMS 3
+#define NUMPLATFORMS 4
 static char* platforms[NUMPLATFORMS] = {
-    "Win32s", "Windows 95", "Windows NT"
+    "Win32s", "Windows 95", "Windows NT", "Windows CE"
 };
 
-#define NUMPROCESSORS 9
+#define NUMPROCESSORS 11
 static char* processors[NUMPROCESSORS] = {
-    "intel", "mips", "alpha", "ppc", "shx", "arm", "ia64", "alpha64", "msil"
+    "intel", "mips", "alpha", "ppc", "shx", "arm", "ia64", "alpha64", "msil",
+    "amd64", "ia32_on_win64"
 };
 
 /* Used to store the encoding used for binary files */
@@ -190,7 +197,7 @@ TclpInitLibraryPath(path)
      */
 
     sprintf(installLib, "lib/tcl%s", TCL_VERSION);
-    sprintf(developLib, "../tcl%s/library", TCL_PATCH_LEVEL);
+    sprintf(developLib, "tcl%s/library", TCL_PATCH_LEVEL);
 
     /*
      * Look for the library relative to default encoding dir.
@@ -245,7 +252,25 @@ TclpInitLibraryPath(path)
      */
 
     if (path != NULL) {
-	Tcl_SplitPath(path, &pathc, &pathv);
+	int i, origc;
+	CONST char **origv;
+
+	Tcl_SplitPath(path, &origc, &origv);
+	pathc = 0;
+	pathv = (CONST char **) ckalloc((unsigned int)(origc * sizeof(char *)));
+	for (i=0; i< origc; i++) {
+	    if (origv[i][0] == '.') {
+		if (strcmp(origv[i], ".") == 0) {
+		    /* do nothing */
+		} else if (strcmp(origv[i], "..") == 0) {
+		    pathc--;
+		} else {
+		    pathv[pathc++] = origv[i];
+		}
+	    } else {
+		pathv[pathc++] = origv[i];
+	    }
+	}
 	if (pathc > 2) {
 	    str = pathv[pathc - 2];
 	    pathv[pathc - 2] = installLib;
@@ -300,6 +325,7 @@ TclpInitLibraryPath(path)
 	    Tcl_ListObjAppendElement(NULL, pathPtr, objPtr);
 	    Tcl_DStringFree(&ds);
 	}
+	ckfree((char *) origv);
 	ckfree((char *) pathv);
     }
 
@@ -336,6 +362,25 @@ AppendEnvironment(
     Tcl_Obj *objPtr;
     Tcl_DString ds;
     CONST char **pathv;
+    char *shortlib;
+
+    /*
+     * The shortlib value needs to be the tail component of the
+     * lib path. For example, "lib/tcl8.4" -> "tcl8.4" while
+     * "usr/share/tcl8.5" -> "tcl8.5".
+     */
+    for (shortlib = (char *) (lib + strlen(lib) - 1); shortlib > lib ; shortlib--) {
+        if (*shortlib == '/') { 
+            if (shortlib == (lib + strlen(lib) - 1)) {
+                Tcl_Panic("last character in lib cannot be '/'");
+            }
+            shortlib++;
+            break;
+        }
+    }
+    if (shortlib == lib) {
+        Tcl_Panic("no '/' character found in lib");
+    }
 
     /*
      * The "L" preceeding the TCL_LIBRARY string is used to tell VC++
@@ -358,10 +403,10 @@ AppendEnvironment(
 
 	/* 
 	 * The lstrcmpi() will work even if pathv[pathc - 1] is random
-	 * UTF-8 chars because I know lib is ascii.
+	 * UTF-8 chars because I know shortlib is ascii.
 	 */
 
-	if ((pathc > 0) && (lstrcmpiA(lib + 4, pathv[pathc - 1]) != 0)) {
+	if ((pathc > 0) && (lstrcmpiA(shortlib, pathv[pathc - 1]) != 0)) {
 	    CONST char *str;
 	    /*
 	     * TCL_LIBRARY is set but refers to a different tcl
@@ -371,7 +416,7 @@ AppendEnvironment(
 	     * version string.
 	     */
 	    
-	    pathv[pathc - 1] = (lib + 4);
+	    pathv[pathc - 1] = shortlib;
 	    Tcl_DStringInit(&ds);
 	    str = Tcl_JoinPath(pathc, pathv, &ds);
 	    objPtr = Tcl_NewStringObj(str, Tcl_DStringLength(&ds));

@@ -1294,6 +1294,7 @@ dist: mklinks
 		$(DISTDIR)/macosx
 	mkdir $(DISTDIR)/macosx/Tcl.pbproj
 	cp -p $(TOP_DIR)/macosx/Tcl.pbproj/*.pbx* $(DISTDIR)/macosx/Tcl.pbproj
+	cp -p $(TOP_DIR)/macosx/README $(DISTDIR)/macosx
 	mkdir $(DISTDIR)/unix/dltest
 	cp -p $(UNIX_DIR)/dltest/*.c $(UNIX_DIR)/dltest/Makefile.in \
 		$(UNIX_DIR)/dltest/README \
@@ -1343,14 +1344,16 @@ allpatch: dist
 # TOOL_DIR.
 #
 
+html:
+	$(BUILD_HTML)
 html-tcl:
-	EXTRA_HTML_ARGS=--tcl
+	$(BUILD_HTML) --tcl
 html-tk:
-	EXTRA_HTML_ARGS=--tk
+	$(BUILD_HTML) --tk
 
-html html-tcl html-tk: 
+BUILD_HTML = \
 	$(TCL_EXE) $(TOOL_DIR)/tcltk-man2html.tcl --htmldir=$(DISTDIR)/html \
-		--srcdir=$(TOP_DIR)/.. $(EXTRA_HTML_ARGS)
+		--srcdir=$(TOP_DIR)/..
 
 #
 # Target to create a Macintosh version of the distribution.  This will

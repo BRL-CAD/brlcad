@@ -246,7 +246,7 @@ test socket-1.12 {arg parsing for socket command} {socket} {
 set path(script) [makeFile {} script]
 
 test socket-2.1 {tcp connection} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set timer [after 10000 "set x timed_out"]
@@ -284,7 +284,7 @@ if [info exists port] {
     set port [expr 2048 + [pid]%1024]
 }
 test socket-2.2 {tcp connection with client port specified} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set timer [after 10000 "set x timeout"]
@@ -320,7 +320,7 @@ test socket-2.2 {tcp connection with client port specified} {socket stdio} {
     set x
 } [list ready "hello $port"]
 test socket-2.3 {tcp connection with client interface specified} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set timer [after 2000 "set x done"]
@@ -351,7 +351,7 @@ test socket-2.3 {tcp connection with client interface specified} {socket stdio} 
     set x
 } {ready {hello 127.0.0.1}}
 test socket-2.4 {tcp connection with server interface specified} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set timer [after 2000 "set x done"]
@@ -384,7 +384,7 @@ test socket-2.4 {tcp connection with server interface specified} {socket stdio} 
     set x
 } {ready hello}
 test socket-2.5 {tcp connection with redundant server port} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set timer [after 10000 "set x timeout"]
@@ -427,7 +427,7 @@ test socket-2.6 {tcp connection} {socket} {
     set status
 } ok
 test socket-2.7 {echo server, one line} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set timer [after 10000 "set x timeout"]
@@ -467,8 +467,9 @@ test socket-2.7 {echo server, one line} {socket stdio} {
     close $f
     list $x $y
 } {{hello abcdefghijklmnop} done}
-test socket-2.8 {echo server, loop 50 times, single connection} {socket stdio} {
-    makeFile {
+removeFile script
+test socket-2.8 {echo server, loop 50 times, single connection} -constraints {socket stdio} -setup {
+    set path(script) [makeFile {
 	set f [socket -server accept 0]
 	proc accept {s a p} {
             fileevent $s readable [list echo $s]
@@ -494,7 +495,8 @@ test socket-2.8 {echo server, loop 50 times, single connection} {socket stdio} {
 	after cancel $timer
 	close $f
 	puts "done $i"
-    } script
+    } script]
+} -body {
     set f [open "|[list [interpreter] $path(script)]" r]
     gets $f
     gets $f listen
@@ -510,10 +512,13 @@ test socket-2.8 {echo server, loop 50 times, single connection} {socket stdio} {
     catch {set x [gets $f]}
     close $f
     set x
-} {done 50}
+} -cleanup {
+    removeFile script
+} -result {done 50}
+set path(script) [makeFile {} script]
 test socket-2.9 {socket conflict} {socket stdio} {
     set s [socket -server accept 0]
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts -nonewline $f "socket -server accept [lindex [fconfigure $s -sockname] 2]"
     close $f
@@ -579,7 +584,7 @@ test socket-2.11 {detecting new data} {socket} {
 
 
 test socket-3.1 {socket conflict} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set f [socket -server accept 0]
@@ -599,7 +604,7 @@ test socket-3.1 {socket conflict} {socket stdio} {
     set x
 } {1 {couldn't open socket: address already in use}}
 test socket-3.2 {server with several clients} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set t1 [after 30000 "set x timed_out"]
@@ -659,7 +664,7 @@ test socket-3.2 {server with several clients} {socket stdio} {
 } {ready done}
 
 test socket-4.1 {server with several clients} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set port [gets stdin]
@@ -759,7 +764,7 @@ test socket-5.3 {byte order problems, socket numbers, htons} \
 } {couldn't open socket: not owner}
 
 test socket-6.1 {accept callback error} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	gets stdin port
@@ -784,7 +789,7 @@ test socket-6.1 {accept callback error} {socket stdio} {
 } {{divide by zero}}
 
 test socket-7.1 {testing socket specific options} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set ss [socket -server accept 0]
@@ -812,7 +817,7 @@ test socket-7.1 {testing socket specific options} {socket stdio} {
     lappend l [llength $p]
 } {0 0 3}
 test socket-7.2 {testing socket specific options} {socket stdio} {
-    removeFile script
+    file delete $path(script)
     set f [open $path(script) w]
     puts $f {
 	set ss [socket -server accept 2821]
@@ -1391,8 +1396,8 @@ set path(script1) [makeFile {} script1]
 set path(script2) [makeFile {} script2]
 
 test socket-12.1 {testing inheritance of server sockets} {socket stdio exec} {
-    removeFile script1
-    removeFile script2
+    file delete $path(script1)
+    file delete $path(script2)
 
     # Script1 is just a 10 second delay.  If the server socket
     # is inherited, it will be held open for 10 seconds
@@ -1410,17 +1415,19 @@ test socket-12.1 {testing inheritance of server sockets} {socket stdio exec} {
 
     set f [open $path(script2) w]
     puts $f [list set tcltest [interpreter]]
-    puts $f [format {
+    puts -nonewline $f {
 	set f [socket -server accept 0]
 	puts [lindex [fconfigure $f -sockname] 2]
 	proc accept { file addr port } {
 	    close $file
 	}
-	exec $tcltest "%s" &
+	exec $tcltest }
+    puts $f [list $path(script1) &]
+    puts $f {
 	close $f
 	after 1000 exit
 	vwait forever
-    } $path(script1)]
+    }
     close $f
 	
     # Launch script2 and wait 5 seconds
@@ -1441,14 +1448,12 @@ test socket-12.1 {testing inheritance of server sockets} {socket stdio exec} {
 	set x {server socket was inherited}
     }
 
-    removeFile script1
-    removeFile script2
     close $p
     set x
 } {server socket was not inherited}
 test socket-12.2 {testing inheritance of client sockets} {socket stdio exec} {
-    removeFile script1
-    removeFile script2
+    file delete $path(script1)
+    file delete $path(script2)
 
     # Script1 is just a 20 second delay.  If the server socket
     # is inherited, it will be held open for 10 seconds
@@ -1466,15 +1471,17 @@ test socket-12.2 {testing inheritance of client sockets} {socket stdio exec} {
 
     set f [open $path(script2) w]
     puts $f [list set tcltest [interpreter]]
-    puts $f [format {
+    puts -nonewline $f {
         gets stdin port
 	set f [socket 127.0.0.1 $port]
-	exec $tcltest "%s" &
+        exec $tcltest }
+    puts $f [list $path(script1) &]
+    puts $f {
 	puts $f testing
 	flush $f
 	after 1000 exit
 	vwait forever
-    } $path(script1)]
+    }
     close $f
 
     # Create the server socket
@@ -1528,14 +1535,12 @@ test socket-12.2 {testing inheritance of client sockets} {socket stdio exec} {
     if {!$failed} {
 	vwait failed
     }
-    removeFile script1
-    removeFile script2
     close $p
     set x
 } {client socket was not inherited}
 test socket-12.3 {testing inheritance of accepted sockets} {socket stdio exec} {
-    removeFile script1
-    removeFile script2
+    file delete $path(script1)
+    file delete $path(script2)
 
     set f [open $path(script1) w]
     puts $f {
@@ -1546,17 +1551,23 @@ test socket-12.3 {testing inheritance of accepted sockets} {socket stdio exec} {
 
     set f [open $path(script2) w]
     puts $f [list set tcltest [interpreter]]
-    puts $f [format {
+    puts -nonewline $f {
 	set server [socket -server accept 0]
 	puts stdout [lindex [fconfigure $server -sockname] 2]
-	proc accept { file host port } {
+	proc accept { file host port } }
+    puts $f \{
+    puts -nonewline $f {
 	    global tcltest
 	    puts $file {test data on socket}
-	    exec $tcltest "%s" &
+	    exec $tcltest }
+    puts $f [list $path(script1) &]
+    puts $f {
 	    after 1000 exit
 	}
+    puts $f \} 
+    puts $f {
 	vwait forever
-    } $path(script1)]
+    }
     close $f
 
     # Launch the script2 process and connect to it.  See how long
@@ -1605,8 +1616,6 @@ test socket-12.3 {testing inheritance of accepted sockets} {socket stdio exec} {
     
     vwait x
 
-    removeFile script1
-    removeFile script2
     close $p
     set x
 } {accepted socket was not inherited}
@@ -1614,7 +1623,7 @@ test socket-12.3 {testing inheritance of accepted sockets} {socket stdio exec} {
 test socket-13.1 {Testing use of shared socket between two threads} \
 	{socket testthread} {
 
-    removeFile script
+    file delete $path(script1)
     threadReap
 
     makeFile {
@@ -1667,6 +1676,9 @@ test socket-13.1 {Testing use of shared socket between two threads} \
     set result
 
 } {hello 1}
+
+removeFile script1
+removeFile script2
 
 # cleanup
 if {[string match sock* $commandSocket] == 1} {
