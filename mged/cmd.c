@@ -86,8 +86,7 @@ void set_e_axis_pos();
 /* Carl Nuzman experimental */
 #if 1
 extern int cmd_vdraw();
-extern int cmd_read_center();
-extern int cmd_read_scale();
+extern int cmd_vget();
 #endif
 
 extern Tcl_CmdProc	cmd_fhelp;
@@ -507,10 +506,8 @@ static struct funtab funtab[] = {
 #if 1
 "vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
 	cmd_vdraw, 2, 7, TRUE,
-"read_center", "", "Experimental - return coords of view center",
-	cmd_read_center, 1, 1, TRUE,
-"read_scale", "", "Experimental - return coords of view scale",
-	cmd_read_scale, 1, 1, TRUE,
+"vget", "center|size|eye|ypr|quat", "Experimental - return high-precision view parameters.",
+	cmd_vget, 2, 2, TRUE,
 #endif
 "vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
 	f_vrmgr, 3, MAXARGS,TRUE,
