@@ -199,7 +199,7 @@ drawing an object" } }
     color_entry_build $top color comb_control($id,color)\
 	    "color_entry_chooser $id $top color \"Combination Color\"\
 	    comb_control $id,color"\
-	    12 $comb_control($id,color)
+	    12 $comb_control($id,color) not_rt
 
     label $top.shaderL -text "Shader" -anchor e
     set hoc_data { { summary "Use this to manually enter the shader

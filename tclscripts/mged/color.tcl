@@ -24,7 +24,7 @@
 # menubutton contains some canned color entries as well as an
 # entry that invokes a user specified command for setting the color.
 #
-proc color_entry_build { top key vn user_color_cmd width icolor } {
+proc color_entry_build { top key vn user_color_cmd width icolor canned_colors } {
     frame $top.$key\F -relief sunken -bd 2
     entry $top.$key\E -relief flat -width $width -textvar $vn
     hoc_register_data $top.$key\E "Color"\
@@ -58,6 +58,7 @@ of the menubutton." } }
 in the menu is an entry for a color tool." } }
     menu $top.$key\MB.m -title "Color" -tearoff 0
 
+if {$canned_colors == "rt"} {
     $top.$key\MB.m add command -background #000032 -activebackground #000032 \
 	    -command "set $vn \"0 0 50\"; \
 	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
@@ -79,6 +80,32 @@ in the menu is an entry for a color tool." } }
     $top.$key\MB.m add command -background #000000 -activebackground #000000 \
 	    -command "set $vn \"0 0 0\"; \
 	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+} else {
+    $top.$key\MB.m add command -background #000000 -activebackground #000000 \
+	    -command "set $vn \"0 0 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #ffffff -activebackground #ffffff \
+	    -command "set $vn \"255 255 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #ff0000 -activebackground #ff0000 \
+	    -command "set $vn \"255 0 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #00ff00 -activebackground #00ff00 \
+	    -command "set $vn \"0 255 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #0000ff -activebackground #0000ff \
+	    -command "set $vn \"0 0 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #ffff00 -activebackground #ffff00 \
+	    -command "set $vn \"255 255 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #00ffff -activebackground #00ffff \
+	    -command "set $vn \"0 255 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #ff00ff -activebackground #ff00ff \
+	    -command "set $vn \"255 0 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+}
     $top.$key\MB.m add separator
     $top.$key\MB.m add command -label "Color Tool..." -command $user_color_cmd
     hoc_register_menu_data "Color" "Color Tool..." "Color Tool"\

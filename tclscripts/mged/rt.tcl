@@ -306,7 +306,7 @@ that is used when clearing the framebuffer." } }
     color_entry_build $top color rt_control($id,color)\
 	    "color_entry_chooser $id $top color \"Background Color\"\
 	    rt_control $id,color"\
-	    12 $rt_control($id,color)
+	    12 $rt_control($id,color) rt
 
     button $top.advancedB -relief raised -text "Advanced Settings..."\
 	    -command "do_Advanced_Settings $id" \

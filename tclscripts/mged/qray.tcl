@@ -92,7 +92,7 @@ ray enters/leaves an object." } }
     color_entry_build $top oddColor qray_control($id,oddcolor)\
 	    "color_entry_chooser $id $top oddColor \"Odd Color\"\
 	    qray_control $id,oddcolor"\
-	    12 $qray_control($id,oddcolor)
+	    12 $qray_control($id,oddcolor) not_rt
 
     frame $top.evenColorFF
     label $top.evenColorL -text "even" -anchor e
@@ -104,7 +104,7 @@ ray enters/leaves an object." } }
     color_entry_build $top evenColor qray_control($id,evencolor)\
 	    "color_entry_chooser $id $top evenColor \"Even Color\"\
 	    qray_control $id,evencolor"\
-	    8 $qray_control($id,evencolor)
+	    8 $qray_control($id,evencolor) not_rt
 
     frame $top.voidColorFF
     label $top.voidColorL -text "void" -anchor e
@@ -116,7 +116,7 @@ ray enters/leaves an object." } }
     color_entry_build $top voidColor qray_control($id,voidcolor)\
 	    "color_entry_chooser $id $top voidColor \"Void Color\"\
 	    qray_control $id,voidcolor"\
-	    8 $qray_control($id,voidcolor)
+	    8 $qray_control($id,voidcolor) not_rt
 
     frame $top.overlapColorFF
     label $top.overlapColorL -text "overlap" -anchor e
@@ -128,7 +128,7 @@ ray enters/leaves an object." } }
     color_entry_build $top overlapColor qray_control($id,overlapcolor)\
 	    "color_entry_chooser $id $top overlapColor \"Overlap Color\"\
 	    qray_control $id,overlapcolor"\
-	    8 $qray_control($id,overlapcolor)
+	    8 $qray_control($id,overlapcolor) not_rt
 
     grid $top.colorL - -sticky "ew" -in $top.gridFF1
     grid $top.oddColorL $top.oddColorF -sticky "nsew" -in $top.gridFF1
