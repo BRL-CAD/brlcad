@@ -512,6 +512,9 @@ CONST mat_t			mat;
 	rt_vls_strcpy( &str, rp->ss.ss_args );
 	if( rt_structparse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
 		rt_vls_free( &str );
+		rt_free( (char *)eip , "rt_ebm_import: eip" );
+		ip->idb_type = ID_NULL;
+		ip->idb_ptr = (genptr_t)NULL;
 		return -2;
 	}
 	rt_vls_free( &str );
@@ -522,6 +525,9 @@ CONST mat_t			mat;
 	    eip->tallness <= 0.0 )  {
 	    	rt_structprint( "Unreasonable EBM parameters", rt_ebm_parse,
 	    		(char *)eip );
+	    	rt_free( (char *)eip , "rt_ebm_import: eip" );
+	    	ip->idb_type = ID_NULL;
+	    	ip->idb_ptr = (genptr_t)NULL;
 		return -1;
 	}
 
@@ -538,6 +544,10 @@ CONST mat_t			mat;
 	if( (fp = fopen(eip->file, "r")) == NULL )  {
 		perror(eip->file);
 		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		rt_free( (char *)eip->map , "rt_ebm_import: eip->map" );
+		rt_free( (char *)eip , "rt_ebm_import: eip" );
+		ip->idb_type = ID_NULL;
+		ip->idb_ptr = (genptr_t)NULL;
 		return(-1);
 	}
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
@@ -1210,6 +1220,7 @@ struct rt_tol		*tol;
 	vect_t		height,h;
 
 	RT_CK_TOL( tol );
+	NMG_CK_MODEL( m );
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
