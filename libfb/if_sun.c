@@ -80,7 +80,7 @@ extern int	fb_sim_readrect(), fb_sim_writerect();
  */
 #define XMAXSCREEN	1152	/* Physical screen width in pixels. */
 #define YMAXSCREEN	896	/* Physical screen height in pixels. */
-#define XMAXWINDOW	646	/* Max. width of frame buffer in pixels. */
+#define XMAXWINDOW	640	/* Max. width of frame buffer in pixels. */
 #define YMAXWINDOW	512	/* Max. height of frame buffer in pixels. */
 #define BANNER		18	/* Height of title bar at top of window. */
 #define BORDER		2	/* Border thickness of window. */
