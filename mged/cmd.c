@@ -662,7 +662,7 @@ struct funtab *functions;
 	if( argc <= 1 )  {
 		(void)printf("The following %scommands are available:\n",
 		    functions->ft_name);
-		for( ftp = functions; ftp->ft_name; ftp++ )  {
+		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
 			col_item(ftp->ft_name);
 		}
 		col_eol();
