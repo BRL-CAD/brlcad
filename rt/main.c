@@ -115,18 +115,22 @@ int	arg;
 }
 
 /*
+ *			M E M O R Y _ S U M M A R Y
  */
 void
 memory_summary()
 {
 #ifdef HAVE_SBRK
 	if (rt_verbosity & VERBOSE_STATS)  {
+		long	mdelta = bu_n_malloc - n_malloc;
+		long	fdelta = bu_n_free - n_free;
 		fprintf(stderr,
-			"Additional mem=%ld., #malloc=%ld, #free=%ld, #realloc=%ld\n",
+			"Additional mem=%ld., #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
 			(long)((char *)sbrk(0)-beginptr),
-			bu_n_malloc - n_malloc,
-			bu_n_free - n_free,
-			bu_n_realloc - n_realloc );
+			mdelta,
+			fdelta,
+			bu_n_realloc - n_realloc,
+			mdelta - fdelta);
 	}
 	beginptr = (char *) sbrk(0);
 #endif
