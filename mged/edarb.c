@@ -41,8 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-static int	dbcompar();
-
 /* face definitions for each arb type */
 int arb_faces[5][24] = {
 	{0,1,2,3, 0,1,4,5, 1,2,4,5, 0,2,4,5, -1,-1,-1,-1, -1,-1,-1,-1},	/* ARB4 */
@@ -248,23 +246,23 @@ vect_t pos_model;
 		/* moving a point - not an edge */
 		VMOVE(&es_rec.s.s_values[es_menu*3], &pos_model[0]);
 		edptr += 4;
-	}
+	} else if( es_edflag == EARB ) {
+		vect_t	edge_dir;
 
-	if( es_edflag == EARB ) {
 		/* moving an edge */
 		pt1 = *edptr++;
 		pt2 = *edptr++;
 		/* direction of this edge */
 		if( newedge ) {
-			/* edge direction comes from edgedir() */
+			/* edge direction comes from edgedir() in pos_model */
+			VMOVE( edge_dir, pos_model );
 			VMOVE(pos_model, &es_rec.s.s_values[pt1*3]);
 			newedge = 0;
-		}
-		else {
+		} else {
 			/* must calculate edge direction */
-			VSUB2(es_m, &es_rec.s.s_values[3*pt2], &es_rec.s.s_values[3*pt1]);
+			VSUB2(edge_dir, &es_rec.s.s_values[3*pt2], &es_rec.s.s_values[3*pt1]);
 		}
-		if(MAGNITUDE(es_m) == 0.0) 
+		if(MAGNITUDE(edge_dir) == 0.0) 
 			goto err;
 		/* bounding planes bp1,bp2 */
 		bp1 = *edptr++;
@@ -274,7 +272,7 @@ vect_t pos_model;
 /*
 printf("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 */
-		if( mv_edge(pos_model, bp1, bp2, pt1, pt2) )
+		if( mv_edge(pos_model, bp1, bp2, pt1, pt2, edge_dir) )
 			goto err;
 	}
 
@@ -405,118 +403,90 @@ err:
 	return(1);		/* BAD */
 }
 
-
-static int
-dbcompar( x, y )
-register dbfloat_t *x,*y;
-{
-
-	int i;
-
-	for(i=0; i<3; i++) {
-		if( *x++ != *y++ )
-			return(0);   /* different */
-	}
-	return(1);  /* same */
-}
-
-
 /*   PLANEQN:
  *	finds equation of a plane defined by 3 points use1,use2,use3
  *	of solid record sp.  Equation is stored at "loc" of es_peqn
  *	array.
+ *
+ *  Returns -
+ *	 0	success
+ *	-1	failure
  */
 int
 planeqn(loc, use1, use2, use3, sp)
 int loc, use1, use2, use3;
 struct solidrec *sp;
 {
-	vect_t	work, worc;
-	fastf_t	mag;
+	vect_t	a,b,c;
 
-	if( dbcompar(&sp->s_values[use1*3],&sp->s_values[use2*3]) )
-		return(1);
-	if( dbcompar(&sp->s_values[use2*3],&sp->s_values[use3*3]) )
-		return(1);
-	if( dbcompar(&sp->s_values[use1*3],&sp->s_values[use3*3]) )
-		return(1);
-	VSUB2(work,&sp->s_values[use2*3],&sp->s_values[use1*3]);
-	VSUB2(worc,&sp->s_values[use3*3],&sp->s_values[use1*3]);
-	VCROSS(&es_peqn[loc][0],work,worc);
-	if( (mag = MAGNITUDE(&es_peqn[loc][0])) == 0.0 )  
-		return(1);
-	VSCALE(&es_peqn[loc][0],&es_peqn[loc][0],1.0/mag);
-	es_peqn[loc][3] = VDOT(&es_peqn[loc][0],&sp->s_values[use1*3]);
-	return(0);
+	/* XXX This converts data types as well! */
+	VMOVE( a, &sp->s_values[use1*3] );
+	VMOVE( b, &sp->s_values[use2*3] );
+	VMOVE( c, &sp->s_values[use3*3] );
+
+	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c ) );
 }
 
 /*	INTERSECT:
  *	Finds intersection point of three planes.
  *		The planes are at es_planes[type][loc] and
  *		the result is stored at "pos" in solid struct sp.
+ *
+ *  Returns -
+ *	 0	success
+ *	 1	failure
  */
 int
 intersect( type, loc, pos, sp )
 int type, loc, pos;
 struct solidrec *sp;
 {
-	vect_t	vec1, vec2, vec3;
-	fastf_t	d;
-	int i, j, i1, i2, i3;
+	vect_t	vec1;
+	int	j;
+	int	i1, i2, i3;
 
 	j = type - 4;
 
 	i1 = arb_planes[j][loc];
 	i2 = arb_planes[j][loc+1];
 	i3 = arb_planes[j][loc+2];
-/*
-printf("intersect planes are %d %d %d\n",i1+1,i2+1,i3+1);
-*/
 
-	VCROSS(vec1, &es_peqn[i2][0], &es_peqn[i3][0]);
-	if( (d = VDOT(&es_peqn[i1][0], vec1)) == 0.0 ) 
-		return( 1 );
-	d = 1.0 / d;
-	VCROSS(vec2, &es_peqn[i1][0], &es_peqn[i3][0]);
-	VCROSS(vec3, &es_peqn[i1][0], &es_peqn[i2][0]);
-	for(i=0; i<3; i++) {
-		j = pos * 3 + i;
-		sp->s_values[j] = d * ((es_peqn[i1][3] * vec1[i])
-					  - (es_peqn[i2][3] * vec2[i])
-					  + (es_peqn[i3][3] * vec3[i]));
-	}
-
+	if( rt_mkpoint_3planes( vec1, es_peqn[i1], es_peqn[i2],
+	    es_peqn[i3] ) < 0 )
+		return(1);
+	VMOVE( &sp->s_values[pos*3], vec1 );	/* XXX type conversion too */
 	return( 0 );
 }
-
 
 /*  MV_EDGE:
  *	Moves an arb edge (end1,end2) with bounding
- *	planes bp1 and bp2 through point "thru"
+ *	planes bp1 and bp2 through point "thru".
+ *	The edge has (non-unit) slope "dir".
+ *	Note that the fact that the normals here point in rather than
+ *	out makes no difference for computing the correct intercepts.
+ *	After the intercepts are found, they should be checked against
+ *	the other faces to make sure that they are always "inside".
  */
 int
-mv_edge(thru, bp1, bp2, end1, end2)
+mv_edge(thru, bp1, bp2, end1, end2, dir)
 vect_t thru;
 int bp1, bp2, end1, end2;
+vect_t	dir;
 {
 	dbfloat_t *op;
-	fastf_t	t;
+	fastf_t	t1, t2;
 
-	if( VDOT(&es_peqn[bp1][0], es_m) == 0 ||
-	    VDOT(&es_peqn[bp2][0], es_m) == 0 ) {
-		(void)printf("edge (direction) parallel to face\n");
+	if( rt_isect_ray_plane( &t1, thru, dir, es_peqn[bp1] ) < 0 ||
+	    rt_isect_ray_plane( &t2, thru, dir, es_peqn[bp2] ) < 0 )  {
+		(void)printf("edge (direction) parallel to face normal\n");
 		return( 1 );
 	}
-	t = (es_peqn[bp1][3] - VDOT(&es_peqn[bp1][0], thru)) / VDOT(&es_peqn[bp1][0], es_m);
-	op = &es_rec.s.s_values[end1*3];
-	VJOIN1( op, thru, t, es_m );
 
-	t = (es_peqn[bp2][3] - VDOT(&es_peqn[bp2][0], thru)) / VDOT(&es_peqn[bp2][0], es_m);
+	op = &es_rec.s.s_values[end1*3];
+	VJOIN1( op, thru, t1, dir );
+
 	op = &es_rec.s.s_values[end2*3];
-	VJOIN1( op, thru, t, es_m );
+	VJOIN1( op, thru, t2, dir );
 
 	return( 0 );
 }
-
-
-
