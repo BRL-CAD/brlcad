@@ -1049,60 +1049,25 @@ struct vertexuse *vu_p;
 	rt_bomb("Couldn't find mapped vertexuse of vertex!\n");
 }
 
-
-
-/*
- *	Given a pointer to a vertexuse in a face and a ray, find the
- *	"first" and "last" uses of the vertex along the ray in the face.
- *	Consider the diagram below where 4 OT_SAME loopuses meet at a single
- *	vertex.  The ray enters from the upper left and proceeds to the lower
- *	right.  The ray encounters vertexuse 1 first and vertexuse 3 last.
- *
- *
- *		     \  ^ |
- *		      \ | |
- *		       1| V2
- *		------->o o------->
- *		         .
- *		<-------o o<------
- *		       4^ |3
- *		        | | \
- *		        | |  \
- *		        | V   \|
- *			      -
- *
- *	The primary purpose of this routine is to find the vertexuses
- *	that should be the parameters to nmg_cut_loop() and nmg_join_loop().
+/* Support routine for 
+ * nmg_find_first_last_use_of_v_in_fu
  */
-void
-nmg_find_first_last_use_of_v_in_fu(v, first_vu, last_vu, dir, fu, tol)
+static void
+pick_edges(v, vu_max, vu_min, fu, max_dir, min_dir, tol, dir)
 struct vertex *v;
-struct vertexuse **first_vu;
-struct vertexuse **last_vu;
-vect_t 		dir;
-struct faceuse	*fu;
+struct vertexuse **vu_max, **vu_min;
+struct faceuse *fu;
+int *max_dir, *min_dir;	/* 1: forward -1 reverse */
 struct rt_tol	*tol;
+vect_t dir;
 {
 	struct vertexuse *vu;
+	struct edgeuse *eu_next, *eu_last;
+	struct vertexuse *vu_next, *vu_last;
 	double dot_max = -2.0;
 	double dot_min = 2.0;
 	double vu_dot;
-	struct edgeuse *eu_next, *eu_last;
-	struct vertexuse *vu_next, *vu_last;
 	vect_t eu_dir;
-
-	NMG_CK_VERTEX(v);
-	NMG_CK_FACEUSE(fu);
-	if (first_vu == (struct vertexuse **)(NULL)) {
-		rt_log("%s: %d first_vu is null ptr\n", __FILE__, __LINE__);
-		rt_bomb("terminating\n");
-	}
-	if (last_vu == (struct vertexuse **)(NULL)) {
-		rt_log("%s: %d last_vu is null ptr\n", __FILE__, __LINE__);
-		rt_bomb("terminating\n");
-	}
-
-	VUNITIZE(dir);
 
 	/* Look at all the uses of this vertex, and find the uses
 	 * associated with an edgeuse in this faceuse.  
@@ -1113,6 +1078,7 @@ struct rt_tol	*tol;
 	 * We're looking for the vertexuses with the min/max edgeuse
 	 * vector dot product.
 	 */
+	*vu_max = *vu_min = (struct vertexuse *)NULL;
 	for (RT_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
 		NMG_CK_VERTEXUSE(vu);
 		NMG_CK_VERTEX(vu->v_p);
@@ -1123,6 +1089,7 @@ struct rt_tol	*tol;
 
 		NMG_CK_EDGEUSE(vu->up.eu_p);
 
+		/* compute/compare vu/eu vector w/ ray vector */
 		eu_next = RT_LIST_PNEXT_CIRC(edgeuse, vu->up.eu_p);
 		NMG_CK_EDGEUSE(eu_next);
 		vu_next = eu_next->vu_p;
@@ -1143,7 +1110,8 @@ struct rt_tol	*tol;
 						vu_dot);
 				}
 				dot_max = vu_dot;
-				*last_vu = vu;
+				*vu_max = vu;
+				*max_dir = 1;
 			}
 			if (vu_dot < dot_min) {
 				if (tri_debug) {
@@ -1156,16 +1124,21 @@ struct rt_tol	*tol;
 				}
 
 				dot_min = vu_dot;
-				*first_vu = vu;
+				*vu_min = vu;
+				*min_dir = 1;
 			}
 		}
 
+		/* compute/compare vu/prev_eu vector w/ ray vector */
 		eu_last = RT_LIST_PLAST_CIRC(edgeuse, vu->up.eu_p);
 		NMG_CK_EDGEUSE(eu_last);
 		vu_last = eu_last->vu_p;
 		NMG_CK_VERTEXUSE(vu_last);
 		NMG_CK_VERTEX(vu_last->v_p);
 		NMG_CK_VERTEX_G(vu_last->v_p->vg_p);
+		/* form vector in reverse direction so that all vectors
+		 * "point out" from the vertex in question.
+		 */
 		VSUB2(eu_dir, vu_last->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(eu_dir);
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
@@ -1179,7 +1152,8 @@ struct rt_tol	*tol;
 						vu_dot);
 				}
 				dot_max = vu_dot;
-				*first_vu = vu;
+				*vu_max = vu;
+				*max_dir = -1;
 			}
 			if (vu_dot < dot_min) {
 				if (tri_debug) {
@@ -1191,12 +1165,163 @@ struct rt_tol	*tol;
 						vu_dot);
 				}
 				dot_min = vu_dot;
-				*last_vu = vu;
+				*vu_min = vu;
+				*min_dir = -1;
 			}
 		}
 	}
+
 }
 
+/* Support routine for 
+ * nmg_find_first_last_use_of_v_in_fu
+ */
+struct edgeuse *
+pick_eu(eu_p, fu, dir, find_max)
+struct edgeuse *eu_p;
+struct faceuse *fu;
+int find_max;
+vect_t dir;
+{
+	struct edgeuse *eu, *keep_eu, *eu_next;
+	int go_radial_not_mate = 0;
+	double dot_limit;
+	double euleft_dot;
+	vect_t left, eu_vect;
+
+	if (find_max) dot_limit = -2.0;
+	else dot_limit = 2.0;
+
+	/* walk around the edge looking for uses in this face */
+	eu = eu_p;
+	do {
+		if (nmg_find_fu_of_eu(eu) == fu) {
+			/* compute the vector for this edgeuse */
+			eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu);
+			VSUB2(eu_vect, eu_next->vu_p->v_p->vg_p->coord,
+				eu->vu_p->v_p->vg_p->coord);
+
+			/* compute the "left" vector for this edgeuse */
+			VCROSS(left, fu->f_p->fg_p->N, eu_vect);
+
+			euleft_dot = VDOT(left, dir);
+			/* if this is and edgeuse we need to remember, keep
+			 * track of it while we go onward
+			 */
+			if (find_max) {
+				if (euleft_dot > dot_limit) {
+					dot_limit = euleft_dot;
+					keep_eu = eu;
+				}
+			} else {
+				if (euleft_dot < dot_limit) {
+					dot_limit = euleft_dot;
+					keep_eu = eu;
+				}
+			}
+		}
+
+		if (go_radial_not_mate) eu = eu->eumate_p;
+		else eu = eu->radial_p;
+		go_radial_not_mate = ! go_radial_not_mate;
+
+	} while ( eu != eu_p );
+	return keep_eu;
+}
+
+
+
+
+/*
+ *	Given a pointer to a vertexuse in a face and a ray, find the
+ *	"first" and "last" uses of the vertex along the ray in the face.
+ *	Consider the diagram below where 4 OT_SAME loopuses meet at a single
+ *	vertex.  The ray enters from the upper left and proceeds to the lower
+ *	right.  The ray encounters vertexuse (represented by "o" below)
+ *	number 1 first and vertexuse 3 last.
+ *
+ *
+ *			 edge A
+ *			 |
+ *		     \  ^||
+ *		      \ |||
+ *		       1||V2
+ *		------->o|o------->
+ *  edge D --------------.-------------edge B
+ *		<-------o|o<------
+ *		       4^||3
+ *		        ||| \
+ *		        |||  \
+ *		        ||V   \|
+ *			 |    -
+ *		    edge C
+ *
+ *	The primary purpose of this routine is to find the vertexuses
+ *	that should be the parameters to nmg_cut_loop() and nmg_join_loop().
+ */
+void
+nmg_find_first_last_use_of_v_in_fu(v, first_vu, last_vu, dir, fu, tol)
+struct vertex *v;
+struct vertexuse **first_vu;
+struct vertexuse **last_vu;
+vect_t 		dir;
+struct faceuse	*fu;
+struct rt_tol	*tol;
+{
+	struct vertexuse *vu_max, *vu_min;
+	int max_dir, min_dir;	/* 1: forward -1 reverse */
+	struct edgeuse *eu_max, *eu_min, *eu_p;
+
+	NMG_CK_VERTEX(v);
+	NMG_CK_FACEUSE(fu);
+	if (first_vu == (struct vertexuse **)(NULL)) {
+		rt_log("%s: %d first_vu is null ptr\n", __FILE__, __LINE__);
+		rt_bomb("terminating\n");
+	}
+	if (last_vu == (struct vertexuse **)(NULL)) {
+		rt_log("%s: %d last_vu is null ptr\n", __FILE__, __LINE__);
+		rt_bomb("terminating\n");
+	}
+
+	VUNITIZE(dir);
+
+	/* go find the edges which are "closest" to the direction vector */
+	pick_edges(v, &vu_max, &vu_min, fu, &max_dir, &min_dir, dir);
+
+
+	/* Now we know which 2 edges are most important to look at.
+	 * The question now is which vertexuse on this edge to pick.
+	 * For example, in the diagram above we will choose a use of edge C
+	 * for our "max".  Either vu3 OR vu4 could be chosen.
+	 *
+	 * For our max point, we choose the use for which:
+	 * 		vdot(ray, eu_left_vector)
+	 * is largest.
+	 *
+	 * For our min point, we choose the use for which:
+	 * 		vdot(ray, eu_left_vector)
+	 * is smallest.
+	 */
+
+
+	/* get an edgeuse of the proper edge */
+	if (max_dir == -1) {
+		eu_p = RT_LIST_PLAST_CIRC(edgeuse, vu_max->up.eu_p);
+		vu_max = eu_p->vu_p;
+	} else if (max_dir != 1)
+		rt_bomb("bad max_dir\n");
+
+	eu_max = pick_eu(eu_p, fu, dir, 1);
+
+	if (min_dir == -1) {
+		eu_p = RT_LIST_PLAST_CIRC(edgeuse, vu_min->up.eu_p);
+		vu_min = eu_p->vu_p;
+	} else if (min_dir != 1)
+		rt_bomb("bad min_dir\n");
+
+	eu_min = pick_eu(eu_p, fu, dir, 0);
+
+}
 
 static void
 pick_pt2d_for_cutjoin(tbl2d, p1, p2, tol)
