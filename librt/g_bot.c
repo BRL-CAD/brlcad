@@ -133,10 +133,7 @@ struct rt_i		*rtip;
 	stp->st_aradius = f;
 	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 
-	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
-		stp->st_is_platemode = 1;
-
-	return( 0 );
+	return 0;
 }
 
 
