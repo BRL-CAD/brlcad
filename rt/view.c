@@ -272,7 +272,7 @@ register struct application *ap;
 			register int spread;
 			int		npix = 0;
 
-			spread = 1<<(incr_nlevel-incr_level)-1;
+			spread = (1<<(incr_nlevel-incr_level))-1;
 			RES_ACQUIRE( &rt_g.res_syscall );
 			for( dy=spread; dy >= 0; dy-- )  {
 				yy = ap->a_y + dy;
