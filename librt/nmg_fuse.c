@@ -1772,7 +1772,7 @@ CONST struct rt_tol	*tol;
 	}
 	nmg_tbl( &vtab, TBL_FREE, 0 );
 
-	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+	if ( count != 0 || rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_ck_fu_verts(fu1=x%x, f2=x%x, tol=%g) f1=x%x, ret=%d, worst=%gmm (%e)\n",
 			fu1, f2, tol->dist, fu1->f_p,
 			count, worst, worst );
@@ -2038,6 +2038,58 @@ CONST struct rt_tol	*tol;
 	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
 		rt_log("nmg_model_face_fuse: %d faces fused\n", total);
 	return total;
+}
+
+int
+nmg_model_break_all_es_on_v( m, v, tol )
+struct model *m;
+struct vertex *v;
+CONST struct rt_tol *tol;
+{
+	struct nmg_ptbl eus;
+	int i;
+	int count=0;
+
+	NMG_CK_MODEL( m );
+	NMG_CK_VERTEX( v );	
+	RT_CK_TOL( tol );
+
+	nmg_edgeuse_tabulate( &eus, &m->magic );
+
+	for( i=0 ; i<NMG_TBL_END( &eus ) ; i++ )
+	{
+		struct edgeuse *eu;
+		struct vertex *va;
+		struct vertex *vb;
+		fastf_t dist;
+		int code;
+
+		eu = (struct edgeuse *)NMG_TBL_GET( &eus, i );
+		NMG_CK_EDGEUSE( eu );
+
+		if( eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
+			continue;
+		va = eu->vu_p->v_p;
+		vb = eu->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX(va);
+		NMG_CK_VERTEX(vb);
+
+		if( va == v ) continue;
+		if( vb == v ) continue;
+
+		code = rt_isect_pt_lseg( &dist, va->vg_p->coord, vb->vg_p->coord,
+			v->vg_p->coord, tol );
+		if( code < 1 )  continue;	/* missed */
+		if( code == 1 || code == 2 )  {
+			rt_log("nmg_model_break_all_es_on_v() code=%d, why wasn't this vertex fused?\n", code);
+			continue;
+		}
+		/* Break edge on vertex, but don't fuse yet. */
+		(void)nmg_ebreak( v, eu );
+		count++;
+	}
+	nmg_tbl( &eus, TBL_FREE, (long *)NULL );
+	return( count );
 }
 
 /*
@@ -2695,9 +2747,25 @@ CONST struct rt_tol	*tol;
 		 * so let's create a temporary tolerance that will work!!! */
 
 		struct rt_tol tmp_tol;
+		struct faceuse		*fu;
+		plane_t			pl;
+		fastf_t			dist;
 
 		tmp_tol = (*tol);
 		tmp_tol.dist = diff_len/3.0;
+		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+			rt_bomb( "Nmg_is_crack_outie called with non-face loop" );
+
+		fu = lu->up.fu_p;
+		NMG_CK_FACEUSE( fu );
+		NMG_GET_FU_PLANE( pl, fu );
+		dist = DIST_PT_PLANE( midpt, pl );
+		if( !NEAR_ZERO( dist, tmp_tol.dist ) )
+		{
+			/* our midpt is not within tolerance of face */
+			/* Let's move it */
+			VJOIN1( midpt, midpt , -dist, pl )
+		}
 		class = nmg_class_pt_lu_except( midpt, lu, e, &tmp_tol );
 #else
 		rt_pr_tol(tol);
@@ -2714,13 +2782,13 @@ CONST struct rt_tol	*tol;
 	}
 
 	if( lu->orientation == OT_SAME )  {
-		if( class == NMG_CLASS_AinB )
+		if( class == NMG_CLASS_AinB || class == NMG_CLASS_AonBshared )
 			return 0;		/* an "innie" */
 		if( class == NMG_CLASS_AoutB )
 			return 1;		/* an "outie" */
 	} else {
 		/* It's a hole loop, things work backwards. */
-		if( class == NMG_CLASS_AinB )
+		if( class == NMG_CLASS_AinB || class == NMG_CLASS_AonBshared )
 			return 1;		/* an "outie" */
 		if( class == NMG_CLASS_AoutB )
 			return 0;		/* an "innie" */
@@ -3422,9 +3490,9 @@ CONST struct rt_tol	*tol;
 	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
 	if( count1 )  rt_log("nmg_radial_join_eu_NEW() bad parity at completion, %d\n", count1);
 	nmg_radial_verify_pointers( &list1, tol );
-
+#if 0
 	nmg_eu_radial_check( eu1ref, nmg_find_s_of_eu(eu1), tol );	/* expensive */
-
+#endif
 	/* Ensure that all edgeuses are using the "best_eg" line */
 	for( RT_LIST_FOR( rad, nmg_radial, &list1 ) )  {
 		if( rad->eu->g.lseg_p != best_eg )  {
@@ -3594,6 +3662,7 @@ CONST struct rt_tol	*tol;
 
 	nflip = nmg_radial_mark_flips( &list, s, tol );
 	if( nflip )  {
+		struct nmg_radial *rad;
 		rt_log("nmg_eu_radial_check(x%x) %d flips needed\n  %g %g %g --- %g %g %g\n",
 			s, nflip,
 			V3ARGS(eu->vu_p->v_p->vg_p->coord),
@@ -3605,6 +3674,8 @@ CONST struct rt_tol	*tol;
 if (rt_g.NMG_debug)
 {
 	nmg_stash_model_to_file( "radial_check.g", nmg_find_model( &eu->l.magic ), "error" );
+	for( RT_LIST_FOR( rad, nmg_radial, &list ) )
+		nmg_pr_fu_briefly( rad->fu, "" );
 	rt_bomb("nmg_eu_radial_check\n");
 }
 	}
