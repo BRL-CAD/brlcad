@@ -116,7 +116,6 @@ int flags;
 {
     struct structparse *sp = (struct structparse *)clientData;
     struct rt_vls str;
-    char *curvalue;
 
     /* Ask the librt structparser for the value of the variable */
 
