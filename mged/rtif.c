@@ -1522,36 +1522,25 @@ char		**argv;
      *	Build a list of all the top-level objects currently displayed
      */
     rt_cmd_vec_len = build_tops(&rt_cmd_vec[0], &rt_cmd_vec[MAXARGS]);
-    if ((snames = skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir))
-	== 0)
-	return (TCL_OK);
     
-    for (i = 0; snames[i] != 0; ++i)
-	Tcl_AppendResult(interp, snames[i], " ", NULL);
-    rt_free((char *) snames, "solid names");
-
-#if 0
     rt_vls_init(&vls);
-    rt_vls_printf(&vls, "%g %g %g", ray_orig[X], ray_orig[Y], ray_orig[Z]);
-    Tcl_SetResult(interp, rt_vls_addr(&vls), TCL_VOLATILE);
+    start_catching_output(&vls);
+    snames = skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir);
+    stop_catching_output(&vls);
+
+    if (snames == 0)
+    {
+	Tcl_SetResult(interp, rt_vls_addr(&vls), TCL_VOLATILE);
+	rt_vls_free(&vls);
+	return (TCL_ERROR);
+    }
+
     rt_vls_free(&vls);
 
-    return (TCL_OK);
-#endif
-
-#if 0
-    if (Tcl_GetDouble(interp, argv[1], &viewX) != TCL_OK) return TCL_ERROR;
-
-    /* Do stuff. */
-
-    Tcl_SetResult(interp, "foo", TCL_STATIC);
-
-    Tcl_SetResult(interp, rt_vls_addr(&vls), TCL_VOLATILE);
-    rt_vls_free(&vls);
-
-
-    Tcl_AppendElement(interp, "This { is really \\ fu\"nk}y.");
-#endif
+    for (i = 0; snames[i] != 0; ++i)
+	Tcl_AppendElement(interp, snames[i]);
+    
+    rt_free((char *) snames, "solid names");
 
     return TCL_OK;
 }
