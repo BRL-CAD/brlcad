@@ -36,6 +36,7 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "raytrace.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "./debug.h"
 #include "./complex.h"
 #include "./polyno.h"
@@ -63,21 +64,8 @@ struct  tgc_specific {
 	char	tgc_AD_CB;	/*  boolean:  A*D == C*B  */
 };
 
-struct tgc_internal {
-	long	magic;
-	vect_t	v;
-	vect_t	h;
-	vect_t	a;
-	vect_t	b;
-	vect_t	c;
-	vect_t	d;
-};
-#define RT_TGC_INTERNAL_MAGIC	0xaabbdd87
-#define RT_TGC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TGC_INTERNAL_MAGIC,"tgc_internal")
-
 #define VLARGE		1000000.0
 #define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
-
 
 /*
  *			R T _ T G C _ P R E P
@@ -119,19 +107,6 @@ struct rt_i		*rtip;
 	LOCAL vect_t	nH;
 	LOCAL vect_t	work;
 
-	/*
-	 *  For a fast way out, hand this solid off to the REC routine.
-	 *  If it takes it, then there is nothing to do, otherwise
-	 *  the solid is a TGC.
-	 */
-#if NEW_IF
-	if( rt_rec_prep( stp, ep, rtip ) == 0 )
-		return(0);		/* OK */
-#else
-	if( rt_rec_prep( stp, rec, rtip ) == 0 )
-		return(0);		/* OK */
-#endif
-
 #if NEW_IF
 	/* All set */
 #else
@@ -146,6 +121,14 @@ struct rt_i		*rtip;
 #endif
 	tip = (struct tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
+
+	/*
+	 *  For a fast way out, hand this solid off to the REC routine.
+	 *  If it takes it, then there is nothing to do, otherwise
+	 *  the solid is a TGC.
+	 */
+	if( rt_rec_prep( stp, ip, rtip ) == 0 )
+		return(0);		/* OK */
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
 	mag_h = sqrt( magsq_h = MAGSQ( tip->h ) );
