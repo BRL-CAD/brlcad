@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:53:55  mike
+ * Release_4.0
+ * 
  * Revision 2.1  91/08/30  17:54:30  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -32,6 +35,7 @@ static char RCSid[] = "@(#)$Header$";
 #include "./jove.h"
 
 int diffnum = 0;
+void	fixorder();
 
 /* Returns whether line1 char1 is before line2 char2 in the buffer.
    Also sets `diffnum' to the number of lines between the two for
@@ -173,6 +177,7 @@ LINE	*line1, *line2;
 	return retline;
 }
 
+void
 lremove(line1, line2)
 register LINE	*line1,
 		*line2;
@@ -274,6 +279,7 @@ LINE	*line1, *line2;
 	this_cmd = KILLCMD;
 }
 
+void
 fixorder(line1, char1, line2, char2)
 register LINE	**line1,
 		**line2;

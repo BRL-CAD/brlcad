@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:53:54  mike
+ * Release_4.0
+ * 
  * Revision 2.3  91/08/30  18:59:33  mike
  * Modifications for clean compilation on the XMP
  * 
@@ -44,6 +47,7 @@ int	flen,
 BUFFER	*lastbuf = 0;	/* Last buffer we were in so we have a default
 			 * buffer during a select buffer.
 			 */
+void	SetBuf();
 
 char *
 filename(bp)
@@ -338,6 +342,7 @@ FindFile()
 	SetBuf(do_find(curwind, name));
 }
 
+void
 SetBuf(newbuf)
 BUFFER	*newbuf;
 {
@@ -426,6 +431,7 @@ BufErase()
 	SetUnmodified(delbuf);
 }
 
+void
 BufKill()
 {
 	BUFFER	*delbuf;

@@ -39,6 +39,8 @@
 #include "machine.h"
 #include "externs.h"
 
+void	lineDots();
+
 /*
  * Program parameters defaults
  *
@@ -447,7 +449,7 @@ FILE *fd;
  *
  * This is why RIACS sent Nancy to grad school!
  */
-
+void
 lineDots(x0, y0, x1, y1, func, arg1, arg2)
 int x0, y0, x1, y1;
 void (*func)();
@@ -655,7 +657,7 @@ char *pgm;
  * Compute the minimum and maximum width and height of a character as defined
  * in the font.
  */
-
+void
 charMinMaxWidth(ch, min, max)
 char ch;
 int *min, *max;
@@ -682,6 +684,7 @@ int *min, *max;
 	}
     }
 }
+void
 charMinMaxHeight(ch, min, max)
 char ch;
 int *min, *max;
