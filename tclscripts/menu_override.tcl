@@ -1,4 +1,4 @@
-#
+##
 #				M E N U _ O V E R R I D E . T C L
 #
 # Author -
@@ -21,43 +21,58 @@
 #	The proc's below were copied from libtk/menu.tcl and modified.
 #
 
-proc tkTraverseWithinMenu { w char } {
-    if {$char == ""} {
+bind Menu <ButtonRelease> {
+    cad_MenuInvoke %W %b
+}
+
+# cad_MenuInvoke --
+#
+# This procedure is invoked when button 1 is released over a menu.
+# It invokes the appropriate menu action and unposts the menu if
+# it came from a menubutton.
+#
+# Arguments:
+# w -			Name of the menu widget.
+# button -		Button that was released.
+#
+proc cad_MenuInvoke { w button } {
+    global tkPriv
+
+    if {$tkPriv(window) == ""} {
+	# Mouse was pressed over a menu without a menu button, then
+	# dragged off the menu (possibly with a cascade posted) and
+	# released.  Unpost everything and quit.
+
+	$w postcascade none
+	$w activate none
+	event generate $w <<MenuSelect>>
+	tkMenuUnpost $w
 	return
     }
+    if {[$w type active] == "cascade"} {
+	$w postcascade active
+	set menu [$w entrycget active -menu]
+	tkMenuFirstEntry $menu
+    } elseif {[$w type active] == "tearoff"} {
+	tkMenuUnpost $w
+	tkTearOffMenu $w
+    } elseif {[$w cget -type] == "menubar"} {
+	$w postcascade none
+	$w activate none
+	event generate $w <<MenuSelect>>
+	tkMenuUnpost $w
+    } else {
+	tkMenuUnpost $w
 
-    set char [string tolower $char]
-    set last [$w index last]
-
-    if {$last == "none"} {
-        return
-    }
-
-    for {set i 0} {$i <= $last} {incr i} {
-	if [catch {set char2 [string index  [$w entrycget $i -label]  [$w entrycget $i -underline]]}] {
-	    continue
+	if {$button == 3} {
+	    hoc_menu_callback $w
+	} else {
+	    uplevel #0 [list $w invoke active]
 	}
-
-	if {[string compare $char [string tolower $char2]] == 0} {
-	    if {[$w type $i] == "cascade"} {
-		$w activate $i
-		$w postcascade active
-		event generate $w <<MenuSelect>>
-		set m2 [$w entrycget $i -menu]
-		if {$m2 != ""} {
-		    mged_MenuFirstEntry $m2
-		}
-	    }    else {
-                tkMenuUnpost $w
-                uplevel #0 [list $w invoke $i]
-	    }
-            return
-	}
-
     }
 }
 
-proc mged_MenuFirstEntry { menu } {
+proc cad_MenuFirstEntry { menu } {
     if {$menu == ""} {
 	return
     }
@@ -90,6 +105,42 @@ proc mged_MenuFirstEntry { menu } {
     }   
 }
 
+proc tkTraverseWithinMenu { w char } {
+    if {$char == ""} {
+	return
+    }
+
+    set char [string tolower $char]
+    set last [$w index last]
+
+    if {$last == "none"} {
+        return
+    }
+
+    for {set i 0} {$i <= $last} {incr i} {
+	if [catch {set char2 [string index  [$w entrycget $i -label]  [$w entrycget $i -underline]]}] {
+	    continue
+	}
+
+	if {[string compare $char [string tolower $char2]] == 0} {
+	    if {[$w type $i] == "cascade"} {
+		$w activate $i
+		$w postcascade active
+		event generate $w <<MenuSelect>>
+		set m2 [$w entrycget $i -menu]
+		if {$m2 != ""} {
+		    cad_MenuFirstEntry $m2
+		}
+	    }    else {
+                tkMenuUnpost $w
+                uplevel #0 [list $w invoke $i]
+	    }
+            return
+	}
+
+    }
+}
+
 proc tkMenuNextMenu {menu direction} {
     global tkPriv
 
@@ -103,7 +154,7 @@ proc tkMenuNextMenu {menu direction} {
 	    $menu postcascade active
 	    set m2 [$menu entrycget active -menu]
 	    if {$m2 != ""} {
-		mged_MenuFirstEntry $m2
+		cad_MenuFirstEntry $m2
 	    }
 	    return
 	} else {
