@@ -390,6 +390,7 @@ struct rt_i		*rtip;
 
 		VMOVE( curr_pt, bend_end );
 next_pt:
+		if (!pp3) break;
 		curr_id = pp2->pp_id;
 		curr_od = pp2->pp_od;
 		pp1 = pp2;
