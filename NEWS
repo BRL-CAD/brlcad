@@ -10,36 +10,9 @@ see that file for more historic information.
 --- 2004-08-08  Release 7.0.0                                      ---
 ----------------------------------------------------------------------
 
-There is a lot to talk about this release.  In many ways, this is a
-major BRL-CAD release with the package entering the realm of Open
-Source software.  With this new public presence, BRL-CAD's source code
-has undergone major restructuring with a complete replacement of the
-build sytem and conversion of the sources towards standards
-compliance.
-
-
-OPEN SOURCE
-
-This marks the first release of BRL-CAD as Open Source software.  It
-has taken several years and much hard work by many people to actually
-make this happen.  Special thanks goes out to the U.S. Army Research
-Laboratory for giving back to the community by allowing BRL-CAD to be
-released as Open Source software under the Open Source Initiative
-(OSI) approved NASA Open Source Agreement (NOSA).
-
-The majority of BRL-CAD is covered by the NOSA agreement.  However,
-given the vast size, complexity, and varied usage needs of BRL-CAD's
-source code and supporting data, there are portions that are also
-covered by other licenses allowing for a greater degree of flexibility
-in how they may be used.
-
-BRL-CAD's supporting shell scripts, build files, images, and included
-geometry databases are either released under a BSD-style license or
-are in the public domain.  See the individual files in question and
-the COPYING file for more details.  The licenses are intended to
-foster and encourage improvements to BRL-CAD and the Open Source
-community as a whole without taking away from the package's heritage
-and history.  See the COPYING file for more details and information.
+BRL-CAD's source code has undergone major restructuring with a
+complete replacement of the build sytem and conversion of the sources
+towards standards compliance.
 
 
 SOURCES REORGANIZED
