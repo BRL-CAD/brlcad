@@ -1,3 +1,5 @@
+#define USE_NEW_IMPORT	0
+
 /*
  *			D B _ T R E E . C
  *
@@ -48,37 +50,12 @@ struct tree_list {
 
 /* -------------------------------------------------- */
 
-/*
- *  In-memory format for combination.
- *  (Regions and Groups are both a kind of Combination).
- *  Move to h/wdb.h
- */
-struct rt_comb_internal  {
-	long		magic;
-	union tree	*tree;		/* Leading to tree_db_leaf leaves */
-	char		region_flag;	/* !0 ==> this COMB is a REGION */
-	/* Begin GIFT compatability */
-	short		region_id;
-	short		aircode;
-	short		GIFTmater;
-	short		los;
-	/* End GIFT compatability */
-	char		rgb_valid;	/* !0 ==> rgb[] has valid color */
-	unsigned char	rgb[3];
-	struct bu_vls	shader_name;
-	struct bu_vls	shader_param;
-	struct bu_vls	material;
-	char		inherit;
-};
-#define RT_COMB_MAGIC	0x436f6d49	/* "ComI" */
-#define RT_CK_COMB(_p)		NMG_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
-
 
 RT_EXTERN( union tree *db_mkbool_tree , (struct tree_list *tree_list , int howfar ) );
 RT_EXTERN( union tree *db_mkgift_tree , (struct tree_list *tree_list , int howfar , struct db_tree_state *tsp ) );
 
 /*
- *		R T _ C O M B _ V 4 _ I M P O R T
+ *			R T _ C O M B _ V 4 _ I M P O R T
  *
  *  Import a combination record from a V4 database into internal form.
  */
@@ -168,7 +145,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 					tp->tr_l.tl_mat = mat_dup( prod );
 				}
 			}
-bu_log("M_name=%s, matp=x%x\n", tp->tr_l.tl_name, tp->tr_l.tl_mat );
+/* bu_log("M_name=%s, matp=x%x\n", tp->tr_l.tl_name, tp->tr_l.tl_mat ); */
 		}
 	}
 	if( node_count )
@@ -1133,7 +1110,7 @@ struct combined_tree_state	**region_start_statepp;
 		/*  Handle inheritance of material property. */
 		nts = *tsp;	/* struct copy */
 
-#if !1
+#if USE_NEW_IMPORT
 		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
 			bu_log("db_recurse() import of %s failed\n", dp->d_namep);
 			curtree = TREE_NULL;		/* FAIL */
@@ -1181,7 +1158,7 @@ struct combined_tree_state	**region_start_statepp;
 			}
 		}
 
-#if 1
+#if !USE_NEW_IMPORT
 		tlp = trees = (struct tree_list *)rt_malloc(
 			sizeof(struct tree_list) * (dp->d_len),
 			"tree_list array" );

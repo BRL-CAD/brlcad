@@ -37,40 +37,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "/m/cad/librt/debug.h"
 
-/*
- *  In-memory format for combination.
- *  (Regions and Groups are both a kind of Combination).
- *  Move to h/wdb.h
- */
-struct rt_comb_internal  {
-	long		magic;
-	union tree	*tree;		/* Leading to tree_db_leaf leaves */
-	char		region_flag;	/* !0 ==> this COMB is a REGION */
-	/* Begin GIFT compatability */
-	short		region_id;
-	short		aircode;
-	short		GIFTmater;
-	short		los;
-	/* End GIFT compatability */
-	char		rgb_valid;	/* !0 ==> rgb[] has valid color */
-	unsigned char	rgb[3];
-	struct rt_vls	shader_name;
-	struct rt_vls	shader_param;
-	struct rt_vls	material;
-	char		inherit;
-};
-#define RT_COMB_MAGIC	0x436f6d49	/* "ComI" */
-#define RT_CK_COMB(_p)		NMG_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
-
-
-/* Internal. Ripped off from db_tree.c */
-struct tree_list {
-	union tree *tl_tree;
-	int	tl_op;
-};
-#define TREE_LIST_NULL	((struct tree_list *)0)
-
-
 /* --- Begin John's pretty-printer --- */
 
 char
