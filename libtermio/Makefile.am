@@ -8,4 +8,4 @@ AM_CFLAGS = -I$(top_srcdir)/h
 
 BUILT_SOURCES = vers.c
 vers.c:
-	$(top_srcdir)/sh/newvers.sh
+	$(top_srcdir)/sh/newvers.sh termio_version 
