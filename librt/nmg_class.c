@@ -561,7 +561,7 @@ again:
 
 	/* find the closest approach in this face to the projected point */
 	class = nmg_class_pt_fu_except( vg->coord, fu, lu,
-		NULL, NULL, NULL, 0, tol );
+		NULL, NULL, NULL, 0, 0, tol );
 
 	/* If this vertex lies ON loop edge, must check all others. */
 	if( class == NMG_CLASS_AonBshared )  {
@@ -683,7 +683,7 @@ CONST struct rt_tol	*tol;
 				 */
 				class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
 					(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
-					tol);
+					0, tol);
 				if( class == NMG_CLASS_AonBshared )  {
 					/* Point is ON face, therefore it must be
 					 * ON the shell also.
