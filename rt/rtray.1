@@ -17,6 +17,37 @@ in the input
 and produces a VLD standard
 .IR ray (5V)
 format ray file on standard output.
+The ``ob'' field of the
+.IR ray (5V)
+file is set to the region id of each intersected region, or to
+the negative of the aircode for each air region,
+or to one of five VLD-standard reserved values:
+.TP
+\-999
+zero-thickness ``paint'' at ray's first entry into the model.
+.TP
+\-998
+zero-thickness ``paint'' at any ray's exit interior to the model RPP.
+.TP
+\-1
+(unmodeled) air between modeled regions.
+.TP
+\-997
+zero-thickness ``paint'' at any ray's entry interior to the model RPP.
+.TP
+\-996
+zero-thickness ``paint'' at ray's final exit from the model.
+.LP
+The ``rt'' ray tag field of the
+.IR ray (5V)
+file is a 32-bit value
+set to a combination of the grid X and grid Y coordinates, plus the
+recursion/iteration (a_level) value (used mostly for multibounce effects
+in radar simulation).
+This allows all
+.IR ray (5V)
+records pertaining to the same grid cell to be identified.
+.LP
 The orientation of the rays to be fired may be specified by
 the
 .B \-a
@@ -73,14 +104,13 @@ The default for
 .IR rtray (1)
 is on, ie
 .BR \-U1 ,
-but the effect of air solids may be disabled with
+but the effect of air regions may be disabled with
 .BR \-U0 .
 .TP
-By default, the rays images are written to stdout.
-The
 .B \-o
 .B output.ray
-option specifies a named ray file for output.
+specifies a named ray file for output.
+By default, the rays are written to stdout.
 Note that the VLD standary ray file format
 .IR ray (5V)
 is a machine-specific binary format, which means ray files should
@@ -97,15 +127,18 @@ which is most useful when used with
 .IR mged (1)
 and the VLD ray filters.
 In order to convert a ray file into a minimal monochrome
-UNIX-plot image for viewing, run
+UNIX-plot image for viewing, run:
 .sp .5
   /vld/bin/rayvect -mMM < file.ray > file.vect
   /vld/bin/vectplot -mMM < file.vect > file.plot
-  tplot -Tmeg file.plot		# or equivalent UNIX-plot filter
+  tplot -Tmeg file.plot		# or other plot filter
+  pl-sgi < file.plot
 .sp .5
 .SH "SEE ALSO"
-gift(1V), mged(1), rt(1), rayplot(1), rayvect(1), rtray(1), rtpp(1),
-librt(3), ray(5V).
+gift(1V), mged(1),
+raydump(1V), rayplot(1V), rayvect(1V),
+rt(1), rtpp(1),
+librt(3), plot3(5), ray(5V).
 .SH DIAGNOSTICS
 Numerous error conditions are possible.
 Descriptive messages are printed on standard error (file descriptor 2).
