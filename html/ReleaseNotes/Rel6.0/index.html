@@ -53,7 +53,7 @@
   <li>Improved raytracer edge detection performance</li>
   <li>Initial support for multiply represented objects (MROs)</li>
   <li>Improved Bezier curve support for sketch extrusion (extrude) primitive</li>
-	<li>Binary object support for Height field (dsp) primitive and texture shader</li>
+	<li>Binary object support for height field (dsp) primitive and texture shader</li>
 	<li>New flat and invisible shaders</li>
 </ul>
 
@@ -69,23 +69,26 @@
   <li>g_diff
     <p>Compares two geometry database files and reports differences between the two
   </li>
+  <li>dbupgrade
+    <p>Upgrades an old BRL-CAD database to the current BRL-CAD release file format.  This allows access to new functionality only available with the newer database formats.  (e.g. Convert a database created with BRL-CAD rel4.5 to one that is fully functional in BRL-CAD rel6.0)
+  </li>
 
 </ul>
 
 <a name="new_lib"><h2>New Libraries</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
-  <li>New general purpose bourne-shell utility library (part of regression suite)
+  <li>New general purpose bourne-shell-based utility library (part of regression suite)
     <p>Includes support for file locking, semaphores, stdout/stderr/file logging, mail, cvs, packaging, and remote host querying facilities
   </li>
 </ul>
 
 <a name="dev"><h2>Developer Notes</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
-  <li>New and improved regression test suite</li>
   <li>Compile-time optimizations that significantly increase raytrace performance (at cost of run-time debugging)</li>
   <li>Detached dependancy on X (and Tk) during source compilation</li>
   <li>Consolidated cake build options</li>
-  <li>Mged 'db' command facilities</li>
+  <li>Mged 'db' developer command facilities</li>
+  <li>New and improved regression test suite (still in transition)</li>
   <li>Improved ANSI source conformance (still in transition)</li>
 </ul>
 
@@ -99,11 +102,11 @@
 <a name="removed"><h2>Unsupported Features and Utilities</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
   <li>g4-g5
-    <p>This tool has been replaced by the more general 'dbupgrade' command
+    <p>This tool has been replaced by the new and more general 'dbupgrade' command
   </li>
 
   <!-- include specific commands that did this --->
-  <li>Standard input/output redirection is no longer supported for g2asc, asc2g</li>
+  <li>Standard input/output redirection is no longer supported for g2asc and asc2g</li>
 </ul>
 
 <hr>
