@@ -84,25 +84,25 @@
 	(_mode) == AMM_CON_TRAN_Z )
 
 struct view_ring {
-  struct bu_list l;
-  mat_t   vr_rot_mat;
-  mat_t   vr_tvc_mat;
-  fastf_t vr_scale;
-  int     vr_id;
+  struct bu_list	l;
+  mat_t			vr_rot_mat;
+  mat_t			vr_tvc_mat;
+  fastf_t		vr_scale;
+  int			vr_id;
 };
 
 #define NUM_TRAILS 8
 #define MAX_TRAIL 32
 struct trail {
-  int t_cur_index;      /* index of first free entry */
-  int t_nused;          /* max index in use */
-  point_t t_pt[MAX_TRAIL];
+  int		t_cur_index;      /* index of first free entry */
+  int		t_nused;          /* max index in use */
+  point_t	t_pt[MAX_TRAIL];
 };
 
 #define MAX_CLIENTS 32
 struct client {
-  int c_fd;
-  struct pkg_conn *c_pkg;
+  int			c_fd;
+  struct pkg_conn	*c_pkg;
 };
 
 /* mged command variables for affecting the user environment */
@@ -159,6 +159,12 @@ struct _axes_state {
   int		ax_edit_size2;
   int		ax_edit_linewidth1;
   int		ax_edit_linewidth2;
+};
+
+struct _dlist_state {
+  int		dl_rc;
+  int		dl_active;	/* 1 - actively using display lists */
+  int		dl_flag;
 };
 
 struct _grid_state {
@@ -374,64 +380,60 @@ struct _menu_state {
 };
 
 struct dm_list {
-  struct bu_list l;
-  struct dm *dml_dmp;
-  FBIO *dml_fbp;
-  int dml_netfd;			/* socket used to listen for connections */
-  struct client dml_clients[MAX_CLIENTS];
-  int dml_dirty;			/* true if received an expose or configuration event */
-  int dml_mapped;
-  int dml_owner;			/* true if owner of the view info */
-  int dml_am_mode;			/* alternate mouse mode */
-  int dml_ndrawn;
-  int dml_perspective_angle;
-  int *dml_zclip_ptr;
-  struct bu_list dml_p_vlist;		/* predictor vlist */
-  struct trail dml_trails[NUM_TRAILS];
-  struct cmd_list *dml_tie;
+  struct bu_list	l;
+  struct dm		*dml_dmp;
+  FBIO			*dml_fbp;
+  int			dml_netfd;			/* socket used to listen for connections */
+  struct client		dml_clients[MAX_CLIENTS];
+  int			dml_dirty;			/* true if received an expose or configuration event */
+  int			dml_mapped;
+  int			dml_owner;			/* true if owner of the view info */
+  int			dml_am_mode;			/* alternate mouse mode */
+  int			dml_ndrawn;
+  int			dml_perspective_angle;
+  int			*dml_zclip_ptr;
+  struct bu_list	dml_p_vlist;			/* predictor vlist */
+  struct trail		dml_trails[NUM_TRAILS];
+  struct cmd_list	*dml_tie;
+
+  int			dml_adc_auto;
+  int			dml_grid_auto_size;
+  int			_dml_mouse_dx;
+  int			_dml_mouse_dy;
+  int			_dml_omx;
+  int			_dml_omy;
+  int			_dml_knobs[8];
+  point_t		_dml_work_pt;
 
   /* Tcl variable names for display info */
-  struct bu_vls dml_fps_name;
-  struct bu_vls	dml_aet_name;
-  struct bu_vls	dml_ang_name;
-  struct bu_vls	dml_center_name;
-  struct bu_vls	dml_size_name;
-  struct bu_vls	dml_adc_name;
-
-  int dml_adc_auto;
-  int dml_grid_auto_size;
-  int _dml_mouse_dx;
-  int _dml_mouse_dy;
-  int _dml_omx;
-  int _dml_omy;
-  int _dml_knobs[8];
-  point_t _dml_work_pt;
+  struct bu_vls		dml_fps_name;
+  struct bu_vls		dml_aet_name;
+  struct bu_vls		dml_ang_name;
+  struct bu_vls		dml_center_name;
+  struct bu_vls		dml_size_name;
+  struct bu_vls		dml_adc_name;
 
   /* Slider stuff */
-  int dml_scroll_top;
-  int dml_scroll_active;
-  int dml_scroll_y;
-  struct scroll_item *dml_scroll_array[6];
+  int			dml_scroll_top;
+  int			dml_scroll_active;
+  int			dml_scroll_y;
+  struct scroll_item	*dml_scroll_array[6];
 
   /* Shareable Resources */
-  struct _view_state *dml_view_state;
-  struct _adc_state *dml_adc_state;
-  struct _menu_state *dml_menu_state;
-  struct _rubber_band *dml_rubber_band;
+  struct _view_state	*dml_view_state;
+  struct _adc_state	*dml_adc_state;
+  struct _menu_state	*dml_menu_state;
+  struct _rubber_band	*dml_rubber_band;
   struct _mged_variables *dml_mged_variables;
-  struct _color_scheme *dml_color_scheme;
-  struct _grid_state *dml_grid_state;
-  struct _axes_state *dml_axes_state;
+  struct _color_scheme	*dml_color_scheme;
+  struct _grid_state	*dml_grid_state;
+  struct _axes_state	*dml_axes_state;
+  struct _dlist_state	*dml_dlist_state;
 
   /* Hooks */
-  int (*dml_cmd_hook)();
-  void (*dml_viewpoint_hook)();
-  int (*dml_eventHandler)();
-};
-
-struct dm_char_queue {
-  struct bu_list l;
-  struct dm_list *dlp;
+  int			(*dml_cmd_hook)();
+  void			(*dml_viewpoint_hook)();
+  int			(*dml_eventHandler)();
 };
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
@@ -459,6 +461,7 @@ struct dm_char_queue {
 #define color_scheme curr_dm_list->dml_color_scheme
 #define grid_state curr_dm_list->dml_grid_state
 #define axes_state curr_dm_list->dml_axes_state
+#define dlist_state curr_dm_list->dml_dlist_state
 
 #define cmd_hook curr_dm_list->dml_cmd_hook
 #define viewpoint_hook curr_dm_list->dml_viewpoint_hook
@@ -561,12 +564,11 @@ extern int dm_pipe[];			/* defined in ged.c */
 extern int update_views;		/* defined in ged.c */
 extern struct dm_list head_dm_list;	/* defined in attach.c */
 extern struct dm_list *curr_dm_list;	/* defined in attach.c */
-extern struct dm_char_queue head_dm_char_queue;
 
 struct w_dm {
-  int type;
-  char *name;
-  int (*init)();
+  int	type;
+  char	*name;
+  int	(*init)();
 };
 extern struct w_dm which_dm[];  /* defined in attach.c */
 

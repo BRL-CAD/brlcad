@@ -301,13 +301,9 @@ char **argv;
 
 	bzero((void *)&head_dm_list, sizeof(struct dm_list));
 	BU_LIST_INIT( &head_dm_list.l );
-	{
-	  struct dm_list *dlp;
 
-	  BU_GETSTRUCT(dlp, dm_list);
-	  BU_LIST_APPEND(&head_dm_list.l, &dlp->l);
-	  curr_dm_list = dlp;
-	}
+	BU_GETSTRUCT(curr_dm_list, dm_list);
+	BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
 
 	/* initialize predictor stuff */
 	BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
@@ -342,6 +338,9 @@ char **argv;
 
 	BU_GETSTRUCT(menu_state, _menu_state);
 	menu_state->ms_rc = 1;
+
+	BU_GETSTRUCT(dlist_state, _dlist_state);
+	dlist_state->dl_rc = 1;
 
 	BU_GETSTRUCT(view_state, _view_state);
 	view_state->vs_rc = 1;
