@@ -9,6 +9,10 @@ SHELL=/bin/sh
 # For SunOS 5 (Solaris 2), need to add -Xc
 COPTS = -DCAKEDEBUG -DYYDEBUG -DCAREFUL -D`machinetype.sh -a`
 
+# For Netbsd, need to add -l to get yylineno
+LEXOPTS=
+# LEXOPTS= -l
+
 BINDIR=/usr/brlcad/bin
 
 #LDFLAGS=-k 64k
@@ -51,7 +55,7 @@ cake_g.c:	cake_g.y
 		mv -f y.output cake_g.t
 
 cake_s.c:	cake_s.l
-		lex cake_s.l
+		lex $(LEXOPTS) cake_s.l
 		mv -f lex.yy.c cake_s.c
 
 var:		$(SRC) $(GSRC)
