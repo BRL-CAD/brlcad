@@ -32,7 +32,7 @@ proc print_return_val str {
 }
 
 if ![info exists mged_default(dm_key_bindings)] {
-    set mged_default(dm_key_bindings) "\tKey\t\t\tBehavior
+    set mged_default(dm_key_bindings) "\tKey Sequence\t\tBehavior
 \ta\t\t\ttoggle angle distance cursor (ADC)
 \te\t\t\ttoggle edit axes
 \tm\t\t\ttoggle model axes
