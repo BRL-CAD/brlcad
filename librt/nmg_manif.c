@@ -401,10 +401,10 @@ char *tbl;
 		paint_color = NMG_INDEX_VALUE(paint_table,
 						fu_p->index);
 
-		if (NMG_INDEX_VALUE(paint_meaning, paint_color) ==
+		if (NMG_INDEX_VALUE(paint_meaning, (int)paint_color) ==
 		    PAINT_INTERIOR) {
 		    	set_face_sub_manifold(tbl, fu_p, NMG_2MANIFOLD);
-		} else if (NMG_INDEX_VALUE(paint_meaning, paint_color)
+		} else if (NMG_INDEX_VALUE(paint_meaning, (int)paint_color)
 		    == PAINT_EXTERIOR) {
 		    	set_face_sub_manifold(tbl, fu_p, NMG_3MANIFOLD);
 		}
