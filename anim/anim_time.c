@@ -22,10 +22,10 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
-
+#include "conf.h"
 #include <math.h>
 #include <stdio.h>
-
+#include "machine.h"
 
 
 extern int optind;
@@ -38,18 +38,19 @@ extern char *optarg;
 #define DELTA		(1.0e-6)
 
 /* command line variables */
-float inv0,inv1;
+fastf_t inv0,inv1;
 int v0_set =	 0;
 int v1_set =	 0;
 int query =	 0;
 int verbose = 	 0;
 int maxlines = 	 0;
 int domem = 	 0;
+int debug = 	 0;
 
-float gettime(float dist,float a,float b,float c,float init)
+fastf_t gettime(fastf_t dist,fastf_t a,fastf_t b,fastf_t c,fastf_t init)
 {
 
-	float old,new,temp,inv;
+	fastf_t old,new,temp,inv;
 	int countdown,success;
 	countdown = MAXITS;
 
@@ -66,7 +67,8 @@ float gettime(float dist,float a,float b,float c,float init)
 			success = 1;
 			break;
 		}
-		/*printf("c: %d %f\t%f\n",countdown,new,new-old);*/
+		if (debug)
+			printf("c: %d %f\t%f\n",countdown,new,new-old);
 		old = new;
 	}
 	if (!success) fprintf(stderr,"warning - max iterations reached\n");
@@ -78,12 +80,12 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	float *l, *x, *y, *z;
-	float temp0,temp1,temp2,start,end,v0,v1;
+	fastf_t *l, *x, *y, *z;
+	fastf_t temp0,temp1,temp2,start,end,v0,v1;
 	int i,j , num,plen;
 	
 
-	float time,dist,slope,a,b,c;
+	fastf_t time,dist,slope,a,b,c;
 
 
 	plen = 0;
@@ -95,29 +97,29 @@ char **argv;
 		maxlines = MAXLEN;
 	}
 
-	l = (float *) rt_malloc(maxlines*sizeof(float),"l[]");
+	l = (fastf_t *) rt_malloc(maxlines*sizeof(fastf_t),"l[]");
 	if (verbose) {
-		x = (float *) rt_malloc(maxlines*sizeof(float),"x[]");
-		y = (float *) rt_malloc(maxlines*sizeof(float),"y[]");
-		z = (float *) rt_malloc(maxlines*sizeof(float),"z[]");
+		x = (fastf_t *) rt_malloc(maxlines*sizeof(fastf_t),"x[]");
+		y = (fastf_t *) rt_malloc(maxlines*sizeof(fastf_t),"y[]");
+		z = (fastf_t *) rt_malloc(maxlines*sizeof(fastf_t),"z[]");
 	} else {
-		x = (float *) rt_malloc(2*sizeof(float),"x[]");
-		y = (float *) rt_malloc(2*sizeof(float),"y[]");
-		z = (float *) rt_malloc(2*sizeof(float),"z[]");
+		x = (fastf_t *) rt_malloc(2*sizeof(fastf_t),"x[]");
+		y = (fastf_t *) rt_malloc(2*sizeof(fastf_t),"y[]");
+		z = (fastf_t *) rt_malloc(2*sizeof(fastf_t),"z[]");
 	}
 	l[0] = 0.0;
 
 	while(plen<maxlines){
 		i = (verbose) ? plen : plen%2;
 		j = (verbose) ? (plen-1) : (plen+1)%2;
-		num = scanf("%f %f %f %f",&end,x+i,y+i,z+i);
+		num = scanf("%lf %lf %lf %lf",&end,x+i,y+i,z+i);
 		if (num<4)
 			break;
 		if(plen){
 			temp0 = x[i]-x[j];
 			temp1 = y[i]-y[j];
 			temp2 = z[i]-z[j];
-			l[plen] = sqrtf(temp0*temp0+temp1*temp1+temp2*temp2);
+			l[plen] = sqrt(temp0*temp0+temp1*temp1+temp2*temp2);
 			l[plen] += l[plen-1];
 		} else {
 			start = end;
@@ -185,7 +187,7 @@ char **argv;
 }
 
 /* code to read command line arguments*/
-#define OPT_STR "s:e:qm:v"
+#define OPT_STR "ds:e:qm:v"
 int get_args(argc,argv)
 int argc;
 char **argv;
@@ -195,11 +197,11 @@ char **argv;
 	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 's':
-			sscanf(optarg,"%f",&inv0);
+			sscanf(optarg,"%lf",&inv0);
 			v0_set = 1;
 			break;
 		case 'e':
-			sscanf(optarg,"%f",&inv1);
+			sscanf(optarg,"%lf",&inv1);
 			v1_set = 1;
 			break;
 		case 'q':
@@ -211,6 +213,9 @@ char **argv;
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'd':
+			debug = 1;
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);
