@@ -51,6 +51,7 @@ char	*state_str[] = {
 	"UNKNOWN",
 };
 
+extern double			frametime;	/* from ged.c */
 extern struct rt_db_internal	es_int;
 
 
@@ -331,6 +332,9 @@ dotitles()
 			FINDNULL(cp);
 			(void)sprintf(cp, "/%s", illump->s_path[i]->d_namep );
 		}
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+	} else {
+		(void)sprintf( linebuf, "%.2f fps", 1/frametime );
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	}
 }
