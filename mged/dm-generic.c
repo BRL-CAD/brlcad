@@ -568,14 +568,17 @@ end:
     int r, g, b;
     struct bu_vls vls;
 
-    if(argc != 4){
+    if(argc != 1 && argc != 4){
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "Usage: dm bg r g b");
+      bu_vls_printf(&vls, "Usage: dm bg [r g b]");
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
 
       return TCL_ERROR;
     }
+
+    if(argc == 1)
+      return DM_GET_BGCOLOR(dmp, interp);
 
     if(sscanf(argv[1], "%d", &r) != 1 ||
        sscanf(argv[2], "%d", &g) != 1 ||
