@@ -984,8 +984,9 @@ is_hackers_night( tv )
 struct timeval	*tv;
 {
 	struct tm	*tp;
+	long		sec = tv->tv_sec;
 
-	tp = localtime( &tv->tv_sec );
+	tp = localtime( &sec );
 
 	/* Sunday(0) and Saturday(6) are "night" */
 	if( tp->tm_wday == 0 || tp->tm_wday == 6 )  return(1);
