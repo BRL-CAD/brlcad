@@ -8678,7 +8678,7 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 
 	/* make sure new solid does no already exist */
 	if( (dp=db_lookup( wdbp->dbip, argv[1], LOOKUP_QUIET ) ) != DIR_NULL ) {
-	  Tcl_AppendResult(interp, argv[1], "already exists!!\n", (char *)NULL );
+	  Tcl_AppendResult(interp, argv[1], " already exists!!\n", (char *)NULL );
 	  return TCL_ERROR;
 	}
 
@@ -8717,7 +8717,7 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	if( argc == 4 ) {
+	if( argc == 5 ) {
 		max_normal_error = atof( argv[4] );
 		if( max_normal_error < 0.0 || max_normal_error > 90.0 ) {
 			Tcl_AppendResult(interp, "maximum normal error must be between 0.0 and 90.0\n",
