@@ -70,19 +70,17 @@ struct wmember  {
 /*
  *  Definitions for pipe (wire) segments
  */
-struct wdb_pipeseg  {
+
+struct wdb_pipept {
 	struct rt_list	l;		/* doubly linked list support */
-	point_t		ps_start;	/* start point of centerline */
-	point_t		ps_bendcenter;	/* BEND only: center of bend circle */
-	fastf_t		ps_id;		/* inner diam, <=0 if solid (wire) */
-	fastf_t		ps_od;		/* pipe outer diam */
-	int		ps_type;	/* WDB_PIPESEG_TYPE_{END, LINEAR, BEND} */
+	point_t		pp_coord;	/* "control" point for pipe solid */
+	fastf_t		pp_id;		/* inner diam, <=0 if solid (wire) */
+	fastf_t		pp_od;		/* pipe outer diam */
+	fastf_t		pp_bendradius;	/* bend radius to use for a bend at this point */
 };
+
 #define WDB_PIPESEG_NULL	((struct wdb_pipeseg *)0)
 #define WDB_PIPESEG_MAGIC	0x9723ffef
-#define WDB_PIPESEG_TYPE_END	1	/* End of pipe.  Required, last */
-#define WDB_PIPESEG_TYPE_LINEAR	2	/* Linear pipe segment */
-#define WDB_PIPESEG_TYPE_BEND	3	/* Bending pipe segment */
 
 /*
  *  Solid conversion routines
@@ -129,7 +127,7 @@ WDB_EXTERN(int mk_bsurf, (FILE *fp, genptr_t bp) );
 #endif /* NURB_H */
 WDB_EXTERN(int mk_particle, (FILE *fp, char *name, point_t vertex,
 			vect_t height, double vradius, double hradius) );
-WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipeseg *headp) );
+WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipept *headp) );
 
 /*
  *  These routines will be replaced in the next release.

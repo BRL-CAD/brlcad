@@ -313,19 +313,20 @@ union record  {
 		unsigned char	n_grans[4];	/* # eqn granules to follow */
 		/* Note that eqn granules are in "network" byte order */
 	}  n;
-	struct pipe_wire_rec  {
-		char	pw_id;			/* DBID_PIPE */
-		char	pw_pad;
-		char	pw_name[NAMESIZE];
-		unsigned char	pw_count[4];	/* # additional granules */
-		struct exported_pipeseg  {
-			unsigned char	eps_type[4];
-			unsigned char	eps_start[8*3];
-			unsigned char	eps_bendcenter[8*3];
-			unsigned char	eps_id[8];
-			unsigned char	eps_od[8];
-		} pw_data[1];			/* mach indep segments */
-	}  pw;
+	/* new pipe solid */
+	struct pipewire_rec  {
+		char	pwr_id;			/* DBID_PIPE */
+		char	pwr_pad;
+		char	pwr_name[NAMESIZE];
+		unsigned char	pwr_pt_count[4]; /* number of points in this pipe solid */
+		unsigned char	pwr_count[4];	/* # additional granules */
+		struct exported_pipept  {
+			unsigned char	epp_coord[8*3];
+			unsigned char	epp_bendradius[8];
+			unsigned char	epp_id[8];
+			unsigned char	epp_od[8];
+		} pwr_data[1];			/* mach indep segments */
+	}  pwr;
 	struct particle_rec  {
 		char	p_id;			/* DBID_PARTICLE */
 		char	p_pad;
