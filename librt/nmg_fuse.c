@@ -1720,7 +1720,10 @@ CONST struct rt_tol	*tol;
 		eu = rad->eu;
 		for( ; uses >= 2; uses-- )  {
 			eu = nmg_find_next_use_of_2e_in_lu( eu, e1, e2 );
-rt_log("rad->eu=x%x, eu=x%x, uses=%d\n", rad->eu, eu, uses);
+			if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
+				rt_log("rad->eu=x%x, eu=x%x, uses=%d\n",
+					rad->eu, eu, uses);
+			}
 			if( eu == rad->eu )  {
 				nmg_pr_lu_briefly( lu, 0 );
 				nmg_pr_radial_list( hd, tol );
@@ -1890,8 +1893,6 @@ CONST struct rt_tol	*tol;
 		/* With this one flipped, set expectation for next */
 		expected_ot = !expected_ot;
 	}
-	if( expected_ot == (orig->fu->orientation == OT_SAME) )
-		return nflip;
 
 	if( count & 1 )  {
 		rt_log("nmg_radial_mark_flips() NOTICE dangling fu=x%x detected at eu=x%x in shell=x%x, proceeding.\n  %g %g %g --- %g %g %g\n",
@@ -1900,8 +1901,11 @@ CONST struct rt_tol	*tol;
 			V3ARGS(orig->eu->eumate_p->vu_p->v_p->vg_p->coord)
 		);
 		nmg_pr_radial_list( hd, tol );
-		return 0;
+		return count;
 	}
+
+	if( expected_ot == (orig->fu->orientation == OT_SAME) )
+		return nflip;
 
 	rt_log("nmg_radial_mark_flips() unable to establish proper orientation parity.\n  eu count=%d, shell=x%x, expectation=%d\n",
 		count, s, expected_ot);
