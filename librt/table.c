@@ -197,7 +197,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
 		rt_ell_describe,
 
-	"ID_NMG",	0,
+	"ID_NMG",	1,
 		rt_nmg_prep,	rt_nmg_shot,	rt_nmg_print,	rt_nmg_norm,
 		rt_nmg_uv,	rt_nmg_curve,	rt_nmg_class,	rt_nmg_free,
 		rt_nmg_plot,	rt_nmg_vshot,	rt_nmg_tess,
