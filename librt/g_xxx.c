@@ -73,9 +73,9 @@ struct rt_i		*rtip;
  */
 void
 rt_xxx_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
-	register struct xxx_specific *xxx =
+	register CONST struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
 }
 
@@ -252,9 +252,9 @@ struct rt_tol		*tol;
  */
 int
 rt_xxx_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 	LOCAL struct rt_xxx_internal	*xip;
 	union record			*rp;
@@ -283,9 +283,9 @@ register mat_t		mat;
  */
 int
 rt_xxx_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_xxx_internal	*xip;
 	union record		*rec;

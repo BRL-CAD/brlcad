@@ -503,7 +503,7 @@ struct rt_i		*rtip;
  */
 void
 rt_arb_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -906,9 +906,9 @@ rt_arb_class()
  */
 int
 rt_arb_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST  mat_t		mat;
 {
 	struct rt_arb_internal	*aip;
 	union record		*rp;
@@ -951,9 +951,9 @@ register mat_t		mat;
  */
 int
 rt_arb_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_arb_internal	*aip;
 	union record		*rec;

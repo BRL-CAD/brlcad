@@ -127,10 +127,13 @@ struct rt_i		*rtip;
  */
 void
 rt_nmg_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
-	register struct nmg_specific *nmg =
-		(struct nmg_specific *)stp->st_specific;
+	register struct model *m =
+		(struct model *)stp->st_specific;
+
+	NMG_CK_MODEL(m);
+	nmg_pr_m(m);
 }
 
 /*
@@ -2432,10 +2435,10 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
  */
 int
 rt_nmg_import_internal( ip, ep, mat, rebound )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
-int			rebound;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+CONST register mat_t		mat;
+int				rebound;
 {
 	struct model			*m;
 	union record			*rp;
@@ -2531,10 +2534,10 @@ int			rebound;
  */
 int
 rt_nmg_export_internal( ep, ip, local2mm, compact )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
-int			compact;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+int				compact;
 {
 	struct model			*m;
 	union record			*rp;
@@ -2679,9 +2682,9 @@ rt_log("Mapping of old index to new index, and kind\n");
  */
 int
 rt_nmg_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 	struct model			*m;
 	struct nmgregion		*r;
@@ -2712,9 +2715,9 @@ register mat_t		mat;
  */
 int
 rt_nmg_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct model			*m;
 	union record			*rp;

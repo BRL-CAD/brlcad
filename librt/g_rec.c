@@ -358,9 +358,9 @@ struct rt_i		*rtip;
  */
 void
 rt_rec_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
-	register struct rec_specific *rec =
+	register CONST struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
 
 	VPRINT("V", rec->rec_V);

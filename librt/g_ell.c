@@ -302,7 +302,7 @@ struct rt_i		*rtip;
  */
 void
 rt_ell_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -1064,9 +1064,9 @@ fail:
  */
 int
 rt_ell_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 	struct rt_ell_internal	*eip;
 	union record		*rp;
@@ -1103,9 +1103,9 @@ register mat_t		mat;
  */
 int
 rt_ell_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_ell_internal	*tip;
 	union record		*rec;

@@ -67,7 +67,7 @@ union record		*rec;
 
 void
 epa_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
 	register struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;

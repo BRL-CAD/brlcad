@@ -53,9 +53,9 @@ extern struct vertex *rt_nmg_find_pt_in_shell();
  */
 int
 rt_ars_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-mat_t			mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+CONST mat_t			mat;
 {
 	struct rt_ars_internal *ari;
 	union record	*rp;
@@ -461,7 +461,7 @@ pointp_t ap, bp, cp;
  */
 void
 rt_ars_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;

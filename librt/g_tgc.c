@@ -431,9 +431,9 @@ mat_t	Scl, Inv;
  */
 void
 rt_tgc_print( stp )
-register struct soltab	*stp;
+register CONST struct soltab	*stp;
 {
-	register struct tgc_specific	*tgc =
+	register CONST struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
 
 	VPRINT( "V", tgc->tgc_V );
@@ -1519,9 +1519,9 @@ rt_tgc_class()
  */
 int
 rt_tgc_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 	struct rt_tgc_internal	*tip;
 	union record		*rp;
@@ -1560,9 +1560,9 @@ register mat_t		mat;
  */
 int
 rt_tgc_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_tgc_internal	*tip;
 	union record		*rec;

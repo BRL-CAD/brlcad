@@ -182,9 +182,9 @@ struct rt_i		*rtip;
  */
 void
 rt_sph_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
-	register struct sph_specific *sph =
+	register CONST struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 
 	VPRINT("V", sph->sph_V);

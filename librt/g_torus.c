@@ -276,9 +276,9 @@ struct rt_i		*rtip;
  */
 void
 rt_tor_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
-	register struct tor_specific *tor =
+	register CONST struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 
 	rt_log("r2/r1 (alpha) = %f\n", tor->tor_alpha);
@@ -1242,9 +1242,9 @@ double	radius;
  */
 int
 rt_tor_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 	struct rt_tor_internal	*tip;
 	union record		*rp;
@@ -1304,9 +1304,9 @@ register mat_t		mat;
  */
 int
 rt_tor_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_tor_internal	*tip;
 	union record		*rec;

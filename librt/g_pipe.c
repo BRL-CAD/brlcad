@@ -75,7 +75,7 @@ struct rt_i		*rtip;
  */
 void
 rt_pipe_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
 	register struct pipe_specific *pipe =
 		(struct pipe_specific *)stp->st_specific;
@@ -278,9 +278,9 @@ struct rt_tol		*tol;
  */
 int
 rt_pipe_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 	register struct exported_pipeseg *exp;
 	register struct wdb_pipeseg	*psp;
@@ -357,9 +357,9 @@ done:	;
  */
 int
 rt_pipe_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_pipe_internal	*pip;
 	struct rt_list		*headp;

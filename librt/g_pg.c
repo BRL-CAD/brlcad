@@ -180,9 +180,9 @@ CONST struct rt_tol	*tol;
  */
 void
 rt_pg_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
-	register struct tri_specific *trip =
+	register CONST struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
 
 	if( trip == TRI_NULL )  {
@@ -680,9 +680,9 @@ struct rt_tol		*tol;
  */
 int
 rt_pg_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-mat_t			mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+CONST mat_t			mat;
 {
 	struct rt_pg_internal	*pgp;
 	union record		*rp;
@@ -744,9 +744,9 @@ mat_t			mat;
  */
 int
 rt_pg_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_pg_internal	*pgp;
 	union record		*rec;

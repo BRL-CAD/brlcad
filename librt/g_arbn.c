@@ -31,7 +31,7 @@ static char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-RT_EXTERN(void rt_arbn_print, (struct soltab *stp) );
+RT_EXTERN(void rt_arbn_print, (CONST struct soltab *stp) );
 RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
 
 /*
@@ -133,7 +133,7 @@ next_k:				;
  */
 void
 rt_arbn_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
 }
 
@@ -431,9 +431,9 @@ struct rt_tol		*tol;
  */
 int
 rt_arbn_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 	union record		*rp;
 	struct rt_arbn_internal	*aip;
@@ -484,9 +484,9 @@ register mat_t		mat;
  */
 int
 rt_arbn_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_arbn_internal	*aip;
 	union record		*rec;

@@ -104,9 +104,9 @@ struct rt_i		*rtip;
  */
 void
 rt_hlf_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
-	register struct half_specific *halfp =
+	register CONST struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
 	if( halfp == HALF_NULL )  {
@@ -457,9 +457,9 @@ struct rt_tol		*tol;
  */
 int
 rt_hlf_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-mat_t			mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+CONST mat_t			mat;
 {
 	struct rt_half_internal	*hip;
 	union record	*rp;
@@ -517,9 +517,9 @@ mat_t			mat;
  */
 int
 rt_hlf_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_half_internal	*hip;
 	union record		*rec;

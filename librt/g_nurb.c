@@ -159,7 +159,7 @@ struct rt_i		*rtip;
  */
 void
 rt_nurb_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
 	register struct nurb_specific *nurb =
 		(struct nurb_specific *)stp->st_specific;
@@ -716,8 +716,8 @@ struct rt_tol		*tol;
 int
 rt_nurb_import( ip, ep, mat )
 struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 
 	struct rt_nurb_internal * sip;
@@ -1070,12 +1070,11 @@ struct nurb_hit * head;
 
 int
 rt_nurb_export( ep, ip, local2mm)
-struct rt_external 	* ep;
-struct rt_db_internal	* ip;
-double			local2mm;
+struct rt_external	 	* ep;
+CONST struct rt_db_internal	* ip;
+double				local2mm;
 {
-
-
+	return -1;		/* XXXXX */
 }
 
 void

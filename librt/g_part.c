@@ -308,9 +308,9 @@ struct rt_i		*rtip;
  */
 void
 rt_part_print( stp )
-register struct soltab *stp;
+register CONST struct soltab *stp;
 {
-	register struct part_specific *part =
+	register CONST struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
 
 	VPRINT("part_V", part->part_int.part_V );
@@ -924,9 +924,9 @@ struct rt_tol		*tol;
  */
 int
 rt_part_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+register CONST mat_t		mat;
 {
 	point_t		v;
 	vect_t		h;
@@ -1004,9 +1004,9 @@ register mat_t		mat;
  */
 int
 rt_part_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_part_internal	*pip;
 	union record		*rec;
