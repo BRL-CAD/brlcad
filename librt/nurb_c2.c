@@ -126,7 +126,7 @@ fastf_t v;
 	cvp->crv_c1 = mean - discrim;
 	cvp->crv_c2 = mean + discrim;
 
-	if( APX_EQ( ( E*G - F*F), 0.0 ))
+	if( fabs( E*G - F*F) < 0.0001 )		/* XXX */
 	{
 		rt_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
 			E,F,G);
@@ -139,8 +139,7 @@ fastf_t v;
         wein[2] = ( (E * M) - (F * L))/ (denom);
         wein[3] = ( (E * N) - (F * M))/ (denom);
 
-
-        if ( APX_EQ( wein[1] , 0.0 ) && APX_EQ( wein[3] - cvp->crv_c1, 0.0) )
+	if( fabs(wein[1]) < 0.0001 && fabs( wein[3] - cvp->crv_c1 ) < 0.0001 )
         {
                 evec[0] = 0.0; evec[1] = 1.0;
         } else

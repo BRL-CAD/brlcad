@@ -250,6 +250,8 @@ register struct knot_vector *kv;
 
 /* knot_index()
  *	Calculates and returns the index of the value for the knot vector
+ *
+ * XXX It is hard to know what tolerance to use here for the comparisons.
  */
 
 int
@@ -263,14 +265,14 @@ int	order;
 	int	k_index;
 
 	if ( k_value < ( knt = *(kv->knots + order - 1))) {
-		if (APX_EQ( k_value, knt)) {
+		if (fabs( k_value - knt) < 0.0001) {
 			k_value = knt;
 		} else
 			return - 1;
 	}
 
 	if ( k_value > ( knt = *(kv->knots + kv->k_size - order + 1)) ) {
-		if (APX_EQ( k_value, knt)) {
+		if (fabs( k_value - knt) < 0.0001) {
 			k_value = knt;
 		} else
 			return - 1;

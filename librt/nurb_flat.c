@@ -164,8 +164,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	VCROSS(nrm, v1, v2);
 
 	nrmln = MAGNITUDE(nrm);
-
-	if (APX_EQ(nrmln, 0.0))
+	if( nrmln < 0.0001 )			/* XXX Why this constant? */
 		return RT_NURB_SPLIT_FLAT;
 
 	VSUB2(v3, p4, p1);
@@ -215,7 +214,7 @@ int	pt_type;
 	 * loop through all of the points until a line is found which may not
 	 * be the end pts of the curve if the endpoints are the same. 
 	 */
-	for (i = size - 1; (i > 0) && APX_EQ(length, 0.0); i--) {
+	for (i = size - 1; (i > 0) && length < SQRT_SMALL_FASTF; i--) {
 		if ( !rational) {
 			VMOVE(p2, (crv + (i * coords)));
 		} else {
@@ -228,7 +227,7 @@ int	pt_type;
 	}
 
 
-	if (!APX_EQ(length, 0.0)) {
+	if( length >= SQRT_SMALL_FASTF )  {
 		VSCALE(ln, ln, 1.0 / length);
 		c_ptr = crv + coords;
 
