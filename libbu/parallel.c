@@ -358,6 +358,22 @@ bu_avail_cpus()
 #endif /* n16 */
 
 
+#ifdef __FreeBSD__
+	{
+	  int maxproc;
+	  size_t len;
+	  len = 4;
+	  if (sysctlbyname("hw.ncpu", &maxproc, &len, NULL, 0) == -1) {
+	    ncpu = 1;
+	    perror("sysctlbyname");
+	  } else {
+	    ncpu = maxproc;
+	  }
+	  goto DONE_NCPU;
+	}
+#endif
+
+
 #if defined(__ppc__)
 	{
 	  int mib[2], maxproc;
@@ -369,8 +385,9 @@ bu_avail_cpus()
 	  if (sysctl(mib, 2, &maxproc, &len, NULL, NULL == -1)) {
 	    ncpu = 1;
 	    perror("sysctl");
+	  } else {
+	    ncpu = maxproc; /* should be able to get sysctl to return maxproc */
 	  }
-	  ncpu = maxproc; /* should be able to get sysctl to return maxproc */
 	  goto DONE_NCPU;
 	}
 #endif /* __ppc__ */
