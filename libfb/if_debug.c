@@ -12,63 +12,66 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	deb_dopen(),
-		deb_dclose(),
-		deb_dreset(),
-		deb_dclear(),
-		deb_bread(),
-		deb_bwrite(),
-		deb_cmread(),
-		deb_cmwrite(),
-		deb_viewport_set(),
-		deb_window_set(),
-		deb_zoom_set(),
-		deb_curs_set(),
-		deb_cmemory_addr(),
-		deb_cscreen_addr(),
+_LOCAL_ int	deb_open(),
+		deb_close(),
+		deb_reset(),
+		deb_clear(),
+		deb_read(),
+		deb_write(),
+		deb_rmap(),
+		deb_wmap(),
+		deb_viewport(),
+		deb_window(),
+		deb_zoom(),
+		deb_setcursor(),
+		deb_cursor(),
+		deb_scursor(),
 		deb_readrect(),
 		deb_writerect(),
+		deb_flush(),
+		deb_free(),
 		deb_help();
 
 /* This is the ONLY thing that we "export" */
-FBIO debug_interface =
-		{
-		deb_dopen,
-		deb_dclose,
-		deb_dreset,
-		deb_dclear,
-		deb_bread,
-		deb_bwrite,
-		deb_cmread,
-		deb_cmwrite,
-		deb_viewport_set,
-		deb_window_set,
-		deb_zoom_set,
-		deb_curs_set,
-		deb_cmemory_addr,
-		deb_cscreen_addr,
-		deb_readrect,
-		deb_writerect,
-		deb_help,
-		"Debugging Interface",
-		8*1024,			/* max width */
-		8*1024,			/* max height */
-		"/dev/debug",
-		512,			/* current width (init 0) */
-		512,			/* current height (init 0) */
-		-1,			/* file descriptor */
-		PIXEL_NULL,		/* page_base */
-		PIXEL_NULL,		/* page_curp */
-		PIXEL_NULL,		/* page_endp */
-		-1,			/* page_no */
-		0,			/* page_ref */
-		0L,			/* page_curpos */
-		0L,			/* page_pixels */
-		0			/* debug */
-		};
+FBIO debug_interface = {
+	deb_open,
+	deb_close,
+	deb_reset,
+	deb_clear,
+	deb_read,
+	deb_write,
+	deb_rmap,
+	deb_wmap,
+	deb_viewport,
+	deb_window,
+	deb_zoom,
+	deb_setcursor,
+	deb_cursor,
+	deb_scursor,
+	deb_readrect,
+	deb_writerect,
+	deb_flush,
+	deb_free,
+	deb_help,
+	"Debugging Interface",
+	32*1024,		/* max width */
+	32*1024,		/* max height */
+	"/dev/debug",
+	512,			/* current/default width */
+	512,			/* current/default height */
+	-1,			/* file descriptor */
+	PIXEL_NULL,		/* page_base */
+	PIXEL_NULL,		/* page_curp */
+	PIXEL_NULL,		/* page_endp */
+	-1,			/* page_no */
+	0,			/* page_ref */
+	0L,			/* page_curpos */
+	0L,			/* page_pixels */
+	0			/* debug */
+};
 
 _LOCAL_ int
-deb_dopen( ifp, file, width, height )
+deb_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -103,7 +106,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-deb_dclose( ifp )
+deb_close( ifp )
 FBIO	*ifp;
 {
 	fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
@@ -111,7 +114,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-deb_dreset( ifp )
+deb_reset( ifp )
 FBIO	*ifp;
 {
 	fb_log( "fb_reset( 0x%lx )\n", (unsigned long)ifp );
@@ -119,7 +122,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-deb_dclear( ifp, pp )
+deb_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
@@ -134,7 +137,7 @@ RGBpixel	*pp;
 }
 
 _LOCAL_ int
-deb_bread( ifp, x, y, pixelp, count )
+deb_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -147,7 +150,7 @@ int	count;
 }
 
 _LOCAL_ int
-deb_bwrite( ifp, x, y, pixelp, count )
+deb_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -177,7 +180,7 @@ int	count;
 }
 
 _LOCAL_ int
-deb_cmread( ifp, cmp )
+deb_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -187,7 +190,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-deb_cmwrite( ifp, cmp )
+deb_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -214,7 +217,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-deb_viewport_set( ifp, left, top, right, bottom )
+deb_viewport( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
@@ -224,7 +227,7 @@ int	left, top, right, bottom;
 }
 
 _LOCAL_ int
-deb_window_set( ifp, x, y )
+deb_window( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -234,7 +237,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-deb_zoom_set( ifp, x, y )
+deb_zoom( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -244,7 +247,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-deb_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+deb_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
 int	xbits, ybits;
@@ -256,7 +259,7 @@ int	xorig, yorig;
 }
 
 _LOCAL_ int
-deb_cmemory_addr( ifp, mode, x, y )
+deb_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -267,7 +270,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-deb_cscreen_addr( ifp, mode, x, y )
+deb_scursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -301,6 +304,22 @@ RGBpixel	*pp;
 		(unsigned long)ifp, xmin, ymin, width, height,
 		(unsigned long)pp );
 	return( width*height );
+}
+
+_LOCAL_ int
+deb_flush( ifp )
+FBIO	*ifp;
+{
+	fb_log( "if_flush( 0x%lx )\n", (unsigned long)ifp );
+	return	0;
+}
+
+_LOCAL_ int
+deb_free( ifp )
+FBIO	*ifp;
+{
+	fb_log( "fb_free( 0x%lx )\n", (unsigned long)ifp );
+	return	0;
 }
 
 /*ARGSUSED*/
