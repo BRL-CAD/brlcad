@@ -34,7 +34,7 @@ fastf_t u, v;
 	struct snurb *usrf, *vsrf;
 	fastf_t * se, * ue, *ve;
 	point_t uvec, vvec;
-	fastf_t * norm;
+	fastf_t * norm = (fastf_t *)NULL;
 	fastf_t p;
 	int i;
 
@@ -298,5 +298,6 @@ fastf_t u, v;
 		
 		return norm;
 	}
+	/* This will be a null pointer, is this an error? */
+	return norm;
 }
-
