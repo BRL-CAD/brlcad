@@ -403,7 +403,7 @@ char *argv[];
 		if( NMG_TBL_END( &faces ) )
 		{
 			/* glue faces together */
-			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
 
 			nmg_rebound( m , &tol );
 			nmg_fix_normals( s , &tol );

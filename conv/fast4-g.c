@@ -100,7 +100,7 @@ static char	*usage="Usage:\n\tfast4-g [-dwp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FL
 	P - set tolerance for parallel test (cosine of angle)\n";
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
-RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl ) );
+RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl, struct bn_tol *tol ) );
 RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s1 , fastf_t thick , int normal_ward , int approximate , struct rt_tol *tol ) );
 RT_EXTERN( struct edgeuse *nmg_next_radial_eu , ( CONST struct edgeuse *eu , CONST struct shell *s , int wires ) );
 RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop , ( struct loopuse *lu ) );
@@ -2140,7 +2140,7 @@ struct shell *new_s;
 
 		nmg_tbl( &faces , TBL_INS , (long *)fu );
 	}
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
 
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
@@ -2893,7 +2893,7 @@ Extrude_faces()
 				continue;
 
 			dup_shells[thick_no*2+center-1] = nmg_dup_shell( shells[thick_no*2+center-1],
-									&trans_tbl );
+									&trans_tbl, &tol );
 
 			/* move trans_tbl info to dup_tbl */
 			for( i=0 ; i<table_size ; i++ )
@@ -3732,7 +3732,7 @@ make_nmg_objects()
 
 				nmg_tbl( &faces , TBL_INS , (long *)fu );
 			}
-			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
 		}
 	}
 
@@ -3836,7 +3836,7 @@ make_nmg_objects()
 
 					nmg_tbl( &faces , TBL_INS , (long *)fu );
 				}
-				nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+				nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
 			}
 		}
 
@@ -5127,7 +5127,7 @@ fastf_t thick;
 		}
 	}
 
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
 	nmg_fix_normals( s1 , &tol );

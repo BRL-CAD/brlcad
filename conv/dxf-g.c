@@ -372,7 +372,7 @@ char *argv[];
 
 	/* glue faces together */
 	rt_log( "Glueing %d faces together...\n" , NMG_TBL_END( &faces ) );
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
 
 	nmg_rebound( m , &tol );
 
