@@ -2076,7 +2076,7 @@ do_ccone3()
 			bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
-			rt_bomb( "CCONE2\n" );
+			rt_bomb( "CCONE3\n" );
 		}
 		return;
 	}
