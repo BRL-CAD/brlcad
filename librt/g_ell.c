@@ -1039,12 +1039,25 @@ struct rt_tol		*tol;
 	{
 		for( j=0; j < strips[i].nverts; j++ )
 		{
+			struct faceuse *fu;
 			struct vertexuse *vu;
+			vect_t norm_opp;
 
 			NMG_CK_VERTEX( strips[i].vp[j] );
+			VREVERSE( norm_opp , strips[i].norms[j] )
 
 			for( RT_LIST_FOR( vu , vertexuse , &strips[i].vp[j]->vu_hd ) )
-				nmg_vertexuse_nv( vu , strips[i].norms[j] );
+			{
+				fu = nmg_find_fu_of_vu( vu );
+				NMG_CK_FACEUSE( fu );
+				/* get correct direction of normals depending on
+				 * faceuse orientation
+				 */
+				if( fu->orientation == OT_SAME )
+					nmg_vertexuse_nv( vu , strips[i].norms[j] );
+				else if( fu->orientation == OT_OPPOSITE )
+					nmg_vertexuse_nv( vu , norm_opp );
+			}
 		}
 	}
 
