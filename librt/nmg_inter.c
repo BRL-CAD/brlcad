@@ -1,3 +1,4 @@
+#define HEART 1
 /*
  *			N M G _ I N T E R . C
  *
@@ -75,6 +76,7 @@ struct nmg_inter_struct {
 	struct faceuse	*fu2;		/* null if l2 comes from a wire */
 	struct rt_tol	tol;
 	int		coplanar;	/* a flag */
+	struct edge_g	*on_eg;		/* edge_g for line of intersection */
 	point_t		pt;		/* 3D line of intersection */
 	vect_t		dir;
 	point_t		pt2d;		/* 2D projection of isect line */
@@ -3155,6 +3157,350 @@ do_ret:
 }
 
 /*
+ *			N M G _ F I N D _ E G _ O N _ L I N E
+ *
+ *  Do a geometric search to find an edge_g on the given line.
+ *  If the fuser did it's job, there should be only one.
+ */
+struct edge_g *
+nmg_find_eg_on_line( magic_p, pt, dir, tol )
+CONST long		*magic_p;
+CONST point_t		pt;
+CONST vect_t		dir;
+CONST struct rt_tol	*tol;
+{
+	struct nmg_ptbl	eutab;
+	struct edgeuse	**eup;
+	struct edge_g	*ret = (struct edge_g *)NULL;
+
+	RT_CK_TOL(tol);
+
+	nmg_edgeuse_on_line_tabulate( &eutab, magic_p, pt, dir, tol );
+
+	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
+	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
+	)  {
+		if( !ret )  {
+			/* No edge_g found yet, use this one. */
+			ret = (*eup)->e_p->eg_p;
+			continue;
+		}
+		if( (*eup)->e_p->eg_p == ret ) continue;	/* OK */
+		/* Found different edge_g, claimed to be colinear */
+		rt_log("*eup=x%x, eg_p=x%x, ret=x%x\n", *eup, (*eup)->e_p->eg_p, ret );
+		rt_bomb("nmg_find_eg_on_line() 2 different eg's, fuser failure.\n");
+	}
+	(void)nmg_tbl( &eutab, TBL_FREE, 0 );
+	return ret;
+}
+
+/*
+ *  Search all edgeuses referring to this vu's vertex.
+ *  Report if any edgeuse referrs to edge_g "eg".
+ *  If found, and hit_vu non-NULL, bomb.
+ * XXX This is a lame name.
+ */
+struct vertexuse *
+nmg_search_v_eg( vu, eg, hit_vu )
+struct vertexuse		*vu;
+CONST struct edge_g		*eg;
+struct vertexuse		*hit_vu;	/* often will be NULL */
+{
+	CONST struct vertex	*v;
+	CONST struct vertexuse	*vu1;
+
+	NMG_CK_VERTEXUSE(vu);
+	NMG_CK_EDGE_G(eg);
+
+	v = vu->v_p;
+	NMG_CK_VERTEX(v);
+
+	for( RT_LIST_FOR( vu1, vertexuse, &v->vu_hd ) )  {
+		CONST struct edgeuse	*eu;
+		NMG_CK_VERTEXUSE(vu1);
+		if( vu1 == vu )  continue;
+		if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+		eu = vu1->up.eu_p;
+		if( eu->e_p->eg_p != eg )  continue;
+
+		/* 'vu' is shared by an edge along 'eg' */
+		if( hit_vu )  {
+			/* Is it a different vertex than hit_vu? */
+			if( hit_vu->v_p == v )  continue;
+
+			/* Yes, this "can't happen" */
+			rt_log("vu=x%x, v=x%x; hit_vu=x%x, v=x%x\n",
+				vu, v, hit_vu, hit_vu->v_p );
+			rt_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
+		}
+		hit_vu = vu;
+	}
+	return hit_vu;
+}
+
+/*
+ * HEART
+ *
+ *  For each distinct edge_g LINE on the face (composed of potentially many
+ *  edgeuses and many different edges), intersect the edge_g LINE with
+ *  the face/face intersection line passed in is->pt and is->dir.
+ *  Go to great pains to ensure that two non-colinear lines intersect
+ *  at either 0 or 1 points, and no more.
+ */
+void
+nmg_isect_line2_face2pNEW( is, fu1 )
+struct nmg_inter_struct	*is;
+struct faceuse		*fu1;
+{
+	struct nmg_ptbl		eu_list;
+	struct nmg_ptbl		eg_list;
+	struct edge_g		**eg1;
+	struct edgeuse		**eu1;
+	fastf_t			dist[2];
+	int			code;
+	point_t			eg_pt2d;	/* 2D */
+	vect_t			eg_dir2d;	/* 2D */
+	struct loopuse		*lu1;
+	point_t			hit3d;
+	point_t			hit2d;		/* 2D */
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_FACEUSE(fu1);
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_line2_face2pNEW(, fu1=x%x)\n", fu1);
+
+	/* Project the intersect line into 2D.  Build matrix first. */
+	nmg_isect2d_prep( is, &fu1->l.magic );
+	/* XXX Need subroutine for this!! */
+	MAT4X3PNT( is->pt2d, is->proj, is->pt );
+	MAT4X3VEC( is->dir2d, is->proj, is->dir );
+
+	/* Build list of all edgeuses in fu1 */
+	nmg_edgeuse_tabulate( &eu_list, &fu1->l.magic );
+
+	/* Build list of all edge_g's in fu1 */
+	/* XXX This could be more cheaply done by cooking down eu_list */
+	nmg_edge_g_tabulate( &eg_list, &fu1->l.magic );
+
+	/* Process each distinct line in the face */
+	for( eg1 = (struct edge_g **)NMG_TBL_LASTADDR(&eg_list);
+	     eg1 >= (struct edge_g **)NMG_TBL_BASEADDR(&eg_list); eg1--
+	)  {
+		struct vertexuse	*hit_vu = (struct vertexuse *)NULL;
+		struct vertex		*hit_v = (struct vertex *)NULL;
+
+		NMG_CK_EDGE_G(*eg1);
+
+		if( *eg1 == is->on_eg )  {
+colinear:
+			/* This edge_g is known to be ON the face/face line.
+			 * Enlist all the vertexuses from edgeuses using on_eg.
+			 */
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+				rt_log("\tThis edge_geom generated the line.  Enlisting.\n");
+			}
+			for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
+			     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu_list); eu1--
+			)  {
+				NMG_CK_EDGEUSE(*eu1);
+				if( (*eu1)->e_p->eg_p != is->on_eg )  continue;
+				nmg_enlist_vu(is, (*eu1)->vu_p, 0 );
+				nmg_enlist_vu(is, RT_LIST_PNEXT_CIRC(edgeuse, (*eu1))->vu_p, 0 );
+			}
+			continue;
+		}
+
+		/*
+		 *  eg1 is now known to be NOT colinear with on_eg.
+		 *  From here on, only 0 or 1 points of intersection are possible.
+		 */
+
+		/*  The 3D line in is->pt and is->dir is prepared by our caller. */
+		MAT4X3PNT( eg_pt2d, is->proj, (*eg1)->e_pt );
+		MAT4X3VEC( eg_dir2d, is->proj, (*eg1)->e_dir );
+
+		/* Calculate 2D geometric intersection, but don't look at answer yet */
+		dist[0] = dist[1] = -INFINITY;
+		code = rt_isect_line2_line2( dist, is->pt2d, is->dir2d,
+			eg_pt2d, eg_dir2d, &(is->tol) );
+
+		/* Do this check before topology search */
+		if( code == 0 )  {
+			/* Geometry says lines are colinear.  Egads!  This can't be! */
+			if( is->on_eg )  {
+				rt_bomb("nmg_isect_lien2_face2pNEW() edge_g not shared, geometry says lines are colinear.  Unresolvable inconsistency.\n");
+			}
+			/* on_eg wasn't set, use it and continue on */
+			rt_log("WARNING: setting on_eg and continuing.\n");
+			is->on_eg = (*eg1);
+			goto colinear;
+		}
+
+		/* If on_eg was specified, do a topology search */
+		if( is->on_eg )  {
+			/* See if any vu along eg1 is used by edge from on_eg */
+			for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
+			     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu_list); eu1--
+			)  {
+				NMG_CK_EDGEUSE(*eu1);
+				if( (*eu1)->e_p->eg_p != *eg1 )  continue;
+				hit_vu = nmg_search_v_eg( (*eu1)->vu_p, is->on_eg, hit_vu );
+				hit_vu = nmg_search_v_eg( RT_LIST_PNEXT_CIRC(edgeuse, (*eu1))->vu_p, is->on_eg, hit_vu );
+			}
+			/* hit_vu will be non-NULL if there is 1 topological intersection */
+		}
+
+		/* Now compare results of topology and geometry calculations */
+
+		if( code < 0 )  {
+			/* Geometry says lines are parallel, no intersection */
+			if( hit_vu )  {
+				rt_log("NOTICE: geom/topo mis-match, enlisting topo vu\n");
+				/* XXX There could be many vu's with same v, due to acordian pleats */
+				nmg_enlist_vu(is, hit_vu, 0);
+			}
+			continue;
+		}
+		/* Geometry says 2 lines intersect at a point */
+		VJOIN1( hit3d, is->pt, dist[0], is->dir );
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			VPRINT("\t2 lines intersect at", hit3d);
+		}
+		if( !V3PT_IN_RPP( hit3d, fu1->f_p->min_pt, fu1->f_p->max_pt ) )  {
+			/* Lines intersect outside bounds of this face. */
+			continue;
+		}
+
+		VJOIN1_2D( hit2d, is->pt2d, dist[0], is->dir2d );
+
+		/* Consistency check between geometry, and hit_vu. */
+		if( hit_vu && !rt_pt3_pt3_equal( hit3d, hit_vu->v_p->vg_p->coord, &(is->tol) ) )  {
+			rt_log("ERROR? hit_vu and hit3d don't agree!\n");
+			VPRINT("hit3d ", hit3d);
+			VPRINT("hit_vu", hit_vu->v_p->vg_p->coord);
+			/* XXX Now what? */
+		}
+
+		if( hit_vu )  hit_v = hit_vu->v_p;
+
+		/* Search all eu's on eg1 for vu's to enlist.  May be many. */
+		for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
+		     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu_list); eu1--
+		)  {
+			struct vertexuse	*vu1a, *vu1b;
+			struct vertexuse	*vu1_midpt;
+			fastf_t			ldist;
+			point_t			eu1_pt2d;	/* 2D */
+			point_t			eu1_end2d;	/* 2D */
+
+			NMG_CK_EDGEUSE(*eu1);
+			if( (*eu1)->e_p->eg_p != *eg1 )  continue;
+			vu1a = (*eu1)->vu_p;
+			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eu1) )->vu_p;
+
+
+			/* First, a topology check of both endpoints */
+			if( vu1a->v_p == hit_v )  {
+hit_a:
+				if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+					rt_log("\tlisting intersect point at vu1a=x%x\n", vu1a);
+				}
+				nmg_enlist_vu(is, vu1a, 0);
+			}
+			if( vu1b->v_p == hit_v )  {
+hit_b:
+				if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+					rt_log("\tlisting intersect point at vu1b=x%x\n", vu1b);
+				}
+				nmg_enlist_vu(is, vu1b, 0);
+			}
+			if( vu1a->v_p == hit_v || vu1b->v_p == hit_v )  continue;
+
+			/*  Second, a geometry check on the edgeuse ENDPOINTS
+			 *  -vs- the line segment.  This is 3D, for consistency
+			 *  with comparisons elsewhere.
+			 */
+			if( rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord ) <= is->tol.dist_sq  )  {
+				/* XXX What if hit_v already set, differently? */
+				hit_v = vu1a->v_p;
+				goto hit_a;
+			}
+			if( rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord ) <= is->tol.dist_sq )  {
+				hit_v = vu1b->v_p;
+				goto hit_b;
+			}
+
+			/* Third, a geometry check of the HITPT -vs- the line segment */
+			nmg_get_2d_vertex( eu1_pt2d, vu1a->v_p, is, fu1 );
+			nmg_get_2d_vertex( eu1_end2d, vu1b->v_p, is, fu1 );
+			ldist = 0;
+			code = rt_isect_pt2_lseg2( &ldist, eu1_pt2d, eu1_end2d, hit2d, &(is->tol) );
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+				rt_log("\trt_isect_pt2_lseg2() returned %d, ldist=%g\n", code, ldist);
+			}
+			switch(code)  {
+			case -2:
+				continue;	/* outside lseg AB pts */
+			default:
+			case -1:
+				continue;	/* Point not on lseg */
+			case 1:
+				/* Point is at A (vu1a) by geometry */
+				hit_v = vu1a->v_p;
+				if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\thit_v = x%x (vu1a)\n", hit_v);
+				goto hit_a;
+			case 2:
+				/* Point is at B (vu1b) by geometry */
+				hit_v = vu1b->v_p;
+				if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\thit_v = x%x (vu1b)\n", hit_v);
+				goto hit_b;
+			case 3:
+				/* Point hits the line segment amidships!  Split edge!
+				 * If we don't have a hit vertex yet,
+				 * search for one in whole model.
+				 */
+				if( !hit_v )  {
+					hit_v = nmg_find_pt_in_model(fu1->s_p->r_p->m_p,
+						hit3d, &(is->tol));
+					if( hit_v == vu1a->v_p || hit_v == vu1b->v_p )
+						rt_bomb("About to make 0-length edge!\n");
+				}
+				vu1_midpt = nmg_ebreak(hit_v, *eu1)->vu_p;
+				if( !hit_v )  {
+					hit_v = vu1_midpt->v_p;
+					nmg_vertex_gv( hit_v, hit3d );
+					if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+						rt_log("\tmaking new vertex vu=x%x hit_v=x%x\n",
+							vu1_midpt, hit_v);
+					}
+				} else {
+					if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+						rt_log("\tre-using hit_v=x%x, vu=x%x\n", hit_v, vu1_midpt);
+					}
+					if( hit_v != vu1_midpt->v_p )  rt_bomb("hit_v changed?\n");
+				}
+				nmg_enlist_vu(is, vu1_midpt, 0);
+				/* Neither old nor new edgeuse need further handling */
+			}
+		}
+	}
+
+	/* Don't forget to do self loops with no edges */
+	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+		struct vertexuse	*vu1;
+
+		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_VERTEXUSE_MAGIC )  continue;
+
+		/* Intersect line with lone vertex vu1 */
+		vu1 = RT_LIST_FIRST( vertexuse, &lu1->down_hd );
+		NMG_CK_VERTEXUSE(vu1);
+		nmg_isect_line2_vertex2( is, vu1, fu1 );
+		/* Only potential result is a use of vu1 added to the other face */
+	}
+}
+
+/*
  *			N M G _ I S E C T _ T W O _ F A C E 3 P
  *
  *  Handle the complete mutual intersection of
@@ -3202,8 +3548,11 @@ struct faceuse		*fu1, *fu2;
     	    	nmg_pl_2fu( "Iface%d.pl", 0, fu1, fu2, 0 );
     	}
 
+	/* Topology search */
 	/* See if 2 faces share an edge already.  If so, get edge_geom line */
 	if( (on_eu = nmg_find_edge_between_2fu(fu1, fu2)) )  {
+		is->on_eg = on_eu->e_p->eg_p;
+		NMG_CK_EDGE_G(is->on_eg);
 		/* XXX Should call nmg_is_eu_on_line3() as double-check */
 #if 0
 rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
@@ -3212,6 +3561,11 @@ rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 		VPRINT("isect ray is->dir", is->dir);
 		VPRINT("on_eu   eg->e_dir", on_eu->e_p->eg_p->e_dir);
 #endif
+	} else {
+		/* Geometry search */
+		if( !(is->on_eg = nmg_find_eg_on_line( &fu1->l.magic, is->pt, is->dir, &(is->tol) ) ) )  {
+			is->on_eg = nmg_find_eg_on_line( &fu2->l.magic, is->pt, is->dir, &(is->tol) );
+		}
 	}
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
@@ -3227,11 +3581,15 @@ rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 	/*  Intersect the line with everything in fu1.
 	 *  Note any colinear edgeuses in fu2 for potential sharing.
 	 */
+#if HEART
+	nmg_isect_line2_face2pNEW(is, fu1);
+#else
 	/* XXX Should these guys be made to share edge geometry? */
 	nmg_edgeuse_on_line_tabulate( &on_line, &fu2->l.magic,
 		is->pt, is->dir, &(is->tol) );
 	(void)nmg_isect_line2_face2p(is, fu1, 0, &on_line);
 	(void)nmg_tbl( &on_line, TBL_FREE, 0 );
+#endif
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_fu_touchingloops(fu1);
@@ -3262,10 +3620,14 @@ rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 	is->s1 = fu2->s_p;
 	is->fu2 = fu1;
 	is->fu1 = fu2;
+#if HEART
+	nmg_isect_line2_face2pNEW(is, fu2);
+#else
 	nmg_edgeuse_on_line_tabulate( &on_line, &fu1->l.magic,
 		is->pt, is->dir, &(is->tol) );
 	(void)nmg_isect_line2_face2p(is, fu2, 0, &on_line);
 	(void)nmg_tbl( &on_line, TBL_FREE, 0 );
+#endif
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_fu_touchingloops(fu1);
