@@ -240,7 +240,7 @@ set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{Experm
 set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
-set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
+#set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set mged_help_data(vrot)	{{xdeg ydeg zdeg}	{rotate viewpoint}}
 set mged_help_data(wcodes)	{{filename object(s)}	{write region ident codes to filename}}
 set mged_help_data(whatid)	{{region_name}	{display ident number for region}}

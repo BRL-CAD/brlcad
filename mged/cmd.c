@@ -432,7 +432,9 @@ static struct cmdtab cmdtab[] = {
 	{"view2model_lu", f_view2model_lu},
 	{"vnirt", f_vnirt},
 	{"vquery_ray", f_vnirt},
+#if 0
 	{"vrmgr", f_vrmgr},
+#endif
 	{"vrot", cmd_vrot},
 #if 0
 	{"vrot_center", f_vrot_center},
