@@ -60,9 +60,18 @@ char	*menustring;
  *  MEX however steals:
  *    0 - 15	on the 3030 (first 8 are "known" colors)
  *    top 256	on the 4D
+ *  Note: as of Release 3.1, 4Sight on the 4D's uses the bottom 32 colors.
+ *    To quote makemap, the lowest eight colors are the eight standard
+ *    Graphics Library colors (black, red, green, blue, magenta, cyan,
+ *    and white).  The next 23 (8 to 30) are a black to white gray ramp.
+ *    The remaining 225 colors (31 to 255) are mapped as a 5*9*5 color cube.
  */
 /* Map RGB onto 10x10x10 color cube, giving index in range 0..999 */
+#ifdef mips
+#define MAP_RESERVED	32		/* # slots reserved by MAX */
+#else
 #define MAP_RESERVED	16		/* # slots reserved by MEX */
+#endif
 #define COLOR_APPROX(r,g,b)	\
 	((r/26)+ (g/26)*10 + (b/26)*100 + MAP_RESERVED)
 
@@ -493,10 +502,9 @@ init_display()
 		 *  On the 4D, it still returns 12.
 		 */
 		map_size = 1<<getplanes(); /* 10 or 12, depending on ismex() */
-#ifdef mips
-		map_size = 1<<10;	/*XXX*/
-#endif /* mips */
 		map_size -= MAP_RESERVED;	/* MEX's share */
+		if( map_size > 1000 )
+			map_size = 1000;	/* all we are asking for */
 
 		/* The first 8 entries of the colormap are "known" colors */
 		mapcolor( 0, 000, 000, 000 );	/* BLACK */
