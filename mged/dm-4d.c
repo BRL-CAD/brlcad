@@ -383,16 +383,20 @@ Ir_open()
 	int		win_o_y=12;
 
 	/*
-	 *  Take inventory of the hardware
+	 *  Take inventory of the hardware.
+	 *  See "types for class graphics" in /usr/include/sys/invent.h
 	 */
 	while( (inv = getinvent()) != (inventory_t *)0 )  {
 		if( inv->class != INV_GRAPHICS )  continue;
 		switch( inv->type )  {
 		default:
+#if 0
 			printf("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",
 			    inv->type);
+#endif
 			/* Since we recognize all the old devices, be
 			 * optimistic and assume that new devices are plush.
+			 * Or at least that GL can simulate everything adequately.
 			 */
 			ir_is_gt = 1;
 			ir_has_zbuf = 1;
@@ -438,28 +442,31 @@ Ir_open()
 #endif
 
 #if defined(INV_GR2)
-		case INV_GR2:		/* Elan Graphics */
-			if(inv->state & INV_GR2_ELAN)
-			{
-				ir_has_rgb = 1;
-				ir_has_doublebuffer = 1;
-				ir_has_zbuf = 1;
-				ir_is_gt = 1;
-			}
-			break;
-#endif
-		}
-#if defined(NEWPORT)
-	case NEWPORT:		/* Elan Graphics */
-		if(inv->state & INV_NEWPORT)
-		{
+		case INV_GR2:		/* Elan EXPRESS Graphics */
+			/* if(inv->state & INV_GR2_ELAN) */
+			/* Just let GL simulate it */
 			ir_has_rgb = 1;
 			ir_has_doublebuffer = 1;
 			ir_has_zbuf = 1;
 			ir_is_gt = 1;
-		}
-		break;
+			/* if(inv->state & INV_GR2_EXTREME) */
+			break;
 #endif
+#if defined(INV_NEWPORT)
+		case INV_NEWPORT:
+			/* if(inv->state & INV_NEWPORT_XL) */
+			/* Just let GL simulate it */
+			ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			ir_has_zbuf = 1;
+			ir_is_gt = 1;
+#			if 0
+				if(inv->state & INV_NEWPORT_24)
+					ir_has_rgb = 1;
+#			endif
+			break;
+#endif
+		}
 	}
 	endinvent();		/* frees internal inventory memory */
 #if 0
