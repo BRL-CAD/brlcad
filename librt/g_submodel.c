@@ -1,3 +1,5 @@
+#define HONEST_WAY	1
+
 /*
  *			G _ S U B M O D E L . C
  *
@@ -62,7 +64,9 @@ struct submodel_specific {
 #define RT_SUBMODEL_SPECIFIC_MAGIC	0x73756253	/* subS */
 #define RT_CK_SUBMODEL_SPECIFIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_SPECIFIC_MAGIC,"submodel_specific")
 
+#if !HONEST_WAY
 CONST extern struct rt_functab rt_submodelhook_functab;
+#endif
 
 /*
  *  			R T _ S U B M O D E L _ P R E P
@@ -94,16 +98,12 @@ struct rt_i		*rtip;
 	vect_t	radvec;
 	vect_t	diam;
 	char	*argv[2];
+	struct rt_i	**rtipp;
 
 	RT_CK_DB_INTERNAL(ip);
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
 
-/* XXX How do we match a previous exact use of this file and treetop list,
- * XXX so as to get any sort of efficiency out of instancing it?
- * XXX That would be silly, because then they would overlap!  Don't bother.
- * (This might happen if a submodel is both subtracted and unioned).
- */
 	bu_semaphore_acquire(RT_SEM_MODEL);
 	/* This code must be prepared to run in parallel
 	 * without tripping over itself.
@@ -124,9 +124,35 @@ struct rt_i		*rtip;
 			}
 		}
 	}
-	/* XXX Need to search dbi_client list here */
 
-	sub_rtip = rt_new_rti( sub_dbip );
+	/*
+	 *  Search for a previous exact use of this file and treetop,
+	 *  so as to obtain storage efficiency from re-using it.
+	 *  Search dbi_client list for a re-use of an rt_i.
+	 *  rtip's are registered there by db_clone_dbi().
+	 */
+	for( BU_PTBL_FOR( rtipp, (struct rt_i **), &sub_dbip->dbi_clients ) )  {
+		register char	*ttp;
+		RT_CK_RTI(*rtipp);
+		ttp = (*rtipp)->rti_treetop;
+		if( ttp && strcmp( ttp, sip->treetop ) == 0 )  {
+			/* Re-cycle an already prepped rti */
+			sub_rtip = *rtipp;
+			sub_rtip->rti_uses++;
+
+			bu_semaphore_release(RT_SEM_MODEL);
+
+			if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
+				bu_log("rt_submodel_prep(%s): Re-used already prepped database %s, rtip=x%lx\n",
+					stp->st_dp->d_namep,
+					sub_dbip->dbi_filename,
+					(long)sub_rtip );
+			}
+			goto done;
+		}
+	}
+
+	sub_rtip = rt_new_rti( sub_dbip );	/* does db_clone_dbi() */
 	RT_CK_RTI(sub_rtip);
 
 	bu_semaphore_release(RT_SEM_MODEL);
@@ -142,6 +168,7 @@ struct rt_i		*rtip;
 	sub_rtip->rti_hasty_prep = rtip->rti_hasty_prep;
 	sub_rtip->rti_tol = rtip->rti_tol;	/* struct copy */
 	sub_rtip->rti_ttol = rtip->rti_ttol;	/* struct copy */
+	sub_rtip->rti_treetop = bu_strdup(sip->treetop);
 
 	if( sip->meth )  {
 		sub_rtip->rti_space_partition = sip->meth;
@@ -166,6 +193,7 @@ struct rt_i		*rtip;
 	/* Stay on 1 CPU because we're already multi-threaded at this point. */
 	rt_prep_parallel(sub_rtip, 1);
 
+#if !HONEST_WAY
 	/*
 	 *  Record the "up" pointer from the sub model.
 	 */
@@ -197,8 +225,9 @@ struct rt_i		*rtip;
 	RT_VISIT_ALL_SOLTABS_START( sub_stp, sub_rtip )  {
 		sub_stp->st_meth = &rt_submodelhook_functab;
 	} RT_VISIT_ALL_SOLTABS_END
+#endif
 
-	
+done:	
 	BU_GETSTRUCT( submodel, submodel_specific );
 	submodel->magic = RT_SUBMODEL_SPECIFIC_MAGIC;
 	stp->st_specific = (genptr_t)submodel;
@@ -312,7 +341,7 @@ struct seg		*segHeadp;
 	 * Then the submodel can be stacked arbitrarily deep.
 	 * Alternatively, submodels can't include submodels.
 	 */
-#if 1
+#if HONEST_WAY
 	for( BU_LIST_FOR( segp, seg, &(segHeadp->l) ) )  {
 		struct seg	*up_segp;
 		RT_CHECK_SEG(segp);
@@ -772,6 +801,8 @@ CONST struct db_i		*dbip;
 	struct bu_vls		str;
 
 	BU_CK_EXTERNAL( ep );
+	RT_CK_DBI(dbip);
+
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_STRSOL )  {
@@ -837,9 +868,12 @@ CONST struct db_i		*dbip;
 	if( ip->idb_type != ID_SUBMODEL )  return(-1);
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
+#if 0
 bu_log("export: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
+#endif
 
 	/* Ignores scale factor */
+	BU_ASSERT( local2mm == 1.0 );
 
 	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
@@ -853,7 +887,9 @@ bu_log("export: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, si
 	strncpy( rec->ss.ss_keyword, "submodel", NAMESIZE-1 );
 	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
 	bu_vls_free( &str );
+#if 0
 bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
+#endif
 
 	return(0);
 }
@@ -907,6 +943,7 @@ struct rt_db_internal	*ip;
 }
 
 
+#if !HONEST_WAY
 
 /* ============================================================ */
 /*								*/
@@ -1302,3 +1339,5 @@ CONST struct rt_functab rt_submodelhook_functab = {
 		NULL, NULL, NULL,
 		NULL,
 };
+
+#endif /* !HONEST_WAY */
