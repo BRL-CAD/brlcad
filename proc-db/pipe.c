@@ -158,7 +158,7 @@ void
 Names()
 {
 	struct points *ptr;
-	char *inform,*outform,*cutform;
+	char *inform=NULL,*outform=NULL,*cutform=NULL;
 	int nummer=0;
 
 

@@ -33,9 +33,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 mat_t	identity;
 double degtorad = 0.0174532925199433;
 
-static vect_t	up = {0, 0, 1};
-static vect_t	down = {0, 0, -1};
-
 struct val {
 	double	v_z[3];
 	double	v_x;
@@ -163,8 +160,6 @@ struct val *a, *b, *c, *d;
 	int min, max;
 	register int i;
 	point_t	centroid, work;
-	fastf_t	verts[5][3];
-	fastf_t	norms[5][3];
 	int	ndiff;
 	int	lvl;
 	int	j;
