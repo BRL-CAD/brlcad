@@ -5,7 +5,7 @@
  *  displays.
  *
  *  Authors -
- *	Christopher Jackson
+ *	Christopher J. Jackson
  *	Timothy G. Smith
  *
  *  Source -
