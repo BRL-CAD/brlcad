@@ -55,6 +55,90 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
+void
+pipe_seg_scale_od( ps, scale )
+struct wdb_pipeseg *ps;
+fastf_t scale;
+{
+	struct wdb_pipeseg *prev;
+	struct wdb_pipeseg *next;
+	int seg_count=0;
+	int id_eq_od=0;
+
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	/* make sure we can make this change */
+	if( scale < 1.0 )
+	{
+		/* need to check that the new OD is not less than ID
+		 * of any affected segment.
+		 */
+		prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
+		while( prev->l.magic != RT_LIST_HEAD_MAGIC &&
+			 prev->ps_type == WDB_PIPESEG_TYPE_BEND )
+		{
+			if( prev->ps_id > scale*prev->ps_od )
+			{
+				rt_log( "Cannot make OD smaller than ID\n" );
+				return;
+			}
+			seg_count++;
+			if( prev->ps_id == scale*prev->ps_od )
+				id_eq_od++;
+			prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+		}
+		if( ps->ps_type == WDB_PIPESEG_TYPE_BEND )
+		{
+			next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+			while( next->ps_type == WDB_PIPESEG_TYPE_BEND )
+			{
+				if( next->ps_id > scale*prev->ps_od )
+				{
+					rt_log( "Cannot make OD smaller than ID\n" );
+					return;
+				}
+				seg_count++;
+				if( next->ps_id == scale*next->ps_od )
+					id_eq_od++;
+				next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
+			}
+			if( next->ps_id > scale*prev->ps_od )
+			{
+				rt_log( "Cannot make OD smaller than ID\n" );
+				return;
+			}
+			seg_count++;
+			if( next->ps_id == scale*next->ps_od )
+				id_eq_od++;
+		}
+		if( seg_count && id_eq_od == seg_count )
+		{
+			rt_log( "Cannot make zero wall thickness pipe\n" );
+			return;
+		}
+	}
+
+	ps->ps_od *= scale;
+	prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
+	while( prev->l.magic != RT_LIST_HEAD_MAGIC &&
+		 prev->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		prev->ps_od *= scale;
+		prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+	}
+
+	if( ps->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+		while( next->ps_type == WDB_PIPESEG_TYPE_BEND )
+		{
+			next->ps_od *= scale;
+			next = RT_LIST_PNEXT_CIRC( wdb_pipeseg, &next->l );
+		}
+		next->ps_od *= scale;
+	}
+}
+
 static void
 break_bend( ps, n1, n2, angle )
 struct wdb_pipeseg *ps;
