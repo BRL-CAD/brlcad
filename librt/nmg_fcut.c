@@ -1290,13 +1290,14 @@ int				ass;
  *		at this vertexuse.
  */
 static int
-nmg_special_wedge_processing( vs, start, end, lo_ang, hi_ang, wclass, tol )
+nmg_special_wedge_processing( vs, start, end, lo_ang, hi_ang, wclass, exclude, tol )
 struct nmg_vu_stuff	*vs;
 int	start;		/* vu index of coincident range */
 int	end;
 double	lo_ang;
 double	hi_ang;
 int	wclass;
+int	*exclude;
 CONST struct rt_tol	*tol;
 {
 	register int	i;
@@ -1315,15 +1316,18 @@ CONST struct rt_tol	*tol;
 	}
 
 	if( end-start >= 128 )  rt_bomb("nmg_special_wedge_processing: array overflow\n");
-	bzero( (char *)not_these, sizeof(not_these) );
+	if( !exclude )  {
+		bzero( (char *)not_these, sizeof(not_these) );
+		exclude = not_these;
+	}
 
 again:
 	/* May be many "outer" wedges to iterate over this side of line */
 	outer_wedge = nmg_find_vu_in_wedge( vs, start, end,
-		lo_ang, hi_ang, wclass, not_these );
+		lo_ang, hi_ang, wclass, exclude );
 	if( outer_wedge <= -1 )  return 0;	/* No wedges to process */
 
-	not_these[outer_wedge] = 1;	/* Don't return this wedge again */
+	exclude[outer_wedge] = 1;	/* Don't return this wedge again */
 
 	/* There is at least one wedge on this side of the line */
 	outer_lu = nmg_lu_of_vu( vs[outer_wedge].vu );
@@ -1331,12 +1335,12 @@ again:
 
 	inner_wedge = nmg_find_vu_in_wedge( vs, start, end,
 		vs[outer_wedge].lo_ang, vs[outer_wedge].hi_ang,
-		wclass, not_these );
+		wclass, exclude );
 	if( inner_wedge <= -1 )  {
 		/*
 		 *  See if there is another outer wedge that starts where
 		 *  outer_wedge left off.
-		 *  not_these[outer_wedge] is already set.
+		 *  exclude[outer_wedge] is already set.
 		 */
 		goto again;
 	}
@@ -1356,7 +1360,7 @@ again:
 		nmg_loop_g( new_lu->l_p, tol );
 		nmg_lu_reorient(inner_lu, tol);
 		nmg_lu_reorient(new_lu, tol);
-		return 1;
+		return 1;		/* cutjoin was done */
 	}
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
@@ -1371,13 +1375,12 @@ again:
 			rt_log("joining loops\n");
 		vs[inner_wedge].vu = nmg_join_2loops( vs[outer_wedge].vu,
 			vs[inner_wedge].vu );
-		return 1;
+		return 1;		/* cutjoin was done */
 	}
 
 	/* Recurse on inner wedge */
-/* XXX Need to not process wedges already done (like, outer_wedge) */
 	if( nmg_special_wedge_processing( vs, start, end,
-	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass, tol ) )
+	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass, exclude, tol ) )
 		return 1;	/* An inner wedge was cut */
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
@@ -1525,10 +1528,10 @@ got_loop:
 	/* XXX */
 
 	/* Here is where the special wedge-breaking code goes */
-	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, rs->tol ) )
+	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, 0, rs->tol ) )
 		goto top;
 	/* XXX reclass on/on edges from WEDGE_RIGHT to WEDGE_LEFT here? */
-	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, rs->tol ) )
+	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, 0, rs->tol ) )
 		goto top;
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
