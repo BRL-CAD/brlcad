@@ -40,12 +40,23 @@ struct light_specific *LightHeadp = LIGHT_NULL;		/* Linked list of lights */
 
 extern double AmbientIntensity;
 
+HIDDEN int light_setup(), light_render(), light_print();
+int light_free();
+
+struct mfuncs light_mfuncs[] = {
+	"light",	0,		0,
+	light_setup,	light_render,	light_print,	light_free,
+
+	(char *)0,	0,		0,
+	0,		0,		0,		0
+};
 
 /*
  *			L I G H T _ R E N D E R
  *
  *  If we have a direct view of the light, return it's color.
  */
+HIDDEN int
 light_render( ap, pp )
 register struct application *ap;
 register struct partition *pp;
@@ -61,14 +72,13 @@ register struct partition *pp;
  *
  *  Called once for each light-emitting region.
  */
-int
+HIDDEN int
 light_setup( rp )
 register struct region *rp;
 {
 	register struct light_specific *lp;
 
 	GETSTRUCT( lp, light_specific );
-	rp->reg_ufunc = light_render;
 	rp->reg_udata = (char *)lp;
 
 	lp->lt_intensity = 1000.0;	/* Lumens */
@@ -106,14 +116,55 @@ register struct region *rp;
 	VMOVE( lp->lt_vec, lp->lt_pos );
 	VUNITIZE( lp->lt_vec );
 
-	if(rdebug&RDEBUG_MATERIAL)
-		mlib_print(rp->reg_name, light_parse, (mp_off_ty)lp);
-
 	/* Add to linked list of lights */
 	lp->lt_forw = LightHeadp;
 	LightHeadp = lp;
 
 	return(1);
+}
+
+/*
+ *			L I G H T _ P R I N T
+ */
+HIDDEN int
+light_print( rp )
+register struct region *rp;
+{
+	mlib_print(rp->reg_name, light_parse, (mp_off_ty)rp->reg_udata);
+}
+
+/*
+ *			L I G H T _ F R E E
+ */
+int
+light_free( cp )
+char *cp;
+{
+
+	if( LightHeadp == LIGHT_NULL )  {
+		rt_log("light_free(x%x), list is null\n", cp);
+		return;
+	}
+	if( LightHeadp == (struct light_specific *)cp )  {
+		LightHeadp = LightHeadp->lt_forw;
+	} else {
+		register struct light_specific *lp;	/* current light */
+		register struct light_specific **llp;	/* last light lt_forw */
+
+		llp = &LightHeadp;
+		lp = LightHeadp->lt_forw;
+		while( lp != LIGHT_NULL )  {
+			if( lp == (struct light_specific *)cp )  {
+				*llp = lp->lt_forw;
+				goto found;
+			}
+			llp = &(lp->lt_forw);
+			lp = lp->lt_forw;
+		}
+		rt_log("light_free:  unable to find light in list\n");
+	}
+found:
+	rt_free( cp, "light_specific" );
 }
 
 /*

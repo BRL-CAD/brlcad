@@ -50,17 +50,18 @@ int	N;
 	int	i, nx, total, index;
 	register sph_map_t *mapp;
 
-	mapp = (sph_map_t *) calloc( 1, (unsigned)sizeof(sph_map_t) );
-	if( mapp == NULL )
+	mapp = (sph_map_t *)rt_malloc( sizeof(sph_map_t), "sph_map_t");
+	if( mapp == SPH_NULL )
 		return( SPH_NULL );
+	bzero( (char *)mapp, sizeof(sph_map_t) );
 
 	mapp->ny = N/2;
-	mapp->nx = (int *) malloc( (unsigned)(N/2 * sizeof(*(mapp->nx))) );
+	mapp->nx = (int *) rt_malloc( (unsigned)(N/2 * sizeof(*(mapp->nx))), "sph nx" );
 	if( mapp->nx == NULL ) {
 		sph_free( mapp );
 		return( SPH_NULL );
 	}
-	mapp->xbin = (unsigned char **) malloc( (unsigned)(N/2 * sizeof(char *)) );
+	mapp->xbin = (unsigned char **) rt_malloc( (unsigned)(N/2 * sizeof(char *)), "sph xbin" );
 	if( mapp->xbin == NULL ) {
 		sph_free( mapp );
 		return( SPH_NULL );
@@ -104,15 +105,15 @@ sph_map_t *mp;
 		return;
 
 	if( mp->_data != NULL )
-		(void) free( (char *)mp->_data );
+		(void) rt_free( (char *)mp->_data, "sph _data" );
 
 	if( mp->nx != NULL )
-		(void) free( (char *)mp->nx );
+		(void) rt_free( (char *)mp->nx, "sph nx" );
 
 	if( mp->xbin != NULL )
-		(void) free( (char *)mp->xbin );
+		(void) rt_free( (char *)mp->xbin, "sph xbin" );
 
-	(void) free( (char *)mp );
+	(void) rt_free( (char *)mp, "sph_map_t" );
 }
 
 /*
@@ -369,6 +370,15 @@ struct matparse sph_parse[] = {
 	(char *)0,	(mp_off_ty)0,			(char *)0
 };
 
+HIDDEN int sph_setup(), sph_render(), sph_print(), sph_mfree();
+
+struct mfuncs sph_mfuncs[] = {
+	"sph",		0,		0,
+	sph_setup,	sph_render,	sph_print,	sph_mfree,
+
+	(char *)0,	0,		0,
+	0,		0,		0,		0
+};
 
 /*
  *  			S P H _ R E N D E R
@@ -376,7 +386,7 @@ struct matparse sph_parse[] = {
  *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
  *  return a pointer to the relevant pixel.
  */
-HIDDEN
+HIDDEN int
 sph_render( ap, pp )
 struct application *ap;
 struct partition *pp;
@@ -404,17 +414,16 @@ struct partition *pp;
  *			S P H _ S E T U P
  *
  *  Returns -
- *	0	failed
- *	!0	success
+ *	<0	failed
+ *	>0	success
  */
-int
+HIDDEN int
 sph_setup( rp )
 register struct region *rp;
 {
 	register struct sph_specific *spp;
 
 	GETSTRUCT( spp, sph_specific );
-	rp->reg_ufunc = sph_render;
 	rp->reg_udata = (char *)spp;
 
 	spp->sp_file[0] = '\0';
@@ -423,8 +432,6 @@ register struct region *rp;
 	if( spp->sp_n < 0 )  spp->sp_n = 512;
 	if( spp->sp_file[0] == '\0' )
 		goto fail;
-	if(rdebug&RDEBUG_MATERIAL)
-		mlib_print("sph_setup", sph_parse, (mp_off_ty)spp);
 	if( (spp->sp_map = sph_init( spp->sp_n )) == SPH_NULL )
 		goto fail;
 	if( sph_load( spp->sp_map, spp->sp_file ) < 0 )
@@ -432,5 +439,23 @@ register struct region *rp;
 	return(1);
 fail:
 	rt_free( (char *)spp, "sph_specific" );
-	return(0);
+	return(-1);
+}
+
+/*
+ *			S P H _ P R I N T
+ */
+HIDDEN int
+sph_print( rp )
+register struct region *rp;
+{
+	mlib_print("sph_setup", sph_parse, (mp_off_ty)rp->reg_udata);
+	/* Should be more here */
+}
+
+HIDDEN int
+sph_mfree( cp )
+char *cp;
+{
+	sph_free( (sph_map_t *)cp );
 }

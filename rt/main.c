@@ -102,9 +102,10 @@ static char	**objtab;		/* array of treetop strings */
 #ifdef PARALLEL
 static int	lock_tab[12];		/* Lock usage counters */
 static char	*all_title[12] = {
-	"malloc",
+	"syscall",
 	"worker",
 	"stats",
+	"results",
 	"???"
 };
 
@@ -263,15 +264,10 @@ char **argv;
 		exit(1);
 	}
 
-	RES_INIT( &rt_g.res_malloc );
+	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
-#ifdef PARALLEL
-	scanbuf = rt_malloc( npts*npts*3 + sizeof(long), "scanbuf" );
-#endif
-
-	if(rdebug&RDEBUG_RTMEM)
-		rt_g.debug |= DEBUG_MEM;
+	RES_INIT( &rt_g.res_results );
 
 	title_file = argv[optind];
 	title_obj = argv[optind+1];
@@ -303,13 +299,9 @@ char **argv;
 		/* KLUDGE ALERT:  The library want zoom before window! */
 		fb_zoom( fbp, fb_getwidth(fbp)/npts, fb_getheight(fbp)/npts );
 		fb_window( fbp, npts/2, npts/2 );
-	}
-
-	/* Get some dynamic memory to keep from making malloc sbrk() early */
-	for( x=0; x<npsw; x++ )  {
-		rt_get_pt(&resource[x]);
-		rt_get_seg(&resource[x]);
-		rt_get_bitv(&resource[x]);
+	} else if( outputfile == (char *)0 )  {
+		/* Perhaps the isatty check here? */
+		outfp = stdout;
 	}
 	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
 	beginptr = sbrk(0);
@@ -609,7 +601,16 @@ cm_clean( argc, argv )
 int	argc;
 char	**argv;
 {
+	register struct region *regp;
+
+	/* The linkage here needs to be much better for things
+	 * like rtrad, etc. XXXX
+	 */
+	for( regp=ap.a_rt_i->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )
+		mlib_free( regp );
 	rt_clean( ap.a_rt_i );
+	if(rdebug&RDEBUG_RTMEM)
+		rt_prmem( "After rt_clean" );
 	return(0);
 }
 
@@ -658,8 +659,12 @@ int framenumber;
 
 		/* Initialize the material library for all regions */
 		for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-			if( mlib_setup( regp ) == 0 )  {
+			if( mlib_setup( regp ) < 0 )  {
 				rt_log("mlib_setup failure on %s\n", regp->reg_name);
+			} else {
+				if(rdebug&RDEBUG_MATERIAL)
+					regp->reg_mfuncs->mf_print( regp );
+				/* Perhaps this should be a function? */
 			}
 		}
 		(void)rt_read_timer( outbuf, sizeof(outbuf) );
@@ -675,6 +680,9 @@ int framenumber;
 		rtip->mdl_min[X], rtip->mdl_max[X],
 		rtip->mdl_min[Y], rtip->mdl_max[Y],
 		rtip->mdl_min[Z], rtip->mdl_max[Z] );
+
+	if(rdebug&RDEBUG_RTMEM)
+		rt_g.debug |= DEBUG_MEM;	/* Just for the tracing */
 
 	if( outputfile != (char *)0 )  {
 #ifdef CRAY_COS
@@ -740,6 +748,9 @@ int framenumber;
 	 */
 	view_end( &ap );
 
+	if(rdebug&RDEBUG_RTMEM)
+		rt_g.debug &= ~DEBUG_MEM;	/* Stop until next frame */
+
 	/*
 	 *  All done.  Display run statistics.
 	 */
@@ -769,12 +780,6 @@ int framenumber;
 
 		strncpy( dn, outfp->ldn, sizeof(outfp->ldn) );	/* COS name */
 #endif CRAY_COS
-#ifdef PARALLEL
-		if( fwrite( scanbuf, sizeof(char), npts*npts*3, outfp ) != npts*npts*3 )  {
-			fprintf(stderr,"%s: fwrite failure\n", framename);
-			return(-1);		/* BAD */
-		}
-#endif PARALLEL
 		(void)fclose(outfp);
 		outfp = NULL;
 #ifdef CRAY_COS
@@ -862,7 +867,7 @@ double azim, elev;
 RES_INIT(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_malloc);
+	register int i = p - (&rt_g.res_syscall);
 	if(rdebug&RDEBUG_PARALLEL) 
 		fprintf(stderr,"RES_INIT 0%o, i=%d, rt_g=0%o\n", p, i, &rt_g);
 	LOCKASGN(p);
@@ -872,7 +877,7 @@ register int *p;
 RES_ACQUIRE(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_malloc);
+	register int i = p - (&rt_g.res_syscall);
 	if( i < 0 || i > 12 )  {
 		fprintf("RES_ACQUIRE(0%o)? %d?\n", p, i);
 		abort();
@@ -885,7 +890,7 @@ register int *p;
 RES_RELEASE(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_malloc);
+	register int i = p - (&rt_g.res_syscall);
 	if(rdebug&RDEBUG_PARALLEL) fputc( 'a'+i, stderr );
 	LOCKOFF(p);
 	if(rdebug&RDEBUG_PARALLEL) fputc( '\n', stderr);
@@ -912,7 +917,7 @@ RES_ACQUIRE(p)
 register int *p;		/* known to be a5 */
 {
 	register int i;
-	i = p - (&rt_g.res_malloc);
+	i = p - (&rt_g.res_syscall);
 
 #ifdef PARALLEL
 	asm("loop:");

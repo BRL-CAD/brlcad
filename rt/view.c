@@ -351,11 +351,20 @@ struct partition *PartHeadp;
 	 *  material-handling functions for efficiency reasons,
 	 *  because not all materials need the normals.
 	 */
-	if( !(pp->pt_regionp->reg_ufunc) )  {
-		rt_log("colorview:  no reg_ufunc\n");
-		return(0);
+	{
+		register struct mfuncs *mfp = pp->pt_regionp->reg_mfuncs;
+
+		if( mfp == MF_NULL )  {
+			rt_log("colorview:  reg_mfuncs NULL\n");
+			return(0);
+		}
+		if( mfp->mf_magic != MF_MAGIC )  {
+			rt_log("colorview:  reg_mfuncs bad magic, %x != %x\n",
+				mfp->mf_magic, MF_MAGIC );
+			return(0);
+		}
+		return( mfp->mf_render( ap, pp ) );
 	}
-	return( pp->pt_regionp->reg_ufunc( ap, pp ) );
 }
 
 /*
@@ -371,9 +380,9 @@ register struct application *ap;
 	if( fbp ==FBIO_NULL )
 		return;
 	/* We make no guarantee that the last few pixels are done */
-	RES_ACQUIRE( &rt_g.res_malloc );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*npts*3, npts );
-	RES_RELEASE( &rt_g.res_malloc );
+	RES_RELEASE( &rt_g.res_syscall );
 #endif PARALLEL
 }
 
@@ -383,15 +392,45 @@ register struct application *ap;
 view_end(ap)
 struct application *ap;
 {
+	register struct light_specific *lp, *nlp;
+
+#ifdef PARALLEL
+	if( fwrite( scanbuf, sizeof(char), npts*npts*3, outfp ) != npts*npts*3 )  {
+		fprintf(stderr,"view_end:  fwrite failure\n");
+		return(-1);		/* BAD */
+	}
+#endif PARALLEL
+
+	/* Eliminate implicit lights */
+	lp=LightHeadp;
+	while( lp != LIGHT_NULL )  {
+		if( lp->lt_explicit )  {
+			/* will be cleaned by mlib_free() */
+			lp = lp->lt_forw;
+			continue;
+		}
+		nlp = lp->lt_forw;
+		light_free( (char *)lp );
+		lp = nlp;
+	}
 }
 
 /*
  *  			V I E W _ I N I T
+ *
+ *  Called once, early on in RT setup.
  */
 view_init( ap, file, obj, npts, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
+
+#ifdef PARALLEL
+	scanbuf = rt_malloc( npts*npts*3 + sizeof(long), "scanbuf" );
+#endif
+
+	mlib_init();			/* initialize material library */
+
 	if( minus_o )  {
 		/* Output is destined for a pixel file */
 		return(0);		/* don't open framebuffer */

@@ -27,6 +27,29 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+HIDDEN int txt_setup(), txt_render(), txt_print(), txt_free();
+HIDDEN int ckr_setup(), ckr_render(), ckr_print(), ckr_free();
+HIDDEN int tstm_render();
+HIDDEN int star_render();
+extern int mlib_zero();
+
+struct mfuncs txt_mfuncs[] = {
+	"texture",	0,		0,
+	txt_setup,	txt_render,	txt_print,	txt_free,
+
+	"checker",	0,		0,
+	ckr_setup,	ckr_render,	ckr_print,	ckr_free,
+
+	"testmap",	0,		0,
+	mlib_zero,	tstm_render,	mlib_zero,	mlib_zero,
+
+	"fakestar",	0,		0,
+	mlib_zero,	star_render,	mlib_zero,	mlib_zero,
+
+	(char *)0,	0,		0,
+	0,		0,		0,		0
+};
+
 struct txt_specific {
 	unsigned char tx_transp[8];	/* RGB for transparency */
 	char	tx_file[128];	/* Filename */
@@ -216,14 +239,13 @@ struct partition *pp;
 /*
  *			T X T _ S E T U P
  */
-int
+HIDDEN int
 txt_setup( rp )
 register struct region *rp;
 {
 	register struct txt_specific *tp;
 
 	GETSTRUCT( tp, txt_specific );
-	rp->reg_ufunc = txt_render;
 	rp->reg_udata = (char *)tp;
 
 	tp->tx_file[0] = '\0';
@@ -233,9 +255,30 @@ register struct region *rp;
 	if( tp->tx_l < 0 )  tp->tx_l = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 	tp->tx_pixels = (char *)0;
-	if(rdebug&RDEBUG_MATERIAL)
-		mlib_print(rp->reg_name, txt_parse, (mp_off_ty)tp);
 	return( txt_read(tp) );
+}
+
+/*
+ *			T X T _ P R I N T
+ */
+HIDDEN int
+txt_print( rp )
+register struct region *rp;
+{
+	mlib_print(rp->reg_name, txt_parse, (mp_off_ty)rp->reg_udata);
+}
+
+/*
+ *			T X T _ F R E E
+ */
+HIDDEN int
+txt_free( cp )
+char *cp;
+{
+	if( ((struct txt_specific *)cp)->tx_pixels )
+		rt_free( ((struct txt_specific *)cp)->tx_pixels,
+			((struct txt_specific *)cp)->tx_file );
+	rt_free( cp, "txt_specific" );
 }
 
 struct ckr_specific  {
@@ -258,7 +301,7 @@ struct matparse ckr_parse[] = {
 /*
  *			C K R _ R E N D E R
  */
-HIDDEN
+HIDDEN int
 ckr_render( ap, pp )
 register struct application *ap;
 register struct partition *pp;
@@ -287,30 +330,46 @@ register struct partition *pp;
 /*
  *			C K R _ S E T U P
  */
-int
+HIDDEN int
 ckr_setup( rp )
 register struct region *rp;
 {
 	register struct ckr_specific *ckp;
 
 	GETSTRUCT( ckp, ckr_specific );
-	bzero( (char *)ckp, sizeof(struct ckr_specific) );
-	rp->reg_ufunc = ckr_render;
 	rp->reg_udata = (char *)ckp;
 	mlib_parse( rp->reg_mater.ma_matparm, ckr_parse, (mp_off_ty)ckp );
-	if(rdebug&RDEBUG_MATERIAL)
-		mlib_print(rp->reg_name, ckr_parse, (mp_off_ty)ckp);
 	return(1);
 }
 
 /*
- *			T E S T M A P _ R E N D E R
+ *			C K R _ P R I N T
+ */
+HIDDEN int
+ckr_print( rp )
+register struct region *rp;
+{
+	mlib_print(rp->reg_name, ckr_parse, (mp_off_ty)rp->reg_udata);
+}
+
+/*
+ *			C K R _ F R E E
+ */
+HIDDEN int
+ckr_free( cp )
+char *cp;
+{
+	rt_free( cp, "ckr_specific" );
+}
+
+/*
+ *			T S T M _ R E N D E R
  *
  *  Render a map which varries red with U and blue with V values.
  *  Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN
-testmap_render( ap, pp )
+tstm_render( ap, pp )
 register struct application *ap;
 register struct partition *pp;
 {
@@ -323,18 +382,6 @@ register struct partition *pp;
 	VSET( ap->a_color, uv.uv_u, 0, uv.uv_v );
 	return(1);
 }
-
-/*
- *			T M A P _ S E T U P
- */
-tmap_setup( rp )
-register struct region *rp;
-{
-	rp->reg_ufunc = testmap_render;
-	rp->reg_udata = (char *)0;
-	return(1);
-}
-
 
 static vect_t star_colors[] = {
 	{ 0.825769, 0.415579, 0.125303 },	/* 3000 */
@@ -372,16 +419,4 @@ register struct partition *pp;
 	} else {
 		VSETALL( ap->a_color, 0 );
 	}
-}
-
-/*
- *			S T A R _ S E T U P
- */
-int
-star_setup( rp )
-register struct region *rp;
-{
-	rp->reg_ufunc = star_render;
-	rp->reg_udata = (char *)0;
-	return(1);
 }

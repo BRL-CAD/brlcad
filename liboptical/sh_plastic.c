@@ -69,7 +69,25 @@ struct matparse phong_parse[] = {
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
 
-extern int phong_render();
+HIDDEN int phong_setup(), mirror_setup(), glass_setup();
+HIDDEN int phong_render();
+HIDDEN int phong_print();
+HIDDEN int phong_free();
+
+struct mfuncs phg_mfuncs[] = {
+	"plastic",	0,		0,
+	phong_setup,	phong_render,	phong_print,	phong_free,
+
+	"mirror",	0,		0,
+	mirror_setup,	phong_render,	phong_print,	phong_free,
+
+	"glass",	0,		0,
+	glass_setup,	phong_render,	phong_print,	phong_free,
+
+	(char *)0,	0,		0,
+	0,		0,		0,		0
+};
+
 HIDDEN int phg_rmiss();
 HIDDEN int phg_rhit();
 HIDDEN int phg_refract();
@@ -83,14 +101,13 @@ extern double ipow();
 /*
  *			P H O N G _ S E T U P
  */
-int
+HIDDEN int
 phong_setup( rp )
 register struct region *rp;
 {
 	register struct phong_specific *pp;
 
 	GETSTRUCT( pp, phong_specific );
-	rp->reg_ufunc = phong_render;
 	rp->reg_udata = (char *)pp;
 
 	pp->shine = 10;
@@ -101,22 +118,19 @@ register struct region *rp;
 	pp->refrac_index = 0.0;
 
 	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
-	if(rdebug&RDEBUG_MATERIAL)
-		mlib_print(rp->reg_name, phong_parse, (mp_off_ty)pp);
 	return(1);
 }
 
 /*
  *			M I R R O R _ S E T U P
  */
-int
+HIDDEN int
 mirror_setup( rp )
 register struct region *rp;
 {
 	register struct phong_specific *pp;
 
 	GETSTRUCT( pp, phong_specific );
-	rp->reg_ufunc = phong_render;
 	rp->reg_udata = (char *)pp;
 
 	pp->shine = 4;
@@ -135,14 +149,13 @@ register struct region *rp;
 /*
  *			G L A S S _ S E T U P
  */
-int
+HIDDEN int
 glass_setup( rp )
 register struct region *rp;
 {
 	register struct phong_specific *pp;
 
 	GETSTRUCT( pp, phong_specific );
-	rp->reg_ufunc = phong_render;
 	rp->reg_udata = (char *)pp;
 
 	pp->shine = 4;
@@ -156,6 +169,26 @@ register struct region *rp;
 	if(rdebug&RDEBUG_MATERIAL)
 		mlib_print(rp->reg_name, phong_parse, (mp_off_ty)pp);
 	return(1);
+}
+
+/*
+ *			P H O N G _ P R I N T
+ */
+HIDDEN int
+phong_print( rp )
+register struct region *rp;
+{
+	mlib_print(rp->reg_name, phong_parse, (mp_off_ty)rp->reg_udata);
+}
+
+/*
+ *			P H O N G _ F R E E
+ */
+HIDDEN int
+phong_free( cp )
+char *cp;
+{
+	rt_free( cp, "phong_specific" );
 }
 
 
@@ -225,6 +258,7 @@ register struct region *rp;
 	s	is the angle between the reflected ray and the observer.
 	n	'Shininess' of the material,  range 1 to 10.
  */
+HIDDEN int
 phong_render( ap, pp )
 register struct application *ap;
 register struct partition *pp;
@@ -689,7 +723,7 @@ struct partition *PartHeadp;
 	}
 
 	/* Check to see if we hit a light source */
-	if( pp->pt_regionp->reg_ufunc == light_render )
+	if( pp->pt_regionp->reg_mfuncs->mf_render == light_render )
 		return(1);		/* light_visible = 1 */
 	return(0);			/* light_visible = 0 */
 }
@@ -709,7 +743,7 @@ struct partition *PartHeadp;
 }
 
 /* Null function */
-nullf() { ; }
+nullf() { return(0); }
 
 /*
  *			H I T _ N O T H I N G

@@ -27,63 +27,109 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 #include "./rdebug.h"
 
-extern int phong_setup();
-extern int txt_setup();
-extern int tmap_setup();
-extern int cloud_setup();
-extern int mirror_setup();
-extern int glass_setup();
-extern int ckr_setup();
-extern int star_setup();
-extern int sph_setup();
-extern int light_setup();
+struct mfuncs *mfHead = MF_NULL;	/* Head of list of materials */
 
-struct matlib {
-	char	*ml_name;
-	int	(*ml_setup)();
-} matlib[] = {
-	"plastic",	phong_setup,
-	"texture",	txt_setup,
-	"testmap",	tmap_setup,
-	"cloud",	cloud_setup,
-	"mirror",	mirror_setup,
-	"glass",	glass_setup,
-	"checker",	ckr_setup,
-	"fakestar",	star_setup,
-	"sph",		sph_setup,
-	"light",	light_setup,
-	(char *)0,	0			/* END */
-};
+/*
+ *			M L I B _ A D D
+ *
+ *  Internal routine to add an array of mfuncs structures to the linked
+ *  list of material routines.
+ */
+HIDDEN void
+mlib_add( mfp )
+register struct mfuncs *mfp;
+{
+	for( ; mfp->mf_name != (char *)0; mfp++ )  {
+		mfp->mf_magic = MF_MAGIC;
+		mfp->mf_forw = mfHead;
+		mfHead = mfp;
+	}
+}
+
+/*
+ *			M L I B _ I N I T
+ *
+ *  Enrole the various materials.  Single point of explicit interface with
+ *  the materials modules.
+ */
+mlib_init()
+{
+	extern struct mfuncs phg_mfuncs[];
+	extern struct mfuncs light_mfuncs[];
+	extern struct mfuncs cloud_mfuncs[];
+	extern struct mfuncs sph_mfuncs[];
+	extern struct mfuncs txt_mfuncs[];
+
+	mlib_add( phg_mfuncs );
+	mlib_add( light_mfuncs );
+	mlib_add( cloud_mfuncs );
+	mlib_add( sph_mfuncs );
+	mlib_add( txt_mfuncs );
+}
 
 /*
  *			M L I B _ S E T U P
  *
  *  Returns -
- *	0	failed
+ *	<0	failed
  *	!0	success
  */
 int
 mlib_setup( rp )
 register struct region *rp;
 {
-	register struct matlib *mlp;
+	register struct mfuncs *mfp;
 
-	if( rp->reg_ufunc )  {
+	if( rp->reg_mfuncs != MF_NULL )  {
 		rt_log("mlib_setup:  region %s already setup\n", rp->reg_name );
-		return(0);
+		return(-1);
 	}
 	if( rp->reg_mater.ma_matname[0] == '\0' )
 		goto def;
-	for( mlp=matlib; mlp->ml_name != (char *)0; mlp++ )  {
-		if( rp->reg_mater.ma_matname[0] != mlp->ml_name[0]  ||
-		    strcmp( rp->reg_mater.ma_matname, mlp->ml_name ) != 0 )
+	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
+		if( rp->reg_mater.ma_matname[0] != mfp->mf_name[0]  ||
+		    strcmp( rp->reg_mater.ma_matname, mfp->mf_name ) != 0 )
 			continue;
-		return( mlp->ml_setup( rp ) );
+		goto found;
 	}
 	rt_log("mlib_setup(%s):  material not known, default assumed\n",
 		rp->reg_mater.ma_matname );
 def:
-	return( phong_setup( rp ) );
+	mfp = phg_mfuncs;		/* default */
+found:
+	rp->reg_mfuncs = mfp;
+	rp->reg_udata = (char *)0;
+	if( mfp->mf_setup( rp ) < 0 )  {
+		/* What to do if setup fails? */
+		if( mfp != phg_mfuncs )
+			goto def;
+		return(-1);		/* BAD */
+	}
+	return(0);			/* OK */
+}
+
+/*
+ *			M L I B _ F R E E
+ *
+ *  Routine to free material-property specific data
+ */
+mlib_free( rp )
+register struct region *rp;
+{
+	register struct mfuncs *mfp = rp->reg_mfuncs;
+
+	if( mfp == MF_NULL )  {
+		rt_log("mlib_free:  reg_mfuncs NULL\n");
+		return;
+	}
+	if( mfp->mf_magic != MF_MAGIC )  {
+		rt_log("mlib_free:  reg_mfuncs bad magic, %x != %x\n",
+			mfp->mf_magic, MF_MAGIC );
+		return;
+	}
+	mfp->mf_free( rp->reg_udata );
+	rp->reg_mfuncs = MF_NULL;
+	rp->reg_udata = (char *)0;
 }
 
 /*
@@ -218,4 +264,16 @@ int *base;		/* base address of users structure */
 			break;
 		}
 	}
+}
+
+/*
+ *			M L I B _ Z E R O
+ *
+ *  Regardless of arguments, always return zero.
+ *  Useful mostly as a stub setup, print, and/or free routine.
+ */
+/* VARARGS */
+mlib_zero()
+{
+	return(0);
 }

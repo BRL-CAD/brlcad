@@ -41,6 +41,15 @@ struct matparse cloud_parse[] = {
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
 
+HIDDEN int cloud_setup(), cloud_render(), cloud_print(), cloud_free();
+
+struct mfuncs cloud_mfuncs[] = {
+	"cloud",	0,		0,
+	cloud_setup,	cloud_render,	cloud_print,	cloud_free,
+
+	(char *)0,	0,		0,
+	0,		0,		0,		0
+};
 
 #define	NUMSINES	4
 
@@ -95,26 +104,43 @@ float Contrast, initFx, initFy;
 	return( t1 * t2 / k );
 }
 
-extern cloud_render();
-
-int
+/*
+ *			C L O U D _ S E T U P
+ */
+HIDDEN int
 cloud_setup( rp )
 register struct region *rp;
 {
 	register struct cloud_specific *cp;
 
 	GETSTRUCT( cp, cloud_specific );
-	rp->reg_ufunc = cloud_render;
 	rp->reg_udata = (char *)cp;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
 	mlib_parse( rp->reg_mater.ma_matparm, cloud_parse, (mp_off_ty)cp );
-	if(rdebug&RDEBUG_MATERIAL)
-		mlib_print(rp->reg_name, cloud_parse, (mp_off_ty)cp);
 	return(1);
 }
 
+/*
+ *			C L O U D _ P R I N T
+ */
+HIDDEN int
+cloud_print( rp )
+register struct region *rp;
+{
+	mlib_print( rp->reg_name, cloud_parse, (mp_off_ty)rp->reg_udata );
+}
+
+/*
+ *			C L O U D _ F R E E
+ */
+HIDDEN int
+cloud_free( cp )
+char *cp;
+{
+	rt_free( cp, "cloud_specific" );
+}
 
 /*
  *			C L O U D _ R E N D E R
