@@ -32,6 +32,17 @@ proc collaborate { cmd {id ""} } {
     }
 }
 
+# Join or quit the Mged Collaborative Session
+proc collab_doit { id } {
+    global mged_gui
+
+    if {$mged_gui($id,collaborate)} {
+	collab_join $id
+    } else {
+	collab_quit $id
+    }
+}
+
 # Join Mged Collaborative Session
 proc collab_join { id } {
     global mged_gui
@@ -64,6 +75,7 @@ proc collab_join { id } {
 	reconfig_gui_default $id
     }
 
+    set mged_gui($id,collaborate) 1
     lappend mged_collaborators $id
 }
 
@@ -84,5 +96,6 @@ proc collab_quit { id } {
     }
 
     catch {share -u view $w}
+    set mged_gui($id,collaborate) 0
     set mged_collaborators [lreplace $mged_collaborators $i $i]
 }
