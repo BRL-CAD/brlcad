@@ -42,24 +42,26 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
-
 /*
- *	N M G _ F I N D _ T O P _ F A C E
+ *	N M G _ F I N D _ T O P _ F A C E _ I N _ D I R
  *
- *	Finds the topmost face in a shell (in z-direction).
+ *	Finds the topmost face in a shell (in given direction).
  *	Expects to have a translation table (variable "flags") for
  *	the model, and will ignore face structures that have their
  *	flag set in the table.
+ *
+ *	dir must be X,Y,Z, -X, -Y, or -Z.
  */
-
 struct face *
-nmg_find_top_face( s , flags )
+nmg_find_top_face_in_dir( s, dir , flags )
 CONST struct shell *s;
+int dir;
 long *flags;
 {
-	fastf_t max_z=(-MAX_FASTF);
-	fastf_t max_slope=(-MAX_FASTF);
+	fastf_t extreme_value=(-MAX_FASTF);
+	fastf_t extreme_slope=(-MAX_FASTF);
 	vect_t edge;
+	vect_t normal;
 	struct face *f_top=(struct face *)NULL;
 	struct edge *e_top=(struct edge *)NULL;
 	struct vertex *vp_top=(struct vertex *)NULL;
@@ -68,13 +70,22 @@ long *flags;
 	struct edgeuse *eu,*eu1;
 	struct vertexuse *vu;
 	int done;
+	int bottommost=0;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_find_top_face( s = x%x , flags = x%x )\n" , s , flags );
+		rt_log( "nmg_find_top_face_in_dir( s = x%x , dir=%d , flags = x%x )\n" , s, dir , flags );
 
 	NMG_CK_SHELL( s );
 
-	/* find vertex with greatest z coordinate */
+	if( dir < 0 )
+	{
+		bottommost = 1;
+		dir = (-dir);
+		extreme_value = MAX_FASTF;
+		extreme_slope = MAX_FASTF;
+	}
+
+	/* find extreme vertex */
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		NMG_CK_FACEUSE( fu );
@@ -88,10 +99,21 @@ long *flags;
 				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 				{
 					NMG_CK_EDGEUSE( eu );
-					if( eu->vu_p->v_p->vg_p->coord[Z] > max_z )
+					if( bottommost )
 					{
-						max_z = eu->vu_p->v_p->vg_p->coord[Z];
-						vp_top = eu->vu_p->v_p;
+						if( eu->vu_p->v_p->vg_p->coord[dir] < extreme_value )
+						{
+							extreme_value = eu->vu_p->v_p->vg_p->coord[dir];
+							vp_top = eu->vu_p->v_p;
+						}
+					}
+					else
+					{
+						if( eu->vu_p->v_p->vg_p->coord[dir] > extreme_value )
+						{
+							extreme_value = eu->vu_p->v_p->vg_p->coord[dir];
+							vp_top = eu->vu_p->v_p;
+						}
 					}
 				}
 			}
@@ -99,11 +121,11 @@ long *flags;
 	}
 	if( vp_top == (struct vertex *)NULL )
 	{
-		rt_log( "Fix_normals: Could not find uppermost vertex" );
+		rt_log( "Find_top_face_in_dir: Could not find extreme vertex" );
 		return( (struct face *)NULL );
 	}
 
-	/* find edge from vp_top with largest slope in +z direction */
+	/* find edge from vp_top with extreme slope in "dir" direction */
 	for( RT_LIST_FOR( vu , vertexuse , &vp_top->vu_hd ) )
 	{
 		NMG_CK_VERTEXUSE( vu );
@@ -139,10 +161,21 @@ long *flags;
 			VUNITIZE( edge );
 
 			/* check against current maximum slope */
-			if( edge[Z] > max_slope )
+			if( bottommost )
 			{
-				max_slope = edge[Z];
-				e_top = eu->e_p;
+				if( edge[dir] < extreme_slope )
+				{
+					extreme_slope = edge[dir];
+					e_top = eu->e_p;
+				}
+			}
+			else
+			{
+				if( edge[dir] > extreme_slope )
+				{
+					extreme_slope = edge[dir];
+					e_top = eu->e_p;
+				}
 			}
 		}
 	}
@@ -152,8 +185,17 @@ long *flags;
 		return( (struct face *)NULL );
 	}
 
-	/* now find the face containing e_top with "left-pointing vector" having the greatest slope */
-	max_slope = (-MAX_FASTF);
+	/* if the top edge is a free edge, don't use it */
+	eu = e_top->eu_p;
+	if( eu->eumate_p == eu->radial_p )
+		return( (struct face *)NULL );
+
+	/* now find the face containing e_top with "left-pointing vector" having the most extreme slope */
+	if( bottommost )
+		extreme_slope = MAX_FASTF;
+	else
+		extreme_slope = (-MAX_FASTF);
+
 	eu = e_top->eu_p;
 	eu1 = eu;
 	done = 0;
@@ -168,7 +210,6 @@ long *flags;
 			{
 				vect_t left;
 				vect_t edge_dir;
-				vect_t normal;
 
 				/* fu is a faceuse containing "eu1" */
 				fu = lu->up.fu_p;
@@ -193,17 +234,28 @@ long *flags;
 				/* find the normal for this faceuse */
 				NMG_GET_FU_NORMAL( normal, fu );
 
-				/* edge direction cross normal gives vetor in face */
+				/* edge direction cross normal gives vector in face */
 				VCROSS( left , edge_dir , normal );
 
 				/* unitize to get slope */
 				VUNITIZE( left );
 
-				/* check against current max slope */
-				if( left[Z] > max_slope )
+				/* check against current most extreme slope */
+				if( bottommost )
 				{
-					max_slope = left[Z];
-					f_top = fu->f_p;
+					if( left[dir] < extreme_slope )
+					{
+						extreme_slope = left[dir];
+						f_top = fu->f_p;
+					}
+				}
+				else
+				{
+					if( left[dir] > extreme_slope )
+					{
+						extreme_slope = left[dir];
+						f_top = fu->f_p;
+					}
 				}
 			}
 		}
@@ -217,11 +269,45 @@ long *flags;
 
 	if( f_top == (struct face *)NULL )
 	{
-		rt_log( "Nmg_find_top_face: Could not find uppermost face" );
+		rt_log( "Nmg_find_top_face_in_dir: Could not find uppermost face" );
 		return( (struct face *)NULL );
 	}
 
 	return( f_top );
+}
+
+/*
+ *	N M G _ F I N D _ T O P _ F A C E
+ *
+ *	Finds the topmost face in a shell (in some direction).
+ *	Expects to have a translation table (variable "flags") for
+ *	the model, and will ignore face structures that have their
+ *	flag set in the table.
+ */
+
+struct face *
+nmg_find_top_face( s , flags )
+CONST struct shell *s;
+long *flags;
+{
+	struct face *top_face;
+	int dir;
+
+
+	/* try positive directions first */
+	for( dir=X ; dir<=Z ; dir++ )
+		if( (top_face=nmg_find_top_face_in_dir( s, dir, flags )) != (struct face *)NULL )
+			return( top_face );
+
+	/* now try negative directions */
+	for( dir=X ; dir<=Z ; dir++ )
+		if( (top_face=nmg_find_top_face_in_dir( s, -dir, flags )) != (struct face *)NULL )
+			return( top_face );
+
+	/* give up!! */
+	rt_log( "Nmg_find_top_face: Cannot find a top face\n" );
+	return( (struct face *)NULL );
+
 }
 
 /*	N M G _ A S S O C _ V O I D _ S H E L L S
