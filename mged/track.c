@@ -24,12 +24,6 @@
 
 extern void aexists();
 
-extern int 	numargs;
-extern char	*cmd_args[];
-extern int	newargs;
-extern int	args;
-extern int	argcnt;
-
 static int	Trackpos = 0;
 static fastf_t	plano[4], plant[4];
 
@@ -56,6 +50,8 @@ char **argv;
 	char temp[4];
 	vect_t	temp1, temp2;
 	int item, mat, los;
+	int arg;
+	int edit_result;
 
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
@@ -63,87 +59,120 @@ char **argv;
 	oper[0] = oper[2] = INTERSECT;
 	oper[1] = SUBTRACT;
 
-	args = numargs;
-	argcnt = 0;
+	arg = 1;
 
 	/* get the roadwheel info */
-	(void)printf("Enter X of the FIRST roadwheel: ");
-	argcnt = getcmd(args);
-	fw[0] = atof( cmd_args[args] ) * local2base;
-	args += argcnt;
-	(void)printf("Enter X of the LAST roadwheel: ");
-	argcnt = getcmd(args);
-	lw[0] = atof( cmd_args[args] ) * local2base;
-	args += argcnt;
+	if ( argc < arg+1 ) {
+		(void)printf("Enter X of the FIRST roadwheel: ");
+		return CMD_MORE;
+	}
+	fw[0] = atof( argv[arg] ) * local2base;
+	++arg;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter X of the LAST roadwheel: ");
+		return CMD_MORE;
+	}
+	lw[0] = atof( argv[arg] ) * local2base;
+	++arg;
+
 	if( fw[0] <= lw[0] ) {
 		(void)printf("First wheel after last wheel - STOP\n");
 		return CMD_BAD;
 	}
-	(void)printf("Enter Z of the roadwheels: ");
-	argcnt = getcmd(args);
-	fw[1] = lw[1] = atof( cmd_args[args] ) * local2base;
-	args += argcnt;
-	(void)printf("Enter radius of the roadwheels: ");
-	argcnt = getcmd(args);
-	fw[2] = lw[2] = atof( cmd_args[args] ) * local2base;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter Z of the roadwheels: ");
+		return CMD_MORE;
+	}
+	fw[1] = lw[1] = atof( argv[arg] ) * local2base;
+	++arg;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter radius of the roadwheels: ");
+		return CMD_MORE;
+	}
+	fw[2] = lw[2] = atof( argv[arg] ) * local2base;
+	++arg;
 	if( fw[2] <= 0 ) {
 		(void)printf("Radius <= 0 - STOP\n");
 		return CMD_BAD;
 	}
-	args += argcnt;
 
-	/* get the drive wheel info */
-	(void)printf("Enter X of the drive (REAR) wheel: ");
-	argcnt = getcmd(args);
-	dw[0] = atof( cmd_args[args] ) * local2base;
+	if ( argc < arg+1 ) {
+		/* get the drive wheel info */
+		(void)printf("Enter X of the drive (REAR) wheel: ");
+		return CMD_MORE;
+	}
+	dw[0] = atof( argv[arg] ) * local2base;
+	++arg;
 	if( dw[0] >= lw[0] ) {
 		(void)printf("DRIVE wheel not in the rear - STOP \n");
 		return CMD_BAD;
 	}
-	args += argcnt;
-	(void)printf("Enter Z of the drive (REAR) wheel: ");
-	argcnt = getcmd(args);
-	dw[1] = atof( cmd_args[args] ) * local2base;
-	args += argcnt;
-	(void)printf("Enter radius of the drive (REAR) wheel: ");
-	argcnt = getcmd(args);
-	dw[2] = atof( cmd_args[args] ) * local2base;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter Z of the drive (REAR) wheel: ");
+		return CMD_MORE;
+	}
+	dw[1] = atof( argv[arg] ) * local2base;
+	++arg;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter radius of the drive (REAR) wheel: ");
+		return CMD_MORE;
+	}
+	dw[2] = atof( argv[arg] ) * local2base;
+	++arg;
 	if( dw[2] <= 0 ) {
 		(void)printf("Radius <= 0 - STOP\n");
 		return CMD_BAD;
 	}
-	args += argcnt;
-
+	
 	/* get the idler wheel info */
-	(void)printf("Enter X of the idler (FRONT) wheel: ");
-	argcnt = getcmd(args);
-	iw[0] = atof( cmd_args[args] ) * local2base;
-	args += argcnt;
+	if( argc < arg+1 ) {
+		(void)printf("Enter X of the idler (FRONT) wheel: ");
+		return CMD_MORE;
+	}
+	iw[0] = atof( argv[arg] ) * local2base;
+	++arg;
 	if( iw[0] <= fw[0] ) {
 		(void)printf("IDLER wheel not in the front - STOP \n");
 		return CMD_BAD;
 	}
-	(void)printf("Enter Z of the idler (FRONT) wheel: ");
-	argcnt = getcmd(args);
-	iw[1] = atof( cmd_args[args] ) * local2base;
-	args += argcnt;
-	(void)printf("Enter radius of the idler (FRONT) wheel: ");
-	argcnt = getcmd(args);
-	iw[2] = atof( cmd_args[args] ) * local2base;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter Z of the idler (FRONT) wheel: ");
+		return CMD_MORE;
+	}
+	iw[1] = atof( argv[arg] ) * local2base;
+	++arg;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter radius of the idler (FRONT) wheel: ");
+		return CMD_MORE;
+	}
+	iw[2] = atof( argv[arg] ) * local2base;
+	++arg;
 	if( iw[2] <= 0 ) {
 		(void)printf("Radius <= 0 - STOP\n");
 		return CMD_BAD;
 	}
-	args += argcnt;
 
 	/* get track info */
-	(void)printf("Enter Y-MIN of the track: ");
-	argcnt = getcmd(args);
-	tr[2] = tr[0] = atof( cmd_args[args] ) * local2base;
-	args += argcnt;
-	(void)printf("Enter Y-MAX of the track: ");
-	argcnt = getcmd(args);
-	tr[1] = atof( cmd_args[args] ) * local2base;
+	if( argc < arg+1 ) {
+		(void)printf("Enter Y-MIN of the track: ");
+		return CMD_MORE;
+	}
+	tr[2] = tr[0] = atof( argv[arg] ) * local2base;
+	++arg;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter Y-MAX of the track: ");
+		return CMD_MORE;
+	}
+	tr[1] = atof( argv[arg] ) * local2base;
+	++arg;
 	if( tr[0] == tr[1] ) {
 		(void)printf("MIN == MAX ... STOP\n");
 		return CMD_BAD;
@@ -153,10 +182,13 @@ char **argv;
 		tr[1] = tr[0];
 		tr[0] = tr[2];
 	}
-	args += argcnt;
-	(void)printf("Enter track thickness: ");
-	argcnt = getcmd(args);
-	tr[2] = atof( cmd_args[args] ) * local2base;
+
+	if( argc < arg+1 ) {
+		(void)printf("Enter track thickness: ");
+		return CMD_MORE;
+	}
+	tr[2] = atof( argv[arg] ) * local2base;
+	++arg;
 	if( tr[2] <= 0 ) {
 		(void)printf("Track thickness <= 0 - STOP\n");
 		return CMD_BAD;
@@ -435,7 +467,7 @@ tryagain:	/* sent here to try next set of names */
 		char	*arglist[3];
 		arglist[0] = "e";
 		arglist[1] = grpname;
-		f_edit( 2, arglist );
+		edit_result = f_edit( 2, arglist );
 	}
 
 	Trackpos += 10;
@@ -444,7 +476,7 @@ tryagain:	/* sent here to try next set of names */
 	los_default = los;
 	grpname[5] = solname[8] = regname[8] = '\0';
 
-	return CMD_OK;
+	return edit_result;
 }
 
 void
