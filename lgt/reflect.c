@@ -206,7 +206,6 @@ STATIC bool hi_Obliq();
 
 STATIC fastf_t myIpow();
 STATIC fastf_t correct_Lgt();
-STATIC fastf_t *mirror_Reflect();
 
 /* "Hit" application routines to pass to "rt_shootray()". */
 STATIC int f_Model(), f_Probe(), f_Shadow(), f_HL_Hit(), f_Region();
@@ -218,6 +217,7 @@ STATIC int f_Overlap(), f_NulOverlap();
 STATIC int refract();
 
 STATIC void hl_Postprocess();
+STATIC void mirror_Reflect();
 STATIC void model_Reflectance();
 STATIC void glass_Refract();
 STATIC void view_pix(), view_bol(), view_eol(), view_end();
@@ -932,8 +932,9 @@ struct partition *pt_headp;
 		{
 		ap->a_user = material_id;
 		if( entry->reflectivity > 0.0 )
-			{	register fastf_t *mirror_coefs =
-						mirror_Reflect( ap, pp );
+			{	fastf_t mirror_coefs[3];
+			mirror_Reflect( ap, pp, mirror_coefs );
+
 			/* Compute mirror reflection. */
 			VJOIN1(	rgb_coefs,
 				rgb_coefs,
@@ -1071,12 +1072,15 @@ register Lgt_Source *lgt_entry;
 	}
 
 /*
-	fastf_t *mirror_Reflect( register struct application *ap,
-				register struct partition *pp )			 */
-STATIC fastf_t *
-mirror_Reflect( ap, pp )
+	void mirror_Reflect( register struct application *ap,
+			     register struct partition *pp,
+			     register fastf_t *mirror_coefs )	
+ */
+STATIC void
+mirror_Reflect( ap, pp, mirror_coefs )
 register struct application *ap;
 register struct partition *pp;
+register fastf_t *mirror_coefs;
 	{	fastf_t r_dir[3];
 		struct application ap_hit;
 	ap_hit = *ap;		/* Same as initial application. */
@@ -1102,7 +1106,9 @@ register struct partition *pp;
 	/* Set up ray origin at surface contact point. */
 	VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
 	(void) rt_shootray( &ap_hit );
-	return	ap_hit.a_color;
+	mirror_coefs[RED] = ap_hit.a_color[RED];
+	mirror_coefs[GRN] = ap_hit.a_color[GRN];
+	mirror_coefs[BLU] = ap_hit.a_color[BLU];
 	}
 
 /*
