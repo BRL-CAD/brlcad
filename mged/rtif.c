@@ -6,6 +6,7 @@
  * Functions -
  *	f_rt		ray-trace
  *	f_rrt		ray-trace using any program
+ *	f_rtcheck	ray-trace to check for overlaps
  *	f_saveview	save the current view parameters
  *	f_rmats		load views from a file
  *	f_savekey	save keyframe in file
@@ -44,7 +45,7 @@ extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
 
 extern char	*filename;	/* Name of database file */
-int		drawreg;	/* if > 0, process and draw regions */
+
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
@@ -133,53 +134,39 @@ mat_t	mat;
 	return(0);
 }
 
-#define LEN 32
-void
-f_rt()
+/*
+ *			S E T U P _ R T
+ *
+ *  Set up command line for one of the RT family of programs,
+ *  with all objects in view enumerated.
+ */
+#define LEN	128
+static char	*rt_cmd_vec[LEN];
+
+setup_rt( vp )
+register char	**vp;
 {
-	register char **vp;
 	register struct solid *sp;
 	register int i;
-	int pid, rpid;
-	int retcode;
-	int o_pipe[2];
-	char *vec[LEN];
-	char *dm;
-	FILE *fp;
-
-	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
-		return;
 
 	/*
-	 * This may be a workstation where RT and MGED have to share the
-	 * display, so let display go.  We will try to reattach at the end.
-	 */
-	dm = dmp->dmr_name;
-	release();
-
-	vp = &vec[0];
-	*vp++ = "rt";
-	*vp++ = "-s50";
-	*vp++ = "-M";
-	for( i=1; i < numargs; i++ )
-		*vp++ = cmd_args[i];
-	*vp++ = filename;
-
-	/* Find all unique top-level entrys.
+	 * Find all unique top-level entrys.
 	 *  Mark ones already done with s_iflag == UP
 	 */
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
 	FOR_ALL_SOLIDS( sp )  {
-		register struct solid *forw;	/* XXX */
+		register struct solid *forw;
 
 		if( sp->s_iflag == UP )
 			continue;
-		if( vp < &vec[LEN] )
+		if( vp < &rt_cmd_vec[LEN] )
 			*vp++ = sp->s_path[0]->d_namep;
-		else
-			(void)printf("ran out of vec for %s\n",
+		else  {
+			(void)printf("ran out of rt_cmd_vec at %s\n",
 				sp->s_path[0]->d_namep );
+			break;
+		}
 		sp->s_iflag = UP;
 		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
 			if( forw->s_path[0] == sp->s_path[0] )
@@ -188,10 +175,25 @@ f_rt()
 	}
 	*vp = (char *)0;
 
-	vp = &vec[0];
+	/* Print out the command we are about to run */
+	vp = &rt_cmd_vec[0];
 	while( *vp )
 		(void)printf("%s ", *vp++ );
 	(void)printf("\n");
+
+}
+
+/*
+ *			R U N _ R T
+ */
+run_rt()
+{
+	register struct solid *sp;
+	register int i;
+	int pid, rpid;
+	int retcode;
+	int o_pipe[2];
+	FILE *fp;
 
 	(void)pipe( o_pipe );
 	(void)signal( SIGINT, SIG_IGN );
@@ -202,11 +204,12 @@ f_rt()
 			(void)close(i);
 
 		(void)signal( SIGINT, SIG_DFL );
-		(void)execvp( "rt", vec );
-		perror( "rt" );
-		exit(42);
+		(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
+		perror( rt_cmd_vec[0] );
+		exit(16);
 	}
-	/* Connect up to pipe */
+
+	/* As parent, send view information down pipe */
 	(void)close( o_pipe[0] );
 	fp = fdopen( o_pipe[1], "w" );
 	{
@@ -218,8 +221,8 @@ f_rt()
 		rt_oldwrite(fp, eye_model );
 	}
 	(void)fclose( fp );
-	
-	/* Wait for rt to finish */
+
+	/* Wait for program to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
 	if( retcode != 0 )
@@ -229,6 +232,40 @@ f_rt()
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
 
+	return(retcode);
+}
+
+/*
+ *			F _ R T
+ */
+void
+f_rt()
+{
+	register char **vp;
+	register int i;
+	int retcode;
+	char *dm;
+
+	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
+		return;
+
+	/*
+	 * This may be a workstation where RT and MGED have to share the
+	 * display, so let display go.  We will try to reattach at the end.
+	 */
+	dm = dmp->dmr_name;
+	release();
+
+	vp = &rt_cmd_vec[0];
+	*vp++ = "rt";
+	*vp++ = "-s50";
+	*vp++ = "-M";
+	for( i=1; i < numargs; i++ )
+		*vp++ = cmd_args[i];
+	*vp++ = filename;
+
+	setup_rt( vp );
+	retcode = run_rt();
 	if( retcode == 0 )  {
 		/* Wait for a return, then reattach display */
 		printf("Press RETURN to reattach\007\n");
@@ -249,14 +286,9 @@ void
 f_rrt()
 {
 	register char **vp;
-	register struct solid *sp;
 	register int i;
-	int pid, rpid;
-	int retcode;
-	int o_pipe[2];
-	char *vec[LEN];
-	char *dm;
-	FILE *fp;
+	int	retcode;
+	char	*dm;
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 		return;
@@ -268,53 +300,71 @@ f_rrt()
 	dm = dmp->dmr_name;
 	release();
 
-	vp = &vec[0];
+	vp = &rt_cmd_vec[0];
 	for( i=1; i < numargs; i++ )
 		*vp++ = cmd_args[i];
 	*vp++ = filename;
 
-	/* Find all unique top-level entrys.
-	 *  Mark ones already done with s_iflag == UP
-	 */
-	FOR_ALL_SOLIDS( sp )
-		sp->s_iflag = DOWN;
-	FOR_ALL_SOLIDS( sp )  {
-		register struct solid *forw;	/* XXX */
-
-		if( sp->s_iflag == UP )
-			continue;
-		if( vp < &vec[LEN] )
-			*vp++ = sp->s_path[0]->d_namep;
-		else
-			(void)printf("ran out of vec for %s\n",
-				sp->s_path[0]->d_namep );
-		sp->s_iflag = UP;
-		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
-			if( forw->s_path[0] == sp->s_path[0] )
-				forw->s_iflag = UP;
-		}
+	setup_rt( vp );
+	retcode = run_rt();
+	if( retcode == 0 )  {
+		/* Wait for a return, then reattach display */
+		printf("Press RETURN to reattach\007\n");
+		while( getchar() != '\n' )
+			/* NIL */  ;
 	}
-	*vp = (char *)0;
+	attach( dm );
+}
 
-	vp = &vec[0];
-	while( *vp )
-		(void)printf("%s ", *vp++ );
-	(void)printf("\n");
+/*
+ *			F _ R T C H E C K
+ *
+ *  Invoke "rtcheck" to find overlaps, and display them as a vector overlay.
+ */
+void
+f_rtcheck()
+{
+	register char **vp;
+	register int i;
+	struct vlhead	vhead;
+	int	pid, rpid;
+	int	retcode;
+	int	o_pipe[2];
+	int	i_pipe[2];
+	FILE	*fp;
+	struct solid *sp;
 
-	(void)pipe( o_pipe );
+	if( not_state( ST_VIEW, "Overlap check in current view" ) )
+		return;
+
+	vp = &rt_cmd_vec[0];
+	*vp++ = "rtcheck";
+	*vp++ = "-s50";
+	*vp++ = "-M";
+	for( i=1; i < numargs; i++ )
+		*vp++ = cmd_args[i];
+	*vp++ = filename;
+
+	setup_rt( vp );
+
+	(void)pipe( o_pipe );			/* output from mged */
+	(void)pipe( i_pipe );			/* input back to mged */
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
 		(void)close(0);
 		(void)dup( o_pipe[0] );
+		(void)close(1);
+		(void)dup( i_pipe[1] );
 		for( i=3; i < 20; i++ )
 			(void)close(i);
 
 		(void)signal( SIGINT, SIG_DFL );
-		(void)execvp( cmd_args[1], vec );
-		perror( cmd_args[1] );
-		exit(42);
+		(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
+		perror( rt_cmd_vec[0] );
+		exit(16);
 	}
-	/* Connect up to pipe */
+
+	/* As parent, send view information down pipe */
 	(void)close( o_pipe[0] );
 	fp = fdopen( o_pipe[1], "w" );
 	{
@@ -326,8 +376,15 @@ f_rrt()
 		rt_oldwrite(fp, eye_model );
 	}
 	(void)fclose( fp );
-	
-	/* Wait for rt to finish */
+
+	/* Prepare to receive UNIX-plot back from child */
+	(void)close(i_pipe[1]);
+	fp = fdopen(i_pipe[0], "r");
+	vhead.vh_first = vhead.vh_last = VL_NULL;
+	(void)uplot_vlist( &vhead, fp );
+	fclose(fp);
+
+	/* Wait for program to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
 	if( retcode != 0 )
@@ -337,17 +394,13 @@ f_rrt()
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
 
-	if( retcode == 0 )  {
-		/* Wait for a return, then reattach display */
-		printf("Press RETURN to reattach\007\n");
-		while( getchar() != '\n' )
-			/* NIL */  ;
-	}
-	attach( dm );
+	/* Add overlay */
+	invent_solid( "OVERLAPS", &vhead );
+	dmaflag++;
 }
 
 /*
- *  				B A S E N A M E
+ *			B A S E N A M E
  *  
  *  Return basename of path, removing leading slashes and trailing suffix.
  */
@@ -372,6 +425,9 @@ register char *p1, *suff;
 	return(buf);
 }
 
+/*
+ *			F _ S A V E V I E W
+ */
 void
 f_saveview()
 {
