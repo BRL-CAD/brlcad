@@ -140,6 +140,45 @@ struct tor_specific {
 	mat_t	tor_invR;	/* invRot(vect') */
 };
 
+struct tor_internal {
+	point_t	v;
+	vect_t	h;
+	vect_t	a;
+	vect_t	b;
+};
+
+/*
+ *			T O R _ I M P O R T
+ *
+ *  Import a torus from the database format to the internal format.
+ *  Apply modeling transformations at the same time.
+ */
+int
+tor_import( tip, rp, mat )
+struct tor_internal	*tip;
+union record		*rp;
+register mat_t		mat;
+{
+	LOCAL fastf_t	vec[3*4];
+
+	/* Check record type */
+	if( rp->u_id != ID_SOLID )  {
+		rt_log("tor_import: defective record\n");
+		return(-1);
+	}
+
+	/* Convert from database to internal format */
+	rt_fastf_float( vec, rp->s.s_values, 4 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( tip->v, mat, &vec[0*3] );
+	MAT4X3VEC( tip->h, mat, &vec[1*3] );
+	MAT4X3VEC( tip->a, mat, &vec[2*3] );
+	MAT4X3VEC( tip->b, mat, &vec[3*3] );
+
+	return(0);		/* OK */
+}
+
 /*
  *  			T O R _ P R E P
  *  
@@ -164,30 +203,18 @@ struct rt_i		*rtip;
 	register struct tor_specific *tor;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_h;
 	LOCAL mat_t	R;
-	LOCAL vect_t	A, B, Hv;
 	LOCAL vect_t	P, w1;	/* for RPP calculation */
 	FAST fastf_t	f;
 	LOCAL fastf_t	r1, r2;	/* primary and secondary radius */
 	LOCAL fastf_t	mag_b;
-	fastf_t		vec[3*4];
+	struct tor_internal	ti;
 
-	rt_fastf_float( vec, rec->s.s_values, 4 );
+	if( tor_import( &ti, rec, stp->st_pathmat ) < 0 )
+		return(-1);		/* BAD */
 
-#define TOR_V	&vec[0*ELEMENTS_PER_VECT]
-#define TOR_H	&vec[1*ELEMENTS_PER_VECT]
-#define TOR_A	&vec[2*ELEMENTS_PER_VECT]
-#define TOR_B	&vec[3*ELEMENTS_PER_VECT]
-
-	/*
-	 * Apply 3x3 rotation mat only to A,B,H
-	 */
-	MAT4X3VEC( A, stp->st_pathmat, TOR_A );
-	MAT4X3VEC( B, stp->st_pathmat, TOR_B );
-	MAT4X3VEC( Hv, stp->st_pathmat, TOR_H );
-
-	magsq_a = MAGSQ( A );
-	magsq_b = MAGSQ( B );
-	magsq_h = MAGSQ( Hv );
+	magsq_a = MAGSQ( ti.a );
+	magsq_b = MAGSQ( ti.b );
+	magsq_h = MAGSQ( ti.h );
 	r1 = sqrt(magsq_a);
 	r2 = sqrt(magsq_h);
 	mag_b = sqrt(magsq_b);
@@ -209,20 +236,20 @@ struct rt_i		*rtip;
 	}
 
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
-	f = VDOT( A, B )/(r1*mag_b);
+	f = VDOT( ti.a, ti.b )/(r1*mag_b);
 
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( B, Hv )/(mag_b*r2);
+	f = VDOT( ti.b, ti.h )/(mag_b*r2);
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( A, Hv )/(r1*r2);
+	f = VDOT( ti.a, ti.h )/(r1*r2);
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
@@ -243,19 +270,19 @@ struct rt_i		*rtip;
 	tor->tor_r1 = r1;
 	tor->tor_r2 = r2;
 
-	MAT4X3PNT( tor->tor_V, stp->st_pathmat, TOR_V );
+	VMOVE( tor->tor_V, ti.v );
 	tor->tor_alpha = r2/tor->tor_r1;
 
 	/* Compute R and invR matrices */
-	VUNITIZE( Hv );
-	VMOVE( tor->tor_N, Hv );
+	VUNITIZE( ti.h );
+	VMOVE( tor->tor_N, ti.h );
 
 	mat_idn( R );
-	VMOVE( &R[0], A );
+	VMOVE( &R[0], ti.a );
 	VUNITIZE( &R[0] );
-	VMOVE( &R[4], B );
+	VMOVE( &R[4], ti.b );
 	VUNITIZE( &R[4] );
-	VMOVE( &R[8], Hv );
+	VMOVE( &R[8], ti.h );
 	mat_inv( tor->tor_invR, R );
 
 	/* Compute SoR.  Here, S = I / r1 */
@@ -303,6 +330,9 @@ struct rt_i		*rtip;
 	return(0);			/* OK */
 }
 
+/*
+ *			T O R _ P R I N T
+ */
 void
 tor_print( stp )
 register struct soltab *stp;
@@ -854,6 +884,9 @@ struct soltab *stp;
 	VUNITIZE( cvp->crv_pdir );
 }
 
+/*
+ *			T O R _ U V
+ */
 void
 tor_uv( ap, stp, hitp, uvp )
 struct application	*ap;
@@ -886,25 +919,15 @@ tor_class()
 	return(0);
 }
 
-/* Names for TORUS fields */
-#define F1 	&points[0]
-#define F2	&points[3]
-#define F3	&points[6]
-#define F4	&points[9]
-#define F5	&points[12]
-#define F6	&points[15]
-#define F7	&points[18]
-#define F8	&points[21]
-
 /*
  *			T O R _ P L O T
  *
  * The TORUS has the following input fields:
- *	F1	V from origin to center
- *	F2	Radius Vector, Normal to plane of torus
- *	F3,F4	perpindicular, to CENTER of torus (for top, bottom)
- *	F5,F6	perpindicular, for inner edge
- *	F7,F8	perpindicular, for outer edge
+ *	ti.v	V from origin to center
+ *	ti.h	Radius Vector, Normal to plane of torus
+ *	ti.a,ti.b	perpindicular, to CENTER of torus (for top, bottom)
+ *
+ * The inner and outer edge need to be constructed as well.
  *
  * The following ellipses have to be constructed:
  *	C1	top ellipse
@@ -912,7 +935,7 @@ tor_class()
  *	C3	inner ellipse
  *	C4	outer ellipse
  */
-void
+int
 tor_plot( rp, matp, vhead, dp )
 union record	*rp;
 register matp_t matp;
@@ -920,37 +943,41 @@ struct vlhead	*vhead;
 struct directory *dp;
 {
 	register int		i;
-	register fastf_t	*op;
-	register dbfloat_t	*ip;
 	fastf_t		C1[16*3];
 	fastf_t 	C2[16*3];
 	fastf_t		C3[16*3];
 	fastf_t		C4[16*3];
-	static vect_t	tempv;		/* Torus vector addition area */
-	fastf_t		points[3*8];
+	point_t		top_center;
+	point_t		bottom_center;
+	vect_t		newA, newB;
+	fastf_t		magH, magA, magB;
+	fastf_t		f;
+	struct tor_internal	ti;
 
-	/*
-	 * Rotate, translate, and scale the V point.
-	 * All other vectors are merely scaled and translated.
-	 */
-	MAT4X3PNT( &points[0], matp, &rp[0].s.s_values[0] );
+	if( tor_import( &ti, rp, matp ) < 0 )
+		return(-1);		/* BAD */
 
-	ip = &rp[0].s.s_values[1*3];
-	op = &points[1*3];
-	for(i=1; i<8; i++)  {
-		MAT4X3VEC( op, matp, ip );
-		op += 3;
-		ip += 3;
-	}
+	VADD2(top_center,ti.v,ti.h);		/* center point of TOP */
+	ell_16pts(C1,top_center,ti.a,ti.b);	/* top */
 
-	VADD2(tempv,F1,F2);	/* center point of TOP */
-	ell_16pts(C1,tempv,F3,F4);	/* top */
-
-	VSUB2(tempv,F1,F2);
-	ell_16pts(C4,tempv,F3,F4);	/* bottom */
+	VSUB2(bottom_center,ti.v,ti.h);
+	ell_16pts(C4,bottom_center,ti.a,ti.b);	/* bottom */
  
-	ell_16pts(C2,F1,F5,F6);	/* inner */
-	ell_16pts(C3,F1,F7,F8);	/* outer */
+	magH = MAGNITUDE(ti.h);
+	magA = MAGNITUDE(ti.a);
+	magB = MAGNITUDE(ti.b);
+
+	f = (magA - magH) / magA;
+	VSCALE( newA, ti.a, f );
+	f = (magB - magH) / magB;
+	VSCALE( newB, ti.b, f );
+	ell_16pts(C2, ti.v, newA, newB);	/* inner */
+
+	f = (magA + magH) / magA;
+	VSCALE( newA, ti.a, f );
+	f = (magB + magH) / magB;
+	VSCALE( newB, ti.b, f );
+	ell_16pts(C3, ti.v, newA, newB);	/* outer */
  
 	ADD_VL( vhead, &C1[15*ELEMENTS_PER_VECT], 0 );
 	for( i=0; i<16; i++ )  {
@@ -995,4 +1022,12 @@ struct directory *dp;
 	ADD_VL( vhead, &C4[12*3], 1);
 	ADD_VL( vhead, &C3[12*3], 1);
 	ADD_VL( vhead, &C1[12*3], 1);
+	return(0);
+}
+
+/*
+ */
+int
+tor_tess()
+{
 }
