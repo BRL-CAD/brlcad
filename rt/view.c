@@ -715,7 +715,7 @@ struct seg *finished_segs;
 		 * of code attempts to spot this behavior and skip over the glass sliver.
 		 * Any sliver less than 0.05mm thick will be skipped (0.05 is a SWAG).
 		 */
-		if( pp->pt_regionp == ap->a_uptr &&
+		if( (genptr_t)pp->pt_regionp == ap->a_uptr &&
 			pp->pt_forw != PartHeadp &&
 			pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05 )
 				pp = pp->pt_forw;
@@ -1428,9 +1428,9 @@ bu_log("mallocing curr_float_frame\n");
 	ap->a_rt_i->rti_nlights = light_init(ap);
 
 	/* Create integer version of background color */
-	inonbackground[0] = ibackground[0] = background[0] * 255;
-	inonbackground[1] = ibackground[1] = background[1] * 255;
-	inonbackground[2] = ibackground[2] = background[2] * 255;
+	inonbackground[0] = ibackground[0] = rint( background[0] * 255 );
+	inonbackground[1] = ibackground[1] = rint( background[1] * 255 );
+	inonbackground[2] = ibackground[2] = rint( background[2] * 255 );
 
 	/*
 	 * If a non-background pixel comes out the same color as the
