@@ -11,14 +11,14 @@
 #define	BUILD_LIBRARY	ar r
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --cache-file cache.MTYPE \
 			 --exec-prefix=BASEDIR --prefix=BASEDIR
-#define PRODUCTS	libtcl.a tclsh
+#define PRODUCTS	[[echo libtcl''TCLTK_VERS.a]] tclsh
 #define	AFTER_MAKE	/**/
 #else
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --enable-shared \
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR
-#define PRODUCTS	libtcl.so tclsh
-#define SHARED_PRODUCT	libtcl.so''[[LIBVERS]]
-#define	AFTER_MAKE	mv -f libtcl.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
+#define PRODUCTS	[[ echo libtcl''TCLTK_VERS.so]] tclsh
+#define SHARED_PRODUCT	libtcl''TCLTK_VERS.so''[[LIBVERS]]
+#define	AFTER_MAKE	mv -f libtcl''TCLTK_VERS.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #endif
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
@@ -40,7 +40,7 @@ clean&:
 	make -f Makefile clean
 
 noprod&:
-	rm -rf libtcl.*
+	rm -rf libtcl''TCLTK_VERS.*
 
 clobber&: 
 	rm -f *.MTYPE *.o libtcl* config.log config.status tclConfig.sh tclsh Makefile
