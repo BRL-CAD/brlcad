@@ -58,7 +58,7 @@ char **argv;
 
 	if( argc < 3 )  {
 		fprintf(stderr,"Usage:  fbbackgnd [-h] hue saturation\n");
-		return(1);
+		exit(1);
 	}
 
 	if( argv[1][0] == '-' && argv[1][1] == 'h' )  {
@@ -70,7 +70,7 @@ char **argv;
 
 	if( (fbp = fb_open( NULL, npix, npix )) == FBIO_NULL )  {
 		fprintf(stderr, "fbbackgnd:  fb_open failed\n");
-		return	1;
+		exit(1);
 	}
 
 	/* Write out top area with initial HSV */
@@ -97,6 +97,7 @@ printf("%d..%d: deltav=%f\n", h_start, h_end, deltav);
 		FILL( col[0], col[1], col[2] );
 		fb_write( fbp, 0, npix-1-line, buf, npix );
 	}
+	exit(0);
 }
 
 /* rgbhsv
