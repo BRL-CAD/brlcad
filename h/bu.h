@@ -243,9 +243,11 @@ extern char	*realloc();
 /*
  * Forward declarations.
  */
+extern int bu_cv_itemlen(int cookie);
 extern int bu_cv_cookie(char *in);
 extern int bu_cv_optimize(int cookie);
 extern int bu_cv_w_cookie(genptr_t, int, int, genptr_t, int, int);
+
 extern int bu_cv_ntohss(SIGNED short *, int, genptr_t, int);
 extern int bu_cv_ntohus(unsigned short *, int, genptr_t, int);
 extern int bu_cv_ntohsl(SIGNED long int *, int, genptr_t, int);
@@ -1640,6 +1642,7 @@ extern void bu_observer_free(struct bu_observer *);
 
 /* bu_tcl.c */
 extern void bu_badmagic_tcl();
+
 
 #ifdef __cplusplus
 }

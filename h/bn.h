@@ -346,6 +346,14 @@ BU_EXTERN(double	bn_noise_ridged, (point_t point, double h_val,
  */
 
 
+extern int bn_distsq_line3_line3(fastf_t dist[3],
+				 point_t P,
+				 vect_t d,
+				 point_t Q,
+				 vect_t e,
+				 point_t pt1,
+				 point_t pt2);
+
 BU_EXTERN(int		bn_dist_pt3_lseg3, (fastf_t *dist, point_t pca,
 				CONST point_t a, CONST point_t b,
 				CONST point_t p, CONST struct bn_tol *tol));
