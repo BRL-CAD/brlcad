@@ -1747,7 +1747,12 @@ mat_t		mat;
 				(struct rt_ars_internal *)es_int.idb_ptr;
 			RT_ARS_CK_MAGIC( ars );
 
-			VMOVE( mpt , ars->curves[0] );
+			if (es_ars_crv < 0 || es_ars_col < 0) {
+			  VMOVE( mpt, es_pt );
+			} else {
+			  VMOVE( mpt, &ars->curves[es_ars_crv][es_ars_col*3] );
+			}
+
 			*strp = "V";
 			break;
 		}
