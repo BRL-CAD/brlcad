@@ -1967,6 +1967,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_PTBL(b);
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
+	if(eg)  NMG_CK_EDGE_G_LSEG(rs->eg_p);
 
 	bzero( (char *)rs, sizeof(*rs) );
 	rs->magic = NMG_RAYSTATE_MAGIC;
@@ -2074,6 +2075,7 @@ int		other_rs_state;
 
 	NMG_CK_RAYSTATE(rs);
 	RT_CK_TOL(rs->tol);
+	if(rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
 
 	if( cur == rs->nvu-1 || mag[cur+1] != mag[cur] )  {
 		/* Single vertexuse at this dist */
@@ -2162,6 +2164,9 @@ fastf_t			*mag2;
 	if(rt_g.NMG_debug&DEBUG_FCUT)
 		rt_log("nmg_face_combine()\n");
 
+	if(rs1->eg_p) NMG_CK_EDGE_G_LSEG(rs1->eg_p);
+	if(rs2->eg_p) NMG_CK_EDGE_G_LSEG(rs2->eg_p);
+
 #if PLOT_BOTH_FACES
 	nmg_2face_plot( rs1->fu1, rs1->fu2 );
 #else
@@ -2184,12 +2189,16 @@ fastf_t			*mag2;
 				rt_log("\nnmg_face_combineX() doing index1 block (at end)\n");
 			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
 			nxt2 = cur2;
+			if(rs1->eg_p) NMG_CK_EDGE_G_LSEG(rs1->eg_p);
+			if(rs2->eg_p) NMG_CK_EDGE_G_LSEG(rs2->eg_p);
 			if( !rs2->eg_p )  rs2->eg_p = rs1->eg_p;
 		} else if( mag1[cur1] > mag2[cur2] )  {
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 				rt_log("\nnmg_face_combineX() doing index2 block (at end)\n");
 			nxt1 = cur1;
 			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
+			if(rs1->eg_p) NMG_CK_EDGE_G_LSEG(rs1->eg_p);
+			if(rs2->eg_p) NMG_CK_EDGE_G_LSEG(rs2->eg_p);
 			if( !rs1->eg_p )  rs1->eg_p = rs2->eg_p;
 		} else {
 			struct vertexuse	*vu1;
@@ -2206,13 +2215,19 @@ fastf_t			*mag2;
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 				rt_log("\nnmg_face_combineX() doing index1 block\n");
 			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
+			if(rs1->eg_p) NMG_CK_EDGE_G_LSEG(rs1->eg_p);
+			if(rs2->eg_p) NMG_CK_EDGE_G_LSEG(rs2->eg_p);
 			if( !rs2->eg_p )  rs2->eg_p = rs1->eg_p;
 
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 				rt_log("\nnmg_face_combineX() doing index2 block\n");
 			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
+			if(rs1->eg_p) NMG_CK_EDGE_G_LSEG(rs1->eg_p);
+			if(rs2->eg_p) NMG_CK_EDGE_G_LSEG(rs2->eg_p);
 			if( !rs1->eg_p )  rs1->eg_p = rs2->eg_p;
 		}
+		if(rs1->eg_p) NMG_CK_EDGE_G_LSEG(rs1->eg_p);
+		if(rs2->eg_p) NMG_CK_EDGE_G_LSEG(rs2->eg_p);
 	}
 
 	/*
@@ -2223,10 +2238,15 @@ fastf_t			*mag2;
 		nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
 	}
 	if( !rs2->eg_p )  rs2->eg_p = rs1->eg_p;
+	if(rs1->eg_p) NMG_CK_EDGE_G_LSEG(rs1->eg_p);
+	if(rs2->eg_p) NMG_CK_EDGE_G_LSEG(rs2->eg_p);
+
 	for( ; cur2 < rs2->nvu; cur2 = nxt2 )  {
 		nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, rs1->state );
 	}
 	if( !rs1->eg_p )  rs1->eg_p = rs2->eg_p;
+	if(rs1->eg_p) NMG_CK_EDGE_G_LSEG(rs1->eg_p);
+	if(rs2->eg_p) NMG_CK_EDGE_G_LSEG(rs2->eg_p);
 
 	if( rs1->state != NMG_STATE_OUT || rs2->state != NMG_STATE_OUT )  {
 		rt_log("ERROR nmg_face_combine() ended in state '%s'/'%s'?\n",
@@ -2535,6 +2555,8 @@ CONST char		*reason;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_RAYSTATE(rs);
+	if(eu->g.lseg_p) NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);
+	if(rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_edge_geom_isect_line(eu=x%x, %s)\n eu->g=x%x, rs->eg=x%x at START\n",
@@ -2553,6 +2575,7 @@ CONST char		*reason;
 			VMOVE( eg->e_dir, rs->dir );
 			rs->eg_p = eg;
 		} else {
+			NMG_CK_EDGE_G_LSEG(rs->eg_p);
 			nmg_use_edge_g( eu, (long *)rs->eg_p );
 		}
 		goto out;
@@ -2575,6 +2598,7 @@ CONST char		*reason;
 	 */
 	nmg_jeg( rs->eg_p, eu->g.lseg_p );
 out:
+	NMG_CK_EDGE_G_LSEG(rs->eg_p);
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at END\n",
 			eu, eu->g.magic_p, rs->eg_p);
@@ -2845,6 +2869,7 @@ int			other_rs_state;
 	vu = rs->vu[pos];
 	NMG_CK_VERTEXUSE(vu);
 	RT_CK_TOL(rs->tol);
+	if(rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d) START\n",
@@ -2925,6 +2950,7 @@ int			other_rs_state;
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
 		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
+			NMG_CK_EDGE_G_LSEG(rs->eg_p);
 			nmg_edge_geom_isect_line( eu, rs, "force ON_REV to line" );
 		}
 	}
@@ -2932,6 +2958,7 @@ int			other_rs_state;
 		eu = nmg_find_eu_of_vu(vu);
 		NMG_CK_EDGEUSE(eu);
 		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
+			NMG_CK_EDGE_G_LSEG(rs->eg_p);
 			nmg_edge_geom_isect_line( eu, rs, "force ON_FORW to line" );
 		}
 	}
@@ -3274,6 +3301,7 @@ nmg_fu_touchingloops(rs->fu2);
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d) END\n",
 			rs->vu[pos], pos);
 	}
+	if(rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
 	return 0;
 }
                                                                                                                                       
