@@ -2,7 +2,11 @@
 
 bin_PROGRAMS = remrt rtsrv
 
-remrt_srcs = remrt.c ihost.c $(top_srcdir)/src/rt/opt.c
+remrt_srcs = \
+	opt.c \
+	ihost.c \
+	remrt.c
+
 remrt_SOURCES = $(remrt_srcs) vers.c
 remrt_LDADD = ${FB} ${OPTICAL} ${RT}
 
