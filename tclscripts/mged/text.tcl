@@ -845,6 +845,12 @@ proc set_text_key_bindings { id } {
 		break
 	    }
 
+	    bind $w <KP_Enter> {
+		execute_cmd %W
+		vi_insert_mode %W
+		break
+	    }
+
 	    bind $w <Delete> {
 		backward_delete_char %W
 		break
@@ -888,6 +894,11 @@ proc set_text_key_bindings { id } {
 	    }
 
 	    bind $w <Return> {
+		execute_cmd %W
+		break
+	    }
+
+	    bind $w <KP_Enter> {
 		execute_cmd %W
 		break
 	    }
