@@ -465,6 +465,8 @@ register fastf_t *max;
 
 	/* X axis */
 	if( rp->r_dir[X] < -EPSILON )  {
+		/* Heading towards smaller numbers */
+		/* if( *min > *pt )  miss */
 		if( (sv = (*min - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
 		if(rp->r_max > sv)
@@ -472,6 +474,8 @@ register fastf_t *max;
 		if( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
 	}  else if( rp->r_dir[X] > EPSILON )  {
+		/* Heading towards larger numbers */
+		/* if( *max < *pt )  miss */
 		if( (st = (*max - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
 		if(rp->r_max > st)
@@ -480,8 +484,9 @@ register fastf_t *max;
 			rp->r_min = sv;
 	}  else  {
 		/*
-		 *  Direction along this axis is NEAR 0, (ray aligned
-		 *  with axis), merely check pos against the boundaries.
+		 *  Direction cosines along this axis is NEAR 0,
+		 *  which implies that the ray is perpendicular to the axis,
+		 *  so merely check position against the boundaries.
 		 */
 		if( (*min > *pt) || (*max < *pt) )
 			return(0);	/* MISS */;
@@ -504,10 +509,6 @@ register fastf_t *max;
 		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
 			rp->r_min = sv;
 	}  else  {
-		/*
-		 *  Direction along this axis is NEAR 0, (ray aligned
-		 *  with axis), merely check against the boundaries.
-		 */
 		if( (*min > *pt) || (*max < *pt) )
 			return(0);	/* MISS */;
 	}
@@ -529,10 +530,6 @@ register fastf_t *max;
 		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
 			rp->r_min = sv;
 	}  else  {
-		/*
-		 *  Direction along this axis is NEAR 0, (ray aligned
-		 *  with axis), merely check against the boundaries.
-		 */
 		if( (*min > *pt) || (*max < *pt) )
 			return(0);	/* MISS */;
 	}
