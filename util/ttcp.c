@@ -147,6 +147,7 @@ pattern(register char *cp, register int cnt)
 /******* timing *********/
 
 #ifdef SYSV
+/* was long instead of time_t */
 extern time_t time(time_t *);
 static time_t time0;
 static struct tms tms0;
