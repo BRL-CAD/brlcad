@@ -46,7 +46,7 @@ char	new_name[NAMESIZE];
 char	prestr[NAMESIZE];
 int	ncharadd;
 
-int invoke_db_wrapper( ClientData clientData, Tcl_Interp *interp, int argc, char **argv, const char *cmd );
+int invoke_db_wrapper(Tcl_Interp *interp, int argc, char **argv);
 
 /*
  *
@@ -59,26 +59,14 @@ int invoke_db_wrapper( ClientData clientData, Tcl_Interp *interp, int argc, char
  */
 int
 f_dup(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
 {
-  struct bu_vls vls;
+	CHECK_DBI_NULL;
 
-  CHECK_DBI_NULL;
-
-  if(argc < 2 || 3 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help dup");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  return invoke_db_wrapper( clientData, interp, argc, argv, "dup" );
+	return invoke_db_wrapper(interp, argc, argv);
 }
 
 /*
@@ -88,19 +76,26 @@ char	**argv;
  *  that have been subsumed by "db" object methods.
  */
 int
-invoke_db_wrapper( ClientData clientData, Tcl_Interp *interp, int argc, char **argv, const char *cmd )
+invoke_db_wrapper(Tcl_Interp	*interp,
+		  int		argc,
+		  char		**argv)
 {
-	struct bu_vls	str;
-	int	ret;
+	register int	i;
+	struct bu_vls	vls;
+	int		ret;
 
-	bu_vls_init(&str);
+	bu_vls_init(&vls);
 
-	bu_vls_printf( &str, "db %s ", cmd );
-	bu_vls_from_argv( &str, argc-1, argv+1 );
-	if(bu_debug) bu_log("%s\n", bu_vls_addr(&str) );
+	bu_vls_strcpy(&vls, MGED_DB_NAME);
+	for (i = 0; i < argc; ++i)
+		bu_vls_printf(&vls, " %s", argv[i]);
 
-	ret = Tcl_Eval( interp, bu_vls_addr(&str) );
-	bu_vls_free( &str );
+	if (bu_debug)
+		bu_log("%s\n", bu_vls_addr(&vls));
+
+	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
 	return ret;
 }
 
@@ -120,31 +115,21 @@ invoke_db_wrapper( ClientData clientData, Tcl_Interp *interp, int argc, char **a
  */
 int
 f_concat(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
 {
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || 3 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help dbconcat");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
 	/* get any prefix */
-	if( argc < 3 )  {
-	  Tcl_AppendResult(interp, MORE_ARGS_STR,
-			   "concat: Enter prefix string or / for no prefix: ",
-			   (char *)NULL);
-	  return TCL_ERROR;
+	if (argc < 3) {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "concat: Enter prefix string or / for no prefix: ",
+				 (char *)NULL);
+		return TCL_ERROR;
 	}
 
-	return invoke_db_wrapper( clientData, interp, argc, argv, "concat" );
+	return invoke_db_wrapper(interp, argc, argv);
 }
