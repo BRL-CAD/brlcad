@@ -6,6 +6,8 @@
 #	Author - Robert G. Parker
 #
 
+check_externs "_mged_opendb _mged_rt"
+
 proc init_Raytrace { id } {
     global player_screen
     global rt_fb_or_file
@@ -34,7 +36,7 @@ proc init_Raytrace { id } {
     }
 
     if ![info exists rt_file($id)] {
-	regsub \.g$ [opendb] .pix default_file
+	regsub \.g$ [_mged_opendb] .pix default_file
 	set rt_file($id) $default_file
     }
 
@@ -64,13 +66,13 @@ proc init_Raytrace { id } {
 
     toplevel $top -screen $player_screen($id)
 
-    frame $top.gridF
+    frame $top.gridF -relief groove -bd 2
     frame $top.gridF2
     frame $top.gridF3
     frame $top.framebufferF -relief sunken -bd 2
     frame $top.filenameF -relief sunken -bd 2
     frame $top.sizeF -relief sunken -bd 2
-    frame $top.bgColorF -relief sunken -bd 2
+    frame $top.colorF -relief sunken -bd 2
 
     if {$rt_fb_or_file($id) == "framebuffer"} {
 	set fb_state normal
@@ -84,13 +86,13 @@ proc init_Raytrace { id } {
 	    -state $fb_state
     radiobutton $top.framebufferRB -text "Frame Buffer" -anchor w\
 	    -value framebuffer -variable rt_fb_or_file($id)\
-	    -command "set_fb_state $id"
+	    -command "rt_set_fb_state $id"
 
     entry $top.filenameE -relief flat -width 12 -textvar rt_file($id)\
 	    -state $file_state
     radiobutton $top.filenameRB -text "File Name" -anchor w\
 	    -value filename -variable rt_fb_or_file($id)\
-	    -command "set_file_state $id"
+	    -command "rt_set_file_state $id"
 
     label $top.sizeL -text "Size" -anchor w
     entry $top.sizeE -relief flat -width 12 -textvar rt_size($id)
@@ -110,30 +112,30 @@ proc init_Raytrace { id } {
     $top.sizeMB.sizeM add command -label 1024\
 	    -command "set rt_size($id) 1024"
 
-    label $top.bgColorL -text "Background Color" -anchor w
-    entry $top.bgColorE -relief flat -width 12 -textvar rt_color($id)
-    menubutton $top.bgColorMB -relief raised -bd 2\
-	    -menu $top.bgColorMB.bgColorM -indicatoron 1
-    menu $top.bgColorMB.bgColorM -tearoff 0
-    $top.bgColorMB.bgColorM add command -label "Choose Color"\
-	    -command "do_choose_color $id"
-    $top.bgColorMB.bgColorM add separator
-    $top.bgColorMB.bgColorM add command -label black\
-	     -command "set rt_color($id) \"0 0 0\"; set_bgColorMB_color $id"
-    $top.bgColorMB.bgColorM add command -label white\
-	     -command "set rt_color($id) \"220 220 220\"; set_bgColorMB_color $id"
-    $top.bgColorMB.bgColorM add command -label red\
-	     -command "set rt_color($id) \"220 0 0\"; set_bgColorMB_color $id"
-    $top.bgColorMB.bgColorM add command -label green\
-	     -command "set rt_color($id) \"0 220 0\"; set_bgColorMB_color $id"
-    $top.bgColorMB.bgColorM add command -label blue\
-	     -command "set rt_color($id) \"0 0 220\"; set_bgColorMB_color $id"
-    $top.bgColorMB.bgColorM add command -label yellow\
-	     -command "set rt_color($id) \"220 220 0\"; set_bgColorMB_color $id"
-    $top.bgColorMB.bgColorM add command -label cyan\
-	    -command "set rt_color($id) \"0 220 220\"; set_bgColorMB_color $id"
-    $top.bgColorMB.bgColorM add command -label magenta\
-	    -command "set rt_color($id) \"220 0 220\"; set_bgColorMB_color $id"
+    label $top.colorL -text "Background Color" -anchor w
+    entry $top.colorE -relief flat -width 12 -textvar rt_color($id)
+    menubutton $top.colorMB -relief raised -bd 2\
+	    -menu $top.colorMB.colorM -indicatoron 1
+    menu $top.colorMB.colorM -tearoff 0
+    $top.colorMB.colorM add command -label "Choose Color"\
+	    -command "rt_choose_color $id"
+    $top.colorMB.colorM add separator
+    $top.colorMB.colorM add command -label black\
+	     -command "set rt_color($id) \"0 0 0\"; rt_set_colorMB $id"
+    $top.colorMB.colorM add command -label white\
+	     -command "set rt_color($id) \"220 220 220\"; rt_set_colorMB $id"
+    $top.colorMB.colorM add command -label red\
+	     -command "set rt_color($id) \"220 0 0\"; rt_set_colorMB $id"
+    $top.colorMB.colorM add command -label green\
+	     -command "set rt_color($id) \"0 220 0\"; rt_set_colorMB $id"
+    $top.colorMB.colorM add command -label blue\
+	     -command "set rt_color($id) \"0 0 220\"; rt_set_colorMB $id"
+    $top.colorMB.colorM add command -label yellow\
+	     -command "set rt_color($id) \"220 220 0\"; rt_set_colorMB $id"
+    $top.colorMB.colorM add command -label cyan\
+	    -command "set rt_color($id) \"0 220 220\"; rt_set_colorMB $id"
+    $top.colorMB.colorM add command -label magenta\
+	    -command "set rt_color($id) \"220 0 220\"; rt_set_colorMB $id"
 
     button $top.advancedB -relief raised -text "Advanced Settings..."\
 	    -command "do_Advanced_Settings $id"
@@ -145,20 +147,22 @@ proc init_Raytrace { id } {
 	    -command "catch { destroy $top }"
 
     grid $top.framebufferE -sticky "ew" -in $top.framebufferF
-    grid $top.framebufferF $top.framebufferRB -sticky "ew" -in $top.gridF -pady 4
+    grid $top.framebufferF $top.framebufferRB -sticky "ew"\
+	    -in $top.gridF -padx 8 -pady 8
     grid $top.filenameE -sticky "ew" -in $top.filenameF
-    grid $top.filenameF $top.filenameRB -sticky "ew" -in $top.gridF -pady 4
+    grid $top.filenameF $top.filenameRB -sticky "ew"\
+	    -in $top.gridF -padx 8 -pady 8
     grid columnconfigure $top.framebufferF 0 -weight 1
     grid columnconfigure $top.filenameF 0 -weight 1
     grid columnconfigure $top.gridF 0 -weight 1
 
     grid $top.sizeE $top.sizeMB -sticky "ew" -in $top.sizeF
     grid $top.sizeF $top.sizeL -sticky "ew" -in $top.gridF2 -pady 4
-    grid $top.bgColorE $top.bgColorMB -sticky "ew" -in $top.bgColorF
-    grid $top.bgColorF $top.bgColorL -sticky "ew" -in $top.gridF2 -pady 4
+    grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorF
+    grid $top.colorF $top.colorL -sticky "ew" -in $top.gridF2 -pady 4
 
     grid columnconfigure $top.sizeF 0 -weight 1
-    grid columnconfigure $top.bgColorF 0 -weight 1
+    grid columnconfigure $top.colorF 0 -weight 1
     grid columnconfigure $top.gridF2 0 -weight 1
 
     grid $top.advancedB -sticky "nsew" -in $top.gridF3
@@ -170,8 +174,8 @@ proc init_Raytrace { id } {
     pack $top.gridF $top.gridF2 $top.gridF3 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8
 
-    bind $top.bgColorE <Return> "set_bgColorMB_color $id"
-    set_bgColorMB_color $id
+    bind $top.colorE <Return> "rt_set_colorMB $id"
+    rt_set_colorMB $id
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]
@@ -193,7 +197,7 @@ proc do_Raytrace { id } {
     global rt_lmodel
 
     cmd_set $id
-    set rt_cmd "rt"
+    set rt_cmd "_mged_rt"
 
     if {$rt_fb_or_file($id) == "filename"} {
 	if {$rt_file($id) != ""} {
@@ -211,8 +215,8 @@ proc do_Raytrace { id } {
 	    append rt_cmd " -o $rt_file($id)"
 	} else {
 	    mged_dialog .$id.rtDialog $player_screen($id)\
-		    "You must specify a file name!"\
-		    "You must specify a file name!"\
+		    "No file name specified!"\
+		    "No file name specified!"\
 		    "" 0 OK
 	    return
 	}
@@ -233,7 +237,7 @@ proc do_Raytrace { id } {
 	    }
 	} else {
 	    mged_dialog .$id.rtDialog $player_screen($id)\
-		    "Improper size specification"\
+		    "Improper size specification!"\
 		    "Improper size specification: $rt_size($id)"\
 		    "" 0 OK
 	    return
@@ -247,7 +251,7 @@ proc do_Raytrace { id } {
 	    append rt_cmd " -C$red/$green/$blue"
 	} else {
 	    mged_dialog .$id.rtDialog $player_screen($id)\
-		    "Improper color specification"\
+		    "Improper color specification!"\
 		    "Improper color specification: $rt_color($id)"\
 		    "" 0 OK
 	    return
@@ -285,7 +289,7 @@ proc do_fbclear { id } {
 		$rt_color($id) cmatch red green blue]
 	if {!$result} {
 	    mged_dialog .$id.rtDialog $player_screen($id)\
-		    "Improper color specification"\
+		    "Improper color specification!"\
 		    "Improper color specification: $rt_color($id)"\
 		    "" 0 OK
 	    return
@@ -304,11 +308,11 @@ proc do_fbclear { id } {
 
     if {$result != 0} {
 	mged_dialog .$id.rtDialog $player_screen($id)\
-		"RT Error" "Rt Error: $rt_error" "" 0 OK
+		"RT Error!" "Rt Error: $rt_error" "" 0 OK
     }
 }
 
-proc set_fb_state { id } {
+proc rt_set_fb_state { id } {
     set top .$id.do_rt
 
     $top.clearB configure -state normal
@@ -318,7 +322,7 @@ proc set_fb_state { id } {
     focus $top.framebufferE
 }
 
-proc set_file_state { id } {
+proc rt_set_file_state { id } {
     set top .$id.do_rt
 
     $top.clearB configure -state disabled
@@ -328,35 +332,26 @@ proc set_file_state { id } {
     focus $top.filenameE
 }
 
-proc do_choose_color { id } {
+proc rt_choose_color { id } {
     global player_screen
     global rt_color
 
     set top .$id.do_rt
-    set hex_color [tk_chooseColor -parent $top] 
-    if {$hex_color == ""} {
-	return
-    }
+    set colors [chooseColor $top]
 
-    $top.bgColorMB configure -bg $hex_color
-
-    set result [regexp "^#(\[0-9AaBbCcDdEeFf\]\[0-9AaBbCcDdEeFf\])(\[0-9AaBbCcDdEeFf\]\[0-9AaBbCcDdEeFf\])(\[0-9AaBbCcDdEeFf\]\[0-9AaBbCcDdEeFf\])$" $hex_color cmatch hred hgreen hblue]
-
-    if {$result} {
-	set red [format "%d" 0X$hred]
-	set green [format "%d" 0X$hgreen]
-	set blue [format "%d" 0X$hblue]
-	set rt_color($id) "$red $green $blue"
-    } else {
+    if {[llength $colors] != 2} {
 	mged_dialog .$id.rtDialog $player_screen($id)\
-		"Error choosing a color."\
-		"Error choosing a color: $hex_color"\
+		"Error choosing a color!"\
+		"Error choosing a color!"\
 		"" 0 OK
 	return
     }
+
+    $top.colorMB configure -bg [lindex $colors 0]
+    set rt_color($id) [lindex $colors 1]
 }
 
-proc set_bgColorMB_color { id } {
+proc rt_set_colorMB { id } {
     global player_screen
     global rt_color
 
@@ -367,7 +362,7 @@ proc set_bgColorMB_color { id } {
 		$rt_color($id) cmatch red green blue]
 	if {!$result} {
 	    mged_dialog .$id.rtDialog $player_screen($id)\
-		    "Improper color specification"\
+		    "Improper color specification!"\
 		    "Improper color specification: $rt_color($id)"\
 		    "" 0 OK
 	    return
@@ -376,7 +371,7 @@ proc set_bgColorMB_color { id } {
 	return
     }
 
-    $top.bgColorMB configure -bg [format "#%02x%02x%02x" $red $green $blue]
+    $top.colorMB configure -bg [format "#%02x%02x%02x" $red $green $blue]
 }
 
 proc do_Advanced_Settings { id } {

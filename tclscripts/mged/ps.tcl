@@ -6,6 +6,8 @@
 #	Author - Robert G. Parker
 #
 
+check_externs "_mged_opendb _mged_ps"
+
 proc init_psTool { id } {
     global player_screen
     global ps_file
@@ -24,7 +26,7 @@ proc init_psTool { id } {
     }
 
     if ![info exists ps_file($id)] {
-	regsub \.g$ [opendb] .ps default_file
+	regsub \.g$ [_mged_opendb] .ps default_file
 	set ps_file($id) $default_file
     }
 
@@ -175,7 +177,7 @@ proc do_ps { id } {
     global ps_zclip
 
     cmd_set $id
-    set ps_cmd "ps"
+    set ps_cmd "_mged_ps"
 
     if {$ps_file($id) != ""} {
 	if {[file exists $ps_file($id)]} {
@@ -190,8 +192,8 @@ proc do_ps { id } {
 	}
     } else {
 	mged_dialog .$id.psDialog $player_screen($id)\
-		"You must specify a file name!"\
-		"You must specify a file name!"\
+		"No file name specified!"\
+		"No file name specified!"\
 		"" 0 OK
 	return
     }

@@ -89,6 +89,21 @@ proc mged_dialog { w screen title text bitmap default args } {
 	bind $w <Return> "$w.bot.button$default flash ; set button$w $default"
     }
 
+    set pxy [winfo pointerxy $w]
+    set x [lindex $pxy 0]
+    set y [lindex $pxy 1]
+    set width [winfo reqwidth $w]
+    set dx [expr $width / 2]
+    set x [expr $x - $dx]
+    set y [expr $y - 70]
+    if {$x < 0} {
+	set x 0
+    }
+    if {$y < 0} {
+	set y 0
+    }
+    wm geometry $w +$x+$y
+
     tkwait variable button$w
     catch { destroy $w }
     return [set button$w]
@@ -140,6 +155,21 @@ proc mged_input_dialog { w screen title text entryvar defaultentry default args 
     if { $default >= 0 } {
 	bind $w <Return> "$w.bot.button$default flash ; set button$w $default"
     }
+
+    set pxy [winfo pointerxy $w]
+    set x [lindex $pxy 0]
+    set y [lindex $pxy 1]
+    set width [winfo reqwidth $w]
+    set dx [expr $width / 2]
+    set x [expr $x - $dx]
+    set y [expr $y - 70]
+    if {$x < 0} {
+	set x 0
+    }
+    if {$y < 0} {
+	set y 0
+    }
+    wm geometry $w +$x+$y
 
     tkwait variable button$w
     set entrylocal [set entry$w]
@@ -346,13 +376,18 @@ proc do_Open { id } {
 proc do_New { id } {
     global player_screen
 
-    set file_types {{{MGED Database} {.g}}}
-    set ia_filename [tk_getSaveFile -parent .$id -filetypes $file_types\
-	    -initialdir . -title "New MGED Database" -defaultextension ".g"]
-    if {$ia_filename != ""} {
-	opendb $ia_filename y
-	mged_dialog .$id.cool $player_screen($id) "File loaded" \
-		"Database $ia_filename successfully loaded." info 0 OK
+    set ret [mged_input_dialog .$id.new $player_screen($id) "New MGED Database" \
+	    "Enter new database filename:" ia_filename "" 0 OK CANCEL]
+
+    if {$ia_filename != "" && $ret == 0} {
+	if [file exists $ia_filename] {
+	    mged_dialog .$id.uncool $player_screen($id) "Existing Database" \
+		    "$ia_filename already exists" info 0 OK
+	} else {
+	    opendb $ia_filename y
+	    mged_dialog .$id.cool $player_screen($id) "File loaded" \
+		    "Database $ia_filename successfully loaded." info 0 OK
+	}
     }
 }
 
@@ -363,20 +398,21 @@ proc do_Concat { id } {
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
 	    -initialdir . -title "Insert MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
-	dbconcat $ia_filename /
-    }
-}
+	mged_input_dialog .$id.prefix $player_screen($id) "Prefix" \
+		"Enter prefix:" prefix "" 0 OK
 
-proc do_Keep { id } {
+	if {$prefix != ""} {
+	    dbconcat $ia_filename $prefix
+	} else {
+	    dbconcat $ia_filename /
+	}
+    }
 }
 
 proc do_Units { id } {
     global mged_display
 
     _mged_units $mged_display(units)
-}
-
-proc do_Raytrace { id } {
 }
 
 proc do_rt_script { id } {
@@ -386,15 +422,9 @@ proc do_rt_script { id } {
     if {[string length $ia_filename] > 0} {
 	saveview $ia_filename
     } else {
-	mged_dialog .$id.toobad $player_screen($id) "Error" \
+	mged_dialog .$id.uncool $player_screen($id) "Error" \
 		"No such file exists." warning 0 OK
     }
-}
-
-proc do_plot { id } {
-}
-
-proc do_postscript { id } {
 }
 
 proc do_About_MGED { id } {
@@ -403,7 +433,7 @@ proc do_About_MGED { id } {
     mged_dialog .$id.about $player_screen($id) "About MGED..." \
 	    "MGED: Multi-device Geometry EDitor\n\
 \n\
-MGED is a part of The BRL-CAD Package.\n\n\
+MGED is a part of the BRL-CAD(TM) package.\n\n\
 Developed by The U. S. Army Research Laboratory\n\
 Aberdeen Proving Ground, Maryland  21005-5068  USA\n\
 " \
@@ -437,7 +467,7 @@ proc ia_invoke { w } {
 
     if [info complete $cmd] {
 	cmd_set $id
-	catch [list mged_glob $cmd] globbed_cmd
+	catch [list db_glob $cmd] globbed_cmd
 	set result [catch [list uplevel #0 $globbed_cmd] ia_msg]
 
 	if { ![winfo exists $w] } {
