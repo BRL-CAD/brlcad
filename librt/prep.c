@@ -37,6 +37,7 @@ static const char RCSprep[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "plot3.h"
 #include "./debug.h"
+#include <unistd.h>
 
 BU_EXTERN(void		rt_ck, (struct rt_i	*rtip));
 
@@ -193,6 +194,7 @@ int			ncpu;
 	register int		i;
 	struct resource		*resp;
 	vect_t			diag;
+	char *sbrk_start, *sbrk_end;
 
 	RT_CK_RTI(rtip);
 
@@ -362,6 +364,7 @@ int			ncpu;
 		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
 	}
 
+	sbrk_start = sbrk( 0 );
 	/*
 	 *	Partition space
 	 *
@@ -377,6 +380,10 @@ int			ncpu;
 			stp->st_piece_rpps = NULL;
 		}
 	} RT_VISIT_ALL_SOLTABS_END
+
+	sbrk_end = sbrk( 0 );
+
+	bu_log( "space partition used %ld bytes\n", (long)(sbrk_end - sbrk_start) );
 
 	/* Plot bounding RPPs */
 	if( (RT_G_DEBUG&DEBUG_PLOTBOX) )  {
