@@ -199,12 +199,27 @@ proc hole_init {} {
 	global treetop_name
 	global treetop_tree
 
+	set newtree [concat "{-" $treetop_tree "{l _hole.s}}"]
+	puts "newtree = $newtree"
+
 	# .inmem form tgc
 	send rtsync \
 		vrmgr_send \
 			_mged_kill _hole.s
 
 	send rtsync \
+		node_send "{" \
+			.inmem put _hole.s tgc \
+				V "{" 0 0   0 "}" \
+				H "{" 0 0 -50 "}" \
+				A "{" 1 0 0 "}" \
+				B "{" 0 1 0 "}" \
+				C "{" 1 0 0 "}" \
+				D "{" 0 1 0 "}" \
+			";" \
+			.inmem adjust $treetop_name \
+				tree $newtree \
+		"}" ";" \
 		vrmgr_send "{" \
 			.inmem put _hole.s tgc \
 				V "{" 0 0   0 "}" \
@@ -214,21 +229,22 @@ proc hole_init {} {
 				C "{" 1 0 0 "}" \
 				D "{" 0 1 0 "}" \
 			";" \
-			_mged_e _hole.s ";" \
-		"}"
-
-	set newtree [concat "{-" $treetop_tree "{l _hole.s}}"]
-	puts "newtree = $newtree"
-
-	send rtsync \
-		vrmgr_send "{" \
 			.inmem adjust $treetop_name \
-				tree $newtree \
-		"}"
+				tree $newtree ";" \
+			_mged_e _hole.s ";" \
+		"}" ";" \
+		reprep ";" refresh
 }
 
 proc hole_size { radius } {
 	send rtsync \
+		node_send "{" \
+			.inmem adjust _hole.s \
+			A "{" $radius 0 0 "}" \
+			B "{" 0 $radius 0 "}" \
+			C "{" $radius 0 0 "}" \
+			D "{" 0 $radius 0 "}" ";" \
+		"}" ";" \
 		vrmgr_send "{" \
 			.inmem adjust _hole.s \
 			A "{" $radius 0 0 "}" \
@@ -236,7 +252,8 @@ proc hole_size { radius } {
 			C "{" $radius 0 0 "}" \
 			D "{" 0 $radius 0 "}" ";" \
 			redraw_vlist _hole.s \
-		"}"
+		"}" ";" \
+		reprep ";" refresh
 }
 
 puts "done dg.tcl"
