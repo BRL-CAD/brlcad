@@ -47,6 +47,15 @@ struct  frame {
 struct rt_list head = {MAGIC, &head, &head};
 struct frame globals;
 
+extern int optind;
+extern char *optarg;
+int get_args();
+int verbose;		/* print status on stderr */
+int specify_base;	/* user specified a base */
+int user_base;		/* value of user-specified base */
+int force_shell;	/* force shell script for each frame */
+int suppress_shell;	/* suppress shell script for each frame */
+
 void squirtframes();
 void sf();
 
@@ -153,7 +162,9 @@ FILE *in;
 	if (token == SHELL) {
 		new->flags |= FLAG_SCRIPT;
 	}
+	if (verbose) {
 fprintf(stderr,"scriptsort: Frame %d(%d)\n",new->number, new->tp);
+	}
 	return(new);
 }
 
@@ -215,8 +226,8 @@ struct frame *fp;
 		fprintf(stdout,"%s", fp->text);
 	}
 	fprintf(stdout,"end;\n");
-	if (fp->flags & FLAG_SCRIPT) {
-		fprintf(stdout,"!end_of_frame.sh;\n");
+	if ((force_shell || (fp->flags & FLAG_SCRIPT)) && !suppress_shell) {
+		fprintf(stdout,"!end_of_frame.sh %d\n", fp->number);
 	}
 }
 void merge()
@@ -246,16 +257,48 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-	struct frame *new;
+	struct frame *new, *lp;
 	
-	int base;
-	fprintf(stderr,"scriptsort: starting.\n");
-	if (argc == 2) {
-		base = atoi(argv[1]);
-	} else {
-		base = 32;
+	int base, count;
+
+	if (!get_args(argc,argv)) {
+		exit(1);
 	}
-	{
+	if (verbose) fprintf(stderr,"scriptsort: starting.\n");
+
+	RT_LIST_INIT(&head);
+	globals.text=NULL;
+	globals.tp=globals.tl=0;
+	globals.flags=globals.location=globals.length = 0;
+	globals.l.magic = MAGIC;
+
+	if (verbose) fprintf(stderr,"scriptsort: reading.\n");
+
+	while((new=getframe(stdin)) != NULL) {
+		RT_LIST_INSERT(&head,&new->l);
+	}
+	if (verbose) fprintf(stderr,"scriptsort: sorting.\n");
+	bubblesort();
+	if (verbose) fprintf(stderr,"scriptsort: merging.\n");
+	merge();
+
+	if (verbose) fprintf(stderr,"scriptsort: squirting.\n");
+	if (specify_base) {
+		base = user_base;
+	} else {
+		base = 0;
+	}
+	if (base == 0) {
+		/*compute base as largest power of 2 less than num of frames*/
+		base = 1;
+		count = 2;
+		for ( RT_LIST_FOR( lp, frame, &head ) ) {
+			if (count-- <= 0) {
+				base *= 2;
+				count = base - 1;
+			}
+		}
+	} else {
 		register unsigned int left,right,mask,bits;
 		bits = sizeof(int)*4;		/* assumes 8 bit byte */
 		mask = (1<<bits)-1;		/* Makes a low bit mask */
@@ -278,23 +321,6 @@ fprintf(stderr,"left=0x%x, right=0x%x, mask=0x%x, bits=%d\n",left,right,mask,
 		}
 	}
 		
-	RT_LIST_INIT(&head);
-	globals.text=NULL;
-	globals.tp=globals.tl=0;
-	globals.flags=globals.location=globals.length = 0;
-	globals.l.magic = MAGIC;
-
-	fprintf(stderr,"scriptsort: reading.\n");
-
-	while((new=getframe(stdin)) != NULL) {
-		RT_LIST_INSERT(&head,&new->l);
-	}
-	fprintf(stderr,"scriptsort: sorting.\n");
-	bubblesort();
-	fprintf(stderr,"scriptsort: merging.\n");
-	merge();
-
-	fprintf(stderr,"scriptsort: squirting.\n");
 	if (globals.text) {
 		fprintf(stdout,"%s", globals.text);
 	}
@@ -349,4 +375,37 @@ int skip;
 			if (&runner->l == &head) return;
 		}
 	}
+}
+
+#define OPT_STR "qb:fs"
+int get_args (argc,argv)
+int argc;
+char **argv;
+{
+	int c;
+	verbose = 1;
+	specify_base = force_shell = suppress_shell = 0;
+	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+		switch(c){
+		case 'q':
+			verbose = 0;
+			break;
+		case 'b':
+			specify_base = 1;
+			user_base = atoi(optarg);
+			break;
+		case 'f':
+			force_shell = 1;
+			suppress_shell = 0;
+			break;
+		case 's':
+			suppress_shell = 1;
+			force_shell = 0;
+			break;
+		default:
+			fprintf(stderr,"Unknown option: -%c\n",c);
+			return(0);
+		}
+	}
+	return(1);
 }
