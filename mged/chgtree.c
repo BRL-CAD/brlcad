@@ -427,8 +427,6 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int i;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 	int	is_phony;
 	int	verbose = LOOKUP_NOISY;
 
@@ -521,7 +519,6 @@ char	**argv;
 	int		num_deleted;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
-	union tree		*tp;
 	int			ret;
 
 	CHECK_DBI_NULL;
@@ -689,8 +686,6 @@ char	**argv;
 	struct animate		*anp;
 	struct directory	*dp;
 	mat_t			stack;
-	mat_t			arc;
-	int			i;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	union tree		*tp;

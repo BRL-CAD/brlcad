@@ -176,8 +176,6 @@ char    **argv;
 {
   register struct directory *dp;
   register int i;
-  register struct dm_list *dmlp;
-  register struct dm_list *save_dmlp;
 
   CHECK_DBI_NULL;
 
@@ -209,8 +207,6 @@ char    **argv;
 {
   register struct directory *dp;
   register int i;
-  register struct dm_list *dmlp;
-  register struct dm_list *save_dmlp;
 
   CHECK_DBI_NULL;
 
@@ -1105,7 +1101,6 @@ char	**argv;
 {
 	register struct solid *sp;
 	register struct solid *nsp;
-	register struct dm_list *dmlp;
 	struct directory	*dp;
 
 	CHECK_DBI_NULL;
@@ -1668,7 +1663,6 @@ fastf_t azim, elev, twist;
   fastf_t o_twist;
   fastf_t o_arz;
   fastf_t o_larz;
-  char *av[5];
   struct bu_vls vls;
 
   /* grab old twist angle before it's lost */
@@ -1709,7 +1703,6 @@ int	argc;
 char	**argv;
 {
   int iflag = 0;
-  struct bu_vls vls;
   fastf_t twist = 0.0;  /* assumed to be 0.0 ---- unless supplied by user */
 
   if(argc < 3 || 5 < argc){
@@ -1749,7 +1742,6 @@ register struct directory *dp;
   register struct solid *sp;
   static struct solid *nsp;
   register int i;
-  register struct dm_list *dmlp;
 
   if(dbip == DBI_NULL)
     return;
@@ -1796,7 +1788,6 @@ register struct directory *dp;
 {
   register struct solid *sp;
   register struct solid *nsp;
-  register struct dm_list *dmlp;
 
   if(dbip == DBI_NULL)
     return;
@@ -2294,7 +2285,6 @@ char	**argv;
   vect_t tvec;
   vect_t rvec;
   char	*cmd;
-  char  knob_val_pair[128];
   char origin = '\0';
   int do_tran = 0;
   int do_rot = 0;
@@ -2302,7 +2292,6 @@ char	**argv;
   int view_flag = 0;  /* manipulate view using view coords */
   int model_flag = 0; /* manipulate view using model coords */
   int edit_flag = 0;  /* force edit interpretation */
-  struct bu_vls vls;
 
   CHECK_DBI_NULL;
 
@@ -3433,11 +3422,6 @@ int model_flag;
 int view_flag;
 int edit_flag;
 {
-  point_t new_pos;
-  point_t diff;
-  point_t model_pos;
-  point_t view_pos;
-
   if(EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
 		    !view_flag && !model_flag) || edit_flag))
     mged_etran(tvec);
@@ -3625,8 +3609,6 @@ char	**argv;
 static void
 abs_zoom()
 {
-  vect_t new_pos;
-
   /* Use initial Viewscale */
   if(-SMALL_FASTF < view_state->vs_absolute_scale && view_state->vs_absolute_scale < SMALL_FASTF)
     view_state->vs_Viewscale = view_state->vs_i_Viewscale;
@@ -3656,8 +3638,6 @@ int
 mged_zoom(val)
 double val;
 {
-  vect_t new_pos;
-
   if( val < SMALL_FASTF || val > INFINITY )  {
     Tcl_AppendResult(interp, "zoom: scale factor out of range\n", (char *)NULL);
     return TCL_ERROR;
@@ -3818,7 +3798,6 @@ char	*path;
     char	*pp;
     char	*start_addr;
     char	**result;
-    char	*copy;
 
     nm_constituents = ((*path != '/') && (*path != '\0'));
     for (pp = path; *pp != '\0'; ++pp)
@@ -4095,9 +4074,6 @@ void
 setview( a1, a2, a3 )
 double a1, a2, a3;		/* DOUBLE angles, in degrees */
 {
-  point_t model_pos;
-  point_t temp;
-
   buildHrot( view_state->vs_Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
   new_mats();
 
@@ -4122,7 +4098,6 @@ vect_t view_pos;
   point_t old_model_center;
   point_t new_model_center;
   vect_t diff;
-  vect_t temp;
   mat_t	delta;
 
   MAT_DELTAS_GET_NEG( old_model_center, view_state->vs_toViewcenter );
@@ -5038,10 +5013,7 @@ mat_t newrot;
     mged_variables->mv_rotate_about = save_origin;
     es_edflag = save_edflag;
   }else{
-    point_t model_pt;
     point_t point;
-    point_t s_point;
-    mat_t temp;
     vect_t work;
 
     bn_mat_mul2(newrot, acc_rot_sol);
@@ -5133,7 +5105,6 @@ mged_vrot(origin, newrot)
 char origin;
 mat_t newrot;
 {
-  vect_t new_pos;
   mat_t   newinv;
 
   bn_mat_inv( newinv, newrot );

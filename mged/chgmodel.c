@@ -665,7 +665,6 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
-	struct bu_vls		args;
 
 	CHECK_DBI_NULL;
 
@@ -1077,7 +1076,6 @@ char	**argv;
 			for( i=0 ; i<BU_PTBL_END( &table ) ; i++ )
 			{
 				struct face *f;
-				struct face_g_plane *fg;
 
 				f = (struct face *)BU_PTBL_GET( &table, i );
 				NMG_CK_FACE( f );
@@ -1104,7 +1102,6 @@ char	**argv;
 			for( i=0 ; i<BU_PTBL_END( &table ) ; i++ )
 			{
 				struct face *f;
-				struct face_g_plane *fg;
 				struct faceuse *fu;
 
 				f = (struct face *)BU_PTBL_GET( &table, i );
@@ -1959,7 +1956,6 @@ char	**argv;
 		av[2] = "sketch";
 		f_make( clientData, interp, 3, av );
 	} else if( strcmp( argv[2], "sketch" ) == 0 ) {
-		struct line_seg *lsg;
 		struct carc_seg *csg;
 		struct nurb_seg *nsg;
 
@@ -2167,8 +2163,6 @@ char	**argv;
 {
   int iflag = 0;
   vect_t argvect;
-  mat_t temp;
-  vect_t s_point, point, v_work, model_pt;
 
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
