@@ -2,6 +2,31 @@ dnl **************************
 dnl ** BRL-CAD configure.ac **
 dnl **************************
 dnl $Id$
+dnl
+dnl Herein lies the venerable GNU Autotools configure script for BRL-CAD.
+dnl As best is reasonably possible, proper ordering and separation of tests
+dnl and settings should be maintained.  The tests should be added to the 
+dnl rather clearly labeled sections below so that they are as follows:
+dnl
+dnl	 1) check command-line arguments
+dnl	 2) check programs
+dnl	 3) check libraries
+dnl	 4) check headers
+dnl	 5) check types
+dnl	 6) check functions
+dnl	 7) output a summary
+dnl
+dnl Any useful build arguments should be added to the output summary at the
+dnl end.  Although it may be possible to check for certain features of command
+dnl line arguments near the top, related tests should be delayed and placed
+dnl into the appropriate test section.
+dnl
+dnl Features of the GNU Autotools that would require an increase in the minimum
+dnl version requirement are highly discouraged.  Likewise discouraged is
+dnl rolling back support for versions released prior to autoconf 2.50.
+dnl
+dnl Strive to tame the chaos that is so easily achieved.
+dnl
 
 AC_INIT(librt/bool.c)
 AC_PREREQ(2.50)
@@ -61,18 +86,6 @@ AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
 		fi
 	]	
 )
-
-onlyrts="no"
-AC_ARG_ENABLE(only-rts, AC_HELP_STRING(--enable-only-rts,
-		  [Only build enough stuff to for (and including) librtserver (for muves3)]) ,
-	[
-		if test "x$enableval" != "xno"
-		then
-			onlyrts="yes"
-		fi
-	]
-)
-AM_CONDITIONAL(ONLYRTS, test "x$onlyrts" = xyes)
 
 # XXX these flags are GCC-specific -- perhaps should set after the compiler check
 CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
@@ -135,8 +148,40 @@ AC_DEFINE(USE_REGCOMP,1,new regex stuff)
 
 # doxygen
 AC_ARG_ENABLE(doxygen, AC_HELP_STRING(--enable-doxygen,
-		       [enable documentation generation with doxygen (auto)]))
- 
+		       [enable documentation generation with doxygen \[default=automatic\]]))
+
+# only build benchmark
+only_benchmark="no"
+AC_ARG_ENABLE(only-benchmark, AC_HELP_STRING(--enable-only-benchmark,
+		  [Only build the components necessary for benchmark]) ,
+	[
+		if ! test "x$enableval" = "xno" ; then
+			only_benchmark="yes"
+		fi
+	]
+)
+AC_MSG_CHECKING(whether to only build benchmark)
+AC_MSG_RESULT($only_benchmark)
+AM_CONDITIONAL(ONLY_BENCHMARK, test "x$only_benchmark" = "xyes")
+
+# only build librtserver
+only_rts="no"
+AC_ARG_ENABLE(only-rts, AC_HELP_STRING(--enable-only-rts,
+		  [Only build the components necessary for librtserver]) ,
+	[
+		if ! test "x$enableval" = "xno" ; then
+			only_rts="yes"
+			if test "x$only_benchmark" = "xyes" ; then
+				AC_MSG_WARN(Requesting BOTH benchmark and librtserver "only"?)
+				AC_MSG_WARN(Building both benchmark and librtserver)
+			fi
+		fi
+	]
+)
+AC_MSG_CHECKING(whether to only build librtserver)
+AC_MSG_RESULT($only_rts)
+AM_CONDITIONAL(ONLY_RTS, test "x$only_rts" = "xyes")
+
 
 dnl **************************
 dnl *** Check for programs ***
@@ -163,7 +208,8 @@ if ! test "x$enable_doxygen" = "xno" ; then
 		enable_doxygen=no
 	fi
 fi
-AM_CONDITIONAL(DOC, test "x$enable_doxygen" = "xyes")
+AC_MSG_CHECKING(whether to enable doxygen)
+AC_MSG_RESULT($enable_doxygen)
 
 AC_MSG_CHECKING(compiler and flags for sanity)
 AC_TRY_RUN([
@@ -598,9 +644,9 @@ echo Build debug release ..................: no
 echo Build profile release ................: no
 echo Print verbose compilation warnings ...: no
 echo
+echo Only build benchmark suite ...........: $only_benchmark
+echo Only build librtserver ...............: $only_rts
 echo Generate doxygen documentation .......: $enable_doxygen
-echo Only build benchmark .................: no
-echo Only build librtserver ...............: $onlyrts
 echo
 echo ---
 echo $0 complete, type \'make\' to begin building
