@@ -1708,6 +1708,45 @@ CONST vect_t norm;
 }
 
 /*
+ * 			N M G _ V E R T E X U S E _ A _ C N U R B
+ *
+ *  Given a vertex with associated geometry in model space
+ *  which lies on a face_g_snurb surface, it will have
+ *  a corresponding set of (u,v) or (u,v,w) parameters on that surface.
+ *  Build the association here.
+ *
+ *  Note that all vertexuses of a single vertex which are all used
+ *  by the same face_g_snurb will have the same "param" value, but
+ *  will have individual vertexuse_a_cnurb structures.
+ */
+void
+nmg_vertexuse_a_cnurb( vu, uvw )
+struct vertexuse	*vu;
+CONST vect_t		uvw;
+{
+	struct vertexuse_a_cnurb	*vua;
+	struct model	*m;
+
+	NMG_CK_VERTEXUSE( vu );
+
+	if( vu->a.magic_p )  rt_bomb("nmg_vertexuse_a_cnurb() vu has attribute already\n");
+	NMG_CK_EDGEUSE( vu->up.eu_p );
+	if( vu->up.eu_p->g.magic_p) NMG_CK_EDGE_G_CNURB( vu->up.eu_p->g.cnurb_p );
+
+	m = nmg_find_model( &vu->l.magic );
+	GET_VERTEXUSE_A_CNURB( vua , m );
+	VMOVE( vua->param, uvw );
+	vua->magic = NMG_VERTEXUSE_A_CNURB_MAGIC;
+
+	vu->a.cnurb_p = vua;
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_vertexuse_a_cnurb(vu=x%x, param=(%g %g %g)) vua=x%x\n",
+			vu , V3ARGS( uvw ), vua);
+	}
+}
+
+/*
  *			N M G _ E D G E _ G
  *
  *	Compute the equation of the line formed by the endpoints of the edge.
@@ -1801,6 +1840,125 @@ struct edgeuse *eu;
 }
 
 /*
+ *			N M G _ E D G E _ G _ C N U R B
+ *
+ *  For an edgeuse associated with a face_g_snurb surface,
+ *  create a spline curve in the parameter space of the snurb
+ *  which describes the path from the start vertex to the end vertex.
+ *
+ *  The vertexuses at each end of the curve are given vertexuse attributes
+ *  with parameter values of 0.0 and 1.0 automaticly.
+ *  If this is not correct, it can be altered with nmg_xxxx()
+ */
+void
+nmg_edge_g_cnurb(eu, order, n_knots, kv, n_pts, pt_type, points)
+struct edgeuse	*eu;
+int		order;
+int		n_knots;
+fastf_t		*kv;
+int		n_pts;
+int		pt_type;
+fastf_t		*points;
+{
+	struct model	*m;
+	struct edge_g_cnurb *eg;
+	struct edge	*e;
+	struct faceuse	*fu;
+
+	NMG_CK_EDGEUSE(eu);
+	e = eu->e_p;
+	NMG_CK_EDGE(e);
+	NMG_CK_VERTEXUSE(eu->vu_p);
+	NMG_CK_VERTEX(eu->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+
+	NMG_CK_EDGEUSE(eu->eumate_p);
+	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+
+	if(eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+		rt_bomb("nmg_edge_g_cnurb(): edge runs from+to same vertex, 0 len!\n");
+
+	if (eu->g.cnurb_p) {
+		rt_bomb("nmg_edge_g_cnurb() geometry already assigned\n");
+	}
+	fu = nmg_find_fu_of_eu(eu);
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
+
+	/* Make new edge_g structure */
+	m = nmg_find_model(&eu->l.magic);
+	GET_EDGE_G_CNURB(eg, m);
+	RT_LIST_INIT( &eg->eu_hd2 );
+
+	if( n_knots > 0 && kv )  {
+		eg->k.k_size = n_knots;
+		eg->k.knots = kv;
+	} else {
+		/* Give a default curve of order 4, no interior knots */
+		rt_nurb_kvknot( &eg->k.knots, 4, 0.0, 1.0, 0 );
+	}
+
+	if( n_pts < 2 )  rt_bomb("nmg_edge_g_cnurb() n_pts < 2\n");
+	eg->c_size = n_pts;
+	eg->pt_type = pt_type;
+	if( points )  {
+		eg->ctl_points = points;
+	} else {
+		int	ncoord = RT_NURB_EXTRACT_COORDS(pt_type);
+
+		eg->ctl_points = (fastf_t *)rt_calloc(
+			sizeof(fastf_t),
+			ncoord * n_pts,
+			"cnurb ctl_points[]" );
+
+		/*
+		 * As a courtesy, set first and last point to 
+		 * the PARAMETER values of the edge's vertices.
+		 */
+		NMG_CK_VERTEXUSE_A_CNURB( eu->vu_p->a.cnurb_p );
+		NMG_CK_VERTEXUSE_A_CNURB( eu->eumate_p->vu_p->a.cnurb_p );
+		switch( ncoord )  {
+		case 4:
+			eg->ctl_points[3] = 1;
+			eg->ctl_points[ (n_pts-1)*ncoord + 3] = 1;
+			/* fall through... */
+		case 3:
+			VMOVE( eg->ctl_points, eu->vu_p->a.cnurb_p->param );
+			VMOVE( &eg->ctl_points[ (n_pts-1)*ncoord ],
+				eu->eumate_p->vu_p->a.cnurb_p->param );
+			break;
+		case 2:
+			VMOVE( eg->ctl_points, eu->vu_p->a.cnurb_p->param );
+			VMOVE( &eg->ctl_points[ (n_pts-1)*ncoord ],
+				eu->eumate_p->vu_p->a.cnurb_p->param );
+			break;
+		default:
+			rt_bomb("nmg_edge_g_cnurb() bad ncoord?\n");
+		}
+	}
+
+	/* Dequeue edgeuses from their current list (should point to themselves), add to new list */
+	RT_LIST_DEQUEUE( &eu->l2 );
+	RT_LIST_DEQUEUE( &eu->eumate_p->l2 );
+
+	/* Associate edgeuse with this geometry */
+	RT_LIST_INSERT( &eg->eu_hd2, &eu->l2 );
+	RT_LIST_INSERT( &eg->eu_hd2, &eu->eumate_p->l2 );
+	eu->g.cnurb_p = eg;
+	eu->eumate_p->g.cnurb_p = eg;
+
+	eg->magic = NMG_EDGE_G_LSEG_MAGIC;
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_edge_g_cnurb(eu=x%x, order=%d, n_knots=%d, kv=x%x, n_pts=%d, pt_type=x%x, points=x%x) eg=x%x\n",
+			eu, order, n_knots, eg->k.knots,
+			n_pts, pt_type, eg->ctl_points, eg );
+	}
+}
+
+/*
  *			N M G _ U S E _ E D G E _ G
  *
  *  Associate edgeuse 'eu' with the edge_g_X structure given as 'magic_p'.
@@ -1824,7 +1982,7 @@ long		*magic_p;
 	struct edge_g_lseg	*eg = (struct edge_g_lseg *)magic_p;
 	int			ndead = 0;
 
-	if( !magic_p )  return;	/* Don't use a null new geom */
+	if( !magic_p )  return 0;	/* Don't use a null new geom */
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE_G_LSEG(eg);
@@ -1956,6 +2114,7 @@ CONST struct rt_tol	*tol;
 /*			N M G _ F A C E _ G
  *
  *	Assign plane equation to face.
+ * XXX Should probably be called nmg_face_g_plane()
  *
  *  In the interest of modularity this no longer calls nmg_face_bb().
  */
@@ -1999,6 +2158,100 @@ CONST plane_t p;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_face_g(fu=x%x, p=(%g %g %g %g))\n", fu , V4ARGS( p ));
+	}
+}
+
+/*
+ *			N M G _ F A C E _ G _ S N U R B
+ *
+ *  Create a new NURBS surface to be the geometry for an NMG face.
+ *
+ *  If either of the knot vector arrays or the ctl_points arrays are
+ *  given as non-null, then simply swipe the caller's arrays.
+ *  The caller must have allocated them with rt_malloc() or malloc().
+ *  If the pointers are NULL, then the necessary storage is allocated here.
+ *
+ *  This is the NMG parallel to rt_nurb_new_snurb().
+ */
+void
+nmg_face_g_snurb(fu, u_order, v_order, n_u_knots, n_v_knots, ukv, vkv, n_rows, n_cols, pt_type, mesh)
+struct faceuse	*fu;
+int		u_order;
+int		v_order;
+int		n_u_knots;
+int		n_v_knots;
+fastf_t		*ukv;
+fastf_t		*vkv;
+int		n_rows;
+int		n_cols;
+int		pt_type;
+fastf_t		*mesh;
+{
+	int i;
+	struct face_g_snurb	*fg;
+	struct face	*f;
+	struct model	*m;
+
+	NMG_CK_FACEUSE(fu);
+	f = fu->f_p;
+	NMG_CK_FACE(f);
+
+	fu->orientation = OT_SAME;
+	fu->fumate_p->orientation = OT_OPPOSITE;
+
+	fg = f->g.snurb_p;
+	if (fg) {
+		/* Face already has geometry associated with it */
+		rt_bomb("nmg_face_g_snurb() face already has geometry\n");
+	}
+
+	m = nmg_find_model( &fu->l.magic );
+	GET_FACE_G_SNURB(f->g.snurb_p, m);
+	fg = f->g.snurb_p;
+
+	fg->order[0] = u_order;
+	fg->order[1] = v_order;
+	fg->u.magic = NMG_KNOT_VECTOR_MAGIC;
+	fg->v.magic = NMG_KNOT_VECTOR_MAGIC;
+	fg->u.k_size = n_u_knots;
+	fg->v.k_size = n_v_knots;
+
+	if( ukv )  {
+		fg->u.knots = ukv;
+	} else {
+		fg->u.knots = (fastf_t *)rt_calloc(
+			n_u_knots, sizeof(fastf_t), "u.knots[]" );
+	}
+	if( vkv )  {
+		fg->v.knots = vkv;
+	} else {
+		fg->v.knots = (fastf_t *)rt_calloc(
+			n_v_knots, sizeof(fastf_t), "v.knots[]" );
+	}
+
+	fg->s_size[0] = n_rows;
+	fg->s_size[1] = n_cols;
+	fg->pt_type = pt_type;
+
+	if( mesh )  {
+		fg->ctl_points = mesh;
+	} else {
+		int	nwords;
+		nwords = n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
+		fg->ctl_points = (fastf_t *)rt_calloc(
+			nwords, sizeof(fastf_t), "snurb ctl_points[]" );
+	}
+
+	f->flip = 0;
+	RT_LIST_INIT(&fg->f_hd);
+	RT_LIST_APPEND( &fg->f_hd, &f->l );
+	fg->magic = NMG_FACE_G_SNURB_MAGIC;
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_face_g_snurb(fu=x%x, u_order=%d, v_order=%d, n_u_knots=%d, n_v_knots=%d, ukv=x%x, vkv=x%x, n_rows=%d, n_cols=%d, pt_type=x%x, mesh=x%x) fg=x%x\n",
+			fu, u_order, v_order, n_u_knots, n_v_knots,
+			fg->u.knots, fg->v.knots,
+			n_rows, n_cols, pt_type, fg->ctl_points, fg );
 	}
 }
 
