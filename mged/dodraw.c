@@ -885,17 +885,8 @@ drawH_part2(
 	struct solid		*existing_sp)
 {
 	register struct solid *sp;
-	register int	i;
 
 	if( !existing_sp )  {
-		if (pathp->fp_len > MAX_PATH) {
-		  char *cp = db_path_to_string(pathp);
-
-		  Tcl_AppendResult(interp, "drawH_part2: path too long, solid ignored.\n\t",
-				   cp, "\n", (char *)NULL);
-		  bu_free((genptr_t)cp, "Path string");
-		  return;
-		}
 		/* Handling a new solid */
 		GET_SOLID(sp, &FreeSolid.l);
 		/* NOTICE:  The structure is dirty & not initialized for you! */
@@ -947,12 +938,7 @@ drawH_part2(
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
 		sp->s_Eflag = 0;	/* This is a solid */
-		sp->s_last = pathp->fp_len-1;
-
-		/* Copy path information */
-		for( i=0; i<=sp->s_last; i++ ) {
-			sp->s_path[i] = pathp->fp_names[i];
-		}
+		db_dup_full_path( &sp->s_fullpath, pathp );
 		sp->s_regionid = tsp->ts_regionid;
 	}
 
@@ -1002,26 +988,6 @@ genptr_t                user_ptr1, user_ptr2, user_ptr3;
 }
 
 /*
- *			F U L L _ P A T H _ F R O M _ S O L I D
- *
- *  Initializes a 'db_full_path' to correspond to sp->s_path.
- */
-void
-full_path_from_solid( pathp, sp )
-struct db_full_path	*pathp;
-register struct solid	*sp;
-{
-	pathp->fp_len = pathp->fp_maxlen = sp->s_last+1;
-	pathp->fp_names = (struct directory **)bu_malloc(
-		pathp->fp_maxlen * sizeof(struct directory *),
-		"db_full_path array");
-	pathp->magic = DB_FULL_PATH_MAGIC;
-
-	bcopy( (char *)sp->s_path, (char *)pathp->fp_names,
-		pathp->fp_len * sizeof(struct directory *) );
-}
-
-/*
  *  			P A T H h M A T
  *  
  *  Find the transformation matrix obtained when traversing
@@ -1039,20 +1005,16 @@ pathHmat(
 {
 	struct db_tree_state	ts;
 	struct db_full_path	null_path;
-	struct db_full_path	path;
 
 	RT_CHECK_DBI(dbip);
-
-	full_path_from_solid( &path, sp );
 
 	db_full_path_init( &null_path );
 	ts = mged_initial_tree_state;		/* struct copy */
 	ts.ts_dbip = dbip;
 	ts.ts_resp = &rt_uniresource;
 
-	(void)db_follow_path( &ts, &null_path, &path, LOOKUP_NOISY, depth+1 );
+	(void)db_follow_path( &ts, &null_path, &sp->s_fullpath, LOOKUP_NOISY, depth+1 );
 	db_free_full_path( &null_path );
-	db_free_full_path( &path );
 
 #if 0
 	/*
@@ -1076,55 +1038,6 @@ pathHmat(
 	bn_mat_copy( matp, ts.ts_mat );	/* implicit return */
 
 	db_free_db_tree_state( &ts );
-
-#if 0
-	register struct directory *parentp;
-	register struct directory *kidp;
-	register int		j;
-	struct rt_db_internal	intern;
-	struct rt_comb_internal	*comb;
-	auto mat_t		tmat;
-	register int		i;
-
-	if(dbip == DBI_NULL)
-	  return;
-
-	bn_mat_idn( matp );
-	for( i=0; i <= depth; i++ )  {
-		parentp = sp->s_path[i];
-		kidp = sp->s_path[i+1];
-		if( !(parentp->d_flags & DIR_COMB) )  {
-		  Tcl_AppendResult(interp, "pathHmat:  ", parentp->d_namep,
-				   " is not a combination\n", (char *)NULL);
-		  return;		/* ERROR */
-		}
-
-		if( rt_db_get_internal( &intern, parentp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-			READ_ERR_return;
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		if( comb->tree )
-		{
-			static mat_t xmat;	/* temporary fastf_t matrix */
-			int found=0;
-
-			db_tree_funcleaf( dbip, comb, comb->tree, Do_getmat,
-				(genptr_t)xmat, (genptr_t)kidp->d_namep, (genptr_t)&found );
-			rt_db_free_internal( &intern, &rt_uniresource );
-
-			if( found )
-			{
-				bn_mat_mul( tmat, matp, xmat );
-				bn_mat_copy( matp, tmat );
-			}
-			else
-			{
-				Tcl_AppendResult(interp, "pathHmat: unable to follow ", parentp->d_namep,
-						 "/", kidp->d_namep, "\n", (char *)NULL);
-				return;			/* ERROR */
-			}
-		}
-	}
-#endif
 }
 
 /*
@@ -1148,13 +1061,13 @@ replot_original_solid( struct solid *sp )
 	if(dbip == DBI_NULL)
 	  return 0;
 
-	dp = sp->s_path[sp->s_last];
+	dp = LAST_SOLID(sp);
 	if( sp->s_Eflag )  {
 	  Tcl_AppendResult(interp, "replot_original_solid(", dp->d_namep,
 			   "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	  return(-1);
 	}
-	pathHmat( sp, mat, sp->s_last-1 );
+	pathHmat( sp, mat, sp->s_fullpath.fp_len-2 );
 
 	if( rt_db_get_internal( &intern, dp, dbip, mat, &rt_uniresource ) < 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
@@ -1212,7 +1125,7 @@ replot_modified_solid(
 	transform_editing_solid( &intern, mat, ip, 0 );
 
 	if( rt_functab[ip->idb_type].ft_plot( &vhead, &intern, &mged_ttol, &mged_tol ) < 0 )  {
-	  Tcl_AppendResult(interp, sp->s_path[sp->s_last]->d_namep,
+	  Tcl_AppendResult(interp, LAST_SOLID(sp)->d_namep,
 			   ": re-plot failure\n", (char *)NULL);
 	  return(-1);
 	}
@@ -1336,8 +1249,7 @@ invent_solid(
 	nvectors += sp->s_vlen;
 
 	/* set path information -- this is a top level node */
-	sp->s_last = 0;
-	sp->s_path[0] = dp;
+	db_add_node_to_full_path( &sp->s_fullpath, dp );
 
 	sp->s_iflag = DOWN;
 	sp->s_soldash = 0;
@@ -1912,13 +1824,12 @@ add_solid_path_to_result( interp, sp )
 Tcl_Interp *interp;
 register struct solid	*sp;
 {
-	register int	i;
+	struct bu_vls str;
 
-	for( i = 0; i <= sp->s_last; i++ )  {
-		Tcl_AppendResult( interp, sp->s_path[i]->d_namep,
-			i == sp->s_last ? NULL : "/", NULL );
-	}
-	Tcl_AppendResult( interp, " ", NULL );
+	bu_vls_init(&str);
+	db_path_to_vls(&str, &sp->s_fullpath );
+	Tcl_AppendResult( interp, bu_vls_addr(&str), " ", NULL );
+	bu_vls_free(&str);
 }
 
 /*
@@ -1958,16 +1869,12 @@ char	**argv;
 			continue;
 
 		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-			register int j;
-			for( j = sp->s_last; j >= 0; j-- )  {
-				if( sp->s_path[j] != dp )
-					continue;
+			if( db_full_path_search( &sp->s_fullpath, dp ) )  {
 #if 0
 				add_solid_path_to_result(interp, sp);
 #endif
 				(void)replot_original_solid( sp );
 				sp->s_iflag = DOWN;	/* It won't be drawn otherwise */
-				break;
 			}
 		}
 	}

@@ -190,15 +190,8 @@ build_path_name_of_solid(vp, sp)
 struct bu_vls	*vp;
 struct solid	*sp;
 {
-    int		i;
-
     bu_vls_trunc(vp, 0);
-    for (i = 0; i < sp -> s_last; ++i)
-    {
-	bu_vls_strcat(vp, sp -> s_path[i] -> d_namep);
-	bu_vls_strcat(vp, "/");
-    }
-    bu_vls_strcat(vp, sp -> s_path[sp -> s_last] -> d_namep);
+    db_path_to_vls(vp, &sp->s_fullpath);
 }
 
 /*

@@ -94,9 +94,9 @@ f_mouse(
 {
 	vect_t	mousevec;		/* float pt -1..+1 mouse pos vect */
 	int	isave;
-	int	up = atoi(argv[1]);
-	int	xpos = atoi(argv[2]);
-	int	ypos = atoi(argv[3]);
+	int	up;
+	int	xpos;
+	int	ypos;
 
 	if(argc < 4 || 4 < argc){
 	  struct bu_vls vls;
@@ -107,6 +107,10 @@ f_mouse(
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
+
+	up = atoi(argv[1]);
+	xpos = atoi(argv[2]);
+	ypos = atoi(argv[3]);
 
 	/* Build floating point mouse vector, -1 to +1 */
 	mousevec[X] =  xpos * INV_GED;
@@ -190,8 +194,8 @@ f_mouse(
 	   * Convert DT position to path element select
 	   */
 	  isave = ipathpos;
-	  ipathpos = illump->s_last - (
-				       (ypos+(int)GED_MAX) * (illump->s_last+1) / (int)GED_RANGE);
+	  ipathpos = illump->s_fullpath.fp_len-1 - (
+	       (ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
 	  if( ipathpos != isave )
 	    view_state->vs_flag++;
 	  return TCL_OK;
@@ -338,12 +342,12 @@ f_aip(
   if(state == ST_O_PATH){
     if(argc == 1 || *argv[1] == 'f'){
       ++ipathpos;
-      if(ipathpos > illump->s_last)
+      if(ipathpos >= illump->s_fullpath.fp_len)
 	ipathpos = 0;
     }else if(*argv[1] == 'b'){
       --ipathpos;
       if(ipathpos < 0)
-	ipathpos = illump->s_last;
+	ipathpos = illump->s_fullpath.fp_len-1;
     }else{
       Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
@@ -529,7 +533,7 @@ wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t po
  *	matpick a/b	Pick arc between a and b.
  *	matpick #	Similar to internal interface.
  *			0 = top level object is a solid.
- *			n = edit arc from s_path[n-1] to [n]
+ *			n = edit arc from path [n-1] to [n]
  */
 int
 f_matpick(
@@ -582,9 +586,9 @@ f_matpick(
 		if( (d0 = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		  return TCL_ERROR;
 		/* Find arc on illump path which runs from d0 to d1 */
-		for( j=1; j <= illump->s_last; j++ )  {
-			if( illump->s_path[j-1] != d0 )  continue;
-			if( illump->s_path[j-0] != d1 )  continue;
+		for( j=1; j < illump->s_fullpath.fp_len; j++ )  {
+			if( DB_FULL_PATH_GET(&illump->s_fullpath,j-1) != d0 )  continue;
+			if( DB_FULL_PATH_GET(&illump->s_fullpath,j-0) != d1 )  continue;
 			ipathpos = j;
 			goto got;
 		}
@@ -595,13 +599,15 @@ f_matpick(
 	} else {
 		ipathpos = atoi(argv[1]);
 		if( ipathpos < 0 )  ipathpos = 0;
-		else if( ipathpos > illump->s_last )  ipathpos = illump->s_last;
+		else if( ipathpos >= illump->s_fullpath.fp_len )
+			ipathpos = illump->s_fullpath.fp_len-1;
 	}
 got:
 	/* Include all solids with same tree top */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		for( j = 0; j <= ipathpos; j++ )  {
-			if( sp->s_path[j] != illump->s_path[j] )
+			if( DB_FULL_PATH_GET(&sp->s_fullpath,j) !=
+			    DB_FULL_PATH_GET(&illump->s_fullpath,j) )
 				break;
 		}
 		/* Only accept if top of tree is identical */

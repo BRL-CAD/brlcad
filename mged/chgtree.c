@@ -896,28 +896,12 @@ register struct db_full_path	*pathp;
 {
 	register struct solid	*sp;
 	int			count = 0;
-	int			i;
 	struct solid		*ret = (struct solid *)NULL;
 
 	RT_CK_FULL_PATH(pathp);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-		int not_this_solid=0;
-
-		if( pathp->fp_len != sp->s_last+1 )
-			continue;
-
-		for( i=0 ; i<pathp->fp_len ; i++ )
-		{
-			if( pathp->fp_names[i] != sp->s_path[i] )
-			{
-				not_this_solid = 1;
-				break;
-			}
-		}
-
-		if( not_this_solid )
-			continue;
+		if( !db_identical_full_paths( pathp, &sp->s_fullpath ) )  continue;
 
 		/* Paths are the same */
 		ret = sp;

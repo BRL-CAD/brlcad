@@ -1028,20 +1028,22 @@ char	**argv;
     char *av[2];
 
     if (illump != SOLID_NULL) {
-      register int i, last;
       struct bu_vls vls;
 
       bu_vls_init(&vls);
 
       if (state == ST_S_EDIT)
-	last = illump->s_last;
-      else if (state == ST_O_EDIT)
-	  last = ipathpos;
-      else
+    	db_path_to_vls( &vls, &illump->s_fullpath );
+      else if (state == ST_O_EDIT)  {
+      	int i;
+      	for( i=0; i < ipathpos; i++ )  {
+      		bu_vls_printf(&vls, "/%s",
+			DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep );
+      	}
+      } else
 	return TCL_ERROR;
 
-      for (i = 0; i <= last; ++i)
-	bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
+    	db_path_to_vls( &vls, &illump->s_fullpath );
 
       av[0] = bu_vls_addr(&vls);
       av[1] = (char *)NULL;
@@ -1182,7 +1184,7 @@ f_zap(
 
 	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
 	while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
-		dp = sp->s_path[0];
+		dp = FIRST_SOLID(sp);
 		RT_CK_DIR(dp);
 		if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
 			if( db_dirdelete( dbip, dp ) < 0 )  {
@@ -1792,39 +1794,29 @@ char	**argv;
  */
 void
 eraseobjall(dpp)
-     register struct directory **dpp;
+     register struct directory **dpp;	/* this is a partial path spec. XXX should be db_full_path? */
 {
 	register struct directory **tmp_dpp;
 	register struct solid *sp;
 	register struct solid *nsp;
-	register int i;
+	struct db_full_path	subpath;
 
 	if (dbip == DBI_NULL)
 		return;
 
 	update_views = 1;
 
-	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
+	db_full_path_init(&subpath);
+	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
 		RT_CK_DIR(*tmp_dpp);
+		db_add_node_to_full_path(&subpath, *tmp_dpp);
+	}
 
 	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
 	while (BU_LIST_NOT_HEAD(sp, &HeadSolid.l)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
-		for (i=0; i <= sp->s_last; i++) {
-			/* look for first path element */
-			if (sp->s_path[i] != *dpp)
-				continue;
 
-			/* look for rest of path */
-			for (++i, tmp_dpp = dpp+1;
-			     i <= sp->s_last && *tmp_dpp != DIR_NULL;
-			     ++i, ++tmp_dpp)
-				if (sp->s_path[i] != *tmp_dpp)
-					goto end;
-
-			if (*tmp_dpp != DIR_NULL)
-				goto end;
-
+		if( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
 #ifdef DO_DISPLAY_LISTS
 			freeDListsAll(sp->s_dlist, 1);
 #endif
@@ -1834,10 +1826,7 @@ eraseobjall(dpp)
 
 			BU_LIST_DEQUEUE(&sp->l);
 			FREE_SOLID(sp, &FreeSolid.l);
-
-			break;
 		}
-	end:
 		sp = nsp;
 	}
 
@@ -1846,6 +1835,8 @@ eraseobjall(dpp)
 			Tcl_AppendResult(interp, "eraseobjall: db_dirdelete failed\n", (char *)NULL);
 		}
 	}
+
+	db_free_full_path(&subpath);
 }
 
 
@@ -1858,12 +1849,12 @@ eraseobjall(dpp)
  */
 void
 eraseobj(dpp)
-     register struct directory **dpp;
+     register struct directory **dpp;	/* this is a partial path spec. XXX should be db_full_path? */
 {
 	register struct directory **tmp_dpp;
 	register struct solid *sp;
 	register struct solid *nsp;
-	register int i;
+	struct db_full_path	subpath;
 
 	if (dbip == DBI_NULL)
 		return;
@@ -1873,32 +1864,28 @@ eraseobj(dpp)
 
 	update_views = 1;
 
-	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
+	db_full_path_init(&subpath);
+	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
 		RT_CK_DIR(*tmp_dpp);
+		db_add_node_to_full_path(&subpath, *tmp_dpp);
+	}
 
 	sp = BU_LIST_FIRST(solid, &HeadSolid.l);
 	while (BU_LIST_NOT_HEAD(sp, &HeadSolid.l)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
-		for (i = 0, tmp_dpp = dpp;
-		     i <= sp->s_last && *tmp_dpp != DIR_NULL;
-		     ++i, ++tmp_dpp)
-			if (sp->s_path[i] != *tmp_dpp)
-				goto end;
 
-
-		if (*tmp_dpp != DIR_NULL)
-			goto end;
+		if( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
 
 #ifdef DO_DISPLAY_LISTS
-		freeDListsAll(sp->s_dlist, 1);
+			freeDListsAll(sp->s_dlist, 1);
 #endif
 
-		if (state != ST_VIEW && illump == sp)
-			button( BE_REJECT );
+			if (state != ST_VIEW && illump == sp)
+				button( BE_REJECT );
 
-		BU_LIST_DEQUEUE(&sp->l);
-		FREE_SOLID(sp, &FreeSolid.l);
-	end:
+			BU_LIST_DEQUEUE(&sp->l);
+			FREE_SOLID(sp, &FreeSolid.l);
+		}
 		sp = nsp;
 	}
 
@@ -1907,6 +1894,8 @@ eraseobj(dpp)
 			Tcl_AppendResult(interp, "eraseobj: db_dirdelete failed\n", (char *)NULL);
 		}
 	}
+
+	db_free_full_path(&subpath);
 }
 
 
@@ -1923,7 +1912,6 @@ struct solid *startp;
 int		lvl;			/* debug level */
 {
   register struct solid	*sp;
-  register int		i;
   register struct bn_vlist	*vp;
   int			nvlist;
   int			npts;
@@ -1944,14 +1932,13 @@ int		lvl;			/* debug level */
   FOR_ALL_SOLIDS(sp, &startp->l){
     if (lvl <= -2) {
       /* print only leaves */
-      bu_vls_printf(&vls, "%s ", sp->s_path[(int)(sp->s_last)]->d_namep);
+      bu_vls_printf(&vls, "%s ", LAST_SOLID(sp)->d_namep );
       continue;
     }
 
     if( lvl != -1 )
 	bu_vls_printf(&vls, "%s", sp->s_flag == UP ? "VIEW " : "-no- ");
-    for( i=0; i <= sp->s_last; i++ )
-      bu_vls_printf(&vls, "/%s", sp->s_path[i]->d_namep);
+    db_path_to_vls(&vls, &sp->s_fullpath);
     if(( lvl != -1 ) && ( sp->s_iflag == UP ))
       bu_vls_printf(&vls, " ILLUM");
 
@@ -2133,13 +2120,14 @@ char	**argv;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l){
 	  int	a_new_match;
 
+/* XXX Could this make use of db_full_path_subset()? */
 	  if (nmatch == 0 || nmatch != ri) {
-		  i = sp -> s_last;
-		  if (sp -> s_path[i] == dp) {
+		  i = sp -> s_fullpath.fp_len-1;
+		  if (DB_FULL_PATH_GET(&sp->s_fullpath,i) == dp) {
 			  a_new_match = 1;
 			  j = nm_pieces - 1;
 			  for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
-				  sname = sp -> s_path[i] -> d_namep;
+				  sname = DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_namep;
 				  if ((*sname != *(path_piece[j]))
 				      || strcmp(sname, path_piece[j]))
 					  a_new_match = 0;

@@ -97,7 +97,7 @@ char	*argv[];
 		  state_err( "Default SOLID Analyze" );
 		  return TCL_ERROR;
 		}
-		ndp = illump->s_path[illump->s_last];
+		ndp = LAST_SOLID(illump);
 		if(illump->s_Eflag) {
 		  Tcl_AppendResult(interp, "analyze: cannot analyze evaluated region containing ",
 				   ndp->d_namep, "\n", (char *)NULL);

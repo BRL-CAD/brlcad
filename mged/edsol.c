@@ -2320,8 +2320,10 @@ init_sedit()
 	}
 
 	/* Read solid description into es_int */
-	if( rt_db_get_internal( &es_int, illump->s_path[(int)(illump->s_last)], dbip, NULL, &rt_uniresource ) < 0 )  {
-	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[(int)(illump->s_last)]->d_namep,
+	if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
+	  dbip, NULL, &rt_uniresource ) < 0 )  {
+	  Tcl_AppendResult(interp, "init_sedit(",
+	  		LAST_SOLID(illump)->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
 	  rt_db_free_internal( &es_int, &rt_uniresource );
 	  return;				/* FAIL */
@@ -2362,7 +2364,7 @@ init_sedit()
 	}
 
 	/* Save aggregate path matrix */
-	pathHmat( illump, es_mat, illump->s_last-1 );
+	pathHmat( illump, es_mat, illump->s_fullpath.fp_len-2 );
 
 	/* get the inverse matrix */
 	bn_mat_inv( es_invmat, es_mat );
@@ -2438,10 +2440,11 @@ replot_editing_solid()
 {
   mat_t mat;
   register struct solid *sp;
+  struct directory *illdp = LAST_SOLID(illump);
 
   FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
-    if(sp->s_path[(int)(sp->s_last)]->d_addr == illump->s_path[(int)(illump->s_last)]->d_addr){
-      pathHmat( sp, mat, sp->s_last-1 );
+    if(LAST_SOLID(sp) == illdp )  {
+      pathHmat( sp, mat, sp->s_fullpath.fp_len-2 );
       (void)replot_modified_solid( sp, &es_int, mat );
     }
   }
@@ -7319,8 +7322,10 @@ init_oedit_guts()
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
-	if( rt_db_get_internal( &es_int, illump->s_path[(int)(illump->s_last)], dbip, NULL, &rt_uniresource ) < 0 )  {
-		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[(int)(illump->s_last)]->d_namep,
+	if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
+	    dbip, NULL, &rt_uniresource ) < 0 )  {
+		Tcl_AppendResult(interp, "init_oedit(",
+	    			LAST_SOLID(illump)->d_namep,
 				 "):  solid import failure\n", (char *)NULL);
 		rt_db_free_internal( &es_int, &rt_uniresource );
 		button(BE_REJECT);
@@ -7339,7 +7344,7 @@ init_oedit_guts()
 	}
 
 	/* Save aggregate path matrix */
-	pathHmat(illump, es_mat, illump->s_last-1);
+	pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
 
 	/* get the inverse matrix */
 	bn_mat_inv(es_invmat, es_mat);
@@ -7415,11 +7420,12 @@ oedit_apply()
 
 	switch (ipathpos) {
 	case 0:
-		moveHobj(illump->s_path[ipathpos], modelchanges);
+		moveHobj(DB_FULL_PATH_GET(&illump->s_fullpath,ipathpos),
+			modelchanges);
 		break;
 	case 1:
-		moveHinstance(illump->s_path[ipathpos-1],
-			      illump->s_path[ipathpos],
+		moveHinstance(DB_FULL_PATH_GET(&illump->s_fullpath,ipathpos-1),
+			      DB_FULL_PATH_GET(&illump->s_fullpath,ipathpos),
 			      modelchanges);
 		break;
 	default:
@@ -7435,8 +7441,8 @@ oedit_apply()
 		bn_mat_mul(tempm, modelchanges, topm);
 		bn_mat_mul(deltam, inv_topm, tempm);
 
-		moveHinstance(illump->s_path[ipathpos-1],
-			      illump->s_path[ipathpos],
+		moveHinstance(DB_FULL_PATH_GET(&illump->s_fullpath,ipathpos-1),
+			      DB_FULL_PATH_GET(&illump->s_fullpath,ipathpos),
 			      deltam);
 		break;
 	}
@@ -7586,7 +7592,7 @@ sedit_apply(accept_flag)
 	}
 
 	/* write editing changes out to disc */
-	dp = illump->s_path[(int)(illump->s_last)];
+	dp = LAST_SOLID(illump);
 
 	/* make sure that any BOT solid is minimally legal */
 	if (es_int.idb_type == ID_BOT) {
@@ -7688,7 +7694,7 @@ sedit_reject()
 	  register struct solid *sp;
 
 	  FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
-	    if(sp->s_path[(int)(sp->s_last)]->d_addr == illump->s_path[(int)(illump->s_last)]->d_addr)
+	    if(LAST_SOLID(sp) == LAST_SOLID(illump))
 	      (void)replot_original_solid( sp );
 	  }
 	}
@@ -8955,7 +8961,6 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  int i;
   int status;
   struct rt_db_internal ces_int;
   Tcl_Obj *pto;
@@ -8985,7 +8990,7 @@ char **argv;
 
     pnto = Tcl_NewObj();
     /* insert solid name, type and parameters */
-    Tcl_AppendStringsToObj(pnto, illump->s_path[(int)(illump->s_last)]->d_namep, " ",
+    Tcl_AppendStringsToObj(pnto, LAST_SOLID(illump)->d_namep, " ",
 			   Tcl_GetStringFromObj(pto, (int *)0), (char *)0);
 
     Tcl_SetObjResult(interp, pnto);
@@ -9009,8 +9014,12 @@ char **argv;
 
   pnto = Tcl_NewObj();
   /* insert full pathname */
-  for(i=0; i <= illump->s_last; i++){
-    Tcl_AppendStringsToObj(pnto, "/", illump->s_path[i]->d_namep, (char *)0);
+  {
+  	struct bu_vls str;
+  	bu_vls_init(&str);
+  	db_path_to_vls(&str, &illump->s_fullpath);
+        Tcl_AppendStringsToObj(pnto, bu_vls_addr(&str), NULL );
+  	bu_vls_free(&str);
   }
 
   /* insert solid type and parameters */
@@ -9131,8 +9140,10 @@ char **argv;
   rt_db_free_internal( &es_int, &rt_uniresource );
 
   /* read in a fresh copy */
-  if( rt_db_get_internal( &es_int, illump->s_path[(int)(illump->s_last)], dbip, NULL, &rt_uniresource ) < 0 )  {
-    Tcl_AppendResult(interp, "sedit_reset(", illump->s_path[(int)(illump->s_last)]->d_namep,
+  if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
+   dbip, NULL, &rt_uniresource ) < 0 )  {
+    Tcl_AppendResult(interp, "sedit_reset(",
+   			LAST_SOLID(illump)->d_namep,
 		     "):  solid import failure\n", (char *)NULL);
     return TCL_ERROR;				/* FAIL */
   }
@@ -9258,7 +9269,7 @@ f_oedit_apply(clientData, interp, argc, argv)
 
 	/* Save aggregate path matrix */
 	bn_mat_idn(es_mat);
-	pathHmat(illump, es_mat, illump->s_last-1);
+	pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
 
 	/* get the inverse matrix */
 	bn_mat_inv(es_invmat, es_mat);

@@ -191,12 +191,10 @@ char **argv;
 	  /* solid edit mode */
 	  /* apply es_mat editing to parameters */
 	  transform_editing_solid( &intern, es_mat, &es_int, 0 );
-	  outdp = illump->s_path[illump->s_last];
+	  outdp = LAST_SOLID(illump);
 
 	  Tcl_AppendResult(interp, "You are in Solid Edit mode, using edited solid as outside solid: ", (char *)NULL);
-	  for(i=0; i <= illump->s_last; i++) {
-	    Tcl_AppendResult(interp, "/", illump->s_path[i]->d_namep, (char *)NULL);
-	  }
+	  add_solid_path_to_result( interp, illump );
 	  Tcl_AppendResult(interp, "\n", (char *)NULL);
 	}  else if( state == ST_O_EDIT ) {
 	  /* object edit mode */
@@ -210,12 +208,10 @@ char **argv;
 	  /* apply es_mat and modelchanges editing to parameters */
 	  bn_mat_mul(newmat, modelchanges, es_mat);
 	  transform_editing_solid( &intern, newmat, &es_int, 0 );
-	  outdp = illump->s_path[illump->s_last];
+	  outdp = LAST_SOLID(illump);
 
 	  Tcl_AppendResult(interp, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
-	  for(i=0; i <= illump->s_last; i++) {
-	    Tcl_AppendResult(interp, "/", illump->s_path[i]->d_namep, (char *)NULL);
-	  }
+	  add_solid_path_to_result( interp, illump );
 	  Tcl_AppendResult(interp, "\n", (char *)NULL);
 	} else {
 	  /* Not doing any editing....ask for outside solid */

@@ -91,8 +91,8 @@ struct partition *PartHeadp;
 	    PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
 	VSUB2(diff,PartHeadp->pt_forw->pt_inhit->hit_point,aim_point);
 
-	diff_solid = strcmp(sp->s_path[0]->d_namep,
-	    PartHeadp->pt_forw->pt_inseg->seg_stp->st_name);
+	diff_solid = (FIRST_SOLID(sp) !=
+		PartHeadp->pt_forw->pt_inseg->seg_stp->st_dp);
 	len = MAGNITUDE(diff);
 
 	if (	NEAR_ZERO(len,epsilon)
@@ -182,11 +182,11 @@ char	**argv;
 	numobjs = 0;
 	FOR_ALL_SOLIDS(sp) {
 		for (i = 0; i < numobjs; i++)  {
-			if( objname[i] == sp->s_path[0]->d_namep )
+			if( objname[i] == FIRST_SOLID(sp)->d_namep )
 				break;
 		}
 		if (i == numobjs)
-			objname[numobjs++] = sp->s_path[0]->d_namep;
+			objname[numobjs++] = FIRST_SOLID(sp)->d_namep;
 	}
 
 	Tcl_AppendResult(interp, "Generating hidden-line drawing of the following regions:\n",

@@ -169,26 +169,28 @@ vect_t eye_model;
 #define DIR_USED	0x80	/* XXX move to raytrace.h */
 	(void)fprintf(fp, "start 0; clean;\n");
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
-		for (i=0;i<=sp->s_last;i++) {
-			sp->s_path[i]->d_flags &= ~DIR_USED;
+		for (i=0;i<sp->s_fullpath.fp_len;i++) {
+			DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags &= ~DIR_USED;
 		}
 	}
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
-		for (i=0; i<=sp->s_last; i++ ) {
-			if (!(sp->s_path[i]->d_flags & DIR_USED)) {
+		for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
+			struct directory *dp;
+			dp = DB_FULL_PATH_GET(&sp->s_fullpath,i);
+			if (!(dp->d_flags & DIR_USED)) {
 				register struct animate *anp;
-				for (anp = sp->s_path[i]->d_animate; anp;
+				for (anp = dp->d_animate; anp;
 				    anp=anp->an_forw) {
 					db_write_anim(fp, anp);
 				}
-				sp->s_path[i]->d_flags |= DIR_USED;
+				dp->d_flags |= DIR_USED;
 			}
 		}
 	}
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
-		for (i=0;i<=sp->s_last;i++) {
-			sp->s_path[i]->d_flags &= ~DIR_USED;
+		for (i=0;i<sp->s_fullpath.fp_len;i++) {
+			DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags &= ~DIR_USED;
 		}
 	}
 #undef DIR_USED
@@ -246,21 +248,22 @@ register char **end;
 		sp->s_wflag = DOWN;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		register struct solid *forw;
+		struct directory *dp = FIRST_SOLID(sp);
 
 		if( sp->s_wflag == UP )
 			continue;
-		if( sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR )
+		if( dp->d_addr == RT_DIR_PHONY_ADDR )
 			continue;	/* Ignore overlays, predictor, etc */
 		if( vp < end )
-			*vp++ = sp->s_path[0]->d_namep;
+			*vp++ = dp->d_namep;
 		else  {
 		  Tcl_AppendResult(interp, "mged: ran out of comand vector space at ",
-				   sp->s_path[0]->d_namep, "\n", (char *)NULL);
+				   dp->d_namep, "\n", (char *)NULL);
 		  break;
 		}
 		sp->s_wflag = UP;
 		for(BU_LIST_PFOR(forw, sp, solid, &HeadSolid.l)){
-			if( forw->s_path[0] == sp->s_path[0] )
+			if( FIRST_SOLID(forw) == dp )
 				forw->s_wflag = UP;
 		}
 	}
@@ -810,14 +813,15 @@ char	**argv;
 		sp->s_wflag = DOWN;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		register struct solid *forw;	/* XXX */
+		struct directory *dp = FIRST_SOLID(sp);
 
 		if( sp->s_wflag == UP )
 			continue;
-		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR) continue;
-		(void)fprintf(fp, "'%s' ", sp->s_path[0]->d_namep);
+		if (dp->d_addr == RT_DIR_PHONY_ADDR) continue;
+		(void)fprintf(fp, "'%s' ", dp->d_namep);
 		sp->s_wflag = UP;
 		for(BU_LIST_PFOR(forw, sp, solid, &HeadSolid.l)){
-			if( forw->s_path[0] == sp->s_path[0] )
+			if( FIRST_SOLID(forw) == dp )
 				forw->s_wflag = UP;
 		}
 	}
@@ -898,7 +902,7 @@ char	**argv;
 			break;
 		}
 		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-			if( sp->s_path[(int)(sp->s_last)] != dp )  continue;
+			if( LAST_SOLID(sp) != dp )  continue;
 			if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
 			vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 			VMOVE( sav_start, vp->pt[vp->nused-1] );
@@ -2164,18 +2168,19 @@ char 		**argv;
 	  sp->s_wflag = DOWN;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  register struct solid *forw;	/* XXX */
+	  struct directory *dp = FIRST_SOLID(sp);
 
 	  if( sp->s_wflag == UP )
 	    continue;
-	  if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR){
+	  if (dp->d_addr == RT_DIR_PHONY_ADDR){
 	    if (skip_phony) continue;
 	  } else {
 	    if (skip_real) continue;
 	  }
-	  Tcl_AppendResult(interp, sp->s_path[0]->d_namep, " ", (char *)NULL);
+	  Tcl_AppendResult(interp, dp->d_namep, " ", (char *)NULL);
 	  sp->s_wflag = UP;
 	  FOR_REST_OF_SOLIDS(forw, sp, &HeadSolid.l){
-	    if( forw->s_path[0] == sp->s_path[0] )
+	    if( FIRST_SOLID(forw) == dp )
 	      forw->s_wflag = UP;
 	  }
 	}

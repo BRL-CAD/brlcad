@@ -394,9 +394,9 @@ dgo_illum_tcl(clientData, interp, argc, argv)
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 		register int i;
 
-		for (i = 0; i <= sp->s_last; ++i) {
-			if (*argv[2] == *sp->s_path[i]->d_namep &&
-			    strcmp(argv[2], sp->s_path[i]->d_namep) == 0) {
+		for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
+			if (*argv[2] == *DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_namep &&
+			    strcmp(argv[2], DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_namep) == 0) {
 				found = 1;
 				if (illum)
 					sp->s_iflag = UP;
@@ -633,15 +633,15 @@ dgo_who_tcl(clientData, interp, argc, argv)
 
 		if (sp->s_flag == UP)
 			continue;
-		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR) {
+		if (FIRST_SOLID(sp)->d_addr == RT_DIR_PHONY_ADDR) {
 			if (skip_phony) continue;
 		} else {
 			if (skip_real) continue;
 		}
-		Tcl_AppendResult(interp, sp->s_path[0]->d_namep, " ", (char *)NULL);
+		Tcl_AppendResult(interp, FIRST_SOLID(sp)->d_namep, " ", (char *)NULL);
 		sp->s_flag = UP;
 		FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid){
-			if (forw->s_path[0] == sp->s_path[0])
+			if (FIRST_SOLID(forw) == FIRST_SOLID(sp))
 				forw->s_flag = UP;
 		}
 	}
@@ -898,7 +898,7 @@ dgo_zap(dgop, interp)
 
 	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
 	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
-		dp = sp->s_path[0];
+		dp = FIRST_SOLID(sp);
 		RT_CK_DIR(dp);
 		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 			if (db_dirdelete(dgop->dgo_wdbp->dbip, dp) < 0) {
@@ -2223,8 +2223,7 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 	dgo_bound_solid(interp, sp);
 
 	/* set path information -- this is a top level node */
-	sp->s_last = 0;
-	sp->s_path[0] = dp;
+	db_add_node_to_full_path( &sp->s_fullpath, dp );
 
 	sp->s_iflag = DOWN;
 	sp->s_soldash = 0;
@@ -2322,17 +2321,8 @@ dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp, dgcdp)
      struct dg_client_data	 *dgcdp; 
 {
 	register struct solid *sp;
-	register int	i;
 
 	if (!existing_sp) {
-		if (pathp->fp_len > MAX_PATH) {
-		  char *cp = db_path_to_string(pathp);
-
-		  Tcl_AppendResult(dgcdp->interp, "drawH_part2: path too long, solid ignored.\n\t",
-				   cp, "\n", (char *)NULL);
-		  bu_free((genptr_t)cp, "Path string");
-		  return;
-		}
 		/* Handling a new solid */
 		GET_SOLID(sp, &FreeSolid.l);
 		/* NOTICE:  The structure is dirty & not initialized for you! */
@@ -2386,12 +2376,7 @@ dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp, dgcdp)
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
 		sp->s_Eflag = 0;	/* This is a solid */
-		sp->s_last = pathp->fp_len-1;
-
-		/* Copy path information */
-		for (i=0; i<=sp->s_last; i++) {
-			sp->s_path[i] = pathp->fp_names[i];
-		}
+		db_dup_full_path( &sp->s_fullpath, pathp );
 		sp->s_regionid = tsp->ts_regionid;
 
 		/* Add to linked list of solid structs */
@@ -2524,38 +2509,24 @@ dgo_eraseobjall(dgop, interp, dpp)
 	register struct directory **tmp_dpp;
 	register struct solid *sp;
 	register struct solid *nsp;
-	register int i;
+	struct db_full_path	subpath;
 
 	if(dgop->dgo_wdbp->dbip == DBI_NULL)
 		return;
 
-	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
+	db_full_path_init(&subpath);
+	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
 		RT_CK_DIR(*tmp_dpp);
+		db_add_node_to_full_path(&subpath, *tmp_dpp);
+	}
 
 	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
 	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
-		for (i=0; i <= sp->s_last; i++) {
-			/* look for first path element */
-			if (sp->s_path[i] != *dpp)
-				continue;
-
-			/* look for rest of path */
-			for (++i, tmp_dpp = dpp+1;
-			     i <= sp->s_last && *tmp_dpp != DIR_NULL;
-			     ++i, ++tmp_dpp)
-				if (sp->s_path[i] != *tmp_dpp)
-					goto end;
-
-			if (*tmp_dpp != DIR_NULL)
-				goto end;
-
+		if( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
 			BU_LIST_DEQUEUE(&sp->l);
 			FREE_SOLID(sp, &FreeSolid.l);
-
-			break;
 		}
-	end:
 		sp = nsp;
 	}
 
@@ -2564,6 +2535,7 @@ dgo_eraseobjall(dgop, interp, dpp)
 			Tcl_AppendResult(interp, "dgo_eraseobjall: db_dirdelete failed\n", (char *)NULL);
 		}
 	}
+	db_free_full_path(&subpath);
 }
 
 /*
@@ -2582,7 +2554,7 @@ dgo_eraseobj(dgop, interp, dpp)
 	register struct directory **tmp_dpp;
 	register struct solid *sp;
 	register struct solid *nsp;
-	register int i;
+	struct db_full_path	subpath;
 
 	if(dgop->dgo_wdbp->dbip == DBI_NULL)
 		return;
@@ -2590,24 +2562,19 @@ dgo_eraseobj(dgop, interp, dpp)
 	if (*dpp == DIR_NULL)
 		return;
 
-	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
+	db_full_path_init(&subpath);
+	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
 		RT_CK_DIR(*tmp_dpp);
+		db_add_node_to_full_path(&subpath, *tmp_dpp);
+	}
 
 	sp = BU_LIST_FIRST(solid, &dgop->dgo_headSolid);
 	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
-		for (i = 0, tmp_dpp = dpp;
-		     i <= sp->s_last && *tmp_dpp != DIR_NULL;
-		     ++i, ++tmp_dpp)
-			if (sp->s_path[i] != *tmp_dpp)
-				goto end;
-
-		if (*tmp_dpp != DIR_NULL)
-			goto end;
-
-		BU_LIST_DEQUEUE(&sp->l);
-		FREE_SOLID(sp, &FreeSolid.l);
-	end:
+		if( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
+			BU_LIST_DEQUEUE(&sp->l);
+			FREE_SOLID(sp, &FreeSolid.l);
+		}
 		sp = nsp;
 	}
 
@@ -2616,6 +2583,7 @@ dgo_eraseobj(dgop, interp, dpp)
 			Tcl_AppendResult(interp, "dgo_eraseobj: db_dirdelete failed\n", (char *)NULL);
 		}
 	}
+	db_free_full_path(&subpath);
 }
 
 /*
@@ -2694,21 +2662,22 @@ dgo_build_tops(interp, hsp, start, end)
 		sp->s_flag = DOWN;
 	FOR_ALL_SOLIDS(sp, &hsp->l)  {
 		register struct solid *forw;
+		struct directory *dp = FIRST_SOLID(sp);
 
 		if (sp->s_flag == UP)
 			continue;
-		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR)
+		if (dp->d_addr == RT_DIR_PHONY_ADDR)
 			continue;	/* Ignore overlays, predictor, etc */
 		if (vp < end)
-			*vp++ = sp->s_path[0]->d_namep;
+			*vp++ = dp->d_namep;
 		else  {
 		  Tcl_AppendResult(interp, "mged: ran out of comand vector space at ",
-				   sp->s_path[0]->d_namep, "\n", (char *)NULL);
+				   dp->d_namep, "\n", (char *)NULL);
 		  break;
 		}
 		sp->s_flag = UP;
 		for (BU_LIST_PFOR(forw, sp, solid, &hsp->l)) {
-			if (forw->s_path[0] == sp->s_path[0])
+			if (FIRST_SOLID(forw) == dp)
 				forw->s_flag = UP;
 		}
 	}
@@ -2744,26 +2713,26 @@ dgo_rt_write(dgop, vop, fp, eye_model)
 #define DIR_USED	0x80	/* XXX move to raytrace.h */
 	(void)fprintf(fp, "start 0; clean;\n");
 	FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
-		for (i=0;i<=sp->s_last;i++) {
-			sp->s_path[i]->d_flags &= ~DIR_USED;
+		for (i=0;i<sp->s_fullpath.fp_len;i++) {
+			DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags &= ~DIR_USED;
 		}
 	}
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-		for (i=0; i<=sp->s_last; i++ ) {
-			if (!(sp->s_path[i]->d_flags & DIR_USED)) {
+		for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
+			if (!(DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags & DIR_USED)) {
 				register struct animate *anp;
-				for (anp = sp->s_path[i]->d_animate; anp;
+				for (anp = DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_animate; anp;
 				    anp=anp->an_forw) {
 					db_write_anim(fp, anp);
 				}
-				sp->s_path[i]->d_flags |= DIR_USED;
+				DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags |= DIR_USED;
 			}
 		}
 	}
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-		for (i=0;i<=sp->s_last;i++) {
-			sp->s_path[i]->d_flags &= ~DIR_USED;
+		for (i=0;i< sp->s_fullpath.fp_len;i++) {
+			DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags &= ~DIR_USED;
 		}
 	}
 #undef DIR_USED
@@ -2971,7 +2940,6 @@ dgo_print_schain(dgop, interp, lvl)
      int		lvl;			/* debug level */
 {
 	register struct solid		*sp;
-	register int			i;
 	register struct bn_vlist	*vp;
 	int				nvlist;
 	int				npts;
@@ -2985,12 +2953,11 @@ dgo_print_schain(dgop, interp, lvl)
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 		if (lvl <= -2) {
 			/* print only leaves */
-			bu_vls_printf(&vls, "%s ", sp->s_path[(int)(sp->s_last)]->d_namep);
+			bu_vls_printf(&vls, "%s ", LAST_SOLID(sp)->d_namep);
 			continue;
 		}
 
-		for (i=0; i <= sp->s_last; i++)
-			bu_vls_printf(&vls, "/%s", sp->s_path[i]->d_namep);
+		db_path_to_vls(&vls, &sp->s_fullpath);
 
 		if ((lvl != -1) && (sp->s_iflag == UP))
 			bu_vls_printf(&vls, " ILLUM");
@@ -3065,7 +3032,6 @@ dgo_print_schain_vlcmds(dgop, interp)
      Tcl_Interp		*interp;
 {
 	register struct solid		*sp;
-	register int			i;
 	register struct bn_vlist	*vp;
 	struct bu_vls 		vls;
 

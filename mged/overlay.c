@@ -121,12 +121,8 @@ char	**argv;
 			continue;
 		/* Find uses of this solid in the solid table */
 		FOR_ALL_SOLIDS(s, &HeadSolid.l)  {
-			int	j;
-			for( j = s->s_last; j >= 0; j-- )  {
-				if( s->s_path[j] == dp )  {
-					rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
-					break;
-				}
+			if( db_full_path_search( &s->s_fullpath, dp ) )  {
+				rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
 			}
 		}
 	}

@@ -20,7 +20,6 @@
 #ifndef SEEN_SOLID_H
 #define SEEN_SOLID_H
 
-#define MAX_PATH	16	/* Maximum depth of path */
 struct solid  {
   struct bu_list l;
   fastf_t s_size;	/* Distance across solid, in model space */
@@ -28,8 +27,7 @@ struct solid  {
   vect_t s_center;	/* Center point of solid, in model space */
   struct bu_list s_vlist;/* Pointer to unclipped vector list */
   int s_vlen;		/* # of actual cmd[] entries in vlist */
-  struct directory *s_path[MAX_PATH];	/* Full `path' name */
-  char s_last;		/* index of last path element */
+  struct db_full_path s_fullpath;
   char s_flag;		/* UP = object visible, DOWN = obj invis */
   char s_iflag;	        /* UP = illuminated, DOWN = regular */
   char s_soldash;	/* solid/dashed line flag */
@@ -55,11 +53,17 @@ struct solid  {
 #define GET_SOLID(p,fp) { \
 	if(BU_LIST_IS_EMPTY(fp)){ \
 		BU_GETSTRUCT(p,solid); \
+		db_full_path_init(&(p)->s_fullpath); \
 	}else{ \
 		p = BU_LIST_NEXT(solid,fp); \
 		BU_LIST_DEQUEUE(&((p)->l)); \
+		(p)->s_fullpath.fp_len = 0; \
 	} \
 	BU_LIST_INIT( &((p)->s_vlist) ); }
+
+/* Obtain the last node (the solid) on the path */
+#define LAST_SOLID(_sp)	DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
+#define FIRST_SOLID(_sp)	((_sp)->s_fullpath.fp_names[0])
 
 #define FREE_SOLID(p,fp) { \
 	BU_LIST_APPEND(fp, &((p)->l)); \
@@ -70,10 +74,6 @@ struct solid  {
 
 #define FOR_REST_OF_SOLIDS(p1,p2,hp) \
 	for(BU_LIST_PFOR(p1,p2,solid,hp))
-
-/*XXX Eventually move to bu.h */
-#define BU_LIST_PREV_IS_HEAD(p,hp)\
-	(((struct bu_list *)(p))->back == (hp))
 
 #define BU_LIST_PFOR(p1,p2,structure,hp) \
 	(p1)=BU_LIST_PNEXT(structure,p2); \
