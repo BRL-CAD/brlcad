@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.1
-	Last edit: 	3/21/85 at 13:59:42	G S M
-	Retrieved: 	8/13/86 at 10:26:47
+	SCCS id:	@(#) librle.c	1.2
+	Last edit: 	3/21/85 at 16:21:57	G S M
+	Retrieved: 	8/13/86 at 10:26:53
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -16,7 +16,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.1	last edit 3/21/85 at 13:59:42";
+char	sccsTag[] = "@(#) librle.c	1.2	last edit 3/21/85 at 16:21:57";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -330,6 +330,178 @@ ColorMap	*cmap;
 		return	-1;
 	else
 		return	0;
+	}
+
+/*	r l e _ d e c o d e _ l n ( )
+	Decode one scanline into 'scan_buf'.
+	Buffer is assumed to be filled with background color.
+ */
+rle_decode_ln( fp, scan_buf )
+FILE	*fp;
+Pixel	*scan_buf;
+	{
+	static Rle_Word inst;
+	static short	word;
+	register int	n;
+	register u_char	*pp = (u_char *) scan_buf; /* Pointer into pixel. */
+	static int	lines_to_skip = 0;
+
+	if( lines_to_skip > 0 )
+		{
+		--lines_to_skip;
+		return	0;
+		}
+	while( _Get_Inst( fp, &inst ) != EOF )
+		{
+		if( debug )
+			(void) fprintf( stderr,
+					"op %d, datum %d\n",
+					inst.opcode,
+					inst.datum
+					);
+		switch( n = inst.opcode )
+			{
+			case RSkipLinesOp :
+				lines_to_skip = inst.datum - 1;
+				if (debug)
+					(void) fprintf( stderr,
+							"Skip Lines %d\n",
+							lines_to_skip
+							);
+				if( lines_to_skip < 0 )
+					return	-1;
+				else
+					return	0;
+			case RSetColorOp:
+				if( debug )
+					(void) fprintf( stderr,
+							"Set Color %d\n",
+							inst.datum
+							);
+			/*
+			 * Select "color channel" that following ops go to.
+			 *
+			 * Set `pp' to point to starting pixel element;
+			 * by adding STRIDE to pp, will move to corresponding
+			 * color element in next pixel.
+			 * If Black & White image:  point to left-most
+			 * byte (Red for Ikonas) in long,
+			 * and Run and Data will ignore strides below.
+			 */
+				if( _bw_flag )
+					n = 0;
+				else
+					n = inst.datum;
+				switch( n )
+					{
+					case 0:
+						pp = &(scan_buf->red);
+						break;
+					case 1:
+						pp = &(scan_buf->green);
+						break;
+					case 2:
+						pp = &(scan_buf->blue);
+						break;
+					default:
+						(void) fprintf( stderr,
+							"Bad color %d\n",
+								n
+								);
+						return	-1;
+					}
+				break;
+			case RSkipPixelsOp:
+				n = inst.datum;
+				if( debug )
+					(void) fprintf( stderr,
+							"Skip Pixels %d\n",
+							n
+							);
+				pp += n * STRIDE; /* advance pixel ptr */
+				break;
+			case RByteDataOp:
+				n = inst.datum + 1;
+				if( debug )
+					(void) fprintf( stderr,
+						"Byte Data, count=%d.\n",
+							n
+							);
+	
+				if( ! _bw_flag )
+					{
+					while( n-- > 0 )
+						{
+						*pp = getc( fp );
+						pp += STRIDE;
+						}
+					}
+				else
+					{ /* Ugh, black & white.	*/
+					register u_char c;
+					while( n-- > 0 )
+						{
+						*pp++ = c = getc( fp );
+						*pp++ = c;
+						*pp++ = c;
+						*pp++ = c;
+						}
+					}
+				if( feof( fp ) )
+					{
+					(void) fprintf( stderr,
+				"unexpected EOF while reading Byte Data\n"
+							);
+					return	-1;
+					}
+				if( (inst.datum+1) & 01 )
+					/* word align file ptr */
+					(void) getc( fp );
+				break;
+			case RRunDataOp:
+				n = inst.datum + 1;
+				{
+				register char *p = (char *) &word;
+				*p++ = getc( fp );
+				*p++ = getc( fp );
+				}
+				if(debug)
+					(void) fprintf( stderr,	
+							"Run-Data(len=%d,inten=%d)\n",
+							n,
+							word
+							);
+	
+				if( ! _bw_flag )
+					{
+					register u_char inten = (u_char)word;
+					while( n-- > 0 )
+						{
+						*pp = inten;
+						pp += STRIDE;
+						}
+					}
+				else
+					{ /* Ugh, black & white.		*/
+					while( n-- > 0 )
+						{
+						*pp++ = (u_char) word;
+						*pp++ = (u_char) word;
+						*pp++ = (u_char) word;
+						*pp++ = (u_char) word;
+						}
+					}
+				break;
+			default:
+				(void) fprintf( stderr,
+						"Unrecognized opcode: %d (x%x x%x)\n",
+						inst.opcode, inst.opcode, inst.datum
+						);
+				if( ! debug )
+					return	-1;
+			}
+		}
+	return	0;
 	}
 
 /* 	r l e _ e n c o d e _ l n ( )
@@ -650,178 +822,6 @@ register u_char	*cmap_seg;
 				"Write of color map segment failed!\n"
 				);
 		return	-1;
-		}
-	return	0;
-	}
-
-/*	r l e _ d e c o d e _ l n ( )
-	Decode one scanline into 'scan_buf'.
-	Buffer is assumed to be filled with background color.
- */
-rle_decode_ln( fp, scan_buf )
-FILE	*fp;
-Pixel	*scan_buf;
-	{
-	static Rle_Word inst;
-	static short	word;
-	register int	n;
-	register u_char	*pp = (u_char *) scan_buf; /* Pointer into pixel. */
-	static int	lines_to_skip = 0;
-
-	if( lines_to_skip > 0 )
-		{
-		--lines_to_skip;
-		return	0;
-		}
-	while( _Get_Inst( fp, &inst ) != EOF )
-		{
-		if( debug )
-			(void) fprintf( stderr,
-					"op %d, datum %d\n",
-					inst.opcode,
-					inst.datum
-					);
-		switch( n = inst.opcode )
-			{
-			case RSkipLinesOp :
-				lines_to_skip = inst.datum;
-				if (debug)
-					(void) fprintf( stderr,
-							"Skip Lines %d\n",
-							lines_to_skip
-							);
-				if( lines_to_skip < 1 )
-					return	-1;
-				else
-					return	0;
-			case RSetColorOp:
-				if( debug )
-					(void) fprintf( stderr,
-							"Set Color %d\n",
-							inst.datum
-							);
-			/*
-			 * Select "color channel" that following ops go to.
-			 *
-			 * Set `pp' to point to starting pixel element;
-			 * by adding STRIDE to pp, will move to corresponding
-			 * color element in next pixel.
-			 * If Black & White image:  point to left-most
-			 * byte (Red for Ikonas) in long,
-			 * and Run and Data will ignore strides below.
-			 */
-				if( _bw_flag )
-					n = 0;
-				else
-					n = inst.datum;
-				switch( n )
-					{
-					case 0:
-						pp = &(scan_buf->red);
-						break;
-					case 1:
-						pp = &(scan_buf->green);
-						break;
-					case 2:
-						pp = &(scan_buf->blue);
-						break;
-					default:
-						(void) fprintf( stderr,
-							"Bad color %d\n",
-								n
-								);
-						return	-1;
-					}
-				break;
-			case RSkipPixelsOp:
-				n = inst.datum;
-				if( debug )
-					(void) fprintf( stderr,
-							"Skip Pixels %d\n",
-							n
-							);
-				pp += n * STRIDE; /* advance pixel ptr */
-				break;
-			case RByteDataOp:
-				n = inst.datum + 1;
-				if( debug )
-					(void) fprintf( stderr,
-						"Byte Data, count=%d.\n",
-							n
-							);
-	
-				if( ! _bw_flag )
-					{
-					while( n-- > 0 )
-						{
-						*pp = getc( fp );
-						pp += STRIDE;
-						}
-					}
-				else
-					{ /* Ugh, black & white.	*/
-					register u_char c;
-					while( n-- > 0 )
-						{
-						*pp++ = c = getc( fp );
-						*pp++ = c;
-						*pp++ = c;
-						*pp++ = c;
-						}
-					}
-				if( feof( fp ) )
-					{
-					(void) fprintf( stderr,
-				"unexpected EOF while reading Byte Data\n"
-							);
-					return	-1;
-					}
-				if( (inst.datum+1) & 01 )
-					/* word align file ptr */
-					(void) getc( fp );
-				break;
-			case RRunDataOp:
-				n = inst.datum + 1;
-				{
-				register char *p = (char *) &word;
-				*p++ = getc( fp );
-				*p++ = getc( fp );
-				}
-				if(debug)
-					(void) fprintf( stderr,	
-							"Run-Data(len=%d,inten=%d)\n",
-							n,
-							word
-							);
-	
-				if( ! _bw_flag )
-					{
-					register u_char inten = (u_char)word;
-					while( n-- > 0 )
-						{
-						*pp = inten;
-						pp += STRIDE;
-						}
-					}
-				else
-					{ /* Ugh, black & white.		*/
-					while( n-- > 0 )
-						{
-						*pp++ = (u_char) word;
-						*pp++ = (u_char) word;
-						*pp++ = (u_char) word;
-						*pp++ = (u_char) word;
-						}
-					}
-				break;
-			default:
-				(void) fprintf( stderr,
-						"Unrecognized opcode: %d (x%x x%x)\n",
-						inst.opcode, inst.opcode, inst.datum
-						);
-				if( ! debug )
-					return	-1;
-			}
 		}
 	return	0;
 	}
