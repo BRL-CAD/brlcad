@@ -33,7 +33,9 @@
 extern int	close();
 extern int	dup();
 extern int	execl();
+#ifndef CRAY1		/* Horrid XMP UNICOS 4.0.7 /bin/cc bug if you define this */
 extern void	exit();
+#endif
 extern int	fork();
 extern int	getuid();
 #ifdef BSD
