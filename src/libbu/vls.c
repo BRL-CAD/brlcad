@@ -461,7 +461,7 @@ bu_vls_vlscatzap(register struct bu_vls *dest, register struct bu_vls *src)
  *  separated words.
  */
 void
-bu_vls_from_argv(register struct bu_vls *vp, int argc, char **argv)
+bu_vls_from_argv(register struct bu_vls *vp, int argc, const char *argv[])
 {
 	BU_CK_VLS(vp);
 	for( ; argc > 0; argc--, argv++ )  {
