@@ -85,6 +85,7 @@ MGED_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) )
 MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (CONST struct bu_list *pipe_hd, CONST point_t pt ) );
 MGED_EXTERN( void split_pipept, (struct bu_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
 MGED_EXTERN( struct wdb_pipept *del_pipept, (struct wdb_pipept *ps ) );
+MGED_EXTERN( struct wdb_pipept *add_pipept, (struct rt_pipe_internal *pipe, struct wdb_pipept *pp, CONST point_t new_pt ) );
 
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
@@ -2999,7 +3000,7 @@ sedit()
 			else if( !es_mvalid && !inpara )
 				break;
 
-			add_pipept( pipe, es_pipept, new_pt );
+			es_pipept = add_pipept( pipe, es_pipept, new_pt );
 		}
 		break;
 	case ECMD_PIPE_PT_INS:

@@ -354,7 +354,7 @@ CONST point_t pt;
 	return( nearest );
 }
 
-void
+struct wdb_pipept *
 add_pipept( pipe, pp, new_pt )
 struct rt_pipe_internal *pipe;
 struct wdb_pipept *pp;
@@ -382,7 +382,7 @@ CONST point_t new_pt;
 			new->pp_bendradius = 40.0;
 			VMOVE( new->pp_coord, new_pt );
 			BU_LIST_INSERT( &pipe->pipe_segs_head, &new->l );
-			return;
+			return( new );
 		}
 	}
 
@@ -404,7 +404,10 @@ CONST point_t new_pt;
 		/* won't work here, so refuse to do it */
 		BU_LIST_DEQUEUE( &new->l );
 		bu_free( (genptr_t)new, "add_pipept: new " );
+		return( pp );
 	}
+	else
+		return( new );
 }
 
 
