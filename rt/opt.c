@@ -27,6 +27,8 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "./mathtab.h"
+#include "./ext.h"
+
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
@@ -41,7 +43,6 @@ int		hex_out = 0;		/* Binary or Hex .pix output file */
 double		AmbientIntensity = 0.4;	/* Ambient light intensity */
 double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
-extern int	use_air;		/* Handling of air in librt */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
