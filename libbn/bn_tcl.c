@@ -682,7 +682,6 @@ bn_cmd_noise_slice(ClientData clientData,
 	int noise_type = NOISE_FBM;
 	double val;
 	point_t pt;
-	double *img;
 
 	if (argc != 7) {
 		Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -698,9 +697,6 @@ bn_cmd_noise_slice(ClientData clientData,
 	h_val = atof(argv[3]);
 	lacunarity = atof(argv[4]);
 	octaves = atof(argv[5]);
-
-
-	img = bu_malloc(xdim*ydim*sizeof(double), "noise array");
 
 	switch (noise_type) {
 	case NOISE_FBM: 
