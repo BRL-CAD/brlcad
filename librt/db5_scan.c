@@ -255,10 +255,32 @@ struct db_i	*dbip;
 	}
 
 	if( db5_header_is_valid( header ) )  {
+		struct directory	*dp;
+		struct rt_db_internal	intern;
+
 		/* File is v5 format */
 bu_log("WARNING:  %s is BRL-CAD v5 format.\nWARNING:  You probably need a newer version of this program to read it.\n", dbip->dbi_filename);
 		dbip->dbi_version = 5;
-		return db5_scan( dbip, db5_diradd_handler, NULL );
+		if( db5_scan( dbip, db5_diradd_handler, NULL ) < 0 )  {
+			bu_log("db_dirbuild(%s): db5_scan() failed\n",
+				dbip->dbi_filename);
+			return -1;
+		}
+		/* Need to retrieve _GLOBAL object and obtain title and units */
+		if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY )) == DIR_NULL )  {
+			bu_log("db_dirbuild(%s): improper v5 database, no %s object\n",
+				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
+			dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
+			return 0;	/* not a fatal error, user may have deleted it */
+		}
+		if( rt_db_get_internal( &intern, dp, dbip, NULL ) < 0 )  {
+			bu_log("db_dirbuild(%s): improper v5 database, corrupted %s object\n",
+				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
+			return -1;	/* this is fatal */
+		}
+		BU_CK_AVS( &intern.idb_avs );
+bu_avs_print( &intern.idb_avs, DB5_GLOBAL_OBJECT_NAME );
+return -1;
 	}
 
 	/* Make a very simple check for a v4 database */
