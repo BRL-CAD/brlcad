@@ -17,16 +17,18 @@ static char RCSid[] = "$Header$";
 
 extern outval		ValTab[];
 extern int		nirt_debug;
-
+extern double		base2local;
+extern double		local2base;
 overlap			ovlp_list;
 
 overlap			*find_ovlp();
 void			del_ovlp();
 void			init_ovlp();
 
-int if_hit(ap, part_head)
+int if_hit(ap, part_head, finished_segs)
 struct application	*ap;
 struct partition 	*part_head;
+struct seg		*finished_segs;
 {
     struct partition	*part;
     char		*basename();
@@ -190,13 +192,15 @@ struct region			*reg2;
  *		The callbacks used by backup()
  *
  */
-int if_bhit(ap, part_head)
+int if_bhit(ap, part_head, finished_segs)
 struct application	*ap;
 struct partition 	*part_head;
+struct seg		*finished_segs;
 {
     struct partition	*part;
     vect_t		dir;
     point_t		point;
+    point_t		onormal;
     int			i;
 
     if ((part = part_head -> pt_back) == part_head)
@@ -205,11 +209,16 @@ struct partition 	*part_head;
 	exit (1);
     }
 
+    /* calculate exit point */
+    VJOIN1(part->pt_outhit->hit_point, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
+
     if (nirt_debug & DEBUG_BACKOUT)
     {
 	bu_log("Backmost region is '%s'\n", part->pt_regionp->reg_name);
 	bu_log("Backout ray exits at (%g %g %g)\n",
-	    V3ARGS(part -> pt_outhit -> hit_point));
+	       part->pt_outhit->hit_point[0] * base2local,
+	       part->pt_outhit->hit_point[1] * base2local,
+	       part->pt_outhit->hit_point[2] * base2local);
     }
 
     for (i = 0; i < 3; ++i)
@@ -218,7 +227,10 @@ struct partition 	*part_head;
 
     if (nirt_debug & DEBUG_BACKOUT)
 	bu_log("Point %g beyond is (%g %g %g)\n",
-	    BACKOUT_DIST, V3ARGS(point));
+	       BACKOUT_DIST,
+	       point[0] * base2local,
+	       point[1] * base2local,
+	       point[2] * base2local);
 
     for (i = 0; i < 3; ++i)
 	target(i) = point[i];
