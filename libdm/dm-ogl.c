@@ -73,10 +73,6 @@ void	Ogl_establish_lighting();
 void	Ogl_establish_zbuffer();
 int     Ogl_irisX2ged();
 int     Ogl_irisY2ged();
-#ifdef IR_KNOBS
-int     Ogl_irlimit();			/* provides knob dead spot */
-int     Ogl_add_tol();
-#endif
 
 static void	Ogl_gen_color();
 static void     Ogl_colorit();
@@ -174,7 +170,8 @@ struct dm *dmp;
 }
 
 /* get rid of when no longer needed */
-#define USE_RAMP	(((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on || ((struct ogl_vars *)dmp->dmr_vars)->mvars.lighting_on)
+#define USE_RAMP (((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on || \
+		  ((struct ogl_vars *)dmp->dmr_vars)->mvars.lighting_on)
 #define CMAP_BASE	32
 #define CMAP_RAMP_WIDTH	16
 #define MAP_ENTRY(x)	( USE_RAMP ? \
@@ -319,7 +316,8 @@ struct dm *dmp;
     return TCL_ERROR;
   }
 
-  ((struct ogl_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
+  ((struct ogl_vars *)dmp->dmr_vars)->dpy =
+    Tk_Display(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
 
   /* must do this before MakeExist */
   if ((vip=Ogl_set_visual(dmp, ((struct ogl_vars *)dmp->dmr_vars)->xtkwin))==NULL){
@@ -339,7 +337,8 @@ struct dm *dmp;
   Tk_MoveToplevelWindow(((struct ogl_vars *)dmp->dmr_vars)->xtkwin, 1276 - 976, 0);
   Tk_MakeWindowExist(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
 
-  ((struct ogl_vars *)dmp->dmr_vars)->win = Tk_WindowId(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
+  ((struct ogl_vars *)dmp->dmr_vars)->win =
+    Tk_WindowId(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
 
   a_screen = Tk_ScreenNumber(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
 
@@ -1671,34 +1670,6 @@ ogl_dbtext(str)
 {
   Tcl_AppendResult(interp, "dm-ogl: You pressed Help key and '",
 		   str, "'\n", (char *)NULL);
-}
-/*
- *			I R L I M I T
- *
- * Because the dials are so sensitive, setting them exactly to
- * zero is very difficult.  This function can be used to extend the
- * location of "zero" into "the dead zone".
- */
-int
-Ogl_irlimit(i)
-int i;
-{
-  if( i > NOISE )
-    return( i-NOISE );
-  if( i < -NOISE )
-    return( i+NOISE );
-  return(0);
-}
-
-int
-Ogl_add_tol(i)
-int i;\
-{
-  if( i > 0 )
-    return( i + NOISE );
-  if( i < 0 )
-    return( i - NOISE );
-  return(0);
 }
 #endif
 
