@@ -919,9 +919,10 @@ int			verbose;
  *  Print a ptbl array as a vertex list.
  */
 void
-nmg_pr_ptbl_vert_list( str, tbl )
+nmg_pr_ptbl_vert_list( str, tbl, mag )
 CONST char		*str;
 CONST struct nmg_ptbl	*tbl;
+CONST fastf_t		*mag;
 {
 	int			i;
 	CONST struct vertexuse	**vup;
@@ -959,7 +960,7 @@ CONST struct nmg_ptbl	*tbl;
 		} else {
 			rt_log("UNKNOWN");
 		}
-		rt_log("\tv=x%x, vu=x%x\n", v , vu);
+		rt_log("\tv=x%x, vu=x%x, dist=%g\n", v , vu, mag[i] );
 	}
 }
 
