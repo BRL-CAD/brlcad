@@ -256,6 +256,7 @@ char **argv;
 
 	state = ST_VIEW;
 	es_edflag = -1;
+	es_edclass = scroll_edit = EDIT_CLASS_NULL;
 	inpara = newedge = 0;
 
 	/* These values match old GED.  Use 'tol' command to change them. */
@@ -268,8 +269,6 @@ char **argv;
 	rt_prep_timer();		/* Initialize timer */
 
 	new_mats();
-
-	setview( 0.0, 0.0, 0.0 );
 
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
@@ -284,6 +283,8 @@ char **argv;
 	/* Get set up to use Tcl */
 	mged_setup();
 	mged_slider_link_vars(curr_dm_list);
+
+	setview( 0.0, 0.0, 0.0 );
 
 	windowbounds[0] = XMAX;		/* XHR */
 	windowbounds[1] = XMIN;		/* XLR */
@@ -556,11 +557,18 @@ int mask;
 	  bu_vls_printf(&input_str_prefix, "%s%S\n",
 			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			&curr_cmd_list->more_default);
-	else
-	  bu_vls_printf(&input_str_prefix, "%s%S\n",
-			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			&input_str);
+	else {
+	  if (curr_cmd_list->quote_string)
+	    bu_vls_printf(&input_str_prefix, "%s\"%S\"\n",
+			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			  &input_str);
+	  else
+	    bu_vls_printf(&input_str_prefix, "%s%S\n",
+			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			  &input_str);
+	}
 
+	curr_cmd_list->quote_string = 0;
 	bu_vls_trunc(&curr_cmd_list->more_default, 0);
 
 	/* If this forms a complete command (as far as the Tcl parser is
