@@ -610,7 +610,7 @@ prepare()
 
 	do_prep( rtip );
 
-	if( RT_LIST_IS_EMPTY( &rtip->rti_headsolid ) )  {
+	if( rtip->nsolids <= 0 )  {
 		rt_log("ph_matrix: No solids remain after prep.\n");
 		exit(3);
 	}
