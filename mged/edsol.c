@@ -49,7 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static int	new_way = 0;	/* Set 1 for import/export handling */
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	eto_ed();
+static void	rpc_ed(), rhc_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
 static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
@@ -101,8 +101,24 @@ int	es_menu;		/* item selected from menu */
 #define MENU_ELL_SCALE_B	39
 #define MENU_ELL_SCALE_C	40
 #define MENU_ELL_SCALE_ABC	41
-#define MENU_ETO_R1		42
-#define MENU_ETO_R2		43
+#define MENU_RPC_B		42
+#define MENU_RPC_H		43
+#define MENU_RPC_R		44
+#define MENU_RHC_B		45
+#define MENU_RHC_H		46
+#define MENU_RHC_R		47
+#define MENU_RHC_C		48
+#define MENU_EPA_H		49
+#define MENU_EPA_R1		50
+#define MENU_EPA_R2		51
+#define MENU_EHY_H		52
+#define MENU_EHY_R1		53
+#define MENU_EHY_R2		54
+#define MENU_EHY_C		55
+#define MENU_ETO_R		56
+#define MENU_ETO_RD		57
+#define MENU_ETO_SCALE_C	58
+#define MENU_ETO_ROT_C		59
 
 /*
  *			M A T _ S C A L E _ A B O U T _ P T
@@ -268,8 +284,10 @@ struct menu_item  tor_menu[] = {
 
 struct menu_item  eto_menu[] = {
 	{ "ELL-TORUS MENU", (void (*)())NULL, 0 },
-	{ "scale r1 (r)", eto_ed, MENU_ETO_R1 },
-	{ "scale r2 (rd)", eto_ed, MENU_ETO_R2 },
+	{ "scale r", eto_ed, MENU_ETO_R },
+	{ "scale D", eto_ed, MENU_ETO_RD },
+	{ "scale C", eto_ed, MENU_ETO_SCALE_C },
+	{ "rotate C", eto_ed, MENU_ETO_ROT_C },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -412,6 +430,40 @@ struct menu_item cntrl_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
+struct menu_item  rpc_menu[] = {
+	{ "RPC MENU", (void (*)())NULL, 0 },
+	{ "scale B", rpc_ed, MENU_RPC_B },
+	{ "scale H", rpc_ed, MENU_RPC_H },
+	{ "scale r", rpc_ed, MENU_RPC_R },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  rhc_menu[] = {
+	{ "RHC MENU", (void (*)())NULL, 0 },
+	{ "scale B", rhc_ed, MENU_RHC_B },
+	{ "scale H", rhc_ed, MENU_RHC_H },
+	{ "scale r", rhc_ed, MENU_RHC_R },
+	{ "scale c", rhc_ed, MENU_RHC_C },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  epa_menu[] = {
+	{ "EPA MENU", (void (*)())NULL, 0 },
+	{ "scale H", epa_ed, MENU_EPA_H },
+	{ "scale A", epa_ed, MENU_EPA_R1 },
+	{ "scale B", epa_ed, MENU_EPA_R2 },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  ehy_menu[] = {
+	{ "EHY MENU", (void (*)())NULL, 0 },
+	{ "scale H", ehy_ed, MENU_EHY_H },
+	{ "scale A", ehy_ed, MENU_EHY_R1 },
+	{ "scale B", ehy_ed, MENU_EHY_R2 },
+	{ "scale c", ehy_ed, MENU_EHY_C },
+	{ "", (void (*)())NULL, 0 }
+};
+
 struct menu_item *which_menu[] = {
 	point4_menu,
 	edge5_menu,
@@ -545,6 +597,40 @@ int arg;
 
 static void
 eto_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = PSCALE;
+	if(arg == MENU_ETO_ROT_C )
+		es_edflag = ECMD_ETO_ROT_C;
+}
+
+static void
+rpc_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = PSCALE;
+}
+
+static void
+rhc_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = PSCALE;
+}
+
+static void
+epa_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = PSCALE;
+}
+
+static void
+ehy_ed( arg )
 int arg;
 {
 	es_menu = arg;
@@ -797,6 +883,10 @@ init_sedit()
 	/* Experimental, but working. */
 	switch( id )  {
 	case ID_ELL:
+	case ID_EHY:
+	case ID_EPA:
+	case ID_RPC:
+	case ID_RHC:
 	case ID_TGC:
 	case ID_TOR:
 	case ID_ETO:
@@ -926,6 +1016,18 @@ sedit_menu()  {
 		break;
 	case ID_BSPLINE:
 		menu_array[MENU_L1] = spline_menu;
+		break;
+	case ID_RPC:
+		menu_array[MENU_L1] = rpc_menu;
+		break;
+	case ID_RHC:
+		menu_array[MENU_L1] = rhc_menu;
+		break;
+	case ID_EPA:
+		menu_array[MENU_L1] = epa_menu;
+		break;
+	case ID_EHY:
+		menu_array[MENU_L1] = ehy_menu;
 		break;
 	case ID_ETO:
 		menu_array[MENU_L1] = eto_menu;
@@ -1413,6 +1515,18 @@ sedit()
 		mat_idn( incr_change );
 		break;
 
+	case ECMD_ETO_ROT_C:
+		/* rotate ellipse semi-major axis vector */
+		{
+			struct rt_eto_internal	*eto = 
+				(struct rt_eto_internal *)es_int.idb_ptr;
+			RT_ETO_CK_MAGIC(eto);
+			MAT4X3VEC(work, incr_change, eto->eto_C);
+			VMOVE(eto->eto_C, work);
+		}
+		mat_idn( incr_change );
+		break;
+
 	default:
 		(void)printf("sedit():  unknown edflag = %d.\n", es_edflag );
 	}
@@ -1810,13 +1924,15 @@ torcom:
 		}
 		break;
 
-	case MENU_ETO_R1:
+	case MENU_ETO_R:
 		/* scale radius 1 (r) of ETO */
 		/* new_way only */
 		{
 			struct rt_eto_internal	*eto = 
 				(struct rt_eto_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
+			fastf_t	ch, cv, dh, newrad;
+			vect_t	Nu;
+
 			RT_ETO_CK_MAGIC(eto);
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
@@ -1826,18 +1942,28 @@ torcom:
 				newrad = eto->eto_r * es_scale;
 			}
 			if( newrad < SMALL )  newrad = 4*SMALL;
-			if( eto->eto_rd <= newrad )
+			VMOVE(Nu, eto->eto_N);
+			VUNITIZE(Nu);
+			/* get horiz and vert components of C and Rd */
+			cv = VDOT( eto->eto_C, Nu );
+			ch = sqrt( VDOT( eto->eto_C, eto->eto_C ) - cv * cv );
+			/* angle between C and Nu */
+			dh = eto->eto_rd * cv / MAGNITUDE(eto->eto_C);
+			/* make sure revolved ellipse doesn't overlap itself */
+			if (ch <= newrad && dh <= newrad)
 				eto->eto_r = newrad;
 		}
 		break;
 
-	case MENU_ETO_R2:
-		/* scale radius 2 (rd) of ETO */
+	case MENU_ETO_RD:
+		/* scale Rd, ellipse semi-minor axis length, of ETO */
 		/* new_way only */
 		{
 			struct rt_eto_internal	*eto = 
 				(struct rt_eto_internal *)es_int.idb_ptr;
-			fastf_t	newrad;
+			fastf_t	dh, newrad, work;
+			vect_t	Nu;
+
 			RT_ETO_CK_MAGIC(eto);
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
@@ -1847,8 +1973,278 @@ torcom:
 				newrad = eto->eto_rd * es_scale;
 			}
 			if( newrad < SMALL )  newrad = 4*SMALL;
-			if( newrad <= eto->eto_r )
-				eto->eto_rd = newrad;
+			work = MAGNITUDE(eto->eto_C);
+				if (newrad <= work) {
+				VMOVE(Nu, eto->eto_N);
+				VUNITIZE(Nu);
+				dh = newrad * VDOT( eto->eto_C, Nu ) / work;
+				/* make sure revolved ellipse doesn't overlap itself */
+				if (dh <= eto->eto_r)
+					eto->eto_rd = newrad;
+			}
+		}
+		break;
+
+	case MENU_ETO_SCALE_C:
+		/* scale vector C */
+		{
+			struct rt_eto_internal	*eto = 
+				(struct rt_eto_internal *)es_int.idb_ptr;
+			fastf_t	ch, cv;
+			vect_t	Nu, Work;
+
+			RT_ETO_CK_MAGIC(eto);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(eto->eto_C);
+			}
+			if (es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
+				VMOVE(Nu, eto->eto_N);
+				VUNITIZE(Nu);
+				VSCALE(Work, eto->eto_C, es_scale);
+				/* get horiz and vert comps of C and Rd */
+				cv = VDOT( Work, Nu );
+				ch = sqrt( VDOT( Work, Work ) - cv * cv );
+				if (ch <= eto->eto_r)
+					VMOVE(eto->eto_C, Work);
+			}
+		}
+		break;
+
+	case MENU_RPC_B:
+		/* scale vector B */
+		{
+			struct rt_rpc_internal	*rpc = 
+				(struct rt_rpc_internal *)es_int.idb_ptr;
+			RT_RPC_CK_MAGIC(rpc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(rpc->rpc_B);
+			}
+			VSCALE(rpc->rpc_B, rpc->rpc_B, es_scale);
+		}
+		break;
+
+	case MENU_RPC_H:
+		/* scale vector H */
+		{
+			struct rt_rpc_internal	*rpc = 
+				(struct rt_rpc_internal *)es_int.idb_ptr;
+
+			RT_RPC_CK_MAGIC(rpc);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(rpc->rpc_H);
+			}
+			VSCALE(rpc->rpc_H, rpc->rpc_H, es_scale);
+		}
+		break;
+
+	case MENU_RPC_R:
+		/* scale rectangular half-width of RPC */
+		{
+			struct rt_rpc_internal	*rpc = 
+				(struct rt_rpc_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+
+			RT_RPC_CK_MAGIC(rpc);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / rpc->rpc_r;
+			}
+			rpc->rpc_r *= es_scale;
+		}
+		break;
+
+	case MENU_RHC_B:
+		/* scale vector B */
+		{
+			struct rt_rhc_internal	*rhc = 
+				(struct rt_rhc_internal *)es_int.idb_ptr;
+			RT_RHC_CK_MAGIC(rhc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(rhc->rhc_B);
+			}
+			VSCALE(rhc->rhc_B, rhc->rhc_B, es_scale);
+		}
+		break;
+
+	case MENU_RHC_H:
+		/* scale vector H */
+		{
+			struct rt_rhc_internal	*rhc = 
+				(struct rt_rhc_internal *)es_int.idb_ptr;
+			RT_RHC_CK_MAGIC(rhc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(rhc->rhc_H);
+			}
+			VSCALE(rhc->rhc_H, rhc->rhc_H, es_scale);
+		}
+		break;
+
+	case MENU_RHC_R:
+		/* scale rectangular half-width of RHC */
+		{
+			struct rt_rhc_internal	*rhc = 
+				(struct rt_rhc_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+
+			RT_RHC_CK_MAGIC(rhc);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / rhc->rhc_r;
+			}
+			rhc->rhc_r *= es_scale;
+		}
+		break;
+
+	case MENU_RHC_C:
+		/* scale rectangular half-width of RHC */
+		{
+			struct rt_rhc_internal	*rhc = 
+				(struct rt_rhc_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+
+			RT_RHC_CK_MAGIC(rhc);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / rhc->rhc_c;
+			}
+			rhc->rhc_c *= es_scale;
+		}
+		break;
+
+	case MENU_EPA_H:
+		/* scale height vector H */
+		{
+			struct rt_epa_internal	*epa = 
+				(struct rt_epa_internal *)es_int.idb_ptr;
+
+			RT_EPA_CK_MAGIC(epa);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(epa->epa_H);
+			}
+			VSCALE(epa->epa_H, epa->epa_H, es_scale);
+		}
+		break;
+
+	case MENU_EPA_R1:
+		/* scale semimajor axis of EPA */
+		{
+			struct rt_epa_internal	*epa = 
+				(struct rt_epa_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+
+			RT_EPA_CK_MAGIC(epa);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / epa->epa_r1;
+			}
+			if (epa->epa_r1 * es_scale >= epa->epa_r2)
+				epa->epa_r1 *= es_scale;
+		}
+		break;
+
+	case MENU_EPA_R2:
+		/* scale semiminor axis of EPA */
+		{
+			struct rt_epa_internal	*epa = 
+				(struct rt_epa_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+
+			RT_EPA_CK_MAGIC(epa);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / epa->epa_r2;
+			}
+			if (epa->epa_r2 * es_scale <= epa->epa_r1)
+				epa->epa_r2 *= es_scale;
+		}
+		break;
+
+	case MENU_EHY_H:
+		/* scale height vector H */
+		{
+			struct rt_ehy_internal	*ehy = 
+				(struct rt_ehy_internal *)es_int.idb_ptr;
+
+			RT_EHY_CK_MAGIC(ehy);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(ehy->ehy_H);
+			}
+			VSCALE(ehy->ehy_H, ehy->ehy_H, es_scale);
+		}
+		break;
+
+	case MENU_EHY_R1:
+		/* scale semimajor axis of EHY */
+		{
+			struct rt_ehy_internal	*ehy = 
+				(struct rt_ehy_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+
+			RT_EHY_CK_MAGIC(ehy);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / ehy->ehy_r1;
+			}
+			if (ehy->ehy_r1 * es_scale >= ehy->ehy_r2)
+				ehy->ehy_r1 *= es_scale;
+		}
+		break;
+
+	case MENU_EHY_R2:
+		/* scale semiminor axis of EHY */
+		{
+			struct rt_ehy_internal	*ehy = 
+				(struct rt_ehy_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+
+			RT_EHY_CK_MAGIC(ehy);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / ehy->ehy_r2;
+			}
+			if (ehy->ehy_r2 * es_scale <= ehy->ehy_r1)
+				ehy->ehy_r2 *= es_scale;
+		}
+		break;
+
+	case MENU_EHY_C:
+		/* scale distance between apex of EHY & asymptotic cone */
+		{
+			struct rt_ehy_internal	*ehy = 
+				(struct rt_ehy_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+
+			RT_EHY_CK_MAGIC(ehy);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / ehy->ehy_c;
+			}
+			ehy->ehy_c *= es_scale;
 		}
 		break;
 
@@ -2232,6 +2628,10 @@ init_objedit()
 	case ID_ELL:
 	case ID_ARB8:
 	case ID_HALF:
+	case ID_RPC:
+	case ID_RHC:
+	case ID_EHY:
+	case ID_EPA:
 	case ID_ETO:
 		/* All folks with u_id == (DB_)ID_SOLID */
 		if( es_rec.s.s_cgtype < 0 )
@@ -2735,36 +3135,172 @@ struct rt_db_internal	*ip;
 		}
 		break;
 
+	case ID_RPC:
+		{
+			struct rt_rpc_internal	*rpc = 
+				(struct rt_rpc_internal *)es_int.idb_ptr;
+			vect_t	Ru;
+
+			RT_RPC_CK_MAGIC(rpc);
+			MAT4X3PNT( pos_view, xform, rpc->rpc_V );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, rpc->rpc_V, rpc->rpc_B );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'B' );
+
+			VADD2( work, rpc->rpc_V, rpc->rpc_H );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'H' );
+
+			VCROSS( Ru, rpc->rpc_B, rpc->rpc_H );
+			VUNITIZE( Ru );
+			VSCALE( Ru, Ru, rpc->rpc_r );
+			VADD2( work, rpc->rpc_V, Ru );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'r' );
+		}
+		break;
+
+	case ID_RHC:
+		{
+			struct rt_rhc_internal	*rhc = 
+				(struct rt_rhc_internal *)es_int.idb_ptr;
+			vect_t	Ru;
+
+			RT_RHC_CK_MAGIC(rhc);
+			MAT4X3PNT( pos_view, xform, rhc->rhc_V );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, rhc->rhc_V, rhc->rhc_B );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'B' );
+
+			VADD2( work, rhc->rhc_V, rhc->rhc_H );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'H' );
+
+			VCROSS( Ru, rhc->rhc_B, rhc->rhc_H );
+			VUNITIZE( Ru );
+			VSCALE( Ru, Ru, rhc->rhc_r );
+			VADD2( work, rhc->rhc_V, Ru );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'r' );
+
+			VMOVE( work, rhc->rhc_B );
+			VUNITIZE( work );
+			VSCALE( work, work,
+				MAGNITUDE(rhc->rhc_B) + rhc->rhc_c );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'c' );
+		}
+		break;
+
+	case ID_EPA:
+		{
+			struct rt_epa_internal	*epa = 
+				(struct rt_epa_internal *)es_int.idb_ptr;
+			vect_t	A, B;
+
+			RT_EPA_CK_MAGIC(epa);
+			MAT4X3PNT( pos_view, xform, epa->epa_V );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, epa->epa_V, epa->epa_H );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'H' );
+
+			VSCALE( A, epa->epa_Au, epa->epa_r1 );
+			VADD2( work, epa->epa_V, A );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'A' );
+
+			VCROSS( B, epa->epa_Au, epa->epa_H );
+			VUNITIZE( B );
+			VSCALE( B, B, epa->epa_r2 );
+			VADD2( work, epa->epa_V, B );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'B' );
+		}
+		break;
+
+	case ID_EHY:
+		{
+			struct rt_ehy_internal	*ehy = 
+				(struct rt_ehy_internal *)es_int.idb_ptr;
+			vect_t	A, B;
+
+			RT_EHY_CK_MAGIC(ehy);
+			MAT4X3PNT( pos_view, xform, ehy->ehy_V );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, ehy->ehy_V, ehy->ehy_H );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'H' );
+
+			VSCALE( A, ehy->ehy_Au, ehy->ehy_r1 );
+			VADD2( work, ehy->ehy_V, A );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'A' );
+
+			VCROSS( B, ehy->ehy_Au, ehy->ehy_H );
+			VUNITIZE( B );
+			VSCALE( B, B, ehy->ehy_r2 );
+			VADD2( work, ehy->ehy_V, B );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'B' );
+
+			VMOVE( work, ehy->ehy_H );
+VPRINT("H", ehy->ehy_H);
+			VUNITIZE( work );
+VPRINT("Hu", work);
+			VSCALE( work, work,
+				MAGNITUDE(ehy->ehy_H) + ehy->ehy_c );
+VPRINT("c", work);
+			VADD2( work, ehy->ehy_V, work );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'c' );
+		}
+		break;
+
 	case ID_ETO:
 		/* new_way only */
 		{
 			struct rt_eto_internal	*eto = 
 				(struct rt_eto_internal *)es_int.idb_ptr;
-			fastf_t	r3, r4;
-			vect_t	adir;
-			RT_ETO_CK_MAGIC(eto);
+			fastf_t	ch, cv, dh, dv, cmag, phi;
+			vect_t	Au, Nu;
 
-			mat_vec_ortho( adir, eto->eto_N );
+			RT_ETO_CK_MAGIC(eto);
 
 			MAT4X3PNT( pos_view, xform, eto->eto_V );
 			POINT_LABEL( pos_view, 'V' );
 
-#if 0
-			r3 = eto->r_a - eto->r_h;
-			VJOIN1( work, eto->v, r3, adir );
-			MAT4X3PNT(pos_view, xform, work);
-			POINT_LABEL( pos_view, 'I' );
+			VMOVE(Nu, eto->eto_N);
+			VUNITIZE(Nu);
+			vec_ortho( Au, Nu );
+			VUNITIZE(Au);
 
-			r4 = eto->r_a + eto->r_h;
-			VJOIN1( work, eto->v, r4, adir );
-			MAT4X3PNT(pos_view, xform, work);
-			POINT_LABEL( pos_view, 'O' );
+			cmag = MAGNITUDE(eto->eto_C);
+			/* get horizontal and vertical components of C and Rd */
+			cv = VDOT( eto->eto_C, Nu );
+			ch = sqrt( cmag*cmag - cv*cv );
+			/* angle between C and Nu */
+			phi = acos( cv / cmag );
+			dv = -eto->eto_rd * sin(phi);
+			dh = eto->eto_rd * cos(phi);
 
-			VJOIN1( work, eto->v, eto->r_a, adir );
-			VADD2( work, work, eto->h );
+			VJOIN2(work, eto->eto_V, eto->eto_r+ch, Au, cv, Nu);
 			MAT4X3PNT(pos_view, xform, work);
-			POINT_LABEL( pos_view, 'H' );
-#endif
+			POINT_LABEL( pos_view, 'C' );
+
+			VJOIN2(work, eto->eto_V, eto->eto_r+dh, Au, dv, Nu);
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'D' );
+
+			VJOIN1(work, eto->eto_V, eto->eto_r, Au);
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'r' );
 		}
 		break;
 

@@ -47,6 +47,8 @@ extern int     es_edflag;		/* type of editing for this solid */
 #define ECMD_ARB_SETUP_ROTFACE	14
 #define ECMD_ARB_ROTATE_FACE	15
 
+#define ECMD_ETO_ROT_C		16
+
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
 extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */

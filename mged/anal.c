@@ -42,6 +42,8 @@ static void	tgc_anal();
 static void	ell_anal();
 static void	tor_anal();
 static void	ars_anal();
+static void	rpc_anal();
+static void	rhc_anal();
 
 /*
  *			F _ A N A L Y Z E
@@ -145,6 +147,14 @@ struct rt_db_internal	*ip;
 
 	case ID_TOR:
 		tor_anal(vp, ip);
+		break;
+
+	case ID_RPC:
+		rpc_anal(vp, ip);
+		break;
+
+	case ID_RHC:
+		rhc_anal(vp, ip);
 		break;
 
 	default:
@@ -648,22 +658,103 @@ struct rt_db_internal	*ip;
 
 
 
-/*	anaylze ars */
+/*	analyze ars */
 static void
 ars_anal(vp, ip)
 struct rt_vls	*vp;
 struct rt_db_internal	*ip;
 {
-	rt_vls_printf(vp,"ARS analyze not implimented\n");
+	rt_vls_printf(vp,"ARS analyze not implemented\n");
 }
 
-/*	anaylze spline */
+/*	analyze spline */
 static void
 spline_anal(vp, ip)
 struct rt_vls	*vp;
 struct rt_db_internal	*ip;
 {
-	rt_vls_printf(vp,"SPLINE analyze not implimented\n");
+	rt_vls_printf(vp,"SPLINE analyze not implemented\n");
+}
+
+#define arcsinh(x) (log((x) + sqrt((x)*(x) + 1.)))
+
+/*	analyze rpc */
+static void
+rpc_anal(vp, ip)
+struct rt_vls	*vp;
+struct rt_db_internal	*ip;
+{
+	fastf_t	area_parab, area_body, area_rect, b, h, r, vol_parab;
+	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+
+	RT_RPC_CK_MAGIC( rpc );
+
+	b = MAGNITUDE( rpc->rpc_B );
+	h = MAGNITUDE( rpc->rpc_H );
+	r = rpc->rpc_r;
+	
+	/* area of one parabolic side */
+	area_parab = 4./3 * b*r;
+	
+	/* volume of rpc */
+	vol_parab = area_parab*h;
+	
+	/* surface area of parabolic body */
+	area_body = .5*sqrt(r*r + 4.*b*b) + .25*r*r/b*arcsinh(2.*b/r);
+	area_body *= 2.;
+
+	rt_vls_printf(vp,"Surface Areas:  front(BxR)=%.4f  top(RxH)=%.4f  body=%.4f\n",
+			area_parab*base2local*base2local,
+			2*r*h*base2local*base2local,
+			area_body*base2local*base2local);
+	rt_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
+			(2*area_parab+2*r*h+area_body)*base2local*base2local,
+			vol_parab*base2local*base2local*base2local,
+			vol_parab/3787878.79);
+}
+
+/*	analyze rhc */
+static void
+rhc_anal(vp, ip)
+struct rt_vls	*vp;
+struct rt_db_internal	*ip;
+{
+	fastf_t	area_hyperb, area_body, area_rect, b, c, h, k, r, vol_hyperb,
+		work1, work2, work3, work4;
+	struct rt_rhc_internal	*rhc = (struct rt_rhc_internal *)ip->idb_ptr;
+
+	RT_RHC_CK_MAGIC( rhc );
+
+	b = MAGNITUDE( rhc->rhc_B );
+	h = MAGNITUDE( rhc->rhc_H );
+	r = rhc->rhc_r;
+	c = rhc->rhc_c;
+	
+	/* area of one hyperbolic side (from macsyma) WRONG!!!! */
+	work1 = sqrt(b*(b + 2.*c));
+	area_hyperb = -2.*r*work1*(.5*(b+c) + c*c*log(c/(work1 + b + c)));
+
+	/* volume of rhc */
+	vol_hyperb = area_hyperb*h;
+	
+	/* surface area of hyperbolic body */
+	area_body=0.;
+#if 0
+	k = (b+c)*(b+c) - c*c;
+#define X_eval(y) sqrt( 1. + (4.*k)/(r*r*k*k*(y)*(y) + r*r*c*c) )
+#define L_eval(y) .5*k*(y)*X_eval(y) \
+		  + r*k*(r*r*c*c + 4.*k - r*r*c*c/k)*arcsinh((y)*sqrt(k)/c)
+	area_body = 2.*(L_eval(r) - L_eval(0.));
+#endif
+
+	rt_vls_printf(vp,"Surface Areas:  front(BxR)=%.4f  top(RxH)=%.4f  body=%.4f\n",
+			area_hyperb*base2local*base2local,
+			2*r*h*base2local*base2local,
+			area_body*base2local*base2local);
+	rt_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
+			(2*area_hyperb+2*r*h+2*area_body)*base2local*base2local,
+			vol_hyperb*base2local*base2local*base2local,
+			vol_hyperb/3787878.79);
 }
 
 /*
