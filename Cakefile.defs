@@ -212,7 +212,7 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #else
 #		define MGED_OBJS	dm-4d dm-X
-#		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_LIBRARY=\\\\"/n/vapor/m/cad/tclscripts\\\\"
+#		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/n/vapor/m/cad/tclscripts\\\\"
 #		define MGED_LIBES	-L''XLIBDIR -lX11 -lgl_s
 #endif
 #	endif
@@ -275,7 +275,7 @@ set -S2 "/bin/sh"
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc -lc_s
 #		define	LD_OPTS		GFLAG
-#if 1
+#if 0
 #       define  XINCDIR /usr/X11/include
 #       define  XLIBDIR /usr/X11/lib
 #else
@@ -292,7 +292,7 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	-L''XLIBDIR -lX11_s -lgl_s -lGL
 #else
 #	if 1
-#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lX11_s -lgl_s -lGL
+#		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -lGL
 #	else
 /* Experiment with Mesa library */
 #		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -L../.libMesa.6d -lMesaGL
@@ -316,7 +316,7 @@ set -S2 "/bin/sh"
 #if 0
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DBSD=43 -DIF_X -I''XINCDIR
 #else
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DBSD=43 -DIF_X -I''XINCDIR -DFB_USING_TCL_TK
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DIF_OGL -DBSD=43 -DIF_X -I''XINCDIR -DFB_USING_TCL_TK
 #endif
 
 # if 0
@@ -329,13 +329,13 @@ set -S2 "/bin/sh"
 #	define  LIBDM_OBJS	dm-X dm-ogl dm-glx
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_OGL
 #	define	MGED_OBJS	dm-X dm-ogl dm-glx
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
 #else
 #	define	LIBMESA_CONFIG	-DFBIND=2
 #	define  LIBDM_OBJS	dm-X dm-ogl dm-glx
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_OGL
 #	define	MGED_OBJS	dm-X dm-ogl dm-glx
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
 #endif
 # endif
 #	define	HAS_TCP	1
@@ -368,8 +368,9 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
 #	define	GFLAG		-64 -KPIC -G 7
-#	define	XLIBDIR		/usr/lib64
-#	if 1	/* PRODUCTION=1 */
+#	define  XINCDIR /usr/include/X11
+#	define	XLIBDIR /usr/lib64
+#	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sharedlibvers.sh
@@ -393,24 +394,17 @@ set -S2 "/bin/sh"
 
 /* GAK!  No GL library in 64-bit mode, only OpenGL!  ARRRRGH! */
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBDM_OBJS	dm-X
-#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -I''XINCDIR -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
-#	define	MGED_LIBES	LIBDM -L''XLIBDIR -lX11
-#    if 1	/* PRODUCTION=1 */
-/*		Still some porting issues, XMGED won't compile yet */
-#    else
-#       define  XMGED_ALLOCA    alloca
-#	define	XMGED_OBJS	dm-X
-#	define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D \
-				-DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11
-#	define	XMGED_LIBES	-L''XLIBDIR -lXm_s \
-				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
-				-lxmalloc -ll
-#    endif
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -DIF_OGL -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 
+#if 1
+#	define	LIBDM_OBJS	dm-X dm-ogl
+#else
+#	define  LIBDM_OBJS      dm-X
+#endif
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
+#	define	MGED_OBJS	dm-X dm-ogl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
+#	define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
 #	define	GETHOST	hostname
@@ -581,7 +575,7 @@ set -S2 "/bin/sh"
 #		define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
 #		define  LIBMESA_CONFIG  -DFBIND=2 -I''XINCDIR
 #		define	MGED_OBJS	dm-X dm-ogl
-#		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
+#		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\" -DDOUBLE_BUFFERING_WITH_PIXMAPS
 #		define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
 
 #	endif
