@@ -2072,10 +2072,14 @@ dmo_png_cmd(struct dm_obj	*dmop,
 	 * We need to reverse things if the image byte order
 	 * is different from the system's byte order.
 	 */
-	if ((BYTE_ORDER == LITTLE_ENDIAN &&
-	     ximage_p->byte_order == MSBFirst) ||
-	    (BYTE_ORDER == BIG_ENDIAN &&
-	     ximage_p->byte_order == LSBFirst)) {
+	if (
+#ifdef NATURAL_IEEE	/* big endian */
+	     ximage_p->byte_order == LSBFirst
+#else			/* little endian */
+	     ximage_p->byte_order == MSBFirst
+#endif
+	   ){
+
 #if 0
 	    bu_log("red mask - %ld\n", ximage_p->red_mask);
 	    bu_log("green mask - %ld\n", ximage_p->green_mask);
