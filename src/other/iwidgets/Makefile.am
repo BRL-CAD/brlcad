@@ -1,6 +1,8 @@
 # $Id$
 
-SUBDIRS = generic doc
+SUBDIRS = \
+	doc \
+	generic
 
 INSTALL_DIR = ${libdir}/iwidgets4.0.1
 

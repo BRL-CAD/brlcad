@@ -1,6 +1,6 @@
 # $Id$
 
-dist_man_MANS = \
+mann_MANS = \
 	buttonbox.n \
 	calendar.n \
 	canvasprintbox.n \
@@ -55,6 +55,7 @@ dist_man_MANS = \
 	watch.n
 
 EXTRA_DIST = \
+	$(mann_MANS) \
 	generateHtml.sh \
 	iwidgets.ps \
 	man.macros \
@@ -65,3 +66,12 @@ EXTRA_DIST = \
 	tk2html2.awk
 
 transform = s,^,iwidgets_,
+
+install-data-hook:
+	@for manpage in $(mann_MANS) ; do \
+		echo "Configuring $(mandir)/mann/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/iwidgets/doc/man.macros' -e '/man\.macros/d' $(mandir)/mann/$$manpage > $(mandir)/mann/$$manpage.new ; \
+		mv $(mandir)/mann/$$manpage.new $(mandir)/mann/$$manpage ; \
+	done
+
+MAINTAINERCLEANFILES = Makefile.in
