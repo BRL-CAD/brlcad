@@ -274,8 +274,17 @@ int a;
 			arb_code[2] = '\0';
 			return(0);			/* BAD */
 		}
-		VUNITIZE( arbp->arb_N );
-		VCROSS( arbp->arb_Ybasis, arbp->arb_N, arbp->arb_Xbasis );
+		f = 1/f;
+		VSCALE( arbp->arb_N, arbp->arb_N, f);
+
+		/*
+		 * Get vector perp. to AB in face of plane ABC.
+		 * Scale by projection of AC, make this Ybasis.
+		 */
+		VCROSS( work, arbp->arb_N, arbp->arb_Xbasis );
+		VUNITIZE( work );
+		f = VDOT( work, P_A );
+		VSCALE( arbp->arb_Ybasis, work, f );
 		arbp->arb_YYlen = 1.0 / VDOT( arbp->arb_Ybasis, arbp->arb_Ybasis );
 
 		/*
@@ -477,8 +486,7 @@ register struct uvcoord *uvp;
 	uvp->uv_u = VDOT( P_A, arbp->arb_Xbasis ) * arbp->arb_XXlen;
 	uvp->uv_v = 1.0 - ( VDOT( P_A, arbp->arb_Ybasis ) * arbp->arb_YYlen );
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
-		if( rt_g.debug )
-			rt_log("arb_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
+		rt_log("arb_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
