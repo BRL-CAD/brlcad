@@ -40,6 +40,11 @@ extern int dm_pipe[];
 struct shared_info {
   fastf_t _Viewscale;
   fastf_t _i_Viewscale;
+#if 1
+  fastf_t azimuth;
+  fastf_t elevation;
+  fastf_t twist;
+#endif
   mat_t   _Viewrot;
   mat_t   _toViewcenter;
   mat_t   _model2view;
@@ -107,7 +112,9 @@ struct dm_list {
   struct cmd_list *aim;
   void (*_knob_hook)();
   void (*_axes_color_hook)();
-  int (*_dm_init)();
+  int (*_cmd_hook)();
+  void (*_state_hook)();
+  int (*dm_init)();
 };
 
 extern int update_views;   /* from dm-X.h */
@@ -116,15 +123,23 @@ extern struct dm_list *curr_dm_list;
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define dmp curr_dm_list->_dmp
-#define dm_vars dmp->dmr_vars
-#define pathName dmp->dmr_pathName
-#define dname dmp->dmr_dname
+#if 0
+#define dm_vars dmp->dm_vars
+#endif
+#define pathName dmp->dm_pathName
+#define dname dmp->dm_dname
 #define dirty curr_dm_list->_dirty
 #define owner curr_dm_list->_owner
 #define am_mode curr_dm_list->_am_mode
 #define knob_hook curr_dm_list->_knob_hook
 #define axes_color_hook curr_dm_list->_axes_color_hook
+#if 0
 #define dm_init curr_dm_list->_dm_init
+#endif
+#if 1
+#define cmd_hook curr_dm_list->_cmd_hook
+#define state_hook curr_dm_list->_state_hook
+#endif
 
 #define mged_variables curr_dm_list->s_info->_mged_variables
 
@@ -236,7 +251,7 @@ extern struct dm_list *curr_dm_list;
 #define GET_DM_LIST(p,structure,w) { \
 	register struct dm_list *tp; \
 	for(BU_LIST_FOR(tp, dm_list, &head_dm_list.l)) { \
-		if(w == ((struct structure *)tp->_dmp->dmr_vars)->win) { \
+		if(w == ((struct structure *)tp->_dmp->dm_vars)->win) { \
 			(p) = tp; \
 			break; \
 		} \
