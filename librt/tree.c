@@ -440,12 +440,14 @@ found_it:
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
-	curtree->tr_a.tu_name = db_path_to_string( pathp );
 	/* regionp will be filled in later by rt_tree_region_assign() */
 	curtree->tr_a.tu_regionp = (struct region *)0;
 
-	if(rt_g.debug&DEBUG_TREEWALK)
-		rt_log("rt_gettree_leaf() %s\n", curtree->tr_a.tu_name );
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("rt_gettree_leaf() %s\n", sofar );
+		rt_free(sofar, "path string");
+	}
 
 	return(curtree);
 }
