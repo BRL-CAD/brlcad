@@ -57,10 +57,12 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
 			struct rt_external *ep, mat_t mat)); \
 	RT_EXTERN(int rt_##name##_export, (struct rt_external *ep, \
-			struct rt_db_internal *ip)); \
+			struct rt_db_internal *ip, \
+			double local2mm)); \
 	RT_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
 	RT_EXTERN(int rt_##name##_describe, (struct rt_vls *str, \
-			struct rt_db_internal *ip, int verbose));
+			struct rt_db_internal *ip, int verbose, \
+			double mm2local));
 #else
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_/**/name/**/_prep, (struct soltab *stp, \
@@ -90,10 +92,12 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
 			struct rt_external *ep, mat_t mat)); \
 	RT_EXTERN(int rt_/**/name/**/_export, (struct rt_external *ep, \
-			struct rt_db_internal *ip)); \
+			struct rt_db_internal *ip, \
+			double local2mm)); \
 	RT_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip)); \
 	RT_EXTERN(int rt_/**/name/**/_describe, (struct rt_vls *str, \
-			struct rt_db_internal *ip, int verbose));
+			struct rt_db_internal *ip, int verbose, \
+			double mm2local));
 #endif
 
 /* Note:  no semi-colons at the end of these, please */	
@@ -156,8 +160,8 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_ars_prep,	rt_ars_shot,	rt_ars_print,	rt_ars_norm,
 		rt_ars_uv,	rt_ars_curve,	rt_ars_class,	rt_ars_free,
 		rt_ars_plot,	rt_vstub,	rt_ars_tess,
-		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
-		rt_nul_describe,
+		rt_ars_import,	rt_ars_export,	rt_ars_ifree,
+		rt_ars_describe,
 
 	"ID_HALF",	0,
 		rt_hlf_prep,	rt_hlf_shot,	rt_hlf_print,	rt_hlf_norm,
@@ -292,11 +296,12 @@ int NDEF(rt_nul_import,(struct rt_db_internal *ip,
 			struct rt_external *ep,
 			mat_t mat))
 int NDEF(rt_nul_export,(struct rt_external *ep,
-			struct rt_db_internal *ip))
+			struct rt_db_internal *ip,
+			double local2mm))
 void DEF(rt_nul_ifree,(struct rt_db_internal *ip))
 int NDEF(rt_nul_describe,(struct rt_vls *str,
 			struct rt_db_internal *ip,
-			int verbose))
+			int verbose, double mm2local))
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
