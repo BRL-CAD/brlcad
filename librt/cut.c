@@ -529,6 +529,11 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			rt_pr_cut( rtip->rti_nu_grid, 0 );
 		}
 
+		/* XXX Make an empty boxnode */
+		rtip->rti_CutHead.bn.bn_type = CUT_BOXNODE;
+		rtip->rti_CutHead.bn.bn_len = 0;
+		rtip->rti_CutHead.bn.bn_maxlen = 0;
+
 		rt_free( (char *)nu_xbox.bn_list, "nu_xbox bn_list[]" );
 		rt_free( (char *)nu_ybox.bn_list, "nu_ybox bn_list[]" );
 		rt_free( (char *)nu_zbox.bn_list, "nu_zbox bn_list[]" );
