@@ -40,6 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 #include "rtgeom.h"
+#include "tcl.h"
 
 
 const mat_t	id_mat = {
@@ -78,6 +79,8 @@ int
 main(argc, argv)
 char **argv;
 {
+	int i;
+
 	iname = "-";
 	ifp = stdin;
 	ofp = stdout;
@@ -158,13 +161,43 @@ char **argv;
 			}
                         putc( '\n', ofp );
 		}
+		fprintf( ofp, "db units %s\n", bu_units_string( dbip->dbi_local2base ) );
 		FOR_ALL_DIRECTORY_START(dp, dbip)  {
 			struct rt_db_internal	intern;
-			struct bu_attribute_value_set *avs;
+			struct bu_attribute_value_set *avs=NULL;
 
 			/* Skip GLOBAL object */
-			if( dp->d_major_type == 2 && dp->d_minor_type == 0 )
+			if( dp->d_major_type == 2 && dp->d_minor_type == 0 ) {
+				const char *value;
+				Tcl_Obj	*list, *obj;
+				int list_len;
+				struct bu_attribute_value_set g_avs;
+
+				/* get region colortable */
+				if( db5_get_attributes( dbip, &g_avs, dp ) ) {
+					bu_log( "Failed to get attributes of _GLOBAL!!\n" );
+					continue;
+				}
+				value = bu_avs_get( &g_avs, "regionid_colortable" );
+				if( !value )
+					continue;
+				list = Tcl_NewStringObj( value, -1);
+				if( Tcl_ListObjLength( interp, list, &list_len ) != TCL_OK ) {
+					bu_log( "Failed to get length of region color table!!\n" );
+					continue;
+				}
+				for( i=0 ; i<list_len ; i++ ) {
+					if( Tcl_ListObjIndex( interp, list, i, &obj ) != TCL_OK ) {
+						bu_log( "Cannot get entry %d from the color table!!\n",
+							i );
+						continue;
+					}
+					fprintf( ofp, "db color %s\n",
+						 Tcl_GetStringFromObj(obj, NULL) );
+				}
+				bu_avs_free( &g_avs );
 				continue;
+			}
 
 			if( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 )  {
 				bu_log("Unable to read '%s', skipping\n", dp->d_namep);
