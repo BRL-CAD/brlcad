@@ -121,6 +121,7 @@ static char errbuf[80];
 static FILE	*pkg_debug;
 static void	pkg_ck_debug();
 static void	pkg_timestamp();
+static void	pkg_checkin();
 
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
 			sprintf(errbuf,"pkg: bad pointer x%x\n",p);\
@@ -1597,6 +1598,7 @@ register struct pkg_conn	*pc;
  *  If input is available, it is read into pkc_inbuf[].
  *  If nodelay is set, poll without waiting.
  */
+static void
 pkg_checkin(pc, nodelay)
 register struct pkg_conn	*pc;
 int		nodelay;
