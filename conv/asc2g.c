@@ -536,22 +536,19 @@ identbld()
 	register char	*cp;
 	register char	*np;
 	char		id;		/* a freebie */
-	char		units;		/* libwdb doesn't take this?! */
+	char		units;		/* units code number */
 	char		version[6];
 	char		title[72];
+	char		*unit_str;
 
 	cp = buf;
 	id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
 
-	/* Note that there is no provision for handing libwdb the units.  Just
-	 * ignore.
-	 */
-
 	units = (char)atoi( cp );
 	cp = nxt_spc( cp );
 
-	/* Note that there is no provision for handing libwdb the version either.
+	/* Note that there is no provision for handing libwdb the version.
 	 * However, this is automatically provided when needed.
 	 */
 
@@ -570,7 +567,34 @@ identbld()
 	zap_nl();
 	(void)strncpy( title, buf, sizeof(title)-1 );
 
-	mk_id(stdout, title);
+	switch(units)  {
+	case ID_NO_UNIT:
+		unit_str = "none";
+		break;
+	case ID_MM_UNIT:
+		unit_str = "mm";
+		break;
+	case ID_CM_UNIT:
+		unit_str = "cm";
+		break;
+	case ID_M_UNIT:
+		unit_str = "m";
+		break;
+	case ID_IN_UNIT:
+		unit_str = "in";
+		break;
+	case ID_FT_UNIT:
+		unit_str = "ft";
+		break;
+	default:
+		fprintf(stderr,"asc2g: unknown units = %d\n", units);
+		exit(1);
+	}
+
+	if( mk_id_units(stdout, title, unit_str) < 0 )  {
+		fprintf(stderr, "asc2g: unable to write database ID\n");
+		exit(2);
+	}
 }
 
 
