@@ -7,24 +7,17 @@
  *  model.  It consists of a front end that writes a ray data
  *  file, and a post-processor, which reads said file and is
  *  responsible for producing the UnixPlot file.
- *  The output format is:
- *  		view title
- *  			ray data
- *  		production of the UnixPlot file from the ray data
- *  
- *  
- *			 :
- *			 :
  *
  *  At present, the main use for this module is to generate
  *  UnixPlot file that can be read by various existing filters
- *  to produce a three dimensional line drawing of an MGED object.
- *  Three dimensionality is is achieved through the rotation of the
- *  MGED model interrogated.
+ *  to produce a bas-relief line drawing of an MGED object: i.e.
+ *  flat when viewed head-on, but with relief detail when seen at
+ *  an angle.
  *
- *  Authors -
+ *  This is based on previous work done by Michael John Muuss.
+ *
+ *  Author -
  *	Dr. Susanne L. Muuss
- *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -143,8 +136,7 @@ struct application	*ap;
  *			R A Y M I S S
  *
  *  This function is called by rt_shootray(), which is called by
- *  do_frame(). Writes out data necessary to record where a miss
- *  miss was scored.
+ *  do_frame(). Records coordinates where a miss is detected.
  */
 
 int
@@ -201,9 +193,9 @@ register struct partition *PartHeadp;
 
 	
 	/*
-	 * Output the ray data: distance to hit, region_id, screen
-	 * plane (pixel) coordinates for x and y positions of a ray.
-	 * These positions are represented by ap->a_x and ap->a_y.
+	 * Output the ray data: screen plane (pixel) coordinates
+	 * for x and y positions of a ray, region_id, and hit_distance.
+	 * The x and y positions are represented by ap->a_x and ap->a_y.
 	 *
 	 *  Assume all rays are parallel.
 	 */
