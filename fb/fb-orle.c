@@ -77,7 +77,7 @@ char	*argv[];
 	cmflag = 1;		/* Need to save colormap */
 	if( fb_rmap( fbp, &cmap ) == -1 )
 		cmflag = 0;
-	if( cmflag && is_linear_cmap( &cmap ) )
+	if( cmflag && fb_is_linear_cmap( &cmap ) )
 		cmflag = 0;
 	if( crunch && (cmflag == 0) )
 		crunch = 0;

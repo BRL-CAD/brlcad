@@ -137,7 +137,7 @@ char **argv;
 	if( crunch )  {
 		if( fb_rmap( fbp, &cmap ) == -1 )  {
 			crunch = 0;
-		} else if( is_linear_cmap( &cmap ) ) {
+		} else if( fb_is_linear_cmap( &cmap ) ) {
 			crunch = 0;
 		}
 	}
