@@ -628,7 +628,6 @@ int	frame;		/* frame number */
 	int			n;
 	int			netfd;
 	int			got;
-	unsigned long		addr_tmp;
 
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
@@ -642,24 +641,14 @@ int	frame;		/* frame number */
 	if( atoi( host ) > 0 )  {
 		/* Numeric */
 		sinhim.sin_family = AF_INET;
-#if CRAY && OLDTCP
-		addr_tmp = inet_addr(host);
-		sinhim.sin_addr = addr_tmp;
-#else
 		sinhim.sin_addr.s_addr = inet_addr(host);
-#endif
 	} else {
 		if( (hp = gethostbyname(host)) == NULL )  {
 			fb_log("gethostbyname(%s) fail\n", host);
 			return(-1);
 		}
 		sinhim.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, (char *)&addr_tmp, hp->h_length);
-#		if CRAY && OLDTCP
-			sinhim.sin_addr = addr_tmp;
-#		else
-			sinhim.sin_addr.s_addr = addr_tmp;
-#		endif
+		bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
 	}
 
 	if( (netfd = socket(sinhim.sin_family, SOCK_STREAM, 0)) < 0 )  {
