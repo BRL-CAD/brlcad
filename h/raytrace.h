@@ -21,7 +21,7 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
-#ifdef vax
+#if defined(vax) || (defined(sgi) && !defined(mips))
 #	define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
 #else
 #	define INFINITY	(1.0e40)	/* IBM limit is 10**75 */
