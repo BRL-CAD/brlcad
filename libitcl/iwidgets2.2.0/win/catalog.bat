@@ -1,2 +1,0 @@
-itkwish.exe catalog
-i
