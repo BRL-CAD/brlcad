@@ -3552,11 +3552,10 @@ struct wdb_push_data {
  * enough to do hear with out them.
  */
 static union tree *
-wdb_push_leaf(tsp, pathp, ep, id, client_data)
+wdb_push_leaf(tsp, pathp, ip, client_data)
      struct db_tree_state	*tsp;
      struct db_full_path	*pathp;
-     struct bu_external	*ep;
-     int			id;
+     struct rt_db_internal	*ip;
      genptr_t		client_data;
 {
 	union tree	*curtree;
@@ -3572,7 +3571,8 @@ wdb_push_leaf(tsp, pathp, ep, id, client_data)
 	if (rt_g.debug&DEBUG_TREEWALK) {
 		char *sofar = db_path_to_string(pathp);
 
-		Tcl_AppendResult(wpdp->interp, "wdb_push_leaf(", rt_functab[id].ft_name,
+		Tcl_AppendResult(wpdp->interp, "wdb_push_leaf(",
+				ip->idb_meth->ft_name,
 				 ") path='", sofar, "'\n", (char *)NULL);
 		bu_free((genptr_t)sofar, "path string");
 	}
