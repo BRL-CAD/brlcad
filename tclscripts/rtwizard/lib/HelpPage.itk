@@ -222,7 +222,7 @@ namespace eval RtWizard {
 		Level1Tag
 
 	$t insert insert \
-		"Once the database has been selected, you will be presented with the sample images page. This page allows you to select the type of image you would like to produce. On the left is a widget that allows you to select the type of image. Below that widget is some text that describes the image and what information will be required. To the right is the sample image. To proceed, simply select the image you would like to make and hit \"OK\"\n\n" \
+		"Once the database has been selected, you will be presented with the sample images page. This page allows you to select the type of image you would like to produce. On the left is a widget that allows you to select the type of image. Below that widget is some text that describes the image and what information will be required. To the right is the sample image. To proceed, simply select the image you would like to make and hit \"OK\" \n\n" \
 		NormalTag
 	
 	$t insert insert \
@@ -234,7 +234,7 @@ namespace eval RtWizard {
 		Level1Tag
 
 	$t insert insert \
-		"Use the Steps menu to move between steps. They may be done in any order.\n\n" \ 
+		"Use the Steps menu to move between steps. They may be done in any order.\n\n" \
 		NormalTag
 
 	$t insert insert \
