@@ -50,7 +50,7 @@ do
 	chmod 775 $i
 	ed - $i << EOF
 f
-g,$BASEDIR,s,,$NEW,p
+g,$BASEDIR,s,,$NEW,gp
 w
 q
 EOF
