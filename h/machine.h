@@ -37,7 +37,9 @@ typedef long	bitv_t;		/* largest integer type */
 /* full means resource free, empty means resource busy */
 #define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
 #define RES_RELEASE(ptr)	(void)Daset(ptr,3)	/* set full */
+
 #endif HEP
+
 
 #ifdef alliant
 /*
@@ -51,7 +53,9 @@ typedef long	bitv_t;		/* largest integer type */
 
 /* RES_ACQUIRE is a function in rt.c, using tas instruction */
 #define RES_RELEASE(ptr)	*(ptr)=0;
+
 #endif alliant
+
 
 #ifdef cray
 /*
@@ -66,7 +70,14 @@ typedef long	bitv_t;		/* largest integer type */
 
 #define RES_ACQUIRE(ptr)	;
 #define RES_RELEASE(ptr)	;
+
+#define bzero(str,n)		memset( str, '\0', n )
+#define bcopy(from,to,count)	memcpy( to, from, count )
+
+#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
+
 #endif cray
+
 
 #ifndef LOCAL
 /*
@@ -81,6 +92,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_ACQUIRE(ptr)	;
 #define RES_RELEASE(ptr)	;
 #endif
+
 
 #define BITV_MASK	((1<<BITV_SHIFT)-1)
 
