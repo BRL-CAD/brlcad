@@ -18,10 +18,14 @@
 
 #include <stdio.h>
 #include <strings.h>
+#include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "rtlist.h"
+#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
-#include <math.h>
+
 #define	PI	3.14159265358979
 extern int errno;
 
@@ -74,9 +78,7 @@ int entityno;
 	int		i;
 	struct wmember head,*wmem;
 
-	head.wm_forw = &head;
-	head.wm_back = &head;
-
+	RT_LIST_INIT( &head.l );
 
 	/* Default values */
 	VSET( adir , 0.0 , 0.0 , 1.0 );
