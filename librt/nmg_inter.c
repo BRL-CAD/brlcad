@@ -1541,9 +1541,7 @@ out:
 		nmg_ck_v_in_2fus(vu1_final->v_p, fu1, fu2, &is->tol);
 	}
 
-#if 0
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-#endif
 		rt_log("nmg_isect_edge3p_face3p(, eu1=x%x, fu2=x%x) ret=%d END\n", eu1, fu2, ret);
 	return ret;
 }
@@ -2041,7 +2039,7 @@ nmg_fu_touchingloops(fu2);
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
 
-	again = 0;
+	again = 1;
 	for( trips = 0; again > 0 && trips < 3; trips++ )  {
 		again = 0;
 
