@@ -16,8 +16,8 @@
  *  the full resolution of an image to be retained, and captured,
  *  even with the 10x10x10 color cube display.
  *
- *  In order to use this sized chunk of memory with the shared memory
- *  system, it is necessary to "poke" your kernel to authorized this.
+ *  In order to use this large a chunk of memory with the shared memory
+ *  system, it is necessary to "poke" your kernel to authorize this.
  *  In the shminfo structure, change shmmax from 0x10000 to 0x250000,
  *  shmall from 0x40 to 0x258, and tcp spaces from 2000 to 4000 by running:
  *
@@ -61,12 +61,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-#ifdef SYSV
 #define bzero(p,cnt)	memset(p,'\0',cnt)
-#endif
 
-/* Local state variables within the FBIO structure */
+extern char *sbrk();
 extern char *malloc();
+extern int errno;
+extern char *shmat();
+extern int brk();
 
 /*
  *  Defines for dealing with SGI Graphics Engine Pipeline
@@ -149,48 +150,11 @@ FBIO sgi_interface =
 		};
 
 
-/* Interface to the 12-bit window versions of these routines */
+/* Interface to the 12-bit window version */
 int		sgw_dopen();
-_LOCAL_ int
-		sgw_curs_set(),
-		sgw_cmemory_addr();
 
 _LOCAL_ Colorindex get_Color_Index();
 _LOCAL_ void	sgw_inqueue();
-
-/* This one is not exported, but is used for roll-over to 12-bit mode */
-static FBIO sgiw_interface =
-		{
-		sgw_dopen,
-		sgi_dclose,
-		fb_null,
-		sgi_dclear,
-		sgi_bread,
-		sgi_bwrite,
-		sgi_cmread,
-		sgi_cmwrite,
-		sgi_viewport_set,
-		sgi_window_set,
-		sgi_zoom_set,
-		sgw_curs_set,
-		sgw_cmemory_addr,
-		fb_null,
-		"Silicon Graphics IRIS, in 12-bit mode, for windows",
-		1024,			/* max width */
-		768,			/* max height */
-		"/dev/sgiw",
-		512,			/* current/default width  */
-		512,			/* current/default height */
-		-1,			/* file descriptor */
-		PIXEL_NULL,		/* page_base */
-		PIXEL_NULL,		/* page_curp */
-		PIXEL_NULL,		/* page_endp */
-		-1,			/* page_no */
-		0,			/* pdirty */
-		0L,			/* page_curpos */
-		0L,			/* page_pixels */
-		0			/* debug */
-		};
 
 /*
  *  Per SGI (window or device) state information
@@ -207,6 +171,7 @@ struct sgiinfo {
 	int	si_rgb_ct;
 	short	si_curs_on;
 	short	si_cmap_flag;
+	int	si_shmid;
 };
 #define	SGI(ptr) ((struct sgiinfo *)((ptr)->u1.p))
 #define	SGIL(ptr) ((ptr)->u1.p)		/* left hand side version */
@@ -243,28 +208,75 @@ static int map_size;			/* # of color map slots available */
 
 static RGBpixel	rgb_table[4096];
 
+/*
+ *			S G I _ G E T M E M
+ *
+ *  Because there is no hardware zoom or pan, we need to repaint the
+ *  screen (with big pixels) to implement these operations.
+ *  This means that the actual "contents" of the frame buffer need
+ *  to be stored somewhere else.  If possible, we allocate a shared
+ *  memory segment to contain that image.  This has several advantages,
+ *  the most important being that when operating the display in 12-bit
+ *  output mode, pixel-readbacks still give the full 24-bits of color.
+ *  System V shared memory persists until explicitly killed, so this
+ *  also means that in MEX mode, the previous contents of the frame
+ *  buffer still exist, and can be again accessed, even though the
+ *  MEX windows are transient, per-process.
+ * 
+ *  There are a few oddities, however.  The worst is that System V will
+ *  not allow the break (see sbrk(2)) to be set above a shared memory
+ *  segment, and shmat(2) does not seem to allow the selection of any
+ *  reasonable memory address (like 6 Mbytes up) for the shared memory.
+ *  In the initial version of this routine, that prevented subsequent
+ *  calls to malloc() from succeeding, quite a drawback.  The work-around
+ *  used here is to increase the current break to a large value,
+ *  attach to the shared memory, and then return the break to it's
+ *  original value.  This should allow most reasonable requests for
+ *  memory to be satisfied.  In special cases, the values used here
+ *  might need to be increased.
+ */
 _LOCAL_ int
 sgi_getmem( ifp )
 FBIO	*ifp;
 {
-	int key = 42;
-	int shmid;
-	int size = 1024 * 768 * sizeof(RGBpixel);
-	int i;
-	extern int errno;
-	extern char *shmat();
-	char *sp;
+#define SHMEM_KEY	42
+	int	size;
+	int	i;
+	char	*old_brk;
+	char	*new_brk;
+	char	*sp;
 
 	errno = 0;
-	if( (shmid = shmget( key, size, IPC_CREAT|0666 )) < 0 )  {
-		fb_log("shmget returned %d, errno=%d\n", shmid, errno);
+	size = 1024 * 768 * sizeof(RGBpixel);
+	size = (size + 4096-1) & ~(4096-1);
+	if( (SGI(ifp)->si_shmid = shmget( SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
+		fb_log("shmget returned %d, errno=%d\n", SGI(ifp)->si_shmid, errno);
 		goto fail;
 	}
-	/* Open the segment Read/Write */
-	if( (sp = shmat( shmid, 0, 0 )) == (char *)(-1) )  {
+
+	/* Move up the existing break, to leave room for later malloc()s */
+	old_brk = sbrk(0);
+	new_brk = (char *)(6 * 1024 * 1024);
+	if( new_brk <= old_brk )
+		new_brk = old_brk + 1024 * 1024;
+	new_brk = (char *)((((int)new_brk) + 4096-1) & ~(4096-1));
+	if( brk( new_brk ) < 0 )  {
+		fb_log("new brk(x%x) failure, errno=%d\n", new_brk, errno);
+		goto fail;
+	}
+
+	/* Open the segment Read/Write, near the current break */
+	if( (sp = shmat( SGI(ifp)->si_shmid, 0, 0 )) == (char *)(-1) )  {
 		fb_log("shmat returned x%x, errno=%d\n", sp, errno );
 		goto fail;
 	}
+
+	/* Restore the old break */
+	if( brk( old_brk ) < 0 )  {
+		fb_log("restore brk(x%x) failure, errno=%d\n", old_brk, errno);
+		/* Take the memory and run */
+	}
+
 	ifp->if_mem = sp;
 	return(0);
 fail:
@@ -428,6 +440,9 @@ register FBIO	*ifp;
 		curson();		/* Cursor interferes with reading! */
 }
 
+/*
+ *			S G I _ D O P E N
+ */
 _LOCAL_ int
 sgi_dopen( ifp, file, width, height )
 FBIO	*ifp;
@@ -438,24 +453,14 @@ int	width, height;
 	register int i;
 	
 	if( ismex() )  {
-		char *name;
-
-		name = ifp->if_name;
-		*ifp = sgiw_interface;	/* struct copy */
-		ifp->if_name = name;
 		return( sgw_dopen( ifp, file, width, height ) );
 	}
 	gbegin();		/* not ginit() */
 	RGBmode();
 	gconfig();
 	if( getplanes() < 24 )  {
-		char *name;
-
 		singlebuffer();
 		gconfig();
-		name = ifp->if_name;
-		*ifp = sgiw_interface;	/* struct copy */
-		ifp->if_name = name;
 		return( sgw_dopen( ifp, file, width, height ) );
 	}
 	tpoff();		/* Turn off textport */
@@ -537,11 +542,20 @@ FBIO	*ifp;
 		}
 		break;
 	}
+#ifdef never
+	if( flag )  {
+		/* Attempt to release shared memory segment */
+		(void)shmctl( SGI(ifp)->si_shmid, IPC_RMID, 0 );
+	}
+#endif
 	if( SGIL(ifp) != NULL )
 		(void)free( (char *)SGIL(ifp) );
 	return(0);
 }
 
+/*
+ *			S G I _ D C L E A R
+ */
 _LOCAL_ int
 sgi_dclear( ifp, pp )
 FBIO	*ifp;
@@ -591,6 +605,9 @@ register RGBpixel	*pp;
 	return(0);
 }
 
+/*
+ *			S G I _ W I N D O W _ S E T
+ */
 _LOCAL_ int
 sgi_window_set( ifp, x, y )
 FBIO	*ifp;
@@ -611,6 +628,9 @@ int	x, y;
 	return(0);
 }
 
+/*
+ *			S G I _ Z O O M _ S E T
+ */
 _LOCAL_ int
 sgi_zoom_set( ifp, x, y )
 FBIO	*ifp;
@@ -639,6 +659,9 @@ int	x, y;
 	return(0);
 }
 
+/*
+ *			S G I _ B R E A D
+ */
 _LOCAL_ int
 sgi_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
@@ -666,12 +689,7 @@ int	count;
 		} else	{
 			scan_count = count;
 		}
-
-#ifdef BSD
-		bcopy( ip, *pixelp, scan_count*sizeof(RGBpixel) );
-#else
 		memcpy( *pixelp, ip, scan_count*sizeof(RGBpixel) );
-#endif
 
 		pixelp += scan_count;
 		count -= scan_count;
@@ -684,6 +702,9 @@ int	count;
 	return(ret);
 }
 
+/*
+ *			S G I _ B W R I T E
+ */
 _LOCAL_ int
 sgi_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
@@ -898,6 +919,9 @@ int	count;
 	return(ret);
 }
 
+/*
+ *			S G I _ V I E W P O R T _ S E T
+ */
 _LOCAL_ int
 sgi_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
@@ -915,6 +939,9 @@ int	left, top, right, bottom;
 	return(0);
 }
 
+/*
+ *			S G I _ C M R E A D
+ */
 _LOCAL_ int
 sgi_cmread( ifp, cmp )
 FBIO	*ifp;
@@ -935,6 +962,9 @@ register ColorMap	*cmp;
 	return(0);
 }
 
+/*
+ *			 S G I _ C M W R I T E
+ */
 _LOCAL_ int
 sgi_cmwrite( ifp, cmp )
 FBIO	*ifp;
@@ -965,15 +995,23 @@ register ColorMap	*cmp;
 	return(0);
 }
 
+/*
+ *			S G I _ C U R S _ S E T
+ */
 _LOCAL_ int
 sgi_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char	*bits;
 int		xbits, ybits;
 int		xorig, yorig;
-	{	register int	y;
-		register int	xbytes;
-		Cursor		newcursor;
+{
+	register int	y;
+	register int	xbytes;
+	Cursor		newcursor;
+
+	if( qtest() )
+		sgw_inqueue(ifp);
+
 	/* Check size of cursor.					*/
 	if( xbits < 0 )
 		return	-1;
@@ -985,37 +1023,52 @@ int		xorig, yorig;
 		ybits = 16;
 	if( (xbytes = xbits / 8) * 8 != xbits )
 		xbytes++;
-	for( y = 0; y < ybits; y++ )
-		{
+	for( y = 0; y < ybits; y++ )  {
 		newcursor[y] = bits[(y*xbytes)+0] << 8 & 0xFF00;
 		if( xbytes == 2 )
 			newcursor[y] |= bits[(y*xbytes)+1] & 0x00FF;
-		}
+	}
 	defcursor( 1, newcursor );
 	curorigin( 1, (short) xorig, (short) yorig );
 	return	0;
-	}
+}
 
+/*
+ *			S G I _ C M E M O R Y _ A D D R
+ */
 _LOCAL_ int
 sgi_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
-	{
+{
+	if( qtest() )
+		sgw_inqueue(ifp);
+
 	SGI(ifp)->si_curs_on = mode;
-	if( ! mode )
-		{
+	if( ! mode )  {
 		cursoff();
 		return	0;
-		}
+	}
 	x *= SGI(ifp)->si_xzoom;
 	y *= SGI(ifp)->si_yzoom;
 	curson();
-	RGBcursor( 1, 255, 255, 0, 0xFF, 0xFF, 0xFF );
-	setvaluator( MOUSEX, x, 0, 1023 );
-	setvaluator( MOUSEY, y, 0, 1023 );
-	return	0;
+	switch( SGI(ifp)->si_mode )  {
+	case MODE_RGB:
+		RGBcursor( 1, 255, 255, 0, 0xFF, 0xFF, 0xFF );
+		setvaluator( MOUSEX, x, 0, 1023 );
+		setvaluator( MOUSEY, y, 0, 1023 );
+		break;
+	case MODE_APPROX:
+	case MODE_FIT:
+		/* Color and bitmask ignored under MEX.	*/
+		setcursor( 1, YELLOW, 0x2000 );
+		setvaluator( MOUSEX, x + WIN_L, 0, 1023 );
+		setvaluator( MOUSEY, y + WIN_B, 0, 1023 );
+		break;
 	}
+	return	0;
+}
 
 /*
  *			g e t _ C o l o r _ I n d e x
@@ -1084,6 +1137,9 @@ register RGBpixel	*pixelp;
 	rgb_table[i][BLU] = b; }
 
 
+/*
+ *			S G W _ D O P E N
+ */
 int
 sgw_dopen( ifp, file, width, height )
 FBIO	*ifp;
@@ -1109,10 +1165,11 @@ int	width, height;
 		SGI(ifp)->si_mode = mode;
 	}
 
+	/* By default, pop up a 512x512 MEX window, rather than fullsize */
 	if( width <= 0 )
-		width = ifp->if_width;
+		width = 512;
 	if( height <= 0 )
-		height = ifp->if_height;
+		height = 512;
 	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
 	if ( height > ifp->if_max_height - 2 * MARGIN - BANNER)
@@ -1190,65 +1247,6 @@ int	width, height;
 	sgi_repaint( ifp );
 	return	0;
 }
-
-_LOCAL_ int
-sgw_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
-FBIO	*ifp;
-unsigned char	*bits;
-int		xbits, ybits;
-int		xorig, yorig;
-	{	register int	y;
-		register int	xbytes;
-		Cursor		newcursor;
-
-	if( qtest() )
-		sgw_inqueue(ifp);
-	/* Check size of cursor.					*/
-	if( xbits < 0 )
-		return	-1;
-	if( xbits > 16 )
-		xbits = 16;
-	if( ybits < 0 )
-		return	-1;
-	if( ybits > 16 )
-		ybits = 16;
-	if( (xbytes = xbits / 8) * 8 != xbits )
-		xbytes++;
-	for( y = 0; y < ybits; y++ )
-		{
-		newcursor[y] = bits[(y*xbytes)+0] << 8 & 0xFF00;
-		if( xbytes == 2 )
-			newcursor[y] |= bits[(y*xbytes)+1] & 0x00FF;
-		}
-	defcursor( 1, newcursor );
-	curorigin( 1, (short) xorig, (short) yorig );
-	return	0;
-	}
-
-_LOCAL_ int
-sgw_cmemory_addr( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
-	{	static Colorindex	cursor_color = YELLOW;
-			/* Color and bitmask ignored under MEX.	*/
-	if( qtest() )
-		sgw_inqueue(ifp);
-	SGI(ifp)->si_curs_on = mode;
-	if( ! mode )
-		{
-		cursoff();
-		setcursor( 0, 1, 0x2000 );
-		return	0;
-		}
-	x *= SGI(ifp)->si_xzoom;
-	y *= SGI(ifp)->si_yzoom;
-	curson();
-	setcursor( 1, cursor_color, 0x2000 );
-	setvaluator( MOUSEX, x + WIN_L, 0, 1023 );
-	setvaluator( MOUSEY, y + WIN_B, 0, 1023 );
-	return	0;
-	}
 
 /*
  *			S G W _ I N Q U E U E
