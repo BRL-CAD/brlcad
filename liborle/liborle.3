@@ -1,6 +1,6 @@
 .TH LIBRLE 3V VMB
-'\"	last edit:	85/03/25	G. S. Moss
-'\"	SCCS ID:	@(#)librle.3	1.3
+'\"	last edit:	85/03/26	G. S. Moss
+'\"	SCCS ID:	@(#)librle.3	1.4
 .SH NAME
 librle \- run-length encoded image library
 .SH SYNOPSIS
@@ -8,9 +8,9 @@ librle \- run-length encoded image library
 .B #include ``/vld/include/rle.h''
 .B #include ``/vld/include/fb.h''
 .P
-\fBint rle_rhdr( stream, cmflag, bgpixel, xsize, ysize, xpos, ypos )\fR
+\fBint rle_rhdr( stream, flags, bgpixel, xsize, ysize, xpos, ypos )\fR
 .B FILE *stream;
-.B int *cmflag;
+.B int *flags;
 .B Pixel *bgpixel;
 .B int *xsize, *ysize;
 .B int *xpos, *ypos;
@@ -90,9 +90,21 @@ in
 .I xpos\^
 and
 .IR ypos\^ .
-.I Cmflag\^
-will be set to indicate whether or not a color map is present.  If it is
-set,
+.I Flags\^
+is a flag word using bit flags
+.B
+.SM NO_BOX_SAVE,
+.B
+.SM NO_COLORMAP,
+and
+.B
+.SM NO_IMAGE
+(described in
+.BR rle.h )
+to indicate whether or not the image was saved with background,
+whether the color map was saved,
+and whether or not the image was saved (or just the color map).
+If the color map was saved,
 .I rle_rmap\^
 must be used next to read the color map from the
 .B
@@ -157,7 +169,12 @@ which must be used next to encode the color map pointed to by
 and write it to the
 .B
 .SM RLE
-file.
+file.  If the value of
+.I cmap\^
+is
+.B
+.SM NULL,
+a standard (linear) color map will be written.
 .P
 .I Rle_encode_ln\^
 is used to encode the next scanline (starting at the bottom) and
