@@ -96,7 +96,7 @@ double	cscale;		/* character scale factor */
 	/* label first tic */
 	lab = xmin;
 	sprintf( str, "%3.3g", xmin );
-	tp_2symbol( fp, str, xpen-171,yp-TIC-NUM_DISTANCE, cscale, 0.0);
+	tp_2symbol( fp, str, (double)(xpen-171),(double)(yp-TIC-NUM_DISTANCE), cscale, 0.0);
 	i = 0;
 	while((xpen+ddx)<=xend){
 		i++;
@@ -107,14 +107,14 @@ double	cscale;		/* character scale factor */
 		/* need if test here to check for overlap */
 		if( (i%xtics) == 0){
 			sprintf( str, "%3.3g", lab );
-			tp_2symbol( fp, str, xpen-171, yp-TIC-NUM_DISTANCE, cscale, 0.0);
+			tp_2symbol( fp, str, (double)(xpen-171), (double)(yp-TIC-NUM_DISTANCE), cscale, 0.0);
 		}
 	}
 
 	/* insert axis label here */
 	xtl = xp+(xl - strlen(xtitle)*cscale)/2;
 	ytl = yp - 8 * cscale;
-	tp_2symbol( fp, xtitle,xtl, ytl, 100, 0.0);
+	tp_2symbol( fp, xtitle,(double)xtl, (double)ytl, 100.0, 0.0);
 	yend = yl+yp;
 	ypen= yp;
 	pl_line( fp, xp-TIC, ypen, xp, ypen );
@@ -122,7 +122,7 @@ double	cscale;		/* character scale factor */
 	/* draw first y label */
 	lab = ymin;
 	sprintf( str, "%3.3g", lab );
-	tp_2symbol( fp,str, xp-TIC-LAB_LNGTH-NUM_DISTANCE, ypen, cscale, 0.0);
+	tp_2symbol( fp,str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
 
 	i=0;
 	while((ypen+ddy)<=yend){
@@ -133,14 +133,14 @@ double	cscale;		/* character scale factor */
 		lab += dy;
 		if(( i%ytics) ==0){
 			sprintf( str, "%3.3g", lab );
-			tp_2symbol( fp,str, xp-TIC-LAB_LNGTH-NUM_DISTANCE, ypen, cscale, 0.0);
+			tp_2symbol( fp,str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
 		}
 	}
 
 	/* insert y-axis title here */
 	xtl= xp-1500;
 	ytl= yp + (yl - strlen(ytitle)*cscale)/2 ;
-	tp_2symbol( fp,ytitle,xtl,ytl,100,90.0);
+	tp_2symbol( fp,ytitle,(double)xtl,(double)ytl,100.0,90.0);
 
 	/* now at long last plot the data */
 	j = 0;
