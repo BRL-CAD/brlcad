@@ -94,12 +94,11 @@ static void writepicture();
 static void readlpt();
 static void readhqt();
 static void decode();
-static void clear();
 static void druckeid();
 static long Skip4Base();
 
 static FILE *fin=0,*fout=0;
-static char *pcdname=0,*ppmname=0;
+static char *pcdname=0;
 static char nbuf[100];
 static uBYTE sbuffer[SECSIZE];
 static int keep_ycc;
@@ -136,9 +135,6 @@ static long bufpos;
 #define SKIP(n)  { if (fseek(fin,(n),1)) error(E_READ);}
 #define SKIPr(n) { if (fseek(fin,(n),1)) return(E_READ);}
 
-
-#define xTRIF(x,u,o,a,b,c) ((x)<(u)? (a) : ( (x)>(o)?(c):(b)  ))
-#define xNORM(x) x=TRIF(x,0,255,0,x,255)
 #define NORM(x) { if(x<0) x=0; else if (x>255) x=255;}
 
 static void error(e)
@@ -167,7 +163,6 @@ enum ERRORS e;
 		fprintf(stderr,"Opts:\n");
 		fprintf(stderr,"     -x Overskip mode (tries to improve color quality.)\n");
 		fprintf(stderr,"     -i Give some (buggy) informations from fileheader\n");
-		fprintf(stderr,"     -d Show differential picture only \n\n");
 		fprintf(stderr,"     -ycc suppress ycc to rgb conversion \n");
 		fprintf(stderr,"        (Experimentally, doesn't have deeper sense)\n\n");
 		fprintf(stderr,"     -0 Extract thumbnails from Overview file\n");
@@ -229,7 +224,7 @@ enum ERRORS e;
 		break;
 	}
 	if(fin) fclose(fin);
-	if(fout && ppmname) fclose(fout);
+	if(fout) fclose(fout);
 	exit(9);
 }
 
@@ -258,13 +253,13 @@ char **argv;
 	char *opt;
 	dim w,h;
 	long cd_offset,cd_offhelp;
-	int do_info,do_diff,do_overskip;
+	int do_info,do_overskip;
 
 	enum SIZES size=S_UNSPEC;
 	enum ERRORS eret;
 	implane Luma, Chroma1,Chroma2;
 
-	do_info=do_diff=do_overskip=keep_ycc=0;
+	do_info=do_overskip=keep_ycc=0;
 
 	ASKIP;
 
@@ -280,15 +275,6 @@ char **argv;
 			else error(E_ARG);
 			continue;
 		}
-
-
-		if(!strcmp(opt,"d"))
-		{ 
-			if (!do_diff) do_diff=1;
-			else error(E_ARG);
-			continue;
-		}
-
 
 		if(!strcmp(opt,"x"))
 		{ 
@@ -359,17 +345,8 @@ char **argv;
 	pcdname= *argv;
 	ASKIP;
 
-	if(argc>0)
-	{
-		ppmname= *argv;
-		ASKIP;
-	}
-
 	if(argc>0) error(E_ARG);
-	if((size==S_Over) && (!ppmname)) error(E_ARG);
 	if(do_info && (size==S_Over)) error(E_OPT);
-	if(do_overskip && do_diff) error(E_OPT);
-	if(do_diff && (size != S_4Base) && (size != S_16Base)) error(E_OPT);
 	if(do_overskip && (size != S_Base16) && (size != S_Base4) && (size != S_Base) && (size != S_4Base) ) error(E_OVSKIP);
 
 	if(!(fin=fopen(pcdname,"r"))) error(E_READ);
@@ -410,11 +387,7 @@ char **argv;
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
 		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
 
-		if(!ppmname) fout=stdout;
-		else
-		{
-			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
-		}
+		fout=stdout;
 		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
@@ -425,8 +398,6 @@ char **argv;
 		planealloc(&Luma   ,w,h);
 		planealloc(&Chroma1,w,h);
 		planealloc(&Chroma2,w,h);
-
-
 
 		if(!do_overskip)
 		{ 
@@ -445,11 +416,7 @@ char **argv;
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
 		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
 
-		if(!ppmname) fout=stdout;
-		else
-		{
-			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
-		}
+		fout=stdout;
 		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
@@ -495,11 +462,7 @@ char **argv;
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
 		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
 
-		if(!ppmname) fout=stdout;
-		else
-		{
-			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
-		}
+		fout=stdout;
 		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
@@ -520,12 +483,6 @@ char **argv;
 			interpolate(&Chroma1);
 			interpolate(&Chroma2);
 			interpolate(&Chroma2);
-
-			if(do_diff) {
-				clear(&Luma,128);
-				clear(&Chroma1,156);
-				clear(&Chroma2,137);
-			}
 
 			cd_offset = L_Head + L_Base16 + L_Base4 + L_Base ;
 			SEEK(cd_offset + 4);     
@@ -564,11 +521,7 @@ char **argv;
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
 		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
 
-		if(!ppmname) fout=stdout;
-		else
-		{
-			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
-		}
+		fout=stdout;
 		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
@@ -595,12 +548,6 @@ char **argv;
 		decode(w/2,h/2,&Luma,nullplane,nullplane,0);
 		interpolate(&Luma);
 
-		if(do_diff) {
-			clear(&Luma,128);
-			clear(&Chroma1,156);
-			clear(&Chroma2,137);
-		}
-
 		cd_offset=ftell(fin);
 		if(cd_offset % SECSIZE) error(E_POS);
 		cd_offset/=SECSIZE;
@@ -616,11 +563,7 @@ char **argv;
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
 		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
 
-		if(!ppmname) fout=stdout;
-		else
-		{
-			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
-		}
+		fout=stdout;
 		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
@@ -647,7 +590,7 @@ char **argv;
 			ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
 			/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
 
-			sprintf(nbuf,"%s%04d",ppmname,bildnr+1);
+			sprintf(nbuf,"overview%04d",bildnr+1);
 			if (!(fout=fopen(nbuf,"w"))) error(E_WRITE);
 			writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 		}
@@ -657,20 +600,9 @@ char **argv;
 		error(E_INTERN);
 	}
 
-
-
-
 	exit(0);
-
-
-
 }
 #undef ASKIP
-
-
-
-
-
 
 static enum ERRORS readplain(w,h,l,c1,c2)
 dim w,h;
@@ -736,16 +668,6 @@ implane *l,*c1,*c2;
 	return E_NONE;
 }
 
-
-
-
-
-
-
-
-
-
-
 static void interpolate(p)
 implane *p;
 {
@@ -769,6 +691,7 @@ implane *p;
 	for(y=0;y<h;y++)
 	{
 		yi=h-1-y;
+		/* XXX Old is at 0*y, new is at 1*y */
 		optr=p->im+  yi*p->mwidth + (w-1);
 		nptr=p->im+2*yi*p->mwidth + (2*w - 2);
 
@@ -801,7 +724,7 @@ implane *p;
 		*(nptr++)=(((int)*(optr++))+((int)*(uptr++))+1)>>1;
 	}
 
-
+	/* Duplicate the last line */
 	optr=p->im + (2*h-2)*p->mwidth;
 	nptr=p->im + (2*h-1)*p->mwidth;
 	for(x=0;x<w;x++)
@@ -811,15 +734,6 @@ implane *p;
 	}
 
 }
-
-
-
-
-
-
-
-
-
 
 static void halve(p)
 implane *p;
@@ -839,24 +753,13 @@ implane *p;
 		nptr=(p->im) +   y*(p->mwidth);
 		optr=(p->im) + 2*y*(p->mwidth);
 
+		/* XXX old image is at 1*Y, new is at 0*Y */
 		for(x=0;x<w;x++,nptr++,optr+=2)
 		{ 
 			*nptr = *optr;
 		}
-
 	}
-
 }
-
-
-
-
-
-
-
-
-
-
 
 #define BitShift 12
 
@@ -893,6 +796,7 @@ implane *l,*c1,*c2;
 
 	for(y=0;y<h;y++)
 	{
+		/* Converted values are at 0*y */
 		pl =  l->im + y *  l->mwidth;
 		pc1= c1->im + y * c1->mwidth;
 		pc2= c2->im + y * c2->mwidth;
@@ -916,11 +820,6 @@ implane *l,*c1,*c2;
 }
 #undef BitShift
 
-
-
-
-
-
 static void writepicture(w,h,r,g,b)
 dim w,h;
 implane *r,*g,*b;
@@ -941,14 +840,14 @@ implane *r,*g,*b;
 	if((!b) || (b->iwidth != w ) || (b->iheight != h) || (!b->im)) error(E_INTERN);
 
 	BUinit;
-	for( y=h-1; y>+0; y-- )  {
+	/* Output from 0*y */
+	for( y=h-1; y>=0; y-- )  {
 		pr= r->im + y * r->mwidth;
 		pg= g->im + y * g->mwidth;
 		pb= b->im + y * b->mwidth;
 		for(x=0;x<w;x++) BUwrite(*pr++,*pg++,*pb++);
 	}
 	BUflush;
-	if(ppmname) fclose(fout);
 }
 
 
@@ -1112,12 +1011,7 @@ int n;
 	if(n<3) return;
 	ptr+= 1 + 4* myhufflen1;
 	readhqtsub((struct pcdhqt *)ptr,myhuff2,&myhufflen2);
-
 }
-
-
-
-
 
 static void decode(w,h,f,f1,f2,autosync)
 dim w,h;
@@ -1135,13 +1029,13 @@ int autosync;
 	melde("decode\n");
 #define nextbuf  {  nptr=sbuffer;  EREADBUF; }
 #define checkbuf { if (nptr >= sbuffer + sizeof(sbuffer)) nextbuf; }
-	#define shiftout(n){ sreg<<=n; inh-=n; \
-                     while (inh<=24) \
-                      {checkbuf; \
-                       sreg |= ((unsigned long)(*(nptr++)))<<(24-inh);\
-                       inh+=8;\
-                      }\
-                    }  
+#define shiftout(n){ sreg<<=n; inh-=n; \
+                    while (inh<=24) \
+                     {checkbuf; \
+                      sreg |= ((unsigned long)(*(nptr++)))<<(24-inh);\
+                      inh+=8;\
+                     }\
+                   }  
 #define issync ((sreg & 0xffffff00) == 0xfffffe00) 
 #define seeksync { while (!issync) shiftout(1);}
 
@@ -1256,23 +1150,6 @@ int autosync;
 #undef seeksync
 
 }
-
-
-
-
-static void clear(l,n)
-implane *l;
-int n;
-{ 
-	dim x,y;
-	uBYTE *ptr;
-
-	ptr=l->im;
-	for (x=0;x<l->mwidth;x++)
-		for (y=0; y<l->mheight;y++)
-			*(ptr++)=n;
-}
-
 
 static int testbegin()
 {
