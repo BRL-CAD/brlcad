@@ -178,9 +178,11 @@ register struct scroll_item     *mptr;
 /*
  *			S C R O L L _ D I S P L A Y
  *
- *  
+ *  The parameter is the Y pixel address of the starting
+ *  screen Y to be used, and the return value is the last screen Y
+ *  position used.
  */
-void
+int
 scroll_display( y_top )
 int y_top;
 { 
@@ -195,21 +197,23 @@ int y_top;
 	else
 		scroll_array[1] = SCROLL_NULL;
 
+	scroll_top = y_top;
 	y = y_top;
-	scroll_top = y - SCROLL_DY / 2;
-
 	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
-	   for( mptr = *m; mptr->scroll_string[0] != '\0';
-	     mptr++, y += SCROLL_DY )  {
-	     	xpos = *(mptr->scroll_val) * 2047;
-		dmp->dmr_puts( mptr->scroll_string, xpos, y, 0, DM_RED );
-		dmp->dmr_2d_line(XMAX, y+(SCROLL_DY/2), MENUXLIM, y+(SCROLL_DY/2), 0);
-	     }
+		for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
+		     	y += SCROLL_DY;		/* y is now bottom line pos */
+		     	xpos = *(mptr->scroll_val) * 2047;
+			dmp->dmr_puts( mptr->scroll_string,
+				xpos, y-SCROLL_DY/2, 0, DM_RED );
+			dmp->dmr_2d_line(XMAX, y, MENUXLIM, y, 0);
+		}
 	}
-	if( y == y_top )  return;	/* no active menus */
-
-	dmp->dmr_2d_line( MENUXLIM, scroll_top-1, MENUXLIM, y-(SCROLL_DY/2), 0 );
-	dmp->dmr_2d_line( MENUXLIM, scroll_top, XMAX, scroll_top, 0 );
+	if( y != y_top )  {
+		/* Sliders were drawn, so make left vert edge */
+		dmp->dmr_2d_line( MENUXLIM, scroll_top-1,
+			MENUXLIM, y, 0 );
+	}
+	return( y );
 }
 
 /*
@@ -240,11 +244,10 @@ register int	pen_y;
 	 * above here.
 	 */
 	yy = scroll_top;
-
 	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
 		for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
-			yy += SCROLL_DY;
-			if( pen_y <= yy )
+			yy += SCROLL_DY;	/* bottom line pos */
+			if( pen_y < yy )
 				continue;	/* pen below this item */
 
 			/* Record the location of scroll marker */

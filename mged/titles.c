@@ -88,6 +88,10 @@ dotitles()
 	/* Line across the bottom, above two bottom status lines */
 	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX, TITLE_YBASE-TEXT1_DY, 0 );
 
+	/* Display scroll bars */
+	y = scroll_display( SCROLLY ); 
+	y = MENUY;
+
 	/* Display state and local unit in upper right corner, boxed */
 	dmp->dmr_puts(state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
 #define YPOS	(MENUY - MENU_DY - 75 )
@@ -97,8 +101,6 @@ dotitles()
 	/*
 	 * Print information about object illuminated
 	 */
-	y = MENUY;
-
 	if( illump != SOLID_NULL &&
 	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
 		for( i=0; i <= illump->s_last; i++ )  {
@@ -114,7 +116,6 @@ dotitles()
 	/*
 	 * The top of the menu (if any) begins at the Y value specified.
 	 */
-	scroll_display( SCROLLY ); 
 	mmenu_display( y );
 
 	/* print parameter locations on screen */

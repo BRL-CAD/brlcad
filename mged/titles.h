@@ -23,8 +23,8 @@
 #define YMAX		(2047)
 #define	MENUXLIM	(-1250)		/* Value to set X lim to for menu */
 #define	MENUX		(-2048+115)	/* pixel position for menu, X */
-#define	MENUY		1780	/* 1800 */	/* pixel position for menu, Y */
-#define	SCROLLY		2000		/* pixel position for scroll, Y */
+#define	MENUY		1780		/* pixel position for menu, Y */
+#define	SCROLLY		(2047)		/* starting Y pos for scroll area */
 #define	MENU_DY		(-104)		/* Distance between menu items */
 #define SCROLL_DY	(-100)		/* Distance between scrollers */
 
