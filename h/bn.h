@@ -56,7 +56,14 @@ extern "C" {
 
 
 
+/*----------------------------------------------------------------------*/
+/*
+ *  Declarations of external functions in LIBBN.
+ *  Source file names listed alphabetically.
+ */
 
+/* vers.c (created by the Cakefile) */
+extern CONST char		bn_version[];
 
 #ifdef __cplusplus
 }
