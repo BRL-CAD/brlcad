@@ -73,8 +73,9 @@ struct application	*ap;
 		register struct partition *newpp;
 		register struct seg *lastseg;
 		register struct hit *lasthit;
-		LOCAL lastflip;
+		LOCAL int	lastflip;
 
+		RT_CHECK_SEG(segp);
 		if(rt_g.debug&DEBUG_PARTITION) rt_pr_seg(segp);
 		if( segp->seg_stp->st_bit >= ap->a_rt_i->nsolids) rt_bomb("rt_boolweave: st_bit");
 
@@ -365,6 +366,8 @@ struct region			*reg2;
 	static long count = 0;		/* Not PARALLEL, shouldn't hurt */
 	register fastf_t depth;
 
+	RT_CHECK_PT(pp);
+
 	/* Attempt to control tremendous error outputs */
 	if( ++count > 100 )  {
 		if( (count%100) != 3 )  return(1);
@@ -417,6 +420,7 @@ struct application *ap;
 	if( ap->a_rt_i->rti_magic != RTI_MAGIC )  rt_bomb("rt_boolweave:  bad rtip\n");
 	pp = InputHdp->pt_forw;
 	while( pp != InputHdp )  {
+		RT_CHECK_PT(pp);
 		hitcnt = 0;
 		if(rt_g.debug&DEBUG_PARTITION)  {
 			rt_log("rt_boolfinal: (%g,%g)\n", startdist, enddist );
@@ -551,6 +555,9 @@ struct application *ap;
 			}  else  {
 				APPEND_PT( newpp, FinalHdp->pt_back );
 			}
+
+			RT_CHECK_SEG(newpp->pt_inseg);
+			RT_CHECK_SEG(newpp->pt_outseg);
 
 			/* Shameless efficiency hack:
 			 * If the application is for viewing only,
@@ -737,6 +744,7 @@ char *title;
 
 	rt_log("------%s\n", title);
 	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
+		RT_CHECK_PT(pp);
 		rt_pr_pt(rtip, pp);
 	}
 	rt_log("------\n");
@@ -751,6 +759,7 @@ struct rt_i		*rtip;
 register struct partition *pp;
 {
 	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_pr_pt:  bad rtip\n");
+	RT_CHECK_PT(pp);
 
 	rt_log("%.8x: PT %s %s (%g,%g)",
 		pp,
@@ -885,6 +894,7 @@ void
 rt_pr_seg(segp)
 register struct seg *segp;
 {
+	RT_CHECK_SEG(segp);
 	rt_log("%.8x: SEG %s (%g,%g) bit=%d\n",
 		segp,
 		segp->seg_stp->st_name,
