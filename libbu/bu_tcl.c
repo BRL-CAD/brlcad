@@ -1,24 +1,27 @@
-/*
- *			B U _ T C L . C
+/*****h* libbu/cmd.c
  *
- *  Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
+ * NAME
+ *	B U _ T C L . C
  *
- *  Remember that in MGED you need to say "set glob_compat_mode 0"
- *  to get [] to work with TCL semantics rather than MGED glob semantics.
+ * SYNOPSIS
+ *	Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
  *
- *  Author -
+ *	Remember that in MGED you need to say "set glob_compat_mode 0"
+ *	to get [] to work with TCL semantics rather than MGED glob semantics.
+ *
+ * Author -
  *	Michael John Muuss
  *  
- *  Source -
+ * Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
- *  Distribution Notice -
+ * Distribution Notice -
  *	Re-distribution of this software is restricted, as described in
  *	your "Statement of Terms and Conditions for the Release of
  *	The BRL-CAD Package" agreement.
  *
- *  Copyright Notice -
+ * Copyright Notice -
  *	This software is Copyright (C) 1998 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
@@ -41,40 +44,77 @@ static const char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 #include "tcl.h"
 
 #include "machine.h"
-#include "bu.h"
+#include "cmd.h"		/* this includes bu.h */
 #include "vmath.h"
 #include "bn.h"
 
 /* defined in libbu/cmdhist_obj.c */
 extern int Cho_Init();
 
-/*
- *			B U _ B A D M A G I C _ T C L
+static struct bu_cmdtab bu_cmds[] = {
+	{"bu_units_conversion",		bu_tcl_units_conversion},
+	{"bu_brlcad_path",		bu_tcl_brlcad_path},
+	{"bu_mem_barriercheck",		bu_tcl_mem_barriercheck},
+	{"bu_ck_malloc_ptr",		bu_tcl_ck_malloc_ptr},
+	{"bu_malloc_len_roundup",	bu_tcl_malloc_len_roundup},
+	{"bu_prmem",			bu_tcl_prmem},
+	{"bu_printb",			bu_tcl_printb,},
+	{"bu_get_all_keyword_values",	bu_get_all_keyword_values},
+	{"bu_get_value_by_keyword",	bu_get_value_by_keyword},
+	{"bu_rgb_to_hsv",		bu_tcl_rgb_to_hsv},
+	{"bu_hsv_to_rgb",		bu_tcl_hsv_to_rgb},
+	{"bu_key_eq_to_key_val",	bu_tcl_key_eq_to_key_val},
+	{"bu_shader_to_tcl_list",	bu_tcl_shader_to_key_val},
+	{"bu_key_val_to_key_eq",	bu_tcl_key_val_to_key_eq},
+	{"bu_shader_to_key_eq",		bu_tcl_shader_to_key_eq},
+	{(char *)NULL,	(int (*)())0 }
+};
+
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_badmagic_tcl
+ *
+ * SYNOPSIS
+ * 	Support routine for BU_CKMAG_TCL macro. As used by
+ *	BU_CKMAG_TCL, this routine is not called unless there
+ *	is trouble with the pointer. When called, an appropriate
+ *	message is added to interp indicating the problem.
+ *
+ * PARAMETERS
+ *	interp	- tcl interpreter where result is stored
+ *	ptr	- pointer to a data structure
+ *	magic	- the correct/desired magic number
+ *	str	- usually indicates the data structure name
+ *	file	- file where this routine was called
+ *	line	- line number in the above file
+ *
+ * RETURN
+ *	void
  */
 
 void
-bu_badmagic_tcl( interp, ptr, magic, str, file, line )
-Tcl_Interp	*interp;
-CONST long	*ptr;
-long		magic;
-CONST char	*str;
-CONST char	*file;
-int		line;
+bu_badmagic_tcl(Tcl_Interp	*interp,
+		CONST long	*ptr,
+		long		magic,
+		CONST char	*str,
+		CONST char	*file,
+		int		line)
 {
 	char	buf[256];
 
-	if( !(ptr) )  { 
+	if (!(ptr)) { 
 		sprintf(buf, "ERROR: NULL %s pointer in TCL interface, file %s, line %d\n", 
-			str, file, line ); 
+			str, file, line); 
 		Tcl_AppendResult(interp, buf, NULL);
 		return;
 	}
-	if( *((long *)(ptr)) != (magic) )  { 
+	if (*((long *)(ptr)) != (magic)) { 
 		sprintf(buf, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
 			(long)ptr,
 			str, magic,
 			bu_identify_magic( *(ptr) ), *(ptr),
-			file, line ); 
+			file, line); 
 		Tcl_AppendResult(interp, buf, NULL);
 		return;
 	}
@@ -82,24 +122,33 @@ int		line;
 }
 
 
-/*
- *		B U _ S T R U C T P A R S E _ G E T _ T E R S E _ F O R M
+/*****f* libbu/bu_tcl.c
  *
- *  Convert the "form" of a bu_structparse table into a TCL result string,
- *  with parameter-name data-type pairs:
+ * NAME
+ *	bu_structparse_get_terse_form
  *
- *	V {%f %f %f} A {%f %f %f}
+ * SYNOPSIS
+ *	Convert the "form" of a bu_structparse table into a TCL result string,
+ *	with parameter-name data-type pairs:
  *
- *  A different routine should build a more general 'form', along the
- *  lines of {V {%f %f %f} default {help}} {A {%f %f %f} default# {help}}
+ *		V {%f %f %f} A {%f %f %f}
+ *
+ *	A different routine should build a more general 'form', along the
+ *	lines of {V {%f %f %f} default {help}} {A {%f %f %f} default# {help}}
+ *
+ * PARAMETERS
+ *	interp	- tcl interpreter
+ *	sp	- structparse table
+ *
+ * RETURN
+ *	void
  */
 void
-bu_structparse_get_terse_form(interp, sp)
-Tcl_Interp *interp;
-register struct bu_structparse *sp;
+bu_structparse_get_terse_form(Tcl_Interp			*interp,
+			      register struct bu_structparse	*sp)
 {
-	struct bu_vls str;
-	int	i;
+	struct bu_vls	str;
+	int		i;
 
 	bu_vls_init(&str);
 
@@ -110,7 +159,7 @@ register struct bu_structparse *sp;
 		if (strcmp(sp->sp_fmt, "%c") == 0 ||
 		    strcmp(sp->sp_fmt, "%s") == 0 ||
 		    strcmp(sp->sp_fmt, "%S") == 0) {
-			if (sp->sp_count > 1)  {
+			if (sp->sp_count > 1) {
 				/* Make them all look like %###s */
 				bu_vls_printf(&str, "%%%ds", sp->sp_count);
 			} else {
@@ -129,30 +178,50 @@ register struct bu_structparse *sp;
 	bu_vls_free(&str);
 }
 
-/* Skip the separator(s) */
+/*****d* libbu/bu_tcl.c
+ *
+ * NAME
+ *	BU_SP_SKIP_SEP
+ *
+ * SYNOPSIS
+ *	Skip the separator(s) (i.e. whitespace and open-braces)
+ *
+ * PARAMETERS
+ *	_cp	- character pointer
+ */
 #define BU_SP_SKIP_SEP(_cp)	\
 	{ while( *(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 		*(_cp) == '\t' || *(_cp) == '{' ) )  ++(_cp); }
 
-
-/*
- *			B U _ S T R U C T P A R S E _ A R G V
+/*****f* libbu/bu_tcl.c
  *
- * Support routine for db adjust and db put.  Much like bu_structparse routine,
- * but takes the arguments as lists, a more Tcl-friendly method.
- * Also knows about the Tcl result string, so it can make more informative
- * error messages.
+ * NAME
+ *	bu_structparse_argv
  *
- *  Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
+ * SYNOPSIS
+ *	Support routine for db adjust and db put.  Much like the bu_struct_parse routine
+ *	which takes its input as a bu_vls. This routine, however, takes the arguments
+ *	as lists, a more Tcl-friendly method. Also knows about the Tcl result string,
+ *	so it can make more informative error messages.
+ *
+ *	Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
+ *
+ * PARAMETERS
+ *	interp	- tcl interpreter
+ *	argc	- number of elements in argv
+ *	argv	- contains the keyword-value pairs
+ *	desc	- structure description
+ *	base	- base addr of users struct
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
-
 int
-bu_structparse_argv( interp, argc, argv, desc, base )
-Tcl_Interp			*interp;
-int				 argc;
-char			       **argv;
-CONST struct bu_structparse	*desc;		/* structure description */
-char				*base;		/* base addr of users struct */
+bu_structparse_argv(Tcl_Interp			*interp,
+		    int				argc,
+		    char			**argv,
+		    CONST struct bu_structparse	*desc,
+		    char			*base)
 {
 	register char				*cp, *loc;
 	register CONST struct bu_structparse	*sdp;
@@ -160,19 +229,19 @@ char				*base;		/* base addr of users struct */
 	register int				ii;
 	struct bu_vls				 str;
 
-	if( desc == (struct bu_structparse *)NULL ) {
-		bu_log( "bu_structparse_argv: NULL desc pointer\n" );
-		Tcl_AppendResult( interp, "NULL desc pointer", (char *)NULL );
+	if (desc == (struct bu_structparse *)NULL) {
+		bu_log("bu_structparse_argv: NULL desc pointer\n");
+		Tcl_AppendResult(interp, "NULL desc pointer", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	/* Run through each of the attributes and their arguments. */
 
-	bu_vls_init( &str );
-	while( argc > 0 ) {
+	bu_vls_init(&str);
+	while (argc > 0) {
 		/* Find the attribute which matches this argument. */
-		for( sdp = desc; sdp->sp_name != NULL; sdp++ ) {
-			if( strcmp(sdp->sp_name, *argv) != 0 )
+		for (sdp = desc; sdp->sp_name != NULL; sdp++) {
+			if (strcmp(sdp->sp_name, *argv) != 0)
 				continue;
 
 			/* if we get this far, we've got a name match
@@ -184,54 +253,54 @@ char				*base;		/* base addr of users struct */
 #else
 			loc = (char *)(base+((int)sdp->sp_offset));
 #endif
-			if( sdp->sp_fmt[0] != '%' ) {
-				bu_log( "bu_structparse_argv: unknown format\n" );
-				bu_vls_free( &str );
-				Tcl_AppendResult( interp, "unknown format",
-						  (char *)NULL );
+			if (sdp->sp_fmt[0] != '%') {
+				bu_log("bu_structparse_argv: unknown format\n");
+				bu_vls_free(&str);
+				Tcl_AppendResult(interp, "unknown format",
+						 (char *)NULL);
 				return TCL_ERROR;
 			}
 
 			--argc;
 			++argv;
 
-			switch( sdp->sp_fmt[1] )  {
+			switch (sdp->sp_fmt[1]) {
 			case 'c':
 			case 's':
 				/* copy the string, converting escaped
 				 * double quotes to just double quotes
 				 */
-				if( argc < 1 ) {
-					bu_vls_trunc( &str, 0 );
-					bu_vls_printf( &str,
-			 "not enough values for \"%s\" argument: should be %d",
-						       sdp->sp_name,
-						       sdp->sp_count );
-					Tcl_AppendResult( interp,
-							  bu_vls_addr(&str),
-							  (char *)NULL );
-					bu_vls_free( &str );
+				if (argc < 1) {
+					bu_vls_trunc(&str, 0);
+					bu_vls_printf(&str,
+						      "not enough values for \"%s\" argument: should be %d",
+						      sdp->sp_name,
+						      sdp->sp_count);
+					Tcl_AppendResult(interp,
+							 bu_vls_addr(&str),
+							 (char *)NULL);
+					bu_vls_free(&str);
 					return TCL_ERROR;
 				}
-				for( ii = j = 0;
+				for (ii = j = 0;
 				     j < sdp->sp_count && argv[0][ii] != '\0';
-				     loc[j++] = argv[0][ii++] )
+				     loc[j++] = argv[0][ii++])
 					;
-				if( ii < sdp->sp_count )
+				if (ii < sdp->sp_count)
 					loc[ii] = '\0';
-				if( sdp->sp_count > 1 ) {
+				if (sdp->sp_count > 1) {
 					loc[sdp->sp_count-1] = '\0';
-					Tcl_AppendResult( interp,
-							  sdp->sp_name, " ",
-							  loc, " ",
-							  (char *)NULL );
+					Tcl_AppendResult(interp,
+							 sdp->sp_name, " ",
+							 loc, " ",
+							 (char *)NULL);
 				} else {
-					bu_vls_trunc( &str, 0 );
-					bu_vls_printf( &str, "%s %c ",
-						       sdp->sp_name, *loc );
-					Tcl_AppendResult( interp,
-							  bu_vls_addr(&str),
-							  (char *)NULL );
+					bu_vls_trunc(&str, 0);
+					bu_vls_printf(&str, "%s %c ",
+						      sdp->sp_name, *loc);
+					Tcl_AppendResult(interp,
+							 bu_vls_addr(&str),
+							 (char *)NULL);
 				}
 				break;
 			case 'S': {
@@ -480,35 +549,61 @@ char				*base;		/* base addr of users struct */
 	return TCL_OK;
 }
 
-/*
- *			B U _ T C L _ M E M _ B A R R I E R C H E C K
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_mem_barriercheck
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_mem_barriercheck.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_tcl_mem_barriercheck(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_mem_barriercheck(ClientData	clientData,
+			Tcl_Interp	*interp,
+			int		argc,
+			char		**argv)
 {
 	int	ret;
 
 	ret = bu_mem_barriercheck();
-	if( ret < 0 )  {
+	if (ret < 0) {
 		Tcl_AppendResult(interp, "bu_mem_barriercheck() failed\n", NULL);
 		return TCL_ERROR;
 	}
 	return TCL_OK;
 }
 
-/*
- *			B U _ T C L _ C K _ M A L L O C _ P T R
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_ck_malloc_ptr
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_ck_malloc_ptr.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_tcl_ck_malloc_ptr(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_ck_malloc_ptr(ClientData		clientData,
+		     Tcl_Interp		*interp,
+		     int		argc,
+		     char		**argv)
 {
 	if( argc != 3 )  {
 		Tcl_AppendResult( interp, "Usage: bu_ck_malloc_ptr ascii-ptr description\n");
@@ -518,15 +613,28 @@ char **argv;
 	return TCL_OK;
 }
 
-/*
- *			B U _ T C L _ M A L L O C _ L E N _ R O U N D U P
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_malloc_len_roundup
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_malloc_len_roundup.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_tcl_malloc_len_roundup(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_malloc_len_roundup(ClientData	clientData,
+			  Tcl_Interp	*interp,
+			  int		argc,
+			  char		**argv)
 {
 	int	val;
 
@@ -539,19 +647,31 @@ char **argv;
 	return TCL_OK;
 }
 
-/*
- *			B U _ T C L _ P R M E M
+/*****f* libbu/bu_tcl.c
  *
- *  Print map of memory currently in use, to stderr.
+ * NAME
+ *	bu_tcl_prmem
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_prmem. Prints map of
+ *	memory currently in use, to stderr.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_tcl_prmem(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_prmem(ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int	argc,
+	     char	**argv)
 {
-	if( argc != 2 )  {
+	if (argc != 2) {
 		Tcl_AppendResult(interp, "Usage: bu_prmem title\n");
 		return TCL_ERROR;
 	}
@@ -559,54 +679,78 @@ char **argv;
 	return TCL_OK;
 }
 
-/*
- *			B U _ T C L _ P R I N T B
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_printb
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_vls_printb.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_tcl_printb(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_printb(ClientData	clientData,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv)
 {
 	struct bu_vls	str;
 
-	if( argc != 4 )  {
+	if (argc != 4) {
 		Tcl_AppendResult(interp, "Usage: bu_printb title integer-to-format bit-format-string\n", NULL);
 		return TCL_ERROR;
 	}
 	bu_vls_init(&str);
-	bu_vls_printb( &str, argv[1], atoi(argv[2]), argv[3] );
-	Tcl_SetResult( interp, bu_vls_addr(&str), TCL_VOLATILE );
+	bu_vls_printb(&str, argv[1], atoi(argv[2]), argv[3]);
+	Tcl_SetResult(interp, bu_vls_addr(&str), TCL_VOLATILE);
 	bu_vls_free(&str);
 	return TCL_OK;
 }
 
-/*
- *			B U _ G E T _ V A L U E _ B Y _ K E Y W O R D
+/*****f* libbu/bu_tcl.c
  *
- *  Given arguments of alternating keywords and values
- *  and a specific keyword ("Iwant"),
- *  return the value associated with that keyword.
+ * NAME
+ *	bu_get_value_by_keyword
+ *
+ * SYNOPSIS
+ *	Given arguments of alternating keywords and values
+ *	and a specific keyword ("Iwant"),
+ *	return the value associated with that keyword.
  *
  *	example:  bu_get_value_by_keyword Iwant az 35 elev 25 temp 9.6
  *
- *  If only one argument is given after the search keyword, it is interpreted
- *  as a list in the same format.
+ *	If only one argument is given after the search keyword, it is interpreted
+ *	as a list in the same format.
  *
  *	example:  bu_get_value_by_keyword Iwant {az 35 elev 25 temp 9.6}
  *
- *  Search order is left-to-right, only first match is returned.
+ *	Search order is left-to-right, only first match is returned.
  *
- *  Sample use:
- *	 bu_get_value_by_keyword V8 [concat type [.inmem get box.s]]
+ *	Sample use:
+ *		bu_get_value_by_keyword V8 [concat type [.inmem get box.s]]
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_get_value_by_keyword(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_get_value_by_keyword(ClientData	clientData,
+			Tcl_Interp	*interp,
+			int		argc,
+			char		**argv)
 {
 	int	listc;
 	char	**listv;
@@ -680,50 +824,58 @@ char **argv;
 	return TCL_ERROR;
 }
 
-/*
- *			B U _ G E T _ A L L _ K E Y W O R D _ V A L U E S
+/*****f* libbu/bu_tcl.c
  *
- *  Given arguments of alternating keywords and values,
- *  establish local variables named after the keywords, with the
- *  indicated values.
+ * NAME
+ *	bu_get_all_keyword_values
+ *
+ * SYNOPSIS
+ *	Given arguments of alternating keywords and values,
+ *	establish local variables named after the keywords, with the
+ *	indicated values. Returns in interp a list of the variable
+ *	names that were assigned to. This lets you detect at runtime
+ *	what assignments were actually performed.
  *
  *	example:  bu_get_all_keyword_values az 35 elev 25 temp 9.6
  *
- *  This is much faster than writing this in raw Tcl 8 as:
+ *	This is much faster than writing this in raw Tcl 8 as:
  *
  *	foreach {keyword value} $list {
  *		set $keyword $value
  *		lappend retval $keyword
  *	}
  *
- *  If only one argument is given it is interpreted
- *  as a list in the same format.
+ *	If only one argument is given it is interpreted
+ *	as a list in the same format.
  *
  *	example:  bu_get_all_keyword_values {az 35 elev 25 temp 9.6}
  *
- *  For security reasons, the name of the local variable assigned to
- *  is that of the input keyword with "key_" prepended.
- *  This prevents a playful user from overriding variables inside
- *  the function, e.g. loop iterator "i", etc.
- *  This could be even worse when called in global context.
+ *	For security reasons, the name of the local variable assigned to
+ *	is that of the input keyword with "key_" prepended.
+ *	This prevents a playful user from overriding variables inside
+ *	the function, e.g. loop iterator "i", etc.
+ *	This could be even worse when called in global context.
  *
- *  Processing order is left-to-right, rightmost value for a repeated
- *  keyword will be the one used.
+ *	Processing order is left-to-right, rightmost value for a repeated
+ *	keyword will be the one used.
  *
- *  Sample use:
- *	 bu_get_all_keyword_values [concat type [.inmem get box.s]]
+ *	Sample use:
+ *		bu_get_all_keyword_values [concat type [.inmem get box.s]]
  *
- *  Returns -
- *	List of variable names that were assigned to.
- *	This lets you detect at runtime what assignments
- *	were actually performed.
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_get_all_keyword_values(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_get_all_keyword_values(ClientData	clientData,
+			  Tcl_Interp	*interp,
+			  int		argc,
+			  char		**argv)
 {
 	struct bu_vls	variable;
 	int	listc;
@@ -799,15 +951,31 @@ char **argv;
 	return TCL_OK;
 }
 
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_rgb_to_hsv
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_rgb_to_hsv.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 /*
  *			B U _ T C L _ R G B _ T O _ H S V
  */
 int
-bu_tcl_rgb_to_hsv(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_rgb_to_hsv(ClientData	clientData,
+		  Tcl_Interp	*interp,
+		  int		argc,
+		  char		**argv)
 {
 	int		rgb_int[3];
 	unsigned char	rgb[3];
@@ -821,14 +989,13 @@ char **argv;
 		return TCL_ERROR;
 	}
 	if (( Tcl_GetInt( interp, argv[1], &rgb_int[0] ) != TCL_OK )
-	 || ( Tcl_GetInt( interp, argv[2], &rgb_int[1] ) != TCL_OK )
-	 || ( Tcl_GetInt( interp, argv[3], &rgb_int[2] ) != TCL_OK )
-	 || ( rgb_int[0] < 0 ) || ( rgb_int[0] > 255 )
-	 || ( rgb_int[1] < 0 ) || ( rgb_int[1] > 255 )
-	 || ( rgb_int[2] < 0 ) || ( rgb_int[2] > 255 ))
-	 {
+	    || ( Tcl_GetInt( interp, argv[2], &rgb_int[1] ) != TCL_OK )
+	    || ( Tcl_GetInt( interp, argv[3], &rgb_int[2] ) != TCL_OK )
+	    || ( rgb_int[0] < 0 ) || ( rgb_int[0] > 255 )
+	    || ( rgb_int[1] < 0 ) || ( rgb_int[1] > 255 )
+	    || ( rgb_int[2] < 0 ) || ( rgb_int[2] > 255 )) {
 		bu_vls_printf(&result, "bu_rgb_to_hsv: Bad RGB (%s, %s, %s)\n",
-		    argv[1], argv[2], argv[3]);
+			      argv[1], argv[2], argv[3]);
 		Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
 		bu_vls_free(&result);
 		return TCL_ERROR;
@@ -845,15 +1012,28 @@ char **argv;
 	
 }
 
-/*
- *			B U _ T C L _ H S V _ T O _ R G B
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_hsv_to_rgb
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_hsv_to_rgb.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_tcl_hsv_to_rgb(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_hsv_to_rgb(ClientData	clientData,
+		  Tcl_Interp	*interp,
+		  int		argc,
+		  char		**argv)
 {
 	fastf_t		hsv[3];
 	unsigned char	rgb[3];
@@ -883,12 +1063,28 @@ char **argv;
 	
 }
 
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_key_eq_to_key_val
+ *
+ * SYNOPSIS
+ *	Converts key=val to "key val" pairs.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
-bu_tcl_key_eq_to_key_val( clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_key_eq_to_key_val(ClientData	clientData,
+			 Tcl_Interp	*interp,
+			 int		argc,
+			 char		**argv)
 {
 	struct bu_vls vls;
 	char *next;
@@ -917,12 +1113,28 @@ char **argv;
 
 }
 
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_shader_to_key_val
+ *
+ * SYNOPSIS
+ *	Converts a shader string to a tcl list.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
-bu_tcl_shader_to_key_val( clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_shader_to_key_val(ClientData	clientData,
+			 Tcl_Interp	*interp,
+			 int		argc,
+			 char		**argv)
 {
 	struct bu_vls vls;
 
@@ -942,12 +1154,28 @@ char **argv;
 
 }
 
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_key_val_to_key_eq
+ *
+ * SYNOPSIS
+ *	Converts "key value" pairs to key=value.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
-bu_tcl_key_val_to_key_eq( clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_key_val_to_key_eq(ClientData	clientData,
+			 Tcl_Interp	*interp,
+			 int		argc,
+			 char		**argv)
 {
 	int i=0;
 
@@ -963,12 +1191,28 @@ char **argv;
 
 }
 
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	bu_tcl_shader_to_key_eq
+ *
+ * SYNOPSIS
+ *	Converts a shader tcl list into a shader string.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
+ */
 int
-bu_tcl_shader_to_key_eq( clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_shader_to_key_eq(ClientData	clientData,
+			Tcl_Interp	*interp,
+			int		argc,
+			char		**argv)
 {
 	struct bu_vls vls;
 
@@ -988,119 +1232,103 @@ char **argv;
 	return TCL_OK;
 }
 
-/*
- *			B U _ T C L _ B R L C A D _ P A T H
+/*****f* libbu/bu_tcl.c
  *
- *  Tcl access to library routine bu_brlcad_path(),
- *  which handles BRLCAD_ROOT issues for GUI code.
+ * NAME
+ *	bu_tcl_brlcad_path
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_brlcad_path.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_tcl_brlcad_path( clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_brlcad_path(ClientData	clientData,
+		   Tcl_Interp	*interp,
+		   int		 argc,
+		   char		**argv)
 {
-	if( argc != 2 )  {
+	if (argc != 2) {
 		Tcl_AppendResult(interp, "Usage: bu_brlcad_path subdir\n",
-			(char *)NULL );
+				 (char *)NULL);
 		return TCL_ERROR;
 	}
-	Tcl_AppendResult(interp, bu_brlcad_path( argv[1] ), NULL );
+	Tcl_AppendResult(interp, bu_brlcad_path(argv[1]), NULL);
 	return TCL_OK;
 }
 
-/*
- *			B U _ T C L _ U N I T S _ C O N V E R S I O N
+/*****f* libbu/bu_tcl.c
  *
- *	Tcl access to bu_units_comversion()
+ * NAME
+ *	bu_tcl_units_conversion
+ *
+ * SYNOPSIS
+ *	A tcl wrapper for bu_units_conversion.
+ *
+ * PARAMETERS
+ *	clientData	- associated data/state
+ *	interp		- tcl interpreter in which this command was registered.
+ *	argc		- number of elements in argv
+ *	argv		- command name and arguments
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_tcl_units_conversion( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+bu_tcl_units_conversion(ClientData	clientData,
+			Tcl_Interp	*interp,
+			int		argc,
+			char		**argv)
 {
 	double conv_factor;
 	struct bu_vls result;
 
-	if( argc != 2 )  {
+	if (argc != 2) {
 		Tcl_AppendResult(interp, "Usage: bu_units_conversion units_string\n",
-			(char *)NULL );
+				 (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	conv_factor = bu_units_conversion( argv[1] );
-	if( conv_factor == 0.0 )
-	{
+	conv_factor = bu_units_conversion(argv[1]);
+	if (conv_factor == 0.0) {
 		Tcl_AppendResult(interp, "ERROR: bu_units_conversion: Unrecognized units string: ",
-			argv[1], "\n", (char *)NULL );
-			return TCL_ERROR;
+				 argv[1], "\n", (char *)NULL);
+		return TCL_ERROR;
 	}
 
-	bu_vls_init( &result );
-	bu_vls_printf( &result, "%.12e", conv_factor );
-	Tcl_AppendResult(interp, bu_vls_addr( &result ), (char *)NULL );
-	bu_vls_free( &result );
+	bu_vls_init(&result);
+	bu_vls_printf(&result, "%.12e", conv_factor);
+	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_vls_free(&result);
 	return TCL_OK;
 }
 
-/*
- *			B U _ T C L _ S E T U P
+/*****f* libbu/bu_tcl.c
  *
- *  Add all the supported Tcl interfaces to LIBBU routines to
- *  the list of commands known by the given interpreter.
+ * NAME
+ *	bu_tcl_setup
+ *
+ * SYNOPSIS
+ *	Add all the supported Tcl interfaces to LIBBU routines to
+ *	the list of commands known by the given interpreter.
+ *
+ * PARAMETERS
+ *	interp		- tcl interpreter in which this command was registered.
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 void
-bu_tcl_setup(interp)
-Tcl_Interp *interp;
+bu_tcl_setup(Tcl_Interp *interp)
 {
-	(void)Tcl_CreateCommand(interp,
-		"bu_units_conversion",	bu_tcl_units_conversion,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_brlcad_path",	bu_tcl_brlcad_path,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_mem_barriercheck",	bu_tcl_mem_barriercheck,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_ck_malloc_ptr",	bu_tcl_ck_malloc_ptr,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_malloc_len_roundup",bu_tcl_malloc_len_roundup,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_prmem",		bu_tcl_prmem,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_printb",		bu_tcl_printb,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_get_all_keyword_values", bu_get_all_keyword_values,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_get_value_by_keyword", bu_get_value_by_keyword,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_rgb_to_hsv",	bu_tcl_rgb_to_hsv,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_hsv_to_rgb",	bu_tcl_hsv_to_rgb,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_key_eq_to_key_val",	bu_tcl_key_eq_to_key_val,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_shader_to_tcl_list",	bu_tcl_shader_to_key_val,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_key_val_to_key_eq",	bu_tcl_key_val_to_key_eq,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp,
-		"bu_shader_to_key_eq",	bu_tcl_shader_to_key_eq,
-		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	bu_register_cmds(interp, bu_cmds);
 
 	Tcl_SetVar(interp, "bu_version", (char *)bu_version+5, TCL_GLOBAL_ONLY);	/* from vers.c */
 	Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
@@ -1110,13 +1338,23 @@ Tcl_Interp *interp;
 	Cho_Init(interp);
 }
 
-/*
- *  Allows LIBBU to be dynamically loaded to a vanilla tclsh/wish with
- *  "load /usr/brlcad/lib/libbu.so"
+/*****f* libbu/bu_tcl.c
+ *
+ * NAME
+ *	Bu_Init
+ *
+ * SYNOPSIS
+ *	Allows LIBBU to be dynamically loaded to a vanilla tclsh/wish with
+ *	"load /usr/brlcad/lib/libbu.so"
+ *
+ * PARAMETERS
+ *	interp		- tcl interpreter in which this command was registered.
+ *
+ * RETURN
+ *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-Bu_Init(interp)
-Tcl_Interp *interp;
+Bu_Init(Tcl_Interp *interp)
 {
 	bu_tcl_setup(interp);
 #if 0
