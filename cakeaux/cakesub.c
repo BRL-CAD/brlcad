@@ -70,6 +70,7 @@ nextword:
 	len = 1;	/* for the null */
 	for( i=0; i<old_join; i++ ) len += strlen(argv[1]);
 	old = malloc(len);
+	old[0] = '\0';
 	cp = old;
 	for( i=0; i<old_join; i++ )  {
 		/*(void)*/ strcat( cp, argv[1] );
@@ -81,6 +82,7 @@ nextword:
 	len = 1;	/* for the null */
 	for( i=0; i<new_join; i++ ) len += strlen(argv[1]);
 	new = malloc(len);
+	new[0] = '\0';
 	cp = new;
 	for( i=0; i<new_join; i++ )  {
 		/*(void)*/ strcat( cp, argv[1] );
