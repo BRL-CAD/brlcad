@@ -25,6 +25,7 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "rtstring.h"
 #include "rtlist.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -777,7 +778,7 @@ struct nmg_exp_counts {
 
 int
 rt_nmg_reindex(p, ecnt)
-long	*p;
+genptr_t		p;
 struct nmg_exp_counts	*ecnt;
 {
 	int	index;
@@ -801,10 +802,10 @@ struct nmg_exp_counts	*ecnt;
 	return( ret );
 }
 
-#define INDEX(o,i,elem)		(void)rt_plong( (o)->elem, rt_nmg_reindex((i)->elem, ecnt) )
+#define INDEX(o,i,elem)		(void)rt_plong( (o)->elem, rt_nmg_reindex((genptr_t)((i)->elem), ecnt) )
 #define INDEXL(oo,ii,elem)	{ \
-	(void)rt_plong( (oo)->elem.forw, rt_nmg_reindex((ii)->elem.forw, ecnt) ); \
-	(void)rt_plong( (oo)->elem.back, rt_nmg_reindex((ii)->elem.back, ecnt) ); }
+	(void)rt_plong( (oo)->elem.forw, rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt) ); \
+	(void)rt_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
 
 void
 rt_nmg_edisk( op, ip, ecnt, index, local2mm )
@@ -960,7 +961,7 @@ double		local2mm;
 			NMG_CK_LOOPUSE(lu);
 			rt_plong( d->magic, DISK_LOOPUSE_MAGIC );
 			INDEXL( d, lu, l );
-			rt_plong( d->up, rt_nmg_reindex(lu->up.magic_p, ecnt) );
+			rt_plong( d->up, rt_nmg_reindex((genptr_t)(lu->up.magic_p), ecnt) );
 			INDEX( d, lu, lumate_p );
 			rt_plong( d->orientation, lu->orientation );
 			INDEX( d, lu, l_p );
@@ -1010,7 +1011,7 @@ double		local2mm;
 			NMG_CK_EDGEUSE(eu);
 			rt_plong( d->magic, DISK_EDGEUSE_MAGIC );
 			INDEXL( d, eu, l );
-			rt_plong( d->up, rt_nmg_reindex(eu->up.magic_p, ecnt) );
+			rt_plong( d->up, rt_nmg_reindex((genptr_t)(eu->up.magic_p), ecnt) );
 			INDEX( d, eu, eumate_p );
 			INDEX( d, eu, radial_p );
 			INDEX( d, eu, e_p );
@@ -1056,7 +1057,7 @@ double		local2mm;
 			NMG_CK_VERTEXUSE(vu);
 			rt_plong( d->magic, DISK_VERTEXUSE_MAGIC );
 			INDEXL( d, vu, l );
-			rt_plong( d->up, rt_nmg_reindex(vu->up.magic_p, ecnt) );
+			rt_plong( d->up, rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt) );
 			INDEX( d, vu, v_p );
 			INDEX( d, vu, vua_p );
 		}
@@ -1730,7 +1731,8 @@ ptrs[subscript], rt_nmg_index_of_struct(ptrs[subscript]) );
 	/* Import each structure, in turn */
 	cp = (char *)(rp+1);	/* start at first granule in */
 	for( i=1; i < maxindex; i++ )  {
-		rt_nmg_idisk( ptrs[i], cp, ecnt, i, ptrs, mat );
+		rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)cp,
+			ecnt, i, ptrs, mat );
 		cp += rt_disk_sizes[ecnt[i].kind];
 	}
 
@@ -1769,7 +1771,6 @@ double			local2mm;
 	int				subscript;
 	int				kind_counts[NMG_N_KINDS];
 	genptr_t			disk_arrays[NMG_N_KINDS];
-	int				disk_sizes[NMG_N_KINDS];
 	int				additional_grans;
 	int				tot_size;
 	int				kind;
@@ -1858,7 +1859,8 @@ rt_log("Mapping of old index to new index, and kind\n");
 	for( i = m->maxindex-1; i >= 0; i-- )  {
 		if( ptrs[i] == (long *)0 )  continue;
 		kind = ecnt[i].kind;
-		rt_nmg_edisk( disk_arrays[kind], ptrs[i], ecnt, i, local2mm );
+		rt_nmg_edisk( (genptr_t)(disk_arrays[kind]),
+			(genptr_t)(ptrs[i]), ecnt, i, local2mm );
 	}
 
 	RT_INIT_EXTERNAL(&count_ext);
