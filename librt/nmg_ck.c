@@ -201,29 +201,29 @@ struct edgeuse *eup;
 		if (eu->vu_p->v_p == eup->vu_p->v_p) {
 			if (eu->eumate_p->vu_p->v_p != eup->eumate_p->vu_p->v_p)
 			{
-				rt_log("nmg_vedge() edgeuse mate does not have correct vertex\n");
-				rt_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
+				bu_log("nmg_vedge() edgeuse mate does not have correct vertex\n");
+				bu_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
 					eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
-				rt_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
+				bu_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
 					eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
 				rt_bomb("nmg_vedge() edgeuse mate does not have correct vertex\n");
 			}
 		} else if (eu->vu_p->v_p == eup->eumate_p->vu_p->v_p) {
 			if (eu->eumate_p->vu_p->v_p != eup->vu_p->v_p)
 			{
-				rt_log("nmg_vedge() edgeuse does not have correct vertex\n" );
-				rt_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
+				bu_log("nmg_vedge() edgeuse does not have correct vertex\n" );
+				bu_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
 					eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
-				rt_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
+				bu_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
 					eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
 				rt_bomb("nmg_vedge() edgeuse does not have correct vertex\n");
 			}
 		} else
 		{
-			rt_log("nmg_vedge() edgeuse does not share vertex endpoint\n" );
-			rt_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
+			bu_log("nmg_vedge() edgeuse does not share vertex endpoint\n" );
+			bu_log( "(eu=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x)\n",
 				eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
-			rt_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
+			bu_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
 				eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
 			rt_bomb("nmg_vedge() edgeuse does not share vertex endpoint\n");
 		}
@@ -727,7 +727,7 @@ char *str;
 {
 	char *errstr;
 	struct edgeuse *eparent;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_e error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_e error str");
 	(void)sprintf(errstr, "%sedge %8lx\n", str, e);
 	
 	NMG_CK_EDGE(e);
@@ -746,7 +746,7 @@ char *str;
 	if (eparent != eu && eparent->eumate_p != eu) rt_bomb(
 		strcat(errstr, "nmg_ck_e() Edge denies edgeuse parentage\n"));
 
-	rt_free(errstr, "nmg_ck_e error str");
+	bu_free(errstr, "nmg_ck_e error str");
 }
 
 /*
@@ -760,13 +760,13 @@ char *str;
 {
 	char *errstr;
 
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_vu error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_vu error str");
 	(void)sprintf(errstr, "%svertexuse %8lx\n", str, vu);
 	
 	if (vu->up.magic_p != parent) rt_bomb(
 		strcat(errstr, "nmg_ck_vu() Vertexuse denies parentage\n"));
 
-	rt_free(errstr, "nmg_ck_vu error str");
+	bu_free(errstr, "nmg_ck_vu error str");
 }
 
 /*
@@ -781,7 +781,7 @@ char *str;
 	char *errstr;
 	struct edgeuse *eur, *eu_next, *eu_last;	
 
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_eu error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_eu error str");
 	(void)sprintf(errstr, "%sedgeuse %8lx\n", str, eu);
 
 	NMG_CK_EDGEUSE(eu);
@@ -834,7 +834,7 @@ char *str;
 	NMG_CK_VERTEXUSE(eu->vu_p);
 	nmg_ck_vu(&eu->l.magic, eu->vu_p, errstr);
 
-	rt_free(errstr, "nmg_ck_eu error str");
+	bu_free(errstr, "nmg_ck_eu error str");
 }
 
 /*
@@ -847,13 +847,13 @@ struct loop_g *lg;
 char *str;
 {
 	char *errstr;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_lg error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_lg error str");
 	(void)sprintf(errstr, "%sloop_g %8lx\n", str, lg);
 
 	NMG_CK_LOOP_G(lg);
 	NMG_CK_LOOP(l);
 
-	rt_free(errstr, "nmg_ck_lg error str");
+	bu_free(errstr, "nmg_ck_lg error str");
 }
 
 /*
@@ -866,7 +866,7 @@ struct loop *l;
 char *str;
 {
 	char *errstr;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_l error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_l error str");
 	(void)sprintf(errstr, "%sloop %8lx\n", str, l);
 
 	NMG_CK_LOOP(l);
@@ -877,7 +877,7 @@ char *str;
 
 	if (l->lg_p) nmg_ck_lg(l, l->lg_p, errstr);
 
-	rt_free(errstr, "");
+	bu_free(errstr, "");
 }
 
 /*
@@ -896,7 +896,7 @@ char *str;
 	int edgeuse_num=0;
 	long	magic1;
 
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_lu error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_lu error str");
 	(void)sprintf(errstr, "%sloopuse %8lx\n", str, lu);
 	
 	NMG_CK_LOOPUSE(lu);
@@ -939,7 +939,7 @@ char *str;
 	} else {
 		rt_bomb(strcat(errstr, "nmg_ck_lu() Bad loopuse down pointer\n") );
 	}
-	rt_free(errstr, "nmg_ck_lu error str");
+	bu_free(errstr, "nmg_ck_lu error str");
 }
 
 /*
@@ -952,7 +952,7 @@ struct face_g_plane *fg;
 char *str;
 {
 	char *errstr;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_fg error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_fg error str");
 	(void)sprintf(errstr, "%sFace_g %8lx\n", str, f);
 
 	NMG_CK_FACE_G_PLANE(fg);
@@ -963,7 +963,7 @@ char *str;
 	        rt_bomb(errstr);
 	}
 
-	rt_free(errstr, "nmg_ck_fg error str");
+	bu_free(errstr, "nmg_ck_fg error str");
 }
 
 /* 
@@ -976,7 +976,7 @@ struct face *f;
 char *str;
 {
 	char *errstr;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_f error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_f error str");
 	(void)sprintf(errstr, "%sFace %8lx\n", str, f);
 
 	NMG_CK_FACE(f);
@@ -987,7 +987,7 @@ char *str;
 
 	if (f->g.plane_p) nmg_ck_fg(f, f->g.plane_p, errstr);
 
-	rt_free(errstr, "nmg_ck_f error str");
+	bu_free(errstr, "nmg_ck_f error str");
 }
 
 /*
@@ -1007,7 +1007,7 @@ char *str;
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_SHELL(s);
 
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_fu error str");
+	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_fu error str");
 	(void)sprintf(errstr, "%sFaceuse %8lx\n", str, fu);
 
 	if (fu->s_p != s) rt_bomb(
@@ -1035,7 +1035,7 @@ char *str;
 			errstr, loop_number++, lu);
 		nmg_ck_lu(&fu->l.magic, lu, errstr);
 	}
-	rt_free(errstr, "nmg_ck_fu error str");
+	bu_free(errstr, "nmg_ck_fu error str");
 }
 
 /*	N M G _ C K _ E G _ V E R T S
@@ -1868,7 +1868,7 @@ CONST struct bn_tol *tol;
         m = r->m_p;
         NMG_CK_MODEL(m);
 
-        st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+        st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
         st.tabl = &tab;
 	st.tol = (struct bn_tol *)tol;
 
@@ -1880,5 +1880,5 @@ CONST struct bn_tol *tol;
 
 	bu_ptbl_free( &tab );
 
-        rt_free( (char *)st.visited, "visited[]");
+        bu_free( (char *)st.visited, "visited[]");
 }

@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *
  *	and returns the rest of the line beyond the field separator.
  */
-struct rt_vls *rt_assoc (fname, value, field_sep)
+struct bu_vls *rt_assoc (fname, value, field_sep)
 
 char	*fname;
 char	*value;
@@ -52,11 +52,11 @@ int	field_sep;
     char		*cp;
     FILE		*fp;
     int			len;
-    struct rt_vls	*vp = 0;
-    struct rt_vls	buffer;
+    struct bu_vls	*vp = 0;
+    struct bu_vls	buffer;
 
 	/* XXX NONPARALLEL */
-	/* I'd prefer using "rt_open_mapped_file()" here instead, I think  -Mike */
+	/* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
     if ((fp = fopen(fname, "r")) == NULL)
     {
 	/*	XXX
@@ -66,29 +66,29 @@ int	field_sep;
 	 *	between ERROR_PERFORMING_THE_LOOKUP
 	 *	and VALUE_NOT_FOUND.
 	 */
-	rt_log("rt_assoc:  Cannot open association file '%s'\n", fname);
+	bu_log("rt_assoc:  Cannot open association file '%s'\n", fname);
 	exit (1);
     }
 
-    rt_vls_init(&buffer);
+    bu_vls_init(&buffer);
     len = strlen(value);
 
     do
     {
-	rt_vls_trunc(&buffer, 0);
-	if (rt_vls_gets(&buffer, fp) == -1)
+	bu_vls_trunc(&buffer, 0);
+	if (bu_vls_gets(&buffer, fp) == -1)
 	    goto wrap_up;
-	cp = rt_vls_addr(&buffer);
+	cp = bu_vls_addr(&buffer);
 
     } while ((*cp != *value) || (*(cp + len) != field_sep)
 	  || (strncmp(cp, value, len) != 0));
 
-    vp = (struct rt_vls *)
-	    rt_malloc(sizeof(struct rt_vls), "value of rt_assoc");
-    rt_vls_init(vp);
-    rt_vls_strcpy(vp, cp + len + 1);
+    vp = (struct bu_vls *)
+	    bu_malloc(sizeof(struct bu_vls), "value of rt_assoc");
+    bu_vls_init(vp);
+    bu_vls_strcpy(vp, cp + len + 1);
 
 wrap_up:
-    rt_vls_trunc(&buffer, 0);
+    bu_vls_trunc(&buffer, 0);
     return (vp);
 }

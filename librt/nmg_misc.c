@@ -92,7 +92,7 @@ struct loopuse *lu;
 	}
 
 	/* allocate memory for "psuedo-vertices" */
-	pts = (point_t *)rt_calloc( edge_count, sizeof( point_t ), "Orient_nurb_face_loops: pts" );
+	pts = (point_t *)bu_calloc( edge_count, sizeof( point_t ), "Orient_nurb_face_loops: pts" );
 
 	/* Assign uv geometry to each "psuedo-vertex" */
 	edge_no = 0;
@@ -160,7 +160,7 @@ struct loopuse *lu;
 		VADD2( area, area, cross );
 	}
 
-	rt_free( (char *)pts, "nmg_snurb_calc_lu_uv_orient: pts" );
+	bu_free( (char *)pts, "nmg_snurb_calc_lu_uv_orient: pts" );
 
 	if( area[Z] > 0.0 )
 		return( OT_SAME );
@@ -423,7 +423,7 @@ long *flags;
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 		{
-			rt_log( "Checking edge (%g %g %g)<->(%g %g %g)\n",
+			bu_log( "Checking edge (%g %g %g)<->(%g %g %g)\n",
 				V3ARGS( eu->vu_p->v_p->vg_p->coord ),
 				V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 		}
@@ -458,11 +458,11 @@ long *flags;
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 		{
-			rt_log( "Checking edge (%g %g %g)<->(%g %g %g)\n",
+			bu_log( "Checking edge (%g %g %g)<->(%g %g %g)\n",
 				V3ARGS( eu->vu_p->v_p->vg_p->coord ),
 				V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
-			rt_log( "\tedge direction = (%g %g %g)\n", V3ARGS( edge ) );
-			rt_log( "\t\textreme slope = %g\n", extreme_slope );
+			bu_log( "\tedge direction = (%g %g %g)\n", V3ARGS( edge ) );
+			bu_log( "\t\textreme slope = %g\n", extreme_slope );
 		}
 
 		/* check against current maximum slope */
@@ -479,7 +479,7 @@ long *flags;
 			if( edge[dir] > extreme_slope )
 			{
 				if( rt_g.NMG_debug & DEBUG_BASIC )
-					rt_log( "New top edge!\n" );
+					bu_log( "New top edge!\n" );
 				extreme_slope = edge[dir];
 				e_top = eu->e_p;
 			}
@@ -692,10 +692,10 @@ CONST struct bn_tol *ttol;
 		total_shells++;
 
 	/* make an array of shells and top faces */
-	top_faces = (struct top_face *)rt_calloc( total_shells , sizeof( struct top_face ) , "nmg_assoc_void_shells: top_faces" );
+	top_faces = (struct top_face *)bu_calloc( total_shells , sizeof( struct top_face ) , "nmg_assoc_void_shells: top_faces" );
 
 	/* make flags array for use by "nmg_find_top_face" */
-	flags = (long *)rt_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
+	flags = (long *)bu_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
 
 	top_faces[0].s = outer_shell;
 	top_faces[0].f = nmg_find_top_face( outer_shell, &dir , flags );
@@ -863,7 +863,7 @@ CONST struct bn_tol *ttol;
 			bu_ptbl_ins( shells , (long *)void_s );
 		}
 	}
-	rt_free( (char *)flags , "nmg_assoc_void_shells: flags" );
+	bu_free( (char *)flags , "nmg_assoc_void_shells: flags" );
 }
 
 /*	N M G _ F I N D _ O U T E R _ A N D _ V O I D _ S H E L L S
@@ -894,7 +894,7 @@ CONST struct bn_tol *tol;
 	BN_CK_TOL( tol );
 
 	/* Decompose shells */
-	outer_shells = (struct bu_ptbl *)rt_malloc( sizeof( struct bu_ptbl ) , "nmg_find_outer_and_void_shells: outer_shells" );
+	outer_shells = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ) , "nmg_find_outer_and_void_shells: outer_shells" );
 	bu_ptbl_init( outer_shells , 64, " outer_shells ");
 	for (BU_LIST_FOR(s, shell, &r->s_hd))
 	{
@@ -915,7 +915,7 @@ CONST struct bn_tol *tol;
 	for (BU_LIST_FOR(s, shell, &r->s_hd))
 		total_shells++;
 
-	flags = (long *)rt_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
+	flags = (long *)bu_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
 
 	for( BU_LIST_FOR( s , shell , &r->s_hd ) )
 	{
@@ -940,11 +940,11 @@ CONST struct bn_tol *tol;
 	/* outer_shells is now a list of all the outer shells in the region */
 	outer_shell_count = BU_PTBL_END( outer_shells );
 
-	*shells = (struct bu_ptbl **)rt_calloc( BU_PTBL_END( outer_shells ) , sizeof( struct bu_ptbl *) ,
+	*shells = (struct bu_ptbl **)bu_calloc( BU_PTBL_END( outer_shells ) , sizeof( struct bu_ptbl *) ,
 			"nmg_find_outer_and_void_shells: shells" );
 	for( i=0 ; i<BU_PTBL_END( outer_shells ) ; i++ )
 	{
-		(*shells)[i] = (struct bu_ptbl *)rt_malloc( sizeof( struct bu_ptbl ) , 
+		(*shells)[i] = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ) , 
 			"nmg_find_outer_and_void_shells: shells[]" );
 
 		bu_ptbl_init( (*shells)[i] , 64, "(*shells)[i]");
@@ -954,7 +954,7 @@ CONST struct bn_tol *tol;
 			nmg_assoc_void_shells( r , (*shells)[i] , tol );
 	}
 
-	rt_free( (char *)flags , "nmg_find_outer_and_void_shells: flags" );
+	bu_free( (char *)flags , "nmg_find_outer_and_void_shells: flags" );
 	bu_ptbl_free( outer_shells );
 	return( outer_shell_count );
 }
@@ -1131,7 +1131,7 @@ CONST struct face_g_plane *fg;
  *	[pt] = [inverse][hpq].
  *
  * There is likely a more economical solution rather than matrix inversion, but
- * mat_inv was handy at the time.
+ * bn_mat_inv was handy at the time.
  *
  * Checks if these planes form a singular matrix and returns:
  *	0 - all is well
@@ -1159,7 +1159,7 @@ CONST int pl_count;
 		}
 	}
 
-	mat_zero( matrix );
+	bn_mat_zero( matrix );
 	VSET( hpq , 0.0 , 0.0 , 0.0 );
 
 	for( i=0 ; i<pl_count ; i++ )
@@ -1185,7 +1185,7 @@ CONST int pl_count;
 	if( NEAR_ZERO( det , SMALL_FASTF ) )
 		return( 1 );
 
-	mat_inv( inverse , matrix );
+	bn_mat_inv( inverse , matrix );
 
 	MAT4X3PNT( pt , inverse , hpq );
 
@@ -1825,7 +1825,7 @@ plane_t pl;
 	}
 
 	/* build matrix */
-	mat_zero( matrix );
+	bn_mat_zero( matrix );
 	VSET( vsum , 0.0 , 0.0 , 0.0 );
 
 	one_over_vertex_count = 1.0/(double)(BU_PTBL_END( &verts ));
@@ -1863,7 +1863,7 @@ plane_t pl;
 		fastf_t inv_len_pl;
 
 		/* invert matrix */
-		mat_inv( inverse , matrix );
+		bn_mat_inv( inverse , matrix );
 
 		/* get normal vector */
 		MAT4X3PNT( pl , inverse , vsum );
@@ -2466,7 +2466,7 @@ CONST struct bn_tol	*tol;
 	NMG_CK_MODEL(m);
 	BN_CK_TOL(tol);
 
-	flags = (int *)rt_calloc( m->maxindex*2, sizeof(int), "rebound flags[]" );
+	flags = (int *)bu_calloc( m->maxindex*2, sizeof(int), "rebound flags[]" );
 
 	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
@@ -2517,7 +2517,7 @@ CONST struct bn_tol	*tol;
 		nmg_region_a( r, tol );
 	}
 
-	rt_free( (char *)flags, "rebound flags[]" );
+	bu_free( (char *)flags, "rebound flags[]" );
 }
 
 /*
@@ -2540,7 +2540,7 @@ unsigned long *total_points;
 
 	NMG_CK_MODEL(m);
 
-	tbl = (short *)rt_calloc(m->maxindex+1, sizeof(char),
+	tbl = (short *)bu_calloc(m->maxindex+1, sizeof(char),
 		"face/wire/point counted table");
 
 	*total_faces = *total_wires = *total_points = 0;
@@ -2565,7 +2565,7 @@ unsigned long *total_points;
 		}
 	}
 
-	rt_free((char *)tbl, "face/wire/point counted table");
+	bu_free((char *)tbl, "face/wire/point counted table");
 }
 
 /*
@@ -2596,7 +2596,7 @@ int *loop_size;
 
 	/* create an index into the table, ordered to create a loop */
 	if( *index == NULL )
-		(*index) = (int *)rt_calloc( tbl_size , sizeof( int ) , "Table index" );
+		(*index) = (int *)bu_calloc( tbl_size , sizeof( int ) , "Table index" );
 
 	for( i=0 ; i<tbl_size ; i++ )
 		(*index)[i] = (-1);
@@ -2864,14 +2864,14 @@ struct bn_tol *tol;
 				}
 
 				/* now eliminate loop from table */
-				eu_used = (struct edgeuse **)rt_calloc( loop_size , sizeof( struct edguse *) , "edges used list" );
+				eu_used = (struct edgeuse **)bu_calloc( loop_size , sizeof( struct edguse *) , "edges used list" );
 				for( i=0 ; i<loop_size ; i++ )
 					eu_used[i] = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[i] );
 
 				for( i=0 ; i<loop_size ; i++ )
 					bu_ptbl_rm( &eu_tbl , (long *)eu_used[i] );
 
-				rt_free( (char *)eu_used , "edge used list" );
+				bu_free( (char *)eu_used , "edge used list" );
 
 				/* may need to remove one more edgeuse from table */
 				eu_tmp = nmg_find_e( (*(struct vertex **)BU_PTBL_GET( &vert_tbl, 0 )), (*(struct vertex **)BU_PTBL_GET( &vert_tbl, loop_size-1 )), (struct shell *)NULL, (struct edge *)NULL );
@@ -2970,7 +2970,7 @@ struct bn_tol *tol;
 			bu_ptbl_ins( &vert_tbl , (long *)&eu2->eumate_p->vu_p->v_p );
 
 			/* save list of used edges to be removed later */
-			eu_used = (struct edgeuse **)rt_calloc( edges_used , sizeof( struct edguse *) , "edges used list" );
+			eu_used = (struct edgeuse **)bu_calloc( edges_used , sizeof( struct edguse *) , "edges used list" );
 			for( i=0 ; i<edges_used ; i++ )
 				eu_used[i] = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[i] );
 
@@ -3040,7 +3040,7 @@ struct bn_tol *tol;
 				}
 			}
 
-			rt_free( (char *)eu_used , "edge used list" );
+			bu_free( (char *)eu_used , "edge used list" );
 
 			/* re-order loop */
 			loop_size = 0;
@@ -3119,7 +3119,7 @@ struct bn_tol *tol;
 	}
 
 	/* Free up all the memory */
-	rt_free( (char *)index , "index" );
+	bu_free( (char *)index , "index" );
 	bu_ptbl_free( &eu_tbl );
 	bu_ptbl_free( &vert_tbl );
 
@@ -3167,7 +3167,7 @@ struct bn_tol *tol;
 
 	/* create translation table double size to accomodate both copies */
 	tbl_size = m->maxindex * 3;
-	(*trans_tbl) = (long **)rt_calloc(tbl_size, sizeof(long *),
+	(*trans_tbl) = (long **)bu_calloc(tbl_size, sizeof(long *),
 		"nmg_dup_shell trans_tbl" );
 
 	bu_ptbl_init( &faces , 64, " &faces ");
@@ -3521,11 +3521,11 @@ CONST struct shell *s;
 	m = nmg_find_model( &s->l.magic );
 	NMG_CK_MODEL( m );
 
-	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_shell_is_void: flags " );
+	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "nmg_shell_is_void: flags " );
 
 	f = nmg_find_top_face( s, &dir , flags );
 
-	rt_free( (char *)flags , "nmg_shell_is_void: flags" );
+	bu_free( (char *)flags , "nmg_shell_is_void: flags" );
 
 	if( f == (struct face *)NULL )
 		return( -1 );
@@ -3663,7 +3663,7 @@ CONST struct bn_tol *tol;
 			}
 			else
 			{
-				rt_log( "nmg_propagate_normals: found an unoriented face!!!!\n" );
+				bu_log( "nmg_propagate_normals: found an unoriented face!!!!\n" );
 				nmg_pr_fu_briefly( fu, "" );
 				rt_bomb( "nmg_propagate_normals: found an unoriented face!!!!\n" );
 			}
@@ -3888,7 +3888,7 @@ CONST struct bn_tol *tol;
 	BN_CK_TOL( tol );
 
 	m = s->r_p->m_p;
-	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_fix_normals: flags" );
+	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "nmg_fix_normals: flags" );
 
 missed:
 	/* find the top face */
@@ -3897,7 +3897,7 @@ missed:
 	{
 		bu_log( "nmg_fix_normals: Could not get a top face from nmg_find_top_face()\n" );
 		bu_log( "\tWARNING: continuing without fixing normals!!!!\n" );
-		rt_free( (char *)flags, "nmg_fix_normals: flags" );
+		bu_free( (char *)flags, "nmg_fix_normals: flags" );
 		return;
 	}
 	if( *f_top->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
@@ -3917,7 +3917,7 @@ missed:
 	if( fu->orientation != OT_SAME )
 	{
 		bu_log( "nmg_fix_normals: no OT_SAME use of top face\n" );
-		rt_free( (char *)flags , "nmg_fix_normals: flags" );
+		bu_free( (char *)flags , "nmg_fix_normals: flags" );
 		return;
 	}
 	NMG_GET_FU_NORMAL( normal , fu );
@@ -3974,7 +3974,7 @@ missed:
 
 	if( missed_faces )
 	{
-		rt_log( "nmg_fix_decomposed_shell_normals: missed %d faces in shell x%x (was it decomposed????)\n", 
+		bu_log( "nmg_fix_decomposed_shell_normals: missed %d faces in shell x%x (was it decomposed????)\n", 
 			missed_faces, s );
 		rt_bomb( "nmg_fix_decomposed_shell_normals: missed faces in shell (was it decomposed????)\n" );
 	}
@@ -4019,11 +4019,11 @@ int reindex;
 		v = (struct vertex *)BU_PTBL_GET( &tbl, i );
 		NMG_CK_VERTEX( v );
 
-		for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
+		for( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
 		{
 			if( (nmg_find_s_of_vu( vu ))->r_p != r )
 			{
-				rt_log( "vertexuse x%x (v=x%x) at (%g %g %g) has use in another region\n",
+				bu_log( "vertexuse x%x (v=x%x) at (%g %g %g) has use in another region\n",
 					vu, v, V3ARGS( v->vg_p->coord ) );
 				other_uses++;
 			}
@@ -4049,7 +4049,7 @@ int reindex;
 		{
 			if( (nmg_find_s_of_eu( eu1 ))->r_p != r )
 			{
-				rt_log( "edgeuse x%x (e=x%x) at (%g %g %g)<->(%g %g %g0 has use in another region\n",
+				bu_log( "edgeuse x%x (e=x%x) at (%g %g %g)<->(%g %g %g0 has use in another region\n",
 					eu, e, V3ARGS( eu->vu_p->v_p->vg_p->coord ), V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 				other_uses++;
 			}
@@ -4065,9 +4065,9 @@ int reindex;
 
 	m = nmg_mm();
 
-	RT_LIST_DEQUEUE( &r->l );
+	BU_LIST_DEQUEUE( &r->l );
 
-	RT_LIST_INSERT( &m->r_hd, &r->l );
+	BU_LIST_INSERT( &m->r_hd, &r->l );
 
 	r->m_p = m;
 
@@ -4129,14 +4129,14 @@ CONST struct bn_tol *tol;
 
 		if( !f->g.magic_p )
 		{
-			rt_log( "nmg_fix_normals failed, found a face with no geometry (x%x)\n", f );
+			bu_log( "nmg_fix_normals failed, found a face with no geometry (x%x)\n", f );
 			return;
 		}
 
 		if( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
 		{
-			rt_log( "nmg_fix_normals: non-planar face found (x%x)\n", f );
-			rt_log( "	cannot fix normals\n" );
+			bu_log( "nmg_fix_normals: non-planar face found (x%x)\n", f );
+			bu_log( "	cannot fix normals\n" );
 			return;
 		}
 	}
@@ -4207,8 +4207,8 @@ CONST struct bn_tol *tol;
 				inner_count++;
 			else if( class == NMG_CLASS_Unknown )
 			{
-				rt_log( "nmg_fix_normals: nmg_classify_s_vs_s() failed for shells x%x and x%x\n", s1, s2 );
-				rt_log( "   Continueing anyway (shell is likely to have incorrectly oriented normals)\n" );
+				bu_log( "nmg_fix_normals: nmg_classify_s_vs_s() failed for shells x%x and x%x\n", s1, s2 );
+				bu_log( "   Continueing anyway (shell is likely to have incorrectly oriented normals)\n" );
 			}
 		}
 
@@ -4243,7 +4243,7 @@ CONST struct bn_tol *tol;
 			fu_in_s = NMG_INDEX_GETP( faceuse, trans_tbl, fu );
 			if( !fu_in_s )
 			{
-				rt_log( "fu x%x does not have corrrespondence in original shell\n", fu );
+				bu_log( "fu x%x does not have corrrespondence in original shell\n", fu );
 				nmg_pr_fu_briefly( fu, "" );
 				continue;
 			}
@@ -4684,14 +4684,14 @@ struct bn_tol	*tol;
 	htab.aft_faceuse = nmg_split_loops_handler;
 
 	sl_state.split = 0;
-	sl_state.flags = (long *)rt_calloc( m->maxindex*2 , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
+	sl_state.flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
 	sl_state.tol = tol;
 
 	nmg_visit( magic_p , &htab , (genptr_t *)&sl_state );
 
 	count = sl_state.split;
 
-	rt_free( (char *)sl_state.flags , "nmg_split_loops_into_faces: flags" );
+	bu_free( (char *)sl_state.flags , "nmg_split_loops_into_faces: flags" );
 
 	return( count );
 }
@@ -4740,7 +4740,7 @@ struct bn_tol *tol;
 	NMG_CK_REGION( r );
 	m = r->m_p;
 	NMG_CK_MODEL( m );
-	flags = (long *)rt_calloc( m->maxindex*2 , sizeof( long ) , "nmg_decompose_shell: flags" );
+	flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_decompose_shell: flags" );
 
 	bu_ptbl_init( &stack , 64, " &stack ");
 	bu_ptbl_init( &shared_edges , 64, " &shared_edges ");
@@ -4842,7 +4842,7 @@ struct bn_tol *tol;
 
 	if( !missed_faces )	/* nothing to do, just one shell */
 	{
-		rt_free( (char *)flags , "nmg_decompose_shell: flags " );
+		bu_free( (char *)flags , "nmg_decompose_shell: flags " );
 		bu_ptbl_free( &stack );
 		bu_ptbl_free( &shared_edges );
 		return( no_of_shells );
@@ -4857,7 +4857,7 @@ struct bn_tol *tol;
 		bu_ptbl_reset( &stack );
 
 		/* Look at the list of shared edges to see if anything can be deduced */
-		shells_at_edge = (int *)rt_calloc( no_of_shells+1 , sizeof( int ) , "nmg_decompose_shell: shells_at_edge" );
+		shells_at_edge = (int *)bu_calloc( no_of_shells+1 , sizeof( int ) , "nmg_decompose_shell: shells_at_edge" );
 
 		for( i=0 ; i<BU_PTBL_END( &shared_edges ) ; i++ )
 		{
@@ -5002,7 +5002,7 @@ struct bn_tol *tol;
 			}
 		}
 
-		rt_free( (char *)shells_at_edge , "nmg_decompose_shell: shells_at_edge" );
+		bu_free( (char *)shells_at_edge , "nmg_decompose_shell: shells_at_edge" );
 
 		/* make a new shell number */
 		if( new_shell_no )
@@ -5151,7 +5151,7 @@ struct bn_tol *tol;
 		bu_ptbl_free( &faces );
 		nmg_shell_a( new_s, tol );
 	}
-	rt_free( (char *)flags , "nmg_decompose_shell: flags " );
+	bu_free( (char *)flags , "nmg_decompose_shell: flags " );
 	bu_ptbl_free( &stack );
 	bu_ptbl_free( &shared_edges );
 
@@ -5333,13 +5333,13 @@ long		*magic_p;
 	htab.aft_edgeuse = nmg_unbreak_handler;
 
 	ub_state.unbroken = 0;
-	ub_state.flags = (long *)rt_calloc( m->maxindex*2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
+	ub_state.flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
 
 	nmg_visit( magic_p , &htab , (genptr_t *)&ub_state );
 
 	count = ub_state.unbroken;
 
-	rt_free( (char *)ub_state.flags , "nmg_unbreak_region_edges: flags" );
+	bu_free( (char *)ub_state.flags , "nmg_unbreak_region_edges: flags" );
 
 	return( count );
 }
@@ -5924,7 +5924,7 @@ CONST struct bn_tol *tol;
 			struct intersect_fus *i_fus;
 
 			/* create and initialize an intersect_fus struct for this edge */
-			i_fus = (struct intersect_fus *)rt_malloc( sizeof( struct intersect_fus ) , "nmg_get_edge_lines: i_fus" );
+			i_fus = (struct intersect_fus *)bu_malloc( sizeof( struct intersect_fus ) , "nmg_get_edge_lines: i_fus" );
 			i_fus->fu[0] = NULL;
 			i_fus->fu[1] = fu;
 			i_fus->eu = eu;
@@ -6004,7 +6004,7 @@ CONST struct bn_tol *tol;
 
 				i_fus = (struct intersect_fus *)BU_PTBL_GET( int_faces , edge_no );
 
-				rt_free( (char *)i_fus , "nmg_get_edge_lines: i_fus" );
+				bu_free( (char *)i_fus , "nmg_get_edge_lines: i_fus" );
 			}
 			return( 1 );
 		}
@@ -6017,7 +6017,7 @@ CONST struct bn_tol *tol;
 		fu2 = nmg_find_fu_of_eu( eu->radial_p );
 
 		/* initialize the intersect structure for this edge */
-		i_fus = (struct intersect_fus *)rt_malloc( sizeof( struct intersect_fus ) , "nmg_inside_vert: intersection list" );
+		i_fus = (struct intersect_fus *)bu_malloc( sizeof( struct intersect_fus ) , "nmg_inside_vert: intersection list" );
 		i_fus->fu[0] = fu1;
 		if( eu->radial_p == eu->eumate_p )
 		{
@@ -6351,7 +6351,7 @@ CONST struct bn_tol *tol;
 		i_fus->free_edge = 1;
 
 	bu_ptbl_rm( int_faces , (long *)j_fus );
-	rt_free( (char *)j_fus , "nmg_split_edges_at_pts: j_fus " );
+	bu_free( (char *)j_fus , "nmg_split_edges_at_pts: j_fus " );
 
 }
 
@@ -7526,7 +7526,7 @@ CONST struct bn_tol *tol;
 	i = BU_PTBL_END( int_faces );
 	if( i < 3 )
 		i = 3;
-	planes = (plane_t *)rt_calloc( i , sizeof( plane_t ) , "nmg_calc_new_v: planes" );
+	planes = (plane_t *)bu_calloc( i , sizeof( plane_t ) , "nmg_calc_new_v: planes" );
 
 	pl_count = 0;
 
@@ -7568,7 +7568,7 @@ CONST struct bn_tol *tol;
 		{
 			bu_log( "nmg_cacl_new_v: Cannot solve for new geometry at ( %f %f %f )\n",
 				V3ARGS( new_v->vg_p->coord ) );
-			rt_free( (char *)planes , "nmg_calc_new_v: planes" );
+			bu_free( (char *)planes , "nmg_calc_new_v: planes" );
 			return( 1 );
 		}
 	}
@@ -7588,7 +7588,7 @@ CONST struct bn_tol *tol;
 		if( bn_mkpoint_3planes( new_v->vg_p->coord , planes[0] , planes[1] , planes[2] ) )
 		{
 			bu_log( "nmg_cacl_new_v: 3 planes do not intersect at a point\n" );
-			rt_free( (char *)planes , "nmg_calc_new_v: planes" );
+			bu_free( (char *)planes , "nmg_calc_new_v: planes" );
 			return( 1 );
 		}
 	}
@@ -7596,14 +7596,14 @@ CONST struct bn_tol *tol;
 	{
 		bu_log( "nmg_calc_new_v: No face planes at vertex x%x (%f %f %f)\n",
 			new_v , V3ARGS( new_v->vg_p->coord ) );
-		rt_free( (char *)planes , "nmg_calc_new_v: planes" );
+		bu_free( (char *)planes , "nmg_calc_new_v: planes" );
 		return( 1 );
 	}
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "\tnew_v = ( %f %f %f )\n" , V3ARGS( new_v->vg_p->coord ) );
 
-	rt_free( (char *)planes , "nmg_calc_new_v: planes" );
+	bu_free( (char *)planes , "nmg_calc_new_v: planes" );
 
 	for( i=0 ; i<BU_PTBL_END( int_faces ) ; i++ )
 	{
@@ -7672,7 +7672,7 @@ CONST struct bn_tol *tol;
 
 		plane_count = BU_PTBL_END( faces );
 
-		planes = (plane_t *)rt_calloc( plane_count+free_edges , sizeof( plane_t ) , "nmg_complex_vertex_solve: planes" );
+		planes = (plane_t *)bu_calloc( plane_count+free_edges , sizeof( plane_t ) , "nmg_complex_vertex_solve: planes" );
 
 
 		for( i=0 ; i<BU_PTBL_END( faces ) ; i++ )
@@ -7755,10 +7755,10 @@ CONST struct bn_tol *tol;
 		{
 			bu_log( "nmg_complex_vertex_solve: Could not calculate new geometry at ( %f %f %f )\n",
 				V3ARGS( new_v->vg_p->coord ) );
-			rt_free( (char *) planes , "nmg_complex_vertex_solve: planes" );
+			bu_free( (char *) planes , "nmg_complex_vertex_solve: planes" );
 			return( 1 );
 		}
-		rt_free( (char *) planes , "nmg_complex_vertex_solve: planes" );
+		bu_free( (char *) planes , "nmg_complex_vertex_solve: planes" );
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 			bu_log( "nmg_complex_vertex_solve: new coords = ( %f %f %f )\n",
@@ -7817,7 +7817,7 @@ CONST struct bn_tol *tol;
 		struct intersect_fus *i_fus;
 
 		i_fus = (struct intersect_fus *)BU_PTBL_GET( &int_faces , i );
-		rt_free( (char *)i_fus , "nmg_complex_vertex_solve: intersect_fus struct\n" );
+		bu_free( (char *)i_fus , "nmg_complex_vertex_solve: intersect_fus struct\n" );
 	}
 	bu_ptbl_free( &int_faces );
 
@@ -8185,7 +8185,7 @@ CONST struct bn_tol *tol;
 	 * could be lots of them
 	 */
 
-	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_move_edge_thru_pt: flags" );
+	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "nmg_move_edge_thru_pt: flags" );
 	bu_ptbl_init( &faces , 64, " &faces ");
 
 	eu1 = mv_eu;
@@ -8214,7 +8214,7 @@ CONST struct bn_tol *tol;
 					{
 						bu_log( "mg_move_edge_thru_pt: Cannot handle complex vertices\n" );
 						bu_ptbl_free( &faces );
-						rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+						bu_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
 						return( 1 );
 					}
 
@@ -8223,7 +8223,7 @@ CONST struct bn_tol *tol;
 						/* failed */
 						bu_log( "nmg_move_edge_thru_pt: Could not solve simple vertex\n" );
 						bu_ptbl_free( &faces );
-						rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+						bu_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
 						return( 1 );
 					}
 				}
@@ -8245,7 +8245,7 @@ CONST struct bn_tol *tol;
 					{
 						bu_log( "mg_move_edge_thru_pt: Cannot handle complex vertices\n" );
 						bu_ptbl_free( &faces );
-						rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+						bu_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
 						return( 1 );
 					}
 
@@ -8273,7 +8273,7 @@ CONST struct bn_tol *tol;
 							/* failed */
 							bu_log( "nmg_move_edge_thru_pt: Could not solve simple vertex\n" );
 							bu_ptbl_free( &faces );
-							rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+							bu_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
 							return( 1 );
 						}
 					}
@@ -8301,7 +8301,7 @@ CONST struct bn_tol *tol;
 	}
 	while( fu != fu1 && fu != fu1->fumate_p );
 
-	rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+	bu_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
 	bu_ptbl_free( &faces );
 
 	return( 0 );
@@ -8317,7 +8317,7 @@ nmg_vlist_to_wire_edges( s , vhead )
 struct shell *s;
 struct bu_list *vhead;
 {
-	struct rt_vlist *vp;
+	struct bn_vlist *vp;
 	struct edgeuse *eu;
 	struct vertex *v1,*v2;
 	point_t pt1,pt2;
@@ -8328,11 +8328,11 @@ struct bu_list *vhead;
 	v1 = (struct vertex *)NULL;
 	v2 = (struct vertex *)NULL;
 
-	vp = BU_LIST_FIRST( rt_vlist , vhead );
+	vp = BU_LIST_FIRST( bn_vlist , vhead );
 	if( vp->nused < 2 )
 		return;
 
-	for( BU_LIST_FOR( vp , rt_vlist , vhead ) )
+	for( BU_LIST_FOR( vp , bn_vlist , vhead ) )
 	{
 		register int i;
 		register int nused = vp->nused;
@@ -8342,14 +8342,14 @@ struct bu_list *vhead;
 		{
 			switch( vp->cmd[i] )
 			{
-				case RT_VLIST_LINE_MOVE:
-				case RT_VLIST_POLY_MOVE:
+				case BN_VLIST_LINE_MOVE:
+				case BN_VLIST_POLY_MOVE:
 					v1 = (struct vertex *)NULL;
 					v2 = (struct vertex *)NULL;
 					VMOVE( pt2 , vp->pt[i] );
 					break;
-				case RT_VLIST_LINE_DRAW:
-				case RT_VLIST_POLY_DRAW:
+				case BN_VLIST_LINE_DRAW:
+				case BN_VLIST_POLY_DRAW:
 					VSUB2( edge_vec , pt2 , vp->pt[i] );
 					if( VNEAR_ZERO( edge_vec , SMALL_FASTF ) )
 						break;
@@ -8365,8 +8365,8 @@ struct bu_list *vhead;
 						nmg_vertex_gv( v1 , pt1 );
 					nmg_edge_g( eu );
 					break;
-				case RT_VLIST_POLY_START:
-				case RT_VLIST_POLY_END:
+				case BN_VLIST_POLY_START:
+				case BN_VLIST_POLY_END:
 					break;
 			}
 		}
@@ -9147,7 +9147,7 @@ CONST struct bn_tol *tol;
 					struct vertex *vpbad1,*vpbada;
 
 					/* found a dangling edge, put it in the list */
-					dang = (struct dangle *)rt_malloc( sizeof( struct dangle ) ,
+					dang = (struct dangle *)bu_malloc( sizeof( struct dangle ) ,
 						"nmg_open_shells_connect: dang" );
 
 					dang->needs_edge_breaking = 0;
@@ -9322,7 +9322,7 @@ CONST struct bn_tol *tol;
 			}
 		}
 		bu_ptbl_rm( &dangles , (long *)dang );
-		rt_free( (char *)dang , "nmg_open_shells_connect: dang" );
+		bu_free( (char *)dang , "nmg_open_shells_connect: dang" );
 	}
 
 	bu_ptbl_free( &dangles);
@@ -9438,7 +9438,7 @@ struct model *m;
 	(void)bu_ptbl_free( &vertices );
 
 	/* adjust the direction of all the faces */
-	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_mirror_model: flags" );
+	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "nmg_mirror_model: flags" );
 	for( BU_LIST_FOR( r , nmgregion , &m->r_hd ) )
 	{
 		struct shell *s;
@@ -9469,7 +9469,7 @@ struct model *m;
 		}
 	}
 
-	rt_free( (char *)flags , "nmg_mirror_model: flags " );
+	bu_free( (char *)flags , "nmg_mirror_model: flags " );
 }
 
 int
@@ -11136,7 +11136,7 @@ CONST struct bn_tol *tol;
 	VMOVE( tgc_int->v, base_center );
 	VSUB2( tgc_int->h, top_center, base_center );
 
-	mat_vec_perp( plv_1, top_pl );
+	bn_vec_perp( plv_1, top_pl );
 	VCROSS( plv_2, top_pl, plv_1 );
 	VUNITIZE( plv_1 );
 	VUNITIZE( plv_2 );
@@ -11329,7 +11329,7 @@ CONST struct bn_tol *tol;
 		}
 	}
 	poly_int->npoly = face_count;
-	poly_int->poly = (struct rt_pg_face_internal *)rt_calloc( face_count,
+	poly_int->poly = (struct rt_pg_face_internal *)bu_calloc( face_count,
 		sizeof( struct rt_pg_face_internal ), "nmg_to_poly: poly" );
 
 	face_count = 0;
@@ -11362,8 +11362,8 @@ CONST struct bn_tol *tol;
 						count_npts++;
 
 					poly_int->poly[face_count].npts = count_npts;
-					poly_int->poly[face_count].verts = (fastf_t *) rt_calloc( 3*count_npts, sizeof( fastf_t ), "nmg_to_poly: verts" );
-					poly_int->poly[face_count].norms = (fastf_t *) rt_calloc( 3*count_npts, sizeof( fastf_t ), "nmg_to_poly: norms" );
+					poly_int->poly[face_count].verts = (fastf_t *) bu_calloc( 3*count_npts, sizeof( fastf_t ), "nmg_to_poly: verts" );
+					poly_int->poly[face_count].norms = (fastf_t *) bu_calloc( 3*count_npts, sizeof( fastf_t ), "nmg_to_poly: norms" );
 
 					for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 					{
