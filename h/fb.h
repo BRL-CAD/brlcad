@@ -66,6 +66,8 @@ typedef struct  {
 	int	(*if_curs_set)();
 	int	(*if_cmemory_addr)();
 	int	(*if_cscreen_addr)();
+	int	(*if_readrect)();
+	int	(*if_writerect)();
 	int	(*if_help)();	/* prints useful information */
 	char	*if_type;	/* what "open" claims it is. */
 	int	if_max_width;
@@ -120,6 +122,10 @@ typedef struct  {
 #define fb_setcursor(_ifp,_bits,_xb,_yb,_xo,_yo) (*_ifp->if_curs_set)(_ifp,_bits,_xb,_yb,_xo,_yo)
 #define fb_cursor(_ifp,_mode,_x,_y)	(*_ifp->if_cmemory_addr)(_ifp,_mode,_x,_y)
 #define fb_scursor(_ifp,_mode,_x,_y)	(*_ifp->if_cscreen_addr)(_ifp,_mode,_x,_y)
+#define fb_readrect(_ifp,_xmin,_ymin,_width,_height,_pp) \
+		(*_ifp->if_readrect)(_ifp,_xmin,_ymin,_width,_height,_pp)
+#define fb_writerect(_ifp,_xmin,_ymin,_width,_height,_pp) \
+		(*_ifp->if_writerect)(_ifp,_xmin,_ymin,_width,_height,_pp)
 
 /* Library entry points which are true functions.			*/
 extern FBIO	*fb_open();
