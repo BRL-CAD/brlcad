@@ -680,6 +680,7 @@ struct combined_tree_state	**region_start_statepp;
 	/*
 	 * Load the entire object into contiguous memory.
 	 */
+	if( dp->d_addr == RT_DIR_PHONY_ADDR )  return TREE_NULL;
 	if( db_get_external( &ext, dp, tsp->ts_dbip ) < 0 )  {
 		rt_log("db_recurse() db_get_external() FAIL\n");
 		return(TREE_NULL);		/* FAIL */
