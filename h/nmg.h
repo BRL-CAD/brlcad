@@ -199,6 +199,10 @@ struct nmg_ptbl {
 	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
 		rt_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
+#define NMG_CK2MAG(_ptr, _magic1, _magic2, _str)	\
+	if( !(_ptr) || (*((long *)(_ptr)) != (_magic1) && *((long *)(_ptr)) != (_magic2) ) )  { \
+		rt_badmagic( (long *)(_ptr), _magic1, _str, __FILE__, __LINE__ ); \
+	}
 
 #define NMG_CK_MODEL(_p)	NMG_CKMAG(_p, NMG_MODEL_MAGIC, "model")
 #define NMG_CK_MODEL_A(_p)	NMG_CKMAG(_p, NMG_MODEL_A_MAGIC, "model_a")
@@ -208,8 +212,9 @@ struct nmg_ptbl {
 #define NMG_CK_SHELL_A(_p)	NMG_CKMAG(_p, NMG_SHELL_A_MAGIC, "shell_a")
 #define NMG_CK_FACE(_p)		NMG_CKMAG(_p, NMG_FACE_MAGIC, "face")
 #define NMG_CK_FACE_G(_p)	bogus_ck_face_g;
-#define NMG_CK_FACE_G_PLANE(_p)	NMG_CKMAG(_p, NMG_FACE_G_PLANE_MAGIC, "face_g plane")
-#define NMG_CK_FACE_G_SNURB(_p)	NMG_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "face_g snurb")
+#define NMG_CK_FACE_G_PLANE(_p)	NMG_CKMAG(_p, NMG_FACE_G_PLANE_MAGIC, "face_g_plane")
+#define NMG_CK_FACE_G_SNURB(_p)	NMG_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "face_g_snurb")
+#define NMG_CK_FACE_G_EITHER(_p)	NMG_CK2MAG(_p, NMG_FACE_G_PLANE_MAGIC, NMG_FACE_G_SNURB_MAGIC, "face_g_plane|face_g_snurb")
 #define NMG_CK_FACEUSE(_p)	NMG_CKMAG(_p, NMG_FACEUSE_MAGIC, "faceuse")
 #define NMG_CK_FACEUSE_A(_p)	bogus_ck_faceuse_a;
 #define NMG_CK_LOOP(_p)		NMG_CKMAG(_p, NMG_LOOP_MAGIC, "loop")
@@ -220,6 +225,7 @@ struct nmg_ptbl {
 #define NMG_CK_EDGE_G(_p)	bogus_ck_edge_g;
 #define NMG_CK_EDGE_G_LSEG(_p)	NMG_CKMAG(_p, NMG_EDGE_G_LSEG_MAGIC, "edge_g_lseg")
 #define NMG_CK_EDGE_G_CNURB(_p)	NMG_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "edge_g_cnurb")
+#define NMG_CK_EDGE_G_EITHER(_p)	NMG_CK2MAG(_p, NMG_EDGE_G_LSEG_MAGIC, NMG_EDGE_G_CNURB_MAGIC, "edge_g_lseg|edge_g_cnurb")
 #define NMG_CK_EDGEUSE(_p)	NMG_CKMAG(_p, NMG_EDGEUSE_MAGIC, "edgeuse")
 #define NMG_CK_EDGEUSE_A(_p)	bogus_ck_edgeuse_a;
 #define NMG_CK_VERTEX(_p)	NMG_CKMAG(_p, NMG_VERTEX_MAGIC, "vertex")
@@ -227,7 +233,8 @@ struct nmg_ptbl {
 #define NMG_CK_VERTEXUSE(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_MAGIC, "vertexuse")
 #define NMG_CK_VERTEXUSE_A(_p)	bogus_ck_vertexuse_a;
 #define NMG_CK_VERTEXUSE_A_PLANE(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_PLANE_MAGIC, "vertexuse_a_plane")
-#define NMG_CK_VERTEXUSE_A_CNURB(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_CNURB_MAGIC, "vertexuse_a_cnurb_plane")
+#define NMG_CK_VERTEXUSE_A_CNURB(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_CNURB_MAGIC, "vertexuse_a_cnurb")
+#define NMG_CK_VERTEXUSE_A_EITHER(_p)	NMG_CK2MAG(_p, NMG_VERTEXUSE_A_PLANE_MAGIC, NMG_VERTEXUSE_A_CNURB_MAGIC, "vertexuse_a_plane|vertexuse_a_cnurb")
 #define NMG_CK_LIST(_p)		NMG_CKMAG(_p, RT_LIST_HEAD_MAGIC, "rt_list")
 
 /* Used only in nmg_mod.c */
@@ -255,6 +262,7 @@ struct knot_vector {
 	int		magic;
 	int		k_size;		/* knot vector size */
 	fastf_t		* knots;	/* pointer to knot vector  */
+/* XXX This does not belong here! Eliminate from here and nurb.h */
 	long		index;		/* struct # in this model */
 };
 #endif
