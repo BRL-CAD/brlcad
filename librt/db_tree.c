@@ -764,9 +764,9 @@ int			noisy;
 			}
 		}
 
-		if( (dp->d_flags & DIR_COMB) == 0 )  goto is_leaf;
-
 		db_add_node_to_full_path( pathp, dp );
+
+		if( (dp->d_flags & DIR_COMB) == 0 )  goto is_leaf;
 
 		/* Advance to next path element */
 		cp = ep+1;
@@ -845,7 +845,7 @@ found_it:
 		if( (dp->d_flags & DIR_COMB) == 0 )  {
 is_leaf:
 			/* Object is a leaf */
-			db_add_node_to_full_path( pathp, dp );
+			/*db_add_node_to_full_path( pathp, dp );*/
 			if( oldc == '\0' )  {
 				/* No more path was given, all is well */
 				goto out;
