@@ -21,7 +21,7 @@ and reports
 overlaps,
 vacuums,
 and potential problems with air regions.
-The output consists of single-line reports,
+By default, the output consists of single-line reports,
 each of which contains a tag identifying the report type
 and then other data as appropriate for that type report.
 Unless the
@@ -117,12 +117,21 @@ Sets the width and height of each grid cell to
 millimeters.
 The default is 100 mm.
 .TP 12
-.B "-p"
+.B "-o"
 Causes
 .I g_lint
 to include in each report
 the model coordinates of the ray origination point.
 These appear between the tag and the rest of the data.
+.TP 12
+.B "-p"
+Causes
+.I g_lint
+to produce its reports as
+.I plot3(5)
+drawing commands instead of ASCII text.
+This is useful in conjunction with the ``overlay'' command of
+.I mged.
 .TP 12
 .BI "-r" " bits"
 Specifies which types of reports to produce.
@@ -148,10 +157,10 @@ The meaning of the individual bits is as follows:
  4 unconfined airs
 .in -5
 .in +5
- 8 air first on shotlines
+ 8 air first on rays
 .in -5
 .in +5
-16 air last on shotlines
+16 air last on rays
 .in -5
 .in +5
 32 vacuums.
@@ -176,15 +185,34 @@ millimeters.
 The default is 0.
 .TP 12
 .B "-u"
-Produce all air-related reports.
-This option is similar to
-.I "-r 30",
-except that it does not affect the non-air report-specification bits.
+Sets the
+.I useair
+member of the
+.I rt_i
+structure to 1,
+which causes
+.I librt
+to report partitions containing air.
+It is also set implicitly if any air-related reports have been specified.
+By default,
+.I librt
+ignores air regions.
+.TP 12
+.BI "-x" " bits"
+Sets the
+.I g_lint
+debug flags to 
+.I bits.
+See the
+.I -r
+option
+for more details.
+Note that some of the report types have no corresponding diagnostics.
 .SH EXAMPLE
 The command
 .sp
 .in +5
-\fIg_lint -a 35 -e 25 -c -g 1 -r 31 kitchen.g appliances\fR
+\fIg_lint -a 35 -e 25 -c -g 1 -r 31 -t 0.01 kitchen.g appliances\fR
 .in -5
 .sp
 fires a ray every millimeter and produces overlap reports
@@ -192,7 +220,7 @@ and every type of air-related report,
 but no vacuum reports.
 
 .SH SEE ALSO
-mged(1), librt(3), strtoul(3)
+mged(1), librt(3), strtoul(3), plot3(5)
 .SH AUTHOR
 Paul Tanenbaum
 .SH SOURCE
