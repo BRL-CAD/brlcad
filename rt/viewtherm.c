@@ -96,6 +96,8 @@ extern fastf_t	frame_delta_t;		/* from main.c */
 extern struct region	env_region;	/* from text.c */
 #endif
 
+void		free_scanlines();
+
 /***** variables shared with rt.c *****/
 extern char	*outputfile;		/* name of base of output file */
 /***** end variables shared with rt.c *****/
@@ -110,6 +112,8 @@ fastf_t	spectrum_param[3] = {
 	100, 380, 12000			/* # samp, min nm, max nm */
 };
 fastf_t	bg_temp = 293;			/* degK.  20 degC = 293 degK */
+
+struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -326,9 +330,8 @@ struct rt_i	*rtip;
  *  Background texture mapping could be done here.
  *  For now, return a pleasant dark blue.
  */
-static hit_nothing( ap, PartHeadp )
+static hit_nothing( ap )
 register struct application *ap;
-struct partition *PartHeadp;
 {
 	if( rdebug&RDEBUG_MISSPLOT )  {
 		vect_t	out;
@@ -403,9 +406,10 @@ struct partition *PartHeadp;
  *  This can be a recursive procedure.
  */
 int
-colorview( ap, PartHeadp )
+colorview( ap, PartHeadp, finished_segs )
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg *finished_segs;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -593,6 +597,7 @@ out:
 	return(1);
 }
 
+void
 free_scanlines()
 {
 	register int	y;
@@ -617,20 +622,11 @@ register struct application *ap;
 char *file, *obj;
 {
 	struct rt_vls	name;
+	extern char	libmultispectral_version[];
 
-	/*
-	 *  Connect up material library interfaces
-	 *  Note that sh_plastic.c defines the required "default" entry.
-	 */
-#if NO_MATER
-	{
-		extern struct mfuncs phg_mfuncs[];
-		extern struct mfuncs light_mfuncs[];
+	bu_log("%s", libmultispectral_version+5);
 
-		mlib_add_shader( &mfHead, phg_mfuncs );
-		mlib_add_shader( &mfHead, light_mfuncs );
-	}
-#endif
+	multispectral_shader_init(&mfHead);	/* in libmultispectral/init.c */
 
 	bu_struct_print( "rttherm variables", view_parse, NULL );
 
