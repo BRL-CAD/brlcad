@@ -35,7 +35,6 @@ class QuadDisplay {
 
     public method pane {args}
     public method multi_pane {args}
-    public method toggle_multi_pane {}
     public method refresh {}
     public method refreshall {}
 
@@ -46,7 +45,9 @@ class QuadDisplay {
     public method slew {args}
     public method tra {args}
     public method size {args}
+if 0 {
     public method scale {args}
+}
     public method zoom {sf}
     public method autoview {}
     public method autoviewall {}
@@ -66,7 +67,7 @@ class QuadDisplay {
     public method perspective {args}
     public method bg {args}
     public method fb_active {args}
-    public method fb_update {args}
+    public method fb_observe {args}
     public method rt {args}
     public method rtcheck {args}
 
@@ -80,6 +81,8 @@ class QuadDisplay {
     public method detach_viewall {}
     public method detach_drawable {dg}
     public method detach_drawableall {dg}
+
+    protected method toggle_multi_pane {}
 
     private variable priv_pane ur
     private variable priv_multi_pane 1
@@ -300,54 +303,6 @@ body QuadDisplay::multi_pane {args} {
     }
 }
 
-body QuadDisplay::toggle_multi_pane {} {
-    if {$priv_multi_pane} {
-	set itk_option(-multi_pane) 0
-	set priv_multi_pane 0
-
-	switch $itk_option(-pane) {
-	    ul {
-		hide lower
-		$itk_component(upw) hide urp
-	    }
-	    ur {
-		hide lower
-		$itk_component(upw) hide ulp
-	    }
-	    ll {
-		hide upper
-		$itk_component(lpw) hide lrp
-	    }
-	    lr {
-		hide upper
-		$itk_component(lpw) hide llp
-	    }
-	}
-    } else {
-	set itk_option(-multi_pane) 1
-	set priv_multi_pane 1
-
-	switch $itk_option(-pane) {
-	    ul {
-		show lower
-		$itk_component(upw) show urp
-	    }
-	    ur {
-		show lower
-		$itk_component(upw) show ulp
-	    }
-	    ll {
-		show upper
-		$itk_component(lpw) show lrp
-	    }
-	    lr {
-		show upper
-		$itk_component(lpw) show llp
-	    }
-	}
-    }
-}
-
 body QuadDisplay::refresh {} {
     $itk_component($itk_option(-pane)) refresh
 }
@@ -383,8 +338,10 @@ body QuadDisplay::size {args} {
     eval $itk_component($itk_option(-pane)) size $args
 }
 
+if 0 {
 body QuadDisplay::scale {args} {
     eval $itk_component($itk_option(-pane)) scale $args
+}
 }
 
 body QuadDisplay::zoom {args} {
@@ -474,8 +431,8 @@ body QuadDisplay::fb_active {args} {
     eval $itk_component($itk_option(-pane)) fb_active $args
 }
 
-body QuadDisplay::fb_update {args} {
-    eval $itk_component($itk_option(-pane)) fb_update $args
+body QuadDisplay::fb_observe {args} {
+    eval $itk_component($itk_option(-pane)) fb_observe $args
 }
 
 body QuadDisplay::rt {args} {
@@ -541,4 +498,52 @@ body QuadDisplay::detach_drawableall {dg} {
     $itk_component(ur) detach_drawable $dg
     $itk_component(ll) detach_drawable $dg
     $itk_component(lr) detach_drawable $dg
+}
+
+body QuadDisplay::toggle_multi_pane {} {
+    if {$priv_multi_pane} {
+	set itk_option(-multi_pane) 0
+	set priv_multi_pane 0
+
+	switch $itk_option(-pane) {
+	    ul {
+		hide lower
+		$itk_component(upw) hide urp
+	    }
+	    ur {
+		hide lower
+		$itk_component(upw) hide ulp
+	    }
+	    ll {
+		hide upper
+		$itk_component(lpw) hide lrp
+	    }
+	    lr {
+		hide upper
+		$itk_component(lpw) hide llp
+	    }
+	}
+    } else {
+	set itk_option(-multi_pane) 1
+	set priv_multi_pane 1
+
+	switch $itk_option(-pane) {
+	    ul {
+		show lower
+		$itk_component(upw) show urp
+	    }
+	    ur {
+		show lower
+		$itk_component(upw) show ulp
+	    }
+	    ll {
+		show upper
+		$itk_component(lpw) show lrp
+	    }
+	    lr {
+		show upper
+		$itk_component(lpw) show llp
+	    }
+	}
+    }
 }
