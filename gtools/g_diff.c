@@ -31,16 +31,15 @@ static const char RCSid[] = "$Header$";
 #endif
 
 #include "conf.h"
-
 #include <stdio.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "machine.h"
 #include "externs.h"
@@ -51,6 +50,9 @@ static const char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 #include "tcl.h"
+#include "mater.h"
+
+static struct mater *mater_hd1=MATER_NULL, *mater_hd2=MATER_NULL;
 
 extern int optind;
 extern int optopt;
@@ -67,6 +69,72 @@ static Tcl_Interp *interp = NULL;
 static int pre_5_vers=0;
 static int use_floats=0;	/* flag to use floats for comparisons */
 static struct db_i *dbip1, *dbip2;
+static int version2;
+
+void
+compare_colors()
+{
+	struct mater *mp1, *mp2;
+	int found1=0, found2=0;
+
+	for( mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw )  {
+		found1 = 0;
+		mp2 = mater_hd2;
+		while( mp2 != MATER_NULL ) {
+			if( mp1->mt_low == mp2->mt_low &&
+			    mp1->mt_high == mp2->mt_high &&
+			    mp1->mt_r == mp2->mt_r &&
+			    mp1->mt_g == mp2->mt_g &&
+			    mp1->mt_b == mp2->mt_b ) {
+				found1 = 1;
+				break;
+			} else {
+				mp2 = mp2->mt_forw;
+			}
+		}
+		if( !found1 )
+			break;
+	}
+	for( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
+		found1 = 0;
+		mp1 = mater_hd1;
+		while( mp1 != MATER_NULL ) {
+			if( mp1->mt_low == mp2->mt_low &&
+			    mp1->mt_high == mp2->mt_high &&
+			    mp1->mt_r == mp2->mt_r &&
+			    mp1->mt_g == mp2->mt_g &&
+			    mp1->mt_b == mp2->mt_b ) {
+				found2 = 1;
+				break;
+			} else {
+				mp1 = mp1->mt_forw;
+			}
+		}
+		if( !found2 )
+			break;
+	}
+	if( !found1 || !found2 ) {
+		if( mode == HUMAN ) {
+			printf( "Color table has changed from:\n" );
+			for( mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw )  {
+				printf( "\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
+					mp1->mt_r, mp1->mt_g, mp1->mt_b );
+			}
+			printf( "\t\tto:\n" );
+			for( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
+				printf( "\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
+					mp2->mt_r, mp2->mt_g, mp2->mt_b );
+			}
+		} else {
+			if( version2 > 4 )
+				printf( "attr_rm _GLOBAL regionid_colortable\n" );
+			for( mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw )  {
+				printf( "color %d %d %d %d %d\n", mp2->mt_low, mp2->mt_high,
+					mp2->mt_r, mp2->mt_g, mp2->mt_b );
+			}
+		}
+	}
+}
 
 void
 Usage( str )
@@ -79,11 +147,11 @@ void
 kill_obj( name )
 char *name;
 {
-	if( mode == HUMAN )
+	if( mode == HUMAN ) {
 		printf( "%s has been killed\n", name );
-	else
+	} else {
 		printf( "kill %s\n", name );
-
+	}
 }
 
 void
@@ -907,8 +975,13 @@ char *argv[];
 		exit( 1 );
 	}
 
-	if( dbip1->dbi_version < 5 )
+	/* save regionid colortable */
+	mater_hd1 = rt_material_head;
+	rt_material_head = MATER_NULL;
+
+	if( dbip1->dbi_version < 5 ) {
 		pre_5_vers++;
+	}
 
 	if( (dbip2 = db_open( file2, "r" )) == DBI_NULL )
 	{
@@ -942,8 +1015,16 @@ char *argv[];
 		exit( 1 );
 	}
 
-	if( dbip2->dbi_version < 5 )
+	/* save regionid colortable */
+	mater_hd2 = rt_material_head;
+	rt_material_head = MATER_NULL;
+
+	if( dbip2->dbi_version < 5 ) {
 		pre_5_vers++;
+		version2 = 4;
+	} else {
+		version2 = 5;
+	}
 
 	if( mode == HUMAN)
 		printf( "\nChanges from %s to %s\n\n", dbip1->dbi_filename, dbip2->dbi_filename );
@@ -965,6 +1046,9 @@ char *argv[];
 		else
 			printf( "units %s\n", rt_units_string(dbip2->dbi_local2base) );
 	}
+
+	/* and color table */
+	compare_colors();
 
 	/* next compare objects */
 	diff_objs( wdb1, wdb2 );
