@@ -1,0 +1,23 @@
+/*
+ *			libbu/Cakefile
+ */
+#define SRCDIR	libbu
+#define PRODUCTS	libbu.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#define FILES	\
+	badmagic bomb \
+	getopt linebuf \
+	log magic malloc memset \
+	parallel printb semaphore \
+	vls
+
+#define VERSION_VARIABLE	bu_version
+#define LIBRARY_TITLE		"The BRL-CAD Utility Library"
+
+#include "../Cakefile.lib"
+
+#include "../Cakefile.rules"
