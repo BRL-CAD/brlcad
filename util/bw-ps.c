@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>	/* for atof() */
 #include <time.h>	/* for ctime() */
+#include "externs.h"
 
 #define	DEFAULT_SIZE	6.75		/* default output size in inches */
 #define	MAX_BYTES	(64*128)	/* max bytes per image chunk */
