@@ -183,7 +183,7 @@ char *framename;
 					faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
 				}
 			} else {
-				int face_num;
+				long int face_num;
 
 				if( !faces ) {
 					bu_log( "No faces structure while reading partial data!!!\n" );
@@ -300,7 +300,7 @@ view_end()
 		fprintf( outfp, "BOT: %s\n", Tcl_GetHashKey( &bots, entry ) );
 		faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
 		for( i=0 ; i<BU_PTBL_LEN( faces ) ; i++ ) {
-			fprintf( outfp, "\t%d\n", (int)BU_PTBL_GET( faces, i ) );
+			fprintf( outfp, "\t%ld\n", (long int)BU_PTBL_GET( faces, i ) );
 		}
 		entry = Tcl_NextHashEntry( &search );
 	}
