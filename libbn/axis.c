@@ -34,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "./tig.h"
 
 #define	TICK_YLEN	(char_width)	/* tick is 1 character height */
 #define	NUM_YOFF	(3*char_width)	/* numbers offset from line */
@@ -158,7 +159,7 @@ double	char_width;		/* character scale (size) */
 }
 
 void
-F3AXIS(fp, string, x, y, z, length, theta, ccw,
+F(f3axis, F3AXIS)(fp, string, x, y, z, length, theta, ccw,
 	ndigits, label_start, label_incr, tick_separation, char_width )
 FILE		**fp;
 char		*string;	/* label for axis */

@@ -20,6 +20,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "./tig.h"
 
 /*
  *			T P _ 3 V E C T O R
@@ -89,7 +90,7 @@ double	fromheadfract, toheadfract;
 }
 
 void
-F3VECT(fp, fx, fy, fz, tx, ty, tz, fl, tl )
+F(f3vect, F3VECT)(fp, fx, fy, fz, tx, ty, tz, fl, tl )
 FILE	**fp;
 float	*fx;
 float	*fy;

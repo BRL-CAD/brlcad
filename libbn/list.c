@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "./tig.h"
 
 /* Modes for internal flag */
 #define	TP_MARK		1		/* Draw marks */
@@ -50,7 +51,7 @@ register int	npoints;
 }
 
 void
-F2LIST( fpp, x, y, n )
+F(f2list, F2LIST)( fpp, x, y, n )
 FILE		**fpp;
 register float	*x, *y;
 int		*n;
@@ -84,7 +85,7 @@ register int	npoints;
 }
 
 void
-F3LIST( fpp, x, y, z, n )
+F(f3list, F3LIST)( fpp, x, y, z, n )
 FILE		**fpp;
 register float	*x, *y, *z;
 int		*n;
@@ -158,7 +159,7 @@ double		size;			/* marker size */
  *  This FORTRAN interface expects arrays of REALs (single precision).
  */
 void
-F2MLST( fp, x, y, np, flag, mark, interval, size )
+F(f2mlst, F2MLST)( fp, x, y, np, flag, mark, interval, size )
 FILE	**fp;
 float	*x, *y;
 int	*np;

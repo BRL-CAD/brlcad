@@ -38,6 +38,7 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include "./tig.h"
 
 #define TIC		100
 #define REF_WIDTH	0.857143
@@ -385,7 +386,7 @@ int n;
  *	CULC FORTRAN-IV Interface Entry
  */
 void
-FPLOT(xp, yp, xl, yl, xtitle, ytitle, x, y, n )
+F(fplot, FPLOT)(xp, yp, xl, yl, xtitle, ytitle, x, y, n )
 char *xtitle, *ytitle;
 int *xp, *yp, *xl, *yl, *n;
 float *x, *y;

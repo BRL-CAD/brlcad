@@ -56,6 +56,7 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include "./tig.h"
 
 void
 tp_scale( idata, elements, mode, length, odata, min, dx )
@@ -161,7 +162,7 @@ double *dx;
  */
 
 void
-FSCALE( idata, elements, mode, length, odata, min, dx )
+F(fscale, FSCALE)( idata, elements, mode, length, odata, min, dx )
 int idata[];
 int *elements;
 char *mode;

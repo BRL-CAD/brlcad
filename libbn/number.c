@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "./tig.h"
 
 void
 tp_2number( fp, input, x, y, cscale, theta, digits )
@@ -42,7 +43,7 @@ int	digits;		/* # digits wide */
 }
 
 void
-F2NUMB( fp, input, x, y, cscale, theta, digits )
+F(f2numb, F2NUMB)( fp, input, x, y, cscale, theta, digits )
 FILE	**fp;
 float	*input;
 int	*x, *y;

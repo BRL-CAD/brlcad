@@ -20,6 +20,7 @@
 
 #include "machine.h"
 #include "vmath.h"
+#include "./tig.h"
 
 /*
  *	Motion encoding macros
@@ -1149,7 +1150,7 @@ TINY	tp_ctable[] = {
  *  This FORTRAN interface expects REAL args (single precision).
  */
 void
-F2SYMB( fp, string, x, y, scale, theta )
+F(f2symb, F2SYMB)( fp, string, x, y, scale, theta )
 FILE	**fp;
 char	*string;
 float	*x, *y;
