@@ -2029,7 +2029,7 @@ wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 	comb_leaf->tr_l.tl_name = bu_strdup(mref);
 }
 
-BU_EXTERN(HIDDEN int wdb_dir_add, ( struct db_i *input_dbip, CONST char
+BU_EXTERN(static int wdb_dir_add, ( struct db_i *input_dbip, CONST char
 	*name, long laddr, int len, int flags, genptr_t ptr));
 
 struct dir_add_stuff {
