@@ -15,6 +15,9 @@
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by 
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
+ *
+ *  Note -
+ *	Any program that uses this header file must also include <stdio.h>
  */
 #ifndef FACET_H
 #define FACET_H seen
@@ -242,7 +245,7 @@ struct loopuse {
     union {
 	struct edgeuse	    *eu_p;  /* list of eu's in lu */
 	struct vertexuse    *vu_p; /* loop is a single vertex */
-	long		    *magic_p /* for those times when we're not sure */
+	long		    *magic_p; /* for those times when we're not sure */
     } down;
 };
 
@@ -268,7 +271,7 @@ struct edgeuse {
     union {
 	struct loopuse	*lu_p;
 	struct shell	*s_p;
-	long	        *magic_p /* for those times when we're not sure */
+	long	        *magic_p; /* for those times when we're not sure */
     } up;
     struct edgeuse	*next,	    /* either clockwise/ccw edges in loop */
     			*last,	    /* or list of edges/faces in shell */
@@ -305,7 +308,7 @@ struct vertexuse {
 	struct shell	*s_p;	/* no fu's or eu's on shell */
 	struct loopuse	*lu_p;	/* loopuse contains single vertex */
 	struct edgeuse	*eu_p;	/* eu causing this vu */
-	long		*magic_p /* for those times when we're not sure */
+	long		*magic_p; /* for those times when we're not sure */
     } up;
     struct vertexuse	*next,   /* list of all vu's of vertex */
 			*last;
@@ -463,11 +466,11 @@ struct walker_tbl {
  */
 #if __STDC__
 extern struct model	*nmg_mmr();
-extern struct shell 	*nmg_msv(struct region *r_p);
+extern struct shell 	*nmg_msv(struct nmgregion *r_p);
 extern struct nmgregion	*nmg_mrsv(struct model *m);
 extern struct vertexuse	*nmg_mvu(struct vertex *v, long *upptr);
 extern struct vertexuse	*nmg_mvvu(long *upptr);
-extern struct edgeuse	*nmg_me(struct vertex *v1, *v2, struct shell *s);
+extern struct edgeuse	*nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s);
 extern struct edgeuse	*nmg_meonvu(struct vertexuse *vu);
 extern struct edgeuse	*nmg_eins(struct edgeuse *eu);
 extern struct loopuse	*nmg_ml(struct shell *s);
@@ -477,7 +480,7 @@ extern struct faceuse	*nmg_cface(struct shell *s, struct vertex **vt,	unsigned n
 extern struct edgeuse	*nmg_eusplit(struct vertex *v, struct edgeuse *oldeu);
 extern struct edge	*nmg_esplit(struct vertex *v, struct edge *e);
 extern char		*nmg_identify_magic(long magic);
-extern int		nmg_tbl(nmg_ptbl *b, int func, long **p);
+extern int		nmg_tbl(struct nmg_ptbl *b, int func, long *p);
 extern void		nmg_movevu(struct vertexuse *vu, struct vertex *v);
 extern void		nmg_kfu(struct faceuse *fu1);
 extern void		nmg_klu(struct loopuse *lu1);
@@ -486,7 +489,7 @@ extern void		nmg_kvu(struct vertexuse *vu);
 extern void		nmg_ks(struct shell *s);
 extern void		nmg_kr(struct nmgregion *r);
 extern void		nmg_km(struct model *m);
-extern void		nmg_pr_m(struct model *m, char *h);
+extern void		nmg_pr_m(struct model *m);
 extern void		nmg_pr_r(struct nmgregion *r, char *h);
 extern void		nmg_pr_s(struct shell *s, char *h);
 extern void		nmg_pr_fg(struct face_g *fg, char *h);
@@ -500,20 +503,20 @@ extern void		nmg_pr_vg(struct vertex_g *vg, char *h);
 extern void		nmg_pr_v(struct vertex *v, char *h);
 extern void		nmg_pr_vu(struct vertexuse *vu, char *h);
 extern void		nmg_unglueedge(struct edgeuse *eu);
-extern void		nmg_moveeu(struct edgeuse *eudst, *eusrc);
+extern void		nmg_moveeu(struct edgeuse *eudst, struct edgeuse *eusrc);
 extern void 		nmg_moveltof(struct faceuse *fu, struct shell *s);
-extern void		nmg_face_g(struct faceuse *fu);
+extern void		nmg_face_g(struct faceuse *fu, plane_t p);
 extern void		nmg_face_bb(struct face *f);
 extern void		nmg_vertex_gv(struct vertex *v, pointp_t pt);
-extern void		nmg_loop_g(loop *l);
-extern void		nmg_shell_a(shell *s);
-extern void		nmg_jv(struct vertex *v1, *v2);
+extern void		nmg_loop_g(struct loop *l);
+extern void		nmg_shell_a(struct shell *s);
+extern void		nmg_jv(struct vertex *v1, struct vertex *v2);
 extern void		nmg_moveltof(struct faceuse *fu, struct shell *s);
-extern void		nmg_pl_s(FILE fp, struct shell *s);
-extern void		nmg_pl_r(FILE fp, struct nmgregion *r);
-extern void		nmg_pl_m(FILE fp, struct model *m);
+extern void		nmg_pl_s(FILE *fp, struct shell *s);
+extern void		nmg_pl_r(FILE *fp, struct nmgregion *r);
+extern void		nmg_pl_m(FILE *fp, struct model *m);
 
-extern struct shell	*nmg_do_bool(struct shell *s1, *s2, int oper);
+extern struct shell	*nmg_do_bool(struct shell *s1, struct shell *s2, int oper);
 
 #else
 extern struct model	*nmg_mmr();
