@@ -215,23 +215,23 @@ static CONST vect_t	dsp_pl[BBOX_PLANES] = {
 
 
 #define DSP_O(m) offsetof(struct rt_dsp_internal, m)
-#define DSP_AO(a) offsetofarray(struct rt_dsp_internal, a)
+#define DSP_AO(a) bu_offsetofarray(struct rt_dsp_internal, a)
 
 struct bu_structparse rt_dsp_parse[] = {
-	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), FUNC_NULL },
-	{"%d",  1, "sm", DSP_O(dsp_smooth), FUNC_NULL },
-	{"%d",	1, "w", DSP_O(dsp_xcnt), FUNC_NULL },
-	{"%d",	1, "n", DSP_O(dsp_ycnt), FUNC_NULL },
-	{"%f", 16, "stom", DSP_AO(dsp_stom), FUNC_NULL },
+	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0, 0,			FUNC_NULL }
 };
 
 struct bu_structparse rt_dsp_ptab[] = {
-	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), FUNC_NULL },
-	{"%d",  1, "sm", DSP_O(dsp_smooth), FUNC_NULL },
-	{"%d",	1, "w", DSP_O(dsp_xcnt), FUNC_NULL },
-	{"%d",	1, "n", DSP_O(dsp_ycnt), FUNC_NULL },
-	{"%f", 16, "stom", DSP_AO(dsp_stom), FUNC_NULL },
+	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0, 0,			FUNC_NULL }
 };
 
@@ -328,7 +328,7 @@ struct rt_i		*rtip;
 	RT_DSP_CK_MAGIC(dsp_ip);
 	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
-	GETSTRUCT( dsp, dsp_specific );
+	BU_GETSTRUCT( dsp, dsp_specific );
 	stp->st_specific = (genptr_t) dsp;
 	dsp->dsp_i = *dsp_ip;		/* struct copy */
 
@@ -2405,10 +2405,10 @@ register struct soltab *stp;
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_free()\n");
 
-	RT_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
-	rt_close_mapped_file(dsp->dsp_i.dsp_mp);
+	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+	bu_close_mapped_file(dsp->dsp_i.dsp_mp);
 
-	rt_free( (char *)dsp, "dsp_specific" );
+	bu_free( (char *)dsp, "dsp_specific" );
 }
 
 /*
@@ -2428,10 +2428,10 @@ rt_dsp_class()
  */
 int
 rt_dsp_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_dsp_internal	*dsp_ip =
 		(struct rt_dsp_internal *)ip->idb_ptr;
@@ -2602,7 +2602,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 
@@ -2625,7 +2625,7 @@ struct rt_tol		*tol;
 int
 rt_dsp_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	LOCAL struct rt_dsp_internal	*dsp_ip;
@@ -2640,7 +2640,7 @@ register CONST mat_t		mat;
 	ip->idb_ptr = (genptr_t)NULL; \
 	return -2
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 
 	if (rt_g.debug & DEBUG_HF)
@@ -2651,13 +2651,13 @@ register CONST mat_t		mat;
 
 	/* Check record type */
 	if( rp->u_id != DBID_STRSOL )  {
-		rt_log("rt_dsp_import: defective record\n");
+		bu_log("rt_dsp_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_DSP;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
 	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
 	dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
 
@@ -2667,8 +2667,8 @@ register CONST mat_t		mat;
 	dsp_ip->dsp_xcnt = dsp_ip->dsp_ycnt = 0;
 	dsp_ip->dsp_xs = dsp_ip->dsp_ys = dsp_ip->dsp_zs = 0.0;
 	dsp_ip->dsp_smooth = 1;
-	mat_idn(dsp_ip->dsp_stom);
-	mat_idn(dsp_ip->dsp_mtos);
+	bn_mat_idn(dsp_ip->dsp_stom);
+	bn_mat_idn(dsp_ip->dsp_mtos);
 
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );
@@ -2684,13 +2684,13 @@ register CONST mat_t		mat;
 	}
 	
 	/* Apply Modeling transoform */
-	mat_copy(tmp, dsp_ip->dsp_stom);
-	mat_mul(dsp_ip->dsp_stom, mat, tmp);
+	bn_mat_copy(tmp, dsp_ip->dsp_stom);
+	bn_mat_mul(dsp_ip->dsp_stom, mat, tmp);
 	
-	mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
+	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
 	/* get file */
-	if( !(dsp_ip->dsp_mp = rt_open_mapped_file( dsp_ip->dsp_file, "dsp" )) )  {
+	if( !(dsp_ip->dsp_mp = bu_open_mapped_file( dsp_ip->dsp_file, "dsp" )) )  {
 		IMPORT_FAIL("unable to open");
 	}
 	if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
@@ -2714,7 +2714,7 @@ register CONST mat_t		mat;
  */
 int
 rt_dsp_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -2729,9 +2729,9 @@ double				local2mm;
 	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
 	RT_DSP_CK_MAGIC(dsp_ip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "dsp external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "dsp external");
 	rec = (union record *)ep->ext_buf;
 
 	dsp = *dsp_ip;	/* struct copy */
@@ -2767,7 +2767,7 @@ double				local2mm;
  */
 int
 rt_dsp_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -2791,7 +2791,7 @@ double			mm2local;
 		dsp_ip->v[X] * mm2local,
 		dsp_ip->v[Y] * mm2local,
 		dsp_ip->v[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 #endif
 
 	return(0);
@@ -2816,13 +2816,13 @@ struct rt_db_internal	*ip;
 	RT_DSP_CK_MAGIC(dsp_ip);
 
 	if (dsp_ip->dsp_mp) {
-		RT_CK_MAPPED_FILE(dsp_ip->dsp_mp);
-		rt_close_mapped_file(dsp_ip->dsp_mp);
+		BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+		bu_close_mapped_file(dsp_ip->dsp_mp);
 	}
 
 	dsp_ip->magic = 0;			/* sanity */
-	dsp_ip->dsp_mp = (struct rt_mapped_file *)0;
+	dsp_ip->dsp_mp = (struct bu_mapped_file *)0;
 
-	rt_free( (char *)dsp_ip, "dsp ifree" );
+	bu_free( (char *)dsp_ip, "dsp ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

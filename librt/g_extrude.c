@@ -109,10 +109,10 @@ mat_t		Rot, Inv;
 	VJOIN2( uC, eip->h, -mag_ha, uA, -mag_hb, uB );
 	VUNITIZE( uC );
 
-	mat_idn( Rot );
-	mat_idn( Inv );
-	mat_idn( tmp_mat1 );
-	mat_idn( tmp_mat2 );
+	bn_mat_idn( Rot );
+	bn_mat_idn( Inv );
+	bn_mat_idn( tmp_mat1 );
+	bn_mat_idn( tmp_mat2 );
 
 	tmp_mat1[0] = uA[X];
 	tmp_mat1[1] = uA[Y];
@@ -167,7 +167,7 @@ struct rt_i		*rtip;
 	eip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC( eip );
 
-	GETSTRUCT( extr, extrude_specific );
+	BU_GETSTRUCT( extr, extrude_specific );
 	stp->st_specific = (genptr_t)extr;
 
 	rt_extr_rotate( eip, Rot, iRot );
@@ -303,7 +303,7 @@ register struct soltab *stp;
 	register struct extrude_specific *extrude =
 		(struct extrude_specific *)stp->st_specific;
 
-	rt_free( (char *)extrude, "extrude_specific" );
+	bu_free( (char *)extrude, "extrude_specific" );
 }
 
 /*
@@ -320,10 +320,10 @@ rt_extrude_class()
  */
 int
 rt_extrude_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct curve			*crv=(struct curve *)NULL;
@@ -481,7 +481,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	return(-1);
 }
@@ -495,7 +495,7 @@ struct rt_tol		*tol;
 int
 rt_extrude_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 struct db_i		*dbip;
 {
@@ -508,11 +508,11 @@ struct db_i		*dbip;
 	char					*ptr;
 	point_t					tmp_vec;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_EXTR )  {
-		rt_log("rt_extrude_import: defective record\n");
+		bu_log("rt_extrude_import: defective record\n");
 		return(-1);
 	}
 
@@ -564,7 +564,7 @@ struct db_i		*dbip;
  */
 int
 rt_extrude_export( ep, ip, local2mm, dbip )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 CONST struct db_i		*dbip;
@@ -579,9 +579,9 @@ CONST struct db_i		*dbip;
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = 2*sizeof( union record );
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "extrusion external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "extrusion external");
 	rec = (union record *)ep->ext_buf;
 
 	rec->extr.ex_id = DBID_EXTR;
@@ -616,7 +616,7 @@ CONST struct db_i		*dbip;
  */
 int
 rt_extrude_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -628,17 +628,17 @@ double			mm2local;
 	char	buf[256];
 
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
-	rt_vls_strcat( str, "2D extrude (EXTRUDE)\n");
+	bu_vls_strcat( str, "2D extrude (EXTRUDE)\n");
 	sprintf( buf, "\tV = (%g %g %g)\n\tH = (%g %g %g)\n\tu_dir = (%g %g %g)\n\tv_dir = (%g %g %g)\n",
 		V3ARGS( extrude_ip->V ),
 		V3ARGS( extrude_ip->h ),
 		V3ARGS( extrude_ip->u_vec ),
 		V3ARGS( extrude_ip->v_vec ) );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 	sprintf( buf, "\tsketch name: %.16s\n\tcurve name: %.16s\n",
 		extrude_ip->sketch_name,
 		extrude_ip->curve_name );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 	
 
 	return(0);

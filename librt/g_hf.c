@@ -70,9 +70,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 /* All fields valid in string solid */
 CONST struct bu_structparse rt_hf_parse[] = {
-	{"%s",	128,	"cfile",	offsetofarray(struct rt_hf_internal, cfile), FUNC_NULL},
-	{"%s",	128,	"dfile",	offsetofarray(struct rt_hf_internal, dfile), FUNC_NULL},
-	{"%s",	8,	"fmt",		offsetofarray(struct rt_hf_internal, fmt), FUNC_NULL},
+	{"%s",	128,	"cfile",	bu_offsetofarray(struct rt_hf_internal, cfile), BU_STRUCTPARSE_FUNC_NULL},
+	{"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
+	{"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
 	{"%d",	1,	"w",		HF_O(w),		FUNC_NULL },
 	{"%d",	1,	"n",		HF_O(n),		FUNC_NULL },
 	{"%d",	1,	"shorts",	HF_O(shorts),		FUNC_NULL },
@@ -87,8 +87,8 @@ CONST struct bu_structparse rt_hf_parse[] = {
 };
 /* Subset of fields found in cfile */
 CONST struct bu_structparse rt_hf_cparse[] = {
-	{"%s",	128,	"dfile",	offsetofarray(struct rt_hf_internal, dfile), FUNC_NULL},
-	{"%s",	8,	"fmt",		offsetofarray(struct rt_hf_internal, fmt), FUNC_NULL},
+	{"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
+	{"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
 	{"%d",	1,	"w",		HF_O(w),		FUNC_NULL },
 	{"%d",	1,	"n",		HF_O(n),		FUNC_NULL },
 	{"%d",	1,	"shorts",	HF_O(shorts),		FUNC_NULL },
@@ -110,7 +110,7 @@ struct hf_specific {
 	int	hf_w;		/* X dimension of file */
 	int	hf_n;		/* Y dimension of file */
 	int	hf_shorts;	/* Boolean: use shorts instead of double */
-	struct rt_mapped_file *hf_mp;
+	struct bu_mapped_file *hf_mp;
 };
 
 /*
@@ -136,20 +136,20 @@ struct rt_i		*rtip;
 {
 	struct rt_hf_internal		*hip;
 	register struct hf_specific	*hf;
-	CONST struct rt_tol		*tol = &rtip->rti_tol;
+	CONST struct bn_tol		*tol = &rtip->rti_tol;
 	double	dot;
 	vect_t	height, work;
 	static int first_time=1;
 
 	if (first_time) {
-		rt_log("%s\n",RCSid);
+		bu_log("%s\n",RCSid);
 		first_time=0;
 	}
 	RT_CK_DB_INTERNAL(ip);
 	hip = (struct rt_hf_internal *)ip->idb_ptr;
 	RT_HF_CK_MAGIC(hip);
 
-	GETSTRUCT(hf, hf_specific);
+	BU_GETSTRUCT(hf, hf_specific);
 	stp->st_specific = (genptr_t) hf;
 	/*
 	 * The stuff that is given to us.
@@ -184,8 +184,8 @@ struct rt_i		*rtip;
 	 */
 	dot = VDOT(hf->hf_X, hf->hf_Y);
 	if (fabs(dot) >tol->perp) {	/* not perpendicular, bad hf */
-		rt_log("Hf(%s): X not perpendicular to Y.\n", stp->st_name);
-		rt_free((genptr_t)hf, "struct hf");
+		bu_log("Hf(%s): X not perpendicular to Y.\n", stp->st_name);
+		bu_free((genptr_t)hf, "struct hf");
 		stp->st_specific = (genptr_t) 0;
 		return 1;	/* BAD */
 	}
@@ -282,8 +282,8 @@ register CONST struct soltab *stp;
 	VPRINT("X", hf->hf_X);
 	VPRINT("Y", hf->hf_Y);
 	VPRINT("N", hf->hf_N);
-	rt_log("XL %g\n", hf->hf_Xlen);
-	rt_log("YL %g\n", hf->hf_Ylen);
+	bu_log("XL %g\n", hf->hf_Xlen);
+	bu_log("YL %g\n", hf->hf_Ylen);
 }
 
 static int
@@ -306,7 +306,7 @@ int			xCell, yCell;
 	register double hf2mm = hfp->hf_file2mm;
 
 	if (rt_g.debug & DEBUG_HF) {
-		rt_log("rt_hf_cell_shot(%s): %d, %d\n", stp->st_name,
+		bu_log("rt_hf_cell_shot(%s): %d, %d\n", stp->st_name,
 		    xCell, yCell);
 	}
 	{
@@ -485,7 +485,7 @@ leave:
 	if (!fnd1 && !fnd2) return 0;
 
 	if (rt_g.debug & DEBUG_HF) {
-		rt_log("rt_hf_cell_shot: hit(%d).\n",fnd1+fnd2);
+		bu_log("rt_hf_cell_shot: hit(%d).\n",fnd1+fnd2);
 	}
 
 	/*
@@ -498,7 +498,7 @@ leave:
 	 * replace the out if dn>0 or the in if dn<0.
 	 */
 
-/* rt_log("cell: k1st=%g, k2nd=%g\n", k1st,k2nd); */
+/* bu_log("cell: k1st=%g, k2nd=%g\n", k1st,k2nd); */
 
 	if (!fnd2 ) {
 		hitp->hit_dist = k1st;
@@ -606,7 +606,7 @@ int *nhits;
 		break;
 	}
 	if (xx < 0) {
-		rt_log("hf: xx < 0, plane = %d\n", plane);
+		bu_log("hf: xx < 0, plane = %d\n", plane);
 	}
 
 	if (hf->hf_shorts) {
@@ -636,7 +636,7 @@ int *nhits;
 	right *= hf->hf_file2mm;
 	answer = (right-left)/xright*xx+left;
 #if 0
-rt_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
+bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
     loc[Z], answer, left, right, xright, xx);
 #endif
 
@@ -691,7 +691,7 @@ struct seg		*seghead;
 	LOCAL	int		nhits;
 	double	xWidth, yWidth;
 
-	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
+	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
 	vect_t  peqn;
 	fastf_t pdist;
@@ -765,7 +765,7 @@ bzero(hits,sizeof(hits));
 		allDist[allIndex] = s = dxbdn/dn;
 		if (rt_g.debug & DEBUG_HF) {
 			VPRINT("hf: Plane Equation", peqn);
-			rt_log("hf: dn=%g, dxbdn=%g, s=%g\n", dn, dxbdn, dxbdn/dn);
+			bu_log("hf: dn=%g, dxbdn=%g, s=%g\n", dn, dxbdn, dxbdn/dn);
 		}
 
 		if (dn < -SQRT_SMALL_FASTF) {		/* Leaving */
@@ -789,7 +789,7 @@ bzero(hits,sizeof(hits));
 		}
 		if ( in > out ) {
 			if (rt_g.debug & DEBUG_HF) {
-				rt_log("rt_hf_shoot(%s): in(%g) > out(%g)\n",
+				bu_log("rt_hf_shoot(%s): in(%g) > out(%g)\n",
 				    stp->st_name, in, out);
 			}
 			return 0;	/* MISS */
@@ -797,14 +797,14 @@ bzero(hits,sizeof(hits));
 	}
 
 	if ( iplane >= 0 || oplane >= 0 ) {
-		rt_log("rt_hf_shoot(%s): 1 hit => MISS\n",
+		bu_log("rt_hf_shoot(%s): 1 hit => MISS\n",
 		    stp->st_name);
 		return 0;	/* MISS */
 	}
 
 	if ( in >= out || out >= INFINITY ) {
 		if (rt_g.debug & DEBUG_HF) {
-			rt_log("rt_hf_shoot(%s): in(%g) >= out(%g) || out >= INFINITY\n",
+			bu_log("rt_hf_shoot(%s): in(%g) >= out(%g) || out >= INFINITY\n",
 			    stp->st_name, in, out);
 		}
 		return 0;
@@ -821,7 +821,7 @@ bzero(hits,sizeof(hits));
 	yWidth = hf->hf_Ylen/((double)(hf->hf_n-1));
 
 	if (rt_g.debug & DEBUG_HF) {
-		rt_log("hf: xWidth=%g, yWidth=%g\n", xWidth, yWidth);
+		bu_log("hf: xWidth=%g, yWidth=%g\n", xWidth, yWidth);
 	}
 
 
@@ -877,8 +877,8 @@ bzero(hits,sizeof(hits));
 		tmp = xWidth/fabs(aray[X]);
 
 #if 0
-rt_log("hf: tmp=%g\n", tmp);
-rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
+bu_log("hf: tmp=%g\n", tmp);
+bu_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		aray[X], aray[Y], aray[Z]);
 #endif
 
@@ -907,9 +907,9 @@ rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		signY = (aray[Y] < 0.0) ? -1 : 1;
 
 		if (rt_g.debug & DEBUG_HF ) {
-			rt_log("hf: curloc=(%g, %g, %g) aray=(%g,%g,%g)\n", curloc[X], curloc[Y],
+			bu_log("hf: curloc=(%g, %g, %g) aray=(%g,%g,%g)\n", curloc[X], curloc[Y],
 			    curloc[Z], aray[X], aray[Y], aray[Z]);
-			rt_log("hf: from=(%g, %g) to=(%g, %g)\n",
+			bu_log("hf: from=(%g, %g) to=(%g, %g)\n",
 			    goesIN[X]/xWidth,
 			    goesIN[Y]/yWidth,
 			    goesOUT[X]/xWidth,
@@ -922,7 +922,7 @@ rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		delta = aray[Y]/fabs(aray[X]);
 
 #if 0
-rt_log("aray[Y]/aray[X]=%g\n", delta);
+bu_log("aray[Y]/aray[X]=%g\n", delta);
 #endif
 
 		if (delta < 0.0) {
@@ -941,7 +941,7 @@ rt_log("aray[Y]/aray[X]=%g\n", delta);
 			error += delta;
 		}
 		if (rt_g.debug & DEBUG_HF) {
-			rt_log("hf: delta=%g, error=%g, %d, %d\n", 
+			bu_log("hf: delta=%g, error=%g, %d, %d\n", 
 			   delta, error, xCell, yCell);
 		}
 
@@ -952,7 +952,7 @@ rt_log("aray[Y]/aray[X]=%g\n", delta);
 			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
 			if (rt_g.debug & DEBUG_HF) {
-				rt_log("hf: cell %d,%d [%g -- %g] ",
+				bu_log("hf: cell %d,%d [%g -- %g] ",
 				xCell, yCell, minZ, maxZ);
 			}
 			/*
@@ -1020,7 +1020,7 @@ rt_log("aray[Y]/aray[X]=%g\n", delta);
 			}
 
 			if (rt_g.debug & DEBUG_HF) {
-				rt_log("lowest=%g, highest=%g\n", 
+				bu_log("lowest=%g, highest=%g\n", 
 				    lowest, highest);
 			}
 
@@ -1048,7 +1048,7 @@ skip_first:
 			if (error > SQRT_SMALL_FASTF) {
 				yCell += signY;
 				if (rt_g.debug & DEBUG_HF) {
-					rt_log("hf: cell %d,%d \n", xCell, yCell);
+					bu_log("hf: cell %d,%d \n", xCell, yCell);
 				}
 				if ((yCell < 0) || yCell > hf->hf_n-2) {
 					error -= 1.0;
@@ -1119,7 +1119,7 @@ skip_first:
 			VADD2(curloc, curloc, aray);
 		} while (xCell >= 0 && xCell < hf->hf_w-1 );
 		if (rt_g.debug & DEBUG_HF) {
-			rt_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
+			bu_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
 			   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 		}
 /* OTHER HALF */
@@ -1148,8 +1148,8 @@ skip_first:
 		tmp = yWidth/fabs(aray[Y]);
 
 #if 0
-rt_log("hf: tmp=%g\n", tmp);
-rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
+bu_log("hf: tmp=%g\n", tmp);
+bu_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		aray[X], aray[Y], aray[Z]);
 #endif
 
@@ -1178,9 +1178,9 @@ rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		signY = (aray[Y] < 0.0) ? -1 : 1;
 
 		if (rt_g.debug & DEBUG_HF ) {
-			rt_log("hf: curloc=(%g, %g, %g) aray=(%g,%g,%g)\n", curloc[X], curloc[Y],
+			bu_log("hf: curloc=(%g, %g, %g) aray=(%g,%g,%g)\n", curloc[X], curloc[Y],
 			    curloc[Z], aray[X], aray[Y], aray[Z]);
-			rt_log("hf: from=(%g, %g) to=(%g, %g)\n",
+			bu_log("hf: from=(%g, %g) to=(%g, %g)\n",
 			    goesIN[X]/xWidth,
 			    goesIN[Y]/yWidth,
 			    goesOUT[X]/xWidth,
@@ -1193,7 +1193,7 @@ rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		delta = aray[X]/fabs(aray[Y]);
 
 #if 0
-rt_log("aray[X]/aray[Y]=%g\n", delta);
+bu_log("aray[X]/aray[Y]=%g\n", delta);
 #endif
 
 		if (delta < 0.0) {
@@ -1212,7 +1212,7 @@ rt_log("aray[X]/aray[Y]=%g\n", delta);
 			error += delta;
 		}
 		if (rt_g.debug & DEBUG_HF) {
-			rt_log("hf: delta=%g, error=%g, %d, %d\n", 
+			bu_log("hf: delta=%g, error=%g, %d, %d\n", 
 			   delta, error, xCell, yCell);
 		}
 
@@ -1222,7 +1222,7 @@ rt_log("aray[X]/aray[Y]=%g\n", delta);
 			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
 			if (rt_g.debug & DEBUG_HF) {
-				rt_log("hf: cell %d,%d [%g -- %g] ",
+				bu_log("hf: cell %d,%d [%g -- %g] ",
 				xCell, yCell, minZ, maxZ);
 			}
 			if (xCell < 0 || xCell > hf->hf_w-2) {
@@ -1279,7 +1279,7 @@ rt_log("aray[X]/aray[Y]=%g\n", delta);
 
 
 			if (rt_g.debug & DEBUG_HF) {
-				rt_log("lowest=%g, highest=%g\n", 
+				bu_log("lowest=%g, highest=%g\n", 
 				    lowest, highest);
 			}
 
@@ -1307,7 +1307,7 @@ skip_2nd:
 			if (error > SQRT_SMALL_FASTF) {
 				xCell += signX;
 				if (rt_g.debug & DEBUG_HF) {
-					rt_log("hf: cell %d,%d\n", xCell, yCell);
+					bu_log("hf: cell %d,%d\n", xCell, yCell);
 				}
 				if ((xCell < 0) || xCell > hf->hf_w-2) {
 					error -= 1.0;
@@ -1378,7 +1378,7 @@ skip_2nd:
 			VADD2(curloc, curloc, aray);
 		} while (yCell >= 0 && yCell < hf->hf_n-1 );
 		if (rt_g.debug & DEBUG_HF) {
-			rt_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
+			bu_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
 			   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 		}
 	}
@@ -1402,11 +1402,11 @@ skip_2nd:
 		VREVERSE(hits[nhits].hit_normal, hits[nhits-1].hit_normal);
 		nhits++;
 		if (nerrors++ < 6 ) {
-			rt_log("rt_hf_shot(%s): %d hits: ", stp->st_name, nhits-1);
+			bu_log("rt_hf_shot(%s): %d hits: ", stp->st_name, nhits-1);
 			for(i=0; i< nhits; i++) {
-				rt_log("%f(%d), ",hits[i].hit_dist,hits[i].hit_surfno);
+				bu_log("%f(%d), ",hits[i].hit_dist,hits[i].hit_surfno);
 			}
-			rt_log("\n");
+			bu_log("\n");
 		}
 #if 0
 rt_g.debug |= DEBUG_HF;
@@ -1422,7 +1422,7 @@ rt_bomb("Odd number of hits.");
 			segp->seg_stp = stp;
 			segp->seg_in = hits[i];
 			segp->seg_out= hits[i+1];
-			RT_LIST_INSERT( &(seghead->l), &(segp->l));
+			BU_LIST_INSERT( &(seghead->l), &(segp->l));
 		}
 	}
 	return nhits;	/* hits or misses */
@@ -1546,10 +1546,10 @@ register struct soltab *stp;
 		(struct hf_specific *)stp->st_specific;
 
 	if (hf->hf_mp) {
-		rt_close_mapped_file(hf->hf_mp);
-		hf->hf_mp = (struct rt_mapped_file *)0;
+		bu_close_mapped_file(hf->hf_mp);
+		hf->hf_mp = (struct bu_mapped_file *)0;
 	}
-	rt_free( (char *)hf, "hf_specific" );
+	bu_free( (char *)hf, "hf_specific" );
 }
 
 /*
@@ -1566,10 +1566,10 @@ rt_hf_class()
  */
 int
 rt_hf_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	register unsigned short		*sp;
@@ -1738,7 +1738,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
 
@@ -1758,13 +1758,13 @@ struct rt_tol		*tol;
 int
 rt_hf_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	union record			*rp;
 	struct bu_vls			str;
-	struct rt_mapped_file		*mp;
+	struct bu_mapped_file		*mp;
 	vect_t				tmp;
 	int				in_cookie;	/* format cookie */
 	int				in_len;
@@ -1772,17 +1772,17 @@ register CONST mat_t		mat;
 	int				count;
 	int				got;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_STRSOL )  {
-		rt_log("rt_hf_import: defective record\n");
+		bu_log("rt_hf_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_HF;
-	ip->idb_ptr = rt_calloc( 1, sizeof(struct rt_hf_internal), "rt_hf_internal");
+	ip->idb_ptr = bu_calloc( 1, sizeof(struct rt_hf_internal), "rt_hf_internal");
 	xip = (struct rt_hf_internal *)ip->idb_ptr;
 	xip->magic = RT_HF_INTERNAL_MAGIC;
 
@@ -1803,7 +1803,7 @@ register CONST mat_t		mat;
 	if( bu_struct_parse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
 		bu_vls_free( &str );
 err1:
-		rt_free( (char *)xip , "rt_hf_import: xip" );
+		bu_free( (char *)xip , "rt_hf_import: xip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;
@@ -1819,7 +1819,7 @@ err1:
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( !fp )  {
 			perror(xip->cfile);
-			rt_log("rt_hf_import() unable to open cfile=%s\n", xip->cfile);
+			bu_log("rt_hf_import() unable to open cfile=%s\n", xip->cfile);
 			goto err1;
 		}
 		bu_vls_init( &str );
@@ -1829,7 +1829,7 @@ err1:
 		fclose(fp);
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( bu_struct_parse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
-			rt_log("rt_hf_import() parse error in cfile input '%s'\n",
+			bu_log("rt_hf_import() parse error in cfile input '%s'\n",
 				bu_vls_addr(&str) );
 			bu_vls_free( &str );
 			goto err1;
@@ -1839,15 +1839,15 @@ err1:
 	/* Check for reasonable values */
 	if( !xip->dfile[0] )  {
 		/* XXX Should create 2x2 data file instead, for positioning use (FPO) */
-		rt_log("rt_hf_import() no dfile specified\n");
+		bu_log("rt_hf_import() no dfile specified\n");
 		goto err1;
 	}
 	if( xip->w < 2 || xip->n < 2 )  {
-		rt_log("rt_hf_import() w=%d, n=%d too small\n");
+		bu_log("rt_hf_import() w=%d, n=%d too small\n");
 		goto err1;
 	}
 	if( xip->xlen <= 0 || xip->ylen <= 0 )  {
-		rt_log("rt_hf_import() xlen=%g, ylen=%g too small\n", xip->xlen, xip->ylen);
+		bu_log("rt_hf_import() xlen=%g, ylen=%g too small\n", xip->xlen, xip->ylen);
 		goto err1;
 	}
 
@@ -1867,7 +1867,7 @@ err1:
 
 	/* Prepare for cracking input file format */
 	if( (in_cookie = bu_cv_cookie( xip->fmt )) == 0 )  {
-		rt_log("rt_hf_import() fmt='%s' unknown\n", xip->fmt);
+		bu_log("rt_hf_import() fmt='%s' unknown\n", xip->fmt);
 		goto err1;
 	}
 	in_len = bu_cv_itemlen( in_cookie );
@@ -1875,8 +1875,8 @@ err1:
 	/*
 	 *  Load data file, and transform to internal format
 	 */
-	if( !(mp = rt_open_mapped_file( xip->dfile, "hf" )) )  {
-		rt_log("rt_hf_import() unable to open '%s'\n", xip->dfile);
+	if( !(mp = bu_open_mapped_file( xip->dfile, "hf" )) )  {
+		bu_log("rt_hf_import() unable to open '%s'\n", xip->dfile);
 		goto err1;
 	}
 	xip->mp = mp;
@@ -1900,11 +1900,11 @@ err1:
 		return 0;		/* OK */
 	}
 
-	mp->apbuf = (genptr_t)rt_malloc( mp->apbuflen, "rt_hf_import apbuf[]" );
+	mp->apbuf = (genptr_t)bu_malloc( mp->apbuflen, "rt_hf_import apbuf[]" );
 	got = bu_cv_w_cookie( mp->apbuf, out_cookie, mp->apbuflen,
 		mp->buf, in_cookie, count );
 	if( got != count )  {
-		rt_log("rt_hf_import(%s) bu_cv_w_cookie count=%d, got=%d\n",
+		bu_log("rt_hf_import(%s) bu_cv_w_cookie count=%d, got=%d\n",
 			xip->dfile, count, got );
 	}
 
@@ -1927,7 +1927,7 @@ err1:
  */
 int
 rt_hf_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1945,9 +1945,9 @@ double				local2mm;
 	xip->ylen /= local2mm;
 	xip->zscale /= local2mm;
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record) * DB_SS_NGRAN;
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "hf external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "hf external");
 	rec = (union record *)ep->ext_buf;
 
 	bu_vls_init( &str );
@@ -1982,7 +1982,7 @@ double			mm2local;
 	register struct rt_hf_internal	*xip =
 		(struct rt_hf_internal *)ip->idb_ptr;
 
-	RT_VLS_CHECK(str);
+	BU_CK_VLS(str);
 	RT_HF_CK_MAGIC(xip);
 	bu_vls_printf( str, "Height Field (HF)  mm2local=%g\n", mm2local);
 	bu_vls_struct_print( str, rt_hf_parse, ip->idb_ptr );
@@ -2009,10 +2009,10 @@ struct rt_db_internal	*ip;
 
 	if( xip->mp )
 	{
-		RT_CK_MAPPED_FILE(xip->mp);
-		rt_close_mapped_file(xip->mp);
+		BU_CK_MAPPED_FILE(xip->mp);
+		bu_close_mapped_file(xip->mp);
 	}
 
-	rt_free( (char *)xip, "hf ifree" );
+	bu_free( (char *)xip, "hf ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

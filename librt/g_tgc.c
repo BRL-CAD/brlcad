@@ -130,19 +130,19 @@ struct rt_i		*rtip;
 	prod_cd = mag_c * mag_d;
 
 	if( NEAR_ZERO( mag_h, RT_LEN_TOL ) ) {
-		rt_log("tgc(%s):  zero length H vector\n", stp->st_name );
+		bu_log("tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that figure is not two-dimensional			*/
 	if( NEAR_ZERO( mag_a, RT_LEN_TOL ) &&
 	    NEAR_ZERO( mag_c, RT_LEN_TOL ) ) {
-		rt_log("tgc(%s):  vectors A, C zero length\n", stp->st_name );
+		bu_log("tgc(%s):  vectors A, C zero length\n", stp->st_name );
 		return (1);
 	}
 	if( NEAR_ZERO( mag_b, RT_LEN_TOL ) &&
 	    NEAR_ZERO( mag_d, RT_LEN_TOL ) ) {
-		rt_log("tgc(%s):  vectors B, D zero length\n", stp->st_name );
+		bu_log("tgc(%s):  vectors B, D zero length\n", stp->st_name );
 		return (1);
 	}
 
@@ -150,7 +150,7 @@ struct rt_i		*rtip;
 	if( prod_ab <= SMALL )  {
 		/* AB end is degenerate */
 		if( prod_cd <= SMALL )  {
-			rt_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
+			bu_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
 			return(1);		/* BAD */
 		}
 		/* Exchange ends, so that in solids with one degenerate end,
@@ -161,14 +161,14 @@ struct rt_i		*rtip;
 #define VEXCHANGE( a, b, tmp )	{ VMOVE(tmp,a); VMOVE(a,b); VMOVE(b,tmp); }
 		VEXCHANGE( tip->a, tip->c, work );
 		VEXCHANGE( tip->b, tip->d, work );
-		rt_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
+		bu_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
 	}
 
 	/* Ascertain whether H lies in A-B plane 			*/
 	VCROSS( work, tip->a, tip->b );
 	f = VDOT( tip->h, work ) / ( prod_ab*mag_h );
 	if ( NEAR_ZERO(f, RT_DOT_TOL) ) {
-		rt_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
+		bu_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -176,9 +176,9 @@ struct rt_i		*rtip;
 		/* Validate that A.B == 0 */
 		f = VDOT( tip->a, tip->b ) / prod_ab;
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
-			rt_log("tgc(%s):  A not perpendicular to B, f=%g\n",
+			bu_log("tgc(%s):  A not perpendicular to B, f=%g\n",
 			    stp->st_name, f);
-			rt_log("tgc: dot=%g / a*b=%g\n",
+			bu_log("tgc: dot=%g / a*b=%g\n",
 			    VDOT( tip->a, tip->b ),  prod_ab );
 			return(1);		/* BAD */
 		}
@@ -187,9 +187,9 @@ struct rt_i		*rtip;
 		/* Validate that C.D == 0 */
 		f = VDOT( tip->c, tip->d ) / prod_cd;
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
-			rt_log("tgc(%s):  C not perpendicular to D, f=%g\n",
+			bu_log("tgc(%s):  C not perpendicular to D, f=%g\n",
 			    stp->st_name, f);
-			rt_log("tgc: dot=%g / c*d=%g\n",
+			bu_log("tgc: dot=%g / c*d=%g\n",
 			    VDOT( tip->c, tip->d ), prod_cd );
 			return(1);		/* BAD */
 		}
@@ -199,7 +199,7 @@ struct rt_i		*rtip;
 		/* Validate that  A || C */
 		f = 1.0 - VDOT( tip->a, tip->c ) / (mag_a * mag_c);
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
-			rt_log("tgc(%s):  A not parallel to C, f=%g\n",
+			bu_log("tgc(%s):  A not parallel to C, f=%g\n",
 			    stp->st_name, f);
 			return(1);		/* BAD */
 		}
@@ -209,14 +209,14 @@ struct rt_i		*rtip;
 		/* Validate that  B || D, for parallel planes	*/
 		f = 1.0 - VDOT( tip->b, tip->d ) / (mag_b * mag_d);
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
-			rt_log("tgc(%s):  B not parallel to D, f=%g\n",
+			bu_log("tgc(%s):  B not parallel to D, f=%g\n",
 			    stp->st_name, f);
 			return(1);		/* BAD */
 		}
 	}
 
 	/* solid is OK, compute constant terms, etc. */
-	GETSTRUCT( tgc, tgc_specific );
+	BU_GETSTRUCT( tgc, tgc_specific );
 	stp->st_specific = (genptr_t)tgc;
 
 	VMOVE( tgc->tgc_V, tip->v );
@@ -263,11 +263,11 @@ struct rt_i		*rtip;
 	rt_tgc_shear( nH, Z, Shr, tShr, iShr );
 	rt_tgc_scale( tgc->tgc_A, tgc->tgc_B, tgc->tgc_sH, Scl, iScl );
 
-	mat_mul( tmp, Shr, Rot );
-	mat_mul( tgc->tgc_ScShR, Scl, tmp );
+	bn_mat_mul( tmp, Shr, Rot );
+	bn_mat_mul( tgc->tgc_ScShR, Scl, tmp );
 
-	mat_mul( tmp, tShr, Scl );
-	mat_mul( tgc->tgc_invRtShSc, iRot, tmp );
+	bn_mat_mul( tmp, tShr, Scl );
+	bn_mat_mul( tgc->tgc_invRtShSc, iRot, tmp );
 
 	/* Compute bounding sphere and RPP */
 	{
@@ -368,8 +368,8 @@ struct tgc_specific	*tgc;
 	VUNITIZE( uC );
 	VMOVE( tgc->tgc_N, uC );
 
-	mat_idn( Rot );
-	mat_idn( Inv );
+	bn_mat_idn( Rot );
+	bn_mat_idn( Inv );
 
 	Rot[0] = Inv[0] = uA[X];
 	Rot[1] = Inv[4] = uA[Y];
@@ -403,9 +403,9 @@ CONST vect_t	vect;
 int		axis;
 mat_t		Shr, Trn, Inv;
 {
-	mat_idn( Shr );
-	mat_idn( Trn );
-	mat_idn( Inv );
+	bn_mat_idn( Shr );
+	bn_mat_idn( Trn );
+	bn_mat_idn( Inv );
 
 	if( NEAR_ZERO( vect[axis], SMALL_FASTF ) )
 		rt_bomb("rt_tgc_shear() divide by zero\n");
@@ -430,8 +430,8 @@ rt_tgc_scale( a, b, h, Scl, Inv )
 fastf_t	a, b, h;
 mat_t	Scl, Inv;
 {
-	mat_idn( Scl );
-	mat_idn( Inv );
+	bn_mat_idn( Scl );
+	bn_mat_idn( Inv );
 	Scl[0]  /= a;
 	Scl[5]  /= b;
 	Scl[10] /= h;
@@ -452,25 +452,25 @@ register CONST struct soltab	*stp;
 	(struct tgc_specific *)stp->st_specific;
 
 	VPRINT( "V", tgc->tgc_V );
-	rt_log( "mag sheared H = %f\n", tgc->tgc_sH );
-	rt_log( "mag A = %f\n", tgc->tgc_A );
-	rt_log( "mag B = %f\n", tgc->tgc_B );
-	rt_log( "mag C = %f\n", tgc->tgc_C );
-	rt_log( "mag D = %f\n", tgc->tgc_D );
+	bu_log( "mag sheared H = %f\n", tgc->tgc_sH );
+	bu_log( "mag A = %f\n", tgc->tgc_A );
+	bu_log( "mag B = %f\n", tgc->tgc_B );
+	bu_log( "mag C = %f\n", tgc->tgc_C );
+	bu_log( "mag D = %f\n", tgc->tgc_D );
 	VPRINT( "Top normal", tgc->tgc_N );
 
-	mat_print( "Sc o Sh o R", tgc->tgc_ScShR );
-	mat_print( "invR o trnSh o Sc", tgc->tgc_invRtShSc );
+	bn_mat_print( "Sc o Sh o R", tgc->tgc_ScShR );
+	bn_mat_print( "invR o trnSh o Sc", tgc->tgc_invRtShSc );
 
 	if( tgc->tgc_AD_CB )  {
-		rt_log( "A*D == C*B.  Equal eccentricities gives quadratic equation.\n");
+		bu_log( "A*D == C*B.  Equal eccentricities gives quadratic equation.\n");
 	} else {
-		rt_log( "A*D != C*B.  Quartic equation.\n");
+		bu_log( "A*D != C*B.  Quartic equation.\n");
 	}
-	rt_log( "(C/A - 1) = %f\n", tgc->tgc_CdAm1 );
-	rt_log( "(D/B - 1) = %f\n", tgc->tgc_DdBm1 );
-	rt_log( "(|A|**2)/(|C|**2) = %f\n", tgc->tgc_AAdCC );
-	rt_log( "(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD );
+	bu_log( "(C/A - 1) = %f\n", tgc->tgc_CdAm1 );
+	bu_log( "(D/B - 1) = %f\n", tgc->tgc_DdBm1 );
+	bu_log( "(|A|**2)/(|C|**2) = %f\n", tgc->tgc_AAdCC );
+	bu_log( "(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD );
 }
 
 /* hit_surfno is set to one of these */
@@ -538,7 +538,7 @@ struct seg		*seghead;
 	 */
 	t_scale = MAGNITUDE(dprime);
 	if( NEAR_ZERO( t_scale, SMALL_FASTF ) )  {
-		rt_log("tgc(%s) dprime=(%g,%g,%g), t_scale=%e, miss.\n",
+		bu_log("tgc(%s) dprime=(%g,%g,%g), t_scale=%e, miss.\n",
 		    V3ARGS(dprime), t_scale);
 		return 0;
 	}
@@ -647,7 +647,7 @@ struct seg		*seghead;
 		}
 	} else {
 		LOCAL poly	Q, Qsqr;
-		LOCAL complex	val[4];	/* roots of final equation */
+		LOCAL bn_complex_t	val[4];	/* roots of final equation */
 		register int	l;
 		register int nroots;
 
@@ -704,8 +704,8 @@ struct seg		*seghead;
 		}
 		/* Here, 'npts' is number of points being returned */
 		if ( npts != 0 && npts != 2 && npts != 4 ){
-			rt_log("tgc:  reduced %d to %d roots\n",nroots,npts);
-			rt_pr_roots( stp->st_name, val, nroots );
+			bu_log("tgc:  reduced %d to %d roots\n",nroots,npts);
+			bn_pr_roots( stp->st_name, val, nroots );
 		}
 	}
 
@@ -717,7 +717,7 @@ struct seg		*seghead;
 	}
 
 	if ( npts != 0 && npts != 2 && npts != 4 ){
-		rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
+		bu_log("tgc(%s):  %d intersects != {0,2,4}\n",
 		    stp->st_name, npts );
 		return(0);			/* No hit */
 	}
@@ -777,7 +777,7 @@ struct seg		*seghead;
 		segp->seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return(2);
 	}
 	if ( intersect == 1 )  {
@@ -793,7 +793,7 @@ struct seg		*seghead;
 		 *  whether this lies within the governing ellipse.
 		 */
 		if( NEAR_ZERO( dprime[Z], SMALL_FASTF ) )  {
-			rt_log("tgc: dprime[Z] = 0!\n" );
+			bu_log("tgc: dprime[Z] = 0!\n" );
 			return(0);
 		}
 		b = ( -pprime[Z] )/dprime[Z];
@@ -817,7 +817,7 @@ struct seg		*seghead;
 			nflag = TGC_NORM_TOP;	/* copy normal */
 		} else {
 			/* intersection apparently invalid  */
-			rt_log("tgc(%s):  only 1 intersect\n", stp->st_name);
+			bu_log("tgc(%s):  only 1 intersect\n", stp->st_name);
 			return(0);
 		}
 
@@ -842,7 +842,7 @@ struct seg		*seghead;
 			segp->seg_out.hit_surfno = nflag;
 		}
 
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return(2);
 	}
 
@@ -901,7 +901,7 @@ struct seg		*seghead;
 		segp->seg_out.hit_dist = b * t_scale;
 		segp->seg_out.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
 	}
-	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	return(2);
 }
 
@@ -939,7 +939,7 @@ struct application	*ap;
 	LOCAL poly		R, Rsqr;
 
 	/* Allocate space for polys and roots */
-	C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
+	C = (poly *)bu_malloc(n * sizeof(poly), "tor poly");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
 #       include "noalias.h"
@@ -1113,7 +1113,7 @@ struct application	*ap;
 				npts = 2;
 			}
 		} else {
-			LOCAL complex	val[4];	/* roots of final equation */
+			LOCAL bn_complex_t	val[4];	/* roots of final equation */
 			register int	l;
 			register int nroots;
 
@@ -1132,8 +1132,8 @@ struct application	*ap;
 			}
 			/* Here, 'npts' is number of points being returned */
 			if ( npts != 0 && npts != 2 && npts != 4 ){
-				rt_log("tgc:  reduced %d to %d roots\n",nroots,npts);
-				rt_pr_roots( "tgc", val, nroots );
+				bu_log("tgc:  reduced %d to %d roots\n",nroots,npts);
+				bn_pr_roots( "tgc", val, nroots );
 			}
 		}
 
@@ -1144,7 +1144,7 @@ struct application	*ap;
 			k[i] -= cor_proj;
 
 		if ( npts != 0 && npts != 2 && npts != 4 ){
-			rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
+			bu_log("tgc(%s):  %d intersects != {0,2,4}\n",
 			    stp[ix]->st_name, npts );
 			RT_TGC_SEG_MISS(segp[ix]);		/* No hit	*/
 			continue;
@@ -1226,7 +1226,7 @@ struct application	*ap;
 		 */
 			if( dprime[Z] == 0.0 )  {
 #if 0
-				rt_log("tgc: dprime[Z] = 0!\n" );
+				bu_log("tgc: dprime[Z] = 0!\n" );
 #endif
 				RT_TGC_SEG_MISS(segp[ix]);
 				continue;
@@ -1253,7 +1253,7 @@ struct application	*ap;
 			} else {
 				/* intersection apparently invalid  */
 #if 0
-				rt_log("tgc(%s):  only 1 intersect\n", stp[ix]->st_name);
+				bu_log("tgc(%s):  only 1 intersect\n", stp[ix]->st_name);
 #endif
 				RT_TGC_SEG_MISS(segp[ix]);
 				continue;
@@ -1339,7 +1339,7 @@ struct application	*ap;
 			}
 		}
 	} /* end for each ray/cone pair */
-	rt_free( (char *)C, "tor poly" );
+	bu_free( (char *)C, "tor poly" );
 }
 
 /*
@@ -1456,7 +1456,7 @@ register struct xray *rp;
 		VUNITIZE( hitp->hit_normal );
 		break;
 	default:
-		rt_log("rt_tgc_norm: bad surfno=%d\n", hitp->hit_surfno);
+		bu_log("rt_tgc_norm: bad surfno=%d\n", hitp->hit_surfno);
 		break;
 	}
 }
@@ -1486,19 +1486,19 @@ register struct uvcoord	*uvp;
 	switch( hitp->hit_surfno )  {
 	case TGC_NORM_BODY:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
-		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
+		uvp->uv_u = acos(pprime[Y]) * bn_inv2pi;
 		uvp->uv_v = pprime[Z];		/* height */
 		break;
 	case TGC_NORM_TOP:
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
+		uvp->uv_u = acos(pprime[Y]/len) * bn_inv2pi;
 		uvp->uv_v = len;		/* rim v = 1 */
 		break;
 	case TGC_NORM_BOT:
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
+		uvp->uv_u = acos(pprime[Y]/len) * bn_inv2pi;
 		uvp->uv_v = 1 - len;	/* rim v = 0 */
 		break;
 	}
@@ -1521,7 +1521,7 @@ struct soltab *stp;
 	register struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
 
-	rt_free( (char *)tgc, "tgc_specific");
+	bu_free( (char *)tgc, "tgc_specific");
 }
 
 int
@@ -1540,24 +1540,24 @@ rt_tgc_class()
 int
 rt_tgc_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	struct rt_tgc_internal	*tip;
 	union record		*rp;
 	LOCAL fastf_t	vec[3*6];
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_tgc_import: defective record\n");
+		bu_log("rt_tgc_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_TGC;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_tgc_internal), "rt_tgc_internal");
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	tip->magic = RT_TGC_INTERNAL_MAGIC;
 
@@ -1580,7 +1580,7 @@ register CONST mat_t		mat;
  */
 int
 rt_tgc_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1592,9 +1592,9 @@ double				local2mm;
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "tgc external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "tgc external");
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
@@ -1620,7 +1620,7 @@ double				local2mm;
  */
 int
 rt_tgc_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1633,13 +1633,13 @@ double			mm2local;
 	fastf_t	Hmag;
 
 	RT_TGC_CK_MAGIC(tip);
-	rt_vls_strcat( str, "truncated general cone (TGC)\n");
+	bu_vls_strcat( str, "truncated general cone (TGC)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 	    tip->v[X] * mm2local,
 	    tip->v[Y] * mm2local,
 	    tip->v[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	Hmag = MAGNITUDE(tip->h);
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
@@ -1647,9 +1647,9 @@ double			mm2local;
 	    tip->h[Y] * mm2local,
 	    tip->h[Z] * mm2local,
 	    Hmag * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 	if( Hmag < VDIVIDE_TOL )  {
-		rt_vls_strcat( str, "H vector is zero!\n");
+		bu_vls_strcat( str, "H vector is zero!\n");
 	} else {
 		register double	f = 1/Hmag;
 		VSCALE( unitv, tip->h, f );
@@ -1662,28 +1662,28 @@ double			mm2local;
 	    tip->a[Y] * mm2local,
 	    tip->a[Z] * mm2local,
 	    MAGNITUDE(tip->a) * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
 	    tip->b[X] * mm2local,
 	    tip->b[Y] * mm2local,
 	    tip->b[Z] * mm2local,
 	    MAGNITUDE(tip->b) * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
 	    tip->c[X] * mm2local,
 	    tip->c[Y] * mm2local,
 	    tip->c[Z] * mm2local,
 	    MAGNITUDE(tip->c) * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tD (%g, %g, %g) mag=%g\n",
 	    tip->d[X] * mm2local,
 	    tip->d[Y] * mm2local,
 	    tip->d[Z] * mm2local,
 	    MAGNITUDE(tip->d) * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	VCROSS( unitv, tip->c, tip->d );
 	VUNITIZE( unitv );
@@ -1703,7 +1703,7 @@ rt_tgc_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
-	rt_free( ip->idb_ptr, "tgc ifree" );
+	bu_free( ip->idb_ptr, "tgc ifree" );
 	ip->idb_ptr = GENPTR_NULL;
 }
 
@@ -1712,10 +1712,10 @@ struct rt_db_internal	*ip;
  */
 int
 rt_tgc_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_tgc_internal	*tip;
 	register int		i;
@@ -1787,7 +1787,7 @@ struct soltab *stp;
 	 * in ideal coords.  This is a symmetric matrix with
 	 * the columns (dNx, dNy, dNz).
 	 */
-	mat_idn( dN );
+	bn_mat_idn( dN );
 	dN[0] = Q2;
 	dN[2] = dN[8] = 2.0*Q*tgc->tgc_DdBm1 * hitp->hit_vpriv[X];
 	dN[5] = R2;
@@ -1799,8 +1799,8 @@ struct soltab *stp;
 	    - 4.0*tgc->tgc_CdAm1*tgc->tgc_DdBm1 * R*Q;
 
 	/* M = At * dN * A */
-	mat_mul( mtmp, dN, tgc->tgc_ScShR );
-	mat_mul( M, tgc->tgc_invRtShSc, mtmp );
+	bn_mat_mul( mtmp, dN, tgc->tgc_ScShR );
+	bn_mat_mul( M, tgc->tgc_invRtShSc, mtmp );
 
 	/* XXX - determine the scaling */
 	gradf[X] = Q2 * hitp->hit_vpriv[X];
@@ -1857,7 +1857,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	struct shell		*s;		/* shell to hold facetted TGC */
 	struct faceuse		*fu,*fu_top,*fu_base;
@@ -1882,8 +1882,8 @@ CONST struct rt_tol	*tol;
 	vect_t			normal;		/* normal vector */
 	vect_t			rev_norm;	/* reverse normal */
 	struct tgc_pts		**pts;		/* array of points (pts[ellipse#][seg#]) */
-	struct nmg_ptbl		verts;		/* table of vertices used for top and bottom faces */
-	struct nmg_ptbl		faces;		/* table of faceuses for nmg_gluefaces */
+	struct bu_ptbl		verts;		/* table of vertices used for top and bottom faces */
+	struct bu_ptbl		faces;		/* table of faceuses for nmg_gluefaces */
 	struct vertex		**v[3];		/* array for making triangular faces */
 	int			i;
 
@@ -1893,9 +1893,9 @@ CONST struct rt_tol	*tol;
 
 	if( ttol->abs > 0.0 && ttol->abs < tol->dist )
 	{
-		rt_log( "tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
+		bu_log( "tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
 			ttol->abs , tol->dist );
-		rt_log( "Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n" );
+		bu_log( "Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n" );
 		return( -1 );
 	}
 
@@ -1915,12 +1915,12 @@ CONST struct rt_tol	*tol;
 
 	if( a == 0.0 && b == 0.0 && (c == 0.0 || d == 0.0) )
 	{
-		rt_log( "Illegal TGC a, b, and c or d less than tolerance\n" );
+		bu_log( "Illegal TGC a, b, and c or d less than tolerance\n" );
 		return( -1);
 	}
 	else if( c == 0.0 && d == 0.0 && (a == 0.0 || b == 0.0 ) )
 	{
-		rt_log( "Illegal TGC c, d, and a or b less than tolerance\n" );
+		bu_log( "Illegal TGC c, d, and a or b less than tolerance\n" );
 		return( -1 );
 	}
 
@@ -1976,24 +1976,24 @@ CONST struct rt_tol	*tol;
 		if( (radius * 0.2) < max_radius )
 			alpha_tol = 2.0 * acos( 1.0 - 2.0 * radius * 0.1 / max_radius );
 		else
-			alpha_tol = rt_halfpi;
+			alpha_tol = bn_halfpi;
 	}
 	else
 	{
 		if( ttol->abs > 0.0 )
 			abs = 2.0 * acos( 1.0 - ttol->abs/max_radius );
 		else
-			abs = rt_halfpi;
+			abs = bn_halfpi;
 
 		if( ttol->rel > 0.0 )
 		{
 			if( ttol->rel * 2.0 * radius < max_radius )
 				rel = 2.0 * acos( 1.0 - ttol->rel * 2.0 * radius/max_radius );
 			else
-				rel = rt_halfpi;
+				rel = bn_halfpi;
 		}
 		else
-			rel = rt_halfpi;
+			rel = bn_halfpi;
 
 		if( ttol->norm > 0.0 )
 		{
@@ -2015,7 +2015,7 @@ CONST struct rt_tol	*tol;
 				norm = norm_top;
 		}
 		else
-			norm = rt_halfpi;
+			norm = bn_halfpi;
 
 		if( abs < rel )
 			alpha_tol = abs;
@@ -2026,7 +2026,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	/* get number of segments per quadrant */
-	nsegs = rt_halfpi / alpha_tol + 0.9999;
+	nsegs = bn_halfpi / alpha_tol + 0.9999;
 	if( nsegs < 2 )
 		nsegs = 2;
 
@@ -2049,9 +2049,9 @@ CONST struct rt_tol	*tol;
 
 		max_ratio = MAX_RATIO + 1.0;
 
-		factors = (fastf_t *)rt_malloc( nells*sizeof( fastf_t ), "factors" );
-		A = (vect_t *)rt_malloc( nells*sizeof( vect_t ), "A vectors" );
-		B = (vect_t *)rt_malloc( nells*sizeof( vect_t ), "B vectors" );
+		factors = (fastf_t *)bu_malloc( nells*sizeof( fastf_t ), "factors" );
+		A = (vect_t *)bu_malloc( nells*sizeof( vect_t ), "A vectors" );
+		B = (vect_t *)bu_malloc( nells*sizeof( vect_t ), "B vectors" );
 
 		factors[bot_ell] = 0.0;
 		factors[top_ell] = 1.0;
@@ -2070,7 +2070,7 @@ CONST struct rt_tol	*tol;
 			VMOVE( B[top_ell], tip->c );
 			reversed = 1;
 		}
-		ang = 2.0*rt_pi/((double)nsegs);
+		ang = 2.0*bn_pi/((double)nsegs);
 		sin_ang = sin( ang );
 		cos_ang = cos( ang );
 		cos_m_1_sq = (cos_ang - 1.0)*(cos_ang - 1.0);
@@ -2189,7 +2189,7 @@ CONST struct rt_tol	*tol;
 			}
 			else	/* no MAX??? */
 			{
-				rt_log( "rt_tgc_tess: Should never get here!!\n" );
+				bu_log( "rt_tgc_tess: Should never get here!!\n" );
 				rt_bomb( "rt_tgc_tess: Should never get here!!\n" );
 			}
 
@@ -2230,9 +2230,9 @@ CONST struct rt_tol	*tol;
 	}
 
 	/* get memory for points */
-	pts = (struct tgc_pts **)rt_calloc( nells , sizeof( struct tgc_pts *) , "rt_tgc_tess: pts" );
+	pts = (struct tgc_pts **)bu_calloc( nells , sizeof( struct tgc_pts *) , "rt_tgc_tess: pts" );
 	for( i=0 ; i<nells ; i++ )
-		pts[i] = (struct tgc_pts *)rt_calloc( nsegs , sizeof( struct tgc_pts ) , "rt_tgc_tess: pts" );
+		pts[i] = (struct tgc_pts *)bu_calloc( nsegs , sizeof( struct tgc_pts ) , "rt_tgc_tess: pts" );
 
 	/* calculate geometry for points */
 	for( i=0 ; i<nells ; i++ )
@@ -2246,7 +2246,7 @@ CONST struct rt_tol	*tol;
 			double alpha;
 			double sin_alpha,cos_alpha;
 
-			alpha = rt_twopi * (double)(2*j+1)/(double)(2*nsegs);
+			alpha = bn_twopi * (double)(2*j+1)/(double)(2*nsegs);
 			sin_alpha = sin( alpha );
 			cos_alpha = cos( alpha );
 
@@ -2299,23 +2299,23 @@ CONST struct rt_tol	*tol;
 
 	/* make region, shell, vertex */
 	*r = nmg_mrsv( m );
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
-	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &verts , 64, " &verts ");
+	bu_ptbl_init( &faces , 64, " &faces ");
 	/* Make bottom face */
 	if( a > 0.0 && b > 0.0 )
 	{
 		for( i=nsegs-1 ; i>=0 ; i-- ) /* reverse order to get outward normal */
 		{
 			if( !pts[0][i].dont_use )
-				nmg_tbl( &verts , TBL_INS , (long *)&pts[0][i].v );
+				bu_ptbl_ins( &verts , (long *)&pts[0][i].v );
 		}
 
-		if( NMG_TBL_END( &verts ) > 2 )
+		if( BU_PTBL_END( &verts ) > 2 )
 		{
-			fu_base = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), NMG_TBL_END( &verts ) );
-			nmg_tbl( &faces , TBL_INS , (long *)fu_base );
+			fu_base = nmg_cmface( s , (struct vertex ***)BU_PTBL_BASEADDR( &verts ), BU_PTBL_END( &verts ) );
+			bu_ptbl_ins( &faces , (long *)fu_base );
 		}
 		else
 			fu_base = (struct faceuse *)NULL;
@@ -2327,17 +2327,17 @@ CONST struct rt_tol	*tol;
 	/* Make top face */
 	if( c > 0.0 && d > 0.0 )
 	{
-		nmg_tbl( &verts , TBL_RST , (long *)NULL );
+		bu_ptbl_reset( &verts );
 		for( i=0 ; i<nsegs ; i++ )
 		{
 			if( !pts[nells-1][i].dont_use )
-				nmg_tbl( &verts , TBL_INS , (long *)&pts[nells-1][i].v );
+				bu_ptbl_ins( &verts , (long *)&pts[nells-1][i].v );
 		}
 
-		if( NMG_TBL_END( &verts ) > 2 )
+		if( BU_PTBL_END( &verts ) > 2 )
 		{
-			fu_top = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), NMG_TBL_END( &verts ) );
-			nmg_tbl( &faces , TBL_INS , (long *)fu_top );
+			fu_top = nmg_cmface( s , (struct vertex ***)BU_PTBL_BASEADDR( &verts ), BU_PTBL_END( &verts ) );
+			bu_ptbl_ins( &faces , (long *)fu_top );
 		}
 		else
 			fu_top = (struct faceuse *)NULL;
@@ -2346,7 +2346,7 @@ CONST struct rt_tol	*tol;
 		fu_top = (struct faceuse *)NULL;
 
 	/* Free table of vertices */
-	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &verts );
 
 	/* Make triangular faces */
 	for( i=0 ; i<nells-1 ; i++ )
@@ -2375,7 +2375,7 @@ CONST struct rt_tol	*tol;
 					else
 						v[2] = curr_top;
 					fu = nmg_cmface( s , v , 3 );
-					nmg_tbl( &faces , TBL_INS , (long *)fu );
+					bu_ptbl_ins( &faces , (long *)fu );
 					curr_bot = &pts[i][k].v;
 				}
 			}
@@ -2391,7 +2391,7 @@ CONST struct rt_tol	*tol;
 					else
 						v[2] = curr_bot;
 					fu = nmg_cmface( s , v , 3 );
-					nmg_tbl( &faces , TBL_INS , (long *)fu );
+					bu_ptbl_ins( &faces , (long *)fu );
 					curr_top = &pts[i+1][k].v;
 				}
 			}
@@ -2411,7 +2411,7 @@ CONST struct rt_tol	*tol;
 			double alpha;
 			double sin_alpha,cos_alpha;
 
-			alpha = rt_twopi * (double)(2*j+1)/(double)(2*nsegs);
+			alpha = bn_twopi * (double)(2*j+1)/(double)(2*nsegs);
 			sin_alpha = sin( alpha );
 			cos_alpha = cos( alpha );
 
@@ -2443,14 +2443,14 @@ CONST struct rt_tol	*tol;
 	}
 
 	/* Associate face plane equations */
-	for( i=0 ; i<NMG_TBL_END( &faces ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &faces ) ; i++ )
 	{
-		fu = (struct faceuse *)NMG_TBL_GET( &faces , i );
+		fu = (struct faceuse *)BU_PTBL_GET( &faces , i );
 		NMG_CK_FACEUSE( fu );
 
 		if( nmg_calc_face_g( fu ) )
 		{
-			rt_log( "rt_tess_tgc: failed to calculate plane equation\n" );
+			bu_log( "rt_tess_tgc: failed to calculate plane equation\n" );
 			nmg_pr_fu_briefly( fu, "" );
 			return( -1 );
 		}
@@ -2505,7 +2505,7 @@ CONST struct rt_tol	*tol;
 			    !(i == nells-1 && c == 0.0 && d == 0.0 ) &&
 			      pts[i][j].v )
 			{
-				for( RT_LIST_FOR( vu , vertexuse , &pts[i][j].v->vu_hd ) )
+				for( BU_LIST_FOR( vu , vertexuse , &pts[i][j].v->vu_hd ) )
 				{
 					NMG_CK_VERTEXUSE( vu );
 
@@ -2527,12 +2527,12 @@ CONST struct rt_tol	*tol;
 	}
 
 	/* Finished with storage, so free it */
-	rt_free( (char *)factors, "rt_tgc_tess: factors" );
-	rt_free( (char *)A , "rt_tgc_tess: A" );
-	rt_free( (char *)B , "rt_tgc_tess: B" );
+	bu_free( (char *)factors, "rt_tgc_tess: factors" );
+	bu_free( (char *)A , "rt_tgc_tess: A" );
+	bu_free( (char *)B , "rt_tgc_tess: B" );
 	for( i=0 ; i<nells ; i++ )
-		rt_free( (char *)pts[i] , "rt_tgc_tess: pts[i]" );
-	rt_free( (char *)pts , "rt_tgc_tess: pts" );
+		bu_free( (char *)pts[i] , "rt_tgc_tess: pts[i]" );
+	bu_free( (char *)pts , "rt_tgc_tess: pts" );
 
 	/* mark real edges for top and bottom faces */
 	for( i=0 ; i<2 ; i++ )
@@ -2549,16 +2549,16 @@ CONST struct rt_tol	*tol;
 
 		NMG_CK_FACEUSE( fu );
 
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
 			struct edgeuse *eu;
 
 			NMG_CK_LOOPUSE( lu );
 
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 			{
 				struct edge *e;
 
@@ -2573,8 +2573,8 @@ CONST struct rt_tol	*tol;
 	nmg_region_a( *r , tol );
 
 	/* glue faces together */
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), tol );
-	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), tol );
+	bu_ptbl_free( &faces );
 
 	return( 0 );
 }
@@ -2602,7 +2602,7 @@ rt_tgc_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_tgc_internal	*tip;
 
@@ -2645,13 +2645,13 @@ struct rt_tol		*tol;
 	/* Create the NMG Topology */
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST( shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST( shell, &(*r)->s_hd);
 
 
 	/* Create transformation matrix  for the top cap surface*/
 
-	mat_idn( omat );
-	mat_idn( mat);
+	bn_mat_idn( omat );
+	bn_mat_idn( mat);
 	
 	omat[0] = MAGNITUDE(tip->c);
 	omat[5] = MAGNITUDE(tip->d);
@@ -2659,7 +2659,7 @@ struct rt_tol		*tol;
 	omat[7] = tip->v[1] + tip->h[1];
 	omat[11] = tip->v[2] + tip->h[2];
 
-	mat_mul(imat, mat, omat);
+	bn_mat_mul(imat, mat, omat);
 
         VMOVE(anorm, tip->c);
         VMOVE(bnorm, tip->d);
@@ -2668,14 +2668,14 @@ struct rt_tol		*tol;
         VUNITIZE(bnorm);
         VUNITIZE(cnorm);
 
-        mat_idn( omat );
+        bn_mat_idn( omat );
 
         VMOVE( &omat[0], anorm);
         VMOVE( &omat[4], bnorm);
         VMOVE( &omat[8], cnorm);
 
 
-	mat_mul(top_mat, omat, imat);
+	bn_mat_mul(top_mat, omat, imat);
 
 	/* Create topology for top cap surface */
 
@@ -2683,9 +2683,9 @@ struct rt_tol		*tol;
 	vertp[0] = &verts[0];
 	top_fu = nmg_cmface(s, vertp, 1);
 
-	lu = RT_LIST_FIRST( loopuse, &top_fu->lu_hd);
+	lu = BU_LIST_FIRST( loopuse, &top_fu->lu_hd);
 	NMG_CK_LOOPUSE(lu);
-	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	eu= BU_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 	top_eu = eu;
 
@@ -2693,15 +2693,15 @@ struct rt_tol		*tol;
 	nmg_vertexuse_a_cnurb( eu->vu_p, uvw);
 	VSET( uvw, 1, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
-	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+	eu = BU_LIST_NEXT( edgeuse, &eu->l);
 
 	/* Top cap surface */
 	nmg_tgc_disk( top_fu, top_mat, 0.0, 0 );
 
 	/* Create transformation matrix  for the bottom cap surface*/
 
-	mat_idn( omat );
-	mat_idn( mat);
+	bn_mat_idn( omat );
+	bn_mat_idn( mat);
 	
 	omat[0] = MAGNITUDE(tip->a);
 	omat[5] = MAGNITUDE(tip->b);
@@ -2709,7 +2709,7 @@ struct rt_tol		*tol;
         omat[7] = tip->v[1];
         omat[11] = tip->v[2];
 
-        mat_mul(imat, mat, omat);
+        bn_mat_mul(imat, mat, omat);
 
         VMOVE(anorm, tip->a);
         VMOVE(bnorm, tip->b);
@@ -2718,22 +2718,22 @@ struct rt_tol		*tol;
         VUNITIZE(bnorm);
         VUNITIZE(cnorm);
 
-        mat_idn( omat );
+        bn_mat_idn( omat );
 
         VMOVE( &omat[0], anorm);
         VMOVE( &omat[4], bnorm);
         VMOVE( &omat[8], cnorm);
 
-        mat_mul(bot_mat, omat, imat);
+        bn_mat_mul(bot_mat, omat, imat);
 
 	/* Create topology for bottom cap surface */
 
 	vertp[0] = &verts[1];
 	bot_fu = nmg_cmface(s, vertp, 1);
 
-	lu = RT_LIST_FIRST( loopuse, &bot_fu->lu_hd);
+	lu = BU_LIST_FIRST( loopuse, &bot_fu->lu_hd);
 	NMG_CK_LOOPUSE(lu);
-	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	eu= BU_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 	bot_eu = eu;
 
@@ -2756,14 +2756,14 @@ struct rt_tol		*tol;
 	nmg_tgc_nurb_cyl( cyl_fu, top_mat, bot_mat);
 
 	/* fuse top cylinder edge to matching edge on body of cylinder */
-	lu = RT_LIST_FIRST( loopuse, &cyl_fu->lu_hd);
+	lu = BU_LIST_FIRST( loopuse, &cyl_fu->lu_hd);
 
-	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	eu= BU_LIST_FIRST( edgeuse, &lu->down_hd);
 
 	nmg_je( top_eu, eu );
 
-	eu= RT_LIST_LAST( edgeuse, &lu->down_hd);
-	eu= RT_LIST_LAST( edgeuse, &eu->l);
+	eu= BU_LIST_LAST( edgeuse, &lu->down_hd);
+	eu= BU_LIST_LAST( edgeuse, &eu->l);
 
 	nmg_je( bot_eu, eu );
 	nmg_region_a( *r,tol);
@@ -2888,9 +2888,9 @@ int	flip;
                 mptr += 3;
         }
 
-	lu = RT_LIST_FIRST( loopuse, &fu->lu_hd);
+	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd);
 	NMG_CK_LOOPUSE(lu);
-	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	eu= BU_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
 	
@@ -3019,9 +3019,9 @@ mat_t	bot_mat;
 
 	/* Assign edgeuse parameters & vertex geometry */
 
-	lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 	NMG_CK_LOOPUSE(lu);
-	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 	
 	/* March around the fu's loop assigning uv parameter values */
@@ -3034,13 +3034,13 @@ mat_t	bot_mat;
 	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
 	VSET( uvw, 1, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
-	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+	eu = BU_LIST_NEXT( edgeuse, &eu->l);
 
 	VSET( uvw, 1, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
 	VSET( uvw, 1, 1, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
-	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+	eu = BU_LIST_NEXT( edgeuse, &eu->l);
 
 	VSET( uvw, 1, 1, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
@@ -3051,24 +3051,24 @@ mat_t	bot_mat;
 	HDIVIDE( point, hvect);
 	nmg_vertex_gv( eu->vu_p->v_p, point );		/* 4,1 vertex */
 
-	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+	eu = BU_LIST_NEXT( edgeuse, &eu->l);
 
 	VSET( uvw, 0, 1, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
 	VSET( uvw, 0, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
-	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+	eu = BU_LIST_NEXT( edgeuse, &eu->l);
 
 	/* Create the edge loop geometry */
 
-	lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 	NMG_CK_LOOPUSE(lu);
-	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
 	for( i = 0; i < 4; i++)
 	{
 		nmg_edge_g_cnurb_plinear(eu);
-		eu = RT_LIST_NEXT(edgeuse, &eu->l);
+		eu = BU_LIST_NEXT(edgeuse, &eu->l);
 	}
 }

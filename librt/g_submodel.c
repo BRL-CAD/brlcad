@@ -68,13 +68,13 @@ struct rt_submodel_internal {
 	mat_t	root2leaf;
 };
 #define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/* subm */
-#define RT_SUBMODEL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_SUBMODEL_INTERNAL_MAGIC,"rt_submodel_internal")
+#define RT_SUBMODEL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_INTERNAL_MAGIC,"rt_submodel_internal")
 
 #define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
 
 struct bu_structparse rt_submodel_parse[] = {
-	{"%s",	128, "file",	offsetofarray(struct rt_submodel_internal, file), FUNC_NULL },
-	{"%s",	128, "treetop", offsetofarray(struct rt_submodel_internal, treetop), FUNC_NULL },
+	{"%s",	128, "file",	bu_offsetofarray(struct rt_submodel_internal, file), BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",	128, "treetop", bu_offsetofarray(struct rt_submodel_internal, treetop), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "meth",	RT_SUBMODEL_O(meth),		FUNC_NULL },
 	{"",	0, (char *)0, 0,			FUNC_NULL }
 };
@@ -89,7 +89,7 @@ struct submodel_specific {
 	struct rt_i	*rtip;		/* sub model */
 };
 #define RT_SUBMODEL_SPECIFIC_MAGIC	0x73756253	/* subS */
-#define RT_CK_SUBMODEL_SPECIFIC(_p)	RT_CKMAG(_p,RT_SUBMODEL_SPECIFIC_MAGIC,"submodel_specific")
+#define RT_CK_SUBMODEL_SPECIFIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_SPECIFIC_MAGIC,"submodel_specific")
 
 /*
  *  			R T _ S U B M O D E L _ P R E P
@@ -183,8 +183,8 @@ struct rt_i		*rtip;
 	submodel->magic = RT_SUBMODEL_SPECIFIC_MAGIC;
 	stp->st_specific = (genptr_t)submodel;
 
-	mat_copy( submodel->subm2m, sip->root2leaf );
-	mat_inv( submodel->m2subm, sip->root2leaf );
+	bn_mat_copy( submodel->subm2m, sip->root2leaf );
+	bn_mat_inv( submodel->m2subm, sip->root2leaf );
 	submodel->rtip = sub_rtip;
 
 	/* Propagage submodel bounding box back upwards, rotated&scaled. */
@@ -323,7 +323,7 @@ struct seg		*seghead;
 	register struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
 	register struct seg *segp;
-	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
+	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 	struct application	nap;
 	point_t			startpt;
 
@@ -559,7 +559,7 @@ CONST struct bn_tol	*tol;
 	state = rt_initial_tree_state;	/* struct copy */
 	state.ts_ttol = ttol;
 	state.ts_tol = tol;
-	mat_copy( state.ts_mat, sip->root2leaf );
+	bn_mat_copy( state.ts_mat, sip->root2leaf );
 
 	state.ts_m = (struct model **)&good;	/* hack */
 	good.vheadp = vhead;
@@ -607,7 +607,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 
@@ -627,7 +627,7 @@ CONST struct rt_tol	*tol;
 int
 rt_submodel_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 CONST struct db_i		*dbip;
 {
@@ -635,11 +635,11 @@ CONST struct db_i		*dbip;
 	union record			*rp;
 	struct bu_vls		str;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_STRSOL )  {
-		rt_log("rt_submodel_import: defective strsol record\n");
+		bu_log("rt_submodel_import: defective strsol record\n");
 		return(-1);
 	}
 
@@ -659,7 +659,7 @@ bu_log("rt_submodel_import: '%s'\n", rp->ss.ss_args);
 	if( bu_struct_parse( &str, rt_submodel_parse, (char *)sip ) < 0 )  {
 		bu_vls_free( &str );
 fail:
-		rt_free( (char *)sip , "rt_submodel_import: sip" );
+		bu_free( (char *)sip , "rt_submodel_import: sip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;
@@ -686,7 +686,7 @@ bn_mat_print("root2leaf", sip->root2leaf );
  */
 int
 rt_submodel_export( ep, ip, local2mm, dbip )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 CONST struct db_i		*dbip;
@@ -703,7 +703,7 @@ bu_log("export: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, si
 
 	/* Ignores scale factor */
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
 	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "submodel external");
 	rec = (union record *)ep->ext_buf;
@@ -738,7 +738,7 @@ double			mm2local;
 		(struct rt_submodel_internal *)ip->idb_ptr;
 
 	RT_SUBMODEL_CK_MAGIC(sip);
-	rt_vls_strcat( str, "instanced submodel (SUBMODEL)\n");
+	bu_vls_strcat( str, "instanced submodel (SUBMODEL)\n");
 
 	bu_vls_printf(str, "\tfile='%s', treetop='%s', meth=%d\n",
 		sip->file,

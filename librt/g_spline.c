@@ -34,7 +34,7 @@ struct rt_spl_internal {
 	struct b_spline	**surfs;
 };
 #define RT_SPL_INTERNAL_MAGIC	0x00911911
-#define RT_SPL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_SPL_INTERNAL_MAGIC,"rt_spl_internal")
+#define RT_SPL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_SPL_INTERNAL_MAGIC,"rt_spl_internal")
 
 struct b_tree {
 	point_t min, max;		/* bounding box info */
@@ -125,9 +125,9 @@ struct rt_i		*rtip;
 
 		new_srf = sip->surfs[i];
 
-		GETSTRUCT( s_tree, b_head );
-		GETSTRUCT( s_tree->left, b_tree );
-		GETSTRUCT( s_tree->right, b_tree );
+		BU_GETSTRUCT( s_tree, b_head );
+		BU_GETSTRUCT( s_tree->left, b_tree );
+		BU_GETSTRUCT( s_tree->right, b_tree );
 
 		/* Add to linked list */
 		s_tree->next = nlist;
@@ -187,7 +187,7 @@ register struct soltab * stp;
 	register struct b_head * ncnt = (struct b_head *) stp->st_specific;
 
 	if( ncnt  == (struct b_head *)0 )  {
-		rt_log("spline(%s):  no surfaces\n", stp->st_name);
+		bu_log("spline(%s):  no surfaces\n", stp->st_name);
 		return;
 	}
 
@@ -223,10 +223,10 @@ rt_spl_class()
  */
 int
 rt_spl_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_spl_internal	*sip;
 	register int	i;
@@ -423,7 +423,7 @@ struct soltab *stp;
 		M = VDOT(norm, uve);
 		N = VDOT(norm, v2e);
 	} else {
-		rt_log("rt_spl_curve: bad mesh point type %d\n",
+		bu_log("rt_spl_curve: bad mesh point type %d\n",
 			s_ptr->root->ctl_mesh->pt_type);
 		goto	cleanup;
 	}
@@ -440,7 +440,7 @@ struct soltab *stp;
 
 	if ( APX_EQ( (E * G) - ( F* F ) , 0.0 ) )
 	{
-		rt_log("first fundamental form is singular E = %g F = %g G = %g\n",
+		bu_log("first fundamental form is singular E = %g F = %g G = %g\n",
 			E,F,G);
 		return;
 	}
@@ -475,12 +475,12 @@ struct soltab *stp;
 	VUNITIZE( cvp->crv_pdir );
 
 cleanup:
-	rt_free( (char *)s_eval, "spl_curve:s_eval");
-	rt_free( (char *)u_eval, "spl_curve:u_eval");
-	rt_free( (char *)v_eval, "spl_curve:v_eval");
-	rt_free( (char *)u2_eval, "spl_curve:u2_eval");
-	rt_free( (char *)v2_eval, "spl_curve:v2_eval");
-	rt_free( (char *)uv_eval, "spl_curve:uv_eval");
+	bu_free( (char *)s_eval, "spl_curve:s_eval");
+	bu_free( (char *)u_eval, "spl_curve:u_eval");
+	bu_free( (char *)v_eval, "spl_curve:v_eval");
+	bu_free( (char *)u2_eval, "spl_curve:u2_eval");
+	bu_free( (char *)v2_eval, "spl_curve:v2_eval");
+	bu_free( (char *)uv_eval, "spl_curve:uv_eval");
 }
 
 /*
@@ -501,7 +501,7 @@ register struct soltab * stp;
 		spl_sfree( nlist->root);
 		spl_sfree( nlist->u_diff);
 		spl_sfree( nlist->v_diff);
-		rt_free( (char *)nlist, "rt_spl_free: b_head structure");
+		bu_free( (char *)nlist, "rt_spl_free: b_head structure");
 	}
 
 	return;
@@ -533,7 +533,7 @@ struct b_tree * tree;
 	if ( rootp->root != (struct b_spline *) 0 )
 		spl_sfree( rootp->root );
 
-	rt_free( (char *)rootp, "rt_spl_n_free: tree structure ");
+	bu_free( (char *)rootp, "rt_spl_n_free: tree structure ");
 
 }
 
@@ -612,11 +612,11 @@ register struct xray *rp;
 		VCROSS( norm, u_norm, v_norm );
 		VUNITIZE( norm);
 		VMOVE(hitp->hit_normal, norm);
-		rt_free( (char *)spl_eval, "rt_spl_curve: spl_eval" );
+		bu_free( (char *)spl_eval, "rt_spl_curve: spl_eval" );
 	}
 	else
 	{
-		rt_log("rt_spl_curve: bad mesh point type %d\n",
+		bu_log("rt_spl_curve: bad mesh point type %d\n",
 			h_ptr->root->ctl_mesh->pt_type);
 		return;
 	}
@@ -626,8 +626,8 @@ register struct xray *rp;
 		VREVERSE( hitp->hit_normal, norm );
 	}
 
-	rt_free( (char *)u_eval, "rt_spl_curve: u_eval" );
-	rt_free( (char *)v_eval, "rt_spl_curve: v_eval" );
+	bu_free( (char *)u_eval, "rt_spl_curve: u_eval" );
+	bu_free( (char *)v_eval, "rt_spl_curve: v_eval" );
 
 	return;
 }
@@ -706,7 +706,7 @@ struct seg		*seghead;
 			VMOVE(segp->seg_out.hit_point, hit2->hit_point );
 			VMOVE(segp->seg_out.hit_vpriv,hit2->hit_vpriv);
 			segp->seg_out.hit_private = hit2->hit_private;
-			rt_free( (char *)hit2, "rt_spl_shot: hit point");
+			bu_free( (char *)hit2, "rt_spl_shot: hit point");
 		} else	/* Fake it */
 		{
 			segp->seg_out.hit_dist = hit1->hit_dist + .01;
@@ -717,9 +717,9 @@ struct seg		*seghead;
 			segp->seg_out.hit_private = hit1->hit_private;
 		}
 
-		rt_free( (char *)hit1, "rt_spl_shot: hit point");
+		bu_free( (char *)hit1, "rt_spl_shot: hit point");
 
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	bu_semaphore_release( RT_SEM_MODEL );	
 	return(2);
@@ -773,8 +773,8 @@ int level;
 		}
 
 		/* Record new right and left descendants */
-		GETSTRUCT( tree->left, b_tree );
-		GETSTRUCT( tree->right, b_tree );
+		BU_GETSTRUCT( tree->left, b_tree );
+		BU_GETSTRUCT( tree->right, b_tree );
 		tree->left->root = sub;
 		spl_bound( tree->left->root,
 		    tree->left->min, tree->left->max);
@@ -791,12 +791,12 @@ int level;
 	}
 
 	if ( rt_g.debug & DEBUG_SPLINE ) 
-	    rt_log("spline: Left tree level %d\n", level);
+	    bu_log("spline: Left tree level %d\n", level);
 
 	rt_spl_n_shoot( rp,  invdir,  tree->left, ap, level+1 );
 
 	if ( rt_g.debug & DEBUG_SPLINE ) 
-	    rt_log("spline: Right tree level %d\n", level);
+	    bu_log("spline: Right tree level %d\n", level);
 
 	rt_spl_n_shoot( rp,  invdir,  tree->right, ap, level+1);
 }
@@ -825,7 +825,7 @@ int level;
 		{
 
 			if ( rt_g.debug & DEBUG_SPLINE ) 
-			    rt_log("spline: Hit found at level %d\n",
+			    bu_log("spline: Hit found at level %d\n",
 				level);
 			hit_count++;
 			rt_spl_add_hit( h0 );
@@ -837,12 +837,12 @@ int level;
 	{
 		tmp = p;
 		p = p->next;
-		rt_free( (char *)tmp, "rt_spl_shot_poly: polygon" );
+		bu_free( (char *)tmp, "rt_spl_shot_poly: polygon" );
 	}
 
 	if ( !hit_count && rt_g.debug & DEBUG_SPLINE )
 	{
-		rt_log("Bounding Box hit but no surface hit");
+		bu_log("Bounding Box hit but no surface hit");
 		VPRINT("min", tree->min);
 		VPRINT("max", tree->max);
 		rt_pr_spl("B_Spline surface", tree->root);
@@ -880,7 +880,7 @@ struct local_hit * hit1;
 		    EQ_HIT(hit1->hit_vpriv[0], h_ptr->hit_vpriv[0]) &&
 		    EQ_HIT(hit1->hit_vpriv[1], h_ptr->hit_vpriv[1]) )
 		{
-			rt_free( (char *) hit1, "rt_spl_add_hit: duplicate");
+			bu_free( (char *) hit1, "rt_spl_add_hit: duplicate");
 			return;
 		}
 	}
@@ -1024,7 +1024,7 @@ struct spl_poly * p1;
 		return 0;
 		
 	/* if we reach this point we have a hit */
-	h0 = (struct local_hit *) rt_malloc ( sizeof ( struct local_hit ), 
+	h0 = (struct local_hit *) bu_malloc ( sizeof ( struct local_hit ), 
 		"rt_spl_ray_poly: hit point");
 
 	h0->next = (struct local_hit *)0;
@@ -1066,7 +1066,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_spl_internal	*sip;
 	int	i;
@@ -1090,7 +1090,7 @@ struct rt_tol		*tol;
 int
 rt_spl_import( ip, ep, mat )
 struct rt_db_internal	*ip;
-struct rt_external	*ep;
+struct bu_external	*ep;
 mat_t			mat;
 {
 	struct rt_spl_internal *sip;
@@ -1100,23 +1100,23 @@ mat_t			mat;
 	int		currec;
 	int		s;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_BSOLID )  {
-		rt_log("rt_spl_import: defective header record\n");
+		bu_log("rt_spl_import: defective header record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_BSPLINE;
-	ip->idb_ptr = rt_malloc(sizeof(struct rt_spl_internal), "rt_spl_internal");
+	ip->idb_ptr = bu_malloc(sizeof(struct rt_spl_internal), "rt_spl_internal");
 	sip = (struct rt_spl_internal *)ip->idb_ptr;
 	sip->magic = RT_SPL_INTERNAL_MAGIC;
 
 	sip->nsurf = rp->B.B_nsurf;
 	sip->resolution = rp->B.B_resolution;
 
-	sip->surfs = (struct b_spline **)rt_malloc(
+	sip->surfs = (struct b_spline **)bu_malloc(
 		sip->nsurf * sizeof(struct b_spline *), "spl surfs[]" );
 
 	rp++;
@@ -1126,7 +1126,7 @@ mat_t			mat;
 		register dbfloat_t	*vp;
 
 		if( rp->u_id != ID_BSURF )  {
-			rt_log("rt_spl_import: defective surface record\n");
+			bu_log("rt_spl_import: defective surface record\n");
 			return(-1);
 		}
 		/*
@@ -1174,7 +1174,7 @@ mat_t			mat;
 				vp += P4;
 			}
 		} else {
-			rt_log("rt_spl_import:  %d invalid elements-per-vect\n", epv );
+			bu_log("rt_spl_import:  %d invalid elements-per-vect\n", epv );
 			return(-1);
 		}
 		rp += 1 + rp->d.d_nknots + rp->d.d_nctls;
@@ -1190,7 +1190,7 @@ mat_t			mat;
  */
 int
 rt_spl_export( ep, ip, local2mm )
-struct rt_external	*ep;
+struct bu_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
@@ -1209,10 +1209,10 @@ double			local2mm;
 
 	per_curve_grans = (sip->pts_per_curve+7)/8;
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + per_curve_grans * sip->ncurves) *
 		sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "spl external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "spl external");
 	rec = (union record *)ep->ext_buf;
 
 	rec[0].a.a_id = ID_SPL_A;
@@ -1268,7 +1268,7 @@ double			local2mm;
  */
 int
 rt_spl_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1281,11 +1281,11 @@ double			mm2local;
 	int				surf;
 
 	RT_SPL_CK_MAGIC(sip);
-	rt_vls_strcat( str, "arbitrary rectangular solid (SPL)\n");
+	bu_vls_strcat( str, "arbitrary rectangular solid (SPL)\n");
 
 	sprintf(buf, "\t%d surfaces, resolution=%g\n",
 		sip->nsurf, sip->resolution );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	for( surf=0; surf < sip->nsurf; surf++ )  {
 		register struct b_spline	*sp;
@@ -1299,18 +1299,18 @@ double			mm2local;
 			sp->order[1],
 			mp->mesh_size[0],
 			mp->mesh_size[1] );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 
 		sprintf(buf, "\t\tKnot vector %d + %d\n",
 			sp->u_kv->k_size,
 			sp->u_kv->k_size );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 
 		sprintf(buf, "\t\tV (%g, %g, %g)\n",
 			mp->mesh[X] * mm2local,
 			mp->mesh[Y] * mm2local,
 			mp->mesh[Z] * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 
 		if( !verbose )  continue;
 
@@ -1319,13 +1319,13 @@ double			mm2local;
 			register fastf_t *v = mp->mesh;
 
 			sprintf( buf, "\Row %d:\n", i );
-			rt_vls_strcat( str, buf );
+			bu_vls_strcat( str, buf );
 			for( j=0; j < mp->mesh_size[1]; j++ )  {
 				sprintf(buf, "\t\t(%g, %g, %g)\n",
 					v[X] * mm2local,
 					v[Y] * mm2local,
 					v[Z] * mm2local );
-				rt_vls_strcat( str, buf );
+				bu_vls_strcat( str, buf );
 				v += ELEMENTS_PER_VECT;
 			}
 		}
@@ -1358,6 +1358,6 @@ struct rt_db_internal	*ip;
 	}
 	sip->magic = 0;		/* sanity */
 	sip->nsurf = 0;
-	rt_free( (char *)sip, "spl ifree" );
+	bu_free( (char *)sip, "spl ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

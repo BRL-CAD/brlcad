@@ -236,7 +236,7 @@ struct rt_i		*rtip;
 	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
-	GETSTRUCT( part, part_specific );
+	BU_GETSTRUCT( part, part_specific );
 	stp->st_specific = (genptr_t)part;
 	part->part_int = *pip;			/* struct copy */
 	pip = &part->part_int;
@@ -261,20 +261,20 @@ struct rt_i		*rtip;
 	VCROSS( b, Hunit, a );
 
 	/* Compute R and Rinv */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VMOVE( &R[0], a );		/* has unit length */
 	VMOVE( &R[4], b );		/* has unit length */
 	VMOVE( &R[8], Hunit );
-	mat_trn( Rinv, R );
+	bn_mat_trn( Rinv, R );
 
 	/* Compute scale matrix S */
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = 1.0 / pip->part_vrad;	/* |A| = |B| */
 	S[ 5] = S[0];
 	S[10] = 1.0 / MAGNITUDE( pip->part_H );
 
-	mat_mul( part->part_SoR, S, R );
-	mat_mul( part->part_invRoS, Rinv, S );
+	bn_mat_mul( part->part_SoR, S, R );
+	bn_mat_mul( part->part_invRoS, Rinv, S );
 
 	/* RPP and bounding sphere */
 	VJOIN1( stp->st_center, pip->part_V, 0.5, pip->part_H );
@@ -324,25 +324,25 @@ register CONST struct soltab *stp;
 
 	VPRINT("part_V", part->part_int.part_V );
 	VPRINT("part_H", part->part_int.part_V );
-	rt_log("part_vrad=%g\n", part->part_int.part_vrad );
-	rt_log("part_hrad=%g\n", part->part_int.part_hrad );
+	bu_log("part_vrad=%g\n", part->part_int.part_vrad );
+	bu_log("part_hrad=%g\n", part->part_int.part_hrad );
 
 	switch( part->part_int.part_type )  {
 	case RT_PARTICLE_TYPE_SPHERE:
-		rt_log("part_type = SPHERE\n");
+		bu_log("part_type = SPHERE\n");
 		break;
 	case RT_PARTICLE_TYPE_CYLINDER:
-		rt_log("part_type = CYLINDER\n");
-		mat_print("part_SoR", part->part_SoR );
-		mat_print("part_invRoS", part->part_invRoS );
+		bu_log("part_type = CYLINDER\n");
+		bn_mat_print("part_SoR", part->part_SoR );
+		bn_mat_print("part_invRoS", part->part_invRoS );
 		break;
 	case RT_PARTICLE_TYPE_CONE:
-		rt_log("part_type = CONE\n");
-		mat_print("part_SoR", part->part_SoR );
-		mat_print("part_invRoS", part->part_invRoS );
+		bu_log("part_type = CONE\n");
+		bn_mat_print("part_SoR", part->part_SoR );
+		bn_mat_print("part_invRoS", part->part_invRoS );
 		break;
 	default:
-		rt_log("part_type = %d ???\n", part->part_int.part_type );
+		bu_log("part_type = %d ???\n", part->part_int.part_type );
 		break;
 	}
 }
@@ -413,7 +413,7 @@ struct seg		*seghead;
 		segp->seg_in.hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 		segp->seg_out.hit_dist = b + root;
 		segp->seg_out.hit_surfno = RT_PARTICLE_SURF_VSPHERE;
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return(2);			/* HIT */
 	}
 
@@ -608,7 +608,7 @@ out:
 		hits[1] = hits[0];		/* struct copy */
 		hitp++;
 	} else if( hitp > &hits[2] )  {
-		rt_log("rt_part_shot(%s): %d hits? surf0=%d\n",
+		bu_log("rt_part_shot(%s): %d hits? surf0=%d\n",
 			stp->st_name, hitp - &hits[0],
 			hits[0].hit_surfno );
 	}
@@ -621,7 +621,7 @@ out:
 		segp->seg_stp = stp;
 		segp->seg_in = hits[0];		/* struct copy */
 		segp->seg_out = hits[1];	/* struct copy */
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	} else {
 		/* entry is [1], exit is [0] */
 		register struct seg *segp;
@@ -630,7 +630,7 @@ out:
 		segp->seg_stp = stp;
 		segp->seg_in = hits[1];		/* struct copy */
 		segp->seg_out = hits[0];	/* struct copy */
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(2);			/* HIT */
 }
@@ -750,7 +750,7 @@ register struct soltab *stp;
 	register struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
 
-	rt_free( (char *)part, "part_specific" );
+	bu_free( (char *)part, "part_specific" );
 }
 
 /*
@@ -809,10 +809,10 @@ vect_t		h;
  */
 int
 rt_part_plot( vhead, ip, ttol, tol )
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 struct rt_db_internal *ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_part_internal	*pip;
 	point_t		tail;
@@ -949,7 +949,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_part_internal	*pip;
 	LOCAL mat_t	R;
@@ -991,35 +991,35 @@ struct rt_tol		*tol;
 	/* For rotation of the particle, +H (model) becomes +Z (unit sph) */
 	VSET( zz, 0, 0, 1 );
 	bn_mat_fromto( R, pip->part_H, zz );
-	mat_trn( invR, R );			/* inv of rot mat is trn */
+	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
 	/*** Upper (H) ***/
 
 	/* Compute S and invS matrices */
 	/* invS is just 1/diagonal elements */
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = S[ 5] = S[10] = 1/pip->part_hrad;
-	mat_inv( invS, S );
+	bn_mat_inv( invS, S );
 
 	/* invRinvS, for converting points from unit sphere to model */
-	mat_mul( state.upper_invRinvS, invR, invS );
+	bn_mat_mul( state.upper_invRinvS, invR, invS );
 
 	/* invRoS, for converting normals from unit sphere to model */
-	mat_mul( state.upper_invRoS, invR, S );
+	bn_mat_mul( state.upper_invRoS, invR, S );
 
 	/*** Lower (V) ***/
 
 	/* Compute S and invS matrices */
 	/* invS is just 1/diagonal elements */
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = S[ 5] = S[10] = 1/pip->part_vrad;
-	mat_inv( invS, S );
+	bn_mat_inv( invS, S );
 
 	/* invRinvS, for converting points from unit sphere to model */
-	mat_mul( state.lower_invRinvS, invR, invS );
+	bn_mat_mul( state.lower_invRinvS, invR, invS );
 
 	/* invRoS, for converting normals from unit sphere to model */
-	mat_mul( state.lower_invRoS, invR, S );
+	bn_mat_mul( state.lower_invRoS, invR, S );
 
 	/* Find the larger of two hemispheres */
 	radius = pip->part_vrad;
@@ -1064,10 +1064,10 @@ struct rt_tol		*tol;
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	state.s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Find the number of segments to divide 90 degrees worth into */
-	nsegs = rt_halfpi / state.theta_tol + 0.999;
+	nsegs = bn_halfpi / state.theta_tol + 0.999;
 	if( nsegs < 2 )  nsegs = 2;
 
 	/*  Find total number of strips of vertices that will be needed.
@@ -1077,7 +1077,7 @@ struct rt_tol		*tol;
 	 *  the poles.  Thus, strips[0] will have 4 faces.
 	 */
 	nstrips = 2 * nsegs + 2;
-	strips = (struct vert_strip *)rt_calloc( nstrips,
+	strips = (struct vert_strip *)bu_calloc( nstrips,
 		sizeof(struct vert_strip), "strips[]" );
 
 	/* North pole (Upper hemisphere, H end) */
@@ -1107,9 +1107,9 @@ struct rt_tol		*tol;
 	}
 	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
-		strips[i].vp = (struct vertex **)rt_calloc( strips[i].nverts,
+		strips[i].vp = (struct vertex **)bu_calloc( strips[i].nverts,
 			sizeof(struct vertex *), "strip vertex[]" );
-		strips[i].norms = (vect_t *)rt_calloc( strips[i].nverts,
+		strips[i].norms = (vect_t *)bu_calloc( strips[i].nverts,
 			sizeof( vect_t ), "strip normals[]" );
 	}
 	/* All strips have faces, except for the one (marked) equator */
@@ -1118,7 +1118,7 @@ struct rt_tol		*tol;
 			strips[i].fu = (struct faceuse **)NULL;
 			continue;
 		}
-		strips[i].fu = (struct faceuse **)rt_calloc( strips[i].nfaces,
+		strips[i].fu = (struct faceuse **)bu_calloc( strips[i].nfaces,
 			sizeof(struct faceuse *), "strip faceuse[]" );
 	}
 
@@ -1140,7 +1140,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
 				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					rt_log("rt_part_tess() nmg_cmface failure\n");
+					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 				if( j+1 >= strips[i].nverts_per_strip )  break;
@@ -1150,7 +1150,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i-1].vp[(j+1+toff)%tlim]);
 				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
 				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					rt_log("rt_part_tess() nmg_cmface failure\n");
+					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 			}
@@ -1173,7 +1173,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i-1].vp[(j+1)%tlim]);
 				vertp[0] = &(strips[i].vp[(j+1)%blim]);
 				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 4 )) == 0 )  {
-					rt_log("rt_part_tess() nmg_cmface failure\n");
+					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 			}
@@ -1197,7 +1197,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
 				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					rt_log("rt_part_tess() nmg_cmface failure\n");
+					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 				if( j+1 >= strips[i].nverts_per_strip )  break;
@@ -1207,7 +1207,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i+1].vp[(j+1+toff)%tlim]);
 				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					rt_log("rt_part_tess() nmg_cmface failure\n");
+					bu_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 			}
@@ -1231,13 +1231,13 @@ struct rt_tol		*tol;
 			alpha = (((double)i) / (nstrips-1-1));
 		else
 			alpha = (((double)i-1) / (nstrips-1-1));
-		cos_alpha = cos(alpha*rt_pi);
-		sin_alpha = sin(alpha*rt_pi);
+		cos_alpha = cos(alpha*bn_pi);
+		sin_alpha = sin(alpha*bn_pi);
 		for( j=0; j < strips[i].nverts; j++ )  {
 
 			beta = ((double)j) / strips[i].nverts;
-			cos_beta = cos(beta*rt_twopi);
-			sin_beta = sin(beta*rt_twopi);
+			cos_beta = cos(beta*bn_twopi);
+			sin_beta = sin(beta*bn_twopi);
 			VSET( sphere_pt,
 				cos_beta * sin_alpha,
 				sin_beta * sin_alpha,
@@ -1282,7 +1282,7 @@ struct rt_tol		*tol;
 			NMG_CK_VERTEX( strips[i].vp[j] );
 			VREVERSE( norm_opp , strips[i].norms[j] )
 
-			for( RT_LIST_FOR( vu , vertexuse , &strips[i].vp[j]->vu_hd ) )
+			for( BU_LIST_FOR( vu , vertexuse , &strips[i].vp[j]->vu_hd ) )
 			{
 				fu = nmg_find_fu_of_vu( vu );
 				NMG_CK_FACEUSE( fu );
@@ -1303,29 +1303,29 @@ struct rt_tol		*tol;
 	/* Release memory */
 	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
-		rt_free( (char *)strips[i].vp, "strip vertex[]" );
-		rt_free( (char *)strips[i].norms, "strip norms[]" );
+		bu_free( (char *)strips[i].vp, "strip vertex[]" );
+		bu_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
 	for( i=0; i < nstrips; i++ )  {
 		if( strips[i].fu == (struct faceuse **)0 )  continue;
-		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
+		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
-	rt_free( (char *)strips, "strips[]" );
+	bu_free( (char *)strips, "strips[]" );
 	return(0);
 fail:
 	/* Release memory */
 	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
-		rt_free( (char *)strips[i].vp, "strip vertex[]" );
-		rt_free( (char *)strips[i].norms, "strip norms[]" );
+		bu_free( (char *)strips[i].vp, "strip vertex[]" );
+		bu_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
 	for( i=0; i < nstrips; i++ )  {
 		if( strips[i].fu == (struct faceuse **)0 )  continue;
-		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
+		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
-	rt_free( (char *)strips, "strips[]" );
+	bu_free( (char *)strips, "strips[]" );
 	return(-1);
 }
 
@@ -1335,7 +1335,7 @@ fail:
 int
 rt_part_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	point_t		v;
@@ -1346,11 +1346,11 @@ register CONST mat_t		mat;
 	union record	*rp;
 	struct rt_part_internal	*part;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_PARTICLE )  {
-		rt_log("rt_part_import: defective record\n");
+		bu_log("rt_part_import: defective record\n");
 		return(-1);
 	}
 
@@ -1362,7 +1362,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_PARTICLE;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_part_internal), "rt_part_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_part_internal), "rt_part_internal");
 	part = (struct rt_part_internal *)ip->idb_ptr;
 	part->part_magic = RT_PART_INTERNAL_MAGIC;
 
@@ -1370,11 +1370,11 @@ register CONST mat_t		mat;
 	MAT4X3PNT( part->part_V, mat, v );
 	MAT4X3VEC( part->part_H, mat, h );
 	if( (part->part_vrad = vrad / mat[15]) < 0 )  {
-		rt_free( ip->idb_ptr, "rt_part_internal" );
+		bu_free( ip->idb_ptr, "rt_part_internal" );
 		return(-2);
 	}
 	if( (part->part_hrad = hrad / mat[15]) < 0 )  {
-		rt_free( ip->idb_ptr, "rt_part_internal" );
+		bu_free( ip->idb_ptr, "rt_part_internal" );
 		return(-3);
 	}
 
@@ -1386,7 +1386,7 @@ register CONST mat_t		mat;
 		minrad = part->part_vrad;
 	}
 	if( maxrad <= 0 )  {
-		rt_free( ip->idb_ptr, "rt_part_internal" );
+		bu_free( ip->idb_ptr, "rt_part_internal" );
 		return(-4);
 	}
 
@@ -1414,7 +1414,7 @@ register CONST mat_t		mat;
  */
 int
 rt_part_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1430,9 +1430,9 @@ double				local2mm;
 	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "part external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "part external");
 	rec = (union record *)ep->ext_buf;
 
 	/* Convert from user units to mm */
@@ -1460,7 +1460,7 @@ double				local2mm;
  */
 int
 rt_part_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1472,53 +1472,53 @@ double			mm2local;
 	RT_PART_CK_MAGIC(pip);
 	switch( pip->part_type )  {
 	case RT_PARTICLE_TYPE_SPHERE:
-		rt_vls_strcat( str, "spherical particle\n");
+		bu_vls_strcat( str, "spherical particle\n");
 		sprintf(buf, "\tV (%g, %g, %g)\n",
 			pip->part_V[X] * mm2local,
 			pip->part_V[Y] * mm2local,
 			pip->part_V[Z] * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		sprintf(buf, "\tradius = %g\n",
 			pip->part_vrad * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		break;
 	case RT_PARTICLE_TYPE_CYLINDER:
-		rt_vls_strcat( str, "cylindrical particle (lozenge)\n");
+		bu_vls_strcat( str, "cylindrical particle (lozenge)\n");
 		sprintf(buf, "\tV (%g, %g, %g)\n",
 			pip->part_V[X] * mm2local,
 			pip->part_V[Y] * mm2local,
 			pip->part_V[Z] * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		sprintf(buf, "\tH (%g, %g, %g)\n",
 			pip->part_H[X] * mm2local,
 			pip->part_H[Y] * mm2local,
 			pip->part_H[Z] * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		sprintf(buf, "\tradius = %g\n",
 			pip->part_vrad * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		break;
 	case RT_PARTICLE_TYPE_CONE:
-		rt_vls_strcat( str, "conical particle\n");
+		bu_vls_strcat( str, "conical particle\n");
 		sprintf(buf, "\tV (%g, %g, %g)\n",
 			pip->part_V[X] * mm2local,
 			pip->part_V[Y] * mm2local,
 			pip->part_V[Z] * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		sprintf(buf, "\tH (%g, %g, %g)\n",
 			pip->part_H[X] * mm2local,
 			pip->part_H[Y] * mm2local,
 			pip->part_H[Z] * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		sprintf(buf, "\tv end radius = %g\n",
 			pip->part_vrad * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		sprintf(buf, "\th end radius = %g\n",
 			pip->part_hrad * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		break;
 	default:
-		rt_vls_strcat( str, "Unknown particle type\n");
+		bu_vls_strcat( str, "Unknown particle type\n");
 		return(-1);
 	}
 	return(0);
@@ -1534,6 +1534,6 @@ rt_part_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
-	rt_free( ip->idb_ptr, "particle ifree" );
+	bu_free( ip->idb_ptr, "particle ifree" );
 	ip->idb_ptr = GENPTR_NULL;
 }

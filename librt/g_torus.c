@@ -183,7 +183,7 @@ struct rt_i		*rtip;
 
 	/* Validate that |A| == |B| (for now) */
 	if( rt_fdiff( tip->r_a, tip->r_b ) != 0 ) {
-		rt_log("tor(%s):  (|A|=%f) != (|B|=%f) \n",
+		bu_log("tor(%s):  (|A|=%f) != (|B|=%f) \n",
 			stp->st_name, tip->r_a, tip->r_b );
 		return(1);		/* BAD */
 	}
@@ -192,32 +192,32 @@ struct rt_i		*rtip;
 	f = VDOT( tip->a, tip->b )/(tip->r_a*tip->r_b);
 
 	if( ! NEAR_ZERO(f, 0.0001) )  {
-		rt_log("tor(%s):  A not perpendicular to B, f=%f\n",
+		bu_log("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->b, tip->h )/(tip->r_b);
 	if( ! NEAR_ZERO(f, 0.0001) )  {
-		rt_log("tor(%s):  B not perpendicular to H, f=%f\n",
+		bu_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->a, tip->h )/(tip->r_a);
 	if( ! NEAR_ZERO(f, 0.0001) )  {
-		rt_log("tor(%s):  A not perpendicular to H, f=%f\n",
+		bu_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that 0 < r2 <= r1 for alpha computation */
 	if( 0.0 >= tip->r_h  || tip->r_h > tip->r_a )  {
-		rt_log("r1 = %f, r2 = %f\n", tip->r_a, tip->r_h );
-		rt_log("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
+		bu_log("r1 = %f, r2 = %f\n", tip->r_a, tip->r_h );
+		bu_log("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
 		return(1);		/* BAD */
 	}
 
 	/* Solid is OK, compute constant terms now */
-	GETSTRUCT( tor, tor_specific );
+	BU_GETSTRUCT( tor, tor_specific );
 	stp->st_specific = (genptr_t)tor;
 
 	tor->tor_r1 = tip->r_a;
@@ -229,14 +229,14 @@ struct rt_i		*rtip;
 	/* Compute R and invR matrices */
 	VMOVE( tor->tor_N, tip->h );
 
-	mat_idn( R );
+	bn_mat_idn( R );
 	VSCALE( &R[0], tip->a, 1.0/tip->r_a );
 	VSCALE( &R[4], tip->b, 1.0/tip->r_b );
 	VMOVE( &R[8], tor->tor_N );
-	mat_inv( tor->tor_invR, R );
+	bn_mat_inv( tor->tor_invR, R );
 
 	/* Compute SoR.  Here, S = I / r1 */
-	mat_copy( tor->tor_SoR, R );
+	bn_mat_copy( tor->tor_SoR, R );
 	tor->tor_SoR[15] *= tor->tor_r1;
 
 	VMOVE( stp->st_center, tor->tor_V );
@@ -290,13 +290,13 @@ register CONST struct soltab *stp;
 	register CONST struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 
-	rt_log("r2/r1 (alpha) = %f\n", tor->tor_alpha);
-	rt_log("r1 = %f\n", tor->tor_r1);
-	rt_log("r2 = %f\n", tor->tor_r2);
+	bu_log("r2/r1 (alpha) = %f\n", tor->tor_alpha);
+	bu_log("r1 = %f\n", tor->tor_r1);
+	bu_log("r2 = %f\n", tor->tor_r2);
 	VPRINT("V", tor->tor_V);
 	VPRINT("N", tor->tor_N);
-	mat_print("S o R", tor->tor_SoR );
-	mat_print("invR", tor->tor_invR );
+	bn_mat_print("S o R", tor->tor_SoR );
+	bn_mat_print("invR", tor->tor_invR );
 }
 
 /*
@@ -411,7 +411,7 @@ struct seg		*seghead;
 	Asqr.cf[3] = A.cf[1] * A.cf[2] + A.cf[2] * A.cf[1];
 	Asqr.cf[4] = A.cf[2] * A.cf[2];
 
-	/* Inline expansion of rt_poly_scale( &X2_Y2, 4.0 ) and
+	/* Inline expansion of bn_poly_scale( &X2_Y2, 4.0 ) and
 	 * rt_poly_sub( &Asqr, &X2_Y2, &C ).
 	 */
 	C.dgr   = 4;
@@ -426,8 +426,8 @@ struct seg		*seghead;
 	 */
 	if ( (i = rt_poly_roots( &C, val )) != 4 ){
 		if( i != 0 )  {
-			rt_log("tor:  rt_poly_roots() 4!=%d\n", i);
-			rt_pr_roots( stp->st_name, val, i );
+			bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
+			bn_pr_roots( stp->st_name, val, i );
 		}
 		return(0);		/* MISS */
 	}
@@ -453,8 +453,8 @@ struct seg		*seghead;
 		return(0);		/* No hit */
 
 	default:
-		rt_log("rt_tor_shot: reduced 4 to %d roots\n",i);
-		rt_pr_roots( stp->st_name, val, 4 );
+		bu_log("rt_tor_shot: reduced 4 to %d roots\n",i);
+		bn_pr_roots( stp->st_name, val, 4 );
 		return(0);		/* No hit */
 
 	case 2:
@@ -498,7 +498,7 @@ struct seg		*seghead;
 	/* Set aside vector for rt_tor_norm() later */
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
-	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 
 	if( i == 2 )
 		return(2);			/* HIT */
@@ -512,7 +512,7 @@ struct seg		*seghead;
 	segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 1;
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[3], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[2], dprime );
-	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	return(4);			/* HIT */
 }
 
@@ -545,10 +545,10 @@ struct application	*ap;
 	LOCAL fastf_t	*cor_proj;
 
 	/* Allocate space for polys and roots */
-        C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
-	val = (complex (*)[4])rt_malloc(n * sizeof(complex) * 4,
+        C = (poly *)bu_malloc(n * sizeof(poly), "tor poly");
+	val = (complex (*)[4])bu_malloc(n * sizeof(complex) * 4,
 		"tor complex");
-	cor_proj = (fastf_t *)rt_malloc(n * sizeof(fastf_t), "tor proj");
+	cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "tor proj");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
 #	include "noalias.h"
@@ -627,7 +627,7 @@ struct application	*ap;
 				 A.cf[2] * A.cf[1];
 		Asqr.cf[4] = A.cf[2] * A.cf[2];
 
-		/* Inline expansion of (void) rt_poly_scale( &X2_Y2, 4.0 ) */
+		/* Inline expansion of (void) bn_poly_scale( &X2_Y2, 4.0 ) */
 		X2_Y2.cf[0] *= 4.0;
 		X2_Y2.cf[1] *= 4.0;
 		X2_Y2.cf[2] *= 4.0;
@@ -651,8 +651,8 @@ struct application	*ap;
 	 	*/
 		if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]) )) != 4 ){
 			if( num_roots != 0 )  {
-				rt_log("tor:  rt_poly_roots() 4!=%d\n", num_roots);
-				rt_pr_roots( "tor", val[i], num_roots );
+				bu_log("tor:  rt_poly_roots() 4!=%d\n", num_roots);
+				bn_pr_roots( "tor", val[i], num_roots );
 			}
 			SEG_MISS(segp[i]);		/* MISS */
 		}
@@ -691,8 +691,8 @@ struct application	*ap;
 		}
 		else if( num_zero != 2 && num_zero != 4 ) {
 #if 0
-			rt_log("rt_tor_shot: reduced 4 to %d roots\n",i);
-			rt_pr_roots( stp->st_name, val, 4 );
+			bu_log("rt_tor_shot: reduced 4 to %d roots\n",i);
+			bn_pr_roots( stp->st_name, val, 4 );
 #endif
 			SEG_MISS(segp[i]);		/* MISS */
 		}
@@ -772,9 +772,9 @@ struct application	*ap;
 	}
 
 	/* Free tmp space used */
-	rt_free( (char *)C, "tor C");
-	rt_free( (char *)val, "tor val");
-	rt_free( (char *)cor_proj, "tor cor_proj");
+	bu_free( (char *)C, "tor C");
+	bu_free( (char *)val, "tor val");
+	bu_free( (char *)cor_proj, "tor cor_proj");
 }
 
 /*
@@ -900,14 +900,14 @@ register struct uvcoord	*uvp;
 	/*
 	 * -pi/2 <= atan2(x,y) <= pi/2
 	 */
-	uvp -> uv_u = atan2(pprime[Y], pprime[X]) * rt_inv2pi + 0.5;
+	uvp -> uv_u = atan2(pprime[Y], pprime[X]) * bn_inv2pi + 0.5;
 
 	VSET(work, pprime[X], pprime[Y], 0.0);
 	VUNITIZE(work);
 	VSUB2(pprime2, pprime, work);
 	VUNITIZE(pprime2);
 	costheta = VDOT(pprime2, work);
-	uvp -> uv_v = atan2(pprime2[Z], costheta) * rt_inv2pi + 0.5;
+	uvp -> uv_v = atan2(pprime2[Z], costheta) * bn_inv2pi + 0.5;
 }
 
 /*
@@ -920,7 +920,7 @@ struct soltab *stp;
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 
-	rt_free( (char *)tor, "tor_specific");
+	bu_free( (char *)tor, "tor_specific");
 }
 
 int
@@ -940,10 +940,10 @@ rt_tor_class()
  */
 int
 rt_tor_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1002,14 +1002,14 @@ CONST struct rt_tol	*tol;
 	 */
 	if( ttol->norm > 0.0 )  {
 		register int	nseg;
-		nseg = (rt_pi / ttol->norm) + 0.99;
+		nseg = (bn_pi / ttol->norm) + 0.99;
 		if( nseg > nlen ) nlen = nseg;
 		if( nseg > nw ) nw = nseg;
 	}
 
 	/* Compute the points on the surface of the torus */
 	dist_to_rim = tip->r_h/tip->r_a;
-	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
+	pts = (fastf_t *)bu_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_plot pts[]" );
 
 #define PT(www,lll)	((((www)%nw)*nlen)+((lll)%nlen))
@@ -1017,7 +1017,7 @@ CONST struct rt_tol	*tol;
 #define NORM_A(ww,ll)	(&norms[PT(ww,ll)*3])
 
 	for( len = 0; len < nlen; len++ )  {
-		beta = rt_twopi * len / nlen;
+		beta = bn_twopi * len / nlen;
 		cos_beta = cos(beta);
 		sin_beta = sin(beta);
 		/* G always points out to rim, along radius vector */
@@ -1025,7 +1025,7 @@ CONST struct rt_tol	*tol;
 		/* We assume that |radius| = |A|.  Circular */
 		VSCALE( G, radius, dist_to_rim );
 		for( w = 0; w < nw; w++ )  {
-			alpha = rt_twopi * w / nw;
+			alpha = bn_twopi * w / nw;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
@@ -1050,7 +1050,7 @@ CONST struct rt_tol	*tol;
 		}
 	}
 
-	rt_free( (char *)pts, "rt_tor_plot pts[]" );
+	bu_free( (char *)pts, "rt_tor_plot pts[]" );
 	return(0);
 }
 
@@ -1063,7 +1063,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1129,19 +1129,19 @@ CONST struct rt_tol	*tol;
 	 */
 	if( ttol->norm > 0.0 )  {
 		register int	nseg;
-		nseg = (rt_pi / ttol->norm) + 0.99;
+		nseg = (bn_pi / ttol->norm) + 0.99;
 		if( nseg > nlen ) nlen = nseg;
 		if( nseg > nw ) nw = nseg;
 	}
 
 	/* Compute the points on the surface of the torus */
 	dist_to_rim = tip->r_h/tip->r_a;
-	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
+	pts = (fastf_t *)bu_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_tess pts[]" );
-	norms = (fastf_t *)rt_malloc( nw * nlen * sizeof( vect_t ) , "rt_tor_tess: norms[]" );
+	norms = (fastf_t *)bu_malloc( nw * nlen * sizeof( vect_t ) , "rt_tor_tess: norms[]" );
 
 	for( len = 0; len < nlen; len++ )  {
-		beta = rt_twopi * len / nlen;
+		beta = bn_twopi * len / nlen;
 		cos_beta = cos(beta);
 		sin_beta = sin(beta);
 		/* G always points out to rim, along radius vector */
@@ -1149,7 +1149,7 @@ CONST struct rt_tol	*tol;
 		/* We assume that |radius| = |A|.  Circular */
 		VSCALE( G, radius, dist_to_rim );
 		for( w = 0; w < nw; w++ )  {
-			alpha = rt_twopi * w / nw;
+			alpha = bn_twopi * w / nw;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
@@ -1161,11 +1161,11 @@ CONST struct rt_tol	*tol;
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-	verts = (struct vertex **)rt_calloc( nw*nlen, sizeof(struct vertex *),
+	verts = (struct vertex **)bu_calloc( nw*nlen, sizeof(struct vertex *),
 		"rt_tor_tess *verts[]" );
-	faces = (struct faceuse **)rt_calloc( nw*nlen, sizeof(struct faceuse *),
+	faces = (struct faceuse **)bu_calloc( nw*nlen, sizeof(struct faceuse *),
 		"rt_tor_tess *faces[]" );
 
 	/* Build the topology of the torus */
@@ -1178,7 +1178,7 @@ CONST struct rt_tol	*tol;
 			vertp[2] = &verts[ PT(w+1,len+1) ];
 			vertp[3] = &verts[ PT(w+1,len+0) ];
 			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
-				rt_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
+				bu_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
 					w, nw, len, nlen );
 				nfaces--;
 			}
@@ -1208,7 +1208,7 @@ CONST struct rt_tol	*tol;
 
 			VREVERSE( rev_norm , NORM_A(w,len) );
 
-			for( RT_LIST_FOR( vu , vertexuse , &verts[PT(w,len)]->vu_hd ) )
+			for( BU_LIST_FOR( vu , vertexuse , &verts[PT(w,len)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1228,10 +1228,10 @@ CONST struct rt_tol	*tol;
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
-	rt_free( (char *)pts, "rt_tor_tess pts[]" );
-	rt_free( (char *)verts, "rt_tor_tess *verts[]" );
-	rt_free( (char *)faces, "rt_tor_tess *faces[]" );
-	rt_free( (char *)norms , "rt_tor_tess norms[]" );
+	bu_free( (char *)pts, "rt_tor_tess pts[]" );
+	bu_free( (char *)verts, "rt_tor_tess *verts[]" );
+	bu_free( (char *)faces, "rt_tor_tess *faces[]" );
+	bu_free( (char *)norms , "rt_tor_tess norms[]" );
 	return(0);
 }
 
@@ -1286,7 +1286,7 @@ double	radius;
 		 */
 		return( 360*10 );
 	}
-	n = rt_pi / half_theta + 0.99;
+	n = bn_pi / half_theta + 0.99;
 
 	/* Impose the limits again */
 	if( n <= 6 )  return(6);
@@ -1303,7 +1303,7 @@ double	radius;
 int
 rt_tor_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	struct rt_tor_internal	*tip;
@@ -1312,17 +1312,17 @@ register CONST mat_t		mat;
 	vect_t			axb;
 	register fastf_t	f;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_tor_import: defective record\n");
+		bu_log("rt_tor_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_TOR;
-	ip->idb_ptr = rt_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
+	ip->idb_ptr = bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	tip->magic = RT_TOR_INTERNAL_MAGIC;
 
@@ -1340,7 +1340,7 @@ register CONST mat_t		mat;
 	tip->r_b = MAGNITUDE(tip->b);
 	tip->r_h = MAGNITUDE(tip->h);
 	if( tip->r_a < SMALL || tip->r_b < SMALL || tip->r_h < SMALL )  {
-		rt_log("rt_tor_import:  zero length A, B, or H vector\n");
+		bu_log("rt_tor_import:  zero length A, B, or H vector\n");
 		return(-1);
 	}
 	/* In memory, the H vector is unit length */
@@ -1364,7 +1364,7 @@ register CONST mat_t		mat;
  */
 int
 rt_tor_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1381,9 +1381,9 @@ double				local2mm;
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "tor external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "tor external");
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
@@ -1394,11 +1394,11 @@ double				local2mm;
 
 	/* Validate that 0 < r2 <= r1 */
 	if( r2 <= 0.0 )  {
-		rt_log("rt_tor_export:  illegal r2=%.12e <= 0\n", r2);
+		bu_log("rt_tor_export:  illegal r2=%.12e <= 0\n", r2);
 		return(-1);
 	}
 	if( r2 > r1 )  {
-		rt_log("rt_tor_export:  illegal r2=%.12e > r1=%.12e\n",
+		bu_log("rt_tor_export:  illegal r2=%.12e > r1=%.12e\n",
 			r2, r1);
 		return(-1);
 	}
@@ -1410,7 +1410,7 @@ double				local2mm;
 	VMOVE( norm, tip->h );
 	m2 = MAGNITUDE( norm );		/* F2 is NORMAL to torus */
 	if( m2 <= SQRT_SMALL_FASTF )  {
-		rt_log("rt_tor_export: normal magnitude is zero!\n");
+		bu_log("rt_tor_export: normal magnitude is zero!\n");
 		return(-1);		/* failure */
 	}
 	m2 = 1.0/m2;
@@ -1419,7 +1419,7 @@ double				local2mm;
 
 	/* Create two mutually perpendicular vectors, perpendicular to Norm */
 	/* Ensure that AxB points in direction of N */
-	mat_vec_ortho( cross1, norm );
+	bn_vec_ortho( cross1, norm );
 	VCROSS( cross2, norm, cross1 );
 	VUNITIZE( cross2 );
 
@@ -1454,7 +1454,7 @@ double				local2mm;
  */
 int
 rt_tor_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1465,20 +1465,20 @@ double			mm2local;
 	double				r3, r4;
 
 	RT_TOR_CK_MAGIC(tip);
-	rt_vls_strcat( str, "torus (TOR)\n");
+	bu_vls_strcat( str, "torus (TOR)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g), r1=%g (A), r2=%g (H)\n",
 		tip->v[X] * mm2local,
 		tip->v[Y] * mm2local,
 		tip->v[Z] * mm2local,
 		tip->r_a * mm2local, tip->r_h * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tN=(%g, %g, %g)\n",
 		tip->h[X] * mm2local,
 		tip->h[Y] * mm2local,
 		tip->h[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	if( !verbose )  return(0);
 
@@ -1486,27 +1486,27 @@ double			mm2local;
 		tip->a[X] * mm2local / tip->r_a,
 		tip->a[Y] * mm2local / tip->r_a,
 		tip->a[Z] * mm2local / tip->r_a );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB=(%g, %g, %g)\n",
 		tip->b[X] * mm2local / tip->r_b,
 		tip->b[Y] * mm2local / tip->r_b,
 		tip->b[Z] * mm2local / tip->r_b );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	r3 = tip->r_a - tip->r_h;
 	sprintf(buf, "\tvector to inner edge = (%g, %g, %g)\n",
 		tip->a[X] * mm2local / tip->r_a * r3,
 		tip->a[Y] * mm2local / tip->r_a * r3,
 		tip->a[Z] * mm2local / tip->r_a * r3 );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	r4 = tip->r_a + tip->r_h;
 	sprintf(buf, "\tvector to outer edge = (%g, %g, %g)\n",
 		tip->a[X] * mm2local / tip->r_a * r4,
 		tip->a[Y] * mm2local / tip->r_a * r4,
 		tip->a[Z] * mm2local / tip->r_a * r4 );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	return(0);
 }
@@ -1526,6 +1526,6 @@ struct rt_db_internal	*ip;
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
-	rt_free( (char *)tip, "rt_tor_internal" );
+	bu_free( (char *)tip, "rt_tor_internal" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

@@ -79,7 +79,7 @@ struct rt_i		*rtip;
 	 * Process a HALFSPACE, which is represented as a 
 	 * normal vector, and a distance.
 	 */
-	GETSTRUCT( halfp, half_specific );
+	BU_GETSTRUCT( halfp, half_specific );
 	stp->st_specific = (genptr_t)halfp;
 
 	VMOVE( halfp->half_eqn, hip->eqn );
@@ -114,11 +114,11 @@ register CONST struct soltab *stp;
 		(struct half_specific *)stp->st_specific;
 
 	if( halfp == HALF_NULL )  {
-		rt_log("half(%s):  no data?\n", stp->st_name);
+		bu_log("half(%s):  no data?\n", stp->st_name);
 		return;
 	}
 	VPRINT( "Normal", halfp->half_eqn );
-	rt_log( "d = %f\n", halfp->half_eqn[3] );
+	bu_log( "d = %f\n", halfp->half_eqn[3] );
 	VPRINT( "Xbase", halfp->half_Xbase );
 	VPRINT( "Ybase", halfp->half_Ybase );
 }
@@ -173,7 +173,7 @@ struct seg		*seghead;
 		}
 	}
 	if( rt_g.debug & DEBUG_ARB8 )
-		rt_log("half: in=%f, out=%f\n", in, out);
+		bu_log("half: in=%f, out=%f\n", in, out);
 
 	{
 		register struct seg *segp;
@@ -182,7 +182,7 @@ struct seg		*seghead;
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = in;
 		segp->seg_out.hit_dist = out;
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(2);			/* HIT */
 }
@@ -268,10 +268,10 @@ register struct xray *rp;
 	/* We are expected to compute hit_point here.  May be infinite. */
 	f = hitp->hit_dist;
 	if( f <= -INFINITY )  {
-		rt_log("rt_hlf_norm:  hit_dist = -INFINITY, unable to compute pt.\n");
+		bu_log("rt_hlf_norm:  hit_dist = -INFINITY, unable to compute pt.\n");
 		VSETALL( hitp->hit_point, -INFINITY );
 	} else if( f >= INFINITY )  {
-		rt_log("rt_hlf_norm:  hit_dist = +INFINITY, unable to compute pt.\n");
+		bu_log("rt_hlf_norm:  hit_dist = +INFINITY, unable to compute pt.\n");
 		VSETALL( hitp->hit_point, INFINITY );
 	} else {
 		VJOIN1( hitp->hit_point, rp->r_pt, f, rp->r_dir );
@@ -323,7 +323,7 @@ register struct uvcoord *uvp;
 
 	f = hitp->hit_dist;
 	if( f <= -INFINITY || f >= INFINITY )  {
-		rt_log("rt_hlf_uv:  infinite dist\n");
+		bu_log("rt_hlf_uv:  infinite dist\n");
 		rt_pr_hit( "rt_hlf_uv", hitp );
 		uvp->uv_u = uvp->uv_v = 0;
 		uvp->uv_du = uvp->uv_dv = 0;
@@ -333,7 +333,7 @@ register struct uvcoord *uvp;
 
 	f = VDOT( P_A, halfp->half_Xbase )/10000;
 	if( f <= -INFINITY || f >= INFINITY )  {
-		rt_log("rt_hlf_uv:  bad X vdot\n");
+		bu_log("rt_hlf_uv:  bad X vdot\n");
 		VPRINT("Xbase", halfp->half_Xbase);
 		rt_pr_hit( "rt_hlf_uv", hitp );
 		VPRINT("st_center", stp->st_center );
@@ -348,7 +348,7 @@ register struct uvcoord *uvp;
 
 	f = VDOT( P_A, halfp->half_Ybase )/10000;
 	if( f <= -INFINITY || f >= INFINITY )  {
-		rt_log("rt_hlf_uv:  bad Y vdot\n");
+		bu_log("rt_hlf_uv:  bad Y vdot\n");
 		VPRINT("Xbase", halfp->half_Ybase);
 		rt_pr_hit( "rt_hlf_uv", hitp );
 		VPRINT("st_center", stp->st_center );
@@ -363,7 +363,7 @@ register struct uvcoord *uvp;
 
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
 		if( rt_g.debug )
-			rt_log("half_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
+			bu_log("half_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
@@ -387,7 +387,7 @@ struct soltab *stp;
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
-	rt_free( (char *)halfp, "half_specific");
+	bu_free( (char *)halfp, "half_specific");
 }
 
 int
@@ -400,7 +400,7 @@ CONST struct bn_tol		*tol;
 		(struct half_specific *)stp->st_specific;
 
 	if( halfp == HALF_NULL ) {
-		rt_log( "half(%s):  no data?\n", stp->st_name );
+		bu_log( "half(%s):  no data?\n", stp->st_name );
 		return 0;
 	}
 
@@ -420,10 +420,10 @@ CONST struct bn_tol		*tol;
  */
 int
 rt_hlf_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal 	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_half_internal	*hip;
 	vect_t cent;		/* some point on the plane */
@@ -517,7 +517,7 @@ CONST int	free;
 	/* Now some safety.  Verify that the normal has unit length */
 	f = MAGNITUDE( hop->eqn);
 	if ( f < SMALL ) {
-		rt_log("rt_half_xform: bad normal, len = %g\n", f);
+		bu_log("rt_half_xform: bad normal, len = %g\n", f);
 		return(-1);
 	}
 	t = f - 1.0;
@@ -539,7 +539,7 @@ CONST int	free;
 int
 rt_hlf_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 CONST mat_t			mat;
 {
 	struct rt_half_internal	*hip;
@@ -549,16 +549,16 @@ CONST mat_t			mat;
 	fastf_t		orig_eqn[3*2];
 	register double	f,t;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_hlf_import: defective record, id=x%x\n", rp->u_id);
+		bu_log("rt_hlf_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_HALF;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_half_internal), "rt_half_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_half_internal), "rt_half_internal");
 	hip = (struct rt_half_internal *)ip->idb_ptr;
 	hip->magic = RT_HALF_INTERNAL_MAGIC;
 
@@ -580,7 +580,7 @@ CONST mat_t			mat;
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( hip->eqn );
 	if( f < SMALL )  {
-		rt_log("rt_hlf_import:  bad normal, len=%g\n", f );
+		bu_log("rt_hlf_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
 	t = f - 1.0;
@@ -598,7 +598,7 @@ CONST mat_t			mat;
  */
 int
 rt_hlf_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -610,9 +610,9 @@ double				local2mm;
 	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC(hip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "half external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "half external");
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
@@ -632,7 +632,7 @@ double				local2mm;
  */
 int
 rt_hlf_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -642,12 +642,12 @@ double			mm2local;
 	char	buf[256];
 
 	RT_HALF_CK_MAGIC(hip);
-	rt_vls_strcat( str, "halfspace\n");
+	bu_vls_strcat( str, "halfspace\n");
 
 	sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
 		V3ARGS(hip->eqn),		/* should have unit length */
 		hip->eqn[3] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	return(0);
 }
@@ -662,7 +662,7 @@ rt_hlf_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
-	rt_free( ip->idb_ptr, "hlf ifree" );
+	bu_free( ip->idb_ptr, "hlf ifree" );
 	ip->idb_ptr = GENPTR_NULL;
 }
 
@@ -675,7 +675,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_half_internal	*vip;
 #if 0

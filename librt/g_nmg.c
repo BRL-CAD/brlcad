@@ -80,7 +80,7 @@ struct rt_i		*rtip;
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	GETSTRUCT( nmg_s, nmg_specific );
+	BU_GETSTRUCT( nmg_s, nmg_specific );
 	stp->st_specific = (genptr_t)nmg_s;
 	nmg_s->nmg_model = m;
 	ip->idb_ptr = (genptr_t)NULL;
@@ -94,7 +94,7 @@ struct rt_i		*rtip;
 	/* the model bounding box is an amalgam of the 
 	 * nmgregion bounding boxes.
 	 */
-	for (RT_LIST_FOR(rp, nmgregion, &m->r_hd )) {
+	for (BU_LIST_FOR(rp, nmgregion, &m->r_hd )) {
 		NMG_CK_REGION(rp);
 		NMG_CK_REGION_A(rp->ra_p);
 
@@ -161,7 +161,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 		(struct nmg_specific *)stp->st_specific;
 
 	if(rt_g.NMG_debug & DEBUG_NMGRT) {
-		rt_log("rt_nmg_shot()\n\t");
+		bu_log("rt_nmg_shot()\n\t");
 		rt_pr_tol(&ap->a_rt_i->rti_tol);
 	}
 
@@ -209,12 +209,12 @@ struct seg		*seghead;	/* intersection w/ ray */
 	 *		(NULL)		item not previously processed
 	 *		hitmiss ptr	item previously processed
 	 */
-	rd.hitmiss = (struct hitmiss **)rt_calloc( rd.rd_m->maxindex,
+	rd.hitmiss = (struct hitmiss **)bu_calloc( rd.rd_m->maxindex,
 		sizeof(struct hitmiss *), "nmg geom hit list");
 
 	/* initialize the lists of things that have been hit/missed */
-	RT_LIST_INIT(&rd.rd_hit);
-	RT_LIST_INIT(&rd.rd_miss);
+	BU_LIST_INIT(&rd.rd_hit);
+	BU_LIST_INIT(&rd.rd_miss);
 	rd.magic = NMG_RAY_DATA_MAGIC;
 
 	/* intersect the ray with the geometry */
@@ -224,7 +224,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 	status = nmg_ray_segs(&rd);
 
 	/* free the hitmiss table */
-	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
+	bu_free( (char *)rd.hitmiss, "free nmg geom hit list");
 
 	return(status);
 }
@@ -312,7 +312,7 @@ register struct soltab *stp;
 		(struct nmg_specific *)stp->st_specific;
 
 	nmg_km( nmg->nmg_model );
-	rt_free( (char *)nmg, "nmg_specific" );
+	bu_free( (char *)nmg, "nmg_specific" );
 }
 
 /*
@@ -330,10 +330,10 @@ rt_nmg_class()
  */
 int
 rt_nmg_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct model	*m;
 
@@ -364,7 +364,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct model	*lm;
 
@@ -374,7 +374,7 @@ CONST struct rt_tol	*tol;
 	lm = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(lm);
 
-	if( RT_LIST_IS_EMPTY( &(lm->r_hd) ) )  {
+	if( BU_LIST_IS_EMPTY( &(lm->r_hd) ) )  {
 		/* No regions in imported geometry, can't give valid 'r' */
 		*r = (struct nmgregion *)NULL;
 		return -1;
@@ -382,17 +382,17 @@ CONST struct rt_tol	*tol;
 
 	/* XXX A big hack, just for testing ***/
 
-	*r = RT_LIST_FIRST(nmgregion, &(lm->r_hd) );
+	*r = BU_LIST_FIRST(nmgregion, &(lm->r_hd) );
 	NMG_CK_REGION(*r);
-	if( RT_LIST_NEXT_NOT_HEAD( *r, &(lm->r_hd) ) )  {
+	if( BU_LIST_NEXT_NOT_HEAD( *r, &(lm->r_hd) ) )  {
 		struct nmgregion *r2;
 
-		r2 = RT_LIST_PNEXT( nmgregion, &((*r)->l) );
-		while( RT_LIST_NOT_HEAD( &r2->l, &(lm->r_hd) ) )
+		r2 = BU_LIST_PNEXT( nmgregion, &((*r)->l) );
+		while( BU_LIST_NOT_HEAD( &r2->l, &(lm->r_hd) ) )
 		{
 			struct nmgregion *next_r;
 
-			next_r = RT_LIST_PNEXT( nmgregion, &r2->l );
+			next_r = BU_LIST_PNEXT( nmgregion, &r2->l );
 			nmg_merge_regions( *r, r2, tol );
 
 			r2 = next_r;
@@ -412,9 +412,9 @@ CONST struct rt_tol	*tol;
 }
 
 #define RT_CK_DISKMAGIC(_cp,_magic)	\
-	if( rt_glong(_cp) != _magic )  { \
-		rt_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
-			rt_glong(_cp), _magic, __FILE__, __LINE__); \
+	if( bu_glong(_cp) != _magic )  { \
+		bu_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
+			bu_glong(_cp), _magic, __FILE__, __LINE__); \
 		rt_bomb("bad magic\n"); \
 	}
 
@@ -778,7 +778,7 @@ register long	magic;
 		return NMG_KIND_VERTEX_G;
 	}
 	/* default */
-	rt_log("magic = x%x\n", magic);
+	bu_log("magic = x%x\n", magic);
 	rt_bomb("rt_nmg_magic_to_kind: bad magic");
 	return -1;
 }
@@ -839,15 +839,15 @@ double		scale;
 		count *= RT_NURB_EXTRACT_COORDS(pt_type);
 
 	cp = rt_nmg_fastf_p;
-	(void)rt_plong( cp + 0, DISK_DOUBLE_ARRAY_MAGIC );
-	(void)rt_plong( cp + 4, count );
+	(void)bu_plong( cp + 0, DISK_DOUBLE_ARRAY_MAGIC );
+	(void)bu_plong( cp + 4, count );
 	if( pt_type == 0 || scale == 1.0 )  {
 		htond( cp + (4+4), (unsigned char *)fp, count );
 	} else {
 		fastf_t		*new;
 
 		/* Need to scale data by 'scale' ! */
-		new = (fastf_t *)rt_malloc( count*sizeof(fastf_t), "rt_nmg_export_fastf" );
+		new = (fastf_t *)bu_malloc( count*sizeof(fastf_t), "rt_nmg_export_fastf" );
 		if( RT_NURB_IS_PT_RATIONAL(pt_type) )  {
 			/* Don't scale the homogeneous (rational) coord */
 			register int	i;
@@ -863,7 +863,7 @@ double		scale;
 			VSCALEN( new, fp, scale, count );
 		}
 		htond( cp + (4+4), (unsigned char *)new, count );
-		rt_free( (char *)new, "rt_nmg_export_fastf" );
+		bu_free( (char *)new, "rt_nmg_export_fastf" );
 	}
 	cp += (4+4) + count * 8;
 	rt_nmg_fastf_p = cp;
@@ -888,7 +888,7 @@ int			pt_type;
 	fastf_t			*tmp;
 
 	if( ecnt[subscript].byte_offset <= 0 || ecnt[subscript].kind != NMG_KIND_DOUBLE_ARRAY )  {
-		rt_log("subscript=%d, byte_offset=%d, kind=%d (expected %d)\n",
+		bu_log("subscript=%d, byte_offset=%d, kind=%d (expected %d)\n",
 			subscript, ecnt[subscript].byte_offset,
 			ecnt[subscript].kind, NMG_KIND_DOUBLE_ARRAY );
 		rt_bomb("rt_nmg_import_fastf() bad ecnt table\n");
@@ -896,10 +896,10 @@ int			pt_type;
 
 
 	cp = base + ecnt[subscript].byte_offset;
-	if( rt_glong( cp ) != DISK_DOUBLE_ARRAY_MAGIC )  {
-		rt_log("magic mis-match, got x%x, s/b x%x, file %s, line %d\n",
-			rt_glong(cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
-		rt_log("subscript=%d, byte_offset=%d\n",
+	if( bu_glong( cp ) != DISK_DOUBLE_ARRAY_MAGIC )  {
+		bu_log("magic mis-match, got x%x, s/b x%x, file %s, line %d\n",
+			bu_glong(cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
+		bu_log("subscript=%d, byte_offset=%d\n",
 			 subscript, ecnt[subscript].byte_offset);
 		rt_bomb("rt_nmg_import_fastf() bad magic\n");
 	}
@@ -907,13 +907,13 @@ int			pt_type;
 	if( pt_type )
 		len *= RT_NURB_EXTRACT_COORDS(pt_type);
 
-	count = rt_glong( cp + 4 );
+	count = bu_glong( cp + 4 );
 	if( count != len )  {
-		rt_log("rt_nmg_import_fastf() subscript=%d, expected len=%d, got=%d\n",
+		bu_log("rt_nmg_import_fastf() subscript=%d, expected len=%d, got=%d\n",
 			subscript, len, count );
 		rt_bomb("rt_nmg_import_fastf()\n");
 	}
-	ret = (fastf_t *)rt_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf[]" );
+	ret = (fastf_t *)bu_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf[]" );
 	if( !mat )  {
 		ntohd( (unsigned char *)ret, cp + (4+4), count );
 		return ret;
@@ -924,7 +924,7 @@ int			pt_type;
 	 *  Need to know width of data points, may be 3, or 4-tuples.
 	 *  The vector times matrix calculation can't be done in place.
 	 */
-	tmp = (fastf_t *)rt_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf tmp[]" );
+	tmp = (fastf_t *)bu_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf tmp[]" );
 	ntohd( (unsigned char *)tmp, cp + (4+4), count );
 	switch( RT_NURB_EXTRACT_COORDS(pt_type) )  {
 	case 3:
@@ -942,7 +942,7 @@ int			pt_type;
 	default:
 		rt_bomb("rt_nmg_import_fastf() unsupported # of coords in ctl_point\n");
 	}
-	rt_free( (char *)tmp, "rt_nmg_import_fastf tmp[]" );
+	bu_free( (char *)tmp, "rt_nmg_import_fastf tmp[]" );
 	return ret;
 }
 
@@ -977,32 +977,32 @@ struct nmg_exp_counts	*ecnt;
 		} else {
 			ret = ecnt[index].new_subscript;
 			if( ecnt[index].kind < 0 )  {
-				rt_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, index, ret, ecnt[index].kind);
+				bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, index, ret, ecnt[index].kind);
 				rt_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
 			}
 			/* ret == 0 on supressed loop_g ptrs, etc */
 			if( ret < 0 || ret > ecnt[0].byte_offset )  {
-				rt_log("rt_nmg_reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
+				bu_log("rt_nmg_reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
 					p,
-					rt_identify_magic(*(long *)p),
+					bu_identify_magic(*(long *)p),
 					index, ret, ecnt[0].byte_offset);
 				rt_bomb("rt_nmg_reindex() subscript out of range\n");
 			}
 		}
 	}
-/*rt_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d\n", p, index, ret);*/
+/*bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d\n", p, index, ret);*/
 	return( ret );
 }
 
 /* forw may never be null;  back may be null for loopuse (sigh) */
 #define INDEX(o,i,elem)	\
-	(void)rt_plong(&(o)->elem[0], rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
+	(void)bu_plong(&(o)->elem[0], rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo,ii,elem)	{ \
 	register long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt); \
-	if( _f == DISK_INDEX_NULL )  rt_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
-	(void)rt_plong( (oo)->elem.forw, _f ); \
-	(void)rt_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
-#define PUTMAGIC(_magic)	(void)rt_plong( &d->magic[0], _magic )
+	if( _f == DISK_INDEX_NULL )  bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
+	(void)bu_plong( (oo)->elem.forw, _f ); \
+	(void)bu_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
+#define PUTMAGIC(_magic)	(void)bu_plong( &d->magic[0], _magic )
 
 /*
  *			R T _ N M G _ E D I S K
@@ -1030,7 +1030,7 @@ double		local2mm;
 			d = &((struct disk_model *)op)[oindex];
 			NMG_CK_MODEL(m);
 			PUTMAGIC( DISK_MODEL_MAGIC );
-			rt_plong( d->version, 0 );
+			bu_plong( d->version, 0 );
 			INDEXL( d, m, r_hd );
 		}
 		return;
@@ -1099,12 +1099,12 @@ double		local2mm;
 			NMG_CK_FACEUSE(fu);
 			NMG_CK_FACEUSE(fu->fumate_p);
 			NMG_CK_FACE(fu->f_p);
-			if( fu->f_p != fu->fumate_p->f_p )  rt_log("faceuse export, differing faces\n");
+			if( fu->f_p != fu->fumate_p->f_p )  bu_log("faceuse export, differing faces\n");
 			PUTMAGIC( DISK_FACEUSE_MAGIC );
 			INDEXL( d, fu, l );
 			INDEX( d, fu, s_p );
 			INDEX( d, fu, fumate_p );
-			rt_plong( d->orientation, fu->orientation );
+			bu_plong( d->orientation, fu->orientation );
 			INDEX( d, fu, f_p );
 			INDEXL( d, fu, lu_hd );
 		}
@@ -1118,8 +1118,8 @@ double		local2mm;
 			PUTMAGIC( DISK_FACE_MAGIC );
 			INDEXL( d, f, l );	/* face is member of fg list */
 			INDEX( d, f, fu_p );
-			rt_plong( d->g, rt_nmg_reindex((genptr_t)(f->g.magic_p), ecnt) );
-			rt_plong( d->flip, f->flip );
+			bu_plong( d->g, rt_nmg_reindex((genptr_t)(f->g.magic_p), ecnt) );
+			bu_plong( d->flip, f->flip );
 		}
 		return;
 	case NMG_KIND_FACE_G_PLANE:
@@ -1145,21 +1145,21 @@ double		local2mm;
 			NMG_CK_FACE_G_SNURB(fg);
 			PUTMAGIC( DISK_FACE_G_SNURB_MAGIC );
 			INDEXL( d, fg, f_hd );
-			rt_plong( d->u_order, fg->order[0] );
-			rt_plong( d->v_order, fg->order[1] );
-			rt_plong( d->u_size, fg->u.k_size );
-			rt_plong( d->v_size, fg->v.k_size );
-			rt_plong( d->u_knots,
+			bu_plong( d->u_order, fg->order[0] );
+			bu_plong( d->v_order, fg->order[1] );
+			bu_plong( d->u_size, fg->u.k_size );
+			bu_plong( d->v_size, fg->v.k_size );
+			bu_plong( d->u_knots,
 				rt_nmg_export_fastf( fg->u.knots,
 					fg->u.k_size, 0, 1.0 ) );
-			rt_plong( d->v_knots,
+			bu_plong( d->v_knots,
 				rt_nmg_export_fastf( fg->v.knots,
 					fg->v.k_size, 0, 1.0 ) );
-			rt_plong( d->us_size, fg->s_size[0] );
-			rt_plong( d->vs_size, fg->s_size[1] );
-			rt_plong( d->pt_type, fg->pt_type );
+			bu_plong( d->us_size, fg->s_size[0] );
+			bu_plong( d->vs_size, fg->s_size[1] );
+			bu_plong( d->pt_type, fg->pt_type );
 			/* scale XYZ ctl_points by local2mm */
-			rt_plong( d->ctl_points,
+			bu_plong( d->ctl_points,
 				rt_nmg_export_fastf( fg->ctl_points,
 					fg->s_size[0] * fg->s_size[1],
 					fg->pt_type,
@@ -1174,9 +1174,9 @@ double		local2mm;
 			NMG_CK_LOOPUSE(lu);
 			PUTMAGIC( DISK_LOOPUSE_MAGIC );
 			INDEXL( d, lu, l );
-			rt_plong( d->up, rt_nmg_reindex((genptr_t)(lu->up.magic_p), ecnt) );
+			bu_plong( d->up, rt_nmg_reindex((genptr_t)(lu->up.magic_p), ecnt) );
 			INDEX( d, lu, lumate_p );
-			rt_plong( d->orientation, lu->orientation );
+			bu_plong( d->orientation, lu->orientation );
 			INDEX( d, lu, l_p );
 			INDEXL( d, lu, down_hd );
 		}
@@ -1219,13 +1219,13 @@ double		local2mm;
 			 * at the top of the edgeuse.  Beware on import.
 			 */
 			INDEXL( d, eu, l2 );
-			rt_plong( d->up, rt_nmg_reindex((genptr_t)(eu->up.magic_p), ecnt) );
+			bu_plong( d->up, rt_nmg_reindex((genptr_t)(eu->up.magic_p), ecnt) );
 			INDEX( d, eu, eumate_p );
 			INDEX( d, eu, radial_p );
 			INDEX( d, eu, e_p );
-			rt_plong( d->orientation, eu->orientation);
+			bu_plong( d->orientation, eu->orientation);
 			INDEX( d, eu, vu_p );
-			rt_plong( d->g, rt_nmg_reindex((genptr_t)(eu->g.magic_p), ecnt) );
+			bu_plong( d->g, rt_nmg_reindex((genptr_t)(eu->g.magic_p), ecnt) );
 		}
 		return;
 	case NMG_KIND_EDGE:
@@ -1235,7 +1235,7 @@ double		local2mm;
 			d = &((struct disk_edge *)op)[oindex];
 			NMG_CK_EDGE(e);
 			PUTMAGIC( DISK_EDGE_MAGIC );
-			rt_plong( d->is_real, e->is_real );
+			bu_plong( d->is_real, e->is_real );
 			INDEX( d, e, eu_p );
 		}
 		return;
@@ -1261,23 +1261,23 @@ double		local2mm;
 			NMG_CK_EDGE_G_CNURB(eg);
 			PUTMAGIC( DISK_EDGE_G_CNURB_MAGIC );
 			INDEXL( d, eg, eu_hd2 );
-			rt_plong( d->order, eg->order );
+			bu_plong( d->order, eg->order );
 
 			/* If order is zero, everything else is NULL */
 			if( eg->order == 0 )  return;
 
-			rt_plong( d->k_size, eg->k.k_size );
-			rt_plong( d->knots,
+			bu_plong( d->k_size, eg->k.k_size );
+			bu_plong( d->knots,
 				rt_nmg_export_fastf( eg->k.knots,
 					eg->k.k_size, 0, 1.0 ) );
-			rt_plong( d->c_size, eg->c_size );
-			rt_plong( d->pt_type, eg->pt_type );
+			bu_plong( d->c_size, eg->c_size );
+			bu_plong( d->pt_type, eg->pt_type );
 			/*
 			 * The curve's control points are in parameter space
 			 * for cnurbs on snurbs, and in XYZ for cnurbs on planar faces.
 			 * UV values do NOT get transformed, XYZ values do!
 			 */
-			rt_plong( d->ctl_points,
+			bu_plong( d->ctl_points,
 				rt_nmg_export_fastf( eg->ctl_points,
 					eg->c_size,
 					eg->pt_type,
@@ -1293,11 +1293,11 @@ double		local2mm;
 			NMG_CK_VERTEXUSE(vu);
 			PUTMAGIC( DISK_VERTEXUSE_MAGIC );
 			INDEXL( d, vu, l );
-			rt_plong( d->up,
+			bu_plong( d->up,
 				rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt) );
 			INDEX( d, vu, v_p );
 			if(vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
-			rt_plong( d->a,
+			bu_plong( d->a,
 				rt_nmg_reindex((genptr_t)(vu->a.magic_p), ecnt) );
 		}
 		return;
@@ -1349,7 +1349,7 @@ double		local2mm;
 		}
 		return;
 	}
-	rt_log("rt_nmg_edisk kind=%d unknown\n", ecnt[index].kind);
+	bu_log("rt_nmg_edisk kind=%d unknown\n", ecnt[index].kind);
 }
 #undef INDEX
 #undef INDEXL
@@ -1360,29 +1360,29 @@ double		local2mm;
  *
  *  NOTE that the "< 0" test here is a comparison with DISK_INDEX_LISTHEAD.
  */
-#define INDEX(o,i,ty,elem)	(i)->elem = (struct ty *)ptrs[rt_glong((o)->elem)]
+#define INDEX(o,i,ty,elem)	(i)->elem = (struct ty *)ptrs[bu_glong((o)->elem)]
 #define INDEXL_HD(oo,ii,elem,hd)	{ \
 	register int	sub; \
-	if( (sub = rt_glong((oo)->elem.forw)) < 0 ) \
+	if( (sub = bu_glong((oo)->elem.forw)) < 0 ) \
 		(ii)->elem.forw = &(hd); \
-	else	(ii)->elem.forw = (struct rt_list *)ptrs[sub]; \
-	if( (sub = rt_glong((oo)->elem.back)) < 0 ) \
+	else	(ii)->elem.forw = (struct bu_list *)ptrs[sub]; \
+	if( (sub = bu_glong((oo)->elem.back)) < 0 ) \
 		(ii)->elem.back = &(hd); \
-	else	(ii)->elem.back = (struct rt_list *)ptrs[sub]; }
+	else	(ii)->elem.back = (struct bu_list *)ptrs[sub]; }
 
 /* For use with the edgeuse l2 / edge_g eu2_hd secondary list */
 /* The subscripts will point to the edgeuse, not the edgeuse's l2 rt_list */
 #define INDEXL_HD2(oo,ii,elem,hd)	{ \
 	register int	sub; \
 	register struct edgeuse	*eu2; \
-	if( (sub = rt_glong((oo)->elem.forw)) < 0 ) { \
+	if( (sub = bu_glong((oo)->elem.forw)) < 0 ) { \
 		(ii)->elem.forw = &(hd); \
 	} else { \
 		eu2 = (struct edgeuse *)ptrs[sub]; \
 		NMG_CK_EDGEUSE(eu2); \
 		(ii)->elem.forw = &eu2->l2; \
 	} \
-	if( (sub = rt_glong((oo)->elem.back)) < 0 ) { \
+	if( (sub = bu_glong((oo)->elem.back)) < 0 ) { \
 		(ii)->elem.back = &(hd); \
 	} else { \
 		eu2 = (struct edgeuse *)ptrs[sub]; \
@@ -1446,7 +1446,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			RT_CK_DISKMAGIC( d->magic, DISK_REGION_A_MAGIC );
 			ntohd( (unsigned char *)min, d->min_pt, 3 );
 			ntohd( (unsigned char *)max, d->max_pt, 3 );
-			rt_rotate_bbox( r->min_pt, r->max_pt, mat, min, max );
+			bn_rotate_bbox( r->min_pt, r->max_pt, mat, min, max );
 		}
 		return 0;
 	case NMG_KIND_SHELL:
@@ -1476,7 +1476,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			RT_CK_DISKMAGIC( d->magic, DISK_SHELL_A_MAGIC );
 			ntohd( (unsigned char *)min, d->min_pt, 3 );
 			ntohd( (unsigned char *)max, d->max_pt, 3 );
-			rt_rotate_bbox( sa->min_pt, sa->max_pt, mat, min, max );
+			bn_rotate_bbox( sa->min_pt, sa->max_pt, mat, min, max );
 		}
 		return 0;
 	case NMG_KIND_FACEUSE:
@@ -1488,7 +1488,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			RT_CK_DISKMAGIC( d->magic, DISK_FACEUSE_MAGIC );
 			INDEX( d, fu, shell, s_p );
 			INDEX( d, fu, faceuse, fumate_p );
-			fu->orientation = rt_glong( d->orientation );
+			fu->orientation = bu_glong( d->orientation );
 			INDEX( d, fu, face, f_p );
 			INDEXL_HD( d, fu, lu_hd, fu->lu_hd );
 			INDEXL_HD( d, fu, l, fu->s_p->fu_hd ); /* after fu->s_p */
@@ -1506,9 +1506,9 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			NMG_CK_FACE(f);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_MAGIC );
 			INDEX( d, f, faceuse, fu_p );
-			g_index = rt_glong(d->g);
+			g_index = bu_glong(d->g);
 			f->g.magic_p = (long *)ptrs[g_index];
-			f->flip = rt_glong( d->flip );
+			f->flip = bu_glong( d->flip );
 			/* Enrole this face on fg's list of users */
 			NMG_CK_FACE_G_EITHER(f->g.magic_p);
 			INDEXL_HD( d, f, l, f->g.plane_p->f_hd ); /* after fu->fg_p set */
@@ -1525,7 +1525,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_PLANE_MAGIC );
 			INDEXL_HD( d, fg, f_hd, fg->f_hd );
 			ntohd( (unsigned char *)plane, d->N, 4 );
-			rt_rotate_plane( fg->N, mat, plane );
+			bn_rotate_plane( fg->N, mat, plane );
 		}
 		return 0;
 	case NMG_KIND_FACE_G_SNURB:
@@ -1536,22 +1536,22 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			NMG_CK_FACE_G_SNURB(fg);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_SNURB_MAGIC );
 			INDEXL_HD( d, fg, f_hd, fg->f_hd );
-			fg->order[0] = rt_glong( d->u_order );
-			fg->order[1] = rt_glong( d->v_order );
-			fg->u.k_size = rt_glong( d->u_size );
+			fg->order[0] = bu_glong( d->u_order );
+			fg->order[1] = bu_glong( d->v_order );
+			fg->u.k_size = bu_glong( d->u_size );
 			fg->u.knots = rt_nmg_import_fastf( basep, ecnt,
-				rt_glong( d->u_knots ), (matp_t)NULL,
+				bu_glong( d->u_knots ), (matp_t)NULL,
 				fg->u.k_size, 0 );
-			fg->v.k_size = rt_glong( d->v_size );
+			fg->v.k_size = bu_glong( d->v_size );
 			fg->v.knots = rt_nmg_import_fastf( basep, ecnt,
-				rt_glong( d->v_knots ), (matp_t)NULL,
+				bu_glong( d->v_knots ), (matp_t)NULL,
 				fg->v.k_size, 0 );
-			fg->s_size[0] = rt_glong( d->us_size );
-			fg->s_size[1] = rt_glong( d->vs_size );
-			fg->pt_type = rt_glong( d->pt_type );
+			fg->s_size[0] = bu_glong( d->us_size );
+			fg->s_size[1] = bu_glong( d->vs_size );
+			fg->pt_type = bu_glong( d->pt_type );
 			/* Transform ctl_points by 'mat' */
 			fg->ctl_points = rt_nmg_import_fastf( basep, ecnt,
-				rt_glong( d->ctl_points ), (matp_t)mat,
+				bu_glong( d->ctl_points ), (matp_t)mat,
 				fg->s_size[0] * fg->s_size[1],
 				fg->pt_type );
 		}
@@ -1566,19 +1566,19 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_loopuse *)ip)[iindex];
 			NMG_CK_LOOPUSE(lu);
 			RT_CK_DISKMAGIC( d->magic, DISK_LOOPUSE_MAGIC );
-			up_index = rt_glong(d->up);
+			up_index = bu_glong(d->up);
 			lu->up.magic_p = (long *)ptrs[up_index];
 			INDEX( d, lu, loopuse, lumate_p );
-			lu->orientation = rt_glong( d->orientation );
+			lu->orientation = bu_glong( d->orientation );
 			INDEX( d, lu, loop, l_p );
 			up_kind = ecnt[up_index].kind;
 			if( up_kind == NMG_KIND_FACEUSE )  {
 				INDEXL_HD( d, lu, l, lu->up.fu_p->lu_hd );
 			} else if( up_kind == NMG_KIND_SHELL )  {
 				INDEXL_HD( d, lu, l, lu->up.s_p->lu_hd );
-			} else rt_log("bad loopuse up, index=%d, kind=%d\n", up_index, up_kind);
+			} else bu_log("bad loopuse up, index=%d, kind=%d\n", up_index, up_kind);
 			INDEXL_HD( d, lu, down_hd, lu->down_hd );
-			if( lu->down_hd.forw == RT_LIST_NULL )
+			if( lu->down_hd.forw == BU_LIST_NULL )
 				rt_bomb("rt_nmg_idisk: null loopuse down_hd.forw\n");
 			NMG_CK_LOOP(lu->l_p);
 		}
@@ -1605,7 +1605,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			RT_CK_DISKMAGIC( d->magic, DISK_LOOP_G_MAGIC );
 			ntohd( (unsigned char *)min, d->min_pt, 3 );
 			ntohd( (unsigned char *)max, d->max_pt, 3 );
-			rt_rotate_bbox( lg->min_pt, lg->max_pt, mat, min, max );
+			bn_rotate_bbox( lg->min_pt, lg->max_pt, mat, min, max );
 		}
 		return 0;
 	case NMG_KIND_EDGEUSE:
@@ -1618,20 +1618,20 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_edgeuse *)ip)[iindex];
 			NMG_CK_EDGEUSE(eu);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGEUSE_MAGIC );
-			up_index = rt_glong(d->up);
+			up_index = bu_glong(d->up);
 			eu->up.magic_p = (long *)ptrs[up_index];
 			INDEX( d, eu, edgeuse, eumate_p );
 			INDEX( d, eu, edgeuse, radial_p );
 			INDEX( d, eu, edge, e_p );
-			eu->orientation = rt_glong( d->orientation );
+			eu->orientation = bu_glong( d->orientation );
 			INDEX( d, eu, vertexuse, vu_p );
 			up_kind = ecnt[up_index].kind;
 			if( up_kind == NMG_KIND_LOOPUSE )  {
 				INDEXL_HD( d, eu, l, eu->up.lu_p->down_hd );
 			} else if( up_kind == NMG_KIND_SHELL )  {
 				INDEXL_HD( d, eu, l, eu->up.s_p->eu_hd );
-			} else rt_log("bad edgeuse up, index=%d, kind=%d\n", up_index, up_kind);
-			eu->g.magic_p = (long *)ptrs[rt_glong(d->g)];
+			} else bu_log("bad edgeuse up, index=%d, kind=%d\n", up_index, up_kind);
+			eu->g.magic_p = (long *)ptrs[bu_glong(d->g)];
 			NMG_CK_EDGE(eu->e_p);
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			NMG_CK_EDGEUSE(eu->radial_p);
@@ -1658,7 +1658,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_edge *)ip)[iindex];
 			NMG_CK_EDGE(e);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_MAGIC );
-			e->is_real = rt_glong( d->is_real );
+			e->is_real = bu_glong( d->is_real );
 			INDEX( d, e, edgeuse, eu_p );
 			NMG_CK_EDGEUSE(e->eu_p);
 		}
@@ -1689,17 +1689,17 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			NMG_CK_EDGE_G_CNURB(eg);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_CNURB_MAGIC );
 			INDEXL_HD2( d, eg, eu_hd2, eg->eu_hd2 );
-			eg->order = rt_glong( d->order );
+			eg->order = bu_glong( d->order );
 
 			/* If order is zero, so is everything else */
 			if( eg->order == 0 )  return 0;
 
-			eg->k.k_size = rt_glong( d->k_size );
+			eg->k.k_size = bu_glong( d->k_size );
 			eg->k.knots = rt_nmg_import_fastf( basep, ecnt,
-				rt_glong( d->knots ), (matp_t)NULL,
+				bu_glong( d->knots ), (matp_t)NULL,
 				eg->k.k_size, 0 );
-			eg->c_size = rt_glong( d->c_size );
-			eg->pt_type = rt_glong( d->pt_type );
+			eg->c_size = bu_glong( d->c_size );
+			eg->pt_type = bu_glong( d->pt_type );
 			/*
 			 * The curve's control points are in parameter space.
 			 * They do NOT get transformed!
@@ -1708,13 +1708,13 @@ CONST unsigned char	*basep;	/* base of whole import record */
 				/* UV coords on snurb surface don't get xformed */
 				eg->ctl_points = rt_nmg_import_fastf( basep,
 					ecnt,
-					rt_glong( d->ctl_points ), (matp_t)NULL,
+					bu_glong( d->ctl_points ), (matp_t)NULL,
 					eg->c_size, eg->pt_type );
 			} else {
 				/* XYZ coords on planar face DO get xformed */
 				eg->ctl_points = rt_nmg_import_fastf( basep,
 					ecnt,
-					rt_glong( d->ctl_points ), (matp_t)mat,
+					bu_glong( d->ctl_points ), (matp_t)mat,
 					eg->c_size, eg->pt_type );
 			}
 		}
@@ -1726,9 +1726,9 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_vertexuse *)ip)[iindex];
 			NMG_CK_VERTEXUSE(vu);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_MAGIC );
-			vu->up.magic_p = (long *)ptrs[rt_glong(d->up)];
+			vu->up.magic_p = (long *)ptrs[bu_glong(d->up)];
 			INDEX( d, vu, vertex, v_p );
-			vu->a.magic_p = (long *)ptrs[rt_glong(d->a)];
+			vu->a.magic_p = (long *)ptrs[bu_glong(d->a)];
 			NMG_CK_VERTEX(vu->v_p);
 			if(vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
 			INDEXL_HD( d, vu, l, vu->v_p->vu_hd );
@@ -1781,7 +1781,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 		}
 		return 0;
 	}
-	rt_log("rt_nmg_idisk kind=%d unknown\n", ecnt[index].kind);
+	bu_log("rt_nmg_idisk kind=%d unknown\n", ecnt[index].kind);
 	return -1;
 }
 
@@ -1807,7 +1807,7 @@ int				kind_counts[NMG_N_KINDS];
 	subscript = 1;
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
 #if DEBUG
-rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
+bu_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 #endif
 		if( kind == NMG_KIND_DOUBLE_ARRAY )  continue;
 		for( j = 0; j < kind_counts[kind]; j++ )  {
@@ -1826,7 +1826,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct nmgregion	*r;
 					GET_REGION( r, m );
 					r->l.magic = NMG_REGION_MAGIC;
-					RT_LIST_INIT( &r->s_hd );
+					BU_LIST_INIT( &r->s_hd );
 					ptrs[subscript] = (long *)r;
 				}
 				break;
@@ -1843,9 +1843,9 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct shell	*s;
 					GET_SHELL( s, m );
 					s->l.magic = NMG_SHELL_MAGIC;
-					RT_LIST_INIT( &s->fu_hd );
-					RT_LIST_INIT( &s->lu_hd );
-					RT_LIST_INIT( &s->eu_hd );
+					BU_LIST_INIT( &s->fu_hd );
+					BU_LIST_INIT( &s->lu_hd );
+					BU_LIST_INIT( &s->eu_hd );
 					ptrs[subscript] = (long *)s;
 				}
 				break;
@@ -1862,7 +1862,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct faceuse	*fu;
 					GET_FACEUSE( fu, m );
 					fu->l.magic = NMG_FACEUSE_MAGIC;
-					RT_LIST_INIT( &fu->lu_hd );
+					BU_LIST_INIT( &fu->lu_hd );
 					ptrs[subscript] = (long *)fu;
 				}
 				break;
@@ -1879,7 +1879,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct face_g_plane	*fg;
 					GET_FACE_G_PLANE( fg, m );
 					fg->magic = NMG_FACE_G_PLANE_MAGIC;
-					RT_LIST_INIT( &fg->f_hd );
+					BU_LIST_INIT( &fg->f_hd );
 					ptrs[subscript] = (long *)fg;
 				}
 				break;
@@ -1888,7 +1888,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct face_g_snurb	*fg;
 					GET_FACE_G_SNURB( fg, m );
 					fg->l.magic = NMG_FACE_G_SNURB_MAGIC;
-					RT_LIST_INIT( &fg->f_hd );
+					BU_LIST_INIT( &fg->f_hd );
 					ptrs[subscript] = (long *)fg;
 				}
 				break;
@@ -1897,7 +1897,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct loopuse	*lu;
 					GET_LOOPUSE( lu, m );
 					lu->l.magic = NMG_LOOPUSE_MAGIC;
-					RT_LIST_INIT( &lu->down_hd );
+					BU_LIST_INIT( &lu->down_hd );
 					ptrs[subscript] = (long *)lu;
 				}
 				break;
@@ -1939,7 +1939,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct edge_g_lseg	*eg;
 					GET_EDGE_G_LSEG( eg, m );
 					eg->l.magic = NMG_EDGE_G_LSEG_MAGIC;
-					RT_LIST_INIT( &eg->eu_hd2 );
+					BU_LIST_INIT( &eg->eu_hd2 );
 					ptrs[subscript] = (long *)eg;
 				}
 				break;
@@ -1948,7 +1948,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct edge_g_cnurb	*eg;
 					GET_EDGE_G_CNURB( eg, m );
 					eg->l.magic = NMG_EDGE_G_CNURB_MAGIC;
-					RT_LIST_INIT( &eg->eu_hd2 );
+					BU_LIST_INIT( &eg->eu_hd2 );
 					ptrs[subscript] = (long *)eg;
 				}
 				break;
@@ -1981,7 +1981,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct vertex	*v;
 					GET_VERTEX( v, m );
 					v->magic = NMG_VERTEX_MAGIC;
-					RT_LIST_INIT( &v->vu_hd );
+					BU_LIST_INIT( &v->vu_hd );
 					ptrs[subscript] = (long *)v;
 				}
 				break;
@@ -1994,12 +1994,12 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				}
 				break;
 			default:
-				rt_log("bad kind = %d\n", kind);
+				bu_log("bad kind = %d\n", kind);
 				ptrs[subscript] = (long *)0;
 				break;
 			}
 #if DEBUG
-rt_log("   disk_index=%d, kind=%s, ptr=x%x, final_index=%d\n",
+bu_log("   disk_index=%d, kind=%s, ptr=x%x, final_index=%d\n",
 subscript, rt_nmg_kind_names[kind],
 ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
 #endif
@@ -2020,7 +2020,7 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
  *
  *  No storage is allocated here, that will be done by rt_nmg_import_fastf()
  *  on the fly.
- *  A separate call to rt_malloc() will be used, so that nmg_keg(), etc.,
+ *  A separate call to bu_malloc() will be used, so that nmg_keg(), etc.,
  *  can kill each array as appropriate.
  */
 void
@@ -2051,12 +2051,12 @@ int			maxindex;
 	/* Should have found the first one now */
 	RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
 #if DEBUG
-rt_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, offset, subscript );
+bu_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, offset, subscript );
 #endif
 	for( i=0; i < nkind; i++ )  {
 		int	ndouble;
 		RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
-		ndouble = rt_glong( cp + offset + 4 );
+		ndouble = bu_glong( cp + offset + 4 );
 		ecnt[subscript].kind = NMG_KIND_DOUBLE_ARRAY;
 		/* Stored byte offset is from beginning of disk record */
 		ecnt[subscript].byte_offset = offset;
@@ -2079,10 +2079,10 @@ rt_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, of
 int
 rt_nmg_import_internal( ip, ep, mat, rebound, tol )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 int				rebound;
-CONST struct rt_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	struct model			*m;
 	union record			*rp;
@@ -2096,12 +2096,12 @@ CONST struct rt_tol		*tol;
 	int				kind;
 	static long			bad_magic = 0x999;
 
-	RT_CK_EXTERNAL( ep );
-	RT_CK_TOL( tol );
+	BU_CK_EXTERNAL( ep );
+	BN_CK_TOL( tol );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_NMG )  {
-		rt_log("rt_nmg_import: defective record\n");
+		bu_log("rt_nmg_import: defective record\n");
 		return(-1);
 	}
 
@@ -2110,7 +2110,7 @@ CONST struct rt_tol		*tol;
 	 *  In the future, this will be the backwards-compatability hook.
 	 */
 	if( rp->nmg.N_version != DISK_MODEL_VERSION )  {
-		rt_log("rt_nmg_import:  expected NMG '.g' format version %d, got version %d, aborting.\n",
+		bu_log("rt_nmg_import:  expected NMG '.g' format version %d, got version %d, aborting.\n",
 			DISK_MODEL_VERSION,
 			rp->nmg.N_version );
 		return -1;
@@ -2119,17 +2119,17 @@ CONST struct rt_tol		*tol;
 	/* Obtain counts of each kind of structure */
 	maxindex = 1;
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		kind_counts[kind] = rt_glong( rp->nmg.N_structs+4*kind );
+		kind_counts[kind] = bu_glong( rp->nmg.N_structs+4*kind );
 		maxindex += kind_counts[kind];
 	}
 #if DEBUG
-	rt_log("import maxindex=%d\n", maxindex);
+	bu_log("import maxindex=%d\n", maxindex);
 #endif
 
 	/* Collect overall new subscripts, and structure-specific indices */
-	ecnt = (struct nmg_exp_counts *)rt_calloc( maxindex+3,
+	ecnt = (struct nmg_exp_counts *)bu_calloc( maxindex+3,
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
-	real_ptrs = (long **)rt_calloc( maxindex+3,
+	real_ptrs = (long **)bu_calloc( maxindex+3,
 		sizeof(long *), "ptrs[]" );
 	/* So that indexing [-1] gives an appropriately bogus magic # */
 	ptrs = real_ptrs+1;
@@ -2174,8 +2174,8 @@ CONST struct rt_tol		*tol;
 	ip->idb_type = ID_NMG;
 	ip->idb_ptr = (genptr_t)m;
 
-	rt_free( (char *)ecnt, "ecnt[]" );
-	rt_free( (char *)real_ptrs, "ptrs[]" );
+	bu_free( (char *)ecnt, "ecnt[]" );
+	bu_free( (char *)real_ptrs, "ptrs[]" );
 
 	return(0);			/* OK */
 }
@@ -2222,7 +2222,7 @@ CONST struct rt_tol		*tol;
  */
 int
 rt_nmg_export_internal( ep, ip, local2mm, compact )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 int				compact;
@@ -2256,7 +2256,7 @@ int				compact;
 #endif
 
 	/* Collect overall new subscripts, and structure-specific indices */
-	ecnt = (struct nmg_exp_counts *)rt_calloc( m->maxindex+1,
+	ecnt = (struct nmg_exp_counts *)bu_calloc( m->maxindex+1,
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
 	for( i = 0; i < NMG_N_KINDS; i++ )
 		kind_counts[i] = 0;
@@ -2341,21 +2341,21 @@ int				compact;
 
 	/* Sanity checking */
 #if DEBUG
-rt_log("Mapping of old index to new index, and kind\n");
+bu_log("Mapping of old index to new index, and kind\n");
 #endif
 	for( i=0; i < m->maxindex; i++ )  {
 		if( ptrs[i] == (long *)0 )  continue;
 #if DEBUG
-		rt_log(" %4d %4d %s (%d)\n",
+		bu_log(" %4d %4d %s (%d)\n",
 			i, ecnt[i].new_subscript,
 			rt_nmg_kind_names[ecnt[i].kind], ecnt[i].kind);
 #endif
 		if( nmg_index_of_struct(ptrs[i]) != i )  {
-			rt_log("***ERROR, ptrs[%d]->index = %d\n",
+			bu_log("***ERROR, ptrs[%d]->index = %d\n",
 				i, nmg_index_of_struct(ptrs[i]) );
 		}
 		if( rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind )  {
-			rt_log("@@@ERROR, ptrs[%d] kind(%d) != %d\n",
+			bu_log("@@@ERROR, ptrs[%d] kind(%d) != %d\n",
 				i, rt_nmg_magic_to_kind(*ptrs[i]),
 				ecnt[i].kind);
 		}
@@ -2364,7 +2364,7 @@ rt_log("Mapping of old index to new index, and kind\n");
 	tot_size = 0;
 	for( i = 0; i < NMG_N_KINDS; i++ )  {
 #if DEBUG
-		rt_log("%d of kind %s (%d)\n",
+		bu_log("%d of kind %s (%d)\n",
 			kind_counts[i], rt_nmg_kind_names[i], i);
 #endif
 		if( kind_counts[i] <= 0 )  {
@@ -2380,17 +2380,17 @@ rt_log("Mapping of old index to new index, and kind\n");
 	ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
 
 	additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "nmg external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "nmg external");
 	rp = (union record *)ep->ext_buf;
 	rp->nmg.N_id = DBID_NMG;
 	rp->nmg.N_version = DISK_MODEL_VERSION;
-	(void)rt_plong( rp->nmg.N_count, additional_grans );
+	(void)bu_plong( rp->nmg.N_count, additional_grans );
 
 	/* Record counts of each kind of structure */
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		(void)rt_plong( rp->nmg.N_structs+4*kind, kind_counts[kind] );
+		(void)bu_plong( rp->nmg.N_structs+4*kind, kind_counts[kind] );
 	}
 
 	cp = (char *)(rp+1);	/* advance one granule */
@@ -2410,8 +2410,8 @@ rt_log("Mapping of old index to new index, and kind\n");
 			(genptr_t)(ptrs[i]), ecnt, i, local2mm );
 	}
 
-	rt_free( (char *)ptrs, "ptrs[]" );
-	rt_free( (char *)ecnt, "ecnt[]" );
+	bu_free( (char *)ptrs, "ptrs[]" );
+	bu_free( (char *)ecnt, "ecnt[]" );
 
 	return(0);
 }
@@ -2425,18 +2425,18 @@ rt_log("Mapping of old index to new index, and kind\n");
 int
 rt_nmg_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	struct model			*m;
 	union record			*rp;
-	struct rt_tol			tol;
+	struct bn_tol			tol;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_NMG )  {
-		rt_log("rt_nmg_import: defective record\n");
+		bu_log("rt_nmg_import: defective record\n");
 		return(-1);
 	}
 
@@ -2445,7 +2445,7 @@ register CONST mat_t		mat;
 	 * As long as this NMG is going to be turned into vlist, or
 	 * handed off to the boolean evaluator, any non-zero numbers are fine.
 	 */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -2471,7 +2471,7 @@ register CONST mat_t		mat;
  */
 int
 rt_nmg_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -2498,7 +2498,7 @@ double				local2mm;
  */
 int
 rt_nmg_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -2507,7 +2507,7 @@ double			mm2local;
 		(struct model *)ip->idb_ptr;
 
 	NMG_CK_MODEL(m);
-	rt_vls_printf( str, "n-Manifold Geometry solid (NMG) maxindex=%d\n",
+	bu_vls_printf( str, "n-Manifold Geometry solid (NMG) maxindex=%d\n",
 		m->maxindex);
 
 	if( !verbose )  return(0);
@@ -2522,7 +2522,7 @@ double			mm2local;
 	/* If verbose, should print out structure counts */
 	nmg_vls_struct_counts( str, &count );
 
-	rt_free( (char *)ptrs, "struct_count *ptrs[]" );
+	bu_free( (char *)ptrs, "struct_count *ptrs[]" );
 	}
 #endif
 

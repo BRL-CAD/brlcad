@@ -208,7 +208,7 @@ struct rt_i		*rtip;
 {
 	struct rt_rpc_internal		*xip;
 	register struct rpc_specific	*rpc;
-	CONST struct rt_tol		*tol = &rtip->rti_tol;
+	CONST struct bn_tol		*tol = &rtip->rti_tol;
 	LOCAL fastf_t	magsq_b, magsq_h, magsq_r;
 	LOCAL fastf_t	mag_b, mag_h, mag_r;
 	LOCAL fastf_t	f;
@@ -218,7 +218,7 @@ struct rt_i		*rtip;
 	LOCAL vect_t	invsq;	/* [ 1/(|H|**2), 1/(|R|**2), 1/(|B|**2) ] */
 
 	RT_CK_DB_INTERNAL(ip);
-	RT_CK_TOL(tol);
+	BN_CK_TOL(tol);
 	xip = (struct rt_rpc_internal *)ip->idb_ptr;
 	RT_RPC_CK_MAGIC(xip);
 
@@ -245,7 +245,7 @@ struct rt_i		*rtip;
 	 */
 	stp->st_id = ID_RPC;		/* set soltab ID */
 
-	GETSTRUCT( rpc, rpc_specific );
+	BU_GETSTRUCT( rpc, rpc_specific );
 	stp->st_specific = (genptr_t)rpc;
 	rpc->rpc_b = mag_b;
 	rpc->rpc_inv_rsq = 1 / magsq_r;
@@ -260,22 +260,22 @@ struct rt_i		*rtip;
 	VMOVE( rpc->rpc_V, xip->rpc_V );
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VREVERSE( &R[0], rpc->rpc_Hunit );
 	VMOVE(    &R[4], rpc->rpc_Runit );
 	VREVERSE( &R[8], rpc->rpc_Bunit );
-	mat_trn( Rinv, R );			/* inv of rot mat is trn */
+	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute S */
 	VSET( invsq, 1.0/magsq_h, 1.0/magsq_r, 1.0/magsq_b );
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = sqrt( invsq[0] );
 	S[ 5] = sqrt( invsq[1] );
 	S[10] = sqrt( invsq[2] );
 
 	/* Compute SoR and invRoS */
-	mat_mul( rpc->rpc_SoR, S, R );
-	mat_mul( rpc->rpc_invRoS, Rinv, S );
+	bn_mat_mul( rpc->rpc_SoR, S, R );
+	bn_mat_mul( rpc->rpc_invRoS, Rinv, S );
 
 	/* Compute bounding sphere and RPP */
 	/* bounding sphere center */
@@ -312,8 +312,8 @@ register CONST struct soltab *stp;
 	VPRINT("Bunit", rpc->rpc_Bunit);
 	VPRINT("Hunit", rpc->rpc_Hunit);
 	VPRINT("Runit", rpc->rpc_Runit);
-	mat_print("S o R", rpc->rpc_SoR );
-	mat_print("invR o S", rpc->rpc_invRoS );
+	bn_mat_print("S o R", rpc->rpc_SoR );
+	bn_mat_print("invR o S", rpc->rpc_invRoS );
 }
 
 /* hit_surfno is set to one of these */
@@ -348,7 +348,7 @@ struct seg		*seghead;
 	LOCAL vect_t	xlated;		/* translated vector */
 	LOCAL struct hit hits[3];	/* 2 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
-/*?????	CONST struct rt_tol	*tol = &rtip->rti_tol; ?????*/
+/*?????	CONST struct bn_tol	*tol = &rtip->rti_tol; ?????*/
 
 	hitp = &hits[0];
 
@@ -459,7 +459,7 @@ check_plates:
 		segp->seg_stp = stp;
 		segp->seg_in = hits[0];		/* struct copy */
 		segp->seg_out = hits[1];	/* struct copy */
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	} else {
 		/* entry is [1], exit is [0] */
 		register struct seg *segp;
@@ -468,7 +468,7 @@ check_plates:
 		segp->seg_stp = stp;
 		segp->seg_in = hits[1];		/* struct copy */
 		segp->seg_out = hits[0];	/* struct copy */
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(2);			/* HIT */
 }
@@ -523,7 +523,7 @@ register struct xray	*rp;
 		VMOVE( hitp->hit_normal, rpc->rpc_Hunit );
 		break;
 	default:
-		rt_log("rt_rpc_norm: surfno=%d bad\n", hitp->hit_surfno);
+		bu_log("rt_rpc_norm: surfno=%d bad\n", hitp->hit_surfno);
 		break;
 	}
 }
@@ -595,14 +595,14 @@ register struct uvcoord	*uvp;
 	case RPC_NORM_BODY:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
 		len = sqrt(pprime[Y]*pprime[Y] + pprime[Z]*pprime[Z]);
-		uvp->uv_u = acos(pprime[Y]/len) * rt_invpi;
+		uvp->uv_u = acos(pprime[Y]/len) * bn_invpi;
 		uvp->uv_v = -pprime[X];		/* height */
 		break;
 	case RPC_NORM_FRT:
 	case RPC_NORM_BACK:
 		/* end plates - circular mapping, not seamless w/body, top */
 		len = sqrt(pprime[Y]*pprime[Y] + pprime[Z]*pprime[Z]);
-		uvp->uv_u = acos(pprime[Y]/len) * rt_invpi;
+		uvp->uv_u = acos(pprime[Y]/len) * bn_invpi;
 		uvp->uv_v = len;	/* rim v = 1 for both plates */
 		break;
 	case RPC_NORM_TOP:
@@ -625,7 +625,7 @@ register struct soltab *stp;
 	register struct rpc_specific *rpc =
 		(struct rpc_specific *)stp->st_specific;
 
-	rt_free( (char *)rpc, "rpc_specific" );
+	bu_free( (char *)rpc, "rpc_specific" );
 }
 
 /*
@@ -642,10 +642,10 @@ rt_rpc_class()
  */
 int
 rt_rpc_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_rpc_internal	*xip;
         fastf_t *front;
@@ -669,14 +669,14 @@ struct rt_tol		*tol;
 	/* Check for |H| > 0, |B| > 0, |R| > 0 */
 	if( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	 || NEAR_ZERO(rh, RT_LEN_TOL) )  {
-		rt_log("rt_rpc_plot():  zero length H, B, or rh\n");
+		bu_log("rt_rpc_plot():  zero length H, B, or rh\n");
 		return(-2);		/* BAD */
 	}
 
 	/* Check for B.H == 0 */
 	f = VDOT( xip->rpc_B, xip->rpc_H ) / (b * h);
 	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
-		rt_log("rt_rpc_plot(): B not perpendicular to H, f=%f\n", f);
+		bu_log("rt_rpc_plot(): B not perpendicular to H, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 
@@ -688,11 +688,11 @@ struct rt_tol		*tol;
 	VCROSS(   Ru, Bu, Hu );
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VREVERSE( &R[0], Hu );
 	VMOVE(    &R[4], Ru );
 	VREVERSE( &R[8], Bu );
-	mat_trn( invR, R );			/* inv of rot mat is trn */
+	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
 	/*
 	 *  Establish tolerances
@@ -727,7 +727,7 @@ struct rt_tol		*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = rt_pi;
+		ntol = bn_pi;
 
 #if 1
 	/* initial parabola approximation is a single segment */
@@ -742,8 +742,8 @@ struct rt_tol		*tol;
 	n += rt_mk_parabola( pts, rh, b, dtol, ntol );
 
 	/* get mem for arrays */
-	front = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
-	back  = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
+	front = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
+	back  = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
 
 	/* generate front & back plates in world coordinates */
 	pos = pts;
@@ -758,7 +758,7 @@ struct rt_tol		*tol;
 		i += 3;
 		old = pos;
 		pos = pos->next;
-		rt_free( (char *)old, "pt_node" );
+		bu_free( (char *)old, "pt_node" );
 	}
 #else
 	/* initial parabola approximation is a single segment */
@@ -773,8 +773,8 @@ struct rt_tol		*tol;
 	n += rt_mk_parabola( pts, rh, b, dtol, ntol );
 
 	/* get mem for arrays */
-	front = (fastf_t *)rt_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
-	back  = (fastf_t *)rt_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
+	front = (fastf_t *)bu_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
+	back  = (fastf_t *)bu_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
 
 	/* generate front & back plates in world coordinates */
 	pos = pts;
@@ -789,7 +789,7 @@ struct rt_tol		*tol;
 		i += 3;
 		old = pos;
 		pos = pos->next;
-		rt_free( (char *)old, "pt_node" );
+		bu_free( (char *)old, "pt_node" );
 	}
 	for (i = 3*n; i < 6*n-3; i+=3) {
 		VMOVE( &front[i], &front[6*n-i-6] );
@@ -819,8 +819,8 @@ struct rt_tol		*tol;
 		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 	
-	rt_free( (char *)front, "fastf_t" );
-	rt_free( (char *)back,  "fastf_t" );
+	bu_free( (char *)front, "fastf_t" );
+	bu_free( (char *)back,  "fastf_t" );
                                                                                                         
 	return(0);
 }
@@ -894,7 +894,7 @@ rt_ptalloc()
 {
 	struct pt_node *mem;
 	
-	mem = (struct pt_node *)rt_malloc(sizeof(struct pt_node), "pt_node");
+	mem = (struct pt_node *)bu_malloc(sizeof(struct pt_node), "pt_node");
 	if (!mem) {
 		fprintf(stderr, "rt_ptalloc: no more memory!\n");
 		exit(-1);
@@ -915,7 +915,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	int		i, j, n;
 	fastf_t		b, *back, f, *front, h, rh;
@@ -932,7 +932,7 @@ CONST struct rt_tol	*tol;
 	fastf_t		r_sq_over_b;
 
 	NMG_CK_MODEL( m );
-	RT_CK_TOL( tol );
+	BN_CK_TOL( tol );
 	RT_CK_TESS_TOL( ttol );
 
 	RT_CK_DB_INTERNAL(ip);
@@ -947,14 +947,14 @@ CONST struct rt_tol	*tol;
 	/* Check for |H| > 0, |B| > 0, |R| > 0 */
 	if( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	 || NEAR_ZERO(rh, RT_LEN_TOL) )  {
-		rt_log("rt_rpc_tess():  zero length H, B, or rh\n");
+		bu_log("rt_rpc_tess():  zero length H, B, or rh\n");
 		return(-2);		/* BAD */
 	}
 
 	/* Check for B.H == 0 */
 	f = VDOT( xip->rpc_B, xip->rpc_H ) / (b * h);
 	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
-		rt_log("rt_rpc_tess(): B not perpendicular to H, f=%f\n", f);
+		bu_log("rt_rpc_tess(): B not perpendicular to H, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 
@@ -966,11 +966,11 @@ CONST struct rt_tol	*tol;
 	VCROSS(   Ru, Bu, Hu );
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VREVERSE( &R[0], Hu );
 	VMOVE(    &R[4], Ru );
 	VREVERSE( &R[8], Bu );
-	mat_trn( invR, R );			/* inv of rot mat is trn */
+	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
 	/*
 	 *  Establish tolerances
@@ -1005,7 +1005,7 @@ CONST struct rt_tol	*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = rt_pi;
+		ntol = bn_pi;
 
 	/* initial parabola approximation is a single segment */
 	pts = rt_ptalloc();
@@ -1019,14 +1019,14 @@ CONST struct rt_tol	*tol;
 	n += rt_mk_parabola( pts, rh, b, dtol, ntol );
 
 	/* get mem for arrays */
-	front = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
-	back  = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
-	norms = (vect_t *)rt_calloc( n , sizeof( vect_t ) , "rt_rpc_tess: norms" );
-	vfront = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
-	vback = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
-	vtemp = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
+	front = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
+	back  = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
+	norms = (vect_t *)bu_calloc( n , sizeof( vect_t ) , "rt_rpc_tess: norms" );
+	vfront = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
+	vback = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
+	vtemp = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	outfaceuses =
-		(struct faceuse **)rt_malloc((n+2) * sizeof(struct faceuse *), "faceuse *");
+		(struct faceuse **)bu_malloc((n+2) * sizeof(struct faceuse *), "faceuse *");
 	if (!front || !back || !vfront || !vback || !vtemp || !outfaceuses) {
 		fprintf(stderr, "rt_rpc_tess: no memory!\n");
 		exit(-1);
@@ -1053,11 +1053,11 @@ CONST struct rt_tol	*tol;
 		j++;
 		old = pos;
 		pos = pos->next;
-		rt_free( (char *)old, "pt_node" );
+		bu_free( (char *)old, "pt_node" );
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	for( i=0; i<n; i++ )  {
 		vfront[i] = vtemp[i] = (struct vertex *)0;
@@ -1111,12 +1111,12 @@ CONST struct rt_tol	*tol;
 		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
 		{
 			/* free mem */
-			rt_free( (char *)front, "fastf_t");
-			rt_free( (char *)back, "fastf_t");
-			rt_free( (char*)vfront, "vertex *");
-			rt_free( (char*)vback, "vertex *");
-			rt_free( (char*)vtemp, "vertex *");
-			rt_free( (char*)outfaceuses, "faceuse *");
+			bu_free( (char *)front, "fastf_t");
+			bu_free( (char *)back, "fastf_t");
+			bu_free( (char*)vfront, "vertex *");
+			bu_free( (char*)vback, "vertex *");
+			bu_free( (char*)vtemp, "vertex *");
+			bu_free( (char*)outfaceuses, "faceuse *");
 
 			return(-1);		/* FAIL */
 		}
@@ -1133,7 +1133,7 @@ CONST struct rt_tol	*tol;
 
 		/* do "front" vertices */
 		NMG_CK_VERTEX( vfront[i] );
-		for( RT_LIST_FOR( vu , vertexuse , &vfront[i]->vu_hd ) )
+		for( BU_LIST_FOR( vu , vertexuse , &vfront[i]->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 			fu = nmg_find_fu_of_vu( vu );
@@ -1151,7 +1151,7 @@ CONST struct rt_tol	*tol;
 
 		/* and "back" vertices */
 		NMG_CK_VERTEX( vback[i] );
-		for( RT_LIST_FOR( vu , vertexuse , &vback[i]->vu_hd ) )
+		for( BU_LIST_FOR( vu , vertexuse , &vback[i]->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 			fu = nmg_find_fu_of_vu( vu );
@@ -1175,12 +1175,12 @@ CONST struct rt_tol	*tol;
 	nmg_region_a( *r, tol );
 	
 	/* free mem */
-	rt_free( (char *)front, "fastf_t");
-	rt_free( (char *)back, "fastf_t");
-	rt_free( (char*)vfront, "vertex *");
-	rt_free( (char*)vback, "vertex *");
-	rt_free( (char*)vtemp, "vertex *");
-	rt_free( (char*)outfaceuses, "faceuse *");
+	bu_free( (char *)front, "fastf_t");
+	bu_free( (char *)back, "fastf_t");
+	bu_free( (char*)vfront, "vertex *");
+	bu_free( (char*)vback, "vertex *");
+	bu_free( (char*)vtemp, "vertex *");
+	bu_free( (char*)outfaceuses, "faceuse *");
 
 	return(0);
 }
@@ -1194,23 +1194,23 @@ CONST struct rt_tol	*tol;
 int
 rt_rpc_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	LOCAL struct rt_rpc_internal	*xip;
 	union record			*rp;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_rpc_import: defective record\n");
+		bu_log("rt_rpc_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_RPC;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_rpc_internal), "rt_rpc_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_rpc_internal), "rt_rpc_internal");
 	xip = (struct rt_rpc_internal *)ip->idb_ptr;
 	xip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
@@ -1222,8 +1222,8 @@ register CONST mat_t		mat;
 
 	if( xip->rpc_r < SMALL_FASTF )
 	{
-		rt_log( "rt_rpc_import: r is zero\n" );
-		rt_free( (char *)ip->idb_ptr , "rt_rpc_import: ip->idp_ptr" );
+		bu_log( "rt_rpc_import: r is zero\n" );
+		bu_free( (char *)ip->idb_ptr , "rt_rpc_import: ip->idp_ptr" );
 		return( -1 );
 	}
 
@@ -1237,7 +1237,7 @@ register CONST mat_t		mat;
  */
 int
 rt_rpc_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1250,9 +1250,9 @@ double				local2mm;
 	xip = (struct rt_rpc_internal *)ip->idb_ptr;
 	RT_RPC_CK_MAGIC(xip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "rpc external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "rpc external");
 	rpc = (union record *)ep->ext_buf;
 
 	rpc->s.s_id = ID_SOLID;
@@ -1262,13 +1262,13 @@ double				local2mm;
 	mag_h = MAGNITUDE( xip->rpc_H );
 	
 	if( mag_b < RT_LEN_TOL || mag_h < RT_LEN_TOL || xip->rpc_r < RT_LEN_TOL) {
-		rt_log("rt_rpc_export: not all dimensions positive!\n");
+		bu_log("rt_rpc_export: not all dimensions positive!\n");
 		return(-1);
 	}
 
 	f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h );
 	if ( !NEAR_ZERO( f , RT_DOT_TOL) ) {
-		rt_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n",f );
+		bu_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n",f );
 		return(-1);
 	}
 
@@ -1290,7 +1290,7 @@ double				local2mm;
  */
 int
 rt_rpc_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1300,30 +1300,30 @@ double			mm2local;
 	char	buf[256];
 
 	RT_RPC_CK_MAGIC(xip);
-	rt_vls_strcat( str, "Right Parabolic Cylinder (RPC)\n");
+	bu_vls_strcat( str, "Right Parabolic Cylinder (RPC)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 		xip->rpc_V[X] * mm2local,
 		xip->rpc_V[Y] * mm2local,
 		xip->rpc_V[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
 		xip->rpc_B[X] * mm2local,
 		xip->rpc_B[Y] * mm2local,
 		xip->rpc_B[Z] * mm2local,
 		MAGNITUDE(xip->rpc_B) * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
 		xip->rpc_H[X] * mm2local,
 		xip->rpc_H[Y] * mm2local,
 		xip->rpc_H[Z] * mm2local,
 		MAGNITUDE(xip->rpc_H) * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 	
 	sprintf(buf, "\tr=%g\n", xip->rpc_r * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	return(0);
 }
@@ -1344,6 +1344,6 @@ struct rt_db_internal	*ip;
 	RT_RPC_CK_MAGIC(xip);
 	xip->rpc_magic = 0;		/* sanity */
 
-	rt_free( (char *)xip, "rpc ifree" );
+	bu_free( (char *)xip, "rpc ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

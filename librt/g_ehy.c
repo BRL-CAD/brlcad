@@ -204,7 +204,7 @@ struct rt_i		*rtip;
 {
 	struct rt_ehy_internal		*xip;
 	register struct ehy_specific	*ehy;
-	CONST struct rt_tol		*tol = &rtip->rti_tol;
+	CONST struct bn_tol		*tol = &rtip->rti_tol;
 	LOCAL fastf_t	magsq_h;
 	LOCAL fastf_t	mag_a, mag_h;
 	LOCAL fastf_t	c, f, r1, r2;
@@ -213,7 +213,7 @@ struct rt_i		*rtip;
 	LOCAL mat_t	S;
 
 	RT_CK_DB_INTERNAL(ip);
-	RT_CK_TOL(tol);
+	BN_CK_TOL(tol);
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	RT_EHY_CK_MAGIC(xip);
 
@@ -241,7 +241,7 @@ struct rt_i		*rtip;
 	 */
 	stp->st_id = ID_EHY;		/* set soltab ID */
 
-	GETSTRUCT( ehy, ehy_specific );
+	BU_GETSTRUCT( ehy, ehy_specific );
 	stp->st_specific = (genptr_t)ehy;
 
 	/* make unit vectors in A, H, and BxH directions */
@@ -254,21 +254,21 @@ struct rt_i		*rtip;
 	ehy->ehy_cprime = c / mag_h;
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VREVERSE( &R[0], ehy->ehy_Bunit );
 	VMOVE(    &R[4], ehy->ehy_Aunit );
 	VREVERSE( &R[8], ehy->ehy_Hunit );
-	mat_trn( Rinv, R );			/* inv of rot mat is trn */
+	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute S */
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = 1.0/r2;
 	S[ 5] = 1.0/r1;
 	S[10] = 1.0/mag_h;
 
 	/* Compute SoR and invRoS */
-	mat_mul( ehy->ehy_SoR, S, R );
-	mat_mul( ehy->ehy_invRoS, Rinv, S );
+	bn_mat_mul( ehy->ehy_SoR, S, R );
+	bn_mat_mul( ehy->ehy_invRoS, Rinv, S );
 
 	/* Compute bounding sphere and RPP */
 	/* bounding sphere center */
@@ -304,8 +304,8 @@ register CONST struct soltab *stp;
 	VPRINT("Aunit", ehy->ehy_Aunit);
 	VPRINT("Bunit", ehy->ehy_Bunit);
 	fprintf(stderr, "c = %g\n", ehy->ehy_cprime);
-	mat_print("S o R", ehy->ehy_SoR );
-	mat_print("invR o S", ehy->ehy_invRoS );
+	bn_mat_print("S o R", ehy->ehy_SoR );
+	bn_mat_print("invR o S", ehy->ehy_invRoS );
 }
 
 /* hit_surfno is set to one of these */
@@ -430,7 +430,7 @@ check_plates:
 		segp->seg_stp = stp;
 		segp->seg_in = hits[0];		/* struct copy */
 		segp->seg_out = hits[1];	/* struct copy */
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	} else {
 		/* entry is [1], exit is [0] */
 		register struct seg *segp;
@@ -439,7 +439,7 @@ check_plates:
 		segp->seg_stp = stp;
 		segp->seg_in = hits[1];		/* struct copy */
 		segp->seg_out = hits[0];	/* struct copy */
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(2);			/* HIT */
 }
@@ -497,7 +497,7 @@ register struct xray	*rp;
 		VREVERSE( hitp->hit_normal, ehy->ehy_Hunit );
 		break;
 	default:
-		rt_log("rt_ehy_norm: surfno=%d bad\n", hitp->hit_surfno);
+		bu_log("rt_ehy_norm: surfno=%d bad\n", hitp->hit_surfno);
 		break;
 	}
 }
@@ -533,13 +533,13 @@ struct soltab		*stp;
 		/* get the saved away scale factor */
 		scale = - hitp->hit_vpriv[X];
 
-		mat_idn( M1 );
+		bn_mat_idn( M1 );
 		M1[0] = M1[5] = (4 * ehy->ehy_cprime + 2)
 			/ (ehy->ehy_cprime * ehy->ehy_cprime);
 		M1[10] = -1.;
 		/* M1 = invR * S * M1 * S * R */
-		mat_mul( M2, ehy->ehy_invRoS, M1);
-		mat_mul( M1, M2, ehy->ehy_SoR );
+		bn_mat_mul( M2, ehy->ehy_invRoS, M1);
+		bn_mat_mul( M1, M2, ehy->ehy_SoR );
 
 		/* find the second fundamental form */
 		MAT4X3VEC( tmp, ehy->ehy_invRoS, u );
@@ -600,14 +600,14 @@ register struct uvcoord	*uvp;
 			uvp->uv_u = 0;
 		} else {
 			len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
-			uvp->uv_u = acos(pprime[X]/len) * rt_inv2pi;
+			uvp->uv_u = acos(pprime[X]/len) * bn_inv2pi;
 		}
 		uvp->uv_v = -pprime[Z];
 		break;
 	case EHY_NORM_TOP:
 		/* top plate, polar coords */
 		len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[X]/len) * rt_inv2pi;
+		uvp->uv_u = acos(pprime[X]/len) * bn_inv2pi;
 		uvp->uv_v = 1.0 - len;
 		break;
 	}
@@ -630,7 +630,7 @@ register struct soltab *stp;
 		(struct ehy_specific *)stp->st_specific;
 
 
-	rt_free( (char *)ehy, "ehy_specific" );
+	bu_free( (char *)ehy, "ehy_specific" );
 }
 
 /*
@@ -647,10 +647,10 @@ rt_ehy_class()
  */
 int
 rt_ehy_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang();
@@ -697,11 +697,11 @@ struct rt_tol		*tol;
 	VCROSS(   Bu, Au, Hu );
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VREVERSE( &R[0], Bu );
 	VMOVE(    &R[4], Au );
 	VREVERSE( &R[8], Hu );
-	mat_trn( invR, R );			/* inv of rot mat is trn */
+	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
 	/*
 	 *  Establish tolerances
@@ -729,7 +729,7 @@ struct rt_tol		*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = rt_pi;
+		ntol = bn_pi;
 
 	/*
 	 *	build ehy from 2 hyperbolas
@@ -792,7 +792,7 @@ struct rt_tol		*tol;
 
 			/* get next node before freeing */
 			next = pos_b->next;
-			rt_free( (char *)pos_b, "pt_node" );
+			bu_free( (char *)pos_b, "pt_node" );
 			pos_b = next;
 		}
 		/* construct hyperbola along semi-major axis of ehy
@@ -822,14 +822,14 @@ struct rt_tol		*tol;
 	}
 	
 	/* make array of ptrs to ehy ellipses */
-	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
+	ellipses = (fastf_t **)bu_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 	/* keep track of whether pts in each ellipse are doubled or not */
-	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
+	pts_dbl = (int *)bu_malloc( nell * sizeof(int), "dbl ints" );
 
 	/* make ellipses at each z level */
 	i = 0;
 	nseg = 0;
-	theta_prev = rt_twopi;
+	theta_prev = bn_twopi;
 	pos_a = pts_a->next;	/* skip over apex of ehy */
 	pos_b = pts_b->next;
 	while (pos_a) {
@@ -840,7 +840,7 @@ struct rt_tol		*tol;
 		VSET( p1, 0., pos_b->p[Y], 0. );
 		theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 		if (nseg == 0) {
-			nseg = (int)(rt_twopi / theta_new) + 1;
+			nseg = (int)(bn_twopi / theta_new) + 1;
 			pts_dbl[i] = 0;
 		} else if (theta_new < theta_prev) {
 			nseg *= 2;
@@ -849,7 +849,7 @@ struct rt_tol		*tol;
 			pts_dbl[i] = 0;
 		theta_prev = theta_new;
 
-		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
+		ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
 		rt_ell( ellipses[i], V, A, B, nseg );
 		
@@ -913,10 +913,10 @@ struct rt_tol		*tol;
 
 	/* free mem */
 	for (i = 0; i < nell; i++) {
-		rt_free( (char *)ellipses[i], "pts ell");
+		bu_free( (char *)ellipses[i], "pts ell");
 	}
-	rt_free( (char *)ellipses, "fastf_t ell[]");
-	rt_free( (char *)pts_dbl, "dbl ints" );
+	bu_free( (char *)ellipses, "fastf_t ell[]");
+	bu_free( (char *)pts_dbl, "dbl ints" );
 
 	return(0);
 }
@@ -934,7 +934,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2, cprime;
 	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang();
@@ -956,7 +956,7 @@ CONST struct rt_tol	*tol;
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
 	vect_t		A, Au, B, Bu, Hu, V;
-	struct nmg_ptbl	vert_tab;
+	struct bu_ptbl	vert_tab;
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -993,21 +993,21 @@ CONST struct rt_tol	*tol;
 	VCROSS(   Bu, Au, Hu );
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VREVERSE( &R[0], Bu );
 	VMOVE(    &R[4], Au );
 	VREVERSE( &R[8], Hu );
-	mat_trn( invR, R );			/* inv of rot mat is trn */
+	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
 	/* Compute S */
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = 1.0/r2;
 	S[ 5] = 1.0/r1;
 	S[10] = 1.0/mag_h;
 
 	/* Compute SoR and invRoS */
-	mat_mul( SoR, S, R );
-	mat_mul( invRoS, invR, S );
+	bn_mat_mul( SoR, S, R );
+	bn_mat_mul( invRoS, invR, S );
 
 	/*
 	 *  Establish tolerances
@@ -1035,7 +1035,7 @@ CONST struct rt_tol	*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = rt_pi;
+		ntol = bn_pi;
 
 	/*
 	 *	build ehy from 2 hyperbolas
@@ -1094,7 +1094,7 @@ CONST struct rt_tol	*tol;
 		/* free mem for old approximation of hyperbola */
 		pos_b = pts_b;
 		while ( pos_b ) {
-			rt_free( (char *)pos_b, "pt_node" );
+			bu_free( (char *)pos_b, "pt_node" );
 			pos_b = pos_b->next;
 		}
 		/* construct hyperbola along semi-major axis of ehy
@@ -1124,15 +1124,15 @@ CONST struct rt_tol	*tol;
 	}
 	
 	/* make array of ptrs to ehy ellipses */
-	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
+	ellipses = (fastf_t **)bu_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 
 	/* keep track of whether pts in each ellipse are doubled or not */
-	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
+	pts_dbl = (int *)bu_malloc( nell * sizeof(int), "dbl ints" );
 	
 	/* make ellipses at each z level */
 	i = 0;
 	nseg = 0;
-	theta_prev = rt_twopi;
+	theta_prev = bn_twopi;
 	pos_a = pts_a->next;	/* skip over apex of ehy */
 	pos_b = pts_b->next;
 	while (pos_a) {
@@ -1143,13 +1143,13 @@ CONST struct rt_tol	*tol;
 		VSET( p1, 0., pos_b->p[Y], 0. );
 		theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 		if (nseg == 0) {
-			nseg = (int)(rt_twopi / theta_new) + 1;
+			nseg = (int)(bn_twopi / theta_new) + 1;
 			pts_dbl[i] = 0;
 			/* maximum number of faces needed for ehy */
 			face = nseg*(1 + 3*((1 << (nell-1)) - 1));
 			/* array for each triangular face */
 			outfaceuses = (struct faceuse **)
-			rt_malloc( (face+1) * sizeof(struct faceuse *), "faceuse []" );
+			bu_malloc( (face+1) * sizeof(struct faceuse *), "faceuse []" );
 		} else if (theta_new < theta_prev) {
 			nseg *= 2;
 			pts_dbl[i] = 1;
@@ -1157,7 +1157,7 @@ CONST struct rt_tol	*tol;
 			pts_dbl[i] = 0;
 		theta_prev = theta_new;
 
-		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
+		ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
 		rt_ell( ellipses[i], V, A, B, nseg );
 		
@@ -1171,15 +1171,15 @@ CONST struct rt_tol	*tol;
 	 */
 	 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 	
 	/* vertices of ellipses of ehy */
 	vells = (struct vertex ***)
-		rt_malloc(nell*sizeof(struct vertex **), "vertex [][]");
+		bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
 	j = nseg;
 	for (i = nell-1; i >= 0; i--) {
 	        vells[i] = (struct vertex **)
-	        	rt_malloc(j*sizeof(struct vertex *), "vertex []");
+	        	bu_malloc(j*sizeof(struct vertex *), "vertex []");
 		if (i && pts_dbl[i])
 			j /= 2;
 	}
@@ -1189,19 +1189,19 @@ CONST struct rt_tol	*tol;
 		vells[nell-1][i] = (struct vertex *)NULL;
 	face = 0;
 	if ( (outfaceuses[face++] = nmg_cface(s, vells[nell-1], nseg)) == 0) {
-		rt_log("rt_ehy_tess() failure, top face\n");
+		bu_log("rt_ehy_tess() failure, top face\n");
 		goto fail;
 	}
 	fu_top = outfaceuses[0];
 
 	/* Mark edges of this face as real, this is the only real edge */
-	for( RT_LIST_FOR( lu , loopuse , &outfaceuses[0]->lu_hd ) )
+	for( BU_LIST_FOR( lu , loopuse , &outfaceuses[0]->lu_hd ) )
 	{
 		NMG_CK_LOOPUSE( lu );
 
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
-		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 		{
 			struct edge *e;
 
@@ -1236,7 +1236,7 @@ CONST struct rt_tol	*tol;
 			        vertp[1] = vells[top][jj+1];
 			        vertp[2] = vells[top][jj];
 				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-					rt_log("rt_ehy_tess() failure\n");
+					bu_log("rt_ehy_tess() failure\n");
 					goto fail;
 				}
 				if (j == 0)
@@ -1249,7 +1249,7 @@ CONST struct rt_tol	*tol;
 				else
 					vertp[1] = (struct vertex *)0;
 				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-					rt_log("rt_ehy_tess() failure\n");
+					bu_log("rt_ehy_tess() failure\n");
 					goto fail;
 				}
 				if (j != nseg-1)
@@ -1262,7 +1262,7 @@ CONST struct rt_tol	*tol;
 				else
 					vertp[1] = vells[top][jj+2];
 				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-					rt_log("rt_ehy_tess() failure\n");
+					bu_log("rt_ehy_tess() failure\n");
 					goto fail;
 				}
 			} else {
@@ -1273,7 +1273,7 @@ CONST struct rt_tol	*tol;
 				        vertp[1] = vells[top][j+1];
 			        vertp[2] = vells[top][j];
 				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-					rt_log("rt_ehy_tess() failure\n");
+					bu_log("rt_ehy_tess() failure\n");
 					goto fail;
 				}
 				if (j == 0)
@@ -1286,7 +1286,7 @@ CONST struct rt_tol	*tol;
 				else
 					vertp[0] = (struct vertex *)0;
 				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-					rt_log("rt_ehy_tess() failure\n");
+					bu_log("rt_ehy_tess() failure\n");
 					goto fail;
 				}
 				if (j != nseg-1)
@@ -1309,7 +1309,7 @@ CONST struct rt_tol	*tol;
 	vertp[1] = vells[0][1];
 	vertp[2] = vells[0][0];
 	if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-		rt_log("rt_ehy_tess() failure\n");
+		bu_log("rt_ehy_tess() failure\n");
 		goto fail;
 	}
 	/* associate geometry with topology */
@@ -1323,7 +1323,7 @@ CONST struct rt_tol	*tol;
 		else
 			vertp[1] = vells[0][i+1];
 		if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-			rt_log("rt_ehy_tess() failure\n");
+			bu_log("rt_ehy_tess() failure\n");
 			goto fail;
 		}
 	}
@@ -1344,17 +1344,17 @@ CONST struct rt_tol	*tol;
 	nmg_shell_coplanar_face_merge( s, tol, 1 );
 
 	/* free mem */
-	rt_free( (char *)outfaceuses, "faceuse []");
+	bu_free( (char *)outfaceuses, "faceuse []");
 	for (i = 0; i < nell; i++) {
-		rt_free( (char *)ellipses[i], "pts ell");
-	        rt_free( (char *)vells[i], "vertex []");
+		bu_free( (char *)ellipses[i], "pts ell");
+	        bu_free( (char *)vells[i], "vertex []");
 	}
-	rt_free( (char *)ellipses, "fastf_t ell[]");
-	rt_free( (char *)vells, "vertex [][]");
+	bu_free( (char *)ellipses, "fastf_t ell[]");
+	bu_free( (char *)vells, "vertex [][]");
 
 	/* Assign vertexuse normals */
 	nmg_vertex_tabulate( &vert_tab , &s->l.magic );
-	for( i=0 ; i<NMG_TBL_END( &vert_tab ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &vert_tab ) ; i++ )
 	{
 		point_t pt_prime,tmp_pt;
 		vect_t norm,rev_norm,tmp_vect;
@@ -1362,7 +1362,7 @@ CONST struct rt_tol	*tol;
 		struct vertex *v;
 		struct vertexuse *vu;
 
-		v = (struct vertex *)NMG_TBL_GET( &vert_tab , i );
+		v = (struct vertex *)BU_PTBL_GET( &vert_tab , i );
 		NMG_CK_VERTEX( v );
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G( vg );
@@ -1374,7 +1374,7 @@ CONST struct rt_tol	*tol;
 		VUNITIZE( norm );
 		VREVERSE( rev_norm , norm );
 
-		for( RT_LIST_FOR( vu , vertexuse , &v->vu_hd ) )
+		for( BU_LIST_FOR( vu , vertexuse , &v->vu_hd ) )
 		{
 			struct faceuse *fu;
 
@@ -1393,18 +1393,18 @@ CONST struct rt_tol	*tol;
 		}
 	}
 
-	nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &vert_tab );
 	return(0);
 
 fail:
 	/* free mem */
-	rt_free( (char *)outfaceuses, "faceuse []");
+	bu_free( (char *)outfaceuses, "faceuse []");
 	for (i = 0; i < nell; i++) {
-		rt_free( (char *)ellipses[i], "pts ell");
-	        rt_free( (char *)vells[i], "vertex []");
+		bu_free( (char *)ellipses[i], "pts ell");
+	        bu_free( (char *)vells[i], "vertex []");
 	}
-	rt_free( (char *)ellipses, "fastf_t ell[]");
-	rt_free( (char *)vells, "vertex [][]");
+	bu_free( (char *)ellipses, "fastf_t ell[]");
+	bu_free( (char *)vells, "vertex [][]");
 
 	return(-1);
 }
@@ -1418,23 +1418,23 @@ fail:
 int
 rt_ehy_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	LOCAL struct rt_ehy_internal	*xip;
 	union record			*rp;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_ehy_import: defective record\n");
+		bu_log("rt_ehy_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_EHY;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_ehy_internal), "rt_ehy_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_ehy_internal), "rt_ehy_internal");
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
@@ -1449,8 +1449,8 @@ register CONST mat_t		mat;
 
 	if( xip->ehy_r1 < SMALL_FASTF || xip->ehy_r2 < SMALL_FASTF || xip->ehy_c < SMALL_FASTF )
 	{
-		rt_log( "rt_ehy_import: r1, r2, or c are zero\n" );
-		rt_free( (char *)ip->idb_ptr , "rt_ehy_import: ip->idb_ptr" );
+		bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
+		bu_free( (char *)ip->idb_ptr , "rt_ehy_import: ip->idb_ptr" );
 		return( -1 );
 	}
 
@@ -1464,7 +1464,7 @@ register CONST mat_t		mat;
  */
 int
 rt_ehy_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1476,16 +1476,16 @@ double				local2mm;
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	RT_EHY_CK_MAGIC(xip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ehy external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ehy external");
 	ehy = (union record *)ep->ext_buf;
 
 	ehy->s.s_id = ID_SOLID;
 	ehy->s.s_type = EHY;
 
 	if (!NEAR_ZERO( MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
-		rt_log("rt_ehy_export: Au not a unit vector!\n");
+		bu_log("rt_ehy_export: Au not a unit vector!\n");
 		return(-1);
 	}
 
@@ -1493,17 +1493,17 @@ double				local2mm;
 		|| xip->ehy_c < RT_LEN_TOL
 		|| xip->ehy_r1 < RT_LEN_TOL
 		|| xip->ehy_r2 < RT_LEN_TOL) {
-		rt_log("rt_ehy_export: not all dimensions positive!\n");
+		bu_log("rt_ehy_export: not all dimensions positive!\n");
 		return(-1);
 	}
 	
 	if ( !NEAR_ZERO( VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL) ) {
-		rt_log("rt_ehy_export: Au and H are not perpendicular!\n");
+		bu_log("rt_ehy_export: Au and H are not perpendicular!\n");
 		return(-1);
 	}
 	
 	if (xip->ehy_r2 > xip->ehy_r1) {
-		rt_log("rt_ehy_export: semi-minor axis cannot be longer than semi-major axis!\n");
+		bu_log("rt_ehy_export: semi-minor axis cannot be longer than semi-major axis!\n");
 		return(-1);
 	}
 
@@ -1528,7 +1528,7 @@ double				local2mm;
  */
 int
 rt_ehy_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1538,29 +1538,29 @@ double			mm2local;
 	char	buf[256];
 
 	RT_EHY_CK_MAGIC(xip);
-	rt_vls_strcat( str, "Elliptical Hyperboloid (EHY)\n");
+	bu_vls_strcat( str, "Elliptical Hyperboloid (EHY)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 		xip->ehy_V[X] * mm2local,
 		xip->ehy_V[Y] * mm2local,
 		xip->ehy_V[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
 		xip->ehy_H[X] * mm2local,
 		xip->ehy_H[Y] * mm2local,
 		xip->ehy_H[Z] * mm2local,
 		MAGNITUDE(xip->ehy_H) * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 	
 	sprintf(buf, "\tA=%g\n", xip->ehy_r1 * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB=%g\n", xip->ehy_r2 * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tc=%g\n", xip->ehy_c * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	return(0);
 }
@@ -1581,6 +1581,6 @@ struct rt_db_internal	*ip;
 	RT_EHY_CK_MAGIC(xip);
 	xip->ehy_magic = 0;		/* sanity */
 
-	rt_free( (char *)xip, "ehy ifree" );
+	bu_free( (char *)xip, "ehy ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

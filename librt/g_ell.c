@@ -203,7 +203,7 @@ struct rt_i		*rtip;
 
 	/* XXX this coded constant stuff will bite us someday soon */
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
-		rt_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
+		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
 		return(1);		/* BAD */
 	}
@@ -219,22 +219,22 @@ struct rt_i		*rtip;
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
+		bu_log("ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
+		bu_log("ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
+		bu_log("ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
 	/* Solid is OK, compute constant terms now */
-	GETSTRUCT( ell, ell_specific );
+	BU_GETSTRUCT( ell, ell_specific );
 	stp->st_specific = (genptr_t)ell;
 
 	VMOVE( ell->ell_V, eip->v );
@@ -244,24 +244,24 @@ struct rt_i		*rtip;
 	VMOVE( ell->ell_Bu, Bu );
 	VMOVE( ell->ell_Cu, Cu );
 
-	mat_idn( ell->ell_SoR );
-	mat_idn( R );
+	bn_mat_idn( ell->ell_SoR );
+	bn_mat_idn( R );
 
 	/* Compute R and Rinv matrices */
 	VMOVE( &R[0], Au );
 	VMOVE( &R[4], Bu );
 	VMOVE( &R[8], Cu );
-	mat_trn( Rinv, R );			/* inv of rot mat is trn */
+	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute SoS (Affine transformation) */
-	mat_idn( SS );
+	bn_mat_idn( SS );
 	SS[ 0] = ell->ell_invsq[0];
 	SS[ 5] = ell->ell_invsq[1];
 	SS[10] = ell->ell_invsq[2];
 
 	/* Compute invRSSR */
-	mat_mul( mtemp, SS, R );
-	mat_mul( ell->ell_invRSSR, Rinv, mtemp );
+	bn_mat_mul( mtemp, SS, R );
+	bn_mat_mul( ell->ell_invRSSR, Rinv, mtemp );
 
 	/* Compute SoR */
 	VSCALE( &ell->ell_SoR[0], eip->a, ell->ell_invsq[0] );
@@ -321,8 +321,8 @@ register CONST struct soltab *stp;
 		(struct ell_specific *)stp->st_specific;
 
 	VPRINT("V", ell->ell_V);
-	mat_print("S o R", ell->ell_SoR );
-	mat_print("invRSSR", ell->ell_invRSSR );
+	bn_mat_print("S o R", ell->ell_SoR );
+	bn_mat_print("invRSSR", ell->ell_invRSSR );
 }
 
 /*
@@ -376,7 +376,7 @@ struct seg		*seghead;
 		segp->seg_in.hit_dist = k2;
 		segp->seg_out.hit_dist = k1;
 	}
-	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	return(2);			/* HIT */
 }
 
@@ -536,21 +536,21 @@ register struct uvcoord *uvp;
 	/* Assert that pprime has unit length */
 
 	/* U is azimuth, atan() range: -pi to +pi */
-	uvp->uv_u = mat_atan2( pprime[Y], pprime[X] ) * rt_inv2pi;
+	uvp->uv_u = bn_atan2( pprime[Y], pprime[X] ) * bn_inv2pi;
 	if( uvp->uv_u < 0 )
 		uvp->uv_u += 1.0;
 	/*
 	 *  V is elevation, atan() range: -pi/2 to +pi/2,
 	 *  because sqrt() ensures that X parameter is always >0
 	 */
-	uvp->uv_v = mat_atan2( pprime[Z],
+	uvp->uv_v = bn_atan2( pprime[Z],
 		sqrt( pprime[X] * pprime[X] + pprime[Y] * pprime[Y]) ) *
-		rt_invpi + 0.5;
+		bn_invpi + 0.5;
 
 	/* approximation: r / (circumference, 2 * pi * aradius) */
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
 	uvp->uv_du = uvp->uv_dv =
-		rt_inv2pi * r / stp->st_aradius;
+		bn_inv2pi * r / stp->st_aradius;
 }
 
 /*
@@ -563,7 +563,7 @@ register struct soltab *stp;
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
 
-	rt_free( (char *)ell, "ell_specific" );
+	bu_free( (char *)ell, "ell_specific" );
 }
 
 int
@@ -621,10 +621,10 @@ fastf_t *A, *B;
  */
 int
 rt_ell_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	register int		i;
 	struct rt_ell_internal	*eip;
@@ -748,7 +748,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -784,7 +784,7 @@ struct rt_tol		*tol;
 	magsq_b = MAGSQ( state.eip->b );
 	magsq_c = MAGSQ( state.eip->c );
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
-		rt_log("rt_ell_tess():  zero length A, B, or C vector\n");
+		bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
 		return(-2);		/* BAD */
 	}
 
@@ -799,17 +799,17 @@ struct rt_tol		*tol;
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell():  A not perpendicular to B, f=%f\n", f);
+		bu_log("ell():  A not perpendicular to B, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell():  B not perpendicular to C, f=%f\n", f);
+		bu_log("ell():  B not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell():  A not perpendicular to C, f=%f\n", f);
+		bu_log("ell():  A not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 
@@ -824,25 +824,25 @@ struct rt_tol		*tol;
 	}
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VMOVE( &R[0], Au );
 	VMOVE( &R[4], Bu );
 	VMOVE( &R[8], Cu );
-	mat_trn( invR, R );			/* inv of rot mat is trn */
+	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
 	/* Compute S and invS matrices */
 	/* invS is just 1/diagonal elements */
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = invAlen;
 	S[ 5] = invBlen;
 	S[10] = invClen;
-	mat_inv( invS, S );
+	bn_mat_inv( invS, S );
 
 	/* invRinvS, for converting points from unit sphere to model */
-	mat_mul( state.invRinvS, invR, invS );
+	bn_mat_mul( state.invRinvS, invR, invS );
 
 	/* invRoS, for converting normals from unit sphere to model */
-	mat_mul( state.invRoS, invR, S );
+	bn_mat_mul( state.invRoS, invR, S );
 
 	/* Compute radius of bounding sphere */
 	radius = Alen;
@@ -889,10 +889,10 @@ struct rt_tol		*tol;
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	state.s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Find the number of segments to divide 90 degrees worth into */
-	nsegs = rt_halfpi / state.theta_tol + 0.999;
+	nsegs = bn_halfpi / state.theta_tol + 0.999;
 	if( nsegs < 2 )  nsegs = 2;
 
 	/*  Find total number of strips of vertices that will be needed.
@@ -901,7 +901,7 @@ struct rt_tol		*tol;
 	 *  the poles.  Thus, strips[0] will have 4 faces.
 	 */
 	nstrips = 2 * nsegs + 1;
-	strips = (struct vert_strip *)rt_calloc( nstrips,
+	strips = (struct vert_strip *)bu_calloc( nstrips,
 		sizeof(struct vert_strip), "strips[]" );
 
 	/* North pole */
@@ -927,15 +927,15 @@ struct rt_tol		*tol;
 	}
 	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
-		strips[i].vp = (struct vertex **)rt_calloc( strips[i].nverts,
+		strips[i].vp = (struct vertex **)bu_calloc( strips[i].nverts,
 			sizeof(struct vertex *), "strip vertex[]" );
-		strips[i].norms = (vect_t *)rt_calloc( strips[i].nverts,
+		strips[i].norms = (vect_t *)bu_calloc( strips[i].nverts,
 			sizeof( vect_t ), "strip normals[]" );
 	}
 	/* All strips have faces, except for the equator */
 	for( i=0; i < nstrips; i++ )  {
 		if( strips[i].nfaces <= 0 )  continue;
-		strips[i].fu = (struct faceuse **)rt_calloc( strips[i].nfaces,
+		strips[i].fu = (struct faceuse **)bu_calloc( strips[i].nfaces,
 			sizeof(struct faceuse *), "strip faceuse[]" );
 	}
 
@@ -957,7 +957,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
 				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					rt_log("rt_ell_tess() nmg_cmface failure\n");
+					bu_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 				if( j+1 >= strips[i].nverts_per_strip )  break;
@@ -967,7 +967,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
 				vertp[2] = &(strips[i-1].vp[(j+1+toff)%tlim]);
 				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					rt_log("rt_ell_tess() nmg_cmface failure\n");
+					bu_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 			}
@@ -990,7 +990,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
 				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
 				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					rt_log("rt_ell_tess() nmg_cmface failure\n");
+					bu_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 				if( j+1 >= strips[i].nverts_per_strip )  break;
@@ -1000,7 +1000,7 @@ struct rt_tol		*tol;
 				vertp[1] = &(strips[i+1].vp[(j+1+toff)%tlim]);
 				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
 				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
-					rt_log("rt_ell_tess() nmg_cmface failure\n");
+					bu_log("rt_ell_tess() nmg_cmface failure\n");
 					goto fail;
 				}
 			}
@@ -1020,13 +1020,13 @@ struct rt_tol		*tol;
 		point_t		model_pt;
 
 		alpha = (((double)i) / (nstrips-1));
-		cos_alpha = cos(alpha*rt_pi);
-		sin_alpha = sin(alpha*rt_pi);
+		cos_alpha = cos(alpha*bn_pi);
+		sin_alpha = sin(alpha*bn_pi);
 		for( j=0; j < strips[i].nverts; j++ )  {
 
 			beta = ((double)j) / strips[i].nverts;
-			cos_beta = cos(beta*rt_twopi);
-			sin_beta = sin(beta*rt_twopi);
+			cos_beta = cos(beta*bn_twopi);
+			sin_beta = sin(beta*bn_twopi);
 			VSET( sphere_pt,
 				cos_beta * sin_alpha,
 				cos_alpha,
@@ -1064,7 +1064,7 @@ struct rt_tol		*tol;
 			NMG_CK_VERTEX( strips[i].vp[j] );
 			VREVERSE( norm_opp , strips[i].norms[j] )
 
-			for( RT_LIST_FOR( vu , vertexuse , &strips[i].vp[j]->vu_hd ) )
+			for( BU_LIST_FOR( vu , vertexuse , &strips[i].vp[j]->vu_hd ) )
 			{
 				fu = nmg_find_fu_of_vu( vu );
 				NMG_CK_FACEUSE( fu );
@@ -1085,29 +1085,29 @@ struct rt_tol		*tol;
 	/* Release memory */
 	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
-		rt_free( (char *)strips[i].vp, "strip vertex[]" );
-		rt_free( (char *)strips[i].norms, "strip norms[]" );
+		bu_free( (char *)strips[i].vp, "strip vertex[]" );
+		bu_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
 	for( i=0; i < nstrips; i++ )  {
 		if( strips[i].fu == (struct faceuse **)0 )  continue;
-		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
+		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
-	rt_free( (char *)strips, "strips[]" );
+	bu_free( (char *)strips, "strips[]" );
 	return(0);
 fail:
 	/* Release memory */
 	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
-		rt_free( (char *)strips[i].vp, "strip vertex[]" );
-		rt_free( (char *)strips[i].norms, "strip norms[]" );
+		bu_free( (char *)strips[i].vp, "strip vertex[]" );
+		bu_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
 	for( i=0; i < nstrips; i++ )  {
 		if( strips[i].fu == (struct faceuse **)0 )  continue;
-		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
+		bu_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
-	rt_free( (char *)strips, "strips[]" );
+	bu_free( (char *)strips, "strips[]" );
 	return(-1);
 }
 
@@ -1121,24 +1121,24 @@ fail:
 int
 rt_ell_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	struct rt_ell_internal	*eip;
 	union record		*rp;
 	LOCAL fastf_t	vec[3*4];
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_ell_import: defective record\n");
+		bu_log("rt_ell_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ELL;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	eip->magic = RT_ELL_INTERNAL_MAGIC;
 
@@ -1159,7 +1159,7 @@ register CONST mat_t		mat;
  */
 int
 rt_ell_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1171,9 +1171,9 @@ double				local2mm;
 	tip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(tip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ell external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ell external");
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
@@ -1197,7 +1197,7 @@ double				local2mm;
  */
 int
 rt_ell_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1210,13 +1210,13 @@ double			mm2local;
 	vect_t	unitv;
 
 	RT_ELL_CK_MAGIC(tip);
-	rt_vls_strcat( str, "ellipsoid (ELL)\n");
+	bu_vls_strcat( str, "ellipsoid (ELL)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 		tip->v[X] * mm2local,
 		tip->v[Y] * mm2local,
 		tip->v[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	mag_a = MAGNITUDE(tip->a);
 	mag_b = MAGNITUDE(tip->b);
@@ -1227,21 +1227,21 @@ double			mm2local;
 		tip->a[Y] * mm2local,
 		tip->a[Z] * mm2local,
 		mag_a * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
 		tip->b[X] * mm2local,
 		tip->b[Y] * mm2local,
 		tip->b[Z] * mm2local,
 		mag_b * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
 		tip->c[X] * mm2local,
 		tip->c[Y] * mm2local,
 		tip->c[Z] * mm2local,
 		mag_c * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	if( !verbose )  return(0);
 
@@ -1270,7 +1270,7 @@ rt_ell_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
-	rt_free( ip->idb_ptr, "ell ifree" );
+	bu_free( ip->idb_ptr, "ell ifree" );
 	ip->idb_ptr = GENPTR_NULL;
 }
 
@@ -1294,7 +1294,7 @@ rt_ell_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -1340,7 +1340,7 @@ struct rt_tol		*tol;
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
-		rt_log("rt_ell_tess():  zero length A, B, or C vector\n");
+		bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
 		return(-2);		/* BAD */
 	}
 
@@ -1355,17 +1355,17 @@ struct rt_tol		*tol;
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell():  A not perpendicular to B, f=%f\n", f);
+		bu_log("ell():  A not perpendicular to B, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell():  B not perpendicular to C, f=%f\n", f);
+		bu_log("ell():  B not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell():  A not perpendicular to C, f=%f\n", f);
+		bu_log("ell():  A not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 
@@ -1380,25 +1380,25 @@ struct rt_tol		*tol;
 	}
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	VMOVE( &R[0], Au );
 	VMOVE( &R[4], Bu );
 	VMOVE( &R[8], Cu );
-	mat_trn( invR, R );			/* inv of rot mat is trn */
+	bn_mat_trn( invR, R );			/* inv of rot mat is trn */
 
 	/* Compute S and invS matrices */
 	/* invS is just 1/diagonal elements */
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = invAlen;
 	S[ 5] = invBlen;
 	S[10] = invClen;
-	mat_inv( invS, S );
+	bn_mat_inv( invS, S );
 
 	/* invRinvS, for converting points from unit sphere to model */
-	mat_mul( invRinvS, invR, invS );
+	bn_mat_mul( invRinvS, invR, invS );
 
 	/* invRoS, for converting normals from unit sphere to model */
-	mat_mul( invRoS, invR, S );
+	bn_mat_mul( invRoS, invR, S );
 
 	/* Compute radius of bounding sphere */
 	radius = Alen;
@@ -1407,9 +1407,9 @@ struct rt_tol		*tol;
 	if( Clen > radius )
 		radius = Clen;
 
-	mat_idn( xlate );
+	bn_mat_idn( xlate );
 	MAT_DELTAS_VEC( xlate, eip->v );
-	mat_mul( unit2model, xlate, invRinvS );
+	bn_mat_mul( unit2model, xlate, invRinvS );
 
 	/*
 	 *  --- Build Topology ---
@@ -1424,7 +1424,7 @@ struct rt_tol		*tol;
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	vertp[0] = &verts[0];
 	vertp[1] = &verts[0];
@@ -1432,21 +1432,21 @@ struct rt_tol		*tol;
 	vertp[3] = &verts[1];
 
 	if( (fu = nmg_cmface( s, vertp, 4 )) == 0 )  {
-		rt_log("rt_ell_tnurb(%s): nmg_cmface() fail on face\n");
+		bu_log("rt_ell_tnurb(%s): nmg_cmface() fail on face\n");
 		return -1;
 	}
 
 	/* March around the fu's loop assigning uv parameter values */
-	lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 	NMG_CK_LOOPUSE(lu);
-	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 	NMG_CK_EDGEUSE(eu);
 
 	/* Loop always has Counter-Clockwise orientation (CCW) */
 	for( i=0; i < 4; i++ )  {
 		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_ell_uvw[i*3] );
 		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_ell_uvw[(i+1)*3] );
-		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+		eu = BU_LIST_NEXT( edgeuse, &eu->l );
 	}
 
 	/* Associate vertex geometry */
@@ -1459,13 +1459,13 @@ struct rt_tol		*tol;
 	nmg_sphere_face_snurb( fu, unit2model );
 
 	/* Associate edge geometry (trimming curve) -- linear in param space */
-	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+	eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 	NMG_CK_EDGEUSE(eu);
 	for( i=0; i < 4; i++ )  {
 #if 0
 struct snurb sn;
 fastf_t	param[4];
-rt_log("\neu=x%x, vu=x%x, v=x%x  ", eu, eu->vu_p, eu->vu_p->v_p);
+bu_log("\neu=x%x, vu=x%x, v=x%x  ", eu, eu->vu_p, eu->vu_p->v_p);
 VPRINT("xyz", eu->vu_p->v_p->vg_p->coord);
 nmg_hack_snurb( &sn, fu->f_p->g.snurb_p );
 VPRINT("uv", eu->vu_p->a.cnurb_p->param);
@@ -1474,7 +1474,7 @@ VPRINT("surf(u,v)", param);
 #endif
 
 		nmg_edge_g_cnurb_plinear(eu);
-		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+		eu = BU_LIST_NEXT( edgeuse, &eu->l );
 	}
 
 	/* Compute "geometry" for region and shell */

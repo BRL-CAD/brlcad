@@ -61,7 +61,7 @@ struct rt_i		*rtip;
 	gip = (struct rt_grip_internal *)ip->idb_ptr;
 	RT_GRIP_CK_MAGIC(gip);
 
-	GETSTRUCT( gripp, grip_specific);
+	BU_GETSTRUCT( gripp, grip_specific);
 	stp->st_specific = (genptr_t)gripp;
 
 	VMOVE(gripp->grip_normal, gip->normal);
@@ -88,12 +88,12 @@ register CONST struct soltab *stp;
 		(struct grip_specific *)stp->st_specific;
 
 	if( gripp == GRIP_NULL )  {
-		rt_log("grip(%s):  no data?\n", stp->st_name);
+		bu_log("grip(%s):  no data?\n", stp->st_name);
 		return;
 	}
 	VPRINT( "Center", gripp->grip_center);
 	VPRINT( "Normal", gripp->grip_normal);
-	rt_log( "mag = %f\n", gripp->grip_mag);
+	bu_log( "mag = %f\n", gripp->grip_mag);
 }
 
 /*
@@ -196,7 +196,7 @@ struct soltab *stp;
 	register struct grip_specific *gripp =
 		(struct grip_specific *)stp->st_specific;
 
-	rt_free( (char *)gripp, "grip_specific");
+	bu_free( (char *)gripp, "grip_specific");
 }
 
 int
@@ -216,10 +216,10 @@ rt_grp_class()
  */
 int
 rt_grp_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal 	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_grip_internal	*gip;
 	vect_t xbase, ybase;	/* perpendiculars to normal */
@@ -274,7 +274,7 @@ struct rt_tol		*tol;
 int
 rt_grp_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 CONST mat_t			mat;
 {
 	struct rt_grip_internal	*gip;
@@ -283,16 +283,16 @@ CONST mat_t			mat;
 	fastf_t		orig_eqn[3*3];
 	register double	f,t;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_grp_import: defective record, id=x%x\n", rp->u_id);
+		bu_log("rt_grp_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_GRIP;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_grip_internal), "rt_grip_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_grip_internal), "rt_grip_internal");
 	gip = (struct rt_grip_internal *)ip->idb_ptr;
 	gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
@@ -309,7 +309,7 @@ CONST mat_t			mat;
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( gip->normal );
 	if( f < SMALL )  {
-		rt_log("rt_grp_import:  bad normal, len=%g\n", f );
+		bu_log("rt_grp_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
 	t = f - 1.0;
@@ -326,7 +326,7 @@ CONST mat_t			mat;
  */
 int
 rt_grp_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -338,9 +338,9 @@ double				local2mm;
 	gip = (struct rt_grip_internal *)ip->idb_ptr;
 	RT_GRIP_CK_MAGIC(gip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "grip external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "grip external");
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
@@ -361,7 +361,7 @@ double				local2mm;
  */
 int
 rt_grp_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -371,18 +371,18 @@ double			mm2local;
 	char	buf[256];
 
 	RT_GRIP_CK_MAGIC(gip);
-	rt_vls_strcat( str, "grip\n");
+	bu_vls_strcat( str, "grip\n");
 
 	sprintf(buf, "\tN (%g, %g, %g)\n",
 		V3ARGS(gip->normal));		/* should have unit length */
 
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g %g %g) mag=%g\n",
 		gip->center[0]*mm2local, gip->center[1]*mm2local,
 		gip->center[2]*mm2local, gip->mag*mm2local);
 
-	rt_vls_strcat( str, buf);
+	bu_vls_strcat( str, buf);
 	return(0);
 }
 
@@ -396,7 +396,7 @@ rt_grp_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
-	rt_free( ip->idb_ptr, "grip ifree" );
+	bu_free( ip->idb_ptr, "grip ifree" );
 	ip->idb_ptr = GENPTR_NULL;
 }
 
@@ -409,7 +409,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	struct rt_grip_internal	*gip;
 

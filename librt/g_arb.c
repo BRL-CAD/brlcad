@@ -468,7 +468,7 @@ CONST char	*name;
 		f = VDOT( afp->peqn, P_A );
 		if( ! NEAR_ZERO(f,RT_SLOPPY_DOT_TOL) )  {
 			/* Non-planar face */
-			rt_log("arb(%s): face %s[%d] non-planar, dot=%g\n",
+			bu_log("arb(%s): face %s[%d] non-planar, dot=%g\n",
 				name, title, ptno, f );
 #ifdef CONSERVATIVE
 			return(-1);			/* BAD */
@@ -539,7 +539,7 @@ CONST char			*name;
 	next_point: ;
 	}
 	if( rt_g.debug & DEBUG_ARB8 )  {
-		rt_log("arb(%s) equiv_pts[] = %d %d %d %d %d %d %d %d\n",
+		bu_log("arb(%s) equiv_pts[] = %d %d %d %d %d %d %d %d\n",
 			name,
 			equiv_pts[0], equiv_pts[1], equiv_pts[2], equiv_pts[3],
 			equiv_pts[4], equiv_pts[5], equiv_pts[6], equiv_pts[7]);
@@ -555,7 +555,7 @@ CONST char			*name;
 
 			pt_index = rt_arb_info[i].ai_sub[j];
 			if( rt_g.debug & DEBUG_ARB8 )  {
-				rt_log("face %d, j=%d, npts=%d, orig_vert=%d, vert=%d\n",
+				bu_log("face %d, j=%d, npts=%d, orig_vert=%d, vert=%d\n",
 					i, j, npts,
 					pt_index, equiv_pts[pt_index] );
 			}
@@ -603,7 +603,7 @@ skip_pt:		;
 		pap->pa_faces++;
 	}
 	if( pap->pa_faces < 4  || pap->pa_faces > 6 )  {
-		rt_log("arb(%s):  only %d faces present\n",
+		bu_log("arb(%s):  only %d faces present\n",
 			name, pap->pa_faces);
 		return(-1);			/* Error */
 	}
@@ -648,7 +648,7 @@ int			uv_wanted;
 	{
 		register struct arb_specific	*arbp;
 		if( (arbp = (struct arb_specific *)stp->st_specific) == 0 )  {
-			arbp = (struct arb_specific *)rt_malloc(
+			arbp = (struct arb_specific *)bu_malloc(
 				sizeof(struct arb_specific) +
 				sizeof(struct aface) * (pa.pa_faces - 4),
 				"arb_specific" );
@@ -666,7 +666,7 @@ int			uv_wanted;
 			 * copy the data first, THEN update arb_opt,
 			 * because arb_opt doubles as the "UV avail" flag.
 			 */
-			ofp = (struct oface *)rt_malloc(
+			ofp = (struct oface *)bu_malloc(
 				pa.pa_faces * sizeof(struct oface), "arb_opt");
 			bcopy( (char *)pa.pa_opt, (char *)ofp,
 				pa.pa_faces * sizeof(struct oface) );
@@ -738,10 +738,10 @@ register CONST struct soltab *stp;
 	register int i;
 
 	if( arbp == (struct arb_specific *)0 )  {
-		rt_log("arb(%s):  no faces\n", stp->st_name);
+		bu_log("arb(%s):  no faces\n", stp->st_name);
 		return;
 	}
-	rt_log("%d faces:\n", arbp->arb_nmfaces);
+	bu_log("%d faces:\n", arbp->arb_nmfaces);
 	for( i=0; i < arbp->arb_nmfaces; i++ )  {
 		afp = &(arbp->arb_face[i]);
 		VPRINT( "A", afp->A );
@@ -752,7 +752,7 @@ register CONST struct soltab *stp;
 			VPRINT( "UVorig", op->arb_UVorig );
 			VPRINT( "U", op->arb_U );
 			VPRINT( "V", op->arb_V );
-			rt_log( "Ulen = %g, Vlen = %g\n",
+			bu_log( "Ulen = %g, Vlen = %g\n",
 				op->arb_Ulen, op->arb_Vlen);
 		}
 	}
@@ -791,7 +791,7 @@ struct seg		*seghead;
 	iplane = oplane = -1;
 
 	if (rt_g.debug & DEBUG_ARB8) {
-		rt_log("\n\n------------\n arb: ray point %g %g %g -> %g %g %g\n",
+		bu_log("\n\n------------\n arb: ray point %g %g %g -> %g %g %g\n",
 			V3ARGS(rp->r_pt),
 			V3ARGS(rp->r_dir));
 	}
@@ -807,7 +807,7 @@ struct seg		*seghead;
 
 	        if (rt_g.debug & DEBUG_ARB8) {
 	        	HPRINT("arb: Plane Equation", afp->peqn);
-			rt_log("arb: dn=%g dxbdn=%g s=%g\n", dn, dxbdn, dxbdn/dn);
+			bu_log("arb: dn=%g dxbdn=%g s=%g\n", dn, dxbdn, dxbdn/dn);
 	        }
 
 		if( dn < -SQRT_SMALL_FASTF )  {
@@ -836,7 +836,7 @@ struct seg		*seghead;
 	}
 	/* Validate */
 	if( iplane == -1 || oplane == -1 )  {
-		rt_log("rt_arb_shoot(%s): 1 hit => MISS\n",
+		bu_log("rt_arb_shoot(%s): 1 hit => MISS\n",
 			stp->st_name);
 		return( 0 );	/* MISS */
 	}
@@ -853,7 +853,7 @@ struct seg		*seghead;
 
 		segp->seg_out.hit_dist = out;
 		segp->seg_out.hit_surfno = oplane;
-		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(2);			/* HIT */
 }
@@ -1016,19 +1016,19 @@ register struct uvcoord *uvp;
 
 	if( arbp->arb_opt == (struct oface *)0 )  {
 		register int		ret = 0;
-		struct rt_external	ext;
+		struct bu_external	ext;
 		struct rt_db_internal	intern;
 		struct rt_arb_internal	*aip;
 
-		RT_INIT_EXTERNAL(&ext);
+		BU_INIT_EXTERNAL(&ext);
 		if( db_get_external( &ext, stp->st_dp, ap->a_rt_i->rti_dbip ) < 0 )  {
-			rt_log("rt_arb_uv(%s) db_get_external failure\n",
+			bu_log("rt_arb_uv(%s) db_get_external failure\n",
 				stp->st_name);
 			return;
 		}
 		if( rt_arb_import( &intern, &ext,
 		    stp->st_matp ? stp->st_matp : bn_mat_identity ) < 0 )  {
-			rt_log("rt_arb_uv(%s) database import error\n",
+			bu_log("rt_arb_uv(%s) database import error\n",
 				stp->st_name);
 			db_free_external( &ext );
 			return;
@@ -1052,7 +1052,7 @@ register struct uvcoord *uvp;
 		rt_arb_ifree( &intern );
 
 		if( ret != 0 || arbp->arb_opt == (struct oface *)0 )  {
-			rt_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
+			bu_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
 				stp->st_name,
 		    		stp->st_specific, arbp->arb_opt );
 			return;
@@ -1067,7 +1067,7 @@ register struct uvcoord *uvp;
 	uvp->uv_u = VDOT( P_A, ofp->arb_U );
 	uvp->uv_v = 1.0 - VDOT( P_A, ofp->arb_V );
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 || uvp->uv_u > 1 || uvp->uv_v > 1 )  {
-		rt_log("arb_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
+		bu_log("arb_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
@@ -1103,8 +1103,8 @@ register struct soltab *stp;
 		(struct arb_specific *)stp->st_specific;
 
 	if( arbp->arb_opt )
-		rt_free( (char *)arbp->arb_opt, "arb_opt" );
-	rt_free( (char *)arbp, "arb_specific" );
+		bu_free( (char *)arbp->arb_opt, "arb_opt" );
+	bu_free( (char *)arbp, "arb_specific" );
 }
 
 #define ARB_FACE( valp, a, b, c, d ) \
@@ -1122,10 +1122,10 @@ register struct soltab *stp;
  */
 int
 rt_arb_plot( vhead, ip, ttol, tol )
-struct rt_list			*vhead;
+struct bu_list			*vhead;
 struct rt_db_internal		 *ip;
 CONST struct rt_tess_tol	*ttol;
-struct rt_tol			*tol;
+struct bn_tol			*tol;
 {
 	struct rt_arb_internal	*aip;
 
@@ -1154,7 +1154,7 @@ CONST struct bn_tol    *tol;
 	register int i;
 	
 	if( arbp == (struct arb_specific *)0 ) {
-		rt_log("arb(%s): no faces\n", stp->st_name);
+		bu_log("arb(%s): no faces\n", stp->st_name);
 		return RT_CLASSIFY_UNIMPLEMENTED;
 	}
 
@@ -1186,7 +1186,7 @@ CONST struct bn_tol    *tol;
 int
 rt_arb_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST  mat_t		mat;
 {
 	struct rt_arb_internal	*aip;
@@ -1195,17 +1195,17 @@ register CONST  mat_t		mat;
 	LOCAL vect_t		work;
 	LOCAL fastf_t		vec[3*8];
 	
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_arb_import: defective record, id=x%x\n", rp->u_id);
+		bu_log("rt_arb_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARB8;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal");
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -1230,7 +1230,7 @@ register CONST  mat_t		mat;
  */
 int
 rt_arb_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1243,9 +1243,9 @@ double				local2mm;
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "arb external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "arb external");
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
@@ -1269,7 +1269,7 @@ double				local2mm;
  */
 int
 rt_arb_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1283,7 +1283,7 @@ double			mm2local;
 
 	RT_ARB_CK_MAGIC(aip);
 
-	tmp_tol.magic = RT_TOL_MAGIC;
+	tmp_tol.magic = BN_TOL_MAGIC;
 	tmp_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
 	tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
 	tmp_tol.perp = 1e-5;
@@ -1294,14 +1294,14 @@ double			mm2local;
 	if( !arb_type )
 	{
 
-		rt_vls_strcat( str, "ARB8\n");
+		bu_vls_strcat( str, "ARB8\n");
 
 		/* Use 1-based numbering, to match vertex labels in MGED */
 		sprintf(buf, "\t1 (%g, %g, %g)\n",
 			aip->pt[0][X] * mm2local,
 			aip->pt[0][Y] * mm2local,
 			aip->pt[0][Z] * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 
 		if( !verbose )  return(0);
 
@@ -1310,13 +1310,13 @@ double			mm2local;
 				aip->pt[i][X] * mm2local,
 				aip->pt[i][Y] * mm2local,
 				aip->pt[i][Z] * mm2local );
-			rt_vls_strcat( str, buf );
+			bu_vls_strcat( str, buf );
 		}
 	}
 	else
 	{
 		sprintf( buf, "ARB%d\n", arb_type );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		switch( arb_type )
 		{
 			case ARB8:
@@ -1326,7 +1326,7 @@ double			mm2local;
 						aip->pt[i][X] * mm2local,
 						aip->pt[i][Y] * mm2local,
 						aip->pt[i][Z] * mm2local );
-						rt_vls_strcat( str, buf );
+						bu_vls_strcat( str, buf );
 				}
 				break;
 			case ARB7:
@@ -1336,7 +1336,7 @@ double			mm2local;
 						aip->pt[i][X] * mm2local,
 						aip->pt[i][Y] * mm2local,
 						aip->pt[i][Z] * mm2local );
-						rt_vls_strcat( str, buf );
+						bu_vls_strcat( str, buf );
 				}
 				break;
 			case ARB6:
@@ -1346,13 +1346,13 @@ double			mm2local;
 						aip->pt[i][X] * mm2local,
 						aip->pt[i][Y] * mm2local,
 						aip->pt[i][Z] * mm2local );
-						rt_vls_strcat( str, buf );
+						bu_vls_strcat( str, buf );
 				}
 				sprintf( buf, "\t6 (%g, %g, %g)\n",
 					aip->pt[6][X] * mm2local,
 					aip->pt[6][Y] * mm2local,
 					aip->pt[6][Z] * mm2local );
-				rt_vls_strcat( str, buf );
+				bu_vls_strcat( str, buf );
 				break;
 			case ARB5:
 				for( i=0 ; i<5 ; i++ )
@@ -1361,7 +1361,7 @@ double			mm2local;
 						aip->pt[i][X] * mm2local,
 						aip->pt[i][Y] * mm2local,
 						aip->pt[i][Z] * mm2local );
-						rt_vls_strcat( str, buf );
+						bu_vls_strcat( str, buf );
 				}
 				break;
 			case ARB4:
@@ -1371,13 +1371,13 @@ double			mm2local;
 						aip->pt[i][X] * mm2local,
 						aip->pt[i][Y] * mm2local,
 						aip->pt[i][Z] * mm2local );
-						rt_vls_strcat( str, buf );
+						bu_vls_strcat( str, buf );
 				}
 				sprintf( buf, "\t4 (%g, %g, %g)\n",
 					aip->pt[4][X] * mm2local,
 					aip->pt[4][Y] * mm2local,
 					aip->pt[4][Z] * mm2local );
-				rt_vls_strcat( str, buf );
+				bu_vls_strcat( str, buf );
 				break;
 		}
 	}
@@ -1394,7 +1394,7 @@ rt_arb_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
-	rt_free( ip->idb_ptr, "arb ifree" );
+	bu_free( ip->idb_ptr, "arb ifree" );
 	ip->idb_ptr = (genptr_t)NULL;
 }
 
@@ -1415,7 +1415,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol	*ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
@@ -1437,7 +1437,7 @@ struct rt_tol		*tol;
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Process each face */
 	for( i=0; i < pa.pa_faces; i++ )  {
@@ -1460,13 +1460,13 @@ struct rt_tol		*tol;
 			*vertpp++ = &verts[pa.pa_pindex[0][i]];
 		}
 		if( rt_g.debug & DEBUG_ARB8 )  {
-			rt_log("face %d, npts=%d, verts %d %d %d %d\n",
+			bu_log("face %d, npts=%d, verts %d %d %d %d\n",
 				i, pa.pa_npts[i],
 				pa.pa_pindex[0][i], pa.pa_pindex[1][i],
 				pa.pa_pindex[2][i], pa.pa_pindex[3][i] );
 		}
 		if( (fu[i] = nmg_cmface( s, vertp, pa.pa_npts[i] )) == 0 )  {
-			rt_log("rt_arb_tess(%s): nmg_cmface() fail on face %d\n", i);
+			bu_log("rt_arb_tess(%s): nmg_cmface() fail on face %d\n", i);
 			continue;
 		}
 	}
@@ -1528,7 +1528,7 @@ rt_arb_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
@@ -1552,7 +1552,7 @@ struct rt_tol		*tol;
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Process each face */
 	for( i=0; i < pa.pa_faces; i++ )  {
@@ -1575,7 +1575,7 @@ struct rt_tol		*tol;
 			*vertpp++ = &verts[pa.pa_pindex[0][i]];
 		}
 		if( rt_g.debug & DEBUG_ARB8 )  {
-			rt_log("face %d, npts=%d, verts %d %d %d %d\n",
+			bu_log("face %d, npts=%d, verts %d %d %d %d\n",
 				i, pa.pa_npts[i],
 				pa.pa_pindex[0][i], pa.pa_pindex[1][i],
 				pa.pa_pindex[2][i], pa.pa_pindex[3][i] );
@@ -1583,29 +1583,29 @@ struct rt_tol		*tol;
 		/* The edges created will be linear, in parameter space...,
 		 * but need to have edge_g_cnurb geometry. */
 		if( (fu[i] = nmg_cmface( s, vertp, pa.pa_npts[i] )) == 0 )  {
-			rt_log("rt_arb_tnurb(%s): nmg_cmface() fail on face %d\n", i);
+			bu_log("rt_arb_tnurb(%s): nmg_cmface() fail on face %d\n", i);
 			continue;
 		}
 		/* March around the fu's loop assigning uv parameter values */
-		lu = RT_LIST_FIRST( loopuse, &fu[i]->lu_hd );
+		lu = BU_LIST_FIRST( loopuse, &fu[i]->lu_hd );
 		NMG_CK_LOOPUSE(lu);
-		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(eu);
 
 		/* Loop always has Counter-Clockwise orientation (CCW) */
 		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_arb_uvw[0*3] );
 		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_arb_uvw[1*3] );
-		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+		eu = BU_LIST_NEXT( edgeuse, &eu->l );
 
 		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_arb_uvw[1*3] );
 		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_arb_uvw[2*3] );
-		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+		eu = BU_LIST_NEXT( edgeuse, &eu->l );
 
 		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_arb_uvw[2*3] );
 		if( pa.pa_npts[i] > 3 ) {
 			nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_arb_uvw[3*3] );
 
-			eu = RT_LIST_NEXT( edgeuse, &eu->l );
+			eu = BU_LIST_NEXT( edgeuse, &eu->l );
 			nmg_vertexuse_a_cnurb( eu->vu_p, &rt_arb_uvw[3*3] );
 		}
 		/* Final eu must end back at the beginning */
@@ -1640,9 +1640,9 @@ struct rt_tol		*tol;
 		fg->v.knots[2] = fg->v.knots[3] = 1;
 
 		/* Assign surface control points from the corners */
-		lu = RT_LIST_FIRST( loopuse, &fu[i]->lu_hd );
+		lu = BU_LIST_FIRST( loopuse, &fu[i]->lu_hd );
 		NMG_CK_LOOPUSE(lu);
-		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(eu);
 
 		/* For ctl_points, need 4 verts in order 0, 1, 3, 2 */
@@ -1652,7 +1652,7 @@ struct rt_tol		*tol;
 
 			/* Also associate edge geometry (trimming curve) */
 			nmg_edge_g_cnurb_plinear(eu);
-			eu = RT_LIST_NEXT( edgeuse, &eu->l );
+			eu = BU_LIST_NEXT( edgeuse, &eu->l );
 		}
 		if( pa.pa_npts[i] == 3 ) {
 			vect_t	c_b;

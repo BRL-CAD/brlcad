@@ -175,7 +175,7 @@ struct rt_i		*rtip;
 	RT_ETO_CK_MAGIC(tip);
 
 	/* Solid is OK, compute constant terms now */
-	GETSTRUCT( eto, eto_specific );
+	BU_GETSTRUCT( eto, eto_specific );
 	stp->st_specific = (genptr_t)eto;
 
 	eto->eto_r = tip->eto_r;
@@ -183,7 +183,7 @@ struct rt_i		*rtip;
 	eto->eto_rc = MAGNITUDE( tip->eto_C );
 	if ( NEAR_ZERO(eto->eto_r, 0.0001) || NEAR_ZERO(eto->eto_rd, 0.0001)
 		|| NEAR_ZERO(eto->eto_rc, 0.0001)) {
-		rt_log("eto(%s): r, rd, or rc zero length\n", stp->st_name);
+		bu_log("eto(%s): r, rd, or rc zero length\n", stp->st_name);
 		return(1);
 	}
 
@@ -206,7 +206,7 @@ struct rt_i		*rtip;
 	dh = eto->eto_rd * cos(phi);
 	/* make sure ellipse doesn't overlap itself when revolved */
 	if (ch > eto->eto_r || dh > eto->eto_r) {
-		rt_log("eto(%s): revolved ellipse overlaps itself\n",
+		bu_log("eto(%s): revolved ellipse overlaps itself\n",
 			stp->st_name);
 		return(1);
 	}
@@ -217,11 +217,11 @@ struct rt_i		*rtip;
 	eto->fv =  eto->eu;
 
 	/* Compute R and invR matrices */
-	mat_idn( eto->eto_R );
+	bn_mat_idn( eto->eto_R );
 	VMOVE( &eto->eto_R[0], Bu );
 	VMOVE( &eto->eto_R[4], Au );
 	VMOVE( &eto->eto_R[8], Nu );
-	mat_inv( eto->eto_invR, eto->eto_R );
+	bn_mat_inv( eto->eto_invR, eto->eto_R );
 
 	stp->st_aradius = stp->st_bradius = eto->eto_r + eto->eto_rc;
 
@@ -277,12 +277,12 @@ register CONST struct soltab *stp;
 	VPRINT("V", eto->eto_V);
 	VPRINT("N", eto->eto_N);
 	VPRINT("C", eto->eto_C);
-	rt_log("r = %f\n", eto->eto_r);
-	rt_log("rc = %f\n", eto->eto_rc);
-	rt_log("rd = %f\n", eto->eto_rd);
-	mat_print("R", eto->eto_R );
-	mat_print("invR", eto->eto_invR );
-	rt_log( "rpp: (%g, %g, %g) to (%g, %g, %g)\n",
+	bu_log("r = %f\n", eto->eto_r);
+	bu_log("rc = %f\n", eto->eto_rc);
+	bu_log("rd = %f\n", eto->eto_rd);
+	bn_mat_print("R", eto->eto_R );
+	bn_mat_print("invR", eto->eto_invR );
+	bu_log( "rpp: (%g, %g, %g) to (%g, %g, %g)\n",
 		stp->st_min[X], stp->st_min[Y], stp->st_min[Z], 
 		stp->st_max[X], stp->st_max[Y], stp->st_max[Z]);
 }
@@ -331,7 +331,7 @@ struct seg		*seghead;
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
 	LOCAL poly	C;		/* The final equation */
-	LOCAL complex	val[4];	/* The complex roots */
+	LOCAL bn_complex_t	val[4];	/* The complex roots */
 	LOCAL double	k[4];		/* The real roots */
 	register int	i;
 	LOCAL int	j;
@@ -440,8 +440,8 @@ struct seg		*seghead;
 	 */
 	if ( (i = rt_poly_roots( &C, val )) != 4 ){
 		if( i != 0 )  {
-			rt_log("eto:  rt_poly_roots() 4!=%d\n", i);
-			rt_pr_roots( stp->st_name, val, i );
+			bu_log("eto:  rt_poly_roots() 4!=%d\n", i);
+			bn_pr_roots( stp->st_name, val, i );
 		}
 		return(0);		/* MISS */
 	}
@@ -467,8 +467,8 @@ struct seg		*seghead;
 		return(0);		/* No hit */
 
 	default:
-		rt_log("rt_eto_shot: reduced 4 to %d roots\n",i);
-		rt_pr_roots( stp->st_name, val, 4 );
+		bu_log("rt_eto_shot: reduced 4 to %d roots\n",i);
+		bn_pr_roots( stp->st_name, val, 4 );
 		return(0);		/* No hit */
 
 	case 2:
@@ -511,7 +511,7 @@ struct seg		*seghead;
 	/* Set aside vector for rt_eto_norm() later */
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
-	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 
 	if( i == 2 )
 		return(2);			/* HIT */
@@ -524,7 +524,7 @@ struct seg		*seghead;
 	segp->seg_out.hit_dist = k[2];
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[3], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[2], dprime );
-	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	return(4);			/* HIT */
 }
 
@@ -705,13 +705,13 @@ register struct uvcoord	*uvp;
 
 	/* normalize to [0, 2pi] */
 	if (theta_u < 0.)
-		theta_u += rt_twopi;
+		theta_u += bn_twopi;
 	if (theta_v < 0.)
-		theta_v += rt_twopi;
+		theta_v += bn_twopi;
 
 	/* normalize to [0, 1] */
-	uvp->uv_u = theta_u/rt_twopi;
-	uvp->uv_v = theta_v/rt_twopi;
+	uvp->uv_u = theta_u/bn_twopi;
+	uvp->uv_v = theta_v/bn_twopi;
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
@@ -725,7 +725,7 @@ struct soltab *stp;
 	register struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
 
-	rt_free( (char *)eto, "eto_specific");
+	bu_free( (char *)eto, "eto_specific");
 }
 
 int
@@ -747,10 +747,10 @@ rt_eto_class()
  */
 int
 rt_eto_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -771,7 +771,7 @@ struct rt_tol		*tol;
 
 	if ( NEAR_ZERO(tip->eto_r, 0.0001) || NEAR_ZERO(b, 0.0001)
 		|| NEAR_ZERO(a, 0.0001)) {
-		rt_log("eto_plot: r, rd, or rc zero length\n");
+		bu_log("eto_plot: r, rd, or rc zero length\n");
 		return(1);
 	}
 
@@ -808,7 +808,7 @@ struct rt_tol		*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = rt_pi;
+		ntol = bn_pi;
 
 	/* (x, y) coords for an ellipse */
 	ell = rt_mk_ell( &npts, a, b, dtol, ntol );
@@ -821,7 +821,7 @@ struct rt_tol		*tol;
 
 	/* number of segments required in eto circles */
 	nells = rt_num_circular_segments( dtol, tip->eto_r );
-	theta = rt_twopi / nells;	/* put ellipse every theta rads */
+	theta = bn_twopi / nells;	/* put ellipse every theta rads */
 	/* get horizontal and vertical components of C and Rd */
 	cv = VDOT( tip->eto_C, Nu );
 	ch = sqrt( VDOT( tip->eto_C, tip->eto_C ) - cv * cv );
@@ -832,12 +832,12 @@ struct rt_tol		*tol;
 
 	/* make sure ellipse doesn't overlap itself when revolved */
 	if (ch > tip->eto_r || dh > tip->eto_r) {
-		rt_log("eto_plot: revolved ellipse overlaps itself\n");
+		bu_log("eto_plot: revolved ellipse overlaps itself\n");
 		return(1);
 	}
 	
 	/* get memory for nells ellipses */
-	eto_ells = (fastf_t *)rt_malloc(nells * npts * sizeof(point_t), "ells[]");
+	eto_ells = (fastf_t *)bu_malloc(nells * npts * sizeof(point_t), "ells[]");
 
 	/* place each ellipse properly to make eto */
 	for (i = 0, ang = 0.; i < nells; i++, ang += theta) {
@@ -878,7 +878,7 @@ struct rt_tol		*tol;
 			RT_ADD_VLIST( vhead, PTA(j,i), RT_VLIST_LINE_DRAW );
 	}
 
-	rt_free( (char *)eto_ells, "ells[]" );
+	bu_free( (char *)eto_ells, "ells[]" );
 	return(0);
 }
 
@@ -966,7 +966,7 @@ fastf_t	a, b, dtol, ntol;
 	ell_quad->next->next = NULL;
 
 	*n = rt_ell4( ell_quad, a, b, dtol, ntol );
-	ell = (point_t *)rt_malloc(4*(*n+1)*sizeof(point_t), "rt_mk_ell pts");
+	ell = (point_t *)bu_malloc(4*(*n+1)*sizeof(point_t), "rt_mk_ell pts");
 
 	/* put 1st quad of ellipse into an array */
 	pos = ell_quad;
@@ -974,7 +974,7 @@ fastf_t	a, b, dtol, ntol;
 		VMOVE( ell[i], pos->p );
 		oldpos = pos;
 		pos = pos->next;
-		rt_free( (char *)oldpos, "pt_node" );
+		bu_free( (char *)oldpos, "pt_node" );
 	}
 	/* mirror 1st quad to make 2nd */
 	for (i = (*n+1)+1; i < 2*(*n+1); i++) {
@@ -1006,7 +1006,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1033,7 +1033,7 @@ struct rt_tol		*tol;
 
 	if ( NEAR_ZERO(tip->eto_r, 0.0001) || NEAR_ZERO(b, 0.0001)
 		|| NEAR_ZERO(a, 0.0001)) {
-		rt_log("eto_tess: r, rd, or rc zero length\n");
+		bu_log("eto_tess: r, rd, or rc zero length\n");
 		fail = (-2);
 		goto failure;
 	}
@@ -1071,7 +1071,7 @@ struct rt_tol		*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = rt_pi;
+		ntol = bn_pi;
 
 	/* (x, y) coords for an ellipse */
 	ell = rt_mk_ell( &npts, a, b, dtol, ntol );
@@ -1084,7 +1084,7 @@ struct rt_tol		*tol;
 
 	/* number of segments required in eto circles */
 	nells = rt_num_circular_segments( dtol, tip->eto_r );
-	theta = rt_twopi / nells;	/* put ellipse every theta rads */
+	theta = bn_twopi / nells;	/* put ellipse every theta rads */
 	/* get horizontal and vertical components of C and Rd */
 	cv = VDOT( tip->eto_C, Nu );
 	ch = sqrt( VDOT( tip->eto_C, tip->eto_C ) - cv * cv );
@@ -1095,14 +1095,14 @@ struct rt_tol		*tol;
 
 	/* make sure ellipse doesn't overlap itself when revolved */
 	if (ch > tip->eto_r || dh > tip->eto_r) {
-		rt_log("eto_tess: revolved ellipse overlaps itself\n");
+		bu_log("eto_tess: revolved ellipse overlaps itself\n");
 		fail = (-3);
 		goto failure;
 	}
 	
 	/* get memory for nells ellipses */
-	eto_ells = (fastf_t *)rt_malloc(nells * npts * sizeof(point_t), "ells[]");
-	norms = (vect_t *)rt_calloc( nells*npts , sizeof( vect_t ) , "rt_eto_tess: norms" );
+	eto_ells = (fastf_t *)bu_malloc(nells * npts * sizeof(point_t), "ells[]");
+	norms = (vect_t *)bu_calloc( nells*npts , sizeof( vect_t ) , "rt_eto_tess: norms" );
 
 	/* place each ellipse properly to make eto */
 	for (i = 0, ang = 0.; i < nells; i++, ang += theta) {
@@ -1127,11 +1127,11 @@ struct rt_tol		*tol;
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-	verts = (struct vertex **)rt_calloc( npts*nells, sizeof(struct vertex *),
+	verts = (struct vertex **)bu_calloc( npts*nells, sizeof(struct vertex *),
 		"rt_eto_tess *verts[]" );
-	faces = (struct faceuse **)rt_calloc( npts*nells, sizeof(struct faceuse *),
+	faces = (struct faceuse **)bu_calloc( npts*nells, sizeof(struct faceuse *),
 		"rt_eto_tess *faces[]" );
 
 	/* Build the topology of the eto */
@@ -1143,7 +1143,7 @@ struct rt_tol		*tol;
 			vertp[2] = &verts[ PT(i+1,j+1) ];
 			vertp[3] = &verts[ PT(i+1,j+0) ];
 			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
-				rt_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d\n",
+				bu_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d\n",
 					i, nells, j, npts );
 				nfaces--;
 			}
@@ -1178,7 +1178,7 @@ struct rt_tol		*tol;
 
 			NMG_CK_VERTEX( verts[PT(i,j)] );
 
-			for( RT_LIST_FOR( vu , vertexuse , &verts[PT(i,j)]->vu_hd ) )
+			for( BU_LIST_FOR( vu , vertexuse , &verts[PT(i,j)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1199,11 +1199,11 @@ struct rt_tol		*tol;
 	nmg_region_a( *r, tol );
 
 failure:	
-	rt_free( (char *)ell, "rt_mk_ell pts" );
-	rt_free( (char *)eto_ells, "ells[]" );
-	rt_free( (char *)verts, "rt_eto_tess *verts[]" );
-	rt_free( (char *)faces, "rt_eto_tess *faces[]" );
-	rt_free( (char *)norms, "rt_eto_tess: norms[]" );
+	bu_free( (char *)ell, "rt_mk_ell pts" );
+	bu_free( (char *)eto_ells, "ells[]" );
+	bu_free( (char *)verts, "rt_eto_tess *verts[]" );
+	bu_free( (char *)faces, "rt_eto_tess *faces[]" );
+	bu_free( (char *)norms, "rt_eto_tess: norms[]" );
 
 	return( fail );
 }
@@ -1217,23 +1217,23 @@ failure:
 int
 rt_eto_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 {
 	struct rt_eto_internal	*tip;
 	union record		*rp;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_eto_import: defective record\n");
+		bu_log("rt_eto_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ETO;
-	ip->idb_ptr = rt_malloc(sizeof(struct rt_eto_internal), "rt_eto_internal");
+	ip->idb_ptr = bu_malloc(sizeof(struct rt_eto_internal), "rt_eto_internal");
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
 	tip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
@@ -1245,7 +1245,7 @@ register CONST mat_t		mat;
 	tip->eto_rd = rp->s.s_values[3*3+1] / mat[15];
 
 	if( tip->eto_r < SMALL || tip->eto_rd < SMALL )  {
-		rt_log("rt_eto_import:  zero length R or Rd vector\n");
+		bu_log("rt_eto_import:  zero length R or Rd vector\n");
 		return(-1);
 	}
 
@@ -1259,7 +1259,7 @@ register CONST mat_t		mat;
  */
 int
 rt_eto_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -1271,9 +1271,9 @@ double				local2mm;
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
 	RT_ETO_CK_MAGIC(tip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "eto external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "eto external");
 	eto = (union record *)ep->ext_buf;
 
 	eto->s.s_id = ID_SOLID;
@@ -1283,12 +1283,12 @@ double				local2mm;
 		|| MAGNITUDE(tip->eto_N) < RT_LEN_TOL
 		|| tip->eto_r < RT_LEN_TOL
 		|| tip->eto_rd < RT_LEN_TOL) {
-		rt_log("rt_eto_export: not all dimensions positive!\n");
+		bu_log("rt_eto_export: not all dimensions positive!\n");
 		return(-1);
 	}
 	
 	if (tip->eto_rd > MAGNITUDE(tip->eto_C) ) {
-		rt_log("rt_eto_export: semi-minor axis cannot be longer than semi-major axis!\n");
+		bu_log("rt_eto_export: semi-minor axis cannot be longer than semi-major axis!\n");
 		return(-1);
 	}
 
@@ -1311,7 +1311,7 @@ double				local2mm;
  */
 int
 rt_eto_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1321,32 +1321,32 @@ double			mm2local;
 	char				buf[256];
 
 	RT_ETO_CK_MAGIC(tip);
-	rt_vls_strcat( str, "Elliptical Torus (ETO)\n");
+	bu_vls_strcat( str, "Elliptical Torus (ETO)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 		tip->eto_V[X] * mm2local,
 		tip->eto_V[Y] * mm2local,
 		tip->eto_V[Z] * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tN=(%g, %g, %g)\n",
 		tip->eto_N[X] * mm2local,
 		tip->eto_N[Y] * mm2local,
 		tip->eto_N[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC=(%g, %g, %g) mag=%g\n",
 		tip->eto_C[X] * mm2local,
 		tip->eto_C[Y] * mm2local,
 		tip->eto_C[Z] * mm2local,
 		MAGNITUDE(tip->eto_C) * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 	
 	sprintf(buf, "\tr=%g\n", tip->eto_r * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 	
 	sprintf(buf, "\td=%g\n", tip->eto_rd * mm2local);
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	return(0);
 }
@@ -1366,6 +1366,6 @@ struct rt_db_internal	*ip;
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
 	RT_ETO_CK_MAGIC(tip);
 
-	rt_free( (char *)tip, "eto ifree" );
+	bu_free( (char *)tip, "eto ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

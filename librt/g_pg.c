@@ -87,7 +87,7 @@ struct rt_i		*rtip;
 		}
 	}
 	if( stp->st_specific == (genptr_t)0 )  {
-		rt_log("pg(%s):  no faces\n", stp->st_name);
+		bu_log("pg(%s):  no faces\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
 
@@ -125,13 +125,13 @@ HIDDEN int
 rt_pgface( stp, ap, bp, cp, tol )
 struct soltab	*stp;
 fastf_t		*ap, *bp, *cp;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	register struct tri_specific *trip;
 	vect_t work;
 	LOCAL fastf_t m1, m2, m3, m4;
 
-	GETSTRUCT( trip, tri_specific );
+	BU_GETSTRUCT( trip, tri_specific );
 	VMOVE( trip->tri_A, ap );
 	VSUB2( trip->tri_BA, bp, ap );
 	VSUB2( trip->tri_CA, cp, ap );
@@ -145,9 +145,9 @@ CONST struct rt_tol	*tol;
 	m4 = MAGNITUDE( trip->tri_wn );
 	if( m1 < tol->dist || m2 < tol->dist ||
 	    m3 < tol->dist || m4 < tol->dist )  {
-		rt_free( (char *)trip, "getstruct tri_specific");
+		bu_free( (char *)trip, "getstruct tri_specific");
 		if( rt_g.debug & DEBUG_ARB8 )
-			rt_log("pg(%s): degenerate facet\n", stp->st_name);
+			bu_log("pg(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		
 
@@ -175,7 +175,7 @@ register CONST struct soltab *stp;
 		(struct tri_specific *)stp->st_specific;
 
 	if( trip == TRI_NULL )  {
-		rt_log("pg(%s):  no faces\n", stp->st_name);
+		bu_log("pg(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
@@ -184,7 +184,7 @@ register CONST struct soltab *stp;
 		VPRINT( "C-A", trip->tri_CA );
 		VPRINT( "BA x CA", trip->tri_wn );
 		VPRINT( "Normal", trip->tri_N );
-		rt_log("\n");
+		bu_log("\n");
 	} while( trip = trip->tri_forw );
 }
 
@@ -268,7 +268,7 @@ struct seg		*seghead;
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, trip->tri_N );
 		if( ++nhits >= MAXHITS )  {
-			rt_log("rt_pg_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
+			bu_log("rt_pg_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
 			break;
 		}
 		hp++;
@@ -340,8 +340,8 @@ struct seg		*seghead;
 		 */
 
 		if( nerrors++ < 6 )  {
-			rt_log("rt_pg_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
-			rt_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
+			bu_log("rt_pg_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
+			bu_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
 				V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
 			for(i=0; i < nhits; i++ )
 			{
@@ -349,9 +349,9 @@ struct seg		*seghead;
 
 				VJOIN1( tmp_pt, rp->r_pt, hits[i].hit_dist, rp->r_dir );
 				if( VDOT( rp->r_dir, hits[i].hit_normal ) < 0.0 )
-					rt_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
+					bu_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
 				else
-					rt_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
+					bu_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
 			}
 		}
 
@@ -381,7 +381,7 @@ struct seg		*seghead;
 					VREVERSE( hits[i].hit_normal, hits[i].hit_normal );
 					dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
 					nhits++;
-					rt_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
+					bu_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
 				}
 				else if( dot1 < 0.0 && dot2 < 0.0 )
 				{
@@ -396,7 +396,7 @@ struct seg		*seghead;
 					VREVERSE( hits[i].hit_normal, hits[i-1].hit_normal );
 					dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
 					nhits++;
-					rt_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
+					bu_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
 				}
 				i++;
 			}
@@ -406,7 +406,7 @@ struct seg		*seghead;
 		{
 			hits[nhits] = hits[nhits-1];	/* struct copy */
 			VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
-			rt_log( "\t\tadding fictitious hit at %f\n", hits[nhits].hit_dist );
+			bu_log( "\t\tadding fictitious hit at %f\n", hits[nhits].hit_dist );
 			nhits++;
 		}
 	}
@@ -420,7 +420,7 @@ struct seg		*seghead;
 			segp->seg_stp = stp;
 			segp->seg_in = hits[i];		/* struct copy */
 			segp->seg_out = hits[i+1];	/* struct copy */
-			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
 	}
 	return(nhits);			/* HIT */
@@ -439,7 +439,7 @@ struct soltab *stp;
 	while( trip != TRI_NULL )  {
 		register struct tri_specific *nexttri = trip->tri_forw;
 
-		rt_free( (char *)trip, "pg tri_specific");
+		bu_free( (char *)trip, "pg tri_specific");
 		trip = nexttri;
 	}
 }
@@ -485,10 +485,10 @@ rt_pg_class()
  */
 int
 rt_pg_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	register int	i;
 	register int	p;	/* current polygon number */
@@ -534,7 +534,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	register int	i;
 	struct shell	*s;
@@ -549,11 +549,11 @@ struct rt_tol		*tol;
 	RT_PG_CK_MAGIC(pgp);
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-	verts = (struct vertex **)rt_malloc(
+	verts = (struct vertex **)bu_malloc(
 		pgp->max_npts * sizeof(struct vertex *), "pg_tess verts[]");
-	vertp = (struct vertex ***)rt_malloc(
+	vertp = (struct vertex ***)bu_malloc(
 		pgp->max_npts * sizeof(struct vertex **), "pg_tess vertp[]");
 	for( i=0; i < pgp->max_npts; i++ )
 		vertp[i] = &verts[i];
@@ -571,7 +571,7 @@ struct rt_tol		*tol;
 
 		/* Construct the face.  Verts should be in CCW order */
 		if( (fu = nmg_cmface( s, vertp, pp->npts )) == (struct faceuse *)0 )  {
-			rt_log("rt_pg_tess() nmg_cmface failed, skipping face %d\n",
+			bu_log("rt_pg_tess() nmg_cmface failed, skipping face %d\n",
 				p);
 		}
 
@@ -585,8 +585,8 @@ struct rt_tol		*tol;
 		if( nmg_calc_face_g( fu ) )
 		{
 			nmg_pr_fu_briefly( fu, "" );
-			rt_free( (char *)verts, "pg_tess verts[]" );
-			rt_free( (char *)vertp, "pg_tess vertp[]" );
+			bu_free( (char *)verts, "pg_tess verts[]" );
+			bu_free( (char *)vertp, "pg_tess vertp[]" );
 			return -1;			/* FAIL */
 		}
 	}
@@ -602,8 +602,8 @@ struct rt_tol		*tol;
 	/* mark edges as real */
 	(void)nmg_mark_edges_real( &s->l );
 #endif
-	rt_free( (char *)verts, "pg_tess verts[]" );
-	rt_free( (char *)vertp, "pg_tess vertp[]" );
+	bu_free( (char *)verts, "pg_tess verts[]" );
+	bu_free( (char *)vertp, "pg_tess vertp[]" );
 
 	return(0);		/* OK */
 }
@@ -618,7 +618,7 @@ struct rt_tol		*tol;
 int
 rt_pg_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 CONST mat_t			mat;
 {
 	struct rt_pg_internal	*pgp;
@@ -627,16 +627,16 @@ CONST mat_t			mat;
 	int			rno;		/* current record number */
 	int			p;		/* current polygon index */
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_P_HEAD )  {
-		rt_log("rt_pg_import: defective header record\n");
+		bu_log("rt_pg_import: defective header record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_POLY;
-	ip->idb_ptr = rt_malloc(sizeof(struct rt_pg_internal), "rt_pg_internal");
+	ip->idb_ptr = bu_malloc(sizeof(struct rt_pg_internal), "rt_pg_internal");
 	pgp = (struct rt_pg_internal *)ip->idb_ptr;
 	pgp->magic = RT_PG_INTERNAL_MAGIC;
 
@@ -647,7 +647,7 @@ CONST mat_t			mat;
 		return -1;
 	}
 	if( pgp->npoly )
-		pgp->poly = (struct rt_pg_face_internal *)rt_malloc(
+		pgp->poly = (struct rt_pg_face_internal *)bu_malloc(
 			pgp->npoly * sizeof(struct rt_pg_face_internal), "rt_pg_face_internal");
 	pgp->max_npts = 0;
 
@@ -657,13 +657,13 @@ CONST mat_t			mat;
 		pp = &pgp->poly[p];
 		rno = p+1;
 		if( rp[rno].q.q_id != ID_P_DATA )  {
-			rt_log("rt_pg_import: defective data record\n");
+			bu_log("rt_pg_import: defective data record\n");
 			return -1;
 		}
 		pp->npts = rp[rno].q.q_count;
-		pp->verts = (fastf_t *)rt_malloc(
+		pp->verts = (fastf_t *)bu_malloc(
 			pp->npts * 3 * sizeof(fastf_t), "pg verts[]" );
-		pp->norms = (fastf_t *)rt_malloc(
+		pp->norms = (fastf_t *)bu_malloc(
 			pp->npts * 3 * sizeof(fastf_t), "pg norms[]" );
 #		include "noalias.h"
 		for( i=0; i < pp->npts; i++ )  {
@@ -691,7 +691,7 @@ CONST mat_t			mat;
  */
 int
 rt_pg_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -706,9 +706,9 @@ double				local2mm;
 	pgp = (struct rt_pg_internal *)ip->idb_ptr;
 	RT_PG_CK_MAGIC(pgp);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + pgp->npoly) * sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "pg external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "pg external");
 	rec = (union record *)ep->ext_buf;
 
 	rec[0].p.p_id = ID_P_HEAD;
@@ -719,7 +719,7 @@ double				local2mm;
 		rno = p+1;
 		pp = &pgp->poly[p];
 		if( pp->npts < 3 || pp->npts > 5 )  {
-			rt_log("rt_pg_export:  unable to support npts=%d\n",
+			bu_log("rt_pg_export:  unable to support npts=%d\n",
 				pp->npts);
 			return(-1);
 		}
@@ -746,7 +746,7 @@ double				local2mm;
  */
 int
 rt_pg_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -758,15 +758,15 @@ double			mm2local;
 	int				i;
 
 	RT_PG_CK_MAGIC(pgp);
-	rt_vls_strcat( str, "polygon solid with no topology (POLY)\n");
+	bu_vls_strcat( str, "polygon solid with no topology (POLY)\n");
 
 	sprintf(buf, "\t%d polygons (faces)\n",
 		pgp->npoly );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tMost complex face has %d vertices\n",
 		pgp->max_npts );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	if( pgp->npoly )
 	{
@@ -774,7 +774,7 @@ double			mm2local;
 			pgp->poly[0].verts[X] * mm2local,
 			pgp->poly[0].verts[Y] * mm2local,
 			pgp->poly[0].verts[Z] * mm2local );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 	}
 
 	if( !verbose )  return(0);
@@ -786,7 +786,7 @@ double			mm2local;
 
 		sprintf( buf, "\tPolygon %d: (%d pts)\n",
 			i, pgp->poly[i].npts );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		for( j=0; j < pgp->poly[i].npts; j++ )  {
 			sprintf(buf, "\t\tV (%g, %g, %g)\n\t\t N (%g, %g, %g)\n",
 				v[X] * mm2local,
@@ -795,7 +795,7 @@ double			mm2local;
 				n[X] * mm2local,
 				n[Y] * mm2local,
 				n[Z] * mm2local );
-			rt_vls_strcat( str, buf );
+			bu_vls_strcat( str, buf );
 			v += ELEMENTS_PER_VECT;
 			n += ELEMENTS_PER_VECT;
 		}
@@ -824,13 +824,13 @@ struct rt_db_internal	*ip;
 	 *  Free storage for each polygon
 	 */
 	for( i=0; i < pgp->npoly; i++ )  {
-		rt_free( (char *)pgp->poly[i].verts, "pg verts[]");
-		rt_free( (char *)pgp->poly[i].norms, "pg norms[]");
+		bu_free( (char *)pgp->poly[i].verts, "pg verts[]");
+		bu_free( (char *)pgp->poly[i].norms, "pg norms[]");
 	}
 	if( pgp->npoly )
-		rt_free( (char *)pgp->poly, "pg poly[]" );
+		bu_free( (char *)pgp->poly, "pg poly[]" );
 	pgp->magic = 0;			/* sanity */
 	pgp->npoly = 0;
-	rt_free( (char *)pgp, "pg ifree" );
+	bu_free( (char *)pgp, "pg ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

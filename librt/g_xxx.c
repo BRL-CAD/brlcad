@@ -62,7 +62,7 @@ struct rt_xxx_internal {
 	vect_t	v;
 };
 #define RT_XXX_INTERNAL_MAGIC	0xxx
-#define RT_XXX_CK_MAGIC(_p)	RT_CKMAG(_p,RT_XXX_INTERNAL_MAGIC,"rt_xxx_internal")
+#define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p,RT_XXX_INTERNAL_MAGIC,"rt_xxx_internal")
 #endif
 
 /* ray tracing form of solid, including precomputed terms */
@@ -93,7 +93,7 @@ struct rt_i		*rtip;
 {
 	struct rt_xxx_internal		*xxx_ip;
 	register struct xxx_specific	*xxx;
-	CONST struct rt_tol		*tol = &rtip->rti_tol;
+	CONST struct bn_tol		*tol = &rtip->rti_tol;
 
 	RT_CK_DB_INTERNAL(ip);
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
@@ -132,7 +132,7 @@ struct seg		*seghead;
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
 	register struct seg *segp;
-	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
+	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
 	return(0);			/* MISS */
 }
@@ -221,7 +221,7 @@ register struct soltab *stp;
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
 
-	rt_free( (char *)xxx, "xxx_specific" );
+	bu_free( (char *)xxx, "xxx_specific" );
 }
 
 /*
@@ -241,10 +241,10 @@ CONST struct bn_tol    *tol;
  */
 int
 rt_xxx_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 
@@ -268,7 +268,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 
@@ -288,24 +288,24 @@ CONST struct rt_tol	*tol;
 int
 rt_xxx_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 	union record			*rp;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_xxx_import: defective record\n");
+		bu_log("rt_xxx_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_XXX;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
 	xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
@@ -321,7 +321,7 @@ CONST struct db_i		*dbip;
  */
 int
 rt_xxx_export( ep, ip, local2mm, dbip )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 CONST struct db_i		*dbip;
@@ -334,9 +334,9 @@ CONST struct db_i		*dbip;
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
 	RT_XXX_CK_MAGIC(xxx_ip);
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "xxx external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
@@ -368,7 +368,7 @@ CONST struct db_i		*dbip;
  */
 int
 rt_xxx_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -378,13 +378,13 @@ double			mm2local;
 	char	buf[256];
 
 	RT_XXX_CK_MAGIC(xxx_ip);
-	rt_vls_strcat( str, "truncated general xxx (XXX)\n");
+	bu_vls_strcat( str, "truncated general xxx (XXX)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 		xxx_ip->v[X] * mm2local,
 		xxx_ip->v[Y] * mm2local,
 		xxx_ip->v[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	return(0);
 }
@@ -405,6 +405,6 @@ struct rt_db_internal	*ip;
 	RT_XXX_CK_MAGIC(xxx_ip);
 	xxx_ip->magic = 0;			/* sanity */
 
-	rt_free( (char *)xxx_ip, "xxx ifree" );
+	bu_free( (char *)xxx_ip, "xxx ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }

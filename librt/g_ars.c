@@ -54,7 +54,7 @@ extern int	rt_ars_face();
 int
 rt_ars_import( ip, ep, mat )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 CONST mat_t			mat;
 {
 	struct rt_ars_internal *ari;
@@ -63,16 +63,16 @@ CONST mat_t			mat;
 	LOCAL vect_t	base_vect;
 	int		currec;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_ARS_A )  {
-		rt_log("rt_ars_import: defective record\n");
+		bu_log("rt_ars_import: defective record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARS;
-	ip->idb_ptr = rt_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+	ip->idb_ptr = bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
 	ari = (struct rt_ars_internal *)ip->idb_ptr;
 	ari->magic = RT_ARS_INTERNAL_MAGIC;
 	ari->ncurves = rp[0].a.a_m;
@@ -81,7 +81,7 @@ CONST mat_t			mat;
 	/*
 	 * Read all the curves into internal form.
 	 */
-	ari->curves = (fastf_t **)rt_malloc(
+	ari->curves = (fastf_t **)bu_malloc(
 		(ari->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
 	currec = 1;
 	for( i=0; i < ari->ncurves; i++ )  {
@@ -126,7 +126,7 @@ CONST mat_t			mat;
  */
 int
 rt_ars_export( ep, ip, local2mm )
-struct rt_external	*ep;
+struct bu_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
@@ -144,10 +144,10 @@ double			local2mm;
 
 	per_curve_grans = (arip->pts_per_curve+7)/8;
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + per_curve_grans * arip->ncurves) *
 		sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ars external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ars external");
 	rec = (union record *)ep->ext_buf;
 
 	rec[0].a.a_id = ID_ARS_A;
@@ -202,7 +202,7 @@ double			local2mm;
  */
 int
 rt_ars_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -214,17 +214,17 @@ double			mm2local;
 	int				i;
 
 	RT_ARS_CK_MAGIC(arip);
-	rt_vls_strcat( str, "arbitrary rectangular solid (ARS)\n");
+	bu_vls_strcat( str, "arbitrary rectangular solid (ARS)\n");
 
 	sprintf(buf, "\t%d curves, %d points per curve\n",
 		arip->ncurves, arip->pts_per_curve );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 		arip->curves[0][X] * mm2local,
 		arip->curves[0][Y] * mm2local,
 		arip->curves[0][Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	if( !verbose )  return(0);
 
@@ -233,13 +233,13 @@ double			mm2local;
 		register fastf_t *v = arip->curves[i];
 
 		sprintf( buf, "\tCurve %d:\n", i );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		for( j=0; j < arip->pts_per_curve; j++ )  {
 			sprintf(buf, "\t\t(%g, %g, %g)\n",
 				v[X] * mm2local,
 				v[Y] * mm2local,
 				v[Z] * mm2local );
-			rt_vls_strcat( str, buf );
+			bu_vls_strcat( str, buf );
 			v += ELEMENTS_PER_VECT;
 		}
 	}
@@ -267,12 +267,12 @@ struct rt_db_internal	*ip;
 	 *  Free storage for faces
 	 */
 	for( i = 0; i < arip->ncurves; i++ )  {
-		rt_free( (char *)arip->curves[i], "ars curve" );
+		bu_free( (char *)arip->curves[i], "ars curve" );
 	}
-	rt_free( (char *)arip->curves, "ars curve ptrs" );
+	bu_free( (char *)arip->curves, "ars curve ptrs" );
 	arip->magic = 0;		/* sanity */
 	arip->ncurves = 0;
-	rt_free( (char *)arip, "ars ifree" );
+	bu_free( (char *)arip, "ars ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
@@ -381,7 +381,7 @@ int		npts;
 	int	rec;
 
 	/* Leave room for first point to be repeated */
-	base = fp = (fastf_t *)rt_malloc(
+	base = fp = (fastf_t *)bu_malloc(
 	    (npts+1) * sizeof(fastf_t) * ELEMENTS_PER_VECT,
 	    "ars curve" );
 
@@ -389,7 +389,7 @@ int		npts;
 	for( ; npts > 0; npts -= 8 )  {
 		rr = &rp[rec++];
 		if( rr->b.b_id != ID_ARS_B )  {
-			rt_log("rt_ars_rd_curve():  non-ARS_B record!\n");
+			bu_log("rt_ars_rd_curve():  non-ARS_B record!\n");
 			break;
 		}
 		lim = (npts>8) ? 8 : npts;
@@ -422,7 +422,7 @@ pointp_t ap, bp, cp;
 	vect_t work;
 	LOCAL fastf_t m1, m2, m3, m4;
 
-	GETSTRUCT( trip, tri_specific );
+	BU_GETSTRUCT( trip, tri_specific );
 	VMOVE( trip->tri_A, ap );
 	VSUB2( trip->tri_BA, bp, ap );
 	VSUB2( trip->tri_CA, cp, ap );
@@ -436,9 +436,9 @@ pointp_t ap, bp, cp;
 	m4 = MAGNITUDE( trip->tri_wn );
 	if( NEAR_ZERO(m1,0.0001) || NEAR_ZERO(m2,0.0001) ||
 	    NEAR_ZERO(m3,0.0001) || NEAR_ZERO(m4,0.0001) )  {
-		rt_free( (char *)trip, "tri_specific struct");
+		bu_free( (char *)trip, "tri_specific struct");
 		if( rt_g.debug & DEBUG_ARB8 )
-			rt_log("ars(%s): degenerate facet\n", stp->st_name);
+			bu_log("ars(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		
 
@@ -466,7 +466,7 @@ register CONST struct soltab *stp;
 		(struct tri_specific *)stp->st_specific;
 
 	if( trip == TRI_NULL )  {
-		rt_log("ars(%s):  no faces\n", stp->st_name);
+		bu_log("ars(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
@@ -475,7 +475,7 @@ register CONST struct soltab *stp;
 		VPRINT( "C-A", trip->tri_CA );
 		VPRINT( "BA x CA", trip->tri_wn );
 		VPRINT( "Normal", trip->tri_N );
-		rt_log("\n");
+		bu_log("\n");
 	} while( trip = trip->tri_forw );
 }
 
@@ -521,7 +521,7 @@ struct seg		*seghead;
 		 */
 		dn = VDOT( trip->tri_wn, rp->r_dir );
 		if( rt_g.debug & DEBUG_ARB8 )
-			rt_log("N.Dir=%g ", dn );
+			bu_log("N.Dir=%g ", dn );
 
 		/*
 		 *  If ray lies directly along the face, drop this face.
@@ -558,13 +558,13 @@ struct seg		*seghead;
 		hp->hit_private = (char *)trip;
 		hp->hit_vpriv[X] = dn;
 
-		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
+		if(rt_g.debug&DEBUG_ARB8) bu_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 
 		/* Bug fix: next line was "nhits++".  This caused ars_hitsort
 			to exceed bounds of "hits" array by one member and
 			clobber some stack variables i.e. "stp" -- GSM */
 		if( ++nhits >= RT_ARS_MAXHITS )  {
-			rt_log("ars(%s): too many hits\n", stp->st_name);
+			bu_log("ars(%s): too many hits\n", stp->st_name);
 			break;
 		}
 		hp++;
@@ -581,10 +581,10 @@ struct seg		*seghead;
 		 * If this condition exists, it is almost certainly due to
 		 * the dn==0 check above.  Just log error.
 		 */
-		rt_log("ERROR: ars(%s): %d hits odd, skipping solid\n",
+		bu_log("ERROR: ars(%s): %d hits odd, skipping solid\n",
 			stp->st_name, nhits);
 		for(i=0; i < nhits; i++ )
-			rt_log("k=%g dn=%g\n",
+			bu_log("k=%g dn=%g\n",
 				hits[i].hit_dist, hp->hit_vpriv[X]);
 		return(0);		/* MISS */
 	}
@@ -618,16 +618,16 @@ struct seg		*seghead;
 				continue;
 			}
 #endif
-		   	rt_log("ars(%s): in/out error\n", stp->st_name );
+		   	bu_log("ars(%s): in/out error\n", stp->st_name );
 			for( j=nhits-1; j >= 0; j-- )  {
-		   		rt_log("%d %s dist=%g dn=%g\n",
+		   		bu_log("%d %s dist=%g dn=%g\n",
 					j,
 					((hits[j].hit_vpriv[X] > 0) ?
 		   				" In" : "Out" ),
 			   		hits[j].hit_dist,
 					hits[j].hit_vpriv[X] );
 				if( j>0 )
-					rt_log( "\tseg length = %g\n", hits[j].hit_dist - hits[j-1].hit_dist );
+					bu_log( "\tseg length = %g\n", hits[j].hit_dist - hits[j-1].hit_dist );
 		   	}
 #ifdef CONSERVATIVE
 		   	return(0);
@@ -642,7 +642,7 @@ struct seg		*seghead;
 			segp->seg_stp = stp;
 			segp->seg_in = hits[i-2];	/* struct copy */
 			segp->seg_out = hits[i-1];	/* struct copy */
-			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
 	}
 	return(nhits);			/* HIT */
@@ -738,7 +738,7 @@ register struct uvcoord *uvp;
 	uvp->uv_v = 1.0 - ( VDOT( P_A, trip->tri_CA ) * yylen );
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
 		if( rt_g.debug )
-			rt_log("rt_ars_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
+			bu_log("rt_ars_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
@@ -761,7 +761,7 @@ register struct soltab *stp;
 	while( trip != TRI_NULL )  {
 		register struct tri_specific *nexttri = trip->tri_forw;
 
-		rt_free( (char *)trip, "ars tri_specific");
+		bu_free( (char *)trip, "ars tri_specific");
 		trip = nexttri;
 	}
 }
@@ -777,10 +777,10 @@ rt_ars_class()
  */
 int
 rt_ars_plot( vhead, ip, ttol, tol )
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 struct rt_db_internal *ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	register int	i;
 	register int	j;
@@ -836,7 +836,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	register int	i;
 	register int	j;
@@ -845,8 +845,8 @@ struct rt_tol		*tol;
 	struct shell	*s;
 	struct vertex	**verts;
 	struct faceuse	*fu;
-	struct nmg_ptbl	kill_fus;
-	struct nmg_ptbl tbl;
+	struct bu_ptbl	kill_fus;
+	struct bu_ptbl tbl;
 	int		bad_ars=0;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -865,15 +865,15 @@ struct rt_tol		*tol;
 			if( VAPPROXEQUAL( ARS_PT(0,-2), ARS_PT(0,-1), tol->dist ) )
 				continue;
 
-			code = rt_dist_pt3_lseg3( &dist, pca, ARS_PT(0,-2), ARS_PT(0,-1), ARS_PT(0,0), tol );
+			code = bn_dist_pt3_lseg3( &dist, pca, ARS_PT(0,-2), ARS_PT(0,-1), ARS_PT(0,0), tol );
 
 			if( code < 2 )
 			{
-				rt_log( "ARS curve backtracks on itself!!!\n" );
-				rt_log( "\tCurve #%d, points #%d through %d are:\n", i, j-2, j );
-				rt_log( "\t\t%d (%f %f %f)\n", j-2, V3ARGS( ARS_PT(0,-2) ) );
-				rt_log( "\t\t%d (%f %f %f)\n", j-1, V3ARGS( ARS_PT(0,-1) ) );
-				rt_log( "\t\t%d (%f %f %f)\n", j, V3ARGS( ARS_PT(0,0) ) );
+				bu_log( "ARS curve backtracks on itself!!!\n" );
+				bu_log( "\tCurve #%d, points #%d through %d are:\n", i, j-2, j );
+				bu_log( "\t\t%d (%f %f %f)\n", j-2, V3ARGS( ARS_PT(0,-2) ) );
+				bu_log( "\t\t%d (%f %f %f)\n", j-1, V3ARGS( ARS_PT(0,-1) ) );
+				bu_log( "\t\t%d (%f %f %f)\n", j, V3ARGS( ARS_PT(0,0) ) );
 				bad_ars = 1;
 				j++;
 			}
@@ -882,18 +882,18 @@ struct rt_tol		*tol;
 
 	if( bad_ars )
 	{
-		rt_log( "TESSELATION FAILURE: This ARS solid has not been tesselated.\n\tAny result you may obtain is incorrect.\n" );
+		bu_log( "TESSELATION FAILURE: This ARS solid has not been tesselated.\n\tAny result you may obtain is incorrect.\n" );
 		return( -1 );
 	}
 
-	nmg_tbl( &kill_fus, TBL_INIT, (long *)NULL );
+	bu_ptbl_init( &kill_fus, 64, " &kill_fus");
 
 	/* Build the topology of the ARS.  Start by allocating storage */
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-	verts = (struct vertex **)rt_calloc( arip->ncurves * (arip->pts_per_curve+1),
+	verts = (struct vertex **)bu_calloc( arip->ncurves * (arip->pts_per_curve+1),
 		sizeof(struct vertex *),
 		"rt_tor_tess *verts[]" );
 
@@ -922,9 +922,9 @@ struct rt_tol		*tol;
 			/*
 			 *  First triangular face
 			 */
-			if( rt_3pts_distinct( ARS_PT(0,0), ARS_PT(1,1),
+			if( bn_3pts_distinct( ARS_PT(0,0), ARS_PT(1,1),
 				ARS_PT(0,1), tol )
-			   && !rt_3pts_collinear( ARS_PT(0,0), ARS_PT(1,1),
+			   && !bn_3pts_collinear( ARS_PT(0,0), ARS_PT(1,1),
 				ARS_PT(0,1), tol )
 			)  {
 				/* Locate these points, if previously mentioned */
@@ -938,7 +938,7 @@ struct rt_tol		*tol;
 				corners[2] = &verts[IJ(1,1)];
 
 				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
-					rt_log("rt_ars_tess() nmg_cmface failed, skipping face a[%d][%d]\n",
+					bu_log("rt_ars_tess() nmg_cmface failed, skipping face a[%d][%d]\n",
 						i,j);
 				}
 
@@ -948,17 +948,17 @@ struct rt_tol		*tol;
 				ASSOC_GEOM( 2, 1, 1 );
 				if( nmg_calc_face_g( fu ) )
 				{
-					rt_log( "Degenerate face created, will kill it later\n" );
-					nmg_tbl( &kill_fus, TBL_INS, (long *)fu );
+					bu_log( "Degenerate face created, will kill it later\n" );
+					bu_ptbl_ins( &kill_fus, (long *)fu );
 				}
 			}
 
 			/*
 			 *  Second triangular face
 			 */
-			if( rt_3pts_distinct( ARS_PT(1,0), ARS_PT(1,1),
+			if( bn_3pts_distinct( ARS_PT(1,0), ARS_PT(1,1),
 				ARS_PT(0,0), tol )
-			   && !rt_3pts_collinear( ARS_PT(1,0), ARS_PT(1,1),
+			   && !bn_3pts_collinear( ARS_PT(1,0), ARS_PT(1,1),
 				ARS_PT(0,0), tol )
 			)  {
 				/* Locate these points, if previously mentioned */
@@ -972,7 +972,7 @@ struct rt_tol		*tol;
 				corners[2] = &verts[IJ(1,1)];
 
 				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
-					rt_log("rt_ars_tess() nmg_cmface failed, skipping face b[%d][%d]\n",
+					bu_log("rt_ars_tess() nmg_cmface failed, skipping face b[%d][%d]\n",
 						i,j);
 				}
 
@@ -982,19 +982,19 @@ struct rt_tol		*tol;
 				ASSOC_GEOM( 2, 1, 1 );
 				if( nmg_calc_face_g( fu ) )
 				{
-					rt_log( "Degenerate face created, will kill it later\n" );
-					nmg_tbl( &kill_fus, TBL_INS, (long *)fu );
+					bu_log( "Degenerate face created, will kill it later\n" );
+					bu_ptbl_ins( &kill_fus, (long *)fu );
 				}
 			}
 		}
 	}
 
-	rt_free( (char *)verts, "rt_ars_tess *verts[]" );
+	bu_free( (char *)verts, "rt_ars_tess *verts[]" );
 
 	/* kill any degenerate faces that may have been created */
-	for( i=0 ; i<NMG_TBL_END( &kill_fus ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &kill_fus ) ; i++ )
 	{
-		fu = (struct faceuse *)NMG_TBL_GET( &kill_fus, i );
+		fu = (struct faceuse *)BU_PTBL_GET( &kill_fus, i );
 		NMG_CK_FACEUSE( fu );
 		(void)nmg_kfu( fu );
 	}

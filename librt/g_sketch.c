@@ -194,7 +194,7 @@ register struct soltab *stp;
 	register struct sketch_specific *sketch =
 		(struct sketch_specific *)stp->st_specific;
 
-	rt_free( (char *)sketch, "sketch_specific" );
+	bu_free( (char *)sketch, "sketch_specific" );
 }
 
 /*
@@ -211,10 +211,10 @@ rt_sketch_class()
  */
 int
 rt_sketch_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	struct curve			*crv;
@@ -287,7 +287,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	return(-1);
 }
@@ -301,7 +301,7 @@ struct rt_tol		*tol;
 int
 rt_sketch_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct rt_external	*ep;
+CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 CONST struct db_i		*dbip;
 {
@@ -315,11 +315,11 @@ CONST struct db_i		*dbip;
 	unsigned char			*ptr;
 	genptr_t			*segs;
 
-	RT_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_SKETCH )  {
-		rt_log("rt_sketch_import: defective record\n");
+		bu_log("rt_sketch_import: defective record\n");
 		return(-1);
 	}
 
@@ -437,7 +437,7 @@ CONST struct db_i		*dbip;
  */
 int
 rt_sketch_export( ep, ip, local2mm, dbip )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 CONST struct db_i		*dbip;
@@ -461,7 +461,7 @@ CONST struct db_i		*dbip;
 		bu_mem_barriercheck();
 	}
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 
 	bu_ptbl_init( &segs, 64, "rt_sketch_export: segs" );
 	nbytes = sizeof(union record);		/* base record */
@@ -499,7 +499,7 @@ CONST struct db_i		*dbip;
 
 	ngran = ceil((double)(nbytes + sizeof(union record)) / sizeof(union record));
 	ep->ext_nbytes = ngran * sizeof(union record);	
-	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "sketch external");
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "sketch external");
 
 	rec = (union record *)ep->ext_buf;
 
@@ -514,10 +514,10 @@ CONST struct db_i		*dbip;
 	htond( rec->skt.skt_uvec, (unsigned char *)tmp_vec, 3 );
 	VSCALE( tmp_vec, sketch_ip->v_vec, local2mm );
 	htond( rec->skt.skt_vvec, (unsigned char *)tmp_vec, 3 );
-	(void)rt_plong( rec->skt.skt_vert_count, sketch_ip->vert_count );
-	(void)rt_plong( rec->skt.skt_curve_count, sketch_ip->curve_count );
-	(void)rt_plong( rec->skt.skt_seg_count, BU_PTBL_END( &segs) );
-	(void)rt_plong( rec->skt.skt_count, ngran-1 );
+	(void)bu_plong( rec->skt.skt_vert_count, sketch_ip->vert_count );
+	(void)bu_plong( rec->skt.skt_curve_count, sketch_ip->curve_count );
+	(void)bu_plong( rec->skt.skt_seg_count, BU_PTBL_END( &segs) );
+	(void)bu_plong( rec->skt.skt_count, ngran-1 );
 
 	ptr = (unsigned char *)rec;
 	ptr += sizeof( struct sketch_rec );
@@ -612,7 +612,7 @@ CONST struct db_i		*dbip;
  */
 int
 rt_sketch_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -624,13 +624,13 @@ double			mm2local;
 	char	buf[256];
 
 	RT_SKETCH_CK_MAGIC(sketch_ip);
-	rt_vls_strcat( str, "2D sketch (SKETCH)\n");
+	bu_vls_strcat( str, "2D sketch (SKETCH)\n");
 
 	sprintf(buf, "\tV = (%g %g %g)\n\t%d vertices, %d curves\n",
 		V3ARGS( sketch_ip->V ),
 		sketch_ip->vert_count,
 		sketch_ip->curve_count );
-	rt_vls_strcat( str, buf );
+	bu_vls_strcat( str, buf );
 
 	if( !verbose )
 		return( 0 );
@@ -638,7 +638,7 @@ double			mm2local;
 	for( curve_no=0 ; curve_no < sketch_ip->curve_count ; curve_no++ )
 	{
 		sprintf(buf, "\tCurve: %-16.16s\n", sketch_ip->curves[curve_no].crv_name );
-		rt_vls_strcat( str, buf );
+		bu_vls_strcat( str, buf );
 		for( seg_no=0 ; seg_no < sketch_ip->curves[curve_no].seg_count ; seg_no++ )
 		{
 			struct line_seg *lsg;
@@ -653,22 +653,22 @@ double			mm2local;
 					sprintf( buf, "\t\tLine segment (%g %g) <-> (%g %g)\n",
 						V2ARGS( sketch_ip->verts[lsg->start] ),
 						V2ARGS( sketch_ip->verts[lsg->end] ) );
-					rt_vls_strcat( str, buf );
+					bu_vls_strcat( str, buf );
 					break;
 				case CURVE_CARC_MAGIC:
 					csg = (struct carc_seg *)sketch_ip->curves[curve_no].segments[seg_no];
 					sprintf( buf, "\t\tCircular Arc:\n" );
-					rt_vls_strcat( str, buf );
+					bu_vls_strcat( str, buf );
 					sprintf( buf, "\t\t\tstart: (%g, %g)\n",
 						V2ARGS( sketch_ip->verts[csg->start] ) );
-					rt_vls_strcat( str, buf );
+					bu_vls_strcat( str, buf );
 					sprintf( buf, "\t\t\tend: (%g, %g)\n",
 						V2ARGS( sketch_ip->verts[csg->end] ) );
-					rt_vls_strcat( str, buf );
+					bu_vls_strcat( str, buf );
 					sprintf( buf, "\t\t\tradius: %g\n", csg->radius );
-					rt_vls_strcat( str, buf );
+					bu_vls_strcat( str, buf );
 					sprintf( buf, "\t\t\torientation: %d\n", csg->orientation );
-					rt_vls_strcat( str, buf );
+					bu_vls_strcat( str, buf );
 					break;
 				default:
 					bu_bomb( "rt_sketch_describe: ERROR: unrecognized segment type\n" );

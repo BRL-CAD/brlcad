@@ -96,7 +96,7 @@ struct rt_i		*rtip;
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
-		rt_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
+		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
 		return(1);		/* BAD */
 	}
@@ -106,7 +106,7 @@ struct rt_i		*rtip;
 	    || fabs(magsq_a - magsq_c) > 0.0001 ) {
 #if 0	    	
 	    	/* Ordinarily, don't say anything here, will handle as ELL */
-		rt_log("sph(%s):  non-equal length A, B, C vectors\n",
+		bu_log("sph(%s):  non-equal length A, B, C vectors\n",
 			stp->st_name );
 #endif
 		return(1);		/* ELL, not SPH */
@@ -123,17 +123,17 @@ struct rt_i		*rtip;
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("sph(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
+		bu_log("sph(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("sph(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
+		bu_log("sph(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("sph(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
+		bu_log("sph(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
@@ -143,7 +143,7 @@ struct rt_i		*rtip;
 	stp->st_id = ID_SPH;		/* "fix" soltab ID */
 
 	/* Solid is OK, compute constant terms now */
-	GETSTRUCT( sph, sph_specific );
+	BU_GETSTRUCT( sph, sph_specific );
 	stp->st_specific = (genptr_t)sph;
 
 	VMOVE( sph->sph_V, eip->v );
@@ -158,7 +158,7 @@ struct rt_i		*rtip;
 	 * to unit length.  Used here in UV mapping.
 	 * See ell.c for details.
 	 */
-	mat_idn( sph->sph_SoR );
+	bn_mat_idn( sph->sph_SoR );
 	VSCALE( &sph->sph_SoR[0], eip->a, 1.0/magsq_a );
 	VSCALE( &sph->sph_SoR[4], eip->b, 1.0/magsq_b );
 	VSCALE( &sph->sph_SoR[8], eip->c, 1.0/magsq_c );
@@ -189,10 +189,10 @@ register CONST struct soltab *stp;
 		(struct sph_specific *)stp->st_specific;
 
 	VPRINT("V", sph->sph_V);
-	rt_log("Rad %g\n", sph->sph_rad);
-	rt_log("Radsq %g\n", sph->sph_radsq);
-	rt_log("Invrad %g\n", sph->sph_invrad);
-	mat_print("S o R", sph->sph_SoR );
+	bu_log("Rad %g\n", sph->sph_rad);
+	bu_log("Radsq %g\n", sph->sph_radsq);
+	bu_log("Invrad %g\n", sph->sph_invrad);
+	bn_mat_print("S o R", sph->sph_SoR );
 }
 
 /*
@@ -256,7 +256,7 @@ struct seg		*seghead;
 	/* we know root is positive, so we know the smaller t */
 	segp->seg_in.hit_dist = b - root;
 	segp->seg_out.hit_dist = b + root;
-	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	return(2);			/* HIT */
 }
 
@@ -388,21 +388,21 @@ register struct uvcoord *uvp;
 	/* Assert that pprime has unit length */
 
 	/* U is azimuth, atan() range: -pi to +pi */
-	uvp->uv_u = mat_atan2( pprime[Y], pprime[X] ) * rt_inv2pi;
+	uvp->uv_u = bn_atan2( pprime[Y], pprime[X] ) * bn_inv2pi;
 	if( uvp->uv_u < 0 )
 		uvp->uv_u += 1.0;
 	/*
 	 *  V is elevation, atan() range: -pi/2 to +pi/2,
 	 *  because sqrt() ensures that X parameter is always >0
 	 */
-	uvp->uv_v = mat_atan2( pprime[Z],
+	uvp->uv_v = bn_atan2( pprime[Z],
 		sqrt( pprime[X] * pprime[X] + pprime[Y] * pprime[Y]) ) *
-		rt_invpi + 0.5;
+		bn_invpi + 0.5;
 
 	/* approximation: r / (circumference, 2 * pi * aradius) */
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
 	uvp->uv_du = uvp->uv_dv =
-		rt_inv2pi * r / stp->st_aradius;
+		bn_inv2pi * r / stp->st_aradius;
 }
 
 /*
@@ -415,7 +415,7 @@ register struct soltab *stp;
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 
-	rt_free( (char *)sph, "sph_specific" );
+	bu_free( (char *)sph, "sph_specific" );
 }
 
 int

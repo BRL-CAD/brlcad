@@ -228,7 +228,7 @@ struct rt_i		*rtip;
 	 */
 	stp->st_id = ID_REC;		/* "fix" soltab ID */
 
-	GETSTRUCT( rec, rec_specific );
+	BU_GETSTRUCT( rec, rec_specific );
 	stp->st_specific = (genptr_t)rec;
 
 	VMOVE( rec->rec_Hunit, tip->h );
@@ -243,24 +243,24 @@ struct rt_i		*rtip;
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_h );
 
 	/* Compute R and Rinv matrices */
-	mat_idn( R );
+	bn_mat_idn( R );
 	f = 1.0/mag_a;
 	VSCALE( &R[0], tip->a, f );
 	f = 1.0/mag_b;
 	VSCALE( &R[4], tip->b, f );
 	f = 1.0/mag_h;
 	VSCALE( &R[8], tip->h, f );
-	mat_trn( Rinv, R );			/* inv of rot mat is trn */
+	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute S */
-	mat_idn( S );
+	bn_mat_idn( S );
 	S[ 0] = sqrt( invsq[0] );
 	S[ 5] = sqrt( invsq[1] );
 	S[10] = sqrt( invsq[2] );
 
 	/* Compute SoR and invRoS */
-	mat_mul( rec->rec_SoR, S, R );
-	mat_mul( rec->rec_invRoS, Rinv, S );
+	bn_mat_mul( rec->rec_SoR, S, R );
+	bn_mat_mul( rec->rec_invRoS, Rinv, S );
 
 	/* Compute bounding sphere and RPP */
 	{
@@ -366,8 +366,8 @@ register CONST struct soltab *stp;
 
 	VPRINT("V", rec->rec_V);
 	VPRINT("Hunit", rec->rec_Hunit);
-	mat_print("S o R", rec->rec_SoR );
-	mat_print("invR o S", rec->rec_invRoS );
+	bn_mat_print("S o R", rec->rec_SoR );
+	bn_mat_print("invR o S", rec->rec_invRoS );
 }
 
 /* hit_surfno is set to one of these */
@@ -485,7 +485,7 @@ hit:
 			segp->seg_stp = stp;
 			segp->seg_in = hits[0];		/* struct copy */
 			segp->seg_out = hits[1];	/* struct copy */
-			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		} else {
 			/* entry is [1], exit is [0] */
 			register struct seg *segp;
@@ -494,13 +494,13 @@ hit:
 			segp->seg_stp = stp;
 			segp->seg_in = hits[1];		/* struct copy */
 			segp->seg_out = hits[0];	/* struct copy */
-			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
 		return 2;			/* HIT */
 	}
 	if( nhits == 1 )  {
 		if( hits[0].hit_surfno != REC_NORM_BODY )
-			rt_log("rt_rec_shot(%s): 1 intersection with end plate?\n", stp->st_name );
+			bu_log("rt_rec_shot(%s): 1 intersection with end plate?\n", stp->st_name );
 		/*
 		 *  Ray is tangent to body of cylinder,
 		 *  or a single hit on on an end plate (??)
@@ -519,20 +519,20 @@ hit:
 		 */
 		k1 = hits[0].hit_dist - hits[1].hit_dist;
 		if( NEAR_ZERO( k1, tol_dist ) )  {
-			if(rt_g.debug&DEBUG_ARB8)rt_log("rt_rec_shot(%s): 3 hits, collapsing 0&1\n", stp->st_name);
+			if(rt_g.debug&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 0&1\n", stp->st_name);
 			hits[1] = hits[2];	/* struct copy */
 			nhits--;
 			goto hit;
 		}
 		k1 = hits[1].hit_dist - hits[2].hit_dist;
 		if( NEAR_ZERO( k1, tol_dist ) )  {
-			if(rt_g.debug&DEBUG_ARB8)rt_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
+			if(rt_g.debug&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
 			nhits--;
 			goto hit;
 		}
 	}
 	/*  nhits >= 3 */
-	rt_log("rt_rec_shot(%s): %d unique hits?!?  %g, %g, %g, %g\n",
+	bu_log("rt_rec_shot(%s): %d unique hits?!?  %g, %g, %g, %g\n",
 		stp->st_name, nhits,
 		hits[0].hit_dist,
 		hits[1].hit_dist,
@@ -699,7 +699,7 @@ register struct xray *rp;
 		VREVERSE( hitp->hit_normal, rec->rec_Hunit );
 		break;
 	default:
-		rt_log("rt_rec_norm: surfno=%d bad\n", hitp->hit_surfno);
+		bu_log("rt_rec_norm: surfno=%d bad\n", hitp->hit_surfno);
 		break;
 	}
 }
@@ -742,7 +742,7 @@ struct soltab *stp;
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		break;
 	default:
-		rt_log("rt_rec_curve: bad surfno %d\n", hitp->hit_surfno);
+		bu_log("rt_rec_curve: bad surfno %d\n", hitp->hit_surfno);
 		break;
 	}
 }
@@ -784,7 +784,7 @@ register struct uvcoord *uvp;
 			ratio = 1.0;
 		if( ratio < -1.0 )
 			ratio = -1.0;
-		uvp->uv_u = acos(ratio) * rt_inv2pi;
+		uvp->uv_u = acos(ratio) * bn_inv2pi;
 		uvp->uv_v = pprime[Z];		/* height */
 		break;
 	case REC_NORM_TOP:
@@ -795,7 +795,7 @@ register struct uvcoord *uvp;
 			ratio = 1.0;
 		if( ratio < -1.0 )
 			ratio = -1.0;
-		uvp->uv_u = acos(ratio) * rt_inv2pi;
+		uvp->uv_u = acos(ratio) * bn_inv2pi;
 		uvp->uv_v = len;		/* rim v = 1 */
 		break;
 	case REC_NORM_BOT:
@@ -806,7 +806,7 @@ register struct uvcoord *uvp;
 			ratio = 1.0;
 		if( ratio < -1.0 )
 			ratio = -1.0;
-		uvp->uv_u = acos(ratio) * rt_inv2pi;
+		uvp->uv_u = acos(ratio) * bn_inv2pi;
 		uvp->uv_v = 1 - len;	/* rim v = 0 */
 		break;
 	}
@@ -833,7 +833,7 @@ struct soltab *stp;
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
 
-	rt_free( (char *)rec, "rec_specific");
+	bu_free( (char *)rec, "rec_specific");
 }
 
 int
