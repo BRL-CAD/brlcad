@@ -125,6 +125,33 @@ CONST struct rt_db_internal	*intern;
 	return DIR_COMB;
 }
 
+/* 
+ *			W D B _ I M P O R T
+ *
+ *  Returns -
+ *	-1	ft_import failure (from rt_db_get_internal)
+ *	-2	db_get_external failure (from rt_db_get_internal)
+ *	-3	Attempt to import from write-only (stream) file.
+ *	-4	Name not found in database TOC.
+ */
+int
+wdb_import( wdbp, internp, name, mat )
+struct rt_wdb			*wdbp;
+CONST struct rt_db_internal	*internp;
+CONST char			*name;
+CONST mat_t			mat;
+{
+	struct directory	*dp;
+
+	if( wdbp->type == RT_WDB_TYPE_FILE )
+		return -3;	/* No table of contents, file is write-only */
+
+	if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL )
+		return -4;
+
+	return rt_db_get_internal( internp, dp, wdbp->dbip, mat );
+}
+
 /*
  *			W D B _ E X P O R T
  *
