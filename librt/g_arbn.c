@@ -455,7 +455,7 @@ register mat_t		mat;
 	ip->idb_ptr = rt_malloc( sizeof(struct rt_arbn_internal), "rt_arbn_internal");
 	aip = (struct rt_arbn_internal *)ip->idb_ptr;
 	aip->magic = RT_ARBN_INTERNAL_MAGIC;
-	aip->neqn = rp->n.n_neqn;
+	aip->neqn = rt_glong( rp->n.n_neqn );
 	if( aip->neqn <= 0 )  return(-1);
 	aip->eqn = (plane_t *)rt_malloc( aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
 
@@ -519,8 +519,8 @@ double			local2mm;
 	rec = (union record *)ep->ext_buf;
 
 	rec[0].n.n_id = DBID_ARBN;
-	rec[0].n.n_neqn = aip->neqn;
-	rec[0].n.n_grans = ngrans;
+	(void)rt_plong( rec[0].n.n_neqn, aip->neqn );
+	(void)rt_plong( rec[0].n.n_grans, ngrans );
 
 	/* Take the data from the caller, and scale it, into sbuf */
 	sp = sbuf = (double *)rt_malloc(

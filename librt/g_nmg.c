@@ -1852,7 +1852,7 @@ rt_log("Mapping of old index to new index, and kind\n");
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "nmg external");
 	rp = (union record *)ep->ext_buf;
 	rp->nmg.N_id = DBID_NMG;
-	rp->nmg.N_count = additional_grans;
+	(void)rt_plong( rp->nmg.N_count, additional_grans );
 
 	cp = (char *)(rp+1);	/* advance one granule */
 	for( i=0; i < NMG_N_KINDS; i++ )  {
