@@ -396,3 +396,58 @@ register vect_t point;
 	 */
 	mat_mul( out, origin_to_pt, t2 );
 }
+
+/*
+ *  			W R T _ P O I N T _ D I R E C
+ *  
+ *  Given a model-space transformation matrix "change",
+ *  return a matrix which applies the change with-respect-to
+ *  given "point" and "direc".
+ */
+void
+wrt_point_direc( out, change, in, point, direc )
+register matp_t out, change, in;
+register vect_t point, direc;
+{
+	static mat_t	t1, t2;
+	static mat_t	pt_to_origin, origin_to_pt;
+	static mat_t	d_to_zaxis, zaxis_to_d;
+	static vect_t	zaxis;
+
+	/* build "point to origin" matrix */
+	mat_idn( pt_to_origin );
+	MAT_DELTAS(pt_to_origin, -point[X], -point[Y], -point[Z]);
+
+	/* build "origin to point" matrix */
+	mat_idn( origin_to_pt );
+	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
+
+	/* build "direc to zaxis" matrix */
+	VSET(zaxis, 0, 0, 1);
+	mat_fromto(d_to_zaxis, direc, zaxis);
+
+	/* build "zaxis to direc" matrix */
+	mat_inv(zaxis_to_d, d_to_zaxis);
+
+	/* t1 = pt_to_origin * in */
+	mat_mul( t1, pt_to_origin, in );
+
+	/* t2 = d_to_zaxis * pt_to_origin * in */
+	mat_mul( t2, d_to_zaxis, t1 );
+
+	/* apply change matrix...
+	 *	t1 = change * d_to_zaxis * pt_to_origin * in
+	 */
+	mat_mul( t1, change, t2 );
+
+	/* apply zaxis_to_d matrix:
+	 *	t2 = zaxis_to_d * change * d_to_zaxis * pt_to_origin * in
+	 */
+	mat_mul( t2, zaxis_to_d, t1 );
+
+	/* apply origin_to_pt matrix:
+	 *	out = origin_to_pt * zaxis_to_d * change *
+	 *		d_to_zaxis * pt_to_origin * in
+	 */
+	mat_mul( out, origin_to_pt, t2 );
+}
