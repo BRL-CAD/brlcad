@@ -227,16 +227,16 @@ extern int arb_faces[5][24];	/* from edarb.c */
 
 struct menu_item cline_menu[] = {
 	{ "CLINE MENU",		(void (*)())NULL, 0 },
-	{ "Scale H",		cline_ed, ECMD_CLINE_SCALE_H },
+	{ "Set H",		cline_ed, ECMD_CLINE_SCALE_H },
 	{ "Move End H",		cline_ed, ECMD_CLINE_MOVE_H },
-	{ "Scale R",		cline_ed, ECMD_CLINE_SCALE_R },
-	{ "Scale plate thickness", cline_ed, ECMD_CLINE_SCALE_T },
+	{ "Set R",		cline_ed, ECMD_CLINE_SCALE_R },
+	{ "Set plate thickness", cline_ed, ECMD_CLINE_SCALE_T },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct  menu_item extr_menu[] = {
 	{ "EXTRUSION MENU",	(void (*)())NULL, 0 },
-	{ "Scale H",		extr_ed, ECMD_EXTR_SCALE_H },
+	{ "Set H",		extr_ed, ECMD_EXTR_SCALE_H },
 	{ "Move End H",		extr_ed, ECMD_EXTR_MOV_H },
 	{ "Rotate H",		extr_ed, ECMD_EXTR_ROT_H },
 	{ "Referenced Sketch",	extr_ed, ECMD_EXTR_SKT_NAME },
@@ -345,15 +345,15 @@ struct menu_item  point4_menu[] = {
 
 struct menu_item  tgc_menu[] = {
 	{ "TGC MENU", (void (*)())NULL, 0 },
-	{ "Scale H",	tgc_ed, MENU_TGC_SCALE_H },
-	{ "Scale H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
-	{ "Scale A",	tgc_ed, MENU_TGC_SCALE_A },
-	{ "Scale B",	tgc_ed, MENU_TGC_SCALE_B },
-	{ "Scale c",	tgc_ed, MENU_TGC_SCALE_C },
-	{ "Scale d",	tgc_ed, MENU_TGC_SCALE_D },
-	{ "Scale A,B",	tgc_ed, MENU_TGC_SCALE_AB },
-	{ "Scale C,D",	tgc_ed, MENU_TGC_SCALE_CD },
-	{ "Scale A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
+	{ "Set H",	tgc_ed, MENU_TGC_SCALE_H },
+	{ "Set H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
+	{ "Set A",	tgc_ed, MENU_TGC_SCALE_A },
+	{ "Set B",	tgc_ed, MENU_TGC_SCALE_B },
+	{ "Set c",	tgc_ed, MENU_TGC_SCALE_C },
+	{ "Set d",	tgc_ed, MENU_TGC_SCALE_D },
+	{ "Set A,B",	tgc_ed, MENU_TGC_SCALE_AB },
+	{ "Set C,D",	tgc_ed, MENU_TGC_SCALE_CD },
+	{ "Set A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
 	{ "Rotate H",	tgc_ed, MENU_TGC_ROT_H },
 	{ "Rotate AxB",	tgc_ed, MENU_TGC_ROT_AB },
 	{ "Move End H(rt)", tgc_ed, MENU_TGC_MV_H },
@@ -363,26 +363,26 @@ struct menu_item  tgc_menu[] = {
 
 struct menu_item  tor_menu[] = {
 	{ "TORUS MENU", (void (*)())NULL, 0 },
-	{ "Scale Radius 1", tor_ed, MENU_TOR_R1 },
-	{ "Scale Radius 2", tor_ed, MENU_TOR_R2 },
+	{ "Set Radius 1", tor_ed, MENU_TOR_R1 },
+	{ "Set Radius 2", tor_ed, MENU_TOR_R2 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  eto_menu[] = {
 	{ "ELL-TORUS MENU", (void (*)())NULL, 0 },
-	{ "Scale r", eto_ed, MENU_ETO_R },
-	{ "Scale D", eto_ed, MENU_ETO_RD },
-	{ "Scale C", eto_ed, MENU_ETO_SCALE_C },
+	{ "Set r", eto_ed, MENU_ETO_R },
+	{ "Set D", eto_ed, MENU_ETO_RD },
+	{ "Set C", eto_ed, MENU_ETO_SCALE_C },
 	{ "Rotate C", eto_ed, MENU_ETO_ROT_C },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  ell_menu[] = {
 	{ "ELLIPSOID MENU", (void (*)())NULL, 0 },
-	{ "Scale A", ell_ed, MENU_ELL_SCALE_A },
-	{ "Scale B", ell_ed, MENU_ELL_SCALE_B },
-	{ "Scale C", ell_ed, MENU_ELL_SCALE_C },
-	{ "Scale A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
+	{ "Set A", ell_ed, MENU_ELL_SCALE_A },
+	{ "Set B", ell_ed, MENU_ELL_SCALE_B },
+	{ "Set C", ell_ed, MENU_ELL_SCALE_C },
+	{ "Set A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -525,43 +525,43 @@ struct menu_item cntrl_menu[] = {
 
 struct menu_item part_menu[] = {
 	{ "Particle MENU", (void (*)())NULL, 0 },
-	{ "Scale H", part_ed, MENU_PART_H },
-	{ "Scale v", part_ed, MENU_PART_v },
-	{ "Scale h", part_ed, MENU_PART_h },
+	{ "Set H", part_ed, MENU_PART_H },
+	{ "Set v", part_ed, MENU_PART_v },
+	{ "Set h", part_ed, MENU_PART_h },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  rpc_menu[] = {
 	{ "RPC MENU", (void (*)())NULL, 0 },
-	{ "Scale B", rpc_ed, MENU_RPC_B },
-	{ "Scale H", rpc_ed, MENU_RPC_H },
-	{ "Scale r", rpc_ed, MENU_RPC_R },
+	{ "Set B", rpc_ed, MENU_RPC_B },
+	{ "Set H", rpc_ed, MENU_RPC_H },
+	{ "Set r", rpc_ed, MENU_RPC_R },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  rhc_menu[] = {
 	{ "RHC MENU", (void (*)())NULL, 0 },
-	{ "Scale B", rhc_ed, MENU_RHC_B },
-	{ "Scale H", rhc_ed, MENU_RHC_H },
-	{ "Scale r", rhc_ed, MENU_RHC_R },
-	{ "Scale c", rhc_ed, MENU_RHC_C },
+	{ "Set B", rhc_ed, MENU_RHC_B },
+	{ "Set H", rhc_ed, MENU_RHC_H },
+	{ "Set r", rhc_ed, MENU_RHC_R },
+	{ "Set c", rhc_ed, MENU_RHC_C },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  epa_menu[] = {
 	{ "EPA MENU", (void (*)())NULL, 0 },
-	{ "Scale H", epa_ed, MENU_EPA_H },
-	{ "Scale A", epa_ed, MENU_EPA_R1 },
-	{ "Scale B", epa_ed, MENU_EPA_R2 },
+	{ "Set H", epa_ed, MENU_EPA_H },
+	{ "Set A", epa_ed, MENU_EPA_R1 },
+	{ "Set B", epa_ed, MENU_EPA_R2 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  ehy_menu[] = {
 	{ "EHY MENU", (void (*)())NULL, 0 },
-	{ "Scale H", ehy_ed, MENU_EHY_H },
-	{ "Scale A", ehy_ed, MENU_EHY_R1 },
-	{ "Scale B", ehy_ed, MENU_EHY_R2 },
-	{ "Scale c", ehy_ed, MENU_EHY_C },
+	{ "Set H", ehy_ed, MENU_EHY_H },
+	{ "Set A", ehy_ed, MENU_EHY_R1 },
+	{ "Set B", ehy_ed, MENU_EHY_R2 },
+	{ "Set c", ehy_ed, MENU_EHY_C },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -574,12 +574,12 @@ struct menu_item pipe_menu[] = {
 	{ "Delete Point", pipe_ed, MENU_PIPE_DEL_PT },
 	{ "Append Point", pipe_ed, MENU_PIPE_ADD_PT },
 	{ "Prepend Point", pipe_ed, MENU_PIPE_INS_PT },
-	{ "Scale Point OD", pipe_ed, MENU_PIPE_PT_OD },
-	{ "Scale Point ID", pipe_ed, MENU_PIPE_PT_ID },
-	{ "Scale Point Bend", pipe_ed, MENU_PIPE_PT_RADIUS },
-	{ "Scale Pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
-	{ "Scale Pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
-	{ "Scale Pipe Bend", pipe_ed, MENU_PIPE_SCALE_RADIUS },
+	{ "Set Point OD", pipe_ed, MENU_PIPE_PT_OD },
+	{ "Set Point ID", pipe_ed, MENU_PIPE_PT_ID },
+	{ "Set Point Bend", pipe_ed, MENU_PIPE_PT_RADIUS },
+	{ "Set Pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
+	{ "Set Pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
+	{ "Set Pipe Bend", pipe_ed, MENU_PIPE_SCALE_RADIUS },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -604,9 +604,9 @@ struct menu_item ebm_menu[] = {
 struct menu_item dsp_menu[] = {
 	{"DSP MENU", (void (*)())NULL, 0 },
 	{"File Name", dsp_ed, MENU_DSP_FNAME },
-	{"Scale X", dsp_ed, MENU_DSP_SCALE_X },
-	{"Scale Y", dsp_ed, MENU_DSP_SCALE_Y },
-	{"Scale ALT", dsp_ed, MENU_DSP_SCALE_ALT },
+	{"Set X", dsp_ed, MENU_DSP_SCALE_X },
+	{"Set Y", dsp_ed, MENU_DSP_SCALE_Y },
+	{"Set ALT", dsp_ed, MENU_DSP_SCALE_ALT },
 	{ "", (void (*)())NULL, 0 }
 };
 
