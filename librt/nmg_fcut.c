@@ -1187,7 +1187,6 @@ struct faceuse	*fu;
 	struct face_g	*fg;
 	long		*tab;
 	int		fancy;
-	int		delay;
 
 	if( ! (rt_g.NMG_debug & DEBUG_PL_ANIM) )  return;
 
@@ -1207,11 +1206,9 @@ struct faceuse	*fu;
 
 	/* Cause animation of boolean operation as it proceeds! */
 	if( nmg_vlblock_anim_upcall )  {
-		delay = 1;
-
 		/* if requested, delay 3/4 second */
 		(*nmg_vlblock_anim_upcall)( vbp,
-			delay ? 750000 : 0 );
+			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0 );
 	} else {
 		rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}

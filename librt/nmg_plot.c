@@ -1260,7 +1260,8 @@ struct faceuse	*fu1;
 		nmg_vlblock_fu(vbp, fu1, tab, 1);
 
 		if( nmg_vlblock_anim_upcall )  {
-			(*nmg_vlblock_anim_upcall)( vbp, US_DELAY );
+			(*nmg_vlblock_anim_upcall)( vbp,
+				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0 );
 		} else {
 			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
@@ -1329,7 +1330,8 @@ int		show_mates;
 
 		/* Cause animation of boolean operation as it proceeds! */
 		if( nmg_vlblock_anim_upcall )  {
-			(*nmg_vlblock_anim_upcall)( vbp, US_DELAY );
+			(*nmg_vlblock_anim_upcall)( vbp,
+				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0 );
 		}
 		rt_vlblock_free(vbp);
 	}

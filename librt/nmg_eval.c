@@ -1036,14 +1036,9 @@ int		delay;
 
 		/* Cause animation of boolean operation as it proceeds! */
 		if( nmg_vlblock_anim_upcall )  {
-#if 0
 			/* if requested, delay 1/4 second */
 			(*nmg_vlblock_anim_upcall)( vbp,
-				delay ? 250000 : 0 );
-#else
-			/* Go full speed */
-			(*nmg_vlblock_anim_upcall)( vbp, 0 );
-#endif
+				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0 );
 		} else {
 			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
