@@ -153,6 +153,7 @@
 #	define HAVE_GETOPT_DECL	1
 #	define HAVE_XOPEN	1
 #	define HAVE_TERMIOS_H	1
+#	define HAVE_SYS_MMAN_H	1
 #	define HAVE_MEMORY_H	1				/* XXX */
 #	if !defined(_XOPEN_SOURCE)				/* XXX */
 #		define _XOPEN_SOURCE	1
