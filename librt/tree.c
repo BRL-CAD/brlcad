@@ -45,7 +45,7 @@ HIDDEN struct region *rt_getregion();
 HIDDEN void	rt_tree_region_assign();
 
 
-static struct db_tree_state	rt_initial_tree_state = {
+CONST struct db_tree_state	rt_initial_tree_state = {
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0, 0, 0, 0,		/* region, air, gmater, LOS */
