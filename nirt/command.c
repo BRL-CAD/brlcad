@@ -23,7 +23,8 @@ static char RCSid[] = "$Header$";
 #include "./usrfmt.h"
 
 char		*local_unit[] = {
-		    "none", "mm", "cm", "m", "in", "ft", "unknown"
+		    "none", "um", "mm", "cm", "m", "km",
+		    "in", "ft", "yd", "mi", "unknown"
 		};
 char		local_u_name[64];
 double		base2local;		/* from db_i struct, not fastf_t */
