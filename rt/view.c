@@ -295,8 +295,10 @@ register struct application *ap;
 		b = 0x80;
 	}
 
+#ifdef vax
 	if( ikfd > 0 )
 		ikwpixel( ap->a_x, ap->a_y, (b<<16)|(g<<8)|(r) );
+#endif
 	if( pixfd > 0 )  {
 		*pixelp++ = r & 0xFF;
 		*pixelp++ = g & 0xFF;
