@@ -278,20 +278,7 @@ struct seg		*seghead;
 		return(0);		/* MISS */
 
 	/* Sort hits, Near to Far */
-	{
-		register int i, j;
-		LOCAL struct hit temp;
-
-		for( i=0; i < nhits-1; i++ )  {
-			for( j=i+1; j < nhits; j++ )  {
-				if( hits[i].hit_dist <= hits[j].hit_dist )
-					continue;
-				temp = hits[j];		/* struct copy */
-				hits[j] = hits[i];	/* struct copy */
-				hits[i] = temp;		/* struct copy */
-			}
-		}
-	}
+	rt_hitsort( hits, nhits );
 
 	/* Remove duplicate hits.
 	   We remove one of a pair of hits when they are
