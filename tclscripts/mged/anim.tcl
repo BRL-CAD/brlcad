@@ -85,7 +85,8 @@ proc sketch_init_draw {} {
 	uplevel #0 set mged_sketch_node 0		
 	uplevel #0 set mged_sketch_count 0		
 	uplevel #0 set mged_sketch_time 0.0	
-	uplevel #0 set mged_sketch_tinc 1.0	
+	uplevel #0 set mged_sketch_tinc 1.0
+	uplevel #0 set mged_sketch_tinit 0.0
 	uplevel #0 {set mged_sketch_name ""}
 	uplevel #0 {set mged_sketch_splname ""}
 	uplevel #0 {set mged_sketch_splprefix "spl_"}
@@ -116,9 +117,9 @@ proc sketch_popup_draw { p } {
 	}
 	toplevel $root
 	wm title $root "MGED curve editor"
-	button $root.b0 -text "APPEND" -command "sketch_append"
-	button $root.b1 -text "INSERT" -command {sketch_insert $mged_sketch_node}
-	button $root.b2 -text "MOVE" -command {sketch_move $mged_sketch_node}
+	button $root.b0 -text "ADD" -command {sketch_add [viewget center] $mged_sketch_node}
+	button $root.b1 -text "INSERT" -command {sketch_insert [viewget center] $mged_sketch_node}
+	button $root.b2 -text "MOVE" -command {sketch_move [viewget center] $mged_sketch_node}
 	button $root.b3 -text "DELETE" -command {sketch_delete $mged_sketch_node}
 	frame  $root.f1
 	label  $root.f1.l0 -text "Node "
@@ -389,66 +390,59 @@ proc sketch_incr { i } {
 	sketch_update
 }
 
-#append current view center to current curve
-proc sketch_append {} {
-	global mged_sketch_node mged_sketch_count mged_sketch_tinc
-	global mged_sketch_time
+#add node behind node n, where n can range from -1 to l-1
+proc sketch_add { point n } {
+	global mged_sketch_tinc mged_sketch_tinit mged_sketch_node
 
-	set length [vdraw read length]
+	set length [vdraw r l]
+	set last [expr $length - 1]
+	upvar #0 "mged_sketch_time_[vdraw r n]" tlist
 	if { $length == 0 } {
-		set cmd 0
-		upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
-		set mged_sketch_time 0.0
-		set tlist $mged_sketch_time
-	} else {
-		set cmd 1
-		upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
-		set mged_sketch_time [expr \
-			[lindex $tlist [expr $mged_sketch_count - 1]] \
-			+ $mged_sketch_tinc]
-		lappend tlist $mged_sketch_time
-		#puts $mged_sketch_time
-	}
-	set center [viewget center]
-	#set center [viewget eye]
-	set mged_sketch_node [vdraw r l]
-	eval [concat vdraw w n $cmd $center]
-	sketch_update
-}
-
-#insert current view center at specified node
-proc sketch_insert { n } {
-	global mged_sketch_tinc
-
-	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
-	if { $n == "" } {
+		eval vdraw w 0 0 $point
+		set tlist [list $mged_sketch_tinit]
+		sketch_update
+		return
+	} 
+	if { ($n == "") || ($n < -1) || ($n > $last) } {
 		sketch_update
 		return
 	}
-	if { $n == 0 } {
-		eval [concat vdraw i $n 0 [viewget center]]
+	set newn [expr $n + 1]
+	if { $n == -1 } {
+		eval vdraw i $newn 0 $point
 		set vertex [vdraw r 1]
-		eval [concat vdraw w 1 1 [lrange $vertex 1 3]]
+		eval vdraw w 1 1 [lrange $vertex 1 3]
 		set tn [expr [lindex $tlist 0] - $mged_sketch_tinc]
+	} elseif { $n == $last} {
+		eval vdraw i $newn 1 $point
+		set tn [expr [lindex $tlist $last] + $mged_sketch_tinc]
 	} else {
-		eval [concat vdraw i $n 1 [viewget center]]
-		set tn [expr [lindex $tlist $n]+[lindex $tlist [expr $n - 1]]]
-		set tn [expr $tn * 0.5]
+		eval vdraw i $newn 1 $point
+		set tn [expr ([lindex $tlist $n]+[lindex $tlist $newn])*0.5]
 	}
-	set tlist [linsert $tlist $n $tn]
+	set tlist [linsert $tlist $newn $tn]
+	set mged_sketch_node $newn
 	sketch_update
+}	
+
+#insert current view center before specified node
+proc sketch_insert { point n } {
+	if { $n != "" } {
+		set n [expr $n - 1]
+	}
+	sketch_add $point $n
 }
 
 #move specified node to current view center
-proc sketch_move { n } {
+proc sketch_move { point n } {
 	if { $n == "" } {
 		sketch_update
 		return
 	}
 	if { $n == 0 } {
-		eval [concat vdraw w $n 0 [viewget center]]
+		eval vdraw w $n 0 $point
 	} else {
-		eval [concat vdraw w $n 1 [viewget center]]
+		eval vdraw w $n 1 $point
 	}
 	sketch_update
 }
@@ -752,11 +746,12 @@ proc sketch_copy { name } {
 		}
 	}
 	vdraw o $basename
-	text ._sketch_scratch
-	sketch_text_echoc ._sketch_scratch
+	set buffer ._sketch_scratch_
+	text $buffer
+	sketch_text_echoc $buffer
 	sketch_open_curve $name
-	sketch_text_apply ._sketch_scratch replace
-	destroy ._sketch_scratch
+	sketch_text_apply $buffer replace
+	destroy $buffer
 	if {[sketch_update] == 0} {
 		catch {destroy ._sketch_input}
 	} else {
@@ -806,6 +801,7 @@ proc sketch_delete_curve { name } {
 proc sketch_init_view {} {
 	#view curve
 	uplevel #0 set mged_sketch_init_view 1
+	uplevel #0 set mged_sketch_vapply 0
 	uplevel #0 set mged_sketch_vwidget ".view"
 	uplevel #0 set mged_sketch_vprefix "_v_"
 	uplevel #0 set mged_sketch_vnode 0		
@@ -856,7 +852,7 @@ proc sketch_popup_view { p } {
 	}
 	toplevel $root
 	wm title $root "MGED view curve editor"
-	button $root.b0 -text "APPEND" -command "sketch_vappend"
+	button $root.b0 -text "ADD" -command {sketch_vadd $mged_sketch_vnode}
 	button $root.b1 -text "INSERT" -command {sketch_vinsert $mged_sketch_vnode}
 	button $root.b2 -text "MOVE" -command {sketch_vmove $mged_sketch_vnode}
 	button $root.b3 -text "DELETE" -command {sketch_vdelete $mged_sketch_vnode}
@@ -865,6 +861,9 @@ proc sketch_popup_view { p } {
 	label  $root.f1.l1 -textvariable mged_sketch_vnode
 	label  $root.f1.l2 -text " of "
 	label  $root.f1.l3 -textvariable mged_sketch_vcount
+	checkbutton $root.cb0 -text "Apply current node to view" \
+		-variable mged_sketch_vapply -command "sketch_vupdate"
+	$root.cb0 deselect
 	frame  $root.f0 
 	button $root.f0.b4 -text "-->" -command {sketch_vincr 10}
 	button $root.f0.b40 -text "->" -command {sketch_vincr 1}
@@ -919,7 +918,7 @@ proc sketch_popup_view { p } {
 	$root.mb0.m0 add command -label "Write V-curve To File" -command {sketch_popup_vsave curve}
 	
 	pack \
-		$root.f4 $root.f3 $root.f5 $root.f1 $root.f0 \
+		$root.f4 $root.f3 $root.f5 $root.f1 $root.cb0 $root.f0 \
 		$root.b0 $root.b1 $root.b2 $root.b3 \
 		$root.mb0 \
 		$root.f8	\
@@ -941,7 +940,8 @@ proc sketch_popup_view { p } {
 }
 
 proc sketch_open_vcurve {name} {
-	global mged_sketch_vname mged_sketch_vparams mged_sketch_vwidget mged_sketch_vprefix
+	global mged_sketch_vname mged_sketch_vparams mged_sketch_vwidget \
+		mged_sketch_vprefix mged_sketch_vapply
 
 	set prefix $mged_sketch_vwidget.$mged_sketch_vprefix
 	#get non-empty name
@@ -962,6 +962,8 @@ proc sketch_open_vcurve {name} {
 	if { [info commands $prefix$name.t] == "" } {
 		sketch_popup_text_create $mged_sketch_vwidget \
 			$mged_sketch_vprefix$name "View curve: $name" ro
+		$prefix$name.t tag configure current -background white \
+			-relief raised -borderwidth 2
 	}
 	set mged_sketch_vname $name	
 	#create parameter list if need be
@@ -973,7 +975,7 @@ proc sketch_open_vcurve {name} {
 	wm deiconify $prefix$name
 	raise $prefix$name
 	raise $mged_sketch_vwidget
-
+	set mged_sketch_vapply 0
 }
 
 proc sketch_post_vcurve_list { menu function } {
@@ -1152,38 +1154,58 @@ proc sketch_set_vparams { newlist } {
 
 
 #append current view parameters to view curve
-proc sketch_vappend {} {
+proc sketch_vadd { n } {
 	global mged_sketch_vnode mged_sketch_vcount mged_sketch_vtinc
 	global mged_sketch_vtime mged_sketch_vname mged_sketch_vparams mged_sketch_vwidget mged_sketch_vprefix
 
 	set text $mged_sketch_vwidget.$mged_sketch_vprefix$mged_sketch_vname.t
 	set length [sketch_text_rows $text]
+	set last [expr $length - 1]
 	if { $length == 0 } {
 		set mged_sketch_vtime 0.0
 		set mged_sketch_vnode 0
-		set node $mged_sketch_vnode
-		incr node 1
-	} else {
-		set node $mged_sketch_vnode
-		incr node 1
-		set mged_sketch_vtime [lindex [$text get \
-		   "$node.0" "$node.0 lineend"] 0]
-		set mged_sketch_vtime \
-		   [expr $mged_sketch_vtime+$mged_sketch_vtinc]
+		set n $mged_sketch_vnode
+		$text configure -state normal
+		$text insert "1.0" [sketch_get_view_line $mged_sketch_vtime nl]
+		$text configure -state disabled
+		sketch_vupdate 
+		return		
+	} 
+	if { ($n == "") || ($n < -1) || ($n > $last) } {
+		sketch_vupdate
+		return
 	}
-	incr node 1
+	set line [expr $n + 2]
+	set preline [expr $n + 1]
+	if { $n == -1 } {
+		set time1 [lindex [$text get "$line.0" "$line.0 lineend"] 0] 
+		set mged_sketch_vtime [expr $time1 - $mged_sketch_vtinc]
+	} elseif { $n == $last } {
+		set time0 [lindex [$text get "$preline.0" "$preline.0 lineend"] 0] 
+		set mged_sketch_vtime [expr $time0 + $mged_sketch_vtinc]
+	} else {
+		set time0 [lindex [$text get "$preline.0" "$preline.0 lineend"] 0] 
+		set time1 [lindex [$text get "$line.0" "$line.0 lineend"] 0] 
+		set mged_sketch_vtime [expr ($time0 + $time1)*0.5]
+	}
 	$text configure -state normal
-	$text insert "$node.0" [sketch_get_view_line nl]
+	$text insert "$line.0" [sketch_get_view_line $mged_sketch_vtime nl]
 	$text configure -state disabled
-	incr mged_sketch_vnode 1
-
+	set mged_sketch_vnode $preline
 	sketch_vupdate
 }
 
-proc sketch_get_view_line { {mode 0}} {
-	global mged_sketch_vtime mged_sketch_vparams
+proc sketch_vinsert { n } {
+	if { $n != "" } {
+		set n [expr $n - 1]
+	}
+	sketch_vadd $n
+}
 
-	set line "\t$mged_sketch_vtime"
+proc sketch_get_view_line { time {mode 0}} {
+	global mged_sketch_vparams
+
+	set line "\t$time"
 	foreach cmd $mged_sketch_vparams {
 		set new [join [viewget $cmd] "\t"]
 		append line "\t$new"
@@ -1224,14 +1246,14 @@ proc sketch_vmove { n } {
 	set mged_sketch_vtime [lindex [$text get "$n.0" "$n.0 lineend"] 0]
 	$text configure -state normal
 	$text delete "$n.0" "$n.0 lineend"
-	$text insert "$n.0" [sketch_get_view_line] 			
+	$text insert "$n.0" [sketch_get_view_line $mged_sketch_vtime] 			
 	$text configure -state disabled
 
 	sketch_vupdate
 }
 
 #insert current view center at specified node
-proc sketch_vinsert { n } {
+proc sketch_vinsert2 { n } {
 	global mged_sketch_vtinc global mged_sketch_vtime mged_sketch_vname \
 		mged_sketch_vwidget mged_sketch_vprefix
 
@@ -1250,7 +1272,7 @@ proc sketch_vinsert { n } {
 		set mged_sketch_vtime  [expr 0.5*($t1+$t2)]
 	}
 	$text configure -state normal
-	$text insert "$n.0" [sketch_get_view_line nl] 			
+	$text insert "$n.0" [sketch_get_view_line $mged_sketch_vtime nl] 			
 	$text configure -state disabled
 	
 	sketch_vupdate
@@ -1260,7 +1282,7 @@ proc sketch_vinsert { n } {
 proc sketch_vupdate {} {
 	global mged_sketch_vcount mged_sketch_vtime mged_sketch_vnode
 	global mged_sketch_vname mged_sketch_vparams mged_sketch_cmdlen \
-		mged_sketch_vwidget mged_sketch_vprefix
+		mged_sketch_vwidget mged_sketch_vprefix mged_sketch_vapply
 
 	if { $mged_sketch_vname == "" } {
 		puts "sketch_vupdate: no view curve"
@@ -1286,19 +1308,27 @@ proc sketch_vupdate {} {
 
 	set mged_sketch_vtime [lindex $line 0]
 	
-	set i 1
-	set str ""
-	foreach cmd $mged_sketch_vparams {
-		set cargs [lrange $line $i \
-		   [expr $i + $mged_sketch_cmdlen($cmd) - 1] ]
-		set str [concat $str $cmd $cargs]
-		incr i $mged_sketch_cmdlen($cmd)
+	if { $mged_sketch_vapply } {
+		set i 1
+		set str ""
+		foreach cmd $mged_sketch_vparams {
+			set cargs [lrange $line $i \
+			   [expr $i + $mged_sketch_cmdlen($cmd) - 1] ]
+			set str [concat $str $cmd $cargs]
+			incr i $mged_sketch_cmdlen($cmd)
+		}
+		if { $i != $len } {
+			puts "sketch_vupdate: expected $i columns, got $len"
+			return
+		} 
+		eval viewset $str
 	}
-	if { $i != $len } {
-		puts "sketch_vupdate: expected $i columns, got $len"
-		return
-	} 
-	eval viewset $str
+
+	#highlight the current line
+	$text tag remove current 1.0 end
+	set line [expr $mged_sketch_vnode + 1]
+	set nline [expr $mged_sketch_vnode + 2]
+	$text tag add current "$line.0" "$nline.0"
 }
 
 #increment current node by specified amount
@@ -1404,24 +1434,13 @@ proc sketch_popup_vload {} {
 	set buttons [list \
 		[list "OK" "sketch_vload \[._sketch_input.f0.e get\] \
 			\[._sketch_input.f1.e get\] \
-			\[._sketch_input.f2.e get\] \$mged_sketch_text_lmode"] \
+			\[._sketch_input.f2.e get\]" ] \
 		{"Cancel" "destroy ._sketch_input"} \
 		]
 	sketch_popup_input "Load View Curve" $entries $buttons
-	frame ._sketch_input.f3
-	pack ._sketch_input.f3 -side bottom
-	radiobutton ._sketch_input.f3.r0 -text "Replace" \
-		-variable mged_sketch_text_lmode -value "replace"
-	radiobutton ._sketch_input.f3.r1 -text "Append" \
-		-variable mged_sketch_text_lmode -value "end"
-	radiobutton ._sketch_input.f3.r2 -text "Add New Columns" \
-		-variable mged_sketch_text_lmode -value "right"
-
-	pack ._sketch_input.f3.r0 ._sketch_input.f3.r1 ._sketch_input.f3.r2 \
-		-side left -fill x
 }
 
-proc sketch_vload { filename vcurve cols mode} {
+proc sketch_vload { filename vcurve cols} {
 	global mged_sketch_vname mged_sketch_vparams mged_sketch_vwidget mged_sketch_vprefix
 
 	set oldname $mged_sketch_vname
@@ -1443,7 +1462,7 @@ proc sketch_vload { filename vcurve cols mode} {
 	set text $mged_sketch_vwidget.$mged_sketch_vprefix$vcurve.t
 	set fd [open $filename r]
 	$text configure -state normal
-	sketch_text_from_fd $text $fd $cols $mode
+	sketch_text_from_fd $text $fd $cols replace
 	$text configure -state disabled
 	close $fd
 	catch {destroy ._sketch_input}
@@ -1978,7 +1997,7 @@ proc sketch_text_do_col {w rows args} {
 
 
 proc sketch_text_col_arith {w rows arglist} {
-	set buffer $w._scratch_
+	set buffer $w._col_scratch_
 	#destroy if exists already
 	if {[info commands $buffer] != ""} {
 		destroy $buffer
@@ -2294,10 +2313,11 @@ proc sketch_popup_read {w type src} {
 proc sketch_text_readc {w curve col mode} {
 	set oldcurve [vdraw r n]
 	sketch_open_curve $curve
-	text $w._scratch_
-	sketch_text_echoc $w._scratch_ 
-	sketch_text_from_text $w $w._scratch_ $col $mode
-	destroy $w._scratch_
+	set buffer $w._readc_scratch_
+	text $buffer
+	sketch_text_echoc $buffer
+	sketch_text_from_text $w $buffer $col $mode
+	destroy $buffer
 	sketch_open_curve $oldcurve
 	sketch_text_bar_reset $w
 	catch {destroy ._sketch_input}
@@ -2336,26 +2356,26 @@ proc sketch_popup_write {w dst} {
 }
 
 proc sketch_text_writec {w curve col} {
-	
-	text $w._scratch_
-	sketch_text_from_text $w._scratch_ $w $col append
-	set i [llength [split [$w._scratch_ get 1.0 "1.0 lineend"] "\t"]]
+	set buffer $w._writec_scratch_
+	text $buffer
+	sketch_text_from_text $buffer $w $col append
+	set i [llength [split [$buffer get 1.0 "1.0 lineend"] "\t"]]
 	incr i -1
 	if { $i < 3 } {
-		destroy $w._scratch_
+		destroy $buffer
 		puts "Need at least three columns"
 		return -1
 	}
 	if { $i == 3 } {
 		#assume time is missing
-		sketch_text_col_arith $w._scratch_ all {@i @0 @1 @2}
+		sketch_text_col_arith $buffer all {@i @0 @1 @2}
 		puts "Filling in missing time column"
 	}
 	set oldcurve [vdraw r n]
 	sketch_open_curve $curve
-	sketch_text_apply $w._scratch_ replace
+	sketch_text_apply $buffer replace
 	sketch_open_curve $oldcurve
-	destroy $w._scratch_
+	destroy $buffer
 	catch {destroy ._sketch_input}
 	sketch_update
 
@@ -3687,7 +3707,7 @@ proc sketch_text_from_text { wout win col mode {rows all}} {
 proc sketch_text_from_fd { w fd col mode } {
 	if { ($col != "all") || ($mode == "left") || ($mode == "right")} {
 		set mymode two
-		set myw $w._scratch
+		set myw $w._ffd_scratch
 		text $myw
 	} else {
 		#simple case, don't need intermediate buffer
