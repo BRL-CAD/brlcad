@@ -72,8 +72,8 @@ int		use_air = 0;		/* Handling of air in librt */
 char usage[] = "\
 Usage:  rttherm [options] model.g objects...\n\
 Options:\n\
- -C spectrum=nsamp/lo_nm/hi_nm\n\
- -C bg_temp=degK\n\
+ -c set spectrum=nsamp/lo_nm/hi_nm\n\
+ -c set bg_temp=degK\n\
  -s #		Square grid size in pixels (default 512)\n\
  -w # -n #	Grid size width and height in pixels\n\
  -V #		View (pixel) aspect ratio (width/height)\n\
