@@ -1,16 +1,13 @@
 /*
- *			burst/Cakefile
- *
- *	Author:		Gary S. Moss
- *			U. S. Army Ballistic Research Laboratory
- *			Aberdeen Proving Ground
- *			Maryland 21005-5066
- *			(301)278-6651 or AV-298-6651
- *
- *	$Header$ (BRL)
- *
- * FONTDIR is pathname to font file (times.r.6) which is included with sources
- * but on real BSD systems is found in /usr/lib/vfont.
+			burst/Cakefile
+
+	Author:		Gary S. Moss
+			U. S. Army Ballistic Research Laboratory
+			Aberdeen Proving Ground
+			Maryland 21005-5066
+
+	$Header$ (BRL)
+
  */
 #define CONFIGDEFS	LGT_CONFIG -I. /* -DDEBUG */
 

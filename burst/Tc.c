@@ -3,6 +3,11 @@
 	Modified: 	%G% at %U%
 	Retrieved: 	%H% at %T%
 	SCCS archive:	%P%
+
+	Author:	Gary S. Moss
+	U. S. Army Ballistic Research Laboratory
+	Aberdeen Proving Ground
+	Maryland 21005-5066
 */
 /*LINTLIBRARY*/
 #ifndef lint
