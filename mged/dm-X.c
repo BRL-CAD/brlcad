@@ -100,6 +100,24 @@ static XFontStruct *fontstruct;		/* X Font */
 
 static int	no_faceplate = 0;
 
+#if 0
+
+struct X_vars {
+    int no_faceplate;
+    int linewidth;
+    
+
+
+
+
+struct structparse X_vparse[] = {
+	{"%d",  1, "no_faceplate",	&no_faceplate,	refresh_hook },
+	{"%d",  1, "linewidth",		&ir_linewidth,	refresh_hook },
+	{"%s",  1, "foreground",        
+	{"",	0,  (char *)0,		0,			FUNC_NULL }
+};
+
+#endif
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
@@ -119,9 +137,9 @@ static int	no_faceplate = 0;
  */
 X_open()
 {
-	char	line[64];
-	char	hostname[80];
-	char	display[80];
+        char	line[85];
+        char	hostname[80];
+	char	display[82];
 	char	*envp;
 
 	/* get or create the default display */
@@ -133,7 +151,7 @@ X_open()
 	}
 
 	rt_log("X Display [%s]? ", envp );
-	(void)fgets( line, sizeof(line), stdin );
+	(void)fgets( line, 82, stdin );
 	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' ) {
@@ -183,11 +201,7 @@ X_prolog()
 void
 X_epilog()
 {
-#if 0
-	XFlush( dpy );
-#else
 	XSync( dpy, 0 );	/* Prevent lag between events and updates */
-#endif
 	return;
 }
 
