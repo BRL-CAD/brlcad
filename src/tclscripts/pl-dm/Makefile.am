@@ -4,6 +4,7 @@ this_dir = tclscripts/pl-dm
 tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
 	bindings.tcl \
 	help.tcl \
 	menu.tcl

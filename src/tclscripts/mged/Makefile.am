@@ -4,6 +4,7 @@ this_dir = tclscripts/mged
 tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
 	accel.tcl \
 	adc.tcl \
 	anim.tcl \

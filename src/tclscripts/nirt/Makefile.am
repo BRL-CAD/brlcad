@@ -3,7 +3,9 @@
 this_dir = tclscripts/nirt
 tcldir = $(prefix)/$(this_dir)
 
-dist_tcl_SCRIPTS = prototype.sh
+dist_tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
+	prototype.sh
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \

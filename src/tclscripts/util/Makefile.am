@@ -4,6 +4,7 @@ this_dir = tclscripts/util
 tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
 	expand_int_ranges.tcl \
 	luniq.tcl
 

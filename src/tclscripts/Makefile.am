@@ -5,6 +5,7 @@ this_dir = tclscripts
 tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS= \
+	$(BUILT_SOURCES) \
 	ami.tcl \
 	ampi.tcl \
 	cad_clrpick.tcl \

@@ -4,6 +4,7 @@ this_dir = tclscripts/lib
 tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
 	CellPlot.tcl \
 	ColorEntry.tcl \
 	ComboBox.tcl \

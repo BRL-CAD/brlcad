@@ -4,7 +4,9 @@ SUBDIRS = examples lib
 this_dir = tclscripts/rtwizard
 tcldir = $(prefix)/$(this_dir)
 
-dist_tcl_SCRIPTS = rtwizard.tcl
+dist_tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
+	rtwizard.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \

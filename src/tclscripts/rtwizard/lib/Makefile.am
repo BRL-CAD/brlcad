@@ -4,6 +4,7 @@ this_dir = tclscripts/rtwizard/lib
 tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
 	DbPage.itk \
 	ExamplePage.itk \
 	FbPage.itk \

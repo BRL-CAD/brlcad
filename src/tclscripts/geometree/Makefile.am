@@ -4,6 +4,7 @@ this_dir = tclscripts/geometree
 tcldir = $(prefix)/$(this_dir)
 
 dist_tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
 	GeometryBrowser.tcl \
 	geometree.tcl
 
