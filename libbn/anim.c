@@ -894,10 +894,10 @@ void anim_mat_print(m,s_colon)
 mat_t m;
 int s_colon;
 {
-        printf("%f %f %f %f\n", m[0], m[1], m[2], m[3]);
-        printf("%f %f %f %f\n", m[4], m[5], m[6], m[7]);
-        printf("%f %f %f %f\n", m[8], m[9], m[10], m[11]);
-        printf("%f %f %f %f", m[12], m[13], m[14], m[15]);
+        printf("%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
+        printf("%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
+        printf("%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
+        printf("%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
         if (s_colon)
                 printf(";");
         printf("\n");

@@ -75,7 +75,7 @@ char **argv;
 		fprintf(stderr,"anim_script: Get_args error\n");
 	
 	if (view && (viewsize > 0.0))
-                printf("viewsize %f;\n", viewsize);
+                printf("viewsize %.10g;\n", viewsize);
 
 
 	while (1) {
@@ -135,12 +135,12 @@ char **argv;
 	                printf("start %d;\n", first_frame + frame);
 			printf("clean;\n");
 			if (readview)
-		                printf("viewsize %f;\n", viewsize);
-	                printf("eye_pt %f %f %f;\n",a[3],a[7],a[11]);
+		                printf("viewsize %.10g;\n", viewsize);
+	                printf("eye_pt %.10g %.10g %.10g;\n",a[3],a[7],a[11]);
 			/* implicit anim_v_permute */
-			printf("viewrot %f %f %f 0\n",-a[1],-a[5],-a[9]);
-	                printf("%f %f %f 0\n", a[2], a[6], a[10]);
-	                printf("%f %f %f 0\n", -a[0], -a[4],-a[8]);
+			printf("viewrot %.10g %.10g %.10g 0\n",-a[1],-a[5],-a[9]);
+	                printf("%.10g %.10g %.10g 0\n", a[2], a[6], a[10]);
+	                printf("%.10g %.10g %.10g 0\n", -a[0], -a[4],-a[8]);
 	                printf("0 0 0 1;\n");
 	                printf("end;\n");
 		}

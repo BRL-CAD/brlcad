@@ -131,11 +131,11 @@ char **argv;
 				roll_ang -= sign * MAGNITUDE(v) / radius;
 
 			if (!(count%print_int))
-				printf("%f %f %f 0.0\n",time,factor*RTOD*yaw,RTOD*roll_ang);
+				printf("%.10g %.10g %.10g 0.0\n",time,factor*RTOD*yaw,RTOD*roll_ang);
 		}
 		else { /* print position and orientation of vehicle */
 			if (!(count%print_int))
-				printf("%f %f %f %f %f 0.0 0.0\n",time,front[0],front[1],front[2], RTOD * angle);
+				printf("%.10g %.10g %.10g %.10g %.10g 0.0 0.0\n",time,front[0],front[1],front[2], RTOD * angle);
 		}
 		count++;
 	}

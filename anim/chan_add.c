@@ -53,9 +53,9 @@ char **argv;
 					doit = 1;
 			}
 			if (doit)
-				printf("%g\t",temp + addend);
+				printf("%.10g\t",temp + addend);
 			else
-				printf("%g\t",temp);
+				printf("%.10g\t",temp);
 		}
 		if ( count == (of-1))
 			printf("\n");
