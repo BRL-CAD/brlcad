@@ -419,7 +419,7 @@ getsolid()
 		VMOVE( D(7), D(5) );
 		VMOVE( D(6), D(5) );
 		VMOVE( D(5), D(4) );
-		return( mk_arb8( outfp, name, (point_t *)dd ) );
+		return( mk_arb8( outfp, name, (CONST point_t *)dd ) );
 	}
 
 	if( strcmp( solid_type, "arb5" ) == 0 )  {
@@ -428,13 +428,13 @@ getsolid()
 		VMOVE( D(5), D(4) );
 		VMOVE( D(6), D(4) );
 		VMOVE( D(7), D(4) );
-		return( mk_arb8( outfp, name, (point_t *)dd ) );
+		return( mk_arb8( outfp, name, (CONST point_t *)dd ) );
 	}
 
 	if( strcmp( solid_type, "arb4" ) == 0 )  {
 		if( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_arb4( outfp, name, (point_t *)dd ) );
+		return( mk_arb4( outfp, name, (CONST point_t *)dd ) );
 	}
 
 	if( strcmp( solid_type, "rcc" ) == 0 )  {
