@@ -1027,6 +1027,7 @@ long ***trans_tbl;
 					NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
 					new_fu = nmg_mf( new_lu );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu , (long *)new_fu );
+					NMG_INDEX_ASSIGN( (*trans_tbl) , fu->fumate_p , (long *)new_fu->fumate_p );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p , (long *)new_fu->f_p );
 				}
 			}
