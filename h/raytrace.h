@@ -557,12 +557,9 @@ struct region  {
  *  Partitions of a ray.  Passed from rt_shootray() into user's
  *  a_hit() function.
  *
- *  NOTE:  rt_get_pt allows enough storage at the end of the partition
- *  for a bit vector of "rt_i.nsolids" bits in length.
- *
- *  NOTE:  The number of solids in a model can change from frame to frame
- *  due to the effect of animations, so partition structures can be expected
- *  to change length over the course of a single application program.
+ *  Not changed to a bu_list for backwards compatability, but
+ *  you can iterate the whole list by writing:
+ *	for( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )
  */
 
 struct partition {
