@@ -5,6 +5,18 @@
  *  
  *  Before this can be done, the model max and min must have
  *  been computed -- no incremental cutting.
+ *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCScut[] = "@(#)$Header$ (BRL)";
@@ -74,16 +86,21 @@ register struct rt_i *rtip;
 	rt_ct_optim( &rtip->rti_CutHead, 0 );
 
 	/* Measure the depth of tree, find max # of RPPs in a cut node */
+	rt_hist_init( &rtip->rti_hist_cellsize, 0, rtip->nsolids/4, 50 );
+	rt_hist_init( &rtip->rti_hist_cutdepth, 0, rt_cutDepth+10, 50 );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
 	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
-	if(rt_g.debug&DEBUG_CUT) rt_log(
-		"Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
+	if(rt_g.debug&DEBUG_CUT)  {
+		rt_log("Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
 		rtip->rti_cut_maxdepth,
 		rtip->rti_cut_nbins,
 		rtip->rti_cut_maxlen,
 		((double)rtip->rti_cut_totobj)/rtip->rti_cut_nbins );
+		rt_hist_pr( &rtip->rti_hist_cellsize, "Cut tree leaf cell size");
+		rt_hist_pr( &rtip->rti_hist_cutdepth, "Cut tree depth (height)"); 
+	}
 
-	if(rt_g.debug&DEBUG_CUT) rt_pr_cut( &rtip->rti_CutHead, 0 );
+	if(rt_g.debug&DEBUG_CUTDETAIL) rt_pr_cut( &rtip->rti_CutHead, 0 );
 
 	/* For plotting, build slightly enlarged model RPP, to
 	 * allow rays clipped to the model RPP to be depicted,
@@ -143,7 +160,7 @@ struct soltab *stp;	/* should be object handle & routine addr */
 vect_t min, max;
 int depth;
 {
-	if(rt_g.debug&DEBUG_CUT)rt_log("rt_ct_add(x%x, %s, %d)\n",
+	if(rt_g.debug&DEBUG_CUTDETAIL)rt_log("rt_ct_add(x%x, %s, %d)\n",
 		cutp, stp->st_name, depth);
 	if( cutp->cut_type == CUT_CUTNODE )  {
 		vect_t temp;
@@ -229,7 +246,7 @@ register int axis;
 	auto double d;
 	register int i;
 
-	if(rt_g.debug&DEBUG_CUT)rt_log("rt_ct_box(x%x, %c)\n",cutp,"XYZ345"[axis]);
+	if(rt_g.debug&DEBUG_CUTDETAIL)rt_log("rt_ct_box(x%x, %c)\n",cutp,"XYZ345"[axis]);
 
 	/*  In absolute terms, each box must be at least 1mm wide after cut. */
 	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
@@ -269,7 +286,7 @@ register int axis;
 		return(0);	/* cut will be too small */
 
 	/* We are going to cut -- convert caller's node type */
-	if(rt_g.debug&DEBUG_CUT)rt_log("rt_ct_box(x%x) [%g,%g,%g]\n",
+	if(rt_g.debug&DEBUG_CUTDETAIL)rt_log("rt_ct_box(x%x) [%g,%g,%g]\n",
 		cutp,
 		oldbox.bn.bn_min[axis], pt_close, oldbox.bn.bn_max[axis]);
 	cutp->cut_type = CUT_CUTNODE;
@@ -667,10 +684,11 @@ register struct rt_i	*rtip;
 register union cutter	*cutp;
 int			depth;
 {
+	register int	len;
 
 	if( cutp->cut_type == CUT_CUTNODE )  {
-		rt_ct_measure( rtip, cutp->cn.cn_l, depth+1 );
-		rt_ct_measure( rtip, cutp->cn.cn_r, depth+1 );
+		rt_ct_measure( rtip, cutp->cn.cn_l, len = (depth+1) );
+		rt_ct_measure( rtip, cutp->cn.cn_r, len );
 		return;
 	}
 	if( cutp->cut_type != CUT_BOXNODE )  {
@@ -678,12 +696,16 @@ int			depth;
 		return;
 	}
 	/*
-	 * BOXNODE
+	 * BOXNODE (leaf)
 	 */
 	rtip->rti_cut_nbins++;
-	rtip->rti_cut_totobj += cutp->bn.bn_len;
-	if( rtip->rti_cut_maxlen < cutp->bn.bn_len )
-		rtip->rti_cut_maxlen = cutp->bn.bn_len;
+	rtip->rti_cut_totobj += (len = cutp->bn.bn_len);
+	if( rtip->rti_cut_maxlen < len )
+		rtip->rti_cut_maxlen = len;
 	if( rtip->rti_cut_maxdepth < depth )
 		rtip->rti_cut_maxdepth = depth;
+
+	RT_HISTOGRAM_TALLY( &rtip->rti_hist_cellsize, len );
+	RT_HISTOGRAM_TALLY( &rtip->rti_hist_cutdepth, depth ); 
+
 }
