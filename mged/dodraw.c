@@ -1779,7 +1779,9 @@ char	**argv;
 			for( j = sp->s_last; j >= 0; j-- )  {
 				if( sp->s_path[j] != dp )
 					continue;
+#if 0
 				add_solid_path_to_result(interp, sp);
+#endif
 				(void)replot_original_solid( sp );
 				sp->s_iflag = DOWN;	/* It won't be drawn otherwise */
 				break;
