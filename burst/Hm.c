@@ -37,6 +37,10 @@ extern void	exit();
 extern unsigned alarm();
 #endif
 
+#ifndef _POSIX_SOURCE
+extern FILE    *fdopen(int, const char *);
+#endif
+
 #define HmDEBUG		false
 
 #ifndef Max
