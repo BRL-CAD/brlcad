@@ -155,7 +155,7 @@ dnl appropriate section further below.
 
 # Allow user to specify flags without relying on environment
 AC_ARG_WITH(cflags, AC_HELP_STRING(--with-cflags,
-		    [Specify additional flags to pass to the C compiler]) ,
+		[Specify additional flags to pass to the C compiler]),
 	[
 		if test "x$withval" != "xno" ; then
 			CFLAGS="$CFLAGS $withval"
@@ -163,7 +163,7 @@ AC_ARG_WITH(cflags, AC_HELP_STRING(--with-cflags,
 	]	
 )
 AC_ARG_WITH(cppflags, AC_HELP_STRING(--with-cppflags,
-		      [Specify additional flags to pass to C preprocessor]) ,
+		[Specify additional flags to pass to C preprocessor]),
 	[
 		if test "x$withval" != "xno"; then
 			CPPFLAGS="$CPPFLAGS $withval"
@@ -171,7 +171,7 @@ AC_ARG_WITH(cppflags, AC_HELP_STRING(--with-cppflags,
 	]
 )
 AC_ARG_WITH(ldflags, AC_HELP_STRING(--with-ldflags,
-		     [Specify additional flags to pass to linker]) ,
+		[Specify additional flags to pass to linker]),
 	[
 		if test "x$withval" != "xno" ; then
 			LDFLAGS="$LDFLAGS $withval"
@@ -179,7 +179,7 @@ AC_ARG_WITH(ldflags, AC_HELP_STRING(--with-ldflags,
 	]	
 )
 AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
-		  [Specify additional libraries to link against]) ,
+		[Specify additional libraries to link against]),
 	[
 		if test "x$withval" != "xno" ; then
 			LIBS="$LIBS $withval"
@@ -190,8 +190,8 @@ AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
 # use the jdk
 JAVA_CFLAGS=
 with_java=no
-AC_ARG_WITH(jdk, AC_HELP_STRING(--with-jdk=path, 
-		 [Specify location of Java Development Kit]),
+AC_ARG_WITH(jdk, AC_HELP_STRING(--with-jdk=path,
+		[Specify location of Java Development Kit]),
 	[
 		JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
 		with_java=yes
@@ -211,8 +211,7 @@ AC_SUBST(JAVA_LDFLAGS)
 # only build benchmark
 AC_MSG_CHECKING(whether to only build benchmark)
 only_benchmark=no
-AC_ARG_ENABLE(only-benchmark,
-	AC_HELP_STRING(--enable-only-benchmark,
+AC_ARG_ENABLE(only-benchmark, AC_HELP_STRING(--enable-only-benchmark,
 		[Only build the components necessary for the benchmark suite (default=no)]),
 	[if test "x$enableval" != "xno" ; then
 		only_benchmark=yes
@@ -220,14 +219,11 @@ AC_ARG_ENABLE(only-benchmark,
 )
 AC_MSG_RESULT($only_benchmark)
 
-AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$only_benchmark" != "xno"])
-
 # only build librtserver
 AC_MSG_CHECKING(whether to only build librtserver)
 only_rts=no
 warn_only_both=no
-AC_ARG_ENABLE(only-rtserver,
-	AC_HELP_STRING(--enable-only-rtserver,
+AC_ARG_ENABLE(only-rtserver, AC_HELP_STRING(--enable-only-rtserver,
 		[Only build the components necessary for the raytrace server (default=no)]),
 	[if test "x$enableval" != "xno" ; then
 		only_rts=yes
@@ -237,7 +233,6 @@ AC_ARG_ENABLE(only-rtserver,
 	fi]
 )
 AC_MSG_RESULT($only_rts)
-AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
 if test "x$warn_only_both" != "xno" ; then
 	AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 	AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
@@ -247,8 +242,7 @@ fi
 
 # enable 64-bit builds
 build_64bit=auto
-AC_ARG_ENABLE(64bit-build,
-	AC_HELP_STRING(--enable-64bit-build,
+AC_ARG_ENABLE(64bit-build, AC_HELP_STRING(--enable-64bit-build,
 		[enable 64-bit compilation mode (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_64bit=no
@@ -260,8 +254,7 @@ AC_ARG_ENABLE(64bit-build,
 # force enable/disable building of libregex
 dnl build_regex has alias(es)
 build_regex=auto
-AC_ARG_ENABLE(regex-build,
-	AC_HELP_STRING(--enable-regex-build,
+AC_ARG_ENABLE(regex-build, AC_HELP_STRING(--enable-regex-build,
 		[Build and use the included regular expression library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_regex=no
@@ -273,8 +266,7 @@ AC_ARG_ENABLE(regex-build,
 # force enable/disable building of libpng
 dnl build_png has alias(es)
 build_png=auto
-AC_ARG_ENABLE(png-build,
-	AC_HELP_STRING(--enable-png-build,
+AC_ARG_ENABLE(png-build, AC_HELP_STRING(--enable-png-build,
 		[Build and use the included Portable Network Graphics library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_png=no
@@ -286,8 +278,7 @@ AC_ARG_ENABLE(png-build,
 # force enable/disable building of zlib
 dnl build_zlib has alias(es)
 build_zlib=auto
-AC_ARG_ENABLE(zlib-build,
-	AC_HELP_STRING(--enable-zlib-build,
+AC_ARG_ENABLE(zlib-build, AC_HELP_STRING(--enable-zlib-build,
 		[Build and use the included zlib compression library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_zlib=no
@@ -299,8 +290,7 @@ AC_ARG_ENABLE(zlib-build,
 # doxygen
 AC_MSG_CHECKING(whether to generate documentation with doxygen)
 use_doxygen=no
-AC_ARG_ENABLE(doxygen,
-	AC_HELP_STRING(--enable-doxygen,
+AC_ARG_ENABLE(doxygen, AC_HELP_STRING(--enable-doxygen,
 		[enable documentation generation with doxygen (default=no)]),
 	[if test "xenable_doxygen" != "xno" ; then
 		use_doxygen=yes
@@ -311,21 +301,18 @@ AC_MSG_RESULT($use_doxygen)
 # jove
 AC_MSG_CHECKING(whether to compile jove or not)
 use_jove=no
-AC_ARG_ENABLE(jove,
-	AC_HELP_STRING(--enable-jove,
+AC_ARG_ENABLE(jove, AC_HELP_STRING(--enable-jove,
 		[enable compilation of jove (default=no)]),
 	[if test "x$enable_jove" != "xno" ; then
 		use_jove=yes
 	fi]
 )
 AC_MSG_RESULT($use_jove)
-AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
 
 # optimized
 dnl optimized has alias(es)
 use_optimized=no
-AC_ARG_ENABLE(optimized,
-	AC_HELP_STRING(--enable-optimized,
+AC_ARG_ENABLE(optimized, AC_HELP_STRING(--enable-optimized,
 		[enable optimized compilation (default=no)]),
 	[if test "x$enable_optimized" != "xno" ; then
 		use_optimized=yes
@@ -335,8 +322,7 @@ AC_ARG_ENABLE(optimized,
 # warnings
 dnl warnings has alias(es)
 use_warnings=no
-AC_ARG_ENABLE(warnings,
-	AC_HELP_STRING(--enable-warnings,
+AC_ARG_ENABLE(warnings, AC_HELP_STRING(--enable-warnings,
 		[enable verbose compilation warnings (default=no)]),
 	[if test "x$enable_warnings" != "xno" ; then
 		use_warnings=yes
@@ -346,8 +332,7 @@ AC_ARG_ENABLE(warnings,
 # debug
 dnl debug has alias(es)
 use_debug=yes
-AC_ARG_ENABLE(debug,
-	AC_HELP_STRING(--disable-debug,
+AC_ARG_ENABLE(debug, AC_HELP_STRING(--disable-debug,
 		[disable debug symbols (default=no)]),
 	[if test "x$disable_debug" != "xno" ; then
 		use_debug=no
@@ -357,8 +342,7 @@ AC_ARG_ENABLE(debug,
 # profiling
 dnl profiling has alias(es)
 use_profiling=no
-AC_ARG_ENABLE(profiling,
-	AC_HELP_STRING(--enable-profiling,
+AC_ARG_ENABLE(profiling, AC_HELP_STRING(--enable-profiling,
 		[enable profiling (default=no)]),
 	[if test "x$enable_profiling" != "xno" ; then
 		use_profiling=yes
@@ -514,7 +498,6 @@ case "$target" in
 		;;
 esac
 AC_SUBST(PTHREAD_LIBS)
-AM_CONDITIONAL(IRIX, [test "x$is_irix" == yes])
 
 dnl XXX should only add to build paths when something fails that is
 dnl necessary additionally, a compiler might complain if /usr/local or
@@ -1273,7 +1256,6 @@ if test "x$only_rts" != "xno" ; then
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
 fi
-AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
 
 dnl *** libm ***
 
@@ -1340,7 +1322,6 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBPNG)
-AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 
 dnl *** libregex ***
 
@@ -1387,7 +1368,6 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(REGEX_LIBS)
-AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 
 dnl *** libz ***
 
@@ -1435,7 +1415,6 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
-AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 
 dnl figure out whether we are building 64-bit
 build_brlcad_64bit="no"
@@ -1473,6 +1452,15 @@ fi
 dnl ***************************
 dnl *** Configure Makefiles ***
 dnl ***************************
+
+AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
+AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
+AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
+AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
+AM_CONDITIONAL(IRIX, [test "x$is_irix" == "xyes" ])
+AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
+AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$only_benchmark" != "xno"])
+AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
 
 dnl XXX - These defines are available but not presently necessary
 dnl CALTECH_MALLOC
