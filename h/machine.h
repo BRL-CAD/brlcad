@@ -567,6 +567,11 @@ typedef long	bitv_t;		/* largest integer type */
 # endif
 #endif
 
+/* Even in C++ not all compilers know the "bool" keyword yet */
+#if !defined(BOOL)
+# define BOOL	int
+#endif
+
 /* A portable way of dealing with pre-ANSI C.  Assume signed variables */
 #if !defined(SIGNED)
 # if __STDC__
