@@ -311,18 +311,3 @@ group_write()
 	}
 	/* Could make all-encompasing "all.g" group here */
 }
-
-int
-getint( cp, start, len )
-char	*cp;
-int	start;
-int	len;
-{
-	char	buf[128];
-
-	if( len >= sizeof(buf) )  len = sizeof(buf)-1;
-
-	strncpy( buf, cp+start, len );
-	buf[len] = '\0';
-	return atoi(buf);	
-}
