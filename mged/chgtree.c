@@ -44,22 +44,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "wdb.h"
 #include "./sedit.h"
 #include "raytrace.h"
+#include "wdb.h"
 #include "rtgeom.h"
 #include "./ged.h"
 #include "externs.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
-
-/* XXX Move to raytrace.h */
-BU_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
-				int argc, CONST char **argv));
-BU_EXTERN(union tree		*db_find_named_leaf, (union tree *tp,
-				CONST char *cp));
-
 
 extern void solid_list_callback(); /* chgview.c */
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
