@@ -1256,7 +1256,7 @@ fi
 #------------------------------------------------------------------------
 
 if test "${GCC}" = "yes" ; then
-    CFLAGS_WARNING="-Wall -Wconversion -Wno-implicit-int"
+    CFLAGS_WARNING="-Wall -Wno-implicit-int"
 else
     CFLAGS_WARNING=""
 fi
