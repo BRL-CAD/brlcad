@@ -606,6 +606,51 @@ minimum bounding polygon of the region and ignores holes.
 </DD>
 <HR>
 
+<DT><a NAME="attr"><B>attr</B> <I>object_name</I> [<I>attribute_name</I>] [<I>attribute_value</I>]
+[<I>attribute_name attribute_value ...</I>]
+
+<DD>The ``attr'' command is used to create, change, or retrieve
+attributes of database objects.  With just an object name, this
+commands returns a list of all the attributes for that object and
+their values.  With just an object name and an attribute name, the
+value of that attribute is returned. If an object name, attribute
+name, and an attribute value is provided, that attribute/value pair is
+assigned to the specified object.  If that attribute does not exist,
+it is created, otherwise, the value is changed to the one
+provided. Any additional arguments must be attribute/value pairs to be
+assigned to the object. Note that the attribute values may not contain
+embedded white space unless the entire value is enclosed in double
+quotes or ``{}'', and attribute names may not contain any white space.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<kbd>mged></kbd> <b>attr region_1 comment {This is a comment for region_1}</b><br>
+-- assign an attribute named ``comment'' to <I>region_1</I>, its value is ``This is a comment for region_1''<br>
+<kbd>mged></kbd> <b>attr region_1 comment</b><br>
+-- list all the attributes for <I>region_1</I><br>
+</DD>
+</DL>
+</DD>
+<HR>
+
+<DT><a NAME="attr_rm"><B>attr_rm</B> <I>object_name</I>
+[<I>attribute_name</I>] [<I>attribute_name</I>] ...
+
+<DD>The ``attr_rm'' command is used to remove attributes. The object
+to lose its attributes, and the specific attribute names to be removed
+must be specified.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<kbd>mged></kbd> <b>attr_rm region_1 comment</b><br>
+-- delete the attribute named ``comment'' from <I>region_1</I><br>
+</DD>
+</DL>
+</DD>
+<HR>
+
 <DT><a NAME="bev"><B>bev</B> [<I>-t</I>] [<I>-P#</I>] <I>new_obj Boolean_formula</I></DT>
 
 <DD> The ``bev'' command performs the operations indicated in the <I>Boolean_formula</I>
