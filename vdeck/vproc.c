@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) vproc.c	2.6
-	Last edit: 	12/20/85 at 19:04:33
-	Retrieved: 	8/13/86 at 08:26:34
+	SCCS id:	@(#) vproc.c	2.7
+	Last edit: 	7/10/86 at 11:07:27
+	Retrieved: 	8/13/86 at 08:27:02
 	SCCS archive:	/m/cad/vdeck/RCS/s.vproc.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) vproc.c	2.6	last edit 12/20/85 at 19:04:33";
+char	sccsTag[] = "@(#) vproc.c	2.7	last edit 7/10/86 at 11:07:27";
 #endif
 /*
 	Procedures for vproc.c
@@ -30,12 +30,16 @@ char	sccsTag[] = "@(#) vproc.c	2.6	last edit 12/20/85 at 19:04:33";
 #include <setjmp.h>
 #include <std.h>
 #include "./vextern.h"
+extern void	eread(), ewrite();
+extern void	mat_idn();
+
 Directory	directory[NDIR];
 static char	*db_title = NULL, *db_units = "  ";
 
 char		*addname(), getarg();
 Directory	*lookup(), *diradd();
 void		quit(), abort_sig();
+void		blank_fill();
 
 /*
 	Section 1:	C O M M A N D S
@@ -54,41 +58,38 @@ register char *prefix;
 	
 	nns = nnr = regflag = numrr = 0;
 	
-	/* rewind object file
-	 */
-	lseek( objfd, 0L, 0 );
+	/* Rewind object file.						*/
+	(void) lseek( objfd, 0L, 0 );
 
-	/* create file for solid table
-	 */
-	if( prefix != 0 ) {
-		strncpy( st_file, prefix, 73 );
-		strcat( st_file, ".st" );
-	} else	strncpy( st_file, "solids", 7 );
-	if( (solfd = creat( st_file, 0666 )) < 0 ) {
+	/* Create file for solid table.					*/
+	if( prefix != 0 )
+		{
+		(void) strncpy( st_file, prefix, 73 );
+		(void) strcat( st_file, ".st" );
+		}
+	else
+		(void) strncpy( st_file, "solids", 7 );
+	if( (solfd = creat( st_file, 0666 )) < 0 )
+		{
 		perror( st_file );
 		exit( 10 );
-	}
+		}
 
 	/* Target units (a2,3x)						*/
-	write( solfd, db_units, 2 );
+	ewrite( solfd, db_units, 2 );
 	blank_fill( solfd, 3 );
 
 	/* Title							*/
 	if( db_title == NULL )
-		{
-		(void) write( solfd, objfile, (unsigned) strlen( objfile ) );
-		}
+		ewrite( solfd, objfile, (unsigned) strlen( objfile ) );
 	else
-		{
-		(void) write( solfd, db_title, (unsigned) strlen( db_title ) );
-		}
-	(void) write( solfd, LF, 1 );
+		ewrite( solfd, db_title, (unsigned) strlen( db_title ) );
+	ewrite( solfd, LF, 1 );
 
-	/* save space for number of solids and regions
-	 */
+	/* Save space for number of solids and regions.			*/
 	savsol = lseek( solfd, 0L, 1 );
 	blank_fill( solfd, 10 );
-	(void) write( solfd, LF, 1 );
+	ewrite( solfd, LF, 1 );
 
 	/* Create file for region table.				*/
 	if( prefix != 0 )
@@ -119,8 +120,8 @@ register char *prefix;
 		exit( 10 );
 		}
 	itoa( -1, buff, 5 );
-	(void) write( ridfd, buff, 5 );
-	(void) write( ridfd, LF, 1 );
+	ewrite( ridfd, buff, 5 );
+	ewrite( ridfd, LF, 1 );
 
 	/* Create /tmp file for discrimination of files.		*/
 	(void) strncpy( disc_file, mktemp( "/tmp/disXXXXXX" ), 15 );
@@ -153,12 +154,12 @@ register char *prefix;
 	/* Add number of solids and regions on second card.		*/
 	(void) lseek( solfd, savsol, 0 );
 	itoa( nns, buff, 5 );
-	(void) write( solfd, buff, 5 );
+	ewrite( solfd, buff, 5 );
 	itoa( nnr, buff, 5 );
-	(void) write( solfd, buff, 5 );
+	ewrite( solfd, buff, 5 );
 
 	/* Finish region id table.					*/
-	(void) write( ridfd, LF, 1 );
+	ewrite( ridfd, LF, 1 );
 
  	/* Must go back and add regions as members of regions.		*/
 	if( numrr > 0 )
@@ -169,13 +170,13 @@ register char *prefix;
 			for( j = 1; j <= nnr; j++ )
 				{
 				/* Next region name in desc.		 */
-				readF( rd_rrfd, name, NAMESIZE );
+				eread( rd_rrfd, name, NAMESIZE );
 				if( strcmp( findrr[i].rr_name, name ) == 0 )
 					{ /* Region number in desc is j add
 						to regfd at rrpos[i]	*/
 					(void) lseek( regfd, findrr[i].rr_pos, 0);
 					itoa( j+delreg, buff, 4 );
-					(void) write( regfd, buff, 4 );
+					ewrite( regfd, buff, 4 );
 					break;
 					}
 				}
@@ -198,10 +199,10 @@ register char *prefix;
 	(void) close( solfd );
 	(void) close( regfd );
 	(void) close( ridfd );
-	unlink( disc_file );
+	(void) unlink( disc_file );
 	(void) close( idfd );
 	(void) close( rd_idfd );
-	unlink( reg_file );
+	(void) unlink( reg_file );
 	(void) close( rrfd );
 	(void) close( rd_rrfd );
 
@@ -221,17 +222,16 @@ char  *args[];
 	int		pid, ret, status;
 	register int	i;
 
-	signal( SIGINT, SIG_IGN );
+	(void) signal( SIGINT, SIG_IGN );
 
-	/* build arg vector
-	 */
+	/* Build arg vector.						*/
 	argv[0] = "Shell( deck )";
 	argv[1] = "-c";
 	to = argv[2] = cmdbuf;
 	for( i = 1; i < arg_ct; i++ ) {
 		from = args[i];
 		if( (to + strlen( args[i] )) - argv[2] > MAXLN - 1 ) {
-			fprintf( stderr, "\ncommand line too long\n" );
+			(void) fprintf( stderr, "\ncommand line too long\n" );
 			exit( 10 );
 		}
 		(void) printf( "%s ", args[i] );
@@ -248,8 +248,8 @@ char  *args[];
 	} else	if( pid == 0 ) { /*
 				  * CHILD process - execs a shell command
 				  */
-		signal( SIGINT, SIG_DFL );
-		execv(	"/bin/sh", argv );
+		(void) signal( SIGINT, SIG_DFL );
+		(void) execv( "/bin/sh", argv );
 		perror( "/bin/sh -c" );
 		exit( 99 );
 	} else	/*
@@ -288,7 +288,7 @@ builddir()
 	for(	dirp = directory, ndir = 0;
 		ndir < NDIR
 	    &&	(dirp->d_addr = lseek( objfd, 0L, 1 )) != -1
-	    &&	readF( objfd, (char *) &record, sizeof(record) ) == sizeof(record);
+	    &&	read( objfd, (char *) &record, sizeof(record) ) == sizeof(record);
 		dirp++, ndir++
 		)
 		{
@@ -304,9 +304,8 @@ builddir()
 				db_title = emalloc( strlen(record.I.i_title)+1 );
 				(void) strcpy( db_title, record.I.i_title );
 				}
-			(void) fprintf( stdout, "%s\n", record.I.i_title );
-			(void) fprintf( stdout,
-					"GED database version (%s)\n",
+			(void) printf( "%s\n", record.I.i_title );
+			(void) printf(	"GED database version (%s)\n",
 					record.I.i_version
 					);
 			/* Ignore second ident records' units, unless
@@ -526,42 +525,31 @@ register char	*cp;
 void
 list_toc( args )
 char	 *args[];
-{
-	register int	i, j;
-
+	{	register int	i, j;
 	(void) fflush( stdout );
 	for( tmp_ct = 0, i = 1; args[i] != NULL; i++ )
 		{
 		for( j = 0; j < ndir; j++ )
 			{
 			if( match( args[i], toc_list[j] ) )
-				{
 				tmp_list[tmp_ct++] = toc_list[j];
-				}
 			}
 		}
 	if( i > 1 )
-		{
-		col_prt( tmp_list, tmp_ct );
-		}
+		(void) col_prt( tmp_list, tmp_ct );
 	else
-		{
-		col_prt( toc_list, ndir );
-		}
+		(void) col_prt( toc_list, ndir );
 	return;
-}
+	}
 
 /*	c o l _ p r t ( )
 	Print list of names in tabular columns.
  */
 col_prt( list, ct )
-register
-char	*list[];
-register
-int	ct;
-	{
-	char		buf[72];
-	register int	i, column, spaces;
+register char	*list[];
+register int	ct;
+	{	char		buf[72];
+		register int	i, column, spaces;
 
 	for( i = 0, column = 0; i < ct; i++ )
 		{
@@ -570,7 +558,7 @@ int	ct;
 		if( column > 56 )
 			{
 			buf[column++] = '\n';
-			(void) write( 1, buf, (unsigned) column );
+			ewrite( 1, buf, (unsigned) column );
 			column = 0;
 			}
 		else
@@ -583,7 +571,7 @@ int	ct;
 			}
 		}
 	buf[column++] = '\n';
-	(void) write( 1, buf, (unsigned) column );
+	ewrite( 1, buf, (unsigned) column );
 	column = 0;
 	return	ct;
 	}
@@ -654,8 +642,10 @@ char	*args[];
 					curr_list[k] = curr_list[k+1];
 			} else	++j;
 		if( nomatch )
-			fprintf( stderr,
-				"Object \"%s\" not found.\n", args[i] );
+			(void) fprintf( stderr,
+					"Object \"%s\" not found.\n",
+					args[i]
+					);
 	}
 	return( curr_ct );
 }
@@ -703,56 +693,64 @@ int   n,    w;
 	Convert float to ascii  w.df format.
  */
 ftoascii( f, s, w, d )
-register
-char	    *s;
+register char	   *s;
 register int	w, d;
-float	  f;
-{
-	int	c, i, j;
-	long	n, sign;
+float	  	f;
+	{	register int	c, i, j;
+		long	n, sign;
 
-	if( w <= d + 2 ) {
-		fprintf( stderr,
-			"ftoascii: incorrect format  need w.df  stop" );
+	if( w <= d + 2 )
+		{
+		(void) fprintf( stderr,
+				"ftoascii: incorrect format  need w.df  stop"
+				);
 		exit( 10 );
-	}
-	for( i = 1; i <= d; i++ )	f = f * 10.0;
+		}
+	for( i = 1; i <= d; i++ )
+		f = f * 10.0;
 
 	/* round up */
-	if( f < 0.0 )	f -= 0.5;
-	else		f += 0.5;
+	if( f < 0.0 )
+		f -= 0.5;
+	else
+		f += 0.5;
 	n = f;
-	if( (sign = n) < 0 )	n = -n;
+	if( (sign = n) < 0 )
+		n = -n;
 	i = 0;
-	do {
+	do	{
 		s[i++] = n % 10 + '0';
-		if( i == d )	s[i++] = '.';
-	} while( (n /= 10) > 0 );
+		if( i == d )
+			s[i++] = '.';
+		}
+	while( (n /= 10) > 0 );
 
-	/* zero fill the d field if necessary
-	 */
-	if( i < d ) {	
-		for( j = i; j < d; j++ )	s[j] = '0';
+	/* Zero fill the d field if necessary.				*/
+	if( i < d )
+		{	
+		for( j = i; j < d; j++ )
+			s[j] = '0';
 		s[j++] = '.';
 		i = j;
-	}
-	if( sign < 0 )	s[i++] = '-';
+		}
+	if( sign < 0 )
+		s[i++] = '-';
 	
-	/* blank fill rest of field
-	 */
-	for ( j = i; j < w; j++ )	s[j] = ' ';
+	/* Blank fill rest of field.					*/
+	for ( j = i; j < w; j++ )
+		s[j] = ' ';
 	if( i > w )
-		fprintf( stderr, "Ftoascii: field length too small\n" );
+		(void) fprintf( stderr, "Ftoascii: field length too small\n" );
 	s[w] = '\0';
 
-	/* reverse the array
-	 */
-	for( i = 0, j = w - 1; i < j; i++, j-- ) {
+	/* Reverse the array.						*/
+	for( i = 0, j = w - 1; i < j; i++, j-- )
+		{
 		c    = s[i];
 		s[i] = s[j];
 		s[j] =    c;
+		}
 	}
-}
 
 /*	c h e c k ( )
 	Compares solids to see if have a new solid.
@@ -805,8 +803,8 @@ register int	ct;
 	 * trap interrupts such that command is aborted cleanly and
 	 * command line is restored rather than terminating program
 	 */
-	signal( SIGINT, abort_sig );
-	return( (args[0])[0] );
+	(void) signal( SIGINT, abort_sig );
+	return	(args[0])[0];
 	}
 
 /*	g e t a r g ( )
@@ -839,22 +837,25 @@ register char	*str;
 /*	m e n u ( )
 	Display menu stored at address 'addr'.
  */
+void
 menu( addr )
 char **addr;
-{
-	register char	**sbuf = addr;
-	
-	while( *sbuf )	(void) printf( "%s\n", *sbuf++ );
-	fflush( stdout );
-}
+	{	register char	**sbuf = addr;
+	while( *sbuf )
+		(void) printf( "%s\n", *sbuf++ );
+	(void) fflush( stdout );
+	return;
+	}
 
 /*	b l a n k _ f i l l ( )
 	Write count blanks to fildes.
  */
+void
 blank_fill( fildes, count )
 register int	fildes,	count;
 	{	register char	*blank_buf = BLANKS;
-	return( write( fildes, blank_buf, (unsigned) count ) );
+	ewrite( fildes, blank_buf, (unsigned) count );
+	return;
 	}
 
 /*
@@ -875,7 +876,7 @@ abort_sig( sig )
 	(void) signal( SIGINT, quit );	/* reset trap */
 	if( access( disc_file, 0 ) == 0 )
 		{
-		unlink( disc_file );
+		(void) unlink( disc_file );
 		if( idfd > 0 )
 			(void) close( idfd );
 		if( rd_idfd > 0 )
@@ -883,7 +884,7 @@ abort_sig( sig )
 		}
 	if( access( reg_file, 0 ) == 0 )
 		{
-		unlink( reg_file );
+		(void) unlink( reg_file );
 		if( rrfd > 0 )
 			(void) close( rrfd );
 		if( rd_rrfd > 0 )
