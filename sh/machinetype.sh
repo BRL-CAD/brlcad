@@ -177,7 +177,13 @@ cat << EOF > ${IN_FILE}
 #	undef	sun
 #	undef	sun4
 	MACHINE=sun4;
-	UNIXTYPE=BSD;
+#if	__STDC__ == 0
+/*		Solaris 2.x (SunOS 5.x), cc default is -Xt */
+		UNIXTYPE=SYSV;
+#	else
+/*		Older SunOS */
+		UNIXTYPE=BSD;
+#endif
 	HAS_TCP=1;
 	HAS_SYMLINKS=1;
 #endif
