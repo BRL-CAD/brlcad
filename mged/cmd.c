@@ -54,6 +54,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 
 int get_more_default();
+int set_more_default();
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
@@ -73,6 +74,16 @@ struct bu_vls tcl_output_hook;
 
 Tcl_Interp *interp = NULL;
 Tk_Window tkwin;
+
+#ifdef DO_RUBBER_BAND
+#define RUBBER_BAND_COLOR "255 255 255"
+#define RUBBER_BAND_LINE_WIDTH "1"
+#define RUBBER_BAND_LINE_STYLE "0"
+
+struct bu_vls rubber_band_color;
+struct bu_vls rubber_band_line_width;
+struct bu_vls rubber_band_line_style;
+#endif
 
 /* nirt stuff */
 #define NIRT_EVEN_COLOR "255 255 0"
@@ -249,6 +260,7 @@ static struct cmdtab cmdtab[] = {
 	"find", f_find,
 	"fracture", f_fracture,
 	"g", f_group,
+	"get_rect", f_get_rect, 
 	"get_view", f_get_view,
 	"goto_view", f_goto_view,
 	"output_hook", cmd_output_hook,
@@ -352,6 +364,7 @@ static struct cmdtab cmdtab[] = {
 	"sca", f_sca,
 	"showmats", f_showmats,
 	"sed", f_sed,
+	"set_rect", f_set_rect, 
 	"setview", f_setview,
 	"shells", f_shells,
 	"shader", f_shader,
@@ -905,6 +918,22 @@ mged_setup()
 	Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state],
 		   TCL_GLOBAL_ONLY);
 
+#ifdef DO_RUBBER_BAND
+	/* initialize rubber band variables */
+	bu_vls_init(&rubber_band_color);
+	bu_vls_init(&rubber_band_line_width);
+	bu_vls_init(&rubber_band_line_style);
+
+	bu_vls_strcpy(&rubber_band_color, "rubber_band_color");
+	Tcl_SetVar(interp, bu_vls_addr(&rubber_band_color), RUBBER_BAND_COLOR, TCL_GLOBAL_ONLY);
+
+	bu_vls_strcpy(&rubber_band_line_width, "rubber_band_line_width");
+	Tcl_SetVar(interp, bu_vls_addr(&rubber_band_line_width), RUBBER_BAND_LINE_WIDTH, TCL_GLOBAL_ONLY);
+
+	bu_vls_strcpy(&rubber_band_line_style, "rubber_band_line_style");
+	Tcl_SetVar(interp, bu_vls_addr(&rubber_band_line_style), RUBBER_BAND_LINE_STYLE, TCL_GLOBAL_ONLY);
+#endif
+
 	/* initialize nirt variables */
 	bu_vls_init(&nirt_even_color);
 	bu_vls_init(&nirt_odd_color);
@@ -986,6 +1015,8 @@ cmd_setup()
 	(void)Tcl_CreateCommand(interp, "cmd_get", cmd_get, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "get_more_default", get_more_default, (ClientData)NULL,
+				(Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "set_more_default", set_more_default, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "stuff_str", cmd_stuff_str, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
@@ -1186,6 +1217,24 @@ get_more_default(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+int
+set_more_default(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char **argv;
+{
+	struct cmd_list *p;
+
+	if(argc != 2){
+		Tcl_AppendResult(interp, "Usage: set_more_default more_default", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	bu_vls_strcpy(&curr_cmd_list->more_default, argv[1]);
+	return TCL_OK;
+}
+
 
 int
 cmd_mged_glob(clientData, interp, argc, argv)
@@ -1373,6 +1422,7 @@ cmdline(vp, record)
 	int	status;
 	struct bu_vls globbed;
 	struct bu_vls tmp_vls;
+	struct bu_vls save_vp;
 	struct timeval start, finish;
 	size_t len;
 	extern struct bu_vls mged_prompt;
@@ -1385,6 +1435,8 @@ cmdline(vp, record)
 		
 	bu_vls_init(&globbed);
 	bu_vls_init(&tmp_vls);
+	bu_vls_init(&save_vp);
+	bu_vls_vlscat(&save_vp, vp);
 
 	/* MUST MAKE A BACKUP OF THE INPUT STRING AND USE THAT IN THE CALL TO
 	   Tcl_Eval!!!
@@ -1427,13 +1479,13 @@ cmdline(vp, record)
 			   it in the history. */
 			if (record && tkwin != NULL) {
 				bu_vls_printf(&tmp_vls, "distribute_text {} {%s} {%s}",
-					      bu_vls_addr(&globbed), interp->result);
+					      bu_vls_addr(&save_vp), interp->result);
 				Tcl_Eval(interp, bu_vls_addr(&tmp_vls));
 				Tcl_SetResult(interp, "", TCL_STATIC);
 			}
 
 			if(record)
-				history_record(vp, &start, &finish, CMD_OK);
+				history_record(&save_vp, &start, &finish, CMD_OK);
 
 		}else{
 /* XXXXXX */
@@ -1474,7 +1526,7 @@ cmdline(vp, record)
 				    interp->result[len-1] == '\n' ? "" : "\n");
 
 		if (record)
-			history_record(vp, &start, &finish, CMD_BAD);
+			history_record(&save_vp, &start, &finish, CMD_BAD);
 
 		bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 		status = CMD_BAD;
@@ -1485,6 +1537,8 @@ cmdline(vp, record)
  end:
 	bu_vls_free(&globbed);
 	bu_vls_free(&tmp_vls);
+	bu_vls_free(&save_vp);
+
 	return status;
 }
 
@@ -2228,7 +2282,7 @@ f_update(clientData, interp, argc, argv)
 
 	event_check(1);  /* non-blocking */
 
-	if( sedraw > 0)
+	if(sedraw > 0)
 		sedit();
 
 	refresh();
