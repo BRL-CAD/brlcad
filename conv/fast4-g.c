@@ -83,7 +83,7 @@ static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
 
-static int		*faces;		/* one triplet per face indexing three grid points */
+static int		*faces=NULL;	/* one triplet per face indexing three grid points */
 static fastf_t		*thickness;	/* thickness of each face */
 static char		*facemode;	/* mode for each face */
 static int		face_size=0;	/* actual length of above arrays */
@@ -2433,7 +2433,7 @@ int type;
 		strncpy( field , &line[col] , 8 );
 		icmp = atoi( field );
 
-		if( igrp > 0 && icmp > 0 )
+		if( igrp >= 0 && icmp > 0 )
 		{
 			if( list_ptr )
 			{
@@ -2502,9 +2502,13 @@ int pos;
 	if( face_count >= face_size )
 	{
 		face_size += GRID_BLOCK;
+		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+			bu_log( "memory corrupted before realloc of faces, thickness, and facemode\n" );
 		faces = (int *)bu_realloc( (void *)faces,  face_size*3*sizeof( int ), "faces" );
 		thickness = (fastf_t *)bu_realloc( (void *)thickness, face_size*sizeof( fastf_t ), "thickness" );
 		facemode = (char *)bu_realloc( (void *)facemode, face_size*sizeof( char ), "facemode" );
+		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+			bu_log( "memory corrupted after realloc of faces, thickness, and facemode\n" );
 	}
 
 	faces[face_count*3] = pt1;
@@ -2523,6 +2527,9 @@ int pos;
 	}
 
 	face_count++;
+
+	if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+		bu_log( "memory corrupted at end of Add_bot_face()\n" );
 }
 
 void
@@ -2547,11 +2554,15 @@ do_tri()
 
 	if( faces == NULL )
 	{
+		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+			bu_log( "memory corrupted before malloc of faces\n" );
 		faces = (int *)bu_malloc( GRID_BLOCK*3*sizeof( int ), "faces" );
 		thickness = (fastf_t *)bu_malloc( GRID_BLOCK*sizeof( fastf_t ), "thickness" );
 		facemode = (char *)bu_malloc( GRID_BLOCK*sizeof( char ), "facemode" );
 		face_size = GRID_BLOCK;
 		face_count = 0;
+		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+			bu_log( "memory corrupted after malloc of faces , thickness, and facemode\n" );
 	}
 
 	strncpy( field , &line[24] , 8 );
@@ -2565,6 +2576,7 @@ do_tri()
 
 	thick = 0.0;
 	pos = 0;
+
 	if( mode == PLATE_MODE )
 	{
 		strncpy( field , &line[56] , 8 );
@@ -2572,18 +2584,24 @@ do_tri()
 
 		strncpy( field , &line[64] , 8 );
 		pos = atoi( field );
+		if( pos == 0 )
+			pos = POS_FRONT;
 
 		if( debug )
 			bu_log( "\tplate mode: thickness = %f\n" , thick );
 
-		thickness[face_count] = thick;
-		facemode[face_count] = pos;
 	}
 
 	if( do_plot )
 		plot_tri( pt1, pt2, pt3 );
 
+	if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+		bu_log( "memory corrupted before call to Add_bot_face()\n" );
+
 	Add_bot_face( pt1, pt2, pt3, thick, pos );
+
+	if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
+		bu_log( "memory corrupted after call to Add_bot_face()\n" );
 }
 
 void
@@ -3054,7 +3072,7 @@ do_hex2()
 
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+	if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed in Do_hex2\n" );
 }
 
@@ -3063,7 +3081,7 @@ Process_hole_wall()
 {
 	if( debug )
 		bu_log( "Process_hole_wall\n" );
-	if( bu_debug & DEBUG_MEM_FULL )
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
 		bu_prmem( "At start of Process_hole_wall:" );
 
 	rewind( fdin );
@@ -3146,7 +3164,7 @@ int pass_number;
 
 	if( debug )
 		bu_log( "\n\nProcess_input( pass = %d )\n" , pass_number );
-	if( bu_debug & DEBUG_MEM_FULL )
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
 		bu_prmem( "At start of Process_input:" );
 
 	if( pass_number != 0 && pass_number != 1 )
@@ -3354,7 +3372,7 @@ char *str;
 			ptr2++;
 			start = atoi( ptr );
 			stop = atoi( ptr2 );
-			if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 				bu_log( "ERROR: bu_mem_barriercheck failed in make_region_list\n" );
 			for( i=start ; i<=stop ; i++ )
 			{
@@ -3362,11 +3380,11 @@ char *str;
 				{
 					region_list_len += REGION_LIST_BLOCK;
 					region_list = (int *)bu_realloc( (char *)region_list, region_list_len*sizeof( int ), "region_list" );
-					if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+					if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 						bu_log( "ERROR: bu_mem_barriercheck failed in make_region_list (after realloc)\n" );
 				}
 				region_list[do_skips++] = i;
-				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+				if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
 					bu_log( "ERROR: bu_mem_barriercheck failed in make_region_list (after adding %d)\n", i );
 			}
 		}
@@ -3463,9 +3481,9 @@ char *argv[];
 		}
 	}
 
-	if( rt_g.debug )
+	if(bu_debug )
 	{
-		bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+		bu_printb( "librtbu_debug",bu_debug, DEBUG_FORMAT );
 		bu_log("\n");
 	}
 	if( rt_g.NMG_debug )
