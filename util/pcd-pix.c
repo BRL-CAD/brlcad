@@ -35,16 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define own_BUsize (3*24*1024)
 
-
-/*
-** Important: sBYTE must be a signed byte type !!!
-**
-*/
-
-#ifndef sBYTE
-typedef   signed char sBYTE;
-#endif
-
 typedef unsigned char uBYTE;
 typedef unsigned long dim;
 
@@ -1199,13 +1189,17 @@ int autosync;
 		}
 		else
 		{
+			register int	key;
 			/*      if((!lptr) || (n>maxwidth)) error(E_SEQ4);*/
 			if(!lptr)      error(E_SEQ6);
 			if(n>maxwidth) error(E_SEQ4);
 			for(i=0,hp=htptr;(i<htlen) && ((sreg & hp->mask)!= hp->seq); i++,hp++);
 			if(i>=htlen) error(E_SEQ5);
 
-			sum=((int)(*lptr)) + ((sBYTE)hp->key);
+			/* Ensure key is treated as signed byte */
+			if( (key = hp->key) & 0x80 )
+				key |= ((-1) & ~0x7F);
+			sum=((int)(*lptr)) + key;
 			NORM(sum);
 			*(lptr++) = sum;
 
