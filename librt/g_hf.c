@@ -552,7 +552,7 @@ err1:
 	/*
 	 *  Load data file, and transform to internal format
 	 */
-	if( !(mp = rt_open_mapped_file( xip->dfile, NULL )) )  {
+	if( !(mp = rt_open_mapped_file( xip->dfile, "hf" )) )  {
 		rt_log("rt_hf_import() unable to open '%s'\n", xip->dfile);
 		goto err1;
 	}
