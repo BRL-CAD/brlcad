@@ -406,7 +406,7 @@ int		cpu_num;
 
 	if( !resp->re_pmem.buckets[0].q_forw )
 	{
-		for( i=0 ; i<NBUCKETS ; i++ )
+		for( i=0 ; i<RT_PM_NBUCKETS ; i++ )
 		{
 			resp->re_pmem.buckets[i].q_forw = &resp->re_pmem.buckets[i];
 			resp->re_pmem.buckets[i].q_back = &resp->re_pmem.buckets[i];
