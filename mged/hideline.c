@@ -57,8 +57,7 @@
 		  pdv_3line(plotfp, a, b ); }
 
 extern struct db_i *dbip;	/* current database instance */
-extern int numargs;
-extern char *cmd_args[];	/* array of pointers to args */
+
 extern float Viewscale;
 extern mat_t view2model;
 extern mat_t model2view;
@@ -67,8 +66,77 @@ fastf_t epsilon;
 vect_t aim_point;
 struct solid *sp;
 
+/*
+ * hit_headon - routine called by rt_shootray if ray hits model
+ */
+
+static int
+hit_headon(ap,PartHeadp)
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	register char diff_solid;
+	vect_t	diff;
+	register fastf_t len;
+
+	if (PartHeadp->pt_forw->pt_forw != PartHeadp)
+		printf("hit_headon: multiple partitions\n");
+
+	VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point,ap->a_ray.r_pt,
+	    PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	VSUB2(diff,PartHeadp->pt_forw->pt_inhit->hit_point,aim_point);
+
+	diff_solid = strcmp(sp->s_path[0]->d_namep,
+	    PartHeadp->pt_forw->pt_inseg->seg_stp->st_name);
+	len = MAGNITUDE(diff);
+
+	if (	NEAR_ZERO(len,epsilon)
+	    ||
+	    ( diff_solid &&
+	    VDOT(diff,ap->a_ray.r_dir) > 0 )
+	    )
+		return(1);
+	else
+		return(0);
+}
+
+/*
+ * hit_tangent - routine called by rt_shootray if ray misses model
+ *
+ *     We know we are shooting at the model since we are aiming at the
+ *     vector list MGED created. However, shooting at an edge or shooting
+ *     tangent to a curve produces only one intersection point at which
+ *     time rt_shootray reports a miss. Therefore, this routine is really
+ *     a "hit" routine.
+ */
+
+static int
+hit_tangent(ap,PartHeadp)
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	return(1);		/* always a hit */
+}
+
+/*
+ * hit_overlap - called by rt_shootray if ray hits an overlap
+ */
+
+static int
+hit_overlap(ap,PartHeadp)
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	return(0);		/* never a hit */
+}
+
+/*
+ *			F _ H I D E L I N E
+ */
 int
-f_hideline()
+f_hideline(argc, argv)
+int	argc;
+char	**argv;
 {
 	FILE 	*plotfp;
 	char 	visible;
@@ -85,9 +153,9 @@ f_hideline()
 	vect_t last,dir;
 	register struct rt_vlist	*vp;
 
-	if ((plotfp = fopen(cmd_args[1],"w")) == NULL) {
+	if ((plotfp = fopen(argv[1],"w")) == NULL) {
 		(void)printf("f_hideline: unable to open \"%s\" for writing.\n",
-		    cmd_args[1]);
+		    argv[1]);
 		return(1);
 	}
 	pl_space(plotfp,-2048,-2048,2048,2048);
@@ -123,10 +191,10 @@ f_hideline()
 	a.a_diverge = 0;
 	a.a_rbeam = 0;
 
-	if (numargs > 2) {
-		sscanf(cmd_args[2],"%f",&step);
+	if (argc > 2) {
+		sscanf(argv[2],"%f",&step);
 		step = Viewscale/step;
-		sscanf(cmd_args[3],"%f",&epsilon);
+		sscanf(argv[3],"%f",&epsilon);
 		epsilon *= Viewscale/100;
 	} else {
 		step = Viewscale/256;
@@ -200,68 +268,4 @@ f_hideline()
 	}
 	fclose(plotfp);
 	return(0);
-}
-
-/*
- * hit_headon - routine called by rt_shootray if ray hits model
- */
-
-static int
-hit_headon(ap,PartHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	register char diff_solid;
-	vect_t	diff;
-	register fastf_t len;
-
-	if (PartHeadp->pt_forw->pt_forw != PartHeadp)
-		printf("hit_headon: multiple partitions\n");
-
-	VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point,ap->a_ray.r_pt,
-	    PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	VSUB2(diff,PartHeadp->pt_forw->pt_inhit->hit_point,aim_point);
-
-	diff_solid = strcmp(sp->s_path[0]->d_namep,
-	    PartHeadp->pt_forw->pt_inseg->seg_stp->st_name);
-	len = MAGNITUDE(diff);
-
-	if (	NEAR_ZERO(len,epsilon)
-	    ||
-	    ( diff_solid &&
-	    VDOT(diff,ap->a_ray.r_dir) > 0 )
-	    )
-		return(1);
-	else
-		return(0);
-}
-
-/*
- * hit_tangent - routine called by rt_shootray if ray misses model
- *
- *     We know we are shooting at the model since we are aiming at the
- *     vector list MGED created. However, shooting at an edge or shooting
- *     tangent to a curve produces only one intersection point at which
- *     time rt_shootray reports a miss. Therefore, this routine is really
- *     a "hit" routine.
- */
-
-static int
-hit_tangent(ap,PartHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	return(1);		/* always a hit */
-}
-
-/*
- * hit_overlap - called by rt_shootray if ray hits an overlap
- */
-
-static int
-hit_overlap(ap,PartHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	return(0);		/* never a hit */
 }
