@@ -72,7 +72,6 @@ char **argv;
 
 	if( db_get( dbip , dp , &record , 0 , 1 ) < 0 ) {
 	  TCL_READ_ERR_return;
-	  return TCL_ERROR;
 	}
 	if( record.u_id != ID_COMB )	/* Not a combination */
 	{

@@ -1102,12 +1102,10 @@ char	**argv;
 	/* Change name in the file */
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
 	  TCL_READ_ERR_return;
-	  return TCL_ERROR;
 	}
 	NAMEMOVE( argv[2], record.c.c_name );
 	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
 	  TCL_WRITE_ERR_return;
-	  return TCL_ERROR;
 	}
 
 	/* Examine all COMB nodes */
@@ -1130,7 +1128,6 @@ char	**argv;
 						argv[2], NAMESIZE);
 					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 ) {
 					  TCL_WRITE_ERR_return;
-					  return TCL_ERROR;
 					}
 				}
 			}
