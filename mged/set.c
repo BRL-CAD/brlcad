@@ -33,10 +33,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tcl.h"
 
 extern void predictor_hook();		/* in ged.c */
-extern void adc_xyz_To_dv_xyadc();	/* in adc.c */
-extern void adc_xyz_grid_To_dv_xyadc();	/* in adc.c */
-extern void dv_xyadc_To_adc_xyz();	/* in adc.c */
-extern void dv_xyadc_To_adc_xyz_grid();	/* in adc.c */
 
 #ifdef USE_FRAMEBUFFER
 extern void set_port();
@@ -48,7 +44,6 @@ static void set_fb();
 struct _mged_variables default_mged_variables = {
 /* autosize */			1,
 /* rateknobs */			0,
-/* adcflag */                   0,
 /* slidersflag */               0,
 /* sgi_win_size */		0,
 /* sgi_win_origin */		{ 0, 0 },
@@ -83,23 +78,6 @@ struct _mged_variables default_mged_variables = {
 /* context */                   1,
 /* dlist */                     1,
 /* use_air */			0,
-/* query_ray_cmd_echo */		0,
-/* query_ray_color_odd */	{ 0, 255, 255 },
-/* query_ray_color_even */	{ 255, 255, 0 },
-/* query_ray_color_void */	{ 255, 0, 255 },
-/* query_ray_color_overlap */	{ 255, 255, 255 },
-/* adc_xyz */			{ 0.0, 0.0, 0.0 },
-/* adc_xyz_grid */		{ 0.0, 0.0 },
-/* adc_a1 */			45.0,
-/* adc_a2 */			45.0,
-/* adc_dst */			0.0,
-/* adc_anchor_xyz */		0,
-/* adc_anchor_a1 */		0,
-/* adc_anchor_pt_a1 */		{ 0.0, 0.0, 0.0 },
-/* adc_anchor_a2 */		0,
-/* adc_anchor_pt_a2 */		{ 0.0, 0.0, 0.0 },
-/* adc_anchor_tick */		0,
-/* adc_anchor_pt_tick */	{ 0.0, 0.0, 0.0 },
 #ifdef USE_FRAMEBUFFER
 /* listen */			0,
 /* port */			0,
@@ -124,7 +102,6 @@ struct _mged_variables default_mged_variables = {
 /* grid_res_major_v */		5,
 #endif
 /* mouse_behavior */            'd',
-/* query_ray_behavior */             't',
 /* coords */                    'v',
 /* rotate_about */              'v',
 /* transform */                 'v',
@@ -154,8 +131,6 @@ void set_scroll();
 void set_absolute_tran();
 void set_absolute_view_tran();
 void set_absolute_model_tran();
-void set_adc_xyz();
-void set_adc_xyz_grid();
 
 /*
  *  Cause screen to be refreshed when all cmds have been processed.
@@ -194,7 +169,6 @@ nmg_eu_dist_set()
 struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(rateknobs),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "adcflag",		MV_O(adcflag),          set_dirty_flag },
 	{"%d",	1, "slidersflag",	MV_O(slidersflag),      set_dirty_flag },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
@@ -229,23 +203,6 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "context",           MV_O(context),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
 	{"%d",  1, "use_air",		MV_O(use_air),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "query_ray_cmd_echo",MV_O(query_ray_cmd_echo),BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  3, "query_ray_color_odd",MV_O(query_ray_color_odd),BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  3, "query_ray_color_even",MV_O(query_ray_color_even),BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  3, "query_ray_color_void",MV_O(query_ray_color_void),BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  3, "query_ray_color_overlap",MV_O(query_ray_color_overlap),BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  3, "adc_xyz",		MV_O(adc_xyz),		set_adc_xyz },
-	{"%f",  2, "adc_xyz_grid",	MV_O(adc_xyz_grid),	set_adc_xyz_grid },
-	{"%f",  1, "adc_a1",		MV_O(adc_a1),		set_dirty_flag },
-	{"%f",  1, "adc_a2",		MV_O(adc_a2),		set_dirty_flag },
-	{"%f",  1, "adc_dst",		MV_O(adc_dst),		set_dirty_flag },
-	{"%d",  1, "adc_anchor_xyz",	MV_O(adc_anchor_xyz),	set_dirty_flag },
-	{"%d",  1, "adc_anchor_a1",	MV_O(adc_anchor_a1),	set_dirty_flag },
-	{"%f",  3, "adc_anchor_pt_a1",	MV_O(adc_anchor_pt_a1),	set_dirty_flag },
-	{"%d",  1, "adc_anchor_a2",	MV_O(adc_anchor_a2),	set_dirty_flag },
-	{"%f",  3, "adc_anchor_pt_a2",	MV_O(adc_anchor_pt_a2),	set_dirty_flag },
-	{"%d",  1, "adc_anchor_tick",	MV_O(adc_anchor_tick),	set_dirty_flag },
-	{"%f",  3, "adc_anchor_pt_tick",MV_O(adc_anchor_pt_tick),set_dirty_flag },
 #ifdef USE_FRAMEBUFFER
 	{"%d",  1, "listen",		MV_O(listen),		set_port },
 	{"%d",  1, "port",		MV_O(port),		set_port },
@@ -270,7 +227,6 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "grid_res_major_v",	MV_O(grid_res_major_v),	set_grid_res },
 #endif
 	{"%c",  1, "mouse_behavior",	MV_O(mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%c",  1, "query_ray_behavior",MV_O(query_ray_behavior),BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "coords",            MV_O(coords),           BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "rotate_about",      MV_O(rotate_about),     BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "transform",         MV_O(transform),        BU_STRUCTPARSE_FUNC_NULL },
@@ -657,36 +613,4 @@ set_grid_res()
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
       if(dlp->_mged_variables == mged_variables)
 	dlp->_grid_auto_size = 0;
-}
-
-void
-set_adc_xyz()
-{
-  struct dm_list *dlp;
-
-  adc_xyz_To_dv_xyadc();
-  dv_xyadc_To_adc_xyz_grid();
-
-  set_dirty_flag();
-
-  if(adc_auto)
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-      if(dlp->_mged_variables == mged_variables)
-	dlp->_adc_auto = 0;
-}
-
-void
-set_adc_xyz_grid()
-{
-  struct dm_list *dlp;
-
-  adc_xyz_grid_To_dv_xyadc();
-  dv_xyadc_To_adc_xyz();
-
-  set_dirty_flag();
-
-  if(adc_auto)
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-      if(dlp->_mged_variables == mged_variables)
-	dlp->_adc_auto = 0;
 }
