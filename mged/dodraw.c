@@ -244,7 +244,7 @@ int			id;
 		dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
 
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat, dbip ) < 0 )  {
 	  Tcl_AppendResult(interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 			   ":  solid import failure\n", (char *)NULL);
 
@@ -956,7 +956,7 @@ struct solid	*sp;
 	}
 
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, &ext, mat, dbip ) < 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
 	  if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 	  db_free_external( &ext );
@@ -1066,10 +1066,7 @@ int			copy;
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;
 		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
-		if( i== 0 )  {
-			invent_solid( name, &vbp->head[0], vbp->rgb[0], copy );
-			continue;
-		}
+
 		sprintf( namebuf, "%s%x",
 			shortname, vbp->rgb[i] );
 		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
