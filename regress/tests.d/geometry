@@ -1,10 +1,16 @@
 #!/bin/sh
 #
-# This is the initial brlcad test template
+# g e o m e t r y
 #
-
+# This is the initial brlcad geometry test.  All of the supported primitives
+# that have values set for the mged 'in' and 'db put' commands actually 
+#
+###
 # Source function library
 . `dirname $0`/library
+
+# this is not necessary, but including anyways for now
+initializeVariable TEST "geometry"
 
 # initialize some variables, if not already set, to expected brlcadish values
 initializeVariable PACKAGE_NAME brlcad
@@ -28,8 +34,8 @@ initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
 start ( ) {
     
 
-TEST="geometry"
-PRIMITIVES="tor arb arbn arg bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc torus vol xxx"
+# these should be the brlcad "database" names that are used to create geometry in a geometry editor
+PRIMITIVES="arb arbn arg bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc tor vol xxx"
 VER="4 5"
 
 for PRIM in $PRIMITIVES ; do
