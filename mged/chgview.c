@@ -962,6 +962,11 @@ char	**argv;
 	struct solid *lastfound = SOLID_NULL;
 	register int i;
 	int nmatch;
+	char	**path_pieces;
+
+	path_pieces = path_parse(argv[1]);
+	while (*path_pieces != 0)
+	    rt_log("OK, next piece is '%s'\n", *path_piece++);
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return CMD_BAD;
@@ -1553,4 +1558,52 @@ char	**argv;
     usejoy(0.0, 0.0, theta);
 
     return CMD_OK;
+}
+
+/*
+ *			P A T H _ P A R S E
+ *
+ *	    Break up a path string into its constituents.
+ *
+ *	This function has one parameter:  a slash-separated path.
+ *	path_parse() allocates storage for and copies each constituent
+ *	of path.  It returns a null-terminated array of these copies.
+ *
+ *	It is the caller's responsibility to free the copies and the
+ *	pointer to them.
+ */
+static char **
+path_parse (path)
+
+char	*path;
+
+{
+    int		nm_constituents;
+    char	*pp;
+    char	**result;
+    char	*copy;
+
+    while (*path == '/')
+	++path;
+
+    nm_constituents = 1;
+    for (pp = path; *pp != '\0'; ++pp)
+	if (pp == '/')
+	    ++nm_constituents;
+    
+    result = (char **) rt_malloc((nm_constituents + 1) * sizeof(char *),
+			"array of strings");
+    
+    for (i = 0, pp = path; i < nm_constituents; ++i)
+    {
+	start_addr = pp;
+	while (*++pp != '/')
+	    ;
+	result[i] = (char *) rt_malloc((pp - start_addr) * sizeof(char),
+			"string");
+	strncpy(result[i], start_addr, (pp - start_addr));
+    }
+    result[nm_constituents] = 0;
+
+    return(result);
 }
