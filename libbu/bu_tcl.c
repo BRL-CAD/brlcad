@@ -122,6 +122,11 @@ register struct bu_structparse *sp;
 	bu_vls_free(&str);
 }
 
+/* Skip the separator(s) */
+#define BU_SP_SKIP_SEP(_cp)	\
+	{ while( *(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
+		*(_cp) == '\t' || *(_cp) == '{' ) )  ++(_cp); }
+
 
 /*
  *			B U _ S T R U C T P A R S E _ A R G V
@@ -280,10 +285,7 @@ char				*base;		/* base addr of users struct */
 						return TCL_ERROR;
 					}
 
-					while( (*cp == ' ' || *cp == '\n' ||
-						*cp == '\t') && *cp )
-						++cp;
-			
+					BU_SP_SKIP_SEP(cp);
 					tmpi = atoi( cp );
 					if( *cp && (*cp == '+' || *cp == '-') )
 						cp++;
@@ -310,10 +312,7 @@ char				*base;		/* base addr of users struct */
 					} else {
 						*(ip++) = tmpi;
 					}
-					/* Skip the separator(s) */
-					while( (*cp == ' ' || *cp == '\n' ||
-						*cp == '\t') && *cp ) 
-						++cp;
+					BU_SP_SKIP_SEP(cp);
 				}
 				Tcl_AppendResult( interp,
 						  sdp->sp_count > 1 ? "{" : "",
@@ -363,10 +362,7 @@ char				*base;		/* base addr of users struct */
 						return TCL_ERROR;
 					}
 					
-					while( (*cp == ' ' || *cp == '\n' ||
-						*cp == '\t') && *cp )
-						++cp;
-
+					BU_SP_SKIP_SEP(cp);
 					numstart = cp;
 					if( *cp == '-' || *cp == '+' ) cp++;
 
@@ -427,9 +423,7 @@ char				*base;		/* base addr of users struct */
 					
 					*dp++ = tmp_double;
 
-					while( (*cp == ' ' || *cp == '\n' ||
-						*cp == '\t') && *cp )
-						++cp;
+					BU_SP_SKIP_SEP(cp);
 				}
 				Tcl_AppendResult( interp,
 						  sdp->sp_count > 1 ? "{" : "",
