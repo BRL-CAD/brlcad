@@ -47,7 +47,7 @@ f_amtrack(  )
 
 	register struct directory *dp;
 	float fw[3], lw[3], iw[3], dw[3], tr[3];
-	char solname[12], regname[12], grpname[7], oper[3];
+	char solname[12], regname[12], grpname[9], oper[3];
 	int i, j, memb[4];
 	char temp[4];
 	float temp1[3], temp2[3];
@@ -167,7 +167,8 @@ f_amtrack(  )
 	solname[6] = 's';
 	regname[6] = 'r';
 	solname[7] = regname[7] = '.';
-	solname[8] = regname[8] = '\0';
+	grpname[5] = solname[8] = regname[8] = '\0';
+	grpname[8] = solname[11] = regname[11] = '\0';
 /*
 	(void)printf("\nX of first road wheel  %10.4f\n",fw[0]);
 	(void)printf("X of last road wheel   %10.4f\n",lw[0]);
@@ -184,6 +185,28 @@ f_amtrack(  )
 	(void)printf("thickness of track     %10.4f\n",tr[2]);
 */
 
+/* Check for names to use:
+ *	1.  start with track.s.1->10 and track.r.1->10
+ *	2.  if bad, increment count by 10 and try again
+ */
+
+tryagain:	/* sent here to try next set of names */
+
+	for(i=0; i<11; i++) {
+		crname(solname, i);
+		crname(regname, i);
+		if(	(lookup(solname, LOOKUP_QUIET) != DIR_NULL)	||
+			(lookup(regname, LOOKUP_QUIET) != DIR_NULL)	) {
+			/* name already exists */
+			solname[8] = regname[8] = '\0';
+			if( (Trackpos += 10) > 500 ) {
+				(void)printf("Track: naming error -- STOP\n");
+				return;
+			}
+			goto tryagain;
+		}
+		solname[8] = regname[8] = '\0';
+	}
 
 	/* no interupts */
 	(void)signal( SIGINT, SIG_IGN );
@@ -194,25 +217,14 @@ f_amtrack(  )
 	for(i=0; i<24; i++)
 		record.s.s_values[i] = 0.0;
 
-	tryagain:	/* sent here if naming error to try again */
-
 	slope(fw, iw, tr);
 	VMOVE(temp2, &record.s.s_values[0]);
 	crname(solname, 1);
 	(void)strcpy(record.s.s_name, solname);
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = BOX;		/* BOX */
-	if( wrobj(solname) ) {
-		/* name already exists, try next set */
-		if( (Trackpos += 10) > 990 ) {
-			(void)printf(" I QUIT!!! \n");
-			return;
-		}
-
-		(void)printf("will try next set\n");
-		solname[8] = '\0';
-		goto tryagain;
-	}
+	if( wrobj(solname) ) 
+		return;
 
 	solname[8] = '\0';
 
@@ -402,6 +414,7 @@ f_amtrack(  )
 		j = 2;
 	itoa(i, temp, j);
 	(void)strcat(grpname, temp);
+	grpname[8] = '\0';
 	for(i=1; i<11; i++) {
 		regname[8] = '\0';
 		crname(regname, i);
