@@ -324,7 +324,7 @@ char *cp;
 {
 	bu_free( cp, "noise_specific" );
 }
-#define RESCALE_NOISE(n) n = n+1.0
+#define RESCALE_NOISE(n) n += 1.0
 
 /*
  *	N O R M _ N O I S E

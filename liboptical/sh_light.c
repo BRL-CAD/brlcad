@@ -885,7 +885,6 @@ light_miss(ap)
 register struct application *ap;
 {
 	struct light_specific *lp = (struct light_specific *)(ap->a_uptr);
-	bu_log("miss\n");
 
 	RT_CK_LIGHT(lp);
 	if( (!lp->lt_visible) || lp->lt_infinite ) {

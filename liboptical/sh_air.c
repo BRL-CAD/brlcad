@@ -18,8 +18,8 @@
 struct air_specific {
 	long	magic;
 	double	d_p_mm;	/* density per unit millimeter (specified in m)*/
-	double	scale;
-	double	delta;
+	double	scale;	/* only used in emist */
+	double	delta;	/* only used in emist */
 	char	*name;	/* name of "ground" object for emist_terrain_render */
 };
 #define CK_air_SP(_p) BU_CKMAG(_p, air_MAGIC, "air_specific")
@@ -117,6 +117,8 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if (rdebug&RDEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm) );
 	if( bu_struct_parse( matparm, air_parse, (char *)air_sp ) < 0 )
 		return(-1);
+
+	if (rdebug&RDEBUG_SHADE) air_print(rp, air_sp);
 
 	return(1);
 }
