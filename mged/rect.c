@@ -93,10 +93,14 @@ draw_rect()
 	       mged_variables->rubber_band_color[2], 1);
   DM_SET_LINE_ATTR(dmp, mged_variables->rubber_band_linewidth, line_style);
 
-  DM_DRAW_LINE_2D(dmp, rect_x, rect_y, rect_x, rect_y + rect_height);
-  DM_DRAW_LINE_2D(dmp, rect_x, rect_y + rect_height, rect_x + rect_width, rect_y + rect_height);
-  DM_DRAW_LINE_2D(dmp, rect_x + rect_width, rect_y + rect_height, rect_x + rect_width, rect_y);
-  DM_DRAW_LINE_2D(dmp, rect_x + rect_width, rect_y, rect_x, rect_y);
+  DM_DRAW_LINE_2D(dmp, rect_x, rect_y * dmp->dm_aspect,
+		  rect_x, (rect_y + rect_height) * dmp->dm_aspect);
+  DM_DRAW_LINE_2D(dmp, rect_x, (rect_y + rect_height) * dmp->dm_aspect,
+		  rect_x + rect_width, (rect_y + rect_height) * dmp->dm_aspect);
+  DM_DRAW_LINE_2D(dmp, rect_x + rect_width, (rect_y + rect_height) * dmp->dm_aspect,
+		  rect_x + rect_width, rect_y * dmp->dm_aspect);
+  DM_DRAW_LINE_2D(dmp, rect_x + rect_width, rect_y * dmp->dm_aspect,
+		  rect_x, rect_y * dmp->dm_aspect);
 }
 
 /*
@@ -107,10 +111,15 @@ get_rect(x, y, width, height)
 int *x, *y;
 int *width, *height;
 {
+#ifdef USE_RT_ASPECT
+  *x = dm_Normal2Xx(dmp, rect_x);
+  *y = dmp->dm_height - dm_Normal2Xy(dmp, rect_y, 1);
+#else
   *x = dm_Normal2Xx(dmp, rect_x, 1);
   *y = dmp->dm_height - dm_Normal2Xy(dmp, rect_y);
-  *width = rect_width * dmp->dm_width / 2.0;
-  *height = rect_height * dmp->dm_height / 2.0;
+#endif
+  *width = rect_width * dmp->dm_width * 0.5;
+  *height = rect_height * dmp->dm_height * 0.5;
 }
 
 /*
@@ -122,8 +131,13 @@ set_rect(x, y, width, height)
 int x, y;
 int width, height;
 {
+#ifdef USE_RT_ASPECT
+  rect_x = dm_Xx2Normal(dmp, x);
+  rect_y = dm_Xy2Normal(dmp, dmp->dm_height - y, 1);
+#else
   rect_x = dm_Xx2Normal(dmp, x, 1);
   rect_y = dm_Xy2Normal(dmp, dmp->dm_height - y);
+#endif
   rect_width = width * 2.0 / (fastf_t)dmp->dm_width;
   rect_height = height * 2.0 / (fastf_t)dmp->dm_height;
 }
@@ -181,9 +195,9 @@ rt_rect_area()
   }
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "rt -s %d -F %d -j %d,%d,%d,%d",
-		dmp->dm_width, mged_variables->port,
-		xmin, ymin, xmax, ymax);
+  bu_vls_printf(&vls, "rt -w %d -n %d -V %lf -F %d -j %d,%d,%d,%d",
+		dmp->dm_width, dmp->dm_height, (fastf_t)(dmp->dm_width/(fastf_t)dmp->dm_height),
+		mged_variables->port, xmin, ymin, xmax, ymax);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   (void)Tcl_ResetResult(interp);
   bu_vls_free(&vls);
