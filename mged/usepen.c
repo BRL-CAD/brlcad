@@ -76,7 +76,7 @@ static void	illuminate();
  *  The only way to exit the intermediate states (non-VIEW, non-EDIT)
  *  is by completing the sequence, or pressing BE_REJECT.
  */
-void
+int
 f_mouse( argc, argv )
 int	argc;
 char	**argv;
@@ -102,11 +102,11 @@ char	**argv;
 
 		if( (i = scroll_select(xpos, ypos )) < 0 )  {
 			(void)printf("mouse press outside valid scroll area\n");
-			return;
+			return CMD_BAD;
 		} 
 		if( i > 0 )  {
 			/* Scroller bars claimed button press */
-			return;
+			return CMD_OK;
 		}
 		/* Otherwise, fall through */
 	}
@@ -119,11 +119,11 @@ char	**argv;
 		register int i;
 		if( (i = mmenu_select( ypos )) < 0 )  {
 			(void)printf("mouse press outside valid menu\n");
-			return;
+			return CMD_BAD;
 		}
 		if( i > 0 )  {
 			/* Menu claimed button press */
-			return;
+			return CMD_OK;
 		}
 		/* Otherwise, fall through */
 	}
@@ -140,7 +140,7 @@ char	**argv;
 	case ST_S_EDIT:
 	case ST_O_EDIT:
 	default:
-		return;		/* Take no action in these states */
+		return CMD_OK;		/* Take no action in these states */
 
 	case ST_O_PICK:
 	case ST_S_PICK:
@@ -159,7 +159,7 @@ char	**argv;
 			(ypos+2048L) * (illump->s_last+1) / 4096);
 		if( ipathpos != isave )
 			dmaflag++;
-		return;
+		return CMD_OK;
 
 	} else switch( state )  {
 
@@ -169,23 +169,23 @@ char	**argv;
 		 * Make indicated point be new view center (NEW).
 		 */
 		slewview( mousevec );
-		return;
+		return CMD_OK;
 
 	case ST_O_PICK:
 		ipathpos = 0;
 		(void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
 		dmaflag = 1;
-		return;
+		return CMD_OK;
 
 	case ST_S_PICK:
 		/* Check details, Init menu, set state */
 		init_sedit();		/* does chg_state */
 		dmaflag = 1;
-		return;
+		return CMD_OK;
 
 	case ST_S_EDIT:
 		sedit_mouse( mousevec );
-		return;
+		return CMD_OK;
 
 	case ST_O_PATH:
 		/*
@@ -220,19 +220,19 @@ char	**argv;
 		init_objedit();
 
 		dmaflag++;
-		return;
+		return CMD_OK;
 
 	case ST_S_VPICK:
 		sedit_vpick( mousevec );
-		return;
+		return CMD_OK;
 
 	case ST_O_EDIT:
 		objedit_mouse( mousevec );
-		return;
+		return CMD_OK;
 
 	default:
 		state_err( "mouse press" );
-		return;
+		return CMD_BAD;
 	}
 	/* NOTREACHED */
 }
