@@ -182,7 +182,68 @@ char	**argv;
 		return;
 	}
 
-	cvt_vlblock_to_solids( vbp, name );
+	cvt_vlblock_to_solids( vbp, name, 0 );
+
+	rt_vlblock_free(vbp);
+	dmaflag = 1;
+}
+
+void
+label_vlist_verts( vbp, src, mat, sz )
+struct rt_vlblock	*vbp;
+struct rt_list		*src;
+mat_t			mat;
+double			sz;
+{
+	struct rt_vlist	*vp;
+	struct rt_list	*vhead;
+	char		label[256];
+	fastf_t		scale;
+
+	vhead = rt_vlblock_find( vbp, 255, 255, 255 );	/* white */
+
+	for( RT_LIST_FOR( vp, rt_vlist, src ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			sprintf( label, " %g, %g, %g",
+				V3ARGS(*pt) );
+			vlist_3symbol( vhead, label, pt, mat, sz );
+		}
+	}
+}
+
+/* Usage:  labelvert solid(s) */
+void
+f_labelvert( argc, argv )
+int	argc;
+char	**argv;
+{
+	int	i;
+	struct rt_vlblock	*vbp;
+	struct directory	*dp;
+	mat_t			mat;
+	fastf_t			scale;
+
+	vbp = rt_vlblock_init();
+	mat_idn(mat);
+	mat_inv( mat, Viewrot );
+	scale = VIEWSIZE / 100;		/* divide by # chars/screen */
+
+	for( i=1; i<argc; i++ )  {
+		struct solid	*s;
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
+			continue;
+		/* Find uses of this solid in the solid table */
+		FOR_ALL_SOLIDS(s)  {
+			if( s->s_path[s->s_last] != dp )  continue;
+			label_vlist_verts( vbp, &s->s_vlist, mat, scale );
+		}
+	}
+
+	cvt_vlblock_to_solids( vbp, "_LABELVERT_", 0 );
 
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
@@ -430,10 +491,10 @@ double	scale;			/* scale factor to change 1x1 char sz */
 		MAT4X3PNT( loc, mat, temp );
 		RT_ADD_VLIST( vhead, loc, RT_VLIST_LINE_MOVE );		/* move */
 
-		for( p = tp_cindex[*cp]; ((stroke= *p)&0xFF) != LAST; p++ )  {
+		for( p = tp_cindex[*cp]; (stroke= *p) != LAST; p++ )  {
 			int	draw;
 
-			if( (stroke&0xFF)==NEGY )  {
+			if( stroke==NEGY )  {
 				ysign = (-1);
 				stroke = *++p;
 			} else
