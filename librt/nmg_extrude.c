@@ -1445,7 +1445,7 @@ out:
 			struct shell *next_s;
 
 			next_s = BU_LIST_PNEXT( shell , &s2->l );
-			nmg_js( s_tmp , s2 );
+			nmg_js( s_tmp , s2 , tol );
 
 			s2 = next_s;
 		}
