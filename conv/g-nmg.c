@@ -111,9 +111,11 @@ struct directory *dp;
 	else
 		region_flag = 0;
 
-	if( mk_lrcomb( fp_out , rp[0].c.c_name , &headp , region_flag , rp[0].c.c_matname , rp[0].c.c_matparm ,
-		(char *)rp[0].c.c_rgb , rp[0].c.c_regionid , rp[0].c.c_aircode , rp[0].c.c_material ,
-		rp[0].c.c_los , rp[0].c.c_inherit ) )
+	if( mk_lrcomb( fp_out, rp[0].c.c_name, &headp, region_flag,
+	    rp[0].c.c_matname, rp[0].c.c_matparm,
+	    (unsigned char *)rp[0].c.c_rgb, rp[0].c.c_regionid,
+	    rp[0].c.c_aircode, rp[0].c.c_material,rp[0].c.c_los,
+	    rp[0].c.c_inherit ) )
 		{
 			rt_log( "G-nmg: error in making region (%s)\n" , rp[0].c.c_name );
 		}
@@ -345,7 +347,7 @@ union tree		*curtree;
 	if (r != 0)
 	{
 		char nmg_name[16];
-		char rgb[3];
+		unsigned char rgb[3];
 		struct wmember headp,*wmem;
 
 		/* Write the nmgregion to the output file */
@@ -362,9 +364,11 @@ union tree		*curtree;
 		rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
 		rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);
 		rgb[2] = (int)(tsp->ts_mater.ma_color[2] * 255.0);
-		if( mk_lrcomb( fp_out , pathp->fp_names[pathp->fp_len-1]->d_namep , &headp , 1 ,
-			tsp->ts_mater.ma_matname , tsp->ts_mater.ma_matparm , rgb , tsp->ts_regionid,
-			tsp->ts_aircode , tsp->ts_gmater , tsp->ts_los , tsp->ts_mater.ma_cinherit ) )
+		if( mk_lrcomb( fp_out,
+		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
+		    tsp->ts_mater.ma_matname, tsp->ts_mater.ma_matparm, rgb,
+		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
+		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
 		{
 			rt_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
 		}
