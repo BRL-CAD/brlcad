@@ -86,6 +86,7 @@ void	calc_planes();
 void update_edit_absolute_tran();
 void set_e_axes_pos();
 vect_t e_axes_pos;
+vect_t curr_e_axes_pos;
 #if 1
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 #else
@@ -1954,6 +1955,7 @@ set_e_axes_pos()
 #if 1
     MAT4X3PNT(e_axes_pos, es_mat,
 	      ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+    VMOVE(curr_e_axes_pos, e_axes_pos);
 #else
     VMOVE(e_axes_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
 #endif
@@ -2893,9 +2895,30 @@ sedit()
 				/* Need vector from current vertex/keypoint
 				 * to desired new location.
 				 */
+#ifdef TRY_EDIT_NEW_WAY
+#if 1
+			  /* move solid so that es_keypoint is at position es_para */
+			  {
+			    vect_t raw_para;
+
+			    MAT4X3PNT(raw_para, es_invmat, es_para);
+			    MAT4X3PNT(work, es_invmat, es_keypoint);
+			    VSUB2( delta, work, raw_para );
+			    mat_idn( xlatemat );
+			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
+			  }
+#else
+			  /* move solid to position es_para */
+			  MAT4X3PNT(work, es_invmat, es_keypoint);
+			  VSUB2( delta, work, es_para );
+			  mat_idn( xlatemat );
+			  MAT_DELTAS_VEC_NEG( xlatemat, delta );
+#endif
+#else
 				VSUB2( delta, es_para, es_keypoint );
 				mat_idn( xlatemat );
 				MAT_DELTAS_VEC( xlatemat, delta );
+#endif
 				transform_editing_solid(&es_int, xlatemat, &es_int, 1);
 			}
 		}
@@ -3044,8 +3067,8 @@ sedit()
 			}
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
-#if 0
-			MAT4X3VEC(work, es_invmat, es_keypoint);
+#ifdef TRY_EDIT_NEW_WAY
+			MAT4X3PNT(work, es_invmat, es_keypoint);
 			mat_xform_about_pt( mat, incr_change, work );
 #else
 			mat_xform_about_pt( mat, incr_change, es_keypoint );
@@ -4805,7 +4828,7 @@ CONST mat_t			mat;
 	id = ip->idb_type;
 	transform_editing_solid( &intern, mat, (struct rt_db_internal *)ip, 0 );
 
-	if( id != ID_ARS )
+	if( id != ID_ARS || id != ID_POLY )
 	{
 		if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
 		    base2local ) < 0 )
