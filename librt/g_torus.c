@@ -879,12 +879,6 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-#if 0
-	/* Do nothing.  Really, should do something like what REC does,
-	 * ie, angle around center & angle around rim */
-	uvp->uv_u = uvp->uv_v = 0;
-	uvp->uv_du = uvp->uv_dv = 0;
-#else
 	register struct tor_specific	*tor =
 			(struct tor_specific *) stp -> st_specific;
 	LOCAL vect_t			work;
@@ -894,15 +888,17 @@ register struct uvcoord	*uvp;
 
 	VSUB2(work, hitp -> hit_point, tor -> tor_V);
 	MAT4X3VEC(pprime, tor -> tor_SoR, work);
-	uvp -> uv_u = atan2(pprime[Y], pprime[X]) * rt_inv2pi;
+	/*
+	 * -pi/2 <= atan2(x,y) <= pi/2
+	 */
+	uvp -> uv_u = atan2(pprime[Y], pprime[X]) * rt_inv2pi + 0.5;
 
 	VSET(work, pprime[X], pprime[Y], 0.0);
 	VUNITIZE(work);
 	VSUB2(pprime2, pprime, work);
 	VUNITIZE(pprime2);
 	costheta = VDOT(pprime2, work);
-	uvp -> uv_v = atan2(costheta, pprime2[Z]) * rt_inv2pi;
-#endif
+	uvp -> uv_v = atan2(pprime2[Z], costheta) * rt_inv2pi + 0.5;
 }
 
 /*
