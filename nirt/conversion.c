@@ -1,6 +1,6 @@
 /*      CONVERSION.C    */
 #ifndef lint
-static char RCSid[] = "$Header$";
+static const char RCSid[] = "$Header$";
 #endif
 
 /*	INCLUDES	*/

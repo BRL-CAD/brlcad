@@ -47,6 +47,7 @@ int	curframe;		/* current frame number */
  *
  *  Process "start" command in new format input stream
  */
+int
 cm_start( argc, argv )
 int	argc;
 char	**argv;
@@ -55,6 +56,7 @@ char	**argv;
 	return 0;
 }
 
+int
 cm_vsize( argc, argv )
 int	argc;
 char	**argv;
@@ -63,6 +65,7 @@ char	**argv;
 	return(0);
 }
 
+int
 cm_eyept( argc, argv )
 int	argc;
 char	**argv;
@@ -74,6 +77,7 @@ char	**argv;
 	return(0);
 }
 
+int
 cm_lookat_pt( argc, argv )
 int	argc;
 char	**argv;
@@ -99,6 +103,7 @@ char	**argv;
 	return(0);
 }
 
+int
 cm_vrot( argc, argv )
 int	argc;
 char	**argv;
@@ -110,6 +115,7 @@ char	**argv;
 	return(0);
 }
 
+int
 cm_orientation( argc, argv )
 int	argc;
 char	**argv;
@@ -130,6 +136,7 @@ char	**argv;
  *
  *  framenumber, viewsize, eye x y z, orientation x y z w
  */
+int
 cm_end( argc, argv )
 int	argc;
 char	**argv;
@@ -152,6 +159,7 @@ char	**argv;
 	return(0);
 }
 
+int
 cm_tree( argc, argv )
 int		argc;
 CONST char	**argv;
@@ -160,6 +168,7 @@ CONST char	**argv;
 	return(0);
 }
 
+int
 cm_multiview( argc, argv )
 int	argc;
 char	**argv;
@@ -175,6 +184,7 @@ char	**argv;
  *
  *  Usage:  anim <path> <type> args
  */
+int
 cm_anim( argc, argv )
 int	argc;
 char	**argv;
@@ -188,6 +198,7 @@ char	**argv;
  *
  *  Clean out results of last rt_prep(), and start anew.
  */
+int
 cm_clean( argc, argv )
 int	argc;
 char	**argv;
@@ -201,6 +212,7 @@ char	**argv;
  *
  *  Allow variable values to be set or examined.
  */
+int
 cm_set( argc, argv )
 int	argc;
 char	**argv;
@@ -212,6 +224,7 @@ char	**argv;
 /* 
  *			C M _ A E
  */
+int
 cm_ae( argc, argv )
 int	argc;
 char	**argv;
@@ -223,6 +236,7 @@ char	**argv;
 /*
  *			C M _ O P T
  */
+int
 cm_opt( argc, argv )
 int	argc;
 char	**argv;
@@ -237,36 +251,36 @@ char	**argv;
  */
 
 struct command_tab rt_cmdtab[] = {
-	"start", "frame number", "start a new frame",
-		cm_start,	2, 2,
-	"viewsize", "size in mm", "set view size",
-		cm_vsize,	2, 2,
-	"eye_pt", "xyz of eye", "set eye point",
-		cm_eyept,	4, 4,
-	"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
-		cm_lookat_pt,	4, 5,
-	"viewrot", "4x4 matrix", "set view direction from matrix",
-		cm_vrot,	17,17,
-	"orientation", "quaturnion", "set view direction from quaturnion",
-		cm_orientation,	5, 5,
-	"end", 	"", "end of frame setup, begin raytrace",
-		cm_end,		1, 1,
-	"multiview", "", "produce stock set of views",
-		cm_multiview,	1, 1,
-	"anim", 	"path type args", "specify articulation animation",
-		cm_anim,	4, 999,
-	"tree", 	"treetop(s)", "specify alternate list of tree tops",
-		cm_tree,	1, 999,
-	"clean", "", "clean articulation from previous frame",
-		cm_clean,	1, 1,
-	"set", 	"", "show or set parameters",
-		cm_set,		1, 999,
-	"ae", "azim elev", "specify view as azim and elev, in degrees",
-		cm_ae,		3, 3,
-	"opt", "-flags", "set flags, like on command line",
-		cm_opt,		2, 999,
-	(char *)0, (char *)0, (char *)0,
-		0,		0, 0	/* END */
+	{"start", "frame number", "start a new frame",
+		cm_start,	2, 2},
+	{"viewsize", "size in mm", "set view size",
+		cm_vsize,	2, 2},
+	{"eye_pt", "xyz of eye", "set eye point",
+		cm_eyept,	4, 4},
+	{"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
+		cm_lookat_pt,	4, 5},
+	{"viewrot", "4x4 matrix", "set view direction from matrix",
+		cm_vrot,	17,17},
+	{"orientation", "quaturnion", "set view direction from quaturnion",
+		cm_orientation,	5, 5},
+	{"end", 	"", "end of frame setup, begin raytrace",
+		cm_end,		1, 1},
+	{"multiview", "", "produce stock set of views",
+		cm_multiview,	1, 1},
+	{"anim", 	"path type args", "specify articulation animation",
+		cm_anim,	4, 999},
+	{"tree", 	"treetop(s)", "specify alternate list of tree tops",
+		cm_tree,	1, 999},
+	{"clean", "", "clean articulation from previous frame",
+		cm_clean,	1, 1},
+	{"set", 	"", "show or set parameters",
+		cm_set,		1, 999},
+	{"ae", "azim elev", "specify view as azim and elev, in degrees",
+		cm_ae,		3, 3},
+	{"opt", "-flags", "set flags, like on command line",
+		cm_opt,		2, 999},
+	{(char *)0, (char *)0, (char *)0,
+		0,		0, 0}	/* END */
 };
 
 /*
@@ -303,4 +317,5 @@ char	**argv;
 		}
 		bu_free( buf, "cmd buf" );
 	}
+	return 0;
 }

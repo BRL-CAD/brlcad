@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Header$";
+static const char RCSid[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -49,6 +49,9 @@ int eq_cubic();
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 11.3  2000/01/31 16:20:25  jra
+ * Eliminated an unused variable
+ *
  * Revision 11.2  1996/07/17 17:02:46  jra
  * Minor Mods for IRIX 6.2
  *
@@ -154,6 +157,7 @@ int 		(*eqptr)();
  * Author:
  *	Christopher T. Johnson - 90/03/22
  */
+int
 eq_cubic(x)
 int x;
 {

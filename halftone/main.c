@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Header$";
+static const char RCSid[] = "$Header$";
 #endif
 #include "conf.h"
 
@@ -56,6 +56,10 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 11.3  2000/08/24 23:07:42  mike
+ *
+ * lint
+ *
  * Revision 11.2  1996/12/13  14:33:46  jra
  * pix_common_file_size is now bn_common_file_size.
  *
@@ -276,6 +280,8 @@ char **argv;
 		(void) fprintf(stderr,"halftone: excess argument(s) ignored.\n");
 	}
 }
+
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -370,4 +376,5 @@ char **argv;
 		}
 		fwrite(Out,1,width,stdout);
 	}
+	return 0;
 }

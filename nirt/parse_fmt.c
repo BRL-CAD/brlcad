@@ -3,7 +3,7 @@
  *	
  */
 #ifndef lint
-static char RCSid[] = "$Header$";
+static const char RCSid[] = "$Header$";
 #endif
 
 #include "conf.h"
