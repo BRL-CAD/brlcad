@@ -201,6 +201,8 @@ struct part_specific {
 #define RT_PARTICLE_SURF_BODY		2
 #define RT_PARTICLE_SURF_HSPHERE	3
 
+RT_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
+
 /*
  *  			R T _ P A R T _ P R E P
  *  
@@ -263,7 +265,6 @@ struct rt_i		*rtip;
 	GETSTRUCT( part, part_specific );
 	stp->st_specific = (genptr_t)part;
 	part->part_int = *((struct part_internal *)intern.idb_ptr);	/* struct copy */
-	/* XXX need to free intern.idb_ptr */
 	pip = &part->part_int;
 	intern.idb_ptr = GENPTR_NULL;	/* sanity */
 
@@ -277,6 +278,7 @@ struct rt_i		*rtip;
 		stp->st_max[Y] = pip->part_V[Y] + pip->part_vrad;
 		stp->st_min[Z] = pip->part_V[Z] - pip->part_vrad;
 		stp->st_max[Z] = pip->part_V[Z] + pip->part_vrad;
+		rt_part_ifree( &intern );
 		return(0);		/* OK */
 	}
 
@@ -334,6 +336,7 @@ struct rt_i		*rtip;
 		stp->st_aradius = f;
 		stp->st_bradius = MAGNITUDE(work);
 	}
+	rt_part_ifree( &intern );
 	return(0);			/* OK */
 }
 
