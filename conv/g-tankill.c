@@ -47,8 +47,11 @@ static int	debug_plots;		/* Make debugging plots */
 static int	ncpu = 1;		/* Number of processors */
 static int	surr_code = 1000;	/* Surroundings code */
 static int	curr_id;		/* Current region ident code */
+static int	id_counter;		/* Ident counter */
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
+static char	*id_file = NULL;	/* Output ident file */
+static FILE	*fp_id = NULL;		/* Output ident file pointer */
 static struct nmg_ptbl		idents;	/* Table of region ident numbers */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
@@ -98,8 +101,11 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
-	rt_log( "region stub called, this shouldn't happen\n" );
-	rt_bomb( "region_stub\n" );
+	struct directory *fp_name;	/* name from pathp */
+
+	fp_name = DB_FULL_PATH_CUR_DIR( pathp );
+	rt_log( "region stub called (for object %s), this shouldn't happen\n" , fp_name->d_namep );
+	return( (union tree *)NULL );
 }
 
 static union tree *
@@ -109,8 +115,11 @@ struct db_full_path     *pathp;
 struct rt_external      *ep;
 int                     id;
 {
-	rt_log( "leaf stub called, this shouldn't happen\n" );
-	rt_bomb( "leaf_stub\n" );
+	struct directory *fp_name;	/* name from pathp */
+
+	fp_name = DB_FULL_PATH_CUR_DIR( pathp );
+	rt_log( "Only regions may be converted to TANKILL format\n\t%s is not a region and will be ignored\n" , fp_name->d_namep );
+	return( (union tree *)NULL );
 }
 
 /* Routine to identify external/void shells
@@ -166,6 +175,9 @@ long *flags;
 CONST struct rt_tol *ttol;
 {
 	struct shell *s;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
 	int ext_shell_id=1;
 
 	NMG_CK_REGION( r );
@@ -211,15 +223,52 @@ rt_log( "\t\tChecking shell x%x as possible void\n" , void_s );
 				{
 					struct face *int_f;
 					struct shell *test_s;
+					int breakout=0;
+					int not_in_this_shell=0;
 rt_log( "\t\t\tIt is a void shell...\n" );
 
 					/* this is a void shell
 					 * but does it belong with external shell s */
 					if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , s->sa_p->min_pt , s->sa_p->max_pt ) )
 					{
-rt_log( "\t\t\t\tNot for this external shell\n" );
+rt_log( "\t\t\t\tNot for this external shell (bounding boxes not within one another)\n" );
 						continue;
 					}
+
+					for( RT_LIST_FOR( fu , faceuse , &void_s->fu_hd ) )
+					{
+						for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+						{
+							if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+								continue;
+							for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+							{
+								int class;
+
+								class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord , s , ttol );
+
+								if( class == NMG_CLASS_AoutB )
+								{
+rt_log( "\t\t\tNot for this external shell (point on void shell is outside external shell)\n" );
+									breakout = 1;
+									not_in_this_shell = 1;
+									break;
+								}
+								else if( class == NMG_CLASS_AinB )
+								{
+									breakout = 1;
+									break;
+								}
+							}
+							if( breakout )
+								break;
+						}
+						if( breakout )
+							break;
+					}
+
+					if( not_in_this_shell )
+						continue;
 
 					int_f = nmg_find_top_face( void_s , flags );
 
@@ -235,8 +284,8 @@ rt_log( "\t\t\t\tNot for this external shell\n" );
 								continue;
 
 							test_f = nmg_find_top_face( test_s , flags );
-							if( test_f->fg_p->max_pt[Z] > int_f->fg_p->max_pt[Z]
-							    && test_f->fg_p->max_pt[Z] < ext_f->fg_p->max_pt[Z] )
+							if( test_f->max_pt[Z] > int_f->max_pt[Z]
+							    && test_f->max_pt[Z] < ext_f->max_pt[Z] )
 							{
 								wrong_void = 1;
 								break;
@@ -261,9 +310,10 @@ rt_log( "\t\t\t\tMarked this Shell (x%x) as %d\n" , void_s , NMG_INDEX_GET( flag
 
 /*	Routine to write an nmgregion in the TANKILL format */
 static void
-Write_tankill_region( r , tsp )
+Write_tankill_region( r , tsp , pathp )
 struct nmgregion *r;
 struct db_tree_state *tsp;
+struct db_full_path *pathp;
 {
 	struct shell *s;
 	struct nmg_ptbl shells;		/* list of shells to be decomposed */
@@ -280,12 +330,12 @@ struct db_tree_state *tsp;
 	/* Check if region extents are beyond the limitations of the TANKILL format */
 	for( i=X ; i<ELEMENTS_PER_PT ; i++ )
 	{
-		if( r->ra_p->min_pt[i] < (-9999.0) )
+		if( r->ra_p->min_pt[i] < (-12000.0) )
 		{
 			rt_log( "g-tankill: Coordinates too large (%g) for TANKILL format\n" , r->ra_p->min_pt[i] );
 			return;
 		}
-		if( r->ra_p->max_pt[i] > 99999.0 )
+		if( r->ra_p->max_pt[i] > 12000.0 )
 		{
 			rt_log( "g-tankill: Coordinates too large (%g) for TANKILL format\n" , r->ra_p->max_pt[i] );
 			return;
@@ -511,8 +561,12 @@ struct db_tree_state *tsp;
 		}
 
 		/* Now write the data out */
-		fprintf( fp_out , "%11d%7d%7d           " ,
-			NMG_TBL_END( &vertices ), tsp->ts_regionid , surr_code );
+		if( fp_id )	/* Use id count instead of actual id */
+			fprintf( fp_out , "%11d%7d%7d           " ,
+				NMG_TBL_END( &vertices ), id_counter , surr_code );
+		else
+			fprintf( fp_out , "%11d%7d%7d           " ,
+				NMG_TBL_END( &vertices ), tsp->ts_regionid , surr_code );
 		for( i=0 ; i<NMG_TBL_END( &vertices ) ; i++ )
 		{
 			struct vertex *v;
@@ -526,6 +580,17 @@ struct db_tree_state *tsp;
 
 		/* clear the vertices list for the next shell */
 		nmg_tbl( &vertices , TBL_RST , NULL );
+	}
+
+	/* write info to the idents file if one is open */
+	if( fp_id != NULL )
+	{
+		struct directory *fp_name;	/* name from pathp */
+
+		fp_name = DB_FULL_PATH_CUR_DIR( pathp );
+		fprintf( fp_id , "%d %d %s %d %d %d %s\n" , id_counter , tsp->ts_regionid ,
+			fp_name->d_namep , tsp->ts_aircode , tsp->ts_gmater , tsp->ts_los ,
+			tsp->ts_mater.ma_matname );
 	}
 
 	regions_written++;
@@ -594,13 +659,16 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:o:r:s:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:di:n:o:r:s:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
 			break;
 		case 'd':
 			debug_plots = 1;
+			break;
+		case 'i':		/* Idents output file */
+			id_file = optarg;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
@@ -660,6 +728,17 @@ char	*argv[];
 			return 2;
 		}
 	}
+
+	if( id_file != NULL )
+	{
+		if ((fp_id = fopen( id_file , "w")) == NULL)
+		{
+			rt_log( "Cannot open %s\n" , id_file );
+			perror( argv[0] );
+			return 2;
+		}
+	}
+
 	optind++;
 
 	/* First produce a list of region ident codes */
@@ -670,10 +749,16 @@ char	*argv[];
 		region_stub,			/* do nothing */
 		leaf_stub );			/* do nothing */
 
+	/* TANKILL only allows up to 2000 distinct component codes */
+	if( NMG_TBL_END( &idents ) > 2000 )
+	{
+		rt_log( "Too many ident codes for TANKILL\n" );
+		rt_log( "\tProcessing all regions anyway\n" );
+	}
 
 	/* Process regions in ident order */
 	curr_id = 0;
-	for( i=0 ; i<NMG_TBL_END( &idents ) ; i++ )
+	for( id_counter=0 ; id_counter<NMG_TBL_END( &idents ) ; id_counter++ )
 	{
 		int next_id = 99999999;
 		for( j=0 ; j<NMG_TBL_END( &idents ) ; j++ )
@@ -793,7 +878,7 @@ union tree		*curtree;
 	if (r != 0)
 	{
 		/* Write the region to the TANKILL file */
-		Write_tankill_region( r , tsp );
+		Write_tankill_region( r , tsp , pathp );
 
 		/* NMG region is no longer necessary */
 		nmg_kr(r);
