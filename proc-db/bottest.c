@@ -39,7 +39,7 @@ int argc;
 char *argv[];
 {
 	fastf_t vertices[36];
-	int faces[12];
+	int faces[15];
 	struct bu_bitv *face_mode;
 	fastf_t thickness[4];
 
@@ -297,6 +297,12 @@ char *argv[];
 	faces[11] = 11;
 
 	mk_bot( stdout, "bot_solid_dup_vs", RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, 12, 4, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL );
+
+	faces[12] = 9;
+	faces[13] = 10;
+	faces[14] = 11;
+
+	mk_bot( stdout, "bot_solid_dup_fs", RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, 12, 5, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL );
 
 	bu_free( (char *)face_mode, "bottest: face_mode" );
 }
