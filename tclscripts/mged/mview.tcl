@@ -214,7 +214,7 @@ proc set_default_views { id } {
 proc setmv { id } {
     global mged_gui
 
-    if { $mged_gui($id,multi_view) } {
+    if { $mged_gui($id,multi_pane) } {
 	# insure that the weight is not exaggerated
 	grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
 
