@@ -45,6 +45,7 @@ Usage:  rtshot [options] model.g objects...\n\
  -d # # #	Set direction vector\n\
  -p # # #	Set starting point\n\
  -a # # #	Set shoot-at point\n\
+ -f		Set emulate FASTGEN mode\n\
  -o #		Set onehit flag\n\
  -r #		Set ray length\n";
 
@@ -59,6 +60,7 @@ int		set_at = 0;
 int		set_onehit = 0;
 fastf_t		set_ray_length = 0.0;
 vect_t		at_vect;
+int		emulate_fastgen = 0;
 int		use_air = 0;		/* Handling of air */
 
 extern int hit(), miss();
@@ -155,6 +157,13 @@ char **argv;
 		argc -= 4;
 		argv += 4;
 		continue;
+
+	case 'f':
+		emulate_fastgen = 1;
+		argc--;
+		argv++;
+		continue;
+
 	default:
 err:
 		(void)fputs(usage, stderr);
@@ -176,6 +185,10 @@ err:
 		fprintf(stderr,"rtshot:  rt_dirbuild failure\n");
 		exit(2);
 	}
+
+	if( emulate_fastgen )
+		rtip->rti_save_overlaps = 1;
+
 	ap.a_rt_i = rtip;
 	fprintf(stderr, "db title:  %s\n", idbuf);
 	rtip->useair = use_air;
@@ -247,6 +260,9 @@ struct partition *PartHeadp;
 
 	if( (pp=PartHeadp->pt_forw) == PartHeadp )
 		return(0);		/* Nothing hit?? */
+
+	if( emulate_fastgen )
+		rt_rebuild_overlaps( PartHeadp, ap, 1 );
 
 	/* First, plot ray start to inhit */
 	if( rdebug&RDEBUG_RAYPLOT )  {

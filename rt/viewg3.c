@@ -256,6 +256,9 @@ register struct partition *PartHeadp;
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
+	if( ap->a_rt_i->rti_save_overlaps )
+		rt_rebuild_overlaps( PartHeadp, ap, 1 );
+
 	part_compact(ap, PartHeadp, TOL);
 
 	/*  comp components in partitions */
