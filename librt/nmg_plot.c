@@ -386,13 +386,6 @@ point_t base;
 	pt_eu = eu->vu_p->v_p->vg_p->coord;
 	pt_other = eu->eumate_p->vu_p->v_p->vg_p->coord;
 
-	if (*eu->up.magic_p == NMG_SHELL_MAGIC || 
-	    (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
-	     *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC) ) {
-	     	/* Wire edge, or edge in wire loop */
-		VMOVE(base, pt_eu);
-		return;
-	}
 	if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC ||
 	    *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC) {
 		rt_log("in %s at %d edgeuse has bad parent\n", __FILE__, __LINE__);
@@ -455,18 +448,19 @@ point_t base, tip60;
 
 	NMG_CK_EDGEUSE(eu);
 
-	nmg_eu_coord(eu, base);
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC ||
 	    (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_SHELL_MAGIC) ) {
 	    	/* Wire edge, or edge in wire loop */
+	    	VMOVE( base, eu->vu_p->v_p->vg_p->coord );
 		NMG_CK_EDGEUSE(eu->eumate_p);
-		nmg_eu_coord( eu->eumate_p, tip );
+		VMOVE( tip, eu->eumate_p->vu_p->v_p->vg_p->coord );
 	}
 	else if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 	    	/* Loop in face */
 	    	register struct edgeuse *eutmp;
+		nmg_eu_coord(eu, base);
 		eutmp = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
 		NMG_CK_EDGEUSE(eutmp);
 		nmg_eu_coord( eutmp, tip );
