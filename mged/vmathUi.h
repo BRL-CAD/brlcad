@@ -1,4 +1,4 @@
-char vmath_ui_str[] = "\
+char *vmath_ui_str = "\
 set M_E		2.7182818284590452354;\
 set M_LOG2E	1.4426950408889634074;\
 set M_LOG10E	0.43429448190325182765;\
@@ -376,7 +376,9 @@ proc vec3x4mat { v m } {\
                  [expr [vdot [list [lindex $m 2] [lindex $m 6] [lindex $m 10]]\
                              $v]*$f]];\
 };\
-\
+";
+
+char *vmath_ui_str2 = "\
 proc vec2x4mat { v m } {\
   set f [expr 1.0/[lindex $m 15]];\
   return [list [expr [lindex $m 0]*[lindex $v 0]+[lindex $m 4]*[lindex $v 1]] \
