@@ -3,8 +3,6 @@
  *
  * An attempt at 2D Geoffrey Gardner style cloud texture map
  *
- *  Notes -
- *	Uses sin() table for speed.
  *
  *  Author -
  *	Philip Dykstra
@@ -28,6 +26,7 @@ static char RCScloud[] = "@(#)$Header$ (BRL)";
 #include "../h/vmath.h"
 #include "../h/raytrace.h"
 #include "material.h"
+#include "mathtab.h"
 
 struct cloud_specific {
 	float	cl_thresh;
@@ -45,33 +44,6 @@ struct matparse cloud_parse[] = {
 #define	PI	3.1415926535898
 #define	TWOPI	6.283185307179
 #define	NUMSINES	4
-
-/*
- *	S I N E
- *
- * Table lookup sine function.
- */
-double
-sine(angle)
-double angle;
-{
-#define	TABSIZE	512
-
-	static	int	init = 0;
-	static	double	table[TABSIZE];
-	register int	i;
-
-	if (init == 0) {
-		for( i = 0; i < TABSIZE; i++ )
-			table[i] = sin( TWOPI * i / TABSIZE );
-		init++;
-	}
-
-	if (angle > 0)
-		return( table[(int)((angle / TWOPI) * TABSIZE + 0.5) % TABSIZE] );
-	else
-		return( -table[(int)((-angle / TWOPI) * TABSIZE + 0.5) % TABSIZE] );
-}
 
 /*
  *			C L O U D _ T E X T U R E
@@ -95,23 +67,23 @@ float Contrast, initFx, initFy;
 	 */
 	Fx = TWOPI * initFx;
 	Fy = TWOPI * initFy;
-	Px = PI * 0.5 * sine( 0.5 * Fy * y );
-	Py = PI * 0.5 * sine( 0.5 * Fx * x );
+	Px = PI * 0.5 * tab_sin( 0.5 * Fy * y );
+	Py = PI * 0.5 * tab_sin( 0.5 * Fx * x );
 	C = 1.0;	/* ??? */
 
 	for( i = 0; i < NUMSINES; i++ ) {
 		/*
 		 * Compute one term of each summation.
 		 */
-		t1 += C * sine( Fx * x + Px ) + Contrast;
-		t2 += C * sine( Fy * y + Py ) + Contrast;
+		t1 += C * tab_sin( Fx * x + Px ) + Contrast;
+		t2 += C * tab_sin( Fy * y + Py ) + Contrast;
 
 		/*
 		 * Compute the new phases and frequencies.
 		 * N.B. The phases shouldn't vary the same way!
 		 */
-		Px = PI / 2.0 * sine( Fy * y );
-		Py = PI / 2.0 * sine( Fx * x );
+		Px = PI / 2.0 * tab_sin( Fy * y );
+		Py = PI / 2.0 * tab_sin( Fx * x );
 		Fx *= 2.0;
 		Fy *= 2.0;
 		C  *= 0.707;
