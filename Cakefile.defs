@@ -176,6 +176,19 @@ set -S2 "/bin/sh"
 #	define	MANDIR	/usr/catman/u_man/man
 #endif
 
+#ifdef i386
+#	define	MTYPE   at
+#	define	HAS_TCP 1
+#	define	LIBRT_TIMER	timerunix
+#	define	LIBFB_CONFIG	-DIF_X -DIF_REMOTE -DIF_PTTY
+#	define	LIBFB_OBJS	if_X pkg if_ptty if_remote
+#	define	LIBFB_SETUP	cp /usr/lib/libX11.a PRODUCTS
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X
+#	define	MGED_LIBES	/usr/lib/libX11.a -linet
+#	define	STANDARD_LIBES	-lm -linet
+#endif
+
 #if defined(alliant) && !defined(i860)
 /*	Alliant FX/8.  Compile all programs for the CEs */
 #	undef	fx
@@ -219,7 +232,7 @@ set -S2 "/bin/sh"
 #	else
 /*		FX/C */
 #		define	CC	/bin/fxc
-/*		-O c(concurrent) g(global) i(inline) v(vectors)
+/*		-O c(concurrent) g(global) i(inline) v(vectors) */
 #		if	1
 /*			Conservative */
 #		else
@@ -409,6 +422,7 @@ set -S2 "/bin/sh"
 /*			Use this one to generate code */
 /*#			define	CC_OPTS	-traditional*/
 #			define	CC_OPTS	-traditional -fstrength-reduce -fomit-frame-pointer -finline-functions
+/*#			define	CC_OPTS	-fstrength-reduce -fomit-frame-pointer -finline-functions*/
 #		else
 /*			Use this one as an "ansi lint" -- don't use the code! */
 #			define	CC_OPTS	-ansi -g -pedantic -Wall
@@ -430,11 +444,11 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #	else
 /*		Sun with X11 configuration */
-#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DID_AB -DIF_SUN \
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_ts
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DID_AB -DIF_SUN -DIF_TS \
 			-I/usr/X11/include -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
-			-L/usr/X11/lib -lX11
+			-L/usr/X11/lib -lX11 -lgds
 #		define	MGED_OBJS	dm-sun dm-X
 #		define	MGED_CONFIG	-DDM_SUNPW -DDM_X
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
@@ -493,8 +507,10 @@ set -S2 "/bin/sh"
 /*	-g -hnobtreg for debugging */
 #	if 1
 /*		Cray ANSI Standard C */
+/*		 -hreport=v gives vectorization report */
+/*		 -hmsglevel_0 gives full warnings, as well as errors */
 #		define	CC	/bin/scc
-#		define CC_DEFS	-hvreport
+#		define CC_DEFS	-hmsglevel_0
 #	else
 #		if 1
 /*			Plain old /bin/cc */
@@ -561,27 +577,25 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-lX11 -lnet
 #endif
 
-#ifdef convex
+#if defined(convex) || defined(__convex__)
 #	undef	convex
 #	undef	c1
 #	define	MTYPE	c1
 #	define	BSD	42
 #	define	HAS_TCP	1
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
-#	define	LIBFB_OBJS	if_remote if_ptty
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#	define	LIBFB_OBJS	if_remote if_ab
 #	define	LIBFB_LIBES	LIBPKG
 #	define	LIBRT_TIMER	timer42
 #	define	FC	/usr/convex/fc
 /*	libplot3/htond.c depends on running in native mode (CC_OPTS= -fn) */
 #	if 0
-/*		Optional vectorizing C compiler */
+/*		-O0 -O1 are scalar, -O1 for vectors, -O2 for parallel */
 #		define	OPTIMIZER	-O2
-#		define	CC	/usr/convex/vc
 #		if 1
-#			define	CC_OPTS	-fn
 #		else
 #			define	CC_OPTS	-DVECTORIZE -fn
-#endif
+#		endif
 #	endif
 #endif
 
