@@ -120,7 +120,7 @@ void make_bot_object(char		*name,
 /*************************** code from libwdb/bot.c ***************************/
 
 static int
-mk_bot_w_normals(
+rt_mk_bot_w_normals(
 	struct rt_wdb *fp,
 	const char *name,
 	unsigned char	mode,
@@ -195,7 +195,7 @@ mk_bot_w_normals(
 }
 
 static int
-mk_bot(
+rt_mk_bot(
 	struct rt_wdb *fp,
 	const char *name,
 	unsigned char	mode,
@@ -212,7 +212,7 @@ mk_bot(
 					 * otherwise thickness is centered about hit point
 					 */
 {
-	return( mk_bot_w_normals( fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
+	return( rt_mk_bot_w_normals( fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
 				  faces, thickness, face_mode, 0, NULL, NULL ) );
 }
 
@@ -510,7 +510,7 @@ make_bot_object(char		*name,
 	if( count )
 		bu_log( "WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id );
 
-	mk_bot(wdbp, name, bot_mode, RT_BOT_UNORIENTED, 0,
+	rt_mk_bot(wdbp, name, bot_mode, RT_BOT_UNORIENTED, 0,
 	       bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
 	       bot_ip.faces, bot_ip.thickness, bot_ip.face_mode);
 
