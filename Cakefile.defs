@@ -337,7 +337,6 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LD_OPTS	CC_OPTS
 #	define	FC	/usr/alliant/fortran
-#	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_LIBES	-lcvec -lcommon
 #	define	LIBRT_TIMER	timer42
 #endif
@@ -365,7 +364,6 @@ set -S2 "/bin/sh"
 #		endif
 #	endif
 #	define	FC	/usr/alliant/fortran
-#	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
 #	define	LIBRT_LIBES	-lcommon
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
@@ -477,7 +475,6 @@ set -S2 "/bin/sh"
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
-#	define	LIBMALLOC	/* needs malloc() from -lmpc */
 /*	X11 Configuration is standard in IRIX 4.0 */
 #	define	XINCDIR	/usr/X11/include
 #	define	XLIBDIR	/usr/X11/lib
@@ -542,7 +539,6 @@ set -S2 "/bin/sh"
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
-#	define	LIBMALLOC	/* needs malloc() from -lmpc */
 
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -DIF_X -I''XINCDIR
@@ -604,7 +600,6 @@ set -S2 "/bin/sh"
 #	ifndef	LD_OPTS
 #		define	LD_OPTS	CC_OPTS
 #	endif
-#	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
 
 #	define	sun_no_opts	/* Production configuration */
@@ -711,7 +706,6 @@ set -S2 "/bin/sh"
 #	define	RANLIB		/**/
 #	define	STANDARD_LIBES	-L''LIBDIR -lm
 # endif
-#	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
 
 #	define	XINCDIR		/usr/X11/include
@@ -784,7 +778,6 @@ set -S2 "/bin/sh"
 #	ifndef	LD_OPTS
 #		define	LD_OPTS	CC_OPTS
 #	endif
-#	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
 /*	NeXT with X11 configuration */
 #	define	LIBFB_OBJS	if_remote if_ab if_X
@@ -810,7 +803,6 @@ set -S2 "/bin/sh"
 #	define  CC_OPTS	-Tbsd4.3 -U__STDC__ -g
 #	define	FC_OPTS	CC_OPTS
 #	define	LD_OPTS	CC_OPTS -g
-#	define	LIBMALLOC	/* may be able to use local libmalloc */
 #	define	LIBRT_TIMER	timer42
 #	define	LIBFB_OBJS	if_remote if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
@@ -849,7 +841,6 @@ set -S2 "/bin/sh"
 #		endif
 #	endif
 #	define	RANLIB	echo
-#	define	LIBMALLOC	/* use vendor library */
 #	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBRT_LIBES	-L/lib/multi -lu -lio
@@ -905,7 +896,6 @@ set -S2 "/bin/sh"
 #	endif
 #	define	FC	/bin/cf77
 #	define	RANLIB	echo
-#	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBRT_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
@@ -1045,7 +1035,6 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LDFLAGS	LD_OPTS
 #	define	STANDARD_LIBES	-lm -lc
-#	define	LIBMALLOC	/* use vendor library */
 #	define	HAS_TCP	1
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBPKG_CONFIG	/**/
@@ -1239,9 +1228,6 @@ set -S2 "/bin/sh"
 #	define	LIBCURSOR	../libcursor/libcursor.ARCH_SUF
 #	define	LIBFONT	../libfont/libfont.ARCH_SUF
 #	define	LIBSYSV	../libsysv/libsysv.ARCH_SUF
-#	ifndef	LIBMALLOC
-#		define	LIBMALLOC	../libmalloc/libmalloc.ARCH_SUF
-#	endif
 #	if HAS_TCP
 #		define	LIBPKG	../libpkg/libpkg.ARCH_SUF
 #	else
@@ -1264,9 +1250,6 @@ set -S2 "/bin/sh"
 #	define	LIBCURSOR	../.libcursor.MTYPE/libcursor.ARCH_SUF
 #	define	LIBFONT	../.libfont.MTYPE/libfont.ARCH_SUF
 #	define	LIBSYSV	../.libsysv.MTYPE/libsysv.ARCH_SUF
-#	ifndef	LIBMALLOC
-#		define	LIBMALLOC	../.libmalloc.MTYPE/libmalloc.ARCH_SUF
-#	endif
 #	if HAS_TCP
 #		define	LIBPKG	../.libpkg.MTYPE/libpkg.ARCH_SUF
 #	else
@@ -1306,10 +1289,6 @@ set -S2 "/bin/sh"
 #	define	LIBFONT_DEP	[[LIBVERS ../libfont/libfont.ARCH_SUF]]
 #	define	LIBSYSV	-L../libsysv -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../libsysv/libsysv.ARCH_SUF]]
-#	ifndef	LIBMALLOC
-#		define	LIBMALLOC	-L../libmalloc -lmalloc
-#		define	LIBMALLOC_DEP	[[LIBVERS ../libmalloc/libmalloc.ARCH_SUF]]
-#	endif
 #	if HAS_TCP
 #		define	LIBPKG	-L../libpkg -lpkg
 #		define	LIBPKG_DEP	[[LIBVERS ../libpkg/libpkg.ARCH_SUF]]
@@ -1348,10 +1327,6 @@ set -S2 "/bin/sh"
 #	define	LIBFONT_DEP	[[LIBVERS ../.libfont.MTYPE/libfont.ARCH_SUF]]
 #	define	LIBSYSV	-L../.libsysv.MTYPE -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../.libsysv.MTYPE/libsysv.ARCH_SUF]]
-#	ifndef	LIBMALLOC
-#		define	LIBMALLOC	-L../.libmalloc.MTYPE -lmalloc
-#		define	LIBMALLOC_DEP	[[LIBVERS ../.libmalloc.MTYPE/libmalloc.ARCH_SUF]]
-#	endif
 #	if HAS_TCP
 #		define	LIBPKG	-L../.libpkg.MTYPE -lpkg
 #		define	LIBPKG_DEP	[[LIBVERS ../.libpkg.MTYPE/libpkg.ARCH_SUF]]

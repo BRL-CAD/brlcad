@@ -136,7 +136,6 @@ CDIRS="cake cakeaux papers contributed"
 # db depends on conv, conv depends on libwdb, libwdb depends on librt
 BDIRS="bench \
 	libsysv \
-	libmalloc \
 	libplot3 \
 	libwdb \
 	libpkg \
@@ -243,7 +242,6 @@ benchmark)
 	then	sh $0 relink
 	fi
 	(cd ${DIRPRE}libsysv${DIRSUF};  cake -k)
-	(cd ${DIRPRE}libmalloc${DIRSUF};  cake -k)
 	(cd ${DIRPRE}bench${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libwdb${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libplot3${DIRSUF};  cake -k)
