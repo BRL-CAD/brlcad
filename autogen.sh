@@ -540,7 +540,7 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
   autoconf_output=`$AUTOCONF -f 2>&1`
   if [ ! $? = 0 ] ; then
     if test -f "$LIBTOOL_M4" ; then
-      found_libtool="$ECHO $autoconf_output | grep AC_PROG_LIBTOOL"
+      found_libtool="`$ECHO $autoconf_output | grep AC_PROG_LIBTOOL`"
       if ! test "x$found_libtool" = "x" ; then
 	if test -f acinclude.m4 ; then
 	  if ! test -f acinclude.m4.backup ; then
