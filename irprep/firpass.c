@@ -2592,7 +2592,7 @@ struct partition *PartHeadp;
 		}
 
 		/*  Curvature.  */
-		RT_CURVE(&cur,hitp,stp);
+		RT_CURVATURE(&cur,hitp,pp->pt_inflip,stp);
 		/*  Print out curvature information.  */
 /*
  *		(void)printf("Principle direction of curvature:  ");

@@ -19,7 +19,7 @@
 
 /*	27 May 1992       - Add statements to allow a pix file  */
 /*			    to be written.  */
-/*	30 September 1994 - Change name from see.c to ir-X.c
+/*	30 September 1994 - Change name from see.c to ir-X.c	*/
 
 /*  Include files needed.  */
 #include "conf.h"
@@ -71,7 +71,7 @@ main()
    int screen;			/*  Used for getting colors.  */
    XColor colval[MAXCOL];	/*  Color values.  */
    XRectangle rect[MAXARR];	/*  Array for drawing rectangles.  */
-   char **a;			/*  Place holder for XSetStandard  */
+   char **a=(char **)NULL;	/*  Place holder for XSetStandard  */
 				/*  Properties.  */
    char *winttl = "SEE";	/*  Window title.  */
    char *exit = "QUIT";		/*  Exit label.  */
