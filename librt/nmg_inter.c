@@ -3128,27 +3128,28 @@ fixup:
 						hit_v,
 						V3ARGS(hit_v->vg_p->coord) );
 				}
-#if 0
-/* Efficiency measure.  Add later. */
-				if( !V3PT_IN_RPP( hit_v->vg_p->coord, fu1->f_p->min_pt, fu1->f_p->max_pt ) )  {
-					/* Lines intersect outside bounds of this face. */
+
+				/*
+				 *  If the hit point is outside BOTH faces
+				 *  bounding RPP, then it can be ignored.
+				 *  Otherwise, it is needed for generating
+				 *  accurate state transitions in the
+				 *  face cutter.
+				 */
+				if( !V3PT_IN_RPP( hit_v->vg_p->coord, fu1->f_p->min_pt, fu1->f_p->max_pt ) &&
+				    !V3PT_IN_RPP( hit_v->vg_p->coord, fu2->f_p->min_pt, fu2->f_p->max_pt )
+				)  {
+					/* Lines intersect outside bounds of both faces. */
 					if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-						VPRINT("\t\tisect pt outside fu1 RPP:", hit_v->vg_p->coord );
-						rt_log("\t\tface RPP: ( %g %g %g ) <-> ( %g %g %g )\n",
+						VPRINT("\t\tisect pt outside fu1 & fu2 RPP:", hit_v->vg_p->coord );
+						rt_log("\t\tfu1 RPP: ( %g %g %g ) <-> ( %g %g %g )\n",
 							V3ARGS( fu1->f_p->min_pt ), V3ARGS( fu1->f_p->max_pt ) );
-					}
-					continue;
-				}
-				if( !V3PT_IN_RPP( hit_v->vg_p->coord, fu2->f_p->min_pt, fu2->f_p->max_pt ) )  {
-					/* Lines intersect outside bounds of this face. */
-					if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-						VPRINT("\t\tisect pt outside fu2 RPP:", hit_v->vg_p->coord );
-						rt_log("\t\tface RPP: ( %g %g %g ) <-> ( %g %g %g )\n",
+						rt_log("\t\tfu2 RPP: ( %g %g %g ) <-> ( %g %g %g )\n",
 							V3ARGS( fu2->f_p->min_pt ), V3ARGS( fu2->f_p->max_pt ) );
 					}
 					continue;
 				}
-#endif
+
 				/*
 				 *  Geometry check.
 				 *  Since on_eg is the line of intersection
@@ -3813,8 +3814,6 @@ struct faceuse		*fu1, *fu2;
 		    	ang = acos(fabs(dot));
 			rt_log("WARNING nmg_isect_two_face3p() is->pt and on_eg lines differ by %g deg. (shared topo)\n",
 				ang * rt_radtodeg );
-		    	if( ang * rt_radtodeg > 1.0 )
-				rt_bomb("nmg_isect_two_face3p() line direction mismatch\n");
 		}
 		/* Take geometry from the known shared edge is->on_eg */
 		nmg_isect_construct_nice_ray( is, fu2 );
