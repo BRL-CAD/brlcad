@@ -400,7 +400,12 @@ proc overlap_tool { id } {
 		return
 	}
 
-	set over_cont($id,objs) "all"
+	set objs [who]
+	if { [string length $objs] == 0 } {
+		set objs "all"
+	}
+
+	set over_cont($id,objs) $objs
 	set over_cont($id,az) 0
 	set over_cont($id,el) 0
 	set over_cont($id,local2base) $local2base
