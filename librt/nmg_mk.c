@@ -2112,12 +2112,16 @@ long		*magic_p;
 		vect_t		dir_src;
 		vect_t		dir_dest;
 		fastf_t		deg;
+		double		cos_ang;
 
 		VMOVE( dir_src, old->e_dir );
 		VUNITIZE( dir_src );
 		VMOVE( dir_dest, eg->e_dir );
 		VUNITIZE( dir_dest );
-		deg = acos(fabs(VDOT( dir_src, dir_dest ))) * rt_radtodeg;
+		cos_ang = fabs(VDOT( dir_src, dir_dest ));
+		if( cos_ang > 1.0 )
+			cos_ang = 1.0;
+		deg = acos( cos_ang ) * rt_radtodeg;
 		if( fabs(deg) > 2 )  {
 			VPRINT( "dir_src ", dir_src );
 			VPRINT( "dir_dest", dir_dest );
@@ -3018,6 +3022,7 @@ struct edge_g_lseg	*src_eg;
 	vect_t				dir_src;
 	vect_t				dir_dest;
 	fastf_t				deg;
+	double				cos_ang;
 
 	NMG_CK_EDGE_G_LSEG(src_eg);
 	NMG_CK_EDGE_G_LSEG(dest_eg);
@@ -3031,7 +3036,10 @@ struct edge_g_lseg	*src_eg;
 	VUNITIZE( dir_src );
 	VMOVE( dir_dest, dest_eg->e_dir );
 	VUNITIZE( dir_dest );
-	deg = acos(fabs(VDOT( dir_src, dir_dest ))) * rt_radtodeg;
+	cos_ang = fabs(VDOT( dir_src, dir_dest ));
+	if( cos_ang > 1.0 )
+		cos_ang = 1.0;
+	deg = acos( cos_ang ) * rt_radtodeg;
 	if( fabs(deg) > 2 )  {
 		VPRINT( "dir_src ", dir_src );
 		VPRINT( "dir_dest", dir_dest );
