@@ -1,6 +1,6 @@
 /*
- *	@(#) vproc.c			retrieved: 8/13/86 at 08:25:07,
- *	@(#) version 2.1		last edit: 6/1/84 at 14:05:19.
+ *	@(#) vproc.c			retrieved: 8/13/86 at 08:25:20,
+ *	@(#) version 2.2		last edit: 6/20/84 at 12:22:51.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -93,9 +93,6 @@ char *prefix;
 	}
 	itoa( -1, buff, 5 );
 	write( ridfd, buff, 5 );
-	write( ridfd, LF, 1 );
-	itoa( 0, buff, 10 );
-	write( ridfd, buff, 10 );
 	write( ridfd, LF, 1 );
 
 	/* create /tmp file for discrimination of files
