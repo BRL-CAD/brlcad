@@ -2,6 +2,7 @@
 lib_LTLIBRARIES = libtermio.la
 
 libtermio_la_SOURCES = termio.c vers.c
+libtermio_la_LDFLAGS = -version-info 19:1
 
 CFLAGS = -I$(top_srcdir)/h
 

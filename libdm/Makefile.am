@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libdm.la
 
 SRCS = clip.c color.c dm-Null.c dm-X.c dm-generic.c dm-plot.c dm-ps.c dm_obj.c knob.c options.c query.c tcl.c 
 libdm_la_SOURCES = $(SRCS) vers.c
+libdm_la_LDFLAGS = -version-info 19:1
 
 CFLAGS = @X_CFLAGS@ -I$(top_srcdir)/h
 

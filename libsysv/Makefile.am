@@ -2,6 +2,7 @@
 lib_LTLIBRARIES = libsysv.la
 
 libsysv_la_SOURCES = regex.c redata.c vers.c
+libsysv_la_LDFLAGS = -version-info 19:1
 
 noinst_HEADERS = cclass.h cname.h regex2.h utils.h
 
