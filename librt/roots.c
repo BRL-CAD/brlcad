@@ -7,7 +7,7 @@
 #define	Abs( a )	((a) >= 0 ? (a) : -(a))
 
 int		polyRoots();
-static void	findRoot(), synthetic(), compH(), nextZ(), deflate();
+static void	findRoot(), synthetic(), deflate();
 
 
 /*	>>>  p o l y R o o t s ( )  <<<
@@ -124,36 +124,75 @@ register poly		*eqn;	/* polynomial			*/
 register complex	*nxZ;	/* initial guess for root	*/
 {
 	static complex  p0, p1, p2;	/* evaluated polynomial+derivatives */
+	static complex	p1_H;		/* p1 - H, temporary */
 	static complex  Z, H;		/* 'Z' and H(Z) in comment	*/
+	static complex  T;		/* temporary for making H */
 	static double	diff, dist;	/* test values for convergence	*/
-	static double	f;		/* floating temp */
+	static double	a,b;		/* floating temps */
+	static int	n;
 	register int	i;		/* iteration counter		*/
 
 	i = 0;
-	do {
-		Z = *nxZ;
-		synthetic( &Z, eqn, &p0, &p1, &p2 );
-		compH( &H, &p0, &p1, &p2, eqn->dgr );
-		nextZ( nxZ, &p0, &p1, &H, eqn->dgr );
-
+	for(;;) {
 		/* If the thing hasn't converged after 20 iterations,
 		 * it probably won't.
 		 */
-		if (++i > 20)
-			break;
+		if (++i > 20)  {
+			printf("findRoot:  didn't converge in 20 iterations\n");
+			return;
+		}
+
+		Z = *nxZ;
+		synthetic( &Z, eqn, &p0, &p1, &p2 );
+
+		/* Compute H for Laguerre's method. */
+		n = eqn->dgr-1;
+		H = p1;
+		CxMul( &H, &p1 );
+		CxScal( &H, (double)(n*n) );
+		T = p0;
+		CxMul( &T, &p2 );
+		CxScal( &T, (double)(eqn->dgr*n) );
+		CxSub( &H, &T );
+
+		/* Calculate the next iteration for Laguerre's method.
+		 * Test to see whether addition or subtraction gives the
+		 * larger denominator for the next 'Z' , and use the
+		 * appropriate value in the formula.
+		 */
+		CxSqrt( &H );
+		p1_H = p1;
+		CxSub( &p1_H, &H );
+		CxAdd( &p1, &H );		/* p1 <== p1+H */
+		CxScal( &p0, (double)(eqn->dgr) );
+		if ( CxAmplSq( &p1_H ) > CxAmplSq( &p1 ) ){
+			CxDiv( &p0, &p1_H);
+			CxSub( nxZ, &p0 );
+		} else {
+			CxDiv( &p0, &p1 );
+			CxSub( nxZ, &p0 );
+		}
 
 		/* Use proportional convergence test to allow very small
 		 * roots and avoid wasting time on large roots.
+		 * THIS IS WIERD, AND COSTLY, using CxAmpl().
+		 * Using CxAmplSq() saves lots of cycles;  the loop
+		 * termination induced by SMALL will change, but probably
+		 * not by vast amounts.
 		 */
-		f = CxAmpl( nxZ );
-		diff = CxAmpl( &Z ) - f;
+		b = CxAmplSq( nxZ );		/* Was CxAmpl() */
+		a = CxAmplSq( &Z );		/* Was CxAmpl() */
+		diff = a - b;
 		diff = Abs( diff );
-		if ( ( dist = f - diff ) < 0 ){
+		if ( b < diff ){
 			dist = 0;
 		} else {
-			dist = SMALL* Abs(dist);
+			dist = (b - diff) * SMALL;
 		}
-	} while ( diff > dist );
+		if( diff > dist )
+			continue;
+		return;
+	}
 }
 
 
@@ -202,64 +241,6 @@ register complex	*Z, *b, *c, *d;
 	}
 }
 
-
-/*	>>>  c o m p H ( )  <<<
- *
- *	Computes H for Laguerre's method.
- *	See note under 'findRoot' for explicit formula.
- */
-static void
-compH( H, p0, p1, p2, degr )
-register complex   *H, *p0, *p1, *p2;
-int       degr;
-{
-	static complex   T;
-	register int       n=degr-1;
-
-	T = *p0;
-	*H = *p1;
-
-	CxMul( H, p1 );
-	CxScal( H, (double)(n*n) );
-	CxMul( &T, p2 );
-	CxScal( &T, (double)(degr*n) );
-
-	CxSub( H, &T );
-}
-
-
-/*	>>>  n e x t Z ( )  <<<
- *
- *	Calculates the next iteration for Laguerre's method.
- *	See note under 'findRoot' for explicit formula.
- */
-static void
-nextZ( nxZ, p0, p1, H, degr )
-register complex   *nxZ, *p0, *p1, *H;
-int       degr;
-{
-	static complex   p1A, p1S;
-
-	p1A = *p1;
-	p1S = *p1;
-	CxSqrt(H);
-	/* Test to see whether addition or subtraction gives the larger
-	 * denominator for the next 'Z' , and use the appropriate value
-	 * in the formula.
-	 */
-	CxSub( &p1S, H );
-	CxAdd( &p1A, H );
-	CxScal( p0, (double)(degr) );
-	if ( CxAmpl( &p1S ) > CxAmpl( &p1A ) ){
-		CxDiv( p0, &p1S);
-		CxSub( nxZ, p0 );
-	} else {
-		CxDiv( p0, &p1A );
-		CxSub( nxZ, p0 );
-	}
-}
-
-
 /*	>>>  d e f l a t e ( )  <<<
  *
  *	Deflates a polynomial by a given root.
@@ -285,7 +266,7 @@ register complex		*root;
 		div.dgr = 2;
 		div.cf[0] = 1;
 		div.cf[1] = -2 * root->re;
-		div.cf[2] = root->re * root->re + root->im * root->im;
+		div.cf[2] = CxAmplSq( root );
 	}
 
 	/* Use synthetic division to find the quotient (new polynomial)
