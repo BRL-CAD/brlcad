@@ -1466,7 +1466,7 @@ dnl *** libtkGLX ***
 dnl See if we can build libtkGLX
 # XXX need to test why the library fails on non-irix
 TKGLX=
-if test "x$host_os" = "xirix6.5"
+if test "x$host_os" = "xirix6.5" ; then
 	TKGLX=libtkGLX
 fi
 AC_SUBST(TKGLX)
