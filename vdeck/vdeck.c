@@ -670,18 +670,14 @@ struct rt_tor_internal	*gp;
 char			*name;
 int			num;
 {
-	vect_t	norm;
-
 	RT_VLS_CHECK(v);
 	RT_TOR_CK_MAGIC(gp);
 
 	/* V, N, r1, r2 */
-	VSCALE( norm, gp->h, 1/gp->r_h );
-
 	vls_itoa( v, num, 5 );
 	rt_vls_strcat( v, "tor  " );		/* 5 */
 	vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
-	vls_ftoa_vec( v, norm, 10, 4 );
+	vls_ftoa_vec( v, gp->h, 10, 4 );
 	rt_vls_strcat( v, name );
 	rt_vls_strcat( v, "\n" );
 
