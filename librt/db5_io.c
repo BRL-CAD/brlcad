@@ -1393,9 +1393,20 @@ db5_export_color_table( struct bu_vls *ostr, struct db_i *dbip )
 	}
 }
 
+/*
+ *			D B 5 _ I M P O R T _ C O L O R _ T A B L E
+ */
 void
-db5_import_color_table( struct bu_vls *istr )
+db5_import_color_table( char *cp )
 {
+	char	*sp = cp;
+	int	low, high, r, g, b;
+
+	while( (sp = strchr( sp, '{' )) != NULL )  {
+		sp++;
+		if( sscanf( sp, "%d %d %d %d %d", &low, &high, &r, &g, &b ) != 5 )  break;
+		rt_color_addrec( low, high, r, g, b, -1L );
+	}
 }
 
 /*
@@ -1415,12 +1426,13 @@ db5_put_color_table( struct db_i *dbip )
 	int	ret;
 
 	RT_CK_DBI(dbip);
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
 	bu_vls_init(&str);
 	db5_export_color_table( &str, dbip );
 
 	ret = db5_update_attribute( DB5_GLOBAL_OBJECT_NAME,
-		"material", bu_vls_addr(&str), dbip );
+		"regionid_colortable", bu_vls_addr(&str), dbip );
 
 	bu_vls_free( &str );
 	return ret;

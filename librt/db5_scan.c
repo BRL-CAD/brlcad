@@ -321,7 +321,8 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 			}
 		}
 		if( (cp = bu_avs_get( &avs, "regionid_colortable")) != NULL )  {
-			/* XXX Grab the region-id coloring table here */
+			/* Import the region-id coloring table */
+			db5_import_color_table(cp);
 		}
 		bu_avs_free( &avs );
 		bu_free_external(&ext);	/* not until after done with avs! */
