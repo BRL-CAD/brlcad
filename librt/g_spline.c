@@ -64,7 +64,6 @@ struct local_hit {
 #define NULLTREE    (struct b_tree *) 0
 
 struct local_hit * spl_hit_head = NULLHIT;
-int hit_count;
 
 /* Algorithm - Fire a ray at the bounding box of a b_spline surface.  If an
  * intersection is found then subdivide the surface creating two new
@@ -82,7 +81,6 @@ int hit_count;
  */
 void	n_shoot();		/* XXX needs an rt_ or spl_ name */
 void	add_hit();		/* XXX */
-void	interp_uv();		/* XXX */
 void	n_free();		/* XXX */
 void	shot_poly();		/* XXX */
 
@@ -208,7 +206,7 @@ struct directory *dp;
 		s_tree->next = nlist;
 		nlist = s_tree;
 
-		s_split = (struct b_spline * ) spl_split( new_srf, 0);
+		s_split = (struct b_spline * ) spl_split( new_srf, ROW);
 		s_tree->left->root = s_split;
 		s_tree->right->root = s_split->next;
 		s_split->next = (struct b_spline *) 0;
@@ -229,8 +227,6 @@ struct directory *dp;
 		VMINMAX( stp->st_min, stp->st_max, s_tree->max );
 		if ( rt_g.debug & DEBUG_SPLINE ) {
 			rt_pr_spl( "initial surface",s_tree->root );
-			rt_pr_spl( "left  surface", s_tree->left->root );
-			rt_pr_spl( "right  surface",s_tree->right->root );
 			fprintf(stderr, "bounding box\n");
 			VPRINT("min", s_tree->min);
 			VPRINT("max", s_tree->max);
@@ -285,8 +281,10 @@ struct soltab *stp;
 register struct hit *hitp;
 register struct uvcoord *uvp;
 {
+
 	uvp->uv_u = hitp->hit_vpriv[0];
 	uvp->uv_v = hitp->hit_vpriv[1];
+
 	return;
 }
 
@@ -753,15 +751,13 @@ struct application * ap;
 	if(!NEAR_ZERO(rp->r_dir[2], SQRT_SMALL_FASTF)) 
 		invdir[2] = 1.0 / rp->r_dir[2];
 
-	hit_count = 0;
-
 	RES_ACQUIRE( &rt_g.res_model );	
 
 	for(; nlist != (struct b_head *) 0; nlist = nlist->next )
 	{
 		curr_tree = nlist;
-		n_shoot( rp, invdir, nlist->left,  ap, 1, 0 );
-		n_shoot( rp, invdir, nlist->right, ap, 1, 0 );
+		n_shoot( rp, invdir, nlist->left,  ap, 0 );
+		n_shoot( rp, invdir, nlist->right, ap, 0 );
 	}
 
 	/* Sort the hit points and create the segments if only one hit
@@ -822,15 +818,12 @@ struct application * ap;
 	return segp;
 }
 
-#define OTHERDIR(dir)	( (dir == 0)? 1:0)
-
 void
-n_shoot( rp,  invdir,  tree, ap, dir, level)
+n_shoot( rp,  invdir,  tree, ap, level)
 register struct xray *rp;
 fastf_t * invdir;
 struct b_tree * tree;
 struct application *ap;
-int dir;
 int level;
 {
 	int flat;
@@ -853,14 +846,14 @@ int level;
 		}
 
 		flat =	spl_flat( tree->root, pix_size );
-		if (flat)
+		if (flat == FLAT)
 		{
 			shot_poly( rp,  tree, level);
 			return;
 		}
 
 		sub = (struct b_spline *) 
-		spl_split( tree->root, dir);
+		spl_split( tree->root, flat);
 		if( spl_check( sub ) < 0 || 
 		    spl_check( sub->next ) < 0 )  {
 		    	rt_pr_spl("error in spl_split() input:", tree->root);
@@ -890,14 +883,12 @@ int level;
 	if ( rt_g.debug & DEBUG_SPLINE ) 
 	    rt_log("spline: Left tree level %d\n", level);
 
-	n_shoot( rp,  invdir,  tree->left, ap,
-	    OTHERDIR(dir), level+1 );
+	n_shoot( rp,  invdir,  tree->left, ap, level+1 );
 
 	if ( rt_g.debug & DEBUG_SPLINE ) 
 	    rt_log("spline: Right tree level %d\n", level);
 
-	n_shoot( rp,  invdir,  tree->right, ap,
-	    OTHERDIR(dir), level+1);
+	n_shoot( rp,  invdir,  tree->right, ap, level+1);
 }
 
 void
@@ -907,6 +898,9 @@ struct b_tree * tree;
 {
 	struct  spl_poly * poly, *p, *tmp;
 	struct  local_hit * h0, * ray_poly();
+	int hit_count;
+
+	hit_count = 0;
 	
 	poly = (struct spl_poly *) spl_to_poly( tree->root );
 
@@ -935,26 +929,49 @@ struct b_tree * tree;
 	if ( !hit_count && rt_g.debug & DEBUG_SPLINE )
 	{
 		rt_log("Bounding Box hit but no surface hit");
+		VPRINT("min", tree->min);
+		VPRINT("max", tree->max);
 		rt_pr_spl("B_Spline surface", tree->root);
 	}
 
 }
 
+#define EQ_HIT(a,b)	( ((a) - (b) ) < EPSILON)
+
+/* If this is a duplicate of an existing hit point than
+ * it means that the ray hit exactly on an edge of a patch 
+ * subdivision and you need to thow out the extra hit.
+ */
+
 void
 add_hit( hit1 )
 struct local_hit * hit1;
 {
+
+	register struct local_hit * h_ptr;
+
 	if ( spl_hit_head == NULLHIT) {
 	        hit1 ->next = hit1-> prev = NULLHIT;
 		spl_hit_head = hit1;
 		return;
-	} else
-	{
-		hit1->prev = NULLHIT;
-		hit1->next = spl_hit_head;
-		spl_hit_head->prev = hit1;
-		spl_hit_head = hit1;
 	}
+
+	/* check for duplicates */
+	for( h_ptr = spl_hit_head; h_ptr != NULLHIT; h_ptr = h_ptr->next)
+	{
+		if( EQ_HIT(hit1->hit_dist, h_ptr->hit_dist ) &&
+		    EQ_HIT(hit1->hit_vpriv[0], h_ptr->hit_vpriv[0]) &&
+		    EQ_HIT(hit1->hit_vpriv[1], h_ptr->hit_vpriv[1]) )
+		{
+			rt_free( (char *) hit1, "add_hit: duplicate");
+			return;
+		}
+	}
+	
+	hit1->prev = NULLHIT;
+	hit1->next = spl_hit_head;
+	spl_hit_head->prev = hit1;
+	spl_hit_head = hit1;
 }
 
 struct local_hit *
@@ -996,171 +1013,127 @@ get_next_hit(  )
 }
 
 
-
-#define V_CROSS_SIGN( a, b )  	(( ((a[0] * b[1] - a[1] * b[0]) + (a[1] * b[2] - a[2] * b[1]) +	(a[0] * b[2] - a[2] * b[0])) >= 0.0)? 1 : 0)
-
-struct plane {				/* Plane definition */
-        point_t  nrm;			/* Plane Normal */
-	fastf_t  offset;			/* Plane Offset */
-};
-
 struct local_hit *
 ray_poly( rp, p1 )
 struct xray * rp;
 struct spl_poly * p1;
 {
-	point_t itr_point;
-	vect_t b_minus_a, c_minus_b, a_minus_c, itr_cross;
-	struct local_hit * h0;
-	fastf_t uv[2], tmp;
-	struct plane plane_form(), pln;
+	register struct local_hit * h0;
+	point_t pt1, pt2, pt3;
+	point_t Q, B, norm;
+	fastf_t uv[2];
+	fastf_t d, offset, t;
+	unsigned int i0, i1, i2;
+	fastf_t NX, NY, NZ;
 
-	fastf_t denom, t;
-	int curr_sign;
+	norm[0] = (p1->ply[0])[1] * ((p1->ply[1])[2] - (p1->ply[2])[2]) + 
+		  (p1->ply[1])[1] * ((p1->ply[2])[2] - (p1->ply[0])[2]) + 
+		  (p1->ply[2])[1] * ((p1->ply[0])[2] - (p1->ply[1])[2]);
 
-	pln = plane_form( p1->ply[0], p1->ply[1], p1->ply[2] );
+	norm[1] = -((p1->ply[0])[0] * ((p1->ply[1])[2] - (p1->ply[2])[2]) + 
+		    (p1->ply[1])[0] * ((p1->ply[2])[2] - (p1->ply[0])[2]) + 
+		    (p1->ply[2])[0] * ((p1->ply[0])[2] - (p1->ply[1])[2]));
 
-	denom = VDOT( pln.nrm, rp->r_dir);
+	norm[2] = (p1->ply[0])[0] * ((p1->ply[1])[1] - (p1->ply[2])[1]) + 
+		  (p1->ply[1])[0] * ((p1->ply[2])[1] - (p1->ply[0])[1]) + 
+		  (p1->ply[2])[0] * ((p1->ply[0])[1] - (p1->ply[1])[1]);
 
-	if (APX_EQ( denom, 0.0))
-		return (struct local_hit *) 0;
+	offset = -(
+		(p1->ply[0])[0] * ((p1->ply[1])[1] * (p1->ply[2])[2] - 
+	        (p1->ply[2])[1] * (p1->ply[1])[2]) + 
 
-	t = - (VDOT( pln.nrm, rp->r_pt) + pln.offset)/ denom;
+		(p1->ply[1])[0] * ((p1->ply[2])[1] * (p1->ply[0])[2] - 
+	        (p1->ply[0])[1] * (p1->ply[2])[2]) +
 
-	if ( t < 0.0005  )
-		return (struct local_hit *) 0;
+    		(p1->ply[2])[0] * ((p1->ply[0])[1] * (p1->ply[1])[2] - 
+		(p1->ply[1])[1] * (p1->ply[0])[2]));
 
-	VJOIN1( itr_point, rp->r_pt, t, rp->r_dir);
+	d = ((norm)[0] * (rp->r_dir)[0] + 
+	    (norm)[1] * (rp->r_dir)[1] + 
+	    (norm)[2] * (rp->r_dir)[2]);
 
-	VSUB2( b_minus_a, p1->ply[1], p1->ply[0]);
-	VSUB2( c_minus_b, p1->ply[2], p1->ply[1]);
+	if ( fabs(d) < 0.0001 )
+		return 0;
 
-	VSUB2( itr_cross, itr_point, p1->ply[0]);
-	curr_sign = V_CROSS_SIGN( b_minus_a, itr_cross);
+	t = -((
+	    norm[0] * rp->r_pt[0] + 
+	    norm[1] * rp->r_pt[1] + 
+	    norm[2] * rp->r_pt[2]) + offset) / d;
 
-	VSUB2( itr_cross, itr_point, p1->ply[1]);
-	if ( V_CROSS_SIGN( c_minus_b, itr_cross) != curr_sign )
-		return (struct local_hit *) 0;
+	NX  = fabs( norm[X] );
+	NY  = fabs( norm[Y] );
+	NZ  = fabs( norm[Z] );
 
-	VSUB2( a_minus_c, p1->ply[0], p1->ply[2]);
-	VSUB2( itr_cross, itr_point, p1->ply[2]);
-	if ( V_CROSS_SIGN( a_minus_c, itr_cross) != curr_sign )
-		return (struct local_hit *) 0;
+	i0 = 0; i1 = 1; i2 = 2;
+
+	if ( NY > NX) { 
+		i0 = 1; 
+		i1 = 0; 
+	}
+
+	if ( NZ > NY) { 
+		i0 = 2; 
+		i1 = 1; 
+		i2 = 0;
+	}
+
+	Q[i0] = rp->r_pt[i0] + rp->r_dir[i0] * t;
+	Q[i1] = rp->r_pt[i1] + rp->r_dir[i1] * t;
+	Q[i2] = rp->r_pt[i2] + rp->r_dir[i2] * t;
+
+	VSUB2( pt1, (p1->ply[2]), (p1->ply[1]));
+	VSUB2( pt2, Q, (p1->ply[1]));
+	VCROSS( pt3, pt1, pt2 );
+	B[X] = pt3[i0] / norm[i0];
+	if( B[X] < 0.0 || B[X] > 1.0 )
+		return 0;
+
+	VSUB2( pt1, (p1->ply[0]), (p1->ply[2]));
+	VSUB2( pt2, Q, (p1->ply[2]));
+	VCROSS( pt3, pt1, pt2 );
+	B[Y] = pt3[i0] / norm[i0];
+	if( B[Y] < 0.0 || B[Y] > 1.0 )
+		return 0;
+
+	VSUB2( pt1, (p1->ply[1]), (p1->ply[0]));
+	VSUB2( pt2, Q, (p1->ply[0]));
+	VCROSS( pt3, pt1, pt2 );
+	B[Z] = pt3[i0] / norm[i0];
+	if( B[Z] < 0.0 || B[Z] > 1.0 )
+		return 0;
 		
 	/* if we reach this point we have a hit */
-
 	h0 = (struct local_hit *) rt_malloc ( sizeof ( struct local_hit ), 
 		"ray_poly: hit point");
 
 	h0->next = (struct local_hit *)0;
 	h0->prev = (struct local_hit *)0;
-		
-	interp_uv( p1, itr_point, uv );
 
 	h0->hit_dist = t;
-
-	/* This is a hack */
-	/* If a surface is linear in either direction than
-	 * the normal must be approximated since the dirivatives
-	 * can't be used to calculate the normal.
-         */
-
-	VMOVE(h0->hit_normal, pln.nrm );
+	VMOVE(h0->hit_normal, norm );
 	VUNITIZE(h0->hit_normal);
 	if( VDOT( rp->r_dir, h0->hit_normal ) > 0 )
 		VREVERSE( h0->hit_normal, h0->hit_normal );
 	
-	VMOVE(h0->hit_point, itr_point);
-	h0->hit_vpriv[0] = uv[0];
+	VMOVE(h0->hit_point, Q);
+	h0->hit_vpriv[0] = 
+		((p1->uv[0][0] * B[0]) + (p1->uv[1][0] * B[1]) + 
+		(p1->uv[2][0] * B[2]));
+	h0->hit_vpriv[1] = 
+		((p1->uv[0][1] * B[0]) + (p1->uv[1][1] * B[1]) + 
+		(p1->uv[2][1] * B[2]));
 
-	h0->hit_vpriv[1] = uv[1];
 	h0->hit_vpriv[2] = 0;			/* if set flip normal */
+
 	h0->hit_private = (char *) curr_tree;
 	
 	if( rt_g.debug & DEBUG_SPLINE)
 	{ 
 		VPRINT("hit point", h0->hit_point);
+		fprintf(stderr,"u = %f  v = %f\n ", h0->hit_vpriv[0], h0->hit_vpriv[1]);
 	} 
 	
 	return h0;
 }
 
-/*****************************************************************
- * TAG( plane_form )
- * 
- * Form the plane equation from three points.
- * Inputs:
- * 	Three homogeneous 4 points a, b, and c.
- * Outputs:
- * 	A plane equation.
- * Assumptions:
- *	[None]
- * Algorithm:
- * 	Cross product expansion from Foley and Van Dam
- */
 
-struct plane
-plane_form( a, b, c )
-point_t a, b, c;
-{
-    struct plane plane_p;
-
-    fastf_t x1, y1, z1, x2, y2, z2, x3, y3, z3;
-
-    x1 = a[0];
-    y1 = a[1];
-    z1 = a[2];
-    x2 = b[0];
-    y2 = b[1];
-    z2 = b[2];
-    x3 = c[0];
-    y3 = c[1];
-    z3 = c[2];
-
-    plane_p.nrm[0] = y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2);
-    plane_p.nrm[1] = -(x1 * (z2 - z3) + x2 * (z3 - z1) + x3 * (z1 - z2));
-    plane_p.nrm[2] = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
-
-    plane_p.offset = -(x1 * (y2 * z3 - y3 * z2) + x2 * (y3 * z1 - y1 * z3)
-			+ x3 * (y1 * z2 - y2 * z1));
-
-    return plane_p;
-}
-
-void
-interp_uv( p1, itr,uv )
-fastf_t uv[2];
-point_t itr;
-struct spl_poly * p1;
-{
-	point_t tmp, b_minus_a, c_minus_a,
-		d_minus_a;
-
-	fastf_t r, s, t, area_s, area_t, area;
-
-	VSUB2( b_minus_a, p1->ply[1], p1->ply[0]);
-	VSUB2( c_minus_a, p1->ply[2], p1->ply[0]);
-
-	VCROSS( tmp, b_minus_a, c_minus_a );
-	area = MAGNITUDE( tmp );
-
-	if (area <= 0.0)
-		fprintf( stderr, "interp_norm: polygon has zero area\n");
-
-	VSUB2( d_minus_a, itr, p1->ply[0] );
-	
-	VCROSS( tmp, b_minus_a, d_minus_a );
-	area_t = MAGNITUDE( tmp );
-
-	VCROSS( tmp, d_minus_a, c_minus_a );
-	area_s = MAGNITUDE( tmp );
-
-	t = area_t / area;
-	s = area_s / area;
-	r = 1.0 - s - t;
-
-	uv[0] = (fastf_t)
-		((p1->uv[0][0] * r) + (p1->uv[1][0] * s) + (p1->uv[2][0] * t));
-	uv[1] = (fastf_t)
-		((p1->uv[0][1] * r) + (p1->uv[1][1] * s) + (p1->uv[2][1] * t));
-}
