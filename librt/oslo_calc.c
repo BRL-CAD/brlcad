@@ -70,12 +70,7 @@ struct resource *res;
 
 	mu = 0;				/* initialize mu */
 
-	if( res )
-		head = (struct oslo_mat *) rt_pmalloc (
-		    sizeof( struct oslo_mat),
-		    &res->re_pmem );
-	else
-		head = (struct oslo_mat *) bu_malloc (
+	head = (struct oslo_mat *) bu_malloc (
 		    sizeof( struct oslo_mat),
 		    "rt_nurb_calc_oslo: oslo mat head" );
 
@@ -86,12 +81,7 @@ struct resource *res;
 
 		if ( j != 0 )
 		{
-			if( res )
-				new_o = (struct oslo_mat *) rt_pmalloc ( 
-				    sizeof( struct oslo_mat), 
-				    &res->re_pmem );
-			else
-				new_o = (struct oslo_mat *) bu_malloc ( 
+			new_o = (struct oslo_mat *) bu_malloc ( 
 				    sizeof( struct oslo_mat), 
 				    "rt_nurb_calc_oslo: oslo mat struct" );
 
@@ -169,11 +159,7 @@ struct resource *res;
 			}
 		}
 
-		if( res )
-			o_ptr->o_vec = (fastf_t *) rt_pmalloc ( sizeof( fastf_t) * (v+1),
-			    &res->re_pmem);
-		else
-			o_ptr->o_vec = (fastf_t *) bu_malloc ( sizeof( fastf_t) * (v+1),
+		o_ptr->o_vec = (fastf_t *) bu_malloc ( sizeof( fastf_t) * (v+1),
 			    "rt_nurb_calc_oslo: oslo vector");
 
 		o_ptr->offset = AMAX(muprim -v,0);
@@ -227,15 +213,7 @@ struct resource *res;
 	{
 		omp = om;
 		om = om->next;
-		if( res )
-		{
-			rt_pfree( (char *)omp->o_vec, &res->re_pmem);
-			rt_pfree( (char *)omp, &res->re_pmem);
-		}
-		else
-		{
-			bu_free( (char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
-			bu_free( (char *)omp, "rt_nurb_free_oslo: struct oslo");
-		}
+		bu_free( (char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
+		bu_free( (char *)omp, "rt_nurb_free_oslo: struct oslo");
 	}
 }

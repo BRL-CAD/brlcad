@@ -1258,23 +1258,6 @@ struct animate {
 #define RT_CK_ANIMATE(_p)	BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
 /*
- *			R T _ Q E L E M
- *
- *	Structure for use by pmalloc()
- */
-#define RT_PM_NBUCKETS        18
-
-struct rt_qelem {
-        struct rt_qelem *q_forw;
-        struct rt_qelem *q_back;
-};
-
-struct rt_pm_res {
-	struct rt_qelem buckets[RT_PM_NBUCKETS];
-	struct rt_qelem adjhead;
-};
-
-/*
  *			R T _ H T B L
  *
  *  Support for variable length arrays of "struct hit".
@@ -1376,7 +1359,6 @@ struct resource {
 	struct bu_list	re_solid_bitv;	/* head of freelist */
 	struct bu_list	re_region_ptbl;	/* head of freelist */
 	struct bu_list	re_nmgfree;	/* head of NMG hitmiss freelist */
-	struct rt_pm_res re_pmem;	/* for use by pmalloc() */
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	float		*re_randptr;	/* ptr into random number table */
@@ -3035,11 +3017,6 @@ BU_EXTERN(int			rt_uplot_to_vlist, (struct bn_vlblock *vbp,
 BU_EXTERN(void			rt_label_vlist_verts, (struct bn_vlblock *vbp,
 				struct bu_list *src, mat_t mat,
 				double sz, double mm2local) );
-
-/* pmalloc.c */
-BU_EXTERN(char *rt_pmalloc, (long nbytes, struct rt_pm_res *pmem));
-BU_EXTERN(void rt_pfree, (char *mem, struct rt_pm_res *pmem));
-BU_EXTERN(char *rt_prealloc, (char *mem, unsigned nbytes, struct rt_pm_res *pmem));
 
 #ifdef SEEN_RTGEOM_H
 /* g_sketch.c */

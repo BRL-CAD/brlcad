@@ -268,6 +268,7 @@ struct hitmiss *newhit;
 	struct hitmiss *a_hit;
 
 	BU_LIST_MAGIC_SET(&newhit->l, NMG_RT_HIT_MAGIC);
+	newhit->hit.hit_magic = RT_HIT_MAGIC;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		bu_log("hit_ins()\n  inserting:");
@@ -2075,7 +2076,7 @@ struct face_g_snurb *fg;
 			if( u >= srf->u.knots[0] && u <= srf->u.knots[srf->u.k_size-1] &&
 			    v >= srf->v.knots[0] && v <= srf->v.knots[srf->v.k_size-1] )
 			{
-				hp = (struct rt_nurb_uv_hit *)rt_pmalloc( sizeof( struct rt_nurb_uv_hit ), &rd->ap->a_resource->re_pmem );
+				hp = (struct rt_nurb_uv_hit *)bu_calloc( 1, sizeof( struct rt_nurb_uv_hit ), "struct rt_nurb_uv_hit" );
 				hp->next = (struct rt_nurb_uv_hit *)NULL;
 				hp->sub = 0;
 				hp->u = u;
@@ -2143,7 +2144,7 @@ struct face_g_snurb *fg;
 				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log( "\tNot a hit\n" );
 
-				rt_pfree( (char *)hp, &rd->ap->a_resource->re_pmem );
+				bu_free( (char *)hp, "hit" );
 				hp = next;
 				continue;
 			}
@@ -2243,7 +2244,7 @@ struct face_g_snurb *fg;
 
 			hit_ins( rd, myhit );
 
-			rt_pfree( (char *)hp, &rd->ap->a_resource->re_pmem );
+			bu_free( (char *)hp, "hit" );
 			hp = next;
 		}
 		rt_nurb_free_snurb( srf, rd->ap->a_resource );

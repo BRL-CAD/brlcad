@@ -93,14 +93,7 @@ struct resource *res;
 		srf1->s_size[1] = srf1->u.k_size - 
 			srf1->order[0];
 
-		if( res )
-			srf1->ctl_points = (fastf_t *)
-			rt_pmalloc( sizeof(fastf_t) * srf1->s_size[0] *
-				srf1->s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
-				&res->re_pmem);
-		else
-			srf1->ctl_points = (fastf_t *)
+		srf1->ctl_points = (fastf_t *)
 			bu_malloc( sizeof(fastf_t) * srf1->s_size[0] *
 				srf1->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
@@ -119,14 +112,7 @@ struct resource *res;
 		srf2->s_size[1] = srf2->u.k_size - 
 			srf2->order[0];
 
-		if( res )
-			srf2->ctl_points = (fastf_t *)
-			rt_pmalloc( sizeof(fastf_t) * srf2->s_size[0] *
-				srf2->s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
-				&res->re_pmem);
-		else
-			srf2->ctl_points = (fastf_t *)
+		srf2->ctl_points = (fastf_t *)
 			bu_malloc( sizeof(fastf_t) * srf2->s_size[0] *
 				srf2->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
@@ -193,14 +179,7 @@ struct resource *res;
 		srf1->s_size[1] = srf1->u.k_size - 
 			srf1->order[0];
 
-		if( res )
-			srf1->ctl_points = (fastf_t *)
-			rt_pmalloc( sizeof(fastf_t) * srf1->s_size[0] *
-				srf1->s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
-				&res->re_pmem);
-		else
-			srf1->ctl_points = (fastf_t *)
+		srf1->ctl_points = (fastf_t *)
 			bu_malloc( sizeof(fastf_t) * srf1->s_size[0] *
 				srf1->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
@@ -219,14 +198,7 @@ struct resource *res;
 		srf2->s_size[1] = srf2->u.k_size - 
 			srf2->order[0];
 
-		if( res )
-			srf2->ctl_points = (fastf_t *)
-			rt_pmalloc( sizeof(fastf_t) * srf2->s_size[0] *
-				srf2->s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
-				&res->re_pmem);
-		else
-			srf2->ctl_points = (fastf_t *)
+		srf2->ctl_points = (fastf_t *)
 			bu_malloc( sizeof(fastf_t) * srf2->s_size[0] *
 				srf2->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
@@ -264,10 +236,7 @@ struct resource *res;
 	BU_LIST_APPEND( split_hd, &srf1->l );
 
 	rt_nurb_free_oslo(oslo, res);
-	if( res )
-		rt_pfree( (char *)new_kv.knots, &res->re_pmem);
-	else
-		bu_free( (char *)new_kv.knots, "rt_nurb_s_split: new kv knots");
+	bu_free( (char *)new_kv.knots, "rt_nurb_s_split: new kv knots");
 
 }
 

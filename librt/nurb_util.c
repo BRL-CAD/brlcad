@@ -56,24 +56,12 @@ struct resource *res;
 
 	pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
 
-	if( res )
-	{
-		srf->u.knots = (fastf_t *) rt_pmalloc ( 
-			n_u * sizeof (fastf_t ), &res->re_pmem);
-		srf->v.knots = (fastf_t *) rt_pmalloc ( 
-			n_v * sizeof (fastf_t ), &res->re_pmem);
-		srf->ctl_points = ( fastf_t *) rt_pmalloc( 
-			pnum, &res->re_pmem);
-	}
-	else
-	{
-		srf->u.knots = (fastf_t *) bu_malloc ( 
+	srf->u.knots = (fastf_t *) bu_malloc ( 
 			n_u * sizeof (fastf_t ), "rt_nurb_new_snurb: u kv knot values");
-		srf->v.knots = (fastf_t *) bu_malloc ( 
+	srf->v.knots = (fastf_t *) bu_malloc ( 
 			n_v * sizeof (fastf_t ), "rt_nurb_new_snurb: v kv knot values");
-		srf->ctl_points = ( fastf_t *) bu_malloc( 
+	srf->ctl_points = ( fastf_t *) bu_malloc( 
 			pnum, "rt_nurb_new_snurb: control mesh points");
-	}
 
 	return srf;
 }
@@ -118,18 +106,10 @@ struct resource *res;
 {
 	NMG_CK_SNURB(srf);
 
-	if( res )
-	{
-		rt_pfree( (char *)srf->u.knots, &res->re_pmem );
-		rt_pfree( (char *)srf->v.knots, &res->re_pmem );
-		rt_pfree( (char *)srf->ctl_points, &res->re_pmem );
-	}
-	else
-	{
-		bu_free( (char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots" );
-		bu_free( (char *)srf->v.knots, "rt_nurb_free_snurb() v.knots" );
-		bu_free( (char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
-	}
+	bu_free( (char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots" );
+	bu_free( (char *)srf->v.knots, "rt_nurb_free_snurb() v.knots" );
+	bu_free( (char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
+
 	/* Invalidate the structure */
 	srf->u.knots = (fastf_t *)NULL;
 	srf->v.knots = (fastf_t *)NULL;
@@ -150,19 +130,9 @@ struct resource *res;
 
 	/* assume that links to other surface and curves are already deleted */
 
-	if( res )
-	{
-		rt_pfree( (char *)srf->u.knots, &res->re_pmem );
-		rt_pfree( (char *)srf->v.knots, &res->re_pmem );
-		rt_pfree( (char *)srf->ctl_points, &res->re_pmem);
-	}
-	else
-	{
-
-		bu_free( (char *)srf->u.knots, "rt_nurb_free_snurb: u kv knots" );
-		bu_free( (char *)srf->v.knots, "rt_nurb_free_snurb: v kv knots" );
-		bu_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
-	}
+	bu_free( (char *)srf->u.knots, "rt_nurb_free_snurb: u kv knots" );
+	bu_free( (char *)srf->v.knots, "rt_nurb_free_snurb: v kv knots" );
+	bu_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
 
 	srf->l.magic = 0;
 	bu_free( (char *)srf, "rt_nurb_free_snurb: snurb struct" );

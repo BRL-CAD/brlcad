@@ -585,7 +585,6 @@ rt_init_resource(
 	int		cpu_num,
 	struct rt_i	*rtip)
 {
-	int i;
 
 	if( resp == &rt_uniresource )  {
 		cpu_num = MAX_PSW;		/* array is [MAX_PSW+1] just for this */
@@ -622,17 +621,6 @@ rt_init_resource(
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
 		BU_LIST_INIT( &resp->re_nmgfree )
-
-	if( !resp->re_pmem.buckets[0].q_forw )
-	{
-		for( i=0 ; i<RT_PM_NBUCKETS ; i++ )
-		{
-			resp->re_pmem.buckets[i].q_forw = &resp->re_pmem.buckets[i];
-			resp->re_pmem.buckets[i].q_back = &resp->re_pmem.buckets[i];
-		}
-		resp->re_pmem.adjhead.q_forw = &resp->re_pmem.adjhead;
-		resp->re_pmem.adjhead.q_back = &resp->re_pmem.adjhead;
-	}
 
 	resp->re_boolstack = NULL;
 	resp->re_boolslen = 0;
@@ -752,10 +740,6 @@ struct resource	*resp;
 		bu_free( (genptr_t)resp->re_boolstack, "boolstack" );
 		resp->re_boolstack = NULL;
 		resp->re_boolslen = 0;
-	}
-
-	if( !resp->re_pmem.buckets[0].q_forw )  {
-		/* XXX How to release the pmalloc buckets? */
 	}
 
 	/* Release the state variables for 'solid pieces' */
