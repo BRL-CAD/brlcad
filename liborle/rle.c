@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.14
-	Last edit: 	4/29/86 at 15:11:48	G S M
-	Retrieved: 	8/13/86 at 10:29:59
+	SCCS id:	@(#) librle.c	1.15
+	Last edit: 	6/18/86 at 10:05:45	G S M
+	Retrieved: 	8/13/86 at 10:30:20
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,7 +15,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.14	last edit 4/29/86 at 15:11:48";
+char	sccsTag[] = "@(#) librle.c	1.15	last edit 6/18/86 at 10:05:45";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -859,10 +859,11 @@ register u_char	*cmap_seg;
 		(void) fprintf( stderr,	"Failed to read color map!\n" );
 		return	-1;
 		}
-	for( i = 0; i < 256; i++ )
+	for( i = 0; i < 256; i++, cm++ )
 		{
 		SWAB( *cm );
-		*cmap_seg++ = (u_char) *cm++;
+		*cmap_seg++ = (u_char) *cm;
+		/* Must increment "cm" seperately due to bug in 4.2 BSD pcc. */
 		}
 	return	0;
 	}
