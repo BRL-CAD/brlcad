@@ -17,9 +17,15 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
@@ -122,7 +128,7 @@ char	*argv[];
 		/* Ignore .pss extension if it's there. */
 		doti = strlen(reg_name) - 4;
 		if (doti > 0 && !strcmp(".pss", reg_name+doti))
-		reg_name[doti] = '\0';
+			reg_name[doti] = '\0';
 	}
 
 	jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile, bfile);
