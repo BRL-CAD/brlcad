@@ -35,7 +35,6 @@
 
 static char rcsid[] = "@(#) tkImgFmtPIX.c 1.7 95/06/14 22:49:55";
 
-#include "./tkInt.h"
 #include "./tkPort.h"
 
 /*
