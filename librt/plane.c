@@ -333,6 +333,7 @@ CONST struct rt_tol	*tol;
  *  The direction vectors C and D need not have unit length.
  *
  *  Explicit Return -
+ *	-2	no intersection, lines are parallel.
  *	-1	no intersection
  *	 0	lines are co-linear (t returned for u=0 to give distance to A)
  *	 1	intersection found (t and u returned)
@@ -358,6 +359,7 @@ CONST struct rt_tol	*tol;
 	LOCAL vect_t		abs_n;
 	LOCAL vect_t		h;
 	register fastf_t	det;
+	register fastf_t	det1;
 	register short int	q,r,s;
 
 	/*
@@ -456,17 +458,24 @@ CONST struct rt_tol	*tol;
 	 *	det(M) = det [         ] = -Dq * Cr + Cq * Dr
 	 *	             [ Dr  -Cr ]
 	 *
-	 *  If det(M) is zero, then there is no solution; otherwise,
-	 *  exactly one solution exists.
+	 *  If det(M) is zero, then the lines are parallel (perhaps colinear).
+	 *  Otherwise, exactly one solution exists.
 	 */
 	VSUB2( h, a, p );
 	det = c[q] * d[r] - d[q] * c[r];
+	det1 = (c[q] * h[r] - h[q] * c[r]);		/* see below */
 	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  {
+		/* Lines are parallel */
+		if( !NEAR_ZERO( det1, SQRT_SMALL_FASTF ) )  {
+			/* Lines are NOT co-linear, just parallel */
+			return -2;	/* parallel, no intersection */
+		}
+
 		/* Lines are co-linear */
 		/* Compute t for u=0 as a convenience to caller */
 		*u = 0;
 		/* Use largest direction component */
-		if( d[q] >= d[r] )  {
+		if( fabs(d[q]) >= fabs(d[r]) )  {
 			*t = h[q]/d[q];
 		} else {
 			*t = h[r]/d[r];
@@ -498,7 +507,7 @@ CONST struct rt_tol	*tol;
 	 *	     det(M)       det(M)        -Dq * Cr + Cq * Dr
 	 */
 	det = 1/det;
-	*t = det * (c[q] * h[r] - h[q] * c[r]);
+	*t = det * det1;
 	*u = det * (d[q] * h[r] - h[q] * d[r]);
 
 	/*
