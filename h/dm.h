@@ -117,8 +117,8 @@ struct dm {
   genptr_t dm_vars;		/* pointer to display manager dependant variables */
   struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
   struct bu_vls dm_initWinProc; /* Tcl/Tk procedure for initializing the drawing window */
-  char dm_dname[80];		/* Display name */
-  fastf_t *dm_vp;		/* XXX--ogl still depends on this--XXX Viewscale pointer */
+  struct bu_vls dm_dname;	/* Display name */
+  fastf_t *dm_vp;		/* XXX--ogl still depends on this--Viewscale pointer */
 };
 
 extern int dm_process_options();
