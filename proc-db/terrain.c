@@ -21,12 +21,15 @@
 /* Header files which are used for this example */
 
 #include <stdio.h>		/* Direct the output to stdout */
+#include <stdlib.h>
+#include <math.h>
 #include "machine.h"		/* BRLCAD specific machine data types */
 #include "db.h"			/* BRLCAD data base format */
 #include "vmath.h"		/* BRLCAD Vector macros */
 #include "nurb.h"		/* BRLCAD Spline data structures */
 #include "raytrace.h"
 #include "../librt/debug.h"	/* rt_g.debug flag settings */
+#include "externs.h"
 
 fastf_t grid[10][10][3];
 
@@ -41,16 +44,21 @@ int argc; char * argv[];
 	char * nurb_name = "terrain";
 	int	i,j;
 	fastf_t 	hscale;
-	fastf_t	v;
 
 	if (isatty(fileno(stdout))) {
 		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
 		return(-1);
 	}
 
-	while ((i=getopt(argc, argv, "d")) != EOF) {
+	hscale = 2.5;
+
+
+	while ((i=getopt(argc, argv, "dh:")) != EOF) {
 		switch (i) {
 		case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
+		case 'h' :
+			hscale = atof( optarg );
+			break;
 		default	:
 			(void)fprintf(stderr,
 				"Usage: %s [-d] > database.g\n", *argv);
@@ -67,12 +75,15 @@ int argc; char * argv[];
 
 	mk_id( stdout, id_name);
 	mk_bsolid( stdout, nurb_name, 1, 1.0);
-	hscale = 2.5;
 
 	for( i = 0; i < 10; i++)
 		for( j = 0; j < 10; j++)
 		{
-			v = hscale * drand48() + 10.0;
+			fastf_t		v;
+			fastf_t		drand48();
+
+			v = (hscale * drand48()) + 10.0;
+
 			grid[i][j][0] = i;
 			grid[i][j][1] = j;
 			grid[i][j][2] = v;
