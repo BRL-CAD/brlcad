@@ -603,6 +603,37 @@ if(getuid()==53) bu_hexdump_external(stderr, out, "v5 ext");
 }
 
 /*
+ *			D B 5 _ M A K E _ F R E E _ O B J E C T
+ */
+void
+db5_make_free_object( struct bu_external *ep, long length )
+{
+	struct db5_ondisk_header *odp;
+	int		h_width;
+	unsigned char	*cp;
+
+	BU_CK_EXTERNAL(ep);
+
+	BU_ASSERT_LONG( length, >=, 8 );
+	BU_ASSERT_LONG( length&7, ==, 0 );
+
+	ep->ext_buf = bu_calloc( 1, length, "db5_make_free_object" );
+	ep->ext_nbytes = length;
+
+	/* Determine encoding for the header length field */
+	h_width = db5_select_length_encoding( length>>3 );
+
+	/* prepare combined external object */
+	odp = (struct db5_ondisk_header *)ep->ext_buf;
+	odp->db5h_magic1 = DB5HDR_MAGIC1;
+	odp->db5h_hflags = (h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) |
+			DB5HDR_HFLAGS_DLI_FREE_STORAGE;
+
+	cp = ((unsigned char *)ep->ext_buf) + length-1;
+	*cp = DB5HDR_MAGIC2;
+}
+
+/*
  *			D B 5 _ I M P O R T _ A T T R I B U T E S
  *
  *  Convert the on-disk encoding into a handy easy-to-use
