@@ -38,6 +38,9 @@ qinterp: qinterp.o
 scriptsort: scriptsort.o
 	CC LDFLAGS scriptsort.o -o scriptsort
 
+track: track.o anim.o
+	CC LDFLAGS track.o anim.o LIBRT -lm -lmpc -o track
+
 turn: turn.o anim.o
 	CC LDFLAGS turn.o anim.o LIBRT -lm -lmpc -o turn
 
