@@ -43,7 +43,7 @@ start ( ) {
 #
 # these should be the brlcad "database names" that are used to create geometry in a geometry editor
 #
-PRIMITIVES="arb4 arb5 arb6 arb7 arb8 arbn ars bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc tor vol xxx"
+PRIMITIVES="arb5 arb6 arb7 arb8 arbn ars bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc tor vol xxx"
 #
 # these are the versions that are supported and considered valid
 #
@@ -58,32 +58,32 @@ VER="4 5"
 # 
 # in args =>
 #
-# arb4_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 -50 50 -50"
-# arb4_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 50 50} V5 {-50 50 -50} V6 {-50 50 -50} V7 {-50 50 -50} V8 {-50 50 -50}"
+arb4_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 -50 50 -50"
+arb4_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 50 50} V5 {-50 50 -50} V6 {-50 50 -50} V7 {-50 50 -50} V8 {-50 50 -50}"
 
 #
 # Arbitrary Regular Polyhedron with 5-faces (arb5) Arguments
 # 
 # in args =>
 #
-# arb5_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 0 0"
-# arb5_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 0 0} V6 {-50 0 0} V7 {-50 0 0} V8 {-50 0 0}"
+arb5_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 0 0"
+arb5_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 0 0} V6 {-50 0 0} V7 {-50 0 0} V8 {-50 0 0}"
 
 #
 # Arbitrary Regular Polyhedron with 6-faces (arb6) Arguments
 # 
 # in args =>
 #
-# arb6_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 0 -50 -50 0 50"
-# arb6_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 0 -50} V6 {-50 0 -50} V7 {-50 0 50} V8 {-50 0 50}"
+arb6_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 0 -50 -50 0 50"
+arb6_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 0 -50} V6 {-50 0 -50} V7 {-50 0 50} V8 {-50 0 50}"
 
 #
 # Arbitrary Regular Polyhedron with 7-faces (arb7) Arguments
 # 
 # in args =>
 #
-# arb7_IN_ARGS="50 -50 -25 50 50 -25 50 50 75 50 -50 25 -50 -50 -25 -50 50 -25 -50 50 25"
-# arb7_DB_ARGS="V1 {50 -50 -25} V2 {50 50 -25} V3 {50 50 75} V4 {50 -50 25} V5 {-50 -50 -25} V6 {-50 50 -25} V7 {-50 50 25} V8 {-50 -50 -25}"
+arb7_IN_ARGS="50 -50 -25 50 50 -25 50 50 75 50 -50 25 -50 -50 -25 -50 50 -25 -50 50 25"
+arb7_DB_ARGS="V1 {50 -50 -25} V2 {50 50 -25} V3 {50 50 75} V4 {50 -50 25} V5 {-50 -50 -25} V6 {-50 50 -25} V7 {-50 50 25} V8 {-50 -50 -25}"
 
 #
 # Arbitrary Regular Polyhedron with 8-faces (arb8) Arguments
@@ -138,8 +138,8 @@ dsp_DB_ARGS=""
 # 
 # in args => bw_file width height extrusion_distance
 #
-ebm_IN_ARGS="ebm.bw 32 32 10"
-ebm_DB_ARGS="F ebm.bw W 32 N 32 H 10 M { 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 }"
+ebm_IN_ARGS="${TEST}.ebm.bw 32 32 10"
+ebm_DB_ARGS="F ${TEST}.ebm.bw W 32 N 32 H 10 M { 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 }"
 
 #
 # (ehy) Arguments
@@ -320,8 +320,8 @@ tor_DB_ARGS="V { 0 0 0 } H { 1 0 0 } r_a 50 r_h 25"
 # in args => file xNcells yNcells zNcells lower_threshold upper_threshold
 #            xvoxelsize yvoxelsize zvoxelsize
 #
-vol_IN_ARGS="vol.bw 32 32 8 128 255 10 10 10"
-vol_DB_ARGS="file vol.bw w 32 n 32 d 8 lo 128 hi 255 size {10 10 10} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}"
+vol_IN_ARGS="${TEST}.vol.bw 32 32 8 128 255 10 10 10"
+vol_DB_ARGS="file ${TEST}.vol.bw w 32 n 32 d 8 lo 128 hi 255 size {10 10 10} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}"
 
 #
 # (xxx) Arguments
@@ -336,159 +336,290 @@ xxx_DB_ARGS=""
 ###
 
 clean
+
 PATH=$BRLCAD_ROOT/bin:$PATH
 
+#
+# iterate over primitives
+#
 for PRIM in $PRIMITIVES ; do
 
     unset IN_ARGS ; IN_ARGS="echo \$${PRIM}_IN_ARGS" ; IN_ARGS=`eval $IN_ARGS`
     unset DB_ARGS ; DB_ARGS="echo \$${PRIM}_DB_ARGS" ; DB_ARGS=`eval $DB_ARGS`
 
-    if [ "x$IN_ARGS" = "x" ] ; then
+    if [ "x$IN_ARGS" = "x" ] && [ "x$DB_ARGS" = "x" ]  ; then
         warn "Primitive ${PRIM} has no arguments set, skipping"
     else
-
-	if [ "x${PRIM}" = "xebm" ]; then
-            #
-            # If the solid is an ebm, create the bitmap to extrude
-	    #
-	    gencolor -r205 0 16 32 64 128 | \
-                dd of=ebm.bw bs=1024 count=1 >/dev/null 2>&1
-	fi
-
-	if [ "x${PRIM}" = "xvol" ]; then
-	    #
-	    # Create a 32x32x8 element voxel map by
-	    # concatenating 8 bw files.
-	    #
-	    gencolor -r205 0 16 32 64 128 | \
-                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
-	    cat tmp.bw > vol.bw
-	    gencolor -r205 16 32 64 128 0 | \
-                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
-	    cat tmp.bw >> vol.bw
-	    gencolor -r205 32 64 128 0 16 | \
-                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
-	    cat tmp.bw >> vol.bw
-	    gencolor -r205 64 128 0 16 32 | \
-                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
-	    cat tmp.bw >> vol.bw
-	    gencolor -r205 128 0 16 32 64 | \
-                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
-	    cat tmp.bw >> vol.bw
-	    gencolor -r205 0 16 32 64 128 | \
-                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
-	    cat tmp.bw >> vol.bw
-	    gencolor -r205 16 32 64 128 0 | \
-                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
-	    cat tmp.bw >> vol.bw
-	    gencolor -r205 32 64 128 0 16 | \
-                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
-	    cat tmp.bw >> vol.bw
-	fi
 
         log ""
         log "Evaluating $PRIM"
         log "===================="
 
-        mged -c <<EOF
-#
+
+        #
+        # primitive specific tests and initialization
+        #
+	if [ "x${PRIM}" = "xebm" ]; then
+            #
+            # If the solid is an ebm, create the bitmap to extrude
+	    #
+	    gencolor -r205 0 16 32 64 128 | \
+                dd of=${TEST}.ebm.bw bs=1024 count=1 >/dev/null 2>&1
+
+            if [ $? != 0 ] ; then
+                warn "gencolor failed to create ebm primitive bitmap datafile properly"
+            fi
+
+	elif [ "x${PRIM}" = "xvol" ]; then
+	    #
+	    # Create a 32x32x8 element voxel map by
+	    # concatenating 8 bw files.
+	    #
+	    gencolor -r205 0 16 32 64 128 | \
+                dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat ${TEST}.tmp.bw > ${TEST}.vol.bw
+	    gencolor -r205 16 32 64 128 0 | \
+                dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat ${TEST}.tmp.bw >> ${TEST}.vol.bw
+	    gencolor -r205 32 64 128 0 16 | \
+                dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat ${TEST}.tmp.bw >> ${TEST}.vol.bw
+	    gencolor -r205 64 128 0 16 32 | \
+                dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat ${TEST}.tmp.bw >> ${TEST}.vol.bw
+	    gencolor -r205 128 0 16 32 64 | \
+                dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat ${TEST}.tmp.bw >> ${TEST}.vol.bw
+	    gencolor -r205 0 16 32 64 128 | \
+                dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat ${TEST}.tmp.bw >> ${TEST}.vol.bw
+	    gencolor -r205 16 32 64 128 0 | \
+                dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat ${TEST}.tmp.bw >> ${TEST}.vol.bw
+	    gencolor -r205 32 64 128 0 16 | \
+                dd of=${TEST}.tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat ${TEST}.tmp.bw >> ${TEST}.vol.bw
+
+            if expr "`ls -s ${TEST}.vol.bw | awk '{print $1}'" = "0" ; then
+                warn "failed to create vol primitive volume map datafile properly"
+            fi
+            rm ${TEST}.tmp.bw
+	fi
+
+
+        #
+        # Test 'in' command
+        #
+        for VERSION in $VER ; do
+            mged -c > ${TEST}.${PRIM}.${VERSION}.mged.log 2>&1 <<EOF
 # Start MGED script
-#
 
 set glob_compat_mode 0
 
+set mged_default(db_version) $VERSION
 
-foreach version { 4 5 } { 
+puts "Opening database \[${TEST}.${PRIM}.${VERSION}.g\]"
+opendb ${TEST}.${PRIM}.${VERSION}.g
 
-    set mged_default(db_version) \$version
+set autosize 0
+units mm
 
-    puts "Opening database \[${TEST}.${PRIM}.\$version.g\]"
-    opendb ${TEST}.${PRIM}.\$version.g
+Z
+viewsize 100 
+ae 35 25
 
-    set autosize 0
-    units mm
-
-    Z
-    viewsize 100 
-    ae 35 25
-
-    #
-    # Edit 'in' args 
-    #
-    set inval "in ${PRIM}.in.s $PRIM $IN_ARGS"
-    puts "Running \[\$inval\]"
-    eval \$inval
-    saveview ${TEST}.${PRIM}.\$version.in.rt
-
-    Z
-    viewsize 100 
-    ae 35 25
-    set makeval "make ${PRIM}.make.s $PRIM"
-    puts "Running \[\$makeval\]"
-    eval \$makeval
-    saveview ${TEST}.${PRIM}.\$version.make.rt
-
-    Z
-    viewsize 100 
-    ae 35 25
-                
-    #
-    # Edit 'db put' args 
-    #
-    set dbputval "db put ${PRIM}.dbput.s $PRIM $DB_ARGS"
-    puts "Running \[\$dbputval\]"
-    eval \$dbputval
-    saveview ${TEST}.${PRIM}.\$version.dbput.rt
-
-    Z
-    viewsize 100 
-    ae 35 25
-    r ${PRIM}.in.r u ${PRIM}.in.s
-    # sca .5, rot 10 10 -10, tra 20 -20 20
-    set putmatval "putmat ${PRIM}.in.r/${PRIM}.in.s { 0.969846 -0.17101 -0.173648 19.3442  0.200706 0.96461 0.17101 -11.8579  0.138258 -0.200706 0.969846 26.1762  0 0 0 1 }"
-    eval \$putmatval
-
-    push ${PRIM}.in.r
-    shader ${PRIM}.in.r {checker {s 4}}
-
-    Z
-    viewsize 100 
-    ae 35 25
-    e ${PRIM}.in.r
-    saveview ${TEST}.${PRIM}.\$version.trans.rt
-} 
+set inval "in ${PRIM}.in.s $PRIM $IN_ARGS"
+puts "Running \[\$inval\]"
+eval \$inval
+saveview ${TEST}.${PRIM}.${VERSION}.in.rt
 
 q
 
-#
 # End MGED script
-#
-
 EOF
+            if [ $? != 0 ] ; then
+                warn "v$VERSION $PRIM 'in' command failed"
+            fi
+        done
+        # end loop over versions for in command
 
-    for version in $VER ; do
-        log "Testing v$version database for ${PRIM}"
-        if [ -f ${TEST}.${PRIM}.${version}.g ] ; then
 
-            [ -f ./${TEST}.${PRIM}.${version}.in.rt ] && ./${TEST}.${PRIM}.${version}.in.rt
-            [ -f ./${TEST}.${PRIM}.${version}.make.rt ] && ./${TEST}.${PRIM}.${version}.make.rt
-            [ -f ./${TEST}.${PRIM}.${version}.dbput.rt ] && ./${TEST}.${PRIM}.${version}.dbput.rt
-            [ -f ./${TEST}.${PRIM}.${version}.trans.rt ] && ./${TEST}.${PRIM}.${version}.trans.rt
-            log "	Done raytracing"
-        
-            log "	Converting to ascii (g2asc)"
-            g2asc ${TEST}.${PRIM}.${version}.g ${TEST}.${PRIM}.asc
-            log "	Converting to binary (asc2g)"
-            asc2g ${TEST}.${PRIM}.asc ${TEST}.${PRIM}.${version}.asc2g.g
-            log "	Database diffing (g_diff)"
-            g_diff -f ${TEST}.${PRIM}.${version}.asc2g.g ${TEST}.${PRIM}.5.g
-        else
-            bomb "No v$version database was created for ${PRIM}"
-        fi
-        log "Done testing $version database for ${PRIM}"
 
-    done  
-    # end loop over vers
+        #
+        # Test 'putmat' command
+        #
+        for VERSION in $VER ; do
+            mged -c > ${TEST}.${PRIM}.${VERSION}.mged.log 2>&1 <<EOF
+###################
+# Start MGED script
+
+set glob_compat_mode 0
+
+set mged_default(db_version) $VERSION
+
+puts "Opening database \[${TEST}.${PRIM}.${VERSION}.g\]"
+opendb ${TEST}.${PRIM}.${VERSION}.g
+
+set autosize 0
+units mm
+
+Z
+viewsize 100 
+ae 35 25
+
+set inval "in ${PRIM}.putmat.s $PRIM $IN_ARGS"
+puts "Running \[\$inval\]"
+eval \$inval
+
+Z
+viewsize 100 
+ae 35 25
+r ${PRIM}.putmat.r u ${PRIM}.putmat.s
+# sca .5, rot 10 10 -10, tra 20 -20 20
+set putmatval "putmat ${PRIM}.putmat.r/${PRIM}.putmat.s { 0.969846 -0.17101 -0.173648 19.3442  0.200706 0.96461 0.17101 -11.8579  0.138258 -0.200706 0.969846 26.1762  0 0 0 1 }"
+puts "Running \[\$putmatval\]"
+eval \$putmatval
+
+push ${PRIM}.putmat.r
+shader ${PRIM}.putmat.r {checker {s 4}}
+
+Z
+viewsize 100 
+ae 35 25
+e ${PRIM}.putmat.r
+saveview ${TEST}.${PRIM}.${VERSION}.putmat.rt
+
+q
+
+# End MGED script
+###################
+EOF
+            if [ $? != 0 ] ; then
+                warn "v$VERSION $PRIM 'putmat' command failed"
+            fi
+        done
+        # end loop over versions for putmat command
+
+
+        #
+        # Test make' command
+        #
+        for VERSION in $VER ; do
+            mged -c > ${TEST}.${PRIM}.${VERSION}.mged.log 2>&1 <<EOF
+###################
+# Start MGED script
+
+set glob_compat_mode 0
+
+set mged_default(db_version) $VERSION
+
+puts "Opening database \[${TEST}.${PRIM}.${VERSION}.g\]"
+opendb ${TEST}.${PRIM}.${VERSION}.g
+
+set autosize 0
+units mm
+
+Z
+viewsize 100 
+ae 35 25
+
+set makeval "make ${PRIM}.make.s $PRIM"
+puts "Running \[\$makeval\]"
+eval \$makeval
+saveview ${TEST}.${PRIM}.${VERSION}.make.rt
+
+q
+
+# End MGED script
+###################
+EOF
+            if [ $? != 0 ] ; then
+                warn "v$VERSION $PRIM 'make' command failed"
+            fi
+        done
+        # end loop over versions for make command
+
+
+        #
+        # Test 'db put' command
+        #
+        for VERSION in $VER ; do
+            mged -c > ${TEST}.${PRIM}.${VERSION}.mged.log 2>&1 <<EOF
+###################
+# Start MGED script
+
+set glob_compat_mode 0
+
+set mged_default(db_version) $VERSION
+
+puts "Opening database \[${TEST}.${PRIM}.${VERSION}.g\]"
+opendb ${TEST}.${PRIM}.${VERSION}.g
+
+set autosize 0
+units mm
+
+Z
+viewsize 100 
+ae 35 25
+
+set dbputval "db put ${PRIM}.dbput.s $PRIM $DB_ARGS"
+puts "Running \[\$dbputval\]"
+eval \$dbputval
+e ${PRIM}.dbput.s
+saveview ${TEST}.${PRIM}.${VERSION}.dbput.rt
+
+q
+
+# End MGED script
+###################
+EOF
+            if [ $? != 0 ] ; then
+                warn "v$VERSION $PRIM 'db put' command failed"
+            fi
+        done
+        # end loop over versions for db put command
+
+        #
+        # Version databases are now created, so we test them
+        #
+
+
+        for VERSION in $VER ; do
+            if [ -f ${TEST}.${PRIM}.${VERSION}.g ] ; then
+            
+                log "Raytracing"
+
+                [ -f ./${TEST}.${PRIM}.${VERSION}.in.rt ] && ./${TEST}.${PRIM}.${VERSION}.in.rt -B
+                [ $? != 0 ] && warn "v$VERSION $PRIM 'in' rt failed"
+
+                [ -f ./${TEST}.${PRIM}.${VERSION}.putmat.rt ] && ./${TEST}.${PRIM}.${VERSION}.putmat.rt -B
+                [ $? != 0 ] && warn "v$VERSION $PRIM 'putmat' rt failed"
+
+                [ -f ./${TEST}.${PRIM}.${VERSION}.make.rt ] && ./${TEST}.${PRIM}.${VERSION}.make.rt -B
+                [ $? != 0 ] && warn "v$VERSION $PRIM 'make' rt failed"
+
+                [ -f ./${TEST}.${PRIM}.${VERSION}.dbput.rt ] && ./${TEST}.${PRIM}.${VERSION}.dbput.rt -B
+                [ $? != 0 ] && warn "v$VERSION $PRIM 'db put' rt failed"
+
+                log "Converting to ascii (g2asc)"
+                g2asc ${TEST}.${PRIM}.${VERSION}.g ${TEST}.${PRIM}.${VERSION}.g2asc.asc > ${TEST}.${PRIM}.${VERSION}.g2asc.log 2>&1
+                [ $? != 0 ] && warn "v$VERSION $PRIM 'g2asc' failed"
+ 
+                log "Converting to binary (asc2g)"
+                asc2g ${TEST}.${PRIM}.${VERSION}.g2asc.asc ${TEST}.${PRIM}.${VERSION}.g2asc.asc2g.g > ${TEST}.${PRIM}.${VERSION}.asc2g.log 2>&1
+                [ $? != 0 ] && warn "v$VERSION $PRIM 'asc2g' failed"
+
+                log "Database diffing (g_diff) v${VERSION} against current"
+                g_diff -f ${TEST}.${PRIM}.${VERSION}.g2asc.asc2g.g ${TEST}.${PRIM}.${VERSION}.g
+                [ $? != 0 ] && warn "v$VERSION $PRIM 'g_diff' failed"
+            else
+                warn "No v$VERSION database was created for ${PRIM}"
+            fi
+            
+        done  
+        # end loop over vers
+
+        log "Done with ${PRIM}"
 
     fi
     # end of test if primitive has values set
@@ -500,18 +631,18 @@ done
     return 0
 }
 
-stop ( ) {
+stopTest ( ) {
     bomb "stop unimplemented"
-    return 0
 }
 
 status ( ) {
     bomb "status unimplemented"
-    return 0
 }
 
 clean ( ) {
-    [ ! "x$TEST" = "x" ] && rm -f ${TEST}.*
+    if [ ! "x$TEST" = "x" ] ; then
+        rm -f ${TEST}.*
+    fi
 
     return 0
 }
@@ -521,10 +652,10 @@ case "$1" in
         start
         ;;
     stop )
-        stop
+        stopTest
         ;;
     restart )
-        stop
+        stopTest
         start
         ;;
     status )
