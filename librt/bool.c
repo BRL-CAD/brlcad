@@ -717,6 +717,26 @@ choose:
  *	1	Requested number of hits are available in FinalHdp
  *
  *  The caller must free whatever is in both partition chains.
+ *
+ *
+ *  --- NOTES for improvements that haven't been implemented yet ---
+ *
+ *  With a_onehit != 0, it is difficult to honor the 'enddist' value
+ *  (and the a_ray_length value), and still get correct results.
+ *  Need to take into account some additional factors:
+ *
+ *  1)  A region shouldn't be evaluated until all it's solids have been
+ *	intersected, to prevent the "CERN" problem of out points being
+ *	wrong because subtracted solids aren't intersected yet.
+ *
+ *	Maybe "all" solids don't have to be intersected, but some strong
+ *	statements are needed along these lines.
+ *
+ *	A region is definitely ready to be evaluated
+ *	IF all it's solids have been intersected.
+ *
+ *  2)  A partition shouldn't be evaluated until all the regions within it
+ *	are ready to be evaluated.
  */
 int
 rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regiontable, ap )
