@@ -815,7 +815,7 @@ int			red, green, blue;
 	vbp = rt_vlblock_init();
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-		nmg_vlblock_lu(vbp, lu, b, red, green, blue, 0);
+		nmg_vlblock_lu(vbp, lu, b, red, green, blue, 1);
 	}
 
 	rt_plot_vlblock(fp, vbp);
