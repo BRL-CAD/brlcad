@@ -174,6 +174,8 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		8
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
+#define USE_PROTOTYPES	/**/	/* not ANSI, but prototypes supported */
+
 #endif
 
 #ifdef apollo
@@ -289,6 +291,7 @@ typedef long	bitv_t;		/* largest integer type */
 #if !defined(GENPTR_H_SEEN)
 #  if __STDC__
 	typedef void	*genptr_t;
+#	define VOID_STAR		/* for the Utah Raster Toolkit */
 #  else
 	typedef char	*genptr_t;
 #  endif
@@ -316,5 +319,15 @@ typedef long	bitv_t;		/* largest integer type */
 #else
 #define HIDDEN	/***/		/* (nil)|static, for func's local to 1 file */
 #endif
+
+/* some stuff the Utah Raster Toolkit wants */
+#define CONST_DECL CONST
+#ifdef __STDC__
+#define USE_PROTOTYPES
+#endif
+#if BSD && !SYSV
+#  define SYS_TIME_H	/* time_t is defined through sys/time.h not time.h */
+#endif
+
 
 #endif
