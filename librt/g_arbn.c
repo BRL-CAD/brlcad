@@ -841,6 +841,7 @@ const struct db_i		*dbip;
 		MAT4X3PNT( pt, mat, orig_pt );
 
 		/* Measure new distance from origin to new point */
+		VUNITIZE( norm );
 		VMOVE( aip->eqn[i], norm );
 		aip->eqn[i][3] = VDOT( pt, norm );
 	}
@@ -961,6 +962,7 @@ const struct db_i		*dbip;
 		MAT4X3PNT( pt, mat, orig_pt );
 
 		/* Measure new distance from origin to new point */
+		VUNITIZE( norm );
 		VMOVE( aip->eqn[i], norm );
 		aip->eqn[i][3] = VDOT( pt, norm );
 	}
