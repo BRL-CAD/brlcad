@@ -378,7 +378,7 @@ struct animate *anp;
 			rt_log("db_write_anim: unknown matrix operation\n");
 		}
 		for (i=0; i<16; i++) {
-			fprintf(fop, " %8.3f", anp->an_u.anu_m.anm_mat[i]);
+			fprintf(fop, " %.15e", anp->an_u.anu_m.anm_mat[i]);
 			if ((i == 15) || ((i&3) == 3)) {
 				fputs("\n",fop);
 			}
