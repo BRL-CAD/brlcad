@@ -626,11 +626,7 @@ struct resource {
 	 */
 	typedef int	*stroff_t;
 #else
-#	if defined(__STDC__) && !defined(apollo)
-		typedef void	*stroff_t;
-#	else
-		typedef char	*stroff_t;
-#	endif
+	typedef char	*stroff_t;
 #endif
 
 struct structparse {
