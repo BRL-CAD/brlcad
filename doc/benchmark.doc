@@ -196,7 +196,8 @@ l l.
 System Name	Configuration
 _	_
 axposf	DEC Alpha 4000/710, 256M, OSF/1 V3.0 \(dg
-ex-art	Pentium-P90, 16MB, BSD/OS 2.0
+ex-art	Pentium-P90, 16MB, 256K cache, BSD/OS 2.0, 
+orac	486/100, 20MB, No cache, BSD/OS 2.0 (laptop)
 pk	Cray C90, C916/161024, UNICOS 8.0.2.4
 vapor	SGI, 18* 75 MHz R8000 IP21, 1024G RAM 8-way, Irix 6.0
 vblt	66 MHz 486DX2/66, 16M RAM, Linux 1.1.73
@@ -323,6 +324,7 @@ wilson	41.16	39.54	45.98	42.93	34.82	40.88	-P1
 whiz	36.25	31.08	37.21	39.62	36.98	36.22
 warp	19.88	21.33	23.71	24.19	22.60	22.34
 ex-art	14.40	16.63	22.12	25.38	23.83	20.47	
+orac	7.57	8.23	10.72	12.43	11.30	10.05	
 wilted	9.58	9.53	10.66	10.53	9.87	10.03
 vblt	4.85	4.89	5.29	5.24	4.90	5.03	
 wimp	1.16	1.34	1.82	2.25	2.06	1.72	
