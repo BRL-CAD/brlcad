@@ -67,6 +67,7 @@ SOURCES = $(itcl_SOURCES)
 WIN_OBJECTS = dllEntryPoint.$(OBJEXT)
 UNIX_OBJECTS =
 GENERIC_OBJECTS = itclStubInit.$(OBJEXT) \
+	itclStubLib.$(OBJEXT) \
 	itcl_bicmds.$(OBJEXT) \
 	itcl_class.$(OBJEXT) \
 	itcl_cmds.$(OBJEXT) \
@@ -81,7 +82,7 @@ GENERIC_OBJECTS = itclStubInit.$(OBJEXT) \
 PLATFORM_OBJECTS = @PLATFORM_OBJECTS@
 itclstub_OBJECTS = itclStubLib.$(OBJEXT)
 itcl_OBJECTS = $(PLATFORM_OBJECTS) $(GENERIC_OBJECTS)
-OBJECTS = $(itcl_OBJECTS) $(itclstub_OBJECTS)
+OBJECTS = $(itcl_OBJECTS)
 
 #========================================================================
 # The substitution of "exampleA_LIB_FILE" into the variable name below

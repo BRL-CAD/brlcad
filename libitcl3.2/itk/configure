@@ -1900,7 +1900,7 @@ fi
 	*)
 	    #MAKE_STATIC_LIB="\${STLIB_LD} \$@ \$(\$@_OBJECTS)"
 	    #MAKE_SHARED_LIB="\${SHLIB_LD} \$@ \$(\$@_OBJECTS) \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS}"
-	    MAKE_STATIC_LIB="\${STLIB_LD} \$@ \$(itkstub_OBJECTS)"
+	    MAKE_STATIC_LIB="\${STLIB_LD} \$@ \$(itk_OBJECTS)"
 	    MAKE_SHARED_LIB="\${SHLIB_LD} \$@ \$(itk_OBJECTS) \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS}"
 	    ;;
     esac

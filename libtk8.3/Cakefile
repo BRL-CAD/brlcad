@@ -19,7 +19,7 @@
 			 --exec-prefix=BASEDIR --prefix=BASEDIR \
 			 --x-includes=XINCDIR --x-libraries=XLIBDIR \
 			 --with-tcl=[[pwd]]/LIBTCL_DIR \
-			 --quiet
+			 --disable-shared --quiet
 #define PRODUCTS	[[echo libtk''TCLTK_VERS.a]]
 #define	AFTER_MAKE	rm -f libtk.a ; ln -s PRODUCTS libtk.a
 #else

@@ -16,7 +16,7 @@
 #if !defined(BUILD_LIBRARY)
 #define	BUILD_LIBRARY	ar r
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --cache-file cache.MTYPE \
-			 --exec-prefix=BASEDIR --prefix=BASEDIR
+			 --exec-prefix=BASEDIR --prefix=BASEDIR --disable-shared
 #define PRODUCTS	[[echo libtcl''TCLTK_VERS.a]]
 #define	AFTER_MAKE	rm -f libtcl.a ; ln -s PRODUCTS libtcl.a
 #else
