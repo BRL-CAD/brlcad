@@ -545,8 +545,7 @@ struct ptlist **curv_pts;
 	   			dpi = (t2-t1)/(double)num_points; /* parameter incremenmt */
 
 	   			/* start point */
-	   			/* XXX Is this right? */
-	   			VSET( tmp, xc, yc, 0.0 );
+	   			VSET( tmp, xc, yc, v1[2] );
    				MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
 	   			VSCALE( ptr->pt , ptr->pt , conv_factor );
    				npts++;
