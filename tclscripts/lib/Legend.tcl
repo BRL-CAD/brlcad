@@ -33,9 +33,11 @@ class cadwidgets::Legend {
     itk_option define -slots slots Slots 10
     itk_option define -colorFunc colorFunc ColorFunc ""
 
+    public method drawToCanvas {c x y w h tags}
     public method update {}
     public method getColor {val}
     public method rampRGB {val}
+    public method postscript {args}
 
     private variable low 0.0
     private variable high 1.0
@@ -163,18 +165,12 @@ body cadwidgets::Legend::constructor {args} {
 body cadwidgets::Legend::destructor {} {
 }
 
-body cadwidgets::Legend::update {} {
-    set xoff 10
-    set yoff 15
-
-    $itk_component(canvas) delete all
-    set w [expr {[winfo width $itk_component(canvas)] - (2 * $xoff)}]
-    set h [winfo height $itk_component(canvas)]
+body cadwidgets::Legend::drawToCanvas {c xoff yoff w h tags} {
     set si [expr {$w / double($itk_option(-slots))}]
     set vi [expr {$dv / double($itk_option(-slots) - 1)}]
 
     set y1 $yoff
-    set y2 [expr {$h - 1}]
+    set y2 [expr {$h + $y1}]
     for {set i 0} {$i < $itk_option(-slots)} {incr i} {
 	set x1 [expr {int($i * $si) + $xoff}]
 	set x2 [expr {int(($i + 1) * $si) + $xoff}]
@@ -184,13 +180,23 @@ body cadwidgets::Legend::update {} {
 	} else {
 	    set rgb [eval format "#%.2x%.2x%.2x" [eval $itk_option(-colorFunc) $low $high $val]]
 	}
-	$itk_component(canvas) create rectangle $x1 $y1 $x2 $y2 \
-		-outline "" -fill $rgb
+	$c create rectangle $x1 $y1 $x2 $y2 \
+		-outline "" -fill $rgb -tags $tags
     }
-    $itk_component(canvas) create text $xoff $yoff -text $low -anchor s
-    $itk_component(canvas) create text [expr {$w + $xoff}] $yoff -text $high -anchor s
+    $c create text $xoff $yoff -text $low -anchor s -tags $tags
+    $c create text [expr {$w + $xoff}] $yoff -text $high -anchor s -tags $tags
 
     return
+}
+
+body cadwidgets::Legend::update {} {
+    set xoff 20
+    set yoff 15
+
+    $itk_component(canvas) delete all
+    set w [expr {[winfo width $itk_component(canvas)] - (2 * $xoff)}]
+    set h [expr {[winfo height $itk_component(canvas)] - $yoff}]
+    drawToCanvas $itk_component(canvas) $xoff $yoff $w $h legend
 }
 
 body cadwidgets::Legend::getColor {val} {
@@ -227,4 +233,8 @@ body cadwidgets::Legend::rampRGB {val} {
     }
 
     return "$r $g $b"
+}
+
+body cadwidgets::Legend::postscript {args} {
+    eval $itk_component(canvas) postscript $args
 }
