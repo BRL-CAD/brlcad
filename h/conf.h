@@ -235,6 +235,7 @@
 #       define HAVE_FLOAT_H     1
 #       define HAVE_LIMITS_H    1
 #	define HAVE_BZERO	1
+#	define HAVE_DLOPEN	1
 #	if 0 && (__FreeBSD_cc_version >= 400000 )
 /*	Only FreeBSD 4.0 and above have multi-CPU support */
 #		define HAS_POSIX_THREADS 1
