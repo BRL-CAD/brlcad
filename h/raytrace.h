@@ -111,7 +111,7 @@ struct hit {
 	point_t		hit_point;	/* Intersection point */
 	vect_t		hit_normal;	/* Surface Normal at hit_point */
 	vect_t		hit_vpriv;	/* private vector for xxx_*() */
-	char		*hit_private;	/* private handle for xxx_shot() */
+	genptr_t	hit_private;	/* private handle for xxx_shot() */
 };
 #define HIT_NULL	((struct hit *)0)
 
@@ -223,7 +223,7 @@ struct soltab {
 	vect_t		st_center;	/* Centroid of solid */
 	fastf_t		st_aradius;	/* Radius of APPROXIMATING sphere */
 	fastf_t		st_bradius;	/* Radius of BOUNDING sphere */
-	int		*st_specific;	/* -> ID-specific (private) struct */
+	genptr_t	st_specific;	/* -> ID-specific (private) struct */
 	struct soltab	*st_forw;	/* Forward linked list of solids */
 	struct soltab	*st_back;	/* Backward links */
 	struct directory *st_dp;	/* Directory entry of solid */
@@ -348,8 +348,8 @@ struct region  {
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
 	struct mater_info reg_mater;	/* Real material information */
-	char		*reg_mfuncs;	/* User appl. funcs for material */
-	char		*reg_udata;	/* User appl. data for material */
+	genptr_t	reg_mfuncs;	/* User appl. funcs for material */
+	genptr_t	reg_udata;	/* User appl. data for material */
 	short		reg_transmit;	/* flag:  material transmits light */
 	short		reg_instnum;	/* instance number, from d_uses */
 };
@@ -789,7 +789,7 @@ struct application  {
 	int		a_y;		/* Screen Y of ray, if applicable */
 	char		*a_purpose;	/* Debug string:  purpose of ray */
 	int		a_user;		/* application-specific value */
-	char		*a_uptr;	/* application-specific pointer */
+	genptr_t	a_uptr;		/* application-specific pointer */
 	fastf_t		a_rbeam;	/* initial beam radius (mm) */
 	fastf_t		a_diverge;	/* slope of beam divergance/mm */
 	fastf_t		a_color[9];	/* application-specific color */
@@ -1029,7 +1029,7 @@ extern double mat_atan2();
 /*****************************************************************
  *                                                               *
  *  Internal routines in the RT library.			 *
- *  These routines are not intended for Applications to use.	 *
+ *  These routines are *not* intended for Applications to use.	 *
  *  The interface to these routines may change significantly	 *
  *  from release to release of this software.			 *
  *                                                               *
@@ -1249,12 +1249,6 @@ extern void rt_pr_roots();		/* print complex roots */
 /*
  *  Constants provided and used by the RT library.
  */
-#if __STDC__
-#define	CONST	const
-#else
-#define	CONST	/**/
-#endif
-
 extern CONST double rt_pi;
 extern CONST double rt_twopi;
 extern CONST double rt_halfpi;
