@@ -1157,7 +1157,7 @@ struct dm *dmp;
 
   while (1) {
     for (i=0, j=0, vip=vibase; i<num; i++, vip++){
-#if 1
+#if 0
       /* code to force a particular visual class and depth */
       if (vip->depth != 8)
 	continue;
