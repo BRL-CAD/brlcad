@@ -870,6 +870,7 @@ struct dm_list *p;
   bu_vls_init(&p->s_info->_ang1_vls);
   bu_vls_init(&p->s_info->_ang2_vls);
   bu_vls_init(&p->s_info->_distadc_vls);
+  bu_vls_init(&p->s_info->_Viewscale_vls);
 }
 
 void
@@ -900,6 +901,7 @@ struct dm_list *p;
   bu_vls_free(&p->s_info->_ang1_vls);
   bu_vls_free(&p->s_info->_ang2_vls);
   bu_vls_free(&p->s_info->_distadc_vls);
+  bu_vls_free(&p->s_info->_Viewscale_vls);
 }
 
 void
@@ -956,6 +958,8 @@ struct dm_list *p;
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_distadc_vls, "distadc(%S)",
 		&p->_dmp->dm_pathName);
+  bu_vls_printf(&p->s_info->_Viewscale_vls, "Viewscale(%S)",
+		&p->_dmp->dm_pathName);
 
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[X]),
 	      (char *)&p->s_info->_rate_tran[X], TCL_LINK_DOUBLE);
@@ -995,6 +999,9 @@ struct dm_list *p;
 	      (char *)&p->s_info->_adc_a2_deg, TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_distadc_vls),
 	      (char *)&p->s_info->_dv_distadc, TCL_LINK_INT);
+  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_Viewscale_vls),
+	      (char *)&p->s_info->_Viewscale,
+	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 }
 
 void
@@ -1020,4 +1027,5 @@ struct dm_list *p;
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_ang1_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_ang2_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_distadc_vls));
+  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_Viewscale_vls));
 }
