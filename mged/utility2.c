@@ -1122,7 +1122,6 @@ mat_t xform;
 	struct directory *found;
 	struct rt_db_internal sol_int;
 	struct object_use *use;
-	int id;
 
 	if(dbip == DBI_NULL)
 	  return DIR_NULL;
@@ -1177,7 +1176,7 @@ mat_t xform;
 	  return( DIR_NULL );
 	}
 
-	if( (id=rt_db_get_internal( &sol_int, dp, dbip, xform, &rt_uniresource )) < 0 )
+	if( rt_db_get_internal( &sol_int, dp, dbip, xform, &rt_uniresource ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "Cannot import solid ",
 			   dp->d_namep, "\n", (char *)NULL);
