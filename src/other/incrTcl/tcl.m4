@@ -916,7 +916,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 
 	    # AIX v<=4.1 has some different flags than 4.2+
 	    if test "$system" = "AIX-4.1" -o "`uname -v`" -lt "4" ; then
-		LIBOBJS="$LIBOBJS tclLoadAix.o"
+		AC_LIBOBJ([tclLoadAix])
 		DL_LIBS="-lld"
 	    fi
 
@@ -1138,17 +1138,6 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 	    fi
 	    if test "`uname -m`" = "alpha" ; then
 		EXTRA_CFLAGS="-mieee"
-	    fi
-
-	    # The combo of gcc + glibc has a bug related
-	    # to inlining of functions like strtod(). The
-	    # -fno-builtin flag should address this problem
-	    # but it does not work. The -fno-inline flag
-	    # is kind of overkill but it works.
-	    # Disable inlining only when one of the
-	    # files in compat/*.c is being linked in.
-	    if test x"${LIBOBJS}" != x ; then
-	        EXTRA_CFLAGS="${EXTRA_CFLAGS} -fno-inline"
 	    fi
 
 	    ;;
@@ -2182,7 +2171,7 @@ AC_DEFUN(TEA_BUGGY_STRTOD, [
 	    AC_MSG_RESULT([ok])
 	else
 	    AC_MSG_RESULT([buggy])
-	    LIBOBJS="$LIBOBJS fixstrtod.o"
+	    AC_LIBOBJ([fixstrtod])
 	    AC_DEFINE(strtod, fixstrtod)
 	fi
     fi
@@ -2425,6 +2414,7 @@ The PACKAGE variable must be defined by your TEA configure.in])
     fi
     AC_MSG_RESULT([ok])
     TEA_INITED=ok
+    AC_PROG_CC
     case "`uname -s`" in
 	*win32*|*WIN32*|*CYGWIN_NT*|*CYGWIN_9*|*CYGWIN_ME*|*MINGW32_*)
 	    AC_CHECK_PROG(CYGPATH, cygpath, cygpath -w, echo)
