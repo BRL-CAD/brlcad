@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.5  86/04/06  06:28:48  gwyn
+ * Fixed endless loop on joverc under System V.
+ * 
  * Revision 2.4  86/01/17  13:23:37  gwyn
  * fixed SYS5 terminal mode setup
  * 
@@ -148,11 +151,7 @@ getchar()
 #endif SYS5
 #endif JOBCONTROL
 
-#ifndef SYS5
 		if(nchars <= 0) {
-#else
-		if(nchars < 0) {
-#endif SYS5
 			if (Input)
 				return EOF;
 			finish(0);
