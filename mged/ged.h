@@ -443,6 +443,7 @@ struct _mged_variables {
         int     orig_gui;
 	int     m_axes;  /* model axes */
 	int     v_axes;  /* view axes */
+	int	v_axes_pos; /* view axes position */
 	int     e_axes;  /* edit axes */
         int     linewidth;
         int     linestyle;
