@@ -1,6 +1,11 @@
 #!/bin/sh
+#			S E T U P . S H
+#
 # This shell script is to be run as the very first step in installing
 # the BRL CAD Package
+# Secret option:  -f, (fast) to skip re-compiling Cake.
+#
+#  $Header$
 
 # Ensure that all subordinate scripts run with the Bourne shell,
 # rather than the user's shell
@@ -57,22 +62,25 @@ SCRIPTS="machinetype.sh cakeinclude.sh cray.sh"
 
 for i in ${SCRIPTS}
 do
-	mv -f ${BINDIR}/${i} ${BINDIR}/${i}.bak
+	mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
 	cp ${i} ${BINDIR}/.
 done
 
-# Make and install "cake" and "cakeaux"
+if test x$1 != x-f
+then
+	# Make and install "cake" and "cakeaux"
 
-cd cake;
-make clobber
-make install
-make clobber
+	cd cake
+	make clobber
+	make install
+	make clobber
 
-cd ../cakeaux
-make clobber
-make cakesub			# XXX
-cp cakesub ${BINDIR}/.
-make clobber
+	cd ../cakeaux
+	make clobber
+	make cakesub			# XXX
+	cp cakesub ${BINDIR}/.
+	make clobber
+fi
 
 #
 # Handle any vendor-specific configurations and setups.
