@@ -46,14 +46,14 @@ HIDDEN void rt_plot_cut();
 
 /* XXX start temporary NUgrid hack  -- shared with shoot.c */
 #define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
-	((((_z)*nu_cells_per_axis[Y])+(_y))*nu_cells_per_axis[X])+(_x) ])
+	((((_z)*rt_nu_cells_per_axis[Y])+(_y))*rt_nu_cells_per_axis[X])+(_x) ])
 struct nu_axis {
 	fastf_t	nu_spos;	/* cell start pos */
 	fastf_t	nu_epos;	/* cell end pos */
 	fastf_t	nu_width;	/* voxel size */
 };
-struct nu_axis	*nu_axis[3];
-int		nu_cells_per_axis[3];
+struct nu_axis	*rt_nu_axis[3];
+int		rt_nu_cells_per_axis[3];
 union cutter	*nu_grid;
 /* XXX end NUgrid hack */
 
@@ -190,7 +190,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	}
 
 	for( i=0; i<3; i++ )  {
-		nu_axis[i] = (struct nu_axis *)rt_calloc( nu_max_ncells,
+		rt_nu_axis[i] = (struct nu_axis *)rt_calloc( nu_max_ncells,
 			sizeof(struct nu_axis), "NUgrid axis" );
 	}
 
@@ -214,11 +214,11 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		struct histogram	*ehp = &end_hist[i];
 		int	hindex = 0;
 /*		int	epos; */
-		int	axi = 0;	/* nu_axis index */
+		int	axi = 0;	/* rt_nu_axis index */
 
 		if( shp->hg_min != ehp->hg_min )  rt_bomb("cut_it: hg_min error\n");
 		pos = shp->hg_min;
-		nu_axis[i][axi].nu_spos = pos;
+		rt_nu_axis[i][axi].nu_spos = pos;
 		for( hindex = 0; hindex < shp->hg_nbins; hindex++ )  {
 			if( pos > shp->hg_max )  break;
 			/* Advance interval one more histogram entry */
@@ -229,34 +229,34 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			if( nstart < nu_sol_per_cell &&
 			    nend < nu_sol_per_cell )  continue;
 			/* End current interval, start new one */
-			nu_axis[i][axi].nu_epos = pos;
-			nu_axis[i][axi].nu_width = pos - nu_axis[i][axi].nu_spos;
+			rt_nu_axis[i][axi].nu_epos = pos;
+			rt_nu_axis[i][axi].nu_width = pos - rt_nu_axis[i][axi].nu_spos;
 			if( axi >= nu_max_ncells-1 )  {
 				rt_log("NUgrid ran off end, axis=%d, axi=%d\n",
 					i, axi);
 				pos = shp->hg_max+1;
 				break;
 			}
-			nu_axis[i][++axi].nu_spos = pos;
+			rt_nu_axis[i][++axi].nu_spos = pos;
 			nstart = 0;
 			nend = 0;
 		}
 		/* End final interval */
-		nu_axis[i][axi].nu_epos = pos;
-		nu_axis[i][axi].nu_width = pos - nu_axis[i][axi].nu_spos;
-		nu_cells_per_axis[i] = axi+1;
+		rt_nu_axis[i][axi].nu_epos = pos;
+		rt_nu_axis[i][axi].nu_width = pos - rt_nu_axis[i][axi].nu_spos;
+		rt_nu_cells_per_axis[i] = axi+1;
 	}
 
 	/* For debugging */
 	if(rt_g.debug&DEBUG_CUT)  for( i=0; i<3; i++ )  {
 		register int j;
 		rt_log("\nNUgrid %c axis:  %d cells\n",
-			"XYZ*"[i], nu_cells_per_axis[i] );
-		for( j=0; j<nu_cells_per_axis[i]; j++ )  {
+			"XYZ*"[i], rt_nu_cells_per_axis[i] );
+		for( j=0; j<rt_nu_cells_per_axis[i]; j++ )  {
 			rt_log("  %g .. %g, w=%g\n",
-				nu_axis[i][j].nu_spos,
-				nu_axis[i][j].nu_epos,
-				nu_axis[i][j].nu_width );
+				rt_nu_axis[i][j].nu_spos,
+				rt_nu_axis[i][j].nu_epos,
+				rt_nu_axis[i][j].nu_width );
 		}
 	}
 
@@ -264,8 +264,8 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	rt_hist_init( &nu_hist_cellsize, 0.0, 399.0, 400 );
 	/* For the moment, re-use "union cutter" */
 	nu_grid = (union cutter *)rt_malloc(
-		nu_cells_per_axis[X] * nu_cells_per_axis[Y] *
-		nu_cells_per_axis[Z] * sizeof(union cutter),
+		rt_nu_cells_per_axis[X] * rt_nu_cells_per_axis[Y] *
+		rt_nu_cells_per_axis[Z] * sizeof(union cutter),
 		 "3-D NUgrid union cutter []" );
 	nu_xbox.bn_len = 0;
 	nu_xbox.bn_maxlen = rtip->nsolids;
@@ -283,11 +283,11 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		nu_zbox.bn_maxlen * sizeof(struct soltab *),
 		"zbox boxnode []" );
 	/* Build each of the X slices */
-	for( xp = 0; xp < nu_cells_per_axis[X]; xp++ )  {
+	for( xp = 0; xp < rt_nu_cells_per_axis[X]; xp++ )  {
 		VMOVE( xmin, rtip->mdl_min );
 		VMOVE( xmax, rtip->mdl_max );
-		xmin[X] = nu_axis[X][xp].nu_spos;
-		xmax[X] = nu_axis[X][xp].nu_epos;
+		xmin[X] = rt_nu_axis[X][xp].nu_spos;
+		xmax[X] = rt_nu_axis[X][xp].nu_epos;
 		VMOVE( nu_xbox.bn_min, xmin );
 		VMOVE( nu_xbox.bn_max, xmax );
 		nu_xbox.bn_len = 0;
@@ -301,11 +301,11 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		} RT_VISIT_ALL_SOLTABS_END
 
 		/* Build each of the Y slices in this X slice */
-		for( yp = 0; yp < nu_cells_per_axis[Y]; yp++ )  {
+		for( yp = 0; yp < rt_nu_cells_per_axis[Y]; yp++ )  {
 			VMOVE( ymin, xmin );
 			VMOVE( ymax, xmax );
-			ymin[Y] = nu_axis[Y][yp].nu_spos;
-			ymax[Y] = nu_axis[Y][yp].nu_epos;
+			ymin[Y] = rt_nu_axis[Y][yp].nu_spos;
+			ymax[Y] = rt_nu_axis[Y][yp].nu_epos;
 			VMOVE( nu_ybox.bn_min, ymin );
 			VMOVE( nu_ybox.bn_max, ymax );
 			nu_ybox.bn_len = 0;
@@ -319,13 +319,13 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			}
 			/* Build each of the Z slices in this Y slice. */
 			/* Each of these will be a final cell */
-			for( zp = 0; zp < nu_cells_per_axis[Z]; zp++ )  {
+			for( zp = 0; zp < rt_nu_cells_per_axis[Z]; zp++ )  {
 				register union cutter *cutp =
 					RT_NUGRID_CELL(nu_grid, xp, yp, zp);
 				VMOVE( zmin, ymin );
 				VMOVE( zmax, ymax );
-				zmin[Z] = nu_axis[Z][zp].nu_spos;
-				zmax[Z] = nu_axis[Z][zp].nu_epos;
+				zmin[Z] = rt_nu_axis[Z][zp].nu_spos;
+				zmax[Z] = rt_nu_axis[Z][zp].nu_epos;
 				cutp->cut_type = CUT_BOXNODE;
 				VMOVE( cutp->bn.bn_min, zmin );
 				VMOVE( cutp->bn.bn_max, zmax );
@@ -375,7 +375,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 #endif	/* NUgrid */
 
 	for( i=0; i<3; i++ )  {
-		rt_free( (char *)nu_axis[i], "NUgrid axis" );
+		rt_free( (char *)rt_nu_axis[i], "NUgrid axis" );
 	}
 
 	/*  Finished with histogram data structures */

@@ -57,30 +57,30 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 
 /* start NUgrid XXX  --  associated with cut.c */
 #define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
-	((((_z)*nu_cells_per_axis[Y])+(_y))*nu_cells_per_axis[X])+(_x) ])
+	((((_z)*rt_nu_cells_per_axis[Y])+(_y))*rt_nu_cells_per_axis[X])+(_x) ])
 
-struct nu_axis {
+struct rt_nu_axis {
 	fastf_t	nu_spos;	/* cell start pos */
 	fastf_t	nu_epos;	/* cell end pos */
 	fastf_t	nu_width;	/* voxel size (end-start) */
 };
-extern struct nu_axis	*nu_axis[3];
-extern int		nu_cells_per_axis[3];
+extern struct nu_axis	*rt_nu_axis[3];
+extern int		rt_nu_cells_per_axis[3];
 extern union cutter	*nu_grid;
 
 #define NUGRID_T_SETUP(_ax,_cno)	\
 	if( ap->a_ray.r_dir[_ax] == 0.0 )  { \
 		ssp->tv[_ax] = INFINITY; \
 	} else if( ap->a_ray.r_dir[_ax] < 0 ) { \
-		ssp->tv[_ax] = (nu_axis[_ax][_cno].nu_epos - ssp->newray.r_pt[_ax]) * \
+		ssp->tv[_ax] = (rt_nu_axis[_ax][_cno].nu_epos - ssp->newray.r_pt[_ax]) * \
 			ssp->inv_dir[_ax]; \
 	} else { \
-		ssp->tv[_ax] = (nu_axis[_ax][_cno].nu_spos - ssp->newray.r_pt[_ax]) * \
+		ssp->tv[_ax] = (rt_nu_axis[_ax][_cno].nu_spos - ssp->newray.r_pt[_ax]) * \
 			ssp->inv_dir[_ax]; \
 	}
 #define NUGRID_T_ADV(_ax,_cno)  \
 	if( ap->a_ray.r_dir[_ax] != 0 )  { \
-		ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
+		ssp->tv[_ax] += rt_nu_axis[_ax][_cno].nu_width * \
 			ssp->abs_inv_dir[_ax]; \
 	}
 
@@ -158,29 +158,29 @@ register struct shootray_status	*ssp;
 					V3ARGS( ssp->newray.r_pt ) );
 			}
 
-			if( ssp->newray.r_pt[X] < nu_axis[X][0].nu_spos )
+			if( ssp->newray.r_pt[X] < rt_nu_axis[X][0].nu_spos )
 				break;
-			for( x=0; x < nu_cells_per_axis[X]; x++ )  {
-				if( ssp->newray.r_pt[X] < nu_axis[X][x].nu_epos )
+			for( x=0; x < rt_nu_cells_per_axis[X]; x++ )  {
+				if( ssp->newray.r_pt[X] < rt_nu_axis[X][x].nu_epos )
 					break;
 			}
-			if( x >= nu_cells_per_axis[X] )  break;
+			if( x >= rt_nu_cells_per_axis[X] )  break;
 
-			if( ssp->newray.r_pt[Y] < nu_axis[Y][0].nu_spos )
+			if( ssp->newray.r_pt[Y] < rt_nu_axis[Y][0].nu_spos )
 				break;
-			for( y=0; y < nu_cells_per_axis[Y]; y++ )  {
-				if( ssp->newray.r_pt[Y] < nu_axis[Y][y].nu_epos )
+			for( y=0; y < rt_nu_cells_per_axis[Y]; y++ )  {
+				if( ssp->newray.r_pt[Y] < rt_nu_axis[Y][y].nu_epos )
 					break;
 			}
-			if( y >= nu_cells_per_axis[Y] )  break;
+			if( y >= rt_nu_cells_per_axis[Y] )  break;
 
-			if( ssp->newray.r_pt[Z] < nu_axis[Z][0].nu_spos )
+			if( ssp->newray.r_pt[Z] < rt_nu_axis[Z][0].nu_spos )
 				break;
-			for( z=0; z < nu_cells_per_axis[Z]; z++ )  {
-				if( ssp->newray.r_pt[Z] < nu_axis[Z][z].nu_epos )
+			for( z=0; z < rt_nu_cells_per_axis[Z]; z++ )  {
+				if( ssp->newray.r_pt[Z] < rt_nu_axis[Z][z].nu_epos )
 					break;
 			}
-			if( z >= nu_cells_per_axis[Z] )  break;
+			if( z >= rt_nu_cells_per_axis[Z] )  break;
 			cutp = RT_NUGRID_CELL( nu_grid, x, y, z );
 
 			/*
@@ -261,7 +261,7 @@ if(rt_g.debug&DEBUG_ADVANCE) VPRINT("Exit tv[]", ssp->tv);
 			ssp->t0 = ssp->t1;
 			NUGRID_T_ADV( ssp->out_axis, ssp->igrid[ssp->out_axis] );
 			if( ap->a_ray.r_dir[ssp->out_axis] > 0 ) {
-				if( ++(ssp->igrid[ssp->out_axis]) >= nu_cells_per_axis[ssp->out_axis] )
+				if( ++(ssp->igrid[ssp->out_axis]) >= rt_nu_cells_per_axis[ssp->out_axis] )
 					break;
 			} else {
 				if( --(ssp->igrid[ssp->out_axis]) < 0 )
