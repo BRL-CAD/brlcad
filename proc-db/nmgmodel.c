@@ -549,7 +549,6 @@ char *av[];
 
 	
 	/* write the database */
-	unlink(mfilename);
 	if ((fdmodel = fopen(mfilename, "w")) == (FILE *)NULL)
 		perror(mfilename);
 	else {
