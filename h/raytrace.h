@@ -38,11 +38,11 @@
 #define RAYTRACE_H_VERSION	"@(#)$Header$ (BRL)"
 
 /*
- *  System library routines used by the RT library.
+ *  System library routines used by LIBRT.
  *  If header files are to be included, this should happen first,
  *  to prevent accidentally redefining important stuff.
  */
-#if __STDC__ && !apollo
+#if (__STDC__ && !apollo) || (sgi && mips)
 /*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
 #	include <stdlib.h>
 #	include <stddef.h>
@@ -100,8 +100,9 @@ extern char	*realloc();
  *  the compiler understands them or not.
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
+ *  The setting of USE_PROTOTYPES is done in machine.h
  */
-#if __STDC__
+#if USE_PROTOTYPES
 #	define	RT_EXTERN(type_and_name,args)	extern type_and_name args
 #	define	RT_ARGS(args)			args
 #else
@@ -1149,58 +1150,79 @@ struct command_tab {
  *  This needs to be at the end of the header file,
  *  so that all the structure names are known.
  *  XXX the "union record" and "struct nmgregion" pointers are problematic.
+ *
+ *  XXX On SGI, can not use identifiers in prototypes inside structure!
  */
 struct rt_functab {
 	char	*ft_name;
 	int	ft_use_rpp;
-#if defined(__STDC__) && defined(RECORD_DEFINED)
-	int	(*ft_prep) RT_ARGS((struct soltab *stp, union record *rec,
-			struct rt_i *rtip));
+#if defined(RECORD_DEFINED)
+	int	(*ft_prep) RT_ARGS((struct soltab * /*stp*/,
+			union record * /*rec*/,
+			struct rt_i * /*rtip*/));
 #else
-	int	(*ft_prep) RT_ARGS((struct soltab *stp, genptr_t rec,
-			struct rt_i *rtip));
+	int	(*ft_prep) RT_ARGS((struct soltab * /*stp*/,
+			genptr_t  /*rec*/,
+			struct rt_i * /*rtip*/));
 #endif
-	int 	(*ft_shot) RT_ARGS((struct soltab *stp, struct xray *rp,
-			struct application *ap, struct seg *seghead));
-	void	(*ft_print) RT_ARGS((struct soltab *stp));
-	void	(*ft_norm) RT_ARGS((struct hit *hitp, struct soltab *stp,
-			struct xray *rp));
-	void	(*ft_uv) RT_ARGS((struct application *ap, struct soltab *stp,
-			struct hit *hitp, struct uvcoord *uvp));
-	void	(*ft_curve) RT_ARGS((struct curvature *cvp, struct hit *hitp,
-			struct soltab *stp));
+	int 	(*ft_shot) RT_ARGS((struct soltab * /*stp*/,
+			struct xray * /*rp*/,
+			struct application * /*ap*/,
+			struct seg * /*seghead*/));
+	void	(*ft_print) RT_ARGS((struct soltab * /*stp*/));
+	void	(*ft_norm) RT_ARGS((struct hit * /*hitp*/,
+			struct soltab * /*stp*/,
+			struct xray * /*rp*/));
+	void	(*ft_uv) RT_ARGS((struct application * /*ap*/,
+			struct soltab * /*stp*/,
+			struct hit * /*hitp*/,
+			struct uvcoord * /*uvp*/));
+	void	(*ft_curve) RT_ARGS((struct curvature * /*cvp*/,
+			struct hit * /*hitp*/,
+			struct soltab * /*stp*/));
 	int	(*ft_classify)();
-	void	(*ft_free) RT_ARGS((struct soltab *stp));
-#if defined(__STDC__) && defined(RECORD_DEFINED)
-	int	(*ft_plot) RT_ARGS((union record *rp, mat_t mat,
-			struct vlhead *vhead, struct directory *dp,
-			double abs_tol, double rel_tol, double norm_tol));
+	void	(*ft_free) RT_ARGS((struct soltab * /*stp*/));
+#if defined(RECORD_DEFINED)
+	int	(*ft_plot) RT_ARGS((union record * /*rec*/,
+			mat_t /*mat*/,
+			struct vlhead * /*vhead*/,
+			struct directory * /*dp*/,
+			double /*abs*/, double /*rel*/, double /*norm*/));
 #else
-	int	(*ft_plot) RT_ARGS((genptr_t rp, mat_t mat,
-			struct vlhead *vhead, struct directory *dp,
-			double abs_tol, double rel_tol, double norm_tol));
+	int	(*ft_plot) RT_ARGS((genptr_t /*rec*/,
+			mat_t /*mat*/,
+			struct vlhead * /*vhead*/,
+			struct directory * /*dp*/,
+			double /*abs*/, double /*rel*/, double /*norm*/));
 #endif
-	void	(*ft_vshot) RT_ARGS((struct soltab *stp[], struct xray *rp[],
-			struct seg segp[], int n, struct resource *resp));
-#if defined(__STDC__) && defined(RECORD_DEFINED) && \
-    defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
-	int	(*ft_tessellate) RT_ARGS((struct nmgregion **r,
-			struct model *m, union record *rp,
-			mat_t mat, struct directory *dp,
-			double abs_tol, double rel_tol, double norm_tol));
+	void	(*ft_vshot) RT_ARGS((struct soltab * /*stp*/[],
+			struct xray *[] /*rp*/,
+			struct seg [] /*segp*/, int /*n*/,
+			struct resource * /*resp*/));
+#if defined(RECORD_DEFINED) && defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
+	int	(*ft_tessellate) RT_ARGS((struct nmgregion ** /*r*/,
+			struct model * /*m*/,
+			union record * /*rec*/,
+			mat_t /*mat*/,
+			struct directory * /*dp*/,
+			double /*abs*/, double /*rel*/, double /*norm*/));
 #else
-	int	(*ft_tessellate) RT_ARGS((genptr_t *r,
-			genptr_t m, genptr_t rp,
-			mat_t mat, struct directory *dp,
-			double abs_tol, double rel_tol, double norm_tol));
+	int	(*ft_tessellate) RT_ARGS((genptr_t * /*r*/,
+			genptr_t /*m*/,
+			genptr_t /*rec*/,
+			mat_t /*mat*/,
+			struct directory * /*dp*/,
+			double /*abs*/, double /*rel*/, double /*norm*/));
 #endif
-	int	(*ft_import) RT_ARGS((struct rt_db_internal *ip,
-			struct rt_external *ep, mat_t mat));
-	int	(*ft_export) RT_ARGS((struct rt_external *ep,
-			struct rt_db_internal *ip));
-	void	(*ft_ifree) RT_ARGS((struct rt_db_internal *ip));
-	int	(*ft_describe) RT_ARGS((struct rt_vls *str,
-			struct rt_db_internal *ip, int verbose));
+	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
+			struct rt_external * /*ep*/,
+			mat_t /*mat*/));
+	int	(*ft_export) RT_ARGS((struct rt_external * /*ep*/,
+			struct rt_db_internal * /*ip*/));
+	void	(*ft_ifree) RT_ARGS((struct rt_db_internal * /*ip*/));
+	int	(*ft_describe) RT_ARGS((struct rt_vls * /*str*/,
+			struct rt_db_internal * /*ip*/,
+			int /*verbose*/));
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
@@ -1212,7 +1234,11 @@ extern int rt_nfunctab;
  *****************************************************************/
 
 RT_EXTERN(void rt_bomb, (char *str) );	/* Fatal error */
-RT_EXTERN(void rt_log, (char *, ... ) );	/* Log message */
+#if __STDC__
+RT_EXTERN(void rt_log, (char *, ... ) ); /* Log message */
+#else
+RT_EXTERN(void rt_log, () );		/* Log message */
+#endif
 					/* Read named MGED db, build toc */
 RT_EXTERN(struct rt_i *rt_dirbuild, (char *filename, char *buf, int len) );
 					/* Prepare for raytracing */
