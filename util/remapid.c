@@ -872,7 +872,7 @@ char	*db_name;
 		continue;
 	    ip = (struct rt_db_internal *)
 		bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
-	    if (rt_db_get_internal(ip, dp, dbip, (mat_t *) NULL) < 0)
+	    if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL) < 0)
 	    {
 		bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		    dp -> d_namep);
