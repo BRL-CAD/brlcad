@@ -175,6 +175,8 @@ char    **argv;
 {
   register struct directory *dp;
   register int i;
+  register struct dm_list *dmlp;
+  register struct dm_list *save_dmlp;
 
   if(dbip == DBI_NULL)
     return TCL_OK;
@@ -194,7 +196,16 @@ char    **argv;
       eraseobj(dp);
   }
 
-  /* XXX do dm_freeDList() for each solid deleted */
+#ifdef DO_SINGLE_DISPLAY_LIST
+  for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+    if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+      save_dmlp = curr_dm_list;
+      curr_dm_list = dmlp;
+      createDList(&HeadSolid);
+      curr_dm_list = save_dmlp;
+    }
+  }
+#endif
 
   return TCL_OK;
 }
@@ -207,6 +218,8 @@ char    **argv;
 {
   register struct directory *dp;
   register int i;
+  register struct dm_list *dmlp;
+  register struct dm_list *save_dmlp;
 
   if(dbip == DBI_NULL)
     return TCL_OK;
@@ -225,6 +238,17 @@ char    **argv;
     if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
       eraseobjall(dp);
   }
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+  for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+    if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+      save_dmlp = curr_dm_list;
+      curr_dm_list = dmlp;
+      createDList(&HeadSolid);
+      curr_dm_list = save_dmlp;
+    }
+  }
+#endif
 
   return TCL_OK;
 }
@@ -321,16 +345,6 @@ char	**argv;
   if (f_zap(clientData, interp, 1, av) == TCL_ERROR)
     return TCL_ERROR;
 
-  if( dmp->dm_displaylist )  {
-    /*
-     * Force out the control list with NO solids being drawn,
-     * then the display processor will not mind when we start
-     * writing new subroutines out there...
-     */
-    update_views = 1;
-    refresh();
-  }
-
   return edit_com( argc, argv, 1, 1 );
 }
 
@@ -353,8 +367,6 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  update_views = 1;
-
   return edit_com( argc, argv, 1, 1 );
 }
 
@@ -375,8 +387,6 @@ char	**argv;
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
-
-  update_views = 1;
 
   return edit_com( argc, argv, 3, 1 );
 }
@@ -409,8 +419,6 @@ char	**argv;
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
-
-  update_views = 1;
 
   return edit_com( argc, argv, 2, 1 );
 }
@@ -481,6 +489,9 @@ int	catch_sigint;
 {
   register struct directory *dp;
   register int	i;
+  register struct dm_list *dmlp;
+  register struct dm_list *save_dmlp;
+  register struct cmd_list *save_cmd_list;
   double		elapsed_time;
   int		initial_blank_screen;
   struct bu_vls vls;
@@ -500,11 +511,7 @@ int	catch_sigint;
     }
   }
 
-  if( dmp->dm_displaylist )  {
-    /* Force displaylist update before starting new drawing */
-    update_views = 1;
-    refresh();
-  }
+  update_views = 1;
 
   if( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3);	/* allow interupts */
@@ -518,42 +525,41 @@ int	catch_sigint;
   drawtrees( argc, argv, kind );
   (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
 
-  bu_vls_printf(&vls, "%ld vectors in %g sec\n", nvectors, elapsed_time);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  save_dmlp = curr_dm_list;
+  save_cmd_list = curr_cmd_list;
+  for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+    curr_dm_list = dmlp;
+    if(curr_dm_list->aim)
+      curr_cmd_list = curr_dm_list->aim;
+    else
+      curr_cmd_list = &head_cmd_list;
 
-  {
-    register struct dm_list *p;
-    struct dm_list *save_dm_list;
-    struct cmd_list *save_cmd_list;
+    /* If we went from blank screen to non-blank, resize */
+    if (mged_variables.autosize  && initial_blank_screen &&
+	BU_LIST_NON_EMPTY(&HeadSolid.l)) {
+      struct view_list *vlp;
 
-    save_dm_list = curr_dm_list;
-    save_cmd_list = curr_cmd_list;
-    for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-      curr_dm_list = p;
-      if(curr_dm_list->aim)
-	curr_cmd_list = curr_dm_list->aim;
-      else
-	curr_cmd_list = &head_cmd_list;
+      size_reset();
+      new_mats();
+      (void)mged_svbase();
 
-      /* If we went from blank screen to non-blank, resize */
-      if (mged_variables.autosize  && initial_blank_screen &&
-	  BU_LIST_NON_EMPTY(&HeadSolid.l)) {
-	struct view_list *vlp;
-
-	size_reset();
-	new_mats();
-	(void)mged_svbase();
-
-	for(BU_LIST_FOR(vlp, view_list, &headView.l))
-	  vlp->vscale = Viewscale;
-      }
-
-      color_soltab();
+      for(BU_LIST_FOR(vlp, view_list, &headView.l))
+	vlp->vscale = Viewscale;
     }
 
-    curr_dm_list = save_dm_list;
-    curr_cmd_list = save_cmd_list;
+    color_soltab();
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+    createDList(&HeadSolid);
+#endif
   }
+
+  curr_dm_list = save_dmlp;
+  curr_cmd_list = save_cmd_list;
+
+  bu_vls_printf(&vls, "%d total solid(s)\n", BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist);
+  bu_vls_printf(&vls, "%ld vectors in %g sec\n", nvectors, elapsed_time);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 
   bu_vls_free(&vls);
   (void)signal( SIGINT, SIG_IGN );
@@ -969,6 +975,7 @@ char	**argv;
 {
 	register struct solid *sp;
 	register struct solid *nsp;
+	register struct dm_list *dmlp;
 	struct directory	*dp;
 
 	if(dbip == DBI_NULL)
@@ -990,6 +997,22 @@ char	**argv;
 	if( state != ST_VIEW )
 		button( BE_REJECT );
 
+#ifdef DO_DISPLAY_LISTS
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist)
+#ifdef DO_SINGLE_DISPLAY_LIST
+	    dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
+				      HeadSolid.s_dlist + dmlp->_dmp->dm_displaylist,
+				      1);
+#else
+	    dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
+				      HeadSolid.s_dlist + dmlp->_dmp->dm_displaylist,
+				      BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
+				      HeadSolid.s_dlist + 1);
+#endif
+	}
+#endif
+
 	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
 	while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
 		dp = sp->s_path[0];
@@ -999,13 +1022,13 @@ char	**argv;
 			  Tcl_AppendResult(interp, "f_zap: db_dirdelete failed\n", (char *)NULL);
 			}
 		}
+
 		nsp = BU_LIST_PNEXT(solid, sp);
 		BU_LIST_DEQUEUE(&sp->l);
 		FREE_SOLID(sp,&FreeSolid.l);
 		sp = nsp;
 	}
 
-	/*XXX dm_freeDList() */
 
 	/* Keeping freelists improves performance.  When debugging, give mem back */
 	if( rt_g.debug )  mged_freemem();
@@ -1193,13 +1216,12 @@ register struct directory *dp;
   register struct solid *sp;
   static struct solid *nsp;
   register int i;
+  register struct dm_list *dmlp;
 
   if(dbip == DBI_NULL)
     return;
 
   update_views = 1;
-
-  /* XXX do dm_freeDList() for each solid deleted */
 
   RT_CK_DIR(dp);
   sp = BU_LIST_NEXT(solid, &HeadSolid.l);
@@ -1207,6 +1229,18 @@ register struct directory *dp;
     nsp = BU_LIST_PNEXT(solid, sp);
     for( i=0; i<=sp->s_last; i++ )  {
       if( sp->s_path[i] != dp )  continue;
+
+#ifdef DO_DISPLAY_LISTS
+#ifdef DO_SINGLE_DISPLAY_LIST
+    /* do nothing here */
+#else
+      for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist)
+	  dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
+				    sp->s_dlist + dmlp->_dmp->dm_displaylist, 1);
+      }
+#endif
+#endif
 
       if( state != ST_VIEW && illump == sp )
 	button( BE_REJECT );
@@ -1237,14 +1271,13 @@ register struct directory *dp;
 {
   register struct solid *sp;
   register struct solid *nsp;
+  register struct dm_list *dmlp;
 
   if(dbip == DBI_NULL)
     return;
 
   update_views = 1;
   RT_CK_DIR(dp);
-
-  /* XXX do dm_freeDList() for each solid deleted */
 
   sp = BU_LIST_FIRST(solid, &HeadSolid.l);
   while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
@@ -1253,6 +1286,18 @@ register struct directory *dp;
       sp = nsp;
       continue;
     }
+
+#ifdef DO_DISPLAY_LISTS
+#ifdef DO_SINGLE_DISPLAY_LIST
+    /* do nothing here */
+#else
+    for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+      if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist)
+	dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
+			    sp->s_dlist + dmlp->_dmp->dm_displaylist, 1);
+    }
+#endif
+#endif
 
     if(state != ST_VIEW && illump == sp)
       button( BE_REJECT );
