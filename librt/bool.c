@@ -64,7 +64,7 @@ struct seg *segp_in;
 	curbin = 1;				/* bin 0 is always FALSE */
 	PartHd.pt_forw = PartHd.pt_back = &PartHd;
 
-	if(debug&DEBUG_PARTITION) printf("-------------------BOOL_REGIONS\n");
+	if(debug&DEBUG_PARTITION) fprintf(stderr,"-------------------BOOL_REGIONS\n");
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
 		register struct partition *newpp;		/* XXX */
 		FAST fastf_t dist;				/* XXX */

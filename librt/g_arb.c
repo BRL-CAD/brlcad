@@ -377,7 +377,7 @@ register struct xray *rp;
 		/* HIT is within planar face */
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, plp->pl_N );
-		if(debug&DEBUG_ARB8) printf("arb: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
+		if(debug&DEBUG_ARB8) fprintf(stderr,"arb: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
 		if( nhits++ >= MAXHITS )  {
 			fprintf(stderr,"arb(%s): too many hits\n", stp->st_name);
 			break;
