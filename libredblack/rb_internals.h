@@ -62,6 +62,18 @@
 #define	rb_root(t, o)		(((t) -> rbt_root)[o])
 #define rb_current(t)		((t) -> rbt_current)
 #define rb_null(t)		((t) -> rbt_empty_node)
+#define	rb_get_uniqueness(t, o)						\
+(									\
+    (((t) -> rbt_unique)[(o)/8] & (0x1 << ((o) % 8))) ? 1 : 0		\
+)
+#define	rb_set_uniqueness(t, o, u)					\
+{									\
+    int	_b = (o) / 8;							\
+    int _p = (o) - _b * 8;						\
+									\
+    ((t) -> rbt_unique)[_b] &= ~(0x1 << _p);				\
+    ((t) -> rbt_unique)[_b] |= (u) << _p;				\
+}
 
 /*
  *	Access functions for fields of (struct rb_node)
