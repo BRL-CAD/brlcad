@@ -1964,7 +1964,7 @@ plane_t norm;
  * improve speed, but too large will produce errors. Perhaps a routine to calculate
  * an appropriate UV_TOL could be constructed.
  */
-#define UV_TOL  1.0e-6
+#define UV_TOL  1.0e-5
 
 void
 isect_ray_snurb_face(rd, fu, fg)
@@ -2086,7 +2086,6 @@ struct face_g_snurb *fg;
 		}
 		else
 		{
-
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				bu_log( "isect_ray_snurb_face: using planes (%g %g %g %g) (%g %g %g %g)\n",
 					V4ARGS( pl1 ), V4ARGS( pl2 ) );
