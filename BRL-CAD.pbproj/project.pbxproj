@@ -4737,10 +4737,6 @@
 			isa = PBXTargetDependency;
 			target = 4E3CE67E03C672A9003F204C;
 		};
-		4E3CE71C03C67CA3003F204C = {
-			isa = PBXTargetDependency;
-			target = 4E3CE6CC03C672BE003F204C;
-		};
 		4E3CE71D03C67CA3003F204C = {
 			isa = PBXTargetDependency;
 			target = 4E3CE48303C67094003F204C;
@@ -9075,7 +9071,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libsysv/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh libsysv_version \"The BRL-CAD System V Compatibility Library\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh libsysv_version \"The BRL-CAD System V Compatibility Library\"\ncp vers.c $TEMP_ROOT/../libsysv/.";
 		};
 		4E8E3EE103B6FBAC003F204C = {
 			buildActionMask = 2147483647;
@@ -15835,7 +15831,6 @@
 				4EA968FA03B71350003F204C,
 				4EA968FB03B71350003F204C,
 				4EA968FC03B71350003F204C,
-				4EA968FD03B71350003F204C,
 				4EA968FE03B71350003F204C,
 				4EA968FF03B71350003F204C,
 				4EA9690003B71350003F204C,
@@ -15951,10 +15946,6 @@
 		4EA968FC03B71350003F204C = {
 			isa = PBXTargetDependency;
 			target = 4EA967FD03B71096003F204C;
-		};
-		4EA968FD03B71350003F204C = {
-			isa = PBXTargetDependency;
-			target = 4EA9681A03B710A3003F204C;
 		};
 		4EA968FE03B71350003F204C = {
 			isa = PBXTargetDependency;
@@ -16160,7 +16151,6 @@
 				4E3CE71903C67CA3003F204C,
 				4E3CE71A03C67CA3003F204C,
 				4E3CE71B03C67CA3003F204C,
-				4E3CE71C03C67CA3003F204C,
 				4E3CE71D03C67CA3003F204C,
 				4E3CE71E03C67CA3003F204C,
 				4E3CE71F03C67CA3003F204C,
