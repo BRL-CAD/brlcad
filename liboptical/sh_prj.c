@@ -261,7 +261,7 @@ const char				*value;	/* string containing value */
  *
  * XXX "orient" MUST ALWAYS BE THE LAST PARAMETER SPECIFIED FOR EACH IMAGE.
  */
-HIDDEN int
+static void
 orient_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -365,8 +365,6 @@ const char				*value;	/* string containing value */
 	/* we add an image to the list of images regardless of whether the data is valid or not */
 	BU_LIST_MAGIC_SET(&img_new->l, img_MAGIC);
 	BU_LIST_APPEND(&img_sp->l, &img_new->l);
-
-	return 0;
 }
 
 #define IMG_O(m)	offsetof(struct img_specific, m)
