@@ -24,6 +24,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <signal.h>
+#ifdef USE_STRING_H
+#	include <string.h>
+#else
+#	include <strings.h>
+#endif
+#include <errno.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "externs.h"
@@ -32,13 +39,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 #include <ctype.h>
-#ifdef USE_STRING_H
-#	include <string.h>
-#else
-#	include <strings.h>
-#endif
-
-extern int errno;
 
 static char	red_tmpfil[] = "/tmp/GED.aXXXXX";
 static char	red_tmpcomb[] = "red_tmp.aXXXXX";
