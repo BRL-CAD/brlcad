@@ -37,7 +37,7 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=5.0;	RCS_REVISION=11;	REL_DATE=Today		# beta-5.0
+RELEASE=5.0;	RCS_REVISION=12;	REL_DATE=Today		# beta-5.0
 #RELEASE=4.6;	RCS_REVISION=11;	REL_DATE=Today		# almost-5.0
 #RELEASE=4.5;	RCS_REVISION=11;	REL_DATE=14-Feb-98	# 4.4 "Porting release"
 #RELEASE=4.4;	RCS_REVISION=11;	REL_DATE=5-Jan-95
