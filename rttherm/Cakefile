@@ -8,7 +8,7 @@
 #define CONFIGDEFS	-DRT_MULTISPECTRAL -I''XINCDIR
 
 #define SRCDIR	rttherm
-#define PRODUCTS	rttherm ssampview
+#define PRODUCTS	rttherm ssampview ssamp-bw
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -48,6 +48,9 @@ rttherm:	RTTHERM_OBJ LIBMULTISPECTRAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DE
 /* GUI to browse spectral images interactively */
 ssampview:	ssampview.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
 	CC LDFLAGS ssampview.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBTK LIBTCL LIBTCL_LIBES LIBFB LIBFB_LIBES LIBES -o ssampview
+
+ssamp-bw:	ssamp-bw.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS ssamp-bw.o LIBBN LIBBU LIBBU_LIBES LIBES -o ssamp-bw
 
 /* Program to test identity relationship between rgb and spectral reps */
 pixtest: pixtest.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
