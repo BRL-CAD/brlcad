@@ -40,10 +40,6 @@
  *  $Header$
  */
 
-#ifndef SEEN_RTLIST_H
-# include "rtlist.h"
-#endif
-
 #ifndef SEEN_COMPAT4_H
 # include "compat4.h"
 #endif
@@ -117,13 +113,281 @@ extern char	*realloc();
 		bu_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
 
+/*----------------------------------------------------------------------*/
+/* list.c */
+/*
+ *									*
+ *			     B U _ L I S T				*
+ *									*
+ *			Doubly-linked list support			*
+ *									*
+ *  These macros assume that all user-provided structures will have	*
+ *  a "struct bu_list" as their first element (often named "l" [ell]).	*
+ *  Thus, a pointer to the bu_list struct is a "pun" for the		*
+ *  user-provided structure as well, and the pointers can be converted	*
+ *  back and forth safely with type casts.				*
+ *									*
+ *  Furthermore, the head of the linked list could be			*
+ *  a full instance of the user-provided structure			*
+ *  (although the storage-conscious programmer could make the head	*
+ *  just an bu_list structure, with careful type casting).		*
+ *  This results in a doubly-linked circular list, with the head	*
+ *  having the same shape as all the list members.			*
+ *  The application is free to make use of this symmetry and store	*
+ *  data values in the head, or the extra storage in the head can	*
+ *  be ignored.								*
+ *									*
+ *  Where a macro expects an argument "p", it should be a pointer to	*
+ *  a user-provided structure.						*
+ *									*
+ *  Where a macro expects an argument "hp", it should be a pointer to	*
+ *  a "struct bu_list" located in the list head, e.g., &(head.l).	*
+ *									*
+ *  Where a macro expects an argument "old", "new", or "cur", it should	*
+ *  be a pointer to the "struct bu_list" located either			*
+ *  in a user-provided structure, e.g. &((p)->l),			*
+ *  or for the case of "old" it may also be in the list head, e.g.	*
+ *	RT_LIST_INSERT( &(head.l), &((p)->l) );				*
+ *									*
+ *  Dequeueing the head of a list is a valid and			*
+ *  well defined operation which should be performed with caution.	*
+ *  Unless a pointer to some other element of the list is retained	*
+ *  by the application, the rest of the linked list can no longer be	*
+ *  referred to.							*
+ *									*
+ *  The "magic" field of the list header _must_ be set to the constant	*
+ *  BU_LIST_HEAD_MAGIC, but the "magic" field of all list members	*
+ *  should be established by user code, to identify the type of		*
+ *  structure that the bu_list structure is embedded in.		*
+ *  It is permissible for one list to contain an arbitrarily mixed	*
+ *  set of user "magic" numbers, as long as the head is properly marked.*
+ *									*
+ *  There is a dual set of terminology used in some of the macros:	*
+ *	FIRST / LAST	from the point of view of the list head		*
+ *	NEXT / PREV	from the point of view of a list member		*
+ *	forw / back	the actual pointer names			*
+ *									*
+ ************************************************************************/
+
+struct bu_list {
+	long		magic;
+	struct bu_list	*forw;		/* "forward", "next" */
+	struct bu_list	*back;		/* "back", "last" */
+};
+#define BU_LIST_HEAD_MAGIC	0x01016580	/* Magic num for list head */
+#define BU_LIST_NULL	((struct bu_list *)0)
+
+
+/*
+ *  Insert "new" item in front of "old" item.  Often, "old" is the head.
+ *  To put the new item at the tail of the list, insert before the head, e.g.
+ *	BU_LIST_INSERT( &(head.l), &((p)->l) );
+ */
+#define BU_LIST_INSERT(old,new)	{ \
+	(new)->back = (old)->back; \
+	(old)->back = (new); \
+	(new)->forw = (old); \
+	(new)->back->forw = (new);  }
+
+/*
+ *  Append "new" item after "old" item.  Often, "old" is the head.
+ *  To put the new item at the head of the list, append after the head, e.g.
+ *	BU_LIST_APPEND( &(head.l), &((p)->l) );
+ */
+#define BU_LIST_APPEND(old,new)	{ \
+	(new)->forw = (old)->forw; \
+	(new)->back = (old); \
+	(old)->forw = (new); \
+	(new)->forw->back = (new);  }
+
+/* Dequeue "cur" item from anywhere in doubly-linked list */
+#define BU_LIST_DEQUEUE(cur)	{ \
+	(cur)->forw->back = (cur)->back; \
+	(cur)->back->forw = (cur)->forw; \
+	(cur)->forw = (cur)->back = BU_LIST_NULL;  /* sanity */ }
+
+/*
+ *  The Stack Discipline
+ *
+ *  BU_LIST_PUSH places p at the tail of hp.
+ *  BU_LIST_POP  sets p to last element in hp's list (else NULL)
+ *		  and, if p is non-null, dequeues it.
+ */
+#define BU_LIST_PUSH(hp,p)					\
+	BU_LIST_APPEND(hp, (struct bu_list *)(p))
+
+#define BU_LIST_POP(structure,hp,p)				\
+	if (BU_LIST_NON_EMPTY(hp))				\
+	{							\
+	    (p) = ((struct structure *)((hp)->forw));		\
+	    BU_LIST_DEQUEUE((struct bu_list *)(p));		\
+	}							\
+	else							\
+	     (p) = (struct structure *) 0
+/*
+ *  "Bulk transfer" all elements from the list headed by src_hd
+ *  onto the list headed by dest_hd, without examining every element
+ *  in the list.  src_hd is left with a valid but empty list.
+ *  
+ *  BU_LIST_INSEBU_LIST places src_hd elements at head of dest_hd list,
+ *  BU_LIST_APPEND_LIST places src_hd elements at end of dest_hd list.
+ */
+#define BU_LIST_INSEBU_LIST(dest_hp,src_hp) \
+	if( BU_LIST_NON_EMPTY(src_hp) )  { \
+		register struct bu_list	*_first = (src_hp)->forw; \
+		register struct bu_list	*_last = (src_hp)->back; \
+		(dest_hp)->forw->back = _last; \
+		_last->forw = (dest_hp)->forw; \
+		(dest_hp)->forw = _first; \
+		_first->back = (dest_hp); \
+		(src_hp)->forw = (src_hp)->back = (src_hp); \
+	}
+
+#define BU_LIST_APPEND_LIST(dest_hp,src_hp) \
+	if( BU_LIST_NON_EMPTY(src_hp) )  {\
+		register struct bu_list	*_first = (src_hp)->forw; \
+		register struct bu_list	*_last = (src_hp)->back; \
+		_first->back = (dest_hp)->back; \
+		(dest_hp)->back->forw = _first; \
+		(dest_hp)->back = _last; \
+		_last->forw = (dest_hp); \
+		(src_hp)->forw = (src_hp)->back = (src_hp); \
+	}
+
+/* Test if a doubly linked list is empty, given head pointer */
+#define BU_LIST_IS_EMPTY(hp)	((hp)->forw == (hp))
+#define BU_LIST_NON_EMPTY(hp)	((hp)->forw != (hp))
+#define BU_LIST_NON_EMPTY_P(p,structure,hp)	\
+	(((p)=(struct structure *)((hp)->forw)) != (struct structure *)(hp))
+#define BU_LIST_IS_CLEAR(hp)	((hp)->magic == 0 && \
+			(hp)->forw == BU_LIST_NULL && \
+			(hp)->back == BU_LIST_NULL)
+
+/* Handle list initialization */
+#define	BU_LIST_UNINITIALIZED(hp)	((hp)->forw == BU_LIST_NULL)
+#define BU_LIST_INIT(hp)	{ \
+	(hp)->forw = (hp)->back = (hp); \
+	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
+#define BU_LIST_MAGIC_SET(hp,val)	{(hp)->magic = (val);}
+#define BU_LIST_MAGIC_OK(hp,val)	((hp)->magic == (val))
+#define BU_LIST_MAGIC_WRONG(hp,val)	((hp)->magic != (val))
+
+/* Return re-cast pointer to first element on list.
+ * No checking is performed to see if list is empty.
+ */
+#define BU_LIST_LAST(structure,hp)	\
+	((struct structure *)((hp)->back))
+#define BU_LIST_PREV(structure,hp)	\
+	((struct structure *)((hp)->back))
+#define BU_LIST_FIRST(structure,hp)	\
+	((struct structure *)((hp)->forw))
+#define BU_LIST_NEXT(structure,hp)	\
+	((struct structure *)((hp)->forw))
+
+/* Boolean test to see if current list element is the head */
+#define BU_LIST_IS_HEAD(p,hp)	\
+	(((struct bu_list *)(p)) == (hp))
+#define BU_LIST_NOT_HEAD(p,hp)	\
+	(((struct bu_list *)(p)) != (hp))
+#define BU_CK_LIST_HEAD( _p )	BU_CKMAG( (_p), BU_LIST_HEAD_MAGIC, "bu_list")
+
+/* Boolean test to see if the next list element is the head */
+#define BU_LIST_NEXT_IS_HEAD(p,hp)	\
+	(((struct bu_list *)(p))->forw == (hp))
+#define BU_LIST_NEXT_NOT_HEAD(p,hp)	\
+	(((struct bu_list *)(p))->forw != (hp))
+
+/*
+ *  Intended as innards for a for() loop to visit all nodes on list, e.g.:
+ *	for( BU_LIST_FOR( p, structure, hp ) )  {
+ *		work_on( p );
+ *	}
+ */
+#define BU_LIST_FOR(p,structure,hp)	\
+	(p)=BU_LIST_FIRST(structure,hp); \
+	BU_LIST_NOT_HEAD(p,hp); \
+	(p)=BU_LIST_PNEXT(structure,p)
+/*
+ *  Intended as innards for a for() loop to visit elements of two lists
+ *	in tandem, e.g.:
+ *	    for (BU_LIST_FOR2(p1, p2, structure, hp1, hp2) ) {
+ *		    process( p1, p2 );
+ *	    }
+ */
+#define	BU_LIST_FOR2(p1,p2,structure,hp1,hp2)				\
+		(p1)=BU_LIST_FIRST(structure,hp1),			\
+		(p2)=BU_LIST_FIRST(structure,hp2);			\
+		BU_LIST_NOT_HEAD((struct bu_list *)(p1),(hp1)) &&	\
+		BU_LIST_NOT_HEAD((struct bu_list *)(p2),(hp2));		\
+		(p1)=BU_LIST_NEXT(structure,(struct bu_list *)(p1)),	\
+		(p2)=BU_LIST_NEXT(structure,(struct bu_list *)(p2))
+
+/*
+ *  Innards for a while() loop that constantly picks off the first element.
+ *  Useful mostly for a loop that will dequeue every list element, e.g.:
+ *	while( BU_LIST_WHILE(p, structure, hp) )  {
+ *		BU_LIST_DEQUEUE( &(p->l) );
+ *		free( (char *)p );
+ *	}
+ */
+#define BU_LIST_WHILE(p,structure,hp)	\
+	(((p)=(struct structure *)((hp)->forw)) != (struct structure *)(hp))
+
+/* Return the magic number of the first (or last) item on a list */
+#define BU_LIST_FIRST_MAGIC(hp)		((hp)->forw->magic)
+#define BU_LIST_LAST_MAGIC(hp)		((hp)->back->magic)
+
+/* Return pointer to next (or previous) element, which may be the head */
+#define BU_LIST_PNEXT(structure,p)	\
+	((struct structure *)(((struct bu_list *)(p))->forw))
+#define BU_LIST_PLAST(structure,p)	\
+	((struct structure *)(((struct bu_list *)(p))->back))
+
+/* Return pointer two links away, which may include the head */
+#define BU_LIST_PNEXT_PNEXT(structure,p)	\
+	((struct structure *)(((struct bu_list *)(p))->forw->forw))
+#define BU_LIST_PNEXT_PLAST(structure,p)	\
+	((struct structure *)(((struct bu_list *)(p))->forw->back))
+#define BU_LIST_PLAST_PNEXT(structure,p)	\
+	((struct structure *)(((struct bu_list *)(p))->back->forw))
+#define BU_LIST_PLAST_PLAST(structure,p)	\
+	((struct structure *)(((struct bu_list *)(p))->back->back))
+
+/* Return pointer to circular next element; ie, ignoring the list head */
+#define BU_LIST_PNEXT_CIRC(structure,p)	\
+	((BU_LIST_FIRST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
+		BU_LIST_PNEXT_PNEXT(structure,(struct bu_list *)(p)) : \
+		BU_LIST_PNEXT(structure,p) )
+
+/* Return pointer to circular last element; ie, ignoring the list head */
+#define BU_LIST_PPREV_CIRC(structure,p)	\
+	((BU_LIST_LAST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
+		BU_LIST_PLAST_PLAST(structure,(struct bu_list *)(p)) : \
+		BU_LIST_PLAST(structure,p) )
+
+/*
+ *  Support for membership on multiple linked lists.
+ *
+ *  When a structure of type '_type' contains more than one bu_list structure
+ *  within it (such as the NMG edgeuse), this macro can be used to convert
+ *  a pointer '_ptr2' to a "midway" bu_list structure (an element called
+ *  '_name2' in structure '_type') back into a pointer to the overall
+ *  enclosing structure.  Examples:
+ *
+ *  eu = BU_LIST_MAIN_PTR( edgeuse, midway, l2 );
+ *
+ *  eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
+ */  
+#define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
+	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
 
 /*----------------------------------------------------------------------*/
+/* bitv.c */
 /*
  *  Bit vector data structure.
  */
 struct bu_bitv {
-	struct rt_list	l;		/* linked list for caller's use */
+	struct bu_list	l;		/* linked list for caller's use */
 	unsigned int	nbits;		/* actual size of bits[], in bits */
 	bitv_t		bits[2];	/* variable size array */
 };
@@ -185,8 +449,36 @@ struct bu_bitv {
 	} /* end for(_wd) */ \
 } /* end block */
 
+/*----------------------------------------------------------------------*/
+/* hist.c */
+
+/*
+ *			B U _ H I S T
+ */
+struct bu_hist  {
+	long		magic;
+	fastf_t		hg_min;		/* minimum value */
+	fastf_t		hg_max;		/* maximum value */
+	fastf_t		hg_clumpsize;	/* (max-min+1)/nbins+1 */
+	long		hg_nsamples;	/* total number of samples spread into histogram */
+	long		hg_nbins;	/* # of bins in hg_bins[] */
+	long		*hg_bins;	/* array of counters */
+};
+#define BU_HIST_MAGIC	0x48697374	/* Hist */
+#define BU_CK_HIST(_p)	BU_CKMAG(_p, BU_HIST_MAGIC, "struct bu_hist")
+#define BU_HIST_TALLY( _hp, _val )	{ \
+	if( (_val) <= (_hp)->hg_min )  { \
+		(_hp)->hg_bins[0]++; \
+	} else if( (_val) >= (_hp)->hg_max )  { \
+		(_hp)->hg_bins[(_hp)->hg_nbins]++; \
+	} else { \
+		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)]++; \
+	} \
+	(_hp)->hg_nsamples++;  }
+
 
 /*----------------------------------------------------------------------*/
+/* ptbl.c */
 /*
  *  Support for generalized "pointer tables".
  */
@@ -201,7 +493,7 @@ struct bu_bitv {
 #define BU_PTBL_ZERO	8	/* replace all occurrences of an item by 0 */
 
 struct bu_ptbl {
-	struct rt_list	l;	/* linked list for caller's use */
+	struct bu_list	l;	/* linked list for caller's use */
 	int		end;	/* index into buffer of first available location */
 	int		blen;	/* # of (long *)'s worth of storage at *buffer */
 	long 		**buffer; /* data storage area */
@@ -234,17 +526,15 @@ struct bu_ptbl {
     ip = cast BU_PTBL_LASTADDR(ptbl); ip >= cast BU_PTBL_BASEADDR(ptbl); ip--
 
 
-/* histogram */
-
 /* vlist, vlblock?  But they use vmath.h... */
 
 /*----------------------------------------------------------------------*/
-
+/* mappedfile.c */
 /*
  *			B U _ M A P P E D _ F I L E
  */
 struct bu_mapped_file {
-	struct rt_list	l;
+	struct bu_list	l;
 	char		*name;		/* bu_strdup() of file name */
 	genptr_t	buf;		/* In-memory copy of file (may be mmapped) */
 	long		buflen;		/* # bytes in 'buf' */
@@ -265,6 +555,7 @@ typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
 #define BUHOOK_NULL 0
 
 /*----------------------------------------------------------------------*/
+/* vls.c */
 /*
  *  Variable Length Strings: bu_vls support (formerly rt_vls in h/rtstring.h)
  */
@@ -321,6 +612,7 @@ extern int	bu_debug;
 \4?\3?\2MEM_LOG\1MEM_CHECK"
 
 /*----------------------------------------------------------------------*/
+/* parse.c */
 /*
  *	Structure parse/print
  *
@@ -376,6 +668,9 @@ struct bu_structparse {
 
 /*----------------------------------------------------------------------*/
 /*
+ *  An "opaque" handle for holding onto objects,
+ *  typically in some kind of external form that is not directly
+ *  usable without passing through an "importation" function.
  * A "bu_external" struct holds the "external binary" representation of a
  * structure or other block of arbitrary data.
  */
@@ -386,7 +681,7 @@ struct bu_external  {
 };
 #define BU_EXTERNAL_MAGIC	0x768dbbd0
 #define BU_INIT_EXTERNAL(_p)	{(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
-	(_p)->ext_buf = GENPTR_NULL; (_p)->ext_nbytes = 0;}
+	(_p)->ext_buf = (genptr_t)NULL; (_p)->ext_nbytes = 0;}
 #define BU_CK_EXTERNAL(_p)	RT_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
 /*----------------------------------------------------------------------*/
@@ -427,6 +722,15 @@ extern char *			bu_optarg;
 BU_EXTERN(int			bu_getopt, (int nargc, char * CONST nargv[],
 				CONST char *ostr) );
 
+/* hist.c */
+BU_EXTERN(void			bu_hist_free, (struct bu_hist *histp));
+BU_EXTERN(void			bu_hist_init, (struct bu_hist *histp,
+				fastf_t min, fastf_t max, int nbins));
+BU_EXTERN(void			bu_hist_range, (struct bu_hist *hp,
+				fastf_t low, fastf_t high));
+BU_EXTERN(void			bu_hist_pr, (struct bu_hist *histp,
+				CONST char *title));
+
 /* ispar.c */
 BU_EXTERN(int			bu_is_parallel, () );
 BU_EXTERN(void			bu_kill_parallel, () );
@@ -434,6 +738,10 @@ BU_EXTERN(void			bu_kill_parallel, () );
 /* linebuf.c */
 #define port_setlinebuf		bu_setlinebuf	/* libsysv compat */
 BU_EXTERN(void			bu_setlinebuf, (FILE *fp) );
+
+/* list.c */
+BU_EXTERN(int			bu_list_len, (CONST struct bu_list *hd));
+BU_EXTERN(void			bu_list_reverse, (struct bu_list *hd));
 
 /* log.c */
 BU_EXTERN(void			bu_log_indent_delta, (int delta) );
