@@ -29,6 +29,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "raytrace.h"
 
+/* XXX Move to vmath.h */
+#define V3PT_IN_RPP(_pt, _lo, _hi)	( \
+	(_pt)[X] >= (_lo)[X] && (_pt)[X] <= (_hi)[X] && \
+	(_pt)[Y] >= (_lo)[Y] && (_pt)[Y] <= (_hi)[Y] && \
+	(_pt)[Z] >= (_lo)[Z] && (_pt)[Z] <= (_hi)[Z]  )
+
 extern int nmg_class_nothing_broken;
 
 #define INSIDE	32
@@ -140,10 +146,12 @@ long		*novote;
 			closest->dist = 0.0;
 			closest->p.eu = eu;
 			closest->inout = FACE_HIT;
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("FACE_HIT\n");
 		} else if (eu->up.lu_p->orientation == OT_OPPOSITE) {
 			closest->dist = 0.0;
 			closest->p.eu = eu;
 			closest->inout = FACE_MISS;
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("FACE_MISS\n");
 		} else rt_bomb("joint_hitmiss2: bad loop orientation\n");
 	    	return;
 	}
@@ -167,6 +175,7 @@ long		*novote;
  *	and whether it is on the inside of the face area bounded by the
  *	edgeuse or on the outside of the face area.
  *
+ *  This routine should print everything indented two tab stops.
  */
 static void pt_hitmis_e(pt, eu, closest, tol, novote)
 point_t		pt;
@@ -177,8 +186,8 @@ long		*novote;
 {
 	vect_t	N,	/* plane normal */
 		euvect,	/* vector of edgeuse */
-		plvec,	/* vector into face from edge */
 		ptvec;	/* vector from lseg to pt */
+	vect_t	left;	/* vector left of edge -- into inside of loop */
 	pointp_t eupt, matept;
 	point_t pca;	/* point of closest approach from pt to edge lseg */
 	fastf_t dist;	/* distance from pca to pt */
@@ -188,6 +197,8 @@ long		*novote;
 	NMG_CK_EDGEUSE(eu->eumate_p);
 	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+	RT_CK_TOL(tol);
+	VSETALL(left, 0);
 
 	eupt = eu->vu_p->v_p->vg_p->coord;
 	matept = eu->eumate_p->vu_p->v_p->vg_p->coord;
@@ -209,86 +220,120 @@ long		*novote;
 		VPRINT("          \tpca:", pca);
 	}
 
-	if (dist < closest->dist) {
+	/* XXX Double check on dist to pca */
+	VSUB2( ptvec, pt, pca );
+	mag = MAGNITUDE(ptvec);
+	if( fabs(dist - mag) > tol->dist )
+		rt_log("ERROR! dist=%e |pt-pca|=%e, tol=%g, tol_sq=%g\n", dist, mag, tol->dist, tol->dist_sq);
 
+	if (dist >= closest->dist) {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-				EUPRINT("\t\tcloser to edgeuse", eu);
-				rt_log("\t\tdistance: %g (closest=%g)\n", dist, closest->dist);
+			EUPRINT("\t\tskipping, earlier eu is closer", eu);
 		}
+		return;
+	}
 
-		if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
-		    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
+	/* Plane hit point is closer to this edgeuse than previous one(s) */
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		EUPRINT("\t\tcloser to edgeuse", eu);
+		rt_log("\t\tdistance: %g (closest=%g)\n", dist, closest->dist);
+	}
 
-		    	if (NEAR_ZERO(dist, tol->dist)) {
-		    		/* The ray has hit the edge! */
-		    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-			    		VPRINT("Vertex", pt);
-			    		EUPRINT("hits edge, calling Joint_HitMiss", eu);
-			    		rt_log("distance: %g   tol: %g\n", dist, tol->dist);
-		    		}
+	if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC) {
+		rt_log("Trying to classify a pt (%g, %g, %g)\n\tvs a wire edge? (%g, %g, %g -> %g, %g, %g)\n",
+	    		V3ARGS(pt),
+	    		V3ARGS(eupt),
+	    		V3ARGS(matept)
+		);
+	    	return;
+	}
 
-		    		joint_hitmiss2(eu, pt, closest, novote);
-		    		return;
-		    	} else {
-		    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-			    		VPRINT("Vertex", pt);
-			    		EUPRINT("Misses edge", eu);
-			    		rt_log("distance: %g   tol: %g\n", dist, tol->dist);
-		    		}
-		    	}
+    	if (NEAR_ZERO(dist, tol->dist)) {
+    		/* The ray has hit the edge! */
+    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+	    		rt_log("\t\tdistance: %e   tol: %g\n", dist, tol->dist);
+    			rt_log("\t\tThe ray has hit the edge, calling joint_hitmiss2()\n");
+    		}
+    		joint_hitmiss2(eu, pt, closest, novote);
+    		goto out;
+    	} else {
+    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+	    		rt_log("\t\tdistance: %g   tol: %g\n", dist, tol->dist);
+    			rt_log("\t\tThe ray has missed the edge\n");
+    		}
+    	}
 
-			/* calculate in/out */
-			VMOVE(N, eu->up.lu_p->up.fu_p->f_p->fg_p->N);
-		    	if (eu->up.lu_p->up.fu_p->orientation != OT_SAME) {
-				VREVERSE(N,N);
-		    	}
-			VSUB2(euvect, matept, eupt);
+	/* calculate in/out */
+	VMOVE(N, eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+    	if (eu->up.lu_p->up.fu_p->orientation != OT_SAME) {
+    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\tReversing normal\n");
+		VREVERSE(N,N);
+    	}
 
-			mag = MAGSQ(euvect);
-			while (mag < 1.0 && mag > 0.0) {
-				VSCALE(euvect, euvect, 10.0);
-				mag = MAGSQ(euvect);
-			}
+	VSUB2(euvect, matept, eupt);
+    	if (rt_g.NMG_debug & DEBUG_CLASSIFY) VPRINT("\t\teuvect unnorm", euvect);
+	VUNITIZE(euvect);
 
-		    	/* Get vector which lies on the plane, and points
-		    	 * left, towards the interior of the CCW loop.
-		    	 */
-		    	VCROSS( plvec, N, euvect );
-			VSUB2(ptvec, pt, pca);
+    	/* Get vector which lies on the plane, and points
+    	 * left, towards the interior of the CCW loop.
+    	 */
+    	VCROSS( left, N, euvect );	/* left vector */
+	if(eu->up.lu_p->orientation != OT_SAME )  {
+		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\tReversing left vec\n");
+		VREVERSE(left, left);
+	}
 
-			mag = MAGSQ(ptvec);
-			while (mag < 1.0 && mag > 0.0) {
-				VSCALE(ptvec, ptvec, 10.0);
-				mag = MAGSQ(ptvec);
-			}
+	VSUB2(ptvec, pt, pca);		/* pt - pca */
+    	if (rt_g.NMG_debug & DEBUG_CLASSIFY) VPRINT("\t\tptvec unnorm", ptvec);
+	VUNITIZE( ptvec );
 
-			dot = VDOT(plvec, ptvec);
-			if (dot >= 0.0) {
-				closest->dist = dist;
-				closest->p.eu = eu;
-				closest->inout = FACE_HIT;
-			    	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			    		rt_log("\tHIT\n");
-			} else if (dot < 0.0) {
-				closest->dist = dist;
-				closest->p.eu = eu;
-				closest->inout = FACE_MISS;
-			    	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			    		rt_log("\tMISS\n");
-			}
-		} else {
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-				rt_log("Trying to classify a pt (%g, %g, %g)\n\tvs a wire edge? (%g, %g, %g -> %g, %g, %g)\n",
-					pt[0], pt[1], pt[2],
-					eu->vu_p->v_p->vg_p->coord[0],
-					eu->vu_p->v_p->vg_p->coord[1],
-					eu->vu_p->v_p->vg_p->coord[2],
-					eu->eumate_p->vu_p->v_p->vg_p->coord[0],
-					eu->eumate_p->vu_p->v_p->vg_p->coord[1],
-					eu->eumate_p->vu_p->v_p->vg_p->coord[2]
-				);
-		}
+	dot = VDOT(left, ptvec);
+	if( NEAR_ZERO( dot, RT_DOT_TOL )  )  {
+	    	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	    		rt_log("\t\tpt lies on line of edge, outside verts. Skipping this edge\n");
+		goto out;
+	}
 
+	if (dot >= 0.0) {
+		closest->dist = dist;
+		closest->p.eu = eu;
+		closest->inout = FACE_HIT;
+	    	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	    		rt_log("\t\tpt is left of edge, INSIDE loop, dot=%g\n", dot);
+	} else if (dot < 0.0) {
+		closest->dist = dist;
+		closest->p.eu = eu;
+		closest->inout = FACE_MISS;
+	    	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	    		rt_log("\t\tpt is right of edge, OUTSIDE loop\n");
+	}
+
+out:
+	/* XXX Temporary addition for chasing bug in Bradley r5 */
+	/* XXX Should at least add DEBUG_PLOTEM check, later */
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		struct faceuse	*fu;
+		char	buf[128];
+		static int	num;
+		FILE	*fp;
+		long	*bits;
+		point_t	mid_pt;
+		point_t	left_pt;
+		fu = eu->up.lu_p->up.fu_p;
+		bits = (long *)rt_calloc( nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
+		sprintf(buf,"faceclass%d.pl", num++);
+		if( (fp = fopen(buf, "w")) == NULL) rt_bomb(buf);
+		nmg_pl_fu( fp, fu, bits, 0, 255, 0 );
+		pl_color( fp, 255, 255, 0 );	/* yellow */
+		pdv_3line( fp, pca, pt );
+		pl_color( fp, 255, 0, 0 );	/* red */
+		VADD2SCALE( mid_pt, eupt, matept, 0.5 );
+		VJOIN1( left_pt, mid_pt, 500, left);
+		pdv_3line( fp, mid_pt, left_pt );
+		fclose(fp);
+		rt_free( (char *)bits, "bits[]");
+		rt_log("wrote %s\n", buf);
 	}
 }
 
@@ -310,9 +355,13 @@ long		*novote;
 	pointp_t lu_pt;
 	fastf_t dist;
 	struct edgeuse *eu;
+	struct loop_g	*lg;
 	char *name;
 
 	NMG_CK_LOOPUSE(lu);
+	NMG_CK_LOOP(lu->l_p);
+	lg = lu->l_p->lg_p;
+	NMG_CK_LOOP_G(lg);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		VPRINT("pt_hitmis_loop\tProjected Pt:", pt);
@@ -320,7 +369,11 @@ long		*novote;
 	if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
 		return;
 
-	
+	if( !V3PT_IN_RPP( pt, lg->min_pt, lg->max_pt ) )  {
+		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+			rt_log("\tPoint is outside loop RPP\n");
+		return;
+	}
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			pt_hitmis_e(pt, eu, closest, tol, novote);
@@ -382,25 +435,29 @@ long		*novote;
 	struct loopuse *lu;
 	struct neighbor closest;
 
-	/* if this is a non-manifold (dangling) face of the shell, don't
-	 * count any potential hit
-	 */
-
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		VPRINT("nmg_pt_hitmis_f\tProjected Pt:", pt);
 	}
 
-
-	/* find the closest approach in this face to the point */
+	/* find the closest approach in this face to the projected point */
 	closest.dist = MAX_FASTF;
 	closest.p.eu = (struct edgeuse *)NULL;
+	closest.inout = 0;
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		pt_hitmis_l(pt, lu, &closest, tol, novote);
 	}
 
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		rt_log("nmg_pt_hitmis_f\tReturn=%s\n",
+			closest.inout == FACE_HIT ? "HIT" : "MISS" );
+	}
 	if (closest.inout == FACE_HIT) return(1);
-	return(0);
+	if( closest.inout == FACE_MISS ) return(0);
+	/* No explicit results implies a miss */
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log("nmg_pt_hitmis_f: no results.  Implies MISS\n");
+	return 0;
 }
 
 
@@ -495,7 +552,9 @@ CONST struct rt_tol	*tol;
 			    pt[Y] <= fu->f_p->fg_p->max_pt[Y] &&
 			    pt[Z] >= fu->f_p->fg_p->min_pt[Z] &&
 			    pt[Z] <= fu->f_p->fg_p->max_pt[Z]) {
-			    	/* translate point into plane of face and
+			    	/*
+			    	 * XXX Above test assumes dir=1,0,0; omit X.
+				 * translate point into plane of face and
 			    	 * determine hit.
 			    	 */
 			    	VJOIN1(plane_pt, pt, dist,projection_dir);
