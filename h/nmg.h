@@ -602,15 +602,6 @@ struct vertexuse_a {
 	(_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
 
 
-/* This is the solid information specific to an nmg solid */
-struct nmg_specific {
-	int		nmg_smagic;
-	vect_t		nmg_V;	/* */
-	struct model	*nmg_model;
-	vect_t		nmg_invdir;
-	int		nmg_emagic;
-};
-
 struct nmg_boolstruct {
 	struct nmg_ptbl	ilist;		/* vertexuses on intersection line */
 	fastf_t		tol;
