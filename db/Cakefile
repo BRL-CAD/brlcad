@@ -17,7 +17,7 @@
 #define PRODUCTS	bldg391.g crod.g demo.g \
 	ktank.g moss.g prim.g \
 	star.g truck.g world.g cube.g axis.g \
-	woodsman.g m35.g lgt-test.g
+	woodsman.g m35.g lgt-test.g havoc.g tank_car.g
 #define STATIC_PRODUCTS		\
 	../SRCDIR/bldg391.asc ../SRCDIR/crod.asc ../SRCDIR/demo.asc \
 	../SRCDIR/ktank.asc ../SRCDIR/moss.asc ../SRCDIR/prim.asc \
@@ -25,7 +25,8 @@
 	../SRCDIR/world.asc ../SRCDIR/cube.asc ../SRCDIR/axis.asc \
 	../SRCDIR/woodsman.asc ../SRCDIR/m35.asc \
 	../SRCDIR/lgt-test.asc ../SRCDIR/lgt-test.ldb \
-	../SRCDIR/lgt-test.mdb ../SRCDIR/lgt-test.key
+	../SRCDIR/lgt-test.mdb ../SRCDIR/lgt-test.key \
+	../SRCDIR/havoc.asc ../SRCDIR/tank_car.asc
 
 #define SRCDIR	db
 #define FILES	/**/
