@@ -37,6 +37,8 @@
 extern point_t e_axes_pos;
 extern int scroll_select();		/* defined in scroll.c */
 extern int menu_select();		/* defined in menu.c */
+extern void rect_view2image();		/* defined in rect.c */
+extern void rb_set_dirty_flag();
 
 int doMotion = 0;
 
@@ -103,13 +105,14 @@ char **argv;
   if(!strcmp(argv[0], "idle")){
     am_mode = AMM_IDLE;
     scroll_active = 0;
-    if(rubber_band_active){
-      rubber_band_active = 0;
-      dirty = 1;
+    if(rubber_band->rb_active){
+      rubber_band->rb_active = 0;
 
-      if(mged_variables->mouse_behavior == 'r')
+      if(mged_variables->mv_mouse_behavior == 'p')
+	rb_set_dirty_flag();
+      else if(mged_variables->mv_mouse_behavior == 'r')
 	rt_rect_area();
-      else if(mged_variables->mouse_behavior == 'z')
+      else if(mged_variables->mv_mouse_behavior == 'z')
 	zoom_rect_area();
     }
 
@@ -129,15 +132,15 @@ char **argv;
       return TCL_ERROR;
     }
 
-    old_orig_gui = mged_variables->orig_gui;
+    old_orig_gui = mged_variables->mv_orig_gui;
 
     fx = dm_Xx2Normal(dmp, atoi(argv[1]));
     fy = dm_Xy2Normal(dmp, atoi(argv[2]), 0);
     x = fx * GED_MAX;
     y = fy * GED_MAX;
 
-    if(mged_variables->faceplate &&
-       mged_variables->orig_gui){
+    if(mged_variables->mv_faceplate &&
+       mged_variables->mv_orig_gui){
 #define        MENUXLIM        (-1250)
 
       if(x >= MENUXLIM && scroll_select(x, y, 0)){
@@ -151,21 +154,21 @@ char **argv;
       }
     }
 
-    mged_variables->orig_gui = 0;
+    mged_variables->mv_orig_gui = 0;
     fy = dm_Xy2Normal(dmp, atoi(argv[2]), 1);
     y = fy * GED_MAX;
 
 end:
     bu_vls_init(&vls);
-    if(mged_variables->mouse_behavior == 'q' && !stolen){
+    if(mged_variables->mv_mouse_behavior == 'q' && !stolen){
       point_t view_pt;
       point_t model_pt;
 
-      if(mged_variables->grid_snap)
+      if(grid_state->gr_snap)
 	snap_to_grid(&fx, &fy);
 
       VSET(view_pt, fx, fy, 1.0);
-      MAT4X3PNT(model_pt, view2model, view_pt);
+      MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
       VSCALE(model_pt, model_pt, base2local);
       if(*zclip_ptr)
 	bu_vls_printf(&vls, "nirt %lf %lf %lf",
@@ -173,56 +176,56 @@ end:
       else
 	bu_vls_printf(&vls, "nirt -b %lf %lf %lf",
 		      model_pt[X], model_pt[Y], model_pt[Z]);
-    }else if((mged_variables->mouse_behavior == 'p' ||
-	      mged_variables->mouse_behavior == 'r' ||
-	      mged_variables->mouse_behavior == 'z') && !stolen){
+    }else if((mged_variables->mv_mouse_behavior == 'p' ||
+	      mged_variables->mv_mouse_behavior == 'r' ||
+	      mged_variables->mv_mouse_behavior == 'z') && !stolen){
 
-      if(mged_variables->grid_snap)
+      if(grid_state->gr_snap)
 	snap_to_grid(&fx, &fy);
 
-      rubber_band_active = 1;
-      rect_x = fx;
-      rect_y = fy;
-      rect_width = 0.0;
-      rect_height = 0.0;
-
-      dirty = 1;
-    }else if(mged_variables->mouse_behavior == 's' && !stolen){
-      if(mged_variables->grid_snap){
+      rubber_band->rb_active = 1;
+      rubber_band->rb_x = fx;
+      rubber_band->rb_y = fy;
+      rubber_band->rb_width = 0.0;
+      rubber_band->rb_height = 0.0;
+      rect_view2image();
+      rb_set_dirty_flag();
+    }else if(mged_variables->mv_mouse_behavior == 's' && !stolen){
+      if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
       
       bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
-    }else if(mged_variables->mouse_behavior == 'o' && !stolen){
-      if(mged_variables->grid_snap){
+    }else if(mged_variables->mv_mouse_behavior == 'o' && !stolen){
+      if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
       
       bu_vls_printf(&vls, "mouse_object_edit_select %d %d", x, y);
-    }else if(mged_variables->mouse_behavior == 'c' && !stolen){
-      if(mged_variables->grid_snap){
+    }else if(mged_variables->mv_mouse_behavior == 'c' && !stolen){
+      if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
       
       bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
-    }else if(adc_draw && mged_variables->transform == 'a' && !stolen) {
+    }else if(adc_state->adc_draw && mged_variables->mv_transform == 'a' && !stolen) {
       point_t model_pt;
       point_t view_pt;
 
-      if(mged_variables->grid_snap)
+      if(grid_state->gr_snap)
 	snap_to_grid(&fx, &fy);
 
       VSET(view_pt, fx, fy, 1.0);
-      MAT4X3PNT(model_pt, view2model, view_pt);
+      MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
       VSCALE(model_pt, model_pt, base2local);
       bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
-    }else if(mged_variables->grid_snap && !stolen &&
+    }else if(grid_state->gr_snap && !stolen &&
 	     state != ST_S_PICK && state != ST_O_PICK &&
 	     state != ST_O_PATH && !SEDIT_PICK){
       point_t view_pt;
@@ -231,7 +234,7 @@ end:
       snap_to_grid(&fx, &fy);
 
       if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	 mged_variables->transform == 'e'){
+	 mged_variables->mv_transform == 'e'){
 	int save_edflag = -1;
 
 	if(state == ST_S_EDIT){
@@ -243,10 +246,10 @@ end:
 	  edobj = BE_O_XY;
 	}
 
-	MAT4X3PNT(view_pt, model2view, e_axes_pos);
+	MAT4X3PNT(view_pt, view_state->vs_model2view, e_axes_pos);
 	view_pt[X] = fx;
 	view_pt[Y] = fy;
-	MAT4X3PNT(model_pt, view2model, view_pt);
+	MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
 	VSCALE(model_pt, model_pt, base2local);
 	bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	status = Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -256,17 +259,17 @@ end:
 	else
 	  edobj = save_edflag;
 
-	mged_variables->orig_gui = old_orig_gui;
+	mged_variables->mv_orig_gui = old_orig_gui;
 	bu_vls_free(&vls);
 	return status;
       }else{
 	point_t vcenter;
 
-	MAT_DELTAS_GET_NEG(vcenter, toViewcenter);
-	MAT4X3PNT(view_pt, model2view, vcenter);
+	MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
+	MAT4X3PNT(view_pt, view_state->vs_model2view, vcenter);
 	view_pt[X] = fx;
 	view_pt[Y] = fy;
-	MAT4X3PNT(model_pt, view2model, view_pt);
+	MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
 	VSCALE(model_pt, model_pt, base2local);
 	bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
       }
@@ -274,7 +277,7 @@ end:
       bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
     status = Tcl_Eval(interp, bu_vls_addr(&vls));
-    mged_variables->orig_gui = old_orig_gui;
+    mged_variables->mv_orig_gui = old_orig_gui;
     bu_vls_free(&vls);
 
     return status;
@@ -297,11 +300,11 @@ end:
     case 't':
       am_mode = AMM_TRAN;
 
-      if(mged_variables->grid_snap){
+      if(grid_state->gr_snap){
 	int save_edflag;
 
 	if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	   mged_variables->transform == 'e'){
+	   mged_variables->mv_transform == 'e'){
 	  if(state == ST_S_EDIT){
 	    save_edflag = es_edflag;
 	    if(!SEDIT_TRAN)
@@ -323,10 +326,10 @@ end:
 
       break;
     case 's':
-      if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
+      if(state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 	 NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
 	acc_sc_sol = 1.0;
-      else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
+      else if(state == ST_O_EDIT && mged_variables->mv_transform == 'e'){
 	edit_absolute_scale = acc_sc_obj - 1.0;
 	if(edit_absolute_scale > 0.0)
 	  edit_absolute_scale /= 3.0;
@@ -358,8 +361,8 @@ end:
 
     switch(*argv[1]){
     case '1':
-      fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - dv_xadc;
-      fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - dv_yadc;
+      fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
+      fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
@@ -369,8 +372,8 @@ end:
       am_mode = AMM_ADC_ANG1;
       break;
     case '2':
-      fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - dv_xadc;
-      fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - dv_yadc;
+      fx = dm_Xx2Normal(dmp, dml_omx) * GED_MAX - adc_state->adc_dv_x;
+      fy = dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
@@ -388,10 +391,10 @@ end:
 
 	VSET(view_pt, dm_Xx2Normal(dmp, dml_omx), dm_Xy2Normal(dmp, dml_omy, 1), 0.0);
 
-	if(mged_variables->grid_snap)
+	if(grid_state->gr_snap)
 	  snap_to_grid(&view_pt[X], &view_pt[Y]);
 
-	MAT4X3PNT(model_pt, view2model, view_pt);
+	MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
 	VSCALE(model_pt, model_pt, base2local);
 
 	bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
@@ -404,9 +407,9 @@ end:
       break;
     case 'd':
       fx = (dm_Xx2Normal(dmp, dml_omx) * GED_MAX -
-	    dv_xadc) * Viewscale * base2local * INV_GED;
+	    adc_state->adc_dv_x) * view_state->vs_Viewscale * base2local * INV_GED;
       fy = (dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX -
-	    dv_yadc) * Viewscale * base2local * INV_GED;
+	    adc_state->adc_dv_y) * view_state->vs_Viewscale * base2local * INV_GED;
 
       td = sqrt(fx * fx + fy * fy);
       bu_vls_init(&vls);
@@ -496,10 +499,10 @@ end:
     case 's':
       switch(*argv[2]){
       case 'x':
-	if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
+	if(state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
 	  acc_sc_sol = 1.0;
-	else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
+	else if(state == ST_O_EDIT && mged_variables->mv_transform == 'e'){
 	  edit_absolute_scale = acc_sc[0] - 1.0;
 	  if(edit_absolute_scale > 0.0)
 	    edit_absolute_scale /= 3.0;
@@ -508,10 +511,10 @@ end:
 	am_mode = AMM_CON_SCALE_X;
 	break;
       case 'y':
-	if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
+	if(state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
 	  acc_sc_sol = 1.0;
-	else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
+	else if(state == ST_O_EDIT && mged_variables->mv_transform == 'e'){
 	  edit_absolute_scale = acc_sc[1] - 1.0;
 	  if(edit_absolute_scale > 0.0)
 	    edit_absolute_scale /= 3.0;
@@ -520,10 +523,10 @@ end:
 	am_mode = AMM_CON_SCALE_Y;
 	break;
       case 'z':
-	if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
+	if(state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
 	  acc_sc_sol = 1.0;
-	else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
+	else if(state == ST_O_EDIT && mged_variables->mv_transform == 'e'){
 	  edit_absolute_scale = acc_sc[2] - 1.0;
 	  if(edit_absolute_scale > 0.0)
 	    edit_absolute_scale /= 3.0;
