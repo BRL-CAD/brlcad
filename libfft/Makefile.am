@@ -5,7 +5,22 @@ lib_LTLIBRARIES = libfft.la
 AM_CFLAGS=-I$(top_srcdir)/h
 noinst_PROGRAMS = fftc ifftc
 SRCS = fftfast.c splitdit.c ditsplit.c
-BUILT_SOURCES = rfft16.c rfft32.c rfft64.c rfft128.c rfft256.c irfft16.c irfft32.c irfft64.c irfft128.c irfft256.c vers.c
+
+BUILT_SOURCES = \
+	irfft128.c \
+	irfft16.c \
+	irfft256.c \
+	irfft32.c \
+	irfft512.c \
+	irfft64.c \
+	rfft128.c \
+	rfft16.c \
+	rfft256.c \
+	rfft32.c \
+	rfft512.c \
+	rfft64.c \
+	vers.c
+
 libfft_la_SOURCES = $(SRCS) $(BUILT_SOURCES)
 noinst_HEADERS = complex.h fft.h
 libfft_la_LDFLAGS = -version-info 19:1
@@ -31,6 +46,9 @@ rfft128.c:	fftc
 rfft256.c:	fftc
 	./fftc 256 > rfft256.c
 
+rfft512.c:	fftc
+	./fftc 512 > rfft512.c
+
 irfft16.c:	ifftc
 	./ifftc 16 > irfft16.c
 
@@ -46,6 +64,9 @@ irfft128.c:	ifftc
 irfft256.c:	ifftc
 	./ifftc 256 > irfft256.c
 
+irfft512.c:	ifftc
+	./ifftc 512 > irfft512.c
+
 
 vers.c: $(SRCS)
-	$(top_srcdir)/sh/newvers.sh fft_version "BRL-CAD FFT Library"
+	sh $(top_srcdir)/sh/vers.sh fft_version "BRL-CAD FFT Library" > $@
