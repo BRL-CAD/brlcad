@@ -36,6 +36,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
+
+#include "tcl.h"
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -44,14 +47,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./ged.h"
 #include "externs.h"
-#include "tcl.h"
 #include "./solid.h"
 #include "./dm.h"
+#include "./mgedtcl.h"
 
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct rt_tol		mged_tol;	/* from ged.c */
 extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
-extern Tcl_Interp		*interp;	/* from cmd.c */
 
 void	aexists();
 
