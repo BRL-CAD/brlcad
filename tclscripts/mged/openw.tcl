@@ -636,13 +636,21 @@ hoc_register_menu_data "Create" "Combination Editor..." "Combination Editor"\
 menu .$id.menubar.create.solid -title "Make Solid" -tearoff $mged_default(tearoff_menus)
 set make_solid_types [_mged_make -t]
 foreach solid_type $make_solid_types {
-    .$id.menubar.create.solid add command -label "$solid_type..."\
+    .$id.menubar.create.solid add command -label "$solid_type"\
 	    -command "init_solid_create $id $solid_type"
 
     set ksl {}
     lappend ksl "summary \"Make a $solid_type using the values found in the tcl variable solid_data(attr,$solid_type).\"" "see_also \"make, in\""
-    hoc_register_menu_data "Make Solid" "$solid_type..." "Make a $solid_type" $ksl
+    hoc_register_menu_data "Make Solid" "$solid_type" "Make a $solid_type" $ksl
 }
+
+.$id.menubar.create.solid add separator
+
+.$id.menubar.create.solid add command -label "dsp..."\
+    -command "dsp_create $id"
+set ksl {}
+lappend ksl "summary \"Make a dsp solid.\"" "see_also \"make, in\""
+hoc_register_menu_data "Make Solid" "dsp..." "Make a dsp solid" $ksl
 
 menu .$id.menubar.view -title "View" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.view add command -label "Top" -underline 0\
