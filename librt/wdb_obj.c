@@ -6983,7 +6983,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 						 (char *)NULL ) != TCL_OK ) {
 					bu_log( "Unable to post question!!!\n" );
 				} else {
-					char *result;
+					const char *result;
 
 					result = Tcl_GetStringResult( interp );
 					if( !strcmp( result, "no" ) ) {
