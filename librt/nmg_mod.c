@@ -1209,6 +1209,87 @@ struct edgeuse *eu;
 	nmg_keu(eu);
 }
 
+/*
+ *			N M G _ J O I N _ 2 L O O P S
+ *
+ *  Intended to join an interior and exterior loop together,
+ *  by building a bridge between the two indicated vertices.
+ *
+ *  This routine can be used to join two exterior loops which do not
+ *  overlap, and it can also be used to join an exterior loop with
+ *  a loop of oposite orientation that lies entirely within it.
+ *  This restriction is important, but not checked for.
+ *
+ *  If the two vertexuses reference distinct vertices, then two new
+ *  edges are built to bridge the loops together.
+ *  If the two vertexuses share the same vertex, then it is even easier.
+ */
+int
+nmg_join_2loops( vu1, vu2 )
+struct vertexuse	*vu1;
+struct vertexuse	*vu2;
+{
+	struct edgeuse	*eu1, *eu2;
+	struct edgeuse	*new_eu;
+	struct edgeuse	*first_new_eu;
+	struct edgeuse	*second_new_eu;
+	struct edgeuse	*final_eu2;
+	struct loopuse	*lu1, *lu2;
+
+	NMG_CK_VERTEXUSE(vu1);
+	NMG_CK_VERTEXUSE(vu2);
+	eu1 = vu1->up.eu_p;
+	eu2 = vu2->up.eu_p;
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_EDGEUSE(eu2);
+	lu1 = eu1->up.lu_p;
+	lu2 = eu2->up.lu_p;
+	NMG_CK_LOOPUSE(lu1);
+	NMG_CK_LOOPUSE(lu2);
+
+	if( lu1 == lu2 || lu1->l_p == lu2->l_p )
+		rt_bomb("nmg_join_2loops: can't join loop to itself\n");
+
+	if( lu1->up.fu_p != lu2->up.fu_p )
+		rt_bomb("nmg_join_2loops: can't join loops in different faces\n");
+
+	if( vu1->v_p != vu2->v_p )  {
+		/*
+		 *  Start by taking a jaunt from vu1 to vu2 and back.
+		 */
+		/* insert 0 length edge */
+		first_new_eu = nmg_eins(eu1);
+		/* split the new edge, and connect it to vertex 2 */
+		second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
+		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
+		/* Make the two new edgeuses share just one edge */
+		nmg_moveeu( second_new_eu, first_new_eu );
+	} else {
+		second_new_eu = RT_LIST_NEXT( edgeuse, &eu1->l );
+	}
+
+	/*
+	 *  Gobble edges off of loop2, and insert them into loop1,
+	 *  between first_new_eu and second_new_eu.
+	 *  The final edge from loop 2 will then be followed by
+	 *  second_new_eu.
+	 */
+	final_eu2 = RT_LIST_PLAST_CIRC(edgeuse, eu2 );
+	while( RT_LIST_NON_EMPTY( &lu2->down_hd ) )  {
+		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, final_eu2);
+
+		RT_LIST_DEQUEUE(&eu2->l);
+		RT_LIST_INSERT(&second_new_eu->l, &eu2->l);
+		eu2->up.lu_p = lu1;
+
+		RT_LIST_DEQUEUE(&eu2->eumate_p->l);
+		RT_LIST_APPEND(&second_new_eu->eumate_p->l, &eu2->eumate_p->l);
+		eu2->eumate_p->up.lu_p = lu1->lumate_p;
+	}
+
+	/* Kill entire (null) loop associated with lu2 */
+	nmg_klu(lu2);
+}
 
 /*			N M G _ S I M P L I F Y _ L O O P
  *
