@@ -1,9 +1,8 @@
 /*
  *			rfbd/Cakefile
  */
-#ifdef RFBD_CONFIG
-#	define CONFIGDEFS	RFBD_CONFIG
-#endif
+
+#define CONFIGDEFS	RFBD_CONFIG
 
 #define SRCDIR	rfbd
 #define PRODUCTS	rfbd
@@ -17,7 +16,12 @@
 
 /* Explicit composition of each product */
 
-rfbd:	OBJ
+rfbd:	OBJ LIBFB
 	CC LDFLAGS -o rfbd OBJ LIBFB LIBES
+
+
+/* Override the installation directory */
+#undef	BINDIR
+#define	BINDIR	ETCDIR
 
 #include "../Cakefile.rules"

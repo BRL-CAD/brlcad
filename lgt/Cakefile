@@ -14,25 +14,16 @@
 
 #define FILES	lgt char do_options getfont error\
 	execshell fb glob grid_rotate ir lgt_db mat_db octree\
-	prnt reflect resource texture trie sgi_dep\
+	prnt reflect texture trie sgi_dep\
 	strtok hmenu
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-/* There seems to be some difficulty with this, on the Suns */
-#ifndef LGT_CONFIG
-#	define	LGT_CONFIG	/**/
-#endif
-
-#ifndef	RT_CONFIG
-#	define	RT_CONFIG	/**/
-#endif
-
 /* Explicit composition of each product */
 
 lgt:	OBJ
-	CC LDFLAGS -o lgt OBJ RT_CONFIG LIBRT LIBFB \
+	CC LDFLAGS -o lgt OBJ LIBRT RT_LIBES LIBFB \
 		LIBTERMIO LIBCURSOR LIBTERMLIB LIBSYSV LIBES
 
 #include "../Cakefile.rules"
