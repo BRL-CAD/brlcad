@@ -2065,7 +2065,7 @@ CONST struct rt_tol *tol;
 	struct nmg_ptbl eus;
 	int i;
 	int count=0;
-	char *magic_type;
+	CONST char *magic_type;
 
 	if( rt_g.NMG_debug & DEBUG_BOOL )
 		rt_log( "nmg_break_all_es_on_v( magic=x%x, v=x%x )\n", magic_p, v );
@@ -2073,7 +2073,7 @@ CONST struct rt_tol *tol;
 	NMG_CK_VERTEX( v );	
 	RT_CK_TOL( tol );
 
-	magic_type = rt_identify_magic( *magic_p );
+	magic_type = bu_identify_magic( *magic_p );
 	if( !strcmp( magic_type, "NULL" ), !strcmp( magic_type, "Unknown_Magic" ) )
 	{
 		rt_log( "Bad magic pointer passed to nmg_break_all_es_on_v (%s)\n", magic_type );
