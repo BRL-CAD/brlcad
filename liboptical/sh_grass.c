@@ -253,16 +253,20 @@ vect_t wind;
 	o->tot_len = 0.0;
 	for (seg=0 ; seg < i->segs ; seg++) {
 		o->leaf[seg].magic = i->leaf[seg].magic;
-
+#define WIND 1
+#if WIND
 		if (seg > 0) {
-
 			MAT4X3VEC(v, m, i->leaf[seg].blade);
 			VADD2(v, v, wind);
 			VUNITIZE(v);
 			VMOVE(o->leaf[seg].blade, v);
+
 		} else {
 			MAT4X3VEC(o->leaf[seg].blade, m, i->leaf[seg].blade);
 		}
+#else
+		MAT4X3VEC(o->leaf[seg].blade, m, i->leaf[seg].blade);
+#endif
 		/* XXX should recompute N? */
 		MAT4X3VEC(o->leaf[seg].N, m, i->leaf[seg].N);
 		o->leaf[seg].len = i->leaf[seg].len;
@@ -961,7 +965,7 @@ struct grass_specific	*grass_sp;
 	val = plants_this_cell(cell, grass_sp);
 	ppc = grass_sp->ppc + grass_sp->ppcd * val;
 
-#if 1
+#if WIND
 {
 	vect_t wind_vec;
 	VSET(wind_vec, 0.70710678, 0.70710678, 0.0);
