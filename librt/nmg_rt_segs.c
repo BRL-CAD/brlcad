@@ -154,25 +154,28 @@ vect_t left_vect;
 	vect_t eu_vect;
 	struct edgeuse *teu;
 
-	if (rt_g.NMG_debug & DEBUG_NMGRT)
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 		rt_log("sort_eus\n");
 
 	NMG_CK_EDGE(e_p);
 	NMG_CK_EDGE_G(e_p->eg_p);
 
 
-	VPRINT("ray_vect", rp->r_dir);
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
+		VPRINT("ray_vect", rp->r_dir);
 
 	VMOVE(edge_vect, e_p->eg_p->e_dir);
 	VREVERSE(edge_opp_vect, e_p->eg_p->e_dir);
-	VPRINT("edge_vect", edge_vect);
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
+		VPRINT("edge_vect", edge_vect);
 
 	/* compute the "left" vector  which is perpendicular to the edge
 	 * and the ray
 	 */
 	VCROSS(left_vect, edge_vect, rp->r_dir);
 
-	VPRINT("left_vect", left_vect);
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
+		VPRINT("left_vect", left_vect);
 
 	VUNITIZE(left_vect);
 
@@ -191,7 +194,7 @@ vect_t left_vect;
 		 NMG_CK_FACE_G(tmp.eu->up.lu_p->up.fu_p->f_p->fg_p);
 
 		fg_p = tmp.eu->up.lu_p->up.fu_p->f_p->fg_p;
-		if (rt_g.NMG_debug & DEBUG_NMGRT) {
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 		    	rt_log("\n");
 			HPRINT("face_normal", fg_p->N);
 		}
@@ -211,7 +214,7 @@ vect_t left_vect;
 	    	}
 		VUNITIZE(face_vect);
 
-	    	if (rt_g.NMG_debug & DEBUG_NMGRT) {
+	    	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 			VPRINT("face_vect", face_vect);
 	    	}
 		/* figure out if this is one of the prime edgeuses */
@@ -224,7 +227,7 @@ vect_t left_vect;
 		prime_uses[a].ndotr = tmp.ndotr;	\
 		prime_uses[a].eu = tmp.eu
 
-	    	if (rt_g.NMG_debug & DEBUG_NMGRT)
+	    	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 		    	rt_structprint("tmp", ef_parsetab, (char *)&tmp);
 
 		if (tmp.fdotl >= 0.0) {
@@ -505,7 +508,7 @@ int in, out;
 char *s;
 {
 
-	if (rt_g.NMG_debug & DEBUG_NMGRT)
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 		rt_log("edge_ray_graze(%s)\n", s);
 
 	bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
@@ -532,7 +535,7 @@ struct hitmiss	*a_hit;
 struct ef_data *i_u;	/* "important" uses of edge */
 {
 
-	if (rt_g.NMG_debug & DEBUG_NMGRT)
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 		rt_log("edge_enter_solid()\n");
 	/* we enter solid, normal from face
 	 * with most anti-rayward normal
@@ -546,7 +549,7 @@ struct ef_data *i_u;	/* "important" uses of edge */
 	 *	_/  |  \___
 	 */
 
-		if (rt_g.NMG_debug & DEBUG_NMGRT) {
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 			rt_log("edge_enter_solid w/ ray_hit_distance %g (%g %g %g)",
 				a_hit->hit.hit_dist,
 				a_hit->hit.hit_point[0],
@@ -590,7 +593,7 @@ struct hitmiss	*a_hit;
 struct ef_data *i_u;	/* "important" uses of edge */
 {
 
-	if (rt_g.NMG_debug & DEBUG_NMGRT)
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 		rt_log("edge_zero_depth_hit()\n");
 	/* zero depth hit
     	 *
@@ -638,7 +641,7 @@ struct hitmiss	*a_hit;
 struct ef_data *i_u;	/* "important" uses of edge */
 {
 
-	if (rt_g.NMG_debug & DEBUG_NMGRT)
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 		rt_log("edge_leave_solid()\n");
 	/* leave solid
 	*
@@ -717,7 +720,7 @@ int		filled;
 	struct edgeuse *eu_p;
 	char manifolds = NMG_MANIFOLDS(tbl, e_p);
 	
-	if (rt_g.NMG_debug & DEBUG_NMGRT)
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 	    	rt_log("edge_hit()\n");
 
 	if (manifolds & NMG_3MANIFOLD) {
@@ -784,7 +787,7 @@ int		filled;
 
 	    sort_eus(i_u, e_p, tbl, rp, left_vect);
 
-	    if (rt_g.NMG_debug & DEBUG_NMGRT) {
+	    if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 	    	rt_log("\nedge_hit 3MANIFOLD\n");
 	    	edge_confusion(a_hit, i_u, (char *)NULL, 0);
 	    }
@@ -802,7 +805,7 @@ int		filled;
 
 	    			    	/* leave & re-enter solid */
 
-					if (rt_g.NMG_debug & DEBUG_NMGRT)
+					if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 						rt_log("edge_hit leave&re-enter\n");
 
 					RT_LIST_DEQUEUE(&a_hit->l);
@@ -820,7 +823,7 @@ int		filled;
 				RT_LIST_DEQUEUE(&a_hit->l);
 				rt_free((char *)a_hit, "freeing hitpoint");
 
-				if (rt_g.NMG_debug & DEBUG_NMGRT)
+				if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 					rt_log("edge_hit graze exterior on left\n");
 	    		} else {
 	    			/* What's going on? */
@@ -835,7 +838,7 @@ int		filled;
 		    i_u[RIGHT_MAX_ENTER].eu != i_u[RIGHT_MIN_EXIT].eu) {
 
 	    		/* grazing exterior of solid on right */
-			if (rt_g.NMG_debug & DEBUG_NMGRT)
+			if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 				rt_log("edge_hit graze exterior on right\n");
 			RT_LIST_DEQUEUE(&a_hit->l);
 			rt_free((char *)a_hit, "freeing hitpoint");
@@ -863,8 +866,10 @@ int		filled;
 			} else {
 				edge_enter_solid(a_hit, seg_p, i_u);
     				filled = 1;
-				rt_log("added %d to segment: ", filled);
-				rt_pr_seg(seg_p);
+				if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
+					rt_log("added %d to segment: ", filled);
+					rt_pr_seg(seg_p);
+				}
 			}
 		} else if (i_u[LEFT_MAX_EXIT].eu &&
 	    		i_u[LEFT_MAX_EXIT].eu !=
@@ -988,7 +993,7 @@ int		filled;
 			filled = 2;
 		}
 
-		if (rt_g.NMG_debug & DEBUG_NMGRT) {
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 			rt_log("added %d to segment: ", filled);
 			rt_pr_seg(seg_p);
 		}
@@ -1008,7 +1013,7 @@ int		filled;
 		}
 
 		filled = 2;
-		if (rt_g.NMG_debug & DEBUG_NMGRT) {
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 			rt_log("added %d to segment: ", filled);
 			rt_pr_seg(seg_p);
 		}
@@ -1055,7 +1060,7 @@ struct soltab		*stp;
 	    	}
 		a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_hit);
 
-		if (rt_g.NMG_debug & DEBUG_NMGRT) {
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 			rt_log("build_seg w/ ray_hit_distance %g (%g %g %g)",
 				a_hit->hit.hit_dist,
 				a_hit->hit.hit_point[0],
@@ -1094,7 +1099,7 @@ struct soltab		*stp;
 
 
 	    ++seg_count;
-	    if (rt_g.NMG_debug & DEBUG_NMGRT) {
+	    if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 	    	rt_log("adding segment %d to seg list\n", seg_count);
 		rt_pr_seg(seg_p);
 	    }
@@ -1119,10 +1124,10 @@ struct ray_data	*rd;
 	int seg_count=0;
 
 	if (RT_LIST_IS_EMPTY(&rd->rd_hit)) {
-		if (rt_g.NMG_debug & DEBUG_NMGRT)
+		if (rt_g.NMG_debug & DEBUG_RT_SEGS)
 			rt_log("ray missed NMG\n");
 		return(0);			/* MISS */
-	} else /* if (rt_g.NMG_debug & DEBUG_NMGRT) */{
+	} else if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 
 		rt_log("\nsorted nmg/ray hit list\n");
 
@@ -1133,6 +1138,25 @@ struct ray_data	*rd;
 				a_hit->hit.hit_point[1],
 				a_hit->hit.hit_point[2]);
 
+			if (a_hit->in_out & HMG_HIT_IN_IN)
+				rt_log(" HMG_HIT_IN_IN  ");
+			if (a_hit->in_out & HMG_HIT_IN_OUT)
+				rt_log(" HMG_HIT_IN_OUT ");
+			if (a_hit->in_out & HMG_HIT_OUT_IN)
+				rt_log(" HMG_HIT_OUT_IN ");
+			if (a_hit->in_out & HMG_HIT_IN_IN)
+				rt_log(" HMG_HIT_IN_IN  ");
+			if (a_hit->in_out & HMG_HIT_IN_ON)
+				rt_log(" HMG_HIT_IN_ON  ");
+			if (a_hit->in_out & HMG_HIT_ON_IN)
+				rt_log(" HMG_HIT_ON_IN  ");
+			if (a_hit->in_out & HMG_HIT_OUT_ON)
+				rt_log(" HMG_HIT_OUT_ON ");
+			if (a_hit->in_out & HMG_HIT_ON_OUT)
+				rt_log(" HMG_HIT_ON_OUT ");
+			if ( (a_hit->in_out & 0xFF) == 0 )
+				rt_log(" -No hit sense- ");
+
 			switch ( *(int*)a_hit->hit.hit_private) {
 			case NMG_FACE_MAGIC: rt_log("\tface\n"); break;
 			case NMG_EDGE_MAGIC: rt_log("\tedge\n"); break;
@@ -1140,13 +1164,14 @@ struct ray_data	*rd;
 			default : rt_log(" hit unknown magic (%d)\n", 
 				*(int*)a_hit->hit.hit_private); break;
 			}
+
 		}
 	}
 
 
 	seg_count = nmg_build_segs(rd, rd->ap, rd->seghead, rd->stp);
 	
-	if (!(rt_g.NMG_debug & DEBUG_NMGRT))
+	if (!(rt_g.NMG_debug & DEBUG_RT_SEGS))
 		return(seg_count);
 
 	/* print debugging data before returning */
