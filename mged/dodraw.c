@@ -853,6 +853,7 @@ struct solid	*sp;
 			   "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	  return(-1);
 	}
+	/* XXX This should really be db_follow_path_for_state() */
 	pathHmat( sp, mat, sp->s_last-1 );
 
 	BU_INIT_EXTERNAL( &ext );
@@ -1576,4 +1577,65 @@ char	**argv;
 	  /* draw the new solid */
 	  return f_edit( clientData, interp, 2, av );
 	}
+}
+
+/*
+ *			A D D _ S O L I D _ P A T H _ T O _ R E S U L T
+ */
+void
+add_solid_path_to_result( interp, sp )
+Tcl_Interp *interp;
+register struct solid	*sp;
+{
+	register int	i;
+
+	for( i = 0; i <= sp->s_last; i++ )  {
+		Tcl_AppendResult( interp, sp->s_path[i]->d_namep,
+			i == sp->s_last ? NULL : "/", NULL );
+	}
+	Tcl_AppendResult( interp, " ", NULL );
+}
+
+/*
+ *			R E D R A W _ V L I S T
+ *
+ *  Given the name(s) of database objects, re-generate the vlist
+ *  associated with every solid in view which references the
+ *  named object(s), either solids or regions.
+ *  Particularly useful with outboard .inmem database modifications.
+ */
+int
+cmd_redraw_vlist( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	struct directory	*dp;
+	int		i;
+
+	if( argc < 2 )  {
+		Tcl_AppendResult(interp, "Usage: rtdraw_vlist object(s)\n", NULL);
+		return TCL_ERROR;
+	}
+
+	for( i = 1; i < argc; i++ )  {
+		register struct solid	*sp;
+
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == NULL )
+			continue;
+
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+			register int j;
+			for( j = sp->s_last; j >= 0; j-- )  {
+				if( sp->s_path[j] != dp )
+					continue;
+				add_solid_path_to_result(interp, sp);
+				(void)replot_original_solid( sp );
+				sp->s_iflag = DOWN;	/* It won't be drawn otherwise */
+				break;
+			}
+		}
+	}
+	return TCL_OK;
 }
