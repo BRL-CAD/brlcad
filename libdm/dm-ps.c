@@ -399,12 +399,17 @@ int which_eye;
  */
 /* ARGSUSED */
 static int
-ps_drawVList( dmp, vp )
+ps_drawVList( dmp, vp, perspective )
 struct dm *dmp;
 register struct rt_vlist *vp;
+double perspective;
 {
   static vect_t			last;
   register struct rt_vlist	*tvp;
+  register point_t		*pt_prev=NULL;
+  register fastf_t		dist_prev=1.0;
+  register fastf_t		dist;
+  fastf_t			delta;
   int useful = 0;
 
   if( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
@@ -416,6 +421,16 @@ register struct rt_vlist *vp;
   else
     fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV ");		/* Normal vectors */
 #endif
+
+    /* delta is used in clipping to insure clipped endpoint is slightly
+     * in front of eye plane (perspective mode only).
+     * This value is a SWAG that seems to work OK.
+     */
+    delta = psmat[15]*0.0001;
+    if( delta < 0.0 )
+	delta = -delta;
+    if( delta < SQRT_SMALL_FASTF )
+	delta = SQRT_SMALL_FASTF;
 
   for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
     register int	i;
@@ -431,13 +446,83 @@ register struct rt_vlist *vp;
       case RT_VLIST_POLY_MOVE:
       case RT_VLIST_LINE_MOVE:
 	/* Move, not draw */
-	MAT4X3PNT( last, psmat, *pt );
+		if( perspective > 0.0 )
+	    	{
+	    		/* cannot apply perspective transformation to
+			 * points behind eye plane!!!!
+	    		 */
+	    		dist = VDOT( *pt, &psmat[12] ) + psmat[15];
+	    		if( dist <= 0.0 )
+	    		{
+	    			pt_prev = pt;
+	    			dist_prev = dist;
+	    			continue;
+	    		}
+	    		else
+	    		{
+	    			MAT4X3PNT( last, psmat, *pt );
+	    			dist_prev = dist;
+	    			pt_prev = pt;
+	    		}
+	    	}
+		else
+			MAT4X3PNT( last, psmat, *pt );
 	continue;
       case RT_VLIST_POLY_DRAW:
       case RT_VLIST_POLY_END:
       case RT_VLIST_LINE_DRAW:
 	/* draw */
-	MAT4X3PNT( fin, psmat, *pt );
+		if( perspective > 0.0 )
+	    	{
+	    		/* cannot apply perspective transformation to
+			 * points behind eye plane!!!!
+	    		 */
+	    		dist = VDOT( *pt, &psmat[12] ) + psmat[15];
+	    		if( dist <= 0.0 )
+	    		{
+	    			if( dist_prev <= 0.0 )
+	    			{
+	    				/* nothing to plot */
+		    			dist_prev = dist;
+		    			pt_prev = pt;
+		    			continue;
+	    			}
+	    			else
+	    			{
+	    				fastf_t alpha;
+	    				vect_t diff;
+	    				point_t tmp_pt;
+
+	    				/* clip this end */
+	    				VSUB2( diff, *pt, *pt_prev );
+	    				alpha = (dist_prev - delta) / ( dist_prev - dist );
+	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
+	    				MAT4X3PNT( fin, psmat, tmp_pt );
+	    			}
+	    		}
+	    		else
+	    		{
+	    			if( dist_prev <= 0.0 )
+	    			{
+	    				fastf_t alpha;
+	    				vect_t diff;
+	    				point_t tmp_pt;
+
+	    				/* clip other end */
+	    				VSUB2( diff, *pt, *pt_prev );
+	    				alpha = (-dist_prev + delta) / ( dist - dist_prev );
+	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
+	    				MAT4X3PNT( last, psmat, tmp_pt );
+	    				MAT4X3PNT( fin, psmat, *pt );
+	    			}
+	    			else
+	    			{
+	    				MAT4X3PNT( fin, psmat, *pt );
+	    			}
+	    		}
+	    	}
+		else
+			MAT4X3PNT( fin, psmat, *pt );
 	VMOVE( start, last );
 	VMOVE( last, fin );
 	break;

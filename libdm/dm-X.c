@@ -561,11 +561,11 @@ int which_eye;
  *  
  */
 
-/* ARGSUSED */
 static int
-X_drawVList( dmp, vp )
+X_drawVList( dmp, vp, perspective )
 struct dm *dmp;
 register struct rt_vlist *vp;
+double perspective;
 {
     static vect_t spnt, lpnt, pnt;
     register struct rt_vlist *tvp;
@@ -573,9 +573,22 @@ register struct rt_vlist *vp;
     XSegment *segp;			/* current segment */
     XGCValues gcv;
     int	nseg;			        /* number of segments */
+    fastf_t delta;
+    register point_t *pt_prev = NULL;
+    fastf_t 	 dist_prev=1.0;
 
     if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
       bu_log("X_drawVList()\n");
+
+    /* delta is used in clipping to insure clipped endpoint is slightly
+     * in front of eye plane (perspective mode only).
+     * This value is a SWAG that seems to work OK.
+     */
+    delta = xmat[15]*0.0001;
+    if( delta < 0.0 )
+	delta = -delta;
+    if( delta < SQRT_SMALL_FASTF )
+	delta = SQRT_SMALL_FASTF;
 
     nseg = 0;
     segp = segbuf;
@@ -584,6 +597,7 @@ register struct rt_vlist *vp;
 	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
+    	fastf_t 	 dist;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	/* 2^31 ~= 2e9 -- dynamic range of a long int */
@@ -602,12 +616,27 @@ register struct rt_vlist *vp;
 		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		}
 
-		MAT4X3PNT( lpnt, xmat, *pt );
-#if 0
-		if( lpnt[0] < -1e6 || lpnt[0] > 1e6 ||
-		    lpnt[1] < -1e6 || lpnt[1] > 1e6 )
-		  continue; /* omit this point (ugh) */
-#endif
+		if( perspective > 0.0 )
+	    	{
+	    		/* cannot apply perspective transformation to
+			 * points behind eye plane!!!!
+	    		 */
+	    		dist = VDOT( *pt, &xmat[12] ) + xmat[15];
+	    		if( dist <= 0.0 )
+	    		{
+	    			pt_prev = pt;
+	    			dist_prev = dist;
+	    			continue;
+	    		}
+	    		else
+	    		{
+	    			MAT4X3PNT( lpnt, xmat, *pt );
+	    			dist_prev = dist;
+	    			pt_prev = pt;
+	    		}
+	    	}
+		else
+			MAT4X3PNT( lpnt, xmat, *pt );
 
 #ifdef USE_RT_ASPECT
 		lpnt[0] *= 2047;
@@ -627,12 +656,62 @@ register struct rt_vlist *vp;
 		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		}
 
-		MAT4X3PNT( pnt, xmat, *pt );
-#if 0
-		if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
-		    pnt[1] < -1e6 || pnt[1] > 1e6 )
-		  continue; /* omit this point (ugh) */
-#endif
+		if( perspective > 0.0 )
+	    	{
+	    		/* cannot apply perspective transformation to
+			 * points behind eye plane!!!!
+	    		 */
+	    		dist = VDOT( *pt, &xmat[12] ) + xmat[15];
+			if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug )
+	    			bu_log( "dist=%g, dist_prev=%g\n", dist, dist_prev );
+	    		if( dist <= 0.0 )
+	    		{
+	    			if( dist_prev <= 0.0 )
+	    			{
+	    				/* nothing to plot */
+		    			dist_prev = dist;
+		    			pt_prev = pt;
+		    			continue;
+	    			}
+	    			else
+	    			{
+	    				fastf_t alpha;
+	    				vect_t diff;
+	    				point_t tmp_pt;
+
+	    				/* clip this end */
+	    				VSUB2( diff, *pt, *pt_prev );
+	    				alpha = (dist_prev - delta) / ( dist_prev - dist );
+	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
+	    				MAT4X3PNT( pnt, xmat, tmp_pt );
+	    			}
+	    		}
+	    		else
+	    		{
+	    			if( dist_prev <= 0.0 )
+	    			{
+	    				fastf_t alpha;
+	    				vect_t diff;
+	    				point_t tmp_pt;
+
+	    				/* clip other end */
+	    				VSUB2( diff, *pt, *pt_prev );
+	    				alpha = (-dist_prev + delta) / ( dist - dist_prev );
+	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
+	    				MAT4X3PNT( lpnt, xmat, tmp_pt );
+	    				lpnt[0] *= 2047;
+	    				lpnt[1] *= 2047 * dmp->dm_aspect;
+	    				lpnt[2] *= 2047;
+	    				MAT4X3PNT( pnt, xmat, *pt );
+	    			}
+	    			else
+	    			{
+	    				MAT4X3PNT( pnt, xmat, *pt );
+	    			}
+	    		}
+	    	}
+		else
+			MAT4X3PNT( pnt, xmat, *pt );
 
 #ifdef USE_RT_ASPECT
 		pnt[0] *= 2047;
@@ -645,8 +724,10 @@ register struct rt_vlist *vp;
 
 		/* save pnt --- it might get changed by clip() */
 		VMOVE(spnt, pnt);
+	    	pt_prev = pt;
+	    	dist_prev = dist;
 
-		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug) {
 		  bu_log("before clipping:\n");
 		  bu_log("clipmin - %lf %lf %lf\n",
 			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[X],
@@ -684,7 +765,7 @@ register struct rt_vlist *vp;
 		  }
 		}
 
-		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug) {
 		  bu_log("after clipping:\n");
 		  bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
 		  bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
