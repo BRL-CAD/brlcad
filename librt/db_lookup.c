@@ -216,28 +216,30 @@ char				*newname;
 	register struct directory *findp;
 	register struct directory **headp;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_dirdelete:  bad dbip\n");
+	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_rename:  bad dbip\n");
 
 	/* Remove from linked list */
 	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
 	if( *headp == dp )  {
+		/* Was first on list, dequeue */
 		*headp = dp->d_forw;
 	} else {
 		for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
 			if( findp->d_forw != dp )
 				continue;
+			/* Dequeue */
 			findp->d_forw = dp->d_forw;
 			goto out;
 		}
-		return(-1);
+		return(-1);		/* ERROR: can't find */
 	}
 
+out:
 	/* Effect new name */
 	rt_free( dp->d_namep, "d_namep" );
 	dp->d_namep = rt_strdup( newname );
 
 	/* Add to new linked list */
-out:
 	headp = &(dbip->dbi_Head[db_dirhash(newname)]);
 	dp->d_forw = *headp;
 	*headp = dp;
