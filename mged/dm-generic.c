@@ -244,7 +244,6 @@ end:
 
       if((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	 mged_variables->mv_transform == 'e'){
-	int save_edflag = -1;
 
 #if 0
 	if(state == ST_S_EDIT){
