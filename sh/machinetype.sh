@@ -367,12 +367,13 @@ x-v|x-b)
 	exit 0;;
 x-d)
 	# This option is used primarily when building CAKE.
-	# This depends on `machinetype.sh -d` discarding the newline.
+	# This depends on sh `machinetype.sh -d` discarding the newline.
 	if test ${UNIXTYPE} = BSD
 	then	echo "-D__BSD -D_BSD -DBSD"
 	else	echo "-D__SYSV -DATT -DSYSV"
 	fi
 	echo "-D__MACHINETYPE__${MACHINE}"
+	echo "-DBRLCAD_BASEDIR=${BASEDIR}"
 	exit 0;;
 *)
 	echo "$0:  Unknown argument /$ARG/" 1>&2; break;;
