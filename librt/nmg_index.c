@@ -582,7 +582,7 @@ CONST struct model			*m;
 	}
 
 	NMG_CK_MODEL(m);
-	bzero( ctr, sizeof(*ctr) );
+	bzero( (char *)ctr, sizeof(*ctr) );
 
 	ptrs = (long **)rt_calloc( m->maxindex+1, sizeof(long *), "nmg_m_count ptrs[]" );
 
