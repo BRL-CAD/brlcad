@@ -108,8 +108,8 @@ AC_ARG_WITH(jdk,
         ])
 case "$target" in
 	*-*-darwin*)
-		JAVA_CFLAGS=""
-		JAVA_LDFLAGS="-shrext .jnilib"
+		JAVA_CFLAGS="-framework JavaVM"
+		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
 		have_java=yes
 		;;
 esac
