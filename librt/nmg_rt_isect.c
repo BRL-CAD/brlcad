@@ -164,18 +164,17 @@ struct vertexuse *vu_p;
 /*
  *	Examine the vertex neighborhood to classify the ray as IN/ON/OUT of
  *	the NMG both before and after hitting the vertex.
-
-N       R
-^      ^
-|     /
-|    / |
-|   /  | -NdotR (N)
-|  /   |
-| /    |
-|/     V
-.----->Q
-
-
+ *
+ *	N       R
+ *	^      ^
+ *	|     /
+ *	|    / |
+ *	|   /  | -NdotR (N)
+ *	|  /   |
+ *	| /    |
+ *	|/     V
+ *	.----->Q
+ *
  */
 static void
 vertex_neighborhood(rd, vu_p, myhit)
@@ -189,7 +188,9 @@ struct hitmiss *myhit;
 	point_t q;
 	vect_t		n;
 	struct nmg_ptbl ftbl;
-
+	double cos_angle;
+	hvect_t norm;
+	point_t	North_plane_pt, South_plane_pt, South_Pole, North_Pole;
 
 	NMG_CK_VERTEXUSE(vu_p);
 	NMG_CK_VERTEX(vu_p->v_p);
@@ -200,39 +201,67 @@ struct hitmiss *myhit;
 	/* for every use of this vertex */
 	for ( RT_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd) ) {
 		/* if the parent use is an (edge/loop)use of an 
-		 * OT_SAME faceuse...
+		 * OT_SAME faceuse that we haven't already processed...
 		 */
 		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
 		    *vu->up.eu_p->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    *vu->up.eu_p->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
-		    vu->up.eu_p->up.lu_p->up.fu_p->orientation == OT_SAME) {
+		    vu->up.eu_p->up.lu_p->up.fu_p->orientation == OT_SAME &&
+		    nmg_tbl(&ftbl, TBL_INS_UNIQUE,
+		    &vu->up.eu_p->up.lu_p->up.fu_p->l.magic) < 0 ) {
+
+		    	/* There is a conceptual sphere around the vertex
+		    	 * The point where the ray enters this sphere is
+		    	 *  called the North Pole, and the point where it
+		    	 *  exits is called the South Pole.
+		    	 *
+		    	 * The distance from each "Pole Point" to the faceuse
+		    	 *  is the commodity in which we are interested.
+		    	 * This is either the distance to the plane (if the
+		    	 * projection of the point into the plane lies within
+		    	 * the faceuse), or the magnitude of the sum of the
+		    	 * vectors point->plane and plane_pt->faceuse boundary
+		    	 */
 
 
 			fu = vu->up.eu_p->up.lu_p->up.fu_p;
-
-		    	/* if we've already done this face,
-		    	 * skip on to the next
-		    	 */
-			if (nmg_tbl(&ftbl, TBL_INS_UNIQUE, &fu->l.magic) >= 0)
-				continue;
-
 			/* check this face */
 			NMG_CK_FACE(fu->f_p);
 			NMG_CK_FACE_G(fu->f_p->fg_p);
-		    	NMG_GET_FU_NORMAL( n, fu );
+		    	NMG_GET_FU_NORMAL( norm, fu );
 
-			NdotR = VDOT(n, rd->rp->r_dir);
-			VADD2(q, vu_p->v_p->vg_p->coord, rd->rp->r_dir);
-			VJOIN1(q, q, NdotR, n);
 
-			/* pt "q" should be on plane of the face.
-			 * determine if it is in/on/out of the face boundary
-			 * XXX
-			 */
+
+		    	/* compute the "north pole" points
+		    	 *
+		    	 * project the point a unit distance BACK along the
+		    	 * ray and then project the point "back down" onto
+		    	 * the plane.
+		    	 */
+			VJOIN1(North_Pole, vu_p->v_p->vg_p->coord,
+				-1.0, rd->rp->r_dir);
+		    	VJOIN1(North_plane_pt, North_Pole, cos_angle, norm);
+
+
+		    	/* compute the "south pole" points
+		    	 *
+		    	 * project the point a unit distance FORWARD along the
+		    	 * ray, and then project the point down "back up"
+		    	 * onto the plane.
+		    	 */
+			VADD2(South_Pole, vu_p->v_p->vg_p->coord,
+				rd->rp->r_dir);
+		    	VJOIN1(South_plane_pt, South_Pole, -cos_angle, norm);
+
 		}
 	}
 	(void)nmg_tbl( &ftbl, TBL_FREE, (long *)NULL );
 }
+
+
+
+
+
 
 /*
  *  Once it has been decided that the ray hits the vertex, 
@@ -604,7 +633,20 @@ struct edgeuse *eu_p;
 
 
 
-
+/*
+ *	Find the distance from a point (rd->plane_pt) in the plane of a face
+ *	to a vertexuse in the plane of the face.  The distance is stored in
+ *	rd->plane_dist if it is less than the current value.  If the value
+ *	is stored, rd->plane_closest gets vu_p and rd->plane_dist_type is
+ *	set to NMG_PCA_VERTEX.
+ *
+ *	Uses:
+ *	CONST	rd->tol
+ *	CONST	rd->plane_pt
+ *		rd->plane_dist
+ *		rd->plane_dist_type
+ *		rd->plane_closest
+ */
 static void
 dist_plane_pt_vu(rd, vu_p)
 struct ray_data *rd;
@@ -612,12 +654,17 @@ struct vertexuse *vu_p;
 {
 	vect_t v;
 	fastf_t dist;
+
+	/* Form a vector from the vertexuse to the plane_pt.
+	 * Take the magnitude of the vector to find the distance
+	 * between the two points.
+	 */
     	VSUB2(v, rd->plane_pt, vu_p->v_p->vg_p->coord);	
 	dist = MAGNITUDE(v);
 
-	if (dist < rd->tol->dist) {
-		/* make sure there is a hit on the vertex */
-	}
+#if 0
+	/* make sure there is a hit on the vertex */
+#endif
 
 	if (dist < rd->plane_dist) {
 		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -630,6 +677,20 @@ struct vertexuse *vu_p;
 		rd->plane_closest = (long *)vu_p->v_p;
 	}
 }
+
+/*
+ *	Find the distance from a point (rd->plane_pt) in the plane of a 
+ *	face to an edgeuse in the plane of the face.  Store the distance 
+ *	result in rd->plane_dist and eu_p in rd->plane_closest if this
+ *	distance is less than rd->plane_dist at the time of calling.
+ *
+ *	Uses:
+ *	CONST	rd->tol
+ *	CONST	rd->plane_pt
+ *		rd->plane_dist
+ *		rd->plane_dist_type
+ *		rd->plane_closest
+ */
 static void
 dist_plane_pt_eu(rd, eu_p)
 struct ray_data *rd;
@@ -665,6 +726,7 @@ struct edgeuse *eu_p;
 			rt_log("\told plane_dist_type UNDEFINED\n"); break;
 		}
 	}
+
 	/* Determine if the plane intercept is closer to this edgeuse than
 	 * the previously closest edge/vertex
 	 */
@@ -689,7 +751,6 @@ struct edgeuse *eu_p;
 		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 			rt_log(	"\tplane_pt on eu, (new dist: %g)\n",
 				rd->plane_dist);
-		/* XXX make sure we have a hit on this edge? */
 		break;
 	case 1:	/* within tolerance of endpoint at eu_p->vu_p.
 		   store vertexuse ptr in plane_closest,
@@ -706,7 +767,6 @@ struct edgeuse *eu_p;
 				rt_log("\tplane_pt on vu(dist %g) keeping old dist %g)\n",
 					dist, rd->plane_dist);
 		}
-		/* XXX make sure we have a hit on the vertex? */
 		break;
 	case 2:	/* within tolerance of endpoint at eu_p->eumate_p
 		   store vertexuse ptr (eu->next) in plane_closest,
@@ -724,7 +784,7 @@ struct edgeuse *eu_p;
 				rt_log("\tplane_pt on next(eu_p)->vu(dist %g) keeping old dist %g)\n",
 					dist, rd->plane_dist);
 		}
-		/* XXX make sure we have a hit on the vertex? */
+
 		break;
 	case 3: /* PCA of pt on line is "before" eu_p->vu_p of seg */
 		if (dist < rd->plane_dist) {
@@ -771,6 +831,7 @@ struct edgeuse *eu_p;
 		break;
 	}
 }
+
 
 /*	I S E C T _ R A Y _ L O O P U S E
  *
@@ -832,6 +893,11 @@ struct loopuse *lu_p;
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
 	RT_LIST_INSERT(&rd->rd_miss, &myhit->l); }
 
+/*
+ * Determine whether or not we need to generate a hit on the face, given that
+ * an edgeuse was the closest item to the ray/plane intercept.
+ *
+ */
 static void
 face_closest_is_eu(rd, fu_p, eu)
 struct ray_data *rd;
@@ -919,7 +985,6 @@ struct edgeuse *eu;
 	 *	     /-   -\
 	 *	    /-	   -\
 	 *	e1 /-	    -\	e2
-	 *
 	 */
 
 	if (rd->plane_dist_type == NMG_PCA_EDGE_VERTEX &&
@@ -961,7 +1026,7 @@ struct edgeuse *eu;
 			    	 */
 				if (newvdot < vdot_min) {
 					closest_eu = vu->up.eu_p;
-					vdot_min - newvdot;
+					vdot_min = newvdot;
 				}
 			}
 	    	}
@@ -1109,7 +1174,8 @@ struct faceuse *fu_p;
 	plane_t		norm;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		rt_log("isect_ray_faceuse(0x%08x, face:0x%08x)", rd, fu_p->f_p);
+		rt_log("isect_ray_faceuse(0x%08x, face:0x%08x)\n",
+			rd, fu_p->f_p);
 
 	NMG_CK_FACEUSE(fu_p);
 	NMG_CK_FACEUSE(fu_p->fumate_p);
@@ -1118,16 +1184,22 @@ struct faceuse *fu_p;
 
 	/* if this face already processed, we are done. */
 	if (myhit = NMG_INDEX_GET(rd->hitmiss, fu_p->f_p)) {
-		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_MAGIC)) {
+		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
+		    NMG_RT_HIT_MAGIC)) {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				rt_log(" previously hit\n");
-		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_SUB_MAGIC)) {
+		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
+		    NMG_RT_HIT_SUB_MAGIC)) {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				rt_log(" previously hit sub-element\n");
-		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_MISS_MAGIC)) {
+		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit,
+		    NMG_RT_MISS_MAGIC)) {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				rt_log(" previously missed\n");
 		} else {
+			rt_log("%s %d:\n\tBad magic %ld (0x%08x) for hitmiss struct for faceuse 0x%08x\n",
+				__FILE__, __LINE__,
+				myhit->l.magic, myhit->l.magic, fu_p);
 			nmg_rt_bomb(rd, "Was I hit or not?\n");
 		}
 		return;
@@ -1203,12 +1275,24 @@ struct faceuse *fu_p;
 	}
 
 
-	/* check each loopuse in the faceuse to determine hit/miss and
-	 * find the object which is "closest" to the ray/plane intercept.
-	 */
+	/* determine if the plane point is in or out of the face */
+
+
+	/* intersect the ray with the edges/verticies of the face */
+
+
+
+
+	/* check each loopuse in the faceuse to determine hit/miss. */
 	for ( RT_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd) )
 		isect_ray_loopuse(rd, lu_p);
 
+	/* find the object which is "closest" to the ray/plane intercept. */
+#if 0
+	class = nmg_class_pt_fu_except(rd->plane_pt, fu,
+		(struct loopuse *)NULL,
+		&dist, &type, &magic_p rd->tol);
+#endif
 
 	/* find the sub-element that was closest to the point of intersection.
 	 * If this element was hit, we don't need to generate a hit point on
@@ -1298,6 +1382,7 @@ struct ray_data *rd;
 	struct hitmiss *hm;
 
 
+	rt_g.NMG_debug |= DEBUG_RT_ISECT;
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("isect_ray_nmg: Pnt(%g %g %g) Dir(%g %g %g)\n", 
 			rd->rp->r_pt[0],
