@@ -145,6 +145,7 @@ vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	-
 pyr	Pyramid 9820	OSx Version 4.1	net	-
 li	IBM PC	Linux	net,X11	X11
 bsdi	IBM PC	BSDI	net,X11	X11
+nb86	IBM PC  NetBSD/i386 1.0	net,X11	X11
 5d	SGI 4D	Irix 4.0.5	sgi,net,X11	sgi,X11
 6d	SGI 4D	Irix 5.2	sgi,net,X11	sgi,X11
 7d	SGI 4D/TFP	Irix 6	sgi,net,X11	X11
