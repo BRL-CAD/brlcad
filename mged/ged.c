@@ -159,6 +159,8 @@ char **argv;
 			exit(2);		/* NOT finish() */
 		}
 	}
+	if( dbip->dbi_read_only )
+		(void)printf("%s:  READ ONLY\n", dbip->dbi_filename );
 
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
