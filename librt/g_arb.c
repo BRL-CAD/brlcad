@@ -250,25 +250,14 @@ next_pt:		;
 			stp->st_specific = (int *)arbp;
 		}
 		arbp->arb_nmfaces = pa.pa_faces;
-		{
-			register struct aface	*aip, *aop;
-#			include "noalias.h"
-			aip = &pa.pa_face[pa.pa_faces-1];
-			aop = &arbp->arb_face[pa.pa_faces-1];
-			for( i=pa.pa_faces-1; i>=0; i--, aip--, aop-- )  {
-				*aop = *aip;	/* struct copy */
-			}
-		}
+		bcopy( (char *)pa.pa_face, (char *)arbp->arb_face,
+			pa.pa_faces * sizeof(struct aface) );
 
 		if( uv_wanted )  {
-			register struct oface	*oip, *oop;
 			arbp->arb_opt = (struct oface *)rt_malloc(
 				pa.pa_faces * sizeof(struct oface), "arb_opt");
-#			include "noalias.h"
-			oip = &pa.pa_opt[pa.pa_faces-1];
-			oop = &arbp->arb_opt[pa.pa_faces-1];
-			for( i = pa.pa_faces-1; i>=0; i--, oip--, oop-- )
-				*oop = *oip;	/* struct copy */
+			bcopy( (char *)pa.pa_opt, (char *)arbp->arb_opt,
+				pa.pa_faces * sizeof(struct oface) );
 		} else {
 			arbp->arb_opt = (struct oface *)0;
 		}
