@@ -37,6 +37,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+NMG_EXTERN( struct faceuse *nmg_find_fu_of_eu , (struct edgeuse *eu) );
 
 /*	N M G _ T B L
  *	maintain a table of pointers (to magic numbers/structs)
@@ -1290,23 +1291,6 @@ nmg_close_shell( struct shell *s , struct rt_tol *tol )
 		/* Create an index into the table that orders the edgeuses into a loop */
 		order_tbl( &eu_tbl , &index , NMG_TBL_END( &eu_tbl ) , &loop_size );
 
-		/* Calculate normal for new face, used to insure that we don't
-		 * accidently create a face with the opposite normal */
-		VSET( normal , 0.0 , 0.0 , 0.0 );
-		for( i=0 ; i<loop_size ; i++ )
-		{
-			j = i+1;
-			if( j == loop_size )
-				j = 0;
-
-			eu1 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[i] );
-			eu2 = (struct edgeuse *)NMG_TBL_GET( &eu_tbl , index[j] );
-			VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
-			VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord , eu2->vu_p->v_p->vg_p->coord );
-			VCROSS( tmp_norm , v1 , v2 );
-			VADD2( normal , normal , tmp_norm );
-		}
-
 		/* Create new faces to close the shell */
 		while( loop_size > 3 )
 		{
@@ -1445,7 +1429,9 @@ nmg_close_shell( struct shell *s , struct rt_tol *tol )
 
 				found_face = 1;
 				VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord , eu2->vu_p->v_p->vg_p->coord );
-				if( VDOT( inside , v2 ) < 0.0 )
+				fu = nmg_find_fu_of_eu( eu1 );
+				VCROSS( inside , fu->f_p->fg_p->N , v1 );
+				if( VDOT( inside , v2 ) > 0.0 )
 				{
 					/* this face normal would be in the wrong direction */
 					found_face = 0;
@@ -1593,4 +1579,184 @@ nmg_close_shell( struct shell *s , struct rt_tol *tol )
 		rt_log( "nmg_close_shell(): Simplified shell is empty" );
 		return;
 	}
+}
+
+/*
+ *	N M G _ M E R G E _ S H E L L S
+ *
+ *	Move everything from source shell to destination
+ *	shell, then destroy source shell
+ *
+ */
+void
+nmg_merge_shells( struct shell *dst , struct shell *src )
+{
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct vertexuse *vu;
+
+	NMG_CK_SHELL( src );
+	NMG_CK_SHELL( dst );
+
+	while( RT_LIST_NON_EMPTY( &src->fu_hd ) )
+	{
+		fu = RT_LIST_FIRST( faceuse , &src->fu_hd );
+		NMG_CK_FACEUSE( fu );
+		nmg_mv_fu_between_shells( dst , src , fu );
+	}
+
+	while( RT_LIST_NON_EMPTY( &src->lu_hd ) )
+	{
+		lu = RT_LIST_FIRST( loopuse , &src->lu_hd );
+		NMG_CK_LOOPUSE( lu );
+		nmg_mv_lu_between_shells( dst , src , lu );
+	}
+
+	while( RT_LIST_NON_EMPTY( &src->eu_hd ) )
+	{
+		eu = RT_LIST_FIRST( edgeuse , &src->eu_hd );
+		NMG_CK_EDGEUSE( eu );
+		nmg_mv_eu_between_shells( dst , src , eu );
+	}
+
+	if( src->vu_p )
+	{
+		NMG_CK_VERTEXUSE( src->vu_p );
+		nmg_mv_vu_between_shells( dst , src , src->vu_p );
+	}
+
+	nmg_ks( src );
+}
+
+/*
+ *	N M G _ D U P _ S H E L L
+ *
+ *	Duplicate a shell and return the new copy. New shell is
+ *	in the same region.
+ *
+ *  The vertex geometry is copied from the source faces into topologically
+ *  distinct (new) vertex and vertex_g structs.
+ *  They will start out being geometricly coincident, but it is anticipated
+ *  that the caller will modify the geometry, e.g. as in an extrude operation.
+ */
+struct shell *
+nmg_dup_shell( struct shell *s )
+{
+	struct model *m;
+	struct shell *new_s;
+	struct faceuse *fu;
+	struct loopuse *lu,*new_lu;
+	struct edgeuse *eu;
+	struct faceuse *new_fu;
+	long ** trans_tbl;
+	struct nmg_ptbl faces;
+
+	NMG_CK_SHELL( s );
+
+	m = nmg_find_model( (long *)s );
+
+	/* create translation table double size to accomodate both copies */
+	trans_tbl = (long **)rt_calloc(m->maxindex*2, sizeof(long *),
+		"nmg_dup_shell trans_tbl" );
+
+	nmg_tbl( &faces , TBL_INIT , NULL );
+
+	new_s = nmg_msv( s->r_p );
+
+	/* copy face uses */
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_SAME )
+		{
+			new_fu = (struct faceuse *)NULL;
+			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			{
+				NMG_CK_LOOPUSE( lu );
+				if( new_fu )
+					new_lu = nmg_dup_loop( lu , &new_fu->l.magic , trans_tbl );
+				else
+				{
+					new_lu = nmg_dup_loop( lu , &new_s->l.magic , trans_tbl );
+					new_fu = nmg_mf( new_lu );
+				}
+			}
+			if (fu->f_p->fg_p)
+				nmg_face_g(new_fu, fu->f_p->fg_p->N);
+			new_fu->orientation = fu->orientation;
+			new_fu->fumate_p->orientation = fu->fumate_p->orientation;
+			nmg_tbl( &faces , TBL_INS , (long *)new_fu );
+		}
+	}
+
+	/* glue new faces */
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_tbl( &faces , TBL_FREE , NULL );
+
+	/* copy wire loops */
+	for( RT_LIST_FOR( lu , loopuse , &s->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu );
+		new_lu = nmg_dup_loop( lu , &new_s->l.magic , trans_tbl );
+	}
+
+	/* copy wire edges */
+	for( RT_LIST_FOR( eu , edgeuse , &s->eu_hd ) )
+	{
+		struct vertex *old_v1,*old_v2,*new_v1,*new_v2;
+		struct edgeuse *new_eu;
+
+		NMG_CK_EDGEUSE( eu );
+		NMG_CK_VERTEXUSE( eu->vu_p );
+		NMG_CK_VERTEX( eu->vu_p->v_p );
+		NMG_CK_EDGEUSE( eu->eumate_p );
+		NMG_CK_VERTEXUSE( eu->eumate_p->vu_p );
+		NMG_CK_VERTEX( eu->eumate_p->vu_p->v_p );
+
+		old_v1 = eu->vu_p->v_p;
+		new_v1 = NMG_INDEX_GETP(vertex, trans_tbl, old_v1);
+		old_v2 = eu->eumate_p->vu_p->v_p;
+		new_v2 = NMG_INDEX_GETP(vertex, trans_tbl, old_v2);
+
+		/* make the wire edge */
+		new_eu = nmg_me( new_v1 , new_v2 , new_s );
+
+		new_v1 = new_eu->vu_p->v_p;
+		NMG_INDEX_ASSIGN( trans_tbl , old_v1 , (long *)new_v1 );
+
+		new_v2 = new_eu->eumate_p->vu_p->v_p;
+		NMG_INDEX_ASSIGN( trans_tbl , old_v2 , (long *)new_v2 );
+
+	}
+
+#if 0
+	/* XXX for this to work nmg_mvu and nmg_mvvu must not be private
+	 *     perhaps there is another way???? */
+	/* copy vertex use
+	 * This must be done last, since other routines may steal it */
+	if( s->vu_p )
+	{
+		old_vu = s->vu_p;
+		NMG_CK_VERTEXUSE( old_vu );
+		old_v = old_vu->v_p;
+		NMG_CK_VERTEX( old_v );
+		new_v = NMG_INDEX_GETP(vertex, trans_tbl, old_v);
+		if( new_v )
+		{
+			/* already copied vertex, just need a use */
+			if( new_s->vu_p )
+				(void )nmg_kvu( new_s->vu_p );
+			new_s->vu_p = nmg_mvu( new_v , (long *)new_s , m );
+		}
+		else
+			new_s->vu_p = nmg_mvvu( (long *)new_s , m );
+	}
+#endif
+	
+
+	/* free some memory */
+	rt_free( (char *)trans_tbl , "nmg_dup_shell: trans_tbl" );
+
+	return( new_s );
 }
