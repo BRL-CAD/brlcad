@@ -602,6 +602,51 @@ CONST struct bu_vls	*vp;
 }
 
 /*
+ *			B U _ V L S _ R E A D
+ *
+ *  Read the remainder of a UNIX file onto the end of a vls.
+ *
+ *  Returns -
+ *	nread	number of characters read
+ *	0	if EOF encountered immediately
+ *	-1	read error
+ */
+int
+bu_vls_read( vp, fd )
+struct bu_vls	*vp;
+int		fd;
+{
+	int	ret = 0;
+	int	todo;
+	int	got;
+
+	BU_CK_VLS(vp);
+
+#if !unix
+	bu_bomb("bu_vls_read(): This isn't UNIX\n");
+#else
+	for(;;)  {
+		bu_vls_extend( vp, 4096 );
+		todo = vp->vls_max - vp->vls_len - vp->vls_offset - 1;
+
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		got = read(fd, vp->vls_str+vp->vls_offset+vp->vls_len, todo );
+		bu_semaphore_release(BU_SEM_SYSCALL);
+
+		if( got < 0 )  {
+			/* Read error, abandon the read */
+			return -1;
+		}
+		if(got == 0)  break;
+		vp->vls_len += got;
+		ret += got;
+	}
+	vp->vls_str[vp->vls_len+vp->vls_offset] = '\0';	/* force null termination */
+#endif
+	return ret;
+}
+
+/*
  *			B U _ V L S _ G E T S
  *
  *  Append a newline-terminated string from the file pointed to by "fp"
