@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle-fb.c	1.7
-	Last edit: 	5/29/85 at 13:10:31
-	Retrieved: 	8/13/86 at 03:17:22
+	SCCS id:	@(#) rle-fb.c	1.8
+	Last edit: 	8/7/85 at 14:23:55
+	Retrieved: 	8/13/86 at 03:17:29
 	SCCS archive:	/m/cad/fb_utils/RCS/s.rle-fb.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) rle-fb.c	1.7	last edit 5/29/85 at 13:10:31";
+char	sccsTag[] = "@(#) rle-fb.c	1.8	last edit 8/7/85 at 14:23:55";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -29,7 +29,7 @@ char	sccsTag[] = "@(#) rle-fb.c	1.7	last edit 5/29/85 at 13:10:31";
 typedef unsigned char	u_char;
 static char	*usage[] = {
 "",
-"rle-fb (1.7)",
+"rle-fb (1.8)",
 "",
 "Usage: rle-fb [-Odv][-b (rgbBG)][-p X Y][file.rle]",
 "",
@@ -91,7 +91,7 @@ char	*argv[];
 	dma_pixels = DMA_PIXELS;
 	dma_scans = DMA_SCANS;
 	scan_bytes = _fbsize * sizeof(Pixel);
-	if( fbopen( NULL, APPEND ) == -1 )
+	if( fbopen( NULL, CREATE ) == -1 )
 		return	1;
 
 	if( rle_verbose )
