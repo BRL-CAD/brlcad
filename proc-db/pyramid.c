@@ -25,11 +25,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "db.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
+#include "wdb.h"
 
 void	do_leaf(), do_pleaf(), pnorms(), do_tree();
-void	rt_log();
 
 double sin60;
 
@@ -178,19 +179,19 @@ int	level;
 
 	mat_idn( m );
 	sprintf(nm, "%sL", name);
-	mk_memb( stdout, leafp, m, UNION );
+	mk_memb( stdout, leafp, m, WMOP_UNION );
 
 	MAT_DELTAS( m, 1*scale, 0, 0 );
 	sprintf(nm, "%sR", name);
-	mk_memb( stdout, leafp, m, UNION );
+	mk_memb( stdout, leafp, m, WMOP_UNION );
 
 	MAT_DELTAS( m, 0.5*scale, sin60*scale, 0 );
 	sprintf(nm, "%sB", name);
-	mk_memb( stdout, leafp, m, UNION );
+	mk_memb( stdout, leafp, m, WMOP_UNION );
 
 	MAT_DELTAS( m, 0.5*scale, sin60/3*scale, sin60*scale );
 	sprintf(nm, "%sT", name);
-	mk_memb( stdout, leafp, m, UNION );
+	mk_memb( stdout, leafp, m, WMOP_UNION );
 
 	/* Loop for children if level > 1 */
 	if( level <= 1 )
