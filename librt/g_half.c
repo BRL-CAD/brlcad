@@ -48,6 +48,10 @@ static char RCShalf[] = "@(#)$Header$ (BRL)";
 extern double   modf();
 #endif
 
+struct half_internal  {
+	plane_t	eqn;
+};
+
 struct half_specific  {
 	plane_t	half_eqn;		/* Plane equation, outward normal */
 	vect_t	half_Xbase;		/* "X" basis direction */
@@ -58,13 +62,39 @@ struct half_specific  {
 /*
  *  			R T _ H L F _ P R E P
  */
+#if NEW_IF
+int
+rt_hlf_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+#else
 int
 rt_hlf_prep( stp, rec, rtip )
 struct soltab	*stp;
 union record	*rec;
 struct rt_i	*rtip;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct half_internal	*hip;
 	register struct half_specific *halfp;
+
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+	ip = &intern;
+	if( rt_hlf_import( ip, ep, stp->st_pathmat ) < 0 )
+		return(-1);		/* BAD */
+	RT_CK_DB_INTERNAL( ip );
+#endif
+	hip = (struct half_internal *)ip->idb_ptr;
 
 	/*
 	 * Process a HALFSPACE, which is represented as a 
@@ -73,12 +103,10 @@ struct rt_i	*rtip;
 	GETSTRUCT( halfp, half_specific );
 	stp->st_specific = (genptr_t)halfp;
 
-	if( rt_hlf_import( halfp->half_eqn, rec, stp->st_pathmat ) < 0 )  {
-		rt_log("rt_hlf_prep(%s): db import failure\n", stp->st_name);
-		rt_free( (char *)halfp, "half_specific" );
-		return(1);	/* BAD */
-	}
+	VMOVE( halfp->half_eqn, hip->eqn );
+	halfp->half_eqn[3] = hip->eqn[3];
 
+	/* Select one point on the halfspace as the "center" */
 	VSCALE( stp->st_center, halfp->half_eqn, halfp->half_eqn[3] );
 
 	/* X and Y basis for uv map */
@@ -392,6 +420,17 @@ rt_hlf_class()
  *  We just make a cross in the plane, with the outward normal
  *  drawn shorter.
  */
+#if NEW_IF
+int
+rt_hlf_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_hlf_plot( rp, mat, vhead, dp )
 union record	*rp;
@@ -399,24 +438,38 @@ mat_t		mat;
 struct vlhead	*vhead;
 struct directory *dp;
 {
-	plane_t	eqn;
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct half_internal	*hip;
 	vect_t cent;		/* some point on the plane */
 	vect_t xbase, ybase;	/* perpendiculars to normal */
 	vect_t x1, x2;
 	vect_t y1, y2;
 	vect_t tip;
 
-	if( rt_hlf_import( eqn, rp, mat ) < 0 )  {
-		rt_log("rt_hlf_plot(%s): db import failure\n", dp->d_namep);
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	if( rt_hlf_import( &intern, ep, mat ) < 0 )  {
+		rt_log("rt_hlf_plot(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	hip = (struct half_internal *)ip->idb_ptr;
 
 	/* Invent a "center" point on the plane -- point closets to origin */
-	VSCALE( cent, eqn, eqn[3] );
+	VSCALE( cent, hip->eqn, hip->eqn[3] );
 
 	/* The use of "x" and "y" here is not related to the axis */
 	vec_perp( xbase, cent );
-	VCROSS( ybase, xbase, eqn );
+	VCROSS( ybase, xbase, hip->eqn );
 
 	/* Arrange for the cross to be 2 meters across */
 	VUNITIZE( xbase );
@@ -438,7 +491,7 @@ struct directory *dp;
 	ADD_VL( vhead, x1, 1 );
 	ADD_VL( vhead, y2, 1 );
 
-	VSCALE( tip, eqn, 500 );
+	VSCALE( tip, hip->eqn, 500 );
 	VADD2( tip, cent, tip );
 	ADD_VL( vhead, cent, 0 );
 	ADD_VL( vhead, tip, 1 );
@@ -453,20 +506,29 @@ struct directory *dp;
  *	 0	success
  */
 int
-rt_hlf_import( eqn, rp, mat )
-plane_t		eqn;
-union record	*rp;
-mat_t		mat;
+rt_hlf_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+mat_t			mat;
 {
+	struct half_internal	*hip;
+	union record	*rp;
 	point_t		orig_pt;
 	point_t		pt;
 	fastf_t		orig_eqn[3*2];
 	register double	f,t;
 
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_SOLID )  {
 		rt_log("rt_hlf_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_HALF;
+	ip->idb_ptr = rt_malloc( sizeof(struct half_internal), "half_internal");
+	hip = (struct half_internal *)ip->idb_ptr;
 
 	rt_fastf_float( orig_eqn, rp->s.s_values, 2 );	/* 2 floats too many */
 
@@ -474,17 +536,17 @@ mat_t		mat;
 	VSCALE( orig_pt, orig_eqn, orig_eqn[1*ELEMENTS_PER_VECT] );
 
 	/* Transform the point, and the normal */
-	MAT4X3VEC( eqn, mat, orig_eqn );
+	MAT4X3VEC( hip->eqn, mat, orig_eqn );
 	MAT4X3PNT( pt, mat, orig_pt );
 
 	/*
 	 *  The transformed normal is all that is required.
 	 *  The new distance is found from the transformed point on the plane.
 	 */
-	eqn[3] = VDOT( pt, eqn );
+	hip->eqn[3] = VDOT( pt, hip->eqn );
 
 	/* Verify that normal has unit length */
-	f = MAGNITUDE( eqn );
+	f = MAGNITUDE( hip->eqn );
 	if( f < SMALL )  {
 		rt_log("rt_hlf_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
@@ -493,10 +555,59 @@ mat_t		mat;
 	if( !NEAR_ZERO( t, 0.001 ) )  {
 		/* Restore normal to unit length */
 		f = 1/f;
-		VSCALE( eqn, eqn, f );
-		eqn[3] *= f;
+		VSCALE( hip->eqn, hip->eqn, f );
+		hip->eqn[3] *= f;
 	}
 	return(0);			/* OK */
+}
+
+/*
+ *			R T _ H L F _ E X P O R T
+ */
+int
+rt_hlf_export( ep, ip )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+{
+	return(-1);
+}
+
+/*
+ *			R T _ H L F _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_hlf_describe( str, ip, verbose )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+{
+	register struct half_internal	*hip =
+		(struct half_internal *)ip->idb_ptr;
+	char	buf[256];
+
+	rt_vls_strcat( str, "halfspace\n");
+
+	sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
+		V3ARGS(hip->eqn), hip->eqn[3] );
+	rt_vls_strcat( str, buf );
+
+	return(0);
+}
+
+/*
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ *  XXX The suffix of this name is temporary.
+ */
+void
+rt_hlf_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	RT_CK_DB_INTERNAL(ip);
+	rt_free( ip->idb_ptr, "hlf ifree" );
 }
 
 /*
