@@ -30,9 +30,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+#include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include <signal.h>
-#include <stdio.h>
 #include <sys/time.h>		/* For struct timeval */
 
 #include "tcl.h"
@@ -893,7 +898,7 @@ char	**argv;
 			break;
 		}
 		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-			if( sp->s_path[sp->s_last] != dp )  continue;
+			if( sp->s_path[(int)(sp->s_last)] != dp )  continue;
 			if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
 			vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 			VMOVE( sav_start, vp->pt[vp->nused-1] );
@@ -1075,32 +1080,32 @@ extern int	cm_set();
 extern int	cm_orientation();
 
 static struct command_tab cmdtab[] = {
-	"start", "frame number", "start a new frame",
-		cm_start,	2, 2,
-	"viewsize", "size in mm", "set view size",
-		cm_vsize,	2, 2,
-	"eye_pt", "xyz of eye", "set eye point",
-		cm_eyept,	4, 4,
-	"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
-		cm_lookat_pt,	4, 5,
-	"orientation", "quaturnion", "set view direction from quaturnion",
-		cm_orientation,	5, 5,
-	"viewrot", "4x4 matrix", "set view direction from matrix",
-		cm_vrot,	17,17,
-	"end", 	"", "end of frame setup, begin raytrace",
-		cm_end,		1, 1,
-	"multiview", "", "produce stock set of views",
-		cm_multiview,	1, 1,
-	"anim", 	"path type args", "specify articulation animation",
-		cm_anim,	4, 999,
-	"tree", 	"treetop(s)", "specify alternate list of tree tops",
-		cm_tree,	1, 999,
-	"clean", "", "clean articulation from previous frame",
-		cm_clean,	1, 1,
-	"set", 	"", "show or set parameters",
-		cm_set,		1, 999,
-	(char *)0, (char *)0, (char *)0,
-		0,		0, 0	/* END */
+	{"start", "frame number", "start a new frame",
+		cm_start,	2, 2},
+	{"viewsize", "size in mm", "set view size",
+		cm_vsize,	2, 2},
+	{"eye_pt", "xyz of eye", "set eye point",
+		cm_eyept,	4, 4},
+	{"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
+		cm_lookat_pt,	4, 5},
+	{"orientation", "quaturnion", "set view direction from quaturnion",
+		cm_orientation,	5, 5},
+	{"viewrot", "4x4 matrix", "set view direction from matrix",
+		cm_vrot,	17,17},
+	{"end", 	"", "end of frame setup, begin raytrace",
+		cm_end,		1, 1},
+	{"multiview", "", "produce stock set of views",
+		cm_multiview,	1, 1},
+	{"anim", 	"path type args", "specify articulation animation",
+		cm_anim,	4, 999},
+	{"tree", 	"treetop(s)", "specify alternate list of tree tops",
+		cm_tree,	1, 999},
+	{"clean", "", "clean articulation from previous frame",
+		cm_clean,	1, 1},
+	{"set", 	"", "show or set parameters",
+		cm_set,		1, 999},
+	{(char *)0, (char *)0, (char *)0,
+		0,		0, 0}	/* END */
 };
 
 /*
