@@ -1381,8 +1381,8 @@ continue;
 				no_faceplate = !no_faceplate;
 				rt_vls_strcat( &dm_values.dv_string,
 				    no_faceplate ?
-				    "set faceplate=0\n" :
-				    "set faceplate=1\n" );
+				    "set faceplate 0\n" :
+				    "set faceplate 1\n" );
 				Ir_configure_window_shape();
 				dmaflag = 1;
 				continue;
@@ -2432,7 +2432,7 @@ char	**argv;
 	/* For now, only "set" command is implemented */
 	if( strcmp( argv[0], "set" ) != 0 )  {
 		rt_log("dm: command is not 'set'\n");
-		return -1;
+		return CMD_BAD;
 	}
 
 	rt_vls_init(&vls);
@@ -2440,10 +2440,17 @@ char	**argv;
 		/* Bare set command, print out current settings */
 		rt_structprint("dm_4d internal variables", Ir_vparse, (char *)0 );
 		rt_log("%s", rt_vls_addr(&vls) );
-	} else {
-		rt_vls_from_argv( &vls, argc-1, argv+1 );
+	} else if( argc == 2 ) {
+	        rt_vls_name_print( &vls, Ir_vparse, argv[1], (char *)0 );
+		rt_log( "%s\n", rt_vls_addr(&vls) );
+  	} else {
+	        rt_vls_printf( &vls, "%s=\"", argv[1] );
+	        rt_vls_from_argv( &vls, argc-2, argv+2 );
+		rt_vls_putc( &vls, '\"' );
 		rt_structparse( &vls, Ir_vparse, (char *)0 );
 	}
 	rt_vls_free(&vls);
-	return 0;
+	return CMD_OK;
 }
+
+
