@@ -37,28 +37,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
 #include "rtgeom.h"
-#include "externs.h"
 
 #include "./ged.h"
 #include "./solid.h"
 #include "./sedit.h"
 #include "./dm.h"
 #include "./menu.h"
-
-/* From librt/nmg_info.c */
-RT_EXTERN( struct edge *nmg_find_e_nearest_pt2, (long *magic_p,
-			CONST point_t pt2, CONST mat_t mat,
-			CONST struct rt_tol *tol) );
-
-/* XXX Move to rtgeom.h? */
-#define RT_NURB_GET_CONTROL_POINT(_s,_u,_v)	((_s)->ctl_points[ \
-	((_v)*(_s)->s_size[1]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
 
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
