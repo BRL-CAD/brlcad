@@ -191,8 +191,10 @@ genptr_t	*dpp;
 	}
 	RT_LIST_INSERT( &(LightHead.l), &(lp->l) );
 
-	if( lp->lt_invisible )
-		return(0);	/* don't show it */
+	if( lp->lt_invisible )  {
+		lp->lt_rp = REGION_NULL;
+		return(0);	/* don't show light, destroy it */
+	}
 
 	return(1);
 }
@@ -502,7 +504,9 @@ struct partition *PartHeadp;
  *
  *  Called from view_end().
  *  Take care of releasing storage for any lights which will not
- *  be cleaned up by mlib_free(), i.e., implicitly created lights.
+ *  be cleaned up by mlib_free():
+ *	implicitly created lights, because they have no associated region, and
+ *	invisible lights, because their region was destroyed.
  */
 void
 light_cleanup()
@@ -510,7 +514,7 @@ light_cleanup()
 	register struct light_specific *lp, *zaplp;
 
 	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
-		if( lp->lt_rp != REGION_NULL )  {
+		if( lp->lt_rp != REGION_NULL && lp->lt_invisible == 0 )  {
 			/* Will be cleaned up by mlib_free() */
 			continue;
 		}
