@@ -85,6 +85,9 @@ class Sketch_editor {
 		if { [catch units units] } {
 			set units ""
 		}
+	        if { [string index $units end] == "\n" } {
+		    set units [string range $units 0 "end-1"]
+		}
 		if { [catch {status base2local} tolocal] } {
 			set tolocal 1.0
 			set tobase 1.0
