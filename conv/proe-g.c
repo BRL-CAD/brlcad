@@ -32,7 +32,7 @@ static char RCSid[] = "$Header$";
 
 #include <stdio.h>
 #include <math.h>
-#include <libgen.h>
+#include <libgen.h>		/* this is sgi-specific, or maybe ANSI-specific */
 #ifdef USE_STRING_H
 #include <string.h>
 #else
