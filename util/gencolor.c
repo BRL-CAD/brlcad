@@ -91,9 +91,10 @@ int argc; char **argv;
 		while( 1 )  {
 			if( write( 1, (char *)buf, bytes_in_buf ) != bytes_in_buf )  {
 				perror("write");
-				exit(1);
+				break;
 			}
 		}
+		exit(1);
 	}
 
 	while( count > 0 ) {
