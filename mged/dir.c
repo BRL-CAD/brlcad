@@ -1561,6 +1561,7 @@ f_mvall()
 		}
 	}
 
+	(void)fclose(fp);
 }
 
 /*	F _ K I L L A L L
@@ -1575,6 +1576,7 @@ f_killall()
 {
 	register FILE *fp;
 	char combname[NAMESIZE];
+	int len;
 
 	/* no interupts */
 	(void)signal( SIGINT, SIG_IGN );
@@ -1588,24 +1590,26 @@ f_killall()
 	while( fread( (char*)&record, sizeof(record), 1, fp ) == 1 &&
 	     ! feof(fp) )  {
 		if( record.u_id == ID_COMB ) {
-			if(record.c.c_length == 0)
+			if( (len = record.c.c_length) == 0)
 				continue;
 			/* save the combination name */
 			strcpy(combname, record.c.c_name);
-			fread( (char *)&record, sizeof(record), 1, fp );
-			if( record.u_id == ID_MEMB ) {
-				register int i;
-				for(i=1; i<numargs; i++) {
-					if(strcmp(cmd_args[i], record.M.m_instname) == 0) {
-						/* match ... must remove at least one member */
-						rm_membs( combname );
-						break;
+			while( len-- ) {	/* each member */
+				fread( (char *)&record, sizeof(record), 1, fp );
+				if( record.u_id == ID_MEMB ) {
+					register int i;
+					for(i=1; i<numargs; i++) {
+						if(strcmp(cmd_args[i], record.M.m_instname) == 0) {
+							/* match ... must remove at least one member */
+							rm_membs( combname );
+							break;
+						}
 					}
 				}
 			}
 		}
 	}
-	fclose(fp);
+	(void)fclose(fp);
 	/* ALL references removed...now KILL the object[s] */
 	/* reuse cmd_args[] */
 	f_kill();
@@ -1658,3 +1662,74 @@ top:
 		db_putrec(dp, &record, 0);
 	}
 }
+
+
+
+
+/*		F _ K I L L T R E E ( )
+ *
+ *	Kill ALL paths belonging to an object
+ *
+ */
+void
+f_killtree()
+{
+	register struct directory *dp;
+	register int i;
+
+	/* no interupts */
+	(void)signal( SIGINT, SIG_IGN );
+	
+	for(i=1; i<numargs; i++) {
+		if( (dp = lookup(cmd_args[i], LOOKUP_NOISY) ) == DIR_NULL )
+			continue;
+		killtree( dp );
+	}
+}
+
+
+
+
+killtree( dp )
+register struct directory *dp;
+{
+
+	struct directory *nextdp;
+	int nparts, i;
+
+	db_getrec(dp, (char *)&record, 0);
+
+	if( record.u_id == ID_COMB ) {
+		nparts = record.c.c_length;
+
+		for(i=1; i<=nparts; i++) {
+			/* get ith member */
+			db_getrec(dp, (char *)&record, i);
+
+			if( (nextdp = lookup(record.M.m_instname, LOOKUP_QUIET)) == DIR_NULL )
+				continue;
+			killtree( nextdp );
+		}
+		/* finished killing all members....kill this comb */
+		(void)printf("KILL COMB :  %s\n",dp->d_namep);
+		eraseobj( dp );
+		db_delete( dp);
+		dir_delete( dp );
+		return;
+	}
+
+	/* NOT a comb, if solid, ars, spline, or polygon -> kill */
+	if( record.u_id == ID_SOLID ||
+		record.u_id == ID_ARS_A ||
+		record.u_id == ID_P_HEAD ||
+		record.u_id == ID_BSOLID ) {
+
+		(void)printf("KILL SOLID:  %s\n",dp->d_namep);
+		eraseobj( dp );
+		db_delete( dp );
+		dir_delete( dp );
+	}
+}
+
+
+
