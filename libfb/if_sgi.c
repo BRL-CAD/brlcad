@@ -129,7 +129,7 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-#define if_pixsize	if_pref
+#define if_pixsize	u1.l
 	ifp->if_pixsize = 1;	/* for zoom fakeout */
 	return(0);
 }
