@@ -293,6 +293,9 @@ pix-ps: pix-ps.o
 pix-ppm: pix-ppm.o
 	CC LDFLAGS -o pix-ppm pix-ppm.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
+pcd-pix: pcd-pix.o
+	CC LDFLAGS -o pcd-pix pcd-pix.o LIBES
+
 plstat: plstat.o
 	CC LDFLAGS -o plstat plstat.o LIB_PRE''LIBPLOT LIBES
 
