@@ -164,6 +164,7 @@ char		*tcp_port = NULL;		/* TCP port on control_host */
 
 int	debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
+int	debugimage = 0;
 int	test_fb_speed = 0;
 char	*framebuffer_name = NULL;
 
@@ -395,6 +396,7 @@ bu_log("after Tcl_Init\n");
 	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
 	Tcl_LinkVar(interp, "test_fb_speed", (char *)&test_fb_speed, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "debugimage", (char *)&debugimage, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "fullfloat_mode", (char *)&fullfloat_mode, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "reproject_mode", (char *)&reproject_mode, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "curframe", (char *)&curframe, TCL_LINK_INT);
@@ -925,38 +927,40 @@ fp->ff_dist, V3ARGS(fp->ff_hitpt) );
 			npix = fb_writerect( fbp, 0, start_line,
 				width, nlines, bigbuf );
 			if( npix < 0 )  rt_bomb("rtnode: fb_writerect() error\n");
-/* Pure debugging -- form image to the right in fb */
-{
-			op = bigbuf;
-			fp = &curr_float_frame[start_line*width];
-			for( ; npix > 0; fp++,npix-- )  {
-				register int val;
-				if( fp->ff_dist <= -INFINITY )  {
-					/* Red = missed */
-					*op++ = 200;
-					*op++ = 0;
-					*op++ = 0;
-				} else if( fp->ff_frame < 0 )  {
-					/* Dull red = not valid */
-					*op++ = 0;
-					*op++ = 100;
-					*op++ = 0;
-				} else if( fp->ff_frame != curframe )  {
-					/* Green = reprojected */
-					*op++ = 0;
-					*op++ = 200;
-					*op++ = 0;
-				} else {
-					/* Blue = freshly computed */
-					*op++ = 0;
-					*op++ = 0;
-					*op++ = 200;
+
+			/* For debugging -- form image to the right in fb */
+			if(debugimage) {
+				op = bigbuf;
+				fp = &curr_float_frame[start_line*width];
+				for( ; npix > 0; fp++,npix-- )  {
+					register int val;
+					if( fp->ff_dist <= -INFINITY )  {
+						/* Red = missed */
+						*op++ = 200;
+						*op++ = 0;
+						*op++ = 0;
+					} else if( fp->ff_frame < 0 )  {
+						/* Dull red = not valid */
+						*op++ = 0;
+						*op++ = 100;
+						*op++ = 0;
+					} else if( fp->ff_frame != curframe )  {
+						/* Green = reprojected */
+						*op++ = 0;
+						*op++ = 200;
+						*op++ = 0;
+					} else {
+						/* Blue = freshly computed */
+						*op++ = 0;
+						*op++ = 0;
+						*op++ = 200;
+					}
 				}
+				npix = fb_writerect( fbp, width, start_line,
+					width, nlines, bigbuf );
+				if( npix < 0 )  rt_bomb("rtnode: fb_writerect() error\n");
 			}
-			npix = fb_writerect( fbp, width, start_line,
-				width, nlines, bigbuf );
-			if( npix < 0 )  rt_bomb("rtnode: fb_writerect() error\n");
-}
+
 			bu_free( (char *)bigbuf, "bigbuf[] full image buffer");
 		}
 		view_end(&ap);
