@@ -178,7 +178,7 @@ struct mem_map **pp;
 unsigned size;
 unsigned long addr;
 {
-	register int type = {0};
+	register int type = 0;
 	register struct mem_map *prevp = MAP_NULL;
 	register struct mem_map *curp;
 	long il;
