@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -982,7 +983,7 @@ STATIC void prnt_Usage()
 
 STATIC void log_Run()
 {
-    long                clock;
+    time_t              clock;
     mat_t		model2hv;		/* model to h,v matrix */
     mat_t		hv2model;		/* h,v tp model matrix */
     quat_t		orient;			/* orientation */
@@ -995,7 +996,7 @@ STATIC void log_Run()
     (void) time(&clock);
 
     (void) printf("# Log information produced by cell-fb %s\n",
-	ctime((CONST long *)&clock) );
+	ctime(&clock) );
     (void) printf("az_el: %f %f\n", az, el);
     (void) printf("view_extrema: %f %f %f %f\n",
 	SCRX2H(0), SCRX2H(fb_width), SCRY2V(0), SCRY2V(fb_height));
