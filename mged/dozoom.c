@@ -474,6 +474,7 @@ mat_print("pmat", pmat);
     draw_axes(E_AXES); /* draw edit axis */
 }
 
+#define DO_NEW_E_AXES
 /*
  * Draw view, edit or world axes.
  */
@@ -489,6 +490,9 @@ int axes;
   double ox, oy;
   point_t a1, a2;
   point_t m1, m2;
+#ifdef DO_NEW_E_AXES
+  point_t m3, m4;
+#endif
   point_t   v1, v2;
   mat_t mr_mat;   /* model rotations */
   static char *labels[] = {"X", "Y", "Z"};
@@ -525,7 +529,10 @@ int axes;
     }
   }
 
-  vlist.nused = 6;
+  if(axes == E_AXES)
+    vlist.nused = 12;
+  else
+    vlist.nused = 6;
 
   /* set the vertex label color */
   dmp->dm_setColor(dmp, DM_YELLOW, 1);
@@ -535,18 +542,13 @@ int axes;
 
     for(j = 0; j < 3; ++j){
       if(i == j){
-#if 0
-	if(axes == V_AXES && mged_variables.v_axes > 1){
+	if(axes == V_AXES){
 	  a1[j] = -0.125;
 	  a2[j] = 0.125;
 	}else{
 	  a1[j] = -0.25;
 	  a2[j] = 0.25;
 	}
-#else
-	a1[j] = -0.125;
-	a2[j] = 0.125;
-#endif
       }else{
 	a1[j] = 0.0;
 	a2[j] = 0.0;
@@ -605,35 +607,68 @@ int axes;
       if(state == ST_S_EDIT || state == ST_O_EDIT){
 	/* build edit axes in model coordinates */
 
-	  /* apply rotations */
-	  MAT4X3PNT(m1, acc_rot_sol, a1);
-	  MAT4X3PNT(m2, acc_rot_sol, a2);
-#if 1
-	  /* apply scale and translations */
-	  m1[X] = Viewscale*m1[X] + e_axes_pos[X];
-	  m1[Y] = Viewscale*m1[Y] + e_axes_pos[Y];
-	  m1[Z] = Viewscale*m1[Z] + e_axes_pos[Z];
-	  m2[X] = Viewscale*m2[X] + e_axes_pos[X];
-	  m2[Y] = Viewscale*m2[Y] + e_axes_pos[Y];
-	  m2[Z] = Viewscale*m2[Z] + e_axes_pos[Z];
+#ifdef DO_NEW_E_AXES
+	m3[X] = Viewscale*a1[X] + e_axes_pos[X];
+	m3[Y] = Viewscale*a1[Y] + e_axes_pos[Y];
+	m3[Z] = Viewscale*a1[Z] + e_axes_pos[Z];
+	m4[X] = Viewscale*a2[X] + e_axes_pos[X];
+	m4[Y] = Viewscale*a2[Y] + e_axes_pos[Y];
+	m4[Z] = Viewscale*a2[Z] + e_axes_pos[Z];
+#endif
+	/* apply rotations */
+	MAT4X3PNT(m1, acc_rot_sol, a1);
+	MAT4X3PNT(m2, acc_rot_sol, a2);
+#ifndef DO_NEW_E_AXES
+	/* apply scale and translations */
+	m1[X] = Viewscale*m1[X] + e_axes_pos[X];
+	m1[Y] = Viewscale*m1[Y] + e_axes_pos[Y];
+	m1[Z] = Viewscale*m1[Z] + e_axes_pos[Z];
+	m2[X] = Viewscale*m2[X] + e_axes_pos[X];
+	m2[Y] = Viewscale*m2[Y] + e_axes_pos[Y];
+	m2[Z] = Viewscale*m2[Z] + e_axes_pos[Z];
 #else
-	  m1[X] = Viewscale*m1[X] + es_keypoint[X];
-	  m1[Y] = Viewscale*m1[Y] + es_keypoint[Y];
-	  m1[Z] = Viewscale*m1[Z] + es_keypoint[Z];
-	  m2[X] = Viewscale*m2[X] + es_keypoint[X];
-	  m2[Y] = Viewscale*m2[Y] + es_keypoint[Y];
-	  m2[Z] = Viewscale*m2[Z] + es_keypoint[Z];
+	m1[X] = Viewscale*m1[X] + es_keypoint[X];
+	m1[Y] = Viewscale*m1[Y] + es_keypoint[Y];
+	m1[Z] = Viewscale*m1[Z] + es_keypoint[Z];
+	m2[X] = Viewscale*m2[X] + es_keypoint[X];
+	m2[Y] = Viewscale*m2[Y] + es_keypoint[Y];
+	m2[Z] = Viewscale*m2[Z] + es_keypoint[Z];
 #endif
       }else
 	return;
     }
 
     /* load axes */
+#ifdef DO_NEW_E_AXES
+    if(axes == E_AXES){
+      VMOVE(vlist.pt[i*4], m1);
+      vlist.cmd[i*4] = RT_VLIST_LINE_MOVE;
+      VMOVE(vlist.pt[i*4 + 1], m2);
+      vlist.cmd[i*4 + 1] = RT_VLIST_LINE_DRAW;
+
+      VMOVE(vlist.pt[i*4 + 2], m3);
+      vlist.cmd[i*4 + 2] = RT_VLIST_LINE_MOVE;
+      VMOVE(vlist.pt[i*4 + 3], m4);
+      vlist.cmd[i*4 + 3] = RT_VLIST_LINE_DRAW;
+
+      /* convert point m4 from model to view space */
+      MAT4X3PNT(v2, model2view, m4);
+
+      /* label axes */
+      dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			   ((int)(2048.0 * v2[Y])) + 15, 1);
+    }else{
+      VMOVE(vlist.pt[i*2], m1);
+      vlist.cmd[i*2] = RT_VLIST_LINE_MOVE;
+      VMOVE(vlist.pt[i*2 + 1], m2);
+      vlist.cmd[i*2 + 1] = RT_VLIST_LINE_DRAW;
+    }
+#else
     VMOVE(vlist.pt[i*2], m1);
     vlist.cmd[i*2] = RT_VLIST_LINE_MOVE;
     VMOVE(vlist.pt[i*2 + 1], m2);
     vlist.cmd[i*2 + 1] = RT_VLIST_LINE_DRAW;
-
+#endif
     /* convert point m2 from model to view space */
     MAT4X3PNT(v2, model2view, m2);
 
