@@ -35,8 +35,9 @@ static char RCSwray[] = "@(#)$Header$ (BRL)";
 
 
 /* /vld/include/ray.h -- ray segment data format (D A Gwyn) */
-/* binary ray segment data record; see ray(4V) */
-struct vldray  {
+/* binary ray segment data record; see ray(4V) (SCCS vers 1.4) */
+struct vldray
+{
 	float	ox;			/* origin coordinates */
 	float	oy;
 	float	oz;
@@ -45,11 +46,12 @@ struct vldray  {
 	float	rz;
 	float	na;			/* origin surface normal */
 	float	ne;
-	/* the following are in 2 pieces for binary file portability: */
-	short	ob_lo;			/* object code low 16 bits */
-	short	ob_hi;			/* object code high 16 bits */
-	short	rt_lo;			/* ray tag low 16 bits */
-	short	rt_hi;			/* ray tag high 16 bits */
+	float	pa;			/* principal direction */
+	float	pe;
+	float	pc;			/* principal curvature */
+	float	sc;			/* secondary curvature */
+	long	ob;			/* object code */
+	long	rt;			/* ray tag */
 };
 
 /*
@@ -75,16 +77,15 @@ FILE *fp;
 	vldray.na = atan2( hitp->hit_normal[Y], hitp->hit_normal[X] );
 	vldray.ne = asin( hitp->hit_normal[Z] );
 
-	i = pp->pt_regionp->reg_regionid;
-	vldray.ob_lo = i & 0xFFFF;
-	vldray.ob_hi = (i>>16) & 0xFFFF;
-	vldray.rt_lo = ap->a_level;
-	vldray.rt_hi = ap->a_y;
+	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
+
+	vldray.ob = pp->pt_regionp->reg_regionid;
+	vldray.rt = (ap->a_y << 16) | (ap->a_level & 0xFFFF);
 	fwrite( &vldray, sizeof(struct vldray), 1, fp );
 }
 
 /*
- *  			W R A Y D I S T
+ *  			W R A Y P T S
  *  
  *  Write a VLD-standard ray for a section of a ray specified
  *  by the "in" and "out" distances along the ray.  This is usually
@@ -104,10 +105,10 @@ FILE *fp;
 	vldray.na = atan2( ap->a_ray.r_dir[Y], ap->a_ray.r_dir[X] );
 	vldray.ne = asin( ap->a_ray.r_dir[Z] );
 
-	vldray.ob_lo = 0;	/* might want to be something special */
-	vldray.ob_hi = 0;
+	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
-	vldray.rt_lo = ap->a_level;
-	vldray.rt_hi = ap->a_y;
+	vldray.ob = 0;		/* might want to be something special */
+
+	vldray.rt = (ap->a_y << 16) | (ap->a_level & 0xFFFF);
 	fwrite( &vldray, sizeof(struct vldray), 1, fp );
 }
