@@ -1,6 +1,6 @@
 /*			R B _ E X T R E M E . C
  *
- *	Routines to extract mins, maxes, and adjacent nodes
+ *	Routines to extract mins, maxes, adjacent, and current nodes
  *			from a red-black tree
  *
  *	Author:	Paul Tanenbaum
@@ -182,4 +182,28 @@ int	sense;
 	rb_current(tree) = node;
 	return (rb_data(node, order));
     }
+}
+
+/*		            R B _ C U R R ( )
+ *
+ *	    Return the current red-black node
+ *
+ *	This function has two parameters: the tree and order in which
+ *	to find the current node.  Rb_curr() returns a pointer to
+ *	the data in the current node, if it exists.  Otherwise,
+ *	it returns NULL.
+ */
+void *rb_curr (tree, order)
+
+rb_tree	*tree;
+int	order;
+
+{
+    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    RB_CKORDER(tree, order);
+
+    if (rb_current(tree) == rb_null(tree))
+	return (NULL);
+    else
+	return (rb_data(rb_current(tree), order));
 }
