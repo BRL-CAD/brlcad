@@ -80,6 +80,7 @@ void	f_preview();
 void	f_ev(), f_debugnmg();
 void	f_tol();
 void	f_debugdir();
+void	f_polybinout();
 
 static struct funtab {
 	char *ft_name;
@@ -218,6 +219,8 @@ static struct funtab {
 	f_pathsum, 2, MAXARGS,
 "plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
 	f_plot, 2, MAXARGS,
+"polybinout", "file", "store vlist polygons into polygon file (experimental)",
+	f_polybinout, 2, 2,
 "prcolor", "", "print color&material table",
 	f_prcolor, 1, 1,
 "prefix", "new_prefix object(s)", "prefix each occurrence of object name(s)",
