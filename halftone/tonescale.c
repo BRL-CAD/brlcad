@@ -7,6 +7,9 @@ extern int Debug;
 typedef struct Cubic {
 	double	x,A,B,C,D;
 } C;
+extern struct Cubic *EqCubics;
+int eq_cubic();
+
 /*	tonescale	Given a raw pixel value, return a scaled value
  *
  * This is normally used to map the output devices characteristics to
@@ -39,12 +42,14 @@ typedef struct Cubic {
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 1.2  90/04/10  03:29:34  cjohnson
+ * Bug fixes to allow Tonescale to be used.
+ * added debug to print Cubics
+ * 
  * Revision 1.1  90/04/09  16:18:47  cjohnson
  * Initial revision
  * 
  */
-extern struct Cubic *EqCubics;
-int eq_cubic();
 void
 tonescale(map,Slope,B,eqptr)
 unsigned char	*map;
@@ -54,9 +59,20 @@ int 		(*eqptr)();
 {
 	int i,result;
 
+/*
+ * 	Is there a function we should be using?
+ * N.B.	This code has not been tested with a funtion being passed in.
+ */
 	if (!eqptr ) eqptr=eq_cubic;
 
+/*
+ *	If there is no defined Cubics then set a straight line.
+ */
 	if (!EqCubics) {
+/*
+ *		We need an extra cubic to make eq_cubic processing
+ *		easier.
+ */
 		EqCubics = (struct Cubic *)malloc(2*sizeof(struct Cubic));
 		EqCubics[0].x = 0.0;
 		EqCubics[0].A = B;
@@ -85,6 +101,7 @@ int 		(*eqptr)();
 		map[i] = result;
 	}
 }
+
 static struct Cubic	*EqCubics=0;
 /* eq_cubic	default tone scale alorithm
  *
@@ -96,7 +113,7 @@ static struct Cubic	*EqCubics=0;
  *	x	x value for equation.
  *
  * Exit:
- *	returns	y in the range 0-255  reqires a clipping.
+ *	returns	y in the range 0-255  reqires clipping.
  *
  * Calls:
  *	none.
@@ -129,6 +146,7 @@ int x;
 	if (y>255) y = 255;
 	return(y);
 }
+
 /* cubic_init	initialize a cubic list given a set of points.
  *
  * Entry:
@@ -146,7 +164,14 @@ int x;
  *	none.
  *
  * Method:
- *	diagnal solution to cubics taken from Lee Butler's book.
+ *	Cubic Spline Interpolation
+ *	Taken from page 107 of:
+ *		Numerical Analysis 2nd Edition by
+ *		Richard L. Burden, J. Douglas Faires and
+ *		    Albert C. Reynalds.
+ *
+ * I.e.  I don't have a clue to what is going on...... :-(
+ *	
  */
 cubic_init(n,x,y)
 int n;
