@@ -30,15 +30,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 #include <math.h>
 
-#ifdef BSD
-#  define __BSDbackup BSD
-#  undef BSD
-#endif
 #include <netdb.h>
-#ifdef __BSDbackup
-#  define BSD __BSDbackup
-#  undef __BSDbackup
-#endif
 
 #ifdef USE_STRING_H
 # include <string.h>
