@@ -35,11 +35,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern int common_dm();				/* defined in dm-generic.c */
-
-extern void X24_configureWindow();
-
-extern void dm_var_init();
+extern int common_dm();			/* defined in dm-generic.c */
+extern void dm_var_init();		/* defined in attach.c */
 
 static int X_dm();
 static void dirty_hook();
@@ -96,6 +93,9 @@ char *argv[];
 		(unsigned long)((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
   Tcl_SetVar(interp, bu_vls_addr(&name_vls), bu_vls_addr(&value_vls), TCL_GLOBAL_ONLY);
 #endif
+
+  /* initialize the background color */
+  cs_set_bg();
 
   return TCL_OK;
 }
