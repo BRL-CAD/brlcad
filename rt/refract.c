@@ -71,12 +71,24 @@ struct shadework	*swp;
 
 	RT_AP_CHECK(ap);
 
-/*	This prevents us from shadowing as a result of procedural shaders. Lee
- *	if( swp->sw_xmitonly )  return 1;
- */
-
-	reflect = swp->sw_reflect;
-	transmit = swp->sw_transmit;
+	/*
+	 *  sw_xmitonly is set primarily for light visibility rays.
+	 *  Need to compute (partial) transmission through to the light,
+	 *  or procedural shaders won't be able to cast shadows
+	 *  and light won't be able to get through glass
+	 *  (including "stained glass" and "filter glass").
+	 *
+	 *  On the other hand, light visibility rays shouldn't be refracted,
+	 *  it is pointless to shoot at where the light isn't.
+	 */
+	if( swp->sw_xmitonly )  {
+		/* Caller wants transmission term only, don't fire reflected rays */
+		transmit = swp->sw_transmit + swp->sw_reflect;	/* Don't loose energy */
+		reflect = 0;
+	} else {
+		reflect = swp->sw_reflect;
+		transmit = swp->sw_transmit;
+	}
 	if( reflect <= 0 && transmit <= 0 )
 		goto out;
 
