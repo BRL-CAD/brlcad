@@ -61,14 +61,18 @@ char *argv[];
 	register int		i;
 	register int		fudge;
 	register ColorMap	*cp = &cmap;
+	int	size;
 	FBIO *fbp;
+
+	size = 512;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
 		usage();
 		return	1;
 		}
-	if( (fbp = fb_open( 0, 512, 512 )) == NULL )
+	if( hires ) size = 1024;
+	if( (fbp = fb_open( NULL, size, size )) == NULL )
 		return	1;
 
 	switch( flavor )  {
