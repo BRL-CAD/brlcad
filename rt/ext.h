@@ -31,8 +31,12 @@ extern int		rpt_overlap;		/* Warn about overlaps? */
 extern int		rpt_dist;		/* Output depth along w/ RGB? */
 extern int		space_partition;		/* Space partitioning algorithm to use */
 extern int		nugrid_dimlimit;		/* limit to dimensions of nugrid; <= 0 means no limit */
-extern double		nu_gfactor;	/* constant factor in NUgrid algorithm,
-					   if applicable */
+extern double		nu_gfactor;		/* constant factor in NUgrid algorithm */
+extern int		sub_grid_mode;		/* mode to raytrace a rectangular portion of view */
+extern int		sub_xmin;		/* lower left of sub rectangle */
+extern int		sub_ymin;
+extern int		sub_xmax;		/* upper right of sub rectangle */
+extern int		sub_ymax;
 
 /***** variables declared in rt.c *****/
 extern struct application	ap;
