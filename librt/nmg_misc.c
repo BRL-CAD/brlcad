@@ -3100,6 +3100,41 @@ struct intersect_fus
 };
 
 static void
+nmg_pr_inter( new_v , int_faces )
+CONST struct vertex *new_v;
+CONST struct nmg_ptbl *int_faces;
+{
+	int i;
+
+	rt_log( "int_faces at vertex x%x ( %f %f %f )\n" , new_v , V3ARGS( new_v->vg_p->coord ) );
+	for( i=0 ; i<NMG_TBL_END( int_faces ) ; i++ )
+	{
+		struct intersect_fus *i_fus;
+
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , i );
+
+		rt_log( "edge number %d, x%x\n" , i , i_fus );
+		rt_log( "\tfu1 = x%x, fu2 = x%x\n" , i_fus->fu[0] , i_fus->fu[1] );
+
+		if( i_fus->eu == NULL )
+			rt_log( "\teu = NULL\n" );
+		else if( i_fus->eu->vu_p == NULL )
+			rt_log( "\teu = x%x , vu_p = NULL\n" , i_fus->eu );
+		else
+			rt_log( "\teu = x%x, from x%x ( %f %f %f ) to x%x ( %f %f %f )\n" , i_fus->eu,
+				i_fus->eu->vu_p->v_p , V3ARGS( i_fus->eu->vu_p->v_p->vg_p->coord ),
+				i_fus->eu->eumate_p->vu_p->v_p , V3ARGS( i_fus->eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+
+		rt_log( "\tstart = ( %f %f %f ) , dir = ( %f %f %f )\n" , V3ARGS( i_fus->start ) , V3ARGS( i_fus->dir ) );
+		rt_log( "\tpt = ( %f %f %f )\n" , V3ARGS( i_fus->pt ) );
+		if( i_fus->vp )
+			rt_log( "\tvp = x%x ( %f %f %f )\n" , i_fus->vp , V3ARGS( i_fus->vp->vg_p->coord ) );
+		else
+			rt_log( "\tvp = NULL\n" );
+	}
+}
+
+static void
 nmg_plot_inter( new_v , int_faces )
 CONST struct vertex *new_v;
 CONST struct nmg_ptbl *int_faces;
@@ -3117,6 +3152,8 @@ CONST struct nmg_ptbl *int_faces;
 		perror( "nmg_plot_inter" );
 		return;
 	}
+
+	rt_log( "Plotting to %s\n" , name );
 
 	for( i=0 ; i<NMG_TBL_END( int_faces ) ; i++ )
 	{
@@ -3189,6 +3226,8 @@ CONST struct rt_tol *tol;
 	int edge_no;
 	struct rt_tol tol_tmp;
 
+rt_log( "nmg_get_edge_lines: at x%x ( %f %f %f )\n" , new_v , V3ARGS( new_v->vg_p->coord ) );
+
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
 
@@ -3229,83 +3268,93 @@ CONST struct rt_tol *tol;
 		fu1 = nmg_find_fu_of_eu( eu );
 		fu2 = nmg_find_fu_of_eu( eu->radial_p );
 
+
 		/* initialize the intersect structure for this edge */
 		i_fus = (struct intersect_fus *)rt_malloc( sizeof( struct intersect_fus ) , "nmg_inside_vert: intersection list" );
 		i_fus->fu[0] = fu1;
 		i_fus->fu[1] = fu2;
 		i_fus->eu = eu;
 		i_fus->vp = (struct vertex *)NULL;
+		VSET( i_fus->pt , 0.0 , 0.0 , 0.0 );
+		VSET( i_fus->start , 0.0 , 0.0 , 0.0 );
+		VSET( i_fus->dir , 0.0 , 0.0 , 0.0 );
 
-		NMG_GET_FU_NORMAL( normal1 , fu1 );
-		/* find the new edge line at the intersection of these two faces
-		 * the line is defined by start and dir */
-		if( ret_val=rt_isect_2planes( start , dir , fu1->f_p->fg_p->N , fu2->f_p->fg_p->N , new_v->vg_p->coord , &tol_tmp ) )
+		/* if edge is between loops of same face , don't calculate an edge line */
+		if( fu1->f_p != fu2->f_p )
 		{
-			if( ret_val == (-1) )
+			NMG_GET_FU_NORMAL( normal1 , fu1 );
+			/* find the new edge line at the intersection of these two faces
+			 * the line is defined by start and dir */
+rt_log( "fu1 (x%x) fu2 (x%x) planes = ( %f %f %f %f ) and ( %f %f %f %f )\n" , fu1 , fu2 , V4ARGS( fu1->f_p->fg_p->N ) , V4ARGS( fu2->f_p->fg_p->N ) );
+			if( ret_val=rt_isect_2planes( start , dir , fu1->f_p->fg_p->N , fu2->f_p->fg_p->N , new_v->vg_p->coord , &tol_tmp ) )
 			{
-				/* faces are coplanar */
-				VMOVE( dir , eu_dir );
-				VUNITIZE( dir );
-				if( rt_isect_line3_plane( &dist , new_v->vg_p->coord , fu1->f_p->fg_p->N , fu2->f_p->fg_p->N , &tol_tmp ) < 1 )
-				{
-					rt_log( "nmg_inside_vert: Cannot find new edge between two identical planes\n" );
-					continue;
-				}
-				VJOIN1( start , new_v->vg_p->coord , dist , normal1 );
-			}
-			else if( ret_val == (-2) )
-			{
-				/* faces are parallel but distinct */
-				plane_t plane1,plane2;
-				vect_t v1,v2;
-				point_t p1,p2;
-				fastf_t dist2[2];
-
-				NMG_GET_FU_PLANE( plane2 , fu2 );
-				NMG_GET_FU_PLANE( plane1 , fu1 );
-				rt_log( "\nplanes are parallel and distinct at ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-				rt_log( "dot product of normals = %g\n" , VDOT( normal1 , plane2 ) );
-				rt_log( "tol->para = %g\n" , tol->para );
-				VCROSS( dir , normal1 , plane2 );
-				rt_log( "cross_product of normals = ( %g %g %g )\n" , V3ARGS( dir ) );
-				rt_log( "length of dir = %g\n" , MAGNITUDE( dir ) );
-				VUNITIZE( dir );
-				rt_log( "unitized cross_product of normals = ( %f %f %f )\n" , V3ARGS( dir ) );
-				VSUB2( v1 , eu->eumate_p->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
-				VUNITIZE( v1 );
-				rt_log( "direction of old edge = ( %f %f %f )\n" , V3ARGS( v1 ) );
-				VCROSS( v1 , dir , plane1 );
-				VUNITIZE( v1 );
-				VSCALE( p1 , plane1 , plane1[3] );
-				VCROSS( v2 , dir , plane2 );
-				VUNITIZE( v2 );
-				VSCALE( p2 , plane2 , plane2[3] );
-				ret_val = rt_isect_line2_line2( dist2 , p1 , v1 , p2 , v2 , &tol_tmp );
+rt_log( "nmg_get_edge_lines: rt_isect_2planes failed returned %d\n" , ret_val );
 				if( ret_val == (-1) )
 				{
-					rt_log( "No intersection\n" );
-					return( 1 );
+					/* faces are coplanar */
+					VMOVE( dir , eu_dir );
+					VUNITIZE( dir );
+					if( rt_isect_line3_plane( &dist , new_v->vg_p->coord , fu1->f_p->fg_p->N , fu2->f_p->fg_p->N , &tol_tmp ) < 1 )
+					{
+						rt_log( "nmg_inside_vert: Cannot find new edge between two identical planes\n" );
+						continue;
+					}
+					VJOIN1( start , new_v->vg_p->coord , dist , normal1 );
 				}
-				else if( ret_val == 0 )
+				else if( ret_val == (-2) )
 				{
-					rt_log( "Lines are collinear\n" );
-					return( 1 );
-				}
-				else if( ret_val == 1 )
-				{
-					VJOIN1( start , p1 , dist2[0] , v1 );
-					rt_log( "intersection is at ( %f %f %f )\n" , V3ARGS( start ) );
+					/* faces are parallel but distinct */
+					plane_t plane1,plane2;
+					vect_t v1,v2;
+					point_t p1,p2;
+					fastf_t dist2[2];
+
+					NMG_GET_FU_PLANE( plane2 , fu2 );
+					NMG_GET_FU_PLANE( plane1 , fu1 );
+					rt_log( "\nplanes are parallel and distinct at ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+					rt_log( "dot product of normals = %g\n" , VDOT( normal1 , plane2 ) );
+					rt_log( "tol->para = %g\n" , tol->para );
+					VCROSS( dir , normal1 , plane2 );
+					rt_log( "cross_product of normals = ( %g %g %g )\n" , V3ARGS( dir ) );
+					rt_log( "length of dir = %g\n" , MAGNITUDE( dir ) );
+					VUNITIZE( dir );
+					rt_log( "unitized cross_product of normals = ( %f %f %f )\n" , V3ARGS( dir ) );
+					VSUB2( v1 , eu->eumate_p->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
+					VUNITIZE( v1 );
+					rt_log( "direction of old edge = ( %f %f %f )\n" , V3ARGS( v1 ) );
+					VCROSS( v1 , dir , plane1 );
+					VUNITIZE( v1 );
+					VSCALE( p1 , plane1 , plane1[3] );
+					VCROSS( v2 , dir , plane2 );
+					VUNITIZE( v2 );
+					VSCALE( p2 , plane2 , plane2[3] );
+					ret_val = rt_isect_line2_line2( dist2 , p1 , v1 , p2 , v2 , &tol_tmp );
+					if( ret_val == (-1) )
+					{
+						rt_log( "No intersection\n" );
+						return( 1 );
+					}
+					else if( ret_val == 0 )
+					{
+						rt_log( "Lines are collinear\n" );
+						return( 1 );
+					}
+					else if( ret_val == 1 )
+					{
+						VJOIN1( start , p1 , dist2[0] , v1 );
+						rt_log( "intersection is at ( %f %f %f )\n" , V3ARGS( start ) );
+					}
 				}
 			}
-		}
-		/* Make the start point at closest approach to old vertex */
-		(void)rt_dist_pt3_line3( &dist , start , start , dir , new_v->vg_p->coord , &tol_tmp );
+			/* Make the start point at closest approach to old vertex */
+			(void)rt_dist_pt3_line3( &dist , start , start , dir , new_v->vg_p->coord , &tol_tmp );
 
-		/* Make sure the calculated direction is away from the vertex */
-		if( VDOT( eu_dir , dir ) < 0.0 )
-			VREVERSE( dir , dir );
-		VMOVE( i_fus->start , start );
-		VMOVE( i_fus->dir , dir );
+			/* Make sure the calculated direction is away from the vertex */
+			if( VDOT( eu_dir , dir ) < 0.0 )
+				VREVERSE( dir , dir );
+			VMOVE( i_fus->start , start );
+			VMOVE( i_fus->dir , dir );
+		}
 
 		nmg_tbl( int_faces , TBL_INS , (long *)i_fus );
 
@@ -3336,6 +3385,7 @@ CONST struct rt_tol *tol;
 	int edge_no;
 	point_t ave_pt;
 	struct rt_tol tol_tmp;
+	fastf_t edge_count=0.0;
 
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
@@ -3353,40 +3403,77 @@ rt_log( "\nnmg_get_max_edge_inters for vertex at ( %f %f %f )\n" , V3ARGS( new_v
 	/* loop through edges departing from new_v */
 	for( edge_no=0 ; edge_no<NMG_TBL_END( int_faces ) ; edge_no++ )
 	{
-		struct intersect_fus *i_fus;
-		fastf_t max_dist,backup_max_dist;
+		struct intersect_fus *edge_fus,*other_fus[2];
+		fastf_t max_dist;
 		fastf_t old_edge_len_sq;
 		vect_t old_edge_vec;
-		int face_no;
+		int next_edge_no,prev_edge_no;
+		int other_index;
+		int found;
 
-		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
+		edge_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
 
-		VSUB2( old_edge_vec , i_fus->eu->eumate_p->vu_p->v_p->vg_p->coord , new_v->vg_p->coord );
+		/* don't calculate intersect point for edge between two loops of same face */
+		if( edge_fus->fu[0]->f_p == edge_fus->fu[1]->f_p )
+			continue;
+
+		found = 0;
+		next_edge_no = edge_no;
+		while( !found )
+		{
+			next_edge_no++;
+			if( next_edge_no == NMG_TBL_END( int_faces ) )
+				next_edge_no = 0;
+
+			if( next_edge_no == edge_no )
+				break;
+
+			other_fus[1] = (struct intersect_fus *)NMG_TBL_GET( int_faces , next_edge_no );
+			if( other_fus[1]->fu[1] != edge_fus->fu[1] )
+				found = 1;
+		}
+
+		if( !found )
+			rt_log( "nmg_get_max_edge_inters: All edges in are in the same face!!!\n" );
+
+		found = 0;
+		prev_edge_no = edge_no;
+		while( !found )
+		{
+			prev_edge_no--;
+			if( prev_edge_no == (-1) )
+				prev_edge_no = NMG_TBL_END( int_faces ) - 1;
+
+			if( prev_edge_no == edge_no )
+				break;
+
+			other_fus[0] = (struct intersect_fus *)NMG_TBL_GET( int_faces , prev_edge_no );
+			if( other_fus[0]->fu[0] != edge_fus->fu[0] )
+				found = 1;
+		}
+
+		if( !found )
+			rt_log( "nmg_get_max_edge_inters: All edges in are in the same face!!!\n" );
+
+		VSUB2( old_edge_vec , edge_fus->eu->eumate_p->vu_p->v_p->vg_p->coord , new_v->vg_p->coord );
 		old_edge_len_sq = MAGSQ( old_edge_vec );
 
 		max_dist = (-MAX_FASTF);
-		backup_max_dist = MAX_FASTF;
 
-		/* find intersection with each face */
-		for( face_no=0 ; face_no<NMG_TBL_END( faces ) ; face_no++ )
+		/* find intersections with neighboring two faces */
+		for( other_index=0 ; other_index<2 ; other_index++ )
 		{
-			struct face *fp;
 			struct faceuse *fu;
 			plane_t pl;
 			fastf_t dist;
 
-			fp = (struct face *)NMG_TBL_GET( faces , face_no );
-			fu = fp->fu_p;
+			fu = other_fus[other_index]->fu[other_index];
 			if( fu->orientation != OT_SAME )
 				fu = fu->fumate_p;
 			NMG_GET_FU_PLANE( pl , fu );
 			
-			/* don't consider planes that this edge lies in */
-			if( i_fus->fu[0]->f_p == fp || i_fus->fu[1]->f_p == fp )
-				continue;
-
 			/* intersect plane edge line */
-			if( rt_isect_line3_plane( &dist , i_fus->start , i_fus->dir , pl , tol ) < 1 )
+			if( rt_isect_line3_plane( &dist , edge_fus->start , edge_fus->dir , pl , tol ) < 1 )
 				continue;
 #if 0
 			/* if intersect point is more than halfway to the next vertex, this is likely
@@ -3406,18 +3493,17 @@ rt_log( "\nnmg_get_max_edge_inters for vertex at ( %f %f %f )\n" , V3ARGS( new_v
 		if( max_dist == (-MAX_FASTF))
 		{
 			rt_log( "nmg_get_max_edge_inters: couldn't find intersection point for edge\n" );
-			rt_log( "Using backup distance: %f\n" , backup_max_dist );
-			max_dist = backup_max_dist;
 		}
 
-		VJOIN1( i_fus->pt , i_fus->start , max_dist , i_fus->dir );
-rt_log( "\tfor edge start at ( %f %f %f ) in dir ( %f %f %f )\n" , V3ARGS( i_fus->start ) , V3ARGS( i_fus->dir ) );
-rt_log( "\t\tdist = %f, intersect at ( %f %f %f )\n" , max_dist , V3ARGS( i_fus->pt ) );
+		VJOIN1( edge_fus->pt , edge_fus->start , max_dist , edge_fus->dir );
+rt_log( "\tfor edge start at ( %f %f %f ) in dir ( %f %f %f )\n" , V3ARGS( edge_fus->start ) , V3ARGS( edge_fus->dir ) );
+rt_log( "\t\tdist = %f, intersect at ( %f %f %f )\n" , max_dist , V3ARGS( edge_fus->pt ) );
 
-		VADD2( ave_pt , ave_pt , i_fus->pt );
+		VADD2( ave_pt , ave_pt , edge_fus->pt );
+		edge_count++;
 	}
 
-	VSCALE( ave_pt , ave_pt , 1.0/((double)(NMG_TBL_END( int_faces ))) );
+	VSCALE( ave_pt , ave_pt , 1.0/edge_count );
 	VMOVE( new_v->vg_p->coord , ave_pt );
 rt_log( "\tave_pt = ( %f %f %f )\n" , V3ARGS( ave_pt ) );
 }
@@ -3800,8 +3886,11 @@ struct nmg_ptbl *int_faces;
 CONST struct rt_tol *tol;
 {
 	int edge_no=0,j;
+rt_log( "nmg_split_edges_at_pts:\n" );
 
 	RT_CK_TOL( tol );
+
+nmg_pr_inter( new_v , int_faces );
 
 	for( edge_no=0 ; edge_no<NMG_TBL_END( int_faces ) ; edge_no++ )
 	{
@@ -3811,26 +3900,28 @@ CONST struct rt_tol *tol;
 		fastf_t dist;
 		vect_t to_pca;
 		struct vertex *re_use_vp;
+		int prev_edge_no;
 
 		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
 
+		/* skip edges between two loops of same face, for now */
+		if( i_fus->fu[0]->f_p == i_fus->fu[1]->f_p )
+			continue;
+
 		re_use_vp = (struct vertex *)NULL;
 		/* Look for a vertex already assigned the geometry for i_fus->pt */
-		for( j=0 ; j<edge_no ; j++ )
+		prev_edge_no = edge_no - 1;
+		if( prev_edge_no >= 0 )
 		{
 			struct intersect_fus *tmp_fus;
 
-			tmp_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , j );
-			if( tmp_fus->vp )
+			tmp_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , prev_edge_no );
+			if( tmp_fus->vp && rt_pt3_pt3_equal( tmp_fus->pt , i_fus->pt , tol ) )
 			{
-				if( rt_pt3_pt3_equal( tmp_fus->pt , i_fus->pt , tol ) )
-				{
-					/* found a match, use this vertex */
-					re_use_vp = tmp_fus->vp;
-					i_fus->vp = tmp_fus->vp;
-					VMOVE( i_fus->pt , tmp_fus->pt );
-					break;
-				}
+				/* found a match, use this vertex */
+				re_use_vp = tmp_fus->vp;
+				i_fus->vp = tmp_fus->vp;
+				VMOVE( i_fus->pt , tmp_fus->pt );
 			}
 		}
 
@@ -3838,10 +3929,10 @@ CONST struct rt_tol *tol;
 		if( !i_fus->vp || (i_fus->vp != i_fus->eu->vu_p->v_p &&
 		    i_fus->vp != i_fus->eu->eumate_p->vu_p->v_p ))
 		{
-rt_log( "Calling nmg_esplit( vp = x%x, eu = x%x )\n\ti_fus->eu->vu_p->v_p = x%x, i_fus->eu->eumate_p->vu_p->v_p = x%x\n",
-i_fus->vp , i_fus->eu , i_fus->eu->vu_p->v_p , i_fus->eu->eumate_p->vu_p->v_p );
+rt_log( "Calling nmg_esplit( vp = x%x, eu = x%x )\n", i_fus->vp , i_fus->eu );
 			new_eu = nmg_esplit( i_fus->vp , i_fus->eu );
 			i_fus->vp = new_eu->vu_p->v_p;
+rt_log( "\tAfter Calling nmg_esplit: i_fus->eu = x%x (x%x) , x%x to x%x\n" , i_fus->eu , i_fus->eu->eumate_p , i_fus->eu->vu_p->v_p , i_fus->eu->eumate_p->vu_p->v_p );
 			if( re_use_vp )
 			{
 				struct vertexuse *vu;
@@ -3862,6 +3953,8 @@ i_fus->vp , i_fus->eu , i_fus->eu->vu_p->v_p , i_fus->eu->eumate_p->vu_p->v_p );
 						continue;
 
 rt_log( "\tKilling crack at eu's x%x and x%x\n" , eu1 , eu2 );
+rt_log( "\t\tmates are x%x and x%x\n" , eu1->eumate_p , eu2->eumate_p );
+rt_log( "\t\ti_fus->eu = x%x, mate = x%x\n" , i_fus->eu , i_fus->eu->eumate_p );
 
 					nmg_keu( eu1 );
 					nmg_keu( eu2 );
@@ -3876,8 +3969,50 @@ rt_log( "\tKilling crack at eu's x%x and x%x\n" , eu1 , eu2 );
 rt_log( "\tSetting v x%x to ( %f %f %f )\n" , i_fus->vp , V3ARGS( i_fus->pt ) );
 		}
 	}
+nmg_pr_inter( new_v , int_faces );
+	/* Now take care of edges between two loops of same face */
+	edge_no = 0;
+	while( edge_no < NMG_TBL_END( int_faces ) )
+	{
+		int next_edge_no;
+		int found=0;
+		struct intersect_fus *i_fus,*j_fus;
 
-	nmg_plot_inter( new_v , int_faces );
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
+
+		if( i_fus->fu[0]->f_p != i_fus->fu[1]->f_p )
+		{
+			edge_no++;
+			continue;
+		}
+
+		next_edge_no = edge_no;
+		while( !found )
+		{
+			next_edge_no++;
+			if( next_edge_no == NMG_TBL_END( int_faces ) )
+				next_edge_no = 0;
+
+			if( next_edge_no == edge_no )
+				break;
+
+			j_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , next_edge_no );
+			if( j_fus->fu[0] == i_fus->fu[1] && j_fus->fu[1] != j_fus->fu[0] )
+				found = 1;
+		}
+
+		if( found )
+		{
+			(void)nmg_esplit( j_fus->vp , i_fus->eu );
+
+			nmg_tbl( int_faces , TBL_RM , (long *)i_fus );
+		}
+		else
+			rt_log( "nmg_split_edges_at_pts: All edges are on same faces!!!\n" );
+	}
+
+nmg_plot_inter( new_v , int_faces );
+nmg_pr_inter( new_v , int_faces );
 }
 
 /*	N M G _ M A K E _ F A C E S _ A T _ V E R T
@@ -3901,7 +4036,7 @@ CONST struct rt_tol *tol;
 	int added_faces=0;
 	int edge_no=0,next_edge_no,j;
 
-rt_log( "nmg_make_faces_at_vert ( %f %f %f )\n" , V3ARGS( new_v->vg_p->coord ) );
+rt_log( "nmg_make_faces_at_vert x%x ( %f %f %f )\n", new_v , V3ARGS( new_v->vg_p->coord ) );
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
 
@@ -3911,6 +4046,39 @@ rt_log( "nmg_make_faces_at_vert ( %f %f %f )\n" , V3ARGS( new_v->vg_p->coord ) )
 	tol_tmp.dist_sq = SMALL_FASTF;
 	tol_tmp.perp = 0.0;
 	tol_tmp.para = 1.0;
+
+	if( NMG_TBL_END( int_faces ) == 1 )
+	{
+		struct intersect_fus *i_fus;
+
+		/* only one intersect point is left, move new_v to it */
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , 0 );
+rt_log( "only one intersect point, joining x%x to x%x at ( %f %f %f )\n" , i_fus->vp , new_v , V3ARGS( i_fus->vp->vg_p->coord ) );
+		VMOVE( new_v->vg_p->coord , i_fus->vp->vg_p->coord );
+		nmg_jv( new_v , i_fus->vp );
+		return;
+	}
+
+	if( NMG_TBL_END( int_faces ) == 2 )
+	{
+		struct intersect_fus *i_fus,*j_fus;
+		point_t center_pt;
+
+		/* only two intersect points left, move new_v to the center of
+		 * the connecting line
+		 */
+
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , 0 );
+		j_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , 1 );
+
+		VCOMB2( center_pt , 0.5 , i_fus->vp->vg_p->coord , 0.5 , j_fus->vp->vg_p->coord );
+		VMOVE( new_v->vg_p->coord , center_pt );
+
+rt_log( "only two intersect points left, move vertex x%x to center point ( %f %f %f )\n" , new_v , V3ARGS( center_pt ) );
+
+		return;
+	}
+	
 
 	nmg_tbl( &new_faces , TBL_INIT , (long *)NULL );
 
@@ -4060,7 +4228,7 @@ rt_log( "\t\tFusing x%x and x%x\n" , i_fus->vp , new_v );
 				 * fuse with new_v
 				 */
 rt_log( "\t\tFusing x%x and x%x\n" , j_fus->vp , new_v );
-				nmg_complex_jv( j_fus->vp , new_v );
+				nmg_complex_jv( j_fus->vp , new_v , int_faces );
 				nmg_tbl( int_faces , TBL_RM , (long *)j_fus );
 				j_fus = (struct intersect_fus *)NULL;
 			}
@@ -4186,9 +4354,59 @@ nmg_pr_fu_around_eu( eu , tol );
 				lu->lumate_p->orientation = OT_SAME;
 			}
 		}
-#else
+#endif
+#if 0
 		nmg_lu_reorient( new_lu , tol );
 		nmg_lu_reorient( old_lu , tol );
+#endif
+
+		new_lu->orientation = OT_SAME;
+		new_lu->lumate_p->orientation = OT_SAME;
+		old_lu->orientation = OT_SAME;
+		old_lu->lumate_p->orientation = OT_SAME;
+#if 0
+		{
+			int ccw;
+			vect_t norm;
+
+			NMG_GET_FU_NORMAL( norm , fu );
+
+			ccw = nmg_loop_is_ccw( new_lu , norm , tol );
+			if( ccw > 0 )
+			{
+				new_lu->orientation = OT_SAME;
+				new_lu->lumate_p->orientation = OT_SAME;
+			}
+			else if( ccw < 0 )
+			{
+				new_lu->orientation = OT_OPPOSITE;
+				new_lu->lumate_p->orientation = OT_OPPOSITE;
+			}
+			else
+			{
+				rt_log( "Can't determine orientation of new_lu x%x\n" , new_lu );
+				new_lu->orientation = OT_SAME;
+				new_lu->lumate_p->orientation = OT_SAME;
+			}
+
+			ccw = nmg_loop_is_ccw( old_lu , norm , tol );
+			if( ccw > 0 )
+			{
+				old_lu->orientation = OT_SAME;
+				old_lu->lumate_p->orientation = OT_SAME;
+			}
+			else if( ccw < 0 )
+			{
+				old_lu->orientation = OT_OPPOSITE;
+				old_lu->lumate_p->orientation = OT_OPPOSITE;
+			}
+			else
+			{
+				rt_log( "Can't determine orientation of old_lu x%x\n" , old_lu );
+				old_lu->orientation = OT_SAME;
+				old_lu->lumate_p->orientation = OT_SAME;
+			}
+		}
 #endif
 
 		/* find which loopuse contains new_v
@@ -4226,6 +4444,8 @@ nmg_pr_fu_around_eu( eu , tol );
 rt_log( "Make face from lu (x%x):\n" , lu );
 nmg_pr_lu_briefly( lu , (char *)NULL );
 		new_fu = nmg_mk_new_face_from_loop( lu );
+
+		NMG_CK_FACEUSE( new_fu );
 
 		/* calculate a plane equation for the new face */
 		if( nmg_fu_planeeqn( new_fu , &tol_tmp ) )
@@ -4273,6 +4493,8 @@ nmg_kill_cracks_at_vertex( vp )
 CONST struct vertex *vp;
 {
 	struct vertexuse *vu;
+
+rt_log( "nmg_kill_cracks_at_vertex( x%x )\n" , vp );
 
 	NMG_CK_VERTEX( vp );
 
@@ -4323,6 +4545,7 @@ CONST struct vertex *vp;
 					{
 						vu_next = RT_LIST_PNEXT( vertexuse , &vu_next->l );
 					}
+rt_log( "\tKilling eu's x%x (x%x ) and x%x (x%x)\n" , eu_prev , eu_prev->eumate_p , eu , eu->eumate_p );
 
 					if( nmg_keu( eu_prev ) )
 					{
@@ -4343,6 +4566,7 @@ CONST struct vertex *vp;
 			}
 			if( bad_loop )
 			{
+rt_log( "\t\tKilling empty loopuse x%x\n" , lu );
 				if( nmg_klu( lu ) )
 				{
 					bad_face = 1;
@@ -4354,6 +4578,7 @@ CONST struct vertex *vp;
 
 		if( bad_face )
 		{
+rt_log( "\t\t\tKilling empty faceuse x%x\n" , fu );
 			(void)nmg_kfu( fu );
 		}
 
@@ -4674,12 +4899,17 @@ rt_log( "Merging intersects at x%x and x%x\n" , old_vp , new_vp );
 				else
 				{
 rt_log( "nmg_fix_crossed_loops: killing eu's x%x and x%x\n" , prev_eu , j_fus->eu );
+rt_log( "\tmates are x%x and x%x\n" , prev_eu->eumate_p , j_fus->eu->eumate_p );
+rt_log( "\tj_fus->eu = x%x, mate = x%x\n" , j_fus->eu , j_fus->eu->eumate_p );
+rt_log( "\ti_fus->eu = x%x, mate = x%x\n" , i_fus->eu , i_fus->eu->eumate_p );
 					nmg_keu( prev_eu );
 					nmg_keu( j_fus->eu );
 				}
 			}
 			i_fus->fu[1] = j_fus->fu[1];
+rt_log( "\tremoving j_fus x%x from table\n" , j_fus );
 			nmg_tbl( int_faces , TBL_RM , (long *)j_fus );
+nmg_pr_inter( new_v , int_faces );
 		}
 		else
 			edge_no++;
@@ -4768,7 +4998,7 @@ rt_log( "\t\t\tret_val = %d\n" , ret_val );
 			NMG_GET_FU_PLANE( pl1 , i_fus->fu[0] );
 			NMG_GET_FU_PLANE( pl2 , i_fus->fu[1] );
 			NMG_GET_FU_PLANE( pl3 , j_fus->fu[1] );
-#if 0
+#if 1
 
 			if( rt_mkpoint_3planes( new_pt , pl1 , pl2 , pl3 ) )
 			{
@@ -4804,6 +5034,7 @@ rt_log( "\t\t\tnew_point = ( %f %f %f )\n" , V3ARGS( new_pt ) );
 			i_fus->fu[1] = j_fus->fu[1];
 			nmg_tbl( int_faces , TBL_RM , (long *)j_fus );
 nmg_plot_inter( new_v , int_faces );
+nmg_pr_inter( new_v , int_faces );
 		}
 		else
 		{
@@ -4874,13 +5105,13 @@ CONST struct rt_tol *tol;
 	if( nmg_get_edge_lines( new_v , &int_faces , tol ) )
 		return( 1 );
 
-#if 1
+#if 0
 	/* fill in "pt" portion of intersect_fus structures with points
 	 * at a distnace of (for now) 3.0 mm
 	 */
 	nmg_get_edge_inters( new_v , 3.0 , &int_faces );
 
-#else
+#endif
 
 	/* fill in "pt" portion of intersect_fus structures with points
 	 * that are the intersections of the edge line with the other
@@ -4889,7 +5120,6 @@ CONST struct rt_tol *tol;
 	 */
 	nmg_get_max_edge_inters( new_v , &int_faces , faces , tol );
 
-#endif
 	/* split edges at intersection points */
 	nmg_split_edges_at_pts( new_v , &int_faces , tol );
 
