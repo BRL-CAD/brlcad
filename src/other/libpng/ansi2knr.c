@@ -231,9 +231,7 @@ BY ANY OTHER PARTY.
 /* Most of the conditionals here are to make ansi2knr work with */
 /* or without the GNU configure machinery. */
 
-#if HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #include <ctype.h>

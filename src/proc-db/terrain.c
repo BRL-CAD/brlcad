@@ -20,9 +20,7 @@
 
 /* Header files which are used for this example */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"		/* BRLCAD configuration header */
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
