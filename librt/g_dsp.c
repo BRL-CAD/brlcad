@@ -2161,8 +2161,6 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct dsp_specific *dsp =
-		(struct dsp_specific *)stp->st_specific;
 #if 1
  	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_norm(%g %g %g,   %g %g %g)",
@@ -2441,8 +2439,6 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct dsp_specific *dsp =
-		(struct dsp_specific *)stp->st_specific;
 
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_curve()\n");
