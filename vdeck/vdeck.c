@@ -54,13 +54,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"		/* XXX */
 #include "externs.h"
 #include "rtstring.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 
 #include "./vextern.h"
+
+#include "../librt/debug.h"
 
 int	debug = 0;
 
@@ -138,7 +139,6 @@ long		savsol;		/* File postion of # of solids & regions */
 
 /* Structures.								*/
 mat_t		xform, notrans, identity;
-Record		record;
 
 extern void		blank_fill(), menu();
 extern void		quit();
@@ -184,6 +184,10 @@ char	*argv[];
 	}
 
 	toc();		/* Build table of contents from directory.	*/
+
+#if 0
+	rt_g.debug |= DEBUG_TREEWALK;
+#endif
 
 	/*      C o m m a n d   I n t e r p r e t e r			*/
 	(void) setjmp( env );/* Point of re-entry from aborted command.	*/
@@ -319,7 +323,7 @@ int		neg;
 		return;
 
 	case OP_UNION:
-		flatten_tree( vls, tp->tr_b.tb_left, op, neg );
+		flatten_tree( vls, tp->tr_b.tb_left, "or", neg );
 		flatten_tree( vls, tp->tr_b.tb_right, "or", 0 );
 		break;
 	case OP_INTERSECT:
@@ -333,21 +337,7 @@ int		neg;
 	}
 }
 
-static CONST struct db_tree_state	initial_tree_state = {
-	0,			/* ts_dbip */
-	0,			/* ts_sofar */
-	0, 0, 0, 0,		/* region, air, gmater, LOS */
-	1.0, 1.0, 1.0,		/* color, RGB */
-	0,			/* override */
-	DB_INH_LOWER,		/* color inherit */
-	DB_INH_LOWER,		/* mater inherit */
-	"",			/* material name */
-	"",			/* material params */
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0,
-};
+extern CONST struct db_tree_state	rt_initial_tree_state;
 
 /*
  *			R E G I O N _ E N D
@@ -371,6 +361,7 @@ union tree		*curtree;
 	int			length;
 	struct directory	*regdp;
 	int			i;
+	int			first;
 
 	RT_VLS_INIT( &ident );
 	RT_VLS_INIT( &reg );
@@ -386,7 +377,7 @@ union tree		*curtree;
 		if( regdp->d_flags & DIR_REGION )  break;
 	}
 
-	/* ---------------- */
+	nnr++;			/* Start new region */
 
 	/* Print an indicator of our progress */
 	(void) printf( "%4d:%s\n", nnr+delreg, fullname );
@@ -394,25 +385,36 @@ union tree		*curtree;
 	/*
 	 *  Write the boolean formula into the region table.
 	 */
-	nnr++;			/* Start new region */
 
 	/* Convert boolean tree into string of 7-char chunks */
-	flatten_tree( &flat, curtree, "  ", 0 );
+	if( curtree->tr_op == OP_NOP )  {
+		rt_vls_strcat( &flat, "" );
+	} else {
+		/* XXX More may be needed */
+		db_non_union_push( curtree );
+		flatten_tree( &flat, curtree, "  ", 0 );
+	}
 
 	/* Output 9 of the 7-char chunks per region "card" */
 	cp = rt_vls_addr( &flat );
 	left = rt_vls_strlen( &flat );
-rt_log("flat tree='%s'\n", cp);
+	first = 1;
 
 	do  {
 		register char	*op;
 
 		op = obuf;
-		(void) sprintf( op, "%5d ", nnr+delreg );
+		if( first )  {
+			(void) sprintf( op, "%5d ", nnr+delreg );
+			first = 0;
+		} else {
+			strncpy( op, "      ", 6 );
+		}
 		op += 6;
 
 		if( left > 9*7 )  {
 			strncpy( op, cp, 9*7 );
+			cp += 9*7;
 			op += 9*7;
 			left -= 9*7;
 		} else {
@@ -462,8 +464,14 @@ rt_log("flat tree='%s'\n", cp);
 	rt_vls_free( &flat );
 	rt_free( fullname, "fullname" );
 
-	curtree->tr_a.tu_stp = 0;	/* XXX to keep solid table from evaporating */
-	return curtree;
+	/*
+	 *  Returned tree will be freed by caller.
+	 *  To keep solid table available for seraching,
+	 *  add this tree to a list of trees to be released once
+	 *  everything is finished.
+	 */
+	/* XXX Should make list of "regions" (trees) here */
+	return  (union tree *)0;
 }
 
 /*
@@ -484,7 +492,6 @@ int			id;
 	struct rt_db_internal	intern;
 	struct rt_tol		tol;
 	struct rt_vls		sol;
-	union record		rec;	/* XXX hack */
 
 	RT_VLS_INIT( &sol );
 
@@ -510,11 +517,10 @@ int			id;
 				goto next_one;
 		}
 		/* Success, we have a match! */
-#if 0
-		if( rt_g.debug & DEBUG_SOLIDS )
+		if( debug )  {
 			rt_log("rt_gettree_leaf:  %s re-referenced\n",
 				dp->d_namep );
-#endif
+		}
 		goto found_it;
 next_one: ;
 	}
@@ -539,8 +545,7 @@ next_one: ;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
-#if 0
-	if(rt_g.debug&DEBUG_SOLIDS)  {
+	if(debug)  {
 		struct rt_vls	str;
 		rt_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
@@ -551,7 +556,6 @@ next_one: ;
 		rt_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
 		rt_vls_free( &str );
 	}
-#endif
 
 	/* For now, just link them all onto the same list */
 	RT_LIST_INSERT( &(sol_hd.l), &(stp->l) );
@@ -581,11 +585,14 @@ next_one: ;
 		addtgc( &sol, (struct rt_tgc_internal *)intern.idb_ptr,
 			dp->d_namep, stp->st_bit+delsol );
 		break;
-#if 0
 	case ID_ARS:
-		addars( &rec );
+		addars( &sol, (struct rt_tgc_internal *)intern.idb_ptr,
+			dp->d_namep, stp->st_bit+delsol );
 		break;
-#endif
+	case ID_HALF:
+		/* XXX */
+	case ID_PIPE:
+		/* XXX */
 	default:
 		(void) fprintf( stderr,
 			"vdeck: '%s' Solid type has no corresponding COMGEOM soild, skipping\n",
@@ -624,7 +631,7 @@ char	*str;
 {
 	if( !sol_hd.l.magic )  RT_LIST_INIT( &sol_hd.l );
 
-	if( db_walk_tree( dbip, 1, &str, 1, &initial_tree_state,
+	if( db_walk_tree( dbip, 1, &str, 1, &rt_initial_tree_state,
 	    0, region_end, gettree_leaf ) < 0 )  {
 		fprintf(stderr,"Unable to treewalk '%s'\n", str );
 	}
@@ -772,6 +779,10 @@ int			num;
 	}
 }
 
+#define GENELL	1
+#define	ELL1	2
+#define SPH	3
+
 /*	a d d e l l ( )
 	Process the general ellipsoid.
  */
@@ -858,6 +869,12 @@ int			num;
 		exit( 10 );
 	}
 }
+
+#define TGC	1
+#define TEC	2
+#define TRC	3
+#define REC	4
+#define RCC	5
 
 /*	a d d t g c ( )
 	Process generalized truncated cone.
@@ -1032,15 +1049,19 @@ int			num;
 /*	a d d a r s ( )
 	Process triangular surfaced polyhedron - ars.
  */
-addars( rec )
-register Record *rec;
-	{	char	buf[10];
-		register int	i, vec;
-		int	npt, npts, ncurves, ngrans, granule, totlen;
-		float	work[3], vertex[3];
-		hvect_t	v_work, v_workk;
-
+addars( v, gp, name, num )
+struct rt_vls		*v;
+struct rt_tgc_internal	*gp;
+char			*name;
+int			num;
+{
 #if 0
+	char	buf[10];
+	register int	i, vec;
+	int	npt, npts, ncurves, ngrans, granule, totlen;
+	float	work[3], vertex[3];
+	hvect_t	v_work, v_workk;
+
 	ngrans = rec->a.a_curlen;
 	totlen = rec->a.a_totlen;
 	npts = rec->a.a_n;
@@ -1094,56 +1115,7 @@ register Record *rec;
 #endif
 }
 
-#define MAX_PSP	60
-/*	p s p ( )
-	Print solid parameters  -  npts points or vectors.
- */
-psp( npts, rec )
-register int	npts;
-register Record *rec;
-	{	register int	i, j, k, jk;
-		char		buf[MAX_PSP+1];
-	j = jk = 0;
-	for( i = 0; i < npts*3; i += 3 )
-		{ /* Write 3 points.					*/
-		for( k = i; k <= i+2; k++ )
-			{
-			rec->s.s_values[k] *= unit_conversion;
-			ftoascii( rec->s.s_values[k], &buf[jk*10], 10, 4 );
-			++jk;
-			}
-
-		if( (++j & 01) == 0 )
-			{ /* End of line.				*/
-			ewrite( solfd, buf, MAX_PSP );
-			jk = 0;
-			ewrite(	solfd,
-				rec->s.s_name,
-				(unsigned) strlen( rec->s.s_name )
-				);
-			ewrite( solfd, LF, 1 );
-			if( i != (npts-1)*3 )
-				{   /* new line */
-				itoa( nns+delsol, buf, 5 );
-				ewrite( solfd, buf, 5 );
-				blank_fill( solfd, 5 );
-				}
-			}
-		}	
-	if( (j & 01) == 1 )
-		{ /* Finish off rest of line.				*/
-		for( k = 30; k <= MAX_PSP; k++ )
-			buf[k] = ' ';
-		ewrite( solfd, buf, MAX_PSP );
-		ewrite(	solfd,
-			rec->s.s_name,
-			(unsigned) strlen( rec->s.s_name )
-			);
-		ewrite( solfd, LF, 1 );
-		}
-	return;
-	}
-
+#if 0
 /*	p a r s p ( )
 	Print npts points of an ars.
  */
@@ -1189,6 +1161,7 @@ register Record	*rec;
 		}
 	return;
 	}
+#endif
 
 #include <varargs.h>
 /*	p r o m p t ( )							*/
