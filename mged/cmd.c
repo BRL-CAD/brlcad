@@ -202,8 +202,6 @@ static struct funtab funtab[] = {
 	f_comb,4,MAXARGS,TRUE,
 "comb_color", "comb R G B", "assign a color to a combination (like 'mater')",
 	f_comb_color, 5,5,TRUE,
-"dbconcat", "file [prefix]", "concatenate 'file' onto end of present database.  Run 'dup file' first.",
-	f_concat, 2, 3, TRUE,
 "copyeval", "new_solid path_to_old_solid (seperate path components with spaces, not /)",
 	"copy an 'evaluated' path solid",
 	f_copyeval, 1, 27, TRUE,
@@ -215,6 +213,8 @@ static struct funtab funtab[] = {
 	f_delobj,2,MAXARGS,TRUE,
 "db", "command", "database manipulation routines",
 	cmd_db, 1, MAXARGS, TRUE,
+"dbconcat", "file [prefix]", "concatenate 'file' onto end of present database.  Run 'dup file' first.",
+	f_concat, 2, 3, TRUE,
 "debugdir", "", "Print in-memory directory, for debugging",
 	f_debugdir, 1, 1, TRUE,
 "debuglib", "[hex_code]", "Show/set debugging bit vector for librt",
@@ -368,6 +368,8 @@ static struct funtab funtab[] = {
 	f_orientation, 5, 5,TRUE,
 "orot", "xdeg ydeg zdeg", "rotate object being edited",
 	f_rot_obj, 4, 4,TRUE,
+"oscale", "factor", "scale object by factor",
+	f_sc_obj,2,2,TRUE,
 "overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
 	f_overlay, 2, 3,TRUE,
 "p", "dx [dy dz]", "set parameters",
@@ -448,14 +450,10 @@ static struct funtab funtab[] = {
 	f_saveview,2,MAXARGS,TRUE,
 "showmats", "path", "show xform matrices along path",
 	f_showmats,2,2,TRUE,
-"oscale", "factor", "scale object by factor",
-	f_sc_obj,2,2,TRUE,
 "sed", "<path>", "solid-edit named solid",
 	f_sed,2,2,TRUE,
 "setview", "x y z", "set the view given angles x, y, and z in degrees",
         f_setview,4,4,TRUE,
-"vars",	"[var=opt]", "assign/display mged variables",
-	f_set,1,2,TRUE,
 "shells", "nmg_model", "breaks model into seperate shells",
 	f_shells, 2,2,TRUE,
 "shader", "comb material [arg(s)]", "assign materials (like 'mater')",
@@ -476,7 +474,7 @@ static struct funtab funtab[] = {
 	f_status, 1,1,TRUE,
 "summary", "[s r g]", "count/list solid/reg/groups",
 	f_summary,1,2,TRUE,
-"sv", "x y", "Move view center to (x, y, 0)",
+"sv", "x y", "Move view center to (x, y)",
 	f_slewview, 3, 3,TRUE,
 "sync",	"",	"forces UNIX sync",
 	f_sync, 1, 1,TRUE,
@@ -508,6 +506,8 @@ static struct funtab funtab[] = {
 	f_units,1,2,TRUE,
 "untie", "pathName", "untie display manager pathName",
         f_untie, 2,2,TRUE,
+"vars",	"[var=opt]", "assign/display mged variables",
+	f_set,1,2,TRUE,
 #if 1
 "vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
 	cmd_vdraw, 2, 7, TRUE,
@@ -2216,8 +2216,8 @@ char	*argv[];
     return TCL_ERROR;
   }
 
-  tabvec[X] =  -x / 2047.0;
-  tabvec[Y] =  -y / 2047.0;
+  tabvec[X] =  x / 2047.0;
+  tabvec[Y] =  y / 2047.0;
   tabvec[Z] = 0;
   slewview( tabvec );
 
@@ -2378,6 +2378,7 @@ char    **argv;
   return TCL_ERROR;
 }
 
+
 /*
  *                         S E T _ T R A N
  *
@@ -2490,3 +2491,4 @@ fastf_t x, y, z;
 
   return CMD_BAD;
 }
+
