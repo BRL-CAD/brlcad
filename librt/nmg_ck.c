@@ -991,6 +991,128 @@ char *str;
 	rt_free(errstr, "nmg_ck_fu error str");
 }
 
+/*	N M G _ C K _ E G _ V E R T S
+ *
+ * Check if vertices from edgeuses using this edge geometry
+ * actually lie on the edge geomatry.
+ *
+ * "eg" must be LSEG
+ * returns number of vertices not on edge line
+ */
+
+int
+nmg_ck_eg_verts( eg , tol )
+CONST struct edge_g_lseg *eg;
+CONST struct rt_tol *tol;
+{
+	struct rt_list *eu2;
+	vect_t e_dir;
+	int count=0;
+
+	NMG_CK_EDGE_G_LSEG( eg );
+	RT_CK_TOL( tol );
+
+	VMOVE( e_dir , eg->e_dir );
+	VUNITIZE( e_dir );
+
+	for( RT_LIST_FOR( eu2 , rt_list , &eg->eu_hd2 ) )
+	{
+		struct edgeuse *eu;
+		struct vertex *v1,*v2;
+		struct vertex_g *vg1,*vg2;
+		vect_t pt_to_vert;
+		vect_t eg_to_vert;
+
+		eu = RT_LIST_MAIN_PTR( edgeuse, eu2, l2 );
+
+		NMG_CK_EDGEUSE( eu );
+
+		v1 = eu->vu_p->v_p;
+		NMG_CK_VERTEX( v1 );
+		vg1 = v1->vg_p;
+		NMG_CK_VERTEX_G( vg1 );
+
+		v2 = eu->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX( v2 );
+		vg2 = v2->vg_p;
+		NMG_CK_VERTEX_G( vg2 );
+
+		VSUB2( pt_to_vert , vg1->coord , eg->e_pt );
+		VJOIN1( eg_to_vert , pt_to_vert , -VDOT( e_dir , pt_to_vert ) , e_dir );
+		if( MAGSQ( eg_to_vert ) > tol->dist_sq )
+		{
+			count++;
+			rt_log( "vertex ( %g %g %g ) on eu to ( %g %g %g )\n", V3ARGS( vg1->coord ),
+					V3ARGS( vg2->coord ) );
+			rt_log( "\tnot on edge geometry: pt=( %g %g %g ), dir=( %g %g %g )\n",
+					V3ARGS( eg->e_pt ), V3ARGS( eg->e_dir ) );
+		}
+	}
+
+	return( count );
+}
+
+/*	N M G _ C K _ G E O M E T R Y
+ *
+ * Check that vertices actually lie on geometry for
+ * faces and edges
+ *
+ * returns number of vertices that do not lie on geometry
+ */
+int
+nmg_ck_geometry( m , tol )
+CONST struct model *m;
+CONST struct rt_tol *tol;
+{
+	struct nmg_ptbl g_tbl;
+	int i;
+	int count=0;
+
+	NMG_CK_MODEL( m );
+	RT_CK_TOL( tol );
+
+	nmg_tbl( &g_tbl , TBL_INIT , (long *)NULL );
+
+	nmg_edge_g_tabulate( &g_tbl , &m->magic );
+
+	for( i=0 ; i<NMG_TBL_END( &g_tbl ) ; i++ )
+	{
+		long *ep;
+		struct edge_g_lseg *eg;
+
+		ep = NMG_TBL_GET( &g_tbl , i );
+		switch( *ep )
+		{
+			case NMG_EDGE_G_LSEG_MAGIC:
+				eg = (struct edge_g_lseg *)ep;
+				NMG_CK_EDGE_G_LSEG( eg );
+				count += nmg_ck_eg_verts( eg , tol );
+				break;
+			case NMG_EDGE_G_CNURB_MAGIC:
+				/* XXX any checking for vertices on CNURB geometry?? */
+				break;
+		}
+	}
+
+	nmg_tbl( &g_tbl , TBL_RST , (long *)NULL );
+
+	nmg_face_tabulate( &g_tbl , &m->magic );
+
+	for( i=0 ; i<NMG_TBL_END( &g_tbl ) ; i++ )
+	{
+		struct face *f;
+
+		f = (struct face *)NMG_TBL_GET( &g_tbl , i );
+		NMG_CK_FACE( f );
+
+		count += nmg_ck_fg_verts( f->fu_p , f , tol );
+	}
+
+	nmg_tbl( &g_tbl , TBL_FREE , (long *)NULL );
+
+	return( count );
+}
+
 /*
  *			N M G _ C K _ F A C E _ W O R T H L E S S _ E D G E S
  *
