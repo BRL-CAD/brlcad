@@ -1182,11 +1182,9 @@ tie_break:
 			if( a->lo_ang <= diff )  A_LT_B;
 			A_GT_B;
 		case WEDGE_CROSS:
-			if( b->lo_ang < a->hi_ang )  A_GT_B;
-			/* Choose smaller inbound angle */
-			diff = 360 - b->hi_ang;/* CW version of left angle */
-			if( diff < a->lo_ang )  A_GT_B;
-			A_LT_B;
+			/* A is RIGHT, B is CROSS */
+			if( nmg_is_wedge_before_cross( a, b ) )  A_LT_B;
+			A_GT_B;
 		case WEDGE_RIGHT:
 			if( lo_equal )  {
 				if( a->hi_ang < b->hi_ang )  A_GT_B;
