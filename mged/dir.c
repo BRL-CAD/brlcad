@@ -1002,14 +1002,10 @@ register struct directory *dp;
 int pathpos;
 char prefix;
 {	
-  union record	*rp;
   register int	i;
   register struct directory *nextdp;
-
-  if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ){
-    TCL_READ_ERR;
-    return;
-  }
+  struct rt_db_internal intern;
+  struct rt_comb_internal *comb;
 
   for( i=0; i<pathpos; i++) 
     Tcl_AppendResult(interp, "\t", (char *)NULL);
@@ -1032,26 +1028,84 @@ char prefix;
 
   Tcl_AppendResult(interp, "\n", (char *)NULL);
 
-  if( !(dp->d_flags & DIR_COMB) )  {
-    bu_free( (genptr_t)rp, "printnode recs");
+  if( !(dp->d_flags & DIR_COMB) )
     return;
-  }
 
   /*
    *  This node is a combination (eg, a directory).
    *  Process all the arcs (eg, directory members).
    */
-  for( i=1; i < dp->d_len; i++ )  {
-    if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
-	== DIR_NULL )
-  	/* XXX It's legit to refer to a leaf which hasn't been defined yet. */
-  	/* XXX Just print the name here without grumbling.  Maybe note it with a special suffix.  -Mike */
-      continue;
 
-    prefix = rp[i].M.m_relation;
-    printnode ( nextdp, pathpos+1, prefix );
+  if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	READ_ERR_return;
+  comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+  if( comb->tree )
+  {
+  	int node_count;
+  	int actual_count;
+  	struct rt_tree_array *rt_tree_array;
+
+	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
+	{
+		db_non_union_push( comb->tree );
+		if( db_ck_v4gift_tree( comb->tree ) < 0 )
+		{
+			Tcl_AppendResult(interp, "Cannot flatten tree for listing\n", (char *)NULL );
+			return;
+		}
+	}
+	node_count = db_tree_nleaves( comb->tree );
+	if( node_count > 0 )
+	{
+		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
+			sizeof( struct rt_tree_array ), "tree list" );
+		actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
+		if( actual_count > node_count )  bu_bomb("rt_comb_v4_export() array overflow!");
+		if( actual_count < node_count )  bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
+	}
+
+  	for( i=0 ; i<actual_count ; i++ )
+  	{
+  		char op;
+
+		switch( rt_tree_array[i].tl_op )
+		{
+			case OP_UNION:
+				op = 'u';
+				break;
+			case OP_INTERSECT:
+				op = '+';
+				break;
+			case OP_SUBTRACT:
+				op = '-';
+				break;
+			default:
+				op = '?';
+				break;
+		}
+
+  		if( (nextdp = db_lookup( dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+  		{
+  			int j;
+			struct bu_vls tmp_vls;
+  			
+			for( j=0; j<pathpos+1; j++) 
+				Tcl_AppendResult(interp, "\t", (char *)NULL);
+
+			bu_vls_init(&tmp_vls);
+			bu_vls_printf(&tmp_vls, "%c ", op);
+			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
+
+			Tcl_AppendResult(interp, rt_tree_array[i].tl_tree->tr_l.tl_name, "\n", (char *)NULL);
+		}
+  		else
+			printnode( nextdp, pathpos+1, op );
+  	}
+	bu_free( (char *)rt_tree_array, "printnode: rt_tree_array" );
   }
-  bu_free( (genptr_t)rp, "printnode recs");
+  rt_comb_ifree( &intern );
 }
 
 
@@ -1300,7 +1354,7 @@ char	**argv;
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
+	      else
 	  return TCL_OK;
 
 	for(i=1; i<argc; i++) {
@@ -1321,14 +1375,14 @@ killtree( dbip, dp )
 struct db_i	*dbip;
 register struct directory *dp;
 {
-  Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+	Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		   ":  ", dp->d_namep, "\n", (char *)NULL);
 
-  eraseobj( dp );
+	eraseobj( dp );
 
-  if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
-    TCL_DELETE_ERR("");
-  }
+	if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
+	  TCL_DELETE_ERR("");
+	}
 }
 
 int
@@ -1338,9 +1392,9 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
-  db_pr_dir( dbip );
-  return TCL_OK;
+	db_pr_dir( dbip );
+	return TCL_OK;
 }
