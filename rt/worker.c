@@ -55,7 +55,6 @@ extern fastf_t	viewsize;
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern int	incr_level;		/* current incremental level */
 extern int	incr_nlevel;		/* number of levels */
-extern int	parallel;		/* Trying to use multi CPUs */
 extern int	npsw;
 extern struct resource resource[];
 
@@ -64,14 +63,6 @@ HIDDEN point_t	viewbase_model;	/* model-space location of viewplane corner */
 HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
 HIDDEN int last_pixel;		/* last pixel number */
 HIDDEN int nworkers;		/* number of workers now running */
-
-#ifdef cray
-struct taskcontrol {
-	int	tsk_len;
-	int	tsk_id;
-	int	tsk_value;
-} taskcontrol[MAX_PSW];
-#endif
 
 /*
  *			G R I D _ S E T U P
@@ -136,24 +127,15 @@ grid_setup()
  *
  *  Compute a run of pixels, in parallel if the hardware permits it.
  *
- *  Don't use registers in this function.  At least on the Alliant,
- *  register context is NOT preserved when exiting the parallel mode,
- *  because the serial portion resumes on some arbitrary processor,
- *  not necessarily the one that serial execution started on.
- *  The registers are not shared.
  */
 do_run( a, b )
 {
-#ifdef alliant
-	register int d7;	/* known to be in d7 */
-#endif
 	int	x;
-	int	pid;
 
 	cur_pixel = a;
 	last_pixel = b;
 
-	if( !parallel )  {
+	if( !rt_g.rtg_parallel )  {
 		/*
 		 * SERIAL case -- one CPU does all the work.
 		 */
@@ -162,62 +144,15 @@ do_run( a, b )
 	}
 
 	/*
-	 *  Parallel case.  This is different for each system.
-	 *  The parallel workers are started and terminated here.
+	 *  Parallel case.
 	 */
 	nworkers = 0;
-#ifndef CRAY_COS
-	pid = getpid();
-#endif CRAY_COS
-#ifdef HEP
-	for( x=1; x<npsw; x++ )  {
-		/* This is more expensive when GEMINUS>1 */
-		Dcreate( worker, x );
-	}
-	worker(0);	/* avoid wasting this task */
-#endif HEP
-#ifdef cray
-	/* Create any extra worker tasks */
-	for( x=1; x<npsw; x++ ) {
-		taskcontrol[x].tsk_len = 3;
-		taskcontrol[x].tsk_value = x;
-		TSKSTART( &taskcontrol[x], worker, x );
-	}
-	worker(0);	/* avoid wasting this task */
-	/* Wait for them to finish */
-	for( x=1; x<npsw; x++ )  {
-		TSKWAIT( &taskcontrol[x] );
-	}
-#endif
-#ifdef alliant
-	{
-		asm("	movl		_npsw,d0");
-		asm("	subql		#1,d0");
-		asm("	cstart		d0");
-		asm("super_loop:");
-		worker(d7);		/* d7 has current index, like magic */
-		asm("	crepeat		super_loop");
-	}
-#endif
+	rt_parallel( worker, npsw );
+
 	/* Ensure that all the workers are REALLY dead */
 	x = 0;
 	while( nworkers > 0 )  x++;
 	if( x > 0 )  rt_log("do_run(%d,%d): termination took %d extra loops\n", a, b, x);	
-
-#ifndef CRAY_COS
-	/*
-	 * At this point, all multi-tasking activity should have ceased,
-	 * and we should be just a single UNIX process with our original
-	 * PID and open file table (kernel struct u).  If not, then any
-	 * output is going to be written into the wrong file.
-	 * Both CRAY machines are known to get this wrong. XXX
-	 */
-	if( pid != (x=getpid()) )  {
-		rt_log("\n**ERROR** do_run:  PID changed from %d to %d, open file table probably botched!\n\n",
-			pid, x );
-		/* rt_bomb( "files scrambled" ); */
-	}
-#endif CRAY_COS
 }
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
