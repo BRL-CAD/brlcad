@@ -236,26 +236,6 @@ char *cp;
 	rt_free( cp, "grass_specific" );
 }
 
-int
-xmit_hit( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-{
-return 1;
-}
-
-/*
- *			R R _ M I S S
- */
-HIDDEN int
-/*ARGSUSED*/
-xmit_miss( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	RT_AP_CHECK(ap);
-	return(1);	/* treat as escaping ray */
-}
 static int
 frob(in, dir, p2, d2, ap, swp, grass_sp, radius, t, out_dist)
 point_t in, p2;
@@ -271,6 +251,7 @@ double out_dist;
 	vect_t v;
 	double val;
 	double ldist[2];
+	point_t npt;
 
 	double dist;
 
@@ -280,7 +261,8 @@ double out_dist;
 	val = bn_noise_fbm(p2, grass_sp->h_val,
 		grass_sp->lacunarity, grass_sp->octaves);
 
-	val *=  500.0 * grass_sp->size;
+	val *=  500.0 /* XXX hack.  Known height of solid */
+		* grass_sp->size;
 
 
 	VJOIN1(PCA1, in, ldist[0], dir);
@@ -289,7 +271,8 @@ double out_dist;
 		bu_log("\tval %g %g\n", val, val * 500.0 * grass_sp->size);
 		bu_log("\tldist[0]=%g PCA1 %g %g %g\n", ldist[0], V3ARGS(PCA1));
 	}
-	if (PCA1[Z] >= val || PCA1[Z] < 0.0) return 0;
+	if (PCA1[Z] >= val) return 0;
+	if (PCA1[Z] < 0.0) return -1;
 
 
 
@@ -306,15 +289,23 @@ double out_dist;
 	swp->sw_transmit = 0.0;
 
 	PCA2[Z] = 0.0;
-#if 1
+#if 0
+	VSCALE(PCA2, PCA2, 0.01);
+
+	do {
+		VSCALE(PCA2, PCA2, 2.36398);
+		bn_noise_vec(PCA2, v);
+	} while (VDOT(v, dir) >= -0.1736);
+
+#else
 	bn_noise_vec(PCA2, v);
 	if (VDOT(v, dir) > 0.0) {
 		VREVERSE(swp->sw_hit.hit_normal, v);
 	} else {
 		VMOVE(swp->sw_hit.hit_normal, v);
 	}
-	VUNITIZE(swp->sw_hit.hit_normal);
 #endif
+	VUNITIZE(swp->sw_hit.hit_normal);
 
 	return 1;
 }
@@ -417,7 +408,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 * to the first cell boundary in the X direction
 	 */
 	if (dir[X] < 0.0) {
-		tDX = 1.0 / dir[X];
+		tDX = -1.0 / dir[X];
 		tX = (in[X] - ((int)in[X])) / dir[X];
 		which_x = 0.0;
 	} else {
@@ -439,7 +430,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 * to the first cell boundary in the Y direction
 	 */
 	if (dir[Y] < 0.0) {
-		tDY = 1.0 / dir[Y];
+		tDY = -1.0 / dir[Y];
 		tY = (in[Y] - ((int)in[Y])) / dir[Y];
 		which_y = 0.0;
 	} else {
@@ -521,7 +512,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	}
 
 
-	if (hit) {
+	if (hit > 0) {
 		VMOVE(pp->pt_inhit->hit_normal, swp->sw_hit.hit_normal);
 		swp->sw_transmit = 0.0;
 		return 1;
