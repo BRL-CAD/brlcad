@@ -525,7 +525,6 @@ CONST struct rt_tol	*tol;
 #if 0
 	rt_log(" theta = %g (%g) n_angles=%d\n", theta, theta / rt_twopi, n_angles );
 	nmg_face_lu_plot( lu, this_vu, this_vu );
-	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
 #endif
 
 	if( n_angles < 3 )  {
@@ -534,7 +533,7 @@ CONST struct rt_tol	*tol;
 		return 0;
 	}
 
-	rad = theta * rt_inv2pi;
+	rad = theta * rt_inv2pi;	/* "winding number" */
 	x = rad-1;
 	/* "rad" value is normalized -1..+1, tolerance here is 1% */
 	if( NEAR_ZERO( x, 0.05 ) )  {
@@ -546,12 +545,13 @@ CONST struct rt_tol	*tol;
 		/* theta = -two pi, loop is CW */
 		return -1;
 	}
-	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g (%g)\n",
+	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g, winding=%g\n",
 		theta, rad );
 	nmg_pr_lu_briefly(lu, NULL);
-	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
+	rt_log(" theta = %g, winding=%g\n", theta, theta / rt_twopi );
+	
+	rt_g.NMG_debug |= DEBUG_PLOTEM;
 	nmg_face_lu_plot( lu, this_vu, this_vu );
-	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
 	rt_bomb("nmg_loop_is_ccw()\n");
 	return 0;
 }
