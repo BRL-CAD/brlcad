@@ -26,10 +26,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef sgi
 # include "gl.h"
 # include "device.h"
-#ifdef mips
-# include "gl/addrs.h"
-# include "gl/cg2vme.h"
-#endif
+#  ifdef mips
+#   include "gl/addrs.h"
+#   include "gl/cg2vme.h"
+#   include "gl/get.h"
+#  endif
 
 #define	HUGE	1.0e10	/* for near/far clipping */
 
@@ -47,6 +48,7 @@ Matrix	identmat;	/* identity */
 Matrix	centermat;	/* center screen matrix */
 Coord	viewsize;
 
+int	ntsc = 0;	/* use NTSC display, for video recording */
 int	axis = 0;	/* display coord axis */
 int	info = 0;	/* output orientation info */
 int	fullscreen = 0;	/* use a full screen window (if mex) */
@@ -84,7 +86,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "aft:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "aft:n" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			axis++;
@@ -94,6 +96,9 @@ register char **argv;
 			break;
 		case 't':
 			thickness = atoi(optarg);
+			break;
+		case 'n':
+			ntsc = 1;
 			break;
 		default:		/* '?' */
 			return(0);
@@ -109,7 +114,7 @@ register char **argv;
 }
 
 static char usage[] = "\
-Usage: pl-sgi [-a -f] [-t thickness] [file.plot]\n";
+Usage: pl-sgi [-a -f -n] [-t thickness] [file.plot]\n";
 #endif /* sgi */
 
 main( argc, argv )
@@ -483,16 +488,24 @@ init_display()
 	int map_size;		/* # of color map slots available */
 
 	if( ismex() ) {
-		if( fullscreen )
+		if( fullscreen )  {
 			prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
-		else
+		} else if( ntsc )  {
+			prefposition( 0, XMAX170, 0, YMAX170 );
+		} else {
 			prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
+		}
 		foreground();
 		if( winopen( "UNIX plot display" ) == -1 ) {
 			printf( "No more graphics ports available.\n" );
 			return	1;
 		}
 		wintitle( "UNIX plot display" );
+
+		if( ntsc )  {
+			setmonitor(NTSC);
+		}
+
 		/* Free window of position constraint.			*/
 		winconstraints();
 		tpoff();
