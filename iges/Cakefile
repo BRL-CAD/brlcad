@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	iges-g
-#define PRODUCTS	iges-g
+#define PRODUCTS	iges-g g-iges
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -22,16 +22,37 @@
 	b-spline brep get_outer_shell add_inner_shell make_face \
 	add_face add_loop get_edge_list read_edge_list \
 	get_vertex_list read_vertex_list get_vertex get_att \
-	read_att check_names
+	read_att check_names planar_nurb g-iges iges
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
 
-iges-g:	OBJ
+#define I_G_OBJ main.o usage.o readstart.o recsize.o readrec.o readglobal.o \
+        readstrg.o readint.o readflt.o readtime.o makedir.o readcols.o \
+        findp.o summary.o stack.o readtree.o showtree.o convtree.o \
+        copytree.o arrange.o bubbleup.o treecheck.o freetree.o \
+        makemembers.o convsolids.o readname.o convassem.o matmult.o \
+        readcnv.o evalxform.o readmatrix.o makegroup.o block2.o \
+        sphere.o wedge.o tor.o cyl.o cone.o ell.o convinst.o \
+        extrude.o extrudcirc.o extrudcon.o getcurve.o \
+        revolve.o splinef.o readdbl.o brlabs.o docolor.o spline.o convsurf.o \
+        b-spline.o brep.o get_outer_shell.o add_inner_shell.o make_face.o \
+        add_face.o add_loop.o get_edge_list.o read_edge_list.o \
+        get_vertex_list.o read_vertex_list.o get_vertex.o get_att.o \
+        read_att.o check_names.o planar_nurb.o
+
+iges-g:	I_G_OBJ
 	sh ../newvers.sh version "IGES-to-BRLCAD Translator"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS -o iges-g OBJ vers.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES
+	CC LDFLAGS -o iges-g I_G_OBJ vers.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES
+
+#define G_I_OBJ g-iges.o iges.o
+
+g-iges: G_I_OBJ
+	sh ../newvers.sh version "BRLCAD-to-IGES Translator"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS -o g-iges G_I_OBJ vers.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES
 
 #include "../Cakefile.rules"
