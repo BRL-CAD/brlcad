@@ -32,7 +32,6 @@ bu_observer_attach_tcl(clientData, interp, argc, argv)
 	struct bu_observer *headp = (struct bu_observer *)clientData;
 	struct bu_observer *op;
 
-	bu_log("bu_observer_attach_tcl: step1\n");
 	if (argc < 2 || 3 < argc) {
 		struct bu_vls vls;
 
@@ -42,7 +41,6 @@ bu_observer_attach_tcl(clientData, interp, argc, argv)
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-	bu_log("bu_observer_attach_tcl: step2\n");
 
 	/* see if it already exists, if so, modify it */
 	for (BU_LIST_FOR(op, bu_observer, &headp->l))
