@@ -187,12 +187,13 @@ found:
 		/* Setup has failed */
 		bu_vls_free( &arg );
 		ret = -1;		/* BAD */
+		goto out;
 	}
 	bu_vls_free( &arg );
 	ret = 0;			/* OK */
 out:
 	if (rdebug&RDEBUG_MATERIAL)
-		bu_log( "...finished \"%s\"\n", matname );
+		bu_log( "...finished \"%s\", ret=%d\n", matname, ret );
 	return ret;
 }
 
