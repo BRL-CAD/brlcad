@@ -63,9 +63,9 @@ struct fixpt  {
 	o.f = a.f + b.f; \
 	FIXPT_NORMALIZE(o); }
 
-#define PR_FIX( str, fp )	rt_log("%s = %2d+x%8.8x\n", str, fp.i, fp.f )
+#define PR_FIX( str, fp )	bu_log("%s = %2d+x%8.8x\n", str, fp.i, fp.f )
 
-#define PR_FIX2( str, fp )	rt_log("%s = (%2d+x%8.8x,%2d+x%8.8x)\n", \
+#define PR_FIX2( str, fp )	bu_log("%s = (%2d+x%8.8x,%2d+x%8.8x)\n", \
 				str, fp[0].i, fp[0].f, fp[1].i, fp[1].f )
 
 #endif /* FIXPT_H */
