@@ -7,6 +7,8 @@ rcs_id[] = "$Header$";
 
 #include	"cake.h"
 
+extern	time_t	pick_time();
+
 /*
 **	The main chasing function. It checks all entries to see
 **	if they describe a dependency of the name. If the second arg
@@ -34,7 +36,6 @@ reg	Entry	*picked;
 	extern	time_t	cake_gettime();
 	extern	Node	*chase();
 	extern	Node	*chase_node();
-	extern	time_t	pick_time();
 	extern	bool	match();
 	extern	bool	eval();
 	extern	Entry	*ground_entry();
