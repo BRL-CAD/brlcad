@@ -1249,7 +1249,10 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
 
 	crv = &sketch_ip->skt_curve;
 
-	crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof(int), "crv->reverse" );
+	if (crv->seg_count) {
+	    crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof(int), "crv->reverse" );
+	}
+
 	for( i=0 ; i<crv->seg_count ; i++ )
 	{
 		crv->reverse[i] = bu_glong( ptr );
