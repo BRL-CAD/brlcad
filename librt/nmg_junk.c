@@ -257,3 +257,130 @@ CONST struct rt_tol	*tol;
 	rt_free( (char *)v, "vertex array");
 	return(s);
 }
+
+
+int		heap_find(), heap_insert();
+struct vertex	**init_heap();
+void		heap_increase();
+int		heap_cur_sz;	/* Next free spot in heap. */
+
+main()
+{
+	sz = 1000;
+	verts[0] = init_heap(sz);
+}
+
+
+/*
+*	I N I T _ H E A P
+*
+*	Initialize an array-based implementation of a heap of vertex structs.
+*	(Heap: Binary tree w/value of parent > than that of children.)
+*/
+struct vertex **
+init_heap(n)
+int	n;
+{
+	extern int	heap_cur_sz;
+	struct vertex	**heap;
+
+	heap_cur_sz = 1;
+	heap = (struct vertex **)
+		rt_malloc(1 + n*sizeof(struct vertex *), "heap");
+	if (heap == (struct vertex **)NULL) {
+		rt_log("init_heap: no mem\n");
+		rt_bomb("");
+	}
+	return(heap);
+}
+
+/*
+*	H E A P _ I N C R E A S E
+*
+*	Make a heap bigger to make room for new entries.
+*/
+void
+heap_increase(h, n)
+struct vertex	**h[1];
+int	*n;
+{
+	struct vertex	**big_heap;
+	int	i;
+
+	big_heap = (struct vertex **)
+		rt_malloc(1 + 3 * (*n) * sizeof(struct vertex *), "heap");
+	if (big_heap == (struct vertex **)NULL)
+		rt_bomb("heap_increase: no mem\n");
+	for (i = 1; i <= *n; i++)
+		big_heap[i] = h[0][i];
+	*n *= 3;
+	rt_free((char *)h[0], "heap");
+	h[0] = big_heap;
+}
+
+/*
+*	H E A P _ I N S E R T
+*
+*	Insert a vertex struct into the heap (only if it is
+*	not already there).
+*/
+int
+heap_insert(h, n, i)
+struct vertex	**h[1];	/* Heap of vertices. */
+int		*n;	/* Max size of heap. */
+struct vertex	*i;	/* Item to insert. */
+{
+	extern int	heap_cur_sz;
+	struct vertex	**new_heap, *tmp;
+	int		cur, done;
+
+	if (heap_find(h[0], heap_cur_sz, i, 1))	/* Already in heap. */
+		return(heap_cur_sz);
+
+	if (heap_cur_sz > *n)
+		heap_increase(h, n);
+
+	cur = heap_cur_sz;
+	h[0][cur] = i;	/* Put at bottom of heap. */
+
+	/* Bubble item up in heap. */
+	done = 0;
+	while (cur > 1 && !done)
+		if (h[0][cur] < h[0][cur>>1]) {
+			tmp          = h[0][cur>>1];
+			h[0][cur>>1] = h[0][cur];
+			h[0][cur]    = tmp;
+			cur >>= 1;
+		} else
+			done = 1;
+	heap_cur_sz++;
+	return(heap_cur_sz);
+}
+
+/*
+*	H E A P _ F I N D
+*
+*	See if a given vertex struct is in the heap.  If so,
+*	return its location in the heap array.
+*/
+int
+heap_find(h, n, i, loc)
+struct vertex	**h;	/* Heap of vertexs. */
+int		n;	/* Max size of heap. */
+struct vertex	*i;	/* Item to search for. */
+int		loc;	/* Location to start search at. */
+{
+	int		retval;
+
+	if (loc > n || h[loc] > i)
+		retval = 0;
+	else if (h[loc] == i)
+		retval = loc;
+	else {
+		loc <<= 1;
+		retval = heap_find(h, n, i, loc);
+		if (!retval)
+			retval = heap_find(h, n, i, loc+1);
+	}
+	return(retval);
+}
