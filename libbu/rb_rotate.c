@@ -24,7 +24,8 @@ static char RCSid[] = "@(#) $Header$";
  *
  *	This function has two parameters: the node about which to rotate
  *	and the order to be rotated.  _rb_rot_left() is an implementation
- *	of the routine called LEFT-ROTATE on p. 266 of Cormen et al.
+ *	of the routine called LEFT-ROTATE on p. 266 of Cormen et al,
+ *	with modification on p. 285.
  */
 void _rb_rot_left (x, order)
 
@@ -60,6 +61,14 @@ int		order;
 	rb_right_child(x_parent, order) = y;
     rb_left_child(y, order) = x;
     rb_parent(x, order) = y;
+
+    rb_size(y, order) = rb_size(x, order);
+    rb_size(x, order) =
+	rb_size(rb_left_child(x, order), order) +
+	rb_size(rb_right_child(x, order), order) + 1;
+    if (tree -> rbt_debug & RB_DEBUG_OS)
+	rt_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
+	    x, order, rb_size(x, order), y, order, rb_size(y, order));
 }
 
 /*		    _ R B _ R O T _ R I G H T ( )
@@ -104,4 +113,12 @@ int		order;
 	rb_right_child(y_parent, order) = x;
     rb_right_child(x, order) = y;
     rb_parent(y, order) = x;
+
+    rb_size(x, order) = rb_size(y, order);
+    rb_size(y, order) =
+	rb_size(rb_left_child(y, order), order) +
+	rb_size(rb_right_child(y, order), order) + 1;
+    if (tree -> rbt_debug & RB_DEBUG_OS)
+	rt_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
+	    x, order, rb_size(x, order), y, order, rb_size(y, order));
 }

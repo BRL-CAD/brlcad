@@ -55,7 +55,10 @@ struct rb_node	*new_node;
     rb_parent(new_node, order) =
     rb_left_child(new_node, order) =
     rb_right_child(new_node, order) = rb_null(tree);
-    rb_size(node, order) = 1;
+    rb_size(new_node, order) = 1;
+    if (tree -> rbt_debug & RB_DEBUG_OS)
+	rt_log("_rb_insert(%x): size(%x, %d)=%d\n",
+	    new_node, new_node, order, rb_size(new_node, order));
 
     /*
      *	Perform vanilla-flavored binary-tree insertion
@@ -66,6 +69,10 @@ struct rb_node	*new_node;
     while (node != rb_null(tree))
     {
 	parent = node;
+	++rb_size(parent, order);
+	if (tree -> rbt_debug & RB_DEBUG_OS)
+	    rt_log("_rb_insert(%x): size(%x, %d)=%d\n",
+		new_node, parent, order, rb_size(parent, order));
 	comparison = (*compare)(rb_data(new_node, order), rb_data(node, order));
 	if (comparison < 0)
 	{
@@ -258,6 +265,10 @@ void	*data;
 	    rb_left_child(node, order) =
 	    rb_right_child(node, order) = rb_null(tree);
 	    rb_set_color(node, order, RB_BLACK);
+	    rb_size(node, order) = 1;
+	    if (tree -> rbt_debug & RB_DEBUG_OS)
+		rt_log("rb_insert(%x): size(%x, %d)=%d\n",
+		    node, node, order, rb_size(node, order));
 	}
     /*	Otherwise, insert the node into the tree */
     else

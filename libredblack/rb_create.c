@@ -64,6 +64,9 @@ int	(**order_funcs)();
     rb_null(tree) -> rbn_color = (char *)
 		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
 			    "red-black colors");
+    rb_null(tree) -> rbn_size = (int *)
+		rt_malloc(nm_orders * sizeof(int),
+			    "red-black subtree sizes");
     rb_null(tree) -> rbn_package = (struct rb_package **)
 		rt_malloc(nm_orders * sizeof(struct rb_package *),
 			    "red-black packages");
@@ -94,6 +97,7 @@ int	(**order_funcs)();
 	rb_set_color(rb_null(tree), order, RB_BLACK);
 	rb_left_child(rb_null(tree), order) = RB_NODE_NULL;
 	rb_right_child(rb_null(tree), order) = RB_NODE_NULL;
+	rb_size(rb_null(tree), order) = 0;
 	(rb_null(tree) -> rbn_package)[order] = RB_PKG_NULL;
     }
 
