@@ -8,6 +8,8 @@
 #define SRCDIR	mged
 #undef BINDIR
 #define BINDIR	TCLSCRIPTSDIR/mged
+#undef BINPERM
+#define BINPERM 444
 
 #define FILES	/**/
 #define	SRCSUFF	/**/
