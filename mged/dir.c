@@ -1112,9 +1112,11 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register int	i,j,k;
-	register union record *rp = (union record *)NULL;
+	register int	i,k;
 	register struct directory *dp;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	int			ret;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 		return TCL_ERROR;
@@ -1122,46 +1124,56 @@ char	**argv;
 	if( setjmp( jmp_env ) == 0 )
 		(void)signal( SIGINT, sig3);  /* allow interupts */
 	else{
-		if(rp)
-			bu_free( (genptr_t)rp, "dir_nref recs" );
-
+		/* Free intern? */
 		return TCL_OK;
 	}
+
+	ret = TCL_OK;
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-again:
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-				(void)signal( SIGINT, SIG_IGN );
-				TCL_READ_ERR_return;
-			}
-			/* [0] is COMB, [1..n] are MEMBERs */
-			for( j=1; j < dp->d_len; j++ )  {
-				if( rp[j].M.m_instname[0] == '\0' )
-					continue;
-				for( k=1; k<argc; k++ )  {
-					if( strncmp( rp[j].M.m_instname,
-					    argv[k], NAMESIZE) != 0 )
-						continue;
 
-					/* Remove this reference */
-					if( db_delrec( dbip, dp, j ) < 0 )  {
-						Tcl_AppendResult(interp, "error in killing reference to '",
-						    argv[k], "', exit MGED and retry\n", (char *)NULL);
-						TCL_ERROR_RECOVERY_SUGGESTION;
-						(void)signal( SIGINT, SIG_IGN );
-						bu_free( (genptr_t)rp, "dir_nref recs" );
-						return TCL_ERROR;
-					}
-					bu_free( (genptr_t)rp, "dir_nref recs" );
-					goto again;
+			if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
+				Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
+					") failure", (char *)NULL );
+				ret = TCL_ERROR;
+				continue;
+			}
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			RT_CK_COMB(comb);
+
+			for( k=1; k<argc; k++ )  {
+				int	code;
+
+				code = db_tree_del_dbleaf( &(comb->tree), argv[k] );
+				if( code == -1 )  continue;	/* not found */
+				if( code == -2 )  continue;	/* empty tree */
+				if( code < 0 )  {
+					Tcl_AppendResult(interp, "  ERROR_deleting ",
+						dp->d_namep, "/", argv[k],
+						"\n", (char *)NULL);
+					ret = TCL_ERROR;
+				} else {
+					Tcl_AppendResult(interp, "deleted ",
+						dp->d_namep, "/", argv[k],
+						"\n", (char *)NULL);
 				}
 			}
-			bu_free( (genptr_t)rp, "dir_nref recs" );
+
+			if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+				Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
+				ret = TCL_ERROR;
+				continue;
+			}
 		}
+	}
+
+	if( ret != TCL_OK )  {
+		Tcl_AppendResult(interp, "KILL skipped because of earlier errors.\n", (char *)NULL);
+		return ret;
 	}
 
 	/* ALL references removed...now KILL the object[s] */
