@@ -1025,10 +1025,10 @@ CONST struct bn_tol	*tol;
 	RT_CK_DB_INTERNAL(ip);
 	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot_ip);
-
+#if 0
 	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )	/* tesselation not supported */
 		return( -1 );
-
+#endif
         *r = nmg_mrsv( m );     /* Make region, empty shell, vertex */
         s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
