@@ -91,9 +91,11 @@ register struct rt_i *rtip;
 
 	/* In case everything is a halfspace, set a minimum space */
 	if( rtip->mdl_min[X] >= INFINITY )  {
+		rt_log("All solids are halspaces, setting minimum\n");
 		VSETALL( rtip->mdl_min, -1 );
 	}
 	if( rtip->mdl_max[X] <= -INFINITY )  {
+		rt_log("All solids are halspaces, setting maximum\n");
 		VSETALL( rtip->mdl_max, 1 );
 	}
 
@@ -463,8 +465,8 @@ register struct rt_i *rtip;
 	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
 	VMOVE( rtip->rti_inf_box.bn.bn_min, rtip->mdl_min );
 	VMOVE( rtip->rti_inf_box.bn.bn_max, rtip->mdl_max );
-	VSETALL( rtip->mdl_min, -0.1 );
-	VSETALL( rtip->mdl_max,  0.1 );
+	VSETALL( rtip->mdl_min,  INFINITY );
+	VSETALL( rtip->mdl_max, -INFINITY );
 
 	rt_hist_free( &rtip->rti_hist_cellsize );
 	rt_hist_free( &rtip->rti_hist_cutdepth );
