@@ -41,6 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/mater.h"
 #include "../h/raytrace.h"
 #include "../librt/debug.h"
+#include "fb.h"				/* /vld/lib/fb.h */
 
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
@@ -59,8 +60,7 @@ Options:\n\
 	3	Three light debugging model (diffuse)\n\
 ";
 
-extern int ikfd;		/* defined in iklib.o */
-extern int ikhires;		/* defined in iklib.o */
+int fbfd = -1;			/* framebuffer file descriptor */
 
 extern int lightmodel;		/* lighting model # to use */
 extern mat_t view2model;
@@ -193,10 +193,13 @@ register struct application *ap;
 		b = 0x80;
 	}
 
-#ifdef vax
-	if( ikfd > 0 )
-		ikwpixel( ap->a_x, ap->a_y, (b<<16)|(g<<8)|(r) );
-#endif
+	if( fbfd > 0 )  {
+		Pixel p;
+		p.red = r;
+		p.green = g;
+		p.blue = b;
+		fbwrite( ap->a_x, ap->a_y, &p, 1 );
+	}
 	if( pixfd > 0 )  {
 		*pixelp++ = r & 0xFF;
 		*pixelp++ = g & 0xFF;
@@ -467,7 +470,11 @@ view_eol()
 		pixelp = &scanline[0];
 	}
 }
-view_end() {}
+view_end()
+{
+	if( fbfd > 0 )
+		fbclose(fbfd);
+}
 
 /*
  *  			V I E W _ I N I T
@@ -485,29 +492,23 @@ char *file, *obj;
 		pixelp = &scanline[0];
 		scanbytes = npts * 3;
 	}  else  {
+		int width;
 		/* Output directly to Ikonas */
-		if( npts > 512 )
-			ikhires = 1;
+		if( npts <= 512 )
+			width = 512;
+		else
+			width = 1024;
 
-		ikopen();
-		load_map(1);		/* Standard map: linear */
-		ikclear();
-		if( npts <= 32 )  {
-			ikzoom( 15, 15 );	/* 1 pixel gives 16 */
-			ikwindow( (0)*4, 4063+31 );
-		} else if( npts <= 50 )  {
-			ikzoom( 9, 9 );		/* 1 pixel gives 10 */
-			ikwindow( (0)*4, 4063+31 );
-		} else if( npts <= 64 )  {
-			ikzoom( 7, 7 );		/* 1 pixel gives 8 */
-			ikwindow( (0)*4, 4063+29 );
-		} else if( npts <= 128 )  {
-			ikzoom( 3, 3 );		/* 1 pixel gives 4 */
-			ikwindow( (0)*4, 4063+25 );
-		} else if ( npts <= 256 )  {
-			ikzoom( 1, 1 );		/* 1 pixel gives 2 */
-			ikwindow( (0)*4, 4063+17 );
+		fbsetsize( width );
+		if( (fbfd = fbopen( NULL, APPEND )) < 0 )  {
+			rt_log("Can't get frame buffer\n");
+			exit(12);
 		}
+		fbclear();
+		fb_wmap( NULL );
+		/* KLUDGE ALERT:  The library want zoom before window! */
+		fbzoom( width/npts, width/npts );
+		fbwindow( npts/2, npts/2 );
 	}
 }
 
