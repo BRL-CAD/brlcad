@@ -49,6 +49,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  * XXX don't spoil the conversion.
  */
 
+/*
+ * XXX These should be bracketed in {} !!!!
+ */
+
 int
 bn_decode_mat(m, str)
 mat_t m;
@@ -67,9 +71,29 @@ char *str;
 }
 
 int
+bn_decode_tol(tol, str)
+struct bn_tol *tol;
+const char *str;
+{
+	int ret;
+
+	tol->magic = BN_TOL_MAGIC;
+
+	/* provide meaningful defaults */
+	tol->dist = 0.005;
+	tol->perp = 1e-6;
+
+	if( *str == '{' )  str++;
+	ret = sscanf(str, "%lf %lf", &tol->dist, &tol->perp);
+	tol->dist_sq = tol->dist * tol->dist;
+	tol->para = 1 - tol->perp;
+
+	return 2;	/* You always get something good */
+}
+int
 bn_decode_quat(q, str)
 quat_t q;
-char *str;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
@@ -78,7 +102,7 @@ char *str;
 int
 bn_decode_vect(v, str)
 vect_t v;
-char *str;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
@@ -87,7 +111,16 @@ char *str;
 int
 bn_decode_hvect(v, str)
 hvect_t v;
-char *str;
+const char *str;
+{
+	if( *str == '{' )  str++;
+	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
+}
+
+int
+bn_decode_plane(v, str)
+plane_t v;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
@@ -96,7 +129,7 @@ char *str;
 void
 bn_encode_mat(vp, m)
 struct bu_vls *vp;
-mat_t m;
+const mat_t m;
 {
 	if( m == NULL )  {
 		bu_vls_putc(vp, 'I');
@@ -111,7 +144,7 @@ mat_t m;
 void
 bn_encode_quat(vp, q)
 struct bu_vls *vp;
-quat_t q;
+const quat_t q;
 {
 	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
 }
@@ -119,7 +152,7 @@ quat_t q;
 void
 bn_encode_vect(vp, v)
 struct bu_vls *vp;
-vect_t v;
+const vect_t v;
 {
 	bu_vls_printf(vp, "%g %g %g", V3ARGS(v));
 }
@@ -127,7 +160,7 @@ vect_t v;
 void
 bn_encode_hvect(vp, v)
 struct bu_vls *vp;
-hvect_t v;
+const hvect_t v;
 {
 	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(v));
 }
@@ -135,7 +168,8 @@ hvect_t v;
 void
 bn_quat_distance_wrapper(dp, q1, q2)
 double *dp;
-quat_t q1, q2;
+const quat_t q1;
+const quat_t q2;
 {
 	*dp = quat_distance(q1, q2);
 }
@@ -185,16 +219,16 @@ CONST vect_t dir;
 }
 
 /*
- *			B N _ M A T H _ C M D
+ *			B N _ M A T H _ C M D _ V O I D
  *
- * Tcl wrappers for the math functions.
+ * Tcl wrappers for the math functions of type void.
  *
  * This is where you should put clauses, in the below "if" statement, to add
  * Tcl support for the LIBBN math routines.
  */
 
 int
-bn_math_cmd(clientData, interp, argc, argv)
+bn_math_cmd_void(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -538,10 +572,10 @@ error:
 	return TCL_ERROR;
 }
 
-static struct math_func_link {
+static struct math_func_link_void {
 	char *name;
 	void (*func)();
-} math_funcs[] = {
+} math_funcs_void[] = {
 	"mat_mul",            bn_mat_mul,
 	"mat_inv",            bn_mat_inv,
 	"mat_trn",            bn_mat_trn,
@@ -581,6 +615,79 @@ static struct math_func_link {
 	"quat_log",           quat_log,
 	0, 0
 };
+
+
+/*
+ *			B N _ M A T H _ C M D _ I N T
+ *
+ * Tcl wrappers for the math functions of type int.
+ *
+ * This is where you should put clauses, in the below "if" statement, to add
+ * Tcl support for the LIBBN math routines.
+ */
+
+int
+bn_math_cmd_int(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int (*math_func)();
+	struct bu_vls result;
+
+	math_func = (int (*)())clientData; /* object-to-function cast */
+	bu_vls_init(&result);
+
+	if (math_func == bn_isect_2planes )  {
+		plane_t	a, b;
+		point_t	rpp_min;
+		struct bn_tol tol;
+		point_t	out_pt;
+		vect_t	out_dir;
+		int	ret;
+
+		if( argc != 4 ||
+		    bn_decode_plane(a, argv[1]) < 4 ||
+		    bn_decode_plane(b, argv[2]) < 4 ||
+		    bn_decode_vect(rpp_min, argv[3]) < 3 ||
+		    bn_decode_tol(&tol, argv[4]) < 2
+		)  {
+			bu_vls_printf(&result, "usage: %s plane_a plane_b rpp_min tol\n", argv[0]);
+			goto error;
+		}
+		if( (ret = bn_isect_2planes( out_pt, out_dir, a, b, rpp_min, &tol )) < 0 )  {
+			bu_vls_printf(&result, "bn_isect_2planes() failed, ret=%d\n", ret);
+			goto error;
+		}
+		bu_vls_printf(&result, "{");
+		bn_encode_vect( &result, out_pt );
+		bu_vls_printf(&result, "} {");
+		bn_encode_vect( &result, out_dir );
+		bu_vls_printf(&result, "}");
+	} else {
+		bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet", argv[0]);
+		goto error;
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_vls_free(&result);
+	return TCL_OK;
+
+error:
+	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_vls_free(&result);
+	return TCL_ERROR;
+}
+
+static struct math_func_link_int {
+	char *name;
+	int (*func)();
+} math_funcs_int[] = {
+	"bn_isect_2planes",	bn_isect_2planes,
+	0, 0
+};
+
 
 /*
  *			B N _ C M D _ C O M M O N _ F I L E _ S I Z E
@@ -797,11 +904,18 @@ void
 bn_tcl_setup(interp)
 Tcl_Interp *interp;
 {
-	struct math_func_link *mp;
+	struct math_func_link_void *vp;
+	struct math_func_link_int *ip;
 
-	for (mp = math_funcs; mp->name != NULL; mp++) {
-		(void)Tcl_CreateCommand(interp, mp->name, bn_math_cmd,
-		    (ClientData)mp->func, /* Function-to-Object pointer cast */
+	for (vp = math_funcs_void; vp->name != NULL; vp++) {
+		(void)Tcl_CreateCommand(interp, vp->name, bn_math_cmd_void,
+		    (ClientData)vp->func, /* Function-to-Object pointer cast */
+		    (Tcl_CmdDeleteProc *)NULL);
+	}
+
+	for (ip = math_funcs_int; ip->name != NULL; ip++) {
+		(void)Tcl_CreateCommand(interp, ip->name, bn_math_cmd_int,
+		    (ClientData)ip->func, /* Function-to-Object pointer cast */
 		    (Tcl_CmdDeleteProc *)NULL);
 	}
 
