@@ -452,3 +452,24 @@ step:		;
 	}
 	return 0;
 }
+
+/*
+ *			D B _ F U L L _ P A T H _ S E A R C H
+ *
+ *  Returns -
+ *	1	'dp' is found on this path
+ *	0	not found
+ */
+int
+db_full_path_search( const struct db_full_path *a, const struct directory *dp )
+{
+	register int i;
+
+	RT_CK_FULL_PATH(a);
+	RT_CK_DIR(dp);
+
+	for( i = a->fp_len-1; i >= 0; i-- )  {
+		if( a->fp_names[i] == dp )  return 1;
+	}
+	return 0;
+}
