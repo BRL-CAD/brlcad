@@ -3,6 +3,7 @@
  *
  *	Color Square shader.  Maps the shader space RPP onto the unit
  *	color cube.
+ *
  */
 #include "conf.h"
 
@@ -25,18 +26,17 @@
  */
 struct cs_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
-	double	val;	/* variables for shader ... */
-	vect_t	delta;
-	mat_t	m_to_r;	/* model to region matrix */
-	char	*name;
+	double	cs_val;
+	char	*cs_reg_name;
+	mat_t	cs_m_to_sh;	/* model to shader space matrix */
 };
 
 /* The default values for the variables in the shader specific structure */
 CONST static
 struct cs_specific cs_defaults = {
 	cs_MAGIC,
-	1.0,
-	{ 1.0, 1.0, 1.0 },
+	0.0,
+	(char *) NULL,
 	{	0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
@@ -52,15 +52,13 @@ struct cs_specific cs_defaults = {
  * structure above
  */
 struct structparse cs_print_tab[] = {
-	{"%f",  1, "val",		SHDR_O(val),		FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
+	{"%f",  1, "val",		SHDR_O(cs_val),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
 struct structparse cs_parse_tab[] = {
 	{"i",	(long)(cs_print_tab), (char *)0, 0,		FUNC_NULL },
-	{"%f",  1, "v",			SHDR_O(val),		FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(delta),		FUNC_NULL },
+	{"%f",  1, "v",			SHDR_O(cs_val),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -84,7 +82,7 @@ struct mfuncs cs_mfuncs[] = {
 };
 
 
-/*	X X X _ S E T U P
+/*	C S _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -122,54 +120,27 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( rt_structparse( matparm, cs_parse_tab, (char *)cs_sp ) < 0 )
 		return(-1);
 
-
-#if 0
-	/* Optional:  get the matrix which maps model space into
-	 *  "region" or "shader" space.
+	/* Optional:
 	 *
 	 * If the shader needs to operate in a coordinate system which stays
 	 * fixed on the region when the region is moved (as in animation)
 	 * we need to get a matrix to perform the appropriate transform(s).
 	 */
 
-	db_region_mat(cs_sp->m_to_r, rtip->rti_dbip, rp->reg_name);
-
-	/* 
-	 * scale space so that the range 0..1 in shader space covers 
-	 * the region bounding box exactly
-	 */
-
-	VSETALL(bb_max, -INFINITY);
-	VSETALL(bb_min, INFINITY);
-	rt_bound_tree(rp->reg_treetop, bb_min, bb_max);
-
-	if( rdebug&RDEBUG_SHADE)
-		rt_log("bb_min(%g %g %g)   bb_max(%g %g %g)\n",
-			V3ARGS(bb_min),		V3ARGS(bb_max) );
-
-	VSUB2(v_tmp, bb_max, bb_min);
-	VINVDIR(v_tmp, v_tmp);
-	mat_idn(tmp);
-	MAT_SCALE_VEC(tmp, v_tmp);
-	mat_mul2(tmp, cs_sp->m_to_r);
-#else
-	db_shader_mat(cs_sp->m_to_r, rtip->rti_dbip, rp);
-#endif
-	/* 
-	 * cs_sp->m_to_r now maps model-space coordinates
-	 * into region-space coordinates
-	 */
+	db_shader_mat(cs_sp->cs_m_to_sh, rtip->rti_dbip, rp);
 
 	if( rdebug&RDEBUG_SHADE) {
+		cs_sp->cs_reg_name = rt_strdup(rp->reg_name);
+
 		rt_structprint( " Parameters:", cs_print_tab, (char *)cs_sp );
-		mat_print( "m_to_r", cs_sp->m_to_r );
+		mat_print( "m_to_sh", cs_sp->cs_m_to_sh );
 	}
 
 	return(1);
 }
 
 /*
- *	X X X _ P R I N T
+ *	C S _ P R I N T
  */
 HIDDEN void
 cs_print( rp, dp )
@@ -180,17 +151,23 @@ char	*dp;
 }
 
 /*
- *	X X X _ F R E E
+ *	C S _ F R E E
  */
 HIDDEN void
 cs_free( cp )
 char *cp;
 {
+	register struct cs_specific *cs_sp =
+		(struct cs_specific *)cp;
+
+	if (cs_sp->cs_reg_name)
+		rt_free(cs_sp->cs_reg_name, "cs_sp region name");
+
 	rt_free( cp, "cs_specific" );
 }
 
 /*
- *	X X X _ R E N D E R
+ *	C S _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point
  *	to be shaded.  The purpose here is to fill in values in the shadework
@@ -212,25 +189,31 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_cs_SP(cs_sp);
 
-	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "cs", cs_print_tab, (char *)cs_sp );
+	if( rdebug&RDEBUG_SHADE) {
+		rt_log("cs_render(%s)\n", cs_sp->cs_reg_name);
+		rt_structprint( "Parameters:", cs_print_tab, (char *)cs_sp );
+	}
 
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in cs_setup().
 	 */
-	MAT4X3PNT(pt, cs_sp->m_to_r, swp->sw_hit.hit_point);
+	MAT4X3PNT(pt, cs_sp->cs_m_to_sh, swp->sw_hit.hit_point);
 
 
-	if( rdebug&RDEBUG_SHADE)
-		rt_log("cs_render(%s)  model:(%g %g %g)\ncs_render(%s) region:(%g %g %g)\n", 
-		cs_sp->name,
-		V3ARGS(swp->sw_hit.hit_point),
-		cs_sp->name,
-		V3ARGS(pt) );
+	if( rdebug&RDEBUG_SHADE) {
+		rt_log("cs_render(%s)  model:(%g %g %g)\n",
+			cs_sp->cs_reg_name,
+			V3ARGS(swp->sw_hit.hit_point) );
+
+		rt_log("cs_render(%s) shader:(%g %g %g)\n", 
+			cs_sp->cs_reg_name,
+			V3ARGS(pt) );
+	}
+
 
 	/* XXX perform shading operations here */
-
+	VMOVE(swp->sw_color, pt);
 
 	/* caller will perform transmission/reflection calculations
 	 * based upon the values of swp->sw_transmit and swp->sw_reflect
@@ -238,8 +221,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 * 0 < swp->sw_transmit <= 1 causes transmission computations
 	 * 0 < swp->sw_reflect <= 1 causes reflection computations
 	 */
-
-	VMOVE(swp->sw_color, pt);
 
 	return(1);
 }
