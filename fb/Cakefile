@@ -14,7 +14,7 @@
 		pl-fb fbcolor fbcmrot pixbackgnd fbframe ap-pix \
 		bw-fb bw-pix bw3-pix bwcrop bwdiff bwfilter bw-imp bw-ps \
 		bwhist bwhisteq bwmod bwrect bwrot bwscale bwstat fb-bw \
-		gencolor pix-bw pix-bw3 pixfilter pixhist \
+		bw-a gencolor pix-bw pix-bw3 pixfilter pixhist \
 		pixhist3d pixhist3d-pl \
 		pixrect pixrot pixscale pixstat fbcbars \
 		sun-pix mac-pix pixmerge pixmatte op-bw \
@@ -187,6 +187,9 @@ pixbackgnd:	pixbackgnd.o
 
 fbframe:	fbframe.o LIBFB
 	CC LDFLAGS -o fbframe fbframe.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+
+bw-a:		bw-a.o LIBFB
+	CC LDFLAGS -o bw-a bw-a.o LIB_PRE''LIBFB LIBFB_LIBS LIBES
 
 bw-fb:		bw-fb.o LIBFB
 	CC LDFLAGS -o bw-fb bw-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
