@@ -181,6 +181,11 @@ char **argv;
 	if( argc == 4 )  {
 		/* Slip one command to dispatcher */
 		(void)pkg_send( MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv );
+
+		/* Prevent chasing the package with an immediate TCP close */
+		sleep(1);
+
+		pkg_close( pcsrv );
 		exit(0);
 	}
 
