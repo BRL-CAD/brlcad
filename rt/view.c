@@ -276,6 +276,7 @@ struct partition *PartHeadp;
 			ap->a_ray.r_pt, out );
 	}
 	ap->a_user = 0;		/* Signal view_pixel:  MISS */
+	VMOVE( ap->a_color, background );	/* In case someone looks */
 	return(0);
 }
 
@@ -345,8 +346,9 @@ struct partition *PartHeadp;
 		f = pp->pt_outhit->hit_dist+0.0001;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 		sub_ap.a_purpose = "pushed eye position";
-		ap->a_user = rt_shootray( &sub_ap );	/* Signal view_pixel*/
+		(void)rt_shootray( &sub_ap );
 		VSCALE( ap->a_color, sub_ap.a_color, 0.80 );
+		ap->a_user = 1;		/* Signal view_pixel: HIT */
 		return(1);
 	}
 
