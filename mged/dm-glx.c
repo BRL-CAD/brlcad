@@ -95,7 +95,6 @@ extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 extern inventory_t	*getinvent();
 extern void (*knob_offset_hook)();
-void set_knob_offset();
 
 /* Display Manager package interface */
 
@@ -114,11 +113,13 @@ void	Glx_statechange(), Glx_viewchange(), Glx_colorchange();
 void	Glx_window(), Glx_debug();
 int	Glx_dm();
 
-int   Glx_loadGLX();
+static void set_knob_offset();
+static int   Glx_load_startup();
+static struct dm_list *get_dm_list();
 #ifdef USE_PROTOTYPES
-Tk_GenericProc Glx_checkevents;
+static Tk_GenericProc Glx_doevent;
 #else
-int Glxcheckevents();
+static int Glxcheckevents();
 #endif
 
 #ifndef MULTI_ATTACH
@@ -148,7 +149,7 @@ static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 /* End modifiable variables */
 #endif
 
-static int irsetup();
+static int glx_setup();
 
 #ifdef MULTI_ATTACH
 #define dpy (((struct glx_vars *)dm_vars)->_dpy)
@@ -206,7 +207,6 @@ struct glx_vars {
 };
 
 void glx_var_init();
-static struct dm_list *get_dm_list();
 #else
 static Tk_Window xtkwin;
 static Display  *dpy;
@@ -443,50 +443,51 @@ Glx_configure_window_shape()
 
 Glx_open()
 {
-        char	line[82];
-        char	hostname[80];
-	char	display[82];
-	char	*envp;
+  char	line[82];
+  char	hostname[80];
+  char	display[82];
+  char	*envp;
 
-	glx_var_init();
-	/* get or create the default display */
-	if( (envp = getenv("DISPLAY")) == NULL ) {
-		/* Env not set, use local host */
-		gethostname( hostname, 80 );
-		hostname[79] = '\0';
-		(void)sprintf( display, "%s:0", hostname );
-		envp = display;
-	}
+  glx_var_init();
+  /* get or create the default display */
+  if( (envp = getenv("DISPLAY")) == NULL ) {
+    /* Env not set, use local host */
+    gethostname( hostname, 80 );
+    hostname[79] = '\0';
+    (void)sprintf( display, "%s:0", hostname );
+    envp = display;
+  }
 
-	rt_log("X Display [%s]? ", envp );
-	(void)fgets( line, sizeof(line), stdin );
-	line[strlen(line)-1] = '\0';		/* remove newline */
-	if( feof(stdin) )  quit();
-	if( line[0] != '\0' ) {
-		if( irsetup(line) ) {
-			return(1);		/* BAD */
-		}
-	} else {
-		if( irsetup(envp) ) {
-			return(1);	/* BAD */
-		}
-	}
+  rt_log("X Display [%s]? ", envp );
+  (void)fgets( line, sizeof(line), stdin );
+  line[strlen(line)-1] = '\0';		/* remove newline */
+  if( feof(stdin) )  quit();
+  if( line[0] != '\0' ) {
+    if( glx_setup(line) ) {
+      rt_free(dm_vars, "Glx_open: dm_vars");
+      return(1);		/* BAD */
+    }
+  } else {
+    if( glx_setup(envp) ) {
+      rt_free(dm_vars, "Glx_open: dm_vars");
+      return(1);	/* BAD */
+    }
+  }
 
-	/* Ignore the old scrollbars and menus */
-	mged_variables.show_menu = 0;
+  /* Ignore the old scrollbars and menus */
+  mged_variables.show_menu = 0;
 
-	knob_offset_hook = set_knob_offset;
+  knob_offset_hook = set_knob_offset;
 
-	return(0);			/* OK */
+  return(0);			/* OK */
 }
 
 static int
-irsetup( name )
+glx_setup( name )
 char *name;
 {
   register int	i;
   static int ref_count = 0;
-  char tmp_str[64];
   Matrix		m;
   inventory_t	*inv;
   int		win_size=1000;
@@ -501,31 +502,38 @@ char *name;
   XEventClass e_class[15];
   XInputClassInfo *cip;
   XAnyClassPtr any;
+  GLXconfig *glx_config, *p;
   Display *tmp_dpy;
 
-  sprintf(tmp_str, "%s%d", "mged", ref_count++);
-  ref = strdup(tmp_str);
-
-  rt_vls_init(&pathName);
-  rt_vls_printf(&pathName, ".%s.glx", ref);
-
-	  
   rt_vls_init(&str);
-  rt_vls_printf(&str, "loadtk %s\n", name);
 
+  /* Only need to do this once */
   if(tkwin == NULL){
+    rt_vls_printf(&str, "loadtk %s\n", name);
+
     if(cmdline(&str, FALSE) == CMD_BAD){
       rt_vls_free(&str);
       return -1;
     }
   }
-	
-  (void)TkGLX_Init(interp, tkwin);
 
-  /* Invoke script to create button and key bindings */
-  if( Glx_loadGLX() )
-    return -1;
+  /* Only need to do this once for this display manager */
+  if(!ref_count){
+    (void)TkGLX_Init(interp, tkwin);
 
+    /* Invoke script to load commands */
+    if( Glx_load_startup() ){
+      rt_vls_free(&str);
+      return -1;
+    }
+  }
+
+  rt_vls_init(&pathName);
+  rt_vls_printf(&pathName, ".dm_glx%d", ref_count++);
+  ref = strdup(rt_vls_addr(&pathName));
+  rt_vls_strcat(&pathName, ".win"); 
+
+  /* initialize the modifiable variables */
   mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
   mvars.zclipping_on = 1;       /* Z Clipping flag */
   mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
@@ -534,8 +542,10 @@ char *name;
   mvars.dummy_perspective = 1;
   mvars.perspective_mode = 0;   /* Perspective flag */
 
-  if((tmp_dpy = XOpenDisplay(name)) == NULL)
+  if((tmp_dpy = XOpenDisplay(name)) == NULL){
+    rt_vls_free(&str);
     return -1;
+  }
 
   winx_size = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
   winy_size = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
@@ -553,16 +563,8 @@ char *name;
    * is defined in glxinit.tk
    */
   rt_vls_strcpy(&str, "create_glx ");
-  rt_vls_printf(&str, "%s .%s glx %s %d %d true true\n", name,
-		ref, ref, winx_size, winy_size);
-
-#if 0
-  /*
-   * Call bindem to bind key and mouse events. Bindem is defined
-   * in glxinit.tk
-   */
-  rt_vls_printf(&str, "bindem .%s\n", ref);
-#endif
+  rt_vls_printf(&str, "%s %s %s %s %d %d true true\n", name,
+		ref, rt_vls_addr(&pathName), ref, winx_size, winy_size);
 
   if(cmdline(&str, FALSE) == CMD_BAD){
     rt_vls_free(&str);
@@ -590,166 +592,156 @@ char *name;
 
   glx_is_gt = 1;
 
-  {
-    GLXconfig *glx_config, *p;
+  glx_config = TkGLXwin_RefGetConfig(ref);
 
-    glx_config = TkGLXwin_RefGetConfig(ref);
+  /* set configuration variables */
+  for(p = glx_config; p->buffer; ++p){
+    switch(p->buffer){
+    case GLX_NORMAL:
+      switch(p->mode){
+      case GLX_ZSIZE:
+	if(p->arg)
+	  mvars.zbuf = 1;
+	else
+	  mvars.zbuf = 0;
 
-    /* set configuration variables */
-    for(p = glx_config; p->buffer; ++p){
-	    switch(p->buffer){
-	    case GLX_NORMAL:
-	      switch(p->mode){
-	      case GLX_ZSIZE:
-		if(p->arg)
-		  mvars.zbuf = 1;
-		else
-		  mvars.zbuf = 0;
-
-		break;
-	      case GLX_RGB:
-		if(p->arg)
-		  mvars.rgb = 1;
-		else
-		  mvars.rgb = 0;
-
-		break;
-	      case GLX_DOUBLE:
-		if(p->arg)
-		  mvars.doublebuffer = 1;
-		else
-		  mvars.doublebuffer = 0;
-
-		break;
-	      case GLX_STEREOBUF:
-		stereo_is_on = 1;
-
-		break;
-	      case GLX_BUFSIZE:
-	      case GLX_STENSIZE:
-	      case GLX_ACSIZE:
-	      case GLX_VISUAL:
-	      case GLX_COLORMAP:
-	      case GLX_WINDOW:
-	      case GLX_MSSAMPLE:
-	      case GLX_MSZSIZE:
-	      case GLX_MSSSIZE:
-	      case GLX_RGBSIZE:
-	      default:
-		break;
-	      }
-	    case GLX_OVERLAY:
-	    case GLX_POPUP:
-	    case GLX_UNDERLAY:
-	    default:
-	      break;
-	    }
-	  }
-
-	  free((void *)glx_config);
-	}
-
+	break;
+      case GLX_RGB:
+	if(p->arg)
+	  mvars.rgb = 1;
+	else
+	  mvars.rgb = 0;
 	
-	if (mged_variables.sgi_win_size > 0)
-		win_size = mged_variables.sgi_win_size;
+	break;
+      case GLX_DOUBLE:
+	if(p->arg)
+	  mvars.doublebuffer = 1;
+	else
+	  mvars.doublebuffer = 0;
 
-	if (mged_variables.sgi_win_origin[0] != 0)
-		win_o_x = mged_variables.sgi_win_origin[0];
+	break;
+      case GLX_STEREOBUF:
+	stereo_is_on = 1;
 
-	if (mged_variables.sgi_win_origin[1] != 0)
-		win_o_y = mged_variables.sgi_win_origin[1];
-#if 0
-	prefposition( win_o_x, win_o_x+win_size, win_o_y, win_o_y+win_size);
-#else
-#endif
-#if 0
-	keepaspect(1,1);	/* enforce 1:1 aspect ratio */
-#endif
-	winconstraints();	/* remove constraints on the window size */
+	break;
+      case GLX_BUFSIZE:
+      case GLX_STENSIZE:
+      case GLX_ACSIZE:
+      case GLX_VISUAL:
+      case GLX_COLORMAP:
+      case GLX_WINDOW:
+      case GLX_MSSAMPLE:
+      case GLX_MSZSIZE:
+      case GLX_MSSSIZE:
+      case GLX_RGBSIZE:
+      default:
+	break;
+      }
+    case GLX_OVERLAY:
+    case GLX_POPUP:
+    case GLX_UNDERLAY:
+    default:
+      break;
+    }
+  }
 
-	/*
-	 * Establish GL library operating modes
-	 */
-	/* Don't draw polygon edges */
-	glcompat( GLC_OLDPOLYGON, 0 );
+  free((void *)glx_config);
+	
+  if (mged_variables.sgi_win_size > 0)
+    win_size = mged_variables.sgi_win_size;
 
-	/* Z-range mapping */
-	/* Z range from getgdesc(GD_ZMIN)
-	 * to getgdesc(GD_ZMAX).
-	 * Hardware specific.
-	 */
-	glcompat( GLC_ZRANGEMAP, 0 );
-	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
+  if (mged_variables.sgi_win_origin[0] != 0)
+    win_o_x = mged_variables.sgi_win_origin[0];
 
-	mvars.min_scr_z = getgdesc(GD_ZMIN)+15;
-	mvars.max_scr_z = getgdesc(GD_ZMAX)-15;
+  if (mged_variables.sgi_win_origin[1] != 0)
+    win_o_y = mged_variables.sgi_win_origin[1];
 
-	Glx_configure_window_shape();
+  winconstraints();	/* remove constraints on the window size */
 
-	/* Line style 0 is solid.  Program line style 1 as dot-dashed */
-	deflinestyle( 1, 0xCF33 );
-	setlinestyle( 0 );
+  /*
+   * Establish GL library operating modes
+   */
+  /* Don't draw polygon edges */
+  glcompat( GLC_OLDPOLYGON, 0 );
 
-	/*
-	 * Take a look at the available input devices. We're looking
-	 * for "dial+buttons".
-	 */
-	olist = list = (XDeviceInfoPtr) XListInputDevices (dpy, &ndevices);
+  /* Z-range mapping */
+  /* Z range from getgdesc(GD_ZMIN)
+   * to getgdesc(GD_ZMAX).
+   * Hardware specific.
+   */
+  glcompat( GLC_ZRANGEMAP, 0 );
+  /* Take off a smidgeon for wraparound, as suggested by SGI manual */
 
-	/* IRIX 4.0.5 bug workaround */
-	if( list == (XDeviceInfoPtr)NULL ||
-	   list == (XDeviceInfoPtr)1 )  goto Done;
+  mvars.min_scr_z = getgdesc(GD_ZMIN)+15;
+  mvars.max_scr_z = getgdesc(GD_ZMAX)-15;
 
-	for(j = 0; j < ndevices; ++j, list++){
-	  if(list->use == IsXExtensionDevice){
-	    if(!strcmp(list->name, "dial+buttons")){
-	      if((dev = XOpenDevice(dpy, list->id)) == (XDevice *)NULL){
-		rt_log("Glx_open: Couldn't open the dials+buttons\n");
-		goto Done;
-	      }
+  Glx_configure_window_shape();
 
-	      for(cip = dev->classes, k = 0; k < dev->num_classes;
-		  ++k, ++cip){
-		switch(cip->input_class){
-		case ButtonClass:
-		  DeviceButtonPress(dev, devbuttonpress, e_class[nclass]);
-		  ++nclass;
-		  DeviceButtonRelease(dev, devbuttonrelease, e_class[nclass]);
-		  ++nclass;
-		  break;
-		case ValuatorClass:
-		  DeviceMotionNotify(dev, devmotionnotify, e_class[nclass]);
-		  ++nclass;
-		  break;
-		default:
-		  break;
-		}
-	      }
+  /* Line style 0 is solid.  Program line style 1 as dot-dashed */
+  deflinestyle( 1, 0xCF33 );
+  setlinestyle( 0 );
 
-	      XSelectExtensionEvent(dpy, win, e_class, nclass);
-	      goto Done;
-	    }
+  /*
+   * Take a look at the available input devices. We're looking
+   * for "dial+buttons".
+   */
+  olist = list = (XDeviceInfoPtr) XListInputDevices (dpy, &ndevices);
+
+  /* IRIX 4.0.5 bug workaround */
+  if( list == (XDeviceInfoPtr)NULL ||
+      list == (XDeviceInfoPtr)1 )  goto Done;
+
+  for(j = 0; j < ndevices; ++j, list++){
+    if(list->use == IsXExtensionDevice){
+      if(!strcmp(list->name, "dial+buttons")){
+	if((dev = XOpenDevice(dpy, list->id)) == (XDevice *)NULL){
+	  rt_log("Glx_open: Couldn't open the dials+buttons\n");
+	  goto Done;
+	}
+
+	for(cip = dev->classes, k = 0; k < dev->num_classes;
+	    ++k, ++cip){
+	  switch(cip->input_class){
+	  case ButtonClass:
+	    DeviceButtonPress(dev, devbuttonpress, e_class[nclass]);
+	    ++nclass;
+	    DeviceButtonRelease(dev, devbuttonrelease, e_class[nclass]);
+	    ++nclass;
+	    break;
+	  case ValuatorClass:
+	    DeviceMotionNotify(dev, devmotionnotify, e_class[nclass]);
+	    ++nclass;
+	    break;
+	  default:
+	    break;
 	  }
 	}
-Done:
-	XFreeDeviceList(olist);
-	Tk_CreateGenericHandler(Glx_checkevents,
-				(ClientData)rt_vls_addr(&pathName));
-	XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
-		     KeyPressMask|StructureNotifyMask);
 
-	return(0);
+	XSelectExtensionEvent(dpy, win, e_class, nclass);
+	goto Done;
+      }
+    }
+  }
+Done:
+  XFreeDeviceList(olist);
+  Tk_CreateGenericHandler(Glx_doevent,
+			  (ClientData)rt_vls_addr(&pathName));
+
+  /* start with constant tracking OFF */
+  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
+	       KeyPressMask|StructureNotifyMask);
+
+  return(0);
 }
 
 /*XXX Just experimenting */
 int
-Glx_loadGLX()
+Glx_load_startup()
 {
   FILE    *fp;
   struct rt_vls str;
   char *path;
   int     found;
-  int bogus;
 
 /*XXX*/
 #define DM_GLX_RCFILE "glxinit2.tk"
@@ -758,10 +750,12 @@ Glx_loadGLX()
   rt_vls_init( &str );
 
   if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
-    if ((fp = fopen(path, "r")) != NULL ) {
-      rt_vls_strcpy( &str, path );
+    rt_vls_strcpy( &str, path );
+    rt_vls_strcat( &str, "/" );
+    rt_vls_strcat( &str, DM_GLX_RCFILE );
+
+    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
       found = 1;
-    }
   }
 
   if(!found){
@@ -836,10 +830,10 @@ Glx_close()
   frontbuffer(0);
 
   Tk_DestroyWindow(Tk_Parent(xtkwin));
-  Tk_DeleteGenericHandler(Glx_checkevents,
+  Tk_DeleteGenericHandler(Glx_doevent,
 			  (ClientData)rt_vls_addr(&pathName));
   knob_offset_hook = NULL;
-  rt_free(dm_vars, "glx_close: dm_vars");
+  rt_free(dm_vars, "Glx_close: dm_vars");
   rt_vls_free(&pathName);
   free(ref);
 }
@@ -1298,7 +1292,7 @@ int		noblock;
    events like Expose and ConfigureNotify.
 */
 int
-Glx_checkevents(clientData, eventPtr)
+Glx_doevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
@@ -2504,52 +2498,52 @@ Glx_dm(argc, argv)
 int	argc;
 char	**argv;
 {
-	struct rt_vls	vls;
+  struct rt_vls	vls;
 
-	if( !strcmp( argv[0], "set" )){
-	  rt_vls_init(&vls);
-	  if( argc < 2 )  {
-	    /* Bare set command, print out current settings */
+  if( !strcmp( argv[0], "set" )){
+    rt_vls_init(&vls);
+    if( argc < 2 )  {
+      /* Bare set command, print out current settings */
 #ifdef MULTI_ATTACH
-	    rt_structprint("dm_4d internal variables", Glx_vparse, (CONST char *)&mvars );
+      rt_structprint("dm_4d internal variables", Glx_vparse, (CONST char *)&mvars );
 #else
-	    rt_structprint("dm_4d internal variables", Glx_vparse, (char *)0 );
+      rt_structprint("dm_4d internal variables", Glx_vparse, (char *)0 );
 #endif
-	    rt_log("%s", rt_vls_addr(&vls) );
-	  } else if( argc == 2 ) {
-	    rt_vls_name_print( &vls, Glx_vparse, argv[1], (CONST char *)&mvars );
-	    rt_log( "%s\n", rt_vls_addr(&vls) );
-	  } else {
-	    rt_vls_printf( &vls, "%s=\"", argv[1] );
-	    rt_vls_from_argv( &vls, argc-2, argv+2 );
-	    rt_vls_putc( &vls, '\"' );
-	    rt_structparse( &vls, Glx_vparse, (char *)&mvars);
-	  }
-	  rt_vls_free(&vls);
-	  return CMD_OK;
-	}
+      rt_log("%s", rt_vls_addr(&vls) );
+    } else if( argc == 2 ) {
+      rt_vls_name_print( &vls, Glx_vparse, argv[1], (CONST char *)&mvars );
+      rt_log( "%s\n", rt_vls_addr(&vls) );
+    } else {
+      rt_vls_printf( &vls, "%s=\"", argv[1] );
+      rt_vls_from_argv( &vls, argc-2, argv+2 );
+      rt_vls_putc( &vls, '\"' );
+      rt_structparse( &vls, Glx_vparse, (char *)&mvars);
+    }
+    rt_vls_free(&vls);
+    return CMD_OK;
+  }
 
-	if( !strcmp( argv[0], "mouse" )){
-	  int up;
-	  int xpos;
-	  int ypos;
+  if( !strcmp( argv[0], "mouse" )){
+    int up;
+    int xpos;
+    int ypos;
 
-	  if( argc < 4){
-	    rt_log("dm: need more parameters\n");
-	    rt_log("mouse 1|0 xpos ypos\n");
-	    return CMD_BAD;
-	  }
+    if( argc < 4){
+      rt_log("dm: need more parameters\n");
+      rt_log("mouse 1|0 xpos ypos\n");
+      return CMD_BAD;
+    }
 
-	  up = atoi(argv[1]);
-	  xpos = atoi(argv[2]);
-	  ypos = atoi(argv[3]);
-	  rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
-			up, irisX2ged(xpos), irisY2ged(ypos));
-	  return CMD_OK;
-	}
-
-	rt_log("dm: bad command - %s\n", argv[0]);
-	return CMD_BAD;
+    up = atoi(argv[1]);
+    xpos = atoi(argv[2]);
+    ypos = atoi(argv[3]);
+    rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
+		  up, irisX2ged(xpos), irisY2ged(ypos));
+    return CMD_OK;
+  }
+  
+  rt_log("dm: bad command - %s\n", argv[0]);
+  return CMD_BAD;
 }
 
 void
@@ -2571,12 +2565,13 @@ void
 glx_var_init()
 {
   dm_vars = (char *)rt_malloc(sizeof(struct glx_vars),
-					    "glx_vars");
+					    "glx_var_init: glx_vars");
   bzero((void *)dm_vars, sizeof(struct glx_vars));
   devmotionnotify = LASTEvent;
   devbuttonpress = LASTEvent;
   devbuttonrelease = LASTEvent;
 }
+
 
 struct dm_list *
 get_dm_list(window)
