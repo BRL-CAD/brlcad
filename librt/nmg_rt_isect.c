@@ -40,11 +40,7 @@ point_t plane_pt;
 {
 	FILE *fd;
 	char name[25];
-	char buf[80];
 	long *b;
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	struct vertexuse *vu;
 
 	NMG_CK_FACEUSE(fu);
 	
@@ -84,7 +80,6 @@ point_t plane_pt;
 {
         FILE *fd;
         char name[25];
-        char buf[80];
 	long *b;
 	point_t min_pt, max_pt;
 	int i;
@@ -197,8 +192,6 @@ struct ray_data *rd;
 struct hitmiss *newhit;
 {
 	struct hitmiss *a_hit;
-	struct faceuse *fu;
-	struct vertexuse *vu;
 
 	RT_LIST_MAGIC_SET(&newhit->l, NMG_RT_HIT_MAGIC);
 
@@ -280,8 +273,125 @@ struct vertexuse *vu_p;
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 
-	return myhit;
+ 	return myhit;
 }
+
+/*
+ * Support routine for vertex_neighborhood()
+ *
+ */
+static double
+get_pole_dist_to_face(rd, vu,
+	Pole, Pole_prj_pt, Pole_dist,
+	pointA, leftA, pointB, leftB, polar_height_vect)
+struct ray_data *rd;
+struct vertexuse *vu;
+point_t Pole;
+point_t Pole_prj_pt;
+double *Pole_dist;
+point_t pointA;
+vect_t leftA;
+point_t pointB;
+vect_t leftB;
+vect_t polar_height_vect;
+{
+	vect_t pca_to_pole_vect;
+	vect_t VtoPole_prj;
+	point_t pcaA, pcaB;
+	double distA, distB;
+	int code, status;
+
+
+
+
+/* find the points of closest approach
+ *  There are six distinct return values from rt_dist_pt3_lseg3():
+ *
+ *    Value	Condition
+ *    	-----------------------------------------------------------------
+ *	0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
+ *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
+ *	1	P is within tolerance of point A.  *dist = 0, pca=A.
+ *	2	P is within tolerance of point B.  *dist = 0, pca=B.
+ *
+ *	3	P is to the "left" of point A.  *dist=|P-A|, pca=A.
+ *	4	P is to the "right" of point B.  *dist=|P-B|, pca=B.
+ *	5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
+ */
+	code = rt_dist_pt3_lseg3( &distA, pcaA, vu->v_p->vg_p->coord, pointA,
+			Pole_prj_pt, rd->tol );
+	if (code < 3) {
+		/* Point is on line */
+		*Pole_dist = MAGNITUDE(polar_height_vect);
+		return;
+	}
+
+	status = code << 4;
+	code = rt_dist_pt3_lseg3( &distB, pcaB, vu->v_p->vg_p->coord, pointB,
+			Pole_prj_pt, rd->tol );
+	if (code < 3) {
+		/* Point is on line */
+		*Pole_dist = MAGNITUDE(polar_height_vect);
+		return;
+	}
+
+	status |= code;
+
+	/*	  Status
+	 *	codeA CodeB
+	 *	 3	3	Do the Tanenbaum patch thing
+	 *	 3	4	This should not happen.
+	 *	 3	5	compute dist from pole to pcaB
+	 *	 4	3	This should not happen.
+	 *	 4	4	This should not happen.
+	 *	 4	5	This should not happen.
+	 *	 5	3	compute dist from pole to pcaA
+	 *	 5	4	This should not happen.
+	 *	 5	5	pick the edge with smallest "dist"
+	 *	 		and compute pole-pca distance.
+	 */
+
+	switch (status) {
+	case 0x35: /* compute dist from pole to pcaB */
+		VSUB2(pca_to_pole_vect, pcaB, Pole);
+		break;
+	case 0x53: /* compute dist from pole to pcaA */
+		VSUB2(pca_to_pole_vect, pcaA, Pole);
+		break;
+	case 0x55:/* pick the edge with smallest "dist"
+		   * and compute pole-pca distance.
+		   */
+		if (distA < distB) {
+			VSUB2(pca_to_pole_vect, pcaA, Pole);
+		} else {
+			VSUB2(pca_to_pole_vect, pcaB, Pole);
+		}
+		break;
+	case 0x33:/* Do the Tanenbaum algorithm. */
+		VSUB2(VtoPole_prj, Pole_prj_pt, vu->v_p->vg_p->coord);
+		if (VDOT(leftA, VtoPole_prj) > VDOT(leftB, VtoPole_prj)) {
+			VSUB2(pca_to_pole_vect, pcaA, Pole);
+		} else {
+			VSUB2(pca_to_pole_vect, pcaB, Pole);
+		}
+		break;
+	case 0x34: /* fallthrough */
+	case 0x54: /* fallthrough */
+	case 0x43: /* fallthrough */
+	case 0x44: /* fallthrough */
+	case 0x45: /* fallthrough */
+	default:
+		rt_log("%s %d: So-called 'Impossible' status codes\n",
+			__FILE__, __LINE__);
+		rt_bomb("Pretending NOT to bomb\n");
+		break;
+	}
+
+	*Pole_dist = MAGNITUDE(pca_to_pole_vect);		
+
+	return;
+}
+
 
 /*	V E R T E X _ N E I G H B O R H O O D
  *
@@ -289,19 +399,41 @@ struct vertexuse *vu_p;
  *	the NMG both before and after hitting the vertex.
  *
  *
- *	There is a conceptual sphere about the vertex.  The point where the
- *	ray enters the sphere is called the "North Pole" and the point where
- *	it exits the sphere is called the "South Pole"  
+ *	There is a conceptual sphere about the vertex.  For reasons associated
+ *	with tolerancing, the sphere has a radius equal to the magnitude of
+ *	the maximum dimension of the NMG bounding RPP.
+ *
+ *	The point where the ray enters this sphere is called the "North Pole"
+ *	and the point where it exits the sphere is called the "South Pole"  
  *
  *	For each face which uses this vertex we compute 2 "distance" metrics:
  *
  *	project the "north pole" and "south pole" down onto the plane of the
- *	face.
+ *	face:
  *
- *		XXX If necessary expand the sphere until the projections for
- *			all faces are no longer within tolerance of the
- *			vertex. 
- *		XXX what about rays (nearly) perpendicular to a face?
+ *
+ *
+ *			    		    /
+ *				  	   /
+ *				     	  /North Pole
+ *				     	 / |
+ *			Face Normal  ^	/  |
+ *			 	     | /   | Projection of North Pole
+ *	Plane of face	    	     |/    V to plane
+ *  ---------------------------------*-------------------------------
+ *     Projection of South Pole ^   / Vertex		
+ *	  	       to plane	|  /
+ *			    	| /
+ *			    	|/
+ *			    	/South Pole
+ *			       /
+ *			      /
+ *			     /
+ *			    /
+ *			   /
+ *			  /
+ *			|/_
+ *			Ray
  *
  *	If the projected polar point is inside the two edgeuses at this
  *		vertexuse, then
@@ -325,8 +457,6 @@ struct vertexuse *vu_p;
  *	If the north (south) pole is "outside" the plane of the closest face,
  *	then the ray state is "outside" before (after) the ray hits the
  *	vertex.
- *
- *
  */
 static void
 vertex_neighborhood(rd, vu_p, myhit)
@@ -336,21 +466,36 @@ struct hitmiss *myhit;
 {
 	struct vertexuse *vu;
 	struct faceuse *fu;
-	struct nmg_ptbl ftbl;
+	point_t	South_Pole, North_Pole;
+	struct faceuse *North_fu, *South_fu;
+	point_t North_pl_pt, South_pl_pt;
+	double North_dist, South_dist;
+	double North_min, South_min;
+	double cos_angle;
+	vect_t VtoPole;
 	double scalar_dist;
-	vect_t north_vect;	/* vector from vertex to North_Pole */
-	vect_t norm, anti_norm;
-	point_t	North_pl_pt, South_pl_pt, South_Pole, North_Pole;
-	point_t min_pt, max_pt;
 	double dimen, t;
+	point_t min_pt, max_pt;
 	int i;
+	vect_t norm, anti_norm;
+	vect_t polar_height_vect;
+	vect_t leftA, leftB;
+	point_t pointA, pointB;
+	struct edgeuse *eu;
+	vect_t edge_vect;
 
 	NMG_CK_VERTEXUSE(vu_p);
 	NMG_CK_VERTEX(vu_p->v_p);
 	NMG_CK_VERTEX_G(vu_p->v_p->vg_p);
 
-	(void)nmg_tbl( &ftbl, TBL_INIT, (long *)NULL );
+	nmg_model_bb( min_pt, max_pt, nmg_find_model( vu_p->up.magic_p ));
+	for (dimen= -MAX_FASTF,i=3 ; i-- ; ) {
+		t = max_pt[i]-min_pt[i];
+		if (t > dimen) dimen = t;
+	}
 
+  	VJOIN1(North_Pole, vu_p->v_p->vg_p->coord, -dimen, rd->rp->r_dir);
+	VJOIN1(South_Pole, vu_p->v_p->vg_p->coord, dimen, rd->rp->r_dir);
 
     	/* There is a conceptual sphere around the vertex
 	 * The max dimension of the bounding box for the NMG defines the size.
@@ -358,15 +503,8 @@ struct hitmiss *myhit;
     	 *  called the North Pole, and the point where it
     	 *  exits is called the South Pole.
     	 */
-	nmg_model_bb( min_pt, max_pt, nmg_find_model( vu_p->up.magic_p ));
-	for (dimen= -MAX_FASTF,i=3 ; i-- ; ) {
-		t = max_pt[i]-min_pt[i];
-		if (t > dimen) dimen = t;
-	}
 
-	VJOIN1(North_Pole, vu_p->v_p->vg_p->coord, -dimen, rd->rp->r_dir);
-	VJOIN1(South_Pole, vu_p->v_p->vg_p->coord, dimen, rd->rp->r_dir);
-
+	South_min = North_min = MAX_FASTF;
 
 	/* for every use of this vertex */
 	for ( RT_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd) ) {
@@ -375,57 +513,97 @@ struct hitmiss *myhit;
 		 */
 		fu = nmg_find_fu_of_vu( vu );
 		if (fu && *vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
-		    fu->orientation == OT_SAME &&
-		    nmg_tbl(&ftbl, TBL_INS_UNIQUE, &fu->l.magic) < 0 ) {
+		    fu->orientation == OT_SAME ) {
 
-		    	/* The distance from each "Pole Point" to the faceuse
-		    	 *  is the commodity in which we are interested.
-		    	 *
-		    	 * A pole point is projected
-		    	 * This is either the distance to the plane (if the
-		    	 * projection of the point into the plane lies within
-		    	 * the angle of the two edgeuses at this vertex) or
-		    	 */
-
-/*
- *
- *
- *		    		    /
- *			  	   /
- *			     	  /North Pole
- *			     	 / |
- *		Face Normal  ^	/  |
- *		 	     | /   |
- *		    	     |/    V Projection of North Pole
- *  Projection of    	     *			 to plane
- *  South Pole to plane ^   / Vertex
- *		    	|  /
- *		    	| /
- *		    	|/
- *		    	/South Pole
- *		       /
- *		     |/
- *		      -
- *		    Ray
- *
- *
- */
-
-		    	NMG_GET_FU_NORMAL( norm, fu );
-		    	VREVERSE(anti_norm, norm);
-
-		    	/* project the north pole onto the plane */
-		    	VSUB2(north_vect, vu->v_p->vg_p->coord, North_Pole);
-			scalar_dist = VDOT(norm, north_vect);
-
-		    	/* project the poles down onto the plane */
+			/* The distance from each "Pole Point" to the faceuse
+			 *  is the commodity in which we are interested.
+			 *
+			 * A pole point is projected
+			 * This is either the distance to the plane (if the
+			 * projection of the point into the plane lies within
+			 * the angle of the two edgeuses at this vertex) or
+			 * we take the distance from the pole to the PCA of
+			 * the closest edge.
+			 */
+			NMG_GET_FU_NORMAL( norm, fu );
+			VREVERSE(anti_norm, norm);
+		
+			/* project the north pole onto the plane */
+			VSUB2(polar_height_vect, vu->v_p->vg_p->coord, North_Pole);
+			scalar_dist = VDOT(norm, polar_height_vect);
+		
+			/* project the poles down onto the plane */
 			VJOIN1(North_pl_pt, North_Pole, scalar_dist, anti_norm);
 			VJOIN1(South_pl_pt, South_Pole, scalar_dist, norm);
+		
+			/* Find points on sphere in direction of edges
+			 * (away from vertex along edge)
+			 */
+			do
+				eu = RT_LIST_PNEXT_CIRC(edgeuse, vu->up.eu_p);
+			while (eu->vu_p->v_p == vu->v_p);
+			nmg_find_eu_leftvec(leftA, eu);
+			VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord,
+				vu->v_p->vg_p->coord);
+			VUNITIZE(edge_vect);
+			VJOIN1(pointA, vu->v_p->vg_p->coord, dimen, edge_vect)
+
+			do
+				eu = RT_LIST_PLAST_CIRC(edgeuse, vu->up.eu_p);
+			while (eu->vu_p->v_p == vu->v_p);
+			nmg_find_eu_leftvec(leftB, eu);
+			VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord,
+				vu->v_p->vg_p->coord);
+			VUNITIZE(edge_vect);
+			VJOIN1(pointB, vu->v_p->vg_p->coord, dimen, edge_vect)
 
 
+		    	/* find distance of face to North Pole */
+			get_pole_dist_to_face(rd, vu,
+				North_Pole, North_pl_pt, &North_dist,
+				pointA, leftA, pointB, leftB,
+				polar_height_vect);
+
+			if (North_min > North_dist) {
+				North_min = North_dist;
+				North_fu = fu;
+			}
+
+
+		    	/* find distance of face to South Pole */
+			get_pole_dist_to_face(rd, vu,
+				South_Pole, South_pl_pt, &South_dist,
+				pointA, leftA, pointB, leftB,
+				polar_height_vect);
+
+			if (South_min > South_dist) {
+				South_min = South_dist;
+				South_fu = fu;
+			}
 		}
 	}
-	(void)nmg_tbl( &ftbl, TBL_FREE, (long *)NULL );
+
+	NMG_GET_FU_NORMAL( norm, North_fu );
+	VSUB2(VtoPole, North_Pole, vu->v_p->vg_p->coord);
+	cos_angle = VDOT(norm, VtoPole);
+	if (RT_VECT_ARE_PERP(cos_angle, rd->tol))
+		myhit->in_out |= NMG_RAY_STATE_ON << 4;
+	else if (cos_angle > 0.0)
+		myhit->in_out |= NMG_RAY_STATE_OUTSIDE << 4;
+	else
+		myhit->in_out |= NMG_RAY_STATE_INSIDE << 4;
+
+
+	NMG_GET_FU_NORMAL( norm, South_fu );
+	VSUB2(VtoPole, South_Pole, vu->v_p->vg_p->coord);
+	cos_angle = VDOT(norm, VtoPole);
+	if (RT_VECT_ARE_PERP(cos_angle, rd->tol))
+		myhit->in_out |= NMG_RAY_STATE_ON;
+	else if (cos_angle > 0.0)
+		myhit->in_out |= NMG_RAY_STATE_OUTSIDE;
+	else
+		myhit->in_out |= NMG_RAY_STATE_INSIDE;
+
 }
 
 
@@ -469,8 +647,15 @@ int status;
 
 	/* XXX need to compute neighborhood of vertex so that ray
 	 * can be classified as in/on/out before and after the vertex.
+	 *
 	 */
 	vertex_neighborhood(rd, vu_p, myhit);
+
+	/* XXX we re really should temper the results of vertex_neighborhood()
+	 * with the knowledge of "status"
+	 */
+
+
 
 	hit_ins(rd, myhit);
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -499,7 +684,6 @@ struct ray_data *rd;
 struct vertexuse *vu_p;
 {
 	struct hitmiss *myhit;
-	vect_t	v;
 	double ray_vu_dist;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
