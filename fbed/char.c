@@ -78,13 +78,12 @@ dochar( c, xpos, ypos, odd )
 int c;
 int xpos, ypos, odd;
 	{
-	register int    i, j, k;
+	register int    i, j;
 	int		base;
 	int     	totwid = width;
 	int     	up, down;
 	static float	resbuf[BUFFSIZ];
-	static RGBpixel	fbline[BUFFSIZ * BUFFSIZ / 4],
-			fbbuff[BUFFSIZ * BUFFSIZ / 4];
+	static RGBpixel	fbline[BUFFSIZ];
 
 	/* Read in the character bit map, with two blank lines on each end. */
 	for (i = 0; i < 2; i++)
@@ -100,18 +99,11 @@ int xpos, ypos, odd;
 	/* Initial base line for filtering depends on odd flag. */
 	base = (odd ? 1 : 2);
 
-	/* Read in the area of the Frame Buffer for filtering */
-	fbbget(	xpos,
-		xpos + (totwid + 3) - 2,
-		ypos - up,
-		ypos + down + 3,
-		fbbuff
-		);
 
 	/* Produce a RGBpixel buffer from a description of the character and
 	 	the read back data from the frame buffer for anti-aliasing.
 	 */
-	for (i = height + base, k = 0; i >= base; i--, k++)
+	for (i = height + base; i >= base; i--)
 		{
 		squash(	filterbuf[i - 1],	/* filter info */
 			filterbuf[i],
@@ -119,29 +111,24 @@ int xpos, ypos, odd;
 			resbuf,
 			totwid + 4
 			);
+		fb_read( fbp, xpos, ypos - down + i, fbline, totwid+3);
 		for (j = 0; j < (totwid + 3) - 1; j++)
-			{	register int	h = (k*((totwid+3)-1))+j;
-			fbline[h][RED] =
+			{
+			fbline[j][RED] =
 				(int)(paint[RED]*resbuf[j]+(1-resbuf[j]) *
-		    		(fbbuff[h][RED] & 0377))
+		    		(fbline[j][RED] & 0377))
 			 	& 0377;
-			fbline[h][GRN] =
+			fbline[j][GRN] =
 				(int)(paint[GRN]*resbuf[j]+(1-resbuf[j]) *
-				(fbbuff[h][GRN] & 0377))
+				(fbline[j][GRN] & 0377))
 				& 0377;
-			fbline[h][BLU] =
+			fbline[j][BLU] =
 				(int)(paint[BLU]*resbuf[j]+(1-resbuf[j]) *
-				(fbbuff[h][BLU] & 0377))
+				(fbline[j][BLU] & 0377))
 				& 0377;
 			}
+		fb_write( fbp, xpos, ypos - down + i, fbline,  totwid+3 );
 		}
-	/* Send the character data back to be read into the frame buffer */
-	fbbput( xpos,
-		xpos + (totwid + 3) - 2,
-		ypos - up,
-		ypos - up + k - 1,
-		fbline
-		);
 	return;
 	}
 
