@@ -17,20 +17,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 		SCCS archive:	/v/src/libcursor/s.libcursor.c
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef BSD
-#	include <strings.h>
+
+#ifdef USE_STRING_H
+#include <string.h>
 #else
-#	include <string.h>
+#include <strings.h>
 #endif
+
 #ifndef CRAY
-#	if defined( VLDSYSV )
-#		include <sys/_ioctl.h>
-#	else
-#		include <sys/ioctl.h>
-#		define _winsize winsize	/* For compat with _ioctl.h. */
-#	endif
+#include <sys/ioctl.h>
+#define _winsize winsize	/* For compat with _ioctl.h. */
 #endif
+
 #define TBUFSIZ		1024
 #define MAX_TERM_LEN	80
 
