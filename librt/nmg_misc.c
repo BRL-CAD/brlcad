@@ -10882,3 +10882,35 @@ struct bn_tol *tol;
 	}
 	return( count );
 }
+
+int
+nmg_mv_region_to_model( r, m )
+struct nmgregion *r;
+struct model *m;
+{
+	struct model *m_old;
+	int ret_val;
+
+	NMG_CK_REGION( r );
+	NMG_CK_MODEL( m );
+
+	if( r->m_p == m )
+		return( 0 );
+
+	m_old = r->m_p;
+
+	BU_LIST_DEQUEUE( &r->l );
+
+	if( BU_LIST_IS_EMPTY( &m_old->r_hd ) )
+		ret_val = 1;
+	else
+		ret_val = 0;
+
+	BU_LIST_APPEND( &m->r_hd, &r->l );
+
+	r->m_p = m;
+
+	nmg_m_reindex( m, 0 );
+
+	return( ret_val );
+}
