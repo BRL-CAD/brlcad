@@ -29,6 +29,7 @@ struct	menu_item  {
 	int	menu_arg;
 };
 
+
 #define MENU_NULL		((struct menu_item *)0)
 	
 #define NMENU	3
@@ -36,3 +37,6 @@ struct	menu_item  {
 #define MENU_L1		0	/* top-level solid-edit menu */
 #define MENU_L2		1	/* second-level menu (unused) */
 #define MENU_GEN	2	/* general features (mouse buttons) */
+
+extern struct menu_item *menu_array[NMENU];
+extern int cur_menu, cur_item, menuflag;
