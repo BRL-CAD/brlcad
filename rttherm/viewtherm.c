@@ -728,6 +728,8 @@ char	*framename;
 			"struct scanline[height]" );
 	}
 
+	/* Check for existing file and checkpoint-restart? */
+
 	rt_log("Dynamic scanline buffering\n");
 	for( i=0; i<height; i++ )
 		scanline[i].sl_left = width;
