@@ -49,6 +49,21 @@ typedef	int	Cast;
 #	define	CPP_OPTIONS	"-D__stardent=1"
 #endif
 
+#if defined(sun) && defined(sparc) && defined(ATT)
+	/* SunOS 5 with unbundled compilers */
+#	undef __STDC__
+#	define __STDC__ 1	/* hack! */
+#	define	CPP		"cc"
+	/*
+	 * WARNING:  Make sure /opt/SUNWspro/bin is ahead of /usr/ucb
+	 * in your path.
+	 * /opt/SUNWspro/bin/cc -E puts unwanted spaces around
+	 * substitutions so fall back to old SunC mode
+	 */
+#	define	CPP_OPTIONS	"-E"
+#	define	CPP_OPTIONS2	"-Xs"
+#endif
+
 /*
  *  The SGI story:
  *	On Irix 3, "cc main.c" does only sgi, and not __sgi.
