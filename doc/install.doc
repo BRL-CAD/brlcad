@@ -1,11 +1,12 @@
 .\" $Header$
-.\" tbl install.doc | troff -t -ms | ...
+.\" tbl install.doc | troff -t -ms | catimp -P imt1
 .TL
+PRELIMINARY
 Installing the BRL-CAD Package
 .br
-Release 3.5
+Release 4.0
 .sp
-19-May-1989
+23-July-1991
 .AU
 Michael John Muuss
 .AI
@@ -25,8 +26,9 @@ the distribution tape.
 GOING QUICKLY
 .PP
 This document exists to help you install the BRL-CAD Package. With
-approximately 150,000 lines of source code, and support for over a dozen
-systems, the configuration is important. It would be best if you read
+approximately 280,000 lines of source code, and support for over a dozen
+hardware platforms, the configuration is important.
+It would be best if you read
 these directions first. However, it would be quite understandable if
 you were more eager to press ahead than to read this long paper.
 If you choose to start compiling now,
@@ -111,14 +113,14 @@ MTYPE	Hardware	Software	Framebuffer	MGED
 _
 fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
 c1	Convex C1	UNIX 6.2.32.2	net	-
-xmp	Cray X-MP	UNICOS 4.0.7	net	-
+xmp	Cray X-MP	UNICOS 5.1.11	net,X11	X11
 cr2	Cray-2	UNICOS 4.0.7	net,X11	X11
-vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	mg, vg
-sel	Gould PN6080, PN9080	UTX/32 Rel 2.0	net	-
+vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	-
+sel	Gould PN6080, PN9080	UTX/32 Rel 2.0	net,X11	X11
 pyr	Pyramid 9820	OSx Version 4.1	net	-
 3d	SGI 3030	Version 3.5, 3.6	sgi, net	sgi
-4d	SGI 4D	Version 3.1+4Sight	sgi, net	sgi
-sun3	Sun-3/*	SunOS 3.4	sun, net	sun
+4d	SGI 4D	Irix 3.2	sgi, net	sgi
+sun3	Sun-3/*	SunOS 3.4	sun,net,X11	sun,X11
 sun4	Sun-4/*	SunOS 4.0	sun, net	sun
 .TE
 .IP b)
@@ -137,9 +139,12 @@ eta	ETA-10	System V
 vax	DEC VAX-11	Berkeley 4.1 BSD
 3d	SGI 3030	Version 3.4 (TCP or XNS)
 stl	Stellar	System V
-apollo	Apollo	UNIX
+apollo	Apollo	SR10
 aux	Apple Mac II	AUX 1.0
+next	NeXT	NeXT 2.0
 .TE
+These systems are not considered ``supported'', but should work with
+little or no effort.
 .IP c)
 Porting this software to a machine which is not
 in one of the ``supported'' lists above
@@ -182,18 +187,14 @@ l l.
 dm-ir	SGI 2400, 3030
 dm-4d	SGI 4-D
 dm-sun	SUN 3.2 Pixwin
-dm-vg	Vector General 3300
-dm-mg	Megatek 7250
 dm-rat	Raster Tech One/180,380
 dm-rat80	Raster Tech One/80
-dm-ps300	E&S Picture System 300
-dm-X	X Window System (X11R3)
-dm-X10	X Window System (X10R4)
+dm-X	X Window System (X11R4)
 .TE
 .NH 1
 LOADING THE SOFTWARE
 .IP 1)
-Find a disk with about 60 Mbytes of free space that you can use.
+Find a disk with about 100 Mbytes of free space that you can use.
 The BRL-CAD Package is distributed in source code form only,
 so you will need enough space to simultaneously store
 the source material, documentation, binary files, and test images.
@@ -209,6 +210,9 @@ such as are used on Sun and SGI workstations,
 be certain that the
 arrow in the upper left corner of the cartridge is pointing to the "SAFE"
 position.
+For the Exabyte 8mm style tape cartridges,
+be certain that the write protect tab has been slid so that the red portion
+is visible.
 .IP 3)
 Change directory to the place where you want the source code to go, and
 run these two commands:
@@ -272,6 +276,10 @@ read the paper "Understanding the Preparation and Analysis of Solid
 Models", located in "papers/solid-models".
 A fairly disorganized and occasionally incomplete collection of
 often helpful tidbits exists in the "doc/" directory.
+The most useful of these are the release notes in "doc/rel4.0.doc";
+this is a collection of E-mail traffic concerning the developments
+that lead up to the current release.
+Release notes for earlier releases are also provided.
 .sp
 .TS
 center;
@@ -283,7 +291,7 @@ rt	A ray-tracing lighting model, for rendering
 lgt	Another lighting model, for rendering
 mged	A solid-model editor
 conv	ASCII/binary database converters
-rfbd	Remote network frame-buffer daemon
+fbserv	Remote network frame-buffer server
 util	Zillions of image-handling utilities and tools
 fbed	Frame-buffer image editor
 vdeck	Convert mged models to GIFT-format card decks.
@@ -386,7 +394,7 @@ to \fBls\fR(1).
 This multi-machine configuration
 is the strategy used at BRL, where a single fileserver
 holds the master copy of the source code, and provides NFS
-service for Goulds, Alliants, Convexes, Sun-3s, Sun-4s, SGI 3-Ds and SGI-4Ds.
+service for Goulds, Alliants, Crays, Convexes, Sun-3s, Sun-4s, SGI-3Ds and SGI-4Ds.
 Having this capability makes it much easier to keep consistent
 binaries on a wide variety of machines, and minimizes "out of phase"
 errors between different members of the development group.
@@ -470,14 +478,17 @@ to be placed in a location generally accessible to you, before
 the BRL-CAD sources can be compiled.
 .PP
 A full production installation done with \fBcake install\fR
-will require three directories for installing the compiled software in.
-These three directories are known symbolicly as BINDIR, LIBDIR, and ETCDIR.
+will require five directories for installing the compiled software in.
+These directories are known symbolicly as BINDIR, LIBDIR, ETCDIR, MANDIR, and INCDIR.
 BINDIR is where executable ("binary") programs and scripts are installed,
 LIBDIR is where all the libraries are installed, for you to use when
 writing additional software for this environment, and
 ETCDIR is where a few additional ("etc") programs,
 such as network server daemons,
 are installed.
+MANDIR is where the manual page subdirectories are installed.
+INCDIR is where all the include files are installed,
+so that programs which you write can reference them.
 A non-production installation only requires that BINDIR exist.
 LIBDIR and ETCDIR are made the same as BINDIR, in case an accidental
 \fBcake install\fR is performed.
@@ -496,7 +507,7 @@ If you don't have some kind of "bin" directory yet, run:
 .ft B
 .sp .5
 .nf
-	cd
+	cd		# Go to your HOME directory
 	mkdir bin
 	cd bin
 	pwd
@@ -509,9 +520,9 @@ directory (as printed by \fBpwd\fR above)
 was "/a/d/mike/bin".
 Use this path string as BINDIR.
 .PP
-Using the full path name of your "bin" directory,
+Using the \fIfull\fR path name of your "bin" directory,
 update the definitions for BINDIR,
-LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
+LIBDIR, MANDIR, INCDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
 "cray.sh", "cake/Makefile", and "cakeaux/Makefile".
 The shell script "newbindir.sh" can be used to simplify this process
 for you;  just run it with the first argument being
@@ -527,12 +538,11 @@ to make these directories, or have a superuser make them for you:
 .ft B
 .nf
 .sp .5
-	mkdir /usr/include/brlcad
 	mkdir /usr/brlcad
 	cd /usr/brlcad
-	mkdir bin lib etc
-	chmod 775 bin lib etc
-	chown YOURNAME bin lib etc
+	mkdir bin lib etc include man vfont
+	chmod 775 bin lib etc include man vfont
+	chown YOURNAME bin lib etc include man vfont
 .sp .5
 .fi
 .ft R
@@ -785,13 +795,18 @@ installing the new product.
 For example, an existing version of mged would be renamed
 /usr/brlcad/bin/mged.bak before the new version is installed
 as /usr/brlcad/bin/mged.
+If this behavior is not desired, perhaps because of limited disk space,
+the rule "cake install-nobak" can be used instead.
 .NH 2
 Installing Network Framebuffer Service
 .PP
 If your system reported HAS_TCP=1, then you have TCP/IP networking,
 and you have the option of
 offering in-bound remote framebuffer service via
-\fBrfbd\fR, the remote-framebuffer daemon.
+\fBfbserv\fR, the framebuffer server and remote-framebuffer daemon.
+(Note that in previous releases, this function was provided by \fBrfbd\fR.
+This release continues to provide an \fBrfbd\fR program, but you should
+switch to \fBfbserv\fR).
 If you wish to do this, you should be sure that
 the IF_REMOTE capability has been selected for \fBlibfb\fR.
 (In the supported configurations, it is).
@@ -800,26 +815,26 @@ To define the service,
 add this line to /etc/services:
 .sp .5
 .ft B
-remotefb     5558/tcp       # Remote Frame Buffer
+remotefb     5558/tcp       # BRL Remote Frame Buffer
 .ft R
 .PP
 If your system does not support \fBinetd\fR(8),
-\fBrfbd\fR should be started in /etc/rc.local.
+\fBfbserv\fR should be started in /etc/rc.local.
 If your system uses the Sun style of \fBinetd\fR(8),
-\fBrfbd\fR must be started with this /etc/servers entry:
+\fBfbserv\fR must be started with this /etc/servers entry:
 .sp .5
 .nf
 .ft B
-remotefb tcp    /usr/brlcad/etc/rfbd
+remotefb tcp    /usr/brlcad/bin/fbserv
 .ft R
 .fi
 .PP
 If your system supports the Berkeley 4.3 BSD style of \fBinetd\fR(8),
-\fBrfbd\fR must be started with this /etc/inetd.conf entry:
+\fBfbserv\fR must be started with this /etc/inetd.conf entry:
 .sp .5
 .nf
 .ft B
-remotefb stream tcp     nowait  nobody  /usr/brlcad/etc/rfbd       rfbd
+remotefb stream tcp     nowait  nobody  /usr/brlcad/bin/fbserv       fbserv
 .ft R
 .fi
 .sp .5
@@ -846,7 +861,7 @@ you will need to run these additional commands:
 .fi
 .sp .5
 This will allow
-.B rfbd
+.B fbserv
 to start the 4Sight window system when a remote connection is made.
 .NH 2
 Special Kernel/Shared Memory Considerations on all SGI systems
@@ -936,7 +951,7 @@ HAS_TCP=1, otherwise define HAS_TCP=0.
 Extending the network support for non-TCP environments,
 or TCP implementations that use some other interface,
 will probably only require changes to \fBlibfb\fR(3)
-and \fBrfbd\fR(1),
+and \fBfbserv\fR(1),
 and will not be elaborated on here.
 Check how you did by running:
 .ft B
@@ -949,7 +964,7 @@ and making any necessary corrections.
 If \fBmachinetype.sh\fR reports that HAS_TCP=0, ie, 
 this is a machine without TCP network capability,
 the \fBgen.sh\fR script will automaticly delete
-\fBrfbd\fR and \fBlibpkg\fR from the PRODUCTS list,
+\fBfbserv\fR and \fBlibpkg\fR from the PRODUCTS list,
 as they serve no purpose in a non-networked environment.
 .NH 2
 Cakefile.defs
@@ -1491,44 +1506,6 @@ With a little luck, this should result in working software.
 .NH 2
 SILICON GRAPHICS 4-D WARNINGS
 .PP
-On an SGI 4-D, warning messages from the compiler of the form:
-.sp .5
-.nf
-.ft B
-uopt: Warning: main: parts of procedure have no exit point
-.ft R
-.fi
-.sp .5
-represent a warning from SGI's compiler that can safely be ignored;
-it is intended to signal infinite loops, but sometimes cries "wolf".
-.PP
-Presently, it is not possible to open a graphics window unless a
-user is logged in on the console.
-This adversely affects the usefulness of the network frame buffer daemon
-\fBrfbd\fR and remote shell invocations of \fBpl-sgi\fR.
-The frame buffer library contains optional code to automatically start up the
-window system (``4Sight'') if no user is logged in;  this uses the
-ps_open_PostScript() subroutine to check the status of the window system.
-Alas, through IRIX release 3.1C, 4Sight release 1.3, this routine is
-not compatible with the ``shared'' versions of the graphics library.
-Because the shared library results in smaller executable files,
-the default configuration uses shared libraries, and requires that
-you must be logged into the console of the workstation in order to
-obtain a graphics display.
-If you wish to have the automatic behavior, and don't mind the fact that
-the executable files will not be sharable across different 4D models,
-then modify the two \fB#if\ 1\fR statements in the 4D section of
-\fBCakefile.defs\fR to be \fB#if\ 0\fR.
-.PP
-When the software is compiled using the ``shared'' libraries,
-binaries are compatible across the entire 4-D hardware line,
-from personal Iris through the GTX.  However, there is
-one SGI graphics library subroutine that is not properly interfaced
-to the shared library mechanism (ps_open_PostScript()).  Therefore,
-if the \fBrfbd\fR(8) remote frame buffer daemon is to be used,
-the binaries must be model-specific.  Otherwise, the binaries
-can be generic for any 4-D.
-.PP
 There is utterly no support for SGI 4-D machines running SGI software
 releases earlier than 3.0 \(em they don't work well.
 .NH 2
@@ -1561,18 +1538,6 @@ the parent process, where timing data is being collected.
 Presently, there is no known fix, except to re-run the benchmarks
 many times, and only use timing data from runs where the
 ``rt_parallel: PID changed ...'' warning does not occur.
-.PP
-Under C 3.0, which is /bin/cc on XMP UNICOS 4.0 and on Cray-2
-UNICOS 4.0, the \fBlgt\fR program will not compile due to
-a compiler bug:
-.sp .5
-.ft B
-.nf
- * F * :../lgt/hmenu.c: 207: CC058 - Invalid Initialization
-.fi
-.ft R
-Get your site analyst to request the necessary compiler fixes,
-or get C 4.0 or ANSI C.
 .PP
 Ignore these error messags:
 .sp .5
@@ -1713,9 +1678,9 @@ the old library now exists as \fBliborle\fR,
 and all the programs have had an "o" added to their name, e.g.,
 the version of \fBrle-fb\fR which uses the old library is now \fBorle-fb\fR.
 .NH 1
-UPGRADING FROM RELEASE 3.0 to 3.5
+UPGRADING FROM RELEASE 3.0 to 3.7
 .PP
-Release 3.5 is a maintenance release.
+Release 3.7 is a maintenance release.
 Significant effort went into providing good support
 for the full line of SGI 4-D workstations.
 This included making the SGI 4-D
@@ -1735,15 +1700,22 @@ See the file \fBdoc/rel3.1.doc\fR for more details.
 .PP
 There have been no file format changes.
 .NH 1
+UPGRADING FROM RELEASE 3.7 to 4.0
+.PP
+Release 4.0 is a major features release.
+It contains an implementation of Kevin Weiler's n-Manifold Geometry
+capability, which can be used to convert CSG models into faceted
+approximations.
+Note that this software is still experimental in this release, and can only
+operate on very simple cases.
+.PP
+There are lots of new image processing and signal processing tools.
+.NH 1
 WORK IN PROGRES
 .PP
 We are hard at work on a variety of new features, the most significant are:
 .IP (*)
 a substantial package for animation specification and preview,
-.IP (*)
-code to replace the "big-E" command, to convert the CSG model into
-a polygonal approximation, for certain analysis codes, and to drive
-display hardware with fast polygon rendering,
 .IP (*)
 additional primitive types,
 .IP (*)
