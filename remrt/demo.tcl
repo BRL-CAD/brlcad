@@ -266,7 +266,7 @@ proc reconnect {} {
 		if { [ catch { set fds($host) [socket $host 5353] } code ] }  {
 			set fds($host) dead
 			set status($host) "$host not-responding"
-			puts "  $host : $code, skipping"
+			puts "  $host : $code"
 			continue
 		}
 		# fds($host) is now set non-dead, to the actual fd.
