@@ -54,8 +54,6 @@ extern double tran_x;
 extern double tran_y;
 extern double tran_z;
 
-int ignore_scroll_and_menu = 0;
-
 #endif
 
 /*	Degree <-> Radian conversion factors	*/
@@ -117,10 +115,8 @@ char	**argv;
 
 	if (mged_variables.faceplate) {
 
-#ifdef XMGED
 	if(!ignore_scroll_and_menu){
-#endif
-	/*
+        /*
 	 * If mouse press is in scroll area, see if scrolling, and if so,
 	 * divert this mouse press.
 	 */
@@ -154,13 +150,9 @@ char	**argv;
 		}
 		/* Otherwise, fall through */
 	}
-
-#ifdef XMGED
       }
-#endif
+      }
 
-
-    }
 	/*
 	 *  In the best of all possible worlds, nothing should happen
 	 *  when the mouse is not pressed;  this would relax the requirement
