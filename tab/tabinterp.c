@@ -695,7 +695,8 @@ register struct chan	*chp;
 fastf_t			*times;
 {
 	double	d,s;
-	double	u,v;
+	double	u = 0;
+	double	v = 0;
 	double	hi;			/* horiz interval i-1 to i */
 	double	hi1;			/* horiz interval i to i+1 */
 	double	D2yi;			/* D2 of y[i] */
