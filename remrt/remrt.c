@@ -210,7 +210,6 @@ struct frame {
 	double		fr_cpu;		/* CPU seconds used so far */
 	/* Current view */
 	struct vls	fr_cmd;		/* RT options & command string */
-	char		fr_servinit[MAXSERVERS]; /* sent server options & matrix? */
 };
 struct frame FrameHead;
 struct frame *FreeFrame;
@@ -244,7 +243,6 @@ struct servers {
 #define SRST_RESTART	5		/* about to restart */
 #define SRST_CLOSING	6		/* Needs to be closed */
 	struct frame	*sr_curframe;	/* ptr to current frame */
-	int		sr_index;	/* fr_servinit[] index */
 	/* Timings */
 	struct timeval	sr_sendtime;	/* time of last sending */
 	double		sr_l_elapsed;	/* last: elapsed_sec */
@@ -679,13 +677,11 @@ struct pkg_conn *pc;
 	sp->sr_state = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_lump = 32;
-	sp->sr_index = fd;
 	sp->sr_host = ihp;
 
 	/* Clear any frame state that may remain from an earlier server */
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
 		CHECK_FRAME(fr);
-		fr->fr_servinit[sp->sr_index] = 0;
 	}
 }
 
@@ -1059,8 +1055,6 @@ register struct frame *fr;
 	}
 	vls_cat( &fr->fr_cmd, ";" );
 
-	bzero( fr->fr_servinit, sizeof(fr->fr_servinit) );
-
 	fr->fr_start.tv_sec = fr->fr_end.tv_sec = 0;
 	fr->fr_start.tv_usec = fr->fr_end.tv_usec = 0;
 	fr->fr_nrays = 0;
@@ -1410,7 +1404,6 @@ struct timeval	*nowp;
 
 			sp->sr_pc = PKC_NULL;
 			sp->sr_state = SRST_UNUSED;
-			sp->sr_index = -1;
 			sp->sr_host = IHOST_NULL;
 
 			break;
@@ -1547,13 +1540,16 @@ struct timeval		*nowp;
 	}
 
 	/*
-	 *  Provide info about this frame, if this is the first assignment
-	 *  of work from this frame to this server.
+	 *  Send the server the necessary view information about this frame,
+	 *  if the server is not currently working on this frame.
+	 *  Note that the "next" frame may be a frame that the server
+	 *  has worked on before (perhaps due to work requeued when
+	 *  a tardy server was dropped), yet we still must re-send the
+	 *  viewpoint.
 	 */
-	if( fr->fr_servinit[sp->sr_index] == 0 )  {
-		send_matrix( sp, fr );
-		fr->fr_servinit[sp->sr_index] = 1;
+	if( sp->sr_curframe != fr )  {
 		sp->sr_curframe = fr;
+		send_matrix( sp, fr );
 	}
 
 	/* Special handling for the first assignment of each frame */
@@ -3030,10 +3026,6 @@ char	**argv;
 		if( fr->fr_filename )  rt_log("\tfile=%s\n", fr->fr_filename );
 
 		rt_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
-		rt_log("\tservinit: ");
-		for( i=0; i<MAXSERVERS; i++ )
-			rt_log("%d", fr->fr_servinit[i]);
-		rt_log("\n");
 		pr_list( &(fr->fr_todo) );
 		rt_log("\tcmd=%s\n", fr->fr_cmd.vls_str );
 	}
@@ -3067,7 +3059,7 @@ char	**argv;
 	rt_log("Servers:\n");
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		rt_log("  %2d  %s ", sp->sr_index, sp->sr_host->ht_name );
+		rt_log("  %2d  %s ", sp->sr_pc->pkc_fd, sp->sr_host->ht_name );
 		switch( sp->sr_state )  {
 		case SRST_NEW:
 			rt_log("New"); break;
