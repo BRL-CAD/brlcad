@@ -293,3 +293,16 @@ char	**argv;
 	}
 	(void)dmp->dmr_cmd( argc-1, argv+1 );
 }
+
+/*
+ *			 I S _ D M _ N U L L
+ *
+ *  Returns -
+ *	 0	If the display manager goes to a real screen.
+ *	!0	If the null display manager is attached.
+ */
+int
+is_dm_null()
+{
+	return dmp == &dm_Null;
+}
