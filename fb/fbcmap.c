@@ -1,11 +1,9 @@
 /*
  *		F B C M A P . C
  *
- *	Usage:	fbcmap [-h] [flavor]
- *
- *	Write a colormap to a framebuffer.
+ *	Write a built-in colormap to a framebuffer.
  *	When invoked with no arguments, or with a flavor of 0,
- *	the standard ramp color-map is written.
+ *	the standard 1:1 ramp color-map is written.
  *	Other flavors provide interesting alternatives.
  *
  *  Author -
@@ -32,9 +30,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-void	usage();
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+void		usage();
 typedef unsigned char	u_char;
-int hires = 0;
+
+static char	*framebuffer = NULL;
+static int	scr_width = 0;
+static int	scr_height = 0;
+
+
 static ColorMap cmap;
 static int	flavor = 0;
 extern u_char	utah8[], utah9[];	/* defined at end of file */
@@ -66,14 +73,12 @@ char *argv[];
 	int	size;
 	FBIO *fbp;
 
-	size = 512;
-
 	if( ! pars_Argv( argc, argv ) ) {
 		usage();
 		return	1;
 	}
-	if( hires ) size = 1024;
-	if( (fbp = fb_open( NULL, size, size )) == NULL )
+
+	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		return	1;
 
 	switch( flavor )  {
@@ -232,13 +237,29 @@ register char	**argv;
 	register int	c;
 	extern int	optind;
 
-	while( (c = getopt( argc, argv, "h" )) != EOF ) {
+	while( (c = getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF ) {
 		switch( c ) {
-			case 'h' : /* High resolution frame buffer.	*/
-				hires++;
-				break;
-			case '?' :
-				return	0;
+		case 'h' :
+			scr_width = scr_height = 1024;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 'S':
+		case 's':
+			/* square file size */
+			scr_height = scr_width = atoi(optarg);
+			break;
+		case 'w':
+		case 'W':
+			scr_width = atoi(optarg);
+			break;
+		case 'n':
+		case 'N':
+			scr_height = atoi(optarg);
+			break;
+		case '?' :
+			return	0;
 		}
 	}
 	if( argv[optind] != NULL )
@@ -249,7 +270,9 @@ register char	**argv;
 void
 usage()
 {
-	(void) fprintf( stderr, "Usage : fbcmap	[-h] [map_number]\n" );
+	(void) fprintf(stderr,"Usage : fbcmap [-h] [-F framebuffer]\n");
+	(void) fprintf(stderr,"	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
+	(void) fprintf(stderr,"	[map_number]\n" );
 	(void) fprintf( stderr,
 			"Color map #0, linear (standard).\n" );
 	(void) fprintf( stderr,
