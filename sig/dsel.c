@@ -10,7 +10,7 @@ static char usage[] = "\
 Usage: dsel num\n\
        dsel skip keep ...\n";
 
-#define INT_MAX ( ((int) ~0) >> 1 )
+#define INTEGER_MAX ( ((int) ~0) >> 1 )
 
 main( argc, argv )
 int	argc;
@@ -41,7 +41,7 @@ char	**argv;
 			argc--;
 			argv++;
 		} else {
-			nkeep = INT_MAX;
+			nkeep = INTEGER_MAX;
 		}
 
 		if( nkeep <= 0 )
