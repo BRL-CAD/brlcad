@@ -781,9 +781,10 @@ int which_eye;
 
 /* ARGSUSED */
 static int
-ogl_drawVList( dmp, vp )
+ogl_drawVList( dmp, vp, perspective )
 struct dm *dmp;
 register struct rt_vlist *vp;
+double perspective;
 {
   register struct rt_vlist *tvp;
   int first;
