@@ -42,7 +42,7 @@ proc build_comb_menu_all {} {
 
     set paths [_mged_x -1]
     if {![llength $paths]} {
-	mged_dialog .$id.combDialog $player_screen($id)\
+	cad_dialog .$id.combDialog $player_screen($id)\
 		"No combinations are being displayed!"\
 		"No combinations are being displayed!"\
 		"" 0 OK

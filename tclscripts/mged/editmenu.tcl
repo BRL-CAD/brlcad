@@ -43,7 +43,7 @@ proc build_edit_menu_all { type } {
 
     set paths [_mged_x -1]
     if {![llength $paths]} {
-	mged_dialog .$id.editDialog $player_screen($id)\
+	cad_dialog .$id.editDialog $player_screen($id)\
 		"No solids are being displayed!"\
 		"No solids are being displayed!"\
 		"" 0 OK
@@ -79,7 +79,7 @@ proc ray_build_edit_menu { type x y } {
     set paths [ray_get_info $ray in path]
 
     if {![llength $paths]} {
-	mged_dialog .$id.editDialog $player_screen($id)\
+	cad_dialog .$id.editDialog $player_screen($id)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK

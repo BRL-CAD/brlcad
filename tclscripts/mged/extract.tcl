@@ -76,7 +76,7 @@ proc do_extract { id } {
 
     if {$ex_file($id) != ""} {
 	if [file exists $ex_file($id)] {
-	    set result [mged_dialog .$id.exDialog $player_screen($id)\
+	    set result [cad_dialog .$id.exDialog $player_screen($id)\
 		    "Append to $ex_file($id)?"\
 		    "Append to $ex_file($id)?"\
 		    "" 0 OK CANCEL]
@@ -86,7 +86,7 @@ proc do_extract { id } {
 	    }
 	}
     } else {
-	mged_dialog .$id.exDialog $player_screen($id)\
+	cad_dialog .$id.exDialog $player_screen($id)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK
@@ -100,7 +100,7 @@ proc do_extract { id } {
 	set globbed_str [db_glob $ex_objects($id)]
 	append ex_cmd " $globbed_str"
     } else {
-	mged_dialog .$id.exDialog $player_screen($id)\
+	cad_dialog .$id.exDialog $player_screen($id)\
 		"No objects specified!"\
 		"No objects specified!"\
 		"" 0 OK
