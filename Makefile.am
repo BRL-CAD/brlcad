@@ -1,10 +1,14 @@
 # $Id$
-SUBDIRS=@TCL@ @TK@ @ITCL@\
+
+SUBDIRS=\
 	h\
 	libtcl8.4\
 	libtk8.4\
+	libitcl3.2\
+	iwidgets4.0.1\
 	libbn\
 	libbu\
+	libcursor\
 	libdm\
 	libfb\
 	libfft\
@@ -22,6 +26,8 @@ SUBDIRS=@TCL@ @TK@ @ITCL@\
 	bwish\
 	conv\
 	fb\
+	fbed\
+	fbserv\
 	gtools\
 	irprep\
 	mged\

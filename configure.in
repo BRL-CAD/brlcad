@@ -65,34 +65,18 @@ echo "TCL_BUILD_CFLAGS = $TCL_BUILD_CFLAGS"
 AC_SUBST(TCL_BUILD_CFLAGS)
 
 
-dnl itcl
-case "$target" in
-	*-*-*bsd*)
-		ITCL_LIBS="-L/usr/local/lib -litcl32"
-		;;
-	*)
-		ITCL_LIBS="-litcl"
-		;;
-esac
-ITCL=
+ITCL_LIBS="${prefix}/libitcl8.4/itcl/libitcl.la"
 AC_SUBST(ITCL_LIBS)
-AC_SUBST(ITCL)
 
 dnl tk
 TK_LIBS='${top_builddir}'"/libtk8.4/libtk.la"
 TK=
+TK_LIBRARY="$prefix/tk8.4"
 AC_SUBST(TK)
 AC_SUBST(TK_LIBS)
+AC_SUBST(TK_LIBRARY)
 
-dnl itk
-case "$target" in
-	*-*-*bsd*)
-		ITK_LIBS="-L/usr/local/lib -litk3.2"
-		;;
-	*)
-		ITK_LIBS="-litk"
-		;;
-esac
+ITK_LIBS="${prefix}/libitcl8.4/itk/libitk.la"
 AC_SUBST(ITK_LIBS)
 
 PNG_LIBS="-lpng -lz"
@@ -166,7 +150,9 @@ AC_OUTPUT([
 	bwish/Makefile
 	conv/Makefile
 	doc/Makefile
+	fbed/Makefile
 	fb/Makefile
+	fbserv/Makefile
 	gtools/Makefile
 	h/Makefile
 	html/Makefile
@@ -185,11 +171,24 @@ AC_OUTPUT([
 	html/ReleaseNotes/Rel5.0/Summary/Makefile
 	html/ReleaseNotes/Rel6.0/Makefile
 	irprep/Makefile
+	iwidgets4.0.1/Makefile
 	libbn/Makefile
 	libbu/Makefile
+	libcursor/Makefile
 	libdm/Makefile
 	libfb/Makefile
 	libfft/Makefile
+	libitcl3.2/itcl/doc/Makefile
+	libitcl3.2/itcl/generic/Makefile
+	libitcl3.2/itcl/library/Makefile
+	libitcl3.2/itcl/Makefile
+	libitcl3.2/itcl/unix/Makefile
+	libitcl3.2/itk/doc/Makefile
+	libitcl3.2/itk/generic/Makefile
+	libitcl3.2/itk/library/Makefile
+	libitcl3.2/itk/Makefile
+	libitcl3.2/itk/unix/Makefile
+	libitcl3.2/Makefile
 	liboptical/Makefile
 	liborle/Makefile
 	libpkg/Makefile
@@ -213,6 +212,9 @@ AC_OUTPUT([
 	libtk8.4/generic/Makefile
 	libtk8.4/Makefile
 	libtk8.4/unix/Makefile
+	libtk8.4/library/Makefile
+	libtk8.4/library/demos/Makefile
+	libtk8.4/library/msgs/Makefile
 	libutahrle/Makefile
 	libwdb/Makefile
 	Makefile
