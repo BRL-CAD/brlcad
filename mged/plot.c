@@ -298,6 +298,11 @@ char	**argv;
 	if( not_state( ST_VIEW, "Presented Area Calculation" ) == TCL_ERROR )
 		return TCL_ERROR;
 
+	if( BU_LIST_IS_EMPTY( &dgop->dgo_headSolid ) ) {
+		Tcl_AppendResult(interp, "No objects displayed!!!\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 	  if( !sp->s_Eflag && sp->s_soldash != 0 )  {
 	    struct bu_vls vls;
