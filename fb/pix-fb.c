@@ -26,9 +26,8 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
-#define MAX_LINE	2048		/* Max pixels/line */
-static RGBpixel scanline[MAX_LINE];	/* 1 scanline pixel buffer */
-static int scanbytes;			/* # of bytes of scanline */
+static RGBpixel *scanline;		/* 1 scanline pixel buffer */
+static int	scanbytes;		/* # of bytes of scanline */
 
 static char	*framebuffer = NULL;
 static char	*file_name;
@@ -168,11 +167,14 @@ char **argv;
 	yout = scr_height - scr_yoff;
 	if( yout < 0 ) yout = 0;
 	if( yout > (file_height-file_yoff) ) yout = (file_height-file_yoff);
-	if( xout > MAX_LINE ) {
-		fprintf( stderr, "pix-fb: can't output %d pixel lines.\n", xout );
-		exit( 2 );
-	}
+
 	scanbytes = xout * sizeof(RGBpixel);
+	if( (scanline = (RGBpixel *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
+		fprintf(stderr,
+			"pix-fb:  malloc(%d) failure for scanline buffer\n",
+			scanbytes);
+		exit(2);
+	}
 
 	if( clear )  {
 		fb_clear( fbp, PIXEL_NULL );
@@ -232,7 +234,7 @@ long	num;
 	}
 	
 	while( num > 0 ) {
-		try = num > MAX_LINE ? MAX_LINE : num;
+		try = num > scanbytes ? scanbytes : num;
 		n = read( fd, scanline, try );
 		if( n <= 0 ){
 			return -1;
