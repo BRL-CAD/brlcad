@@ -403,7 +403,7 @@ char **argv;
 		pending_pov = bu_strdup( last_pov );
 		return TCL_OK;
 	}
-	Tcl_AppendResult(interp, "refresh:  no last_pov, ignored\n");
+	Tcl_AppendResult(interp, "refresh:  no last_pov, ignored\n", NULL);
 	return TCL_ERROR;
 }
 
