@@ -9,7 +9,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 unsigned short
-getshort(msgp)
+fbgetshort(msgp)
 	char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
@@ -27,7 +27,7 @@ getshort(msgp)
 }
 
 unsigned long
-getlong(msgp)
+fbgetlong(msgp)
 	char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
@@ -40,7 +40,7 @@ getlong(msgp)
 }
 
 char *
-putshort(s, msgp)
+fbputshort(s, msgp)
 	register unsigned short s;
 	register char *msgp;
 {
@@ -51,7 +51,7 @@ putshort(s, msgp)
 }
 
 char *
-putlong(l, msgp)
+fbputlong(l, msgp)
 	register unsigned long l;
 	register char *msgp;
 {

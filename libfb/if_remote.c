@@ -104,9 +104,9 @@ void	pkg_queue(), flush_queue();
 static	struct pkg_conn *pcp;
 
 /* from getput.c */
-extern unsigned short getshort();
-extern unsigned long getlong();
-extern char *putshort(), *putlong();
+extern unsigned short fbgetshort();
+extern unsigned long fbgetlong();
+extern char *fbputshort(), *fbputlong();
 
 /*
  * Open a connection to the remote libfb.
@@ -143,14 +143,14 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-	(void)putlong( ifp->if_width, &buf[0] );
-	(void)putlong( ifp->if_height, &buf[4] );
+	(void)fbputlong( ifp->if_width, &buf[0] );
+	(void)fbputlong( ifp->if_height, &buf[4] );
 	(void) strcpy( &buf[8], file + 1 );
 	pkg_send( MSG_FBOPEN, buf, strlen(devicename)+8, pc );
 
 	/* XXX - need to get the size back! */
 	pkg_waitfor( MSG_RETURN, buf, 4, pc );
-	return( getlong( buf ) );
+	return( fbgetlong( buf ) );
 }
 
 _LOCAL_ int
@@ -163,7 +163,7 @@ FBIO	*ifp;
 	pkg_send( MSG_FBCLOSE, 0L, 0L, PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
 	pkg_close( PCP(ifp) );
-	return( getlong( buf ) );
+	return( fbgetlong( buf ) );
 }
 
 _LOCAL_ int
@@ -177,7 +177,7 @@ Pixel	*bgpp;
 	/* send a clear package to remote */
 	pkg_send( MSG_FBCLEAR, 0L, 0L, PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
-	return( getlong( buf ) );
+	return( fbgetlong( buf ) );
 }
 
 /*
@@ -194,14 +194,14 @@ int	num;
 	char	buf[3*4+1];
 
 	/* Send Read Command */
-	(void)putlong( x, &buf[0] );
-	(void)putlong( y, &buf[4] );
-	(void)putlong( num, &buf[8] );
+	(void)fbputlong( x, &buf[0] );
+	(void)fbputlong( y, &buf[4] );
+	(void)fbputlong( num, &buf[8] );
 	pkg_send( MSG_FBREAD, buf, 3*4, PCP(ifp) );
 
 	/* Get return first, to see how much data there is */
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
-	ret = getlong( buf );
+	ret = fbgetlong( buf );
 
 	/* Get Data */
 	if( ret == 0 )
@@ -225,16 +225,16 @@ int	num;
 	char	buf[3*4+1];
 
 	/* Send Write Command */
-	(void)putlong( x, &buf[0] );
-	(void)putlong( y, &buf[4] );
-	(void)putlong( num, &buf[8] );
+	(void)fbputlong( x, &buf[0] );
+	(void)fbputlong( y, &buf[4] );
+	(void)fbputlong( num, &buf[8] );
 	pkg_send( MSG_FBWRITE+MSG_NORETURN, buf, 3*4, PCP(ifp) );
 
 	/* Send DATA */
 	pkg_send( MSG_DATA, (char *)pixelp, num*4, PCP(ifp) );
 #ifdef NEVER
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
-	ret = getlong( buf );
+	ret = fbgetlong( buf );
 	return(ret);
 #endif
 	return	0;	/* No error return, sacrificed for speed.	*/
@@ -252,12 +252,12 @@ int	x, y;
 	char	buf[3*4+1];
 	
 	/* Send Command */
-	(void)putlong( mode, &buf[0] );
-	(void)putlong( x, &buf[4] );
-	(void)putlong( y, &buf[8] );
+	(void)fbputlong( mode, &buf[0] );
+	(void)fbputlong( x, &buf[4] );
+	(void)fbputlong( y, &buf[8] );
 	pkg_send( MSG_FBCURSOR, buf, 3*4, PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
-	return( getlong( buf ) );
+	return( fbgetlong( buf ) );
 }
 
 /*
@@ -271,11 +271,11 @@ int	x, y;
 	char	buf[3*4+1];
 	
 	/* Send Command */
-	(void)putlong( x, &buf[0] );
-	(void)putlong( y, &buf[4] );
+	(void)fbputlong( x, &buf[0] );
+	(void)fbputlong( y, &buf[4] );
 	pkg_send( MSG_FBWINDOW, buf, 2*4, PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
-	return( getlong( buf ) );
+	return( fbgetlong( buf ) );
 }
 
 /*
@@ -289,11 +289,11 @@ int	x, y;
 	char	buf[3*4+1];
 
 	/* Send Command */
-	(void)putlong( x, &buf[0] );
-	(void)putlong( y, &buf[4] );
+	(void)fbputlong( x, &buf[0] );
+	(void)fbputlong( y, &buf[4] );
 	pkg_send( MSG_FBZOOM, buf, 2*4, PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
-	return( getlong( buf ) );
+	return( fbgetlong( buf ) );
 }
 
 _LOCAL_ int
@@ -306,7 +306,7 @@ ColorMap	*cmap;
 	pkg_send( MSG_FBRMAP, 0, 0, PCP(ifp) );
 	pkg_waitfor( MSG_DATA, cmap, sizeof(*cmap), PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
-	return( getlong(buf) );
+	return( fbgetlong(buf) );
 }
 
 _LOCAL_ int
@@ -321,7 +321,7 @@ ColorMap	*cmap;
 	else
 		pkg_send( MSG_FBWMAP, cmap, sizeof(*cmap), PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
-	return( getlong(buf) );
+	return( fbgetlong(buf) );
 }
 
 /*
