@@ -30,8 +30,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 
@@ -43,17 +41,20 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+
+#include "../libfb/pkgtypes.h"
 #include "./ged.h"
 #include "./mged_dm.h"
-#include "../libfb/pkgtypes.h"
 #include "./fbserv.h"
 
+
 #define NET_LONG_LEN	4	/* # bytes to network long */
+
 
 void set_port(void);
 
 #ifdef LOCAL_STATIC
-#undef LOCAL_STATIC
+#  undef LOCAL_STATIC
 #endif
 #define LOCAL_STATIC static
 

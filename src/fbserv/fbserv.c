@@ -54,12 +54,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #if defined(IRIX) && IRIX==5
-#define	_BSD_COMPAT
+#  define	_BSD_COMPAT
 #endif
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,22 +67,22 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <errno.h>
 
 #if defined(HAVE_STDARG_H)
-# include <stdarg.h>
+#  include <stdarg.h>
 #endif
 #if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
-# include <varargs.h>
+#  include <varargs.h>
 #endif
 
 #if defined(BSD) && !defined(CRAY2)
-#	include <syslog.h>
+#  include <syslog.h>
 #endif
 
 #include <sys/socket.h>
 #include <netinet/in.h>		/* For htonl(), etc */
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <sys/wait.h>
 
@@ -95,6 +93,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "pkg.h"
 
 #include "../libfb/pkgtypes.h"
+
 
 /* These symbols are provided by libfb/server.c */
 extern struct pkg_switch fb_server_pkg_switch[];
