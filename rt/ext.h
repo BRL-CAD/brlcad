@@ -21,7 +21,6 @@
 
 /***** Variables declared in viewXXX.c */
 extern int		use_air;		/* Handling of air in librt */
-extern int		using_mlib;		/* Material routines used */
 /***** end of sharing with viewing model *****/
 
 /***** Variables declared in opt.c *****/
