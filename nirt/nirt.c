@@ -412,8 +412,8 @@ char **argv;
     do_rt_gettrees (rtip, argv + optind, argc - optind);
  
     /* Initialize the table of resource structures */
-    res_tab[use_of_air].re_magic =
-	(res_tab[1 - use_of_air].re_magic = RESOURCE_MAGIC);
+    rt_init_resource( &res_tab[use_of_air], 0, rtip );
+    rt_init_resource( &res_tab[1-use_of_air], 1, rtip );
 
     /* initialization of the application structure */
     ap.a_hit = if_hit;        /* branch to if_hit routine            */
