@@ -24,6 +24,7 @@ struct pkg_header {
 	long		pkg_len;		/* Byte count of remainder */
 };
 
+#define	PKG_STREAMLEN	4096
 struct pkg_conn {
 	int		pkc_fd;		/* TCP connection fd */
 	struct pkg_switch *pkc_switch;	/* Array of message handlers */
@@ -36,6 +37,8 @@ struct pkg_conn {
 	struct pkg_header pkc_hdr;	/* hdr of cur msg */
 #define			pkc_len		pkc_hdr.pkg_len
 #define			pkc_type	pkc_hdr.pkg_type
+	char		pkc_stream[PKG_STREAMLEN];
+	int		pkc_strpos;	/* index into stream buffer */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1))
@@ -46,6 +49,8 @@ extern struct pkg_conn *pkg_getclient();
 extern struct pkg_conn *pkg_makeconn();
 extern void pkg_close();
 extern int pkg_send();
+extern int pkg_stream();
+extern int pkg_flush();
 extern int pkg_waitfor();
 extern char *pkg_bwaitfor();
 extern int pkg_get();
