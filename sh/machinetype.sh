@@ -177,7 +177,7 @@ cat << EOF > ${IN_FILE}
 #	undef	sun
 #	undef	sun4
 	MACHINE=sun4;
-#if	__STDC__ == 0
+#if	defined(__STDC__) && __STDC__ == 0
 /*		Solaris 2.x (SunOS 5.x), cc default is -Xt */
 		UNIXTYPE=SYSV;
 #	else
