@@ -3,7 +3,7 @@
  *
  *  $Header$
  */
-#define CONFIGDEFS	RT_CONFIG -DDFLT_SHELL=\\\\"/bin/tbsh\\\\"
+#define CONFIGDEFS	RT_CONFIG -DDFLT_SHELL=\\\\"/bin/sh\\\\"
 
 #define SRCDIR	nirt
 #define PRODUCTS	nirt
