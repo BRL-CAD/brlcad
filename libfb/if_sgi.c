@@ -118,6 +118,7 @@ _LOCAL_ int	sgi_open(),
 /* This is the ONLY thing that we "export" */
 FBIO sgi_interface =
 		{
+		0,
 		sgi_open,
 		sgi_close,
 		sgi_clear,
