@@ -352,8 +352,8 @@ CONST struct bn_tol	*tol;
 
 	BN_CK_TOL(tol);
 
-	if( (mag1 = MAGNITUDE(d1)) < SMALL_FASTF )  rt_bomb("bn_2line3_colinear() mag1 zero\n");
-	if( (mag2 = MAGNITUDE(d2)) < SMALL_FASTF )  rt_bomb("bn_2line3_colinear() mag2 zero\n");
+	if( (mag1 = MAGNITUDE(d1)) < SMALL_FASTF )  bu_bomb("bn_2line3_colinear() mag1 zero\n");
+	if( (mag2 = MAGNITUDE(d2)) < SMALL_FASTF )  bu_bomb("bn_2line3_colinear() mag2 zero\n");
 
 	/* Impose a general angular tolerance to reject "obviously" non-parallel lines */
 	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
@@ -910,7 +910,7 @@ bu_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
 
 		if( !bn_between( a[X], hit_pt[X], b[X], tol ) ||
 		    !bn_between( a[Y], hit_pt[Y], b[Y], tol ) ) {
-		    	rt_bomb("bn_isect_line2_lseg2() hit_pt not between A and B!\n");
+		    	bu_bomb("bn_isect_line2_lseg2() hit_pt not between A and B!\n");
 		}
 	}
 
@@ -1104,7 +1104,7 @@ CONST struct bn_tol	*tol;
 	}
 	pmag = MAGNITUDE(pdir);
 	if( pmag < SMALL_FASTF )
-		rt_bomb("bn_isect_lseg3_lseg3: |p|=0\n");
+		bu_bomb("bn_isect_lseg3_lseg3: |p|=0\n");
 	if( status == 0 )  {
 		int	nogood = 0;
 		/* Lines are colinear */
@@ -1136,7 +1136,7 @@ CONST struct bn_tol	*tol;
 
 	qmag = MAGNITUDE(qdir);
 	if( qmag < SMALL_FASTF )
-		rt_bomb("bn_isect_lseg3_lseg3: |q|=0\n");
+		bu_bomb("bn_isect_lseg3_lseg3: |q|=0\n");
 	qtol = tol->dist / qmag;
 	if( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
 	else if( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
@@ -2289,7 +2289,7 @@ CONST vect_t	y_dir;
 			ang -= rt_twopi;
 		} while( ang > rt_twopi );
 	}
-	if( ang < 0 || ang > rt_twopi )  rt_bomb("bn_angle_measure() angle out of range\n");
+	if( ang < 0 || ang > rt_twopi )  bu_bomb("bn_angle_measure() angle out of range\n");
 	return ang;
 }
 
