@@ -254,7 +254,6 @@ char	*itag;
 
 	chan[n].c_ilen = len;
 	chan[n].c_itag = rt_strdup( itag );
-fprintf(stderr,"c_itag=%s\n", chan[n].c_itag);
 	chan[n].c_ival = (fastf_t *)rt_malloc( len * sizeof(fastf_t), "c_ival");
 	return(n);
 }
@@ -299,6 +298,7 @@ register int		ch;
 		return;
 	}
 	cp = &chan[ch];
+	if( cp->c_itag == (char *)0 )  cp->c_itag = "_no_file_";
 	fprintf(stderr,"--- Channel %d, ilen=%d (%s):\n",
 		ch, cp->c_ilen, cp->c_itag );
 	for( i=0; i < cp->c_ilen; i++ )  {
