@@ -1483,8 +1483,12 @@ mat_t		mat;
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			pipe_seg = BU_LIST_FIRST( wdb_pipept , &pipe->pipe_segs_head );
-			VMOVE( mpt , pipe_seg->pp_coord );
+			if (es_pipept == (struct wdb_pipept *)NULL) {
+			  pipe_seg = BU_LIST_FIRST( wdb_pipept , &pipe->pipe_segs_head );
+			  VMOVE( mpt , pipe_seg->pp_coord );
+			} else {
+			  VMOVE( mpt , es_pipept->pp_coord );
+			}
 			*strp = "V";
 			break;
 		}
