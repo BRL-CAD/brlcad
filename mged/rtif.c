@@ -55,10 +55,7 @@ static void setup_rt();
 
 static int tree_walk_needed;
 
-struct run_rt {
-       int			fd;
-       int			pid;
-};
+struct run_rt head_run_rt;
 
 struct rtcheck {
        int			fd;
@@ -295,6 +292,22 @@ int printcmd;
   }
 }
 
+int
+cmd_rt_abort(ClientData clientData,
+	     Tcl_Interp *interp,
+	     int argc,
+	     char **argv)
+{
+	struct run_rt *rrp;
+
+	for (BU_LIST_FOR(rrp, run_rt, &head_run_rt.l)) {
+		kill(rrp->pid, SIGKILL);
+		rrp->aborted = 1;
+	}
+
+	return TCL_OK;
+}
+
 static void
 rt_output_handler(ClientData clientData, int mask)
 {
@@ -313,6 +326,7 @@ rt_output_handler(ClientData clientData, int mask)
 #endif
 		int retcode;
 		int rpid;
+		int aborted;
 
 		Tcl_DeleteFileHandler(run_rtp->fd);
 		close(run_rtp->fd);
@@ -321,9 +335,16 @@ rt_output_handler(ClientData clientData, int mask)
 		while ((rpid = wait(&retcode)) != run_rtp->pid && rpid != -1)
 			pr_wait_status(retcode);
 
+		aborted = run_rtp->aborted;
+
 		/* free run_rtp */
+ 		BU_LIST_DEQUEUE(&run_rtp->l);
 		bu_free((genptr_t)run_rtp, "rt_output_handler: run_rtp");
 
+		if (aborted)
+			bu_log("Raytrace aborted.\n");
+		else
+			bu_log("Raytrace complete.\n");
 		return;
 	}
 
@@ -449,6 +470,7 @@ run_rt()
 		sp->s_wflag = DOWN;
 
 	BU_GETSTRUCT(run_rtp, run_rt);
+	BU_LIST_APPEND(&head_run_rt.l, &run_rtp->l);
 	run_rtp->fd = pipe_err[0];
 	run_rtp->pid = pid;
 
