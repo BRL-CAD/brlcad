@@ -129,8 +129,9 @@ static struct w_dm which_dm[] = {
 };
 
 int
-release(name)
+release(name, need_close)
 char *name;
+int need_close;
 {
 	register struct solid *sp;
 	struct dm_list *p;
@@ -162,16 +163,18 @@ char *name;
 	    p = curr_dm_list;
 	}
 
-	/* Delete all references to display processor memory */
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-		rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
-		sp->s_bytes = 0;
-		sp->s_addr = 0;
+	if(need_close){
+	  /* Delete all references to display processor memory */
+	  FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+	    rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+	    sp->s_bytes = 0;
+	    sp->s_addr = 0;
+	  }
+	  rt_mempurge( &(dmp->dmr_map) );
+
+	  dmp->dmr_close(dmp);
 	}
-	rt_mempurge( &(dmp->dmr_map) );
-
-	dmp->dmr_close(dmp);
-
+	
 	if(!--p->s_info->_rc)
 	  bu_free( (genptr_t)p->s_info, "release: s_info" );
 	else if(p->_owner)
@@ -268,9 +271,11 @@ char    **argv;
     if( strcmp(argv[1], wp->dp->dmr_name ) == 0 )
       break;
 
-  if(wp == (struct w_dm *)0)
-    goto Bad;
-
+  if(wp->dp == (struct dm *)0){
+    Tcl_AppendResult(interp, "attach(", argv[1], "): BAD\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  
   if(argc == 2 && NEED_GUI(wp->dp)){
     return do_2nd_attach_prompt();
   }else{
@@ -319,8 +324,10 @@ char    **argv;
 Bad:
   Tcl_AppendResult(interp, "attach(", argv[1], "): BAD\n", (char *)NULL);
 
-  if(wp != (struct w_dm *)0)
-    release((char *)NULL);
+  if(dmp->dmr_vars != (genptr_t)0)
+    release((char *)NULL, 1);  /* relesae() will call dmr_close */
+  else
+    release((char *)NULL, 0);  /* release() will not call dmr_close */
 
   return TCL_ERROR;
 }
