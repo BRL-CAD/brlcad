@@ -10,6 +10,7 @@
  *
  *  Author -
  *	Michael John Muuss
+ *	Lee A. Butler
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -30,93 +31,78 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-
+#include "rtstring.h"
 #ifdef BSD
 # include <strings.h>
 #else
 # include <string.h>
 #endif
 
-/*			R T _ P A R S E _ M A T
+/*
+ *		P A R S E _ F L O A T
  *
- *	Parse a string as a mat_t.  The elemets should be separated by
- *	a single, comma character.
+ *	parse an array of one or more floats.  The floats
  */
 HIDDEN void
-rt_parse_mat( mat, str)
-register matp_t mat;
-char *str;
+parse_float(value, count, loc)
+char *value;
+int count;
+double *loc;
 {
 	register int i;
+	register char *cp;
+	int dot_seen;
+	char *numstart;
+	double tmp_double;
+	
 
-	for (i=0 ; i < ELEMENTS_PER_MAT ; ++i)
-		mat[i] = 0.0;
+	for (i=0 ; i < count && *value ; ++i){
+		tmp_double = atof( value );
 
-	for (i=0 ; i < ELEMENTS_PER_MAT ; ++i) {
-		if (!isdigit(*str) && *str != '.') return;
-		mat[i] = atof(str);
-		while (*str && *str != ',')
-			str++;
-		if (!*str) return;	/* EOS */
-		else str++;		/* Skip element separator */
+		/* skip text of float # */
+		numstart = value;
+
+		/* skip sign */
+		if (*numstart == '-' || *numstart == '+') numstart++;
+
+		cp = numstart;
+
+		/* skip matissa */
+		for (dot_seen = 0; *cp ; cp++ ) {
+			if (*cp == '.' && !dot_seen) {
+				dot_seen = 1;
+				continue;
+			}
+			if (!isdigit(*cp))
+				break;
+			
+		}
+
+		/* no mantissa, no float value */
+		if (cp == numstart + dot_seen)
+			return;
+
+		*((double *)loc) = tmp_double;
+		loc += sizeof(double);
+		value = cp;
+
+		/* there was a mantissa, so we may have an exponent */
+		if  (*cp == 'E' || *cp == 'e') {
+			numstart = ++cp;
+
+			/* skip exponent sign */
+		    	if (*numstart == '+' || *numstart == '-') numstart++;
+
+			while (isdigit(*cp)) cp++;
+
+			/* if there was a mantissa, skip over it */
+			if (cp != numstart)
+				value = cp;
+		}
+
+		/* skip the separator */
+		if (*value) value++;
 	}
-}
-
-/*
- *			R T _ P A R S E _ R G B
- *
- *  Parse a slash (or other non-numeric, non-whitespace) separated string
- *  as 3 decimal (or octal) bytes.  Useful for entering rgb values in
- *  mlib_parse as 4/5/6.
- *
- *  Element [3] is made non-zero to indicate that a value has been set.
- */
-HIDDEN void
-rt_parse_rgb( rgb, str )
-register unsigned char *rgb;
-register char *str;
-{
-	if( !isdigit(*str) )  return;
-	rgb[0] = atoi(str);
-	rgb[1] = rgb[2] = 0;
-
-	while( *str )
-		if( !isdigit(*str++) )  break;
-	if( !*str )  return;
-	rgb[1] = atoi(str);
-	while( *str )
-		if( !isdigit(*str++) )  break;
-	if( !*str )  return;
-	rgb[2] = atoi(str);
-}
-
-
-/*
- *			R T _ P A R S E _ V E C T
- *
- *  Parse a comma separated string
- *  as a vect_t (3 fastf_t's).  Useful for entering vector values in
- *  mlib_parse as 1.0/0.5/0.1.
- */
-HIDDEN void
-rt_parse_vect( vp, str )
-register fastf_t	*vp;
-register char		*str;
-{
-	vp[0] = vp[1] = vp[2] = 0.0;
-	if( !isdigit(*str) && *str != '.' )  return;
-	vp[0] = atof(str);
-
-	while( *str && *str != ',')
-		str++;
-	if (!*str) return;
-	vp[1] = atof(++str);
-
-	while( *str && *str != ',')
-		str++;
-	if (!*str) return;
-	vp[2] = atof(++str);
-
 }
 
 /*
@@ -127,72 +113,155 @@ register char		*str;
  *	 0	entry found and processed
  */
 HIDDEN int
-rt_struct_lookup( spp, name, base, value )
-register struct structparse	*spp;
-register char			*name;
-char				*base;
+rt_struct_lookup( sdp, name, base, value )
+register struct structparse	*sdp;		/* structure description */
+register char			*name;		/* struct member name */
+char				*base;		/* begining of structure */
 char				*value;		/* string containing value */
 {
 	register char *loc;
+	int i;
 
-	for( ; spp->sp_name != (char *)0; spp++ )  {
-		if( strcmp( spp->sp_name, name ) != 0
-		    && spp->sp_fmt[0] != 'i' )
+	for( ; sdp->sp_name != (char *)0; sdp++ )  {
+
+		if( strcmp( sdp->sp_name, name ) != 0	/* no name match */
+		    && sdp->sp_fmt[0] != 'i' )		/* no include desc */
 			continue;
 
+		/* if we get this far, we've got a name match
+		 * with a name in the structure description
+		 */
+
 #if CRAY && !__STDC__
-		loc = (char *)(base + ((int)spp->sp_offset*sizeof(int)));
+		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
 #else
-		loc = (char *)(base + ((int)spp->sp_offset));
+		loc = (char *)(base + ((int)sdp->sp_offset));
 #endif
 
-		switch( spp->sp_fmt[0] )  {
-		case 'i':
+		if (sdp->sp_fmt[0] == 'i') {
 			/* Indirect to another structure */
 			if( rt_struct_lookup(
-				(struct structparse *)spp->sp_offset,
+				(struct structparse *)sdp->sp_count,
 				name, base, value )
 			    == 0 )
 				return(0);	/* found */
-			break;
-		case '%':
-			switch( spp->sp_fmt[1] )  {
+			else
+				continue;
+		}
+		if (sdp->sp_fmt[0] != '%') {
+			rt_log("rt_struct_lookup(%s): unknown format '%s'\n",
+				name, sdp->sp_fmt );
+			return(-1);
+		}
 
-			case 'C':
-				rt_parse_rgb( loc, value );
-				break;
-			case 'V':
-				rt_parse_vect( loc, value );
-				break;
-			case 'M':
-				rt_parse_mat( loc, value );
-				break;
-			case 'f':
-				/*  Silicon Graphics sucks wind.
-				 *  On the 3-D machines, float==double,
-				 *  which breaks the scanf() strings.
-				 *  So, here we cause "%f" to store into
-				 *  a double.  This is the "generic"
-				 *  floating point read.  Humbug.
+		switch( sdp->sp_fmt[1] )  {
+		case 'c':
+		case 's':
+			{	register int i, j;
+
+				/* copy the string, converting escaped
+				 * double quotes to just double quotes
 				 */
-				*((double *)loc) = atof( value );
-				break;
-			case 's':
-				strcpy((char *)loc, value);
-				break;
-			default:
-				(void)sscanf( value, spp->sp_fmt, loc );
-				break;
+				for(i=j=0 ;
+				    j < sdp->sp_count && value[i] != '\0' ;
+				    loc[j++] = value[i++])
+					if (value[i] == '\\' &&
+					    value[i+1] == '"')
+					    	++i;
+
+				if (sdp->sp_count > 1)
+					loc[sdp->sp_count-1] = '\0';
+			}
+			break;
+		case 'S':
+			{	struct rt_vls *vls = (struct rt_vls *)loc;
+				if (vls->vls_magic != RT_VLS_MAGIC)
+					rt_vls_init(vls);
+
+				rt_vls_strcpy(vls, value);
+			}
+			break;
+		case 'i':
+			{	register short *ip = (short *)loc;
+				register short tmpi;
+				register char *cp;
+				for (i=0 ; i < sdp->sp_count && *value ; ++i){
+					tmpi = atoi( value );
+
+					cp = value;
+					if (*cp && (*cp == '+' || *cp == '-'))
+						cp++;
+
+					while (*cp && isdigit(*cp) )
+						cp++; 
+
+					/* make sure we actually had an
+					 * integer out there
+					 */
+					if (cp == value ||
+					    (cp == value+1 &&
+					    (*value == '+' || *value == '-')))
+						break;
+					else {
+						*(ip++) = tmpi;
+						value = cp;
+					}
+					/* skip the separator */
+					if (*value) value++;
+				}
+			}
+			break;
+		case 'd':
+			{	register int *ip = (int *)loc;
+				register int tmpi;
+				register char *cp;
+				for (i=0 ; i < sdp->sp_count && *value ; ++i){
+					tmpi = atoi( value );
+
+					cp = value;
+					if (*cp && (*cp == '+' || *cp == '-'))
+						cp++;
+
+					while (*cp && isdigit(*cp) )
+						cp++; 
+
+					/* make sure we actually had an
+					 * integer out there
+					 */
+					if (cp == value ||
+					    (cp == value+1 &&
+					    (*value == '+' || *value == '-')))
+						break;
+					else {
+						*(ip++) = tmpi;
+						value = cp;
+					}
+					/* skip the separator */
+					if (*value) value++;
+				}
+			}
+			break;
+		case 'f':
+			parse_float(value, sdp->sp_count, (double *)loc);
+			break;
+		case 'C':	/* sdp->sp_count ignored */
+			for (i=0 ; i < 3 && *value ; ++i) {
+				*((unsigned char *)loc++) = atoi( value );
+				while (*value && isdigit(*value) )
+					value++;
+
+				/* skip the separator */
+				if (*value) value++;
 			}
 			break;
 		default:
 			rt_log("rt_struct_lookup(%s): unknown format '%s'\n",
-				name, spp->sp_fmt );
+				name, sdp->sp_fmt );
 			return(-1);
+			break;
 		}
-		if( spp->sp_hook != FUNC_NULL )  {
-			/* XXX What should the args be? */
-			spp->sp_hook( spp, name, base, value );
+		if( sdp->sp_hook != FUNC_NULL )  {
+			sdp->sp_hook( sdp, name, base, value );
 		}
 		return(0);		/* OK */
 	}
@@ -201,11 +270,13 @@ char				*value;		/* string containing value */
 
 /*
  *			R T _ S T R U C T P A R S E
+ *	parse the structure element description in the vls string "vls"
+ *	according to the structure description in "parsetab"
  */
 void
-rt_structparse( vls, parsetab, base )
+rt_structparse( vls, desc, base )
 struct rt_vls		*vls;		/* string to parse through */
-struct structparse	*parsetab;
+struct structparse	*desc;		/* structure description */
 char			*base;		/* base address of users structure */
 {
 	register char *cp;
@@ -213,52 +284,72 @@ char			*base;		/* base address of users structure */
 	char	*value;
 
 	RT_VLS_CHECK(vls);
+	if (desc == (struct structparse *)NULL) {
+		rt_log( "Null \"struct structparse\" pointer\n");
+		return;
+	}
+
 
 	cp = RT_VLS_ADDR(vls);
 
 	while( *cp )  {
-		/* NAME = VALUE separator (comma, space, tab) */
+		/* NAME = VALUE white-space-separator */
 
 		/* skip any leading whitespace */
-		while( *cp != '\0' && 
-		    (*cp == ',' || (isascii(*cp) && isspace(*cp)) ))
+		while( *cp != '\0' && isascii(*cp) && isspace(*cp) )
 			cp++;
 
 		/* Find equal sign */
 		name = cp;
-		while( *cp != '\0' && *cp != '=' )  cp++;
+		while ( *cp != '\0' && *cp != '=' )
+			cp++;
+
 		if( *cp == '\0' )  {
-			if( name == cp )  break;
-			rt_log("rt_structparse: name '%s' without '='\n", name );
+			if( name == cp ) break;
+
+			/* end of string in middle of arg */
+			rt_log("rt_structparse: name '%s' without '='\n",
+				name );
+			break;
 		}
+
 		*cp++ = '\0';
 
 		/* Find end of value. */
-		value = cp;
 		if (*cp == '"')	{
-			/* strings are double-quote (") delimited */
+			/* strings are double-quote (") delimited
+			 * skip leading " & find terminating "
+			 * while skipping escaped quotes (\")
+			 */
+			for (value = ++cp ; *cp != '\0' ; ++cp)
+				if (*cp == '"' &&
+				    (cp == value || *(cp-1) != '\\') )
+					break;
 
-			value = ++cp; /* skip leading " */
-			while (*cp != '\0' && *cp != '"')
-				cp++;
-
-		} else	/* non-strings are white-space delimited */
+			if (*cp != '"') {
+				rt_log("rt_structparse: name '%s'=\" without closing \"\n",
+					name);
+				break;
+			}
+		} else {
+			/* non-strings are white-space delimited */
+			value = cp;
 			while( *cp != '\0' && isascii(*cp) && !isspace(*cp) )
 				cp++;
-		
+		}
+
 		if( *cp != '\0' )
 			*cp++ = '\0';
 
-		/* Lookup name in parsetab table */
-		if( rt_struct_lookup( parsetab, name, base, value ) < 0 )  {
+		/* Lookup name in desc table */
+		if( rt_struct_lookup( desc, name, base, value ) < 0 )  {
 			rt_log("rt_structparse:  '%s=%s', element name not found in:\n",
 				name, value);
-			rt_structprint( "troublesome one", parsetab, base );
+			rt_structprint( "troublesome one", desc, base );
 		}
 	}
+
 }
-
-
 
 /*	M A T P R I N T
  *
@@ -296,80 +387,159 @@ register matp_t mat;
 void
 rt_structprint( title, parsetab, base )
 char 			*title;
-struct structparse	*parsetab;
+struct structparse	*parsetab;	/* structure description */
 char			*base;		/* base address of users structure */
 {
-	register struct structparse	*spp;
+	register struct structparse	*sdp;
 	register char			*loc;
 	register int			lastoff = -1;
 
 	rt_log( "%s\n", title );
-	for( spp = parsetab; spp->sp_name != (char *)0; spp++ )  {
+	if (parsetab == (struct structparse *)NULL) {
+		rt_log( "Null \"struct structparse\" pointer\n");
+		return;
+	}
+	for( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
 
 		/* Skip alternate keywords for same value */
-		if( lastoff == spp->sp_offset )
+		if( lastoff == sdp->sp_offset )
 			continue;
-		lastoff = spp->sp_offset;
+		lastoff = sdp->sp_offset;
 
 #if CRAY && !__STDC__
-		loc = (char *)(base + ((int)spp->sp_offset*sizeof(int)));
+		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
 #else
-		loc = (char *)(base + ((int)spp->sp_offset));
+		loc = (char *)(base + ((int)sdp->sp_offset));
 #endif
 
-		switch( spp->sp_fmt[0] )  {
-		case 'i':
-			rt_structprint( spp->sp_name,
-				(struct structparse *)spp->sp_offset,
+		if (sdp->sp_fmt[0] == 'i' )  {
+			rt_structprint( sdp->sp_name,
+				(struct structparse *)sdp->sp_count,
 				base );
-			break;
-		case '%':
-			switch( spp->sp_fmt[1] )  {
+			continue;
+		}
 
-			case 'c':
-				rt_log( " %s=%c\n", spp->sp_name, *loc);
+		if ( sdp->sp_fmt[0] != '%')  {
+			rt_log("rt_structprint:  %s: unknown format '%s'\n",
+				sdp->sp_name, sdp->sp_fmt );
+			continue;
+		}
+
+		switch( sdp->sp_fmt[1] )  {
+		case 'c':
+		case 's':
+			if (sdp->sp_count < 1)
 				break;
-			case 's':
-				rt_log( " %s=\"%s\"\n", spp->sp_name,
+			if (sdp->sp_count == 1)
+				rt_log( " %s='%c'\n", sdp->sp_name, *loc);
+			else
+				rt_log( " %s=\"%s\"\n", sdp->sp_name,
 					(char *)loc );
-				break;
-			case 'd':
-				rt_log( " %s=%d\n", spp->sp_name,
-					*((int *)loc) );
-				break;
-			case 'f':
-				rt_log( " %s=%.-25G\n", spp->sp_name,
-					*((double *)loc) );
-				break;
-			case 'C':
-				{
-					register unsigned char *cp =
-						(unsigned char *)loc;
-					rt_log(" %s=%d/%d/%d\n", spp->sp_name,
-						cp[0], cp[1], cp[2] );
-					break;
+			break;
+		case 'S':
+			{	register int indent = rt_g.rtg_logindent;
+				register struct rt_vls *vls =
+					(struct rt_vls *)loc;
+
+				rt_g.rtg_logindent = strlen(sdp->sp_name)+2;
+				
+				rt_log(" %s=(vls_magic)%d (vls_len)%d (vls_max)%d\n",
+					sdp->sp_name, vls->vls_magic,
+					vls->vls_len, vls->vls_max);
+				rt_g.rtg_logindent = indent;
+				rt_log("\"%s\"\n", vls->vls_str);
+			}
+			break;
+		case 'i':
+			{	register int i = sdp->sp_count;
+				register short *sp = (short *)loc;
+
+				rt_log( " %s=%hd", sdp->sp_name, *sp++ );
+
+				while (--i > 0) rt_log( ",%d", *sp++ );
+
+				rt_log("\n");
+			}
+			break;
+		case 'd':
+			{	register int i = sdp->sp_count;
+				register int *dp = (int *)loc;
+
+				rt_log( " %s=%d", sdp->sp_name, *dp++ );
+
+				while (--i > 0) rt_log( ",%d", *dp++ );
+
+				rt_log("\n");
+			}
+			break;
+		case 'f':
+			{	register int i = sdp->sp_count;
+				register double *dp = (double *)loc;
+
+				if (sdp->sp_count == ELEMENTS_PER_MAT) {
+					matprint(sdp->sp_name, (matp_t)dp);
+				} else if (sdp->sp_count <= ELEMENTS_PER_VECT){
+					rt_log( " %s=%.25G", sdp->sp_name, *dp++ );
+
+					while (--i > 0)
+						rt_log( ",%.25G", *dp++ );
+
+					rt_log("\n");
+				}else  {
+					register int j = rt_g.rtg_logindent;
+
+					rt_g.rtg_logindent += strlen(sdp->sp_name)+2;
+					
+					rt_log( " %s=%.25G\n", sdp->sp_name, *dp++ );
+
+					while (--i > 1)
+						rt_log( "%.25G\n", *dp++ );
+
+					rt_g.rtg_logindent = j;
+					rt_log( "%.25G\n", *dp );
+
 				}
-			case 'M': matprint(spp->sp_name, (matp_t)loc);
-				break;
-			case 'V':
-				{
-					register fastf_t *fp = (fastf_t *)loc;
-					rt_log(" %s=%.-25G  %.-25G  %.-25G\n",
-						spp->sp_name,
-						fp[0], fp[1], fp[2] );
-					break;
-				}
-			default:
-				rt_log( " %s=%s??\n", spp->sp_name,
-					spp->sp_fmt );
-				break;
+			}
+			break;
+		case 'C':	/* sdp->sp_count ignored */
+			{	register unsigned char *ucp =
+					(unsigned char *)loc;
+
+				rt_log( " %s=%u/%u/%u\n",
+					sdp->sp_name,
+					ucp[0], ucp[1], ucp[2] );
 			}
 			break;
 		default:
-			rt_log("rt_structprint:  %s: unknown format '%s'\n",
-				spp->sp_name, spp->sp_fmt );
+			rt_log( " rt_structprint: Unknown format: %s=%s??\n",
+				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
+	}
+}
+
+HIDDEN void
+vls_print_float(vls, name, count, dp)
+struct rt_vls *vls;
+char *name;
+register int count;
+register double *dp;
+{
+	register int tmpi;
+	register char *cp;
+
+	rt_vls_extend(vls, strlen(name) + 3 + 32 * count);
+
+	cp = &vls->vls_str[vls->vls_len];
+	sprintf(cp, " %s=%.27G", name, *dp++);
+	tmpi = strlen(cp);
+	vls->vls_len += tmpi;
+
+	while (--count > 0) {
+		cp += tmpi;
+		sprintf(cp, ",%.27G", *dp++);
+		tmpi = strlen(cp);
+		vls->vls_len += tmpi;
 	}
 }
 
@@ -379,9 +549,9 @@ char			*base;		/* base address of users structure */
  *	by humans, but easier to parse with the computer.
  */
 void
-rt_vls_structprint( vls, ptab, base)
+rt_vls_structprint( vls, sdp, base)
 struct	rt_vls			*vls;	/* vls to print into */
-register struct structparse	*ptab;
+register struct structparse	*sdp;	/* structure description */
 char				*base;	/* structure ponter */
 {
 	register char			*loc;
@@ -390,124 +560,175 @@ char				*base;	/* structure ponter */
 
 	RT_VLS_CHECK(vls);
 
-	for ( ; ptab->sp_name != (char*)NULL ; ptab++) {
+	if (sdp == (struct structparse *)NULL) {
+		rt_log( "Null \"struct structparse\" pointer\n");
+		return;
+	}
+
+	for ( ; sdp->sp_name != (char*)NULL ; sdp++) {
 		/* Skip alternate keywords for same value */
 
-		if( lastoff == ptab->sp_offset )
+		if( lastoff == sdp->sp_offset )
 			continue;
-		lastoff = ptab->sp_offset;
+		lastoff = sdp->sp_offset;
 
 #if CRAY && !__STDC__
-		loc = (char *)(base + ((int)ptab->sp_offset*sizeof(int)));
+		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
 #else
-		loc = (char *)(base + ((int)ptab->sp_offset));
+		loc = (char *)(base + ((int)sdp->sp_offset));
 #endif
 
-		switch( ptab->sp_fmt[0] )  {
-		case 'i':
-			{
-				struct rt_vls sub_str;
+		if (sdp->sp_fmt[0] == 'i')  {
+			struct rt_vls sub_str;
 
-				rt_vls_init(&sub_str);
-				rt_vls_structprint( &sub_str,
-					(struct structparse *)ptab->sp_offset,
-					base );
+			rt_vls_init(&sub_str);
+			rt_vls_structprint( &sub_str,
+				(struct structparse *)sdp->sp_count,
+				base );
 
-				rt_vls_vlscat(vls, &sub_str);
-				rt_vls_free( &sub_str );
+			rt_vls_vlscat(vls, &sub_str);
+			rt_vls_free( &sub_str );
+			continue;
+		}
+
+		if ( sdp->sp_fmt[0] != '%' )  {
+			rt_log("rt_structprint:  %s: unknown format '%s'\n",
+				sdp->sp_name, sdp->sp_fmt );
+			break;
+		}
+
+		switch( sdp->sp_fmt[1] )  {
+		case 'c':
+		case 's':
+			if (sdp->sp_count < 1)
 				break;
+			if (sdp->sp_count == 1) {
+				rt_vls_extend(vls, strlen(sdp->sp_name)+6);
+				cp = &vls->vls_str[vls->vls_len];
+				if (*loc == '"')
+					sprintf(cp, "%s%s=\"%s\"",
+						(vls->vls_len?" ":""),
+						sdp->sp_name, "\\\"");
+				else
+					sprintf(cp, "%s%s=\"%c\"",
+						(vls->vls_len?" ":""),
+						sdp->sp_name,
+						*(signed char *)loc);
+			} else {
+				register char *p;
+				register int count=0;
+
+				/* count the quote characters */
+				p = loc;
+				while ((p=strchr(p, '"')) != (char *)NULL) {
+					++p;
+					++count;
+				}
+				rt_vls_extend(vls, strlen(sdp->sp_name)+
+					strlen(loc)+5+count);
+
+				cp = &vls->vls_str[vls->vls_len];
+				if (vls->vls_len) (void)strcat(cp, " ");
+				(void)strcat(cp, sdp->sp_name);
+				(void)strcat(cp, "=\"");
+
+				/* copy the string, escaping all the internal
+				 * double quote (") characters
+				 */
+				p = &cp[strlen(cp)];
+				while (*loc) {
+					if (*loc == '"') {
+						*p++ = '\\';
+					}
+					*p++ = *loc++;
+				}
+				*p++ = '"';
+				*p = '\0';
 			}
-		case '%':
-			switch( ptab->sp_fmt[1] )  {
+			vls->vls_len += strlen(cp);
+			break;
+		case 'S':
+			{	register struct rt_vls *vls_p =
+					(struct rt_vls *)loc;
 
-			case 'c':
-				rt_vls_extend(vls, strlen(ptab->sp_name)+4);
-				cp = &vls->vls_str[vls->vls_len];
-				sprintf(cp, " %s=%c",
-					ptab->sp_name, (char)(*loc));
-				vls->vls_len += strlen(cp);
-				break;
-			case 's':
-				rt_vls_extend(vls, strlen(ptab->sp_name)+
-					strlen(loc)+6);
-				cp = &vls->vls_str[vls->vls_len];
-				sprintf(cp, " %s=\"%s\"",
-				 	ptab->sp_name, loc);
-				vls->vls_len += strlen(cp);
-				break;
-			case 'd':
-				rt_vls_extend(vls, 64+strlen(ptab->sp_name)+3);
-				cp = &vls->vls_str[vls->vls_len];
-				sprintf(cp, " %s=%d",
-					ptab->sp_name, *((int *)loc) );
-				vls->vls_len += strlen(cp);
-				break;
-			case 'f':
-				rt_vls_extend(vls, 32+strlen(ptab->sp_name));
-				cp = &vls->vls_str[vls->vls_len];
-				sprintf(cp, " %s=%.27E",
-					ptab->sp_name, *((double *)loc) );
-				vls->vls_len += strlen(cp);
-				break;
-			case 'C':
-				{
-					register unsigned char *ucp =
-						(unsigned char *)loc;
+				rt_vls_extend(vls, rt_vls_strlen(vls_p) + 5 +
+					strlen(sdp->sp_name) );
 
-					rt_vls_extend(vls,
-						16+strlen(ptab->sp_name) );
-					/* WARNING: peeks inside rt_vls structure */
-					cp = &vls->vls_str[vls->vls_len];
-					sprintf( cp, " %s=%d/%d/%d",
-						ptab->sp_name,
-						ucp[0], ucp[1], ucp[2]);
-					vls->vls_len += strlen(cp);
-					break;
+				cp = &vls->vls_str[vls->vls_len];
+				sprintf(cp, "%s%s=\"%s\"", sdp->sp_name,
+					(vls->vls_len?" ":""),
+					rt_vls_addr(vls_p) );
+				vls->vls_len += strlen(cp);
+			}
+			break;
+		case 'i':
+			{	register int i = sdp->sp_count;
+				register short *sp = (short *)loc;
+				register int tmpi;
+
+				rt_vls_extend(vls, 
+					64 * i + strlen(sdp->sp_name) + 3 );
+
+				cp = &vls->vls_str[vls->vls_len];
+				sprintf(cp, "%s%s=%d",
+						(vls->vls_len?" ":""),
+						 sdp->sp_name, *sp++);
+				tmpi = strlen(cp);
+				vls->vls_len += tmpi;
+
+				while (--i > 0) {
+					cp += tmpi;
+					sprintf(cp, ",%d", *sp++);
+					tmpi = strlen(cp);
+					vls->vls_len += tmpi;
 				}
-			case 'M':
-				{	register fastf_t *fp = (fastf_t *)loc;
+			}
+			break;
+		case 'd':
+			{	register int i = sdp->sp_count;
+				register int *dp = (int *)loc;
+				register int tmpi;
 
-					rt_vls_extend(vls,
-						365+strlen(ptab->sp_name));
+				rt_vls_extend(vls, 
+					64 * i + strlen(sdp->sp_name) + 3 );
 
-					cp = &vls->vls_str[vls->vls_len];
-					sprintf(cp,
-" %s=\
-%.27E,%.27E,%.27E,%.27E,\
-%.27E,%.27E,%.27E,%.27E,\
-%.27E,%.27E,%.27E,%.27E,\
-%.27E,%.27E,%.27E,%.27E",
-						ptab->sp_name,
-						fp[0], fp[1], fp[2], fp[3],
-						fp[4], fp[5], fp[6], fp[7],
-						fp[8], fp[9], fp[10],fp[11],
-						fp[12],fp[13],fp[14],fp[15]);
-					vls->vls_len += strlen(cp);
-					break;
+				cp = &vls->vls_str[vls->vls_len];
+				sprintf(cp, "%s%s=%d", 
+					(vls->vls_len?" ":""),
+					sdp->sp_name, *dp++);
+				tmpi = strlen(cp);
+				vls->vls_len += tmpi;
+
+				while (--i > 0) {
+					cp += tmpi;
+					sprintf(cp, ",%d", *dp++);
+					tmpi = strlen(cp);
+					vls->vls_len += tmpi;
 				}
-			case 'V':
-				{
-					register fastf_t *fp = (fastf_t *)loc;
+			}
+			break;
+		case 'f':
+			vls_print_float(vls, sdp->sp_name, sdp->sp_count,
+				(double *)loc);
+			break;
+		case 'C':
+			{
+				register unsigned char *RGBp =
+					(unsigned char *)loc;
 
-					rt_vls_extend(vls, 96);
+				rt_vls_extend(vls, 16+strlen(sdp->sp_name) );
 
-					cp = &vls->vls_str[vls->vls_len];
-					sprintf(cp, " %s=%.27E,%.27E,%.27E",
-						ptab->sp_name,
-						fp[0], fp[1], fp[2] );
-					vls->vls_len += strlen(cp);
-					break;
-				}
-			default:
-				rt_log( " %s=%s??\n", ptab->sp_name,
-					ptab->sp_fmt );
-				abort();
-				break;
+				cp = &vls->vls_str[vls->vls_len];
+				sprintf(cp, "%s%s=%d/%d/%d", 
+						(vls->vls_len?" ":""),
+						sdp->sp_name,
+						RGBp[0], RGBp[1], RGBp[2]);
+				vls->vls_len += strlen(cp);
 			}
 			break;
 		default:
-			rt_log("rt_structprint:  %s: unknown format '%s'\n",
-				ptab->sp_name, ptab->sp_fmt );
+			rt_log( " %s=%s??\n", sdp->sp_name, sdp->sp_fmt );
+			abort();
 			break;
 		}
 	}
