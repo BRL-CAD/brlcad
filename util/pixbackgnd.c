@@ -144,8 +144,7 @@ char **argv;
 	}
 
 	/* Do rest with V dropping from start to end values */
-	hsv[2] = h_start;
-	deltav = (h_start-h_end) / (double)(file_height-line);
+	deltav = (hsv[2]-h_end) / (double)(file_height-line);
 
 	for( ; line<file_height; line++ )  {
 		hsv[2] -= deltav;
