@@ -1705,6 +1705,8 @@ plane_t pl;
 	fastf_t det;
 	double one_over_vertex_count;
 	vect_t vsum;
+	fastf_t min_dist=MAX_FASTF;
+	fastf_t max_dist=(-MAX_FASTF);
 	int i;
 	int got_dir=0;
 	int failed=0;
@@ -1735,13 +1737,15 @@ plane_t pl;
 	fg = f->g.plane_p;
 	if( fg )
 	{
+		struct face *f1;
+
 		NMG_CK_FACE_G_PLANE( fg );
 
 		/* count loops using this face geometry */
 		loop_count = 0;
-		for( RT_LIST_FOR( f , face, &fg->f_hd ) )
+		for( RT_LIST_FOR( f1 , face, &fg->f_hd ) )
 		{
-			for( RT_LIST_FOR( lu, loopuse, &f->fu_p->lu_hd ) )
+			for( RT_LIST_FOR( lu, loopuse, &f1->fu_p->lu_hd ) )
 				loop_count++;
 		}
 
@@ -1898,6 +1902,25 @@ plane_t pl;
 			failed = 1;
 		}
 	}
+
+	/* make sure plane is at center of range of vertices */
+	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	{
+		struct vertex *v;
+		struct vertex_g *vg;
+		fastf_t dist;
+
+		v = (struct vertex *)NMG_TBL_GET( &verts, i );
+		vg = v->vg_p;
+
+		dist = DIST_PT_PLANE( vg->coord, pl );
+		if( dist > max_dist )
+			max_dist = dist;
+		if( dist < min_dist )
+			min_dist = dist;
+	}
+
+	pl[H] += (max_dist + min_dist)/2.0;
 
 	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
 	return( failed );
@@ -9152,51 +9175,22 @@ CONST struct rt_tol *tol;
 		NMG_GET_FU_PLANE( pl, fu );
 
 		/* check if all the vertices for this face lie on the plane */
-		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		if( nmg_ck_fu_verts( fu, fu->f_p, tol ) )
 		{
-			NMG_CK_LOOPUSE( lu );
+			plane_t pl;
 
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
-			{
-				vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-				dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
-				if( dist_to_plane > tol->dist || dist_to_plane < -tol->dist )
-				{
-					triangulate = 1;
-					break;
-				}
-			}
-			else
-			{
-				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-				{
-					NMG_CK_EDGEUSE( eu );
-					vu = eu->vu_p;
-					dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
-					if( dist_to_plane > tol->dist || dist_to_plane < -tol->dist )
-					{
-						triangulate = 1;
-						break;
-					}
-				}
-				if( triangulate )
-					break;
-			}
-		}
-
-		if( triangulate )
-		{
 			/* Need to triangulate this face */
 			nmg_triangulate_fu( fu, tol );
 
 			/* split each triangular loop into its own face */
 			(void)nmg_split_loops_into_faces( &fu->l.magic, tol );
-			if( nmg_calc_face_g( fu ) )
-			{
-				rt_log( "cvt_euclid_region: nmg_calc_face_g failed!!\n" );
-				rt_bomb( "euclid-g: Could not calculate new face geometry\n" );
-			}
 
+			if( nmg_calc_face_plane( fu, pl ) )
+			{
+				rt_log( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed\n" );
+				rt_bomb( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed" );
+			}
+			nmg_face_new_g( fu, pl );
 		}
 	}
 
@@ -9210,8 +9204,13 @@ CONST struct rt_tol *tol;
 		if( nmg_tbl( &faceuses, TBL_LOC, (long *)fu ) != (-1) )
 			continue;
 
-		nmg_calc_face_g( fu );
+		if( nmg_calc_face_plane( fu, pl ) )
+		{
+			rt_log( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed\n" );
+			rt_bomb( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed" );
+		}
 
+		nmg_face_new_g( fu, pl );
 	}
 
 	nmg_tbl( &faceuses, TBL_FREE, (long *)NULL );
@@ -10648,8 +10647,16 @@ CONST struct rt_tol *tol;
 					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 						count_npts++;
 
-					if( count_npts > max_count )
+					if( count_npts > 5 )
+					{
 						max_count = count_npts;
+						break;
+					}
+					if( !nmg_lu_is_convex( lu, tol ) )
+					{
+						max_count = 6;
+						break;
+					}
 				}
 
 				/* if any loop has more than 5 vertices, triangulate the face */
@@ -10657,12 +10664,6 @@ CONST struct rt_tol *tol;
 				{
 					if( rt_g.NMG_debug & DEBUG_BASIC )
 						rt_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
-					nmg_triangulate_fu( fu, tol );
-				}
-				else if( !nmg_lu_is_convex( lu, tol ) )
-				{
-					if( rt_g.NMG_debug & DEBUG_BASIC )
-						rt_log( "write_shell_as_polysolid: triangulating non-convex fu x%x\n", fu );
 					nmg_triangulate_fu( fu, tol );
 				}
 
