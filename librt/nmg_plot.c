@@ -1251,6 +1251,7 @@ int			fancy;
 
 	RT_CK_VLBLOCK(vbp);
 	NMG_CK_SHELL(s);
+	NMG_CK_REGION(s->r_p);
 	m = s->r_p->m_p;
 	NMG_CK_MODEL(m);
 
@@ -1303,6 +1304,8 @@ int			fancy;
 	struct shell *s;
 
 	RT_CK_VLBLOCK(vbp);
+	NMG_CK_REGION(r);
+
 	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
 		nmg_vlblock_s(vbp, s, fancy);
 	}
@@ -1320,6 +1323,8 @@ int			fancy;
 	struct nmgregion *r;
 
 	RT_CK_VLBLOCK(vbp);
+	NMG_CK_MODEL(m);
+
 	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		nmg_vlblock_r(vbp, r, fancy);
 	}
