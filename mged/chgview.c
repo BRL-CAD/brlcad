@@ -832,7 +832,14 @@ f_release(argc, argv)
 int	argc;
 char	**argv;
 {
+#ifdef MULTI_ATTACH
+  if(argc == 2)
+    release(argv[1]);
+  else
+    release(NULL);
+#else
 	release();
+#endif
 	return CMD_OK;
 }
 

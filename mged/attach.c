@@ -190,15 +190,39 @@ static struct dm *which_dm[] = {
 	0
 };
 
+#ifdef MULTI_ATTACH
+void
+release(name)
+char *name;
+{
+#else
 void
 release()
 {
+#endif
 	register struct solid *sp;
 #ifdef MULTI_ATTACH
 	struct dm_list *p;
+	struct dm_list *save_dm_list = (struct dm_list *)NULL;
 
-	if( curr_dm_list == &head_dm_list )
-	  return;
+	if(name != NULL){
+	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	    if(strcmp(name, rt_vls_addr(&p->_pathName)))
+	      continue;
+
+	    save_dm_list = curr_dm_list;
+	    curr_dm_list = p;
+	    break;
+	  }
+
+	  if(p == &head_dm_list){
+	    rt_log("release: %s not found\n", name);
+	    return;
+	  }
+	}else{
+	  if( curr_dm_list == &head_dm_list )
+	    return;
+	}
 #endif
 
 	/* Delete all references to display processor memory */
@@ -213,7 +237,12 @@ release()
 
 #ifdef MULTI_ATTACH
 	p = curr_dm_list;
-	curr_dm_list = (struct dm_list *)curr_dm_list->l.forw;
+
+	/* name was not supplied so use next one */
+	if(save_dm_list == (struct dm_list *)NULL)
+	  curr_dm_list = (struct dm_list *)curr_dm_list->l.forw;
+	else
+	  curr_dm_list = save_dm_list;  /* put it back the way it was */
 
 	RT_LIST_DEQUEUE( &p->l );
 	rt_free( (char *)p, "release: curr_dm_list" );
@@ -293,7 +322,7 @@ char *name;
   dm_var_init(o_dm_list);
 #else
   if(*dp != (struct dm *)0)
-    release();
+    release(NULL);
 #endif
 #else
 	if( dmp != &dm_Null )
@@ -428,7 +457,7 @@ reattach()
     return;
 
   name = strdup(dmp->dmr_name);
-  release();
+  release(NULL);
   attach(name);
   free((void *)name);
 #else
