@@ -522,6 +522,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 		case 'r':
 			region_flag = 1;
 			break;
+		/* XXX How about -p and -v for FASTGEN? */
 		case '?':
 		default:
 			PRINT_USAGE;
@@ -572,7 +573,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 	/*
 	 *	At this point, we know we have a Boolean expression.
 	 *	If the combination already existed and region_flag is -1,
-	 *	then leave its c_flags alone.
+	 *	then leave its region_flag alone.
 	 *	If the combination didn't exist yet,
 	 *	then pretend region_flag was 0.
 	 *	Otherwise, make sure to set its c_flags according to region_flag.
