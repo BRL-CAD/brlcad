@@ -1976,6 +1976,7 @@ BU_EXTERN(void rt_find_fallback_angle, (double angles[5], CONST vect_t vec));
 
 /* table.c */
 BU_EXTERN(int rt_id_solid, (struct bu_external *ep));
+BU_EXTERN(CONST struct rt_functab *rt_get_functab_by_label, (CONST char *label));
 
 
 /* prep.c */
