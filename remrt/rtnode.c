@@ -624,6 +624,15 @@ char			*buf;
 	do_run( start_line*width, end_line*width+width-1 );
 	(void)rt_read_timer( (char *)0, 0 );
 
+	/*
+	 *  Ensure all scanlines have made it to display server,
+	 *  by requesting a cheap LIBFB service which requires a reply.
+	 */
+	{
+		int	xcent, ycent, xzoom, yzoom;
+		(void)fb_getview( fbp, &xcent, &ycent, &xzoom, &yzoom );
+	}
+
 	if(debug) rt_log("done!\n");
 
 	if( pkg_send( RTSYNCMSG_DONE, "1", 2, pcsrv ) < 0 )  {

@@ -646,9 +646,18 @@ char			*buf;
 		rt_log("%s DONE %s\n", stamp(), rtnodes[i].host->ht_name );
 		rtnodes[i].busy = 0;
 		if( buf )  free(buf);
-		return;
+		goto check_others;
 	}
 	rt_bomb("DONE Message received from phantom pkg?\n");
+
+check_others:
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].fd <= 0 )  continue;
+		if( rtnodes[i].ncpus <= 0 )  continue;
+		if( rtnodes[i].busy )  return;	/* Still working on last one */
+	}
+	/* This frame is now done, flush to screen */
+	fb_flush(fbp);
 }
 
 /*
