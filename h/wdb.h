@@ -138,6 +138,19 @@ WDB_EXTERN(int mk_particle, (FILE *fp, char *name, point_t vertex,
 			vect_t height, double vradius, double hradius) );
 WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipept *headp) );
 
+/* strsol.c */
+WDB_EXTERN(int mk_dsp, (FILE *fp, CONST char *name, CONST char *file,
+			int xdim, int ydim, CONST matp_t mat));
+WDB_EXTERN(int mk_ebm, (FILE *fp, CONST char *name, CONST char *file,
+			int xdim, int ydim, fastf_t tallness, CONST matp_t mat));
+WDB_EXTERN(int mk_vol, (FILE*fp, CONST char *name, CONST char *file,
+			int xdim, int ydim, int zdim, int lo, int hi,
+			CONST vect_t cellsize, CONST matp_t mat));
+WDB_EXTERN(int mk_strsol, (FILE *fp, CONST char *name,
+			CONST char *string_solid, CONST char *string_arg));
+WDB_EXTERN(int mk_submodel, (FILE *fp, CONST char *name, CONST char *file,
+			CONST char *treetop, int meth));
+
 /*
  *  These routines will be replaced in the next release.
  *  Try not to use them.
