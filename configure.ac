@@ -752,6 +752,8 @@ else
 		dnl automatic detection
 		if test "x$png_works" = "xno" ; then
 			build_brlcad_png=yes
+		else
+			PNG_LIBS="-lpng -lz"
 		fi
 	fi
 fi
