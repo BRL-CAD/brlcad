@@ -33,15 +33,17 @@ The
 .B -M
 option causes
 .I nirt
-to read the eye point and the view-rotation matrix from the standard input,
-and fire a single ray from the point in the view direction.
+to read the eye point and
+either the orientation quaternion (new format)
+or the view-rotation matrix (old format) from the standard input,
+and fire a single ray from the point in the specified direction.
 This option allows
 .I nirt
 to be called directly from within
 .I mged
 using the
-.B rrt
-command.
+.BR nirt " and " rrt
+commands.
 The
 .BI -u " n"
 option sets the \fIuseair\fR member
