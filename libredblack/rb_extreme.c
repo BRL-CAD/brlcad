@@ -14,11 +14,13 @@
  *
  *	    Return the minimum or maximum node in a red-black tree
  *
- *	This function has three parameters: the root of the tree, the
- *	order, and the sense (min or max).  _rb_extreme() returns a
- *	pointer to the extreme node.
+ *	This function has four parameters: the root of the tree, the
+ *	order, the sense (min or max), and the address to be understood
+ *	as the nil node pointer. _rb_extreme() returns a pointer to the
+ *	extreme node.
  */
-static struct rb_node *_rb_extreme (struct rb_node *root, int order, int sense)
+static struct rb_node *_rb_extreme (struct rb_node *root, int order,
+				    int sense, struct rb_node *empty_node)
 {
     struct rb_node	*child;
 
@@ -27,7 +29,7 @@ static struct rb_node *_rb_extreme (struct rb_node *root, int order, int sense)
 	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
 	child = (sense == SENSE_MIN) ? rb_left_child(root, order) :
 				       rb_right_child(root, order);
-	if (child == RB_NODE_NULL)
+	if (child == empty_node)
 	    break;
 	root = child;
     }
@@ -59,15 +61,15 @@ void *rb_extreme (rb_tree *tree, int order, int sense)
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
     {
 	fprintf(stderr,
-	    "Error: _rb_extreme(): invalid sense %d, file %s, line %s\n",
+	    "Error: rb_extreme(): invalid sense %d, file %s, line %s\n",
 	    sense, __FILE__, __LINE__);
 	exit (0);
     }
 
     /* Wade throught the tree */
-    node = _rb_extreme(rb_root(tree, order), order, sense);
+    node = _rb_extreme(rb_root(tree, order), order, sense, rb_null(tree));
 
-    return (node -> rbn_data);
+    return (rb_data(node, order));
 }
 
 /*		    _ R B _ N E I G H B O R ( )
@@ -86,14 +88,17 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
 {
     struct rb_node	*child;
     struct rb_node	*parent;
+    struct rb_node	*empty_node = rb_null(node -> rbn_tree);
 
+    printf("_rb_neighbor(<%d>, %d, %d)...\n", (int) node, order, sense);
+    fflush(stdout);
     child = (sense == SENSE_MIN) ? rb_left_child(node, order) :
 				   rb_right_child(node, order);
-    if (child != RB_NODE_NULL)
-	return (_rb_extreme(child, order, sense));
+    if (child != empty_node)
+	return (_rb_extreme(child, order, sense, empty_node));
     parent = rb_parent(node, order);
-    while ((parent != RB_NODE_NULL) &&
-	   (node == rb_child(parent, order, SENSE)))
+    while ((parent != empty_node) &&
+	   (node == rb_child(parent, order, sense)))
     {
 	node = parent;
 	parent = rb_parent(parent, order);
@@ -135,8 +140,8 @@ void *rb_neighbor (int order, int sense)
     node = _rb_neighbor(current_node, order, sense);
 
     /* Record the node with which we've been working */
-    if (node != RB_NODE_NULL)
+    if (node != rb_null(tree))
 	current_node = node;
 
-    return (node -> rbn_data);
+    return (rb_data(node, order));
 }
