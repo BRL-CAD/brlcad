@@ -17,12 +17,12 @@ rcs_id[] = "$Header$";
 #include	<signal.h>
 #include	<sys/stat.h>
 
+typedef	struct	passwd	Pwent;
+typedef	struct	stat	Stat;
+
 #if !defined(__convex__) && !__STDC__ && !__EXTENSIONS__
 extern	Pwent	*getpwuid();
 #endif
-
-typedef	struct	passwd	Pwent;
-typedef	struct	stat	Stat;
 
 int	Gflag = FALSE;
 int	Lflag = FALSE;
