@@ -37,8 +37,8 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 #if 1
 struct bu_hook_list bu_bomb_hook_list = {
 	{	BU_LIST_HEAD_MAGIC, 
-		&bu_log_hook_list.l, 
-		&bu_log_hook_list.l
+		&bu_bomb_hook_list.l, 
+		&bu_bomb_hook_list.l
 	}, 
 	BUHOOK_NULL,
 	GENPTR_NULL
@@ -65,10 +65,14 @@ void
 bu_bomb(str)
 CONST char *str;
 {
-	if (BU_LIST_IS_EMPTY(&bu_bomb_hook_list.l)) {
-		fprintf(stderr,"\n%s\n", str);
-		fflush(stderr);
-	} else {
+fprintf(stderr, "bu_bomb\n");
+
+	/* First thing, always always always try to print the string */
+	fprintf(stderr,"\n%s\n", str);
+	fflush(stderr);
+
+	/* MGED would like to be able to additional logging, do callbacks. */
+	if (BU_LIST_NON_EMPTY(&bu_bomb_hook_list.l)) {
 		bu_call_hook(&bu_bomb_hook_list, (genptr_t)str);
 	}
 
