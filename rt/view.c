@@ -29,9 +29,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int ikfd;		/* defined in iklib.o */
 
-vect_t l0color = { 128, 128, 255 };
-vect_t l1color = { 255, 128, 128 };
-vect_t l2color = {   0, 255,   0 };
+vect_t l0color = {  28,  28, 255 };
+vect_t l1color = { 255,  28,  28 };
+vect_t l2color = { 255, 100,   0 };
 extern vect_t l0vec;
 extern vect_t l1vec;
 extern vect_t l2vec;
