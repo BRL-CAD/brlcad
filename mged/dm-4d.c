@@ -1028,6 +1028,11 @@ int		white;
 				endpolygon();
 				first = 1;
 				break;
+			case RT_VLIST_POLY_VERTNORM:
+				/* Set per-vertex normal.  Given before vert. */
+				VMOVE( gtvec, *pt );
+				n3f(gtvec);
+				break;
 			}
 		}
 	}
