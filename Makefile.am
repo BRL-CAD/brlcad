@@ -92,7 +92,7 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 $(PACKAGE_NAME)-$(VERSION).dmg:
 	@$(ECHO) "Building a Disk Image for Mac OS X"
 	@$(ECHO)
-	@@SH@ sh/make_dmg.sh $(PACKAGE_NAME)-$(VERSION) $(PACKAGE_NAME)-$(VERSION).pkg
+	@@SH@ sh/make_dmg.sh $(PACKAGE_NAME)-$(VERSION)
 
 # using home is probably not a great choice..
 $(PACKAGE)-$(VERSION).rpm: $(PACKAGE)-$(VERSION).tar.gz
@@ -125,12 +125,12 @@ $(PACKAGE)-$(VERSION).bin.zip:
 	@$(ECHO)
 	@@SH@ sh/make_zip.sh $(PACKAGE_NAME)-$(VERSION)
 
- $(PACKAGE)-$(VERSION).bin.tar.gz:
+ $(PACKAGE)-$(VERSION).bin.tar.gz: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Building a gzip-compressed tape archive"
 	@$(ECHO)
 	@@SH@ sh/make_tgz.sh $(PACKAGE_NAME)-$(VERSION)
 
- $(PACKAGE)-$(VERSION).bin.tar.bz2:
+ $(PACKAGE)-$(VERSION).bin.tar.bz2: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Building a bzip2-compressed tape archive"
 	@$(ECHO)
 	@@SH@ sh/make_bz2.sh $(PACKAGE_NAME)-$(VERSION)
@@ -138,7 +138,7 @@ $(PACKAGE)-$(VERSION).bin.zip:
  $(PACKAGE)-$(VERSION).bin.tar:
 	@$(ECHO) "Building a uncompressed tape archive"
 	@$(ECHO)
-	@@SH@ sh/make_tar.sh $(PACKAGE_NAME)-$(VERSION)
+	@@SH@ sh/make_tar.sh $(PACKAGE_NAME) $(MAJOR_VERSION) $(MINOR_VERSION) $(PATCH_VERSION) $(DESTDIR)$(prefix)
 
 
 #############
