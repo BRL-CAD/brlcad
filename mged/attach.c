@@ -37,8 +37,9 @@ MGED_EXTERN(void	Nu_input, (fd_set *input, int noblock) );
 static void	Nu_void();
 static int	Nu_int0();
 static unsigned Nu_unsign();
-void find_new_owner();
 static int do_2nd_attach_prompt();
+static void find_new_owner();
+static void dm_var_init();
 
 struct dm dm_Null = {
 	Nu_int0, Nu_void,
@@ -127,7 +128,13 @@ extern struct dm dm_pex;
 extern struct _mged_variables default_mged_variables;
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
-void dm_var_init();
+
+static char *view_cmd_str[] = {
+  "press top",
+  "press right",
+  "press front",
+  "press 45,45"
+};
 
 static struct dm *which_dm[] = {
 	&dm_PS,  /* We won't be advertising this guy --- access is now through the ps command */
@@ -580,7 +587,7 @@ char    **argv;
   return TCL_OK;
 }
 
-void
+static void
 find_new_owner( op )
 struct dm_list *op;
 {
@@ -598,7 +605,7 @@ struct dm_list *op;
 }
 
 
-void
+static void
 dm_var_init(initial_dm_list, name)
 struct dm_list *initial_dm_list;
 char *name;
@@ -610,6 +617,8 @@ char *name;
     rt_vls_init(&pathName);
     strcpy(dname, name);
   }else{
+    int i;
+
     curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
 							    "shared_info");
     bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
@@ -618,9 +627,10 @@ char *name;
 
     rt_vls_init(&pathName);
     strcpy(dname, name);
-    mat_copy( Viewrot, initial_dm_list->s_info->_Viewrot );
+    mat_copy(Viewrot, identity);
     size_reset();
     new_mats();
+    (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
 
     MAT_DELTAS_GET(orig_pos, toViewcenter);
 
@@ -628,4 +638,35 @@ char *name;
     dmaflag = 1;
     owner = 1;
   }
+}
+
+/* Load default views */
+int
+f_load_dv(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  int i;
+  struct rt_vls vls;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  rt_vls_init(&vls);
+  for(i = 0; i < VIEW_TABLE_SIZE; ++i){
+    rt_vls_strcpy(&vls, view_cmd_str[i]);
+    (void)cmdline(&vls, False);
+    mat_copy(viewrot_table[i], Viewrot);
+    viewscale_table[i] = Viewscale;
+  }
+  rt_vls_free(&vls);
+
+  current_view = 0;
+  mat_copy(Viewrot, viewrot_table[current_view]);
+  Viewscale = viewscale_table[current_view];
+  new_mats();
+
+  return TCL_OK;
 }
