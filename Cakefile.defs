@@ -231,7 +231,7 @@ set -S2 "/bin/sh"
 #	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
-#		define	OPTIMIZER	-O2 -woff 658 -Wl,-w1
+#		define	OPTIMIZER	-O2 -Olimit 1400 -woff 658 -Wl,-w1
 /*		Use shared libraries */
 #		define	SHARED	_s
 #	else
@@ -746,7 +746,7 @@ set -S2 "/bin/sh"
 #	define	BSD	44
 #	define	CC	/usr/bin/cc
 #	define	OPTIMIZER	/**/
-#	define	CC_OPTS -g
+#	define	CC_OPTS -O
 #	define	XINCDIR	/usr/X11/include
 #	define	XLIBDIR	/usr/X11/lib
 
