@@ -48,14 +48,14 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(int rt_##name##_plot, (struct rt_list *vhead, \
 			struct rt_db_internal *ip, \
 			CONST struct rt_tess_tol *ttol, \
-			struct rt_tol *tol)); \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], \
 			struct xray *rp[], \
 			struct seg segp[], int n, struct application *ap )); \
 	RT_EXTERN(int rt_##name##_tess, (struct nmgregion **r, \
 			struct model *m, struct rt_db_internal *ip, \
 			CONST struct rt_tess_tol *ttol, \
-			struct rt_tol *tol)); \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
 			CONST struct rt_external *ep, CONST mat_t mat)); \
 	RT_EXTERN(int rt_##name##_export, (struct rt_external *ep, \
@@ -84,14 +84,14 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(int rt_/**/name/**/_plot, (struct rt_list *vhead, \
 			struct rt_db_internal *ip, \
 			CONST struct rt_tess_tol *ttol, \
-			struct rt_tol *tol)); \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(void rt_/**/name/**/_vshot, (struct soltab *stp[], \
 			struct xray *rp[], \
 			struct seg segp[], int n, struct application *ap )); \
 	RT_EXTERN(int rt_/**/name/**/_tess, (struct nmgregion **r, \
 			struct model *m, struct rt_db_internal *ip, \
 			CONST struct rt_tess_tol *ttol, \
-			struct rt_tol *tol)); \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
 			CONST struct rt_external *ep, CONST mat_t mat)); \
 	RT_EXTERN(int rt_/**/name/**/_export, (struct rt_external *ep, \
@@ -337,7 +337,7 @@ void DEF(rt_nul_free,(struct soltab *stp))
 int NDEF(rt_nul_plot,(struct rt_list *vhead,
 			struct rt_db_internal *ip,
 			CONST struct rt_tess_tol *ttol,
-			struct rt_tol *tol))
+			CONST struct rt_tol *tol))
 void DEF(rt_nul_vshot,(struct soltab *stp[],
 			struct xray *rp[],
 			struct seg segp[], int n,
@@ -346,7 +346,7 @@ int NDEF(rt_nul_tess,(struct nmgregion **r,
 			struct model *m,
 			struct rt_db_internal *ip,
 			CONST struct rt_tess_tol *ttol,
-			struct rt_tol *tol))
+			CONST struct rt_tol *tol))
 int NDEF(rt_nul_import,(struct rt_db_internal *ip,
 			CONST struct rt_external *ep,
 			CONST mat_t mat))
