@@ -565,9 +565,11 @@ struct rt_i	*rtip;
 				}
 			case 1:
 				/* Full success */
-				if(rdebug&RDEBUG_MATERIAL)
+				if( rdebug&RDEBUG_MATERIAL &&
+				    ((struct mfuncs *)(regp->reg_mfuncs))->mf_print )  {
 					((struct mfuncs *)(regp->reg_mfuncs))->
 						mf_print( regp, regp->reg_udata );
+				}
 				/* Perhaps this should be a function? */
 				break;
 			}
