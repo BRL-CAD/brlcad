@@ -522,7 +522,9 @@ struct application *ap;
 		RT_CHECK_PT(pp);
 		claiming_regions = 0;
 		if(rt_g.debug&DEBUG_PARTITION)  {
-			rt_log("rt_boolfinal: (%g,%g)\n", startdist, enddist );
+			rt_log("rt_boolfinal: (%g,%g) x%d y%d lvl%d\n",
+				startdist, enddist,
+				ap->a_x, ap->a_y, ap->a_level );
 			rt_pr_pt( ap->a_rt_i, pp );
 		}
 		RT_CHECK_SEG(pp->pt_inseg);
@@ -532,24 +534,35 @@ struct application *ap;
 		diff = pp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
 		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
 			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
-				"rt_boolfinal:  Zero thickness partition: %s (%.18e,%.18e)\n",
+				"rt_boolfinal:  Zero thickness partition: %s (%.18e,%.18e) x%d y%d lvl%d\n",
 				pp->pt_regionp->reg_name,
 				pp->pt_inhit->hit_dist,
-				pp->pt_outhit->hit_dist );
+				pp->pt_outhit->hit_dist,
+				ap->a_x, ap->a_y, ap->a_level );
 			pp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
 		}
 
 
-		/* Sanity checks on sorting.  Remove later. */
+		/* Sanity checks on sorting. */
 		if( pp->pt_inhit->hit_dist > pp->pt_outhit->hit_dist )  {
-			rt_log("rt_boolfinal: inverted partition %.8x\n", pp);
+			rt_log("rt_boolfinal: inverted partition %.8x x%d y%d lvl%d\n",
+				pp,
+				ap->a_x, ap->a_y, ap->a_level );
 			rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
 		}
-		if( pp->pt_forw != InputHdp && pp->pt_outhit->hit_dist > pp->pt_forw->pt_inhit->hit_dist )  {
-			rt_log("rt_boolfinal:  sorting defect!\n");
-			if( !(rt_g.debug & DEBUG_PARTITION) )
-				rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
-			return(0);	/* give up */
+		if( pp->pt_forw != InputHdp )  {
+			diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
+			if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
+				if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  fusing 2 partitions x%d y%d lvl%d\n",
+					ap->a_x, ap->a_y, ap->a_level );
+				pp->pt_forw->pt_inhit->hit_dist = pp->pt_outhit->hit_dist;
+			} else if( diff > 0 )  {
+				rt_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d\n",
+					ap->a_x, ap->a_y, ap->a_level );
+				if( !(rt_g.debug & DEBUG_PARTITION) )
+					rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
+				return(0);	/* give up */
+			}
 		}
 
 		/*
