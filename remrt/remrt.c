@@ -372,9 +372,21 @@ char	**argv;
 	}
 
 	/* Listen for our PKG connections */
-	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, rt_log)) < 0 &&
-	    (tcp_listen_fd = pkg_permserver("4446", "tcp", 8, rt_log)) < 0 )
-		exit(1);
+	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, rt_log)) < 0 )  {
+		int	i;
+		char	num[8];
+		/* Do it by the numbers */
+		for(i=0; i<10; i++ )  {
+			sprintf( num, "%d", 4446+i );
+			if( (tcp_listen_fd = pkg_permserver(num, "tcp", 8, rt_log)) < 0 )
+				continue;
+			break;
+		}
+		if( i >= 10 )  {
+			rt_log("Unable to find a port to listen on\n");
+			exit(1);
+		}
+	}
 	/* Now, pkg_permport has tcp port number */
 
 	(void)signal( SIGPIPE, SIG_IGN );
@@ -689,6 +701,8 @@ char	*why;
 		return;
 	}
 	oldstate = sp->sr_state;
+	sp->sr_state = SRST_CLOSING;
+
 	rt_log("dropping %s (%s)\n", sp->sr_host->ht_name, why);
 
 	pc = sp->sr_pc;
@@ -696,12 +710,14 @@ char	*why;
 		rt_log("drop_server(x%x), sr_pc=0\n", sp);
 		return;
 	}
+
+	/* Clear the bits from "clients" now, to prevent further select()s */
 	fd = pc->pkc_fd;
 	if( fd <= 3 || fd >= NFD )  {
 		rt_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
 		return;
 	}
-	sp->sr_state = SRST_CLOSING;
+	clients &= ~(1<<sp->sr_pc->pkc_fd);
 
 	if( oldstate != SRST_READY )  return;
 
@@ -1339,7 +1355,7 @@ struct timeval	*nowp;
 
 		case SRST_CLOSING:
 			/* Handle final closing */
-			if(debug) rt_log("final close on %s\n", sp->sr_host->ht_name);
+			if(debug>1) rt_log("final close on %s\n", sp->sr_host->ht_name);
 			clients &= ~(1<<sp->sr_pc->pkc_fd);
 			pkg_close(sp->sr_pc);
 
@@ -2239,7 +2255,8 @@ struct ihost	*ihp;
 #ifdef sgi
 #	define RSH	"/usr/bsd/rsh"
 #endif
-#ifdef CRAY2
+#if CRAY || m68k
+/*	m68k: Need this for MAC II under AUX as well */
 #	define RSH	"/usr/bin/remsh"
 #endif
 #ifndef RSH
@@ -2293,9 +2310,8 @@ FILE	*fp;
 			sprintf(cmd,
 				"cd %s; rtsrv %s %d",
 				rem_dir, ourname, port );
-#if 0
-			rt_log("%s\n", cmd); fflush(stdout);
-#endif
+			if(debug)
+				rt_log("%s\n", cmd); fflush(stdout);
 
 			pid = fork();
 			if( pid == 0 )  {
@@ -2304,10 +2320,14 @@ FILE	*fp;
 				for(i=3; i<40; i++)  (void)close(i);
 				if( vfork() == 0 )  {
 					/* worker Child */
+
+					/* First, try direct exec. */
 					execl(
 						RSH,
 						"rsh", host,
 						"-n", cmd, 0 );
+
+					/* Second, try $PATH exec */
 					execlp(
 						"rsh",
 						"rsh", host,
@@ -2328,9 +2348,8 @@ FILE	*fp;
 				RSH, host,
 				rem_dir, rem_db,
 				ourname, port );
-#if 0
-			rt_log("%s\n", cmd); fflush(stdout);
-#endif
+			if(debug)
+				rt_log("%s\n", cmd); fflush(stdout);
 
 			pid = fork();
 			if( pid == 0 )  {
@@ -2486,11 +2505,15 @@ char	*name;
 	return(ihp);
 }
 
+/*
+ *			H O S T _ L O O K U P _ B Y _ A D D R
+ */
 struct ihost *
 host_lookup_by_addr( from, enter )
 struct sockaddr_in	*from;
 int	enter;
 {
+	register struct ihost	*ihp;
 	struct hostent	*addr;
 	unsigned long	addr_tmp;
 	char		name[64];
@@ -2519,10 +2542,19 @@ int	enter;
 		return( IHOST_NULL );
 	}
 
-	/* Print up a hostent structure */
+	/* See if this host has been previously entered by number */
+	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
+		if( strcmp( ihp->ht_name, name ) == 0 )
+			return( ihp );
+	}
+
+	/* Create a new hostent structure */
 	return( make_default_host( name ) );
 }
 
+/*
+ *			H O S T _ L O O K U P _ B Y _ N A M E
+ */
 struct ihost *
 host_lookup_by_name( name, enter )
 char	*name;
