@@ -152,6 +152,13 @@ hex-dumps and the famous trial-and-error-method. :-)
 No assurance is made that this program will read any particular
 Photo-CD CD-ROM, although in practice it has done well, so far.
 It has not been tested with multi-session CD-ROMs.
+.PP
+When processing 4Base and 16Base images, a substantial amount of dynamic
+memory is used.  If
+.IR pcd-pix (1)
+fails with an "out of memory" error, you may need to configure more
+swap space on your machine, or add more RAM, or both.
+As a general guide, for 16Base images 32 MBytes is not enough, 64 MBytes is.
 .SH "SEE ALSO"
 hpcdtoppm(1), 
 brlcad(1), pix-fb(1), bw-fb(1), fbscanplot(1), pix(5), bw(5)
