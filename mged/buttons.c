@@ -92,7 +92,6 @@ int be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_slicemode(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
