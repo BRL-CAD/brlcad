@@ -19,15 +19,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-unsigned long line[512];
+unsigned char line[512*3];		/* R, G, B per pixel */
 
 main()
 {
-	register unsigned long *ip;
+	register unsigned char *ip;
 
 	while( read( 0, line, sizeof(line) ) == sizeof(line) )  {
-		for( ip = line; ip < &line[512]; ip++ )
-			printf("%6.6x ", *ip & 0xFFFFFF );
-		printf("\n");
+		for( ip = line; ip < &line[512*3]; ip+=3 )
+			printf("%2.2x %2.2x %2.2x\n", ip[0], ip[1], ip[2]);
 	}
 }

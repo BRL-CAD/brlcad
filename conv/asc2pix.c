@@ -19,30 +19,22 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-unsigned long line[512];
+unsigned char line[512*3];		/* R, G, B per pixel */
 
 main()
 {
-	register unsigned long *ip;
+	register unsigned char *ip;
+	auto int r,g,b;
 
 	ip = line;
 	while( !feof( stdin ) )  {
-		scanf( "%x", ip++ );
-		if( ip >= &line[512] )  {
+		scanf( "%x %x %x", &r, &g, &b );
+		*ip++ = r;
+		*ip++ = g;
+		*ip++ = b;
+		if( ip >= &line[512*3] )  {
 			ip = line;
 			write( 1, line, sizeof(line) );
-			bzero( line, sizeof(line) );
 		}
 	}
 }
-
-#ifndef BSD42
-
-bzero( str, n )
-register char *str;
-register int n;
-{
-	while( n-- > 0 )
-		*str++ = '\0';
-}
-#endif
