@@ -424,22 +424,24 @@ struct seg {
 
 /*
  *  Macros to operate on Right Rectangular Parallelpipeds (RPPs).
- * XXX move to vmath.h
+ * XXX move to vmath.h?
  */
+struct bound_rpp {
+	point_t	min;
+	point_t max;
+};
 
+#if 0
 /*
  *  Compare two bounding RPPs;  return true if disjoint.
- *  RPP 1 is defined by lo1, hi1, RPP 2 by lo2, hi2.
  */
 #define RT_2RPP_DISJOINT(_l1, _h1, _l2, _h2) \
-      ( (_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[2] > (_h2)[2] || \
-	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[1] || (_l2)[2] > (_h1)[2] )
+	V3RPP_DISJOINT(_l1, _h1, _l2, _h2)
 
 /* Test for point being inside or on an RPP */
 #define RT_POINT_IN_RPP(_pt, _min, _max)	\
-	( ( (_pt)[X] >= (_min)[X] && (_pt)[X] <= (_max)[X] ) &&  \
-	  ( (_pt)[Y] >= (_min)[Y] && (_pt)[Y] <= (_max)[Y] ) &&  \
-	  ( (_pt)[Z] >= (_min)[Z] && (_pt)[Z] <= (_max)[Z] ) )
+	V3PT_IN_RPP(_pt, _min, _max)
+#endif
 
 /*
  *			S O L T A B
@@ -454,13 +456,13 @@ struct soltab {
 	struct rt_i	*st_rtip;	/* "up" pointer to rt_i */
 	long		st_uses;	/* Usage count, for instanced solids */
 	int		st_id;		/* Solid ident */
-	vect_t		st_center;	/* Centroid of solid */
+	point_t		st_center;	/* Centroid of solid */
 	fastf_t		st_aradius;	/* Radius of APPROXIMATING sphere */
 	fastf_t		st_bradius;	/* Radius of BOUNDING sphere */
 	genptr_t	st_specific;	/* -> ID-specific (private) struct */
 	CONST struct directory *st_dp;	/* Directory entry of solid */
-	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
-	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
+	point_t		st_min;		/* min X, Y, Z of bounding RPP */
+	point_t		st_max;		/* max X, Y, Z of bounding RPP */
 	long		st_bit;		/* solids bit vector index (const) */
 	struct bu_ptbl	st_regions;	/* ptrs to regions using this solid (const) */
 	matp_t		st_matp;	/* solid coords to model space, NULL=identity */
@@ -468,6 +470,7 @@ struct soltab {
 	/* Experimental stuff for accelerating "pieces" of solids */
 	long		st_npieces;	/* # pieces used by this solid */
 	long		st_piecestate_num; /* re_pieces[] subscript */
+	struct bound_rpp *st_piece_rpps;/* bounding RPP of each piece of this solid */
 };
 #define st_name		st_dp->d_namep
 #define RT_SOLTAB_NULL	((struct soltab *)0)
@@ -1457,10 +1460,10 @@ struct rt_i {
 	struct rt_tess_tol rti_ttol;	/* Tessellation tolerance defaults */
 	fastf_t		rti_max_beam_radius; /* Max threat radius for FASTGEN cline solid */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
-	vect_t		mdl_min;	/* min corner of model bounding RPP */
-	vect_t		mdl_max;	/* max corner of model bounding RPP */
-	vect_t		rti_pmin;	/* for plotting, min RPP */
-	vect_t		rti_pmax;	/* for plotting, max RPP */
+	point_t		mdl_min;	/* min corner of model bounding RPP */
+	point_t		mdl_max;	/* max corner of model bounding RPP */
+	point_t		rti_pmin;	/* for plotting, min RPP */
+	point_t		rti_pmax;	/* for plotting, max RPP */
 	double		rti_radius;	/* radius of model bounding sphere */
 	struct db_i	*rti_dbip;	/* prt to Database instance struct */
 	/* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
@@ -1795,7 +1798,7 @@ struct rt_shootray_status {
 	int			rstep[3];     /* -/0/+ dir of ray in axis */
 	CONST union cutter	*lastcut, *lastcell;
 	CONST union cutter	*curcut;
-	vect_t			curmin, curmax;
+	point_t			curmin, curmax;
 	int			igrid[3];     /* integer cell coordinates */
 	vect_t			tv;	      /* next t intercept values */
 	int			out_axis;     /* axis ray will leave through */
