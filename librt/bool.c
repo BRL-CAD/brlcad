@@ -62,37 +62,10 @@ struct partition *PartHdp;
 	register struct seg *segp;
 	register struct partition *pp;
 
-	if(rt_g.debug&DEBUG_PARTITION) rt_log("-------------------BOOL_WEAVE\n");
-	/* First pass -- validity checking */
+	if(rt_g.debug&DEBUG_PARTITION)
+		rt_log("-------------------BOOL_WEAVE\n");
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
-
-		/* Totally ignore things behind the start position */
-		if( segp->seg_out.hit_dist < -10.0 )
-			continue;
-
-		/*  Eliminate very thin segments, or they will cause
-		 *  trouble below.
-		 */
-		if( rt_fdiff(segp->seg_in.hit_dist,segp->seg_out.hit_dist)==0 ) {
-			rt_log(
-				"rt_boolweave: 1  Thin seg discarded: %s (%g,%g)\n",
-				segp->seg_stp->st_name,
-				segp->seg_in.hit_dist,
-				segp->seg_out.hit_dist );
-			continue;
-		}
-		if( segp->seg_in.hit_dist < -INFINITY ||
-		    segp->seg_out.hit_dist > INFINITY )  {
-		    	rt_log("rt_boolweave: 1  Defective segment %s (%g,%g)\n",
-				segp->seg_stp->st_name,
-				segp->seg_in.hit_dist,
-				segp->seg_out.hit_dist );
-			continue;
-		}
-	}
-	/* Second pass -- weaving */
-	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
-		register struct partition *newpp;		/* XXX */
+		register struct partition *newpp;
 		register struct seg *lastseg;
 		register struct hit *lasthit;
 		LOCAL lastflip;
@@ -108,15 +81,15 @@ struct partition *PartHdp;
 		 */
 		if( rt_fdiff(segp->seg_in.hit_dist,segp->seg_out.hit_dist)==0 ) {
 			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
-				"rt_boolweave: 2  Thin seg discarded: %s (%g,%g)\n",
+				"rt_boolweave:  Thin seg discarded: %s (%g,%g)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
 			continue;
 		}
-		if( segp->seg_in.hit_dist < -INFINITY ||
-		    segp->seg_out.hit_dist > INFINITY )  {
-		    	rt_log("rt_boolweave: 2 Defective segment %s (%g,%g)\n",
+		if( !(segp->seg_in.hit_dist >= -INFINITY &&
+		    segp->seg_out.hit_dist <= INFINITY) )  {
+		    	rt_log("rt_boolweave:  Defective segment %s (%g,%g)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
@@ -782,7 +755,7 @@ double a, b;
 	}
 	if( d <= 0.0001 )
 		return(0);	/* both nearly zero */
-	if( d == INFINITY )  {
+	if( d >= INFINITY )  {
 		if( a == b )  return(0);
 		if( a < b )  return(-1);
 		return(1);

@@ -64,7 +64,7 @@ rt_shootray( ap )
 register struct application *ap;
 {
 	auto struct seg *HeadSeg;
-	register int ret;
+	auto int ret;
 	auto vect_t inv_dir;		/* inverses of ap->a_ray.r_dir */
 	auto vect_t point;
 	auto fastf_t	box_start, box_end, model_end;
@@ -158,14 +158,17 @@ register struct application *ap;
 	}
 
 top:
+	if(rt_g.debug&DEBUG_SHOOT) rt_log("rt_shootray:  loop top, hack=%d\n", hack_flag);
 	if( hack_flag == 0 )  {
 		/* Push ray starting point to edge of model RPP */
 		box_start = ap->a_ray.r_min;
 		model_end = ap->a_ray.r_max;
 		if( box_start < -10.0 )
 			box_start = -10.0;	/* don't look back far */
+		lastcut = CUTTER_NULL;
 	}  else  {
 		cutp = &(ap->a_rt_i->rti_inf_box);
+		lastcut = cutp;
     		box_start = -100000;
 		box_end = ap->a_ray.r_max = INFINITY;
     		model_end = box_end * 0.99999;
@@ -179,7 +182,6 @@ top:
 		BITZERO(solidbits->be_v,ap->a_rt_i->nsolids);
 		BITZERO(regionbits,ap->a_rt_i->nregions);
 	}
-	lastcut = CUTTER_NULL;
 	trybool = 0;
 	if( hack_flag )  goto middle;
 
@@ -189,7 +191,7 @@ top:
 	 *  model space again (or first hit is found, if user is impatient).
 	 */
 	while( box_start < model_end )  {
-		struct soltab *stp;
+		struct soltab **stpp;
 
 		waitsegs = SEG_NULL;
 
@@ -212,7 +214,7 @@ top:
 
 		/* Don't get stuck within the same box for long */
 		if( cutp==lastcut )  {
-			rt_log("straight box push failed %g\n", box_end);
+			rt_log("%d,%d box push failed %g\n", ap->a_x, ap->a_y, box_end);
 			box_end += 1.0;		/* Advance 1mm */
 			box_start = box_end;
 			continue;
@@ -221,12 +223,15 @@ top:
 
 		if( !rt_in_rpp(&ap->a_ray, inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
-			rt_log("rt_shootray:  ray misses box?\n");
+			rt_log("\nrt_shootray:  ray misses box? (%g,%g) (%g,%g) \n",ap->a_ray.r_min, ap->a_ray.r_max, box_start, box_end);
+			VPRINT("r_pt", ap->a_ray.r_pt);
+			VPRINT("point", point);
+			VPRINT("Dir", ap->a_ray.r_dir);
+		     	rt_pr_cut( cutp, 0 );
 			break;
 		}
 middle:
 		box_end = ap->a_ray.r_max;	
-		ret = cutp->bn.bn_len;		/* loop count, below */
 
 		if(rt_g.debug&DEBUG_SHOOT) {
 			rt_log("ray (%f, %f) %f\n", box_start, box_end, model_end);
@@ -235,10 +240,12 @@ middle:
 		}
 
 		/* Consider all objects within the box */
-		while( --ret >= 0 )  {
+		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
+		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
+			register struct soltab *stp;
 			register struct seg *newseg;
 
-			stp = cutp->bn.bn_list[ret];
+			stp = *stpp;
 			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
 				if(rt_g.debug&DEBUG_SHOOT)rt_log("skipping %s\n", stp->st_name);
 				ap->a_rt_i->nmiss_tree++;
@@ -269,18 +276,6 @@ middle:
 				continue;	/* MISS */
 			}
 			if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
-
-			/* First, some checking */
-			if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
-				LOCAL struct hit temp;		/* XXX */
-				rt_log("ERROR %s: in/out rev (%f,%f)\n",
-					newseg->seg_stp->st_name,
-					newseg->seg_in.hit_dist,
-					newseg->seg_out.hit_dist );
-				temp = newseg->seg_in;	/* struct copy */
-				newseg->seg_in = newseg->seg_out;/* struct copy */
-				newseg->seg_out = temp;	/* struct copy */
-			}
 
 			/* Discard seg entirely behind start point of ray */
 			while( newseg != SEG_NULL && 

@@ -403,7 +403,7 @@ register struct xray *rp;
 			stp->st_name);
 		return( SEG_NULL );	/* MISS */
 	}
-	if( in >= out )
+	if( in >= out || out >= INFINITY )
 		return( SEG_NULL );	/* MISS */
 
 	{

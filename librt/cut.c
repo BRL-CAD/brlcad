@@ -324,6 +324,7 @@ register union cutter *cutp;
 int depth;
 {
 	register int oldlen;
+	register int axis;
 
 	if( cutp->cut_type == CUT_CUTNODE )  {
 		rt_cut_optim( cutp->cn.cn_l, depth+1 );
@@ -342,10 +343,18 @@ int depth;
 	/* Attempt to subdivide finer than rt_cutLen near treetop */
 	if( depth >= 12 && cutp->bn.bn_len <= rt_cutLen )
 		return;				/* Fine enough */
-	/* Keep subdividing until things don't get any better. */
-	/* Really we might want to proceed for 2-3 levels, but... */
-	oldlen = cutp->bn.bn_len;
-	rt_cut_box( cutp, AXIS(depth) );
+	/*
+	 *  In general, keep subdividing until things don't get any better.
+	 *  Really we might want to proceed for 2-3 levels.
+	 *
+	 *  First, make certain this is a worthwhile cut.
+	 *  In absolute terms, each box must be at least 1mm wide after cut.
+	 */
+	axis = AXIS(depth);
+	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
+		return;
+	oldlen = cutp->bn.bn_len;	/* save before rt_cut_box() */
+	rt_cut_box( cutp, axis );
 	if( cutp->cn.cn_l->bn.bn_len < oldlen ||
 	    cutp->cn.cn_r->bn.bn_len < oldlen )  {
 		rt_cut_optim( cutp->cn.cn_l, depth+1 );
