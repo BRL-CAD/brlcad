@@ -48,6 +48,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./inout.h"
 #include "./protocol.h"
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+extern char	*getenv();
+
 #ifdef SYSV
 #define vfork	fork
 #endif SYSV
@@ -115,9 +120,6 @@ struct frame {
 	/* options */
 	int		fr_width;	/* frame width (pixels) */
 	int		fr_height;	/* frame height (pixels) */
-	int		fr_hyper;	/* hypersampling */
-	int		fr_benchmark;	/* Benchmark flag */
-	double		fr_perspective;	/* perspective angle */
 	char		*fr_picture;	/* ptr to picture buffer */
 	struct list	fr_todo;	/* work still to be done */
 	/* Timings */
@@ -126,7 +128,7 @@ struct frame {
 	long		fr_nrays;	/* rays fired so far */
 	double		fr_cpu;		/* CPU seconds used so far */
 	/* Current view */
-	struct vls	fr_cmd;		/* RT command string */
+	struct vls	fr_cmd;		/* RT options & command string */
 	char		fr_servinit[MAXSERVERS]; /* sent server options & matrix? */
 };
 struct frame FrameHead;
@@ -136,6 +138,7 @@ struct frame *FreeFrame;
 struct servers {
 	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
 	struct list	sr_work;
+	struct ihost	*sr_host;	/* description of this host */
 	int		sr_lump;	/* # lines to send at once */
 	int		sr_started;
 #define SRST_NEW	1		/* connected, no model loaded yet */
@@ -143,8 +146,6 @@ struct servers {
 #define SRST_READY	3		/* loaded, ready */
 #define SRST_RESTART	4		/* about to restart */
 	struct frame	*sr_curframe;	/* ptr to current frame */
-	long		sr_addr;	/* NET order inet addr */
-	char		sr_name[64];	/* host name */
 	int		sr_index;	/* fr_servinit[] index */
 	/* Timings */
 	struct timeval	sr_sendtime;	/* time of last sending */
@@ -158,6 +159,25 @@ struct servers {
 } servers[MAXSERVERS];
 #define SERVERS_NULL	((struct servers *)0)
 
+/* Internal Host table */
+struct ihost {
+	struct hostent	ht_host;	/* All details of this host */
+	int		ht_when;	/* When to use this host */
+#define HT_ALWAYS	1		/* Always try to use this one */
+#define HT_NIGHT	2		/* Only use at night */
+#define HT_PASSIVE	3		/* May call in, never initiated */
+	int		ht_where;	/* Where to find database */
+#define HT_CD		1		/* cd to ht_path first */
+#define HT_CONVERT	2		/* cd to ht_path, asc2g database */
+	char		*ht_path;
+	struct ihost	*ht_next;
+};
+struct ihost		*HostHead;
+#define IHOST_NULL	((struct ihost *)0)
+struct ihost		*host_lookup_by_name();
+struct ihost		*host_lookup_by_addr();
+struct ihost		*host_lookup_by_hostent();
+
 /* RT Options */
 int		width = 64;
 int		height = 64;
@@ -167,6 +187,9 @@ double		perspective = 0;
 int		benchmark = 0;
 int		rdebug;
 int		use_air = 0;
+char		*outputfile;		/* output file name */
+char		*framebuffer;
+extern double	azimuth, elevation;
 
 struct rt_g	rt_g;
 
@@ -177,8 +200,7 @@ extern struct command_tab cmd_tab[];	/* given at end */
 char	start_cmd[256];		/* contains file name & objects */
 
 FILE	*helper_fp;		/* pipe to rexec helper process */
-char	ourname[32];
-char	out_file[256];		/* output file name */
+char	ourname[64];
 
 extern char *malloc();
 
@@ -259,25 +281,57 @@ char	**argv;
 		printf("Interactive REMRT listening at port %d\n", pkg_permport);
 		clients = (1<<0);
 	} else {
+		FILE	*fp;
+
 		printf("Automatic REMRT listening at port %d\n", pkg_permport);
 		clients = 0;
+		clients = (1<<0);	/* for testing only */
 
 		/* parse command line args for sizes, etc */
 		if( !get_args( argc, argv ) )  {
 			fprintf(stderr,"remrt:  bad arg list\n");
 			exit(1);
 		}
-		/* Collect up results of arg parsing */
-		/* Most importantly, -o, -F */
 
 		/* take note of database name and treetops */
-		/* Read .remrtrc file to acquire servers */
+		build_start_cmd( argc, argv, optind );
 
+		/* Read .remrtrc file to acquire servers */
+		if( (fp = fopen(".remrtrc", "r")) == NULL )  {
+			char	*home;
+			char	path[128];
+
+			if( (home = getenv("HOME")) == NULL )
+				home = "/usr/brlcad/etc";
+			sprintf( path, "%s/.remrtrc", home );
+			fp = fopen( path, "r" );
+		}
+		if( fp != NULL )  {
+			source(fp);
+			fclose(fp);
+		}
+
+		/* Collect up results of arg parsing */
+		/* automatic: outputfile, width, height */
+		if( framebuffer )  init_fb(framebuffer);
+
+		/* Build queue of work to be done */
 		if( !matflag )  {
-			/* if not -M, start off single az/el frame */
+			struct frame	*fr;
+			char	buf[128];
+			/* if not -M, queue off single az/el frame */
+			GET_FRAME(fr);
+			prep_frame(fr);
+			sprintf(buf, "ae %g %g;", azimuth, elevation);
+			vls_cat( &fr->fr_cmd, buf);
+			APPEND_FRAME( fr, FrameHead.fr_back );
 		} else {
 			/* if -M, start reading RT script */
 		}
+
+		/* Attempt to start some servers */
+
+		/* Compute until no work remains */
 	}
 
 	while(clients)  {
@@ -339,11 +393,12 @@ addclient(pc)
 struct pkg_conn *pc;
 {
 	register struct servers *sp;
-	int on = 1, options = 0, fromlen;
+	struct ihost	*ihp;
+	int		on = 1;
+	int		options = 0;
+	auto int	fromlen;
 	struct sockaddr_in from;
-	register struct hostent *hp;
 	int fd;
-	unsigned long addr_tmp;
 
 	fd = pc->pkc_fd;
 
@@ -356,6 +411,14 @@ struct pkg_conn *pc;
 	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof (on)) < 0)
 		perror("setsockopt (SO_KEEPALIVE)");
 
+	if( (ihp = host_lookup_by_addr( &from, 1 )) == IHOST_NULL )  {
+		/* Disaster */
+		printf("abandoning this unknown server!!\n");
+		close( fd );
+		/* Maybe free the pkg struct? */
+		return;
+	}
+
 	clients |= 1<<fd;
 
 	sp = &servers[fd];
@@ -366,22 +429,9 @@ struct pkg_conn *pc;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_lump = 3;
 	sp->sr_index = fd;
-#ifdef CRAY
-	sp->sr_addr = from.sin_addr;
-	hp = gethostbyaddr(&(sp->sr_addr), sizeof (struct in_addr),
-		from.sin_family);
-#else
-	sp->sr_addr = from.sin_addr.s_addr;
-	hp = gethostbyaddr(&from.sin_addr, sizeof (struct in_addr),
-		from.sin_family);
-#endif
-	if (hp == 0) {
-		sprintf( sp->sr_name, "x%x", ntohl(sp->sr_addr) );
-	} else {
-		strncpy( sp->sr_name, hp->h_name, sizeof(sp->sr_name) );
-	}
+	sp->sr_host = ihp;
 
-	printf("%s: ACCEPT\n", sp->sr_name );
+	printf("%s: ACCEPT\n", sp->sr_host->ht_host.h_name );
 
 	if( start_cmd[0] != '\0' )  {
 		send_start(sp);
@@ -402,7 +452,7 @@ register struct pkg_conn *pc;
 
 	fd = pc->pkc_fd;
 	sp = &servers[fd];
-	printf("REMRT closing fd %d %s\n", fd, sp->sr_name);
+	printf("REMRT closing fd %d %s\n", fd, sp->sr_host->ht_host.h_name);
 	if( fd <= 3 || fd >= NFD )  {
 		printf("That's unreasonable, forget it!\n");
 		return;
@@ -455,47 +505,28 @@ register char *str;
 }
 
 /*
- *			H O S T 2 A D D R
- */
-long
-host2addr(str)
-char *str;
-{
-	if( str[0] == '0' || atoi(str) > 0 )  {
-		/* Numeric */
-		register int i;
-		if( (i=inet_addr(str)) != 0 )
-			return(i);
-		return(string2int(str));
-	} else {
-		register struct hostent *addr;
-		long i;
-		if ((addr=gethostbyname(str)) == NULL)
-			return(0);
-		bcopy(addr->h_addr,(char*)&i, sizeof(long));
-		return(i);
-	}
-}
-
-/*
  *			G E T _ S E R V E R _ B Y _ N A M E
  */
 struct servers *
 get_server_by_name( str )
 char *str;
 {
-	register long i;
 	register struct servers *sp;
+	struct ihost	*ihp;
 
 	if( isdigit( *str ) )  {
+		int	i;
 		i = atoi( str );
 		if( i < 0 || i >= MAXSERVERS )  return( SERVERS_NULL );
 		return( &servers[i] );
 	}
-	i = host2addr(str);
+
+	if( (ihp = host_lookup_by_name( str, 0 )) == IHOST_NULL )
+		return( SERVERS_NULL );
+
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		if( sp->sr_addr == i )  return(sp);
+		if( sp->sr_host == ihp )  return(sp);
 	}
 	return( SERVERS_NULL );
 }
@@ -564,13 +595,19 @@ prep_frame(fr)
 register struct frame *fr;
 {
 	register struct list *lp;
+	char buf[BUFSIZ];
 
 	/* Get local buffer for image */
 	fr->fr_width = width;
 	fr->fr_height = height;
-	fr->fr_perspective = perspective;
-	fr->fr_hyper = hypersample;
-	fr->fr_benchmark = benchmark;
+
+	fr->fr_cmd.vls_cur = 0;	/* free existing? */
+	if( benchmark )  vls_cat( &fr->fr_cmd, "opt -B;" );
+	sprintf(buf, "opt -w%d -n%d -H%d -p%g;",
+		fr->fr_width, fr->fr_height,
+		hypersample, perspective );
+	vls_cat( &fr->fr_cmd, buf );
+
 	if( fr->fr_picture )  free(fr->fr_picture);
 	fr->fr_picture = (char *)0;
 	bzero( fr->fr_servinit, sizeof(fr->fr_servinit) );
@@ -634,8 +671,8 @@ register struct frame *fr;
 		fr->fr_nrays/delta,
 		fr->fr_nrays/fr->fr_cpu );
 
-	if( out_file[0] != '\0' )  {
-		sprintf(name, "%s.%d", out_file, fr->fr_number);
+	if( outputfile )  {
+		sprintf(name, "%s.%d", outputfile, fr->fr_number);
 		cnt = fr->fr_width*fr->fr_height*3;
 		if( (fd = creat(name, 0444)) > 0 )  {
 			printf("Writing..."); fflush(stdout);
@@ -751,7 +788,7 @@ top:
 				lp->li_start = b+1;
 
 			printf("fr%d %d..%d -> %s\n", fr->fr_number,
-				a, b, sp->sr_name);
+				a, b, sp->sr_host->ht_host.h_name);
 
 			/* Record newly allocated scanlines */
 			GET_LIST(lp);
@@ -852,7 +889,7 @@ char *buf;
 		printf("MSG_START in state %d?\n", sp->sr_started);
 	}
 	sp->sr_started = SRST_READY;
-	printf("%s READY FOR WORK\n", sp->sr_name);
+	printf("%s READY FOR WORK\n", sp->sr_host->ht_host.h_name);
 	if(running) schedule();
 }
 
@@ -865,7 +902,7 @@ register struct pkg_conn *pc;
 char *buf;
 {
 	if(print_on)
-		printf("%s:%s", servers[pc->pkc_fd].sr_name, buf );
+		printf("%s:%s", servers[pc->pkc_fd].sr_host->ht_host.h_name, buf );
 	if(buf) (void)free(buf);
 }
 
@@ -1036,8 +1073,9 @@ register struct frame	*fp;
 send_start(sp)
 register struct servers *sp;
 {
-	printf("Sending model info to %s\n", sp->sr_name);
 	if( start_cmd[0] == '\0' || sp->sr_started != SRST_NEW )  return;
+
+	printf("Sending model info to %s\n", sp->sr_host->ht_host.h_name);
 	if( pkg_send( MSG_START, start_cmd, strlen(start_cmd)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 	sp->sr_started = SRST_LOADING;
@@ -1073,17 +1111,10 @@ send_matrix(sp, fr)
 struct servers *sp;
 register struct frame *fr;
 {
-	char buf[BUFSIZ];
-
-	sprintf(buf, "opt %s -w%d -n%d -H%d -p%f;",
-		fr->fr_benchmark ? "-B" : "",
-		fr->fr_width, fr->fr_height,
-		fr->fr_hyper, fr->fr_perspective );
-	vls_cat( &fr->fr_cmd, buf );
 
 	if( pkg_send( MSG_MATRIX, fr->fr_cmd.vls_str, fr->fr_cmd.vls_cur, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
-	printf("sent matrix to %s\n", sp->sr_name);
+	printf("sent matrix to %s\n", sp->sr_host->ht_host.h_name);
 }
 
 /*
@@ -1150,15 +1181,23 @@ start_helper()
 				break;
 			/* */
 			sprintf(cmd,
-				"rsh %s -n 'cd cad/remrt; rtsrv %s %d'",
-				host, ourname, port );
-			if( vfork() == 0 )  {
+				"cd cad/remrt; rtsrv %s %d",
+				ourname, port );
+			if( fork() == 0 )  {
 				/* 1st level child */
 				(void)close(0);
 				for(i=3; i<40; i++)  (void)close(i);
 				if( vfork() == 0 )  {
 					/* worker Child */
-					system( cmd );
+					execl(
+#ifdef sgi
+						"/usr/bsd/rsh",
+#else
+						"/usr/ucb/rsh",
+#endif
+						"rsh", host,
+						"-n", cmd, 0 );
+					perror("execl");
 					_exit(0);
 				}
 				_exit(0);
@@ -1181,6 +1220,115 @@ start_helper()
 	(void)close(fds[0]);
 }
 
+build_start_cmd( argc, argv, startc )
+int	argc;
+char	**argv;
+int	startc;
+{
+	register char	*cp;
+	register int	i;
+	int		len;
+
+	/* Build new start_cmd[] string */
+	cp = start_cmd;
+	for( i=startc; i < argc; i++ )  {
+		if( i > startc )  *cp++ = ' ';
+		len = strlen( argv[i] );
+		bcopy( argv[i], cp, len );
+		cp += len;
+	}
+	*cp++ = '\0';
+}
+
+struct ihost *
+host_lookup_by_hostent( addr, enter )
+struct hostent	*addr;
+int		enter;
+{
+	register struct ihost	*ihp;
+
+	/* Search list for existing instance */
+	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
+		if( strcmp( ihp->ht_host.h_name, addr->h_name ) != 0 )
+			continue;
+		return( ihp );
+	}
+	if( enter == 0 )
+		return( IHOST_NULL );
+
+	/* If not found and enter==1, enter in host table w/defaults */
+	GETSTRUCT( ihp, ihost );
+	ihp->ht_host = *addr;		/* struct copy */
+
+	/* Default host parameters */
+	ihp->ht_when = HT_PASSIVE;
+	ihp->ht_where = HT_CD;
+	ihp->ht_path = ".";
+
+	ihp->ht_next = HostHead;
+	HostHead = ihp;
+	return(ihp);
+}
+
+struct ihost *
+host_lookup_by_addr( from, enter )
+struct sockaddr_in	*from;
+int	enter;
+{
+	struct hostent	*addr;
+	unsigned long	addr_tmp;
+
+#ifdef CRAY
+	addr_tmp = from->sin_addr;
+#else
+	addr_tmp = from->sin_addr.s_addr;
+#endif
+	addr = gethostbyaddr(&from->sin_addr, sizeof (struct in_addr),
+		from->sin_family);
+	if( addr == NULL )  {
+		/* Potentially, print up a hostent structure here */
+		addr_tmp = ntohl(addr_tmp);
+		printf("%d.%d.%d.%d: unknown host\n",
+			(addr_tmp>>24) & 0xff,
+			(addr_tmp>>16) & 0xff,
+			(addr_tmp>> 8) & 0xff,
+			(addr_tmp    ) & 0xff );
+		return( IHOST_NULL );
+	}
+	return( host_lookup_by_hostent( addr, enter ) );
+}
+
+struct ihost *
+host_lookup_by_name( name, enter )
+char	*name;
+int	enter;
+{
+	struct sockaddr_in	sin;
+	struct hostent		*addr;
+
+	/* Determine name to be found */
+	if( isdigit( *name ) )  {
+		/* Numeric */
+		sin.sin_family = AF_INET;
+#ifdef CRAY
+		sin.sin_addr = inet_addr(name);
+		addr = gethostbyaddr( &addr_tmp, sizeof(struct in_addr),
+			sin.sin_family );
+#else
+		sin.sin_addr.s_addr = inet_addr(name);
+		addr = gethostbyaddr( &sin.sin_addr, sizeof(struct in_addr),
+			sin.sin_family );
+#endif
+	} else {
+		addr = gethostbyname(name);
+	}
+	if( addr == NULL )  {
+		printf("%s:  bad host\n", name);
+		return( IHOST_NULL );
+	}
+	return( host_lookup_by_hostent( addr, enter ) );
+}
+
 /*** Commands ***/
 
 cd_load( argc, argv )
@@ -1188,9 +1336,6 @@ int	argc;
 char	**argv;
 {
 	register struct servers *sp;
-	register char	*cp;
-	register int	i;
-	int		len;
 
 	if( running )  {
 		printf("Can't load while running!!\n");
@@ -1206,15 +1351,7 @@ char	**argv;
 		}
 	}
 
-	/* Build new start_cmd[] string */
-	cp = start_cmd;
-	for( i=1; i < argc; i++ )  {
-		if( i > 1 )  *cp++ = ' ';
-		len = strlen( argv[i] );
-		bcopy( argv[i], cp, len );
-		cp += len;
-	}
-	*cp++ = '\0';
+	build_start_cmd( argc, argv, 1 );
 
 	/* Start any idle servers */
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
@@ -1285,14 +1422,20 @@ char	**argv;
 		perror(argv[1]);
 		return;
 	}
+	source(fp);
+	fclose(fp);
+	printf("read file done\n");
+}
+
+source(fp)
+FILE	*fp;
+{
 	while( !feof(fp) )  {
 		/* do one command from file */
 		interactive_cmd(fp);
 		/* Without delay, see if anything came in */
 		check_input(0);
 	}
-	fclose(fp);
-	printf("read file done\n");
 }
 
 cd_detach( argc, argv )
@@ -1308,8 +1451,8 @@ cd_file( argc, argv )
 int	argc;
 char	**argv;
 {
-	strncpy( out_file, argv[1], sizeof(out_file) );
-	printf("frames will be recorded in %s.###\n", out_file);
+	outputfile = rt_strdup( argv[1] );
+	printf("frames will be recorded in %s.###\n", outputfile);
 }
 
 cd_mat( argc, argv )
@@ -1321,6 +1464,7 @@ char	**argv;
 	int	i;
 
 	GET_FRAME(fr);
+	prep_frame(fr);
 
 	if( argc >= 3 )  {
 		fr->fr_number = atoi(argv[2]);
@@ -1335,7 +1479,6 @@ char	**argv;
 		if(read_matrix( fp, fr ) < 0 ) break;
 	fclose(fp);
 
-	prep_frame(fr);
 	APPEND_FRAME( fr, FrameHead.fr_back );
 }
 
@@ -1369,9 +1512,9 @@ char	**argv;
 		if(read_matrix( fp, &dummy_frame ) < 0 ) break;
 	for( i=a; i<b; i++ )  {
 		GET_FRAME(fr);
+		prep_frame(fr);
 		fr->fr_number = i;
 		if(read_matrix( fp, fr ) < 0 ) break;
-		prep_frame(fr);
 		APPEND_FRAME( fr, FrameHead.fr_back );
 	}
 	fclose(fp);
@@ -1510,10 +1653,8 @@ char	**argv;
 	printf("Frames waiting:\n");
 	for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
 		printf("%5d\t", fr->fr_number);
-		printf("width=%d, height=%d, perspective angle=%f\n",
-			fr->fr_width, fr->fr_height, fr->fr_perspective );
-		printf("\thypersample = %d, ", fr->fr_hyper);
-		printf("benchmark = %d, ", fr->fr_benchmark);
+		printf("width=%d, height=%d\n",
+			fr->fr_width, fr->fr_height );
 		if( fr->fr_picture )  printf(" (Pic)");
 		printf("\n");
 		printf("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
@@ -1544,8 +1685,8 @@ char	**argv;
 		printf("Framebuffer is %s\n", fbp->if_name);
 	else
 		printf("No framebuffer\n");
-	if( out_file[0] != '\0' )
-		printf("Output file: %s.###\n", out_file );
+	if( outputfile )
+		printf("Output file: %s.###\n", outputfile );
 	printf("Printing of remote messages is %s\n",
 		print_on?"ON":"Off" );
     	printf("Listening at %s, port %d\n", ourname, pkg_permport);
@@ -1554,7 +1695,7 @@ char	**argv;
 	printf("Servers:\n");
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		printf("  %2d  %s ", sp->sr_index, sp->sr_name );
+		printf("  %2d  %s ", sp->sr_index, sp->sr_host->ht_host.h_name );
 		switch( sp->sr_started )  {
 		case SRST_NEW:
 			printf("Idle"); break;
@@ -1633,6 +1774,73 @@ char	**argv;
 	}
 }
 
+/*
+ * host name always|night|passive cd|convert path
+ */
+cd_host( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct ihost	*ihp;
+
+	if( argc < 5 )  {
+		printf("Registered Host Table:\n");
+		for( ihp = HostHead; ihp != IHOST_NULL; ihp=ihp->ht_next )  {
+			printf("%s ", ihp->ht_host.h_name);
+			switch(ihp->ht_when)  {
+			case HT_ALWAYS:
+				printf("always ");
+				break;
+			case HT_NIGHT:
+				printf("night ");
+				break;
+			case HT_PASSIVE:
+				printf("passive ");
+				break;
+			default:
+				printf("?when? ");
+				break;
+			}
+			switch(ihp->ht_where)  {
+			case HT_CD:
+				printf("cd %s\n", ihp->ht_path);
+				break;
+			case HT_CONVERT:
+				printf("convert %s\n", ihp->ht_path);
+				break;
+			default:
+				printf("?where?\n");
+				break;
+			}
+		}
+		return;
+	}
+
+	if( (ihp = host_lookup_by_name( argv[1], 1 )) == IHOST_NULL )  return;
+
+	/* When */
+	if( strcmp( argv[2], "always" ) == 0 ) {
+		ihp->ht_when = HT_ALWAYS;
+	} else if( strcmp( argv[2], "night" ) == 0 )  {
+		ihp->ht_when = HT_NIGHT;
+	} else if( strcmp( argv[2], "passive" ) == 0 )  {
+		ihp->ht_when = HT_PASSIVE;
+	} else {
+		printf("unknown 'when' string '%s'\n", argv[2]);
+	}
+
+	/* Where */
+	if( strcmp( argv[3], "cd" ) == 0 )  {
+		ihp->ht_where = HT_CD;
+		ihp->ht_path = rt_strdup( argv[4] );
+	} else if( strcmp( argv[3], "convert" ) == 0 )  {
+		ihp->ht_where = HT_CONVERT;
+		ihp->ht_path = rt_strdup( argv[4] );
+	} else {
+		printf("unknown 'where' string '%s'\n", argv[3] );
+	}
+}
+
 struct command_tab cmd_tab[] = {
 	"load",	"file obj(s)",	"specify database and treetops",
 		cd_load,	3, 99,
@@ -1662,6 +1870,8 @@ struct command_tab cmd_tab[] = {
 		cd_status,	1, 1,
 	"detach", "",		"detatch from interactive keyboard",
 		cd_detach,	1, 1,
+	"host", "name always|night|passive cd|convert path", "register server host",
+		cd_host,	1, 5,
 	/* FRAME BUFFER */
 	"attach", "[fb]",	"attach to frame buffer",
 		cd_attach,	1, 2,
