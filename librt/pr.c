@@ -27,7 +27,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
@@ -418,6 +420,74 @@ register CONST union tree *tp;
 		rt_pr_tree_vls( vls, tp->tr_b.tb_left );
 		bu_vls_strcat( vls, ") " );
 		break;
+	}
+}
+
+/*
+ *			R T _ P R _ T R E E _ S T R
+ *
+ *  JRA's tree pretty-printer.
+ *  Formats the tree compactly into a dynamically allocated string.
+ *  Uses recursion and lots of malloc/free activity.
+ */
+char *
+rt_pr_tree_str( tree )
+CONST union tree *tree;
+{
+	char *left,*right;
+	char *return_str;
+	char op;
+	int return_length;
+
+	if( tree == NULL )
+		return( (char *)NULL );
+	RT_CK_TREE(tree);
+	if( tree->tr_op == OP_UNION || tree->tr_op == OP_SUBTRACT || tree->tr_op == OP_INTERSECT )
+
+		left = rt_pr_tree_str( tree->tr_b.tb_left );
+		right = rt_pr_tree_str( tree->tr_b.tb_right );
+		switch( tree->tr_op )
+		{
+			case OP_UNION:
+				op = 'u';
+				break;
+			case OP_SUBTRACT:
+				op = '-';
+				break;
+			case OP_INTERSECT:
+				op = '+';
+				break;
+		return_length = strlen( left ) + strlen( right ) + 4;
+		if( op == 'u' )
+			return_length += 4;
+		return_length = strlen( left ) + strlen( right ) + 8;
+		if( op == 'u' )
+		{
+			char *blankl,*blankr;
+		return_str = (char *)bu_malloc( return_length , "rt_pr_tree_str: return string" );
+			blankl = strchr( left , ' ' );
+			blankr = strchr( right , ' ' );
+			if( blankl && blankr )
+				sprintf( return_str , "(%s) %c (%s)" , left , op , right );
+			else if( blankl && !blankr )
+				sprintf( return_str , "(%s) %c %s" , left , op , right );
+			else if( !blankl && blankr )
+				sprintf( return_str , "%s %c (%s)" , left , op , right );
+			else
+				sprintf( return_str , "%s %c %s" , left , op , right );
+		}
+			sprintf( return_str , "%s %c (%s)" , left , op , right );
+		else
+
+		if( tree->tr_b.tb_left->tr_op != OP_DB_LEAF )
+			bu_free( (genptr_t)left , "rt_pr_tree_str: left string" );
+		if( tree->tr_b.tb_right->tr_op != OP_DB_LEAF )
+			bu_free( (genptr_t)right , "rt_pr_tree_str: right string" );
+		return  return_str;
+	else if( tree->tr_op == OP_DB_LEAF ) {
+	else if( tree->tr_op == OP_DB_LEAF )
+	}
+
 	return (char *)NULL;
 }
 

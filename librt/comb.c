@@ -41,72 +41,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 /* --- Begin John's pretty-printer --- */
 
-char
-*Recurse_tree( tree )
-union tree *tree;
-{
-	char *left,*right;
-	char *return_str;
-	char op;
-	int return_length;
-
-	if( tree == NULL )
-		return( (char *)NULL );
-	if( tree->tr_op == OP_UNION || tree->tr_op == OP_SUBTRACT || tree->tr_op == OP_INTERSECT )
-	{
-		left = Recurse_tree( tree->tr_b.tb_left );
-		right = Recurse_tree( tree->tr_b.tb_right );
-		switch( tree->tr_op )
-		{
-			case OP_UNION:
-				op = 'u';
-				break;
-			case OP_SUBTRACT:
-				op = '-';
-				break;
-			case OP_INTERSECT:
-				op = '+';
-				break;
-		}
-		return_length = strlen( left ) + strlen( right ) + 4;
-		if( op == 'u' )
-			return_length += 4;
-		return_str = (char *)rt_malloc( return_length , "recurse_tree: return string" );
-		if( op == 'u' )
-		{
-			char *blankl,*blankr;
-
-			blankl = strchr( left , ' ' );
-			blankr = strchr( right , ' ' );
-			if( blankl && blankr )
-				sprintf( return_str , "(%s) %c (%s)" , left , op , right );
-			else if( blankl && !blankr )
-				sprintf( return_str , "(%s) %c %s" , left , op , right );
-			else if( !blankl && blankr )
-				sprintf( return_str , "%s %c (%s)" , left , op , right );
-			else
-				sprintf( return_str , "%s %c %s" , left , op , right );
-		}
-		else
-			sprintf( return_str , "%s %c %s" , left , op , right );
-		if( tree->tr_b.tb_left->tr_op != OP_DB_LEAF )
-			rt_free( left , "Recurse_tree: left string" );
-		if( tree->tr_b.tb_right->tr_op != OP_DB_LEAF )
-			rt_free( right , "Recurse_tree: right string" );
-		return( return_str );
-	}
-	else if( tree->tr_op == OP_DB_LEAF ) {
-		return bu_strdup(tree->tr_l.tl_name) ;
-	}
-}
-
 void
 Print_tree( tree )
 union tree *tree;
 {
 	char *str;
 
-	str = Recurse_tree( tree );
+	str = rt_pr_tree_str( tree );
 	if( str != NULL )
 	{
 		printf( "%s\n" , str );
