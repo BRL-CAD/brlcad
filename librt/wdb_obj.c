@@ -5847,17 +5847,18 @@ wdb_node_write(struct db_i		*dbip,
 	       register struct directory *dp,
 	       genptr_t			ptr)
 {
-	struct rt_wdb	*keepfp = (struct rt_wdb *)ptr;
-	struct bu_external	ext;
+	struct rt_wdb		*keepfp = (struct rt_wdb *)ptr;
+	struct rt_db_internal	intern;
 
 	RT_CK_WDB(keepfp);
 
 	if (dp->d_nref++ > 0)
 		return;		/* already written */
 
-	if (db_get_external(&ext, dp, dbip) < 0)
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
 		WDB_READ_ERR_return;
-	if (wdb_export_external(keepfp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type) < 0)
+
+	if (wdb_put_internal(keepfp, dp->d_namep, &intern, 1.0) < 0)
 		WDB_WRITE_ERR_return;
 }
 
