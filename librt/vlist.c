@@ -718,7 +718,7 @@ double			mm2local;
 			/* XXX Skip polygon markers? */
 			sprintf( label, " %g, %g, %g",
 				(*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local );
-			bn_vlist_3string( vhead, vbp->free_vlist_hd, label, pt, mat, sz );
+			bn_vlist_3string( vhead, vbp->free_vlist_hd, label, (*pt), mat, sz );
 		}
 	}
 }
