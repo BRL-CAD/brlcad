@@ -307,13 +307,14 @@ struct application  {
 	struct xray a_ray;	/* Actual ray to be shot */
 	int	(*a_hit)();	/* routine to call when shot hits model */
 	int	(*a_miss)();	/* routine to call when shot misses */
-	int	a_level;	/* recursion level */
+	int	a_level;	/* recursion level (for printing) */
 	int	a_onehit;	/* flag to stop on first hit */
 	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
 	int	a_x;		/* Screen X of ray, where applicable */
 	int	a_y;		/* Screen Y of ray, where applicable */
 	int	a_user;		/* application-specific value */
 	point_t	a_color;	/* application-specific color */
+	vect_t	a_uvec;		/* application-specific vector */
 };
 
 /*
@@ -348,6 +349,7 @@ extern int dir_build();			/* Read named GED db, build toc */
 extern void pr_seg();			/* Print seg struct */
 extern void pr_partitions();		/* Print the partitions */
 extern void viewbounds();		/* Find bounding view-space RPP */
+extern struct soltab *find_solid();	/* Find solid by leaf name */
 
 extern char *vmalloc();			/* visible malloc() */
 extern void vfree();			/* visible free() */
