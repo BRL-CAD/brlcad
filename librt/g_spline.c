@@ -763,13 +763,13 @@ int level;
 		}
 
 		if ( rt_g.debug & DEBUG_SPLINE ) 
-		    (void)rt_log("spline: Left tree level %d\n", level);
+		    rt_log("spline: Left tree level %d\n", level);
 
 		n_shoot( rp,  invdir,  tree->left, ap,
 		    OTHERDIR(dir), level+1 );
 
 		if ( rt_g.debug & DEBUG_SPLINE ) 
-		    (void)rt_log("spline: Right tree level %d\n", level);
+		    rt_log("spline: Right tree level %d\n", level);
 
 		n_shoot( rp,  invdir,  tree->right, ap,
 		    OTHERDIR(dir), level+1);
@@ -792,7 +792,7 @@ struct b_tree * tree;
 		{
 
 			if ( rt_g.debug & DEBUG_SPLINE ) 
-			    (void)rt_log("spline: Hit found at level %d\n",
+			    rt_log("spline: Hit found at level %d\n",
 				level);
 			hit_count++;
 			add_hit( h0 );
@@ -809,7 +809,7 @@ struct b_tree * tree;
 
 	if ( !hit_count && rt_g.debug & DEBUG_SPLINE )
 	{
-		(void) rt_log("Bounding Box hit but no surface hit");
+		rt_log("Bounding Box hit but no surface hit");
 		rt_pr_spl("B_Spline surface", tree->root);
 	}
 
