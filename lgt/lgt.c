@@ -89,7 +89,8 @@ char	*argv[];
 		oldlimit/HZ,
 		newlimit/HZ
 		);
-	rt_log(	"Memory limit set to %dKW.\n", limit( C_PROC, 0, L_MEM, 0 ) );
+	rt_log(	"Memory limit set to %dKW.\n",
+		limit( C_PROC, 0, L_MEM, -1 ) );
 	}
 #endif
 	
