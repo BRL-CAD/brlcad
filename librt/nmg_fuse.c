@@ -1379,7 +1379,14 @@ CONST struct rt_tol	*tol;		/* for printing */
 		/* Nothing but wire edgeuses, done. */
 		return;
 	}
+
 	/* At least one non-wire edgeuse was found */
+	if( hd->forw == hd->back )
+	{
+		/* only one entry in list */
+		return;
+	}
+	
 #if 0
 rt_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x\n",
 rmin->ang * rt_radtodeg, rmin->eu,
