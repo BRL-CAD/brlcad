@@ -271,6 +271,8 @@ STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
 		Requeue(),
 		Raster(), SetSigs();
 
+char usage[] = "plot-fb:  [-h] [-d] [-o] [file.plot]\n";
+
 /*
  *  M A I N
  *
@@ -307,11 +309,25 @@ char **argv;
 				break;
 
 			default:
-				fprintf(stderr, "unknown option %s\n",
-					argv[i] );
+				fprintf(stderr, usage);
+				exit(4);
 			}
 		else
 			filename = argv[i];
+
+	/*
+	 *  Open the selected filename -- note
+	 *  with no arguments, we plot STDIN.
+	 */
+	if ( filename == NULL || filename[0] == 0 )  {
+		if( isatty(fileno(stdin)) )  {
+			fprintf(stderr,usage);
+			return Foo(-3);
+		}
+		filename = "-";
+		pfin = stdin;
+	} else if( (pfin = fopen( filename, "r" )) == NULL )
+		return Foo( -2 );
 
 	/*
 	 * Handle image-size specific initializations
@@ -343,18 +359,8 @@ char **argv;
 		fprintf(stderr,"fbplot: fb_open failed\n");
 		exit(1);
 	}
-
-	/*
-	 *  Plot the selected filename -- note
-	 *  with no arguments, we plot STDIN.
-	 */
 	if( debug )
 		fprintf(stderr, "fbplot output of %s\n", filename);
-		
-	if ( filename == NULL || filename[0] == 0 )
-		pfin = stdin;
-	else if( (pfin = fopen( filename, "r" )) == NULL )
-		return Foo( -2 );
 
 	SetSigs();			/* set signal catchers */
 
