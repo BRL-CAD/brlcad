@@ -27,7 +27,7 @@ int i;
 	printf( "Summary of entity types found:\n" );
 	for( i=0 ; i<=ntypes ; i++ )
 	{
-		if( typecount[i][1] != 0 )
-			printf( "%10d %s\n",typecount[i][1],types[i] );
+		if( typecount[i].count != 0 )
+			printf( "%10d %s\n",typecount[i].count , typecount[i].name );
 	}
 }

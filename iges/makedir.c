@@ -152,15 +152,15 @@ Makedir()
 		found = 0;
 		for( i=0 ; i<ntypes ; i++ )
 		{
-			if( typecount[i][0] == dir[entcount]->type )
+			if( typecount[i].type == dir[entcount]->type )
 			{
-				typecount[i][1]++;
+				typecount[i].count++;
 				found = 1;
 				break;
 			}
 		}
 		if( !found )
-			typecount[ntypes][1]++;
+			typecount[0].count++;
 
 		/* Check if this is a transformation entity */
 		if( dir[entcount]->type == 124 || dir[entcount]->type == 700 )

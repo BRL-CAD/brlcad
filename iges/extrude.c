@@ -238,8 +238,8 @@ int entityno;
 		}
 		default:
 			i = (-1);
-			while( dir[curve]->type != typecount[++i][0] && i < ntypes );
-			printf( "Extrusions of %s are not allowed\n" , types[i] );
+			while( dir[curve]->type != typecount[++i].type && i < ntypes );
+			printf( "Extrusions of %s are not allowed\n" , typecount[i].name );
 			break;
 	}
 	return( 0 );
