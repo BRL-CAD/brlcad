@@ -57,7 +57,10 @@ struct chan {
 #define INTERP_ACCEL	5
 #define	INTERP_QUAT	6	/* first chan of 4 that define a quaternion */
 #define INTERP_QUAT2	7	/* an additional quaterion chan (2,3,4) */
+#define INTERP_NEXT	8	/* method to look forward/backward in time */
 	int	c_periodic;	/* cyclic end conditions? */
+	int	c_sourcechan;	/* index of source chan (QUAT, NEXT) */
+	int	c_offset;	/* source offset (NEXT) */
 };
 
 int		o_len;		/* length of all output arrays */
@@ -74,6 +77,7 @@ extern int	cm_interp();
 extern int	cm_idump();
 extern int	cm_rate();
 extern int	cm_accel();
+extern int	cm_next();
 
 struct command_tab cmdtab[] = {
 	"file", "filename chan_num(s)", "load channels from file",
@@ -82,6 +86,8 @@ struct command_tab cmdtab[] = {
 		cm_times,	4, 4,
 	"interp", "{step|linear|spline|cspline|quat} chan_num(s)", "set interpolation type",
 		cm_interp,	3, 999,
+	"next", "dest_chan src_chan [+/- #nsamp]", "lookahead in time",
+		cm_next,	3, 4,
 	"idump", "[chan_num(s)]", "dump input channel values",
 		cm_idump,	1, 999,
 	"rate", "chan_num init_value incr_per_sec [comment]", "create rate based channel",
@@ -285,6 +291,7 @@ char	*itag;
 	while( nchans <= n )  {
 		if( chan[nchans].c_ilen > 0 ) {
 			fprintf(stderr,"create_chan: internal error\n");
+			return -1;
 		} else {
 			bzero( (char *)&chan[nchans++], sizeof(struct chan) );
 		}
@@ -453,30 +460,17 @@ char	**argv;
 	for( i = 2; i < argc; i++ )  {
 		ch = atoi( argv[i] );
 		chp = &chan[ch];
-		if( chp->c_ilen <= 0 )  {
-			fprintf(stderr,"error: attempt to set interpolation type on unallocated channel %d\n", ch);
-			continue;
-		}
-		if( chp->c_interp > 0 )  {
-			fprintf(stderr,"error: attempt to modify channel %d already specified by 'interp'\n", i);
-			continue;
-		}
+		if( chan_not_loaded_or_specified(ch) )  continue;
 		chp->c_interp = interp;
 		chp->c_periodic = periodic;
 		if( interp == INTERP_QUAT )  {
 			int	j;
 			for( j = 1; j < 4; j++ )  {
 				chp = &chan[ch+j];
-				if( chp->c_ilen <= 0 )  {
-					fprintf(stderr,"error: attempt to set interpolation type on unallocated channel %d\n", ch);
-				continue;
-				}
-				if( chp->c_interp > 0 )  {
-					fprintf(stderr,"error: attempt to modify channel %d already specified by 'interp'\n", i);
-					continue;
-				}
+				if( chan_not_loaded_or_specified(ch+j) )  continue;
 				chp->c_interp = INTERP_QUAT2;
 				chp->c_periodic = periodic;
+				chp->c_sourcechan = ch;
 			}
 		}
 	}
@@ -514,10 +508,12 @@ go()
 			o_len * sizeof(fastf_t), "c_oval[]");
 	}
 
+	/* Interpolate values for all "interp" channels */
 	for( ch=0; ch < nchans; ch++ )  {
 		chp = &chan[ch];
 		if( chp->c_ilen <= 0 )
 			continue;
+		if( chp->c_interp == INTERP_NEXT )  continue;
 
 		/*  As a service to interpolators, if this is a periodic
 		 *  interpolation, build the mapped time array.
@@ -575,7 +571,43 @@ again:
 			continue;
 		}
 	}
+
+	/* Copy out values for all "next" channels */
+	for( ch=0; ch < nchans; ch++ )  {
+		chp = &chan[ch];
+		if( chp->c_ilen <= 0 )
+			continue;
+		if( chp->c_interp != INTERP_NEXT )  continue;
+		next_interpolate( chp );
+	}
+
 	rt_free( (char *)times, "loc times");
+}
+
+/*
+ *			N E X T _ I N T E R P O L A T E
+ */
+next_interpolate( chp )
+register struct chan	*chp;
+{
+	register int	t;		/* output time index */
+	register int	i;		/* input time index */
+	register struct chan	*ip;
+
+	ip = &chan[chp->c_sourcechan];
+
+	for( t=0; t<o_len; t++ )  {
+		i = t + chp->c_offset;
+		if( i <= 0 )  {
+			chp->c_oval[t] = ip->c_oval[0];
+			continue;
+		}
+		if( i >= o_len )  {
+			chp->c_oval[t] = ip->c_oval[o_len-1];
+			continue;
+		}
+		chp->c_oval[t] = ip->c_oval[i];
+	}
 }
 
 /*
@@ -1027,4 +1059,63 @@ register fastf_t	*times;
 		}
 #endif
 	}
+}
+
+int
+cm_next( argc, argv )
+int	argc;
+char	*argv[];
+{
+	int	ochan, ichan;
+	int	offset = 1;
+	char	buf[128];
+
+	ochan = atoi(argv[1]);
+	ichan = atoi(argv[2]);
+	if( argc > 3 )  offset = atoi(argv[3]);
+	/* If input channel not loaded, or not interpolated, error */
+	if( chan[ichan].c_ilen <= 0 || chan[ichan].c_interp <= 0 )  {
+		fprintf(stderr,"ERROR next: ichan %d not loaded yet\n");
+		return 0;
+	}
+	/* If output channel is loaded, error */
+	if( chan[ochan].c_ilen > 0 )  {
+		fprintf(stderr,"ERROR next: ochan %d previous loaded\n");
+		return 0;
+	}
+	sprintf(buf, "next: value of chan %d [%d]", ichan, offset);
+	if( create_chan( argv[1], chan[ichan].c_ilen, buf ) < 0 )  {
+		fprintf(stderr,"ERROR next: uanble to create output channel\n");
+		return 0;
+	}
+	/* c_ilen, c_itag, c_ival are now initialized */
+	chan[ochan].c_interp = INTERP_NEXT;
+	chan[ochan].c_sourcechan = ichan;
+	chan[ochan].c_offset = offset;
+	chan[ochan].c_periodic = 0;
+	chan[ochan].c_itime = chan[ichan].c_itime;	/* share time array */
+	/* c_ival[] will not be loaded with anything */
+	return 0;
+}
+
+/*
+ *  Returns -
+ *	-1 on error
+ *	 0 if data loaded, and interpolator not yet set.
+ *	 1 if no data, or interpolator already set (message printed)
+ */
+int
+chan_not_loaded_or_specified( ch )
+int	ch;
+{
+	if( ch < 0 || ch >= nchans )  return -1;
+	if( chan[ch].c_ilen <= 0 )  {
+		fprintf(stderr,"error: attempt to set interpolation type on unallocated channel %d\n", ch);
+		return 1;
+	}
+	if( chan[ch].c_interp > 0 )  {
+		fprintf(stderr,"error: attempt to modify channel %d which already has interpolation type set\n", ch);
+		return 1;
+	}
+	return 0;
 }
