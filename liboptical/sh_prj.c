@@ -365,8 +365,10 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		bu_bomb("Null prj shaderfile?\n");
 
 	parameter_file = bu_open_mapped_file( fname, (char *)NULL );
-	if (! parameter_file)
+	if (! parameter_file) {
+		bu_log( "prj_setup can't get shaderfile (%s)\n", fname );
 		bu_bomb("prj_setup can't get shaderfile... bombing\n");
+	}
 
 	bu_vls_init(&parameter_data);
 	bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
