@@ -495,6 +495,32 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
+#if defined(hppa) 
+/********************************
+ *				*
+ *   HP 9000/700                *
+ *   Running HP-UX 9.1          *
+ *				*
+ ********************************/
+
+#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#define const   /**/            /* Does not support const keyword */
+#define CONST   /**/            /* Does not support const keyword */
+
+#define RES_INIT(ptr)		;
+#define RES_ACQUIRE(ptr)	;
+#define RES_RELEASE(ptr)	;
+#define MAX_PSW		1	/* only one processor, max */
+#define DEFAULT_PSW	1
+
+#endif
+
 #ifndef LOCAL
 /********************************
  *				*
