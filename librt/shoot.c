@@ -69,7 +69,11 @@ struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
  *
  *  NOTE:  The appliction functions may call shootray() recursively.
  */
-static int curbin;	/* NOT PARALLEL;  needs fixing */
+struct shootwork {
+	struct application	*sw_ap;
+	struct seg		*sw_HeadSeg;
+	int			sw_curbin;
+};
 
 int
 shootray( ap )
@@ -77,7 +81,7 @@ register struct application *ap;
 {
 	extern struct region *HeadRegion;
 	register struct region *rp;
-	auto struct seg *HeadSeg;	/* must NOT be static (recursion) */
+	auto struct shootwork sw;	/* must NOT be static (recursion) */
 	register int ret;
 
 	/*
@@ -99,8 +103,9 @@ register struct application *ap;
 		fflush(stderr);		/* In case of instant death */
 	}
 
-	HeadSeg = SEG_NULL;
-	curbin = 0;				/* bin 0 is always FALSE */
+	sw.sw_ap = ap;
+	sw.sw_HeadSeg = SEG_NULL;
+	sw.sw_curbin = 0;				/* bin 0 is always FALSE */
 
 	/* For now, consider every region in the model */
 	for( rp=HeadRegion; rp != REGION_NULL; rp = rp->reg_forw )  {
@@ -108,11 +113,11 @@ register struct application *ap;
 		 * Boolean TRUE signals hit of 1 or more solids in tree
 		 * At leaf node, it will call ft_shot & add to seg chain.
 		 */
-		(void)shoot_tree( ap, rp->reg_treetop, &HeadSeg );
+		(void)shoot_tree( rp->reg_treetop, &sw );
 	}
 
 	/* HeadSeg chain now has all segments hit by this ray */
-	if( HeadSeg == SEG_NULL )  {
+	if( sw.sw_HeadSeg == SEG_NULL )  {
 		ret = ap->a_miss( ap );
 	}  else  {
 		auto struct partition PartHead;
@@ -120,7 +125,7 @@ register struct application *ap;
 		 *  All intersections of the ray with the model have
 		 *  been computed.  Evaluate the boolean functions.
 		 */
-		bool_regions( HeadSeg, &PartHead );
+		bool_regions( sw.sw_HeadSeg, &PartHead );
 
 		if( PartHead.pt_forw == &PartHead )  {
 			ret = ap->a_miss( ap );
@@ -148,13 +153,13 @@ register struct application *ap;
 		 */
 		{
 			register struct seg *segp;	/* XXX */
-			for( segp = HeadSeg; segp != SEG_NULL; segp = segp->seg_next )
+			for( segp = sw.sw_HeadSeg; segp != SEG_NULL; segp = segp->seg_next )
 				segp->seg_stp->st_bin = 0;
 
-			while( HeadSeg != SEG_NULL )  {
-				segp = HeadSeg->seg_next;
-				FREE_SEG( HeadSeg );
-				HeadSeg = segp;
+			while( sw.sw_HeadSeg != SEG_NULL )  {
+				segp = sw.sw_HeadSeg->seg_next;
+				FREE_SEG( sw.sw_HeadSeg );
+				sw.sw_HeadSeg = segp;
 			}
 		}
 	}
@@ -239,10 +244,9 @@ register fastf_t *min, *max;
  *  Returns TRUE when there is the Potential for a hit;
  *  bool_regions() must ultimately decide.
  */
-shoot_tree( ap, tp, HeadSegp )
-register struct application *ap;
+shoot_tree( tp, swp )
 register struct tree *tp;
-struct seg **HeadSegp;
+register struct shootwork *swp;
 {
 	if( tp->tr_op == OP_SOLID )  {
 		register struct seg *newseg;
@@ -251,16 +255,16 @@ struct seg **HeadSegp;
 			return( TRUE );		/* sol has already been hit */
 
 		/* If ray does not strike the bounding RPP, skip on */
-		if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max )  ||
-		    ap->a_ray.r_max <= 0.0 )  {
+		if( !in_rpp( &(swp->sw_ap->a_ray), tp->tr_min, tp->tr_max )  ||
+		    swp->sw_ap->a_ray.r_max <= 0.0 )  {
 			nmiss_solid++;
 			return( FALSE );	/* MISS subtree */
 		}
 
 #	ifdef never
 		/* Consider bounding sphere */
-		VSUB2( diff, stp->st_center, ap->a_ray.r_pt );
-		distsq = VDOT(ap->a_ray.r_dir, diff);
+		VSUB2( diff, stp->st_center, swp->sw_ap->a_ray.r_pt );
+		distsq = VDOT(swp->sw_ap->a_ray.r_dir, diff);
 		if( (MAGSQ(diff) - distsq*distsq) > stp->st_radsq ) {
 			nmiss_solid++;
 			continue;
@@ -270,7 +274,7 @@ struct seg **HeadSegp;
 		nshots++;
 		if( (newseg = functab[tp->tr_stp->st_id].ft_shot(
 			tp->tr_stp,
-			&ap->a_ray )
+			&(swp->sw_ap->a_ray) )
 		     ) == SEG_NULL )  {
 			nmiss++;
 			return( FALSE );	/* MISS */
@@ -302,23 +306,23 @@ struct seg **HeadSegp;
 			register struct seg *seg2 = newseg;
 			while( seg2->seg_next != SEG_NULL )
 				seg2 = seg2->seg_next;
-			seg2->seg_next = (*HeadSegp);
-			(*HeadSegp) = newseg;
+			seg2->seg_next = swp->sw_HeadSeg;
+			swp->sw_HeadSeg = newseg;
 		}
 
 		if( newseg->seg_stp->st_bin == 0 )  {
-			if( curbin++ >= NBINS )
+			if( swp->sw_curbin++ >= NBINS )
 				rtbomb("shoot_tree:  need > NBINS bins");
 			/* The negative bin number is flag to bool_regions */
-			newseg->seg_stp->st_bin = -curbin;
+			newseg->seg_stp->st_bin = -(swp->sw_curbin);
 		}
 		nhits++;
 		return( TRUE );		/* HIT, solid added */
 	}
 
 	/* If ray does not strike the bounding RPP, skip on */
-	if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max )  ||
-	    ap->a_ray.r_max <= 0.0 )  {
+	if( !in_rpp( &(swp->sw_ap->a_ray), tp->tr_min, tp->tr_max )  ||
+	    swp->sw_ap->a_ray.r_max <= 0.0 )  {
 		nmiss_tree++;
 		return( FALSE );	/* MISS subtree */
 	}
@@ -330,24 +334,24 @@ struct seg **HeadSegp;
 
 	case OP_UNION:
 		/* NOTE:  It is important to always evaluate both */
-		flag = shoot_tree( ap, tp->tr_left, HeadSegp );
-		if( shoot_tree( ap, tp->tr_right, HeadSegp ) == FALSE  &&
+		flag = shoot_tree( tp->tr_left, swp );
+		if( shoot_tree( tp->tr_right, swp ) == FALSE  &&
 		    flag == FALSE )
 			return(FALSE);
 		return(TRUE);			/* May have a hit */
 
 	case OP_INTERSECT:
-		return(	shoot_tree( ap, tp->tr_left, HeadSegp )  &&
-			shoot_tree( ap, tp->tr_right, HeadSegp )  );
+		return(	shoot_tree( tp->tr_left, swp )  &&
+			shoot_tree( tp->tr_right, swp )  );
 
 	case OP_SUBTRACT:
-		if( shoot_tree( ap, tp->tr_left, HeadSegp ) == FALSE )
+		if( shoot_tree( tp->tr_left, swp ) == FALSE )
 			return(FALSE);		/* FALSE = FALSE - X */
 		/* If ray hit left solid, we MUST compute potential
 		 *  hit with right solid, as only bool_regions()
 		 *  can really tell the final story.  Always give TRUE.
 		 */
-		shoot_tree( ap, tp->tr_right, HeadSegp );
+		shoot_tree( tp->tr_right, swp );
 		return( TRUE );		/* May have a hit */
 
 	default:
