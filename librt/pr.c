@@ -20,6 +20,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -428,21 +429,36 @@ CONST vect_t	vec;
 	register double	f;
 	double		asinZ;
 
-	if( vec[X] <= -1.0 )  angles[X] = -90.0;
-	else if( vec[X] >= 1.0 )  angles[X] = 90.0;
-	else angles[X] = acos( vec[X] ) * rt_radtodeg;
-	}
-	if( vec[Y] <= -1.0 )  angles[Y] = -90.0;
-	else if( vec[Y] >= 1.0 )  angles[Y] = 90.0;
-	else angles[Y] = acos( vec[Y] ) * rt_radtodeg;
-	}
-	if( vec[Z] <= -1.0 )  angles[Z] = -90.0;
-	else if( vec[Z] >= 1.0 )  angles[Z] = 90.0;
-	else angles[Z] = acos( vec[Z] ) * rt_radtodeg;
+	/* convert direction cosines into axis angles */
+	if( vec[X] <= -1.0 )  {
+		angles[X] = 180.0;
+	} else if( vec[X] >= 1.0 )  {
+		angles[X] = 0.0;
+		angles[X] = acos( vec[X] ) * rt_radtodeg;
+		angles[X] = acos( vec[X] ) * bn_radtodeg;
 	}
 
-	if( vec[Z] <= -1.0 )  vec[Z] = -1.0;
-	else if( vec[Z] >= 1.0 )  vec[Z] = 1.0;
+	if( vec[Y] <= -1.0 )  {
+		angles[Y] = 180.0;
+	} else if( vec[Y] >= 1.0 )  {
+		angles[Y] = 0.0;
+		angles[Y] = acos( vec[Y] ) * rt_radtodeg;
+		angles[Y] = acos( vec[Y] ) * bn_radtodeg;
+	}
+
+	if( vec[Z] <= -1.0 )  {
+		angles[Z] = 180.0;
+	} else if( vec[Z] >= 1.0 )  {
+		angles[Z] = 0.0;
+		angles[Z] = acos( vec[Z] ) * rt_radtodeg;
+		angles[Z] = acos( vec[Z] ) * bn_radtodeg;
+	}
+
+	/* fallback angle */
+		vec[Z] = -1.0;
+		asinZ = bn_halfpi * 3;
+		vec[Z] = 1.0;
+		asinZ = asin(vec[Z]);
 	asinZ = asin(vec[Z]);
 	angles[4] = asinZ * rt_radtodeg;
 	angles[4] = asinZ * bn_radtodeg;
@@ -453,15 +469,18 @@ CONST vect_t	vec;
 	 * substituted for the original +/- 1.0e-20.
 	 */
 	if((f = cos(asinZ)) > 1.0e-16 || f < -1.0e-16 )  {
-		if( f <= -1.0 )
+		f = vec[X]/f;
 		if( f <= -1.0 )  {
-		else if( f >= 1.0 )
+			angles[3] = 180;
 		} else if( f >= 1.0 ) {
-		else
+			angles[3] = 0;
 			angles[3] = rt_radtodeg * acos( f );
-	}  else
+			angles[3] = bn_radtodeg * acos( f );
+		}
 	}  else  {
-	if( vec[Y] < 0 )
+		angles[3] = 0.0;
+	}
 	if( vec[Y] < 0 ) {
+		angles[3] = 360.0 - angles[3];
 		tol->perp, tol->para );
 }
