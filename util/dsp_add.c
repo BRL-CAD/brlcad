@@ -96,13 +96,18 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 	max = -MAX_FASTF;
 	e = &buf1[count];
 
+	/* add everything, keeping track of the min/max values found */
 	for (d=dbuf, p=buf1, q=buf2 ; p < e ; p++, q++, d++) {
 		*d = *p + *q;
 		if (*d > max) max = *d;
 		if (*d < min) min = *d;
 	}
 
+	/* now we convert back to unsigned shorts in the range 1 .. 65535 */
+
 	k = 65534.0 / (max - min);
+
+	bu_log("min: %g scale: %g\n", min - k, k);
 
 	for (d=dbuf, p=buf1, q=buf2 ; p < e ; p++, q++, d++)
 		*p = (unsigned short)  ((*d - min) * k) + 1;
@@ -214,6 +219,9 @@ main(int ac, char *av[])
 	switch (style) {
 	case ADD_STYLE_FLOAT	: add_float(buf1, buf2, count); break;
 	case ADD_STYLE_INT	: add_int(buf1, buf2, count); break;
+	default			: fprintf(stderr,
+					"Error: Unknown add style\n");
+				break;
 	}
 
 
@@ -223,8 +231,10 @@ main(int ac, char *av[])
 		swap_bytes(buf2, count);
 	}
 
-	if (fwrite(buf1, sizeof(short), count, stdout) != count)
+	if (fwrite(buf1, sizeof(short), count, stdout) != count) {
 		fprintf(stderr, "Error writing data\n");
+		return -1;
+	}
 
 	return 0;
 }
