@@ -33,8 +33,8 @@ struct camo_specific {
 	point_t	noise_vscale;	/* size of noise coordinate space */
 	vect_t	noise_delta;	/* a delta in noise space to be applied to pts */
 
-	double	t1;	/* color threshold 1 */
-	double	t2;	/* color threshold 2 */
+	double	t1;	/* noise threshold for color1 */
+	double	t2;	/* noise threshold for color2 */
 	point_t c1;	/* color 1 */
 	point_t c2;	/* color 2 */
 	point_t c3;	/* color 3 */
@@ -79,6 +79,8 @@ static struct camo_specific camo_defaults = {
 #define SHDR_O(m)	offsetof(struct camo_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct camo_specific, m)
 
+void color_fix();
+
 struct bu_structparse camo_print_tab[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(noise_lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(noise_h_val),		FUNC_NULL },
@@ -87,9 +89,9 @@ struct bu_structparse camo_print_tab[] = {
 	{"%f",  3, "vscale",		SHDR_AO(noise_vscale),	FUNC_NULL },
 	{"%f",	1, "thresh1",		SHDR_O(t1),		FUNC_NULL },
 	{"%f",	1, "thresh2",		SHDR_O(t2),		FUNC_NULL },
-	{"%f",  3, "color1",		SHDR_AO(c1),		FUNC_NULL },
-	{"%f",  3, "color2",		SHDR_AO(c2),		FUNC_NULL },
-	{"%f",  3, "color3",		SHDR_AO(c3),		FUNC_NULL },
+	{"%f",  3, "color1",		SHDR_AO(c1),		color_fix },
+	{"%f",  3, "color2",		SHDR_AO(c2),		color_fix },
+	{"%f",  3, "color3",		SHDR_AO(c3),		color_fix },
 	{"%f",  3, "delta",		SHDR_AO(noise_delta),		FUNC_NULL },
 };
 
@@ -106,9 +108,9 @@ struct bu_structparse camo_parse[] = {
 	{"%f",  3, "vscale",		SHDR_AO(noise_vscale),	FUNC_NULL },
 	{"%f",  3, "vs",		SHDR_AO(noise_vscale),	FUNC_NULL },
 	{"%f",  3, "v",			SHDR_AO(noise_vscale),	FUNC_NULL },
-	{"%f",  3, "c1",		SHDR_AO(c1),		FUNC_NULL },
-	{"%f",  3, "c2",		SHDR_AO(c2),		FUNC_NULL },
-	{"%f",  3, "c3",		SHDR_AO(c3),		FUNC_NULL },
+	{"%f",  3, "c1",		SHDR_AO(c1),		color_fix },
+	{"%f",  3, "c2",		SHDR_AO(c2),		color_fix },
+	{"%f",  3, "c3",		SHDR_AO(c3),		color_fix },
 	{"%f",  3, "delta",		SHDR_AO(noise_delta),		FUNC_NULL },
 	{"%f",  3, "d",			SHDR_AO(noise_delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
@@ -124,6 +126,39 @@ struct mfuncs camo_mfuncs[] = {
 	{(char *)0,	0,		0,		0,		0,
 	0,		0,		0,		0 }
 };
+
+/*  color_fix
+ *
+ *  Used as a hooked function for input of color values
+ */
+void
+color_fix( sdp, name, base, value )
+register CONST struct bu_structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	register double *p = (double *)(base+sdp->sp_offset);
+	register int i;
+	int ok;
+
+	/* if all the values are in the range [0..1] there's nothing to do */
+	for (ok=1, i=0 ; i < sdp->sp_count ; i++, p++) {
+		if (*p > 1.0) ok = 0;
+	}
+	if (ok) return;
+
+	/* user specified colors in the range [0..255] so we need to
+	 * map those into [0..1]
+	 */
+	p = (double *)(base+sdp->sp_offset);
+	for (i=0 ; i < sdp->sp_count ; i++, p++) {
+		*p /= 255.0;
+	}
+}
+
+
+
 
 /*	C A M O _ S E T U P
  *
