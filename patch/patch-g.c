@@ -1003,13 +1003,15 @@ struct rt_tol *tol;
 	/* don't need the verts array any more */
 	rt_free( (char *)verts , "build_solid: verts" );
 
+	/* fuse vertices */
+	(void)nmg_model_vertex_fuse( m, tol );
+
 	/* FASTGEN targets may have vertices that should be part of
 	 * an adjoining edge. Use nmg_break_long_edges to fix this
 	 */
-	s = RT_LIST_FIRST( shell , &r->s_hd );
-	i = nmg_break_long_edges( s , tol );
+	i = nmg_break_edges( &m->magic , tol );
 	if( debug > 2 )
-		rt_log( "nmg_break_long_edges broke %d edges\n" , i );
+		rt_log( "nmg_break_edges broke %d edges\n" , i );
 
 	/* glue all the faces together */
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
