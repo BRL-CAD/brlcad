@@ -258,7 +258,6 @@ struct db_full_path	*pathp;
 union tree		*curtree;
 {
 	extern FILE		*fp_fig;
-	struct nmgregion	*r;
 	struct rt_list		vhead;
 
 	RT_CK_FULL_PATH(pathp);
@@ -311,10 +310,11 @@ union tree		*curtree;
 			goto out;
 		}
 	}
-	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	curtree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_done++;
-	if (r != 0) {
+	if( curtree != 0 && curtree->tr_op == OP_NMG_TESS &&
+	    curtree->tr_d.td_r != 0 )  {
 		FILE	*fp_psurf;
 		int	i;
 		struct rt_vls	file_base;
@@ -368,7 +368,7 @@ union tree		*curtree;
 		if ((fp_psurf = fopen(rt_vls_addr(&file), "w")) == NULL)
 			perror(rt_vls_addr(&file));
 		else {
-			nmg_to_psurf(r, fp_psurf);
+			nmg_to_psurf(curtree->tr_d.td_r, fp_psurf);
 			fclose(fp_psurf);
 			if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
 		}
@@ -390,7 +390,7 @@ union tree		*curtree;
 					(int)(tsp->ts_mater.ma_color[2] * 255) );
 				/* nmg_pl_r( fp, r ); */
 				RT_LIST_INIT( &vhead );
-				nmg_r_to_vlist( &vhead, r, 0 );
+				nmg_r_to_vlist( &vhead, curtree->tr_d.td_r, 0 );
 				rt_vlist_to_uplot( fp, &vhead );
 				fclose(fp);
 				RT_FREE_VLIST( &vhead );
@@ -398,9 +398,6 @@ union tree		*curtree;
 			}
 			rt_vls_free(&file);
 		}
-
-		/* NMG region is no longer necessary */
-		nmg_kr(r);
 		rt_vls_free(&file_base);
 	}
 
