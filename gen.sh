@@ -157,7 +157,7 @@ BDIRS="bench \
 	mged \
 	proc-db \
 	comgeom-g \
-	iges-g \
+	iges \
 	fb \
 	util \
 	fbed \
