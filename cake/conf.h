@@ -24,6 +24,11 @@ typedef	long	Cast;
 #	define	CPP_OPTIONS2	"-D__CAKE__vax"
 #endif
 
+#if __MACHINETYPE__alpha
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__alpha"
+#endif
+
 #if __MACHINETYPE__mips
 	/* DECStation with MIPS chip */
 #	define	CPP		"cc"
