@@ -19,7 +19,7 @@
 
 #define	LINELEN	256 /* max input line length from elements file */
 
-static char *usage="dxf-g [-v] [-d] [-p] [-t tolerance] [-i input_file] [-o output_file_name]";
+static char *usage="dxf-g [-v] [-p] [-t tolerance] [-i input_file] [-o output_file_name]";
 
 int
 main( argc , argv )
