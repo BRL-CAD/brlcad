@@ -368,6 +368,8 @@ do1()
 			/*printf("select timeout in do1()\n");*/
 			if( fbp != FBIO_NULL )
 				fb_poll(fbp);
+			else
+				break;
 		}
 #if 0
 		if( pkg_process( rem_pcp ) < 0 ) {
