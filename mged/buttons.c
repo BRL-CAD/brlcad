@@ -134,7 +134,7 @@ void		btn_head_menu();
 void		btn_item_hit();
 
 static struct menu_item first_menu[] = {
-	{ "(BUTTON MENU)", btn_head_menu, 1 },		/* chg to 2nd menu */
+	{ "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
 	{ "", (void (*)())NULL, 0 }
 };
 struct menu_item second_menu[] = {
