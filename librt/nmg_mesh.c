@@ -234,7 +234,16 @@ CONST struct bn_tol	*tol;
 
 	if( bn_pt3_pt3_equal( eu1->vu_p->v_p->vg_p->coord,
 	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
+	{
+		rt_log( "vertices should have been fused:\n" );
+		rt_log( "\tvertex x%x ( %.12f %.12f %.12f )\n",
+			eu1->vu_p->v_p,
+			V3ARGS( eu1->vu_p->v_p->vg_p->coord ) );
+		rt_log( "\tvertex x%x ( %.12f %.12f %.12f )\n",
+			eu1->eumate_p->vu_p->v_p,
+			V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) );
 		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
+	}
 
 #if 1
 nmg_radial_join_eu_NEW(eu1, eu2, tol);
