@@ -3,20 +3,33 @@
  *
  * Ray Tracing program, Boolean region evaluator.
  *
- * Author -
+ *  Note to developers -
+ *	Do not use the hit_point field in these routines, as
+ *	for some solid types it has been filled in by the g_xxx_shot()
+ *	routine, and for other solid types it may not have been.
+ *	In particular, copying a garbage hit_point from a structure which
+ *	has not yet been filled in, into a structure which won't be
+ *	filled in again, gives wrong results.
+ *	Thanks to Keith Bowman for finding this obscure bug.
+ *
+ *  Author -
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1985-1996 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSbool[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -298,6 +311,7 @@ struct application	*ap;
 				}
 				continue;
 			}
+			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(rtip, pp);
 			if( diff > -(tol_dist) )  {
 				/*
 				 * Seg starts almost "precisely" at the
@@ -308,11 +322,11 @@ struct application	*ap;
 				 * advance to next partition.
 				 */
 				lasthit->hit_dist = pp->pt_outhit->hit_dist;
-				VMOVE(lasthit->hit_point, pp->pt_outhit->hit_point);
-				if(rt_g.debug&DEBUG_PARTITION)  rt_log("seg start fused to partition end\n");
+				if(rt_g.debug&DEBUG_PARTITION)  {
+					rt_log("seg start fused to partition end, diff=%g\n", diff);
+				}
 				continue;
 			}
-			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(rtip, pp);
 
 			/*
 			 *  diff < ~~0
@@ -482,7 +496,6 @@ equal_start:
 					newpp->pt_outseg = segp;
 					newpp->pt_outhit = &segp->seg_out;
 					newpp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
-					VMOVE(newpp->pt_outhit->hit_point, pp->pt_inhit->hit_point);
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg ends at partition start, fuse\n");
