@@ -55,7 +55,7 @@ register char *cp;
 	} else if ( col_count != 0 ) {
 		/* Space over before starting new column */
 		do {
-			rt_log( ' ' );
+			rt_log( " " );
 			col_len++;
 		}  while ( (col_len % NAMESIZE) != 0 );
 	}
