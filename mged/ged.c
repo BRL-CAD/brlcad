@@ -108,6 +108,7 @@ char **argv;
 	mat_idn( Viewrot );
 	mat_idn( toViewcenter );
 	mat_idn( modelchanges );
+
 	new_mats();
 
 	setview( 0, 0, 0 );
@@ -326,20 +327,23 @@ float xangle, yangle, zangle;
 	 */
 	if( es_edflag == PROT || es_edflag == SROT || movedir == ROTARROW ) {
 		static mat_t tempp;
+		static vect_t point;
 
 		mat_idn( incr_change );
 		buildHrot( incr_change, xangle, yangle, zangle );
 
+
 		if( es_edflag == SROT || es_edflag == PROT )  {
-			/* accumulate the rotations */
+			/* accumulate the translations */
 			mat_mul(tempp, incr_change, acc_rot_sol);
 			mat_copy(acc_rot_sol, tempp);
 			sedit();	/* change es_rec only, NOW */
 			return;
 		}
-		/* accumulate change matrices */
-		mat_mul( tempp, incr_change, modelchanges );
-		mat_copy( modelchanges, tempp);
+		/* accumulate change matrix - do it wrt a point NOT view center */
+		mat_mul(tempp, modelchanges, es_mat);
+		MAT4X3PNT(point, tempp, es_rec.s.s_values);
+		wrt_point(modelchanges, incr_change, modelchanges, point);
 
 		new_mats();
 		return;

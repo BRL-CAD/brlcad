@@ -1,10 +1,20 @@
 /*
  *			C H G M O D E L
  *
+ * This module contains functions which change particulars of the
+ * model, generally on a single solid or combination.
+ * Changes to the tree structure of the model are done in chgtree.c
+ *
  * Functions -
  *
- * The U. S. Army Ballistic Research Laboratory
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include	<signal.h>
@@ -22,175 +32,12 @@ extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
 
+static void	aexists();
+
 int		newedge;		/* new edge for arb editing */
 
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
-
-static void	aexists();
-
-/* Rename an object */
-/* Format: n oldname newname	*/
-void
-f_name()
-{
-	register struct directory *dp;
-	union record record;
-
-	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
-
-	if( lookup( cmd_args[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( cmd_args[2] );
-		return;
-	}
-
-	dp->d_namep = strdup( cmd_args[2] );
-	db_getrec( dp, &record, 0 );
-
-	NAMEMOVE( cmd_args[2], record.c.c_name );
-	db_putrec( dp, &record, 0 );
-	(void)printf("done\n");
-}
-
-/* Copy a solid */
-/* Format: c oldname newname	*/
-void
-f_copy()
-{
-	register struct directory *proto;
-	register struct directory *dp;
-	union record record;
-	int i, ngran;
-
-	if( (proto = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
-
-	if( lookup( cmd_args[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( cmd_args[2] );
-		return;
-	}
-
-	db_getrec( proto, &record, 0 );
-
-	if( record.u_id != ID_SOLID && record.u_id != ID_ARS_A ) {
-		(void)printf("%s: not a solid\n", proto->d_namep );
-		return;
-	}
-
-	/*
-	 * Update the in-core directory
-	 */
-	if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, 0 )) == DIR_NULL )
-		return;
-	db_alloc( dp, proto->d_len );
-
-	/*
-	 * Update the disk record
-	 */
-	if(record.u_id == ID_ARS_A)  {
-		NAMEMOVE( cmd_args[2], record.a.a_name );
-		ngran = record.a.a_totlen;
-		db_putrec( dp, &record, 0 );
-
-		/* Process the rest of the ARS (b records)  */
-		for( i = 0; i < ngran; i++ )  {
-			db_getrec( proto, &record, i+1 );
-			if( i == 0 )  {
-				record.b.b_values[0] = -toViewcenter[MDX];
-				record.b.b_values[1] = -toViewcenter[MDY];
-				record.b.b_values[2] = -toViewcenter[MDZ];
-			}
-			db_putrec( dp, &record, i+1 );
-		}
-	}  else  {
-		NAMEMOVE( cmd_args[2], record.s.s_name );
-		record.s.s_values[0] = -toViewcenter[MDX];
-		record.s.s_values[1] = -toViewcenter[MDY];
-		record.s.s_values[2] = -toViewcenter[MDZ];
-		db_putrec( dp, &record, 0 );
-	}
-	(void)printf("done\n");
-}
-
-/* Create an instance of something */
-/* Format: i object combname instname [op]	*/
-void
-f_instance()
-{
-	register struct directory *dp;
-	char oper;
-
-	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
-
-	oper = UNION;
-	if( numargs == 5 )
-		oper = cmd_args[4][0];
-	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-		(void)printf("bad operation: %c\n", oper );
-		return;
-	}
-	if( combadd( dp, cmd_args[2], cmd_args[3], '\0', oper, 0, 0 ) ==
-	    DIR_NULL )
-		return;
-	(void)printf("done\n");
-}
-
-/* add solids to a region or create the region */
-/* and then add solids */
-/* Format: r regionname opr1 sol1 opr2 sol2 ... oprn soln */
-void
-f_region()
-{
-	register struct directory *dp;
-	union record record;
-	int i;
-	int ident, air;
-	char oper;
-
-	ident = air = 0;
-	/* Check for even number of arguments */
-	if( numargs & 01 )  {
-		printf("error in number of args!\n");
-		return;
-	}
-	/* Get operation and solid name for each solid */
-	for( i = 2; i < numargs; i += 2 )  {
-		if( cmd_args[i][1] != '\0' )  {
-			(void)printf("bad operation: %s skip member: %s\n",
-				cmd_args[i], cmd_args[i+1] );
-			continue;
-		}
-		oper = cmd_args[i][0];
-		if( (dp = lookup( cmd_args[i + 1], LOOKUP_NOISY )) == DIR_NULL )  {
-			(void)printf("skipping %s\n", cmd_args[i + 1] );
-			continue;
-		}
-
-		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-			(void)printf("bad operation: %c skip member: %s\n",
-				oper, dp->d_namep );
-			continue;
-		}
-
-		db_getrec( dp, &record, 0 );
-		if( record.u_id == ID_COMB ) {
-			if( record.c.c_flags == 'R' ) {
-				(void)printf(
-				     "Note: %s is a region\n",
-				     dp->d_namep );
-			}
-		}
-
-		if( combadd( dp, cmd_args[1], (char *)NULL, 'r', oper, ident,
-							air ) == DIR_NULL )  {
-			(void)printf("error in combadd\n");
-			return;
-		}
-	}
-	(void)printf("done\n");
-}
 
 /* Add/modify item and air codes of a region */
 /* Format: I region item <air>	*/
@@ -257,46 +104,6 @@ f_modify()
 	(void)printf("done\n");
 }
 
-/* Remove an object or several from the description */
-/* Format: k object1 object2 .... objectn	*/
-void
-f_kill()
-{
-	register struct directory *dp;
-	register int i;
-
-	for( i = 1; i < numargs; i++ )  {
-		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) != DIR_NULL )  {
-			eraseobj( dp );
-			db_delete( dp );
-			dir_delete( dp );
-		}
-	}
-	dmaflag = 1;
-	(void)printf("done\n");
-}
-
-/* Grouping command */
-/* Format: g groupname object1 object2 .... objectn	*/
-void
-f_group()
-{
-	register struct directory *dp;
-	register int i;
-
-	/* get objects to add to group */
-	for( i = 2; i < numargs; i++ )  {
-		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )  {
-			if( combadd( dp, cmd_args[1], (char *)NULL, 'g',
-				UNION, 0, 0) == DIR_NULL )
-				return;
-		}
-		else
-			(void)printf("skip member %s\n", cmd_args[i]);
-	}
-	(void)printf("done\n");
-}
-
 /* Mirror image */
 /* Format: m oldsolid newsolid axis	*/
 void
@@ -328,7 +135,7 @@ f_mirror()
 
 	db_getrec( proto, &record, 0 );
 	if( record.u_id != ID_SOLID && record.u_id != ID_ARS_A )  {
-		(void)printf("%s: not a solid\n", dp->d_namep );
+		(void)printf("%s: not a solid\n", proto->d_namep );
 		return;
 	}
 	if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, 0 )) == DIR_NULL )
@@ -374,7 +181,6 @@ f_extrude()
 	static int pt[4];
 	static int prod;
 	static float dist;
-	static vect_t work;
 	static struct solidrec lsolid;	/* local copy of solid */
 
 	if( state != ST_S_EDIT )  {
@@ -393,7 +199,8 @@ f_extrude()
 	/* get distance to project face */
 	dist = atof( cmd_args[2] );
 	/* apply es_mat[15] to get to real model space */
-	dist *= es_mat[15];
+	/* convert from the local unit (as input) to the base unit */
+	dist = dist * es_mat[15] * local2base;
 
 	newedge = 1;
 
@@ -538,44 +345,6 @@ f_extrude()
 	dmaflag = 1;
 }
 
-/* Delete members of a combination */
-/* Format: D comb memb1 memb2 .... membn	*/
-void
-f_delmem()
-{
-	register struct directory *dp;
-	register int i, rec;
-	union record record;
-
-	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
-
-	/* Examine all the Member records, one at a time */
-	for( rec = 1; rec < dp->d_len; rec++ )  {
-		db_getrec( dp, &record, rec );
-top:
-		/* Compare this member to each command arg */
-		for( i = 2; i < numargs; i++ )  {
-			if( strcmp( cmd_args[i], record.M.m_instname ) != 0 &&
-			    strcmp( cmd_args[i], record.M.m_brname ) != 0 )
-				continue;
-			printf("deleting member %s\n", cmd_args[i] );
-
-			/* If deleting last member, just truncate */
-			if( rec == dp->d_len-1 ) {
-				db_trunc(dp, 1);
-				continue;
-			}
-
-			db_getrec( dp, &record, dp->d_len-1 );	/* last one */
-			db_putrec( dp, &record, rec );		/* xch */
-			db_trunc( dp, 1 );
-			goto top;
-		}
-	}
-	(void)printf("done\n");
-}
-
 /* define an arb8 using rot fb angles to define a face */
 /* Format: a name rot fb	*/
 void
@@ -701,7 +470,6 @@ f_mirface()
 	static int face;
 	static int pt[4];
 	static int prod;
-	static float dist;
 	static vect_t work;
 	static struct solidrec lsolid;	/* local copy of solid */
 
@@ -867,6 +635,61 @@ f_mirface()
 	dmaflag = 1;
 }
 
+/*
+ * Change the local units of the description.
+ * Base unit is fixed so just changing the current local unit.
+ */
+f_units()
+{
+	int new_unit = 0;
+
+	if( strcmp(cmd_args[1], "mm") == 0 ) 
+		new_unit = ID_MM_UNIT;
+	else
+	if( strcmp(cmd_args[1], "cm") == 0 ) 
+		new_unit = ID_CM_UNIT;
+	else
+	if( strcmp(cmd_args[1], "m") == 0 ) 
+		new_unit = ID_M_UNIT;
+	else
+	if( strcmp(cmd_args[1], "in") == 0 ) 
+		new_unit = ID_IN_UNIT;
+	else
+	if( strcmp(cmd_args[1], "ft") == 0 ) 
+		new_unit = ID_FT_UNIT;
+
+	if( new_unit ) {
+		/* change to the new local unit */
+		dir_units( new_unit );
+		localunit = new_unit;
+		if(state == ST_S_EDIT)
+			pr_solid( &es_rec.s );
+
+		dmaflag = 1;
+		return;
+	}
+
+	(void)printf("%s: unrecognized unit\n");
+	(void)printf("<mm|cm|m|in|ft> are only recognized units\n");
+	return;
+}
+
+/*
+ *	Change the current title of the description
+ */
+f_title()
+{
+	register int i;
+
+	cur_title[0] = '\0';
+	for(i=1; i<numargs; i++) {
+		strcat(cur_title, cmd_args[i]);
+		strcat(cur_title, " ");
+	}
+
+	dir_title();
+	dmaflag = 1;
+}
 
 /* tell him it already exists */
 static void
@@ -884,4 +707,117 @@ char	*name;
  */
 void
 f_make()  {
+	printf("unimplemented\n");
+}
+
+/* allow precise changes to object rotation */
+void
+f_rot_obj()
+{
+	mat_t temp;
+	vect_t s_point, point, v_work, model_pt;
+
+	if(state != ST_O_EDIT) {
+		state_err("Object Rotation");
+		return;
+	}
+
+	if(movedir != ROTARROW) {
+		(void)printf("Not in object rotate mode\n");
+		return;
+	}
+
+	/* find point for rotation to take place wrt */
+	MAT4X3PNT(model_pt, es_mat, es_rec.s.s_values);
+	MAT4X3PNT(point, modelchanges, model_pt);
+
+	/* Find absolute translation vector to go from "model_pt" to
+	 * 	"point" without any of the rotations in "modelchanges"
+	 */
+	VSCALE(s_point, point, modelchanges[15]);
+	VSUB2(v_work, s_point, model_pt);
+
+	/* REDO "modelchanges" such that:
+	 *	1. NO rotations (identity)
+	 *	2. trans == v_work
+	 *	3. same scale factor
+	 */
+	mat_idn(temp);
+	MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
+	temp[15] = modelchanges[15];
+	mat_copy(modelchanges, temp);
+
+	/* build new rotation matrix */
+	mat_idn(temp);
+	buildHrot(temp, atof(cmd_args[1])*degtorad,
+			atof(cmd_args[2])*degtorad,
+			atof(cmd_args[3])*degtorad );
+
+	/* Record the new rotation matrix into the revised
+	 *	modelchanges matrix wrt "point"
+	 */
+	wrt_point(modelchanges, temp, modelchanges, point);
+
+	new_mats();
+	dmaflag = 1;
+}
+
+/* allow precise changes to object scaling */
+void
+f_sc_obj()
+{
+	mat_t incr;
+	vect_t point, temp;
+
+	if(state != ST_O_EDIT) {
+		state_err("Object Scale");
+		return;
+	}
+
+	if(movedir != SARROW) {
+		(void)printf("Not in object scale mode\n");
+		return;
+	}
+
+	mat_idn(incr);
+	incr[15] = 1.0 / (atof(cmd_args[1]) * modelchanges[15]);
+
+	/* find point the scaling is to take place wrt */
+	MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
+	MAT4X3PNT(point, modelchanges, temp);
+
+	wrt_point(modelchanges, incr, modelchanges, point);
+	new_mats();
+}
+
+/* allow precise changes to object translation */
+void
+f_tr_obj()
+{
+	register int i;
+	mat_t incr, old;
+	vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
+
+	if(state != ST_O_EDIT) {
+		state_err("Object Translation");
+		return;
+	}
+
+	mat_idn(incr);
+	mat_idn(old);
+
+	if(movedir & (RARROW|UARROW)) {
+		for(i=0; i<3; i++) {
+			new_vertex[i] = atof(cmd_args[i+1]) * local2base;
+		}
+		MAT4X3PNT(model_sol_pt, es_mat, es_rec.s.s_values);
+		MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
+		VSUB2(model_incr, new_vertex, ed_sol_pt);
+		MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
+		mat_copy(old,modelchanges);
+		mat_mul(modelchanges, incr, old);
+		new_mats();
+		return;
+	}
+	(void)printf("Not in object translate mode\n");
 }

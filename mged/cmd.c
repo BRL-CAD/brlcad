@@ -47,7 +47,9 @@ void	f_edcomb(), f_status(), f_rot();
 void	f_refresh(), f_fix(), f_rt();
 void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
-void	f_mirface();
+void	f_mirface(), f_units(), f_title();
+void	f_rot_obj(), f_tr_obj(), f_sc_obj();
+void	f_analyze();
 
 static struct funtab {
 	char *ft_name;
@@ -78,13 +80,19 @@ static struct funtab {
 	"extrude",f_extrude,3,3,"extrude #### distance (extrude dist from face)",
 	"rm",f_delmem,3,20,"rm comb <members> (remove members from comb)",
 	"arb",f_arbdef,4,4,"arb name rot fb (make arb8, rotation + fallback)",
+	"units",f_units,2,2,"units <mm|cm|m|in|ft> (change units)",
+	"title",f_title,2,20,"title newtitle (change the title)",
+	"rotobj",f_rot_obj,4,4,"rotate xang yang zang (rotate object about x, y, z)",
+	"vrot",f_vrot,4,4,"rot xdeg ydeg zdeg (rotate view)",
+	"translate",f_tr_obj,4,4,"translate x y z (trans object to x,y,z)",
+	"scale",f_sc_obj,2,2,"scale factor (scale object by factor)",
+	"analyze",f_analyze,1,2,"analyze [arbname] (list much info about arb)",
 	"\n",f_return,1,1,"NOP",
 	"%",f_comm,1,1,"% (escape to interactive shell)",
 	"q",f_quit,1,1,"q (quit)",
 	"center",f_center,4,4,"center x y z (debug, set view center)",
 	"press",f_press,2,20,"press button (emulate button press)",
 	"size",f_view,2,2,"size size (debug, set view size)",
-	"rot",f_rot,4,4,"rot xdeg ydeg zdeg (rotate view)",
 	"x",f_debug,1,1,"x (debug, list drawn objects)",
 	"regdump",f_regdebug,1,1,"regdump (debug, toggle register print)",
 	"edcomb",f_edcomb,7,7,"edcomb combname flag item air mat los (edit combination record info)",
@@ -226,7 +234,7 @@ f_param()
 {
 	register int i;
 
-	if( es_edflag == 0 )  {
+	if( es_edflag <= 0 )  {
 		(void)printf("A solid editor option not selected\n");
 		return;
 	}
@@ -242,6 +250,21 @@ f_param()
 				return;
 			}
 		}
+	}
+	/* check if need to convert to the base unit */
+	switch( es_edflag ) {
+
+		case STRANS:
+		case PSCALE:
+		case EARB:
+		case MOVEH:
+			/* must convert to base units */
+			es_para[0] *= local2base;
+			es_para[1] *= local2base;
+			es_para[2] *= local2base;
+
+		default:
+			return;
 	}
 }
 

@@ -3,7 +3,16 @@
  *
  * Functions -
  *	dotitles	Output GED "faceplate" & titles.
+ *
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include "ged_types.h"
 #include "ged.h"
 #include "solid.h"
@@ -19,7 +28,7 @@ extern int	printf(), sprintf();
 int	state;
 char	*state_str[] = {
 	"-ZOT-",
-	"VIEW",
+	"VIEWING",
 	"SOL PICK",
 	"SOL EDIT",
 	"OBJ PICK",
@@ -27,6 +36,17 @@ char	*state_str[] = {
 	"OBJ EDIT",
 	"UNKNOWN",
 };
+
+char	*local_unit[] = {
+	"NONE",
+	"MILLIMETERS",
+	"CENTIMETERS",
+	"METERS",
+	"INCHES",
+	"FEET",
+	"UNKNOWN",
+};
+
 
 /*
  *			D O T I T L E S
@@ -44,7 +64,8 @@ dotitles()
 	static vect_t temp;
 	static vect_t pos_view;		/* view position */
 	union record temp_rec;		/* copy of es_rec record */
-	register int yloc;
+	mat_t new_mat;
+	register int yloc, xloc;
 	auto char linebuf[512];
 
 	/* Enclose window in decorative box.  Mostly for alignment. */
@@ -54,11 +75,17 @@ dotitles()
 	dmp->dmr_2d_line( -2048,  2047, -2048, -2048, 0 );
 	if( illump != SOLID_NULL )  {
 		dmp->dmr_2d_line(  XLIM,  2047,  XLIM,  TITLE_YBASE-TEXT1_DY, 0 );
-		dmp->dmr_2d_line( -2047, TITLE_YBASE-TEXT1_DY, XLIM, TITLE_YBASE-TEXT1_DY, 0 );
 	}
+	dmp->dmr_2d_line( -2047, TITLE_YBASE-TEXT1_DY, 2047, TITLE_YBASE-TEXT1_DY, 0 );
 
 	/* Display current state in upper right corner */
-	dmp->dmr_puts( state_str[state], MENUX, MENUY - MENU_DY, 2, DM_YELLOW );
+	dmp->dmr_puts( state_str[state], MENUX, MENUY - MENU_DY, 1, DM_YELLOW );
+
+	/* Display current local unit in effect */
+	dmp->dmr_puts( local_unit[localunit], MENUX, MENUY - (2*MENU_DY), 1, DM_CYAN);
+	dmp->dmr_2d_line(XLIM, 1825, 2047, 1825, 0);
+	dmp->dmr_2d_line(XLIM, 1815, 2047, 1815, 0);
+	dmp->dmr_2d_line(XLIM, 1815, XLIM, 2047, 0);
 
 	/*
 	 * Print information about object illuminated
@@ -75,6 +102,14 @@ dotitles()
 			y += MENU_DY;
 		}
 	}
+
+	/* put horiz lines to seperate path info and menu */
+	if( state == ST_S_EDIT ) {
+		/* solid edit */
+		dmp->dmr_2d_line(XLIM, y-MENU_DY/2, 2047, y-MENU_DY/2, 0);
+		dmp->dmr_2d_line(XLIM, y-MENU_DY/2+10, 2047, y-MENU_DY/2+10, 0);
+	}
+
 	/*
 	 * The "y" value is passed so that the menu can be presented
 	 * even when in illuminate path mode.
@@ -83,7 +118,20 @@ dotitles()
 	menu_display( y );
 
 	/* print parameter locations on screen */
-	if(es_edflag >= 0)  switch( es_gentype )  {
+	if( state == ST_O_EDIT && illump->s_Eflag ) {
+		/* region is a processed region */
+		MAT4X3PNT(temp, model2objview, es_rec.s.s_values);
+		xloc = (int)(temp[X]*2048);
+		yloc = (int)(temp[Y]*2048);
+		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY, yloc-TEXT0_DY);
+		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY, yloc+TEXT0_DY);
+		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY, yloc+TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY, yloc-TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY, yloc-TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY, yloc-TEXT0_DY, 0);
+	}
+
+	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  switch( es_gentype )  {
 
 	case GENARB8:
 		MAT4X3PNT( work, es_mat, es_rec.s.s_values );
@@ -181,6 +229,7 @@ dotitles()
 				0,
 				DM_YELLOW );
 		}
+
 		if(illump->s_last) {
 			(void)sprintf(&linebuf[0], "** PATH --  ");
 			for(i=0; i <= illump->s_last; i++) {
@@ -221,12 +270,71 @@ dotitles()
 		}
 	}
 
+	/* display path info for object editing also */
+	if( state == ST_O_EDIT ) {
+		(void)sprintf(&linebuf[0], "** PATH --  ");
+		for(i=0; i <= illump->s_last; i++) {
+			cp = &linebuf[0];
+			FINDNULL( cp );
+			(void)sprintf(cp,"/%s",illump->s_path[i]->d_namep);
+		}
+		cp = &linebuf[0];
+		FINDNULL( cp );
+		(void)sprintf(cp,":");
+
+		dmp->dmr_puts(	&linebuf[0],
+				TITLE_XBASE+15,
+				SOLID_YBASE,
+				1,
+				DM_RED);
+
+		/* print the evaluated (path) solid parameters */
+		if( state == ST_O_EDIT && illump->s_Eflag == 0 ) {
+			/* NOT an evaluated region */
+			/* object edit option selected */
+			temp_rec = es_rec;
+			mat_mul(new_mat, modelchanges, es_mat);
+			MAT4X3PNT( temp_rec.s.s_values, new_mat, es_rec.s.s_values );
+			for(i=1; i<8; i++) {
+				MAT4X3VEC( &temp_rec.s.s_values[i*3], new_mat, &es_rec.s.s_values[i*3] );
+			}
+
+			pr_solid( &temp_rec.s );
+
+			for(i=0; i<es_nlines; i++) {
+				dmp->dmr_puts(	&es_display[i*ES_LINELEN],
+						TITLE_XBASE,
+						SOLID_YBASE+TEXT1_DY+(TEXT0_DY*i),
+						0,
+						DM_RED );
+			}
+			pr_solid( &es_rec.s );
+		}
+
+		if( state == ST_O_EDIT && illump->s_Eflag ) {
+			/* region has been evaluated */
+			MAT4X3PNT(work, modelchanges, es_rec.s.s_values);
+			(void)sprintf( &linebuf[0],
+					"CENTER  : %.4f %.4f %.4f",
+					work[0]*base2local, work[1]*base2local, work[2]*base2local );
+			dmp->dmr_puts( &linebuf[0],
+					TITLE_XBASE+15,
+					SOLID_YBASE+TEXT1_DY+TEXT0_DY,
+					1,
+					DM_RED );
+		}
+
+	}
+
 	/*
-	 * General status information on the last line
+	 * General status information on the next to last line
 	 */
 	(void)sprintf( &linebuf[0],
-		"\r view:  cent=(%.3f, %.3f, %.3f), size=%.3f, ",
-		-toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ], VIEWSIZE );
+		" view:  cent=(%.3f, %.3f, %.3f), size=%.3f, ",
+		-toViewcenter[MDX]*base2local,
+		-toViewcenter[MDY]*base2local,
+		-toViewcenter[MDZ]*base2local,
+		VIEWSIZE*base2local );
 
 	cp = &linebuf[0];
 	FINDNULL(cp);
@@ -237,16 +345,25 @@ dotitles()
 	dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE, 1, DM_WHITE );
 
 	/*
-	 * Angle/Distance cursor above status line.
+	 * Angle/Distance cursor below status line.
 	 */
 	if (adcflag)  {
 		(void)sprintf( &linebuf[0],
-"\r cursor:  angle1=%.1f,  angle2=%.1f,  dist=%.3f,  cent=(%.3f, %.3f)",
+" cursor:  angle1=%.1f,  angle2=%.1f,  dist=%.3f,  cent=(%.3f, %.3f)",
 				angle1 * radtodeg, angle2 * radtodeg,
-				(c_tdist / 2047.0) / VIEWFACTOR,
-				(curs_x / 2047.0) / VIEWFACTOR,
-				(curs_y / 2047.0) / VIEWFACTOR
+				(c_tdist / 2047.0) / VIEWFACTOR*base2local,
+				(curs_x / 2047.0) / VIEWFACTOR*base2local,
+				(curs_y / 2047.0) / VIEWFACTOR*base2local
 			     );
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE - TEXT1_DY, 1, DM_CYAN );
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_CYAN );
+	}
+	else {
+		/* display title and units */
+		(void)sprintf(&linebuf[0], " Title = %s",cur_title);
+		cp = &linebuf[0];
+		FINDNULL( cp );
+		(void)sprintf(cp, "   UNITS = %s",local_unit[localunit]);
+		linebuf[80] = '\0';
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_BLUE );
 	}
 }

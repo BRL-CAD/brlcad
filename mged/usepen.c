@@ -185,6 +185,10 @@ register int x, y;
 					sp->s_iflag = UP;
 			}
 			state = ST_O_EDIT;
+
+			/* begin object editing - initialize */
+			init_objedit();
+
 			dmaflag++;
 			return;
 		}
@@ -286,19 +290,29 @@ register int x, y;
 		 *	p' = ( (p - center) * scale ) + center
 		 */
 		incr_change[15] = 1.0 / scale;
+/*
 		wrt_view( modelchanges, incr_change, modelchanges );
+*/
+
+		/* Have scaling take place with respect to a point, NOT
+		 *	the view center
+		 */
+		MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
+		MAT4X3PNT(pos_model, modelchanges, temp);
+		wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 	}  else if( movedir & (RARROW|UARROW) )  {
 		static mat_t oldchanges;	/* temporary matrix */
 
 		/* Vector from object center to cursor */
-		MAT4X3PNT( pos_view, model2objview, illump->s_center );
+		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
+		MAT4X3PNT( pos_view, model2objview, temp );
 		if( movedir & RARROW )
 			pos_view[X] = x / 2047.0;
 		if( movedir & UARROW )
 			pos_view[Y] = y / 2047.0;
 
 		MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
-		MAT4X3PNT( tr_temp, modelchanges, illump->s_center );
+		MAT4X3PNT( tr_temp, modelchanges, temp );
 		VSUB2( tr_temp, pos_model, tr_temp );
 		MAT_DELTAS(incr_change,
 			tr_temp[X], tr_temp[Y], tr_temp[Z]);
@@ -420,4 +434,36 @@ register matp_t out, change, in;
 	mat_idn( t1 );
 	MAT_DELTAS( t1, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ] );
 	mat_mul( out, t1, t2 );
+}
+/*
+ *  			W R T _ P O I N T
+ *  
+ *  Given a model-space transformation matrix "change",
+ *  return a matrix which applies the change with-respect-to
+ *  "point".
+ */
+wrt_point( out, change, in, point )
+register matp_t out, change, in;
+register vect_t point;
+{
+	static mat_t t1, t2, pt_to_origin, origin_to_pt;
+
+	/* build "point to origin" matrix */
+	mat_idn( pt_to_origin );
+	MAT_DELTAS(pt_to_origin, -point[X], -point[Y], -point[Z]);
+
+	/* build "origin to point" matrix */
+	mat_idn( origin_to_pt );
+	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
+
+	/* t1 = pt_to_origin * in */
+	mat_mul( t1, pt_to_origin, in );
+
+	/* apply change matrix: t2 = change * pt_to_origin * in */
+	mat_mul( t2, change, t1 );
+
+	/* apply origin_to_pt matrix:
+	 *	out = origin_to_pt * change * pt_to_origin * in
+	 */
+	mat_mul( out, origin_to_pt, t2 );
 }

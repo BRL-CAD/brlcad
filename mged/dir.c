@@ -16,6 +16,9 @@
  *	db_grow		Increase size of existing database entry
  *	db_trunc	Decrease size of existing entry, from it's end
  *	f_memprint	Debug, print memory & db free maps
+ *	conversions	Builds conversion factors given a local unit
+ *	dir_units	Changes the local unit
+ *	dir_title	Change the target title
  *
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -50,6 +53,8 @@ int		objfd;			/* FD of object file */
 
 union record	record;
 
+double	local2base, base2local;		/* unit conversion factors */
+int	localunit;			/* local unit currently in effect */
 static char *units_str[] = {
 	"none",
 	"mm",
@@ -59,6 +64,9 @@ static char *units_str[] = {
 	"feet",
 	"extra"
 };
+
+char	cur_title[128];			/* current target title */
+
 char	*filename;			/* Name of database file */
 static int read_only = 0;		/* non-zero when read-only */
 
@@ -95,8 +103,23 @@ dir_build()  {
 	if( record.u_id != ID_IDENT )  {
 		(void)printf("Warning:  File is not a proper GED database\n");
 		(void)printf("This database should be converted before further use.\n");
+		localunit = 0;
+		local2base = base2local = 1.0;
 	}
+	else {
+		/* have ID record - set up the unit conversion factors */
+		localunit = record.i.i_units;
+		conversions( record.i.i_units );
+
+		/* save the title */
+		cur_title[0] = '\0';
+		strcat(cur_title, record.i.i_title);
+
+	}
+
 	(void)lseek( objfd, 0L, 0 );
+
+
 	while(1)  {
 		addr = lseek( objfd, 0L, 1 );
 		if( (unsigned)read( objfd, (char *)&record, sizeof record )
@@ -579,3 +602,119 @@ f_memprint()
 	(void)printf("Database free granule map:\n");
 	memprint( &dbfreep );
 }
+
+
+
+/*	builds conversion factors given the local unit
+ */
+conversions( local )
+int local;
+{
+
+	/*	This routine assumes the base unit == inches
+	 */
+	switch( local ) {
+
+		case ID_NO_UNIT:
+			/* no local unit specified ... use the base unit(inches) */
+			localunit = record.i.i_units = ID_IN_UNIT;
+			local2base = base2local = 1.0;
+		break;
+
+		case ID_MM_UNIT:
+			/* local unit is mm */
+			local2base = 1.0 / 25.4;
+			base2local = 25.4;
+		break;
+
+		case ID_CM_UNIT:
+			/* local unit is cm */
+			local2base = 1.0 / 2.54;
+			base2local = 2.54;
+		break;
+
+		case ID_M_UNIT:
+			/* local unit is meters */
+			local2base = 1.0 / .0254;
+			base2local = .0254;
+		break;
+
+		case ID_IN_UNIT:
+			/* local unit is inches */
+			local2base = base2local = 1.0;
+		break;
+
+		case ID_FT_UNIT:
+			/* local unit is feet */
+			base2local = 1.0 / 12.0;
+			local2base = 12.0;
+		break;
+
+		default:
+			local2base = base2local = 1.0;
+			localunit = 6;
+		break;
+
+	}
+
+}
+
+
+
+
+/* change the local unit of the description */
+dir_units( new_unit )
+int new_unit;
+{
+
+	if( read_only ) {
+		(void)printf("Read only file\n");
+		return;
+	}
+
+	(void)lseek(objfd, 0L, 0);
+	(void)read(objfd, (char *)&record, sizeof record);
+
+	if(record.u_id != ID_IDENT) {
+		(void)printf("NOT a proper GED file\n");
+		return;
+	}
+
+	(void)lseek(objfd, 0L, 0);
+
+	record.i.i_units = new_unit;
+	conversions( new_unit );
+
+	(void)write(objfd, (char *)&record, sizeof record);
+
+}
+
+
+
+/* change the title of the description */
+dir_title( )
+{
+
+	if( read_only ) {
+		(void)printf("Read only file\n");
+		return;
+	}
+
+	(void)lseek(objfd, 0L, 0);
+	(void)read(objfd, (char *)&record, sizeof record);
+
+	if(record.u_id != ID_IDENT) {
+		(void)printf("NOT a proper GED file\n");
+		return;
+	}
+
+	(void)lseek(objfd, 0L, 0);
+
+	record.i.i_title[0] = '\0';
+
+	strcat(record.i.i_title, cur_title);
+
+	(void)write(objfd, (char *)&record, sizeof record);
+
+}
+

@@ -88,9 +88,9 @@ register struct solidrec *sp;
 	/* TODO:  This should be type-specific, with labels */
 	for( i = 0; i < 24; i+=3 )
 		(void)fprintf(fp,"%.9f %.9f %.9f\n",
-			sp->s_values[i],
-			sp->s_values[i+1],
-			sp->s_values[i+2] );
+			sp->s_values[i]*base2local,
+			sp->s_values[i+1]*base2local,
+			sp->s_values[i+2]*base2local );
 	fclose(fp);
 }
 
@@ -116,6 +116,9 @@ register struct solidrec *sp;
 			&sp->s_values[i],
 			&sp->s_values[i+1],
 			&sp->s_values[i+2] );
+		sp->s_values[i] *= local2base;
+		sp->s_values[i+1] *= local2base;
+		sp->s_values[i+2] *= local2base;
 	}
 	fclose(fp);
 }

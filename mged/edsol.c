@@ -25,8 +25,6 @@
 
 extern int	printf();
 
-static void	findang();
-
 static void	arb_ed(), ars_ed(), ell_ed(), tgc_ed(), tor_ed();
 
 struct menu_item  arb_menu[] = {
@@ -432,7 +430,7 @@ sedit()
  * angles = pointer to 5 floats to store angles
  * unitv = pointer to the unit vector (previously computed)
  */
-static void
+void
 findang( angles, unitv )
 register float *angles, *unitv;
 {
@@ -482,6 +480,12 @@ register struct solidrec *sp;
 	static float r1, r2;
 	static vect_t unitv;
 	static float ang[5];
+
+	/* convert to local units */
+	for(i=0; i<24; i+=3) {
+		VSCALE(work, &sp->s_values[i], base2local);
+		VMOVE(&sp->s_values[i], work);
+	}
 
 	switch( sp->s_type ) {
 
@@ -570,6 +574,12 @@ register struct solidrec *sp;
 
 		es_nlines = 7;
 		break;
+	}
+
+	/* convert back to base units */
+	for(i=0; i<24; i+=3) {
+		VSCALE(work, &sp->s_values[i], local2base);
+		VMOVE(&sp->s_values[i], work);
 	}
 }
 
@@ -741,3 +751,58 @@ torcom:
 		break;
 	}
 }
+
+/*
+ *			I N I T _ O B J E D I T
+ *
+ */
+init_objedit()
+{
+	int i;
+
+	/*
+	 * Check for a processed region 
+	 */
+	if( illump->s_Eflag )  {
+		/* Have a processed (E'd) region - NO key solid.
+		 * 	Use the 'center' as the key
+		 */
+		VMOVE(es_rec.s.s_values, illump->s_center);
+
+		/* Zero the other values */
+		for(i=3; i<24; i++)
+			es_rec.s.s_values[i] = 0.0;
+
+		/* The s_center takes the es_mat into account already */
+		mat_idn(es_mat);
+
+		/* for safety sake */
+		es_menu = 0;
+		es_edflag = -1;
+
+		return;
+	}
+
+	/* Not an evaluated region - just a regular path ending in a solid */
+	db_getrec( illump->s_path[illump->s_last], &es_rec, 0 );
+
+	if( es_rec.u_id != ID_SOLID )  {
+		(void)printf(
+"ERROR - Should have a SOLID at bottom of path\n");
+		return;
+	}
+
+	es_menu = 0;
+	es_edflag = -1;
+
+	/* Save aggregate path matrix */
+	pathHmat( illump, es_mat );
+
+	/* get the inverse matrix */
+	mat_inv( es_invmat, es_mat );
+
+	/* fill the display array */
+	pr_solid( &es_rec );
+
+}
+

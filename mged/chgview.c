@@ -5,8 +5,14 @@
  *	eraseobj	Drop an object from the visible list
  *	pr_solids	Print info about visible list
  *
- * The U. S. Army Ballistic Research Laboratory
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include	<signal.h>
@@ -36,15 +42,22 @@ static void	eedit();
 /* Format: C x y z	*/
 f_center()
 {
-	toViewcenter[MDX] = -atof( cmd_args[1] );
-	toViewcenter[MDY] = -atof( cmd_args[2] );
-	toViewcenter[MDZ] = -atof( cmd_args[3] );
+	/* must convert from the local unit to the base unit */
+	toViewcenter[MDX] = -atof( cmd_args[1] ) * local2base;
+	toViewcenter[MDY] = -atof( cmd_args[2] ) * local2base;
+	toViewcenter[MDZ] = -atof( cmd_args[3] ) * local2base;
 	new_mats();
 	dmaflag++;
 }
 
-f_rot()
+f_vrot()
 {
+	/* Actually, it would be nice if this worked all the time */
+	/* usejoy isn't quite the right thing */
+	if( state != ST_VIEW )  {
+		state_err("View Rotate");
+		return;
+	}
 	usejoy(	atof(cmd_args[1]) * degtorad,
 		atof(cmd_args[2]) * degtorad,
 		atof(cmd_args[3]) * degtorad );
@@ -216,9 +229,10 @@ f_list()
 		(void)printf(" num curves  %d\n", record.a.a_m );
 		(void)printf(" pts/curve   %d\n", record.a.a_n );
 		db_getrec( dp, &record, 1 );
+		/* convert vertex from the base unit to the local unit */
 		(void)printf(" vertex      %.4f %.4f %.4f\n",
-			record.b.b_values[0], record.b.b_values[1],
-			record.b.b_values[2] );
+			record.b.b_values[0]*base2local, record.b.b_values[1]*base2local,
+			record.b.b_values[2]*base2local );
 		return;
 	}
 	if( record.u_id == ID_P_HEAD )  {
@@ -249,9 +263,10 @@ f_list()
 #define Mat record.M.m_mat
 		if( Mat[0] != 1.0  || Mat[5] != 1.0 || Mat[10] != 1.0 )
 			(void)printf(" (Rotated)");
+		/* must convert translations to the local unit before printing */
 		if( Mat[MDX] != 0.0 || Mat[MDY] != 0.0 || Mat[MDZ] != 0.0 )
 			(void)printf(" [%f,%f,%f]",
-				Mat[MDX], Mat[MDY], Mat[MDZ]);
+				Mat[MDX]*base2local, Mat[MDY]*base2local, Mat[MDZ]*base2local);
 		(void)putchar('\n');
 	}
 #undef Mat
@@ -283,8 +298,8 @@ f_zap()
 f_status()
 {
 	printf("STATE=%s, ", state_str[state] );
-	printf("maxview=%f, ", maxview);
-	printf("Viewscale=%f\n", Viewscale);
+	printf("maxview=%f, ", maxview*base2local);
+	printf("Viewscale=%f\n", Viewscale*base2local);
 	mat_print("toViewcenter", toViewcenter);
 	mat_print("Viewrot", Viewrot);
 	mat_print("model2view", model2view);
@@ -458,9 +473,10 @@ struct solid *startp;
 		(void)printf("  %s", sp->s_flag == UP ? "VIEW":"-NO-" );
 		if( sp->s_iflag == UP )
 			(void)printf(" ILL");
+		/* convert to the local unit for printing */
 		(void)printf(" [%f,%f,%f] size %f",
-			sp->s_center[X], sp->s_center[Y], sp->s_center[Z],
-			sp->s_size);
+			sp->s_center[X]*base2local, sp->s_center[Y]*base2local, 
+			sp->s_center[Z]*base2local,sp->s_size*base2local);
 		(void)putchar('\n');
 		sp = sp->s_forw;
 	}
