@@ -166,7 +166,7 @@ mat_t	mat;
  *  Set up command line for one of the RT family of programs,
  *  with all objects in view enumerated.
  */
-#define LEN	128
+#define LEN	10240
 static char	*rt_cmd_vec[LEN];
 
 void
@@ -190,7 +190,7 @@ register char	**vp;
 		if( vp < &rt_cmd_vec[LEN] )
 			*vp++ = sp->s_path[0]->d_namep;
 		else  {
-			(void)printf("ran out of rt_cmd_vec at %s\n",
+			(void)printf("mged: ran out of rt_cmd_vec at %s\n",
 				sp->s_path[0]->d_namep );
 			break;
 		}
