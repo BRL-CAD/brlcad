@@ -18,7 +18,9 @@ static int scanbytes;			/* # of bytes of scanline */
 
 struct pixel outline[MAX_LINE];
 
-char usage[] = "Usage: fb-pix [-h] file.pix [width]\n";
+int inverse = 0;			/* Draw upside-down */
+
+char usage[] = "Usage: fb-pix [-h] [-i] file.pix [width]\n";
 
 main(argc, argv)
 int argc;
@@ -41,6 +43,10 @@ char **argv;
 		nlines = 1024;
 		argc--; argv++;
 	}
+	if( strcmp( argv[1], "-i" ) == 0 )  {
+		inverse = 1;
+		argc--; argv++;
+	}
 	if( (diskfd = creat( argv[1], 0444 )) < 0 )  {
 		perror( argv[1] );
 		exit(3);
@@ -57,8 +63,31 @@ char **argv;
 		exit(12);
 	}
 
-	{
+	if( !inverse )  {
+		/*  Regular -- draw bottom to top */
 		for( y = nlines-1; y >= 0; y-- )  {
+			register char *in;
+			register struct pixel *out;
+			register int i;
+
+			fbread( 0, y, outline, nlines );
+
+			in = scanline;
+			out = outline;
+			for( i=0; i<nlines; i++ )  {
+				*in++ = out->red;
+				*in++ = out->green;
+				*in++ = out->blue;
+				out++;
+			}
+			if( write( diskfd, (char *)scanline, scanbytes ) != scanbytes )  {
+				perror("write");
+				exit(1);
+			}
+		}
+	}  else  {
+		/*  Inverse -- draw top to bottom */
+		for( y=0; y < nlines; y++ )  {
 			register char *in;
 			register struct pixel *out;
 			register int i;
