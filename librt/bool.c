@@ -166,7 +166,6 @@ struct application	*ap;
 		lasthit = &segp->seg_in;
 		lastflip = 0;
 		for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
-			register int i;
 
 			diff = lasthit->hit_dist - pp->pt_outhit->hit_dist;
 			if( diff > ap->a_rt_i->rti_tol.dist )  {
