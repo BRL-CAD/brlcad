@@ -309,6 +309,8 @@ rt_log( "Looking for voids in shell x%x\n" , outer_shell );
 	top_faces[0].f = nmg_find_top_face( outer_shell , flags );
 	ext_f = top_faces[0].f;
 	fu = top_faces[0].f->fu_p;
+	if( fu->orientation != OT_SAME )
+		fu = fu->fumate_p;
 	NMG_GET_FU_NORMAL( top_faces[0].normal , fu );
 rt_log( "shell x%x, top_face = x%x , normal = ( %g %g %g )\n" , top_faces[0].s , top_faces[0].f , V3ARGS( top_faces[0].normal ) );
 
@@ -468,7 +470,7 @@ struct nmgregion *r;
 struct nmg_ptbl ***shells;
 CONST struct rt_tol *tol;
 {
-	struct nmg_ptbl outer_shells;
+	struct nmg_ptbl *outer_shells;
 	struct shell *s;
 	int i;
 	int total_shells=0;
@@ -480,19 +482,20 @@ CONST struct rt_tol *tol;
 	RT_CK_TOL( tol );
 
 	/* Decompose shells */
-	nmg_tbl( &outer_shells , TBL_INIT , NULL );
+	outer_shells = (struct nmg_ptbl *)rt_malloc( sizeof( struct nmg_ptbl ) , "nmg_find_outer_and_void_shells: outer_shells" );
+	nmg_tbl( outer_shells , TBL_INIT , NULL );
 	for (RT_LIST_FOR(s, shell, &r->s_hd))
 	{
 		NMG_CK_SHELL( s );
-		nmg_tbl( &outer_shells , TBL_INS , (long *)s );
+		nmg_tbl( outer_shells , TBL_INS , (long *)s );
 	}
-	for( i=0 ; i<NMG_TBL_END( &outer_shells ) ; i++ )
+	for( i=0 ; i<NMG_TBL_END( outer_shells ) ; i++ )
 	{
-		s = (struct shell *)NMG_TBL_GET( &outer_shells , i );
-		if( nmg_decompose_shell( s ) )
+		s = (struct shell *)NMG_TBL_GET( outer_shells , i );
+		if( nmg_decompose_shell( s , tol ) > 1 )
 			re_bound = 1;
 	}
-	nmg_tbl( &outer_shells , TBL_RST , NULL );
+	nmg_tbl( outer_shells , TBL_RST , NULL );
 
 	if( re_bound )
 		nmg_region_a( r , tol );
@@ -518,7 +521,7 @@ CONST struct rt_tol *tol;
 		NMG_GET_FU_NORMAL( normal , fu );
 		if( normal[Z] > 0.0 )
 		{
-			nmg_tbl( &outer_shells , TBL_INS , (long *)s );	/* outer shell */
+			nmg_tbl( outer_shells , TBL_INS , (long *)s );	/* outer shell */
 rt_log( "Shell x%x is an outer shell\n" , s );
 		}
 		else
@@ -526,31 +529,24 @@ rt_log( "Shell x%x is a void shell\n" , s );
 	}
 
 	/* outer_shells is now a list of all the outer shells in the region */
-	outer_shell_count = NMG_TBL_END( &outer_shells );
-	if( outer_shell_count == total_shells )
-	{
-		/* there are no void shells */
-		*shells = (struct nmg_ptbl **)rt_malloc(  sizeof( struct nmg_ptbl *) ,
-			"nmg_find_outer_and_void_shells: shells" );
-		**shells = &outer_shells; /* return the list of outer shells */
-		return( outer_shell_count );		/* no void shells */
-	}
+	outer_shell_count = NMG_TBL_END( outer_shells );
 
-	*shells = (struct nmg_ptbl **)rt_calloc( NMG_TBL_END( &outer_shells ) , sizeof( struct nmg_ptbl *) ,
+	*shells = (struct nmg_ptbl **)rt_calloc( NMG_TBL_END( outer_shells ) , sizeof( struct nmg_ptbl *) ,
 			"nmg_find_outer_and_void_shells: shells" );
-	for( i=0 ; i<NMG_TBL_END( &outer_shells ) ; i++ )
+	for( i=0 ; i<NMG_TBL_END( outer_shells ) ; i++ )
 	{
 		(*shells)[i] = (struct nmg_ptbl *)rt_malloc( sizeof( struct nmg_ptbl ) , 
 			"nmg_find_outer_and_void_shells: shells[]" );
 
 		nmg_tbl( (*shells)[i] , TBL_INIT , NULL );
 		NMG_CK_PTBL( (*shells)[i] );
-		nmg_tbl( (*shells)[i] , TBL_INS , (long *)NMG_TBL_GET( &outer_shells , i ) );
-		nmg_assoc_void_shells( r , (*shells)[i] , tol );
+		nmg_tbl( (*shells)[i] , TBL_INS , (long *)NMG_TBL_GET( outer_shells , i ) );
+		if( outer_shell_count != total_shells ) /* must be some void shells */
+			nmg_assoc_void_shells( r , (*shells)[i] , tol );
 	}
 
 	rt_free( (char *)flags , "nmg_find_outer_and_void_shells: flags" );
-	nmg_tbl( &outer_shells , TBL_FREE , NULL );
+	nmg_tbl( outer_shells , TBL_FREE , NULL );
 	return( outer_shell_count );
 }
 
@@ -666,6 +662,8 @@ FILE *fp_dir,*fp_param;
 {
 	int color_de;
 
+rt_log( "get_color: %d %d %d\n" , V3ARGS( color ) );
+
 	for( color_de=0 ; color_de < 9 ; color_de++ )
 	{
 		if( color[0] == colortab[color_de][1] &&
@@ -676,6 +674,7 @@ FILE *fp_dir,*fp_param;
 
 	if( color_de == 9 )
 		color_de = (-write_color_entity( color ));
+rt_log( "\tcolor_de = %d\n" , color_de );
 
 	return( color_de );
 }
@@ -1179,16 +1178,16 @@ rt_log( "only one outer shell, no new region created\n" );
 			tmp_name = NULL;
 			tmp_dependent = 1;
 rt_log( "For outer shell #%d new_r = x%x\n" , i , new_r );
+
+			for( j=NMG_TBL_END( shells[i] )-1 ; j >= 0  ; j-- )
+			{
+				s = (struct shell *)NMG_TBL_GET( shells[i] , j );
+rt_log( "Moving shell x%x to region x%x\n" , s , new_r );
+				nmg_mv_shell_to_region( s , new_r );
+			}
+			(void)nmg_ks( s_new );
 		}
 
-		for( j=NMG_TBL_END( shells[i] )-1 ; j >= 0  ; j-- )
-		{
-			s = (struct shell *)NMG_TBL_GET( shells[i] , j );
-rt_log( "Moving shell x%x to region x%x\n" , s , new_r );
-			nmg_mv_shell_to_region( s , new_r );
-		}
-		if( s_new )
-			(void)nmg_ks( s_new );
 
 		/* Make the vertex list entity */
 rt_log( "writing vertex list for region x%x\n" , new_r );
@@ -1214,7 +1213,10 @@ rt_log( "writing edge list for region x%x\n" , new_r );
 	(void)nmg_tbl( &etab , TBL_FREE , 0 );
 
 	if( outer_shell_count != 1 )
+{
+rt_log( "Writing solid assembly\n" );
 		return( write_solid_assembly( name, brep_de , outer_shell_count , dependent , fp_dir , fp_param ) );
+}
 	else
 		return( brep_de[0] );
 }
@@ -1384,7 +1386,7 @@ FILE *fp_dir,*fp_param;
 		dir_entry[i] = DEFAULT;
 
 	/* Build list of edge structures */
-	nmg_region_edge_list( etab , r );
+	nmg_edge_tabulate( etab , &r->l.magic );
 
 	rt_vls_printf( &str , "504,%d" , NMG_TBL_END( etab ) );
 
@@ -1695,7 +1697,7 @@ FILE *fp_dir,*fp_param;
 	int			dir_entry[21];
 	int			name_de;
 	int			prop_de;
-	int			color_de;
+	int			color_de=DEFAULT;
 
 	NMG_CK_REGION( r );
 
@@ -2509,7 +2511,7 @@ FILE *fp_param;
 	int			dir_entry[21];
 	int			name_de;
 	int			prop_de;
-	int			color_de;
+	int			color_de=DEFAULT;
 	int			i;
 
 	rt_vls_init( &str );
@@ -2588,7 +2590,7 @@ FILE *fp_param;
 	int			dir_entry[21];
 	int			name_de;
 	int			prop_de;
-	int			color_de;
+	int			color_de=DEFAULT;
 	int			i;
 
 	rt_vls_init( &str );
@@ -2903,7 +2905,7 @@ FILE *fp_dir,*fp_param;
 	int			dir_entry[21];
 	int			name_de;
 	int			props_de;
-	int			color_de;
+	int			color_de=DEFAULT;
 	int			union_count=0;
 	int			status=1;
 	int			i;
@@ -2978,7 +2980,7 @@ FILE *fp_dir,*fp_param;
 	int			actual_length=0;
 	int			name_de;
 	int			props_de;
-	int			color_de;
+	int			color_de=DEFAULT;
 	int			union_count=0;
 	int			non_union_count=0;
 	int			status=1;
