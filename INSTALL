@@ -14,7 +14,7 @@ the package for one location, then move it to another.  Be sure that
 		export PATH
 	csh:
 	 	setenv BRLCAD_ROOT /foobar/brlcad
-	 	set path=($path /foobar/brlcad)
+	 	set path=($path /foobar/brlcad/bin)
 
 Compile:
 	% cd brlcad
