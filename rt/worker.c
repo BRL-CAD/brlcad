@@ -140,10 +140,12 @@ grid_setup()
 		zoomout = 1.0 / tan( bn_degtorad * rt_perspective / 2.0 );
 		VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
 		/*
-		 * Divergance is (0.5 * viewsize / width) mm at
-		 * a ray distance of (viewsize * zoomout) mm.
+		 * divergence is perspective angle divided by the number
+		 * of pixels in that angle. Extra factor of 0.5 is because
+		 * perspective is a full angle while divergence is the tangent
+		 * (slope) of a half angle.
 		 */
-		ap.a_diverge = (0.5 / width) / zoomout;
+		ap.a_diverge = tan( bn_degtorad * rt_perspective * 0.5 / width );
 		ap.a_rbeam = 0;
 	}  else  {
 		/* all rays go this direction */
