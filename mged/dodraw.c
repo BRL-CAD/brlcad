@@ -41,14 +41,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"	/* XXX */
 
-extern void color_soltab();
-
 void		cvt_vlblock_to_solids();
 void		drawH_part2();
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
 extern void	(*nmg_mged_debug_display_hack)();
-int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
 
 /*
@@ -740,21 +737,6 @@ struct solid		*existing_sp;
 		}
 		sp->s_regionid = tsp->ts_regionid;
 	}
-	sp->s_addr = 0;
-	sp->s_bytes = 0;
-
-	/* Cvt to displaylist, determine displaylist memory requirement. */
-	if( !no_memory && (sp->s_bytes = dmp->dm_cvtvecs( dmp, sp )) != 0 )  {
-		/* Allocate displaylist storage for object */
-		sp->s_addr = rt_memalloc( &(dmp->dm_map), sp->s_bytes );
-		if( sp->s_addr == 0 )  {
-		  no_memory = 1;
-		  Tcl_AppendResult(interp, "draw: out of Displaylist\n" ,(char *)NULL);
-		  sp->s_bytes = 0;	/* not drawn */
-		} else {
-		  sp->s_bytes = dmp->dm_load(dmp, sp->s_addr, sp->s_bytes );
-		}
-	}
 
 	/* Solid is successfully drawn */
 	if( !existing_sp )  {
@@ -762,15 +744,9 @@ struct solid		*existing_sp;
 		bu_semaphore_acquire( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
 		BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
 		bu_semaphore_release( (unsigned int)(&rt_g.res_model - &rt_g.res_syscall) );
-#if 0
-		dmp->dm_viewchange( dmp, DM_CHGV_ADD, sp );
-#endif
 	} else {
 		/* replacing existing solid -- struct already linked in */
 		sp->s_iflag = UP;
-#if 0
-		dmp->dm_viewchange( dmp, DM_CHGV_REPL, sp );
-#endif
 	}
 }
 
@@ -944,7 +920,6 @@ struct rt_db_internal		*ip;
 CONST mat_t			mat;
 {
 	struct rt_db_internal	intern;
-	unsigned		addr, bytes;
 	struct bu_list		vhead;
 
 	BU_LIST_INIT( &vhead );
@@ -956,10 +931,6 @@ CONST mat_t			mat;
 
 	/* Release existing vlist of this solid */
 	RT_FREE_VLIST( &(sp->s_vlist) );
-
-	/* Remember displaylist location of previous solid */
-	addr = sp->s_addr;
-	bytes = sp->s_bytes;
 
 	/* Draw (plot) a normal solid */
 	RT_CK_DB_INTERNAL( ip );
@@ -983,9 +954,12 @@ CONST mat_t			mat;
 		(struct db_full_path *)0,
 		(struct db_tree_state *)0, sp );
 
+#if 0
 	/* Release previous chunk of displaylist. */
 	if( bytes > 0 )
 		rt_memfree( &(dmp->dm_map), bytes, (unsigned long)addr );
+#endif
+
 	dmaflag = 1;
 	return(0);
 }
@@ -1097,31 +1071,9 @@ int		copy;
 	sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
 	sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
 	sp->s_regionid = 0;
-	sp->s_addr = 0;
-	sp->s_bytes = 0;
-
-	/* Cvt to displaylist, determine displaylist memory requirement. */
-	if( !no_memory && (sp->s_bytes = dmp->dm_cvtvecs( dmp, sp )) != 0 )  {
-		/* Allocate displaylist storage for object */
-		sp->s_addr = rt_memalloc( &(dmp->dm_map), sp->s_bytes );
-		if( sp->s_addr == 0 )  {
-		  no_memory = 1;
-		  Tcl_AppendResult(interp, "invent_solid: out of Displaylist\n", (char *)NULL);
-		  sp->s_bytes = 0;	/* not drawn */
-		} else {
-		  sp->s_bytes = dmp->dm_load(dmp, sp->s_addr, sp->s_bytes );
-		}
-	}
 
 	/* Solid successfully drawn, add to linked list of solid structs */
 	BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
-#if 0
-	dmp->dm_viewchange( dmp, DM_CHGV_ADD, sp );
-#endif
-	color_soltab();
-#if 0
-	dmp->dm_colorchange(dmp);
-#endif
 #endif
 	return(0);		/* OK */
 }
