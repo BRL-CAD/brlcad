@@ -2,8 +2,8 @@
  *			B O D Y I O . C
  *
  * Functions -
- *	bodyread - read an object's body from a file
- *	bodywrite - write an object's body to a file
+ *	cmd_bodyread - read an object's body from a file
+ *	cmd_bodywrite - write an object's body to a file
  *
  *  Author -
  *	Paul J. Tanenbaum
@@ -42,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -72,8 +73,12 @@ char	*argv[];
     struct db5_raw_internal	raw;
     struct stat			stat_buf;
     unsigned char		major_code, minor_code;
-    char			*foo;
+    char			*descrip;
     struct bu_vls		vls;
+    struct rt_db_internal	intern;
+    struct rt_binunif_internal	*bip;
+    int				fd;
+    int				gotten;
 
     CHECK_DBI_NULL;
 
@@ -100,8 +105,7 @@ char	*argv[];
 						argv[3])) {
 		bu_vls_init( &vls );
 		bu_vls_printf( &vls,
-				"Invalid data type: 'tomato'\n" );
-				/*"Invalid data type: '%s'\n", argv[3] );*/
+				"Invalid data type: '%s'\n", argv[3] );
 		Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 		bu_vls_free( &vls );
 		mged_print_result( TCL_ERROR );
@@ -110,7 +114,7 @@ char	*argv[];
 	    break;
     }
     bu_vls_init( &vls );
-    if (db5_type_descrip_from_codes( &foo, major_code, minor_code )) {
+    if (db5_type_descrip_from_codes( &descrip, major_code, minor_code )) {
 	bu_vls_printf( &vls,
 			"Invalid maj/min: %d %d\n",
 			major_code, minor_code);
@@ -119,21 +123,23 @@ char	*argv[];
 	mged_print_result( TCL_ERROR );
 	return;
     }
-    bu_vls_printf( &vls, "Type is %d %d '%s'\n", major_code, minor_code, foo);
-    Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
-    bu_vls_free( &vls );
-    mged_print_result( TCL_OK );
-    return;
+    bu_log( "Type is %d %d '%s'\n", major_code, minor_code, descrip);
 
-#if 0
     /*
      *	Check to see if we need to create a new object
      */
     if( (dp = db_lookup( dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL ) {
+	bu_vls_init( &vls );
+	bu_vls_printf( &vls, "I don't feel like creating object %s\n", argv[1] );
+	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
+	bu_vls_free( &vls );
+	mged_print_result( TCL_ERROR );
+	return;
+
+#if 0
 	/* Update the in-core directory */
 	if( (dp = db_diradd( dbip, argv[1], -1, 0, 0, NULL ))
-		== DIR_NULL
-	 || db_put ( dbip, dp, XXX, 0, 1) < 0 )  {
+		== DIR_NULL ) {
 	  Tcl_AppendResult(interp, "An error has occured while adding '",
 			   argv[1], "' to the database.\n", (char *)NULL);
 	  TCL_ERROR_RECOVERY_SUGGESTION;
@@ -146,12 +152,10 @@ char	*argv[];
 	bu_vls_init( &comb->material );
 	comb->region_id = -1;
 	comb->tree = TREE_NULL;
+#endif
 
+    } else {
 	RT_INIT_DB_INTERNAL( &intern );
-	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
-	intern.idb_ptr = (genptr_t)comb;
-
     }
 
     /*
@@ -165,9 +169,66 @@ char	*argv[];
 	mged_print_result( TCL_ERROR );
 	return;
     }
-    /* stat_buf.st_size */
-    (void)signal( SIGINT, SIG_IGN );
-#endif
+    bu_log ("File '%s' is %d bytes long\n", argv[2], stat_buf.st_size);
+    if( (fd = open( argv[2], O_RDONLY  )) == -1 ) {
+	bu_vls_init( &vls );
+	bu_vls_printf( &vls,
+	    "Cannot open file %s for reading\n", argv[2] );
+	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
+	bu_vls_free( &vls );
+	mged_print_result( TCL_ERROR );
+	return;
+    }
+
+    if (db5_type_descrip_from_codes( &descrip, major_code, minor_code )) {
+	bu_vls_printf( &vls,
+	    "Invalid major_code/minor_code: %d\n", major_code);
+	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
+	bu_vls_free( &vls );
+	mged_print_result( TCL_ERROR );
+	return;
+    }
+    switch (major_code) {
+	case DB5_MAJORTYPE_BINARY_UNIF:
+	    bip = bu_malloc(sizeof(struct rt_binunif_internal),
+		    "rt_binunif_internal");
+	    bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
+	    bip->type = minor_code;
+	    bip->u.uint8 = (unsigned char *) bu_malloc(stat_buf.st_size, "binunif");
+	    bu_log("Created an rt_binunif_internal for type '%s' (minor=%d)\n", descrip, minor_code);
+
+	    gotten = read( fd, (void *) (bip->u.uint8), stat_buf.st_size);
+	    if (gotten == -1) {
+		perror( "bodyread" );
+		return TCL_ERROR;
+	    } else if (gotten < stat_buf.st_size) {
+		bu_vls_init( &vls );
+		bu_vls_printf( &vls,
+		    "Incomplete read of object %s from file %s, got %d bytes\n",
+		    argv[1], argv[2], gotten );
+		Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
+		bu_vls_free( &vls );
+		mged_print_result( TCL_ERROR );
+		return;
+	    }
+	    bip->count = gotten / db5_type_sizeof_n_binu( minor_code );
+	    bu_log("Got 'em!\nThink I own %d of 'em\n", bip->count);
+
+	    intern.idb_type = ID_BINUNIF;
+	    intern.idb_meth = &rt_functab[ID_BINUNIF];
+	    intern.idb_ptr = (genptr_t)bip;
+	    rt_db_put_internal5( dp, dbip, &intern );
+	    rt_db_free_internal( &intern );
+	    break;
+	default:
+	    bu_vls_printf( &vls,
+		"Haven't gotten around to supporting type: %s\n",
+		descrip);
+	    Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
+	    bu_vls_free( &vls );
+	    mged_print_result( TCL_ERROR );
+	    return;
+    }
 
     return TCL_OK;
 }
@@ -200,7 +261,7 @@ char	*argv[];
 
     CHECK_DBI_NULL;
 
-    if(argc != 4){
+    if(argc != 3){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "help %s", argv[0]);
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -211,10 +272,10 @@ char	*argv[];
     /*
      *	Find the guy we're told to write
      */
-    if( (dp = db_lookup( dbip, argv[2], LOOKUP_NOISY)) != DIR_NULL ){
+    if( (dp = db_lookup( dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL ){
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls,
-	    "Cannot find object %s for writing\n", argv[1] );
+	    "Cannot find object %s for writing\n", argv[2] );
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
