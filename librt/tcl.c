@@ -1047,7 +1047,8 @@ char			      **argv;
 					argv[1], "'\n", (char *)NULL );
 				return TCL_ERROR;
 			}
-			db_free_tree( comb->tree );
+			if( comb->tree )
+				db_free_tree( comb->tree );
 			comb->tree = new;
 		} else {
 			Tcl_AppendResult( interp, "db adjust ", buf,
