@@ -265,7 +265,7 @@ set -S2 "/bin/sh"
 #		define	LD_OPTS		GFLAG
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lGL -lgl -lXt -lXm -lX11
 #		define	TCL_MGED_LIBES	LIBTKGLX -L''XLIBDIR -lX11_s -lgl_s -lGL_s
-#		define	MGED_LIBES	-L''XLIBDIR -lX11_s -lgl_s
+#		define	MGED_LIBES	LIBTKGLX -L''XLIBDIR -lPEX5 -lX11_s -lgl_s -lGL
 #		define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lGL_S -lXm_s\
 				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
 				-lxmalloc -ll
@@ -298,9 +298,9 @@ set -S2 "/bin/sh"
 				-lxmalloc -ll
 # else
 /* 	Carl's test version */
-#	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx
+#	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx dm-pex dm-ogl2
 #  if 1
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DMULTI_ATTACH
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX -DDM_OGL2
 #  else
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DMULTI_ATTACH
 #  endif
