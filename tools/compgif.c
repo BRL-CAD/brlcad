@@ -1,36 +1,36 @@
 /*
- * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
- * preserved on all copies.
- * 
- * There is no warranty or other guarantee of fitness for this software,
- * it is provided solely "as is".  Bug reports or fixes may be sent
- * to the author, who may or may not act on them as he desires.
- *
- * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
- * source is available for no extra charge.
- *
- * If you modify this software, you should include a notice giving the
- * name of the person performing the modification, the date of modification,
- * and the reason for such modification.
- */
+* This software is copyrighted as noted below.  It may be freely copied,
+* modified, and redistributed, provided that the copyright notice is 
+* preserved on all copies.
+* 
+* There is no warranty or other guarantee of fitness for this software,
+* it is provided solely "as is".  Bug reports or fixes may be sent
+* to the author, who may or may not act on them as he desires.
+*
+* You may not include this software in a program or other software product
+* without supplying the source, or without informing the end-user that the 
+* source is available for no extra charge.
+*
+* If you modify this software, you should include a notice giving the
+* name of the person performing the modification, the date of modification,
+* and the reason for such modification.
+*/
 
 /*  compgif.c */
 /*
- *
- * GIF Image compression - LZW algorithm implemented with Trie type
- *                         structure.
- *                         Written by Bailey Brown, Jr.
- *                         last change May 24, 1990
- *                         file: compgif.c
- *
- *  You may use or modify this code as you wish, as long as you mention
- *  my name in your documentation.
- *
- *                  - Bailey Brown, Jr.
- *
- */
+*
+* GIF Image compression - LZW algorithm implemented with Trie type
+*                         structure.
+*                         Written by Bailey Brown, Jr.
+*                         last change May 24, 1990
+*                         file: compgif.c
+*
+*  You may use or modify this code as you wish, as long as you mention
+*  my name in your documentation.
+*
+*                  - Bailey Brown, Jr.
+*
+*/
 
 #include "rle_config.h"
 #include <stdio.h>
@@ -47,7 +47,7 @@ extern void *malloc();
 
 #endif /* USE_STDLIB_H */
 
-#include "rletogif.h"
+#include "./rletogif.h"
 
 #define MAXIMUMCODE 4095   /* 2**maximum_code_size */
 #define BLOCKSIZE 256   /* max block byte count + 1 */
