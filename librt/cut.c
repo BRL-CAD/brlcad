@@ -1581,6 +1581,12 @@ register union cutter	*cutp;
 		cutp->bn.bn_maxlen = 0;
 
 		if( cutp->bn.bn_piecelist )  {
+			for( i=0 ; i<cutp->bn.bn_piecelen ; i++ ) {
+				struct rt_piecelist *olp = &cutp->bn.bn_piecelist[i];
+				if( olp->pieces ) {
+					bu_free( (char *)olp->pieces, "olp->pieces" );
+				}
+			}
 			bu_free( (char *)cutp->bn.bn_piecelist, "bn_piecelist[]" );
 			cutp->bn.bn_piecelist = (struct rt_piecelist *)NULL;
 		}
