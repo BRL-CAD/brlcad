@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 
 #ifdef sgi
 # include "gl.h"
@@ -42,6 +43,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define Min( x1, x2 )	((x1) < (x2) ? (x1) : (x2))
 #define Max( x1, x2 )	((x1) > (x2) ? (x1) : (x2))
+#define	PI		3.1415926535898
+#define	DtoR(x)		((x)*PI/180.0)
+#define	RtoD(x)		((x)*180.0/PI)
 
 extern int	getopt();
 extern char	*optarg;
@@ -53,6 +57,7 @@ Matrix	viewpersp;	/* perspective viewing projection */
 Matrix	identmat;	/* identity */
 Matrix	centermat;	/* center screen matrix */
 Coord	viewsize;
+double	globalscale[3];
 
 int	ntsc = 0;	/* use NTSC display, for video recording */
 int	axis = 0;	/* display coord axis */
@@ -285,6 +290,7 @@ view_loop()
 	getmatrix( m );
 	tran[0] = tran[1] = tran[2] = 0;
 	scal[0] = scal[1] = scal[2] = 1;
+	globalscale[0] = globalscale[1] = globalscale[2] = 1;
 
 	/*depthcue(1);*/
 	/*cursoff();XXX*/
@@ -911,20 +917,29 @@ float	tran[3], scal[3];
 	 * combine new operations with old
 	 *  orient = orient * scal * trans * rot * view
 	 */
+	globalscale[0] *= scal[0];
+	globalscale[1] *= scal[1];
+	globalscale[2] *= scal[2];
 	loadmatrix( rot );
 	translate( tran[0], tran[1], tran[2] );
-	scale( scal[0], scal[1], scal[2] );
 	multmatrix( orient );
 	getmatrix( orient );
 
 	/* set up total viewing transformation */
 	loadmatrix( viewmat );
+	scale( globalscale[0], globalscale[1], globalscale[2] );
 	multmatrix( orient );
 
 	if( info ) {
+		double	xrot, yrot, zrot, cosyrot;
 		printf( "(%f %f %f) scale %f\n",
 			orient[3][0], orient[3][1], orient[3][2],
-			orient[3][3] );
+			globalscale[0] );
+		yrot = asin(orient[2][0]);
+		cosyrot = cos(yrot);
+		zrot = asin(orient[1][0]/-cosyrot);
+		xrot = asin(orient[2][1]/-cosyrot);
+		printf( "rot: %f %f %f\n", RtoD(xrot), RtoD(yrot), RtoD(zrot) );
 	}
 }
 
