@@ -2166,6 +2166,50 @@ out:
 }
 
 /*
+ *		N M G _ I N S E R T _ O T H E R _ F U _ V U _ I N _ L I S T
+ *
+ *  Insert the vu from fu2 that corresponds to vu1 onto
+ *  the OTHER face's (fu2's) intersect list.
+ *  If such a vu does not exist, make a self-loop in fu2.
+ */
+void
+nmg_insert_other_fu_vu_in_list( is, list, vu1, fu2 )
+struct nmg_inter_struct	*is;
+struct nmg_ptbl		*list;
+struct vertexuse	*vu1;
+struct faceuse		*fu2;
+{
+	struct vertexuse	*vu2;
+	struct nmg_ptbl		*lp;
+	struct loopuse		*plu;		/* point loopuse */
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_PTBL(list);
+	NMG_CK_VERTEXUSE(vu1);
+	NMG_CK_FACEUSE(fu2);
+
+	if( is->l1 == list )
+		lp = is->l2;
+	else
+		lp = is->l1;
+	if( vu2 = nmg_find_v_in_face( vu1->v_p, fu2 ) )  {
+		(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
+		return;
+	}
+	/* Insert copy of this vertex into other face, as self-loop. */
+	plu = nmg_mlv(&fu2->l.magic, vu1->v_p, OT_UNSPEC);
+	nmg_loop_g(plu->l_p);
+	vu2 = RT_LIST_FIRST( vertexuse, &plu->down_hd );
+	NMG_CK_VERTEXUSE(vu2);
+	(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		rt_log("nmg_insert_other_fu_vu_in_list: vu1=x%x, made self-loop for fu2: vu2=x%x\n",
+			vu1, vu2);
+	}
+}
+
+/*
  * NEWLINE!
  *			N M G _ I S E C T _ L I N E 2 _ E D G E 2 P
  *
@@ -2252,6 +2296,8 @@ struct faceuse		*fu2;
 			rt_log("\t\tedge colinear with isect line.  Listing vu1a, vu1b\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
+		nmg_insert_other_fu_vu_in_list( is, list, vu1a, fu2 );
+		nmg_insert_other_fu_vu_in_list( is, list, vu1b, fu2 );
 		goto out;
 	}
 
@@ -2266,11 +2312,13 @@ struct faceuse		*fu2;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu1a\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
+		nmg_insert_other_fu_vu_in_list( is, list, vu1a, fu2 );
 		nmg_ck_face_worthless_edges( fu1 );
 	} else if( dist[1] == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu1b\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
+		nmg_insert_other_fu_vu_in_list( is, list, vu1b, fu2 );
 		nmg_ck_face_worthless_edges( fu1 );
 	} else {
 		/* Intersection is in the middle of eu1, split edge */
@@ -2296,6 +2344,7 @@ struct faceuse		*fu2;
 		vu1_final = nmg_ebreak(new_v, eu1)->vu_p;
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1_final->l.magic);
 		if( !new_v )  nmg_vertex_gv( vu1_final->v_p, hit_pt );	/* 3d geom */
+		nmg_insert_other_fu_vu_in_list( is, list, vu1_final, fu2 );
 
 		nmg_ck_face_worthless_edges( fu1 );
 	}
