@@ -768,7 +768,6 @@ char *str;
 {
   register struct dm_list *p;
   struct dm_list *save_dm_list;
-  point_t new_pos;
   struct bu_vls vls;
 
   if(state != from){
