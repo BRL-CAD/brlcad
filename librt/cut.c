@@ -163,51 +163,59 @@ genptr_t	arg;
 	(*(CONST struct soltab **)(_p1))->_memb[_ind] > \
 	(*(CONST struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
 	
+/* Functions for use with qsort */
+HIDDEN int rt_projXmin_comp BU_ARGS((CONST void * p1, CONST void * p2));
+HIDDEN int rt_projXmax_comp BU_ARGS((CONST void * p1, CONST void * p2));
+HIDDEN int rt_projYmin_comp BU_ARGS((CONST void * p1, CONST void * p2));
+HIDDEN int rt_projYmax_comp BU_ARGS((CONST void * p1, CONST void * p2));
+HIDDEN int rt_projZmin_comp BU_ARGS((CONST void * p1, CONST void * p2));
+HIDDEN int rt_projZmax_comp BU_ARGS((CONST void * p1, CONST void * p2));
+
 HIDDEN int
 rt_projXmin_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void * p1, * p2;
 {
 	return CMP(p1,p2,st_min,X);
 }
 
 HIDDEN int
 rt_projXmax_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void * p1, * p2;
 {
 	return CMP(p1,p2,st_max,X);
 }
 
 HIDDEN int
 rt_projYmin_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void * p1, * p2;
 {
 	return CMP(p1,p2,st_min,Y);
 }
 
 HIDDEN int
 rt_projYmax_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void * p1, * p2;
 {
 	return CMP(p1,p2,st_max,Y);
 }
 
 HIDDEN int
 rt_projZmin_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void * p1, * p2;
 {
 	return CMP(p1,p2,st_min,Z);
 }
 
 HIDDEN int
 rt_projZmax_comp( p1, p2 )
-CONST genptr_t p1, p2;
+CONST void * p1, * p2;
 {
 	return CMP(p1,p2,st_max,Z);
 }
 
 static struct cmp_pair {
-	int (*cmp_min) BU_ARGS((CONST void *, CONST void *));
-	int (*cmp_max) BU_ARGS((CONST void *, CONST void *));
+	HIDDEN int (*cmp_min) BU_ARGS((CONST void *, CONST void *));
+	HIDDEN int (*cmp_max) BU_ARGS((CONST void *, CONST void *));
 } pairs[] = {
 	{ rt_projXmin_comp, rt_projXmax_comp },
 	{ rt_projYmin_comp, rt_projYmax_comp },
