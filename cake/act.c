@@ -62,7 +62,7 @@ reg	bool	force_exec;
 #ifdef	CAKEDEBUG
 	if (cakedebug)
 	{
-		printf("starting update of\n");
+		printf("level %d starting update of\n", level);
 		print_node(node);
 	}
 #endif
@@ -281,7 +281,7 @@ reg	bool	force_exec;
 
 endit:
 
-	cdebug("update finished\n");
+	cdebug("update level %d finished\n", level);
 	for_list (ptr, node->n_new)
 	{
 		bnode = (Node *) ldata(ptr);
@@ -322,6 +322,12 @@ reg	Node	*root;
 	reg	List	*ptr;
 	reg	Node	*target;
 
+#ifdef	CAKEDEBUG
+	if (cakedebug)  {			/* BRL */
+		cdebug("execute plan:\n");
+		print_node(root);
+	}
+#endif
 	for_list (ptr, root->n_old)
 	{
 		target = (Node *) ldata(ptr);
@@ -351,6 +357,12 @@ reg	bool	force_exec;
 	reg	Node	*bnode;
 	Wait		code;
 
+#ifdef	CAKEDEBUG
+	if (cakedebug)  {			/* BRL */
+		cdebug("carry_out plan:\n");
+		print_node(node);
+	}
+#endif
 	if (Gflag && ! nflag)
 	{
 		for_list (ptr, node->n_new)
@@ -411,6 +423,16 @@ reg	Node	*node;
 	reg	int	pid;
 	reg	char	*after;
 
+	if( cakedebug )  {			/* BRL */
+		cdebug("action(): ", act->a_str, node);
+		print_act(act);
+		cdebug("\n");
+	}
+	if( act->a_str == NULL || strlen(act->a_str) <= 0 )  {	/* BRL */
+		printf("NOTE:  Null action skipped\n");
+		code.w_status = 0;
+		return(code);
+	}
 	put_trail("action", "start");
 	after = expand_cmds(act->a_str);
 	if (! (on_act(act, af_SILENT) || sflag))

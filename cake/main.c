@@ -76,7 +76,7 @@ char	**argv;
 	signal(SIGQUIT, cake_finish);
 	signal(SIGILL,  cake_abort);
 	signal(SIGTRAP, cake_abort);
-	signal(SIGIOT,  cake_abort);
+/*	signal(SIGIOT,  cake_abort);	/* BRL */
 	signal(SIGEMT,  cake_abort);
 	signal(SIGFPE,  cake_abort);
 	signal(SIGBUS,  cake_abort);
@@ -106,7 +106,7 @@ char	**argv;
 
 	argv += process_args(argv, &argc, 1);
 
-#ifdef	CAKEDEBUG
+#if defined(CAKEDEBUG) && !defined(ATT)
 	if (cakedebug || entrydebug || patdebug || lexdebug)
 		setlinebuf(stdout);
 #endif
@@ -369,7 +369,7 @@ nextword:
 		vector++, j++;
 	}
 
-	cdebug(" \n%return %d\n", j);
+	cdebug(" \nreturn %d\n", j);	/* BRL MOD */
 	return j;
 }
 

@@ -53,7 +53,12 @@ reg	List	*args;
 	fflush(stdout);
 
 	if (type == Exec)
-		parse_args(cmd, argv);
+	{
+		if( parse_args(cmd, argv) < 1)  {		/* BRL */
+			printf("cake_proc:  Null exec command!\n");
+			exit_cake(FALSE);
+		}
+	}
 	or (type == Script)
 	{
 		reg	FILE	*script_fp;
@@ -88,7 +93,11 @@ reg	List	*args;
 				_exit(127);
 			}
 
+#ifdef ATT
 			if ((fd = open(file, O_WRONLY|O_CREAT, 0600)) < 0)
+#else
+			if ((fd = creat(file, 0600)) < 0)	/* BRL */
+#endif
 			{
 				perror("cake system error, reopen stdout");
 				_exit(127);
