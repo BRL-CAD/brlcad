@@ -35,7 +35,7 @@ fastf_t	u;
 fastf_t v;
 {
 	struct snurb * us, *vs, * uus, * vvs, *uvs;
-	fastf_t *ue, *ve, *uue, *vve, *uve, *se;
+	fastf_t ue[4], ve[4], uue[4], vve[4], uve[4], se[4];
         fastf_t         E, F, G;                /* First Fundamental Form */
         fastf_t         L, M, N;                /* Second Fundamental form */
         fastf_t         denom;
@@ -51,12 +51,12 @@ fastf_t v;
 	vvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
 	uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 	
-	se = rt_nurb_s_eval(srf, u, v);
-	ue = rt_nurb_s_eval(us, u,v);
-	ve = rt_nurb_s_eval(vs, u,v);
-	uue = rt_nurb_s_eval(uus, u,v);
-	vve = rt_nurb_s_eval(vvs, u,v);
-	uve = rt_nurb_s_eval(uvs, u,v);
+	rt_nurb_s_eval(srf, u, v, se);
+	rt_nurb_s_eval(us, u,v, ue);
+	rt_nurb_s_eval(vs, u,v, ve);
+	rt_nurb_s_eval(uus, u,v, uue);
+	rt_nurb_s_eval(vvs, u,v, uve);
+	rt_nurb_s_eval(uvs, u,v, uve);
 
 	rt_nurb_free_snurb( us);
 	rt_nurb_free_snurb( vs);
@@ -118,7 +118,7 @@ fastf_t v;
 	{
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		vec_ortho(cvp->crv_pdir, norm);
-		goto cleanup;
+		return;
 	}
 
 	denom = ( (E*G) - (F*F) );
@@ -134,7 +134,7 @@ fastf_t v;
 		rt_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
 			E,F,G);
 		vec_ortho(cvp->crv_pdir, norm);	/* sanity */
-		goto cleanup;
+		return;
 	}
 
         wein[0] = ( (G * L) - (F * M))/ (denom);
@@ -161,12 +161,4 @@ fastf_t v;
         cvp->crv_pdir[1] = evec[0] * ue[1] + evec[1] * ve[1];
         cvp->crv_pdir[2] = evec[0] * ue[2] + evec[1] * ve[2];
 	VUNITIZE( cvp->crv_pdir);
-
-cleanup:
-	rt_free( (char *) se, "rt_nurb_curv:se");
-	rt_free( (char *) ue, "rt_nurb_curv:ue");
-	rt_free( (char *) ve, "rt_nurb_curv:ve");
-	rt_free( (char *) uue, "rt_nurb_curv:uue");
-	rt_free( (char *) vve, "rt_nurb_curv:vve");
-	rt_free( (char *) uve, "rt_nurb_curv:uve");
 }
