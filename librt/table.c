@@ -250,15 +250,6 @@ BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip,
 BU_EXTERN(int rt_comb_export5, (struct bu_external *ep,
 		CONST struct rt_db_internal *ip,
 		double local2mm, CONST struct db_i *dbip ));
-BU_EXTERN(int rt_comb_import4, (struct rt_db_internal *ip,
-		CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip ));
-BU_EXTERN(int rt_comb_export4, (struct bu_external *ep,
-		CONST struct rt_db_internal *ip,
-		double local2mm, CONST struct db_i *dbip ));
-BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
-BU_EXTERN(int rt_comb_describe, (struct bu_vls *str,
-		CONST struct rt_db_internal *ip, int verbose,
-		double mm2local));
 
 /* from db5_bin.c */
 BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal *ip,
