@@ -1060,6 +1060,8 @@ extern void rt_prep_timer(void);
 					/* Read timer, return time + str */
 extern double rt_read_timer(char *str, int len);
 
+
+
 #else
 
 extern void rt_bomb();			/* Fatal error */
@@ -1253,6 +1255,19 @@ extern void memfree(struct mem_map **pp, unsigned size, unsigned long addr);
 extern void mempurge(struct mem_map **pp);
 extern void memprint(struct mem_map **pp);
 
+/* plane.c */
+extern int rt_mk_plane_3pts(plane_t plane, point_t a, point_t b, point_t c);
+extern int rt_mkpoint_3planes(point_t pt, plane_t a, plane_t b, plane_t c);
+extern int rt_isect_ray_plane(fastf_t *dist, point_t pt, vect_t  dir, plane_t plane);
+extern int rt_isect_2planes(point_t pt, vect_t  dir, plane_t a, plane_t b, vect_t  rpp_min);
+extern int rt_isect_2lines(fastf_t *t, fastf_t *u, point_t p, vect_t d, point_t a, vect_t c);
+extern int rt_isect_line_lseg(fastf_t *t, point_t p, vect_t d, point_t a, point_t b);
+extern int rt_dist_line_point(point_t pt, vect_t dir, point_t a);
+extern double rt_dist_line_origin(point_t pt, vect_t dir);
+extern double rt_area_of_triangle(point_t a, point_t b, point_t c);
+extern int rt_isect_pt_lseg(fastf_t, *dist, point_t a, point_t b, point_t p, fastf_t tolsq);
+extern double rt_dist_pt_lseg(point_t pca, point_t a, point_t b, point_t p);
+
 #else
 
 extern char *rt_malloc();		/* visible malloc() */
@@ -1321,6 +1336,19 @@ extern unsigned long memget();
 extern void memfree();
 extern void mempurge();
 extern void memprint();
+
+/* plane.c */
+extern int rt_mk_plane_3pts();
+extern int rt_mkpoint_3planes();
+extern int rt_isect_ray_plane();
+extern int rt_isect_2planes();
+extern int rt_isect_2lines();
+extern int rt_isect_line_lseg();
+extern int rt_dist_line_point();
+extern double rt_dist_line_origin();
+extern double rt_area_of_triangle();
+extern int rt_isect_pt_lseg();
+extern double rt_dist_pt_lseg();
 
 #endif
 
