@@ -60,14 +60,10 @@ proc begin_edit_callback {} {
 
 	# load solid edit menus
 	set edit_menus [get_edit_solid_menus]
-	if {$esolint_type == "arb8"} {
-	    eval do_arb_edit_menu $esolint_type $edit_menus
-	} else {
-	    eval do_edit_menu $esolint_type $edit_menus
-	}
+	init_solid_edit_menus $esolint_type $edit_menus
     } elseif {$mged_display(state) == "OBJ EDIT"} {
 	# load object edit menus
-	do_edit_menu {} {}
+	init_object_edit_menus
 
 	foreach id $mged_players {
 	    build_edit_info $id
@@ -99,7 +95,7 @@ proc end_edit_callback {} {
 	return
     }
 
-    undo_edit_menu
+    undo_edit_menus
     foreach id $mged_players {
 	esolint_destroy $id
     }
