@@ -26,6 +26,7 @@
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "anim.h"
 
 #ifndef M_PI
@@ -110,6 +111,7 @@ char wheel_cmd[10];		/* default is "lmul" */
 int get_circumf;	/* flag: just return circumference of track */
 int read_wheels;		/* flag: read new wheel positions each frame */
 int len_mode;		/* mode for track_len */
+int anti_strobe;	/* flag: take measures against strobing effect */
 
 main(argc,argv)
 int argc;
@@ -125,6 +127,8 @@ char **argv;
 	FILE *stream;
 	struct wheel *wh;
 	int last_steer, last_frame;
+	int rndtabi;
+	fastf_t halfpadlen, delta, prev_dist;
 
 	VSETALL(zero,0.0);
 	VSETALL(to_track,0.0);
@@ -217,8 +221,12 @@ char **argv;
 		go = 1;
 	}
 
+	if (anti_strobe) {
+		RT_RANDSEED(rndtabi, 0);
+	}
+
 	/* main loop */
-	distance = 0.0;
+	prev_dist = distance = 0.0;
 	frame = first_frame;
 	for ( ; ; frame++) {
 		if (dist_mode==GIVEN){
@@ -286,6 +294,15 @@ char **argv;
 			}
 		}
 
+		if (anti_strobe) {
+			halfpadlen = 0.5 * tracklen/(fastf_t) num_links;
+			delta = distance - prev_dist;
+			prev_dist = distance;
+			if ((delta >= halfpadlen)||(delta <= -halfpadlen)) {
+				distance += RT_RANDOM(rndtabi) * 2.0* halfpadlen;
+			}
+		}
+
 		if (go && (!get_circumf)) {
 			if (print_mode==PRINT_ANIM) {
 				printf("start %d;\nclean;\n", frame);
@@ -338,7 +355,7 @@ char **argv;
 	free(wh);
 }
 
-#define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:"
+#define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:a"
 
 int get_args(argc,argv)
 int argc;
@@ -358,6 +375,7 @@ char **argv;
 	print_mode = PRINT_ANIM;
 	dist_mode = GIVEN;
 	len_mode = TRACK_MIN;
+	anti_strobe = 0;
 
         while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
                 i=0;
@@ -462,6 +480,9 @@ char **argv;
                 		fprintf(stderr,"Unknown option: -l%c\n",*optarg);
                 		return(0);
                 	}
+                	break;
+                case 'a':
+                	anti_strobe = 1;
                 	break;
                 default:
                         fprintf(stderr,"Unknown option: -%c\n",c);
