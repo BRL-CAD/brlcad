@@ -75,7 +75,4 @@ struct mfuncs	**headp;
 	MFUNCS( prj_mfuncs );
 	MFUNCS( grass_mfuncs );
 	MFUNCS( tthrm_mfuncs );
-	MFUNCS( brick_mfuncs );
-	MFUNCS( noiseperlin_mfuncs );
-
 }
