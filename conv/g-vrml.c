@@ -166,7 +166,13 @@ struct db_full_path		*pathp;
 CONST struct rt_comb_internal	*combp;
 genptr_t			client_data;
 {
-	return( !select_lights( tsp, pathp, combp, client_data ) );
+	int ret;
+
+	ret =  select_lights( tsp, pathp, combp, client_data );
+	if( ret == 0 )
+		return( -1 );
+	else
+		return( 0 );
 }
 
 union tree *
@@ -340,6 +346,13 @@ char	*argv[];
 	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_8999 Material { diffuseColor 0.18 0.31 0.31 } } }\n");
 	fprintf( fp_out, "Shape { appearance Appearance { material DEF Material_9999 Material { diffuseColor 0.00 0.41 0.82 } } }\n");
 
+	/* I had hoped to create a separate sub-tree (using the Transform node) for each group name argument
+	 * however, it appears they are all handled at the same time so I will only have one Transform for the
+	 * complete conversion
+	 * Later on switch nodes may be added to turn on and off the groups (via ROUTE nodes) */
+	fprintf ( fp_out, "Transform {\n");
+	fprintf ( fp_out, "\tchildren [\n");
+
 	optind++;
 
 	for( i=optind ; i<argc ; i++ )
@@ -371,12 +384,6 @@ char	*argv[];
 
 	}
 
-	/* I had hoped to create a separate sub-tree (using the Transform node) for each group name argument
-	 * however, it appears they are all handled at the same time so I will only have one Transform for the
-	 * complete conversion
-	 * Later on switch nodes may be added to turn on and off the groups (via ROUTE nodes) */
-	fprintf ( fp_out, "Transform {\n");
-	fprintf ( fp_out, "\tchildren [\n");
 
 	/* Walk indicated tree(s).  Each non-light-source region will be output separately */
 	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
@@ -457,10 +464,6 @@ struct mater_info *mater;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB( comb );
 
-	fprintf( fp, "\t\tShape { \n");
-	fprintf( fp, "\t\t\t# Component_ID: %d   %s\n",comb->region_id,full_path);
-	fprintf( fp, "\t\t\tappearance Appearance { \n");
-
 	if( mater->ma_color_valid )
 	{
 		r = mater->ma_color[0];
@@ -496,109 +499,119 @@ struct mater_info *mater;
 		/* this is a light source */
 		is_light = 1;
 	}
-	else if( strncmp( "plastic", mat.shader, 7 ) == 0 )
-	{
-		if( mat.shininess < 0 )
-			mat.shininess = 10;
-		if( mat.transparency < 0.0 )
-			mat.transparency = 0.0;
-
-		fprintf( fp, "\t\t\t\tmaterial Material {\n" );
-		fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\t\t\t\temissiveColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
-		if( mat.transparency > 0.0 )
-			fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
-		fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
-	}
-	else if( strncmp( "glass", mat.shader, 5 ) == 0 )
-	{
-		if( mat.shininess < 0 )
-			mat.shininess = 4;
-		if( mat.transparency < 0.0 )
-			mat.transparency = 0.8;
-
-		fprintf( fp, "\t\t\t\tmaterial Material {\n" );
-		fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\t\t\t\temissiveColor %g %g %g \n", r, g, b );
-		fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
-		if( mat.transparency > 0.0 )
-			fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
-		fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
-	}
-	else if( strncmp( "texture", mat.shader, 7 ) == 0 )
-	{
-		if( mat.tx_w < 0 )
-			mat.tx_w = 512;
-		if( mat.tx_n < 0 )
-			mat.tx_n = 512;
-
-		if( strlen( mat.tx_file ) )
-		{
-			int tex_fd;
-			int nbytes;
-			long tex_len;
-			long bytes_read=0;
-			unsigned char tex_buf[TXT_BUF_LEN*3];
-
-			if( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
-			{
-				bu_log( "Cannot open texture file (%s)\n", mat.tx_file );
-				perror( "g-vrml: " );
-			}
-			else
-			{
-				/* Johns note - need to check (test) the texture stuff */
-				fprintf( fp, "\t\t\t\ttextureTransform TextureTransform {\n");
-				fprintf( fp, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
-				fprintf( fp, "\t\t\t\ttexture PixelTexture {\n");
-				fprintf( fp, "\t\t\t\t\trepeatS TRUE\n");
-				fprintf( fp, "\t\t\t\t\trepeatT TRUE\n");
-				fprintf( fp, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3 );
-				tex_len = mat.tx_w*mat.tx_n*3;
-				while( bytes_read < tex_len )
-				{
-					long bytes_to_go=tex_len;
-
-					bytes_to_go = tex_len - bytes_read;
-					if( bytes_to_go > TXT_BUF_LEN*3 )
-						bytes_to_go = TXT_BUF_LEN*3;
-					nbytes = 0;
-					while( nbytes < bytes_to_go )
-						nbytes += read( tex_fd, &tex_buf[nbytes],
-							bytes_to_go-nbytes );
-
-					bytes_read += nbytes;
-					for( i=0 ; i<nbytes ; i += 3 )
-						fprintf( fp, "\t\t\t0x%02x%02x%02x\n",
-							tex_buf[i],
-							tex_buf[i+1],
-							tex_buf[i+2] );
-				}
-				fprintf( fp, "\t\t\t\t}\n" );
-			}
-		}
-	}
 	else
 	{
-		/* If no color was defined set the colors according to the thousands groups */
-		int thou = comb->region_id/1000;
-		thou == 0 ? fprintf( fp, "\t\t\tmaterial USE Material_999\n")
-		: thou == 1 ? fprintf( fp, "\t\t\tmaterial USE Material_1999\n")
-		: thou == 2 ? fprintf( fp, "\t\t\tmaterial USE Material_2999\n")
-		: thou == 3 ? fprintf( fp, "\t\t\tmaterial USE Material_3999\n")
-		: thou == 4 ? fprintf( fp, "\t\t\tmaterial USE Material_4999\n")
-		: thou == 5 ? fprintf( fp, "\t\t\tmaterial USE Material_5999\n")
-		: thou == 6 ? fprintf( fp, "\t\t\tmaterial USE Material_6999\n")
-		: thou == 7 ? fprintf( fp, "\t\t\tmaterial USE Material_7999\n")
-		: thou == 8 ? fprintf( fp, "\t\t\tmaterial USE Material_8999\n")
-		: fprintf( fp, "\t\t\tmaterial USE Material_9999\n");
+		fprintf( fp, "\t\tShape { \n");
+		fprintf( fp, "\t\t\t# Component_ID: %d   %s\n",comb->region_id,full_path);
+		fprintf( fp, "\t\t\tappearance Appearance { \n");
 
-/*		fprintf( fp, "\t\t\t\tmaterial Material {\n" );
- *		fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
- *		fprintf( fp, "\t\t\t\t\temissiveColor %g %g %g \n", r, g, b );
- *		fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
+		if( strncmp( "plastic", mat.shader, 7 ) == 0 )
+		{
+			if( mat.shininess < 0 )
+				mat.shininess = 10;
+			if( mat.transparency < 0.0 )
+				mat.transparency = 0.0;
+
+			fprintf( fp, "\t\t\t\tmaterial Material {\n" );
+			fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
+			fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
+			if( mat.transparency > 0.0 )
+				fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
+			fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
+		}
+		else if( strncmp( "glass", mat.shader, 5 ) == 0 )
+		{
+			if( mat.shininess < 0 )
+				mat.shininess = 4;
+			if( mat.transparency < 0.0 )
+				mat.transparency = 0.8;
+
+			fprintf( fp, "\t\t\t\tmaterial Material {\n" );
+			fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
+			fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
+			if( mat.transparency > 0.0 )
+				fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
+			fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
+		}
+		else if( strncmp( "texture", mat.shader, 7 ) == 0 )
+		{
+			if( mat.tx_w < 0 )
+				mat.tx_w = 512;
+			if( mat.tx_n < 0 )
+				mat.tx_n = 512;
+
+			if( strlen( mat.tx_file ) )
+			{
+				int tex_fd;
+				int nbytes;
+				long tex_len;
+				long bytes_read=0;
+				unsigned char tex_buf[TXT_BUF_LEN*3];
+
+				if( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
+				{
+					bu_log( "Cannot open texture file (%s)\n", mat.tx_file );
+					perror( "g-vrml: " );
+				}
+				else
+				{
+					/* Johns note - need to check (test) the texture stuff */
+					fprintf( fp, "\t\t\t\ttextureTransform TextureTransform {\n");
+					fprintf( fp, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
+					fprintf( fp, "\t\t\t\ttexture PixelTexture {\n");
+					fprintf( fp, "\t\t\t\t\trepeatS TRUE\n");
+					fprintf( fp, "\t\t\t\t\trepeatT TRUE\n");
+					fprintf( fp, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3 );
+					tex_len = mat.tx_w*mat.tx_n*3;
+					while( bytes_read < tex_len )
+					{
+						long bytes_to_go=tex_len;
+
+						bytes_to_go = tex_len - bytes_read;
+						if( bytes_to_go > TXT_BUF_LEN*3 )
+							bytes_to_go = TXT_BUF_LEN*3;
+						nbytes = 0;
+						while( nbytes < bytes_to_go )
+							nbytes += read( tex_fd, &tex_buf[nbytes],
+								bytes_to_go-nbytes );
+
+						bytes_read += nbytes;
+						for( i=0 ; i<nbytes ; i += 3 )
+							fprintf( fp, "\t\t\t0x%02x%02x%02x\n",
+								tex_buf[i],
+								tex_buf[i+1],
+								tex_buf[i+2] );
+					}
+					fprintf( fp, "\t\t\t\t}\n" );
+				}
+			}
+		}
+		else if( mater->ma_color_valid )
+		{
+			/* no shader specified, but a color is assigned */
+			fprintf( fp, "\t\t\t\tmaterial Material {\n" );
+			fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g }\n", r, g, b );
+		}
+		else
+		{
+			/* If no color was defined set the colors according to the thousands groups */
+			int thou = comb->region_id/1000;
+			thou == 0 ? fprintf( fp, "\t\t\tmaterial USE Material_999\n")
+			: thou == 1 ? fprintf( fp, "\t\t\tmaterial USE Material_1999\n")
+			: thou == 2 ? fprintf( fp, "\t\t\tmaterial USE Material_2999\n")
+			: thou == 3 ? fprintf( fp, "\t\t\tmaterial USE Material_3999\n")
+			: thou == 4 ? fprintf( fp, "\t\t\tmaterial USE Material_4999\n")
+			: thou == 5 ? fprintf( fp, "\t\t\tmaterial USE Material_5999\n")
+			: thou == 6 ? fprintf( fp, "\t\t\tmaterial USE Material_6999\n")
+			: thou == 7 ? fprintf( fp, "\t\t\tmaterial USE Material_7999\n")
+			: thou == 8 ? fprintf( fp, "\t\t\tmaterial USE Material_8999\n")
+			: fprintf( fp, "\t\t\tmaterial USE Material_9999\n");
+
+/*			fprintf( fp, "\t\t\t\tmaterial Material {\n" );
+ *			fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
+ *			fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
 */
+		}
 	}
 
 	if( !is_light )
@@ -671,11 +684,10 @@ struct mater_info *mater;
 				s = next_s;
 			}
 		}
+		fprintf( fp, "\t\t\t} \n");
+		fprintf( fp, "\t\t\tgeometry IndexedFaceSet { \n");
+		fprintf( fp, "\t\t\t\tcoord Coordinate { \n");
 	}
-
-	fprintf( fp, "\t\t\t} \n");
-	fprintf( fp, "\t\t\tgeometry IndexedFaceSet { \n");
-	fprintf( fp, "\t\t\t\tcoord Coordinate { \n");
 
 	/* get list of vertices */
 	nmg_vertex_tabulate( &verts, &m->magic );
@@ -788,17 +800,17 @@ struct mater_info *mater;
 
 		if( mat.lt_dir[X] != 0.0 || mat.lt_dir[Y] != 0.0 ||mat.lt_dir[Z] != 0.0 )
 		{
-			fprintf( fp, "SpotLight {\n" );
-			fprintf( fp, "\ton \tTRUE\n" );
+			fprintf( fp, "\t\tSpotLight {\n" );
+			fprintf( fp, "\t\t\ton \tTRUE\n" );
 			if( mat.lt_fraction > 0.0 )
-				fprintf( fp, "\tintensity \t%g\n", mat.lt_fraction );
-			fprintf( fp, "\tcolor \t%g %g %g\n", r,g,b );
-			fprintf( fp, "\tlocation \t%g %g %g\n", V3ARGS( ave_pt ) );
-			fprintf( fp, "\tdirection \t%g %g %g\n", V3ARGS( mat.lt_dir ) );
-			fprintf( fp, "\tcutOffAngle \t%g }\n", mat.lt_angle );
+				fprintf( fp, "\t\t\tintensity \t%g\n", mat.lt_fraction );
+			fprintf( fp, "\t\t\tcolor \t%g %g %g\n", r,g,b );
+			fprintf( fp, "\t\t\tlocation \t%g %g %g\n", V3ARGS( ave_pt ) );
+			fprintf( fp, "\t\t\tdirection \t%g %g %g\n", V3ARGS( mat.lt_dir ) );
+			fprintf( fp, "\t\t\tcutOffAngle \t%g }\n", mat.lt_angle );
 		}
 		else
-			fprintf( fp, "PointLight {\n\ton TRUE\n\tintensity 1\n\tcolor %g %g %g\n\tlocation %g %g %g\n}\n",r,g,b,V3ARGS( ave_pt ) );
+			fprintf( fp, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n",r,g,b,V3ARGS( ave_pt ) );
 	}
 }
 
