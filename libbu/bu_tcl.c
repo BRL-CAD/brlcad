@@ -1041,3 +1041,15 @@ Tcl_Interp *interp;
 	/* initialize command history objects */
 	Cho_Init(interp);
 }
+
+/*
+ *  Allows LIBBU to be dynamically loade to a vanilla tclsh/wish with
+ *  "load /usr/brlcad/lib/libbu.so"
+ */
+int
+Bu_Init(interp)
+Tcl_Interp *interp;
+{
+	bu_tcl_setup(interp);
+	return TCL_OK;
+}
