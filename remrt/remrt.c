@@ -838,6 +838,8 @@ register struct frame *fr;
 	/* Get local buffer for image */
 	fr->fr_size = npts;
 	fr->fr_zoomout = zoomout;
+	fr->fr_hyper = hypersample;
+	fr->fr_benchmark = benchmark;
 	if( fr->fr_picture )  free(fr->fr_picture);
 	fr->fr_picture = (char *)0;
 	bzero( fr->fr_servinit, sizeof(fr->fr_servinit) );
