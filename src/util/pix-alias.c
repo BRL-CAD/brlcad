@@ -26,9 +26,15 @@
  *	
  *	Run length of 0 seems to be meaningless.
  */
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+                                                                                                                                                                            
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H

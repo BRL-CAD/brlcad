@@ -1,10 +1,17 @@
 /*	P I X E L S W A P -- interchange pixel values in an image
  *	Options
  *	h	help
+ *
+ *	$Id$
  */
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+                                                                                                                                                                            
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
