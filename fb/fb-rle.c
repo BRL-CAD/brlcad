@@ -170,7 +170,7 @@ char	*argv[];
 	/* If screen size = default & file size is given, track file size */
 	if( screen_width == 0 && file_width > 0 )
 		screen_width = file_width;
-	if( screen_height == 0 && screen_height > 0 )
+	if( screen_height == 0 && file_height > 0 )
 		screen_height = file_height;
 
 	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == FBIO_NULL )
