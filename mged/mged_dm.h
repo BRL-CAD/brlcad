@@ -54,7 +54,54 @@ struct dm {
 	struct mem_map *dmr_map;	/* displaylist mem map */
 	int	(*dmr_cmd)();		/* dm-specific cmds to perform */
 };
+
+#ifndef MULTI_ATTACH
+
 extern struct dm *dmp;			/* ptr to current display mgr */
+
+#else
+
+struct dm_list {
+  struct rt_list l;
+  struct dm *_dmp;
+  int *dm_vars;   /* pointer to display manager variables */
+
+/* New stuff to allow more than one active display manager */
+  int     _dmaflag;
+  fastf_t _Viewscale;
+  mat_t   _Viewrot;
+  mat_t   _toViewcenter;
+  mat_t   _model2view;
+  mat_t   _view2model;
+  mat_t   _model2objview;
+  mat_t   _objview2model;
+  struct _mged_variables _mged_variables;
+
+/* Angle/distance cursor stuff */
+  int     _adcflag;
+  fastf_t _curs_x;
+  fastf_t _curs_y;
+  fastf_t _c_tdist;
+  fastf_t _angle1;
+  fastf_t _angle2;
+
+/* Rate stuff */
+  int     _rateflag_slew;
+  vect_t  _rate_slew;
+  vect_t  _absolute_slew;
+
+  int     _rateflag_rotate;
+  vect_t  _rate_rotate;
+  vect_t  _absolute_rotate;
+	
+  int     _rateflag_zoom;
+  fastf_t  _rate_zoom;
+  fastf_t  _absolute_zoom;
+};
+
+extern struct rt_list dm_list_head;  /* list of active display managers */
+extern struct dm_list *dm_list_curr;
+#endif
 
 /*
  * Definitions for dealing with the buttons and lights.
