@@ -75,6 +75,8 @@ struct db_i	*dbip;
 	rtip->needprep = 1;
 	dbip->dbi_uses++;
 
+	BU_LIST_INIT( &rtip->HeadRegion );
+
 	/* This table is used for discovering the per-cpu resource structures */
 	bu_ptbl_init( &rtip->rti_resources, MAX_PSW, "rti_resources ptbl" );
 
@@ -224,7 +226,7 @@ int			ncpu;
 	rtip->Regions = (struct region **)bu_malloc(
 		rtip->nregions * sizeof(struct region *),
 		"rtip->Regions[]" );
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		rtip->Regions[regp->reg_bit] = regp;
 		rt_optim_tree( regp->reg_treetop, resp );
 		rt_solid_bitfinder( regp->reg_treetop, regp, resp );
@@ -648,7 +650,7 @@ register struct rt_i *rtip;
 	RT_CK_RTI(rtip);
 
 	/* DEBUG: Ensure that all region trees are valid */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		RT_CK_REGION(regp);
 		db_ck_tree( regp->reg_treetop );
 	}
@@ -656,10 +658,9 @@ register struct rt_i *rtip;
 	 *  Clear out the region table
 	 *  db_free_tree() will delete most soltab structures.
 	 */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
-		register struct region *nextregp = regp->reg_forw;
-
+	while( BU_LIST_WHILE( regp, region, &rtip->HeadRegion ) )  {
 		RT_CK_REGION(regp);
+		BU_LIST_DEQUEUE(&(regp->l));
 		db_free_tree( regp->reg_treetop );
 		bu_free( (genptr_t)regp->reg_name, "region name str");
 		regp->reg_name = (char *)0;
@@ -668,11 +669,8 @@ register struct rt_i *rtip;
 			bu_free( (genptr_t)regp->reg_mater.ma_shader, "ma_shader" );
 			regp->reg_mater.ma_shader = (char *)NULL;
 		}
-
 		bu_free( (genptr_t)regp, "struct region");
-		regp = nextregp;
 	}
-	rtip->HeadRegion = REGION_NULL;
 	rtip->nregions = 0;
 
 	/*
@@ -764,7 +762,6 @@ register struct rt_i *rtip;
  *  implicit type), or for special effects.
  *
  *  Returns -
- *	-1	if unable to find indicated region
  *	 0	success
  */
 int
@@ -772,28 +769,11 @@ rt_del_regtree( rtip, delregp )
 struct rt_i *rtip;
 register struct region *delregp;
 {
-	register struct region *regp;
-	register struct region *nextregp;
-
-	regp = rtip->HeadRegion;
 	if( rt_g.debug & DEBUG_REGIONS )
 		bu_log("Del Region %s\n", delregp->reg_name);
 
-	if( regp == delregp )  {
-		rtip->HeadRegion = regp->reg_forw;
-		goto zot;
-	}
+	BU_LIST_DEQUEUE(&(delregp->l));
 
-	for( ; regp != REGION_NULL; regp=nextregp )  {
-		nextregp=regp->reg_forw;
-		if( nextregp == delregp )  {
-			regp->reg_forw = nextregp->reg_forw;	/* unlink */
-			goto zot;
-		}
-	}
-	bu_log("rt_del_region:  unable to find %s\n", delregp->reg_name);
-	return(-1);
-zot:
 	db_free_tree( delregp->reg_treetop );
 	delregp->reg_treetop = TREE_NULL;
 	bu_free( (char *)delregp->reg_name, "region name str");
@@ -880,7 +860,7 @@ register struct rt_i	*rtip;
 		RT_CK_SOLTAB(stp);
 	} RT_VISIT_ALL_SOLTABS_END
 
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		RT_CK_REGION(regp);
 		db_ck_tree(regp->reg_treetop);
 	}

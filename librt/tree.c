@@ -164,8 +164,7 @@ union tree			*curtree;
 	}
 
 	BU_GETSTRUCT( rp, region );
-	rp->reg_magic = RT_REGION_MAGIC;
-	rp->reg_forw = REGION_NULL;
+	rp->l.magic = RT_REGION_MAGIC;
 	rp->reg_regionid = tsp->ts_regionid;
 	rp->reg_aircode = tsp->ts_aircode;
 	rp->reg_gmater = tsp->ts_gmater;
@@ -206,8 +205,7 @@ union tree			*curtree;
 	 *  Add the region to the linked list of regions.
 	 *  Positions in the region bit vector are established at this time.
 	 */
-	rp->reg_forw = rtip->HeadRegion;
-	rtip->HeadRegion = rp;
+	BU_LIST_INSERT( &(rtip->HeadRegion), &rp->l );
 
 	rp->reg_bit = rtip->nregions++;	/* Assign bit vector pos. */
 	bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
@@ -689,7 +687,7 @@ int		ncpus;
 		rt_gettree_leaf );
 
 	/* DEBUG:  Ensure that all region trees are valid */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		RT_CK_REGION(regp);
 		db_ck_tree(regp->reg_treetop);
 	}
@@ -699,7 +697,7 @@ int		ncpus;
 	 *  First remove any references from the region tree,
 	 *  then remove actual soltab structs from the soltab list.
 	 */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		RT_CK_REGION(regp);
 		rt_tree_kill_dead_solid_refs( regp->reg_treetop );
 		(void)rt_tree_elim_nops( regp->reg_treetop );
@@ -722,7 +720,7 @@ again:
 	/* Handle finishing touches on the trees that needed soltab structs
 	 * that the parallel code couldn't look at yet.
 	 */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		RT_CK_REGION(regp);
 
 		/* The region and the entire tree are cross-referenced */
@@ -746,7 +744,7 @@ again:
 	}
 
 	/* DEBUG:  Ensure that all region trees are valid */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		RT_CK_REGION(regp);
 		db_ck_tree(regp->reg_treetop);
 	}
@@ -1028,11 +1026,11 @@ rt_getregion( rtip, reg_name )
 struct rt_i		*rtip;
 register CONST char	*reg_name;
 {	
-	register struct region	*regp = rtip->HeadRegion;
+	register struct region	*regp;
 	register CONST char *reg_base = rt_basename(reg_name);
 
 	RT_CK_RTI(rtip);
-	for( ; regp != REGION_NULL; regp = regp->reg_forw )  {	
+	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		register CONST char	*cp;
 		/* First, check for a match of the full path */
 		if( *reg_base == regp->reg_name[0] &&

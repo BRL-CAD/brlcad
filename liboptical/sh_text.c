@@ -804,7 +804,8 @@ struct mfuncs	**headp;
 	/* Get copies of, or eliminate, references to dynamic structures */
 	env_region.reg_name = bu_strdup( rp->reg_name );
 	env_region.reg_treetop = TREE_NULL;
-	env_region.reg_forw = REGION_NULL;
+	env_region.l.forw = BU_LIST_NULL;
+	env_region.l.back = BU_LIST_NULL;
 	env_region.reg_mfuncs = (char *)0;
 
 	env_region.reg_mater.ma_shader = bu_vls_strdup( matparm );

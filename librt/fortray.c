@@ -365,7 +365,7 @@ int		fbuflen;
 		fr_string_c2f( fbuf, buf, fbuflen );
 		return;
 	}
-	for( rp = (*rtip)->HeadRegion; rp != REGION_NULL; rp=rp->reg_forw )  {
+	for( BU_LIST_FOR( rp, region, &((*rtip)->HeadRegion) ) )  {
 		if( rp->reg_bit != rnum )  continue;
 		len = strlen( rp->reg_name );
 		offset = 0;

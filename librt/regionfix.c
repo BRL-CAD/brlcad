@@ -118,8 +118,7 @@ struct rt_i	*rtip;
 		}
 #endif
 		
-		rp = rtip->HeadRegion;
-		for( ; rp != REGION_NULL; rp = rp->reg_forw )  {
+		for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 #if USE_REGCOMP
 			ret = regexec(&re_space, (char *)rp->reg_name, 0, 0,0);
 #else				      

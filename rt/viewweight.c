@@ -159,15 +159,14 @@ char *file, *obj;
 void
 view_2init( ap )
 struct application *ap;
-	{
+{
 	register struct region *rp;
 	register struct rt_i *rtip = ap->a_rt_i;
 	
-	for( rp = rtip->HeadRegion; rp != (struct region *) NULL;
-			rp = rp->reg_forw ) {
+	for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 		rp->reg_udata = (genptr_t) NULL;
-		}
 	}
+}
 
 /* end of each pixel */
 void	view_pixel(ap)
@@ -241,8 +240,7 @@ struct application *ap;
 		fprintf( outfp, "  Weight Matl LOS  Material Name  Density Name\n" );
 		fprintf( outfp, " ------- ---- --- --------------- ------- -------------\n" );
 		}
-	for( rp = rtip->HeadRegion; rp != (struct region *) NULL;
-			rp = rp->reg_forw ) {
+	for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 		register fastf_t weight = 0;
 		register int l = strlen(rp->reg_name);
 		register fastf_t *ptr;
@@ -289,8 +287,7 @@ struct application *ap;
 		fprintf(outfp,"Weight by item number (in %s):\n\n",units);
 		fprintf(outfp,"Item  Weight  Region Names\n" );
 		fprintf(outfp,"---- -------- --------------------\n" );
-		for( rp = rtip->HeadRegion; rp != (struct region *) NULL;
-				rp = rp->reg_forw ) {
+		for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 			register int i = rp->reg_regionid;
 	
 			if( item_wt[i] < 0 )
@@ -303,9 +300,7 @@ struct application *ap;
 			if( item_wt[i] < 0 )
 				continue;
 			fprintf(outfp,"%4d %8.3f ", i, item_wt[i] );
-			for( rp = rtip->HeadRegion;
-					rp != (struct region *) NULL;
-					rp = rp->reg_forw ) {
+			for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 				if( rp->reg_regionid == i ) {
 					register int l = strlen(rp->reg_name);
 					l = l > 65 ? l-65 : 0;

@@ -290,7 +290,7 @@ char	**argv;
 {
 	struct rt_i *rtip = ap.a_rt_i;
 
-	if( rtip->HeadRegion == REGION_NULL )  {
+	if( BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
 		def_tree( rtip );		/* Load the default trees */
 	}
 
@@ -342,7 +342,7 @@ char	**argv;
 		60, 60, 60, 60, 60, 60, 60
 	};
 
-	if( rtip->HeadRegion == REGION_NULL )  {
+	if( BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
 		def_tree( rtip );		/* Load the default trees */
 	}
 	for( i=0; i<(sizeof(a)/sizeof(a[0])); i++ )  {
