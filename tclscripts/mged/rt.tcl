@@ -281,6 +281,8 @@ proc do_Raytrace { id } {
 
 		if {$result} {
 		    return
+		} else {
+		    file rename -force $rt_control($id,file) $rt_control($id,file).bak
 		}
 	    }
 
