@@ -206,10 +206,6 @@ genptr_t		client_data;
 			mk_nmg( fp_out , nmg_name , r->m_p );
 		}
 
-		/* NMG region is no longer necessary */
-		if( !empty_model )
-			nmg_kr(r);
-
 		/* Now make a normal brlcad region */
 		if( tsp->ts_mater.ma_color_valid )
 		{
