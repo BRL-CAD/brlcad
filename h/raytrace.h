@@ -542,9 +542,11 @@ struct partition {
 };
 #define PT_NULL		((struct partition *)0)
 #define PT_MAGIC	0x87687681
+#define PT_HD_MAGIC	0x87687680
 
-#define RT_CHECK_PT(_p)	RT_CKMAG(_p,PT_MAGIC, "struct partition")
+#define RT_CHECK_PT(_p)	RT_CK_PT(_p)	/* compat */
 #define RT_CK_PT(_p)	RT_CKMAG(_p,PT_MAGIC, "struct partition")
+#define RT_CK_PT_HD(_p)	RT_CKMAG(_p,PT_HD_MAGIC, "struct partition list head")
 
 #define COPY_PT(ip,out,in)	{ \
 	bcopy((char *)in, (char *)out, ip->rti_pt_bytes); }
