@@ -21,13 +21,18 @@ static char	sccsid[] = "@(#)cad_parea.c	1.6";
 
 #include "conf.h"
 
-#include	<stdio.h>
-#include	<string.h>
-
-#include	"./vld_std.h"
+#include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"
+
+#include	"./vld_std.h"
+
 
 typedef struct
 	{

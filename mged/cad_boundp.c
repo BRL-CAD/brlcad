@@ -36,10 +36,11 @@ static char	sccsid[] = "@(#)cad_boundp.c	1.13";
 
 #include <math.h>
 #include <stdio.h>
+#ifdef USE_STRING_H
 #include <string.h>
-
-#include	"./vld_std.h"
-
+#else
+#include <strings.h>
+#endif
 #ifdef HAVE_STDARG_H
 #include	<stdarg.h>
 #else
@@ -48,6 +49,8 @@ static char	sccsid[] = "@(#)cad_boundp.c	1.13";
 
 #include "machine.h"
 #include "externs.h"
+
+#include "./vld_std.h"
 
 typedef struct
 	{
