@@ -201,6 +201,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(a)[Z] = (b)[Z];\
 			(a)[W] = (b)[W]; }
 
+/* This naming convention seems better than the VMOVE_2D version below */
+#define V2MOVE(a,b)	{ \
+			(a)[X] = (b)[X];\
+			(a)[Y] = (b)[Y]; }
+
 /* Reverse the direction of b and store it in a */
 #define VREVERSE(a,b)	{ \
 			(a)[X] = -(b)[X]; \
@@ -231,6 +236,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(a)[_vadd2] = (b)[_vadd2] + (c)[_vadd2]; \
 	}
 
+#define V2ADD2(a,b,c)	{ \
+			(a)[X] = (b)[X] + (c)[X];\
+			(a)[Y] = (b)[Y] + (c)[Y];}
+
 /* Subtract vector at `c' from vector at `b', store result at `a' */
 #ifdef SHORT_VECTORS
 #define VSUB2(a,b,c) 	VSUB2N(a,b,c, 3)
@@ -247,6 +256,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	for(_vsub2 = 0; _vsub2 < (n); _vsub2++) \
 		(a)[_vsub2] = (b)[_vsub2] - (c)[_vsub2]; \
 	}
+
+#define V2SUB2(a,b,c)	{ \
+			(a)[X] = (b)[X] - (c)[X];\
+			(a)[Y] = (b)[Y] - (c)[Y];}
 
 /* Vectors:  A = B - C - D */
 #ifdef SHORT_VECTORS
@@ -321,6 +334,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	for(_vscale = 0; _vscale < (n); _vscale++) \
 		(a)[_vscale] = (b)[_vscale] * (c); \
 	}
+
+#define V2SCALE(a,b,c)	{ \
+			(a)[X] = (b)[X] * (c);\
+			(a)[Y] = (b)[Y] * (c); }
 
 /* Normalize vector `a' to be a unit vector */
 #ifdef SHORT_VECTORS
@@ -467,6 +484,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(a)[Z] = (b)[Z] + (c) * (d)[Z]; \
 			(a)[W] = (b)[W] + (c) * (d)[W]; }
 
+#define V2JOIN1(a,b,c,d) 	{ \
+			(a)[X] = (b)[X] + (c) * (d)[X];\
+			(a)[Y] = (b)[Y] + (c) * (d)[Y]; }
+
 /*
  *  Blend into vector `a'
  *	scalar `b' times vector at `c' plus
@@ -489,6 +510,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /* Return scalar magnitude squared of vector at `a' */
 #define MAGSQ(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z] )
+#define MAG2SQ(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] )
 
 /* Return scalar magnitude of vector at `a' */
 #define MAGNITUDE(a)	sqrt( MAGSQ( a ) )
@@ -514,6 +536,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /* Compute dot product of vectors at `a' and `b' */
 #define VDOT(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z] )
+
+#define V2DOT(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
 
 /* Subtract two points to make a vector, dot with another vector */
 #define VSUB2DOT(_pt2, _pt, _vec)	( \
@@ -760,24 +784,17 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /*
  *  Some 2-D versions of the 3-D macros given above.
+ *
+ *  A better naming convention is V2MOVE() rather than VMOVE_2D().
+ *  XXX These xxx_2D names are slated to go away, use the others.
  */
-#define VADD2_2D(a,b,c)	{ \
-			(a)[X] = (b)[X] + (c)[X];\
-			(a)[Y] = (b)[Y] + (c)[Y];}
-#define VSUB2_2D(a,b,c)	{ \
-			(a)[X] = (b)[X] - (c)[X];\
-			(a)[Y] = (b)[Y] - (c)[Y];}
-#define MAGSQ_2D(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] )
-#define VDOT_2D(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
-#define VMOVE_2D(a,b)	{ \
-			(a)[X] = (b)[X];\
-			(a)[Y] = (b)[Y];}
-#define VSCALE_2D(a,b,c)	{ \
-			(a)[X] = (b)[X] * (c);\
-			(a)[Y] = (b)[Y] * (c); }
-#define VJOIN1_2D(a,b,c,d) 	{ \
-			(a)[X] = (b)[X] + (c) * (d)[X];\
-			(a)[Y] = (b)[Y] + (c) * (d)[Y]; }
+#define VADD2_2D(a,b,c)	V2ADD2(a,b,c)
+#define VSUB2_2D(a,b,c)	V2SUB2(a,b,c)
+#define MAGSQ_2D(a)	MAG2SQ(a)
+#define VDOT_2D(a,b)	V2DOT(a,b)
+#define VMOVE_2D(a,b)	V2MOVE(a,b)
+#define VSCALE_2D(a,b,c)	V2SCALE(a,b,c)
+#define VJOIN1_2D(a,b,c,d) 	V2JOIN1(a,b,c,d)
 
 /*
  *  Quaternion math definitions.
