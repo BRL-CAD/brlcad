@@ -29,6 +29,15 @@
 #	define _POSIX_SOURCE	1
 #endif
 
+#if defined(sgi) || defined(__sgi)
+#	if IRIX < 6
+#		define HAS_SGIGL	1	/* Old GL */
+#	else
+#		define HAS_OPENGL	1	/* OpenGL */
+#	endif
+#endif
+
+
 /*
  *	Include handling
  *
