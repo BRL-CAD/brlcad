@@ -123,7 +123,7 @@ void	Ir_statechange(), Ir_viewchange(), Ir_colorchange();
 void	Ir_window(), Ir_debug();
 int	Ir_dm();
 #if MIXED_MODE
-void   Ir_loadGLX();
+int   Ir_loadGLX();
 #ifdef USE_PROTOTYPES
 Tk_GenericProc Ircheckevents;
 #else
@@ -159,6 +159,16 @@ static int	ir_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
 static int	min_scr_z;		/* based on getgdesc(GD_ZMIN) */
 static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 /* End modifiable variables */
+
+#if MIXED_MODE
+static int irsetup();
+GLXconfig glxConfig [] = {
+  { GLX_NORMAL, GLX_DOUBLE, TRUE },
+  { GLX_NORMAL, GLX_RGB, TRUE },
+  { GLX_NORMAL, GLX_ZSIZE, GLX_NOCONFIG },
+  { 0, 0, 0 }
+};
+#endif
 
 static int	ir_fd;			/* GL file descriptor to select() on */
 static CONST char ir_title[] = "BRL MGED";
@@ -284,7 +294,7 @@ struct structparse Ir_vparse[] = {
 };
 
 
-static char ref[] = "mged_glx";
+static char ref[] = "mged";
 static int	ir_oldmonitor;		/* Old monitor type */
 long gr_id;
 long win_l, win_b, win_r, win_t;
@@ -465,8 +475,45 @@ Ir_configure_window_shape()
  */
 
 #if MIXED_MODE
-int
 Ir_open()
+{
+        char	line[82];
+        char	hostname[80];
+	char	display[82];
+	char	*envp;
+
+	/* get or create the default display */
+	if( (envp = getenv("DISPLAY")) == NULL ) {
+		/* Env not set, use local host */
+		gethostname( hostname, 80 );
+		hostname[79] = '\0';
+		(void)sprintf( display, "%s:0", hostname );
+		envp = display;
+	}
+
+	rt_log("X Display [%s]? ", envp );
+	(void)fgets( line, sizeof(line), stdin );
+	line[strlen(line)-1] = '\0';		/* remove newline */
+	if( feof(stdin) )  quit();
+	if( line[0] != '\0' ) {
+		if( irsetup(line) ) {
+			return(1);		/* BAD */
+		}
+	} else {
+		if( irsetup(envp) ) {
+			return(1);	/* BAD */
+		}
+	}
+
+	/* Ignore the old scrollbars and menus */
+	ignore_scroll_and_menu = 1;
+
+	return(0);			/* OK */
+}
+
+static int
+irsetup( name )
+char *name;
 {
 	register int	i;
 	Matrix		m;
@@ -485,28 +532,54 @@ Ir_open()
 	XAnyClassPtr any;
 
 	rt_vls_init(&str);
-	rt_vls_strcpy(&str, "loadtk\n");
-	(void)cmdline(&str, FALSE);
-	rt_vls_free(&str);
+	rt_vls_printf(&str, "loadtk %s\n", name);
+	if(cmdline(&str, FALSE) == CMD_BAD){
+	  rt_vls_free(&str);
+	  return -1;
+	}
 	
-	TkGLX_Init(interp, tkwin);
+	(void)TkGLX_Init(interp, tkwin);
 
-	/* Invoke script to create a mixed-mode X window */
-	Ir_loadGLX();
+	/* Invoke script to create button and key bindings */
+	if( Ir_loadGLX() )
+	  return -1;
+
+	dpy = Tk_Display(tkwin);
+	winx_size = DisplayWidth(dpy, Tk_ScreenNumber(tkwin)) - 20;
+	winy_size = DisplayHeight(dpy, Tk_ScreenNumber(tkwin)) - 20;
+	if(winx_size > winy_size)
+	  winx_size = winy_size;
+	else
+	  winy_size = winx_size;
+
+	rt_vls_strcpy(&str, "create_glx ");
+	rt_vls_printf(&str, ".%s %s %d %d true true\n", ref, ref,
+		      winx_size, winy_size);
+	rt_vls_printf(&str, "pack .%s -expand 1 -fill both\n", ref);
+	if(cmdline(&str, FALSE) == CMD_BAD){
+	  rt_vls_free(&str);
+	  return -1;
+	}
+
+	rt_vls_free(&str);
+
+	if(TkGLXwin_RefExists(ref)){
+	  xtkwin = TkGLXwin_RefGetTkwin(ref);
+	  if(xtkwin == NULL)
+	    return -1;
+	}else{
+	  rt_log("Ir_open: ref - %s doesn't exist!!!\n", ref);
+	  return -1;
+	}
 
 	/* Do this now to force a GLXlink */
 	Tk_MapWindow(xtkwin);
 
-	dpy = Tk_Display(xtkwin);
 	Tk_MakeWindowExist(xtkwin);
 	win = Tk_WindowId(xtkwin);
 
-#if 0
 	ir_is_gt = 1;
-	ir_has_zbuf = 1;
-	ir_has_rgb = 1;
-	ir_has_doublebuffer = 1;
-#else
+
 	{
 	  GLXconfig *glx_config, *p;
 
@@ -552,29 +625,18 @@ Ir_open()
 	      case GLX_MSSSIZE:
 	      case GLX_RGBSIZE:
 	      default:
-#if 0
-		/* What else do we have? */
-		rt_log("Ir_open: GLX_NORMAL\tmode - %d\targ - %d\n",
-		       p->mode, p->arg);
-#endif
 		break;
 	      }
 	    case GLX_OVERLAY:
 	    case GLX_POPUP:
 	    case GLX_UNDERLAY:
 	    default:
-#if 0
-	      /* What else do we have? */
-	      rt_log("Ir_open: buffer - %d\tmode - %d\targ - %d\n",
-		     p->buffer, p->mode, p->arg);
-#endif
 	      break;
 	    }
 	  }
 
 	  free((void *)glx_config);
 	}
-#endif
 
 #if 0
 	/* Start out with the usual window */
@@ -670,27 +732,75 @@ Done:
 	XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
 		     KeyPressMask|StructureNotifyMask);
 
-	/* Ignore the old scrollbars and menus */
-	ignore_scroll_and_menu = 1;
-
-	return (0);
+	return(0);
 }
 
 /*XXX Just experimenting */
-void
+int
 Ir_loadGLX()
 {
-  if(Tcl_EvalFile(interp, "/m/cad/mged/glxinit.tk") == TCL_ERROR){
-    rt_log("Ir_open: %s\n", interp->result);
-    mged_finish(1);
+  FILE    *fp;
+  struct rt_vls str;
+  char *path;
+  int     found;
+  int bogus;
+
+#define DM_IR_ENVRC "MGED_DM_IR_RCFILE"
+#define DM_IR_RCFILE "glxinit2.tk"
+
+  found = 0;
+  rt_vls_init( &str );
+
+  if((path = getenv(DM_IR_ENVRC)) != (char *)NULL ){
+    if ((fp = fopen(path, "r")) != NULL ) {
+      rt_vls_strcpy( &str, path );
+      found = 1;
+    }
   }
 
-  if(TkGLXwin_RefExists(ref))
-    xtkwin = TkGLXwin_RefGetTkwin(ref);
-  else{
-    rt_log("Ir_open: ref - %s doesn't exist!!!\n", ref);
-    mged_finish(1);
+  if(!found){
+    if( (path = getenv("HOME")) != (char *)NULL )  {
+      rt_vls_strcpy( &str, path );
+      rt_vls_strcat( &str, "/" );
+      rt_vls_strcat( &str, DM_IR_RCFILE );
+
+      if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+	found = 1;
+    }
   }
+
+  if( !found ) {
+    if( (fp = fopen( DM_IR_RCFILE, "r" )) != NULL )  {
+      rt_vls_strcpy( &str, DM_IR_RCFILE );
+      found = 1;
+    }
+  }
+
+/*XXX Temporary, so things will work without knowledge of the new environment
+      variables */
+  if( !found ) {
+    rt_vls_strcpy( &str, "/m/cad/mged/");
+    rt_vls_strcat( &str, DM_IR_RCFILE);
+
+    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+      found = 1;
+  }
+
+  if(!found){
+    rt_vls_free(&str);
+    return -1;
+  }
+
+  fclose( fp );
+
+  if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
+    rt_log("Error reading %s: %s\n", DM_IR_RCFILE, interp->result);
+    rt_vls_free(&str);
+    return -1;
+  }
+
+  rt_vls_free(&str);
+  return 0;
 }
 
 #else
