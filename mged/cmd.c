@@ -709,6 +709,8 @@ mged_setup()
 #endif
 
 	Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 
 	bu_vls_init(&edit_info_vls);
 	bu_vls_init(&edit_rate_model_tran_vls[X]);
