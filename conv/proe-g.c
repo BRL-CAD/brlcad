@@ -71,10 +71,11 @@ static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static int do_simplify=0;	/* flag to try to simplify solids */
 static char *reg_cmp=(char *)NULL;		/* compiled regular expression */
-static char *usage="proe-g [-p] [-d] [-a] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
+static char *usage="proe-g [-p] [-s] [-d] [-a] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -p option is to create polysolids rather than NMG's.\n\
+	The -s option is to simplify the objects to ARB's or TGC's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -u option indicates that portions of object names that match the regular expression\n\
 		'reg_exp' shouold be ignored.\n\
@@ -358,6 +359,231 @@ char *name,*obj;
 		ptr = Add_new_name( name , (char *)NULL , PART_TYPE );
 
 	return( ptr->solid_name );
+}
+
+static int
+Write_shell_as_tgc( fd, s, solid_name, tol )
+FILE *fd;
+struct shell *s;
+char *solid_name;
+CONST struct rt_tol *tol;
+{
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct faceuse *fu_base=(struct faceuse *)NULL;
+	struct faceuse *fu_top=(struct faceuse *)NULL;
+	int four_vert_faces=0;
+	int many_vert_faces=0;
+	int base_vert_count=0;
+	int top_vert_count=0;
+	int ret=0;
+	point_t sum;
+	fastf_t vert_count=0.0;
+	fastf_t one_over_vert_count;
+	point_t base_center;
+	fastf_t min_base_r_sq;
+	fastf_t max_base_r_sq;
+	fastf_t sum_base_r_sq;
+	fastf_t ave_base_r_sq;
+	fastf_t base_r;
+	point_t top_center;
+	fastf_t min_top_r_sq;
+	fastf_t max_top_r_sq;
+	fastf_t sum_top_r_sq;
+	fastf_t ave_top_r_sq;
+	fastf_t top_r;
+	plane_t top_pl;
+	plane_t base_pl;
+	vect_t height;
+	vect_t plv_1,plv_2;
+	vect_t a,b,c,d;
+
+	NMG_CK_SHELL( s );
+	RT_CK_TOL( tol );
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		int lu_count=0;
+
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		vert_count = 0.0;
+
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				return( 0 );
+
+			lu_count++;
+			if( lu_count > 1 )
+				return( 0 );
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				vert_count++;
+		}
+
+		if( vert_count < 4 )
+			return( 0 );
+
+		if( vert_count == 4 )
+			four_vert_faces++;
+		else
+		{
+			many_vert_faces++;
+			if( many_vert_faces > 2 )
+				return( 0 );
+
+			if( many_vert_faces == 1 )
+			{
+				fu_base = fu;
+				base_vert_count = vert_count;
+				NMG_GET_FU_PLANE( base_pl, fu_base );
+			}
+			else if( many_vert_faces == 2 )
+			{
+				fu_top = fu;
+				top_vert_count = vert_count;
+				NMG_GET_FU_PLANE( top_pl, fu_top );
+			}
+		}
+	}
+	if( base_vert_count != top_vert_count )
+		return( 0 );
+	if( base_vert_count != four_vert_faces )
+		return( 0 );
+
+	if( !NEAR_ZERO( 1.0 + VDOT( top_pl, base_pl ), tol->perp ) )
+		return( 0 );
+
+	/* This looks like a good candidate,
+	 * Calculate center of base and top faces
+	 */
+
+	vert_count = 0.0;
+	VSETALL( sum, 0.0 );
+	lu = RT_LIST_FIRST( loopuse, &fu_base->lu_hd );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+
+		NMG_CK_EDGEUSE( eu );
+
+		NMG_CK_VERTEXUSE( eu->vu_p );
+		NMG_CK_VERTEX( eu->vu_p->v_p );
+		vg = eu->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg );
+
+		VADD2( sum, sum, vg->coord );
+		vert_count++;
+	}
+
+	one_over_vert_count = 1.0/vert_count;
+	VSCALE( base_center, sum, one_over_vert_count );
+
+	/* Calculate Average Radius */
+	min_base_r_sq = MAX_FASTF;
+	max_base_r_sq = (-min_base_r_sq);
+	sum_base_r_sq = 0.0;
+	lu = RT_LIST_FIRST( loopuse, &fu_base->lu_hd );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+		vect_t rad_vect;
+		fastf_t r_sq;
+
+		vg = eu->vu_p->v_p->vg_p;
+
+		VSUB2( rad_vect, vg->coord, base_center );
+		r_sq = MAGSQ( rad_vect );
+		if( r_sq > max_base_r_sq )
+			max_base_r_sq = r_sq;
+		if( r_sq < min_base_r_sq )
+			min_base_r_sq = r_sq;
+
+		sum_base_r_sq += r_sq;
+	}
+
+	ave_base_r_sq = sum_base_r_sq/vert_count;
+
+	base_r = sqrt( max_base_r_sq );
+
+	if( !NEAR_ZERO( (max_base_r_sq - ave_base_r_sq)/ave_base_r_sq, 0.001 ) ||
+	    !NEAR_ZERO( (min_base_r_sq - ave_base_r_sq)/ave_base_r_sq, 0.001 ) )
+			return( 0 );
+
+	VSETALL( sum, 0.0 );
+	lu = RT_LIST_FIRST( loopuse, &fu_top->lu_hd );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+
+		NMG_CK_EDGEUSE( eu );
+
+		NMG_CK_VERTEXUSE( eu->vu_p );
+		NMG_CK_VERTEX( eu->vu_p->v_p );
+		vg = eu->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg );
+
+		VADD2( sum, sum, vg->coord );
+	}
+
+	VSCALE( top_center, sum, one_over_vert_count );
+
+	/* Calculate Average Radius */
+	min_top_r_sq = MAX_FASTF;
+	max_top_r_sq = (-min_top_r_sq);
+	sum_top_r_sq = 0.0;
+	lu = RT_LIST_FIRST( loopuse, &fu_top->lu_hd );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+		vect_t rad_vect;
+		fastf_t r_sq;
+
+		vg = eu->vu_p->v_p->vg_p;
+
+		VSUB2( rad_vect, vg->coord, top_center );
+		r_sq = MAGSQ( rad_vect );
+		if( r_sq > max_top_r_sq )
+			max_top_r_sq = r_sq;
+		if( r_sq < min_top_r_sq )
+			min_top_r_sq = r_sq;
+
+		sum_top_r_sq += r_sq;
+	}
+
+	ave_top_r_sq = sum_top_r_sq/vert_count;
+	top_r = sqrt( max_top_r_sq );
+
+	if( !NEAR_ZERO( (max_top_r_sq - ave_top_r_sq)/ave_top_r_sq, 0.001 ) ||
+	    !NEAR_ZERO( (min_top_r_sq - ave_top_r_sq)/ave_top_r_sq, 0.001 ) )
+			return( 0 );
+
+
+	VSUB2( height, top_center, base_center );
+
+	mat_vec_perp( plv_1, top_pl );
+	VCROSS( plv_2, top_pl, plv_1 );
+	VUNITIZE( plv_1 );
+	VUNITIZE( plv_2 );
+	VSCALE( a, plv_1, base_r );
+	VSCALE( b, plv_2, base_r );
+	VSCALE( c, plv_1, top_r );
+	VSCALE( d, plv_2, top_r );
+
+	if( (ret=mk_tgc( fd, solid_name, base_center, height, a, b, c, d )) )
+	{
+		rt_log( "Write_shell_as_tgc: Failed to make TGC for %s (%d)\n", solid_name, ret );
+		rt_bomb( "Write_shell_as_tgc failed\n" );
+	}
+
+	return( 1 );
 }
 
 static int
@@ -1059,7 +1285,7 @@ char line[MAX_LINE_LEN];
 		return;
 	}
 
-	if( !polysolid || do_simplify )
+	if( !polysolid || (do_simplify && face_count < 165) )
 	{
 		/* fuse vertices that are within tolerance of each other */
 		rt_log( "\tFusing vertices for part\n" );
@@ -1136,7 +1362,7 @@ char line[MAX_LINE_LEN];
 
 		nmg_rebound( m , &tol );
 
-	if( do_simplify )
+	if( do_simplify && face_count < 165 )
 	{
 		struct vertex *v;
 		struct nmg_ptbl tab;
@@ -1372,11 +1598,15 @@ char line[MAX_LINE_LEN];
 				rt_bomb( "Shell_is_arb screwed up" );
 				
 		}
+		if( solid_is_written )
+			rt_log( "\t%s written as an ARB\n", solid_name );
 	}
 
 	if( do_simplify && !solid_is_written )
 	{
-		/* Check if this is a TGC */
+		solid_is_written = Write_shell_as_tgc( fd_out, s, solid_name, &tol );
+		if( solid_is_written )
+			rt_log( "\t%s written as a TGC\n", solid_name );
 	}
 
 	if( polysolid && !solid_is_written )
