@@ -282,6 +282,26 @@ char **argv;
 		}
 	}
 
+	/* Be nice on loaded machines */
+	{
+		FILE	*fp;
+		fp = popen("PATH=/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
+		if( fp )  {
+			double	load = 0;
+			int	iload;
+			fscanf( fp, "%lf", &load );
+			rt_log("Load average = %g\n", load);
+			fclose(fp);
+
+			iload = (int)(load + 0.9);	/* round up */
+			max_cpus -= iload;
+			if( max_cpus <= 0 )  {
+				rt_log("This machine is overloaded, aborting.\n");
+				exit(9);
+			}
+		}
+	}
+
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
 	npsw = max_cpus;
 	if( npsw > 1 )  {
