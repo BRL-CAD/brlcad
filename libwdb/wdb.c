@@ -325,7 +325,6 @@ double	r1, r2;
 	return(0);		/* OK */
 }
 
-
 /*
  *			M K _ R C C
  *
@@ -376,6 +375,40 @@ fastf_t	radius;
 
 	VMOVE( F5, F3);
 	VMOVE( F6, F4);
+
+	fwrite( (char *)&rec, sizeof( rec), 1, fp);
+	return(0);		/* OK */
+}
+
+/*
+ *			M K _ T G C
+ *
+ * Make truncated general cylinder
+ */
+mk_tgc( fp, name, v, h, a, b, c, d )
+FILE	*fp;
+char	*name;
+point_t	v;
+vect_t	h;
+vect_t	a, b;
+vect_t	c, d;
+{
+	static union record rec;
+	fastf_t m1, m2;
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.s.s_id = ID_SOLID;
+	rec.s.s_type = GENTGC;
+	rec.s.s_cgtype = TGC;
+	NAMEMOVE(name, rec.s.s_name);
+
+	/* Really, converting from fastf_t to dbfloat_t here */
+	VMOVE( F1, v );
+	VMOVE( F2, h );
+	VMOVE( F3, a );
+	VMOVE( F4, b );
+	VMOVE( F5, c );
+	VMOVE( F6, d );
 
 	fwrite( (char *)&rec, sizeof( rec), 1, fp);
 	return(0);		/* OK */
