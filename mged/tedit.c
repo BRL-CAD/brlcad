@@ -24,6 +24,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <signal.h>
 #include "machine.h"
@@ -155,6 +157,7 @@ register struct solidrec *sp;
 editit( file )
 char *file;
 {
+#if 0
 #ifdef BSD
 	register pid, xpid;
 	int stat, omask;
@@ -183,15 +186,10 @@ char *file;
 	sigsetmask(omask);
 	return (!stat);
 #endif
-#ifdef SYSV
-	/* System V */
+#else
 	register pid, xpid;
 	int stat;
-#if defined(sgi) && !defined(mips)
-	int (*s2)(), (*s3)();
-#else
 	void (*s2)(), (*s3)();
-#endif
 
 	s2 = signal( SIGINT, SIG_IGN );
 	s3 = signal( SIGQUIT, SIG_IGN );
@@ -220,6 +218,6 @@ char *file;
 			break;
 	(void)signal(SIGINT, s2);
 	(void)signal(SIGQUIT, s3);
-	return (!stat);
 #endif
+	return (!stat);
 }
