@@ -1,6 +1,6 @@
 /*			R B _ D E L E T E . C
  *
- *	Written by:	Paul Tanenbaum
+ *	    Routines to delete a node from a red-black tree
  *
  */
 #ifndef lint
@@ -14,7 +14,6 @@ static char RCSid[] = "@(#) $Header$";
 #include "vmath.h"
 #include "raytrace.h"
 #include "redblack.h"
-#define		RB_DELETE	1
 #include "rb_internals.h"
 
 /*		    L E F T _ R O T A T E ( )
@@ -22,9 +21,8 @@ static char RCSid[] = "@(#) $Header$";
  *		Perfrom left rotation on a red-black tree
  *
  *	This function has two parameters: the node about which to rotate
- *	and the order to be rotated.  The bulk of this code is from
- *	T. H. Cormen, C. E. Leiserson, and R. L. Rivest.  _Introduction
- *	to Algorithms_.  Cambridge, MA: MIT Press, 1990. p. 266.
+ *	and the order to be rotated.  Left_rotate() is an implementation
+ *	of the routine called LEFT-ROTATE on p. 266 of Cormen et al.
  */
 static void left_rotate (struct rb_node *x, int order)
 {
@@ -60,7 +58,7 @@ static void left_rotate (struct rb_node *x, int order)
  *		Perfrom right rotation on a red-black tree
  *
  *	This function has two parameters: the node about which to rotate
- *	and the order to be rotated.  This function is hacked from
+ *	and the order to be rotated.  Right_rotate() is hacked from
  *	left_rotate() above.
  */
 static void right_rotate (struct rb_node *y, int order)
@@ -91,6 +89,17 @@ static void right_rotate (struct rb_node *y, int order)
     rb_right_child(x, order) = y;
     rb_parent(y, order) = x;
 }
+
+/*		    R B _ R O T A T E ( )
+ *			    and
+ *		R B _ O T H E R _ R O T A T E ( )
+ *
+ *	These macros have three parameters: the node about which
+ *	to rotate, the order to be rotated, and the direction of
+ *	rotation.  They allow indirection in the use of left_rotate()
+ *	and right_rotate().  Intended for use only by rb_fixup()
+ *	below.
+ */
 #define	rb_rotate(n, o, d)	(((d) == RB_LEFT)		? 	\
 				    left_rotate((n), (o))	:	\
 				    right_rotate((n), (o)))
@@ -98,6 +107,16 @@ static void right_rotate (struct rb_node *y, int order)
 				    right_rotate((n), (o))	:	\
 				    left_rotate((n), (o)))
 
+/*			R B _ F I X U P ( )
+ *
+ *	    Restore the red-black properties of a red-black tree
+ *		    after the splicing out of a node
+ *
+ *	This function has three parameters: the tree to be fixed up,
+ *	the node where the trouble occurs, and the order.  rb_fixup()
+ *	is an implementation of the routine RB-DELETE-FIXUP on p. 274
+ *	of Cormen et al.
+ */
 static void rb_fixup (rb_tree *tree, struct rb_node *node, int order)
 {
     int			direction;
@@ -152,13 +171,19 @@ static void rb_fixup (rb_tree *tree, struct rb_node *node, int order)
     rb_set_color(node, order, RB_BLACK);
 }
 
+/*		    R B _ F R E E _ N O D E ( )
+ *
+ *	    Relinquish memory occupied by a red-black node
+ *
+ *	This function has one parameter: a node to free.  rb_free_node()
+ *	frees the memory allocated for the various members of the node
+ *	and then frees the memory allocated for the node itself.
+ */
 static void rb_free_node (struct rb_node *node)
 {
     rb_tree	*tree;
 
     RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
-
-    fprintf(stderr, "rb_free_node(%x)...\n", node);
 
     tree = node -> rbn_tree;
     if (rb_current(tree) == node)
@@ -172,11 +197,18 @@ static void rb_free_node (struct rb_node *node)
     rt_free((char *) node, "red-black node");
 }
 
+/*		    R B _ F R E E _ P A C K A G E ( )
+ *
+ *	    Relinquish memory occupied by a red-black package
+ *
+ *	This function has one parameter: a package to free.
+ *	rb_free_package() frees the memory allocated to point to the
+ *	nodes that contained the package and then frees the memory
+ *	allocated for the package itself.
+ */
 static void rb_free_package (struct rb_package *package)
 {
     RB_CKMAG(package, RB_PKG_MAGIC, "red-black package");
-
-    fprintf(stderr, "rb_free_package(%x)...\n", package);
 
     rt_free((char *) package -> rbp_node, "red-black package nodes");
     rt_free((char *) package, "red-black package");
@@ -184,8 +216,11 @@ static void rb_free_package (struct rb_package *package)
 
 /*		        _ R B _ D E L E T E ( )
  *
- *	        Delete a node from a red-black tree
+ *	        Delete a node from one order of a red-black tree
  *
+ *	This function has three parameters: a tree, the node to delete,
+ *	and the order from which to delete it.  _rb_delete() is an
+ *	implementation of the routine RB-DELETE on p. 273 of Cormen et al.
  */
 static void _rb_delete (rb_tree *tree, struct rb_node *node, int order)
 {
@@ -197,18 +232,12 @@ static void _rb_delete (rb_tree *tree, struct rb_node *node, int order)
     RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(tree, order);
 
-    fprintf(stderr, "_rb_delete(<%x>, <%x>, %d)...\n", tree, node, order);
-    fflush(stderr);
-
     if ((rb_left_child(node, order) == rb_null(tree))
      || (rb_right_child(node, order) == rb_null(tree)))
 	y = node;
     else
 	y = _rb_neighbor(node, order, SENSE_MAX);
     
-    fprintf(stderr, "_rb_delete(%x, %d) splicing out <%x>\n",
-	node, order, y);
-
     if (rb_left_child(y, order) == rb_null(tree))
 	only_child = rb_right_child(y, order);
     else
@@ -230,9 +259,6 @@ static void _rb_delete (rb_tree *tree, struct rb_node *node, int order)
 	(node -> rbn_package)[order] = (y -> rbn_package)[order];
 	((node -> rbn_package)[order] -> rbp_node)[order] = node;
     }
-    fprintf(stderr,
-	"_rb_delete() decrementing refs to <%x>... now equals %d\n",
-	y, y -> rbn_pkg_refs - 1);
     if (--(y -> rbn_pkg_refs) == 0)
 	rb_free_node(y);
     
@@ -244,11 +270,10 @@ static void _rb_delete (rb_tree *tree, struct rb_node *node, int order)
  *
  *	        Applications interface to _rb_delete()
  *
- *	This function has one parameter: a tree and the data block
- *	to be deleted.  rb_delete() removes the data block from each
- *	order in the tree.  rb_delete() returns the number of orders
- *	for which the discovered node contains a data pointer that
- *	is not equal to the specified data block pointer.
+ *	This function has two parameters: the tree and order from which
+ *	to do the deleting.  rb_delete() removes the data block stored
+ *	in the current node (in the position of the specified order)
+ *	from every order in the tree.
  */
 void rb_delete (rb_tree *tree, int order)
 {
@@ -258,8 +283,6 @@ void rb_delete (rb_tree *tree, int order)
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
-
-    fprintf(stderr, "rb_delete(<%x>, %d)...\n", tree, order); fflush(stderr);
 
     nm_orders = tree -> rbt_nm_orders;
     package = (rb_current(tree) -> rbn_package)[order];

@@ -1,6 +1,14 @@
 /*			R E D B L A C K . H
  *
- *	Written by:	Paul Tanenbaum
+ *	The data structures, constants, and applications interface
+ *	to LIBREDBLACK(3), the BRL-CAD red-black tree library.
+ *
+ *	Many of the routines in LIBREDBLACK(3) are based on the algorithms
+ *	in chapter 13 of Cormen, T. H., Leiserson, C. E., and Rivest, R. L.
+ *	1990.  _Introduction to Algorithms_.  Cambridge, MA: MIT Press.
+ *	pp. 263-80.
+ *
+ *	Author:	Paul Tanenbaum
  *
  *  $Header$
  */
@@ -9,7 +17,7 @@
 #define REDBLACK_H seen
 
 /*
- *	Data structures
+ *			R B _ T R E E
  */
 typedef struct
 {
@@ -24,6 +32,9 @@ typedef struct
 }	rb_tree;
 #define	RB_TREE_NULL	((rb_tree *) 0)
 
+/*
+ *			R B _ P A C K A G E
+ */
 struct rb_package
 {
     long		rbp_magic;	/* Magic no. for integrity check */
@@ -32,6 +43,9 @@ struct rb_package
 };
 #define	RB_PKG_NULL	((struct rb_package *) 0)
 
+/*
+ *			R B _ N O D E
+ */
 struct rb_node
 {
     long		rbn_magic;	/* Magic no. for integrity check */
@@ -49,12 +63,11 @@ struct rb_node
  *	Applications interface to rb_extreme()
  */
 #define	SENSE_MIN	0
-#define	rb_min(t,o)	rb_extreme((t), (o), SENSE_MIN)
 #define	SENSE_MAX	1
+#define	rb_min(t,o)	rb_extreme((t), (o), SENSE_MIN)
 #define	rb_max(t,o)	rb_extreme((t), (o), SENSE_MAX)
 #define rb_pred(t,o)	rb_neighbor((t), (o), SENSE_MIN)
 #define rb_succ(t,o)	rb_neighbor((t), (o), SENSE_MAX)
-#define rb_search1(t,n)	rb_search((t), 0, (n))
 
 /*
  *	Applications interface to rb_walk()
@@ -92,10 +105,6 @@ int rb_insert		(
 			    rb_tree	*tree,
 			    void	*data
 			);
-void rb_install_print	(
-			    rb_tree	*tree,
-			    void	(*print_func)()
-			);
 void *rb_neighbor	(
 			    rb_tree	*tree,
 			    int		order,
@@ -106,6 +115,7 @@ void *rb_search		(
 			    int		order,
 			    void	*data
 			);
+#define rb_search1(t,n)	rb_search((t), 0, (n))
 void rb_summarize_tree	(   rb_tree	*tree	);
 void rb_walk		(
 			    rb_tree	*tree,

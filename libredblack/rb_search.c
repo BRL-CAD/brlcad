@@ -1,6 +1,6 @@
 /*			R B _ S E A R C H . C
  *
- *	Written by:	Paul Tanenbaum
+ *	Routines to search for a node in a red-black tree
  *
  */
 #ifndef lint
@@ -17,11 +17,11 @@ static char RCSid[] = "@(#) $Header$";
  *
  *	   	Search for a node in a red-black tree
  *
- *	This function has four parameters: the root of the tree
- *	in which to search, the order number and the comparison function,
- *	and a data block containing the desired value of the key.  On
- *	success, _rb_search() returns a pointer to the discovered node.
- *	Otherwise, it returns (tree -> rbt_empty_node).
+ *	This function has four parameters: the root and order of the tree
+ *	in which to search, the comparison function, and a data block
+ *	containing the desired value of the key.  On success, _rb_search()
+ *	returns a pointer to the discovered node.  Otherwise, it returns
+ *	(tree -> rbt_empty_node).
  */
 struct rb_node *_rb_search
 	(struct rb_node *root, int order_nm, int (*order)(), void *data)
