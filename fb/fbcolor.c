@@ -39,6 +39,8 @@ ColorMap cm;
 FBIO *fbp;
 int size = 512;
 
+void	new_rgb(), rgbhsv(), hsvrgb();
+
 main(argc, argv )
 char **argv;
 {
@@ -224,6 +226,7 @@ doKeyPad()
 	return	1;		/* keep going */
 }
 
+void
 new_rgb()  {
 	/* Wrap values to stay in range 0..255 */
 	if( col[curchan] < 0 ) col[curchan] = 255;
@@ -260,6 +263,7 @@ register char	**argv;
  * 
  * convert red green blue to hue saturation value
  */
+void
 rgbhsv(rgb, hsv)
 register int *rgb;
 register int *hsv;
@@ -313,6 +317,7 @@ register int *hsv;
 
 double modf();
 
+void
 hsvrgb(hsv, rgb)
 register int *hsv;
 register int *rgb;

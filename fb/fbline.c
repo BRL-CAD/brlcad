@@ -62,6 +62,8 @@ RGBpixel	pixcolor = { 255, 255, 255 };
 
 static int	x1, y1, x2, y2;
 
+void		edgelimit(), BuildStr(), Raster();
+
 static char usage[] = "\
 Usage: fbline [-h -c ] [-F framebuffer]\n\
 	[-r red] [-g green] [-b blue] x1 y1 x2 y2\n";
@@ -158,6 +160,7 @@ char **argv;
  *	Limit generated positions to edges of screen
  *	Really should clip to screen, instead.
  */
+void
 edgelimit( ppos )
 register struct coords *ppos;
 {
@@ -173,6 +176,7 @@ register struct coords *ppos;
  *
  *  set up DDA parameters
  */
+void
 BuildStr( pt1, pt2 )
 struct coords		*pt1, *pt2;
 {
@@ -220,6 +224,7 @@ struct coords		*pt1, *pt2;
  *	Modified Bresenham algorithm.  Guaranteed to mark a dot for
  *	a zero-length stroke.
  */
+void
 Raster( vp )
 register struct stroke *vp;
 {

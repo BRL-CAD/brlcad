@@ -34,6 +34,8 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
+void		newframe();
+
 FBIO *fbp;
 int pix_line;		/* Number of pixels/line */
 int zoom;		/* Zoom Factor.			*/
@@ -145,6 +147,7 @@ char **argv;
 	fb_close( fbp );
 }
 
+void
 newframe(i)
 register int i;
 {

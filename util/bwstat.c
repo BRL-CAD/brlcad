@@ -38,6 +38,8 @@ unsigned char buf[IBUFSIZE];	/* Input buffer */
 int	verbose = 0;
 long	bin[256];		/* Histogram bins */
 
+void	show_hist();
+
 static char *Usage = "usage: bwstat [-v] [file.bw]\n";
 
 main( argc, argv )
@@ -147,6 +149,7 @@ char **argv;
 /*
  * Display the histogram values.
  */
+void
 show_hist( bin, sum )
 long bin[256];
 int sum;

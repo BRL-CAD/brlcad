@@ -44,6 +44,8 @@ int	bufy;				/* y coordinate in buffer */
 FILE	*buffp;
 int	nflag = 0;
 
+void	init_buffer(), fill_buffer(), binterp(), ninterp();
+
 static char usage[] = "\
 Usage: bwscale [-n] infile.bw inx iny outx outy >out.bw\n";
 
@@ -94,6 +96,7 @@ int argc; char **argv;
  *  and malloc space for it.
  *  XXX - CHECK FILE SIZE
  */
+void
 init_buffer( scanlen )
 int scanlen;
 {
@@ -117,6 +120,7 @@ int scanlen;
  * Load the buffer with scan lines centered around
  * the given y coordinate.
  */
+void
 fill_buffer( y )
 int y;
 {
@@ -221,6 +225,7 @@ int	ix, iy, ox, oy;
  *
  * This version preserves the outside pixels and interps inside only.
  */
+void
 binterp( ofp, ix, iy, ox, oy )
 FILE	*ofp;
 int	ix, iy, ox, oy;
@@ -272,6 +277,7 @@ int	ix, iy, ox, oy;
  *
  * This version preserves the outside pixels and interps inside only.
  */
+void
 ninterp( ofp, ix, iy, ox, oy )
 FILE	*ofp;
 int	ix, iy, ox, oy;

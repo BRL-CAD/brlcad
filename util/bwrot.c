@@ -48,6 +48,8 @@ int	plus90, minus90, reverse, invert;
 
 static	char *Usage = "usage: bwrot [-f -b -r -i] nx ny < file.bw > file.bw\n";
 
+void	fill_buffer(), reverse_buffer();
+
 FILE	*ifp, *ofp;
 
 main( argc, argv )
@@ -181,6 +183,7 @@ int argc; char **argv;
 	}
 }
 
+void
 fill_buffer()
 {
 	firsty = lasty + 1;
@@ -193,6 +196,7 @@ fill_buffer()
 	fread( buffer, 1, scanbytes * buflines, ifp );
 }
 
+void
 reverse_buffer()
 {
 	int	i;

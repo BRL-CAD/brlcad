@@ -41,6 +41,8 @@ double fps = 0.0;	/* frames per second */
 int increment = 1;
 int onestep = 0;
 
+void	delay();
+
 FBIO *fbp;
 
 static char usage[] = "\
@@ -137,6 +139,7 @@ char **argv;
 
 #ifdef BSD
 #include <sys/time.h>
+void
 delay( s, us )
 {
 	struct timeval tv;
@@ -146,6 +149,7 @@ delay( s, us )
 	select( 2, (char *)0, (char *)0, (char *)0, &tv );
 }
 #else
+void
 delay( s, us )
 {
 	sleep( s + (us/1000000) );

@@ -32,6 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
+void	usage();
 typedef unsigned char	u_char;
 int hires = 0;
 static ColorMap cmap;
@@ -245,7 +246,7 @@ register char	**argv;
 	return	1;
 }
 
-
+void
 usage()
 {
 	(void) fprintf( stderr, "Usage : fbcmap	[-h] [map_number]\n" );

@@ -31,6 +31,7 @@ int	inbytes;			/* # bytes of one input scanline */
 int	outbytes;			/* # bytes of one output scanline */
 int	outsize;			/* size of output buffer */
 unsigned char	*outbuf;		/* ptr to output image buffer */
+void	widen_line();
 
 extern char *malloc();
 
@@ -133,6 +134,7 @@ char **argv;
 	exit(0);
 }
 
+void
 widen_line( cp, y )
 register unsigned char *cp;
 int y;

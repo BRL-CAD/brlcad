@@ -45,6 +45,8 @@ int	title_height = 80;
 int	h_start = 240;
 int	h_end = 50;
 
+void	rgbhsv(), hsvrgb();
+
 char usage[] = "\
 Usage:  pixbackgnd [-h] [-s squaresize] [-w width] [-n height]\n\
 	[-t title_height]\n\
@@ -178,6 +180,7 @@ char **argv;
  * 
  * convert red green blue to hue saturation value
  */
+void
 rgbhsv(rgb, hsv)
 register double *rgb;
 register double *hsv;
@@ -231,6 +234,7 @@ register double *hsv;
 
 double modf();
 
+void
 hsvrgb(hsv, rgb)
 register double *hsv;
 register double *rgb;

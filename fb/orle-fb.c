@@ -49,6 +49,8 @@ static int	width = 512;
 static int	topdown = 0;
 static int	pixels_per_buffer;
 
+void		fill_Buffer();
+
 /*	m a i n ( )							*/
 main( argc, argv )
 int	argc;
@@ -234,6 +236,7 @@ char	*argv[];
 /*	f i l l _ B u f f e r ( )
 	Fill cluster buffer from scanline (as fast as possible).
  */
+void
 fill_Buffer( dest, src, scan_bytes, repeat )
 register char	*dest;
 register char	*src;

@@ -53,7 +53,7 @@ int	polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 /*
  *			D U N N O P E N
  */
-int
+void
 dunnopen()
 {
 
@@ -171,6 +171,7 @@ goodstatus()
  *	Provides a 10 millisecond delay when called
  *
  */
+void
 hangten()
 {
 	static struct timeval delaytime = { 0, 10000}; /* set timeout to 10mS*/
@@ -211,6 +212,7 @@ int nsecs;
  *
  *  Get and print the current exposure
  */
+void
 getexposure(title)
 char *title;
 {

@@ -47,6 +47,8 @@ int	xin, yin, xout, yout, nxin, nyin;
 int	plus90, minus90, reverse, invert;
 int	pixbytes = 3;
 
+void	fill_buffer(), reverse_buffer();
+
 static	char *Usage = "usage: pixrot [-f -b -r -i -#bytes] nx ny < file.pix > file.pix\n";
 
 FILE	*ifp, *ofp;
@@ -187,6 +189,7 @@ int argc; char **argv;
 	}
 }
 
+void
 fill_buffer()
 {
 	firsty = lasty + 1;
@@ -195,6 +198,7 @@ fill_buffer()
 	fread( buffer, 1, scanbytes * buflines, ifp );
 }
 
+void
 reverse_buffer()
 {
 	int	i, j;

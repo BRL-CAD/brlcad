@@ -41,6 +41,8 @@ int	mode = DIFF;
 int	backgnd = 0;
 unsigned char ibuf1[512], ibuf2[512], obuf[512];
 
+void	open_file();
+
 char usage[] = "\
 Usage: bwdiff [-m -g -l -e -n] file1.bw file2.bw (- stdin, . skip)\n";
 
@@ -167,6 +169,7 @@ int argc; char **argv;
 	}
 }
 
+void
 open_file( fp, name )
 FILE **fp;
 char *name;

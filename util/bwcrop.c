@@ -45,6 +45,8 @@ float	ulx,uly,urx,ury,lrx,lry,llx,lly;	/* Corners of original file */
 
 #define	round(x) ((int)(x+0.5))
 
+void	init_buffer(), fill_buffer();
+
 FILE	*ifp, *ofp;
 
 static char usage[] = "\
@@ -148,6 +150,7 @@ int argc; char **argv;
  *  and malloc space for it.
  *  XXX - CHECK FILE SIZE
  */
+void
 init_buffer( scanlen )
 int scanlen;
 {
@@ -171,6 +174,7 @@ int scanlen;
  * Load the buffer with scan lines centered around
  * the given y coordinate.
  */
+void
 fill_buffer( y )
 int y;
 {

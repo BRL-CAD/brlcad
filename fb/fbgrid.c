@@ -35,6 +35,8 @@ static int	fbheight = 512;
 static int	flavor = DECIMAL;
 static int	clear = 0;
 
+void		grid(), oldflavor();
+
 static char usage[] = "\
 Usage: fbgrid [-h -c] [-b | -d | -o]\n";
 
@@ -86,6 +88,7 @@ int argc; char **argv;
 	fb_close( fbp );
 }
 
+void
 grid( fbp, line, spacing )
 FBIO *fbp;
 RGBpixel line[];
@@ -101,6 +104,7 @@ int	spacing;
 	}
 }
 
+void
 oldflavor()
 {
 	register FBIO	*fbp;

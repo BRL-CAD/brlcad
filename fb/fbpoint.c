@@ -38,6 +38,8 @@ char	*xprefix = NULL;
 char	*yprefix = NULL;
 char	null_str = '\0';
 
+void	SimpleInput();
+
 char usage[] = "\
 Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]] [initx inity]\n";
 
@@ -54,6 +56,7 @@ L ^F	Right (many)\r\n\
 q Q cr	QUIT\r\n\
 ";
 
+void
 SimpleInput()	/* ==== get keyboard input.	*/
 {
 	register char ch;

@@ -30,6 +30,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 unsigned char	obuf[3*1024];
 unsigned char	red[1024], green[1024], blue[1024];
 
+void	open_file();
+
 char *Usage = "usage: bw3-pix redin greenin bluein > file.pix (- stdin, . skip)\n";
 
 main( argc, argv )
@@ -77,6 +79,7 @@ char **argv;
 	}
 }
 
+void
 open_file( fp, name )
 FILE **fp;
 char *name;

@@ -69,6 +69,8 @@ int	oflag = 0;	/* Different offset specified */
 char *file_name;
 FILE *infp;
 
+void	select_filter();
+
 char	usage[] = "\
 Usage: bwfilter [-f<type>] [-v] [-d#] [-o#]\n\
         [-s squaresize] [-w width] [-n height] [file.bw] > file.bw\n";
@@ -218,6 +220,7 @@ int argc; char **argv;
  *  Looks at the command line string and selects a filter
  *  based on it.
  */
+void
 select_filter( str )
 char *str;
 {

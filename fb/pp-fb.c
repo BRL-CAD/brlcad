@@ -96,6 +96,8 @@ int ib=0,ic=0,nc=0,ibc=0,itc=3;
 int itmc[500];
 long itm[500],loci,locd,loct=0,loce,ctoi();
 
+void	paint(), prtclr(), prtsmu();
+
 main(argc,argv)
 int argc;
 char **argv;
@@ -405,6 +407,7 @@ again:				printf("      %-7s  %s%c%5ld ",
 		}
 	}
 }
+void
 paint()
 /* Paint picture */
 {
@@ -680,6 +683,7 @@ long ix,*jx;
 		else ib=i;
 		}
 }
+void
 prtclr(raw)
 char raw;
 {
@@ -697,7 +701,8 @@ char raw;
 	putchar('\n');
 	return;
 }
-int prtsmu(raw)
+void
+prtsmu(raw)
 char raw;
 {
 	if(raw)	printf("\015\n");

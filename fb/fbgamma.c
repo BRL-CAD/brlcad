@@ -25,6 +25,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 double	atof();
 
+void	checkgamma();
+
 static char usage[] = "\
 Usage: fbgamma [-h -o] val [gval bval]\n";
 
@@ -117,6 +119,7 @@ int argc; char **argv;
 	fb_close( fbp );
 }
 
+void
 checkgamma( g )
 double g;
 {

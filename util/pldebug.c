@@ -98,6 +98,8 @@ struct uplot letters[] = {
 int	verbose;
 long	counts['z'-'A'+1];	/* for counting command usage */
 
+void	outchar(), outstring(), outshort(), outfloat();
+
 static char usage[] = "\
 Usage: pldebug [-v] < unix_plot\n";
 
@@ -173,6 +175,7 @@ char	**argv;
 	}
 }
 
+void
 outchar( n )
 int	n;
 {
@@ -188,6 +191,7 @@ int	n;
 	putchar(')');
 }
 
+void
 outstring( n )
 int	n;
 {
@@ -199,6 +203,7 @@ int	n;
 	putchar('"');
 }
 
+void
 outshort( n )
 int	n;
 {
@@ -215,6 +220,7 @@ int	n;
 	putchar(')');
 }
 
+void
 outfloat( n )
 int	n;
 {

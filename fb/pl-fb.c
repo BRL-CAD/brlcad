@@ -282,6 +282,8 @@ STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
 		Requeue(),
 		Raster(), SetSigs();
 
+void		edgelimit(), put_vector_char();
+
 /*
  *			S X T 1 6
  *
@@ -800,6 +802,7 @@ spacend:
  * 	into plotting space
  *	Update position to reflect character width.
  */
+void
 put_vector_char( c, pos )
 register char	c;
 register coords	*pos;
@@ -843,6 +846,7 @@ register coords	*pos;
  *
  *	Limit generated positions to edges of screen
  */
+void
 edgelimit( ppos )
 register coords *ppos;
 {

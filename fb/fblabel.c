@@ -22,10 +22,12 @@
 #include <ctype.h>
 #include "fb.h"
 
-#define INCL_FONT
-#if defined(sel) || defined(gould) || defined( sgi )
-#define BIGENDIAN
+#if defined(vax)
+#	define	LITTLEENDIAN	1
+#else
+#	define BIGENDIAN	1
 #endif
+
 #if defined(BIGENDIAN)
 #define SWAB(shrt)	(shrt=(((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
 #define SWABV(shrt)	((((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
@@ -97,6 +99,7 @@ static int xpos;
 static int ypos;
 char * textstring;
 
+void	do_char(), do_line(), squash(), fill_buf(), clear_buf();
 
 get_args( argc, argv )
 register char **argv;
@@ -177,6 +180,7 @@ char **argv;
 	exit(0);
 }
 
+void
 do_line( line )
 register char	*line;
 {
@@ -236,6 +240,7 @@ register char	*line;
 	 return;
 }
 
+void
 do_char( c, x, y, odd )
 int c;
 int x, y, odd;
@@ -398,7 +403,7 @@ char *fontname;
 	arrays.  The "bit arrays" are actually int arrays whose values are
 	assumed to be only 0 or 1.
  */
-
+void
 squash( buf0, buf1, buf2, ret_buf, n )
 register int	*buf0, *buf1, *buf2;	
 register float	*ret_buf;
@@ -428,7 +433,7 @@ register int	n;
 	character font file.  The file pointer is assumed to be in the
 	correct position.
  */
-
+void
 fill_buf( wid, buf )
 register int	wid;
 register int	*buf;
@@ -469,7 +474,7 @@ register int	*buf;
 	"read" background areas of the character needed for filtering near
 	the edges of the character definition.
  */
-
+void
 clear_buf( wid, buf )
 int		wid;
 register int	*buf;

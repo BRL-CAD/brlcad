@@ -50,6 +50,10 @@ int	rpp;			/* indicates new center and space values */
 double	centx, centy, centz;	/* new center of rotation values */
 double	viewsize = 2.0;
 
+void	dofile(), copy_string();
+void	two_coord_out(), three_coord_out();
+void	two_dcoord_out(), three_dcoord_out();
+
 static char usage[] = "\
 Usage: plrot [options] [file1 ... fileN] > file.plot\n\
    -x# -y# -z#    Rotation about axis in degrees\n\
@@ -171,6 +175,7 @@ char	**argv;
 	}
 }
 
+void
 dofile( fp )
 FILE	*fp;
 {
@@ -363,6 +368,7 @@ FILE	*fp;
 	}
 }
 
+void
 copy_string( fp )
 FILE	*fp;
 {
@@ -393,6 +399,7 @@ double	minx, miny, minz, maxx, maxy, maxz;
 
 /******* Coordinate Transforms / Output *******/
 
+void
 two_coord_out( fp, m )
 FILE	*fp;
 mat_t	m;
@@ -418,6 +425,7 @@ mat_t	m;
 	putsi(p2[2]);		/* and Z */
 }
 
+void
 three_coord_out( fp, m )
 FILE	*fp;
 mat_t	m;
@@ -443,6 +451,7 @@ mat_t	m;
 	putsi(p2[2]);		/* and Z */
 }
 
+void
 two_dcoord_out( fp, m )
 FILE	*fp;
 mat_t	m;
@@ -467,6 +476,7 @@ mat_t	m;
 	fwrite( buf, 1, 3*8, stdout );
 }
 
+void
 three_dcoord_out( fp, m )
 FILE	*fp;
 mat_t	m;

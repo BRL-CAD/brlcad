@@ -46,6 +46,8 @@ struct	{
 	long	sum, partial_sum;
 } r, g, b;
 
+void	show_hist();
+
 static char *Usage = "usage: pixstat [-v] [file.pix]\n";
 
 main( argc, argv )
@@ -194,6 +196,7 @@ char **argv;
 /*
  * Display the histogram values.
  */
+void
 show_hist()
 {
 	int	i;
