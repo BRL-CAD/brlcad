@@ -33,11 +33,11 @@ if ![info exists mged_color_scheme] {
 }
 
 if ![info exists mged_players] {
-    set mged_players ""
+    set mged_players {}
 }
 
 if ![info exists mged_collaborators] {
-    set mged_collaborators ""
+    set mged_collaborators {}
 }
 
 if ![info exists mged_default(ggeom)] {
@@ -287,6 +287,7 @@ set mged_gui($id,edit_info_pos) "+0+0"
 set mged_gui($id,num_lines) $mged_default(num_lines)
 set mged_gui($id,multi_view) $mged_default(multi_view)
 set mged_gui($id,dm_loc) $mged_default(pane)
+set mged_gui($id,dtype) $dtype
 
 if ![dm_validXType $gscreen $dtype] {
     return "gui: $gscreen does not support $dtype"
@@ -348,6 +349,7 @@ menu .$id.menubar -tearoff $mged_default(tearoff_menus)
 .$id.menubar add cascade -label "ViewRing" -underline 4 -menu .$id.menubar.viewring
 .$id.menubar add cascade -label "Settings" -underline 0 -menu .$id.menubar.settings
 .$id.menubar add cascade -label "Modes" -underline 0 -menu .$id.menubar.modes
+.$id.menubar add cascade -label "Misc" -underline 1 -menu .$id.menubar.misc
 .$id.menubar add cascade -label "Tools" -underline 0 -menu .$id.menubar.tools
 .$id.menubar add cascade -label "Help" -underline 0 -menu .$id.menubar.help
 
@@ -1468,6 +1470,69 @@ pair of axes. One remains unmoved, while the other
 moves to indicate how things have changed." }
           { see_also "rset" } }
 
+menu .$id.menubar.misc -title "Misc" -tearoff $mged_default(tearoff_menus)
+.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_gui($id,zclip) -label "Z Clipping" -underline 0\
+	-command "mged_apply $id \"dm set zclip \$mged_gui($id,zclip)\""
+hoc_register_menu_data "Misc" "Z Clipping" "Z Clipping"\
+	{ { summary "Toggle zclipping. When zclipping is active, the Z value
+of each point is checked against the min and max Z values
+of the viewing cube. If the Z value of the point is found
+outside this range, it is clipped (i.e. not drawn).
+Zclipping can be used to remove geometric detail that may
+be occluding geometry of greater interest." }
+          { see_also "dm" } }
+.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_gui($id,perspective_mode) -label "Perspective" -underline 0\
+	-command "mged_apply $id \"set perspective_mode \$mged_gui($id,perspective_mode)\""
+hoc_register_menu_data "Misc" "Perspective" "Perspective"\
+	{ { summary "Toggle perspective_mode."}
+          { see_also "rset, vars" } }
+.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_gui($id,faceplate) -label "Faceplate" -underline 0\
+	-command "mged_apply $id \"set faceplate \$mged_gui($id,faceplate)\""
+hoc_register_menu_data "Misc" "Faceplate" "Faceplate"\
+	{ { summary "Toggle drawing the MGED faceplate." }
+          { see_also "rset, vars" } }
+.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_gui($id,orig_gui) -label "Faceplate GUI" -underline 10\
+	-command "mged_apply $id \"set orig_gui \$mged_gui($id,orig_gui)\""
+hoc_register_menu_data "Misc" "Faceplate GUI" "Faceplate GUI"\
+	{ { summary "Toggle drawing the MGED faceplate GUI. The faceplate GUI
+consists of the faceplate menu and sliders." }
+          { see_also "rset, vars" } }
+.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_gui($id,forward_keys) -label "Keystroke Forwarding" -underline 8\
+	-command "mged_apply $id \"set_forward_keys \\\[winset\\\] \$mged_gui($id,forward_keys)\""
+hoc_register_menu_data "Misc" "Keystroke Forwarding" "Keystroke Forwarding"\
+	{ { summary "Toggle keystroke forwarding. When forwarding keystrokes, each
+key event within the drawing window is forwarded to the command
+window. Drawing window specific commands (i.e. commands that
+modify the state of the drawing window) will apply only to the
+drawing window wherein the user typed. This feature is provided
+to lessen the need to use the mouse." } }
+if {$mged_gui($id,dtype) == "ogl"} {
+    .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
+	    -variable mged_gui($id,depthcue) -label "Depth Cueing" -underline 0\
+	    -command "mged_apply $id \"dm set depthcue \$mged_gui($id,depthcue)\""
+    hoc_register_menu_data "Misc" "Depth Cueing" "Depth Cueing"\
+	    { { summary "Toggle depth cueing. When depth cueing is active,
+lines that are farther away appear more faint." } 
+    { see_also "dm" } }
+    .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
+	    -variable mged_gui($id,zbuffer) -label "Z Buffer" -underline 2\
+	    -command "mged_apply $id \"dm set zbuffer \$mged_gui($id,zbuffer)\""
+    hoc_register_menu_data "Misc" "Z Buffer" "Z Buffer"\
+	    { { summary "Toggle Z buffer." }
+              { see_also "dm" } }
+    .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
+	    -variable mged_gui($id,lighting) -label "Lighting" -underline 0\
+	    -command "mged_apply $id \"dm set lighting \$mged_gui($id,lighting)\""
+    hoc_register_menu_data "Misc" "Lighting" "Lighting"\
+	    { { summary "Toggle lighting." }
+              { see_also "dm" } }
+}
+
 menu .$id.menubar.tools -title "Tools" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.tools add command -label "ADC Control Panel..." -underline 0\
 	-command "init_adc_control $id"
@@ -1859,6 +1924,7 @@ proc reconfig_all_gui_default {} {
 
 proc update_mged_vars { id } {
     global mged_gui
+    global forwarding_key
     global rateknobs
     global use_air
     global listen
@@ -1871,6 +1937,8 @@ proc update_mged_vars { id } {
     global rotate_about
     global transform
     global faceplate
+    global perspective_mode
+    global orig_gui
 
     winset $mged_gui($id,active_dm)
     set mged_gui($id,rateknobs) $rateknobs
@@ -1891,6 +1959,16 @@ proc update_mged_vars { id } {
     set mged_gui($id,grid_draw) [rset grid draw]
     set mged_gui($id,draw_snap) [rset grid snap]
     set mged_gui($id,faceplate) $faceplate
+    set mged_gui($id,zclip) [dm set zclip]
+    set mged_gui($id,perspective_mode) $perspective_mode
+    set mged_gui($id,orig_gui) $orig_gui
+    set mged_gui($id,forward_keys) $forwarding_key($mged_gui($id,active_dm))
+
+    if {$mged_gui($id,dtype) == "ogl"} {
+	set mged_gui($id,depthcue) [dm set depthcue]
+	set mged_gui($id,zbuffer) [dm set zbuffer]
+	set mged_gui($id,lighting) [dm set lighting]
+    }
 
     if {$mged_gui($id,fb)} {
 	.$id.menubar.settings.fb entryconfigure 7 -state normal
