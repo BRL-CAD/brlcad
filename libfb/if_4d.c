@@ -528,23 +528,42 @@ int		npix;
 		if( ifp->if_width == SGI(ifp)->mi_memwidth )  {
 			if( nlines == 1 )  {
 				/* This is the partial-line case */
-				lrectwrite(
-					SGI(ifp)->mi_xoff+xbase,
-					SGI(ifp)->mi_yoff+y,
-					SGI(ifp)->mi_xoff+xbase+npix-1,
-					SGI(ifp)->mi_yoff+y,
-					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
-					    sizeof(struct sgi_pixel)] );
+				if( SGI(ifp)->mi_is_gt)
+					lrectwrite(
+						SGI(ifp)->mi_xoff+xbase,
+						SGI(ifp)->mi_yoff+y,
+						SGI(ifp)->mi_xoff+xbase+npix-1,
+						SGI(ifp)->mi_yoff+y,
+						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
+						    sizeof(struct sgi_pixel)] );
+				else
+					fake_rectwrite(
+						SGI(ifp)->mi_xoff+xbase,
+						SGI(ifp)->mi_yoff+y,
+						SGI(ifp)->mi_xoff+xbase+npix-1,
+						SGI(ifp)->mi_yoff+y,
+						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
+						    sizeof(struct sgi_pixel)] );
 				return;
 			} else {
 				/* Multiple line case, do full lines */
-				lrectwrite(
-					SGI(ifp)->mi_xoff+0,
-					SGI(ifp)->mi_yoff+y,
-					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
-					SGI(ifp)->mi_yoff+y+nlines-1,
-					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
-					    sizeof(struct sgi_pixel)] );
+				if( SGI(ifp)->mi_is_gt)
+					lrectwrite(
+						SGI(ifp)->mi_xoff+0,
+						SGI(ifp)->mi_yoff+y,
+						SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+						SGI(ifp)->mi_yoff+y+nlines-1,
+						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+						    sizeof(struct sgi_pixel)] );
+				else
+					fake_rectwrite(
+						SGI(ifp)->mi_xoff+0,
+						SGI(ifp)->mi_yoff+y,
+						SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+						SGI(ifp)->mi_yoff+y+nlines-1,
+						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+						    sizeof(struct sgi_pixel)] );
+
 				return;
 			}
 		}
@@ -555,13 +574,22 @@ int		npix;
 			 *  are done with DMA.  The sys-call & interrupt
 			 *  processing burns 60% of the CPU in sys-time!
 			 */
-			lrectwrite(
-				SGI(ifp)->mi_xoff+xbase,
-				SGI(ifp)->mi_yoff+y,
-				SGI(ifp)->mi_xoff+xbase+npix-1,
-				SGI(ifp)->mi_yoff+y,
-				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
-				    sizeof(struct sgi_pixel)] );
+			if( SGI(ifp)->mi_is_gt )
+				lrectwrite(
+					SGI(ifp)->mi_xoff+xbase,
+					SGI(ifp)->mi_yoff+y,
+					SGI(ifp)->mi_xoff+xbase+npix-1,
+					SGI(ifp)->mi_yoff+y,
+					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
+					    sizeof(struct sgi_pixel)] );
+			else
+				fake_rectwrite(
+					SGI(ifp)->mi_xoff+xbase,
+					SGI(ifp)->mi_yoff+y,
+					SGI(ifp)->mi_xoff+xbase+npix-1,
+					SGI(ifp)->mi_yoff+y,
+					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
+					    sizeof(struct sgi_pixel)] );
 			xbase = 0;
 			npix = ifp->if_width;
 		}
@@ -584,12 +612,20 @@ int		npix;
 				op[x].green = CMG(ifp)[sgip[x].green];
 				op[x].blue  = CMB(ifp)[sgip[x].blue];
 			}
-			lrectwrite(
-				SGI(ifp)->mi_xoff+0,
-				SGI(ifp)->mi_yoff+y,
-				SGI(ifp)->mi_xoff+0+ifp->if_width-1,
-				SGI(ifp)->mi_yoff+y,
-				op );
+			if( SGI(ifp)->mi_is_gt )		
+				lrectwrite(
+					SGI(ifp)->mi_xoff+0,
+					SGI(ifp)->mi_yoff+y,
+					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+					SGI(ifp)->mi_yoff+y,
+					op );
+			else
+				fake_rectwrite(
+					SGI(ifp)->mi_xoff+0,
+					SGI(ifp)->mi_yoff+y,
+					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+					SGI(ifp)->mi_yoff+y,
+					op );
 		}
 		return;
 	}
@@ -673,10 +709,16 @@ int		npix;
 			 * Y direction replication is done by this loop.
 			 */
 			for( rep=0; rep<SGI(ifp)->mi_yzoom; rep++ )  {
-				lrectwrite(
-					xscrmin, yscr,
-					xscrmax, yscr,
-					SGI(ifp)->mi_scanline );
+				if( SGI(ifp)->mi_is_gt )
+					lrectwrite(
+						xscrmin, yscr,
+						xscrmax, yscr,
+						SGI(ifp)->mi_scanline );
+				else
+					fake_rectwrite(
+						xscrmin, yscr,
+						xscrmax, yscr,
+						SGI(ifp)->mi_scanline );
 				yscr++;
 			}
 		}
@@ -2081,3 +2123,45 @@ int	y;
 	fb_log("libfb/sgi_%s mp error y=%d\n", str, y);
 	return(-1);			/* BAD */
 }
+
+
+/* fake_rectwrite is necessary as lrectwrite is not yet supported
+ * for non GT hardware in IRIX version 3.1 or earlier. There is
+ * however, a stub in the library which states that this yet yet
+ * available for these systems. To allow us to  still use
+ * shared libraries and have the same executables across the
+ * 4D series of workstations if the system does not contain
+ * the GT hardware upgrade than use this fake routine until 
+ * a later release.  This routine will eventually go away as
+ * IRIX 3.2 will basicly implement lrectwrite the same as below 
+ */
+
+static unsigned char Red_pixels[1024];
+static unsigned char Green_pixels[1024];
+static unsigned char Blue_pixels[1024];
+
+fake_rectwrite( x1, y1, x2, y2, pixels)
+short x1,y1, x2, y2;
+register struct sgi_pixel * pixels;
+{
+	register struct sgi_pixel * p;
+	short n, scan, i;
+
+	p = pixels;
+ 
+	n = x2  - x1 + 1;
+	for( scan = y1; scan <= y2; scan++)
+	{
+		for ( i = 0; i < n; i++)
+		{
+			Red_pixels[i] =   p->red;
+			Green_pixels[i] = p->green;
+			Blue_pixels[i] =  p->blue;
+			p++;
+		}
+	
+		cmov2i( x1, scan);
+		writeRGB( n, Red_pixels, Green_pixels, Blue_pixels);
+	}
+}
+
