@@ -331,6 +331,9 @@ register char **argv;
 			break;
 		case 'v': /* Set level of "non-debug" debugging output */
 			sscanf( bu_optarg, "%x", &rt_verbosity );
+			bu_printb( "Verbosity:", rt_verbosity,
+				VERBOSE_FORMAT);
+			bu_log("\n");
 			break;
 		case 'E':
 			eye_backoff = atof( bu_optarg );
