@@ -24,7 +24,7 @@
 class QuadDisplay {
     inherit iwidgets::Panedwindow
 
-    constructor {type args} {}
+    constructor {{type X} args} {}
     destructor {}
 
     itk_option define -pane pane Pane ur
@@ -85,7 +85,7 @@ class QuadDisplay {
     private variable lr ""
 }
 
-body QuadDisplay::constructor {type args} {
+body QuadDisplay::constructor {{type X} args} {
     Panedwindow::add upper
     Panedwindow::add lower
 

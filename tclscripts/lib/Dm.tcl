@@ -22,7 +22,7 @@
 class Dm {
     inherit itk::Widget
 
-    constructor {args} {}
+    constructor {{type X} args} {}
     destructor {}
 
     itk_option define -dmsize dmsize Dmsize {512 512}
@@ -88,7 +88,7 @@ class Dm {
     private variable type X
 }
 
-body Dm::constructor {_type args} {
+body Dm::constructor {{_type X} args} {
     switch $_type {
 	X -
 	ogl {

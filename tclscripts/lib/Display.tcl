@@ -29,7 +29,7 @@ class Display {
     itk_option define -rscale rscale Rscale 0.4
     itk_option define -sscale sscale Sscale 2.0
 
-    constructor {_type args} {
+    constructor {{_type X} args} {
 	eval Dm::constructor $_type
 	View::constructor
     } {
