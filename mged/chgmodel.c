@@ -1355,7 +1355,7 @@ char	**argv;
 	}
 
 	if( argc < 2 )  {
-	  str = rt_units_string(dbip->dbi_local2base);
+	  str = bu_units_string(dbip->dbi_local2base);
 
 	  if(sflag)
 	    bu_vls_printf(&vls, "%s", str);
@@ -1428,7 +1428,7 @@ this choice of units will not be remembered on your next editing session.\n", (c
 	sf = dbip->dbi_base2local / sf;
 	update_grids(sf);
 
-	str = rt_units_string(dbip->dbi_local2base);
+	str = bu_units_string(dbip->dbi_local2base);
 	bu_vls_printf(&vls, "You will now be editing in '%s'.  1 %s = %g mm \n",
 			str, str, dbip->dbi_local2base );
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);

@@ -44,14 +44,14 @@ RT_EXTERN(HIDDEN void	aim_set, (CONST struct bu_structparse *sdp, CONST char *na
 			CONST char *base, char *value));
 
 struct bu_structparse light_parse[] = {
-	{"%f",	1, "inten",	LIGHT_O(lt_intensity),	FUNC_NULL },
-	{"%f",	1, "angle",	LIGHT_O(lt_angle),	FUNC_NULL },
-	{"%f",	1, "fract",	LIGHT_O(lt_fraction),	FUNC_NULL },
+	{"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	3, "aim",	LIGHT_OA(lt_dir),	aim_set },
-	{"%d",	1, "shadows",	LIGHT_O(lt_shadows),	FUNC_NULL },
-	{"%d",	1, "infinite",	LIGHT_O(lt_infinite),	FUNC_NULL },
-	{"%d",	1, "invisible",	LIGHT_O(lt_invisible),	FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
+	{"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 struct light_specific	LightHead;	/* Heads linked list of lights */

@@ -139,7 +139,7 @@ char	**argv;
 
 	intervals = atof(argv[3]);
 
-	m_len = atof(argv[1]) * rt_units_conversion(argv[2]);
+	m_len = atof(argv[1]) * bu_units_conversion(argv[2]);
 
 	/* Check to make sure there has been a valid conversion. */
 	if(m_len <= 0)  {

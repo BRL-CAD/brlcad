@@ -261,11 +261,11 @@ struct bn_tol		*tol;
 		vp = new->ctl_mesh->mesh;
 
 		for( i = 0; i < new->ctl_mesh->mesh_size[0]; i++) {
-			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_MOVE );
 			vp += new->ctl_mesh->pt_type;
 			for( j = 1; j < new->ctl_mesh->mesh_size[1]; j++ )  {
 				/** CTL_POS( i, j ); **/
-				RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_DRAW );
 				vp += new->ctl_mesh->pt_type;
 			}
 		}
@@ -275,10 +275,10 @@ struct bn_tol		*tol;
 		 */
 		for( i = 0; i < new->ctl_mesh->mesh_size[1]; i++ )  {
 			vp = new->ctl_mesh->mesh+CTL_POS( 0, i );
-			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_MOVE );
 			for( j = 1; j < new->ctl_mesh->mesh_size[0]; j++ )  {
 				vp = new->ctl_mesh->mesh+CTL_POS( j, i );
-				RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_DRAW );
 			}
 		}
 	}

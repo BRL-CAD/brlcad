@@ -136,36 +136,36 @@ struct noise_specific noise_defaults = {
  * structure above
  */
 struct bu_structparse noise_print_tab[] = {
-	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
+	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt },
 	{"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad },
-	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
-	{"%f",  1, "min",		SHDR_O(minval),		FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 
 };
 struct bu_structparse noise_parse_tab[] = {
 	{"i",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(delta),	FUNC_NULL },
+	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "d",			SHDR_AO(delta),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt },
 	{"%f",  1, "s",			SHDR_O(size),		bu_mm_cvt },
 	{"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad },
 	{"%f",  1, "ang",		SHDR_O(max_angle),	noise_deg_to_rad },
 	{"%f",  1, "a",			SHDR_O(max_angle),	noise_deg_to_rad },
-	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
-	{"%f",  3, "vs",		SHDR_AO(vscale),	FUNC_NULL },
-	{"%f",  3, "v",			SHDR_AO(vscale),	FUNC_NULL },
-	{"%f",  1, "min",		SHDR_O(minval),		FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "v",			SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	noise_setup(), noise_render(),

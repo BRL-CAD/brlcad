@@ -801,21 +801,21 @@ struct bn_tol		*tol;
 
 	/* Draw the front */
 	RT_ADD_VLIST( vhead, &front[(n-1)*ELEMENTS_PER_VECT],
-		RT_VLIST_LINE_MOVE );
+		BN_VLIST_LINE_MOVE );
 	for( i = 0; i < n; i++ )  {
-		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw the back */
-	RT_ADD_VLIST( vhead, &back[(n-1)*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, &back[(n-1)*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 	for( i = 0; i < n; i++ )  {
-		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw connections */
 	for( i = 0; i < n; i++ )  {
-		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* free mem */

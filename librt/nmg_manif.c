@@ -39,9 +39,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define PAINT_INTERIOR 1
 #define PAINT_EXTERIOR 0
 
-#define RT_LIST_LINK_CHECK( p ) \
-	if (BU_LIST_PNEXT_PLAST(rt_list, p) != p || \
-	    BU_LIST_PLAST_PNEXT(rt_list, p) != p) { \
+#define BU_LIST_LINK_CHECK( p ) \
+	if (BU_LIST_PNEXT_PLAST(bu_list, p) != p || \
+	    BU_LIST_PLAST_PNEXT(bu_list, p) != p) { \
 		bu_log("%s[%d]: linked list integrity check failed\n", \
 				__FILE__, __LINE__); \
 	    	bu_log("0x%08x->forw(0x%08x)->back = 0x%08x\n", \
@@ -77,7 +77,7 @@ register CONST char	*manifolds;
 
 	for(BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	    NMG_CK_LOOPUSE(lu);
-	    RT_LIST_LINK_CHECK( &lu->l );
+	    BU_LIST_LINK_CHECK( &lu->l );
 
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 	        /* go looking around each edge for a face of the same
@@ -89,7 +89,7 @@ register CONST char	*manifolds;
 	    	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 
 	 	    NMG_CK_EDGEUSE( eu );
-	 	    RT_LIST_LINK_CHECK( &eu->l );
+	 	    BU_LIST_LINK_CHECK( &eu->l );
 
 		    eur = nmg_radial_face_edge_in_shell(eu);
 		    newfu = eur->up.lu_p->up.fu_p;

@@ -54,9 +54,9 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
 
-	{"%d",	1, "maxreflect",	bu_byteoffset(numreflect),	FUNC_NULL },
+	{"%d",	1, "maxreflect",	bu_byteoffset(numreflect),	BU_STRUCTPARSE_FUNC_NULL },
 #endif
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 void		dumpray();

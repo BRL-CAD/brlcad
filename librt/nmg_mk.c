@@ -3134,7 +3134,7 @@ struct edge_g_lseg	*src_eg;
 		NMG_CK_EDGE_G_LSEG(src_eg);
 
 		/* Obtain an eu from src_eg */
-		midway = BU_LIST_FIRST(rt_list, &src_eg->eu_hd2 );
+		midway = BU_LIST_FIRST(bu_list, &src_eg->eu_hd2 );
 		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
 		eu = BU_LIST_MAIN_PTR( edgeuse, midway, l2 );
 		NMG_CK_EDGEUSE(eu);

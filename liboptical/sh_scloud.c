@@ -70,27 +70,27 @@ static struct scloud_specific scloud_defaults = {
 #define SHDR_AO(m)	bu_offsetofarray(struct scloud_specific, m)
 
 struct bu_structparse scloud_pr[] = {
-	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
-	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 struct bu_structparse scloud_parse[] = {
-	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
-	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "m", 		SHDR_O(max_d_p_mm),	FUNC_NULL },
-	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "s",			SHDR_O(scale),		FUNC_NULL },
-	{"%f",  3, "vs",		SHDR_AO(vscale),	FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(delta),		FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "m", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "s",			SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "d",			SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	scloud_setup(), scloud_render(), tsplat_render();

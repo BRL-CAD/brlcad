@@ -32,8 +32,6 @@ static char RCSeto[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
-#include "./complex.h"
-#include "./polyno.h"
 
 /*
  * The ETO has the following input fields:
@@ -330,7 +328,7 @@ struct seg		*seghead;
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL poly	C;		/* The final equation */
+	LOCAL bn_poly_t	C;		/* The final equation */
 	LOCAL bn_complex_t	val[4];	/* The complex roots */
 	LOCAL double	k[4];		/* The real roots */
 	register int	i;
@@ -866,16 +864,16 @@ struct bn_tol		*tol;
 	
 	/* draw ellipses */
 	for (i = 0; i < nells; i++) {
-		RT_ADD_VLIST( vhead, PTA(i,npts-1), RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, PTA(i,npts-1), BN_VLIST_LINE_MOVE );
 		for( j = 0; j < npts; j++ )
-			RT_ADD_VLIST( vhead, PTA(i,j), RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, PTA(i,j), BN_VLIST_LINE_DRAW );
 	}
 	
 	/* draw connecting circles */
 	for (i = 0; i < npts; i++) {
-		RT_ADD_VLIST( vhead, PTA(nells-1,i), RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, PTA(nells-1,i), BN_VLIST_LINE_MOVE );
 		for( j = 0; j < nells; j++ )
-			RT_ADD_VLIST( vhead, PTA(j,i), RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, PTA(j,i), BN_VLIST_LINE_DRAW );
 	}
 
 	bu_free( (char *)eto_ells, "ells[]" );

@@ -549,11 +549,11 @@ struct bn_tol		*tol;
 		vp = c->ctl_points;
 		for( i = 0; i < c->s_size[0]; i++)
 		{
-			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_MOVE );
 			vp += coords;
 			for( j = 1; j < c->s_size[1]; j++)
 			{
-				RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_DRAW );
 				vp += coords;
 			}
 		}
@@ -564,10 +564,10 @@ struct bn_tol		*tol;
 			
 			stride = c->s_size[1] * coords;
 			vp = &c->ctl_points[j * coords];
-			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_MOVE );
 			for( i = 0; i < c->s_size[0]; i++)
 			{
-				RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, vp, BN_VLIST_LINE_DRAW );
 				vp += stride;
 			}
 		}

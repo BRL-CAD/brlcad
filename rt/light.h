@@ -15,7 +15,7 @@
  *  @(#)$Header$ (BRL)
  */
 struct light_specific {
-	struct rt_list	l;	/* doubly linked list */
+	struct bu_list	l;	/* doubly linked list */
 	/* User-specified fields */
 	vect_t	lt_dir;		/* explicit coordinate aim */
 	fastf_t	lt_intensity;	/* Intensity Lumens (cd*sr): total output */
@@ -41,7 +41,7 @@ struct light_specific {
 };
 #define LIGHT_NULL	((struct light_specific *)0)
 #define LIGHT_MAGIC	0xdbddbdb7
-#define RT_CK_LIGHT(_p)	RT_CKMAG((_p), LIGHT_MAGIC, "light_specific")
+#define RT_CK_LIGHT(_p)	BU_CKMAG((_p), LIGHT_MAGIC, "light_specific")
 
 extern struct light_specific	LightHead;
 

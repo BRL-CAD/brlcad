@@ -3656,7 +3656,7 @@ CONST struct bn_tol	*tol;
 		rt_bomb("nmg_common_v_2eg() eg1 and eg2 are colinear\n");
 
 	/* Scan all edgeuses in the model that use eg1 */
-	for( BU_LIST_FOR( midway, rt_list, &eg1->eu_hd2 ) )  {
+	for( BU_LIST_FOR( midway, bu_list, &eg1->eu_hd2 ) )  {
 		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
 		eu1 = BU_LIST_MAIN_PTR( edgeuse, midway, l2 );
 		NMG_CK_EDGEUSE(eu1);

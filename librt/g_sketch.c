@@ -255,10 +255,10 @@ struct bn_tol		*tol;
 					if( first || start != prev )
 					{
 						VJOIN2( pt, sketch_ip->V, sketch_ip->verts[start][0], sketch_ip->u_vec, sketch_ip->verts[start][1], sketch_ip->v_vec);
-						RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE )
+						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
 					}
 					VJOIN2( pt, sketch_ip->V, sketch_ip->verts[end][0], sketch_ip->u_vec, sketch_ip->verts[end][1], sketch_ip->v_vec);
-					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 					prev = end;
 					break;
 				default:

@@ -60,17 +60,17 @@ struct	bu_structparse stxt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for Cray compiler */
 	{"%d",	1, "transp",		0,		stxt_transp_hook },
-	{"%s",	STX_NAME_LEN, "file",	1,			FUNC_NULL },
+	{"%s",	STX_NAME_LEN, "file",	1,			BU_STRUCTPARSE_FUNC_NULL },
 #else
 	{"%d",	1, "transp",	bu_offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook },
-	{"%s",	STX_NAME_LEN, "file",	bu_offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL },
+	{"%s",	STX_NAME_LEN, "file",	bu_offsetofarray(struct stxt_specific, stx_file),	BU_STRUCTPARSE_FUNC_NULL },
 #endif
-	{"%d",	1, "w",			SOL_O(stx_w),		FUNC_NULL },
-	{"%d",	1, "n",			SOL_O(stx_n),		FUNC_NULL },
-	{"%d",	1, "d",			SOL_O(stx_d),		FUNC_NULL },
-	{"%d",	1, "fw",		SOL_O(stx_fw),		FUNC_NULL },
-	{"%d",	1, "trans_valid",	SOL_O(trans_valid),	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "d",			SOL_O(stx_d),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "fw",		SOL_O(stx_fw),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "trans_valid",	SOL_O(trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 struct	mfuncs stxt_mfuncs[] = {

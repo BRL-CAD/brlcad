@@ -59,14 +59,14 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	"%d",	1, "maxreflect",	(int)&numreflect,	FUNC_NULL,
-	"%f",	1, "wavelength",	(int)&wavelength,	FUNC_NULL,
-	"%f",	1, "xhpol",	(int)&xhpol,		FUNC_NULL,
-	"%f",	1, "xvpol",	(int)&xvpol,		FUNC_NULL,
-	"%f",	1, "rhpol",	(int)&rhpol,		FUNC_NULL,
-	"%f",	1, "rvpol",	(int)&rvpol,		FUNC_NULL,
-	"%f",	1, "epsilon",	(int)&epsilon,		FUNC_NULL,
-	"",	0, (char *)0,	0,			FUNC_NULL
+	"%d",	1, "maxreflect",	(int)&numreflect,	BU_STRUCTPARSE_FUNC_NULL,
+	"%f",	1, "wavelength",	(int)&wavelength,	BU_STRUCTPARSE_FUNC_NULL,
+	"%f",	1, "xhpol",	(int)&xhpol,		BU_STRUCTPARSE_FUNC_NULL,
+	"%f",	1, "xvpol",	(int)&xvpol,		BU_STRUCTPARSE_FUNC_NULL,
+	"%f",	1, "rhpol",	(int)&rhpol,		BU_STRUCTPARSE_FUNC_NULL,
+	"%f",	1, "rvpol",	(int)&rvpol,		BU_STRUCTPARSE_FUNC_NULL,
+	"%f",	1, "epsilon",	(int)&epsilon,		BU_STRUCTPARSE_FUNC_NULL,
+	"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL
 };
 
 void		dumpray();

@@ -40,9 +40,9 @@ struct cloud_specific {
 #define CL_O(m)	offsetof(struct cloud_specific, m)
 
 struct bu_structparse cloud_parse[] = {
-	{"%f",	1, "thresh",	CL_O(cl_thresh),	FUNC_NULL },
-	{"%f",	1, "range",	CL_O(cl_range),		FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
+	{"%f",	1, "thresh",	CL_O(cl_thresh),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "range",	CL_O(cl_range),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	cloud_setup(), cloud_render();

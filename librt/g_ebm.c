@@ -52,15 +52,15 @@ struct rt_ebm_specific {
 
 struct bu_structparse rt_ebm_parse[] = {
 #if CRAY && !__STDC__
-	{"%s",	RT_EBM_NAME_LEN, "file",	1,	FUNC_NULL },
+	{"%s",	RT_EBM_NAME_LEN, "file",	1,	BU_STRUCTPARSE_FUNC_NULL },
 #else
 	{"%s",	RT_EBM_NAME_LEN, "file", bu_offsetofarray(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL },
 #endif
-	{"%d",	1, "w",		RT_EBM_O(xdim),		FUNC_NULL },
-	{"%d",	1, "n",		RT_EBM_O(ydim),		FUNC_NULL },
-	{"%f",	1, "d",		RT_EBM_O(tallness),	FUNC_NULL },
+	{"%d",	1, "w",		RT_EBM_O(xdim),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "n",		RT_EBM_O(ydim),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "d",		RT_EBM_O(tallness),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	16, "mat", bu_offsetofarray(struct rt_ebm_internal, mat), BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0, 0,			FUNC_NULL }
+	{"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 struct ebm_hit_private {
@@ -1054,21 +1054,21 @@ register struct bu_list	*vhead;
 
 	VSET( s, x1, y1, 0.0 );
 	MAT4X3PNT( srot, mat, s );
-	RT_ADD_VLIST( vhead, srot, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, srot, BN_VLIST_LINE_MOVE );
 
 	VSET( p, x1, y1, t );
 	MAT4X3PNT( prot, mat, p );
-	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, prot, BN_VLIST_LINE_DRAW );
 
 	VSET( p, x2, y2, t );
 	MAT4X3PNT( prot, mat, p );
-	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, prot, BN_VLIST_LINE_DRAW );
 
 	p[Z] = 0;
 	MAT4X3PNT( prot, mat, p );
-	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, prot, BN_VLIST_LINE_DRAW );
 
-	RT_ADD_VLIST( vhead, srot, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, srot, BN_VLIST_LINE_DRAW );
 }
 
 struct ebm_edge

@@ -640,19 +640,19 @@ struct bn_tol		*tol;
 	rt_ell_16pts( bottom, eip->v, eip->b, eip->c );
 	rt_ell_16pts( middle, eip->v, eip->a, eip->c );
 
-	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
-	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
-	RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 	return(0);
 }

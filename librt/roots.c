@@ -159,10 +159,10 @@ rt_poly_findroot( eqn, nxZ )
 register bn_poly_t	*eqn;	/* polynomial			*/
 register bn_complex_t	*nxZ;	/* initial guess for root	*/
 {
-	LOCAL complex  p0, p1, p2;	/* evaluated polynomial+derivatives */
-	LOCAL bn_complex_t	p1_H;		/* p1 - H, temporary */
-	LOCAL complex  cZ, cH;		/* 'Z' and H(Z) in comment	*/
-	LOCAL complex  T;		/* temporary for making H */
+	LOCAL bn_complex_t  p0, p1, p2;	/* evaluated polynomial+derivatives */
+	LOCAL bn_complex_t  p1_H;		/* p1 - H, temporary */
+	LOCAL bn_complex_t  cZ, cH;		/* 'Z' and H(Z) in comment	*/
+	LOCAL bn_complex_t  T;		/* temporary for making H */
 	FAST fastf_t	diff;		/* test values for convergence	*/
 	FAST fastf_t	b;		/* floating temps */
 	LOCAL int	n;
@@ -361,7 +361,7 @@ register bn_complex_t	*root;
 		div.cf[0] = 1;
 		div.cf[1] = - root->re;
 	} else {
-		/*  root is bn_complex_t		*/
+		/*  root is complex		*/
 		div.dgr = 2;
 		div.cf[0] = 1;
 		div.cf[1] = -2 * root->re;

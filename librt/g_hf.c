@@ -73,27 +73,27 @@ CONST struct bu_structparse rt_hf_parse[] = {
 	{"%s",	128,	"cfile",	bu_offsetofarray(struct rt_hf_internal, cfile), BU_STRUCTPARSE_FUNC_NULL},
 	{"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
 	{"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d",	1,	"w",		HF_O(w),		FUNC_NULL },
-	{"%d",	1,	"n",		HF_O(n),		FUNC_NULL },
-	{"%d",	1,	"shorts",	HF_O(shorts),		FUNC_NULL },
-	{"%f",	1,	"file2mm",	HF_O(file2mm),		FUNC_NULL },
-	{"%f",	3,	"v",		HF_O(v[0]),		FUNC_NULL },
-	{"%f",	3,	"x",		HF_O(x[0]),		FUNC_NULL },
-	{"%f",	3,	"y",		HF_O(y[0]),		FUNC_NULL },
-	{"%f",	1,	"xlen",		HF_O(xlen),		FUNC_NULL },
-	{"%f",	1,	"ylen",		HF_O(ylen),		FUNC_NULL },
-	{"%f",	1,	"zscale",	HF_O(zscale),		FUNC_NULL },
-	{"",	0,	(char *)0,	0,			FUNC_NULL }
+	{"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	3,	"v",		HF_O(v[0]),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	3,	"x",		HF_O(x[0]),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	3,	"y",		HF_O(y[0]),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1,	"xlen",		HF_O(xlen),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1,	"ylen",		HF_O(ylen),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1,	"zscale",	HF_O(zscale),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 /* Subset of fields found in cfile */
 CONST struct bu_structparse rt_hf_cparse[] = {
 	{"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
 	{"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
-	{"%d",	1,	"w",		HF_O(w),		FUNC_NULL },
-	{"%d",	1,	"n",		HF_O(n),		FUNC_NULL },
-	{"%d",	1,	"shorts",	HF_O(shorts),		FUNC_NULL },
-	{"%f",	1,	"file2mm",	HF_O(file2mm),		FUNC_NULL },
-	{"",	0,	(char *)0,	0,			FUNC_NULL }
+	{"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 struct hf_specific {
@@ -1600,18 +1600,18 @@ struct bn_tol		*tol;
 	goal = 20000;
 
 	/* Draw the 4 corners of the base plate */
-	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, xip->v, BN_VLIST_LINE_MOVE );
 
 	VJOIN1( start, xip->v, xip->xlen, xip->x );
-	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, start, BN_VLIST_LINE_DRAW );
 
 	VJOIN2( start, xip->v, xip->xlen, xip->x, xip->ylen, xip->y );
-	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, start, BN_VLIST_LINE_DRAW );
 
 	VJOIN1( start, xip->v, xip->ylen, xip->y );
-	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, start, BN_VLIST_LINE_DRAW );
 
-	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, xip->v, BN_VLIST_LINE_DRAW );
 	goal -= 5;
 
 #define HF_GET(_p,_x,_y)	((_p)[(_y)*xip->w+(_x)])
@@ -1619,47 +1619,47 @@ struct bn_tol		*tol;
 	 *  Draw the four "ridge lines" at full resolution, for edge matching.
 	 */
 	/* X direction, Y=0, with edges down to base */
-	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, xip->v, BN_VLIST_LINE_MOVE );
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0 );
 	for( x = 0; x < xip->w; x++ )  {
 		VJOIN2( cur, xip->v, x, xbasis, *sp, zbasis );
-		RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 		sp++;
 	}
 	VJOIN1( cur, xip->v, xip->xlen, xip->x );
-	RT_ADD_VLIST( vhead, cur, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, cur, BN_VLIST_LINE_DRAW );
 
 	/* X direction, Y=n-1, with edges down to base */
 	VJOIN1( start, xip->v, xip->ylen, xip->y );
-	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, start, BN_VLIST_LINE_MOVE );
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, xip->n - 1 );
 	VJOIN1( start, xip->v, xip->ylen, xip->y );
 	for( x = 0; x < xip->w; x++ )  {
 		VJOIN2( cur, start, x, xbasis, *sp, zbasis );
-		RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 		sp++;
 	}
 	VJOIN2( cur, xip->v, xip->xlen, xip->x, xip->ylen, xip->y );
-	RT_ADD_VLIST( vhead, cur, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, cur, BN_VLIST_LINE_DRAW );
 
 	/* Y direction, X=0 */
-	cmd = RT_VLIST_LINE_MOVE;
+	cmd = BN_VLIST_LINE_MOVE;
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0 );
 	for( y = 0; y < xip->n; y++ )  {
 		VJOIN2( cur, xip->v, y, ybasis, *sp, zbasis );
 		RT_ADD_VLIST(vhead, cur, cmd );
-		cmd = RT_VLIST_LINE_DRAW;
+		cmd = BN_VLIST_LINE_DRAW;
 		sp += xip->w;
 	}
 
 	/* Y direction, X=w-1 */
-	cmd = RT_VLIST_LINE_MOVE;
+	cmd = BN_VLIST_LINE_MOVE;
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, xip->w - 1, 0 );
 	VJOIN1( start, xip->v, xip->xlen, xip->x );
 	for( y = 0; y < xip->n; y++ )  {
 		VJOIN2( cur, start, y, ybasis, *sp, zbasis );
 		RT_ADD_VLIST(vhead, cur, cmd );
-		cmd = RT_VLIST_LINE_DRAW;
+		cmd = BN_VLIST_LINE_DRAW;
 		sp += xip->w;
 	}
 	goal -= 4 + 2 * (xip->w + xip->n);
@@ -1686,19 +1686,19 @@ struct bn_tol		*tol;
 		x = 0;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 		VJOIN2( cur, start, x, xbasis, *sp, zbasis );
-		RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_MOVE );
 		x += half_step;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 		for( ; x < xip->w; x += step )  {
 			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
-			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 			sp += step;
 		}
 		if( x != step+xip->w-1+step )  {
 			x = xip->w - 1;
 			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
-			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 		}
 	}
 
@@ -1708,18 +1708,18 @@ struct bn_tol		*tol;
 		y = 0;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 		VJOIN2( cur, start, y, ybasis, *sp, zbasis );
-		RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_MOVE );
 		y += half_step;
 		for( ; y < xip->n; y += step )  {
 			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, y, ybasis, *sp, zbasis );
-			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 		}
 		if( y != step+xip->n-1+step )  {
 			y = xip->n - 1;
 			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, y, ybasis, *sp, zbasis );
-			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST(vhead, cur, BN_VLIST_LINE_DRAW );
 		}
 	}
 	return 0;

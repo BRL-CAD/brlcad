@@ -88,7 +88,7 @@ register FILE	*fp;
 		}
 		if( curpos >= curlen )  {
 			curlen *= 2;
-			buf = rt_realloc( buf, curlen, "rt_read_cmd command buffer" );
+			buf = bu_realloc( buf, curlen, "rt_read_cmd command buffer" );
 		}
 		buf[curpos++] = c;
 	} while( c != '\0' );

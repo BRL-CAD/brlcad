@@ -223,7 +223,7 @@ struct bu_structparse rt_dsp_parse[] = {
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0, 0,			FUNC_NULL }
+	{"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 struct bu_structparse rt_dsp_ptab[] = {
@@ -232,7 +232,7 @@ struct bu_structparse rt_dsp_ptab[] = {
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0, 0,			FUNC_NULL }
+	{"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 static int plot_file_num=0;
@@ -2452,11 +2452,11 @@ struct bn_tol		*tol;
 
 #define MOVE() \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, s_pt); \
-	RT_ADD_VLIST( vhead, m_pt, RT_VLIST_LINE_MOVE )
+	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_MOVE )
 
 #define DRAW() \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, s_pt); \
-	RT_ADD_VLIST( vhead, m_pt, RT_VLIST_LINE_DRAW )
+	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_DRAW )
 
 
 	/* Draw the Bottom */

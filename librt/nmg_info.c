@@ -2404,7 +2404,7 @@ CONST struct edge_g_lseg	*eg;	/* can also be edge_g_cnurb */
 	NMG_CK_EDGE_G_EITHER(eg);
 	(void)bu_ptbl_init( tab, 64, " tab");
 
-	for( BU_LIST_FOR( midway, rt_list, &eg->eu_hd2 ) )  {
+	for( BU_LIST_FOR( midway, bu_list, &eg->eu_hd2 ) )  {
 		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
 		eu = BU_LIST_MAIN_PTR( edgeuse, midway, l2 );
 		NMG_CK_EDGEUSE(eu);

@@ -92,12 +92,12 @@ struct txt_specific {
 
 struct bu_structparse txt_parse[] = {
 	{"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
-	{"%s",	TXT_NAME_LEN, "file", bu_offsetofarray(struct txt_specific, tx_file),		FUNC_NULL },
-	{"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL },
-	{"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL },
-	{"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL }, /*compat*/
-	{"%d",	1, "trans_valid",	TX_O(tx_trans_valid),	FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
+	{"%s",	TXT_NAME_LEN, "file", bu_offsetofarray(struct txt_specific, tx_file),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL }, /*compat*/
+	{"%d",	1, "trans_valid",	TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /*
@@ -526,7 +526,7 @@ struct bu_structparse ckr_parse[] = {
 	{"%d",	3, "a",	bu_offsetofarray(struct ckr_specific, ckr_a), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	3, "b",	bu_offsetofarray(struct ckr_specific, ckr_b), BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "s", offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
+	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /*

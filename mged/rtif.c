@@ -562,7 +562,7 @@ char	**argv;
 	int	i_pipe[2];
 	FILE	*fp;
 	struct solid *sp;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock	*vbp;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -792,7 +792,7 @@ char	**argv;
 	int	mode;
 	fastf_t	scale;
 	mat_t	rot;
-	register struct rt_vlist *vp;
+	register struct bn_vlist *vp;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -826,7 +826,7 @@ char	**argv;
 		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 			if( sp->s_path[sp->s_last] != dp )  continue;
 			if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
-			vp = BU_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+			vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 			VMOVE( sav_start, vp->pt[vp->nused-1] );
 			VMOVE( sav_center, sp->s_center );
 			Tcl_AppendResult(interp, "animating EYE solid\n", (char *)NULL);
@@ -888,23 +888,23 @@ work:
 
 	    		/* Adjust vector list for non-dl devices */
 	    		if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
-			vp = BU_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+			vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 	    		VSUB2( xlate, eye_model, vp->pt[vp->nused-1] );
-			for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 				register int	i;
 				register int	nused = vp->nused;
 				register int	*cmd = vp->cmd;
 				register point_t *pt = vp->pt;
 				for( i = 0; i < nused; i++,cmd++,pt++ )  {
 					switch( *cmd )  {
-					case RT_VLIST_POLY_START:
-					case RT_VLIST_POLY_VERTNORM:
+					case BN_VLIST_POLY_START:
+					case BN_VLIST_POLY_VERTNORM:
 						break;
-					case RT_VLIST_LINE_MOVE:
-					case RT_VLIST_LINE_DRAW:
-					case RT_VLIST_POLY_MOVE:
-					case RT_VLIST_POLY_DRAW:
-					case RT_VLIST_POLY_END:
+					case BN_VLIST_LINE_MOVE:
+					case BN_VLIST_LINE_DRAW:
+					case BN_VLIST_POLY_MOVE:
+					case BN_VLIST_POLY_DRAW:
+					case BN_VLIST_POLY_END:
 						VADD2( *pt, *pt, xlate );
 						break;
 					}
@@ -918,23 +918,23 @@ work:
 	if( mode == 1 )  {
     		VMOVE( sp->s_center, sav_center );
 		if( BU_LIST_NON_EMPTY( &(sp->s_vlist) ) )  {
-			vp = BU_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+			vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 	    		VSUB2( xlate, sav_start, vp->pt[vp->nused-1] );
-			for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 				register int	i;
 				register int	nused = vp->nused;
 				register int	*cmd = vp->cmd;
 				register point_t *pt = vp->pt;
 				for( i = 0; i < nused; i++,cmd++,pt++ )  {
 					switch( *cmd )  {
-					case RT_VLIST_POLY_START:
-					case RT_VLIST_POLY_VERTNORM:
+					case BN_VLIST_POLY_START:
+					case BN_VLIST_POLY_VERTNORM:
 						break;
-					case RT_VLIST_LINE_MOVE:
-					case RT_VLIST_LINE_DRAW:
-					case RT_VLIST_POLY_MOVE:
-					case RT_VLIST_POLY_DRAW:
-					case RT_VLIST_POLY_END:
+					case BN_VLIST_LINE_MOVE:
+					case BN_VLIST_LINE_DRAW:
+					case BN_VLIST_POLY_MOVE:
+					case BN_VLIST_POLY_DRAW:
+					case BN_VLIST_POLY_END:
 						VADD2( *pt, *pt, xlate );
 						break;
 					}
@@ -1049,7 +1049,7 @@ static struct command_tab cmdtab[] = {
  */
 static vect_t	rtif_eye_model;
 static mat_t	rtif_viewrot;
-static struct rt_vlblock	*rtif_vbp;
+static struct bn_vlblock	*rtif_vbp;
 static FILE	*rtif_fp;
 static double	rtif_delay;
 static struct _mged_variables    rtif_saved_state;       /* saved state variable\s */
@@ -1082,7 +1082,7 @@ int	num;
 
 	if(rtif_vbp)  {
 		rt_vlblock_free(rtif_vbp);
-		rtif_vbp = (struct rt_vlblock *)NULL;
+		rtif_vbp = (struct bn_vlblock *)NULL;
 	}
 	db_free_anim(dbip);	/* Forget any anim commands */
 	sig3();			/* Call main SIGINT handler */
@@ -1213,7 +1213,7 @@ char	**argv;
 	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH", 0 );
 	if(rtif_vbp)  {
 		rt_vlblock_free(rtif_vbp);
-		rtif_vbp = (struct rt_vlblock *)NULL;
+		rtif_vbp = (struct bn_vlblock *)NULL;
 	}
 	db_free_anim(dbip);	/* Forget any anim commands */
 
@@ -1258,7 +1258,7 @@ char	**argv;
 	struct bu_vls o_vls;
 	struct bu_vls p_vls;
 	struct bu_vls t_vls;
-	struct rt_vlblock *vbp;
+	struct bn_vlblock *vbp;
 	struct qray_dataList *ndlp;
 	struct qray_dataList HeadQRayData;
 
@@ -1692,7 +1692,7 @@ char	**argv;
 
 #if 1
 	/*
-	   At the moment mat_lookat will return NAN's if the direction vector
+	   At the moment bn_mat_lookat will return NAN's if the direction vector
 	   is aligned with the Z axis. The following is a temporary workaround.
 	 */
 	{
@@ -1758,9 +1758,9 @@ int	argc;
 
 	/* Record eye path as a polyline.  Move, then draws */
 	if( BU_LIST_IS_EMPTY( vhead ) )  {
-		RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_MOVE );
 	} else {
-		RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_DRAW );
 	}
 	
 	/* First step:  put eye at view center (view 0,0,0) */
@@ -1776,10 +1776,10 @@ int	argc;
 	VSET( yv, 0.0, 0.05, 0.0 );
 	MAT4X3PNT( xm, view_state->vs_view2model, xv );
 	MAT4X3PNT( ym, view_state->vs_view2model, yv );
-	RT_ADD_VLIST( vhead, xm, RT_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vhead, ym, RT_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, xm, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, ym, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_MOVE );
 
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.

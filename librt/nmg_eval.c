@@ -643,7 +643,7 @@ int		delay;
 
 	if( do_anim )  {
 		extern void (*nmg_vlblock_anim_upcall)();
-		struct rt_vlblock	*vbp;
+		struct bn_vlblock	*vbp;
 
 		vbp = rt_vlblock_init();
 

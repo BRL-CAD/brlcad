@@ -274,22 +274,22 @@ CONST char				*value;	/* string containing value */
  * structure above
  */
 struct bu_structparse img_parse_tab[] = {
-	{"%S",	1, "image",		IMG_O(i_file),		FUNC_NULL},
+	{"%S",	1, "image",		IMG_O(i_file),		BU_STRUCTPARSE_FUNC_NULL},
 	{"%d",	1, "w",			IMG_O(i_width),		dimen_hook},
 	{"%d",	1, "n",			IMG_O(i_height),	dimen_hook},
 	{"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook},
-	{"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	FUNC_NULL},
+	{"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL},
 	{"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook},
-	{"%c",	1, "through",		IMG_O(i_through),	FUNC_NULL},
-	{"%c",	1, "antialias",		IMG_O(i_antialias),	FUNC_NULL},
-	{"%c",	1, "behind",		IMG_O(i_behind),	FUNC_NULL},
+	{"%c",	1, "through",		IMG_O(i_through),	BU_STRUCTPARSE_FUNC_NULL},
+	{"%c",	1, "antialias",		IMG_O(i_antialias),	BU_STRUCTPARSE_FUNC_NULL},
+	{"%c",	1, "behind",		IMG_O(i_behind),	BU_STRUCTPARSE_FUNC_NULL},
 	{"%c",	1, "perspective",	IMG_O(i_perspective),	persp_hook},
-	{"",	0, (char *)0,		0,			FUNC_NULL}
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL}
 };
 struct bu_structparse img_print_tab[] = {
 	{"i",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	4, "i_plane",		IMG_AO(i_plane),	FUNC_NULL},
-	{"",	0, (char *)0,		0,			FUNC_NULL}
+	{"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL},
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL}
 };
 
 

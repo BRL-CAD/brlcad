@@ -42,7 +42,6 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 #include "./complex.h"
-#include "./polyno.h"
 #include "nurb.h" 
 RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
 struct rt_i *rtip));
@@ -524,9 +523,9 @@ struct seg		*seghead;
 	LOCAL vect_t		cor_pprime;	/* corrected P prime */
 	LOCAL fastf_t		cor_proj = 0;	/* corrected projected dist */
 	LOCAL int		i;
-	LOCAL poly		C;	/*  final equation	*/
-	LOCAL poly		Xsqr, Ysqr;
-	LOCAL poly		R, Rsqr;
+	LOCAL bn_poly_t		C;	/*  final equation	*/
+	LOCAL bn_poly_t		Xsqr, Ysqr;
+	LOCAL bn_poly_t		R, Rsqr;
 
 	/* find rotated point and direction */
 	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp->r_dir );
@@ -646,7 +645,7 @@ struct seg		*seghead;
 			npts = 2;
 		}
 	} else {
-		LOCAL poly	Q, Qsqr;
+		LOCAL bn_poly_t	Q, Qsqr;
 		LOCAL bn_complex_t	val[4];	/* roots of final equation */
 		register int	l;
 		register int nroots;
@@ -934,12 +933,12 @@ struct application	*ap;
 	LOCAL vect_t		cor_pprime;	/* corrected P prime */
 	LOCAL fastf_t		cor_proj = 0;	/* corrected projected dist */
 	LOCAL int		i;
-	LOCAL poly		*C;	/*  final equation	*/
-	LOCAL poly		Xsqr, Ysqr;
-	LOCAL poly		R, Rsqr;
+	LOCAL bn_poly_t		*C;	/*  final equation	*/
+	LOCAL bn_poly_t		Xsqr, Ysqr;
+	LOCAL bn_poly_t		R, Rsqr;
 
 	/* Allocate space for polys and roots */
-	C = (poly *)bu_malloc(n * sizeof(poly), "tor poly");
+	C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
 #       include "noalias.h"
@@ -1042,7 +1041,7 @@ struct application	*ap;
 			C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
 			C[ix].cf[2] = Xsqr.cf[2] + Ysqr.cf[2] - Rsqr.cf[2];
 		} else {
-			LOCAL poly	Q, Qsqr;
+			LOCAL bn_poly_t	Q, Qsqr;
 
 			Q.dgr = 1;
 			Q.cf[0] = dprime[Z] * tgc->tgc_DdBm1;
@@ -1339,7 +1338,7 @@ struct application	*ap;
 			}
 		}
 	} /* end for each ray/cone pair */
-	bu_free( (char *)C, "tor poly" );
+	bu_free( (char *)C, "tor bn_poly_t" );
 }
 
 /*
@@ -1732,21 +1731,21 @@ struct bn_tol		*tol;
 	rt_ell_16pts( top, work, tip->c, tip->d );
 
 	/* Draw the top */
-	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw the bottom */
-	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 
 	/* Draw connections */
 	for( i=0; i<16; i += 4 )  {
-		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
 	}
 	return(0);
 }

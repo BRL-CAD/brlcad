@@ -141,32 +141,32 @@ struct fire_specific fire_defaults = {
  * structure above
  */
 struct bu_structparse fire_print_tab[] = {
-	{"%d",  1, "debug",	SHDR_O(fire_debug),		FUNC_NULL },
-	{"%f",  1, "flicker",	SHDR_O(fire_flicker),		FUNC_NULL },
-	{"%f",  1, "stretch",	SHDR_O(fire_stretch),		FUNC_NULL },
-	{"%f",	1, "lacunarity", SHDR_O(noise_lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 	SHDR_O(noise_h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 	SHDR_O(noise_octaves),		FUNC_NULL },
+	{"%d",  1, "debug",	SHDR_O(fire_debug),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "flicker",	SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "stretch",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "lacunarity", SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "octaves", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  3, "scale",	SHDR_O(noise_size),		bu_mm_cvt },
-	{"%f",  3, "vscale",	SHDR_AO(noise_vscale),		FUNC_NULL },
-	{"%f",  3, "delta",	SHDR_AO(noise_delta),		FUNC_NULL },
-	{"%f",	3,  "max",	SHDR_AO(fire_max),		FUNC_NULL },
-	{"%f",	3,  "min",	SHDR_AO(fire_min),		FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  3, "vscale",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "delta",	SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	3,  "max",	SHDR_AO(fire_max),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	3,  "min",	SHDR_AO(fire_min),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 
 };
 struct bu_structparse fire_parse_tab[] = {
 	{"i",	bu_byteoffset(fire_print_tab[0]), "fire_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  1, "f",		SHDR_O(fire_flicker),		FUNC_NULL },
-	{"%f",  1, "st",	SHDR_O(fire_stretch),		FUNC_NULL },
-	{"%f",	1, "l",		SHDR_O(noise_lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 	SHDR_O(noise_h_val),		FUNC_NULL },
-	{"%f",	1, "o", 	SHDR_O(noise_octaves),		FUNC_NULL },
+	{"%f",  1, "f",		SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "st",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "l",		SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "o", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "s",		SHDR_O(noise_size),		bu_mm_cvt },
-	{"%f",  3, "v",		SHDR_AO(noise_vscale),		FUNC_NULL },
-	{"%f",  3, "vs",	SHDR_AO(noise_vscale),		FUNC_NULL },
-	{"%f",  3, "d",		SHDR_AO(noise_delta),		FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  3, "v",		SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "vs",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  3, "d",		SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	fire_setup(), fire_render();

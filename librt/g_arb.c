@@ -1108,10 +1108,10 @@ register struct soltab *stp;
 }
 
 #define ARB_FACE( valp, a, b, c, d ) \
-	RT_ADD_VLIST( vhead, valp[a], RT_VLIST_LINE_MOVE ); \
-	RT_ADD_VLIST( vhead, valp[b], RT_VLIST_LINE_DRAW ); \
-	RT_ADD_VLIST( vhead, valp[c], RT_VLIST_LINE_DRAW ); \
-	RT_ADD_VLIST( vhead, valp[d], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, valp[a], BN_VLIST_LINE_MOVE ); \
+	RT_ADD_VLIST( vhead, valp[b], BN_VLIST_LINE_DRAW ); \
+	RT_ADD_VLIST( vhead, valp[c], BN_VLIST_LINE_DRAW ); \
+	RT_ADD_VLIST( vhead, valp[d], BN_VLIST_LINE_DRAW );
 
 /*
  *  			R T _ A R B _ P L O T

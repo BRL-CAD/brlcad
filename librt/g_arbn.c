@@ -382,12 +382,12 @@ struct bn_tol		*tol;
 				if( next_k != 0)  continue;
 
 				if( point_count <= 0 )  {
-					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 					VMOVE( a, pt );
 				} else if( point_count == 1 )  {
 					VSUB2( dist, pt, a );
 					if( MAGSQ(dist) < tol->dist_sq )  continue;
-					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 					VMOVE( b, pt );
 				} else {
 					VSUB2( dist, pt, a );
@@ -400,7 +400,7 @@ struct bn_tol		*tol;
 					VPRINT(" a", a);
 					VPRINT(" b", b);
 					VPRINT("pt", pt);
-					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );	/* draw it */
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );	/* draw it */
 				}
 				point_count++;
 			}

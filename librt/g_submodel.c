@@ -75,8 +75,8 @@ struct rt_submodel_internal {
 struct bu_structparse rt_submodel_parse[] = {
 	{"%s",	128, "file",	bu_offsetofarray(struct rt_submodel_internal, file), BU_STRUCTPARSE_FUNC_NULL },
 	{"%s",	128, "treetop", bu_offsetofarray(struct rt_submodel_internal, treetop), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "meth",	RT_SUBMODEL_O(meth),		FUNC_NULL },
-	{"",	0, (char *)0, 0,			FUNC_NULL }
+	{"%d",	1, "meth",	RT_SUBMODEL_O(meth),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -159,7 +159,7 @@ struct rt_i		*rtip;
 	argv[0] = sip->treetop;
 	argv[1] = NULL;
 	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
-		rt_free_rti( rtip );
+		bu_free_rti( rtip );
 		return -2;
 	}
 
@@ -443,7 +443,7 @@ register struct soltab *stp;
 	register struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
 
-	rt_free_rti( submodel->rtip );
+	bu_free_rti( submodel->rtip );
 
 	bu_free( (genptr_t)submodel, "submodel_specific" );
 }

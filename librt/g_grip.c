@@ -246,21 +246,21 @@ struct bn_tol		*tol;
 	VADD2( y1, gip->center, ybase );
 	VSUB2( y2, gip->center, ybase );
 
-	RT_ADD_VLIST( vhead, x1, RT_VLIST_LINE_MOVE );	/* the base */
-	RT_ADD_VLIST( vhead, y1, RT_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, x2, RT_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, y2, RT_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, x1, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, x1, BN_VLIST_LINE_MOVE );	/* the base */
+	RT_ADD_VLIST( vhead, y1, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, x2, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, y2, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, x1, BN_VLIST_LINE_DRAW );
 
 	VSCALE( tip, gip->normal, gip->mag );
 	VADD2( tip, gip->center, tip );
 
-	RT_ADD_VLIST( vhead, x1,  RT_VLIST_LINE_MOVE ); /* the sides */
-	RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, x2,  RT_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, y1,  RT_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, y2,  RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, x1,  BN_VLIST_LINE_MOVE ); /* the sides */
+	RT_ADD_VLIST( vhead, tip, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, x2,  BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, y1,  BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, tip, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, y2,  BN_VLIST_LINE_DRAW );
 	return(0);
 }
 

@@ -33,8 +33,6 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "rtgeom.h"
 #include "./debug.h"
-#include "./complex.h"
-#include "./polyno.h"
 
 struct id_pipe
 {
@@ -100,7 +98,7 @@ struct hit_list
 #define	PIPE_BEND_BASE		7
 #define PIPE_BEND_TOP		8
 
-RT_EXTERN( void bn_pipe_ifree, (struct rt_db_internal *ip) );
+RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
 
 
 HIDDEN int
@@ -148,7 +146,7 @@ fastf_t od, id;
 	/* angle goes from 0.0 at start to some angle less than PI */
 	if( pipe->bend_angle >= bn_pi )
 	{
-		bu_log( "Error: bn_pipe_prep: Bend section bends through more than 180 degrees\n" );
+		bu_log( "Error: rt_pipe_prep: Bend section bends through more than 180 degrees\n" );
 		return( 1 );
 	}
 
@@ -494,14 +492,14 @@ int			seg_no;
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL poly	C;		/* The final equation */
+	LOCAL bn_poly_t	C;		/* The final equation */
 	LOCAL bn_complex_t	val[4];	/* The complex roots */
 	LOCAL double	k[4];		/* The real roots */
 	register int	i;
 	LOCAL int	j;
 	LOCAL int	root_count=0;
-	LOCAL poly	A, Asqr;
-	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
+	LOCAL bn_poly_t	A, Asqr;
+	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
 	LOCAL fastf_t	cor_proj;
 	LOCAL fastf_t	dist_to_pca;
@@ -1505,7 +1503,7 @@ int			full_circle;
 	x = radius;
 	y = 0.0;
 	VJOIN2( pt, center, x, v1, y, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	for( i=0 ; i<seg_count ; i++ )
 	{
 		vect_t radial_dir;
@@ -1514,7 +1512,7 @@ int			full_circle;
 		xnew = x*cos_del - y*sin_del;
 		ynew = x*sin_del + y*cos_del;
 		VJOIN2( pt, center, xnew, v1, ynew, v2 );
-		RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 		x = xnew;
 		y = ynew;
 	}
@@ -1531,41 +1529,41 @@ CONST vect_t			v2;
 	point_t pt;
 
 	VJOIN1( pt, p1, or1, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	VJOIN1( pt, p2, or2, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 	VJOIN1( pt, p1, or1, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	VJOIN1( pt, p2, or2, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 	VJOIN1( pt, p1, -or1, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	VJOIN1( pt, p2, -or2, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 	VJOIN1( pt, p1, -or1, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	VJOIN1( pt, p2, -or2, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 
 	if( ir1 <= 0.0 && ir2 <= 0.0 )
 		return;
 
 	VJOIN1( pt, p1, ir1, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	VJOIN1( pt, p2, ir2, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 	VJOIN1( pt, p1, ir1, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	VJOIN1( pt, p2, ir2, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 	VJOIN1( pt, p1, -ir1, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	VJOIN1( pt, p2, -ir2, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 	VJOIN1( pt, p1, -ir1, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	VJOIN1( pt, p2, -ir2, v2 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 }
 
 HIDDEN void
@@ -3329,7 +3327,6 @@ struct bn_tol		*tol;
 			"rt_pipe_tess: outer_loop" );
 	inner_loop = (struct vertex **)bu_calloc( arc_segs, sizeof( struct vertex *),
 			"rt_pipe_tess: inner_loop" );
-
 	delta_angle = 2.0 * bn_pi / (double)arc_segs;
 	sin_del = sin( delta_angle );
 	cos_del = cos( delta_angle );

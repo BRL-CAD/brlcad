@@ -67,21 +67,21 @@ struct phong_specific {
 #define PL_O(m)	offsetof(struct phong_specific, m)
 
 struct bu_structparse phong_parse[] = {
-	{"%d",	1, "shine",		PL_O(shine),		FUNC_NULL },
-	{"%d",	1, "sh",		PL_O(shine),		FUNC_NULL },
-	{"%f",	1, "specular",		PL_O(wgt_specular),	FUNC_NULL },
-	{"%f",	1, "sp",		PL_O(wgt_specular),	FUNC_NULL },
-	{"%f",	1, "diffuse",		PL_O(wgt_diffuse),	FUNC_NULL },
-	{"%f",	1, "di",		PL_O(wgt_diffuse),	FUNC_NULL },
-	{"%f",	1, "transmit",		PL_O(transmit),		FUNC_NULL },
-	{"%f",	1, "tr",		PL_O(transmit),		FUNC_NULL },
-	{"%f",	1, "reflect",		PL_O(reflect),		FUNC_NULL },
-	{"%f",	1, "re",		PL_O(reflect),		FUNC_NULL },
-	{"%f",	1, "ri",		PL_O(refrac_index),	FUNC_NULL },
-	{"%f",	1, "extinction_per_meter", PL_O(extinction),	FUNC_NULL },
-	{"%f",	1, "extinction",	PL_O(extinction),	FUNC_NULL },
-	{"%f",	1, "ex",		PL_O(extinction),	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "sh",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "specular",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "sp",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "diffuse",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "di",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "transmit",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "tr",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "reflect",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "re",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "ri",		PL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "extinction_per_meter", PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "extinction",	PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "ex",		PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int phong_setup(), mirror_setup(), glass_setup();

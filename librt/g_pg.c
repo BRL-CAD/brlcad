@@ -503,10 +503,10 @@ struct bn_tol		*tol;
 
 		pp = &pgp->poly[p];
 		RT_ADD_VLIST( vhead, &pp->verts[3*(pp->npts-1)],
-			RT_VLIST_LINE_MOVE );
+			BN_VLIST_LINE_MOVE );
 		for( i=0; i < pp->npts; i++ )  {
 			RT_ADD_VLIST( vhead, &pp->verts[3*i],
-				RT_VLIST_LINE_DRAW );
+				BN_VLIST_LINE_DRAW );
 		}
 	}
 	return(0);		/* OK */

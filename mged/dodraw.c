@@ -159,7 +159,7 @@ long	us;		/* microseconds of extra delay */
  */
 void
 mged_vlblock_anim_upcall_handler( vbp, us, copy )
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 long		us;		/* microseconds of extra delay */
 int		copy;
 {
@@ -304,7 +304,7 @@ static int mged_do_not_draw_nmg_solids_during_debugging = 0;
 static int mged_draw_edge_uses=0;
 static int mged_enable_fastpath = 0;
 static int mged_fastpath_count=0;	/* statistics */
-static struct rt_vlblock	*mged_draw_edge_uses_vbp;
+static struct bn_vlblock	*mged_draw_edge_uses_vbp;
 
 /*
  *			M G E D _ N M G _ R E G I O N _ S T A R T
@@ -391,10 +391,10 @@ CONST struct rt_comb_internal *combp;
 
 					pp = &pgp->poly[p];
 					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
-						RT_VLIST_LINE_MOVE );
+						BN_VLIST_LINE_MOVE );
 					for( i=0; i < pp->npts; i++ )  {
 						RT_ADD_VLIST( &vhead, &pp->verts[3*i],
-							RT_VLIST_LINE_DRAW );
+							BN_VLIST_LINE_DRAW );
 					}
 				}
 			} else {
@@ -409,16 +409,16 @@ CONST struct rt_comb_internal *combp;
 					VCROSS( norm, aa, bb );
 					VUNITIZE(norm);
 					RT_ADD_VLIST( &vhead, norm,
-						RT_VLIST_POLY_START );
+						BN_VLIST_POLY_START );
 
 					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
-						RT_VLIST_POLY_MOVE );
+						BN_VLIST_POLY_MOVE );
 					for( i=0; i < pp->npts-1; i++ )  {
 						RT_ADD_VLIST( &vhead, &pp->verts[3*i],
-							RT_VLIST_POLY_DRAW );
+							BN_VLIST_POLY_DRAW );
 					}
 					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
-						RT_VLIST_POLY_END );
+						BN_VLIST_POLY_END );
 				}
 			}
 		}
@@ -773,8 +773,8 @@ A production implementation will exist in the maintenance release.\n", (char *)N
 
 	  	if (mged_draw_edge_uses) {
 	  		cvt_vlblock_to_solids(mged_draw_edge_uses_vbp, "_EDGEUSES_", 0);
-	  		rt_vlblock_free(mged_draw_edge_uses_vbp);
-			mged_draw_edge_uses_vbp = (struct rt_vlblock *)NULL;
+	  		bn_vlblock_free(mged_draw_edge_uses_vbp);
+			mged_draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
  	  	}
 
 		/* Destroy NMG */
@@ -793,35 +793,35 @@ A production implementation will exist in the maintenance release.\n", (char *)N
 /*
  *  Compute the min, max, and center points of the solid.
  *  Also finds s_vlen;
- * XXX Should split out a separate rt_vlist_rpp() routine, for librt/vlist.c
+ * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
 void
 mged_bound_solid( sp )
 register struct solid *sp;
 {
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	register double			xmax, ymax, zmax;
 	register double			xmin, ymin, zmin;
 
 	xmax = ymax = zmax = -INFINITY;
 	xmin = ymin = zmin =  INFINITY;
 	sp->s_vlen = 0;
-	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 		register int	j;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
 		for( j = 0; j < nused; j++,cmd++,pt++ )  {
 			switch( *cmd )  {
-			case RT_VLIST_POLY_START:
-			case RT_VLIST_POLY_VERTNORM:
+			case BN_VLIST_POLY_START:
+			case BN_VLIST_POLY_VERTNORM:
 				/* Has normal vector, not location */
 				break;
-			case RT_VLIST_LINE_MOVE:
-			case RT_VLIST_LINE_DRAW:
-			case RT_VLIST_POLY_MOVE:
-			case RT_VLIST_POLY_DRAW:
-			case RT_VLIST_POLY_END:
+			case BN_VLIST_LINE_MOVE:
+			case BN_VLIST_LINE_DRAW:
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
 				V_MIN( xmin, (*pt)[X] );
 				V_MAX( xmax, (*pt)[X] );
 				V_MIN( ymin, (*pt)[Y] );
@@ -1060,7 +1060,7 @@ matp_t matp;
 #endif
 #endif
 
-	mat_copy( matp, ts.ts_mat );	/* implicit return */
+	bn_mat_copy( matp, ts.ts_mat );	/* implicit return */
 
 	db_free_db_tree_state( &ts );
 
@@ -1244,7 +1244,7 @@ CONST mat_t			mat;
  */
 void
 cvt_vlblock_to_solids( vbp, name, copy )
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 char			*name;
 int			copy;
 {
@@ -1334,7 +1334,7 @@ int		copy;
 
 	if( copy )  {
 		BU_LIST_INIT( &(sp->s_vlist) );
-		rt_vlist_copy( &(sp->s_vlist), vhead );
+		bn_vlist_copy( &(sp->s_vlist), vhead );
 	} else {
 		/* For efficiency, just swipe the vlist */
 		BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );

@@ -34,8 +34,6 @@ static char RCStorus[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
-#include "./complex.h"
-#include "./polyno.h"
 
 /*
  * The TORUS has the following input fields:
@@ -344,13 +342,13 @@ struct seg		*seghead;
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL poly	C;		/* The final equation */
+	LOCAL bn_poly_t	C;		/* The final equation */
 	LOCAL bn_complex_t val[4];		/* The complex roots */
 	LOCAL double	k[4];		/* The real roots */
 	register int	i;
 	LOCAL int	j;
-	LOCAL poly	A, Asqr;
-	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
+	LOCAL bn_poly_t	A, Asqr;
+	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
 	LOCAL fastf_t	cor_proj;
 
@@ -535,19 +533,19 @@ struct application	*ap;
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL poly	*C;		/* The final equation */
+	LOCAL bn_poly_t	*C;		/* The final equation */
 	LOCAL bn_complex_t (*val)[4];	/* The complex roots */
 	LOCAL int	num_roots;
 	LOCAL int	num_zero;
-	LOCAL poly	A, Asqr;
-	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
+	LOCAL bn_poly_t	A, Asqr;
+	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
 	LOCAL fastf_t	*cor_proj;
 
 	/* Allocate space for polys and roots */
-        C = (poly *)bu_malloc(n * sizeof(poly), "tor poly");
-	val = (complex (*)[4])bu_malloc(n * sizeof(complex) * 4,
-		"tor complex");
+        C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
+	val = (bn_complex_t (*)[4])bu_malloc(n * sizeof(bn_complex_t) * 4,
+		"tor bn_complex_t");
 	cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "tor proj");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
@@ -1036,17 +1034,17 @@ CONST struct bn_tol	*tol;
 	/* Draw lengthwise (around outside rim) */
 	for( w = 0; w < nw; w++ )  {
 		len = nlen-1;
-		RT_ADD_VLIST( vhead, PTA(w,len), RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, PTA(w,len), BN_VLIST_LINE_MOVE );
 		for( len = 0; len < nlen; len++ )  {
-			RT_ADD_VLIST( vhead, PTA(w,len), RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, PTA(w,len), BN_VLIST_LINE_DRAW );
 		}
 	}
 	/* Draw around the "width" (1 cross section) */
 	for( len = 0; len < nlen; len++ )  {
 		w = nw-1;
-		RT_ADD_VLIST( vhead, PTA(w,len), RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, PTA(w,len), BN_VLIST_LINE_MOVE );
 		for( w = 0; w < nw; w++ )  {
-			RT_ADD_VLIST( vhead, PTA(w,len), RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, PTA(w,len), BN_VLIST_LINE_DRAW );
 		}
 	}
 

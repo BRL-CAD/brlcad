@@ -56,19 +56,19 @@ struct cook_specific {
 #define CL_O(m)	offsetof(struct cook_specific, m)
 
 struct bu_structparse cook_parse[] = {
-	{"%f", 1, "m",		CL_O(m),		FUNC_NULL },
-	{"%f", 1, "specular",	CL_O(wgt_specular),	FUNC_NULL },
-	{"%f", 1, "sp",		CL_O(wgt_specular),	FUNC_NULL },
-	{"%f", 1, "diffuse",	CL_O(wgt_diffuse),	FUNC_NULL },
-	{"%f", 1, "di",		CL_O(wgt_diffuse),	FUNC_NULL },
-	{"%f", 1, "transmit",	CL_O(transmit),		FUNC_NULL },
-	{"%f", 1, "tr",		CL_O(transmit),		FUNC_NULL },
-	{"%f", 1, "reflect",	CL_O(reflect),		FUNC_NULL },
-	{"%f", 1, "re",		CL_O(reflect),		FUNC_NULL },
-	{"%f", 1, "ri",		CL_O(refrac_index),	FUNC_NULL },
-	{"%f", 1, "extinction",	CL_O(extinction),	FUNC_NULL },
-	{"%f", 1, "ex",		CL_O(extinction),	FUNC_NULL },
-	{"",   0, (char *)0,	0,			FUNC_NULL }
+	{"%f", 1, "m",		CL_O(m),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "specular",	CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "sp",		CL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "diffuse",	CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "di",		CL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "transmit",	CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "tr",		CL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "reflect",	CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "re",		CL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "ri",		CL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "extinction",	CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "ex",		CL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	cook_setup(), cmirror_setup(), cglass_setup();

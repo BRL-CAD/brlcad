@@ -834,11 +834,11 @@ struct bn_tol		*tol;
 	/* Draw the top ellipse */
 	RT_ADD_VLIST( vhead,
 		&ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
-		RT_VLIST_LINE_MOVE );
+		BN_VLIST_LINE_MOVE );
 	for( i = 0; i < nseg; i++ )  {
 		RT_ADD_VLIST( vhead,
 			&ellipses[nell-1][i*ELEMENTS_PER_VECT],
-			RT_VLIST_LINE_DRAW );
+			BN_VLIST_LINE_DRAW );
 	}
 
 	/* connect ellipses */
@@ -853,11 +853,11 @@ struct bn_tol		*tol;
 		/* Draw the current ellipse */
 		RT_ADD_VLIST( vhead,
 			&ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
-			RT_VLIST_LINE_MOVE );
+			BN_VLIST_LINE_MOVE );
 		for( j = 0; j < nseg; j++ )  {
 			RT_ADD_VLIST( vhead,
 				&ellipses[bottom][j*ELEMENTS_PER_VECT],
-				RT_VLIST_LINE_DRAW );
+				BN_VLIST_LINE_DRAW );
 		}
 
 		/* make connections between ellipses */
@@ -868,20 +868,20 @@ struct bn_tol		*tol;
 				jj = j;
 			RT_ADD_VLIST( vhead,
 				&ellipses[bottom][j*ELEMENTS_PER_VECT],
-				RT_VLIST_LINE_MOVE );
+				BN_VLIST_LINE_MOVE );
 			RT_ADD_VLIST( vhead,
 				&ellipses[top][jj*ELEMENTS_PER_VECT],
-				RT_VLIST_LINE_DRAW );
+				BN_VLIST_LINE_DRAW );
 		}
 	}
 
 	VADD2( Work, xip->epa_V, xip->epa_H );
 	for (i = 0; i < nseg; i++) {
 		/* Draw connector */
-		RT_ADD_VLIST( vhead, Work, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, Work, BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead,
 			&ellipses[0][i*ELEMENTS_PER_VECT],
-			RT_VLIST_LINE_DRAW );
+			BN_VLIST_LINE_DRAW );
 	}
 
 	/* free mem */

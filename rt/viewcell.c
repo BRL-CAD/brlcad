@@ -44,7 +44,7 @@ int		use_air = 0;		/* Handling of air in librt */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,		FUNC_NULL }
+	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
 static mat_t	model2hv;		/* model coords to GIFT h,v in inches */

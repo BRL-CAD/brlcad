@@ -444,13 +444,13 @@ extern struct bu_structparse view_parse[];
 #endif
 struct bu_structparse set_parse[] = {
 #if !defined(__alpha)	/* XXX Alpha does not support this initialization! */
-	{"%d",	1, "width",	byteoffset(width),		FUNC_NULL },
-	{"%d",	1, "height",	byteoffset(height),		FUNC_NULL },
-	{"%f",	1, "perspective", byteoffset(rt_perspective),	FUNC_NULL },
-	{"%f",	1, "angle",	byteoffset(rt_perspective),	FUNC_NULL },
+	{"%d",	1, "width",	byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "height",	byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "perspective", byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "angle",	byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
-	{"",	0, (char *)0,	0,				FUNC_NULL }
+	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /*
@@ -617,7 +617,7 @@ int framenumber;
 	/* az/el 0,0 is when screen +Z is model +X */
 	VSET( work, 0, 0, 1 );
 	MAT3X3VEC( temp, view2model, work );
-	ae_vec( &azimuth, &elevation, temp );
+	bn_ae_vec( &azimuth, &elevation, temp );
 	bu_log(
 		"View: %g azimuth, %g elevation off of front view\n",
 		azimuth, elevation);

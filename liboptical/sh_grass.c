@@ -169,33 +169,33 @@ struct grass_specific grass_defaults = {
  * structure above
  */
 struct bu_structparse grass_print_tab[] = {
-	{"%f",  2, "cell",		SHDR_AO(cell),		FUNC_NULL },
-	{"%f",	1, "ppc",		SHDR_O(ppc),		FUNC_NULL },
-	{"%f",	1, "ppcd",		SHDR_O(ppcd),		FUNC_NULL },
-	{"%f",	1, "t",			SHDR_O(t),		FUNC_NULL },
-	{"%f",	1, "width",		SHDR_O(blade_width),	FUNC_NULL },
-	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "size",		SHDR_O(size),		FUNC_NULL },
-	{"%d",	1, "nsegs",		SHDR_O(nsegs),		FUNC_NULL },
-	{"%f",	1, "seg_ratio",		SHDR_O(seg_ratio),	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  2, "cell",		SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "ppc",		SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "ppcd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "t",			SHDR_O(t),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "width",		SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "size",		SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "nsegs",		SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "seg_ratio",		SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 
 };
 struct bu_structparse grass_parse_tab[] = {
 	{"i",	bu_byteoffset(grass_print_tab[0]), "grass_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  2, "c",			SHDR_AO(cell),		FUNC_NULL },
-	{"%f",	1, "p",			SHDR_O(ppc),		FUNC_NULL },
-	{"%f",	1, "pd",		SHDR_O(ppcd),		FUNC_NULL },
-	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "s",			SHDR_O(size),		FUNC_NULL },
-	{"%f",	1, "w",			SHDR_O(blade_width),	FUNC_NULL },
-	{"%d",	1, "n",			SHDR_O(nsegs),		FUNC_NULL },
-	{"%f",	1, "r",			SHDR_O(seg_ratio),	FUNC_NULL },
-	{"%d",	1, "d",			SHDR_O(debug),		FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  2, "c",			SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "p",			SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "pd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "s",			SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "w",			SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "n",			SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "r",			SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "d",			SHDR_O(debug),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	grass_setup(), grass_render();

@@ -74,16 +74,16 @@ struct toyota_specific {
 #define CL_O(m)	offsetof(struct toyota_specific, m)
 
 struct bu_structparse toyota_parse[] = {
-	{"%f", 1, "alpha",	CL_O(alpha),		FUNC_NULL },
-	{"%f", 1, "beta",	CL_O(beta),		FUNC_NULL },
-	{"%d", 1, "weather",	CL_O(weather),		FUNC_NULL },
-	{"%f", 1, "sun_sang",	CL_O(sun_sang),		FUNC_NULL },
-	{"%f", 1, "index_refrac",CL_O(index_refrac),	FUNC_NULL },
-	{"%f", 1, "atmos_trans",CL_O(atmos_trans),	FUNC_NULL },
-	{"%f", 3, "Zenith",	bu_offsetofarray(struct toyota_specific, Zenith),		FUNC_NULL },
-	{"%s", 1, "material",	bu_offsetofarray(struct toyota_specific, material),		FUNC_NULL },
-	{"%d", 1, "glass",	CL_O(glass),		FUNC_NULL },
-	{"",   0, (char *)0,	0,			FUNC_NULL }
+	{"%f", 1, "alpha",	CL_O(alpha),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "beta",	CL_O(beta),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "weather",	CL_O(weather),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "sun_sang",	CL_O(sun_sang),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "index_refrac",CL_O(index_refrac),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "atmos_trans",CL_O(atmos_trans),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 3, "Zenith",	bu_offsetofarray(struct toyota_specific, Zenith),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%s", 1, "material",	bu_offsetofarray(struct toyota_specific, material),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "glass",	CL_O(glass),		BU_STRUCTPARSE_FUNC_NULL },
+	{"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	toyota_setup(), tmirror_setup(), tglass_setup();

@@ -92,7 +92,7 @@ struct gauss_specific {
 	point_t	gauss_min;
 	point_t gauss_max;
 	mat_t	gauss_m_to_sh;	/* model to shader space matrix */
-	struct	rt_list	dbil;
+	struct	bu_list	dbil;
 };
 
 
@@ -119,14 +119,14 @@ struct gauss_specific gauss_defaults = {
  * structure above
  */
 struct bu_structparse gauss_print_tab[] = {
-	{"%f",  1, "sigma",		SHDR_O(gauss_sigma),	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  1, "sigma",		SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 
 };
 struct bu_structparse gauss_parse_tab[] = {
 	{"i",	bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  1, "s",			SHDR_O(gauss_sigma),	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%f",  1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	gauss_setup(), gauss_render();

@@ -44,7 +44,7 @@ int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	FUNC_NULL }
+	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 extern FILE	*outfp;			/* optional output file */

@@ -127,14 +127,14 @@ mat_t		Rot, Inv;
 	tmp_mat1[10] = uC[Z];
 
 	MAT_DELTAS_VEC_NEG( Rot, eip->V )
-	bn_mat_mul2( tmp_mat1, Rot );
+	bn_bn_mat_mul2( tmp_mat1, Rot );
 
 	MAT4X3VEC( tmp_h, Rot, eip->h );
 
 	tmp_mat2[2] = tmp_h[X]/tmp_h[Z];
 	tmp_mat2[6] = tmp_h[Y]/tmp_h[Z];
 
-	bn_mat_mul2( tmp_mat2, Rot );
+	bn_bn_mat_mul2( tmp_mat2, Rot );
 
 }
 
@@ -383,10 +383,10 @@ struct bn_tol		*tol;
 				if( first || start != prev )
 				{
 					VJOIN2( pt, extrude_ip->V, sketch_ip->verts[start][0], extrude_ip->u_vec, sketch_ip->verts[start][1], extrude_ip->v_vec);
-					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE )
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
 				}
 				VJOIN2( pt, extrude_ip->V, sketch_ip->verts[end][0], extrude_ip->u_vec, sketch_ip->verts[end][1], extrude_ip->v_vec);
-				RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 				prev = end;
 				break;
 			default:
@@ -421,10 +421,10 @@ struct bn_tol		*tol;
 				if( first || start != prev )
 				{
 					VJOIN2( pt, end_of_h, sketch_ip->verts[start][0], extrude_ip->u_vec, sketch_ip->verts[start][1], extrude_ip->v_vec);
-					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE )
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
 				}
 				VJOIN2( pt, end_of_h, sketch_ip->verts[end][0], extrude_ip->u_vec, sketch_ip->verts[end][1], extrude_ip->v_vec);
-				RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
 				prev = end;
 				break;
 			default:
@@ -452,8 +452,8 @@ struct bn_tol		*tol;
 					end = lsg->end;
 				VJOIN2( pt, extrude_ip->V, sketch_ip->verts[end][0], extrude_ip->u_vec, sketch_ip->verts[end][1], extrude_ip->v_vec);
 				VJOIN2( pt2, end_of_h, sketch_ip->verts[end][0], extrude_ip->u_vec, sketch_ip->verts[end][1], extrude_ip->v_vec);
-				RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE )
-				RT_ADD_VLIST( vhead, pt2, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
+				RT_ADD_VLIST( vhead, pt2, BN_VLIST_LINE_DRAW );
 				prev = end;
 				break;
 			default:

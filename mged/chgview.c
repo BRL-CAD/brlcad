@@ -935,7 +935,7 @@ char	**argv;
   		db_full_path_init( &path );
 
   		ts.ts_dbip = dbip;
-  		mat_idn(ts.ts_mat);
+  		bn_mat_idn(ts.ts_mat);
 
   		if( db_follow_path_for_state( &ts, &path, argv[arg], 1 ) )
   			continue;
@@ -1025,7 +1025,7 @@ char	**argv;
 }
 
 /*
- *  To return all the free "struct rt_vlist" and "struct solid" items
+ *  To return all the free "struct bn_vlist" and "struct solid" items
  *  lurking on their respective freelists, back to bu_malloc().
  *  Primarily as an aid to tracking memory leaks.
  *  WARNING:  This depends on knowledge of the macro GET_SOLID in mged/solid.h
@@ -1035,7 +1035,7 @@ void
 mged_freemem()
 {
   register struct solid		*sp;
-  register struct rt_vlist	*vp;
+  register struct bn_vlist	*vp;
 
   FOR_ALL_SOLIDS(sp,&FreeSolid.l){
     GET_SOLID(sp,&FreeSolid.l);
@@ -1043,9 +1043,9 @@ mged_freemem()
   }
 
   while( BU_LIST_NON_EMPTY( &rt_g.rtg_vlfree ) )  {
-    vp = BU_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree );
+    vp = BU_LIST_FIRST( bn_vlist, &rt_g.rtg_vlfree );
     BU_LIST_DEQUEUE( &(vp->l) );
-    bu_free( (genptr_t)vp, "mged_freemem: struct rt_vlist" );
+    bu_free( (genptr_t)vp, "mged_freemem: struct bn_vlist" );
   }
 }
 
@@ -1803,7 +1803,7 @@ int		lvl;			/* debug level */
 {
   register struct solid	*sp;
   register int		i;
-  register struct rt_vlist	*vp;
+  register struct bn_vlist	*vp;
   int			nvlist;
   int			npts;
   struct bu_vls vls;
@@ -1861,13 +1861,13 @@ int		lvl;			/* debug level */
     /* Print the actual vector list */
     nvlist = 0;
     npts = 0;
-    for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+    for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
       register int	i;
       register int	nused = vp->nused;
       register int	*cmd = vp->cmd;
       register point_t *pt = vp->pt;
 
-      RT_CK_VLIST( vp );
+      BN_CK_VLIST( vp );
       nvlist++;
       npts += nused;
       if( lvl <= 2 )  continue;
@@ -4570,7 +4570,7 @@ char	**argv;
 
   VSUB2( dir, eye, look );
   VUNITIZE( dir );
-  mat_ae_vec( &new_az, &new_el, dir );
+  bn_ae_vec( &new_az, &new_el, dir );
 
   bu_vls_init(&vls);
   bu_vls_printf(&vls, "ae %-15.10f %-15.10f %-15.10f", new_az, new_el, view_state->vs_twist);

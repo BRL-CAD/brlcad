@@ -297,7 +297,7 @@ struct rt_i			*rtip;
 		struct bu_list	*mid;
 
 		/* Search dp->d_use_hd list for other instances */
-		for( BU_LIST_FOR( mid, rt_list, &dp->d_use_hd ) )  {
+		for( BU_LIST_FOR( mid, bu_list, &dp->d_use_hd ) )  {
 
 			stp = BU_LIST_MAIN_PTR( soltab, mid, l2 );
 			RT_CK_SOLTAB(stp);

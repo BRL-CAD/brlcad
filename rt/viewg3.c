@@ -63,7 +63,7 @@ int		use_air = 1;		/* Handling of air in librt */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,		FUNC_NULL }
+	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
 static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
@@ -355,7 +355,7 @@ register struct partition *PartHeadp;
 #define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f\n"
 
 	if( rt_perspective > 0 )  {
-		ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
+		bn_ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
 	}
 
 #ifdef SPRINTF_NOT_PARALLEL
