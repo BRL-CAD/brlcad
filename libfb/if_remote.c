@@ -30,6 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #ifdef BSD
+#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <sys/types.h>
 #include <sys/uio.h>		/* for struct iovec */
 #include <netinet/in.h>		/* for htons(), etc */
