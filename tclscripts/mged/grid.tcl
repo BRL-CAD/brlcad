@@ -281,6 +281,11 @@ proc init_grid_control { id } {
     frame $top.gridFF3 -relief groove -bd 2
     frame $top.gridF4
 
+    frame $top.hF -relief sunken -bd 2
+    frame $top.maj_hF -relief sunken -bd 2
+    frame $top.vF -relief sunken -bd 2
+    frame $top.maj_vF -relief sunken -bd 2
+
     frame $top.anchorF
     frame $top.anchorFF -relief sunken -bd 2
     frame $top.colorF
@@ -290,12 +295,72 @@ proc init_grid_control { id } {
     label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
 
     label $top.hL -text "Horiz." -anchor w
-    entry $top.hE -relief sunken -width 12 -textvar grid_control_h($id)
-    entry $top.maj_hE -relief sunken -width 12 -textvar grid_control_maj_h($id)
+    entry $top.hE -relief flat -width 12 -textvar grid_control_h($id)
+    menubutton $top.hMB -relief raised -bd 2\
+	    -menu $top.hMB.spacing -indicatoron 1
+    menu $top.hMB.spacing -tearoff 0
+    $top.hMB.spacing add command -label "micrometer" -underline 4\
+	    -command "set_grid_spacing $id micrometer"
+    $top.hMB.spacing add command -label "millimeter" -underline 2\
+	    -command "set_grid_spacing $id millimeter"
+    $top.hMB.spacing add command -label "centimeter" -underline 0\
+	    -command "set_grid_spacing $id centimeter"
+    $top.hMB.spacing add command -label "decimeter" -underline 0\
+	    -command "set_grid_spacing $id decimeter"
+    $top.hMB.spacing add command -label "meter" -underline 0\
+	    -command "set_grid_spacing $id meter"
+    $top.hMB.spacing add command -label "kilometer" -underline 0\
+	    -command "set_grid_spacing $id kilometer"
+    $top.hMB.spacing add separator
+    $top.hMB.spacing add command -label "1/10 inch" -underline 0\
+	    -command "set_grid_spacing $id \"1/10 inch\""
+    $top.hMB.spacing add command -label "1/4 inch" -underline 2\
+	    -command "set_grid_spacing $id \"1/4 inch\""
+    $top.hMB.spacing add command -label "1/2 inch" -underline 2\
+	    -command "set_grid_spacing $id \"1/2 inch\""
+    $top.hMB.spacing add command -label "inch" -underline 0\
+	    -command "set_grid_spacing $id inch"
+    $top.hMB.spacing add command -label "foot" -underline 0\
+	    -command "set_grid_spacing $id foot"
+    $top.hMB.spacing add command -label "yard" -underline 0\
+	    -command "set_grid_spacing $id yard"
+    $top.hMB.spacing add command -label "mile" -underline 0\
+	    -command "set_grid_spacing $id mile"
+    entry $top.maj_hE -relief flat -width 12 -textvar grid_control_maj_h($id)
 
     label $top.vL -text "Vert." -anchor w
-    entry $top.vE -relief sunken -width 12 -textvar grid_control_v($id)
-    entry $top.maj_vE -relief sunken -width 12 -textvar grid_control_maj_v($id)
+    entry $top.vE -relief flat -width 12 -textvar grid_control_v($id)
+    menubutton $top.vMB -relief raised -bd 2\
+	    -menu $top.vMB.spacing -indicatoron 1
+    menu $top.vMB.spacing -tearoff 0
+    $top.vMB.spacing add command -label "micrometer" -underline 4\
+	    -command "set_grid_spacing $id micrometer"
+    $top.vMB.spacing add command -label "millimeter" -underline 2\
+	    -command "set_grid_spacing $id millimeter"
+    $top.vMB.spacing add command -label "centimeter" -underline 0\
+	    -command "set_grid_spacing $id centimeter"
+    $top.vMB.spacing add command -label "decimeter" -underline 0\
+	    -command "set_grid_spacing $id decimeter"
+    $top.vMB.spacing add command -label "meter" -underline 0\
+	    -command "set_grid_spacing $id meter"
+    $top.vMB.spacing add command -label "kilometer" -underline 0\
+	    -command "set_grid_spacing $id kilometer"
+    $top.vMB.spacing add separator
+    $top.vMB.spacing add command -label "1/10 inch" -underline 0\
+	    -command "set_grid_spacing $id \"1/10 inch\""
+    $top.vMB.spacing add command -label "1/4 inch" -underline 2\
+	    -command "set_grid_spacing $id \"1/4 inch\""
+    $top.vMB.spacing add command -label "1/2 inch" -underline 2\
+	    -command "set_grid_spacing $id \"1/2 inch\""
+    $top.vMB.spacing add command -label "inch" -underline 0\
+	    -command "set_grid_spacing $id inch"
+    $top.vMB.spacing add command -label "foot" -underline 0\
+	    -command "set_grid_spacing $id foot"
+    $top.vMB.spacing add command -label "yard" -underline 0\
+	    -command "set_grid_spacing $id yard"
+    $top.vMB.spacing add command -label "mile" -underline 0\
+	    -command "set_grid_spacing $id mile"
+    entry $top.maj_vE -relief flat -width 12 -textvar grid_control_maj_v($id)
 
     checkbutton $top.squareGridCB -relief flat -text "Square Grid"\
 	    -offvalue 0 -onvalue 1 -variable grid_control_square($id)\
@@ -347,8 +412,16 @@ proc init_grid_control { id } {
 	    -command "catch { destroy $top; set mged_grid_control($id) 0 }"
 
     grid x $top.tickSpacingL x $top.majorSpacingL -in $top.gridFF1 -padx 8 -pady 8
-    grid $top.hL $top.hE x $top.maj_hE -sticky "ew" -in $top.gridFF1 -padx 8 -pady 8
-    grid $top.vL $top.vE x $top.maj_vE -sticky "ew" -in $top.gridFF1 -padx 8 -pady 8
+    grid $top.hE $top.hMB -sticky ew -in $top.hF
+    grid columnconfigure $top.hF 0 -weight 1
+    grid $top.maj_hE -sticky ew -in $top.maj_hF
+    grid columnconfigure $top.maj_hF 0 -weight 1
+    grid $top.hL $top.hF x $top.maj_hF -sticky "ew" -in $top.gridFF1 -padx 8 -pady 8
+    grid $top.vE $top.vMB -sticky ew -in $top.vF
+    grid columnconfigure $top.vF 0 -weight 1
+    grid $top.maj_vE -sticky ew -in $top.maj_vF
+    grid columnconfigure $top.maj_vF 0 -weight 1
+    grid $top.vL $top.vF x $top.maj_vF -sticky "ew" -in $top.gridFF1 -padx 8 -pady 8
     grid $top.squareGridCB - - - -in $top.gridFF1 -padx 8 -pady 8
 
     grid $top.anchorL -sticky "ew" -in $top.anchorF
@@ -755,7 +828,7 @@ proc set_grid_spacing { id grid_unit } {
 	    set res_major 10
 	}
 	mile {
-	    set res [expr 63360 * $base2local]
+	    set res [expr 1609344 * $base2local]
 	    set res_major 10
 	}
     }
