@@ -52,7 +52,7 @@ static	int	xsetup();
 void		x_print_display_info();
 static	int	x_make_colormap();	/*XXX*/
 static	int	x_make_cursor();	/*XXX*/
-int	repaint();
+static void	repaint();
 
 #define TMP_FILE	"/tmp/x.cmap"
 
@@ -75,8 +75,10 @@ _LOCAL_ int	X_open(),
 		X_help();
 
 #ifdef USE_PROTOTYPES
+static void	Monochrome( unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
 static int	do_event( FBIO	*ifp );
 #else
+static void	Monochrome();
 static int	do_event();
 #endif
 
@@ -516,7 +518,7 @@ int *error1, *error2;
 
 int dither_bw(pixel,count,line)
 unsigned int pixel;
-register count, line;
+register int count, line;
 {
 	if( pixel > dm[((line%ditherPeriod)*ditherPeriod) +
 	    (count%ditherPeriod)])
@@ -531,7 +533,7 @@ register count, line;
 int
 fs_bw(pixel, count, line)
 unsigned int pixel;
-register count, line;
+register int count, line;
 {
 	int  onoff;
 	int  intensity, error;
@@ -565,7 +567,7 @@ register count, line;
 int
 mfs_bw(pixel,count,line)
 unsigned int pixel;
-register count, line;
+register int count, line;
 {
 	int  onoff;
 	int  intensity, error;
@@ -1197,6 +1199,7 @@ FBIO	*ifp;
  * Convert width x height 8bit grey scale bytes in bytebuf to
  * a bitmap in bitbuf, using the selected "method"
  */
+void
 Monochrome(bitbuf,bytebuf,width,height,method)
 unsigned char *bitbuf;
 unsigned char *bytebuf;
@@ -1205,7 +1208,7 @@ int method;
 {
 	register unsigned char *mbuffer, mvalue;   /* monochrome bitmap buffer */
 	register unsigned char *mpbuffer;          /* monochrome byte buffer */
-	register row, col, bit;
+	register int row, col, bit;
 #if 1
 	static unsigned char MSB[8] = { 0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1 };
 #else
@@ -1342,7 +1345,7 @@ register unsigned char *v;
 static void genmap(rmap, gmap, bmap)
 unsigned char rmap[], gmap[], bmap[];
 {
-	register r, g, b;
+	register int r, g, b;
 
 	/* build the basic color cube */
 	for (r=0 ; r < 6 ; r++)
@@ -1593,6 +1596,7 @@ Display *dpy;
  * We do all of our computation here in the first quadrant form and
  * only switch to fourth for Xlib commands.
  */
+void
 repaint(ifp)
 FBIO	*ifp;
 {
