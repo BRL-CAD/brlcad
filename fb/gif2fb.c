@@ -92,6 +92,7 @@ char **argv;
 	int	maxcolors;
 	int	code;
 	int	verbose=0;
+	int	headers=0;
 	int	interlaced;
 	char	*file_name;
 
@@ -105,8 +106,11 @@ char **argv;
 	FBIO *fbp;
 	FILE *fp;
 
-	while ((code = getopt(argc,argv,"vF")) != EOF){
+	while ((code = getopt(argc,argv,"vFh")) != EOF){
 		switch (code) {
+		case 'h':
+			headers=1;
+			break;
 		case 'v':
 			verbose=1;
 			break;
@@ -152,6 +156,10 @@ char **argv;
 	GlobalMap   = (Header.GH_Flags>>7);
 	CR	    = (Header.GH_Flags>>4) & 0x07;
 	GlobalPixels= (Header.GH_Flags&0x07) + 1;
+	if (headers) {
+		fprintf(stderr,"-w%d -n%d\n", ScreenWidth, ScreenHeight);
+		exit(0);
+	}
 /*
  * In verbose mode, output a message before checking to allow the
  * "smarter" user look over the header even if the header is barfO.
