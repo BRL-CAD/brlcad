@@ -1573,6 +1573,7 @@ Rt_Init(Tcl_Interp *interp)
 		/* initialize RT's global state */
 		BU_LIST_INIT(&rt_g.rtg_vlfree);
 		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+		rt_init_resource(&rt_uniresource, 0, NULL);
 	}
 
 	rt_tcl_setup(interp);
