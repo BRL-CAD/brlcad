@@ -179,7 +179,7 @@ adcursor()
  *
  *	"adc"		toggles display of angle/distance cursor
  *	"adc a1 #"	sets angle1
- *	"adc a2 #"	sets angle1
+ *	"adc a2 #"	sets angle2
  *	"adc x #"	sets horz. coord of angle/distance cursor location
  *	"adc y #"	sets vert. coord of angle/distance cursor location
  *	"adc dst #"	sets radius of angle/distance cursor tick
