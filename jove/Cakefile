@@ -40,12 +40,13 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+/* Do not use LIBES symbol.  We don't need anything but libc */
 
 jove:	JOVE_OBJ
 	sh ../SRCDIR/mkversion.sh
-	CC LDFLAGS -o jove JOVE_OBJ version.o LIBTERMLIB LIBES
+	CC LDFLAGS -o jove JOVE_OBJ version.o LIBTERMLIB
 
 findcom:	findcom.o jove_tune.o
-	CC LDFLAGS findcom.o jove_tune.o LIBES -o findcom
+	CC LDFLAGS findcom.o jove_tune.o -o findcom
 
 #include "../Cakefile.rules"
