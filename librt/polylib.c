@@ -277,7 +277,7 @@ register complex	root[];
  */
 static int expecting_fpe = 0;
 static jmp_buf abort_buf;
-static void cubic_catch()  {
+HIDDEN void catch_FPE()  {
 	if( !expecting_fpe )
 		rtbomb("unexpected SIGFPE!\n");
 	longjmp(abort_buf, 1);	/* return error code */
@@ -296,11 +296,11 @@ register complex	root[];
 	/* abort_buf is NOT parallel! */
 	if( first_time )  {
 		first_time = 0;
-		(void)signal(SIGFPE, cubic_catch);
+		(void)signal(SIGFPE, catch_FPE);
 	}
 	expecting_fpe = 1;
 	if( setjmp( abort_buf ) )  {
-		(void)signal(SIGFPE, cubic_catch);
+		(void)signal(SIGFPE, catch_FPE);
 		rtlog("rt: cubic() Floating Point Error\n");
 		if( debug & DEBUG_ROOTS )  {
 			pr_poly(eqn);
