@@ -63,6 +63,7 @@ struct application ap;
 int		stereo = 0;		/* stereo viewing */
 vect_t		left_eye_delta;
 int		hypersample=0;		/* number of extra rays to fire */
+int		jitter=0;		/* jitter ray starting positions */
 int		rt_perspective=0;	/* perspective view -vs- parallel */
 fastf_t		persp_angle = 90;	/* prespective angle (degrees X) */
 fastf_t		aspect = 1;		/* view aspect ratio X/Y */
@@ -108,7 +109,7 @@ register char **argv;
 	register int c;
 	register int i;
 
-	while( (c=getopt( argc, argv, "E:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:" )) != EOF )  {
+	while( (c=getopt( argc, argv, "E:SJH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:" )) != EOF )  {
 		switch( c )  {
 		case 'U':
 			use_air = atoi( optarg );
@@ -122,8 +123,13 @@ register char **argv;
 		case 'S':
 			stereo = 1;
 			break;
+		case 'J':
+			jitter = 1;
+			break;
 		case 'H':
 			hypersample = atoi( optarg );
+			if( hypersample > 0 )
+				jitter = 1;
 			break;
 		case 'F':
 			framebuffer = optarg;
