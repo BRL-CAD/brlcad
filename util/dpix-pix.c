@@ -28,6 +28,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #define NUM	(1024 * 16)	/* Note the powers of 2 -- v. efficient */
+static double		doub[NUM];
+static unsigned char	cha[NUM];
 
 main(argc, argv)
 int	argc;
@@ -36,12 +38,10 @@ char	*argv[];
 	int		count;			/* count of items */
 	int		got;			/* count of bytes */
 	int		fd;			/* UNIX file descriptor */
-	double		d[NUM];
 	register double	*dp;			/* ptr to d */
 	register double *ep;
 	double		m;			/* slope */
 	double		b;			/* intercept */
-	unsigned char	c[NUM];
 
 	if( argc < 2 )  {
 		fprintf(stderr, "Usage: dpix-pix file.dpix > file.pix\n");
@@ -66,12 +66,12 @@ char	*argv[];
 		max = -1.0e20;
 
 		while(1)  {
-			got = read( fd, (char *)&d[0], NUM*sizeof(d[0]) );
+			got = read( fd, (char *)&doub[0], NUM*sizeof(doub[0]) );
 			if( got <= 0 )
 				break;
-			count = got / sizeof(d[0]);
-			ep = &d[count];
-			for(dp = &d[0]; dp < ep;)  {
+			count = got / sizeof(doub[0]);
+			ep = &doub[count];
+			for(dp = &doub[0]; dp < ep;)  {
 				register double val;
 				if( (val = *dp++) < min )
 					min = val;
@@ -105,18 +105,18 @@ char	*argv[];
 		mm = m;
 		bb = b;
 
-		got = read( fd, (char *)&d[0], NUM*sizeof(d[0]) );
+		got = read( fd, (char *)&doub[0], NUM*sizeof(doub[0]) );
 		if (got <=  0 )
 			break;
-		count = got / sizeof(d[0]);
-		ep = &d[count];
-		for(dp = &d[0], cp = &c[0]; dp < ep;)  {
+		count = got / sizeof(doub[0]);
+		ep = &doub[count];
+		for(dp = &doub[0], cp = &cha[0]; dp < ep;)  {
 			*cp++ = mm * (*dp++) + bb;
 		}
 
 		/* fd 1 is stdout */
-		got = write( 1, (char *)&c[0], count*sizeof(c[0]) );
-		if( got != count*sizeof(c[0]) )  {
+		got = write( 1, (char *)&cha[0], count*sizeof(cha[0]) );
+		if( got != count*sizeof(cha[0]) )  {
 			perror("write");
 			exit(2);
 		}
