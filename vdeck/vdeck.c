@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) vdeck.c	2.9
-	Last edit: 	3/18/85 at 14:25:28
-	Retrieved: 	8/13/86 at 08:12:49
+	SCCS id:	@(#) vdeck.c	2.10
+	Last edit: 	3/25/85 at 11:13:27
+	Retrieved: 	8/13/86 at 08:13:14
 	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
 
 	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
 			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.9	last edit 3/18/85 at 14:25:28";
+char	sccsTag[] = "@(#) vdeck.c	2.10	last edit 3/25/85 at 11:13:27";
 
 /*
 	Derived from KARDS, written by Keith Applin.
@@ -932,7 +932,11 @@ Record *rec;
 		break;
 	case TEC :
 		write( solfd, "tec  ", 5 );
-		work[0] = ma / mc;
+		/* This backwards conversion is to counteract an unnecessary
+			conversion of this ratio in 'psp()'.  Sorry about
+			that.
+		 */
+		work[0] = (ma / mc) / unit_conversion;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV4, work );
 		psp( 5, rec );
