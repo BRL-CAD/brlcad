@@ -503,6 +503,10 @@ class Sketch_editor {
 					}
 					lappend segments ::Sketch_editor::[Sketch_carc #auto $this $itk_component(canvas) $seg]
 				}
+				default {
+				    tk_messageBox -type ok -icon warning -title "Unrecognized segment type" \
+					    -message "Curve segments of type '$type' are not yet handled"
+				}
 			}
 		}
 	}
