@@ -88,6 +88,11 @@ char *argv[];
 		}
 	}
 
+	if( isatty(fileno(stdout)) )  {
+		usage("stdout is a tty");
+		exit(1);
+	}
+
 /* fprintf(stderr,"max = %d, percent = %f\n",max,percent); */
 
 	fread(&cur_color,1,3,inp);
