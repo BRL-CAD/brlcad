@@ -194,6 +194,7 @@ char	**argv;
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
 				switch( *cmd )  {
 				case RT_VLIST_POLY_START:
+				case RT_VLIST_POLY_VERTNORM:
 					continue;
 				case RT_VLIST_POLY_MOVE:
 				case RT_VLIST_LINE_MOVE:
@@ -295,6 +296,7 @@ char	**argv;
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
 				switch( *cmd )  {
 				case RT_VLIST_POLY_START:
+				case RT_VLIST_POLY_VERTNORM:
 					continue;
 				case RT_VLIST_POLY_MOVE:
 				case RT_VLIST_LINE_MOVE:
