@@ -89,11 +89,12 @@ static struct bu_cmdtab cmdtab[] = {
 	{(char *)0, (int (*)())0}
 };
 
+/* XXX this device list shouldn't be in here */
 #ifdef IF_OGL
-	static const char *device_name = "/dev/ogl";
+static const char *device_name = "/dev/ogl";
 #elif defined(IF_X)
 #	ifndef WIN32
-	char *device_name = "/dev/X";
+static const char *device_name = "/dev/X";
 #	endif
 #endif
 
