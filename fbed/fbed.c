@@ -1,18 +1,12 @@
 /*
-	SCCS id:	@(#) fbed.c	2.7
-	Modified: 	1/7/87 at 14:57:08
-	Retrieved: 	1/7/87 at 14:57:48
-	SCCS archive:	/vld/moss/src/fbed/s.fbed.c
-
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) fbed.c 2.7, modified 1/7/87 at 14:57:08, archive /vld/moss/src/fbed/s.fbed.c";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -1117,6 +1111,7 @@ char	*buf;
 	panel.n_buf = get_Fb_Panel( &current );
 	panel.n_wid  = current.r_corner.p_x - current.r_origin.p_x;
 	panel.n_hgt = current.r_corner.p_y - current.r_origin.p_y;
+	fb_log( "Rectangle saved.\n" );
 	return	1; 
 	}
 
@@ -1721,11 +1716,6 @@ register char	**argv;
 _LOCAL_ int
 fb_Setup()
 	{
-	if( fbp != FBIO_NULL )
-		{
-		fb_log( "Closing previously opened frame buffer.\n" );
-		(void)fb_close( fbp );
-		}
 	if( (fbp = fb_open( NULL, cur_width, cur_width )) == FBIO_NULL )
 		{
 		fb_log( "Could not open default frame buffer.\n" );
@@ -2019,7 +2009,7 @@ register Point	*pointp;
 			}
 		if( status_change )
 			{
-			(void) fflush( fbp );
+			(void) fb_flush( fbp );
 			if( report_status )
 				prnt_Status();
 			}

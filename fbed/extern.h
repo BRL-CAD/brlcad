@@ -11,19 +11,19 @@
 			(301)278-6647 or AV-298-6647
 */
 #if ! defined( INCL_FB )
-#include <fb.h>
+#include "fb.h"
 #endif
 #if ! defined( _VLD_STD_H_ )
-#include <std.h>
+#include "./std.h"
 #endif
 #if ! defined( INCL_ASCII )
-#include "ascii.h"
+#include "./ascii.h"
 #endif
 #if ! defined( INCL_FONT )
-#include "font.h"
+#include "./font.h"
 #endif
 #if ! defined( INCL_TRY )
-#include "try.h"
+#include "./try.h"
 #endif
 
 typedef struct
@@ -76,10 +76,10 @@ extern char	*char_To_String();
 extern char	*getenv();
 extern char	*malloc();
 extern int	add_Try();
+extern int	bitx();
 extern int	fb_Init_Menu();
 extern int	getpos();
 extern int	get_Input();
-extern int	do_Bitpad();
 extern void	fb_Get_Pixel();
 extern void	pos_close();
 extern void	init_Status();

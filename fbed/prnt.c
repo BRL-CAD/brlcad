@@ -333,5 +333,6 @@ register Rectangle	*rectp;
 			rectp->r_corner.p_x,
 			rectp->r_corner.p_y
 			);
+	(void) fflush( stdout );
 	return;
 	}
