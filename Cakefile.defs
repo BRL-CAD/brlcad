@@ -1406,6 +1406,8 @@ set -S2 "/bin/sh"
 #	define	ETCDIR	/usr/brlcad/etc
 #	define	INCLUDE_DIR	/usr/brlcad/include/brlcad
 #	define	VFONTDIR	/usr/brlcad/vfont
+#	define	TCLLIBDIR	/usr/brlcad/tcl
+#	define	TKLIBDIR	/usr/brlcad/tk
 #endif
 
 #if	!defined(XLIBDIR)
