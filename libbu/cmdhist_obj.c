@@ -213,7 +213,7 @@ cho_open_tcl(clientData, interp, argc, argv)
 
 		(void)Tcl_CreateCommand(interp,
 					bu_vls_addr(&chop->cho_name),
-					cho_cmd,
+					(Tcl_CmdProc *)cho_cmd,
 					(ClientData)chop,
 					cho_deleteProc);
 
