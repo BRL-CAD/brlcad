@@ -103,7 +103,6 @@ extern Tk_Window tkwin;
 /*
  * These variables are visible and modifiable via a "dm set" command.
  */
-static int focus = 0;        /* send key events to the command window */
 static int      dummy_perspective = 1;
 static int      perspective_mode = 0;	/* Perspective flag */
 /* End modifiable variables */
@@ -134,7 +133,6 @@ static int	no_faceplate = 0;
 struct structparse X_vparse[] = {
   {"%d",  1, "perspective",       (int)&perspective_mode, establish_perspective },
   {"%d",  1, "set_perspective",(int)&dummy_perspective,  set_perspective },
-  {"%d",  1, "focus",             (int)&focus,            FUNC_NULL },
   {"",    0,  (char *)0,          0,                      FUNC_NULL }
 };
 
@@ -184,6 +182,9 @@ X_open()
 		}
 	}
 
+	/* Ignore the old scrollbars and menus */
+	ignore_scroll_and_menu = 1;
+
 	return(0);			/* OK */
 }
 
@@ -197,13 +198,16 @@ X_close()
 {
     XFreeGC(dpy, gc);
     Tk_DestroyWindow(xtkwin);
+
 #if 0
     Tcl_DeleteInterp(xinterp);
-#else
-    Tcl_DeleteInterp(interp);
 #endif
-	/* to prevent events being processed after window destroyed */
-	win = -1;
+
+    /* to prevent events being processed after window destroyed */
+    win = -1;
+
+    /* Stop ignoring the old scrollbars and menus */
+    ignore_scroll_and_menu = 0;
 }
 
 /*
@@ -486,7 +490,7 @@ XEvent *eventPtr;
 	return TCL_OK;
 
 #if TRY_PIPES
-    if(focus && eventPtr->type == KeyPress){
+    if(mged_variables.focus && eventPtr->type == KeyPress){
       char buffer[1];
 
       XLookupString(&(eventPtr->xkey), buffer, 1,
