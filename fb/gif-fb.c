@@ -114,6 +114,7 @@ static char	*fb_file = NULL;	/* frame buffer name */
 static FBIO	*fbp = FBIO_NULL;	/* frame buffer handle */
 static int	ht;			/* virtual frame buffer height */
 static int	width, height;		/* overall "screen" size */
+static int	write_width;		/* used width of screen, <= width */
 static int	left, top, right, bottom;	/* image boundary */
 static bool	M_bit;			/* set iff color map provided */
 static bool	I_bit;			/* set iff image interlaced */
@@ -282,7 +283,7 @@ PutPixel( value )
 		   the bottom of the available frame buffer.
 		 */
 
-		if ( fb_write( fbp, 0, ht - row, pixbuf, width ) < 0
+		if ( fb_write( fbp, 0, ht - row, pixbuf, write_width ) < 0
 		   )
 			Message( "Error writing scan line to frame buffer" );
 
@@ -799,6 +800,9 @@ main( argc, argv )
 			Message( "Frame buffer (%dx%d) larger than GIF screen",
 				 wt, ht
 			       );
+
+		write_width = width;
+		if( write_width > wt )  write_width = wt;
 
 		zoom = fb_getwidth(fbp)/width;
 		if( fb_getheight(fbp)/height < zoom )
