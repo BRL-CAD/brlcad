@@ -178,14 +178,14 @@ struct faceuse *fu;
 	pt = vu->v_p->vg_p->coord;
 	dist = NMG_DIST_PT_PLANE(pt, fu->f_p->fg_p->N);
 
-	if (NEAR_ZERO(dist, bs->tol) &&
-	    nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic) < 0) {
+	if ( !NEAR_ZERO(dist, bs->tol) )  return;
+
+	if (nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic) < 0) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		    	VPRINT("Making vertexloop", vu->v_p->vg_p->coord);
 
 		plu = nmg_mlv(&fu->l.magic, vu->v_p, OT_UNSPEC);
-	    	/* XXX should this be TBL_INS_UNIQUE? */
-	    	(void)nmg_tbl(bs->l2, TBL_INS,
+	    	(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
 			&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 	}
 }
@@ -369,22 +369,16 @@ struct faceuse *fu;
 			nmg_jv(v1, vu_other->v_p);
 		} else {
 			/* Since the other face doesn't have a vertex quite
-			 * like this one, we make a copy of this one and make.
-			 * sure it's in the other face's list of intersect
-			 * verticies.
+			 * like this one, we make a copy of this one.
 			 */
-
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("Making vertexloop",
 			    		v1->vg_p->coord);
 
 			plu = nmg_mlv(&fu->l.magic, v1, OT_UNSPEC);
 
-			/* make sure this vertex is in other face's list of
-			 * points to deal with
-			 */
-			/* Should this be TBL_INS_UNIQUE? */
-			(void)nmg_tbl(bs->l2, TBL_INS,
+			/* Add vertex to other face's list */
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
 				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 		}
 		return;
@@ -495,8 +489,7 @@ struct faceuse *fu;
 					rt_bomb("bad plumate\n");
 
 			}
-			/* XXX Should this be TBL_INS_UNIQUE ? */
-			(void)nmg_tbl(bs->l2, TBL_INS,
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
 				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 		}
 
@@ -512,9 +505,7 @@ struct faceuse *fu;
 			rt_log("\tand %g, %g, %g <-> %g, %g, %g\n\n",
 				V3ARGS(p1), V3ARGS(p2) );
 		}
-
-		/* XXX Should this be TBL_INS_UNIQUE ? */
-		(void)nmg_tbl(bs->l1, TBL_INS, &euforw->vu_p->l.magic);
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
 		return;
 	}
 	if ( dist_to_plane < edge_len + bs->tol) {
