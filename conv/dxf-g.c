@@ -11,6 +11,8 @@
 #include "wdb.h"
 #include "../librt/debug.h"
 
+RT_EXTERN( fastf_t nmg_loop_plane_area , (struct loopuse *lu , plane_t pl ) );
+
 extern int errno;
 
 #define	LINELEN	256 /* max input line length from elements file */
@@ -46,7 +48,7 @@ main( int argc , char *argv[] )
         tol.para = 1 - tol.perp;
 
 	out_fp = stdout;
-	dxf = stdin;
+	dxf = NULL;
 
 	if( argc < 2 )
 		rt_bomb( usage );
@@ -184,6 +186,8 @@ main( int argc , char *argv[] )
 		group_code = 1;
 		while( group_code )
 		{
+			struct loopuse *lu;
+
 			if( fgets( line , LINELEN , dxf ) == NULL )
 				rt_bomb( "Unexpected EOF in input file\n" );
 			sscanf( line , "%d" , &group_code );
@@ -258,23 +262,36 @@ main( int argc , char *argv[] )
 							nmg_tbl( &vertices , TBL_INS , (long *)vp[i] );
 						}
 					}
-			                if( nmg_fu_planeeqn( fu , &tol ) )
-			                        rt_log( "Failed to calculate plane eqn\n" );
+
+					for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+					{
+						fastf_t area;
+						plane_t pl;
+
+						area = nmg_loop_plane_area( lu , pl );
+						if( area > 0.0 )
+						{
+							if( lu->orientation == OT_OPPOSITE )
+								HREVERSE( pl , pl );
+							nmg_face_g( fu , pl );
+							break;
+						}
+					}
 					break;
 			}
 		}
 	}
 
 	/* fuse vertices that are within tolerance of each other */
-	rt_log( "Checking %d vertices for repeats...\n" , NMG_TBL_END( &vertices ) );
-	(void)nmg_region_self_vfuse( &vertices , &tol );
-	rt_log( "\t%d unique vertices found\n" , NMG_TBL_END( &vertices ) );
+	(void)nmg_model_vertex_fuse( m , &tol );
 
 	/* glue faces together */
 	rt_log( "Glueing %d faces together...\n" , NMG_TBL_END( &faces ) );
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 
-	nmg_fix_normals( s );
+	nmg_fix_normals( s , &tol );
+
+	nmg_rebound( m , &tol );
 
 	nmg_vshell( &r->s_hd , r );
 
