@@ -4,17 +4,19 @@
 #  is run first, to check out the source code and set up the semaphore files
 #  for each of the client architectures.
 
+USAGE="echo Usage: $0 -d regress_dir [-c cvs_binary] [-R cvs_repository]"
+
+
 args=`getopt d:c:R: $*`
 
 if [ $? != 0 ] ; then
-	echo "Usage: $0 [-d regress_dir] [-c cvs_binary] [-R cvs_repository]"
+	eval $USAGE
 	exit 2
 fi
 
 set -- $args
 
 CVS=cvs
-REGRESS_DIR=/c/regress
 REPOSITORY=/c/CVS
 
 for i in $* ; do
@@ -24,6 +26,7 @@ for i in $* ; do
 			shift 2;;
 		-d)
 			REGRESS_DIR=$2;
+			export REGRESS_DIR
 			shift 2;;
 		-c)
 			CVS=$2;
@@ -33,10 +36,14 @@ for i in $* ; do
 	esac
 done
 
-
-export REGRESS_DIR
 export CVS
 export REPOSITORY
+
+if [ X$REGRESS_DIR = X ] ; then
+	echo "Must specify regression directory"
+	eval $USAGE
+	exit 2
+fi
 
 #
 #  Make sure the regression director exists
