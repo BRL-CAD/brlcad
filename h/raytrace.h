@@ -2240,9 +2240,9 @@ RT_EXTERN(void			nmg_2face_plot, (CONST struct faceuse *fu1,
 				CONST struct faceuse *fu2) );
 RT_EXTERN(void			nmg_face_lu_plot, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu1, CONST struct vertexuse *vu2) );
-RT_EXTERN(void			nmg_cnurb_to_vlist(struct rt_list *vhead,
+RT_EXTERN(void			nmg_cnurb_to_vlist, (struct rt_list *vhead,
 				CONST struct edgeuse *eu,int n_interior,
-				int cmd)
+				int cmd) );
 
 
 /* from nmg_mesh.c */
