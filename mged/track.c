@@ -6,16 +6,19 @@
  *
  */
 
+#include "conf.h"
+
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
