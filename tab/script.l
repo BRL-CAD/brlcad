@@ -1,7 +1,7 @@
 	#include "../tab/tokens.h"
 D	[0-9]
 A	[a-zA-Z]
-L	[a-zA-Z0-9_\/]
+L	[a-zA-Z0-9_\/\.\(\)\[\]\{\}]
 %%
 -?{D}*\.{D}+e[\+-]{D}+	return FLOAT;
 -?{D}*\.{D}+	return FLOAT;
