@@ -3,6 +3,7 @@
 fbcbars \- display standard color bars on a framebuffer
 .SH SYNOPSIS
 .B fbcbars
+.RB [ \-e ]
 .RB [ \-f ]
 .RB [ \-s ]
 .RB [ \-h ]
@@ -13,8 +14,18 @@ fbcbars \- display standard color bars on a framebuffer
 .SH DESCRIPTION
 .I fbcbars
 displays a color bar scale on the currently selected framebuffer.
+The default pattern is the standard SMPTE color bars.
 .PP
-The default pattern is the standard EIA color bars,
+With the
+.B \-f
+flag, FCC/EBU color bars are made.
+The entire screen will contain 8 colors:
+100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue,
+and black.
+.PP
+By specifying the
+.B \-e
+flag, the standard EIA color bars are displayed,
 arranged horizontally on screen.
 The bottom quarter of the screen will be
 -I, 100% white, Q, black.
@@ -26,15 +37,13 @@ By specifying the
 .B \-s
 flag, SMPTE color bars are displayed.  This is the EIA pattern
 with the upper quarter of the bottom quarter of the screen containing
-a reversed and shifted version of the upper pattern, which is claimed
-to be useful for aligning color demodulators.
-.PP
-With the
-.B \-f
-flag, FCC/EBU color bars are made.
-The entire screen will contain 8 colors:
-100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue,
-and black.
+a reversed and shifted version of the upper pattern, which is very
+useful for aligning color demodulators in monitors.
+Using a dichroic blue filter,
+observe the magenta and cyan bars on the NTSC monitor.
+Adjust the phase of the chroma demodulator until they have visually
+equal intensity.
+At this point, all the other color bars will display the correct chroma.
 .PP
 The environment variable FB_FILE specifies
 the current framebuffer, see
@@ -44,7 +53,7 @@ by using the
 .B \-F
 flag.
 .PP
-By default, the requested framebuffer size is assumed to be 512x512 pixels.
+Ordinarily, the requested framebuffer size is the device default.
 Specifying the
 .B \-h
 flag changes the size to 1024x1024.
@@ -70,7 +79,7 @@ SECAD/VLD Computing Consortium, Bldg 394
 .br
 The U. S. Army Ballistic Research Laboratory
 .br
-Aberdeen Proving Ground, Maryland  21005
+Aberdeen Proving Ground, Maryland  21005-5066
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <CAD@BRL.MIL>.
