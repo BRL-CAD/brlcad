@@ -535,7 +535,7 @@ check_hemispheres:
 		}
 		root = sqrt(root);
 		t1 = b - root;
-		/* see if hit'[Z] is below end of cylinder */
+		/* see if hit'[Z] is below V end of cylinder */
 		if( pprime[Z] + t1 * dprime[Z] <= 0.0 )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t1;
@@ -583,6 +583,7 @@ do_check_h:
 		}
 		root = sqrt(root);
 		t1 = b - root;
+		/* see if hit'[Z] is above H end of cylinder */
 		if( pprime[Z] + t1 * dprime[Z] >= 1.0 )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t1;
@@ -605,17 +606,38 @@ out:
 		hits[1] = hits[0];		/* struct copy */
 		hitp++;
 	} else if( hitp > &hits[2] )  {
-		/* Particle is convex, take maximum extent. */
+		/*
+		 *  More than two intersections found.
+		 *  This can happen when a ray grazes down along a tangent
+		 *  line; the intersection interval from the hemisphere
+		 *  may not quite join up with the interval from the cone.
+		 *  Since particles are convex, all we need to do is to
+		 *  return the maximum extent of the ray..
+		 */
 		/* XXX Remove printing after testing is complete */
 		struct bu_vls	str;
 		bu_vls_init(&str);
 		bu_vls_printf(&str, "rt_part_shot(%s): %d hits\n",
 			stp->st_name, hitp - &hits[0] );
-		rt_pr_hitarray_vls( &str, "unsorted particle", hits, hitp - &hits[0] );
+bu_vls_printf(&str, "x=%d, y=%d, pt=(%g, %g, %g), dir=(%g, %g, %g)\n",
+ap->a_x, ap->a_y, V3ARGS(rp->r_pt), V3ARGS(rp->r_dir) );
+		rt_pr_hitarray_vls( &str, "unsorted particle:\n", hits, hitp - &hits[0] );
 
 		/* Sort, take max and min values */
 		rt_hitsort( hits, hitp - &hits[0] );
-		rt_pr_hitarray_vls( &str, "sorted particle", hits, hitp - &hits[0] );
+		rt_pr_hitarray_vls( &str, "sorted particle:\n", hits, hitp - &hits[0] );
+if( hitp - &hits[0] == 4 ) {
+	FILE	*fp = fopen("part.pl", "w");
+	point_t	a, b;
+	VJOIN1( a, rp->r_pt, hits[0].hit_dist, rp->r_dir );
+	VJOIN1( b, rp->r_pt, hits[1].hit_dist, rp->r_dir );
+	pdv_3line( fp, a, b );
+	VJOIN1( a, rp->r_pt, hits[2].hit_dist, rp->r_dir );
+	VJOIN1( b, rp->r_pt, hits[3].hit_dist, rp->r_dir );
+	pdv_3line( fp, a, b );
+	fclose(fp);
+	bu_vls_printf(&str,"Wrote part.pl\n");
+}
 
 		bu_log("%s", bu_vls_addr(&str));
 		bu_vls_free(&str);
