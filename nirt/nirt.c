@@ -16,6 +16,9 @@
  *       Help menu:  nirt -?
  *
  */
+#ifndef lint
+static char RCSid[] = "$Header$:"
+#endif
 
 /*	INCLUDES	*/
 #include <ctype.h>
