@@ -69,16 +69,9 @@ extern struct dm dm_PS;
 extern char     ps_ttybuf[];
 extern int      in_middle;
 extern mat_t    ModelDelta;
-extern short earb4[5][18];
-extern short earb5[9][18];
-extern short earb6[10][18];
-extern short earb7[12][18];
-extern short earb8[12][18];
 extern FILE	*journal_file;
 extern int	journal;	/* initialize to off */
 extern int update_views;
-extern struct rt_db_internal es_int;
-extern short int fixv;         /* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
 typedef struct _cmd{
 	struct _cmd	*prev;
@@ -102,7 +95,6 @@ AliasList alias_free = NULL;
 
 int 	savedit = 0;
 point_t	orig_pos;
-point_t e_axis_pos;
 int irot_set = 0;
 double irot_x = 0;
 double irot_y = 0;
@@ -112,35 +104,38 @@ double tran_x = 0;
 double tran_y = 0;
 double tran_z = 0;
 
-void set_e_axis_pos();
 void set_tran();
 int     mged_wait();
 int chg_state();
 
-static void	addtohist();
-static int	parse_history();
-static void	print_alias(), load_alias_def();
-static void	balance_alias_tree(), free_alias_node();
-static AliasList	get_alias_node();
-static int	extract_alias_def();
 static void    make_command();
 int	f_history(), f_alias(), f_unalias();
 int	f_journal(), f_button(), f_savedit(), f_slider();
 int	f_slewview(), f_openw(), f_closew();
 int	(*button_hook)(), (*slider_hook)();
 int	(*openw_hook)(), (*closew_hook)();
-int	(*knob_hook)();
-int (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
-int (*light_hook)(), (*perspective_hook)();
 int (*tran_hook)(), (*rot_hook)();
 int (*set_tran_hook)();
-int (*bindkey_hook)();
 
 int     f_perspective(), f_cue(), f_light(), f_zbuffer(), f_zclip();
 int     f_tran(), f_irot();
-int     f_aip(), f_ps();
-int     f_bindkey();
+int     f_ps();
 #endif /* XMGED */
+extern int (*knob_hook)();
+extern int (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
+extern int (*light_hook)(), (*perspective_hook)();
+
+extern short earb4[5][18];
+extern short earb5[9][18];
+extern short earb6[10][18];
+extern short earb7[12][18];
+extern short earb8[12][18];
+extern struct rt_db_internal es_int;
+extern short int fixv; /* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
+
+point_t e_axis_pos;
+void set_e_axis_pos();
+
 
 /* Carl Nuzman experimental */
 #if 1
@@ -155,12 +150,12 @@ extern void sync();
 int	inpara;			/* parameter input from keyboard */
 
 int glob_compat_mode = 1;
-int output_as_return = 1;
+int output_as_return = 0;
 
 int mged_cmd();
 struct rt_vls tcl_output_hook;
 
-Tcl_Interp *interp;
+Tcl_Interp *interp = NULL;
 Tk_Window tkwin;
 
 
@@ -233,12 +228,8 @@ static struct funtab funtab[] = {
         f_adc, 1, 5, FALSE,
 "ae", "azim elev", "set view using az and elev angles",
 	f_aeview, 3, 3, FALSE,
-#ifdef XMGED
 "aip", "[fb]", "advance illumination pointer or path position forward or backward",
         f_aip, 1, 2, FALSE,
-"alias", "[name definition]", "lists or creates an alias",
-	f_alias, 1, MAXARGS, FALSE,
-#endif
 "analyze", "[arbname]", "analyze faces of ARB",
 	f_analyze,1,MAXARGS,FALSE,
 "apropos", "keyword", "finds commands whose descriptions contain the given keyword",
@@ -256,8 +247,6 @@ static struct funtab funtab[] = {
 "bev",	"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...", "Boolean evaluation of objects via NMG's",
 	f_bev, 2, MAXARGS, FALSE,
 #ifdef XMGED
-"bindkey", "[key] [command]", "bind key to a command",
-        f_bindkey, 1, MAXARGS, FALSE,
 "button", "number", "simulates a button press, not intended for the user",
 	f_button, 2, 2, FALSE,
 #endif
@@ -282,10 +271,6 @@ static struct funtab funtab[] = {
 	f_copyeval, 1, 27, FALSE,
 "cp", "from to", "copy [duplicate] object",
 	f_copy,3,3, FALSE,
-#ifdef XMGED
-"cue", "", "toggle cueing",
-        f_cue, 1, 1, FALSE,
-#endif
 "cpi", "from to", "copy cylinder and position at end of original cylinder",
 	f_copy_inv,3,3,FALSE,
 "d", "<objects>", "delete list of objects",
@@ -353,10 +338,6 @@ static struct funtab funtab[] = {
 #endif
 "help", "[commands]", "give usage message for given commands",
 	f_help,0,MAXARGS,FALSE,
-#ifdef XMGED
-"history", "[N]", "print out history of commands or last N commands",
-	f_history,1, 2,FALSE,
-#else
 "history", "[-delays]", "list command history",
 	f_history, 1, 4,FALSE,
 "hist_prev", "", "Returns previous command in history",
@@ -365,15 +346,12 @@ static struct funtab funtab[] = {
         cmd_next, 1, 1, TRUE,
 "hist_add", "", "Adds command to the history (without executing it)",
         cmd_hist_add, 1, 1, TRUE,
-#endif
 "i", "obj combination [operation]", "add instance of obj to comb",
 	f_instance,3,4,FALSE,
 "idents", "file object(s)", "make ascii summary of region idents",
 	f_tables, 3, MAXARGS, FALSE,
-#ifdef XMGED
 "iknob", "id [val]", "increment knob value",
        f_knob,2,3, FALSE,
-#endif
 "ill", "name", "illuminate object",
 	f_ill,2,2,FALSE,
 "in", "[-f] [-s] parameters...", "keyboard entry of solids.  -f for no drawing, -s to enter solid edit",
@@ -392,13 +370,8 @@ static struct funtab funtab[] = {
 #endif
 "joint", "command [options]", "articualtion/animation commands",
 	f_joint, 1, MAXARGS, FALSE,
-#ifdef XMGED
-"journal", "[file]", "toggle journaling on or off",
-	f_journal, 1, 2, FALSE,
-#else
 "journal", "fileName", "record all commands and timings to journal",
 	f_journal, 1, 2, FALSE,
-#endif
 "keep", "keep_file object(s)", "save named objects in specified file",
 	f_keep, 3, MAXARGS, FALSE,
 "keypoint", "[x y z | reset]", "set/see center of editing transformations",
@@ -417,10 +390,6 @@ static struct funtab funtab[] = {
 	cmd_left_mouse, 4,4, TRUE,
 "labelvert", "object[s]", "label vertices of wireframes of objects",
 	f_labelvert, 2, MAXARGS, FALSE,
-#ifdef XMGED
-"light", "", "toggle lighting",
-        f_light, 1, 1, FALSE,
-#endif
 "listeval", "", "lists 'evaluated' path solids",
 	f_pathsum, 1, MAXARGS, FALSE,
 "loadtk", "[DISPLAY]", "Initializes Tk window library",
@@ -471,10 +440,6 @@ static struct funtab funtab[] = {
 	cmd_pathlist, 1, MAXARGS,TRUE,
 "permute", "tuple", "permute vertices of an ARB",
 	f_permute,2,2,FALSE,
-#ifdef XMGED
-"perspective", "[n]", "toggle perspective",
-        f_perspective, 1, 2,FALSE,
-#endif
 "plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
 	f_plot, 2, MAXARGS,FALSE,
 "polybinout", "file", "store vlist polygons into polygon file (experimental)",
@@ -567,10 +532,8 @@ static struct funtab funtab[] = {
 	f_status, 1,1,FALSE,
 "summary", "[s r g]", "count/list solid/reg/groups",
 	f_summary,1,2,FALSE,
-#ifdef XMGED
 "sv", "x y", "Move view center to (x, y, 0)",
 	f_slewview, 3, 3,FALSE,
-#endif
 "sync",	"",	"forces UNIX sync",
 	f_sync, 1, 1,FALSE,
 "t", "", "table of contents",
@@ -595,10 +558,6 @@ static struct funtab funtab[] = {
 	f_tr_obj,4,4,FALSE,
 "tree",	"object(s)", "print out a tree of all members of an object",
 	f_tree, 2, MAXARGS,FALSE,
-#ifdef XMGED
-"unalias","name/s", "deletes an alias or aliases",
-	f_unalias, 2, MAXARGS,FALSE,
-#endif
 "units", "[mm|cm|m|in|ft|...]", "change units",
 	f_units,1,2,FALSE,
 #if 1
@@ -623,12 +582,6 @@ static struct funtab funtab[] = {
 	f_xpush, 2,2,FALSE,
 "Z", "", "zap all objects off screen",
 	f_zap,1,1,FALSE,
-#ifdef XMGED
-"zbuffer", "", "toggle zbuffer",
-        f_zbuffer, 1, 1,FALSE,
-"zclip", "", "toggle zclipping",
-        f_zclip, 1, 1,FALSE,
-#endif
 "zoom", "scale_factor", "zoom view in or out",
 	f_zoom, 2,2,FALSE,
 0, 0, 0,
@@ -683,179 +636,6 @@ struct rt_vls *vp;
 {
     rt_delete_hook(output_catch, (genptr_t)vp);
 }
-
-#ifdef XMGED
-int
-f_journal(argc, argv)
-int	argc;
-char	*argv[];
-{
-	char	*path;
-
-	journal = journal ? 0 : 1;
-
-	if(journal){
-		if(argc == 2)
-			if( (journal_file = fopen(argv[1], "w")) != NULL )
-				return CMD_OK;
-			
-		if( (path = getenv("MGED_JOURNAL")) != (char *)NULL )
-			if( (journal_file = fopen(path, "w")) != NULL )
-				return CMD_OK;
-
-		if( (journal_file = fopen( "mged.journal", "w" )) != NULL )
-			return CMD_OK;
-
-		journal = 0;	/* could not open a file so turn off */
-		rt_log( "Could not open a file for journalling.\n");
-
-		return CMD_BAD;
-	}
-
-	fclose(journal_file);
-	return CMD_OK;
-}
-
-int
-f_history(argc, argv)
-int	argc;
-char	*argv[];
-{
-	register int	i;
-	int	N = 0;
-	CmdList	ptr;
-
-
-	if(argc == 1){	/* print entire history list */
-		ptr = hhead;
-	}else{	/* argc == 2;  print last N commands */
-		sscanf(argv[1], "%d", &N);
-		ptr = htail->prev;
-		for(i = 1; i < N && ptr != NULL; ++i, ptr = ptr->prev);
-
-		if(ptr == NULL)
-			ptr = hhead;
-	}
-
-	for(; ptr != htail; ptr = ptr->next)
-		rt_log("%d\t%s\t%s\n", ptr->num, ptr->time,
-				ptr->cmd);
-
-	return CMD_OK;
-}
-
-/*   The node at the end of the list(pointed to by htail) always
-   contains a null cmd string. And hhead points to the
-   beginning(oldest) of the list. */
-static void
-addtohist(cmd)
-char *cmd;
-{
-	static int count = 0;
-	time_t	clock;
-
-	if(hhead != htail){	/* more than one node */
-		htail->prev->next = (CmdList)malloc(sizeof (Cmd));
-		htail->prev->next->next = htail;
-		htail->prev->next->prev = htail->prev;
-		htail->prev = htail->prev->next;
-		clock = time((time_t *) 0);
-		strftime(htail->prev->time, TIME_STR_SIZE, "%I:%M%p", localtime(&clock));
-		htail->prev->cmd =  malloc(strlen(cmd));   /* allocate space for cmd */
-		(void)strncpy(htail->prev->cmd, cmd, strlen(cmd) - 1);
-		htail->prev->cmd[strlen(cmd) - 1] = NULL;
-		htail->prev->num = count;
-		++count;
-	}else if(!count){	/* no nodes */
-		hhead = htail = hcurr = (CmdList)malloc(sizeof (Cmd));
-		htail->prev = NULL;	/* initialize pointers */
-		htail->next = NULL;
-		clock = time((time_t *) 0);
-		strftime(htail->time, TIME_STR_SIZE, "%I:%M%p", localtime(&clock));
-		htail->cmd = malloc(1);	/* allocate space */
-		htail->cmd[0] = NULL;	/* first node will have null command string */
-		++count;
-		addtohist(cmd);
-	}else{		/* only one node */
-		htail->prev = (CmdList)malloc(sizeof (Cmd));
-		htail->prev->next = htail;
-		htail->prev->prev = NULL;
-		hhead = htail->prev;
-		clock = time((time_t *) 0);
-		strftime(hhead->time, TIME_STR_SIZE, "%I:%M%p", localtime(&clock));
-		hhead->cmd =  malloc(strlen(cmd));   /* allocate space for cmd */
-		(void)strncpy(hhead->cmd, cmd, strlen(cmd) - 1);
-		hhead->cmd[strlen(cmd) - 1] = NULL;
-		hhead->num = count;
-		++count;
-	}
-}
-
-static int
-parse_history(cmd, str)
-struct rt_vls	*cmd;
-char	*str;
-{
-	register int	i;
-	int	N;
-	CmdList	ptr;
-
-	if(*str == '@'){	/* @@	last command */
-		if(htail == NULL || htail->prev == NULL){
-			rt_log( "No events in history list yet!\n");
-			return(1);	/* no command in history list yet */
-		}else{
-			rt_vls_strcpy(cmd, htail->prev->cmd);
-			rt_vls_strncat(cmd, "\n", 1);
-			return(0);
-		}
-	}else if(*str >= '0' && *str <= '9'){	/* @N	command N */
-		sscanf(str, "%d", &N);
-		for(i = 1, ptr = hhead; i < N && ptr != NULL; ++i, ptr = ptr->next);
-	
-		if(ptr != NULL){
-			rt_vls_strcpy(cmd, ptr->cmd);
-			rt_vls_strncat(cmd, "\n", 1);
-			return(0);
-		}else{
-			rt_log("%d: Event not found\n", N);
-			return(1);
-		}
-	}else if(*str == '-'){
-		++str;
-		if(*str >= '0' && *str <= '9'){
-			sscanf(str, "%d", &N);
-			for(i = 0, ptr = htail; i < N && ptr != NULL; ++i, ptr = ptr->prev);
-			if(ptr != NULL){
-	                        rt_vls_strcpy(cmd, ptr->cmd);
-				rt_vls_strncat(cmd, "\n", 1);
-	                        return(0);
-			}else{
-	                        rt_log("%s: Event not found\n", str);
-	                        return(1);
-			}
-		}else{
-			rt_log("%s: Event not found\n", str);
-			return(1);
-		}
-	}else{	/* assuming a character string for now */
-		for( ptr = htail; ptr != NULL; ptr = ptr->prev ){
-			if( strncmp( str, ptr->cmd, strlen( str ) - 1 ) )
-				continue;
-			else	/* found a match */
-				break;
-		}
-		if( ptr != NULL ){
-                        rt_vls_strcpy( cmd, ptr->cmd );
-			rt_vls_strncat( cmd, "\n", 1 );
-                        return( 0 );
-		}else{
-                        rt_log("%s: Event not found\n", str );
-                        return( 1 );
-		}
-	}
-}
-#endif
 
 /*
  *	T C L _ A P P I N I T
@@ -1435,10 +1215,6 @@ int record;
 	if (record) history_record(vp, &start, &finish, CMD_OK);
 
 	rt_vls_free(&globbed);
-#ifdef XMGED
-	addtohist(rt_vls_addr(vp));
-	hcurr = htail;
-#endif
 	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	return CMD_OK;
 
@@ -1469,10 +1245,6 @@ int record;
 
 	if (record) history_record(vp, &start, &finish, CMD_BAD);
 	rt_vls_free(&globbed);
-#ifdef XMGED
-	addtohist(rt_vls_addr(vp));
-	hcurr = htail;
-#endif
 	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	return CMD_BAD;
     }
@@ -1494,43 +1266,9 @@ struct funtab in_functions[];
 {
     register struct funtab *ftp;
     struct funtab *functions;
-#ifdef XMGED
-    AliasList	curr;
-    struct rt_vls	cmd;
-    int result;
-    int	i, cmp;
-    int 	save_journal;
-#endif
 
     if (argc == 0)
 	return CMD_OK;	/* No command entered, that's fine */
-
-#ifdef XMGED
-    /* check for aliases first */
-    for(curr = atop; curr != NULL;){
-	if((cmp = strcmp(argv[0], curr->name)) == 0){
-	    if(curr->marked)
-      /* alias has same name as real command, so call real command */
-		break;
-
-      /* repackage alias commands with any arguments and call cmdline again */
-	    save_journal = journal;
-	    journal = 0;	/* temporarily shut off journalling */
-	    rt_vls_init( &cmd );
-	    curr->marked = 1;
-	    if(!extract_alias_def(&cmd, curr, argc, argv))
-		(void)cmdline(&cmd, False);
-	    
-	    rt_vls_free( &cmd );
-	    curr->marked = 0;
-	    journal = save_journal;	/* restore journal state */
-	    return CMD_OK;
-	}else if(cmp > 0)
-	    curr = curr->right;
-	else
-	    curr = curr->left;
-    }
-#endif
 
     /* if no function table is provided, use the default mged function table */
     if( in_functions == (struct funtab *)NULL )
@@ -1547,18 +1285,7 @@ struct funtab in_functions[];
 	     * Call function listed in table, with
 	     * main(argc, argv) style args
 	     */
-#ifdef XMGED
-	    result = ftp->ft_func(argc, argv);
 
-/*  This needs to be done here in order to handle multiple commands within
-    an alias.  */
-	    if( sedraw > 0) {
-		sedit();
-		sedraw = 0;
-		dmaflag = 1;
-	    }
-	    return result;
-#else
 	    switch (ftp->ft_func(argc, argv)) {
 	    case CMD_OK:
 		return CMD_OK;
@@ -1571,7 +1298,6 @@ struct funtab in_functions[];
 		       ftp->ft_name);
 		return CMD_BAD;
 	    }
-#endif
 	}
 	rt_log("Usage: %s%s %s\n\t(%s)\n",functions[0].ft_name,
 	       ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
@@ -1857,94 +1583,6 @@ char	**argv;
 	return bad ? CMD_BAD : CMD_OK;
 }
 
-#ifdef XMGED
-/*
- *			S O U R C E _ F I L E
- *
- */
-void
-mged_source_file(fp, option)
-register FILE	*fp;
-char option;
-{
-	struct rt_vls	str, cmd;
-	int		len;
-	int             cflag = 0;
-	int record;
-
-	switch(option){
-	case 'h':
-	case 'H':
-		rt_vls_init(&str);
-		rt_vls_init(&cmd);
-
-		while( (len = rt_vls_gets( &str, fp )) >= 0 )  {
-		  if(str.vls_str[len - 1] == '\\'){ /* continuation */
-			str.vls_str[len - 1] = ' ';
-                        cflag = 1;
-                  }
-
-                  rt_vls_strcat(&cmd, str.vls_str);
-
-                  if(!cflag){/* no continuation, so add to history list */
-                    rt_vls_strcat( &str, "\n" );
-
-                    if( cmd.vls_len > 0 ){
-                       addtohist( rt_vls_addr(&cmd) );
-                       rt_vls_trunc( &cmd, 0 );
-		    }
-		  }else
-                    cflag = 0;
-
-                  rt_vls_trunc( &str, 0 );
-		}
-
-		rt_vls_free(&str);
-		rt_vls_free(&cmd);
-		break;
-	case 'e':
-        case 'E':
-        case 'b':
-        case 'B':
-		if(option == 'e' || option == 'E')
-		  record = 0;
-		else
-		  record = 1;
-
-		rt_vls_init(&str);
-		rt_vls_init(&cmd);
-
-		while( (len = rt_vls_gets( &str, fp )) >= 0 ){
-		  if(str.vls_str[len - 1] == '\\'){ /* continuation */
-			str.vls_str[len - 1] = ' ';
-                        cflag = 1;
-                  }
-
-                  rt_vls_strcat(&cmd, str.vls_str);
-
-                  if(!cflag){/* no continuation, so execute command */
-                    rt_vls_strcat( &cmd, "\n" );
-
-                    if( cmd.vls_len > 0 ){
-                      cmdline( &cmd, record );
-                      rt_vls_trunc( &cmd, 0 );
-                    }
-                  }else
-		    cflag = 0;
-
-                  rt_vls_trunc( &str, 0 );
-		}
-
-		rt_vls_free(&str);
-		rt_vls_free(&cmd);
-		break;
-	default:
-		rt_log( "Unknown option: %c\n", option);
-		break;
-	}
-}
-#endif
-
 /*
  *                          C M D _ E C H O
  *
@@ -1969,307 +1607,6 @@ char	*argv[];
 }
 
 #ifdef XMGED
-int
-f_alias(argc, argv)
-int	argc;
-char	*argv[];
-{
-	int	i;
-	int	namelen, deflen;
-	int	cmp;
-	AliasList curr, prev;
-
-	if(argc == 1){
-		print_alias(True, NULL, atop);
-		return CMD_BAD;
-	}
-
-	if(argc == 2){
-		print_alias(False, argv[1], atop);
-		return CMD_BAD;
-	}
-
-	namelen = strlen(argv[1]) + 1;
-
-	/* find length of alias definition */
-	for(deflen = 0, i = 2; i < argc; ++i)
-		deflen += strlen(argv[i]) + 1;
-
-	if(atop != NULL){
-		/* find a spot in the binary tree for the new node */
-		for(curr = atop; curr != NULL;){
-			if((cmp = strcmp(argv[1], curr->name)) == 0){
-			/* redefine the alias */
-				free((void *)curr->def);
-				curr->def = (char *)malloc(deflen + 1);
-				load_alias_def(curr->def, argc - 2, argv + 2);
-				return CMD_OK;
-			}else if(cmp > 0){
-				prev = curr;
-				curr = curr->right;
-			}else{
-				prev = curr;
-				curr = curr->left;
-			}
-		}
-		/* create the new node and initialize */
-		if(cmp > 0){
-			prev->right = get_alias_node();
-			curr = prev->right;
-		}else{
-			prev->left = get_alias_node();
-			curr = prev->left;
-		}
-	}else {	/* atop == NULL */
-		atop = get_alias_node();
-		curr = atop;
-	}
-
-	curr->name = (char *)malloc(namelen + 1);
-	curr->def = (char *)malloc(deflen + 1);
-	strcpy(curr->name, argv[1]);
-	load_alias_def(curr->def, argc - 2, argv + 2);
-
-	balance_alias_tree();
-
-	return CMD_OK;
-}
-
-int
-f_unalias(argc, argv)
-int	argc;
-char	*argv[];
-{
-	int	i;
-	int	cmp, o_cmp;
-	AliasList	prev, curr;
-	AliasList	right;
-
-	if(atop == NULL)
-		return CMD_BAD;
-
-	for(i = 1; i < argc; ++i){
-		prev = curr = atop;
-		while(curr != NULL){
-			if((cmp = strcmp(argv[1], curr->name)) == 0){
-				if(prev == curr){	/* tree top gets deleted */
-					if(curr->left != NULL){
-						atop = curr->left;
-						right = curr->right;
-						free_alias_node(curr);
-						for(curr = atop; curr->right != NULL; curr = curr->right);
-						curr->right = right;
-					}else{
-						atop = curr->right;
-						free_alias_node(curr);
-					}
-				}else{
-					if(curr->left != NULL){
-						if(o_cmp > 0)
-							prev->right = curr->left;
-						else
-							prev->left = curr->left;
-
-						prev = curr->left;
-						right = curr->right;
-						free_alias_node(curr);
-						for(; prev->right != NULL; prev = prev->right);
-						prev->right = right;
-					}else{
-						if(o_cmp > 0)
-							prev->right = curr->right;
-						else
-							prev->left = curr->right;
-
-						free_alias_node(curr);
-					}
-				}
-				break;
-			}else if(cmp > 0){
-				prev = curr;
-				curr = curr->right;
-			}else{
-				prev = curr;
-				curr = curr->left;
-			}
-
-			o_cmp = cmp;
-		}/* while */
-	}/* for */
-
-	balance_alias_tree();
-	return CMD_OK;
-}
-
-
-static void
-print_alias(printall, alias, curr)
-int	printall;
-char	*alias;
-AliasList	curr;
-{
-	int	cmp;
-
-	if(curr == NULL)
-		return;
-
-	if(printall){
-		print_alias(printall, alias, curr->left);
-		rt_log( "%s\t%s\n", curr->name, curr->def);
-		print_alias(printall, alias, curr->right);
-	}else{	/* print only one */
-		while(curr != NULL){
-			if((cmp = strcmp(alias, curr->name)) == 0){
-				rt_log( "%s\t%s\n", curr->name, curr->def);
-				return;
-			}else if(cmp > 0)
-				curr = curr->right;
-			else
-				curr = curr->left;
-		}
-	}
-}
-
-
-static void
-load_alias_def(def, num, params)
-char	*def;
-int	num;
-char	*params[];
-{
-	int	i;
-
-	strcpy(def, params[0]);
-
-	for(i = 1; i < num; ++i){
-		strcat(def, " ");
-		strcat(def, params[i]);
-	}
-}
-
-
-static AliasList
-get_alias_node()
-{
-	AliasList	curr;
-
-	if(alias_free == NULL)
-		curr = (AliasList)malloc(sizeof(Alias));
-	else{
-		curr = alias_free;
-		alias_free = alias_free->right;	/* using only right in this freelist */
-	}
-
-	curr->left = NULL;
-	curr->right = NULL;
-	curr->marked = 0;
-	return(curr);
-}
-
-
-static void
-free_alias_node(node)
-AliasList	node;
-{
-	free((void *)node->name);
-	free((void *)node->def);
-	node->right = alias_free;
-	alias_free = node;
-}
-
-
-static void
-balance_alias_tree()
-{
-	int	i = 0;
-}
-
-/*
- *	Extract the alias definition and insert arguments that where called for.
- * If there are any left over arguments, tack them on the end.
- */
-static int
-extract_alias_def(cmd, curr, argc, argv)
-struct rt_vls *cmd;
-AliasList	curr;
-int	argc;
-char	*argv[];
-{
-	int	i = 0;
-	int	j;
-	int	start = 0;	/* used for range of arguments */
-	int	end = 0;
-	int	*arg_used;	/* used to keep track of which arguments have been used */
-	char	*p;
-
-p = curr->def;
-arg_used = (int *)calloc(argc, sizeof(int));
-
-while(p[i] != '\0'){
-	/* copy a command name or other stuff embedded in the alias */
-	for(j = i; p[j] != '$' && p[j] != ';'
-		&& p[j] != '\0'; ++j);
-
-	rt_vls_strncat( cmd, p + i, j - i);
-
-	i = j;
-
-	if(p[i] == '\0')
-		break;
-	else if(p[i] == ';'){
-		rt_vls_strcat(cmd, "\n");
-		++i;
-	}else{		/* parse the variable argument string */
-		++i;
-		if(p[i] < '0' || p[i] > '9'){
-			rt_log( "%s\n", curr->def);
-			rt_log( "Range must be numeric.\n");
-			return(1);	/* Bad */
-		}
-
-		sscanf(p + i, "%d", &start);
-		if(start < 1 || start > argc){
-			rt_log( "%s\n", curr->def);
-			rt_log( "variable argument number is out of range.\n");
-                        return(1);      /* Bad */
-		}
-		if(p[++i] == '-'){
-			++i;
-			if(p[i] < '0' || p[i] > '9')	/* put rest of args here */
-				end = argc;
-			else{
-				sscanf(p + i, "%d", &end);
-				++i;
-			}
-
-			if(end < start || end > argc){
-				rt_log( "%s\n", curr->def);
-				rt_log( "variable argument number is out of range.\n");
-	                        return(1);      /* Bad */
-			}
-		}else
-			end = start;
-
-		for(; start <= end; ++start){
-			arg_used[start] = 1;	/* mark used */
-			rt_vls_strcat(cmd, argv[start]);
-			rt_vls_strcat(cmd, " ");
-		}
-	}
-}/* while */
-
-/* tack unused arguments on the end */
-for(j = 1; j < argc; ++j){
-	if(!arg_used[j]){
-		rt_vls_strcat(cmd, " ");
-		rt_vls_strcat(cmd, argv[j]);
-	}
-}
-
-rt_vls_strcat(cmd, "\n");
-return(0);
-}
-
 int
 f_button(argc, argv)
 int	argc;
@@ -2348,25 +1685,6 @@ char	*argv[];
 }
 
 int
-f_slewview(argc, argv)
-int	argc;
-char	*argv[];
-{
-	int x, y;
-	vect_t tabvec;
-
-	sscanf(argv[1], "%d", &x);
-	sscanf(argv[2], "%d", &y);
-
-	tabvec[X] =  x / 2047.0;
-	tabvec[Y] =  y / 2047.0;
-	tabvec[Z] = 0;
-	slewview( tabvec );
-
-	return CMD_OK;
-}
-
-int
 f_openw(argc, argv)
 int     argc;
 char    *argv[];
@@ -2392,87 +1710,6 @@ char    *argv[];
 
   rt_log( "closew: currently not available\n");
   return CMD_BAD;
-}
-
-int
-f_cue(argc, argv)
-int     argc;
-char    *argv[];
-{
-  if(cue_hook)
-    return (*cue_hook)();
-
-
-  rt_log( "cue: currently not available\n");
-  return CMD_BAD;
-}
-
-int
-f_zclip(argc, argv)
-int     argc;
-char    *argv[];
-{
-  if(zclip_hook)
-    return (*zclip_hook)();
-
-  rt_log( "zclip: currently not available\n");
-  return CMD_BAD;
-}
-
-int
-f_zbuffer(argc, argv)
-int     argc;
-char    *argv[];
-{
-  if(zbuffer_hook)
-    return (*zbuffer_hook)();
-
-  rt_log( "zbuffer: currently not available\n");
-  return CMD_BAD;
-}
-
-int
-f_light(argc, argv)
-int     argc;
-char    *argv[];
-{
-  if(light_hook)
-    return (*light_hook)();
-
-  rt_log( "light: currently not available\n");
-  return CMD_BAD;
-}
-
-int
-f_perspective(argc, argv)
-int     argc;
-char    *argv[];
-{
-  int i;
-  static int perspective_angle = 0;
-  static int perspective_mode = 0;
-  static int perspective_table[] = { 30, 45, 60, 90 };
-
-  if(argc == 2){
-    perspective_mode = 1;
-    sscanf(argv[1], "%d", &i);
-    if(i < 0 || i > 3){
-      if (--perspective_angle < 0) perspective_angle = 3;
-    }else
-      perspective_angle = i;
-
-    rt_vls_printf( &dm_values.dv_string,
-		  "set perspective %d\n",
-		  perspective_table[perspective_angle] );
-  }else{
-    perspective_mode = 1 - perspective_mode;
-    rt_vls_printf( &dm_values.dv_string,
-		  "set perspective %d\n",
-		  perspective_mode ? perspective_table[perspective_angle] : -1 );
-  }
-
-  update_views = 1;
-  return CMD_OK;
 }
 
 static void
@@ -2530,120 +1767,6 @@ fastf_t x, y, z;
   }
 }
 
-void
-set_e_axis_pos()
-{
-  int	i;
-
-  /* If there is more than one active view, then tran_x/y/z
-     needs to be initialized for each view. */
-  if(set_tran_hook){
-    point_t pos;
-
-    VSETALL(pos, 0.0);
-    (*set_tran_hook)(pos);
-  }else{
-    tran_x = tran_y = tran_z = 0;
-  }
-
-  if(rot_hook)
-    (*rot_hook)();
-
-  irot_x = irot_y = irot_z = 0;
-  update_views = 1;
-
-  switch(es_int.idb_type){
-  case	ID_ARB8:
-  case	ID_ARBN:
-    if(state == ST_O_EDIT)
-      i = 0;
-    else
-      switch(es_edflag){
-      case	STRANS:
-	i = 0;
-	break;
-      case	EARB:
-	switch(es_type){
-	case	ARB5:
-	  i = earb5[es_menu][0];
-	  break;
-	case	ARB6:
-	  i = earb6[es_menu][0];
-	  break;
-	case	ARB7:
-	  i = earb7[es_menu][0];
-	  break;
-	case	ARB8:
-	  i = earb8[es_menu][0];
-	  break;
-	default:
-	  i = 0;
-	  break;
-	}
-	break;
-      case	PTARB:
-	switch(es_type){
-	case    ARB4:
-	  i = es_menu;	/* index for point 1,2,3 or 4 */
-	  break;
-	case    ARB5:
-	case	ARB7:
-	  i = 4;	/* index for point 5 */
-	  break;
-	case    ARB6:
-	  i = es_menu;	/* index for point 5 or 6 */
-	  break;
-	default:
-	  i = 0;
-	  break;
-	}
-	break;
-      case ECMD_ARB_MOVE_FACE:
-	switch(es_type){
-	case	ARB4:
-	  i = arb_faces[0][es_menu * 4];
-	  break;
-	case	ARB5:
-	  i = arb_faces[1][es_menu * 4];  		
-	  break;
-	case	ARB6:
-	  i = arb_faces[2][es_menu * 4];  		
-	  break;
-	case	ARB7:
-	  i = arb_faces[3][es_menu * 4];  		
-	  break;
-	case	ARB8:
-	  i = arb_faces[4][es_menu * 4];  		
-	  break;
-	default:
-	  i = 0;
-	  break;
-	}
-	break;
-      case ECMD_ARB_ROTATE_FACE:
-	i = fixv;
-	break;
-      default:
-	i = 0;
-	break;
-      }
-
-    VMOVE(e_axis_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
-    break;
-  case ID_TGC:
-  case ID_REC:
-    if(es_edflag == ECMD_TGC_MV_H ||
-       es_edflag == ECMD_TGC_MV_HH){
-      struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
-
-      VADD2(e_axis_pos, tgc->h, tgc->v);
-      break;
-    }
-  default:
-    VMOVE(e_axis_pos, es_keypoint);
-    break;
-  }
-}
 
 int
 f_tran(argc, argv)
@@ -2863,17 +1986,223 @@ clean_up:
   mged_variables.faceplate = o_faceplate;
   return CMD_OK;
 }
-
-int
-f_bindkey(argc, argv)
-int argc;
-char *argv[];
-{
-  if(bindkey_hook)
-    return (*bindkey_hook)(argc, argv);
-
-  rt_log( "bindkey: currently not available\n");
-  return CMD_BAD;
-}
 #endif
 
+int
+f_cue(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(cue_hook)
+    return (*cue_hook)();
+
+
+  rt_log( "cue: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_zclip(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(zclip_hook)
+    return (*zclip_hook)();
+
+  rt_log( "zclip: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_zbuffer(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(zbuffer_hook)
+    return (*zbuffer_hook)();
+
+  rt_log( "zbuffer: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_light(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(light_hook)
+    return (*light_hook)();
+
+  rt_log( "light: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_perspective(argc, argv)
+int     argc;
+char    *argv[];
+{
+  int i;
+  static int perspective_angle = 0;
+  static int perspective_mode = 0;
+  static int perspective_table[] = { 30, 45, 60, 90 };
+
+  if(argc == 2){
+    perspective_mode = 1;
+    sscanf(argv[1], "%d", &i);
+    if(i < 0 || i > 3){
+      if (--perspective_angle < 0) perspective_angle = 3;
+    }else
+      perspective_angle = i;
+
+    rt_vls_printf( &dm_values.dv_string,
+		  "set perspective %d\n",
+		  perspective_table[perspective_angle] );
+  }else{
+    perspective_mode = 1 - perspective_mode;
+    rt_vls_printf( &dm_values.dv_string,
+		  "set perspective %d\n",
+		  perspective_mode ? perspective_table[perspective_angle] : -1 );
+  }
+
+#if 0
+  update_views = 1;
+#endif
+  return CMD_OK;
+}
+
+int
+f_slewview(argc, argv)
+int	argc;
+char	*argv[];
+{
+	int x, y;
+	vect_t tabvec;
+
+	sscanf(argv[1], "%d", &x);
+	sscanf(argv[2], "%d", &y);
+
+	tabvec[X] =  x / 2047.0;
+	tabvec[Y] =  y / 2047.0;
+	tabvec[Z] = 0;
+	slewview( tabvec );
+
+	return CMD_OK;
+}
+
+void
+set_e_axis_pos()
+{
+  int	i;
+
+#if 0
+  /* If there is more than one active view, then tran_x/y/z
+     needs to be initialized for each view. */
+  if(set_tran_hook){
+    point_t pos;
+
+    VSETALL(pos, 0.0);
+    (*set_tran_hook)(pos);
+  }else{
+    tran_x = tran_y = tran_z = 0;
+  }
+
+  if(rot_hook)
+    (*rot_hook)();
+
+  irot_x = irot_y = irot_z = 0;
+  update_views = 1;
+#endif
+
+  switch(es_int.idb_type){
+  case	ID_ARB8:
+  case	ID_ARBN:
+    if(state == ST_O_EDIT)
+      i = 0;
+    else
+      switch(es_edflag){
+      case	STRANS:
+	i = 0;
+	break;
+      case	EARB:
+	switch(es_type){
+	case	ARB5:
+	  i = earb5[es_menu][0];
+	  break;
+	case	ARB6:
+	  i = earb6[es_menu][0];
+	  break;
+	case	ARB7:
+	  i = earb7[es_menu][0];
+	  break;
+	case	ARB8:
+	  i = earb8[es_menu][0];
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case	PTARB:
+	switch(es_type){
+	case    ARB4:
+	  i = es_menu;	/* index for point 1,2,3 or 4 */
+	  break;
+	case    ARB5:
+	case	ARB7:
+	  i = 4;	/* index for point 5 */
+	  break;
+	case    ARB6:
+	  i = es_menu;	/* index for point 5 or 6 */
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case ECMD_ARB_MOVE_FACE:
+	switch(es_type){
+	case	ARB4:
+	  i = arb_faces[0][es_menu * 4];
+	  break;
+	case	ARB5:
+	  i = arb_faces[1][es_menu * 4];  		
+	  break;
+	case	ARB6:
+	  i = arb_faces[2][es_menu * 4];  		
+	  break;
+	case	ARB7:
+	  i = arb_faces[3][es_menu * 4];  		
+	  break;
+	case	ARB8:
+	  i = arb_faces[4][es_menu * 4];  		
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case ECMD_ARB_ROTATE_FACE:
+	i = fixv;
+	break;
+      default:
+	i = 0;
+	break;
+      }
+
+    VMOVE(e_axis_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+    break;
+  case ID_TGC:
+  case ID_REC:
+    if(es_edflag == ECMD_TGC_MV_H ||
+       es_edflag == ECMD_TGC_MV_HH){
+      struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
+
+      VADD2(e_axis_pos, tgc->h, tgc->v);
+      break;
+    }
+  default:
+    VMOVE(e_axis_pos, es_keypoint);
+    break;
+  }
+}
