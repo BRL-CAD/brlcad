@@ -1543,7 +1543,7 @@ rt_extrude_import5(
 	ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
 	extrude_ip->keypoint = bu_glong( ptr );
 	ptr += SIZEOF_NETWORK_LONG;
-	extrude_ip->sketch_name = strdup( (const char *)ptr );
+	extrude_ip->sketch_name = bu_strdup( (const char *)ptr );
 
 	return(0);			/* OK */
 }
