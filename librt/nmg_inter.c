@@ -236,6 +236,7 @@ CONST struct rt_tol	*tol;
 	fastf_t		fuzz;
 	int		ret;
 
+	RT_CK_TOL(tol);
 	/*
 	 *  To keep the values of u between 0 and 1,
 	 *  C should NOT be scaled to have unit length.
@@ -337,8 +338,7 @@ rt_log("rt_isect_lseg2_lseg2() p=(%g,%g,%g), pdir=(%g,%g,%g)\n\t\tq=(%g,%g,%g), 
 V3ARGS(p), V3ARGS(pdir), V3ARGS(q), V3ARGS(qdir) );
 
 #if 1
-	status = rt_isect_line2_line2( &dist[0], &dist[1],
-		p, pdir, q, qdir, tol );
+	status = rt_isect_line2_line2( dist, p, pdir, q, qdir, tol );
 	if( status < 0 )  {
 		/* Lines are parallel, non-colinear */
 		return -1;	/* No intersection */
@@ -1137,7 +1137,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 {
 	point_t		this_start;
 	point_t		this_end;
-	point_t		this_dir;
+	vect_t		this_dir;
 	point_t		other_start;
 	point_t		other_end;
 	vect_t		other_dir;
@@ -2078,6 +2078,7 @@ CONST struct rt_tol	*tol;
 	point_t		min_pt;
 	int		status;
 
+	RT_CK_TOL(tol);
 	bs.magic = NMG_INTER_STRUCT_MAGIC;
 	bs.vert2d = (fastf_t *)NULL;
 	bs.tol = *tol;		/* struct copy */
