@@ -158,6 +158,19 @@ grid_setup()
 		rt_bomb("zero-radius beam");
 	MAT4X3PNT( viewbase_model, view2model, temp );
 
+	if( jitter & JITTER_FRAME )  {
+		/* Move the frame in a smooth circular rotation in the plane */
+		fastf_t		ang;	/* radians */
+		fastf_t		dx, dy;
+
+		ang = curframe * frame_delta_t * rt_pi;	/* 2 sec period */
+		dx = cos(ang) * 0.5;	/* 1/2 width amplitude */
+		dy = sin(ang) * 0.5;
+		VJOIN2( viewbase_model, viewbase_model,
+			dx, dx_model,
+			dy, dy_model );
+	}
+
 	if( cell_width <= 0 || cell_width >= INFINITY ||
 	    cell_height <= 0 || cell_height >= INFINITY )  {
 		rt_log("grid_setup: cell size ERROR (%g, %g) mm\n",
@@ -292,7 +305,7 @@ worker()
 			}
 			VSETALL( colorsum, 0 );
 			for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
-				if( jitter )  {
+				if( jitter & JITTER_CELL )  {
 					FAST fastf_t dx, dy;
 					dx = a.a_x + rand_half(a.a_resource->re_randptr);
 					dy = a.a_y + rand_half(a.a_resource->re_randptr);
