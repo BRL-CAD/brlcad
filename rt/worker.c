@@ -290,6 +290,13 @@ int	cpu;
 				a.a_x = pixelnum%width;
 				a.a_y = pixelnum/width;
 			}
+			if( sub_grid_mode )  {
+				if( a.a_x < sub_xmin || a.a_x > sub_xmax )
+					continue;
+				if( a.a_y < sub_ymin || a.a_y > sub_ymax )
+					continue;
+			}
+
 			VSETALL( colorsum, 0 );
 			for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
 				if( jitter & JITTER_CELL )  {
