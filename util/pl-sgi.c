@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"		/* to define "sgi" on ANSI compilers */
+#include "externs.h"
 
 #ifdef sgi
 # include "gl.h"
@@ -51,10 +52,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	DtoR(x)		((x)*PI/180.0)
 #define	RtoD(x)		((x)*180.0/PI)
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
 Matrix	*viewmat;	/* current viewing projection */
 Matrix	viewortho;	/* ortho viewing projection */
 Matrix	viewpersp;	/* perspective viewing projection */
@@ -78,6 +75,8 @@ int	cmap_mode = 1;	/* !0 if in color map mode, else RGBmode */
 int	onebuffer = 0;	/* !0 if in single buffer mode, else double */
 long	menu;
 char	*menustring;
+
+void	uplot();
 
 /*
  *  Color Map:
@@ -785,6 +784,7 @@ init_display()
 #define	geti(fp,x)	{ (x) = getc(fp); (x) |= (short)(getc(fp)<<8); }
 #define	getb(fp)	(getc(fp))
 
+void
 uplot( fp, max, min )
 FILE	*fp;
 Coord	max[3], min[3];
