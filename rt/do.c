@@ -470,7 +470,7 @@ char	**argv;
 	}
 	rt_vls_init( &str );
 	rt_vls_from_argv( &str, argc-1, argv+1 );
-	if( bu_structparse( &str, set_parse, (char *)0 ) < 0 )  {
+	if( bu_struct_parse( &str, set_parse, (char *)0 ) < 0 )  {
 		rt_vls_free( &str );
 		return(-1);
 	}
