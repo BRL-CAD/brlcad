@@ -145,7 +145,7 @@ do
 	then
 		mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
 	fi
-	sed -e "s,/usr/brlcad,${BASEDIR}," < ${i} > ${BINDIR}/${i}
+	sed -e 's,=/usr/brlcad$,='${BASEDIR}, < ${i} > ${BINDIR}/${i}
 	chmod 555 ${BINDIR}/${i}
 done
 cd ..
