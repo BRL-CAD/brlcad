@@ -132,14 +132,12 @@ typedef int	bool;			/* boolean data type */
 
 RGBpixel	cur_color = { 255, 255, 255 };
 
-typedef struct
-	{
+typedef struct {
 	short		x;
 	short		y;
-	}	coords; 		/* Cartesian coordinates */
+} coords; 				/* Cartesian coordinates */
 
-typedef struct descr
-	{
+typedef struct descr {
 	struct descr	*next;		/* next in list, or NULL */
 	coords		pixel;		/* starting scan, nib */
 	tiny		xsign;		/* 0 or +1 */
@@ -150,7 +148,8 @@ typedef struct descr
 	short		e;		/* DDA error accumulator */
 	short		de;		/* increment for `e' */
 	RGBpixel	col;		/* COLOR of this vector */
-	}	stroke; 		/* rasterization descriptor */
+	struct descr	*freep;		/* next in free list, or NULL */
+} stroke; 				/* rasterization descriptor */
 
 /*	Global data allocations:	*/
 
@@ -236,6 +235,8 @@ STATIC struct vectorchar {
 
 STATIC int	Nscanlines = 512;
 STATIC int	Npixels = 512;
+STATIC char	*framebuffer = NULL;
+STATIC char	*filename = NULL;
 
 struct band  {
 	stroke	*first;
@@ -247,11 +248,12 @@ STATIC struct band	*bandEnd;
 STATIC RGBpixel	*buffer;		/* ptr to active band buffer */
 STATIC long	buffersize;		/* active band buffer bytes */
 STATIC short	ystart = 0;		/* active band starting scan */
-STATIC short	debug  = 0;
-STATIC short	over = 0;		/* !0 to overlay on existing image */
-STATIC short	immediate = 0;		/* !0 to plot immediately */
+STATIC int	debug  = 0;
+STATIC int	over = 0;		/* !0 to overlay on existing image */
+STATIC int	immediate = 0;		/* !0 to plot immediately */
+STATIC int	single_banded = 0;	/* !0 if one fullscreen band */
 STATIC short	lines_per_band = 16;	/* scan lines per band */
-STATIC short	line_thickness = 0;
+STATIC short	line_thickness = 1;
 
 STATIC int	sigs[] =		/* signals to be caught */
 	{
@@ -275,14 +277,60 @@ FBIO	*fbp;			/* Current framebuffer */
 /*	Local subroutines:	*/
 
 STATIC int	DoFile(), Foo();
-STATIC stroke	*Allocate(), *Dequeue();
+STATIC stroke	*Dequeue();
 STATIC bool	BuildStr(), GetCoords(),
 		OutBuild();
-STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
-		Requeue(),
+STATIC void	Catch(), FreeUp(), InitDesc(), Requeue(),
 		Raster(), SetSigs();
 
 void		edgelimit(), put_vector_char();
+
+/*
+ *  Stroke descriptor management.
+ *  We malloc these in large blocks and keep our own free list.
+ *  Last I looked it took 32 bytes per stroke, so every 32 strokes
+ *  is 1KB, or 32K strokes / MByte.
+ */
+#define	STROKE_NULL	((stroke *)0)
+
+struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
+
+/* allocate new strokes to the free list */
+STATIC void
+get_strokes()
+{
+	register stroke	*sp;
+	register char	*cp;
+	register int	bytes;
+
+	/* ~32 strokes/KB */
+	bytes = 640 * sizeof(stroke);
+	if( (cp = malloc(bytes)) == (char *)0 ) {
+		/* Attempt to draw/free some vectors and try again */
+		OutBuild();
+		if( (cp = malloc(bytes)) == (char *)0 ) {
+			fprintf(stderr,"pl-fb: malloc failed!\n");
+			exit( 2 );
+		}
+	}
+	/* link them all into the free list */
+	sp = (stroke *)cp;
+	while( bytes >= sizeof(stroke) ) {
+		sp->freep = freep;
+		freep = sp++;
+		bytes -= sizeof(stroke);
+	}
+}
+
+#define GET_STROKE(vp)    { \
+			while( ((vp)=freep) == STROKE_NULL ) \
+				get_strokes(); \
+			freep = (vp)->freep; \
+			(vp)->freep = STROKE_NULL; }
+
+#define FREE_STROKE(vp)  { \
+			(vp)->freep = freep; \
+			freep = (vp); }
 
 /*
  *			S X T 1 6
@@ -302,7 +350,80 @@ register long v;
 	return( w | v );
 }
 
-char usage[] = "Usage: pl-fb [-h] [-d] [-o] [-i] [-t thickness] [file.plot]\n";
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while( (c = getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
+		switch( c ) {
+		case 't':
+			line_thickness = atoi(optarg);
+			if( line_thickness <= 0 )
+				line_thickness = 1;
+			break;
+		case 'i':
+			immediate = 1;
+			break;
+		case 'd':
+			debug = 1;
+			break;
+		case 'O':
+		case 'o':
+			over = 1;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 'h':
+			Nscanlines = Npixels = 1024;
+			break;
+		case 'S':
+		case 's':
+			Nscanlines = Npixels = atoi(optarg);
+			break;
+		case 'W':
+		case 'w':
+			Npixels = atoi(optarg);
+			break;
+		case 'N':
+		case 'n':
+			Nscanlines = atoi(optarg);
+			break;
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc ) {
+		/* no file name given, use stdin */
+		if( isatty(fileno(stdin)) )
+			return(0);
+		filename = "-";
+		pfin = stdin;
+	} else {
+		/* open file */
+		filename = argv[optind];
+		if( (pfin = fopen(filename, "r")) == NULL ) {
+			fprintf( stderr,
+			   "pl-fb: Can't open file \"%s\"\n", filename );
+			return(0);
+		}
+	}
+
+	if( argc > ++optind )
+		(void)fprintf( stderr, "pl-fb: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
+
+static char usage[] = "\
+Usage: pl-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
+        [-S squaresize] [-W width] [-N height] [file.plot]\n";
 
 /*
  *  M A I N
@@ -314,64 +435,18 @@ char usage[] = "Usage: pl-fb [-h] [-d] [-o] [-i] [-t thickness] [file.plot]\n";
  *	Default (no arguments) action is to plot STDIN on current FB.
  */
 main(argc, argv)
-int argc;
-char **argv;
+int	argc;
+char	**argv;
 {
-	register int	i;
-	register char	*filename = NULL;
-	char		*cp;
-	
 	Nscanlines = Npixels = 512;
-	for(i = 1; i < argc; i++)
-		if( argv[i][0] == '-' )
-			switch( argv[i][1] )  {
-			case 't':
-				line_thickness = atoi(argv[++i]);
-				break;
-				
-			case 'i':
-				immediate = 1;
-				break;
 
-			case 'd':
-				debug = 1;
-				break;
-
-			case 'O':
-			case 'o':
-				over = 1;
-				break;
-
-			case 'h':
-				Nscanlines = Npixels = 1024;
-				break;
-
-			default:
-				fprintf(stderr, usage);
-				exit(4);
-			}
-		else
-			filename = argv[i];
-
-	/*
-	 *  Open the selected filename -- note
-	 *  with no arguments, we plot STDIN.
-	 */
-	if ( filename == NULL || filename[0] == 0 )  {
-		if( isatty(fileno(stdin)) )  {
-			fprintf(stderr,usage);
-			exit(-3);
-		}
-		filename = "-";
-		pfin = stdin;
-	} else if( (pfin = fopen( filename, "r" )) == NULL ) {
-		fprintf(stderr,"Can't open file \"%s\"\n", filename);
-		exit(-2);
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
 
-
 	/* Open frame buffer, adapt to slightly smaller ones */
-	if( (fbp = fb_open( NULL, Npixels, Nscanlines )) == FBIO_NULL )  {
+	if( (fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL ) {
 		fprintf(stderr,"pl-fb: fb_open failed\n");
 		exit(1);
 	}
@@ -381,6 +456,10 @@ char **argv;
 		lines_per_band = Nscanlines;
 		if( !over )
 			fb_clear( fbp, RGBPIXEL_NULL );
+	} else if( Nscanlines <= 512 ) {
+		/* make one full size band */
+		lines_per_band = Nscanlines;
+		single_banded = 1;
 	}
 
 	/*
@@ -408,7 +487,11 @@ char **argv;
 	}
 	bzero( (char *)band, BANDS*sizeof(struct band) );
 	bandEnd = &band[BANDS];
-
+	if( single_banded && over ) {
+    		/* Read in initial screen */
+	    	if( fb_read( fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+    			fprintf(stderr,"pl-fb: band read error\n");
+    	}
 	if( debug )
 		fprintf(stderr, "pl-fb output of %s\n", filename);
 
@@ -991,32 +1074,14 @@ register coords	*coop;		/* -> input coordinates */
 
 STATIC void
 InitDesc()
-	{
+{
 	register struct band *bp;	/* *bp -> start of descr list */
 
 	for ( bp = &band[0]; bp < bandEnd; ++bp )
 		bp->first = NULL;		/* nothing in band yet */
 		bp->last  = NULL;
-	}
-
-
-/*
-	Queue - queue descriptor onto band list
-
-	Note that descriptor order is not important.
-*/
-
-STATIC void
-Queue( bp, hp, vp )
-	register struct band *bp;
-	register stroke **hp;		/* *hp -> first descr in list */
-	register stroke *vp;		/* -> new descriptor */
-{
-	vp->next = *hp; 		/* -> first in existing list */
-	*hp = vp;			/* -> new first descriptor */
-	if( vp->next == NULL )
-		bp->last = vp;		/* update end pointer */
 }
+
 
 /*
  * 	Requeue - enqueue descriptor at END of band list
@@ -1036,15 +1101,15 @@ register stroke	     *vp;
 }
 
 /*
-	Dequeue - remove descriptor from band list (do not free space)
-*/
-
+ *	Dequeue - remove descriptor from band list (do not free space)
+ *
+ *  Returns addr of descriptor, or NULL if none left.
+ */
 STATIC stroke *
-Dequeue( bp, hp )				/* returns addr of descriptor,
-					   or NULL if none left */
-	register struct band *bp;
-	register stroke **hp;		/* *hp -> first descr in list */
-	{
+Dequeue( bp, hp )
+register struct band *bp;
+register stroke **hp;		/* *hp -> first descr in list */
+{
 	register stroke *vp;		/* -> descriptor */
 
 	if ( (vp = *hp) != NULL )
@@ -1054,7 +1119,7 @@ Dequeue( bp, hp )				/* returns addr of descriptor,
 		bp->last = NULL;
 		
 	return vp;			/* may be NULL */
-	}
+}
 
 
 /*
@@ -1069,7 +1134,7 @@ FreeUp()
 
 	for ( bp = &band[0]; bp < bandEnd; ++bp )
 		while ( (vp = Dequeue( bp, &bp->first )) != NULL )
-			free( (char *)vp );	/* free storage */
+			FREE_STROKE(vp);	/* free storage */
 	}
 
 /*
@@ -1103,14 +1168,19 @@ register coords	*pt1, *pt2;
 	vp->de = vp->major - vp->minor;
 }
 
-
 /*
-	BuildStr - set up DDA parameters and queue stroke
-*/
-
+ *	BuildStr - set up DDA parameters and queue stroke
+ *
+ *  Given two end points of a line, allocate and intialize a stroke
+ *  descriptor for it.  If we are drawing "thick" lines we generate
+ *  several extra stroke descriptors as well.  In immediate or memory
+ *  buffered mode we rasterize it and free it right away.  In "regular"
+ *  banded buffered mode, we link the descriptor(s) into its starting
+ *  point band(s).
+ */
 STATIC bool
-BuildStr( pt1, pt2 )			/* returns true unless bug */
-coords		*pt1, *pt2;	/* endpoints */
+BuildStr( pt1, pt2 )		/* returns true or dies */
+coords	*pt1, *pt2;		/* endpoints */
 {
 	register stroke *vp;		/* -> rasterization descr */
 	register int	thick;
@@ -1124,17 +1194,23 @@ coords		*pt1, *pt2;	/* endpoints */
 		pt2 = temp;
 	}
 
-	if ( (vp = Allocate()) == NULL )	/* alloc a descriptor */
-		return false;		/* "can't happen" */
-
-	prep_dda( vp, pt1, pt2 );
+	GET_STROKE(vp);			/* alloc a descriptor */
+	prep_dda( vp, pt1, pt2 );	/* prep it */
 
 	/* Thicken by advancing alternating pixels in minor direction */
-	thick = line_thickness;
+	thick = line_thickness - 1;	/* number of "extra" pixels */
 	if( thick >= vp->major && vp->major > 0 )  thick = vp->major-1;
 	for( ; thick >= 0; thick-- )  {
-		register stroke *v2 = Allocate();
-		*v2 = *vp;
+		register stroke *v2;
+
+		if( thick == 0 ) {
+			/* last pass, use vp */
+			v2 = vp;
+		} else {
+			/* make a new one */
+			GET_STROKE(v2);
+			*v2 = *vp;
+		}
 
 		/* Advance minor only */
 		if( vp->ymajor )
@@ -1144,45 +1220,37 @@ coords		*pt1, *pt2;	/* endpoints */
 			v2->pixel.y += (vp->ysign!=0 ? vp->ysign : 1) *
 				((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2 );
 
-		if( immediate )  {
+		if( immediate || single_banded )  {
 			ystart = 0;
 			Raster( v2, (struct band *)0 );
 		}  else
 			/* link descriptor into band corresponding to starting scan */
 			Requeue( &band[v2->pixel.y / lines_per_band], v2 );
 	}
-	free((char *)vp);
 	return true;
 }
 
 /*
-	Allocate - allocate a descriptor (possibly updating image file)
-*/
-
-STATIC stroke *
-Allocate()				/* returns addr of descriptor
-					   or NULL if something wrong */
-	{
-	register stroke *vp;		/* -> allocated storage */
-
-	if ( (vp = (stroke *)malloc( sizeof(stroke) )) == NULL
-	  && OutBuild() 		/* flush and free up storage */
-	   )
-		vp = (stroke *)malloc( sizeof(stroke) );
-
-	return vp;			/* should be non-NULL now */
-	}
-
-/*
-	OutBuild - rasterize all strokes into raster frame image
-*/
-
+ *	OutBuild - rasterize all strokes into raster frame image
+ */
 STATIC bool
 OutBuild()				/* returns true if successful */
 {
 	register struct band *hp;	/* *hp -> head of descr list */
 	register struct band *np;	/* `hp' for next band */
 	register stroke *vp;		/* -> rasterization descr */
+
+	if( single_banded ) {
+		if( debug ) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
+		if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+			return false;	/* can't write image file */
+		if( over )  {
+			/* Read back the composite image */
+			if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+				fprintf(stderr,"pl-fb:  band read error\n");
+		}
+		return true;
+	}
 
 	for ( hp = &band[0]; hp < bandEnd; ++hp )
 		if ( hp->first != NULL )
@@ -1220,27 +1288,28 @@ OutBuild()				/* returns true if successful */
 }
 
 /*
-	Raster - rasterize stroke.  If overflow into next band, requeue;
-					else free the descriptor.
-
-Method:
-	Modified Bresenham algorithm.  Guaranteed to mark a dot for
-	a zero-length stroke.  Please do not try to "improve" this code
-	as it is extremely hard to get all aspects just right.
-*/
-
+ *	Raster - rasterize stroke.
+ *
+ *  If immediate mode, draw the individual pixel on the frame buffer.
+ *  If banded buffered mode, draw the portion in this band.  If it
+ *     overflows into next band, requeue; else free the descriptor.
+ *
+ *  Method:
+ *	Modified Bresenham algorithm.  Guaranteed to mark a dot for
+ *	a zero-length stroke.  Please do not try to "improve" this code
+ *	as it is extremely hard to get all aspects just right.
+ */
 STATIC void
 Raster( vp, np )
-	register stroke *vp;		/* -> rasterization descr */
-	register struct band *np;	/* *np -> next band 1st descr */
-	{
+register stroke *vp;		/* -> rasterization descr */
+register struct band *np;	/* *np -> next band 1st descr */
+{
 	register short	dy;		/* raster within active band */
 
 	/*
-	 *  Set the color of this vector into master color array
+	 *  Draw the portion within this band.
 	 */
-	for ( dy = vp->pixel.y - ystart; dy < lines_per_band; )
-		{
+	for ( dy = vp->pixel.y - ystart; dy < lines_per_band; ) {
 
 		/* set the appropriate pixel in the buffer */
 		if( immediate )  {
@@ -1252,31 +1321,30 @@ Raster( vp, np )
 			COPYRGB( *pp, vp->col );
 		}
 
-		if ( vp->major-- == 0 ) /* done! */
-			{
-			free( (char *)vp );	/* return to "malloc" */
+		if ( vp->major-- == 0 ) { /* done! */
+			FREE_STROKE( vp );	/* return to "malloc" */
 			return;
-			}
-		if ( vp->e < 0 )	/* advance major & minor */
-			{
+		}
+
+		if ( vp->e < 0 ) {
+			/* advance major & minor */
 			dy += vp->ysign;
 			vp->pixel.x += vp->xsign;
 			vp->e += vp->de;
-			}
-		else	{		/* advance major only */
+		} else {
+			/* advance major only */
 			if ( vp->ymajor )	/* Y is major dir */
 				++dy;
 			else			/* X is major dir */
 				vp->pixel.x += vp->xsign;
 			vp->e -= vp->minor;
-			}
 		}
+	}
 
 	/* overflow into next band; re-queue */
-
 	vp->pixel.y = ystart + lines_per_band;
 	Requeue( np, vp );       /* DDA parameters already set */
-	}
+}
 
 /*
 	Foo - clean up before return from rasterizer
