@@ -2117,8 +2117,10 @@ init_Tty()
 	clr_Tabs( tty_fd );
 	clr_Echo( tty_fd );
 	clr_CRNL( tty_fd );
+#if defined(sgi) || defined(__sgi)
 	if( isSGI )
 		sgi_Init();
+#endif
 	return;
 	}
 
@@ -2369,9 +2371,11 @@ Point *pointp;
 	if( pad_flag )
 		return do_Bitpad( pointp );
 	else
+#if defined(sgi) || defined(__sgi)
 	if( isSGI )
 		return sgi_Mouse_Pos( &cursor_pos );
 	else
+#endif
 		return -1;
 	}
 
