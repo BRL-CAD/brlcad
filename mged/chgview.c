@@ -861,6 +861,72 @@ int	verbose;
 	rt_functab[id].ft_ifree( &intern );
 }
 
+static void
+cmd_list_guts(clientData, interp, argc, argv, recurse)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+int recurse;
+{
+  register struct directory *dp;
+  register int arg;
+  struct bu_vls str;
+  int id;
+  char *listeval="listeval";
+  struct rt_db_internal intern;
+
+  bu_vls_init( &str );
+
+  for (arg = 0; arg < argc; arg++) {
+    if (recurse) {
+      char *tmp_argv[2];
+
+      tmp_argv[0] = listeval;
+      tmp_argv[1] = argv[arg];
+
+      f_pathsum(clientData, interp, 2, tmp_argv);
+    } else if (strchr(argv[arg], '/')) {
+      struct db_tree_state ts;
+      struct db_full_path path;
+
+      bzero( (char *)&ts, sizeof( ts ) );
+      db_full_path_init( &path );
+
+      ts.ts_dbip = dbip;
+      bn_mat_idn(ts.ts_mat);
+
+      if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
+	continue;
+
+      dp = DB_FULL_PATH_CUR_DIR( &path );
+
+      if ((id = rt_db_get_internal(&intern, dp, dbip, ts.ts_mat)) < 0) {
+	Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+			 ") failure\n", (char *)NULL );
+	continue;
+      }
+
+      db_free_full_path( &path );
+
+      bu_vls_printf( &str, "%s:  ", argv[arg] );
+
+      if (rt_functab[id].ft_describe(&str, &intern, 99, base2local) < 0)
+	Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
+
+      rt_functab[id].ft_ifree( &intern );
+    } else {
+      if ((dp = db_lookup(dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
+	continue;
+
+      do_list(&str, dp, 99);	/* very verbose */
+    }
+  }
+
+  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+  bu_vls_free( &str );
+}
+
 /*
  *			C M D _ L I S T
  *
@@ -874,18 +940,12 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  register struct directory *dp;
-  register int arg;
-  struct bu_vls str;
   int start_arg=1;
   int recurse=0;
-  char *listeval="listeval";
-  int id;
-  struct rt_db_internal intern;
 
   CHECK_DBI_NULL;
 
-  if(argc < 2 || MAXARGS < argc){
+  if(MAXARGS < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -895,76 +955,75 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  bu_vls_init( &str );
+  if (strcmp(argv[1], "-r") == 0) {
+    recurse = 1;
+    start_arg = 2;
 
+    if (illump == SOLID_NULL &&
+	argc <= start_arg) {
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help l");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+      return TCL_ERROR;
+    }
+  }
+
+#if 0
   if( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3 );	/* allow interupts */
   else{
     bu_vls_free( &str );
     return TCL_OK;
   }
+#endif
 
-  if( strcmp( argv[1], "-r" ) == 0 )
-	{
-		recurse = 1;
-		start_arg = 2;
-	}
+  if (argc == 1 ||
+      argc == 2 && recurse) {
+    int ac = 1;
+    char *av[2];
 
-  for( arg = start_arg; arg < argc; arg++ )  {
-  	if( recurse )
-  	{
-  		char *tmp_argv[2];
+    if (illump != SOLID_NULL) {
+      register int i, last;
+      struct bu_vls vls;
 
-  		tmp_argv[0] = listeval;
-  		tmp_argv[1] = argv[arg];
+      bu_vls_init(&vls);
 
-  		f_pathsum( clientData, interp, 2, tmp_argv );
-  	}
-  	else if( strchr( argv[arg], '/' ) )
-  	{
-  		struct db_tree_state ts;
-  		struct db_full_path path;
+      if (state == ST_S_EDIT)
+	last = illump->s_last;
+      else if (state == ST_O_EDIT)
+	  last = ipathpos;
+      else
+	return TCL_ERROR;
 
-  		bzero( (char *)&ts, sizeof( ts ) );
-  		db_full_path_init( &path );
+      for (i = 0; i <= last; ++i)
+	bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
 
-  		ts.ts_dbip = dbip;
-  		bn_mat_idn(ts.ts_mat);
+      av[0] = bu_vls_addr(&vls);
+      av[1] = (char *)NULL;
+      cmd_list_guts(clientData, interp, ac, av, recurse);
 
-  		if( db_follow_path_for_state( &ts, &path, argv[arg], 1 ) )
-  			continue;
+      bu_vls_free(&vls);
+    } else {
+      struct bu_vls vls;
 
-  		dp = DB_FULL_PATH_CUR_DIR( &path );
-
-		if( (id = rt_db_get_internal( &intern, dp, dbip, ts.ts_mat)) < 0 )
-		{
-			Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-				") failure\n", (char *)NULL );
-			continue;
-		}
-
-  		db_free_full_path( &path );
-
-		bu_vls_printf( &str, "%s:  ", argv[arg] );
-
-		if( rt_functab[id].ft_describe( &str, &intern, 99, base2local ) < 0 )
-  			Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-
-  		rt_functab[id].ft_ifree( &intern );
-  	}
-  	else
-  	{
-	    if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
-	      continue;
-
-	    do_list( &str, dp, 99 );	/* very verbose */
- 	 }
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help l");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+      return TCL_ERROR;
+    }
+  } else {
+    argc -= start_arg;
+    argv += start_arg;
+    cmd_list_guts(clientData, interp, argc, argv, recurse);
   }
 
-  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-  bu_vls_free( &str );
-
+#if 0
   (void)signal(SIGINT, SIG_IGN);
+#endif
   return TCL_OK;
 }
 
