@@ -2,19 +2,28 @@
  *			C L I P . C
  *
  * Functions -
- *	clip	clip a line segment against the size of the display
+ *	clip	clip a 2-D integer line segment against the size of the display
+ *	vclip	clip a 3-D floating line segment against a bounding RPP.
  *
  * Author -
- *	This module written by Doug Kingston, 14 October 81
+ *	clip() was written by Doug Kingston, 14 October 81
  *	Based on the clipping routine in "Principles of Computer
  *	Graphics" by Newman and Sproull, 1973, McGraw/Hill.
  *
- *			R E V I S I O N   H I S T O R Y
+ *	vclip() was adapted from RT by Mike Muuss, 17 January 1985.
  *
- *	05/27/83  MJM	Adapted code to run on VAX;  numerous cleanups.
- *
- *	09-Sep-83 DAG	Overhauled.
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
+#include <stdio.h>
+#include "ged_types.h"
+#include "vmath.h"
 
 static int	code();
 
@@ -90,4 +99,85 @@ float x, y;
 		cval |= 010;
 
 	return (cval);
+}
+
+typedef float fastf_t;		/* for compatability with ged_types.h */
+#define EPSILON		0.0001
+#define INFINITY	100000000.0
+
+
+/*
+ *			V C L I P
+ *
+ *  Clip a ray against a rectangular parallelpiped (RPP)
+ *  that has faces parallel to the coordinate planes (a clipping RPP).
+ *  The RPP is defined by a minimum point and a maximum point.
+ *
+ *  Returns -
+ *	 0  if ray does not hit RPP,
+ *	!0  if ray hits RPP.
+ *
+ *  Implicit Return -
+ *	if !0 was returned, "a" and "b" have been clipped to the RPP.
+ */
+vclip( a, b, min, max )
+vect_t a, b;
+register fastf_t *min, *max;
+{
+	static vect_t diff;
+	static double sv;
+	static double st;
+	static double mindist, maxdist;
+	register fastf_t *pt = &a[0];
+	register fastf_t *dir = &diff[0];
+	register int i;
+
+	mindist = -INFINITY;
+	maxdist = INFINITY;
+	VSUB2( diff, b, a );
+
+	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
+		if( *dir < -EPSILON )  {
+			if( (sv = (*min - *pt) / *dir) < 0.0 )
+				return(0);	/* MISS */
+			if(maxdist > sv)
+				maxdist = sv;
+			if( mindist < (st = (*max - *pt) / *dir) )
+				mindist = st;
+		}  else if( *dir > EPSILON )  {
+			if( (st = (*max - *pt) / *dir) < 0.0 )
+				return(0);	/* MISS */
+			if(maxdist > st)
+				maxdist = st;
+			if( mindist < ((sv = (*min - *pt) / *dir)) )
+				mindist = sv;
+		}  else  {
+			/*
+			 *  If direction component along this axis is NEAR 0,
+			 *  (ie, this ray is aligned with this axis),
+			 *  merely check against the boundaries.
+			 */
+			if( (*min > *pt) || (*max < *pt) )
+				return(0);	/* MISS */;
+		}
+	}
+	if( mindist >= maxdist )
+		return(0);	/* MISS */
+
+	if( mindist > 1 || maxdist < 0 )
+		return(0);	/* MISS */
+
+	if( mindist <= 0 && maxdist >= 1 )
+		return(1);	/* HIT, no clipping needed */
+
+	/* Don't grow one end of a contained segment */
+	if( mindist < 0 )
+		mindist = 0;
+	if( maxdist > 1 )
+		maxdist = 1;
+
+	/* Compute actual intercept points */
+	VCOMP1( b, a, maxdist, diff );		/* b must go first */
+	VCOMP1( a, a, mindist, diff );
+	return(1);		/* HIT */
 }
