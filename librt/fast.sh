@@ -39,7 +39,7 @@ cake \
 
 cake \
  g_half.o \
- nmg_fcut.o
+ nmg_fcut.o \
  nmg_index.o \
  nmg_inter.o \
  nmg_extrude.o \
