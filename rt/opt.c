@@ -26,7 +26,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "./mathtab.h"
 #include "./ext.h"
 
 #include "./rdebug.h"
