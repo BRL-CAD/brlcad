@@ -1,6 +1,0 @@
-name proe-brl
-startup spawn
-exec_file /usr/brlcad/pro-engineer/sgi_elf2/proe-brl
-text_dir /usr/brlcad/pro-engineer/text
-revision 18
-end
