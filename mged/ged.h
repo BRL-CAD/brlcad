@@ -454,6 +454,7 @@ MGED_EXTERN(int f_edgedir, (int argc, char **argv));
 MGED_EXTERN(int f_edit, (int argc, char **argv));
 MGED_EXTERN(int f_eqn, (int argc, char **argv));
 MGED_EXTERN(int f_ev, (int argc, char **argv));
+MGED_EXTERN(int f_eval, (int argc, char **argv));
 MGED_EXTERN(int f_evedit, (int argc, char **argv));
 MGED_EXTERN(int f_extrude, (int argc, char **argv));
 MGED_EXTERN(int f_facedef, (int argc, char **argv));
