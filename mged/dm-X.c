@@ -22,8 +22,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #define DO_XSELECTINPUT 0
-#define TRY_PIPES 1
-#define TRY_MULTIBUFFERING 0  /* Leave this off. The Multibuffering extension doesn't work */
 
 #include "conf.h"
 
@@ -53,8 +51,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./solid.h"
 
-#if TRY_PIPES
-extern int ged_pipe[];
+#ifdef SEND_KEY_DOWN_PIPE
+extern int dm_pipe[];
 #endif
 
 static void	label();
@@ -63,6 +61,9 @@ static int	xsetup();
 static void     x_var_init();
 static void     establish_perspective();
 static void     set_perspective();
+#ifdef VIRTUAL_TRACKBALL
+static void     establish_vtb();
+#endif
 
 /* Display Manager package interface */
 
@@ -116,19 +117,23 @@ extern Tk_Window tkwin;
 struct modifiable_x_vars {
   int perspective_mode;
   int dummy_perspective;
+#ifdef VIRTUAL_TRACKBALL
+  int virtual_trackball;
+#endif
 };
 
 struct x_vars {
   Display *dpy;
   Tk_Window xtkwin;
   Window win;
-#if TRY_MULTIBUFFERING
-  Multibuffer buffers[2];
-  Multibuffer curr_buf;
-  int doublebuffer;
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+  Pixmap pix;
 #endif
   int width;
   int height;
+#ifdef VIRTUAL_TRACKBALL
+  int omx, omy;
+#endif
   GC gc;
   XFontStruct *fontstruct;
   int is_monochrome;
@@ -141,6 +146,9 @@ struct x_vars {
 struct structparse X_vparse[] = {
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective", X_MV_O(dummy_perspective),  set_perspective },
+#ifdef VIRTUAL_TRACKBALL
+  {"%d",  1, "virtual_trackball", X_MV_O(virtual_trackball),establish_vtb },
+#endif
   {"",    0,  (char *)0,          0,                      FUNC_NULL }
 };
 
@@ -214,6 +222,11 @@ X_close()
   if(((struct x_vars *)dm_vars)->gc != 0)
     XFreeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc);
 
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+  if(((struct x_vars *)dm_vars)->pix != 0)
+     Tk_FreePixmap(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix);
+#endif
+
   if(((struct x_vars *)dm_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct x_vars *)dm_vars)->xtkwin);
 
@@ -235,11 +248,17 @@ X_close()
 void
 X_prolog()
 {
-#if TRY_MULTIBUFFERING
-  if(!((struct x_vars *)dm_vars)->doublebuffer)
-    XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+  XGCValues       gcv;
+
+  gcv.foreground = ((struct x_vars *)dm_vars)->bg;
+  XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc,
+	    GCForeground, &gcv);
+  XFillRectangle(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix,
+		 ((struct x_vars *)dm_vars)->gc, 0, 0, ((struct x_vars *)dm_vars)->width + 1,
+		 ((struct x_vars *)dm_vars)->height + 1);
 #else
-    XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
+  XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
 #endif
 }
 
@@ -252,17 +271,11 @@ X_epilog()
     /* Put the center point up last */
     draw( 0, 0, 0, 0 );
 
-#if TRY_MULTIBUFFERING
-    if(((struct x_vars *)dm_vars)->doublebuffer){
-      /* dpy, size of buffer array, buffer array, minimum delay, maximum delay */
-      XmbufDisplayBuffers(((struct x_vars *)dm_vars)->dpy, 1,
-			  &((struct x_vars *)dm_vars)->curr_buf, 0, 0);
-
-      /* swap buffers */
-      ((struct x_vars *)dm_vars)->curr_buf =
-	((struct x_vars *)dm_vars)->curr_buf == ((struct x_vars *)dm_vars)->buffers[0] ?
-	((struct x_vars *)dm_vars)->buffers[1] : ((struct x_vars *)dm_vars)->buffers[0];
-    }
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+    XCopyArea(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix,
+	      ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc,
+	      0, 0, ((struct x_vars *)dm_vars)->width, ((struct x_vars *)dm_vars)->height,
+	      0, 0);
 #endif
     /* Prevent lag between events and updates */
     XSync(((struct x_vars *)dm_vars)->dpy, 0);
@@ -309,6 +322,7 @@ int white_flag;
     int	lastx = 0;
     int	lasty = 0;
 
+    gcv.foreground = ((struct x_vars *)dm_vars)->fg;
     XChangeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc, GCForeground, &gcv);
 
     if( sp->s_soldash )
@@ -378,7 +392,11 @@ int white_flag;
 		lasty = y;
 		useful = 1;
 		if( nseg == 1024 ) {
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+		    XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
+#else
 		    XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
+#endif
 		    /* Thicken the drawing, if monochrome */
 		    if( white_flag && ((struct x_vars *)dm_vars)->is_monochrome ){
 			int	i;
@@ -392,7 +410,11 @@ int white_flag;
 			    segp->y2++;
 			    segp++;
 			}
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+			XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
+#else
 			XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
+#endif
 		    }
 		    nseg = 0;
 		    segp = segbuf;
@@ -402,7 +424,11 @@ int white_flag;
 	}
     }
     if( nseg ) {
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+	XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
+#else
 	XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
+#endif
 	if( white_flag && ((struct x_vars *)dm_vars)->is_monochrome ){
 	    int	i;
 	    /* XXX - width and height don't work on Sun! */
@@ -415,7 +441,11 @@ int white_flag;
 		segp->y2++;
 		segp++;
 	    }
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+	    XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
+#else
 	    XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
+#endif
 	}
     }
 
@@ -533,14 +563,14 @@ XEvent *eventPtr;
   }
 #endif
 
-#if TRY_PIPES
-  if(mged_variables.focus && eventPtr->type == KeyPress){
+#ifdef SEND_KEY_DOWN_PIPE
+  if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
 		  (KeySym *)NULL, (XComposeStatus *)NULL);
 
-    write(ged_pipe[1], buffer, 1);
+    write(dm_pipe[1], buffer, 1);
 
     curr_dm_list = save_dm_list;
 
@@ -566,6 +596,45 @@ XEvent *eventPtr;
     refresh();
     goto end;
   } else if( eventPtr->type == MotionNotify ) {
+#ifdef VIRTUAL_TRACKBALL
+    int mx, my;
+
+    rt_vls_init(&cmd);
+    mx = eventPtr->xmotion.x;
+    my = eventPtr->xmotion.y;
+
+    switch(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
+    case VIRTUAL_TRACKBALL_OFF:
+      /* do the regular thing */
+      mx = (mx/(double)((struct x_vars *)dm_vars)->width - 0.5) * 4095;
+      my = (0.5 - my/(double)((struct x_vars *)dm_vars)->height) * 4095;
+
+      /* Constant tracking (e.g. illuminate mode) bound to M mouse */
+      rt_vls_printf( &cmd, "M 0 %d %d\n", mx, my );
+      break;
+    case VIRTUAL_TRACKBALL_ROTATE:
+      rt_vls_printf( &cmd, "irot %f %f 0\n",
+		     (double)(my - ((struct x_vars *)dm_vars)->omy)/2.0,
+		     (double)(mx - ((struct x_vars *)dm_vars)->omx)/2.0);
+      break;
+    case VIRTUAL_TRACKBALL_TRANSLATE:
+      rt_vls_printf( &cmd, "tran %f %f %f",
+		     ((double)mx/((struct x_vars *)dm_vars)->width - 0.5) * 2,
+		     (0.5 - (double)my/((struct x_vars *)dm_vars)->height) * 2, tran_z);
+      break;
+    case VIRTUAL_TRACKBALL_ZOOM:
+      rt_vls_printf( &cmd, "zoom %lf",
+		     ((double)((struct x_vars *)dm_vars)->omy - my)/
+		     ((struct x_vars *)dm_vars)->height + 1.0);
+      break;
+    case VIRTUAL_TRACKBALL_IGNORE:
+    default:
+      goto end;
+    }
+
+    ((struct x_vars *)dm_vars)->omx = mx;
+    ((struct x_vars *)dm_vars)->omy = my;
+#else
     int	x, y;
 
 #if !DO_XSELECTINPUT
@@ -578,6 +647,7 @@ XEvent *eventPtr;
     /* Constant tracking (e.g. illuminate mode) bound to M mouse */
     rt_vls_init(&cmd);
     rt_vls_printf( &cmd, "M 0 %d %d\n", x, y );
+#endif
   } else {
     XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, &xwa);
     ((struct x_vars *)dm_vars)->height = xwa.height;
@@ -678,6 +748,9 @@ int	a, b;
 		       KeyPressMask|StructureNotifyMask);
 	  break;
 #else
+#ifdef VIRTUAL_TRACKBALL
+  if(!((struct x_vars *)dm_vars)->mvars.virtual_trackball){
+#endif
  	switch( b )  {
 	case ST_VIEW:
 	    /* constant tracking OFF */
@@ -699,6 +772,9 @@ int	a, b;
 	    rt_log("X_statechange: unknown state %s\n", state_str[b]);
 	    break;
 	}
+#ifdef VIRTUAL_TRACKBALL
+  }
+#endif
 
 	/*X_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
 }
@@ -755,11 +831,19 @@ int	x2, y2;		/* to point */
 
   if( sx1 == sx2 && sy1 == sy2 )
     XDrawPoint( ((struct x_vars *)dm_vars)->dpy,
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+		((struct x_vars *)dm_vars)->pix,
+#else
 		((struct x_vars *)dm_vars)->win,
+#endif
 		((struct x_vars *)dm_vars)->gc, sx1, sy1 );
   else
     XDrawLine( ((struct x_vars *)dm_vars)->dpy,
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+	       ((struct x_vars *)dm_vars)->pix,
+#else
 	       ((struct x_vars *)dm_vars)->win,
+#endif
 	       ((struct x_vars *)dm_vars)->gc, sx1, sy1, sx2, sy2 );
 }
 
@@ -777,7 +861,11 @@ char	*str;
   /*sy += ((struct x_vars *)dm_vars)->fontstruct->max_bounds.ascent + ((struct x_vars *)dm_vars)->fontstruct->max_bounds.descent/2);*/
 
   XDrawString( ((struct x_vars *)dm_vars)->dpy,
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+	       ((struct x_vars *)dm_vars)->pix,
+#else
 	       ((struct x_vars *)dm_vars)->win,
+#endif
 	       ((struct x_vars *)dm_vars)->gc, sx, sy, str, strlen(str) );
 }
 
@@ -926,30 +1014,10 @@ char	*name;
   ((struct x_vars *)dm_vars)->win =
       Tk_WindowId(((struct x_vars *)dm_vars)->xtkwin);
 
-#if TRY_MULTIBUFFERING
-  if(!XmbufQueryExtension(((struct x_vars *)dm_vars)->dpy,
-			  &first_event, &first_error)){
-    ((struct x_vars *)dm_vars)->doublebuffer = 0;
-    rt_log("xsetup: no multi-buffering extension available on %s\n", name);
-  }else{
-    int num;
-
-    num = XmbufCreateBuffers(((struct x_vars *)dm_vars)->dpy,
-			  ((struct x_vars *)dm_vars)->win, 2,
-			  MultibufferUpdateActionBackground,
-			  MultibufferUpdateHintFrequent,
-			  ((struct x_vars *)dm_vars)->buffers);
-    if(num != 2){
-      if(num)
-	XmbufDestroyBuffers(((struct x_vars *)dm_vars)->dpy,
-			    ((struct x_vars *)dm_vars)->win);
-      ((struct x_vars *)dm_vars)->doublebuffer = 0;
-      rt_log("xsetup: failed to get 2 buffers\n");
-    }else{
-      ((struct x_vars *)dm_vars)->doublebuffer = 1;
-      ((struct x_vars *)dm_vars)->curr_buf = ((struct x_vars *)dm_vars)->buffers[1];
-    }
-  }
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+  ((struct x_vars *)dm_vars)->pix = Tk_GetPixmap(((struct x_vars *)dm_vars)->dpy,
+    DefaultRootWindow(((struct x_vars *)dm_vars)->dpy), ((struct x_vars *)dm_vars)->width,
+    ((struct x_vars *)dm_vars)->height, Tk_Depth(((struct x_vars *)dm_vars)->xtkwin));
 #endif
 
   a_screen = Tk_ScreenNumber(((struct x_vars *)dm_vars)->xtkwin);
@@ -1110,6 +1178,28 @@ set_perspective()
   dmaflag = 1;
 }
 
+#ifdef VIRTUAL_TRACKBALL
+static void
+establish_vtb()
+{
+  if(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
+    if(state != ST_S_PICK && state != ST_O_PICK &&
+       state != ST_O_PATH && state != ST_S_VPICK){
+
+      /* turn constant tracking ON */
+      XdoMotion = 1;
+    }
+  }else{
+    if(state != ST_S_PICK && state != ST_O_PICK &&
+       state != ST_O_PATH && state != ST_S_VPICK){
+
+      /* turn constant tracking OFF */
+      XdoMotion = 0;
+    }    
+  }
+}
+#endif
+
 int
 X_dm(argc, argv)
 int argc;
@@ -1159,6 +1249,61 @@ char *argv[];
     return CMD_OK;
   }
 
+#ifdef VIRTUAL_TRACKBALL  
+  if(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
+  if( !strcmp( argv[0], "vtb" )){
+    int buttonpress;
+
+    if( argc < 5){
+      rt_log("dm: need more parameters\n");
+      rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
+      return CMD_BAD;
+    }
+
+
+    buttonpress = atoi(argv[2]);
+    ((struct x_vars *)dm_vars)->omx = atoi(argv[3]);
+    ((struct x_vars *)dm_vars)->omy = atoi(argv[4]);
+
+    if(buttonpress){
+      switch(*argv[1]){
+      case 'r':
+	((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
+	break;
+      case 't':
+	{
+	  struct rt_vls cmd;
+	  rt_vls_init(&cmd);
+
+	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
+	  rt_vls_printf( &cmd, "tran %f %f %f",
+			 ((double)((struct x_vars *)dm_vars)->omx/
+			  ((struct x_vars *)dm_vars)->width - 0.5) * 2,
+			 (0.5 - (double)((struct x_vars *)dm_vars)->omy/
+			  ((struct x_vars *)dm_vars)->height) * 2, tran_z);
+
+	  (void)cmdline(&cmd, FALSE);
+	}
+	break;
+      case 'z':
+	((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
+	break;
+      default:
+	rt_log("dm: need more parameters\n");
+	rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
+	return CMD_BAD;
+      }
+    }else{
+      ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_IGNORE;
+    }
+
+    return CMD_OK;
+  }
+  }else{
+    return CMD_OK;
+  }
+#endif
+
   rt_log("dm: bad command - %s\n", argv[0]);
   return CMD_BAD;
 }
@@ -1185,9 +1330,11 @@ X_load_startup()
   rt_vls_init( &str );
 
   if((filename = getenv("DM_X_RCFILE")) == (char *)NULL )
-        filename = DM_X_RCFILE;
+    /* Use default file name */
+    filename = DM_X_RCFILE;
 
   if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
+    /* Use MGED_LIBRARY path */
     rt_vls_strcpy( &str, path );
     rt_vls_strcat( &str, "/" );
     rt_vls_strcat( &str, filename );
@@ -1198,6 +1345,7 @@ X_load_startup()
 
   if(!found){
     if( (path = getenv("HOME")) != (char *)NULL )  {
+      /* Use HOME path */
       rt_vls_strcpy( &str, path );
       rt_vls_strcat( &str, "/" );
       rt_vls_strcat( &str, filename );
@@ -1208,20 +1356,11 @@ X_load_startup()
   }
 
   if( !found ) {
+    /* Check current directory */
     if( (fp = fopen( filename, "r" )) != NULL )  {
       rt_vls_strcpy( &str, filename );
       found = 1;
     }
-  }
-
-/*XXX Temporary, so things will work without knowledge of the new environment
-      variables */
-  if( !found ) {
-    rt_vls_strcpy( &str, "/m/cad/mged/");
-    rt_vls_strcat( &str, filename);
-
-    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-      found = 1;
   }
 
   if(!found){
@@ -1280,7 +1419,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #define DO_XSELECTINPUT 1
-#define TRY_PIPES 1
 
 #include "conf.h"
 
@@ -1308,8 +1446,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./solid.h"
 
-#if TRY_PIPES
-extern int ged_pipe[];
+#ifdef SEND_KEY_DOWN_PIPE
+extern int dm_pipe[];
 #endif
 
 static void	label();
@@ -1746,14 +1884,14 @@ XEvent *eventPtr;
     if (eventPtr->xany.window != win)
 	return TCL_OK;
 
-#if TRY_PIPES
-    if(mged_variables.focus && eventPtr->type == KeyPress){
+#ifdef SEND_KEY_DOWN_PIPE
+    if(mged_variables.send_key && eventPtr->type == KeyPress){
       char buffer[1];
 
       XLookupString(&(eventPtr->xkey), buffer, 1,
 		    (KeySym *)NULL, (XComposeStatus *)NULL);
 
-      write(ged_pipe[1], buffer, 1);
+      write(dm_pipe[1], buffer, 1);
       return TCL_RETURN;
     }
 #endif
@@ -2396,9 +2534,11 @@ X_load_startup()
   rt_vls_init( &str );
 
   if((filename = getenv("DM_X_RCFILE")) == (char *)NULL )
-        filename = DM_X_RCFILE;
+    /* Use default file name */
+    filename = DM_X_RCFILE;
 
   if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
+    /* Use MGED_LIBRARY path */
     rt_vls_strcpy( &str, path );
     rt_vls_strcat( &str, "/" );
     rt_vls_strcat( &str, filename );
@@ -2409,6 +2549,7 @@ X_load_startup()
 
   if(!found){
     if( (path = getenv("HOME")) != (char *)NULL )  {
+      /* Use HOME path */
       rt_vls_strcpy( &str, path );
       rt_vls_strcat( &str, "/" );
       rt_vls_strcat( &str, filename );
@@ -2419,20 +2560,11 @@ X_load_startup()
   }
 
   if( !found ) {
+    /* Check current directory */
     if( (fp = fopen( filename, "r" )) != NULL )  {
       rt_vls_strcpy( &str, filename );
       found = 1;
     }
-  }
-
-/*XXX Temporary, so things will work without knowledge of the new environment
-      variables */
-  if( !found ) {
-    rt_vls_strcpy( &str, "/m/cad/mged/");
-    rt_vls_strcat( &str, filename);
-
-    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-      found = 1;
   }
 
   if(!found){
