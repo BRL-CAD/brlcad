@@ -358,6 +358,7 @@ fastf_t	radius;
 {
 	static union record rec;
 	fastf_t m1, m2;
+	vect_t	tvec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
@@ -367,15 +368,16 @@ fastf_t	radius;
 
 	VMOVE( F1, base );
 	VMOVE( F2, height  );
-	base[0] += PI;
-	base[1] += PI;
-	base[2] += PI;
-	VCROSS( F3, base, F2 );
+	VMOVE( tvec, base );
+	tvec[0] += PI;
+	tvec[1] += PI;
+	tvec[2] += PI;
+	VCROSS( F3, tvec, F2 );
 	m1 = MAGNITUDE( F3 );
 	if( m1 == 0.0 )  {
-		base[1] = 0.0;		/* Vector is colinear, so */
-		base[2] = 0.0;		/* make it different */
-		VCROSS( F3, base, F2 );
+		tvec[1] = 0.0;		/* Vector is colinear, so */
+		tvec[2] = 0.0;		/* make it different */
+		VCROSS( F3, tvec, F2 );
 		m1 = MAGNITUDE( F3 );
 		if( m1 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
