@@ -207,16 +207,15 @@ must not exist by this name."}}\
 proc do_Open { id } {
     global mged_gui
 
-    set file_types {{{MGED Database} {.g}} {{All Files} {*}}}
-    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types \
-	    -initialdir $mged_gui(databaseDir) \
-	    -title "Open MGED Database"]
+    set ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
+    set filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
+	    -initialdir $mged_gui(databaseDir) -title "Open MGED Database"]
 
-    if {$ia_filename != ""} {
+    if {$filename != ""} {
 	# save the directory
-	set mged_gui(databaseDir) [file dirname $ia_filename]
+	set mged_gui(databaseDir) [file dirname $filename]
 
-	set ret [catch {opendb $ia_filename} msg]
+	set ret [catch {opendb $filename} msg]
 	if {$ret} {
 	    cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
 		    $msg info 0 OK
@@ -225,6 +224,43 @@ proc do_Open { id } {
 		    $msg info 0 OK
 	}
     }
+}
+
+## - getFile
+#
+# Call Tk's filebrowser to get a file. Initialize the browser to 
+# look in $dir at files of type $ftype. The dir parameter is
+# updated before returning. This routine returns the absolute
+# pathname of the file. Note - the filename length is currently
+# limited to a max of 127 characters.
+#
+proc getFile { id parent dir ftypes title } {
+    global mged_gui
+    upvar #0 $dir path
+
+    if {![info exists path] || $path == ""} {
+	set path [pwd]
+    }
+
+    set filename [tk_getOpenFile -parent $parent -filetypes $ftypes \
+	    -initialdir $path -title $title]
+
+    # warn about filenames whose lengths are larger than 127 characters
+    if {[string length $filename] > 127} {
+	if {$parent == "."} {
+	    set parent ""
+	}
+	cad_dialog $parent.uncool $mged_gui($id,screen) "Error" \
+		"Length of path is greater than 127 bytes." info 0 OK
+	return ""
+    }
+
+    if {$filename != ""} {
+	# save the path
+	set path [file dirname $filename]
+    }
+
+    return $filename
 }
 
 proc do_Concat { id } {
@@ -236,14 +272,14 @@ proc do_Concat { id } {
 	return
     }
 
-    set file_types {{{MGED Database} {.g}} {{All Files} {*}}}
-    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types \
+    set ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
+    set filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
 	    -initialdir $mged_gui(databaseDir) \
 	    -title "Insert MGED Database"]
 
-    if {$ia_filename != ""} {
+    if {$filename != ""} {
 	# save the directory
-	set mged_gui(databaseDir) [file dirname $ia_filename]
+	set mged_gui(databaseDir) [file dirname $filename]
 
 	set ret [cad_input_dialog .$id.prefix $mged_gui($id,screen) "Prefix" \
 		"Enter prefix:" prefix ""\
@@ -257,7 +293,7 @@ the database being inserted."} { see_also dbconcat } } OK CANCEL]
 	}
 
 	if {$ret == 0} {
-	    dbconcat $ia_filename $prefix
+	    dbconcat $filename $prefix
 	}
     }
 }
@@ -265,8 +301,8 @@ the database being inserted."} { see_also dbconcat } } OK CANCEL]
 proc do_LoadScript { id } {
     global mged_gui
 
-    set file_types {{{Tcl Scripts} {.tcl}} {{All Files} {*}}}
-    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types \
+    set ftypes {{{Tcl Scripts} {.tcl}} {{All Files} {*}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
 	    -initialdir $mged_gui(loadScriptDir) \
 	    -title "Load Script"]
 
