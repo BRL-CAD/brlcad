@@ -63,7 +63,6 @@ unsigned int cnt;
 char *str;
 {
 	register char *ptr;
-	extern char *malloc();
 
 #ifdef MEMDEBUG
 	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
@@ -157,13 +156,13 @@ register char *ptr;
 unsigned int cnt;
 char *str;
 {
-	extern char *realloc();
-
 #ifdef MEMDEBUG
 	register char *savedptr;
+
 	savedptr = ptr;
 	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
 #endif /* MEMDEBUG */
+
 	if( rt_g.rtg_parallel ) {
 		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	}
