@@ -1467,7 +1467,7 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 			for( i=0 ; i<= bsg->degree ; i++ ) {
 				VMOVE_2D( V[i], skt->verts[bsg->ctl_points[i]] );
 			}
-			Bezier( V, bsg->degree, 0.5, NULL, NULL, pt, NULL );
+			Bezier( V, bsg->degree, 0.51, NULL, NULL, pt, NULL );
 			bu_free( (char *)V, "Bezier control points" );
 			break;
 		default:
@@ -2140,6 +2140,7 @@ const struct bn_tol	*tol;
 				}
 			}
 		}
+		RT_FREE_VLIST( &vhead );
 	}
 
 	/* extrude this face */
