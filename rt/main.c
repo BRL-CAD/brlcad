@@ -135,10 +135,6 @@ char **argv;
 			incr_nlevel, width);
 	}
 
-	if( pix_start == -1 )  {
-		pix_start = 0;
-		pix_end = height * width - 1;
-	}
 	/*
 	 *  Handle parallel initialization, if applicable.
 	 */

@@ -64,6 +64,8 @@ extern void	worker();
 extern struct application ap;
 extern int	hypersample;		/* number of extra rays to fire */
 extern fastf_t	aspect;			/* view aspect ratio X/Y */
+extern fastf_t	cell_width;		/* model space grid cell width */
+extern fastf_t	cell_height;		/* model space grid cell height */
 extern point_t	eye_model;		/* model-space location of eye */
 extern fastf_t  eye_backoff;		/* dist of eye from center */
 extern fastf_t	rt_perspective;		/* persp (degrees X) 0 => ortho */
@@ -608,8 +610,39 @@ int framenumber;
 	fprintf(stderr, "\n...................Frame %5d...................\n",
 		framenumber);
 
+	/* Compute model RPP, etc */
+	do_prep( rtip );
+
+	fprintf(stderr,"shooting at %d solids in %d regions\n",
+		rtip->nsolids, rtip->nregions );
+	if( rtip->HeadSolid == SOLTAB_NULL )  {
+		fprintf(stderr,"rt ERROR: No solids\n");
+		exit(3);
+	}
+	fprintf(stderr,"model X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
+		rtip->mdl_min[X], rtip->mdl_max[X],
+		rtip->mdl_min[Y], rtip->mdl_max[Y],
+		rtip->mdl_min[Z], rtip->mdl_max[Z] );
+
 	/*
-	 *  Deal with CPU limits and priorities, where appropriate.
+	 *  Perform Grid setup.
+	 *  This may alter cell size or width/height.
+	 */
+	grid_setup();
+	fprintf(stderr,"Grid: (%g, %g) mm, (%d, %d) pixels\n",
+		cell_width, cell_height,
+		width, height );
+	fprintf(stderr,"Beam radius=%g mm, divergence=%g mm/1mm\n",
+		ap.a_rbeam, ap.a_diverge );
+
+	if( pix_start == -1 )  {
+		pix_start = 0;
+		pix_end = height * width - 1;
+	}
+
+	/*
+	 *  After the parameters for this calculation have been established,
+	 *  deal with CPU limits and priorities, where appropriate.
 	 *  Because limits exist, they better be adequate.
 	 *  We assume that the Cray can produce MINRATE pixels/sec
 	 *  on images with extreme amounts of glass & mirrors.
@@ -635,22 +668,10 @@ int framenumber;
 			rt_pri_set(14);
 	}
 
-	do_prep( rtip );
-
-	fprintf(stderr,"shooting at %d solids in %d regions\n",
-		rtip->nsolids, rtip->nregions );
-	if( rtip->HeadSolid == SOLTAB_NULL )  {
-		fprintf(stderr,"rt ERROR: No solids\n");
-		exit(3);
-	}
-	fprintf(stderr,"model X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
-		rtip->mdl_min[X], rtip->mdl_max[X],
-		rtip->mdl_min[Y], rtip->mdl_max[Y],
-		rtip->mdl_min[Z], rtip->mdl_max[Z] );
-
-	if(rdebug&RDEBUG_RTMEM)
-		rt_g.debug |= DEBUG_MEM;	/* Just for the tracing */
-
+	/*
+	 *  Determine output file name
+	 *  On UNIX only, check to see if this is a "restart".
+	 */
 	if( outputfile != (char *)0 )  {
 #ifdef CRAY_COS
 		/* Dots in COS file names make them permanant files. */
@@ -728,12 +749,11 @@ int framenumber;
 		fprintf(stderr,"Output file is '%s'\n", framename);
 	}
 
-	grid_setup();
-	fprintf(stderr,"Beam radius=%g mm, divergence=%g mm/1mm\n",
-		ap.a_rbeam, ap.a_diverge );
-
 	/* initialize lighting */
 	view_2init( &ap );
+
+	if(rdebug&RDEBUG_RTMEM)
+		rt_g.debug |= DEBUG_MEM;	/* Just for the tracing */
 
 	rtip->nshots = 0;
 	rtip->nmiss_model = 0;

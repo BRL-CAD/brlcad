@@ -32,7 +32,7 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 extern mat_t	view2model;
 extern mat_t	model2view;
 
-/***** worker.c variables imported from rt.c *****/
+/***** worker.c variables imported from opt.c *****/
 extern void	worker();
 extern struct application ap;
 extern int	stereo;			/* stereo viewing */
@@ -43,6 +43,8 @@ extern fastf_t	rt_perspective;		/* persp (degrees X) 0 => ortho */
 extern fastf_t	aspect;			/* view aspect ratio X/Y */
 extern vect_t	dx_model;		/* view delta-X as model-space vect */
 extern vect_t	dy_model;		/* view delta-Y as model-space vect */
+extern fastf_t	cell_width;		/* model space grid cell width */
+extern fastf_t	cell_height;		/* model space grid cell height */
 extern point_t	eye_model;		/* model-space location of eye */
 extern int	width;			/* # of pixels in X */
 extern int	height;			/* # of lines in Y */
@@ -80,11 +82,24 @@ grid_setup()
 	mat_mul( model2view, Viewrotscale, toEye );
 	mat_inv( view2model, model2view );
 
-	/* Chop -1.0..+1.0 range into parts */
-	VSET( temp, 2.0/width, 0, 0 );
-	MAT4X3VEC( dx_model, view2model, temp );
-	VSET( temp, 0, 2.0/(height*aspect), 0 );
-	MAT4X3VEC( dy_model, view2model, temp );
+	/* Determine grid spacing and orientation */
+	if( cell_width > 0.0 )  {
+		if( cell_height <= 0.0 )  cell_height = cell_width;
+		width = viewsize / cell_width;
+		height = viewsize / (cell_height*aspect);
+	} else {
+		/* Chop -1.0..+1.0 range into parts */
+		cell_width = viewsize / width;
+		cell_height = viewsize / (height*aspect);
+	}
+	VSET( temp, 1, 0, 0 );
+	MAT3X3VEC( dx_model, view2model, temp );	/* rotate only */
+	VSCALE( dx_model, dx_model, cell_width );
+
+	VSET( temp, 0, 1, 0 );
+	MAT3X3VEC( dy_model, view2model, temp );	/* rotate only */
+	VSCALE( dy_model, dy_model, cell_height );
+
 	if( stereo )  {
 		/* Move left 2.5 inches (63.5mm) */
 		VSET( temp, -63.5*2.0/viewsize, 0, 0 );
