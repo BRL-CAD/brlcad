@@ -29,27 +29,27 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct sizes {
 	int	width;		/* image width in pixels */
 	int	height;		/* image height in pixels */
-	long	size;		/* total number of pixels */
 };
 struct sizes fb_common_sizes[] = {
-	{   50,	  50,	    2500 },
-	{   64,	  64,	    4096 },
-	{  128,	 128,	   16384 },
-	{  160,  120,	   19200 },	/* quarter 640x480 */
-	{  256,	 256,	   65536 },
-	{  320,  240,	   76800 },	/* half 640x480 */
-	{  512,	 512,	  262144 },
-	{  640,	 480,	  307200 },	/* Common video format */
-	{  720,	 486,	  349920 },	/* Abekas video format */
-	{ 1024,	 768,	  786432 },	/* SGI-3D screen size */
-	{ 1152,  900,	 1036800 },	/* Sun screen size */
-	{ 1024,	1024,	 1048576 },
-	{ 1280,  960,	 1228800 },	/* twice 640x480 */
-	{ 1280,	1024,	 1310720 },	/* SGI-4D screen size */
-	{ 2048, 2048,	 4194304 },
-	{ 4096, 4096,	16777216},
-	{ 8192, 8192,	67108864},
-	{    0,	   0,	0 }
+	{   50,	  50 },
+	{   64,	  64 },
+	{  128,	 128 },
+	{  160,  120 },		/* quarter 640x480 */
+	{  256,	 256 },
+	{  320,  240 },		/* half 640x480 */
+	{  512,	 512 },
+	{  640,  512 },		/* half 1280x1024 */
+	{  640,	 480 },		/* Common video format */
+	{  720,	 486 },		/* Abekas video format */
+	{ 1024,	 768 },		/* SGI-3D screen size */
+	{ 1152,  900 },		/* Sun screen size */
+	{ 1024,	1024 },
+	{ 1280,  960 },		/* twice 640x480 */
+	{ 1280,	1024 },		/* SGI-4D screen size */
+	{ 2048, 2048 },
+	{ 4096, 4096 },
+	{ 8192, 8192 },
+	{    0,	   0 }
 };
 
 /*
@@ -100,8 +100,8 @@ register int	npixels;	/* Number of pixels */
 		return	0;
 
 	sp = fb_common_sizes;
-	while( sp->size != 0 ) {
-		if( sp->size == npixels ) {
+	while( sp->width != 0 ) {
+		if( npixels == sp->width * sp->height ) {
 			*widthp = sp->width;
 			*heightp = sp->height;
 			return	1;
