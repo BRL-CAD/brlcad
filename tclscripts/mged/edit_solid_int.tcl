@@ -64,6 +64,11 @@ proc init_edit_solid_int { id } {
     set esolint_control(pathname) [lindex $esolint_info 0]
     set esolint_cvals [lrange $esolint_info 2 end]
 
+    if [catch {db form $esolint_control(type)}] {
+	build_edit_info $id
+	return
+    }
+
     set row -1
     toplevel $w -screen $mged_gui($id,screen)
 
