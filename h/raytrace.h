@@ -443,8 +443,10 @@ struct soltab {
 #define ID_EPA		19	/* Elliptical Paraboloid  */
 #define ID_EHY		20	/* Elliptical Hyperboloid  */
 #define ID_ETO		21	/* Elliptical Torus  */
+#define ID_GRIP		22	/* Pseudo Solid Grip */
+#define ID_JOINT	23	/* Pseudo Solid/Region Joint */
 
-#define ID_MAXIMUM	21	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	23	/* Maximum defined ID_xxx value */
 
 
 /*
