@@ -906,7 +906,10 @@ union tree	*tp;
 
 	case OP_SOLID:
 		if( tp->tr_a.tu_stp )  {
-			rt_free( (char *)tp->tr_a.tu_stp, "(union tree) solid" );
+			register struct soltab	*stp = tp->tr_a.tu_stp;
+			RT_CK_SOLTAB(stp);
+			RT_LIST_DEQUEUE( &(stp->l) );
+			rt_free( (char *)stp, "(union tree) solid" );
 			tp->tr_a.tu_stp = RT_SOLTAB_NULL;
 		}
 		break;
