@@ -284,7 +284,7 @@ CONST struct rt_tol	*tol;
 			 }
 		}
 	}
-rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
+if(total>0)rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
 	return total;
 }
 
@@ -572,7 +572,7 @@ CONST struct rt_tol	*tol;
 		}
 	}
 	nmg_tbl( &ftab, TBL_FREE, 0 );
-rt_log("nmg_model_face_fuse: %d faces fused\n", total);
+if(total>0)rt_log("nmg_model_face_fuse: %d faces fused\n", total);
 	return total;
 }
 
@@ -615,6 +615,6 @@ CONST struct rt_tol	*tol;
 	/* Step 3 -- edges */
 	total += nmg_model_edge_fuse( m, tol );
 
-rt_log("nmg_model_fuse(): %d entities fused\n", total);
+if(total>0)rt_log("nmg_model_fuse(): %d entities fused\n", total);
 	return total;
 }
