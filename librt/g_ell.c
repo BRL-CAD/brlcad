@@ -33,6 +33,7 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 #include "rtgeom.h"
 #include "./debug.h"
 
@@ -1256,4 +1257,305 @@ struct rt_db_internal	*ip;
 	RT_CK_DB_INTERNAL(ip);
 	rt_free( ip->idb_ptr, "ell ifree" );
 	ip->idb_ptr = GENPTR_NULL;
+}
+
+static CONST fastf_t rt_ell_uvw[5*3] = {
+	0, 0, 0,
+	1, 0, 0,
+	1, 1, 0,
+	0, 1, 0,
+	0, 0, 0
+};
+
+/*
+ *			R T _ E L L _ T N U R B
+ */
+int
+rt_ell_tnurb( r, m, ip, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+struct rt_tol		*tol;
+{
+	LOCAL mat_t	R;
+	LOCAL mat_t	S;
+	LOCAL mat_t	invR;
+	LOCAL mat_t	invS;
+	mat_t		invRinvS;
+	mat_t		invRoS;
+	LOCAL mat_t	unit2model;
+	LOCAL mat_t	xlate;
+	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	LOCAL fastf_t	Alen, Blen, Clen;
+	LOCAL fastf_t	invAlen, invBlen, invClen;
+	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
+	LOCAL fastf_t	f;
+	register int		i;
+	fastf_t		radius;
+	int		nsegs;
+	int		nstrips;
+	struct vert_strip	*strips;
+	int		j;
+	int	faceno;
+	int	stripno;
+	int	boff;		/* base offset */
+	int	toff;		/* top offset */
+	int	blim;		/* base subscript limit */
+	int	tlim;		/* top subscrpit limit */
+	fastf_t	rel;		/* Absolutized relative tolerance */
+	struct rt_ell_internal	*eip;
+	struct vertex		*verts[8];
+	struct vertex		**vertp[4];
+	struct faceuse		*fu;
+	struct shell		*s;
+	struct loopuse		*lu;
+	struct edgeuse		*eu;
+	point_t			pole;
+
+	RT_CK_DB_INTERNAL(ip);
+	eip = (struct rt_ell_internal *)ip->idb_ptr;
+	RT_ELL_CK_MAGIC(eip);
+
+	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
+	magsq_a = MAGSQ( eip->a );
+	magsq_b = MAGSQ( eip->b );
+	magsq_c = MAGSQ( eip->c );
+	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
+		rt_log("rt_ell_tess():  zero length A, B, or C vector\n");
+		return(-2);		/* BAD */
+	}
+
+	/* Create unit length versions of A,B,C */
+	invAlen = 1.0/(Alen = sqrt(magsq_a));
+	VSCALE( Au, eip->a, invAlen );
+	invBlen = 1.0/(Blen = sqrt(magsq_b));
+	VSCALE( Bu, eip->b, invBlen );
+	invClen = 1.0/(Clen = sqrt(magsq_c));
+	VSCALE( Cu, eip->c, invClen );
+
+	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
+	f = VDOT( Au, Bu );
+	if( ! NEAR_ZERO(f, 0.005) )  {
+		rt_log("ell():  A not perpendicular to B, f=%f\n", f);
+		return(-3);		/* BAD */
+	}
+	f = VDOT( Bu, Cu );
+	if( ! NEAR_ZERO(f, 0.005) )  {
+		rt_log("ell():  B not perpendicular to C, f=%f\n", f);
+		return(-3);		/* BAD */
+	}
+	f = VDOT( Au, Cu );
+	if( ! NEAR_ZERO(f, 0.005) )  {
+		rt_log("ell():  A not perpendicular to C, f=%f\n", f);
+		return(-3);		/* BAD */
+	}
+
+	{
+		vect_t	axb;
+		VCROSS( axb, Au, Bu );
+		f = VDOT( axb, Cu );
+		if( f < 0 )  {
+			VREVERSE( Cu, Cu );
+			VREVERSE( eip->c, eip->c );
+		}
+	}
+
+	/* Compute R and Rinv matrices */
+	mat_idn( R );
+	VMOVE( &R[0], Au );
+	VMOVE( &R[4], Bu );
+	VMOVE( &R[8], Cu );
+	mat_trn( invR, R );			/* inv of rot mat is trn */
+
+	/* Compute S and invS matrices */
+	/* invS is just 1/diagonal elements */
+	mat_idn( S );
+	S[ 0] = invAlen;
+	S[ 5] = invBlen;
+	S[10] = invClen;
+	mat_inv( invS, S );
+
+	/* invRinvS, for converting points from unit sphere to model */
+	mat_mul( invRinvS, invR, invS );
+
+	/* invRoS, for converting normals from unit sphere to model */
+	mat_mul( invRoS, invR, S );
+
+	/* Compute radius of bounding sphere */
+	radius = Alen;
+	if( Blen > radius )
+		radius = Blen;
+	if( Clen > radius )
+		radius = Clen;
+
+	mat_idn( xlate );
+	MAT_DELTAS_VEC_NEG( xlate, eip->v );
+	mat_mul( unit2model, invRinvS, xlate );
+
+	/*
+	 *  --- Build Topology ---
+	 *
+	 *  There is a vertex at either pole, and a single longitude line.
+	 *  There is a single face, an snurb with singularities.
+	 *  vert[0] is the south pole, and is the first row of the ctl_points.
+	 *  vert[1] is the north pole, and is the last row of the ctl_points.
+	 */
+	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+
+	vertp[0] = &verts[0];
+	vertp[1] = &verts[0];
+	vertp[2] = &verts[1];
+	vertp[3] = &verts[1];
+
+	if( (fu = nmg_cmface( s, vertp, 4 )) == 0 )  {
+		rt_log("rt_ell_tnurb(%s): nmg_cmface() fail on face\n");
+		return -1;
+	}
+
+	/* March around the fu's loop assigning uv parameter values */
+	lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+	NMG_CK_LOOPUSE(lu);
+	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+	NMG_CK_EDGEUSE(eu);
+
+	/* Loop always has Counter-Clockwise orientation (CCW) */
+	for( i=0; i < 4; i++ )  {
+		nmg_vertexuse_a_cnurb( eu->vu_p, &rt_ell_uvw[i*3] );
+		nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &rt_ell_uvw[(i+1)*3] );
+		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+	}
+
+	/* Associate vertex geometry */
+	VSUB2( pole, eip->v, eip->c );		/* south pole */
+	nmg_vertex_gv( verts[0], pole );
+	VADD2( pole, eip->v, eip->c );
+	nmg_vertex_gv( verts[1], pole );	/* north pole */
+
+	/* Build snurb, transformed into final position */
+	nmg_sphere_face_snurb( fu, unit2model );
+
+	/* Associate edge geometry (trimming curve) -- linear in param space */
+	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+	NMG_CK_EDGEUSE(eu);
+	for( i=0; i < 4; i++ )  {
+		nmg_edge_g_cnurb_plinear(eu);
+		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+	}
+
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r, tol );
+	return 0;
+}
+
+nmg_sphere_face_snurb( fu, m )
+struct faceuse	*fu;
+CONST matp_t	m;
+{
+	struct face_g_snurb	*fg;
+	FAST fastf_t root2_2 = sqrt(2.0) * 0.5;
+	register fastf_t	*op;
+
+	NMG_CK_FACEUSE(fu);
+
+	/* Let the library allocate all the storage */
+	/* The V direction runs from south to north pole */
+	nmg_face_g_snurb( fu,
+		3, 3,		/* u,v order */
+		8, 12,		/* Number of knots, u,v */
+		NULL, NULL,	/* initial u,v knot vectors */
+		9, 5,		/* n_rows, n_cols */
+		RT_NURB_MAKE_PT_TYPE( 4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL ),
+		NULL );		/* initial mesh */
+
+	fg = fu->f_p->g.snurb_p;
+	NMG_CK_FACE_G_SNURB(fg);
+
+	fg->v.knots[ 0] = 0;
+	fg->v.knots[ 1] = 0;
+	fg->v.knots[ 2] = 0;
+	fg->v.knots[ 3] = 0.25;
+	fg->v.knots[ 4] = 0.25;
+	fg->v.knots[ 5] = 0.5;
+	fg->v.knots[ 6] = 0.5;
+	fg->v.knots[ 7] = 0.75;
+	fg->v.knots[ 8] = 0.75;
+	fg->v.knots[ 9] = 1;
+	fg->v.knots[10] = 1;
+	fg->v.knots[11] = 1;
+
+	fg->u.knots[0] = 0;
+	fg->u.knots[1] = 0;
+	fg->u.knots[2] = 0;
+	fg->u.knots[3] = 0.5;
+	fg->u.knots[4] = 0.5;
+	fg->u.knots[5] = 1;
+	fg->u.knots[6] = 1;
+	fg->u.knots[7] = 1;
+
+	op = fg->ctl_points;
+
+/* Inspired by MAT4X4PNT */
+#define M(x,y,z,w)	{ \
+	*op++ = m[ 0]*(x) + m[ 1]*(y) + m[ 2]*(z) + m[ 3]*(w);\
+	*op++ = m[ 4]*(x) + m[ 5]*(y) + m[ 6]*(z) + m[ 7]*(w);\
+	*op++ = m[ 8]*(x) + m[ 9]*(y) + m[10]*(z) + m[11]*(w);\
+	*op++ = m[12]*(x) + m[13]*(y) + m[14]*(z) + m[15]*(w); }
+
+
+	M(   0     ,   0     ,-1.0     , 1.0     );
+	M( root2_2 ,   0     ,-root2_2 , root2_2 );
+	M( 1.0     ,   0     ,   0     , 1.0     );
+	M( root2_2 ,   0     , root2_2 , root2_2 );
+	M(   0     ,   0     , 1.0     , 1.0     );
+
+	M(   0     ,   0     ,-root2_2 , root2_2 );
+	M( 0.5     , 0.5     ,-0.5     , 0.5     );
+	M( root2_2 , root2_2 ,   0     , root2_2 );
+	M( 0.5     , 0.5     , 0.5     , 0.5     );
+	M(   0     ,   0     , root2_2 , root2_2 );
+
+	M(   0     ,   0     ,-1.0     , 1.0     );
+	M(   0     , root2_2 ,-root2_2 , root2_2 );
+	M(   0     , 1.0     ,   0     , 1.0     );
+	M(   0     , root2_2 , root2_2 , root2_2 );
+	M(   0     ,   0     , 1.0     , 1.0     );
+
+	M(   0     ,   0     ,-root2_2 , root2_2 );
+	M(-0.5     , 0.5     ,-0.5     , 0.5     );
+	M(-root2_2 , root2_2 ,   0     , root2_2 );
+	M(-0.5     , 0.5     , 0.5     , 0.5     );
+	M(   0     ,   0     , root2_2 , root2_2 );
+
+	M(   0     ,   0     ,-1.0     , 1.0     );
+	M(-root2_2 ,   0     ,-root2_2 , root2_2 );
+	M(-1.0     ,   0     ,   0     , 1.0     );
+	M(-root2_2 ,   0     , root2_2 , root2_2 );
+	M(   0     ,   0     , 1.0     , 1.0     );
+
+	M(   0     ,   0     ,-root2_2 , root2_2 );
+	M(-0.5     ,-0.5     ,-0.5     , 0.5     );
+	M(-root2_2 ,-root2_2 ,   0     , root2_2 );
+	M(-0.5     ,-0.5     , 0.5     , 0.5     );
+	M(   0     ,   0     , root2_2 , root2_2 );
+
+	M(   0     ,   0     ,-1.0     , 1.0     );
+	M(   0     ,-root2_2 ,-root2_2 , root2_2 );
+	M(   0     ,-1.0     ,   0     , 1.0     );
+	M(   0     ,-root2_2 , root2_2 , root2_2 );
+	M(   0     ,   0     , 1.0     , 1.0     );
+
+	M(   0     ,   0     ,-root2_2 , root2_2 );
+	M( 0.5     ,-0.5     ,-0.5     , 0.5     );
+	M( root2_2 ,-root2_2 ,   0     , root2_2 );
+	M( 0.5     ,-0.5     , 0.5     , 0.5     );
+	M(   0     ,   0     , root2_2 , root2_2 );
+
+	M(   0     ,   0     ,-1.0     , 1.0     );
+	M( root2_2 ,   0     ,-root2_2 , root2_2 );
+	M( 1.0     ,   0     ,   0     , 1.0     );
+	M( root2_2 ,   0     , root2_2 , root2_2 );
+	M(   0     ,   0     , 1.0     , 1.0     );
 }
