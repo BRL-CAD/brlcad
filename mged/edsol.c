@@ -1200,8 +1200,17 @@ int			free;
 {
 	struct directory	*dp;
 	dp = illump->s_path[illump->s_last];
+	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free ) < 0 )
+		rt_bomb("transform_editing_solid");
+#if 0
+/*
+ * this is the old way.  rt_db_xform_internal was transfered and
+ * modified into rt_generic_xform() in librt/table.c
+ * rt_generic_xform is normally called via rt_functab[id].ft_xform()
+ */
 	if( rt_db_xform_internal( os, mat, is, free, dp->d_namep ) < 0 )
 		rt_bomb("transform_editing_solid");		/* FAIL */
+#endif
 }
 
 /*
@@ -3691,57 +3700,6 @@ struct rt_tol		*tol;
 	}
 	return 0;
 }
-
-/*
- *			R T _ D B _ X F O R M _ I N T E R N A L
- *
- *  Apply a 4x4 transformation matrix to the internal form of a solid.
- *
- *  If "free" flag is non-zero, storage for the original solid is released.
- *  If "os" is same as "is", storage for the original solid is
- *  overwritten with the new, transformed solid.
- *
- * XXX This should be part of the import/export interface.
- * XXX Each solid should know how to transform it's internal representation.
- *
- *  Returns -
- *	-1	FAIL
- *	 0	OK
- */
-int
-rt_db_xform_internal(os, mat, is, free, name)
-struct rt_db_internal	*os;
-mat_t			mat;
-struct rt_db_internal	*is;
-int			free;
-char			*name;
-{
-	struct rt_external	ext;
-	int			id;
-
-	RT_CK_DB_INTERNAL( is );
-	id = is->idb_type;
-	RT_INIT_EXTERNAL(&ext);
-	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[id].ft_export( &ext, is, 1.0 ) < 0 )  {
-		rt_log("rt_db_xform_internal(%s):  %s export failure\n",
-			name, rt_functab[id].ft_name);
-		return -1;			/* FAIL */
-	}
-	if( (free || os == is) && is->idb_ptr )  {
-		rt_functab[id].ft_ifree( is );
-    		is->idb_ptr = (genptr_t)0;
-    	}
-
-	if( rt_functab[id].ft_import( os, &ext, mat ) < 0 )  {
-		rt_log("rt_db_xform_internal(%s):  solid import failure\n",
-			name);
-		return -1;			/* FAIL */
-	}
-	RT_CK_DB_INTERNAL( os );
-	return 0;				/* OK */
-}
-
 
 /* -------------------------------- */
 void
