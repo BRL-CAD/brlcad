@@ -40,7 +40,7 @@ option, a transformation matrix may be provided on standard input
 which maps model-space to view-space.
 In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space,
 with the size of the grid (number of rays fired) specified with
-.B \-f .
+.B \-s .
 The
 .B \-M
 option is most useful when
@@ -51,9 +51,27 @@ is being invoked from a shell script created by an
 .LP
 The following options are recognized.
 .TP
+.B \-s#
+(also
 .B \-f#
-Number of rays to fire in X and Y directions (square grid).
-Default is 512 (512x512), maximum is 1024 (1024x1024).
+) specifies the
+number of rays to fire in the X and Y directions on a square grid.
+For non-square grids, the
+.B \-n#
+option defines the number of scanlines, and the
+.B \-w#
+option defines the width of each scanline in pixels.
+In all cases,
+the default size is 512 pixels, and the maximum is 8192 pixels.
+.TP
+.B \-b "# #"
+is sometimes useful for debugging.  A single ray is fired at the pixel
+coordinates specified, using the view parameters as specified.  This
+is best when accompanied by debugging options.  Note that the standard
+.IR getopt (3)
+routine only allows options to have one parameter, so the X and Y
+coordinates need to be combined into one string parameter by enclosing
+them in double quotes.
 .TP
 .B \-a#
 Select azimuth in degrees.  Used with
@@ -110,6 +128,10 @@ Model 2 displays the surface normals as colors, and is useful
 for examining curvature and surface orientation.
 Model 3 is a three-light diffuse-lighting model, and is intended
 for debugging.
+Model 4 is a curvature debugging display, showing the inverse
+radius of curvature.
+Model 5 is a curvature debugging display, showing the principal
+direction vector.
 .TP
 .B \-P#
 Specify the number of processors (in a multi-processor system) to be
