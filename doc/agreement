@@ -140,6 +140,7 @@ it available to BRL-CAD related hardware vendors and service providers.
 
 1. [ ] RECIPIENT grants ARL and SURVIAC permission to release information
    on this "Recipient Survey Form" to outside parties.
+
    [ ] RECIPIENT considers this information to be proprietary and does not
    grant permission to release this information to outside parties.
 
@@ -174,7 +175,6 @@ ____________________________________________________________
 ____________________________________________________________
 					Internet E-mail Address
 
-
 4. Please indicate the type of your organization:
  [ ] Academic
  [ ] Government
@@ -195,32 +195,26 @@ ____________________________________________________________
 8. Please indicate the anticipated uses of BRL-CAD at this site (check all
 that are appropriate):
 
- [ ]	Computer Aided Design (CAD)
- [ ]	Computer Aided Manufacturing (CAM)
- [ ]	Vulnerability Assessment
- [ ]	Signature Prediction and Analysis
- [ ]	Animation
- [ ]	Visualization
- [ ]	Image Processing
- [ ]	Graphic Arts
- [ ]	Architectural Design
- [ ]	Education
- [ ]	Other (please elaborate)
+ [ ]  Computer Aided Design (CAD)		[ ]  Animation
+ [ ]  Computer Aided Manufacturing (CAM)	[ ]  Visualization
+ [ ]  Vulnerability Assessment 			[ ]  Image Processing
+ [ ]  Signature Prediction and Analysis		[ ]  Graphic Arts
+ [ ]  Architectural Design			[ ]  Education
+
+ [ ]  Other (please elaborate)______________________________
 
 9. Please list the computer platforms that you are likely to install
 BRL-CAD on (check all that are appropriate):
 
-	Vendor		CPU Model	OS Revision
-	======		=========	===========
- [ ]	Linux		_____		___________
- [ ]	FreeBSD		_____		___________
- [ ]	Apple		_____		___________
- [ ]	Sun		_____		___________
- [ ]	SGI		_____		___________
- [ ]	Cray		_____		___________
- [ ]	IBM		_____		___________
- [ ]	DEC		_____		___________
- [ ]	Other (specify)	_____		___________
+    Vendor	   CPU Model		OS Revision
+    ======	   =========		===========
+ [ ] DEC	     _____		___________
+ [ ] IBM	     _____		___________
+ [ ] Linux	     _____		___________
+ [ ] FreeBSD	     _____		___________
+ [ ] Sun	     _____		___________
+ [ ] SGI	     _____		___________
+ [ ] Other (specify) _____		___________
 
 10. Types of BRL-CAD users at this site (check all that are appropriate):
 
@@ -236,9 +230,10 @@ BRL-CAD on (check all that are appropriate):
 
 12. Please specify which edition of BRL-CAD you desire:
 
- [ ]	Source code edition.
- [ ]	Binary executable edition (runs on SGI-IRIX, Solaris-SPARC,
+ [ ]	Binary executable edition (packaged kits exist for SGI-IRIX,
 	RedHat Linux-86, and FreeBSD-86 architectures).
+
+ [ ]	Source code edition (answer question 13 below).
 
 13. If you desire the source code edition, please indicate briefly your
 reasons and the ways you envision using the source code:
@@ -249,13 +244,6 @@ _______________________________________________________________________
 
 _______________________________________________________________________
 
-_______________________________________________________________________
-
-_______________________________________________________________________
-
-			( $Revision$ )
-                                                                 Page 5 of 5
-
 14. If you are purchasing physical media from SURVIAC, please specify
 the format:
 
@@ -264,6 +252,8 @@ the format:
  [ ]	Zip(tm) 100 MByte cartridge, MS-DOS format
 
 
+			( $Revision$ )
+                                                                 Page 5 of 5
 
 
 		Instructions for completing this form
