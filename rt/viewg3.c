@@ -274,6 +274,7 @@ register struct partition *PartHeadp;
 	char			buf[128];	/* temp. sprintf() buffer */
 	point_t			hv;		/* GIFT h,v coords, in inches */
 	point_t			hvcen;
+	int			prev_id=-1;
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
@@ -283,11 +284,22 @@ register struct partition *PartHeadp;
 
 	part_compact(ap, PartHeadp, TOL);
 
-	/*  comp components in partitions */
+	/* count components in partitions */
 	comp_count = 0;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
-		comp_count++;
+		if( pp->pt_regionp->reg_regionid > 0 ) {
+			prev_id = pp->pt_regionp->reg_regionid;
+			comp_count++;
+		} else if( prev_id <= 0 ) {
+			/* normally air would be output along with a solid partition, but this will require a '111' partition */
+			prev_id = pp->pt_regionp->reg_regionid;
+			comp_count++;
+		} else
+			prev_id = pp->pt_regionp->reg_regionid;
 	}
+	pp = PartHeadp->pt_back;
+	if( pp!=PartHeadp && pp->pt_regionp->reg_regionid <= 0 )
+		comp_count++;  /* a trailing '111' ident */
 	if( comp_count == 0 )
 		return( 0 );
 
@@ -400,6 +412,7 @@ register struct partition *PartHeadp;
 
 	/* loop here to deal with individual components */
 	card_count = 0;
+	prev_id = -1;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
 		/*
 		 *  The GIFT statements that would have produced
@@ -425,9 +438,13 @@ register struct partition *PartHeadp;
 		vect_t	normal;		/* surface normal */
 		register struct partition	*nextpp = pp->pt_forw;
 
-		if( (region_id = pp->pt_regionp->reg_regionid) <= 0 )  {
-			bu_log("air region '%s' found when solid region expected, using id=111\n", pp->pt_regionp->reg_name);
-			region_id = 111;
+		region_id = pp->pt_regionp->reg_regionid;
+
+		if( region_id <= 0 && prev_id > 0 )
+		{
+			/* air region output with previous partition */
+			prev_id = region_id;
+			continue;
 		}
 		comp_thickness = pp->pt_outhit->hit_dist -
 				 pp->pt_inhit->hit_dist;
@@ -453,15 +470,35 @@ register struct partition *PartHeadp;
 #endif
 
 		if( nextpp == PartHeadp )  {
-			/* Last partition, no air follows, use code 9 */
-			air_id = 9;
-			air_thickness = 0.0;
+			if( region_id <= 0 ) {
+				/* last partition is air, need a 111 'phantom armor' before AND after */
+				bu_log( "WARNING: adding 'phantom armor' (id=111) with zero thickness before and after air region %s\n",
+					 pp->pt_regionp->reg_name );
+				region_id = 111;
+				air_id = pp->pt_regionp->reg_aircode;
+				air_thickness = comp_thickness;
+				comp_thickness = 0.0;
+			} else {
+				/* Last partition, no air follows, use code 9 */
+				air_id = 9;
+				air_thickness = 0.0;
+			}
+		} else if( region_id <= 0 ) {
+			/* air region, need a 111 'phantom armor' */
+			bu_log( "WARNING: adding 'phantom armor' (id=111) with zero thickness before air region %s\n",
+				 pp->pt_regionp->reg_name );
+			prev_id = region_id;
+			region_id = 111;
+			air_id = pp->pt_regionp->reg_aircode;
+			air_thickness = comp_thickness;
+			comp_thickness = 0.0;
 		} else if( nextpp->pt_regionp->reg_regionid <= 0 &&
 			nextpp->pt_regionp->reg_aircode != 0 )  {
 			/* Next partition is air region */
 			air_id = nextpp->pt_regionp->reg_aircode;
 			air_thickness = nextpp->pt_outhit->hit_dist -
 				nextpp->pt_inhit->hit_dist;
+			prev_id = air_id;
 		} else {
 			/* 2 solid regions, maybe with gap */
 			air_id = 0;
@@ -476,6 +513,7 @@ register struct partition *PartHeadp;
 			} else {
 				air_thickness = 0.0;
 			}
+			prev_id = region_id;
 		}
 
 		/*
@@ -487,6 +525,7 @@ register struct partition *PartHeadp;
 		 *  Hence the one sign change.
 		 *  XXX this should probably be done with atan2()
 		 */
+out:
 		RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 		dot_prod = VDOT( ap->a_ray.r_dir, normal );
 		if( dot_prod > 1.0 )
@@ -593,6 +632,14 @@ register struct partition *PartHeadp;
 				pl_color(plotfp, 0, 0, 255);	/* blue */
 				pdv_3cont(plotfp, air_end);
 			}
+		}
+		if( nextpp == PartHeadp && air_id != 9 ) {
+			/* need to output a 111 'phantom armor' at end of shotline */
+			air_id = 9;
+			air_thickness = 0.0;
+			region_id = 111;
+			comp_thickness = 0.0;
+			goto out;
 		}
 	}
 
@@ -721,9 +768,17 @@ top:		nextpp = pp->pt_forw;
 		if(nextpp == PartHeadp)  {
 			break;
 		}
-		if(pp->pt_regionp->reg_regionid != nextpp->pt_regionp->reg_regionid)  {
+		if( pp->pt_regionp->reg_regionid > 0 && nextpp->pt_regionp->reg_regionid > 0 ) {
+			if(pp->pt_regionp->reg_regionid != nextpp->pt_regionp->reg_regionid)  {
+				continue;
+			}
+		} else if( pp->pt_regionp->reg_regionid <= 0 && nextpp->pt_regionp->reg_regionid <= 0 ) {
+			if( pp->pt_regionp->reg_aircode != nextpp->pt_regionp->reg_aircode ) {
+				continue;
+			}
+		} else
 			continue;
-		}
+
 		gap = nextpp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
 
 		/* The following line is a diagnostic that is worth reusing:
@@ -739,10 +794,10 @@ top:		nextpp = pp->pt_forw;
 		 * should be retained for debugging purposes.
 		 */
 
-		 /* bu_log("part_comp: collapsing gap of %e mm between id=%d and id=%d\n",
-		  *	gap, pp->pt_regionp->reg_regionid, 
-		  *	nextpp->pt_regionp->reg_regionid);
-		  */
+		  bu_log("part_comp: collapsing gap of %e mm between id=%d and id=%d air=%d and air=%d\n",
+		 	gap, pp->pt_regionp->reg_regionid, 
+		 	nextpp->pt_regionp->reg_regionid, pp->pt_regionp->reg_aircode, nextpp->pt_regionp->reg_aircode);
+		 
 		
 		  pp->pt_outseg = nextpp->pt_outseg;
 		  pp->pt_outhit = nextpp->pt_outhit;
