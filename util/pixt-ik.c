@@ -22,8 +22,9 @@ static char scanline[BLOCKSIZE];	/* multi-scanline pixel buffer */
 static int scanbytes;			/* # of bytes of one scanline */
 
 static char outline[MAX_LINE*4];	/* Ikonas pixels */
+int reverse = 0;		/* rotate picture 180 degrees if non-zero */
 
-char usage[] = "Usage: pixt-ik [-h] file.pix [width]\n";
+char usage[] = "Usage: pixt-ik [-h] [-r] file.pix [width]\n";
 
 main(argc, argv)
 int argc;
@@ -41,10 +42,18 @@ char **argv;
 	}
 
 	nlines = 512;
-	if( strcmp( argv[1], "-h" ) == 0 )  {
-		nlines = 1024;
-		argc--; argv++;
-		ikhires = 1;
+	while( argv[1][0] == '-' )  {
+		if( strcmp( argv[1], "-h" ) == 0 )  {
+			nlines = 1024;
+			argc--; argv++;
+			ikhires = 1;
+			continue;
+		}
+		if( strcmp( argv[1], "-r" ) == 0 )  {
+			reverse = 1;
+			argc--; argv++;
+			continue;
+		}
 	}
 	if( (infd = open( argv[1], 0 )) < 0 )  {
 		perror( argv[1] );
@@ -61,24 +70,50 @@ char **argv;
 	ikopen();
 	ikclear();
 
-	for( y = nlines-1; y >= 0; )  {
-		register char *in;
-		if( read( infd, (char *)scanline, BLOCKSIZE ) != BLOCKSIZE )
-			exit(0);
+	if( !reverse )  {
+		/* Normal mode */
+		for( y = nlines-1; y >= 0; )  {
+			register char *in;
+			if( read( infd, (char *)scanline, BLOCKSIZE ) != BLOCKSIZE )
+				exit(0);
 
-		in = scanline;
-		for( j=0; j<lines_per_block; j++ )  {
-			register char *out;
-			register int i;
+			in = scanline;
+			for( j=0; j<lines_per_block; j++ )  {
+				register char *out;
+				register int i;
 
-			out = outline;
-			for( i=0; i<nlines; i++ )  {
-				*out++ = *in++;
-				*out++ = *in++;
-				*out++ = *in++;
-				*out++ = 0;
+				out = outline;
+				for( i=0; i<nlines; i++ )  {
+					*out++ = *in++;
+					*out++ = *in++;
+					*out++ = *in++;
+					*out++ = 0;
+				}
+				clustwrite( outline, y--, nlines );
 			}
-			clustwrite( outline, y--, nlines );
+		}
+	} else {
+		/* Rotate 180 degrees, for Dunn camera */
+		for( y=0; y < nlines; )  {
+			register char *in;
+
+			if( read( infd, (char *)scanline, BLOCKSIZE ) != BLOCKSIZE )
+				exit(0);
+
+			in = scanline;
+			for( j=0; j<lines_per_block; j++ )  {
+				register char *out;
+
+				out = outline+(4*nlines)-1;
+				while( out > outline )  {
+					*out-- = 0;
+					*out-- = in[2];
+					*out-- = in[1];
+					*out-- = *in;
+					in += 3;
+				}
+				clustwrite( outline, y++, nlines );
+			}
 		}
 	}
 	if( read( infd, (char *)scanline, BLOCKSIZE ) > 0 )
