@@ -41,19 +41,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "machine.h"
 
-#ifdef HAVE_UNIX_IO
-# include <sys/types.h>
-# include <sys/stat.h>
-#endif
-
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-#endif
-
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./debug.h"
 
 /*
