@@ -1955,7 +1955,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_MODEL(m);
 	RT_CK_TOL(tol);
 
-	flags = (int *)rt_calloc( m->maxindex, sizeof(int), "rebound flags[]" );
+	flags = (int *)rt_calloc( m->maxindex*2, sizeof(int), "rebound flags[]" );
 
 	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
@@ -2551,7 +2551,7 @@ long ***trans_tbl;
 	m = nmg_find_model( (long *)s );
 
 	/* create translation table double size to accomodate both copies */
-	(*trans_tbl) = (long **)rt_calloc(m->maxindex*2, sizeof(long *),
+	(*trans_tbl) = (long **)rt_calloc(m->maxindex*3, sizeof(long *),
 		"nmg_dup_shell trans_tbl" );
 
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
@@ -3464,7 +3464,7 @@ struct rt_tol	*tol;
 	htab.aft_faceuse = nmg_split_loops_handler;
 
 	sl_state.split = 0;
-	sl_state.flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
+	sl_state.flags = (long *)rt_calloc( m->maxindex*2 , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
 	sl_state.tol = tol;
 
 	nmg_visit( magic_p , &htab , (genptr_t *)&sl_state );
@@ -3522,7 +3522,7 @@ struct rt_tol *tol;
 	NMG_CK_REGION( r );
 	m = r->m_p;
 	NMG_CK_MODEL( m );
-	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_decompose_shell: flags" );
+	flags = (long *)rt_calloc( m->maxindex*2 , sizeof( long ) , "nmg_decompose_shell: flags" );
 
 	nmg_tbl( &stack , TBL_INIT , (long *)NULL );
 	nmg_tbl( &shared_edges , TBL_INIT , (long *)NULL );
@@ -4012,6 +4012,7 @@ int	after;
 	struct edge_g_lseg *eg;
 	struct nmg_unbreak_state *ub_state;
 	struct vertex	*vb;
+	int		ret;
 
 	eu1 = (struct edgeuse *)eup;
 	NMG_CK_EDGEUSE( eu1 );
@@ -4034,7 +4035,7 @@ int	after;
 		rt_log( "nmg_unbreak_handler: no geomtry for edge x%x\n" , e );
 		return;
 	}
-
+	NMG_CK_EDGE_G_EITHER(eg);
 
 	/* if the edge geometry doesn't have at least two uses, this
 	 * is not a candidate for unbreaking */		
@@ -4045,13 +4046,14 @@ int	after;
 
 	/* Check for two consecutive uses, by looking forward. */
 	eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
+	NMG_CK_EDGEUSE( eu2 );
 	if( eu2->g.lseg_p != eg )
 	{
 		/* Can't look backward here, or nmg_unbreak_edge()
 		 * will be asked to kill *this* edgeuse, which
 		 * will blow our caller's mind.
 		 */
-		/* rt_log("nmg_unbreak_handler: edge geom not shared\n"); */
+		/* rt_log("nmg_unbreak_handler: eu1 edge geom not shared with eu2\n"); */
 		return;
 	}
 	vb = eu2->vu_p->v_p;
@@ -4065,7 +4067,8 @@ int	after;
 		*<-----------*<-----------*
 		    eu1mate      eu2mate
 	*/
-	if( nmg_unbreak_edge( eu1 ) != 0 )  return;
+	ret = nmg_unbreak_edge( eu1 );
+	if( ret != 0 )  return;
 
 	/* keep a count of unbroken edges */
 	ub_state->unbroken++;
@@ -4098,7 +4101,7 @@ long		*magic_p;
 	htab.aft_edgeuse = nmg_unbreak_handler;
 
 	ub_state.unbroken = 0;
-	ub_state.flags = (long *)rt_calloc( m->maxindex+2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
+	ub_state.flags = (long *)rt_calloc( m->maxindex*2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
 
 	nmg_visit( magic_p , &htab , (genptr_t *)&ub_state );
 
