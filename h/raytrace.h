@@ -326,7 +326,7 @@ union cutter  {
 	struct cutnode  {
 		char	cn_type;
 		char	cn_axis;	/* 0,1,2 = cut along X,Y,Z */
-		long	cn_point;	/* cut through axis==point */
+		fastf_t	cn_point;	/* cut through axis==point */
 		union cutter *cn_l;	/* val < point */
 		union cutter *cn_r;	/* val >= point */
 	} cn;
