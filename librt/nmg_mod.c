@@ -1986,3 +1986,104 @@ register struct faceuse	*src_fu;
 
 	nmg_kfu(src_fu);
 }
+
+/*
+ *			N M G _ E U _ W I T H _ V U _ I N _ L U
+ *
+ *  Find an edgeuse starting at a given vertexuse within a loop(use).
+ */
+struct edgeuse *
+nmg_eu_with_vu_in_lu( lu, vu )
+struct loopuse		*lu;
+struct vertexuse	*vu;
+{
+	register struct edgeuse	*eu;
+
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_VERTEXUSE(vu);
+	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+		rt_bomb("nmg_eu_with_vu_in_lu: loop has no edges!\n");
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		NMG_CK_EDGEUSE(eu);
+		if( eu->vu_p == vu )  return eu;
+	}
+	rt_bomb("nmg_eu_with_vu_in_lu:  Unable to find vu!\n");
+	/* NOTREACHED */
+	return((struct edgeuse *)NULL);
+}
+
+/*
+ *			N M G _ M O V E _ E G
+ *
+ *  For every edge in shell 's', change all occurances of edge geometry
+ *  structure 'old_eg' to be 'new_eg'.
+ */
+void
+nmg_move_eg( old_eg, new_eg, s )
+struct edge_g	*old_eg;
+struct edge_g	*new_eg;
+struct shell	*s;
+{
+	struct  faceuse		*fu;
+	struct face		*f;
+	struct loopuse		*lu;
+	struct loop		*l;
+	register struct edgeuse		*eu;
+	register struct edge		*e;
+
+	NMG_CK_EDGE_G(old_eg);
+	NMG_CK_EDGE_G(new_eg);
+	NMG_CK_SHELL(s);
+
+	/* Faces in shell */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu);
+		f = fu->f_p;
+		NMG_CK_FACE(f);
+		/* Loops in face */
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			NMG_CK_LOOPUSE(lu);
+			l = lu->l_p;
+			NMG_CK_LOOP(l);
+			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+				/* Loop of Lone vertex */
+				continue;
+			}
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+				NMG_CK_EDGEUSE(eu);
+				e = eu->e_p;
+				NMG_CK_EDGE(e);
+				if(e->eg_p == old_eg)  {
+					nmg_use_edge_g( e, new_eg );
+				}
+			}
+		}
+	}
+	/* Wire loops in shell */
+	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu);
+		l = lu->l_p;
+		NMG_CK_LOOP(l);
+		if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+			/* Wire loop of Lone vertex */
+			continue;
+		}
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+			NMG_CK_EDGEUSE(eu);
+			e = eu->e_p;
+			NMG_CK_EDGE(e);
+			if(e->eg_p == old_eg)  {
+				nmg_use_edge_g( e, new_eg );
+			}
+		}
+	}
+	/* Wire edges in shell */
+	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
+		NMG_CK_EDGEUSE(eu);
+		e = eu->e_p;
+		NMG_CK_EDGE(e);
+		if(e->eg_p == old_eg)  {
+			nmg_use_edge_g( e, new_eg );
+		}
+	}
+}
