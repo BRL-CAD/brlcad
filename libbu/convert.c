@@ -158,10 +158,10 @@ char *in;			/* input format */
 		if (*p != '4') return(NULL);
 		/* fall through */
 	case 'l':
-		result | = CV_64;
+		result |= CV_64;
 		break;
 	case 'd':
-		result | = CV_D;
+		result |= CV_D;
 		break;
 	default:
 		return(NULL);
