@@ -2013,7 +2013,7 @@ const char			*attr;
 					else
 					{
 						bu_vls_printf( &vls, "%s",
-							los[BU_BITTEST( bot->face_mode, i )] );
+							los[BU_BITTEST( bot->face_mode, i )?1:0] );
 						status = TCL_OK;
 					}
 				}
@@ -2662,7 +2662,7 @@ rt_bot_face_fuse( struct rt_bot_internal *bot )
 				case RT_BOT_PLATE_NOCOS:
 					/* check the face thickness and face mode */
 					if( bot->thickness[i] != bot->thickness[j] ||
-						BU_BITTEST( bot->face_mode, i ) != BU_BITTEST( bot->face_mode, j ) )
+					    (BU_BITTEST( bot->face_mode, i )?1:0) != (BU_BITTEST( bot->face_mode, j )?1:0) )
 							break;
 				case RT_BOT_SOLID:
 				case RT_BOT_SURFACE:
