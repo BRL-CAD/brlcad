@@ -71,47 +71,18 @@ bu_brlcad_path(const char *rhs, int fail_quietly)
 	static char	result[256];
 	char		*lhs;
 
-/* The BRLCAD_ROOT symbol has given us loads of problems.
- * This replaces it with the (hopefully more reasonable)
- * directory path specified at compilation time.
- */
-#if USE_BRLCAD_ROOT
-	/* The environment variable, if set, takes priority */
+	lhs = INSTALL_DIRECTORY ;
+	if( bu_file_exists(lhs) )
+		goto ok;
+
 	if( (lhs = getenv("BRLCAD_ROOT")) != NULL )  {
 		if( bu_file_exists(lhs) )
 			goto ok;
 		if (fail_quietly) {
 		  return NULL;
 		}
-		bu_log("You set environment variable BRLCAD_ROOT to '%s', which does not exist.  Seeking=%s\n", lhs, rhs);
-		bu_bomb("bu_brlcad_path()");
-	}
 
-	/* The compiled-in path is used next. */
-# ifdef BRLCAD_ROOT
-	lhs = BRLCAD_ROOT;
-# else
-#   ifndef WIN32
-	lhs = PREFIX;
-#   else
-	/* XXX nastiness that will need to be made dynamic
-	lhs = "C:\\brlcad";  /* change as needed*/
-#   endif
-# endif
-#else
-	lhs = INSTALL_DIRECTORY ;
-#endif
-	if( bu_file_exists(lhs) )
-		goto ok;
-
-	/* Can't find the BRL-CAD root directory, this is fatal! */
-	/* Could use some huristics here, but being overly clever is probably bad. */
-
-	if (fail_quietly) {
-	  return NULL;
-	}
-#if USE_BRLCAD_ROOT
-	bu_log("\
+		bu_log("\
 Unable to find the directory that BRL-CAD is installed in while seeking: \n\
 	%s\n\
 This version of LIBBU was compiled to expect BRL-CAD in: \n\
@@ -125,16 +96,33 @@ csh/tcsh users:\n\
 	setenv BRLCAD_ROOT %s\n\
 sh/bash users:\n\
 	BRLCAD_ROOT=%s; export BRLCAD_ROOT\n",
-	       rhs, lhs, lhs, lhs);
-#else
+	       rhs, INSTALL_DIRECTORY , lhs, lhs);
+	}
+
+	/* Can't find the BRL-CAD root directory, this is fatal! */
+	/* Could use some huristics here, but being overly clever is probably bad. */
+
+	if (fail_quietly) {
+	  return NULL;
+	}
+
+
 	bu_log("\
 Unable to find the directory that BRL-CAD is installed in while seeking: \n\
 	%s\n\
 This version of LIBBU was compiled to expect BRL-CAD in: \n\
 	%s\n\
-but it is no longer there.\n",
-	       rhs, lhs);
-#endif
+but it is no longer there. \n\
+  After you manually locate BRL-CAD,\n\
+please set your environment variable BRLCAD_ROOT to the correct path,\n\
+and re-run this program.\n\
+\n\
+csh/tcsh users:\n\
+	setenv BRLCAD_ROOT /path/to/brlcad\n\
+sh/bash users:\n\
+	BRLCAD_ROOT=/path/to/brlcad; export BRLCAD_ROOT\n",
+	       rhs, INSTALL_DIRECTORY );
+
 	bu_bomb("bu_brlcad_path()");
 
 ok:
@@ -154,7 +142,7 @@ ok:
 	}
 
 	bu_log("\
-Unable to find the '%s' subdirectory within the BRL-CAD\n\
+Unable to find '%s' within the BRL-CAD\n\
 software installed in '%s'.\n\
 This copy of BRL-CAD does not appear to be fully installed.\n\
 Please contact your system administrator for assistance.\n",
