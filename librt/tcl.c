@@ -336,6 +336,44 @@ char **argv;
 }
 
 /*
+ *			R T _ T C L _ R T _ N O _ B O O L
+ *  Usage -
+ *	procname no_bool
+ *	procname no_bool #
+ */
+int
+rt_tcl_rt_no_bool( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct application	*ap = (struct application *)clientData;
+	struct rt_i		*rtip;
+	char			buf[64];
+
+	if( argc < 2 || argc > 3 )  {
+		Tcl_AppendResult( interp,
+				"wrong # args: should be \"",
+				argv[0], " ", argv[1], " [#]\"",
+				(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* Could core dump */
+	RT_AP_CHECK(ap);
+	rtip = ap->a_rt_i;
+	RT_CK_RTI_TCL(rtip);
+
+	if( argc == 3 )  {
+		ap->a_no_booleans = atoi(argv[2]);
+	}
+	sprintf(buf, "%d", ap->a_no_booleans );
+	Tcl_AppendResult( interp, buf, (char *)NULL );
+	return TCL_OK;
+}
+
+/*
  *			R T _ T C L _ R T _ P R E P
  *
  *  When run with no args, just prints current status of prepping.
@@ -400,6 +438,7 @@ char **argv;
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 	"shootray",	rt_tcl_rt_shootray,
 	"onehit",	rt_tcl_rt_onehit,
+	"no_bool",	rt_tcl_rt_no_bool,
 	"prep",		rt_tcl_rt_prep,
 	(char *)0,	(int (*)())0
 };
@@ -1477,11 +1516,6 @@ ClientData clientData;
 	rtip = ap->a_rt_i;
 	RT_CK_RTI(rtip);
 
-	RT_CK_RESOURCE(ap->a_resource);
-	rt_free_resource(rtip, ap->a_resource);
-	bu_free( (genptr_t)ap->a_resource, "a_resource" );
-	ap->a_resource = (struct resource *)NULL;
-
 #if 0
 	/* Warning!  This calls db_close()!  Clobber city. */
 	rt_free_rti(rtip);
@@ -1490,6 +1524,7 @@ ClientData clientData;
 	rtip->rti_dbip = (struct db_i *)NULL;
 	bu_free( (genptr_t)rtip, "struct rt_i" );
 #endif
+	ap->a_rt_i = (struct rt_i *)NULL;
 	bu_free( (genptr_t)ap, "struct application" );
 }
 
@@ -1562,9 +1597,11 @@ char	      **argv;
 	 *  And the "overwrite" sequence in Tcl is to create the new
 	 *  proc before running the Tcl_CmdDeleteProc on the old one,
 	 *  which in this case would trash rt_uniresource.
+	 *  Once on the rti_resources list, rt_clean() will clean 'em up.
 	 */
 	BU_GETSTRUCT( resp, resource );
 	rt_init_resource( resp, 0 );
+	bu_ptbl_ins_unique( &rtip->rti_resources, (long *)resp );
 
 	BU_GETSTRUCT( ap, application );
 	ap->a_resource = resp;
