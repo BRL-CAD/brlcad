@@ -194,8 +194,10 @@ proc apply_air {} {
 toplevel .status
 frame .status.incr_fr
 button .status.button -text "Update CPU Status" -command update_cpu_status
-button .status.incr -text "NCPU++" -command {cur_node_send "incr npsw 1; set npsw"}
-button .status.decr -text "NCPU--" -command {cur_node_send "incr npsw -1; set npsw"}
+button .status.incr -text "NCPU++" -command \
+	{cur_node_send {global npsw; incr npsw 1; set npsw}}
+button .status.decr -text "NCPU--" -command \
+	{cur_node_send {global npsw; incr npsw -1; set npsw}}
 listbox .status.list -height 1 -width 60
 pack .status.incr .status.decr -side left -in .status.incr_fr
 pack .status.button .status.incr_fr .status.list -side top -in .status
