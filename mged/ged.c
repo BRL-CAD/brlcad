@@ -316,7 +316,6 @@ char **argv;
 
 	new_mats();
 
-	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
 
 	bu_vls_init( &curr_cmd_list->more_default );
