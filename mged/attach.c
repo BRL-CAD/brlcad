@@ -171,8 +171,7 @@ static unsigned Nu_unsign() { return(0); }
 static
 Nu_input( fd, noblock )
 {
-	long readfds = (1<<fd);
-	(void)select( 32, &readfds, 0L, 0L, (char *)0 );
+	(void)bsdselect( 1<<fd, 9999999, 0 );
 	return(1);
 }
 

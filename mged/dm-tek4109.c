@@ -90,12 +90,6 @@ struct dm dm_Tek4109 = {
 	"tek4109", "Tektronix 4109"		/* NRTC */
 };
 
-struct timeval	{			/* needed for select() */
-	long	tv_sec;			/* seconds */
-	long	tv_usec;		/* microseconds */
-};
-
-
 extern struct device_values dm_values;	/* values read from devices */
 
 static vect_t clipmin, clipmax;		/* for vector clipping */
@@ -467,7 +461,6 @@ static get_cursor()
 Tek4109_input( cmd_fd, noblock )
 {
 	static long readfds;
-	static struct timeval timeout;
 
 	/*
 	 * Check for input on the keyboard or on the polled registers.
@@ -482,16 +475,14 @@ Tek4109_input( cmd_fd, noblock )
 	 * but we still have to update the display,
 	 * do not suspend execution.
 	 */
-	if( noblock )
-		timeout.tv_sec = 0;
-	else
-		timeout.tv_sec = 30*60;		/* 30 MINUTES for Tek */
-	timeout.tv_usec = 0;
-
 	readfds = (1<<cmd_fd);
 	if( second_fd )
 		readfds |= (1<<second_fd);
-	(void)select( 32, &readfds, 0L, 0L, &timeout );
+
+	if( noblock )
+		readfds = bsdselect( readfds, 0, 0 );
+	else
+		readfds = bsdselect( readfds, 30*60, 0 );
 
 	dm_values.dv_penpress = 0;
 	if( second_fd && readfds & (1<<second_fd) )

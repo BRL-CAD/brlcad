@@ -33,7 +33,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <stdio.h>
-#include <time.h>
 #include <sgtty.h>
 
 #include "./machine.h"	/* special copy */
@@ -499,9 +498,8 @@ double i;
  */
 Mer_input( cmd_fd, noblock )
 {
-	static long readfds;
-	static struct timeval timeout;
 	register int i, j;
+	int readfds;
 
 	edflush();		/* Flush any pending output */
 	/*
@@ -518,16 +516,10 @@ Mer_input( cmd_fd, noblock )
 	 * do not suspend execution.
 	 */
 	if( noblock )  {
-		/* Don't flood the sluggish matrix update */
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 300000;
+		readfds = bsdselect( 1<<cmd_fd, 0, 300000 );
 	}  else  {
-		timeout.tv_sec = 1000;
-		timeout.tv_usec = 0;
+		readfds = bsdselect( 1<<cmd_fd, 1000, 0 );
 	}
-
-	readfds = (1<<cmd_fd) | (1<<input_fd);
-	i = select( 32, &readfds, 0L, 0L, &timeout );
 
 	/*
 	 * Set device interface structure for GED to "rest" state.

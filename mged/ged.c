@@ -42,8 +42,8 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <time.h>
 #include <setjmp.h>
+#include <time.h>
 
 #include "./machine.h"	/* special copy */
 #include "vmath.h"
@@ -552,13 +552,32 @@ new_mats()
 	dmaflag = 1;
 }
 
-#ifdef SYSV
-/* System V lacks this */
-select( n, iv, ov, ev, timeout )
+/*
+ *			B S D S E L E C T
+ *
+ *  Ordinarily, a stub for select() could have been implemented here,
+ *  but the IRIS uses the library routine select() for something else.
+ *  On non-BSD systems, select() is name likely to have been reused,
+ *  so this special interface has been created.  This has the slight
+ *  advantage of centralizing the struct timeval stuff.
+ */
+
+bsdselect( readfds, sec, us )
+long readfds;
 {
-	return(n);
-}
+#ifdef SYSV
+	return(32-1);	/* Always has lots of input */
 #endif
+#ifdef BSD
+	struct timeval tv;
+
+	tv.tv_sec = sec;
+	tv.tv_usec = us;
+	if( select( 32, &readfds, 0L, 0L, &tv ) <= 0 )
+		return(0);
+	return( readfds );
+#endif
+}
 
 #ifdef BSD
 extern void bcopy();

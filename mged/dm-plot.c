@@ -75,12 +75,6 @@ struct dm dm_Plot = {
 	"plot", "Screen to UNIX-Plot"
 };
 
-struct timeval	{			/* needed for select() */
-	long	tv_sec;			/* seconds */
-	long	tv_usec;		/* microseconds */
-};
-
-
 extern struct device_values dm_values;	/* values read from devices */
 
 static vect_t clipmin, clipmax;		/* for vector clipping */
@@ -340,8 +334,7 @@ int dashed;
  */
 Plot_input( cmd_fd, noblock )
 {
-	static long readfds;
-	static struct timeval timeout;
+	register long readfds;
 
 	/*
 	 * Check for input on the keyboard or on the polled registers.
@@ -354,14 +347,11 @@ Plot_input( cmd_fd, noblock )
 	 * in which we still have to update the display,
 	 * do not suspend execution.
 	 */
-	if( noblock )
-		timeout.tv_sec = 0;
-	else
-		timeout.tv_sec = 30*60;		/* 30 MINUTES for Plot */
-	timeout.tv_usec = 0;
-
 	readfds = (1<<cmd_fd);
-	(void)select( 32, &readfds, 0L, 0L, &timeout );
+	if( noblock )
+		readfds = bsdselect( readfds, 0, 0 );
+	else
+		readfds = bsdselect( readfds, 30*60, 0 );	/* 30 mins */
 
 	dm_values.dv_penpress = 0;
 
