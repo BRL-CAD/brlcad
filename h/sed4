@@ -18,6 +18,11 @@ g/nmg_tbl.*(\(.*\), TBL_CAT[ ]*, \(.*\))/s//bu_ptbl_cat(\1, \2)/
 g/nmg_tbl.*(\(.*\), TBL_FREE[ ]*, \(.*\))/s//bu_ptbl_free(\1)/
 g/nmg_tbl/s//bu_ptbl/g
 g/nmg_ptbl/s//bu_ptbl/g
+g/MSR_UNIF/s//BN_UNIF/g
+g/MSR_GAUSS/s//BN_GAUSS/g
+g/MSR_CK/s//BU_CK/g
+g/msr_unif/s//bn_unif/g
+g/msr_gauss/s//bn_gauss/g
 g/RT_CKMAG/s//BU_CKMAG/g
 g/RT_TOL_MAGIC/s//BN_TOL_MAGIC/g
 g/RT_CK_TOL/s//BN_CK_TOL/g
