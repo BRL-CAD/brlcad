@@ -19,6 +19,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 
+#ifdef BSD
+long atol();	/* best we can do... */
+#else
+long strtol();
+#endif
+
 /* declarations to support use of getopt() system call */
 static char	*options = "o:";
 static char	 optflags[sizeof(options)];
@@ -102,7 +108,7 @@ char *av[];
 	int  c, optlen, files;
 	FILE *fd, *fopen();
 	char *eos;
-	long strtol(), newoffset;
+	long newoffset;
 
 	progname = *av;
 
@@ -117,12 +123,16 @@ char *av[];
 	/* get all the option flags from the command line */
 	while ((c=getopt(ac,av,options)) != EOF)
 		if (c == 'o'){
+#ifdef BSD
+			offset = atol(optarg);
+#else
 			newoffset = strtol(optarg, &eos, 0);
 
 			if (eos != optarg) 
 				offset = newoffset;
 			else
 				fprintf(stderr,"%s: error parsing offset \"%s\"\n", optarg);
+#endif
 		}
 		else usage();
 
