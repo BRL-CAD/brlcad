@@ -265,11 +265,9 @@ char	*dp;
 	double	thickness; /* magnitude of v_cloud (distance through solid) */
 	int	steps;	   /* # of samples along ray/solid intersection */
 	double	step_delta;/* distance between sample points, texture space */
-	fastf_t	model_step; /* distance between sample points, model space */
 	int	i;
 	double  val;
 	double	trans;
-	double	sum;
 	point_t	incident_light;
 
 	RT_CHECK_PT(pp);
@@ -308,8 +306,6 @@ char	*dp;
 
 	steps = pow(scloud_sp->lacunarity, scloud_sp->octaves-1) * 4;
 	step_delta = thickness / (double)steps;
-	model_step = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist) /
-		(double)steps;
 
 	if( rdebug&RDEBUG_SHADE)
 		bu_log("steps=%d  delta=%g  thickness=%g\n",
