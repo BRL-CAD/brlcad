@@ -92,6 +92,7 @@ char *aliases[] = {
 	"title",
 	"units",
 	"find",
+	"dbfind",
 	"rm",
 	(char *)0
 };
@@ -179,6 +180,9 @@ char **argv;
 				av[0] = aliases[i];
 				Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
 			}
+			/* add "dbfind" separately */
+			av[0] = "find";
+			Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
 		}
 
 		if( Tcl_EvalFile( safe_interp, argv[1] ) != TCL_OK ) {
