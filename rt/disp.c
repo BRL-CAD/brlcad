@@ -19,9 +19,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
+#include "externs.h"
+#include "bu.h"
 #include "vmath.h"
-#include "rtstring.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "tabdata.h"
 #include "spectrum.h"
@@ -51,7 +54,7 @@ struct rt_tabdata	*cie_z;
 int			use_cie_xyz = 0;	/* Linked with TCL */
 mat_t			xyz2rgb;
 
-char	*pixels;		/* en-route to framebuffer */
+unsigned char	*pixels;		/* en-route to framebuffer */
 
 fastf_t	maxval, minval;				/* Linked with TCL */
 
@@ -59,6 +62,9 @@ Tcl_Interp	*interp;
 Tk_Window	tkwin;
 
 int	doit(), doit1();
+void	find_minmax();
+void	rescale(BU_ARGS(int wav));
+void	show_color(BU_ARGS(int off));
 
 /*
  *
@@ -233,14 +239,18 @@ Tcl_Interp	*inter;
 	Tcl_LinkVar( interp, "use_atmosphere", (char *)&use_atmosphere, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "use_cie_xyz", (char *)&use_cie_xyz, TCL_LINK_INT );
 
+	/* Specify startup file to invoke when run interactively */
 	/* Source the TCL part of this lashup */
-	tcl_RcFileName = "./disp.tcl";
+	/* Tcl7 way:  tcl_RcFileName = "./disp.tcl"; */
+	Tcl_SetVar(interp, "tcl_rcFileName", "./disp.tcl", TCL_GLOBAL_ONLY);
 
 	return TCL_OK;
 }
 
-extern check( double x, double y, double z);
+void check( double x, double y, double z);
+
 /* Check XYZ value to spectrum and back */
+void
 check( x, y, z )
 double x, y, z;
 {
@@ -264,6 +274,7 @@ double x, y, z;
 exit(2);
 }
 
+int
 main( argc, argv )
 char	**argv;
 {
@@ -311,7 +322,7 @@ exit(1);
 	data = rt_tabdata_binary_read( basename, width*height, spectrum );
 
 	/* Allocate framebuffer image buffer */
-	pixels = rt_malloc( width * height * 3, "pixels[]" );
+	pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
 
 	find_minmax();
 	rt_log("min = %g, max=%g Watts\n", minval, maxval );
@@ -336,7 +347,7 @@ char		*argv[];
 		sprintf( cmd, "doit1 %d", wl );
 		Tcl_Eval( interp, cmd );
 	}
-
+	return TCL_OK;
 }
 
 int
@@ -382,6 +393,7 @@ char		*argv[];
 
 /*
  */
+void
 find_minmax()
 {
 	char			*cp;
@@ -417,11 +429,12 @@ find_minmax()
  *  Create monochrome image from the spectral data, at wavelength 'wav',
  *  given current min & max values.
  */
+void
 rescale(wav)
 int	wav;
 {
 	char		*cp;
-	char		*pp;
+	unsigned char	*pp;
 	int		todo;
 	int		nbytes;
 	fastf_t		scale;
@@ -461,11 +474,12 @@ int	wav;
  *  given current min & max values, and frequency offset (in nm).
  *  Go via CIE XYZ space.
  */
+void
 show_color(off)
 int	off;
 {
 	char		*cp;
-	char		*pp;
+	unsigned char	*pp;
 	int		todo;
 	int		nbytes;
 	fastf_t		scale;
