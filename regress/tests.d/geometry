@@ -178,7 +178,7 @@ for PRIM in $PRIMITIVES ; do
     # (rec) Arguments
     # 
     # in args => xvertex yvertex zvertex xheight yheight zheight
-    #            xradius1 yradius1 zradius1
+    #            xradius1 yradius1 zradius1 xradius2 yradius2 zradius2
     #
     set rec_IN_ARGS "0 0 0  0 0 50  40 0 0  0 10 0"
     set rec_DB_ARGS "V {0 0 0} H {0 0 50} A {40 0 0} B {0 10 0} C {40 0 0} D {0 10 0}"
@@ -186,10 +186,11 @@ for PRIM in $PRIMITIVES ; do
     #
     # (rhc) Arguments
     # 
-    # in args =>
+    # in args => xvertex yvertex zvertex xheight yheight zheight 
+    #            rect. half-width apex-to-asymptopes dist.
     #
-    set rhc_IN_ARGS ""
-    set rhc_DB_ARGS ""
+    set rhc_IN_ARGS "0 0 0 0 0 100 100 0 0 10 50"
+    set rhc_DB_ARGS "V {0 0 0} H {0 0 100} B {100 0 0} r 10 c 50"
 
     #
     # (rpc) Arguments
@@ -227,12 +228,13 @@ for PRIM in $PRIMITIVES ; do
 
     #
     # (tgc) Arguments
-    # 
-    # in args =>
     #
-    set tgc_IN_ARGS ""
-    set tgc_DB_ARGS ""
-
+    # in args => xvertex yvertex zvertex xheight yheight zheight
+    #            xradiusA yradiusA zradiusA xradiusB yradiusB zradiusB
+    #            radiusC radiusD
+    set tgc_IN_ARGS "0 0 0  0 0 50  40 0 0  0 10 0  20 5"
+    set tgc_DB_ARGS "V {0 0 0} H {0 0 50} A {40 0 0} B {0 10 0} C {20 0 0} D {0 5 0}"
+ 
     #
     # Torus (tor) Arguments
     #
