@@ -72,7 +72,7 @@ FILE *infp;
 void	select_filter(), dousage();
 
 char	usage[] = "\
-Usage: bwfilter [-f<type>] [-v] [-d#] [-o#]\n\
+Usage: bwfilter [-f type] [-v] [-d div] [-o offset]\n\
         [-s squaresize] [-w width] [-n height] [file.bw] > file.bw\n";
 
 get_args( argc, argv )
