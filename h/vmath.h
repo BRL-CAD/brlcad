@@ -622,6 +622,19 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(a)[Z] = (b)[Z] * (c)[Z]; }
 #endif /* SHORT_VECTORS */
 
+#ifdef SHORT_VECTORS
+#define VELMUL3(a,b,c,d) \
+	{ register int _velmul; \
+	for(_velmul = 0; _velmul < 3; _velmul++) \
+		(a)[_velmul] = (b)[_velmul] * (c)[_velmul] * (d)[_velmul]; \
+	}
+#else
+#define VELMUL3(a,b,c,d) 	{ \
+	(a)[X] = (b)[X] * (c)[X] * (d)[X];\
+	(a)[Y] = (b)[Y] * (c)[Y] * (d)[Y];\
+	(a)[Z] = (b)[Z] * (c)[Z] * (d)[Z]; }
+#endif /* SHORT_VECTORS */
+
 /* Similar to VELMUL */
 #define VELDIV(a,b,c)	{ \
 	(a)[0] = (b)[0] / (c)[0];\
