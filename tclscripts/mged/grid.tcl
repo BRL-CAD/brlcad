@@ -28,7 +28,6 @@ proc do_grid_spacing { id spacing_type } {
 
     if [winfo exists $top] {
 	raise $top
-
 	return
     }
 
