@@ -1187,18 +1187,22 @@ set -S2 "/bin/sh"
 #	define XINCDIR	/usr/X11R6/include
 /*#	define	LEX_OPTS	-l*/
 #	if BUILD_OPTIMIZED	
-#		define	OPTIMIZER	-O3  -ffast-math -fstrength-reduce -fexpensive-optimizations /* -faltivec */
+#		define	OPTIMIZER	-O3  -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations /* -faltivec */
 #	else
-#		define	OPTIMIZER	-g -pg -O
+#		define	OPTIMIZER	-g -pg -O -fno-common
 #	endif
 #	if BUILD_SHARED	
 /*		Shared library version support.  */
-#		define	CC_DEFS -pipe -fPIC -Wall -bsd
-/*#		define	ARCH_SUF	dylib*/
+/*		PowerPC code is position-independant by default (and by design) (i.e. no nee d for -fPIC) */
+#		define	CC_DEFS -pipe -Wall -bsd
+/* #		define	ARCH_SUF	so */
+#		define	ARCH_SUF	dylib
 /*#		define	LIBVERS ../sh/sharedlibvers.sh*/
-/*#		define	BUILD_LIBRARY	cc -dynamiclib*/
+#		define	BUILD_LIBRARY	cc -dynamiclib -flat_namespace -undefined suppress -o
+/* #		define	BUILD_LIBRARY	cc -bundle -flat_namespace -undefined suppress -o */
+/*#		define	BUILD_LIBRARY	libtool -dynamic -o */
 /*#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR*/
-#		define  RANLIB	ranlib -c -s
+/*#		define  RANLIB	ranlib -c -s*/
 #	else
 /*		Static linked executables */
 #		define	CC_DEFS -pipe -Wall
