@@ -1,107 +1,105 @@
-.TH LIBMFB 3 BRL/CAD
-'\"	last edit:	%E%	G S Moss
-'\"	SCCS ID:	%W%
+.TH LIBFB 3 BRL/CAD
 .SH NAME
-libmfb \- multiple device, generic frame buffer library
+libfb \- multiple device, generic frame buffer library
 .SH SYNOPSIS
 .nf
-.B #include <fbm.h>
-.P
+.B #include <fb.h>
+.PP
 /* Generic frame buffer routines: */
-.P
-.B FBIO *fb_open(fbfile, width, height);
+.PP
+.B FBIO "*fb_open(fbfile, width, height)"
 .B char *fbfile;
-.P
-.B int fb_close(fbiop);
-.B FBIO *fbiop;
-.P
-.B int fb_read(fbiop, x, y, addr, count);
-.B FBIO *fbiop;
-.B Pixel *addr;
+.PP
+.B int fb_close(fbp)
+.B FBIO *fbp;
+.PP
+.B int "fb_read(fbp, x, y, addr, count)"
+.B FBIO *fbp;
+.B RGBpixel *addr;
 .B long count;
-.P
-.B int fb_write(fbiop, x, y, addr, count);
-.B FBIO *fbiop;
-.B Pixel *addr;
+.PP
+.B int "fb_write(fbp, x, y, addr, count)"
+.B FBIO *fbp;
+.B RGBpixel *addr;
 .B long count;
-.P
-.B int fb_rmap(fbiop, cmap);
-.B FBIO *fbiop;
+.PP
+.B int fb_rmap(fbp, cmap)
+.B FBIO *fbp;
 .B ColorMap *cmap;
-.P
-.B int fb_wmap(fbiop, cmap);
-.B FBIO *fbiop;
+.PP
+.B int fb_wmap(fbp, cmap)
+.B FBIO *fbp;
 .B ColorMap *cmap;
-.P
-.B int fb_clear(fbiop, colorp);
-.B FBIO *fbiop;
-.B Pixel *colorp;
-.P
-.B char *fb_gettype(fbiop);
-.B FBIO *fbiop;
-.P
-.B int fb_getwidth(fbiop);
-.B FBIO *fbiop;
-.P
-.B int fb_getheight(fbiop);
-.B FBIO *fbiop;
-.P
+.PP
+.B int fb_clear(fbp, colorp)
+.B FBIO *fbp;
+.B RGBpixel *colorp;
+.PP
+.B char *fb_gettype(fbp)
+.B FBIO *fbp;
+.PP
+.B int fb_getwidth(fbp)
+.B FBIO *fbp;
+.PP
+.B int fb_getheight(fbp)
+.B FBIO *fbp;
+.PP
 /* Hardware specific frame buffer routines: */
-.P
-.B int fb_cursor(fbiop, mode, x, y);
-.B FBIO *fbiop;
-.P
-.B int fb_scursor(fbiop, mode, x, y);
-.B FBIO *fbiop;
-.P
-.B int fb_setcursor(fbiop, bitmap);
-.B FBIO *fbiop;
-.B long bitmap[32];
-.P
-.B int fb_window(fbiop, x, y);
-.B FBIO *fbiop;
-.P
-.B int fb_zoom(fbiop, x, y);
-.B FBIO *fbiop;
-.P
+.PP
+.B int fb_cursor(fbp, mode, x, y)
+.B FBIO *fbp;
+.PP
+.B int fb_scursor(fbp, mode, x, y)
+.B FBIO *fbp;
+.PP
+.B int "fb_setcursor(fbp, bits, xbits, ybits, xorig, yorig)"
+.B FBIO *fbp;
+.B unsigned char bits[];
+.B int xbits, ybits;
+.B int xorig, yorig;
+.PP
+.B int fb_window(fbp, x, y)
+.B FBIO *fbp;
+.PP
+.B int fb_zoom(fbp, x, y)
+.B FBIO *fbp;
+.PP
 /* Buffered frame buffer I/O: */
-.P
-.B void fb_ioinit(fbiop);
-.B FBIO *fbiop;
-.P
-.B int fb_seek(fbiop, x, y);
-.B FBIO *fbiop;
-.P
-.B void fb_tell(fbiop, xp, yp);
-.B FBIO *fbiop;
+.PP
+.B void fb_ioinit(fbp)
+.B FBIO *fbp;
+.PP
+.B int fb_seek(fbp, x, y)
+.B FBIO *fbp;
+.PP
+.B void fb_tell(fbp, xp, yp)
+.B FBIO *fbp;
 .B int *xp, *yp;
-.P
-.B int fb_rpixel(fbiop, pixelp);
-.B FBIO *fbiop;
-.B Pixel *pixelp;
-.P
-.B int fb_wpixel(fbiop, pixelp);
-.B FBIO *fbiop;
-.B Pixel *pixelp;
-.P
-.B int fb_flush(fbiop);
-.B FBIO *fbiop;
-.P
-.B void fb_log(format [, arg ] ... );
+.PP
+.B int fb_rpixel(fbp, pixelp)
+.B FBIO *fbp;
+.B RGBpixel *pixelp;
+.PP
+.B int fb_wpixel(fbp, pixelp)
+.B FBIO *fbp;
+.B RGBpixel *pixelp;
+.PP
+.B int fb_flush(fbp)
+.B FBIO *fbp;
+.PP
+.B void "fb_log(format [, arg ] ... )"
 .B char *format;
 .SH DESCRIPTION
 These routines are designed to provide a device-independent
 method of using frame buffers or files containing frame buffer
 images.
-The coordinate system used is first-quadrant (0..width, 0..height),
+The coordinate system used is first-quadrant (0..width-1, 0..height-1),
 with integer addressing.  Translation to hardware coordinate systems
 is handled by the library.
-For unfortuante historical reasons, multi-line transfers proceed towards
-lower numbered scanlines.
-.P
+.PP
 This version of the library assumes that red, green, and blue
 intensities are described by unsigned 8-bit bytes in the range (0..255).
-.P
+.PP
 The exact interpretation of color maps tends to be somewhat device
 specific.
 The three ColorMap arrays each have 256 entries of unsigned 16-bit values.
@@ -110,7 +108,7 @@ resolution, the color map entries are fixed-point fractions
 in the range (0.0..1.0).  In integer notation, the range is (0..65525).
 For devices with less than 16 bits of output from their color maps,
 the left-most portion of each entry is used.
-.P
+.PP
 .I Fb_open\^
 is used to open a frame buffer file
 .IR fbfile\^ .
@@ -142,15 +140,16 @@ The
 and
 .I height\^
 parameters specify the initial size of display desired.
+If these are zero the default sizes for that device will be used.
 On a successful open,
 the frame buffer I/O (FBIO) structure pointer is returned.
 This structure contains size you were actually given, as well
 as the maximum possible size for the selected device.
 A return of FBIO_NULL indicates failure.
-.P
+.PP
 .I Fb_close\^
 simply closes the frame buffer.
-.P
+.PP
 .I Fb_read\^
 reads
 .I count\^
@@ -161,7 +160,7 @@ and
 and places them at program memory address specified
 by
 .IR addr\^ .
-.P
+.PP
 .I Fb_write\^
 writes
 .I count\^
@@ -178,12 +177,12 @@ and
 .I Fb_write\^
 both return the number of pixels actually read or written, or
 -1 on error.
-.P
+.PP
 .I Fb_rmap\^
 reads in the color map from the frame buffer and
 leaves at the location pointed to by
 .IR cmap\^ .
-.P
+.PP
 .I Fb_wmap\^
 writes the color map pointed to by
 .I cmap\^
@@ -193,7 +192,7 @@ is
 .B
 .SM NULL
 then a linear color map is used as the default.
-.P
+.PP
 .I Fb_clear\^
 erases the frame buffer by setting all pixels to the given
 color.
@@ -202,20 +201,20 @@ On a UNIX file, this entails writing the entire file,
 which is an expensive operation, whereas on most
 frame buffer displays
 this can be done in less than a second by a special command.
-.P
+.PP
 .I Fb_gettype\^
 returns a pointer to a string describing the frame buffer
 specified by the FBIO pointer.
-.P
+.PP
 .I Fb_getwidth\^
 and
 .I Fb_getheight\^
 returns the current size of the FBIO frame buffer.
-.P
+.PP
 The following routines work in conjunction with those described above
 to provide functions which only apply if the frame buffer
 file is actually a hardware frame buffer display.
-.P
+.PP
 .I Fb_cursor\^
 places the cursor at the image space coordinates given by
 .I x\^
@@ -223,7 +222,7 @@ and
 .IR y\^ .
 If the mode is non-zero, the cursor is made visible, and
 if mode is zero, the cursor is turned off.
-.P
+.PP
 .I Fb_scursor\^
 is the same as
 .I fb_cursor\^
@@ -234,17 +233,39 @@ space coordinates given by
 .I x\^
 and
 .IR y\^ .
-.P
+.PP
 .I Fb_setcursor\^
 allows the user to set the bitmap used to represent the cursor,
 thereby changing the cursor shape.
 This is not necessarily supported
 by all hardware.
 The argument
-.I bitmap\^
+.I bits\^
 is a pointer to an array
-of 32 32-bit integers.
-.P
+of unsigned chars containing the bits of the cursor.
+The arguments
+.I xbits
+and
+.I ybits
+specify the size of the cursor bitmap.  The number of bytes in the
+.I bits
+array will be the width rounded up to a mutiple of
+eight (so that the cursor "scanlines" are byte aligned) times the
+height.
+.IR bits [0]
+is the lower left corner,
+.IR bits [1]
+is to the right of it, etc.  The next line of the
+.I bits
+array goes above the current one.  Within a byte the most significant
+bit is the leftmost.  The values
+.I xorig
+and
+.I yorig
+specify which bit in the bitmap actually gets placed at the location
+specified in the cursor move routines.  Again, a first quadrant coordinate
+system is used.
+.PP
 .I Fb_window\^
 sets the frame buffer window center position to the image space coordinates
 given by
@@ -254,7 +275,7 @@ and
 This command is usually used in conjunction with the
 .I fb_zoom\^
 routine.
-.P
+.PP
 .I Fb_zoom\^
 sets the zoom factor for the X coordinate
 to
@@ -262,21 +283,21 @@ to
 and the zoom factor for the Y coordinate
 to
 .IR y\^ .
-Zooming is by powers of two and is generally done
+Zooming is generally done
 by pixel replication in hardware.
-.P
+.PP
 The following routines work in conjunction with those described above
 to provide buffered reading and writing of frame buffer images
 either to a real frame buffer or a UNIX file.
 The routines use a simple paging strategy to hold ``bands'' of
 the image in core.
 Since horizontal bands are buffered, the
-ideal motion is to scan left to right, then top to bottom.
-.P
+ideal motion is to scan left to right, then bottom to top.
+.PP
 .I Fb_ioinit\^
 should be called before using any of the other buffered I/O routines and
 repeated whenever the frame buffer is reopened.
-.P
+.PP
 .I Fb_seek\^
 is used to position the current read/write pointer to
 the location to the next position to be read or written.
@@ -290,7 +311,7 @@ imply an automatic move to the next pixel.
 If you read or write the last pixel on a scan line,
 the pointer will automatically move to the beginning
 of the following scan line.
-.P
+.PP
 .I Fb_tell\^
 returns the current location of the read write pointer
 in terms of (X,Y) coordinates on the frame buffer.
@@ -299,25 +320,25 @@ by
 .I xp\^
 and
 .IR yp\^ .
-.P
+.PP
 .I Fb_rpixel\^
 reads the pixel at the current frame buffer location
 and returns it into the location specifed
 by
 .IR pixelp\^ .
-.P
+.PP
 .I Fb_wpixel\^
 writes the pixel pointed to by
 .I pixelp\^
 at the current frame buffer location.
-.P
+.PP
 .I Fb_flush\^
 caused any current buffered frame buffer pages to be written out.
 Unnecessary writes are avoided by the use of page reference bits.
-.P
+.PP
 The following is a printing routine which this library uses to
 indicate errors.
-.P
+.PP
 .I Fb_log\^
 will convert, format and print its
 .I args\^
@@ -330,36 +351,59 @@ see
 This function may be supplied by the application if different behavior
 is desired.
 .SH DEVICES
-The following devices are supported by the library;  not all may
+The following devices are supported by the library; not all may
 be available on any given system.  New device support can be
 incorporated by the addition of a single module to the library.
-.P
-debug
-.P
-disk file
-.P
+.TP
+.BI /dev/debug [num]
+Debug interface
+.br
+.I num
+is a bitvector indicating the levels of verbosity of the output.  See
+.B fb.h
+for the bit definitions.
+.TP
+.I filename
+Disk file interface
+.TP
+.BI /dev/ik [num]
 Adage RDS-3000 ("Ikonas")
-.P
+.br
+.I Num
+indicates the device number.
+.TP
+.BI /dev/sgi [num]
 Silicon Graphics IRIS Workstation
-.P
+.br
+A non-zero
+.I num
+will select the pre-allocated colormap.  The default is to dynamically
+allocate the colors of the colormap, which is slower but usually of
+higher quality.  Note that both forms of colormapping occur only in
+window mode, not RGB mode.
+.TP
+.B /dev/rat
 RasterTek 1/80 (untested)
-.P
-TCP-based network links to a remote frame-buffer
+.TP
+.BI hostname: devicename
+TCP-based network links to a remote framebuffer, where
+.I devicename
+is any from this list.
 .SH EXAMPLE
-.I Libmfb\^
+.I Libfb\^
 can be loaded with any
 C
 program:
-.P
+.PP
 .RS
-$ \|\fI/bin/cc \|program.c \|-lmfb\fP
+$ \|\fI/bin/cc \|program.c \|-lfb\fP
 .RE
 .SH FILES
-fbm.h
+fb.h
 .br
-/usr/local/lib/libmfb.a
+/usr/brl/lib/libfb.a
 .SH "SEE ALSO"
-ik(4B), fb(5B), rle(5B).
+brlcad(1).
 .SH "RETURN VALUES"
 .IR fb_close\^ ,
 .IR fb_write\^ ,
@@ -388,16 +432,25 @@ return the number of pixels actually read or written.
 .IR fb_gettype\^
 returns a pointer to NULL terminated a description string.
 .SH AUTHORS
-Gary S. Moss, BRL/VLD-VMB
+Gary S. Moss
 .br
-Mike J. Muuss, BRL/SECAD-CSMB
+Phillip Dykstra
 .br
-Douglas P. Kingston III, BRL/SECAD-CSMB
+Mike J. Muuss
 .br
-Phil Dykstra, BRL/SECAD-CSMB
+Douglas P. Kingston III
 .SH BUGS
 Vertical scanning will incur the most overhead, making it almost
 impractical.
 Due to the way memory is organized
 in frame buffers and UNIX files, vertical scanning will never
 be easy unless the image can be rotated.
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
