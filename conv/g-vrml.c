@@ -89,7 +89,7 @@ struct bu_structparse vrml_mat_parse[]={
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
-static char	usage[] = "Usage: %s [-v] [-i] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
