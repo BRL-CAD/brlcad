@@ -1713,46 +1713,46 @@ sedit_menu()  {
 
 	menuflag = 0;		/* No menu item selected yet */
 
-	menu_set( MENU_L1, MENU_NULL );
+	mmenu_set( MENU_L1, MENU_NULL );
 	chg_l2menu(ST_S_EDIT);
                                                                       
 	switch( es_int.idb_type ) {
 
 	case ID_ARB8:
-		menu_set( MENU_L1, cntrl_menu );
+		mmenu_set( MENU_L1, cntrl_menu );
 		break;
 	case ID_TGC:
-		menu_set( MENU_L1, tgc_menu );
+		mmenu_set( MENU_L1, tgc_menu );
 		break;
 	case ID_TOR:
-		menu_set( MENU_L1, tor_menu );
+		mmenu_set( MENU_L1, tor_menu );
 		break;
 	case ID_ELL:
-		menu_set( MENU_L1, ell_menu );
+		mmenu_set( MENU_L1, ell_menu );
 		break;
 	case ID_ARS:
-		menu_set( MENU_L1, ars_menu );
+		mmenu_set( MENU_L1, ars_menu );
 		break;
 	case ID_BSPLINE:
-		menu_set( MENU_L1, spline_menu );
+		mmenu_set( MENU_L1, spline_menu );
 		break;
 	case ID_RPC:
-		menu_set( MENU_L1, rpc_menu );
+		mmenu_set( MENU_L1, rpc_menu );
 		break;
 	case ID_RHC:
-		menu_set( MENU_L1, rhc_menu );
+		mmenu_set( MENU_L1, rhc_menu );
 		break;
 	case ID_EPA:
-		menu_set( MENU_L1, epa_menu );
+		mmenu_set( MENU_L1, epa_menu );
 		break;
 	case ID_EHY:
-		menu_set( MENU_L1, ehy_menu );
+		mmenu_set( MENU_L1, ehy_menu );
 		break;
 	case ID_ETO:
-		menu_set( MENU_L1, eto_menu );
+		mmenu_set( MENU_L1, eto_menu );
 		break;
 	case ID_NMG:
-		menu_set( MENU_L1, nmg_menu );
+		mmenu_set( MENU_L1, nmg_menu );
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -1834,7 +1834,7 @@ sedit()
 		/* put up control (main) menu for GENARB8s */
 		menuflag = 0;
 		es_edflag = IDLE;
-		menu_set( MENU_L1, cntrl_menu );
+		mmenu_set( MENU_L1, cntrl_menu );
 		break;
 
 	case ECMD_ARB_SPECIFIC_MENU:
@@ -1843,13 +1843,13 @@ sedit()
 		es_edflag = IDLE;
 		switch( es_menu ){
 			case MENU_ARB_MV_EDGE:  
-				menu_set( MENU_L1, which_menu[es_type-4] );
+				mmenu_set( MENU_L1, which_menu[es_type-4] );
 				break;
 			case MENU_ARB_MV_FACE:
-				menu_set( MENU_L1, which_menu[es_type+1] );
+				mmenu_set( MENU_L1, which_menu[es_type+1] );
 				break;
 			case MENU_ARB_ROT_FACE:
-				menu_set( MENU_L1, which_menu[es_type+6] );
+				mmenu_set( MENU_L1, which_menu[es_type+6] );
 				break;
 			default:
 				rt_log("Bad menu item.\n");
