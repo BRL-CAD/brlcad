@@ -2,8 +2,8 @@
 .SH NAME
 g-tankill \- Tankill Translator (BRL-CAD to Tankill)
 .SH SYNOPSIS
-.B g-tankill [-v] [-xX lvl] [-i idents_file]
-[-a abs_tol] [-r rel_tol] [-n norm_tol] [-o tankill_file] database.g object(s)
+.B g-tankill
+[-v] [-xX lvl] [-i idents_file] [-s surroundings_code] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o tankill_file] database.g object(s)
 .SH DESCRIPTION
 .I g-tankill\^
 converts the specified
@@ -40,7 +40,12 @@ of the regions and the assigned idents are written to
 along with the BRL-CAD ident number, aircode, gift material code,
 los and any material name assigned through the
 .I mater
-command.
+command. The
+.I -s
+option specifies that the provided surroundings code should be used for
+all the components in the
+.I TANKILL
+output model.  The default is to use a surroundings code of 1000.
 .SH EXAMPLE
 .RS
 $ \|\fIg-tankill \|-o sample.tankill \|sample.g \|sample_object\fP
