@@ -246,12 +246,13 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* XXX perform shading operations here */
 	VMOVE(swp->sw_color, pt);
 
-	/* caller will perform transmission/reflection calculations
-	 * based upon the values of swp->sw_transmit and swp->sw_reflect
+	/* shader must perform transmission/reflection calculations
 	 *
 	 * 0 < swp->sw_transmit <= 1 causes transmission computations
 	 * 0 < swp->sw_reflect <= 1 causes reflection computations
 	 */
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
 
 	return(1);
 }
