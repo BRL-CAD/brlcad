@@ -1,7 +1,7 @@
 /*
  *			A S C - P L . C
  *
- *	Produce UNIX plot commands in LIBPLOT(3) format
+ *	Produce UNIX plot commands in PLOT3(5) format
  *	from ASCII representation.
  *
  *  Author -
