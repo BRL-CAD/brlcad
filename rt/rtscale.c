@@ -125,10 +125,10 @@ layout_n_plot()
 	 */
 
 	nticks =  TICKS;
-	tick_hgt = dy/4;
 	dx = 0.1;	
 	dy = 0.1;
 	len = 0.2;
+	tick_hgt = dy/4;
 
 	/* Make the starting point (in view-coordinates) of the scale.
 	 * Note that there is no Z coordinate since the view-coordinate
@@ -192,7 +192,7 @@ fprintf(stderr, "v_rtick_bot: x=%f, y=%f, z=%f\n", v_rtick_bot[X],
 	pdv_3cont(outfp, m_ltick_top);
 
 	pdv_3move(outfp, m_rtick_bot);
-	pdv_3move(outfp, m_rtick_top);
+	pdv_3cont(outfp, m_rtick_top);
 
 	fclose(outfp);
 	return;
