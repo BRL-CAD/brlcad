@@ -759,12 +759,7 @@ struct xray *rayp;
 bool flipped;
 fastf_t normvec[3];
 	{
-	RT_HIT_NORM( hitp, stp, rayp );
-	CopyVec( normvec, hitp->hit_normal ); 
-	if( flipped )
-		{
-		ScaleVec( normvec, -1.0 );
-		}
+	RT_HIT_NORMAL( normvec, hitp, stp, rayp, flipped );
 	}
 
 bool
