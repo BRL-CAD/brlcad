@@ -10,6 +10,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <assert.h>
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./ascii.h"
@@ -125,7 +126,8 @@ OcList	*
 get_Trie( name, triep )
 register char	*name;
 register Trie	*triep;
-	{	register Trie	*curp;
+	{	register Trie *curp = triep; /* initialize to shutup compiler */
+	assert( triep != NULL );
 	/* Traverse next links to end of region name.			*/
 	for( ; triep != TRIE_NULL; triep = triep->n.t_next )
 		{
@@ -163,11 +165,13 @@ register Trie	*triep;
 				name++;
 			}
 		}
-	/* Clobber key-stroke, and return it.				*/
+
+	/* Clobber key-stroke, and return it. */
 	--name;
 	*name = NUL;
-	/* It is caller's responsibility to free this linked-list.	*/
-	return	copy_OcList( curp->l.t_octp );
+	/* It is caller's responsibility to free this linked-list. */
+	assert( curp != NULL );
+	return copy_OcList( curp->l.t_octp );
 	}
 
 STATIC OcList	*

@@ -3,7 +3,6 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6651 or AV-298-6651
 
 	Thanks to Edwin O. Davisson and Robert Shnidman for contributions
 	to the refraction algorithm.
@@ -659,24 +658,26 @@ int *id;
 		char *name;
 		char *value;
 		register char *p;
+		unsigned lenparm = sizeof(map->ma_matparm);
 	if( map->ma_matname[0] == '\0' )
 		return	false;
 	/* guard against changes to length of ma_matparm field */
-	if( sizeof(map->ma_matparm) > MA_LENPARM-1 )
+	if( lenparm > MA_LENPARM-1 )
 		{
 		rt_log( "BUG: Must lengthen MA_LENPARM to be %u bytes.\n",
-			sizeof( map->ma_matparm ) );
+			lenparm );
 		return	false;
 		}
 	/* copy parameter string to scratch buffer and null terminate */
-	(void) strncpy( matparm, map->ma_matparm, sizeof(map->ma_matparm) );
-	matparm[sizeof(map->ma_matparm)] = '\0';
+	(void) strncpy( matparm, map->ma_matparm, lenparm );
+	matparm[lenparm] = '\0';
 	/* get <name>=<value> string */
 	if( (name = strtok( matparm, MA_WHITESP )) == NULL )
 		return	false;
 	do
 		{
 		/* break it down into name and value */
+		value = NULL;
 		for( p = name; *p != '\0'; p++ )
 			if( *p == '=' )
 				{
@@ -684,6 +685,8 @@ int *id;
 				*p = '\0';
 				break;
 				}
+		if( value == NULL )
+			continue; /* No '=' in input token. */
 		/* if we have a material id, get it and return */
 		if(	strcmp( name, MA_MID ) == 0
 		    &&	sscanf( value, "%d", id ) == 1 )
@@ -951,14 +954,11 @@ correct_Lgt( ap, pp, lgt_entry )
 register struct application *ap;
 register struct partition *pp;
 register Lgt_Source *lgt_entry;
-	{	fastf_t	energy_attenuation;
+	{	fastf_t	energy_attenuation = 1.0;
 		fastf_t	lgt_dir[3];
-	if( ! shadowing )
-		{
-		energy_attenuation = 1.0;
-		if( ! lgt_entry->beam )
-			return	lgt_entry->energy;
-		}
+	if( ! shadowing && ! lgt_entry->beam )
+		return	lgt_entry->energy;
+
 	/* Vector to light src from surface contact pt. */
 	Diff2Vec( lgt_entry->loc, pp->pt_inhit->hit_point, lgt_dir );
 	VUNITIZE( lgt_dir );
