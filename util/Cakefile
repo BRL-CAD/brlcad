@@ -18,7 +18,7 @@
 	pix-alias pix-bw pix-bw3 pix-orle \
 	pix-ps pix-rle bw-rle pix-spm pix-sun \
 	pix3filter pixbackgnd pixbgstrip pixbustup pixcolors pixdiff \
-	pixfade pixfields pixfilter pixhalve pixhist \
+	pixfade pixfields pixfieldsep pixfilter pixhalve pixhist \
 	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
 	pixrect pixrot pixsaturate pixscale pixshrink pixstat \
 	pixtile pixuntile pixembed \
@@ -71,6 +71,9 @@ pixfade:	pixfade.o
 
 pixfields:	pixfields.o
 	CC LDFLAGS -o pixfields pixfields.o LIBES
+
+pixfieldsep:	pixfieldsep.o
+	CC LDFLAGS -o pixfieldsep pixfieldsep.o LIBES
 
 pixdiff:	pixdiff.o
 	CC LDFLAGS -o pixdiff pixdiff.o LIBES
