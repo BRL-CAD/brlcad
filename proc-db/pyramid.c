@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 void	do_leaf(), do_pleaf(), pnorms(), do_tree();

@@ -28,9 +28,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #include "bn.h"
-#include "db.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 
@@ -106,7 +105,7 @@ char	**argv;
 	rgb[1] = 180;
 	rgb[2] = 64;
 	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
-	mk_memb( stdout, "plane", identity, UNION );
+	mk_memb( stdout, "plane", identity, WMOP_UNION );
 	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
 
 	/* Create the display pillars */
@@ -278,7 +277,7 @@ struct wmember *headp;
 	i = PICK_MAT;
 	mk_comb( stdout, rname, 1, 1,
 		mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
-	mk_memb( stdout, sname, identity, UNION );
+	mk_memb( stdout, sname, identity, WMOP_UNION );
 
 	(void)mk_addmember( rname, &head, WMOP_UNION );
 	wp = mk_addmember( oname, &head, WMOP_UNION );
@@ -310,7 +309,7 @@ struct wmember *headp;
 	mk_comb( stdout, rname, 1, 1,
 		"stack", args,
 		(unsigned char *)0, 0 );
-	mk_memb( stdout, sname, identity, UNION );
+	mk_memb( stdout, sname, identity, WMOP_UNION );
 
 	(void)mk_addmember( rname, headp, WMOP_UNION );
 }

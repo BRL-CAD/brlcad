@@ -14,12 +14,11 @@
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "db.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "raytrace.h"
 #include "wdb.h"
-/* #include "raytrace.h" */
 
 char *progname ="(noname)";
 

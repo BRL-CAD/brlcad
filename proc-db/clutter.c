@@ -25,10 +25,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "db.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 mat_t	identity;
@@ -94,7 +94,7 @@ char	**argv;
 	rgb[2] = 64;
 	bn_mat_idn( identity );
 	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
-	mk_memb( stdout, "plane", identity, UNION );
+	mk_memb( stdout, "plane", identity, WMOP_UNION );
 	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
 
 	/* Create the detail cells */
@@ -210,8 +210,8 @@ double	size;
 	get_rgb(rgb);
 	i = PICK_MAT;
 	mk_comb( stdout, cname, 2, 1, mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
-	mk_memb( stdout, crystalname, identity, UNION );
-	mk_memb( stdout, rppname, identity, INTERSECT );
+	mk_memb( stdout, crystalname, identity, WMOP_UNION );
+	mk_memb( stdout, rppname, identity, WMOP_INTERSECT );
 	return(height);
 }
 
@@ -324,7 +324,7 @@ double	size;
 	get_rgb(rgb);
 	i = PICK_MAT;
 	mk_comb( stdout, name, 1, 1, mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
-	mk_memb( stdout, sname, identity, UNION );
+	mk_memb( stdout, sname, identity, WMOP_UNION );
 }
 
 double
@@ -469,7 +469,7 @@ int	n;
 		/* Build the region that contains each solid */
 		get_rgb(rgb);
 		mk_comb( stdout, rname, 1, 1, "", "", rgb, 0 );
-		mk_memb( stdout, sname, identity, UNION );
+		mk_memb( stdout, sname, identity, WMOP_UNION );
 		(void)mk_addmember( rname, &head, WMOP_UNION );
 	}
 

@@ -26,10 +26,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "db.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "bu.h"
 #include "nurb.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 mat_t	identity;

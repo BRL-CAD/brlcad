@@ -17,6 +17,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "raytrace.h"
 #include "wdb.h" 
 
 #define D2R(x) (((x)/180)*3.14159265358979)

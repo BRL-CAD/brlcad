@@ -16,8 +16,8 @@ static char rcs_ident[] = "$Header$";
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
-#include "db.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 
@@ -154,11 +154,11 @@ int	sph_type;
 	sprintf(nm1, "sph.%d", id );
 	mk_sph( stdout, nm1, center, rad );
 	mk_comb( stdout, nm, 1, 1, matname, matparm, rgb, 0 );
-	mk_memb( stdout, nm1, m, UNION);
+	mk_memb( stdout, nm1, m, WMOP_UNION);
 
 	new->next = ( struct sphere *)0;
 	new->s_id = id;
-	NAMEMOVE(nm1, new->s_name);
+	strncpy(new->s_name, nm1, sizeof(nm1) );
 	VMOVE( new->s_center, center );
 	new->s_rad = rad;
 	new->s_atom_type = sph_type;
@@ -219,8 +219,8 @@ int sp1, sp2;
 #endif
 
 	mk_comb( stdout, nm1, 3, 1, matname, matparm, rgb, 0 );
-	mk_memb( stdout, nm, m, UNION);
-	mk_memb( stdout, s1->s_name, m, SUBTRACT);
-	mk_memb( stdout, s2->s_name, m, SUBTRACT);
+	mk_memb( stdout, nm, m, WMOP_UNION);
+	mk_memb( stdout, s1->s_name, m, WMOP_SUBTRACT);
+	mk_memb( stdout, s2->s_name, m, WMOP_SUBTRACT);
 	return(0);		/* OK */
 }

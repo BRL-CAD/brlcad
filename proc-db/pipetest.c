@@ -25,8 +25,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 void do_bending();

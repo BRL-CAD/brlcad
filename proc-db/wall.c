@@ -14,9 +14,9 @@
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "rtlist.h"
-#include "wdb.h"
+#include "bu.h"
 #include "raytrace.h"
+#include "wdb.h"
 
 #define min(_a, _b) ((_a) < (_b) ? (_a) : (_b))
 #define max(_a, _b) ((_a) > (_b) ? (_a) : (_b))

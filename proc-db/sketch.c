@@ -33,7 +33,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "rtlist.h"
 #include "wdb.h"
 #include "rtgeom.h"
 

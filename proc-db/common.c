@@ -24,8 +24,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "db.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 
@@ -109,6 +109,6 @@ struct wmember	*headp;
 	bn_mat_mul( both, xlate, rot );
 
 	mk_comb( stdout, name, 1, 1, "light", "shadows=1", rgb, 0 );
-	mk_memb( stdout, nbuf, both, UNION );
+	mk_memb( stdout, nbuf, both, WMOP_UNION );
 	(void)mk_addmember( name, headp, WMOP_UNION );
 }

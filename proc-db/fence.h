@@ -36,12 +36,10 @@
 #endif
 
 #include "machine.h"
-/*#include "bu.h"
- */
+#include "bu.h"
 #include "vmath.h"
-/*#include "bn.h"
- */
-#include "db.h"
+#include "bn.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 /* these variables control the "behavior" of this program's output
