@@ -146,6 +146,7 @@ char **argv;
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_model );
 	/*
 	 *  Do not use rt_log() or rt_malloc() before this point!
 	 */

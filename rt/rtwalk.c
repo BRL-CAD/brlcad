@@ -143,7 +143,7 @@ char **argv;
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
-
+	RES_INIT( &rt_g.res_model );
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
