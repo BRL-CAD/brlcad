@@ -127,7 +127,7 @@ proc sketch_popup_draw { p } {
 		return
 	}
 	toplevel $root
-	wm title $root "MGED curve editor"
+	wm title $root "MGED AnimMate curve editor"
 	button $root.b0 -text "ADD" -command {sketch_add [viewget center] $mged_sketch_node}
 	button $root.b1 -text "INSERT" -command {sketch_insert [viewget center] $mged_sketch_node}
 	button $root.b2 -text "MOVE" -command {sketch_move [viewget center] $mged_sketch_node}
@@ -835,7 +835,7 @@ proc sketch_init_view {} {
 	uplevel #0 set mged_sketch_cmdlen(aet) 3
 	uplevel #0 set mged_sketch_cmdlen(size) 1
 	#dependencies
-	foreach dep {main text} {
+	foreach dep {main table} {
 		if { [info globals mged_sketch_init_$dep] == "" } {
 			sketch_init_$dep
 		}
@@ -862,7 +862,7 @@ proc sketch_popup_view { p } {
 		return
 	}
 	toplevel $root
-	wm title $root "MGED view curve editor"
+	wm title $root "MGED AnimMate view curve editor"
 	button $root.b0 -text "ADD" -command {sketch_vadd $mged_sketch_vnode}
 	button $root.b1 -text "INSERT" -command {sketch_vinsert $mged_sketch_vnode}
 	button $root.b2 -text "MOVE" -command {sketch_vmove $mged_sketch_vnode}
@@ -2472,6 +2472,7 @@ proc sketch_popup_objanim { p {mode obj} } {
 		$root.cb0 deselect
 		uplevel #0 set mged_sketch_objdisp "-d"
 		uplevel #0 set mged_sketch_objrot "-b"
+		set lookat_txt "Eye path and look-at path"
 	} else {
 		wm title $root "MGED AnimMate Object Animation"
 		set if_view ""
@@ -2485,6 +2486,7 @@ proc sketch_popup_objanim { p {mode obj} } {
 		uplevel #0 set mged_sketch_objrv 0
 		$root.cb1 deselect
 		$root.cb2 deselect
+		set lookat_txt "Object path and look-at path"
 	}
 	frame $root.f3
 	button $root.f3.b0 -text "Object center:" \
@@ -2520,7 +2522,7 @@ proc sketch_popup_objanim { p {mode obj} } {
 		-variable mged_sketch_objopt -value "ypr" -command "sketch_script_update $mode"
 	radiobutton $root.rb4 -text "Rotation specified as quat" \
 		-variable mged_sketch_objopt -value "quat" -command "sketch_script_update $mode"
-	radiobutton $root.rb5 -text "Eye-path and look-at path " \
+	radiobutton $root.rb5 -text $lookat_txt \
 		-variable mged_sketch_objopt -value "lookat" -command "sketch_script_update $mode"
 	frame $root.f8
 	label $root.f8.l0 -textvariable mged_sketch_objncols
@@ -2808,6 +2810,8 @@ proc sketch_objanim { objorview } {
 	if { $mged_sketch_objopt == "bank" } {
 		if { $mged_sketch_objmang > 89 } {
 			set mged_sketch_objmang 89
+		} elseif { $mged_sketch_objmang < -89 } {
+			set mged_sketch_objmang -89
 		}
 		set do_bank ${mged_sketch_anim_path}anim_fly
 		if { $type == "curve" } {
@@ -2929,9 +2933,10 @@ proc sketch_script_update { objorview } {
 proc sketch_init_track {} {
 	#track animation
 	uplevel #0 set mged_sketch_init_track 1
+	uplevel #0 {set mged_sketch_whlname ""}
 	uplevel #0 {set mged_sketch_whlsource ""}
 	uplevel #0 {set mged_sketch_lnkname ""}
-	uplevel #0 set mged_sketch_numlinks 1
+	uplevel #0 set mged_sketch_numpads 1
 	uplevel #0 set mged_sketch_radii "1"
 	#dependencies
 	foreach dep {main objanim} {
@@ -2954,7 +2959,7 @@ proc sketch_popup_track_anim { p } {
 	}
 	toplevel $root
 
-	wm title $root "MGED Track Animation"
+	wm title $root "MGED AnimMate Track Animation"
 	label $root.l0 -text "CREATE TRACK ANIMATION"
 	frame $root.f0
 	label $root.f0.l0 -text "Output file: "
@@ -2968,12 +2973,15 @@ proc sketch_popup_track_anim { p } {
 	frame $root.f3
 	label $root.f3.l0 -text "Radii of wheels (or common radius):"
 	entry $root.f3.e0 -textvariable mged_sketch_radii
+	frame $root.fw
+	label $root.fw.l0 -text "Wheel base name:"
+	entry $root.fw.e0 -width 20 -textvariable mged_sketch_whlname
 	frame $root.f4
-	label $root.f4.l0 -text "Link path name:"
+	label $root.f4.l0 -text "Pad base name:"
 	entry $root.f4.e0 -width 20 -textvariable mged_sketch_lnkname
 	frame $root.f5
-	label $root.f5.l0 -text "Number of links: "
-	entry $root.f5.e0 -textvariable mged_sketch_numlinks
+	label $root.f5.l0 -text "Number of pads: "
+	entry $root.f5.e0 -textvariable mged_sketch_numpads
 	frame $root.f6
 	button $root.f6.b0 -text "Vehicle center:" \
 			-command { set mged_sketch_objcen [viewget center] }
@@ -2986,13 +2994,14 @@ proc sketch_popup_track_anim { p } {
 	label $root.f8.l0 -text "First frame:"
 	entry $root.f8.e0 -width 20 -textvariable mged_sketch_objframe
 	frame $root.f9
-	button $root.f9.b0 -text "Create Script" -command {sketch_do_track $mged_sketch_objscript $mged_sketch_whlsource $mged_sketch_objsource $mged_sketch_objori $mged_sketch_objcen $mged_sketch_radii $mged_sketch_numlinks $mged_sketch_lnkname}
+	button $root.f9.b0 -text "OK" -command {sketch_do_track $mged_sketch_objscript $mged_sketch_whlsource $mged_sketch_objsource $mged_sketch_objori $mged_sketch_objcen $mged_sketch_radii $mged_sketch_numpads $mged_sketch_lnkname}
 	button $root.f9.b1 -text "Show Script" -command "sketch_popup_preview $p \$mged_sketch_objscript"
-	button $root.f9.b2 -text "Cancel" -command "destroy $root"
+	button $root.f9.b2 -text "Up" -command "raise $p"
+	button $root.f9.b3 -text "Cancel" -command "destroy $root"
 	
 
-	pack	$root.l0 $root.f0 $root.f1 \
-		$root.f2 $root.f3 \
+	pack	$root.l0 $root.f0 $root.f1 $root.f2 \
+		$root.f3 $root.fw \
 		$root.f4 $root.f5 \
 		$root.f6 $root.f7 \
 		$root.f8 $root.f9\
@@ -3000,21 +3009,21 @@ proc sketch_popup_track_anim { p } {
 
 
 	pack \
-		$root.f0.l0 $root.f1.l0 \
-		$root.f2.l0 $root.f3.l0 \
+		$root.f0.l0 $root.f1.l0 $root.f2.l0 \
+		$root.f3.l0 $root.fw.l0 \
 		$root.f4.l0 $root.f5.l0 \
 		$root.f6.b0 $root.f7.b0 \
 		$root.f8.l0 \
 		-side left -anchor w
 
 	pack \
-		$root.f0.e0 $root.f1.e0 $root.f2.e0\
-		$root.f3.e0 $root.f4.e0 $root.f5.e0\
+		$root.f0.e0 $root.f1.e0 $root.f2.e0 $root.f3.e0\
+		$root.fw.e0 $root.f4.e0 $root.f5.e0\
 		$root.f6.e0 $root.f7.e0 $root.f8.e0 \
 		-side right -anchor e
 
 	pack \
-		$root.f9.b0 $root.f9.b1 $root.f9.b2 \
+		$root.f9.b0 $root.f9.b1 $root.f9.b2 $root.f9.b3 \
 		-side left -fill x -expand yes
 
 
@@ -3022,7 +3031,8 @@ proc sketch_popup_track_anim { p } {
 	bind $root.f0.e0 <Key-Return> "focus $root.f1.e0"
 	bind $root.f1.e0 <Key-Return> "focus $root.f2.e0"
 	bind $root.f2.e0 <Key-Return> "focus $root.f3.e0"
-	bind $root.f3.e0 <Key-Return> "focus $root.f4.e0"
+	bind $root.f3.e0 <Key-Return> "focus $root.fw.e0"
+	bind $root.fw.e0 <Key-Return> "focus $root.f4.e0"
 	bind $root.f4.e0 <Key-Return> "focus $root.f5.e0"
 	bind $root.f5.e0 <Key-Return> "focus $root.f6.e0"
 	bind $root.f6.e0 <Key-Return> "focus $root.f7.e0"
@@ -3033,10 +3043,10 @@ proc sketch_popup_track_anim { p } {
 }
 
 
-proc sketch_do_track { outfile wcurve tcurve ypr center radius numlinks \
-								linkname} {
+proc sketch_do_track { outfile wcurve tcurve ypr center radius numpads \
+								padname} {
 	global mged_sketch_temp1 mged_sketch_anim_path
-
+	uplevel #0 mged_sketch_whlname wname
 
 	#check for overwriting script file
 	if {[file exists $outfile] } {
@@ -3059,8 +3069,22 @@ proc sketch_do_track { outfile wcurve tcurve ypr center radius numlinks \
 		of at least 2 wheels." {} 0 "OK"
 		return -1
 	}
+	if { $wname == "" } {
+		set wcmd ""
+	} else {
+		set wcmd "-w $wname"
+	}
+	if { ($padname == "") || ($numpads == "") } {
+		set lcmd ""
+	} else {
+		set lcmd "-l $numpads $padname"
+	}
+	if { ($lcmd == "") && ($wcmd == "") } {
+		tk_dialog ._sketch_msg "AnimMate Track animation error" \
+		   "You must specify a pad name and number and/or a wheel name." {} 0 "OK"
+		return -1;
+	}
 	set fd [open $mged_sketch_temp1 w]
-	puts $fd "$numwheels $numlinks"
 	set rad 1
 	for {set i 0} { $i < $numwheels} { incr i} {
 		if {[llength $radius] > $i} {
@@ -3081,7 +3105,7 @@ proc sketch_do_track { outfile wcurve tcurve ypr center radius numlinks \
 	while { [llength $ypr] < 3 } { lappend ypr 0}
 	while { [llength $center] < 3 } { lappend ypr 0}
 	set fd [ open "| ${mged_sketch_anim_path}anim_hardtrack -s -b $ypr \
-		-d $center $linkname $mged_sketch_temp1 > $outfile" w]
+		-d $center $wcmd $lcmd $mged_sketch_temp1 > $outfile" w]
 	sketch_write_to_fd $fd $len
 	close $fd
 	sketch_open_curve $oldname
@@ -3133,16 +3157,19 @@ proc sketch_popup_sort { p } {
 	frame $root.f2
 	label $root.f2.l0 -text "Create script: "
 	entry $root.f2.e0 -width 20
-	button $root.f2.b0 -text "OK" -command "sketch_sort $root \
+	frame $root.f3
+	button $root.f3.b0 -text "OK" -command "sketch_sort $root \
 		\[$root.f2.e0 get\] $root.f0.f0.lb0; \
 		$root.f1.b0 invoke"
-	button $root.f2.b1 -text "Cancel" -command "destroy $root"
+	button $root.f3.b1 -text "Show Script" -command "sketch_popup_preview $p \[$root.f2.e0 get\]"
+	button $root.f3.b2 -text "Up" -command "raise $p"
+	button $root.f3.b3 -text "Cancel" -command "destroy $root"
 
 	bind $root.f0.e0 <Key-Return> " sketch_sort_entry1 $root.f0.e0 $root.f0.f0.lb0 $root.f2.e0 "
 	bind $root.f1.e1 <Key-Return> " $root.f1.b0 invoke "
 	bind $root.f0.f0.lb0 <Button-1> "sketch_list_remove_y $root.f0.f0.lb0 %y "
 	bind $root.f1.f1.lb1 <Button-1> "sketch_list_add_y $root.f1.f1.lb1 $root.f0.f0.lb0 %y "
-	bind $root.f2.e0 <Key-Return> "$root.f2.b0 invoke"
+	bind $root.f2.e0 <Key-Return> "$root.f3.b0 invoke"
 
 	$root.f2.e0 insert end ".script"
 	$root.f2.e0 selection range 0 end
@@ -3151,7 +3178,7 @@ proc sketch_popup_sort { p } {
 	$root.f1.e1 insert end "./*.script"
 	sketch_list_filter $root.f1.f1.lb1 "./*.script"
 
-	pack $root.f2 -side bottom
+	pack $root.f3 $root.f2 -side bottom -fill x -expand yes
 	pack $root.l0 -side top
 	pack $root.f0 -side left
 	pack $root.f1 -side right
@@ -3159,8 +3186,10 @@ proc sketch_popup_sort { p } {
 	pack $root.f0.l0 $root.f0.e0 $root.f0.f0 \
 		$root.f1.b0 $root.f1.e1 $root.f1.f1 \
 		-side top -anchor w
-	pack $root.f2.l0 $root.f2.e0 $root.f2.b0 \
-	 	$root.f2.b1 -side left
+	pack $root.f2.l0 $root.f2.e0 \
+		-side left
+	pack $root.f3.b0 $root.f3.b1 $root.f3.b2 $root.f3.b3 \
+		-side left -expand yes -fill x
 	pack $root.f0.f0.lb0 $root.f0.f0.s0 \
 		$root.f1.f1.lb1 $root.f1.f1.s0 \
 		-side left -fill y -expand yes
@@ -3207,7 +3236,7 @@ proc sketch_sort { sortp outfile list } {
 	frame $sortp.fa
 	label $sortp.fa.l0 -text "Sorting $outfile ..."
 	button $sortp.fa.b0 -text "Halt" -command "exec kill $pid"
-	pack $sortp.fa -side bottom -before $sortp.f2
+	pack $sortp.fa -side bottom -before $sortp.f3
 	pack $sortp.fa.l0 $sortp.fa.b0 -side left -fill x
 
 	set done "destroy $sortp.fa; exec rm $mged_sketch_sort_temp"
@@ -3290,8 +3319,8 @@ proc sketch_popup_preview { p {filename ""} } {
 	frame $root.f4
 	button $root.f4.b0 -text "Show" \
 		-command "sketch_preview \[$root.f0.e0 get\]"
-	button $root.f4.b1 -text "Cancel" \
-		-command "destroy $root"
+	button $root.f4.b1 -text "Up" -command "raise $p"
+	button $root.f4.b2 -text "Cancel" -command "destroy $root"
 
 	$root.f0.e0 delete 0 end
 	$root.f0.e0 insert 0 $filename
@@ -3301,12 +3330,13 @@ proc sketch_popup_preview { p {filename ""} } {
 		$root.f0 $root.f1 $root.f2 \
 		$root.f3 $root.cb0 $root.f4 \
 		-side top -expand yes -fill x -anchor w
-	pack $root.f0.l0 $root.f0.e0 \
-		$root.f1.l0 $root.f1.e0 \
-		$root.f2.l0 $root.f2.e0 \
-		$root.f3.l0 $root.f3.e0 \
-		$root.f4.b0 $root.f4.b1 \
-		-side left -expand yes
+	
+	pack $root.f0.l0 $root.f1.l0 $root.f2.l0 $root.f3.l0 \
+		-side left
+	pack $root.f0.e0 $root.f1.e0 $root.f2.e0 $root.f3.e0 \
+		-side right
+	pack $root.f4.b0 $root.f4.b1 $root.f4.b2 \
+		-side left -expand yes -fill x
 
 	focus $root.f0.e0
 	bind $root.f0.e0 <Key-Return> "focus $root.f1.e0"
