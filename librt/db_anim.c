@@ -23,7 +23,7 @@ static char RCSanim[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./debug.h"
 
@@ -47,13 +47,10 @@ register struct animate *anp;
 int	root;
 {
 	register struct animate **headp;
+	struct directory	*dp;
 	register int i;
 
 	/* Could validate an_type here */
-
-	for( i=0; i < anp->an_pathlen; i++ )
-		if( anp->an_path[i] == DIR_NULL )
-			return(-1);	/* BAD */
 
 	anp->an_forw = ANIM_NULL;
 	if( root )  {
@@ -61,10 +58,11 @@ int	root;
 			rt_log("db_add_anim(x%x) root\n", anp);
 		headp = &(dbip->dbi_anroot);
 	} else {
+		dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
 		if( rt_g.debug&DEBUG_ANIM )
 			rt_log("db_add_anim(x%x) arc %s\n", anp,
-				anp->an_path[anp->an_pathlen-1]->d_namep);
-		headp = &(anp->an_path[anp->an_pathlen-1]->d_animate);
+				dp->d_namep);
+		headp = &(dp->d_animate);
 	}
 
 	/* Append to list */
@@ -92,7 +90,7 @@ struct mater_info	*materp;
 	if( rt_g.debug&DEBUG_ANIM )
 		rt_log("db_do_anim(x%x) ", anp);
 	switch( anp->an_type )  {
-	case AN_MATRIX:
+	case RT_AN_MATRIX:
 		if( rt_g.debug&DEBUG_ANIM )  {
 			rt_log("matrix, op=%d\n", anp->an_u.anu_m.anm_op);
 #if 0
@@ -131,7 +129,7 @@ struct mater_info	*materp;
 		}
 #endif
 		break;
-	case AN_PROPERTY:
+	case RT_AN_MATERIAL:
 		if( rt_g.debug&DEBUG_ANIM )
 			rt_log("property\n");
 		break;
@@ -148,6 +146,8 @@ struct mater_info	*materp;
  *			D B _ F R E E _ A N I M
  *
  *  Release chain of animation structures
+ * XXX really need another subroutine in common,
+ * XXX which knows how to free the vls strings, etc.
  */
 void
 db_free_anim( dbip )
@@ -161,7 +161,7 @@ register struct db_i *dbip;
 	for( anp = dbip->dbi_anroot; anp != ANIM_NULL; )  {
 		register struct animate *nextanp = anp->an_forw;
 
-		rt_free( (char *)anp->an_path, "animation path[]");
+		db_free_full_path( &anp->an_path );
 		rt_free( (char *)anp, "struct animate");
 		anp = nextanp;
 	}
@@ -174,11 +174,104 @@ register struct db_i *dbip;
 			for( anp = dp->d_animate; anp != ANIM_NULL; )  {
 				register struct animate *nextanp = anp->an_forw;
 
-				rt_free( (char *)anp->an_path, "animation path[]");
+				db_free_full_path( &anp->an_path );
 				rt_free( (char *)anp, "struct animate");
 				anp = nextanp;
 			}
 			dp->d_animate = ANIM_NULL;
 		}
 	}
+}
+
+/*
+ *			D B _ P A R S E _ A N I M
+ *
+ *  A common parser for mged and rt.
+ *  Experimental.
+ */
+int
+db_parse_anim( dbip, argc, argv )
+struct db_i	*dbip;
+int		argc;
+char		**argv;
+{
+	struct db_tree_state	ts;
+	struct db_full_path	path;
+	struct animate		*anp;
+	int	i;
+	int	at_root = 0;
+
+	GETSTRUCT( anp, animate );
+
+	if( argv[1][0] == '/' )
+		at_root = 1;
+
+	bzero( (char *)&ts, sizeof(ts) );
+	ts.ts_dbip = dbip;
+	mat_idn( ts.ts_mat );
+	anp->an_path.fp_len = anp->an_path.fp_maxlen = 0;
+	anp->an_path.fp_names = (struct directory **)0;
+	if( db_follow_path_for_state( &ts, &(anp->an_path), argv[1], LOOKUP_NOISY ) < 0 )
+		goto bad;
+
+	if( anp->an_path.fp_len > 1 )
+		at_root = 0;
+
+	if( strcmp( argv[2], "matrix" ) == 0 )  {
+		anp->an_type = RT_AN_MATRIX;
+		if( strcmp( argv[3], "rstack" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_RSTACK;
+		else if( strcmp( argv[3], "rarc" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_RARC;
+		else if( strcmp( argv[3], "lmul" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_LMUL;
+		else if( strcmp( argv[3], "rmul" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_RMUL;
+		else if( strcmp( argv[3], "rboth" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_RBOTH;
+		else  {
+			rt_log("db_parse_anim:  Matrix op '%s' unknown\n",
+				argv[3]);
+			goto bad;
+		}
+		for( i=0; i<16; i++ )
+			anp->an_u.anu_m.anm_mat[i] = atof( argv[i+4] );
+	} else if( strcmp( argv[2], "material" ) == 0 )  {
+		anp->an_type = RT_AN_MATERIAL;
+		RT_VLS_INIT( &anp->an_u.anu_p.anp_matname );
+		RT_VLS_INIT( &anp->an_u.anu_p.anp_matparam );
+		if( strcmp( argv[3], "rboth" ) == 0 )  {
+			rt_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
+			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
+				argc-5, &argv[5] );
+		} else if( strcmp( argv[3], "rmaterial" ) == 0 )  {
+			rt_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
+		} else if( strcmp( argv[3], "rparam" ) == 0 )  {
+			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
+				argc-4, &argv[4] );
+		} else if( strcmp( argv[3], "append" ) == 0 )  {
+			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
+				argc-4, &argv[4] );
+		} else {
+			rt_log("db_parse_anim:  material animation '%s' unknown\n",
+				argv[3]);
+			goto bad;
+		}
+	} else if( strcmp( argv[2], "color" ) == 0 )  {
+		anp->an_type = RT_AN_COLOR;
+		anp->an_u.anu_c.anc_rgb[0] = atoi( argv[3+0] );
+		anp->an_u.anu_c.anc_rgb[1] = atoi( argv[3+1] );
+		anp->an_u.anu_c.anc_rgb[2] = atoi( argv[3+2] );
+	} else {
+		rt_log("db_parse_anim:  animation type '%s' unknown\n", argv[2]);
+		goto bad;
+	}
+	if( db_add_anim( dbip, anp, at_root ) < 0 )  {
+		goto bad;
+	}
+	return(0);
+bad:
+	db_free_full_path( &anp->an_path );
+	rt_free( (char *)anp, "animate");
+	return(-1);		/* BAD */
 }
