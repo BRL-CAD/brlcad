@@ -59,25 +59,48 @@ anim_cascade
   status: ok
   desc: evaluate movement of an object relative to a moving frame of reference
   notes: waits for standard input without redirector (e.g. no args given)
-  notes: doesn't take -? or -h
-anim_fly
+anim_hardtrack 
   status: ok
-  desc: make animation table to simulate flying motion
-  notes: doesn't take -? or -h
-anim_hardtrack sean
+  desc: make animation script for a wheeled or tracked vehicle
 anim_keyread
+  status: ok
+  desc: prepares interpolation keyframes for the mged keyframe command
 anim_lookat
+  status: ok
+  desc: creates a view animation script or table
 anim_offset
+  status: ok
+  desc: create an animation table for an object rigidly attached to another object
 anim_orient
+  status: ok
+  desc: convert between orientation formats
 anim_script
+  status: ok
+  desc: create an animation script for one object
 anim_sort
+  status: ok
+  desc: combine concatenated animation scripts into one script
 anim_time
+  status: ok
+  desc: estimate appropriate time parameters for path
 anim_track
+  status: ok
+  desc: make a script to model or animate the pads or wheels of a vehicle
 anim_turn
+  status: ok
+  desc: make an animation table for front-wheel drive vehicle
 any-png.sh
+  status: ok
+  desc: converts a variety of different image file formats to png
+  notes: does
 ap-pix
+  status: ok
+  desc: converts Applicon datafiles to raw image datafiles
 applymap
+  status: ok
+  desc: apply the color map in an RLE file to the pixel data
 asc-nmg
+  
 asc-pl
 asc2g
 asc2pix
