@@ -35,6 +35,7 @@ extern int		query_y;
 extern int		Query_one_pixel;
 extern int		query_rdebug;
 extern int		query_debug;
+extern int		benchmark;
 
 /* view.c */
 #if 0
