@@ -546,10 +546,12 @@ struct rt_i	*rtip;
 do_frame( framenumber )
 int framenumber;
 {
-	char outbuf[132];
+	struct rt_vls	times;
 	char framename[128];		/* File name to hold current frame */
 	struct rt_i *rtip = ap.a_rt_i;
-	static double utime;
+	double	utime;			/* CPU time used */
+	double	nutime;			/* CPU time used, normalized by ncpu */
+	double	wallclock;		/* # seconds of wall clock time */
 	int	npix;			/* # of pixel values to be done */
 	int	lim;
 	vect_t	work, temp;
@@ -781,7 +783,8 @@ int framenumber;
 		pix_start = 0;
 		pix_end = height*width - 1;
 	}
-	utime = rt_read_timer( outbuf, sizeof(outbuf) );
+	rt_vls_init( &times );
+	utime = rt_get_timer( &times, &wallclock );
 
 	/*
 	 *  End of application.  Done outside of timing section.
@@ -804,14 +807,16 @@ int framenumber;
 	 */
 #if !defined(alliant)
 	if( npsw > 1 )  {
-		utime /= npsw;			/* compensate */
-	}
+		nutime = utime / npsw;			/* compensate */
+	} else
 #endif
+		nutime = utime;
 
 	/*
 	 *  All done.  Display run statistics.
 	 */
-	rt_log("SHOT: %s\n", outbuf );
+	rt_log("SHOT: %s\n", rt_vls_addr( &times ) );
+	rt_vls_free( &times );
 #ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
@@ -825,11 +830,20 @@ int framenumber;
 	rt_log(
 		"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
 		framenumber,
-		width*height, utime, (double)(width*height)/utime );
+		width*height, nutime, (double)(width*height)/nutime );
 	rt_log(
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
 		framenumber,
+		rtip->rti_nrays, nutime, (double)(rtip->rti_nrays)/nutime );
+	rt_log(
+		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/CPU_sec\n",
+		framenumber,
 		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
+	rt_log(
+		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (wallclock)\n",
+		framenumber,
+		rtip->rti_nrays,
+		wallclock, (double)(rtip->rti_nrays)/wallclock );
 
 	if( outfp != NULL )  {
 #ifdef CRAY_COS
