@@ -15,19 +15,19 @@ char *argv[];
   register int c;
 
   bu_optind = 0;	 /* re-init bu_getopt */
-  while((c = bu_getopt(argc, argv, "N:S:W:sd:i:n:t:")) != EOF){
+  bu_opterr = 0;
+  while((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != EOF){
     switch(c){
     case 'N':
       dmp->dm_height = atoi(bu_optarg);
       break;
     case 'S':
+    case 's':
       dmp->dm_width = dmp->dm_height = atoi(bu_optarg);
       break;
     case 'W':
       dmp->dm_width = atoi(bu_optarg);
       break;
-    case 's':
-      dmp->dm_stereo = 1;
     case 'd':
       bu_vls_strcpy(&dmp->dm_dName, bu_optarg);
       break;
@@ -44,6 +44,7 @@ char *argv[];
       dmp->dm_top = atoi(bu_optarg);
       break;
     default:
+      bu_log("dm_processOptions: option '%c' unknown\n", bu_optopt);
       break;
     }
   }
