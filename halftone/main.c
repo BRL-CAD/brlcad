@@ -56,6 +56,9 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 11.1  1995/01/04  10:21:51  mike
+ * Release_4.4
+ *
  * Revision 10.2  94/08/23  17:50:01  gdurf
  * Added include of conf.h, removed unnecessary externs
  * 
@@ -260,7 +263,7 @@ char **argv;
 			exit(1);
 		}
 		if (autosize) {
-			if ( !fb_common_file_size(&width, &height, argv[optind], 1)) {
+			if ( !bn_common_file_size(&width, &height, argv[optind], 1)) {
 				(void) fprintf(stderr,"halftone: unable to autosize.\n");
 			}
 		}
