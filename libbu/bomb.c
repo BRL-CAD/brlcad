@@ -29,6 +29,10 @@ static char RCSbomb[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "bu.h"
 
+#ifdef HAVE_UNIX_IO
+#include <fcntl.h>
+#endif
+
 /*
  * These variables are global because BU_SETJUMP() *must* be a macro.
  * If you replace this version of bu_bomb() with one of your own,
@@ -66,7 +70,7 @@ CONST char *str;
 		}
 	}
 
-#if defined(unix) || defined(__unix) || defined(O_WRONLY)
+#if defined(HAVE_UNIX_IO)
 	/*
 	 * No application level error handling,
 	 * go to extra pains to ensure that user gets to see this message.
