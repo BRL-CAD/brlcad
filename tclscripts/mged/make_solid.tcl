@@ -35,7 +35,12 @@ proc make_dsp { id top } {
 		return
 	}
 
-	set ret [catch {_mged_in $mged_gui($id,solid_name) dsp $mged_gui($id,dsp_file_name) $mged_gui($id,dsp_file_width) $mged_gui($id,dsp_file_length) $mged_gui($id,dsp_smooth) $mged_gui($id,dsp_cell_size) $mged_gui($id,dsp_elev_size)} result]
+	set command {_mged_in $mged_gui($id,solid_name) dsp f \
+		$mged_gui($id,dsp_file_name) $mged_gui($id,dsp_file_width) \
+		$mged_gui($id,dsp_file_length) $mged_gui($id,dsp_smooth) ad \
+		$mged_gui($id,dsp_cell_size) $mged_gui($id,dsp_elev_size)}
+
+	set ret [catch $command result]
 	if { $ret != 0 } {
 		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "ERROR creaing DSP" $result "" 0 OK
 	}
