@@ -887,6 +887,7 @@ register struct nmg_bool_state	*bs;
 		}
 		rt_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
 			ptr, nmg_identify_magic( *((long *)ptr) ) );
+		class = NMG_CLASS_BAD;
 		ret = BACTION_RETAIN;
 		goto out;
 	}
@@ -914,6 +915,7 @@ register struct nmg_bool_state	*bs;
 	}
 	rt_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
 		ptr, nmg_identify_magic( *((long *)ptr) ) );
+	class = NMG_CLASS_BAD;
 	ret = BACTION_RETAIN;
 out:
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
