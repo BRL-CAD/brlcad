@@ -18,9 +18,6 @@
  *  $Header$
  */
 
-extern char *malloc();
-extern void free();
-
 /*
  *  Definitions necessary to operate in a parallel environment.
  */
@@ -43,14 +40,10 @@ extern int	res_printf;		/* lock on printing */
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #define GETSTRUCT(p,str) \
-	if( debug & DEBUG_MEM )  printf("getstruct( str ): %s\n", __FILE__); \
-	RES_ACQUIRE( &res_malloc ); \
-	p = (struct str *)malloc(sizeof(struct str)); \
-	RES_RELEASE( &res_malloc ); \
-	if( p == (struct str *)0 ) { \
-		fprintf(stderr,"rt/getstruct( p, str ): malloc failed\n");/* cpp magic */ \
+	p = (struct str *)vmalloc(sizeof(struct str), "getstruct str"); \
+	if( p == (struct str *)0 ) \
 		exit(17); \
-	}  bzero( (char *)p, sizeof(struct str));
+	bzero( (char *)p, sizeof(struct str));
 
 
 /*
@@ -108,11 +101,9 @@ struct seg {
 #define SEG_NULL	((struct seg *)0)
 extern struct seg *FreeSeg;		/* Head of freelist */
 #define GET_SEG(p)    {	RES_ACQUIRE(&res_seg); \
-			if( ((p)=FreeSeg) == SEG_NULL )  { \
-				GETSTRUCT((p), seg); \
-			} else { \
-				FreeSeg = (p)->seg_next; \
-			} \
+			while( ((p)=FreeSeg) == SEG_NULL ) \
+				get_seg(); \
+			FreeSeg = (p)->seg_next; \
 			p->seg_next = SEG_NULL; \
 			RES_RELEASE(&res_seg); }
 #define FREE_SEG(p)   {	RES_ACQUIRE(&res_seg); \
@@ -135,6 +126,7 @@ struct soltab {
 	char		*st_name;	/* Leaf name of solid */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
+/*** bin is NOT PARALLEL ** */
 	int		st_bin;		/* Temporary for boolean processing */
 	int		st_uses;	/* # of refs by tr_stp leaves */
 	mat_t		st_pathmat;	/* Xform matrix on path */
@@ -266,11 +258,9 @@ extern struct partition *FreePart;		 /* Head of freelist */
 	{ GET_PT(p);bzero( ((char *) (p)), sizeof(struct partition) ); }
 
 #define GET_PT(p)   { RES_ACQUIRE(&res_pt); \
-			if( ((p)=FreePart) == PT_NULL )  { \
-				GETSTRUCT((p), partition); \
-			} else { \
-				FreePart = (p)->pt_forw; \
-			} \
+			while( ((p)=FreePart) == PT_NULL ) \
+				get_pt(); \
+			FreePart = (p)->pt_forw; \
 			RES_RELEASE(&res_pt); }
 #define FREE_PT(p) { RES_ACQUIRE(&res_pt); \
 			(p)->pt_forw = FreePart; FreePart = (p); \
@@ -350,6 +340,9 @@ extern int dir_build();			/* Read named GED db, build toc */
 extern void pr_seg();			/* Print seg struct */
 extern void pr_partitions();		/* Print the partitions */
 
+extern char *vmalloc();			/* visible malloc() */
+extern void vfree();			/* visible free() */
+
 /* The matrix math routines */
 extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
 extern void mat_inv(), mat_trn(), mat_ae(), mat_angles();
@@ -370,6 +363,7 @@ extern void pr_bins();			/* Print bins */
 extern void pr_region();		/* Print a region */
 extern void pr_tree();			/* Print an expr tree */
 extern void fastf_float();		/* convert float->fastf_t */
+extern void get_seg(), get_pt();	/* storage obtainers */
 
 /*
  *  Library routines used by the RT library.

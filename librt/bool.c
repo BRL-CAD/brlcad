@@ -32,7 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "vmath.h"
+#include "../h/machine.h"
+#include "../h/vmath.h"
 #include "raytrace.h"
 #include "debug.h"
 
