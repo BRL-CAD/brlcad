@@ -511,7 +511,10 @@ mat_t			mat;
 	while( *cp && isspace(*cp) )  cp++;
 
 	rt_vls_strcpy( &str, cp );
-	rt_structparse( &str, rt_ebm_parse, (char *)eip );
+	if( rt_structparse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
+		rt_vls_free( &str );
+		return -2;
+	}
 	rt_vls_free( &str );
 
 	/* Check for reasonable values */

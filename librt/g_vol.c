@@ -437,7 +437,10 @@ mat_t			mat;
 
 	rt_vls_init( &str );
 	rt_vls_strcpy( &str, cp);
-	rt_structparse( &str, rt_vol_parse, (char *)vip );
+	if( rt_structparse( &str, rt_vol_parse, (char *)vip ) < 0 )  {
+		rt_vls_free( &str );
+		return -2;
+	}
 	rt_vls_free( &str );
 
 	/* Check for reasonable values */
