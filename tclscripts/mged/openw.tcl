@@ -792,7 +792,7 @@ interaction with the GUI is applied to all panes." } }
 menu .$id.menubar.settings.mouse_behavior -title "Mouse Behavior" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.settings.mouse_behavior add radiobutton -value d -variable mged_gui($id,mouse_behavior)\
 	-label "Default" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Default" "Default Mouse Behavior"\
 	{ { synopsis "Enter the default MGED mouse behavior mode." }
           { description "In this mode, the user gets mouse behavior that is
@@ -805,7 +805,7 @@ the same as MGED 4.5 and earlier. See the table below.\n\n
 .$id.menubar.settings.mouse_behavior add separator
 .$id.menubar.settings.mouse_behavior add radiobutton -value s -variable mged_gui($id,mouse_behavior)\
 	-label "Pick edit-solid" -underline 10\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Pick edit-solid" "Pick edit-solid"\
 	{ { synopsis "Enter solid edit ray mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
@@ -826,7 +826,7 @@ released. To select a solid, double click with the left mouse button.\n
           { see_also "nirt, qray, rset, sed, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value m -variable mged_gui($id,mouse_behavior)\
 	-label "Pick edit-matrix" -underline 10\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Pick edit-matrix" "Pick edit-matrix"\
 	{ { synopsis "Enter matrix edit ray mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
@@ -851,7 +851,7 @@ the left mouse button.\n
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value c -variable mged_gui($id,mouse_behavior)\
 	-label "Pick edit-combination" -underline 10\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Pick edit-combination" "Pick edit-combination"\
 	{ { synopsis "Enter combination edit ray mode." }
         { description "In this mode, the mouse is used to fire rays for selecting
@@ -874,7 +874,7 @@ the left mouse button.\n
 .$id.menubar.settings.mouse_behavior add separator
 .$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_gui($id,mouse_behavior)\
 	-label "Sweep raytrace-rectangle" -underline 6\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Sweep raytrace-rectangle" "Sweep raytrace-rectangle"\
 	{ { synopsis "Enter raytrace rectangle mode." }
           { description "If the framebuffer is active, the rectangular area as
@@ -888,7 +888,7 @@ only the rectangle is drawn.\n
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_gui($id,mouse_behavior)\
 	-label "Pick raytrace-object(s)" -underline 14\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Pick raytrace-object(s)" "Pick raytrace-object(s)"\
 	{ { synopsis "Enter raytrace-object mode." }
           { description "Pick an object for raytracing or for adding to the\
@@ -897,7 +897,7 @@ list of objects to be raytraced." }
 .$id.menubar.settings.mouse_behavior add separator
 .$id.menubar.settings.mouse_behavior add radiobutton -value q -variable mged_gui($id,mouse_behavior)\
 	-label "Query ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Query Ray" "Query Ray"\
 	{ { synopsis "Enter query ray mode." }
           { description "In this mode, the mouse is used to fire rays. The data
@@ -910,7 +910,7 @@ or both.\n
           { see_also "nirt, qray, rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_gui($id,mouse_behavior)\
 	-label "Sweep paint-rectangle" -underline 6\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Sweep paint-rectangle" "Sweep paint-rectangle"\
 	{ { synopsis "Enter paint rectangle mode." }
           { description "If the framebuffer is active, the rectangular area
@@ -923,7 +923,7 @@ framebuffer. Otherwise, only the rectangle is drawn.\n
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_gui($id,mouse_behavior)\
 	-label "Sweep zoom-rectangle" -underline 6\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Sweep zoom-rectangle" "Sweep zoom-rectangle"\
 	{ { synopsis "Enter zoom rectangle mode." }
           { description "The rectangular area as specified by the user is used
@@ -2611,7 +2611,6 @@ proc set_listen { id } {
 
 proc set_fb { id } {
     global mged_gui
-    global listen
 
     mged_apply $id "set fb \$mged_gui($id,fb)"
 
@@ -2627,7 +2626,14 @@ proc set_fb { id } {
     }
 
     # update raytrace control panel
-    update_Raytrace $id
+    rt_update_dest $id
+}
+
+proc set_mouse_behavior { id } {
+    global mged_gui
+
+    mged_apply $id "set mouse_behavior $mged_gui($id,mouse_behavior); refresh"
+    rt_update_src $id
 }
 
 proc get_font_height { w } {
