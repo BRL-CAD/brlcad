@@ -347,6 +347,10 @@ proc adc_load { id } {
     global mged_active_dm
     global mged_adc_control
 
+    if ![winfo exists .$id.adc_control] {
+	return
+    }
+
     winset $mged_active_dm($id)
 
     set mged_adc_control($id,draw) [adc draw]
