@@ -27,7 +27,7 @@
 static const char RCSid[] = "$Header$";
 #endif
 
-#define MEMORY_LEAK_CHECKING 1
+/* #define MEMORY_LEAK_CHECKING 1 */
 
 #ifdef MEMORY_LEAK_CHECKING
 #define BARRIER_CHECK { \
@@ -148,7 +148,7 @@ clean_pmp( struct plate_mode *pmp )
 			intern.idb_type = ID_BOT;
 			intern.idb_meth = &rt_functab[ID_BOT];
 			intern.idb_magic = RT_DB_INTERNAL_MAGIC;
-			rt_bot_ifree( &intern );
+			intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 			pmp->bots[i] = NULL;
 		}
 	}
@@ -410,7 +410,9 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	if( db_dirbuild( dbip ) ) {
+		bu_bomb( "db_dirbuild() failed!\n" );
+	}
 
 	if( out_file == NULL )
 		fp_out = stdout;
