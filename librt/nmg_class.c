@@ -827,6 +827,7 @@ CONST struct rt_tol	*tol;
 			fclose(fd);
 		}
 		nmg_pr_lu(lu, "");
+		nmg_stash_model_to_file( "class.g", nmg_find_model((long *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
 		rt_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
 	}
 	if (out > 0) {
