@@ -378,6 +378,7 @@ libtig	Some plotting routines built on libplot3
 librle	A Run-Length-Encoding library (originally from UofUtah)
 libmalloc	The Princeton malloc(3) -- a better malloc
 libwdb	A library for procedurally writing databases
+libredblack	A library implementing red-black trees
 .TE
 .TS
 center;
