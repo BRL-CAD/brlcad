@@ -5,7 +5,9 @@
 */
 
 /* library functions */
+#if !defined(__bsdi__)
 extern	char	*malloc();
+#endif
 #ifdef	ATT
 extern	char	*strchr();
 extern	char	*strrchr();
