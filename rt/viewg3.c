@@ -96,7 +96,7 @@ Options:\n\
  -J #		Jitter.  Default is off.  Any non-zero number is on\n\
  -o model.g3	Specify output file, GIFT-3 format (default=stdout)\n\
  -U #		Set use_air boolean to # (default=1)\n\
- -c \"set ray_data_file=ray_file_name\"         Specify ray data output file (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file)\n\
+ -c \"set ray_data_file=ray_file_name\"         Specify ray data output file (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file ray_first_hit_x ray_first_hit_y ray_first_hit_z)\n\
  -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n\
  -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n\
  -x #		Set librt debug flags\n\
@@ -284,6 +284,8 @@ register struct partition *PartHeadp;
 	point_t			hv;		/* GIFT h,v coords, in inches */
 	point_t			hvcen;
 	int			prev_id=-1;
+	point_t			first_hit;
+	int			first;
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
@@ -432,6 +434,7 @@ register struct partition *PartHeadp;
 	/* loop here to deal with individual components */
 	card_count = 0;
 	prev_id = -1;
+	first = 1;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
 		/*
 		 *  The GIFT statements that would have produced
@@ -544,6 +547,11 @@ register struct partition *PartHeadp;
 		 *  Hence the one sign change.
 		 *  XXX this should probably be done with atan2()
 		 */
+
+		if( first ) {
+			first = 0;
+			VJOIN1( first_hit, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
+		}
 out:
 		RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 		dot_prod = VDOT( ap->a_ray.r_dir, normal );
@@ -683,8 +691,9 @@ out:
 
 	if( shot_fp )
 	{
-		fprintf( shot_fp, "%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f %ld\n",
-			azimuth, elevation, V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ), line_num );
+		fprintf( shot_fp, "%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f %ld %.5f %.5f %.5f\n",
+			azimuth, elevation, V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ),
+			 line_num, V3ARGS( first_hit) );
 
 		line_num +=  1 + (comp_count / 3 );
 		if( comp_count % 3 )
