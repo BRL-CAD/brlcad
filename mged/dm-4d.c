@@ -424,7 +424,6 @@ Ir_open()
 
 #if defined(INV_GR2)
                 case INV_GR2:		/* Elan Graphics */
-		case INV_NEWPORT:	/* INDY */
                         if(inv->state & INV_GR2_ELAN)
                         {
                                 ir_has_rgb = 1;
@@ -435,6 +434,17 @@ Ir_open()
                         break;
 #endif
 		}
+#if defined(NEWPORT)
+                case NEWPORT:		/* Elan Graphics */
+                        if(inv->state & INV_NEWPORT)
+                        {
+                                ir_has_rgb = 1;
+                                ir_has_doublebuffer = 1;
+                                ir_has_zbuf = 1;
+                                ir_is_gt = 1;
+                        }
+                        break;
+#endif
 	}
 	endinvent();		/* frees internal inventory memory */
 #if 0
