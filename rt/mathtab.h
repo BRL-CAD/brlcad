@@ -5,7 +5,7 @@
  *  using table lookups.
  *
  *  Authors -
- *	Philip Dykstra
+ *	Phillip Dykstra
  *	Michael John Muuss
  *  
  *  Source -
@@ -37,5 +37,5 @@ extern float sin_table[];
 #define rand0to1()	(rand_half()+0.5)
 
 #define tab_sin(a)	(((a) > 0) ? \
-	( sin_table[(int)((0.5 + (a) * sin_scale))%SINTABSIZE] ) :\
-	(-sin_table[(int)((0.5 - (a) * sin_scale))%SINTABSIZE] ) )
+	( sin_table[(int)((0.5 + (a) * sin_scale))&(SINTABSIZE-1)] ) :\
+	(-sin_table[(int)((0.5 - (a) * sin_scale))&(SINTABSIZE-1)] ) )
