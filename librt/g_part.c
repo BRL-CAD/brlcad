@@ -736,6 +736,12 @@ struct soltab		*stp;
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
  *  v = elevation
+ *
+ *  The 'u' coordinate wraps around the particle, once.
+ *  The 'v' coordinate covers the 'height' of the particle,
+ *  from V-r1 to (V+H)+r2.
+ *
+ *  hit_point and hit_normal have already been computed.
  */
 void
 rt_part_uv( ap, stp, hitp, uvp )
@@ -744,8 +750,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-/*	register struct part_specific *part =
-		(struct part_specific *)stp->st_specific; */
+	register struct part_specific *part =
+		(struct part_specific *)stp->st_specific;
 }
 
 /*
