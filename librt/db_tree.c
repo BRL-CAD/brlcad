@@ -1434,9 +1434,13 @@ union tree		 *(*leaf_func)();
 		db_walk_subtree( tp->tr_b.tb_right, region_start_statepp, leaf_func );
 		return;
 
+	case OP_DB_LEAF:
+		rt_pr_tree( tp, 1 );
+		bu_bomb("db_walk_subtree() unexpected DB_LEAF\n");
+
 	default:
 		bu_log("db_walk_subtree: bad op %d\n", tp->tr_op);
-		rt_bomb("db_walk_subtree\n");
+		rt_bomb("db_walk_subtree() bad op\n");
 	}
 }
 
