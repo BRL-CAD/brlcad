@@ -35,7 +35,8 @@ fi
 ###cd $REGRESS_DIR/.regress.${ARCH}
 
 
-log "$HOSTNAME regression complete at `date`" >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
+# log "$HOSTNAME regression complete at `date`" >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
+log "Regression Tests Completed" >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
 
 #
 # Now we check to see how we compare to our "reference" run
