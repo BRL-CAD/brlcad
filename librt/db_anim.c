@@ -347,6 +347,9 @@ struct animate *anp;
 	RT_CK_ANIMATE(anp);
 
 	thepath  = db_path_to_string(&(anp->an_path));
+	if ( rt_g.debug&DEBUG_ANIM) {
+		rt_log("db_write_anim: Writing %s\n", thepath);
+	}
 
 	fprintf(fop,"anim %s ", thepath);
 	rt_free(thepath, "path string");
