@@ -173,9 +173,9 @@ char	**argv;
 	init_display();
 
 	if( optind >= argc ) {
-		makeobj( maxobj );
+		makeobj( maxobj++ );
 		uplot( stdin, max, min );
-		closeobj( maxobj++ );
+		closeobj();
 	}
 	while( optind < argc ) {
 		file = argv[optind];
@@ -185,9 +185,9 @@ char	**argv;
 		}
 		file_input = 1;
 
-		makeobj( maxobj );
+		makeobj( maxobj++ );
 		uplot( fp, max, min );
-		closeobj( maxobj++ );
+		closeobj();
 
 		fclose( fp );
 		optind++;
@@ -557,7 +557,7 @@ view_loop()
 
 		if( redisplay ) {
 			/* Setup current view */
-			loadmatrix( viewmat );
+			loadmatrix( *viewmat );
 			scale( g_scal[0], g_scal[1], g_scal[2] );
 			multmatrix( g_rot );
 
@@ -605,9 +605,9 @@ view_loop()
 		/* Check for more objects to be read */
 		if( !file_input && !feof(stdin) /* && select()*/ ) {
 			double	max[3], min[3];
-			makeobj( maxobj );
+			makeobj( maxobj++ );
 			uplot( stdin, max, min );
-			closeobj( maxobj++ );
+			closeobj();
 		}
 	}
 	/*depthcue( 0 );*/
@@ -809,7 +809,7 @@ Coord	max[3], min[3];
 		case 'e':
 			if( !file_input ) {
 				/* remove any objects, start a new one */
-				closeobj( maxobj );
+				closeobj();
 				for( o = minobj; o <= maxobj; o++ )
 					delobj( o );
 				minobj = maxobj;

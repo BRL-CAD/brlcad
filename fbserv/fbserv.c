@@ -170,7 +170,7 @@ int fd;
 }
 #endif /* BSD */
 
-static void *
+static void
 sigalarm(code)
 int	code;
 {
