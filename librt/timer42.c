@@ -28,6 +28,8 @@ static const char RCStimer[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 static struct	timeval time0;	/* Time at which timeing started */
 static struct	rusage ru0;	/* Resource utilization at the start */
@@ -91,6 +93,13 @@ double		*elapsed;
 	if( elapsed )  *elapsed = elapsed_secs;
 
 	if( vp )  {
+#ifdef linux
+		if( rt_g.rtg_parallel != 0 ) {
+			bu_log( "\t\t\tLinux machines do not know how to correctly account for CPU time used\n\
+			by threads.You are trying to use more than one CPU, so the\n\
+			times you see here are likely to be meaningless.\n" );
+		}
+#endif /* linux */
 		bu_vls_printf( vp, "cpu = %g sec, elapsed = %g sec\n",
 			user_cpu_secs, elapsed_secs );
 		bu_vls_strcat( vp, "    parent: " );
