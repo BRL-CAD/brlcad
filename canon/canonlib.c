@@ -1,12 +1,19 @@
+#include "conf.h"
+
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <fcntl.h>
-#include <stdio.h>
-#if defined(__sgi) || defined(sgi)
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
 #include <ctype.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "./canon.h"
 
 #define BUFSIZE 262144	/* 256Kbytes size of image transfer buffer */
@@ -42,9 +49,8 @@ int	src;
  *	is unavailable.
  */
 void
-ipu_acquire(dsp, timeout)
-struct dsreq *dsp;
-int timeout;
+ipu_acquire(struct dsreq *dsp, 
+	    int timeout)
 {
 	int i=0;
 	int status=0;
@@ -100,8 +106,7 @@ int timeout;
  *		static string describing device
  */
 char *
-ipu_inquire(dsp)
-struct dsreq *dsp;
+ipu_inquire(struct dsreq *dsp)
 {
 	static char response[64];
 	u_char buf[36];
@@ -155,8 +160,7 @@ struct dsreq *dsp;
  *	Can be used to "poll" printer done status.
  */
 int
-ipu_remote(dsp)
-struct dsreq *dsp;
+ipu_remote(struct dsreq *dsp)
 {
 	register char *p;
 	int i;
@@ -177,8 +181,7 @@ struct dsreq *dsp;
 	return 0;
 }
 
-int ipu_ready(dsp)
-struct dsreq *dsp;
+int ipu_ready(struct dsreq *dsp)
 {
 	return(testunitready00(dsp));
 }
@@ -197,12 +200,12 @@ struct dsreq *dsp;
  *	height	file image height
  */
 void
-ipu_create_file(dsp, id, type, width, height, clear)
-struct dsreq *dsp;
-u_char id;		/* file identifier */
-u_char type;		/* file type */
-int width, height;
-char clear;		/* boolean: clear file memory */
+ipu_create_file(struct dsreq *dsp, 
+		u_char id, 		/* file identifier */
+		u_char type, 		/* file type */
+		int width, 
+		int height, 
+		char clear)		/* boolean: clear file memory */
 {
 	char *p;
 	u_char file_params[8];
@@ -240,9 +243,8 @@ char clear;		/* boolean: clear file memory */
  *	id	id of file to delete
  */
 void
-ipu_delete_file(dsp, id)
-struct dsreq *dsp;
-u_char id;
+ipu_delete_file(struct dsreq *dsp, 
+		u_char id)
 {
 	register char *p;
 	static short ids;
@@ -269,11 +271,10 @@ u_char id;
  *	copy image from IPU to host computer
  */
 u_char *
-ipu_get_image(dsp, id, sx, sy, w, h)
-struct dsreq *dsp;
-char id;	/* file  id */
-int sx, sy;	/* upper left corner of image */
-int w, h;	/* width/height of image portion to retrieve */
+ipu_get_image(struct dsreq *dsp, 
+	      char id, 		/* file  id */
+	      int sx, int sy, 	/* upper left corner of image */
+	      int w, int h)	/* width/height of image portion to retrieve */
 {
 	register u_char *p;
 	int size;
@@ -321,11 +322,10 @@ int w, h;	/* width/height of image portion to retrieve */
  *	img	pointer to image data
  */
 void
-ipu_put_image(dsp, id, w, h, img)
-struct dsreq *dsp;
-char id;
-int w, h;
-u_char *img;
+ipu_put_image(struct dsreq *dsp, 
+	      char id, 
+	      int w, int h, 
+	      u_char *img)
 {
 	u_char *ipubuf, *p;
 	int saved_debug;
@@ -509,12 +509,11 @@ static unsigned char pr_mode[12] = {
  *	tray	tray selection
  */
 void
-ipu_print_config(dsp, units, divisor, conv, mosaic, gamma, tray)
-struct dsreq *dsp;
-char units;
-int divisor;
-u_char conv, mosaic, gamma;
-int tray;
+ipu_print_config(struct dsreq *dsp, 
+		 char units, 
+		 int divisor, 
+		 u_char conv, u_char mosaic, u_char gamma, 
+		 int tray)
 {
 	register u_char *p;
 	u_char params[255];
@@ -572,11 +571,13 @@ int tray;
  *	wait	sync/async printing
  */
 void
-ipu_print_file(dsp, id, copies, wait, sx, sy, sw, sh, pr_param)
-struct dsreq *dsp;
-char id;
-int copies, wait, sx, sy, sw, sh;
-union ipu_prsc_param *pr_param;
+ipu_print_file(struct dsreq *dsp, 
+	       char id, 
+	       int copies, 
+	       int wait, 
+	       int sx, int sy, 
+	       int sw, int sh, 
+	       union ipu_prsc_param *pr_param)
 {
 	register u_char *p;
 	char buf[18];
@@ -633,13 +634,12 @@ static unsigned char sc_mode[6] = {
  *	rotation	angle of image rotation (multiple of 90 degrees)
  */
 void
-ipu_scan_config(dsp, units, divisor, conv, field, rotation)
-struct dsreq *dsp;
-char units;
-int divisor;
-char conv;
-char field;
-short rotation;
+ipu_scan_config(struct dsreq *dsp, 
+		char units, 
+		int divisor, 
+		char conv, 
+		char field, 
+		short rotation)
 {
 	register u_char *p;
 	u_char params[255];
@@ -694,11 +694,12 @@ short rotation;
  *
  */
 void
-ipu_scan_file(dsp, id, wait, sx, sy, w, h, sc_param)
-struct dsreq *dsp;
-char id, wait;
-int sx, sy, w, h;
-union ipu_prsc_param *sc_param;
+ipu_scan_file(struct dsreq *dsp, 
+	      char id, 
+	      char wait, 
+	      int sx, int sy, 
+	      int w, int h, 
+	      union ipu_prsc_param *sc_param)
 {
 	register u_char *p;
 	char buf[18];
@@ -739,8 +740,7 @@ union ipu_prsc_param *sc_param;
  *		associated file dimensions.
  */
 char *
-ipu_list_files(dsp)
-struct dsreq *dsp;
+ipu_list_files(struct dsreq *dsp)
 {
 #define IPU_FILE_DESC_SIZE 16	/* # bytes for file description */
 #define IPU_LFPH_LEN 8		/* List File Parameters Header Length */
@@ -797,9 +797,8 @@ struct dsreq *dsp;
  * returns number of pages which have been printed
  */
 int
-ipu_stop(dsp, halt)
-struct dsreq *dsp;
-int halt;
+ipu_stop(struct dsreq *dsp, 
+	 int halt)
 {
 	register char *p;
 	char buf[18];
@@ -826,8 +825,7 @@ int halt;
 
 
 int
-ipu_get_conf(dsp)
-struct dsreq *dsp;
+ipu_get_conf(struct dsreq *dsp)
 {
 	register u_char *p;
 	u_char params[255];
@@ -950,9 +948,9 @@ struct dsreq *dsp;
 		}
 	}
 }
+
 int
-ipu_get_conf_long(dsp)
-struct dsreq *dsp;
+ipu_get_conf_long(struct dsreq *dsp)
 {
 	register u_char *p;
 	static u_char params[65535];
