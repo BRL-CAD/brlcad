@@ -1039,7 +1039,6 @@ struct seg		*seghead;
 		 */
 		abs_dn = dn >= 0.0 ? dn : (-dn);
 		if( abs_dn < BOT_MIN_DN ) {
-			    bu_log( "no hit on face %d (dN = %g)\n", trip->tri_surfno, VDOT(trip->tri_N, rp->r_dir )  );
 			continue;
 		}
 		VSUB2( wxb, trip->tri_A, rp->r_pt );
@@ -1202,7 +1201,6 @@ struct seg		*seghead;
 		    abs_dN = dN >= 0.0 ? dN : (-dN);
 		    abs_dn = dn >= 0.0 ? dn : (-dn);
 		    if( abs_dN < BOT_MIN_DN ) {
-			    bu_log( "no hit on face %d (dN = %g)\n", trip->tri_surfno, dN );
 			continue;
 		    }
 		    VSUB2( wxb, trip->tri_A, rp->r_pt );
