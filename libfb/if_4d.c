@@ -52,24 +52,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <gl.h>
 #include <get.h>
 #include <device.h>
-#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
-#include <sys/types.h>
 #include <sys/invent.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <signal.h>
+#include <errno.h>
 #undef RED
 #include <gl/addrs.h>
 #include <gl/cg2vme.h>
 
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
-
-extern char	*sbrk();
-/* extern char	*malloc(); */
-extern int	errno;
-/* extern char	*shmat(); */
-extern int	brk();
 
 extern inventory_t	*getinvent();
 
