@@ -150,7 +150,7 @@ extern FILE *outfile;
 /*
  *	GED functions referenced in more than one source file:
  */
-extern void		dir_build(), buildHrot(), button(), dozoom(),
+extern void		dir_build(), buildHrot(), dozoom(),
 			pr_schain();
 extern void		eraseobj(), mged_finish(), slewview(),
 			mmenu_init(), moveHinstance(), moveHobj(), pr_solid(),
@@ -203,6 +203,14 @@ MGED_EXTERN(void mat_lookat, (mat_t dest, vect_t dir, int yflip) );
 /* XXX new names */
 MGED_EXTERN(void vec_ortho, (vect_t dest, vect_t src) );
 MGED_EXTERN(void vec_perp, (vect_t dest, vect_t src) );
+
+/* buttons.c */
+MGED_EXTERN(void button, (int bnum) );
+MGED_EXTERN(void press, (char *str) );
+MGED_EXTERN(char *label_button, (int bnum) );
+MGED_EXTERN(int not_state, (int desired, char *str) );
+MGED_EXTERN(int chg_state, (int from, int to, char *str) );
+MGED_EXTERN(void state_err, (char *str) );
 
 #ifndef	NULL
 #define	NULL		0
