@@ -919,7 +919,7 @@ process_entities_polyline_vertex_code( int code )
 	case 73:
 	case 74:
 		coord = (code % 70) - 1;
-		face[coord] = atoi( line );
+		face[coord] = abs( atoi( line ) );
 		break;
 	case 0:
 		get_layer();
