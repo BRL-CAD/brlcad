@@ -1172,14 +1172,14 @@ char	**argv;
 	return CMD_OK;					/* OK */
 }
 
-/* eval [opts] new_obj obj1 op obj2 op obj3 ...
+/* bev [opts] new_obj obj1 op obj2 op obj3 ...
  *
  *	tesselates each operand object, then performs
  *	the Boolean evaluation, storing result in
  *	new_obj
  */
 int
-f_eval( argc, argv )
+f_bev( argc, argv )
 int	argc;
 char	**argv;
 {
@@ -1248,7 +1248,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-	rt_log("eval:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
+	rt_log("bev:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
 		mged_abs_tol, mged_rel_tol, mged_nrm_tol );
 	mged_facetize_tree = (union tree *)0;
   	mged_nmg_model = nmg_mm();
@@ -1267,7 +1267,7 @@ char	**argv;
 			nmg_booltree_leaf_tess );
 
 		if( i < 0 )  {
-			rt_log("eval: error in db_walk_tree()\n");
+			rt_log("bev: error in db_walk_tree()\n");
 			/* Destroy NMG */
 			nmg_km( mged_nmg_model );
 			return CMD_BAD;
@@ -1328,11 +1328,11 @@ char	**argv;
 
 	}
 	/* Now, evaluate the boolean tree into ONE region */
-	rt_log("eval:  evaluating boolean expressions\n");
+	rt_log("bev:  evaluating boolean expressions\n");
 
 	r = nmg_booltree_evaluate( tmp_tree, &mged_tol );
 	if( r == 0 )  {
-		rt_log("eval:  no resulting region, aborting\n");
+		rt_log("bev:  no resulting region, aborting\n");
 		nmg_km( mged_nmg_model );
 		return CMD_BAD;
 	}
@@ -1345,11 +1345,11 @@ char	**argv;
 	/* Triangulate model, if requested */
 	if( triangulate )
 	{
-		rt_log("eval:  triangulating resulting object\n" );
+		rt_log("bev:  triangulating resulting object\n" );
 		nmg_triangulate_model( mged_nmg_model , &mged_tol );
 	}
 
-	rt_log("eval:  converting NMG to database format\n");
+	rt_log("bev:  converting NMG to database format\n");
 
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&intern);
@@ -1361,7 +1361,7 @@ char	**argv;
 
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
-		rt_log("eval(%s):  solid export failure\n",
+		rt_log("bev(%s):  solid export failure\n",
 			newname );
 		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
 		db_free_external( &ext );
@@ -1382,7 +1382,7 @@ char	**argv;
 		WRITE_ERR;
 		return CMD_BAD;
 	}
-	rt_log("eval:  wrote %.2f Kbytes to database\n",
+	rt_log("bev:  wrote %.2f Kbytes to database\n",
 		ext.ext_nbytes / 1024.0 );
 	db_free_external( &ext );
 
