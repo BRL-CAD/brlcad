@@ -43,7 +43,7 @@ register char	*line;
 		register int	len = strlen( line );
 	if( ffdes == NULL )
 		{
-		rt_log( "ERROR: do_line() called before get_Font().\n" );
+		bu_log( "ERROR: do_line() called before get_Font().\n" );
 		return;
 		}
 	currx = xpos;
@@ -66,7 +66,7 @@ register char	*line;
 			== EOF
 			)
 			{
-			rt_log( "fseek() to %ld failed.\n",
+			bu_log( "fseek() to %ld failed.\n",
 				(long)(SWABV(dir[char_id].addr) + offset)
 				);
 			return;
@@ -106,7 +106,7 @@ register int	xpos, ypos;
 		if( fread( bitbuf[k], width/8+(width % 8 == 0 ? 0 : 1), 1, ffdes )
 			!= 1 )
 			{
-			rt_log( "\"%s\" (%d) read of character from font failed.\n",
+			bu_log( "\"%s\" (%d) read of character from font failed.\n",
 				__FILE__, __LINE__
 				);
 			return;
@@ -132,7 +132,7 @@ register int	xpos, ypos;
 				continue;
 			if( fb_rpixel( fbiop, (unsigned char *) pixel ) == -1 )
 				{
-				rt_log( "\"%s\" (%d) read of pixel from <%d,%d> failed.\n",
+				bu_log( "\"%s\" (%d) read of pixel from <%d,%d> failed.\n",
 					__FILE__, __LINE__, x, ypos
 					);
 				return;
@@ -144,7 +144,7 @@ register int	xpos, ypos;
 				continue;
 			if( fb_wpixel( fbiop, (unsigned char *) pixel ) == -1 )
 				{
-				rt_log( "\"%s\" (%d) write of pixel to <%d,%d> failed.\n",
+				bu_log( "\"%s\" (%d) write of pixel to <%d,%d> failed.\n",
 					__FILE__, __LINE__, x, ypos
 					);
 				return;

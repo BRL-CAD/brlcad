@@ -57,8 +57,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 		if( ! _pp->pt_inflip && (rt_g.debug&DEBUG_NORML) )\
 			{\
 			V_Print( "Fixed flipped entry normal, was",\
-				_normal, rt_log );\
-			rt_log( "Solid type %d\n", _stp->st_id );\
+				_normal, bu_log );\
+			bu_log( "Solid type %d\n", _stp->st_id );\
 			}\
 		VREVERSE( _normal, _normal );\
 		}\
@@ -75,8 +75,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 		if( ! _pp->pt_outflip && (rt_g.debug&DEBUG_NORML) )\
 			{\
 			V_Print( "Fixed flipped exit normal, was",\
-				_normal, rt_log );\
-			rt_log( "Solid type %d\n", _stp->st_id );\
+				_normal, bu_log );\
+			bu_log( "Solid type %d\n", _stp->st_id );\
 			}\
 		VREVERSE( _normal, _normal );\
 		}\
@@ -170,9 +170,9 @@ static unsigned short *hl_dstmap = NULL;
 	case PT_EMPTY :\
 		return	ap->a_miss( ap );\
 	case PT_OHIT :\
-		rt_log( "BUG:%s: Bad partition returned by rt_shootray!\n",\
+		bu_log( "BUG:%s: Bad partition returned by rt_shootray!\n",\
 			func );\
-		rt_log( "\tlevel=%d grid=<%d,%d>\n",\
+		bu_log( "\tlevel=%d grid=<%d,%d>\n",\
 			ap->a_level, ap->a_x, ap->a_y );\
 		return	ap->a_miss( ap );\
 	case PT_BEHIND :\
@@ -244,7 +244,7 @@ getCenter()
 		VSETALL( modl_cntr, 0.0 );
 		break;
 	default :
-		rt_log( "Illegal grid type %d\n", type_grid );
+		bu_log( "Illegal grid type %d\n", type_grid );
 		return	false;
 		}
 	return	true;
@@ -283,7 +283,7 @@ int frame;
 		{
 		if( a_gridsz > MAX_HL_SIZE )
 			{
-			rt_log( "%s is %dx%d pixels.\n",
+			bu_log( "%s is %dx%d pixels.\n",
 				"Max. size for hidden-line images",
 				MAX_HL_SIZE, MAX_HL_SIZE );
 			return;
@@ -292,18 +292,18 @@ int frame;
 		       malloc( (unsigned)(a_gridsz*a_gridsz)*sizeof(RGBpixel) ))
 			== NULL
 			)
-			rt_log( "Warning, no memory for normal map.\n" );
+			bu_log( "Warning, no memory for normal map.\n" );
 		if( (hl_regmap = (short *)
 			malloc( (unsigned)(a_gridsz*a_gridsz)*sizeof(short) ))
 			== NULL
 			)
-			rt_log( "Warning, no memory for region map.\n" );
+			bu_log( "Warning, no memory for region map.\n" );
 		if( (hl_dstmap = (unsigned short *)
 			malloc( (unsigned)
 				(a_gridsz*a_gridsz)*sizeof(unsigned short) ))
 			== NULL
 			)
-			rt_log( "Warning, no memory for distance map.\n" );
+			bu_log( "Warning, no memory for distance map.\n" );
 		ag.a_hit = f_HL_Hit;
 		ag.a_miss = f_HL_Miss;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
@@ -342,7 +342,7 @@ int frame;
 		}
 
 	if( rt_g.debug & DEBUG_CELLSIZE )
-		rt_log( "Cell size is %g mm.\n", cell_sz );
+		bu_log( "Cell size is %g mm.\n", cell_sz );
 	Scale2Vec( grid_hor, a_cellsz, grid_dh );
 	Scale2Vec( grid_ver, a_cellsz, grid_dv );
 
@@ -477,7 +477,7 @@ genptr_t arg;
 					}
 				a.a_level = 0; /* Recursion level (bounces). */
 #ifdef VDEBUG
-				rt_log( "r_dir=<%g,%g,%g>\n",
+				bu_log( "r_dir=<%g,%g,%g>\n",
 					a.a_ray.r_dir[X],
 					a.a_ray.r_dir[Y],
 					a.a_ray.r_dir[Z] );
@@ -488,7 +488,7 @@ genptr_t arg;
 						{
 						/* Fatal error in application
 							routine. */
-						rt_log( "Fatal error: %s.\n",
+						bu_log( "Fatal error: %s.\n",
 							"raytracing aborted" );
 						return;
 						}
@@ -498,7 +498,7 @@ genptr_t arg;
 					{
 					/* Fatal error in application
 						routine. */
-					rt_log( "Fatal error: %s.\n",
+					bu_log( "Fatal error: %s.\n",
 						"raytracing aborted" );
 					return;
 					}
@@ -610,8 +610,8 @@ struct partition *pt_headp;
 	ap->a_color[BLU] = (normal[Z] + 1.0) / 2.0;
 	if( rt_g.debug )
 		{
-		V_Print( "normal", normal, rt_log );
-		V_Print( "acolor", ap->a_color, rt_log );
+		V_Print( "normal", normal, bu_log );
+		V_Print( "acolor", ap->a_color, bu_log );
 		}
 	if( hl_normap != NULL )
 		{
@@ -897,9 +897,9 @@ struct partition *pt_headp;
 				VJOIN1(	rgb_coefs, rgb_coefs, f, ap->a_color );
 				if( rt_g.debug & DEBUG_SHADOW )
 					{
-					rt_log( "\t\tcontribution from light %d:\n", i );
-					V_Print( "\t\treflectance coeffs", ap->a_color, rt_log );
-					V_Print( "\t\taccumulated coeffs", rgb_coefs, rt_log );
+					bu_log( "\t\tcontribution from light %d:\n", i );
+					V_Print( "\t\treflectance coeffs", ap->a_color, bu_log );
+					V_Print( "\t\taccumulated coeffs", rgb_coefs, bu_log );
 					}
 				}
 			}
@@ -925,8 +925,8 @@ struct partition *pt_headp;
 				);
 			if( rt_g.debug & DEBUG_RGB )
 				{
-				V_Print( "mirror", mirror_coefs, rt_log );
-				V_Print( "rgb_coefs", rgb_coefs, rt_log );
+				V_Print( "mirror", mirror_coefs, bu_log );
+				V_Print( "rgb_coefs", rgb_coefs, bu_log );
 				}
 			}
 		if( entry->transparency > 0.0 )
@@ -940,8 +940,8 @@ struct partition *pt_headp;
 				);
 			if( rt_g.debug & DEBUG_RGB )
 				{
-				V_Print( "glass", ap->a_color, rt_log );
-				V_Print( "rgb_coefs", rgb_coefs, rt_log );
+				V_Print( "glass", ap->a_color, bu_log );
+				V_Print( "rgb_coefs", rgb_coefs, bu_log );
 				}
 			}
 		}
@@ -949,7 +949,7 @@ struct partition *pt_headp;
 	VMOVE( ap->a_color, rgb_coefs );
 	if( rt_g.debug & DEBUG_RGB )
 		{
-		V_Print( "ap->a_color", ap->a_color, rt_log );
+		V_Print( "ap->a_color", ap->a_color, bu_log );
 		}
 	return	1;
 	}
@@ -988,9 +988,9 @@ register Lgt_Source *lgt_entry;
 	
 		if( rt_g.debug & DEBUG_SHADOW )
 			{
-			rt_log( "\tcorrect_Lgt()\n" );
+			bu_log( "\tcorrect_Lgt()\n" );
 			V_Print( "\t\tlgt source location",
-				lgt_entry->loc, rt_log );
+				lgt_entry->loc, bu_log );
 			}
 		/* Set up ray direction to light source. */
 		VMOVE( ap_hit.a_ray.r_dir, lgt_dir );
@@ -1005,9 +1005,9 @@ register Lgt_Source *lgt_entry;
 		if( rt_g.debug & DEBUG_SHADOW )
 			{
 			V_Print( "\t\tdir. of ray to light",
-				ap_hit.a_ray.r_dir, rt_log );
+				ap_hit.a_ray.r_dir, bu_log );
 			V_Print( "\t\torigin of ray to lgt",
-				ap_hit.a_ray.r_pt, rt_log );
+				ap_hit.a_ray.r_pt, bu_log );
 			}
 		/* Fetch attenuated lgt intensity into "ap_hit.a_diverge". */
 		(void) rt_shootray( &ap_hit );
@@ -1040,10 +1040,10 @@ register Lgt_Source *lgt_entry;
 		rel_radius = lgt_entry->radius / pp->pt_inhit->hit_dist;
 		if( rt_g.debug & DEBUG_RGB )
 			{
-			rt_log( "\t\tcos. of angle to lgt center = %g\n", cos_angl );
-			rt_log( "\t\t	   angular distance = %g\n", ang_dist );
-			rt_log( "\t\t	    relative radius = %g\n", rel_radius );
-			rt_log( "\t\t	relative distance = %g\n", ang_dist/rel_radius );
+			bu_log( "\t\tcos. of angle to lgt center = %g\n", cos_angl );
+			bu_log( "\t\t	   angular distance = %g\n", ang_dist );
+			bu_log( "\t\t	    relative radius = %g\n", rel_radius );
+			bu_log( "\t\t	relative distance = %g\n", ang_dist/rel_radius );
 			}
 		/* Return weighted and attenuated light intensity. */
 		return	gauss_Wgt_Func( ang_dist/rel_radius ) *
@@ -1072,10 +1072,10 @@ vect_t normal;
 
 	if( rt_g.debug & DEBUG_RGB )
 		{
-		rt_log( "\tmirror_Reflect: level %d grid <%d,%d>\n",
+		bu_log( "\tmirror_Reflect: level %d grid <%d,%d>\n",
 			ap_hit.a_level, ap_hit.a_x, ap_hit.a_y
 			);
-		rt_log( "\t\tOne hit flag is %s\n",
+		bu_log( "\t\tOne hit flag is %s\n",
 			ap_hit.a_onehit ? "ON" : "OFF" );
 		}
 	/* Calculate reflected incident ray. */
@@ -1122,11 +1122,11 @@ vect_t normal;
 
 	if( rt_g.debug & DEBUG_REFRACT )
 		{
-		rt_log( "\tEntering glass_Refract(), level %d grid <%d,%d>\n",
+		bu_log( "\tEntering glass_Refract(), level %d grid <%d,%d>\n",
 			ap->a_level, ap->a_x, ap->a_y
 			);
-		V_Print( "\t\tincident ray pnt", ap->a_ray.r_pt, rt_log );
-		V_Print( "\t\tincident ray dir", ap->a_ray.r_dir, rt_log );
+		V_Print( "\t\tincident ray pnt", ap->a_ray.r_pt, bu_log );
+		V_Print( "\t\tincident ray dir", ap->a_ray.r_dir, bu_log );
 		}
 	refrac_total++;
 
@@ -1138,7 +1138,7 @@ vect_t normal;
 		{ /* No refraction necessary. */
 			struct partition *pt_headp = pp->pt_back;
 		if( rt_g.debug & DEBUG_REFRACT )
-			rt_log( "\t\tNo refraction on entry.\n" );
+			bu_log( "\t\tNo refraction on entry.\n" );
 		/* Ray direction stays the same, and so does ray origin,
 			because we are using existing partitions with
 			hit distances relative to the ray origin.
@@ -1160,7 +1160,7 @@ vect_t normal;
 			if( rt_g.debug & DEBUG_REFRACT )
 				{
 				V_Print( "\t\tf_Model returned coeffs",
-					ap->a_color, rt_log );
+					ap->a_color, bu_log );
 				}
 			return;	
 			}
@@ -1170,10 +1170,10 @@ vect_t normal;
 			VMOVE( ap->a_color, ap_hit.a_color );
 			if( rt_g.debug & DEBUG_REFRACT )
 				{
-				rt_log( "\t\tOne hit flag is %s\n",
+				bu_log( "\t\tOne hit flag is %s\n",
 					ap->a_onehit ? "ON" : "OFF" );
 				V_Print( "\t\tf_Backgr returned coeffs",
-					ap->a_color, rt_log );
+					ap->a_color, bu_log );
 				}
 			return;
 			}
@@ -1184,7 +1184,7 @@ vect_t normal;
 		if( pp->pt_inhit->hit_dist < 0.0 )
 			{
 			if( rt_g.debug & DEBUG_REFRACT )
-				rt_log( "\t\tRefracting inside solid.\n" );
+				bu_log( "\t\tRefracting inside solid.\n" );
 			VMOVE( ap_ref.a_ray.r_pt, ap->a_ray.r_pt );
 			VMOVE( ap_ref.a_ray.r_dir, ap->a_ray.r_dir );
 			goto	inside_ray;
@@ -1200,7 +1200,7 @@ vect_t normal;
 			VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
 			VMOVE( ap_hit.a_ray.r_dir, ap_ref.a_ray.r_dir );
 			if( rt_g.debug & DEBUG_REFRACT )
-				rt_log( "\t\tPast critical angle on entry!\n" );
+				bu_log( "\t\tPast critical angle on entry!\n" );
 			goto	exiting_ray;
 			}
 		}
@@ -1217,9 +1217,9 @@ inside_ray :
 		   */
 		if( rt_g.debug & DEBUG_REFRACT )
 			{
-			rt_log( "\t\tRefracted ray missed:\n" );
-			V_Print( "\t\trefracted ray pnt", ap_ref.a_ray.r_pt, rt_log );
-			V_Print( "\t\trefracted ray dir", ap_ref.a_ray.r_dir, rt_log );
+			bu_log( "\t\tRefracted ray missed:\n" );
+			V_Print( "\t\trefracted ray pnt", ap_ref.a_ray.r_pt, bu_log );
+			V_Print( "\t\trefracted ray dir", ap_ref.a_ray.r_dir, bu_log );
 			}
 		refrac_missed++;
 		VMOVE( ap_hit.a_ray.r_pt, pp->pt_outhit->hit_point );
@@ -1229,7 +1229,7 @@ inside_ray :
 	else
 		{
 		if( rt_g.debug & DEBUG_REFRACT )
-			rt_log( "\t\tRefracted ray hit.\n" );
+			bu_log( "\t\tRefracted ray hit.\n" );
 		}
 
 	/* Calculate refraction at exit. */
@@ -1245,7 +1245,7 @@ inside_ray :
 			)
 			{ /* Past critical angle, internal reflection. */
 			if( rt_g.debug & DEBUG_REFRACT )
-				rt_log( "\t\tInternal reflection, recursion level (%d)\n", ap_ref.a_level );
+				bu_log( "\t\tInternal reflection, recursion level (%d)\n", ap_ref.a_level );
 			ap_ref.a_level++;
 			VMOVE( ap_ref.a_ray.r_dir, ap_hit.a_ray.r_dir );
 			/* Refracted ray exit point in a_color. */
@@ -1257,7 +1257,7 @@ inside_ray :
 		{ /* Exceeded max bounces, total absorbtion of light. */
 		VSETALL( ap->a_color, 0.0 );
 		if( rt_g.debug & DEBUG_REFRACT )
-			rt_log( "\t\tExceeded max bounces with internal reflections, recursion level (%d)\n", ap_ref.a_level );
+			bu_log( "\t\tExceeded max bounces with internal reflections, recursion level (%d)\n", ap_ref.a_level );
 		refrac_inside++;
 		return;
 		}
@@ -1268,10 +1268,10 @@ exiting_ray :
 	/* Shoot from exit point in direction of refracted ray. */
 	if( rt_g.debug & DEBUG_REFRACT )
 		{
-		rt_log( "\t\tExiting ray from glass.\n" );
-		V_Print( "\t\t   ray origin", ap_hit.a_ray.r_pt, rt_log );
-		V_Print( "\t\tray direction", ap_hit.a_ray.r_dir, rt_log );
-		rt_log( "\t\tOne hit flag is %s\n", ap_hit.a_onehit ? "ON" : "OFF" );
+		bu_log( "\t\tExiting ray from glass.\n" );
+		V_Print( "\t\t   ray origin", ap_hit.a_ray.r_pt, bu_log );
+		V_Print( "\t\tray direction", ap_hit.a_ray.r_dir, bu_log );
+		bu_log( "\t\tOne hit flag is %s\n", ap_hit.a_onehit ? "ON" : "OFF" );
 		}
 	(void) rt_shootray( &ap_hit );
 	VMOVE( ap->a_color, ap_hit.a_color );
@@ -1293,8 +1293,8 @@ register struct application *ap;
 
 	if( rt_g.debug & DEBUG_RGB )
 		{
-		rt_log( "\tRay missed model.\n" );
-		V_Print( "\tbackground coeffs", ap->a_color, rt_log );
+		bu_log( "\tRay missed model.\n" );
+		V_Print( "\tbackground coeffs", ap->a_color, bu_log );
 		}
 
 	/* If this is a reflection, we may see each light source. */
@@ -1331,7 +1331,7 @@ register struct application *ap;
 		}
 	if( rt_g.debug & DEBUG_RGB )
 		{
-		V_Print( "coeffs returned from background", ap->a_color, rt_log );
+		V_Print( "coeffs returned from background", ap->a_color, bu_log );
 		}
 	return	0;
 	}
@@ -1345,7 +1345,7 @@ f_Error( ap )
 register struct application *ap;
 	{
 	if( rt_g.debug & DEBUG_RGB )
-		rt_log( "f_Error()\n" );
+		bu_log( "f_Error()\n" );
 	return	0;
 	}
 
@@ -1360,7 +1360,7 @@ f_Lit( ap )
 register struct application *ap;
 	{	
 	if( rt_g.debug & DEBUG_SHADOW )
-		rt_log( "\t\tSurface is illuminated.\n" );
+		bu_log( "\t\tSurface is illuminated.\n" );
 	ap->a_diverge = 1.0;
 	hits_lit++;
 	return	0;
@@ -1378,7 +1378,7 @@ struct partition *pt_headp;
 		register struct hit *hitp;
 		register struct soltab *stp;
 	if( rt_g.debug & DEBUG_RGB )
-		rt_log( "f_Probe()\n" );
+		bu_log( "f_Probe()\n" );
 	Get_Partition( ap, pp, pt_headp, "f_Probe" );
 	stp = pp->pt_outseg->seg_stp;
 	hitp = pp->pt_outhit;
@@ -1417,14 +1417,14 @@ register fastf_t *v_2;
 		fastf_t	beta;		/* Intermediate scalar. */
 	if( rt_g.debug & DEBUG_REFRACT )
 		{
-		V_Print( "\tEntering refract(), incident ray", v_1, rt_log );
-		V_Print( "\t\tentrance normal", norml, rt_log );
-		rt_log( "\t\trefractive indices leaving:%g, entering:%g\n",
+		V_Print( "\tEntering refract(), incident ray", v_1, bu_log );
+		V_Print( "\t\tentrance normal", norml, bu_log );
+		bu_log( "\t\trefractive indices leaving:%g, entering:%g\n",
 			ri_1, ri_2 );
 		}
 	if( ri_2 < 0.001 || ri_1 < 0.001 )
 		{ /* User probably forgot to specify refractive index. */
-		rt_log( "\tBUG: Zero or negative refractive index, should have been caught earlier.\n" );
+		bu_log( "\tBUG: Zero or negative refractive index, should have been caught earlier.\n" );
 		VMOVE( v_2, v_1 ); /* Just return ray unchanged. */
 		return	1;
 		}
@@ -1444,7 +1444,7 @@ register fastf_t *v_2;
 		Diff2Vec( w, u, v_2 );
 		if( rt_g.debug & DEBUG_REFRACT )
 			{
-			V_Print( "\tdeflected refracted ray", v_2, rt_log );
+			V_Print( "\tdeflected refracted ray", v_2, bu_log );
 			}
 		return	0;
 		}
@@ -1459,7 +1459,7 @@ register fastf_t *v_2;
 		Add2Vec( w, u, v_2 );
 		if( rt_g.debug & DEBUG_REFRACT )
 			{
-			V_Print( "\trefracted ray", v_2, rt_log );
+			V_Print( "\trefracted ray", v_2, bu_log );
 			}
 		return	1;
 		}
@@ -1485,24 +1485,24 @@ struct partition *pt_headp;
 		{	register struct hit *ihitp, *ohitp;
 			register struct soltab *istp, *ostp;
 			point_t inormal;
-		rt_log( "Shadowed by :\n" );
+		bu_log( "Shadowed by :\n" );
 		istp = pp->pt_inseg->seg_stp;
 		ihitp = pp->pt_inhit;
 		ostp = pp->pt_outseg->seg_stp;
 		ohitp = pp->pt_outhit;
 		RT_HIT_NORMAL( inormal, ihitp, istp, &(ap->a_ray), pp->pt_inflip );
-		V_Print( "entry normal", inormal, rt_log );
-		V_Print( "entry point", ihitp->hit_point, rt_log );
-		rt_log( "partition[start %g end %g]\n",
+		V_Print( "entry normal", inormal, bu_log );
+		V_Print( "entry point", ihitp->hit_point, bu_log );
+		bu_log( "partition[start %g end %g]\n",
 			ihitp->hit_dist, ohitp->hit_dist
 			);
-		rt_log( "solid name (%s)\n", pp->pt_inseg->seg_stp->st_name );
+		bu_log( "solid name (%s)\n", pp->pt_inseg->seg_stp->st_name );
 		}
 	ap->a_diverge = 1.0;
 	if( pp->pt_inseg->seg_stp == lgts[ap->a_user].stp )
 		{ /* Have hit the EXPLICIT light source, no shadow. */
 		if( rt_g.debug & DEBUG_SHADOW )
-			rt_log( "Unobstructed path to explicit light.\n" );
+			bu_log( "Unobstructed path to explicit light.\n" );
 		return	ap->a_miss( ap );
 		}
 	for( ; pp != pt_headp; pp = pp->pt_forw )
@@ -1531,14 +1531,14 @@ struct partition *pt_headp;
 		/* Light source is obstructed, object shadowed. */
 		{
 		if( rt_g.debug & DEBUG_SHADOW )
-			rt_log( "Lgt source obstructed, object shadowed\n" );
+			bu_log( "Lgt source obstructed, object shadowed\n" );
 		hits_shadowed++;
 		return	1;
 		}
 	else	/* Full intensity of light source. */
 		{
 		if( rt_g.debug & DEBUG_SHADOW )
-			rt_log( "Full intensity of light source, no shadow\n" );
+			bu_log( "Full intensity of light source, no shadow\n" );
 		return	ap->a_miss( ap );
 		}
 	}
@@ -1593,7 +1593,7 @@ register fastf_t *norml;
 		auto fastf_t lgt_dir[3];
 
 	if( rt_g.debug & DEBUG_RGB )
-		rt_log( "\nmodel_Reflectance(): level %d grid <%d,%d>\n",
+		bu_log( "\nmodel_Reflectance(): level %d grid <%d,%d>\n",
 			ap->a_level, ap->a_x, ap->a_y
 			);
 
@@ -1625,14 +1625,14 @@ register fastf_t *norml;
 	Scale2Vec( lgt_entry->coef, ff, ap->a_color );
 	if( rt_g.debug & DEBUG_RGB )
 		{
-		rt_log( "\tDiffuse reflectance:\n" );
-		V_Print( "\tsurface normal", norml, rt_log );
-		V_Print( "\t dir. of light", lgt_dir, rt_log );
-		rt_log( "\t cosine of incident angle = %g\n", cos_il );
-		rt_log( "\tintensity of light source = %g\n", lgt_energy );
-		rt_log( "\t diffuse weighting coeff. = %g\n",
+		bu_log( "\tDiffuse reflectance:\n" );
+		V_Print( "\tsurface normal", norml, bu_log );
+		V_Print( "\t dir. of light", lgt_dir, bu_log );
+		bu_log( "\t cosine of incident angle = %g\n", cos_il );
+		bu_log( "\tintensity of light source = %g\n", lgt_energy );
+		bu_log( "\t diffuse weighting coeff. = %g\n",
 			mdb_entry->wgt_diffuse );
-		V_Print( "\tdiffuse coeffs", ap->a_color, rt_log );
+		V_Print( "\tdiffuse coeffs", ap->a_color, bu_log );
 		}
 	/* Facter in material color (diffuse reflectance coeffs) */
 	ff = RGB_INVERSE; /* Scale RGB values to coeffs (0.0 .. 1.0 ) */
@@ -1653,9 +1653,9 @@ register fastf_t *norml;
 		Diff2Vec( tmp_dir, lgt_dir, lgt_reflect );
 		if( rt_g.debug & DEBUG_RGB )
 			{
-			rt_log( "\tSpecular reflectance:\n" );
-			V_Print( "\t           dir of eye", view_dir, rt_log );
-			V_Print( "\tdir reflected lgt ray", lgt_reflect, rt_log );
+			bu_log( "\tSpecular reflectance:\n" );
+			V_Print( "\t           dir of eye", view_dir, bu_log );
+			V_Print( "\tdir reflected lgt ray", lgt_reflect, bu_log );
 			}
 		if(	(cos_s = Dot( view_dir, lgt_reflect )) > 0.0
 		    &&	cos_s <= 1.0
@@ -1667,21 +1667,21 @@ register fastf_t *norml;
 			VJOIN1( ap->a_color, ap->a_color, specular, lgt_entry->coef );
 			if( rt_g.debug & DEBUG_RGB )
 				{
-				rt_log( "\tcosine of specular angle = %g\n",
+				bu_log( "\tcosine of specular angle = %g\n",
 					cos_s );
-				rt_log( "\t      specular component = %g\n",
+				bu_log( "\t      specular component = %g\n",
 					specular );
-				V_Print( "\tdiff+spec coeffs", ap->a_color, rt_log );
+				V_Print( "\tdiff+spec coeffs", ap->a_color, bu_log );
 				}
 			}
 		else
 		if( cos_s > 1.0 )
 			{	struct soltab *stp = pp->pt_inseg->seg_stp;
-			rt_log( "\"%s\"(%d) : solid \"%s\" type %d cos(s)=%g grid <%d,%d>!\n",
+			bu_log( "\"%s\"(%d) : solid \"%s\" type %d cos(s)=%g grid <%d,%d>!\n",
 				__FILE__, __LINE__, stp->st_name, stp->st_id,
 				cos_s, ap->a_x, ap->a_y
 				);
-			V_Print( "Surface normal", norml, rt_log );
+			V_Print( "Surface normal", norml, bu_log );
 			}
 		}
 	return;
@@ -1798,7 +1798,7 @@ prnt_Pixel( pixelp, x, y )
 register RGBpixel *pixelp;
 int x, y;
 	{
-	rt_log( "Pixel:<%3d,%3d,%3d>(%4d,%4d)\n",
+	bu_log( "Pixel:<%3d,%3d,%3d>(%4d,%4d)\n",
 		(*pixelp)[RED],
 		(*pixelp)[GRN],
 		(*pixelp)[BLU],
@@ -2012,13 +2012,13 @@ vect_t aliasbuf[];
 		COPYRGB( scanbuf[x], pixel );
 		return;
 	default :
-		rt_log( "unknown buffering scheme %d\n",
+		bu_log( "unknown buffering scheme %d\n",
 			pix_buffered );
 		return;
 		}
 failed:
 #ifdef DEBUG
-	rt_log( "Write failed to pixel <%d,%d>.\n", x, y );
+	bu_log( "Write failed to pixel <%d,%d>.\n", x, y );
 #endif
 	return;
 	}
@@ -2105,14 +2105,14 @@ RGBpixel scanbuf[];
 					) != ct*sizeof(RGBpixel)
 				)
 				{
-				rt_log( "Write of scan line %d failed.\n",
+				bu_log( "Write of scan line %d failed.\n",
 					ap->a_y );
 				perror( "write" );
 				}
 			}
 		else
 		if( fb_write( fbiop, x, y, (unsigned char *)(scanbuf+x), ct ) == -1 )
-			rt_log( "Write of scan line (%d) failed.\n", ap->a_y );
+			bu_log( "Write of scan line (%d) failed.\n", ap->a_y );
 		bu_semaphore_release( RT_SEM_STATS );
 		}
 	return;
@@ -2127,13 +2127,13 @@ view_end()
 	if( pix_buffered == B_PAGE )
 		fb_flush( fbiop );
 	if( rt_g.debug & DEBUG_REFRACT )
-		rt_log( "%s : hits=%d misses=%d inside=%d total=%d\n",
+		bu_log( "%s : hits=%d misses=%d inside=%d total=%d\n",
 			"Refraction stats",
 			refrac_total-(refrac_missed+refrac_inside),
 			refrac_missed, refrac_inside, refrac_total
 			);
 	if( rt_g.debug & DEBUG_SHADOW )
-		rt_log( "Shadowing stats : lit=%d shadowed=%d total=%d\n",
+		bu_log( "Shadowing stats : lit=%d shadowed=%d total=%d\n",
 			hits_lit, hits_shadowed, hits_lit+hits_shadowed
 			);
 	if( hiddenln_draw )
@@ -2197,14 +2197,14 @@ struct region *reg1, *reg2;
 		return	1;
 	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 		ap->a_ray.r_dir );
-	rt_log( "OVERLAP:\n" );
-	rt_log( "reg=%s sol=%s,\n",
+	bu_log( "OVERLAP:\n" );
+	bu_log( "reg=%s sol=%s,\n",
 		reg1->reg_name, pp->pt_inseg->seg_stp->st_name
 		);
-	rt_log( "reg=%s sol=%s,\n",
+	bu_log( "reg=%s sol=%s,\n",
 		reg2->reg_name, pp->pt_outseg->seg_stp->st_name
 		);
-	rt_log( "(x%d y%d lvl%d) depth %gmm at (%g,%g,%g)\n",
+	bu_log( "(x%d y%d lvl%d) depth %gmm at (%g,%g,%g)\n",
 		ap->a_x, ap->a_y, ap->a_level,
 		depth,
 		pt[X], pt[Y], pt[Z]

@@ -245,7 +245,7 @@ register char	**menu;
 	if( ! tty )
 		{
 		for( ; *menu != NULL; menu++ )
-			rt_log( "%s\n", *menu );
+			bu_log( "%s\n", *menu );
 		return;
 		}
 	for( ; *menu != NULL && ! done;  )
@@ -334,7 +334,7 @@ char	*eventstr;
 		update_Screen();
 		}
 	else
-		rt_log( "(%s) %s\n", eventstr == NULL ? "(null)" : eventstr, timer );
+		bu_log( "(%s) %s\n", eventstr == NULL ? "(null)" : eventstr, timer );
 	return;
 	}
 
@@ -373,7 +373,7 @@ prnt_Title( titleptr )
 char	*titleptr;
 	{
 	if( ! tty || rt_g.debug )
-		rt_log( "%s\n", titleptr == NULL ? "(null)" : titleptr );
+		bu_log( "%s\n", titleptr == NULL ? "(null)" : titleptr );
 	return;
 	}
 

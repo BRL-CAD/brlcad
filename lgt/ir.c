@@ -91,7 +91,7 @@ int	xmin, ymin;
 		x = xmin;
 		if( fb_seek( fbiop, x, y ) == -1 )
 			{
-			rt_log( "\"%s\"(%d) fb_seek to pixel <%d,%d> failed.\n",
+			bu_log( "\"%s\"(%d) fb_seek to pixel <%d,%d> failed.\n",
 				__FILE__, __LINE__, x, y
 				);
 			return;
@@ -117,7 +117,7 @@ int	xmin, ymin;
 		}
 	if( ! get_Font( (char *) NULL ) )
 		{
-		rt_log( "Could not load font.\n" );
+		bu_log( "Could not load font.\n" );
 		fb_flush( fbiop );
 		return;
 		}
@@ -162,12 +162,12 @@ FILE	*fp;
 	     ||	fread( (char *) &max, (int) sizeof(int), 1, fp ) != 1
 		)
 		{
-		rt_log( "Can't read minimum and maximum temperatures.\n" );
+		bu_log( "Can't read minimum and maximum temperatures.\n" );
 		return	0;
 		}
 	else
 		{
-		rt_log(	"IR data temperature range is %d to %d\n",
+		bu_log(	"IR data temperature range is %d to %d\n",
 			min, max
 			);
 		if( ir_min == ABSOLUTE_ZERO )
@@ -179,7 +179,7 @@ FILE	*fp;
 			{ /* Merge with existing range.			*/
 			ir_min = Min( ir_min, min );
 			ir_max = Max( ir_max, max );
-			rt_log(	"Global temperature range is %d to %d\n",
+			bu_log(	"Global temperature range is %d to %d\n",
 				ir_min, ir_max
 				);
 			}
@@ -193,7 +193,7 @@ FILE	*fp;
 		{
 		if( fb_seek( fbiop, 0, fy ) == -1 )
 			{
-			rt_log( "\"%s\"(%d) fb_seek to pixel <%d,%d> failed.\n",
+			bu_log( "\"%s\"(%d) fb_seek to pixel <%d,%d> failed.\n",
 				__FILE__, __LINE__, 0, fy
 				);
 			return	0;
@@ -222,7 +222,7 @@ FILE	*fp;
 			fah = Avg_Fah( sum );
 			if( (index = fah-ir_min) > ir_max_index || index < 0 )
 				{
-				rt_log( "temperature out of range (%d)\n",
+				bu_log( "temperature out of range (%d)\n",
 					fah
 					);
 				return	0;
@@ -288,7 +288,7 @@ int		temp;
 		break;
  */
 		}
-/*	rt_log( "temp=%d rgb=(%d %d %d)\n", temp, rgb[RED], rgb[GRN], rgb[BLU] );
+/*	bu_log( "temp=%d rgb=(%d %d %d)\n", temp, rgb[RED], rgb[GRN], rgb[BLU] );
  */
 	return;
 	}
@@ -306,7 +306,7 @@ init_Temp_To_RGB()
 		RGBpixel	rgb;
 	if( (ir_aperture = fb_getwidth( fbiop )/grid_sz) < 1 )
 		{
-		rt_log( "Grid too large for IR application, max. is %d.\n",
+		bu_log( "Grid too large for IR application, max. is %d.\n",
 			IR_DATA_WID
 			);
 		return	0;
@@ -540,7 +540,7 @@ Octree				*op;
 		register int	index = op->o_temp - ir_min;
 	if( index > ir_max_index )
 		{
-		rt_log( "Temperature (%d) above range of data.\n", op->o_temp );
+		bu_log( "Temperature (%d) above range of data.\n", op->o_temp );
 		return	-1;
 		}
 	if( index < 0 )

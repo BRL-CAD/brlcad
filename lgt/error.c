@@ -15,7 +15,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *
  *  Functions -
  *	rt_bomb		Called upon fatal RT library error.
- *	rt_log		Called to log RT library events.
+ *	bu_log		Called to log RT library events.
  *	fb_log		Called to log FB library events.
  *
  *	Idea originated by Mike John Muuss
@@ -51,7 +51,7 @@ void
 bu_bomb(str)
 CONST char *str;
 	{
-	rt_log( "%s (librt.a) : Fatal error, aborting!\n", str );
+	bu_log( "%s (librt.a) : Fatal error, aborting!\n", str );
 	(void) fflush( stdout );
 	prnt_Timer( "DUMP" );
 	if( pix_buffered == B_PAGE )

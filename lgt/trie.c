@@ -76,7 +76,7 @@ register Octree	*octreep;
 			free( (char *) tmp );
 			return	1;
 			}
-	rt_log( "\"%s\"(%d) Couldn't find node.\n", __FILE__, __LINE__ );
+	bu_log( "\"%s\"(%d) Couldn't find node.\n", __FILE__, __LINE__ );
 	return	0;
 	}
 void
@@ -243,7 +243,7 @@ Trie	*triep;
 int	level;
 	{	register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
-	/*rt_log( "prnt_Trie(triep=0x%x,level=%d)\n", triep, level );*/
+	/*bu_log( "prnt_Trie(triep=0x%x,level=%d)\n", triep, level );*/
 	if( tp == TRIE_NULL )
 		return;
 	if( tp->n.t_altr != TRIE_NULL )
@@ -255,7 +255,7 @@ int	level;
 		{	register OcList	*op, *ip;
 		/* At end of name, so print it out.			*/
 		*namep = NUL;
-		rt_log( "%s: ", name_buf );
+		bu_log( "%s: ", name_buf );
 		for( op = tp->l.t_octp; op != OCLIST_NULL; op = op->p_next )
 			{
 			for( ip = tp->l.t_octp; ip != op; ip = ip->p_next )
@@ -264,9 +264,9 @@ int	level;
 					break;
 			if( ip == op )
 				/* This temperature not printed yet.	*/
-				rt_log( "%d,", op->p_octp->o_temp );
+				bu_log( "%d,", op->p_octp->o_temp );
 			}
-		rt_log( "\n" );
+		bu_log( "\n" );
 		}
 	else
 		{
@@ -294,7 +294,7 @@ FILE	*fp;
 		    ||	fwrite( (char *) &ir_max, (int) sizeof(int), 1, fp ) != 1
 			)
 			{
-			rt_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
+			bu_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
 			return	0;
 			}			
 		namep = name_buf;
@@ -333,12 +333,12 @@ FILE	*fp;
 	     ||	fread( (char *) &max, (int) sizeof(int), 1, fp ) != 1
 		)
 		{
-		rt_log( "Could not read min/max info.\n" );
+		bu_log( "Could not read min/max info.\n" );
 		rewind( fp );
 		}
 	else
 		{
-		rt_log( "IR data base temperature range is %d to %d\n",
+		bu_log( "IR data base temperature range is %d to %d\n",
 			min, max
 			);
 		if( ir_min == ABSOLUTE_ZERO )
@@ -350,7 +350,7 @@ FILE	*fp;
 			{ /* Merge with existing range.			*/
 			ir_min = Min( ir_min, min );
 			ir_max = Max( ir_max, max );
-			rt_log(	"Global temperature range is %d to %d\n",
+			bu_log(	"Global temperature range is %d to %d\n",
 				ir_min, ir_max
 				);
 			(void) fflush( stdout );
@@ -368,7 +368,7 @@ FILE	*fp;
 			!= 1
 			)
 			{
-			rt_log( "\"%s\"(%d) Read failed!\n", __FILE__, __LINE__ );
+			bu_log( "\"%s\"(%d) Read failed!\n", __FILE__, __LINE__ );
 			return	0;
 			}
 		for( ; hdr_ptlist.f_length > 0; hdr_ptlist.f_length-- )
@@ -377,7 +377,7 @@ FILE	*fp;
 				Octree		*octreep;
 			if( fread( (char *) c_point, (int) sizeof(c_point), 1, fp ) != 1 )
 				{
-				rt_log(	"\"%s\"(%d) Read failed.\n",
+				bu_log(	"\"%s\"(%d) Read failed.\n",
 					__FILE__, __LINE__ );
 				return	0;
 				}

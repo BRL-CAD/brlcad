@@ -52,7 +52,7 @@ char *fontname;
 	/* Open the file and read in the header information. */
 	if( (newff = fopen( fname, "r" )) == NULL )
 		{
-		rt_log( "Error opening font file '%s'\n", fname );
+		bu_log( "Error opening font file '%s'\n", fname );
 		ffdes = NULL;
 		return	0;
     		}
@@ -61,7 +61,7 @@ char *fontname;
 	ffdes = newff;
 	if( fread( (char *) &lochdr, (int) sizeof(struct header), 1, ffdes ) != 1 )
 		{
-		rt_log( "get_Font() read failed!\n" );
+		bu_log( "get_Font() read failed!\n" );
 		ffdes = NULL;
 		return	0;
 		}
@@ -73,7 +73,7 @@ char *fontname;
 
 	if( lochdr.magic != 0436 )
     		{
-		rt_log( "Not a font file \"%s\": magic=0%o\n",
+		bu_log( "Not a font file \"%s\": magic=0%o\n",
 			fname, (int) lochdr.magic
 			);
 		ffdes = NULL;
@@ -84,7 +84,7 @@ char *fontname;
 	/* Read in the directory for the font. */
 	if( fread( (char *) dir, (int) sizeof(struct dispatch), 256, ffdes ) != 256 )
 		{
-		rt_log( "get_Font() read failed!\n" );
+		bu_log( "get_Font() read failed!\n" );
 		ffdes = NULL;
 		return	0;
 		}

@@ -39,9 +39,9 @@ loc_Perror( msg )
 char	*msg;
 	{
 	if( errno >= 0 && errno < sys_nerr )
-		rt_log( "%s: %s\n", msg, sys_errlist[errno] );
+		bu_log( "%s: %s\n", msg, sys_errlist[errno] );
 	else
-		rt_log( "\"%s\" (%d), errno not set, shouldn't call perror.\n",
+		bu_log( "\"%s\" (%d), errno not set, shouldn't call perror.\n",
 			__FILE__, __LINE__
 			);
 	return;
@@ -116,7 +116,7 @@ char	*args[];
 			switch( stat_loc & 0377 )
 				{
 				case 0177 : /* Child stopped.		*/
-					rt_log(	"\"%s\" (%d) Child stopped.\n",
+					bu_log(	"\"%s\" (%d) Child stopped.\n",
 						__FILE__,
 						__LINE__
 						);
@@ -124,7 +124,7 @@ char	*args[];
 				case 0 :    /* Child exited.		*/
 					return	(stat_loc >> 8) & 0377;
 				default :   /* Child terminated.	*/
-					rt_log(	"\"%s\" (%d) Child terminated, signal %d, status=0x%x.\n",
+					bu_log(	"\"%s\" (%d) Child terminated, signal %d, status=0x%x.\n",
 						__FILE__,
 						__LINE__,
 						stat_loc&0177,

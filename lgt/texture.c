@@ -95,7 +95,7 @@ Mat_Db_Entry	*entry;
 		int	hgt = entry->df_rgb[1] << 3;
 	if( (iconfp = fopen( file, "r" )) == NULL )
 		{
-		rt_log( "Can't open icon texture \"%s\" for reading.\n",
+		bu_log( "Can't open icon texture \"%s\" for reading.\n",
 			file );
 		return	NULL;
 		}
@@ -104,18 +104,18 @@ Mat_Db_Entry	*entry;
 		== (icon_t *) 0
 		)
 		{
-		rt_log( "No space for icon texture map.\n" );
+		bu_log( "No space for icon texture map.\n" );
 		return	NULL;
 		}
 #if DEBUG_TEXTURE
-	rt_log( "init_Icon_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
-	rt_log( "%d bytes allocated for texture map.\n",
+	bu_log( "init_Icon_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
+	bu_log( "%d bytes allocated for texture map.\n",
 		BYTES_WIDE*hgt );
 #endif
 	if( fread( iconmap, sizeof(icon_t), ITEMS_WIDE*hgt, iconfp )
 		== -1 )
 		{
-		rt_log( "Read of icon texture map failed.\n" );
+		bu_log( "Read of icon texture map failed.\n" );
 		return	NULL;
 		}
 	if(	(iconp =
@@ -123,12 +123,12 @@ Mat_Db_Entry	*entry;
 	    ==	(struct icon_texture *) 0
 		)
 		{
-		rt_log( "No space for icon texture.\n" );
+		bu_log( "No space for icon texture.\n" );
 		return	NULL;
 		}
 	if( (iconp->filenm = malloc( strlen(file)+1 )) == NULL )
 		{
-		rt_log( "init_Icon_Texture: no space for file name.\n" );
+		bu_log( "init_Icon_Texture: no space for file name.\n" );
 		return	NULL;
 		}
 	(void) strcpy( iconp->filenm, file );
@@ -167,17 +167,17 @@ Mat_Db_Entry	*entry;
 		== (RGBpixel *) 0
 		)
 		{
-		rt_log( "No space for frame buffer texture map.\n" );
+		bu_log( "No space for frame buffer texture map.\n" );
 		return	NULL;
 		}
 #if DEBUG_TEXTURE
-	rt_log( "init_Fb_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
-	rt_log( "%d bytes allocated for texture map.\n",
+	bu_log( "init_Fb_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
+	bu_log( "%d bytes allocated for texture map.\n",
 		wid*hgt*sizeof(RGBpixel) );
 #endif
 	if( fb_read( txfbiop, 0, 0, (unsigned char *)fbmap, wid*hgt ) == -1 )
 		{
-		rt_log( "Read of frame buffer texture failed.\n" );
+		bu_log( "Read of frame buffer texture failed.\n" );
 		return	NULL;
 		}
 	if(	(fbp =
@@ -185,12 +185,12 @@ Mat_Db_Entry	*entry;
 	    ==	(struct fb_texture *) 0
 		)
 		{
-		rt_log( "No space for fb texture.\n" );
+		bu_log( "No space for fb texture.\n" );
 		return	NULL;
 		}
 	if( (fbp->filenm = malloc( strlen(file)+1 )) == NULL )
 		{
-		rt_log( "init_Fb_Texture: no space for file name.\n" );
+		bu_log( "init_Fb_Texture: no space for file name.\n" );
 		return	NULL;
 		}
 	(void) strcpy( fbp->filenm, file );
@@ -250,14 +250,14 @@ Mat_Db_Entry	*entry;
 	     ||	uvp->uv_v > 1.0 || uvp->uv_v < 0.0
 		)
 		{
-		rt_log( "uv coordinates out of range: u=%g v=%g\n",
+		bu_log( "uv coordinates out of range: u=%g v=%g\n",
 			uvp->uv_u, uvp->uv_v );
 		return	0;
 		}
 	ui = uvp->uv_u * iconp->wid;
 	vi = uvp->uv_v * iconp->hgt;
 #if DEBUG_TEXTURE
-	rt_log( "uvp->uv_u=%g ui=%d uvp->uv_v=%g vi=%d\n",
+	bu_log( "uvp->uv_u=%g ui=%d uvp->uv_v=%g vi=%d\n",
 		uvp->uv_u, ui, uvp->uv_v, vi );
 #endif
 	pixel = icon_Lookup( iconp, ui, vi );
@@ -288,7 +288,7 @@ Mat_Db_Entry	*entry;
 	     ||	uvp->uv_v > 1.0 || uvp->uv_v < 0.0
 		)
 		{
-		rt_log( "uv coordinates out of range: u=%g v=%g\n",
+		bu_log( "uv coordinates out of range: u=%g v=%g\n",
 			uvp->uv_u, uvp->uv_v );
 		return	0;
 		}
@@ -297,9 +297,9 @@ Mat_Db_Entry	*entry;
 	pixel = Fb_Lookup( fbp, ui, vi );
 	COPYRGB( entry->df_rgb, *pixel );
 #if DEBUG_TEXTURE
-	rt_log( "uvp->uv_u=%g uvp->uv_v=%g\n",
+	bu_log( "uvp->uv_u=%g uvp->uv_v=%g\n",
 		uvp->uv_u, uvp->uv_v );
-	rt_log( "fbp->map[%d]=<%d,%d,%d>\n",
+	bu_log( "fbp->map[%d]=<%d,%d,%d>\n",
 		vi*fbp->wid + ui,
 		(*(fbp->map+vi*fbp->wid+ui))[0],	
 		(*(fbp->map+vi*fbp->wid+ui))[1],	

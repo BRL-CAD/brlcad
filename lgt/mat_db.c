@@ -92,10 +92,10 @@ int		material_id;
 		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
 	if( material_id >= MAX_MAT_DB )
 		{
-		rt_log( "Material data base only has %d entries.\n",
+		bu_log( "Material data base only has %d entries.\n",
 			MAX_MAT_DB
 			);
-		rt_log( "If this is not enough, notify the support staff.\n" );
+		bu_log( "If this is not enough, notify the support staff.\n" );
 		return	success;
 		}
 	else
@@ -198,7 +198,7 @@ int	id;
 		}
 	else
 		{
-		rt_log( "Material table full, MAX_DB_ENTRY too small.\n" );
+		bu_log( "Material table full, MAX_DB_ENTRY too small.\n" );
 		return	0;
 		}
 	(void) sprintf( prompt, "material name ? (%s) ", entry->name );

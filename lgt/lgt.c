@@ -82,7 +82,7 @@ char	*argv[];
 #endif
 	beginptr = (char *) sbrk(0);
 
-	npsw = rt_avail_cpus();
+	npsw = bu_avail_cpus();
 	if( npsw > MAX_PSW )
 		npsw = MAX_PSW;
 	if( npsw > 1 )
@@ -98,14 +98,14 @@ char	*argv[];
 	if( (newnice = nicem( C_PROC, 0, NICENESS )) == -1 )
 		perror( "nicem" );
 	else
-		rt_log( "Program niced to %d.\n", newnice - 20 );
+		bu_log( "Program niced to %d.\n", newnice - 20 );
 	oldlimit = limit( C_PROC, 0, L_CPU, MAX_CPU_TICKS );
 	newlimit = limit( C_PROC, 0, L_CPU, -1 );
-	rt_log(	"CPU time limit: was %d seconds, now set to %d seconds.\n",
+	bu_log(	"CPU time limit: was %d seconds, now set to %d seconds.\n",
 		oldlimit/HZ,
 		newlimit/HZ
 		);
-	rt_log(	"Memory limit set to %dKW.\n",
+	bu_log(	"Memory limit set to %dKW.\n",
 		limit( C_PROC, 0, L_MEM, -1 ) );
 	}
 #endif
@@ -200,7 +200,7 @@ int	frame;
 		x_fb_origin = (frame % frames_across) * movie.m_frame_sz;
 		y_fb_origin = (frame / frames_across) * movie.m_frame_sz;
 		}
-	rt_log( "Frame %d:\n", frame );
+	bu_log( "Frame %d:\n", frame );
 	if( movie.m_keys )
 		return	key_Frame() == -1 ? FALSE : TRUE;
 	lgts[0].azim = movie.m_azim_beg +
@@ -209,9 +209,9 @@ int	frame;
 			rel_frame * (movie.m_elev_end - movie.m_elev_beg);
 	grid_roll = movie.m_roll_beg +
 			rel_frame * (movie.m_roll_end - movie.m_roll_beg);
-	rt_log( "\tview azimuth\t%g\n", lgts[0].azim*DEGRAD );
-	rt_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
-	rt_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
+	bu_log( "\tview azimuth\t%g\n", lgts[0].azim*DEGRAD );
+	bu_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
+	bu_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
 	if( movie.m_over )
 		{
 		lgts[0].over = TRUE;
@@ -219,8 +219,8 @@ int	frame;
 			rel_frame * (movie.m_dist_end - movie.m_dist_beg);
 		grid_dist = movie.m_grid_beg +
 			rel_frame * (movie.m_grid_end - movie.m_grid_beg);
-		rt_log( "\teye distance\t%g\n", lgts[0].dist );
-		rt_log( "\tgrid distance\t%g\n", grid_dist );
+		bu_log( "\teye distance\t%g\n", lgts[0].dist );
+		bu_log( "\tgrid distance\t%g\n", grid_dist );
 		}
 	else
 		{
@@ -230,13 +230,13 @@ int	frame;
 			rel_perspective = 0.0;
 			grid_dist = movie.m_grid_beg +
 			     rel_frame * (movie.m_grid_end - movie.m_grid_beg);
-			rt_log( "\tgrid distance\t%g\n", grid_dist );
+			bu_log( "\tgrid distance\t%g\n", grid_dist );
 			}
 		else
 		if( movie.m_pers_beg >= 0.0 )
 			rel_perspective = movie.m_pers_beg +
 			rel_frame * (movie.m_pers_end - movie.m_pers_beg);
-		rt_log( "\tperspective\t%g\n", rel_perspective );
+		bu_log( "\tperspective\t%g\n", rel_perspective );
 		}
 	return	TRUE;
 	}

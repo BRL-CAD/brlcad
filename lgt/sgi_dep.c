@@ -237,7 +237,7 @@ mips_Max_Ray( flag )
 int	flag;
 	{
 	if( ir_mapping )
-		rt_log( "Multiple bounces disallowed during IR mapping.\n" );
+		bu_log( "Multiple bounces disallowed during IR mapping.\n" );
 	else
 		max_bounce = flag;	
 	return	'#'; /* For backward compatibility with SGI menu interface. */
@@ -1022,13 +1022,13 @@ int	fps;
 	xpos = ypos = xsiz / 2;
 	zoom = 1;
 	if( fb_zoom( fbiop, zoom, zoom ) == -1 )
-		rt_log( "Can not set zoom <%d,%d>.\n", zoom, zoom );
+		bu_log( "Can not set zoom <%d,%d>.\n", zoom, zoom );
 	if( fb_viewport( fbiop, 0, 0, xsiz, ysiz ) == -1 )
-		rt_log( "Can not set viewport {<%d,%d>,<%d,%d>}.\n",
+		bu_log( "Can not set viewport {<%d,%d>,<%d,%d>}.\n",
 			0, 0, xsiz, ysiz
 			);
 	if( fb_window( fbiop, xpos, ypos ) == -1 )
-		rt_log( "Can not set window <%d,%d>.\n", xpos, ypos );
+		bu_log( "Can not set window <%d,%d>.\n", xpos, ypos );
 
 	/* Create destination window for movie, with user positioning. */
 	prefsize( framesz, framesz );

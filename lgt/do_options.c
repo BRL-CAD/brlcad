@@ -410,9 +410,9 @@ HMitem	*itemp;
 char **ar;
 	{
 	if( *ar[0] > ' ' && *ar[0] <= '~' )
-		rt_log( "Unbound (%c)\n", *ar[0] );
+		bu_log( "Unbound (%c)\n", *ar[0] );
 	else
-		rt_log( "Unbound (0%o)\n", *ar[0] );
+		bu_log( "Unbound (0%o)\n", *ar[0] );
 	ring_Bell();
 	return	-2;
 	}
@@ -423,7 +423,7 @@ f_Comment( itemp, ar )
 HMitem	*itemp;
 char **ar;
 	{
-	rt_log( "%s\n", ar[0] );
+	bu_log( "%s\n", ar[0] );
 	return	1;
 	}
 
@@ -491,7 +491,7 @@ HMitem	*itemp;
 char **ar;
 	{
 	if( rt_g.rtg_parallel )
-		rt_log( "Will use %d processors.\n", npsw );
+		bu_log( "Will use %d processors.\n", npsw );
 
 	user_interrupt = FALSE;	/* Set by interrupt handler. */
 	for(	frame_no = movie.m_curframe;
@@ -546,7 +546,7 @@ char	**args;
 		{	HMitem	*itemptr;
 		if( ! tty )
 			{
-			rt_log( "pixel buffering command (%c): missing arg.\n",
+			bu_log( "pixel buffering command (%c): missing arg.\n",
 				*args[0] );
 			return	-1;
 			}
@@ -614,7 +614,7 @@ char	**args;
 		{	HMitem	*itemptr;
 		if( ! tty )
 			{
-			rt_log( "debug command (%c): missing argument.\n",
+			bu_log( "debug command (%c): missing argument.\n",
 				*args[0] );
 			return	-1;
 			}
@@ -709,7 +709,7 @@ char	**args;
 		static char	*batch_com[8];
 		char		*script = tmpnam( tmp_file );
 #ifdef cray
-	rt_log( "Sorry, no batch queue on the Cray yet.\n" );
+	bu_log( "Sorry, no batch queue on the Cray yet.\n" );
 	return	1;
 #else
 	batch_com[0] = "batch";
@@ -1032,7 +1032,7 @@ keybd_input :
 				    ||	fb_rpixel( fbiop, (unsigned char *) pixel )
 						== -1
 					)
-					rt_log( "Read from <%d,%d> failed.", mx, my );
+					bu_log( "Read from <%d,%d> failed.", mx, my );
 				else
 					prnt_Scroll( "Temperature is %d degrees fahrenheit.\n",
 						pixel_To_Temp( (RGBpixel *)pixel )
@@ -1050,7 +1050,7 @@ keybd_input :
 					{
 					ir_mapx = tx - fx;
 					ir_mapy = ty - fy;
-					rt_log( "to<%d,%d> from<%d,%d> delta<%d,%d>\n",
+					bu_log( "to<%d,%d> from<%d,%d> delta<%d,%d>\n",
 						tx, ty, fx, fy, ir_mapx, ir_mapy );
 					ir_offset = TRUE;
 					(void) sprintf( IR_AUTO_MAP_PTR, "%4s", "ON" );
@@ -1068,7 +1068,7 @@ keybd_input :
 					{
 					ir_mapx = tx - fx;
 					ir_mapy = ty - fy;
-					rt_log( "to<%d,%d> from<%d,%d> delta<%d,%d>\n",
+					bu_log( "to<%d,%d> from<%d,%d> delta<%d,%d>\n",
 						tx, ty, fx, fy, ir_mapx, ir_mapy );
 					ir_offset = TRUE;
 					(void) sprintf( IR_AUTO_MAP_PTR, "%4s", "ON" );
@@ -1169,7 +1169,7 @@ keybd_input :
 				break;
 			default :
 				ring_Bell();
-				rt_log( "Illegal key '%c:0%o'.\n", c, c );
+				bu_log( "Illegal key '%c:0%o'.\n", c, c );
 				prnt_Prompt( "Cursor input module (type '?' for help) : " );
 				break;
 				}
@@ -1238,7 +1238,7 @@ char	**args;
 		    &&	sscanf( input_ln, "%d", &noframes ) != 1
 			)
 			{
-			rt_log( "Illegal input (%s).\n", input_ln );
+			bu_log( "Illegal input (%s).\n", input_ln );
 			return	-1;
 			}
 		ready_Output_Device( 0 );
@@ -1303,14 +1303,14 @@ char	**args;
 	if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
 	    &&	sscanf( input_ln, "%d", &movie.m_frame_sz ) != 1 )
 		{
-		rt_log( "Illegal input (%s)\n", input_ln );	
+		bu_log( "Illegal input (%s)\n", input_ln );	
 		return	-1;
 		}
 	(void) sprintf( prompt, "Number of frames ? (%d) ", noframes );
 	if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
 	    &&	sscanf( input_ln, "%d", &noframes ) != 1 )
 		{
-		rt_log( "Illegal input (%s)\n", input_ln );	
+		bu_log( "Illegal input (%s)\n", input_ln );	
 		return	-1;
 		}
 	(void) sprintf( prompt, "Frames per second ? (%d) ", fps );
@@ -1318,7 +1318,7 @@ char	**args;
 	    &&	sscanf( input_ln, "%d", &fps ) != 1
 		)
 		{
-		rt_log( "Illegal input (%s)\n", input_ln );	
+		bu_log( "Illegal input (%s)\n", input_ln );	
 		return	-1;
 		}
 	x_fb_origin = 0;
@@ -1356,7 +1356,7 @@ char	**args;
 		{	fastf_t	vsize;
 		if( sscanf( args[2], "%d", &force_cellsz ) != 1 )
 			{
-			rt_log( "Can't read size flag!\n" );
+			bu_log( "Can't read size flag!\n" );
 			return	-1;
 			}
 		if( force_cellsz )
@@ -1367,19 +1367,19 @@ char	**args;
 			if( sscanf( args[1], "%lf", &cell_sz ) != 1 )
 #endif
 				{
-				rt_log( "Can't read cell size!\n" );
+				bu_log( "Can't read cell size!\n" );
 				return	-1;
 				}
 			}
 		else
 			if( sscanf( args[1], "%d", &grid_sz ) != 1 )
 				{
-				rt_log( "Can't read grid size!\n" );
+				bu_log( "Can't read grid size!\n" );
 				return	-1;
 				}
 		if( sscanf( args[3], "%d", &type_grid ) != 1 )
 			{
-			rt_log( "Can't read grid type!\n" );
+			bu_log( "Can't read grid type!\n" );
 			return	-1;
 			}
 
@@ -1389,7 +1389,7 @@ char	**args;
 		if( sscanf( args[4], "%lf", &vsize ) != 1 )
 #endif
 			{
-			rt_log( "Can't read view size!\n" );
+			bu_log( "Can't read view size!\n" );
 			return	-1;
 			}
 		if( vsize > EPSILON )
@@ -1475,12 +1475,12 @@ char	**args;
 		return	-1;
 	if( save_fb_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	if( strcmp( save_fb_file, fb_file ) == 0 )
 		{
-		rt_log( "Frame buffer is same as saved image!\n" );
+		bu_log( "Frame buffer is same as saved image!\n" );
 		return	-1;
 		}
 	if( ! ready_Output_Device( 0 ) )
@@ -1549,12 +1549,12 @@ char	**args;
 		return	-1;
 	if( save_fb_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	if( strcmp( save_fb_file, fb_file ) == 0 )
 		{
-		rt_log( "Frame buffer is same as saved image!\n" );
+		bu_log( "Frame buffer is same as saved image!\n" );
 		return	-1;
 		}
 	if( ! ready_Output_Device( 0 ) )
@@ -1641,7 +1641,7 @@ char	**args;
 	    &&	sscanf( args[1], "%d", &light_id ) != 1
 		)
 		{
-		rt_log( "Illegal input (%s)\n", args[1] );
+		bu_log( "Illegal input (%s)\n", args[1] );
 		return	-1;
 		}
 	if( lgt_Print_Db( light_id ) && popups )
@@ -1676,7 +1676,7 @@ char	**args;
 	if(	args != NULL && args[1] != NULL
 	    &&	sscanf( args[1], "%d", &material_id ) != 1 )
 		{
-		rt_log( "Illegal input (%s)\n", args[1] );
+		bu_log( "Illegal input (%s)\n", args[1] );
 		return	-1;
 		}
 	if( mat_Print_Db( material_id ) && popups )
@@ -1707,12 +1707,12 @@ char	**args;
 		return	-1;
 	if( ir_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	if( (ir_fp = fopen( ir_file, "r" )) == NULL )
 		{
-		rt_log( "Can not open \"%s\" for reading.\n", ir_file );
+		bu_log( "Can not open \"%s\" for reading.\n", ir_file );
 		return	-1;
 		}
 	if( ! ready_Output_Device( 0 ) )
@@ -1720,7 +1720,7 @@ char	**args;
 	prnt_Event( "Reading IR data..." );
 	if( ! read_IR( ir_fp ) )
 		{
-		rt_log(	"Read of IR data from file \"%s\" failed.\n",
+		bu_log(	"Read of IR data from file \"%s\" failed.\n",
 			ir_file
 			);
 		(void) fclose( ir_fp );
@@ -1743,7 +1743,7 @@ FILE	*fp;
 	if( fscanf( fp, "%le", &view_size ) != 1 )
 #endif
 		{
-		rt_log( "Failed to read view size.\n" );
+		bu_log( "Failed to read view size.\n" );
 		if( ! movie.m_keys && fp != stdin )
 			(void) fclose( fp );
 		return	FALSE;
@@ -1756,7 +1756,7 @@ FILE	*fp;
 		!= 3
 		)
 		{
-		rt_log( "Failed to read eye position.\n" );
+		bu_log( "Failed to read eye position.\n" );
 		if( ! movie.m_keys && fp != stdin )
 			(void) fclose( fp );
 		return	FALSE;
@@ -1768,7 +1768,7 @@ FILE	*fp;
 		if( fscanf( fp, "%le", &view_rots[i] ) != 1 )
 #endif
 			{
-			rt_log( "Failed to read view matrix.\n" );
+			bu_log( "Failed to read view matrix.\n" );
 			save_view_flag = FALSE;
 			if( ! movie.m_keys && fp != stdin )
 				(void) fclose( fp );
@@ -1834,7 +1834,7 @@ char	**args;
 	movie.m_noframes = noframes;
 	if( movie.m_noframes < 1 )
 		{
-		rt_log( "It doesn't make sense not to have atleast 2 frames.\n" );
+		bu_log( "It doesn't make sense not to have atleast 2 frames.\n" );
 		ret = -1;
 		goto	error_exit;
 		}
@@ -1873,7 +1873,7 @@ char	**args;
 		else
 		if( (movie.m_keys_fp = fopen( svkey_file, "r" )) == NULL )
 			{
-			rt_log( "Can't open \"%s\" for reading.", svkey_file );
+			bu_log( "Can't open \"%s\" for reading.", svkey_file );
 			ret = -1;
 			goto	error_exit;
 			}
@@ -2027,7 +2027,7 @@ char	**args;
 error_exit :
 	if( ret == -1 )
 		{
-		rt_log( "Illegal input (%s).\n", input_ln );
+		bu_log( "Illegal input (%s).\n", input_ln );
 		movie.m_noframes = 1;
 		}
 	return	ret;
@@ -2042,7 +2042,7 @@ char	**args;
 	{
 	if( ir_mapping )
 		{
-		rt_log( "Multiple bounces disallowed during IR mapping.\n" );
+		bu_log( "Multiple bounces disallowed during IR mapping.\n" );
 		return	-1;
 		}
 	if( args == NULL )
@@ -2055,7 +2055,7 @@ char	**args;
 		    &&	sscanf( input_ln, "%d", &max_bounce ) != 1
 			)
 			{
-			rt_log( "f_Max_Bounce: Illegal input (%s)\n",
+			bu_log( "f_Max_Bounce: Illegal input (%s)\n",
 				input_ln
 				);
 			return	-1;
@@ -2126,7 +2126,7 @@ char	**args;
 
 	if( err_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	/* Insure that error log is truncated. */
@@ -2203,7 +2203,7 @@ HMitem	*itemp;
 char	**args;
 	{
 #ifdef PARALLEL
-		int maxpsw = rt_avail_cpus();
+		int maxpsw = bu_avail_cpus();
 	if( maxpsw > MAX_PSW )
 		maxpsw = MAX_PSW;
 	if( args == NULL )
@@ -2255,18 +2255,18 @@ char	**args;
 		return	-1;
 	if( ir_db_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	if( (ir_fp = fopen( ir_db_file, "w" )) == NULL )
 		{
-		rt_log( "Can not open \"%s\" for writing.\n", ir_db_file );
+		bu_log( "Can not open \"%s\" for writing.\n", ir_db_file );
 		return	-1;
 		}
 	prnt_Event( "Writing IR data base..." );
 	if( ! write_Trie( reg_triep, 0, ir_fp ) )
 		{
-		rt_log(	"Write of IR data base (%s) failed.\n",
+		bu_log(	"Write of IR data base (%s) failed.\n",
 			ir_db_file
 			);
 		(void) fclose( ir_fp );
@@ -2299,12 +2299,12 @@ char	**args;
 		return	-1;
 	if( lgt_db_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	if( ! lgt_Save_Db( lgt_db_file ) )
 		{
-		rt_log( "Write of light source data base (%s) failed.\n", lgt_db_file );
+		bu_log( "Write of light source data base (%s) failed.\n", lgt_db_file );
 		return	-1;
 		}
 	return	1;
@@ -2333,7 +2333,7 @@ char	**args;
 		return	-1;
 	if( mat_db_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	return	mat_Save_Db( mat_db_file ) ? 1 : -1;
@@ -2399,7 +2399,7 @@ char	**args;
 		Toggle( report_overlaps );
 		}
 	if( ! tty )
-		rt_log(	"Overlaps will%sbe reported.\n",
+		bu_log(	"Overlaps will%sbe reported.\n",
 			report_overlaps ? " " : " NOT "
 			);
 	return	1;
@@ -2539,7 +2539,7 @@ char	**args;
 		{	HMitem	*itemptr;
 		if( ! tty )
 			{
-			rt_log( "IR module command (%c): missing argument\n",
+			bu_log( "IR module command (%c): missing argument\n",
 				*args[0] );
 			return	-1;
 			}
@@ -2586,12 +2586,12 @@ char	**args;
 		}
 	if( ir_db_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	if( (ir_fp = fopen( ir_db_file, "r" )) == NULL )
 		{
-		rt_log( "Can not open \"%s\" for reading.\n", ir_db_file );
+		bu_log( "Can not open \"%s\" for reading.\n", ir_db_file );
 		return	-1;
 		}
 	if( ! ready_Output_Device( 0 ) )
@@ -2599,7 +2599,7 @@ char	**args;
 	prnt_Event( "Reading IR data base..." );
 	if( ! read_Trie( ir_fp ) )
 		{
-		rt_log(	"Read of IR data base (%s) failed.\n",
+		bu_log(	"Read of IR data base (%s) failed.\n",
 			ir_db_file
 			);
 		(void) fclose( ir_fp );
@@ -2632,12 +2632,12 @@ char	**args;
 		}
 	if( lgt_db_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	if( ! lgt_Rd_Db( lgt_db_file ) )
 		{
-		rt_log( "Read of light data base (%s) failed.\n", lgt_db_file );
+		bu_log( "Read of light data base (%s) failed.\n", lgt_db_file );
 		return	-1;
 		}
 	return	1;
@@ -2664,12 +2664,12 @@ char	**args;
 		}
 	if( mat_db_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	if( ! mat_Rd_Db( mat_db_file ) )
 		{
-		rt_log( "Read of material data base (%s) failed.\n", mat_db_file );
+		bu_log( "Read of material data base (%s) failed.\n", mat_db_file );
 		return	-1;
 		}
 	return	1;
@@ -2706,7 +2706,7 @@ char	**args;
 #endif
 		)
 		{
-		rt_log( "f_Dist_Grid : Illegal input.\n" );
+		bu_log( "f_Dist_Grid : Illegal input.\n" );
 		return	-1;
 		}
 	else
@@ -2726,7 +2726,7 @@ char	**args;
 #endif
 				)
 				{
-				rt_log( "f_Dist_Grid : Illegal input (%s).\n",
+				bu_log( "f_Dist_Grid : Illegal input (%s).\n",
 					input_ln );
 				return	-1;
 				}
@@ -2745,7 +2745,7 @@ f_Scale_Grid( itemp, args )
 HMitem	*itemp;
 char	**args;
 	{
-	rt_log( "The -g option is obsolete, use -G to set view size.\n" );
+	bu_log( "The -g option is obsolete, use -G to set view size.\n" );
 	return	1;
 	}
 
@@ -2794,7 +2794,7 @@ char	**args;
 		(void) strncpy( svkey_file, args[1], MAX_LN );
 		if( (svkey_fp = fopen( svkey_file, "r" )) == NULL )
 			{
-			rt_log( "Can't open \"%s\" for reading.", svkey_file );
+			bu_log( "Can't open \"%s\" for reading.", svkey_file );
 			return	-1;
 			}
 		}
@@ -2821,12 +2821,12 @@ char	**args;
 			(void) strcpy( svkey_file, input_ln );
 		if( svkey_file[0] == '\0' )
 			{
-			rt_log( "No default, must specify file name!\n" );
+			bu_log( "No default, must specify file name!\n" );
 			return	-1;
 			}
 		if( (svkey_fp = fopen( svkey_file, "r" )) == NULL )
 			{
-			rt_log( "Can't open \"%s\" for reading.", svkey_file );
+			bu_log( "Can't open \"%s\" for reading.", svkey_file );
 			return	-1;
 			}
 		}
@@ -2849,12 +2849,12 @@ char	**args;
 		return	-1;
 
 	/* Compute view-to-model rotation matrix. */
-	mat_idn( to_eye );
+	bn_mat_idn( to_eye );
 	to_eye[MDX] = -lgts[0].loc[X];
 	to_eye[MDY] = -lgts[0].loc[Y];
 	to_eye[MDZ] = -lgts[0].loc[Z];
-	mat_mul( model2view, view_rots, to_eye );
-	mat_inv( view2model, model2view );
+	bn_mat_mul( model2view, view_rots, to_eye );
+	bn_mat_inv( view2model, model2view );
 	save_view_flag = TRUE;
 	force_viewsz = TRUE;
 	if( ! movie.m_keys && svkey_fp != stdin )
@@ -2900,7 +2900,7 @@ char	**args;
 				HL_REVERSE_VIDEO : HL_ENABLED;
 			break;
 		default :
-			rt_log( "Illegal value (%d) for hidden line flag.\n",
+			bu_log( "Illegal value (%d) for hidden line flag.\n",
 				hiddenln_draw );
 			return	-1;
 			}
@@ -2939,7 +2939,7 @@ char	**args;
 		     ||	light_id < 0 || light_id >= MAX_LGTS
 			)
 			{
-			rt_log( "Illegal input (%s)\n", input_ln );
+			bu_log( "Illegal input (%s)\n", input_ln );
 			return	-1;
 			}
 		}
@@ -2948,7 +2948,7 @@ char	**args;
 	    &&	sscanf( args[1], "%d", &light_id ) != 1
 		)
 		{
-		rt_log( "Illegal input (%s)\n", args[1] );
+		bu_log( "Illegal input (%s)\n", args[1] );
 		return	-1;
 		}
 	return	lgt_Edit_Db_Entry( light_id );
@@ -2972,7 +2972,7 @@ char	**args;
 		    &&	sscanf( input_ln, "%d", &material_id ) != 1
 			)
 			{
-			rt_log( "Illegal input (%s)\n", input_ln );
+			bu_log( "Illegal input (%s)\n", input_ln );
 			return	-1;
 			}
 				
@@ -2982,7 +2982,7 @@ char	**args;
 	    &&	sscanf( args[1], "%d", &material_id ) != 1
 		)
 		{
-		rt_log( "Illegal input (%s)\n", args[1] );
+		bu_log( "Illegal input (%s)\n", args[1] );
 		return	-1;
 		}
 	return	mat_Edit_Db_Entry( material_id ) ? 1 : -1;
@@ -3124,7 +3124,7 @@ char	**args;
 		)
 		)
 		{
-		rt_log( "f_Grid_X_Pos : Illegal input.\n" );
+		bu_log( "f_Grid_X_Pos : Illegal input.\n" );
 		return	-1;
 		}
 	else
@@ -3139,7 +3139,7 @@ char	**args;
 			!= 2
 			)
 			{
-			rt_log( "Illegal input (%s).\n", input_ln );
+			bu_log( "Illegal input (%s).\n", input_ln );
 			return	-1;
 			}
 		}
@@ -3169,7 +3169,7 @@ char	**args;
 		)
 		)
 		{
-		rt_log( "f_Grid_Y_Pos : Illegal input.\n" );
+		bu_log( "f_Grid_Y_Pos : Illegal input.\n" );
 		return	-1;
 		}
 	else
@@ -3184,7 +3184,7 @@ char	**args;
 			!= 2
 			)
 			{
-			rt_log( "Illegal input (%s).\n", input_ln );
+			bu_log( "Illegal input (%s).\n", input_ln );
 			return	-1;
 			}
 		}
@@ -3420,16 +3420,16 @@ int	frame;
 		/* Horizontal and vertical grid unit vectors. */
 		MAT4X3VEC( grid_hor, view2model, x_axis );
 		MAT4X3VEC( grid_ver, view2model, y_axis );
-		rt_log( "\tview size\t%12.6f\n", view_size );
-		rt_log( "\tview direction\t<%12.6f,%12.6f,%12.6f>\n",
+		bu_log( "\tview size\t%12.6f\n", view_size );
+		bu_log( "\tview direction\t<%12.6f,%12.6f,%12.6f>\n",
 			-lgts[0].dir[X],
 			-lgts[0].dir[Y],
 			-lgts[0].dir[Z]
 			);
-		V_Print( "\teye location", lgts[0].loc, rt_log );
-		V_Print( "\tgrid location", grid_loc, rt_log );
-		V_Print( "\tgrid horizontal", grid_hor, rt_log );
-		V_Print( "\tgrid vertical", grid_ver, rt_log );
+		V_Print( "\teye location", lgts[0].loc, bu_log );
+		V_Print( "\tgrid location", grid_loc, bu_log );
+		V_Print( "\tgrid horizontal", grid_hor, bu_log );
+		V_Print( "\tgrid vertical", grid_ver, bu_log );
 		}
 	else
 	if(   !	lgts[0].over
@@ -3444,22 +3444,22 @@ int	frame;
 		Diff2Vec( lgts[0].loc, grid_loc, lgts[0].dir );
 		if( MAGNITUDE( lgts[0].dir ) < EPSILON  )
 			{
-			rt_log( "The GRID is on top of your EYE!\n" );
+			bu_log( "The GRID is on top of your EYE!\n" );
 			prnt_Timer( "LGTS" );
 			return	0;
 			}
 		VUNITIZE( lgts[0].dir );
-		rt_log( "Using eye solid (%s) and grid solid \"GRID\".\n",
+		bu_log( "Using eye solid (%s) and grid solid \"GRID\".\n",
 			lgts[0].name );
-		rt_log( "\teye center = <%g,%g,%g>\n",
+		bu_log( "\teye center = <%g,%g,%g>\n",
 			eye_stp->st_center[X],
 			eye_stp->st_center[Y],
 			eye_stp->st_center[Z] );
-		rt_log( "\tgrid center = <%g,%g,%g>\n",
+		bu_log( "\tgrid center = <%g,%g,%g>\n",
 			grid_stp->st_center[X],
 			grid_stp->st_center[Y],
 			grid_stp->st_center[Z] );
-		rt_log( "\tviewing direction = <%g,%g,%g>\n",
+		bu_log( "\tviewing direction = <%g,%g,%g>\n",
 			lgts[0].dir[X],
 			lgts[0].dir[Y],
 			lgts[0].dir[Z] );
@@ -3492,7 +3492,7 @@ int	frame;
 				}
 			}
 #ifdef VDEBUG
-		rt_log( "\tgrid vectors: hor=<%g,%g,%g> ver=<%g,%g,%g>\n",
+		bu_log( "\tgrid vectors: hor=<%g,%g,%g> ver=<%g,%g,%g>\n",
 			grid_hor[X], grid_hor[Y], grid_hor[Z],
 			grid_ver[X], grid_ver[Y], grid_ver[Z] );
 #endif
@@ -3558,8 +3558,8 @@ int	frame;
 			    &&	(lgts[i].stp = rt_find_solid( rt_ip, lgts[i].name )) != SOLTAB_NULL
 				)
 				{
-				rt_log( "Explicitly positioned light sources can't track view.\n" );
-				rt_log( "Light source [%d]:\"%s\" ignored.\n", i, lgts[i].name );
+				bu_log( "Explicitly positioned light sources can't track view.\n" );
+				bu_log( "Light source [%d]:\"%s\" ignored.\n", i, lgts[i].name );
 				continue;
 				}
 			azim = lgts[i].azim + rel_frame *
@@ -3598,7 +3598,7 @@ int	frame;
 		    &&	lgts[i].rgb[1] == 0
 		    &&	lgts[i].rgb[2] == 0
 			)
-			rt_log( "Warning: light source %d is black.\n", i );
+			bu_log( "Warning: light source %d is black.\n", i );
 		Scale2Vec( lgts[i].rgb, RGB_INVERSE, lgts[i].coef );
 		}
 	prnt_Timer( "LGTS" );
@@ -3643,7 +3643,7 @@ char	*args[];
 	if( (args[0] = strtok( input_ln, " \t" )) == NULL )
 		{
 		if( ! tty )
-			rt_log( "Blank line input.\n" );
+			bu_log( "Blank line input.\n" );
 		args[0] = "#";
 		args[1] = NULL;
 		return;
@@ -3673,7 +3673,7 @@ char	*file;
 		}
 	if( script_file[0] == '\0' )
 		{
-		rt_log( "No default, must specify file name!\n" );
+		bu_log( "No default, must specify file name!\n" );
 		return	-1;
 		}
 	{	int	tmp_fd;
@@ -3686,7 +3686,7 @@ char	*file;
 	}
 	if( (run_fp = fopen( script_file, "w" )) == NULL )
 		{
-		rt_log( "Can't open '%s' for writing.\n", script_file );
+		bu_log( "Can't open '%s' for writing.\n", script_file );
 		return	-1;
 		}
 	(void) fprintf( run_fp, "#!/bin/sh\n" );
@@ -3821,14 +3821,14 @@ register char	**argv;
 	/* Check for data base name. */
 	if( (ged_file = argv[optind++]) == NULL )
 		{
-		rt_log( "No GED file or objects!\n" );
+		bu_log( "No GED file or objects!\n" );
 		return	0;
 		}
 
 	/* Check for objects to raytrace. */
 	if( argv[optind] == NULL )
 		{
-		rt_log( "Must specify GED objects!\n" );
+		bu_log( "Must specify GED objects!\n" );
 		return	0;
 		}
 
@@ -3860,7 +3860,7 @@ register char	**argv;
 	prnt_Timer( "LOAD" );
 	if( ! ok )
 		{
-		rt_log( "No valid objects specified!\n" );
+		bu_log( "No valid objects specified!\n" );
 		exit( 1 );
 		}
 	}
@@ -3872,12 +3872,12 @@ register char	**argv;
 	modl_radius = Dist3d( rt_ip->mdl_min, rt_ip->mdl_max ) / 2.0;
 	if( ! force_viewsz )
 		view_size = modl_radius * 2.0;
-	rt_log( "Model minimum [%11.4f,%11.4f,%11.4f]\n",
+	bu_log( "Model minimum [%11.4f,%11.4f,%11.4f]\n",
 		rt_ip->mdl_min[X],
 		rt_ip->mdl_min[Y],
 		rt_ip->mdl_min[Z]
 		);
-	rt_log( "Model maximum [%11.4f,%11.4f,%11.4f]\n",
+	bu_log( "Model maximum [%11.4f,%11.4f,%11.4f]\n",
 		rt_ip->mdl_max[X],
 		rt_ip->mdl_max[Y],
 		rt_ip->mdl_max[Z]

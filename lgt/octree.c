@@ -106,7 +106,7 @@ register int		*levelp;
 	{
 	if( parentp == OCTREE_NULL )
 		{
-		rt_log( "find_Octant() parent node is NULL\n" );
+		bu_log( "find_Octant() parent node is NULL\n" );
 		return	OCTREE_NULL;
 		}
 	do
@@ -146,7 +146,7 @@ int		level;
 	/* Traverse to octant leaf node containing "pt".		*/
 	if( (newp = find_Octant( parentp, pt, &level )) == OCTREE_NULL )
 		{
-		rt_log( "find_Octant() returned NULL!\n" );
+		bu_log( "find_Octant() returned NULL!\n" );
 		return	OCTREE_NULL;
 		}
 
@@ -257,7 +257,7 @@ int		level;
 	/* Ward against integer overflow in 2^level.			*/
 	if( level > L_MAX_POWER_TWO )
 		{
-		rt_log( "Can not subdivide, level = %d\n", level );
+		bu_log( "Can not subdivide, level = %d\n", level );
 		prnt_Octree( &ir_octree, 0 );
 		return	0;
 		}
@@ -301,7 +301,7 @@ Octree	*parentp;
 int	level;
 	{	register PtList	*ptp;
 		register int ptcount = 0;
-	rt_log( "%s[%2d](%8.3f,%8.3f,%8.3f)bits=0%o temp=%04d trie=%05x sibling=%05x child=%05x\n",
+	bu_log( "%s[%2d](%8.3f,%8.3f,%8.3f)bits=0%o temp=%04d trie=%05x sibling=%05x child=%05x\n",
 		parentp->o_child != OCTREE_NULL ? "NODE" : "LEAF",
 		level,
 		parentp->o_points->c_point[X],
@@ -316,14 +316,14 @@ int	level;
 	for( ptp = parentp->o_points->c_next; ptp != PTLIST_NULL; ptp = ptp->c_next )
 		{
 		if( rt_g.debug )
-			rt_log( "\t%8.3f,%8.3f,%8.3f\n",
+			bu_log( "\t%8.3f,%8.3f,%8.3f\n",
 				ptp->c_point[X],
 				ptp->c_point[Y],
 				ptp->c_point[Z]
 				);
 		ptcount++;
 		}
-	rt_log( "\t%d points\n", ptcount );
+	bu_log( "\t%d points\n", ptcount );
 	return;
 	}
 
@@ -359,7 +359,7 @@ FILE	*fp;
 	hdr_ptlist.f_length = 0;
 	if( fwrite( (char *) &hdr_ptlist, sizeof(F_Hdr_Ptlist), 1, fp ) != 1 )
 		{
-		rt_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
+		bu_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
 		return	0;
 		}
 	/* Write out list of points.					*/
@@ -370,7 +370,7 @@ FILE	*fp;
 			!= 1
 			)
 			{
-			rt_log( "\"%s\"(%d) Write failed.\n", __FILE__, __LINE__ );
+			bu_log( "\"%s\"(%d) Write failed.\n", __FILE__, __LINE__ );
 			return	0;
 			}
 		}
@@ -379,20 +379,20 @@ FILE	*fp;
 		/* Go back and fudge point count.			*/
 		if( fseek( fp, addr, 0 ) )
 			{
-			rt_log( "\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__ );
+			bu_log( "\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__ );
 			return	0;
 			}
 		if( fwrite( (char *) &hdr_ptlist, sizeof(hdr_ptlist), 1, fp )
 			!= 1
 			)
 			{
-			rt_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
+			bu_log( "\"%s\"(%d) Write failed!\n", __FILE__, __LINE__ );
 			return	0;
 			}
 		/* Re-position write pointer to end-of-file.		*/
 		if( fseek( fp, 0L, 2 ) )
 			{
-			rt_log( "\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__ );
+			bu_log( "\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__ );
 			return	0;
 			}
 		}

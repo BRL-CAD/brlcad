@@ -90,7 +90,7 @@ fb_Zoom_Window()
 	if( tty )
 		prnt_Event( "Zooming..." );
 	if( fb_zoom( fbiop, zoom, zoom ) == -1 )
-		rt_log( "Can not set zoom <%d,%d>.\n", zoom, zoom );
+		bu_log( "Can not set zoom <%d,%d>.\n", zoom, zoom );
 	if( x_fb_origin >= grid_sz )
 		xpos += x_fb_origin;
 	if( y_fb_origin >= grid_sz )
@@ -98,11 +98,11 @@ fb_Zoom_Window()
 	if( tty )
 		prnt_Event( "Windowing..." );
 	if( fb_viewport( fbiop, 0, 0, grid_sz, grid_sz ) == -1 )
-		rt_log( "Can not set viewport {<%d,%d>,<%d,%d>}.\n",
+		bu_log( "Can not set viewport {<%d,%d>,<%d,%d>}.\n",
 			0, 0, grid_sz, grid_sz
 			);
 	if( fb_window( fbiop, xpos, ypos ) == -1 )
-		rt_log( "Can not set window <%d,%d>.\n", xpos, ypos );
+		bu_log( "Can not set window <%d,%d>.\n", xpos, ypos );
 	if( tty )
 		prnt_Event( (char *) NULL );
 	return;
