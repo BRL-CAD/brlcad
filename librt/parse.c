@@ -25,13 +25,15 @@
 static char RCSparse[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef BSD
-# include <strings.h>
-#else
+#ifdef USE_STRING_H
 # include <string.h>
+#else
+# include <strings.h>
 #endif
 
 #include "machine.h"
@@ -452,11 +454,12 @@ CONST char			*base;	  /* base address of users structure */
 
 				rt_g.rtg_logindent = strlen(sdp->sp_name)+2;
 				
-				rt_log(" %s=(vls_magic)%d (vls_len)%d (vls_max)%d\n",
+				rt_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
 					sdp->sp_name, vls->vls_magic,
+					vls->vls_offset,
 					vls->vls_len, vls->vls_max);
 				rt_g.rtg_logindent = indent;
-				rt_log("\"%s\"\n", vls->vls_str);
+				rt_log("\"%s\"\n", vls->vls_str+vls->vls_offset);
 			}
 			break;
 		case 'i':
@@ -544,7 +547,7 @@ register CONST double	*dp;
 
 	rt_vls_extend(vls, strlen(name) + 3 + 32 * count);
 
-	cp = &vls->vls_str[vls->vls_len];
+	cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
 	sprintf(cp, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
 	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
@@ -619,7 +622,7 @@ CONST char				*base;	/* structure ponter */
 				break;
 			if (sdp->sp_count == 1) {
 				rt_vls_extend(vls, strlen(sdp->sp_name)+6);
-				cp = &vls->vls_str[vls->vls_len];
+				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
 				if (*loc == '"')
 					sprintf(cp, "%s%s=\"%s\"",
 						(vls->vls_len?" ":""),
@@ -642,7 +645,7 @@ CONST char				*base;	/* structure ponter */
 				rt_vls_extend(vls, strlen(sdp->sp_name)+
 					strlen(loc)+5+count);
 
-				cp = &vls->vls_str[vls->vls_len];
+				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
 				if (vls->vls_len) (void)strcat(cp, " ");
 				(void)strcat(cp, sdp->sp_name);
 				(void)strcat(cp, "=\"");
@@ -669,7 +672,7 @@ CONST char				*base;	/* structure ponter */
 				rt_vls_extend(vls, rt_vls_strlen(vls_p) + 5 +
 					strlen(sdp->sp_name) );
 
-				cp = &vls->vls_str[vls->vls_len];
+				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
 				sprintf(cp, "%s%s=\"%s\"",
 					(vls->vls_len?" ":""),
 					sdp->sp_name,
@@ -685,7 +688,7 @@ CONST char				*base;	/* structure ponter */
 				rt_vls_extend(vls, 
 					64 * i + strlen(sdp->sp_name) + 3 );
 
-				cp = &vls->vls_str[vls->vls_len];
+				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
 				sprintf(cp, "%s%s=%d",
 						(vls->vls_len?" ":""),
 						 sdp->sp_name, *sp++);
@@ -708,7 +711,7 @@ CONST char				*base;	/* structure ponter */
 				rt_vls_extend(vls, 
 					64 * i + strlen(sdp->sp_name) + 3 );
 
-				cp = &vls->vls_str[vls->vls_len];
+				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
 				sprintf(cp, "%s%s=%d", 
 					(vls->vls_len?" ":""),
 					sdp->sp_name, *dp++);
