@@ -380,6 +380,7 @@ Ogl2_open()
   char	*envp;
 
   ogl_var_init();
+  rt_vls_init(&pathName);
 
   /* get or create the default display */
   if( (envp = getenv("DISPLAY")) == NULL ) {
@@ -500,9 +501,6 @@ Ogl2_close()
 /*	glClearDepth(0.0);*/
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-#if 0
-	glXMakeCurrent(dpy, None, NULL);
-#endif
 	glXDestroyContext(dpy, glxc);
 
 	Tk_DestroyWindow(xtkwin);
@@ -1447,7 +1445,6 @@ char	*name;
   Display *tmp_dpy;
 
   rt_vls_init(&str);
-  rt_vls_init(&pathName);
 
   /* Only need to do this once */
   if(tkwin == NULL){
@@ -2315,7 +2312,9 @@ Window window;
       if (!glXMakeCurrent(((struct ogl_vars *)p->_dm_vars)->_dpy,
 			  ((struct ogl_vars *)p->_dm_vars)->_win,
 			  ((struct ogl_vars *)p->_dm_vars)->_glxc)){
+#if 0
 	rt_log("get_dm_list: Couldn't make context current\n");
+#endif
 	return DM_LIST_NULL;
       }
 
@@ -2327,7 +2326,9 @@ Window window;
   for( RT_LIST_FOR(p, ogl_vars, &head_ogl_vars.l) ){
     if(window == p->_win){
       if (!glXMakeCurrent(p->_dpy, p->_win, p->_glxc)){
+#if 0
 	rt_log("get_dm_list: Couldn't make context current\n");
+#endif
 	return DM_LIST_NULL;
       }
 

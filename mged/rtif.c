@@ -348,7 +348,11 @@ char	**argv;
 	 */
 	dm = dmp->dmr_name;
 	if( (needs_reattach = dmp->dmr_releasedisplay) != 0 )
+#ifdef MULTI_ATTACH
+	  release(NULL);
+#else
 		release();		/* changes dmp */
+#endif
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rt";
@@ -403,7 +407,11 @@ char	**argv;
 	 */
 	dm = dmp->dmr_name;
 	if( needs_reattach = dmp->dmr_releasedisplay )
+#ifdef MULTI_ATTACH
+	  release(NULL);
+#else
 		release();		/* changes dmp */
+#endif
 
 	vp = &rt_cmd_vec[0];
 	for( i=1; i < argc; i++ )
