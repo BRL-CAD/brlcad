@@ -2545,8 +2545,10 @@ top:
 			NMG_CK_LOOPUSE(tlu);
 			if( tlu == lu )  {
 				/* We touch ourselves at another vu? */
+#if 0
 				rt_log("INFO: nmg_join_touchingloops() lu=x%x touches itself at vu1=x%x, vu2=x%x, skipping\n",
 					lu, vu, tvu );
+#endif
 				continue;
 			}
 			if( *tlu->up.magic_p != NMG_FACEUSE_MAGIC )  continue;
@@ -2558,7 +2560,9 @@ top:
 			 *  XXX a potential shared edge at this point?
 			 *  XXX Call nmg_simplify_loop()?
 			 */
-rt_log("nmg_join_touchingloops(): lu=x%x, vu=x%x, tvu=x%x\n", lu, vu, tvu);
+			if (rt_g.NMG_debug & DEBUG_BASIC)  {
+				rt_log("nmg_join_touchingloops(): lu=x%x, vu=x%x, tvu=x%x\n", lu, vu, tvu);
+			}
 			tvu = nmg_join_2loops( vu, tvu );
 			NMG_CK_VERTEXUSE(tvu);
 			count++;
@@ -3151,7 +3155,9 @@ CONST struct rt_tol	*tol;
 found:
 				VADD2SCALE( mid, v1->vg_p->coord, v2->vg_p->coord, 0.5 );
 				class = nmg_class_pt_f_except( mid, fu, lu, tol );
+#if 0
 rt_log("nmg_lu_reorient() eu midpoint=(%g, %g, %g), class=%s\n", V3ARGS(mid), nmg_class_name(class) );
+#endif
 				switch( class )  {
 				case NMG_CLASS_AinB:
 					/* An interior point, must be a hole */
