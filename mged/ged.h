@@ -131,9 +131,6 @@ extern int	los_default;
 extern mat_t	modelchanges;		/* full changes this edit */
 extern mat_t	incr_change;		/* change(s) from last cycle */
 extern point_t	recip_vanishing_point;
-				
-#define VIEWSIZE	(2*Viewscale)	/* Width of viewing cube */
-#define VIEWFACTOR	(1/Viewscale)	/* 2.0 / VIEWSIZE */
 
 /*
  * Identity matrix.  Handy to have around. - initialized in e1.c

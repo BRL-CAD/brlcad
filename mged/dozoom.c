@@ -357,7 +357,11 @@ mat_print("pmat", pmat);
 		mat = new;
 	}
 
+#ifdef USE_LIBDM
+	dmp->dmr_newrot( dmp, mat, which_eye );
+#else
 	dmp->dmr_newrot( mat, which_eye );
+#endif
 
 	FOR_ALL_SOLIDS( sp )  {
 		sp->s_flag = DOWN;		/* Not drawn yet */
@@ -374,7 +378,11 @@ mat_print("pmat", pmat);
 		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
+#ifdef USE_LIBDM
+ 		if( dmp->dmr_object( dmp, sp, mat, ratio, sp==illump ) )  {
+#else
 		if( dmp->dmr_object( sp, mat, ratio, sp==illump ) )  {
+#endif
 			sp->s_flag = UP;
 			ndrawn++;
 		}
@@ -399,7 +407,11 @@ mat_print("pmat", pmat);
 		mat_mul( new, pmat, model2objview );
 		mat = new;
 	}
+#ifdef USE_LIBDM
+	dmp->dmr_newrot( dmp, mat, which_eye );
+#else
 	dmp->dmr_newrot( mat, which_eye );
+#endif
 	inv_viewsize /= modelchanges[15];
 
 	FOR_ALL_SOLIDS( sp )  {
@@ -416,7 +428,11 @@ mat_print("pmat", pmat);
 		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
+#ifdef USE_LIBDM
+		if( dmp->dmr_object( dmp, sp, mat, ratio, 1 ) )  {
+#else
 		if( dmp->dmr_object( sp, mat, ratio, 1 ) )  {
+#endif
 			sp->s_flag = UP;
 			ndrawn++;
 		}
@@ -444,7 +460,11 @@ int axes;
   static char *labels[] = {"X", "Y", "Z"};
 
   mat_idn(mr_mat);
+#ifdef USE_LIBDM
+  dmp->dmr_newrot(dmp, mr_mat, 0);
+#else
   dmp->dmr_newrot(mr_mat, 0);
+#endif
 
   sp.s_vlist.forw = &sp.s_vlist;
   sp.s_vlist.back = &sp.s_vlist;
@@ -579,6 +599,16 @@ int axes;
     MAT4X3PNT(v2, model2view, m2);
 
     /* label axes */
+#ifdef USE_LIBDM
+    dmp->dmr_puts(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+		  ((int)(2048.0 * v2[Y])) + 15, 1, DM_YELLOW);
+  }
+
+  dmp->dmr_newrot(dmp, model2view, 0);
+
+  /* draw axes */
+  dmp->dmr_object( dmp, &sp, model2view, (double)1.0, 0 );
+#else
     dmp->dmr_puts(labels[i], ((int)(2048.0 * v2[X])) + 15,
 		  ((int)(2048.0 * v2[Y])) + 15, 1, DM_YELLOW);
   }
@@ -587,4 +617,5 @@ int axes;
 
   /* draw axes */
   dmp->dmr_object( &sp, model2view, (double)1.0, 0 );
+#endif
 }

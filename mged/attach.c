@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
+#include "tk.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
@@ -43,23 +44,28 @@ static void find_new_owner();
 static void dm_var_init();
 
 struct dm dm_Null = {
-	Nu_int0, Nu_void,
-	Nu_input,
-	Nu_void, Nu_void,
-	Nu_void, Nu_void,
-	Nu_void,
-	Nu_void, Nu_void,
-	Nu_void,
-	Nu_int0,
-	Nu_unsign, Nu_unsign,
-	Nu_void,
-	Nu_void,
-	Nu_void,
-	Nu_void, Nu_void,
-	0,			/* no displaylist */
-	0,			/* no display to release */
-	0.0,
-	"nu", "Null Display"
+  Nu_int0,
+  Nu_int0, Nu_void,
+  Nu_input,
+  Nu_void, Nu_void,
+  Nu_void, Nu_void,
+  Nu_void,
+  Nu_void, Nu_void,
+  Nu_void,
+  Nu_int0,
+  Nu_unsign, Nu_unsign,
+  Nu_void,
+  Nu_void,
+  Nu_void,
+  Nu_void, Nu_void, Nu_int0, Nu_int0,
+  0,			/* no displaylist */
+  0,			/* no display to release */
+  0.0,
+  "nu", "Null Display",
+  0,
+  0,
+  0,
+  0
 };
 
 /* All systems can compile these! */
@@ -67,6 +73,7 @@ extern struct dm dm_Tek;	/* Tek 4014 */
 extern struct dm dm_T49;	/* Tek 4109 */
 extern struct dm dm_Plot;	/* Unix Plot */
 extern struct dm dm_PS;		/* PostScript */
+#define IS_DM_PS(dp) ((dp) == &dm_PS)
 
 #ifdef DM_MG
 /* We only supply a kernel driver for Berkeley VAX systems for the MG */
@@ -108,6 +115,9 @@ extern struct dm dm_SunPw;
 
 #ifdef DM_X
 extern struct dm dm_X;
+#define IS_DM_X(dp) ((dp) == &dm_X)
+#else
+#define IS_DM_X(dp) (0)
 #endif
 
 #ifdef DM_XGL
@@ -116,16 +126,42 @@ extern struct dm dm_XGL;
 
 #ifdef DM_OGL
 extern struct dm dm_ogl;
+#define IS_DM_OGL(dp) ((dp) == &dm_ogl)
+#else
+#define IS_DM_OGL(dp) (0)
 #endif
 
 #ifdef DM_GLX
 extern struct dm dm_glx;
+#define IS_DM_GLX(dp) ((dp) == &dm_glx)
+#else
+#define IS_DM_GLX(dp) (0)
 #endif
 
 #ifdef DM_PEX
 extern struct dm dm_pex;
+#define IS_DM_PEX(dp) ((dp) == &dm_pex)
+#else
+#define IS_DM_PEX(dp) (0)
 #endif
 
+#ifdef USE_LIBDM
+extern int Ogl_dm_init();
+extern int X_dm_init();
+extern int Glx_dm_init();
+extern int Pex_dm_init();
+extern int PS_dm_init();
+extern void color_soltab();
+
+#define NEED_GUI(dp) ( \
+	IS_DM_OGL(dp) || \
+	IS_DM_GLX(dp) || \
+	IS_DM_PEX(dp) || \
+	IS_DM_X(dp) || \
+	0)
+#endif
+
+extern Tk_Window tkwin;
 extern struct _mged_variables default_mged_variables;
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
@@ -199,7 +235,7 @@ char *name;
 
 	if(name != NULL){
 	  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-	    if(strcmp(name, bu_vls_addr(&p->_pathName)))
+	    if(strcmp(name, bu_vls_addr(&p->_dmp->dmr_pathName)))
 	      continue;
 
 	    /* found it */
@@ -230,7 +266,11 @@ char *name;
 	}
 	rt_mempurge( &(dmp->dmr_map) );
 
+#ifdef USE_LIBDM
+	dmp->dmr_close(dmp);
+#else
 	dmp->dmr_close();
+#endif
 
 	if(!--p->s_info->_rc)
 	  bu_free( (char *)p->s_info, "release: s_info" );
@@ -391,57 +431,66 @@ char    **argv;
     goto Bad;
 
   if(argc == 2){
-#if 1
     return do_2nd_attach_prompt((*dp)->dmr_name);
-#else
-    char  *envp;
-    char  hostname[80];
-    char  display[82];
-
-    /* get or create the default display */
-    if( (envp = getenv("DISPLAY")) == NULL ) {
-      /* Env not set, use local host */
-      gethostname( hostname, 80 );
-      hostname[79] = '\0';
-      (void)sprintf( display, "%s:0", hostname );
-      envp = display;
-    }
-
-    Tcl_AppendResult(interp, MORE_ARGS_STR, "Display [", envp, "]? ", (char *)NULL);
-    bu_vls_printf(&curr_cmd_list->more_default, "%s", envp);
-    return TCL_ERROR;
-#endif
   }else{
-    dmlp = (struct dm_list *)bu_malloc(sizeof(struct dm_list), "dm_list");
+    dmlp = (struct dm_list *)bu_malloc(sizeof(struct dm_list), "struct dm_list");
     bzero((void *)dmlp, sizeof(struct dm_list));
     BU_LIST_APPEND(&head_dm_list.l, &dmlp->l);
     o_dm_list = curr_dm_list;
     curr_dm_list = dmlp;
-    dmp = *dp;
-    dm_var_init(o_dm_list, argv[2]);
+    dmp = (struct dm *)bu_malloc(sizeof(struct dm), "struct dm");
+    *dmp = **dp;
+    dm_var_init(o_dm_list, argv[2], *dp);
   }
 
   no_memory = 0;
+
+  /* Only need to do this once */
+  if(tkwin == NULL && NEED_GUI(*dp))
+    gui_setup();
+
+#ifdef USE_LIBDM
+  if( dm_init() )
+    goto Bad;
+#else
   if( dmp->dmr_open() )
     goto Bad;
+#endif
 
   Tcl_AppendResult(interp, "ATTACHING ", dmp->dmr_name, " (", dmp->dmr_lname,
 		   ")\n", (char *)NULL);
 
   FOR_ALL_SOLIDS( sp )  {
     /* Write vector subs into new display processor */
+#ifdef USE_LIBDM
+    if( (sp->s_bytes = dmp->dmr_cvtvecs( dmp, sp )) != 0 )  {
+#else
     if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+#endif
       sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
       if( sp->s_addr == 0 )  break;
+#ifdef USE_LIBDM
+      sp->s_bytes = dmp->dmr_load(dmp, sp->s_addr, sp->s_bytes);
+#else
       sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
+#endif
     } else {
       sp->s_addr = 0;
       sp->s_bytes = 0;
     }
   }
+
+#ifdef USE_LIBDM
+  dmp->dmr_colorchange(dmp);
+#else
   dmp->dmr_colorchange();
+#endif
   color_soltab();
+#ifdef USE_LIBDM
+  dmp->dmr_viewchange( dmp, DM_CHGV_REDO, SOLID_NULL );
+#else
   dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
+#endif
   ++dmaflag;
   return TCL_OK;
 
@@ -507,7 +556,7 @@ char    **argv;
         return TCL_ERROR;
 
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[1], bu_vls_addr(&p->_pathName)))
+    if(!strcmp(argv[1], bu_vls_addr(&p->_dmp->dmr_pathName)))
       break;
 
   if(p == &head_dm_list){
@@ -556,9 +605,9 @@ char    **argv;
     return TCL_ERROR;
 
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-    if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], bu_vls_addr(&p->_pathName)))
+    if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], bu_vls_addr(&p->_dmp->dmr_pathName)))
 	p1 = p;
-    else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], bu_vls_addr(&p->_pathName)))
+    else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], bu_vls_addr(&p->_dmp->dmr_pathName)))
       p2 = p;
     else if(p1 != (struct dm_list *)NULL && p2 != (struct dm_list *)NULL)
       break;
@@ -570,9 +619,10 @@ char    **argv;
     return TCL_ERROR;
   }
 
+  /*XXX this screws things up for dm-ogl's viewscale pointer --- needs fixing */
   /* free p1's s_info struct if not being used */
   if(!--p1->s_info->_rc)
-    bu_free( (char *)p1->s_info, "tie: s_info" );
+    bu_free( (genptr_t)p1->s_info, "tie: s_info" );
   /* otherwise if p1's s_info struct is being used and p1 is the owner */
   else if(p1->_owner)
     find_new_owner(p1);
@@ -608,39 +658,46 @@ struct dm_list *op;
 
 
 static void
-dm_var_init(initial_dm_list, name)
+dm_var_init(initial_dm_list, name, dp)
 struct dm_list *initial_dm_list;
 char *name;
+struct dm *dp;
 {
-  if(dmp == &dm_PS){
-    curr_dm_list->s_info = initial_dm_list->s_info;
-    owner = 0;
-    ++initial_dm_list->s_info->_rc;
-    bu_vls_init(&pathName);
-    strcpy(dname, name);
-  }else{
-    int i;
+  int i;
 
-    curr_dm_list->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
-							    "shared_info");
-    bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
-    bcopy((void *)&default_mged_variables, (void *)&mged_variables,
-	  sizeof(struct _mged_variables));
+  curr_dm_list->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
+							 "shared_info");
+  bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
+  bcopy((void *)&default_mged_variables, (void *)&mged_variables,
+	sizeof(struct _mged_variables));
 
-    bu_vls_init(&pathName);
-    strcpy(dname, name);
-    mat_copy(Viewrot, identity);
-    size_reset();
-    new_mats();
-    (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
+  bu_vls_init(&pathName);
+  strcpy(dname, name);
+  mat_copy(Viewrot, identity);
+  size_reset();
+  new_mats();
+  (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
 
-    MAT_DELTAS_GET(orig_pos, toViewcenter);
+  MAT_DELTAS_GET(orig_pos, toViewcenter);
 
-    am_mode = ALT_MOUSE_MODE_IDLE;
-    rc = 1;
-    dmaflag = 1;
-    owner = 1;
-  }
+#ifdef USE_LIBDM
+  if(IS_DM_X(dp))
+    dm_init = X_dm_init;
+  else if(IS_DM_OGL(dp))
+    dm_init = Ogl_dm_init;
+  else if(IS_DM_GLX(dp))
+    dm_init = Glx_dm_init;
+  else if(IS_DM_PEX(dp))
+    dm_init = Pex_dm_init;
+  else if(IS_DM_PS(dp))
+    dm_init = PS_dm_init;
+  else
+    dm_init = dmp->dmr_open;
+#endif
+  am_mode = ALT_MOUSE_MODE_IDLE;
+  rc = 1;
+  dmaflag = 1;
+  owner = 1;
 }
 
 /* Load default views */

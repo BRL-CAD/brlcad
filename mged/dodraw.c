@@ -41,6 +41,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"	/* XXX */
 
+#ifdef USE_LIBDM
+extern void color_soltab();
+#endif
+
 void		cvt_vlblock_to_solids();
 void		drawH_part2();
 extern void	(*nmg_plot_anim_upcall)();
@@ -713,7 +717,11 @@ struct solid		*existing_sp;
 	sp->s_bytes = 0;
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
+#ifdef USE_LIBDM
+	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( dmp, sp )) != 0 )  {
+#else
 	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+#endif
 		/* Allocate displaylist storage for object */
 		sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
@@ -721,7 +729,11 @@ struct solid		*existing_sp;
 		  Tcl_AppendResult(interp, "draw: out of Displaylist\n" ,(char *)NULL);
 		  sp->s_bytes = 0;	/* not drawn */
 		} else {
+#ifdef USE_LIBDM
+		  sp->s_bytes = dmp->dmr_load(dmp, sp->s_addr, sp->s_bytes );
+#else
 		  sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
+#endif
 		}
 	}
 
@@ -731,11 +743,19 @@ struct solid		*existing_sp;
 		RES_ACQUIRE( &rt_g.res_model );
 		APPEND_SOLID( sp, HeadSolid.s_back );
 		RES_RELEASE( &rt_g.res_model );
+#ifdef USE_LIBDM
+		dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
+#else
 		dmp->dmr_viewchange( DM_CHGV_ADD, sp );
+#endif
 	} else {
 		/* replacing existing solid -- struct already linked in */
 		sp->s_iflag = UP;
+#ifdef USE_LIBDM
+		dmp->dmr_viewchange( dmp, DM_CHGV_REPL, sp );
+#else
 		dmp->dmr_viewchange( DM_CHGV_REPL, sp );
+#endif
 	}
 }
 
@@ -1023,7 +1043,11 @@ int		copy;
 	sp->s_bytes = 0;
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
+#ifdef USE_LIBDM
+	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( dmp, sp )) != 0 )  {
+#else
 	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+#endif
 		/* Allocate displaylist storage for object */
 		sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
@@ -1031,14 +1055,23 @@ int		copy;
 		  Tcl_AppendResult(interp, "invent_solid: out of Displaylist\n", (char *)NULL);
 		  sp->s_bytes = 0;	/* not drawn */
 		} else {
+#ifdef USE_LIBDM
+		  sp->s_bytes = dmp->dmr_load(dmp, sp->s_addr, sp->s_bytes );
+#else
 		  sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
+#endif
 		}
 	}
 
 	/* Solid successfully drawn, add to linked list of solid structs */
 	APPEND_SOLID( sp, HeadSolid.s_back );
+#ifdef USE_LIBDM
+	dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
+	dmp->dmr_colorchange(dmp);
+#else
 	dmp->dmr_viewchange( DM_CHGV_ADD, sp );
 	dmp->dmr_colorchange();
+#endif
 #endif
 	return(0);		/* OK */
 }

@@ -104,7 +104,6 @@ int output_as_return = 1;
 int mged_cmd();
 struct bu_vls tcl_output_hook;
 
-int gui_not_initialized = 1;
 Tcl_Interp *interp = NULL;
 Tk_Window tkwin;
 
@@ -747,40 +746,8 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-#if 1
   gui_setup();
-#else
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-      return TCL_ERROR;
-
-    /* XXX Screen name should be same as attachment, or should ask, or
-       should be settable from "-display" option. */
-
-    if (tkwin != NULL)  {
-      Tcl_AppendResult(interp, "loadtk: already attached to display", (char *)NULL);
-      return TCL_ERROR;
-    }
-
-    if( argc != 2 )  {
-	tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED");
-    } else {
-	tkwin = Tk_CreateMainWindow(interp, argv[1], "MGED", "MGED");
-    }
-    if (tkwin == NULL)
-	return TCL_ERROR;
-
-    if (tkwin != NULL) {
-	Tk_GeometryRequest(tkwin, 100, 20);
-	/* This runs the tk.tcl script */
-	if (Tk_Init(interp) == TCL_ERROR)
-	    return TCL_ERROR;
-    }
-    
-    /* Handle any delayed events which result */
-    while (Tk_DoOneEvent(TK_DONT_WAIT | TK_ALL_EVENTS))
-	;
-#endif
-    return TCL_OK;
+  return TCL_OK;
 }    
 
 /*
@@ -1044,10 +1011,9 @@ gui_setup()
 {
   char *filename;
   int status;
-  static int gui_initialized = 0;
 
   /* initialize only once */
-  if(gui_initialized)
+  if(tkwin != NULL)
     return;
 
   if((tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED")) == NULL){
@@ -1059,7 +1025,6 @@ gui_setup()
   if (Tk_Init(interp) == TCL_ERROR)
     bu_log("Tk_Init error %s\n", interp->result);
 
-  gui_initialized = 1;
   Tcl_Eval( interp, "wm withdraw .");
 
   /* Check to see if user specified MGED_GUIRC */
@@ -2074,7 +2039,7 @@ char *argv[];
     for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
       if(p_cmd->aim)
 	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-			 bu_vls_addr(&p_cmd->aim->_pathName),
+			 bu_vls_addr(&p_cmd->aim->_dmp->dmr_pathName),
 			 "\n", (char *)NULL);
       else
 	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
@@ -2082,7 +2047,7 @@ char *argv[];
 
     if(p_cmd->aim)
       Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		       bu_vls_addr(&p_cmd->aim->_pathName),
+		       bu_vls_addr(&p_cmd->aim->_dmp->dmr_pathName),
 		       "\n", (char *)NULL);
     else
       Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
@@ -2106,7 +2071,7 @@ char *argv[];
   if(argc == 2){
     if(p_cmd->aim)
       Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		       bu_vls_addr(&p_cmd->aim->_pathName),
+		       bu_vls_addr(&p_cmd->aim->_dmp->dmr_pathName),
 		       "\n", (char *)NULL);
     else
       Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ", "\n", (char *)NULL);
@@ -2115,11 +2080,11 @@ char *argv[];
   }
 
   for( BU_LIST_FOR(p_dm, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[2], bu_vls_addr(&p_dm->_pathName)))
+    if(!strcmp(argv[2], bu_vls_addr(&p_dm->_dmp->dmr_pathName)))
       break;
 
   if(p_dm == &head_dm_list &&
-     strcmp(argv[2], bu_vls_addr(&head_dm_list._pathName))){
+     strcmp(argv[2], bu_vls_addr(&head_dm_list._dmp->dmr_pathName))){
     Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
 		     "\n", (char *)NULL);
 
@@ -2138,7 +2103,7 @@ char *argv[];
 
   p_dm->aim = p_cmd;
   Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		   bu_vls_addr(&p_cmd->aim->_pathName),
+		   bu_vls_addr(&p_cmd->aim->_dmp->dmr_pathName),
 		   "\n", (char *)NULL);
   
   return TCL_OK;
@@ -2152,26 +2117,33 @@ int argc;
 char *argv[];
 {
   int status;
-  char *av_attach[4];
-  char *av_release[2];
+  char *av[4];
+  struct dm_list *dml;
+  struct shared_info *sip;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  av_attach[0] = "attach";
-  av_attach[1] = "ps";
-  av_attach[2] = argv[1];
-  av_attach[3] = NULL;
-  status = f_attach(clientData, interp, 3, av_attach);
+  dml = curr_dm_list;
+
+  av[0] = "attach";
+  av[1] = "ps";
+  av[2] = argv[1];
+  av[3] = NULL;
+  status = f_attach(clientData, interp, 3, av);
   if(status == TCL_ERROR)
     return TCL_ERROR;
+
+  sip = curr_dm_list->s_info;  /* save state info pointer */
+  curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
 
   dirty = 1;
   refresh();
 
-  av_release[0] = "release";
-  av_release[1] = NULL;
-  return f_release(clientData, interp, 1, av_release);
+  curr_dm_list->s_info = sip;  /* restore state info pointer */
+  av[0] = "release";
+  av[1] = NULL;
+  return f_release(clientData, interp, 1, av);
 }
 
 int
@@ -2380,7 +2352,7 @@ char    **argv;
 
   /* change primary focus to window argv[1] */
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l ) ){
-    if( !strcmp( argv[1], bu_vls_addr( &p->_pathName ) ) ){
+    if( !strcmp( argv[1], bu_vls_addr( &p->_dmp->dmr_pathName ) ) ){
       curr_dm_list = p;
 
       if(curr_dm_list->aim)

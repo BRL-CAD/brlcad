@@ -41,6 +41,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
+#ifdef USE_LIBDM
+extern void color_soltab();
+#endif
+
 int		drawreg;	/* if > 0, process and draw regions */
 int		regmemb;	/* # of members left to process in a region */
 int		reg_pathpos;	/* pathpos of a processed region */
@@ -149,8 +153,11 @@ char	**argv;
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	}
-
+#ifdef USE_LIBDM
+	dmp->dmr_colorchange(dmp);
+#else
 	dmp->dmr_colorchange();
+#endif
 	dmaflag = 1;
 
 	return TCL_OK;
@@ -522,7 +529,11 @@ struct mater_info	*materp;
 	sp->s_bytes = 0;
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
+#ifdef USE_LIBDM
+	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( dmp, sp )) != 0 )  {
+#else
 	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+#endif
 		/* Allocate displaylist storage for object */
 		sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
@@ -530,7 +541,11 @@ struct mater_info	*materp;
 		  Tcl_AppendResult(interp, "Edraw: out of Displaylist\n", (char *)NULL);
 		  sp->s_bytes = 0;	/* not drawn */
 		} else {
+#ifdef USE_LIBDM
+			sp->s_bytes = dmp->dmr_load(dmp, sp->s_addr, sp->s_bytes );
+#else
 			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
+#endif
 		}
 	}
 
@@ -538,11 +553,19 @@ struct mater_info	*materp;
 	if( sp != illump )  {
 		/* Add to linked list of solid structs */
 		APPEND_SOLID( sp, HeadSolid.s_back );
+#ifdef USE_LIBDM
+		dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
+#else
 		dmp->dmr_viewchange( DM_CHGV_ADD, sp );
+#endif
 	} else {
 		/* replacing illuminated solid -- struct already linked in */
 		sp->s_iflag = UP;
+#ifdef USE_LIBDM
+		dmp->dmr_viewchange( dmp, DM_CHGV_REPL, sp );
+#else
 		dmp->dmr_viewchange( DM_CHGV_REPL, sp );
+#endif
 	}
 
 	return(1);		/* OK */

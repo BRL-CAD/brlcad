@@ -15,31 +15,29 @@
  *  $Header$
  */
 
-struct device_values  {
-	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
-};
-extern struct device_values dm_values;
+#ifdef USE_LIBDM
+#include "_dm.h"	/* struct dm */
+#else
 
-/* defined in ged.c */
-extern int dm_pipe[];
+/*  Colors */
+#define DM_BLACK	0
+#define DM_RED		1
+#define DM_BLUE		2
+#define DM_YELLOW	3
+#define DM_WHITE	4
 
-/* defined in dm-ps.c */
-extern FILE *ps_fp;
-
-#define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
-
-#define ALT_MOUSE_MODE_IDLE 0
-#define ALT_MOUSE_MODE_ROTATE 1 
-#define ALT_MOUSE_MODE_TRANSLATE 2
-#define ALT_MOUSE_MODE_ZOOM 3
-
-#define VIEW_TABLE_SIZE 5    /* enough to hold the view selections in the menu */
+/* Command parameter to dmr_viewchange() */
+#define DM_CHGV_REDO	0	/* Display has changed substantially */
+#define DM_CHGV_ADD	1	/* Add an object to the display */
+#define DM_CHGV_DEL	2	/* Delete an object from the display */
+#define DM_CHGV_REPL	3	/* Replace an object */
+#define DM_CHGV_ILLUM	4	/* Make new object the illuminated object */
 
 /* Interface to a specific Display Manager */
 struct dm {
 	int	(*dmr_open)();
 	void	(*dmr_close)();
-	void	(*dmr_input)MGED_ARGS((fd_set *input, int noblock));
+	void	(*dmr_input)BU_ARGS((fd_set *input, int noblock));
 	void	(*dmr_prolog)();
 	void	(*dmr_epilog)();
 	void	(*dmr_normal)();
@@ -56,14 +54,36 @@ struct dm {
 	void	(*dmr_colorchange)();	/* called when color table changes */
 	void	(*dmr_window)();	/* Change window boundry */
 	void	(*dmr_debug)();		/* Set DM debug level */
+	int	(*dmr_cmd)();		/* application provided dm-specific command handler */
+	int	(*dmr_eventhandler)();	/* application provided dm-specific event handler */
 	int	dmr_displaylist;	/* !0 means device has displaylist */
 	int	dmr_releasedisplay;	/* !0 release for other programs */
 	double	dmr_bound;		/* zoom-in limit */
 	char	*dmr_name;		/* short name of device */
 	char	*dmr_lname;		/* long name of device */
 	struct mem_map *dmr_map;	/* displaylist mem map */
-	int	(*dmr_cmd)();		/* dm-specific cmds to perform */
+	genptr_t dmr_vars;		/* pointer to display manager dependant variables */
+	struct bu_vls dmr_pathName;	/* full Tcl/Tk name of drawing window */
+	char	dmr_dname[80];		/* Display name */
 };
+#endif
+
+struct device_values  {
+	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
+};
+extern struct device_values dm_values;
+
+/* defined in ged.c */
+extern int dm_pipe[];
+
+#define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
+
+#define ALT_MOUSE_MODE_IDLE 0
+#define ALT_MOUSE_MODE_ROTATE 1 
+#define ALT_MOUSE_MODE_TRANSLATE 2
+#define ALT_MOUSE_MODE_ZOOM 3
+
+#define VIEW_TABLE_SIZE 5    /* enough to hold the view selections in the menu */
 
 struct shared_info {
   fastf_t _Viewscale;
@@ -129,15 +149,13 @@ struct dm_list {
 
 /* New stuff to allow more than one active display manager */
   struct shared_info *s_info;  /* info that can be used by display managers that are tied */
-  char *_dm_vars;   /* pointer to dependant display manager variables */
-  struct bu_vls _pathName; /* full name of drawing window */
   int _dirty;      /* true if received an expose or configuration event */
   int _owner;      /* true if owner of the shared info */
   int _am_mode;    /* alternate mouse mode */
   struct cmd_list *aim;
-  char _dname[80];  /* Display name */
   void (*_knob_hook)();
   void (*_axes_color_hook)();
+  int (*_dm_init)();
 };
 
 extern int update_views;   /* from dm-X.h */
@@ -146,14 +164,15 @@ extern struct dm_list *curr_dm_list;
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define dmp curr_dm_list->_dmp
-#define dm_vars curr_dm_list->_dm_vars
-#define pathName curr_dm_list->_pathName
+#define dm_vars dmp->dmr_vars
+#define pathName dmp->dmr_pathName
+#define dname dmp->dmr_dname
 #define dirty curr_dm_list->_dirty
 #define owner curr_dm_list->_owner
 #define am_mode curr_dm_list->_am_mode
-#define dname curr_dm_list->_dname
 #define knob_hook curr_dm_list->_knob_hook
 #define axes_color_hook curr_dm_list->_axes_color_hook
+#define dm_init curr_dm_list->_dm_init
 
 #define mged_variables curr_dm_list->s_info->_mged_variables
 
@@ -207,6 +226,9 @@ extern struct dm_list *curr_dm_list;
 #define scroll_active curr_dm_list->s_info->_scroll_active
 #define scroll_y curr_dm_list->s_info->_scroll_y
 #define scroll_array curr_dm_list->s_info->_scroll_array
+				
+#define VIEWSIZE	(2*Viewscale)	/* Width of viewing cube */
+#define VIEWFACTOR	(1/Viewscale)	/* 2.0 / VIEWSIZE */
 
 #define ALT_MOUSE_MODE_NOT_ACTIVE(_type,_name)\
   ((_type)dm_vars)->_name == ALT_MOUSE_MODE_OFF ||\
@@ -259,17 +281,3 @@ extern struct dm_list *curr_dm_list;
 
 #define BV_MAXFUNC	64	/* largest code used */
 
-/*  Colors */
-
-#define DM_BLACK	0
-#define DM_RED		1
-#define DM_BLUE		2
-#define DM_YELLOW	3
-#define DM_WHITE	4
-
-/* Command parameter to dmr_viewchange() */
-#define DM_CHGV_REDO	0	/* Display has changed substantially */
-#define DM_CHGV_ADD	1	/* Add an object to the display */
-#define DM_CHGV_DEL	2	/* Delete an object from the display */
-#define DM_CHGV_REPL	3	/* Replace an object */
-#define DM_CHGV_ILLUM	4	/* Make new object the illuminated object */

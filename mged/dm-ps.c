@@ -37,9 +37,25 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./solid.h"
 
+#ifdef USE_LIBDM
+#include "dm-ps.h"
+
+extern color_soltab();
+int PS_dm_init();
+
+int
+PS_dm_init()
+{
+  if(dmp->dmr_init(dmp, color_soltab) == TCL_ERROR)
+    return TCL_ERROR;
+
+  return dmp->dmr_open(dmp);
+}
+#else
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
+int	PS_init();
 int	PS_open();
 void	PS_close();
 MGED_EXTERN(void	PS_input, (fd_set *input, int noblock) );
@@ -51,25 +67,31 @@ int	PS_object();
 unsigned PS_cvtvecs(), PS_load();
 void	PS_statechange(), PS_viewchange(), PS_colorchange();
 void	PS_window(), PS_debug();
+int     PS_dm();
 
 struct dm dm_PS = {
-	PS_open, PS_close,
-	PS_input,
-	PS_prolog, PS_epilog,
-	PS_normal, PS_newrot,
-	PS_update,
-	PS_puts, PS_2d_line,
-	PS_light,
-	PS_object,
-	PS_cvtvecs, PS_load,
-	PS_statechange,
-	PS_viewchange,
-	PS_colorchange,
-	PS_window, PS_debug,
-	0,				/* no displaylist */
-	0,				/* no display to release! */
-	PLOTBOUND,
-	"ps", "Screen to PostScript"
+  PS_init,
+  PS_open, PS_close,
+  PS_input,
+  PS_prolog, PS_epilog,
+  PS_normal, PS_newrot,
+  PS_update,
+  PS_puts, PS_2d_line,
+  PS_light,
+  PS_object,
+  PS_cvtvecs, PS_load,
+  PS_statechange,
+  PS_viewchange,
+  PS_colorchange,
+  PS_window, PS_debug, PS_dm, 0,
+  0,				/* no displaylist */
+  0,				/* no display to release! */
+  PLOTBOUND,
+  "ps", "Screen to PostScript",
+  0,
+  0,
+  0,
+  0
 };
 
 extern struct device_values dm_values;	/* values read from devices */
@@ -87,6 +109,11 @@ static int	in_middle;		/* !0 when in middle of image */
  *  and we define the PLOT file to use 0..4095
  */
 #define	GED_TO_PS(x)	((int)((x)+2048))
+
+PS_init()
+{
+  return TCL_OK;
+}
 
 /*
  *			P S _ O P E N
@@ -480,3 +507,12 @@ register int w[];
 	clipmax[1] = w[2] / 2047.;
 	clipmax[2] = w[4] / 2047.;
 }
+
+int
+PS_dm(argc, argv)
+int argc;
+char *argv[];
+{
+  return TCL_OK;
+}
+#endif
