@@ -151,7 +151,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		gen.sh setup.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
-ADIRS="h doc pix vfont awf brlman tclscripts"
+ADIRS="h doc pix vfont awf brlman"
 
 # Has no Cakefile, just copy it (and all sub-directories!) verbatim.
 # Only used in "dist" command.
@@ -213,7 +213,7 @@ BDIRS="bench \
 	tk \
 "			# This ends the list.
 
-TSDIRS="mged nirt pl-dm"
+TSDIRS=". mged nirt pl-dm"
 TDIRS="libtk libtkGLX"
 
 # If there is no TCP networking, eliminate network-only directories.
