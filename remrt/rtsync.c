@@ -151,7 +151,7 @@ static fd_set	select_list;			/* master copy */
 static int	max_fd;
 
 static	FBIO	*fbp;
-static	char	*framebuffer = "vj:0";
+static	char	*framebuffer;
 static	int	width = 0;		/* use default size */
 static	int	height = 0;
 
