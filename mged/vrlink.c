@@ -207,7 +207,7 @@ char	*argv[];
 	} else if( strcmp( role, "slave" ) == 0 )  {
 	} else if( strcmp( role, "overview" ) == 0 )  {
 	} else {
-		fprintf(stderr,"role '%s' unknown, must be master/slave/overview\n");
+		fprintf(stderr,"role '%s' unknown, must be master/slave/overview\n", role);
 		return;
 	}
 
