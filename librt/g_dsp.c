@@ -2657,6 +2657,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_DSP;
+	ip->idb_meth = &rt_functab[ID_DSP];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
 	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
 	dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;

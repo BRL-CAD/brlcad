@@ -3463,6 +3463,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_PIPE;
+	ip->idb_meth = &rt_functab[ID_PIPE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal");
 	pipe = (struct rt_pipe_internal *)ip->idb_ptr;
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;

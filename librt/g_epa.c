@@ -237,6 +237,7 @@ struct rt_i		*rtip;
 	 *  EPA is ok
 	 */
 	stp->st_id = ID_EPA;		/* set soltab ID */
+	stp->st_meth = &rt_functab[ID_EPA];
 
 	BU_GETSTRUCT( epa, epa_specific );
 	stp->st_specific = (genptr_t)epa;
@@ -1484,6 +1485,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_EPA;
+	ip->idb_meth = &rt_functab[ID_EPA];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_epa_internal), "rt_epa_internal");
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
 	xip->epa_magic = RT_EPA_INTERNAL_MAGIC;

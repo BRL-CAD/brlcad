@@ -1231,6 +1231,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ETO;
+	ip->idb_meth = &rt_functab[ID_ETO];
 	ip->idb_ptr = bu_malloc(sizeof(struct rt_eto_internal), "rt_eto_internal");
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
 	tip->eto_magic = RT_ETO_INTERNAL_MAGIC;

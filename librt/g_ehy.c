@@ -240,6 +240,7 @@ struct rt_i		*rtip;
 	 *  EHY is ok
 	 */
 	stp->st_id = ID_EHY;		/* set soltab ID */
+	stp->st_meth = &rt_functab[ID_EHY];
 
 	BU_GETSTRUCT( ehy, ehy_specific );
 	stp->st_specific = (genptr_t)ehy;
@@ -1438,6 +1439,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_EHY;
+	ip->idb_meth = &rt_functab[ID_EHY];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_ehy_internal), "rt_ehy_internal");
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;

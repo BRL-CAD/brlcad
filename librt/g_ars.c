@@ -72,6 +72,7 @@ CONST mat_t			mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARS;
+	ip->idb_meth = &rt_functab[ID_ARS];
 	ip->idb_ptr = bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
 	ari = (struct rt_ars_internal *)ip->idb_ptr;
 	ari->magic = RT_ARS_INTERNAL_MAGIC;

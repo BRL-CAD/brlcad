@@ -147,9 +147,10 @@ struct rt_tess_tol  {
  *  A handle on the internal format of an MGED database object.
  */
 struct rt_db_internal  {
-	long	idb_magic;
-	int	idb_type;		/* ID_xxx */
-	genptr_t idb_ptr;
+	long		idb_magic;
+	int		idb_type;		/* ID_xxx */
+	struct rt_functab *idb_meth;		/* for ft_ifree(), etc. */
+	genptr_t	idb_ptr;
 };
 #define RT_DB_INTERNAL_MAGIC	0x0dbbd867
 #define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
@@ -223,15 +224,10 @@ struct hit {
  *  use RT_HIT_NORM() macro;  to compute just hit_point, use
  *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
  */
-#define RT_HIT_NORM( _hitp, _stp, _rayp )  { \
-	register int _id = (_stp)->st_id; \
+#define RT_HIT_NORM( _hitp, _stp, _unused )  { \
 	RT_CK_HIT(_hitp); \
-	RT_CHECK_SOLTAB(_stp); \
-	if( _id <= 0 || _id > ID_MAXIMUM ) { \
-		bu_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, (_hitp)->hit_rayp); \
-		rt_bomb("RT_HIT_NORM:  bad st_id");\
-	} \
-	rt_functab[_id].ft_norm(_hitp, _stp, (_hitp)->hit_rayp); }
+	RT_CK_SOLTAB(_stp); \
+	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); }
 
 /*
  *  New macro:  Compute normal into (_hitp)->hit_normal, but leave
@@ -240,10 +236,11 @@ struct hit {
  *  (Example:  box.r = box.s - sph.s; sph.r = sph.s)
  *  Return the post-boolean normal into caller-provided _normal vector.
  */
-#define RT_HIT_NORMAL( _normal, _hitp, _stp, _rayp, _flipflag )  { \
+#define RT_HIT_NORMAL( _normal, _hitp, _stp, _unused, _flipflag )  { \
 	RT_CK_HIT(_hitp); \
-	RT_CHECK_SOLTAB(_stp); \
-	rt_functab[(_stp)->st_id].ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	RT_CK_SOLTAB(_stp); \
+	RT_CK_FUNCTAB((_stp)->st_meth); \
+	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
 	if( _flipflag )  { \
 		VREVERSE( _normal, (_hitp)->hit_normal ); \
 	} else { \
@@ -278,14 +275,10 @@ struct curvature {
  *  When the extra argument was added the name was changed.
  */
 #define RT_CURVATURE( _curvp, _hitp, _flipflag, _stp )  { \
-	register int _id = (_stp)->st_id; \
 	RT_CK_HIT(_hitp); \
-	RT_CHECK_SOLTAB(_stp); \
-	if( _id <= 0 || _id > ID_MAXIMUM )  { \
-		bu_log("stp=x%x, id=%d.\n", _stp, _id); \
-		rt_bomb("RT_CURVE:  bad st_id"); \
-	} \
-	rt_functab[_id].ft_curve( _curvp, _hitp, _stp ); \
+	RT_CK_SOLTAB(_stp); \
+	RT_CK_FUNCTAB((_stp)->st_meth); \
+	(_stp)->st_meth->ft_curve( _curvp, _hitp, _stp ); \
 	if( _flipflag )  { \
 		(_curvp)->crv_c1 = - (_curvp)->crv_c1; \
 		(_curvp)->crv_c2 = - (_curvp)->crv_c2; \
@@ -304,14 +297,10 @@ struct uvcoord {
 	fastf_t		uv_dv;		/* delta in v */
 };
 #define RT_HIT_UVCOORD( ap, _stp, _hitp, uvp )  { \
-	register int _id = (_stp)->st_id; \
 	RT_CK_HIT(_hitp); \
-	RT_CHECK_SOLTAB(_stp); \
-	if( _id <= 0 || _id > ID_MAXIMUM )  { \
-		bu_log("stp=x%x, id=%d.\n", _stp, _id); \
-		rt_bomb("RT_UVCOORD:  bad st_id"); \
-	} \
-	rt_functab[_id].ft_uv( ap, _stp, _hitp, uvp ); }
+	RT_CK_SOLTAB(_stp); \
+	RT_CK_FUNCTAB((_stp)->st_meth); \
+	(_stp)->st_meth->ft_uv( ap, _stp, _hitp, uvp ); }
 
 
 /*
@@ -388,6 +377,7 @@ struct seg {
 struct soltab {
 	struct bu_list	l;		/* links, headed by rti_headsolid */
 	struct bu_list	l2;		/* links, headed by st_dp->d_use_hd */
+	struct rt_functab *st_meth;	/* pointer to per-solid methods */
 	struct rt_i	*st_rtip;	/* "up" pointer to rt_i */
 	int		st_uses;	/* Usage count, for instanced solids */
 	int		st_id;		/* Solid ident */
@@ -1388,6 +1378,7 @@ struct nurb_seg		/* NURB curve segment */
  *  XXX On SGI, can not use identifiers in prototypes inside structure!
  */
 struct rt_functab {
+	long	magic;
 	char	*ft_name;
 	int	ft_use_rpp;
 	int	(*ft_prep) BU_ARGS((struct soltab * /*stp*/,
@@ -1467,6 +1458,8 @@ struct rt_functab {
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
+#define RT_FUNCTAB_MAGIC		0x46754e63	/* FuNc */
+#define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab" );
 
 #define RT_CLASSIFY_UNIMPLEMENTED	BN_CLASSIFY_UNIMPLEMENTED
 #define RT_CLASSIFY_INSIDE		BN_CLASSIFY_INSIDE

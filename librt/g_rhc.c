@@ -248,6 +248,7 @@ struct rt_i		*rtip;
 	 *  RHC is ok
 	 */
 	stp->st_id = ID_RHC;		/* set soltab ID */
+	stp->st_meth = &rt_functab[ID_RHC];
 
 	BU_GETSTRUCT( rhc, rhc_specific );
 	stp->st_specific = (genptr_t)rhc;
@@ -1211,6 +1212,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_RHC;
+	ip->idb_meth = &rt_functab[ID_RHC];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_rhc_internal), "rt_rhc_internal");
 	xip = (struct rt_rhc_internal *)ip->idb_ptr;
 	xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;

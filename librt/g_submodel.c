@@ -178,6 +178,7 @@ struct rt_i		*rtip;
 	bu_ptbl_insert_unique( &rtip->rti_sub_rtip, (long *)sub_rtip );
 	sub_rtip->rti_up = (genptr_t)stp;
 #endif
+
 	
 	BU_GETSTRUCT( submodel, submodel_specific );
 	submodel->magic = RT_SUBMODEL_SPECIFIC_MAGIC;
@@ -226,23 +227,22 @@ register struct xray	*rp;
 	struct soltab	*up_stp;
 	vect_t		norm;
 
-#if 0
 	sub_rtip = stp->st_rtip;
+#if 0
 	up_stp = (struct soltab *)sub_rtip->rti_up;
 	RT_CK_SOLTAB(up_stp);
 	submodel = (struct submodel_specific *)up_stp->st_specific;
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
 
-	rt_functab[stp->st_id].ft_norm(hitp, stp, rayp);
-	/* XXX This can't be done more than once per hit,
-	 * as it corrupts the hit_normal field.
-	 * We have no control over whether application will want more. :-(
-	 * The TCL and NIRT interfaces certainly will...
-	 */
+	/* Obtain normal for submodel's solid in that coordinate system */
+	up_stp->st_meth->ft_norm(hitp, up_stp, hitp->hit_rayp);
+
+	/* Re-project normal back into our model space */
 	VMOVE( norm, hitp->hit_normal );
 	MAT4X3VEC( hitp->hit_normal, submodel->subm2m, norm );
+#else
+	bu_log("rt_submodel_normal_hook() not implemented (yet)\n");
 #endif
-
 }
 
 /*
@@ -340,6 +340,8 @@ struct seg		*seghead;
 	nap.a_uptr = (genptr_t)ap;
 	nap.a_dist = submodel->m2subm[15];	/* scale, local to world */
 
+/* XXX Need a per-processor place to stash this new ray! (Application struct) */
+/* Need to malloc it, and queue it for destruction in caller's application struct */
 	/* shootray already computed a_ray.r_min & r_max for us */
 	/* Make starting point reasonable once in local coord system */
 	VJOIN1( startpt, ap->a_ray.r_pt, ap->a_ray.r_min, ap->a_ray.r_dir );
@@ -390,6 +392,7 @@ register struct xray	*rp;
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
 	/* XXX This will never be called */
+	bu_log("rt_submodel_norm() shouldn't have been called\n");
 }
 
 /*
@@ -412,6 +415,7 @@ struct soltab		*stp;
  	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 
 	/* XXX This will never be called */
+	bu_log("rt_submodel_curve() shouldn't have been called\n");
 }
 
 /*
@@ -433,6 +437,7 @@ register struct uvcoord	*uvp;
 		(struct submodel_specific *)stp->st_specific;
 
 	/* XXX This will never be called */
+	bu_log("rt_submodel_uv() shouldn't have been called\n");
 }
 
 /*
@@ -506,7 +511,7 @@ int			id;
 			rt_functab[id].ft_name,
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 
-		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		if( intern.idb_ptr )  intern.idb_meth->ft_ifree( &intern );
 		return(TREE_NULL);		/* ERROR */
 	}
 	RT_CK_DB_INTERNAL( &intern );
@@ -523,7 +528,7 @@ int			id;
 		return(TREE_NULL);		/* ERROR */
 	}
 
-	rt_functab[id].ft_ifree( &intern );
+	intern.idb_meth->ft_ifree( &intern );
 
 	/* Indicate success by returning something other than TREE_NULL */
 	BU_GETUNION( curtree, tree );
@@ -647,6 +652,7 @@ CONST struct db_i		*dbip;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_SUBMODEL;
+	ip->idb_meth = &rt_functab[ID_SUBMODEL];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_submodel_internal), "rt_submodel_internal");
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;

@@ -141,6 +141,7 @@ struct rt_i		*rtip;
 	 *  This ELL is really an SPH
 	 */
 	stp->st_id = ID_SPH;		/* "fix" soltab ID */
+	stp->st_meth = &rt_functab[ID_SPH];
 
 	/* Solid is OK, compute constant terms now */
 	BU_GETSTRUCT( sph, sph_specific );

@@ -422,6 +422,7 @@ CONST mat_t			mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_VOL;
+	ip->idb_meth = &rt_functab[ID_VOL];
 	ip->idb_ptr = bu_calloc(1, sizeof(struct rt_vol_internal), "rt_vol_internal");
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
 	vip->magic = RT_VOL_INTERNAL_MAGIC;

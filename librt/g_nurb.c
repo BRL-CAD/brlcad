@@ -619,6 +619,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_BSPLINE;
+	ip->idb_meth = &rt_functab[ID_BSPLINE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_nurb_internal), "rt_nurb_internal");
 	sip = (struct rt_nurb_internal *)ip->idb_ptr;
 	sip->magic = RT_NURB_INTERNAL_MAGIC;

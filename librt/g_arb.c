@@ -1205,6 +1205,7 @@ register CONST  mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARB8;
+	ip->idb_meth = &rt_functab[ID_ARB8];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal");
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;

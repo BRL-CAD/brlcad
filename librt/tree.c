@@ -437,6 +437,7 @@ int				id;
 	}
 
 	stp->st_id = id;
+	stp->st_meth = &rt_functab[id];
 	if( mat )  {
 		mat = stp->st_matp;
 	} else {
@@ -447,10 +448,10 @@ int				id;
 	 *  Import geometry from on-disk (external) format to internal.
 	 */
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, mat, tsp->ts_dbip ) < 0 )  {
+	if( stp->st_meth->ft_import( &intern, ep, mat, tsp->ts_dbip ) < 0 )  {
 		int	hash;
 		bu_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	    	if( intern.idb_ptr )  stp->st_meth->ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
 		hash = db_dirhash( dp->d_namep );
 		ACQUIRE_SEMAPHORE_TREE(hash);
@@ -470,11 +471,11 @@ int				id;
     	 *  that is OK, as long as idb_ptr is set to null.
 	 *  Note that the prep routine may have changed st_id.
     	 */
-	if( rt_functab[id].ft_prep( stp, &intern, rtip ) )  {
+	if( stp->st_meth->ft_prep( stp, &intern, rtip ) )  {
 		int	hash;
 		/* Error, solid no good */
 		bu_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
+	    	if( intern.idb_ptr )  stp->st_meth->ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
 		hash = db_dirhash( dp->d_namep );
 		ACQUIRE_SEMAPHORE_TREE(hash);
@@ -529,7 +530,7 @@ int				id;
 		bu_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
 		bu_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
-		if( rt_functab[stp->st_id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
+		if( stp->st_meth->ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
 			bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 				dp->d_namep );
 		}
@@ -539,7 +540,7 @@ int				id;
 #endif
 
 	/* Release internal version */
-    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
+    	if( intern.idb_ptr )  stp->st_meth->ft_ifree( &intern );
 
 found_it:
 	BU_GETUNION( curtree, tree );
@@ -597,7 +598,7 @@ struct soltab	*stp;
 	RELEASE_SEMAPHORE_TREE(hash);		/* end critical section */
 
 	if( stp->st_aradius > 0 )  {
-		rt_functab[stp->st_id].ft_free( stp );
+		stp->st_meth->ft_free( stp );
 		stp->st_aradius = 0;
 	}
 	if( stp->st_matp )  bu_free( (char *)stp->st_matp, "st_matp");

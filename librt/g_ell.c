@@ -1138,6 +1138,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ELL;
+	ip->idb_meth = &rt_functab[ID_ELL];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	eip->magic = RT_ELL_INTERNAL_MAGIC;

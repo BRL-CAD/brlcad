@@ -1320,6 +1320,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_TOR;
+	ip->idb_meth = &rt_functab[ID_TOR];
 	ip->idb_ptr = bu_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	tip->magic = RT_TOR_INTERNAL_MAGIC;

@@ -244,6 +244,7 @@ struct rt_i		*rtip;
 	 *  RPC is ok
 	 */
 	stp->st_id = ID_RPC;		/* set soltab ID */
+	stp->st_meth = &rt_functab[ID_RPC];
 
 	BU_GETSTRUCT( rpc, rpc_specific );
 	stp->st_specific = (genptr_t)rpc;
@@ -1216,6 +1217,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_RPC;
+	ip->idb_meth = &rt_functab[ID_RPC];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_rpc_internal), "rt_rpc_internal");
 	xip = (struct rt_rpc_internal *)ip->idb_ptr;
 	xip->rpc_magic = RT_RPC_INTERNAL_MAGIC;

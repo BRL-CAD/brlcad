@@ -1568,6 +1568,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_TGC;
+	ip->idb_meth = &rt_functab[ID_TGC];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_tgc_internal), "rt_tgc_internal");
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	tip->magic = RT_TGC_INTERNAL_MAGIC;

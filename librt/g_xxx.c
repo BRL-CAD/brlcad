@@ -310,6 +310,7 @@ CONST struct db_i		*dbip;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_XXX;
+	ip->idb_meth = &rt_functab[ID_XXX];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
 	xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;

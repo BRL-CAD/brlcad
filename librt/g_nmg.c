@@ -2172,6 +2172,7 @@ CONST struct bn_tol		*tol;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_NMG;
+	ip->idb_meth = &rt_functab[ID_NMG];
 	ip->idb_ptr = (genptr_t)m;
 
 	bu_free( (char *)ecnt, "ecnt[]" );

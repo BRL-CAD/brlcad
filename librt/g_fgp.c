@@ -116,6 +116,7 @@ struct rt_i		*rtip;
 	ref_stp->l2.magic = RT_SOLTAB2_MAGIC;
 	ref_stp->st_rtip = rtip;
 	ref_stp->st_id = ref_id;
+	ref_stp->st_meth = &rt_functab[ref_id];
 	ref_stp->st_dp = ref_dp;
 	if( stp->st_matp )
 	{
@@ -130,7 +131,7 @@ struct rt_i		*rtip;
 		db_dup_full_path( &ref_stp->st_path, &stp->st_path );
 	db_add_node_to_full_path( &ref_stp->st_path, ref_dp );
 
-	ref_ret =  rt_functab[ref_id].ft_prep( ref_stp, &ref_int, rtip );
+	ref_ret =  ref_stp->st_meth->ft_prep( ref_stp, &ref_int, rtip );
 
 	rt_db_free_internal( &ref_int );
 
@@ -199,7 +200,7 @@ struct seg		*seghead;
 
 	BU_LIST_INIT( &ref_seghead.l );
 
-	ref_ret = rt_functab[fgp->ref_stp->st_id].ft_shot( fgp->ref_stp, rp, ap, &ref_seghead );
+	ref_ret = fgp->ref_stp->st_meth->ft_shot( fgp->ref_stp, rp, ap, &ref_seghead );
 
 	if( ref_ret )
 	{
@@ -478,7 +479,7 @@ register struct soltab *stp;
 	register struct fgp_specific *fgp =
 		(struct fgp_specific *)stp->st_specific;
 
-	rt_functab[fgp->ref_stp->st_id].ft_free( fgp->ref_stp );
+	fgp->ref_stp->st_meth->ft_free( fgp->ref_stp );
 
 	bu_free( (char *)fgp->ref_stp, "ref_stp" );
 
@@ -498,7 +499,7 @@ CONST struct bn_tol    *tol;
 		(struct fgp_specific *)stp->st_specific;
 
 
-	return( rt_functab[fgp->ref_stp->st_id].ft_classify( fgp->ref_stp, min, max, tol ) );
+	return( fgp->ref_stp->st_meth->ft_classify( fgp->ref_stp, min, max, tol ) );
 }
 
 /*
@@ -585,6 +586,7 @@ struct db_i			*dbip;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_FGP;
+	ip->idb_meth = &rt_functab[ID_FGP];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_fgp_internal), "rt_fgp_internal");
 	fgp_ip = (struct rt_fgp_internal *)ip->idb_ptr;
 	fgp_ip->magic = RT_FGP_INTERNAL_MAGIC;

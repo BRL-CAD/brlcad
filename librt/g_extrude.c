@@ -533,6 +533,7 @@ struct db_i		*dbip;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_EXTRUDE;
+	ip->idb_meth = &rt_functab[ID_EXTRUDE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_extrude_internal), "rt_extrude_internal");
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;

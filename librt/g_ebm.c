@@ -545,6 +545,7 @@ CONST mat_t			mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_EBM;
+	ip->idb_meth = &rt_functab[ID_EBM];
 	ip->idb_ptr = bu_calloc(1, sizeof(struct rt_ebm_internal), "rt_ebm_internal");
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
 	eip->magic = RT_EBM_INTERNAL_MAGIC;

@@ -227,6 +227,7 @@ struct rt_i		*rtip;
 	 *  This TGC is really an REC
 	 */
 	stp->st_id = ID_REC;		/* "fix" soltab ID */
+	stp->st_meth = &rt_functab[ID_REC];
 
 	BU_GETSTRUCT( rec, rec_specific );
 	stp->st_specific = (genptr_t)rec;

@@ -292,6 +292,7 @@ CONST mat_t			mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_GRIP;
+	ip->idb_meth = &rt_functab[ID_GRIP];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_grip_internal), "rt_grip_internal");
 	gip = (struct rt_grip_internal *)ip->idb_ptr;
 	gip->magic = RT_GRIP_INTERNAL_MAGIC;

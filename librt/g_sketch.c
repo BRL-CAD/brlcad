@@ -331,6 +331,7 @@ CONST struct db_i		*dbip;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_SKETCH;
+	ip->idb_meth = &rt_functab[ID_SKETCH];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_sketch_internal), "rt_sketch_internal");
 	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
 	sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;

@@ -1370,6 +1370,7 @@ register CONST mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_PARTICLE;
+	ip->idb_meth = &rt_functab[ID_PARTICLE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_part_internal), "rt_part_internal");
 	part = (struct rt_part_internal *)ip->idb_ptr;
 	part->part_magic = RT_PART_INTERNAL_MAGIC;
