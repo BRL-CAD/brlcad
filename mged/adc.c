@@ -251,41 +251,46 @@ char	**argv;
 	}} else if( strcmp( parameter, "dx" ) == 0 )  {
 		if (argc == 1) {
 		    VSET(pt2, pt[0], 0.0, 0.0);
+		    VSCALE(pt2, pt2, local2base);
 		    MAT4X3VEC(pt3, Viewrot, pt2);
-		    dm_values.dv_xadc += pt3[X] * 2047.0 / (Viewscale * base2local);
-		    dm_values.dv_yadc += pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_xadc += pt3[X] * 2047.0 / Viewscale;
+		    dm_values.dv_yadc += pt3[Y] * 2047.0 / Viewscale;
 		    dm_values.dv_flagadc = 1;
 		    return;
 	}} else if( strcmp( parameter, "dy" ) == 0 )  {
 		if (argc == 1) {
 		    VSET(pt2, 0.0, pt[0], 0.0);
+		    VSCALE(pt2, pt2, local2base);
 		    MAT4X3VEC(pt3, Viewrot, pt2);
-		    dm_values.dv_xadc += pt3[X] * 2047.0 / (Viewscale * base2local);
-		    dm_values.dv_yadc += pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_xadc += pt3[X] * 2047.0 / Viewscale;
+		    dm_values.dv_yadc += pt3[Y] * 2047.0 / Viewscale;
 		    dm_values.dv_flagadc = 1;
 		    return;
 	}} else if( strcmp( parameter, "dz" ) == 0 )  {
 		if (argc == 1) {
 		    VSET(pt2, 0.0, 0.0, pt[0]);
+		    VSCALE(pt2, pt2, local2base);
 		    MAT4X3VEC(pt3, Viewrot, pt2);
-		    dm_values.dv_xadc += pt3[X] * 2047.0 / (Viewscale * base2local);
-		    dm_values.dv_yadc += pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_xadc += pt3[X] * 2047.0 / Viewscale;
+		    dm_values.dv_yadc += pt3[Y] * 2047.0 / Viewscale;
 		    dm_values.dv_flagadc = 1;
 		    return;
 	}} else if( strcmp(parameter, "hv") == 0)  {
 		if (argc == 2) {
 		    MAT4X3VEC(pt2, Viewrot, center_model);
+		    VSCALE(pt, pt, local2base);
 		    VSUB2(pt3, pt, pt2);
-		    dm_values.dv_xadc = pt3[X] * 2047.0 / (Viewscale * base2local);
-		    dm_values.dv_yadc = pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_xadc = pt3[X] * 2047.0 / Viewscale;
+		    dm_values.dv_yadc = pt3[Y] * 2047.0 / Viewscale;
 		    dm_values.dv_flagadc = 1;
 		    return;
 	}} else if( strcmp(parameter, "xyz") == 0)  {
 		if (argc == 3) {
+		    VSCALE(pt, pt, local2base);
 		    VSUB2(pt2, pt, center_model);
 		    MAT4X3VEC(pt3, Viewrot, pt2);
-		    dm_values.dv_xadc = pt3[X] * 2047.0 / (Viewscale * base2local);
-		    dm_values.dv_yadc = pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_xadc = pt3[X] * 2047.0 / Viewscale;
+		    dm_values.dv_yadc = pt3[Y] * 2047.0 / Viewscale;
 		    dm_values.dv_flagadc = 1;
 		    return;
 	}} else if( strcmp(parameter, "reset") == 0)  {
