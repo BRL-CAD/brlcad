@@ -49,7 +49,7 @@
     if (((o) < 0) || ((o) >= (t) -> rbt_nm_orders))		\
     {								\
 	rt_log(							\
-	    "Error: Order %d outside 0..%d (nm_orders-1), file %s, line %s\n", \
+	    "Error: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
 	    (o), (t) -> rbt_nm_orders - 1, __FILE__, __LINE__);	\
 	exit (0);						\
     }
@@ -141,11 +141,6 @@ RB_EXTERN(void _rb_rot_left,		(struct rb_node	*x,
 					));
 RB_EXTERN(void _rb_rot_right,		(struct rb_node	*y,
 					 int		order
-					));
-RB_EXTERN(struct rb_node *_rb_search,	(struct rb_node	*root,
-			    		 int		order_nm,
-					 int		(*order)(),
-					 void		*data
 					));
 RB_EXTERN(void _rb_walk,		(rb_tree	*tree,
 			    		 int		order,
