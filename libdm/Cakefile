@@ -12,8 +12,7 @@
 
 #define FILES	\
 	LIBDM_OBJS dm-generic dm-ps dm-plot dm-Null \
-	clip knob color options query tcl dm_obj \
-	fbserv_obj
+	clip knob color options query tcl dm_obj
 
 #define VERSION_VARIABLE	dm_version
 #define LIBRARY_TITLE		"The BRL-CAD Display Manager Library"
