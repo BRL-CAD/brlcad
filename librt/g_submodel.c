@@ -324,7 +324,7 @@ struct seg		*segHeadp;
 	 * Then the submodel can be stacked arbitrarily deep.
 	 * Alternatively, submodels can't include submodels.
 	 */
-#if 0
+#if 1
 	for( BU_LIST_FOR( segp, seg, &(segHeadp->l) ) )  {
 		struct seg	*up_segp;
 		RT_CHECK_SEG(segp);
@@ -362,11 +362,37 @@ struct seg		*segHeadp;
 			segp->seg_out.hit_normal );
 
 		/* RT_HIT_UV */
-		/* gak, no place to stash uv data! */
-		/* Could use hit_vpriv and hit_private */
+		{
+			struct uvcoord	uv;
+			RT_HIT_UVCOORD( ap, segp->seg_stp, &segp->seg_in, &uv );
+			up_segp->seg_in.hit_vpriv[X] = uv.uv_u;
+			up_segp->seg_in.hit_vpriv[Y] = uv.uv_v;
+			if( uv.uv_du >= uv.uv_dv )
+				up_segp->seg_in.hit_vpriv[Z] = uv.uv_du;
+			else
+				up_segp->seg_in.hit_vpriv[Z] = uv.uv_dv;
+
+			RT_HIT_UVCOORD( ap, segp->seg_stp, &segp->seg_out, &uv );
+			up_segp->seg_out.hit_vpriv[X] = uv.uv_u;
+			up_segp->seg_out.hit_vpriv[Y] = uv.uv_v;
+			if( uv.uv_du >= uv.uv_dv )
+				up_segp->seg_out.hit_vpriv[Z] = uv.uv_du;
+			else
+				up_segp->seg_out.hit_vpriv[Z] = uv.uv_dv;
+		}
 
 		/* RT_HIT_CURVATURE */
 		/* no place to stash curvature data! */
+
+		/* Leave behind a distinctive marker to make sure we're
+		 * getting the right stuff back in the hooked functions.
+		 */
+		up_segp->seg_in.hit_surfno = 17;
+		up_segp->seg_out.hit_surfno = 17;
+
+		/* Put this segment on caller's shot routine seglist */
+		BU_LIST_INSERT( &(gp->up_seghead->l), &(up_segp->l) );
+		count++;
 	}
 #else
 	/* Steal & xform the segment list */
@@ -487,13 +513,12 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct submodel_specific *submodel =
-		(struct submodel_specific *)stp->st_specific;
+	RT_CK_HIT(hitp);
 
-	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	if( hitp->hit_surfno != 17 )  bu_bomb("rt_submodel surfno mis-match\n");
 
-	/* XXX This will never be called */
-	bu_log("rt_submodel_norm() shouldn't have been called\n");
+	/* hitp->hit_point is already valid */
+	/* hitp->hit_normal is already valid */
 }
 
 /*
@@ -516,7 +541,7 @@ struct soltab		*stp;
  	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 
 	/* XXX This will never be called */
-	bu_log("rt_submodel_curve() shouldn't have been called\n");
+	bu_log("rt_submodel_curve() not implemented, need extra fields in 'struct hit'\n");
 }
 
 /*
@@ -534,11 +559,13 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct submodel_specific *submodel =
-		(struct submodel_specific *)stp->st_specific;
+	RT_CK_HIT(hitp);
 
-	/* XXX This will never be called */
-	bu_log("rt_submodel_uv() shouldn't have been called\n");
+	if( hitp->hit_surfno != 17 )  bu_bomb("rt_submodel surfno mis-match\n");
+
+	uvp->uv_u = hitp->hit_vpriv[X];
+	uvp->uv_v = hitp->hit_vpriv[Y];
+	uvp->uv_du = uvp->uv_dv = hitp->hit_vpriv[Z];
 }
 
 /*
@@ -983,9 +1010,12 @@ register struct xray	*rp;
 
 	sub_rtip = stp->st_rtip;
 	RT_CK_RTI(sub_rtip);
+
+	/* XXX There should be more than one of these */
 	upper_stp = sub_rtip->rti_up;
 	RT_CK_SOLTAB(upper_stp);
 /* XXX Really need some other way to get upper_stp */
+
 	submodel = (struct submodel_specific *)upper_stp->st_specific;
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
 
@@ -1028,6 +1058,8 @@ bu_bomb("rt_submodelhook_curve() -- no rp?\n");
 
 	sub_rtip = stp->st_rtip;
 	RT_CK_RTI(sub_rtip);
+
+	/* XXX There should be more than one of these */
 	upper_stp = sub_rtip->rti_up;
 	RT_CK_SOLTAB(upper_stp);
 	submodel = (struct submodel_specific *)upper_stp->st_specific;
