@@ -59,6 +59,8 @@
  *	HAVE_SBRK		Set if unistd.h declares sbrk().
  *	HAVE_UNIX_DOMAIN_SOCKETS
  *
+ *	HAVE_DLOPEN		Dynamic library loading support.
+ *
  *  $Header$
  */
 
@@ -120,6 +122,7 @@
 #	define HAVE_SBRK_DECL		1
 #	define HAVE_REGEX_DECL		1
 #	define HAVE_POSIX_REGEXEC	1
+#	define HAVE_DLOPEN		1
 #endif
 
 #if defined(_AIX) || defined(__AIX)
@@ -236,6 +239,7 @@
 #	define HAVE_XOSDEFS_H	1
 #	define HAVE_SYS_ERRLIST_DECL	1
 #	define HAVE_POSIX_REGEXEC	1
+#	define HAVE_DLOPEN 1
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
 #endif
 
