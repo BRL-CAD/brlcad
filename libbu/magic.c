@@ -65,6 +65,10 @@ register long	magic;
 	 */
 	case BU_VLS_MAGIC:
 		return "bu_vls";
+	case BU_PTBL_MAGIC:
+		return "bu_ptbl";
+	case BU_BITV_MAGIC:
+		return "bu_bitv";
 
 	/*
 	 *  nmg.h:  NMG magic numbers
@@ -115,8 +119,6 @@ register long	magic;
 		return("vertexuse_a_plane");
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
 		return("vertexuse_a_cnurb");
-	case NMG_PTBL_MAGIC:
-		return "nmg_ptbl";
 	/*
 	 *  rtlist.h
 	 */
