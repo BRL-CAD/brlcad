@@ -13,6 +13,7 @@
 #if !defined(PI)
 #define    PI           3.141592654
 #endif
+#define    BACKOUT_DIST	1000.0
 #define    OFF          0
 #define    ON		1
 #define    YES          1
@@ -36,8 +37,12 @@
 #define    RAND_NUM     (double)random()/MAX_RAND  /* 0 < number < 1 */
 #endif
 
+/*	FLAG VALUES FOR nirt_debug	*/
+#define	DEBUG_MAT	0x001
+#define	DEBUG_BACKOUT	0x002
+
 /*	STRING FOR USE WITH GETOPT(3)	*/
-#define         OPT_STRING      "bMsu:vx:?"
+#define         OPT_STRING      "bf:Msu:vx:X:?"
 
 /*	MACROS WITH ARGUMENTS	*/
 #define    max(a,b)             (((a)>(b))?(a):(b))
