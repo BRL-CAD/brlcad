@@ -28,6 +28,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtdir.h"
 #include "debug.h"
 
+int rt_pure_boolean_expressions = 0;
+
 union tree *RootTree;		/* Root of tree containing all regions */
 struct region *HeadRegion;
 struct region **Regions;	/* Ptr to array indexed by reg_bit */
@@ -40,6 +42,7 @@ vect_t mdl_max = { -INFINITY, -INFINITY, -INFINITY };
 
 HIDDEN union tree *drawHobj();
 HIDDEN void add_regtree();
+HIDDEN union tree *make_bool_tree();
 
 extern int nul_prep(),	nul_print(), nul_norm(), nul_uv();
 extern int tor_prep(),	tor_print(), tor_norm(), tor_uv();
@@ -290,7 +293,10 @@ next_one: ;
 #define	MAXLEVELS	8
 static struct directory	*path[MAXLEVELS];	/* Record of current path */
 
-static mat_t xmat;				/* temporary fastf_t matrix */
+struct tree_list {
+	union tree *tl_tree;
+	int	tl_op;
+};
 
 /*
  *			D R A W H O B J
@@ -298,6 +304,9 @@ static mat_t xmat;				/* temporary fastf_t matrix */
  * This routine is used to get an object drawn.
  * The actual processing of solids is performed by add_solid(),
  * but all transformations and region building is done here.
+ *
+ * NOTE that this routine is used recursively, so no variables may
+ * be declared static.
  */
 HIDDEN
 union tree *
@@ -306,15 +315,15 @@ struct directory *dp;
 struct region *argregion;
 matp_t old_xlate;
 {
-	auto struct directory *nextdp;	/* temporary */
-	auto mat_t new_xlate;		/* Accumulated xlation matrix */
 	auto union record rec;		/* local copy of this record */
-	auto long savepos;
-	auto int nparts;		/* Number of sub-parts to this comb */
-	auto int i;
-	register union tree *curtree;	/* ptr to current tree top */
-	auto union tree *subtree;	/* ptr to subtree passed up */
-	register struct region *regionp;
+	register int i;
+	auto int j;
+	union tree *curtree;		/* ptr to current tree top */
+	struct region *regionp;
+	union record *members;		/* ptr to array of member recs */
+	int subtreecount;		/* number of non-null subtrees */
+	struct tree_list *trees;	/* ptr to array of structs */
+	struct tree_list *tlp;		/* cur tree_list */
 
 	if( pathpos >= MAXLEVELS )  {
 		rtlog("%s: nesting exceeds %d levels\n",
@@ -323,84 +332,117 @@ matp_t old_xlate;
 	}
 	path[pathpos] = dp;
 
-	/* Routine is recursive:  save file pointer for restoration. */
-	savepos = lseek( ged_fd, 0L, 1 );
+	/*
+	 * Load the first record of the object into local record buffer
+	 */
+	if( lseek( ged_fd, dp->d_addr, 0 ) < 0 ||
+	    read( ged_fd, (char *)&rec, sizeof rec ) != sizeof rec )  {
+		rtlog("drawHobj: %s record read error\n",
+			path_str(pathpos) );
+		return(TREE_NULL);
+	}
 
 	/*
-	 * Load the record into local record buffer
+	 *  Draw a solid
 	 */
-	(void)lseek( ged_fd, dp->d_addr, 0 );
-	(void)read( ged_fd, (char *)&rec, sizeof rec );
-
 	if( rec.u_id == ID_SOLID || rec.u_id == ID_ARS_A ||
 	    rec.u_id == ID_P_HEAD || rec.u_id == ID_B_SPL_HEAD )  {
-		register struct soltab *stp;		/* XXX */
+		register struct soltab *stp;
+		register union tree *xtp;
 
-		/* Draw a solid */
-		stp = add_solid( &rec, dp->d_namep, old_xlate );
-		(void)lseek( ged_fd, savepos, 0);	/* restore pos */
-		if( stp == SOLTAB_NULL )
+		if( (stp = add_solid( &rec, dp->d_namep, old_xlate )) ==
+		    SOLTAB_NULL )
 			return( TREE_NULL );
 
-		/**GETSTRUCT( curtree, union tree ); **/
-		curtree = (union tree *)malloc(sizeof(union tree));
-		if( curtree == TREE_NULL )
-			rtbomb("drawHobj: curtree malloc failed\n");
-		bzero( (char *)curtree, sizeof(union tree) );
-		curtree->tr_op = OP_SOLID;
-		curtree->tr_a.tu_stp = stp;
-		curtree->tr_a.tu_name = strdup(path_str(pathpos));
-		curtree->tr_regionp = argregion;
-		return( curtree );
+		/**GETSTRUCT( xtp, union tree ); **/
+		if( (xtp=(union tree *)vmalloc(sizeof(union tree), "solid tree"))
+		    == TREE_NULL )
+			rtbomb("drawHobj: solid tree malloc failed\n");
+		bzero( (char *)xtp, sizeof(union tree) );
+		xtp->tr_op = OP_SOLID;
+		xtp->tr_a.tu_stp = stp;
+		xtp->tr_a.tu_name = strdup(path_str(pathpos));
+		xtp->tr_regionp = argregion;
+		return( xtp );
 	}
 
 	if( rec.u_id != ID_COMB )  {
-		rtlog("drawobj:  defective input '%c'\n", rec.u_id );
+		rtlog("drawHobj:  defective database record, type '%c'\n",
+			rec.u_id );
 		return(TREE_NULL);			/* ERROR */
 	}
 
-	/* recurse down through a combination (directory) node */
+	/*
+	 *  Process a Combination (directory) node
+	 */
 	regionp = argregion;
+
+	/* Handle combinations which are the top of a "region" */
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			rtlog("Warning:  region %s within region %s (ID %d overrides)\n",
-				path_str(pathpos), argregion->reg_name,
-				argregion->reg_regionid );
+			rtlog("Warning:  region %s within region %s\n",
+				path_str(pathpos), argregion->reg_name );
 /***			argregion = REGION_NULL;	/* override! */
 		} else {
+			register struct region *nrp;
+
 			/* HACK:  ignore "air" solids */
-			if( rec.c.c_aircode != 0 )  {
-				(void)lseek(ged_fd, savepos, 0);
+			if( rec.c.c_aircode != 0 )
 				return(TREE_NULL);
-			}
 
 			/* Start a new region here */
-			GETSTRUCT( regionp, region );
-			regionp->reg_forw = REGION_NULL;
-			regionp->reg_regionid = rec.c.c_regionid;
-			regionp->reg_aircode = rec.c.c_aircode;
-			regionp->reg_material = rec.c.c_material;
-			regionp->reg_name = "being created";
+			GETSTRUCT( nrp, region );
+			nrp->reg_forw = REGION_NULL;
+			nrp->reg_regionid = rec.c.c_regionid;
+			nrp->reg_aircode = rec.c.c_aircode;
+			nrp->reg_material = rec.c.c_material;
+			nrp->reg_name = strdup(path_str(pathpos));
+			regionp = nrp;
 		}
 	}
-	curtree = TREE_NULL;
-	nparts = rec.c.c_length;		/* save in an auto var */
-	for( i=0; i<nparts; i++ )  {
-		(void)read(ged_fd, (char *)&rec, sizeof rec );
-		nextdp = dir_lookup( rec.M.m_instname, LOOKUP_NOISY );
-		if( nextdp == DIR_NULL )
+
+	/* Read all the member records */
+	i = sizeof(union record) * rec.c.c_length;
+	j = sizeof(struct tree_list) * rec.c.c_length;
+	if( (members = (union record *)vmalloc(i, "member records")) ==
+	    (union record *)0  ||
+	    (trees = (struct tree_list *)vmalloc( j, "tree_list array" )) ==
+	    (struct tree_list *)0 )
+		rtbomb("drawHobj:  malloc failure\n");
+
+	if( read( ged_fd, (char *)members, i ) != i )  {
+		rtlog("drawHobj:  %s member read error\n",
+			path_str(pathpos) );
+		return(TREE_NULL);
+	}
+
+	/* Process and store all the sub-trees */
+	subtreecount = 0;
+	tlp = trees;
+	for( i=0; i<rec.c.c_length; i++ )  {
+		register struct member *mp;
+		auto struct directory *nextdp;
+		auto mat_t new_xlate;		/* Accum translation mat */
+
+		mp = &(members[i].M);
+		if( (nextdp = dir_lookup( mp->m_instname, LOOKUP_NOISY )) ==
+		    DIR_NULL )
 			continue;
+
+		/* convert matrix to fastf_t from disk format */
 		{
-			register int j;
-			for( j=0; j<4*4; j++ )
-				xmat[j] = rec.M.m_mat[j];/* cvt to fastf_t */
+			register int k;
+			static mat_t xmat;	/* temporary fastf_t matrix */
+			for( k=0; k<4*4; k++ )
+				xmat[k] = mp->m_mat[k];
+			mat_mul(new_xlate, old_xlate, xmat);
 		}
-		mat_mul(new_xlate, old_xlate, xmat);
 
 		/* Recursive call */
-		subtree = drawHobj( nextdp, regionp, pathpos+1, new_xlate );
-		if( subtree == TREE_NULL )
-			continue;	/* no valid subtree, keep on going */
+		if( (tlp->tl_tree = drawHobj(
+		    nextdp, regionp, pathpos+1, new_xlate )) == TREE_NULL )
+			continue;
+
 		if( regionp == REGION_NULL )  {
 			register struct region *xrp;
 			/*
@@ -413,61 +455,160 @@ matp_t old_xlate;
 			 */
 			rtlog("Warning:  Forced to create region %s\n",
 				path_str(pathpos+1) );
-			if(subtree->tr_op != OP_SOLID )
+			if((tlp->tl_tree)->tr_op != OP_SOLID )
 				rtbomb("subtree not Solid");
 			GETSTRUCT( xrp, region );
 			xrp->reg_name = strdup(path_str(pathpos+1));
-			add_regtree( xrp, subtree );
+			add_regtree( xrp, (tlp->tl_tree) );
+			tlp->tl_tree = TREE_NULL;
 			continue;	/* no remaining subtree, go on */
 		}
 
-		if( curtree == TREE_NULL )  {
-			curtree = subtree;
-		} else {
-			register union tree *xtp;	/* XXX */
-			/** GETSTRUCT( xtp, union tree ); **/
-			xtp=(union tree *)malloc(sizeof(union tree));
-			if( xtp == TREE_NULL )
-				rtbomb("drawHobj: xtp malloc failed\n");
-			bzero( (char *)xtp, sizeof(union tree) );
-			xtp->tr_b.tb_left = curtree;
-			xtp->tr_b.tb_right = subtree;
-			xtp->tr_b.tb_regionp = regionp;
-			switch( rec.M.m_relation )  {
-			default:
-				rtlog("(%s) bad m_relation '%c'\n",
-					path_str(pathpos), rec.M.m_relation );
-				/* FALL THROUGH */
-			case UNION:
-				xtp->tr_op = OP_UNION; break;
-			case SUBTRACT:
-				xtp->tr_op = OP_SUBTRACT; break;
-			case INTERSECT:
-				xtp->tr_op = OP_INTERSECT; break;
-			}
-			curtree = xtp;
+		/* Store operation on subtree */
+		switch( mp->m_relation )  {
+		default:
+			rtlog("%s: bad m_relation '%c'\n",
+				regionp->reg_name, mp->m_relation );
+			/* FALL THROUGH */
+		case UNION:
+			tlp->tl_op = OP_UNION;
+			break;
+		case SUBTRACT:
+			tlp->tl_op = OP_SUBTRACT;
+			break;
+		case INTERSECT:
+			tlp->tl_op = OP_INTERSECT;
+			break;
 		}
+		subtreecount++;
+		tlp++;
 	}
-	if( curtree != TREE_NULL )  {
-		if( regionp == REGION_NULL )  {
-			rtlog("drawHobj: (%s) null regionp, non-null curtree\n", path_str(pathpos) );
-		} else if( argregion == REGION_NULL )  {
-			/* Region began at this level */
-			regionp->reg_name = strdup(path_str(pathpos));
-			add_regtree( regionp, curtree );
 
-			/* Return to caller indicates no remaining subtree */
-			curtree = TREE_NULL;
+	if( subtreecount <= 0 )  {
+		/* Null subtree in region, release region struct */
+		if( argregion == REGION_NULL && regionp != REGION_NULL )  {
+			vfree( regionp->reg_name, "unused region name" );
+			vfree( (char *)regionp, "unused region struct" );
 		}
+		curtree = TREE_NULL;
+		goto out;
+	}
+
+	/* Build tree representing boolean expression in Member records */
+	if( rt_pure_boolean_expressions )  {
+		curtree = make_bool_tree( trees, subtreecount, regionp );
 	} else {
-		/* Null result tree, release region struct */
-		if( argregion == REGION_NULL && regionp != REGION_NULL )
-			free( regionp );
+		register struct tree_list *tstart;
+
+		/*
+		 * This is the way GIFT interpreted equations, so we
+		 * duplicate it here.  Any expressions between UNIONs
+		 * is evaluated first, eg:
+		 *	A - B - C u D - E - F
+		 * is	(A - B - C) u (D - E - F)
+		 * so first we do the parenthesised parts, and then go
+		 * back and glue the unions together.
+		 * As always, unions are the downfall of free enterprise!
+		 */
+		tstart = trees;
+		tlp = trees+1;
+		for( i=subtreecount-1; i>=0; i--, tlp++ )  {
+			/* If we went off end, or hit a union, do it */
+			if( i>0 && tlp->tl_op != OP_UNION )
+				continue;
+			if( (j = tlp-tstart) <= 0 )
+				continue;
+			tstart->tl_tree = make_bool_tree( tstart, j, regionp );
+			if(debug&DEBUG_REGIONS) pr_tree(tstart->tl_tree, 0);
+			/* has side effect of zapping all trees,
+			 * so build new first node */
+			tstart->tl_op = OP_UNION;
+			/* tstart here at union */
+			tstart = tlp;
+		}
+		curtree = make_bool_tree( trees, subtreecount, regionp );
+		if(debug&DEBUG_REGIONS) pr_tree(curtree, 0);
 	}
 
-	/* Clean up and return */
-	(void)lseek( ged_fd, savepos, 0 );
+	if( argregion == REGION_NULL )  {
+		/* Region began at this level */
+		add_regtree( regionp, curtree );
+		curtree = TREE_NULL;		/* no remaining subtree */
+	}
+
+	/* Release dynamic memory and return */
+out:
+	vfree( (char *)trees, "tree_list array");
+	vfree( (char *)members, "member records" );
 	return( curtree );
+}
+
+/*
+ *			M A K E _ B O O L _ T R E E
+ *
+ *  Given a tree_list array, build a tree of "union tree" nodes
+ *  appropriately connected together.  Every element of the
+ *  tree_list array used is replaced with a TREE_NULL.
+ *  Elements which are already TREE_NULL are ignored.
+ *  Returns a pointer to the top of the tree.
+ */
+HIDDEN union tree *
+make_bool_tree( tree_list, howfar, regionp )
+struct tree_list *tree_list;
+int howfar;
+struct region *regionp;
+{
+	register struct tree_list *tlp;
+	register int i;
+	register struct tree_list *first_tlp;
+	register union tree *xtp;
+	register union tree *curtree;
+	register int inuse;
+
+	if( howfar <= 0 )
+		return(TREE_NULL);
+
+	/* Count number of non-null sub-trees to do */
+	for( i=howfar, inuse=0, tlp=tree_list; i>0; i--, tlp++ )  {
+		if( tlp->tl_tree == TREE_NULL )
+			continue;
+		if( inuse++ == 0 )
+			first_tlp = tlp;
+	}
+	if( first_tlp->tl_op != OP_UNION )
+		rtlog("Warning: %s: non-union first operation ignored\n",
+			regionp->reg_name);
+
+	/* Handle trivial cases */
+	if( inuse <= 0 )
+		return(TREE_NULL);
+	if( inuse == 1 )  {
+		curtree = first_tlp->tl_tree;
+		first_tlp->tl_tree = TREE_NULL;
+		return( curtree );
+	}
+
+	/* Allocate all the tree structs we will need */
+	i = sizeof(union tree)*(inuse-1);
+	if( (xtp=(union tree *)vmalloc( i, "tree array")) == TREE_NULL )
+		rtbomb("make_bool_tree: malloc failed\n");
+	bzero( (char *)xtp, i );
+
+	curtree = first_tlp->tl_tree;
+	first_tlp->tl_tree = TREE_NULL;
+	tlp=first_tlp+1;
+	for( i=howfar-(tlp-tree_list); i>0; i--, tlp++ )  {
+		if( tlp->tl_tree == TREE_NULL )
+			continue;
+
+		xtp->tr_b.tb_left = curtree;
+		xtp->tr_b.tb_right = tlp->tl_tree;
+		xtp->tr_b.tb_regionp = regionp;
+		xtp->tr_op = tlp->tl_op;
+		curtree = xtp++;
+		tlp->tl_tree = TREE_NULL;	/* empty the input slot */
+	}
+	return(curtree);
 }
 
 HIDDEN char *
