@@ -735,7 +735,6 @@ CONST struct rt_tol	*tol;
 			rt_log("nmg_two_face_fuse(x%x, x%x) faces have a common loop, they MUST be fused.  flip2=%d\n",
 				f1, f2, flip2);
 		}
-rt_log("common_bigloop says 'fuse'.\n");
 		goto must_fuse;
 	}
 
