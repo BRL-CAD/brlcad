@@ -1350,7 +1350,12 @@ again:
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
 			rt_log("special_wedge:  inner and outer wedges from same loop, cutting loop\n");
 		new_lu = nmg_cut_loop( vs[outer_wedge].vu, vs[inner_wedge].vu );
-		if(new_lu)  nmg_lu_reorient(new_lu, tol);
+		NMG_CK_LOOPUSE(new_lu);
+		NMG_CK_LOOPUSE(inner_lu);
+		nmg_loop_g( inner_lu->l_p, tol );
+		nmg_loop_g( new_lu->l_p, tol );
+		nmg_lu_reorient(inner_lu, tol);
+		nmg_lu_reorient(new_lu, tol);
 		return 1;
 	}
 
