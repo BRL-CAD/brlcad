@@ -51,6 +51,6 @@ char *argv[];
   if((dmp = dm_open(DM_TYPE_PS, DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
     return TCL_ERROR;
 
-  curr_dm_list->s_info->opp = &tkName;
+  curr_dm_list->s_info->opp = &pathName;
   return TCL_OK;
 }
