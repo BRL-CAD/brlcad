@@ -1,3 +1,4 @@
+#define static /**/
 /*
  *			R T
  *
@@ -45,7 +46,6 @@ struct functab functab[] = {
 	arb8_prep,	arb8_shot,	arb8_print,	"ID_ARB8",
 	ars_prep,	arb8_shot,	arb8_print,	"ID_ARS",
 	half_prep,	half_shot,	half_print,	"ID_HALF",
-	null_prep,	rec_shot,	rec_print,	"ID_REC",
 	null_prep,	null_shot,	null_print,	">ID_NULL"
 };
 
@@ -271,6 +271,7 @@ char **argv;
 
 	for( ap.a_y = npts-1; ap.a_y >= 0; ap.a_y--)  {
 		for( ap.a_x = 0; ap.a_x < npts; ap.a_x++)  {
+if(debug&DEBUG_ALLRAYS)printf("x,y=%d,%d\n", ap.a_x, ap.a_y);
 			VSET( tempdir,
 				xbase + ap.a_x * deltas,
 				ybase + (npts-ap.a_y-1) * deltas,

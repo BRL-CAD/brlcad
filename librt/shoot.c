@@ -57,6 +57,7 @@ register struct application *ap;
 	}
 
 	HeadSeg = SEG_NULL;
+	PartHeadp = PT_NULL;
 
 	/*
 	 * For now, shoot at all solids in model.
@@ -72,7 +73,7 @@ register struct application *ap;
 			continue;
 		}
 		nshots++;
-		newseg = functab[stp->st_id].ft_shot( stp, ap->a_ray );
+		newseg = functab[stp->st_id].ft_shot( stp, &ap->a_ray );
 		if( newseg == SEG_NULL )
 			continue;
 
@@ -88,7 +89,7 @@ register struct application *ap;
 			newseg->seg_in = newseg->seg_out; /* struct copy */
 			newseg->seg_out = temp;		/* struct copy */
 		}
-		/* Add to list */
+		/* Add segment chain to list */
 		{
 			register struct seg *seg2 = newseg;
 			while( seg2->seg_next != SEG_NULL )
@@ -131,11 +132,13 @@ done:
 		HeadSeg = hsp;
 	}
 	/* Free up partition list */
-	for( pp = PartHeadp->pt_forw; pp != PartHeadp;  )  {
-		register struct partition *newpp;
-		newpp = pp;
-		pp = pp->pt_forw;
-		FREE_PT(newpp);
+	if( PartHeadp != PT_NULL)  {
+		for( pp = PartHeadp->pt_forw; pp != PartHeadp;  )  {
+			register struct partition *newpp;
+			newpp = pp;
+			pp = pp->pt_forw;
+			FREE_PT(newpp);
+		}
 	}
 	if( debug )  fflush(stdout);
 }
