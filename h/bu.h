@@ -773,14 +773,26 @@ struct bu_attribute_value_pair {
 /*
  *			B U _ A T T R I B U T E _ V A L U E _ S E T
  *
- *  Every one of the names and values is a local copy made with bu_strdup().
- *  They need to be freed individually.
+ *  A variable-sized attribute-value-pair array.
+ *
+ *  avp points to an array of [max] slots.
+ *  The interface routines will realloc to extend as needed.
+ *
+ *  In general,
+ *  each of the names and values is a local copy made with bu_strdup(),
+ *  and each string needs to be freed individually.
+ *  However, if a name or value pointer is between
+ *  readonly_min and readonly_max, then it is part of a big malloc
+ *  block that is being freed by the caller, and should not be individually
+ *  freed.
  */
 struct bu_attribute_value_set {
 	long				magic;
 	int				count;	/* # valid entries in avp */
 	int				max;	/* # allocated slots in avp */
-	struct bu_attribute_value_pair	*avp;
+	struct bu_attribute_value_pair	*avp;	/* array[max] */
+	char				*readonly_min;
+	char				*readonly_max;
 };
 #define BU_AVS_MAGIC		0x41765321	/* AvS! */
 #define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
@@ -1150,9 +1162,15 @@ BU_EXTERN(struct bu_attribute_value_set	*bu_avs_new, (int len, CONST char *str))
 BU_EXTERN(int			bu_avs_add, (struct bu_attribute_value_set *avp,
 				CONST char *attribute,
 				CONST char *value));
+extern int			bu_avs_add_vls(struct bu_attribute_value_set *avp,
+				const char *attribute,
+				const struct bu_vls *value_vls);
+extern const char *		bu_avs_get( const struct bu_attribute_value_set *avp,
+				const char *attribute );
 BU_EXTERN(int			bu_avs_remove, (struct bu_attribute_value_set *avp,
 				CONST char *attribute));
 BU_EXTERN(void			bu_avs_free, (struct bu_attribute_value_set *avp));
+extern void			bu_avs_print( const struct bu_attribute_value_set *avp, const char *title );
 
 /* badmagic.c */
 BU_EXTERN(void			bu_badmagic, (CONST long *ptr, long magic,

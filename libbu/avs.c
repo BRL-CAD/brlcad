@@ -47,10 +47,11 @@ CONST char	*str;
 	avp->max = len;
 	avp->avp = (struct bu_attribute_value_pair *)bu_calloc(avp->max,
 		sizeof(struct bu_attribute_value_pair), str);
+	avp->readonly_min = avp->readonly_max = NULL;
 }
 
 /*
- *			B U _ A V S _ I N I T
+ *			B U _ A V S _ N E W
  *
  *  Allocate storage for a new attribute/value set, with at least
  *  'len' slots pre-allocated.
@@ -62,9 +63,7 @@ CONST char	*str;
 {
 	struct bu_attribute_value_set	*avp;
 
-	avp = (struct bu_attribute_value_set *)bu_malloc(
-		sizeof(struct bu_attribute_value_set),
-		"struct bu_attribute_value_set");
+	BU_GETSTRUCT( avp, bu_attribute_value_set );
 	bu_avs_init( avp, len, "bu_avs_new" );
 
 	if (bu_debug & BU_DEBUG_AVS)
@@ -95,7 +94,8 @@ CONST char	*value;
 
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		bu_free( app->value, "app->value" );
+		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
+			bu_free( app->value, "app->value" );
 		app->value = bu_strdup( value );
 		return 1;
 	}
@@ -122,13 +122,30 @@ CONST char	*value;
 int
 bu_avs_add_vls( avp, attribute, value_vls )
 struct bu_attribute_value_set	*avp;
-CONST char		*attribute;
-CONST struct bu_vls	*value_vls;
+const char		*attribute;
+const struct bu_vls	*value_vls;
 {
 	BU_CK_AVS(avp);
 	BU_CK_VLS(value_vls);
 
 	return bu_avs_add( avp, attribute, bu_vls_addr(value_vls) );
+}
+
+/*
+ *			B U _ A V S _ G E T
+ */
+const char *
+bu_avs_get( const struct bu_attribute_value_set *avp, const char *attribute )
+{
+	struct bu_attribute_value_pair *app;
+
+	BU_CK_AVS(avp);
+
+	for( BU_AVS_FOR(app, avp) )  {
+		if( strcmp( app->name, attribute ) != 0 )  continue;
+		return app->value;
+	}
+	return NULL;
 }
 
 /*
@@ -149,14 +166,17 @@ CONST char	*attribute;
 
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		bu_free( app->name, "app->name" );
-		bu_free( app->value, "app->value" );
+		if( app->name < avp->readonly_min || app->name > avp->readonly_max )
+			bu_free( app->name, "app->name" );
+		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
+			bu_free( app->value, "app->value" );
+
 		/* Move last one down to fit */
 		epp = &avp->avp[avp->count--];
 		if( app != epp )  {
 			*app = *epp;		/* struct copy */
 		}
-		epp->name = 0;		/* sanity */
+		epp->name = 0;			/* sanity */
 		epp->value = 0;
 		return 0;
 	}
@@ -175,8 +195,10 @@ struct bu_attribute_value_set	*avp;
 	BU_CK_AVS(avp);
 
 	for( BU_AVS_FOR(app, avp) )  {
-		bu_free( app->name, "app->name" );
-		bu_free( app->value, "app->value" );
+		if( app->name < avp->readonly_min || app->name > avp->readonly_max )
+			bu_free( app->name, "app->name" );
+		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
+			bu_free( app->value, "app->value" );
 	}
 	bu_free( avp->avp, "avp->avp" );
 	avp->magic = -1L;
@@ -193,7 +215,7 @@ bu_avs_print( const struct bu_attribute_value_set *avp, const char *title )
 
 	BU_CK_AVS(avp);
 
-	bu_log("%s\n", title);
+	bu_log("bu_avs_print: %s\n", title);
 
 	avpp = avp->avp;
 	for( i = 0; i < avp->count; i++, avpp++ )  {
