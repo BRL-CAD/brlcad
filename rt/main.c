@@ -60,7 +60,7 @@ struct application ap;
 int		stereo = 0;		/* stereo viewing */
 vect_t		left_eye_delta;
 int		hypersample=0;		/* number of extra rays to fire */
-int		perspective=0;		/* perspective view -vs- parallel */
+int		rt_perspective=0;	/* perspective view -vs- parallel */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 point_t		eye_model;		/* model-space location of eye */
@@ -189,7 +189,7 @@ register char **argv;
 			hex_out = 0;
 			break;
 		case 'p':
-			perspective = 1;
+			rt_perspective = 1;
 			zoomout = atof( optarg );
 			if( zoomout <= 0 )  zoomout = 1;
 			break;

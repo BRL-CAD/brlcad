@@ -41,7 +41,7 @@ extern struct application ap;
 extern int	stereo;			/* stereo viewing */
 extern vect_t	left_eye_delta;
 extern int	hypersample;		/* number of extra rays to fire */
-extern int	perspective;		/* perspective view -vs- parallel */
+extern int	rt_perspective;		/* perspective view -vs- parallel */
 extern vect_t	dx_model;		/* view delta-X as model-space vect */
 extern vect_t	dy_model;		/* view delta-Y as model-space vect */
 extern point_t	eye_model;		/* model-space location of eye */
@@ -105,7 +105,7 @@ grid_setup()
 	}
 
 	/* "Lower left" corner of viewing plane */
-	if( perspective )  {
+	if( rt_perspective )  {
 		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
 		/*
 		 * Divergance is (0.5 * viewsize / width) mm at
@@ -277,7 +277,7 @@ int cpu;
 					a.a_x, dx_model,
 					a.a_y, dy_model );
 			}
-			if( perspective )  {
+			if( rt_perspective )  {
 				VSUB2( a.a_ray.r_dir,
 					point, eye_model );
 				VUNITIZE( a.a_ray.r_dir );
@@ -297,7 +297,7 @@ int cpu;
 
 				VSUB2(  point, point,
 					left_eye_delta );
-				if( perspective )  {
+				if( rt_perspective )  {
 					VSUB2( a.a_ray.r_dir,
 						point, eye_model );
 					VUNITIZE( a.a_ray.r_dir );

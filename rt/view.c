@@ -65,7 +65,7 @@ Options:\n\
 extern FBIO	*fbp;			/* Framebuffer handle */
 extern FILE	*outfp;			/* optional output file */
 
-extern int	perspective;
+extern int	rt_perspective;
 extern int	width;
 extern int	height;
 extern int	parallel;		/* Trying to use multi CPUs */
