@@ -38,11 +38,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "machine.h"
 #include "vmath.h"
-#include "fb.h"
 #include "nmg.h"
 
 /* #define DEBUG_PLEU */
-
+/* #define DEBUG_POLYTO */
 /*	Print the orientation in a nice, english form
  */
 void nmg_pr_orient(o, h)
@@ -544,7 +543,7 @@ point_t base, tip;
 	VADD2(v2, v2, v1); VUNITIZE(v2);
 	
 	/* compute the start of the edgeuse */
-	VJOIN2(base, p0, 0.5,v2, 0.1,N);
+	VJOIN2(base, p0, 0.125,v2, 0.01,N);
 
 	mag *= 0.6;
 	VJOIN1(tip, base, mag, v1);
@@ -915,8 +914,13 @@ struct shell *s;
  *
  *	A polygon file consists of the following:
  *	The first line consists of two integer numbers: the number of points
- *	(vertices) in the file
- *
+ *	(vertices) in the file, followed by the number of polygons in the file.
+ *	This line is followed by lines for each of the
+ *	verticies.  Each vertex is listed on its own line, as the 3tuple
+ *	"X Y Z".  After the list of verticies comes the list of polygons.  
+ *	each polygon is represented by a line containing 1) the number of
+ *	verticies in the polygon, followed by 2) the indicies of the verticies
+ *	that make up the polygon.
  *
  *	Implicit return:
  *		r->s_p	A new shell containing all the faces from the
@@ -925,10 +929,9 @@ struct shell *s;
  *		min	minimum point of the bounding RPP of the shell
  *		max	maximum point of the bounding RPP of the shell
  */
-struct shell *polytonmg(fd, r, min, max)
+struct shell *polytonmg(fd, r)
 FILE *fd;
 struct nmgregion *r;
-point_t min, max;
 {
 	int i, j, num_pts, num_facets, pts_this_face, facet;
 	int vl_len;
@@ -936,6 +939,9 @@ point_t min, max;
 	struct vertex **vl;	/* list of vertices for this polygon*/
 	point_t p;
 	struct shell *s;
+	struct faceuse *fu;
+	struct edgeuse *eu;
+	plane_t plane;
 
 	s = nmg_msv(r);
 	nmg_kvu(s->vu_p);
@@ -943,12 +949,10 @@ point_t min, max;
 	/* get number of points & number of facets in file */
 	if (fscanf(fd, "%d %d", &num_pts, &num_facets) != 2)
 		rt_bomb("Error in first line of poly file\n");
-	
-	/* get the bounds of the model */
-	if (fscanf(fd, "%lg %lg %lg %lg %lg %lg", &min[0], &max[0],
-	    &min[1], &max[1], &min[2], &max[2]) != 6)
-		rt_bomb("error reading bounding box\n");
-
+#ifdef DEBUG_POLYTO
+	else
+		rt_log("points: %d  facets: %d\n", num_pts, num_facets);
+#endif	
 
 	v = (struct vertex **) rt_calloc(num_pts, sizeof (struct vertex *),
 			"vertices");
@@ -963,9 +967,13 @@ point_t min, max;
 	for (i=0 ; i < num_pts ; ++i) {
 		if (fscanf(fd, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
 			rt_bomb("Error reading point");
+#ifdef DEBUG_POLYTO
+		else
+			rt_log("read vertex #%d (%g %g %g)\n",
+				i, p[0], p[1], p[2]);
+#endif	
 		nmg_vertex_gv(v[i], p);
 	}
-
 
 	vl = (struct vertex **)rt_calloc(vl_len=8, sizeof (struct vertex *),
 		"vertex parameter list");
@@ -973,7 +981,9 @@ point_t min, max;
 	for (facet = 0 ; facet < num_facets ; ++facet) {
 		if (fscanf(fd, "%d", &pts_this_face) != 1)
 			rt_bomb("error getting pt count for this face");
-
+#ifdef DEBUG_POLYTO
+		rt_log("facet %d pts in face %d\n", facet, pts_this_face);
+#endif
 		if (pts_this_face > vl_len) {
 			while (vl_len < pts_this_face) vl_len *= 2;
 			rt_realloc(vl, vl_len*sizeof(struct vertex *),
@@ -986,7 +996,15 @@ point_t min, max;
 			vl[i] = v[j-1];
 		}
 
-		(void)nmg_cface(s, vl, (unsigned)pts_this_face);
+		fu = nmg_cface(s, vl, (unsigned)pts_this_face);
+		eu = fu->lu_p->down.eu_p;
+		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
+					eu->next->vu_p->v_p->vg_p->coord,
+					eu->last->vu_p->v_p->vg_p->coord)) {
+			rt_log("At %d in %s\n", __LINE__, __FILE__);
+			rt_bomb("cannot make plane equation\n");
+		}
+		else nmg_face_g(fu, plane);
 	}
 
 	for (i=0 ; i < num_pts ; ++i) {

@@ -656,7 +656,9 @@ void nmg_klu(lu1)
 struct loopuse *lu1;
 {
 	struct loopuse *lu2, *p;
+#if 0
 	struct edgeuse *eu1, *eu2;
+#endif
 	struct faceuse *fu;
 	struct shell *s;
 
@@ -2156,11 +2158,12 @@ int		poly_markers;
 
 	fu = s->fu_p;
 	do {
-		/* Consider this face */
-		NMG_CK_FACEUSE(fu);
-		NMG_CK_FACE(fu->f_p);
-		fg = fu->f_p->fg_p;
-		NMG_CK_FACE_G(fg);
+	    /* Consider this face */
+	    NMG_CK_FACEUSE(fu);
+	    NMG_CK_FACE(fu->f_p);
+	    fg = fu->f_p->fg_p;
+	    NMG_CK_FACE_G(fg);
+	    if (fu->orientation == OT_SAME) {
 		lu = fu->lu_p;
 		do {
 			/* Consider this loop */
@@ -2200,11 +2203,635 @@ int		poly_markers;
 
 			lu = lu->next;
 		}while (lu != fu->lu_p);
-		fu = fu->next;
+	    }
+	    fu = fu->next;
 	} while (fu != s->fu_p);
 }
 
 
+/*	F I N D E U
+ *
+ *	find an edgeuse in a shell between a pair of verticies
+ */
+static struct edgeuse *findeu(v1, v2, s)
+struct vertex *v1, *v2;
+struct shell *s;
+{
+	struct vertexuse *vu;
+	struct edgeuse *eu;
+
+	NMG_CK_VERTEX(v1);
+	NMG_CK_VERTEX(v2);
+	NMG_CK_SHELL(s);
+
+	vu = v1->vu_p;
+	do {
+		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC && 
+		    vu->up.eu_p->eumate_p->vu_p->v_p == v2  &&
+		    vu->up.eu_p->eumate_p == vu->up.eu_p->radial_p) {
+
+			VPRINT("checking ", vu->v_p->vg_p->coord);
+			VPRINT("and ", vu->up.eu_p->eumate_p->vu_p->v_p->vg_p->coord);
+
+			eu = vu->up.eu_p;
+			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+			    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+			    eu->up.lu_p->up.fu_p->s_p == s)
+			    	return(eu);
+		}
+		vu = vu->next;
+	} while (vu != v1->vu_p);
+
+	return((struct edgeuse *)NULL);
+}
+
+
+
+/*	N M G _ C M F A C E
+ *	Create a face for a manifold shell from a list of vertices
+ *
+ *	"verts" is an array of "n" pointers to pointers to (struct vertex).
+ *	"s" is the
+ *	parent shell for the new face.  The face will consist of a single loop
+ *	made from edges between the n vertices.  Before an edge is created
+ *	between a pair of verticies, we check to see if there is already an
+ *	edge with a single use-pair (in this shell) between the two verticies.
+ *	If such an edge can be found, the newly created edge will "use-share"
+ *	the existing edge.  This greatly facilitates the construction of
+ *	manifold shells from a series of points/faces.
+ *
+ *	If a pointer in verts is a pointer to a null vertex pointer, a new
+ *	vertex is created.  In this way, new verticies can be created
+ *	conveniently within a user's list of known verticies
+ *
+ *	verts		pointers to struct vertex	    vertex structs
+ *
+ *	-------		--------
+ *   0	|  +--|-------->|   +--|--------------------------> (struct vertex)
+ *	-------		--------	---------
+ *   1	|  +--|------------------------>|   +---|---------> (struct vertex)
+ *	-------		--------	---------
+ *   2	|  +--|-------->|   +--|--------------------------> (struct vertex)
+ *	-------		--------
+ *  ...
+ *	-------				---------
+ *   n	|  +--|------------------------>|   +---|---------> (struct vertex)
+ *	-------				---------
+ *
+ */
+struct faceuse *nmg_cmface(s, verts, n)
+struct shell *s;
+struct vertex **verts[];
+unsigned n;
+{
+	struct faceuse *fu;
+	struct edgeuse *eu, *eur, *euold;
+	unsigned i;
+
+	NMG_CK_SHELL(s);
+
+	if (n < 1) {
+		rt_bomb("trying to make bogus face\n");
+	}
+
+	/* make sure verts points to some real storage */
+	if (!verts) {
+		rt_log("in %s at %d, null pointer to array start\n",
+			__FILE__, __LINE__);
+		rt_bomb("nmg_cmface\n");
+	}
+
+	/* validate each of the pointers in verts */
+	for (i=0 ; i < n ; ++i) {
+		if (verts[i]) {
+			if (*verts[i]) {
+				/* validate the structure pointers */
+				NMG_CK_VERTEX(*verts[i]);
+				NMG_CK_VERTEX_G((*verts[i])->vg_p);
+			}
+		} else {
+			rt_log("in %s at %d, null ptr to ptr to struct vertex\n",
+				__FILE__, __LINE__);
+			rt_bomb("nmg_cmface\n");
+		}
+	}
+
+
+	fu = nmg_mf(nmg_mlv(&s->magic, *verts[0], OT_SAME));
+	eu = nmg_meonvu(fu->lu_p->down.vu_p);
+
+	if (!(*verts[0]))
+		*verts[0] = eu->vu_p->v_p;
+
+	for (i = 1 ; i < n ; ++i) {
+
+		euold = fu->lu_p->down.eu_p;
+
+		/* look for pre-existing edge between these
+		 * verticies
+		 */
+		if (*verts[i]) {
+			/* look for an existing edge to share */
+			eur = findeu(*verts[i-1], *verts[i], s);
+			eu = nmg_eusplit(*verts[i], euold);
+			if (eur) nmg_moveeu(eur, eu);
+		} else {
+			eu = nmg_eusplit(*verts[i], euold);
+			*verts[i] = eu->vu_p->v_p;
+		}
+	}
+	return (fu);
+}
+
+
+void nmg_vvg(vg)
+struct vertex_g *vg;
+{
+	NMG_CK_VERTEX_G(vg);
+}
+
+void nmg_vvertex(v, vup)
+struct vertex *v;
+struct vertexuse *vup;
+{
+	struct vertexuse *vu;
+
+	NMG_CK_VERTEX(v);
+
+	vu = vup;
+	do {
+		NMG_CK_VERTEXUSE(vu);
+		if (vu->v_p != v)
+			rt_bomb("a vertexuse in my list doesn't share my vertex\n");
+		vu = vu->next;
+	} while (vu != vup);
+
+	if (v->vg_p) nmg_vvg(v->vg_p);
+}
+
+void nmg_vvua(vua)
+struct vertexuse_a *vua;
+{
+	NMG_CK_VERTEXUSE_A(vua);
+}
+void nmg_vvu(vu, up)
+struct vertexuse *vu;
+union {
+	struct shell	*s;
+	struct loopuse	*lu;
+	struct edgeuse	*eu;
+	long		*magic_p;
+} up;
+{
+	NMG_CK_VERTEXUSE(vu);
+	if (vu->up.magic_p != up.magic_p)
+		rt_bomb("vertexuse denies parent\n");
+
+	if (!vu->next)
+		rt_bomb("vertexuse has null next pointer\n");
+
+	if (vu->next->magic != NMG_VERTEXUSE_MAGIC)
+		rt_bomb("vertexuse next is bad vertexuse\n");
+
+	if (vu->next->last != vu)
+		rt_bomb("vertexuse not last of next vertexuse\n");
+
+	nmg_vvertex(vu->v_p, vu);
+
+	if (vu->vua_p) nmg_vvua(vu->vua_p);
+}
+
+
+
+void nmg_veua(eua)
+struct edgeuse_a *eua;
+{
+	NMG_CK_EDGEUSE_A(eua);
+}
+
+void nmg_veg(eg)
+struct edge_g *eg;
+{
+	NMG_CK_EDGE_G(eg);
+}
+
+void nmg_vedge(e, eup)
+struct edge *e;
+struct edgeuse *eup;
+{
+	struct edgeuse *eu;
+	int is_use = 0;		/* flag: eup is in edge's use list */
+
+	NMG_CK_EDGE(e);
+	NMG_CK_EDGEUSE(eup);
+
+	if (!e->eu_p) rt_bomb("edge has null edgeuse pointer\n");
+
+	eu = eup;
+	do {
+		if (eu == eup || eu->eumate_p == eup)
+			is_use = 1;
+
+		if (eu->vu_p->v_p == eup->vu_p->v_p) {
+			if (eu->eumate_p->vu_p->v_p != eup->eumate_p->vu_p->v_p)
+				rt_bomb("edgeuse mate does not have correct vertex\n");
+		} else if (eu->vu_p->v_p == eup->eumate_p->vu_p->v_p) {
+			if (eu->eumate_p->vu_p->v_p != eup->vu_p->v_p)
+				rt_bomb("edgeuse does not have correct vertex\n");
+		} else
+			rt_bomb("edgeuse does not share vertex endpoint\n");
+
+		eu = eu->eumate_p->radial_p;
+	} while (eu != eup);
+
+	if (!is_use)
+		rt_bomb("Cannot get from edge to parent edgeuse\n");
+
+	if (e->eg_p) nmg_veg(e->eg_p);
+}
+
+void nmg_veu(eup, up)
+struct edgeuse *eup;
+union {
+	struct shell	*s;
+	struct loopuse	*lu;
+	long 		*magic_p;
+} up;
+{
+	struct edgeuse *eu;
+	
+	eu = eup;
+	do {
+		NMG_CK_EDGEUSE(eu);
+
+		if (eu->up.magic_p != up.magic_p)
+			rt_bomb("edgeuse denies parentage\n");
+
+		if (!eu->next)
+			rt_bomb("edgeuse has Null \"next\" pointer\n");
+		if (eu->next->magic != NMG_EDGEUSE_MAGIC)
+			rt_bomb("edgeuse next is bad edgeuse\n");
+		if (eu->next->last != eu)
+		    if (eu->next->last)
+			rt_bomb("next edgeuse has last that points elsewhere\n");
+		    else
+			rt_bomb("next edgeuse has NULL last\n");
+
+		if (eu->eumate_p->magic != NMG_EDGEUSE_MAGIC)
+			rt_bomb("edgeuse mate is bad edgeuse\n");
+		else if (eu->eumate_p->eumate_p != eu)
+			rt_bomb("edgeuse mate spurns edgeuse\n");
+
+		if (eu->radial_p->magic != NMG_EDGEUSE_MAGIC)
+			rt_bomb("edgeuse radial is bad edgeuse\n");
+		else if (eu->radial_p->radial_p != eu)
+			rt_bomb("edgeuse radial denies knowing edgeuse\n");
+
+		nmg_vedge(eu->e_p, eu);
+		
+		if (eu->eua_p) nmg_veua(eu->eua_p);
+
+		switch (eu->orientation) {
+		case OT_NONE	: break;
+		case OT_SAME	: break;
+		case OT_OPPOSITE: break;
+		case OT_UNSPEC	: break;
+		default		: rt_bomb("unknown loopuse orintation\n");
+					break;
+		}
+
+		nmg_vvu(eu->vu_p, eu);
+
+		eu = eu->next;
+	} while (eu != eup);
+}
+void nmg_vlg(lg)
+struct loop_g *lg;
+{
+	int i;
+	
+	NMG_CK_LOOP_G(lg);
+
+	for (i=0 ; i < ELEMENTS_PER_PT ; ++i)
+		if (lg->min_pt[i] > lg->max_pt[i])
+			rt_bomb("loop geom min_pt greater than max_pt\n");
+}
+void nmg_vloop(l, lup)
+struct loop *l;
+struct loopuse *lup;
+{
+	struct loopuse *lu;
+
+	NMG_CK_LOOP(l);
+	NMG_CK_LOOPUSE(lup);
+
+	if (!l->lu_p) rt_bomb("loop has null loopuse pointer\n");
+
+	for (lu=lup ; lu && lu != l->lu_p && lu->next != lup ; lu = lu->next);
+	
+	if (l->lu_p != lu)
+		for (lu=lup->lumate_p ; lu && lu != l->lu_p && lu->next != lup->lumate_p ; lu = lu->next);
+
+	if (l->lu_p != lu) rt_bomb("can't get to parent loopuse from loop\n");
+
+	if (l->lg_p) nmg_vlg(l->lg_p);
+}
+
+void nmg_vlua(lua)
+struct loopuse_a *lua;
+{
+	NMG_CK_LOOPUSE_A(lua);
+}
+
+void nmg_vlu(lulist, up)
+struct loopuse *lulist;
+union {
+	struct shell	*s;
+	struct faceuse	*fu;
+	long		*magic_p;
+} up;
+{
+	struct loopuse *lu;
+	
+	lu = lulist;
+	do {
+		NMG_CK_LOOPUSE(lu);
+
+		if (lu->up.magic_p != up.magic_p)
+			rt_bomb("loopuse denies parentage\n");
+
+		if (!lu->next)
+			rt_bomb("loopuse has null next pointer\n");
+		else if (lu->next->last != lu)
+			rt_bomb("next loopuse has last pointing somewhere else\n");
+
+		if (!lu->lumate_p)
+			rt_bomb("loopuse has null mate pointer\n");
+
+		if (lu->lumate_p->magic != NMG_LOOPUSE_MAGIC)
+			rt_bomb("loopuse mate is bad loopuse\n");
+
+		if (lu->lumate_p->lumate_p != lu)
+			rt_bomb("lumate spurns loopuse\n");
+
+		switch (lu->orientation) {
+		case OT_NONE	: break;
+		case OT_SAME	: break;
+		case OT_OPPOSITE	: break;
+		case OT_UNSPEC	: break;
+		default		: rt_bomb("unknown loopuse orintation\n");
+					break;
+		}
+		if (lu->lumate_p->orientation != lu->orientation)
+			rt_bomb("loopuse and mate have different orientation\n");
+
+		if (!lu->l_p)
+			rt_bomb("loopuse has Null loop pointer\n");
+		else {
+			nmg_vloop(lu->l_p, lu);
+		}
+
+		if (lu->lua_p) nmg_vlua(lu->lua_p);
+
+		if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC)
+			nmg_veu(lu->down.eu_p, lu);
+		else if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC)
+			nmg_vvu(lu->down.vu_p, lu);
+
+		lu = lu->next;
+	} while (lu != lulist);
+}
+void nmg_vfg(fg)
+struct face_g *fg;
+{
+	int i;
+
+	NMG_CK_FACE_G(fg);
+
+	for (i=0 ; i < ELEMENTS_PER_PT ; ++i)
+		if (fg->min_pt[i] > fg->max_pt[i])
+			rt_bomb("face geom min_pt greater than max_pt\n");
+
+	if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 &&
+	    fg->N[H]!=0.0) {
+		rt_log("bad NMG plane equation %fX + %fY + %fZ = %f\n",
+			fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
+		rt_bomb("Bad NMG geometry\n");
+	}
+}
+
+
+void nmg_vface(f, fup)
+struct face *f;
+struct faceuse *fup;
+{
+	struct faceuse *fu;
+
+	NMG_CK_FACE(f);
+	NMG_CK_FACEUSE(fup);
+
+	/* make sure we can get back to the parent faceuse from the face */
+	if (!f->fu_p) rt_bomb("face has null faceuse pointer\n");
+
+	for (fu = fup; fu && fu != f->fu_p && fu->next != fup; fu = fu->next);
+
+	if (f->fu_p != fu) rt_bomb("can't get to parent faceuse from face\n");
+	
+	if (f->fg_p) nmg_vfg(f->fg_p);
+}
+
+
+void nmg_vfua(fua)
+struct faceuse_a *fua;
+{
+	NMG_CK_FACEUSE_A(fua);
+}
+
+/*	N M G _ V F U
+ *
+ *	Validate a list of faceuses
+ */
+void nmg_vfu(fulist, s)
+struct faceuse *fulist;
+struct shell *s;
+{
+	struct faceuse *fu;
+	
+	fu = fulist;
+	do {
+		NMG_CK_FACEUSE(fu);
+		if (fu->s_p != s) {
+			rt_log("faceuse claims shell parent (%8x) instead of (%8x)\n",
+				fu->s_p, s);
+			rt_bomb("nmg_vfu\n");
+		}
+
+		if (!fu->next) {
+			rt_bomb("faceuse next is NULL\n");
+		} else if (fu->next->last != fu) {
+			rt_bomb("faceuse->next->last != faceuse\n");
+		}
+
+		if (!fu->fumate_p)
+			rt_bomb("null faceuse fumate_p pointer\n");
+
+		if (fu->fumate_p->magic != NMG_FACEUSE_MAGIC)
+			rt_bomb("faceuse mate is bad faceuse ptr\n");
+
+		if (fu->fumate_p->fumate_p != fu)
+			rt_bomb("faceuse mate spurns faceuse!\n");
+
+		switch (fu->orientation) {
+		case OT_NONE	: break;
+		case OT_SAME	: if (fu->fumate_p->orientation != OT_OPPOSITE)
+					rt_bomb("faceuse of \"SAME\" orientation has mate that is not \"OPPOSITE\" orientation");
+				break;
+		case OT_OPPOSITE:  if (fu->fumate_p->orientation != OT_SAME)
+					rt_bomb("faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation");
+				break;
+		case OT_UNSPEC	: break;
+		default		: rt_bomb("unknown faceuse orintation\n"); break;
+		}
+
+		if (fu->fua_p) nmg_vfua(fu->fua_p);
+		
+		NMG_CK_FACE(fu->f_p);
+		nmg_vface(fu->f_p, fu);
+		
+		NMG_CK_LOOPUSE(fu->lu_p);
+		nmg_vlu(fu->lu_p, fu);
+		
+		fu = fu->next;
+	} while (fu != fulist);
+}
+
+
+/*	N M G _ S H E L L
+ *
+ *	validate a list of shells and all elements under them
+ */
+void nmg_vshell(sp, r)
+struct shell *sp;
+struct nmgregion *r;
+{
+	struct shell *s;
+	pointp_t lpt, hpt;
+
+	s = sp;
+	do {
+		NMG_CK_SHELL(s);
+		if (s->r_p != r) {
+			rt_log("shell's r_p (%8x) doesn't point to parent (%8x)\n",
+				s->r_p, r);
+			rt_bomb("nmg_vshell");
+		}
+
+		if (!s->next) {
+			rt_bomb("nmg_vshell: Shell's next ptr is null\n");
+		} else if (s->next->last != s) {
+			rt_log("next shell's last(%8x) is not me (%8x)\n",
+				s->next->last, s);
+			rt_bomb("nmg_vshell\n");
+		}
+
+		if (s->sa_p) {
+			NMG_CK_SHELL_A(s->sa_p);
+			/* we make sure that all values of min_pt
+			 * are less than or equal to the values of max_pt
+			 */
+			lpt = s->sa_p->min_pt;
+			hpt = s->sa_p->max_pt;
+			if (lpt[0] > hpt[0] || lpt[1] > hpt[1] ||
+			    lpt[2] > hpt[2]) {
+				rt_log("Bad min_pt/max_pt for shell(%8x)'s extent\n");
+				rt_log("Min_pt %g %g %g\n", lpt[0], lpt[1],
+					lpt[2]);
+				rt_log("Max_pt %g %g %g\n", hpt[0], hpt[1],
+					hpt[2]);
+			}
+		}
+
+		/* now we check out the "children"
+		 */
+
+		if (s->vu_p) {
+			if (s->fu_p || s->lu_p || s->eu_p) {
+				rt_log("shell (%8x) with vertexuse (%8x) has other children\n",
+					s, s->vu_p);
+				rt_bomb("");
+			}
+		}
+
+		if (s->fu_p) {
+			NMG_CK_FACEUSE(s->fu_p);
+			nmg_vfu(s->fu_p, s);
+		}
+
+		if (s->lu_p) {
+			NMG_CK_LOOPUSE(s->lu_p);
+			nmg_vlu(s->lu_p, s);
+		}
+
+		if (s->eu_p) {
+			NMG_CK_EDGEUSE(s->eu_p);
+			nmg_veu(s->eu_p, s);
+		}
+
+
+
+		s = s->next;
+	} while (s != sp);
+}
+
+
+
+/*	N M G _ V R E G I O N
+ *
+ *	validate a list of nmgregions and all elements under them
+ */
+void nmg_vregion(rp, m)
+struct nmgregion *rp;
+struct model *m;
+{
+	struct nmgregion *r;
+	r = rp;
+	do {
+		NMG_CK_REGION(r);
+		if (r->m_p != m) {
+			rt_log("nmgregion pointer m_p %8x should be %8x\n",
+				r->m_p, m);
+			rt_bomb("nmg_vregion\n");
+		}
+		if (r->ra_p) {
+			NMG_CK_REGION_A(r->ra_p);
+		}
+
+		if (r->s_p) {
+			NMG_CK_SHELL(r->s_p);
+			nmg_vshell(r->s_p, r);
+		}
+
+		if (r->next->last != r) {
+			rt_bomb("next nmgregion's last is not me\n");
+		}
+		r = r->next;
+	} while (r != rp);
+}
+
+/*	N M G _ V M O D E L
+ *
+ *	validate an NMG model and all elements in it.
+ */
+void nmg_vmodel(m)
+struct model *m;
+{
+	NMG_CK_MODEL(m);
+	if (m->ma_p) {
+		NMG_CK_MODEL_A(m->ma_p);
+	}
+	NMG_CK_REGION(m->r_p);
+	nmg_vregion(m->r_p, m);
+}
 #if 0
 
 /* ToDo:
