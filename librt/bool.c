@@ -363,9 +363,9 @@ struct application	*ap;
 
 			if(RT_G_DEBUG&DEBUG_PARTITION) {
 				bu_log( "At start of loop:\n" );
-				bu_log( "	remaining input segment: (%g - %g)\n",
+				bu_log( "	remaining input segment: (%.12e - %.12e)\n",
 					lasthit->hit_dist, segp->seg_out.hit_dist );
-				bu_log( "	current partition: (%g - %g)\n",
+				bu_log( "	current partition: (%.12e - %.12e)\n",
 					pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
 				rt_pr_partitions( rtip, PartHdp, "At start of loop" );
 			}
@@ -430,7 +430,13 @@ struct application	*ap;
 				newpp->pt_outhit = &segp->seg_in;
 				newpp->pt_outflip = 1;
 				INSERT_PT( newpp, pp );
-				if(RT_G_DEBUG&DEBUG_PARTITION) bu_log("seg starts within p. Split p at seg start, advance.\n");
+				if(RT_G_DEBUG&DEBUG_PARTITION) {
+					bu_log("seg starts within p. Split p at seg start, advance. (diff = %g)\n", diff);
+					bu_log( "newpp starts at %.12e, pp starts at %.12e\n",
+						newpp->pt_inhit->hit_dist,
+						pp->pt_inhit->hit_dist );
+					bu_log( "newpp = x%x, pp = x%x\n", newpp, pp );
+				}
 				goto equal_start;
 			}
 			if( diff > -(tol_dist) )  {
@@ -449,12 +455,17 @@ struct application	*ap;
 				 * than the top face of the ARB8.
 				 */
 				diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
-				if( NEAR_ZERO(diff, tol_dist) &&
-				    diff < 0 )  {
-					if(RT_G_DEBUG&DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
-					pp->pt_inseg = segp;
-					pp->pt_inhit = &segp->seg_in;
-					pp->pt_inflip = 0;
+				if( !pp->pt_back ||
+				    pp->pt_back == PartHdp ||
+				    pp->pt_back->pt_outhit->hit_dist <=
+				    segp->seg_in.hit_dist ) {
+					if( NEAR_ZERO(diff, tol_dist) &&
+					    diff < 0 )  {
+						if(RT_G_DEBUG&DEBUG_PARTITION) bu_log("changing partition start point to segment start point\n");
+						pp->pt_inseg = segp;
+						pp->pt_inhit = &segp->seg_in;
+						pp->pt_inflip = 0;
+					}
 				}
 equal_start:
 				if(RT_G_DEBUG&DEBUG_PARTITION) bu_log("equal_start\n");
@@ -514,7 +525,13 @@ equal_start:
 					pp->pt_inhit = &segp->seg_out;
 					pp->pt_inflip = 1;
 					INSERT_PT( newpp, pp );
-					if(RT_G_DEBUG&DEBUG_PARTITION) bu_log("start together, seg shorter than partition\n");
+					if(RT_G_DEBUG&DEBUG_PARTITION) {
+						bu_log("start together, seg shorter than partition\n");
+						bu_log( "newpp starts at %.12e, pp starts at %.12e\n",
+							newpp->pt_inhit->hit_dist,
+							pp->pt_inhit->hit_dist );
+						bu_log( "newpp = x%x, pp = x%x\n", newpp, pp );
+					}
 					goto done_weave;
 				}
 				/* NOTREACHED */
@@ -1460,10 +1477,12 @@ const struct bu_bitv	*solidbits;
 					pp, pp->pt_forw );
 				pp->pt_forw->pt_inhit->hit_dist = pp->pt_outhit->hit_dist;
 			} else if( diff > 0 )  {
-				bu_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d\n",
+				bu_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d, diff = %g\n",
 					pp->pt_outhit->hit_dist,
 					pp->pt_forw->pt_inhit->hit_dist,
-					ap->a_x, ap->a_y, ap->a_level );
+					ap->a_x, ap->a_y, ap->a_level, diff );
+				bu_log( "sort defect is between parts x%x and x%x\n",
+					pp, pp->pt_forw );
 				if( !(RT_G_DEBUG & DEBUG_PARTITION) )
 					rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
 				ret = 0;
