@@ -216,8 +216,8 @@ set -S2 "/bin/sh"
 #	define	CC	/usr/bin/cc
 #	define	OPTIMIZER	/**/
 #	define	CC_OPTS -g
-#	define	XINCDIR		/usr/X11/include
-#	define	XLIBDIR		/usr/X11/lib
+#	define	XINCDIR	/usr/X11/include
+#	define	XLIBDIR	/usr/X11/lib
 
 #	define	LIBRT_TIMER	timer42
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
@@ -472,8 +472,8 @@ set -S2 "/bin/sh"
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
 /*	X11 Configuration is standard in IRIX 4.0 */
-#	define	XINCDIR		/usr/X11/include
-#	define	XLIBDIR		/usr/X11/lib
+#	define	XINCDIR	/usr/X11/include
+#	define	XLIBDIR	/usr/X11/lib
 
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
@@ -600,13 +600,19 @@ set -S2 "/bin/sh"
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
 
-#	define	XINCDIR		/usr/X11/include
-#	define	XLIBDIR		/usr/X11/lib
-
 #	define	sun_no_opts	/* Production configuration */
 #	undef	sun_x11
 #	undef	sun_openwin
 #	undef	sun_x11_gds
+
+#	if !defined(sun_openwin)
+#		define	XINCDIR	/usr/X11/include
+#		define	XLIBDIR	/usr/X11/lib
+#	else
+#		define	XINCDIR	/usr/openwin/include
+#		define	XLIBDIR	/usr/openwin/lib
+#	endif
+
 #	ifdef sun_no_opts
 /*		Normal Sun configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun
@@ -632,13 +638,13 @@ set -S2 "/bin/sh"
 /*		Sun with SunOS 4.1.1 and OpenWindows configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
-			-I/usr/openwin/include -DIF_X
+			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
-			-L/usr/openwin/lib -lX11
+			-L''XLIBDIR -lX11
 #		define	MGED_OBJS	dm-sun dm-X
-#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/openwin/include
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-			-L/usr/openwin/lib -lX11
+			-L''XLIBDIR -lX11
 #	endif
 #	ifdef sun_x11_gds
 /*		Sun with X11 configuration and TekSource GDS hardware*/
