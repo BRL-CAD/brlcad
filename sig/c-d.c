@@ -24,7 +24,7 @@ int argc; char **argv;
 		exit( 1 );
 	}
 
-	while( argv[1][0] == '-' )  {
+	while( argc > 1 && argv[1][0] == '-' )  {
 		switch( argv[1][1] )  {
 		case 'r':
 			rflag++;
@@ -63,7 +63,10 @@ int argc; char **argv;
 				onum++;
 			}
 			if( pflag ) {
-				*obp++ = atan2( ibuf[i], ibuf[i+1] );
+				if( ibuf[i] == 0 && ibuf[i+1] == 0 )
+					*obp++ = 0;
+				else
+					*obp++ = atan2( ibuf[i], ibuf[i+1] );
 				onum++;
 			}
 			if( zflag ) {
