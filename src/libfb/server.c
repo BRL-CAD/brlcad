@@ -28,13 +28,27 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 # include "config.h"
 #endif
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-
+#if defined (HAVE_SYS_SELECT_H)
+#  include <sys/select.h>
+#else
+#  if defined(HAVE_SYS_TYPES_H)
+#    include <sys/types.h>
+#  endif
+#  if defined(HAVE_SYS_TIME_H)
+#    include <sys/time.h>
+#  endif
+#  if defined(HAVE_UNISTD_H)
+#    include <unistd.h>
+#  else
+#    if defined(HAVE_SYS_UNISTD_H)
+#      include <sys/unistd.h>
+#    endif
+#  endif
+#endif
 #include "machine.h"
 #include "fb.h"
 #include "pkg.h"
