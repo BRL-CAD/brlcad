@@ -466,7 +466,6 @@ struct soltab {
 	struct bu_ptbl	st_regions;	/* ptrs to regions using this solid (const) */
 	matp_t		st_matp;	/* solid coords to model space, NULL=identity */
 	struct db_full_path st_path;	/* path from region to leaf */
-	short		st_is_platemode;/* 1 = solid is FASTGEN plate mode */
 };
 #define st_name		st_dp->d_namep
 #define RT_SOLTAB_NULL	((struct soltab *)0)
