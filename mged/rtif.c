@@ -176,6 +176,7 @@ mat_t	mat;
 #define LEN	2000
 static char	*rt_cmd_vec[LEN];
 static int	rt_cmd_vec_len;
+static char	rt_cmd_storage[LEN*9];
 
 void
 setup_rt( vp )
@@ -1237,9 +1238,12 @@ char	**argv;
 int	argc;
 {
 	register int	i = 1;
+	char *cp = rt_cmd_storage;
 
 	for( i = 1;  i < argc && i < LEN; i++ )  {
-		rt_cmd_vec[i] = argv[i];
+		strcpy(cp, argv[i]);
+		rt_cmd_vec[i] = cp;
+		cp += strlen(cp) + 1;
 	}
 	rt_cmd_vec[i] = (char *)0;
 	rt_cmd_vec_len = i;
