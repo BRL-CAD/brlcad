@@ -291,14 +291,14 @@ struct application *ap;
 	/* Eliminate implicit lights */
 	lp=LightHeadp;
 	while( lp != LIGHT_NULL )  {
-		if( lp->lt_explicit )  {
-			/* will be cleaned by mlib_free() */
-			lp = lp->lt_forw;
+		if( lp->lt_implicit )  {
+			nlp = lp->lt_forw;
+			light_free( (char *)lp );
+			lp = nlp;
 			continue;
 		}
-		nlp = lp->lt_forw;
-		light_free( (char *)lp );
-		lp = nlp;
+		/* will be cleaned by mlib_free() */
+		lp = lp->lt_forw;
 	}
 	return(0);		/* OK */
 }
@@ -435,6 +435,7 @@ struct partition *PartHeadp;
 
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
+	sw.sw_extinction = 0;
 	sw.sw_xmitonly = 0;		/* want full data */
 	sw.sw_inputs = 0;		/* no fields filled yet */
 	VSETALL( sw.sw_color, 1 );
@@ -496,6 +497,7 @@ register struct shadework *swp;
 
 	if( swp->sw_hit.hit_dist < 0.0 )
 		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
+	ap->a_cumlen += swp->sw_hit.hit_dist;
 
 	want = mfp->mf_inputs;
 
@@ -623,50 +625,49 @@ register int	want;
 	}
 	if( want & MFI_LIGHT )  {
 		register int	i;
-		register fastf_t *intensity;
+		register fastf_t *intensity, *tolight;
 		register fastf_t f;
-		vect_t to_light;
 		struct application sub_ap;
 
 		/*
 		 *  Determine light visibility
 		 */
-		for( i=0, lp=LightHeadp, intensity = swp->sw_intensity;
+		for( i=0, lp=LightHeadp, intensity = swp->sw_intensity, tolight = swp->sw_tolight;
 			lp;
-			lp = lp->lt_forw, i++, intensity += 3
+			lp = lp->lt_forw, i++, intensity += 3, tolight += 3
 		)  {
-			if( !(lp->lt_explicit) )  {
-				/* If this is an implicit light,
-			  	 * then just claim the light is visible.
+			/* compute the light direction */
+			if( lp->lt_infinite ) {
+				/* XXX infinte lights need penumbras? */
+				VMOVE( tolight, lp->lt_vec );
+			} else {
+				/*
+				 *  Dither light pos for penumbra by +/- 0.5 light radius;
+				 *  this presently makes a cubical light source distribution.
 				 */
-				swp->sw_visible[i] = (char *)lp;
-				VSETALL( intensity, 1 );
-				continue;
+				f = lp->lt_radius * 0.9;
+				tolight[X] = lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
+				tolight[Y] = lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
+				tolight[Z] = lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
 			}
 
 			/*
-			 *  An explicit light source, and the shader desires
-			 *  light visibility information.
-			 *  Dither light pos for penumbra by +/- 0.5 light radius;
-			 *  this presently makes a cubical light source distribution.
+			 *  If we have a normal, test against light direction
 			 */
-			f = lp->lt_radius * 0.9;
-			to_light[X] = lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
-			to_light[Y] = lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
-			to_light[Z] = lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
-			if( have & MFI_NORMAL )  {
-				if( VDOT(swp->sw_hit.hit_normal,to_light) < 0 ) {
-					/* backfacing */
+			if( (have & MFI_NORMAL) && (swp->sw_transmit == 0) )  {
+				if( VDOT(swp->sw_hit.hit_normal,tolight) < 0 ) {
+					/* backfacing, opaque */
 					swp->sw_visible[i] = (char *)0;
 					continue;
 				}
 			}
-			VUNITIZE( to_light );
+			VUNITIZE( tolight );
 
 			/*
 			 * See if ray from hit point to light lies within light beam
+			 * Note: this is should always be true for infinite lights!
 			 */
-			if( -VDOT(to_light, lp->lt_aim) < lp->lt_cosangle )  {
+			if( -VDOT(tolight, lp->lt_aim) < lp->lt_cosangle )  {
 				/* dark (outside of light beam) */
 				swp->sw_visible[i] = (char *)0;
 				continue;
@@ -683,10 +684,11 @@ register int	want;
 			 *  (This SHOULD actually return an energy value)
 			 */
 			sub_ap = *ap;			/* struct copy */
-			VMOVE( sub_ap.a_ray.r_dir, to_light );
+			VMOVE( sub_ap.a_ray.r_dir, tolight );
 			VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
 			sub_ap.a_hit = light_hit;
 			sub_ap.a_miss = light_miss;
+			sub_ap.a_user = (int)lp;	/* so we can tell.. */
 			sub_ap.a_level = 0;
 
 			VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
