@@ -834,7 +834,6 @@ AC_SUBST(WDB)
 
 
 AC_CONFIG_SUBDIRS([ \
-	misc/enigma \
 	src/other/libtcl/unix \
 	src/other/libtk/unix \
 ])
