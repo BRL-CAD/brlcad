@@ -29,20 +29,17 @@ Buildroot: /var/tmp/redhat/BUILD/@PACKAGE@-@VERSION@
 %build
 ./configure CFLAGS="$RPM_OPT_FLAGS"
 
-make
+make -j `/bin/cat /proc/cpuinfo | /bin/grep processor | /usr/bin/tail -n 1 | /usr/bin/cut -d : -f 2 | /bin/sed 's/.*/(&+1)*2-1/' | /usr/bin/bc`
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/usr/bin
-mkdir -p $RPM_BUILD_ROOT/usr/share/@PACKAGE@
 make DESTDIR=$RPM_BUILD_ROOT install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
-/usr/bin/@PACKAGE@
-/usr/share/@PACKAGE@/*
+/usr/@PACKAGE@
 
 %changelog
 
