@@ -1,13 +1,45 @@
 # $Id$
-lib_LTLIBRARIES=libbn.la
+lib_LTLIBRARIES = libbn.la
 
-SRCS=anim.c asize.c axis.c bn_tcl.c complex.c const.c font.c fortran.c htester.c list.c marker.c mat.c msr.c noise.c number.c plane.c plot3.c poly.c qmath.c rand.c scale.c sphmap.c symbol.c tabdata.c tplot.c vectfont.c vector.c vert_tree.c wavelet.c
-libbn_la_SOURCES= $(SRCS) vers.c
+SRCS = \
+	anim.c \
+	asize.c \
+	axis.c \
+	bn_tcl.c \
+	complex.c \
+	const.c \
+	font.c \
+	fortran.c \
+	htester.c \
+	list.c \
+	marker.c \
+	mat.c \
+	msr.c \
+	noise.c \
+	number.c \
+	plane.c \
+	plot3.c \
+	poly.c \
+	qmath.c \
+	rand.c \
+	scale.c \
+	sphmap.c \
+	symbol.c \
+	tabdata.c \
+	tplot.c \
+	vectfont.c \
+	vector.c \
+	vert_tree.c \
+	wavelet.c
 
-man_MANS=libplot3.3
-EXTRA_DIST=$(man_MANS)
+libbn_la_SOURCES = $(SRCS) vers.c
 
-AM_CFLAGS=-I$(top_srcdir)/h
+man_MANS = libplot3.3
+
+EXTRA_DIST = $(man_MANS)
+
+AM_CFLAGS = -I$(top_srcdir)/h
+
 libbn_la_LDFLAGS = -version-info 19:1
 
 BUILT_SOURCES = vers.c
