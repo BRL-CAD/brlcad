@@ -26,7 +26,12 @@
 /* We need sys/select.h under Irix 5 to get fd_set. */
 
 #ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
+#	include <sys/select.h>
+#endif
+
+/* POSIX says FD_SET() et.al. go in <sys/time.h> rather than <sys/types.h> */
+#if defined(_POSIX_SOURCE) || defined(linux)
+#	include <sys/time.h>
 #endif
 
 /* Some additional fd_set manipulation routines */
