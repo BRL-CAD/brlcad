@@ -66,6 +66,11 @@ extern int do_frame( int framenumber );
 extern void def_tree( register struct rt_i *rtip );
 extern int old_way( FILE *fp );
 
+/* material.c */
+struct mfuncs *load_dynamic_shader(const char *material, const int mlen);
+int mlib_setup( struct mfuncs **headp, struct region *rp, struct rt_i *rtip );
+void mlib_free( struct region *rp );
+
 /*
  *
  *  
