@@ -578,10 +578,21 @@ set -S2 "/bin/sh"
 #		define	SHARED	_s
 #	endif
 #	define	GFLAG		-KPIC
+# if 0
+#	define	ARCH_SUF	so
+#	define	LIBVERS	[[../sharedlibvers.sh]]
+#	define	BUILD_LIBRARY	ld -shared -o
+#	define	RANLIB		/**/
+#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath LIBDIR
+#	define	LD_OPTS		-m -v
+# else
+#	define	RANLIB	ranlib5.sh
+#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
+#	define	LD_OPTS		GFLAG
+# endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 /* -ansi is used, to get struct timeval */
 #	define  CC_OPTS		GFLAG -ansiposix
-#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
@@ -594,8 +605,6 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-lX11''SHARED -lgl''SHARED
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
-#	define	LD_OPTS		GFLAG
-#	define	RANLIB	ranlib5.sh
 #	define	GETHOST	hostname
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
@@ -741,6 +750,7 @@ set -S2 "/bin/sh"
 #	define	LIBVERS		[[../sharedlibvers.sh]]
 #	define	BUILD_LIBRARY	ld -Bdynamic -o
 #	define	RANLIB		/**/
+#	define	STANDARD_LIBES	-L''LIBDIR
 # endif
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
@@ -1379,7 +1389,7 @@ set -S2 "/bin/sh"
 #if !defined(STANDARD_LIBES)
 #	define	STANDARD_LIBES	-lm
 #endif
-#define LIBES	LIBSYSV -L''LIBDIR STANDARD_LIBES
+#define LIBES	LIBSYSV STANDARD_LIBES
 #define LLIBES	STANDARD_LIBES
 
 /* Program to install executables */
