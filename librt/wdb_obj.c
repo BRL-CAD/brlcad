@@ -421,6 +421,9 @@ Usage: wdb_open\n\
 	wdbp->wdb_mat_default = 1;
 	wdbp->wdb_los_default = 100;
 
+	/* resource structure */
+	wdbp->wdb_resp = &rt_uniresource;
+
 	BU_LIST_INIT(&wdbp->wdb_observers.l);
 
 	/* append to list of rt_wdb's */
@@ -1726,7 +1729,7 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
 			continue;
 
 		db_functree(wdbp->dbip, dp,
-			wdb_killtree_callback, wdb_killtree_callback,
+			wdb_killtree_callback, wdb_killtree_callback, wdbp->wdb_resp,
 			(genptr_t)interp );
 	}
 
@@ -3983,7 +3986,7 @@ wdb_keep_tcl(clientData, interp, argc, argv)
 	for (i = 3; i < argc; i++) {
 		if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 			continue;
-		db_functree(wdbp->dbip, dp, wdb_node_write, wdb_node_write, (genptr_t)&wnd);
+		db_functree(wdbp->dbip, dp, wdb_node_write, wdb_node_write, wdbp->wdb_resp, (genptr_t)&wnd);
 	}
 
 	fclose(keepfp);
