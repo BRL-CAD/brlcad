@@ -81,5 +81,14 @@ struct rtserver_geometry {
 						   and component names as values */
 };
 
+extern void get_model_extents( int sessionid, point_t min, point_t max );
 
+extern struct rtserver_result *rts_submit_job_and_wait( struct rtserver_job *ajob );
 
+extern struct rtserver_result *rts_get_any_waiting_result( int sessionid );
+
+extern struct rtserver_job *rts_get_rtserver_job();
+
+extern struct xray *rts_get_xray();
+
+extern int get_max_working_threads();
