@@ -1,6 +1,0 @@
-ztest250.so \
-		:st = .text 0x5ffe0000, 0x00010000:\
-		:st = .data 0x5fff0000, 0x00010000:
-libz.so.1.0.4 \
-		:st = .text 0x5ffb0000, 0x00010000:\
-		:st = .data 0x5ffc0000, 0x00020000:
