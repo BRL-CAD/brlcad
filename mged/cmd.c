@@ -54,6 +54,9 @@ extern int	cmd_glob();
 int	mged_cmd();
 int	f_sync();
 
+/* XXX Move to ged.h */
+MGED_EXTERN(int f_shader, (int argc, char **argv));
+
 struct funtab {
 	char *ft_name;
 	char *ft_parms;
@@ -283,6 +286,8 @@ static struct funtab funtab[] = {
 	f_sed,2,2,
 "set",	"[var=opt]", "assign/display mged variables",
 	f_set,1,2,
+"shader", "comb material [arg(s)]", "assign materials (like 'mater')",
+	f_shader, 3,MAXARGS,
 "size", "size", "set view size",
 	f_view, 2,2,
 "solids", "file object(s)", "make ascii summary of solid parameters",
