@@ -5,7 +5,8 @@
  *
  *  Author -
  *	Phillip Dykstra
- *  
+ *  	Lee A. Butler
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -32,10 +33,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 HIDDEN int	stk_setup(), stk_render();
 HIDDEN void	stk_print(), stk_free();
+HIDDEN int	ext_setup();
 
 struct mfuncs stk_mfuncs[] = {
 	{MF_MAGIC,	"stack",	0,		0,	0,
 	stk_setup,	stk_render,	stk_print,	stk_free},
+
+	{MF_MAGIC,	"extern",	0,		0,	0,
+	ext_setup,	stk_render,	stk_print,	stk_free},
 
 	{0,		(char *)0,	0,		0,	0,
 	0,		0,		0,		0}
@@ -51,6 +56,55 @@ struct stk_specific {
 struct bu_structparse stk_parse[] = {
 	{"",	0,	(char *)0,	0,			FUNC_NULL }
 };
+
+/*
+ *			E X T _ S E T U P
+ *
+ *  Returns 0 on failure, 1 on success.
+ */
+HIDDEN int
+ext_setup( rp, matparm, dpp, mf_p, rtip, headp )
+register struct region *rp;
+struct rt_vls	*matparm;	/* parameter string */
+char		**dpp;		/* pointer to user data pointer */
+struct mfuncs	*mf_p;
+struct rt_i	*rtip;
+struct mfuncs	**headp;
+{
+	struct bu_mapped_file	*parameter_file;
+	struct bu_vls		parameter_data;
+	char			*filename;
+	int			status;
+
+	RT_CHECK_RTI(rtip);
+	RT_VLS_CHECK( matparm );
+	RT_CK_REGION(rp);
+	
+	filename = bu_vls_addr(matparm);
+	parameter_file = bu_open_mapped_file( filename, (char *)NULL );
+	if (!parameter_file) {
+		bu_log("cannot open external shader file \"%s\"\n", filename);
+		bu_bomb("ext_setup()\n");
+	}
+
+	bu_vls_init(&parameter_data);
+	bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
+		parameter_file->buflen );
+
+	if( rdebug&RDEBUG_SHADE ) {
+		bu_log("ext_setup(%s): {%s}\n",
+			filename, bu_vls_addr(&parameter_data));
+	}
+
+	bu_close_mapped_file( parameter_file );
+
+	status = stk_setup(rp, &parameter_data, dpp, mf_p, rtip, headp);
+
+	bu_vls_free( &parameter_data );
+
+	return status;
+}
+
 
 /*
  *			S T K _ S E T U P
@@ -80,8 +134,9 @@ struct mfuncs	**headp;
 
 	/*bu_struct_parse( matparm, stk_parse, (char *)sp );*/
 
-	if(rdebug&RDEBUG_MATERIAL)
+	if(rdebug&RDEBUG_MATERIAL || rdebug&RDEBUG_SHADE)
 		rt_log( "stk_setup called with \"%s\"\n", RT_VLS_ADDR(matparm) );
+
 	i = 0;
 	start = cp = RT_VLS_ADDR(matparm);
 	while( *cp != '\0' ) {
