@@ -960,7 +960,7 @@ register CONST fastf_t *invdir;	/* inverses of rp->r_dir[] */
 register CONST fastf_t *min;
 register CONST fastf_t *max;
 {
-	register fastf_t	*pt = &rp->r_pt[0];
+	register CONST fastf_t	*pt = &rp->r_pt[0];
 	register fastf_t	sv;
 #define st sv			/* reuse the register */
 	register fastf_t	rmin = -INFINITY;
@@ -969,14 +969,14 @@ register CONST fastf_t *max;
 	/* Start with infinite ray, and trim it down */
 
 	/* X axis */
-	if( rp->r_dir[X] < 0.0 )  {
+	if( *invdir < 0.0 )  {
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
 		if(rmax > (sv = (*min - *pt) * *invdir) )
 			rmax = sv;
 		if( rmin < (st = (*max - *pt) * *invdir) )
 			rmin = st;
-	}  else if( rp->r_dir[X] > 0.0 )  {
+	}  else if( *invdir > 0.0 )  {
 		/* Heading towards larger numbers */
 		/* if( *max < *pt )  miss */
 		if(rmax > (st = (*max - *pt) * *invdir) )
@@ -995,12 +995,12 @@ register CONST fastf_t *max;
 
 	/* Y axis */
 	pt++; invdir++; max++; min++;
-	if( rp->r_dir[Y] < 0.0 )  {
+	if( *invdir < 0.0 )  {
 		if(rmax > (sv = (*min - *pt) * *invdir) )
 			rmax = sv;
 		if( rmin < (st = (*max - *pt) * *invdir) )
 			rmin = st;
-	}  else if( rp->r_dir[Y] > 0.0 )  {
+	}  else if( *invdir > 0.0 )  {
 		if(rmax > (st = (*max - *pt) * *invdir) )
 			rmax = st;
 		if( rmin < ((sv = (*min - *pt) * *invdir)) )
@@ -1012,12 +1012,12 @@ register CONST fastf_t *max;
 
 	/* Z axis */
 	pt++; invdir++; max++; min++;
-	if( rp->r_dir[Z] < 0.0 )  {
+	if( *invdir < 0.0 )  {
 		if(rmax > (sv = (*min - *pt) * *invdir) )
 			rmax = sv;
 		if( rmin < (st = (*max - *pt) * *invdir) )
 			rmin = st;
-	}  else if( rp->r_dir[Z] > 0.0 )  {
+	}  else if( *invdir > 0.0 )  {
 		if(rmax > (st = (*max - *pt) * *invdir) )
 			rmax = st;
 		if( rmin < ((sv = (*min - *pt) * *invdir)) )
