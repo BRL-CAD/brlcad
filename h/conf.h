@@ -137,25 +137,25 @@
 #       define HAVE_FLOAT_H     1
 #       define HAVE_LIMITS_H    1
 #	define HAVE_BZERO	1
-#endif
 
-#if IRIX == 5
-#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
-#	define _BSD_TYPES		1
-#	define _BSD_TIME		1	/* for good timeval */
-#	define HAVE_SBRK_DECL		1
-#endif
+#	if IRIX == 5
+#		define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#		define _BSD_TYPES		1
+#		define _BSD_TIME		1	/* for good timeval */
+#		define HAVE_SBRK_DECL		1
+#	endif
 
-#if IRIX == 6
-#	define HAVE_BSDGETTIMEOFDAY	1	/* For BSDgettimeofday */
-#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
-#	define _BSD_TYPES		1
-#	define _BSD_TIME		1	/* for good timeval */
-#	define HAVE_SBRK_DECL		1
-#	define HAVE_REGEX_DECL		1
-#	define HAVE_POSIX_REGEXEC	1
-#	define USE_REGCOMP		1
-#	define HAVE_DLOPEN		1
+#	if IRIX == 6
+#		define HAVE_BSDGETTIMEOFDAY	1	/* For BSDgettimeofday */
+#		define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#		define _BSD_TYPES		1
+#		define _BSD_TIME		1	/* for good timeval */
+#		define HAVE_SBRK_DECL		1
+#		define HAVE_REGEX_DECL		1
+#		define HAVE_POSIX_REGEXEC	1
+#		define USE_REGCOMP		1
+#		define HAVE_DLOPEN		1
+#	endif
 #endif
 
 #if defined(_AIX) || defined(__AIX)
@@ -180,16 +180,16 @@
 #	define HAVE_UNISTD_H	1
 #	define HAVE_SYS_MMAN_H	1
 #	define HAVE_LIMITS_H	1
-#endif
 
-#if SUNOS > 55
-#	define USE_PROTOTYPES   1	
-#	define HAVE_SBRK_DECL	1
-/* #	define HAVE_GETOPT_DECL	1 -- is not available if __STDC__ */
-#	define HAVE_MEMORY_H	1
-#	define HAVE_LIMITS_H	1
-#	define USE_STRING_H	1
-#	undef _KERNEL  /* make sure the kernel calls are not used */
+#	if SUNOS > 55
+#		define USE_PROTOTYPES   1	
+#		define HAVE_SBRK_DECL	1
+/* #		define HAVE_GETOPT_DECL	1 -- is not available if __STDC__ */
+#		define HAVE_MEMORY_H	1
+#		define HAVE_LIMITS_H	1
+#		define USE_STRING_H	1
+#		undef _KERNEL  /* make sure the kernel calls are not used */
+#	endif
 #endif
 
 #if defined(WIN32)
@@ -557,7 +557,7 @@
 /* We need sys/types.h for definitions and prototypes that will appear 
    everywhere. */
 
-#if SUNOS >= 52
+#if defined(SUNOS) && SUNOS >= 52
 	/* For the duration of <sys/types.h>, set this, to get u_short
 	 * etc, defined properly.
 	 */
@@ -568,11 +568,11 @@
 #	endif
 #endif
 
-#ifndef CPP_ONLY
+#if !defined(CPP_ONLY)
 # include <sys/types.h>
 #endif
 
-#if SUNOS >= 52
+#if defined(SUNOS) && SUNOS >= 52
 #	if SUNOS <= 55
 #		undef	_KERNEL
 #	endif

@@ -105,7 +105,7 @@ extern char	*realloc();
  *  because there is no way to get the C preprocessor to change the
  *  case of a token.
  */
-#if CRAY
+#if defined(CRAY)
 #	define	BU_FORTRAN(lc,uc)	uc
 #endif
 #if defined(apollo) || defined(mips) || defined(aux)
@@ -1143,13 +1143,13 @@ extern int	bu_debug;
 /*
  *  Convert address of global data object into byte "offset" from address 0.
  */
-#if CRAY
+#if defined(CRAY)
 #	define bu_byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
-#  if IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
+#  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
 #	define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
-#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
+#    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
 	/* "Lazy" way.  Works on reasonable machines with byte addressing */
 #	define bu_byteoffset(_i)	((int)((char *)&(_i)))
 #    else
