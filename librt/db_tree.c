@@ -600,6 +600,92 @@ CONST struct member	*mp;
 }
 
 /*
+ *			D B _ A P P L Y _ S T A T E _ F R O M _ M E M B
+ *
+ *  Updates state via *tsp, pushes member's directory entry on *pathp.
+ *  (Caller is responsible for popping it).
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	success, member pushed on path
+ */
+int
+db_apply_state_from_memb_new( tsp, pathp, tp )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+CONST union tree	*tp;
+{
+	register struct directory *mdp;
+	mat_t			xmat;
+	mat_t			old_xlate;
+	register struct animate *anp;
+
+	RT_CK_FULL_PATH(pathp);
+	RT_CK_TREE(tp);
+	if( (mdp = db_lookup( tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+		return(-1);
+
+	db_add_node_to_full_path( pathp, mdp );
+
+	mat_copy( old_xlate, tsp->ts_mat );
+	if( tp->tr_l.tl_mat )
+		mat_copy( xmat, tp->tr_l.tl_mat );
+	else
+		mat_idn( xmat );
+
+	/* Check here for animation to apply */
+	if ((mdp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("Animate %s with...\n", sofar);
+		rt_free(sofar, "path string");
+	}
+	/*
+	 *  For each of the animations attached to the mentioned object,
+	 *  see if the current accumulated path matches the path
+	 *  specified in the animation.
+	 *  Comparison is performed right-to-left (from leafward to rootward).
+	 */
+	for( anp = mdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
+		register int i;
+		register int j = pathp->fp_len-1;
+		register int anim_flag;
+		
+		RT_CK_ANIMATE(anp);
+		i = anp->an_path.fp_len-1;
+		anim_flag = 1;
+
+		if (rt_g.debug & DEBUG_ANIM) {
+			char	*str;
+
+			str = db_path_to_string( &(anp->an_path) );
+			rt_log( "\t%s\t", str );
+			rt_free( str, "path string" );
+			rt_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
+				i, j);
+
+		}
+		for( ; i>=0 && j>=0; i--, j-- )  {
+			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
+				if (rt_g.debug & DEBUG_ANIM) {
+					rt_log("%s != %s\n",
+					     anp->an_path.fp_names[i]->d_namep,
+					     pathp->fp_names[j]->d_namep);
+				}
+				anim_flag = 0;
+				break;
+			}
+		}
+		/* Perhaps tsp->ts_mater should be just tsp someday? */
+		if (anim_flag)  {
+			db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
+		}
+	}
+
+	mat_mul(tsp->ts_mat, old_xlate, xmat);
+	return(0);		/* Success */
+}
+
+/*
  *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
  *
  *  Follow the slash-separated path given by "cp", and update
@@ -931,6 +1017,60 @@ final:
 	return( curtree );
 }
 
+void
+recurseit( tp, msp, pathp, region_start_statepp )
+union tree		*tp;
+struct db_tree_state	*msp;
+struct db_full_path	*pathp;
+struct combined_tree_state	**region_start_statepp;
+{
+	struct db_tree_state	memb_state;
+	union tree		*subtree;
+
+	memb_state = *msp;		/* struct copy */
+
+	RT_CK_TREE(tp);
+	switch( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+		if( db_apply_state_from_memb_new( &memb_state, pathp, tp ) < 0 )
+			return;		/* error? */
+
+		/* Recursive call */
+		if( (subtree = db_recurse( &memb_state, pathp, region_start_statepp )) != TREE_NULL )  {
+			union tree	tmp;
+
+			/* graft subtree on in place of 'tp' leaf node */
+			/* exchange what subtree and tp point at */
+			RT_CK_TREE(subtree);
+			tmp = *tp;	/* struct copy */
+			*tp = *subtree;	/* struct copy */
+			*subtree = tmp;	/* struct copy */
+			db_free_tree( subtree );
+			RT_CK_TREE(tp);
+		}
+		DB_FULL_PATH_POP(pathp);
+		break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		if( tp->tr_op == OP_SUBTRACT )
+			memb_state.ts_sofar |= TS_SOFAR_MINUS;
+		else if( tp->tr_op == OP_INTERSECT )
+			memb_state.ts_sofar |= TS_SOFAR_INTER;
+		recurseit( tp->tr_b.tb_right, &memb_state, pathp, region_start_statepp );
+		recurseit( tp->tr_b.tb_left, &memb_state, pathp, region_start_statepp );
+		break;
+
+	default:
+		rt_log("recurseit: bad op %d\n", tp->tr_op);
+		rt_bomb("recurseit\n");
+	}
+	return;
+}
+
 static vect_t xaxis = { 1.0, 0, 0 };
 static vect_t yaxis = { 0, 1.0, 0 };
 static vect_t zaxis = { 0, 0, 1.0 };
@@ -952,6 +1092,7 @@ struct combined_tree_state	**region_start_statepp;
 {
 	struct directory	*dp;
 	struct rt_external	ext;
+	struct rt_db_internal	intern;
 	int			i;
 	struct tree_list	*tlp;		/* cur elem of trees[] */
 	struct tree_list	*trees = TREE_LIST_NULL;	/* array */
@@ -959,6 +1100,7 @@ struct combined_tree_state	**region_start_statepp;
 
 	RT_CHECK_DBI( tsp->ts_dbip );
 	RT_CK_FULL_PATH(pathp);
+	RT_INIT_DB_INTERNAL(&intern);
 
 	if( pathp->fp_len <= 0 )  {
 		rt_log("db_recurse() null path?\n");
@@ -984,12 +1126,24 @@ struct combined_tree_state	**region_start_statepp;
 
 	if( dp->d_flags & DIR_COMB )  {
 		register CONST union record	*rp = (union record *)ext.ext_buf;
+		struct rt_comb_internal	*comb;
 		struct db_tree_state	nts;
 		int			is_region;
 
 		/*  Handle inheritance of material property. */
 		nts = *tsp;	/* struct copy */
 
+#if !1
+		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
+			rt_log("db_recurse() import of %s failed\n", dp->d_namep);
+			curtree = TREE_NULL;		/* FAIL */
+			goto out;
+		}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB(comb);
+#endif
+
+		/* XXX Can't convert this part yet */
 		if( (is_region = db_apply_state_from_comb( &nts, pathp, &ext )) < 0 )  {
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
@@ -1027,6 +1181,7 @@ struct combined_tree_state	**region_start_statepp;
 			}
 		}
 
+#if 1
 		tlp = trees = (struct tree_list *)rt_malloc(
 			sizeof(struct tree_list) * (dp->d_len),
 			"tree_list array" );
@@ -1083,6 +1238,17 @@ struct combined_tree_state	**region_start_statepp;
 		} else {
 			curtree = db_mkgift_tree( trees, tlp-trees, tsp );
 		}
+#else
+		if( comb->tree )  {
+			curtree = comb->tree;
+			recurseit( curtree, &nts, pathp, region_start_statepp );
+		} else {
+			/* No subtrees in this combination, invent a NOP */
+			GETUNION( curtree, tree );
+			curtree->magic = RT_TREE_MAGIC;
+			curtree->tr_op = OP_NOP;
+		}
+#endif
 
 region_end:
 		if( is_region > 0 )  {
@@ -1174,6 +1340,7 @@ region_end:
 		curtree = TREE_NULL;
 	}
 out:
+	if( intern.idb_ptr )  rt_comb_ifree( &intern );
 	db_free_external( &ext );
 	if( trees )  rt_free( (char *)trees, "tree_list array" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
@@ -1183,6 +1350,7 @@ out:
 			*region_start_statepp );
 		rt_free(sofar, "path string");
 	}
+	if(curtree) RT_CK_TREE(curtree);
 	return(curtree);
 }
 
