@@ -55,28 +55,43 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define MinMax(m, M, a)    { m = Min(m, a); M = Max(M, a); }
 #endif
 
-/* Translate between different coordinate systems at play: h,v (GIFT),
- * view_port (VP), the subdivision of the framebuffer where the image is
- * located and seen, and screen_x, _y coordinates, which are the framebuffer
- * coordinates.
+/*
+ * Translate between different coordinate systems at play:
+ *	H,V	The units of the input file.  (from GIFT)
+ *	C	The relative cell number, within the input
+ *	VP	The pixel within the viewport (a sub-rectangle of the screen)
+ *		Includes offsetting for the "key" area within the viewport.
+ *	SCR	The pixel on the screen.  Framebuffer coordinates for LIBFB.
+ *		Includes offsetting the viewport anywhere on the screen.
  */
 
-#define H2VPX(_h)	( ((_h) - xmin)/cell_size * (wid + grid_flag)+1.0 )
-#define V2VPY(_v)	( ((_v) - ymin)/cell_size * (hgt + grid_flag)+key_height )
+#define H2CX(_h)	( ((_h) - xmin) / cell_size )
+#define V2CY(_v)	( ((_v) - ymin) / cell_size )
+
+#define CX2VPX(_cx)	( (_cx) * (wid + grid_flag)+1.0 )
+#define CY2VPY(_cy)	( (_cy) * (hgt + grid_flag)+key_height )
+
 #define VPX2SCRX(_vp_x)	( (_vp_x) + xorigin )
 #define VPY2SCRY(_vp_y)	( (_vp_y) + yorigin )
+
+/* --- */
 
 #define SCRX2VPX(_scr_x) ( (_scr_x) - xorigin )
 #define SCRY2VPY(_scr_y) ( (_scr_y) - yorigin )
 
-#define VPX2H(_vp_x)	( cell_size * ((_vp_x)/(wid+grid_flag)-1.0) + xmin )
-#define VPY2V(_vp_y)	( cell_size * ((_vp_y)/(hgt+grid_flag)-key_height) + ymin )
+#define VPX2CX(_vp_x)	( (_vp_x) / (wid+grid_flag)-1.0 )
+#define VPY2CY(_vp_y)	( (_vp_y) / (hgt+grid_flag)-key_height )
 
-#define H2SCRX(_h)	VPX2SCRX( H2VPX(_h) )
-#define V2SCRY(_v)	VPY2SCRY( V2VPY(_v) )
+#define CX2H(_cx)	( (_cx) * cell_size + xmin )
+#define CY2V(_cy)	( (_cy) * cell_size + ymin )
 
-#define SCRX2H(_s_x)	VPX2H( SCRX2VPX(_s_x) )
-#define SCRY2V(_s_y)	VPY2V( SCRY2VPY(_s_y) )
+/* --- */
+
+#define H2SCRX(_h)	VPX2SCRX( CX2VPX( H2CX(_h) ) )
+#define V2SCRY(_v)	VPY2SCRY( CY2VPY( V2CY(_v) ) )
+
+#define SCRX2H(_s_x)	CX2H( VPX2CX( SCRX2VPX(_s_x) ) )
+#define SCRY2V(_s_y)	CY2V( VPY2CY( SCRY2VPY(_s_y) ) )
 
 /* Absolute value */
 #define Abs(_a)	((_a) < 0.0 ? -(_a) : (_a))
