@@ -1334,10 +1334,23 @@ char	**argv;
 		switch( cmd[1] ) {
 		case 'x':
 		  if(iknob){
-		    (void)irot(f*180.0, 0.0, 0.0);
-		    absolute_rotate[X] += f;
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[X] += f;
+		      (void)irot(absolute_rotate[X]*180.0,
+				 absolute_rotate[Y]*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		      (void)irot(f*180.0, 0.0, 0.0);
+		      absolute_rotate[X] += f;
+		    }
 		  }else{
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      (void)irot((absolute_rotate[X])*180.0,
+				 absolute_rotate[Y]*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
 		    (void)irot((f - absolute_rotate[X])*180.0, 0.0, 0.0);
+		    }
 		    absolute_rotate[X] = f;
 		  }
 
@@ -1350,10 +1363,23 @@ char	**argv;
 		  break;
 		case 'y':
 		  if(iknob){
-		    (void)irot(0.0, f*180.0, 0.0);
-		    absolute_rotate[Y] += f;
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[Y] += f;
+		      (void)irot(absolute_rotate[X]*180.0,
+				 absolute_rotate[Y]*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		      (void)irot(0.0, f*180.0, 0.0);
+		      absolute_rotate[Y] += f;
+		    }
 		  }else{
-		    (void)irot(0.0, (f - absolute_rotate[Y])*180.0, 0.0);
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      (void)irot(absolute_rotate[X]*180.0,
+				 (absolute_rotate[Y])*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		      (void)irot(0.0, (f - absolute_rotate[Y])*180.0, 0.0);
+		    }
 		    absolute_rotate[Y] = f;
 		  }
 
@@ -1366,10 +1392,23 @@ char	**argv;
 		  break;
 		case 'z':
 		  if(iknob){
-		    (void)irot(0.0, 0.0, f*180.0);
-		    absolute_rotate[Z] += f;
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[Z] += f;
+		      (void)irot(absolute_rotate[X]*180.0,
+				 absolute_rotate[Y]*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		      (void)irot(0.0, 0.0, f*180.0);
+		      absolute_rotate[Z] += f;
+		    }
 		  }else{
-		    (void)irot(0.0, 0.0, (f - absolute_rotate[Z])*180.0);
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      (void)irot(absolute_rotate[X]*180.0,
+				 absolute_rotate[Y]*180.0,
+				 (absolute_rotate[Z])*180.0);
+		    }else {
+		      (void)irot(0.0, 0.0, (f - absolute_rotate[Z])*180.0);
+		    }
 		    absolute_rotate[Z] = f;
 		  }
 

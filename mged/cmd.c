@@ -747,7 +747,6 @@ char **argv;
 
     if (tkwin != NULL) {
 	Tk_GeometryRequest(tkwin, 100, 20);
-
 	/* This runs the tk.tcl script */
 	if (Tk_Init(interp) == TCL_ERROR)
 	    return TCL_ERROR;
@@ -947,6 +946,7 @@ mged_setup()
 
   history_setup();
   mged_variable_setup(interp);
+
   gui_setup();
 }
 
@@ -960,6 +960,19 @@ gui_setup()
   int     found;
 
 #define MGED_GUIRC "mged2.tcl"
+#include "./sliders.h"
+
+  if((tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED")) == NULL){
+    rt_log("mged_setup: Failed to create main window.\n");
+    exit(1);
+  }
+
+  /* This runs the tk.tcl script */
+  if (Tk_Init(interp) == TCL_ERROR)
+    rt_log("Tk_Init error %s\n", interp->result);
+
+  /* Load redefined knob command */
+  Tcl_Eval( interp, knob_str );
 
   found = 0;
   rt_vls_init( &str );
@@ -974,44 +987,41 @@ gui_setup()
     rt_vls_strcat( &str, "/" );
     rt_vls_strcat( &str, filename );
 
-    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
       found = 1;
-  }
-
-  if(!found){
-    if( (path = getenv("HOME")) != (char *)NULL )  {
-      /* Use HOME path */
-      rt_vls_strcpy( &str, path );
-      rt_vls_strcat( &str, "/" );
-      rt_vls_strcat( &str, filename );
-
-      if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-	found = 1;
+      fclose( fp );
+      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
     }
   }
 
-  if( !found ) {
-    /* Check current directory */
-    if( (fp = fopen( filename, "r" )) != NULL )  {
-      rt_vls_strcpy( &str, filename );
+  if( (path = getenv("HOME")) != (char *)NULL )  {
+    /* Use HOME path */
+    rt_vls_strcpy( &str, path );
+    rt_vls_strcat( &str, "/" );
+    rt_vls_strcat( &str, filename );
+
+    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
       found = 1;
+      fclose( fp );
+      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
     }
   }
 
+  /* Check current directory */
+  if( (fp = fopen( filename, "r" )) != NULL )  {
+    rt_vls_strcpy( &str, filename );
+    found = 1;
+    fclose( fp );
+    (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
+  }
+
+  /* Didn't find a startup file, so warn user */
   if(!found){
     rt_log("gui_setup: user interface startup file was not found.\n\n");
     rt_log("Note: there are three environment variables that should be set.\n");
     rt_log("\tMGED_GUIRC is the name of the user interface startup file.\n");
     rt_log("\tMGED_LIBRARY is the path where the Tcl files live.\n");
     rt_log("\tMGED_HTML_DIR is the path where the html files live.\n\n");
-    return;
-  }
-
-  fclose( fp );
-
-  if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_vls_free(&str);
-    return;
   }
 
   rt_vls_free(&str);
@@ -2213,11 +2223,7 @@ set_e_axis_pos()
 {
   int	i;
 
-#if 0
-  rot_x = rot_y = rot_z = 0;
-#endif
   VSETALL( absolute_slew, 0 );
-
   update_views = 1;
 
   switch(es_int.idb_type){
@@ -2387,7 +2393,9 @@ vect_t view_pos;
 
   VMOVE( absolute_slew, view_pos );
 
-  if(state == ST_S_EDIT || state == ST_O_EDIT){
+  /* if doing an edit other than a rotate then do the regular thing */
+  if((state == ST_S_EDIT || state == ST_O_EDIT) &&
+     (!EDIT_ROTATE && es_edflag > IDLE)){
     int status;
     char *av[] = {"M", "1", NULL, NULL, NULL};
     char xval[32], yval[32];
@@ -2404,7 +2412,7 @@ vect_t view_pos;
       return CMD_OK;
     else
       return CMD_BAD;
-  }else{
+  }else{ /* otherwise, slew the view */
     MAT4X3PNT( new_pos, view2model, view_pos );
     MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
     VSUB2( diff, new_pos, old_pos );
@@ -2427,10 +2435,8 @@ fastf_t x, y, z;
   point_t old_pos;
   point_t diff;
   int status;
-  char *av[] = {"vrot", NULL, NULL, NULL, NULL};
+  char *av[] = {NULL, NULL, NULL, NULL, NULL};
   char xval[32], yval[32], zval[32];
-
-  MAT_DELTAS_GET(old_pos, toViewcenter);
 
   av[1] = xval;
   av[2] = yval;
@@ -2438,14 +2444,32 @@ fastf_t x, y, z;
   sprintf(xval, "%f", x);
   sprintf(yval, "%f", y);
   sprintf(zval, "%f", z);
-  status = f_vrot((ClientData)NULL, interp, 4, av);
 
-  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-  VSUB2(diff, new_pos, orig_pos);
-  VADD2(new_pos, old_pos, diff);
-  VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
-  MAT4X3PNT( new_pos, model2view, view_pos);
-  VMOVE( absolute_slew, new_pos );
+  /* if in view state or not doing a solid rotate then allow the view to be rotated */
+  if(state == ST_VIEW || !EDIT_ROTATE){
+    char vrot_str[] = "vrot";
+
+    MAT_DELTAS_GET(old_pos, toViewcenter);
+    av[0] = vrot_str;
+    status = f_vrot((ClientData)NULL, interp, 4, av);
+
+    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+    VSUB2(diff, new_pos, orig_pos);
+    VADD2(new_pos, old_pos, diff);
+    VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
+    MAT4X3PNT( new_pos, model2view, view_pos);
+    VMOVE( absolute_slew, new_pos );
+  }else if(state == ST_S_EDIT){
+    char p_str[] = "p";
+
+    av[0] = p_str;
+    status = f_param((ClientData)NULL, interp, 4, av);
+  }else if(state == ST_O_EDIT){
+    char rotobj_str[] = "rotobj";
+
+    av[0] = rotobj_str;
+    status = f_rot_obj((ClientData)NULL, interp, 4, av);
+  }
 
   if(status == TCL_OK)
     return CMD_OK;
