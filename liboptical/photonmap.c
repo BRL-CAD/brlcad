@@ -60,6 +60,9 @@ int			GPM_RAYS;		/* Number of Sample Rays for each Direction in Irradiance Hemi 
 double			GPM_ATOL;		/* Angular Tolerance for Photon Gathering */
 struct	resource	*GPM_RTAB;		/* Resource Table for Multi-threading */
 int			HitG,HitB;
+point_t			GPM_SphPt;		/* Invalidation Sphere Position */
+fastf_t			GPM_SphRad;		/* Invalidation Sphere Radius */
+fastf_t			GPM_SphEmitRad;		/* Invalidation Sphere Emit Radius */
 
 
 /* Split so that equal numbers are above and below the splitting plane */
@@ -172,7 +175,6 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
   /* If Importance Mapping is enabled, Check to see if the Photon is in an area that is considered important, if not then disregard it */
   if (Map != PM_IMPORTANCE && PMap[PM_IMPORTANCE] -> StoredPhotons) {
     /* Do a KD-Tree lookup and if the photon is within a distance of sqrt(ScaleFactor) from the nearest importon then keep it, otherwise discard it */
-
     Search.RadSq= ScaleFactor;
     Search.Found= 0;
     Search.Max= 1;
@@ -191,44 +193,39 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
       HitB++;
       return;
     }
-/*
-    do {
-      Search.RadSq*= 4.0;
-      Search.Found= 0;
-      LocatePhotons(&Search,PMap[map] -> Root);
-      if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
-        break;
-    } while(Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
-    free(Search.List);
-*/
   }
 
 
-  if (PMap[Map] -> StoredPhotons < PMap[Map] -> MaxPhotons) {
-    HitG++;
-    for (i= 0; i < 3; i++) {
-      /* Store Position, Direction, and Power of Photon */
-      Emit[Map][PMap[Map] -> StoredPhotons].Pos[i]= Pos[i];
-      Emit[Map][PMap[Map] -> StoredPhotons].Dir[i]= Dir[i];
-      Emit[Map][PMap[Map] -> StoredPhotons].Normal[i]= Normal[i];
-      Emit[Map][PMap[Map] -> StoredPhotons].Power[i]= CurPh.Power[i];
+  if (GPM_SphRad) {
+    if ( ((GPM_SphPt[0]-Pos[0])*(GPM_SphPt[0]-Pos[0]) + (GPM_SphPt[1]-Pos[1])*(GPM_SphPt[1]-Pos[1]) + (GPM_SphPt[2]-Pos[2])*(GPM_SphPt[2]-Pos[2])) < GPM_SphRad*GPM_SphRad ) {
+      if (PMap[Map] -> StoredPhotons < PMap[Map] -> MaxPhotons) {
+/*        bu_log("GOT ONE -- MAP: %d, NUM: %d\n",Map,PMap[Map] -> StoredPhotons);*/
+        HitG++;
+        for (i= 0; i < 3; i++) {
+          /* Store Position, Direction, and Power of Photon */
+          Emit[Map][PMap[Map] -> StoredPhotons].Pos[i]= Pos[i];
+          Emit[Map][PMap[Map] -> StoredPhotons].Dir[i]= Dir[i];
+          Emit[Map][PMap[Map] -> StoredPhotons].Normal[i]= Normal[i];
+          Emit[Map][PMap[Map] -> StoredPhotons].Power[i]= CurPh.Power[i];
+          Emit[Map][PMap[Map] -> StoredPhotons].Irrad[i]= -1.0;	/* Initialize Irradiance */
+        }
+        PMap[Map] -> StoredPhotons++;
+      }
     }
-    PMap[Map] -> StoredPhotons++;
-/*
-    if (Map != PM_IMPORTANCE && PMap[PM_IMPORTANCE] -> StoredPhotons < PMap[PM_IMPORTANCE] -> MaxPhotons)
-      bu_log("Map2: %d, Size: %d\n",Map,PMap[Map] -> StoredPhotons);
-*/
-/*
-    if (Map == PM_IMPORTANCE)
-    bu_log("Map: %d, Size: %d, [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",Map,PMap[Map] -> StoredPhotons, Pos[0],Pos[1],Pos[2], CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
-*/
+  } else {
+    if (PMap[Map] -> StoredPhotons < PMap[Map] -> MaxPhotons) {
+      HitG++;
+      for (i= 0; i < 3; i++) {
+        /* Store Position, Direction, and Power of Photon */
+        Emit[Map][PMap[Map] -> StoredPhotons].Pos[i]= Pos[i];
+        Emit[Map][PMap[Map] -> StoredPhotons].Dir[i]= Dir[i];
+        Emit[Map][PMap[Map] -> StoredPhotons].Normal[i]= Normal[i];
+        Emit[Map][PMap[Map] -> StoredPhotons].Power[i]= CurPh.Power[i];
+        Emit[Map][PMap[Map] -> StoredPhotons].Irrad[i]= -1.0;	/* Initialize Irradiance */
+      }
+      PMap[Map] -> StoredPhotons++;
+    }
   }
-
-/*
-  bu_log("[%d][%d][%.3f,%.3f,%.3f]\n",Map,PMap[Map] -> StoredPhotons,CurPh.Power[0],CurPh.Power[1],CurPh.Power[2]);
-  if (!(PMap[Map] -> StoredPhotons % 64))
-  bu_log("[%d][%d][%.3f,%.3f,%.3f]\n",Map,PMap[Map] -> StoredPhotons,Pos[0],Pos[1],Pos[2]);
-*/
 }
 
 
@@ -669,12 +666,14 @@ void EmitImportonsRandom(struct application *ap, point_t eye_pos) {
 /* Emit a photons in a random direction based on a point light */
 void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
   struct	light_specific	*lp;
-  vect_t			ldir;
+  vect_t			ldir,InvalDir[2];
+  fastf_t			Angle1,Angle2;
   int				i;
 
   ldir[0]= 0;
   ldir[1]= 0;
   ldir[2]= -1;
+
 /*
   for (i= 0; i < 8; i++) 
     bu_log("sample points: [%.3f,%.3f,%.3f]\n",lp -> lt_sample_pts[i].lp_pt[0], lp -> lt_sample_pts[i].lp_pt[1], lp -> lt_sample_pts[i].lp_pt[2]);
@@ -685,20 +684,35 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
       if (PMap[PM_GLOBAL] -> StoredPhotons == PMap[PM_GLOBAL] -> MaxPhotons && (!PMap[PM_CAUSTIC] -> StoredPhotons || PMap[PM_CAUSTIC] -> StoredPhotons == PMap[PM_CAUSTIC] -> MaxPhotons))
         return;
 
-      do {
+      if (GPM_SphRad) {
+        InvalDir[0][0]= lp -> lt_pos[0] - GPM_SphPt[0];
+        InvalDir[0][1]= lp -> lt_pos[1] - GPM_SphPt[1];
+        InvalDir[0][2]= lp -> lt_pos[2] - GPM_SphPt[2];
+        InvalDir[1][0]= lp -> lt_pos[0] - (GPM_SphPt[0]+GPM_SphRad*GPM_SphEmitRad);
+        InvalDir[1][1]= lp -> lt_pos[1] - (GPM_SphPt[1]+GPM_SphRad*GPM_SphEmitRad);
+        InvalDir[1][2]= lp -> lt_pos[2] - (GPM_SphPt[2]+GPM_SphRad*GPM_SphEmitRad);
+        VUNITIZE(InvalDir[0]);
+        VUNITIZE(InvalDir[1]);
+        Angle1= VDOT(InvalDir[0],InvalDir[1]);
+/*        bu_log("Angle1: %.3f\n",Angle1);*/
+      } else {
+        InvalDir[0][0]= InvalDir[0][1]= InvalDir[0][2]= 0.0;
+        Angle1= 0;
+      }
+
 /*      do {*/
+      do {
         /* Set Ray Direction to application ptr */
-/*
-        ap -> a_ray.r_dir[0]= 2.0*rand()/RAND_MAX-1.0;
-        ap -> a_ray.r_dir[1]= 2.0*rand()/RAND_MAX-1.0;
-        ap -> a_ray.r_dir[2]= 2.0*rand()/RAND_MAX-1.0;
-*/
         ap -> a_ray.r_dir[0]= 2.0*drand48()-1.0;
         ap -> a_ray.r_dir[1]= 2.0*drand48()-1.0;
         ap -> a_ray.r_dir[2]= 2.0*drand48()-1.0;
-      } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
+        VUNITIZE(ap -> a_ray.r_dir);
+        Angle2= VDOT(InvalDir[0],ap -> a_ray.r_dir);
+      } while (GPM_SphRad > 0 && (Angle2 >= Angle1));
+      /* Remember, these are not angles but cos(theta's), so as we approach 1.0, we approach 0 degrees.
+         So, we want Angle2 to be > than Angle1 */
+
       /* Normalize Ray Direction */
-      VUNITIZE(ap -> a_ray.r_dir);
 /*    } while (drand48() > VDOT(ap -> a_ray.r_dir,ldir));*/ /* we want this to terminate when a rnd# is less than the angle */
 
       /* Set Ray Position to application ptr */
@@ -707,7 +721,7 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
       ap -> a_ray.r_pt[2]= lp -> lt_pos[2];
 
 
-      /* Shoot Photon into Scene, (4.0) is used to align phong's attenuation with photonic energies, it's a heuristic */
+      /* Shoot Photon into Scene */
 /*bu_log("Shooting Ray: [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",lp -> lt_pos[0], lp -> lt_pos[1], lp -> lt_pos[2], x,y,z);*/
       CurPh.Power[0]= 1000.0 * ScaleIndirect * lp -> lt_intensity * lp -> lt_color[0];
       CurPh.Power[1]= 1000.0 * ScaleIndirect * lp -> lt_intensity * lp -> lt_color[1];
@@ -748,12 +762,8 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finis
   VJOIN1(pt, ap -> a_ray.r_pt, part -> pt_inhit -> hit_dist, ap -> a_ray.r_dir);
 
   RT_HIT_NORMAL(normal, part -> pt_inhit, part -> pt_inseg -> seg_stp, &(ap->a_ray), part -> pt_inflip);
-/*  GetEstimate(C1, pt, normal, ScaleFactor/10.0, PMap[PM_GLOBAL] -> StoredPhotons / 100, PM_GLOBAL, 5, 1);*/
-/*  GetEstimate(C1, pt, normal, ScaleFactor/1000.0, 10.0*log(PMap[PM_GLOBAL] -> StoredPhotons), PM_GLOBAL, ScaleFactor/5.0, 1);*/
   GetEstimate(C1, pt, normal, ScaleFactor/1024.0, 128, PM_GLOBAL, ScaleFactor/8.0, 1, 15);
-/*  GetEstimate(C2 ,pt, normal, (int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC] -> MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC] -> MaxPhotons / 50,PM_CAUSTIC, 0, 0);*/
   GetEstimate(C2 ,pt, normal, ScaleFactor/1024.0, PMap[PM_CAUSTIC] -> MaxPhotons / 100,PM_CAUSTIC, ScaleFactor/256.0, 1, 15);
-/*    GetEstimate(IMColor2, pt, normal, (int)(ScaleFactor/100.0),PMap[PM_CAUSTIC] -> MaxPhotons/50,PM_CAUSTIC,1, 0);*/
 
   (*(vect_t*)ap -> a_purpose)[0]+= C1[0] + C2[0];
   (*(vect_t*)ap -> a_purpose)[1]+= C1[1] + C2[1];
@@ -784,7 +794,7 @@ void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi) {
   BasisX[2]= 0.0;
   VUNITIZE(BasisX);
   VCROSS(BasisY,Normal,BasisX);
-	
+
   for (i= 0; i < 3; i++)
     Dir[i]= sin(Theta)*cos(Phi)*BasisX[i] + sin(Theta)*sin(Phi)*BasisY[i] + cos(Theta)*Normal[i];
 }
@@ -825,7 +835,7 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
       lap -> a_purpose= (void*)P -> Irrad;
 
 /*      bu_log("Vec: [%.3f,%.3f,%.3f]\n",ap -> a_ray.r_dir[0],ap -> a_ray.r_dir[1],ap -> a_ray.r_dir[2]);*/
-      rt_shootray(lap);	
+      rt_shootray(lap);
 
 /*      bu_log("[%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",P.Pos[0],P.Pos[1],P.Pos[2],P.Normal[0],P.Normal[1],P.Normal[2],IMColor[0],IMColor[1],IMColor[2]);*/
     }
@@ -849,21 +859,34 @@ void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
   if (!Node)
     return;
 
-  
+
   /* Determine if this pt will be used by calculating a weight */
   bu_semaphore_acquire(PM_SEM);
   if (!Node -> C) {
     ICSize++;
     Node -> C++;
-/*    bu_log("cp:A:%d\n",Node -> C);*/
+/*  bu_log("cp:A:%d\n",Node -> C);*/
     if (!(ICSize%(PMap[PM_GLOBAL] -> MaxPhotons/8)))
       bu_log("    Irradiance Cache Progress: %d%%\n",(int)(0.5+100.0*ICSize/PMap[PM_GLOBAL] -> MaxPhotons));
     bu_semaphore_release(PM_SEM);
-    Irradiance(pid, &Node -> P, ap);
+    if (Node -> P.Irrad[0] == -1) {
+/*
+      Node -> P.Irrad[0]= 0;
+      Node -> P.Irrad[1]= 1;
+      Node -> P.Irrad[2]= 0;
+*/
+      Irradiance(pid, &Node -> P, ap);
+    } else {
+      if ((Node -> P.Irrad[0] < 0.01 || Node -> P.Irrad[1] < 0.01 || Node -> P.Irrad[2] < 0.01) && Node -> P.Pos[2] < 2600.0) {
+      bu_log("******** COMPUTED CACHE POINT: [%.3f,%.3f,%.3f] --- [%.3f,%.3f,%.3f]\n",Node -> P.Pos[0],Node -> P.Pos[1],Node -> P.Pos[2],Node -> P.Irrad[0],Node -> P.Irrad[1],Node -> P.Irrad[2]);
+      Node -> P.Irrad[0]= 1.0;
+      Node -> P.Irrad[1]= 0.0;
+      Node -> P.Irrad[2]= 1.0;
+      }
+    }
   } else {
     bu_semaphore_release(PM_SEM);
   }
-
 
   BuildIrradianceCache(pid, Node -> L, ap);
   BuildIrradianceCache(pid, Node -> R, ap);
@@ -884,11 +907,13 @@ void Initialize(int MAP, int MapSize) {
 }
 
 
-int LoadFile(char *pmfile) {
-  FILE		*FH;
-  int		I1,i;
-  short		S1;
-  char		C1;
+int LoadFile(char *pmfile, struct application *ap, double ScaleIndirect, int cpus) {
+  struct	Photon	*VPList[2];	/* Valid Photon List */
+  point_t		pt;
+  FILE			*FH;
+  int			I1,i,LEPS[2],Valid[2],Invalid[2];
+  short			S1;
+  char			C1;
 
 
   FH= fopen(pmfile,"rb");
@@ -905,7 +930,9 @@ int LoadFile(char *pmfile) {
 
     /* Read in Map Type */
     fread(&C1, sizeof(char), 1, FH);
+    fread(&LEPS[0], sizeof(int), 1, FH);
     fread(&I1, sizeof(int), 1, FH);
+    /* Read in Global Photons */
     Initialize(PM_GLOBAL, I1);
     bu_log("Reading Global: %d\n",I1);
     for (i= 0; i < I1; i++) {
@@ -914,7 +941,9 @@ int LoadFile(char *pmfile) {
 /*      bu_log("Pos: [%.3f,%.3f,%.3f], Irrad: [%.3f,%.3f,%.3f]\n",Emit[PM_GLOBAL][i].Pos[0],Emit[PM_GLOBAL][i].Pos[1],Emit[PM_GLOBAL][i].Pos[2],Emit[PM_GLOBAL][i].Irrad[0],Emit[PM_GLOBAL][i].Irrad[1],Emit[PM_GLOBAL][i].Irrad[2]);*/
     }
 
+    /* Read in Caustic Photons */
     fread(&C1, sizeof(char), 1, FH);
+    fread(&LEPS[1], sizeof(int), 1, FH);
     fread(&I1, sizeof(int), 1, FH);
     Initialize(PM_CAUSTIC, I1);
     bu_log("Reading Caustic: %d\n",I1);
@@ -922,11 +951,122 @@ int LoadFile(char *pmfile) {
       fread(&Emit[PM_CAUSTIC][i],sizeof(struct Photon),1,FH);
     }
 
+    Invalid[0]= Invalid[1]= 0;
+    if (GPM_SphRad) {
+      /* Invalidate Global Portion */
+      Valid[0]= 0;
+      VPList[0]= (struct Photon*)malloc(sizeof(struct Photon)*PMap[PM_GLOBAL] -> MaxPhotons);
+      for (i= 0; i < PMap[PM_GLOBAL] -> MaxPhotons; i++) {
+        memcpy(&pt,&Emit[PM_GLOBAL][i].Pos[0],sizeof(point_t));
+/*        bu_log("IS: %.3f > %.3f\n",(GPM_SphPt[0]-pt[0])*(GPM_SphPt[0]-pt[0]) + (GPM_SphPt[1]-pt[1])*(GPM_SphPt[1]-pt[1]) + (GPM_SphPt[2]-pt[2])*(GPM_SphPt[2]-pt[2]),GPM_SphRad*GPM_SphRad);*/
+        if ( (GPM_SphPt[0]-pt[0])*(GPM_SphPt[0]-pt[0]) + (GPM_SphPt[1]-pt[1])*(GPM_SphPt[1]-pt[1]) + (GPM_SphPt[2]-pt[2])*(GPM_SphPt[2]-pt[2]) > GPM_SphRad*GPM_SphRad) {
+          /* Photon is Valid, Store it. */
+          memcpy(&VPList[0][Valid[0]++],&Emit[PM_GLOBAL][i],sizeof(struct Photon));
+        }
+      }
+      Invalid[0]= PMap[PM_GLOBAL] -> MaxPhotons - Valid[0];
+
+      /* Invalidate Caustic Portion */
+      Valid[1]= 0;
+      VPList[1]= (struct Photon*)malloc(sizeof(struct Photon)*PMap[PM_GLOBAL] -> MaxPhotons);
+      for (i= 0; i < PMap[PM_CAUSTIC] -> MaxPhotons; i++) {
+        memcpy(&pt,&Emit[PM_GLOBAL][i].Pos[0],sizeof(point_t));
+        if ( (GPM_SphPt[0]-pt[0])*(GPM_SphPt[0]-pt[0]) + (GPM_SphPt[1]-pt[1])*(GPM_SphPt[1]-pt[1]) + (GPM_SphPt[2]-pt[2])*(GPM_SphPt[2]-pt[2]) > GPM_SphRad*GPM_SphRad) {
+          /* Photon is Valid, Store it. */
+          memcpy(&VPList[1][Valid[1]++],&Emit[PM_CAUSTIC][i],sizeof(struct Photon));
+        }
+      }
+      Invalid[1]= PMap[PM_CAUSTIC] -> MaxPhotons - Valid[1];
+
+
+bu_log("********** INVALID[0]: %d, INVALID[1]: %d\n",Invalid[0],Invalid[1]);
+      if (Invalid[0] || Invalid[1]) {
+        Initialize(PM_SHADOW,0);
+        Initialize(PM_IMPORTANCE,0);
+
+        /* Set number to be emitted and Emit them */
+        PMap[PM_GLOBAL] -> MaxPhotons= Invalid[0];
+        PMap[PM_GLOBAL] -> StoredPhotons= 0;
+        PMap[PM_CAUSTIC] -> MaxPhotons= Invalid[1];
+        PMap[PM_CAUSTIC] -> StoredPhotons= 0;
+
+        /* Initialize Emitted Photons for each map to 0 */
+        EPL= 0;
+        for (i= 0; i < PM_MAPS; i++)
+          EPS[i]= 0;
+
+        HitG= HitB= 0;
+        ap -> a_level= 1;
+        ap -> a_onehit= 0;
+        ap -> a_ray.magic= RT_RAY_MAGIC;
+        ap -> a_hit= PHit;
+        ap -> a_miss= PMiss;
+        ap -> a_purpose= "Importance Mapping";
+        EmitPhotonsRandom(ap,ScaleIndirect);
+/*
+        ratio= (double)HitG/((double)(HitG+HitB));
+        EPS[PM_GLOBAL]*= ratio;
+        EPS[PM_CAUSTIC]*= ratio;
+*/
+        EPS[0]= LEPS[0];
+        EPS[1]= LEPS[1];
+
+        /* Scale Photon Power */
+        ScalePhotonPower(PM_GLOBAL);
+        ScalePhotonPower(PM_CAUSTIC);
+
+bu_log("********** NEW PHOTONS DONE EMITTING, PUSHING ONTO LIST\n");
+        /* Push Valid photons back onto the Emit List */
+        for (i= 0; i < Valid[0]; i++)
+          Emit[PM_GLOBAL][i+Invalid[0]]= VPList[0][i];
+        for (i= Invalid[1]; i < Valid[1]+Invalid[1]; i++)
+          Emit[PM_CAUSTIC][i+Invalid[0]]= VPList[1][i];
+
+        PMap[PM_GLOBAL] -> MaxPhotons= PMap[PM_GLOBAL] -> StoredPhotons= Invalid[0]+Valid[0];
+        PMap[PM_CAUSTIC] -> MaxPhotons= PMap[PM_CAUSTIC] -> StoredPhotons= Invalid[1]+Valid[1];
+
+bu_log("********** COMPLETE.\n");
+      }
+
+      free(VPList[0]);
+      free(VPList[1]);
+    }
+
+    /* Build Global Tree */
     PMap[PM_GLOBAL] -> StoredPhotons= PMap[PM_GLOBAL] -> MaxPhotons;
     BuildTree(Emit[PM_GLOBAL], PMap[PM_GLOBAL] -> StoredPhotons, PMap[PM_GLOBAL] -> Root);
 
+    /* Build Caustics Tree */
     PMap[PM_CAUSTIC] -> StoredPhotons= PMap[PM_CAUSTIC] -> MaxPhotons;
     BuildTree(Emit[PM_CAUSTIC], PMap[PM_CAUSTIC] -> StoredPhotons, PMap[PM_CAUSTIC] -> Root);
+
+    if (Invalid[0] || Invalid[1]) {
+      /* Compute Irradiance for Invalidated Photons */
+      bu_semaphore_init(PM_SEM_INIT);
+      bu_log("  Building Irradiance Cache For Invalidated Photons...\n");
+      ap -> a_level= 1;
+      ap -> a_onehit= 0;
+      ap -> a_ray.magic= RT_RAY_MAGIC;
+      ap -> a_hit= ICHit;
+      ap -> a_miss= ICMiss;
+      ICSize= 0;
+
+      if (cpus > 1) {
+        GPM_RTAB= (struct resource*)malloc(sizeof(struct resource)*cpus);
+        bzero(GPM_RTAB,cpus*sizeof(struct resource));
+        for (i= 0; i < cpus; i++) {
+          GPM_RTAB[i].re_cpu= i;
+          GPM_RTAB[i].re_magic= RESOURCE_MAGIC;
+          BU_PTBL_SET(&ap -> a_rt_i -> rti_resources, i, &GPM_RTAB[i]);
+          rt_init_resource(&GPM_RTAB[i], GPM_RTAB[i].re_cpu, ap -> a_rt_i);
+        }
+        bu_parallel(IrradianceThread, cpus, ap);
+      } else {
+        /* This will allow profiling for single threaded rendering */
+        IrradianceThread(0,ap);
+      }
+    }
+
     fclose(FH);
     return(1);
   }
@@ -967,6 +1107,8 @@ void WriteFile(char *pmfile) {
     /* === Write PM_GLOBAL Data === */
     C1= PM_GLOBAL;
     fwrite(&C1,sizeof(char),1,FH);
+    /* Write EPS for this Map */
+    fwrite(&EPS[PM_GLOBAL],sizeof(int),1,FH);
     /* Write number of Photons */
     I1= PMap[PM_GLOBAL] -> StoredPhotons;
     fwrite(&I1,sizeof(int),1,FH);
@@ -977,6 +1119,8 @@ void WriteFile(char *pmfile) {
     /* === Write PM_CAUSTIC Data === */
     C1= PM_CAUSTIC;
     fwrite(&C1,sizeof(char),1,FH);
+    /* Write EPS for this Map */
+    fwrite(&EPS[PM_CAUSTIC],sizeof(int),1,FH);
     /* Write number of Photons */
     I1= PMap[PM_CAUSTIC] -> StoredPhotons;
     fwrite(&I1,sizeof(int),1,FH);
@@ -992,7 +1136,7 @@ void WriteFile(char *pmfile) {
 /*
  *  Main Photon Mapping Function
  */
-void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double ScaleIndirect, char pmfile[255]) {
+void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double ScaleIndirect, double SphPX, double SphPY, double SphPZ, double SphRad, double SphEmitRad, char pmfile[255]) {
   int				i,MapSize[PM_MAPS];
   double			ratio;
 
@@ -1003,18 +1147,23 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 
   /* If the user has specified a cache file then first check to see if there is any valid data within it,
      otherwise utilize the file to push the resulting irradiance cache data into for future use. */
-  if (!LoadFile(pmfile)) {
+
+  GPM_RAYS= Rays;
+  GPM_ATOL= cos(AngularTolerance*bn_degtorad);
+  PInit= 1;
+
+  GPM_SphPt[0]= SphPX;
+  GPM_SphPt[1]= SphPY;
+  GPM_SphPt[2]= SphPZ;
+  GPM_SphRad= SphRad;
+  GPM_SphEmitRad= SphEmitRad;
+
+  if (!LoadFile(pmfile,ap,ScaleIndirect,cpus)) {
 /*
     bu_log("pos: [%.3f,%.3f,%.3f]\n",eye_pos[0],eye_pos[1],eye_pos[2]);
     bu_log("I,V,Imp,H: %.3f,%d,%d,%d\n",LightIntensity,VisualizeIrradiance,ImportanceMapping,IrradianceHypersampling);
 */
     bu_log("Building Photon Map:\n");
-
-
-    GPM_RAYS= Rays;
-    GPM_ATOL= cos(AngularTolerance*bn_degtorad);
-
-    PInit= 1;
 
     srand48(RandomSeed);
 /*  bu_log("Photon Structure Size: %d\n",sizeof(struct PNode));*/
@@ -1062,7 +1211,6 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
     HitG= HitB= 0;
     bu_log("  Emitting Photons...\n");
     EmitPhotonsRandom(ap, ScaleIndirect);
-/*      EmitPhotonsRandom(ap, &(LightHead.l), LightIntensity);*/
 
     /* Generate Scale Factor */
     ScaleFactor= max(BBMax[0]-BBMin[0],BBMax[1]-BBMin[1],BBMax[2]-BBMin[2]);

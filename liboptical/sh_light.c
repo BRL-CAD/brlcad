@@ -131,6 +131,7 @@ struct bu_structparse light_print_tab[] = {
 {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
+{"%d",	1, "attenuation",LIGHT_O(lt_attenuation),BU_STRUCTPARSE_FUNC_NULL },
 {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 struct bu_structparse light_parse[] = {
@@ -154,6 +155,8 @@ struct bu_structparse light_parse[] = {
 
 {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
+
+{"%d",	1, "t",		LIGHT_O(lt_attenuation),BU_STRUCTPARSE_FUNC_NULL },
 
 {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible },
 {"%d",  1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
@@ -625,6 +628,7 @@ light_setup(register struct region *rp,
 	lsp->lt_shadows = 1;		/* by default, casts shadows */
 	lsp->lt_angle = 180;		/* spherical emission by default */
 	lsp->lt_exaim = 0;		/* use default aiming mechanism */
+	lsp->lt_attenuation = 0;	/* light attenuates over distance */
 	lsp->lt_infinite = 0;
 	lsp->lt_rp = rp;
 	lsp->lt_pt_count = 0;
