@@ -366,8 +366,8 @@ struct seg		*seghead;
 		{
 			hits[nhits] = hits[nhits-1];	/* struct copy */
 			VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
+			rt_log( "\t\tadding fictitious hit at %f\n", hits[nhits].hit_dist );
 			nhits++;
-			rt_log( "\t\tadding fictitious hit at %f\n", hits[i].hit_dist );
 		}
 	}
 
