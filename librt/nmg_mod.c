@@ -966,7 +966,7 @@ struct edgeuse *eu;
  *	
  */
 struct vertexuse *nmg_find_vu_in_face(pt, fu, tol)
-point_t			pt;
+CONST point_t		pt;
 struct faceuse		*fu;
 CONST struct rt_tol	*tol;
 {
@@ -1864,10 +1864,10 @@ struct edgeuse *eu;
  */
 void
 nmg_ck_list( hd, str )
-CONST struct rt_list	*hd;
+struct rt_list		*hd;
 CONST char		*str;
 {
-	struct rt_list	*cur;
+	register struct rt_list	*cur;
 	int	head_count = 0;
 
 	cur = hd;

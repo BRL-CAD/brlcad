@@ -718,7 +718,7 @@ NMG_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
 NMG_EXTERN(void 		nmg_moveltof, (struct faceuse *fu, struct shell *s) );
 NMG_EXTERN(struct edge		*nmg_esplit, (struct vertex *v, struct edge *e) );
 NMG_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
-NMG_EXTERN(struct vertexuse	*nmg_find_vu_in_face, (point_t pt, struct faceuse *fu, CONST struct rt_tol *tol) );
+NMG_EXTERN(struct vertexuse	*nmg_find_vu_in_face, (CONST point_t pt, struct faceuse *fu, CONST struct rt_tol *tol) );
 NMG_EXTERN(void			nmg_gluefaces, (struct faceuse *fulist[], int n) );
 NMG_EXTERN(struct edgeuse	*nmg_findeu, (struct vertex *v1, struct vertex *v2, struct shell *s, struct edgeuse *eup) );
 NMG_EXTERN(void			nmg_jl, (struct loopuse *lu, struct edgeuse *eu) );
@@ -730,7 +730,7 @@ NMG_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
 NMG_EXTERN(void			nmg_cut_loop, (struct vertexuse *vu1, struct vertexuse *vu2) );
 NMG_EXTERN(struct loopuse	*nmg_split_lu_at_vu, (struct loopuse *lu, struct vertexuse *vu) );
 NMG_EXTERN(void			nmg_split_touchingloops, (struct loopuse *lu) );
-NMG_EXTERN(void			nmg_ck_list, (CONST struct rt_list *hd, CONST char *str) );
+NMG_EXTERN(void			nmg_ck_list, (struct rt_list *hd, CONST char *str) );
 NMG_EXTERN(void			nmg_move_fu_fu, (struct faceuse *dest, struct faceuse *src) );
 
 /* From nmg_misc.c */
