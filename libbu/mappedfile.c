@@ -61,8 +61,6 @@ static struct bu_list	bu_mapped_file_list = {
 	(struct bu_list *)NULL
 };	/* list of currently open mapped files */
 
-#define FILE_LIST_SEMAPHORE_NUM	BU_SEM_BN_NOISE	/* Anything but BU_SEM_SYSCALL */
-
 /*
  *			B U _ O P E N _ M A P P E D _ F I L E
  *
@@ -93,7 +91,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 
 #endif
 
-	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
+	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	if( BU_LIST_UNINITIALIZED( &bu_mapped_file_list ) )  {
 		BU_LIST_INIT( &bu_mapped_file_list );
 	}
@@ -125,7 +123,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 do_reuse:
 		/* It is safe to reuse mp */
 		mp->uses++;
-		bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
+		bu_semaphore_release(BU_SEM_MAPPEDFILE);
 		return mp;
 dont_reuse:
 		/* mp doesn't reflect the file any longer.  Invalidate. */
@@ -133,7 +131,7 @@ dont_reuse:
 		/* Can't invalidate old copy, it may still be in use. */
 		/* Fall through, and open the new version */
 	}
-	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
+	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 	mp = (struct bu_mapped_file *)NULL;
 
 	/* File is not yet mapped, open file read only. */
@@ -255,9 +253,9 @@ dont_reuse:
 	mp->uses = 1;
 	mp->l.magic = BU_MAPPED_FILE_MAGIC;
 
-	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
+	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	BU_LIST_APPEND( &bu_mapped_file_list, &mp->l );
-	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
+	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
 	return mp;
 
@@ -287,9 +285,9 @@ struct bu_mapped_file	*mp;
 {
 	BU_CK_MAPPED_FILE(mp);
 
-	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
+	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	--mp->uses;
-	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
+	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }
 
 /*
@@ -320,7 +318,7 @@ int	verbose;
 {
 	struct bu_mapped_file	*mp;
 
-	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
+	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 
 	for( BU_LIST_FOR( mp, bu_mapped_file, &bu_mapped_file_list ) )  {
 		BU_CK_MAPPED_FILE(mp);
@@ -358,5 +356,5 @@ int	verbose;
 		if( mp->appl )  bu_free( (genptr_t)mp->appl, "bu_mapped_file.appl" );
 		bu_free( (genptr_t)mp, "struct bu_mapped_file" );
 	}
-	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
+	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }
