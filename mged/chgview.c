@@ -69,8 +69,8 @@ f_view()
 {
 	float f;
 	f = atof( cmd_args[1] );
-	if( f < 0.01 ) f = 0.01;
-	Viewscale = f / 2.0;
+	if( f < 0.0001 ) f = 0.0001;
+	Viewscale = f * 0.5 * local2base;
 	new_mats();
 	dmaflag++;
 }
@@ -377,7 +377,6 @@ f_rt()
 
 	(void)pipe( o_pipe );
 	(void)signal( SIGINT, SIG_IGN );
-	(void)signal( SIGQUIT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
 		close(0);
 		dup( o_pipe[0] );
@@ -385,7 +384,6 @@ f_rt()
 			(void)close(i);
 
 		(void)signal( SIGINT, SIG_DFL );
-		(void)signal( SIGQUIT, SIG_DFL );
 		(void)execvp( "rt", vec );
 		perror( "rt" );
 		exit(42);
@@ -402,8 +400,7 @@ f_rt()
 	/* Wait for rt to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
-	(void)signal(SIGINT, quit);
-	(void)signal(SIGQUIT, sig3);
+	(void)signal(SIGINT, cur_sigint);
 
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
