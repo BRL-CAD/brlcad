@@ -14,6 +14,12 @@ proc init_Raytrace { id } {
     global rt_control
     global env
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set top .$id.rt
 
     if [winfo exists $top] {
@@ -364,7 +370,7 @@ destination to the background color." } }
     grid columnconfigure $top 0 -weight 1
     grid rowconfigure $top 0 -weight 1
 
-    color_entry_update $top color $rt_control($id,color)
+    color_entry_update $top color rt_control($id,color) $rt_control($id,color)
     rt_solid_list_callback $id
     rt_olist_edit_configure $id
     place_near_mouse $top
@@ -1094,7 +1100,7 @@ proc rt_cook_dest { id raw_dest } {
     set size [dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
     set rt_control($id,color) [rset cs bg]
-    color_entry_update $rt_control($id,top) color $rt_control($id,color)
+    color_entry_update $rt_control($id,top) color rt_control($id,color) $rt_control($id,color)
 
     if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb) $fb
