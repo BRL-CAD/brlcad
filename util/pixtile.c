@@ -54,7 +54,7 @@ register char **argv;
 		switch( c )  {
 		case 'h':
 			/* high-res */
-			scr_width = 1024;
+			scr_height = scr_width = 1024;
 			break;
 		case 's':
 			/* square input file size */
@@ -101,13 +101,14 @@ char **argv;
 	register int i;
 	char *obuf;
 	int im_line;		/* number of images across output scanline */
+	int im_high;		/* number of images (swaths) high */
 	int scanbytes;		/* bytes per input line */
 	int swathbytes;		/* bytes per swath of images */
 	int image;		/* current sub-image number */
-	int rel;		/* Relative image # within swath */
+	int rel = 0;		/* Relative image # within swath */
 	int maximage;		/* Maximum # of images that will fit */
 	int islist = 0;		/* set if a list, zero if basename */
-	char name[128];
+	char name[256];
 
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -131,10 +132,13 @@ char **argv;
 	/* number of images across line */
 	im_line = scr_width/file_width;
 
+	/* number of images high */
+	im_high = scr_height/file_height;
+
 	/* One swath of images */
 	swathbytes = scr_width * file_height * 3;
 
-	maximage = im_line * (scr_height/file_height);
+	maximage = im_line * im_high;
 
 	if( (obuf = (char *)malloc( swathbytes )) == (char *)0 )  {
 		(void)fprintf(stderr,"pixtile:  malloc %d failure\n", swathbytes );
@@ -151,16 +155,15 @@ char **argv;
 			register char *out;
 			int fd;
 
-			fprintf(stderr,"%d ", framenumber);  fflush(stdout);
-			if(image >= im_line*im_line )  {
+			if(image >= maximage )  {
 				fprintf(stderr,"\npixtile: frame full\n");
 				/* All swaths already written out */
 				exit(0);
 			}
-			/* XXX */
+			fprintf(stderr,"%d ", framenumber);  fflush(stdout);
 			if( islist )  {
 				/*See if we read all the files */
-				if( optind == argc )
+				if( optind >= argc )
 					goto done;
 				strcpy(name, argv[optind++]);
 			} else {
@@ -187,8 +190,10 @@ char **argv;
 		}
 		(void)write( 1, obuf, swathbytes );
 	}
-	/* NOTREACHED */
 done:
-	(void)write( 1, obuf, swathbytes );
+	/* Flush partial frame? */
+	if( rel != 0 )
+		(void)write( 1, obuf, swathbytes );
+	fprintf(stderr,"\n");
 	exit(0);
 }
