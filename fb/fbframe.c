@@ -47,7 +47,7 @@ char **argv;
 	ysize = fb_getheight(fbp);
 	len = (xsize > ysize) ? xsize : ysize;
 	if( (line = (RGBpixel *)malloc(len*sizeof(RGBpixel))) == (RGBpixel *)0 )  {
-		fprintf("fbframe:  malloc failure\n");
+		fprintf(stderr, "fbframe:  malloc failure\n");
 		return(1);
 	}
 
