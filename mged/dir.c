@@ -4,6 +4,7 @@
  * Functions -
  *	db_open		Open the database
  *	dir_build	Build directory of object file
+ *	dir_getspace	Allocate memory for table of directory entry pointers
  *	dir_print	Print table-of-contents of object file
  *	lookup		Convert an object name into directory pointer
  *	dir_add		Add entry to the directory
@@ -33,6 +34,7 @@
  *	Michael John Muuss
  *	Keith A. Applin
  *	Richard Romanelli
+ *	Robert Jon Reschly Jr.
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -59,7 +61,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "objdir.h"
 #include "dm.h"
 
-extern int	read();
+extern int	read(), strcmp();
 extern long	lseek();
 extern char	*malloc();
 extern void	exit(), free(), perror();
@@ -309,42 +311,85 @@ dir_build()  {
 }
 
 /*
+ *			D I R _ G E T S P A C E
+ *
+ * This routine walks through the directory entry list and mallocs enough
+ * space for pointers to hold:
+ *  a) all of the entries if called with an argument of 0, or
+ *  b) the number of entries specified by the argument if > 0.
+ */
+struct directory **
+dir_getspace( num_entries)
+register int num_entries;
+{
+	register struct directory *dp;
+	register int i;
+	register struct directory **dir_basep;
+
+	if( num_entries < 0) {
+		(void) printf( "dir_getspace: was passed %d, used 0\n",
+		  num_entries);
+		num_entries = 0;
+	}
+	if( num_entries == 0)  {
+		/* Set num_entries to the number of entries */
+		for( i = 0; i < NHASH; i++)
+			for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw)
+				num_entries++;
+	}
+
+	/* Allocate and cast num_entries worth of pointers */
+	if( (dir_basep = (struct directory **) malloc( num_entries *
+	  sizeof(dp))) == (struct directory **) 0) {
+	  	(void) printf( "dir_getspace:  unable to allocate memory");
+	}
+	return(dir_basep);
+}
+
+/*
  *			D I R _ P R I N T
  *
  * This routine lists the names of all the objects accessible
  * in the object file.
  */
 void
-dir_print()  {
-	register struct directory	*dp;
+dir_print() {
+	register struct directory *dp;
 	register int i;
+	struct directory **dirp, **dirp0;
 
-	(void)signal( SIGINT, sig2 );	/* allow interupts */
-	if( numargs > 1 ) {
+	(void)signal( SIGINT, sig2);	/* allow interupts */
+
+	/* Get some memory */
+	if( (dirp = dir_getspace( numargs - 1)) == (struct directory **) 0) {
+	  	(void) printf( "dir_print:  unable to get memory");
+	  	return;
+	}
+	dirp0 = dirp;
+
+	if( numargs > 1) {
 		/* Just list specified names */
+		/*
+		 * Verify the names, and add pointers to them to the array.
+		 */
 		for( i = 1; i < numargs; i++ )  {
-			if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
+			if( (dp = lookup( cmd_args[i], LOOKUP_NOISY)) ==
+			  DIR_NULL )
 				continue;
-			col_item( dp->d_namep );
-			if( dp->d_flags & DIR_COMB )
-				col_putchar( '/' );
-			if( dp->d_flags & DIR_REGION )
-				col_putchar( 'R' );
+			*dirp++ = dp;
 		}
-		col_eol();
-		return;
+	} else {
+		/* Full table of contents */
+		/*
+		 * Walk the directory list adding pointers (to the directory
+		 * entries) to the array.
+		 */
+		for( i = 0; i < NHASH; i++)
+			for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw)
+				*dirp++ = dp;
 	}
-	/* Full table of contents */
-	for( i = 0; i < NHASH; i++ )  {
-		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			col_item( dp->d_namep );
-			if( dp->d_flags & DIR_COMB )
-				col_putchar( '/' );
-			if( dp->d_flags & DIR_REGION )
-				col_putchar( 'R' );
-		}
-	}
-	col_eol();
+	col_pr4v( dirp0, (int)(dirp - dirp0));
+	free( dirp0);
 }
 
 /*
@@ -979,8 +1024,10 @@ dir_summary(flag)
 	register struct directory *dp;
 	register int i;
 	static int sol, comb, reg, br;
+	struct directory **dirp, **dirp0;
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
+
 	sol = comb = reg = br = 0;
 	for( i = 0; i < NHASH; i++ )  {
 		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
@@ -997,21 +1044,30 @@ dir_summary(flag)
 	}
 	(void)printf("Summary:\n");
 	(void)printf("  %5d solids\n", sol);
-	(void)printf("  %5d regions, %d non-region combinations\n", reg, comb);
+	(void)printf("  %5d region; %d non-region combinations\n", reg, comb);
 	(void)printf("  %5d branch names\n", br);
-	(void)printf("  %5d total objects\n", sol+reg+comb );
+	(void)printf("  %5d total objects\n\n", sol+reg+comb );
 
 	if( flag == 0 )
 		return;
 	/* Print all names matching the flags parameter */
 	/* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
-	for( i = 0; i < NHASH; i++ )  {
-		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( dp->d_flags & flag )
-				col_item(dp->d_namep);
-		}
+	
+	if( (dirp = dir_getspace(0)) == (struct directory **) 0) {
+	  	(void) printf( "dir_summary:  unable to get memory");
+	  	return;
 	}
-	col_eol();
+	dirp0 = dirp;
+	/*
+	 * Walk the directory list adding pointers (to the directory entries
+	 * of interest) to the array
+	 */
+	for( i = 0; i < NHASH; i++)
+		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw)
+			if( dp->d_flags & flag )
+				*dirp++ = dp;
+	col_pr4v( dirp0, (int)(dirp - dirp0));
+	free( dirp0);
 }
 
 /*
@@ -1025,18 +1081,33 @@ f_tops()
 {
 	register struct directory *dp;
 	register int i;
+	struct directory **dirp, **dirp0;
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
+
 	dir_nref();
-	for( i = 0; i < NHASH; i++ )  {
-		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( dp->d_nref > 0 )
-				continue;
-			/* Object is not a member of any combination */
-			col_item(dp->d_namep);
-		}
+	/*
+	 * Find number of possible entries and allocate memory
+	 */
+	if( (dirp = dir_getspace(0)) == (struct directory **) 0) {
+	  	(void) printf( "f_tops:  unable to get memory");
+	  	return;
 	}
-	col_eol();
+	dirp0 = dirp;
+	/*
+	 * Walk the directory list adding pointers (to the directory entries
+	 * which are the tops of their respective trees) to the array
+	 */
+	for( i = 0; i < NHASH; i++)
+		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw)
+			if( dp->d_nref > 0) {
+				/* Object not member of any combination */
+				continue;
+			} else {
+				*dirp++ = dp;
+			}
+	col_pr4v( dirp0, (int)(dirp - dirp0));
+	free( dirp0);
 }
 
 /*
@@ -1484,6 +1555,3 @@ f_mvall()
 	}
 
 }
-
-
-
