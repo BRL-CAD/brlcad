@@ -50,9 +50,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./qray.h"
 
-extern void mged_update();
-extern void reset_input_strings();
-extern int event_check();
 extern int mged_svbase();
 void		setup_rt();
 
