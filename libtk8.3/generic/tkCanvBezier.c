@@ -321,6 +321,20 @@ BezierCoords(interp, canvas, itemPtr, argc, argv)
 	BezierItem *bezierPtr = (BezierItem *) itemPtr;
 	int i;
 
+	if (argc == 0 ) {
+		double *coordPtr;
+		Tcl_Obj *subobj, *obj = Tcl_NewObj();
+
+		coordPtr = bezierPtr->coords;
+		for( i=0 ; i<bezierPtr->num_points*2 ; i++ ) {
+			subobj = Tcl_NewDoubleObj(*coordPtr);
+			Tcl_ListObjAppendElement(interp, obj, subobj);
+			coordPtr++;
+		}
+		Tcl_SetObjResult(interp, obj);
+		return TCL_OK;
+	}
+
 	if (argc == 1) {
 		if (Tcl_ListObjGetElements(interp, argv[0], &argc,
 					   (Tcl_Obj ***) &argv) != TCL_OK) {
