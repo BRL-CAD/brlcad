@@ -28,7 +28,7 @@
 *
 *  Source -
 *	SECAD/VLD Computing Consortium, Bldg. 394
-*	The U. S. Army Ballistic Reasearch Laboratory
+*	The U. S. Army Ballistic Research Laboratory
 *	Aberdeen Proving Ground, Maryland  21005
 *
 *  Copyright Notice -
@@ -44,7 +44,7 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "wdb.h"
-#include "tig.h"
+#include "plot3.h"
 
 #define NAMELEN 40
 #define BUFF_LEN 256
@@ -52,7 +52,7 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #define TRUE 1
 
 char usage[] = "\
-Usage:  scale (width) (units) (interval)  filename > file.pl\n\
+Usage:  rtscale (width) (units) (interval)  filename > file.pl\n\
 	(width)		length of scale in model measurements\n\
 	(units)		sting denoting the unit type,\n\
 	(interval)	number of intervals on the scale\n";
@@ -62,6 +62,8 @@ int	read_rt_file();
 int	drawscale();
 int	drawticks();
 int	overlay();
+void	make_border();
+void	make_bounding_rpp();
 
 static FILE	*fp;
 
@@ -84,6 +86,7 @@ char	**argv;
 	mat_t		view2model;		/* matrix for converting from view to model space */
 	char		units[BUFF_LEN];	/* string for units type */
 	char		label[BUFF_LEN];	/* string for scale labeling */
+	char		name[BUFF_LEN];		/* incoming file name */
 	int		intervals;		/* number of intervals */
 	int		ret;			/* function return code */
 	fastf_t		m_len;			/* scale length in model size */
@@ -113,6 +116,7 @@ char	**argv;
 	strcpy(label, argv[1]);
 	strcpy(units, argv[2]);
 	strcat(label, units);
+	strcpy(name, argv[4]);
 
 fprintf(stderr, "label=%s\n", label);
 
@@ -135,7 +139,7 @@ fprintf(stderr, "label=%s\n", label);
 	 * not elegant.)
 	 */
 
-	ret = read_rt_file(fp, argv[4],  model2view);
+	ret = read_rt_file(fp, name,  model2view);
 	if(ret < 0)  {
 		exit(-1);
 	}
@@ -149,6 +153,13 @@ fprintf(stderr, "label=%s\n", label);
 	if(ret < 0)  {
 		exit(-1);
 	}
+
+	/* For diagnostic purposes, a border can be put out. */
+	make_border(stdout, view2model);
+
+	/* Make a bounding rpp for the model and put out a space command. */
+/*	make_bounding_rpp(stdout, view2model);
+ */
 
 	exit(0);
 
@@ -225,7 +236,7 @@ fastf_t	m_len;
 
 	VSET(v_lenv, 1.0, 0.0, 0.0);
 	VSET(v_hgtv, 0.0, 1.0, 0.0);
-	VSET(v_startpt, -0.9, -0.9, 0.0);
+	VSET(v_startpt, -0.9, -0.8, 0.0);
 
 	/* Now convert all necessary points and vectors to model coordinates.
 	 * Unitize all direction vectors, and invert the height vector so
@@ -237,7 +248,7 @@ fastf_t	m_len;
 	MAT4X3VEC(m_hgtv, v2mod, v_hgtv);
 	VUNITIZE(m_hgtv);
 	VREVERSE(m_inv_hgtv, m_hgtv);
-	MAT4X3VEC(m_startpt, v2mod, v_startpt);
+	MAT4X3PNT(m_startpt, v2mod, v_startpt);
 	m_tick_hgt = v_tick_hgt / v2mod[15];		/* scale tick_hgt */
 
 /* fprintf(stderr, "layout: m_tick_hgt=%g, v_tick_hgt=%g\n", m_tick_hgt, v_tick_hgt);
@@ -264,7 +275,7 @@ fastf_t	m_len;
 	VADD2(v_label_st, v_startpt, v_offset);
 
 	/* Convert v_label_st to model space */
-	MAT4X3VEC(m_label_st, v2mod, v_label_st);
+	MAT4X3PNT(m_label_st, v2mod, v_label_st);
 
 	/* Make a view to symbol matrix.  Copy the view2model matrix, set the
 	 * MAT_DELTAS to 0, and set the scale to 1.
@@ -316,218 +327,6 @@ mat_print("v2symbol", v2symbol);
 	tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
 	return( 0 );		/* OK */
 }
-
-/*		R E A D _ R T _ F I L E
- *
- * This routine reads an rt_log file line by line until it either finds
- * view, orientation, eye_postion, and size of the model, or it hits the
- * end of file.  When a colon is found, sscanf() retrieves the
- * necessary information.  It takes a file pointer, incoming file
- * name and a matrix pointer as parameters.  
- * It returns 0 okay or < 0 failure.
- */
-
-int
-read_rt_file(infp, name, model2view)
-FILE	*infp;
-char	*name;
-mat_t 	model2view;
-{
-
-	fastf_t		azimuth;		/* part of the view */
-	fastf_t		elevation;		/* part of the view */
-	quat_t		orientation;		/* orientation */
-	point_t		eye_pos;
-	fastf_t		m_size;			/* size of model in mm */
-	char		*ret;			/* return code for fgets */
-	char		string[BUFF_LEN];	/* temporary buffer */
-	char		*arg_ptr;		/* place holder */
-	char		forget_it[9];		/* "azimuth" catcher, then forget */
-	int		i;			/* reusable counter */
-	int		num;			/* return code for sscanf */
-	int		seen_view;		/* these are flags.  */
-	int		seen_orientation;
-	int		seen_eye_pos;
-	int		seen_size;
-
-	mat_t		rotate, xlate;
-	mat_t		tmp_mat;
-
-	/* Set all flags to ready state.  */
-
-	seen_view = FALSE;
-	seen_orientation = FALSE;
-	seen_eye_pos = FALSE;
-	seen_size = FALSE;
-
-/* fprintf(stderr, "set flags: view=%d, orient.=%d, eye_pos=%d, size=%d\n",
- *	seen_view, seen_orientation, seen_eye_pos, seen_size);
- */
-
-	/* feof returns 1 on failure */
-
-	while( feof(infp) == 0 )  {
-
-		/* clear the buffer */	
-		for( i = 0; i < BUFF_LEN; i++ )  {
-			string[i] = '\0';
-		}
-		ret = fgets(string, BUFF_LEN, infp);
-		if( ret == NULL )  {
-			/* There are two situations for which NULL might be
-			 * seen: end of file (handled above) and when the
-			 * process dies a horrible death.  The latter is the
-			 * condition to be caught here.
-			 */
-
-			if( feof(infp) )
-				break;
-			/* Else report that there is a problem. */
-
-			fprintf(stderr, "read_rt_log: read failure on file %s\n",
-				name);
-			return(-1);
-		}
-
-
-		/* Check the first for a colon in the buffer.  If there is
-		 * one, replace it with a NULL, and set a pointer to the
-		 * next space.  Then feed the buffer to
-		 * strcmp see whether it is the view, the orientation,
-		 * the eye_position, or the size.  If it is, then sscanf()
-		 * the needed information into the appropriate variables.
-		 * If the keyword is not found, go back for another line.
-		 *
-		 * Set arg_ptr to NULL so it can be used as a flag to verify
-		 * finding a colon in the input buffer.
-		 */
-
-		arg_ptr = NULL;
-
-		for( i = 0; i < BUFF_LEN; i++ )  {
-			/* Check to make sure the first char. is not a NULL;
-			 * if it is, go back for a new line.
-			 */
-			if( string[i] == '\0' )  {
-				break;
-			}
-			if( string[i] == ':')  {
-				/* If a colon is found, set arg_ptr to the
-				 * address of the colon, and break: no need to
-				 * look for more colons on this line.
-				 */
-
-/* fprintf(stderr, "found colon\n");
- */
-				string[i] = '\0';
-				arg_ptr = &string[++i];		/* increment before using */
-				break;
-			}
-		}
-
-		/* Check to see if a colon has been found.  If not, get another
-		 * input line.
-		 */
-
-		if( arg_ptr == NULL )  {
-			continue;
-		}
-
-		/* Now compare the first word in the buffer with the
-		 * key words wanted.  If there is a match, read the
-		 * information that follows into the appropriate
-		 * variable, and set a flag to indicate that the
-		 * magic thing has been seen.
-		 *
-		 * Note two points of interest: scanf() does not like %g;
-		 * use %lf.  Also, if loading a whole array of characters
-		 * with %s, then the name of the array can be used for the
-		 * destination.  However, if the characters are loaded 
-		 * individually into the subsripted spots with %c (or equiv),
-		 * the address of the location must be provided: &eye_pos[0].
-		 */
-
-		if(strcmp(string, "View") == 0)  {
-			num = sscanf(arg_ptr, "%lf %s %lf", &azimuth, forget_it, &elevation);
-			if( num != 3)  {
-				fprintf(stderr, "View= %g %s %g elevation\n", azimuth, forget_it, elevation);
-				return(-1);
-			}
-			seen_view = TRUE;
-		} else if(strcmp(string, "Orientation") == 0)  {
-			num = sscanf(arg_ptr, "%lf, %lf, %lf, %lf",
-				&orientation[0], &orientation[1], &orientation[2],
-				&orientation[3]);
-
- 			if(num != 4)  {
-				fprintf(stderr, "Orientation= %g, %g, %g, %g\n",
-				 	orientation[0], orientation[1],
-					orientation[2], orientation[3]);
-				return(-1);
-			}
-			seen_orientation = TRUE;
-		} else if(strcmp(string, "Eye_pos") == 0)  {
-			num = sscanf(arg_ptr, "%lf, %lf, %lf", &eye_pos[0],
-				&eye_pos[1], &eye_pos[2]);
-			if( num != 3)  {
-				fprintf(stderr, "Eye_pos= %g, %g, %g\n",
-					eye_pos[0], eye_pos[1], eye_pos[2]);
-				return(-1);
-			}
-			seen_eye_pos = TRUE;
-		} else if(strcmp(string, "Size") == 0)  {
-			num = sscanf(arg_ptr, "%lf", &m_size);
-			if(num != 1)  {
-				fprintf(stderr, "Size=%g\n", m_size);
-				return(-1);
-			}
-			seen_size = TRUE;
-		}
-	}
-
-	/* Check that all the information to proceed is available */
-
-	if( seen_view != TRUE )  {
-		fprintf(stderr, "View not read!\n");
-		return(-1);
-	}
-
-	if( seen_orientation != TRUE )  {
-		fprintf(stderr, "Orientation not read!\n");
-		return(-1);
-	}
-
-	if( seen_eye_pos != TRUE )  {
-		fprintf(stderr, "Eye_pos not read!\n");
-		return(-1);
-	}
-
-	if ( seen_size != TRUE )  {
-		fprintf(stderr, "Size not read!\n");
-		return(-1);
-	}
-
-	/* For now, just print the stuff */
-
-	fprintf(stderr, "view= %g azimuth, %g elevation\n", azimuth, elevation);
-	fprintf(stderr, "orientation= %g, %g, %g, %g\n",
-		orientation[0], orientation[1], orientation[2], orientation[3]);
-	fprintf(stderr, "eye_pos= %g, %g, %g\n", eye_pos[0], eye_pos[1], eye_pos[2]);
-	fprintf(stderr, "size= %gmm\n", m_size);
-
-	/* Build the view2model matrix. */
-
-	quat_quat2mat( rotate, orientation );
-	rotate[15] = 0.5 * m_size;
-	mat_idn( xlate );
-	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
-	mat_mul( model2view, rotate, xlate );
-
-/* mat_print("model2view", model2view);
- */	
-	return(0);
-}
-
 
 	
 
@@ -606,4 +405,84 @@ vect_t		inv_hgtv;
 	pdv_3cont(outfp, bot);
 
 	return( 0 );
+}
+
+/*		M A K E _ B O R D E R
+ *
+ * This routine exists to draw an optional border around the image.  It
+ * exists for diagnostic purposes.  It takes a view to model matrix and
+ * a file pointer.  It lays out and plots the four corners of the image border.
+ */
+
+void
+make_border(outfp, v2mod)
+FILE	*outfp;
+mat_t	v2mod;
+{
+
+	point_t		v_lleft_pt;		/* lower left point, view space */
+	point_t		v_lright_pt;		/*lower right point, view space */
+	point_t		v_uleft_pt;		/* upper left point, view space */
+	point_t 	v_uright_pt;		/* upper right point, view space */
+	point_t		m_lleft_pt;		/* lower left point, mod. space */
+	point_t 	m_lright_pt;		/* lower right point, mod. space */
+	point_t		m_uleft_pt;		/* upper left point, mod. space */
+	point_t		m_uright_pt;		/* upper right point, mod. space */
+
+	/* Make all the points in view space. */
+
+	VSET(v_lleft_pt, -1.0, -1.0, 0.0);
+	VSET(v_lright_pt, 1.0, -1.0, 0.0);
+	VSET(v_uleft_pt, -1.0, 1.0, 0.0);
+	VSET(v_uright_pt, 1.0, 1.0, 0.0);
+
+	/* Convert all the points to model space */
+	MAT4X3PNT(m_lleft_pt, v2mod, v_lleft_pt);
+	MAT4X3PNT(m_lright_pt, v2mod, v_lright_pt);
+	MAT4X3PNT(m_uleft_pt, v2mod, v_uleft_pt);
+	MAT4X3PNT(m_uright_pt, v2mod, v_uright_pt);
+
+	/* Now plot the border in model space. */
+	pdv_3move(outfp, m_lleft_pt);
+	pdv_3cont(outfp, m_lright_pt);
+	pdv_3cont(outfp, m_uright_pt);
+	pdv_3cont(outfp, m_uleft_pt);
+	pdv_3cont(outfp, m_lleft_pt);
+
+	return;
+}
+
+/*
+ *		M A K E _ B O U N D I N G _ R P P
+ *
+ * This routine takes a view2model matrix and a file pointer.  It calculates the  minimun and
+ * the maximun points of the viewing cube in view space, and then translates
+ * it to model space and rotates it so that it will not shrink when rotated and
+ * cut off the geometry/image.  This routine returns nothing.
+ */
+
+void
+make_bounding_rpp(outfp, v2mod)
+FILE	*outfp;
+mat_t	v2mod;
+{
+
+	point_t		v_min;		/* view space minimum coordinate */
+	point_t		v_max;		/* view space maximum coordinate */
+	point_t		new_min;	/* new min of rotated viewing cube */
+	point_t		new_max;	/* new max of rotated viewing cube */
+
+	/* Make the min and max points of the view-space viewing cube */
+	VSET(v_min, -1.0, -1.0, -1.0);
+	VSET(v_max, 1.0, 1.0, 1.0);
+
+	/* Now rotate the viewing cube and obtain new minimum and maximum. */
+
+	rt_rotate_bbox(new_min, new_max, v2mod, v_min, v_max);
+
+	/* Now issue the space command */
+
+	pdv_3space(outfp, new_min, new_max);
+
+	return;
 }
