@@ -182,6 +182,7 @@ for LAST in \
 	html html/manuals html/manuals/mged \
 		html/manuals/mged/animmate html/manuals/libdm \
 		html/manuals/shaders html/manuals/Anim_Tutorial \
+		html/manuals/librt html/manuals/libbu html/manuals/cadwidgets \
 		html/ReleaseNotes html/ReleaseNotes/Rel5.0 \
 		html/ReleaseNotes/Rel5.0/Summary \
 	pro-engineer pro-engineer/text pro-engineer/sgi_elf2 \
