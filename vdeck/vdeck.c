@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	2.5
- *	Last edit: 	10/16/84 at 14:25:42
- *	Retrieved: 	8/13/86 at 08:11:03
+ *	SCCS id:	@(#) vdeck.c	2.6
+ *	Last edit: 	11/29/84 at 12:32:28
+ *	Retrieved: 	8/13/86 at 08:11:32
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.5	last edit 10/16/84 at 14:25:42";
+char	sccsTag[] = "@(#) vdeck.c	2.6	last edit 11/29/84 at 12:32:28";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
@@ -691,20 +691,23 @@ Record *rec;
 	int	i;
 	float	work[3];
 	float	rr1,rr2;
-	vect_t	v_work;
+	vect_t	v_work, v_workk;
 
 	write( solfd, "tor  ", 5 );
 
 	/* operate on vertex
 	 */
-	matXvec( v_work, xform, &(rec->s.s_values[0]) );
+	vtoh_move( v_workk, &(rec->s.s_values[0]) );
+	matXvec( v_work, xform, v_workk );
+	htov_move( &(rec->s.s_values[0]), v_work );
 	VMOVE( &(rec->s.s_values[0]) , v_work );
 
 	/* rest of vectors
 	 */
 	for( i = 3; i <= 21; i += 3 ) {
-		matXvec( v_work, notrans, &(rec->s.s_values[i]) );
-		VMOVE( &(rec->s.s_values[i]), v_work );
+		vtoh_move( v_workk, &(rec->s.s_values[i]) );
+		matXvec( v_work, notrans, v_workk );
+		htov_move( &(rec->s.s_values[i]), v_work );
 	}
 	rr1 = MAGNITUDE( SV2 );	/* r1 */
 	rr2 = MAGNITUDE( SV1 );	/* r2 */    
