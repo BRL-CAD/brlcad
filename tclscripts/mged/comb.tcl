@@ -255,6 +255,10 @@ the form of the selected shader type." } }
 	-command "comb_shader_gui $id camo"
     hoc_register_menu_data "Shader" "camouflage" "Shader - camo" \
 	{ { summary "Apply camouflage to this object." } }
+    $top.shaderMB.m add command -label "air" \
+	-command "comb_shader_gui $id air"
+    hoc_register_menu_data "Shader" "air" "Shader - air" \
+	{ { summary "Apply the air shader to this object." } }
     $top.shaderMB.m add command -label "Unknown" \
 	-command "comb_shader_gui $id unknown"
     hoc_register_menu_data "Shader" "Unknown" "Shader - unknown" \
