@@ -55,7 +55,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
-#include "./menu.h"
 
 #if 1
 #define TRY_EDIT_NEW_WAY
@@ -1876,6 +1875,9 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
   int	i;
 
   update_views = 1;
+#if 0
+  VMOVE(curr_e_axes_pos, es_keypoint);
+#else
   switch(es_int.idb_type){
   case	ID_ARB8:
   case	ID_ARBN:
@@ -1974,6 +1976,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
     VMOVE(curr_e_axes_pos, es_keypoint);
     break;
   }
+#endif
 
   if(both){
     VMOVE(e_axes_pos, curr_e_axes_pos);

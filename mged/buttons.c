@@ -33,8 +33,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "externs.h"
 #include "./mged_solid.h"
-#include "./menu.h"
-#include "./scroll.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 

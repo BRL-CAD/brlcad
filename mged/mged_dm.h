@@ -20,6 +20,7 @@
 
 #include "dm.h"	/* struct dm */
 #include "./menu.h" /* struct menu_item */
+#include "./scroll.h" /* struct scroll_item */
 #define TRY_NEW_MGED_VARS 0
 #define DO_NEW_EDIT_MATS
 
@@ -352,5 +353,16 @@ extern struct dm_list *curr_dm_list;
 	if(BU_LIST_IS_HEAD(tp, &head_dm_list.l))\
 		p = DM_LIST_NULL;\
 	}
+
+
+struct w_dm {
+    struct dm *dp;
+    int (*init)();
+};
+extern struct w_dm which_dm[];  /* defined in attach.c */
+
+/* indices into which_dm[] */
+#define DM_PLOT_INDEX 0
+#define DM_PS_INDEX 1
 
 #endif /* SEEN_MGED_DM_H */
