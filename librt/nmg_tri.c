@@ -2380,11 +2380,25 @@ CONST struct rt_tol	*tol;
 
 	/* make a quick check to see if we need to bother or not */
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		if (lu->orientation != OT_SAME)
+			goto triangulate;
+
 		vert_count = 0;
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd ))
 			if (++vert_count > 3) goto triangulate;
 	}
 
+	if (rt_g.NMG_debug & DEBUG_TRI) {
+		vect_t N;
+		NMG_GET_FU_NORMAL(N, fu);
+		rt_log("---------------- face %g %g %g already triangular\n",
+			N[0], N[1], N[2]);
+
+		for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
+			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd ))
+				VPRINT("pt", eu->vu_p->v_p->vg_p->coord );
+
+	}
 	return;
 
 	triangulate:
