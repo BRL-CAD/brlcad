@@ -1560,6 +1560,9 @@ struct timeval	*t1, *t0;
 
 /*
  *			R T S Y N C _ P H _ D O N E
+ *
+ *  This message indicates that RTNODE has successfully sent
+ *  all it's pixels to the screen.
  */
 void
 rtsync_ph_done(pc, buf)
@@ -1574,6 +1577,8 @@ char			*buf;
 	double		t1, t2, t3;
 	int		nfields;
 	int		sched_update = 0;
+	int		last_i;
+	char		nbuf[32];
 
 	blend1 = 0.8;
 	blend2 = 1 - blend1;
@@ -1627,6 +1632,7 @@ char			*buf;
 				);
 		}
 		rtnodes[i].busy = 0;
+		last_i = i;
 		if( buf )  free(buf);
 		goto check_others;
 	}
@@ -1639,6 +1645,12 @@ check_others:
 		if( rtnodes[i].ncpus <= 0 )  continue;
 		if( rtnodes[i].busy )  return;	/* Still working on last one */
 	}
+
+	/*
+	 *  Frame is entirely done, this was the last assignemnt outstanding.
+	 */
+	strncpy( nbuf, rtnodes[last_i].host->ht_name, 6 );
+	nbuf[6] = '\0';
 	
 	/* Record time that final assignment came back */
 	(void)gettimeofday( &t_all_done, (struct timezone *)NULL );
@@ -1656,12 +1668,13 @@ check_others:
 	ms_all_done = tvdiff( &t_all_done, &frame_start ) * 1000;
 	ms_flush = tvdiff( &time_end, &t_all_done ) * 1000;
 
-	bu_log("%s %6d ms, %6.1f Mbps, %6.1f fps, %d/%d/%d/%d\n",
+	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %d/%d/%d/%d %s\n",
 		stamp(),
 		ms_total,
 		width * height * 3 * 8 / interval / 1000000.0,
 		1.0/interval,
-		ms_assigned, ms_1st_done, ms_all_done, ms_flush );
+		ms_assigned, ms_1st_done, ms_all_done, ms_flush,
+		nbuf );
 
 	/* Trigger TCL code to auto-update cpu status window on major changes */
 	if( sched_update )
