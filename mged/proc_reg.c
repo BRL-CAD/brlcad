@@ -1653,8 +1653,6 @@ union E_tree *eptr;
 			if( eptr->l.m && !eptr->l.do_not_free_model )
 			{
 				nmg_km( eptr->l.m );
-				if( eptr->l.m == eptr->l.stp->st_specific )
-					eptr->l.stp->st_specific = GENPTR_NULL;
 				eptr->l.m = (struct model *)NULL;
 			}
 			if( BU_LIST_NON_EMPTY( &eptr->l.seghead ) )
