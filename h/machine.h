@@ -112,6 +112,23 @@ typedef long long	bitv_t;	/* largest integer type */
 
 #endif
 
+#ifdef ardent
+/********************************
+ *				*
+ *  Ardent Workstation		*
+ *				*
+ ********************************/
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* for parallel cpus */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+/* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines, for now */
+#define MAX_PSW	4		/* # processors, max */
+
+#endif
+
 
 #ifndef LOCAL
 /********************************
