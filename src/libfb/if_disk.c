@@ -155,7 +155,11 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 	  && (ifp->if_fd = open( file, O_RDONLY, 0 )) == -1 ) {
 		if( (ifp->if_fd = open( file, O_RDWR|O_CREAT, 0664 )) > 0 ) {
 			/* New file, write byte at end */
+#ifdef WIN32
+			if(_lseek( ifp->if_fd, (off_t)(height*width*sizeof(RGBpixel)-1), 0 ) == -1 ) {
+#else
 			if( lseek( ifp->if_fd, (off_t)(height*width*sizeof(RGBpixel)-1), 0 ) == -1 ) {
+#endif
 				fb_log( "disk_device_open : can not seek to end of new file.\n" );
 				return	-1;
 			}
@@ -168,7 +172,11 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 	}
 	ifp->if_width = width;
 	ifp->if_height = height;
+#ifdef WIN32
+	if(_lseek( ifp->if_fd, (off_t)0L, 0 ) == -1L ) {
+#else
 	if( lseek( ifp->if_fd, (off_t)0L, 0 ) == -1L ) {
+#endif
 		fb_log( "disk_device_open : can not seek to beginning.\n" );
 		return	-1;
 	}
@@ -186,7 +194,11 @@ _LOCAL_ int
 dsk_free(FBIO *ifp)
 {
 	close( ifp->if_fd );
-	return	unlink( ifp->if_name );
+#ifdef WIN32
+	return remove(ifp->if_name);
+#else
+	return unlink(ifp->if_name);
+#endif
 }
 
 _LOCAL_ int
@@ -215,7 +227,11 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
 	dest = (((long) y * (long) ifp->if_width) + (long) x)
 	     * (long) sizeof(RGBpixel);
+#ifdef WIN32
+	if( ifp->if_seekpos != dest && _lseek(fd, (off_t)dest, 0) == -1L ) {
+#else
 	if( ifp->if_seekpos != dest && lseek(fd, (off_t)dest, 0) == -1L ) {
+#endif
 		fb_log( "disk_buffer_read : seek to %ld failed.\n", dest );
 		return	-1;
 	}
@@ -253,7 +269,11 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	dest = ((long) y * (long) ifp->if_width + (long) x)
 	     * (long) sizeof(RGBpixel);
 	if( dest != ifp->if_seekpos )  {
+#ifdef WIN32
+		if(_lseek(ifp->if_fd, (off_t)dest, 0) == -1L ) {
+#else
 		if( lseek(ifp->if_fd, (off_t)dest, 0) == -1L ) {
+#endif
 			fb_log( "disk_buffer_write : seek to %ld failed.\n", dest );
 			return	-1;
 		}
@@ -281,7 +301,11 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 	if( fd == 1 )  fd = 0;
 
 	if( ifp->if_seekpos != FILE_CMAP_ADDR &&
+#ifdef WIN32
+	    _lseek( fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
+#else
 	    lseek( fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
+#endif
 		fb_log(	"disk_colormap_read : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
 	   	return	-1;
@@ -305,7 +329,11 @@ dsk_wmap(FBIO *ifp, const ColorMap *cmap)
 		return	0;
 	if( fb_is_linear_cmap( cmap ) )
 		return  0;
+#ifdef WIN32
+	if(_lseek( ifp->if_fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
+#else
 	if( lseek( ifp->if_fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
+#endif
 		fb_log(	"disk_colormap_write : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
 		return	-1;
@@ -345,7 +373,11 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 
 	/* Set start of framebuffer */
 	fd = ifp->if_fd;
+#ifdef WIN32
+	if( ifp->if_seekpos != 0L && _lseek( fd, (off_t)0L, 0 ) == -1 ) {
+#else
 	if( ifp->if_seekpos != 0L && lseek( fd, (off_t)0L, 0 ) == -1 ) {
+#endif
 		fb_log( "disk_color_clear : seek failed.\n" );
 		return	-1;
 	}
