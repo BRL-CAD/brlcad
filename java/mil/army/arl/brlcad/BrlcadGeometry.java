@@ -5,51 +5,77 @@ package mil.army.arl.brlcad;
 import java.rmi.*;
 import java.util.Vector;
 
+/**
+ * Provides a wrapper for BRL-CAD library capabilities.
+ */
 public interface BrlcadGeometry extends Remote {
-    // loadGeometry(String geomInfo)
-    // Loads geometry. In the BRL-CAD context we need a database file
-    // and the objects to load. If we can find a way to make the details
-    // opaque that would be cool.
+    /**
+     * Specifies the BRL-CAD target description and top level
+     * object to be managed by the server.
+     *
+     * @param geomInfo the name of the target description
+     * @return         a boolean indicating success or failure
+     * @see            SomethingElse
+     */
     public boolean loadGeometry(String geomInfo) 
 	throws RemoteException;
 
-    // ====
-    // Geometry Query Routines
-    // ====
-    // shootRay (point, direction)
-    // should return an ordered sequence(Vector) of Partitions
+    /**
+     * Performs a ray trace of the currently-loaded geometry.
+     * <p>
+     * Should return an ordered sequence(Vector) of Partitions
+     *
+     * @param   origin The point at which the ray originates.
+     *          dir    The direction in which the ray points.
+     * @return         An ordered sequence(Vector) of Partitions.
+     * @see            Elsewhere.
+     */
     public Vect shootRay(Point origin, Vect dir)
 	throws RemoteException;
 
-    // getBoundingBox()
-    // Returns bounding box of the top level object(s)
+    /**
+     * Returns the bounding box of the top-level object
+     * managed by this server.
+     *
+     * @return       Bounding box of the top level object(s)
+     */
     public BoundingBox getBoundingBox()
 	throws RemoteException;
 
-    // getBoundingBox(String item)
-    // Returns bounding box of the specified object
+    /**
+     * Returns bounding box of the specified object
+     *
+     * @param item  The name of the object.
+     * @return      The bounding box of the object, null if the object does not exist.
+     */
     public BoundingBox getBoundingBox(String item)
 	throws RemoteException;
-
-    // ====
-    // Other Queries
-    // ====
-    // getTitle()
-    // Returns the Title field in the database, if set/supported, \
-    // "No Title" otherwise
-    public String getTitle()
+       
+    /**
+     * Returns the Title field in the database.
+     *
+     * @return      Database title if it is set, null otherwise.
+     */
+    public String getTitle() 
 	throws RemoteException;
 
-    // ====
-    // Dynamic geometry
-    // ====
-    // makeHole
-    // Creates a tgc hole in the geometry. Note that there is no indication
-    // of the objects through which the hole goes. Will need to determine which
-    // regions to subtract the hole from.
+    /**
+     * Creates a tgc hole in the geometry. 
+     * <p>
+     * Note that there is no indication of the objects through 
+     * which the hole goes. Will need to determine which regions 
+     * from which to subtract the hole.
+     *
+     * @param  origin   The origin of the hole.
+     *         dir      The direction of the hole
+     *         baseDiam The diameter of the hole at the origin.
+     *         topDiam  The diameter of the hole at the 
+     * @return          Boolean true if successful.
+     */
     public boolean makeHole(Point origin, Vect dir, 
 			    float baseDiam, float topDiam)
 	throws RemoteException;
+
     // FUTURE
     // shootBundle ()
     // shoots a bundle of rays and returns plates?

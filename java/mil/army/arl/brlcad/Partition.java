@@ -4,17 +4,30 @@ package mil.army.arl.muves.geometry;
 
 import java.io.Serializable;
 
+/**
+ * Replicates the "important" information from the librt partition
+ * structure.
+ */
 public class Partition implements Serializable {
     String item;
     Point inHit;
     Point outHit;
     float obliquity;
-    private RayResult lnkRayResult;
 
+    /**
+     * Retrieves the obliquity value.
+     *
+     * @return    An obliquity value between 0 and PI/2.
+     */
     public float getObliquity() {
         return obliquity;
     }
 
+    /**
+     * Sets the obliquity value.
+     *
+     * @param obl The obliquity value.
+     */
     public void setObliquity(float obl) {
         this.obliquity = obl;
     }
