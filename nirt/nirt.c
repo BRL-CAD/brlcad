@@ -28,6 +28,7 @@
 #include "nirt.h"
 #include "usrfmt.h"
 
+char		*db_name;	/* the name of the MGED file      */
 com_table	ComTab[] =
 		{
 		    { "ae", az_el, "set/query azimuth and elevation", 
@@ -39,6 +40,8 @@ com_table	ComTab[] =
 		    { "xyz", target_coor, "set/query target coordinates", 
 			"X Y Z" },
 		    { "s", shoot, "shoot a ray at the target" },
+		    { "useair", use_air, "set/query use of air",
+			"<0|1|2|...>" },
 		    { "units", nirt_units, "set/query local units",
 			"<mm|cm|m|in|ft>" },
 		    { "fmt", format_output, "set/query output formats",
@@ -59,24 +62,29 @@ com_table	ComTab[] =
 		    { 0 }
 		};
 
-char                     *progname;
-struct rt_i              *rtip;           /* pointer to an rt_i structure   */
-struct application       ap;
+struct rt_i	*rtip;
+struct rt_i	*rti_tab[2];	/* For use w/ and w/o air */
+struct application	ap;
+struct nirt_obj		object_list = {"", 0};
 
 main (argc, argv)
 int argc;
 char **argv;
 {
-    char                *db_name;        /* the name of the MGED file      */
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
+    char		*optstring = OPT_STRING; /* To control getopt(3C) */
     extern char		*local_unit[];
     extern char		local_u_name[];
     extern double	base2local;
     extern double	local2base;
     FILE		*fPtr;
     int                 i;               /* counter                       */
+    int			Ch;		/* Option name */
+    int			use_of_air = 0;
     outval		*vtp;
     extern outval	ValTab[];
+    extern int 		optind;		/* index from getopt(3C) */
+    extern char		*optarg;	/* argument from getopt(3C) */
 
     /* FUNCTIONS */
     int                    if_overlap();    /* routine if you overlap         */
@@ -101,13 +109,35 @@ char **argv;
     void		   print_item();
     void		   shoot();
 
-    progname = *argv++;
-    if ((--argc < 2) || (strcmp(*argv, "-?") == 0))
+    /* Handle command-line options */
+    while ((Ch = getopt(argc, argv, optstring)) != EOF)
+        switch (Ch)
+        {
+            case 'u':
+                if (sscanf(optarg, "%d", &use_of_air) != 1)
+                {
+                    (void) fprintf(stderr,
+                        "Illegal use-air specification: '%s'\n", optarg);
+                    exit (1);
+                }
+                break;
+            case '?':
+	    default:
+                printusage();
+                exit (Ch != '?');
+        }
+    if (argc - optind < 2)
     {
 	printusage();
-	exit(1);
+	exit (1);
     }
-    db_name = *argv;
+    if (use_of_air && (use_of_air != 1))
+    {
+	fprintf(stderr,
+	    "Warning: useair=%d specified, will set to 1\n", use_of_air);
+	use_of_air = 1;
+    }
+    db_name = argv[optind];
 
     /* build directory for target object */
     printf("Database file:  '%s'\n", db_name);
@@ -116,22 +146,16 @@ char **argv;
     {
 	fflush(stdout);
 	fprintf(stderr, "Could not load file %s\n", db_name);
-	printusage();
 	exit(1);
     }
+    rti_tab[use_of_air] = rtip;
+    rti_tab[1 - use_of_air] = RTI_NULL;
     putchar('\n');
-    /*
-     *	Here useair is hardwired to 0.
-     *	A command-line option should be added to allow the user to
-     *	specify that he wants to use air.  Eventualy it would be
-     *	nice to allow interactive toggling of useair, but that
-     *	would require calling rt_gettree() and rt_prep() again!
-     */
-    rtip -> useair = 1;
+    rtip -> useair = use_of_air;
 
     printf("Prepping the geometry...");
-    while (--argc > 0)    /* prepare the objects that are to be included */
-	do_rt_gettree( rtip, *(++argv) );
+    while (++optind < argc)    /* prepare the objects that are to be included */
+	do_rt_gettree( rtip, argv[optind], 1 );
  
     /* initialization of the application structure */
     ap.a_hit = if_hit;        /* branch to if_hit routine            */
@@ -186,17 +210,29 @@ char **argv;
     interact(stdin);
 }
  
+#if 0
+char	usage[] = "\
+Usage: 'nirt [options] model.g objects...'\n\
+Options:\n\
+ -u n    specifies use of air (default 0)\n\
+";
+#endif
+char	usage[] = "\
+Usage: 'nirt [-u n] model.g objects...'\n\
+";
+
 void printusage() 
 {
-    fprintf (stderr, "Usage:   %s file.g object[s]\n", progname); 
+    (void) fputs(usage, stderr);
 }
 
-void do_rt_gettree(rip, object_name)
+void do_rt_gettree(rip, object_name, save)
 struct rt_i	*rip;
 char 		*object_name;
+int		save;		/* Add object_name to object_list? */
 {
-    /* All objects (groups and regions) which are to be included in the */
-    /* description to be raytraced must be preprocessed with rt_gettree */
+    static struct nirt_obj	*op = &object_list;
+
     if (rt_gettree( rip, object_name ) == -1)
     {
 	fflush(stdout);
@@ -204,6 +240,19 @@ char 		*object_name;
 	    object_name);
 	printusage();
 	exit(1);
+    }
+    if (save)
+    {
+	if (op == NULL)
+	{
+	    fputs("Ran out of memory\n");
+	    exit (1);
+	}
+	op -> obj_name = object_name;
+	op -> obj_next = (struct nirt_obj *) malloc(sizeof(struct nirt_obj));
+	op = op -> obj_next;
+	if (op != NULL)
+	    op -> obj_next = NULL;
     }
     putchar('\n');
     printf("Object '%s' processed\n", object_name);
