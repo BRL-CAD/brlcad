@@ -189,10 +189,10 @@ nurb_DB_ARGS=""
 #
 # (part) Arguments
 # 
-# in args =>
+# in args => vertex vectorH v_radius h_radius
 #
-part_IN_ARGS=""
-part_DB_ARGS=""
+part_IN_ARGS="0 0 0  0 0 50  10 20"
+part_DB_ARGS="V {0 0 0} H {0 0 50} r_v 10 r_h 20"
 
 #
 # (pg) Arguments
