@@ -51,7 +51,10 @@ typedef	short	disk_line;
 #endif
 
 #define EOF	-1
-#define NULL	0
+
+#ifndef NULL
+# define NULL	0
+#endif
 
 #define OKAY	0		/* Return codes for when telling */
 #define ABORT	1
