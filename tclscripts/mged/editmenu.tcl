@@ -144,8 +144,7 @@ proc build_solid_menu { type id paths } {
 		    solid_illum \$item"
 	    bind_listbox $top "<Double-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
-		    _mged_press sill;\
-		    _mged_ill \$item;\
+		    _mged_sed \$item;\ 
 		    destroy $top"
 	}
 	o {
