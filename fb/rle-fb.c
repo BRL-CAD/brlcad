@@ -198,19 +198,25 @@ char ** argv;
 			sv_globals.sv_bg_color[i] = background[i];
 	}
 
+	file_width = sv_globals.sv_xmax - sv_globals.sv_xmin + 1;
+
+	/* If screen sizes not specified, try to display rectangle part > 0 */
+	if( screen_width == 0 )  {
+	    	screen_width = sv_globals.sv_xmax + 1;
+		if( scr_xoff > 0 )
+			screen_width += scr_xoff;
+	}
+	if( screen_height == 0 )  {
+	    	screen_height = sv_globals.sv_ymax + 1;
+		if( scr_yoff > 0 )
+			screen_height += scr_yoff;
+	}
+
 	/* Incorporate command-line rectangle repositioning */
 	sv_globals.sv_xmin += scr_xoff;
 	sv_globals.sv_xmax += scr_xoff;
 	sv_globals.sv_ymin += scr_yoff;
 	sv_globals.sv_ymax += scr_yoff;
-
-	/* If screen sizes not specified, try to display rectangle part > 0 */
-	if( screen_width == 0 )
-	    	screen_width = sv_globals.sv_xmax + 1;
-	if( screen_height == 0 )
-	    	screen_height = sv_globals.sv_ymax + 1;
-
-	file_width = sv_globals.sv_xmax - sv_globals.sv_xmin + 1;
 
 	/* Pretend saved image origin is at 0, clip & position in fb_write call */
 	screen_xbase = sv_globals.sv_xmin;
