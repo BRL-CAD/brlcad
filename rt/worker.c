@@ -247,6 +247,7 @@ int cpu;
 			 	VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
 			}
 			a.a_level = 0;		/* recursion level */
+			a.a_purpose = "main ray";
 			rt_shootray( &a );
 
 			if( stereo )  {
@@ -265,6 +266,7 @@ int cpu;
 					VMOVE( a.a_ray.r_pt, point );
 				}
 				a.a_level = 0;		/* recursion level */
+				a.a_purpose = "left eye ray";
 				rt_shootray( &a );
 
 				left = CRT_BLEND(a.a_color);
