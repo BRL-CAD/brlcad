@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.3  84/02/06  20:41:23  dpk
+ * Made screen handling more conservative (i.e. fixed)
+ * 
  * Revision 1.2  83/12/16  00:09:41  dpk
  * Added distinctive RCS header
  * 
@@ -85,11 +88,11 @@ cl_eol()
 		return;
 
 	if (cursor < Curline->s_length) {
-		clrline(cursor, Curline->s_length);
 		Placur(i_line, i_col);
-		if (CE)
+		if (CE) {
+			clrline(cursor, Curline->s_length);
 			putpad(CE, 1);
-		else {
+		} else {
 			/* Ugh.  The slow way */
 			register char *savecp = cursor;
 
