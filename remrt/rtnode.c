@@ -857,7 +857,6 @@ char			*buf;
 
 	if( reproj_cur > 0 && reproj_max > 0 )
 		reproj_percent = (int)(((double)reproj_cur)/reproj_max*100);
-bu_log("reproj_percent %d%%\n", reproj_percent);
 
 	rtip->nshots = 0;
 	rtip->nmiss_model = 0;
