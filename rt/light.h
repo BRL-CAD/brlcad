@@ -21,10 +21,11 @@ struct light_specific {
 	fastf_t	lt_intensity;	/* Intensity Lumens (cd*sr): total output */
 	fastf_t	lt_angle;	/* beam dispersion angle (degrees) 0..180 */
 	fastf_t	lt_fraction;	/* fraction of total light */
-	int	lt_shadows;	/* !0 if this light casts shadows */
+	int	lt_shadows;	/* !0 if this light casts shadows, # of rays*/
 	int	lt_infinite;	/* !0 if infinitely distant */
-	int	lt_invisible;	/* !0 if implicitly modeled or invisible */
+	int	lt_visible;	/* 0 if implicitly modeled or invisible */
 	int	lt_exaim;	/* !0 if explicit aim in lt_dir */
+	fastf_t lt_obscure;	/* percentage obscuration of light */
 	/* Internal fields */
 #if RT_MULTISPECTRAL
 	struct bn_tabdata *lt_spectrum;	/* Units?  mw*sr ? */
@@ -47,3 +48,7 @@ extern struct light_specific	LightHead;
 
 RT_EXTERN(void light_visibility, (struct application *ap,
 				  struct shadework *swp, int have) );
+
+RT_EXTERN(void light_obs, (struct application *ap,
+				  struct shadework *swp, int have) );
+

@@ -133,10 +133,23 @@ register char **argv;
 	bu_optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:v:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:!:"
+	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:q:rs:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:!:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
+		case 'q':
+			i = atoi(bu_optarg);
+			if (i <= 0) {
+				bu_log("-q %d is < 0\n", i);
+				bu_bomb("");
+			}
+			if ( i > BN_RANDHALFTABSIZE) {
+				bu_log("-q %d is > maximum (%d)\n",
+				       i, BN_RANDHALFTABSIZE);
+				bu_bomb("");
+			}
+			bn_randhalftabsize = i;
+			break;
 		case 'j':
 			{
 				register char	*cp = bu_optarg;

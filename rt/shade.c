@@ -284,7 +284,7 @@ vdraw o norm;vdraw p c 00ffff;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\
 	/* NOTE:  Lee has changed the shaders to do light themselves now. */
 	/* This isn't where light visibility is determined any more. */
 	if( want & MFI_LIGHT )  {
-		light_visibility(ap, swp, have);
+	light_obs(ap, swp, have);
 		have |= MFI_LIGHT;
 	}
 
