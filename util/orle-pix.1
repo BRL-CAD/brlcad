@@ -1,20 +1,20 @@
-.TH RLE-PIX 1 BRL/CAD
+.TH ORLE-PIX 1 BRL/CAD
 .SH NAME
-rle\(hypix \- restore run-length encoded image and convert to RGB pixel format
+orle\(hypix \- convert old run-length encoded image to RGB pixel format
 .SH SYNOPSIS
-.B rle-pix
+.B orle-pix
 .RB [ \-dv ]
 .RB [ \-b
 {
 .B rgbwBG
 }] [file.rle]
 .SH DESCRIPTION
-.I Rle-fb\^
-decodes a University of Utah standard
+.I orle-fb\^
+decodes an old University of Utah standard (Edition-2)
 Run-Length Encoded (RLE) format file
 (saved with
-.IR fb-rle\^ (1),
-.IR pix-rle (1),
+.IR fb-orle\^ (1),
+.IR pix-orle (1),
 or a similar program),
 converts it into
 .IR pix\^ (5)
@@ -22,7 +22,7 @@ format, and writes it to standard out.
 If
 .I file.rle\^
 is not specified, standard input is read.
-.I Rle-pix\^
+.I orle-pix\^
 determines the type and size of the saved file (color or B&W)
 and acts accordingly.
 If a non-linear colormap is stored in the RLE file,
@@ -59,13 +59,13 @@ can be any of
 (18% grey).
 .TP
 .I file.rle\^
-Name of file to decode, in RLE format.
+Name of file to decode, in old RLE format.
 .SH EXAMPLE
 .RS
-\fI\|rle-pix \|tank.rle \|> tank.pix\fR
+\fI\|orle-pix \|tank.rle \|> tank.pix\fR
 .RE
 .SH "SEE ALSO"
-brlcad(1), fb-rle(1), pix-fb(1), pix(5).
+brlcad(1), fb-orle(1), fb-rle(1), pix-fb(1), rle-pix(1), pix(5).
 .SH AUTHOR
 Gary S. Moss
 .SH SOURCE
