@@ -27,6 +27,8 @@
 #
 #   log
 #       writes output to a given log file
+#   plog
+#       writes "pretty" output to a given log file in column format
 #   bomb
 #       writes an error message to the log
 #   warn
@@ -54,13 +56,26 @@
 #   LOG
 #       output is sent to $LOG, and is /dev/tty by default
 #   DEBUG  
-#       when defined, extra call details will be sent to $LOG.
+#       when non-null defined, extra call details will be sent to $LOG.
 #       that means define DEBUG if you're modifying scripts for extra info
 #   HOSTNAME
 #       the host name derifed from 1) hostname command, 2) HOST env var,
 #       3) HOSTNAME env var, 4) default "unknown" value
 #   LPWD
 #       current working directory path where library is included
+#
+#   STYLE
+#       set to color to take advantage of a terminal that supports
+#       color output (though ansi escape sequences)
+#   SETCOLOR_SUCCESS
+#       set output color for a success statement
+#   SETCOLOR_FAILURE
+#       set output color for a failure statement
+#   SETCOLOR_WARNING
+#       set output color for a warning statement
+#   SETCOLOR_NORMAL
+#       set output color for a normal statement
+#   
 #
 # INTERNAL  (do not use)
 #
@@ -82,61 +97,130 @@ fi
 # log should *never* call the inherited warn() or bomb() calls
 #
 log ( ) {
-    MESSAGE="\$1"
-    if [ "x$2" = "x" ] ; then FILE="$LOG" ; else FILE="$2" ; fi
+    __MESSAGE="\$1"
+    if [ "x$2" = "x" ] ; then __FILE="$LOG" ; else __FILE="$2" ; fi
 
     # convert stdout and stderr to the proper redirect
-    if [ "x$FILE" = "xstdout" ] ; then 
-	FILE=""
-    elif [ "x$FILE" = "xstderr" ] ; then 
-	FILE="1>&2"
+    if [ "x$__FILE" = "xstdout" ] ; then 
+	__FILE=""
+    elif [ "x$__FILE" = "xstderr" ] ; then 
+	__FILE="1>&2"
     else
-	FILE=">> $FILE"
+	__FILE=">> $__FILE"
     fi
 
     # this is the only call that sends debug after initialization since we want
     # to properly handle a "std???" set LOG var
     if [ x$_TEMP_DEBUG_OFF = x ] ; then
 	# for gratuitous logging...
-	if [ ! "x$DEBUG" = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" $FILE ; fi
+	if [ ! "x$DEBUG" = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" $__FILE ; fi
     fi
 
 
     # check for explicit escape option support
     # try to find a decent echo with -e support
-    LOGTEST=`echo -e "\t\ntest"`
-    if [ `echo $LOGTEST | awk '{print $1}'` = "test" ] ; then
-	ECHO="echo -e"
-
+    __LOGTEST=`echo -e "\t\ntest"`
+    if [ `echo $__LOGTEST | awk '{print $1}'` = "test" ] ; then
+	__ECHO="echo -e"
     # no -e support
     else
 	# need to do some extra checking since the sun5 /bin/echo sucks
 	# see if default echo supports special chars
-	LOGTEST=`echo "\t\ntest"`
-	if [ "x`echo $LOGTEST | awk '{print $1}'`" = "xtest" ] ; then 
-	    ECHO="echo"
+	__LOGTEST=`echo "\t\ntest"`
+	if [ "x`echo $__LOGTEST | awk '{print $1}'`" = "xtest" ] ; then 
+	    __ECHO="echo"
 	else
 	    # for sun5 (built-in echo is poor)
-	    LOGTEST=`/usr/bin/echo "\t\ntest"`
-	    if [ "x`echo $LOGTEST | awk '{print $1}'`" = "xtest" ] ; then
-		ECHO="/usr/bin/echo"
+	    __LOGTEST=`/usr/bin/echo "\t\ntest"`
+	    if [ "x`echo $__LOGTEST | awk '{print $1}'`" = "xtest" ] ; then
+		__ECHO="/usr/bin/echo"
 	    else
 		echo "WARNING: cannot find decent echo"
-		ECHO="echo"
+		__ECHO="echo"
 	    fi
 	fi
     fi
 
 # for gratuitous logging...
-#    if [ ! x$DEBUG = x ] ; then echo "log: ECHO=[${ECHO}] MESSAGE=[${MESSAGE}] FILE=[${FILE}]" >> $LOG ; fi
+#    if [ ! x$DEBUG = x ] ; then echo "log: __ECHO=[${__ECHO}] __MESSAGE=[${__MESSAGE}] __FILE=[${__FILE}]" >> $LOG ; fi
 
-#    OUTPUT="$ECHO \"$MESSAGE\""
-#    eval "$OUTPUT >> $FILE"
-#    eval "$ECHO \"$MESSAGE\" >> $FILE"
-    eval "$ECHO \"$MESSAGE\" $FILE"
+    eval "$__ECHO \"$__MESSAGE\" $__FILE"
 }
 # log the LOG var
 if [ ! "x$DEBUG" = "x" ]  ; then log "LOG=$LOG" ; fi
+
+#
+# plog [messageToWrite] [fileToWriteTo] [columnWidth] [leadingEdge]
+#
+# plog "pretty writes" a given message out to a file name
+# the columnWidth is the maximum length of a given column, while the
+# leading edge is what kind of padding (if any) needs to go on the left
+# of each line.
+# plog, like log, should *never* call the inherited warn() or bomb() calls
+#
+plog ( ) {
+    if [ "x$2" = "x" ] ; then __FILE="$LOG" ; else __FILE="$2" ; fi
+    if [ "x$3" = "x" ] ; then __COLUMN="32000" ; else __COLUMN="$3" ; fi
+    __LEAD="$4"
+
+    # this is the only call that sends debug after initialization since we want
+    # to properly handle a "std???" set LOG var
+    if [ x$_TEMP_DEBUG_OFF = x ] ; then
+	# for gratuitous logging...
+	if [ ! "x$DEBUG" = x ] ; then echo "plog( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" $__FILE ; fi
+    fi
+
+    # turn off log debugging
+    if [ ! "x$DEBUG" = x ] ; then export _TEMP_DEBUG_OFF=1 ; fi
+
+    __LINE=""
+    __POS=0
+# !!! some shells will have already expanded $1 -- need better method for handling newlines and the sort
+    for __WORD in $1 ; do
+
+# !!! see if all our systems support the -c option to wc since obviating awk will speed this up a little 
+# (faster)        __SIZE="`echo $__WORD | wc -c`"
+
+        __NEWLINE=`echo $__WORD | grep '\\\n'`
+        if [ ! "x$__NEWLINE" = "x" ] ; then
+            __SIZE=`expr -$__POS + -$__COLUMN`
+        else
+            __SIZE="`echo $__WORD | wc | awk '{print $3}'`"
+            # add extra padding for a tab (!!! should convert to spaces)
+            if [ ! "x`echo $__WORD | grep '\\\t'`" = "x" ] ; then
+                __SIZE=`expr $__SIZE + 7`
+            # add an extra space at the end of a sentance
+            elif [ ! "x`echo $__WORD | grep '\\.$'`" = "x" ] ; then
+                __SIZE=`expr $__SIZE + 1`
+                __WORD="$__WORD "
+            fi
+        fi
+
+        __NEWSIZE=`expr $__POS + $__SIZE + 1`
+
+        if [ $__NEWSIZE -gt $__COLUMN ] ; then
+            log "${__LEAD}${__LINE}" "$__FILE"
+            __LINE="$__WORD"
+            __POS="$__SIZE"
+        elif [ $__NEWSIZE -lt 0 ] ; then
+            log "${__LEAD}${__LINE} $__WORD" "$__FILE"
+            __LINE=""
+            __POS=0
+        else
+            __POS=$__NEWSIZE
+            if [ "x$__LINE" = "x" ] ; then
+                __LINE="$__WORD"
+            else
+                __LINE="${__LINE} $__WORD"
+            fi
+        fi
+    done
+    log "${__LEAD}${__LINE}" "$__FILE"
+
+    # turn log debugging back on if it was
+    if [ ! "x$DEBUG" = x ] ; then unset _TEMP_DEBUG_OFF ; fi
+
+}
 
 
 #
@@ -154,19 +238,19 @@ bomb ( ) {
         if [ ! "x$DEBUG" = x ] ; then log "bomb( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
     fi
 
-    if [ "x$2" = "x" ] ; then BOMBLOG="$2" ; else BOMBLOG="$2" ; fi
+    if [ "x$2" = "x" ] ; then __BOMBLOG="$2" ; else __BOMBLOG="$2" ; fi
 
     # need a check if dollar three is a number...
-    if [ "x$3" = "x" ] ; then CODE=1 ; else CODE="$3" ; fi
+    if [ "x$3" = "x" ] ; then __CODE=1 ; else __CODE="$3" ; fi
 
     # turn off log debugging
     if [ ! "x$DEBUG" = x ] ; then export _TEMP_DEBUG_OFF=1 ; fi
 
-    log "ERROR: $1" "$BOMBLOG"
+    log "ERROR: $1" "$__BOMBLOG"
     # explicitly display the error message to terminal if logging elsewhere
     # !!! may consider switching default behaviour to be stdout instead of terminal
-    if [ ! "x$BOMBLOG" = "x/dev/tty" ] ; then 
-	if [ "x$BOMBLOG" = "x" ] ; then
+    if [ ! "x$__BOMBLOG" = "x/dev/tty" ] ; then 
+	if [ "x$__BOMBLOG" = "x" ] ; then
 	    if [ ! "x$LOG" = "x/def/tty" ] ; then
 		if [ -w /dev/tty ] ; then
 		    log "ERROR: $1" "/dev/tty"
@@ -181,7 +265,7 @@ bomb ( ) {
     releaseAllLocks
     releaseAllSemaphores
     
-    exit $CODE
+    exit $__CODE
 }
 
 
@@ -199,18 +283,18 @@ warn ( ) {
         if [ ! "x$DEBUG" = x ] ; then log "warn( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
     fi
 
-    if [ "x$2" = "x" ] ; then WARNLOG="$2" ; else WARNLOG="$2" ; fi
+    if [ "x$2" = "x" ] ; then __WARNLOG="$2" ; else __WARNLOG="$2" ; fi
 
     # should check if dollar three is a number...
-    BOMB=0
-    if [ ! x$NO_WARNINGS = x ] ; then BOMB=$NO_WARNINGS ; fi
-    if [ ! "x$3" = "x" ] ; then BOMB=1 ; fi
+    __BOMB=0
+    if [ ! x$NO_WARNINGS = x ] ; then __BOMB=$NO_WARNINGS ; fi
+    if [ ! "x$3" = "x" ] ; then __BOMB=1 ; fi
 
     # turn off log debugging
     if [ ! "x$DEBUG" = x ] ; then export _TEMP_DEBUG_OFF=1 ; fi
 
-    log "WARNING: $1" "$WARN"
-    if [ ! "x$BOMB" = "x0" ] ; then
+    log "WARNING: $1" "$__WARN"
+    if [ ! "x$__BOMB" = "x0" ] ; then
 	bomb "fail on warnings is set so exiting now"
     fi
 
@@ -232,22 +316,22 @@ initializeVariable ( ) {
     if [ "x$1" = "x" ] ; then 
 	bomb "initializeVariable arg1 mismatch"
     else 
-	VAR="$1"
+	__VAR="$1"
     fi
     # do not need to check since may be empty anyways
-    DEF="$2"
+    __DEF="$2"
 
     # stupid name to variable translation is a bitch..especially on sun5
 
     # make sure a value is not already set for the variable being initialized
-    PVAR="echo \$$VAR"
-    if [ x`eval $PVAR` = x ] ; then
-	CMD="$VAR=\"$DEF\""
-	eval $CMD
-	export $VAR
+    __PVAR="echo \$$__VAR"
+    if [ x`eval $__PVAR` = x ] ; then
+	__CMD="$__VAR=\"$__DEF\""
+	eval $__CMD
+	export $__VAR
     fi
 
-    if [ ! x$DEBUG = x ] ; then log "initializeVariable: $VAR=[`eval $PVAR`]" ; fi
+    if [ ! x$DEBUG = x ] ; then log "initializeVariable: $__VAR=[`eval $__PVAR`]" ; fi
 }
 
 
@@ -263,24 +347,24 @@ setHostName ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "setHostName( \$1=[${1}] \$2=[${2}] )" ; fi
 
     if [ "x$1" = x ] ; then 
-	VAR="HOSTNAME"
+	__VAR="HOSTNAME"
     else 
-	VAR="$1"
+	__VAR="$1"
 	# do not forget to check system
-	initializeVariable $VAR "$HOST"
-	if [ x$VAR = x ] ; then $VAR=$HOSTNAME ; export $VAR ; fi
+	initializeVariable $__VAR "$HOST"
+	if [ x$__VAR = x ] ; then $__VAR=$HOSTNAME ; export $__VAR ; fi
     fi
-    if [ "x$2" = x ] ; then DEFVAL="unknown" ; else DEFVAL=$2 ; fi
+    if [ "x$2" = x ] ; then __DEFVAL="unknown" ; else __DEFVAL=$2 ; fi
 
-    VARVAL="echo \$$VAR"
-    if [ ! "x$DEBUG" = x ] ; then log "setHostName: ${VAR}=[`eval $VARVAL`]" ; fi
+    __VARVAL="echo \$$__VAR"
+    if [ ! "x$DEBUG" = x ] ; then log "setHostName: ${__VAR}=[`eval $__VARVAL`]" ; fi
 
     # multiple inits work (without the ifthen mess) since the set should
     # not clobber a variable that already has a non-empty value set
-    if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR `hostname` ; fi
-    if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR $HOST ; fi
-    if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR `uname -n` ; fi
-    if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR $DEFVAL ; fi
+    if [ x`eval $__VARVAL` = x ] ; then initializeVariable $__VAR `hostname` ; fi
+    if [ x`eval $__VARVAL` = x ] ; then initializeVariable $__VAR $HOST ; fi
+    if [ x`eval $__VARVAL` = x ] ; then initializeVariable $__VAR `uname -n` ; fi
+    if [ x`eval $__VARVAL` = x ] ; then initializeVariable $__VAR $__DEFVAL ; fi
 }
 
 #
@@ -297,38 +381,38 @@ setHostName ( ) {
 acquireLock ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "acquireLock( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" ; fi
 
-    if [ "x$1" = x ] ; then NAME="local" ; else NAME="${1}" ; fi
-    if [ "x$2" = x ] ; then RETRY=1 ; else RETRY=$2 ; fi
-    if [ "x$3" = x ] ; then WAIT=0 ; else WAIT=$3 ; fi
+    if [ "x$1" = x ] ; then __NAME="local" ; else __NAME="${1}" ; fi
+    if [ "x$2" = x ] ; then __RETRY=1 ; else __RETRY=$2 ; fi
+    if [ "x$3" = x ] ; then __WAIT=0 ; else __WAIT=$3 ; fi
     if [ "x$4" = x ] ; then 
 	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
-	SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
-	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then PREFIX="" ; else PREFIX="./" ; fi
+	__SWS=`echo $__NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$__SWS" = "x___ROOTED_NAME___" ] ; then __PREFIX="" ; else __PREFIX="./" ; fi
     else 
 	# if we end with a slash, no worries, otherwise, append one
-	SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
-	if [ "x$SWS" = "x___END_SLASH___" ] ; then PREFIX="$4" ; else PREFIX="${4}/" ; fi
+	__SWS=`echo $__NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$__SWS" = "x___END_SLASH___" ] ; then __PREFIX="$4" ; else __PREFIX="${4}/" ; fi
     fi
-    LOCK="${NAME}.lock"
+    __LOCK="${__NAME}.lock"
 
-    while [ -f ${PREFIX}$LOCK ] ; do
-	RETRY=`expr $RETRY - 1`
-	if [ $RETRY -lt 1 ] ; then
-	    warn "Unable to obtain $LOCK in $PREFIX"
+    while [ -f ${__PREFIX}$__LOCK ] ; do
+	__RETRY=`expr $__RETRY - 1`
+	if [ $__RETRY -lt 1 ] ; then
+	    warn "Unable to obtain $__LOCK in $__PREFIX"
 	    return 1
 	fi
-	log "Waiting for $LOCK ($WAIT seconds)... $RETRY attempts remain"
-	sleep $WAIT
+	log "Waiting for $__LOCK ($__WAIT seconds)... $__RETRY attempts remain"
+	sleep $__WAIT
     done
-    touch ${PREFIX}$LOCK
-    if [ ! -w ${PREFIX}$LOCK ] ; then
-        warn "Unable to write to lock file $LOCK in ${PREFIX}?"
+    touch ${__PREFIX}$__LOCK
+    if [ ! -w ${__PREFIX}$__LOCK ] ; then
+        warn "Unable to write to lock file $__LOCK in ${__PREFIX}?"
     fi
     # save the PID of the acquiring process to the lock file
-    log "PID: $$" "${PREFIX}$LOCK"
+    log "PID: $$" "${__PREFIX}$__LOCK"
     # keep a list of the acquired locks up to date
-    _ACQUIRED_LOCKS="$_ACQUIRED_LOCKS ${PREFIX}$NAME" ; export _ACQUIRED_LOCKS
-    log "Acquired $LOCK"
+    _ACQUIRED_LOCKS="$_ACQUIRED_LOCKS ${__PREFIX}$__NAME" ; export _ACQUIRED_LOCKS
+    log "Acquired $__LOCK"
 
     return 0
 }
@@ -343,55 +427,55 @@ acquireLock ( ) {
 releaseLock ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "releaseLock( \$1=[$1] \$2=[$2] )" ; fi
 
-    if [ "x$1" = x ] ; then NAME="local" ; else NAME="${1}" ; fi
+    if [ "x$1" = x ] ; then __NAME="local" ; else __NAME="${1}" ; fi
     if [ "x$2" = x ] ; then 
 	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
-	SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
-	if [ ! "x$DEBUG" = x ] ; then log "releaseLock: SWS=[$SWS]" ; fi
-	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then PREFIX="" ; else PREFIX="./" ; fi
+	__SWS=`echo $__NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ ! "x$DEBUG" = x ] ; then log "releaseLock: __SWS=[$__SWS]" ; fi
+	if [ "x$__SWS" = "x___ROOTED_NAME___" ] ; then __PREFIX="" ; else __PREFIX="./" ; fi
     else 
 	# if we end with a slash, no worries, otherwise, append one
-	SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
-	if [ "x$SWS" = "x___END_SLASH___" ] ; then PREFIX="$2" ; else PREFIX="${2}/" ; fi
+	__SWS=`echo $__NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$__SWS" = "x___END_SLASH___" ] ; then __PREFIX="$2" ; else __PREFIX="${2}/" ; fi
     fi
-    LOCK="${NAME}.lock"
+    __LOCK="${__NAME}.lock"
 
-    if [ ! "x$DEBUG" = x ] ; then log "releaseLock: PREFIX=[$PREFIX] LOCK=[$LOCK]" ; fi
+    if [ ! "x$DEBUG" = x ] ; then log "releaseLock: __PREFIX=[$__PREFIX] __LOCK=[$__LOCK]" ; fi
 
-    if [ ! -f "${PREFIX}$LOCK" ] ; then
-	warn "Lock [$LOCK] is already released"
+    if [ ! -f "${__PREFIX}$__LOCK" ] ; then
+	warn "Lock [$__LOCK] is already released"
 	# make sure the lock is not registered 
 	if [ ! "x$_ACQUIRED_LOCKS" = "x" ] ; then
-	    NEW_AL=""
-	    for CL in $_ACQUIRED_LOCKS ; do
-		if [ ! "x$CL" = "x${PREFIX}$NAME" ] ; then
-		    NEW_AL="$NEW_AL $CL"
+	    __NEW_AL=""
+	    for __CL in $_ACQUIRED_LOCKS ; do
+		if [ ! "x$__CL" = "x${__PREFIX}$__NAME" ] ; then
+		    __NEW_AL="$__NEW_AL $__CL"
 		fi
 	    done
-	    _ACQUIRED_LOCKS="$NEW_AL" ; export _ACQUIRED_LOCKS
+	    _ACQUIRED_LOCKS="$__NEW_AL" ; export _ACQUIRED_LOCKS
 	fi
 	return 1
     fi
-    rm ${PREFIX}$LOCK
+    rm ${__PREFIX}$__LOCK
     # unregister the lock with the _ACQUIRED_LOCKS var
     if [ ! "x$_ACQUIRED_LOCKS" = "x" ] ; then
-	NEW_AL=""
-	FOUND_LOCK=0
-	for CL in $_ACQUIRED_LOCKS ; do
-	    if [ "x$CL" = "x${PREFIX}$NAME" ] ; then
-		FOUND_LOCK=1
+	__NEW_AL=""
+	__FOUND_LOCK=0
+	for __CL in $_ACQUIRED_LOCKS ; do
+	    if [ "x$__CL" = "x${__PREFIX}$__NAME" ] ; then
+		__FOUND_LOCK=1
 	    else
-		NEW_AL="$NEW_AL $CL"
+		__NEW_AL="$__NEW_AL $__CL"
 	    fi
 	done
-	if [ x$FOUND_LOCK = x0 ] ; then
-	    warn "bad bookkeeping -- _ACQUIRED_LOCKS is missing entry $NAME"
+	if [ x$__FOUND_LOCK = x0 ] ; then
+	    warn "bad bookkeeping -- _ACQUIRED_LOCKS is missing entry $__NAME"
 	fi
-	_ACQUIRED_LOCKS="$NEW_AL" ; export _ACQUIRED_LOCKS
+	_ACQUIRED_LOCKS="$__NEW_AL" ; export _ACQUIRED_LOCKS
     else
-	warn "bad bookkeeping -- _ACQUIRED_LOCKS is empty prior to a release of $NAME"
+	warn "bad bookkeeping -- _ACQUIRED_LOCKS is empty prior to a release of $__NAME"
     fi
-    log "Released $LOCK"
+    log "Released $__LOCK"
     return 0
 }
 
@@ -402,8 +486,8 @@ releaseAllLocks ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "releaseAllLocks() _ACQUIRED_LOCKS=[$_ACQUIRED_LOCKS]" ; fi
 
     if [ ! "x$_ACQUIRED_LOCKS" = x ] ; then
-	for LOCK in $_ACQUIRED_LOCKS ; do
-	    releaseLock $LOCK
+	for __LOCK in $_ACQUIRED_LOCKS ; do
+	    releaseLock $__LOCK
 	done
     fi
 }
@@ -417,37 +501,42 @@ releaseAllLocks ( ) {
 acquireSemaphore ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "acquireSemaphore( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" ; fi
 
-    if [ "x$1" = x ] ; then NAME="local" ; else NAME="${1}" ; fi
-    if [ "x$2" = x ] ; then RETRY=1 ; else RETRY=$2 ; fi
-    if [ "x$3" = x ] ; then WAIT=0 ; else WAIT=$3 ; fi
+    if [ "x$1" = x ] ; then __NAME="local" ; else __NAME="${1}" ; fi
+    if [ "x$2" = x ] ; then __RETRY=1 ; else __RETRY=$2 ; fi
+    if [ "x$3" = x ] ; then __WAIT=0 ; else __WAIT=$3 ; fi
     if [ "x$4" = x ] ; then 
 	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
-	SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
-	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then PREFIX="" ; else PREFIX="./" ; fi
+	__SWS=`echo $__NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$__SWS" = "x___ROOTED_NAME___" ] ; then __PREFIX="" ; else __PREFIX="./" ; fi
     else 
 	# if we end with a slash, no worries, otherwise, append one
-	SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
-	if [ "x$SWS" = "x___END_SLASH___" ] ; then PREFIX="$4" ; else PREFIX="${4}/" ; fi
+	__SWS=`echo $__NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$__SWS" = "x___END_SLASH___" ] ; then __PREFIX="$4" ; else __PREFIX="${4}/" ; fi
     fi
-    SEMAPHORE="${NAME}.semaphore"
+    __SEMAPHORE="${__NAME}.semaphore"
 
-    while [ ! -f ${PREFIX}$SEMAPHORE ] ; do
-	RETRY=`expr $RETRY - 1`
-	if [ $RETRY -lt 1 ] ; then
-	    warn "Unable to obtain $SEMAPHORE in $PREFIX"
+    while [ ! -f ${__PREFIX}$__SEMAPHORE ] ; do
+	__RETRY=`expr $__RETRY - 1`
+	if [ $__RETRY -lt 1 ] ; then
+	    warn "Unable to obtain $__SEMAPHORE in $__PREFIX"
 	    return 1
 	fi
-	log "Waiting for $SEMAPHORE ($WAIT seconds)... $RETRY attempts remain"
-	sleep $WAIT
+	log "Waiting for $__SEMAPHORE ($__WAIT seconds)... $__RETRY attempts remain"
+	sleep $__WAIT
     done
     # we move instead of delete so that we can tell who has acquired the semaphore
-    cp -f "${PREFIX}${SEMAPHORE}" "${PREFIX}${SEMAPHORE}.acquired"
-    if [ ! -w ${PREFIX}${SEMAPHORE} ] ; then
-        warn "Unable to write to semaphore file $SEMAPHORE in ${PREFIX}?"
+    mv -f "${__PREFIX}${__SEMAPHORE}" "${__PREFIX}${__SEMAPHORE}.acquired"
+    if [ ! -w "${__PREFIX}${__SEMAPHORE}.acquired" ] ; then
+        warn "Unable to write to acquired semaphore file ${__SEMAPHORE}.acquired in ${__PREFIX}"
     fi    
-    log "HOLDING PID: $$" "${PREFIX}${SEMAPHORE}.acquired"
-    _ACQUIRED_SEMAPHORES="$_ACQUIRED_SEMAPHORES ${PREFIX}$NAME" ; export _ACQUIRED_SEMAPHORES
-    log "Acquired $SEMAPHORE"
+    # sanity check - make sure file is gone
+    if [ -f "${__PREFIX}${__SEMAPHORE}" ] ; then
+	warn "Unable to properly remove/acquire semaphore file ${__SEMAPHORE} in ${__PREFIX}"
+	return 1
+    fi
+    log "HOLDING PID: $$" "${__PREFIX}${__SEMAPHORE}.acquired"
+    _ACQUIRED_SEMAPHORES="$_ACQUIRED_SEMAPHORES ${__PREFIX}$__NAME" ; export _ACQUIRED_SEMAPHORES
+    log "Acquired $__SEMAPHORE"
 
     return 0
 }
@@ -462,57 +551,61 @@ acquireSemaphore ( ) {
 releaseSemaphore ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "releaseSemaphore( \$1=[$1] \$2=[$2] )" ; fi
 
-    if [ "x$1" = x ] ; then NAME="local" ; else NAME="${1}" ; fi
+    if [ "x$1" = x ] ; then __NAME="local" ; else __NAME="${1}" ; fi
     if [ "x$2" = x ] ; then 
 	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
-	SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
-	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then PREFIX="" ; else PREFIX="./" ; fi
+	__SWS=`echo $__NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$__SWS" = "x___ROOTED_NAME___" ] ; then __PREFIX="" ; else __PREFIX="./" ; fi
     else 
 	# if we end with a slash, no worries, otherwise, append one
-	SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
-	if [ "x$SWS" = "x___END_SLASH___" ] ; then PREFIX="$2" ; else PREFIX="${2}/" ; fi
+	__SWS=`echo $__NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$__SWS" = "x___END_SLASH___" ] ; then __PREFIX="$2" ; else __PREFIX="${2}/" ; fi
     fi
-    SEMAPHORE="${NAME}.semaphore"
+    __SEMAPHORE="${__NAME}.semaphore"
 
-    if [ -f ${PREFIX}$SEMAPHORE ] ; then
-	warn "Semaphore [$SEMAPHORE] is already released"
+    if [ -f ${__PREFIX}$__SEMAPHORE ] ; then
+	warn "Semaphore [$__SEMAPHORE] is already released"
     fi
 
-    # recreate the semaphore and remove the .acquired copy
-    touch ${PREFIX}$SEMAPHORE
+    # recreate the semaphore
+    touch ${__PREFIX}$__SEMAPHORE
 
-    if [ ! -w ${PREFIX}$SEMAPHORE ] ; then
-        warn "Unable to write to semaphore file $SEMAPHORE in ${PREFIX}?"
+    # get rid of the stale semaphore acquired file
+    if [ ! -f ${__PREFIX}${__SEMAPHORE}.acquired ] ; then
+	rm -f ${__PREFIX}${__SEMAPHORE}.acquired
+    fi
+	    # if the file was properly registered, it should have a backup copy
+	    if [ ! -f ${__PREFIX}${__SEMAPHORE}.acquired ] ; then
+		warn "Acquired semaphore ${__SEMAPHORE}'s backup copy disappeared in $__PREFIX"
+	    fi
+
+    if [ ! -w ${__PREFIX}$__SEMAPHORE ] ; then
+        warn "Unable to write to semaphore file $__SEMAPHORE in ${__PREFIX}?"
     fi
     # save the PID of the process that last released this semaphore
-    log "RELEASEOR PID: $$" "${PREFIX}${SEMAPHORE}"
+    log "RELEASEOR PID: $$" "${__PREFIX}${__SEMAPHORE}"
+
     # unregister the semaphore with the _ACQUIRED_SEMAPHORES var
     if [ ! "x$_ACQUIRED_SEMAPHORES" = "x" ] ; then
-	NEW_AS=""
-	FOUND_SEM=0
-	for SEM in $_ACQUIRED_SEMAPHORES ; do
-	    if [ "x$SEM" = "x${PREFIX}$NAME" ] ; then
-		FOUND_SEM=1
+	__NEW_AS=""
+	__FOUND_SEM=0
+	for __SEM in $_ACQUIRED_SEMAPHORES ; do
+	    if [ "x$__SEM" = "x${__PREFIX}$__NAME" ] ; then
+		__FOUND_SEM=1
 	    else
-		NEW_AS="$NEW_AS $SEM"
+		__NEW_AS="$__NEW_AS $__SEM"
 	    fi
 	done
-	_ACQUIRED_SEMAPHORES="$NEW_AS" ; export _ACQUIRED_SEMAPHORES
+	_ACQUIRED_SEMAPHORES="$__NEW_AS" ; export _ACQUIRED_SEMAPHORES
 
-	if [ x$FOUND_SEM = x0 ] ; then
-	    warn "bad bookkeeping -- _ACQUIRED_SEMAPHORES is missing entry $NAME"
-	else
-	    # if the file was properly registered, it should have a backup copy
-	    if [ ! -f ${PREFIX}${SEMAPHORE}.acquired ] ; then
-		warn "Acquired semaphore ${SEMAPHORE}'s backup copy disappeared in $PREFIX"
-	    fi
+	if [ x$__FOUND_SEM = x0 ] ; then
+	    warn "bad bookkeeping -- _ACQUIRED_SEMAPHORES is missing entry $__NAME"
+	    log "Created ${__SEMAPHORE}??"
+        else
+	    log "Released $__SEMAPHORE"
 	fi
-	if [ ! -f ${PREFIX}${SEMAPHORE}.acquired ] ; then
-	    rm ${PREFIX}${SEMAPHORE}.acquired
-	fi
-	log "Released $SEMAPHORE"
     else
-	log "Created $SEMAPHORE"
+	log "Created $__SEMAPHORE"
     fi
     return 0
 }
@@ -524,103 +617,194 @@ releaseAllSemaphores ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "releaseAllSemaphores() _ACQUIRED_SEMAPHORES=[$_ACQUIRED_SEMAPHORES]" ; fi
 
     if [ ! "x$_ACQUIRED_SEMAPHORES" = x ] ; then
-	for SEM in $_ACQUIRED_SEMAPHORES ; do
-	    releaseSemaphore $SEM
+	for __SEM in $_ACQUIRED_SEMAPHORES ; do
+	    releaseSemaphore $__SEM
 	done
     fi
 }
 
 
 #
-# mail {addressList} [subject] [body] [{attachmentList}]
+# mail {addressList} [subject] [body] [{attachmentTupleList}]
 #
 # mailer sends out a mail message with a given subject and given body to an address list
 # addressList is required only if USER is not set
+# attachmentTupleList is a 2-tuple pair of 'filename' and 'label' that will be attached
+#   as a mime text attachment, single quote wrapping and label are both required
+#   e.g. $4="'file1' 'label1' 'file2' 'label2' 'file3' 'label3' "
 ###
 mail ( ) {
     if [ ! "x$DEBUG" = "x" ] ; then log "mail( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4])" ; fi
 
     if [ "x$1" = x ] ; then 
 	if [ ! "x$USER" = x ] ; then
-	    ADDRESS="$USER"
+	    __ADDRESS="$USER"
 	else
-	    log "mail: arg1 mismatch -- no e-mail address given, no USER set"
-	    exit
+	    bomb "mail: arg1 mismatch -- no e-mail address given, no USER set"
 	fi
     else
-	ADDRESS="$1"
+	__ADDRESS="$1"
     fi
-    if [ "x$2" = x ] ; then SUBJECT="" ; else SUBJECT="$2" ; fi
-    if [ "x$3" = x ] ; then BODY="" ; else BODY=`echo $3` ; fi
-    if [ ! "x$4" = x ] ; then MULTI="yes"; FILES="$4" ; else MULTI="no"; FILES="" ; fi
-    if [ "x$MAILER" = x ] ; then 
-	MAILER=""
-	for MAILER in /bin/sendmail /usr/bin/sendmail /usr/lib/sendmail /bin/mail /usr/bin/mail ; do
-	    if [ -f $MAILER ] && [ -x $MAILER ] ; then
-		break
+    if [ "x$2" = x ] ; then __SUBJECT="" ; else __SUBJECT="$2" ; fi
+    if [ "x$3" = x ] ; then __BODY="" ; else __BODY="$3" ; fi
+    if [ ! "x$4" = x ] ; then __MULTI="yes"; __FILES="$4" ; else __MULTI="no"; __FILES="" ; fi
+    # need sendmail to properly give mime types
+    for __MAILER in /bin/sendmail /usr/lib/sendmail /usr/bin/sendmail /usr/sbin/sendmail ; do
+	if [ -f "$__MAILER" ] && [ -x "$__MAILER" ] ; then
+	    break
+	fi
+    done
+    if [ ! -x "${__MAILER}" ] ; then
+	warn "Unable to find sendmail -- hoping it is in path"
+	__MAILER="sendmail"
+    fi
+
+    # find a decent echo (!!! may want to consolidate later with log)
+    __LOGTEST=`echo -e "\t\ntest"`
+    if [ `echo $__LOGTEST | awk '{print $1}'` = "test" ] ; then
+	__ECHO="echo -e"
+    # no -e support
+    else
+	# need to do some extra checking since the sun5 /bin/echo sucks
+	# see if default echo supports special chars
+	__LOGTEST=`echo "\t\ntest"`
+	if [ "x`echo $__LOGTEST | awk '{print $1}'`" = "xtest" ] ; then 
+	    __ECHO="echo"
+	else
+	    # for sun5 (built-in echo is poor)
+	    __LOGTEST=`/usr/bin/echo "\t\ntest"`
+	    if [ "x`echo $__LOGTEST | awk '{print $1}'`" = "xtest" ] ; then
+		__ECHO="/usr/bin/echo"
+	    else
+		echo "WARNING: cannot find decent echo"
+		__ECHO="echo"
 	    fi
-	done
+	fi
     fi
+    __BODY=`$__ECHO $__BODY`
 
-    if [ ! "x$DEBUG" = "x" ] ; then log "mail: MAILER=[$MAILER] ADDRESS=[$ADDRESS] SUBJECT=[$SUBJECT] ATTACHMENTS=[$MUTLI]" ; fi
+    # weed off files that are not readable
+    __NEWFILES=""
+    __FILEORLABEL="file"
+    # set the field separator to a single quote
+    __PIFS="$IFS"
+    IFS="'"
+    for __FILELABEL in $__FILES ; do
+	IFS="$__PIFS"  # restore briefly so sed/awk do not screw up
+	if [ "x`echo $__FILELABEL | awk '{print $1}'`" = "x" ] ; then continue ; fi
 
+        if [ "x$__FILEORLABEL" = "xfile" ] ; then 
+	    __FILE="$__FILELABEL"
+	    __FILEORLABEL="label"
+	else 
+	    __LABEL=$__FILELABEL
+	    if [ ! -f "$__FILE" ] ; then
+		warn "Unable to read attachment file [$__FILE]"
+	    else
+		__NEWFILES="$__NEWFILES '$__FILE' '$__LABEL'"
+	    fi
+	    __FILEORLABEL="file"
+	fi
+	IFS="'"
+    done
+    IFS="$__PIFS"  # restore so sed/awk do not screw up
+    if [ ! "x$__FILEORLABEL" = "xfile" ] ; then
+	warn "Missing attachment file label, using null"
+	__NEWFILES="$__NEWFILES ''"
+    fi
+    __FILES="$__NEWFILES"
+    
     # !!! should test validity of mail program existance
+    if [ ! "x$DEBUG" = "x" ] ; then log "mail: __MAILER=[$__MAILER] __ADDRESS=[$__ADDRESS] __SUBJECT=[$__SUBJECT] __ATTACHMENTS=[$__MUTLI]\nmail: __FILES=[$__FILES]" ; fi
 
-    MAILRUN="$MAILER -s \"$SUBJECT\" $ADDRESS"
-
+    # if we weeded off all attachments, then turn off multi
+    if [ "x$__FILES" = "x" ] ; then __MULTI="no" ; fi
     # if we have attachments, we need to loop over them and add them properly
-    if [ "x$MULTI" = "xyes" ] ; then
-	ATTACH=""
-        for FILE in $FILES ; do
-echo "Processing: $FILE"
-	    if [ -f $FILE ] ; then
-		ATTACH="$ATTACH
---xxxx
-Content-Type: text/plain; charset=US-ASCII; name=\"`basename $FILE`\"
-Content-Disposition: attachment; filename=\"`basename $FILE`\"
+    if [ "x$__MULTI" = "xyes" ] ; then
+	__ATTACH=""
+
+	__FILEORLABEL="file"
+	# set the field separator to a single quote
+	__PIFS="$IFS"
+	IFS="'"
+	for __FILELABEL in $__FILES ; do
+	    IFS="$__PIFS"  # restore briefly so sed/awk do not screw up
+	    if [ "x`echo $__FILELABEL | awk '{print $1}'`" = "x" ] ; then continue ; fi
+	    
+	    if [ "x$__FILEORLABEL" = "xfile" ] ; then 
+		__FILE="$__FILELABEL"
+		__FILEORLABEL="label"
+	    else 
+		__LABEL=$__FILELABEL
+		__FILEORLABEL="file"
+		
+		# process the file/label pair now
+		if [ ! "x$DEBUG" = "x" ] ; then log "Processing attachment: [${__FILE}]" ; fi
+		__FILEBASE=`basename "$__FILE"`
+		__ATTACH="${__ATTACH}
+--xxxxqwertyxxxx
+Content-Type: text/plain; charset=US-ASCII; name=\"$__FILEBASE\"
+Content-Description: ${__LABEL}
+Content-Disposition: attachment; filename=\"$__FILEBASE\"
 Content-Transfer-Encoding: 7bit
 
-`cat $FILE`
+`cat \"$__FILE\"`
 "
+
 	    fi
+	    IFS="'"
 	done
+	IFS="$__PIFS"  # restore field separator (awk chokes otherwise)
 
-
-	$MAILER $ADDRESS <<EOF
-Subject: $SUBJECT
+	# loop over outgoing address list
+	for __ADDR in $__ADDRESS ; do
+	    $__MAILER $__ADDR <<EOF
+Subject: ${__SUBJECT}
 MIME-Version: 1.0
-Content-type: multipart/mixed; boundary=\"xxxx\"
+Content-type: multipart/mixed; boundary="xxxxqwertyxxxx"
 Content-Transfer-Encoding: 7bit
 
---xxxx
-Content-Type: text/plain; charset=US-ASCII; name=\"main_body\"
-Content-Disposition: inline; filename=\"main_body\"
+This message is in MIME format.  The first part should be readable text,
+while the remaining parts are likely unreadable without MIME-aware tools.
+Send mail to lamas@arl.army.mil for more info.
+
+--xxxxqwertyxxxx
+Content-Type: text/plain; charset=US-ASCII; name="e-mail.body"
+Content-Description: ${__SUBJECT}
+Content-Disposition: inline; filename="e-mail.body"
 Content-Transfer-Encoding: 7bit
 
-$BODY
+${__BODY}
 
-$ATTACH
+${__ATTACH}
 
+--xxxxqwertyxxxx--
 EOF
-
-echo "[[$MAILER $ADDRESS]]"
+        done
 
     # otherwise we are not sending attachments
     else
-	$MAILER $ADDRESS <<EOF
-Subject: ${SUBJECT}
-Content-Type: text/plain; charset=US-ASCII; name="body"
-Content-Disposition: inline; filename="body"
+	# loop over outgoing address list
+	for __ADDR in $__ADDRESS ; do
+	    $__MAILER $__ADDR <<EOF
+Subject: ${__SUBJECT}
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII; name="e-mail.body"
+Content-Disposition: inline; filename="e-mail.body"
 Content-Transfer-Encoding: 7bit
 
-${BODY}
+${__BODY}
 
 EOF
+	done
     fi
 
+    # check for failure and log if so
     if [ $? != 0 ] ; then
 	log "ERROR: mail failed"
+	return 1
     fi
+    return 0
 }
 
 # INTERNAL STUFF
@@ -633,3 +817,19 @@ initializeVariable _ACQUIRED_SEMAPHORES
 # set a hostname and pwd to play with -- exports HOSTNAME and LPWD accordingly
 setHostName
 initializeVariable LPWD `pwd`
+
+# set STYLE value to 'color' to invoke color logging output, set to anything
+# else to get plain text output
+initializeVariable STYLE "color"
+
+# terminal sequence to move to that column. You could change this
+# to something like "tput hpa ${RES_COL}" if your terminal supports it
+MOVE_TO_COLUMN="echo -en \\033[60G"
+# terminal sequence to set color to a 'success' color (currently: green)
+SETCOLOR_SUCCESS="echo -en \\033[1;32m"
+# terminal sequence to set color to a 'failure' color (currently: red)
+SETCOLOR_FAILURE="echo -en \\033[1;31m"
+# terminal sequence to set color to a 'warning' color (currently: yellow)
+SETCOLOR_WARNING="echo -en \\033[1;33m"
+# terminal sequence to reset to the default color.
+SETCOLOR_NORMAL="echo -en \\033[0;39m"
