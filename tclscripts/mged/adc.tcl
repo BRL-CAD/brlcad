@@ -207,18 +207,24 @@ its anchor point." } }
 
     frame $top.gridF5
     button $top.okB -relief raised -text "Ok"\
-	    -command "mged_apply $id \"adc_ok $id $top\""
+	    -command "adc_ok $id $top"
     hoc_register_data $top.okB "Ok"\
 	    { { summary "Apply the values in the ADC control panel
 to the angle distance cursor then close
 the control panel."} }
     button $top.applyB -relief raised -text "Apply"\
-	    -command "mged_apply $id \"adc_apply $id\""
+	    -command "mged_apply $id \"adc_apply $id\";\
+	    if {\$mged_adc_control($id,interpval) == \"abs\"} {
+	        adc_load $id
+            }"
     hoc_register_data $top.applyB "Apply"\
 	    { { summary "Apply the values in the ADC control panel
 to the angle distance cursor." } }
     button $top.resetB -relief raised -text "Reset"\
-	    -command "mged_apply $id \"adc_reset $id\""
+	    -command "mged_apply $id \"adc reset\";\
+	    if {\$mged_adc_control($id,interpval) == \"abs\"} {
+	        adc_load $id
+            }"
     hoc_register_data $top.resetB "Reset"\
 	    { { summary "Reset the angle distance cursor to its
 default values." } }
@@ -253,23 +259,14 @@ default values." } }
 proc adc_ok { id top } {
     global mged_adc_control
 
-    adc_apply $id
+    mged_apply $id "adc_apply $id"
     catch { destroy $top }
 
     set mged_adc_control($id) 0
 }
 
 proc adc_apply { id } {
-    global mged_active_dm
     global mged_adc_control
-
-    winset $mged_active_dm($id)
-
-    adc anchor_pos 0
-    adc anchor_a1 0
-    adc anchor_a2 0
-    adc anchor_dst 0
-    adc draw $mged_adc_control($id,draw)
 
     switch $mged_adc_control($id,interpval) {
 	abs {
@@ -300,20 +297,15 @@ proc adc_apply { id } {
 	    }
 	}
     }
+
     adc anchor_a1 $mged_adc_control($id,anchor_a1)
     adc anchor_a2 $mged_adc_control($id,anchor_a2)
     adc anchor_dst $mged_adc_control($id,anchor_dst)
-
-    if {$mged_adc_control($id,interpval) == "abs"} {
-	adc_load $id
-    }
+    adc draw $mged_adc_control($id,draw)
 }
 
 proc adc_apply_abs { id } {
-    global mged_active_dm
     global mged_adc_control
-
-    winset $mged_active_dm($id)
 
     switch $mged_adc_control($id,coords) {
 	model {
@@ -335,8 +327,6 @@ proc adc_apply_rel { id } {
     global mged_active_dm
     global mged_adc_control
 
-    winset $mged_active_dm($id)
-
     switch $mged_adc_control($id,coords) {
 	model {
 	    eval adc -i xyz $mged_adc_control($id,pos)
@@ -350,18 +340,6 @@ proc adc_apply_rel { id } {
 	    eval adc -i anchorpoint_a1 [eval view2model_vec $mged_adc_control($id,anchor_pt_a1) 0.0]
 	    eval adc -i anchorpoint_a2 [eval view2model_vec $mged_adc_control($id,anchor_pt_a2) 0.0]
 	}
-    }
-}
-
-proc adc_reset { id } {
-    global mged_active_dm
-    global mged_adc_control
-
-    winset $mged_active_dm($id)
-    adc reset
-
-    if {$mged_adc_control($id,interpval) == "abs"} {
-	adc_load $id
     }
 }
 
@@ -569,7 +547,7 @@ proc adc_interpval { id } {
     switch $mged_adc_control($id,interpval) {
 	abs {
 	    $top.loadB configure -text "Load"\
-		    -command "mged_apply $id \"adc_load $id\""
+		    -command "adc_load $id"
 	    set mged_adc_control($id,interpval_text) "Absolute"
 	    adc_load $id
 
@@ -579,7 +557,7 @@ values from the angle distance cursor." } }
 	}
 	rel {
 	    $top.loadB configure -text "Clear"\
-		    -command "mged_apply $id \"adc_clear $id\""
+		    -command "adc_clear $id"
 	    set mged_adc_control($id,interpval_text) "Relative"
 	    adc_clear $id
 
