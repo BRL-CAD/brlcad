@@ -65,16 +65,16 @@ grid_setup()
 	mat_inv( view2model, model2view );
 
 	/* Determine grid cell size and number of pixels */
-	if( cell_width > 0.0 && width <= 0)  {
-		if( cell_height <= 0.0 )  cell_height = cell_width;
+	if( cell_newsize ) {
+		if( cell_width <= 0.0 ) cell_width = cell_height;
+		if( cell_height <= 0.0 ) cell_height = cell_width;
 		width = (viewsize / cell_width) + 0.99;
 		height = (viewsize / (cell_height*aspect)) + 0.99;
-	} else if( cell_width <= 0.0 && width > 0 )  {
+		cell_newsize = 0;
+	} else {
 		/* Chop -1.0..+1.0 range into parts */
 		cell_width = viewsize / width;
 		cell_height = viewsize / (height*aspect);
-	} else {
-		/* Do nothing, both are already set */
 	}
 
 	/*
