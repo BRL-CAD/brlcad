@@ -780,7 +780,6 @@ struct resource		*resp;
 
 	/* Sort hits, Near to Far */
 	rt_hitsort( hits, nhits );
-bu_log("rt_bot_piece_shot(): nhits = %d\n", nhits );
 
 	/* build segments */
 	{
