@@ -144,6 +144,9 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BINU_32BITINT		0x0e
 #define DB5_MINORTYPE_BINU_64BITINT		0x0f
 
+/* this array depends on the values of the above definitions and is defined in db5_bin.c */
+extern const char *binu_types[];
+
 /*
  *  The "raw internal" form of one database object.
  *  This is what the low-level database routines will operate on.
