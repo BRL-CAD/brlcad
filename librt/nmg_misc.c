@@ -1883,15 +1883,147 @@ CONST char		*title;
 	rt_log("nmg_stash_model_to_file(): wrote '%s' in %d bytes\n", filename, ext.ext_nbytes);
 }
 
+/* XXX move to nmg_info.c
+/*
+ *			N M G _ V U P S
+ *
+ *  Return parent shell of vertexuse
+ */
+struct shell *
+nmg_vups(vu)
+struct vertexuse *vu;
+{
+	NMG_CK_VERTEXUSE(vu);
+
+	if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )
+		return nmg_lups( vu->up.lu_p );
+	return nmg_eups( vu->up.eu_p );
+}
+
 /* state for nmg_unbreak_edge */
 struct nmg_unbreak_state
 {
-	struct rt_tol	*tol;		/* tolerance needed for nmg_radial_join_eu */
 	int		unbroken;	/* count of edges mended */
 	long		*flags;		/* index based array of flags for model */
 };
 
-/*	N M G _ U N B R E A K _ E D G E
+/* XXX move to nmg_mod.c */
+/*
+ *			N M G _ U N B R E A K _ E D G E
+ *
+ *  Eliminate the vertex between this edgeuse and the next edge,
+ *  on all edgeuses radial to this edgeuse's edge.
+ *  The edge geometry must be shared, and all uses of the vertex
+ *  to be disposed of must originate from this edge pair.
+ *
+ *		     eu1          eu2
+ *		*----------->*----------->*
+ *		A.....e1.....B.....e2.....C
+ *		*<-----------*<-----------*
+ *		    eu1mate      eu2mate
+ *
+ *  If successful, the vertex B, the edge e2, and all the edgeuses
+ *  radial to eu2 (including eu2) will have all been killed.
+ *  The radial ordering around e1 will not change.
+ *
+ *  No new topology structures are created by this operation.
+ *
+ *  Returns -
+ *	0	OK, edge unbroken
+ *	<0	failure, nothing changed
+ */
+int
+nmg_unbreak_edge( eu1_first )
+struct edgeuse	*eu1_first;
+{
+	struct edgeuse	*eu1;
+	struct edgeuse	*eu2;
+	struct edge	*e1;
+	struct edge_g	*eg;
+	struct vertexuse *vu;
+	struct vertex	*vb;
+	struct vertex	*vc;
+	struct shell	*s1;
+	int		ret = 0;
+
+	NMG_CK_EDGEUSE( eu1_first );
+	e1 = eu1_first->e_p;
+	NMG_CK_EDGE( e1 );
+
+rt_log("nmg_unbreak_edge(eu1=x%x)\n", eu1_first);
+
+	eg = e1->eg_p;
+	if( !eg )  {
+		rt_log( "nmg_unbreak_edge: no geometry for edge1 x%x\n" , e1 );
+		ret = -1;
+		goto out;
+	}
+	NMG_CK_EDGE_G(eg);
+
+	/* if the edge geometry doesn't have at least two uses, this
+	 * is not a candidate for unbreaking */		
+	if( eg->usage < 2 )  {
+		ret = -2;
+		goto out;
+	}
+
+	s1 = nmg_eups(eu1_first);
+	NMG_CK_SHELL(s1);
+
+	eu1 = eu1_first;
+	eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
+	if( eu2->e_p->eg_p != eg )  {
+		rt_log( "nmg_unbreak_edge: second eu geometry x%x does not match geometry x%x of edge1 x%x\n" ,
+			eu2->e_p->eg_p, eg, e1 );
+		ret = -3;
+		goto out;
+	}
+
+	vb = eu2->vu_p->v_p;		/* middle vertex (B) */
+	vc = eu2->eumate_p->vu_p->v_p;	/* end vertex (C) */
+
+	/* all uses of this vertex must be for this edge geometry, otherwise
+	 * it is not a candidate for deletion */
+	for( RT_LIST_FOR( vu , vertexuse , &vb->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+		/* Ignore vu's not in this shell */
+		if( nmg_vups( vu ) != s1 )  continue;
+
+		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )  {
+			ret = -4;
+			goto out;
+		}
+		if( vu->up.eu_p->e_p->eg_p != eg )  {
+			ret = -5;
+			goto out;
+		}
+	}
+
+	/* visit all the edgeuse pairs radial to eu1 */
+	for(;;)  {
+		/* revector eu1mate's start vertex from B to C */
+		nmg_movevu( eu1->eumate_p->vu_p , vc );
+
+		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
+		eu2 = RT_LIST_PNEXT_CIRC( edgeuse, eu1 );
+		NMG_CK_EDGEUSE(eu2);
+		if( eu2->e_p->eg_p != eg )
+			rt_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
+		if( nmg_keu( eu2 ) )
+			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
+
+		eu1 = eu1->eumate_p->radial_p;
+		if( eu1 == eu1_first )  break;
+	}
+out:
+rt_log("nmg_unbreak_edge(eu=x%x) ret = %d\n", eu1_first, ret);
+	if( *eu1->up.magic_p == NMG_LOOPUSE_MAGIC )
+		nmg_veu( &eu1->up.lu_p->down_hd, &eu1->up.lu_p->l.magic );
+	return ret;
+}
+
+/*
+ *			N M G _ U N B R E A K _ H A N D L E R
  *
  *	edge visit routine for nmg_unbreak_region_edges.
  *
@@ -1903,12 +2035,9 @@ struct nmg_unbreak_state
  *	other uses, and,  if so, kills the second edge.
  *	Also moves the vu of the first edgeuse mate to the vu
  *	of the killed edgeuse mate.
- *	After an edgeuse is killed, searches for possible
- *	radials for the new edgeuse.
  */
-
 void
-nmg_unbreak_edge( ep , state , after )
+nmg_unbreak_handler( ep , state , after )
 long *ep;
 genptr_t *state;
 int after;
@@ -1917,51 +2046,42 @@ int after;
 	struct edge *e;
 	struct edge_g *eg;
 	struct nmg_unbreak_state *ub_state;
-	long *flags;
 	struct vertexuse *vu;
-	struct vertex *vb;
 
 	e = (struct edge *)ep;
 	NMG_CK_EDGE( e );
 
 	ub_state = (struct nmg_unbreak_state *)state;
 
-	flags = ub_state->flags;
-
 	/* make sure we only visit this edge once */
-	if( !NMG_INDEX_TEST_AND_SET( flags , e ) )  return;
+	if( !NMG_INDEX_TEST_AND_SET( ub_state->flags , e ) )  return;
 
 	eg = e->eg_p;
-	if( !eg )
-	{
-		rt_log( "nmg_unbreak_edge: no geomtry for edge x%x\n" , e );
+	if( !eg )  {
+		rt_log( "nmg_unbreak_handler: no geomtry for edge x%x\n" , e );
 		return;
 	}
 
 
 	/* if the edge geometry doesn't have at least two uses, this
 	 * is not a candidate for unbreaking */		
-	if( eg->usage < 2 )
+	if( eg->usage < 2 )  {
+		/* rt_log("nmg_unbreak_handler: usage < 2\n"); */
 		return;
+	}
 
-	/* find two consecutive uses */
+	/* find two consecutive uses.  First look forward. */
 	eu1 = e->eu_p;
 	NMG_CK_EDGEUSE( eu1 );
 	eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
 	if( eu2->e_p->eg_p != eg )
 	{
-		struct edgeuse *eu_tmp;
-
-		eu2 = RT_LIST_PLAST_CIRC( edgeuse , eu1 );
-		if( eu2->e_p->eg_p != eg )
-		{
-			rt_log( "Cannot find second use of edge geometry for edge x%x\n" , e );
-			return;
-		}
-
-		eu_tmp = eu1;
-		eu1 = eu2;
-		eu2 = eu_tmp;
+		/* Can't look backward here, or nmg_unbreak_edge()
+		 * will be asked to kill *this* edgeuse, which
+		 * will blow our caller's mind.
+		 */
+		/* rt_log("nmg_unbreak_handler: edge geom not shared\n"); */
+		return;
 	}
 
 	/* at this point, the situation is:
@@ -1972,83 +2092,46 @@ int after;
 		*<-----------*<-----------*
 		    eu1mate      eu2mate
 	*/
-	/* get the middle vertex */
-	vb = eu2->vu_p->v_p;
-
-	/* all uses of this vertex must be for this edge geometry, otherwise
-	 * it is not a candidate for deletion */
-	for( RT_LIST_FOR( vu , vertexuse , &vb->vu_hd ) )
-	{
-		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )
-			return;
-		if( vu->up.eu_p->e_p->eg_p != eg )
-			return;
-	}
-
-	/* first move eu1's mate start where to eu2's mate starts now */
-	nmg_movevu( eu1->eumate_p->vu_p , eu2->eumate_p->vu_p->v_p );
-	/* O.K. kill the edgeuse */
-	if( nmg_keu( eu2 ) )
-		rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
-
-	/* keep a count of unbroken edges */
-	ub_state->unbroken++;
-
-	/* look for a candidate radial edges for eu1 */
-	for( RT_LIST_FOR( vu , vertexuse , &eu1->vu_p->l ) )
-	{
-		struct edgeuse *eu;
-
-		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )
-			continue;
-
-		if( (eu = vu->up.eu_p) != eu1 )
-		{
-			/* this is a candidate */
-			if( eu->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p )
-				nmg_radial_join_eu( eu1 , eu , ub_state->tol );
-		}
+	if( nmg_unbreak_edge( eu1 ) == 0 )  {
+		/* keep a count of unbroken edges */
+		ub_state->unbroken++;
 	}
 }
 
-/*	N M G _ U N B R E A K _ R E G I O N _ E D G E S
+/* XXX This should be made a global constant */
+static CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
+
+/*
+ *			N M G _ U N B R E A K _ R E G I O N _ E D G E S
  *
- *	Uses the visit handler to call nmg_unbreak_edge for
- *	each edge in the region
+ *	Uses the visit handler to call nmg_unbreak_handler for
+ *	each edge below the region (or any other NMG element).
  *
  *	returns the number of edges mended
  */
-
 int
-nmg_unbreak_region_edges( r , tol )
-struct nmgregion *r;
-CONST struct rt_tol *tol;
+nmg_unbreak_region_edges( magic_p )
+long		*magic_p;
 {
 	struct model *m;
-	struct nmg_visit_handlers *htab;
+	struct nmg_visit_handlers htab;
 	struct nmg_unbreak_state ub_state;
 	long *flags;
 	int count;
 
-	NMG_CK_REGION( r );
-	RT_CK_TOL( tol );
-
-	m = r->m_p;
+	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL( m );	
 
-	htab = (struct nmg_visit_handlers *)rt_calloc( 1 , sizeof( struct nmg_visit_handlers ) ,
-			"nmg_unbreak_region_edges: nmg_visit_handlers" );
-	htab->vis_edge = nmg_unbreak_edge;
+	htab = nmg_visit_handlers_null;		/* struct copy */
+	htab.vis_edge = nmg_unbreak_handler;
 
 	ub_state.unbroken = 0;
-	ub_state.flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
-	ub_state.tol = (struct rt_tol *)tol;
+	ub_state.flags = (long *)rt_calloc( m->maxindex+2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );
 
-	nmg_visit( (long *)&r->l , htab , (genptr_t *)&ub_state );
+	nmg_visit( magic_p , &htab , (genptr_t *)&ub_state );
 
 	count = ub_state.unbroken;
 
-	rt_free( (char *)htab , "nmg_visit_handler" );
 	rt_free( (char *)ub_state.flags , "nmg_unbreak_region_edges: flags" );
 
 	return( count );
