@@ -409,7 +409,9 @@ struct loopuse *lu1;
 
 	f->fu_p = fu1;
 	f->fg_p = (struct face_g *)NULL;
-	f->magic = NMG_FACE_MAGIC;	/* Face struct is GOOD */
+	f->flip = 0;
+	RT_LIST_INIT(&f->l);
+	f->l.magic = NMG_FACE_MAGIC;	/* Face struct is GOOD */
 
 	RT_LIST_INIT(&fu1->lu_hd);
 	RT_LIST_INIT(&fu2->lu_hd);
@@ -1107,6 +1109,7 @@ struct faceuse *fu1;
 	struct faceuse *fu2;
 	struct face	*f1;
 	struct face	*f2;
+	struct face_g	*fg;
 	struct shell	*s;
 
 	NMG_CK_FACEUSE(fu1);
@@ -1126,10 +1129,16 @@ struct faceuse *fu1;
 		(void)nmg_klu( RT_LIST_FIRST( loopuse, &fu1->lu_hd ) );
 	}
 
-	/* kill the geometry */
-	if (f1->fg_p) {
-		NMG_CK_FACE_G(f1->fg_p);
-		FREE_FACE_G(f1->fg_p);
+	/* Release the geometry */
+	if (fg = f1->fg_p) {
+		/* Disassociate this face from face_g */
+		RT_LIST_DEQUEUE( &f1->l );
+
+		/* If face_g is not referred to by any other face, free it */
+		if( RT_LIST_IS_EMPTY( &fg->f_hd ) )  {
+			NMG_CK_FACE_G(fg);
+			FREE_FACE_G(fg);
+		}
 	}
 	FREE_FACE(f1);
 	fu1->f_p = fu2->f_p = (struct face *)NULL;
@@ -1617,14 +1626,15 @@ struct edge_g	*eg;
 /*			N M G _ L O O P _ G
  *
  *	Build the bounding box for a loop
- * XXX Should take tol struct.  Should enlarge bounding box by 1*tol->dist,
- * XXX perhaps as much as 10*tol->dist.
- * XXX This might be the only place it actually has to be changed,
- * XXX but this is the bottom of the call stack.
+ *	The bounding box is guaranteed never to have zero thickness.
+ * XXX This really isn't loop geometry, this is a loop attribute.
+ * XXX This routine really should be called nmg_loop_bb(), unless
+ * XXX it gets something more to do.
  */
 void
-nmg_loop_g(l)
-struct loop *l;
+nmg_loop_g(l, tol)
+struct loop		*l;
+CONST struct rt_tol	*tol;
 {
 	struct edgeuse	*eu;
 	struct vertex_g	*vg;
@@ -1632,8 +1642,10 @@ struct loop *l;
 	struct loopuse	*lu;
 	struct model	*m;
 	long		magic1;
+	FAST fastf_t	thickening;
 
 	NMG_CK_LOOP(l);
+	RT_CK_TOL(tol);
 	lu = l->lu_p;
 	NMG_CK_LOOPUSE(lu);
 
@@ -1670,16 +1682,34 @@ struct loop *l;
 			rt_identify_magic(magic1), magic1 );
 		rt_bomb("nmg_loop_g() loopuse has bad child\n");
 	}
+
+	/*
+	 *  For the case of an axis-aligned loop, ensure that a 0-thickness
+	 *  face is not missed, e.g. by rt_in_rpp(). Thicken the bounding
+	 *  RPP so that it is 10*dist_tol thicker than the MINMAX
+	 *  calculations above report.
+	 *  This ensures enough "surface area" on the thin side of the RPP
+	 *  that a ray won't miss it.
+	 */
+	thickening = 5 * tol->dist;
+	lg->min_pt[X] -= thickening;
+	lg->min_pt[Y] -= thickening;
+	lg->min_pt[Z] -= thickening;
+	lg->max_pt[X] += thickening;
+	lg->max_pt[Y] += thickening;
+	lg->max_pt[Z] += thickening;
 }
 
 /*			N M G _ F A C E _ G
  *
  *	Assign plane equation to face and compute bounding box
+ *
+ *  In the interest of modularity this no longer calls nmg_face_bb().
  */
 void
 nmg_face_g(fu, p)
 struct faceuse *fu;
-plane_t p;
+CONST plane_t p;
 {
 	int i;
 	struct face_g	*fg;
@@ -1695,58 +1725,59 @@ plane_t p;
 
 	fg = f->fg_p;
 	if (fg) {
-		NMG_CK_FACE_G(f->fg_p);
+		/* Face already has face_g associated with it */
+		NMG_CK_FACE_G(fg);
 	} else {
 		m = nmg_find_model( &fu->l.magic );
 		GET_FACE_G(f->fg_p, m);
 		fg = f->fg_p;
 		fg->magic = NMG_FACE_G_MAGIC;
+		RT_LIST_INIT(&fg->f_hd);
+		RT_LIST_APPEND( &fg->f_hd, &f->l );
 	}
 
-	for (i=0 ; i < ELEMENTS_PER_PLANE ; i++)
-		fg->N[i] = p[i];
-
-	nmg_face_bb(f);
+	if( f->flip )  {
+		for (i=0 ; i < ELEMENTS_PER_PLANE ; i++)
+			fg->N[i] = -p[i];
+	} else {
+		HMOVE( fg->N, p );
+	}
 }
 
 /*			N M G _ F A C E _ B B
  *
  *	Build the bounding box for a face
  *
- * XXX Should take tol struct.  Should enlarge bounding box by 1*tol->dist,
- * XXX perhaps as much as 10*tol->dist.
  */
 void
-nmg_face_bb(f)
-struct face *f;
+nmg_face_bb(f, tol)
+struct face		*f;
+CONST struct rt_tol	*tol;
 {
 	struct face_g	*fg;
 	struct loopuse	*lu;
 	struct faceuse	*fu;
-	struct model	*m;
 
+	RT_CK_TOL(tol);
 	NMG_CK_FACE(f);
 	fu = f->fu_p;
 	NMG_CK_FACEUSE(fu);
 
 	if ( fg = f->fg_p ) {
 		NMG_CK_FACE_G(fg);
-	}
-	else {
-		m = nmg_find_model( &fu->l.magic );
-		GET_FACE_G(fg, m);
-		fg->magic = NMG_FACE_G_MAGIC;
-		f->fg_p = fg;
+	} else {
+		/* We have no idea what surface normal to use here */
+		rt_bomb("nmg_face_bb() called on face with no face geometry\n");
 	}
 
 	fg->max_pt[X] = fg->max_pt[Y] = fg->max_pt[Z] = -MAX_FASTF;
 	fg->min_pt[X] = fg->min_pt[Y] = fg->min_pt[Z] = MAX_FASTF;
 
-	/* we compute the extent of the face by looking at the extent of
+	/* compute the extent of the face by looking at the extent of
 	 * each of the loop children.
 	 */
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-		nmg_loop_g(lu->l_p);
+		nmg_loop_g(lu->l_p, tol);
 
 		if (lu->orientation != OT_BOOLPLACE) {
 			VMIN(fg->min_pt, lu->l_p->lg_p->min_pt);
@@ -1759,22 +1790,21 @@ struct face *f;
  *
  *	Build the bounding box for a shell
  *
- * XXX Should take tol struct.  Should enlarge bounding box by 1*tol->dist,
- * XXX perhaps as much as 10*tol->dist.
  */
 void
-nmg_shell_a(s)
-struct shell *s;
+nmg_shell_a(s, tol)
+struct shell		*s;
+CONST struct rt_tol	*tol;
 {
 	struct shell_a *sa;
 	struct vertex_g *vg;
-	struct face_g *fg;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct model	*m;
 
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
 
 	if (s->sa_p) {
 		NMG_CK_SHELL_A(s->sa_p);
@@ -1785,11 +1815,13 @@ struct shell *s;
 	}
 	sa = s->sa_p;
 
-	/* */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
-		nmg_face_bb(fu->f_p);
+		struct face_g *fg;
+
+		nmg_face_bb(fu->f_p, tol);
 
 		fg = fu->f_p->fg_p;
+		NMG_CK_FACE_G(fg);
 		VMIN(sa->min_pt, fg->min_pt);
 		VMAX(sa->max_pt, fg->max_pt);
 
@@ -1800,7 +1832,7 @@ struct shell *s;
 		}
 	}
 	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
-		nmg_loop_g(lu->l_p);
+		nmg_loop_g(lu->l_p, tol);
 
 		VMIN(sa->min_pt, lu->l_p->lg_p->min_pt);
 		VMAX(sa->max_pt, lu->l_p->lg_p->max_pt);
@@ -1834,17 +1866,17 @@ struct shell *s;
  *
  *	build attributes/extents for all shells in a region
  *
- * XXX Should take tol struct.  Should enlarge bounding box by 1*tol->dist,
- * XXX perhaps as much as 10*tol->dist.
  */
 void
-nmg_region_a(r)
-struct nmgregion *r;
+nmg_region_a(r, tol)
+struct nmgregion	*r;
+CONST struct rt_tol	*tol;
 {
 	register struct shell	*s;
 	struct nmgregion_a	*ra;
 
 	NMG_CK_REGION(r);
+	RT_CK_TOL(tol);
 	if( r->ra_p )  {
 		ra = r->ra_p;
 		NMG_CK_REGION_A(ra);
@@ -1859,7 +1891,7 @@ struct nmgregion *r;
 	VSETALL(ra->min_pt, MAX_FASTF);
 
 	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
-		nmg_shell_a(s);
+		nmg_shell_a(s, tol);
 		NMG_CK_SHELL_A(s->sa_p);
 		VMIN(ra->min_pt, s->sa_p->min_pt);
 		VMAX(ra->max_pt, s->sa_p->max_pt);
@@ -2187,4 +2219,41 @@ register struct vertex	*v2;
 		}
 	}
 	FREE_VERTEX(v2);
+}
+
+/*
+ *			N M G _ J F G
+ *
+ *  Join two faces, so that they share one underlying face geometry.
+ *  The loops of the two faces remains unchanged.
+ */
+void
+nmg_jfg( f1, f2 )
+struct face	*f1;
+struct face	*f2;
+{
+	struct face_g	*fg1;
+	struct face_g	*fg2;
+	struct face	*f;
+
+	NMG_CK_FACE(f1);
+	NMG_CK_FACE(f2);
+	fg1 = f1->fg_p;
+	fg2 = f2->fg_p;
+	NMG_CK_FACE_G(fg1);
+	NMG_CK_FACE_G(fg2);
+
+	if( fg1 == fg2 )  return;
+
+	/* Unhook all the faces on fg2 list, and add to fg1 list */
+	while( RT_LIST_NON_EMPTY( &fg2->f_hd ) )  {
+		f = RT_LIST_FIRST( face, &fg2->f_hd );
+		RT_LIST_DEQUEUE( &f->l );
+		NMG_CK_FACE(f);
+		f->fg_p = fg1;
+		RT_LIST_INSERT( &fg1->f_hd, &f->l );
+	}
+
+	/* fg2 list is now empty, release that face geometry */
+	FREE_FACE_G(fg2);
 }
