@@ -444,7 +444,7 @@ static struct math_func_link {
 	"quat_distance",      bn_quat_distance_wrapper,
 	"quat_double",        quat_double,
 	"quat_bisect",        quat_bisect,
-	"quat_slerp",         quat_bisect,
+	"quat_slerp",         quat_slerp,
 	"quat_sberp",         quat_sberp,
 	"quat_make_nearest",  quat_make_nearest,
 	"quat_exp",           quat_exp,
