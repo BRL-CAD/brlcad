@@ -347,12 +347,14 @@ void
 rle_debug( on_off )
 int on_off;
 {
+    static char std_err_buf[BUFSIZ];	/* BUFSIZ from stdio.h */
     debug_f = on_off;
 
     /* Set line buffering on stderr.  Character buffering is the default, and
      * it is SLOOWWW for large amounts of output.
      */
-    setlinebuf( stderr );
+
+    setbuf( stderr, std_err_buf );
 }
 
 
