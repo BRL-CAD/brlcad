@@ -106,9 +106,9 @@ int	width, height;
 		Malloc_Bomb( sizeof(FBIO) );
 		return	FBIO_NULL;
 	}
-	if( file == NULL )  {
+	if( file == NULL || *file == '\0' )  {
 		/* No name given, check environment variable first.	*/
-		if( (file = getenv( "FB_FILE" )) == NULL )  {
+		if( (file = getenv( "FB_FILE" )) == NULL || *file == '\0' )  {
 			/* None set, use first device as default */
 			*ifp = *(_if_list[0]);	/* struct copy */
 			file = ifp->if_name;
