@@ -427,7 +427,7 @@ combdump()	/* Print out Combination record information */
 	mcount = 0;
 	while(1)  {
 		GETSTRUCT( mp, mchain );
-		if( fread( (char *)&mp->r, sizeof(union record), 1, stdin ) != 1
+		if( fread( (char *)&mp->r, sizeof(mp->r), 1, stdin ) != 1
 		    || feof( stdin ) )
 			break;
 		if( mp->r.u_id != ID_MEMB )  {
