@@ -39,8 +39,6 @@ if { [info exists tk_strictMotif] == 0 } {
     loadtk
 }
 
-wm withdraw .
-
 #==============================================================================
 # PHASE 0: Support routines: MGED dialog boxes
 #------------------------------------------------------------------------------
@@ -156,23 +154,10 @@ proc mged_input_dialog { w screen title text entryvar defaultentry default args 
 #      sliders.tcl  :  The Tk sliders replacement
 # html_library.tcl  :  Stephen Uhler's routines for processing HTML
 #==============================================================================
-
-if [info exists env(MGED_LIBRARY)] {
-    set mged_library $env(MGED_LIBRARY)
-} else {
-    set mged_library "/"
-}
-
-while { [file exists $mged_library/mged2.tcl]==0 } {
-    mged_input_dialog .mgeddir $env(DISPLAY) "MGED_LIBRARY environment variable not set" \
-	    "Please enter the full path to the MGED .tcl files:" \
-	    mged_library $mged_library 0 OK
-}
-
 if [info exists env(MGED_HTML_DIR)] {
     set mged_html_dir $env(MGED_HTML_DIR)
 } else {
-    set mged_html_dir "/"
+    set mged_html_dir [lindex $auto_path 0]/../html/mged
 }
 
 while { [file exists $mged_html_dir/index.html]==0 } {
@@ -181,15 +166,7 @@ while { [file exists $mged_html_dir/index.html]==0 } {
 	    mged_html_dir $mged_html_dir 0 OK
 }
 
-catch { source $mged_library/vmath.tcl }
-catch { source $mged_library/html_library.tcl }
-catch { source $mged_library/menu2.tcl }
-catch { source $mged_library/editobj2.tcl }
-catch { source $mged_library/sliders2.tcl }
-catch { source $mged_library/solcreate2.tcl }
-catch { source $mged_library/icreate2.tcl }
-catch { source $mged_library/solclick2.tcl }
-
+catch { source [lindex $auto_path 0]/sliders.tcl }
 trace variable mged_display(state)    w ia_changestate
 trace variable mged_display(path_lhs) w ia_changestate
 trace variable mged_display(path_rhs) w ia_changestate
@@ -269,7 +246,6 @@ proc ia_changestate args {
 #    }
 }
 
-auto_load tkTextInsert
 proc tkTextInsert {w s} {
     if {$s == ""} {
 	return
@@ -302,13 +278,11 @@ proc ia_rtlog_bold { w str } {
 #    $w see insert
 }
 
-
 proc ia_print_prompt { w str } {
     ia_rtlog_bold $w $str
     $w mark set promptEnd {insert}
     $w mark gravity promptEnd left
 }
-
 
 proc get_player_id_t { w } {
     global player_count
@@ -323,7 +297,6 @@ proc get_player_id_t { w } {
 
     return ":"
 }
-
 
 proc distribute_text { w cmd str} {
     global player_count
@@ -464,9 +437,8 @@ proc man_goto { w screen } {
     }
 }
 
-
 proc ia_man { parent screen } {
-    global mged_library mged_html_dir ia_url message
+    global mged_html_dir ia_url message
     
     set w $parent.man
     catch { destroy $w }
@@ -493,13 +465,13 @@ proc ia_man { parent screen } {
     pack $w.text -side top -fill both -expand yes
     pack $w.scrollx -side bottom -fill x
 
-    if { [info exists ia_url]==0 } {
-	while { [file exists $mged_html_dir/index.html]==0 } {
-	    mged_input_dialog .mgedhtmldir $screen "Need path to MGED .html files"
-		    "Please enter the full path to the MGED .html files:" \
-		    mged_html_dir $mged_html_dir 0 OK
-	}
-    }
+#    if { [info exists ia_url]==0 } {
+#	while { [file exists $mged_html_dir/index.html]==0 } {
+#	    mged_input_dialog .mgedhtmldir $screen "Need path to MGED .html files"
+#		    "Please enter the full path to the MGED .html files:" \
+#		    mged_html_dir $mged_html_dir 0 OK
+#	}
+#    }
 
     set w $w.text
 
@@ -592,19 +564,15 @@ proc ia_get_html {file} {
     return $result
 }
 
-
-
 #==============================================================================
 # Spit out message about the openw command
 #==============================================================================
-puts "\nNote: use the openw command to open mged interface windows"
-puts "Usage: openw id host:0\n"
+#puts "\nNote: use the openw command to open mged interface windows"
+#puts "Usage: openw id host:0\n"
 
 set player_count 0
 proc openw { id screen } {
     global ia_filename
-    global mged_library
-    global mged_display
     global ia_cmd_prefix
     global ia_more_default
     global output_as_return
@@ -809,9 +777,6 @@ bind .ia$id.t <Control-h> {
 set ia_cmd_prefix($id) ""
 set ia_more_default($id) ""
 ia_print_prompt .ia$id.t "mged> "
-#set output_as_return 1
-#set faceplate 0
-# output_hook ia_rtlog
 
 .ia$id.t tag configure bold -font -*-Courier-Bold-R-Normal-*-120-*-*-*-*-*-*
 set ia_font -*-Courier-Medium-R-Normal-*-120-*-*-*-*-*-*
@@ -822,5 +787,5 @@ set ia_font -*-Courier-Medium-R-Normal-*-120-*-*-*-*-*-*
 #==============================================================================
 
 mmenu_init $id
-cmd_init $id
+cmd_init $id .ia$id.t
 }
