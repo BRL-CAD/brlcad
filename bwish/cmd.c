@@ -33,6 +33,7 @@
 #include "machine.h"
 #include "externs.h"
 #include "cmd.h"
+#include "libtermio.h"
 
 extern Tcl_Interp *interp;
 

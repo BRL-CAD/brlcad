@@ -27,11 +27,14 @@
  */
 
 #include "conf.h"
+#include <stdio.h>
+#include <ctype.h>
 #include "tk.h"
 
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
+#include "libtermio.h"
 
 #define BWISH_RCFILENAME ".bwishrc"
 
