@@ -1,10 +1,5 @@
 #define NEWLINE 1	/* "New" algorithm:  isect line with 2 faces in 2d */
 
-/* XXX move to vmath.h */
-#define V2PRINT(a,b)	\
-	rt_log("%s (%g, %g)\n", a, V2ARGS(b) );
-
-
 /*
  *			N M G _ I N T E R . C
  *
@@ -2781,6 +2776,8 @@ struct faceuse		*fu2;
 	 *  eg1 is potentially colinear with line of intersection.
 	 *  Test each edgeuse on eg1 individually, and count all those where
 	 *  both vertices are within tolerance of the line.
+	 *  The 3D version of the comparison is used here, for
+	 *  consistency with similar checks in other routines.
 	 */
 	n_colinear = 0;
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
@@ -2795,12 +2792,10 @@ struct faceuse		*fu2;
 		vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
 		NMG_CK_VERTEXUSE(vu1a);
 		NMG_CK_VERTEXUSE(vu1b);
-		nmg_get_2d_vertex( eu1_pt2d, vu1a->v_p, is, fu1 );
-		nmg_get_2d_vertex( eu1_end2d, vu1b->v_p, is, fu1 );
 
-		if( rt_distsq_line2_point2( is->pt2d, is->dir2d, eu1_pt2d ) > is->tol.dist_sq  )
+		if( rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord ) > is->tol.dist_sq  )
 			continue;
-		if( rt_distsq_line2_point2( is->pt2d, is->dir2d, eu1_end2d ) > is->tol.dist_sq )
+		if( rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord ) > is->tol.dist_sq )
 			continue;
 		n_colinear++;
 	}
@@ -2899,20 +2894,22 @@ hit_b:
 		}
 		if( vu1a->v_p == hit_v || vu1b->v_p == hit_v )  continue;
 
-		nmg_get_2d_vertex( eu1_pt2d, vu1a->v_p, is, fu1 );
-		nmg_get_2d_vertex( eu1_end2d, vu1b->v_p, is, fu1 );
-
-		/* Second, a geometry check on the edgeuse ENDPOINTS -vs- the line segment */
-		if( rt_distsq_line2_point2( is->pt2d, is->dir2d, eu1_pt2d ) <= is->tol.dist_sq  )  {
+		/*  Second, a geometry check on the edgeuse ENDPOINTS
+		 *  -vs- the line segment.  This is 3D, for consistency
+		 *  with comparisons elsewhere.
+		 */
+		if( rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord ) <= is->tol.dist_sq  )  {
 			hit_v = vu1a->v_p;
 			goto hit_a;
 		}
-		if( rt_distsq_line2_point2( is->pt2d, is->dir2d, eu1_end2d ) <= is->tol.dist_sq )  {
+		if( rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord ) <= is->tol.dist_sq )  {
 			hit_v = vu1b->v_p;
 			goto hit_b;
 		}
 
 		/* Third, a geometry check of the HITPT -vs- the line segment */
+		nmg_get_2d_vertex( eu1_pt2d, vu1a->v_p, is, fu1 );
+		nmg_get_2d_vertex( eu1_end2d, vu1b->v_p, is, fu1 );
 		ldist = 0;
 		code = rt_isect_pt2_lseg2( &ldist, eu1_pt2d, eu1_end2d, hit2d, &(is->tol) );
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
