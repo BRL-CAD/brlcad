@@ -40,7 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 
-#define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-gr] comb_name [bool_expr]'\n",\
+#define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-cr] comb_name [bool_expr]'\n",\
 				     (char *)NULL)
 
 struct tokens {
@@ -504,8 +504,9 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 
 	/* Parse options */
 	bu_optind = 1;	/* re-init bu_getopt() */
-	while ((ch = bu_getopt(argc, argv, "gr?")) != EOF) {
+	while ((ch = bu_getopt(argc, argv, "cgr?")) != EOF) {
 		switch (ch) {
+		case 'c':
 		case 'g':
 			region_flag = 0;
 			break;
@@ -547,8 +548,16 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 
-		if (region_flag)
+		if (region_flag) {
+			if( !comb->region_flag ) {
+				/* assign values from the defaults */
+				comb->region_id = wdbp->wdb_item_default++;
+				comb->aircode = wdbp->wdb_air_default;
+				comb->GIFTmater = wdbp->wdb_mat_default;
+				comb->los = wdbp->wdb_los_default;
+			}
 			comb->region_flag = 1;
+		}
 		else
 			comb->region_flag = 0;
 

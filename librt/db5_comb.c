@@ -361,7 +361,8 @@ rt_comb_export5(
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->is_fastgen );
 		bu_avs_add_vls( avsp, "region", &value );
-	}
+	} else
+		bu_avs_remove( avsp, "region" );
 	if( comb->inherit )
 		bu_avs_add( avsp, "inherit", "1" );
 	if( comb->rgb_valid )  {
