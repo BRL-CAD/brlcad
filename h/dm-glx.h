@@ -43,18 +43,14 @@ struct glx_vars {
   struct modifiable_glx_vars mvars;
 };
 
-extern struct dm *Glx_open();
-extern void Glx_viewchange();
-extern void Glx_configure_window_shape();
-extern void Glx_establish_perspective();
-extern void Glx_set_perspective();
-extern void Glx_establish_lighting();
-extern void Glx_establish_zbuffer();
-extern int Glx_irlimit();
-extern int Glx_add_tol();
-extern int Glx_irisX2ged();
-extern int Glx_irisY2ged();
-extern struct dm dm_glx;
+extern void glx_configure_window_shape();
+extern void glx_establish_perspective();
+extern void glx_set_perspective();
+extern void glx_establish_lighting();
+extern void glx_establish_zbuffer();
+extern void glx_clear_to_black();
+extern int glx_irisX2ged();
+extern int glx_irisY2ged();
 extern struct glx_vars head_glx_vars;
 
 #endif /* SEEN_DM_GLX */
