@@ -170,9 +170,9 @@ register struct stxt_specific *stp;
  */
 HIDDEN int
 stxt_setup( rp, matparm, dpp )
-register struct region *rp;
-char	*matparm;
-char	**dpp;
+register struct region	*rp;
+struct rt_vls		*matparm;
+char			**dpp;
 {
 	register struct stxt_specific *stp;
 

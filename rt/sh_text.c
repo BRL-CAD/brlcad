@@ -265,9 +265,9 @@ opaque:
  */
 HIDDEN int
 txt_setup( rp, matparm, dpp )
-register struct region *rp;
-char	*matparm;
-char	**dpp;
+register struct region	*rp;
+struct rt_vls		*matparm;
+char			**dpp;
 {
 	register struct txt_specific *tp;
 
@@ -365,9 +365,9 @@ char	*dp;
  */
 HIDDEN int
 ckr_setup( rp, matparm, dpp )
-register struct region *rp;
-char	*matparm;
-char	**dpp;
+register struct region	 *rp;
+struct rt_vls		*matparm;
+char			**dpp;
 {
 	register struct ckr_specific *ckp;
 

@@ -75,7 +75,7 @@ register struct region *rp;
 	material = rp->reg_mater.ma_matname;
 	if( material[0] == '\0' )  {
 		material = mdefault;
-		rt_vls_trunc( &param );
+		rt_vls_trunc( &param, 0 );
 	}
 retry:
 	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
@@ -88,7 +88,7 @@ retry:
 		material );
 	if( material != mdefault )  {
 		material = mdefault;
-		rt_vls_trunc( &param );
+		rt_vls_trunc( &param, 0 );
 		goto retry;
 	}
 	rt_vls_free( &param );
@@ -102,7 +102,7 @@ found:
 		/* What to do if setup fails? */
 		if( material != mdefault )  {
 			material = mdefault;
-			rt_vls_trunc( &param );
+			rt_vls_trunc( &param, 0 );
 			goto retry;
 		}
 	}
