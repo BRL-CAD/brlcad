@@ -243,12 +243,12 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case DBID_PIPE:
-			j = rt_glong(record.pw.pw_count);
+			j = rt_glong(record.pwr.pwr_count);
 			nrec += j;
 			while( j-- > 0 )
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
-			handler( dbip, record.pw.pw_name, addr, nrec,
+			handler( dbip, record.pwr.pwr_name, addr, nrec,
 				DIR_SOLID );
 			break;
 		case DBID_NMG:
