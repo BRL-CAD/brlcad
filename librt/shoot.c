@@ -911,7 +911,6 @@ start_cell:
 		/* Consider all "pieces" of all solids within the box */
 		if( cutp->bn.bn_piecelen > 0 )  {
 			register struct rt_piecelist *plp;
-bu_log("rt_shootray(): bn_piecelen=%d\n", cutp->bn.bn_piecelen );
 			plp = &(cutp->bn.bn_piecelist[cutp->bn.bn_piecelen-1]);
 			for( ; plp >= cutp->bn.bn_piecelist; plp-- )  {
 				struct rt_piecestate *psp;
