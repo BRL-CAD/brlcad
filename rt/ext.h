@@ -30,6 +30,10 @@ extern double		AmbientIntensity;	/* Ambient light intensity */
 extern double		azimuth, elevation;
 extern int		lightmodel;		/* Select lighting model */
 
+/***** variables declared in rt.c *****/
+extern struct application	ap;
+extern vect_t		left_eye_delta;
+
 /***** variables shared with worker() ******/
 extern int		stereo;			/* stereo viewing */
 extern int		hypersample;		/* number of extra rays to fire */
@@ -74,3 +78,5 @@ extern int		output_is_binary;	/* !0 means output is binary */
 extern mat_t		view2model;
 extern mat_t		model2view;
 extern vect_t		left_eye_delta;
+
+extern void		worker();
