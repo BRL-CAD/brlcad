@@ -611,7 +611,7 @@ genptr_t	arg;
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
-#  if SUBOS >= 52
+#  if SUNOS >= 52
 	static int	concurrency = 0; /* Max concurrency we have set */
 #  endif
 #  if SUNOS >= 52 || defined(HAS_POSIX_THREADS)
