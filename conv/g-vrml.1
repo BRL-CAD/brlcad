@@ -1,6 +1,6 @@
 .TH G-VRML 1 BRL-CAD
 .SH NAME
-g-vrml \- Perform Boolean evaluations to produce a VRML version 1.0 file
+g-vrml \- Perform Boolean evaluations to produce a VRML version 2.0 file
 .SH SYNOPSIS
 .B g-vrml
 [-v] [-d calc_dist_tol] [-a abs_tess_tol] [-n norm_tess_tol] [-r rel_tess_tol]
@@ -15,7 +15,7 @@ or to
 .I stdout
 if the
 .I -o
-option is not used. The output is in VRML version 1.0 format. The
+option is not used. The output is in VRML version 2.0 format. The
 .I -v
 option requests verbose output while the conversion is taking place. The
 .I -d
@@ -59,7 +59,7 @@ $ \|\fIg-vrml \|-o shell.wrl \|sample.g \|sample_object\fP
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
 .SH AUTHOR
-John Anderson
+John Anderson (with update to VRML 2.0 by John P. Williams, QUADRA Enterprises)
 .SH SOURCE
 SLAD/BVLD/VMB Advanced Computer Systems Team
 .br
