@@ -182,7 +182,7 @@ static unsigned short	*hl_dstmap = NULL;
 		}\
 	}
 
-STATIC fastf_t		ipow();
+STATIC fastf_t		myIpow();
 STATIC fastf_t		correct_Lgt();
 STATIC fastf_t		*mirror_Reflect();
 
@@ -1257,7 +1257,7 @@ register struct application *ap;
 				{
 				specular = mdb_entry->wgt_specular *
 					lgts[i].energy *
-					ipow( cos_s, mdb_entry->shine );
+					myIpow( cos_s, mdb_entry->shine );
 				/* Add reflected light source.		*/
 				VJOIN1(	ap->a_color,
 					ap->a_color,
@@ -1580,7 +1580,7 @@ fastf_t				*view_dir;
 			)
 			{ /* We have a significant specular component.	*/
 			specular = mdb_entry->wgt_specular * lgt_energy *
-					ipow( cos_s, mdb_entry->shine );
+					myIpow( cos_s, mdb_entry->shine );
 			/* Add specular component.			*/
 			VJOIN1( ap->a_color, ap->a_color, specular, lgt_entry->coef );
 			if( rt_g.debug & DEBUG_RGB )
@@ -1647,7 +1647,7 @@ int	sig;
 	Returns 'd' to the 'n'th power.
  */
 STATIC fastf_t
-ipow( d, n )
+myIpow( d, n )
 register fastf_t	d;
 register int	n;
 	{	register fastf_t	result = 1.0;
