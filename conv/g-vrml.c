@@ -28,6 +28,9 @@ static char RCSid[] = "$Header$";
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -56,10 +59,20 @@ struct vrml_light {
 	fastf_t lt_angle;
 };
 
+#define TXT_BUF_LEN	512
+#define TXT_NAME_LEN	128
+struct vrml_texture {
+	char	tx_file[TXT_NAME_LEN];
+	int	tx_w;
+	int	tx_n;
+};
+
 #define LIGHT_O(m)	offsetof(struct vrml_light, m)
 #define LIGHT_OA(m)	offsetofarray(struct vrml_light, m)
 
 #define PL_O(m)	offsetof(struct vrml_mat, m)
+
+#define TX_O(m) offsetof(struct vrml_texture, m)
 
 struct structparse vrml_mat_parse[]={
 	{"%d", 1, "shine",		PL_O(shininess),	FUNC_NULL },
@@ -76,10 +89,17 @@ struct structparse vrml_light_parse[] = {
 	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
+struct structparse vrml_texture_parse[] = {
+	{"%d",  1, "w",         TX_O(tx_w),             FUNC_NULL },
+	{"%d",  1, "n",         TX_O(tx_n),             FUNC_NULL },
+	{"%s",  TXT_NAME_LEN, "file", offsetofarray(struct vrml_texture, tx_file), FUNC_NULL },
+	{"",	0, (char *)0,	0,			FUNC_NULL }
+};
+
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
-static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-i] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -338,7 +358,8 @@ struct model *m;
 				/* this is a light source */
 				is_light = 1;
 				}
-			else
+			else if( strcmp( "plastic", rec.c.c_matname ) == 0 ||
+				 strcmp( "glass", rec.c.c_matname ) == 0 )
 			{
 				struct vrml_mat mat;
 				struct rt_vls vls;
@@ -360,6 +381,77 @@ struct model *m;
 				fprintf( fp, "\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
 				if( mat.transparency > 0.0 )
 					fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
+				fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
+			}
+			else if( strcmp( "texture", rec.c.c_matname ) == 0 )
+			{
+				struct vrml_texture tex;
+				struct rt_vls vls;
+
+				tex.tx_file[0] = '\0';
+				tex.tx_w = 0;
+				tex.tx_n = 0;
+
+				if( strlen( rec.c.c_matparm ) )
+				{
+					rt_vls_init( &vls );
+					rt_vls_strcpy( &vls, rec.c.c_matparm );
+					bzero( tex.tx_file, TXT_NAME_LEN );
+					(void)rt_structparse( &vls, vrml_texture_parse, (char *)&tex );
+					rt_vls_free( &vls );
+				}
+
+				fprintf( fp, "Separator { # start of %s\n", dp->d_namep );
+				if( strlen( tex.tx_file ) )
+				{
+					int tex_fd;
+					int nbytes;
+					long tex_len;
+					long bytes_read=0;
+					int buf_start=0;
+					unsigned char tex_buf[TXT_BUF_LEN*3];
+
+					if( (tex_fd = open( tex.tx_file, O_RDONLY )) == (-1) )
+					{
+						rt_log( "Cannot open texture file (%s)\n", tex.tx_file );
+						perror( "g-vrml: " );
+					}
+					else
+					{
+						fprintf( fp, "\tTexture2 {\n" );
+						fprintf( fp, "\t\twrapS REPEAT\n" );
+						fprintf( fp, "\t\twrapT REPEAT\n" );
+						fprintf( fp, "\t\timage %d %d %d\n", tex.tx_w, tex.tx_n, 3 );
+						tex_len = tex.tx_w*tex.tx_n*3;
+						while( bytes_read < tex_len )
+						{
+							long bytes_to_go=tex_len;
+
+							bytes_to_go = tex_len - bytes_read;
+							if( bytes_to_go > TXT_BUF_LEN*3 )
+								bytes_to_go = TXT_BUF_LEN*3;
+							nbytes = 0;
+							while( nbytes < bytes_to_go )
+								nbytes += read( tex_fd, &tex_buf[nbytes],
+									bytes_to_go-nbytes );
+
+							bytes_read += nbytes;
+							for( i=0 ; i<nbytes ; i += 3 )
+								fprintf( fp, "\t\t\t0x%2.2x%2.2x%2.2x\n",
+									tex_buf[i],
+									tex_buf[i+1],
+									tex_buf[i+2] );
+						}
+						fprintf( fp, "\t}\n" );
+					}
+				}
+			}
+			else
+			{
+				fprintf( fp, "Separator { # start of %s\n", dp->d_namep );
+				fprintf( fp, "\tMaterial {\n" );
+				fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
+				fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
 				fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
 			}
 		}
