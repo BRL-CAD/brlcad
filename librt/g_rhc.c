@@ -1265,10 +1265,18 @@ CONST struct db_i		*dbip;
 		bu_log("rt_rhc_export: not all dimensions positive!\n");
 		return(-1);
 	}
-	
-	if ( !NEAR_ZERO( VDOT(xip->rhc_B, xip->rhc_H), RT_DOT_TOL) ) {
-		bu_log("rt_rhc_export: B and H are not perpendicular!\n");
-		return(-1);
+
+	{
+		vect_t ub, uh;
+
+		VMOVE(ub, xip->rhc_B);
+		VUNITIZE(ub);
+		VMOVE(uh, xip->rhc_H);
+		VUNITIZE(uh);
+		if ( !NEAR_ZERO( VDOT(ub, uh), RT_DOT_TOL) ) {
+			bu_log("rt_rhc_export: B and H are not perpendicular!\n");
+			return(-1);
+		}
 	}
 
 	/* Warning:  type conversion */
