@@ -65,6 +65,7 @@ void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
+void	f_plot(), f_area();
 
 static struct funtab {
 	char *ft_name;
@@ -183,6 +184,10 @@ static struct funtab {
 	f_color, 7, 7,
 "edcolor", "", "text edit color table",
 	f_edcolor, 1, 1,
+"plot", "[-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
+	f_plot, 2, MAXARGS,
+"area", "[endpoint_tolerance]", "calculate presented area of view",
+	f_area, 1, 2,
 "memprint", "", "print memory maps",
 	f_memprint,1,1
 };
