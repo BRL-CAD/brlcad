@@ -1015,25 +1015,14 @@ register struct uvcoord *uvp;
 
 	if( arbp->arb_opt == (struct oface *)0 )  {
 		register int		ret = 0;
-		struct bu_external	ext;
 		struct rt_db_internal	intern;
 		struct rt_arb_internal	*aip;
 
-		BU_CK_EXTERNAL(&ext);
-		if( db_get_external( &ext, stp->st_dp, ap->a_rt_i->rti_dbip ) < 0 )  {
-			bu_log("rt_arb_uv(%s) db_get_external failure\n",
+		if( rt_db_get_internal( &intern, stp->st_dp, ap->a_rt_i->rti_dbip, stp->st_matp ) < 0 )  {
+			bu_log("rt_arb_uv(%s) rt_db_get_internal failure\n",
 				stp->st_name);
 			return;
 		}
-		if( rt_arb_import( &intern, &ext,
-		    stp->st_matp ? stp->st_matp : bn_mat_identity,
-		    ap->a_rt_i->rti_dbip ) < 0 )  {
-			bu_log("rt_arb_uv(%s) database import error\n",
-				stp->st_name);
-			bu_free_external( &ext );
-			return;
-		}
-		bu_free_external( &ext );
 		RT_CK_DB_INTERNAL( &intern );
 		aip = (struct rt_arb_internal *)intern.idb_ptr;
 		RT_ARB_CK_MAGIC(aip);
@@ -1049,7 +1038,7 @@ register struct uvcoord *uvp;
 		}
 		bu_semaphore_release( RT_SEM_MODEL );
 
-		rt_arb_ifree( &intern );
+		rt_db_free_internal( &intern );
 
 		if( ret != 0 || arbp->arb_opt == (struct oface *)0 )  {
 			bu_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
