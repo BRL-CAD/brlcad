@@ -31,7 +31,7 @@ set mged_helpdevel_data(output_hook)	{{[hook_cmd]}	{set up to have output from b
 set mged_helpdevel_data(put_comb)	{{comb_name is_Region id air material los color shader inherit boolean_expr} {set combination}}
 set mged_helpdevel_data(put_sed)	{{solid parameters}	{put the solid parameters into the in-memory (i.e. es_int)
         solid currently being edited.}}
-set mged_helpdevel_data(reset_edit_solid)	{{}	{reset the parameters for the currently edited solid (i.e. es_int)}}
+set mged_helpdevel_data(sed_reset)	{{}	{reset the parameters for the currently edited solid (i.e. es_int)}}
 set mged_helpdevel_data(rset)		{{[res_type [res [vals]]]}	{provides a mechanism to get/set resource values.}}
 set mged_helpdevel_data(set_more_default)	{{more_default}	{set the current default input value}}
 set mged_helpdevel_data(share)		{{[-u] resource dm1 [dm2]}	{Provides a mechanism to (un)share resources among display managers.}}

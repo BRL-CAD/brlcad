@@ -429,7 +429,7 @@ proc esolint_dec { id entryfield } {
 ## - esolint_reset
 #
 proc esolint_reset {} {
-    reset_edit_solid
+    sed_reset
     esolint_update
 }
 
