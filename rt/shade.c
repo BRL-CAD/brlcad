@@ -134,7 +134,7 @@ register struct shadework *swp;
  *  Note that only hit_dist is valid in pp_inhit.
  *  RT_HIT_NORM() must be called if hit_norm is needed,
  *  after which pt_inflip must be handled.
- *  ft_uv() routines must have hit_point computed
+ *  RT_HIT_UVCOORD() must have hit_point computed
  *  in advance.
  *
  *  If MFI_LIGHT is not on, the presumption is that the sw_visible[]
@@ -204,8 +204,7 @@ register int	want;
 			swp->sw_uv.uv_u = swp->sw_uv.uv_v = 0.5;
 			swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
 		} else {
-			rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-				ap, pp->pt_inseg->seg_stp,
+			RT_HIT_UVCOORD(	ap, pp->pt_inseg->seg_stp,
 				&(swp->sw_hit), &(swp->sw_uv) );
 		}
 		if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 ||
