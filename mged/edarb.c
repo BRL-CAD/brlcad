@@ -50,15 +50,6 @@ int arb_faces[5][24] = {
 	{0,1,2,3, 4,5,6,7, 0,4,7,3, 1,2,6,5, 0,1,5,4, 3,2,6,7},		/* ARB8 */
 };
 
-/* planes to define ARB vertices */
-int arb_planes[5][24] = {
-	{0,1,3, 0,1,2, 0,2,3, 0,1,3, 1,2,3, 1,2,3, 1,2,3, 1,2,3},	/* ARB4 */
-	{0,1,4, 0,1,2, 0,2,3, 0,3,4, 1,2,4, 1,2,4, 1,2,4, 1,2,4},	/* ARB5 */
-	{0,2,3, 0,1,3, 0,1,4, 0,2,4, 1,2,3, 1,2,3, 1,2,4, 1,2,4},	/* ARB6 */
-	{0,2,4, 0,3,4, 0,3,5, 0,2,5, 1,4,5, 1,3,4, 1,3,5, 1,2,4},	/* ARB7 */
-	{0,2,4, 0,3,4, 0,3,5, 0,2,5, 1,2,4, 1,3,4, 1,3,5, 1,2,5},	/* ARB8 */
-};
-
 /*
  *  			E D I T A R B
  *  
@@ -435,10 +426,21 @@ struct solidrec *sp;
 	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c, &tol ) );
 }
 
+/* planes to define ARB vertices */
+CONST int rt_arb_planes[5][24] = {
+	{0,1,3, 0,1,2, 0,2,3, 0,1,3, 1,2,3, 1,2,3, 1,2,3, 1,2,3},	/* ARB4 */
+	{0,1,4, 0,1,2, 0,2,3, 0,3,4, 1,2,4, 1,2,4, 1,2,4, 1,2,4},	/* ARB5 */
+	{0,2,3, 0,1,3, 0,1,4, 0,2,4, 1,2,3, 1,2,3, 1,2,4, 1,2,4},	/* ARB6 */
+	{0,2,4, 0,3,4, 0,3,5, 0,2,5, 1,4,5, 1,3,4, 1,3,5, 1,2,4},	/* ARB7 */
+	{0,2,4, 0,3,4, 0,3,5, 0,2,5, 1,2,4, 1,3,4, 1,3,5, 1,2,5},	/* ARB8 */
+};
+
 /*	INTERSECT:
  *	Finds intersection point of three planes.
  *		The planes are at es_planes[type][loc] and
  *		the result is stored at "pos" in solid struct sp.
+ *
+ *  XXX replaced by rt_arb_3face_intersect().
  *
  *  Returns -
  *	 0	success
@@ -455,15 +457,43 @@ struct solidrec *sp;
 
 	j = type - 4;
 
-	i1 = arb_planes[j][loc];
-	i2 = arb_planes[j][loc+1];
-	i3 = arb_planes[j][loc+2];
+	i1 = rt_arb_planes[j][loc];
+	i2 = rt_arb_planes[j][loc+1];
+	i3 = rt_arb_planes[j][loc+2];
 
 	if( rt_mkpoint_3planes( vec1, es_peqn[i1], es_peqn[i2],
 	    es_peqn[i3] ) < 0 )
 		return(1);
 	VMOVE( &sp->s_values[pos*3], vec1 );	/* XXX type conversion too */
 	return( 0 );
+}
+
+/*
+ *			R T _ A R B _ 3 F A C E _ I N T E R S E C T
+ *
+ *	Finds the intersection point of three faces of an ARB.
+ *
+ *  Returns -
+ *	  0	success
+ *	 -1	failure
+ */
+int
+rt_arb_3face_intersect( point, planes, type, loc )
+point_t			point;
+plane_t			planes[6];
+int			type;		/* 4..8 */
+int			loc;
+{
+	int	j;
+	int	i1, i2, i3;
+
+	j = type - 4;
+
+	i1 = rt_arb_planes[j][loc];
+	i2 = rt_arb_planes[j][loc+1];
+	i3 = rt_arb_planes[j][loc+2];
+
+	return rt_mkpoint_3planes( point, planes[i1], planes[i2], planes[i3] );
 }
 
 /*  MV_EDGE:
