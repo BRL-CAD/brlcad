@@ -108,7 +108,13 @@ int	width, height;
 	short x_pos, y_pos;	/* Lower corner of viewport */
 	register int i;
 	
+	noport();
 	gbegin();		/* not ginit() */
+	if( ismex() )  {
+		fb_log("libfb can't run under MEX\n");
+		(void)sgi_dclose(ifp);
+		return(-1);
+	}
 	RGBmode();
 	gconfig();
 	if( getplanes() < 24 )  {
