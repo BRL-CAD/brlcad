@@ -55,7 +55,7 @@ LIB_RUNTIME_DIR =	$(exec_prefix)/lib
 BIN_INSTALL_DIR =	$(INSTALL_ROOT)$(exec_prefix)/bin
 
 # Directory in which to install the include file itk.h:
-INCLUDE_INSTALL_DIR =	$(INSTALL_ROOT)$(prefix)/include
+INCLUDE_INSTALL_DIR =	$(INSTALL_ROOT)$(prefix)/include/brlcad
 
 # Top-level directory for manual entries:
 MAN_INSTALL_DIR =	$(INSTALL_ROOT)$(prefix)/man
