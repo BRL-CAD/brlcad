@@ -18,9 +18,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+
+#ifndef SYSV
+# include <sys/ioctl.h>
+# include <sys/time.h>
+# include <sys/resource.h>
+#endif
 
 #undef	VMIN
 #include "machine.h"
@@ -156,7 +159,6 @@ int argc;
 char **argv;
 {
 	register int	n;
-	struct timeval	nowait;
 	auto int	ibits;
 
 	if( argc < 2 )  {
@@ -197,25 +199,6 @@ char **argv;
 		exit(1);
 	}
 	if( !debug )  {
-		/* Close off the world */
-		fclose(stdin);
-		fclose(stdout);
-		fclose(stderr);
-
-		for( n=0; n < 20; n++ )
-			if( n != pcsrv->pkc_fd )
-				(void)close(n);
-		(void)open("/dev/null", 0);	/* to fd 0 */
-		(void)dup(0);			/* to fd 1 */
-		(void)dup(0);			/* to fd 2 */
-#ifndef SYSV
-		n = open("/dev/tty", 2);
-		if (n > 0) {
-			ioctl(n, TIOCNOTTY, 0);
-			close(n);
-		}
-#endif SYSV
-
 		/* A fresh process */
 		if (fork())
 			exit(0);
@@ -228,24 +211,40 @@ char **argv;
 #ifndef SYSV
 		(void)setpriority( PRIO_PROCESS, getpid(), 20 );
 #endif
+
+		/* Close off the world */
+		fclose(stdin);
+		fclose(stdout);
+		fclose(stderr);
+
+		(void)close(0);
+		(void)close(1);
+		(void)close(2);
+
+		/* For stdio & perror safety, reopen 0,1,2 */
+		(void)open("/dev/null", 0);	/* to fd 0 */
+		(void)dup(0);			/* to fd 1 */
+		(void)dup(0);			/* to fd 2 */
+
+#ifndef SYSV
+		n = open("/dev/tty", 2);
+		if (n >= 0) {
+			(void)ioctl(n, TIOCNOTTY, 0);
+			(void)close(n);
+		}
+#endif SYSV
 	}
 
 	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
-	nowait.tv_sec = 0;
-	nowait.tv_usec = 0;
 
 	for(;;)  {
 		register struct list	*lp;
 
 		ibits = 1 << pcsrv->pkc_fd;
-		n = select(32, (char *)&ibits, (char *)0, (char *)0,
-			WorkHead.li_forw != &WorkHead ? 
-				&nowait : (struct timeval *)0 );
-		if( n < 0 )  {
-			perror("select");
-			rt_log("select failure\n");
-			exit(9);
-		}
+		/* Use library routine from libsysv */
+		ibits = bsdselect( ibits, 
+			WorkHead.li_forw != &WorkHead ? 0 : 9999,
+			0 );
 		if( ibits )  {
 			if( pkg_get(pcsrv) < 0 )
 				break;
