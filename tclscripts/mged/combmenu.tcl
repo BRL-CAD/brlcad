@@ -27,9 +27,9 @@ check_externs "_mged_x _mged_press"
 
 proc build_comb_menu_all {} {
     global player_screen
+    global mged_players
     global mged_mouse_behavior
     global mouse_behavior
-    global mged_active_dm
     global mged_edit_menu
 
     set win [winset]
@@ -53,22 +53,17 @@ proc build_comb_menu_all {} {
     set combs [build_comb_list $paths]
     build_comb_menu $id $combs
 
-#    if {$mouse_behavior == "c" || \
-#	    $mouse_behavior == "o" || \
-#	    $mouse_behavior == "s"} {
-#	set mouse_behavior d
-#	if {[info exists mged_active_dm($id)] && $win == $mged_active_dm($id)} {
-#	    set mged_mouse_behavior($id) d
-#	    set tmp ""
-#	}
-#    }
+    mged_apply_all "set mouse_behavior d"
+    foreach id $mged_players {
+	set mged_mouse_behavior($id) d
+    }
 }
 
 proc ray_build_comb_menu { x y } {
     global player_screen
+    global mged_players
     global mged_mouse_behavior
     global mouse_behavior
-    global mged_active_dm
     global mged_edit_menu
 
     set win [winset]
@@ -86,15 +81,10 @@ proc ray_build_comb_menu { x y } {
     set combs [build_comb_list $paths]
     build_comb_menu $id $combs
 
-#    if {$mouse_behavior == "c" || \
-#	    $mouse_behavior == "o" || \
-#	    $mouse_behavior == "s"} {
-#	set mouse_behavior d
-#	if {[info exists mged_active_dm($id)] && $win == $mged_active_dm($id)} {
-#	    set mged_mouse_behavior($id) d
-#	    set tmp ""
-#	}
-#    }
+    mged_apply_all "set mouse_behavior d"
+    foreach id $mged_players {
+	set mged_mouse_behavior($id) d
+    }
 }
 
 proc build_comb_menu { id combs } {
@@ -122,10 +112,18 @@ proc build_comb_menu { id combs } {
     create_listbox $top $screen Combination $combs "destroy $top"
     set mged_edit_menu($id) $top
 
-    bind_listbox $top "<ButtonPress-1>" "comb_illum %W %x %y"
-    bind_listbox $top "<Double-1>" "set comb_name($id) \[%W get @%x,%y\];\
-	    comb_load_defaults $id; destroy $top"
-    bind_listbox $top "<ButtonRelease-1>" "%W selection clear 0 end; _mged_press reject"
+    bind_listbox $top "<ButtonPress-1>"\
+	    "set comb \[%W get @%x,%y\];\
+	    set spath \[comb_get_solid_path \$comb\];\
+	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
+	    matrix_illum \$spath \$path_pos"
+    bind_listbox $top "<Double-1>"\
+	    "set comb_name($id) \[%W get @%x,%y\];\
+	    comb_load_defaults $id;\
+	    destroy $top"
+    bind_listbox $top "<ButtonRelease-1>"\
+	    "%W selection clear 0 end;\
+	    _mged_press reject"
 }
 
 proc build_comb_list { paths } {
@@ -151,4 +149,25 @@ proc build_comb_list { paths } {
     }
 
     return $combs
+}
+
+proc comb_get_solid_path { comb } {
+    set paths [_mged_x -1]
+
+    if {[llength $paths] == 0} {
+	return ""
+    }
+
+    set path_index [lsearch $paths *$comb*]
+    set spath [lindex $paths $path_index]
+
+    return $spath
+}
+
+proc comb_get_path_pos { spath comb } {
+    regexp "\[^/\].*" $spath match
+    set path_components [split $match /]
+    set path_pos [lsearch -exact $path_components $comb]
+
+    return $path_pos
 }
