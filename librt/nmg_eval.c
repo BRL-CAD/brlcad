@@ -378,6 +378,7 @@ struct nmg_ptbl class_table[];
 		actions = intersect_actions;
 		break;
 	default:
+		actions = union_actions;	/* shut up lint */
 		rt_log("ERROR nmg_evaluate_boolean() op=%d.\n", op);
 		rt_bomb("bad boolean\n");
 	}
