@@ -617,6 +617,9 @@ CONST struct rt_tol	*tol;
 		/* If this face processed before, skip on */
 		if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
 
+		/* Mark this face as having been processed */
+		NMG_INDEX_SET(faces_seen, fu->f_p);
+
 		/* Only consider the outward pointing faceuses */
 		if( fu->orientation != OT_SAME )  continue;
 
