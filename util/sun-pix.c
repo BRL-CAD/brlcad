@@ -182,6 +182,8 @@ char **argv;
 	}
 
 	if( !pure )  {
+		register long nbits;
+
 		fread( inbuf, sizeof(struct rasterfile), 1, fp );
 
 		header.ras_magic = getlong( &inbuf[NET_LONG_LEN*0] );
@@ -199,6 +201,11 @@ char **argv;
 				header.ras_magic, RAS_MAGIC );
 			exit(1);
 		}
+
+		/* Width is rounded up to next multiple of 16 bits */
+		nbits = header.ras_width * header.ras_depth;
+		nbits = (nbits + 15) & ~15;
+		header.ras_width = nbits / header.ras_depth;
 
 		if(verbose)  {
 			fprintf( stderr, 
