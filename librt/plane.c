@@ -31,6 +31,9 @@ RT_EXTERN(double	rt_dist_pt3_along_line3, (CONST point_t	p,
 			CONST vect_t d, CONST point_t x));
 RT_EXTERN(double	rt_dist_pt2_along_line2, (CONST point_t p,
 			CONST vect_t d, CONST point_t x));
+RT_EXTERN(double	rt_distsq_line3_pt3, (CONST point_t pt,
+			CONST vect_t dir, CONST point_t a));
+
 /* XXX move to vmath.h */
 #define V2PRINT(a,b)	\
 	rt_log("%s (%g, %g)\n", a, V2ARGS(b) );
