@@ -2076,6 +2076,7 @@ union tree *	(*leaf_func)();
 	/*
 	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
 	 */
+	if( bu_is_parallel() )  bu_bomb("db_walk_tree() invoked inside parallel section.\n");
 	/* Export some state to read-only static variables */
 	db_reg_trees = reg_trees;
 	db_reg_count = new_reg_count;
