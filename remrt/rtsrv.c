@@ -864,7 +864,7 @@ char *str;
 
 	if(debug)  fprintf(stderr,"\n%s\n", str);
 	fflush(stderr);
-	if( rt_g.debug || rt_g.NMG_debug )
+	if( rt_g.debug || rt_g.NMG_debug || debug )
 		abort();	/* should dump */
 	exit(12);
 }
