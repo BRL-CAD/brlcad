@@ -516,7 +516,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
   prob_ref= MaxFloat(color[0]+spec[0],color[1]+spec[1],color[2]+spec[2]);
   prob_diff= ((color[0]+color[1]+color[2])/(color[0]+color[1]+color[2]+spec[0]+spec[1]+spec[2]))*prob_ref;
   prob_spec= prob_ref - prob_diff;
-#ifdef WIN32
+#ifndef HAVE_DRAND48
   prob= rand()/(double)RAND_MAX;
 #else
   prob= drand48();
@@ -659,7 +659,7 @@ void EmitImportonsRandom(struct application *ap, point_t eye_pos) {
   while (PMap[PM_IMPORTANCE] -> StoredPhotons < PMap[PM_IMPORTANCE] -> MaxPhotons) {
     do {
       /* Set Ray Direction to application ptr */
-#ifdef WIN32
+#ifndef HAVE_DRAND48
       ap -> a_ray.r_dir[0]= 2.0*rand()/(double)RAND_MAX-1.0;
       ap -> a_ray.r_dir[1]= 2.0*rand()/(double)RAND_MAX-1.0;
       ap -> a_ray.r_dir[2]= 2.0*rand()/(double)RAND_MAX-1.0;
@@ -712,7 +712,7 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
       do {
 /*      do {*/
         /* Set Ray Direction to application ptr */
-#ifdef WIN32
+#ifndef HAVE_DRAND48
 	ap -> a_ray.r_dir[0]= 2.0*rand()/(double)RAND_MAX-1.0;
 	ap -> a_ray.r_dir[1]= 2.0*rand()/(double)RAND_MAX-1.0;
 	ap -> a_ray.r_dir[2]= 2.0*rand()/(double)RAND_MAX-1.0;
@@ -835,7 +835,7 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
   P -> Irrad[0]= P -> Irrad[1]= P -> Irrad[2]= 0.0;
   for (i= 1; i <= M; i++) {
     for (j= 1; j <= N; j++) {
-#ifdef WIN32
+#ifndef HAVE_DRAND48
       theta= asin(sqrt((j-rand()/(double)RAND_MAX)/M));
       phi= (2*M_PI)*((i-rand()/(double)RAND_MAX)/N);
 #else
@@ -1046,7 +1046,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 
     PInit= 1;
 
-#ifdef WIN32
+#ifndef HAVE_SRAND48
     srand(RandomSeed);
 #else
     srand48(RandomSeed);
