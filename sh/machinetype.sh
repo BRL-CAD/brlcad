@@ -131,6 +131,14 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
+#if defined(NeXT)
+#	undef	next
+	MACHINE=next
+	UNIXTYPE=BSD;
+	HAS_TCP=1;
+	HAS_SYMLINKS=1;
+#endif
+
 #if defined(apollo)
 #	undef	apollo
 	MACHINE=apollo;
