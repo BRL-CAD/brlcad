@@ -139,7 +139,7 @@ genptr_t	client_data;
 		if( comb_func )
 			comb_func( dbip, dp, client_data );
 
-	} else if( dp->d_flags & DIR_SOLID )  {
+	} else if( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
 		if( leaf_func )
 			leaf_func( dbip, dp, client_data );
 	} else {
