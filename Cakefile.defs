@@ -884,7 +884,8 @@ set -S2 "/bin/sh"
 #	define	XMGED_OBJS	dm-X
 #	define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I''XINCDIR -I/usr/dt/include
 #	define	XMGED_LIBES	-L/usr/dt/lib -R/usr/dt/lib -lXm \
-				-L''XLIBDIR -R''XLIBDIR -lXt -lXi -lXext -lX11 -ll
+				-L''XLIBDIR -R''XLIBDIR -lXt -lXi -lXext \
+				-lX11 -ll -lnsl -lsocket
 
 #endif
 
