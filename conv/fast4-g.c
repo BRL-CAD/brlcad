@@ -142,8 +142,18 @@ void make_solid_name();
 				make_region_name( name , g_id , c_id , e_id , type ); \
 				if( debug ) \
 					bu_log( "Making region: %s\n", name ); \
-				mk_lrcomb( fp , name , headp , 1 ,\
-					(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
+				if( mode == 1 )\
+					mk_fastgen_region( fp , name , headp , 'P' ,\
+						(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
+				else if( mode == 2 )\
+					mk_fastgen_region( fp , name , headp , 'V' ,\
+						(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
+				else\
+				{\
+					bu_log( "Illegal mode (%d), while trying to make region (%s)\n",\
+						mode, name );\
+					bu_log( "\tRegion not made!!!!!\n");\
+				}\
 			}
 
 #define	PUSH( ptr )	bu_ptbl_ins( &stack , (long *)ptr )
