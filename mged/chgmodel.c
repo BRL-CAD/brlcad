@@ -604,6 +604,7 @@ char	**argv;
 	register struct directory *dp;
 	register int i, j, k;
 	struct rt_db_internal	internal;
+	int			id;
 	mat_t mirmat;
 	mat_t temp;
 	int ngran;
@@ -631,478 +632,459 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( proto->d_flags & DIR_SOLID )
+	id = rt_db_get_internal( &internal, proto, dbip, NULL );
+	if( id < 0 )  {
+	  Tcl_AppendResult(interp, "f_mirror(", argv[1], argv[2],
+		   "):  solid import failure\n", (char *)NULL);
+	  return TCL_ERROR;				/* FAIL */
+	}
+	RT_CK_DB_INTERNAL( &internal );
+
+	/* Build mirror transform matrix, for those who need it. */
+	bn_mat_idn( mirmat );
+	mirmat[k*5] = -1.0;
+
+	switch( id )
 	{
-		int			id;
-
-		id = rt_db_get_internal( &internal, proto, dbip, NULL );
-		if( id < 0 )  {
-		  Tcl_AppendResult(interp, "f_mirror(", argv[1], argv[2],
-			   "):  solid import failure\n", (char *)NULL);
-		  return TCL_ERROR;				/* FAIL */
-		}
-		RT_CK_DB_INTERNAL( &internal );
-
-		switch( id )
+		case ID_TOR:
 		{
-			case ID_TOR:
-			{
-				struct rt_tor_internal *tor;
+			struct rt_tor_internal *tor;
 
-				tor = (struct rt_tor_internal *)internal.idb_ptr;
-				RT_TOR_CK_MAGIC( tor );
+			tor = (struct rt_tor_internal *)internal.idb_ptr;
+			RT_TOR_CK_MAGIC( tor );
 
-				tor->v[k] *= -1.0;
-				tor->h[k] *= -1.0;
+			tor->v[k] *= -1.0;
+			tor->h[k] *= -1.0;
 
-				break;
-			}
-			case ID_TGC:
-			case ID_REC:
-			{
-				struct rt_tgc_internal *tgc;
+			break;
+		}
+		case ID_TGC:
+		case ID_REC:
+		{
+			struct rt_tgc_internal *tgc;
 
-				tgc = (struct rt_tgc_internal *)internal.idb_ptr;
-				RT_TGC_CK_MAGIC( tgc );
+			tgc = (struct rt_tgc_internal *)internal.idb_ptr;
+			RT_TGC_CK_MAGIC( tgc );
 
-				tgc->v[k] *= -1.0;
-				tgc->h[k] *= -1.0;
-				tgc->a[k] *= -1.0;
-				tgc->b[k] *= -1.0;
-				tgc->c[k] *= -1.0;
-				tgc->d[k] *= -1.0;
+			tgc->v[k] *= -1.0;
+			tgc->h[k] *= -1.0;
+			tgc->a[k] *= -1.0;
+			tgc->b[k] *= -1.0;
+			tgc->c[k] *= -1.0;
+			tgc->d[k] *= -1.0;
 
-				break;
-			}
-			case ID_ELL:
-			case ID_SPH:
-			{
-				struct rt_ell_internal *ell;
+			break;
+		}
+		case ID_ELL:
+		case ID_SPH:
+		{
+			struct rt_ell_internal *ell;
 
-				ell = (struct rt_ell_internal *)internal.idb_ptr;
-				RT_ELL_CK_MAGIC( ell );
+			ell = (struct rt_ell_internal *)internal.idb_ptr;
+			RT_ELL_CK_MAGIC( ell );
 
-				ell->v[k] *= -1.0;
-				ell->a[k] *= -1.0;
-				ell->b[k] *= -1.0;
-				ell->c[k] *= -1.0;
+			ell->v[k] *= -1.0;
+			ell->a[k] *= -1.0;
+			ell->b[k] *= -1.0;
+			ell->c[k] *= -1.0;
 
-				break;
-			}
-			case ID_ARB8:
-			{
-				struct rt_arb_internal *arb;
+			break;
+		}
+		case ID_ARB8:
+		{
+			struct rt_arb_internal *arb;
 
-				arb = (struct rt_arb_internal *)internal.idb_ptr;
-				RT_ARB_CK_MAGIC( arb );
+			arb = (struct rt_arb_internal *)internal.idb_ptr;
+			RT_ARB_CK_MAGIC( arb );
 
-				for( i=0 ; i<8 ; i++ )
-					arb->pt[i][k] *= -1.0;
-				break;
-			}
-			case ID_HALF:
-			{
-				struct rt_half_internal *haf;
+			for( i=0 ; i<8 ; i++ )
+				arb->pt[i][k] *= -1.0;
+			break;
+		}
+		case ID_HALF:
+		{
+			struct rt_half_internal *haf;
 
-				haf = (struct rt_half_internal *)internal.idb_ptr;
+			haf = (struct rt_half_internal *)internal.idb_ptr;
                                 RT_HALF_CK_MAGIC( haf );
 
-				haf->eqn[k] *= -1.0;
+			haf->eqn[k] *= -1.0;
 
-				break;
-			}
-			case ID_GRIP:
+			break;
+		}
+		case ID_GRIP:
+		{
+			struct rt_grip_internal *grp;
+
+			grp = (struct rt_grip_internal *)internal.idb_ptr;
+			RT_GRIP_CK_MAGIC( grp );
+
+			grp->center[k] *= -1.0;
+			grp->normal[k] *= -1.0;
+
+			break;
+		}
+		case ID_POLY:
+		{
+			struct rt_pg_internal *pg;
+			fastf_t *verts;
+			fastf_t *norms;
+
+			pg = (struct rt_pg_internal *)internal.idb_ptr;
+			RT_PG_CK_MAGIC( pg );
+
+			verts = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "f_mirror: verts" );
+			norms = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "f_mirror: norms" );
+
+			for( i=0 ; i<pg->npoly ; i++ )
 			{
-				struct rt_grip_internal *grp;
+				int last;
 
-				grp = (struct rt_grip_internal *)internal.idb_ptr;
-				RT_GRIP_CK_MAGIC( grp );
-
-				grp->center[k] *= -1.0;
-				grp->normal[k] *= -1.0;
-
-				break;
-			}
-			case ID_POLY:
-			{
-				struct rt_pg_internal *pg;
-				fastf_t *verts;
-				fastf_t *norms;
-
-				pg = (struct rt_pg_internal *)internal.idb_ptr;
-				RT_PG_CK_MAGIC( pg );
-
-				verts = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "f_mirror: verts" );
-				norms = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "f_mirror: norms" );
-
-				for( i=0 ; i<pg->npoly ; i++ )
+				last = (pg->poly[i].npts - 1)*3;
+				/* mirror coords and temporarily store in reverse order */
+				for( j=0 ; j<pg->poly[i].npts*3 ; j += 3 )
 				{
-					int last;
-
-					last = (pg->poly[i].npts - 1)*3;
-					/* mirror coords and temporarily store in reverse order */
-					for( j=0 ; j<pg->poly[i].npts*3 ; j += 3 )
-					{
-						pg->poly[i].verts[j+k] *= -1.0;
-						VMOVE( &verts[last-j], &pg->poly[i].verts[j] )
-						pg->poly[i].norms[j+k] *= -1.0;
-						VMOVE( &norms[last-j], &pg->poly[i].norms[j] )
-					}
-
-					/* write back mirrored and reversed face loop */
-					for( j=0 ; j<pg->poly[i].npts*3 ; j += 3 )
-					{
-						VMOVE( &pg->poly[i].norms[j], &norms[j] )
-						VMOVE( &pg->poly[i].verts[j], &verts[j] )
-					}
+					pg->poly[i].verts[j+k] *= -1.0;
+					VMOVE( &verts[last-j], &pg->poly[i].verts[j] )
+					pg->poly[i].norms[j+k] *= -1.0;
+					VMOVE( &norms[last-j], &pg->poly[i].norms[j] )
 				}
 
-				bu_free( (char *)verts, "f_mirror: verts" );
-				bu_free( (char *)norms, "f_mirror: norms" );
-
-				break;
-			}
-			case ID_BSPLINE:
-			{
-				struct rt_nurb_internal *nurb;
-
-				nurb = (struct rt_nurb_internal *)internal.idb_ptr;
-				RT_NURB_CK_MAGIC( nurb );
-
-				for( i=0 ; i<nurb->nsrf ; i++ )
+				/* write back mirrored and reversed face loop */
+				for( j=0 ; j<pg->poly[i].npts*3 ; j += 3 )
 				{
-					fastf_t *ptr;
-					int tmp;
-					int orig_size[2];
-					int ncoords;
-					int m;
-					int l;
-
-					/* swap knot vetcors between u and v */
-					ptr = nurb->srfs[i]->u.knots;
-					tmp = nurb->srfs[i]->u.k_size;
-
-					nurb->srfs[i]->u.knots = nurb->srfs[i]->v.knots;
-					nurb->srfs[i]->u.k_size = nurb->srfs[i]->v.k_size;
-					nurb->srfs[i]->v.knots = ptr;
-					nurb->srfs[i]->v.k_size = tmp;
-
-					/* swap order */
-					tmp = nurb->srfs[i]->order[0];
-					nurb->srfs[i]->order[0] = nurb->srfs[i]->order[1];
-					nurb->srfs[i]->order[1] = tmp;
-
-					/* swap mesh size */
-					orig_size[0] = nurb->srfs[i]->s_size[0];
-					orig_size[1] = nurb->srfs[i]->s_size[1];
-
-					nurb->srfs[i]->s_size[0] = orig_size[1];
-					nurb->srfs[i]->s_size[1] = orig_size[0];
-
-					/* allocat memory for a new control mesh */
-					ncoords = RT_NURB_EXTRACT_COORDS( nurb->srfs[i]->pt_type );
-					ptr = (fastf_t *)bu_calloc( orig_size[0]*orig_size[1]*ncoords, sizeof( fastf_t ), "f_mirror: ctl mesh ptr" );
-
-					/* mirror each control point */
-					for( j=0 ; j<orig_size[0]*orig_size[1] ; j++ )
-						nurb->srfs[i]->ctl_points[j*ncoords+k] *= -1.0;
-
-					/* copy mirrored control points into new mesh
-					 * while swaping u and v */
-					m = 0;
-					for( j=0 ; j<orig_size[0] ; j++ )
-					{
-						for( l=0 ; l<orig_size[1] ; l++ )
-						{
-							VMOVEN( &ptr[(l*orig_size[0]+j)*ncoords], &nurb->srfs[i]->ctl_points[m*ncoords], ncoords )
-							m++;
-						}
-					}
-
-					/* free old mesh */
-					bu_free( (char *)nurb->srfs[i]->ctl_points , "f_mirror: ctl points" );
-
-					/* put new mesh in place */
-					nurb->srfs[i]->ctl_points = ptr;
+					VMOVE( &pg->poly[i].norms[j], &norms[j] )
+					VMOVE( &pg->poly[i].verts[j], &verts[j] )
 				}
-
-				break;
 			}
-			case ID_ARBN:
+
+			bu_free( (char *)verts, "f_mirror: verts" );
+			bu_free( (char *)norms, "f_mirror: norms" );
+
+			break;
+		}
+		case ID_BSPLINE:
+		{
+			struct rt_nurb_internal *nurb;
+
+			nurb = (struct rt_nurb_internal *)internal.idb_ptr;
+			RT_NURB_CK_MAGIC( nurb );
+
+			for( i=0 ; i<nurb->nsrf ; i++ )
 			{
-				struct rt_arbn_internal *arbn;
+				fastf_t *ptr;
+				int tmp;
+				int orig_size[2];
+				int ncoords;
+				int m;
+				int l;
 
-				arbn = (struct rt_arbn_internal *)internal.idb_ptr;
-				RT_ARBN_CK_MAGIC( arbn );
+				/* swap knot vetcors between u and v */
+				ptr = nurb->srfs[i]->u.knots;
+				tmp = nurb->srfs[i]->u.k_size;
 
-				for( i=0 ; i<arbn->neqn ; i++ )
-					arbn->eqn[i][k] *= -1.0;
+				nurb->srfs[i]->u.knots = nurb->srfs[i]->v.knots;
+				nurb->srfs[i]->u.k_size = nurb->srfs[i]->v.k_size;
+				nurb->srfs[i]->v.knots = ptr;
+				nurb->srfs[i]->v.k_size = tmp;
 
-				break;
-			}
-			case ID_PIPE:
-			{
-				struct rt_pipe_internal *pipe;
-				struct wdb_pipept *ps;
+				/* swap order */
+				tmp = nurb->srfs[i]->order[0];
+				nurb->srfs[i]->order[0] = nurb->srfs[i]->order[1];
+				nurb->srfs[i]->order[1] = tmp;
 
-				pipe = (struct rt_pipe_internal *)internal.idb_ptr;
-				RT_PIPE_CK_MAGIC( pipe );
+				/* swap mesh size */
+				orig_size[0] = nurb->srfs[i]->s_size[0];
+				orig_size[1] = nurb->srfs[i]->s_size[1];
 
-				for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
-					ps->pp_coord[k] *= -1.0;
+				nurb->srfs[i]->s_size[0] = orig_size[1];
+				nurb->srfs[i]->s_size[1] = orig_size[0];
 
-				break;
-			}
-			case ID_PARTICLE:
-			{
-				struct rt_part_internal *part;
+				/* allocat memory for a new control mesh */
+				ncoords = RT_NURB_EXTRACT_COORDS( nurb->srfs[i]->pt_type );
+				ptr = (fastf_t *)bu_calloc( orig_size[0]*orig_size[1]*ncoords, sizeof( fastf_t ), "f_mirror: ctl mesh ptr" );
 
-				part = (struct rt_part_internal *)internal.idb_ptr;
-				RT_PART_CK_MAGIC( part );
+				/* mirror each control point */
+				for( j=0 ; j<orig_size[0]*orig_size[1] ; j++ )
+					nurb->srfs[i]->ctl_points[j*ncoords+k] *= -1.0;
 
-				part->part_V[k] *= -1.0;
-				part->part_H[k] *= -1.0;
-
-				break;
-			}
-			case ID_RPC:
-			{
-				struct rt_rpc_internal *rpc;
-
-				rpc = (struct rt_rpc_internal *)internal.idb_ptr;
-				RT_RPC_CK_MAGIC( rpc );
-
-				rpc->rpc_V[k] *= -1.0;
-				rpc->rpc_H[k] *= -1.0;
-				rpc->rpc_B[k] *= -1.0;
-
-				break;
-			}
-			case ID_RHC:
-			{
-				struct rt_rhc_internal *rhc;
-
-				rhc = (struct rt_rhc_internal *)internal.idb_ptr;
-				RT_RHC_CK_MAGIC( rhc );
-
-				rhc->rhc_V[k] *= -1.0;
-				rhc->rhc_H[k] *= -1.0;
-				rhc->rhc_B[k] *= -1.0;
-
-				break;
-			}
-			case ID_EPA:
-			{
-				struct rt_epa_internal *epa;
-
-				epa = (struct rt_epa_internal *)internal.idb_ptr;
-				RT_EPA_CK_MAGIC( epa );
-
-				epa->epa_V[k] *= -1.0;
-				epa->epa_H[k] *= -1.0;
-				epa->epa_Au[k] *= -1.0;
-
-				break;
-			}
-			case ID_ETO:
-			{
-				struct rt_eto_internal *eto;
-
-				eto = (struct rt_eto_internal *)internal.idb_ptr;
-				RT_ETO_CK_MAGIC( eto );
-
-				eto->eto_V[k] *= -1.0;
-				eto->eto_N[k] *= -1.0;
-				eto->eto_C[k] *= -1.0;
-
-				break;
-			}
-			case ID_NMG:
-			{
-				struct model *m;
-				struct nmgregion *r;
-				struct shell *s;
-				struct bu_ptbl table;
-				struct vertex *v;
-
-				m = (struct model *)internal.idb_ptr;
-				NMG_CK_MODEL( m );
-
-				/* move every vertex */
-				nmg_vertex_tabulate( &table, &m->magic );
-				for( i=0 ; i<BU_PTBL_END( &table ) ; i++ )
+				/* copy mirrored control points into new mesh
+				 * while swaping u and v */
+				m = 0;
+				for( j=0 ; j<orig_size[0] ; j++ )
 				{
-					v = (struct vertex *)BU_PTBL_GET( &table, i );
-					NMG_CK_VERTEX( v );
-
-					v->vg_p->coord[k] *= -1.0;
-				}
-
-				bu_ptbl_reset( &table );
-
-				nmg_face_tabulate( &table, &m->magic );
-				for( i=0 ; i<BU_PTBL_END( &table ) ; i++ )
-				{
-					struct face *f;
-					struct face_g_plane *fg;
-
-					f = (struct face *)BU_PTBL_GET( &table, i );
-					NMG_CK_FACE( f );
-
-					if( !f->g.magic_p )
-						continue;
-
-					if( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
+					for( l=0 ; l<orig_size[1] ; l++ )
 					{
-						Tcl_AppendResult(interp, "Sorry, Can only mirror NMG solids with planar faces", (char *)0 );
-						bu_ptbl_free( &table );
-						rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-						return TCL_ERROR;
-					}
-
-					
-				}
-
-				for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
-					for( BU_LIST_FOR( s, shell, &r->s_hd ) )
-						nmg_invert_shell( s, &mged_tol );
-
-
-				for( i=0 ; i<BU_PTBL_END( &table ) ; i++ )
-				{
-					struct face *f;
-					struct face_g_plane *fg;
-					struct faceuse *fu;
-
-					f = (struct face *)BU_PTBL_GET( &table, i );
-					NMG_CK_FACE( f );
-
-					fu = f->fu_p;
-					if( fu->orientation != OT_SAME )
-						fu = fu->fumate_p;
-					if( fu->orientation != OT_SAME )
-					{
-						Tcl_AppendResult(interp, "nmg_calc_face_g() failed", (char *)0 );
-						bu_ptbl_free( &table );
-						rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-						return TCL_ERROR;
-					}
-
-					if( nmg_calc_face_g( fu ) )
-					{
-						Tcl_AppendResult(interp, "nmg_calc_face_g() failed", (char *)0 );
-						bu_ptbl_free( &table );
-						rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-						return TCL_ERROR;
+						VMOVEN( &ptr[(l*orig_size[0]+j)*ncoords], &nurb->srfs[i]->ctl_points[m*ncoords], ncoords )
+						m++;
 					}
 				}
 
-				bu_ptbl_free( &table );
-				nmg_rebound( m, &mged_tol );
+				/* free old mesh */
+				bu_free( (char *)nurb->srfs[i]->ctl_points , "f_mirror: ctl points" );
 
-				break;
+				/* put new mesh in place */
+				nurb->srfs[i]->ctl_points = ptr;
 			}
-			case ID_ARS:
+
+			break;
+		}
+		case ID_ARBN:
+		{
+			struct rt_arbn_internal *arbn;
+
+			arbn = (struct rt_arbn_internal *)internal.idb_ptr;
+			RT_ARBN_CK_MAGIC( arbn );
+
+			for( i=0 ; i<arbn->neqn ; i++ )
+				arbn->eqn[i][k] *= -1.0;
+
+			break;
+		}
+		case ID_PIPE:
+		{
+			struct rt_pipe_internal *pipe;
+			struct wdb_pipept *ps;
+
+			pipe = (struct rt_pipe_internal *)internal.idb_ptr;
+			RT_PIPE_CK_MAGIC( pipe );
+
+			for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
+				ps->pp_coord[k] *= -1.0;
+
+			break;
+		}
+		case ID_PARTICLE:
+		{
+			struct rt_part_internal *part;
+
+			part = (struct rt_part_internal *)internal.idb_ptr;
+			RT_PART_CK_MAGIC( part );
+
+			part->part_V[k] *= -1.0;
+			part->part_H[k] *= -1.0;
+
+			break;
+		}
+		case ID_RPC:
+		{
+			struct rt_rpc_internal *rpc;
+
+			rpc = (struct rt_rpc_internal *)internal.idb_ptr;
+			RT_RPC_CK_MAGIC( rpc );
+
+			rpc->rpc_V[k] *= -1.0;
+			rpc->rpc_H[k] *= -1.0;
+			rpc->rpc_B[k] *= -1.0;
+
+			break;
+		}
+		case ID_RHC:
+		{
+			struct rt_rhc_internal *rhc;
+
+			rhc = (struct rt_rhc_internal *)internal.idb_ptr;
+			RT_RHC_CK_MAGIC( rhc );
+
+			rhc->rhc_V[k] *= -1.0;
+			rhc->rhc_H[k] *= -1.0;
+			rhc->rhc_B[k] *= -1.0;
+
+			break;
+		}
+		case ID_EPA:
+		{
+			struct rt_epa_internal *epa;
+
+			epa = (struct rt_epa_internal *)internal.idb_ptr;
+			RT_EPA_CK_MAGIC( epa );
+
+			epa->epa_V[k] *= -1.0;
+			epa->epa_H[k] *= -1.0;
+			epa->epa_Au[k] *= -1.0;
+
+			break;
+		}
+		case ID_ETO:
+		{
+			struct rt_eto_internal *eto;
+
+			eto = (struct rt_eto_internal *)internal.idb_ptr;
+			RT_ETO_CK_MAGIC( eto );
+
+			eto->eto_V[k] *= -1.0;
+			eto->eto_N[k] *= -1.0;
+			eto->eto_C[k] *= -1.0;
+
+			break;
+		}
+		case ID_NMG:
+		{
+			struct model *m;
+			struct nmgregion *r;
+			struct shell *s;
+			struct bu_ptbl table;
+			struct vertex *v;
+
+			m = (struct model *)internal.idb_ptr;
+			NMG_CK_MODEL( m );
+
+			/* move every vertex */
+			nmg_vertex_tabulate( &table, &m->magic );
+			for( i=0 ; i<BU_PTBL_END( &table ) ; i++ )
 			{
-				struct rt_ars_internal *ars;
-				fastf_t *tmp_curve;
+				v = (struct vertex *)BU_PTBL_GET( &table, i );
+				NMG_CK_VERTEX( v );
 
-				ars = (struct rt_ars_internal *)internal.idb_ptr;
-				RT_ARS_CK_MAGIC( ars );
+				v->vg_p->coord[k] *= -1.0;
+			}
 
-				/* mirror each vertex */
-				for( i=0 ; i<ars->ncurves ; i++ )
+			bu_ptbl_reset( &table );
+
+			nmg_face_tabulate( &table, &m->magic );
+			for( i=0 ; i<BU_PTBL_END( &table ) ; i++ )
+			{
+				struct face *f;
+				struct face_g_plane *fg;
+
+				f = (struct face *)BU_PTBL_GET( &table, i );
+				NMG_CK_FACE( f );
+
+				if( !f->g.magic_p )
+					continue;
+
+				if( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
 				{
-					for( j=0 ; j<ars->pts_per_curve ; j++ )
-						ars->curves[i][j*3+k] *= -1.0;
+					Tcl_AppendResult(interp, "Sorry, Can only mirror NMG solids with planar faces", (char *)0 );
+					bu_ptbl_free( &table );
+					rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
+					return TCL_ERROR;
 				}
 
-				/* now reverse order of vertices in each curve */
-				tmp_curve = (fastf_t *)bu_calloc( 3*ars->pts_per_curve, sizeof( fastf_t ), "f_mirror: tmp_curve" );
-				for( i=0 ; i<ars->ncurves ; i++ )
-				{
-					/* reverse vertex order */
-					for( j=0 ; j<ars->pts_per_curve ; j++ )
-						VMOVE( &tmp_curve[(ars->pts_per_curve-j-1)*3], &ars->curves[i][j*3] )
+				
+			}
 
-					/* now copy back */
-					bcopy( tmp_curve, ars->curves[i], ars->pts_per_curve*3*sizeof( fastf_t ) );
+			for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
+				for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+					nmg_invert_shell( s, &mged_tol );
+
+
+			for( i=0 ; i<BU_PTBL_END( &table ) ; i++ )
+			{
+				struct face *f;
+				struct face_g_plane *fg;
+				struct faceuse *fu;
+
+				f = (struct face *)BU_PTBL_GET( &table, i );
+				NMG_CK_FACE( f );
+
+				fu = f->fu_p;
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+				if( fu->orientation != OT_SAME )
+				{
+					Tcl_AppendResult(interp, "nmg_calc_face_g() failed", (char *)0 );
+					bu_ptbl_free( &table );
+					rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
+					return TCL_ERROR;
 				}
 
-				bu_free( (char *)tmp_curve, "f_mirror: tmp_curve" );
-
-				break;
+				if( nmg_calc_face_g( fu ) )
+				{
+					Tcl_AppendResult(interp, "nmg_calc_face_g() failed", (char *)0 );
+					bu_ptbl_free( &table );
+					rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
+					return TCL_ERROR;
+				}
 			}
-			case ID_EBM:
+
+			bu_ptbl_free( &table );
+			nmg_rebound( m, &mged_tol );
+
+			break;
+		}
+		case ID_ARS:
+		{
+			struct rt_ars_internal *ars;
+			fastf_t *tmp_curve;
+
+			ars = (struct rt_ars_internal *)internal.idb_ptr;
+			RT_ARS_CK_MAGIC( ars );
+
+			/* mirror each vertex */
+			for( i=0 ; i<ars->ncurves ; i++ )
 			{
-				struct rt_ebm_internal *ebm;
-
-				ebm = (struct rt_ebm_internal *)internal.idb_ptr;
-				RT_EBM_CK_MAGIC( ebm );
-
-				MAT_IDN( mirmat )
-				mirmat[k*5] = -1.0;
-				bn_mat_mul( temp, mirmat, ebm->mat );
-				MAT_COPY( ebm->mat, temp )
-
-				break;
+				for( j=0 ; j<ars->pts_per_curve ; j++ )
+					ars->curves[i][j*3+k] *= -1.0;
 			}
-			case ID_VOL:
+
+			/* now reverse order of vertices in each curve */
+			tmp_curve = (fastf_t *)bu_calloc( 3*ars->pts_per_curve, sizeof( fastf_t ), "f_mirror: tmp_curve" );
+			for( i=0 ; i<ars->ncurves ; i++ )
 			{
-				struct rt_vol_internal *vol;
+				/* reverse vertex order */
+				for( j=0 ; j<ars->pts_per_curve ; j++ )
+					VMOVE( &tmp_curve[(ars->pts_per_curve-j-1)*3], &ars->curves[i][j*3] )
 
-				vol = (struct rt_vol_internal *)internal.idb_ptr;
-				RT_VOL_CK_MAGIC( vol );
-
-
-				MAT_IDN( mirmat )
-				mirmat[k*5] = -1.0;
-				bn_mat_mul( temp, mirmat, vol->mat );
-				MAT_COPY( vol->mat, temp )
-
-				break;
+				/* now copy back */
+				bcopy( tmp_curve, ars->curves[i], ars->pts_per_curve*3*sizeof( fastf_t ) );
 			}
-			default:
-			{
-				rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-				Tcl_AppendResult(interp, "Cannot mirror this solid type\n", (char *)NULL);
-				return TCL_ERROR;
-			}
-		}
 
-		/* no interuprts */
-		(void)signal( SIGINT, SIG_IGN );
+			bu_free( (char *)tmp_curve, "f_mirror: tmp_curve" );
 
-		if( (dp = db_diradd( dbip, argv[2], -1L, 0, DIR_SOLID)) == DIR_NULL )  {
-		    	TCL_ALLOC_ERR_return;
+			break;
 		}
-		if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {
-			TCL_WRITE_ERR_return;
-		}
-	} else if( proto->d_flags & DIR_COMB ) {
-		struct rt_comb_internal	*comb;
+		case ID_EBM:
+		{
+			struct rt_ebm_internal *ebm;
 
-		/* XXX should be able to use rt_db_get_internal() as above */
-		if( rt_get_comb( &internal, proto, (mat_t *)NULL, dbip ) < 0 )  {
-			Tcl_AppendResult(interp, "rt_get_comb(", proto->d_namep,
-				") failure", (char *)NULL );
-			TCL_READ_ERR_return;
-		}
-		comb = (struct rt_comb_internal *)internal.idb_ptr;
-		bn_mat_idn( mirmat );
-		mirmat[k*5] = -1.0;
-		if( comb->tree )
-			db_tree_mul_dbleaf( comb->tree, mirmat );
+			ebm = (struct rt_ebm_internal *)internal.idb_ptr;
+			RT_EBM_CK_MAGIC( ebm );
 
-		if( (dp = db_diradd( dbip, argv[2], -1, 0, proto->d_flags ) ) == DIR_NULL )  {
-			TCL_ALLOC_ERR_return;
+			bn_mat_mul( temp, mirmat, ebm->mat );
+			bn_mat_copy( ebm->mat, temp );
+
+			break;
 		}
-		if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {
-			TCL_WRITE_ERR_return;
+		case ID_VOL:
+		{
+			struct rt_vol_internal *vol;
+
+			vol = (struct rt_vol_internal *)internal.idb_ptr;
+			RT_VOL_CK_MAGIC( vol );
+
+			bn_mat_mul( temp, mirmat, vol->mat );
+			bn_mat_copy( vol->mat, temp );
+
+			break;
 		}
-	} else {
-	  Tcl_AppendResult(interp, argv[2], ": Cannot mirror\n", (char *)NULL);
-	  return TCL_ERROR;
+		case ID_COMBINATION:
+		{
+			struct rt_comb_internal	*comb;
+
+			comb = (struct rt_comb_internal *)internal.idb_ptr;
+			RT_CK_COMB(comb);
+
+			if( comb->tree )
+				db_tree_mul_dbleaf( comb->tree, mirmat );
+			break;
+		}
+		default:
+		{
+			rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
+			Tcl_AppendResult(interp, "Cannot mirror this solid type\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+	}
+
+	/* no interuprts */
+	(void)signal( SIGINT, SIG_IGN );
+
+	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags)) == DIR_NULL )  {
+	    	TCL_ALLOC_ERR_return;
+	}
+	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {
+		TCL_WRITE_ERR_return;
 	}
 
 	if( no_memory )  {
