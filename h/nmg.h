@@ -724,45 +724,6 @@ struct vertexuse_a_cnurb {
 	(_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
 
 
-/* Faceuse/pt classification structure.
- *  This is what gets returned by nmg_class_pt_fu_except()
- *  It gets built from the arguments to the function and by performing
- *  the point/faceuse classification.
- *
- *  Note:  The calling routine is responsible for calling rt_free() on
- *	the "tbl" element and the structure as a whole.
- */
-struct fu_pt_info {
-	long			magic;
-	CONST struct rt_tol	*tol;
-	CONST struct faceuse	*fu_p;
-	char		*tbl;		/* processed element status table */
-	plane_t		norm;		/* surface normal for face(use) */
-	pointp_t	pt;		/* pt in plane of face to classify */
-	int		pt_class;	/* current point classification */
-	void		(*eu_func)();	/* call w/eu when pt on edgeuse */
-	void		(*vu_func)();	/* call w/vu when pt on vertexuse */
-	char		*priv;		/* private data for [ev]u_func */
-	int		allhits;	/* find first/all touches. */
-	fastf_t		dist_in_plane;	/* dist in plane (elem -> plane_pt) */
-	long		*closest;	/* ptr to elem w/ min(dist_in_plane)*/
-	point_t		pca;
-	int		PCA_loc;	/* is PCA at an edge-span,
-					 *  edge-vertex, or vertex?
-					 */
-};
-
-#define NMG_FPI_MAGIC 0x66706900 /* fpi\0 */
-#define NMG_CK_FPI(_fpi)	NMG_CKMAG(_fpi, NMG_FPI_MAGIC, "fu_pt_info")
-#define NMG_FPI_FREE( _fpi ) { \
- (void)rt_free( (char *)(_fpi->tbl), "nmg_class_pt_fu_except() proc tbl" ); \
- (void)rt_free( (char *)(_fpi), "struct fu_pt_info" ); }
-
-/* values for fu_pt_info->tbl entries */
-#define NMG_FPI_VIRGIN	0
-#define NMG_FPI_MISSED	-2
-#define NMG_FPI_TOUCHED	2
-
 /* values for the "allhits" argument to mg_class_pt_fu_except() */
 #define NMG_FPI_FIRST	0	/* return after finding first touch */
 #define NMG_FPI_PERGEOM	1	/* find all touches,
