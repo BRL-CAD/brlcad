@@ -118,6 +118,7 @@ union tree			*curtree;
 {
 	struct region		*rp;
 	struct directory	*dp;
+	int			shader_len=0;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
@@ -136,6 +137,16 @@ union tree			*curtree;
 	rp->reg_gmater = tsp->ts_gmater;
 	rp->reg_los = tsp->ts_los;
 	rp->reg_mater = tsp->ts_mater;		/* struct copy */
+	if( tsp->ts_mater.ma_shader )
+		shader_len = strlen( tsp->ts_mater.ma_shader );
+	if( shader_len )
+	{
+		rp->reg_mater.ma_shader = (char *)bu_malloc( shader_len+1, "rt_gettree_region_end: ma_shader" );
+		strcpy( rp->reg_mater.ma_shader, tsp->ts_mater.ma_shader );
+	}
+	else
+		rp->reg_mater.ma_shader = (char *)NULL;
+
 	rp->reg_name = db_path_to_string( pathp );
 
 	dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
