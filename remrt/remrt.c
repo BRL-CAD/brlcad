@@ -572,7 +572,7 @@ char	**argv;
 		FD_ZERO(&clients);
 
 		/* parse command line args for sizes, etc */
-		finalframe=-1;
+		finalframe = -1;
 		if( !get_args( argc, argv ) )  {
 			fprintf(stderr,"remrt:  bad arg list\n");
 			exit(1);
@@ -1538,7 +1538,7 @@ register struct frame	*fr;
 		rt_free( fr->fr_filename, "filename" );
 		fr->fr_filename = (char *)0;
 	}
-	for (sp=&servers[0]; sp<&servers[MAXSERVERS]; sp++) {
+	for (sp = &servers[0]; sp<&servers[MAXSERVERS]; sp++) {
 		if (sp->sr_pc == PKC_NULL) continue;
 		if (sp->sr_curframe == fr) {
 			sp->sr_curframe = FRAME_NULL;
@@ -1898,7 +1898,7 @@ struct timeval		*nowp;
 		if (sp->sr_curframe != FRAME_NULL ) return 3;
 		if (work_allocate_method==OPT_MOVIE) {
 			register struct servers *csp;
-			for (csp=&servers[0]; csp < &servers[MAXSERVERS]; csp++ ){
+			for (csp =& servers[0]; csp < &servers[MAXSERVERS]; csp++ ){
 				if (csp->sr_curframe == fr) return 2;
 			}
 		} else if (work_allocate_method==OPT_LOAD) {
