@@ -787,12 +787,12 @@ char **argv;
 	unsigned char	rgb[3];
 	struct bu_vls	result;
 
-	bu_vls_init(&result);
 	if( argc != 4 )  {
 		Tcl_AppendResult( interp, "Usage: bu_hsv_to_rgb H S V\n",
 		    (char *)NULL );
 		return TCL_ERROR;
 	}
+	bu_vls_init(&result);
 	if (( Tcl_GetDouble( interp, argv[1], &hsv[0] ) != TCL_OK )
 	 || ( Tcl_GetDouble( interp, argv[2], &hsv[1] ) != TCL_OK )
 	 || ( Tcl_GetDouble( interp, argv[3], &hsv[2] ) != TCL_OK )
@@ -918,6 +918,28 @@ char **argv;
 }
 
 /*
+ *			B U _ T C L _ B R L C A D _ P A T H
+ *
+ *  Tcl access to library routine bu_brlcad_path(),
+ *  which handles BRLCAD_ROOT issues for GUI code.
+ */
+int
+bu_tcl_brlcad_path( clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	if( argc != 2 )  {
+		Tcl_AppendResult(interp, "Usage: bu_brlcad_path subdir\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+	Tcl_AppendResult(interp, bu_brlcad_path( argv[1] ), NULL );
+	return TCL_OK;
+}
+
+/*
  *			B U _ T C L _ S E T U P
  *
  *  Add all the supported Tcl interfaces to LIBBU routines to
@@ -927,6 +949,9 @@ void
 bu_tcl_setup(interp)
 Tcl_Interp *interp;
 {
+	(void)Tcl_CreateCommand(interp,
+		"bu_brlcad_path",	bu_tcl_brlcad_path,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
 		"bu_mem_barriercheck",	bu_tcl_mem_barriercheck,
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);

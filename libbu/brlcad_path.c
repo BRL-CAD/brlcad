@@ -89,6 +89,7 @@ CONST char *rhs;
 	if( bu_file_exists(lhs) )
 		goto ok;
 
+	/* Can't find the BRL-CAD root directory, this is fatal! */
 	/* Could use some huristics here, but being overly clever is probably bad. */
 
 	bu_log("\
@@ -96,7 +97,10 @@ Unable to find the directory that BRL-CAD is installed in while seeking: \n\
 	%s\n\
 This version of LIBBU was compiled to expect BRL-CAD in: \n\
 	%s\n\
-Please set your environment variable BRLCAD_ROOT with the correct path.\n\
+but it is no longer there.  After you manually locate BRL-CAD,\n\
+please set your environment variable BRLCAD_ROOT to the correct path,\n\
+and re-run this program.\n\
+\n\
 csh/tcsh users:\n\
 	setenv BRLCAD_ROOT %s\n\
 sh/bash users:\n\
