@@ -54,7 +54,6 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "plot3.h"
 
-#define NAMELEN 40
 #define BUFF_LEN 256
 #define FALSE 0
 #define TRUE 1
