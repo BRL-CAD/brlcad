@@ -134,7 +134,7 @@ if [ X${SILENT} = X ] ; then
 fi
 for LAST in \
 	bin include include/brlcad lib vfont \
-	man man/man1 man/man3 man/man5 etc tcl tk \
+	man man/man1 man/man3 man/man5 etc \
 	tclscripts tclscripts/mged tclscripts/nirt \
 	tclscripts/pl-dm html html/manuals html/manuals/mged \
 	html/manuals/mged/animmate html/manuals/libdm \
