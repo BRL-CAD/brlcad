@@ -76,7 +76,6 @@ BOTFACESSRC= \
 	do.c \
 	main.c \
 	opt.c \
-	rt_bot_faces_vers.c \
 	view_bot_faces.c \
 	worker.c
 
