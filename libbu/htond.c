@@ -291,7 +291,7 @@ ibm_normalized:
 #	define	HTOND	yes
 #endif
 
-#if	defined(cray) || defined(CRAY2)
+#if	defined(CRAY1) || defined(CRAY2)
 	/*
 	 *  Cray version.  Somewhat easier using 64-bit registers.
 	 *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
@@ -609,7 +609,7 @@ ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
 #	define	NTOHD	yes
 #endif
 
-#if	defined(cray) || defined(CRAY2)
+#if	defined(CRAY1) || defined(CRAY2)
 	/*
 	 *  Cray version.  Somewhat easier using 64-bit registers.
 	 *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
