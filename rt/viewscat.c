@@ -33,7 +33,7 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./material.h"
 #include "./rdebug.h"
-#include "./scat.h"
+#include "../librad/rad.h"
 
 #define	MAXREFLECT	16
 #define	DEFAULTREFLECT	16
@@ -54,15 +54,14 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
-	"%d",	"maxreflect",	(int)&numreflect,	FUNC_NULL,
-	"%d",	"reflect",	(int)&r_reflections,	FUNC_NULL,
-	"%f",	"wavelength",	(int)&wavelength,	FUNC_NULL,
-	"%f",	"xhpol",	(int)&xhpol,		FUNC_NULL,
-	"%f",	"xvpol",	(int)&xvpol,		FUNC_NULL,
-	"%f",	"rhpol",	(int)&rhpol,		FUNC_NULL,
-	"%f",	"rvpol",	(int)&rvpol,		FUNC_NULL,
-	"%f",	"epsilon",	(int)&epsilon,		FUNC_NULL,
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	"%d",	1, "maxreflect",	(int)&numreflect,	FUNC_NULL,
+	"%f",	1, "wavelength",	(int)&wavelength,	FUNC_NULL,
+	"%f",	1, "xhpol",	(int)&xhpol,		FUNC_NULL,
+	"%f",	1, "xvpol",	(int)&xvpol,		FUNC_NULL,
+	"%f",	1, "rhpol",	(int)&rhpol,		FUNC_NULL,
+	"%f",	1, "rvpol",	(int)&rvpol,		FUNC_NULL,
+	"%f",	1, "epsilon",	(int)&epsilon,		FUNC_NULL,
+	"",	0, (char *)0,	0,			FUNC_NULL
 };
 
 void		dumpray();
@@ -85,7 +84,7 @@ Options:\n\
 ";
 
 struct rayinfo rayinfo[MAX_PSW][MAXREFLECT];
-static struct xray firstray[MAX_PSW];
+struct xray firstray[MAX_PSW];
 
 static int radhit();
 static int radmiss();
@@ -94,12 +93,11 @@ vect_t uhoriz;	/* horizontal emanation plane unit vector. */
 vect_t unorml;	/* normal unit vector to emanation plane. */
 vect_t cemant;	/* center vector of emanation plane. */
 vect_t uvertp;	/* vertical emanation plane unit vector. */
-fastf_t r_reflections;	/* Number of maximum reflections */
-fastf_t wavelength;	/* Radar wavelength */
-fastf_t xhpol;	/* Transmitter vertical polarization */
-fastf_t xvpol;	/* Transmitter horizontal polarization */ 
-fastf_t rhpol;	/* Receiver vertical polarization */
-fastf_t rvpol;	/* Receiver horizontal polarization */
+fastf_t wavelength = 1.0;	/* Radar wavelength */
+fastf_t xhpol = 0.0;	/* Transmitter vertical polarization */
+fastf_t xvpol = 1.0;	/* Transmitter horizontal polarization */ 
+fastf_t rhpol = 0.0;	/* Receiver vertical polarization */
+fastf_t rvpol = 1.0;	/* Receiver horizontal polarization */
 fastf_t epsilon = 1.0e-07;
 fastf_t totali;
 fastf_t totalq;
@@ -118,6 +116,9 @@ char *file, *obj;
 	ap->a_miss = radmiss;
 	ap->a_onehit = 1;
 
+#ifdef SAR
+	sar_init(ap, file, obj, minus_o);
+#endif	
 	return(0);		/* no framebuffer needed */
 }
 
@@ -128,8 +129,9 @@ struct application *ap;
 {
 	extern fastf_t azimuth, elevation;
 	fastf_t elvang, aziang;
-
-	numreflect = r_reflections;
+	vect_t temp, aimpt;
+	fastf_t backoff;
+	
 
 	if( numreflect > MAXREFLECT ) {
 		rt_log("Warning: maxreflect too large (%d), using %d\n",
@@ -155,6 +157,22 @@ struct application *ap;
 	uvertp[1] = uhoriz[2] * unorml[0] - unorml[2]* uhoriz[0];
 	uvertp[2] = uhoriz[0] * unorml[1] - unorml[0]* uhoriz[1];
 	VUNITIZE( uvertp );
+	VPRINT("uhoriz",uhoriz);
+	VPRINT("unorml",unorml);
+	VPRINT("uvertp",uvertp);
+	totali = 0.0;
+	totalq = 0.0;
+
+	VSET(temp, 0.0, 0.0, -1.414 );
+	MAT4X3PNT( aimpt,view2model, temp);
+	rt_log("aim point %f %f %f\n", aimpt[0], aimpt[1], aimpt[2]);
+	rt_log("viewsize %f\n", viewsize);
+	backoff = 1.414 * viewsize/2.0;
+	rt_log("backoff %f\n", backoff);
+
+#ifdef SAR
+	sar_2init( ap );
+#endif
 }
 
 /* end of each pixel */
@@ -293,7 +311,10 @@ struct partition *PartHeadp;
 		rayinfo[cpu_num][0].ip[0] = ap->a_ray.r_pt[0];
 		rayinfo[cpu_num][0].ip[1] = ap->a_ray.r_pt[1];
 		rayinfo[cpu_num][0].ip[2] = ap->a_ray.r_pt[2];
-		radar_physics( cpu_num, depth+1 );
+		radar_physics( cpu_num, depth + 1 );
+#ifdef SAR
+		dumpall( ap, cpu_num, depth + 1); 
+#endif
 	}
 
 	return(depth+1);	/* report hit to main routine */
