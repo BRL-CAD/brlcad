@@ -82,7 +82,6 @@ struct dm_list *o_dm_list;
 int argc;
 char *argv[];
 {
-  int i;
   struct bu_vls vls;
 
   dm_var_init(o_dm_list);
@@ -181,7 +180,6 @@ Ogl_dm(argc, argv)
 int argc;
 char **argv;
 {
-  int status;
   struct bu_vls	vls;
 
   if( !strcmp( argv[0], "set" ) )  {

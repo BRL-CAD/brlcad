@@ -93,14 +93,6 @@ struct dm_list *curr_dm_list;
 char tmp_str[1024];
 static int windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
-static char *default_view_strings[] = {
-  "top",
-  "right",
-  "front",
-  "45,45",
-  "35,25"
-};
-
 struct w_dm which_dm[] = {
   { DM_TYPE_PLOT, "plot", Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
   { DM_TYPE_PS, "ps", PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
@@ -125,7 +117,6 @@ release(name, need_close)
 char *name;
 int need_close;
 {
-  register struct solid *sp;
   struct dm_list *save_dm_list = DM_LIST_NULL;
 
   if(name != NULL){
@@ -313,9 +304,7 @@ register struct w_dm *wp;
 int argc;
 char *argv[];
 {
-  register struct solid *sp;
   register struct dm_list *o_dm_list;
-  struct dm_list *dlp;
 
   o_dm_list = curr_dm_list;
   BU_GETSTRUCT(curr_dm_list, dm_list);
@@ -406,7 +395,6 @@ get_attached()
   char *argv[3];
   char line[80];
   register struct w_dm *wp;
-  struct bu_vls vls;
 
   while(1){
     bu_log("attach (nu");
@@ -444,8 +432,6 @@ int
 gui_setup(dstr)
 char *dstr;
 {
-  char *filename;
-  int status;
   struct bu_vls vls;
 
   /* initialize only once */
@@ -705,7 +691,6 @@ mged_fb_open()
 void
 mged_fb_close()
 {
-  int status;
   struct bu_vls vls;
 
   bu_vls_init(&vls);

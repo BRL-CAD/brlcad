@@ -145,7 +145,6 @@ char    *argv[];
 	struct region_array *regions;
 	struct rt_comb_internal *comb;
 	struct rt_db_internal intern;
-	int found_comp;
 	int line_no=0;
 	int i;
 	long reg_count=0;
@@ -215,7 +214,6 @@ char    *argv[];
 
 
 	/* read lines of region map file */
-	found_comp = 0;
 	new_comp = (struct muves_comp *)NULL;
 	while( fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
 	{
@@ -355,7 +353,6 @@ char    *argv[];
 	while( fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
 	{
 		char *ptr;
-		char *next;
 		char *c;
 		int is_constant=1;
 		int is_def;
@@ -621,10 +618,7 @@ int     argc;
 char    *argv[];
 {
 	struct muves_comp *comp;
-	struct cad_comp_list *cad;
 	struct muves_sys *sys;
-	struct member_list *member;
-	int disp_ret;
 	int i;
 	char **e_argv;
 	int e_argc;
