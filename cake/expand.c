@@ -184,9 +184,9 @@ reg	char	*cmd;
 	extern	char	*get_out();
 	extern	char	*flatten();
 	extern	int	cake_proc();
-	extern	Wait	cake_wait();
+	extern	int	cake_wait();
 	char		buf[MAXSIZE];
-	Wait		code;
+	int		code;
 	reg	char	*out_filename;
 	reg	FILE	*fp;
 	reg	int	i, c;
@@ -207,7 +207,7 @@ reg	char	*cmd;
 	out_filename = get_newname();
 	pid = cake_proc(cmd, Exec, out_filename, (Node *) NULL, (int (*)()) NULL, (List *) NULL);
 	code = cake_wait(pid);
-	if (code.w_status != 0 && ! zflag)
+	if (code != 0 && ! zflag)
 	{
 		printf("cake, %s: nonzero exit status\n", cmd);
 		exit_cake(FALSE);

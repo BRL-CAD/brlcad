@@ -40,15 +40,15 @@ dir_start()
 #ifdef	ATT
 	{
 		extern	int	cake_proc();
-		extern	Wait	cake_wait();
+		extern	int	cake_wait();
 		reg	int	pid;
-		Wait		code;
+		int		code;
 
 		sprintf(scratchbuf, "mkdir %s", dir_name);
 		pid = cake_proc(new_name(scratchbuf), Exec, (char *) NULL,
 			(Node *) NULL, (int (*)()) NULL, (List *) NULL);
 		code = cake_wait(pid);
-		successful = code.w_status == 0;
+		successful = code == 0;
 	}
 #else
 	successful = mkdir(dir_name, 0700) == 0;
@@ -80,15 +80,15 @@ dir_finish()
 #ifndef	LEAVE_DIR
 #ifdef	ATT
 	extern	int	cake_proc();
-	extern	Wait	cake_wait();
+	extern	int	cake_wait();
 	reg	int	pid;
-	Wait		code;
+	int		code;
 
 	sprintf(scratchbuf, "/bin/rm -fr %s", dir_name);
 	pid = cake_proc(new_name(scratchbuf), Exec, (char *) NULL,
 		(Node *) NULL, (int (*)()) NULL, (List *) NULL);
 	code = cake_wait(pid);
-	if (code.w_status != 0)
+	if (code != 0)
 	{
 		fprintf(stderr, "cake system error: cannot remove %s\n", dir_name);
 		return;
@@ -575,11 +575,11 @@ reg	char	*name;
 	{
 		extern	int	getpid();
 		extern	int	cake_proc();
-		extern	Wait	cake_wait();
+		extern	int	cake_wait();
 		extern	char	*noslash();
 		reg	int	pid, cakepid;
 		Stat		statbuf;
-		Wait		code;
+		int		code;
 		char		buf[80];
 
 #ifndef	ATT
@@ -612,7 +612,7 @@ reg	char	*name;
 		pid = cake_proc(buf, Exec, (char *) NULL, (Node *) NULL,
 			(int (*)()) NULL, (List *) NULL);
 		code = cake_wait(pid);
-		if (code.w_status != 0)
+		if (code != 0)
 		{
 			fprintf(stderr, "cake system error: '%s' failed\n", buf);
 			fprintf(stderr, "cake: continuing\n");

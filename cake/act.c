@@ -26,7 +26,7 @@ reg	bool	force_exec;
 	extern		get_utime();
 	extern		save_novol();
 	extern	bool	diff_novol();
-	extern	Wait	carry_out();
+	extern		carry_out();
 	extern	char	*list_names();
 	reg	Node	*bnode, *onode;
 	reg	List	*ptr, *ptr1;
@@ -243,7 +243,7 @@ reg	bool	force_exec;
 		}
 
 		/* execute actions */
-		code = carry_out(node, force_exec);
+		code.w_status = carry_out(node, force_exec);
 		if (code.w_status != 0)
 		{
 			oksofar = FALSE;
@@ -345,17 +345,17 @@ reg	Node	*root;
 #define	START_SCRIPT	"{"
 #define	FINISH_SCRIPT	"}"
 
-Wait
+int
 carry_out(node, force_exec)
 reg	Node	*node;
 reg	bool	force_exec;
 {
 	extern	char	*expand_cmds();
-	extern	Wait	action();
+	extern		action();
 	reg	List	*ptr;
 	reg	Act	*act;
 	reg	Node	*bnode;
-	Wait		code;
+	int		code;
 
 #ifdef	CAKEDEBUG
 	if (cakedebug)  {			/* BRL */
@@ -389,8 +389,8 @@ reg	bool	force_exec;
 				reset_act(act, af_SILENT);
 				printf("executing ...\n");
 				code = action(act, node);
-				printf("... done\n");
-				if (code.w_status != 0)
+				printf("... done code=x%x\n", code);
+				if (code != 0)
 					return code;
 			}
 
@@ -398,11 +398,11 @@ reg	bool	force_exec;
 		}
 
 		code = action(act, node);
-		if (code.w_status != 0)
+		if (code != 0)
 			return code;
 	}
 
-	code.w_status = 0;
+	code = 0;
 	return code;
 }
 
@@ -411,14 +411,14 @@ reg	bool	force_exec;
 **	modified by flags and prefixes.
 */
 
-Wait
+int
 action(act, node)
 reg	Act	*act;
 reg	Node	*node;
 {
 	extern	int	cake_proc();
-	extern	Wait	cake_wait();
-	Wait		code;
+	extern	int	cake_wait();
+	int		code;
 	reg	A_kind	type;
 	reg	int	pid;
 	reg	char	*after;
@@ -430,7 +430,7 @@ reg	Node	*node;
 	}
 	if( act->a_str == NULL || strlen(act->a_str) <= 0 )  {	/* BRL */
 		printf("NOTE:  Null action skipped\n");
-		code.w_status = 0;
+		code = 0;
 		return(code);
 	}
 	put_trail("action", "start");
@@ -450,9 +450,9 @@ reg	Node	*node;
 	code = cake_wait(pid);
 
 	if (on_act(act, af_IGNORE) || iflag)
-		code.w_status = 0;
+		code = 0;
 
-	if (code.w_status != 0 && ! kflag)
+	if (code != 0 && ! kflag)
 		exit_cake(FALSE);
 
 	put_trail("action", "finish");

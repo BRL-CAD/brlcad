@@ -184,7 +184,7 @@ reg	List	*args;
 **	it calls wait again and again until it finds that process.
 */
 
-Wait
+int
 cake_wait(pid)
 reg	int	pid;
 {
@@ -202,7 +202,7 @@ reg	int	pid;
 		status = proc->pr_stat;
 		delete(active_procs, ptr);
 		mutex_unlock();
-		return status;
+		return status.w_status;
 	}
 
 	while ((exitpid = wait(&status)) != -1)
@@ -212,7 +212,7 @@ reg	int	pid;
 		proc = (Proc *) ldata(ptr);
 		proc->pr_run  = FALSE;
 		proc->pr_stat = status;
-		cdebug("cake_wait pid = %d, status = %d\n", exitpid, status.w_status);
+		cdebug("cake_wait pid = %d, status = %d (x%x)\n", exitpid, status.w_status, status.w_status);
 		fflush(stdout);
 
 		if (proc->pr_func != NULL)
@@ -226,7 +226,7 @@ reg	int	pid;
 		{
 			delete(active_procs, ptr);
 			mutex_unlock();
-			return status;	/* normal return */
+			return status.w_status; /* normal return */
 		}
 
 		mutex_unlock();
@@ -234,7 +234,7 @@ reg	int	pid;
 
 	fprintf(stderr, "cake internal error: waiting for nonactive process %s\n", pid);
 	exit_cake(TRUE);
-	return status;	/* to shut up lint */
+	return status.w_status;	/* to shut up lint */
 }
 
 /*
@@ -345,13 +345,13 @@ int
 cake_pclose(fp)
 reg	FILE	*fp;
 {
-	Wait		code;
+	int		code;
 	reg	int	f;
 
 	f = fileno(fp);
 	fclose(fp);
 	code = cake_wait(popen_pid[f]);
-	return code.w_status;
+	return code;
 }
 
 /*

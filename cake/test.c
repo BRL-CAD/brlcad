@@ -15,13 +15,13 @@ Env		env;
 {
 	extern	char	*expand_cmds();
 	extern	int	cake_proc();
-	extern	Wait	cake_wait();
+	extern	int	cake_wait();
 	extern	Node	*chase();
 	extern	bool	get_stat();
 	extern	bool	exist();
 	extern	char	*ground();
 	char		buf[256];
-	Wait		status;
+	int		status;
 	reg	List	*ptr;
 	reg	Pat	*pat;
 	reg	char	*text1, *text2;
@@ -51,23 +51,23 @@ when t_AND:	return eval(node, test->t_left, env) && eval(node, test->t_right, en
 when t_OR:	return eval(node, test->t_left, env) || eval(node, test->t_right, env);
 when t_NOT:	return ! eval(node, test->t_left, env);
 
-when t_CMD:	if (get_stat(test->t_cmd, &status.w_status))
+when t_CMD:	if (get_stat(test->t_cmd, &status))
 		{
-			test->t_kind = (status.w_status == 0)? t_TRUE: t_FALSE;
+			test->t_kind = (status == 0)? t_TRUE: t_FALSE;
 			cdebug("test cmd cache %s: %s\n", test->t_cmd,
-				(status.w_status == 0)? "True": "False");
-			return (status.w_status == 0)? TRUE: FALSE;
+				(status == 0)? "True": "False");
+			return (status == 0)? TRUE: FALSE;
 		}
 
 		cmd = expand_cmds(ground(env, test->t_cmd));
 		pid = cake_proc(cmd, Exec, "/dev/null", (Node *) NULL,
 			(int (*)()) NULL, (List *) NULL);
 		status = cake_wait(pid);
-		new_stat(test->t_cmd, status.w_status);
-		test->t_kind = (status.w_status == 0)? t_TRUE: t_FALSE;
+		new_stat(test->t_cmd, status);
+		test->t_kind = (status == 0)? t_TRUE: t_FALSE;
 		cdebug("test cmd %s: %s\n", test->t_cmd,
-			(status.w_status == 0)? "True": "False");
-		return (status.w_status == 0)? TRUE: FALSE;
+			(status == 0)? "True": "False");
+		return (status == 0)? TRUE: FALSE;
 
 when t_MATCH:	text1 = (char *) first(test->t_list);	/* -vX	*/
 		text2 = (char *) last(test->t_list);	/* file	*/
@@ -77,22 +77,22 @@ when t_MATCH:	text1 = (char *) first(test->t_list);	/* -vX	*/
 
 		cmd = new_name(buf);
 		cdebug("matching command: %s\n", cmd);
-		if (get_stat(cmd, &status.w_status))
+		if (get_stat(cmd, &status))
 		{
-			test->t_kind = (status.w_status == 0)? t_TRUE: t_FALSE;
+			test->t_kind = (status == 0)? t_TRUE: t_FALSE;
 			cdebug("test cmd cache %s: %s\n", test->t_cmd,
-				(status.w_status == 0)? "True": "False");
-			return (status.w_status == 0)? TRUE: FALSE;
+				(status == 0)? "True": "False");
+			return (status == 0)? TRUE: FALSE;
 		}
 
 		pid = cake_proc(cmd, Exec, "/dev/null", (Node *) NULL,
 			(int (*)()) NULL, (List *) NULL);
 		status = cake_wait(pid);
-		new_stat(test->t_cmd, status.w_status);
-		test->t_kind = (status.w_status == 0)? t_TRUE: t_FALSE;
+		new_stat(test->t_cmd, status);
+		test->t_kind = (status == 0)? t_TRUE: t_FALSE;
 		cdebug("test cmd %s: %s\n", test->t_cmd,
-			(status.w_status == 0)? "True": "False");
-		return (status.w_status == 0)? TRUE: FALSE;
+			(status == 0)? "True": "False");
+		return (status == 0)? TRUE: FALSE;
 
 when t_LIST:	for_list (ptr, test->t_list)
 		{
