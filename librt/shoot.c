@@ -1339,6 +1339,9 @@ miss:
 	return(0);		/* MISS */
 }
 
+#undef st
+
+
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 
 /* Stub function which will "similate" a call to a vector shot routine */
