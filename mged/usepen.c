@@ -460,13 +460,18 @@ register matp_t out, change, in;
  */
 void
 wrt_point( out, change, in, point )
-register matp_t out, change, in;
-register vect_t point;
+register matp_t out;
+CONST register matp_t change, in;
+CONST register vect_t point;
 {
 	mat_t	t;
 
 	bn_mat_xform_about_pt( t, change, point );
-	bn_mat_mul( out, t, in );
+
+	if(out == in)
+	  bn_mat_mul2( t, out );
+	else
+	  bn_mat_mul( out, t, in );
 }
 
 /*
