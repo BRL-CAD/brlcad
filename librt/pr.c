@@ -70,11 +70,18 @@ register CONST struct region *rp;
 {
 	struct bu_vls	v;
 
+	RT_CK_REGION(rp);
+
 	bu_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
 	bu_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
 		rp->reg_instnum,
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_gmater, rp->reg_los );
+	if( rp->reg_is_fastgen != REGION_NON_FASTGEN )  {
+		bu_log("reg_is_fastgen = %s mode\n",
+			rp->reg_is_fastgen == REGION_FASTGEN_PLATE ?
+				"plate" : "volume" );
+	}
 	if( rp->reg_mater.ma_color_valid )
 		bu_log("Color %d %d %d\n",
 			(int)rp->reg_mater.ma_color[0]*255.,
