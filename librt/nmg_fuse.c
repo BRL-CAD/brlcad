@@ -334,10 +334,7 @@ CONST struct rt_tol	*tol;
 
 		dist = DIST_PT_PLANE(vg->coord, fg2->N);
 		if( dist > tol->dist )  {
-#if 0
-			if (rt_g.NMG_debug & DEBUG_MESH)
-#endif
-			{
+			if (rt_g.NMG_debug & DEBUG_MESH)  {
 				rt_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
 					fu1, f2,
 					v, dist );
