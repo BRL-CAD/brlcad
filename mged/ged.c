@@ -281,6 +281,9 @@ char **argv;
 	}
 	pr_prompt();
 
+	/* Perform any necessary initializations for the command parser */
+	cmd_setup();
+
 	/****************  M A I N   L O O P   *********************/
 	while(1) {
 		(void)signal( SIGINT, SIG_IGN );
