@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/machine.h"	/* special copy */
 #include "vmath.h"
 #include "mater.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
 #include "./solid.h"
@@ -223,10 +224,10 @@ Ir_open()
 	 *  range with a dead spot at zero (Iris knobs are 1024 units
 	 *  per rotation).
 	 */
-	for(i = DIAL0; i <= DIAL8; i++) {
-		qdevice(i);
+	for(i = DIAL0; i < DIAL8; i++)
 		setvaluator(i, 0, -2048-NOISE, 2047+NOISE);
-	}
+	for(i = DIAL0; i < DIAL8; i++)
+		qdevice(i);
 #endif
 #if IR_BUTTONS
 	/*
