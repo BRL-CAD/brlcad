@@ -1,6 +1,5 @@
 /*		N M G _ E X T R U D E . C
- *	Routines for extruding nmg's. Currently, just a single
- *	face extruder into an nmg solid.
+ *	Routines for extruding nmg's.
  *
  *  Authors -
  *	Michael Markowski
@@ -716,6 +715,86 @@ CONST struct rt_tol *tol;
 		rt_log( "nmg_fix_overlapping_loops: done\n" );
 }
 
+/*	N M G _ B R E A K _ C R O S S E D _ L O O P S
+ *
+ *	Extrusion may create crossed loops within a face.
+ *	This routine intersects each edge within a loop with every other edge
+ *	in the loop
+ */
+void
+nmg_break_crossed_loops( is , tol )
+struct shell *is;
+CONST struct rt_tol *tol;
+{
+	struct faceuse *fu;
+
+	NMG_CK_SHELL( is );
+	RT_CK_TOL( tol );
+
+	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	{
+		struct loopuse *lu;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			struct edgeuse *eu1,*eu2;
+			vect_t v1,v2;
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			for( RT_LIST_FOR( eu1 , edgeuse , &lu->down_hd ) )
+			{
+				VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
+
+				eu2 = RT_LIST_PNEXT( edgeuse , eu1 );
+				while( RT_LIST_NOT_HEAD( eu2 , &lu->down_hd ) )
+				{
+					fastf_t dist[2];
+
+					VSUB2( v2 , eu2->eumate_p->vu_p->v_p->vg_p->coord , eu2->vu_p->v_p->vg_p->coord );
+
+					if( rt_isect_lseg3_lseg3( dist , eu1->vu_p->v_p->vg_p->coord , v1 ,
+						eu2->vu_p->v_p->vg_p->coord , v2 , tol ) >= 0 )
+					{
+						point_t pt;
+						struct edgeuse *new_eu;
+						struct vertex *v=(struct vertex *)NULL;
+
+						if( dist[0] > 0.0 && dist[0] < 1.0 )
+						{
+							VJOIN1( pt , eu1->vu_p->v_p->vg_p->coord , dist[0] , v1 );
+							v = nmg_find_pt_in_shell( is , pt , tol );
+							new_eu = nmg_esplit( v , eu1 );
+							v = new_eu->vu_p->v_p;
+							if( !v->vg_p )
+								nmg_vertex_gv( v , pt );
+							VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
+						}
+						if( dist[1] > 0.0 && dist[1] < 1.0 )
+						{
+							VJOIN1( pt , eu2->vu_p->v_p->vg_p->coord , dist[1] , v2 );
+							v = nmg_find_pt_in_shell( is , pt , tol );
+							new_eu = nmg_esplit( v , eu2 );
+							v = new_eu->vu_p->v_p;
+							if( !v->vg_p )
+								nmg_vertex_gv( v , pt );
+						}
+					}
+					eu2 = RT_LIST_PNEXT( edgeuse , eu2 );
+				}
+			}
+		}
+	}
+}
+
 /*
  *	N M G _ E X T R U D E _ C L E A N U P
  *
@@ -757,6 +836,9 @@ CONST struct rt_tol *tol;
 	/* Extrusion may create loops that overlap */
 	nmg_fix_overlapping_loops( is , tol );
 
+	/* Or loops that cross themselves */
+	nmg_break_crossed_loops( is , tol );
+
 	/* look for self-touching loops */
 	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
 	{
@@ -786,6 +868,7 @@ CONST struct rt_tol *tol;
 				 * "nmg_bad_face_normals" and will result in the undesirable
 				 * portion's demise
 				 */
+
 				orientation = lu->orientation;
 				new_lu = nmg_split_lu_at_vu( lu , vu );
 				new_lu->orientation = orientation;
@@ -920,11 +1003,16 @@ CONST struct rt_tol *tol;
  *	merged with the original shell.  If the original shell is open, then faces
  *	are constructed along the free edges of the two shells to make a closed shell.
  *
+ *	if approximate is non-zero, new vertex geometry at vertices where more than
+ *	three faces intersect may be approximated by a point of minimum distance from
+ *	the intersecting faces.
+ *
  */
 void
-nmg_hollow_shell( s , thick , tol )
+nmg_hollow_shell( s , thick , approximate , tol )
 struct shell *s;
 CONST fastf_t thick;
+CONST int approximate;
 CONST struct rt_tol *tol;
 {
 	struct nmgregion *new_r,*old_r;
@@ -1046,7 +1134,7 @@ CONST struct rt_tol *tol;
 						if( NMG_INDEX_TEST_AND_SET( flags , new_v ) )
 						{
 							/* move this vertex */
-							if( nmg_in_vert( new_v , tol ) )
+							if( nmg_in_vert( new_v , approximate , tol ) )
 								rt_bomb( "Failed to get a new point from nmg_inside_vert\n" );
 						}
 					}
@@ -1125,17 +1213,21 @@ CONST struct rt_tol *tol;
  * of the face normals if normal_ward, or the opposite direction
  * if !normal_ward.  The shell (s) is modified by adjusting the
  * plane equations for each face and calculating new vertex geometry.
- * additional faces and/or edges may be added to the shell.
+ * if approximate is non-zero, new vertex geometry, for vertices
+ * where more than three faces intersect, will be approximated
+ * by a point with minimum distance from the intersecting faces.
+ * if approximate is zero, additional faces and/or edges may be added to the shell.
  *
  * returns:
  *	a pointer to the modified shell on success
  *	NULL on failure
  */
 struct shell *
-nmg_extrude_shell( s , dist , normal_ward , tol )
+nmg_extrude_shell( s , dist , normal_ward , approximate , tol )
 struct shell *s;
 CONST fastf_t dist;
 CONST int normal_ward;
+CONST int approximate;
 CONST struct rt_tol *tol;
 {
 	fastf_t thick;
@@ -1240,7 +1332,7 @@ CONST struct rt_tol *tol;
 			new_v = (struct vertex *)NMG_TBL_GET( &verts , vert_no );
 			NMG_CK_VERTEX( new_v );
 
-			if( nmg_in_vert( new_v , tol ) )
+			if( nmg_in_vert( new_v , approximate , tol ) )
 			{
 				rt_log( "nmg_extrude_shell: Failed to calculate new vertex at v=x%x was ( %f %f %f )\n",
 					new_v , V3ARGS( new_v->vg_p->coord ) );
