@@ -177,7 +177,7 @@ set -S2 "/bin/sh"
 #	undef	ibm
 #	define	MTYPE	ibm
 #	define  CC      /bin/cc
-#	define	CC_OPTS	-qlanglvl=ansi
+#	define	CC_OPTS	-qlanglvl=ansi -D__unix
 #	define	OPTIMIZER	-O
 #	define	HAS_TCP	1
 #	define	LIBRT_TIMER	timerunix
