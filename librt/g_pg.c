@@ -963,8 +963,8 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 		}
 	}
 
-	(void)bot_vertex_fuse( ip_bot );
-	(void)bot_condense( ip_bot );
+	(void)rt_bot_vertex_fuse( ip_bot );
+	(void)rt_bot_condense( ip_bot );
 
 	ip_bot->faces = (int *)bu_realloc( ip_bot->faces, ip_bot->num_faces * 3 * sizeof( int ), "BOT faces" );
 
