@@ -151,7 +151,8 @@ if [ ! -f "${PKG_NAME}.pkg/Contents/Info.plist" ] ; then
     exit 1
 fi
 
-pax -w -f "${PKG_NAME}.pkg/Contents/Archive.pax" "$ARCHIVE"
+# strip any trailing slash so that the archive location is relative
+pax -w -x cpio -s ',^//*,,' -f "${PKG_NAME}.pkg/Contents/Archive.pax" "$ARCHIVE"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully create a pax archive of $ARCHIVE"
     exit 1
