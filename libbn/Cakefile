@@ -27,7 +27,7 @@
 	plot3 fortran font \
 	axis list marker number \
 	scale vectfont symbol vector \
-	tplot
+	tplot vert_tree
 
 #define VERSION_VARIABLE	bn_version
 #define LIBRARY_TITLE		"The BRL-CAD Numerical Computation Library"

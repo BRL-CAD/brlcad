@@ -1165,6 +1165,33 @@ BU_EXTERN(void	bn_vlist_2string, (struct bu_list *vhead,
 				struct bu_list *free_hd, const char *string,
 				double x, double y, double scale, double theta));
 
+
+/*----------------------------------------------------------------------*/
+/* vert_tree.c */
+/*
+ * vertex tree support
+ */
+/* packaging structure
+ * holds all the required info for a single vertex tree
+ */
+struct vert_root {
+	long magic;
+	union vert_tree *the_tree;	/* the actual vertex tree */
+	fastf_t *the_array;		/* the array of vertices */
+	unsigned long curr_vert;	/* the number of vertices currently in the array */
+	unsigned long max_vert;		/* the current maximum capacity of the array */
+};
+
+#define VERT_BLOCK 512			/* number of vertices to malloc per call when building the array */
+
+#define VERT_TREE_MAGIC	0x56455254	/* "VERT" */
+#define BN_CK_VERT_TREE(_p)	BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
+
+extern struct vert_root *create_vert_tree();
+extern void free_vert_tree( struct vert_root *tree_root );
+extern int Add_vert( float x, float y, float z, struct vert_root *tree_root, fastf_t local_tol_sq );
+extern void clean_vert_tree( struct vert_root *tree_root );
+
 /*----------------------------------------------------------------------*/
 /* vectfont.c */
 extern void tp_setup();
