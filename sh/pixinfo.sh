@@ -24,11 +24,12 @@ then
 	exit 1
 fi
 
-FILE=$1
+FILE="$1"
 
 # Change dangerous shell characters to more harmless versions.
 # This primarily affects the returned BASE string.
-eval `basename $FILE| tr '&;$!=' '+,---' | \
+# LHS is added in a second step, in case there is no dot at all.
+eval `basename "$FILE" | tr '&;$!=' '+,---' | \
 	sed -e 's/\\(.*\\)\\.\\(.*\\)/\\1;SUFFIX=\\2;/' -e 's/^/LHS=/' `
 
 # First, see if size is encoded in the name.
@@ -74,7 +75,8 @@ pr|ras)
 	SUFFIX=unknown ;;
 *)
 	#  Suffix not recognized, just act innocent.
-	#  Calling routine may know what to do anyway.
+	#  Calling routine may know what to do anyway, and just wants
+	#  the BASE and SUFFIX strings
 	ARGS="-w0 -n0" ;;
 esac
 
