@@ -222,8 +222,16 @@ register const char	*name;
 int			noisy;
 {
 	register struct directory *dp;
-	register char	n0 = name[0];
-	register char	n1 = name[1];
+	register char	n0;
+	register char	n1;
+
+	if (!name) {
+	  bu_log("db_lookup received NULL name\n");
+	  return (DIR_NULL);
+	}
+
+	n0 = name[0];
+	n1 = name[1];
 
 	RT_CK_DBI(dbip);
 
