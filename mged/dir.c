@@ -985,14 +985,19 @@ cmd_glob()
 	register int i;
 	int orig_numargs = numargs;
 
-	strncpy( word, cmd_args[numargs-1], sizeof(word) );
+	strncpy( word, cmd_args[numargs-1], sizeof(word)-1 );
 	/* If * ? or [ are present, this is a regular expression */
 	pattern = word;
-	while( *pattern )
+	while( *pattern )  {
+		if( *pattern == '\n' ||
+		    *pattern == ' '  ||
+		    *pattern == '\t' )
+			return(0);		/* nothing to do */
 		if( *pattern == '*' ||
 		    *pattern == '?' ||
 		    *pattern++ == '[' )
 			goto hard;
+	}
 	return(0);				/* nothing to do */
 hard:
 	/* First, null terminate (sigh) */
