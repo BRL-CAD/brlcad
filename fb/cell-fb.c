@@ -221,7 +221,6 @@ char	**argv;
 
 {	
     static long	ncells;
-    int	r;
 
     if (! pars_Argv(argc, argv))
     {
@@ -252,8 +251,7 @@ char	**argv;
 	}
 	if (log_flag)
 	    log_Run();
-	r = get_OK();
-    } while ((view_flag == 0) && ! feof(filep) && r);
+    } while ((view_flag == 0) && ! feof(filep) && get_OK());
 }
 
 STATIC long read_Cell_Data()
