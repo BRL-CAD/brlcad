@@ -11,7 +11,8 @@
 #define		ORDER_FIRSTNAME		1
 #define		ORDER_PARTY		2
 #define		DEMOCRAT		0
-#define		REPUBLICAN		1
+#define		REPUBLICAN		2
+#define		ZEMOCRAT		1
 
 typedef struct
 {
@@ -62,10 +63,12 @@ void describe_president (void *v)
 	    __FILE__, __LINE__);
 	exit (0);
     }
-    printf("%-16s %-16s %s\n",
+    fprintf(stderr, "%-16s %-16s %s\n",
 	p -> last, p -> first,
-	(p -> party == DEMOCRAT) ? "Democrat" : "Republican");
-    fflush(stdout);
+	(p -> party == DEMOCRAT) ? "Democrat" :
+	(p -> party == REPUBLICAN) ? "Republican" :
+	(p -> party == ZEMOCRAT) ? "Zemocrat" : "Huhh?");
+    fflush(stderr);
 }
 
 /* 
@@ -104,16 +107,24 @@ main ()
 			};
 
     nm_presidents = sizeof(pres) / sizeof(record);
+    for (i = 0; i < nm_presidents; ++i)
+	fprintf(stderr, "%d  <%x>  %s\n",
+		i, pres + i, pres[i].last);
+
     comp_func[0] = last_name_sort;
     if ((tree = rb_create("First test", 3, comp_func)) == RB_TREE_NULL)
     {
 	fputs("rb_create() bombed\n", stderr);
 	exit (1);
     }
+    rb_install_print(tree, describe_president);
 
     printf("There are %d presidents\n", nm_presidents);
     for (i = 0; i < nm_presidents; ++i)
 	rb_insert(tree, (void *) &(pres[i]));
+
+    printf("\n\n a summary...\n");
+    rb_summarize_tree(tree);fflush(stdout);
 
     for (i = 0; i < 3; ++i)
     {
@@ -125,15 +136,17 @@ main ()
 	    order_string[i], r -> first, r -> last);
     }
 
-    printf("\n\n\nBy last name...\n");
-	rb_walk(tree, ORDER_LASTNAME, describe_president);
-    printf("\n\n\nBy first name...\n");
+    printf("\n\n\nBy last name...\n");fflush(stdout);
+	rb_walk(tree, ORDER_LASTNAME, describe_president);fflush(stdout);
+    printf("\n\n\nBy first name...\n");fflush(stdout);
 	rb_walk(tree, ORDER_FIRSTNAME, describe_president);
     printf("\n\n\nBy party...\n");
 	rb_walk(tree, ORDER_PARTY, describe_president);
 
     p.magic = RECORD_MAGIC;
     strcpy(p.first, "Lyndon");
+    strcpy(p.last, "Johnson");
+    p.party = DEMOCRAT;
     r = (record *) rb_search(tree, ORDER_FIRSTNAME, (void *) (&p));
     if (r == 0)
     {
@@ -145,22 +158,42 @@ main ()
 	describe_president((void *) r);
     }
 
+    fprintf(stderr, "Last names as we begin...\n");
+    rb_diagnose_tree(tree, ORDER_LASTNAME);
+    fprintf(stderr, "First names as we begin...\n");
+    rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+    fprintf(stderr, "parties as we begin...\n");
+    rb_diagnose_tree(tree, ORDER_PARTY);
+
+    fprintf(stderr, "Deleting Johnson by last name\n");
+    rb_delete(tree, ORDER_LASTNAME);
+
+    fprintf(stderr, "Last names afterwards...\n");
+    rb_diagnose_tree(tree, ORDER_LASTNAME);
+    fprintf(stderr, "First names afterwards...\n");
+    rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+
+    printf("\nStepping through by last names\n");
+    for (r = (record *) rb_min(tree, ORDER_LASTNAME);
+	 r != 0;
+	 r = (record *) rb_succ(tree, ORDER_LASTNAME))
     {
-	void left_rotate();
+	describe_president((void *) r);
+    }
 
-	printf("First names as we begin...\n");
-	rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+    printf("\nStepping through by first names\n");
+    for (r = (record *) rb_min(tree, ORDER_FIRSTNAME);
+	 r != 0;
+	 r = (record *) rb_succ(tree, ORDER_FIRSTNAME))
+    {
+	describe_president((void *) r);
+    }
 
-	left_rotate(tree->rbt_root[ORDER_FIRSTNAME], ORDER_FIRSTNAME);
-	printf("First names after left rotation...\n");
-	rb_diagnose_tree(tree, ORDER_FIRSTNAME);
-
-	right_rotate(tree->rbt_root[ORDER_FIRSTNAME], ORDER_FIRSTNAME);
-	printf("First names after derotation...\n");
-	rb_diagnose_tree(tree, ORDER_FIRSTNAME);
-
-	right_rotate(tree->rbt_root[ORDER_FIRSTNAME], ORDER_FIRSTNAME);
-	printf("First names after right rotation...\n");
-	rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+    printf("\nStepping through by parties\n");
+    for (r = (record *) rb_min(tree, ORDER_PARTY);
+	 r != 0;
+	 r = (record *) rb_succ(tree, ORDER_PARTY))
+    {
+	describe_president((void *) r);
     }
 }
