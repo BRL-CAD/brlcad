@@ -77,7 +77,7 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-#define NFS	1	/* BRL */
+
 
 /****************************************************************
  *								*
@@ -331,7 +331,7 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS	CC_OPTS
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
-#if 0
+#	if 1
 /*		Normal Sun configuration */
 #		define	LIBFB_OBJS	if_remote pkg if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
@@ -345,7 +345,7 @@ set -S2 "/bin/sh"
 #		define	MGED_OBJS	dm-sun
 #		define	MGED_CONFIG	-DDM_SUNPW
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
-#else
+#	else
 /*		Sun with X11 configuration */
 #		define	LIBFB_OBJS	if_remote pkg if_sun if_X
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN -DIF_X
