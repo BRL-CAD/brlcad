@@ -9465,3 +9465,100 @@ struct rt_tol *tol;
 
 	return( crv );
 }
+
+int
+nmg_break_edge_at_verts( e, verts, tol )
+struct edge *e;
+struct nmg_ptbl *verts;
+CONST struct rt_tol *tol;
+{
+	int break_count=0;
+	int j;
+	struct vertex *va,*vb;
+	struct nmg_ptbl edges;
+
+	RT_CK_TOL( tol );
+	NMG_CK_EDGE( e );
+	NMG_CK_PTBL( verts );
+
+	nmg_tbl( &edges, TBL_INIT, (long *)NULL );
+	nmg_tbl( &edges, TBL_INS, (long *)e );
+
+start:
+
+	while( NMG_TBL_END( &edges ) )
+	{
+		struct edge *e1;
+		struct edgeuse *eu;
+
+		e1 = (struct edge *)NMG_TBL_GET( &edges, NMG_TBL_END( &edges )-1 );
+		NMG_CK_EDGE( e1 );
+		eu = e1->eu_p;
+		NMG_CK_EDGEUSE( eu );
+
+		va = eu->vu_p->v_p;
+		NMG_CK_VERTEX( va );
+		vb = eu->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX( vb );
+
+		for( j=0 ; j<NMG_TBL_END( verts ) ; j++ )
+		{
+			struct edgeuse *eu_new;
+			struct vertex *v;
+			fastf_t dist;
+			point_t pca;
+
+			v = (struct vertex *)NMG_TBL_GET( verts, j );
+			NMG_CK_VERTEX( v );
+
+			if( v == va || v == vb )
+				continue;
+
+			if( rt_dist_pt3_lseg3( &dist, pca, va->vg_p->coord, vb->vg_p->coord, v->vg_p->coord, tol ) )
+				continue;
+
+			eu_new = nmg_esplit( v, eu, 1 );
+			break_count++;
+
+			nmg_tbl( &edges, TBL_RM, (long *)e );
+			nmg_tbl( &edges, TBL_INS, (long *)eu->e_p );
+			nmg_tbl( &edges, TBL_INS, (long *)eu_new->e_p );
+
+			goto start;
+		}
+		nmg_tbl( &edges, TBL_RM, (long *)e1 );
+	}
+	nmg_tbl( &edges, TBL_FREE, (long *)NULL );
+	return( break_count );
+}
+
+int
+nmg_break_edges( magic_p, tol )
+long *magic_p;
+struct rt_tol *tol;
+{
+	struct nmg_ptbl edges;
+	struct nmg_ptbl verts;
+	int i;
+	int break_count=0;
+
+	RT_CK_TOL( tol );
+
+	nmg_edge_tabulate( &edges, magic_p );
+	nmg_vertex_tabulate( &verts, magic_p );
+
+	for( i=0 ; i<NMG_TBL_END( &edges ); i++ )
+	{
+		struct edge *e;
+		int edge_break_count=0;
+
+		e = (struct edge *)NMG_TBL_GET( &edges, i );
+		NMG_CK_EDGE( e );
+		edge_break_count = nmg_break_edge_at_verts( e, &verts, tol );
+		break_count += edge_break_count;
+	}
+	nmg_tbl( &edges, TBL_FREE, (long *)NULL );
+	nmg_tbl( &verts, TBL_FREE, (long *)NULL );
+
+	return( break_count );
+}
