@@ -14,6 +14,11 @@ fi
 
 NEW="$1"
 
+if test ! -d $NEW
+then	echo "Ahem, $NEW is not an existing directory"
+	exit 1
+fi
+
 echo "(For non-production installation, all dirs forced to new BINDIR)"
 echo
 echo "BINDIR was $BINDIR, will be $NEW"
