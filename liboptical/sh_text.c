@@ -79,7 +79,7 @@ struct structparse txt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
 	"%C",	"transp",	0,			FUNC_NULL,
-	"%s",	"file",		8,			FUNC_NULL,
+	"%s",	"file",		1,			FUNC_NULL,
 #else
 	"%C",	"transp",	offsetofarray(struct txt_specific, tx_transp),	FUNC_NULL,
 	"%s",	"file",		offsetofarray(struct txt_specific, tx_file),		FUNC_NULL,
@@ -296,7 +296,7 @@ struct structparse ckr_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
 	"%C",	"a",		0,			FUNC_NULL,
-	"%C",	"b",		8,			FUNC_NULL,
+	"%C",	"b",		1,			FUNC_NULL,
 #else
 	"%C",	"a",		offsetofarray(struct ckr_specific, ckr_a),		FUNC_NULL,
 	"%C",	"b",		offsetofarray(struct ckr_specific, ckr_b),		FUNC_NULL,
