@@ -857,7 +857,16 @@ int framenumber;
 	 */
 #if !defined(alliant)
 	if( npsw > 1 )  {
-		nutime = utime / npsw;			/* compensate */
+		int avail_cpus;
+		int ncpus;
+
+		avail_cpus = bu_avail_cpus();
+		if( npsw > avail_cpus ) {
+			ncpus = avail_cpus;
+		} else {
+			ncpus = npsw;
+		}
+		nutime = utime / ncpus;			/* compensate */
 	} else
 #endif
 		nutime = utime;
