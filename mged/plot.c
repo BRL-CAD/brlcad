@@ -38,11 +38,10 @@ extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 extern char	*local_unit[];
 
-/* UNIX-Plot routines */
-FILE *up_fp;		/* output file pointer */
-int up_color(), up_cont(), up_cont3(), up_erase(), up_label();
-int up_line(), up_line3(), up_linemod();
-int up_move(), up_move3(), up_putsi(), up_space(), up_spc3();
+/* BRL CAD package UNIX-Plot library routines */
+extern int pl_color(), pl_cont(), pl_3cont(), pl_erase(), pl_label();
+extern int pl_line(), pl_3line(), pl_linmod();
+extern int pl_move(), pl_3move(), pl_space(), pl_3space();
 
 
 /*
@@ -57,6 +56,7 @@ f_plot()
 {
 	register struct solid *sp;
 	register struct veclist *vp;
+	register FILE *fp;
 	static vect_t clipmin, clipmax;
 	static vect_t last;		/* last drawn point */
 	static vect_t fin;
@@ -106,17 +106,17 @@ f_plot()
 			strncat( buf, " ", sizeof(buf) );
 			strncat( buf, argv[0], sizeof(buf) );
 		}
-		(void)printf("piped to %s\n", buf );
-		if( (up_fp = popen( buf, "w" ) ) == NULL )  {
+		if( (fp = popen( buf, "w" ) ) == NULL )  {
 			perror( buf );
 			return;
 		}
+		(void)printf("piped to %s\n", buf );
 	}  else  {
-		(void)printf("plot stored in %s", argv[0] );
-		if( (up_fp = fopen( argv[0], "w" )) == NULL )  {
+		if( (fp = fopen( argv[0], "w" )) == NULL )  {
 			perror( argv[0] );
 			return;
 		}
+		(void)printf("plot stored in %s\n", argv[0] );
 	}
 
 	color_soltab();		/* apply colors to the solid table */
@@ -139,18 +139,18 @@ f_plot()
 	 * which we map to integer space -2048 to +2048
 	 */
 	if( Three_D )
-		up_spc3( -2048, -2048, -2048, 2048, 2048, 2048 );
+		pl_3space( fp, -2048, -2048, -2048, 2048, 2048, 2048 );
 	else
-		up_space( -2048, -2048, 2048, 2048 );
-	up_erase();
+		pl_space( fp, -2048, -2048, 2048, 2048 );
+	pl_erase( fp );
 	Dashing = 0;
-	up_linemod("solid");
+	pl_linmod( fp, "solid");
 	FOR_ALL_SOLIDS( sp )  {
 		if( Dashing != sp->s_soldash )  {
 			if( sp->s_soldash )
-				up_linemod("dotdashed");
+				pl_linmod( fp, "dotdashed");
 			else
-				up_linemod("solid");
+				pl_linmod( fp, "solid");
 			Dashing = sp->s_soldash;
 		}
 		nvec = sp->s_vlen;
@@ -172,10 +172,11 @@ f_plot()
 				register struct mater *mp;
 				mp = (struct mater *)sp->s_materp;
 				if( mp != MATER_NULL )
-					up_color( mp->mt_r,
+					pl_color( fp,
+						mp->mt_r,
 						mp->mt_g,
 						mp->mt_b );
-				up_line3(
+				pl_3line( fp,
 					(int)( start[X] * 2047 ),
 					(int)( start[Y] * 2047 ),
 					(int)( start[Z] * 2047 ),
@@ -183,7 +184,7 @@ f_plot()
 					(int)( fin[Y] * 2047 ),
 					(int)( fin[Z] * 2047 ) );
 			}  else
-				up_line(
+				pl_line( fp,
 					(int)( start[0] * 2047 ),
 					(int)( start[1] * 2047 ),
 					(int)( fin[0] * 2047 ),
@@ -191,9 +192,9 @@ f_plot()
 		}
 	}
 	if( cmd_args[1][0] == '|' )
-		(void)pclose( up_fp );
+		(void)pclose( fp );
 	else
-		(void)fclose( up_fp );
+		(void)fclose( fp );
 }
 
 void
@@ -259,113 +260,4 @@ f_area()
 	(void)printf("Presented area from this viewpoint, square %s:\n",
 		local_unit[localunit] );
 	pclose( fp );
-}
-
-/*
- *  Special version of PLOT library to allow us to write to a
- *  file descriptor other than stdout, and to provide the BRL-extensions
- *  for 3-D UNIX Plot.
- */
-/*
-	up_color -- deposit color selection in UNIX plot output file
-		(BRL addition)
-
-	last edit:	04-Jan-1984	D A Gwyn
-*/
-up_color( r, g, b )
-	int	r, g, b;		/* color components, 0..255 */
-	{
-	putc( 'C', up_fp );
-	putc( r, up_fp );
-	putc( g, up_fp );
-	putc( b, up_fp );
-	}
-
-up_cont(xi,yi){
-	putc('n',up_fp);
-	up_putsi(xi);
-	up_putsi(yi);
-}
-
-up_cont3(xi,yi,zi){
-	putc('N',up_fp);
-	up_putsi(xi);
-	up_putsi(yi);
-	up_putsi(zi);
-}
-
-up_erase(){
-	putc('e',up_fp);
-}
-
-up_label(s)
-char *s;
-{
-	int i;
-	putc('t',up_fp);
-	for(i=0;s[i];)putc(s[i++],up_fp);
-	putc('\n',up_fp);
-}
-
-up_line(xval0,yval0,xval1,yval1){
-	putc('l',up_fp);
-	up_putsi(xval0);
-	up_putsi(yval0);
-	up_putsi(xval1);
-	up_putsi(yval1);
-}
-
-up_line3(xval0,yval0,zval0,xval1,yval1,zval1){
-	putc('L',up_fp);
-	up_putsi(xval0);
-	up_putsi(yval0);
-	up_putsi(zval0);
-	up_putsi(xval1);
-	up_putsi(yval1);
-	up_putsi(zval1);
-}
-
-up_linemod(s)
-char *s;
-{
-	int i;
-	putc('f',up_fp);
-	for(i=0;s[i];)putc(s[i++],up_fp);
-	putc('\n',up_fp);
-}
-
-up_move(xvali,yvali){
-	putc('m',up_fp);
-	up_putsi(xvali);
-	up_putsi(yvali);
-}
-
-up_move3(xvali,yvali,zvali){
-	putc('M',up_fp);
-	up_putsi(xvali);
-	up_putsi(yvali);
-	up_putsi(zvali);
-}
-
-up_putsi(a){
-	putc(a&0377,up_fp);		/* DAG -- bug fix */
-	putc((a>>8)&0377,up_fp);	/* DAG */
-}
-
-up_space(xval0,yval0,xval1,yval1){
-	putc('s',up_fp);
-	up_putsi(xval0);
-	up_putsi(yval0);
-	up_putsi(xval1);
-	up_putsi(yval1);
-}
-
-up_spc3(xval0,yval0,zval0,xval1,yval1,zval1){
-	putc('S',up_fp);
-	up_putsi(xval0);
-	up_putsi(yval0);
-	up_putsi(zval0);
-	up_putsi(xval1);
-	up_putsi(yval1);
-	up_putsi(zval1);
 }

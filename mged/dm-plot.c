@@ -9,10 +9,6 @@
  * We assume that the UNIX-plot filter used can at least discard
  * the non-standard extention to specify color (a Gwyn@BRL addition).
  *
- *  Bug -
- *	If the GED "plot" command is used while this display manager
- *  is attached, up_fp will be smashed, with bad results.
- *
  *  Author -
  *	Michael John Muuss
  *  
@@ -76,18 +72,10 @@ struct dm dm_Plot = {
 };
 
 extern struct device_values dm_values;	/* values read from devices */
+extern FILE	*popen();	/* stdio pipe open routine */
 
 static vect_t clipmin, clipmax;		/* for vector clipping */
-
-#define BELL	007
-#define	FF	014
-#define SUB	032		/* Turn on graphics cursor */
-#define GS	035		/* Enter Graphics Mode (1st vec dark) */
-#define ESC	033
-#define US	037		/* Enter Alpha Mode */
-
-extern FILE	*popen();	/* stdio pipe open routine */
-extern FILE	*up_fp;		/* from plot.c */
+static FILE	*up_fp;
 static char	ttybuf[BUFSIZ];
 
 /*
@@ -123,7 +111,7 @@ Plot_open()
 		}
 	}
 	setbuf( up_fp, ttybuf );
-	up_space( -2048, -2048, 2048, 2048 );
+	pl_space( up_fp, -2048, -2048, 2048, 2048 );
 	return(0);			/* OK */
 }
 
@@ -153,8 +141,8 @@ Plot_prolog()
 	/* We expect the screen to be blank so far, from last frame flush */
 
 	/* Put the center point up */
-	up_move( 0, 0 );
-	up_cont( 0, 0 );
+	pl_move( up_fp,  0, 0 );
+	pl_cont( up_fp,  0, 0 );
 }
 
 /*
@@ -163,7 +151,7 @@ Plot_prolog()
 void
 Plot_epilog()
 {
-	up_erase();			/* forces drawing */
+	pl_erase( up_fp );			/* forces drawing */
 	(void)fflush( up_fp );
 	return;
 }
@@ -202,9 +190,9 @@ double ratio;
 	int useful = 0;
 
 	if( sp->s_soldash )
-		up_linemod("dotdashed");
+		pl_linmod( up_fp, "dotdashed");
 	else
-		up_linemod("solid");
+		pl_linmod( up_fp, "solid");
 
 	nvec = sp->s_vlen;
 	for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
@@ -231,11 +219,11 @@ double ratio;
 				register struct mater *mp;
 				mp = (struct mater *)sp->s_materp;
 				if( mp != MATER_NULL )
-					up_color( mp->mt_r,
+					pl_color( up_fp,  mp->mt_r,
 						mp->mt_g,
 						mp->mt_b );
 			}
-			up_line(
+			pl_line( up_fp, 
 				(int)( start[0] * 2047 ),
 				(int)( start[1] * 2047 ),
 				(int)( fin[0] * 2047 ),
@@ -283,23 +271,23 @@ register u_char *str;
 {
 	switch( color )  {
 	case DM_BLACK:
-		up_color( 0, 0, 0 );
+		pl_color( up_fp,  0, 0, 0 );
 		break;
 	case DM_RED:
-		up_color( 255, 0, 0 );
+		pl_color( up_fp,  255, 0, 0 );
 		break;
 	case DM_BLUE:
-		up_color( 0, 255, 0 );
+		pl_color( up_fp,  0, 255, 0 );
 		break;
 	case DM_YELLOW:
-		up_color( 255, 255, 0 );
+		pl_color( up_fp,  255, 255, 0 );
 		break;
 	case DM_WHITE:
-		up_color( 255, 255, 255 );
+		pl_color( up_fp,  255, 255, 255 );
 		break;
 	}
-	up_move(x,y);
-	up_label(str);
+	pl_move( up_fp, x,y);
+	pl_label( up_fp, str);
 }
 
 /*
@@ -312,13 +300,13 @@ int x1, y1;
 int x2, y2;
 int dashed;
 {
-	up_color( 255, 255, 0 );	/* Yellow */
+	pl_color( up_fp,  255, 255, 0 );	/* Yellow */
 	if( dashed )
-		up_linemod("dotdashed");
+		pl_linmod( up_fp, "dotdashed");
 	else
-		up_linemod("solid");
-	up_move(x1,y1);
-	up_cont(x2,y2);
+		pl_linmod( up_fp, "solid");
+	pl_move( up_fp, x1,y1);
+	pl_cont( up_fp, x2,y2);
 }
 
 /*
