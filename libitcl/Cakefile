@@ -67,9 +67,9 @@ noprod&:
 clobber&: Makefile.MTYPE
 	make -f Makefile.MTYPE clean
 	rm -f *.MTYPE *.o config.log config.status Makefile lib* itclsh itkwish
-	#ifdef NFS
+#ifdef NFS
 	rm -rf itcl itk iwidgets*
-	#endif
+#endif
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
