@@ -24,6 +24,12 @@ else !BUILD_JOVE
 JOVEDIR=
 endif
 
+if BUILD_LIBTKGLX
+TKGLX=libtkGLX
+else !BUILD_LIBTKGLX
+TKGLX=
+endif
+
 if ONLY_BENCHMARK
 SUBDIRS = libtcl
 

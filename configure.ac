@@ -1461,16 +1461,6 @@ else
 fi
 AC_SUBST(LIBZ)
 
-dnl *** libtkGLX ***
-
-dnl See if we can build libtkGLX
-# XXX need to test why the library fails on non-irix
-TKGLX=
-if test "x$host_os" = "xirix6.5" ; then
-	TKGLX=libtkGLX
-fi
-AC_SUBST(TKGLX)
-
 
 dnl *** 64-bit compilation ***
 
@@ -1523,6 +1513,8 @@ dnl *** Configure Makefiles ***
 dnl ***************************
 
 AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
+# XXX only irix can build libtkglx right now?
+AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])

@@ -19,3 +19,5 @@ descnames.h:
 	sh makedescnames.sh
 
 EXTRA_DIST = makedescnames.sh
+
+MAINTAINERCLEANFILES = Makefile.in
