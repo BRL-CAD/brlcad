@@ -134,7 +134,7 @@ int			do_old_matter;
 			break;
 		case ID_FREE:
 			/* Inform db manager of avail. space */
-			memfree( &(dbip->dbi_freep), (unsigned)1,
+			rt_memfree( &(dbip->dbi_freep), (unsigned)1,
 				addr/sizeof(union record) );
 			break;
 		case ID_ARS_A:

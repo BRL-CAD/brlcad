@@ -657,7 +657,7 @@ char	**argv;
 
 	sp=HeadSolid.s_forw;
 	while( sp != &HeadSolid )  {
-		memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+		rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 		dp = sp->s_path[0];
 		RT_CK_DIR(dp);
 		if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
@@ -776,7 +776,7 @@ register struct directory *dp;
 			if( state != ST_VIEW && illump == sp )
 				button( BE_REJECT );
 			dmp->dmr_viewchange( DM_CHGV_DEL, sp );
-			memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+			rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 			DEQUEUE_SOLID( sp );
 			FREE_SOLID( sp );
 			dmaflag = 1;

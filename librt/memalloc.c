@@ -2,24 +2,25 @@
  *			M E M A L L O C . C
  *
  * Functions -
- *	memalloc	allocate 'size' of memory from a given map
- *	memget		allocate 'size' of memory from map at 'place'
- *	memfree		return 'size' of memory to map at 'place'
- *	mempurge	free everything on current memory chain
- *	memprint	print a map
+ *	rt_memalloc	allocate 'size' of memory from a given map
+ *	rt_memget	allocate 'size' of memory from map at 'place'
+ *	rt_memfree	return 'size' of memory to map at 'place'
+ *	rt_mempurge	free everything on current memory chain
+ *	rt_memprint	print a map
+ *	rt_memclose
  *
  * The structure of the displaylist memory map chains
  * consists of non-zero count and base address of that many contiguous units.
  * The addresses are increasing and the list is terminated with the
  * first zero link.
  *
- * memalloc() and memfree() use these tables to allocate displaylist memory.
+ * rt_memalloc() and rt_memfree() use these tables to allocate displaylist memory.
  *
  *	For each Memory Map there exists a queue (coremap).
  *	There also exists a queue of free buffers which are enqueued
  *	on to either of the previous queues.  Initially all of the buffers
  *	are placed on the `freemap' queue.  Whenever a buffer is freed
- *	because of coallescing ends in memfree() or zero size in memalloc()
+ *	because of coallescing ends in rt_memfree() or zero size in rt_memalloc()
  *	the mapping buffer is taken off from the respective queue and
  *	returned to the `freemap' queue.
  *
@@ -46,9 +47,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* XXX not PARALLEL */
 /* Allocation/Free spaces */
-static struct mem_map *freemap = MAP_NULL;	/* Freelist of buffers */
+static struct mem_map *rt_mem_freemap = MAP_NULL;	/* Freelist of buffers */
 
-/* Flags used by `type' in memfree() */
+/* Flags used by `type' in rt_memfree() */
 #define	M_TMTCH	00001	/* Top match */
 #define	M_BMTCH	00002	/* Bottom match */
 #define	M_TOVFL	00004	/* Top overflow */
@@ -67,7 +68,7 @@ static struct mem_map *freemap = MAP_NULL;	/* Freelist of buffers */
  *	Algorithm is first fit.
  */
 unsigned long
-memalloc( pp, size )
+rt_memalloc( pp, size )
 struct mem_map **pp;
 register unsigned size;
 {
@@ -96,8 +97,8 @@ register unsigned size;
 			prevp->m_nxtp = curp->m_nxtp;
 		else
 			*pp = curp->m_nxtp;	/* Click list down at start */
-		curp->m_nxtp = freemap;		/* Link it in */
-		freemap = curp;			/* Make it the start */
+		curp->m_nxtp = rt_mem_freemap;		/* Link it in */
+		rt_mem_freemap = curp;			/* Make it the start */
 	}
 
 	return( addr );
@@ -114,7 +115,7 @@ register unsigned size;
  *	Algorithm is first fit.
  */
 unsigned long
-memget( pp, size, place )
+rt_memget( pp, size, place )
 struct mem_map **pp;
 register unsigned int size;
 unsigned int place;
@@ -124,7 +125,7 @@ unsigned int place;
 
 	prevp = MAP_NULL;		/* special for first pass through */
 	if( size == 0 )
-		rt_bomb("memget() size==0\n");
+		rt_bomb("rt_memget() size==0\n");
 
 	curp = *pp;
 	while( curp )  {
@@ -152,8 +153,8 @@ unsigned int place;
 			prevp->m_nxtp = curp->m_nxtp;
 		else
 			*pp = curp->m_nxtp;	/* Click list down at start */
-		curp->m_nxtp = freemap;		/* Link it in */
-		freemap = curp;			/* Make it the start */
+		curp->m_nxtp = rt_mem_freemap;		/* Link it in */
+		rt_mem_freemap = curp;			/* Make it the start */
 	}
 	return( addr );
 }
@@ -170,7 +171,7 @@ unsigned int place;
  *	or changing addresses.  Other wrap-around conditions are flagged.
  */
 void
-memfree( pp, size, addr )
+rt_memfree( pp, size, addr )
 struct mem_map **pp;
 unsigned size;
 unsigned long addr;
@@ -227,8 +228,8 @@ unsigned long addr;
 	case M_TMTCH|M_BMTCH:	/* Deallocate top element and expand bottom */
 		prevp->m_size += size + curp->m_size;
 		prevp->m_nxtp = curp->m_nxtp;
-		curp->m_nxtp = freemap;		/* Link into freemap */
-		freemap = curp;
+		curp->m_nxtp = rt_mem_freemap;		/* Link into rt_mem_freemap */
+		rt_mem_freemap = curp;
 		break;
 
 	case M_BMTCH:		/* Expand bottom element */
@@ -241,10 +242,10 @@ unsigned long addr;
 		break;
 
 	default:		/* No matches; allocate and insert */
-		if( (tmap=freemap) == MAP_NULL )
+		if( (tmap=rt_mem_freemap) == MAP_NULL )
 			tmap = (struct mem_map *)rt_malloc(sizeof(struct mem_map), "struct mem_map");
 		else
-			freemap = freemap->m_nxtp;	/* Click one off */
+			rt_mem_freemap = rt_mem_freemap->m_nxtp;	/* Click one off */
 
 		if( prevp )
 			prevp->m_nxtp = tmap;
@@ -264,7 +265,7 @@ unsigned long addr;
  *  the freelist.
  */
 void
-mempurge( pp )
+rt_mempurge( pp )
 struct mem_map **pp;
 {
 	register struct mem_map *prevp = MAP_NULL;
@@ -278,8 +279,8 @@ struct mem_map **pp;
 		;
 
 	/* Put the whole busy list onto the free list */
-	prevp->m_nxtp = freemap;
-	freemap = *pp;
+	prevp->m_nxtp = rt_mem_freemap;
+	rt_mem_freemap = *pp;
 
 	*pp = MAP_NULL;
 }
@@ -290,12 +291,12 @@ struct mem_map **pp;
  *  Print a memory chain.
  */
 void
-memprint( pp )
+rt_memprint( pp )
 struct mem_map **pp;
 {
 	register struct mem_map *curp;
 
-	rt_log("memprint(x%x)\n", *pp);
+	rt_log("rt_memprint(x%x)\n", *pp);
 	for( curp = *pp; curp; curp = curp->m_nxtp )
 		rt_log(" a=x%lx, l=%d\n", curp->m_addr, curp->m_size );
 }
@@ -303,15 +304,15 @@ struct mem_map **pp;
 /*
  *			M E M C L O S E
  *
- *  Return all the storage used by the freemap.
+ *  Return all the storage used by the rt_mem_freemap.
  */
 void
-memclose()
+rt_memclose()
 {
 	register struct mem_map *mp;
 
-	while( (mp = freemap) != MAP_NULL )  {
-		freemap = mp->m_nxtp;
+	while( (mp = rt_mem_freemap) != MAP_NULL )  {
+		rt_mem_freemap = mp->m_nxtp;
 		rt_free( (char *)mp, "struct mem_map" );
 	}
 }

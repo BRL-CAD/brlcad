@@ -176,13 +176,13 @@ extern int		clip(), getname(), use_pen(), dir_print();
 extern struct directory	*combadd(), **dir_getspace();
 extern void		ellipse();
 
-/* memalloc.c */
-MGED_EXTERN(unsigned long memalloc, (struct mem_map **pp, unsigned size) );
-MGED_EXTERN(unsigned long memget, (struct mem_map **pp, unsigned int size,
+/* rt_memalloc.c */
+MGED_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
+MGED_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
 	unsigned int place) );
-MGED_EXTERN(void memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
-MGED_EXTERN(void mempurge, (struct mem_map **pp) );
-MGED_EXTERN(void memprint, (struct mem_map **pp) );
+MGED_EXTERN(void rt_memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
+MGED_EXTERN(void rt_mempurge, (struct mem_map **pp) );
+MGED_EXTERN(void rt_memprint, (struct mem_map **pp) );
 
 /* buttons.c */
 MGED_EXTERN(void button, (int bnum) );

@@ -162,11 +162,11 @@ release()
 
 	/* Delete all references to display processor memory */
 	FOR_ALL_SOLIDS( sp )  {
-		memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+		rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 		sp->s_bytes = 0;
 		sp->s_addr = 0;
 	}
-	mempurge( &(dmp->dmr_map) );
+	rt_mempurge( &(dmp->dmr_map) );
 
 	dmp->dmr_close();
 	dmp = &dm_Null;
@@ -196,7 +196,7 @@ char *name;
 		FOR_ALL_SOLIDS( sp )  {
 			/* Write vector subs into new display processor */
 			if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
-				sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
+				sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
 				if( sp->s_addr == 0 )  break;
 				sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
 			} else {

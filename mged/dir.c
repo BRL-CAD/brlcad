@@ -154,9 +154,9 @@ int	argc;
 char	**argv;
 {
 	rt_log("Display manager free map:\n");
-	memprint( &(dmp->dmr_map) );
+	rt_memprint( &(dmp->dmr_map) );
 	rt_log("Database free granule map:\n");
-	memprint( &(dbip->dbi_freep) );
+	rt_memprint( &(dbip->dbi_freep) );
 
 	return CMD_OK;
 }

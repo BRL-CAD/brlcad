@@ -500,7 +500,7 @@ struct mater_info	*materp;
 	/* Cvt to displaylist, determine displaylist memory requirement. */
 	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
 		/* Allocate displaylist storage for object */
-		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
+		sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
 			no_memory = 1;
 			rt_log("Edraw: out of Displaylist\n");

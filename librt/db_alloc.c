@@ -75,7 +75,7 @@ int		count;
 		return(-1);
 	}
 	while(1)  {
-		if( (addr = memalloc( &(dbip->dbi_freep), (unsigned)count )) == 0L )  {
+		if( (addr = rt_memalloc( &(dbip->dbi_freep), (unsigned)count )) == 0L )  {
 			/* No contiguous free block, append to file */
 			if( (dp->d_addr = dbip->dbi_eof) < 0 )  {
 				rt_log("db_alloc: bad EOF\n");
@@ -151,7 +151,7 @@ int		count;
 	}
 
 	/* Try to extend into free space immediately following current obj */
-	if( memget( &(dbip->dbi_freep), (unsigned)count, (unsigned long)(dp->d_addr/sizeof(union record)) ) == 0L )
+	if( rt_memget( &(dbip->dbi_freep), (unsigned)count, (unsigned long)(dp->d_addr/sizeof(union record)) ) == 0L )
 		goto hard;
 
 	dp->d_len += count;
@@ -209,7 +209,7 @@ int			 count;
 		return(-1);
 	}
 	i = db_zapper( dbip, dp, dp->d_len - count );
-	memfree( &(dbip->dbi_freep), (unsigned)count,
+	rt_memfree( &(dbip->dbi_freep), (unsigned)count,
 		(dp->d_addr/(sizeof(union record)))+dp->d_len-count );
 	dp->d_len -= count;
 	return(i);
@@ -282,7 +282,7 @@ struct directory *dp;
 
 	i = db_zapper( dbip, dp, 0 );
 
-	memfree( &(dbip->dbi_freep), (unsigned)dp->d_len,
+	rt_memfree( &(dbip->dbi_freep), (unsigned)dp->d_len,
 		dp->d_addr/(sizeof(union record)) );
 
 	dp->d_len = 0;

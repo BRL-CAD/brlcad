@@ -261,8 +261,8 @@ register struct db_i	*dbip;
 	rt_color_free();		/* Free MaterHead list */
 
 	/* Release map of database holes */
-	mempurge( &(dbip->dbi_freep) );
-	memclose();
+	rt_mempurge( &(dbip->dbi_freep) );
+	rt_memclose();
 
 	/* dbi_inmem */
 
