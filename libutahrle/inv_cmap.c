@@ -265,8 +265,8 @@ unsigned long *dist_buf;
 	cbinc = 2 * ((bcenter + 1) * xsqr - (colormap[2][cindex] * x));
 
 	/* Array starting points. */
-	cdp = dist_buf + rcenter * rstride + gcenter * gstride + bcenter;
-	crgbp = rgbmap + rcenter * rstride + gcenter * gstride + bcenter;
+	cdp = dist_buf + ((rcenter * rstride) + (gcenter * gstride) + bcenter);
+	crgbp = rgbmap + ((rcenter * rstride) + (gcenter * gstride) + bcenter);
 
 	(void)redloop();
     }
