@@ -37,7 +37,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-char CopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States Army";
+char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States Army";
 
 #include <stdio.h>
 #include <fcntl.h>
