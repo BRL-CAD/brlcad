@@ -56,207 +56,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-/* ====================================================================== */
-/* XXX Move to raytrace.h */
-struct rt_list		rt_mapped_file_head;	/* XXX move to rt_g */
-struct rt_mapped_file {
-	struct rt_list	l;
-	char		name[512];	/* Copy of file name */
-	genptr_t	buf;		/* In-memory copy of file (may be mmapped) */
-	long		buflen;		/* # bytes in 'buf' */
-	int		is_mapped;	/* 1=mmap() used, 0=rt_malloc/fread */
-	char		appl[32];	/* Tag for application using 'apbuf' */
-	genptr_t	apbuf;		/* opt: application-specific buffer */
-	long		apbuflen;	/* opt: application-specific buflen */
-	/* XXX Needs date stamp, in case file is modified */
-	int		uses;		/* # ptrs to this struct handed out */
-};
-#define RT_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
-#define RT_CK_MAPPED_FILE(_p)	RT_CKMAG(_p, RT_MAPPED_FILE_MAGIC, "rt_mapped_file")
-
-/*
- *			R T _ O P E N _ M A P P E D _ F I L E
- *
- *  If the file can not be opened, as descriptive an error message as
- *  possible will be printed, to simplify code handling in the caller.
- */
-struct rt_mapped_file *
-rt_open_mapped_file( name, appl )
-CONST char	*name;		/* file name */
-CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
-{
-	struct rt_mapped_file	*mp;
-#ifdef HAVE_UNIX_IO
-	struct stat		sb;
-#endif
-	int			ret;
-	int			fd;	/* unix file descriptor */
-	FILE			*fp;	/* stdio file pointer */
-
-	RES_ACQUIRE( &rt_g.res_model );
-	if( RT_LIST_UNINITIALIZED( &rt_mapped_file_head ) )  {
-		RT_LIST_INIT( &rt_mapped_file_head );
-	}
-	for( RT_LIST_FOR( mp, rt_mapped_file, &rt_mapped_file_head ) )  {
-		RT_CK_MAPPED_FILE(mp);
-		if( strncmp( name, mp->name, sizeof(mp->name) ) )  continue;
-		if( appl && strncmp( appl, mp->appl, sizeof(mp->appl) ) )
-			continue;
-		/* File is already mapped */
-		RES_RELEASE( &rt_g.res_model );
-		return mp;
-	}
-	RES_RELEASE( &rt_g.res_model );
-	/* File is not yet mapped, open file read only. */
-#ifdef HAVE_UNIX_IO
-	RES_ACQUIRE( &rt_g.res_syscall );
-	ret = stat( name, &sb );
-	RES_RELEASE( &rt_g.res_syscall );
-	if( ret < 0 )  {
-		perror(name);
-		goto fail;
-	}
-	if( sb.st_size == 0 )  {
-		rt_log("rt_open_mapped_file(%s) 0-length file\n", name);
-		goto fail;
-	}
-	RES_ACQUIRE( &rt_g.res_syscall );
-	fd = open( name, O_RDONLY );
-	RES_RELEASE( &rt_g.res_syscall );
-	if( fd < 0 )  {
-		perror(name);
-		goto fail;
-	}
-#endif /* HAVE_UNIX_IO */
-
-	/* Optimisticly assume that things will proceed OK */
-	GETSTRUCT( mp, rt_mapped_file );
-	strncpy( mp->name, name, sizeof(mp->name) );
-	if( appl ) strncpy( mp->appl, appl, sizeof(mp->appl) );
-
-#ifdef HAVE_UNIX_IO
-	mp->buflen = sb.st_size;
-#  ifdef HAVE_SYS_MMAN_H
-	/* Attempt to access as memory-mapped file */
-	RES_ACQUIRE( &rt_g.res_syscall );
-	mp->buf = mmap(
-		(caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
-		fd, (off_t)0 );
-	RES_RELEASE( &rt_g.res_syscall );
-	if( mp->buf != (caddr_t)-1 )  {
-	    	/* OK, it's memory mapped in! */
-	    	mp->is_mapped = 1;
-	    	/* It's safe to close the fd now, the manuals say */
-	} else
-#  endif /* HAVE_SYS_MMAN_H */
-	{
-		/* Allocate a local buffer, and slurp it in */
-		mp->buf = rt_malloc( sb.st_size, mp->name );
-		RES_ACQUIRE( &rt_g.res_syscall );
-		ret = read( fd, mp->buf, sb.st_size );
-		RES_RELEASE( &rt_g.res_syscall );
-		if( ret != sb.st_size )  {
-			perror("read");
-			rt_free( (char *)mp->buf, mp->name );
-			goto fail;
-		}
-	}
-	RES_ACQUIRE( &rt_g.res_syscall );
-	close(fd);
-	RES_RELEASE( &rt_g.res_syscall );
-#else /* !HAVE_UNIX_IO */
-	/* Read it in with stdio, with no clue how big it is */
-	RES_ACQUIRE( &rt_g.res_syscall );
-	fp = fopen( name, "r");
-	RES_RELEASE( &rt_g.res_syscall );
-	if( fp == NULL )  {
-		perror(name);
-		goto fail;
-	}
-	/* Read it once to see how large it is */
-	{
-		char	buf[10240];
-		int	got;
-		mp->buflen = 0;
-		RES_ACQUIRE( &rt_g.res_syscall );
-		while( (got = fread( buf, 1, sizeof(buf), fp )) > 0 )
-			mp->buflen += got;
-		rewind(fp);
-		RES_RELEASE( &rt_g.res_syscall );
-	}
-	/* Malloc the necessary buffer */
-	mp->buf = rt_malloc( mp->buflen, mp->name );
-
-	/* Read it again into the buffer */
-	RES_ACQUIRE( &rt_g.res_syscall );
-	ret = fread( mp->buf, mp->buflen, 1, fp );
-	RES_RELEASE( &rt_g.res_syscall );
-	if( ret != 1 )  {
-		RES_ACQUIRE( &rt_g.res_syscall );
-		perror("fread");
-		fclose(fp);
-		RES_RELEASE( &rt_g.res_syscall );
-		rt_log("rt_open_mapped_file() 2nd fread failed? len=%d\n", mp->buflen);
-		rt_free( (char *)mp->buf, "non-unix fread buf" );
-		goto fail;
-	}
-	RES_ACQUIRE( &rt_g.res_syscall );
-	fclose(fp);
-	RES_RELEASE( &rt_g.res_syscall );
-#endif
-
-	mp->uses = 1;
-	mp->l.magic = RT_MAPPED_FILE_MAGIC;
-	RES_ACQUIRE( &rt_g.res_model );
-	RT_LIST_APPEND( &rt_mapped_file_head, &mp->l );
-	RES_RELEASE( &rt_g.res_model );
-	return mp;
-
-fail:
-	if( mp )  rt_free( (char *)mp, "rt_open_mapped_file failed");
-	rt_log("rt_open_mapped_file(%s) can't open file\n", name);
-	return (struct rt_mapped_file *)NULL;
-}
-/*
- *			R T _ C L O S E _ M A P P E D _ F I L E
- */
-void
-rt_close_mapped_file( mp )
-struct rt_mapped_file	*mp;
-{
-	int	ret;
-
-	RT_CK_MAPPED_FILE(mp);
-	RES_ACQUIRE( &rt_g.res_model );
-	if( --mp->uses > 0 )  {
-		RES_RELEASE( &rt_g.res_model );
-		return;
-	}
-	RT_LIST_DEQUEUE( &mp->l );
-	RES_RELEASE( &rt_g.res_model );
-#ifdef HAVE_SYS_MMAN_H
-	if( mp->is_mapped )  {
-		RES_ACQUIRE( &rt_g.res_syscall );
-		ret = munmap( mp->buf, mp->buflen );
-		RES_RELEASE( &rt_g.res_syscall );
-		if( ret < 0 )  perror("munmap");
-	} else
-#endif
-	{
-		rt_free( (char *)mp->buf, mp->name );
-	}
-	mp->buf = (genptr_t)NULL;		/* sanity */
-	if( mp->apbuf )  {
-		rt_free( (char *)mp->apbuf, "rt_close_mapped_file() apbuf[]" );
-		mp->apbuf = (genptr_t)NULL;	/* sanity */
-	}
-	rt_free( (char *)mp, "struct rt_mapped_file" );
-}
-
-/* ====================================================================== */
-
-#define HF_O(m)			offsetof(struct rt_hf_internal, m)
-
 /*
  *  Description of the external string description of the HF.
  *
@@ -270,6 +69,9 @@ struct rt_mapped_file	*mp;
  *  parsed second, and any parameters specified in the cfile override
  *  the values taken from the string solid.
  */
+#define HF_O(m)			offsetof(struct rt_hf_internal, m)
+
+/* All fields valid in string solid */
 CONST struct structparse rt_hf_parse[] = {
 	{"%s",	128,	"cfile",	offsetofarray(struct rt_hf_internal, cfile), FUNC_NULL},
 	{"%s",	128,	"dfile",	offsetofarray(struct rt_hf_internal, dfile), FUNC_NULL},
@@ -286,6 +88,7 @@ CONST struct structparse rt_hf_parse[] = {
 	{"%f",	1,	"zscale",	HF_O(zscale),		FUNC_NULL },
 	{"",	0,	(char *)0,	0,			FUNC_NULL }
 };
+/* Subset of fields found in cfile */
 CONST struct structparse rt_hf_cparse[] = {
 	{"%s",	128,	"dfile",	offsetofarray(struct rt_hf_internal, dfile), FUNC_NULL},
 	{"%s",	8,	"fmt",		offsetofarray(struct rt_hf_internal, fmt), FUNC_NULL},
