@@ -21,13 +21,12 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
 #include "./rdebug.h"
-
-extern double	atof();
 
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of materials */
 

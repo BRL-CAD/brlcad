@@ -38,11 +38,9 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 extern int	getopt();
 extern char	*optarg;
 extern int	optind;
+extern char	*sbrk();
 
 extern char	usage[];
-
-extern double	atof();
-extern char	*sbrk();
 
 int		rdebug;			/* RT program debugging (not library) */
 

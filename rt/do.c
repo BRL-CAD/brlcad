@@ -44,7 +44,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 # define PARALLEL 1
 #endif
 
-extern double	atof();
 extern char	*sbrk();
 
 extern int	rdebug;			/* RT program debugging (not library) */

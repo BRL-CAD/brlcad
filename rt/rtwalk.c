@@ -47,7 +47,6 @@ Usage:  rtwalk [options] startXYZ destXYZ model.g objects...\n\
 (output is rtwalk.mats)\n\
 ";
 
-extern double	atof();
 extern char	*sbrk();
 
 double		viewsize = 42;

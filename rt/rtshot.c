@@ -44,8 +44,6 @@ Usage:  rtshot [options] model.g objects...\n\
  -p # # #	Set starting point\n\
  -a # # #	Set shoot-at point\n";
 
-extern double	atof();
-
 int		rdebug;			/* RT program debugging (not library) */
 static FILE	*plotfp;		/* For plotting into */
 
