@@ -744,12 +744,13 @@ pack .$id.m.file .$id.m.edit .$id.m.view .$id.m.viewring .$id.m.modes .$id.m.set
 pack .$id.m.help -side right
 pack .$id.m -side top -fill x
 
-set multi_view($id) $mged_default_mvmode
-setmv $id
 pack $mged_active_dm($id) -in $mged_dmc($id)
 if {$comb} {
     pack $mged_dmc($id) -side top -padx 2 -pady 2
 }
+
+set multi_view($id) $mged_default_mvmode
+setmv $id
 
 pack .$id.status.cent .$id.status.size .$id.status.units .$id.status.aet\
 	.$id.status.ang -in .$id.status.dpy -side left -anchor w
