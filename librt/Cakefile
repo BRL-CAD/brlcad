@@ -32,6 +32,7 @@
 	nmg_rt_isect nmg_rt_segs nmg_manif \
 	nmg_visit nmg_info nmg_pr \
 	units magic msr vert nmg_extrude nmg_tri nmg_fuse nmg_pt_fu \
+	rtassoc \
 	pr hist machine LIBRT_TIMER storage const global log bomb snoise
 
 #define NURB_OBJ	\
