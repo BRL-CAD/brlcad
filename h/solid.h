@@ -17,6 +17,8 @@
  *
  *  $Header$
  */
+#ifndef SEEN_SOLID_H
+#define SEEN_SOLID_H
 
 #define MAX_PATH	16	/* Maximum depth of path */
 struct solid  {
@@ -76,4 +78,4 @@ struct solid  {
 	(p1)=BU_LIST_PNEXT(structure,p2); \
 	BU_LIST_NOT_HEAD(p1,hp);\
 	(p1)=BU_LIST_PNEXT(structure,p1)
-     
+#endif
