@@ -26,7 +26,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  *  Copyright Notice -
  *	This software is Copyright (C) 1985 by the United States Army.
  *	All rights reserved.
@@ -37,6 +37,11 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+
+#ifdef unix
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
 
 #include "machine.h"
 #include "vmath.h"
@@ -80,13 +85,25 @@ vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
 vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
 int	ibackground[3];			/* integer 0..255 version */
+int	inonbackground[3];		/* integer non-background */
 
 #ifdef RTSRV
 extern int	srv_startpix;		/* offset for view_pixel */
-extern int	srv_scanlen;		/* buf_mode=4 buffer length */
+extern int	srv_scanlen;		/* BUFMODE_RTSRV buffer length */
+extern char	*scanbuf;		/* scanline(s) buffer */
 #endif
-static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame, ... */
-static int	*npix_left;	/* only used in buf_mode=2 */
+
+static int	buf_mode=0;
+#define BUFMODE_UNBUF	1		/* No output buffering */
+#define BUFMODE_DYNAMIC	2		/* Dynamic output buffering */
+#define BUFMODE_INCR	3		/* incr_mode set, dynamic buffering */
+#define BUFMODE_RTSRV	4		/* output buffering into scanbuf */
+
+static struct scanline {
+	int	sl_left;		/* # pixels left on this scanline */
+	char	*sl_buf;		/* ptr to buffer for scanline */
+} *scanline;
+static int	pixel_width = 3;	/* # bytes/pixel */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
@@ -100,28 +117,22 @@ struct structparse view_parse[] = {
  *  			V I E W _ P I X E L
  *  
  *  Arrange to have the pixel output.
- *
- *  The buffering strategy for output files:
- *	In serial mode, let stdio handle the buffering.
- *	In parallel mode, save whole image until the end (view_end).
- *  The buffering strategy for an "online" libfb framebuffer:
- *	buf_mode = 0	single pixel I/O
- *	buf_mode = 1	line buffering
- *	buf_mode = 2	full frame buf, dump to fb+file at end of scanline
- *	buf_mode = 3	full frame buf, dump to fb+file at end of frame
- *	buf_mode = 4	multi-line buffering for RTSRV
  */
 void
 view_pixel(ap)
 register struct application *ap;
 {
-	register int r,g,b;
+	register int	r,g,b;
+	register char	*pixelp;
+	register struct scanline	*slp;
+	register int	do_eol = 0;
 
 	if( ap->a_user == 0 )  {
 		/* Shot missed the model, don't dither */
 		r = ibackground[0];
 		g = ibackground[1];
 		b = ibackground[2];
+		VSETALL( ap->a_color, -1e-20 );	/* background flag */
 	} else {
 		/*
 		 *  To prevent bad color aliasing, add some color dither.
@@ -141,178 +152,167 @@ register struct application *ap;
 		else if( b < 0 )  b = 0;
 		if( r == ibackground[0] && g == ibackground[1] &&
 		    b == ibackground[2] )  {
-		    	register int i;
-		    	int newcolor[3];
-		    	/*  Find largest color channel to perterb.
-		    	 *  It should happen infrequently.
-		    	 *  If you have a faster algorithm, tell me.
-		    	 */
-		    	if( r > g )  {
-		    		if( r > b )  i = 0;
-		    		else i = 2;
-		    	} else {
-		    		if( g > b ) i = 1;
-		    		else i = 2;
-		    	}
-		    	newcolor[0] = r;
-		    	newcolor[1] = g;
-		    	newcolor[2] = b;
-			if( newcolor[i] < 127 ) newcolor[i]++;
-		    	else newcolor[i]--;
-		    	r = newcolor[0];
-		    	g = newcolor[1];
-		    	b = newcolor[2];
+		    	r = inonbackground[0];
+		    	g = inonbackground[1];
+		    	b = inonbackground[2];
 		}
 	}
 
-	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d xy=%3d,%3d\n", r,g,b, ap->a_x, ap->a_y);
+	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
+		r,g,b, ap->a_x, ap->a_y,
+		ap->a_color[0], ap->a_color[1], ap->a_color[2] );
 
-	/*
-	 *  Handle file output in the simple cases where we let stdio
-	 *  do the buffering.
-	 */
-	if( buf_mode <= 1 && outfp != NULL )  {
-		/* Single pixel I/O or "line buffering" (to screen) case */
+	switch( buf_mode )  {
+
+	case BUFMODE_UNBUF:
 		{
-			unsigned char p[4];
-			p[0] = r;
-			p[1] = g;
-			p[2] = b;
-			if( fwrite( (char *)p, 3, 1, outfp ) != 1 )
-				rt_bomb("pixel fwrite error");
+			RGBpixel	p;
+			p[0] = r ;
+			p[1] = g ;
+			p[2] = b ;
+
+			if( outfp != NULL )  {
+				if( fwrite( p, 3, 1, outfp ) != 1 )
+					rt_bomb("pixel fwrite error");
+			}
+			if( fbp != FBIO_NULL )  {
+				/* Framebuffer output */
+				RES_ACQUIRE( &rt_g.res_syscall );
+				fb_write( fbp, ap->a_x, ap->a_y, (char *)p, 1 );
+				RES_RELEASE( &rt_g.res_syscall );
+			}
 		}
-	}
+		return;
+
+#ifdef RTSRV
+	case BUFMODE_RTSRV:
+		/* Multi-pixel buffer */
+		pixelp = scanbuf+ 3 * 
+			((ap->a_y*width) + ap->a_x - srv_startpix);
+		RES_ACQUIRE( &rt_g.res_results );
+		*pixelp++ = r ;
+		*pixelp++ = g ;
+		*pixelp++ = b ;
+		RES_RELEASE( &rt_g.res_results );
+		return;
+#endif
 
 	/*
-	 *  Handle framebuffer output
+	 *  Store results into pixel buffer.
+	 *  Don't depend on interlocked hardware byte-splice.
+	 *  Need to protect scanline[].sl_left when in parallel mode.
 	 */
-	if( buf_mode == 0 )  {
-		/* Single Pixel I/O */
 
-		if( fbp != FBIO_NULL )  {
-			RGBpixel p;
-			p[RED] = r;
-			p[GRN] = g;
-			p[BLU] = b;
-			RES_ACQUIRE( &rt_g.res_syscall );
-			fb_write( fbp, ap->a_x, ap->a_y, p, 1 );
-			RES_RELEASE( &rt_g.res_syscall );
-		}
-	} else {
-		register char *pixelp;
-		register int do_eol = 0;
-
-		switch( buf_mode )  {
-		case 1:
-			/* Here, the buffer is only one line long */
-			pixelp = scanbuf+ap->a_x*3;
-			break;
-		case 2:
-		case 3:
-			/* Buffering a full frame */
-			pixelp = scanbuf+((ap->a_y*width)+ap->a_x)*3;
-#ifdef RTSRV
-		case 4:
-			/* Multi-pixel buffer */
-			pixelp = scanbuf+ 3 * 
-				((ap->a_y*width) + ap->a_x - srv_startpix);
-#endif
-		}
-
-		/* Don't depend on interlocked hardware byte-splice */
+	case BUFMODE_DYNAMIC:
+		slp = &scanline[ap->a_y];
 		RES_ACQUIRE( &rt_g.res_results );
-		if( incr_mode )  {
+		if( slp->sl_buf == (char *)0 )  {
+			slp->sl_buf = rt_calloc( width, 3, "sl_buf" );
+		}
+		pixelp = slp->sl_buf+(ap->a_x*3);
+		*pixelp++ = r ;
+		*pixelp++ = g ;
+		*pixelp++ = b ;
+		if( --(slp->sl_left) <= 0 )
+			do_eol = 1;
+		RES_RELEASE( &rt_g.res_results );
+		break;
+
+	case BUFMODE_INCR:
+		{
 			register int dx,dy;
 			register int spread;
 
 			spread = 1<<(incr_nlevel-incr_level);
+
+			RES_ACQUIRE( &rt_g.res_results );
 			for( dy=0; dy<spread; dy++ )  {
-				pixelp = scanbuf+
-					(((ap->a_y+dy)*width)+ap->a_x)*3;
+				slp = &scanline[ap->a_y+dy];
+				if( slp->sl_buf == (char *)0 )
+					slp->sl_buf = rt_calloc( width,
+						3, "sl_buf" );
+
+				pixelp = slp->sl_buf+(ap->a_x*3);
 				for( dx=0; dx<spread; dx++ )  {
 					*pixelp++ = r ;
 					*pixelp++ = g ;
 					*pixelp++ = b ;
 				}
 			}
-			/* If incremental, first 3 iterations are boring */
-			if( buf_mode == 2 && incr_level > 3 )  {
-				if( --(npix_left[ap->a_y]) <= 0 )
+			/* First 3 incremental iterations are boring */
+			if( incr_level > 3 )  {
+				if( --(scanline[ap->a_y].sl_left) <= 0 )
 					do_eol = 1;
 			}
-		} else {
-			*pixelp++ = r ;
-			*pixelp++ = g ;
-			*pixelp++ = b ;
-			if( buf_mode == 2 && --(npix_left[ap->a_y]) <= 0 )
-				do_eol = 1;
+			RES_RELEASE( &rt_g.res_results );
 		}
-		RES_RELEASE( &rt_g.res_results );
+		break;
 
-		if( do_eol )  {
-			/* buf_mode == 2 if we got here */
-			if( fbp != FBIO_NULL )  {
-				RES_ACQUIRE( &rt_g.res_syscall );
-				if( incr_mode )  {
-					register int dy, yy;
-					register int spread;
+	default:
+		rt_bomb("bad buf_mode");
+	}
 
-					spread = 1<<(incr_nlevel-incr_level);
-					for( dy=0; dy<spread; dy++ )  {
-						yy = ap->a_y + dy;
-						fb_write( fbp, 0, yy,
-						    scanbuf+yy*width*3, width );
-					}
-				} else {
-					fb_write( fbp, 0, ap->a_y,
-					    scanbuf+ap->a_y*width*3, width );
-				}
-				RES_RELEASE( &rt_g.res_syscall );
+
+	if( !do_eol )  return;
+
+	switch( buf_mode )  {
+	case BUFMODE_INCR:
+		if( fbp == FBIO_NULL )  rt_bomb("Incremental rendering with no framebuffer?");
+		{
+			register int dy, yy;
+			register int spread;
+
+			spread = 1<<(incr_nlevel-incr_level)-1;
+			RES_ACQUIRE( &rt_g.res_syscall );
+			for( dy=spread; dy >= 0; dy-- )  {
+				yy = ap->a_y + dy;
+				fb_write( fbp, 0, yy,
+					scanline[yy].sl_buf,
+					width );
 			}
-			if( outfp != NULL )  {
-				int	count;
-
-				RES_ACQUIRE( &rt_g.res_syscall );
-				fseek( outfp, ap->a_y*width*3L, 0 );
-				count = fwrite( scanbuf+ap->a_y*width*3,
-					sizeof(char), width*3, outfp );
-				RES_RELEASE( &rt_g.res_syscall );
-				if( count != width*3 )
-					rt_bomb("view_pixel:  fwrite failure\n");
+			RES_RELEASE( &rt_g.res_syscall );
+			for( dy=spread; dy >= 0; dy-- )  {
+				yy = ap->a_y + dy;
+				rt_free( scanline[yy].sl_buf, "scanline buf" );
+				scanline[yy].sl_buf = (char *)0;
 			}
 		}
+		break;
+
+	case BUFMODE_DYNAMIC:
+		if( fbp != FBIO_NULL )  {
+			RES_ACQUIRE( &rt_g.res_syscall );
+			fb_write( fbp, 0, ap->a_y,
+			    scanline[ap->a_y].sl_buf, width );
+			RES_RELEASE( &rt_g.res_syscall );
+		}
+		if( outfp != NULL )  {
+			int	count;
+
+			RES_ACQUIRE( &rt_g.res_syscall );
+			fseek( outfp, ap->a_y*width*3L, 0 );
+			count = fwrite( scanline[ap->a_y].sl_buf,
+				sizeof(char), width*3, outfp );
+			RES_RELEASE( &rt_g.res_syscall );
+			if( count != width*3 )
+				rt_bomb("view_pixel:  fwrite failure\n");
+		}
+		rt_free( scanline[ap->a_y].sl_buf, "scanline buf" );
+		scanline[ap->a_y].sl_buf = (char *)0;
 	}
 }
 
 /*
  *  			V I E W _ E O L
  *  
- *  This routine is called by main when the last pixel of a scanline
- *  has been finished.  When in parallel mode, this routine is not
- *  used;  the do_eol check in view_pixel() handles things.
- *  This routine handles framebuffer output only, all file output
- *  is done elsewhere.
+ *  This routine is not used;  view_pixel() determines when the last
+ *  pixel of a scanline is really done, for parallel considerations.
  */
 void
 view_eol(ap)
 register struct application *ap;
 {
-	if( buf_mode <= 0 || fbp == FBIO_NULL )
-		return;
-
-	switch( buf_mode )  {
-	case 4:
-		break;
-	case 3:
-		break;
-	case 2:
-		break;
-	default:
-		RES_ACQUIRE( &rt_g.res_syscall );
-		fb_write( fbp, 0, ap->a_y, scanbuf, width );
-		RES_RELEASE( &rt_g.res_syscall );
-		break;
-	}
+	return;
 }
 
 /*
@@ -323,27 +323,11 @@ struct application *ap;
 {
 	register struct light_specific *lp, *nlp;
 
-	if( buf_mode == 3 )  {
-		if( fbp != FBIO_NULL )  {
-			/* Dump full screen */
-			if( fb_getwidth(fbp) == width && fb_getheight(fbp) == height )  {
-				fb_write( fbp, 0, 0, scanbuf, width*height );
-			} else {
-				register int y;
-				for( y=0; y<height; y++ )
-					fb_write( fbp, 0, y, scanbuf+y*width*3, width );
-			}
-		}
-		if( (outfp != NULL) &&
-		    fwrite( scanbuf, sizeof(char), width*height*3, outfp ) != width*height*3 )  {
-			fprintf(stderr,"view_end:  fwrite failure\n");
-			return(-1);		/* BAD */
-		}
-	}
 	if( incr_mode )  {
 		if( incr_level < incr_nlevel )
 			return(0);		 /* more res to come */
 	}
+	free_scanlines();
 
 	/* Eliminate invisible lights (typ. implicit lights) */
 	lp=LightHeadp;
@@ -694,6 +678,18 @@ struct partition *PartHeadp;
 	return(0);
 }
 
+free_scanlines()
+{
+	register int	y;
+
+	for( y=0; y<height; y++ )  {
+		if( scanline[y].sl_buf )  {
+			rt_free( scanline[y].sl_buf );
+			scanline[y].sl_buf = (char *)0;
+		}
+	}
+}
+
 /*
  *  			V I E W _ I N I T
  *
@@ -704,45 +700,41 @@ register struct application *ap;
 char *file, *obj;
 {
 
+	/* Always allocate the scanline[] array */
+	if( ! scanline )  {
+		scanline = (struct scanline *)rt_calloc(
+			height, sizeof(struct scanline),
+			"struct scanline[height]" );
+	} else {
+		free_scanlines();
+	}
+
 #ifdef RTSRV
-	buf_mode = 4;			/* multi-pixel buffering */
+	buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
 #else
-	/* buf_mode = 3 presently can't be set, but still is supported */
 	if( incr_mode )  {
-		buf_mode = 2;		/* Frame buffering, write each line */
+		buf_mode = BUFMODE_INCR;
 	} else if( rt_g.rtg_parallel )  {
-		buf_mode = 2;		/* frame buffering, write each line */
+		buf_mode = BUFMODE_DYNAMIC;
 	} else if( width <= 96 )  {
-		buf_mode = 0;		/* single-pixel I/O */
+		buf_mode = BUFMODE_UNBUF;
 	}  else  {
-		buf_mode = 1;		/* line buffering */
+		buf_mode = BUFMODE_DYNAMIC;
 	}
 #endif
 
 	switch( buf_mode )  {
-	case 0:
-		scanbuf = (char *)0;
+	case BUFMODE_UNBUF:
 		rt_log("Single pixel I/O, unbuffered\n");
 		break;	
-	case 1:
-		scanbuf = rt_malloc( width*3 + sizeof(long),
-			"scanbuf [line]" );
-		rt_log("Buffering single scanlines\n");
+	case BUFMODE_DYNAMIC:
+		rt_log("Dynamic scanline buffering\n");
 		break;
-	case 2:
-		scanbuf = rt_malloc( width*height*3 + sizeof(long),
-			"scanbuf [frame]" );
-		npix_left = (int *)rt_malloc( height*sizeof(int),
-			"npix_left[]" );
-		rt_log("Buffering full frames, fb write at end of line\n");
-		break;
-	case 3:
-		scanbuf = rt_malloc( width*height*3 + sizeof(long),
-			"scanbuf [frame]" );
-		rt_log("Buffering full frames, fb write at end of frame\n");
+	case BUFMODE_INCR:
+		rt_log("Incremental resolution\n");
 		break;
 #ifdef RTSRV
-	case 4:
+	case BUFMODE_RTSRV:
 		scanbuf = rt_malloc( srv_scanlen*3 + sizeof(long),
 			"scanbuf [multi-line]" );
 		break;
@@ -793,11 +785,15 @@ char *file, *obj;
  *  Called each time a new image is about to be done.
  */
 void
-view_2init( ap )
+view_2init( ap, framename )
 register struct application *ap;
+char	*framename;
 {
 	register int i;
 	extern int hit_nothing();
+#ifdef unix
+	struct stat sb;
+#endif
 
 	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
 	ap->a_cumlen = 0.0;
@@ -805,45 +801,77 @@ register struct application *ap;
 	ap->a_onehit = 1;
 
 	switch( buf_mode )  {
-	case 2:
-		if( incr_mode )  {
+	case BUFMODE_INCR:
+		{
 			register int j = 1<<incr_level;
 			register int w = 1<<(incr_nlevel-incr_level);
 
 			/* Diminish buffer expectations on work-saved lines */
 			for( i=0; i<j; i++ )  {
 				if( (i & 1) == 0 )
-					npix_left[i*w] = j/2;
+					scanline[i*w].sl_left = j/2;
 				else
-					npix_left[i*w] = j;
+					scanline[i*w].sl_left = j;
 			}
-		} else {
-			for( i=0; i<height; i++ )
-				npix_left[i] = width;
 		}
+		if( incr_level > 0 )  {
+			if( incr_level < incr_nlevel )
+				return;		 /* more res to come */
+		}
+		break;
 
-		/* If not starting with pixel offset > 0,
-		 * read in existing pixels first
+	case BUFMODE_DYNAMIC:
+		for( i=0; i<height; i++ )
+			scanline[i].sl_left = width;
+
+#ifdef unix
+		/*
+		 *  This code allows the computation of a particular frame
+		 *  to a disk file to be resumed automaticly.
+		 *  This is worthwhile crash protection.
+		 *  This use of stat() and fseek() is UNIX-specific.
+		 *
+		 *  This code depends on the file having already been opened
+		 *  for both reading and writing for this special circumstance
+		 *  of having a pre-existing file with partial results.
+		 *  Ensure that positioning is precisely pixel aligned.
+		 *  The file size is almost certainly
+		 *  not an exact multiple of three bytes.
 		 */
-		if( outfp != NULL && pix_start > 0 )  {
-			/* We depend on file being r+w in this case */
-			rewind( outfp );
-			if( fread( scanbuf, 3, pix_start, outfp ) != pix_start )
-				rt_log("view_2init:  bad initial fread\n");
+		if( outfp != NULL && pix_start == 0 &&
+		    stat( framename, &sb ) >= 0 &&
+		    sb.st_size > 0 )  {
+			/* File exists, with partial results */
+			register int	xx, yy;
+
+			pix_start = sb.st_size / sizeof(RGBpixel);
+
+		    	/* Protect against file being too large */
+			if( pix_start > pix_end )  pix_start = pix_end;
+
+			xx = pix_start % width;
+			yy = pix_start / width;
+			fprintf(stderr,
+				"Continuing with pixel %d (%d, %d) [size=%d]\n",
+				pix_start,
+				xx, yy,
+				sb.st_size );
+
+			scanline[yy].sl_buf = rt_calloc( width,
+				sizeof(RGBpixel), "sl_buf for continuation scanline");
+			fseek( outfp, yy*width*3L, 0 );
+			fread( scanline[yy].sl_buf, sizeof(RGBpixel),
+				width, outfp );
 
 			/* Account for pixels that don't need to be done */
-			i = pix_start/width;
-			npix_left[i] -= pix_start%width;
-			for( i--; i >= 0; i-- )
-				npix_left[i] = 0;
+			scanline[yy].sl_left -= xx;
+			for( i = yy-1; i >= 0; i-- )
+				scanline[i].sl_left = 0;
 		}
+#endif
 		break;
 	default:
 		break;
-	}
-	if( incr_mode && incr_level > 0 )  {
-		if( incr_level < incr_nlevel )
-			return;		 /* more res to come */
 	}
 
 	switch( lightmodel )  {
@@ -870,7 +898,24 @@ register struct application *ap;
 	}
 	ap->a_rt_i->rti_nlights = light_init();
 
-	ibackground[0] = background[0] * 255;
-	ibackground[1] = background[1] * 255;
-	ibackground[2] = background[2] * 255;
+	/* Create integer version of background color */
+	inonbackground[0] = ibackground[0] = background[0] * 255;
+	inonbackground[1] = ibackground[1] = background[1] * 255;
+	inonbackground[2] = ibackground[2] = background[2] * 255;
+
+	/*
+	 * If a non-background pixel comes out the same color as the
+	 * background, modify it slightly, to permit compositing.
+	 * Peterb the background color channel with the largest intensity.
+	 */
+	if( inonbackground[0] > inonbackground[1] )  {
+    		if( inonbackground[0] > inonbackground[2] )  i = 0;
+    		else i = 2;
+    	} else {
+		if( inonbackground[1] > inonbackground[2] ) i = 1;
+    		else i = 2;
+    	}
+	if( inonbackground[i] < 127 ) inonbackground[i]++;
+    	else inonbackground[i]--;
+
 }
