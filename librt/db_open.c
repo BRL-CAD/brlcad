@@ -24,22 +24,24 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
-#include "machine.h"	/* before looking at __unix */
+#include "machine.h"
 
-#if defined(unix) || defined(__unix) || defined(__unix__)
+#ifdef USE_UNIX_IO
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
 
-#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
+#ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
 
@@ -94,7 +96,7 @@ char	*mode;
 {
 	register struct db_i	*dbip;
 	register int		i;
-#if defined(unix) || defined(__unix) || defined(__unix__)
+#ifdef HAVE_UNIX_IO
 	struct stat		sb;
 #endif
 
@@ -103,60 +105,60 @@ char	*mode;
 	GETSTRUCT( dbip, db_i );
 	dbip->dbi_magic = DBI_MAGIC;
 
-#if defined(unix) || defined(__unix) || defined(__unix__)
+#ifdef HAVE_UNIX_IO
 	if( stat( name, &sb ) < 0 )
 		goto fail;
 #endif
 
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
 		/* Read-only mode */
-#		if defined(unix) || defined(__unix) || defined(__unix__)
-			if( sb.st_size == 0 )  goto fail;
-			if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
-				goto fail;
-			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
-				goto fail;
+#ifdef HAVE_UNIX_IO
+		if( sb.st_size == 0 )  goto fail;
+		if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
+			goto fail;
+		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
+			goto fail;
 
-#			if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(_mips))
-			/* Attempt to access as memory-mapped file */
-			if( (dbip->dbi_inmem = mmap(
-			    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
-			    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1 )  {
-				perror("mmap");
-				dbip->dbi_inmem = (char *)0;
-			} else {
-				if(rt_g.debug&DEBUG_DB)
-					rt_log("db_open: memory mapped file\n");
-			}
+#ifdef HAVE_SYS_MMAN_H
+		/* Attempt to access as memory-mapped file */
+		if( (dbip->dbi_inmem = mmap(
+		    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
+		    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1 )  {
+			perror("mmap");
+			dbip->dbi_inmem = (char *)0;
+		} else {
+			if(rt_g.debug&DEBUG_DB)
+				rt_log("db_open: memory mapped file\n");
+		}
 #endif
 
-			if( !dbip->dbi_inmem && sb.st_size <= INMEM_LIM )  {
-				dbip->dbi_inmem = rt_malloc( sb.st_size,
-					"in-memory database" );
-				if( read( dbip->dbi_fd, dbip->dbi_inmem,
-				    sb.st_size ) != sb.st_size )
-					goto fail;
-				if(rt_g.debug&DEBUG_DB)
-					rt_log("db_open: in-memory file\n");
-			}
-#		else
-			if( (dbip->dbi_fp = fopen( name, "r")) == NULL )
+		if( !dbip->dbi_inmem && sb.st_size <= INMEM_LIM )  {
+			dbip->dbi_inmem = rt_malloc( sb.st_size,
+				"in-memory database" );
+			if( read( dbip->dbi_fd, dbip->dbi_inmem,
+			    sb.st_size ) != sb.st_size )
 				goto fail;
-			dbip->dbi_fd = -1;
-#		endif
+			if(rt_g.debug&DEBUG_DB)
+				rt_log("db_open: in-memory file\n");
+		}
+#else /* HAVE_UNIX_IO */
+		if( (dbip->dbi_fp = fopen( name, "r")) == NULL )
+			goto fail;
+		dbip->dbi_fd = -1;
+#endif
 		dbip->dbi_read_only = 1;
 	}  else  {
 		/* Read-write mode */
-#		if defined(unix) || defined(__unix) || defined(__unix__)
-			if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
-				goto fail;
-			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
-				goto fail;
-#		else
-			if( (dbip->dbi_fp = fopen( name, "r+w")) == NULL )
-				goto fail;
-			dbip->dbi_fd = -1;
-#		endif
+#ifdef HAVE_UNIX_IO
+		if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
+			goto fail;
+		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
+			goto fail;
+#else /* HAVE_UNIX_IO */
+		if( (dbip->dbi_fp = fopen( name, "r+w")) == NULL )
+			goto fail;
+		dbip->dbi_fd = -1;
+#endif
 		dbip->dbi_read_only = 0;
 	}
 
@@ -203,7 +205,7 @@ char *name;
 	strncpy( new.i.i_version, ID_VERSION, sizeof(new.i.i_version) );
 	strcpy( new.i.i_title, "Untitled MGED Database" );
 
-#	if defined(unix) || defined(__unix) || defined(__unix__)
+#ifdef HAVE_UNIX_IO
 	{
 		int	fd;
 		if( (fd = creat(name, 0644)) < 0 ||
@@ -211,7 +213,7 @@ char *name;
 			return(DBI_NULL);
 		(void)close(fd);
 	}
-#	else
+#else /* HAVE_UNIX_IO */
 	{
 		FILE	*fp;
 		if( (fp = fopen( name, "w" )) == NULL )
@@ -219,7 +221,7 @@ char *name;
 		(void)fwrite( (char *)&new, 1, sizeof(new), fp );
 		(void)fclose(fp);
 	}
-#	endif
+#endif
 
 	return( db_open( name, "r+w" ) );
 }
@@ -240,7 +242,7 @@ register struct db_i	*dbip;
 	if(rt_g.debug&DEBUG_DB) rt_log("db_close(%s) x%x\n",
 		dbip->dbi_filename, dbip );
 
-#if defined(unix) || defined(__unix) || defined(__unix__)
+#ifdef HAVE_UNIX_IO
 	(void)close( dbip->dbi_fd );
 #endif
 	fclose( dbip->dbi_fp );
