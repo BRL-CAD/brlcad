@@ -432,9 +432,8 @@ struct partition *PartHeadp;
 }
 
 static int
-do_if_miss( ap, PartHeadp )
+do_if_missed( ap )
 register struct application *ap;
-struct partition *PartHeadp;
 {
 	return	0;			/* Report miss to main routine */
 }
