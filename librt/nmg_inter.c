@@ -69,8 +69,8 @@ struct faceuse *fu;
 				CKLU_FOR_FU(lu, fu, vu);
 			}
 		} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-				lu = vu->up.lu_p;
-				CKLU_FOR_FU(lu, fu, vu);
+			lu = vu->up.lu_p;
+			CKLU_FOR_FU(lu, fu, vu);
 		}
 	}
 
@@ -479,25 +479,23 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 		return;
 	}
 	if ( dist_to_plane < dist2 + bs->tol.dist) {
+		struct edgeuse	*eunext;
 		/* Second point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge ends at plane intersect\n");
 
-		if( RT_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p->v_p != v1mate )
+		eunext = RT_LIST_PNEXT_CIRC(edgeuse,eu);
+		NMG_CK_EDGEUSE(eunext);
+		if( eunext->vu_p->v_p != v1mate )
 			rt_bomb("isect_edge_face: discontinuous eu loop\n");
 
-#if 0
-		/* Adding these guys causes bool.g Test7.r to die */
-		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
-#endif
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eunext->vu_p->l.magic);
 
 		vu_other = nmg_find_vu_in_face(v1mate->vg_p->coord, fu, &(bs->tol));
 		if (vu_other) {
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */
-#if 0
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
-#endif
 			/* Make new coordinates be the midpoint */
 			p3 = vu_other->v_p->vg_p->coord;
 			VADD2SCALE(v1mate->vg_p->coord, v1mate->vg_p->coord, p3, 0.5);
@@ -512,9 +510,7 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 			plu = nmg_mlv(&fu->l.magic, v1mate, OT_UNSPEC);
 			vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			NMG_CK_VERTEXUSE(vu_other);
-#if 0
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
-#endif
 		}
 		return;
 	}
@@ -815,7 +811,7 @@ CONST struct rt_tol	*tol;
 	sa2 = s2->sa_p;
 	NMG_CK_SHELL_A(sa2);
 
-	/* XXX this isn't true for non-manifold geometry! */
+	/* XXX this isn't true for non-3-manifold geometry! */
 	if( RT_LIST_IS_EMPTY( &s1->fu_hd ) ||
 	    RT_LIST_IS_EMPTY( &s2->fu_hd ) )  {
 		rt_log("ERROR:shells must contain faces for boolean operations.");
