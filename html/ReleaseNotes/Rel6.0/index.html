@@ -1,8 +1,11 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/
+TR/REC-html40/loose.dtd">
 <html>
-  <head><title>BRL-CAD 6.0 Release Notes</title></head>
-  <body bgcolor="#FFFFFF">
-  <!-- begin body -->
-
+  <head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" >
+<title>BRL-CAD 6.0 Release Notes</title>
+</head>
+<body bgcolor="#FFFFFF">
 <h1>BRL-CAD 6.0 Release Notes</h1>
 <ul>
   <li><a href="#summary">Summary</a></li>
@@ -15,19 +18,204 @@
 <hr>
 <br>
 
+<dl>
+<dt><b>New database file format</b>
+<dd>This is probably the most significant change in this release.
+It introduces a large number of new capabilities in BRLCAD.
+The significant features this introduces include:
+    <dl>
+	<dt><b>Machine-independent data</b></dt>
+	<dd>The geometry in the new file format is stored in an 
+	architecture-independent fashion.  This removes the need to convert
+	the geometry file to ascii representation and back to binary when 
+	moving between machines of different architectures (eg. between 
+	Big-Endian/Little-Endian machines)</dd>
+
+	<dt><b>Unlimited Length Object Names</b></dt>
+	<dd>Names of objects in the geometry database were previously limited
+	to 16 characters.  This restriction was burdensome when constructing
+	complex systems.  The new database format (and MGED/rt) allows for
+	unlimited length names for objects.  The only limits remaining are 
+	usability/human factors (you may wish to thing twice before using 
+	1024-character names for all your objects).</dd>
+
+	<dt><b>Object Attributes</b></dt>
+	<dd>All geometry file objects can now carry arbitrary text data.
+	This is stored as a series of name/value pairs.  For example, it is
+	possible to store an attribute called "modeler" which could indicate
+	the name and organization of the person who created that portion of 
+	the geometry.  Another attribute might be "density" whose value would
+	be the density of the material from which the object was constructed.
+	Analysis codes can store application specific data in these attributes
+	and retrieve them at run-time.  MGED has a GUI control panel for 
+	creating and editing object attributes.</dd>
+
+	<dt><b>Opaque Binary Objects</b></dt>
+	<dd>It is now possible to store arbitrary data in a BRLCAD geometry 
+	database object.  For example, the entire description from an
+	external CAD system could be stored for reference.  Several features
+	of BRLCAD geometry which require ancillary data can now use these
+	database objects as a data source in addition to being able to use
+	external disk files.</dd>
+
+	<dt><b>Reduced Disk space requirements</b></dt>
+	<dd>The new file format is much more agressive about space utilization.
+	Many primitives now occupy sigificantly less disk space.</dd>
+	
+	<dt><b>New <i>dbupgrade</i> utility for easy migration</b></dt>
+	<dd>The dbupgrade command has been created to bring old 
+	databases up to the most current version of the file format.</dd>
+
+	<dt><b>Dual Format capability</b></dt>
+	<dd>The BRLCAD utilities retain the ability to work with files
+	in the previous format.  Users can upgrade geometry to the new format
+	when they choose.  However, new features implemented in the geometry
+	file may not be available under the old format.</dd>
+
+	<dt><b>Hidden Objects</b></dt>
+	<dd>It is now possible to mark objects in the database as "hidden".
+	These will not be listed in ordinary displays of database content.
+	This allows users to keep objects such as Opaque Binary Objects from
+	cluttering listings</dd>
+
+	<dt><b>Deprecation of obsolete "hf" primitive</b></dt>
+	<dd>The dsp primitive (Displacement Map) is functionally equivalent
+	and offers substantial performance advantages.  The bot primitive 
+	(Bag 'o Triangles) is a likewise a substantial improvement over the 
+	existing "poly" primitve.  The dbupgrade utility converts existing 
+	hf and poly primitives into dsp and bot primitives, respectively.  
+	Both hf and poly primitives are deprecated.</dd>
+
+	<dt><b>Introduction of 2D "sketch" primitive</b></dt>
+	<dd>The sketch primitive consists of straight lines, circular arcs, 
+	and bezier curves.  There is a drawing utility in MGED for creating
+	them.</dd>
+
+	<dt><b>Introduction of "extrude" primitive</b></dt>
+	<dd>The extrude primitive supports linear extrusion of 
+	closed-boundary sketch primitive drawings to create 3D objects.
+	</dd>
+
+	<dt><b>New ASCII file format for new binary file format</b></dt>
+
+	<dd>This new ASCII format is based upon the Tcl scripting language.
+	It allows more convenient processing and manipulation of the ASCII
+	format.</dd>
+    </dl>
+</dd>
+<dt><b>MGED Geometry Editor Improvements</b></dt>
+<dd>In addition to supporting both the old and new geometry file formats, there
+have been numerous improvements.  This include:
+    <dl>
+	<dt><b>New User's Manual</b></dt>
+	<dd>A completely updated tutorial introduction to MGED and modeling
+	with BRLCAD.  Delivered in PDF format, suitable for both online 
+	browsing and printing.  Includes a complete command reference.  Look
+	for it in the mged menus at:<br>"Help->Manual->PDF MGED Tutorial"<or>or<br>
+	"/usr/brlcad/html/manuals/mged/VolumeII-Introduction_to_MGED.pdf"
+	</dd>
+
+	<dt><b>Accelerators for complex shape construction</b></dt>
+	<dd>These allow user to automatically generate more complex 
+	primitives from existing ones: rcc-blend, rcc-cap, rcc-tgc, 
+	rpp-arch, rpp-cap, rpp-arch, tor-rcc, sph-part</dd>
+
+	<dt><b>Improved menu and interface layout</b></dt>
+	<dd></dd>
+
+	<dt><b><i>Abort</i> on Raytrace Control Panel</b></dt>
+	<dd>Users Now have the option to abort a running ray-trace process
+	right from the control panel.</dd>
+
+	<dt><b>Extended Primitive Type-in Support</b></dt>
+	<dd>Several Primitive types can now be created from the command prompt.
+	These include: <ul>
+		<li>kinematics control (grip)</li>
+		<li>and arbitrary regular</li>
+		<li>polyhedron (arbn)</li>
+		</ul>
+
+	<dt><b>Extended Primitive Auto-Generation</b></dt>
+	<dd>Several primitive types can now be auto-generated using the 
+	<i>make</i> command from within MGED.  These include:<ul>
+		<li>rectangular parallelopipeds (rpp)</li>
+		<li>arbitrary faceted (ars)</li>
+		<li>and arbitrary regular polyhedron (arbn)</li></ul>
+	Primitives created with this command take their initial parameters
+	from the view center and size.</dd>
+
+
+	<dt><b>New or improved commands</b></dt>
+	<dd>The following new commands have been implemented:
+	<ul>
+		<li><b>E</b> Extended options for creating evaluated wireframes</li>
+		<li><b>adjust:</b> Alter attributes of an object.</li>
+		<li><b>attr:</b> Assign or retrieve a named text attribute from an object</li>
+		<li><b>autoview:</b> Set view size and center so that all displayed solids are in view</li>
+		<li><b>bot_decimate:</b> Perform facet reduction on BOT by edge collapse</li>
+		<li><b>bot_face_sort</b> Optimize a BOT primitive for faster raytracing.</li>
+		<li><b>copyeval:</b> Copy and evaluated/transformed primitive</li>
+		<li><b>hide/unhide:</b> mark database object as hidden/visible</li>
+		<li><b>lt:</b> Like ls, but displays its output in a Tcl-friendly format</li>
+		<li><b>nmg_collapse:</b> Perform facet reduction on NMG by edge collapse</li>
+		<li><b>nmg_simplify:</b> Attempt to convert NMG to CSG primitive (ARB, TGC)</li>
+		<li><b>pathlist</b> Lists all existing paths that start from the specified combinations and end at a primitive</li>
+		<li><b>rtedge</b> Command line interface to the rtedge program for generating line drawings</li>
+		<li><b>shells</b> Separates an NMG primitive into many objects, 1 object per NMG shell.</li>
+		<li><b>showmats</b> List transformation matricies on a path</li>
+		<li><b>summary</b> Provide database statistics</li>
+		<li><b>xpush</b> An extended push that attempts to avoid degenerate conditions in matrix propagation.</li>
+	</ul>
+	</dd>
+
+	<dt><b>Build Pattern Tool</b></dt>
+	<dd>This tool facilitates the construction of replicated objects
+	in various rectangular grid and circular patterns.  For example: 
+	lines of rivet heads, bolt holes, railroad ties, tire tread patterns.
+	</dd>
+
+</dd>
+
+	
+</dd>
+
+
+
+</dl>
+
+<dt><b></b></dt>
+<dd></dd>
+
+
+
 <a name="summary"><h2>Summary</h2></a><tiny><a href="index.html">[back]</a></tiny>
 
 <ul>
-  <li>New Macintosh OS X architecture support</li>
-  <li>Improved raytrace performance</li>
-  <li>New database file format and migration tools</li>
-  <li>New ascii database file format</li>
+  <li>New database file format and migration tools.
+    <ul>
+    <li>New file format is machine-independent (no need for g2asc | asc2g when moving between Big-Endian and Little-Endian machines).</li>
+    <li>New file format stores many objects using less disk space.</li>
+    <li>New "dbupgrade" utility for migrating old databases to new file format.</li>
+    <li>MGED dual-format capability (edits either old or new file formats.</li>
+    <li>New "opaque binary objects" in database for carrying arbitrary data</li>
+    <li>Object attributes:  store arbitrary name/value pairs with any database object</li>
+    <li>Hidden geometry support.</li>
+    <li>Texture shader and dsp primitive can access binary objects as their data source in addition to external files</li>
+    <li>Tcl-based ascii database file format for new binary file format.</li>
+    <li>Improved terrain performance (dbupgrade converts slower hf primitives to dsp primitive)</li>
+    <li>Improved performance when ray-tracing bot primitives (rt_pieces)</li>
+    <li>Improved performance when ray-tracing dsp primitive (octtree based cell traversal)</li>
+    </ul>
+  </li>
+
+  <li>A 2D "sketch" primitive which consists of 
+	  straight lines, circular arcs, and bezier curves.</li>
+  <li>An "extrusion" primitive which allows linear 
+  	extrusion of closed planar 2D sketch primitives into 3D shapes.</li>
+  <li>Improved overall raytrace performance</li>
   <li>Ascii support for extruded bitmap (ebm) and volume (vol) primitives</li>
-  <li>Improved height field (dsp) primitive performance (Bresenham voxel traversal)</li>
-  <li>A new "sketch" primitive which is a 2D sketch consisting of straight lines, circular arcs, and bezier curves</li>
-  <li>A new "extrusion" primitive which allows linear extrusion of closed planar sketches</li>
-  <li>Tesselation support for sketch extrusion (extrude) primitve</li>
   <li>General bug fixes, security enhancements, and speed improvements</li>
+
   <li>Multi-device Geometry Editor (MGED) improvements
   <ul>
     <li>New "accelerators" to automatically generate more complex primitives from existing ones: rcc-blend, rcc-cap, rcc-tgc, rpp-arch, rpp-cap, rpp-arch, tor-rcc, sph-part</li>
@@ -40,21 +228,21 @@
     <li>New "Build Pattern Tool" for duplicating geometry in a pattern</li>
 		<li>New attribute editor panel</li>
   </ul>
-  <li>Supported architectures include Linux, FreeBSD, SGI IRIX, and Sun</li>
-  <li>Improved Pro-Engineer conversion support (new converters)</li>
+  <li>Supported architectures include Linux, FreeBSD, SGI IRIX, Sun, and now MacOS X </li>
+
+  <li>Improved Pro-Engineer conversion support (new converters)
   <ul>
     <li>Oriented and non-oriented triangle support</li>
-    <li>Unlimited name length support<li>
-  </ul>
+    <li>Unlimited name length support</li>
+  </ul></li>
+
   <li>Fastgen 4 conversion now supports character names longer than 16 characters</li>
-  <li>Hidden geometry support</li>
-  <li>Geometry databases now support attributes</li>
+
   <li>Improved and updated support documentation (man pages, command help, and documentation)</li>
-  <li>Improved raytracer edge detection performance</li>
-  <li>Initial support for multiply represented objects (MROs)</li>
-  <li>Improved Bezier curve support for sketch extrusion (extrude) primitive</li>
-	<li>Binary object support for height field (dsp) primitive and texture shader</li>
-	<li>New flat and invisible shaders</li>
+
+  <li>Improved raytracer edge detection performance (rtedge)</li>
+  <li>Initial support for multiply represented objects (MROs) (application library) </li>
+  <li>New "flat" and "invisible" shaders</li>
 </ul>
 
 
@@ -85,7 +273,7 @@
 <a name="dev"><h2>Developer Notes</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
   <li>Compile-time optimizations that significantly increase raytrace performance (at cost of run-time debugging)</li>
-  <li>Detached dependancy on X (and Tk) during source compilation</li>
+  <li>Removed dependency on X (and Tk) during source compilation</li>
   <li>Consolidated cake build options</li>
   <li>Mged 'db' developer command facilities</li>
   <li>New and improved regression test suite (still in transition)</li>
@@ -101,9 +289,7 @@
 
 <a name="removed"><h2>Unsupported Features and Utilities</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
-  <li>g4-g5
-    <p>This tool has been replaced by the new and more general 'dbupgrade' command
-  </li>
+  <li>Standard input/output redirection is no longer supported for g2asc, asc2g</li>
 
   <!-- include specific commands that did this --->
   <li>Standard input/output redirection is no longer supported for g2asc and asc2g</li>
