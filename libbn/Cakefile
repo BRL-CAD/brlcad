@@ -12,6 +12,7 @@
 	complex \
 	const \
 	mat \
+	noise \
 	plane \
 	poly \
 	qmath \
