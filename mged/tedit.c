@@ -190,11 +190,7 @@ char *file;
 	/* System V */
 	register pid, xpid;
 	int stat;
-#ifdef mips
 	void (*s2)(), (*s3)();
-#else
-	int (*s2)(), (*s3)();
-#endif
 
 	s2 = signal( SIGINT, SIG_IGN );
 	s3 = signal( SIGQUIT, SIG_IGN );
