@@ -46,6 +46,7 @@ struct sizes fb_common_sizes[] = {
 	{ 1024,	1024 },
 	{ 1280,  960 },		/* twice 640x480 */
 	{ 1280,	1024 },		/* SGI-4D screen size */
+	{ 1440,  972 },		/* double Abekas video format */
 	{ 2048, 2048 },
 	{ 4096, 4096 },
 	{ 8192, 8192 },
