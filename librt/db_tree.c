@@ -243,8 +243,12 @@ CONST union tree	*tp;
 
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_TREE(tp);
-	if( (mdp = db_lookup( tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
-		return(-1);
+	if( (mdp = db_lookup( tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_QUIET )) == DIR_NULL )  {
+		char	*sofar = db_path_to_string(pathp);
+		bu_log("db_lookup(%s) failed in %s\n", tp->tr_l.tl_name, sofar);
+		rt_free(sofar, "path string");
+		return -1;
+	}
 
 	db_add_node_to_full_path( pathp, mdp );
 
