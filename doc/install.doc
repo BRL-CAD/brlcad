@@ -1,0 +1,309 @@
+.\" $Header$
+.\" tbl install.doc | troff -t -ms | ...
+.TL
+Installing The BRL-CAD Package
+.br
+Release 3.0
+.br
+30-August-1988
+.AU
+Michael John Muuss
+.AI
+US Army Ballistic Research Laboratory
+APG, MD  21005-5066
+<Mike@BRL.MIL>
+.NH 1
+VERSION
+.PP
+This document is printed from the file ``doc/install.doc'' in
+the BRL-CAD source tree.
+The printed copies are usually somewhat older than the version on
+the actual distribution tape.
+When installing the software, please refer to the version from
+the distribution tape.
+.NH 1
+DISTRIBUTION TERMS
+.PP
+This software is an unpublished work that is not generally available
+to the public, except through the terms of a limited distribution
+agreement.
+more...
+.NH 1
+INTRODUCTION
+.PP
+This software is generally used in one of three ways:
+1)  For the RT benchmark,
+2)  For experimentation or to get acquainted with the software,
+3)  For production use.
+
+The machines which are known to be supported by this release are
+listed in this table:
+.TS
+center box;
+l l.
+MTYPE	Hardware	Software
+_
+fx	Alliant FX/8, /80	Concentrix 3.0, 4.0
+xmp	Cray X-M/P	UNICOS 3.0.10
+cr2	Cray-2		UNICOS 3
+vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD
+sel	Gould PN6080, PN9080	UTX/30 Rel 2.0
+3d	SGI 3030	Version 3.5, 3.6
+4d	SGI 4D		Version 2
+4d??	SGI 4D		Version 3
+4d??	SGI 4D/GT	Version 3.1
+sun3	Sun-3/*	SunOS 3.4
+.TE
+Porting this software to a machine which is not in the ``supported''
+list will require additional effort which is generally small.
+See the section on
+``SUPPORTING A NEW MACHINE'', below, for details.
+.NH 1
+LOADING THE SOFTWARE
+.IP 1)
+Find a disk with about 40 Mbytes of free space that you can use.
+The BRL-CAD Package is distributed in source code form only,
+so you will need enough space to simultaneously store
+the source material, documentation, binary files, and test images.
+.IP 2)
+Mount the distribution tape on the tape drive.
+Make certain that the tape is write protected.
+For "round" (1/2 inch) tapes, be certain that the write-enable ring
+has been removed from around the rear of the center hole.
+For "square" IBM 3480-style tape cartridges, be certain that
+the thumbwheel is set so that the white dot is showing.
+For the DC-300 style tape cartridges,
+such as are used on Sun and SGI workstations,
+be certain that the
+arrow in the upper left corner of the cartridge is pointing to the "SAFE"
+position.
+.IP 3)
+Run these two commands:
+.ft B
+.sp .5
+	mkdir cad
+.br
+	cd cad
+.sp .5
+.ft R
+This will create a directory for containing the entire BRL-CAD Package
+tree, to keep this material separate from other projects that you
+may be working on.
+.IP 4)
+Extract the contents of the tape.  On a system which is based
+on Berkeley UNIX, run:
+.ft B
+.sp .5
+	tar x
+.sp .5
+.ft R
+On a system which is based on AT&T System V UNIX, run:
+.ft B
+.sp .5
+	tar xo
+.ft R
+.sp .5
+to forgo the default (bad) behavior of changing the ownership of the files
+as they are read from the tape.
+.PP
+Note that if you have the tape mounted in a non-standard location,
+or are using a Sun workstation, it will be necessary to
+specify the tape drive to use.  For example, on Berkeley UNIX,
+to use tape drive number one (mt1), run:
+.ft B
+.sp .5
+	tar xf /dev/rmt1
+.sp .5
+.ft R
+On a Sun workstation, you will need to use the command
+.ft B
+.sp .5
+	tar xf /dev/rst8
+.sp .5
+.ft R
+in order to have the Sun workstation read the tape using the industry
+standard QIC-24 format, rather than the default Sun behavior of reading
+the tape in QIC-11 format.
+.NH 1
+INSTALLATION DIRECTORIES
+.PP
+At this stage, it is necessary to decide what directory the BRL-CAD Pacakge
+executable programs are going to be installed in, and to make certain
+that the binary (program) installation directory is in your Shell
+search path.
+This is necessary because certain programs (such as "cake")
+and some Shell scripts (such as "machinetype.sh") need
+to be placed in a location generally accessible to you, before
+the BRL-CAD sources can be compiled.
+.NH 2
+INSTALLATION DIRECTORIES \(em BENCHMARKING or EXPLORATION USE
+.PP
+For benchmark use, and for exploratory use, the binary directory should
+probably be set to your personal "bin" (or ".bin") directory.
+Note that the the traditional UNIX
+style is to name a personal directory for binary programs "bin",
+but you can substitute any name here, if you prefer.
+If you don't have some kind of "bin" directory yet, run:
+.ft B
+.sp .5
+	cd
+.br
+	mkdir bin
+.br
+	cd bin
+.br
+	pwd
+.br
+	cd
+.sp .5
+.ft R
+For this example, assume that the path to your "bin"
+directory (as printed by \fBpwd\fR above)
+was "/a/d/mike/bin".
+.NH 3
+Bourne Shell (/bin/sh)
+.PP
+If you are a Bourne Shell user (/bin/sh,
+generally the default shell on most systems),
+you will need to edit your ".profile" file, and modify the PATH
+variable to include the full path name of your "bin" directory.
+In the editor, look for a line that looks something like:
+.ft B
+.sp .5
+	PATH=/usr/ucb:/bin:/usr/bin:/usr/local/bin::
+.sp .5
+.ft R
+and add the path name of your "bin" directory after the equals ("=") sign.
+In this example, the new form would look like:
+.ft B
+.sp .5
+	PATH=/a/d/mike/bin:/usr/ucb:/bin:/usr/bin:/usr/local/bin::
+.sp .5
+.ft R
+where the full path name for the "bin" directory has been added to the
+front of your PATH specification.
+Then, you must run:
+.ft B
+.sp .5
+	.   .profile
+.sp .5
+.ft R
+(dot space dot-profile) to have the Shell set up your new PATH specification.
+.NH 3
+C-Shell (/bin/csh)
+.PP
+If you are a C-Shell user (/bin/csh), you will need to edit your ".cshrc"
+file, and modify the "set path" directive to include the full path name of
+your "bin" directory.
+In the editor, look for a line that looks something like:
+.ft B
+.sp .5
+	set path=(/usr/ucb /bin /usr/bin /usr/local/bin .)
+.sp .5
+.ft R
+and add the path name of your "bin" directory after the open paren ("("),
+followed by a space.
+In this example, the new form would look like:
+.ft B
+.sp .5
+	set path=(/a/d/mike/bin /usr/ucb /bin /usr/bin /usr/local/bin  .)
+.sp .5
+.ft R
+where the full path name for the "bin" directory has been added to the
+front of your search path.  Then, you must run:
+.ft B
+.sp .5
+	source .cshrc
+.sp .5
+.ft R
+to have this change take effect.
+.PP
+Using the full path name of your "bin" directory,
+update the definitions for BINDIR,
+LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
+"cray.sh", "cake/Makefile", and "cakeaux/Makefile".
+.NH 2
+INSTALLATION DIRECTORIES \(em PRODUCTION USE
+.PP
+For production use, the software comes configured to install
+everything in the directories "/usr/brlcad/bin", "/usr/brlcad/lib",
+and "/usr/brlcad/etc".
+If this choice is acceptable to you, then first you need
+to make these directories, or have a superuser make them for you:
+.ft B
+.nf
+.sp .5
+	mkdir /usr/brlcad
+	cd /usr/brlcad
+	mkdir bin lib etc
+	chmod 775 bin lib etc
+	chown YOURNAME bin lib etc
+.sp .5
+.fi
+.ft R
+where you replace "YOURNAME" with your user name, and then
+you need to add "/usr/brlcad/bin" to your search path.
+See the previous section for instructions on how to do this.
+.PP
+If you wish to install the software somewhere else, create the "bin",
+"lib", and "etc" directories, and update the definitions for BINDIR,
+LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh", and
+"cray.sh". Then, add your choice for BINDIR to your search path. 
+.NH 1
+ONE-TIME SETUP
+.PP
+At this point, it is important to check the
+automatic determination of your machine type and system parameters,
+by running:
+.ft B
+.sp .5
+	sh machinetype.sh -v
+.sp .5
+.ft R
+Be certain that the three values which are printed are reasonable.
+First, make sure that the MACHINE variable is appropriate
+for your machine; see the table of supported machine types, above.
+If the MACHINE variable is set properly, 
+the UNIXTYPE variable should also be set properly:  "BSD" for systems
+based on the Berkeley version of UNIX, "SYSV" for systems based
+on AT&T SystemV.
+Finally, the HAS_TCP variable should be one ("1") if your machine
+supports the TCP/IP network protocols, and zero ("0") otherwise.
+If any of these parameters are not correct, 
+see the section on
+``SUPPORTING A NEW MACHINE'', below.
+.PP
+Now that the installation directories have been made, and the
+binary directory has been added to your search path,
+the next step is to run the "setup.sh" shell script
+from within the "cad" directory:
+.ft B
+.sp .5
+	sh setup.sh
+.sp .5
+.ft R
+This script first checks to make sure that your choice for BINDIR
+has been correctly installed into your search path and exported.
+Next, it installs several shell scripts (including \fBmachinetype.sh\fR)
+into BINDIR.
+Finally, it compiles \fBcake\fR and \fBcakeaux\fR.
+Next, run:
+.ft B
+.sp .5
+	make mkdir
+.sp .5
+.ft R
+to make directories for all of the binaries.
+.NH 1
+THE BENCHMARK
+.PP
+To just compile and run the benchmark, run:
+.ft B
+.sp .5
+	make benchmark
+.br
+	cd bench
+.br
+	sh bench
+.sp .5
+.ft R
