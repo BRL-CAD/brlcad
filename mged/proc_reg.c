@@ -2125,9 +2125,7 @@ char	**argv;
 
 		BU_LIST_INIT( &vhead );
 
-		rp = rtip->HeadRegion;
-		while( rp )
-		{
+		for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 			num_halfs = 0;
 			eptr = build_etree( rp->reg_treetop );
 
@@ -2141,8 +2139,6 @@ char	**argv;
 			db_string_to_path( &path, dbip, rp->reg_name );
 			drawH_part2( 0, &vhead, &path, &ts, SOLID_NULL );
 			db_free_full_path( &path );
-
-			rp = rp->reg_forw;
 		}
 		/* do not do an rt_free_rti() (closes the database!!!!) */
 		rt_clean( rtip );
