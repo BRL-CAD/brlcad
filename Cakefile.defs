@@ -539,7 +539,7 @@ set -S2 "/bin/sh"
 #	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
-#		define	OPTIMIZER	-O2 -woff 658
+#		define	OPTIMIZER	-O2 -woff 658 -Wl,-w
 /*		Use shared libraries */
 #		define	SHARED	_s
 #	else
@@ -558,7 +558,6 @@ set -S2 "/bin/sh"
 /*		Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
 #		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
-/*		-Wl,-S supresses non-fatal LD errors.  LD has gotten chatty. */
 #		define	LD_OPTS		GFLAG
 #	else
 /*		Static linked executables */
@@ -606,8 +605,8 @@ set -S2 "/bin/sh"
 /*		Warning 1032 is "expression must have arithmetic type". */
 #		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
 					-OPT:const_copy_limit=16000 \
-					-woff 1032,1174
-/*			what about	-Wl,-S ? -- it doesn't work! */
+					-woff 1032,1174 -Wl,-w
+/*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
