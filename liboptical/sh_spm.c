@@ -79,7 +79,10 @@ char	*dp;
 	y = swp->sw_uv.uv_v * spp->sp_map->ny;
 	x = swp->sw_uv.uv_u * spp->sp_map->nx[y];
 	cp = &(spp->sp_map->xbin[y][x*3]);
-	VSET( swp->sw_color, cp[RED]/256., cp[GRN]/256., cp[BLU]/256. );
+	VSET( swp->sw_color,
+		((double)cp[RED])/256.,
+		((double)cp[GRN])/256.,
+		((double)cp[BLU])/256. );
 	return(1);
 }
 
