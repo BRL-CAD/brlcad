@@ -96,7 +96,7 @@ struct dm *dmp2;
     return ogl_share_dlist(dmp1, dmp2);
 #endif
   default:
-    return TCL_OK;
+    return TCL_ERROR;
   }
 }
 
