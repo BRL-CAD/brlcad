@@ -40,13 +40,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
-#include "./pkg.h"
+#include "pkg.h"
 #include "./pkgtypes.h"
 #include "fb.h"
 #include "./fblocal.h"
 
 #define MAX_PIXELS_NET	1024
 #define MAX_HOSTNAME	32
+#define	PCP(p)	((struct pkg_conn *)p->if_pbase)
+
+/* Package Handlers. */
+extern int pkgerror();	/* foobar message handler */
+static struct pkg_switch pkgswitch[] = {
+	{ MSG_ERROR, pkgerror, "Error Message" },
+	{ 0, NULL, NULL }
+};
 
 _LOCAL_ int	remote_device_open(),
 		remote_device_close(),
@@ -63,18 +71,18 @@ FBIO remote_interface =
 		{
 		remote_device_open,
 		remote_device_close,
-		fb_null,				/* reset		*/
+		fb_null,			/* reset		*/
 		remote_device_clear,
 		remote_buffer_read,
 		remote_buffer_write,
 		remote_colormap_read,
 		remote_colormap_write,
-		fb_null,				/* viewport_set		*/
+		fb_null,			/* viewport_set		*/
 		remote_window_set,
 		remote_zoom_set,
-		fb_null,				/* cursor_init_bitmap	*/
+		fb_null,			/* cursor_init_bitmap	*/
 		remote_cmemory_addr,
-		fb_null,				/* cursor_move_screen_addr */
+		fb_null,			/* cursor_move_screen_addr */
 		"Remote Device Interface",	/* should be filled in	*/
 		1024,				/* " */
 		1024,				/* " */
@@ -93,6 +101,7 @@ FBIO remote_interface =
 		};
 
 void	pkg_queue(), flush_queue();
+static	struct pkg_conn *pcp;
 
 /*
  * Open a connection to the remote libfb.
@@ -129,11 +138,12 @@ int	width, height;
 		return	-1;
 	}
 	(void) strncpy( official_hostname, hostentry->h_name, MAX_HOSTNAME );
-	if( (ifp->if_fd = pkg_open( official_hostname, "mossfb" )) < 0 ) {
+	if( (PCP(ifp) = pkg_open( official_hostname, "mossfb", pkgswitch )) < 0 ) {
 		fb_log(	"remote_device_open : can't connect to host \"%s\".\n",
 			official_hostname );
 		return	-1;
 	}
+	ifp->if_fd = PCP(ifp)->pkc_fd;
 	ifp->if_width = width;
 	ifp->if_height = height;
 	lp = (long *)&buf[0];
@@ -141,10 +151,10 @@ int	width, height;
 	*lp = htonl( ifp->if_height );
 
 	(void) strcpy( &buf[8], file + 1 );
-	pkg_send( MSG_FBOPEN, buf, strlen(devicename)+8, ifp->if_fd );
+	pkg_send( MSG_FBOPEN, buf, strlen(devicename)+8, PCP(ifp) );
 
 	/* XXX - need to get the size back! */
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	ret = ntohl( ret );
 	if( ret < 0 )
 		fb_log( "remote_device_open : device \"%s\" busy.\n", devicename );
@@ -158,9 +168,9 @@ FBIO	*ifp;
 	int	ret;
 
 	/* send a close package to remote */
-	pkg_send( MSG_CLOSE, 0L, 0L, ifp->if_fd );
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
-	pkg_close( ifp->if_fd );
+	pkg_send( MSG_FBCLOSE, 0L, 0L, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
+	pkg_close( PCP(ifp) );
 	return	ntohl( ret );
 }
 
@@ -173,8 +183,8 @@ Pixel	*bgpp;
 
 	/* XXX - need to send background color */
 	/* send a clear package to remote */
-	pkg_send( MSG_FBCLEAR, 0L, 0L, ifp->if_fd );
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+	pkg_send( MSG_FBCLEAR, 0L, 0L, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	return	ntohl( ret );
 }
 
@@ -196,15 +206,15 @@ int	num;
 	cmd.x = htonl( x );
 	cmd.y = htonl( y );
 	cmd.num = htonl( num );
-	pkg_send( MSG_FBREAD, &cmd, sizeof(cmd), ifp->if_fd );
+	pkg_send( MSG_FBREAD, &cmd, sizeof(cmd), PCP(ifp) );
 
 	/* Get return first, to see how much data there is */
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	ret = ntohl( ret );
 
 	/* Get Data */
 	if( ret == 0 )
-		pkg_waitfor( MSG_DATA, (char *) pixelp,	num*4, ifp->if_fd );
+		pkg_waitfor( MSG_DATA, (char *) pixelp,	num*4, PCP(ifp) );
 	else
 		fb_log( "remote_buffer_read : read at <%d,%d> failed.\n", x, y );
 	return	ret;
@@ -228,12 +238,12 @@ int		num;
 	cmd.x = htonl( x );
 	cmd.y = htonl( y );
 	cmd.num = htonl( num );
-	pkg_queue( ifp,	MSG_FBWRITE+MSG_NORETURN, &cmd,	sizeof(cmd), ifp->if_fd );
+	pkg_queue( ifp,	MSG_FBWRITE+MSG_NORETURN, &cmd,	sizeof(cmd), PCP(ifp) );
 
 	/* Send DATA */
-	pkg_queue( ifp,	MSG_DATA, (char *) pixelp, num*4, ifp->if_fd );
+	pkg_queue( ifp,	MSG_DATA, (char *) pixelp, num*4, PCP(ifp) );
 #ifdef NEVER
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	return	ntohl( ret );
 #endif
 	return	0;	/* No error return, sacrificed for speed.	*/
@@ -256,8 +266,8 @@ int	x, y;
 	cmd.mode = htonl( mode );
 	cmd.x = htonl( x );
 	cmd.y = htonl( y );
-	pkg_send( MSG_FBCURSOR, &cmd, sizeof(cmd), ifp->if_fd );
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+	pkg_send( MSG_FBCURSOR, &cmd, sizeof(cmd), PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	return	ntohl( ret );
 }
 
@@ -275,8 +285,8 @@ int	x, y;
 	/* Send Command */
 	cmd.x = htonl( x );
 	cmd.y = htonl( y );
-	pkg_send( MSG_FBWINDOW, &cmd, sizeof(cmd), ifp->if_fd );
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+	pkg_send( MSG_FBWINDOW, &cmd, sizeof(cmd), PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	return	ntohl( ret );
 }
 
@@ -294,8 +304,8 @@ int	x, y;
 	/* Send Command */
 	cmd.x = htonl( x );
 	cmd.y = htonl( y );
-	pkg_send( MSG_FBZOOM, &cmd, sizeof(cmd), ifp->if_fd );
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+	pkg_send( MSG_FBZOOM, &cmd, sizeof(cmd), PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	return	ntohl( ret );
 }
 
@@ -306,9 +316,9 @@ ColorMap	*cmap;
 {
 	int	ret;
 
-	pkg_send( MSG_FBRMAP, 0, 0, ifp->if_fd );
-	pkg_waitfor( MSG_DATA, cmap, sizeof(*cmap), ifp->if_fd );
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+	pkg_send( MSG_FBRMAP, 0, 0, PCP(ifp) );
+	pkg_waitfor( MSG_DATA, cmap, sizeof(*cmap), PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	return	ntohl( ret );
 }
 
@@ -320,10 +330,10 @@ ColorMap	*cmap;
 	int	ret;
 
 	if( cmap == COLORMAP_NULL )
-		pkg_send( MSG_FBWMAP, 0, 0, ifp->if_fd );
+		pkg_send( MSG_FBWMAP, 0, 0, PCP(ifp) );
 	else
-		pkg_send( MSG_FBWMAP, cmap, sizeof(*cmap), ifp->if_fd );
-	pkg_waitfor( MSG_RETURN, &ret, 4, ifp->if_fd );
+		pkg_send( MSG_FBWMAP, cmap, sizeof(*cmap), PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	return	ntohl( ret );
 }
 
@@ -349,13 +359,12 @@ char *buf;
  *  Format of the message header as it is transmitted over the network
  *  connection.  Internet network order is used.
  */
-#define PKG_MAGIC	0x41FE
-typedef struct pkg_header {
+typedef struct mypkg_header {
 	unsigned short	pkg_magic;		/* Ident */
 	unsigned short	pkg_type;		/* Message Type */
 	long		pkg_len;		/* Byte count of remainder */
 	long		pkg_data;		/* start of data */
-} pkg_header;
+} mypkg_header;
 
 #define	MAXQUEUE	128	/* Largest packet we will queue */
 #define	QUEUELEN	16	/* max entries in queue */
@@ -369,24 +378,25 @@ int q_len = 0;
  * NB: I am ignoring the fd!
  */
 static void
-pkg_queue( ifp, type, buf, len, fd )
+pkg_queue( ifp, type, buf, len, pcp )
 FBIO	*ifp;
-int	type, len, fd;
+int	type, len;
 char	*buf;
+struct	pkg_conn *pcp;
 {
-	pkg_header	*pkg;
+	mypkg_header	*pkg;
 
 	if( q_len >= QUEUELEN || len > MAXQUEUE )
 		flush_queue( ifp );
 	if( len > MAXQUEUE ) {
 		/* fb_log( "Too big to queue\n" ); */
-		pkg_send( type, buf, len, fd );
+		pkg_send( type, buf, len, pcp );
 		return;
 	}
 /* fb_log( "Queueing packet\n" ); */
 
 	/* Construct a packet */
-	pkg = (pkg_header *)malloc( sizeof(pkg_header) + len - 4 );
+	pkg = (mypkg_header *)malloc( sizeof(mypkg_header) + len - 4 );
 	pkg->pkg_magic = htons(PKG_MAGIC);
 	pkg->pkg_type = htons(type);	/* should see if it's a valid type */
 	pkg->pkg_len = htonl(len);
@@ -394,7 +404,7 @@ char	*buf;
 
 	/* Link it in */
 	queue[q_len].iov_base = (char *)pkg;	
-	queue[q_len].iov_len = sizeof(pkg_header) + len - 4;
+	queue[q_len].iov_len = sizeof(mypkg_header) + len - 4;
 	q_len++;
 	return;
 }
@@ -413,11 +423,62 @@ FBIO	*ifp;
 	if( q_len == 0 )
 		return;
 	/* fb_log( "Flushing queued data\n" ); */
-	raw_pkg_send( &queue[0], q_len, ifp->if_fd );
+	raw_pkg_send( &queue[0], q_len, PCP(ifp) );
 
 	/* Free bufs */
 	for( i = 0; i < q_len; i++ )
 		free( queue[i].iov_base );
 	q_len = 0;
 	return;
+}
+
+#define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
+			fprintf(stderr,"pkg: bad pointer x%x\n",p);abort();}}
+
+/*
+ *  			R A W _ P K G _ S E N D
+ *
+ *  Send an iovec list of "raw packets", i.e. user is responsible
+ *   for putting on magic headers, network byte order, etc.
+ *
+ *  Note that the whole message should be transmitted by
+ *  TCP with only one TCP_PUSH at the end, due to the use of writev().
+ *
+ *  Returns number of bytes of user data actually sent.
+ */
+int
+raw_pkg_send( buf, len, pc )
+struct iovec buf[];
+int len;
+register struct pkg_conn *pc;
+{
+	long bits;
+	register int i;
+	int start;
+
+	PKG_CK(pc);
+	if( len < 0 )  len=0;
+
+	do  {
+		/* Finish any partially read message */
+		if( pc->pkc_left > 0 )
+			if( pkg_block(pc) < 0 )
+				return(-1);
+	} while( pc->pkc_left > 0 );
+
+	/*
+	 * TODO:  set this FD to NONBIO.  If not all output got sent,
+	 * loop in select() waiting for capacity to go out, and
+	 * reading input as well.  Prevents deadlocking.
+	 */
+	start = 0;
+	while( len > 0 ) {
+		if( (i = writev( pc->pkc_fd, &buf[start], (len>8?8:len) )) < 0 )  {
+			fb_log( "pkg_send : write failed.\n" );
+			return(-1);
+		}
+		len -= 8;
+		start += 8;
+	}
+	return(len);
 }
