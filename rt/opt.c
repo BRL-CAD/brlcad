@@ -214,9 +214,10 @@ register char **argv;
 		case 'P':
 			/* Number of parallel workers */
 			npsw = atoi( optarg );
-			if( npsw < 1 || npsw > MAX_PSW )  {
-				fprintf(stderr,"npsw out of range 1..%d\n", MAX_PSW);
-				npsw = 1;
+			if( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
+				fprintf(stderr,"abs(npsw) out of range 1..%d, using -P%d\n",
+					MAX_PSW, MAX_PSW);
+				npsw = MAX_PSW;
 			}
 			break;
 		case 'B':
