@@ -36,9 +36,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#if RT_MULTISPECTRAL
-# include "tabdata.h"
-#endif
 #include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 #include "../rt/light.h"
@@ -50,7 +47,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 extern double AmbientIntensity;
 
 #if RT_MULTISPECTRAL
-extern CONST struct rt_table	*spectrum;	/* from rttherm/viewtherm.c */
+extern CONST struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
 #endif
 
 /* Local information */
@@ -334,7 +331,7 @@ char	*dp;
 	vect_t	work;
 	vect_t	reflected;
 #if RT_MULTISPECTRAL
-	struct rt_tabdata	*ms_matcolor = RT_TABDATA_NULL;
+	struct bn_tabdata	*ms_matcolor = BN_TABDATA_NULL;
 #else
 	vect_t	cprod;			/* color product */
 	point_t	matcolor;		/* Material color */
@@ -361,7 +358,7 @@ char	*dp;
 	}
 
 #if RT_MULTISPECTRAL
-	ms_matcolor = rt_tabdata_dup( swp->msw_color );
+	ms_matcolor = bn_tabdata_dup( swp->msw_color );
 #else
 	VMOVE( matcolor, swp->sw_color );
 #endif
@@ -375,13 +372,13 @@ char	*dp;
 		}
 		cosine *= AmbientIntensity;
 #if RT_MULTISPECTRAL
-		rt_tabdata_scale( swp->msw_color, ms_matcolor, cosine );
+		bn_tabdata_scale( swp->msw_color, ms_matcolor, cosine );
 #else
 		VSCALE( swp->sw_color, matcolor, cosine );
 #endif
 	} else {
 #if RT_MULTISPECTRAL
-		rt_tabdata_constval( swp->msw_color, 0.0 );
+		bn_tabdata_constval( swp->msw_color, 0.0 );
 #else
 		VSETALL( swp->sw_color, 0 );
 #endif
@@ -414,7 +411,7 @@ char	*dp;
 				cosine = 1;
 			}
 #if RT_MULTISPECTRAL
-			rt_tabdata_incr_mul3_scale( swp->msw_color,
+			bn_tabdata_incr_mul3_scale( swp->msw_color,
 				lp->lt_spectrum,
 				swp->msw_intensity[i],
 				ms_matcolor,
@@ -441,7 +438,7 @@ char	*dp;
 				cosine = 1;
 			}
 #if RT_MULTISPECTRAL
-			rt_tabdata_incr_mul2_scale( swp->msw_color,
+			bn_tabdata_incr_mul2_scale( swp->msw_color,
 				lp->lt_spectrum,
 				swp->msw_intensity[i],
 				ps->wgt_specular * cosine /
@@ -471,7 +468,7 @@ char	*dp;
 		(void)rr_render( ap, pp, swp );
 
 #if RT_MULTISPECTRAL
-	rt_tabdata_free(ms_matcolor);
+	bn_tabdata_free(ms_matcolor);
 #endif
 	return(1);
 }
