@@ -586,23 +586,9 @@ struct rt_i	*rtip;
 		(void)rt_read_timer( outbuf, sizeof(outbuf) );
 		fprintf(stderr, "PREP: %s\n", outbuf );
 	}
-
-	if( rt_g.rtg_parallel && resource[0].re_seg == SEG_NULL )  {
-		register int x;
-		/* 
-		 *  Get dynamic memory to keep from having to call
-		 *  malloc(), because the portability of doing sbrk()
-		 *  sys-calls when running in parallel mode is unknown.
-		 */
-		for( x=0; x<npsw; x++ )  {
-			rt_get_seg(&resource[x]);
-			rt_get_pt(rtip, &resource[x]);
-			rt_get_bitv(rtip, &resource[x]);
-		}
-		fprintf(stderr,"Additional dynamic memory used=%d. bytes\n",
-			sbrk(0)-beginptr );
-		beginptr = sbrk(0);
-	}
+	fprintf(stderr,"Additional dynamic memory used=%d. bytes\n",
+		sbrk(0)-beginptr );
+	beginptr = sbrk(0);
 }
 
 /*
