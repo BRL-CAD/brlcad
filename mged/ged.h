@@ -440,13 +440,6 @@ extern Tcl_Interp *interp;
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
 
-struct run_rt {
-	struct bu_list		l;
-	int			fd;
-	int			pid;
-	int			aborted;
-};
-
 /* defined in rtif.c */
 extern struct run_rt head_run_rt;
 
