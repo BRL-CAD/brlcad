@@ -106,7 +106,9 @@ char	*argv[];
 		return	1;
 		}
 
-#ifdef sgi
+/* XXX - ismex() uses dgl on SGI servers which causes problems when client
+	machine does not grant access to server via 'xhost'. */
+#if 0
 	if( ismex() && tty )
 		{
 		sgi_console = substr( getenv( "TERM" ), "iris" );
