@@ -77,6 +77,7 @@ proc beginning_of_line { w } {
 proc end_of_line { w } {
     $w mark set insert {end - 2c}
     cursor_highlight $w
+    $w see insert
 }
 
 proc backward_char { w } {
@@ -203,6 +204,7 @@ proc next_command { w } {
 		[expr [string length $msg]-2]]
 
 	cursor_highlight $w
+	$w see insert
     } else {
 	if {!$freshline($w)} {
 	    $w delete promptEnd {end - 2c}
@@ -236,6 +238,7 @@ proc prev_command { w } {
 		[expr [string length $msg]-2]]
 
 	cursor_highlight $w
+	$w see insert
     }
 }
 
@@ -256,20 +259,17 @@ proc transpose { w } {
 }
 
 proc execute_cmd { w } {
-#    global mged_edit_style
     global freshline
 
     $w mark set insert {end - 2c}
     $w insert insert \n
+
+    $w see insert
+    update
+
     ia_invoke $w
     set freshline($w) 1
     cursor_highlight $w
-
-#    set win [winset]
-#    set id [get_player_id_dm $win]
-#    if {$id != "mged" && $mged_edit_style($id) == "vi"} {
-#	vi_insert_mode $w
-#    }
 }
 
 proc interrupt_cmd { w } {
@@ -706,6 +706,8 @@ proc text_paste { w } {
     if {[$w cget -state] == "normal"} {
 	focus $w
     }
+
+    $w see insert
 }
 
 proc text_scroll { w x y } {
