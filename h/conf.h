@@ -159,8 +159,18 @@
 #	define HAVE_GETOPT_DECL	1
 #endif
 
+
 #if (defined(SYSV) || BSD >= 43) && !__STDC__
 #	define HAVE_MATHERR	1
+#endif
+
+#if defined(__convex__)
+#	define HAVE_POPEN_DECL	1
+#	define HAVE_STRDUP_DECL 1
+#endif
+
+#ifdef CRAY2
+#	define HAVE_POPEN_DECL 1
 #endif
 
 #if (defined(BSD) && !defined(__bsdi__)) || defined(__GNUC__)
