@@ -119,7 +119,7 @@ CONST char	*string_arg;
 	strncpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword)-1 );
 	strncpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN-1 );
 
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+	if( fwrite( (char *)rec, sizeof(rec), 1, fp ) != 1 )
 		return -1;
 	return 0;
 }
