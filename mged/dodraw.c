@@ -1123,7 +1123,6 @@ int
 replot_original_solid( sp )
 struct solid	*sp;
 {
-	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
 	mat_t			mat;
@@ -1140,33 +1139,17 @@ struct solid	*sp;
 	}
 	pathHmat( sp, mat, sp->s_last-1 );
 
-	BU_INIT_EXTERNAL( &ext );
-	if( db_get_external( &ext, dp, dbip ) < 0 )  return(-1);
-
-	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-	  Tcl_AppendResult(interp, "replot_original_solid() unable to identify type of solid ",
-			   dp->d_namep, "\n", (char *)NULL);
-	  db_free_external( &ext );
-	  return(-1);
-	}
-
-    	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, mat, dbip ) < 0 )  {
+	if( rt_db_get_internal( &intern, dp, dbip, mat ) < 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
-	  if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-	  db_free_external( &ext );
 	  return(-1);		/* ERROR */
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
 	if( replot_modified_solid( sp, &intern, bn_mat_identity ) < 0 )  {
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		db_free_external( &ext );
+		rt_db_free_internal( &intern );
 		return(-1);
 	}
-	if( intern.idb_type > ID_NULL && intern.idb_ptr )
-		rt_functab[id].ft_ifree( &intern );
-	db_free_external( &ext );
+	rt_db_free_internal( &intern );
 	return(0);
 }
 
