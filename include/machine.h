@@ -584,15 +584,17 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define LOCAL   auto            /* static|auto, for serial|parallel cpu */
 #define FAST    register        /* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
-#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+#define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
-#if 0	/* Multi-CPU Altix build */
+#if 1	/* Multi-CPU Altix build */
+#	define DEFAULT_PSW	bu_avail_cpus()
 #	define MAX_PSW		256
 #	define	PARALLEL	1
-#	define	MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
+#	define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 #else	/* 1 CPU Altix build */
 #	define MAX_PSW		1	/* only one processor, max */
 #	define DEFAULT_PSW	1
+#	define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
 #endif
 
 #endif
