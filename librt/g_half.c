@@ -179,7 +179,8 @@ struct seg		*seghead;
 	return(2);			/* HIT */
 }
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define RT_HALF_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
+
 /*
  *			R T _ H L F _ V S H O T
  *
@@ -222,7 +223,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 			/* ray is parallel to plane when dir.N == 0.
 			 * If it is outside the solid, stop now */
 			if( norm_dist > 0.0 ) {
-				SEG_MISS(segp[i]);		/* No hit */
+				RT_HALF_SEG_MISS(segp[i]);	/* No hit */
 			        continue;
 			}
 		}
@@ -589,7 +590,26 @@ struct rt_db_internal	*ip;
  *			R T _ H L F _ T E S S
  */
 int
-rt_hlf_tess()
+rt_hlf_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+register mat_t		mat;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
 {
+	struct rt_half_internal	*vip;
+	register int	i;
+	struct shell	*s;
+	struct vertex	**verts;	/* dynamic array of pointers */
+	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
+	struct faceuse	*fu;
+
+	RT_CK_DB_INTERNAL(ip);
+	vip = (struct rt_half_internal *)ip->idb_ptr;
+	RT_VOL_CK_MAGIC(vip);
+
+	/* XXX tess routine needed */
 	return(-1);
 }

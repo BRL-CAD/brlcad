@@ -45,13 +45,12 @@ RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
  *	!0	failure
  */
 int
-rt_arbn_prep( stp, ep, rtip )
+rt_arbn_prep( stp, ip, rtip )
 struct soltab		*stp;
-struct rt_external	*ep;
+struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
 	struct rt_arbn_internal	*aip;
-	struct rt_db_internal	intern, *ip;
 	vect_t		work;
 	fastf_t		f;
 	register int	i;
@@ -60,10 +59,9 @@ struct rt_i		*rtip;
 	int		*used = (int *)0;	/* plane eqn use count */
 
 	RT_CK_DB_INTERNAL( ip );
-	aip = (struct rt_arbn_internal *)intern.idb_ptr;
+	aip = (struct rt_arbn_internal *)ip->idb_ptr;
 	RT_ARBN_CK_MAGIC(aip);
 
-	stp->st_specific = (genptr_t)aip;
 	used = (int *)rt_malloc(aip->neqn*sizeof(int), "arbn used[]");
 
 	/*
@@ -114,11 +112,12 @@ next_k:				;
 		rt_log("arbn(%s) face %d unused, solid is not convex\n",
 			stp->st_name, i);
 		rt_free( (char *)used, "arbn used[]");
-		rt_arbn_ifree( &intern );
 		return(-1);		/* BAD */
 	}
-
 	rt_free( (char *)used, "arbn used[]");
+
+	stp->st_specific = (genptr_t)aip;
+	ip->idb_ptr = GENPTR_NULL;	/* indicate we stole it */
 
 	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
 	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
@@ -418,14 +417,14 @@ rt_arbn_class()
  *  into another.
  */
 int
-rt_arbn_tess( s, rp, mat, dp, abs_tol, rel_tol, norm_tol )
-struct shell		*s;
-register union record	*rp;
+rt_arbn_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
 register mat_t		mat;
-struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
 {
 	return(-1);
 }

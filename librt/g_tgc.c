@@ -41,7 +41,8 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "./complex.h"
 #include "./polyno.h"
 
-extern int	rt_rec_prep();
+RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
+	struct rt_i *rtip));
 
 static void	rt_tgc_rotate(), rt_tgc_shear();
 static void	rt_tgc_scale();
@@ -816,8 +817,8 @@ struct seg		*seghead;
 	return(2);
 }
 
+#define RT_TGC_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
-#define SEG_MISS(SEG)           (SEG).seg_stp=(struct soltab *) 0;
 /*
  *			R T _ T G C _ V S H O T
  *
@@ -1059,7 +1060,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 	if ( npts != 0 && npts != 2 && npts != 4 ){
 		rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
 			stp[ix]->st_name, npts );
-		SEG_MISS(segp[ix]);			/* No hit	*/
+		RT_TGC_SEG_MISS(segp[ix]);		/* No hit	*/
 		continue;
 	}
 

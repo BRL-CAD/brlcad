@@ -34,7 +34,8 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-extern int rt_sph_prep();
+RT_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
+	struct rt_i *rtip));
 
 /*
  *  Algorithm:
@@ -366,8 +367,7 @@ struct seg		*seghead;
 	return(2);			/* HIT */
 }
 
-
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+#define RT_ELL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
 /*
  *			R T _ E L L _ V S H O T
@@ -407,7 +407,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		dd = VDOT( dprime, dprime );
 
 		if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 ) {
-			SEG_MISS(segp[i]);		/* No hit */
+			RT_ELL_SEG_MISS(segp[i]);		/* No hit */
 		}
 	        else {
 			root = sqrt(root);

@@ -499,8 +499,8 @@ struct seg		*seghead;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
-#define MAXHITS 12		/* # surfaces hit, must be even */
-	LOCAL struct hit hits[MAXHITS];
+#define RT_ARS_MAXHITS 32		/* # surfaces hit, must be even */
+	LOCAL struct hit hits[RT_ARS_MAXHITS];
 	register struct hit *hp;
 	LOCAL int	nhits;
 
@@ -564,7 +564,7 @@ struct seg		*seghead;
 		/* Bug fix: next line was "nhits++".  This caused ars_hitsort
 			to exceed bounds of "hits" array by one member and
 			clobber some stack variables i.e. "stp" -- GSM */
-		if( ++nhits >= MAXHITS )  {
+		if( ++nhits >= RT_ARS_MAXHITS )  {
 			rt_log("ars(%s): too many hits\n", stp->st_name);
 			break;
 		}
