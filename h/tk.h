@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * @(#) tk.h 1.161 95/03/17 16:01:39
+ * @(#) tk.h 1.164 95/06/09 10:18:27
  */
 
 #ifndef _TK
@@ -436,6 +436,9 @@ typedef struct Tk_FakeWin {
  *				context for this window;  if the ic field
  *				is NULL it means that there isn't a context
  *				for the field.
+ * TK_PARENT_DESTROYED:		1 means that the window's parent has already
+ *				been destroyed or is in the process of being
+ *				destroyed.
  */
 
 #define TK_MAPPED		1
@@ -444,6 +447,7 @@ typedef struct Tk_FakeWin {
 #define TK_NEED_CONFIG_NOTIFY	8
 #define TK_GRAB_FLAG		0x10
 #define TK_CHECKED_IC		0x20
+#define TK_PARENT_DESTROYED	0x40
 
 /*
  *--------------------------------------------------------------
@@ -1086,7 +1090,8 @@ EXTERN void		Tk_ImageChanged _ANSI_ARGS_((
 EXTERN int		Tk_Init _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN Atom		Tk_InternAtom _ANSI_ARGS_((Tk_Window tkwin,
 			    char *name));
-EXTERN void		Tk_Main _ANSI_ARGS_((int argc, char **argv));
+EXTERN void		Tk_Main _ANSI_ARGS_((int argc, char **argv,
+			    Tcl_AppInitProc *appInitProc));
 EXTERN void		Tk_MainLoop _ANSI_ARGS_((void));
 EXTERN void		Tk_MaintainGeometry _ANSI_ARGS_((Tk_Window slave,
 			    Tk_Window master, int x, int y, int width,
@@ -1132,7 +1137,7 @@ EXTERN void		Tk_PhotoPutZoomedBlock _ANSI_ARGS_((
 			    Tk_PhotoHandle handle,
 			    Tk_PhotoImageBlock *blockPtr, int x, int y,
 			    int width, int height, int zoomX, int zoomY,
-			    int decimateX, int decimateY));
+			    int subsampleX, int subsampleY));
 EXTERN int		Tk_PhotoGetImage _ANSI_ARGS_((Tk_PhotoHandle handle,
 			    Tk_PhotoImageBlock *blockPtr));
 EXTERN void		Tk_PhotoBlank _ANSI_ARGS_((Tk_PhotoHandle handle));

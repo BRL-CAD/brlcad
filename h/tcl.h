@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * @(#) tcl.h 1.147 95/02/21 11:28:36
+ * @(#) tcl.h 1.150 95/06/08 10:55:57
  */
 
 #ifndef _TCL
@@ -155,6 +155,7 @@ typedef struct Tcl_Value {
  * Procedure types defined by Tcl:
  */
 
+typedef int (Tcl_AppInitProc) _ANSI_ARGS_((Tcl_Interp *interp));
 typedef int (Tcl_AsyncProc) _ANSI_ARGS_((ClientData clientData,
 	Tcl_Interp *interp, int code));
 typedef void (Tcl_CmdDeleteProc) _ANSI_ARGS_((ClientData clientData));
@@ -226,20 +227,22 @@ typedef struct Tcl_DString {
 #define TCL_DONT_USE_BRACES	1
 
 /*
- * Flag value passed to Tcl_RecordAndEval to request no evaluation
- * (record only).
+ * Flag values passed to Tcl_RecordAndEval.
+ * WARNING: these bit choices must not conflict with the bit choices
+ * for evalFlag bits in tclInt.h!!
  */
 
-#define TCL_NO_EVAL		-1
+#define TCL_NO_EVAL		0x10000
+#define TCL_EVAL_GLOBAL		0x20000
 
 /*
  * Special freeProc values that may be passed to Tcl_SetResult (see
  * the man page for details):
  */
 
-#define TCL_VOLATILE	Tcl_Volatile
+#define TCL_VOLATILE	((Tcl_FreeProc *) 1)
 #define TCL_STATIC	((Tcl_FreeProc *) 0)
-#define TCL_DYNAMIC	Tcl_Dynamic
+#define TCL_DYNAMIC	((Tcl_FreeProc *) 3)
 
 /*
  * Flag values passed to variable-related procedures.
@@ -508,7 +511,6 @@ EXTERN void		Tcl_DStringSetLength _ANSI_ARGS_((Tcl_DString *dsPtr,
 			    int length));
 EXTERN void		Tcl_DStringStartSublist _ANSI_ARGS_((
 			    Tcl_DString *dsPtr));
-EXTERN void		Tcl_Dynamic _ANSI_ARGS_((char *blockPtr));
 EXTERN void		Tcl_EnterFile _ANSI_ARGS_((Tcl_Interp *interp,
 			    FILE *file, int permissions));
 EXTERN char *		Tcl_ErrnoId _ANSI_ARGS_((void));
@@ -553,7 +555,8 @@ EXTERN void		Tcl_InitHashTable _ANSI_ARGS_((Tcl_HashTable *tablePtr,
 EXTERN void		Tcl_InitMemory _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int		Tcl_LinkVar _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *varName, char *addr, int type));
-EXTERN void		Tcl_Main _ANSI_ARGS_((int argc, char **argv));
+EXTERN void		Tcl_Main _ANSI_ARGS_((int argc, char **argv,
+			    Tcl_AppInitProc *appInitProc));
 EXTERN char *		Tcl_Merge _ANSI_ARGS_((int argc, char **argv));
 EXTERN Tcl_HashEntry *	Tcl_NextHashEntry _ANSI_ARGS_((
 			    Tcl_HashSearch *searchPtr));
@@ -630,6 +633,5 @@ EXTERN ClientData	Tcl_VarTraceInfo2 _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *part1, char *part2, int flags,
 			    Tcl_VarTraceProc *procPtr,
 			    ClientData prevClientData));
-EXTERN void		Tcl_Volatile _ANSI_ARGS_((char *blockPtr));
 
 #endif /* _TCL */
