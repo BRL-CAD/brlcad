@@ -51,7 +51,7 @@ X_LIBS="-L/usr/X11R6/lib -lX11 -lXi"
 
 TCLVER=8.4
 TCL=libtcl${TCLVER}
-TCL_LIBS='${top_builddir}/${TCL}/${TCL}.la @DL@ @SOCKET@ -lm'
+TCL_LIBS='${top_builddir}/${TCL}/${TCL}.la ${DL} ${SOCKET} -lm'
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
 if test "$FRAMEWORK_BUILD" = "1" ; then
 	dnl this may be wrong
