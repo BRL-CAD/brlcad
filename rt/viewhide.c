@@ -255,12 +255,9 @@ register struct partition *PartHeadp;
 	 * can fill this in.  From there the hit point and the hit normal
 	 * can be extracted.
 	 */
-printf("starting RT_HIT_NORM(pp->pt_inhit,....)\n");
-/* pp->pt_inhit doesn't dump core, but does nothing for the picture; &()
- * dumps core.  hitp, as expected, does not compile.
- */
+
 	RT_HIT_NORM(pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray));
-printf("done RT_HIT_NORM()\n");
+
 
 	/* Now store the distance and the region_id in the appropriate
 	 * cell struct: i.e., ap->a_x (the x-coordinate) +1 within the
@@ -382,6 +379,10 @@ int		y;
 		 * Note that MAXANGLE needs to be greater than the cosine
 		 * of the angle between the two vectors because as the angle
 		 * between the increases, the cosine of said angle decreases.
+		 * Also of interest is that one needs to say: plot if id's
+		 * are not the same OR if either id is not 0 AND the cosine
+		 * of the angle between the normals is less than MAXANGLE. 
+		 * This test prevents the background from being shaded in.
 		 */
 
 		if (botp->c_id != (botp+1)->c_id ||
@@ -449,8 +450,17 @@ int		y;
 
 
 	state = SEEKING_START_PT;
+
+	/* If the region_ids are not equal OR either region_id is not 0 AND
+	 * the cosine of the angle between the normals is less that MAXANGLE,
+	 * plot a line or shade the plot to produce surface normals or give
+	 * a sense of curvature.
+	 */
+
 	for (x=0; x < mem_width; x++, botp++, topp++)  {
-		if (botp->c_id != topp->c_id)  {
+		if (botp->c_id != topp->c_id ||
+		   ( botp->c_id != 0 && 
+		   (VDOT(botp->c_normal, (botp + 1)->c_normal) < MAXANGLE)))  {
 			if( state == FOUND_START_PT ) {
 				continue;
 			} else {
