@@ -131,7 +131,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 ADIRS="h doc pix vfont whetstone awf brlman"
 
 # Has no Cakefile, just copy it verbatim.  Only used in "dist" command.
-CDIRS="cake cakeaux papers contributed"
+CDIRS="cake cakeaux papers contributed pro-engineer"
 
 # Source directories that will have Machine specific binary directories
 # These will be built in the order listed.
@@ -158,6 +158,7 @@ BDIRS="bench \
 	remrt \
 	mged \
 	proc-db \
+	gutil \
 	comgeom-g \
 	iges \
 	fb \
