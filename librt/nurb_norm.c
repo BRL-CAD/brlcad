@@ -67,7 +67,7 @@ fastf_t * norm;
 		p = 0.0;
 		for( i = 0; i < srf->v_knots.k_size -1; i++)
 		{
-			if ( srf->v_knots.knots[i] < u 
+			if ( srf->v_knots.knots[i] < v 
 				&& srf->v_knots.knots[i+1] )
 			{
 				p = srf->v_knots.knots[i];
@@ -183,7 +183,7 @@ fastf_t * norm;
 			}
 		}
 
-		rt_nurb_s_eval( srf, p, v, ve);
+		rt_nurb_s_eval( srf, u, p, ve);
 
 		usrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
 		
