@@ -428,61 +428,73 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	register int sflag = 0;
+	register int sflag;
 	struct id_to_names headIdName;
 	struct id_to_names *itnp;
 	struct id_names *inp;
 	int isAir;
+	int myArgc;
+	char **myArgv;
 
 	CHECK_DBI_NULL;
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
 
-	if(argc < 2){
+	/*
+	 * To avoid gcc -Wall: argument 'X' might be clobbered by `longjmp'
+	 * or `vfork'
+	 */
+	myArgc = argc;
+	myArgv = argv;
+
+	if(myArgc < 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
 	  bu_vls_printf(&vls, "help %s", argv[0]);
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
+	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
 	}
 
-	if (!strcmp(argv[0], "whichair"))
+	if (!strcmp(myArgv[0], "whichair"))
 	  isAir = 1;
 	else
 	  isAir = 0;
 
-	if(strcmp(argv[1], "-s") == 0){
-	  --argc;
-	  ++argv;
+	if(strcmp(myArgv[1], "-s") == 0){
+	  --myArgc;
+	  ++myArgv;
 
-	  if(argc < 2){
+	  if(myArgc < 2){
 	    struct bu_vls vls;
 
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help %s", argv[0]);
+	    bu_vls_printf(&vls, "help %s", myArgv[-1]);
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
+	    (void)signal( SIGINT, SIG_IGN );
 	    return TCL_ERROR;
 	  }
 
 	  sflag = 1;
+	} else {
+	  sflag = 0;
 	}
-
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
-	  return TCL_OK;
 
 	BU_LIST_INIT(&headIdName.l);
 
 	/* Build list of id_to_names */
-	for ( j=1; j<argc; j++ ) {
+	for ( j=1; j<myArgc; j++ ) {
 		int n;
 		int start, end;
 		int range;
 		int k;
 
-		n = sscanf(argv[j], "%d%*[:-]%d", &start, &end);
+		n = sscanf(myArgv[j], "%d%*[:-]%d", &start, &end);
 		switch(n) {
 		case 1:
 			for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) )
@@ -609,46 +621,42 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
-	int sflag = 0;
+	int sflag;
+	int myArgc;
+	char **myArgv;
 
 	CHECK_DBI_NULL;
-
-	if(argc < 2){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help which_shader");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if(strcmp(argv[1], "-s") == 0){
-	  --argc;
-	  ++argv;
-
-	  if(argc < 2){
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help which_shader");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	  }
-
-	  sflag = 1;
-	}
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
         else
 	  return TCL_OK;
 
-	for( j=1; j<argc; j++) {
+	myArgc = argc;
+	myArgv = argv;
+	sflag = 0;
+
+	if(myArgc > 1 && strcmp(myArgv[1], "-s") == 0){
+	  --myArgc;
+	  ++myArgv;
+	  sflag = 1;
+	}
+
+	if(myArgc < 2){
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help which_shader");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		(void)signal( SIGINT, SIG_IGN );
+		return TCL_ERROR;
+	}
+
+	for( j=1; j<myArgc; j++) {
 
 		if(!sflag)
-		  Tcl_AppendResult(interp, "Combination[s] with shader ", argv[j],
+		  Tcl_AppendResult(interp, "Combination[s] with shader ", myArgv[j],
 				   ":\n", (char *)NULL);
 
 		/* Examine all COMB nodes */
@@ -663,7 +671,7 @@ char	**argv;
 				}
 				comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-				if( !strstr( bu_vls_addr( &comb->shader ), argv[j] ) )
+				if( !strstr( bu_vls_addr( &comb->shader ), myArgv[j] ) )
 					continue;
 
 				if(sflag)
@@ -698,7 +706,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	int count=0;
+	int count;
 	char solid_name[NAMESIZE];
 	char *nmg_solid_name;
 	char *prefix;
@@ -729,6 +737,7 @@ char	**argv;
         else
 	  return TCL_OK;
 
+	count = 0;
 	nmg_solid_name = argv[1];
 
 	if( argc > 2 )
@@ -1110,7 +1119,7 @@ char	**argv;
 	struct bu_vls tmp_vls;
 	struct bu_vls	cmd;
 	struct bu_ptbl	cur_path;
-	int status = TCL_OK;
+	int status;
 	char *timep;
 	time_t now;
 	int i;
@@ -1141,6 +1150,7 @@ char	**argv;
 	  bu_ptbl_free( &cur_path );
 	  return TCL_OK;
 	}
+	status = TCL_OK;
 
 	/* find out which ascii table is desired */
 	if( strcmp(argv[0], "solids") == 0 ) {
