@@ -2128,7 +2128,7 @@ BU_EXTERN(void			nmg_km, (struct model *m) );
 BU_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
 BU_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
 BU_EXTERN(void			nmg_vertexuse_nv, (struct vertexuse *vu, CONST vect_t norm));
-BU_EXTERN(void			nmg_vertexuse_a_cnurb, (struct vertexuse *vu, CONST vect_t uvw));
+BU_EXTERN(void			nmg_vertexuse_a_cnurb, (struct vertexuse *vu, CONST fastf_t *uvw));
 BU_EXTERN(void			nmg_edge_g, (struct edgeuse *eu) );
 BU_EXTERN(void			nmg_edge_g_cnurb, (struct edgeuse *eu,
 				int order, int n_knots, fastf_t *kv,
