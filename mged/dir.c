@@ -634,6 +634,9 @@ register struct directory *dp;
 	register union record	*rp;
 	int			want;
 
+	if( dp->d_nref++ > 0 )
+		return;		/* already written */
+
 	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
 		return;
 	want = dp->d_len*sizeof(union record);
