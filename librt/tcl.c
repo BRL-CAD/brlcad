@@ -1644,21 +1644,13 @@ char *char_list;
 int **array;
 int *array_len;
 {
-	Tcl_Obj *obj, *list;
+	Tcl_Obj *obj;
 	int ret;
 
 	obj = Tcl_NewStringObj( char_list, -1 );
-	list = Tcl_NewListObj( 0, NULL );
-	if( (ret=Tcl_ListObjAppendList( interp, list, obj )) != TCL_OK )
-	{
-		Tcl_DecrRefCount( list );
-		Tcl_DecrRefCount( obj );
-		return( ret );
-	}
 
-	ret = tcl_obj_to_int_array( interp, list, array, array_len );
+	ret = tcl_obj_to_int_array( interp, obj, array, array_len );
 
-	Tcl_DecrRefCount( list );
 	Tcl_DecrRefCount( obj );
 
 	return( ret );
@@ -1700,21 +1692,13 @@ char *char_list;
 fastf_t **array;
 int *array_len;
 {
-	Tcl_Obj *obj, *list;
+	Tcl_Obj *obj;
 	int ret;
 
 	obj = Tcl_NewStringObj( char_list, -1 );
-	list = Tcl_NewListObj( 0, NULL );
-	if( (ret=Tcl_ListObjAppendList( interp, list, obj )) != TCL_OK )
-	{
-		Tcl_DecrRefCount( list );
-		Tcl_DecrRefCount( obj );
-		return( ret );
-	}
 
-	ret = tcl_obj_to_fastf_array( interp, list, array, array_len );
+	ret = tcl_obj_to_fastf_array( interp, obj, array, array_len );
 
-	Tcl_DecrRefCount( list );
 	Tcl_DecrRefCount( obj );
 
 	return( ret );
