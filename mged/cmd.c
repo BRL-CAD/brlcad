@@ -158,6 +158,7 @@ int	f_matpick();
 int	mged_cmd();
 int	f_sync();
 int	f_shells();
+int	f_arced();
 
 #ifdef MGED_TCL
 int	f_gui();
@@ -207,6 +208,8 @@ static struct funtab funtab[] = {
 	f_analyze,1,MAXARGS,
 "arb", "name rot fb", "make arb8, rotation + fallback",
 	f_arbdef,4,4,
+"arced", "a/b ...anim_command...", "edit matrix or materials on combination's arc",
+	f_arced, 3,MAXARGS,
 "area", "[endpoint_tolerance]", "calculate presented area of view",
 	f_area, 1, 2,
 "attach", "[device]", "attach to a display processor, or NU",
