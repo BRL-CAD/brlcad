@@ -49,27 +49,26 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
 
-void set_port();
+void set_port(void);
 
 #ifdef LOCAL_STATIC
 #undef LOCAL_STATIC
 #endif
 #define LOCAL_STATIC static
 
-LOCAL_STATIC void new_client();
-LOCAL_STATIC void drop_client();
-LOCAL_STATIC void new_client_handler();
-LOCAL_STATIC void existing_client_handler();
-LOCAL_STATIC void comm_error();
-LOCAL_STATIC void setup_socket();
+LOCAL_STATIC void new_client(struct pkg_conn *pcp);
+LOCAL_STATIC void drop_client(int sub);
+LOCAL_STATIC void new_client_handler(ClientData clientData, int mask);
+LOCAL_STATIC void existing_client_handler(ClientData clientData, int mask);
+LOCAL_STATIC void comm_error(char *str);
+LOCAL_STATIC void setup_socket(int fd);
 
 
 /*
  *			N E W _ C L I E N T
  */
 LOCAL_STATIC void
-new_client(pcp)
-struct pkg_conn	*pcp;
+new_client(struct pkg_conn *pcp)
 {
   register int	i;
 
@@ -99,8 +98,7 @@ struct pkg_conn	*pcp;
  *			D R O P _ C L I E N T
  */
 LOCAL_STATIC void
-drop_client(sub)
-int sub;
+drop_client(int sub)
 {
   if(clients[sub].c_pkg != PKC_NULL)  {
     pkg_close(clients[sub].c_pkg);
@@ -118,7 +116,7 @@ int sub;
  *			S E T _ P O R T
  */
 void
-set_port()
+set_port(void)
 {
   register int i;
   int save_port;
@@ -202,9 +200,7 @@ set_port()
  * Accept any new client connections.
  */
 LOCAL_STATIC void
-new_client_handler(clientData, mask)
-ClientData clientData;
-int mask;
+new_client_handler(ClientData clientData, int mask)
 {
   int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
   struct dm_list *dlp;
@@ -231,9 +227,7 @@ found:
  * Process arrivals from existing clients.
  */
 LOCAL_STATIC void
-existing_client_handler(clientData, mask)
-ClientData clientData;
-int mask;
+existing_client_handler(ClientData clientData, int mask)
 {
   register int i;
   int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
@@ -286,8 +280,7 @@ found:
 }
 
 LOCAL_STATIC void
-setup_socket(fd)
-int	fd;
+setup_socket(int fd)
 {
   int on = 1;
 
@@ -325,8 +318,7 @@ int	fd;
  *  Communication error.  An error occured on the PKG link.
  */
 LOCAL_STATIC void
-comm_error(str)
-char *str;
+comm_error(char *str)
 {
   bu_log(str);
 }
@@ -335,9 +327,7 @@ char *str;
  * This is where we go for message types we don't understand.
  */
 void
-pkgfoo(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+pkgfoo(struct pkg_conn *pcp, char *buf)
 {
   bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
   (void)free(buf);
@@ -346,9 +336,7 @@ char *buf;
 /******** Here's where the hooks lead *********/
 
 void
-rfbopen(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbopen(struct pkg_conn *pcp, char *buf)
 {
   char	rbuf[5*NET_LONG_LEN+1];
   int	want;
@@ -369,9 +357,7 @@ char *buf;
 }
 
 void
-rfbclose(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbclose(struct pkg_conn *pcp, char *buf)
 {
   char	rbuf[NET_LONG_LEN+1];
 	
@@ -393,9 +379,7 @@ char *buf;
 }
 
 void
-rfbfree(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbfree(struct pkg_conn *pcp, char *buf)
 {
   char	rbuf[NET_LONG_LEN+1];
 	
@@ -408,9 +392,7 @@ char *buf;
 }
 
 void
-rfbclear(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbclear(struct pkg_conn *pcp, char *buf)
 {
   RGBpixel bg;
   char	rbuf[NET_LONG_LEN+1];
@@ -427,9 +409,7 @@ char *buf;
 }
 
 void
-rfbread(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbread(struct pkg_conn *pcp, char *buf)
 {
 	int	x, y, num;
 	int	ret;
@@ -462,9 +442,7 @@ char *buf;
 }
 
 void
-rfbwrite(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbwrite(struct pkg_conn *pcp, char *buf)
 {
 	int	x, y, num;
 	char	rbuf[NET_LONG_LEN+1];
@@ -488,9 +466,7 @@ char *buf;
  *			R F B R E A D R E C T
  */
 void
-rfbreadrect(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
 	int	xmin, ymin;
 	int	width, height;
@@ -530,9 +506,7 @@ char *buf;
  *			R F B W R I T E R E C T
  */
 void
-rfbwriterect(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbwriterect(struct pkg_conn *pcp, char *buf)
 {
 	int	x, y;
 	int	width, height;
@@ -560,9 +534,7 @@ char *buf;
  *			R F B B W R E A D R E C T
  */
 void
-rfbbwreadrect(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 {
 	int	xmin, ymin;
 	int	width, height;
@@ -602,9 +574,7 @@ char *buf;
  *			R F B B W W R I T E R E C T
  */
 void
-rfbbwwriterect(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 {
 	int	x, y;
 	int	width, height;
@@ -629,9 +599,7 @@ char *buf;
 }
 
 void
-rfbcursor(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbcursor(struct pkg_conn *pcp, char *buf)
 {
 	int	mode, x, y;
 	char	rbuf[NET_LONG_LEN+1];
@@ -646,9 +614,7 @@ char *buf;
 }
 
 void
-rfbgetcursor(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbgetcursor(struct pkg_conn *pcp, char *buf)
 {
 	int	ret;
 	int	mode, x, y;
@@ -664,9 +630,7 @@ char *buf;
 }
 
 void
-rfbsetcursor(pcp, buf)
-struct pkg_conn *pcp;
-char		*buf;
+rfbsetcursor(struct pkg_conn *pcp, char *buf)
 {
 	char	rbuf[NET_LONG_LEN+1];
 	int	ret;
@@ -690,9 +654,7 @@ char		*buf;
 
 /*OLD*/
 void
-rfbscursor(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbscursor(struct pkg_conn *pcp, char *buf)
 {
 	int	mode, x, y;
 	char	rbuf[NET_LONG_LEN+1];
@@ -708,9 +670,7 @@ char *buf;
 
 /*OLD*/
 void
-rfbwindow(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbwindow(struct pkg_conn *pcp, char *buf)
 {
 	int	x, y;
 	char	rbuf[NET_LONG_LEN+1];
@@ -725,9 +685,7 @@ char *buf;
 
 /*OLD*/
 void
-rfbzoom(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbzoom(struct pkg_conn *pcp, char *buf)
 {
 	int	x, y;
 	char	rbuf[NET_LONG_LEN+1];
@@ -741,9 +699,7 @@ char *buf;
 }
 
 void
-rfbview(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbview(struct pkg_conn *pcp, char *buf)
 {
 	int	ret;
 	int	xcenter, ycenter, xzoom, yzoom;
@@ -761,9 +717,7 @@ char *buf;
 }
 
 void
-rfbgetview(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbgetview(struct pkg_conn *pcp, char *buf)
 {
 	int	ret;
 	int	xcenter, ycenter, xzoom, yzoom;
@@ -780,14 +734,12 @@ char *buf;
 }
 
 void
-rfbrmap(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbrmap(struct pkg_conn *pcp, char *buf)
 {
 	register int	i;
 	char	rbuf[NET_LONG_LEN+1];
 	ColorMap map;
-	char	cm[256*2*3];
+	unsigned char	cm[256*2*3];
 
 	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], fb_rmap( fbp, &map ) );
 	for( i = 0; i < 256; i++ ) {
@@ -809,9 +761,7 @@ char *buf;
  *  of 3*256*2 bytes.
  */
 void
-rfbwmap(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbwmap(struct pkg_conn *pcp, char *buf)
 {
 	int	i;
 	char	rbuf[NET_LONG_LEN+1];
@@ -834,9 +784,7 @@ char *buf;
 }
 
 void
-rfbflush(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbflush(struct pkg_conn *pcp, char *buf)
 {
 	int	ret;
 	char	rbuf[NET_LONG_LEN+1];
@@ -851,9 +799,7 @@ char *buf;
 }
 
 void
-rfbpoll(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbpoll(struct pkg_conn *pcp, char *buf)
 {
 	(void)fb_poll( fbp );
 	if( buf ) (void)free(buf);
@@ -864,9 +810,7 @@ char *buf;
  *  message back and forth, so we receive a dummy long here.
  */
 void
-rfbhelp(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+rfbhelp(struct pkg_conn *pcp, char *buf)
 {
 	long	ret;
 	char	rbuf[NET_LONG_LEN+1];

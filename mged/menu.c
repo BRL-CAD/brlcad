@@ -46,11 +46,7 @@ void set_menucurrent();
 int set_arrowloc();
 
 int
-cmd_mmenu_get(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int index;
     
@@ -107,7 +103,7 @@ char **argv;
  * Clear global data
  */
 void
-mmenu_init()
+mmenu_init(void)
 {
 	menu_state->ms_flag = 0;
 	menu_state->ms_menus[MENU_L1] = MENU_NULL;
@@ -127,9 +123,7 @@ mmenu_init()
  */
 
 void
-mmenu_set( index, value )
-int index;
-struct menu_item *value;
+mmenu_set(int index, struct menu_item *value)
 {
     struct dm_list *dlp;
 
@@ -157,9 +151,7 @@ struct menu_item *value;
 }
 
 void
-mmenu_set_all( index, value )
-int index;
-struct menu_item *value;
+mmenu_set_all(int index, struct menu_item *value)
 {
   struct dm_list *p;
   struct cmd_list *save_cmd_list;
@@ -180,9 +172,7 @@ struct menu_item *value;
 }
 
 void
-mged_highlight_menu_item(mptr, y)
-struct menu_item *mptr;
-int y;
+mged_highlight_menu_item(struct menu_item *mptr, int y)
 {
   switch(mptr->menu_arg){
   case BV_RATE_TOGGLE:
@@ -227,8 +217,7 @@ int y;
  *  menu item will be indicated with an arrow.
  */
 void
-mmenu_display( y_top )
-int y_top;
+mmenu_display(int y_top)
 { 
   static int menu, item;
   register struct menu_item	**m;
@@ -371,7 +360,7 @@ mmenu_select( int pen_y, int do_func )
  *  The arrow can always be eliminated by setting menu_state->ms_flag=0, view_state->flag=1.
  */
 void
-mmenu_pntr( menu, item )
+mmenu_pntr(int menu, int item)
 {
 	menu_state->ms_cur_menu = menu;
 	menu_state->ms_cur_item = item;

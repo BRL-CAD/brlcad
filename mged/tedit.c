@@ -59,15 +59,11 @@ static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 static char	*tmpfil_init = "c:\\GED.aXXXXXX";
 #endif
 
-int writesolid(), readsolid();
-int editit();
+int writesolid(void), readsolid(void);
+int editit(const char *file);
 
 int
-f_tedit(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 
@@ -128,7 +124,7 @@ char **argv;
 
 /* Write numerical parameters of a solid into a file */
 int
-writesolid()
+writesolid(void)
 {
 	register int i;
 	FILE *fp;
@@ -152,6 +148,7 @@ writesolid()
 		struct rt_ehy_internal *ehy;
 		struct rt_eto_internal *eto;
 		struct rt_part_internal *part;
+		struct rt_superell_internal *superell;
 
 		default:
 		  Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
@@ -244,6 +241,14 @@ writesolid()
 			(void)fprintf( fp , "Semi-minor length: %.9f\n" , eto->eto_rd * base2local );
 			(void)fprintf( fp , "Radius of roation: %.9f\n" , eto->eto_r * base2local );
 			break;
+		case ID_SUPERELL:
+			superell = (struct rt_superell_internal *)es_int.idb_ptr;
+			(void)fprintf( fp , "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->v ) );
+			(void)fprintf( fp , "A: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->a ) );
+			(void)fprintf( fp , "B: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->b ) );
+			(void)fprintf( fp , "C: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->c ) );
+			(void)fprintf( fp , "<n,e>: <%.9f, %.9f>\n", superell->n, superell->e);
+			break;
 	}
 	
 	(void)fclose(fp);
@@ -251,8 +256,7 @@ writesolid()
 }
 
 static char *
-Get_next_line( fp )
-FILE *fp;
+Get_next_line(FILE *fp)
 {
 	static char line[LINELEN];
 	int i;
@@ -274,7 +278,7 @@ FILE *fp;
 
 /* Read numerical parameters of solid from file */
 int
-readsolid()
+readsolid(void)
 {
 	register int i;
 	FILE *fp;
@@ -302,6 +306,7 @@ readsolid()
 		struct rt_ehy_internal *ehy;
 		struct rt_eto_internal *eto;
 		struct rt_part_internal *part;
+		struct rt_superell_internal *superell;
 		char *str;
 		double a,b,c,d;
 
@@ -406,6 +411,8 @@ readsolid()
 		case ID_ELL:
 		case ID_SPH:
 			ell = (struct rt_ell_internal *)es_int.idb_ptr;
+
+			fprintf(stderr, "ID_SPH\n");
 
 			if( (str=Get_next_line( fp )) == NULL )
 			{
@@ -751,6 +758,53 @@ readsolid()
 			(void)sscanf( str , "%lf" , &a );
 			eto->eto_r = a * local2base;
 			break;
+		case ID_SUPERELL:
+			superell = (struct rt_superell_internal *)es_int.idb_ptr;
+
+			fprintf(stderr, "ID_SUPERELL\n");
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( superell->v , a , b , c );
+			VSCALE( superell->v , superell->v , local2base );
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( superell->a , a , b , c );
+			VSCALE( superell->a , superell->a , local2base );
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( superell->b , a , b , c );
+			VSCALE( superell->b , superell->b , local2base );
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( superell->c , a , b , c );
+			VSCALE( superell->c , superell->c , local2base );
+			
+			if ( (str=Get_next_line( fp )) == NULL ) {
+			  ret_val = 1;
+			  break;
+			}
+			(void) sscanf( str, "%lf %lf", &superell->n, &superell->e);
+			break;	
 	}
 
 	(void)fclose(fp);

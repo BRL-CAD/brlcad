@@ -41,8 +41,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./sedit.h"
 
-extern int mged_svbase();   /* defined in chgview.c */
-extern void set_scroll();   /* defined in set.c */
+extern int mged_svbase(void);   /* defined in chgview.c */
+extern void set_scroll(void);   /* defined in set.c */
 
 /************************************************************************
  *									*
@@ -50,12 +50,12 @@ extern void set_scroll();   /* defined in set.c */
  *									*
  ************************************************************************/
 
-static void sl_tol();
-static void sl_atol();
-static void sl_rrtol();
-static void sl_artol();
-static void sl_itol();
-static void sl_adctol();
+static void sl_tol(register struct scroll_item *mptr, double val);
+static void sl_atol(register struct scroll_item *mptr, double val);
+static void sl_rrtol(register struct scroll_item *mptr, double val);
+static void sl_artol(register struct scroll_item *mptr, double val);
+static void sl_itol(register struct scroll_item *mptr, double val);
+static void sl_adctol(register struct scroll_item *mptr, double val);
 
 struct scroll_item sl_menu[] = {
 	{ "xslew",	sl_tol,		0,	"X" },
@@ -126,7 +126,7 @@ set_scroll(void)
  *  Reset all scroll bars to the zero position.
  */
 void
-sl_halt_scroll()
+sl_halt_scroll(void)
 {
   struct bu_vls vls;
 
@@ -140,7 +140,7 @@ sl_halt_scroll()
  *			S L _ T O G G L E _ S C R O L L
  */
 void
-sl_toggle_scroll()
+sl_toggle_scroll(void)
 {
   mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
@@ -158,9 +158,7 @@ sl_toggle_scroll()
  ************************************************************************/
 
 static void
-sl_tol( mptr, val )
-register struct scroll_item     *mptr;
-double				val;
+sl_tol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
@@ -179,9 +177,7 @@ double				val;
 }
 
 static void
-sl_atol( mptr, val )
-register struct scroll_item     *mptr;
-double				val;
+sl_atol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
@@ -203,9 +199,7 @@ double				val;
 }
 
 static void
-sl_rrtol( mptr, val )
-register struct scroll_item *mptr;
-double val;
+sl_rrtol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
@@ -225,9 +219,7 @@ double val;
 
 
 static void
-sl_artol( mptr, val )
-register struct scroll_item *mptr;
-double val;
+sl_artol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
@@ -247,9 +239,7 @@ double val;
 
 
 static void
-sl_adctol( mptr, val )
-register struct scroll_item     *mptr;
-double				val;
+sl_adctol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 
@@ -269,9 +259,7 @@ double				val;
 
 
 static void
-sl_itol( mptr, val )
-register struct scroll_item     *mptr;
-double				val;
+sl_itol(register struct scroll_item *mptr, double val)
 {
   struct bu_vls vls;
 

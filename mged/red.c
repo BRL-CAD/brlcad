@@ -40,7 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include <ctype.h>
 
-extern int cmd_name();
+extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static char	red_tmpfil[17];
 #ifndef WIN32
@@ -52,18 +52,14 @@ static char	red_tmpcomb[16];
 static char	*red_tmpcomb_init = "red_tmp.aXXXXXX";
 static char	delims[] = " \t/";	/* allowable delimiters */
 
-void put_rgb_into_comb();
-void restore_comb();
-int editit();
-static int make_tree();
-int clear_comb(),build_comb(),save_comb();
+void put_rgb_into_comb(struct rt_comb_internal *comb, char *str);
+void restore_comb(struct directory *dp);
+int editit(const char *file);
+static int make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index);
+int clear_comb(),build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name),save_comb(struct directory *dpold);
 
 int
-f_red(clientData, interp, argc , argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct directory *dp;
 	struct rt_db_internal	intern;
@@ -197,10 +193,7 @@ char **argv;
 }
 
 HIDDEN char *
-find_keyword( i, line, word )
-int i;
-char *line;
-char *word;
+find_keyword(int i, char *line, char *word)
 {
 	char *ptr1;
 	char *ptr2;
@@ -229,9 +222,7 @@ char *word;
 }
 
 HIDDEN void
-print_matrix( fp, matrix )
-FILE *fp;
-matp_t matrix;
+print_matrix(FILE *fp, matp_t matrix)
 {
 	int k;
 	char buf[64];
@@ -255,9 +246,7 @@ matp_t matrix;
 }
 
 HIDDEN void
-vls_print_matrix(vls, matrix)
-struct bu_vls *vls;
-matp_t matrix;
+vls_print_matrix(struct bu_vls *vls, matp_t matrix)
 {
   int k;
   char buf[64];
@@ -280,9 +269,7 @@ matp_t matrix;
 }
 
 void
-put_rgb_into_comb(comb, str)
-struct rt_comb_internal *comb;
-char *str;
+put_rgb_into_comb(struct rt_comb_internal *comb, char *str)
 {
   int r, g, b;
 
@@ -321,8 +308,7 @@ struct line_list{
 struct line_list HeadLines;
 
 HIDDEN int
-count_nodes(line)
-char *line;
+count_nodes(char *line)
 {
   char *ptr;
   char *name;
@@ -386,12 +372,7 @@ char *line;
 }
 
 HIDDEN int
-put_tree_into_comb(comb, dp, old_name, new_name, str)
-     struct rt_comb_internal	*comb;
-     struct directory		*dp;
-     char			*old_name;
-     char			*new_name;
-     char			*str;
+put_tree_into_comb(struct rt_comb_internal *comb, struct directory *dp, char *old_name, char *new_name, char *str)
 {
 	int			i;
 	int			done;
@@ -719,11 +700,7 @@ cmd_get_comb(ClientData	clientData,
  *			shader inherit boolean_expr
  */
 int
-cmd_put_comb(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct directory *dp;
   struct rt_db_internal	intern;
@@ -1286,14 +1263,7 @@ checkcomb(void)
 }
 
 static int
-make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index)
-     struct rt_comb_internal	*comb;
-     struct directory		*dp;
-     int			node_count;
-     char			*old_name;
-     char			*new_name;
-     struct rt_tree_array	*rt_tree_array;
-     int			tree_index;
+make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
 {
 	struct rt_db_internal	intern;
 	union tree		*final_tree;
@@ -1363,11 +1333,7 @@ make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index)
 }
 
 
-int build_comb( comb, dp, node_count, old_name )
-struct rt_comb_internal *comb;
-struct directory *dp;
-int node_count;
-char *old_name;
+int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name)
 {
 /*	Build the new combination by adding to the recently emptied combination
 	This keeps combo info associated with this combo intact */
@@ -1706,8 +1672,7 @@ char *old_name;
 }
 
 void
-mktemp_comb( str )
-char *str;
+mktemp_comb(char *str)
 {
 /* Make a temporary name for a combination
 	a template name is expected as in "mk_temp()" with 
@@ -1742,8 +1707,7 @@ char *str;
 	}
 }
 
-int save_comb( dpold )
-struct directory *dpold;
+int save_comb(struct directory *dpold)
 {
 /* Save a combination under a temporory name */
 
@@ -1777,8 +1741,7 @@ struct directory *dpold;
 
 /* restore a combination that was saved in "red_tmpcomb" */
 void
-restore_comb( dp )
-struct directory *dp;
+restore_comb(struct directory *dp)
 {
   char *av[4];
   char *name;

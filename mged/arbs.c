@@ -68,11 +68,7 @@ char *p_arb3pt[] = {
  *
  */
 int
-f_3ptarb( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	int			i, solve;
 	vect_t			vec1;
@@ -320,11 +316,7 @@ char *p_rfin[] = {
  *		4. thickness
  */
 int
-f_rfarb(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct directory	*dp;
 	int			i;

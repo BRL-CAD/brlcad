@@ -71,11 +71,7 @@ cmd_overlay(ClientData	clientData,
 
 /* Usage:  labelvert solid(s) */
 int
-f_labelvert(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	int	i;
 	struct rt_vlblock	*vbp;

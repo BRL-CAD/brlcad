@@ -73,10 +73,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *	the rewrite rules and returns the number of the first
  *	match it finds.
  */
-static int find_bool_tree_rewrite (rp)
-
-struct bool_tree_node	*rp;
-
+static int find_bool_tree_rewrite (struct bool_tree_node *rp)
 {
     int		rule_nm;	/* An applicable rule */
     int		lop;		/* Left child's operation */
@@ -137,10 +134,7 @@ struct bool_tree_node	*rp;
  *	the specified node and returns a pointer to the root of
  *	the copy.
  */
-static struct bool_tree_node *dup_bool_tree (rp)
-
-struct bool_tree_node	*rp;
-
+static struct bool_tree_node *dup_bool_tree (struct bool_tree_node *rp)
 {
     BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
@@ -161,11 +155,7 @@ struct bool_tree_node	*rp;
  *	a rule number.  Do_bool_tree_rewrite() applies the specified
  *	rewrite rule to the subtree rooted at the specified node.
  */
-static void do_bool_tree_rewrite (rp, rule_nm)
-
-struct bool_tree_node	*rp;
-int			rule_nm;
-
+static void do_bool_tree_rewrite (struct bool_tree_node *rp, int rule_nm)
 {
     struct bool_tree_node	*left;		/* Left child of the root */
     struct bool_tree_node	*right;		/* Right  "   "   "   "   */
@@ -237,10 +227,7 @@ int			rule_nm;
  *	of any of the rewrite rules.  It returns the number of
  *	times a rewrite rule was applied.
  */
-static int convert_one_node (rp)
-
-struct bool_tree_node	*rp;
-
+static int convert_one_node (struct bool_tree_node *rp)
 {
     int		lisp = 1;
     int		rule_nm;
@@ -264,10 +251,7 @@ struct bool_tree_node	*rp;
  *	at the specified node.  It returns the number of times a
  *	rewrite rule was applied.
  */
-static int _cvt_to_gift_bool (rp)
-
-struct bool_tree_node	*rp;
-
+static int _cvt_to_gift_bool (struct bool_tree_node *rp)
 {
     int		nm_rewrites;
 
@@ -293,10 +277,7 @@ struct bool_tree_node	*rp;
  *	at the specified node.  It returns the number of times a
  *	rewrite rule was applied.
  */
-int cvt_to_gift_bool (rp)
-
-struct bool_tree_node	*rp;
-
+int cvt_to_gift_bool (struct bool_tree_node *rp)
 {
     int		cnr;		/* Cumulative number of rewrites */
     int		nr;		/* Number of rewrites in this pass */
@@ -326,9 +307,7 @@ struct bool_tree_node	*rp;
  *	final newline.
  */
 void
-show_gift_bool (rp, new_line)
-struct bool_tree_node	*rp;
-int			new_line;
+show_gift_bool (struct bool_tree_node *rp, int new_line)
 {
   BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 

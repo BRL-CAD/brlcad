@@ -48,8 +48,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"	/* XXX */
 
-void		cvt_vlblock_to_solids();
-void		drawH_part2();
+void		cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
+void		drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp);
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
 extern void	(*nmg_mged_debug_display_hack)();
@@ -137,9 +137,9 @@ extern struct bn_tol		mged_tol;	/* from ged.c */
  *  Alas, no wextern keyword to make this a little less indirect.
  */
 void
-mged_plot_anim_upcall_handler( file, us )
-char	*file;
-long	us;		/* microseconds of extra delay */
+mged_plot_anim_upcall_handler(char *file, long int us)
+    	      
+    	   		/* microseconds of extra delay */
 {
 	char *av[3];
 
@@ -189,10 +189,10 @@ long	us;		/* microseconds of extra delay */
  *  Alas, no wextern keyword to make this a little less indirect.
  */
 void
-mged_vlblock_anim_upcall_handler( vbp, us, copy )
-struct bn_vlblock	*vbp;
-long		us;		/* microseconds of extra delay */
-int		copy;
+mged_vlblock_anim_upcall_handler(struct bn_vlblock *vbp, long int us, int copy)
+                 	     
+    		   		/* microseconds of extra delay */
+   		     
 {
 
 	cvt_vlblock_to_solids( vbp, "_PLOT_OVERLAY_", copy );
@@ -226,7 +226,7 @@ int		copy;
 #endif
 }
 static void
-hack_for_lee()
+hack_for_lee(void)
 {
 	event_check( 1 );	/* Take any device events */
 
@@ -238,19 +238,8 @@ hack_for_lee()
  *
  *  This routine must be prepared to run in parallel.
  */
-#ifndef WIN32
-HIDDEN union tree *mged_wireframe_region_end( tsp, pathp, curtree, client_data )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t		client_data;
-#else
-HIDDEN union tree *mged_wireframe_region_end(
-register struct db_tree_state	*tsp,
-struct db_full_path	*pathp,
-union tree		*curtree,
-genptr_t		client_data)
-#endif
+HIDDEN union tree *
+mged_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 	return( curtree );
 }
@@ -260,16 +249,8 @@ genptr_t		client_data)
  *
  *  This routine must be prepared to run in parallel.
  */
-#ifndef WIN32
-HIDDEN union tree *mged_wireframe_leaf( tsp, pathp, ip, client_data )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_db_internal	*ip;
-genptr_t		client_data;
-#else
-HIDDEN union tree *mged_wireframe_leaf(struct db_tree_state *tsp,struct db_full_path *pathp,
-struct rt_db_internal *ip,genptr_t client_data)
-#endif
+HIDDEN union tree *
+mged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
 	union tree	*curtree;
 	int		dashflag;		/* draw with dashed lines */
@@ -352,21 +333,8 @@ static struct bn_vlblock	*mged_draw_edge_uses_vbp;
  *  further processing of this region.
  *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
-#ifndef WIN32
 int
-mged_nmg_region_start( tsp, pathp, combp, client_data )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-const struct rt_comb_internal *combp;
-genptr_t client_data;
-#else
-int
-mged_nmg_region_start(
-struct db_tree_state	*tsp,
-struct db_full_path	*pathp,
-const struct rt_comb_internal *combp,
-genptr_t client_data)
-#endif
+mged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
 	union tree		*tp;
 	struct directory	*dp;
@@ -463,19 +431,8 @@ out:
  *
  *  This routine must be prepared to run in parallel.
  */
-#ifndef WIN32
-HIDDEN union tree *mged_nmg_region_end( tsp, pathp, curtree, client_data )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t client_data;
-#else
-HIDDEN union tree *mged_nmg_region_end(
-register struct db_tree_state	*tsp,
-struct db_full_path	*pathp,
-union tree		*curtree,
-genptr_t client_data)
-#endif
+HIDDEN union tree *
+mged_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 	struct nmgregion	*r;
 	struct bu_list		vhead;
@@ -831,8 +788,7 @@ A production implementation will exist in the maintenance release.\n", (char *)N
  * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
 void
-mged_bound_solid( sp )
-register struct solid *sp;
+mged_bound_solid(register struct solid *sp)
 {
 	register struct bn_vlist	*vp;
 	register double			xmax, ymax, zmax;
@@ -978,11 +934,7 @@ drawH_part2(
 }
 
 HIDDEN void
-Do_getmat( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
-struct db_i             *dbip;
-struct rt_comb_internal *comb;
-union tree              *comb_leaf;
-genptr_t                user_ptr1, user_ptr2, user_ptr3;
+Do_getmat(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
 {
 	matp_t	xmat;
 	char	*kid_name;
@@ -1299,19 +1251,8 @@ static union tree	*mged_facetize_tree;
  *
  *  This routine must be prepared to run in parallel.
  */
-#ifndef WIN32
-HIDDEN union tree *mged_facetize_region_end( tsp, pathp, curtree, client_data )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t		client_data;
-#else
-HIDDEN union tree *mged_facetize_region_end(
-register struct db_tree_state	*tsp,
-struct db_full_path	*pathp,
-union tree		*curtree,
-genptr_t		client_data)
-#endif
+HIDDEN union tree *
+mged_facetize_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 	struct bu_list		vhead;
 
@@ -1348,11 +1289,7 @@ genptr_t		client_data)
 
 /* facetize [opts] new_obj old_obj(s) */
 int
-f_facetize(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	int			i;
 	register int		c;
@@ -1592,11 +1529,7 @@ char	**argv;
  *	new_obj
  */
 int
-f_bev(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	int			i;
 	register int		c;
@@ -1900,11 +1833,7 @@ add_solid_path_to_result(
  *  Particularly useful with outboard .inmem database modifications.
  */
 int
-cmd_redraw_vlist( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+cmd_redraw_vlist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct directory	*dp;
 	int		i;

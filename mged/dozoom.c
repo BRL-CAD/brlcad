@@ -53,8 +53,6 @@ point_t	eye_pos_scr = { 0, 0, 1 };
 struct solid	FreeSolid;	/* Head of freelist */
 struct solid	HeadSolid;	/* Head of solid table */
 
-/* changed near - near1, far - far1*/
-
 /*
  *			P E R S P _ M A T
  *
@@ -63,9 +61,7 @@ struct solid	HeadSolid;	/* Head of solid table */
  *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
  */
 static void
-persp_mat( m, fovy, aspect, near1, far1, backoff )
-mat_t	m;
-fastf_t	fovy, aspect, near1, far1, backoff;
+persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff)
 {
 	mat_t	m2, tran;
 
@@ -83,7 +79,7 @@ fastf_t	fovy, aspect, near1, far1, backoff;
 	/* Move eye to origin, then apply perspective */
 	MAT_IDN( tran );
 	tran[11] = -backoff;
-	bn_mat_mul( m, m2, tran );
+	bn_mat_mul(m, m2, tran );
 }
 
 /*
@@ -99,9 +95,7 @@ fastf_t	fovy, aspect, near1, far1, backoff;
  *  pmat = persp * xlate * shear
  */
 static void
-mike_persp_mat( pmat, eye )
-mat_t		pmat;
-const point_t	eye;
+mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
 {
 	mat_t	shear;
 	mat_t	persp;
@@ -215,11 +209,11 @@ bn_mat_print("pmat",pmat);
  *  SPIE Vol 1457 Stereoscopic Display & Applications, 1991, pg 19.
  */
 static void
-deering_persp_mat( m, l, h, eye )
-mat_t		m;
-const point_t	l;	/* lower left corner of screen */
-const point_t	h;	/* upper right (high) corner of screen */
-const point_t	eye;	/* eye location.  Traditionally at (0,0,1) */
+deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
+     		  
+             	  	/* lower left corner of screen */
+             	  	/* upper right (high) corner of screen */
+             	    	/* eye location.  Traditionally at (0,0,1) */
 {
 	vect_t	diff;	/* H - L */
 	vect_t	sum;	/* H + L */
@@ -260,8 +254,7 @@ const point_t	eye;	/* eye location.  Traditionally at (0,0,1) */
  * screen position for the object.
  */
 void
-dozoom(which_eye)
-int	which_eye;
+dozoom(int which_eye)
 {
 	register struct solid	*sp;
 	FAST fastf_t		ratio;
@@ -334,7 +327,7 @@ if( mged_variables->mv_faceplate > 0 )  {
 			if( view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
 				persp_mat( perspective_mat, view_state->vs_vop->vo_perspective,
-					1.0, 0.01, 1.0e10, 1.0 );
+					(fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f );
 			} else {
 				/* This way does not have reasonable Z-clipping,
 				 * but includes shear, for GDurf's testing.

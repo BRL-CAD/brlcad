@@ -54,10 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct bn_tol		mged_tol;	/* from ged.c */
 
 void
-split_pipept( pipe_hd, ps, new_pt )
-struct bu_list *pipe_hd;
-struct wdb_pipept *ps;
-point_t new_pt;
+split_pipept(struct bu_list *pipe_hd, struct wdb_pipept *ps, fastf_t *new_pt)
 {
 }
 

@@ -51,8 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *			I N I T _ T R A I L
  */
 static void
-init_trail(tp)
-struct trail	*tp;
+init_trail(struct trail *tp)
 {
 	tp->t_cur_index = 0;
 	tp->t_nused = 0;
@@ -64,9 +63,7 @@ struct trail	*tp;
  *  Add a new point to the end of the trail.
  */
 static void
-push_trail(tp, pt)
-struct trail	*tp;
-point_t		pt;
+push_trail(struct trail *tp, fastf_t *pt)
 {
 	VMOVE( tp->t_pt[tp->t_cur_index], pt );
 	if( tp->t_cur_index >= tp->t_nused )  tp->t_nused++;
@@ -110,10 +107,7 @@ struct trail	*tp;
  *  t1 should be below (lower screen Y) t2.
  */
 static void
-poly_trail(vhead, t1, t2)
-struct bu_list	*vhead;
-struct trail	*t1;
-struct trail	*t2;
+poly_trail(struct bu_list *vhead, struct trail *t1, struct trail *t2)
 {
 	int	i1, i2;
 	int	todo = t1->t_nused;
@@ -158,7 +152,7 @@ struct trail	*t2;
 }
 
 void
-predictor_init()
+predictor_init(void)
 {
   register int i;
 
@@ -170,7 +164,7 @@ predictor_init()
  *			P R E D I C T O R _ K I L L
  */
 void
-predictor_kill()
+predictor_kill(void)
 {
   RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
   predictor_init();
@@ -204,7 +198,7 @@ predictor_kill()
  *		A --------------- B
  */
 void
-predictor_frame()
+predictor_frame(void)
 {
 	int	i;
 	int	nframes;
@@ -360,7 +354,7 @@ predictor_frame()
  *  Called from set.c when the predictor variables are modified.
  */
 void
-predictor_hook()
+predictor_hook(void)
 {
   if(mged_variables->mv_predictor > 0)
     predictor_init();

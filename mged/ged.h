@@ -52,6 +52,26 @@
 #include "tcl.h"
 #include "wdb.h"
 
+/* Needed to define struct menu_item - RFH */
+#include "./menu.h"
+
+/* Needed to define struct w_dm - RFH */
+#include "./mged_dm.h"
+
+/* Needed to define struct solid - RFH */
+#include "solid.h"
+
+/* A hack around a compilation issue.  No need in fixing it now as the build
+   process is about to be redone - RFH */
+#ifndef SEEN_RT_NURB_INTERNAL
+#define SEEN_RT_NURB_INTERNAL
+struct rt_nurb_internal {
+	long		magic;
+	int	 	nsrf;		/* number of surfaces */
+	struct face_g_snurb **srfs;	/* The surfaces themselves */
+};
+#endif
+
 /*	Stuff needed from db.h */
 #ifndef NAMESIZE
 
@@ -192,27 +212,23 @@ extern jmp_buf jmp_env;
  *	GED functions referenced in more than one source file:
  */
 extern int              tran(), irot();
-extern void             mged_setup();
-extern void		dir_build(), buildHrot(), dozoom(),
-			pr_schain(), itoa();
-extern void		eraseobj(), eraseobjall(), mged_finish(), slewview(),
-			mmenu_init(), moveHinstance(), moveHobj(),
-			quit(), refresh(), rej_sedit(), sedit(),
-			setview(),
-			adcursor(), mmenu_display(), mmenu_set(), mmenu_set_all(),
+extern void             mged_setup(void);
+extern void		dir_build(), buildHrot(fastf_t *, double, double, double), dozoom(int which_eye),
+			pr_schain(struct solid *startp, int lvl), itoa(int n, char *s, int w);
+extern void		eraseobj(register struct directory **dpp), eraseobjall(register struct directory **dpp), mged_finish(int exitcode), slewview(fastf_t *view_pos),
+			mmenu_init(void), moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate), moveHobj(register struct directory *dp, matp_t xlate),
+			quit(void), refresh(void), rej_sedit(), sedit(void),
+			setview(double a1, double a2, double a3),
+			adcursor(void), mmenu_display(int y_top), mmenu_set(int index, struct menu_item *value), mmenu_set_all(int index, struct menu_item *value),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
-extern void		sedit_menu();
-extern void		attach(), get_attached();
+extern void		sedit_menu(void);
+extern void		attach(), get_attached(void);
 extern void		(*cur_sigint)();	/* Current SIGINT status */
-#ifndef WIN32
-extern void		sig2(), sig3();
-#else
-extern void		sig2(int sig), sig3(int sig);
-#endif
+extern void		sig2(int), sig3(int);
 
-extern void		aexists();
-extern int		clip(), getname(), use_pen(), dir_print();
-extern int              mged_cmd_arg_check(), release();
+extern void		aexists(char *name);
+extern int		clip(fastf_t *, fastf_t *, fastf_t *, fastf_t *), getname(), use_pen(), dir_print();
+extern int              mged_cmd_arg_check(), release(char *name, int need_close);
 extern struct directory	*combadd(), **dir_getspace();
 extern void		ellipse();
 
@@ -233,7 +249,7 @@ MGED_EXTERN(int chg_state, (int from, int to, char *str) );
 MGED_EXTERN(void state_err, (char *str) );
 
 MGED_EXTERN(void do_list, (struct bu_vls *outstrp, struct directory *dp, int verbose));
-MGED_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interpreter, int argc, char **argv));
 
 /* history.c */
 void history_record(
@@ -246,7 +262,7 @@ void history_setup(void);
 
 /* cmd.c */
 
-extern void start_catching_output(), stop_catching_output();
+extern void start_catching_output(struct bu_vls *vp), stop_catching_output(struct bu_vls *vp);
 
 #ifndef	NULL
 #define	NULL		0
@@ -473,7 +489,7 @@ extern struct run_rt head_run_rt;
 /* adc.c */
 int f_adc (
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 
@@ -484,41 +500,41 @@ int mged_attach(
 	int argc,
 	char *argv[]);
 #else
-int mged_attach();
+int mged_attach(struct w_dm *wp, int argc, char **argv);
 #endif
 
 /* buttons.c */
-int bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_zoomout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_top(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_right(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_left(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_front(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_vrestore(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_vsave(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_adcursor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_zoomin(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_zoomout(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_rate_toggle(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_top(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_bottom(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_right(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_left(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_front(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_rear(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_vrestore(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_vsave(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_adcursor(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_reset(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_45_45(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int bv_35_25(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_illuminate(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_s_illuminate(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_scale(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_x(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_y(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_xy(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_rotate(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_accept(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_reject(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_s_edit(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_s_rotate(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_s_trans(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_s_scale(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_xscale(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_yscale(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+int be_o_zscale(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
 void btn_head_menu(int i, int menu, int item);
 void chg_l2menu(int i);
 
@@ -532,13 +548,13 @@ int extract_mater_from_line(
 	int *inherit);
 int f_rmater(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int     argc,
 	char    *argv[]);
 int
 f_wmater(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int     argc,
 	char    *argv[]);
 
@@ -546,12 +562,12 @@ f_wmater(
 /* chgtree.c */
 int cmd_kill(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 int cmd_name(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 
@@ -562,34 +578,34 @@ int edit_com(
      int	kind,
      int	catch_sigint);
 void eraseobjpath(
-     Tcl_Interp	*interp,
+     Tcl_Interp	*interpreter,
      int	argc,
      char	**argv,
      int	noisy,
      int	all);
 int f_edit(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 int f_erase(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int     argc,
 	char    **argv);
 int f_erase_all(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int     argc,
 	char    **argv);
 int f_sed(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 int f_zap(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 int mged_erot_xyz(
@@ -608,7 +624,7 @@ void view_ring_destroy(struct dm_list *dlp);
 int cmdline( struct bu_vls *vp, int record);
 int f_quit(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 int mged_cmd(
@@ -650,12 +666,12 @@ void vls_long_dpp(
 void dir_summary(int flag);
 int cmd_killall(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 int cmd_killtree(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 
@@ -689,7 +705,7 @@ int replot_modified_solid(
 	const mat_t			mat);
 int replot_original_solid( struct solid *sp );
 void add_solid_path_to_result(
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	struct solid *sp);
 
 /* dozoom.c */
@@ -722,12 +738,12 @@ void find_nearest_ars_pt();
 int event_check( int non_blocking );
 int f_opendb(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 int f_closedb(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 void new_edit_mats(void);
@@ -750,22 +766,22 @@ int mmenu_select( int pen_y, int do_func );
 /* overlay.c */
 int f_overlay(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 
 /* predictor.c */
-void predictor_frame();
+void predictor_frame(void);
 
 /* usepen.c */
 int f_mouse(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 int f_aip(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int argc,
 	char **argv);
 void buildHrot( mat_t mat, double alpha, double beta, double ggamma );
@@ -774,7 +790,7 @@ void wrt_point( mat_t out, const mat_t change, const mat_t in, const point_t poi
 void wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc );
 int f_matpick(
 	ClientData clientData,
-	Tcl_Interp *interp,
+	Tcl_Interp *interpreter,
 	int	argc,
 	char	**argv);
 
@@ -824,7 +840,7 @@ void oedit_abs_scale(void);
 void oedit_accept(void);
 void oedit_reject(void);
 void objedit_mouse( const vect_t mousevec );
-extern int nurb_closest2d();
+extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const fastf_t *ref_pt, const fastf_t *mat);
 void label_edited_solid(
 	int *num_lines,
 	point_t *lines,
@@ -864,7 +880,7 @@ int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
 void set_scroll_private(void);
-void mged_variable_setup(Tcl_Interp *interp);
+void mged_variable_setup(Tcl_Interp *interpreter);
 
 /* scroll.c */
 void set_scroll(void);

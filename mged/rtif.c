@@ -64,14 +64,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <fcntl.h>
 #endif
 
-extern int mged_svbase();
+extern int mged_svbase(void);
 extern void set_perspective(); /* from set.c */
+
+#ifdef WIN32
+#  include <fcntl.h>
+#endif
+
 /* from ged.c -- used to open databases quietly */
 extern int interactive;
 
-static void setup_rt();
-static int tree_walk_needed;
+static void setup_rt(register char **vp, int printcmd);
 
+static int tree_walk_needed;
 struct run_rt head_run_rt;
 
 struct rtcheck {
@@ -187,8 +192,7 @@ struct command_tab view_cmdtab[] = {
  *  on non-UNIX machines.
  */
 void
-pr_wait_status( status )
-int	status;
+pr_wait_status(int status)
 {
   int	sig = status & 0x7f;
   int	core = status & 0x80;
@@ -225,9 +229,7 @@ int	status;
  *  due to some oddball hackery in RT to determine old -vs- new format.
  */
 HIDDEN void
-rt_oldwrite(fp, eye_model)
-FILE *fp;
-vect_t eye_model;
+rt_oldwrite(FILE *fp, fastf_t *eye_model)
 {
 	register int i;
 
@@ -250,9 +252,7 @@ vect_t eye_model;
  *  as it can be computed in different ways.
  */
 HIDDEN void
-rt_write(fp, eye_model)
-FILE *fp;
-vect_t eye_model;
+rt_write(FILE *fp, fastf_t *eye_model)
 {
 	register int	i;
 	quat_t		quat;
@@ -300,11 +300,7 @@ vect_t eye_model;
  *  Read in one view in the old RT format.
  */
 HIDDEN int
-rt_read(fp, scale, eye, mat)
-FILE	*fp;
-fastf_t	*scale;
-vect_t	eye;
-mat_t	mat;
+rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 {
 	register int i;
 	double d;
@@ -376,9 +372,7 @@ static int	rt_cmd_vec_len;
 static char	rt_cmd_storage[MAXARGS*9];
 
 static void
-setup_rt( vp, printcmd )
-register char	**vp;
-int printcmd;
+setup_rt(register char **vp, int printcmd)
 {
   rt_cmd_vec_len = vp - rt_cmd_vec;
   rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[MAXARGS]);
@@ -494,8 +488,7 @@ rt_output_handler(ClientData clientData, int mask)
 #endif
 
 static void
-rt_set_eye_model(eye_model)
-vect_t eye_model;
+rt_set_eye_model(fastf_t *eye_model)
 {
   if(dmp->dm_zclip || mged_variables->mv_perspective_mode){
     vect_t temp;
@@ -558,7 +551,7 @@ vect_t eye_model;
  *			R U N _ R T
  */
 int
-run_rt()
+run_rt(void)
 {
 	register struct solid *sp;
 	register int i;
@@ -769,11 +762,7 @@ cmd_rt(ClientData	clientData,
  *  Typically used to invoke a remote RT (hence the name).
  */
 int
-f_rrt(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register char **vp;
 	register int i;
@@ -891,8 +880,7 @@ cmd_rtcheck(ClientData	clientData,
  *  Return basename of path, removing leading slashes and trailing suffix.
  */
 HIDDEN char *
-basename( p1, suff )
-register char *p1, *suff;
+basename(register char *p1, register char *suff)
 {
 	register char *p2, *p3;
 	static char buf[128];
@@ -919,11 +907,7 @@ register char *p1, *suff;
  *  in the generated shell script
  */
 int
-f_saveview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char **argv;
+f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct solid *sp;
 	register int i;
@@ -1239,11 +1223,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
  *	1	leave view alone, animate solid named "EYE"
  */
 int
-f_rmats(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register FILE *fp;
 	register struct directory *dp;
@@ -1417,11 +1397,7 @@ work:
 
 /* Save a keyframe to a file */
 int
-f_savekey(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_savekey(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register FILE *fp;
 	fastf_t	time;
@@ -1456,6 +1432,19 @@ char	**argv;
 
 	return TCL_OK;
 }
+
+extern int	cm_start(int argc, char **argv);
+extern int	cm_vsize(int argc, char **argv);
+extern int	cm_eyept(int argc, char **argv);
+extern int	cm_lookat_pt(int argc, char **argv);
+extern int	cm_vrot(int argc, char **argv);
+extern int	cm_end(int argc, char **argv);
+extern int	cm_multiview(int argc, char **argv);
+extern int	cm_anim(int argc, char **argv);
+extern int	cm_tree(int argc, char **argv);
+extern int	cm_clean(int argc, char **argv);
+extern int	cm_set(int argc, char **argv);
+extern int	cm_orientation(int argc, char **argv);
 
 /* table of commands supported by the preview command
  */
@@ -1503,13 +1492,8 @@ static struct command_tab cmdtab[] = {
  *  then any further calls to bu_free() will hang.
  *  It isn't clear how to handle this.
  */
-#ifndef WIN32
 static void
-rtif_sigint( num )
-int	num;
-#else
-static void rtif_sigint(int	num)
-#endif
+rtif_sigint(int num)
 {
 	if(dbip == DBI_NULL)
 	  return;
@@ -1543,11 +1527,7 @@ static void rtif_sigint(int	num)
  *  However, as a bonus, the eye path is left behind as a vector plot.
  */
 int
-f_preview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	char	*cmd;
 	int	c;
@@ -1681,11 +1661,7 @@ char	**argv;
  *  Invoke nirt with the current view & stuff
  */
 int
-f_nirt(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register char **vp;
 	FILE *fp_in;
@@ -1955,8 +1931,8 @@ done:
 	(void)fclose( fp_in );
 #else
 	sa.nLength = sizeof(sa);
-    sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
+	sa.bInheritHandle = TRUE;
+	sa.lpSecurityDescriptor = NULL;
 
 	// Save the handle to the current STDOUT.  
 	hSaveStdout = GetStdHandle(STD_OUTPUT_HANDLE);  
@@ -1968,7 +1944,7 @@ done:
 	SetStdHandle(STD_OUTPUT_HANDLE, pipe_out[1]);  
 
 	// Create noninheritable read handle and close the inheritable read handle. 
-    DuplicateHandle( GetCurrentProcess(), pipe_out[0],
+	DuplicateHandle( GetCurrentProcess(), pipe_out[0],
         GetCurrentProcess(),  &pipe_outDup , 
 		0,  FALSE,
         DUPLICATE_SAME_ACCESS );
@@ -1984,7 +1960,7 @@ done:
 	SetStdHandle(STD_ERROR_HANDLE, pipe_err[1]);  
 
 	// Create noninheritable read handle and close the inheritable read handle. 
-    DuplicateHandle( GetCurrentProcess(), pipe_err[0],
+	DuplicateHandle( GetCurrentProcess(), pipe_err[0],
         GetCurrentProcess(),  &pipe_errDup , 
 		0,  FALSE,
         DUPLICATE_SAME_ACCESS );
@@ -2007,49 +1983,39 @@ done:
 	SetStdHandle(STD_INPUT_HANDLE, pipe_in[0]);
 	// Duplicate the write handle to the pipe so it is not inherited.  
 	DuplicateHandle(GetCurrentProcess(), pipe_in[1], 
-		GetCurrentProcess(), &pipe_inDup, 
-		0, FALSE,                  // not inherited       
-		DUPLICATE_SAME_ACCESS ); 
+			GetCurrentProcess(), &pipe_inDup, 
+			0, FALSE,                  // not inherited       
+			DUPLICATE_SAME_ACCESS ); 
 	CloseHandle(pipe_in[1]); 
 
 
-   si.cb = sizeof(STARTUPINFO);
-   si.lpReserved = NULL;
-   si.lpReserved2 = NULL;
-   si.cbReserved2 = 0;
-   si.lpDesktop = NULL;
-   si.dwFlags = 0;
-   si.dwFlags = STARTF_USESTDHANDLES;
-   si.hStdInput   = pipe_in[0];
-   si.hStdOutput  = pipe_out[1];
-   si.hStdError   = pipe_err[1];
+	si.cb = sizeof(STARTUPINFO);
+	si.lpReserved = NULL;
+	si.lpReserved2 = NULL;
+	si.cbReserved2 = 0;
+	si.lpDesktop = NULL;
+	si.dwFlags = 0;
+	si.dwFlags = STARTF_USESTDHANDLES;
+	si.hStdInput   = pipe_in[0];
+	si.hStdOutput  = pipe_out[1];
+	si.hStdError   = pipe_err[1];
 
 
-   sprintf(line1,"%s ",rt_cmd_vec[0]);
-   for(i=1;i<rt_cmd_vec_len;i++) {
-	   sprintf(name,"%s ",rt_cmd_vec[i]);
-	   strcat(line1,name); 
-	   if(strstr(name,"-e") != NULL) {
-		   i++;
-		   sprintf(name,"\"%s\" ",rt_cmd_vec[i]);
-			strcat(line1,name);} 
-   }
+	sprintf(line1,"%s ",rt_cmd_vec[0]);
+	for(i=1;i<rt_cmd_vec_len;i++) {
+	  sprintf(name,"%s ",rt_cmd_vec[i]);
+	  strcat(line1,name); 
+	  if(strstr(name,"-e") != NULL) {
+	    i++;
+	    sprintf(name,"\"%s\" ",rt_cmd_vec[i]);
+	    strcat(line1,name);} 
+	}
 
-   if(CreateProcess( NULL,
-                     line1,
-                     NULL,
-                     NULL,
-                     TRUE,
-                     DETACHED_PROCESS,
-                     NULL,
-                     NULL,
-                     &si,
-                     &pi )) {
-
-	SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
-	SetStdHandle(STD_OUTPUT_HANDLE, hSaveStdout);
-	SetStdHandle(STD_ERROR_HANDLE, hSaveStderr);
-}
+	if(CreateProcess( NULL, line1, NULL, NULL,TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi )) {
+	  SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
+	  SetStdHandle(STD_OUTPUT_HANDLE, hSaveStdout);
+	  SetStdHandle(STD_ERROR_HANDLE, hSaveStderr);
+	}
  
 	/* use fp_in to feed view info to nirt */
 	CloseHandle( pipe_in[0] );
@@ -2161,11 +2127,7 @@ done:
 }
 
 int
-f_vnirt(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   register int i;
   int status;
@@ -2244,9 +2206,7 @@ char    **argv;
 }
 
 int
-cm_start(argc, argv)
-char	**argv;
-int	argc;
+cm_start(int argc, char **argv)
 {
 	if( argc < 2 )
 		return(-1);
@@ -2256,9 +2216,7 @@ int	argc;
 }
 
 int
-cm_vsize(argc, argv)
-char	**argv;
-int	argc;
+cm_vsize(int argc, char **argv)
 {
 	if( argc < 2 )
 		return(-1);
@@ -2270,9 +2228,7 @@ int	argc;
 }
 
 int
-cm_eyept(argc, argv)
-char	**argv;
-int	argc;
+cm_eyept(int argc, char **argv)
 {
 	if( argc < 4 )
 		return(-1);
@@ -2284,9 +2240,7 @@ int	argc;
 }
 
 int
-cm_lookat_pt(argc, argv)
-int	argc;
-char	**argv;
+cm_lookat_pt(int argc, char **argv)
 {
 	point_t	pt;
 	vect_t	dir;
@@ -2322,9 +2276,7 @@ char	**argv;
 }
 
 int
-cm_vrot(argc, argv)
-char	**argv;
-int	argc;
+cm_vrot(int argc, char **argv)
 {
 	register int	i;
 
@@ -2337,9 +2289,7 @@ int	argc;
 }
 
 int
-cm_orientation( argc, argv )
-int	argc;
-char	**argv;
+cm_orientation(int argc, char **argv)
 {
 	register int	i;
 	quat_t		quat;
@@ -2354,9 +2304,7 @@ char	**argv;
  *			C M _ E N D
  */
 int
-cm_end(argc, argv)
-char	**argv;
-int	argc;
+cm_end(int argc, char **argv)
 {
 	vect_t	xlate;
 	vect_t	new_cent;
@@ -2429,9 +2377,7 @@ int	argc;
 }
 
 int
-cm_multiview(argc, argv)
-char	**argv;
-int	argc;
+cm_multiview(int argc, char **argv)
 {
 	return(-1);
 }
@@ -2442,9 +2388,7 @@ int	argc;
  *  Parse any "anim" commands, and lodge their info in the directory structs.
  */
 int
-cm_anim(argc, argv)
-int	argc;
-char	**argv;
+cm_anim(int argc, char **argv)
 {
 
   if(dbip == DBI_NULL)
@@ -2466,9 +2410,7 @@ char	**argv;
  *  Replace list of top-level objects in rt_cmd_vec[].
  */
 int
-cm_tree(argc, argv)
-char	**argv;
-int	argc;
+cm_tree(int argc, char **argv)
 {
 	register int	i = 1;
 	char *cp = rt_cmd_storage;
@@ -2492,9 +2434,7 @@ int	argc;
  *  Clear current view.
  */
 int
-cm_clean(argc, argv)
-char	**argv;
-int	argc;
+cm_clean(int argc, char **argv)
 {
 	if(dbip == DBI_NULL)
 	  return 0;
@@ -2509,21 +2449,15 @@ int	argc;
 }
 
 int
-cm_set(argc, argv)
-char	**argv;
-int	argc;
+cm_set(int argc, char **argv)
 {
 	return(-1);
 }
 
-extern char **skewer_solids ();
+extern char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path);
 
 int
-cmd_solids_on_ray (clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char		**argv;
+cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char			**snames;
     int				h = 0;
@@ -2628,7 +2562,7 @@ char		**argv;
     
     bu_vls_init(&vls);
     start_catching_output(&vls);
-    snames = skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir, 1);
+    snames = skewer_solids(rt_cmd_vec_len, (const char **)rt_cmd_vec, ray_orig, ray_dir, 1);
     stop_catching_output(&vls);
 
     if (snames == 0)
@@ -2654,11 +2588,7 @@ char		**argv;
  * List the objects currently being drawn.
  */
 int 
-cmd_who (clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char 		**argv;
+cmd_who (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	CHECK_DBI_NULL;
 

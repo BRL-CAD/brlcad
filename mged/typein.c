@@ -27,6 +27,7 @@
  *	eto_in		reads elliptical torus params from keyboard
  *	part_in		reads particle params from keyboard
  *	extrude_in	reads extrude params from keyboard
+ *	superell_in		reads params for all SUPERELLs
  *	checkv		checks for zero vector from keyboard
  *
  * Authors -
@@ -71,7 +72,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-void	aexists();
+void	aexists(char *name);
 
 int		vals;		/* number of args for s_values[] */
 char		**promp;	/* the prompt string */
@@ -493,15 +494,28 @@ char *p_grip[] = {
 	NULL
 };
 
+char *p_superell[] = {
+	"Enter X, Y, Z of superellipse vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector B: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector C: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter n, e of north-south and east-west power: ",
+	"Enter e: "
+};
+
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
 int
-f_in(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	char			*name;
@@ -511,13 +525,13 @@ char **argv;
 	int			do_solid_edit = 0;
 	int			dont_draw = 0;
 	int			nvals, (*fn_in)();
-	int			arb_in(), box_in(), ehy_in(), ell_in(),
-				epa_in(), eto_in(), half_in(), rec_in(),
-				rcc_in(), rhc_in(), rpc_in(), rpp_in(), orpp_in(),
-				sph_in(), tec_in(), tgc_in(), tor_in(), ars_in(),
-				trc_in(), ebm_in(), vol_in(), hf_in(), bot_in(),
-				dsp_in_v4(),dsp_in_v5(), submodel_in(), part_in(), pipe_in(),
-				binunif_in(), arbn_in(), extrude_in(), grip_in();
+	int			arb_in(char **cmd_argvs, struct rt_db_internal *intern), box_in(char **cmd_argvs, struct rt_db_internal *intern), ehy_in(char **cmd_argvs, struct rt_db_internal *intern), ell_in(char **cmd_argvs, struct rt_db_internal *intern),
+				epa_in(char **cmd_argvs, struct rt_db_internal *intern), eto_in(char **cmd_argvs, struct rt_db_internal *intern), half_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), rec_in(char **cmd_argvs, struct rt_db_internal *intern),
+				rcc_in(char **cmd_argvs, struct rt_db_internal *intern), rhc_in(char **cmd_argvs, struct rt_db_internal *intern), rpc_in(char **cmd_argvs, struct rt_db_internal *intern), rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), orpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
+				sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), tec_in(char **cmd_argvs, struct rt_db_internal *intern), tgc_in(char **cmd_argvs, struct rt_db_internal *intern), tor_in(char **cmd_argvs, struct rt_db_internal *intern), ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp),
+				trc_in(char **cmd_argvs, struct rt_db_internal *intern), ebm_in(char **cmd_argvs, struct rt_db_internal *intern), vol_in(char **cmd_argvs, struct rt_db_internal *intern), hf_in(char **cmd_argvs, struct rt_db_internal *intern), bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
+				dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern),dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern), submodel_in(char **cmd_argvs, struct rt_db_internal *intern), part_in(char **cmd_argvs, struct rt_db_internal *intern), pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
+				binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern), superell_in(char **cmd_argvs, struct rt_db_internal *intern);
 
 	CHECK_DBI_NULL;
 
@@ -591,7 +605,7 @@ char **argv;
 	/*
 	 * Decide which solid to make and get the rest of the args
 	 * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
-			rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto>
+			rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto|superell>
 	 */
 	if( strcmp( argv[2], "ebm" ) == 0 )  {
 		nvals = 4;
@@ -786,6 +800,10 @@ char **argv;
 		nvals = 2*3 + 1;
 		menu = p_grip;
 		fn_in = grip_in;
+	} else if( strcmp( argv[2], "superell" ) == 0 )  {
+		nvals = 3*4 + 2;
+		menu = p_superell;
+		fn_in = superell_in;
 	} else if (strcmp(argv[2], "cline") == 0 ||
 		   strcmp(argv[2], "grip") == 0 ||
 		   strcmp(argv[2], "nmg") == 0 ||
@@ -851,10 +869,7 @@ do_new_update:
 }
 
 int
-binunif_in( cmd_argvs, intern, name )
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
-const char		*name;
+binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {
 	unsigned int minor_type;
 
@@ -917,9 +932,7 @@ const char		*name;
  *
  */
 int
-ebm_in( cmd_argvs, intern )
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+ebm_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	struct rt_ebm_internal	*ebm;
 
@@ -947,9 +960,7 @@ struct rt_db_internal	*intern;
  *
  */
 int
-submodel_in( cmd_argvs, intern )
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+submodel_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	struct rt_submodel_internal	*sip;
 
@@ -976,9 +987,7 @@ struct rt_db_internal	*intern;
  *	Read DSP solid from keyboard
  */
 int
-dsp_in_v4 ( cmd_argvs, intern )
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+dsp_in_v4 (char **cmd_argvs, struct rt_db_internal *intern)
 {
 	struct rt_dsp_internal	*dsp;
 
@@ -1014,9 +1023,7 @@ extern void dsp_dump(struct rt_dsp_internal *dsp);
  *	Read DSP solid from keyboard
  */
 int
-dsp_in_v5 ( cmd_argvs, intern )
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+dsp_in_v5 (char **cmd_argvs, struct rt_db_internal *intern)
 {
 	struct rt_dsp_internal	*dsp;
 
@@ -1077,9 +1084,7 @@ struct rt_db_internal	*intern;
  *
  */
 int
-hf_in( cmd_argvs, intern )
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+hf_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	struct rt_hf_internal	*hf;
 
@@ -1143,9 +1148,7 @@ struct rt_db_internal	*intern;
  *
  */
 int
-vol_in( cmd_argvs, intern )
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+vol_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	struct rt_vol_internal	*vol;
 
@@ -1176,11 +1179,7 @@ struct rt_db_internal	*intern;
  *			B O T _ I N
  */
 int
-bot_in( argc, argv, intern, prompt )
-int			argc;
-char			**argv;
-struct rt_db_internal	*intern;
-char			*prompt[];
+bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 {
 	int i;
 	int num_verts, num_faces;
@@ -1326,11 +1325,7 @@ char			*prompt[];
 /*
  *			A R B N _ I N
  */
-int arbn_in( argc, argv, intern, prompt )
-int			argc;
-char			**argv;
-struct rt_db_internal	*intern;
-char			*prompt[];
+int arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 {
 	struct rt_arbn_internal *arbn;
 	int num_planes=0;
@@ -1380,11 +1375,7 @@ char			*prompt[];
  *			P I P E _ I N
  */
 int
-pipe_in( argc, argv, intern, prompt )
-int			argc;
-char			**argv;
-struct rt_db_internal	*intern;
-char			*prompt[];
+pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 {
 	register struct rt_pipe_internal *pipe;
 	int i,num_points;
@@ -1457,11 +1448,7 @@ char			*prompt[];
  *			A R S _ I N
  */
 int
-ars_in( argc, argv, intern, promp )
-int			argc;
-char			**argv;
-struct rt_db_internal	*intern;
-char			*promp[];
+ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
 {
 	register struct rt_ars_internal	*arip;
 	register int			i;
@@ -1636,10 +1623,7 @@ char			*promp[];
  *					1 if unsuccessful read
  */
 int
-half_in(cmd_argvs, intern, name)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
-const char		*name;
+half_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {
 	vect_t norm;
 	double d;
@@ -1669,9 +1653,7 @@ const char		*name;
  *					1 if unsuccessful read
  */
 int
-arb_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+arb_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i, j, n;
 	struct rt_arb_internal	*aip;
@@ -1717,10 +1699,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-sph_in(cmd_argvs, intern, name)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
-const char		*name;
+sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {
 	point_t			center;
 	fastf_t			r;
@@ -1750,9 +1729,7 @@ const char		*name;
  *					1 if unsuccessful read
  */
 int
-ell_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+ell_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	fastf_t			len, mag_b, r_rev, vals[12];
 	int			i, n;
@@ -1830,9 +1807,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-tor_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+tor_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_tor_internal	*tip;
@@ -1872,9 +1847,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-tgc_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+tgc_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	fastf_t			r1, r2;
 	int			i;
@@ -1926,9 +1899,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-rcc_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+rcc_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	fastf_t			r;
 	int			i;
@@ -1974,9 +1945,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-tec_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+tec_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	fastf_t			ratio;
 	int			i;
@@ -2019,9 +1988,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-rec_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+rec_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_tgc_internal	*tip;
@@ -2062,9 +2029,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-trc_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+trc_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	fastf_t			r1, r2;
 	int			i;
@@ -2114,9 +2079,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-box_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+box_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_arb_internal	*aip;
@@ -2174,10 +2137,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-rpp_in(cmd_argvs, intern, name)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
-const char		*name;
+rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {
 	point_t		min, max;
 
@@ -2218,10 +2178,7 @@ const char		*name;
  *					1 if unsuccessful read
  */
 int
-orpp_in(cmd_argvs, intern, name)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
-const char		*name;
+orpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {
 	point_t		min, max;
 
@@ -2257,9 +2214,7 @@ const char		*name;
  *					1 if unsuccessful read
  */
 int
-part_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+part_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_part_internal *part_ip;
@@ -2298,9 +2253,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-rpc_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+rpc_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_rpc_internal	*rip;
@@ -2339,9 +2292,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-rhc_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+rhc_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_rhc_internal	*rip;
@@ -2381,9 +2332,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-epa_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+epa_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_epa_internal	*rip;
@@ -2427,9 +2376,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-ehy_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+ehy_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_ehy_internal	*rip;
@@ -2474,9 +2421,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-eto_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+eto_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_eto_internal	*eip;
@@ -2521,9 +2466,7 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-extrude_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+extrude_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_extrude_internal	*eip;
@@ -2572,9 +2515,7 @@ struct rt_db_internal	*intern;
  *				1 if unsuccessful read
  */
 int
-grip_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+grip_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
 	int			i;
 	struct rt_grip_internal	*gip;
@@ -2597,4 +2538,45 @@ struct rt_db_internal	*intern;
 	gip->mag = atof(cmd_argvs[9]);
 
 	return 0;
+}
+
+/*   S U P E R E L L _ I N ( ) :   	reads superell parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+superell_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	fastf_t			vals[14];
+	int			i, n;
+	struct rt_superell_internal	*eip;
+
+	CHECK_DBI_NULL;
+
+	n = 14;				/* SUPERELL has 12 (same as ELL) + 2 (for <n,e>) params */
+
+	intern->idb_type = ID_SUPERELL;
+	intern->idb_meth = &rt_functab[ID_SUPERELL];
+	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_superell_internal),
+		"rt_superell_internal" );
+	eip = (struct rt_superell_internal *)intern->idb_ptr;
+	eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
+
+	/* convert typed in args to reals and convert to local units */
+	for (i = 0; i < n - 2; i++) {
+		vals[i] = atof(cmd_argvs[3+i]) * local2base;
+	}
+	vals[12] = atof(cmd_argvs[3 + 12]);
+	vals[13] = atof(cmd_argvs[3 + 13]);
+
+	/* V, A, B, C */
+	VMOVE( eip->v, &vals[0] );
+	VMOVE( eip->a, &vals[3] );
+	VMOVE( eip->b, &vals[6] );
+	VMOVE( eip->c, &vals[9] );
+	eip->n = vals[12];
+	eip->e = vals[13];
+	return(0);
 }

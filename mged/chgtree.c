@@ -59,7 +59,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./cmd.h"
 
-extern void solid_list_callback(); /* chgview.c */
+extern void solid_list_callback(void); /* chgview.c */
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
 extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
@@ -75,7 +75,7 @@ static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\
  -type yesno -message {If you delete the \"_GLOBAL\" object you will be losing some important information\
  such as your preferred units and the title of the database. Do you really want to do this?}";
 
-void	aexists();
+void	aexists(char *name);
 
 /* Remove an object or several from the description */
 /* Format: kill [-f] object1 object2 .... objectn	*/
@@ -172,11 +172,7 @@ cmd_kill(ClientData	clientData,
  * Format: cpi old new
  */
 int
-f_copy_inv(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *proto;
 	register struct directory *dp;
@@ -271,11 +267,7 @@ char	**argv;
  *  commands from the script language.
  */
 int
-f_arced(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct animate		*anp;
 	struct directory	*dp;
@@ -406,8 +398,7 @@ cmd_pathlist(ClientData	clientData,
  *			F I N D _ S O L I D _ W I T H _ P A T H
  */
 struct solid *
-find_solid_with_path( pathp )
-register struct db_full_path	*pathp;
+find_solid_with_path(register struct db_full_path *pathp)
 {
 	register struct solid	*sp;
 	int			count = 0;
@@ -446,11 +437,7 @@ register struct db_full_path	*pathp;
  *  matrix is to be edited.
  */
 int
-cmd_oed(clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char      	**argv;
+cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct db_full_path	lhs;
 	struct db_full_path	rhs;
@@ -579,12 +566,7 @@ char      	**argv;
  *
  */
 int
-f_putmat (clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-
+f_putmat (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int			result = TCL_OK;	/* Return code */
     char		*newargv[20+2];
@@ -668,11 +650,7 @@ char	**argv;
  *
  */
 int
-f_copymat(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_copymat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char			*child;
     char			*parent;

@@ -35,9 +35,9 @@
 #include "./mged_dm.h"
 #include "./qray.h"
 
-static void qray_print_fmts();
-static void qray_print_vars();
-static int qray_get_fmt_index();
+static void qray_print_fmts(void);
+static void qray_print_vars(void);
+static int qray_get_fmt_index(char c);
 
 struct bu_vls qray_basename;
 struct bu_vls qray_script;
@@ -86,11 +86,7 @@ static char qray_syntax[] = "\
 ";
 
 int
-f_qray(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct bu_vls vls;
 
@@ -403,7 +399,7 @@ char    **argv;
 }
 
 static void
-qray_print_fmts()
+qray_print_fmts(void)
 {
   int i;
 
@@ -413,7 +409,7 @@ qray_print_fmts()
 }
 
 static void
-qray_print_vars()
+qray_print_vars(void)
 {
   struct bu_vls vls;
 
@@ -437,8 +433,7 @@ qray_print_vars()
 }
 
 static int
-qray_get_fmt_index(c)
-char c;
+qray_get_fmt_index(char c)
 {
   int i;
 
@@ -450,7 +445,7 @@ char c;
 }
 
 void
-init_qray()
+init_qray(void)
 {
   register int i;
   register int n = 0;
@@ -476,11 +471,7 @@ init_qray()
 }
 
 void
-qray_data_to_vlist(vbp, headp, dir, do_overlaps)
-struct rt_vlblock *vbp;
-struct qray_dataList *headp;
-vect_t dir;
-int do_overlaps;
+qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t *dir, int do_overlaps)
 {
   register int i = 1;			/* start out odd */
   register struct bu_list *vhead;

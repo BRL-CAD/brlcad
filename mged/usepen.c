@@ -51,8 +51,8 @@ double	radtodeg = 57.29577951308232098299;
 struct solid	*illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
 int		ipathpos = 0;	/* path index of illuminated element */
 				/* set by e9.c, cleared here */
-void		wrt_view(), wrt_point();
-static void	illuminate();
+void		wrt_view(fastf_t *out, const fastf_t *change, const fastf_t *in), wrt_point(fastf_t *out, const fastf_t *change, const fastf_t *in, const fastf_t *point);
+static void	illuminate(int y);
 
 /*
  *			F _ M O U S E
@@ -278,7 +278,7 @@ f_mouse(
  *  variable "illump" pointing at it.
  */
 static void
-illuminate( y )  {
+illuminate(int y) {
 	register int count;
 	register struct solid *sp;
 

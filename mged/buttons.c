@@ -44,12 +44,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef DM_X
 extern void stateChange();		/* defined in dm-generic.c */
 #endif
-extern int mged_svbase();
-extern void set_e_axes_pos();
-extern int mged_zoom();
-extern void set_absolute_tran();	/* defined in set.c */
-extern void set_scroll_private();	/* defined in set.c */
-extern void adc_set_scroll();		/* defined in adc.c */
+extern int mged_svbase(void);
+extern void set_e_axes_pos(int both);
+extern int mged_zoom(double val);
+extern void set_absolute_tran(void);	/* defined in set.c */
+extern void set_scroll_private(void);	/* defined in set.c */
+extern void adc_set_scroll(void);		/* defined in adc.c */
 
 /*
  * This flag indicates that Primitive editing is in effect.
@@ -118,12 +118,12 @@ static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
 static int	vsaved = 0;	/* set iff view saved */
 
-extern void color_soltab();
-extern void	sl_halt_scroll();	/* in scroll.c */
-extern void	sl_toggle_scroll();
+extern void color_soltab(void);
+extern void	sl_halt_scroll(void);	/* in scroll.c */
+extern void	sl_toggle_scroll(void);
 
-void		btn_head_menu();
-void		btn_item_hit();
+void		btn_head_menu(int i, int menu, int item);
+void		btn_item_hit(int arg, int menu, int item);
 
 static struct menu_item first_menu[] = {
 	{ "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
@@ -177,8 +177,7 @@ struct menu_item oed_menu[] = {
  *			B U T T O N
  */
 void
-button( bnum )
-register int bnum;
+button(register int bnum)
 {
 	register struct buttons *bp;
 
@@ -299,8 +298,7 @@ next:		;
  *  Useful for displays with programable button lables, etc.
  */
 char *
-label_button(bnum)
-int bnum;
+label_button(int bnum)
 {
 	register struct buttons *bp;
 
@@ -473,7 +471,7 @@ bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 /* returns 0 if error, !0 if success */
 static int
-ill_common()  {
+ill_common(void) {
 	/* Common part of illumination */
 	if(BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
 	  Tcl_AppendResult(interp, "no solids in view\n", (char *)NULL);
@@ -808,9 +806,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
  *  Returns !0 and prints error message if state mismatch.
  */
 int
-not_state( desired, str )
-int desired;
-char *str;
+not_state(int desired, char *str)
 {
   if( state != desired ) {
     Tcl_AppendResult(interp, "Unable to do <", str, "> from ",
@@ -828,9 +824,7 @@ char *str;
  *  Returns !0 and prints error message if error.
  */
 int
-chg_state( from, to, str )
-int from, to;
-char *str;
+chg_state(int from, int to, char *str)
 {
   register struct dm_list *p;
   struct dm_list *save_dm_list;
@@ -888,8 +882,7 @@ char *str;
 }
 
 void
-state_err( str )
-char *str;
+state_err(char *str)
 {
   Tcl_AppendResult(interp, "Unable to do <", str, "> from ", state_str[state],
 		   " state.\n", (char *)NULL);
@@ -902,7 +895,7 @@ char *str;
  *  Called when a menu item is hit
  */
 void
- btn_item_hit(arg, menu, item)  {
+ btn_item_hit(int arg, int menu, int item) {
 	button(arg);
 	if( menu == MENU_GEN && 
 	    ( arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE) )

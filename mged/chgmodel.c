@@ -66,7 +66,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct bn_tol mged_tol;
 
 void set_tran();
-void	aexists();
+void	aexists(char *name);
 
 static char	tmpfil[17];
 #ifndef WIN32
@@ -80,11 +80,7 @@ int		newedge;		/* new edge for arb editing */
 /* Add/modify item and air codes of a region */
 /* Format: item region item <air>	*/
 int
-f_itemair(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	int			ident, air, GIFTmater=0, los=0;
@@ -159,11 +155,7 @@ char	**argv;
 /* Modify material information */
 /* Usage:  mater region_name shader r g b inherit */
 int
-f_mater(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	int r=0, g=0, b=0;
@@ -335,11 +327,7 @@ fail:
 }
 
 int
-f_edmater(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    *argv[];
+f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int i;
   int status;
@@ -599,11 +587,7 @@ extract_mater_from_line(
  *  Usage: ocolor combination R G B
  */
 int
-f_comb_color(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int				i;
     int				val;
@@ -663,11 +647,7 @@ char	**argv;
  *  Usage: shader combination shader_material [shader_argument(s)]
  */
 int
-f_shader(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	struct rt_db_internal	intern;
@@ -723,11 +703,7 @@ char	**argv;
 /* Mirror image */
 /* Format: m oldobject newobject axis	*/
 int
-f_mirror(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *proto;
 	register struct directory *dp;
@@ -1206,6 +1182,22 @@ char	**argv;
 
 			break;
 		}
+		case ID_SUPERELL:
+		{
+			struct rt_superell_internal *superell;
+
+			superell = (struct rt_superell_internal *)internal.idb_ptr;
+			RT_SUPERELL_CK_MAGIC( superell );
+
+			superell->v[k] *= -1.0;
+			superell->a[k] *= -1.0;
+			superell->b[k] *= -1.0;
+			superell->c[k] *= -1.0;
+			superell->n = 1.0;
+			superell->e = 1.0;
+
+			break;
+		}
 		case ID_COMBINATION:
 		{
 			struct rt_comb_internal	*comb;
@@ -1249,11 +1241,7 @@ char	**argv;
 /* Modify Combination record information */
 /* Format: edcomb combname Regionflag regionid air los GIFTmater */
 int
-f_edcomb(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	int regionid, air, mat, los;
@@ -1307,8 +1295,7 @@ char	**argv;
 
 /* tell him it already exists */
 void
-aexists( name )
-char	*name;
+aexists(char *name)
 {
   Tcl_AppendResult(interp, name, ":  already exists\n", (char *)NULL);
 }
@@ -1346,6 +1333,7 @@ f_make(ClientData	clientData,
 	struct rt_extrude_internal *extrude_ip;
 	struct rt_bot_internal *bot_ip;
 	struct rt_arbn_internal *arbn_ip;
+	struct rt_superell_internal	*superell_ip;
 
 	if(argc == 2){
 	  struct bu_vls vls;
@@ -1381,6 +1369,7 @@ f_make(ClientData	clientData,
 	    Tcl_AppendElement(interp, "tgc");
 	    Tcl_AppendElement(interp, "tor");
 	    Tcl_AppendElement(interp, "trc");
+	    Tcl_AppendElement(interp, "superell");
 
 	    return TCL_OK;
 	  }
@@ -1412,7 +1401,7 @@ f_make(ClientData	clientData,
 
 	RT_INIT_DB_INTERNAL( &internal );
 
-	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
+	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell | superell
 	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | bot | sketch | extrude> */
 	if (strcmp(argv[2], "arb8") == 0 ||
 	    strcmp(argv[2],  "rpp") == 0)  {
@@ -1984,6 +1973,23 @@ f_make(ClientData	clientData,
 		csg->radius = -1.0;
 		csg->center_is_left = 1;
 		csg->orientation = 0;
+	} else if( strcmp( argv[2], "superell" ) == 0 )  {
+
+
+		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		internal.idb_type = ID_SUPERELL;
+		internal.idb_meth = &rt_functab[ID_SUPERELL];
+		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_superell_internal) , "rt_superell_internal" );
+		superell_ip = (struct rt_superell_internal *)internal.idb_ptr;
+		superell_ip->magic = RT_SUPERELL_INTERNAL_MAGIC;
+		VSET( superell_ip->v , -view_state->vs_vop->vo_center[MDX] , -view_state->vs_vop->vo_center[MDY] , -view_state->vs_vop->vo_center[MDZ] );
+		VSET( superell_ip->a, view_state->vs_vop->vo_scale, 0.0, 0.0 );		/* A */
+		VSET( superell_ip->b, 0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );	/* B */
+		VSET( superell_ip->c, 0.0, 0.0, (0.25*view_state->vs_vop->vo_scale) );	/* C */
+		superell_ip->n = 1.0;
+		superell_ip->e = 1.0;
+	  fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
+
 	} else if (strcmp(argv[2], "hf") == 0) {
 		Tcl_AppendResult(interp, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n", (char *)NULL);
 		return TCL_ERROR;
@@ -2005,7 +2011,7 @@ f_make(ClientData	clientData,
 			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, arbn, ars, bot,\n",
 			   "\t\tehy, ell, ell1, epa, eto, extrude, grip, half, nmg,\n",
 			   "\t\tpart, pipe, rcc, rec, rhc, rpc, sketch, sph, tec,\n",
-			   "\t\ttgc, tor, trc\n",
+			   "\t\ttgc, tor, trc\n",  /* , superell\n", */
 			   (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -2033,10 +2039,7 @@ f_make(ClientData	clientData,
 }
 
 int
-mged_rot_obj(interp, iflag, argvect)
-Tcl_Interp *interp;
-int iflag;
-vect_t argvect;
+mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
 {
 	point_t model_pt;
 	point_t point;
@@ -2103,11 +2106,7 @@ vect_t argvect;
 
 /* allow precise changes to object rotation */
 int
-f_rot_obj(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int iflag = 0;
   vect_t argvect;
@@ -2147,11 +2146,7 @@ char	**argv;
 
 /* allow precise changes to object scaling, both local & global */
 int
-f_sc_obj(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	mat_t incr;
 	vect_t point, temp;
@@ -2240,11 +2235,7 @@ char	**argv;
  *  Allow precise changes to object translation
  */
 int
-f_tr_obj(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 	mat_t incr, old;
@@ -2312,11 +2303,7 @@ char	**argv;
 /* Change the default region ident codes: item air los mat
  */
 int
-f_regdef(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_regdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   if (argc == 1) {
     struct bu_vls vls;
@@ -2372,9 +2359,7 @@ char	**argv;
 
 static int frac_stat;
 void
-mged_add_nmg_part(newname, m)
-char *newname;
-struct model *m;
+mged_add_nmg_part(char *newname, struct model *m)
 {
 	struct rt_db_internal	new_intern;
 	struct directory *new_dp;
@@ -2428,11 +2413,7 @@ struct model *m;
  *	containing a single shell with a single sub-element.
  */
 int
-f_fracture(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 	struct directory *old_dp;
@@ -2598,11 +2579,7 @@ char	**argv;
  *	about a specified ray.
  */
 int
-f_qorot(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	mat_t temp;
 	vect_t s_point, point, v_work, model_pt;
@@ -2671,7 +2648,7 @@ char	**argv;
 }
 
 void
-set_localunit_TclVar()
+set_localunit_TclVar(void)
 {
   struct bu_vls vls;
   struct bu_vls units_vls;

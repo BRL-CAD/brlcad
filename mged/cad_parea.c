@@ -40,12 +40,12 @@ typedef struct
 	double	y;			/* Y coordinate */
 }	point;			/* polygon vertex */
 
-static bool	GetArgs(), Input();
-static void	Output(), Usage();
+static bool	GetArgs(int argc, char **argv), Input(register point *coop);
+static void	Output(double result), Usage(void);
 
 
 static void
-Usage() 				/* print usage message */
+Usage(void) 				/* print usage message */
 {
 	(void)printf( "usage: cad_parea[ -i input][ -o output]\n"
 	    );
@@ -53,9 +53,9 @@ Usage() 				/* print usage message */
 
 
 int
-main( argc, argv )			/* "cad_parea" entry point */
-int		argc;		/* argument count */
-char		*argv[];	/* argument strings */
+main(int argc, char **argv)			/* "cad_parea" entry point */
+   		     		/* argument count */
+    		        	/* argument strings */
 {
 	point		previous;	/* previous point */
 	point		current;	/* current point */
@@ -95,9 +95,9 @@ char		*argv[];	/* argument strings */
 
 
 static bool
-GetArgs( argc, argv )			/* process command arguments */
-int		argc;		/* argument count */
-char		*argv[];	/* argument strings */
+GetArgs(int argc, char **argv)			/* process command arguments */
+   		     		/* argument count */
+    		        	/* argument strings */
 {
 	static bool	iflag = false;	/* set if "-i" option found */
 	static bool	oflag = false;	/* set if "-o" option found */
@@ -158,8 +158,8 @@ char		*argv[];	/* argument strings */
 
 
 static bool
-Input( coop )				/* input a coordinate record */
-register point	*coop;		/* -> input coordinates */
+Input(register point *coop)				/* input a coordinate record */
+              	      		/* -> input coordinates */
 {
 	char		inbuf[82];	/* input record buffer */
 
@@ -186,8 +186,8 @@ register point	*coop;		/* -> input coordinates */
 
 
 static void
-Output( result )			/* output computed area */
-double	result; 		/* computed area */
+Output(double result)			/* output computed area */
+      	        		/* computed area */
 {
 	printf( "%g\n", result );
 }

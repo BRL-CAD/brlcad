@@ -68,18 +68,20 @@ extern short earb6[10][18];
 extern short earb7[12][18];
 extern short earb8[12][18];
 
-static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed(), cline_ed(), bot_ed(), extr_ed();
-static void	rpc_ed(), rhc_ed(), part_ed(), epa_ed(), ehy_ed(), eto_ed();
-static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
-static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
-static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
-static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
-static void	init_sedit_vars(), init_oedit_vars(), init_oedit_guts();
+static void	arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
+static void	nmg_ed(int arg), pipe_ed(int arg), vol_ed(int arg), ebm_ed(int arg), dsp_ed(int arg), cline_ed(int arg), bot_ed(int arg), extr_ed(int arg);
+static void	rpc_ed(int arg), rhc_ed(int arg), part_ed(int arg), epa_ed(int arg), ehy_ed(int arg), eto_ed(int arg);
+static void	superell_ed(int arg);
 
-void pscale();
-void update_edit_absolute_tran();
-void set_e_axes_pos();
+static void	arb7_edge(int arg), arb6_edge(int arg), arb5_edge(int arg), arb4_point(int arg);
+static void	arb8_mv_face(int arg), arb7_mv_face(int arg), arb6_mv_face(int arg);
+static void	arb5_mv_face(int arg), arb4_mv_face(int arg), arb8_rot_face(int arg), arb7_rot_face(int arg);
+static void 	arb6_rot_face(int arg), arb5_rot_face(int arg), arb4_rot_face(int arg), arb_control(int arg);
+static void	init_sedit_vars(void), init_oedit_vars(void), init_oedit_guts(void);
+
+void pscale(void);
+void update_edit_absolute_tran(fastf_t *view_pos);
+void set_e_axes_pos(int both);
 point_t e_axes_pos;
 point_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
@@ -223,9 +225,12 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_CLINE_MOVE_H	108
 #define MENU_CLINE_SCALE_R	109
 #define	MENU_CLINE_SCALE_T	110
-
 #define MENU_TGC_SCALE_H_CD	111
 #define	MENU_TGC_SCALE_H_V_AB	112
+#define MENU_SUPERELL_SCALE_A	113
+#define MENU_SUPERELL_SCALE_B	114
+#define MENU_SUPERELL_SCALE_C	115
+#define MENU_SUPERELL_SCALE_ABC	116
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -633,6 +638,15 @@ struct menu_item bot_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
+struct menu_item  superell_menu[] = {
+	{ "SUPERELLIPSOID MENU", (void (*)())NULL, 0 },
+	{ "Set A", superell_ed, MENU_SUPERELL_SCALE_A },
+	{ "Set B", superell_ed, MENU_SUPERELL_SCALE_B },
+	{ "Set C", superell_ed, MENU_SUPERELL_SCALE_C },
+	{ "Set A,B,C", superell_ed, MENU_SUPERELL_SCALE_ABC },
+	{ "", (void (*)())NULL, 0 }
+};
+
 struct menu_item *which_menu[] = {
 	point4_menu,
 	edge5_menu,
@@ -660,8 +674,7 @@ short int arb_vertices[5][24] = {
 };
 
 static void
-arb8_edge( arg )
-int arg;
+arb8_edge(int arg)
 {
   es_menu = arg;
   es_edflag = EARB;
@@ -674,8 +687,7 @@ int arg;
 }
 
 static void
-arb7_edge( arg )
-int arg;
+arb7_edge(int arg)
 {
   es_menu = arg;
   es_edflag = EARB;
@@ -693,8 +705,7 @@ int arg;
 }
 
 static void
-arb6_edge( arg )
-int arg;
+arb6_edge(int arg)
 {
   es_menu = arg;
   es_edflag = EARB;
@@ -717,8 +728,7 @@ int arg;
 }
 
 static void
-arb5_edge( arg )
-int arg;
+arb5_edge(int arg)
 {
   es_menu = arg;
   es_edflag = EARB;
@@ -736,8 +746,7 @@ int arg;
 }
 
 static void
-arb4_point( arg )
-int arg;
+arb4_point(int arg)
 {
   es_menu = arg;
   es_edflag = PTARB;
@@ -750,7 +759,7 @@ int arg;
 }
 
 static void
-bot_ed( arg )
+bot_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = arg;
@@ -760,8 +769,7 @@ bot_ed( arg )
 }
 
 static void
-ebm_ed( arg )
-int arg;
+ebm_ed(int arg)
 {
   es_menu = arg;
 
@@ -782,8 +790,7 @@ int arg;
 }
 
 static void
-dsp_ed( arg )
-int arg;
+dsp_ed(int arg)
 {
 	es_menu = arg;
 	
@@ -809,16 +816,14 @@ int arg;
 }
 
 static void
-cline_ed( arg )
-int arg;
+cline_ed(int arg)
 {
 	es_edflag = arg;
 	sedit();
 }
 
 static void
-vol_ed( arg )
-int arg;
+vol_ed(int arg)
 {
   es_menu = arg;
 
@@ -845,8 +850,7 @@ int arg;
 }
 
 static void
-pipe_ed( arg )
-int arg;
+pipe_ed(int arg)
 {
 	struct wdb_pipept *next;
 	struct wdb_pipept *prev;
@@ -945,8 +949,7 @@ int arg;
 }
 
 static void
-tgc_ed( arg )
-int arg;
+tgc_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
@@ -964,8 +967,7 @@ int arg;
 
 
 static void
-tor_ed( arg )
-int arg;
+tor_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
@@ -974,8 +976,7 @@ int arg;
 }
 
 static void
-eto_ed( arg )
-int arg;
+eto_ed(int arg)
 {
 	es_menu = arg;
 	if(arg == MENU_ETO_ROT_C )
@@ -987,8 +988,7 @@ int arg;
 }
 
 static void
-rpc_ed( arg )
-int arg;
+rpc_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
@@ -997,8 +997,7 @@ int arg;
 }
 
 static void
-part_ed( arg )
-int arg;
+part_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
@@ -1007,8 +1006,7 @@ int arg;
 }
 
 static void
-rhc_ed( arg )
-int arg;
+rhc_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
@@ -1017,8 +1015,7 @@ int arg;
 }
 
 static void
-epa_ed( arg )
-int arg;
+epa_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
@@ -1027,8 +1024,7 @@ int arg;
 }
 
 static void
-ehy_ed( arg )
-int arg;
+ehy_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
@@ -1037,8 +1033,7 @@ int arg;
 }
 
 static void
-ell_ed( arg )
-int arg;
+ell_ed(int arg)
 {
 	es_menu = arg;
 	es_edflag = PSCALE;
@@ -1047,8 +1042,7 @@ int arg;
 }
 
 static void
-arb8_mv_face( arg )
-int arg;
+arb8_mv_face(int arg)
 {
 	es_menu = arg - 1;
 	es_edflag = ECMD_ARB_MOVE_FACE;
@@ -1061,8 +1055,7 @@ int arg;
 }
 
 static void
-arb7_mv_face( arg )
-int arg;
+arb7_mv_face(int arg)
 {
 	es_menu = arg - 1;
 	es_edflag = ECMD_ARB_MOVE_FACE;
@@ -1075,8 +1068,7 @@ int arg;
 }		
 
 static void
-arb6_mv_face( arg )
-int arg;
+arb6_mv_face(int arg)
 {
 	es_menu = arg - 1;
 	es_edflag = ECMD_ARB_MOVE_FACE;
@@ -1089,8 +1081,7 @@ int arg;
 }
 
 static void
-arb5_mv_face( arg )
-int arg;
+arb5_mv_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_MOVE_FACE;
@@ -1103,8 +1094,7 @@ int arg;
 }
 
 static void
-arb4_mv_face( arg )
-int arg;
+arb4_mv_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_MOVE_FACE;
@@ -1117,8 +1107,7 @@ int arg;
 }
 
 static void
-arb8_rot_face( arg )
-int arg;
+arb8_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
@@ -1129,8 +1118,7 @@ int arg;
 }
 
 static void
-arb7_rot_face( arg )
-int arg;
+arb7_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
@@ -1141,8 +1129,7 @@ int arg;
 }		
 
 static void
-arb6_rot_face( arg )
-int arg;
+arb6_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
@@ -1153,8 +1140,7 @@ int arg;
 }
 
 static void
-arb5_rot_face( arg )
-int arg;
+arb5_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
@@ -1165,8 +1151,7 @@ int arg;
 }
 
 static void
-arb4_rot_face( arg )
-int arg;
+arb4_rot_face(int arg)
 {
   es_menu = arg - 1;
   es_edflag = ECMD_ARB_SETUP_ROTFACE;
@@ -1177,8 +1162,7 @@ int arg;
 }
 
 static void
-arb_control( arg )
-int arg;
+arb_control(int arg)
 {
   es_menu = arg;
   es_edflag = ECMD_ARB_SPECIFIC_MENU;
@@ -1187,8 +1171,7 @@ int arg;
 
 /*ARGSUSED*/
 static void
-ars_ed( arg )
-int arg;
+ars_ed(int arg)
 {
   es_edflag = arg;
   sedit();
@@ -1196,18 +1179,22 @@ int arg;
 
 /*ARGSUSED*/
 static void
-extr_ed( arg )
-int arg;
+extr_ed(int arg)
 {
   es_edflag = arg;
   sedit();
 }
 
+static void superell_ed(int arg) {
+  es_menu = arg;
+  es_edflag = PSCALE;
+  set_e_axes_pos(1);
+  return;
+}
 
 /*ARGSUSED*/
 static void
-spline_ed( arg )
-int arg;
+spline_ed(int arg)
 {
   /* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
   if( arg < 0 )  {
@@ -1230,8 +1217,7 @@ int arg;
  */
 /*ARGSUSED*/
 static void
-nmg_ed( arg )
-int arg;
+nmg_ed(int arg)
 {
 	switch(arg)  {
 	default:
@@ -1522,11 +1508,7 @@ int arg;
  *  processed as well?
  */
 void
-get_solid_keypoint( pt, strp, ip, mat )
-point_t		pt;
-char		**strp;
-struct rt_db_internal	*ip;
-mat_t		mat;
+get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
 	char	*cp = *strp;
 	point_t	mpt;
@@ -1774,6 +1756,37 @@ mat_t		mat;
 			}
 			/* Default */
 			VMOVE( mpt, ell->v );
+			*strp = "V";
+			break;
+		}
+	case ID_SUPERELL:
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)ip->idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+
+			if( strcmp( cp, "V" ) == 0 )  {
+				VMOVE( mpt, superell->v );
+				*strp = "V";
+				break;
+			}
+			if( strcmp( cp, "A" ) == 0 )  {
+				VADD2( mpt , superell->v , superell->a );
+				*strp = "A";
+				break;
+			}
+			if( strcmp( cp, "B" ) == 0 )  {
+				VADD2( mpt , superell->v , superell->b );
+				*strp = "B";
+				break;
+			}
+			if( strcmp( cp, "C" ) == 0 )  {
+				VADD2( mpt , superell->v , superell->c );
+				*strp = "C";
+				break;
+			}
+			/* Default */
+			VMOVE( mpt, superell->v );
 			*strp = "V";
 			break;
 		}
@@ -2106,11 +2119,7 @@ mat_t		mat;
 }
 
 int
-f_get_solid_keypoint(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+f_get_solid_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	if( state == ST_VIEW || state == ST_S_PICK || state == ST_O_PICK )
 		return TCL_OK;
@@ -2120,8 +2129,8 @@ char    **argv;
 }
 
 void
-set_e_axes_pos(both)
-int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
+set_e_axes_pos(int both)
+             /* if(!both) then set only curr_e_axes_pos, otherwise
 	      set e_axes_pos and curr_e_axes_pos */
 {
 	int	i;
@@ -2405,7 +2414,7 @@ init_sedit(void)
 }
 
 static void
-init_sedit_vars()
+init_sedit_vars(void)
 {
 	MAT_IDN(acc_rot_sol);
 	MAT_IDN(incr_change);
@@ -2476,7 +2485,7 @@ transform_editing_solid(
  *  Put up menu header
  */
 void
-sedit_menu()  {
+sedit_menu(void) {
 
 	menu_state->ms_flag = 0;		/* No menu item selected yet */
 
@@ -2496,6 +2505,9 @@ sedit_menu()  {
 		break;
 	case ID_ELL:
 		mmenu_set_all( MENU_L1, ell_menu );
+		break;
+	case ID_SUPERELL:
+		mmenu_set_all( MENU_L1, superell_menu );
 		break;
 	case ID_ARS:
 		mmenu_set_all( MENU_L1, ars_menu );
@@ -2551,7 +2563,7 @@ sedit_menu()  {
 }
 
 int
-get_rotation_vertex()
+get_rotation_vertex(void)
 {
   int i, j;
   int type, loc, valid;
@@ -2596,8 +2608,7 @@ get_rotation_vertex()
 }
 
 char *
-get_file_name( str )
-char *str;
+get_file_name(char *str)
 {
 	struct bu_vls cmd;
 	struct bu_vls varname_vls;
@@ -2646,9 +2657,7 @@ char *str;
 }
 
 static void 
-dsp_scale(dsp, idx)
-struct rt_dsp_internal *dsp;
-int idx;
+dsp_scale(struct rt_dsp_internal *dsp, int idx)
 {
 	mat_t m, scalemat;
 
@@ -2692,7 +2701,7 @@ int idx;
  *  can operate on an equal footing to mouse events.
  */
 void
-sedit()
+sedit(void)
 {
 	struct rt_arb_internal *arb;
 	fastf_t	*eqp;
@@ -6062,8 +6071,7 @@ update_edit_absolute_tran(vect_t view_pos)
 }
 
 void
-sedit_trans(tvec)
-vect_t tvec;
+sedit_trans(fastf_t *tvec)
 {
   vect_t temp;
   vect_t raw_kp;
@@ -6413,8 +6421,7 @@ objedit_mouse( const vect_t mousevec )
 
 
 void
-oedit_trans(tvec)
-point_t tvec;
+oedit_trans(fastf_t *tvec)
 {
   point_t  pos_model;
   point_t  tr_temp;
@@ -6567,7 +6574,7 @@ vls_solid( struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat )
  *  Partial scaling of a solid.
  */
 void
-pscale()
+pscale(void)
 {
 	static fastf_t ma,mb;
 
@@ -7234,6 +7241,73 @@ pscale()
 			VSCALE(ell->c, ell->c, ma/mb);
 		}
 		break;
+
+		/* begin super ellipse menu options */
+	case MENU_SUPERELL_SCALE_A:
+		/* scale vector A */
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(superell->a);
+			}
+			VSCALE( superell->a, superell->a, es_scale );
+		}
+		break;
+
+	case MENU_SUPERELL_SCALE_B:
+		/* scale vector B */
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(superell->b);
+			}
+			VSCALE( superell->b, superell->b, es_scale );
+		}
+		break;
+
+	case MENU_SUPERELL_SCALE_C:
+		/* scale vector C */
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(superell->c);
+			}
+			VSCALE( superell->c, superell->c, es_scale );
+		}
+		break;
+
+	case MENU_SUPERELL_SCALE_ABC:	/* set A,B, and C length the same */
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(superell->a);
+			}
+			VSCALE( superell->a, superell->a, es_scale );
+			ma = MAGNITUDE( superell->a );
+			mb = MAGNITUDE( superell->b );
+			VSCALE(superell->b, superell->b, ma/mb);
+			mb = MAGNITUDE( superell->c );
+			VSCALE(superell->c, superell->c, ma/mb);
+		}
+		break;
+
+
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
 	  {
 	    if( !es_pipept )
@@ -7430,7 +7504,7 @@ pscale()
  *
  */
 static void
-init_oedit_guts()
+init_oedit_guts(void)
 {
 	int			id;
 	char			*strp="";
@@ -7488,7 +7562,7 @@ init_oedit_guts()
 }
 
 static void
-init_oedit_vars()
+init_oedit_vars(void)
 {
 	set_e_axes_pos(1);
 
@@ -7538,7 +7612,7 @@ init_oedit(void)
 	bu_vls_free(&vls);
 }
 
-void oedit_reject();
+void oedit_reject(void);
 
 static void
 oedit_apply( int continue_editing )
@@ -7640,11 +7714,7 @@ oedit_reject(void)
  * when in solid edit and rotating the face of a GENARB8.
  */
 int
-f_eqn(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	*argv[];
+f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	short int i;
 	vect_t tempvec;
@@ -7708,8 +7778,7 @@ char	*argv[];
  *                            solid edit state.
  */
 static int
-sedit_apply(accept_flag)
-     int	accept_flag;
+sedit_apply(int accept_flag)
 {
 	struct directory	*dp;
 
@@ -7856,10 +7925,7 @@ sedit_reject(void)
 }
 
 int
-mged_param(interp, argc, argvect)
-Tcl_Interp *interp;
-int argc;
-vect_t argvect;
+mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 {
   register int i;
 
@@ -7991,11 +8057,7 @@ vect_t argvect;
 /* Input parameter editing changes from keyboard */
 /* Format: p dx [dy dz]		*/
 int
-f_param(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_param(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   register int i;
   vect_t argvect;
@@ -8208,6 +8270,31 @@ label_edited_solid(
 			POINT_LABEL( pos_view, 'B' );
 
 			VADD2( work, ell->v, ell->c );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'C' );
+		}
+		break;
+
+	case ID_SUPERELL:
+		{
+			point_t	work;
+			point_t	pos_view;
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+
+			MAT4X3PNT( pos_view, xform, superell->v );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, superell->v, superell->a );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'A' );
+
+			VADD2( work, superell->v, superell->b );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'B' );
+
+			VADD2( work, superell->v, superell->c );
 			MAT4X3PNT(pos_view, xform, work);
 			POINT_LABEL( pos_view, 'C' );
 		}
@@ -8681,9 +8768,7 @@ sedit_vpick( point_t v_pos )
  *
  */
 int
-rt_vl_closest3d(vhead, ref_pt, closest_pt)
-struct bu_list	*vhead;
-point_t		ref_pt, closest_pt;
+rt_vl_closest3d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *closest_pt)
 {
 	fastf_t		dist, cur_dist;
 	pointp_t	c_pt;
@@ -8724,10 +8809,7 @@ point_t		ref_pt, closest_pt;
  *	transformed into 2 space projection plane coordinates.
  */
 int
-rt_vl_closest2d(vhead, ref_pt, mat, closest_pt)
-struct bu_list	*vhead;
-point_t		ref_pt, closest_pt;
-mat_t		mat;
+rt_vl_closest2d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *mat, fastf_t *closest_pt)
 {
 	fastf_t		dist, cur_dist;
 	point_t		cur_pt2d, ref_pt2d;
@@ -8773,12 +8855,7 @@ mat_t		mat;
  *
  */
 int
-nurb_closest3d(surface, uval, vval, spl, ref_pt )
-int				*surface;
-int				*uval;
-int				*vval;
-const struct rt_nurb_internal	*spl;
-const point_t			ref_pt;
+nurb_closest3d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const fastf_t *ref_pt)
 {
 	struct face_g_snurb	*srf;
 	fastf_t		*mesh;
@@ -8894,11 +8971,7 @@ nurb_closest2d(
 
 
 int
-f_keypoint(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
@@ -8958,11 +9031,7 @@ char	**argv;
 }
 
 int
-f_get_sedit_menus(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct menu_item *mip = (struct menu_item *)NULL;
   struct bu_vls vls;
@@ -9053,6 +9122,9 @@ char **argv;
     case ID_ELL:
       mip = ell_menu;
       break;
+    case ID_SUPERELL:
+      mip = superell_menu;
+      break;
     case ID_BSPLINE:
       mip = spline_menu;
       break;
@@ -9119,11 +9191,7 @@ char **argv;
 }
 
 int
-f_get_sedit(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int status;
   struct rt_db_internal ces_int;
@@ -9197,11 +9265,7 @@ char **argv;
 }
 
 int
-f_put_sedit(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   register const struct rt_functab *ftp;
   long save_magic;
@@ -9281,11 +9345,7 @@ char **argv;
  *			F _ S E D I T _ R E S E T
  */
 int
-f_sedit_reset(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct bu_vls vls;
 
@@ -9356,11 +9416,7 @@ char **argv;
 }
 
 int
-f_sedit_apply(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp *interp;
-     int	argc;
-     char	**argv;
+f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct bu_vls vls;
 
@@ -9387,11 +9443,7 @@ f_sedit_apply(clientData, interp, argc, argv)
 }
 
 int
-f_oedit_reset(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct bu_vls vls;
 
@@ -9422,11 +9474,7 @@ char **argv;
 }
 
 int
-f_oedit_apply(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp *interp;
-     int	argc;
-     char	**argv;
+f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct bu_vls	vls;
 	char		*strp="";

@@ -37,15 +37,15 @@ static const char RCSid[] = "";
 #include "./ged.h"
 #include "./mged_dm.h"
 
-extern void mged_vls_struct_parse(); /* defined in vparse.c */
+extern void mged_vls_struct_parse(struct bu_vls *vls, char *title, struct bu_structparse *how_to_parse, char *structp, int argc, char **argv); /* defined in vparse.c */
 extern point_t e_axes_pos;  /* from edsol.c */
 extern point_t curr_e_axes_pos;  /* from edsol.c */
 
-void draw_grid();
-void snap_to_grid();
-static void grid_set_dirty_flag();
-static void set_grid_draw();
-static void set_grid_res();
+void draw_grid(void);
+void snap_to_grid(fastf_t *mx, fastf_t *my);
+static void grid_set_dirty_flag(void);
+static void set_grid_draw(void);
+static void set_grid_res(void);
 
 struct _grid_state default_grid_state = {
 /* gr_rc */		1,
@@ -72,7 +72,7 @@ struct bu_structparse grid_vparse[] = {
 };
 
 static void
-grid_set_dirty_flag()
+grid_set_dirty_flag(void)
 {
   struct dm_list *dmlp;
 
@@ -82,7 +82,7 @@ grid_set_dirty_flag()
 }
 
 static void
-set_grid_draw()
+set_grid_draw(void)
 {
   struct dm_list *dlp;
 
@@ -106,7 +106,7 @@ set_grid_draw()
 }
 
 static void
-set_grid_res()
+set_grid_res(void)
 {
   struct dm_list *dlp;
 
@@ -119,7 +119,7 @@ set_grid_res()
 }
 
 void
-draw_grid()
+draw_grid(void)
 {
 	register int		i, j;
 	register int		nh, nv;
@@ -274,7 +274,7 @@ snap_to_grid(
 }
 
 void
-snap_keypoint_to_grid()
+snap_keypoint_to_grid(void)
 {
   point_t view_pt;
   point_t model_pt;
@@ -312,7 +312,7 @@ snap_keypoint_to_grid()
 }
 
 void
-snap_view_center_to_grid()
+snap_view_center_to_grid(void)
 {
 	point_t view_pt, model_pt;
 
@@ -406,8 +406,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 }
 
 void
-update_grids(sf)
-fastf_t sf;
+update_grids(fastf_t sf)
 {
   register struct dm_list *dlp;
   struct bu_vls save_result;
@@ -434,11 +433,7 @@ fastf_t sf;
 }
 
 int
-f_grid_set (clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct bu_vls vls;
 

@@ -56,11 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */
 
-#ifndef WIN32
-void	killtree();
-#else
-void	killtree(struct db_i *dbip,struct directory *dp,genptr_t ptr);
-#endif
+void	killtree(struct db_i *dbip, struct directory *dp, genptr_t ptr);
 
 /*
  *			F _ M E M P R I N T
@@ -68,11 +64,7 @@ void	killtree(struct db_i *dbip,struct directory *dp,genptr_t ptr);
  *  Debugging aid:  dump memory maps
  */
 int
-f_memprint(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_memprint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
@@ -113,10 +105,7 @@ char	**argv;
  *  Returns 0 if no expansion happened, !0 if we matched something.
  */
 int
-cmd_glob(argcp, argv, maxargs)
-int  *argcp;
-char *argv[];
-int   maxargs;
+cmd_glob(int *argcp, char **argv, int maxargs)
 {
 	static char word[64];
 	register char *pattern;
@@ -200,11 +189,7 @@ int   maxargs;
 }
 
 HIDDEN void
-Do_prefix( dbip, comb, comb_leaf, prefix_ptr, obj_ptr, user_ptr3 )
-struct db_i		*dbip;
-struct rt_comb_internal *comb;
-union tree		*comb_leaf;
-genptr_t		prefix_ptr, obj_ptr, user_ptr3;
+Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t user_ptr3)
 {
 	char *prefix,*obj;
 	char tempstring_v4[NAMESIZE+2];
@@ -238,11 +223,7 @@ genptr_t		prefix_ptr, obj_ptr, user_ptr3;
  *  when defining the object, and when referencing it.
  */
 int
-f_prefix(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int	i,k;	
 	register struct directory *dp;
@@ -336,11 +317,7 @@ char	**argv;
 }
 
 HIDDEN void
-Change_name( dbip, comb, comb_leaf, old_ptr, new_ptr )
-struct db_i		*dbip;
-struct rt_comb_internal *comb;
-union tree		*comb_leaf;
-genptr_t		old_ptr, new_ptr;
+Change_name(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t old_ptr, genptr_t new_ptr)
 {
 	char	*old_name, *new_name;
 
@@ -511,10 +488,7 @@ cmd_killtree(ClientData	clientData,
  *			K I L L T R E E
  */
 void
-killtree(dbip, dp, ptr)
-struct db_i	*dbip;
-struct directory *dp;
-genptr_t	ptr;
+killtree(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 {
 	Tcl_Interp		*interp = (Tcl_Interp *)ptr;
 	struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
@@ -534,11 +508,7 @@ genptr_t	ptr;
 }
 
 int
-f_debugdir(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_debugdir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   CHECK_DBI_NULL;
 
