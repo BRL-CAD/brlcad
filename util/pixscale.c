@@ -152,8 +152,8 @@ int argc; char **argv;
 	/* See how many lines we can buffer */
 	scanlen = 3 * inx;
 	init_buffer( scanlen );
-	if (inx < outx) i = outx;
-	else i = inx;
+	if (inx < outx) i = outx * 3;
+	else i = inx * 3;
 
 	if( (outbuf = malloc(i)) == NULL )
 		exit( 4 );
