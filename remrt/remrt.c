@@ -2207,6 +2207,11 @@ char *buf;
 		goto out;
 	}
 
+	/* XXX Is this measuring the processing time for
+	 * XXX one assignment, or for the whole pipeline of N_SERVER_ASSIGNMENTS
+	 * XXX worth of assignments?  It looks like the latter.
+	 */
+
 	/*
 	 *  If the elapsed time is less than MIN_ELAPSED_TIME, the package
 	 *  was probably waiting in either the kernel's or libraries
@@ -2333,7 +2338,15 @@ char *buf;
 		double	blend1;	/* fraction of historical value to use */
 		double	blend2;	/* fraction of new value to use */
 
-		if( sp->sr_l_elapsed > assignment_time() )  {
+		if( sp->sr_w_elapsed < MIN_ELAPSED_TIME )  {
+			/*
+			 *  The weighted average so far is much too small.
+			 *  Ignore the historical value, and
+			 *  use this sample to try and get a good initial
+			 *  estimate.
+			 */
+			blend1 = 0.1;
+		} else if( sp->sr_l_elapsed > assignment_time() )  {
 			/*
 			 *  Took longer than expected, put more weight on
 			 *  this sample, and less on the historical values.
