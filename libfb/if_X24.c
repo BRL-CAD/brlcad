@@ -44,6 +44,7 @@
 #define UPD_DBG 0
 #define BLIT_DBG 0
 #define EVENT_DBG 0
+#define BLIT_DBG_PIX 0
 
 /* Print a debug message on first time into a piece of code */
 #if 0
@@ -2961,6 +2962,14 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line + ox *
 			(xi->xi_image->bits_per_pixel/8)]);
 
+#if BLIT_DBG_PIX
+		if (opix < xi->xi_pix) {
+			bu_log("X24_blit: about to clobber memory 1\n");
+			bu_log("\topix - Ox%lx\txi->xi_pix - 0x%lx\n", opix, xi->xi_pix);
+			break;
+		}
+#endif
+
 		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof
 			(RGBpixel)]);
 
@@ -2971,6 +2980,14 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 			unsigned char *p;
 			unsigned char *holdit;
 			int pyht;
+
+#if BLIT_DBG_PIX
+			if (opix < xi->xi_pix) {
+				bu_log("X24_blit: about to clobber memory 2\n");
+				bu_log("\topix - Ox%lx\txi->xi_pix - 0x%lx\n", opix, xi->xi_pix);
+				break;
+			}
+#endif
 
 			/* Calculate the number of lines needed */
 			if (y == y1) {
@@ -3065,6 +3082,15 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 			while (pyht--) {
 				unsigned char *src;
 				p = (unsigned char *)opix;
+
+#if BLIT_DBG_PIX
+				if (opix < xi->xi_pix) {
+					bu_log("X24_blit: about to clobber memory 3\n");
+					bu_log("\topix - Ox%lx\txi->xi_pix - 0x%lx\n", opix, xi->xi_pix);
+					break;
+				}
+#endif
+
 				src = (unsigned char *)holdit;
 				for (x=xi->xi_image->bytes_per_line;x>=0;x--) {
 					*p++ = *src++;
