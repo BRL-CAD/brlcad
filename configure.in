@@ -36,6 +36,19 @@ AC_SUBST(PTHREAD_LIBS)
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
 dnl libs
+
+dnl need curses, would prefer ncurses
+SAVELIBS="${LIBS}"
+LIBS=
+AC_SEARCH_LIBS(initscr, ncurses curses,,AC_ERROR(Need curses!))
+CURSES="${LIBS}"
+AC_SUBST(CURSES)
+LIBS="${SAVELIBS}"
+
+AC_SEARCH_LIBS(mallopt,malloc)
+AC_SEARCH_LIBS(matherr,mx)
+
+
 dnl X
 X_LIBS="-L/usr/X11R6/lib -lX11 -lXi"
 AC_SUBST(X_LIBS)
@@ -91,6 +104,8 @@ AC_CHECK_HEADERS(config.hfloat.h getopt.h limits.h memory.h stdarg.h stdlib.h st
 AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h)
 AC_STRUCT_ST_BLKSIZE
 
+AC_CHECK_DECL(re_comp,AC_DEFINE(HAVE_REGEX_DECL,,BSD regular expressions))
+
 dnl ============================================================
 dnl union wait testing from tcl8.4's configure.in, should be revamped?
 AC_MSG_CHECKING([union wait])
@@ -108,9 +123,10 @@ fi
 dnl ============================================================
 
 AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld",AC_ERROR(No dynamic loader found)))])
-echo "DL is: $DL"
+
 BN='${top_builddir}/libbn/libbn.la ${BU}'
 BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS} -lm ${DL}'
+CURSOR='${top_builddir}/libcursor/libcursor.la'
 DM='${top_builddir}/libdm/libdm.la ${TK_LIBS} ${RT}'
 FB='${top_builddir}/libfb/libfb.la ${X_LIBS} ${PKG} ${BU}'
 OPTICAL='${top_builddir}/liboptical/liboptical.la'
@@ -123,6 +139,7 @@ TERMIO='${top_builddir}/libtermio/libtermio.la'
 WDB='${top_builddir}/libwdb/libwdb.la'
 AC_SUBST(BN)
 AC_SUBST(BU)
+AC_SUBST(CURSOR)
 AC_SUBST(DM)
 AC_SUBST(DL)
 AC_SUBST(FB)
