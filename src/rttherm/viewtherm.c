@@ -115,8 +115,6 @@ extern int	max_ireflect;		/* from refract.c */
 extern int	curframe;		/* from main.c */
 extern fastf_t	frame_delta_t;		/* from main.c */
 
-struct region	env_region;		/* environment map region */
-
 void		free_scanlines(void);
 
 /***** variables shared with rt.c *****/
