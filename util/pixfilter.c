@@ -31,8 +31,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<string.h>
 #endif
 
+#define MAXLINE		(8*1024)
 int	size;
-unsigned char	line1[3*512], line2[3*512], line3[3*512], obuf[3*512];
+unsigned char	line1[3*MAXLINE], line2[3*MAXLINE], line3[3*MAXLINE], obuf[3*MAXLINE];
 unsigned char	*top, *middle, *bottom, *temp;
 
 /* The filter kernels */
@@ -102,7 +103,11 @@ int argc; char **argv;
 		argv++;
 	}
 
-	size = (argc == 2) ? atoi( argv[1] ) : 512;
+	size = (argc == 2) ? atoi( argv[1] ) : MAXLINE;
+	if( size > MAXLINE )  {
+		fprintf(stderr, "pixfilter:  limited to scanlines of %d\n", MAXLINE);
+		exit(1);
+	}
 
 	/*
 	 * Read in bottom and middle lines.
