@@ -1846,8 +1846,10 @@ int			other_rs_state;
 	int			e_assessment;
 	int			action;
 
+#ifdef PARANOID_VERIFY
 	nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
 	nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
+#endif
 
 	vu = rs->vu[pos];
 	NMG_CK_VERTEXUSE(vu);
@@ -1926,7 +1928,12 @@ rt_log("force next eu to ray\n");
 	default:
 	case NMG_ACTION_ERROR:
 	bomb:
-		rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
+	    {
+		struct rt_vls	str;
+
+		rt_log("nmg_face_state_transition: got action=ERROR\n");
+	    	rt_vls_init(&str);
+		rt_vls_printf(&str,"nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
 			vu, pos,
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
@@ -1952,7 +1959,8 @@ rt_log("force next eu to ray\n");
 		nmg_stash_model_to_file( "error.g", nmg_find_model((long*)lu), "nmg_fcut.c error dump" );
 	     }
 		/* Explode */
-		rt_bomb("nmg_face_state_transition: got action=ERROR\n");
+	    	rt_bomb(rt_vls_addr(&str));
+	    }
 	case NMG_ACTION_NONE:
 		if( *(vu->up.magic_p) == NMG_LOOPUSE_MAGIC )  {
 			lu = vu->up.lu_p;
@@ -2083,11 +2091,9 @@ rt_log("force next eu to ray\n");
 		if( lu->l_p == prev_lu->l_p )  {
 			int is_crack;
 			/* Same loop, cut into two */
+			is_crack = nmg_loop_is_a_crack(lu);
 			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
-			if(is_crack = nmg_loop_is_a_crack(lu))  {
-				rt_log("ABOUT TO CUT A CRACK!\n");
-			} else rt_log("About to cut a non-crack\n");
+				rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x) is_crack=%d\n", prev_vu, vu, is_crack);
 			prev_lu = nmg_cut_loop( prev_vu, vu );
 			if(is_crack)  {
 				struct face_g	*fg;
@@ -2113,10 +2119,6 @@ rt_log("force next eu to ray\n");
 			rt_log("nmg_join_2loops(prev_vu=x%x, vu=x%x)\n",
 			prev_vu, vu);
 
-#if 0
-		/* XXX This checking routine does not work */
-		nmg_vmodel(nmg_find_model(&vu->l.magic));
-#endif
 		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC ||
 		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 		    	/* One (or both) is a loop of a single vertex */
@@ -2166,9 +2168,11 @@ rt_log("force next eu to ray\n");
 
 	rs->state = new_state;
 
-	/* XXX Verify both faces are still OK */
+#ifdef PARANOID_VERIFY
+	/* Verify both faces are still OK */
 	nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
 	nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
+#endif
 }
 
 /*

@@ -2021,8 +2021,10 @@ struct faceuse		*fu1, *fu2;
 		VPRINT("isect ray is->dir", is->dir);
 	}
 
+#ifdef PARANOID_VERIFY
 	nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 	nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
+#endif
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
@@ -2038,8 +2040,10 @@ struct faceuse		*fu1, *fu2;
 
 	nmg_isect_face3p_face3p(is, fu1, fu2);
 
+#ifdef PARANOID_VERIFY
 	nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 	nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
+#endif
 
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_two_generic_faces(fu1=x%x, fu2=x%x) vert_lists A:\n", fu1, fu2);
@@ -2051,8 +2055,10 @@ struct faceuse		*fu1, *fu2;
     	is->l1 = &vert_list2;
 	nmg_isect_face3p_face3p(is, fu2, fu1);
 
+#ifdef PARANOID_VERIFY
 	nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 	nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
+#endif
 
 	nmg_purge_unwanted_intersection_points(&vert_list1, fu2);
 	nmg_purge_unwanted_intersection_points(&vert_list2, fu1);
@@ -2070,8 +2076,10 @@ struct faceuse		*fu1, *fu2;
 
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
 
+#ifdef PARANOID_VERIFY
 	nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 	nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
+#endif
 
 	nmg_mesh_faces(fu1, fu2);
 
@@ -2084,8 +2092,10 @@ out:
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
 
+#ifdef PARANOID_VERIFY
 	nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 	nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
+#endif
 }
 
 /*
@@ -2193,8 +2203,11 @@ CONST struct rt_tol	*tol;
 	sa2 = s2->sa_p;
 	NMG_CK_SHELL_A(sa2);
 
+#ifdef PARANOID_VERIFY
+	/* This is a good conservative place to check on things */
 	nmg_vshell( &s1->r_p->s_hd, s1->r_p );
 	nmg_vshell( &s2->r_p->s_hd, s2->r_p );
+#endif
 
 	/* XXX this isn't true for non-3-manifold geometry! */
 	if( RT_LIST_IS_EMPTY( &s1->fu_hd ) ||
@@ -2253,9 +2266,11 @@ CONST struct rt_tol	*tol;
 
 	    	NMG_INDEX_SET(flags, f1);
 
+#ifdef PARANOID_VERIFY
 		/* XXX expensive, but very conservative, for now */
 		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
 		nmg_vshell( &s2->r_p->s_hd, s2->r_p );
+#endif
 	}
 
 	/*
@@ -2271,4 +2286,10 @@ CONST struct rt_tol	*tol;
 	/* Check each lone vert of s1 against shell 2 */
 
 	rt_free( (char *)flags, "nmg_crackshells flags[]" );
+
+#ifdef PARANOID_VERIFY
+	/* After all is done, check things again */
+	nmg_vshell( &s1->r_p->s_hd, s1->r_p );
+	nmg_vshell( &s2->r_p->s_hd, s2->r_p );
+#endif
 }
