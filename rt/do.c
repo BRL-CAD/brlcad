@@ -724,7 +724,7 @@ int framenumber;
 			if( matflag )  return(0);	/* OK */
 			return(-1);			/* Bad */
 		}
-#endif CRAY_COS
+#endif /* CRAY_COS */
 		fprintf(stderr,"Output file is '%s'\n", framename);
 	}
 
@@ -805,7 +805,7 @@ int framenumber;
 		char message[128];
 
 		strncpy( dn, outfp->ldn, sizeof(outfp->ldn) );	/* COS name */
-#endif CRAY_COS
+#endif
 		(void)fclose(outfp);
 		outfp = NULL;
 #ifdef CRAY_COS
@@ -831,13 +831,13 @@ int framenumber;
 		/* Protect finished product */
 		if( outputfile != (char *)0 )
 			chmod( framename, 0444 );
-#endif CRAY_COS
+#endif
 	}
 
 #ifdef STAT_PARALLEL
 	lock_pr();
 	res_pr();
-#endif STAT_PARALLEL
+#endif
 
 	fprintf(stderr,"\n");
 	return(0);		/* OK */
