@@ -3017,7 +3017,8 @@ static char *
 hold_point_to_string(hp)
 struct hold_point *hp;
 {
-	char *text = rt_malloc(1000, "hold_point_to_string");
+#define HOLD_POINT_TO_STRING_LEN	1024
+	char text = rt_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
 	char *path;
 	vect_t loc;
 
@@ -3034,7 +3035,7 @@ struct hold_point *hp;
 		rt_free(path, "full path");
 		break;
 	}
-	if (strlen(text) > 1000) {
+	if (strlen(text) > (unsigned)HOLD_POINT_TO_STRING_LEN) {
 		rt_bomb("hold_point_to_string: over wrote memory!\n");
 	}
 	return text;
