@@ -98,6 +98,21 @@ if ![info exists player_screen(mged)] {
 
 set do_tearoffs 0
 
+# Set the class bindings for use with help. This requires the
+# widget to register its data using hoc_register_data. Also, for now,
+# the Menu class binding is being handled in tclscripts/menu_override.tcl.
+#
+if ![info exists tk_version] {
+    loadtk
+}
+bind Entry <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
+bind Label <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
+bind Text <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
+bind Button <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
+bind Checkbutton <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
+bind Menubutton <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
+bind Radiobutton <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
+
 proc gui_create_default { args } {
     global moveView
     global player_screen
@@ -397,32 +412,62 @@ menu .$id.menubar -tearoff $do_tearoffs
 .$id.menubar add cascade -label "Tools" -underline 0 -menu .$id.menubar.tools
 .$id.menubar add cascade -label "Help" -underline 0 -menu .$id.menubar.help
 
-menu .$id.menubar.file -tearoff $do_tearoffs
+menu .$id.menubar.file -title "File" -tearoff $do_tearoffs
 .$id.menubar.file add command -label "New..." -underline 0 -command "do_New $id"
+hoc_register_menu_data "File" "New..." "New Database"\
+	{ { summary "Open a new database. Note - the database\nmust not already exist." }
+          { see_also opendb} }
 .$id.menubar.file add command -label "Open..." -underline 0 -command "do_Open $id"
+hoc_register_menu_data "File" "Open..." "Open Database"\
+	{ { summary "Open an existing database" }
+          { see_also opendb } }
 .$id.menubar.file add command -label "Insert..." -underline 0 -command "do_Concat $id"
+hoc_register_menu_data "File" "Insert..." "Insert Database"\
+	{ { summary "Insert another database into the current database." }
+          { see_also dbconcat } }
 .$id.menubar.file add command -label "Extract..." -underline 1 -command "init_extractTool $id"
+hoc_register_menu_data "File" "Extract..." "Extract Objects"\
+	{ { summary "Tool for extracting objects out of the current database." }
+          { see_also keep } }
 .$id.menubar.file add command -label "g2asc..." -underline 0 -command "init_g2asc $id"
+hoc_register_menu_data "File" "g2asc..." "Convert to Ascii"\
+	{ { summary "Convert the current database into an ascii file." } }
 .$id.menubar.file add separator
 .$id.menubar.file add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
+hoc_register_menu_data "File" "Raytrace..." "Raytrace View"\
+	{ { summary "Tool for raytracing the current view." }
+          { see_also rt } }
 .$id.menubar.file add cascade -label "Save View As" -underline 0 -menu .$id.menubar.file.saveview
 .$id.menubar.file add separator
 .$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
 .$id.menubar.file add separator
 .$id.menubar.file add command -label "Close" -underline 0 -command "gui_destroy_default $id"
+hoc_register_menu_data "File" "Close" "Close Window"\
+	{ { summary "Close this graphical user interface." }
+          { see_also } }
 .$id.menubar.file add command -label "Exit" -underline 0 -command _mged_quit
+hoc_register_menu_data "File" "Exit" "Exit MGED"\
+	{ { summary "Exit MGED." }
+          { see_also "exit q quit" } }
 
-menu .$id.menubar.file.saveview -tearoff $do_tearoffs
+menu .$id.menubar.file.saveview -title "Save View As" -tearoff $do_tearoffs
 .$id.menubar.file.saveview add command -label "RT script..." -underline 0\
 	-command "init_rtScriptTool $id"
+hoc_register_menu_data "Save View As" "RT script..." "RT Script File"\
+	{ { summary "Save the current view as a RT script file." }
+          { see_also saveview } }
 .$id.menubar.file.saveview add command -label "Plot..." -underline 1\
 	-command "init_plotTool $id"
+hoc_register_menu_data "Save View As" "Plot..." "Plot File"\
+	{ { summary "Save the current view as a Plot file." }
+          { see_also pl } }
 .$id.menubar.file.saveview add command -label "PostScript..." -underline 0\
 	-command "init_psTool $id"
-#.$id.menubar.file.saveview add command -label "Ascii..." -underline 0\
-#	-command "init_asciiTool $id"
+hoc_register_menu_data "Save View As" "PostScript..." "PostScript File"\
+	{ { summary "Save the current view as a PostScript file." }
+          { see_also ps } }
 
-menu .$id.menubar.file.pref -tearoff $do_tearoffs
+menu .$id.menubar.file.pref -title "Preferences" -tearoff $do_tearoffs
 .$id.menubar.file.pref add cascade -label "Units" -underline 0\
 	-menu .$id.menubar.file.pref.units
 .$id.menubar.file.pref add cascade -label "Command Line Edit" -underline 0\
@@ -432,167 +477,228 @@ menu .$id.menubar.file.pref -tearoff $do_tearoffs
 .$id.menubar.file.pref add command -label "Color Schemes..." -underline 6\
 	-command "color_scheme_build $id \"Color Schemes\" [list $mged_color_scheme(primary_map)]\
 	\"Faceplate Colors\" [list $mged_color_scheme(secondary_map)]"
-#.$id.menubar.file.pref add cascade -label "Wireframe Highlight Color" -underline 0\
-#	-menu .$id.menubar.file.pref.wireframe_highlight_color
-#.$id.menubar.file.pref add cascade -label "Default Wireframe Color" -underline 0\
-#	-menu .$id.menubar.file.pref.default_wireframe_color
+hoc_register_menu_data "Preferences" "Color Schemes..." "Color Schemes"\
+	{ { summary "Tool for setting colors." }
+          { see_also "rset" } }
 
-menu .$id.menubar.file.pref.units -tearoff $do_tearoffs
+menu .$id.menubar.file.pref.units -title "Units" -tearoff $do_tearoffs
 .$id.menubar.file.pref.units add radiobutton -value um -variable mged_display(units)\
 	-label "micrometers" -underline 4 -command "do_Units $id"
+hoc_register_menu_data "Units" "micrometers" "Unit of measure - Micrometers"\
+	{ { summary "Set the unit of measure to micrometers.\n1 micrometer = 1/1,000,000 meters" }
+          { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value mm -variable mged_display(units)\
 	-label "millimeters" -underline 2 -command "do_Units $id"
+hoc_register_menu_data "Units" "millimeters" "Unit of measure - Millimeters"\
+	{ { summary "Set the unit of measure to millimeters.\n1 millimeter = 1/1000 meters" }
+          { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value cm -variable mged_display(units)\
 	-label "centimeters" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "centimeters" "Unit of measure - Centimeters"\
+	{ { summary "Set the unit of measure to centimeters.n\t1 centimeter = 1/100 meters" }
+          { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value m -variable mged_display(units)\
 	-label "meters" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "meters" "Unit of measure - Meters"\
+	{ { summary "Set the unit of measure to meters." }
+          { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value km -variable mged_display(units)\
 	-label "kilometers" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "kilometers" "Unit of measure - Kilometers"\
+	{ { summary "Set the unit of measure to kilometers.\n 1 kilometer = 1000 meters" }
+          { see_also "units" } }
 .$id.menubar.file.pref.units add separator
 .$id.menubar.file.pref.units add radiobutton -value in -variable mged_display(units)\
 	-label "inches" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "inches" "Unit of measure - Inches"\
+	{ { summary "Set the unit of measure to inches.\n 1 inch = 25.4 mm" }
+          { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value ft -variable mged_display(units)\
 	-label "feet" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "feet" "Unit of measure - Feet"\
+	{ { summary "Set the unit of measure to feet.\n 1 foot = 12 inches" }
+          { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value yd -variable mged_display(units)\
 	-label "yards" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "yards" "Unit of measure - Yards"\
+	{ { summary "Set the unit of measure to yards.\n 1 yard = 36 inches" }
+          { see_also "" } }
 .$id.menubar.file.pref.units add radiobutton -value mi -variable mged_display(units)\
 	-label "miles" -underline 3 -command "do_Units $id"
+hoc_register_menu_data "Units" "miles" "Unit of measure - Miles"\
+	{ { summary "Set the unit of measure to miles.\n 1 mile = 5280 feet" }
+          { see_also "units" } }
 
-menu .$id.menubar.file.pref.cle -tearoff $do_tearoffs
+menu .$id.menubar.file.pref.cle -title "Command Line Edit" -tearoff $do_tearoffs
 .$id.menubar.file.pref.cle add radiobutton -value emacs -variable mged_edit_style($id)\
 	-label "emacs" -underline 0 -command "set_text_key_bindings $id"
+hoc_register_menu_data "Command Line Edit" "emacs" "Emacs"\
+	{ { summary "Set the command line edit mode to emacs." } }
 .$id.menubar.file.pref.cle add radiobutton -value vi -variable mged_edit_style($id)\
 	-label "vi" -underline 0 -command "set_text_key_bindings $id"
+hoc_register_menu_data "Command Line Edit" "vi" "Vi"\
+	{ { summary "Set the command line edit mode to vi." } }
 
-menu .$id.menubar.file.pref.special_chars -tearoff $do_tearoffs
+menu .$id.menubar.file.pref.special_chars -title "Special Characters" -tearoff $do_tearoffs
 .$id.menubar.file.pref.special_chars add radiobutton -value 0 -variable glob_compat_mode\
 	-label "Tcl Evaluation" -underline 0
+hoc_register_menu_data "Special Characters" "Tcl Evaluation" "Tcl Evaluation"\
+	{ { summary "Set the command interpretation mode to Tcl mode." } }
 .$id.menubar.file.pref.special_chars add radiobutton -value 1 -variable glob_compat_mode\
 	-label "Object Name Matching" -underline 0
+hoc_register_menu_data "Special Characters" "Object Name Matching" "Object Name Matching"\
+	{ { summary\
+"Set the command interpretation mode to MGED object name matching.\n\
+In this mode, globbing is performed against MGED database objects."\
+        } }
 
-menu .$id.menubar.file.pref.wireframe_highlight_color -tearoff $do_tearoffs
-.$id.menubar.file.pref.wireframe_highlight_color add command -label black -underline 0\
-	-command "set wireframe_highlight_color {0 0 0}"
-.$id.menubar.file.pref.wireframe_highlight_color add command -label white -underline 0\
-	-command "set wireframe_highlight_color {255 255 255}"
-.$id.menubar.file.pref.wireframe_highlight_color add command -label red -underline 0\
-	-command "set wireframe_highlight_color {255 0 0}"
-.$id.menubar.file.pref.wireframe_highlight_color add command -label green -underline 0\
-	-command "set wireframe_highlight_color {0 255 0}"
-.$id.menubar.file.pref.wireframe_highlight_color add command -label blue -underline 0\
-	-command "set wireframe_highlight_color {0 0 255}"
-.$id.menubar.file.pref.wireframe_highlight_color add command -label yellow -underline 0\
-	-command "set wireframe_highlight_color {255 255 0}"
-.$id.menubar.file.pref.wireframe_highlight_color add command -label cyan -underline 0\
-	-command "set wireframe_highlight_color {0 255 255}"
-.$id.menubar.file.pref.wireframe_highlight_color add command -label magenta -underline 0\
-	-command "set wireframe_highlight_color {255 0 255}"
-.$id.menubar.file.pref.wireframe_highlight_color add separator
-.$id.menubar.file.pref.wireframe_highlight_color add command -label "Color Tool..." -underline 6\
-	-command "chooseWireframeHighlightColor $id"
-
-menu .$id.menubar.file.pref.default_wireframe_color -tearoff $do_tearoffs
-.$id.menubar.file.pref.default_wireframe_color add command -label black -underline 0\
-	-command "set default_wireframe_color {0 0 0}"
-.$id.menubar.file.pref.default_wireframe_color add command -label white -underline 0\
-	-command "set default_wireframe_color {255 255 255}"
-.$id.menubar.file.pref.default_wireframe_color add command -label red -underline 0\
-	-command "set default_wireframe_color {255 0 0}"
-.$id.menubar.file.pref.default_wireframe_color add command -label green -underline 0\
-	-command "set default_wireframe_color {0 255 0}"
-.$id.menubar.file.pref.default_wireframe_color add command -label blue -underline 0\
-	-command "set default_wireframe_color {0 0 255}"
-.$id.menubar.file.pref.default_wireframe_color add command -label yellow -underline 0\
-	-command "set default_wireframe_color {255 255 0}"
-.$id.menubar.file.pref.default_wireframe_color add command -label cyan -underline 0\
-	-command "set default_wireframe_color {0 255 255}"
-.$id.menubar.file.pref.default_wireframe_color add command -label magenta -underline 0\
-	-command "set default_wireframe_color {255 0 255}"
-.$id.menubar.file.pref.default_wireframe_color add separator
-.$id.menubar.file.pref.default_wireframe_color add command -label "Color Tool..." -underline 6\
-	-command "chooseDefaultWireframeColor $id"
-
-menu .$id.menubar.edit -tearoff $do_tearoffs
+menu .$id.menubar.edit -title "Edit" -tearoff $do_tearoffs
 .$id.menubar.edit add command -label "Solid Selection..." -underline 0 \
 	-command "winset \$mged_active_dm($id); build_edit_menu_all s"
+hoc_register_menu_data "Edit" "Solid Selection..." "Solid Selection"\
+	{ { summary "A tool for selecting a solid to edit." } }
 .$id.menubar.edit add command -label "Matrix Selection..." -underline 0 \
 	-command "winset \$mged_active_dm($id); build_edit_menu_all o"
+hoc_register_menu_data "Edit" "Matrix Selection..." "Matrix Selection"\
+	{ { summary "A tool for selecting a matrix to edit." } }
 .$id.menubar.edit add separator
 .$id.menubar.edit add command -label "Solid Editor..." -underline 6 \
 	-command "init_edit_solid $id"
+hoc_register_menu_data "Edit" "Solid Editor..." "Solid Editor"\
+	{ { summary "A tool for editing/creating solids." } }
 .$id.menubar.edit add command -label "Combination Editor..." -underline 0 \
 	-command "init_comb $id"
+hoc_register_menu_data "Edit" "Combination Editor..." "Combination Editor"\
+	{ { summary "A tool for editing/creating combinations." } }
 
-menu .$id.menubar.create -tearoff $do_tearoffs
+
+menu .$id.menubar.create -title "Create" -tearoff $do_tearoffs
 .$id.menubar.create add cascade\
 	-label "Make Solid" -underline 0 -menu .$id.menubar.create.solid
 #.$id.menubar.create add command\
 #	-label "Instance Creation Panel..." -underline 0 -command "icreate $id"
 .$id.menubar.create add command -label "Solid Editor..." -underline 0 \
 	-command "init_edit_solid $id"
+hoc_register_menu_data "Create" "Solid Editor..." "Solid Editor"\
+	{ { summary "A tool for editing/creating solids." } }
 .$id.menubar.create add command -label "Combination Editor..." -underline 0 \
 	-command "init_comb $id"
+hoc_register_menu_data "Create" "Combination Editor..." "Combination Editor"\
+	{ { summary "A tool for editing/creating combinations." } }
 
-menu .$id.menubar.create.solid -tearoff $do_tearoffs
-#.$id.menubar.create.solid add command\
-#	-label "Solid Creation Panel..." -underline 0 -command "solcreate $id"
-#.$id.menubar.create.solid add separator
+menu .$id.menubar.create.solid -title "Make Solid" -tearoff $do_tearoffs
 set make_solid_types [_mged_make -t]
 foreach solid_type $make_solid_types {
     .$id.menubar.create.solid add command -label "$solid_type..."\
 	    -command "init_solid_create $id $solid_type"
+
+    set ksl {}
+    lappend ksl "summary \"Make a $solid_type using the values found in the tcl variable solid_data(attr,$solid_type).\"" "see_also \"make, in\""
+    hoc_register_menu_data "Make Solid" "$solid_type..." "Make a $solid_type" $ksl
 }
 
-menu .$id.menubar.view -tearoff $do_tearoffs
+menu .$id.menubar.view -title "View" -tearoff $do_tearoffs
 .$id.menubar.view add command -label "Top" -underline 0\
 	-command "mged_apply $id \"press top\""
+hoc_register_menu_data "View" "Top" "Top View"\
+	{ { summary "View of the top (i.e. azimuth = 270, elevation = 90). " }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Bottom" -underline 0\
 	-command "mged_apply $id \"press bottom\""
+hoc_register_menu_data "View" "Bottom" "Bottom View"\
+	{ { summary "View of the bottom (i.e. azimuth = 270 , elevation = -90)." }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Right" -underline 0\
 	-command "mged_apply $id \"press right\""
+hoc_register_menu_data "View" "Right" "Right View"\
+	{ { summary "View of the right side (i.e. azimuth = 270, elevation = 0)." }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Left" -underline 0\
 	-command "mged_apply $id \"press left\""
+hoc_register_menu_data "View" "Left" "Left View"\
+	{ { summary "View of the left side (i.e. azimuth = 90, elevation = 0)." }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Front" -underline 0\
 	-command "mged_apply $id \"press front\""
+hoc_register_menu_data "View" "Front" "Front View"\
+	{ { summary "View of the front (i.e. azimuth = 0, elevation = 0)." }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Back" -underline 3\
 	-command "mged_apply $id \"press rear\""
+hoc_register_menu_data "View" "Back" "Back View"\
+	{ { summary "View of the back (i.e. azimuth = 180, elevation = 0)." }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "az35,el25" -underline 2\
 	-command "mged_apply $id \"press 35,25\""
+hoc_register_menu_data "View" "az35,el25" "View - 35,25"\
+	{ { summary "View with an azimuth of 35 and an elevation of 25." }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "az45,el45" -underline 2\
 	-command "mged_apply $id \"press 45,45\""
+hoc_register_menu_data "View" "az45,el45" "View - 45,45"\
+	{ { summary "View with an azimuth of 45 and an elevation of 45." }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add separator
 .$id.menubar.view add command -label "Zoom In" -underline 5\
 	-command "mged_apply $id \"zoom 2\""
+hoc_register_menu_data "View" "Zoom In" "Zoom In"\
+	{ { summary "Zoom in by a factor of 2." }
+          { see_also "sca, zoom" } }
 .$id.menubar.view add command -label "Zoom Out" -underline 5\
 	-command "mged_apply $id \"zoom 0.5\""
-.$id.menubar.view add separator
-.$id.menubar.view add command -label "Save" -underline 0\
-	-command "mged_apply $id \"press save\""
-.$id.menubar.view add command -label "Restore" -underline 1\
-	-command "mged_apply $id \"press restore\""
+hoc_register_menu_data "View" "Zoom Out" "Zoom Out"\
+	{ { summary "Zoom out by a factor of 2." }
+          { see_also "sca, zoom" } }
 .$id.menubar.view add separator
 .$id.menubar.view add command -label "Default"\
 	-underline 0 -command "mged_apply $id \"press reset\""
+hoc_register_menu_data "View" "Default" "Default View"\
+	{ { summary "Same as top (i.e. azimuth = 270, elevation = 90)." }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Multipane Defaults"\
 	-underline 0 -command "set_default_views $id"
+hoc_register_menu_data "View" "Multipane Defaults" "Multipane Default Views"\
+	{ { summary "Sets the view of all four panes to their defaults.\n\n\
+\tupper left\taz = 90, el = 0\n\
+\tupper right\taz = 35, el = 25\n\
+\tlower left\taz = 0, el = 0\n\
+\tlower right\taz = 90, el = 0" }
+          { see_also "press, ae, view, viewset, viewget" } }
 .$id.menubar.view add command -label "Zero" -underline 0\
 	-command "mged_apply $id \"knob zero\""
+hoc_register_menu_data "View" "Zero" "Zero Knobs"\
+	{ { summary "Stop all rate transformations." }
+          { see_also "knob, press" } }
 
-menu .$id.menubar.viewring -tearoff $do_tearoffs
+menu .$id.menubar.viewring -title "ViewRing" -tearoff $do_tearoffs
 .$id.menubar.viewring add command -label "Add View" -underline 0 -command "view_ring_add $id"
+hoc_register_menu_data "ViewRing" "Add View" "Add View"\
+	{ { summary "Add a view to the view ring." }
+          { see_also "view_ring" } }
 .$id.menubar.viewring add cascade -label "Select View" -underline 0 -menu .$id.menubar.viewring.select
 .$id.menubar.viewring add cascade -label "Delete View" -underline 0 -menu .$id.menubar.viewring.delete
 .$id.menubar.viewring add command -label "Next View" -underline 0 -command "view_ring_next $id"
+hoc_register_menu_data "ViewRing" "Next View" "Next View"\
+	{ { summary "Go to the next view on the view ring.\nControl-n can also be used." }
+          { see_also "view_ring" } }
 .$id.menubar.viewring add command -label "Prev View" -underline 0 -command "view_ring_prev $id"
+hoc_register_menu_data "ViewRing" "Prev View" "Previous View"\
+	{ { summary "Go to the previous view on the view ring.\nControl-p can also be used." }
+          { see_also "view_ring" } }
 .$id.menubar.viewring add command -label "Last View" -underline 0 -command "view_ring_toggle $id"
+hoc_register_menu_data "ViewRing" "Last View" "Last View"\
+	{ { summary "Go to the last view. This can be used to toggle\nbetween two views. Control-t can also be used." }
+          { see_also "view_ring" } }
 
-menu .$id.menubar.viewring.select -tearoff $do_tearoffs -postcommand "do_view_ring_labels $id"
+menu .$id.menubar.viewring.select -title "Select View" -tearoff $do_tearoffs\
+	-postcommand "do_view_ring_labels $id"
 do_view_ring_entries $id s
 set view_ring($id) 1
-menu .$id.menubar.viewring.delete -tearoff $do_tearoffs -postcommand "do_view_ring_labels $id"
+menu .$id.menubar.viewring.delete -title "Delete View" -tearoff $do_tearoffs\
+	-postcommand "do_view_ring_labels $id"
 do_view_ring_entries $id d
 
-menu .$id.menubar.settings -tearoff $do_tearoffs
+menu .$id.menubar.settings -title "Settings" -tearoff $do_tearoffs
 .$id.menubar.settings add cascade -label "Mouse Behavior" -underline 0\
 	-menu .$id.menubar.settings.mouse_behavior
 .$id.menubar.settings add cascade -label "Transform" -underline 0\
@@ -618,175 +724,431 @@ menu .$id.menubar.settings -tearoff $do_tearoffs
 .$id.menubar.settings add cascade -label "View Axes Position" -underline 0\
 	-menu .$id.menubar.settings.vap
 
-menu .$id.menubar.settings.applyTo -tearoff $do_tearoffs
+menu .$id.menubar.settings.applyTo -title "Apply To" -tearoff $do_tearoffs
 .$id.menubar.settings.applyTo add radiobutton -value 0 -variable mged_apply_to($id)\
 	-label "Active Pane" -underline 0
+hoc_register_menu_data "Apply To" "Active Pane" "Active Pane"\
+	{ { summary "Set the \"Apply To\" mode such that the user's\n\
+interaction with the GUI is applied to the active pane." } }
 .$id.menubar.settings.applyTo add radiobutton -value 1 -variable mged_apply_to($id)\
 	-label "Local Panes" -underline 0
+hoc_register_menu_data "Apply To" "Local Panes" "Local Panes"\
+	{ { summary "Set the \"Apply To\" mode such that the user's\n\
+interaction with the GUI is applied to all panes\n\
+local to this instance of the GUI." } }
 .$id.menubar.settings.applyTo add radiobutton -value 2 -variable mged_apply_to($id)\
 	-label "Listed Panes" -underline 1
+hoc_register_menu_data "Apply To" "Listed Panes" "Listed Panes"\
+	{ { summary "Set the \"Apply To\" mode such that the user's\n\
+interaction with the GUI is applied to all panes\n\
+listed in the Tcl variable mged_apply_list(id)\n\
+(Note - id refers to the GUI's id)." } }
 .$id.menubar.settings.applyTo add radiobutton -value 3 -variable mged_apply_to($id)\
 	-label "All Panes" -underline 4
+hoc_register_menu_data "Apply To" "All Panes" "All Panes"\
+	{ { summary "Set the \"Apply To\" mode such that the user's\n\
+interaction with the GUI is applied to all panes." } }
 
-menu .$id.menubar.settings.mouse_behavior -tearoff $do_tearoffs
+menu .$id.menubar.settings.mouse_behavior -title "Mouse Behavior" -tearoff $do_tearoffs
 .$id.menubar.settings.mouse_behavior add radiobutton -value d -variable mged_mouse_behavior($id)\
 	-label "Default" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Default" "Default Mouse Behavior"\
+	{ { summary "Enter the default MGED mouse behavior.\n\n\
+Mouse Button\tBehavior\n\
+     1\tZoom out by a factor of 2\n\
+     2\tCenter View\n\
+     3\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_mouse_behavior($id)\
 	-label "Paint Rectangle Area" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Paint Rectangle Area" "Paint Rectangle Area"\
+	{ { summary "Enter paint rectangle mode.\n\
+If the framebuffer is active, the rectangular area as\n\
+specified by the user is painted with the contents of the\n\
+framebuffer. Otherwise, only the rectangle is drawn.\n\n\
+Mouse Button\tBehavior\n\
+     1\tZoom out by a factor of 2\n\
+     2\tDraw paint rectangle\n\
+     3\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_mouse_behavior($id)\
 	-label "Raytrace Rectangle Area" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Raytrace Rectangle Area" "Raytrace Rectangle Area"\
+	{ { summary "Enter raytrace rectangle mode.\n\
+If the framebuffer is active, the rectangular area as\n\
+specified by the user is raytraced. The rectangular area\n\
+is also painted with the contents of the framebuffer.
+Otherwise, only the rectangle is drawn.\n\n\
+Mouse Button\tBehavior\n\
+     1\tZoom out by a factor of 2\n\
+     2\tDraw raytrace rectangle\n\
+     3\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_mouse_behavior($id)\
 	-label "Zoom Rectangle Area" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Zoom Rectangle Area" "Zoom Rectangle Area"\
+	{ { summary "Enter zoom rectangle mode.\n\
+The rectangular area as specified by the user is used\n\
+to zoom the view.\n\n\
+Mouse Button\tBehavior\n\
+     1\tZoom out by a factor of 2\n\
+     2\tDraw zoom rectangle\n\
+     3\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value q -variable mged_mouse_behavior($id)\
 	-label "Query Ray" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Query Ray" "Query Ray"\
+	{ { summary "Enter query ray mode.\n\
+In this mode, the mouse is used to fire rays. The data\n\
+from the fired rays can be viewed textually, graphically\n\
+or both.\n\n\
+Mouse Button\tBehavior\n\
+     1\tZoom out by a factor of 2\n\
+     2\tFire query ray\n\
+     3\tZoom in by a factor of 2" }
+          { see_also "nirt, qray, rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value s -variable mged_mouse_behavior($id)\
 	-label "Solid Edit Ray" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
-.$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_mouse_behavior($id)\
-	-label "Object Edit Ray" -underline 0\
+hoc_register_menu_data "Mouse Behavior" "Solid Edit Ray" "Solid Edit Ray"\
+	{ { summary "Enter solid edit ray mode.\n\
+In this mode, the mouse is used to fire rays for selecting\n\
+a solid to edit. If more than one solid was hit, a menu of the\n\
+hit solids is presented. The user then selects a solid\n\
+to edit from this menu. If a single solid was hit, it\n\
+is selected for editing. If no solids were hit, a dialog is\n\
+popped up saying that nothing was hit. The user must then fire another
+ray to continue selecting a solid. When a solid is finally\n\
+selected, solid edit mode is entered. When this happens, the mouse\n\
+behavior mode is set to default mode. Note - When selecting items\n\
+from a menu, a left buttonpress highlights the solid in question\n\
+until the button is released. To select a solid, double click with\n\
+the left mouse button.\n\n\
+Mouse Button\tBehavior\n\
+     1\tZoom out by a factor of 2\n\
+     2\tFire solid edit ray\n\
+     3\tZoom in by a factor of 2" }
+          { see_also "nirt, qray, rset, sed, vars" } }
+.$id.menubar.settings.mouse_behavior add radiobutton -value m -variable mged_mouse_behavior($id)\
+	-label "Matrix Edit Ray" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Matrix Edit Ray" "Matrix Edit Ray"\
+	{ { summary "Enter matrix edit ray mode.\n\
+In this mode, the mouse is used to fire rays for selecting\n\
+a matrix to edit. If more than one solid was hit, a menu of the\n\
+hit solids is presented. The user then selects a solid\n\
+from this menu. If a single solid was hit, that solid is selected.\n\
+If no solids were hit, a dialog is popped up saying that nothing was hit.\n\
+The user must then fire another ray to continue selecting a matrix to edit.\n\
+When a solid is finally selected, the user is presented with a menu consisting\n\
+of the path components of the selected solid. From this menu, the\n\
+user selects a path component. This component determines which\n\
+matrix will be edited. After selecting the path component, object/matrix\n\
+edit mode is entered. When this happens, the mouse behavior mode\n\
+is set to default mode. Note - When selecting items\n\
+from a menu, a left buttonpress highlights the solid/matrix in question\n\
+until the button is released. To select a solid/matrix, double click with\n\
+the left mouse button.\n\n\
+Mouse Button\tBehavior\n\
+     1\tZoom out by a factor of 2\n\
+     2\tFire matrix edit ray\n\
+     3\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value c -variable mged_mouse_behavior($id)\
 	-label "Combination Edit Ray" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Combination Edit Ray" "Combination Edit Ray"\
+	{ { summary "Enter combination edit ray mode.\n\
+In this mode, the mouse is used to fire rays for selecting\n\
+a combination to edit. If more than one combination was hit, a menu of the\n\
+hit combinations is presented. The user then selects a combination\n\
+from this menu. If a single combination was hit, that combination is selected.\n\
+If no combinations were hit, a dialog is popped up saying that nothing was hit.\n\
+The user must then fire another ray to continue selecting a combination to edit.\n\
+When a combination is finally selected, the combination edit tool is presented\n\
+and initialized with the values of the selected combination. When this happens,\n\
+the mouse behavior mode is set to default mode. Note - When selecting items\n\
+from a menu, a left buttonpress highlights the combination in question\n\
+until the button is released. To select a combination, double click with\n\
+the left mouse button.\n\n\
+Mouse Button\t\t\tBehavior\n\
+\t1\t\tZoom out by a factor of 2\n\
+\t2\t\tFire combination edit ray\n\
+\t3\t\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
 
-menu .$id.menubar.settings.qray -tearoff $do_tearoffs
+menu .$id.menubar.settings.qray -title "Query Ray Effects" -tearoff $do_tearoffs
 .$id.menubar.settings.qray add radiobutton -value t -variable mged_qray_effects($id)\
 	-label "Text" -underline 0\
 	-command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
+hoc_register_menu_data "Query Ray Effects" "Text" "Query Ray Effects - Text"\
+	{ { summary "Set qray effects mode to 'text'. In this mode,\n\
+only textual output is used to represent the results\n\
+of firing a query ray." }
+          { see_also "qray" } }
 .$id.menubar.settings.qray add radiobutton -value g -variable mged_qray_effects($id)\
 	-label "Graphics" -underline 0\
 	-command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
+hoc_register_menu_data "Query Ray Effects" "Graphics" "Query Ray Effects - Graphics"\
+	{ { summary "Set qray effects mode to 'graphics'. In this mode,\n\
+only graphical output is used to represent the results\n\
+of firing a query ray." }
+          { see_also "qray" } }
 .$id.menubar.settings.qray add radiobutton -value b -variable mged_qray_effects($id)\
 	-label "both" -underline 0\
 	-command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
+hoc_register_menu_data "Query Ray Effects" "both" "Query Ray Effects - Both"\
+	{ { summary "Set qray effects mode to 'both'. In this mode,\n\
+both textual and graphical output is used to represent the results\n\
+of firing a query ray." }
+          { see_also "qray" } }
 
-menu .$id.menubar.settings.mpane -tearoff $do_tearoffs
+menu .$id.menubar.settings.mpane -title "Active Pane" -tearoff $do_tearoffs
 .$id.menubar.settings.mpane add radiobutton -value ul -variable mged_dm_loc($id)\
 	-label "Upper Left" -underline 6\
 	-command "set_active_dm $id"
+hoc_register_menu_data "Active Pane" "Upper Left" "Active Pane - Upper Left"\
+	{ { summary "Set the active pane to be the upper left pane.\n\
+Any interaction with the GUI that affects a pane/\"display manager\"\n\
+will be directed at the upper left pane." } }
 .$id.menubar.settings.mpane add radiobutton -value ur -variable mged_dm_loc($id)\
 	-label "Upper Right" -underline 6\
 	-command "set_active_dm $id"
+hoc_register_menu_data "Active Pane" "Upper Right" "Active Pane - Upper Right"\
+	{ { summary "Set the active pane to be the upper right pane.\n\
+Any interaction with the GUI that affects a pane/\"display manager\"\n\
+will be directed at the upper right pane." } }
 .$id.menubar.settings.mpane add radiobutton -value ll -variable mged_dm_loc($id)\
 	-label "Lower Left" -underline 2\
 	-command "set_active_dm $id"
+hoc_register_menu_data "Active Pane" "Lower Left" "Active Pane - Lower Left"\
+	{ { summary "Set the active pane to be the lower left pane.\n\
+Any interaction with the GUI that affects a pane/\"display manager\"\n\
+will be directed at the lower left pane." } }
 .$id.menubar.settings.mpane add radiobutton -value lr -variable mged_dm_loc($id)\
 	-label "Lower Right" -underline 3\
 	-command "set_active_dm $id"
+hoc_register_menu_data "Active Pane" "Lower Right" "Active Pane - Lower Right"\
+	{ { summary "Set the active pane to be the lower right pane.\n\
+Any interaction with the GUI that affects a pane/\"geometry window\"\n\
+will be directed at the lower right pane." } }
 
-menu .$id.menubar.settings.fb -tearoff $do_tearoffs
+menu .$id.menubar.settings.fb -title "Framebuffer" -tearoff $do_tearoffs
 .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_fb_all($id)\
 	-label "All" -underline 0\
 	-command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
+hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
+	{ { summary "Use the entire pane for the framebuffer." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_fb_all($id)\
 	-label "Rectangle Area" -underline 0\
 	-command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
+hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
+	{ { summary "Use the rectangle area for the framebuffer." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.fb add separator
 .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_fb_overlay($id)\
 	-label "Overlay" -underline 0\
 	-command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
+hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
+	{ { summary "Put the framebuffer in overlay mode. In this mode,\n\
+the framebuffer data is placed in the pane after\n\
+the geometry is drawn (i.e. the framebuffer data is\n\
+is drawn on top of the geometry)." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
 	-label "Underlay" -underline 0\
 	-command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
+hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
+	{ { summary "Put the framebuffer in underlay mode. In this mode,\n\
+the framebuffer data is placed in the pane before\n\
+the geometry is drawn (i.e. the geometry is drawn on\n\
+top of the framebuffer data." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.fb add separator
 .$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
 	-label "Framebuffer Active" -underline 0\
 	-command "set_fb $id; update_Raytrace $id"
+hoc_register_menu_data "Framebuffer" "Framebuffer Active" "Framebuffer Active"\
+	{ { summary "This activates/deactivates the framebuffer." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
 	-label "Listen For Clients" -underline 0\
 	-command "set_listen $id" -state disabled
+hoc_register_menu_data "Framebuffer" "Listen For Clients" "Listen For Clients"\
+	{ { summary "This activates/deactivates listening for clients.\n\
+If the framebuffer is listening for clients, new data can\n\
+be passed into the framebuffer. Otherwise, the framebuffer\n\
+is write protected. Actually, it is also read protected with
+one exception. MGED can still read the framebuffer data." }
+          { see_also "rset, vars" } }
 
-#menu .$id.menubar.settings.bgColor -tearoff $do_tearoffs
-#.$id.menubar.settings.bgColor add command -label black -underline 0\
-#	-command "mged_apply $id \"dm bg 0 0 0\""
-#.$id.menubar.settings.bgColor add command -label white -underline 0\
-#	-command "mged_apply $id \"dm bg 255 255 255\""
-#.$id.menubar.settings.bgColor add command -label red -underline 0\
-#	-command "mged_apply $id \"dm bg 255 0 0\""
-#.$id.menubar.settings.bgColor add command -label green -underline 0\
-#	-command "mged_apply $id \"dm bg 0 255 0\""
-#.$id.menubar.settings.bgColor add command -label blue -underline 0\
-#	-command "mged_apply $id \"dm bg 0 0 255\""
-#.$id.menubar.settings.bgColor add command -label yellow -underline 0\
-#	-command "mged_apply $id \"dm bg 255 255 0\""
-#.$id.menubar.settings.bgColor add command -label cyan -underline 0\
-#	-command "mged_apply $id \"dm bg 0 255 255\""
-#.$id.menubar.settings.bgColor add command -label magenta -underline 0\
-#	-command "mged_apply $id \"dm bg 255 0 255\""
-#.$id.menubar.settings.bgColor add separator
-#.$id.menubar.settings.bgColor add command -label "Color Tool..." -underline 6\
-#	-command "choosePaneColor $id"
-
-menu .$id.menubar.settings.vap -tearoff $do_tearoffs
+menu .$id.menubar.settings.vap -title "View Axes Position" -tearoff $do_tearoffs
 .$id.menubar.settings.vap add radiobutton -value 0 -variable mged_axes($id,view_pos)\
 	-label "Center" -underline 0\
 	-command "mged_apply $id \"rset ax view_pos 0 0\""
+hoc_register_menu_data "View Axes Position" "Center" "View Axes Position - Center"\
+	{ { summary "Place the view axes in the center of the active pane." }
+          { see_also "rset" } }
 .$id.menubar.settings.vap add radiobutton -value 1 -variable mged_axes($id,view_pos)\
 	-label "Lower Left" -underline 2\
 	-command "mged_apply $id \"rset ax view_pos -1750 -1750\""
+hoc_register_menu_data "View Axes Position" "Lower Left" "View Axes Position - Lower Left"\
+	{ { summary "Place the view axes in the lower left corner of the active pane." }
+          { see_also "rset" } }
 .$id.menubar.settings.vap add radiobutton -value 2 -variable mged_axes($id,view_pos)\
 	-label "Upper Left" -underline 6\
 	-command "mged_apply $id \"rset ax view_pos -1750 1750\""
+hoc_register_menu_data "View Axes Position" "Upper Left" "View Axes Position - Upper Left"\
+	{ { summary "Place the view axes in the upper left corner of the active pane." }
+          { see_also "rset" } }
 .$id.menubar.settings.vap add radiobutton -value 3 -variable mged_axes($id,view_pos)\
 	-label "Upper Right" -underline 6\
 	-command "mged_apply $id \"rset ax view_pos 1750 1750\""
+hoc_register_menu_data "View Axes Position" "Upper Right" "View Axes Position - Upper Right"\
+	{ { summary "Place the view axes in the upper right corner of the active pane." }
+          { see_also "rset" } }
 .$id.menubar.settings.vap add radiobutton -value 4 -variable mged_axes($id,view_pos)\
 	-label "Lower Right" -underline 3\
 	-command "mged_apply $id \"rset ax view_pos 1750 -1750\""
+hoc_register_menu_data "View Axes Position" "Lower Right" "View Axes Position - Lower Right"\
+	{ { summary "Place the view axes in the lower right corner of the active pane." }
+          { see_also "rset" } }
 
-menu .$id.menubar.settings.grid -tearoff $do_tearoffs
+menu .$id.menubar.settings.grid -title "Grid" -tearoff $do_tearoffs
 .$id.menubar.settings.grid add command -label "Anchor..." -underline 0\
 	-command "do_grid_anchor $id"
+hoc_register_menu_data "Grid" "Anchor..." "Grid Anchor"\
+	{ { summary "Pops up the grid anchor entry dialog." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid add cascade -label "Spacing" -underline 1\
 	-menu .$id.menubar.settings.grid.spacing
 .$id.menubar.settings.grid add separator
-.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,snap)\
-	-label "Snap To Grid" -underline 0\
-	-command "mged_apply $id \"rset grid snap \$mged_grid($id,snap)\""
 .$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,draw)\
 	-label "Draw Grid" -underline 0\
 	-command "mged_apply $id \"rset grid draw \$mged_grid($id,draw)\""
+hoc_register_menu_data "Grid" "Draw Grid" "Draw Grid"\
+	{ { summary "Toggle drawing the grid. The grid is\n\
+a lattice of points over the pane (geometry window).\n\
+The regular spacing between the points gives the user\n\
+accurate visual cues regarding dimension. This spacing\n\
+can be set by the user." }
+          { see_also "rset" } }
+.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,snap)\
+	-label "Snap To Grid" -underline 0\
+	-command "mged_apply $id \"rset grid snap \$mged_grid($id,snap)\""
+hoc_register_menu_data "Grid" "Snap To Grid" "Snap To Grid"\
+	{ { summary "Toggle grid snapping. When snapping to grid,\n\
+the internal routines that use the mouse pointer location,\n\
+move/snap that location to the nearest grid point. This gives\n\
+the user high accuracy with the mouse for transforming the\n\
+view or editing solids/matrices." }
+          { see_also "rset" } }
 
-menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
+menu .$id.menubar.settings.grid.spacing -title "Grid Spacing" -tearoff $do_tearoffs
 .$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 0\
 	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
+hoc_register_menu_data "Grid Spacing" "Autosize" "Grid Spacing - Autosize"\
+	{ { summary "Set the grid spacing according to the current view size.\n\
+The number of ticks will be between 20 and 200 in user units.\n\
+The major spacing will be set to 10 ticks per major." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "Arbitrary..." -underline 1\
 	-command "do_grid_spacing $id b"
+hoc_register_menu_data "Grid Spacing" "Arbitrary..." "Grid Spacing - Arbitrary"\
+	{ { summary "Pops up the grid spacing entry dialog. The user can\n\
+use this to set both the horizontal and vertical tick spacing." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add separator
 .$id.menubar.settings.grid.spacing add command -label "micrometer" -underline 4\
 	-command "set_grid_spacing $id micrometer 1"
+hoc_register_menu_data "Grid Spacing" "micrometer" "Grid Spacing - micrometer"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 micrometer." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "millimeter" -underline 2\
 	-command "set_grid_spacing $id millimeter 1"
+hoc_register_menu_data "Grid Spacing" "millimeter" "Grid Spacing - millimeter"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 millimeter." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "centimeter" -underline 0\
 	-command "set_grid_spacing $id centimeter 1"
+hoc_register_menu_data "Grid Spacing" "centimeter" "Grid Spacing - centimeter"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 centimeter." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "decimeter" -underline 0\
 	-command "set_grid_spacing $id decimeter 1"
+hoc_register_menu_data "Grid Spacing" "decimeter" "Grid Spacing - decimeter"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 decimeter." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "meter" -underline 0\
 	-command "set_grid_spacing $id meter 1"
+hoc_register_menu_data "Grid Spacing" "meter" "Grid Spacing - meter"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 meter." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "kilometer" -underline 0\
 	-command "set_grid_spacing $id kilometer 1"
+hoc_register_menu_data "Grid Spacing" "kilometer" "Grid Spacing - kilometer"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 kilometer." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add separator
 .$id.menubar.settings.grid.spacing add command -label "1/10 inch" -underline 0\
 	-command "set_grid_spacing $id \"1/10 inch\" 1"
+hoc_register_menu_data "Grid Spacing" "1/10 inch" "Grid Spacing - 1/10 inch"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1/10 inches." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "1/4 inch" -underline 2\
 	-command "set_grid_spacing $id \"1/4 inch\" 1"
+hoc_register_menu_data "Grid Spacing" "1/4 inch" "Grid Spacing - 1/4 inch"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1/4 inches." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "1/2 inch" -underline 2\
 	-command "set_grid_spacing $id \"1/2 inch\" 1"
+hoc_register_menu_data "Grid Spacing" "1/2 inch" "Grid Spacing - 1/2 inch"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1/2 inches." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "inch" -underline 0\
 	-command "set_grid_spacing $id inch 1"
+hoc_register_menu_data "Grid Spacing" "inch" "Grid Spacing - inch"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 inch." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "foot" -underline 0\
 	-command "set_grid_spacing $id foot 1"
+hoc_register_menu_data "Grid Spacing" "foot" "Grid Spacing - foot"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 foot." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "yard" -underline 0\
 	-command "set_grid_spacing $id yard 1"
+hoc_register_menu_data "Grid Spacing" "yard" "Grid Spacing - yard"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 yard." }
+          { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add command -label "mile" -underline 0\
 	-command "set_grid_spacing $id mile 1"
+hoc_register_menu_data "Grid Spacing" "mile" "mile"\
+	{ { summary "Set the horizontal and vertical tick spacing\n\
+to 1 mile." }
+          { see_also "rset" } }
 
-menu .$id.menubar.settings.grid_spacing -tearoff $do_tearoffs
+#
+# Don't need to register menu data here. Already being done above.
+#
+menu .$id.menubar.settings.grid_spacing -title "Grid Spacing" -tearoff $do_tearoffs
 .$id.menubar.settings.grid_spacing add command -label "Autosize" -underline 0\
 	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
 .$id.menubar.settings.grid_spacing add command -label "Arbitrary..." -underline 1\
@@ -820,131 +1182,275 @@ menu .$id.menubar.settings.grid_spacing -tearoff $do_tearoffs
 .$id.menubar.settings.grid_spacing add command -label "mile" -underline 0\
 	-command "set_grid_spacing $id mile 1"
 
-menu .$id.menubar.settings.coord -tearoff $do_tearoffs
+menu .$id.menubar.settings.coord -title "Constraint Coords" -tearoff $do_tearoffs
 .$id.menubar.settings.coord add radiobutton -value m -variable mged_coords($id)\
 	-label "Model" -underline 0\
 	-command "mged_apply $id \"set coords \$mged_coords($id)\""
+hoc_register_menu_data "Constraint Coords" "Model" "Constraint Coords - Model"\
+	{ { summary "Constrained transformations will use model coordinates." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.coord add radiobutton -value v -variable mged_coords($id)\
 	-label "View" -underline 0\
 	-command "mged_apply $id \"set coords \$mged_coords($id)\""
+hoc_register_menu_data "Constraint Coords" "View" "Constraint Coords - View"\
+	{ { summary "Constrained transformations will use view coordinates." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.coord add radiobutton -value o -variable mged_coords($id)\
 	-label "Object" -underline 0\
 	-command "mged_apply $id \"set coords \$mged_coords($id)\"" -state disabled
+hoc_register_menu_data "Constraint Coords" "Object" "Constraint Coords - Object"\
+	{ { summary "Constrained transformations will use object coordinates." }
+          { see_also "rset, vars" } }
 
-menu .$id.menubar.settings.origin -tearoff $do_tearoffs
+menu .$id.menubar.settings.origin -title "Rotate About" -tearoff $do_tearoffs
 .$id.menubar.settings.origin add radiobutton -value v -variable mged_rotate_about($id)\
 	-label "View Center" -underline 0\
 	-command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
+hoc_register_menu_data "Rotate About" "View Center" "Rotate About - View Center"\
+	{ { summary "Set the center of rotation to be about the view center." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.origin add radiobutton -value e -variable mged_rotate_about($id)\
 	-label "Eye" -underline 0\
 	-command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
+hoc_register_menu_data "Rotate About" "Eye" "Rotate About - Eye"\
+	{ { summary "Set the center of rotation to be about the eye." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.origin add radiobutton -value m -variable mged_rotate_about($id)\
 	-label "Model Origin" -underline 0\
 	-command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
+hoc_register_menu_data "Rotate About" "Model Origin" "Rotate About - Model Origin"\
+	{ { summary "Set the center of rotation to be about the model origin." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.origin add radiobutton -value k -variable mged_rotate_about($id)\
 	-label "Key Point" -underline 0\
 	-command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\"" -state disabled
+hoc_register_menu_data "Rotate About" "Key Point" "Rotate About - Key Point"\
+	{ { summary "Set the center of rotation to be about the key point." }
+          { see_also "rset, vars" } }
 
-menu .$id.menubar.settings.transform -tearoff $do_tearoffs
+menu .$id.menubar.settings.transform -title "Transform" -tearoff $do_tearoffs
 .$id.menubar.settings.transform add radiobutton -value v -variable mged_transform($id)\
 	-label "View" -underline 0\
 	-command "set_transform $id"
+hoc_register_menu_data "Transform" "View" "Transform - View"\
+	{ { summary "Set the transform mode to VIEW. When in VIEW mode, the mouse\n\
+can be used to transform the view. This is the default." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.transform add radiobutton -value a -variable mged_transform($id)\
 	-label "ADC" -underline 0\
 	-command "set_transform $id"
+hoc_register_menu_data "Transform" "ADC" "Transform - ADC"\
+	{ { summary "Set the transform mode to ADC. When in ADC mode, the mouse\n\
+can be used to transform the angle distance cursor while\n\
+the angle distance cursor is active. If the angle distance cursor\n\
+is not active, the behavior is the same as VIEW mode." }
+          { see_also "rset, vars" } }
 .$id.menubar.settings.transform add radiobutton -value e -variable mged_transform($id)\
 	-label "Model Params" -underline 0\
 	-command "set_transform $id" -state disabled
+hoc_register_menu_data "Transform" "Object Params" "Transform - Object Params"\
+	{ { summary "Set the transform mode to OBJECT PARAMS. When in OBJECT PARAMS\n\
+mode, the mouse can be used to transform the object parameters." }
+          { see_also "rset, vars" } }
 
-menu .$id.menubar.modes -tearoff $do_tearoffs
+menu .$id.menubar.modes -title "Modes" -tearoff $do_tearoffs
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,draw)\
 	-label "Draw Grid" -underline 0\
 	-command "mged_apply $id \"rset grid draw \$mged_grid($id,draw)\""
+hoc_register_menu_data "Modes" "Draw Grid" "Draw Grid"\
+	{ { summary "Toggle drawing the grid. The grid is\n\
+a lattice of points over the pane (geometry window).\n\
+The regular spacing between the points gives the user\n\
+accurate visual cues regarding dimension. This spacing\n\
+can be set by the user." }
+          { see_also "rset" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,snap)\
 	-label "Snap To Grid" -underline 0\
 	-command "mged_apply $id \"rset grid snap \$mged_grid($id,snap)\""
+hoc_register_menu_data "Modes" "Snap To Grid" "Snap To Grid"\
+	{ { summary "Toggle grid snapping. When snapping to grid,\n\
+the internal routines that use the mouse pointer location,\n\
+move/snap that location to the nearest grid point. This gives\n\
+the user high accuracy with the mouse for transforming the\n\
+view or editing solids/matrices." }
+          { see_also "rset" } }
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
 	-label "Framebuffer Active" -underline 0 \
 	-command "set_fb $id; update_Raytrace $id"
+hoc_register_menu_data "Modes" "Framebuffer Active" "Framebuffer Active"\
+	{ { summary "This activates/deactivates the framebuffer." }
+          { see_also "rset, vars" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
 	-label "Listen For Clients" -underline 0\
 	-command "set_listen $id" -state disabled
+hoc_register_menu_data "Modes" "Listen For Clients" "Listen For Clients"\
+	{ { summary "This activates/deactivates listening for clients.\n\
+If the framebuffer is listening for clients, new data can\n\
+be passed into the framebuffer. Otherwise, the framebuffer\n\
+is write protected. Actually, it is also read protected with
+one exception. MGED can still read the framebuffer data." }
+          { see_also "rset, vars" } }
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
 	-label "Persistent Rubber Band" -underline 0\
 	-command "mged_apply $id \"rset rb draw \$mged_rubber_band($id)\""
+hoc_register_menu_data "Modes" "Persistent Rubber Band" "Persistent Rubber Band"\
+	{ { summary "Toggle drawing the rubber band while idle." }
+          { see_also "rset" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
 	-label "Angle/Dist Cursor" -underline 0 \
 	-command "mged_apply $id \"adc draw \$mged_adc_draw($id)\""
+hoc_register_menu_data "Modes" "Angle/Dist Cursor" "Angle/Dist Cursor"\
+	{ { summary "Toggle drawing the angle distance cursor." }
+          { see_also "adc" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_faceplate($id)\
 	-label "Faceplate" -underline 7\
 	-command "mged_apply $id \"set faceplate \$mged_faceplate($id)\""
+hoc_register_menu_data "Modes" "Faceplate" "Faceplate"\
+	{ { summary "Toggle drawing the MGED faceplate." }
+          { see_also "rset, vars" } }
 .$id.menubar.modes add cascade -label "Axes" -underline 1\
 	-menu .$id.menubar.modes.axes
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_multi_view($id)\
 	-label "Multipane" -underline 0 -command "setmv $id"
+hoc_register_menu_data "Modes" "Multipane" "Multipane"\
+	{ { summary "Toggle between multipane and single pane mode. In\n\
+multipane mode there are four panes, each with its own state." } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable show_edit_info($id)\
 	-label "Edit Info" -underline 0\
 	-command "toggle_edit_info $id"
+hoc_register_menu_data "Modes" "Edit Info" "Edit Info"\
+	{ { summary "Toggle display of edit information.\n\
+If in solid edit state, the edit information is\n\
+displayed in the internal solid editor. This editor,\n\
+as its name implies, can be used to edit the solid\n\
+as well as view its contents. If in object edit\n\
+state, the object information is displayed in a\n\
+dialog box." } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_show_status($id)\
 	-label "Status Bar" -underline 7\
 	-command "toggle_status_bar $id"
+hoc_register_menu_data "Modes" "Status Bar" "Status Bar"\
+	{ { summary "Toggle display of the command window's status bar." } }
 if {$comb} {
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_show_cmd($id)\
 	-label "Command Window" -underline 0\
 	-command "set_cmd_win $id"
+hoc_register_menu_data "Modes" "Command Window" "Command Window"\
+	{ { summary "Toggle display of the command window." } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_show_dm($id)\
 	-label "Graphics Window" -underline 0\
 	-command "set_dm_win $id"
+hoc_register_menu_data "Modes" "Graphics Window" "Graphics Window"\
+	{ { summary "Toggle display of the graphics window." } }
 } 
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
 	-label "Rateknobs" -underline 0\
 	-command "mged_apply $id \"set rateknobs \$mged_rateknobs($id)\""
+hoc_register_menu_data "Modes" "Rateknobs" "Rate Knobs"\
+	{ { summary "Toggle rate knob mode. When in rate knob mode,\n\
+transformation with the mouse becomes rate based.\n\
+For example, if the user rotates the view about the\n\
+X axis, the view continues to rotate about the X axis\n\
+until the rate rotation is stopped." }
+          { see_also "knob" } }
 
-menu .$id.menubar.modes.axes -tearoff $do_tearoffs
+menu .$id.menubar.modes.axes -title "Axes" -tearoff $do_tearoffs
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_axes($id,view_draw) -label "View" -underline 0\
 	-command "mged_apply $id \"rset ax view_draw \$mged_axes($id,view_draw)\""
+hoc_register_menu_data "Axes" "View" "View Axes"\
+	{ { summary "Toggle display of the view axes. The view\n\
+axes are used to give the user visual cues indicating\n\
+the current view of model space. These axes are drawn\n\
+the same as the model axes, except that the view axes'\n\
+position is fixed in view space. This position as\n\
+well as other characteristics can be set by the user." }
+          { see_also "rset" } }
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_axes($id,model_draw) -label "Model" -underline 0\
 	-command "mged_apply $id \"rset ax model_draw \$mged_axes($id,model_draw)\""
+hoc_register_menu_data "Axes" "Model" "Model Axes"\
+	{ { summary "Toggle display of the model axes. The model\n\
+axes are used to give the user visual cues indicating\n\
+the current view of model space. The model axes are by default\n\
+located at the model origin and are fixed in model space.\n\
+So, if the user transforms the view, the model axes will potentially
+move in view space. The model axes position as well\n\
+as other characteristics can be set by the user." }
+          { see_also "rset" } }
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_axes($id,edit_draw) -label "Edit" -underline 0\
 	-command "mged_apply $id \"rset ax edit_draw \$mged_axes($id,edit_draw)\""
+hoc_register_menu_data "Axes" "Edit" "Edit Axes"\
+	{ { summary "Toggle display of the edit axes. The edit\n\
+axes are used to give the user visual cues indicating\n\
+how the edit is progressing. They consist of a pair of axes.\n\
+One remains unmoved, while the other moves to indicate\n\
+what has changed." }
+          { see_also "rset" } }
 
-menu .$id.menubar.tools -tearoff $do_tearoffs
+menu .$id.menubar.tools -title "Tools" -tearoff $do_tearoffs
 .$id.menubar.tools add command -label "ADC Control Panel..." -underline 0\
 	-command "init_adc_control $id"
+hoc_register_menu_data "Tools" "ADC Control Panel..." "ADC Control Panel"\
+	{ { summary "Tool for controlling the angle distance cursor." }
+          { see_also "adc" } }
 .$id.menubar.tools add command -label "Grid Control Panel..." -underline 0\
 	-command "init_grid_control $id"
+hoc_register_menu_data "Tools" "Grid Control Panel..." "Grid Control Panel"\
+	{ { summary "Tool for setting grid parameters." }
+          { see_also "rset" } }
 .$id.menubar.tools add command -label "Query Ray Control Panel..." -underline 0\
 	-command "init_qray_control $id"
+hoc_register_menu_data "Tools" "Query Ray Control Panel..." "Query Ray Control Panel"\
+	{ { summary "Tool for setting query ray parameters." } }
+.$id.menubar.tools add command -label "Raytrace Control Panel..." -underline 0\
+	-command "init_Raytrace $id"
+hoc_register_menu_data "Tools" "Raytrace Control Panel..." "Raytrace Control Panel"\
+	{ { summary "Tool for raytracing the current view." }
+          { see_also rt } }
 .$id.menubar.tools add separator
 .$id.menubar.tools add command -label "Solid Editor..." -underline 0\
 	-command "init_edit_solid $id"
+hoc_register_menu_data "Tools" "Solid Editor..." "Solid Editor"\
+	{ { summary "Tool for creating/editing solids." } }
 .$id.menubar.tools add command -label "Combination Editor..." -underline 0\
 	-command "init_comb $id"
+hoc_register_menu_data "Tools" "Combination Editor..." "Combination Editor"\
+	{ { summary "Tool for creating/editing combinations." } }
 .$id.menubar.tools add command -label "Color Editor..." -underline 1\
 	-command "cadColorWidget tool .$id colorEditTool\
 	-title \"Color Editor\"\
 	-initialcolor black"
+hoc_register_menu_data "Tools" "Color Editor..." "Color Editor"\
+	{ { summary "Tool for displaying colors." } }
 #.$id.menubar.tools add separator
 #.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
 #	-label "Classic Menu Tool..." -underline 0\
 #	-command "toggle_button_menu $id"
 
-menu .$id.menubar.help -tearoff $do_tearoffs
+menu .$id.menubar.help -title "Help" -tearoff $do_tearoffs
 .$id.menubar.help add command -label "About" -underline 0\
 	-command "do_About_MGED $id"
-.$id.menubar.help add command -label "On Context" -underline 0\
-	-command "on_context_help $id"
+hoc_register_menu_data "Help" "About" "About MGED"\
+	{ { summary "Information about MGED" } }
+#.$id.menubar.help add command -label "On Context" -underline 0\
+#	-command "on_context_help $id"
 .$id.menubar.help add command -label "Commands..." -underline 0\
 	-command "command_help $id"
+hoc_register_menu_data "Help" "Commands..." "Commands"\
+	{ { summary "Tool for getting information on MGED's commands." }
+          { see_also "?, help" } }
 .$id.menubar.help add command -label "Apropos..." -underline 1\
 	-command "ia_apropos .$id $screen"
+hoc_register_menu_data "Help" "Apropos..." "Apropos"\
+	{ { summary "Tool for searching for information about\n\
+MGED's commands." }
+          { see_also "apropos" } }
 
 if [info exists env(WEB_BROWSER)] {
     if [ file exists $env(WEB_BROWSER) ] {
@@ -963,6 +1469,8 @@ if ![info exists web_cmd] {
     }
 }
 .$id.menubar.help add command -label "Manual..." -underline 0 -command $web_cmd
+hoc_register_menu_data "Help" "Manual..." "Manual"\
+	{ { summary "Tool for browsing the online MGED manual." } }
 
 #==============================================================================
 # PHASE 3: Bottom-row display
@@ -973,27 +1481,27 @@ frame .$id.status.dpy
 frame .$id.status.illum
 
 label .$id.status.cent -textvar mged_display($mged_active_dm($id),center) -anchor w
-hoc_create_label_binding .$id.status.cent "View Center"\
+hoc_register_data .$id.status.cent "View Center"\
 	{ { summary "These numbers indicate the view center in\nmodel coordinates (local units)." }
           { see_also "center, view, viewget, viewset" } }
 label .$id.status.size -textvar mged_display($mged_active_dm($id),size) -anchor w
-hoc_create_label_binding .$id.status.size "View Size"\
+hoc_register_data .$id.status.size "View Size"\
 	{ { summary "This number indicates the view size (local units)." }
           { see_also size} }
 label .$id.status.units -textvar mged_display(units) -anchor w -padx 4
-hoc_create_label_binding .$id.status.units "Units"\
-	{ { summary "     This indicates the local units.     " }
+hoc_register_data .$id.status.units "Units"\
+	{ { summary "This indicates the local units.     " }
           { see_also units} }
 label .$id.status.aet -textvar mged_display($mged_active_dm($id),aet) -anchor w
-hoc_create_label_binding .$id.status.aet "View Orientation"\
+hoc_register_data .$id.status.aet "View Orientation"\
 	{ { summary "These numbers indicate the view orientation using azimuth,\nelevation and twist." }
         { see_also "ae, view, viewget, viewset" } }
 label .$id.status.ang -textvar mged_display($mged_active_dm($id),ang) -anchor w -padx 4
-hoc_create_label_binding .$id.status.ang "Rateknobs"\
+hoc_register_data .$id.status.ang "Rateknobs"\
 	{ { summary "These numbers give some indication of\nrate of rotation about the x,y,z axes." }
         { see_also knob} }
 label .$id.status.illum.label -textvar ia_illum_label($id)
-hoc_create_label_binding .$id.status.illum.label "Status Area"\
+hoc_register_data .$id.status.illum.label "Status Area"\
 	{ { summary "This area is for displaying either the frames per second,\nthe illuminated path or the keypoint during an edit." } }
 
 #==============================================================================
@@ -1017,7 +1525,7 @@ if {$use_grid_gm} {
 scrollbar .$id.s -relief flat -command ".$id.t yview"
 
 bind .$id.t <Enter> "focus .$id.t; break"
-hoc_create_binding .$id.t "Command Window" { { summary "Enter commands here!" } }
+hoc_register_data .$id.t "Command Window" { { summary "Enter commands here!" } }
 
 set mged_edit_style($id) $mged_default_edit_style
 set dm_insert_char_flag(.$id.t) 0
@@ -1132,9 +1640,9 @@ mview_build_menubar $id
 # PHASE 6: Further setup
 #==============================================================================
 
-if {[info procs mged_MenuFirstEntry] == ""} {
+if {[info procs cad_MenuFirstEntry] == ""} {
     # trigger the Tcl source file to be loaded
-    mged_MenuFirstEntry ""
+    cad_MenuFirstEntry ""
 }
 
 cmd_init $id
