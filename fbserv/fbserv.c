@@ -442,7 +442,7 @@ char *buf;
 {
 	int	height, width;
 	char	rbuf[5*NET_LONG_LEN+1];
-	int	want, did;
+	int	want;
 
 	width = pkg_glong( &buf[0*NET_LONG_LEN] );
 	height = pkg_glong( &buf[1*NET_LONG_LEN] );
@@ -476,7 +476,7 @@ fb_log(s);
 	}
 
 	want = 5*NET_LONG_LEN;
-	if( (did = pkg_send( MSG_RETURN, rbuf, want, pcp )) != want )
+	if( pkg_send( MSG_RETURN, rbuf, want, pcp ) != want )
 		comm_error("pkg_send fb_open reply\n");
 	if( buf ) (void)free(buf);
 }
@@ -885,11 +885,10 @@ rfbhelp(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	int	x;	/* dummy */
 	long	ret;
 	char	rbuf[NET_LONG_LEN+1];
 
-	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+	(void)pkg_glong( &buf[0*NET_LONG_LEN] );
 
 	ret = fb_help(fbp);
 	(void)pkg_plong( &rbuf[0], ret );
@@ -917,7 +916,7 @@ fb_log( char *fmt, ... )
 {
 	va_list ap;
 	char	outbuf[4096];			/* final output string */
-	int	want, got;
+	int	want;
 
 	va_start( ap, fmt );
 	(void)vsprintf( outbuf, fmt, ap );
@@ -930,7 +929,7 @@ fb_log( char *fmt, ... )
 		return;
 	}
 	want = strlen(outbuf)+1;
-	if( (got = pkg_send( MSG_ERROR, outbuf, want, rem_pcp )) != want )  {
+	if( pkg_send( MSG_ERROR, outbuf, want, rem_pcp ) != want )  {
 		comm_error("pkg_send error in fb_log, message was:\n");
 		comm_error(outbuf);
 	}
