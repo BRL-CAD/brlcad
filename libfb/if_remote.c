@@ -582,6 +582,13 @@ int	*x, *y;
 }
 
 /*
+ *			R E M _ S E T C U R S O R
+ *
+ *  Program the "shape" of the cursor.
+ *
+ *  bits[] has xbits*ybits bits in it, rounded up to next largest byte.
+ *
+ *  Do not confuse this routine with the old fb_scursor() call.
  */
 _LOCAL_ int
 rem_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
@@ -590,10 +597,35 @@ CONST unsigned char	*bits;
 int		xbits, ybits;
 int		xorig, yorig;
 {
+	char	buf[4*NET_LONG_LEN+1];
+	int	ret;
 
-	/* XXX For some reason, we don't implement this over the net? */
-	fb_log("rem_setcursor() unimplemented\n");
-	return -1;
+	(void)fbputlong( xbits, &buf[0*NET_LONG_LEN] );
+	(void)fbputlong( ybits, &buf[1*NET_LONG_LEN] );
+	(void)fbputlong( xorig, &buf[2*NET_LONG_LEN] );
+	(void)fbputlong( yorig, &buf[3*NET_LONG_LEN] );
+
+	ret = pkg_2send( MSG_FBSETCURSOR+MSG_NORETURN,
+		buf, 4*NET_LONG_LEN,
+		(char *)bits, (xbits+ybits+7)>>3,
+		PCP(ifp) );
+	ret -= 4*NET_LONG_LEN;
+	if( ret < 0 )
+		return	-1;	/* Error from libpkg */
+
+#if 0
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-2;
+	return( fbgetlong( buf ) );
+#else
+	/* Since this call got somehow overlooked until Release 4.3,
+	 * older 'fbserv' programs won't have support for this request.
+	 * Rather than dooming LGT users to endless frustration,
+	 * simply launch off the request and tell our caller that all is well.
+	 * LGT never actually checks the return code of this routine anyway.
+	 */
+	return 0;
+#endif
 }
 
 /*
