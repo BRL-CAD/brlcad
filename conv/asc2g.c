@@ -48,6 +48,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 
 
+extern void rt_dsp_ifree( struct rt_db_internal	*ip);
+
+
+
 #define BUFSIZE			(8*1024)	/* input line buffer size */
 #define TYPELEN			10
 #define NAME_LEN			20
@@ -270,13 +274,14 @@ strsolbld()
 
 	if( strcmp( type, "dsp" ) == 0 )  {
 		struct rt_dsp_internal *dsp;
+
 		BU_GETSTRUCT( dsp, rt_dsp_internal );
 		bu_vls_init( &dsp->dsp_file );
 		bu_vls_strcpy( &str, args );
 		if( bu_struct_parse( &str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp ) < 0 )  {
 			bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 				name, type, args);
-			rt_dsp_ifree( dsp );
+			rt_dsp_ifree( (struct rt_db_internal *)dsp );
 			goto out;
 		}
 		dsp->magic = RT_DSP_INTERNAL_MAGIC;

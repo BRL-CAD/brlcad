@@ -343,7 +343,8 @@ char *argv[];
 					}
 					else if( line_entity )
 					{
-						struct edgeuse *eu;
+						struct edgeuse *eu = 
+							(struct edgeuse *)NULL;
 
 						for( i=1 ; i<no_of_pts ; i++ )
 						{

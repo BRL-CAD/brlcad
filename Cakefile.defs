@@ -907,7 +907,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	if 1	/* PRODUCTION=1 */
-#		define	OPTIMIZER	-O2
+#		define	OPTIMIZER	-O2 -g
 #	else
 #		define	OPTIMIZER	-g
 #	endif

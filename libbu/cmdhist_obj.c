@@ -25,7 +25,9 @@
 
 #include "conf.h"
 #include "tcl.h"
-
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "cmd.h"

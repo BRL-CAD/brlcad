@@ -20,6 +20,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 unsigned char pix[3];		/* RGB of one pixel */
 

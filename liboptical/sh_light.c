@@ -40,6 +40,10 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "rtprivate.h"
 #include "../rt/light.h"
 
+#if RT_MULTISPECTRAL
+#include "spectrum.h"
+#endif
+
 extern int
 viewshade(struct application *ap,
 	  register CONST struct partition *pp,
@@ -690,8 +694,11 @@ light_setup(register struct region *rp,
 				rp->reg_name, rp->reg_mater.ma_temperature);
 		}
 	} else if (rp->reg_mater.ma_color_valid )  {
-		rt_spect_reflectance_rgb( lsp->lt_spectrum, rp->reg_mater.ma_color );
-		/* XXX Need to convert units of lumens (candela-sr) to ?? mw/sr?  Use any old numbers to get started. */
+		rt_spect_reflectance_rgb( lsp->lt_spectrum,
+					  rp->reg_mater.ma_color );
+		/* XXX Need to convert units of lumens (candela-sr) to ?? 
+		 * mw/sr?  Use any old numbers to get started.
+		 */
 		bn_tabdata_scale( lsp->lt_spectrum, lsp->lt_spectrum,
 			lsp->lt_intensity * 0.001 ); /* XXX */
 	} else {
@@ -777,7 +784,9 @@ light_maker(int num, mat_t v2m)
 	vect_t	temp;
 	vect_t	color;
 	char	name[64];
-
+#if RT_MULTISPECTRAL
+	float	fcolor[3];
+#endif
 	/* Determine the Light location(s) in view space */
 	for( i=0; i<num; i++ )  {
 		switch(i)  {
@@ -805,9 +814,12 @@ light_maker(int num, mat_t v2m)
 		BU_GETSTRUCT( lsp, light_specific );
 		lsp->l.magic = LIGHT_MAGIC;
 #if RT_MULTISPECTRAL
+
 		BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
-		rt_spect_reflectance_rgb( lsp->lt_spectrum, color );
+		VMOVE(fcolor, color);
+		rt_spect_reflectance_rgb( lsp->lt_spectrum, fcolor );
 		bn_tabdata_scale( lsp->lt_spectrum, lsp->lt_spectrum, 1000.0 );
+
 #else
 		VMOVE( lsp->lt_color, color );
 #endif

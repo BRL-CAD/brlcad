@@ -25,6 +25,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 int lmap[256];		/* Map HEX ASCII to binary in left nybble */
 int rmap[256];		/* Map HEX ASCII to binary in right nybble */

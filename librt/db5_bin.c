@@ -35,6 +35,62 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 /*
+ * XXX these are the interface routines needed for table.c
+ */
+int
+rt_bin_expm_export5(struct bu_external *ep,
+			CONST struct rt_db_internal *ip,
+			double local2mm,
+			CONST struct db_i *dbip,
+			struct resource *resp)
+{
+	bu_log("rt_bin_expm_export5() not implemented\n");
+	return -1;
+}
+
+int
+rt_bin_unif_export5(struct bu_external *ep,
+			CONST struct rt_db_internal *ip,
+			double local2mm,
+			CONST struct db_i *dbip,
+			struct resource *resp)
+{
+	bu_log("rt_bin_unif_export5() not implemented\n");
+	return -1;
+}
+int
+rt_bin_unif_import5(struct rt_db_internal * ip,
+ 			CONST struct bu_external *ep,
+ 			CONST mat_t mat,
+			CONST struct db_i *dbip,
+			      struct resource *resp)
+{
+	bu_log("rt_bin_unif_import5() not implemented\n");
+	return -1;
+}
+int
+rt_bin_expm_import5(struct rt_db_internal * ip,
+ 			CONST struct bu_external *ep,
+ 			CONST mat_t mat,
+			CONST struct db_i *dbip,
+			      struct resource *resp)
+{
+	bu_log("rt_bin_expm_import5() not implemented\n");
+	return -1;
+}
+
+int
+rt_bin_mime_import5(struct rt_db_internal * ip,
+ 			CONST struct bu_external *ep,
+ 			CONST mat_t mat,
+			CONST struct db_i *dbip,
+			      struct resource *resp)
+{
+	bu_log("rt_bin_mime_import5() not implemented\n");
+	return -1;
+}
+
+/*
  *			R T _ B I N U N I F _ I M P O R T 5
  *
  *  Import a uniform-array binary object from the database format to
@@ -126,6 +182,9 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 	return 0;		/* OK */
 }
 
+
+
+
 /*
  *			R T _ B I N E X P M _ I M P O R T 5
  *
@@ -142,6 +201,7 @@ rt_binexpm_import5( struct rt_db_internal	*ip,
 	return -1;
 }
 
+
 /*
  *			R T _ B I N M I M E _ I M P O R T 5
  *
@@ -157,6 +217,7 @@ rt_binmime_import5( struct rt_db_internal	*ip,
 	bu_log("rt_binmime_import5() not implemented yet\n");
 	return -1;
 }
+
 
 /*
  *			R T _ B I N _ I M P O R T 5

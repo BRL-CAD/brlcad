@@ -2881,10 +2881,12 @@ struct nmg_ray_state *rs;
 	while( 1 )
 	{
 		struct edgeuse *eu_tmp;
-		struct loopuse *lu1,*lu2;
+		struct loopuse *lu1 = (struct loopuse *)NULL;
+		struct loopuse *lu2 = (struct loopuse *)NULL;
 		point_t mid_pt;
 		int class;
-		int orient1,orient2;
+		int orient1 = 0;
+		int orient2 = 0;
 		int prior_end;
 		int next_start,next_end;
 		int i;
@@ -2971,8 +2973,10 @@ struct nmg_ray_state *rs;
 		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
 			(struct edgeuse *)NULL, 0);
 
-		if( (cuts=find_loop_to_cut( &index1, &index2, prior_start, prior_end,
-			next_start, next_end, mid_pt, rs )) == (struct bu_ptbl *)NULL )
+		
+		cuts = find_loop_to_cut( &index1, &index2, prior_start, prior_end,
+				       next_start, next_end, mid_pt, rs );
+		if( cuts == (struct bu_ptbl *)NULL )
 #if 0
 		{
 			vu1 = rs->vu[index1];

@@ -28,6 +28,9 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <ctype.h>
 #include <signal.h>
 #include <math.h>

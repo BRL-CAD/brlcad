@@ -509,8 +509,8 @@ FILE	*fp;
 struct rt_wdb *fpdb;
 int	reg_id;
 {
-	int	cur_id, face, facet_type, hole_face, i,
-		lst[MAX_PTS_PER_FACE], np, nv;
+	int	cur_id, face, facet_type, i, lst[MAX_PTS_PER_FACE], np, nv;
+	int hole_face = -4200;
 	struct faceuse	*outfaceuses[MAX_PTS_PER_FACE];
 	struct model	*m;	/* Input/output, nmg model. */
 	struct nmgregion *r;

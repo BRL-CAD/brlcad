@@ -92,3 +92,9 @@ BU_EXTERN( void			rt_spect_black_body, (struct bn_tabdata *data,
 BU_EXTERN( void			rt_spect_black_body_fast, (
 					struct bn_tabdata *data,
 					double temp));
+
+BU_EXTERN(void			rt_spect_reflectance_rgb, 
+	  (struct bn_tabdata	*curve, 
+	   CONST float		rgb[3]));
+
+

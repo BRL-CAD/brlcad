@@ -71,7 +71,7 @@ char *argv[];
 	struct rt_wdb *out_fp;		/* output file pointers */
 	char *output_file = "viewpoint.g";
 	char *base_name;		/* title and top level group name */
-	char *coords_name;		/* input coordinates file name */
+	char *coords_name=(char *)NULL;	/* input coordinates file name */
 	char *elems_name;		/* input elements file name */
 	float x,y,z,nx,ny,nz;		/* vertex and normal coords */
 	char *ptr1,*ptr2;
@@ -154,6 +154,11 @@ char *argv[];
 		rt_bomb( usage );
 
 	/* build a title for the BRLCAD database */
+	if ( !coords_name ) {
+		bu_log("%s:%d no coords_name set\n", __FILE__, __LINE__);
+		bu_bomb("croak\n");
+	}
+
 	ptr1 = strrchr( coords_name , '/' );
 	if( ptr1 == NULL )
 		ptr1 = coords_name;

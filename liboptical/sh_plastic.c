@@ -38,6 +38,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadework.h"
 #include "rtprivate.h"
 #include "../rt/light.h"
+#if RT_MULTISPECTRAL
+#include "spectrum.h"
+#endif
 
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
@@ -415,7 +418,7 @@ char	*dp;
 	/* Emission.  0..1 is normal range, -1..0 sucks light out, like OpenGL */
 #if RT_MULTISPECTRAL
 	{
-		fastf_t emission[3];
+		float emission[3];
 		struct bn_tabdata	*ms_emission = BN_TABDATA_NULL;
 		VMOVE(emission,ps->emission);
 #if SW_SET_TRANSMIT

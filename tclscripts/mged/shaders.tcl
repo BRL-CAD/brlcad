@@ -1550,7 +1550,7 @@ proc set_light_defaults { id } {
 	global light_variables
 
 	foreach {type name abbrev def_val desc} $light_variables {
-		set shader_params($id,def_light_$abbrev) $def_val
+		set shader_params(def_light_$abbrev) $def_val
 	}
 }
 
@@ -1721,7 +1721,8 @@ proc do_light_apply { shade_var id } {
 	set pattern ($id,light_)(\[a-z\]*)
 	foreach i [array names shader_params] {
 	    if { [regexp $pattern $i name head varname] && \
-	         $shader_params($id,light_$varname) != $shader_params($id,def_light_$varname) } {
+	         $shader_params($id,light_$varname) != \
+	         $shader_params(def_light_$varname) } {
 			lappend params $varname $shader_params($id,light_$varname)
 		}
 	}
@@ -2106,7 +2107,7 @@ proc stack_add { shader shade_var id } {
 		}
 		light {
 			set_light_defaults "$id,light_$index"
-			set tmp_win [do_light $shade_var $id,light_$index]
+			set tmp_win [do_light $shade_var $id,stk_$index]
 		}
 		bump -
 		bwtexture -

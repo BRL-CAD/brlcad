@@ -186,7 +186,7 @@ again:
 void
 rt_spect_reflectance_rgb( curve, rgb )
 struct bn_tabdata	*curve;
-CONST point_t		rgb;
+CONST float		rgb[3];
 {
 	register int	i;
 	register CONST struct bn_table	*tabp;
