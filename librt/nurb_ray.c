@@ -336,18 +336,18 @@ double	uv_tol;
 			vmax;
 	fastf_t 	u[2],
 			v[2];
-	struct rt_list	plist;
+	struct bu_list	plist;
 
 	NMG_CK_SNURB(srf);
 
 	h = (struct rt_nurb_uv_hit *) 0;
-	RT_LIST_INIT( &plist );
+	BU_LIST_INIT( &plist );
 
 	/* project the surface to a 2 dimensional problem */
 	/* NOTE that this gives a single snurb back, NOT a list */
 	psrf = rt_nurb_project_srf( srf, plane2, plane1 );
 	psrf->dir = 1;
-	RT_LIST_APPEND( &plist, &psrf->l );
+	BU_LIST_APPEND( &plist, &psrf->l );
 
 	if( rt_g.debug & DEBUG_SPLINE )
 		rt_nurb_s_print("srf", psrf);
@@ -356,10 +356,10 @@ double	uv_tol;
 	 * but more may be added on as work progresses.
 	 */
 top:
-	while( RT_LIST_WHILE( psrf, face_g_snurb, &plist ) )  {
+	while( BU_LIST_WHILE( psrf, face_g_snurb, &plist ) )  {
 		int flat;
 		
-		RT_LIST_DEQUEUE( &psrf->l );
+		BU_LIST_DEQUEUE( &psrf->l );
 		NMG_CK_SNURB(psrf);
 		sub = 0;
 		flat = 0;

@@ -131,7 +131,7 @@ fastf_t v;
 
 	if( fabs( E*G - F*F) < 0.0001 )		/* XXX */
 	{
-		rt_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
+		bu_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
 			E,F,G);
 		vec_ortho(cvp->crv_pdir, norm);	/* sanity */
 		return;

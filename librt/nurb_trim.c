@@ -87,7 +87,7 @@ fastf_t u, v;
 	if( quad_case == CASE_C )			/* CASE C */
 		return rt_process_casec(trim, u, v);
 
-	rt_log( "rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case );
+	bu_log( "rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case );
 	return( -1 );
 }
 
@@ -219,7 +219,7 @@ fastf_t u, v;
 
 	struct edge_g_cnurb * clip;
 	int jordan_hit;
-	struct rt_list	plist;
+	struct bu_list	plist;
 	int trim_flag = 0;
 	int caset;
 
@@ -229,13 +229,13 @@ fastf_t u, v;
 
 	jordan_hit = 0;
 
-	RT_LIST_INIT(&plist);
+	BU_LIST_INIT(&plist);
 
 	rt_clip_cnurb(&plist, trim, u, v);
 
-	while( RT_LIST_WHILE( clip, edge_g_cnurb, &plist ) )
+	while( BU_LIST_WHILE( clip, edge_g_cnurb, &plist ) )
 	{
-		RT_LIST_DEQUEUE( &clip->l );
+		BU_LIST_DEQUEUE( &clip->l );
 		
 		caset = rt_trim_case(clip, u,v);
 
@@ -252,9 +252,9 @@ fastf_t u, v;
 		if( trim_flag == TRIM_ON) break;
 	}
 
-	while( RT_LIST_WHILE( clip, edge_g_cnurb, &plist) )
+	while( BU_LIST_WHILE( clip, edge_g_cnurb, &plist) )
 	{
-		RT_LIST_DEQUEUE( &clip->l );
+		BU_LIST_DEQUEUE( &clip->l );
 		rt_nurb_free_cnurb( clip );
 	}
 
@@ -314,7 +314,7 @@ int pt_type;
  */
 void
 rt_clip_cnurb( plist, crv, u, v )
-struct rt_list *plist;
+struct bu_list *plist;
 struct edge_g_cnurb * crv;
 fastf_t u,v;
 {
@@ -426,12 +426,12 @@ fastf_t u,v;
 	c2 = rt_nurb_c_xsplit((struct edge_g_cnurb *) c1->l.forw, m2);
 
 	tmp = (struct edge_g_cnurb *) c1->l.forw;
-	RT_LIST_DEQUEUE( &tmp->l);
+	BU_LIST_DEQUEUE( &tmp->l);
 	rt_nurb_free_cnurb( tmp );
 	
-	RT_LIST_INIT( plist );
-	RT_LIST_INSERT( &c2->l, plist);
-	RT_LIST_APPEND( plist, &c1->l);
+	BU_LIST_INIT( plist );
+	BU_LIST_INSERT( &c2->l, plist);
+	BU_LIST_APPEND( plist, &c1->l);
 }
 
 /* Return the SIGN of the value */

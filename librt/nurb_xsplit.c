@@ -199,7 +199,7 @@ int dir;
 		}
 	}
 	
-	RT_LIST_APPEND( &srf1->l, &srf2->l );
+	BU_LIST_APPEND( &srf1->l, &srf2->l );
 
 	rt_free( (char *) new_kv.knots, "rt_nurb_s_xsplit: new_kv.knots");
 
@@ -270,6 +270,6 @@ fastf_t param;
 
 	rt_free( (char *) new_kv.knots, "rt_nurb_c_xsplit: new_kv.knots");
 
-	RT_LIST_APPEND( &crv1->l, &crv2->l );
+	BU_LIST_APPEND( &crv1->l, &crv2->l );
 	return crv1;
 }

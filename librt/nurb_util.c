@@ -182,27 +182,27 @@ CONST struct edge_g_cnurb * crv;
 	int i,j;
 
 	NMG_CK_CNURB(crv);
-	rt_log("curve = {\n");
-	rt_log("\tOrder = %d\n", crv->order);
-	rt_log("\tKnot Vector = {\n\t\t");
+	bu_log("curve = {\n");
+	bu_log("\tOrder = %d\n", crv->order);
+	bu_log("\tKnot Vector = {\n\t\t");
 
 	for( i = 0; i < crv->k.k_size; i++)
-		rt_log("%10.8f ", crv->k.knots[i]);
+		bu_log("%10.8f ", crv->k.knots[i]);
 
-	rt_log("\n\t}\n");
-	rt_log("\t");
+	bu_log("\n\t}\n");
+	bu_log("\t");
 	rt_nurb_print_pt_type(crv->pt_type);
-	rt_log("\tmesh = {\n");
+	bu_log("\tmesh = {\n");
 	for( ptr = &crv->ctl_points[0], i= 0;
 		i < crv->c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->pt_type))
 	{
-		rt_log("\t\t");
+		bu_log("\t\t");
 		for(j = 0; j < RT_NURB_EXTRACT_COORDS(crv->pt_type); j++)
-			rt_log("%4.5f\t", ptr[j]);
-		rt_log("\n");
+			bu_log("%4.5f\t", ptr[j]);
+		bu_log("\n");
 
 	}
-	rt_log("\t}\n}\n");
+	bu_log("\t}\n}\n");
 	
 
 }
@@ -213,15 +213,15 @@ char * c;
 CONST struct face_g_snurb * srf;
 {
 
-    rt_log("%s\n", c );
+    bu_log("%s\n", c );
 
-    rt_log("order %d %d\n", srf->order[0], srf->order[1] );
+    bu_log("order %d %d\n", srf->order[0], srf->order[1] );
 
-    rt_log( "u knot vector \n");
+    bu_log( "u knot vector \n");
 
     rt_nurb_pr_kv( &srf->u );
 
-    rt_log( "v knot vector \n");
+    bu_log( "v knot vector \n");
 
     rt_nurb_pr_kv( &srf->v );
 
@@ -236,14 +236,14 @@ CONST struct knot_vector * kv;
     register fastf_t * ptr = kv->knots;
     int i;
 
-    rt_log("[%d]\t", kv->k_size );
+    bu_log("[%d]\t", kv->k_size );
 
 
     for( i = 0; i < kv->k_size; i++)
     {
-	rt_log("%2.5f  ", *ptr++);
+	bu_log("%2.5f  ", *ptr++);
     }
-    rt_log("\n");
+    bu_log("\n");
 }
 
 void
@@ -256,21 +256,21 @@ CONST struct face_g_snurb * m;
 
 	NMG_CK_SNURB(m);
 
-	rt_log("\t[%d] [%d]\n", m->s_size[0], m->s_size[1] );
+	bu_log("\t[%d] [%d]\n", m->s_size[0], m->s_size[1] );
 
 	for( i = 0; i < m->s_size[0]; i++)
 	{
 		for( j =0; j < m->s_size[1]; j++)
 		{
-			rt_log("\t");
+			bu_log("\t");
 
 			for(k = 0; k < evp; k++)
-				rt_log("%f    ", m_ptr[k]);
+				bu_log("%f    ", m_ptr[k]);
 
-			rt_log("\n");
+			bu_log("\n");
 			m_ptr += RT_NURB_EXTRACT_COORDS(m->pt_type);
 		}
-		rt_log("\n");
+		bu_log("\n");
 	}
 }
 
@@ -283,16 +283,16 @@ int c;
 	rat = RT_NURB_IS_PT_RATIONAL(c);
 	
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XY)
-		rt_log("Point Type = RT_NURB_PT_XY");
+		bu_log("Point Type = RT_NURB_PT_XY");
 	else 
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XYZ)
-		rt_log("Point Type = RT_NURB_PT_XYX");
+		bu_log("Point Type = RT_NURB_PT_XYX");
 	else 
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_UV)
-		rt_log("Point Type = RT_NURB_PT_UV");
+		bu_log("Point Type = RT_NURB_PT_UV");
 
 	if( rat )
-		rt_log("W\n");
+		bu_log("W\n");
 	else
-		rt_log("\n");
+		bu_log("\n");
 }

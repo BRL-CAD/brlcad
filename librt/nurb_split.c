@@ -43,7 +43,7 @@
  */
 void
 rt_nurb_s_split( split_hd, srf, dir )
-struct rt_list	*split_hd;
+struct bu_list	*split_hd;
 CONST struct face_g_snurb 	*srf;
 int		dir;
 {
@@ -231,8 +231,8 @@ int		dir;
 	}
 	
 	/* Arrangement will be:  head, srf1, srf2 */
-	RT_LIST_APPEND( split_hd, &srf2->l );
-	RT_LIST_APPEND( split_hd, &srf1->l );
+	BU_LIST_APPEND( split_hd, &srf2->l );
+	BU_LIST_APPEND( split_hd, &srf1->l );
 
 	rt_nurb_free_oslo(oslo);
 	rt_free( (char *)new_kv.knots, "rt_nurb_s_split: new kv knots");
@@ -257,7 +257,7 @@ int		dir;
  */
 void
 rt_nurb_c_split( split_hd, crv )
-struct rt_list		*split_hd;
+struct bu_list		*split_hd;
 CONST struct edge_g_cnurb	*crv;
 {
 	struct knot_vector new_kv;
@@ -325,6 +325,6 @@ CONST struct edge_g_cnurb	*crv;
 	rt_free( (char *) new_kv.knots, "rt_nurb_c_split; new_kv.knots" );
 
 	/* Arrangement will be:  head, crv1, crv2 */
-	RT_LIST_APPEND( split_hd, &crv2->l );
-	RT_LIST_APPEND( split_hd, &crv1->l );
+	BU_LIST_APPEND( split_hd, &crv2->l );
+	BU_LIST_APPEND( split_hd, &crv1->l );
 }

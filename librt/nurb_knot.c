@@ -84,7 +84,7 @@ register fastf_t	val;
 
 	check.k_size = num - n;
 	if( check.k_size <= 0 )  {
-		rt_log("rt_nurb_kvmult(new_kv=x%x, kv=x%x, num=%d, val=%g)\n",
+		bu_log("rt_nurb_kvmult(new_kv=x%x, kv=x%x, num=%d, val=%g)\n",
 			new_kv, kv, num, val);
 		rt_nurb_pr_kv(kv);
 		rt_bomb("rt_nurb_kvmult\n");

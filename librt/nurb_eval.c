@@ -67,8 +67,8 @@ fastf_t * final_value;
 	k_index = rt_nurb_knot_index( &srf->u, u, srf->order[RT_NURB_SPLIT_ROW] );
 	if( k_index < 0 )
 	{
-		rt_log( "rt_nurb_s_eval: u value outside parameter range\n");
-		rt_log( "\tUV = (%g %g )\n", u,v );
+		bu_log( "rt_nurb_s_eval: u value outside parameter range\n");
+		bu_log( "\tUV = (%g %g )\n", u,v );
 		rt_nurb_s_print( "", srf );
 		rt_bomb( "rt_nurb_s_eval: u value outside parameter range\n");
 	}

@@ -43,32 +43,32 @@
  */
 int
 rt_nurb_bezier( bezier_hd, orig_surf )
-struct rt_list		*bezier_hd;
+struct bu_list		*bezier_hd;
 CONST struct face_g_snurb	*orig_surf;
 {
 	struct face_g_snurb	*s;
 	int		dir;
-	struct rt_list	todo;
+	struct bu_list	todo;
 
 	NMG_CK_SNURB(orig_surf);
 
 	if( (dir = rt_bez_check( orig_surf )) == -1)  {
 		s = rt_nurb_scopy( orig_surf );
-		RT_LIST_APPEND( bezier_hd, &s->l );
+		BU_LIST_APPEND( bezier_hd, &s->l );
 		return 1;	/* Was already Bezier, nothing done */
 	}
 
-	RT_LIST_INIT( &todo );
+	BU_LIST_INIT( &todo );
 	rt_nurb_s_split( &todo, orig_surf, dir );
 
-	while( RT_LIST_WHILE( s, face_g_snurb, &todo ) )  {
+	while( BU_LIST_WHILE( s, face_g_snurb, &todo ) )  {
 		if( (dir = rt_bez_check(s)) == -1)  {
 			/* This snurb is now a Bezier */
-			RT_LIST_DEQUEUE( &s->l );
-			RT_LIST_APPEND( bezier_hd, &s->l );
+			BU_LIST_DEQUEUE( &s->l );
+			BU_LIST_APPEND( bezier_hd, &s->l );
 		} else {
 			/* Split, and keep going */
-			RT_LIST_DEQUEUE( &s->l );
+			BU_LIST_DEQUEUE( &s->l );
 			rt_nurb_s_split( &todo, s, dir );
 			rt_nurb_free_snurb(s);
 		}
