@@ -336,7 +336,7 @@ int	nwords;
 		bn_mat_idn( mat );
 		bn_mat_angles( mat, args[4], args[5], args[6] );
 		MAT_DELTAS( mat, args[1], args[2], args[3] );
-		if( args[7] > -1e-17 && args[7] < 1e-17 )  {
+		if( NEAR_ZERO( args[7], VDIVIDE_TOL ) )  {
 			/* Nearly zero, signal error */
 			fprintf(stderr,"Orient scale arg is near zero ('%s')\n",
 				words[7] );
