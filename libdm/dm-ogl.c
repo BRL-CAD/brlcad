@@ -124,6 +124,8 @@ struct dm dm_ogl = {
   1,
   0,
   0,
+  0,
+  0,
   1.0, /* aspect ratio */
   0,
   0,
@@ -1055,15 +1057,17 @@ int strict;
 
 
 static int
-ogl_setLineAttr(dmp, width, dashed)
+ogl_setLineAttr(dmp, width, style)
 struct dm *dmp;
 int width;
-int dashed;
+int style;
 {
-  ((struct ogl_vars *)dmp->dm_vars)->mvars.linewidth = width;
+  dmp->dm_lineWidth = width;
+  dmp->dm_lineStyle = style;
+
   glLineWidth((GLfloat) width);
 
-  if( dashed )
+  if(style == DM_DASHED_LINE)
     glEnable(GL_LINE_STIPPLE);
   else
     glDisable(GL_LINE_STIPPLE);
