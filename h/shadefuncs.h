@@ -57,3 +57,5 @@ struct shadework {
 	int		sw_xmitonly;	/* flag: need sw_transmit only */
 	int		sw_inputs;	/* fields from mf_inputs actually filled */
 };
+
+extern void pr_shadework();
