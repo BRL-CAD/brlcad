@@ -691,6 +691,7 @@ set -S2 "/bin/sh"
 #		ifdef M4I65_USE_64_BIT
 #			define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
 #			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
+#			define	LDSHARED	CC -64 -shared
 #		else
 #			ifdef M4I65_USE_N32
 #				define	BUILD_LIBRARY	ld -n32 -mips4 -shared -multigot -o
