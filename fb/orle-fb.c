@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle-fb.c	1.4
-	Last edit: 	3/26/85 at 17:45:51
-	Retrieved: 	8/13/86 at 03:16:57
+	SCCS id:	@(#) rle-fb.c	1.5
+	Last edit: 	3/27/85 at 11:28:44
+	Retrieved: 	8/13/86 at 03:17:07
 	SCCS archive:	/m/cad/fb_utils/RCS/s.rle-fb.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) rle-fb.c	1.4	last edit 3/26/85 at 17:45:51";
+char	sccsTag[] = "@(#) rle-fb.c	1.5	last edit 3/27/85 at 11:28:44";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -25,7 +25,6 @@ char	sccsTag[] = "@(#) rle-fb.c	1.4	last edit 3/26/85 at 17:45:51";
 #endif
 #define PIXELS_PER_DMA	(MAX_DMA/sizeof(Pixel))
 #define SCANS_PER_DMA	(PIXELS_PER_DMA/fbsz)
-#define DMAS_PER_FB	(fbsz/SCANS_PER_DMA)
 #define PIXEL_OFFSET	((scan_ln%scans_per_dma)*fbsz)
 #define Fbread_Dma( y )\
 		if( y >= scans_per_dma &&\
@@ -35,7 +34,7 @@ char	sccsTag[] = "@(#) rle-fb.c	1.4	last edit 3/26/85 at 17:45:51";
 typedef unsigned char	u_char;
 static char	*usage[] = {
 "",
-"rle-fb (1.4)",
+"rle-fb (1.5)",
 "",
 "Usage: rle-fb [-Odv][-b (rgbBG)][-p X Y] [file.rle]",
 "",
@@ -61,7 +60,8 @@ char	*argv[];
 	{
 	register int	scan_ln;
 	register int	fbsz = 512;
-	static Pixel	scan_buf[1024];
+	register int	scans_per_dma;
+	static Pixel	scan_buf[PIXELS_PER_DMA];
 	static Pixel	bg_scan[1024];
 	static ColorMap	cmap;
 	static int	get_flags;
@@ -69,8 +69,6 @@ char	*argv[];
 	static int	xpos, ypos;
 	static int	scan_bytes;
 	static int	pixels_per_dma;
-	static int	scans_per_dma;
-	static int	dmas_per_fb;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
@@ -136,9 +134,8 @@ char	*argv[];
 		if( fb_wmap( (ColorMap *) NULL ) == -1 )
 			return	1;
 		}
-
 	/* Fill buffer with background.					*/
-	if( ! olflag )
+	if( ! olflag && (get_flags & NO_BOX_SAVE) )
 		{
 		register int	i;
 		register Pixel	*to;
@@ -149,28 +146,61 @@ char	*argv[];
 		for( i = 0; i < fbsz; i++ )
 			*to++ = *from;
 		}
+
+	{	register int	page_fault = 1;
+		register int	dirty_flag = 1;
+		register int	y_buffer = fbsz - scans_per_dma;
+
 	for( scan_ln = fbsz - 1; scan_ln >= fbsz - ylen; scan_ln-- )
 		{
-		static int	dirty_flag = 1;
+		if( page_fault )
+			{
+			if( olflag )
+				{ /* Overlay -- read cluster from fb.	*/
+				if(	fbread(	0,
+						y_buffer,
+						scan_buf,
+						pixels_per_dma
+						)
+				    ==	-1
+					)
+					return	1;
+				}
+			else
+			if( (get_flags & NO_BOX_SAVE) && dirty_flag )
+				{ /* Fill buffer with background.	*/
+				register int	i;
+				register Pixel	*scan_ptr = scan_buf;
+				for( i = 0; i < scans_per_dma; ++i )
+					{
+					(void) memcpy(	(char *) scan_ptr,
+							(char *) bg_scan,
+							scan_bytes
+							);
+					scan_ptr += fbsz;
+					}
+				}
+			dirty_flag = 0;
+			page_fault = 0;
+			}
+		{ register int
+			touched = rle_decode_ln( fp, scan_buf+PIXEL_OFFSET );
 
-		if( olflag )
-			{ /* Overlay mode -- read scanline from fb.	*/
-			if( fbread( 0, scan_ln, scan_buf, xlen ) == -1 )
+			if( touched == -1 )
 				return	1;
-			}
-		else
-		if( (get_flags & NO_BOX_SAVE) && dirty_flag )
-			{ /* Fill buffer with background.		*/
-			(void) memcpy(	(char *) scan_buf,
-					(char *) bg_scan,
-					scan_bytes
-					);
-			}
-		if( (dirty_flag = rle_decode_ln( fp, scan_buf )) == -1 )
-			return	1;
-		if( fbwrite( 0, scan_ln, scan_buf, fbsz ) == -1 )
-			return	1;
+			else
+				dirty_flag += touched;
 		}
+		if( page_fault = ! (scan_ln%scans_per_dma) )
+			{
+			if( fbwrite( 0, y_buffer, scan_buf, pixels_per_dma )
+			    ==	-1
+				)
+				return	1;
+			y_buffer -= scans_per_dma;
+			}
+		} /* end for */
+	} /* end block */
 	return	0;
 	}
 
