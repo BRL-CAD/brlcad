@@ -997,8 +997,8 @@ register CONST char	*str;
  */
 HIDDEN struct region *
 rt_getregion( rtip, reg_name )
-struct rt_i	*rtip;
-CONST register char	*reg_name;
+struct rt_i		*rtip;
+register CONST char	*reg_name;
 {	
 	register struct region	*regp = rtip->HeadRegion;
 	register CONST char *reg_base = rt_basename(reg_name);
