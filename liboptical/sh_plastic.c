@@ -375,8 +375,13 @@ char	*dp;
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
 		if (cosine > 1.00001 )  {
-			bu_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
+			bu_log("cosAmb=1+%g %s surfno=%d (x%d,y%d,lvl%d)\n",
+				cosine-1,
+				pp->pt_inseg->seg_stp->st_dp->d_namep,
+				swp->sw_hit.hit_surfno,
 				ap->a_x, ap->a_y, ap->a_level);
+			VPRINT(" normal", swp->sw_hit.hit_normal);
+			VPRINT(" r_dir ", ap->a_ray.r_dir);
 			cosine = 1;
 		}
 		cosine *= AmbientIntensity;
