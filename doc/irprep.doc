@@ -31,7 +31,7 @@ The Army Research Laboratory
 ARL-SLAD-BVLD-VMB
 .sp 2
 This document lists the differences between the IRPREP set of programs in
-the BRL-CAD release 4.0 and the set in the BRL-CAD release 4.?.
+the BRL-CAD release 4.0 and the set in the subsequent BRL-CAD releases.
 .sp 2
 .ft B
 firpass
@@ -165,5 +165,5 @@ an SGI machine.
 See the manual pages for firpass, secpass, shapefact, display, see,
 see2, pictx, and pictsgi for more information.  Also see the User's
 Manual for IRPREP (BRL Special Publication BRL-SP-96, September 1992)
-and the report Computer Programs for Generating an Input File for PRISM
-and Displaying PRISM Results (BRL report in progress).
+and the report Computer Programs for Generating an Input File for
+PRISM and Displaying PRISM Results (BRL report in progress).
