@@ -242,7 +242,6 @@ PtList	**ptlistp;
 		np = pp->c_next;
 		free( (char *) pp );
 		}
-	return;
 	}
 
 #define L_MAX_POWER_TWO		31
