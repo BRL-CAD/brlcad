@@ -131,6 +131,11 @@ struct rt_i		*rtip;
 			}
 		}
 	}
+	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
+		bu_log("rt_submodel_prep(%s): Opened database %s\n",
+			stp->st_dp->d_namep, sub_dbip->dbi_filename );
+	}
+
 	sub_rtip = rt_new_rti( sub_dbip );
 	if( sub_rtip == RTI_NULL )  return -1;
 
@@ -213,6 +218,11 @@ struct rt_i		*rtip;
 	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
 	VSCALE( radvec, diam, 0.5 );
 	stp->st_aradius = stp->st_bradius = MAGNITUDE( radvec );
+
+	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
+		bu_log("rt_submodel_prep(%s): finished loading database %s\n",
+			stp->st_dp->d_namep, sub_dbip->dbi_filename );
+	}
 
 	return(0);		/* OK */
 }
@@ -348,6 +358,7 @@ struct seg		*seghead;
 	nap.a_miss = rt_submodel_a_miss;
 	nap.a_uptr = (genptr_t)&gb;
 	nap.a_dist = submodel->m2subm[15];	/* scale, local to world */
+	nap.a_purpose = "rt_submodel_shot";
 
 	/* shootray already computed a_ray.r_min & r_max for us */
 	/* Construct the ray in submodel coords. */
