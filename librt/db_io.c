@@ -390,7 +390,7 @@ struct db_i		*dbip;
 		int	ngran;
 
 		ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
-		if( ngran != dp->d_len )  {
+		if( ngran != dp->d_len || dp->d_addr == -1L )  {
 			if( ngran < dp->d_len )  {
 				if( db_trunc( dbip, dp, dp->d_len - ngran ) < 0 )
 				    	return(-2);
@@ -412,7 +412,7 @@ struct db_i		*dbip;
 		rec = (union record *)ep->ext_buf;
 		NAMEMOVE( dp->d_namep, rec->s.s_name );
 	} else if( dbip->dbi_version == 5 )  {
-		if( ep->ext_nbytes != dp->d_len )  {
+		if( ep->ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
 			if( db_realloc5( dbip, dp, ep ) < 0 )  {
 				bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
 				return -5;
