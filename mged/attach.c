@@ -134,7 +134,9 @@ void dm_var_init();
 
 /* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
+#if 0
 	&dm_Null,		/* This should go first */
+#endif
 	&dm_Tek,
 	&dm_T49,
 	&dm_PS,
@@ -409,6 +411,85 @@ reattach()
 
   dmaflag = 1;
 }
+
+int
+f_attach( argc, argv )
+int     argc;
+char    **argv;
+{
+  register struct dm **dp;
+  register struct solid *sp;
+  register struct dm_list *dmlp;
+  register struct dm_list *o_dm_list;
+
+  if(argc == 1){
+    rt_log("attach (");
+    dp = &which_dm[0];
+    rt_log("%s", (*dp++)->dmr_name);
+    for( ; *dp != (struct dm *)0; dp++ )
+      rt_log("|%s", (*dp)->dmr_name);
+    rt_log(")[%s]? ", which_dm[0]->dmr_name);
+    
+    return CMD_MORE;
+  }
+
+  for( dp = &which_dm[0]; *dp != (struct dm *)0; dp++ )
+    if( strcmp(argv[1], (*dp)->dmr_name ) == 0 )
+      break;
+
+  if(*dp == (struct dm *)0)
+    goto Bad;
+
+  /* The Null display manager is already attached */
+  if(dp == &which_dm[0])
+    return CMD_OK;
+
+  if(argc == 2){
+    rt_log("X Display: ? ");
+    return CMD_MORE;
+  }
+
+  dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list), "dm_list");
+  bzero((void *)dmlp, sizeof(struct dm_list));
+  RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
+  o_dm_list = curr_dm_list;
+  curr_dm_list = dmlp;
+  dmp = *dp;
+  dm_var_init(o_dm_list);
+
+  no_memory = 0;
+  if( dmp->dmr_open(argv[2]) )
+    goto Bad;
+
+  rt_log("ATTACHING %s (%s)\n",
+	 dmp->dmr_name, dmp->dmr_lname);
+
+  FOR_ALL_SOLIDS( sp )  {
+    /* Write vector subs into new display processor */
+    if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+      sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
+      if( sp->s_addr == 0 )  break;
+      sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
+    } else {
+      sp->s_addr = 0;
+      sp->s_bytes = 0;
+    }
+  }
+  dmp->dmr_colorchange();
+  color_soltab();
+  dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
+  ++dmaflag;
+  return CMD_OK;
+
+Bad:
+  rt_log("attach(%s): BAD\n", argv[1]);
+
+  if(*dp != (struct dm *)0)
+    release(NULL);
+
+  return CMD_BAD;
+}
+
 
 /*
  *			F _ D M
