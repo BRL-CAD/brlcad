@@ -73,7 +73,7 @@ struct msr_gauss *msr_gauss_init();
 #define	MSR_UNIF_LONG(_p)	\
 	 (((_p)->msr_long_ptr ) ? \
 		(_p)->msr_longs[--(_p)->msr_long_ptr] : \
-		msr_unif_long_fill(_p)) }
+		msr_unif_long_fill(_p))
 #define MSR_UNIF_DOUBLE(_p)	\
 	(((_p)->msr_double_ptr) ? \
 		(_p)->msr_doubles[--(_p)->msr_double_ptr] : \
