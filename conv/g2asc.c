@@ -25,7 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  
 #include <stdio.h>
 #include <ctype.h>
-#include "../h/db.h"
+#include "db.h"
 
 extern void	exit();
 extern int	printf(), fprintf();
@@ -356,7 +356,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	(void)free( (char *)fp );
 }
 
-#ifndef BSD42
+#ifdef SYSV
 
 bzero( str, n )
 register char *str;

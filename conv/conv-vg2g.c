@@ -21,7 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "../h/db.h"
+#include "db.h"
 
 union record rec;
 

@@ -23,8 +23,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<stdio.h>
-#include "../h/db.h"
+#include <stdio.h>
+#include "db.h"
 
 extern void	exit();
 extern int	printf(), fprintf(), sscanf(), atoi();	/* bzero()? */
@@ -707,7 +707,7 @@ register char *cp;
 	return( cp );
 }
 
-#ifndef BSD42
+#ifdef SYSV
 
 bzero( str, n )
 register char *str;
