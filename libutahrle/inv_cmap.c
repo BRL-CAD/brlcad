@@ -281,10 +281,9 @@ int
 redloop()
 {
     int detect;
-    int r, i = cindex;
+    int r;
     int first;
     long txsqr = xsqr + xsqr;
-    static int here, min, max;
     static long rxx;
 
     detect = 0;
@@ -329,7 +328,7 @@ int
 greenloop( restart )
 {
     int detect;
-    int g, i = cindex;
+    int g;
     int first;
     long txsqr = xsqr + xsqr;
     static int here, min, max;

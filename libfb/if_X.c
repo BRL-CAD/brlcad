@@ -40,7 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static	void	slowrect();
 static	int	linger();
 static	int	xsetup();
-static	void	print_display_info();	/* debug */
+void		x_print_display_info();
 static	int	x_make_colormap();	/*XXX*/
 static	int	x_make_cursor();	/*XXX*/
 int	repaint();
@@ -962,7 +962,7 @@ int	width, height;
 		XI(ifp)->depth = 1;	/*XXX - until cmap fix */
 
 #if DEBUGX
-	print_display_info(dpy);
+	x_print_display_info(dpy);
 #endif
 
 	/*
@@ -1465,8 +1465,8 @@ FBIO *ifp;
  *  unix:0.1.2 => host:display.screen.visual
  *  Typically the screen and visual default to 0 by being omitted.
  */
-static void
-print_display_info( dpy )
+void
+x_print_display_info( dpy )
 Display *dpy;
 {
 	int	i;
