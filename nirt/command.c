@@ -83,7 +83,7 @@ com_table		*ctp;
 void sh_esc (buffer)
 char	*buffer;
 {
-	char		*shell;
+	static char	*shell = "";
 	static char	*last_cmd = "";
 
 	while (isspace(*buffer))
@@ -95,9 +95,12 @@ char	*buffer;
 	    (void) system(buffer);
 	    last_cmd = buffer;
 	}
-	else if ((shell = getenv("SHELL")) == 0)
-	    shell = DFLT_SHELL;
-	(void) system(shell);
+	else
+	{
+	    if ((*shell == '\0') && (shell = getenv("SHELL")) == 0)
+		shell = DFLT_SHELL;
+	    (void) system(shell);
+	}
 }
 
 void grid_coor(buffer, ctp)
@@ -281,6 +284,7 @@ char	*buffer;
 
 void shoot(buffer, ctp)
 char			*buffer;
+int			ctp;
 {
     int		i;
 
