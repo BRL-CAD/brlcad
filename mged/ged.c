@@ -83,6 +83,16 @@ extern char	version[];		/* from vers.c */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
+static char *units_str[] = {
+	"none",
+	"mm",
+	"cm",
+	"meters",
+	"inches",
+	"feet",
+	"extra"
+};
+
 FILE *infile = stdin;
 FILE *outfile = stdout;
 
@@ -181,6 +191,11 @@ char **argv;
 
 	/*	 Scan input file and build the directory	 */
 	db_scan( dbip, (int (*)())db_diradd);
+
+	/* Print title/units information */
+	if( argc == 2 )
+		(void)printf("%s (units=%s)\n", dbip->dbi_title,
+			units_str[dbip->dbi_localunit] );
 
 	/* Initialize the menu mechanism to be off, but ready. */
 	mmenu_init();
