@@ -74,6 +74,11 @@ DISTCLEANFILES = \
 
 MAINTAINERCLEANFILES = Makefile.in
 
+
+##########################
+# packaged distributions #
+##########################
+
 $(PACKAGE)-$(VERSION).tar.gz: dist
 
 $(PACKAGE_NAME)-$(VERSION).pkg:
@@ -135,9 +140,10 @@ $(PACKAGE)-$(VERSION).bin.zip:
 	@$(ECHO)
 	@@SH@ sh/make_tar.sh $(PACKAGE_NAME)-$(VERSION)
 
-##############
-# the rules  #
-##############
+
+#############
+# the rules #
+#############
 
 .PHONY : benchmark bench pkg dmg rpm deb zip tgz tbz
 
@@ -184,6 +190,76 @@ package:
 	@$(ECHO) "  make bz2	-	Builds a bzip2-compressed tape archive"
 	@$(ECHO) "  make tar	-	Builds a uncompressed tape archive"
 	@$(ECHO) 
+
+
+##########################
+# summaries and warnings #
+##########################
+
+# make sure a dangerous umask will not prevent others from using an
+# installed version by checking to make sure the exec mode is set.
+install-data-local:
+	@warn_umask=no ; \
+	case `ls -ld $(DESTDIR)$(bindir)` in \
+	  d????????-*) warn_umask=yes ;; \
+	  d?????-???*) warn_umask=yes ;; \
+	  d??-??????*) warn_umask=yes ;; \
+	esac ; \
+	if test "x$$warn_umask" = "xyes" ; then \
+	    $(ECHO) ; \
+	    $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
+	    $(ECHO) "  WARNING: There is no execute permission on the" ; \
+	    $(ECHO) "           install directory." ; \
+	    $(ECHO) ; \
+	    $(ECHO) "  Consider running \"umask 022\" before installing" ; \
+	    $(ECHO) "  next time.  You should be able to repair this"; \
+	    $(ECHO) "  installation's directory permissions with: " ; \
+	    $(ECHO) ; \
+	    $(ECHO) "    find $(DESTDIR)$(prefix) -type d -exec chmod go+x {} \;" ; \
+	    if test -d "$(DESTDIR)$(bindir)" ; then \
+	      if test "x$(DESTDIR)$(exec_prefix)/bin" != "x$(DESTDIR)$(bindir)" ; then \
+	  	$(ECHO) "    find $(DESTDIR)$(bindir) -type d -exec chmod go+x {} \;" ; \
+	      fi ; \
+	    fi ; \
+	    if test -d "$(DESTDIR)$(sbindir)" ; then \
+	      if test "x$(DESTDIR)$(exec_prefix)/sbin" != "x$(DESTDIR)$(sbindir)" ; then \
+	  	$(ECHO) "    find $(DESTDIR)$(sbindir) -type d -exec chmod go+x {} \;" ; \
+	      fi ; \
+	    fi ; \
+	    if test -d "$(DESTDIR)$(libexecdir)" ; then \
+	      if test "x$(DESTDIR)$(exec_prefix)/libexec" != "x$(DESTDIR)$(libexecdir)" ; then \
+	  	$(ECHO) "    find $(DESTDIR)$(libexecdir) -type d -exec chmod go+x {} \;" ; \
+	      fi ; \
+	    fi ; \
+	    if test -d "$(DESTDIR)$(datadir)" ; then \
+	      if test "x$(DESTDIR)$(prefix)/share" != "x$(DESTDIR)$(datadir)" ; then \
+	   	$(ECHO) "    find $(DESTDIR)$(prefix) -type d -exec chmod go+x {} \;" ; \
+	      fi ; \
+	    fi ; \
+	    if test -d "$(DESTDIR)$(sysconfdir)" ; then \
+	      if test "x$(DESTDIR)$(prefix)/etc" != "x$(DESTDIR)$(sysconfdir)" ; then \
+	   	$(ECHO) "    find $(DESTDIR)$(sysconfdir) -type d -exec chmod go+x {} \;" ; \
+	      fi ; \
+	    fi ; \
+	    if test -d "$(DESTDIR)$(libdir)" ; then \
+	      if test "x$(DESTDIR)$(exec_prefix)/lib" != "x$(DESTDIR)$(libdir)" ; then \
+	   	$(ECHO) "    find $(DESTDIR)$(libdir) -type d -exec chmod go+x {} \;" ; \
+	      fi ; \
+	    fi ; \
+	    if test -d "$(DESTDIR)$(mandir)" ; then \
+	      if test "x$(DESTDIR)$(prefix)/man" != "x$(DESTDIR)$(mandir)" ; then \
+	   	$(ECHO) "    find $(DESTDIR)$(mandir) -type d -exec chmod go+x {} \;" ; \
+	      fi ; \
+	    fi ; \
+	    if test -d "$(DESTDIR)$(includedir)" ; then \
+	      if test "x$(DESTDIR)$(prefix)/include" != "x$(DESTDIR)$(includedir)" ; then \
+	   	$(ECHO) "    find $(DESTDIR)$(includedir) -type d -exec chmod go+x {} \;" ; \
+	      fi ; \
+	    fi ; \
+	    $(ECHO) ; \
+	    $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
+	    $(ECHO) ; \
+	fi
 
 
 # Print out an informative summary.  As just about everything seems to
