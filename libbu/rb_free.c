@@ -1,9 +1,22 @@
-/*			R B _ F R E E . C
+/*			B U _ R B _ F R E E . C
  *
  *		Routine to free a red-black tree
  *
- *	Author:	Paul Tanenbaum
+ *  Author -
+ *	Paul J. Tanenbaum
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
  *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#) $Header$";
@@ -15,52 +28,51 @@ static char RCSid[] = "@(#) $Header$";
 #include <math.h>
 #include "machine.h"
 #include "bu.h"
-#include "redblack.h"
 #include "./rb_internals.h"
 
-/*			R B _ F R E E ( )
+/*			B U _ R B _ F R E E ( )
  *
  *		      Free a red-black tree
  *
  *	This function has two parameters: the tree to free and a function
- *	to handle the application data.  rb_free() traverses tree's lists
+ *	to handle the application data.  bu_rb_free() traverses tree's lists
  *	of nodes and packages, freeing each one in turn, and then frees tree
- *	itself.  If free_data is non-NULL, then rb_free() calls it just
- *	before freeing each package , passing it the package's rbp_data member.
- *	Otherwise, the application data is left untouched.
+ *	itself.  If free_data is non-NULL, then bu_rb_free() calls it just
+ *	before freeing each package , passing it the package's rbp_data
+ *	member.  Otherwise, the application data is left untouched.
  */
-void rb_free (tree, free_data)
+void bu_rb_free (tree, free_data)
 
-rb_tree	*tree;
-void	(*free_data)();
+bu_rb_tree	*tree;
+void		(*free_data)();
 
 {
-    struct rb_list	*rblp;
-    struct rb_node	*node;
-    struct rb_package	*package;
+    struct bu_rb_list		*rblp;
+    struct bu_rb_node		*node;
+    struct bu_rb_package	*package;
 
-    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
 
     /*
      *	Free all the nodes
      */
-    while (RT_LIST_WHILE(rblp, rb_list, &(tree -> rbt_nodes.l)))
+    while (RT_LIST_WHILE(rblp, bu_rb_list, &(tree -> rbt_nodes.l)))
     {
-	RB_CKMAG(rblp, RB_LIST_MAGIC, "red-black list element");
-	rb_free_node(rblp -> rbl_node);
+	BU_CKMAG(rblp, BU_RB_LIST_MAGIC, "red-black list element");
+	bu_rb_free_node(rblp -> rbl_node);
     }
 
     /*
      *	Free all the packages
      */
-    while (RT_LIST_WHILE(rblp, rb_list, &(tree -> rbt_packages.l)))
+    while (RT_LIST_WHILE(rblp, bu_rb_list, &(tree -> rbt_packages.l)))
     {
-	RB_CKMAG(rblp, RB_LIST_MAGIC, "red-black list element");
+	BU_CKMAG(rblp, BU_RB_LIST_MAGIC, "red-black list element");
 	package = rblp -> rbl_package;
-	RB_CKMAG(package, RB_PKG_MAGIC, "red-black package");
+	BU_CKMAG(package, BU_RB_PKG_MAGIC, "red-black package");
 	if (free_data)
 	    (*free_data)(package -> rbp_data);
-	rb_free_package(package);
+	bu_rb_free_package(package);
     }
 
     /*
@@ -82,32 +94,32 @@ void	(*free_data)();
     bu_free((genptr_t) tree, "red-black tree");
 }
 
-/*		    R B _ F R E E _ N O D E ( )
+/*		    B U _ R B _ F R E E _ N O D E ( )
  *
  *	    Relinquish memory occupied by a red-black node
  *
- *	This function has one parameter: a node to free.  rb_free_node()
+ *	This function has one parameter: a node to free.  bu_rb_free_node()
  *	frees the memory allocated for the various members of the node
  *	and then frees the memory allocated for the node itself.
  */
-void rb_free_node (node)
+void bu_rb_free_node (node)
 
-struct rb_node	*node;
+struct bu_rb_node	*node;
 
 {
-    rb_tree	*tree;
+    bu_rb_tree	*tree;
 
-    RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
+    BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 
     tree = node -> rbn_tree;
-    if (rb_current(tree) == node)
-	rb_current(tree) = rb_null(tree);
-    RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
+    if (bu_rb_current(tree) == node)
+	bu_rb_current(tree) = bu_rb_null(tree);
+    BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 
     /*
      *	Remove node from the list of all nodes
      */
-    RB_CKMAG(node -> rbn_list_pos, RB_LIST_MAGIC, "red-black list element");
+    BU_CKMAG(node -> rbn_list_pos, BU_RB_LIST_MAGIC, "red-black list element");
     RT_LIST_DEQUEUE(&(node -> rbn_list_pos -> l));
 
     bu_free((genptr_t) node -> rbn_parent, "red-black parents");
@@ -119,26 +131,27 @@ struct rb_node	*node;
     bu_free((genptr_t) node, "red-black node");
 }
 
-/*		    R B _ F R E E _ P A C K A G E ( )
+/*		    B U _ R B _ F R E E _ P A C K A G E ( )
  *
  *	    Relinquish memory occupied by a red-black package
  *
  *	This function has one parameter: a package to free.
- *	rb_free_package() frees the memory allocated to point to the
+ *	bu_rb_free_package() frees the memory allocated to point to the
  *	nodes that contained the package and then frees the memory
  *	allocated for the package itself.
  */
-void rb_free_package (package)
+void bu_rb_free_package (package)
 
-struct rb_package	*package;
+struct bu_rb_package	*package;
 
 {
-    RB_CKMAG(package, RB_PKG_MAGIC, "red-black package");
+    BU_CKMAG(package, BU_RB_PKG_MAGIC, "red-black package");
 
     /*
      *	Remove node from the list of all packages
      */
-    RB_CKMAG(package -> rbp_list_pos, RB_LIST_MAGIC, "red-black list element");
+    BU_CKMAG(package -> rbp_list_pos, BU_RB_LIST_MAGIC,
+	"red-black list element");
     RT_LIST_DEQUEUE(&(package -> rbp_list_pos -> l));
 
     bu_free((genptr_t) package -> rbp_node, "red-black package nodes");

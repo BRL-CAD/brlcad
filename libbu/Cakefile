@@ -15,6 +15,9 @@
 	getopt hist ispar linebuf list \
 	log magic malloc mappedfile memset \
 	parallel parse printb ptbl semaphore \
+	rb_create rb_delete rb_diag rb_extreme	\
+	rb_free rb_insert rb_order_stats	\
+	rb_rotate rb_search rb_walk		\
 	vfont brlcad_path \
 	vls htond units bu_tcl file color
 

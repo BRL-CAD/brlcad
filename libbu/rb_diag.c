@@ -1,9 +1,22 @@
-/*		R B _ D I A G N O S T I C S . C
+/*		B U _ R B _ D I A G N O S T I C S . C
  *
  *	Diagnostic routines for red-black tree maintenance
  *
- *	Author:	Paul Tanenbaum
+ *  Author -
+ *	Paul J. Tanenbaum
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
  *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#) $Header$";
@@ -17,7 +30,6 @@ static char RCSid[] = "@(#) $Header$";
 #include "rtlist.h"
 #include "bu.h"
 #include "compat4.h"
-#include "redblack.h"
 #include "./rb_internals.h"
 
 static int d_order;	/* Used by describe_node() */
@@ -28,43 +40,46 @@ static int d_order;	/* Used by describe_node() */
  *
  *	This function has two parameters:  the node to describe and
  *	its depth in the tree.  Describe_node() is intended to be
- *	called by rb_diagnose_tree().
+ *	called by bu_rb_diagnose_tree().
  */
 static void describe_node (node, depth)
 
-struct rb_node	*node;
+struct bu_rb_node	*node;
 int		depth;
 
 {
-    rb_tree		*tree;
-    struct rb_package	*package;
-    void		(*pp)();	/* Pretty print function */
+    bu_rb_tree			*tree;
+    struct bu_rb_package	*package;
+    void			(*pp)();	/* Pretty print function */
 
-    RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
+    BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     tree = node -> rbn_tree;
-    RB_CKORDER(tree, d_order);
+    BU_RB_CKORDER(tree, d_order);
 
     package = (node -> rbn_package)[d_order];
     pp = tree -> rbt_print;
 
-    rt_log("%*snode <%x>...\n", depth * 2, "", node);
-    rt_log("%*s  tree:   <%x>\n", depth * 2, "", node -> rbn_tree);
-    rt_log("%*s  parent: <%x>\n", depth * 2, "", rb_parent(node, d_order));
-    rt_log("%*s  left:   <%x>\n", depth * 2, "", rb_left_child(node, d_order));
-    rt_log("%*s  right:  <%x>\n", depth * 2, "", rb_right_child(node, d_order));
-    rt_log("%*s  color:  %s\n",
-	    depth * 2, "",
-	    (rb_get_color(node, d_order) == RB_RED) ? "RED" :
-	    (rb_get_color(node, d_order) == RB_BLACK) ? "BLACK" : "Huhh?");
-    rt_log("%*s  package: <%x> ", depth * 2, "", package);
+    bu_log("%*snode <%x>...\n", depth * 2, "", node);
+    bu_log("%*s  tree:   <%x>\n", depth * 2, "", node -> rbn_tree);
+    bu_log("%*s  parent: <%x>\n", depth * 2, "",
+	bu_rb_parent(node, d_order));
+    bu_log("%*s  left:   <%x>\n", depth * 2, "",
+	bu_rb_left_child(node, d_order));
+    bu_log("%*s  right:  <%x>\n", depth * 2, "",
+	bu_rb_right_child(node, d_order));
+    bu_log("%*s  color:  %s\n", depth * 2, "",
+	    (bu_rb_get_color(node, d_order) == BU_RB_RED) ? "RED" :
+	    (bu_rb_get_color(node, d_order) == BU_RB_BLACK) ? "BLACK" :
+								"Huhh?");
+    bu_log("%*s  package: <%x> ", depth * 2, "", package);
 
-    if ((pp != 0) && (package != RB_PKG_NULL))
+    if ((pp != 0) && (package != BU_RB_PKG_NULL))
 	(*pp)(package -> rbp_data);
     else
-	rt_log("\n");
+	bu_log("\n");
 }
 
-/*		    R B _ D I A G N O S E _ T R E E ( )
+/*		    B U _ R B _ D I A G N O S E _ T R E E ( )
  *
  *	    Produce a diagnostic printout of a red-black tree
  *
@@ -72,66 +87,66 @@ int		depth;
  *	to print out and the type of traversal (preorder, inorder, or
  *	postorder).
  */
-void rb_diagnose_tree (tree, order, trav_type)
+void bu_rb_diagnose_tree (tree, order, trav_type)
 
-rb_tree	*tree;
-int	order;
-int	trav_type;
+bu_rb_tree	*tree;
+int		order;
+int		trav_type;
 
 {
-    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
-    RB_CKORDER(tree, order);
+    BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
+    BU_RB_CKORDER(tree, order);
 
-    rt_log("-------- Red-black tree <%x> contents --------\n", tree);
-    rt_log("Description: '%s'\n", tree -> rbt_description);
-    rt_log("Order:       %d of %d\n", order, tree -> rbt_nm_orders);
-    rt_log("Current:     <%x>\n", tree -> rbt_current);
-    rt_log("Empty node:  <%x>\n", tree -> rbt_empty_node);
-    rt_log("Uniqueness:  %d\n", rb_get_uniqueness(tree, order));
+    bu_log("-------- Red-black tree <%x> contents --------\n", tree);
+    bu_log("Description: '%s'\n", tree -> rbt_description);
+    bu_log("Order:       %d of %d\n", order, tree -> rbt_nm_orders);
+    bu_log("Current:     <%x>\n", tree -> rbt_current);
+    bu_log("Empty node:  <%x>\n", tree -> rbt_empty_node);
+    bu_log("Uniqueness:  %d\n", bu_rb_get_uniqueness(tree, order));
     d_order = order;
     _rb_walk(tree, order, describe_node, WALK_NODES, trav_type);
-    rt_log("--------------------------------------------------\n");
+    bu_log("--------------------------------------------------\n");
 }
 
-/*		R B _ S U M M A R I Z E _ T R E E ( )
+/*		B U _ R B _ S U M M A R I Z E _ T R E E ( )
  *
  *		    Describe a red-black tree
  *
  *	This function has one parameter: a pointer to a red-black
- *	tree.  rb_summarize_tree() prints out the header information
+ *	tree.  bu_rb_summarize_tree() prints out the header information
  *	for the tree.  It is intended for diagnostic purposes.
  */
-void rb_summarize_tree (tree)
+void bu_rb_summarize_tree (tree)
 
-rb_tree	*tree;
+bu_rb_tree	*tree;
 
 {
     int		i;
 
-    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
 
-    rt_log("-------- Red-black tree <%x> summary --------\n", tree);
-    rt_log("Description:      '%s'\n", tree -> rbt_description);
-    rt_log("Current:          <%x>\n", tree -> rbt_current);
-    rt_log("Empty node:       <%x>\n", tree -> rbt_empty_node);
-    rt_log("Size (in nodes):  %d\n", tree -> rbt_nm_nodes);
-    rt_log("Number of orders: %d\n", tree -> rbt_nm_orders);
-    rt_log("Debug bits:       <%x>\n", tree -> rbt_debug);
+    bu_log("-------- Red-black tree <%x> summary --------\n", tree);
+    bu_log("Description:      '%s'\n", tree -> rbt_description);
+    bu_log("Current:          <%x>\n", tree -> rbt_current);
+    bu_log("Empty node:       <%x>\n", tree -> rbt_empty_node);
+    bu_log("Size (in nodes):  %d\n", tree -> rbt_nm_nodes);
+    bu_log("Number of orders: %d\n", tree -> rbt_nm_orders);
+    bu_log("Debug bits:       <%x>\n", tree -> rbt_debug);
     if ((tree -> rbt_nm_orders > 0) && (tree -> rbt_nm_nodes > 0))
     {
-	rt_log("i    Order[i]   Uniq[i]  Root[i]      Package[i]     Data[i]\n");
+	bu_log("i    Order[i]   Uniq[i]  Root[i]      Package[i]     Data[i]\n");
 	for (i = 0; i < tree -> rbt_nm_orders; ++i)
 	{
-	    rt_log("%-3d  <%x>    %c      <%x>    <%x>    <%x>\n",
+	    bu_log("%-3d  <%x>    %c      <%x>    <%x>    <%x>\n",
 		    i,
-		    rb_order_func(tree, i),
-		    rb_get_uniqueness(tree, i) ? 'Y' : 'N',
-		    rb_root(tree, i),
-		    (rb_root(tree, i) == RB_NODE_NULL) ? 0 :
-			(rb_root(tree, i) -> rbn_package)[i],
-		    (rb_root(tree, i) == RB_NODE_NULL) ? 0 :
-			rb_data(rb_root(tree, i), i));
+		    bu_rb_order_func(tree, i),
+		    bu_rb_get_uniqueness(tree, i) ? 'Y' : 'N',
+		    bu_rb_root(tree, i),
+		    (bu_rb_root(tree, i) == BU_RB_NODE_NULL) ? 0 :
+			(bu_rb_root(tree, i) -> rbn_package)[i],
+		    (bu_rb_root(tree, i) == BU_RB_NODE_NULL) ? 0 :
+			bu_rb_data(bu_rb_root(tree, i), i));
 	}
     }
-    rt_log("-------------------------------------------------\n");
+    bu_log("-------------------------------------------------\n");
 }
