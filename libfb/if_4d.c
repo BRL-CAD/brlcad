@@ -855,10 +855,6 @@ int	width, height;
 			return(-1);
 		}
 	}
-#if defined(__sgi) && defined(__mips)
-	/* XXX On Irix 4.0, something goes wrong with shared memory.  Hack */
-	mode |= MODE_1MALLOC;
-#endif
 	ifp->if_mode = mode;
 
 	/*
