@@ -279,9 +279,7 @@ CONST char	**argv;
 	BU_GETSTRUCT( anp, animate );
 	anp->magic = ANIMATE_MAGIC;
 
-	bzero( (char *)&ts, sizeof(ts) );
-	ts.ts_dbip = dbip;
-	bn_mat_idn( ts.ts_mat );
+	db_init_db_tree_state( &ts, dbip );
 	db_full_path_init( &anp->an_path );
 	if( db_follow_path_for_state( &ts, &(anp->an_path), argv[1], LOOKUP_NOISY ) < 0 )
 		goto bad;
