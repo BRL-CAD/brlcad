@@ -3,7 +3,7 @@
 fast4-g \- FASTGEN4 Translator (FASTGEN4 to BRL-CAD)
 .SH SYNOPSIS
 .B fast4-g
-[-dwq] [-o plot_file] [-c id_list] [-x RT_DEBUG_FLAG] [-b BU_DEBUG_FLAG] file.fastgen4 file.g
+[-dwq] [-o plot_file] [-m muves_warnings] [-c id_list] [-x RT_DEBUG_FLAG] [-b BU_DEBUG_FLAG] file.fastgen4 file.g
 .SH DESCRIPTION
 .I fast4-g\^
 converts the specified
@@ -22,13 +22,20 @@ The
 option requests quiet mode, so that nothing will be printed except errors.
 The
 .I -b
-option specifies a value for a debug flag for libbu.
+option specifies a value for a debug flag for libbu and the
+.I -x
+option specifies a value for the librt debug flag.
 The
 .I -o
 option indicates that all CTRI and CQUAD elements that get processed should be output to the
 specified plot_file in libplot3 format. This file can be view in MGED using the
 .I overlay
 command.
+The
+.I -m
+option requests that information about any CHGCOMP and CBACKING elements be output in the specified
+.I muves_warnings
+file.
 The
 .I -c
 option allows the user to specify a restricted set of components to process from the
@@ -41,19 +48,15 @@ The
 .I file.fastgen4
 file is expected to be in the FASTGEN 4.1 format as defined in the
 FASTGEN 4.1 User Manual.
-.I CCONE1
+.I CCONE1, CCONE2, 
 and
-.I CCONE2
+.I CCONE3
 elements are converted to BRL-CAD truncated right cylinders
 .I (TRC). CHEX2
 elements are converted to BRL-CAD arbitrary convex polyhedrons
 .I (ARB8).
 .I CLINE
-elements are converted to BRL-CAD right circular cylinders
-.I (RCC)
-and two or more CLINES originating or terminating at the same vertex
-are joined with a BRL-CAD sphere
-.I (SPH).
+elements are converted to BRL-CAD cline solids.
 .I CQUAD
 ,
 .I CTRI
@@ -61,7 +64,7 @@ are joined with a BRL-CAD sphere
 .I CHEX1
 elements are converted to faces of a BRL-CAD BOT (Bag Of Triangles).
 .I CSPHERE
-elements are converted to BRL-CAD spheres
+elements are converted to BRL-CAD sphere
 .I (SPH)
 solids. BRL-CAD region ident numbers are assigned by combining the
 FASTGEN4 group and component numbers:
@@ -86,16 +89,6 @@ Hugh Griffis and Maty Lentz,
 April 1994
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
-Some objects represented in FASTGEN4 format may be too complex or
-too vaguely defined to be converted to BRL-CAD format using the preferred
-algorithm. These are typically objects described in plate mode.
-In most of these cases the converter will make a second attempt
-at converting the problem object using a simpler, but less accurate,
-method of combining a series of BRL-CAD
-.I ARB6
-solids, one for each face of the original FASTGEN4 object.
-Errors in the FASTGEN4 file will have unpredictable results on the BRL-CAD
-output file. It is wise to examine the resulting model.
 .SH AUTHOR
 John Anderson
 .SH SOURCE
