@@ -80,7 +80,7 @@ set mged_help_data(expand)	{{expression}	{globs expression against MGED database
 set mged_help_data(eye_pt)	{{mx my mz}	{set eye point to given model coordinates (in mm)}}
 set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components/systems}}
 set mged_help_data(facedef)	{{####}	{define new face for an arb}}
-set mged_help_data(facetize)	{{[-tT] [-P#] new_obj old_obj(s)}	{convert objects to faceted NMG objects at current tol}}
+set mged_help_data(facetize)	{{[-ntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option) at current tol}}
 set mged_help_data(find)	{{[-s] <objects>}	{find all references to objects}}
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		{{groupname <objects>}	{group objects}}
