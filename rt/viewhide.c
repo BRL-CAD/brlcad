@@ -173,6 +173,8 @@ struct application	*ap;
 	 * of this is WHAT?
 	 */
 
+	rt_log("view_init2: %d width\n", width);
+
 	botp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
 		"bottom cell buffer" );
 	topp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
@@ -240,6 +242,11 @@ register struct application	*ap;
 
 	struct	cell	*posp;		/* store the current cell position */
 
+	/* Getting defensive.... just in case. */
+	if(ap->a_x > width)  {
+		rt_bomb("raymiss: pixels exceed width\n");
+	}
+
 	posp = &(topp[ap->a_x + 1]);
 
 	/*
@@ -305,6 +312,12 @@ register struct partition *PartHeadp;
 
 	dist = pp->pt_inhit->hit_dist;
 	region_id = pp->pt_regionp->reg_regionid;
+
+	/* Getting defensive.... just in case. */
+	if(ap->a_x > width)  {
+		rt_bomb("rayhit: pixels exceed width\n");
+	}
+
 	posp = &(topp[ap->a_x + 1]);
 
 	/* Calculate the hit normal and the hit distance.  This is done
