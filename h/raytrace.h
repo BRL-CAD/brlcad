@@ -1978,6 +1978,9 @@ RT_EXTERN(int			rt_uplot_to_vlist, (struct bn_vlblock *vbp,
 RT_EXTERN(void			rt_label_vlist_verts, (struct bn_vlblock *vbp,
 				struct bu_list *src, mat_t mat,
 				double sz, double mm2local) );
+RT_EXTERN(int			rt_process_uplot_value,
+				(struct bu_list *vhead, struct bn_vlblock *vbp,
+				FILE *fp, int c, double char_size) );
 
 
 /************************************************************************
