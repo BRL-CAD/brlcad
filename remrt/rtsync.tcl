@@ -64,7 +64,10 @@ pack .logo .words_fr -side left -in .title_fr
 ## No longer in it's own window.
 ##toplevel .status
 frame .status.incr_fr
+frame .status.update_fr
 button .status.button -text "Update CPU Status" -command update_cpu_status
+checkbutton .status.checkbutton -variable update_status_every_frame
+label .status.checklabel -text "Continuously"
 button .status.incr -text "NCPU++" -command \
 	{cur_node_send {global npsw; incr npsw 1; set npsw}}
 button .status.decr -text "NCPU--" -command \
@@ -77,8 +80,10 @@ label .status.global1 -textvariable cur_global1_status
 label .status.global2 -textvariable cur_global2_status
 label .status.global3 -textvariable cur_global3_status
 label .status.global4 -textvariable cur_global4_status
+pack .status.button .status.checkbutton .status.checklabel \
+	-side left -in .status.update_fr
 pack .status.incr .status.decr .status.drop -side left -in .status.incr_fr
-pack .status.button .status.incr_fr .status.list \
+pack .status.update_fr .status.incr_fr .status.list \
 	.status.global1 .status.global2 .status.global3 .status.global4 \
 	-side top -in .status
 	
