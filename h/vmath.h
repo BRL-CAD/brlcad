@@ -157,7 +157,7 @@ extern double sqrt();
 
 /* Apply a 4x4 matrix to a 3-tuple which is a absolue Point in space */
 #define MAT4X3PNT(o,m,i) \
-	{ LOCAL fastf_t f; \
+	{ FAST fastf_t f; \
 	f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]);\
 	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * f;\
 	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * f;\
@@ -165,7 +165,7 @@ extern double sqrt();
 
 /* Multiply an Absolute 3-Point by a full 4x4 matrix. */
 #define PNT3x4MAT(o,i,m) \
-	{ LOCAL fastf_t f; \
+	{ FAST fastf_t f; \
 	f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]);\
 	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * f;\
 	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * f;\
@@ -173,21 +173,21 @@ extern double sqrt();
 
 /* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
 #define MAT4X3VEC(o,m,i) \
-	{ LOCAL fastf_t f;	f = 1.0/((m)[15]);\
+	{ FAST fastf_t f;	f = 1.0/((m)[15]);\
 	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * f; \
 	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * f; \
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * f; }
 
 /* Multiply a Relative 3-Vector by most of a 4x4 matrix.  Pre-multiply */
 #define VEC3x4MAT(o,i,m) \
-	{ LOCAL fastf_t f; 	f = 1.0/((m)[15]); \
+	{ FAST fastf_t f; 	f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]) * f; }
 
 /* Multiply a Relative 2-Vector by most of a 4x4 matrix.  Pre-multiply */
 #define VEC2x4MAT(o,i,m) \
-	{ LOCAL fastf_t f; 	f = 1.0/((m)[15]); \
+	{ FAST fastf_t f; 	f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * f; }
@@ -197,3 +197,6 @@ extern double sqrt();
 	(a)[0] = -(b)[0]; \
 	(a)[1] = -(b)[1]; \
 	(a)[2] = -(b)[2];
+
+/* Compare two vectors for EXACT equality.  Use carefully. */
+#define VEQUAL(a,b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
