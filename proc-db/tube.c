@@ -73,22 +73,38 @@ char	**argv;
 	register int i;
 	int	frame;
 	char	name[128];
+	char	gname[128];
 	double	iradius, oradius;
 	vect_t	normal;
-	struct wmember head;
+	struct wmember head, ghead;
+	matp_t	matp;
+	mat_t	xlate, prod;
+	mat_t	rot1, rot2, rot3;
+	fastf_t	pos;
+	vect_t	from, to;
+	vect_t	offset;
 
 	head.wm_forw = head.wm_back = &head;
+	ghead.wm_forw = ghead.wm_back = &ghead;
 
 	mk_id( stdout, "Spline Tube" );
 
 	VSET( normal, 0, -1, 0 );
 	mk_half( stdout, "cut", 0, normal );
 
+#ifdef never
+	/* Numbers for a 105-mm M68 gun */
 	oradius = 5 * inches2mm / 2;		/* 5" outer diameter */
 	iradius = 4.134 * inches2mm / 2;	/* 5" inner (land) diameter */
+#else
+	/* Numbers invented to match 125-mm KE (Erline) round */
+	iradius = 125.0/2;
+	oradius = iradius + (5-4.134) * inches2mm / 2;		/* 5" outer diameter */
+#endif
 	fprintf(stderr,"inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
-#ifdef never
+
 	length = 187 * inches2mm;
+#ifdef never
 	spacing = 100;			/* mm per sample */
 	nsamples = ceil(length/spacing);
 	fprintf(stderr,"length=%gmm, spacing=%gmm\n", length, spacing);
@@ -123,6 +139,35 @@ char	**argv;
 		mk_lcomb( stdout, name, 1,
 			"plastic", "",
 			0, (char *)0, &head );
+
+		/*  Place the tube region and the ammo together.
+		 *  The origin of the ammo is expected to be the center
+		 *  of the rearmost plate.
+		 */
+		mk_addmember( name, &ghead );
+		matp = mk_addmember( "ke", &ghead )->wm_mat;
+		pos = ((double)frame)/64 *	/* XXX hack: nframes */
+			(sample[nsamples-1][X] - sample[0][X]); /* length */
+
+		VSET( from, 0, -1, 0 );
+		VSET( to, 1, 0, 0 );		/* to X axis */
+		mat_fromto( rot1, from, to );
+
+		VSET( from, 1, 0, 0 );
+		xfinddir( to, pos, offset );
+		mat_fromto( rot2, from, to );
+
+		mat_idn( xlate );
+		MAT_DELTAS( xlate, offset[X], offset[Y], offset[Z] );
+		mat_mul( rot3, rot2, rot1 );
+		mat_mul( matp, xlate, rot3 );
+
+		(void)mk_addmember( "light.r", &ghead );
+		sprintf( gname, "g%d", frame);
+		mk_lcomb( stdout, gname, 0,
+			(char *)0, "",
+			0, (char *)0, &ghead );
+
 		fprintf( stderr, "%d, ", frame );  fflush(stderr);
 	}
 }
@@ -282,4 +327,32 @@ double	radius;
 		(char *)0, "",
 		0, (char *)0,
 		&head );
+}
+
+/*
+ * Find which section a given X value is in, and indicate what
+ * direction the tube is headed in then.
+ */
+xfinddir( dir, x, loc)
+vect_t	dir;
+double	x;
+point_t	loc;
+{
+	register int i;
+	fastf_t	ratio;
+
+	for( i=0; i<nsamples-1; i++ )  {
+		if( x < sample[i][X] )
+			break;
+		if( x >= sample[i+1][X] )
+			continue;
+		VSUB2( dir, sample[i+1], sample[i] );
+		ratio = (x-sample[i][X]) / (sample[i+1][X]-sample[i][X]);
+		VJOIN1( loc, sample[i], ratio, dir );
+
+		VUNITIZE( dir );
+		return;
+	}
+	fprintf(stderr, "xfinddir: couldn't find x=%g\n", x);
+	VSET( dir, 1, 0, 0 );
 }
