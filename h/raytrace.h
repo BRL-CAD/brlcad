@@ -811,7 +811,9 @@ struct rt_comb_internal  {
 /*
  *			R T _ W D B
  *
- * XXX Somebody give me a descriptive comment
+ *  This data structure is at the core of the "LIBWDB" support for
+ *  allowing application programs to read and write BRL-CAD databases.
+ *  Many different access styles are supported.
  */
  
 struct rt_wdb  {
@@ -833,15 +835,33 @@ struct rt_wdb  {
 #define RT_WDB_TYPE_DB_INMEM			4
 #define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
+/* Some dubious defines, to support the wdb_obj.c evolution */
+#define RT_MAXARGS		9000
+#define RT_MAXLINE		10240
+#define RT_NAMESIZE		16
+
 /*
  *			W D B _ O B J
  *
  * A database object is used to interact with a Brl-Cad database.
+ * This will eventually all migrate into the rt_wdb structure.
+ * One application may have many of these open at one time.
  */
 struct wdb_obj {
   struct bu_list	l;
   struct bu_vls		wdb_name;	/* database object name */
   struct rt_wdb		*wdb_wp;
+
+  /* variables for name prefixing */
+  char			wdb_prestr[RT_NAMESIZE];
+  int			wdb_ncharadd;
+  int			wdb_num_dups;
+
+  /* default region ident codes for this particular database. */
+  int			wdb_item_default;/* GIFT region ID */
+  int			wdb_air_default;
+  int			wdb_mat_default;/* GIFT material code */
+  int			wdb_los_default;/* Line-of-sight estimate */
 };
 extern struct wdb_obj HeadWDBObj;		/* head of BRLCAD database object list */
 #define RT_WDBO_NULL		((struct wdb_obj *)NULL)
@@ -860,10 +880,6 @@ struct vd_curve {
 	struct bu_list	vdc_vhd;	/* head of list of vertices */
 };
 #define VD_CURVE_NULL		((struct vd_curve *)NULL)
-
-#define RT_MAXARGS		9000
-#define RT_MAXLINE		10240
-#define RT_NAMESIZE		16
 
 /*
  *			D G _ O B J

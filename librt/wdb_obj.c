@@ -111,27 +111,20 @@ void wdb_do_list();
 struct directory ** wdb_getspace();
 struct directory *wdb_combadd();
 
+/* XXX move this to rt_g */
 struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 
-static char wdb_prestr[RT_NAMESIZE];
-static int wdb_ncharadd;
-static int wdb_num_dups;
-static struct directory	**wdb_dup_dirp;
-
-/* default region ident codes */
-int wdb_item_default = 1000;	/* GIFT region ID */
-int wdb_air_default = 0;
-int wdb_mat_default = 1;		/* GIFT material code */
-int wdb_los_default = 100;	/* Line-of-sight estimate */
+/* ==== BEGIN evil stuff ==== */
 
 /* input path */
 static struct directory *wdb_objects[WDB_MAX_LEVELS];
 static int wdb_objpos;
+static struct directory *wdb_path[WDB_MAX_LEVELS];
 
 /* print flag */
 static int wdb_prflag;
 
-static struct directory *wdb_path[WDB_MAX_LEVELS];
+/* ==== END evil stuff ==== */
 
 static struct bu_cmdtab wdb_cmds[] = {
 	"match",	wdb_match_tcl,
@@ -379,6 +372,12 @@ Usage: wdb_open\n\
 	bu_vls_init(&wdbop->wdb_name);
 	bu_vls_strcpy(&wdbop->wdb_name, argv[1]);
 	wdbop->wdb_wp = wdbp;
+
+	/* default region ident codes */
+	wdbop->wdb_item_default = 1000;
+	wdbop->wdb_air_default = 0;
+	wdbop->wdb_mat_default = 1;
+	wdbop->wdb_los_default = 100;
 
 	/* append to list of wdb_obj's */
 	BU_LIST_APPEND(&HeadWDBObj.l,&wdbop->l);
@@ -2036,6 +2035,7 @@ BU_EXTERN(HIDDEN int wdb_dir_add, ( struct db_i *input_dbip, CONST char
 struct dir_add_stuff {
 	Tcl_Interp	*interp;
 	struct db_i	*main_dbip;		/* the main database */
+	struct wdb_obj	*wdbop;
 };
 
 /*
@@ -2064,9 +2064,9 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		bu_bomb("wdb_dir_add:  bad dbip\n");
 
 	/* Add the prefix, if any */
-	if (wdb_ncharadd > 0) {
-		(void)strncpy(local, wdb_prestr, wdb_ncharadd);
-		(void)strncpy(local+wdb_ncharadd, name, RT_NAMESIZE-wdb_ncharadd);
+	if (dasp->wdbop->wdb_ncharadd > 0) {
+		(void)strncpy(local, dasp->wdbop->wdb_prestr, dasp->wdbop->wdb_ncharadd);
+		(void)strncpy(local+dasp->wdbop->wdb_ncharadd, name, RT_NAMESIZE-dasp->wdbop->wdb_ncharadd);
 	} else {
 		(void)strncpy(local, name, RT_NAMESIZE);
 	}
@@ -2128,10 +2128,11 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		Tcl_AppendResult(dasp->interp,
 				 "adding solid '",
 				 local, "'\n", (char *)NULL);
-		if ((wdb_ncharadd + strlen(name)) > (unsigned)RT_NAMESIZE)
+		if ((dasp->wdbop->wdb_ncharadd + strlen(name)) > (unsigned)RT_NAMESIZE)
 			Tcl_AppendResult(dasp->interp,
 					 "WARNING: solid name \"",
-					 wdb_prestr, name, "\" truncated to \"",
+					 dasp->wdbop->wdb_prestr, name,
+					 "\" truncated to \"",
 					 local, "\"\n", (char *)NULL);
 
 		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
@@ -2148,9 +2149,10 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 
 		/* Update all the member records */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		if (wdb_ncharadd && comb->tree) {
+		if (dasp->wdbop->wdb_ncharadd && comb->tree) {
 			db_tree_funcleaf(dasp->main_dbip, comb, comb->tree, wdb_do_update,
-					 (genptr_t)&wdb_ncharadd, (genptr_t)wdb_prestr, (genptr_t)NULL);
+			 (genptr_t)&(dasp->wdbop->wdb_ncharadd),
+			 (genptr_t)dasp->wdbop->wdb_prestr, (genptr_t)NULL);
 		}
 	}
 
@@ -2199,14 +2201,14 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 
 	if (strcmp(argv[3], "/") == 0) {
 		/* No prefix desired */
-		(void)strcpy(wdb_prestr, "\0");
+		(void)strcpy(wdbop->wdb_prestr, "\0");
 	} else {
-		(void)strcpy(wdb_prestr, argv[3]);
+		(void)strcpy(wdbop->wdb_prestr, argv[3]);
 	}
 
-	if ((wdb_ncharadd = strlen(wdb_prestr)) > 12) {
-		wdb_ncharadd = 12;
-		wdb_prestr[12] = '\0';
+	if ((wdbop->wdb_ncharadd = strlen(wdbop->wdb_prestr)) > 12) {
+		wdbop->wdb_ncharadd = 12;
+		wdbop->wdb_prestr[12] = '\0';
 	}
 
 	/* open the input file */
@@ -2220,6 +2222,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	/* Scan new database, adding everything encountered. */
 	das.interp = interp;
 	das.main_dbip = wdbop->wdb_wp->dbip;
+	das.wdbop = wdbop;
 	if (db_scan(newdbp, wdb_dir_add, 1, (genptr_t)&das) < 0) {
 		Tcl_AppendResult(interp, "concat: db_scan failure\n", (char *)NULL);
 		bad = 1;	
@@ -2240,6 +2243,8 @@ genptr_t ptr));
 
 struct dir_check_stuff {
  	struct db_i	*main_dbip;
+	struct wdb_obj	*wdbop;
+	struct directory **dup_dirp;
 };
 
 /*
@@ -2266,9 +2271,9 @@ wdb_dir_check(input_dbip, name, laddr, len, flags, ptr)
 	RT_CK_DBI(input_dbip);
 
 	/* Add the prefix, if any */
-	if (wdb_ncharadd > 0) {
-		(void)strncpy( local, wdb_prestr, wdb_ncharadd );
-		(void)strncpy( local+wdb_ncharadd, name, RT_NAMESIZE-wdb_ncharadd );
+	if (dcsp->wdbop->wdb_ncharadd > 0) {
+		(void)strncpy( local, dcsp->wdbop->wdb_prestr, dcsp->wdbop->wdb_ncharadd );
+		(void)strncpy( local+dcsp->wdbop->wdb_ncharadd, name, RT_NAMESIZE-dcsp->wdbop->wdb_ncharadd );
 	} else {
 		(void)strncpy( local, name, RT_NAMESIZE );
 	}
@@ -2277,8 +2282,8 @@ wdb_dir_check(input_dbip, name, laddr, len, flags, ptr)
 	/* Look up this new name in the existing (main) database */
 	if ((dupdp = db_lookup(dcsp->main_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
 		/* Duplicate found, add it to the list */
-		wdb_num_dups++;
-		*wdb_dup_dirp++ = dupdp;
+		dcsp->wdbop->wdb_num_dups++;
+		*dcsp->dup_dirp++ = dupdp;
 	}
 	return 0;
 }
@@ -2311,11 +2316,11 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	(void)strcpy(wdb_prestr, argv[3]);
-	wdb_num_dups = 0;
-	if ((wdb_ncharadd = strlen(wdb_prestr)) > 12) {
-		wdb_ncharadd = 12;
-		wdb_prestr[12] = '\0';
+	(void)strcpy(wdbop->wdb_prestr, argv[3]);
+	wdbop->wdb_num_dups = 0;
+	if ((wdbop->wdb_ncharadd = strlen(wdbop->wdb_prestr)) > 12) {
+		wdbop->wdb_ncharadd = 12;
+		wdbop->wdb_prestr[12] = '\0';
 	}
 
 	/* open the input file */
@@ -2325,23 +2330,26 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	Tcl_AppendResult(interp, "\n*** Comparing ", wdbop->wdb_wp->dbip->dbi_filename,
+	Tcl_AppendResult(interp, "\n*** Comparing ",
+			wdbop->wdb_wp->dbip->dbi_filename,
 			 "  with ", argv[2], " for duplicate names\n", (char *)NULL);
-	if (wdb_ncharadd) {
+	if (wdbop->wdb_ncharadd) {
 		Tcl_AppendResult(interp, "  For comparison, all names in ",
-				 argv[2], " were prefixed with:  ", wdb_prestr, "\n", (char *)NULL);
+				 argv[2], " were prefixed with:  ",
+				 wdbop->wdb_prestr, "\n", (char *)NULL);
 	}
 
 	/* Get array to hold names of duplicates */
-	if ((wdb_dup_dirp = wdb_getspace(wdbop->wdb_wp->dbip, 0)) == (struct directory **) 0) {
+	if ((dirp0 = wdb_getspace(wdbop->wdb_wp->dbip, 0)) == (struct directory **) 0) {
 		Tcl_AppendResult(interp, "f_dup: unable to get memory\n", (char *)NULL);
 		db_close( newdbp );
 		return TCL_ERROR;
 	}
-	dirp0 = wdb_dup_dirp;
 
 	/* Scan new database for overlaps */
 	dcs.main_dbip = wdbop->wdb_wp->dbip;
+	dcs.wdbop = wdbop;
+	dcs.dup_dirp = dirp0;
 	if (db_scan(newdbp, wdb_dir_check, 0, (genptr_t)&dcs) < 0) {
 		Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
 		bu_free((genptr_t)dirp0, "wdb_getspace array");
@@ -2350,8 +2358,8 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	}
 
 	bu_vls_init(&vls);
-	wdb_vls_col_pr4v(&vls, dirp0, (int)(wdb_dup_dirp - dirp0));
-	bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----\n", wdb_num_dups);
+	wdb_vls_col_pr4v(&vls, dirp0, (int)(dcs.dup_dirp - dirp0));
+	bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----\n", wdbop->wdb_num_dups);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_free((genptr_t)dirp0, "wdb_getspace array");
@@ -2394,7 +2402,7 @@ wdb_group_tcl(clientData, interp, argc, argv)
 	for (i = 3; i < argc; i++) {
 		if ((dp = db_lookup(wdbop->wdb_wp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
 			if (wdb_combadd(interp, wdbop->wdb_wp->dbip, dp, argv[2], 0,
-					WMOP_UNION, 0, 0) == DIR_NULL)
+					WMOP_UNION, 0, 0, wdbop) == DIR_NULL)
 				return TCL_ERROR;
 		}  else
 			Tcl_AppendResult(interp, "skip member ", argv[i], "\n", (char *)NULL);
@@ -2513,8 +2521,8 @@ wdb_region_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
- 	ident = wdb_item_default;
- 	air = wdb_air_default;
+ 	ident = wdbop->wdb_item_default;
+ 	air = wdbop->wdb_air_default;
 
 	/* skip past procname */
 	--argc;
@@ -2528,12 +2536,13 @@ wdb_region_tcl(clientData, interp, argc, argv)
 
 	if (db_lookup(wdbop->wdb_wp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
 		/* will attempt to create the region */
-		if (wdb_item_default) {
+		if (wdbop->wdb_item_default) {
 			struct bu_vls tmp_vls;
 
-			wdb_item_default++;
+			wdbop->wdb_item_default++;
 			bu_vls_init(&tmp_vls);
-			bu_vls_printf(&tmp_vls, "Defaulting item number to %d\n", wdb_item_default);
+			bu_vls_printf(&tmp_vls, "Defaulting item number to %d\n",
+				wdbop->wdb_item_default);
 			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			bu_vls_free(&tmp_vls);
 		}
@@ -2570,7 +2579,7 @@ wdb_region_tcl(clientData, interp, argc, argv)
 		}
 
 		if (wdb_combadd(interp, wdbop->wdb_wp->dbip, dp,
-				argv[1], 1, oper, ident, air) == DIR_NULL) {
+				argv[1], 1, oper, ident, air, wdbop) == DIR_NULL) {
 			Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -2578,8 +2587,8 @@ wdb_region_tcl(clientData, interp, argc, argv)
 
 	if (db_lookup(wdbop->wdb_wp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
 		/* failed to create region */
-		if (wdb_item_default > 1)
-			wdb_item_default--;
+		if (wdbop->wdb_item_default > 1)
+			wdbop->wdb_item_default--;
 		return TCL_ERROR;
 	}
 
@@ -2665,7 +2674,7 @@ wdb_comb_tcl(clientData, interp, argc, argv)
 			continue;
 		}
 
-		if (wdb_combadd(interp, wdbop->wdb_wp->dbip, dp, comb_name, 0, oper, 0, 0) == DIR_NULL) {
+		if (wdb_combadd(interp, wdbop->wdb_wp->dbip, dp, comb_name, 0, oper, 0, 0, wdbop) == DIR_NULL) {
 			Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -2905,7 +2914,7 @@ wdb_do_list(dbip, interp, outstrp, dp, verbose)
  * region_flag is 1 (region), or 0 (group).
  */
 struct directory *
-wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air)
+wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdbop)
      Tcl_Interp *interp;
      struct db_i *dbip;
      register struct directory *objp;
@@ -2914,6 +2923,7 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air)
      int relation;			/* = UNION, SUBTRACT, INTERSECT */
      int ident;				/* "Region ID" */
      int air;				/* Air code */
+     struct wdb_obj *wdbop;
 {
 	register struct directory *dp;
 	struct rt_db_internal intern;
@@ -2963,12 +2973,14 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air)
 			comb->region_flag = 1;
 			comb->region_id = ident;
 			comb->aircode = air;
-			comb->los = wdb_los_default;
-			comb->GIFTmater = wdb_mat_default;
+			comb->los = wdbop->wdb_los_default;
+			comb->GIFTmater = wdbop->wdb_mat_default;
 			bu_vls_init(&tmp_vls);
 			bu_vls_printf(&tmp_vls,
 				      "Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
-				      ident, air, wdb_mat_default, wdb_los_default);
+				      ident, air, 
+					wdbop->wdb_mat_default,
+					wdbop->wdb_los_default);
 			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			bu_vls_free(&tmp_vls);
 		}

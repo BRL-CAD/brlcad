@@ -41,11 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-gr] comb_name [bool_expr]'\n",\
 				     (char *)NULL)
-/* default region ident codes */
-extern int wdb_item_default;	/* GIFT region ID */
-extern int wdb_air_default;
-extern int wdb_mat_default;		/* GIFT material code */
-extern int wdb_los_default;	/* Line-of-sight estimate */
 
 struct tokens {
 	struct bu_list		l;
@@ -729,10 +724,10 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 			struct bu_vls tmp_vls;
 
 			comb->region_flag = 1;
-			comb->region_id = wdb_item_default++;;
-			comb->aircode = wdb_air_default;
-			comb->los = wdb_los_default;
-			comb->GIFTmater = wdb_mat_default;
+			comb->region_id = wdbop->wdb_item_default++;;
+			comb->aircode = wdbop->wdb_air_default;
+			comb->los = wdbop->wdb_los_default;
+			comb->GIFTmater = wdbop->wdb_mat_default;
 			bu_vls_init(&tmp_vls);
 			bu_vls_printf(&tmp_vls,
 				"Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
