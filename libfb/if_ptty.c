@@ -62,7 +62,7 @@ FBIO ptty_interface =
 		"Unix pseudo-tty Interface",
 		800,
 		1024,
-		"/dev/tty...",
+		"/dev/tty",
 		800,			/* XXX - are these good defaults? */
 		1024,
 		-1,
