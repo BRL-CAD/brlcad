@@ -49,7 +49,7 @@ ARG="$1"
 
 #  Base directory for the entire package.
 #  Modified by newbindir.sh as part of the installation process, if needed.
-BASEDIR=/usr/brlcad
+BASEDIR=/vld/bparker/cad_dev
 
 if test -x /bin/uname -o -x /usr/bin/uname -o -x /usr/5bin/uname
 then
@@ -89,7 +89,7 @@ then
 		BSD/OS)	MACHINE=bsdi ;;
 		esac ;;
 	# SGI is ugly, returning IP## here.
-	IP??) 
+	IP?*) 
 		case "$OS_TYPE" in
 		IRIX)  	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
 			case "$OS_REVISION" in
@@ -106,7 +106,6 @@ then
 			esac ;;
 		esac ;;
 	esac
-
 fi
 
 if test "$MACHINE" = ""
