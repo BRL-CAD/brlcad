@@ -382,6 +382,10 @@ bv_vrestore()
     new_mats();
 
     (void)mged_svbase();
+
+#ifdef DO_SCROLL_UPDATES
+    set_scroll();
+#endif
   }
 }
 
@@ -415,6 +419,10 @@ bv_reset()  {
   size_reset();
   setview( 0.0, 0.0, 0.0 );
   (void)mged_svbase();
+
+#ifdef DO_SCROLL_UPDATES
+  set_scroll();
+#endif
 }
 
 static void
@@ -438,6 +446,7 @@ ill_common()  {
 	}
 
 	illump = BU_LIST_NEXT(solid, &HeadSolid.l);/* any valid solid would do */
+	illump->s_iflag = UP;
 	edobj = 0;		/* sanity */
 	edsol = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
