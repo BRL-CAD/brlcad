@@ -240,9 +240,9 @@ char	**argv;
  *
  *
  */
-char new_name[NAMESIZE];
-char prestr[15];
-int ncharadd;
+extern char new_name[NAMESIZE];	/* from concat.o */
+extern char prestr[15];
+extern int ncharadd;
 
 
 
