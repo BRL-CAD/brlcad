@@ -60,7 +60,6 @@ matp_t xlate;
 	register int		i;
 	union record		*rec;
 	int			id;
-	char			name[NAMESIZE+2];
 
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		READ_ERR_return;
@@ -92,7 +91,6 @@ matp_t xlate;
 	 *  Then, export it, and re-write the database record.
 	 *  Will work on all solids.
 	 */
-	NAMEMOVE( rec->s.s_name, name );	/* pun for name location */
 	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
 		(void)printf("moveHobj(%s) unable to identify type\n",
 			dp->d_namep );
@@ -119,9 +117,6 @@ matp_t xlate;
 		return;				/* FAIL */
 	}
 	rt_functab[id].ft_ifree( &intern );
-
-	rec = (union record *)ext.ext_buf;
-	NAMEMOVE( name, rec->s.s_name );
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
 		db_free_external( &ext );
