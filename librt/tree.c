@@ -172,6 +172,18 @@ union tree			*curtree;
 }
 
 /*
+ *  XXX Something should be done to account for tolerances from rtip,
+ *  but this at least allows varying deltas for the angle and distance
+ *  parts of the matrix.
+ */
+static CONST mat_t	rt_equal_matrix = {
+	0.00001,	0.00001,	0.00001,	0.01,
+	0.00001,	0.00001,	0.00001,	0.01,
+	0.00001,	0.00001,	0.00001,	0.01,
+	0,		0,		0,		0.00001
+};
+
+/*
  *			R T _ F I N D _ I D E N T I C A L _ S O L I D
  *
  *  See if solid "dp" as transformed by "mat" already exists in the
@@ -293,9 +305,10 @@ int				id;
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/* Determine if this matrix is an identity matrix */
+	/* XXX Should build custom matrix based upon rtip tolerances */
 	for( i=0; i<16; i++ )  {
 		f = tsp->ts_mat[i] - rt_identity[i];
-		if( !NEAR_ZERO(f, 0.0001) )
+		if( !NEAR_ZERO(f, rt_equal_matrix[i]) )
 			break;
 	}
 	if( i < 16 )  {
