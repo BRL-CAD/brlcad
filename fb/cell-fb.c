@@ -139,7 +139,7 @@ static char	*usage[] = {
 	"Usage: cell-fb [options] [file]",
 	"Options:",
 	" -C            Use first 3 fields as r, g, and b",
-	" -M \"r g b r g b\"  Use first 3 fields as r, g, and b",
+	" -M \"r g b r g b\"  Ramp between two colors",
 	" -F dev        Use frame-buffer device `dev'",
 	" -N n          Set frame-buffer height to `n' pixels",
 	" -S n          Set frame-buffer height and width to `n' pixels",
