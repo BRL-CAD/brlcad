@@ -416,6 +416,7 @@ struct _mged_variables {
         int     hot_key;
 	int     view;
 	int	edit;
+        int     context;
 	int	predictor;
 	double	predictor_advance;
 	double	predictor_length;
