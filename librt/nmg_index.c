@@ -790,6 +790,22 @@ struct model *m2;
 }
 
 #define CHECK_INDEX( _p ) if((_p)->index > maxindex ) maxindex = (_p)->index
+#define CHECK_VU_INDEX( _vu) {\
+		NMG_CK_VERTEXUSE(_vu); \
+		CHECK_INDEX(_vu); \
+		if(_vu->a.magic_p)  switch(*_vu->a.magic_p)  { \
+		case NMG_VERTEXUSE_A_PLANE_MAGIC: \
+			CHECK_INDEX(_vu->a.plane_p); \
+			break; \
+		case NMG_VERTEXUSE_A_CNURB_MAGIC: \
+			CHECK_INDEX(_vu->a.cnurb_p); \
+			break; \
+		} \
+		v = _vu->v_p; \
+		NMG_CK_VERTEX(v); \
+		CHECK_INDEX(v); \
+		if(v->vg_p) CHECK_INDEX(v->vg_p); \
+	}
 long
 nmg_find_max_index( m )
 CONST struct model *m;
@@ -840,7 +856,7 @@ CONST struct model *m;
 					if( BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 						/* Loop of Lone vertex */
 						vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
-						CHECK_INDEX(vu);
+						CHECK_VU_INDEX(vu);
 						continue;
 					}
 					for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -858,7 +874,7 @@ CONST struct model *m;
 							break;
 						}
 						vu = eu->vu_p;
-						CHECK_INDEX(vu);
+						CHECK_VU_INDEX(vu);
 					}
 				}
 			}
@@ -873,7 +889,7 @@ CONST struct model *m;
 				if( BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 					/* Wire loop of Lone vertex */
 					vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
-					CHECK_INDEX(vu);
+					CHECK_VU_INDEX(vu);
 					continue;
 				}
 				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -891,7 +907,7 @@ CONST struct model *m;
 						break;
 					}
 					vu = eu->vu_p;
-					CHECK_INDEX(vu);
+					CHECK_VU_INDEX(vu);
 				}
 			}
 			/* Wire edges in shell */
@@ -910,11 +926,11 @@ CONST struct model *m;
 					break;
 				}
 				vu = eu->vu_p;
-				CHECK_INDEX(vu);
+				CHECK_VU_INDEX(vu);
 			}
 			/* Lone vertex in shell */
 			if( vu = s->vu_p )  {
-				CHECK_INDEX(vu);
+				CHECK_VU_INDEX(vu);
 			}
 		}
 	}
