@@ -2456,7 +2456,7 @@ top:
 		rt_log("nmg_face_cutjoin(fu1=x%x, fu2=x%x) eg=x%x END\n", fu1, fu2, rs1.eg_p);
 	}
 	if( eg && !rs1.eg_p )  rt_bomb("nmg_face_cutjoin() lost edge_g?\n");
-	if( eg != rs1.eg_p )  rt_log("nmg_face_cutjoin() changed from eg=x%x to rs1.eg_p=x%x\n", eg, rs1.eg_p);
+	if( eg && eg != rs1.eg_p )  rt_log("nmg_face_cutjoin() changed from eg=x%x to rs1.eg_p=x%x\n", eg, rs1.eg_p);
 	return rs1.eg_p;
 }
 
