@@ -184,7 +184,7 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 {
-	short x_pos, y_pos;	/* Lower corner of viewport */
+	int x_pos, y_pos;	/* Lower corner of viewport */
 	register int i;
 	
 	if( ismex() )  {
@@ -263,9 +263,6 @@ _LOCAL_ int
 sgi_dreset( ifp )
 FBIO	*ifp;
 {
-	short x_pos, y_pos;	/* Lower corner of viewport */
-
-	
 	ginit();
 	RGBmode();
 	gconfig();
@@ -324,8 +321,8 @@ int	x, y;
 register RGBpixel	*pixelp;
 int	count;
 {
-	short scan_count;
-	short xpos, ypos;
+	int scan_count;
+	int xpos, ypos;
 	RGBvalue rr[1024], gg[1024], bb[1024];
 	register int i;
 	int ret;
@@ -366,14 +363,14 @@ int	count;
 _LOCAL_ int
 sgi_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
-short	x, y;
+int	x, y;
 register RGBpixel	*pixelp;
-short	count;
+int	count;
 {
 	register union gepipe *hole = GEPIPE;
-	register short scan_count;
-	short xpos, ypos;
-	register short i;
+	register int scan_count;
+	int xpos, ypos;
+	register int i;
 	int ret;
 
 	ret = count;	/* save count */
@@ -751,7 +748,7 @@ register int	x, y;
 register RGBpixel	*pixelp;
 int	count;
 {	register union gepipe *hole = GEPIPE;
-	short scan_count;
+	int scan_count;
 	Colorindex colors[1025];
 	register int i;
 
@@ -813,7 +810,7 @@ register int	x, y;
 register RGBpixel	*pixelp;
 int	count;
 	{	register union gepipe *hole = GEPIPE;
-		short scan_count;
+		int scan_count;
 		register int i;
 
 	writemask( 0x3FF );
