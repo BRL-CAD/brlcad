@@ -5,6 +5,8 @@ fbgamma \- load a gamma correcting colormap
 .B fbgamma
 .RB [ \-h ]
 .RB [ \-o ]
+.RB [ \-i ]
+.RB [ \-F frambuffer ]
 val
 [gval bval]
 .SH DESCRIPTION
@@ -49,6 +51,21 @@ flag, the size is changed to 1024x1024.
 This size distinction is important for devices like the Adage
 framebuffers which have different operating modes based on the
 display size.
+.PP
+A framebuffer may be explicitly selected with the
+.B \-F
+option, followed by the name of the desired framebuffer.
+.PP
+The
+.B \-i
+option requests that a standard gamma calibration image be displayed on the
+framebuffer.
+This image consists of intensity ramps with 
+patches of solid color, and vertically adjacent patches containing
+alternating black and colored scanlines.
+When using gamma to compensate for non-linearity of a display, the gamma
+values should be adjusted until vertically adjacent ramps of the same color
+appear equal in intensity for all patches.
 .SH THEORY
 The response of a typical monitor is non-linear with respect to
 input voltage.  To a fairly high degree of accuracy, the response
