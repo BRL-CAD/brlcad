@@ -398,10 +398,10 @@ time_t
 cake_gettime()
 {
 #ifdef	ATT
-	extern	long	time();
+	extern	time_t	time();
 	long		val;
 
-	if (time(&val) == -1)
+	if (time(&val) == (time_t)-1)
 	{
 		sprintf(scratchbuf, "cake system error, time");
 		perror(scratchbuf);
