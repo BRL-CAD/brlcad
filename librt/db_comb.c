@@ -70,6 +70,7 @@ int
 db_tree_nleaves( tp )
 CONST union tree	*tp;
 {
+	if( tp == TREE_NULL )  return 0;
 
 	RT_CK_TREE(tp);
 
@@ -305,7 +306,7 @@ double				local2mm;
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 
-	if( db_ck_v4gift_tree( comb->tree ) < 0 )  {
+	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )  {
 		db_non_union_push( comb->tree );
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )  {
 			/* Need to further modify tree */
@@ -317,15 +318,17 @@ double				local2mm;
 
 	/* Count # leaves in tree -- that's how many Member records needed. */
 	node_count = db_tree_nleaves( comb->tree );
-	if( node_count )
+	if( node_count > 0 )  {
 		tree_list = (struct tree_list *)bu_calloc( node_count , sizeof( struct tree_list ) , "tree_list" );
-	else
-		tree_list = (struct tree_list *)NULL;
 
-	/* Convert tree into array form */
-	actual_count = db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
-	if( actual_count > node_count )  bu_bomb("rt_comb_v4_export() array overflow!");
-	if( actual_count < node_count )  bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
+		/* Convert tree into array form */
+		actual_count = db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+		if( actual_count > node_count )  bu_bomb("rt_comb_v4_export() array overflow!");
+		if( actual_count < node_count )  bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
+	} else {
+		tree_list = (struct tree_list *)NULL;
+		actual_count = 0;
+	}
 
 	/* Reformat the data into the necessary V4 granules */
 	RT_INIT_EXTERNAL(ep);
