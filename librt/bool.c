@@ -55,9 +55,6 @@ RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
  * Notes -
  *	It is the responsibility of the CALLER to free the seg chain,
  *	as well as the partition list that we return.
- *
- * XXX Should be given dist tolerance value, to make approx-equal decisions!
- * XXX Use of rt_fdiff is dangerous.
  */
 void
 rt_boolweave( out_hd, in_hd, PartHdp, ap )
@@ -231,8 +228,8 @@ equal_start:
 				 * the two points MUST be forced to become
 				 * exactly equal!
 				 */
-				i = rt_fdiff(segp->seg_out.hit_dist, pp->pt_outhit->hit_dist);
-				if( i > 0 )  {
+				diff = segp->seg_out.hit_dist - pp->pt_outhit->hit_dist;
+				if( diff > ap->a_rt_i->rti_tol.dist )  {
 					/*
 					 * Seg & partition start at roughly
 					 * the same spot,
@@ -248,8 +245,9 @@ equal_start:
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg spans p and beyond\n");
 					continue;
 				}
-				if( i == 0 )  {
+				if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
 					/*
+					 *  diff ~= 0
 					 * Segment and partition start & end
 					 * (nearly) together.
 					 *	PPPP
@@ -258,9 +256,10 @@ equal_start:
 					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("same start&end\n");
 					goto done_weave;
-				}
-				if( i < 0 )  {
+				} else {
 					/*
+					 *  diff < ~0
+					 *
 					 *  Segment + Partition start together,
 					 *  segment ends before partition ends.
 					 *	PPPPPPPPPP
@@ -281,6 +280,7 @@ equal_start:
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("start together, seg shorter\n");
 					goto done_weave;
 				}
+				/* NOTREACHED */
 			} else {
 				/*
 				 *  diff < ~~0
@@ -296,8 +296,10 @@ equal_start:
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
 				newpp->pt_inflip = lastflip;
-				if( (i=rt_fdiff(segp->seg_out.hit_dist, pp->pt_inhit->hit_dist)) < 0 ){
+				diff = segp->seg_out.hit_dist - pp->pt_inhit->hit_dist;
+				if( diff < -(ap->a_rt_i->rti_tol.dist) )  {
 					/*
+					 *  diff < ~0
 					 * Seg starts and ends before current
 					 * partition, but after previous
 					 * partition ends (diff < 0).
@@ -312,8 +314,11 @@ equal_start:
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg between 2 partitions\n");
 					goto done_weave;
 				}
-				if( i==0 )  {
-					/* Seg starts before current
+				if( diff < ap->a_rt_i->rti_tol.dist )  {
+					/*
+					 *  diff ~= 0
+					 *
+					 * Seg starts before current
 					 * partition starts, and ends at or
 					 * near the start of the partition.
 					 * (diff == 0).  FUSE the points.
