@@ -258,7 +258,7 @@ static struct funtab {
 	f_prcolor, 1, 1,
 "prefix", "new_prefix object(s)", "prefix each occurrence of object name(s)",
 	f_prefix, 3, MAXARGS,
-"preview", "preview [-v] [-d sec_delay] rt_script_file", "preview new style RT animation script",
+"preview", "[-v] [-d sec_delay] rt_script_file", "preview new style RT animation script",
 	f_preview, 2, MAXARGS,
 "press", "button_label", "emulate button press",
 	f_press,2,MAXARGS,
