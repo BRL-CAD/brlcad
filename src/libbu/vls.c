@@ -38,22 +38,20 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #if defined(HAVE_STDARG_H)
 /* ANSI C */
-# include <stdarg.h>
+#  include <stdarg.h>
 #endif
 #if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
 /* VARARGS */
-# include <varargs.h>
+#  include <varargs.h>
 #endif
 
 #include "machine.h"
@@ -782,15 +780,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	fbuf[len] = '\0'; /* ensure null termination */
 		
 	/* Grab parameter from arg list, and print it */
-	switch( *ep )  {
-	case 's':
-	    {
-		register char *str;
+	switch( *ep ) {
+	    case 's': 
+		{
+		    register char *str;
 
-		str = va_arg(ap, char *);
-		if (str)  {
-		    if (flags & FIELDLEN)
-			{
+		    str = va_arg(ap, char *);
+		    if (str)  {
+			if (flags & FIELDLEN) {
 			    int	stringlen = strlen(str);
 			    int	left_justify;
 
@@ -799,154 +796,150 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 			    if (stringlen >= fieldlen)
 				bu_vls_strncat(vls, str, fieldlen);
-			    else
-				{
-				    struct bu_vls		padded;
-				    int			i;
+			    else {
+				struct bu_vls		padded;
+				int			i;
 
-				    bu_vls_init(&padded);
-				    if (left_justify)
-					bu_vls_strcat(&padded, str);
-				    for (i = 0; i < fieldlen - stringlen; ++i)
-					bu_vls_putc(&padded, ' ');
-				    if (!left_justify)
-					bu_vls_strcat(&padded, str);
-				    bu_vls_vlscat(vls, &padded);
-				}
+				bu_vls_init(&padded);
+				if (left_justify)
+				    bu_vls_strcat(&padded, str);
+				for (i = 0; i < fieldlen - stringlen; ++i)
+				    bu_vls_putc(&padded, ' ');
+				if (!left_justify)
+				    bu_vls_strcat(&padded, str);
+				bu_vls_vlscat(vls, &padded);
+			    }
 			} else {
 			    bu_vls_strcat(vls, str);
 			}
-		}  else  {
-		    if (flags & FIELDLEN)
-			bu_vls_strncat(vls, "(null)", fieldlen);
-		    else
-			bu_vls_strcat(vls, "(null)");
-		}
-	    }
-	    break;
-	case 'S':
-	    {
-		register struct bu_vls *vp;
-
-		vp = va_arg(ap, struct bu_vls *);
-		if (vp)
-		    {
-			BU_CK_VLS(vp);
-			if (flags & FIELDLEN)
-			    {
-				int	stringlen = bu_vls_strlen(vp);
-				int	left_justify;
-
-				if ((left_justify = (fieldlen < 0)))
-				    fieldlen *= -1;
-
-				if (stringlen >= fieldlen)
-				    bu_vls_strncat(vls, bu_vls_addr(vp), fieldlen);
-				else
-				    {
-					struct bu_vls		padded;
-					int			i;
-
-					bu_vls_init(&padded);
-					if (left_justify)
-					    bu_vls_vlscat(&padded, vp);
-					for (i = 0; i < fieldlen - stringlen; ++i)
-					    bu_vls_putc(&padded, ' ');
-					if (!left_justify)
-					    bu_vls_vlscat(&padded, vp);
-					bu_vls_vlscat(vls, &padded);
-				    }
-			    } else {
-				bu_vls_vlscat(vls, vp);
-			    }
 		    }  else  {
 			if (flags & FIELDLEN)
 			    bu_vls_strncat(vls, "(null)", fieldlen);
 			else
 			    bu_vls_strcat(vls, "(null)");
 		    }
-	    }
-	    break;
-	case 'e':
-	case 'E':
-	case 'f':
-	case 'g':
-	case 'G':
-	    /* All floating point ==> "double" */
-#if defined(LONGDBL)
-	    if (flags & LONGDBL) {
-		register long double ld;
-
-		ld = va_arg(ap, long double);
-		if (flags & FIELDLEN)
-		    sprintf(buf, fbuf, fieldlen, ld);
-		else
-		    sprintf(buf, fbuf, ld);
-		bu_vls_strcat(vls, buf);
-	    } else
-#endif
+		}
+		break;
+	    case 'S': 
 		{
-		    register double d;
+		    register struct bu_vls *vp;
 
-		    d = va_arg(ap, double);
+		    vp = va_arg(ap, struct bu_vls *);
+		    if (vp) {
+			BU_CK_VLS(vp);
+			if (flags & FIELDLEN) {
+			    int	stringlen = bu_vls_strlen(vp);
+			    int	left_justify;
+
+			    if ((left_justify = (fieldlen < 0)))
+				fieldlen *= -1;
+
+			    if (stringlen >= fieldlen)
+				bu_vls_strncat(vls, bu_vls_addr(vp), fieldlen);
+			    else {
+				struct bu_vls		padded;
+				int			i;
+
+				bu_vls_init(&padded);
+				if (left_justify)
+				    bu_vls_vlscat(&padded, vp);
+				for (i = 0; i < fieldlen - stringlen; ++i)
+				    bu_vls_putc(&padded, ' ');
+				if (!left_justify)
+				    bu_vls_vlscat(&padded, vp);
+				bu_vls_vlscat(vls, &padded);
+			    }
+			} else {
+			    bu_vls_vlscat(vls, vp);
+			}
+		    }  else  {
+			if (flags & FIELDLEN)
+			    bu_vls_strncat(vls, "(null)", fieldlen);
+			else
+			    bu_vls_strcat(vls, "(null)");
+		    }
+		}
+		break;
+	    case 'e':
+	    case 'E':
+	    case 'f':
+	    case 'g':
+	    case 'G':
+		/* All floating point ==> "double" */
+#if defined(LONGDBL)
+		if (flags & LONGDBL) {
+		    register long double ld;
+
+		    ld = va_arg(ap, long double);
 		    if (flags & FIELDLEN)
-			sprintf(buf, fbuf, fieldlen, d);
+			sprintf(buf, fbuf, fieldlen, ld);
 		    else
-			sprintf(buf, fbuf, d);
+			sprintf(buf, fbuf, ld);
+		    bu_vls_strcat(vls, buf);
+		} else
+#endif
+		    {
+			register double d;
+
+			d = va_arg(ap, double);
+			if (flags & FIELDLEN)
+			    sprintf(buf, fbuf, fieldlen, d);
+			else
+			    sprintf(buf, fbuf, d);
+			bu_vls_strcat(vls, buf);
+		    }
+		break;
+	    case 'd':
+	    case 'x':
+		if (flags & LONGINT) {
+		    /* Long int */
+		    register long ll;
+		
+		    ll = va_arg(ap, long);
+		    if (flags & FIELDLEN)
+			sprintf(buf, fbuf, fieldlen, ll);
+		    else
+			sprintf(buf, fbuf, ll);
+		    bu_vls_strcat(vls, buf);
+		} else if (flags & SHORTINT) {
+		    /* short int */
+		    register short int sh;
+		    sh = (short int)va_arg(ap, int);
+		    if (flags & FIELDLEN)
+			sprintf(buf, fbuf, fieldlen, sh);
+		    else
+			sprintf(buf, fbuf, sh);
+		    bu_vls_strcat(vls, buf);
+		} else {
+		    /* Regular int */
+		    register int j;
+		
+		    j = va_arg(ap, int);
+		    if (flags & FIELDLEN)
+			sprintf(buf, fbuf, fieldlen, j);
+		    else
+			sprintf(buf, fbuf, j);
 		    bu_vls_strcat(vls, buf);
 		}
-	    break;
-	case 'd':
-	case 'x':
-	    if (flags & LONGINT) {
-		/* Long int */
-		register long ll;
-		
-		ll = va_arg(ap, long);
-		if (flags & FIELDLEN)
-		    sprintf(buf, fbuf, fieldlen, ll);
-		else
-		    sprintf(buf, fbuf, ll);
-		bu_vls_strcat(vls, buf);
-	    } else if (flags & SHORTINT) {
-		/* short int */
-		register short int sh;
-		sh = (short int)va_arg(ap, int);
-		if (flags & FIELDLEN)
-		    sprintf(buf, fbuf, fieldlen, sh);
-		else
-		    sprintf(buf, fbuf, sh);
-		bu_vls_strcat(vls, buf);
-	    } else {
-		/* Regular int */
-		register int j;
-		
-		j = va_arg(ap, int);
-		if (flags & FIELDLEN)
-		    sprintf(buf, fbuf, fieldlen, j);
-		else
-		    sprintf(buf, fbuf, j);
-		bu_vls_strcat(vls, buf);
-	    }
-	    break;
-	case '%':
-	    bu_vls_putc(vls, '%');
-	    break;
-	default:  /* Something weird, maybe %c */
-	    {
-		register int j;
-
-		/* We hope, whatever it is, it fits in an int and the resulting
-		   stringlet is smaller than sizeof(buf) bytes */
-		
-		j = va_arg(ap, int);
-		if (flags & FIELDLEN)
-		    sprintf(buf, fbuf, fieldlen, j);
-		else
-		    sprintf(buf, fbuf, j);
-		bu_vls_strcat(vls, buf);
 		break;
-	    }
+	    case '%':
+		bu_vls_putc(vls, '%');
+		break;
+	    default:  /* Something weird, maybe %c */
+		{
+		    register int j;
+
+		    /* We hope, whatever it is, it fits in an int and the resulting
+		       stringlet is smaller than sizeof(buf) bytes */
+		
+		    j = va_arg(ap, int);
+		    if (flags & FIELDLEN)
+			sprintf(buf, fbuf, fieldlen, j);
+		    else
+			sprintf(buf, fbuf, j);
+		    bu_vls_strcat(vls, buf);
+		    break;
+		}
 	}
 	sp = ep+1;
     }
