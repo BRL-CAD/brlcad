@@ -302,19 +302,23 @@ register "wax" "wax-uni0.arl.mil"
 register wilson "wilson-uni0.arl.mil"
 register jewel "jewel-atm.arl.mil"
 register cosm0 "cosm0-atm.arl.hpc.mil"
-register cosm1 "cosm1-atm.arl.hpc.mil"
-register cosm2 "cosm2-atm.arl.hpc.mil"
-register cosm3 "cosm3-atm.arl.hpc.mil"
-#register cosm4 "cosm4-atm.arl.hpc.mil"
-#register cosm5 "cosm5-atm.arl.hpc.mil"
-#register cosm6 "cosm6-atm.arl.hpc.mil"
-#register cosm7 "cosm7-atm.arl.hpc.mil"
+#register cosm1 "cosm1-atm.arl.hpc.mil"
+#register cosm2 "cosm2-atm.arl.hpc.mil"
+#register cosm3 "cosm3-atm.arl.hpc.mil"
 #register eckert "eckert-atm.arl.hpc.mil"
+
 #register toltec "toltec.nvl.army.mil"
 #register olmec "olmec.nvl.army.mil"		# Only 1 200Mhz cpu
 #register octopus "octopus.nvl.army.mil"
 #register vdemo3 "vdemo3.arl.mil"
-register bfm9000 "bfm9000-lane.nvl.army.mil"
+## NVL, 4 R10k
+#register bfm9000 "bfm9000-lane.nvl.army.mil"
+register toltec "toltec-lane.nvl.army.mil"
+## ARL MSRC, 64 R10k each
+register adele "128.63.240.32"
+register adele1 "128.63.240.33"
+register herman herman.arl.hpc.mil
+register herman1 "128.63.240.35"
 
 frame .button1_fr
 frame .button2_fr
