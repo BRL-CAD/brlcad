@@ -1387,7 +1387,6 @@ register CONST char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
 CONST char				*value;	/* string containing value */
 {
-	double v;
 	double *p = (double *)(base+sdp->sp_offset);
 
 	/* reconvert with optional units */
@@ -1522,12 +1521,10 @@ char *in;
 struct bu_vls *vls;
 {
 	char *iptr;
-	char *out_params=(char *)NULL;
 	char *next=in;
 	char *shader;
 	int shader_name_len=0;
 	int is_stack=0;
-	int stack_count=0;
 	int len;
 
 
@@ -1889,7 +1886,7 @@ struct bu_vls *vls;
 	{
 		/* stacked shaders */
 
-		int i,j;
+		int i;
 
 		if( bu_vls_strlen( vls ) )
 			bu_vls_putc( vls, ' ' );
@@ -1901,8 +1898,7 @@ struct bu_vls *vls;
 		/* process each shader in the stack */
 		for( i=0 ; i<len ; i++ )
 		{
-			char *shader1, *shade1_name, *params1;
-			int len1;
+			char *shader1;
 
 			/* each parameter must be a shader specification in itself */
 			shader1 = bu_list_elem( params, i );
