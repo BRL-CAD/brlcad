@@ -60,7 +60,6 @@ EXTRA_DIST = \
 DISTCLEANFILES = \
 	$(CONFIG_CACHE) \
 	aclocal.m4 \
-	autom4te.cache \
 	brlcad.spec \
 	config.log \
 	config.status \
