@@ -1523,6 +1523,11 @@ int		count;
 	register int		x;
 	register int		y;
 
+	if( pix_count == 0 )			/* lrectwrite dies on 0 count */
+		return 0;
+	if( pix_count < 0 )
+		return -1;
+
 	x = xstart;
 	ybase = y = ystart;
 	pix_count = count;
