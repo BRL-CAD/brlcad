@@ -1933,6 +1933,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
 	      set e_axes_pos and curr_e_axes_pos */
 {
   int	i;
+  register struct dm_list *dmlp;
 
   update_views = 1;
 #if 0
@@ -2069,7 +2070,9 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
     bn_mat_idn(acc_rot_sol);
 #endif
 
-    mged_variables->transform = 'e';
+    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+      dmlp->_mged_variables->transform = 'e';
+
     set_scroll();
   }
 }
@@ -3261,7 +3264,7 @@ sedit()
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
 #ifdef TRY_EDIT_NEW_WAY
-			switch(mged_variables->rotate_about){
+			switch(mged_variables->erotate_about){
 			case 'v':       /* View Center */
 			  VSET(work, 0.0, 0.0, 0.0);
 			  MAT4X3PNT(rot_point, view2model, work);
