@@ -39,6 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vmath.h"
 #include "bu.h"
+#include "bn.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -79,11 +80,8 @@ char **argv;
 {
 	ifp = stdin;
 
-#if 0
-(void)fprintf(stderr, "About to call bu_log\n");
-bu_log("Hello cold cruel world!\n");
-(void)fprintf(stderr, "About to begin\n");
-#endif
+	bu_debug = BU_DEBUG_COREDUMP;
+
 
 	if( argc > 1 && strcmp( argv[1], "-d" ) == 0 )  {
 		argc--; argv++;
@@ -462,77 +460,101 @@ extrbld()
 	(void)mk_extrusion( ofp, name, sketch_name, V, h, u_vec, v_vec, keypoint );
 }
 
+/*
+ *			N M G B L D
+ *
+ *  For the time being, what we read in from the ascii form is
+ *  a hex dump of the on-disk form of NMG.
+ *  This is the same between v4 and v5.
+ *  Reassemble it in v5 binary form here,
+ *  then import it,
+ *  then re-export it.
+ *  This extra step is necessary because we don't know what version
+ *  database the output it, LIBWDB is only interested in writing
+ *  in-memory versions.
+ */
 void
 nmgbld()
 {
-#if 0
 	register char *cp;
-	int cp_i;
-	char *ptr;
-	char nmg_id;
-	int version;
-	char name[NAMESIZE+1];
-	long granules,struct_count[26];
-	int i;
-	long j;
+	int	version;
+	char	*name;
+	long	granules;
+	long	struct_count[26];
+	struct bu_external	ext;
+	struct rt_db_internal	intern;
+	int	j;
 
-	if( sizeof( union record )%32 )
-	{
-		bu_log( "asc2g: nmgbld() will only work with union records with size multipe of 32\n" );
-		exit( -1 );
+	/* First, process the header line */
+	cp = strtok( buf, " " );
+	/* This is nmg_id, unused here. */
+	cp = strtok( NULL, " " );
+	version = atoi(cp);
+	cp = strtok( NULL, " " );
+	name = bu_strdup( cp );
+	cp = strtok( NULL, " " );
+	granules = atol( cp );
+
+	/* Allocate storage for external v5 form of the body */
+	BU_INIT_EXTERNAL(&ext);
+	ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
+	ext.ext_buf = bu_malloc( ext.ext_nbytes, "nmg ext_buf" );
+	bu_plong( ext.ext_buf, version );
+	BU_ASSERT_LONG( version, ==, 1 );	/* DISK_MODEL_VERSION */
+
+	/* Get next line of input with the 26 counts on it */
+	if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )  {
+		bu_log( "Unexpected EOF while reading NMG %s data, line 2\n", name );
+		exit(-1);
 	}
 
-	cp = buf;
-	sscanf( buf , "%c %d %s %ld" , &nmg_id, &version, name, &granules );
-
-	if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	/* Second, process counts for each kind of structure */
+	cp = strtok( buf , " " );
+	for( j=0 ; j<26 ; j++ )
 	{
-		bu_log( "Unexpected EOF while reading NMG data\n" );
-		exit( -1 );
+		struct_count[j] = atol( cp );
+		bu_plong( ((unsigned char *)ext.ext_buf)+
+			SIZEOF_NETWORK_LONG*(j+1), struct_count[j] );
+		cp = strtok( (char *)NULL , " " );
 	}
 
-	ptr = strtok( buf , " " );
-	for( i=0 ; i<26 ; i++ )
-	{
-		struct_count[i] = atof( ptr );
-		ptr = strtok( (char *)NULL , " " );
-	}
+	/* Remaining lines have 32 bytes per line, in hex */
+	/* There are 4 lines to make up one granule */
+	cp = ((char *)ext.ext_buf) + (26+1)*SIZEOF_NETWORK_LONG;
+	for( j=0; j < granules * 4; j++ )  {
+		int k;
+		int cp_i;
 
-	record.nmg.N_id = nmg_id;
-	record.nmg.N_version = version;
-	strncpy( record.nmg.N_name , name , NAMESIZE );
-	bu_plong( record.nmg.N_count , granules );
-	for( i=0 ; i<26 ; i++ )
-		bu_plong( &record.nmg.N_structs[i*4] , struct_count[i] );
-
-	/* write out first record */
-	(void)fwrite( (char *)&record , sizeof( union record ) , 1 , ofp );
-
-	/* read and write the remaining granules */
-	for( j=0 ; j<granules ; j++ )
-	{
-		cp = (char *)&record;
-		for( i=0 ; i<sizeof( union record )/32 ; i++ )
+		if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 		{
-			int k;
-
-			if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-			{
-				bu_log( "Unexpected EOF while reading NMG data\n" );
-				exit( -1 );
-			}
-
-			for( k=0 ; k<32 ; k++ )
-			{
-				sscanf( &buf[k*2] , "%2x" , &cp_i );
-				*cp++ = cp_i;
-			}
+			bu_log( "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
+			exit( -1 );
 		}
-		(void)fwrite( (char *)&record , sizeof( union record ) , 1 , ofp );
+
+		for( k=0 ; k<32 ; k++ )
+		{
+			sscanf( &buf[k*2] , "%2x" , &cp_i );
+			*cp++ = cp_i;
+		}
 	}
-#else
-	bu_bomb("nmgbld() needs to be upgraded to v5\n");
-#endif
+
+	/* Next, import this disk record into memory */
+	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[ID_NMG].ft_import5( &intern, &ext, bn_mat_identity, ofp->dbip ) < 0 )  {
+		bu_log("ft_import5 failed on NMG %s\n", name );
+		exit( -1 );
+	}
+	bu_free_external(&ext);
+
+	/* Now we should have a good NMG in memory */
+	nmg_vmodel( (struct model *)intern.idb_ptr );
+
+	/* Finally, squirt it back out through LIBWDB */
+	mk_nmg( ofp, name, (struct model *)intern.idb_ptr );
+	/* mk_nmg() frees the intern.idp_ptr pointer */
+	RT_INIT_DB_INTERNAL(&intern);
+
+	bu_free( name, "nmg name" );
 }
 
 /*		S O L B L D
