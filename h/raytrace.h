@@ -28,6 +28,10 @@
 # include "rtlist.h"
 #endif
 
+#ifndef SEEN_RTSTRING_H
+# include "rtstring.h"
+#endif
+
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
@@ -378,6 +382,7 @@ struct mater_info {
 	char	ma_override;		/* non-0 ==> ma_color is valid */
 	char	ma_cinherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
 	char	ma_minherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
+	/* XXX These should become rt_vls structures */
 	char	ma_matname[32];		/* Material name */
 	char	ma_matparm[60];		/* String Material parms */
 };
@@ -752,19 +757,34 @@ struct anim_mat {
 #define ANM_RMUL	4			/* Right (leaf side) mul */
 #define ANM_RBOTH	5			/* Replace stack, arc=Idn */
 
+struct rt_anim_property {
+	short		anp_op;			/* RT_ANP_RBOTH, etc */
+	struct rt_vls	anp_matname;		/* Changes for material name */
+	struct rt_vls	anp_matparam;		/* Changes for mat. params */
+};
+#define RT_ANP_RBOTH	1			/* Replace both material & params */
+#define RT_ANP_RMATERIAL 2			/* Replace just material */
+#define RT_ANP_RPARAM	3			/* Replace just params */
+#define RT_ANP_APPEND	4			/* Append to params */
+
+struct rt_anim_color {
+	int		anc_rgb[3];		/* New color */
+};
+
 struct animate {
 	struct animate	*an_forw;		/* forward link */
-	struct directory **an_path;		/* pointer to path array */
-	short		an_pathlen;		/* 0 = root */
+	struct db_full_path an_path;		/* (sub)-path pattern */
 	short		an_type;		/* AN_MATRIX, AN_COLOR... */
 	union animate_specific {
-		struct anim_mat anu_m;
+		struct anim_mat		anu_m;
+		struct rt_anim_property	anu_p;
+		struct rt_anim_color	anu_c;
 	}		an_u;
 };
-#define AN_MATRIX	1			/* Matrix animation */
-#define AN_PROPERTY	2			/* Material property anim */
-#define AN_COLOR	3			/* Material color anim */
-#define AN_SOLID	4			/* Solid parameter anim */
+#define RT_AN_MATRIX	1			/* Matrix animation */
+#define RT_AN_MATERIAL	2			/* Material property anim */
+#define RT_AN_COLOR	3			/* Material color anim */
+#define RT_AN_SOLID	4			/* Solid parameter anim */
 
 #define ANIM_NULL	((struct animate *)0)
 
