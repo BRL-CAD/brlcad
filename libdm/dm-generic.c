@@ -26,7 +26,9 @@
 #else
 #include <strings.h>
 #endif
-#include "tk.h"
+
+#include "tcl.h"
+
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -36,21 +38,15 @@
 extern struct dm *Nu_open();
 extern struct dm *plot_open();
 extern struct dm *ps_open();
+
 #ifdef DM_X
 extern struct dm *X_open();
-#if 0
-extern void X_configureWindowShape();
-#endif
-#endif
+
 #ifdef DM_OGL
 extern struct dm *ogl_open();
-#if 0
-extern void ogl_configureWindowShape();
-extern void ogl_zbuffer();
-extern void ogl_lighting();
-#endif
 extern void ogl_fogHint();
-#endif
+#endif /* DM_OGL */
+#endif /* DM_X */
 
 struct dm *
 dm_open(interp, type, argc, argv)
@@ -153,60 +149,6 @@ int use_aspect;
   else
     return (0.5 - f * 0.5) * dmp->dm_height;
 }
-
-#if 0
-void
-dm_configureWindowShape(dmp)
-struct dm *dmp;
-{
-  switch(dmp->dm_type){
-#ifdef DM_X
-  case DM_TYPE_X:
-    X_configureWindowShape(dmp);
-    return;
-#endif
-#ifdef DM_OGL
-  case DM_TYPE_OGL:
-    ogl_configureWindowShape(dmp);
-    return;
-#endif
-  default:
-    return;
-  }
-}
-
-void
-dm_zbuffer(dmp, zbuffer_on)
-struct dm *dmp;
-int zbuffer_on;
-{
-  switch(dmp->dm_type){
-#ifdef DM_OGL
-  case DM_TYPE_OGL:
-    ogl_zbuffer(dmp, zbuffer_on);
-    return;
-#endif
-  default:
-    return;
-  }
-}
-
-void
-dm_lighting(dmp, lighting_on)
-struct dm *dmp;
-int lighting_on;
-{
-  switch(dmp->dm_type){
-#ifdef DM_OGL
-  case DM_TYPE_OGL:
-    ogl_lighting(dmp, lighting_on);
-    return;
-#endif
-  default:
-    return;
-  }
-}
-#endif
 
 void
 dm_fogHint(dmp, fastfog)

@@ -35,7 +35,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
+#ifdef DM_X
 #include "tk.h"
+#include "itk.h"
+#else
+#include "tcl.h"
+#endif
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm-Null.h"
@@ -58,11 +63,13 @@ extern int PS_dm_init();
 #ifdef DM_X
 extern int X_dm_init();
 extern void X_fb_open();
-#endif
+
 #ifdef DM_OGL
 extern int Ogl_dm_init();
 extern void Ogl_fb_open();
 #endif
+#endif /* DM_X */
+
 #ifdef DM_GLX
 extern int Glx_dm_init();
 #endif
@@ -75,7 +82,9 @@ extern void set_port();		/* defined in fbserv.c */
 extern void predictor_init();	/* defined in predictor.c */
 extern void view_ring_init(); /* defined in chgview.c */
 
+#ifdef DM_X
 extern Tk_Window tkwin;
+#endif
 extern struct _color_scheme default_color_scheme;
 
 int gui_setup();
@@ -104,9 +113,9 @@ struct w_dm which_dm[] = {
   { DM_TYPE_PS, "ps", PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
 #ifdef DM_X
   { DM_TYPE_X, "X", X_dm_init },
-#endif
 #ifdef DM_OGL
   { DM_TYPE_OGL, "ogl", Ogl_dm_init },
+#endif
 #endif
 #ifdef DM_GLX
   { DM_TYPE_GLX, "glx", Glx_dm_init },
@@ -297,9 +306,9 @@ print_valid_dm()
     Tcl_AppendResult(interp, "\tThe following display manager types are valid: ", (char *)NULL);
 #ifdef DM_X
     Tcl_AppendResult(interp, "X  ", (char *)NULL);
-#endif
 #ifdef DM_OGL
     Tcl_AppendResult(interp, "ogl  ", (char *)NULL);
+#endif
 #endif
 #ifdef DM_GLX
     Tcl_AppendResult(interp, "glx", (char *)NULL);
@@ -323,6 +332,7 @@ mged_attach(
   predictor_init();
 
   /* Only need to do this once */
+#ifdef DM_X
   if(tkwin == NULL && NEED_GUI(wp->type)){
     struct dm *tmp_dmp;
     struct bu_vls tmp_vls;
@@ -358,6 +368,7 @@ mged_attach(
     bu_vls_free(&tmp_vls);
     bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
   }
+#endif
 
   BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
 
@@ -442,6 +453,7 @@ int
 gui_setup(dstr)
 char *dstr;
 {
+#ifdef DM_X
   struct bu_vls vls;
 
   /* initialize only once */
@@ -504,6 +516,7 @@ char *dstr;
   bu_vls_strcpy(&vls, "wm withdraw . ; tk appname mged");
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
+#endif /* DM_X */
 
   return TCL_OK;
 }
@@ -690,17 +703,20 @@ char **argv;
 void
 mged_fb_open()
 {
+#ifdef DM_X
   if(dmp->dm_type == DM_TYPE_X)
     X_fb_open();
 #ifdef DM_OGL
   else if(dmp->dm_type == DM_TYPE_OGL)
     Ogl_fb_open();
 #endif
+#endif
 }
 
 void
 mged_fb_close()
 {
+#ifdef DM_X
   struct bu_vls vls;
 
   bu_vls_init(&vls);
@@ -709,4 +725,5 @@ mged_fb_close()
   bu_vls_free(&vls);
 
   fbp = (FBIO *)0;
+#endif
 }

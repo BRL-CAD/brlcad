@@ -21,9 +21,9 @@
 			concat utility1 utility2 track arbs \
 			facedef set animedit comb_std \
 			solids_on_ray history \
-			TCP_FILES attach dm-plot dm-ps doevent muves \
+			TCP_FILES attach dm-plot dm-ps muves \
 			MGED_OBJS vdraw fbserv rect grid axes qray \
-			color_scheme vparse share bodyio update
+			color_scheme vparse share bodyio
 
 /*#define USING_NEW_SO*/
 #include "../Cakefile.defs"

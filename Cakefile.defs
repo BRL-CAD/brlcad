@@ -225,9 +225,9 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DIF_OGL -DBSD=43 -DIF_X -I''XINCDIR
 #	define	LIBMESA_CONFIG	-DFBIND=2
-#	define  LIBDM_OBJS	dm-X dm-ogl
+#	define  LIBDM_OBJS	color query dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DUSE_RT_ASPECT
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
@@ -285,10 +285,10 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
-#	define	LIBDM_OBJS	dm-X dm-ogl
+#	define	LIBDM_OBJS	color query dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
@@ -359,10 +359,10 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
-#	define	LIBDM_OBJS	dm-X dm-ogl
+#	define	LIBDM_OBJS	color query dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
@@ -427,10 +427,10 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
-#	define	LIBDM_OBJS	dm-X dm-ogl
+#	define	LIBDM_OBJS	color query dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
@@ -544,10 +544,10 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
-#	define	LIBDM_OBJS	dm-X dm-ogl
+#	define	LIBDM_OBJS	color query dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DUSE_RT_ASPECT
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
@@ -660,10 +660,10 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
-#	define	LIBDM_OBJS	dm-X dm-ogl
+#	define	LIBDM_OBJS	color query dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DUSE_RT_ASPECT
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
@@ -717,10 +717,10 @@ set -S2 "/bin/sh"
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	LIBDM_OBJS	dm-X
+#		define	LIBDM_OBJS	color query dm-X
 #		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #		define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
@@ -735,22 +735,22 @@ set -S2 "/bin/sh"
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #		if 0
-#			define	LIBDM_OBJS	dm-X dm-ogl
+#			define	LIBDM_OBJS	color query dm-X dm-ogl
 #			define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
 #			define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #			define  LIBMESA_CONFIG  -DFBIND=2 -I''XINCDIR
 #			define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
-#			define	MGED_OBJS	dm-X dm-ogl dm-generic
+#			define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
 $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #		else
-#			define	LIBDM_OBJS	dm-X
+#			define	LIBDM_OBJS	color query dm-X
 #			define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #			define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #			define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#			define	MGED_OBJS	dm-X dm-generic
+#			define	MGED_OBJS	doevent update dm-X dm-generic
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
@@ -828,10 +828,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #  if 1	/* PRODUCTION=1 */
 #	define	LIBMESA_CONFIG	-DFBIND=2
-#	define	LIBDM_OBJS	dm-X
+#	define	LIBDM_OBJS	color query dm-X
 #	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #if 0
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
@@ -844,7 +844,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #  else
 /*	Compiling XGL requires SDK (Solaris Developer's Kit) */
 #	define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0
-#	define	MGED_OBJS	dm-X dm-xgl dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-xgl dm-generic
 #	define	MGED_CONFIG	-DDM_X -DDM_XGL -I''XINCDIR -I''XGLHOME/include
 #	define	MGED_LIBES	-L''XLIBDIR -L''XGLHOME/lib -R''XLIBDIR \
 				-R''XGLHOME/lib \
@@ -894,7 +894,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_LIBES	LIBPKG -lX11
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-lX11
 #endif
@@ -934,7 +934,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-lX11 -lnet
 #endif
@@ -978,22 +978,39 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X -DIF_OGL
 #		define	LIBFB_LIBES	LIBPKG -lGL -L''XLIBDIR -lX11  -lXi -lXmu -lpthread
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
-#		define	LIBDM_OBJS	dm-X dm-ogl
+#		define	LIBDM_OBJS	color query dm-X dm-ogl
 #		define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -I''XINCDIR -DDM_OGL
 #		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -lGL -L''XLIBDIR -lXi -lXmu -lpthread
-#		define	MGED_OBJS	dm-ogl dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-ogl dm-X dm-generic
 #		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	else	/* just use X */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#		define	LIBDM_OBJS	dm-X
-#		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
-#		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -L''XLIBDIR -lXi
-#		define	MGED_OBJS	dm-X dm-generic
-#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		if 1
+#			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#			define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#			define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#			define	LIBDM_OBJS	color query dm-X
+#			define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -L''XLIBDIR -lXi
+#			define	MGED_OBJS	doevent update dm-X dm-generic
+#			define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
+#		else	/* no X */
+#			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#			define	LIBFB_LIBES	LIBPKG
+#			define	LIBFB_OBJS	if_remote if_ab
+#			define	LIBDM_OBJS
+#			define	LIBDM_CONFIG	
+#			define 	LIBDM_LIBES	LIBTCL LIBTCL_LIBES
+#			define	MGED_OBJS	
+#			define	MGED_CONFIG	
+#			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES
+#			define	LIBTK_DIR	/**/
+#			define	LIBTK		/**/
+#			define	LIBTK_DEP	/**/
+#			define	NO_LIBTK
+#		endif
 #	endif
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
@@ -1048,22 +1065,39 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X -DIF_OGL
 #		define	LIBFB_LIBES	LIBPKG -lGL -L''XLIBDIR -lX11  -lXi -lXmu
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
-#		define	LIBDM_OBJS	dm-X dm-ogl
+#		define	LIBDM_OBJS	color query dm-X dm-ogl
 #		define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -I''XINCDIR -DDM_OGL
 #		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -lGL -L''XLIBDIR -lXi -lXmu
-#		define	MGED_OBJS	dm-ogl dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-ogl dm-X dm-generic
 #		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	else	/* just use X */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#		define	LIBDM_OBJS	dm-X
-#		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
-#		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -L''XLIBDIR -lXi
-#		define	MGED_OBJS	dm-X dm-generic
-#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		if 1
+#			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#			define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#			define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#			define	LIBDM_OBJS	color query dm-X
+#			define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -L''XLIBDIR -lXi
+#			define	MGED_OBJS	doevent update dm-X dm-generic
+#			define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
+#		else	/* no X */
+#			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#			define	LIBFB_LIBES	LIBPKG
+#			define	LIBFB_OBJS	if_remote if_ab
+#			define	LIBDM_OBJS
+#			define	LIBDM_CONFIG	
+#			define 	LIBDM_LIBES	LIBTCL LIBTCL_LIBES
+#			define	MGED_OBJS	
+#			define	MGED_CONFIG	
+#			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES
+#			define	LIBTK_DIR	/**/
+#			define	LIBTK		/**/
+#			define	LIBTK_DEP	/**/
+#			define	NO_LIBTK
+#		endif
 #	endif
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
@@ -1093,10 +1127,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lipc
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBDM_OBJS	dm-X
+#	define	LIBDM_OBJS	color query dm-X
 #	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #       define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11 -lipc
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
@@ -1126,10 +1160,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define  LIBFB_CONFIG    -DIF_REMOTE
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
-#       define  LIBDM_OBJS      dm-X
+#       define  LIBDM_OBJS	color query dm-X
 #       define  LIBDM_CONFIG    -DDM_X
 #       define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
@@ -1179,17 +1213,17 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
 #	if 1	/* PRODUCTION=1 */
 /*		X11 for MGED */
-#		define	MGED_OBJS	dm-4d dm-X dm-ogl dm-generic
+#		define	MGED_OBJS	doevent update dm-4d dm-X dm-ogl dm-generic
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
 #		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #	else
 #if 0
 /*		Lee Butler experimental version */
-#		define	MGED_OBJS	dm-4d mged_widget dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-4d mged_widget dm-X dm-generic
 #		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #else
-#		define MGED_OBJS	dm-X dm-generic
+#		define MGED_OBJS	doevent update dm-X dm-generic
 #		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/n/vapor/m/cad/tclscripts/mged\\\\"
 #		define MGED_LIBES	-L''XLIBDIR -lX11 -lgl_s
 #endif
@@ -1271,7 +1305,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L''XLIBDIR -lX11
 #	endif
@@ -1283,7 +1317,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L''XLIBDIR -lX11
 #	endif
@@ -1305,7 +1339,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
 			-L''XLIBDIR -lX11 -lgds
-#		define	MGED_OBJS	dm-sun dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-sun dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
 			-L''XLIBDIR -lX11
@@ -1357,7 +1391,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBRT_TIMER	timer42
-#	define 	MGED_OBJS	dm-X dm-generic
+#	define 	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #	define	FC	/usr/convex/fc
@@ -1399,7 +1433,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define  LIBFB_CONFIG    -DIF_REMOTE
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1468,7 +1502,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #endif
 
 #ifdef ipsc860
@@ -1563,7 +1597,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define  LIBFB_OBJS      if_remote if_X if_X24
 #	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
 #endif
@@ -1594,7 +1628,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/m/X11/core
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X -I/m/X11/core
 #		define	MGED_LIBES	/usr/local/lib/libX11.a
 #	endif
@@ -1626,7 +1660,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X
 #		define	MGED_LIBES	/usr/local/lib/libX11.a
 #	endif
@@ -1646,7 +1680,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define LIBFB_LIBES	LIBPKB -lX11
 #	define LIBRT_TIMER	timer42
 #	define MGED_CONFIG	-DDM_X
-#	define MGED_OBJS	dm-X dm-generic
+#	define MGED_OBJS	doevent update dm-X dm-generic
 #	define MGED_LIBES	LIBPKG -lX11
 #endif
 
@@ -1669,7 +1703,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1693,7 +1727,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_OBJS	if_remote if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	/usr/lib/X11/libX11.a
 #endif
@@ -1725,10 +1759,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	        define  LIBFB_CONFIG    -DIF_REMOTE -I''XINCDIR
 #	        define  LIBFB_LIBES     LIBPKG
 #	endif
-#	define	LIBDM_OBJS	dm-X
+#	define	LIBDM_OBJS	color query dm-X
 #	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #	define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -L''XLIBDIR -lXi
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
@@ -1755,7 +1789,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1771,7 +1805,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_X if_X24
 #	define	LIBFB_LIBES	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1789,7 +1823,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_X if_X24
 #	define	LIBFB_LIBES	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	doevent update dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif

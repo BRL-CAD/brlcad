@@ -15,6 +15,8 @@
 #define FILES	bwish input tcl cmd
 
 #include "../Cakefile.defs"
+
+#if !defined(NO_LIBTK)
 #include "../Cakefile.prog"
 
 #if HAS_TCP
@@ -31,3 +33,16 @@ bwish:	OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBTCL_DEP LIBTK_DEP LIBDM_D
 	CC -o bwish LDFLAGS OBJ COMPLETE_LIBES vers.o
 
 #include "../Cakefile.rules"
+#else
+all&:
+	@echo "SRCDIR:  all done"
+
+clean&:
+	@echo "" > /dev/null
+
+noprod&:
+	@echo "" > /dev/null
+
+clobber&:
+	@echo "" > /dev/null
+#endif

@@ -41,7 +41,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+#ifdef DM_X
 extern void stateChange();		/* defined in dm-generic.c */
+#endif
 extern int mged_svbase();
 extern void set_e_axes_pos();
 extern int mged_zoom();
@@ -833,7 +835,10 @@ char *str;
   }
 
   state = to;
+
+#ifdef DM_X
   stateChange(from, to);
+#endif
 
   save_dm_list = curr_dm_list;
   FOR_ALL_DISPLAYS(p, &head_dm_list.l){

@@ -61,7 +61,11 @@ in all countries except the USA.  All rights reserved.";
 #include <time.h>
 #include <sys/errno.h>
 
+#ifdef DM_X
 #include "tk.h"
+#else
+#include "tcl.h"
+#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -100,7 +104,10 @@ extern void predictor_init();
 
 /* defined in cmd.c */
 extern Tcl_Interp *interp;
+
+#ifdef DM_X
 extern Tk_Window tkwin;
+#endif
 
 /* defined in attach.c */
 extern int mged_link_vars();
@@ -147,7 +154,11 @@ void		usejoy();
 void            slewview();
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
+#ifdef DM_X
 int		classic_mged=0;
+#else
+int		classic_mged=1;
+#endif
 char		*dpy_string = (char *)NULL;
 static int	mged_init_flag = 1;	/* >0 means in initialization stage */
 
@@ -428,9 +439,11 @@ char **argv;
 	   */
 #endif
 
-	  if(classic_mged)
+	  if (classic_mged) {
+#ifdef DM_X
 	    get_attached();
-	  else{
+#endif
+	  } else {
 
 	    if ((fork()) == 0){
 	      struct bu_vls vls;

@@ -2,7 +2,14 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
+
+#if 0
 #include "tk.h"
+#else
+#include "tcl.h"
+#include <X11/Xlib.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"

@@ -86,8 +86,6 @@ Example Use -
 #include <math.h>
 #include <signal.h>
 #include "tcl.h"
-#include "tk.h"
-
 
 #include "machine.h"
 #include "bu.h"

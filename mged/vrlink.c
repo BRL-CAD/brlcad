@@ -23,7 +23,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "tcl.h"
-#include "tk.h"
 
 #ifdef USE_STRING_H
 #include <string.h>
@@ -123,7 +122,7 @@ vr_input_hook()
 		bu_log("vrmgr sent us an EOF\n");
 	}
 	if( val <= 0 )  {
-		Tk_DeleteFileHandler(vrmgr->pkc_fd);
+		Tcl_DeleteFileHandler(vrmgr->pkc_fd);
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
 		return;
@@ -310,8 +309,8 @@ char	*argv[];
 	} else if( strcmp( role, "overview" ) == 0 )  {
 		/* No hooks required, just listen */
 	}
-	Tk_CreateFileHandler(vrmgr->pkc_fd, TK_READABLE,
-			     (Tk_FileProc (*))vr_input_hook, (ClientData)NULL);
+	Tcl_CreateFileHandler(vrmgr->pkc_fd, TCL_READABLE,
+			     (Tcl_FileProc (*))vr_input_hook, (ClientData)NULL);
 	bu_vls_free( &str );
 
 	return TCL_OK;

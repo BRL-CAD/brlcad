@@ -37,10 +37,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>
 #include <time.h>
 
-#include "tcl.h"
+#ifdef DM_X
 #include "tk.h"
+#else
+#include "tcl.h"
+#endif
+
+#include "tclInt.h"
 #include "itcl.h"
-/* #include "tclIntDecls.h" */
 
 #include "machine.h"
 #include "externs.h"
@@ -113,7 +117,10 @@ int mged_cmd();
 struct bu_vls tcl_output_hook;
 
 Tcl_Interp *interp = NULL;
+
+#ifdef DM_X
 Tk_Window tkwin;
+#endif
 
 struct cmdtab {
 	char *ct_name;
@@ -141,7 +148,9 @@ static struct cmdtab cmdtab[] = {
 	{"arced", f_arced},
 	{"area", f_area},
 	{"arot", f_arot},
+#ifdef DM_X
 	{"attach", f_attach},
+#endif
 	{"autoview", f_autoview},
 	{"B", f_blast},
 	{"bev", f_bev},
@@ -174,10 +183,14 @@ static struct cmdtab cmdtab[] = {
 	{"debugnmg", f_debugnmg},
 	{"decompose", f_decompose},
 	{"delay", f_delay},
+#ifdef DM_X
 	{"dm", f_dm},
+#endif
 	{"draw", f_edit},
 	{"dup", f_dup},
+#ifdef DM_X
 	{"E", f_evedit},
+#endif
 	{"e", f_edit},
 	{"eac", f_eac},
 	{"echo", cmd_echo},
@@ -188,7 +201,9 @@ static struct cmdtab cmdtab[] = {
 	{"edmater", f_edmater},
 	{"erase", f_erase},
 	{"erase_all", f_erase_all},
+#ifdef DM_X
 	{"ev", f_ev},
+#endif
 	{"eqn", f_eqn},
 	{"exit", f_quit},
 	{"extrude", f_extrude},
@@ -234,7 +249,9 @@ static struct cmdtab cmdtab[] = {
 	{"labelvert", f_labelvert},
 	{"left",		bv_left},
 	{"listeval", f_pathsum},
+#ifdef DM_X
 	{"loadtk", cmd_tk},
+#endif
 	{"lookat", f_lookat},
 	{"ls", dir_print},
 	{"M", f_mouse},
@@ -244,12 +261,16 @@ static struct cmdtab cmdtab[] = {
 	{"mater", f_mater},
 	{"matpick", f_matpick},
 	{"memprint", f_memprint},
+#ifdef DM_X
 	{"mged_update", f_update},
 	{"mged_wait", f_wait},
+#endif
 	{"mirface", f_mirface},
 	{"mirror", f_mirror},
+#ifdef DM_X
 	{"mmenu_get", cmd_mmenu_get},
 	{"mmenu_set", cmd_nop},
+#endif
 	{"model2grid_lu", f_model2grid_lu},
 	{"model2view", f_model2view},
 	{"model2view_lu", f_model2view_lu},
@@ -264,7 +285,9 @@ static struct cmdtab cmdtab[] = {
 	{"oed", cmd_oed},
 	{"oed_apply", f_oedit_apply},
 	{"oed_reset", f_oedit_reset},
+#ifdef DM_X
 	{"oill",		be_o_illuminate},
+#endif
 	{"opendb", f_opendb},
 	{"orientation", f_orientation},
 	{"orot", f_rot_obj},
@@ -307,7 +330,9 @@ static struct cmdtab cmdtab[] = {
 	{"rear",	bv_rear},
 	{"red", f_red},
 	{"redraw_vlist", cmd_redraw_vlist},
+#ifdef DM_X
 	{"refresh", f_refresh},
+#endif
 	{"regdebug", f_regdebug},
 	{"regdef", f_regdef},
 	{"regions", f_tables},
@@ -849,7 +874,9 @@ cmd_setup()
 	bn_tcl_setup( interp );
 	Rt_Init(interp);
 
+#ifdef DM_X
 	tkwin = NULL;
+#endif
 
 	bu_vls_free(&temp);
 }
@@ -1335,6 +1362,7 @@ cmdline( struct bu_vls *vp, int record )
 			}
 
 
+#ifdef DM_X
 			/* A user typed this command so let everybody see, then record
 			   it in the history. */
 			if (record && tkwin != NULL) {
@@ -1343,6 +1371,7 @@ cmdline( struct bu_vls *vp, int record )
 				Tcl_Eval(interp, bu_vls_addr(&tmp_vls));
 				Tcl_SetResult(interp, "", TCL_STATIC);
 			}
+#endif
 
 			if(record)
 				history_record(&save_vp, &start, &finish, CMD_OK);

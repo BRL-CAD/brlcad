@@ -7,6 +7,8 @@
 
 #include "../Cakefile.defs"
 
+#if !defined(NO_LIBTK)
+
 /* Since we're building a library, we can't also list a regular
  * program (like tclsh) in the PRODUCTS rule, it will confuse
  * the BUILD_LIBRARY rule in Cakefile.defs.
@@ -82,3 +84,16 @@ test&: Makefile.MTYPE
 /* dltest:			if not exist dltest
 	cp -r ../SRCDIR/"unix"/dltest .
 */
+#else
+all&:
+	@echo "SRCDIR:  all done"
+
+clean&:
+	@echo "" > /dev/null
+
+noprod&:
+	@echo "" > /dev/null
+
+clobber&:
+	@echo "" > /dev/null
+#endif
