@@ -610,7 +610,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 	best_val = (thrm_seg->temperature[best_idx] - 
 		    tthrm_sp->tt_min_temp) * tthrm_sp->tt_temp_scale;
 
-	VSET(swp->sw_color, best_val*0.5, best_val, best_val*0.5);
+	VSET(swp->sw_color, best_val, best_val, best_val);
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_log("closest point is: (%g %g %g) temp: %17.14e\n",
