@@ -1741,7 +1741,12 @@ CONST struct loopuse *lu;
 	vh = rt_vlblock_find( vbp, 
 		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
 
-	NMG_GET_FU_NORMAL( n, lu->up.fu_p );
+	if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
+		NMG_GET_FU_NORMAL( n, lu->up.fu_p );
+	} else {
+		/* For wire loops, use a constant normal */
+		VSET( n, 0, 0, 1 );
+	}
 
 	if ((rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) == (DEBUG_PL_LOOP) ) {
 		/* If only DEBUG_PL_LOOP set, just draw lu as wires */
