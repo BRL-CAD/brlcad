@@ -767,6 +767,157 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
 }
 
 /*
+ *			D B 5 _ U P D A T E _ A T T R I B U T E S
+ *
+ *  Update an arbitrary number of attributes on a given database object.
+ *  For efficiency, this is done without looking at the object body at all.
+ *
+ *  Contents of the bu_attribute_value_set are freed, but not the struct itself.
+ *
+ *  Returns -
+ *	0 on success
+ *	<0 on error
+ */
+int
+db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp, struct db_i *dbip )
+{
+	struct bu_external	ext;
+	struct db5_raw_internal	raw;
+	struct bu_attribute_value_set old_avs;
+	struct bu_external	attr;
+	struct bu_external	ext2;
+	int			ret;
+
+	RT_CK_DIR(dp);
+	BU_CK_AVS(avsp);
+	RT_CK_DBI(dbip);
+
+	if(rt_g.debug&DEBUG_DB)  {
+		bu_log("db5_update_attributes(%s) dbip=x%x\n",
+			dp->d_namep, dbip );
+		bu_avs_print( avsp, "new attributes" );
+	}
+
+	if( dbip->dbi_read_only )  {
+		bu_log("db5_update_attributes(%s):  READ-ONLY file\n",
+			dbip->dbi_filename);
+		return -1;
+	}
+
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
+
+	if( db_get_external( &ext, dp, dbip ) < 0 )
+		return -2;		/* FAIL */
+
+	if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 )  {
+		bu_log("db5_update_attributes(%s):  import failure\n",
+			dp->d_namep );
+		bu_free_external( &ext );
+		return -3;
+	}
+
+	if( raw.attributes.ext_buf )  {
+		if( db5_import_attributes( &old_avs, &raw.attributes ) < 0 )  {
+			bu_log("db5_update_attributes(%s):  mal-formed attributes in database\n",
+				dp->d_namep );
+			bu_free_external( &ext );
+			return -8;
+		}
+	} else {
+		bu_avs_init( &old_avs, 4, "db5_update_attributes" );
+	}
+
+	bu_avs_merge( &old_avs, avsp );
+
+	db5_export_attributes( &attr, &old_avs );
+	BU_INIT_EXTERNAL(&ext2);
+	db5_export_object3( &ext2,
+		raw.h_dli,
+		dp->d_namep,
+		&attr,
+		&raw.body,
+		raw.major_type, raw.minor_type,
+		raw.a_zzz, raw.b_zzz );
+
+	/* Write it */
+	ret = db_put_external5( &ext2, dp, dbip );
+	if( ret < 0 )  bu_log("db5_update_attributes(%s):  db_put_external5() failure\n",
+		dp->d_namep );
+
+	bu_free_external( &attr );
+	bu_free_external( &ext2 );
+	bu_free_external( &ext );		/* 'raw' is now invalid */
+	bu_avs_free( &old_avs );
+	bu_avs_free( avsp );
+
+	return ret;
+}
+
+/*
+ *			D B 5 _ U P D A T E _ A T T R I B U T E
+ *
+ *  A convenience routine to update the value of a single attribute.
+ *
+ *  Returns -
+ *	0 on success
+ *	<0 on error
+ */
+int
+db5_update_attribute( const char *obj_name, const char *aname, const char *value, struct db_i *dbip )
+{
+	struct directory	*dp;
+	struct bu_attribute_value_set avs;
+
+	RT_CK_DBI(dbip);
+	if( (dp = db_lookup( dbip, obj_name, LOOKUP_NOISY )) == DIR_NULL )
+		return -1;
+
+	bu_avs_init( &avs, 2, "db5_update_attribute" );
+	bu_avs_add( &avs, aname, value );
+
+	return db5_update_attributes( dp, &avs, dbip );
+}
+
+/*
+ *			D B 5 _ U P D A T E _ I D E N T
+ *
+ *  Update the _GLOBAL object, which in v5 serves the place of the
+ *  "ident" header record in v4.
+ *  Since every database will have one of these things,
+ *  it's no problem to update it.
+ *
+ * Returns -
+ *	 0	Success
+ *	-1	Fatal Error
+ */
+db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
+{
+	struct bu_attribute_value_set avs;
+	struct directory *dp;
+	struct bu_vls	units;
+	int		ret;
+
+	RT_CK_DBI(dbip);
+
+	if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY )) == DIR_NULL )  {
+		bu_log("db5_update_ident() %s object is missing!\n", DB5_GLOBAL_OBJECT_NAME );
+		/* XXX Really should create one here */
+		return -1;
+	}
+
+	bu_vls_init( &units );
+	bu_vls_printf( &units, "%.25e", local2mm );
+
+	bu_avs_init( &avs, 4, "db5_update_ident" );
+	bu_avs_add( &avs, "title", title );
+	bu_avs_add( &avs, "units", bu_vls_addr(&units) );
+
+	ret = db5_update_attributes( dp, &avs, dbip );
+	bu_vls_free( &units );
+	return ret;
+}
+
+/*
  *			D B 5 _ F W R I T E _ I D E N T
  *
  *  Create a header for a v5 database.
@@ -780,6 +931,9 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
  *
  *  Second, create a specially named attribute-only object which
  *  contains the attributes "title=" and "units=".
+ *
+ *  This routine should only be used by db_create().
+ *  Everyone else should use db5_update_ident().
  *
  * Returns -
  *	 0	Success
