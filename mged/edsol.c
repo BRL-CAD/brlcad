@@ -8354,7 +8354,7 @@ char	**argv;
   }
 
   view_state->vs_flag = 1;
-  return TCL_ERROR;
+  return TCL_OK;
 }
 
 get_edit_solid_menus(clientData, interp, argc, argv)
