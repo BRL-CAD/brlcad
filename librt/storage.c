@@ -224,7 +224,11 @@ register char *cp;
 	if( (base = rt_malloc( len, "rt_strdup" )) == (char *)0 )
 		rt_bomb("rt_strdup:  unable to allocate memory");
 
+#ifdef BSD
 	bcopy( cp, base, len );
+#else
+	memcpy( base, cp, len );
+#endif
 	return(base);
 }
 
