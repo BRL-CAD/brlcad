@@ -27,10 +27,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
 
-extern char *getenv();
 static int fb_totally_numeric();
 
 /*
