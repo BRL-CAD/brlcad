@@ -23,6 +23,9 @@ convert: convert.o anim.o
 fly: fly.o
 	CC LDFLAGS fly.o -lm -o fly
 
+lookat: lookat.o anim.o
+	CC LDFLAGS lookat.o anim.o -lm -o lookat
+
 keyread: keyread.o anim.o
 	CC LDFLAGS keyread.o anim.o LIBES -o keyread
 
