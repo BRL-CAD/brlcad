@@ -245,12 +245,13 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  struct bu_vls str;
   point_t center;
 
   if(dbip == DBI_NULL)
     return TCL_OK;
 
-  if(argc < 4 || 4 < argc){
+  if(argc != 1 && argc != 4){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -260,12 +261,23 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  /* center assumed to be in local units */
-  VSET(center, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+  if(argc == 4)  {
+	/* Set center.  Value is in local units */
+	VSET(center, atof(argv[1]), atof(argv[2]), atof(argv[3]));
 
-  /* must convert to base units */
-  VSCALE(center, center, local2base);
-  mged_center(center);
+	/* must convert to base units */
+	VSCALE(center, center, local2base);
+	mged_center(center);
+  }
+
+  /* Whether set or not, print current center in local units */
+  MAT_DELTAS_GET_NEG(center, view_state->vs_toViewcenter);
+  VSCALE(center, center, base2local);
+
+  bu_vls_init(&str);
+  bu_vls_printf(&str, "%f %f %f\n", V3ARGS(center));
+  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+  bu_vls_free(&str);
 
   return TCL_OK;
 }

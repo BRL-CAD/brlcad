@@ -1339,8 +1339,6 @@ char	**argv;
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
-	CHECK_READ_ONLY;
-
 	bu_vls_init(&vls);
 	if(argc < 1 || 2 < argc){
 	  bu_vls_printf(&vls, "help units");
@@ -1403,7 +1401,8 @@ char	**argv;
 		/* change to the new local unit */
 		db_conversions( dbip, new_unit );
 
-		if( db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
+		if( dbip->dbi_read_only ||
+		 db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
 		  Tcl_AppendResult(interp,
 				   "Warning: unable to stash working units into database\n",
 				   (char *)NULL);

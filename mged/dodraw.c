@@ -1256,11 +1256,18 @@ int			copy;
 	strncpy( shortname, name, 16-6 );
 	shortname[16-6] = '\0';
 	/* Remove any residue colors from a previous overlay w/same name */
-	av[0] = "kill";
-	av[1] = "-f";
-	av[2] = shortname;
-	av[3] = NULL;
-	(void)f_kill((ClientData)NULL, interp, 3, av);
+	if( dbip->dbi_read_only )  {
+		av[0] = "d";
+		av[1] = shortname;
+		av[2] = NULL;
+		(void)f_erase((ClientData)NULL, interp, 2, av);
+	} else {
+		av[0] = "kill";
+		av[1] = "-f";
+		av[2] = shortname;
+		av[3] = NULL;
+		(void)f_kill((ClientData)NULL, interp, 3, av);
+	}
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;
@@ -1269,6 +1276,7 @@ int			copy;
 		sprintf( namebuf, "%s%lx",
 			shortname, vbp->rgb[i] );
 		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
+		Tcl_AppendResult( interp, namebuf, " ", (char *)NULL);
 	}
 }
 
