@@ -20,7 +20,6 @@
 static char RCSid[] = "$Header$";
 #endif
 
-/*	INCLUDES	*/
 #include "conf.h"
 
 #include <stdio.h>
@@ -33,6 +32,8 @@ static char RCSid[] = "$Header$";
 #include <math.h>
 
 #include "machine.h"
+#include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./nirt.h"
@@ -95,6 +96,8 @@ char **argv;
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
     char		sfile_name[1024];
+    struct bu_vls	script;
+    char		*sp;
     extern char		*local_unit[];
     extern char		local_u_name[];
     extern double	base2local;
@@ -134,6 +137,7 @@ char **argv;
     void		   shoot();
 
     *sfile_name = '\0';
+    bu_vls_init(&script);
 
     /* Handle command-line options */
     while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
@@ -142,9 +146,16 @@ char **argv;
 	    case 'b':
 		do_backout = 1;
 		break;
+	    case 'e':
+		bu_vls_strcat(&script, optarg);
+		*sfile_name = '\0';
+		break;
 	    case 'f':
 		if (strlen(optarg) < 1024)
+		{
 		    sscanf( optarg, "%s", sfile_name );
+		    bu_vls_trunc(&script, 0);
+		}
 		else
 		    bu_log("Name of script file '%s' too long!\n", optarg);
 		break;
@@ -276,17 +287,19 @@ char **argv;
     /* Run the run-time configuration file, if it exists */
     if ((fPtr = fopenrc()) != NULL)
     {
-	interact(fPtr);
+	interact(READING_FILE, fPtr);
 	fclose(fPtr);
     }
 
-    /*	Run any script file specified on the command line */
-    if (*sfile_name != '\0')
+    /*	Run any script specified on the command line */
+    if (*(sp = bu_vls_addr(&script)) != '\0')
+	interact(READING_STRING, sp);
+    else if (*sfile_name != '\0')
 	if ((fPtr = fopen(sfile_name, "r")) == NULL)
 	    bu_log("Cannot open script file '%s'\n", sfile_name);
 	else
 	{
-	    interact(fPtr);
+	    interact(READING_FILE, fPtr);
 	    fclose(fPtr);
 	}
 
@@ -297,20 +310,21 @@ char **argv;
 	exit (0);
     }
     else
-	interact(stdin);
+	interact(READING_FILE, stdin);
 }
  
 char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
- -b       back out of geometry before first shot\n\
- -f sfile run script sfile before interacting\n\
- -M       read matrix, cmds on stdin\n\
- -s       run in short (non-verbose) mode\n\
- -u n     set use_air=n (default 0)\n\
- -v       run in verbose mode\n\
- -x v     set librt(3) diagnostic flag=v\n\
- -X v     set nirt diagnostic flag=v\n\
+ -b        back out of geometry before first shot\n\
+ -e script run script before interacting\n\
+ -f sfile  run script sfile before interacting\n\
+ -M        read matrix, cmds on stdin\n\
+ -s        run in short (non-verbose) mode\n\
+ -u n      set use_air=n (default 0)\n\
+ -v        run in verbose mode\n\
+ -x v      set librt(3) diagnostic flag=v\n\
+ -X v      set nirt diagnostic flag=v\n\
 ";
 
 void printusage() 
