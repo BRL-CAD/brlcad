@@ -45,7 +45,7 @@ proe-g: proe-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBSYSV_DEP
 	CC LDFLAGS proe-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES LIBSYSV -o proe-g
 
 stl-g:	proe-g
-	rm stl-g
+	rm -f stl-g
 	ln -s proe-g stl-g
 
 fast4-g: fast4-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
