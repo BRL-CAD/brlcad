@@ -810,7 +810,7 @@ CONST struct bn_tol *ttol;
 			{
 				vect_t test_norm;
 				struct face *test_f;
-				int test_dir;
+				int test_dir = 0;
 
 				/* don't check against the outer shell or the candidate void shell */
 				if( test_s == void_s || test_s == outer_shell )
@@ -2534,7 +2534,7 @@ CONST struct bn_tol *tol;
 	int loop_size;			/* number of edgeueses in loop */
 	struct faceuse *fu;
 	struct loopuse *lu;
-	struct edgeuse *eu,*eu1,*eu2,*eu3,*eu_new;
+	struct edgeuse *eu;
 	int start_loop;
 	int i;
 	int found;
@@ -2605,8 +2605,9 @@ CONST struct bn_tol *tol;
 		/* Create new faces to close the shell */
 		while( loop_size > 3 )
 		{
+			struct edgeuse *eu1, *eu2=NULL, *eu_new = NULL;
 			struct edgeuse **eu_used;	/* array of edgueses used, for deletion */
-			int edges_used;			/* number of edges used in making a face */
+			int edges_used=0;			/* number of edges used in making a face */
 			int found_face=0;		/* flag - indicates that a face with the correct normal will be created */
 			int start_index,end_index;	/* start and stop index for loop */
 			int coplanar;			/* flag - indicates entire loop is coplanar */
@@ -2972,12 +2973,16 @@ CONST struct bn_tol *tol;
 			bu_log( "Not makeing face, edges are collinear!\n" );
 
 		/* remove the last three edges from the table */
-		eu1 = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[0] );
-		eu2 = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[1] );
-		eu3 = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[2] );
-		bu_ptbl_rm( &eu_tbl , (long *)eu1 );
-		bu_ptbl_rm( &eu_tbl , (long *)eu2 );
-		bu_ptbl_rm( &eu_tbl , (long *)eu3 );
+		{
+			struct edgeuse *eu1,*eu2,*eu3;
+
+			eu1 = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[0] );
+			eu2 = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[1] );
+			eu3 = (struct edgeuse *)BU_PTBL_GET( &eu_tbl , index[2] );
+			bu_ptbl_rm( &eu_tbl , (long *)eu1 );
+			bu_ptbl_rm( &eu_tbl , (long *)eu2 );
+			bu_ptbl_rm( &eu_tbl , (long *)eu3 );
+		}
 	}
 
 	/* Free up all the memory */
@@ -4581,7 +4586,7 @@ CONST struct bn_tol *tol;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct edgeuse *eu1;
-	struct faceuse *missed_fu;
+	struct faceuse *missed_fu = NULL;
 	struct bu_ptbl stack;
 	struct bu_ptbl shared_edges;
 	long *flags;
@@ -4708,7 +4713,7 @@ CONST struct bn_tol *tol;
 
 	while( missed_faces )
 	{
-		struct edgeuse *unassigned_eu;
+		struct edgeuse *unassigned_eu = NULL;
 		int *shells_at_edge;
 		int new_shell_no=0;
 
@@ -7714,7 +7719,7 @@ CONST struct bn_tol *tol;
 
 	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
-		fastf_t area;
+		fastf_t area = -1;
 
 		NMG_CK_FACEUSE( fu );
 
@@ -9837,7 +9842,7 @@ struct bu_list	*crv_head;
 	struct edge_g_cnurb *crv,*next_crv;
 	struct edge_g_cnurb *new_crv=(struct edge_g_cnurb *)NULL;
 	fastf_t knot_delta=0.0;
-	fastf_t last_knot;
+	fastf_t last_knot=0.0;
 	int ncoords;
 	int knot_index=(-1);
 	int max_order=0;
@@ -10036,7 +10041,7 @@ CONST struct bn_tol *tol;
 	point_t end1;
 	int nsegs;
 	int pt_type;
-	int ncoords;
+	int ncoords = 0;
 	int i;
 
 	BN_CK_TOL( tol );
@@ -10525,7 +10530,7 @@ struct rt_arb_internal *arb_int;
 	int face_verts;
 	int i,j;
 	int found;
-	int ret_val;
+	int ret_val = 0;
 
 	NMG_CK_MODEL( m );
 

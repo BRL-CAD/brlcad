@@ -1051,7 +1051,7 @@ struct vertex	**verts[];
 int		n;
 {
 	struct faceuse *fu;
-	struct edgeuse *eu, *eur, *euold;
+	struct edgeuse *eu, *eur, *euold = NULL;
 	struct loopuse	*lu;
 	struct vertexuse	*vu;
 	int i;
@@ -3153,7 +3153,7 @@ struct loopuse *lu;
 {
 	struct edgeuse *eu;
 	struct edgeuse *jaunt_eu1;
-	struct edgeuse *jaunt_eu2;
+	struct edgeuse *jaunt_eu2 = NULL;
 	struct edgeuse *jaunt_eu3;
 
 	NMG_CK_LOOPUSE( lu );
