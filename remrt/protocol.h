@@ -29,6 +29,8 @@
 #define MSG_RESTART	8	/* recycle server */
 #define MSG_LOGLVL	9	/* enable/disable logging */
 #define	MSG_CD		10	/* change directory */
+#define MSG_CMD		11	/* server sends command to dispatcher */
+#define MSG_VERSION	12	/* server sends version to dispatcher */
 
 /*
  *  This structure is used for MSG_PIXELS messages
