@@ -3,13 +3,13 @@
  *
  *  A trivial example of a program that uses librt.  With comments.
  *
- *    cc -o rtexample rtexample.c librt.a -lm
+ *    cc -I/usr/include/brlcad -o rtexample rtexample.c librt.a -lm
  */
 #include <stdio.h>
 #include <math.h>
-#include <brlcad/machine.h>		/* machine specific definitions */
-#include <brlcad/vmath.h>		/* vector math macros */
-#include <brlcad/raytrace.h>		/* librt interface definitions */
+#include "machine.h"		/* machine specific definitions */
+#include "vmath.h"		/* vector math macros */
+#include "raytrace.h"		/* librt interface definitions */
 
 /* every application needs one of these */
 struct application	ap;
