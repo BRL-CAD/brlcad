@@ -482,7 +482,8 @@ unsigned
 Tek_load( addr, count )
 unsigned addr, count;
 {
-	return( count );
+	printf("Tek_load(x%x, %d.)\n", addr, count );
+	return( 0 );
 }
 /*
  *	This program performs the interpretation function
@@ -615,5 +616,5 @@ char *s;
 
 point(xi,yi){
 	move(xi,yi);
-	cont(xi+1,yi+1);
+	cont(xi,yi);
 }
