@@ -167,11 +167,12 @@ struct servers {
 	int		sr_index;	/* fr_servinit[] index */
 	/* Timings */
 	struct timeval	sr_sendtime;	/* time of last sending */
-	double		sr_l_elapsed;	/* last: elapsed sec/pixel */
-	double		sr_w_elapsed;	/* weighted avg: elapsed sec/pixel */
-	double		sr_s_elapsed;	/* sum of elapsed sec/pixel */
-	double		sr_sq_elapsed;	/* sum of elapsed sec/pixel squared */
-	double		sr_l_cpu;	/* cpu sec for last scanline */
+	double		sr_l_elapsed;	/* last: elapsed_sec */
+	double		sr_l_el_rate;	/* last: elapsed_sec/pixel */
+	double		sr_w_elapsed;	/* weighted avg: elapsed_sec/pixel */
+	double		sr_s_elapsed;	/* sum of elapsed_sec/pixel */
+	double		sr_sq_elapsed;	/* sum of elapsed_sec/pixel squared */
+	double		sr_l_cpu;	/* cpu_sec for last scanline */
 	double		sr_s_cpu;	/* sum of all cpu times */
 	int		sr_nsamp;	/* number of samples summed over */
 	double		sr_l_percent;	/* last: percent of CPU */
@@ -212,8 +213,6 @@ extern double	azimuth, elevation;
 int		desiredframe;
 
 struct rt_g	rt_g;
-
-extern double	atof();
 
 extern struct command_tab cmd_tab[];	/* given at end */
 
@@ -1000,10 +999,11 @@ next_frame: ;
 				sp->sr_curframe = fr;
 			}
 
+#define MAX_LUMP		(8*1024)
 #define ASSIGNMENT_TIME		5	/* desired seconds between results */
 			sp->sr_lump = ASSIGNMENT_TIME / sp->sr_w_elapsed;
 			if( sp->sr_lump < 32 )  sp->sr_lump = 32;
-			if( sp->sr_lump > fr->fr_width )  sp->sr_lump = fr->fr_width;
+			if( sp->sr_lump > MAX_LUMP )  sp->sr_lump = MAX_LUMP;
 
 			if( (lp = fr->fr_todo.li_forw) == &(fr->fr_todo) )  {
 				/*  No more work to assign in this frame,
@@ -1240,13 +1240,14 @@ info.li_nrays, info.li_cpusec );
 	/* Stash the statistics that came back */
 	fr->fr_nrays += info.li_nrays;
 	fr->fr_cpu += info.li_cpusec;
-	sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime ) / npix;
-	sp->sr_w_elapsed = 0.9 * sp->sr_w_elapsed + 0.1 * sp->sr_l_elapsed;
+	sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime );
+	sp->sr_l_el_rate = sp->sr_l_elapsed / npix;
+	sp->sr_w_elapsed = 0.9 * sp->sr_w_elapsed + 0.1 * sp->sr_l_el_rate;
 	sp->sr_sendtime = tvnow;		/* struct copy */
 	sp->sr_l_cpu = info.li_cpusec;
 	sp->sr_s_cpu += info.li_cpusec;
-	sp->sr_s_elapsed += sp->sr_l_elapsed;
-	sp->sr_sq_elapsed += sp->sr_l_elapsed * sp->sr_l_elapsed;
+	sp->sr_s_elapsed += sp->sr_l_el_rate;
+	sp->sr_sq_elapsed += sp->sr_l_el_rate * sp->sr_l_el_rate;
 	sp->sr_nsamp++;
 	sp->sr_l_percent = info.li_percent;
 
@@ -2048,8 +2049,8 @@ char	**argv;
 		printf("\tlast:  elapsed=%g, cpu=%g\n",
 			sp->sr_l_elapsed,
 			sp->sr_l_cpu );
-		printf("\t avg:  elapsed=%g, cpu=%g, weighted=%g, clump=%d\n",
-			sp->sr_s_elapsed/num,
+		printf("\t avg:  elapsed=%gp/s, cpu=%g, weighted=%g, clump=%d\n",
+			1.0/(sp->sr_s_elapsed/num),
 			sp->sr_s_cpu/num,
 			sp->sr_w_elapsed,
 			sp->sr_lump );
