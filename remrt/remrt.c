@@ -44,6 +44,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./rtsrv.h"
 #include "./remrt.h"
 
+#ifdef SYSV
+#define vfork	fork
+#endif SYSV
+
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
 int cur_fbsize;			/* current fb size */
 
@@ -170,7 +174,7 @@ int argc; char **argv;
 	}
 
 	/* Listen for our PKG connections */
-	if( (tcp_listen_fd = pkg_initserver("rtsrv", 8, errlog)) < 0 )
+	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, errlog)) < 0 )
 		exit(1);
 	printf("REMRT listening\n");
 	(void)signal( SIGPIPE, SIG_IGN );
@@ -233,6 +237,7 @@ struct pkg_conn *pc;
 	struct sockaddr_in from;
 	register struct hostent *hp;
 	int fd;
+	unsigned long addr_tmp;
 
 	fd = pc->pkc_fd;
 
@@ -253,9 +258,15 @@ struct pkg_conn *pc;
 	sp->sr_started = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_speed = 3;
+#ifdef cray
+	sp->sr_addr = from.sin_addr;
+	hp = gethostbyaddr(&(sp->sr_addr), sizeof (struct in_addr),
+		from.sin_family);
+#else
 	sp->sr_addr = from.sin_addr.s_addr;
 	hp = gethostbyaddr(&from.sin_addr, sizeof (struct in_addr),
 		from.sin_family);
+#endif cray
 	if (hp == 0) {
 		sprintf( sp->sr_name, "x%x", ntohl(sp->sr_addr) );
 	} else {

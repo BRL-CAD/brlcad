@@ -1,7 +1,7 @@
 /*
- *			R T S R V
+ *			R T S R V . C
  *
- *  Ray Tracing service program, using RT library.
+ *  Remote Ray Tracing service program, using RT library.
  *
  *  Author -
  *	Michael John Muuss
@@ -28,47 +28,62 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "pkg.h"
+#include "fb.h"
 #include "../librt/debug.h"
+#include "../rt/rdebug.h"
 
 #include "./rtsrv.h"
 
+extern char	*sbrk();
 extern double atof();
 
 /***** Variables shared with viewing model *** */
-double AmbientIntensity = 0.4;	/* Ambient light intensity */
-double azimuth, elevation;
-int lightmodel;		/* Select lighting model */
-mat_t view2model;
-mat_t model2view;
-int hex_out;
+FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
+FILE		*outfp = NULL;		/* optional pixel output file */
+int		hex_out = 0;		/* Binary or Hex .pix output file */
+double		AmbientIntensity = 0.4;	/* Ambient light intensity */
+double		azimuth, elevation;
+int		lightmodel;		/* Select lighting model */
+mat_t		view2model;
+mat_t		model2view;
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup();
 extern void worker();
-/***** variables shared with worker() ******/
-int	nworkers;
-struct application ap;
-int	stereo = 0;	/* stereo viewing */
-vect_t left_eye_delta;
-int	hypersample=0;	/* number of extra rays to fire */
-int	perspective=0;	/* perspective view -vs- parallel view */
-vect_t	dx_model;	/* view delta-X as model-space vector */
-vect_t	dy_model;	/* view delta-Y as model-space vector */
-point_t	eye_model;	/* model-space location of eye */
-point_t	viewbase_model;	/* model-space location of viewplane corner */
-int npts;	/* # of points to shoot: x,y */
-mat_t Viewrotscale;
-mat_t toEye;
-fastf_t viewsize;
-fastf_t	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
-/***** end variables shared with worker() */
 
-char scanbuf[8*1024*3];		/* generous scan line */
+/***** variables shared with worker() ******/
+struct application ap;
+int		stereo = 0;	/* stereo viewing */
+vect_t		left_eye_delta;
+int		hypersample=0;	/* number of extra rays to fire */
+int		perspective=0;	/* perspective view -vs- parallel view */
+vect_t		dx_model;	/* view delta-X as model-space vector */
+vect_t		dy_model;	/* view delta-Y as model-space vector */
+point_t		eye_model;	/* model-space location of eye */
+int		npts;		/* # of points to shoot: x,y */
+mat_t		Viewrotscale;
+fastf_t		viewsize=0;
+fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
+char		*scanbuf;	/* For optional output buffering */
+int		npsw = MAX_PSW;		/* number of worker PSWs to run */
+struct resource	resource[MAX_PSW];	/* memory resources */
+/***** end variables shared with worker() *****/
+
+/***** variables shared with do.c *****/
+int		nobjs;			/* Number of cmd-line treetops */
+char		**objtab;		/* array of treetop strings */
+char		*beginptr;		/* sbrk() at start of program */
+int		matflag = 0;		/* read matrix from stdin */
+int		desiredframe = 0;	/* frame to start at */
+int		curframe = 0;		/* current frame number */
+char		*outputfile = (char *)0;/* name of base of output file */
+/***** end variables shared with do.c *****/
 
 /* Variables shared within mainline pieces */
-int npsw = MAX_PSW;
+int		rdebug;			/* RT program debugging (not library) */
+
 static char outbuf[132];
-static char idbuf[132];		/* First ID record info */
+static char idbuf[132];			/* First ID record info */
 
 static int seen_start, seen_matrix;	/* state flags */
 
@@ -129,11 +144,24 @@ char **argv;
 		exit(2);
 	}
 
+	beginptr = sbrk(0);
+
+#ifdef cray
+	npsw = 1;			/* >1 on GOS crashes system */
+#endif cray
+
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
+
 	pkg_nochecking = 1;
 	control_host = argv[1];
-	pcsrv = pkg_open( control_host, "rtsrv", pkgswitch, rt_log );
+	pcsrv = pkg_open( control_host, "rtsrv", "tcp", "", "",
+		pkgswitch, rt_log );
 	if( pcsrv == PKC_ERROR &&
-	    (pcsrv = pkg_open( control_host, "4446", pkgswitch, rt_log )) == PKC_ERROR )  {
+	    (pcsrv = pkg_open( control_host, "4446", "tcp", "", "",
+	    pkgswitch, rt_log )) == PKC_ERROR )  {
 		fprintf(stderr, "unable to contact %s\n", control_host);
 		exit(1);
 	}
@@ -145,11 +173,13 @@ char **argv;
 		(void)open("/dev/null", 0);
 		(void)dup2(0, 1);
 		(void)dup2(0, 2);
+#ifndef SYSV
 		n = open("/dev/tty", 2);
 		if (n > 0) {
 			ioctl(n, TIOCNOTTY, 0);
 			close(n);
 		}
+#endif SYSV
 
 		/* A fresh process */
 		if (fork())
@@ -160,11 +190,14 @@ char **argv;
 		if( setpgrp( n, n ) < 0 )
 			perror("setpgrp");
 
+#ifndef SYSV
 		(void)setpriority( PRIO_PROCESS, getpid(), 20 );
+#endif
 	}
 
 	while( pkg_block(pcsrv) >= 0 )
 		;
+	exit(0);
 }
 
 ph_restart(pc, buf)
@@ -202,7 +235,7 @@ char *buf;
 			break;
 		case 'x':
 			sscanf( &cp[2], "%x", &rt_g.debug );
-			rt_log("debug=x%x\n", rt_g.debug);
+			rt_log("rt_g.debug=x%x\n", rt_g.debug);
 			break;
 		case 'f':
 			/* "Fast" -- just a few pixels.  Or, arg's worth */
@@ -243,7 +276,6 @@ char *buf;
 	char *title_file, *title_obj;	/* name of file and first object */
 	struct rt_i *rtip;
 	register int i;
-	register struct region *regp;
 
 	if( debug )  rt_log( "ph_start: %s\n", buf );
 	if( parse_cmd( buf ) > 0 )  {
@@ -264,14 +296,6 @@ char *buf;
 	title_file = cmd_args[0];
 	title_obj = cmd_args[1];
 
-	RES_INIT( &rt_g.res_pt );
-	RES_INIT( &rt_g.res_seg );
-	RES_INIT( &rt_g.res_malloc );
-	RES_INIT( &rt_g.res_bitv );
-	RES_INIT( &rt_g.res_printf );
-	RES_INIT( &rt_g.res_worker );
-	RES_INIT( &rt_g.res_stats );
-
 	rt_prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
@@ -282,59 +306,20 @@ char *buf;
 	ap.a_rt_i = rtip;
 	rt_log( "db title:  %s\n", idbuf);
 
-	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	rt_log("DB TOC: %s\n", outbuf);
-	rt_prep_timer();
+	/* initialize application -- bogus scanbuf size */
+	(void)view_init( &ap, title_file, title_obj, 32, 0 );
+	if( scanbuf )  rt_free(scanbuf);
+	scanbuf = rt_malloc( 32*1024*3, "scanbuf" );	/* XXX */
 
 	/* Load the desired portion of the model */
 	for( i=1; i<numargs; i++ )  {
 		(void)rt_gettree(rtip, cmd_args[i]);
 	}
-	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	rt_log("DB WALK: %s\n", outbuf);
-	rt_prep_timer();
-
-	/* Allow library to prepare itself */
-	rt_prep(rtip);
-
-	/* Initialize the material library for all regions */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-		if( mlib_setup( regp ) == 0 )  {
-			rt_log("mlib_setup failure\n");
-		}
-	}
-
-	/* initialize application (claim output to file) */
-	view_init( &ap, title_file, title_obj, npts, 1 );
-
-	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	rt_log( "PREP: %s\n", outbuf );
-
-	if( rt_i.HeadSolid == SOLTAB_NULL )  {
-		rt_log("rt: No solids remain after prep.\n");
-		exit(3);
-	}
 
 #ifdef PARALLEL
-	/* Get enough dynamic memory to keep from making malloc sbrk() */
-	for( i=0; i<npsw; i++ )  {
-		rt_get_pt();
-		rt_get_seg();
-		rt_get_bitv();
-	}
-#ifdef HEP
-	/* This isn't useful with the Caltech malloc() in most systems */
-	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
-#endif
-
 	rt_log("PARALLEL: npsw=%d\n", npsw );
-#ifdef HEP
-	for( i=0; i<npsw; i++ )  {
-		Dcreate( worker );
-	}
 #endif
-	rt_log("initial memory use=%d.\n",sbrk(0) );
-#endif
+	beginptr = sbrk(0);
 
 	seen_start = 1;
 	(void)free(buf);
@@ -349,6 +334,7 @@ char *buf;
 {
 	register int i;
 	register char *cp = buf;
+	register struct rt_i *rtip = ap.a_rt_i;
 
 	if( debug )  rt_log( "ph_matrix: %s\n", buf );
 	/* Visible part is from -1 to +1 in view space */
@@ -364,11 +350,43 @@ char *buf;
 		Viewrotscale[i] = atof(cp);
 	}
 
-rt_log("npts=%d\n", npts);
+	if( rtip->needprep )  {
+		register struct region *regp;
+
+		rt_prep_timer();
+		rt_prep(rtip);
+
+		/* Initialize the material library for all regions */
+		for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+			if( mlib_setup( regp ) < 0 )  {
+				rt_log("mlib_setup failure on %s\n", regp->reg_name);
+			} else {
+				if(rdebug&RDEBUG_MATERIAL)
+					regp->reg_mfuncs->mf_print( regp );
+				/* Perhaps this should be a function? */
+			}
+		}
+		(void)rt_read_timer( outbuf, sizeof(outbuf) );
+		rt_log( "PREP: %s\n", outbuf );
+	}
+
+	if( rtip->HeadSolid == SOLTAB_NULL )  {
+		rt_log("rt: No solids remain after prep.\n");
+		exit(3);
+	}
+
 	grid_setup();
 
 	/* initialize lighting */
-	view_2init( &ap, -1 );
+	view_2init( &ap );
+
+	rtip->nshots = 0;
+	rtip->nmiss_model = 0;
+	rtip->nmiss_tree = 0;
+	rtip->nmiss_solid = 0;
+	rtip->nmiss = 0;
+	rtip->nhits = 0;
+	rtip->rti_nrays = 0;
 
 	seen_matrix = 1;
 	(void)free(buf);
@@ -387,6 +405,7 @@ char *buf;
 	register int y;
 	auto int a,b;
 
+	if( debug )  rt_log( "ph_lines: %s\n", buf );
 	if( !seen_start )  {
 		rt_log("ph_lines:  no start yet\n");
 		return;
@@ -442,7 +461,7 @@ char *str;
 	static char *cp = buf+1;
 
 	if( print_on == 0 )  return;
-	RES_ACQUIRE( &rt_g.res_malloc );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	(void)sprintf( cp, str, a, b, c, d, e, f, g, h );
 	while( *cp++ )  ;		/* leaves one beyond null */
 	if( cp[-2] != '\n' )
@@ -455,7 +474,7 @@ char *str;
 		exit(12);
 	cp = buf+1;
 out:
-	RES_RELEASE( &rt_g.res_malloc );
+	RES_RELEASE( &rt_g.res_syscall );
 }
 
 void
@@ -536,52 +555,3 @@ char *line;
 	cmd_args[numargs] = (char *)0;
 	return(0);
 }
-
-fb_open( name, w, h )
-char *name;
-{
-	return(0);
-}
-
-fb_close()
-{
-	return(0);
-}
-
-#ifdef cray
-#ifndef PARALLEL
-LOCKASGN(p)
-{
-}
-LOCKON(p)
-{
-}
-LOCKOFF(p)
-{
-}
-#endif
-#endif
-
-#ifdef sgi
-/* Horrible bug in 3.3.1 and 3.4 -- hypot ruins stack! */
-double
-hypot(a,b)
-double a,b;
-{
-	extern double sqrt();
-	return(sqrt(a*a+b*b));
-}
-#endif
-
-#ifdef alliant
-RES_ACQUIRE(p)
-register int *p;
-{
-#ifdef PARALLEL
-	asm("loop:");
-	while( *p )  ;
-	asm("	tas	a5@");
-	asm("	bne	loop");
-#endif
-}
-#endif alliant
