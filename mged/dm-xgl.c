@@ -1520,7 +1520,8 @@ skip_ok:
 
 		printf("Option [%c]: ", DEFAULT_DB);
 
-			(void)gets(line);
+			(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
+			line[strlen(line)-1] = '\0';		/* remove newline */
 			if(feof(stdin)) goto skip_ok;
 			if(*line == '\0') *line = DEFAULT_DB;
 		}
@@ -1577,7 +1578,8 @@ int	defalt;
 	for(;;) {
 		printf("Is it OK to proceed [%s]? ",
 			(defalt == YES) ? "yes" : "no");
-		(void)gets(line);
+		(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
+		line[strlen(line)-1] = '\0';		/* remove newline */
 		if(feof(stdin)) continue;
 		switch(*line) {
 		  case '\0':
