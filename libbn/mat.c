@@ -243,8 +243,8 @@ register mat_t	output;
 		if( fabs(y) < SQRT_SMALL_FASTF )  {
 			rt_log("mat_inv:  error! fabs(y)=%g\n", fabs(y));
 			mat_print("singular matrix", input);
-			abort();
-			return;		/* ERROR */
+			rt_bomb("mat_inv: singular matrix\n");
+			/* NOTREACHED */
 		}
 		y = 1.0 / y;
 
