@@ -257,15 +257,12 @@ struct nmg_ptbl {
  *  Not found independently, but used in the cnurb and snurb structures.
  *  (Exactly the same as the definition in nurb.h)
  */
-#ifndef NURB_H
 struct knot_vector {
 	int		magic;
 	int		k_size;		/* knot vector size */
 	fastf_t		* knots;	/* pointer to knot vector  */
-/* XXX This does not belong here! Eliminate from here and nurb.h */
-	long		index;		/* struct # in this model */
 };
-#endif
+#define RT_KNOT_VECTOR_MAGIC	NMG_KNOT_VECTOR_MAGIC	/* nurb.h compat */
 
 /*
  *	N O T I C E !
