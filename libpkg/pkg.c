@@ -131,7 +131,7 @@ static void	pkg_checkin();
  */
 unsigned short
 pkg_gshort(msgp)
-	char *msgp;
+unsigned char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
 #ifdef vax
@@ -152,7 +152,7 @@ pkg_gshort(msgp)
  */
 unsigned long
 pkg_glong(msgp)
-	char *msgp;
+unsigned char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
 	register unsigned long u;
