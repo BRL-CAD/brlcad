@@ -83,7 +83,7 @@ set helplib_data(wdb_killall)		{{<objects>} {kill/delete database objects, remov
 set helplib_data(wdb_killtree)		{{<objects>} {kill all paths belonging to objects}}
 set helplib_data(wdb_list)		{{[-r] <objects>} {list object information, verbose}}
 set helplib_data(wdb_listeval)		{{}	{lists 'evaluated' path solids}}
-set helplib_data(wdb_ls)		{{[-a -c -r -s -p -l] [object(s)]} {list objects in this database}}
+set helplib_data(wdb_ls)		{{[-A -o -a -c -r -s -p -l] [object(s) | name/value pairs]} {list objects in this database}}
 set helplib_data(wdb_lt)		{{object} {list object's tree as a tcl list of {operator object} pairs}}
 set helplib_data(wdb_make_bb)		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
 set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occuring in the database}}
