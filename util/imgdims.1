@@ -18,7 +18,9 @@ num_bytes
 
 .SH DESCRIPTION
 .I Imgdims
-guesses the dimensions (in pixels)
+uses the autosizing capability of
+.IR libbn "(5)"
+to guess the dimensions (in pixels)
 of an image.
 The image size may be expressed either implicitly,
 by specifying the name of the file,
@@ -62,7 +64,7 @@ option is not specified,
 .I imgdims
 determines the pixel size based on the extension on
 .I file_name.
-If
+If, additionally,
 .I num_bytes
 was specified or
 .I file_name
@@ -70,18 +72,8 @@ contains none of the recognized extensions,
 .I imgdims
 assumes that there are 3-byte-wide pixels.
 
-.SH HINT
-A typical use for
-.I pixclump
-is in renormalizing an image.
-For example,
-if a tool such as
-.I pixscale
-has been used to transform
-an image containing a relatively small number of colors,
-.I pixclump
-will change pixels whose colors have been interpolated
-back to one of the original colors.
+.SH SEE ALSO
+.IR libbn "(3)"
 
 .SH AUTHOR
 Paul Tanenbaum
