@@ -162,6 +162,7 @@ int	f[], num;
  *	    1 if visible above upper horizon.
  *	   -1 if visible below lower horizon.
  */
+int
 fhvis( x, y )
 int x, y;
 {
