@@ -696,7 +696,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	},
 
 
-	{NULL, ">ID_MAXIMUM", ">id_max",
+	{0L, ">ID_MAXIMUM", ">id_max",
 		0,		/* this entry for sanity only */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
