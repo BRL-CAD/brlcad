@@ -223,367 +223,365 @@ extern int arb_faces[5][24];	/* from edarb.c */
 
 struct menu_item ars_pick_menu[] = {
 	{ "ARS PICK MENU", (void (*)())NULL, 0 },
-	{ "pick vertex", ars_ed, ECMD_ARS_PICK },
-	{ "next vertex", ars_ed, ECMD_ARS_NEXT_PT },
-	{ "prev vertex", ars_ed, ECMD_ARS_PREV_PT },
-	{ "next curve", ars_ed, ECMD_ARS_NEXT_CRV },
-	{ "prev curve", ars_ed, ECMD_ARS_PREV_CRV },
+	{ "Pick Vertex", ars_ed, ECMD_ARS_PICK },
+	{ "Next Vertex", ars_ed, ECMD_ARS_NEXT_PT },
+	{ "Prev Vertex", ars_ed, ECMD_ARS_PREV_PT },
+	{ "Next Curve", ars_ed, ECMD_ARS_NEXT_CRV },
+	{ "Prev Curve", ars_ed, ECMD_ARS_PREV_CRV },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item ars_menu[] = {
 	{ "ARS MENU", (void (*)())NULL, 0 },
-	{ "pick vertex", ars_ed, ECMD_ARS_PICK_MENU },
-	{ "move point", ars_ed, ECMD_ARS_MOVE_PT },
-	{ "delete curve", ars_ed, ECMD_ARS_DEL_CRV },
-	{ "delete column", ars_ed, ECMD_ARS_DEL_COL },
-	{ "dup curve", ars_ed, ECMD_ARS_DUP_CRV },
-	{ "dup column", ars_ed, ECMD_ARS_DUP_COL },
-	{ "move curve", ars_ed, ECMD_ARS_MOVE_CRV },
-	{ "move column", ars_ed, ECMD_ARS_MOVE_COL },
+	{ "Pick Vertex", ars_ed, ECMD_ARS_PICK_MENU },
+	{ "Move Point", ars_ed, ECMD_ARS_MOVE_PT },
+	{ "Delete Curve", ars_ed, ECMD_ARS_DEL_CRV },
+	{ "Delete Column", ars_ed, ECMD_ARS_DEL_COL },
+	{ "Dup Curve", ars_ed, ECMD_ARS_DUP_CRV },
+	{ "Dup Column", ars_ed, ECMD_ARS_DUP_COL },
+	{ "Move Curve", ars_ed, ECMD_ARS_MOVE_CRV },
+	{ "Move Column", ars_ed, ECMD_ARS_MOVE_COL },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  edge8_menu[] = {
 	{ "ARB8 EDGES", (void (*)())NULL, 0 },
-	{ "move edge 12", arb8_edge, 0 },
-	{ "move edge 23", arb8_edge, 1 },
-	{ "move edge 34", arb8_edge, 2 },
-	{ "move edge 14", arb8_edge, 3 },
-	{ "move edge 15", arb8_edge, 4 },
-	{ "move edge 26", arb8_edge, 5 },
-	{ "move edge 56", arb8_edge, 6 },
-	{ "move edge 67", arb8_edge, 7 },
-	{ "move edge 78", arb8_edge, 8 },
-	{ "move edge 58", arb8_edge, 9 },
-	{ "move edge 37", arb8_edge, 10 },
-	{ "move edge 48", arb8_edge, 11 },
+	{ "Move Edge 12", arb8_edge, 0 },
+	{ "Move Edge 23", arb8_edge, 1 },
+	{ "Move Edge 34", arb8_edge, 2 },
+	{ "Move Edge 14", arb8_edge, 3 },
+	{ "Move Edge 15", arb8_edge, 4 },
+	{ "Move Edge 26", arb8_edge, 5 },
+	{ "Move Edge 56", arb8_edge, 6 },
+	{ "Move Edge 67", arb8_edge, 7 },
+	{ "Move Edge 78", arb8_edge, 8 },
+	{ "Move Edge 58", arb8_edge, 9 },
+	{ "Move Edge 37", arb8_edge, 10 },
+	{ "Move Edge 48", arb8_edge, 11 },
 	{ "RETURN",       arb8_edge, 12 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  edge7_menu[] = {
 	{ "ARB7 EDGES", (void (*)())NULL, 0 },
-	{ "move edge 12", arb7_edge, 0 },
-	{ "move edge 23", arb7_edge, 1 },
-	{ "move edge 34", arb7_edge, 2 },
-	{ "move edge 14", arb7_edge, 3 },
-	{ "move edge 15", arb7_edge, 4 },
-	{ "move edge 26", arb7_edge, 5 },
-	{ "move edge 56", arb7_edge, 6 },
-	{ "move edge 67", arb7_edge, 7 },
-	{ "move edge 37", arb7_edge, 8 },
-	{ "move edge 57", arb7_edge, 9 },
-	{ "move edge 45", arb7_edge, 10 },
-	{ "move point 5", arb7_edge, 11 },
+	{ "Move Edge 12", arb7_edge, 0 },
+	{ "Move Edge 23", arb7_edge, 1 },
+	{ "Move Edge 34", arb7_edge, 2 },
+	{ "Move Edge 14", arb7_edge, 3 },
+	{ "Move Edge 15", arb7_edge, 4 },
+	{ "Move Edge 26", arb7_edge, 5 },
+	{ "Move Edge 56", arb7_edge, 6 },
+	{ "Move Edge 67", arb7_edge, 7 },
+	{ "Move Edge 37", arb7_edge, 8 },
+	{ "Move Edge 57", arb7_edge, 9 },
+	{ "Move Edge 45", arb7_edge, 10 },
+	{ "Move Point 5", arb7_edge, 11 },
 	{ "RETURN",       arb7_edge, 12 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  edge6_menu[] = {
 	{ "ARB6 EDGES", (void (*)())NULL, 0 },
-	{ "move edge 12", arb6_edge, 0 },
-	{ "move edge 23", arb6_edge, 1 },
-	{ "move edge 34", arb6_edge, 2 },
-	{ "move edge 14", arb6_edge, 3 },
-	{ "move edge 15", arb6_edge, 4 },
-	{ "move edge 25", arb6_edge, 5 },
-	{ "move edge 36", arb6_edge, 6 },
-	{ "move edge 46", arb6_edge, 7 },
-	{ "move point 5", arb6_edge, 8 },
-	{ "move point 6", arb6_edge, 9 },
+	{ "Move Edge 12", arb6_edge, 0 },
+	{ "Move Edge 23", arb6_edge, 1 },
+	{ "Move Edge 34", arb6_edge, 2 },
+	{ "Move Edge 14", arb6_edge, 3 },
+	{ "Move Edge 15", arb6_edge, 4 },
+	{ "Move Edge 25", arb6_edge, 5 },
+	{ "Move Edge 36", arb6_edge, 6 },
+	{ "Move Edge 46", arb6_edge, 7 },
+	{ "Move Point 5", arb6_edge, 8 },
+	{ "Move Point 6", arb6_edge, 9 },
 	{ "RETURN",       arb6_edge, 10 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  edge5_menu[] = {
 	{ "ARB5 EDGES", (void (*)())NULL, 0 },
-	{ "move edge 12", arb5_edge, 0 },
-	{ "move edge 23", arb5_edge, 1 },
-	{ "move edge 34", arb5_edge, 2 },
-	{ "move edge 14", arb5_edge, 3 },
-	{ "move edge 15", arb5_edge, 4 },
-	{ "move edge 25", arb5_edge, 5 },
-	{ "move edge 35", arb5_edge, 6 },
-	{ "move edge 45", arb5_edge, 7 },
-	{ "move point 5", arb5_edge, 8 },
+	{ "Move Edge 12", arb5_edge, 0 },
+	{ "Move Edge 23", arb5_edge, 1 },
+	{ "Move Edge 34", arb5_edge, 2 },
+	{ "Move Edge 14", arb5_edge, 3 },
+	{ "Move Edge 15", arb5_edge, 4 },
+	{ "Move Edge 25", arb5_edge, 5 },
+	{ "Move Edge 35", arb5_edge, 6 },
+	{ "Move Edge 45", arb5_edge, 7 },
+	{ "Move Point 5", arb5_edge, 8 },
 	{ "RETURN",       arb5_edge, 9 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  point4_menu[] = {
 	{ "ARB4 POINTS", (void (*)())NULL, 0 },
-	{ "move point 1", arb4_point, 0 },
-	{ "move point 2", arb4_point, 1 },
-	{ "move point 3", arb4_point, 2 },
-	{ "move point 4", arb4_point, 4 },
+	{ "Move Point 1", arb4_point, 0 },
+	{ "Move Point 2", arb4_point, 1 },
+	{ "Move Point 3", arb4_point, 2 },
+	{ "Move Point 4", arb4_point, 4 },
 	{ "RETURN",       arb4_point, 5 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  tgc_menu[] = {
 	{ "TGC MENU", (void (*)())NULL, 0 },
-	{ "scale H",	tgc_ed, MENU_TGC_SCALE_H },
-	{ "scale H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
-	{ "scale A",	tgc_ed, MENU_TGC_SCALE_A },
-	{ "scale B",	tgc_ed, MENU_TGC_SCALE_B },
-	{ "scale c",	tgc_ed, MENU_TGC_SCALE_C },
-	{ "scale d",	tgc_ed, MENU_TGC_SCALE_D },
-	{ "scale A,B",	tgc_ed, MENU_TGC_SCALE_AB },
-	{ "scale C,D",	tgc_ed, MENU_TGC_SCALE_CD },
-	{ "scale A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
-	{ "rotate H",	tgc_ed, MENU_TGC_ROT_H },
-	{ "rotate AxB",	tgc_ed, MENU_TGC_ROT_AB },
-	{ "move end H(rt)", tgc_ed, MENU_TGC_MV_H },
-	{ "move end H", tgc_ed, MENU_TGC_MV_HH },
+	{ "Scale H",	tgc_ed, MENU_TGC_SCALE_H },
+	{ "Scale H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
+	{ "Scale A",	tgc_ed, MENU_TGC_SCALE_A },
+	{ "Scale B",	tgc_ed, MENU_TGC_SCALE_B },
+	{ "Scale c",	tgc_ed, MENU_TGC_SCALE_C },
+	{ "Scale d",	tgc_ed, MENU_TGC_SCALE_D },
+	{ "Scale A,B",	tgc_ed, MENU_TGC_SCALE_AB },
+	{ "Scale C,D",	tgc_ed, MENU_TGC_SCALE_CD },
+	{ "Scale A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
+	{ "Rotate H",	tgc_ed, MENU_TGC_ROT_H },
+	{ "Rotate AxB",	tgc_ed, MENU_TGC_ROT_AB },
+	{ "Move End H(rt)", tgc_ed, MENU_TGC_MV_H },
+	{ "Move End H", tgc_ed, MENU_TGC_MV_HH },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  tor_menu[] = {
 	{ "TORUS MENU", (void (*)())NULL, 0 },
-	{ "scale radius 1", tor_ed, MENU_TOR_R1 },
-	{ "scale radius 2", tor_ed, MENU_TOR_R2 },
+	{ "Scale Radius 1", tor_ed, MENU_TOR_R1 },
+	{ "Scale Radius 2", tor_ed, MENU_TOR_R2 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  eto_menu[] = {
 	{ "ELL-TORUS MENU", (void (*)())NULL, 0 },
-	{ "scale r", eto_ed, MENU_ETO_R },
-	{ "scale D", eto_ed, MENU_ETO_RD },
-	{ "scale C", eto_ed, MENU_ETO_SCALE_C },
-	{ "rotate C", eto_ed, MENU_ETO_ROT_C },
+	{ "Scale r", eto_ed, MENU_ETO_R },
+	{ "Scale D", eto_ed, MENU_ETO_RD },
+	{ "Scale C", eto_ed, MENU_ETO_SCALE_C },
+	{ "Rotate C", eto_ed, MENU_ETO_ROT_C },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  ell_menu[] = {
 	{ "ELLIPSOID MENU", (void (*)())NULL, 0 },
-	{ "scale A", ell_ed, MENU_ELL_SCALE_A },
-	{ "scale B", ell_ed, MENU_ELL_SCALE_B },
-	{ "scale C", ell_ed, MENU_ELL_SCALE_C },
-	{ "scale A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
+	{ "Scale A", ell_ed, MENU_ELL_SCALE_A },
+	{ "Scale B", ell_ed, MENU_ELL_SCALE_B },
+	{ "Scale C", ell_ed, MENU_ELL_SCALE_C },
+	{ "Scale A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  spline_menu[] = {
 	{ "SPLINE MENU", (void (*)())NULL, 0 },
-	{ "pick vertex", spline_ed, -1 },
-	{ "move vertex", spline_ed, ECMD_VTRANS },
+	{ "Pick Vertex", spline_ed, -1 },
+	{ "Move Vertex", spline_ed, ECMD_VTRANS },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  nmg_menu[] = {
 	{ "NMG MENU", (void (*)())NULL, 0 },
-	{ "pick edge", nmg_ed, ECMD_NMG_EPICK },
-	{ "move edge", nmg_ed, ECMD_NMG_EMOVE },
-	{ "split edge", nmg_ed, ECMD_NMG_ESPLIT },
-	{ "delete edge", nmg_ed, ECMD_NMG_EKILL },
-	{ "next eu", nmg_ed, ECMD_NMG_FORW },
-	{ "prev eu", nmg_ed, ECMD_NMG_BACK },
-	{ "radial eu", nmg_ed, ECMD_NMG_RADIAL },
-	{ "extrude loop", nmg_ed , ECMD_NMG_LEXTRU },
-	{ "debug edge", nmg_ed, ECMD_NMG_EDEBUG },
+	{ "Pick Edge", nmg_ed, ECMD_NMG_EPICK },
+	{ "Move Edge", nmg_ed, ECMD_NMG_EMOVE },
+	{ "Split Edge", nmg_ed, ECMD_NMG_ESPLIT },
+	{ "Delete Edge", nmg_ed, ECMD_NMG_EKILL },
+	{ "Next EU", nmg_ed, ECMD_NMG_FORW },
+	{ "Prev EU", nmg_ed, ECMD_NMG_BACK },
+	{ "Radial EU", nmg_ed, ECMD_NMG_RADIAL },
+	{ "Extrude Loop", nmg_ed , ECMD_NMG_LEXTRU },
+	{ "Eebug Edge", nmg_ed, ECMD_NMG_EDEBUG },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item mv8_menu[] = {
 	{ "ARB8 FACES", (void (*)())NULL, 0 },
-	{ "move face 1234", arb8_mv_face, 1 },
-	{ "move face 5678", arb8_mv_face, 2 },
-	{ "move face 1584", arb8_mv_face, 3 },
-	{ "move face 2376", arb8_mv_face, 4 },
-	{ "move face 1265", arb8_mv_face, 5 },
-	{ "move face 4378", arb8_mv_face, 6 },
+	{ "Move Face 1234", arb8_mv_face, 1 },
+	{ "Move Face 5678", arb8_mv_face, 2 },
+	{ "Move Face 1584", arb8_mv_face, 3 },
+	{ "Move Face 2376", arb8_mv_face, 4 },
+	{ "Move Face 1265", arb8_mv_face, 5 },
+	{ "Move Face 4378", arb8_mv_face, 6 },
 	{ "RETURN",         arb8_mv_face, 7 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item mv7_menu[] = {
 	{ "ARB7 FACES", (void (*)())NULL, 0 },
-	{ "move face 1234", arb7_mv_face, 1 },
-	{ "move face 2376", arb7_mv_face, 4 },
+	{ "Move Face 1234", arb7_mv_face, 1 },
+	{ "Move Face 2376", arb7_mv_face, 4 },
 	{ "RETURN",         arb7_mv_face, 7 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item mv6_menu[] = {
 	{ "ARB6 FACES", (void (*)())NULL, 0 },
-	{ "move face 1234", arb6_mv_face, 1 },
-	{ "move face 2365", arb6_mv_face, 2 },
-	{ "move face 1564", arb6_mv_face, 3 },
-	{ "move face 125" , arb6_mv_face, 4 },
-	{ "move face 346" , arb6_mv_face, 5 },
+	{ "Move Face 1234", arb6_mv_face, 1 },
+	{ "Move Face 2365", arb6_mv_face, 2 },
+	{ "Move Face 1564", arb6_mv_face, 3 },
+	{ "Move Face 125" , arb6_mv_face, 4 },
+	{ "Move Face 346" , arb6_mv_face, 5 },
 	{ "RETURN",         arb6_mv_face, 6 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item mv5_menu[] = {
 	{ "ARB5 FACES", (void (*)())NULL, 0 },
-	{ "move face 1234", arb5_mv_face, 1 },
-	{ "move face 125" , arb5_mv_face, 2 },
-	{ "move face 235" , arb5_mv_face, 3 },
-	{ "move face 345" , arb5_mv_face, 4 },
-	{ "move face 145" , arb5_mv_face, 5 },
+	{ "Move Face 1234", arb5_mv_face, 1 },
+	{ "Move Face 125" , arb5_mv_face, 2 },
+	{ "Move Face 235" , arb5_mv_face, 3 },
+	{ "Move Face 345" , arb5_mv_face, 4 },
+	{ "Move Face 145" , arb5_mv_face, 5 },
 	{ "RETURN",         arb5_mv_face, 6 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item mv4_menu[] = {
 	{ "ARB4 FACES", (void (*)())NULL, 0 },
-	{ "move face 123" , arb4_mv_face, 1 },
-	{ "move face 124" , arb4_mv_face, 2 },
-	{ "move face 234" , arb4_mv_face, 3 },
-	{ "move face 134" , arb4_mv_face, 4 },
+	{ "Move Face 123" , arb4_mv_face, 1 },
+	{ "Move Face 124" , arb4_mv_face, 2 },
+	{ "Move Face 234" , arb4_mv_face, 3 },
+	{ "Move Face 134" , arb4_mv_face, 4 },
 	{ "RETURN",         arb4_mv_face, 5 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item rot8_menu[] = {
 	{ "ARB8 FACES", (void (*)())NULL, 0 },
-	{ "rotate face 1234", arb8_rot_face, 1 },
-	{ "rotate face 5678", arb8_rot_face, 2 },
-	{ "rotate face 1584", arb8_rot_face, 3 },
-	{ "rotate face 2376", arb8_rot_face, 4 },
-	{ "rotate face 1265", arb8_rot_face, 5 },
-	{ "rotate face 4378", arb8_rot_face, 6 },
+	{ "Rotate Face 1234", arb8_rot_face, 1 },
+	{ "Rotate Face 5678", arb8_rot_face, 2 },
+	{ "Rotate Face 1584", arb8_rot_face, 3 },
+	{ "Rotate Face 2376", arb8_rot_face, 4 },
+	{ "Rotate Face 1265", arb8_rot_face, 5 },
+	{ "Rotate Face 4378", arb8_rot_face, 6 },
 	{ "RETURN",         arb8_rot_face, 7 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item rot7_menu[] = {
 	{ "ARB7 FACES", (void (*)())NULL, 0 },
-	{ "rotate face 1234", arb7_rot_face, 1 },
-	{ "rotate face 567" , arb7_rot_face, 2 },
-	{ "rotate face 145" , arb7_rot_face, 3 },
-	{ "rotate face 2376", arb7_rot_face, 4 },
-	{ "rotate face 1265", arb7_rot_face, 5 },
-	{ "rotate face 4375", arb7_rot_face, 6 },
+	{ "Rotate Face 1234", arb7_rot_face, 1 },
+	{ "Rotate Face 567" , arb7_rot_face, 2 },
+	{ "Rotate Face 145" , arb7_rot_face, 3 },
+	{ "Rotate Face 2376", arb7_rot_face, 4 },
+	{ "Rotate Face 1265", arb7_rot_face, 5 },
+	{ "Rotate Face 4375", arb7_rot_face, 6 },
 	{ "RETURN",         arb7_rot_face, 7 },
 	{ "", (void (*)())NULL, 0 }
 };
 
-
-
 struct menu_item rot6_menu[] = {
 	{ "ARB6 FACES", (void (*)())NULL, 0 },
-	{ "rotate face 1234", arb6_rot_face, 1 },
-	{ "rotate face 2365", arb6_rot_face, 2 },
-	{ "rotate face 1564", arb6_rot_face, 3 },
-	{ "rotate face 125" , arb6_rot_face, 4 },
-	{ "rotate face 346" , arb6_rot_face, 5 },
+	{ "Rotate Face 1234", arb6_rot_face, 1 },
+	{ "Rotate Face 2365", arb6_rot_face, 2 },
+	{ "Rotate Face 1564", arb6_rot_face, 3 },
+	{ "Rotate Face 125" , arb6_rot_face, 4 },
+	{ "Rotate Face 346" , arb6_rot_face, 5 },
 	{ "RETURN",         arb6_rot_face, 6 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item rot5_menu[] = {
 	{ "ARB5 FACES", (void (*)())NULL, 0 },
-	{ "rotate face 1234", arb5_rot_face, 1 },
-	{ "rotate face 125" , arb5_rot_face, 2 },
-	{ "rotate face 235" , arb5_rot_face, 3 },
-	{ "rotate face 345" , arb5_rot_face, 4 },
-	{ "rotate face 145" , arb5_rot_face, 5 },
+	{ "Rotate Face 1234", arb5_rot_face, 1 },
+	{ "Rotate Face 125" , arb5_rot_face, 2 },
+	{ "Rotate Face 235" , arb5_rot_face, 3 },
+	{ "Rotate Face 345" , arb5_rot_face, 4 },
+	{ "Rotate Face 145" , arb5_rot_face, 5 },
 	{ "RETURN",         arb5_rot_face, 6 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item rot4_menu[] = {
 	{ "ARB4 FACES", (void (*)())NULL, 0 },
-	{ "rotate face 123" , arb4_rot_face, 1 },
-	{ "rotate face 124" , arb4_rot_face, 2 },
-	{ "rotate face 234" , arb4_rot_face, 3 },
-	{ "rotate face 134" , arb4_rot_face, 4 },
+	{ "Rotate Face 123" , arb4_rot_face, 1 },
+	{ "Rotate Face 124" , arb4_rot_face, 2 },
+	{ "Rotate Face 234" , arb4_rot_face, 3 },
+	{ "Rotate Face 134" , arb4_rot_face, 4 },
 	{ "RETURN",         arb4_rot_face, 5 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item cntrl_menu[] = {
 	{ "ARB MENU", (void (*)())NULL, 0 },
-	{ "move edges", arb_control, MENU_ARB_MV_EDGE },
-	{ "move faces", arb_control, MENU_ARB_MV_FACE },
-	{ "rotate faces", arb_control, MENU_ARB_ROT_FACE },
+	{ "Move Edges", arb_control, MENU_ARB_MV_EDGE },
+	{ "Move Faces", arb_control, MENU_ARB_MV_FACE },
+	{ "Rotate Faces", arb_control, MENU_ARB_ROT_FACE },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item part_menu[] = {
 	{ "Particle MENU", (void (*)())NULL, 0 },
-	{ "scale H", part_ed, MENU_PART_H },
-	{ "scale v", part_ed, MENU_PART_v },
-	{ "scale h", part_ed, MENU_PART_h },
+	{ "Scale H", part_ed, MENU_PART_H },
+	{ "Scale v", part_ed, MENU_PART_v },
+	{ "Scale h", part_ed, MENU_PART_h },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  rpc_menu[] = {
 	{ "RPC MENU", (void (*)())NULL, 0 },
-	{ "scale B", rpc_ed, MENU_RPC_B },
-	{ "scale H", rpc_ed, MENU_RPC_H },
-	{ "scale r", rpc_ed, MENU_RPC_R },
+	{ "Scale B", rpc_ed, MENU_RPC_B },
+	{ "Scale H", rpc_ed, MENU_RPC_H },
+	{ "Scale r", rpc_ed, MENU_RPC_R },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  rhc_menu[] = {
 	{ "RHC MENU", (void (*)())NULL, 0 },
-	{ "scale B", rhc_ed, MENU_RHC_B },
-	{ "scale H", rhc_ed, MENU_RHC_H },
-	{ "scale r", rhc_ed, MENU_RHC_R },
-	{ "scale c", rhc_ed, MENU_RHC_C },
+	{ "Scale B", rhc_ed, MENU_RHC_B },
+	{ "Scale H", rhc_ed, MENU_RHC_H },
+	{ "Scale r", rhc_ed, MENU_RHC_R },
+	{ "Scale c", rhc_ed, MENU_RHC_C },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  epa_menu[] = {
 	{ "EPA MENU", (void (*)())NULL, 0 },
-	{ "scale H", epa_ed, MENU_EPA_H },
-	{ "scale A", epa_ed, MENU_EPA_R1 },
-	{ "scale B", epa_ed, MENU_EPA_R2 },
+	{ "Scale H", epa_ed, MENU_EPA_H },
+	{ "Scale A", epa_ed, MENU_EPA_R1 },
+	{ "Scale B", epa_ed, MENU_EPA_R2 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item  ehy_menu[] = {
 	{ "EHY MENU", (void (*)())NULL, 0 },
-	{ "scale H", ehy_ed, MENU_EHY_H },
-	{ "scale A", ehy_ed, MENU_EHY_R1 },
-	{ "scale B", ehy_ed, MENU_EHY_R2 },
-	{ "scale c", ehy_ed, MENU_EHY_C },
+	{ "Scale H", ehy_ed, MENU_EHY_H },
+	{ "Scale A", ehy_ed, MENU_EHY_R1 },
+	{ "Scale B", ehy_ed, MENU_EHY_R2 },
+	{ "Scale c", ehy_ed, MENU_EHY_C },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item pipe_menu[] = {
 	{ "PIPE MENU", (void (*)())NULL, 0 },
-	{ "select point", pipe_ed, MENU_PIPE_SELECT },
-	{ "next point", pipe_ed, MENU_PIPE_NEXT_PT },
-	{ "previous point", pipe_ed, MENU_PIPE_PREV_PT },
-	{ "move point", pipe_ed, MENU_PIPE_MOV_PT },
-	{ "delete point", pipe_ed, MENU_PIPE_DEL_PT },
-	{ "append point", pipe_ed, MENU_PIPE_ADD_PT },
-	{ "prepend point", pipe_ed, MENU_PIPE_INS_PT },
-	{ "scale point OD", pipe_ed, MENU_PIPE_PT_OD },
-	{ "scale point ID", pipe_ed, MENU_PIPE_PT_ID },
-	{ "scale point bend", pipe_ed, MENU_PIPE_PT_RADIUS },
-	{ "scale pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
-	{ "scale pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
-	{ "scale pipe bend", pipe_ed, MENU_PIPE_SCALE_RADIUS },
+	{ "Select Point", pipe_ed, MENU_PIPE_SELECT },
+	{ "Next Point", pipe_ed, MENU_PIPE_NEXT_PT },
+	{ "Previous Point", pipe_ed, MENU_PIPE_PREV_PT },
+	{ "Move Point", pipe_ed, MENU_PIPE_MOV_PT },
+	{ "Delete Point", pipe_ed, MENU_PIPE_DEL_PT },
+	{ "Append Point", pipe_ed, MENU_PIPE_ADD_PT },
+	{ "Prepend Point", pipe_ed, MENU_PIPE_INS_PT },
+	{ "Scale Point OD", pipe_ed, MENU_PIPE_PT_OD },
+	{ "Scale Point ID", pipe_ed, MENU_PIPE_PT_ID },
+	{ "Scale Point Bend", pipe_ed, MENU_PIPE_PT_RADIUS },
+	{ "Scale Pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
+	{ "Scale Pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
+	{ "Scale Pipe Bend", pipe_ed, MENU_PIPE_SCALE_RADIUS },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item vol_menu[] = {
 	{"VOL MENU", (void (*)())NULL, 0 },
-	{"file name", vol_ed, MENU_VOL_FNAME },
-	{"file size (X Y Z)", vol_ed, MENU_VOL_FSIZE },
-	{"voxel size (X Y Z)", vol_ed, MENU_VOL_CSIZE },
-	{"threshold (low)", vol_ed, MENU_VOL_THRESH_LO },
-	{"threshold (hi)", vol_ed, MENU_VOL_THRESH_HI },
+	{"File Name", vol_ed, MENU_VOL_FNAME },
+	{"File Size (X Y Z)", vol_ed, MENU_VOL_FSIZE },
+	{"Voxel Size (X Y Z)", vol_ed, MENU_VOL_CSIZE },
+	{"Threshold (low)", vol_ed, MENU_VOL_THRESH_LO },
+	{"Threshold (hi)", vol_ed, MENU_VOL_THRESH_HI },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item ebm_menu[] = {
 	{"EBM MENU", (void (*)())NULL, 0 },
-	{"file name", ebm_ed, MENU_EBM_FNAME },
-	{"file size (W N)", ebm_ed, MENU_EBM_FSIZE },
-	{"extrude depth", ebm_ed, MENU_EBM_HEIGHT },
+	{"File Name", ebm_ed, MENU_EBM_FNAME },
+	{"File Size (W N)", ebm_ed, MENU_EBM_FSIZE },
+	{"Extrude Depth", ebm_ed, MENU_EBM_HEIGHT },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item dsp_menu[] = {
 	{"DSP MENU", (void (*)())NULL, 0 },
-	{"file name", dsp_ed, MENU_DSP_FNAME },
+	{"File Name", dsp_ed, MENU_DSP_FNAME },
 	{"Scale X", dsp_ed, MENU_DSP_SCALE_X },
 	{"Scale Y", dsp_ed, MENU_DSP_SCALE_Y },
 	{"Scale ALT", dsp_ed, MENU_DSP_SCALE_ALT },
@@ -592,24 +590,24 @@ struct menu_item dsp_menu[] = {
 
 struct menu_item fgp_menu[] = {
 	{ "FGP MENU", (void (*)())NULL, 0 },
-	{ "referenced solid", fgp_ed, MENU_FGP_SOLID },
-	{ "Scale thickness", fgp_ed, MENU_FGP_THICK },
-	{ "mode", fgp_ed, MENU_FGP_MODE },
+	{ "Referenced Solid", fgp_ed, MENU_FGP_SOLID },
+	{ "Scale Thickness", fgp_ed, MENU_FGP_THICK },
+	{ "Mode", fgp_ed, MENU_FGP_MODE },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item bot_menu[] = {
 	{ "BOT MENU", (void (*)())NULL, 0 },
-	{ "pick vertex", bot_ed, ECMD_BOT_PICKV },
-	{ "pick edge", bot_ed, ECMD_BOT_PICKE },
-	{ "pick triangle", bot_ed, ECMD_BOT_PICKT },
-	{ "move vertex", bot_ed, ECMD_BOT_MOVEV },
-	{ "move edge", bot_ed, ECMD_BOT_MOVEE },
-	{ "move triangle", bot_ed, ECMD_BOT_MOVET },
-	{ "select mode", bot_ed, ECMD_BOT_MODE },
-	{ "select orientation", bot_ed, ECMD_BOT_ORIENT },
-	{ "set face thickness", bot_ed, ECMD_BOT_THICK },
-	{ "set face mode", bot_ed, ECMD_BOT_FMODE },
+	{ "Pick Vertex", bot_ed, ECMD_BOT_PICKV },
+	{ "Pick Edge", bot_ed, ECMD_BOT_PICKE },
+	{ "Pick Triangle", bot_ed, ECMD_BOT_PICKT },
+	{ "Move Vertex", bot_ed, ECMD_BOT_MOVEV },
+	{ "Move Edge", bot_ed, ECMD_BOT_MOVEE },
+	{ "Move Triangle", bot_ed, ECMD_BOT_MOVET },
+	{ "Select Mode", bot_ed, ECMD_BOT_MODE },
+	{ "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
+	{ "Set Face Thickness", bot_ed, ECMD_BOT_THICK },
+	{ "Set Face Mode", bot_ed, ECMD_BOT_FMODE },
 	{ "", (void (*)())NULL, 0 }
 };
 
