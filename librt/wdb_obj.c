@@ -110,6 +110,7 @@ static struct db_i *wdb_prep_dbip();
 static int wdb_cmd();
 static int wdb_match_tcl();
 int wdb_get_tcl();
+int wdb_attr_tcl();
 static int wdb_put_tcl();
 static int wdb_adjust_tcl();
 static int wdb_form_tcl();
@@ -172,6 +173,7 @@ void wdb_identitize();
 
 static struct bu_cmdtab wdb_cmds[] = {
 	{"adjust",	wdb_adjust_tcl},
+	{"attr",	wdb_attr_tcl},
 	{"c",		wdb_comb_std_tcl},
 	{"cat",		wdb_cat_tcl},
 	{"close",	wdb_close_tcl},
@@ -5692,5 +5694,98 @@ wdb_unhide_tcl( clientData, interp, argc, argv)
 		dp->d_flags &= (~DIR_HIDDEN);
 	}
 
+	return TCL_OK;
+}
+
+int
+wdb_attr_tcl(clientData, interp, argc, argv)
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
+{
+	int			i;
+	struct directory	*dp;
+	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_pair	*avpp;
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	/* this is only valid for v5 databases */
+	if( wdbp->dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "Attributes are only available in database version 5 and later\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* skip past procname */
+	--argc;
+	++argv;
+
+	if (argc < 2 ) {
+		Tcl_AppendResult(interp,
+				 "wrong # args: should be \"", argv[0],
+				 " objName [attribute] [value] [[attribute] [value]...]\"", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* Verify that this wdb supports lookup operations
+	   (non-null dbip) */
+	if (wdbp->dbip == 0) {
+		Tcl_AppendResult(interp,
+				 "db does not support lookup operations",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if( (dp=db_lookup( wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL )
+		return TCL_ERROR;
+
+	
+	if( db5_get_attributes( wdbp->dbip, &avs, dp ) ) {
+		Tcl_AppendResult(interp,
+				 "Cannot get attributes for object ", dp->d_namep, "\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( argc == 2 ) {
+		/* just list all the attributes */
+		avpp = avs.avp;
+		for( i=0 ; i < avs.count ; i++, avpp++ ) {
+			Tcl_AppendResult(interp, avpp->name, " {", avpp->value, "} ", (char *)NULL );
+		}
+	} else if( argc == 3 ) {
+		/* just getting a single attribute */
+		CONST char *val;
+
+		val = bu_avs_get( &avs, argv[2] );
+		if( !val ) {
+			Tcl_AppendResult(interp, "Object ", dp->d_namep, " does not have a ", argv[2], " attribute\n", (char *)NULL );
+			bu_avs_free( &avs );
+			return TCL_ERROR;
+		}
+		Tcl_AppendResult(interp, val, (char *)NULL );
+	} else {
+		/* setting attribute/value pairs */
+		if( argc % 2 ) {
+			Tcl_AppendResult(interp, "Error: attribute names and values must be in pairs!!!\n", (char *)NULL );
+			bu_avs_free( &avs );
+			return TCL_ERROR;
+		}
+
+		i = 2;
+		while( i < argc ) {
+			(void)bu_avs_add( &avs, argv[i], argv[i+1] );
+			i += 2;
+		}
+		if( db5_update_attributes( dp, &avs, wdbp->dbip ) ) {
+			Tcl_AppendResult(interp, "Error: failed to update attributes\n", (char *)NULL );
+			bu_avs_free( &avs );
+			return TCL_ERROR;
+		}
+
+		/* avs is freed by db5_update_attributes() */
+		return TCL_OK;
+	}
+
+	bu_avs_free( &avs );
 	return TCL_OK;
 }
