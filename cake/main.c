@@ -6,6 +6,9 @@ static	char
 rcs_id[] = "$Header$";
 
 #include	"cake.h"
+#if defined(__sgi) && defined(__mips)
+# include <unistd.h>
+#endif
 #include	<pwd.h>
 #include	<signal.h>
 #include	<sys/stat.h>
@@ -319,7 +322,7 @@ char	**argv;
 	extern	Node	*chase();
 	extern	char	*getenv();
 	extern	char	*dir_setup();
-#if !defined(__convex__)
+#if !defined(__convex__) && !__STDC__
 	extern	Pwent	*getpwuid();
 #endif
 	extern	int	geteuid();

@@ -356,6 +356,7 @@ deref_entry(env, entry)
 Env		env;
 reg	Entry	*entry;
 {
+	extern	List	*break_pat();
 	reg	List	*ptr, *ptr1;
 	reg	List	*newlist;
 	reg	List	*patlist;
