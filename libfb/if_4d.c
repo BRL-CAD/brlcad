@@ -640,7 +640,7 @@ int		npix;
 		 *  Memory addresses increment by 1.
 		 *  Screen addresses increment by mi_?zoom.
 		 */
-		yscr = SGI(ifp)->mi_yoff + y + clip.yscroff;
+		yscr = SGI(ifp)->mi_yoff + clip.yscroff + y * SGI(ifp)->mi_yzoom;
 		xscrmin = SGI(ifp)->mi_xoff+clip.xscroff;
 		xscrmax = SGI(ifp)->mi_xoff+ifp->if_width-1-clip.xscrpad;
 		for( n=nlines; n>0; n--, y++ )  {
@@ -1943,7 +1943,7 @@ int		one_y;
 		if( one_y < clip.ymin || one_y > clip.ymax )
 			return;
 		/* This scanline is in bounds */
-		clip.yscroff += one_y - clip.ymin;
+		clip.yscroff += (one_y - clip.ymin) * SGI(ifp)->mi_yzoom;
 		clip.ymin = clip.ymax = one_y;
 	}
 
