@@ -10,7 +10,7 @@
 #	The U. S. Army Ballistic Research Laboratory		#
 #	Aberdeen Proving Ground, Maryland  21005		#
 #								#
-#  $Header$		#
+#  $Header$	#
 #								#
 #################################################################
 
@@ -31,8 +31,8 @@ all:		${PRODUCTS}
 # Format sources for printing on stdout.
 # The invoker is responsible for diverting to their printer of choice.
 print:		${MAKEFILE} ${HEADERS} ${CFILES} ${TFILES}
-	pr ${MAKEFILE} ${HEADERS} ${CFILES} ${TFILES} *.${MANSECTION}
-	nroff -Tlp -man *.${MANSECTION}
+	@pr ${MAKEFILE} ${HEADERS} ${CFILES} ${TFILES} *.${MANSECTION}
+	@nroff -Tlp -man *.${MANSECTION}
 
 # Don't bother doing the stub pages
 typeset:
@@ -153,16 +153,18 @@ inst-dist:
 		*.doc \
 		${DISTRIBUTION}/${SRCDIR}/.
 
-#  running "make clean clobber" will remove all binary files.
+#  running "make clobber" or "make clean noprod" will remove all binary files.
 #  "clean" is intended to remove .o files and by-products.
-#  "clobber" is intended to remove the final executables.
+#  "noprod" is intended to remove the final executables.
 #  Either can be used without the other, depending on the effect desired.
+clobber:	clean noprod
+
 clean:
 	-rm -f core *~ *.o \
 		${SRCDIR}.out ${SRCDIR}.err ${SRCDIR}.xref \
 		${SRCDIR}.flow ${SRCDIR}.lint
 
-clobber:
+noprod:
 	-rm -f ${PRODUCTS}
 
 

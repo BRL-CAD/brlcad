@@ -112,15 +112,24 @@ inst-dist:
 		(cd $$dir; make -k inst-dist) \
 	done
 
+MESSAGE		= "-mRelease 2.0"
+REV_NO		= -r6
 TOP_FILES	= README Makefile Makefile.defs Makefile.rules
 checkin:
 	rcs -l ${TOP_FILES}
-	ci -u -f -r5 -sRel "-mRelease 1.24" ${TOP_FILES}
+	ci -u -f ${REV_NO} -sRel ${MESSAGE} ${TOP_FILES}
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; rm -f Makefile.bak; \
 		rcs -l *.[cshf1-9] Makefile*; \
-		ci -u -f -r5 -sRel "-mRelease 1.24" *.[cshf1-9] Makefile* ) \
+		ci -u -f ${REV_NO} -sRel ${MESSAGE} *.[cshf1-9] Makefile* ) \
+	done
+
+# Remove all binary files (clean, noprod)
+clobber:
+	-for dir in ${DIRS}; \
+	do	echo ---------- $$dir; \
+		(cd $$dir; make -k clobber) \
 	done
 
 # Remove all .o files, leave products
@@ -131,10 +140,10 @@ clean:
 	done
 
 # Remove all products, leave all .o files
-clobber:
+noprod:
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
-		(cd $$dir; make -k clobber) \
+		(cd $$dir; make -k noprod) \
 	done
 
 lint:

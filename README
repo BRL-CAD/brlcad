@@ -8,8 +8,8 @@ and
 RAY-TRACING BENCHMARK
 .sp
 DISTRIBUTION PACKAGE
-Release 1.24
-(24-June-87)
+Release 1.27
+(11-July-87)
 .fi
 .sp
 .sp "VERSION"
@@ -87,6 +87,7 @@ What you have here is a collection of software which includes:
 	libsysv	Some System-V compatibility routines
 	mged	A solid-model editor
 	librt	A solid-model ray-tracing library
+	libspl	A B-spline library
 	rt	A ray-tracing lighting model, for rendering
 	db	Several solid-model databases, in ASCII form
 	conv	ASCII/binary database converters
@@ -204,7 +205,7 @@ of the distribution, the main alternatives for this file
 will all be provided;  right now, a variety of things need to
 be tailored.  Everything is clearly marked;  #SYSV# appears near
 symbols that need to be changed to run on a System V UNIX.
-Certain vendor-specific settings are similarly marked, eg,
+Certain vendor-specific settings are similarly marked, e.g.,
 #SGI#, #GOULD#, #ALLIANT#, #CRAY#, etc.  As distributed, this file
 is configured for a 4.n BSD Berkeley UNIX system on a VAX.
 .sp
@@ -319,6 +320,7 @@ elxsi-gnu	Elxsi 6420, BSD 4.2 16 MB
 elxsi-gnuy	Elxsi 6420, Sys Vr2, 16MB
 elxsi-m1	Elxsi 6410, BSD 4.2 16 MB
 hep	Denelcor HEP, 4 PEMs
+indigo	SGI Iris 3030, FPA, GL2-W3.5
 multiflow	Multiflow Trace 7/200 (PRELIMINARY)
 nrl-xmp	Cray X-MP/12, COS V115, 9.5ns clock
 nrtc-785	VAX 785, FPA, VMS+Eunice_4.1
@@ -327,6 +329,7 @@ nrtc-gremlin	ISI 68020, no FP hardware, 4.2 BSD
 snm2	Cray 1-M, SN2, UNICOS 2.0
 utah-gr	VAX 785, FPA, 4.3 BSD
 utah-ug	VAX 8600, FPA, 4.3 BSD
+violet	VaxStationII GPX, Ultrix 1.2
 vortac	Sun-3/160, 16.67 Mhz clock, 12 Mhz 68881, Sun 3.2
 .TE
 .fi
@@ -336,7 +339,7 @@ center box;
 c s c s
 c c c l
 n n n l.
-FILE:  "bench/moss.log"	Release 1.24
+FILE:  "bench/moss.log"	Release 1.25
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
@@ -354,8 +357,11 @@ Pix/sec	Ray/sec	*780	Machine & OS
 _
   12.3			nrtc-gremlin
   57.2	   81.6	  0.73	brl-vat
+  75.4	  107.7	  0.96	violet
   78.5	  112.1	  1.00	brl-vgr
+  81.2	  115.9	  1.03	indigo
   81.5	  116.4	  1.04	brl-vista
+  83.3	  119.0	  1.06	violet w/fast_sqrt
   86.7			nrtc-785
   89.2	  127.3	  1.14	brl-virus
  103.8	  148.2	  1.32	vortac
@@ -397,7 +403,7 @@ center box;
 c s c s
 c c c l
 n n n l.
-FILE:  "bench/world.log"	Release 1.24
+FILE:  "bench/world.log"	Release 1.25
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
@@ -413,10 +419,13 @@ FILE:  "bench/world.log"	Release 1.20
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
+  32.3	   57.3	 0.90	violet
+  35.5	   63.0	 0.99	violet, w/fast_sqrt
   35.9	   63.6	 1.00	brl-vgr
   38.5	   68.4	 1.08	ardec-3
   39.4	   69.9	 1.10	brl-virus
   45.6	   81.0	 1.27	vortac
+  48.1	   85.3	 1.34	indigo
   48.4	   86.0	 1.35	brl-vista
   59.6	  105.8	 1.66	utah-gr
  128.5	  228.0	 3.58	brl-vector, 1 CE, no vectors
@@ -448,7 +457,7 @@ center box;
 c s c s
 c c c l
 n n n l.
-FILE:  "bench/star.log"	Release 1.24
+FILE:  "bench/star.log"	Release 1.25
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
@@ -464,6 +473,8 @@ FILE:  "bench/star.log"	Release 1.20
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
+  37.4	   44.7	 0.81	violet
+  41.9	   50.0	 0.91	violet, w/fast_sqrt
   46.0	   55.0	 1.00	brl-vgr
   47.7	   57.0	 1.04	brl-virus
   47.8	   57.2	 1.04	ardec-3
@@ -500,7 +511,7 @@ center box;
 c s c s
 c c c l
 n n n l.
-FILE:  "bench/bldg391.log"	Release 1.24
+FILE:  "bench/bldg391.log"	Release 1.25
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
@@ -516,10 +527,13 @@ FILE:  "bench/bldg391.log"	Release 1.20
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
+  29.7	   44.1	 0.87	violet
+  31.1	   46.3	 0.91	violet, w/fast_sqrt
   34.1	   50.7	 1.00	brl-vgr
   35.2	   52.4	 1.03	brl-virus
   40.9	   60.7	 1.20	vortac
   58.2	   86.5	 1.71	utah-gr
+  68.5	  101.8	 2.01	indigo
   68.8	  102.3	 2.02	brl-vista
  105.7	  157.1	 3.10	brl-vector, 1 CE, no vectors (1.00X)
  127.4	  189.3	 3.73	elxsi-m1
@@ -611,6 +625,13 @@ to /etc/passwd:
 .sp
 gclear::4:5::/tmp:/usr/bin/gclear
 .sp
+.IP "CRAY XMP WARNING"
+.sp
+If you are running the benchmark on a Cray XMP, as I'm sure all of you
+are, the world.pix and bldg391.pix images will have a single byte in the
+blue channel off by 1, out in the cloud background.  This is not to be
+considered an error.
+.sp
 .IP "FULL INSTALLATION"
 .sp
 The steps involved in installing the full BRL CAD package
@@ -628,8 +649,6 @@ on a UNIX system are these:
 	ed Makefile.defs
 	ed h/machine.h	                  # defaults OK for 32-bit systems
 	ed Makefile		# to remove IF_REMOTE
-	ed rfbd/Makefile.loc		# configure rfbd
-	ed util/Makefile.loc		# if SYSV
 .sp
 3)  Compile everything.
 	make all
@@ -868,9 +887,20 @@ and remember always to run MGED under a gfxtool window.
 In all cases,
 be certain to properly define the MGED_VERS variable.
 .sp
-If this is a System V machine, you will also have to edit
-the top level Makefile to remove rfbd, libpkg, and fbed
-from the PRODUCTS list.
+If this is a machine without TCP network capability, you will also have
+to edit the top level Makefile to remove rfbd and libpkg from the
+PRODUCTS list.
+.sp
+.IP "KNOWN PROBLEMS"
+.sp
+The Whetstone benchmark is written in FORTRAN, with a subroutine
+in C for determining timings.  The linkage between the two languages
+is very system dependent, and you are likely to have to fiddle with
+the C code to obtain correct operation.  It was felt that the benefit
+of having this well known benchmark on the tape was worth braving
+the non-portability for.
+.sp
+.IP "NON-PROBLEMS"
 .sp
 There are several portions of the "make all" sequence that generate
 messages that might appear to be errors, but are actually intentional.
@@ -883,7 +913,7 @@ Another non-error message is:
 ---------- h
 make  -  -f ../Makefile.defs -f Makefile.loc -f ../Makefile.rules depend
 make -k -  -f ../Makefile.defs -f Makefile.loc -f ../Makefile.rules
-Too many command lines for `clobber'
+Too many command lines for `noprod'
 echo "No clobbering the header files"
 No clobbering the header files
 .fi
@@ -895,6 +925,13 @@ ranlib: warning: libfb.a(oldbbox.o): no symbol table
 ranlib: warning: libfb.a(oldfont.o): no symbol table
 ranlib: warning: libfb.a(stopwatch.o): no symbol table
 .fi
+.sp
+When running a "make install", the db and pix directories will report
+``Make:  Don't know how to make install.  Stop.'', which is OK.
+Also, error messages of the form
+``cp: *.1.stub: No such file or directory'' and
+``cp: *.doc: No such file or directory'' and the like are
+also OK.  The Makefiles are complicated enough as it is.
 .sp
 .IP "IMAGE DISPLAY"
 .sp
@@ -908,7 +945,8 @@ quadrant display).  See doc/pix.5 for more details.
 .sp
 Programs for dealing with images are in the "util" directory. To display
 a pix(5) file on a framebuffer, set environment variable FB_FILE
-(see brlcad(1) for details), and run:
+(see brlcad(1) for details), and run pix-fb.  Note that by leaving
+FB_FILE unset, your default display will be used.
 .sp
 .nf
 	cd bench
@@ -918,26 +956,26 @@ a pix(5) file on a framebuffer, set environment variable FB_FILE
 If the images computed on your machine do not match the reference images,
 the program "util/pixdiff" will compute a pix file that will highlight
 the differences for you, and report a summary of bytes equal, off-by-1,
-and off-by-many, eg,
+and off-by-many, e.g.,
 .sp
 .nf
-	pixdiff moss.pix ../pix/moss.pix \| pix-fb
+	pixdiff moss.pix ../pix/moss.pix \(or pix-fb
 .fi
 .sp
 For a display of the relative magnitude of the differences at
-each pixel, use "util/bwdiff" instead, eg,
+each pixel, use "util/bwdiff" instead, e.g.,
 .sp
 .nf
-	bwdiff moss.pix ../pix/moss.pix \| pix-fb
+	bwdiff moss.pix ../pix/moss.pix \(or pix-fb
 or
-	bwdiff moss.pix ../pix/moss.pix \| \\
-	bwmod -s 128 -m 4 -a 128 \| pix-fb
+	bwdiff moss.pix ../pix/moss.pix \(or \\
+	bwmod -s 128 -m 4 -a 128 \(or pix-fb
 .fi
 .sp
 and for statistics on the differences, use
 .sp
 .nf
-	bwdiff moss.pix ../pix/moss.pix \| pixstat
+	bwdiff moss.pix ../pix/moss.pix \(or pixstat
 .fi
 .sp
 .IP "ENHANCEMENTS"
@@ -973,11 +1011,14 @@ The second module needed is an MGED display manager, like mged/dm-XX.c.
 Here, the task is somewhat harder, as two major modes of behavior are
 supported:  displaylist and refresh.  You should examine display
 managers for devices similar to yours, and proceed from there.
+We would be most interested in obtaining any additional display modules
+that you might develop.
 .sp
 .IP "UPGRADING FROM RELEASE 1.20"
 .sp
 This release contains only minor external changes from Release 1.20,
-but for complete safety, you should save the old binary to "conv/g2asc",
+but for complete safety, you should save the old binary to "conv/g2asc"
+someplace safe,
 so that if you find the binary format of the database incompatable
 you can convert your old databases from binary to ASCII form. Having to
 do this is system dependent (only Sun, SGI, and Alliant users are
@@ -988,18 +1029,18 @@ saved the old converter.
 .sp
 You are invited to participate in the BRL CAD software electronic
 mailing list, called
-.br
+.sp .5
 .ti +1i
 <CAD @ BRL.ARPA>.
-.br
+.sp .5
 Bug reports and discussions of new features
 are the main topics;  volume of messages has been light (so far).
 Direct your bug reports to this address.  Request a subscription by
 sending to
-.br
+.sp .5
 .ti +1i
 <CAD-REQUEST @ BRL.ARPA>.
-.sp
+.sp .5
 If you find bugs, please report your experiences.  While BRL makes no
 offer of support, we are most interested in hearing about your
 experiences.  Electronic mail is vastly preferred over telephone contact.

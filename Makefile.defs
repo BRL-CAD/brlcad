@@ -57,7 +57,8 @@ SYSTEM		= -DBSD
 #SGI#SYSTEM	= -DSYSV
 #ALLIANT#SYSTEM	= -DBSD -ce
 #GOULD#SYSTEM	= -DBSD -m 8
-#CRAY#SYSTEM	= -DSYSV -DPARALLEL
+#XMP#SYSTEM	= -DSYSV -DPARALLEL
+#CRAY2#SYSTEM	= -DSYSV -DPARALLEL -Dcray
 # Sun3, select correct floating point flag, or -fswitch if unsure (slower)
 #SUN3#SYSTEM	= -DBSD -f68881
 #SUN3#SYSTEM	= -DBSD -ffpa
@@ -81,7 +82,8 @@ SYSTEM		= -DBSD
 
 #SGI#SYSVERS	= SGI34
 #SGI#SYSVERS	= SGI35
-#CRAY#SYSVERS	= UNICOS20
+#XMP#SYSVERS	= UNICOS20
+#CRAY2#SYSVERS	= UNICOS20
 #SUN#SYSVERS	= SUN3
 
 #################################################################
@@ -99,7 +101,8 @@ SYSTEM		= -DBSD
 
 #SGI34#LIBPKG_CONFIG	= -I/usr/include/EXOS -DSGI_EXCELAN
 #SGI35#LIBPKG_CONFIG	= -I/usr/include/bsd -DBSD
-#CRAY#LIBPKG_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
+#XMP#LIBPKG_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
+#CRAY2#LIBPKG_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 
 #################################################################
 #								#
@@ -109,7 +112,8 @@ SYSTEM		= -DBSD
 
 #SGI34#REMRT_CONFIG	= -I/usr/include/EXOS -DSGI_EXCELAN
 #SGI35#REMRT_CONFIG	= -I/usr/include/bsd -DBSD
-#CRAY#REMRT_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
+#XMP#REMRT_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
+#CRAY2#REMRT_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 
 #################################################################
 #								#
@@ -173,10 +177,10 @@ LIBFB_CONFIG	= -DIF_REMOTE \
 #	timerunix	Generic UNIX, System III, V, etc.	#
 #	timer52brl	For BRL's System 5-under-4.n BSD	#
 #	timerhep	Denelcor HEP				#
-#	timercray	Cray-X/MP or Cray-2, UNICOS		#
+#	timercray	Cray-X/MP UNICOS			#
 LIBRT_TIMER	= timer42
 #SYSV#LIBRT_TIMER	= timerunix
-#CRAY#LIBRT_TIMER	= timercray
+#XMP#LIBRT_TIMER	= timercray
 #								#
 #################################################################
 
@@ -189,7 +193,8 @@ LIBRT_TIMER	= timer42
 #	On parallel machines, if h/machine.h does not define	#
 #	the PARALLEL flag, it should be done here.		#
 #								#
-#CRAY#RT_CONFIG	= -L/lib/multi -lu
+#XMP#RT_CONFIG	= -L/lib/multi -lu
+#CRAY2#RT_CONFIG	= -lmt
 #								#
 #################################################################
 
@@ -285,7 +290,7 @@ LIBDIR		= /usr/brl/lib
 
 # Suffix for archives.  Won't change for most UNIX machines, but...
 ARCH_SUF	= a
-#CRAY#ARCH_SUF	= o
+#XMP#ARCH_SUF	= o
 
 # For utilities that wish to USE our libraries, here are the popular ones:
 LIBFB		= ../libfb/libfb.${ARCH_SUF}
@@ -295,11 +300,11 @@ LIBRLE		= ../librle/librle.${ARCH_SUF}
 LIBPKG		= ../libpkg/libpkg.${ARCH_SUF}
 LIBSPL		= ../libspl/libspl.${ARCH_SUF}
 LIBTERMLIB	= -ltermlib
-#CRAY#LIBTERMLIB	= -lcurses
+#XMP#LIBTERMLIB	= -lcurses
 LIBTERMIO	= ../libtermio/libtermio.${ARCH_SUF}
 LIBCURSOR	= ../libcursor/libcursor.${ARCH_SUF}
 LIBMALLOC	= ../libmalloc/libmalloc.${ARCH_SUF}
-#SUN#LIBMALLOC	=	# Forced to use SUN's malloc
+#SUN#LIBMALLOC	=	# Forced to use SUN and Alliant malloc
 LIBSYSV		= ../libsysv/libsysv.${ARCH_SUF}
 #SYSV#LIBSYSV	=
 
@@ -335,7 +340,7 @@ LFLAGS		= -hbvxac ${SYSTEM} ${CONFIGDEFS}
 
 # Name of the object module archiver, for use with the loader.
 AR		= ar
-#CRAY#AR	= ../cray-ar.sh
+#XMP#AR	= ../cray-ar.sh
 
 # Regular libraries.  Everybody gets the math library;  most need it.
 LIBES		= -lm
