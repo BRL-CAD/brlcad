@@ -157,7 +157,27 @@ struct model	*m;
 	register struct edgeuse		*eu;
 	struct edge			*e;
 	register struct vertexuse	*vu;
-	struct vertex			*v;
+
+#define MARK_VU(_vu)	{ \
+	struct vertex	*v; \
+	NMG_CK_VERTEXUSE(_vu); \
+	NMG_MARK_INDEX(_vu); \
+	if(_vu->a.magic_p) switch(*_vu->a.magic_p)  { \
+	case NMG_VERTEXUSE_A_PLANE_MAGIC: \
+		NMG_MARK_INDEX(_vu->a.plane_p); \
+		break; \
+	case NMG_VERTEXUSE_A_CNURB_MAGIC: \
+		NMG_MARK_INDEX(_vu->a.cnurb_p); \
+		break; \
+	} \
+	v = _vu->v_p; \
+	NMG_CK_VERTEX(v); \
+	NMG_MARK_INDEX(v); \
+	if(v->vg_p)  { \
+		NMG_CK_VERTEX_G(v->vg_p); \
+		NMG_MARK_INDEX(v->vg_p); \
+	} \
+    }
 
 	NMG_CK_MODEL(m);
 	NMG_MARK_INDEX(m);
@@ -184,9 +204,13 @@ struct model	*m;
 				f = fu->f_p;
 				NMG_CK_FACE(f);
 				NMG_MARK_INDEX(f);
-				if( f->g.plane_p )  {
-					NMG_CK_FACE_G_PLANE(f->g.plane_p);
+				if(f->g.magic_p) switch( *f->g.magic_p )  {
+				case NMG_FACE_G_PLANE_MAGIC:
 					NMG_MARK_INDEX(f->g.plane_p);
+					break;
+				case NMG_FACE_G_SNURB_MAGIC:
+					NMG_MARK_INDEX(f->g.snurb_p);
+					break;
 				}
 				/* Loops in face */
 				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
@@ -202,19 +226,7 @@ struct model	*m;
 					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 						/* Loop of Lone vertex */
 						vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-						NMG_CK_VERTEXUSE(vu);
-						NMG_MARK_INDEX(vu);
-						if(vu->a.plane_p)  {
-							NMG_CK_VERTEXUSE_A_PLANE(vu->a.plane_p);
-							NMG_MARK_INDEX(vu->a.plane_p);
-						}
-						v = vu->v_p;
-						NMG_CK_VERTEX(v);
-						NMG_MARK_INDEX(v);
-						if(v->vg_p)  {
-							NMG_CK_VERTEX_G(v->vg_p);
-							NMG_MARK_INDEX(v->vg_p);
-						}
+						MARK_VU(vu);
 						continue;
 					}
 					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -225,15 +237,7 @@ struct model	*m;
 						NMG_MARK_INDEX(e);
 						if(eu->g.magic_p) nmg_mark_edge_g( eu->g.magic_p );
 						vu = eu->vu_p;
-						NMG_CK_VERTEXUSE(vu);
-						NMG_MARK_INDEX(vu);
-						v = vu->v_p;
-						NMG_CK_VERTEX(v);
-						NMG_MARK_INDEX(v);
-						if(v->vg_p)  {
-							NMG_CK_VERTEX_G(v->vg_p);
-							NMG_MARK_INDEX(v->vg_p);
-						}
+						MARK_VU(vu);
 					}
 				}
 			}
@@ -251,19 +255,7 @@ struct model	*m;
 				if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 					/* Wire loop of Lone vertex */
 					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-					NMG_CK_VERTEXUSE(vu);
-					NMG_MARK_INDEX(vu);
-					if(vu->a.plane_p)  {
-						NMG_CK_VERTEXUSE_A_PLANE(vu->a.plane_p);
-						NMG_MARK_INDEX(vu->a.plane_p);
-					}
-					v = vu->v_p;
-					NMG_CK_VERTEX(v);
-					NMG_MARK_INDEX(v);
-					if(v->vg_p)  {
-						NMG_CK_VERTEX_G(v->vg_p);
-						NMG_MARK_INDEX(v->vg_p);
-					}
+					MARK_VU(vu);
 					continue;
 				}
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -274,15 +266,7 @@ struct model	*m;
 					NMG_MARK_INDEX(e);
 					if(eu->g.magic_p) nmg_mark_edge_g( eu->g.magic_p );
 					vu = eu->vu_p;
-					NMG_CK_VERTEXUSE(vu);
-					NMG_MARK_INDEX(vu);
-					v = vu->v_p;
-					NMG_CK_VERTEX(v);
-					NMG_MARK_INDEX(v);
-					if(v->vg_p)  {
-						NMG_CK_VERTEX_G(v->vg_p);
-						NMG_MARK_INDEX(v->vg_p);
-					}
+					MARK_VU(vu);
 				}
 			}
 			/* Wire edges in shell */
@@ -294,30 +278,15 @@ struct model	*m;
 				NMG_MARK_INDEX(e);
 				if(eu->g.magic_p) nmg_mark_edge_g( eu->g.magic_p );
 				vu = eu->vu_p;
-				NMG_CK_VERTEXUSE(vu);
-				NMG_MARK_INDEX(vu);
-				v = vu->v_p;
-				NMG_CK_VERTEX(v);
-				NMG_MARK_INDEX(v);
-				if(v->vg_p)  {
-					NMG_CK_VERTEX_G(v->vg_p);
-					NMG_MARK_INDEX(v->vg_p);
-				}
+				MARK_VU(vu);
 			}
 			/* Lone vertex in shell */
 			if( vu = s->vu_p )  {
-				NMG_CK_VERTEXUSE(vu);
-				NMG_MARK_INDEX(vu);
-				v = vu->v_p;
-				NMG_CK_VERTEX(v);
-				NMG_MARK_INDEX(v);
-				if(v->vg_p)  {
-					NMG_CK_VERTEX_G(v->vg_p);
-					NMG_MARK_INDEX(v->vg_p);
-				}
+				MARK_VU(vu);
 			}
 		}
 	}
+#undef MARK_VU
 }
 
 /*
@@ -346,6 +315,22 @@ register long	newindex;
 	register struct vertexuse	*vu;
 	struct vertex			*v;
 
+#define ASSIGN_VU(_vu)	{ \
+		NMG_CK_VERTEXUSE(_vu); \
+		NMG_ASSIGN_NEW_INDEX(_vu); \
+		if(_vu->a.magic_p)  switch(*_vu->a.magic_p)  { \
+		case NMG_VERTEXUSE_A_PLANE_MAGIC: \
+			NMG_ASSIGN_NEW_INDEX(_vu->a.plane_p); \
+			break; \
+		case NMG_VERTEXUSE_A_CNURB_MAGIC: \
+			NMG_ASSIGN_NEW_INDEX(_vu->a.cnurb_p); \
+			break; \
+		} \
+		v = _vu->v_p; \
+		NMG_CK_VERTEX(v); \
+		NMG_ASSIGN_NEW_INDEX(v); \
+		if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p); \
+	}
 
 	NMG_CK_MODEL(m);
 	if( m->index != 0 )  rt_log("nmg_m_reindex() m->index=%d\n", m->index);
@@ -375,7 +360,14 @@ register long	newindex;
 				f = fu->f_p;
 				NMG_CK_FACE(f);
 				NMG_ASSIGN_NEW_INDEX(f);
-				if( f->g.plane_p )  NMG_ASSIGN_NEW_INDEX(f->g.plane_p);
+				if( f->g.plane_p ) switch( *f->g.magic_p )  {
+				case NMG_FACE_G_PLANE_MAGIC:
+					NMG_ASSIGN_NEW_INDEX(f->g.plane_p);
+					break;
+				case NMG_FACE_G_SNURB_MAGIC:
+					NMG_ASSIGN_NEW_INDEX(f->g.snurb_p);
+					break;
+				}
 				/* Loops in face */
 				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 					NMG_CK_LOOPUSE(lu);
@@ -387,13 +379,7 @@ register long	newindex;
 					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 						/* Loop of Lone vertex */
 						vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-						NMG_CK_VERTEXUSE(vu);
-						NMG_ASSIGN_NEW_INDEX(vu);
-						if(vu->a.plane_p)  NMG_ASSIGN_NEW_INDEX(vu->a.plane_p);
-						v = vu->v_p;
-						NMG_CK_VERTEX(v);
-						NMG_ASSIGN_NEW_INDEX(v);
-						if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p);
+						ASSIGN_VU(vu);
 						continue;
 					}
 					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -411,12 +397,7 @@ register long	newindex;
 							break;
 						}
 						vu = eu->vu_p;
-						NMG_CK_VERTEXUSE(vu);
-						NMG_ASSIGN_NEW_INDEX(vu);
-						v = vu->v_p;
-						NMG_CK_VERTEX(v);
-						NMG_ASSIGN_NEW_INDEX(v);
-						if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p);
+						ASSIGN_VU(vu);
 					}
 				}
 			}
@@ -431,13 +412,7 @@ register long	newindex;
 				if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 					/* Wire loop of Lone vertex */
 					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-					NMG_CK_VERTEXUSE(vu);
-					NMG_ASSIGN_NEW_INDEX(vu);
-					if(vu->a.plane_p)  NMG_ASSIGN_NEW_INDEX(vu->a.plane_p);
-					v = vu->v_p;
-					NMG_CK_VERTEX(v);
-					NMG_ASSIGN_NEW_INDEX(v);
-					if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p);
+					ASSIGN_VU(vu);
 					continue;
 				}
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -455,12 +430,7 @@ register long	newindex;
 						break;
 					}
 					vu = eu->vu_p;
-					NMG_CK_VERTEXUSE(vu);
-					NMG_ASSIGN_NEW_INDEX(vu);
-					v = vu->v_p;
-					NMG_CK_VERTEX(v);
-					NMG_ASSIGN_NEW_INDEX(v);
-					if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p);
+					ASSIGN_VU(vu);
 				}
 			}
 			/* Wire edges in shell */
@@ -479,24 +449,15 @@ register long	newindex;
 					break;
 				}
 				vu = eu->vu_p;
-				NMG_CK_VERTEXUSE(vu);
-				NMG_ASSIGN_NEW_INDEX(vu);
-				v = vu->v_p;
-				NMG_CK_VERTEX(v);
-				NMG_ASSIGN_NEW_INDEX(v);
-				if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p);
+				ASSIGN_VU(vu);
 			}
 			/* Lone vertex in shell */
 			if( vu = s->vu_p )  {
-				NMG_CK_VERTEXUSE(vu);
-				NMG_ASSIGN_NEW_INDEX(vu);
-				v = vu->v_p;
-				NMG_CK_VERTEX(v);
-				NMG_ASSIGN_NEW_INDEX(v);
-				if(v->vg_p) NMG_ASSIGN_NEW_INDEX(v->vg_p);
+				ASSIGN_VU(vu);
 			}
 		}
 	}
+#undef ASSIGN_VU
 
 #if 1
  rt_log("nmg_m_reindex() oldmax=%d, new%d=>%d\n",
@@ -605,6 +566,26 @@ CONST struct model			*m;
 		ctr->_type++; \
 	}
 
+#define UNIQ_VU(_vu)	{ \
+		NMG_CK_VERTEXUSE(_vu); \
+		NMG_UNIQ_INDEX(_vu, vertexuse); \
+		if(_vu->a.magic_p) switch(*_vu->a.magic_p) { \
+		case NMG_VERTEXUSE_A_PLANE_MAGIC: \
+			NMG_UNIQ_INDEX(_vu->a.plane_p, vertexuse_a_plane); \
+			break; \
+		case NMG_VERTEXUSE_A_CNURB_MAGIC: \
+			NMG_UNIQ_INDEX(_vu->a.cnurb_p, vertexuse_a_cnurb); \
+			break; \
+		} \
+		v = _vu->v_p; \
+		NMG_CK_VERTEX(v); \
+		NMG_UNIQ_INDEX(v, vertex); \
+		if(v->vg_p)  { \
+			NMG_CK_VERTEX_G(v->vg_p); \
+			NMG_UNIQ_INDEX(v->vg_p, vertex_g); \
+		} \
+	}
+
 	NMG_CK_MODEL(m);
 	bzero( ctr, sizeof(*ctr) );
 
@@ -660,19 +641,7 @@ CONST struct model			*m;
 						/* Loop of Lone vertex */
 						ctr->face_lone_verts++;
 						vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
-						NMG_CK_VERTEXUSE(vu);
-						NMG_UNIQ_INDEX(vu, vertexuse);
-						if(vu->a.plane_p)  {
-							NMG_CK_VERTEXUSE_A_PLANE(vu->a.plane_p);
-							NMG_UNIQ_INDEX(vu->a.plane_p, vertexuse_a_plane);
-						}
-						v = vu->v_p;
-						NMG_CK_VERTEX(v);
-						NMG_UNIQ_INDEX(v, vertex);
-						if(v->vg_p)  {
-							NMG_CK_VERTEX_G(v->vg_p);
-							NMG_UNIQ_INDEX(v->vg_p, vertex_g);
-						}
+						UNIQ_VU(vu);
 						continue;
 					}
 					ctr->face_loops++;
@@ -692,15 +661,7 @@ CONST struct model			*m;
 							break;
 						}
 						vu = eu->vu_p;
-						NMG_CK_VERTEXUSE(vu);
-						NMG_UNIQ_INDEX(vu, vertexuse);
-						v = vu->v_p;
-						NMG_CK_VERTEX(v);
-						NMG_UNIQ_INDEX(v, vertex);
-						if(v->vg_p)  {
-							NMG_CK_VERTEX_G(v->vg_p);
-							NMG_UNIQ_INDEX(v->vg_p, vertex_g);
-						}
+						UNIQ_VU(vu);
 					}
 				}
 			}
@@ -719,19 +680,7 @@ CONST struct model			*m;
 					ctr->wire_lone_verts++;
 					/* Wire loop of Lone vertex */
 					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-					NMG_CK_VERTEXUSE(vu);
-					NMG_UNIQ_INDEX(vu, vertexuse);
-					if(vu->a.plane_p)  {
-						NMG_CK_VERTEXUSE_A_PLANE(vu->a.plane_p);
-						NMG_UNIQ_INDEX(vu->a.plane_p, vertexuse_a_plane);
-					}
-					v = vu->v_p;
-					NMG_CK_VERTEX(v);
-					NMG_UNIQ_INDEX(v, vertex);
-					if(v->vg_p)  {
-						NMG_CK_VERTEX_G(v->vg_p);
-						NMG_UNIQ_INDEX(v->vg_p, vertex_g);
-					}
+					UNIQ_VU(vu);
 					continue;
 				}
 				ctr->wire_loops++;
@@ -750,15 +699,7 @@ CONST struct model			*m;
 						break;
 					}
 					vu = eu->vu_p;
-					NMG_CK_VERTEXUSE(vu);
-					NMG_UNIQ_INDEX(vu, vertexuse);
-					v = vu->v_p;
-					NMG_CK_VERTEX(v);
-					NMG_UNIQ_INDEX(v, vertex);
-					if(v->vg_p)  {
-						NMG_CK_VERTEX_G(v->vg_p);
-						NMG_UNIQ_INDEX(v->vg_p, vertex_g);
-					}
+					UNIQ_VU(vu);
 					ctr->wire_loop_edges++;
 				}
 			}
@@ -779,33 +720,18 @@ CONST struct model			*m;
 					break;
 				}
 				vu = eu->vu_p;
-				NMG_CK_VERTEXUSE(vu);
-				NMG_UNIQ_INDEX(vu, vertexuse);
-				v = vu->v_p;
-				NMG_CK_VERTEX(v);
-				NMG_UNIQ_INDEX(v, vertex);
-				if(v->vg_p)  {
-					NMG_CK_VERTEX_G(v->vg_p);
-					NMG_UNIQ_INDEX(v->vg_p, vertex_g);
-				}
+				UNIQ_VU(vu);
 			}
 			/* Lone vertex in shell */
 			if( vu = s->vu_p )  {
 				ctr->shells_of_lone_vert++;
-				NMG_CK_VERTEXUSE(vu);
-				NMG_UNIQ_INDEX(vu, vertexuse);
-				v = vu->v_p;
-				NMG_CK_VERTEX(v);
-				NMG_UNIQ_INDEX(v, vertex);
-				if(v->vg_p)  {
-					NMG_CK_VERTEX_G(v->vg_p);
-					NMG_UNIQ_INDEX(v->vg_p, vertex_g);
-				}
+				UNIQ_VU(vu);
 			}
 		}
 	}
 	/* Caller must free them */
 	return ptrs;
+#undef UNIQ_VU
 }
 
 /*
