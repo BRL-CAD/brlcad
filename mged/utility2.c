@@ -28,12 +28,6 @@
 #include "./sedit.h"
 #include "../librt/debug.h"	/* XXX */
 
-extern int	args;		/* total number of args available */
-extern int	argcnt;		/* holder for number of args added later */
-extern int	newargs;	/* number of args from getcmd() */
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
-
 static union record record;
 
 void		identitize();
@@ -44,7 +38,9 @@ void		push();
 /*  	F _ T A B O B J :   tabs objects as they appear in data file
  */
 int
-f_tabobj( )
+f_tabobj(argc, argv)
+int argc;
+char **argv;
 {
 	register struct directory *dp;
 	int ngran, nmemb;
@@ -53,8 +49,8 @@ f_tabobj( )
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
 
-	for(i=1; i<numargs; i++) {
-		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY)) == DIR_NULL )
+	for(i=1; i<argc; i++) {
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
 		if( db_get( dbip, dp, &record, 0, 1) < 0 ) {
 			READ_ERR;
@@ -165,31 +161,27 @@ char	**argv;
 	(void)signal( SIGINT, sig2 );
 
 	/* find out which command was entered */
-	if( strcmp( cmd_args[0], "paths" ) == 0 ) {
+	if( strcmp( argv[0], "paths" ) == 0 ) {
 		/* want to list all matching paths */
 		flag = LISTPATH;
 	}
-	if( strcmp( cmd_args[0], "listeval" ) == 0 ) {
+	if( strcmp( argv[0], "listeval" ) == 0 ) {
 		/* want to list evaluated solid[s] */
 		flag = LISTEVAL;
 	}
 
 	if( argc < 2 )  {
-		pos_in = args = argc;
 		/* get the path */
 		(void)printf("Enter the path (space is delimiter): ");
-		argcnt = getcmd(args);
-		args += argcnt;
-		objpos = argcnt;
-	} else {
-		pos_in = args = 1;
-		argcnt = argc-1;
-		objpos = argc-1;
+		return CMD_MORE;
 	}
+
+	pos_in = 1;
+	objpos = argc-1;
 
 	/* build directory pointer array for desired path */
 	for(i=0; i<objpos; i++) {
-		if( (obj[i] = db_lookup( dbip, cmd_args[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
+		if( (obj[i] = db_lookup( dbip, argv[pos_in+i], LOOKUP_NOISY )) == DIR_NULL)
 			return CMD_BAD;
 	}
 
@@ -217,7 +209,9 @@ char	**argv;
 static union record saverec;
 
 int
-f_copyeval( )
+f_copyeval(argc, argv)
+int argc;
+char **argv;
 {
 
 	register struct directory *dp;
@@ -230,7 +224,12 @@ f_copyeval( )
 	vect_t	vec;
 
 	prflag = 0;
-	pos_in = args = numargs;
+	pos_in = argc;
+
+	printf("The copyeval command is currently being reconstructed.\n\
+Sorry for the inconvenience.\n");
+
+#if 0
 	argcnt = 0;
 
 	/* interupts */
@@ -249,7 +248,10 @@ f_copyeval( )
 	}
 
 	/* check if last path member is a solid */
-	if( db_get( dbip,  obj[objpos-1], &record, 0, 1) < 0 )  READ_ERR_return;
+	if( db_get( dbip,  obj[objpos-1], &record, 0, 1) < 0 ) {
+		READ_ERR;
+		return;
+	}
 	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A &&
 		record.u_id != ID_BSOLID && record.u_id != ID_P_HEAD) {
 		(void)printf("Bottom of path is not a solid\n");
@@ -360,6 +362,7 @@ f_copyeval( )
 		}
 		return CMD_OK;
 	}
+#endif
 
 	return CMD_BAD;
 }
@@ -639,8 +642,6 @@ char **argv;
 	struct rt_db_internal	es_int;
 
 	RT_CHECK_DBI(dbip);
-
-	if ( argc <= 0) return -1;	/* FAIL */
 
 	old_debug = rt_g.debug;
 	pi_head.magic = MAGIC_PUSH_ID;

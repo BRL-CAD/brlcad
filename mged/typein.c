@@ -26,7 +26,6 @@
  *	ehy_in		reads elliptical hyperboloid params from keyboard
  *	eto_in		reads elliptical torus params from keyboard
  *	checkv		checks for zero vector from keyboard
- *	getcmd		reads and parses input parameters from keyboard
  *
  * Authors -
  *	Charles M. Kennedy
@@ -65,15 +64,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 
 void	aexists();
-extern void f_quit();
 
-int		args;		/* total number of args available */
-int		argcnt;		/* holder for number of args added later */
 int		vals;		/* number of args for s_values[] */
-int		newargs;	/* number of args from getcmd() */
-extern int	numargs;	/* number of args */
-extern int	maxargs;	/* size of cmd_args[] */
-extern char	*cmd_args[];	/* array of pointers to args */
 char		**promp;	/* the prompt string */
 
 char *p_half[] = {
@@ -339,7 +331,9 @@ char *p_eto[] = {
  *			Used for manual entry of solids.
  */
 int
-f_in()
+f_in(argc, argv)
+int argc;
+char **argv;
 {
 	register int i;
 	register struct directory *dp;
@@ -358,152 +352,156 @@ f_in()
 
 	(void)signal( SIGINT, sig2);	/* allow interrupts */
 
-	/* Save the number of args loaded initially */
-	args = numargs;
-	argcnt = 0;
 	vals = 0;
 
 	/* Get the name of the solid to be created */
-	while( args < 2 )  {
+	if( argc < 2 )  {
 		(void)printf("Enter name of solid: ");
-		argcnt = getcmd(args);
-		/* Add any new args slurped up */
-		args += argcnt;
+		return CMD_MORE;
 	}
-	if( db_lookup( dbip,  cmd_args[1], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( cmd_args[1] );
+	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( argv[1] );
 		return CMD_BAD;
 	}
-	if( (int)strlen(cmd_args[1]) >= NAMESIZE )  {
+	if( (int)strlen(argv[1]) >= NAMESIZE )  {
 		(void)printf("ERROR, names are limited to %d characters\n", NAMESIZE-1);
 		return CMD_BAD;
 	}
-	/* Save the solid name since cmd_args[] might get bashed */
-	strcpy( name, cmd_args[1] );
+	/* Save the solid name since argv[] might get bashed */
+	strcpy( name, argv[1] );
 
 	/* Get the solid type to be created and make it */
-	while( args < 3 )  {
+	if( argc < 3 )  {
 		(void)printf("Enter solid type: ");
-		argcnt = getcmd(args);
-		/* Add any new args slurped up */
-		args += argcnt;
+		return CMD_MORE;
 	}
+
+	RT_INIT_DB_INTERNAL( &internal );
+
 	/*
 	 * Decide which solid to make and get the rest of the args
 	 * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
 			rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto>
 	 */
-	if( strcmp( cmd_args[2], "ebm" ) == 0 )  {
-		if( strsol_in( &external, "ebm" ) < 0 )  {
+	if( strcmp( argv[2], "ebm" ) == 0 )  {
+		switch( strsol_in( &external, "ebm", argc, argv ) ) {
+		case CMD_BAD:
 			(void)printf("ERROR, EBM solid not made!\n");
 			return CMD_BAD;
+		case CMD_MORE:
+			return CMD_MORE;
 		}
 		goto do_extern_update;
-	} else if( strcmp( cmd_args[2], "vol" ) == 0 )  {
-		if( strsol_in( &external, "vol" ) < 0 )  {
+	} else if( strcmp( argv[2], "vol" ) == 0 )  {
+		switch( strsol_in( &external, "vol" ) )  {
+		case CMD_BAD:
 			(void)printf("ERROR, VOL solid not made!\n");
 			return CMD_BAD;
+		case CMD_MORE:
+			return CMD_MORE;
 		}
 		goto do_extern_update;
-	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
-		if (ars_in(args, cmd_args, &internal, &p_ars[0]) != 0)  {
+	} else if( strcmp( argv[2], "ars" ) == 0 )  {
+		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
+		case CMD_BAD:
 			(void)printf("ERROR, ars not made!\n");
 			if(internal.idb_type) rt_functab[internal.idb_type].
 				ft_ifree( &internal );
 			return CMD_BAD;
+		case CMD_MORE:
+			return CMD_MORE;
 		}
 		goto do_new_update;
-	} else if( strcmp( cmd_args[2], "half" ) == 0 )  {
+	} else if( strcmp( argv[2], "half" ) == 0 )  {
 		nvals = 3*1 + 1;
 		menu = p_half;
 		fn_in = half_in;
-	} else if( strncmp( cmd_args[2], "arb", 3 ) == 0 )  {
-		nvals = 3*atoi(&cmd_args[2][3]);
+	} else if( strncmp( argv[2], "arb", 3 ) == 0 )  {
+		nvals = 3*atoi(&argv[2][3]);
 		menu = p_arb;
 		fn_in = arb_in;
-	} else if( strcmp( cmd_args[2], "sph" ) == 0 )  {
+	} else if( strcmp( argv[2], "sph" ) == 0 )  {
 		nvals = 3*1 + 1;
 		menu = p_sph;
 		fn_in = sph_in;
-	} else if( strcmp( cmd_args[2], "ell" ) == 0 )  {
+	} else if( strcmp( argv[2], "ell" ) == 0 )  {
 		nvals = 3*2 + 1;
 		menu = p_ell;
 		fn_in = ell_in;
-	} else if( strcmp( cmd_args[2], "ellg" ) == 0 )  {
+	} else if( strcmp( argv[2], "ellg" ) == 0 )  {
 		nvals = 3*4;
 		menu = p_ellg;
 		fn_in = ell_in;
-	} else if( strcmp( cmd_args[2], "ell1" ) == 0 )  {
+	} else if( strcmp( argv[2], "ell1" ) == 0 )  {
 		nvals = 3*2 + 1;
 		menu = p_ell1;
 		fn_in = ell_in;
-	} else if( strcmp( cmd_args[2], "tor" ) == 0 )  {
+	} else if( strcmp( argv[2], "tor" ) == 0 )  {
 		nvals = 3*2 + 2;
 		menu = p_tor;
 		fn_in = tor_in;
-	} else if( strcmp( cmd_args[2], "tgc" ) == 0 ) {
+	} else if( strcmp( argv[2], "tgc" ) == 0 ) {
 		nvals = 3*4 + 2;
 		menu = p_tgc;
 		fn_in = tgc_in;
-	} else if( strcmp( cmd_args[2], "tec" ) == 0 )  {
+	} else if( strcmp( argv[2], "tec" ) == 0 )  {
 		nvals = 3*4 + 1;
 		menu = p_tec;
 		fn_in = tec_in;
-	} else if( strcmp( cmd_args[2], "rec" ) == 0 )  {
+	} else if( strcmp( argv[2], "rec" ) == 0 )  {
 		nvals = 3*4;
 		menu = p_rec;
 		fn_in = rec_in;
-	} else if( strcmp( cmd_args[2], "trc" ) == 0 )  {
+	} else if( strcmp( argv[2], "trc" ) == 0 )  {
 		nvals = 3*2 + 2;
 		menu = p_trc;
 		fn_in = trc_in;
-	} else if( strcmp( cmd_args[2], "rcc" ) == 0 )  {
+	} else if( strcmp( argv[2], "rcc" ) == 0 )  {
 		nvals = 3*2 + 1;
 		menu = p_rcc;
 		fn_in = rcc_in;
-	} else if( strcmp( cmd_args[2], "box" ) == 0 
-		|| strcmp( cmd_args[2], "raw" ) == 0 )  {
+	} else if( strcmp( argv[2], "box" ) == 0 
+		|| strcmp( argv[2], "raw" ) == 0 )  {
 		nvals = 3*4;
 		menu = p_box;
 		fn_in = box_in;
-	} else if( strcmp( cmd_args[2], "rpp" ) == 0 )  {
+	} else if( strcmp( argv[2], "rpp" ) == 0 )  {
 		nvals = 6*1;
 		menu = p_rpp;
 		fn_in = rpp_in;
-	} else if( strcmp( cmd_args[2], "rpc" ) == 0 )  {
+	} else if( strcmp( argv[2], "rpc" ) == 0 )  {
 		nvals = 3*3 + 1;
 		menu = p_rpc;
 		fn_in = rpc_in;
-	} else if( strcmp( cmd_args[2], "rhc" ) == 0 )  {
+	} else if( strcmp( argv[2], "rhc" ) == 0 )  {
 		nvals = 3*3 + 2;
 		menu = p_rhc;
 		fn_in = rhc_in;
-	} else if( strcmp( cmd_args[2], "epa" ) == 0 )  {
+	} else if( strcmp( argv[2], "epa" ) == 0 )  {
 		nvals = 3*3 + 1;
 		menu = p_epa;
 		fn_in = epa_in;
-	} else if( strcmp( cmd_args[2], "ehy" ) == 0 )  {
+	} else if( strcmp( argv[2], "ehy" ) == 0 )  {
 		nvals = 3*3 + 2;
 		menu = p_ehy;
 		fn_in = ehy_in;
-	} else if( strcmp( cmd_args[2], "eto" ) == 0 )  {
+	} else if( strcmp( argv[2], "eto" ) == 0 )  {
 		nvals = 3*3 + 2;
 		menu = p_eto;
 		fn_in = eto_in;
 	} else {
-		(void)printf("f_in:  %s is not a known primitive\n", cmd_args[2]);
+		(void)printf("f_in:  %s is not a known primitive\n", argv[2]);
 		return CMD_BAD;
 	}
 	
 	/* Read arguments */
-	if( args < 3+nvals )  {
-		(void)printf("%s", menu[args-3]);
+	if( argc < 3+nvals )  {
+		(void)printf("%s", menu[argc-3]);
 		return CMD_MORE;
 	}
 
-	RT_INIT_DB_INTERNAL( &internal );
-	if (fn_in(cmd_args, &internal, menu) != 0)  {
-		(void)printf("ERROR, %s not made!\n", cmd_args[2]);
+	if (fn_in(argv, &internal, menu) != 0)  {
+		(void)printf("ERROR, %s not made!\n", argv[2]);
 		if(internal.idb_type) rt_functab[internal.idb_type].
 			ft_ifree( &internal );
 		return CMD_BAD;
@@ -551,20 +549,19 @@ do_extern_update:
  *  "in" name ebm|vol arg(s)
  */
 int
-strsol_in( ep, sol )
+strsol_in( ep, sol, argc, argv )
 struct rt_external	*ep;
 char			*sol;
+int 			 argc;
+char 		       **argv;
 {
 	struct rt_vls	str;
 	union record	*rec;
 
 	/* Read at least one "arg(s)" */
-	while( args < (3 + 1) )  {
+	if( argc < 3+1 ) {
 		(void)printf("%s Arg? ", sol);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			return(-1);	/* failure */
-		}
-		args += argcnt;
+		return CMD_MORE;
 	}
 
 	RT_INIT_EXTERNAL(ep);
@@ -573,14 +570,14 @@ char			*sol;
 	rec = (union record *)ep->ext_buf;
 
 	RT_VLS_INIT( &str );
-	rt_vls_from_argv( &str, args-3, &cmd_args[3] );
+	rt_vls_from_argv( &str, argc-3, &argv[3] );
 
 	rec->ss.ss_id = DBID_STRSOL;
 	strncpy( rec->ss.ss_keyword, "ebm", NAMESIZE-1 );
 	strncpy( rec->ss.ss_args, rt_vls_addr(&str), DB_SS_LEN-1 );
 	rt_vls_free( &str );
 
-	return(0);		/* OK */
+	return CMD_OK;		/* OK */
 }
 
 /*
@@ -599,50 +596,63 @@ char			*promp[];
 	int			cv;	/* current curve (waterline) # */
 	int			axis;	/* current fastf_t in waterline */
 	int			ncurves_minus_one;
+	int arg;
 
-	while (args < 5) {
-		(void)printf("%s", promp[args-3]);
-		if ((argcnt=getcmd(args)) < 0) {
-			return(1);	/* failure */
-		}
-		args += argcnt;
+	int num_pts, num_curves;
+
+	if( argc < 5 ) {
+		(void)printf("%s", promp[argc-3]);
+		return CMD_MORE;
+	}
+
+	num_pts = atoi(argv[3]);
+	num_curves = atoi(argv[4]);
+
+	if (num_pts < 3 || num_curves < 3 ) {
+	    	printf("Invalid number of lines or pts_per_curve\n");
+		return CMD_BAD;
+	}
+
+	if( argc < 8 ) {
+		(void)printf("%s", promp[argc-3]);
+		return CMD_MORE;
+	}
+
+	if( argc < 8+((num_curves-2)*num_pts*3) ) {
+		(void)printf("%s for Waterline %d, Point %d : ",
+			promp[5+(argc-8)%3], 1+(argc-8)/3/num_pts, ((argc-8)/3)%
+			num_pts );
+		return CMD_MORE;
+	}
+
+	if( argc < 8+((num_curves-2)*num_pts*3+3)) {
+		(void)printf("%s for point of last waterline : ",
+			promp[5+(argc-8)%3]);
+		return CMD_MORE;
 	}
 
 	intern->idb_type = ID_ARS;
 	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ars_internal), "rt_ars_internal");
 	arip = (struct rt_ars_internal *)intern->idb_ptr;
 	arip->magic = RT_ARS_INTERNAL_MAGIC;
-
-	if ((arip->pts_per_curve = atoi(cmd_args[3])) < 3 ||
-	    (arip->ncurves =  atoi(cmd_args[4])) < 3 ) {
-	    	printf("Invalid number of lines or pts_per_curve\n");
-		return(1);
-	}
-	printf("Waterlines: %d, curve points: %d\n", arip->ncurves, arip->pts_per_curve);
+	arip->pts_per_curve = num_pts;
+	arip->ncurves = num_curves;
 	ncurves_minus_one = arip->ncurves - 1;
-
 	total_points = arip->ncurves * arip->pts_per_curve;
 
 	arip->curves = (fastf_t **)rt_malloc(
 		(arip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
-	for( i=0; i < arip->ncurves; i++ )  {
+	for( i=0; i < arip->ncurves+1; i++ )  {
 		/* Leave room for first point to be repeated */
 		arip->curves[i] = (fastf_t *)rt_malloc(
 		    (arip->pts_per_curve+1) * sizeof(point_t),
 		    "ars curve" );
 	}
 
-	while (args < 8) {
-		(void)printf("%s", promp[args-3]);
-		if ((argcnt=getcmd(args)) < 0) {
-			return(1);	/* failure */
-		}
-		args += argcnt;
-	}
 	/* fill in the point of the first row */
-	arip->curves[0][0] = atof(cmd_args[5]);
-	arip->curves[0][1] = atof(cmd_args[6]);
-	arip->curves[0][2] = atof(cmd_args[7]);
+	arip->curves[0][0] = atof(argv[5]);
+	arip->curves[0][1] = atof(argv[6]);
+	arip->curves[0][2] = atof(argv[7]);
 
 	/* The first point is duplicated across the first curve */
 	for (i=1 ; i < arip->pts_per_curve ; ++i) {
@@ -652,39 +662,12 @@ char			*promp[];
 	cv = 1;
 	axis = 0;
 	/* scan each of the other points we've already got */
-	for (i=8 ; i < args && i < total_points * ELEMENTS_PER_PT ; ++i) {
-
-		arip->curves[cv][axis] = atof(cmd_args[i]);
+	for (i=8 ; i < argc && i < total_points * ELEMENTS_PER_PT ; ++i) {
+		arip->curves[cv][axis] = atof(argv[i]);
 		if (++axis >= arip->pts_per_curve * ELEMENTS_PER_PT) {
 			axis = 0;
 			cv++;
 		}
-	}
-
-	/* go get the waterline points from the user */
-	while( cv < arip->ncurves )  {
-		if (cv < ncurves_minus_one)
-			(void)printf("%s for Waterline %d, Point %d : ",
-				promp[5+axis%3], cv, axis/3 );
-		else
-			(void)printf("%s for point of last waterline : ",
-				promp[5+axis%3] );
-
-		/* Get some more input */
-		*cmd_args[0] = '\0';
-		if ((argcnt = getcmd(1)) < 0)
-			return(1);
-
-		/* scan each of the args we've already got */
-		for (i=1 ; i < argcnt+1 &&
-		    cv < arip->ncurves && axis < 3*arip->pts_per_curve; i++ )  {
-			arip->curves[cv][axis] = atof(cmd_args[i]);
-			if (++axis >= arip->pts_per_curve * ELEMENTS_PER_PT) {
-				axis = 0;
-				cv++;
-			}
-		}
-		if( cv >= ncurves_minus_one && axis >= ELEMENTS_PER_PT )  break;
 	}
 
 	/* The first point is duplicated across the last curve */
@@ -692,7 +675,8 @@ char			*promp[];
 		VMOVE( arip->curves[ncurves_minus_one]+3*i,
 			arip->curves[ncurves_minus_one] );
 	}
-	return(0);
+
+	return CMD_OK;
 }
 
 /*   H A L F _ I N ( ) :   	reads halfspace parameters from keyboard
@@ -1440,88 +1424,3 @@ struct rt_db_internal	*intern;
 	return(0);	/* success */
 }
 
-/*   C H E C K V ( ) :		checks for zero vector at cmd_args[loc]
- *				returns 0 if vector non-zero
- *				       -1 if vector is zero
- */
-int
-checkv( loc )
-int loc;
-{
-	register int	i;
-	vect_t	work;
-
-	for(i=0; i<3; i++) {
-		work[i] = atof(cmd_args[(loc+i)]);
-	}
-	if( MAGNITUDE(work) < 1e-10 ) {
-		(void)printf("ERROR, zero vector ....\n");
-		return(-1);	/* zero vector */
-	}
-	return(0);	/* vector is non-zero */
-}
-
-/*   G E T C M D ( ) :	gets keyboard input command lines, parses and
- *			saves pointers to the beginning of each element
- *			starting at cmd_args[pos] and returns:
- *				the number of args	if successful
- *						-1	if unsuccessful
- */
-int
-getcmd(pos)
-int pos;
-{
-	register char *lp;
-	register char *lp1;
-
-	newargs = 0;
-	/*
-	 * Now we go to the last argument string read and then position
-	 * ourselves at the end of the string.  This is IMPORTANT so we
-	 * don't overwrite what we've already read into line[].
-	 */
-	lp = cmd_args[pos-1];		/* Beginning of last arg string */
-	while( *lp++ != '\0' )  {	/* Get positioned at end of string */
-		;
-	}
-
-	/* Read input line */
-	(void)fgets( lp, MAXLINE, stdin );
-
-	/* Check for Control-D (EOF) */
-	if( feof( stdin ) )  {
-		/* Control-D typed, let's hit the road */
-		f_quit();
-		/* NOTREACHED */
-	}
-
-	cmd_args[newargs + pos] = lp;
-
-	if( *lp == '\n' )
-		return(0);		/* NOP */
-
-	/* In case first character is not "white space" */
-	if( (*lp != ' ') && (*lp != '\t') && (*lp != '\0') )
-		newargs++;		/* holds # of args */
-
-	for( ; *lp != '\0'; lp++ )  {
-		if( (*lp == ' ') || (*lp == '\t') || (*lp == '\n') )  {
-			*lp = '\0';
-			lp1 = lp + 1;
-			if( (*lp1 != ' ') && (*lp1 != '\t') &&
-			    (*lp1 != '\n') && (*lp1 != '\0') )  {
-				if( (newargs + pos) >= maxargs )  {
-					(void)printf("More than %d arguments, excess flushed\n", maxargs);
-					cmd_args[maxargs] = (char *)0;
-					return(maxargs - pos);
-				}
-				cmd_args[newargs + pos] = lp1;
-			    	newargs++;
-			}
-		}
-		/* Finally, a non-space char */
-	}
-	/* Null terminate pointer array */
-	cmd_args[newargs + pos] = (char *)0;
-	return(newargs);
-}
