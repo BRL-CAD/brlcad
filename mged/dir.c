@@ -717,7 +717,7 @@ union tree		*comb_leaf;
 genptr_t		prefix_ptr, obj_ptr, user_ptr3;
 {
 	char *prefix,*obj;
-	char tempstring[NAMESIZE+2];
+	char tempstring_v4[NAMESIZE+2];
 
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
@@ -725,13 +725,20 @@ genptr_t		prefix_ptr, obj_ptr, user_ptr3;
 	prefix = (char *)prefix_ptr;
 	obj = (char *)obj_ptr;
 
-	if( strncmp( comb_leaf->tr_l.tl_name, obj, NAMESIZE ) )
+	if( strcmp( comb_leaf->tr_l.tl_name, obj ) )
 		return;
 
-	(void)strcpy( tempstring, prefix);
-	(void)strcat( tempstring, obj);
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
-	comb_leaf->tr_l.tl_name = bu_strdup( tempstring );
+	if( dbip->dbi_version < 5 ) {
+		(void)strcpy( tempstring_v4, prefix);
+		(void)strcat( tempstring_v4, obj);
+		comb_leaf->tr_l.tl_name = bu_strdup( tempstring_v4 );
+	} else {
+		comb_leaf->tr_l.tl_name = (char *)bu_malloc( strlen( prefix ) + strlen( obj ) + 1,
+							     "Adding prefix" );
+		(void)strcpy( comb_leaf->tr_l.tl_name , prefix);
+		(void)strcat( comb_leaf->tr_l.tl_name , obj );
+	}
 }
 
 /*
@@ -751,7 +758,9 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
-	char		tempstring[NAMESIZE+2];
+	char tempstring_v4[NAMESIZE+2];
+	struct bu_vls tempstring_v5;
+	char *tempstring;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -766,6 +775,8 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
+	bu_vls_init( &tempstring_v5 );
+
 	/* First, check validity, and change node names */
 	for( i = 2; i < argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL) {
@@ -773,7 +784,7 @@ char	**argv;
 			continue;
 		}
 
-		if( (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
+		if( dbip->dbi_version < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
@@ -786,8 +797,16 @@ char	**argv;
 		  continue;
 		}
 
-		(void) strcpy( tempstring, argv[1]);
-		(void) strcat( tempstring, argv[i]);
+		if( dbip->dbi_version < 5 ) {
+			(void) strcpy( tempstring_v4, argv[1]);
+			(void) strcat( tempstring_v4, argv[i]);
+			tempstring = tempstring_v4;
+		} else {
+			bu_vls_trunc( &tempstring_v5, 0 );
+			bu_vls_strcpy( &tempstring_v5, argv[1] );
+			bu_vls_strcat( &tempstring_v5, argv[i] );
+			tempstring = bu_vls_addr( &tempstring_v5 );
+		}
 
 		if( db_lookup( dbip, tempstring, LOOKUP_QUIET ) != DIR_NULL ) {
 			aexists( tempstring );
@@ -796,12 +815,15 @@ char	**argv;
 		}
 		/*  Change object name in the directory. */
 		if( db_rename( dbip, dp, tempstring ) < 0 )  {
+			bu_vls_free( &tempstring_v5 );
 		  Tcl_AppendResult(interp, "error in rename to ", tempstring,
 				   ", aborting\n", (char *)NULL);
 		  TCL_ERROR_RECOVERY_SUGGESTION;
 		  return TCL_ERROR;
 		}
 	}
+
+	bu_vls_free( &tempstring_v5 );
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -1107,7 +1129,7 @@ genptr_t		old_ptr, new_ptr;
 	old_name = (char *)old_ptr;
 	new_name = (char *)new_ptr;
 
-	if( strncmp( comb_leaf->tr_l.tl_name, old_name, NAMESIZE ) )
+	if( strcmp( comb_leaf->tr_l.tl_name, old_name ) )
 		return;
 
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
@@ -1146,11 +1168,11 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( (int)strlen(argv[2]) > NAMESIZE ) {
+	if( dbip->dbi_version < 5 && (int)strlen(argv[2]) > NAMESIZE ) {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters\n", NAMESIZE);
+	  bu_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters in v4 databases\n", NAMESIZE);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
@@ -1206,7 +1228,7 @@ char	**argv;
 						bu_ptbl_ins( &stack, (long *)comb_leaf );
 						comb_leaf = comb_leaf->tr_b.tb_left;
 					}
-					if( !strncmp( comb_leaf->tr_l.tl_name, argv[1], NAMESIZE ) )
+					if( !strcmp( comb_leaf->tr_l.tl_name, argv[1] ) )
 					{
 						bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
 						comb_leaf->tr_l.tl_name = bu_strdup( argv[2] );
