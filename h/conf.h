@@ -71,7 +71,7 @@
  *
  *	HAVE_SHELL_ESCAPE	Typically UNIX-only functions.
  *	HAVE_UNIX_IO
- *	HAVE_SBRK		Set if unistd.h declares sbrk().
+ *	HAVE_SBRK_DECL		Set if unistd.h declares sbrk().
  *	HAVE_UNIX_DOMAIN_SOCKETS
  *
  *	HAVE_UNISTD_H		Set if unistd.h exists
@@ -220,7 +220,6 @@
 #	define HAVE_UNIX_DOMAIN_SOCKETS	1
 #	define HAVE_SHELL_ESCAPE	1
 #	define HAVE_UNIX_IO		1
-#	define	HAVE_SBRK	1
 #	define	HAVE_SBRK_DECL	1
 #	define HAVE_SYS_SOCKET_H	1
 #	define	HAVE_SYS_ERRLIST_DECL	1
@@ -284,7 +283,7 @@
 #	define HAVE_VFORK	1
 #	define HAVE_VPRINTF	1
 #	define HAVE_WRITEV	1
-#	define HAVE_SBRK	1
+#	define HAVE_SBRK_DECL	1
 #	define HAVE_DLOPEN	1
 #	define HAVE_UNIX_DOMAIN_SOCKETS 1
 #	define HAVE_SHELL_ESCAPE	1
@@ -407,7 +406,7 @@
 		defined(SUNOS) || defined(linux)
 #	define HAVE_SHELL_ESCAPE	1
 #	define HAVE_UNIX_IO		1
-#	define HAVE_SBRK		1
+#	define HAVE_SBRK_DECL		1
 #endif
 
 #if defined(BSD) && !defined(sgi)

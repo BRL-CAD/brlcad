@@ -92,7 +92,7 @@ const char	*appl;		/* non-null only when app. will use 'apbuf' */
 	if( bu_debug&BU_DEBUG_MAPPED_FILE )
 		bu_log("bu_open_mapped_file(%s, %s) sbrk=x%lx\n",
 			name, appl?appl:"(NIL)",
-#ifdef HAVE_SBRK
+#ifdef HAVE_SBRK_DECL
 			(long)sbrk(0)
 #else
 			0
@@ -273,7 +273,7 @@ dont_reuse:
 	if( bu_debug&BU_DEBUG_MAPPED_FILE )  {
 		bu_pr_mapped_file("1st_open", mp);
 		bu_log("bu_open_mapped_file() sbrk=x%lx\n",
-#ifdef HAVE_SBRK
+#ifdef HAVE_SBRK_DECL
 			(long)sbrk(0)
 #else
 			0

@@ -123,7 +123,7 @@ int	arg;
 void
 memory_summary()
 {
-#ifdef HAVE_SBRK
+#ifdef HAVE_SBRK_DECL
 	if (rt_verbosity & VERBOSE_STATS)  {
 		long	mdelta = bu_n_malloc - n_malloc;
 		long	fdelta = bu_n_free - n_free;
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
 
 	bu_setlinebuf( stderr );
 
-#ifdef HAVE_SBRK
+#ifdef HAVE_SBRK_DECL
 	beginptr = (char *) sbrk(0);
 #endif
 	azimuth = 35.0;			/* GIFT defaults */
