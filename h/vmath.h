@@ -33,6 +33,12 @@
  *  separate storage, distinct from the input parameters,
  *  except where noted.
  *
+ *  When writing macros like this, it is very important that any
+ *  variables which are declared within code blocks inside a macro
+ *  start with an underscore.  This prevents any name conflicts with
+ *  user-provided parameters.  For example:
+ *	{ register double _f; stuff; }
+ *
  *  Author -
  *	Michael John Muuss
  *
@@ -339,6 +345,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(o)[_vcomb2] = (a) * (b)[_vcomb2] + (c) * (d)[_vcomb2]; \
 	} }
 
+#define VJOIN4(a,b,c,d,e,f,g,h,i,j)	\
+	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X] + (i)*(j)[X];\
+	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y] + (i)*(j)[Y];\
+	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z] + (i)*(j)[Z]
+
 /* Compose vector at `a' of:
  *	Vector at `b' plus
  *	scalar `c' times vector at `d' plus
@@ -503,12 +514,12 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /* Apply a 4x4 matrix to a 3-tuple which is an absolute Point in space */
 #ifdef SHORT_VECTORS
 #define MAT4X3PNT(o,m,i) \
-	{ register double f; \
+	{ register double _f; \
 	register int _i_m4x3p, _j_m4x3p; \
-	f = 0.0; \
+	_f = 0.0; \
 	for(_j_m4x3p = 0; _j_m4x3p < 3; _j_m4x3p++)  \
-		f += (m)[_j_m4x3p+12] * (i)[_j_m4x3p]; \
-	f = 1.0/(f + (m)[15]); \
+		_f += (m)[_j_m4x3p+12] * (i)[_j_m4x3p]; \
+	_f = 1.0/(_f + (m)[15]); \
 	for(_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++) \
 		(o)[_i_m4x3p] = 0.0; \
 	for(_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++)  { \
@@ -516,24 +527,24 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(o)[_i_m4x3p] += (m)[_j_m4x3p+4*_i_m4x3p] * (i)[_j_m4x3p]; \
 	} \
 	for(_i_m4x3p = 0; _i_m4x3p < 3; _i_m4x3p++)  { \
-		(o)[_i_m4x3p] = ((o)[_i_m4x3p] + (m)[4*_i_m4x3p+3]) * f; \
+		(o)[_i_m4x3p] = ((o)[_i_m4x3p] + (m)[4*_i_m4x3p+3]) * _f; \
 	} }
 #else
 #define MAT4X3PNT(o,m,i) \
-	{ register double f; \
-	f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]);\
-	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * f;\
-	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * f;\
-	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* f;}
+	{ register double _f; \
+	_f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]);\
+	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * _f;\
+	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * _f;\
+	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* _f;}
 #endif /* SHORT_VECTORS */
 
 /* Multiply an Absolute 3-Point by a full 4x4 matrix. */
 #define PNT3X4MAT(o,i,m) \
-	{ register double f; \
-	f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]);\
-	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * f;\
-	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * f;\
-	(o)[Z]=((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10] + (m)[14])* f;}
+	{ register double _f; \
+	_f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]);\
+	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * _f;\
+	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * _f;\
+	(o)[Z]=((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10] + (m)[14])* _f;}
 
 /* Multiply an Absolute hvect_t 4-Point by a full 4x4 matrix. */
 #ifdef SHORT_VECTORS
@@ -556,9 +567,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
 #ifdef SHORT_VECTORS
 #define MAT4X3VEC(o,m,i) \
-	{ register double f; \
+	{ register double _f; \
 	register int _i_m4x3v, _j_m4x3v; \
-	f = 1.0/((m)[15]); \
+	_f = 1.0/((m)[15]); \
 	for(_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) \
 		(o)[_i_m4x3v] = 0.0; \
 	for(_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) { \
@@ -566,29 +577,29 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(o)[_i_m4x3v] += (m)[_j_m4x3v+4*_i_m4x3v] * (i)[_j_m4x3v]; \
 	} \
 	for(_i_m4x3v = 0; _i_m4x3v < 3; _i_m4x3v++) { \
-		(o)[_i_m4x3v] *= f; \
+		(o)[_i_m4x3v] *= _f; \
 	} }
 #else
 #define MAT4X3VEC(o,m,i) \
-	{ register double f;	f = 1.0/((m)[15]);\
-	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * f; \
-	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * f; \
-	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * f; }
+	{ register double _f;	_f = 1.0/((m)[15]);\
+	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * _f; \
+	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * _f; \
+	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * _f; }
 #endif /* SHORT_VECTORS */
 
 /* Multiply a Relative 3-Vector by most of a 4x4 matrix */
 #define VEC3X4MAT(o,i,m) \
-	{ register double f; 	f = 1.0/((m)[15]); \
-	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * f; \
-	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * f; \
-	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]) * f; }
+	{ register double _f; 	_f = 1.0/((m)[15]); \
+	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * _f; \
+	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * _f; \
+	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]) * _f; }
 
 /* Multiply a Relative 2-Vector by most of a 4x4 matrix */
 #define VEC2X4MAT(o,i,m) \
-	{ register double f; 	f = 1.0/((m)[15]); \
-	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * f; \
-	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * f; \
-	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * f; }
+	{ register double _f; 	_f = 1.0/((m)[15]); \
+	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * _f; \
+	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * _f; \
+	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * _f; }
 
 /* Compare two vectors for EXACT equality.  Use carefully. */
 #define VEQUAL(a,b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
