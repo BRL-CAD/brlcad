@@ -38,14 +38,14 @@ int height;				/* input height */
 int width;				/* input width */
 
 char usage[] = "\
-Usage: fb-pix [-h -i] [-s squaresize] [-W width] [-H height] [file.pix]\n";
+Usage: fb-pix [-h -i] [-s squaresize] [-w width] [-n height] [file.pix]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hics:W:H:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hics:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -58,10 +58,10 @@ register char **argv;
 			/* square size */
 			height = width = atoi(optarg);
 			break;
-		case 'W':
+		case 'w':
 			width = atoi(optarg);
 			break;
-		case 'H':
+		case 'n':
 			height = atoi(optarg);
 			break;
 

@@ -40,7 +40,7 @@ double	rweight = 0.0;
 double	gweight = 0.0;
 double	bweight = 0.0;
 
-static char *Usage = "usage: pix-bw [-ntsc -crt -r[#] -g[#] -b[#]] < file.pix > file.bw\n";
+static char *Usage = "usage: pix-bw [-ntsc -crt -R[#] -G[#] -B[#]] < file.pix > file.bw\n";
 /* someday: [file.pix [file.bw]] */
 
 main( argc, argv )
@@ -66,17 +66,17 @@ int argc; char **argv;
 			bweight = 0.08;
 			red = green = blue = 1;
 		} else switch( argv[1][1] ) {
-			case 'r':
+			case 'R':
 				red++;
 				if( argv[1][2] != NULL )
 					rweight = atof( &argv[1][2] );
 				break;
-			case 'g':
+			case 'G':
 				green++;
 				if( argv[1][2] != NULL )
 					gweight = atof( &argv[1][2] );
 				break;
-			case 'b':
+			case 'B':
 				blue++;
 				if( argv[1][2] != NULL )
 					bweight = atof( &argv[1][2] );
