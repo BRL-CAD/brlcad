@@ -21,9 +21,9 @@ Method:
 	(Quadrant 1 graphics devices)
 
 	The frame image file of SCANS scans is considered artificially
-	divided into BANDS bands, each containing SPB scans.  Each band
-	has a linked list of descriptors for not-yet-rasterized strokes
-	that start in the band.
+	divided into BANDS bands, each containing lines_per_band scans.
+	Each band has a linked list of descriptors for
+	not-yet-rasterized strokes that start in the band.
 
 	Space for descriptors is obtained via "malloc".  When no more
 	space is available, the image file is updated as follows, then
@@ -92,7 +92,6 @@ Green, and Blue for each pixel, times the number of pixels desired
 /*	Device Parameters				 */
 
 /* the following parameter should be tweaked for fine-tuning */
-#define SPB		16		/* scan lines per band */
 #define	X_CHAR_SIZE	(8)		/* pixels per char horizontal */
 #define	Y_CHAR_SIZE	(10)		/* pixels per char vertical */
 
@@ -101,7 +100,7 @@ Green, and Blue for each pixel, times the number of pixels desired
 
 /*	Program constants computed from device parameters:	*/
 
-#define BANDS	(Nscanlines / SPB)		/* # of "bands" */
+#define BANDS	(Nscanlines / lines_per_band)		/* # of "bands" */
 #define BYTES	(Npixels * sizeof(RGBpixel))	/* max data bytes per scan */
 #define XMAX	(Npixels - 1)
 #define YMAX	(Nscanlines - 1)
@@ -235,6 +234,8 @@ STATIC long	buffersize;		/* active band buffer bytes */
 STATIC short	ystart = 0;		/* active band starting scan */
 STATIC short	debug  = 0;
 STATIC short	overlay = 0;		/* !0 to overlay on existing image */
+STATIC short	immediate = 0;		/* !0 to plot immediately */
+STATIC short	lines_per_band = 16;	/* scan lines per band */
 
 STATIC int	sigs[] =		/* signals to be caught */
 	{
@@ -265,7 +266,7 @@ STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
 		Requeue(),
 		Raster(), SetSigs();
 
-char usage[] = "Usage: plot-fb [-h] [-d] [-o] [file.plot]\n";
+char usage[] = "Usage: plot-fb [-h] [-d] [-o] [-i] [file.plot]\n";
 
 /*
  *  M A I N
@@ -289,6 +290,10 @@ char **argv;
 		if( argv[i][0] == '-' )
 			switch( argv[i][1] )  {
 				
+			case 'i':
+				immediate = 1;
+				break;
+
 			case 'd':
 				debug = 1;
 				break;
@@ -325,11 +330,23 @@ char **argv;
 		exit(-2);
 	}
 
+
+	/* Open frame buffer, adapt to slightly smaller ones */
+	if( (fbp = fb_open( NULL, Npixels, Nscanlines )) == FBIO_NULL )  {
+		fprintf(stderr,"fbplot: fb_open failed\n");
+		exit(1);
+	}
+	Npixels = fb_getwidth(fbp);
+	Nscanlines = fb_getheight(fbp);
+	if( immediate )
+		lines_per_band = Nscanlines;
+
 	/*
 	 * Handle image-size specific initializations
 	 */
-	if( (Nscanlines % SPB) != 0 )  {
-		fprintf(stderr, "Nscanlines % SPB != 0\n");
+	if( (Nscanlines % lines_per_band) != 0 )  {
+		fprintf(stderr, "Nscanlines(%d) %% lines_per_band(%d) != 0\n",
+			Nscanlines, lines_per_band);
 		exit(1);
 	}
 	space.left = space.right = 0;
@@ -338,7 +355,7 @@ char **argv;
 	delta = Nscanlines;
 	deltao2 = Nscanlines/2;
 
-	buffersize = SPB*Npixels*sizeof(RGBpixel);
+	buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
 	if( (buffer = (RGBpixel *)malloc(buffersize)) == RGBPIXEL_NULL)  {
 		fprintf(stderr,"fbplot:  malloc error\n");
 		exit(1);
@@ -351,10 +368,6 @@ char **argv;
 	bzero( (char *)band, BANDS*sizeof(struct band) );
 	bandEnd = &band[BANDS];
 
-	if( (fbp = fb_open( NULL, Npixels, Nscanlines )) == FBIO_NULL )  {
-		fprintf(stderr,"fbplot: fb_open failed\n");
-		exit(1);
-	}
 	if( debug )
 		fprintf(stderr, "fbplot output of %s\n", filename);
 
@@ -366,7 +379,7 @@ char **argv;
 
 
 /*
-	DoFile - process UNIX plot file onto IKONAS
+	DoFile - process UNIX plot file
 
 	This routine reads UNIX plot records from the specified file
 	and controls the entry of the strokes into the descriptor lists.
@@ -648,7 +661,7 @@ register coords	*coop;
 	register bool	ret;
 
 	ret = GetCoords( coop );
-	fread( &trash, sizeof(trash), 1, pfin );
+	fread( trash, sizeof(trash), 1, pfin );
 	return( ret );
 }
 
@@ -827,7 +840,11 @@ BuildStr( pt1, pt2 )			/* returns true unless bug */
 
 	/* link descriptor into band corresponding to starting scan */
 
-	Requeue( &band[vp->pixel.y / SPB], vp );
+	if( immediate )  {
+		ystart = 0;
+		Raster( vp, (struct band *)0 );
+	}  else
+		Requeue( &band[vp->pixel.y / lines_per_band], vp );
 
 	return true;
 	}
@@ -870,7 +887,7 @@ OutBuild()				/* returns true if successful */
 
 	for ( hp = &band[0], np = &band[1], ystart = 0;
 	      hp < bandEnd;
-	      hp = np++, ystart += SPB
+	      hp = np++, ystart += lines_per_band
 	    )	{
 	    	if( overlay )  {
 	    		/* Read in current band */
@@ -914,13 +931,18 @@ Raster( vp, np )
 	/*
 	 *  Set the color of this vector into master color array
 	 */
-	for ( dy = vp->pixel.y - ystart; dy < SPB; )
+	for ( dy = vp->pixel.y - ystart; dy < lines_per_band; )
 		{
-		register RGBpixel *pp;
 
 		/* set the appropriate pixel in the buffer */
-		pp = (RGBpixel *)buffer[(dy*Npixels) + vp->pixel.x];
-		COPYRGB( *pp, vp->col );
+		if( immediate )  {
+			fb_write( fbp, vp->pixel.x, dy, vp->col, 1 );
+		}  else  {
+			register RGBpixel *pp;
+
+			pp = (RGBpixel *)buffer[(dy*Npixels) + vp->pixel.x];
+			COPYRGB( *pp, vp->col );
+		}
 
 		if ( vp->major-- == 0 ) /* done! */
 			{
@@ -944,7 +966,7 @@ Raster( vp, np )
 
 	/* overflow into next band; re-queue */
 
-	vp->pixel.y = ystart + SPB;
+	vp->pixel.y = ystart + lines_per_band;
 	Requeue( np, vp );       /* DDA parameters already set */
 	}
 
