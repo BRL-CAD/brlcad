@@ -19,10 +19,11 @@
  *	Public Domain, Distribution Unlimited.
  *
  *  Include Sequencing -
+ *	#include "conf.h"
  *	#include <stdio.h>
- *	#include <math.h>
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
  *	#include "rtlist.h"	/_* OPTIONAL, auto-included by bu.h *_/
+ *	#include "bu.h"
  *
  *  Libraries Used -
  *	-lm -lc
@@ -106,11 +107,76 @@ extern char	*realloc();
 		bu_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
 
-/* Bit vector macros would be a good candidate */
+
+/*
+ *  Bit vector data structure.
+ */
+struct bu_bitv {
+	struct rt_list	l;		/* linked list for caller's use */
+	unsigned int	nbits;		/* actual size of bits[], in bits */
+	bitv_t		bits[2];	/* variable size array */
+};
+#define BU_BITV_MAGIC		0x62697476	/* 'bitv' */
+#define BU_CK_BITV(_vp)		BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
+
+/*
+ *  Bit-string manipulators for arbitrarily long bit strings
+ *  stored as an array of bitv_t's.
+ */
+#define BU_BITS2BYTES(_nb)	(BU_BITS2WORDS(_nb)*sizeof(bitv_t))
+#define BU_BITS2WORDS(_nb)	(((_nb)+BITV_MASK)>>BITV_SHIFT)
+#define BU_WORDS2BITS(_nw)	((_nw)*sizeof(bitv_t)*8)
+
+#define BU_BITTEST(_bv,bit)	\
+	(((_bv)->bits[(bit)>>BITV_SHIFT] & (((bitv_t)1)<<((bit)&BITV_MASK)))?1:0)
+#define BU_BITSET(_bv,bit)	\
+	((_bv)->bits[(bit)>>BITV_SHIFT] |= (((bitv_t)1)<<((bit)&BITV_MASK)))
+#define BU_BITCLR(_bv,bit)	\
+	((_bv)->bits[(bit)>>BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BITV_MASK)))
+
+/* This is not done by default for performance reasons */
+#define BU_BITV_BITNUM_CHECK(_bv,_bit)	/* Validate bit number */ \
+	if( ((unsigned)(_bit)) >= (_bv)->nbits )  \
+		rt_bomb("BU_BITV_BITNUM_CHECK bit number out of range");
+#define BU_BITV_NBITS_CHECK(_bv,_nbits)	/* Validate number of bits */ \
+	if( ((unsigned)(_nbits)) > (_bv)->nbits )  \
+		rt_bomb("BU_BITV_NBITS_CHECK number of bits out of range");
+
+/*
+ *  Macros to efficiently find all the ONE bits in a bit vector.
+ *  Counts words down, counts bits in words going up, for speed & portability.
+ *  It does not matter if the shift causes the sign bit to smear to the right.
+ *
+ *  Example:
+ *	BU_BITV_LOOP_START(bv)  {
+ *		fiddle(BU_BITV_LOOP_INDEX);
+ *	} BU_BITV_LOOP_END;
+ */
+#define BU_BITV_LOOP_START(_bv)	\
+{ \
+	register int		_wd;	/* Current word number */  \
+	BU_CK_BITV(_bv); \
+	for( _wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd-- )  {  \
+		register int	_b;	/* Current bit-in-word number */  \
+		register bitv_t	_val;	/* Current word value */  \
+		if((_val = (_bv)->bits[_wd])==0) continue;  \
+		for(_b=0; _b < BITV_MASK+1; _b++, _val >>= 1 ) { \
+			if( !(_val & 1) )  continue;
+
+/*
+ *  This macro is valid only between a BU_BITV_LOOP_START/LOOP_END pair,
+ *  and gives the bit number of the current iteration.
+ */
+#define BU_BITV_LOOP_INDEX	((_wd << BITV_SHIFT) | _b)
+
+#define BU_BITV_LOOP_END	\
+		} /* end for(_b) */ \
+	} /* end for(_wd) */ \
+} /* end block */
 
 /* histogram */
 
-/* vlist, vlblock */
+/* vlist, vlblock?  But they use vmath.h... */
 
 /* rt_mapped_file */
 
@@ -119,7 +185,7 @@ typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
 #define BUHOOK_NULL 0
 
 /*
- *  bu_vls support (formerly rt_vls in h/rtstring.h)
+ *  Variable Length Strings: bu_vls support (formerly rt_vls in h/rtstring.h)
  */
 struct bu_vls  {
 	long	vls_magic;
@@ -179,6 +245,18 @@ extern int	bu_debug;
 /* badmagic.c */
 BU_EXTERN(void			bu_badmagic, (CONST long *ptr, long magic,
 				CONST char *str, CONST char *file, int line));
+
+/* bitv.c */
+BU_EXTERN(struct bu_bitv *	bu_bitv_new, (int nbits));
+BU_EXTERN(void			bu_bitv_clear, (struct bu_bitv *bv));
+BU_EXTERN(void			bu_bitv_or, (struct bu_bitv *ov,
+				CONST struct bu_bitv *iv));
+BU_EXTERN(void			bu_bitv_and, (struct bu_bitv *ov,
+				CONST struct bu_bitv *iv));
+BU_EXTERN(void			bu_bitv_vls, (struct bu_vls *v,
+				CONST struct bu_bitv *bv));
+BU_EXTERN(void			bu_pr_bitv, (CONST char *str,
+				CONST struct bu_bitv *bv));
 
 /* bomb.c */
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
