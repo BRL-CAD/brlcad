@@ -283,9 +283,9 @@ dotitles()
 
 	(void)sprintf( cp, "az=%3.2f el=%2.2f tw=%3.2f ang=(%.2f, %.2f, %.2f)",
 		az, el, twist,
-		dm_values.dv_xjoy * 6,
-		dm_values.dv_yjoy * 6,
-		dm_values.dv_zjoy * 6 );
+		rate_rotate[X],
+		rate_rotate[Y],
+		rate_rotate[Z] );
 	dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE, 1, DM_WHITE );
 
 	/*
