@@ -854,13 +854,13 @@ int	verbose;
 	if(dbip == DBI_NULL)
 	  return;
 
-	bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
-
 	if( (id = rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL )) < 0 )  {
 		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-			") failure", (char *)NULL );
+			") failure\n", (char *)NULL );
 		return;
 	}
+
+	bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
 
 	if( rt_functab[id].ft_describe( outstrp, &intern,
 	    verbose, base2local ) < 0 )
