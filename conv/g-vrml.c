@@ -74,7 +74,7 @@ struct vrml_texture {
 
 #define TX_O(m) offsetof(struct vrml_texture, m)
 
-struct structparse vrml_mat_parse[]={
+struct bu_structparse vrml_mat_parse[]={
 	{"%d", 1, "shine",		PL_O(shininess),	FUNC_NULL },
 	{"%d", 1, "sh",			PL_O(shininess),	FUNC_NULL },
 	{"%f", 1, "transmit",		PL_O(transparency),	FUNC_NULL },
@@ -82,14 +82,14 @@ struct structparse vrml_mat_parse[]={
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
-struct structparse vrml_light_parse[] = {
+struct bu_structparse vrml_light_parse[] = {
 	{"%f",	1, "angle",	LIGHT_O(lt_angle),	FUNC_NULL },
 	{"%f",	1, "fract",	LIGHT_O(lt_fraction),	FUNC_NULL },
 	{"%f",	3, "aim",	LIGHT_OA(lt_dir),	FUNC_NULL },
 	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
-struct structparse vrml_texture_parse[] = {
+struct bu_structparse vrml_texture_parse[] = {
 	{"%d",  1, "w",         TX_O(tx_w),             FUNC_NULL },
 	{"%d",  1, "n",         TX_O(tx_n),             FUNC_NULL },
 	{"%s",  TXT_NAME_LEN, "file", offsetofarray(struct vrml_texture, tx_file), FUNC_NULL },
@@ -393,7 +393,7 @@ struct mater_info *mater;
 		{
 			rt_vls_init( &vls );
 			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)rt_structparse( &vls, vrml_mat_parse, (char *)&mat );
+			(void)bu_structparse( &vls, vrml_mat_parse, (char *)&mat );
 			rt_vls_free( &vls );
 		}
 		fprintf( fp, "Separator { # start of %s\n", full_path );
@@ -417,7 +417,7 @@ struct mater_info *mater;
 		{
 			rt_vls_init( &vls );
 			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)rt_structparse( &vls, vrml_mat_parse, (char *)&mat );
+			(void)bu_structparse( &vls, vrml_mat_parse, (char *)&mat );
 			rt_vls_free( &vls );
 		}
 		fprintf( fp, "Separator { # start of %s\n", full_path );
@@ -443,7 +443,7 @@ struct mater_info *mater;
 			rt_vls_init( &vls );
 			rt_vls_strcpy( &vls, mater->ma_matparm );
 			bzero( tex.tx_file, TXT_NAME_LEN );
-			(void)rt_structparse( &vls, vrml_texture_parse, (char *)&tex );
+			(void)bu_structparse( &vls, vrml_texture_parse, (char *)&tex );
 			rt_vls_free( &vls );
 		}
 
@@ -693,7 +693,7 @@ struct mater_info *mater;
 		{
 			rt_vls_init( &vls );
 			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)rt_structparse( &vls, vrml_light_parse, (char *)&v_light );
+			(void)bu_structparse( &vls, vrml_light_parse, (char *)&v_light );
 			rt_vls_free( &vls );
 		}
 
