@@ -45,7 +45,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  in strictly ascending order, with no overlaps (ie, monotonicly
  * increasing).
  */
-extern struct mater *MaterHead;	/* now defined in librt/mater.c */
+extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
 
 void color_putrec(), color_zaprec();
 
@@ -72,11 +72,11 @@ char	**argv;
 {
 	register struct mater *mp;
 
-	if( MaterHead == MATER_NULL )  {
+	if( rt_material_head == MATER_NULL )  {
 		rt_log("none\n");
 		return CMD_OK;
 	}
-	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )
+	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )
 		pr_mater( mp );
 
 	return CMD_OK;
@@ -95,7 +95,7 @@ char	**argv;
 	register struct mater *newp,*next_mater;
 
 	/* Delete all color records from the database */
-	newp = MaterHead;
+	newp = rt_material_head;
 	while( newp != MATER_NULL )
 	{
 		next_mater = newp->mt_forw;
@@ -116,7 +116,7 @@ char	**argv;
 	rt_insert_color( newp );
 
 	/* Write new color records for all colors in the list */
-	newp = MaterHead;
+	newp = rt_material_head;
 	while( newp != MATER_NULL )
 	{
 		next_mater = newp->mt_forw;
@@ -156,7 +156,7 @@ char	**argv;
 	}
 
 	(void)fprintf( fp, hdr );
-	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
+	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
 			mp->mt_low, mp->mt_high,
 			mp->mt_r, mp->mt_g, mp->mt_b );
@@ -181,9 +181,9 @@ char	**argv;
 	}
 
 	/* Zap all the current records, both in core and on disk */
-	while( MaterHead != MATER_NULL )  {
-		zot = MaterHead;
-		MaterHead = MaterHead->mt_forw;
+	while( rt_material_head != MATER_NULL )  {
+		zot = rt_material_head;
+		rt_material_head = rt_material_head->mt_forw;
 		color_zaprec( zot );
 		rt_free( (char *)zot, "mater rec" );
 	}
@@ -286,7 +286,7 @@ color_soltab()
 	register struct mater *mp;
 
 	FOR_ALL_SOLIDS( sp )  {
-		for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
+		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 			if( sp->s_regionid <= mp->mt_high &&
 			    sp->s_regionid >= mp->mt_low ) {
 			    	sp->s_color[0] = mp->mt_r;

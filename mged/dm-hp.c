@@ -332,7 +332,7 @@ HP_colorchange()
 {
 	register struct mater *mp;
 
-	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )
+	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )
 		HP_colorit( mp );
 
 	color_soltab();		/* apply colors to the solid table */
