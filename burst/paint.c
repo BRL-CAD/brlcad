@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			 (a)[GRN] == (b)[GRN] &&\
 			 (a)[BLU] == (b)[BLU])
 
-static RGBpixel	pixbuf[MAXDEVWID];
+static unsigned char	pixbuf[MAXDEVWID][3];
 static int	gridxmargin;
 static int	gridymargin;
 
@@ -80,11 +80,11 @@ paintGridFb()
 
 	/* draw vertical lines */
 	for( fx = 1; fx < fgridwid; fx++ )
-		COPYRGB( pixbuf[fx], pixbkgr );
+		COPYRGB( &pixbuf[fx][0], pixbkgr );
 	for( fx = fxbeg; fx <= fxfin; fx += zoom )
-		COPYRGB( pixbuf[fx-fxbeg], pixgrid[0] );
+		COPYRGB( &pixbuf[fx-fxbeg][0], &pixgrid[0] );
 	for( fy = fybeg; fy <= fyfin; fy++ )
-		(void) fb_write( fbiop, fxbeg, fy, pixbuf, fgridwid );
+		(void) fb_write( fbiop, fxbeg, fy, (unsigned char *)pixbuf, fgridwid );
 	for( fy = 0; fy < devwid; fy++ )
 		(void) fb_write( fbiop, fxorg, fy, pixaxis, 1 );
 
@@ -92,17 +92,18 @@ paintGridFb()
 	if( zoom > 1 )
 		for( fy = fybeg; fy <= fyfin; fy += zoom )
 			(void) fb_write( fbiop,
-					 fxbeg, fy, pixgrid, fgridwid );		for( fx = 0; fx < devwid; fx++ )
-		COPYRGB( pixbuf[fx], pixaxis );
-	(void) fb_write( fbiop, 0, fyorg, pixbuf, devwid );
+					 fxbeg, fy, pixgrid, fgridwid );
+		for( fx = 0; fx < devwid; fx++ )
+			COPYRGB( &pixbuf[fx][0], pixaxis );
+	(void) fb_write( fbiop, 0, fyorg, (unsigned char *)pixbuf, devwid );
 	return;
 	}
 
 void
 paintCellFb( ap, pixpaint, pixexpendable )
 register struct application	*ap;
-RGBpixel			*pixpaint;
-RGBpixel			*pixexpendable;
+unsigned char			*pixpaint;
+unsigned char			*pixexpendable;
 	{	int		gx, gy;
 		register int	gyfin, gxfin;
 		register int	gxorg, gyorg;
@@ -110,9 +111,9 @@ RGBpixel			*pixexpendable;
 		int		cnt;
 #if DEBUG_CELLFB
 	rt_log( "paintCellFb: expendable {%d,%d,%d}\n",
-		(*pixexpendable)[RED],
-		(*pixexpendable)[GRN],
-		(*pixexpendable)[BLU] );
+		pixexpendable[RED],
+		pixexpendable[GRN],
+		pixexpendable[BLU] );
 #endif
 	gridToFb( ap->a_x, ap->a_y, &gx, &gy );
 	gxorg = gx+1;
@@ -125,33 +126,33 @@ RGBpixel			*pixexpendable;
 		if( zoom != 1 && (y - gy) % zoom == 0 )
 			continue;
 		RES_ACQUIRE( &rt_g.res_stats );
-		(void) fb_read( fbiop, gxorg, y, pixbuf, cnt );
+		(void) fb_read( fbiop, gxorg, y, (unsigned char *)pixbuf, cnt );
 		RES_RELEASE( &rt_g.res_stats );
 		for( x = gxorg; x < gxfin; x++ )
 			{
-			if( SAMERGB( pixbuf[x-gxorg], *pixexpendable )
+			if( SAMERGB( &pixbuf[x-gxorg][0], pixexpendable )
 				)
 				{
 #if DEBUG_CELLFB
 				rt_log( "Clobbering:<%d,%d>{%d,%d,%d}\n",
 					x, y,
-					(pixbuf[x-gxorg])[RED],
-					(pixbuf[x-gxorg])[GRN],
-					(pixbuf[x-gxorg])[BLU] );
+					pixbuf[x-gxorg][RED],
+					pixbuf[x-gxorg][GRN],
+					pixbuf[x-gxorg][BLU] );
 #endif
-				COPYRGB( pixbuf[x-gxorg], *pixpaint );
+				COPYRGB( &pixbuf[x-gxorg][0], pixpaint );
 				}
 #if DEBUG_CELLFB
 			else
 				rt_log( "Preserving:<%d,%d>{%d,%d,%d}\n",
 					x, y,
-					(pixbuf[x-gxorg])[RED],
-					(pixbuf[x-gxorg])[GRN],
-					(pixbuf[x-gxorg])[BLU] );
+					pixbuf[x-gxorg][RED],
+					pixbuf[x-gxorg][GRN],
+					pixbuf[x-gxorg][BLU] );
 #endif
 			}
 		RES_ACQUIRE( &rt_g.res_stats );
-		(void) fb_write( fbiop, gxorg, y, pixbuf, cnt );
+		(void) fb_write( fbiop, gxorg, y, (unsigned char *)pixbuf, cnt );
 		RES_RELEASE( &rt_g.res_stats );
 #if DEBUG_CELLFB
 		rt_log( "paintCellFb: fb_write(%d,%d)\n", x, y );
@@ -163,7 +164,7 @@ RGBpixel			*pixexpendable;
 void
 paintSpallFb( ap )
 register struct application	*ap;
-	{	RGBpixel pixel;
+	{	unsigned char pixel[3];
 		int x, y;
 		int err;
 		fastf_t	celldist;

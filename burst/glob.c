@@ -29,15 +29,15 @@ HmMenu	*mainhmenu;
 Ids airids;		/* burst air idents */
 Ids armorids;		/* burst armor idents */
 Ids critids;		/* critical component idents */
-RGBpixel *pixgrid;
-RGBpixel pixaxis  = { 255,   0,   0 }; /* grid axis */
-RGBpixel pixbhit  = { 200, 255, 200 }; /* burst ray hit non-critical comps */
-RGBpixel pixbkgr  = { 150, 100, 255 }; /* outside grid */
-RGBpixel pixblack = {   0,   0,   0 }; /* black */
-RGBpixel pixcrit  = { 255, 200, 200 }; /* burst ray hit critical component */
-RGBpixel pixghit  = { 255,   0, 255 }; /* ground burst */
-RGBpixel pixmiss  = { 200, 200, 200 }; /* shot missed target */
-RGBpixel pixtarg  = { 255, 255, 255 }; /* shot hit target */
+unsigned char *pixgrid;
+unsigned char pixaxis[3]  = { 255,   0,   0 }; /* grid axis */
+unsigned char pixbhit[3]  = { 200, 255, 200 }; /* burst ray hit non-critical comps */
+unsigned char pixbkgr[3]  = { 150, 100, 255 }; /* outside grid */
+unsigned char pixblack[3] = {   0,   0,   0 }; /* black */
+unsigned char pixcrit[3]  = { 255, 200, 200 }; /* burst ray hit critical component */
+unsigned char pixghit[3]  = { 255,   0, 255 }; /* ground burst */
+unsigned char pixmiss[3]  = { 200, 200, 200 }; /* shot missed target */
+unsigned char pixtarg[3]  = { 255, 255, 255 }; /* shot hit target */
 Trie *cmdtrie = NULL;
 
 bool batchmode = false;		/* are we processing batch input now */
