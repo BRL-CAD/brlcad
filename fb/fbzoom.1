@@ -1,9 +1,13 @@
 .TH FBZOOM 1 BRL/CAD
 .SH NAME
-fbzoom \- enlarge a frame buffer image
+fbzoom \(em enlarge a frame buffer image
 .SH SYNOPSIS
 .B fbzoom
 .RB [ \-h ]
+.RB [ \-F\  framebuffer]
+.RB [ \-{sS}\  squarescrsize]
+.RB [ \-{wW}\  scr_width]
+.RB [ \-{nN}\  scr_height]
 .SH DESCRIPTION
 .I Fbzoom\^
 is used to
@@ -18,6 +22,30 @@ is used to select the display device (see
 .IR brlcad (1)).
 If this variable is not set, the default device for your system will
 be used.
+.PP
+The requested framebuffer size will be the default size for the
+selected device (often 512x512 pixels).
+Specifying the
+.B \-h
+flag changes the size to 1024x1024.
+.PP
+The
+.BI \-w\  scr_width
+and
+.BI \-W\  scr_width
+flags specifies the width of each scanline for the display device,
+in pixels.
+.PP
+The
+.BI \-n\  scr_height
+and
+.BI \-N\  scr_height
+flags specifies the height of each scanline for the display device.
+.PP
+.BI \-s\  squarescrsize
+and
+.BI \-S\  squarescrsize
+set both the height and width to the size given.
 .PP
 The 
 .RB `` h '',
@@ -56,15 +84,6 @@ and typing
 or
 .RB `` Q '',
 exits the program.
-.PP
-The
-.B \-h
-flag causes the frame buffer to be
-used in high resolution mode (1024x1024).
-This is important for frame buffers such as the Adage which operate
-differently depending on the display size.  Without this flag
-the default size for the selected device will be used (usually
-the entire screen).
 .SH "SEE ALSO"
 brlcad(1)
 .SH AUTHORS
