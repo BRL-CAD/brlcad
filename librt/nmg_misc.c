@@ -350,10 +350,19 @@ struct model *m;
 	}
 }
 
-static char padstr[32];
+/*
+ *  NOTE:  All the nmg_pr_*() routines take an "h" (header string) pointer.
+ *  This can be an arbitrary caller-provided string, as long as it is kept
+ *  short.  The string will be copied over into nmg_pr_padstr[], and
+ *  "h" will be changed to point there, so spaces can be added to the end.
+ */
+static char nmg_pr_padstr[128];
 #define MKPAD(_h) { \
-	if (!_h) { _h = padstr; bzero(h, sizeof(padstr)); } \
-	else { if (strlen(_h) < sizeof(padstr)-4) (void)strcat(_h, "   "); } }
+	if (!_h) { _h = nmg_pr_padstr; nmg_pr_padstr[0] = '\0'; } \
+	else if( (_h) < nmg_pr_padstr || (_h) >= nmg_pr_padstr+sizeof(nmg_pr_padstr) )  { \
+		(void)strncpy(nmg_pr_padstr, (_h), sizeof(nmg_pr_padstr)/2); \
+		_h = nmg_pr_padstr; \
+	} else { if (strlen(_h) < sizeof(nmg_pr_padstr)-4) (void)strcat(_h, "   "); } }
 
 #define Return	{ h[strlen(h)-3] = '\0'; return; }
 
