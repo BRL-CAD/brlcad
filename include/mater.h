@@ -37,7 +37,7 @@
 #include "bu.h"
 
 #ifndef RT_EXPORT
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #ifdef RT_EXPORT_DLL
 #define RT_EXPORT __declspec(dllexport)
 #else
