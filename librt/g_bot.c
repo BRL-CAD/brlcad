@@ -268,14 +268,13 @@ struct seg		*seghead;
 int			pieces_flag;	/* !0 if more pieces still to come */
 {
 	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+	register struct seg *segp;
+	register int i;
 
 	RT_CK_SOLTAB(stp);
 
 	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
 	{
-		register struct seg *segp;
-		register int i;
-
 		for( i=0; i < nhits; i++ )
 		{
 			register int surfno = hits[i].hit_surfno;
@@ -340,9 +339,6 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 
 	if( bot->bot_mode == RT_BOT_SURFACE )
 	{
-		register struct seg *segp;
-		register int i;
-
 		for( i=0 ; i<nhits ; i++ )
 		{
 			RT_GET_SEG( segp, ap->a_resource );
@@ -363,9 +359,6 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 
 	if( bot->bot_mode == RT_BOT_SOLID )
 	{
-		register struct seg *segp;
-		register int i;
-
 		if( bot->bot_orientation == RT_BOT_UNORIENTED )
 		{
 			if( nhits == 1 )
@@ -388,7 +381,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 
 			/* Remove duplicate hits */
 			{
-				register int i, j;
+				register int j;
 
 				for( i=0 ; i<nhits-1 ; i++ )
 				{
@@ -442,7 +435,7 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 		   in the hit list. */
 		
 		{
-			register int i, j;
+			register int j;
 
 			for( i=0 ; i<nhits-1 ; i++ )
 			{
@@ -550,8 +543,6 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 
 		/* nhits is even, build segments */
 		{
-			register struct seg *segp;
-			register int	i;
 			for( i=0; i < nhits; i += 2 )  {
 				RT_GET_SEG(segp, ap->a_resource);
 				segp->seg_stp = stp;
