@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) fbgrid.c	1.4
-	Last edit: 	3/13/85 at 22:13:12	G S M
-	Retrieved: 	8/13/86 at 03:14:04
+	SCCS id:	@(#) fbgrid.c	1.5
+	Last edit: 	3/14/85 at 17:57:48	G S M
+	Retrieved: 	8/13/86 at 03:14:11
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbgrid.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbgrid.c	1.4	last edit 3/13/85 at 22:13:12";
+char	sccsTag[] = "@(#) fbgrid.c	1.5	last edit 3/14/85 at 17:57:48";
 #endif
 /*
 			F B G R I D
