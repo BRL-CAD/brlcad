@@ -12,6 +12,7 @@
  *	mat_print( &title, &m )		Print matrix (with title) on stdout.
  *	mat_trn( &o, &i )		Transpose matrix i into matrix o
  *	mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
+ *	mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -36,6 +37,8 @@
 #include	"vmath.h"
 
 extern int	printf();
+
+static double degtorad = 0.0174532925;
 
 
 /*
@@ -358,7 +361,6 @@ float elev;
 	static float sin_az, sin_el;
 	static float cos_az, cos_el;
 	extern double sin(), cos();
-	static double degtorad = 0.0174532925;
 
 	azimuth *= degtorad;
 	elev *= degtorad;
@@ -385,4 +387,60 @@ float elev;
 
 	m[12] = m[13] = m[14] = 0;
 	m[15] = 1.0;
+}
+
+/*
+ *			B U I L D H R O T
+ *
+ * This routine builds a Homogeneous rotation matrix, given
+ * alpha, beta, and gamma as angles of rotation, in degrees.
+ */
+void
+mat_angles( mat, alpha, beta, ggamma )
+register matp_t mat;
+double alpha, beta, ggamma;
+{
+	static float calpha, cbeta, cgamma;
+	static float salpha, sbeta, sgamma;
+
+	if( alpha == 0.0 && beta == 0.0 && ggamma == 0.0 )  {
+		mat_idn( mat );
+		return;
+	}
+
+	alpha *= degtorad;
+	beta *= degtorad;
+	ggamma *= degtorad;
+
+	calpha = cos( alpha );
+	cbeta = cos( beta );
+	cgamma = cos( ggamma );
+
+	salpha = sin( alpha );
+	sbeta = sin( beta );
+	sgamma = sin( ggamma );
+
+	/*
+	 * compute the new rotation to apply to the previous
+	 * viewing rotation.
+	 * Alpha is angle of rotation about the X axis, and is done third.
+	 * Beta is angle of rotation about the Y axis, and is done second.
+	 * Gamma is angle of rotation about Z axis, and is done first.
+	 */
+	mat[0] = cbeta * cgamma;
+	mat[1] = -cbeta * sgamma;
+	mat[2] = -sbeta;
+	mat[3] = 0.0;
+
+	mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
+	mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
+	mat[6] = -salpha * cbeta;
+	mat[7] = 0.0;
+
+	mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
+	mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
+	mat[10] = calpha * cbeta;
+	mat[11] = 0.0;
+	mat[12] = mat[13] = mat[14] = 0.0;
+	mat[15] = 1.0;
 }

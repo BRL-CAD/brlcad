@@ -57,7 +57,6 @@ matp_t mat;
 	static float dx, dy, dz;	/* For finding the bounding spheres */
 	static vect_t	work;		/* Vector addition work area */
 	static vect_t	homog;		/* Vect/Homog.Vect conversion buf */
-	static mat_t	special;	/* Special, no xlate Rotation Mat */
 	static int	facets;		/* # of facets produced */
 	static float	scale;		/* width across widest axis */
 	static int	i;
@@ -65,14 +64,6 @@ matp_t mat;
 	/* init maxima and minima */
 	xmax = ymax = zmax = -100000000.0;
 	xmin = ymin = zmin =  100000000.0;
-
-	/*
-	 * Build the Special Matrix,
-	 * which does not have the translation
-	 * factor, for rotating/scaling relative vectors.
-	 */
-	mat_copy( special, mat );
-	special[3] = special[7] = special[11] = 0.0;
 
 	/*
 	 * Process an ARB8, which is represented as a vector
@@ -84,13 +75,11 @@ matp_t mat;
 	 */
 	vtoh_move( homog, sp->s_values );
 	matXvec( work, mat, homog );
-	htov_move( sp->s_values, work );
+	htov_move( sp->s_values, work );		/* divide out W */
 
 	op = &sp->s_values[1*3];
 	for( i=1; i<8; i++ )  {
-		vtoh_move( homog, op );
-		matXvec( work, special, homog );
-		htov_move( homog, work );		/* divide out W */
+		MAT3XVEC( homog, mat, op );
 		VADD2( op, sp->s_values, homog );
 		op += 3;
 	}
@@ -149,11 +138,11 @@ int a, b, c, d;
 	static vect_t X_A;
 	static float f;
 
-if(debug&DEBUG_TESTING)printf("face %d%d%d%d\n", a, b, c, d );
+if(debug&DEBUG_ARB8)printf("face %d%d%d%d\n", a, b, c, d );
 	trip1 = facet( vects, stp, a, b, c );
 	trip2 = facet( vects, stp, a, c, d );
 
-if(debug&DEBUG_TESTING)printf("face values x%x x%x\n", trip1, trip2);
+if(debug&DEBUG_ARB8)printf("face values x%x x%x\n", trip1, trip2);
 	if( trip1 && trip2 )  {
 		/*
 		 *  If both facets exist, check to see if face is planar.
@@ -161,7 +150,7 @@ if(debug&DEBUG_TESTING)printf("face values x%x x%x\n", trip1, trip2);
 		 */
 		VSUB2( X_A, VERT(d), VERT(a) );
 		f = VDOT( trip1->tri_Q, X_A );
-		if( f == 0.0 )
+		if( NEAR_ZERO(f) )
 			return(2);		/* OK */
 		printf("arb8(%s):  face %d,%d,%d,%d non-planar (dot=%f)\n",
 			stp->st_name, a,b,c,d, f);
@@ -250,8 +239,17 @@ register struct soltab *stp;
 	} while( trip = trip->tri_forw );
 }
 
-extern struct seg *HeadSeg;	/* Pointer to segment list */
-
+/*
+ *			A R B 8 _ S H O T
+ *  
+ * Function -
+ *	Shoot a ray at an ARB8.
+ *  
+ * Returns -
+ *	0	MISS
+ *  	segp	HIT
+ */
+struct seg *
 arb8_shot( stp, rp )
 struct soltab *stp;
 struct ray *rp;
@@ -262,20 +260,17 @@ struct ray *rp;
 	static struct hit in, out;
 	static int flags;
 
-	in.hit_dist = 1000000;
-	out.hit_dist = -100000;
+	in.hit_dist = out.hit_dist = -1000000;	/* 'way back behind eye */
+
 	flags = 0;
 	for( ; trip; trip = trip->tri_forw )  {
 		register float dq;	/* D dot Q */
 		static float k;		/* (vol - (Q dot P))/ (Q dot D) */
 		/*
 		 *  Ray Direction dot Q.  (Q is outward-pointing normal)
-		 *  	> 0	exiting solid
-		 *  	==0	parallel to solid
-		 *  	< 0	entering solid
 		 */
 		dq = VDOT( trip->tri_Q, rp->r_dir );
-		if( debug & DEBUG_TESTING )
+		if( debug & DEBUG_ARB8 )
 			printf("Shooting at face %s.  Q.D=%f\n", trip->tri_code, dq );
 		if( NEAR_ZERO(dq) )
 			continue;
@@ -286,34 +281,34 @@ struct ray *rp;
 		if( dq < 0 )  {
 			/* Entering solid */
 			if( NEAR_ZERO( k - in.hit_dist ) )  {
-				if( debug & DEBUG_TESTING)printf("skipping nearby entry surface, k=%f\n", k);
+				if( debug & DEBUG_ARB8)printf("skipping nearby entry surface, k=%f\n", k);
 				continue;
 			}
 			if( tri_shot( trip, rp, &in, k ) != 0 )
 				continue;
+			if(debug&DEBUG_ARB8) printf("arb8: entry dist=%f, dq=%f, k=%f\n", in.hit_dist, dq, k );
 			flags |= SEG_IN;
 		} else {
 			/* Exiting solid */
 			if( NEAR_ZERO( k - out.hit_dist ) )  {
-				if( debug & DEBUG_TESTING)printf("skipping nearby exit surface, k=%f\n", k);
+				if( debug & DEBUG_ARB8)printf("skipping nearby exit surface, k=%f\n", k);
 				continue;
 			}
 			if( tri_shot( trip, rp, &out, k ) != 0 )
 				continue;
+			if(debug&DEBUG_ARB8) printf("arb8: exit dist=%f, dq=%f, k=%f\n", out.hit_dist, dq, k );
 			flags |= SEG_OUT;
 		}
 	}
 	if( flags == 0 )
-		return(1);		/* MISS */
+		return(SEG_NULL);		/* MISS */
 
 	GETSTRUCT(segp, seg);
 	segp->seg_stp = stp;
 	segp->seg_flag = flags;
 	segp->seg_in = in;
 	segp->seg_out = out;
-	segp->seg_next = HeadSeg;
-	HeadSeg = segp;
-	return(0);			/* HIT */
+	return(segp);			/* HIT */
 }
 
 tri_shot( trip, rp, hitp, k )
@@ -330,7 +325,7 @@ register float	k;			/* (v - (Q dot P))/ (Q dot D) */
 	av = VDOT( hit_pt, trip->tri_BxC );
 	bv = VDOT( hit_pt, trip->tri_CxA );
 	cv = VDOT( hit_pt, trip->tri_AxB );
-	if( debug & DEBUG_TESTING )  {
+	if( debug & DEBUG_ARB8 )  {
 		printf("k = %f,  ", k );
 		VPRINT("hit_pt", hit_pt);
 		printf("av=%f, bv=%f, cv=%f\n", av, bv, cv);
@@ -363,6 +358,6 @@ register float	k;			/* (v - (Q dot P))/ (Q dot D) */
 	hitp->hit_dist = k;
 	VMOVE( hitp->hit_point, hit_pt );
 	VMOVE( hitp->hit_normal, trip->tri_N );
-	if( debug & DEBUG_TESTING )  printf("\t[Above was a hit]\n");
+	if( debug & DEBUG_ARB8 )  printf("\t[Above was a hit]\n");
 	return(0);				/* HIT */
 }

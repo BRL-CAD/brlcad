@@ -18,5 +18,8 @@ extern int debug;
 #define DEBUG_HITS	0x02	/* Print hits used by view() */
 #define DEBUG_ALLRAYS	0x04	/* Print all attempted shots */
 #define DEBUG_QUICKIE	0x08	/* Just do 8x8 centered on origin */
+#define DEBUG_REGIONS	0x10	/* Print regions & boolean trees */
+#define DEBUG_ARB8	0x20	/* Print voluminus ARB8 details */
+#define DEBUG_PARTITION	0x40	/* Print ray partitioning process */
 
 #define DEBUG_TESTING	0x80	/* One-shot debugging flag */

@@ -19,10 +19,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "ray.h"
 #include "db.h"
+#include "dir.h"
 #include "debug.h"
 
 extern struct soltab *HeadSolid;
 extern struct functab functab[];
+struct region *HeadRegion;
+
+void pr_region();
+void pr_tree();
 
 static char idmap[] = {
 	ID_NULL,	/* undefined, 0 */
@@ -51,87 +56,67 @@ static char idmap[] = {
 	ID_NULL		/* n+1 */
 };
 
+union tree *drawHobj();
+static char *path_str();
+
 get_tree(node)
 char *node;
 {
-	union record rec;
-
-	/* For now, a very primitive function */
-
-	rec.s.s_id = GENELL;
-	VSET( &rec.s.s_values[0], 0,3,0 );	/*  V */
-	VSET( &rec.s.s_values[3], 2.5,0,0 );	/*  A */
-	VSET( &rec.s.s_values[6], 0,0.75,0 );	/*  B */
-	VSET( &rec.s.s_values[9], 0,0,1 );	/*  C */
-	add_solid( &rec, "Ell" );
-
-	rec.s.s_id = GENELL;
-	VSET( &rec.s.s_values[0], 4,3,0 );	/*  V */
-	VSET( &rec.s.s_values[3], 1,0,0 );	/*  A */
-	VSET( &rec.s.s_values[6], 0,1,0 );	/*  B */
-	VSET( &rec.s.s_values[9], 0,0,1 );	/*  C */
-	add_solid( &rec, "Near Sphere" );
-
-	rec.s.s_id = GENELL;
-	VSET( &rec.s.s_values[0], 4,3,-5 );	/*  V */
-	VSET( &rec.s.s_values[3], 1,0,0 );	/*  A */
-	VSET( &rec.s.s_values[6], 0,1,0 );	/*  B */
-	VSET( &rec.s.s_values[9], 0,0,1 );	/*  C */
-	add_solid( &rec, "Far Sphere" );
-
-	rec.s.s_id = GENARB8;
-	/* set Z=0 to explode the formulas */
-#define Z 1
-	VSET( &rec.s.s_values[0*3], -2,-1,Z);	/* Abs V */
-	VSET( &rec.s.s_values[1*3], 4,0,0);	/* Relative to V ... */
-	VSET( &rec.s.s_values[2*3], 4,2,0);
-	VSET( &rec.s.s_values[3*3], 0,2,0);
-
-#define H 4
-	VSET( &rec.s.s_values[4*3], 2,1,H);
-	VSET( &rec.s.s_values[5*3], 2,1,H);
-	VSET( &rec.s.s_values[6*3], 2,1,H);
-	VSET( &rec.s.s_values[7*3], 2,1,H);
-	add_solid( &rec, "Flat Arb" );
-#undef Z
-#undef H
-
-	rec.s.s_id = GENARB8;
-	/* set Z=0 to explode the formulas */
-#define Z 1
-	VSET( &rec.s.s_values[0*3], 0,-3,Z);	/* Abs V */
-	VSET( &rec.s.s_values[1*3], 4,0,0);	/* Relative to V ... */
-	VSET( &rec.s.s_values[2*3], 4,2,0);
-	VSET( &rec.s.s_values[3*3], 0,2,0);
-
-#define H 0.5
-	VSET( &rec.s.s_values[4*3], 2,1,H);
-	VSET( &rec.s.s_values[5*3], 2,1,H);
-	VSET( &rec.s.s_values[6*3], 2,1,H);
-	VSET( &rec.s.s_values[7*3], 2,1,H);
-#undef Z
-#undef H
-	add_solid( &rec, "Flat Arb" );
-}
-
-static
-add_solid( rec, name )
-union record *rec;
-char *name;
-{
-	register struct soltab *stp;
+	register struct directory *dp;
 	mat_t	mat;
 
+	mat_idn( mat );
+
+	dp = dir_lookup( node, LOOKUP_NOISY );
+	if( dp == DIR_NULL )
+		return;		/* ERROR */
+	(void)drawHobj( dp, REGION_NULL, 0, mat );
+
+	if( debug & DEBUG_REGIONS )  {
+		register struct region *rp = HeadRegion;	/* XXX */
+
+		printf("printing regions\n");
+		while( rp != REGION_NULL )  {
+			pr_region( rp );
+			rp = rp->reg_forw;
+		}
+	}
+}
+
+/*static */
+struct soltab *
+add_solid( rec, name, mat, regp )
+union record *rec;
+char	*name;
+matp_t	mat;
+struct region *regp;
+{
+	register struct soltab *stp;
+	register float f;
+
+	/* Eliminate any [15] scaling */
+	f = mat[15];
+	if( NEAR_ZERO(f) )  {
+		printf("solid %s:  ", name );
+		mat_print("defective matrix", mat);
+	} else if( f != 1.0 )  {
+		f = 1.0 / f;
+		mat[0] *= f;
+		mat[5] *= f;
+		mat[10]*= f;
+		mat[15] = 1;
+	}
+
 	GETSTRUCT(stp, soltab);
-	stp->st_id = idmap[rec->u_id];
+	stp->st_id = idmap[rec->s.s_type];	/* PUN for a.a_type, too */
 	stp->st_name = name;
 	stp->st_specific = (int *)0;
-	mat_idn( mat);
+	stp->st_regionp = regp;
 
 	if( functab[stp->st_id].ft_prep( &rec->s, stp, mat ) )  {
 		/* Error, solid no good */
 		free(stp);
-		return;		/* continue */
+		return( SOLTAB_NULL );		/* continue */
 	}
 
 	/* For now, just link them all onto the same list */
@@ -142,6 +127,229 @@ char *name;
 		printf("-------------- %s -------------\n", stp->st_name);
 		VPRINT("Bound Sph CENTER", stp->st_center);
 		printf("Bound Sph Rad**2 = %f\n", stp->st_radsq);
+		if( regp != REGION_NULL )
+			printf("Member of region %s\n", regp->reg_name );
 		functab[stp->st_id].ft_print( stp );
 	}
+	return( stp );
+}
+
+#define	MAXLEVELS	8
+struct directory	*path[MAXLEVELS];	/* Record of current path */
+
+/*
+ *			D R A W H O B J
+ *
+ * This routine is used to get an object drawn.
+ * The actual processing of solids is performed by add_solid(),
+ * but all transformations and region building is done here.
+ */
+/*static*/
+union tree *
+drawHobj( dp, argregion, pathpos, old_xlate )
+struct directory *dp;
+struct region *argregion;
+matp_t old_xlate;
+{
+	auto struct directory *nextdp;	/* temporary */
+	auto mat_t new_xlate;		/* Accumulated xlation matrix */
+	auto union record rec;		/* local copy of this record */
+	auto long savepos;
+	auto int nparts;		/* Number of sub-parts to this comb */
+	auto int i;
+	auto union tree *curtree;	/* ptr to current tree top */
+	auto union tree *subtree;	/* ptr to subtree passed up */
+	auto struct region *regionp;
+
+	if( pathpos >= MAXLEVELS )  {
+		(void)printf("%s: nesting exceeds %d levels\n",
+			path_str(MAXLEVELS), MAXLEVELS );
+		return;			/* Error */
+	}
+	path[pathpos] = dp;
+
+	/* Routine is recursive:  save file pointer for restoration. */
+	savepos = lseek( ged_fd, 0L, 1 );
+
+	/*
+	 * Load the record into local record buffer
+	 */
+	(void)lseek( ged_fd, dp->d_addr, 0 );
+	(void)read( ged_fd, (char *)&rec, sizeof rec );
+
+	if( rec.u_id == SOLID || rec.u_id == ARS_A )  {
+		register struct soltab *stp;		/* XXX */
+
+		/* Draw a solid */
+		stp = add_solid( &rec.s, strdup(path_str(pathpos)), old_xlate, argregion );
+		(void)lseek( ged_fd, savepos, 0);	/* restore pos */
+		if( stp == SOLTAB_NULL )
+			return( TREE_NULL );
+		if( argregion != REGION_NULL )  {
+		/**	GETSTRUCT( curtree, union tree ); **/
+			curtree = (union tree *)malloc(sizeof(union tree));
+			if( curtree == TREE_NULL )
+				bomb("drawHobj: curtree malloc failed\n");
+			bzero( (char *)curtree, sizeof(union tree) );
+			curtree->tr_op = OP_SOLID;
+			curtree->tr_stp = stp;
+			return( curtree );
+		}
+		return( TREE_NULL );
+	}
+
+	if( rec.u_id != COMB )  {
+		(void)printf("drawobj:  defective input '%c'\n", rec.u_id );
+		return(TREE_NULL);			/* ERROR */
+	}
+
+	/* recurse down through a combination (directory) node */
+	regionp = argregion;
+	if( rec.c.c_flags == 'R' )  {
+		if( argregion != REGION_NULL )  {
+			printf("Warning: region %s within region\n",
+				path_str(pathpos) );
+		} else {
+			/* Start a new region here */
+			GETSTRUCT( regionp, region );
+			regionp->reg_forw = regionp->reg_active = REGION_NULL;
+		}
+	}
+	curtree = TREE_NULL;
+	nparts = rec.c.c_length;		/* save in an auto var */
+	for( i=0; i<nparts; i++ )  {
+		(void)read(ged_fd, (char *)&rec, sizeof rec );
+		nextdp = dir_lookup( rec.M.m_instname, LOOKUP_NOISY );
+		if( nextdp == DIR_NULL )
+			continue;
+		if( rec.M.m_brname[0] != '\0' )  {
+			register struct directory *tdp;	/* XXX */
+			/*
+			 * Create an alias.  First step towards full
+			 * branch naming.  User is responsible for his
+			 * branch names being unique.
+			 */
+			tdp = dir_lookup(rec.M.m_brname, LOOKUP_QUIET);
+			if( tdp != DIR_NULL )
+				nextdp = tdp; /* use existing alias */
+			else
+				nextdp=dir_add(rec.M.m_brname,nextdp->d_addr);
+		}
+		mat_mul(new_xlate, rec.M.m_mat, old_xlate);
+
+		/* Recursive call */
+		subtree = drawHobj( nextdp, regionp, pathpos+1, new_xlate );
+		if( subtree != TREE_NULL && regionp != REGION_NULL )  {
+			if( curtree == TREE_NULL )  {
+				curtree = subtree;
+			} else {
+				register union tree *xtp;	/* XXX */
+			/**	GETSTRUCT( xtp, union tree ); **/
+				xtp=(union tree *)malloc(sizeof(union tree));
+				if( xtp == TREE_NULL )
+					bomb("drawHobj: xtp malloc failed\n");
+				bzero( (char *)xtp, sizeof(union tree) );
+				xtp->tr_left = curtree;
+				xtp->tr_right = subtree;
+				switch( rec.M.m_relation )  {
+				case SUBTRACT:
+					xtp->tr_op = OP_SUBTRACT; break;
+				case INTERSECT:
+					xtp->tr_op = OP_INTERSECT; break;
+				case UNION:
+					xtp->tr_op = OP_UNION; break;
+				}
+				curtree = xtp;
+			}
+		}
+	}
+	if( curtree != TREE_NULL )  {
+		if( regionp == REGION_NULL )  {
+			printf("drawHobj: (%s) null regionp, non-null curtree\n", path_str(pathpos) );
+		} else if( argregion == REGION_NULL )  {
+			/* Region began at this level */
+			regionp->reg_treetop = curtree;
+			regionp->reg_name = strdup(path_str(pathpos));
+			regionp->reg_forw = HeadRegion;
+			HeadRegion = regionp;
+			if( debug & DEBUG_REGIONS )
+				printf("Add Region %s\n", regionp->reg_name);
+		}
+	} else {
+		/* Null result tree, release region struct */
+		if( argregion == REGION_NULL && regionp != REGION_NULL )
+			free( regionp );
+	}
+
+	/* Clean up and return */
+	(void)lseek( ged_fd, savepos, 0 );
+	return( curtree );
+}
+
+static char *
+path_str( pos )
+int pos;
+{
+	static char line[256];
+	register char *cp = &line[0];
+	register int i;
+
+	for( i=0; i<=pos; i++ )  {
+		(void)sprintf( cp, "/%s%c", path[i]->d_namep, '\0' );
+		cp += strlen(cp);
+	}
+	return( &line[0] );
+}
+
+void
+pr_region( rp )
+register struct region *rp;
+{
+	printf("REGION %s:\n", rp->reg_name );
+	printf("id=%d, air=%d, material=%d, los=%d\n",
+		rp->reg_regionid, rp->reg_aircode,
+		rp->reg_material, rp->reg_los );
+	pr_tree( rp->reg_treetop, 0 );
+	printf("\n");
+}
+
+void
+pr_tree( tp, lvl )
+register union tree *tp;
+int lvl;			/* recursion level */
+{
+	register int i;
+
+	printf("%.8x ", tp);
+	for( i=3*lvl; i>0; i-- )
+		putchar(' ');	/* indent */
+
+	if( tp == TREE_NULL )  {
+		printf("Null???\n");
+		return;
+	}
+
+	switch( tp->tr_op )  {
+
+	case OP_SOLID:
+		printf("SOLID %s\n", tp->tr_stp->st_name );
+		return;
+
+	default:
+		printf("Unknown op=x%x\n", tp->tr_op );
+		return;
+
+	case OP_UNION:
+		printf("UNION\n");
+		break;
+	case OP_INTERSECT:
+		printf("INTERSECT\n");
+		break;
+	case OP_SUBTRACT:
+		printf("MINUS\n");
+		break;
+	}
+	/* BINARY TYPE */
+	pr_tree( tp->tr_left, lvl+1 );
+	pr_tree( tp->tr_right, lvl+1 );
 }

@@ -103,7 +103,6 @@ struct ell_specific {
 	vect_t	ell_V;		/* Vector to center of ellipsoid */
 	mat_t	ell_SoR;	/* Scale(Rot(vect)) */
 	mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
-	vect_t	ell_invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
 };
 
 /*
@@ -124,7 +123,7 @@ struct ell_specific {
 ellg_prep( sp, stp, mat )
 register struct solidrec *sp;
 struct soltab *stp;
-matp_t mat;
+matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 {
 	register struct ell_specific *ell;
 	static double	magsq_a, magsq_b, magsq_c;
@@ -132,18 +131,23 @@ matp_t mat;
 	static mat_t	Rinv;
 	static mat_t	SS;
 	static mat_t	mtemp;
+	static vect_t	A, B, C;
+	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
 	register float	f;
 
 #define SP_A	&sp->s_values[3]
 #define SP_B	&sp->s_values[6]
 #define SP_C	&sp->s_values[9]
 
-	/* TODO:  Apply 4x4mat to V, special_mat to A,B,C */
+	/* Apply 3x3 rotation portion of mat to A,B,C */
+	MAT3XVEC( A, mat, SP_A );
+	MAT3XVEC( B, mat, SP_B );
+	MAT3XVEC( C, mat, SP_C );
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( SP_A );
-	magsq_b = MAGSQ( SP_B );
-	magsq_c = MAGSQ( SP_C );
+	magsq_a = MAGSQ( A );
+	magsq_b = MAGSQ( B );
+	magsq_c = MAGSQ( C );
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_c) ) {
 		printf("ell(%s):  zero length A, B, or C vector\n",
 			stp->st_name );
@@ -151,9 +155,9 @@ matp_t mat;
 	}
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 */
-	if( VDOT( SP_A, SP_B ) != 0.0  ||
-	    VDOT( SP_B, SP_C ) != 0.0  ||
-	    VDOT( SP_A, SP_C ) != 0.0 )  {
+	if( VDOT( A, B ) != 0.0  ||
+	    VDOT( B, C ) != 0.0  ||
+	    VDOT( A, C ) != 0.0 )  {
 		printf("ell(%s):  A, B, or C not perpendicular\n",
 			stp->st_name);
 		return(1);		/* BAD */
@@ -163,35 +167,36 @@ matp_t mat;
 	GETSTRUCT( ell, ell_specific );
 	stp->st_specific = (int *)ell;
 
-	VMOVE( ell->ell_V, &sp->s_values[0] );
+	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==0. */
+	matXvec( ell->ell_V, mat, &sp->s_values[0] );
 
-	VSET( ell->ell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
+	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 
 	mat_zero( ell->ell_SoR );
 	mat_zero( R );
 
 	/* Compute R and Rinv matrices */
 	f = 1.0/sqrt(magsq_a);
-	VSCALE( &R[0], SP_A, f );
+	VSCALE( &R[0], A, f );
 	f = 1.0/sqrt(magsq_b);
-	VSCALE( &R[4], SP_B, f );
+	VSCALE( &R[4], B, f );
 	f = 1.0/sqrt(magsq_c);
-	VSCALE( &R[8], SP_C, f );
+	VSCALE( &R[8], C, f );
 	mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute SoS.  Uses 3x3 of the 4x4 matrix */
-	SS[ 0] = ell->ell_invsq[0];
-	SS[ 5] = ell->ell_invsq[1];
-	SS[10] = ell->ell_invsq[2];
+	SS[ 0] = invsq[0];
+	SS[ 5] = invsq[1];
+	SS[10] = invsq[2];
 
 	/* Compute invRSSR */
 	mat_mul( mtemp, SS, R );
 	mat_mul( ell->ell_invRSSR, Rinv, mtemp );
 
 	/* Compute SoR */
-	VSCALE( &ell->ell_SoR[0], SP_A, ell->ell_invsq[0] );
-	VSCALE( &ell->ell_SoR[4], SP_B, ell->ell_invsq[1] );
-	VSCALE( &ell->ell_SoR[8], SP_C, ell->ell_invsq[2] );
+	VSCALE( &ell->ell_SoR[0], A, invsq[0] );
+	VSCALE( &ell->ell_SoR[4], B, invsq[1] );
+	VSCALE( &ell->ell_SoR[8], C, invsq[2] );
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, ell->ell_V );
@@ -212,7 +217,6 @@ register struct soltab *stp;
 		(struct ell_specific *)stp->st_specific;
 
 	VPRINT("V", ell->ell_V);
-	VPRINT("1/magitude**2", ell->ell_invsq );
 	mat_print("S o R", ell->ell_SoR );
 	mat_print("invRSSR", ell->ell_invRSSR );
 }
@@ -225,12 +229,10 @@ register struct soltab *stp;
  *  a struct seg will be acquired and filled in.
  *  
  *  Returns -
- *  	0	HIT
- *  	1	MISS
- *  
- *  Implicit Return -
- *  	struct seg is added to st_next chain headed by HeadSeg.
+ *  	0	MISS
+ *  	segp	HIT
  */
+struct seg *
 ellg_shot( stp, rp )
 struct soltab *stp;
 register struct ray *rp;
@@ -257,7 +259,7 @@ register struct ray *rp;
 
 	root = dp*dp - dd * (pp-1);
 	if( root < 0 )
-		return(1);		/* No hit */
+		return(SEG_NULL);		/* No hit */
 	root = sqrt(root);
 
 	k1 = (-dp + root) / dd;
@@ -308,7 +310,5 @@ register struct ray *rp;
 		f = 1.0 / MAGNITUDE( segp->seg_out.hit_normal );
 		VSCALE(segp->seg_out.hit_normal, segp->seg_out.hit_normal, f);
 	}
-	segp->seg_next = HeadSeg;
-	HeadSeg = segp;
-	return(0);			/* HIT */
+	return(segp);			/* HIT */
 }

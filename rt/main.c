@@ -20,110 +20,179 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ray.h"
 #include "debug.h"
 
-extern int null_prep(),	null_shot(),	null_print();
-extern int tor_prep(),	tor_shot(),	tor_print();
-extern int tgc_prep(),	tgc_shot(),	tgc_print();
-extern int ellg_prep(),	ellg_shot(),	ellg_print();
-extern int arb8_prep(),	arb8_shot(),	arb8_print();
-extern int ars_prep(),	ars_shot(),	ars_print();
-extern int half_prep(),	half_shot(),	half_print();
+extern int null_prep(),	null_print();
+extern int tor_prep(),	tor_print();
+extern int tgc_prep(),	tgc_print();
+extern int ellg_prep(),	ellg_print();
+extern int arb8_prep(),	arb8_print();
+extern int ars_prep(),	ars_print();
+extern int half_prep(),	half_print();
+
+extern struct seg *null_shot();
+extern struct seg *tor_shot();
+extern struct seg *tgc_shot();
+extern struct seg *ellg_shot();
+extern struct seg *arb8_shot();
+extern struct seg *ars_shot();
+extern struct seg *half_shot();
 
 struct functab functab[] = {
-	null_prep,	null_shot,	null_print,	/* ID_NULL */
-	tor_prep,	tor_shot,	tor_print,	/* ID_TOR */
-	tgc_prep,	tgc_shot,	tgc_print,	/* ID_TGC */
-	ellg_prep,	ellg_shot,	ellg_print,	/* ID_ELL */
-	arb8_prep,	arb8_shot,	arb8_print,	/* ID_ARB8 */
-	ars_prep,	ars_shot,	ars_print,	/* ID_ARS */
-	half_prep,	half_shot,	half_print,	/* ID_HALF */
-	null_prep,	null_shot,	null_print,	/* ID_NULL */
+	null_prep,	null_shot,	null_print,	"ID_NULL",
+	tor_prep,	tor_shot,	tor_print,	"ID_TOR",
+	tgc_prep,	tgc_shot,	tgc_print,	"ID_TGC",
+	ellg_prep,	ellg_shot,	ellg_print,	"ID_ELL",
+	arb8_prep,	arb8_shot,	arb8_print,	"ID_ARB8",
+	ars_prep,	ars_shot,	ars_print,	"ID_ARS",
+	half_prep,	half_shot,	half_print,	"ID_HALF",
+	null_prep,	null_shot,	null_print,	">ID_NULL"
 };
+
+extern struct partition *bool_regions();
 
 int debug = DEBUG_OFF;
 
-struct soltab *HeadSolid = 0;
-struct seg *HeadSeg = 0;
+struct soltab *HeadSolid = SOLTAB_NULL;
 
-char usage[] = "Usage:  rt [-d#] model.vg object [objects]";
+static struct seg *HeadSeg = SEG_NULL;
+
+char usage[] = "Usage:  rt [-f[#]] [-x#] model.vg object [objects]\n";
+
+/* Used for autosizing */
+static float xbase, ybase, zbase;
+static float deltas;
+
+vect_t l0vec;		/* 0th light vector */
+vect_t l1vec;		/* 1st light vector */
+vect_t l2vec;		/* 2st light vector */
 
 main(argc, argv)
 int argc;
 char **argv;
 {
-	static struct ray *rayp;
-	static float xbase, ybase, zbase;
-	static float dx, dy, dz;
-	static int xscreen, yscreen;
-	static int xpts, ypts;
+	register struct ray *rayp;
+	register int xscreen, yscreen;
+	static int npts;		/* # of points to shoot: x,y */
 	static mat_t viewrot;
+	static mat_t invview;
 	static vect_t tempdir;
-	static float *fp;
+	static struct partition *PartHeadp, *pp;
+
+	npts = 200;
 
 	if( argc < 1 )  {
-		printf("%s\n", usage);
+		printf(usage);
 		exit(1);
 	}
 
 	argc--; argv++;
 	while( argv[0][0] == '-' )  {
 		switch( argv[0][1] )  {
-		case 'd':
+		case 'x':
 			sscanf( &argv[0][2], "%x", &debug );
 			printf("debug=x%x\n", debug);
 			break;
+		case 'f':
+			/* "Fast" -- just a few pixels.  Or, arg's worth */
+			npts = atoi( &argv[0][2] );
+			if( npts < 2 || npts > 1024 )
+				npts = 50;
+			break;
 		default:
 			printf("Unknown option '%c' ignored\n", argv[0][1]);
-			printf("%s\n", usage);
+			printf(usage);
 			break;
 		}
 		argc--; argv++;
 	}
-	/* Fetching database name, etc, here later */
 
-	ikopen();
-	load_map(1);
-	ikclear();
+	if( argc < 2 )  {
+		printf(usage);
+		exit(2);
+	}
+	/* Build directory of GED database */
+	dir_build( argv[0] );
+	argc--; argv++;
+
+	if( !(debug&DEBUG_QUICKIE) )  {
+		/* Prepare the Ikonas display */
+		ikopen();
+		load_map(1);
+		ikclear();
+	}
 
 	/* Load the desired portion of the model */
-	get_tree("noname");
+	while( argc > 0 )  {
+		get_tree(argv[0]);
+		argc--; argv++;
+	}
+
 	if( HeadSolid == 0 )  bomb("No solids");
 
 	/* Determine a view */
 	GETSTRUCT(rayp, ray);
 
-	ae_mat( viewrot, -35.0, -25.0 );
+	mat_idn( invview );
+/**	mat_angles( invview, 290.0, 0.0, 310.0 ); */
+	mat_angles( invview, 295.0, 0.0, 235.0 );
+/**	mat_ae( invview, 360.-35.0, 360.-25.0 ); * */
+/**	mat_ae( invview, -35.0, -25.0 ); * */
+/**	mat_ae( invview, 180.0+35.0, 180.0+25.0 ); ** */
+	mat_trn( viewrot, invview );		/* inverse */
 	mat_print( "View Rotation", viewrot );
 
 	if( !(debug&DEBUG_QUICKIE) )  {
-		xbase = -5.0; dx =  0.025;
-		ybase =  6.0; dy = -0.025;
-		zbase = 10.0;
-		xpts = 400;
-		ypts = 400;
+		autosize( viewrot, npts );
 		VSET( tempdir, 0, 0, -1 );
 	} else {
-		xbase = -3; dx = 1;
-		ybase = -3; dy = 1;
+		xbase = -3;
+		ybase = -3;
 		zbase = -10;
-		xpts = 8;
-		ypts = 8;
+		deltas = 1;
+		npts = 8;
 		VSET( tempdir, 0, 0, 1 );
 	}
-	fp = &rayp->r_dir[0];
-	MAT3XVEC( fp, viewrot, tempdir );
+	MAT3XVEC( rayp->r_dir, viewrot, tempdir );
 
-	for( yscreen = 0; yscreen < ypts; yscreen++)  {
-		for( xscreen = 0; xscreen < xpts; xscreen++)  {
+	/* Determine the Light location(s) in model space, xlate to view */
+	/* 0:  Blue, at left edge, 1/2 high */
+	tempdir[0] = 2 * (xbase);
+	tempdir[1] = (2/2) * (ybase);
+	tempdir[2] = 2 * (zbase + npts*deltas);
+VPRINT("Light0 Pos", tempdir);
+	MAT3XVEC( l0vec, viewrot, tempdir );
+	VUNITIZE(l0vec);
+VPRINT("Light0 Vec", l0vec);
+
+	/* 1: Red, at right edge, 1/2 high */
+	tempdir[0] = 2 * (xbase + npts*deltas);
+	tempdir[1] = (2/2) * (ybase);
+	tempdir[2] = 2 * (zbase + npts*deltas);
+VPRINT("Light1 Pos", tempdir);
+	MAT3XVEC( l1vec, viewrot, tempdir );
+	VUNITIZE(l1vec);
+VPRINT("Light1 Vec", l1vec);
+
+	/* 2:  Green, behind, and overhead */
+	tempdir[0] = 2 * (xbase + (npts/2)*deltas);
+	tempdir[1] = 2 * (ybase + npts*deltas);
+	tempdir[2] = 2 * (zbase + (npts/2)*deltas);
+VPRINT("Light2 Pos", tempdir);
+	MAT3XVEC( l2vec, viewrot, tempdir );
+	VUNITIZE(l2vec);
+VPRINT("Light2 Vec", l2vec);
+
+	for( yscreen = npts-1; yscreen >= 0; yscreen--)  {
+		for( xscreen = 0; xscreen < npts; xscreen++)  {
 			VSET( tempdir,
-				xbase + xscreen * dx,
-				ybase + yscreen * dy,
-				zbase);
+				xbase + xscreen * deltas,
+				ybase + (npts-yscreen-1) * deltas,
+				zbase +  2*npts*deltas );
 			MAT3XVEC( rayp->r_pt, viewrot, tempdir );
 
 			shootray( rayp );
 			/* Implicit return of HeadSeg chain */
 
-			if( HeadSeg == 0 )  {
+			if( HeadSeg == SEG_NULL )  {
 				wbackground( xscreen, yscreen );
 				continue;
 			}
@@ -132,20 +201,33 @@ char **argv;
 			 *  All intersections of the ray with the model have
 			 *  been computed.
 			 */
-			/* HeadSeg = closegaps( HeadSeg ) */
+			PartHeadp = bool_regions( HeadSeg );
 
 			/*
-			 *  Hand final intersection list to application
+			 * Hand final partitioned intersection list
+			 * to application.
 			 */
-			viewit( HeadSeg, rayp, xscreen, yscreen );
+			viewit( PartHeadp, rayp, xscreen, yscreen );
 
-			/* Free up Seg memory.  Use freelist, later */
+			/*
+			 * Processing of this ray is complete.
+			 * Release resources.
+			 *
+			 * Free up Seg memory.
+			 */
 			while( HeadSeg != 0 )  {
 				register struct seg *hsp;	/* XXX */
 
 				hsp = HeadSeg->seg_next;
 				free( HeadSeg );
 				HeadSeg = hsp;
+			}
+			/* Free up partition list */
+			for( pp = PartHeadp->pt_forw; pp != PartHeadp;  )  {
+				register struct partition *newpp;
+				newpp = pp;
+				pp = pp->pt_forw;
+				FREE_PART(newpp);
 			}
 		}
 	}
@@ -155,7 +237,6 @@ shootray( rayp )
 register struct ray *rayp;
 {
 	register struct soltab *stp;
-	static float f;
 	static vect_t diff;	/* diff between shot base & solid center */
 	register float distsq;	/* distance**2 */
 
@@ -163,84 +244,110 @@ register struct ray *rayp;
 		VPRINT("\nRay Start", rayp->r_pt);
 		VPRINT("Ray Direction", rayp->r_dir);
 	}
-	f = MAGSQ(rayp->r_dir) - 1.0;
-	if( !NEAR_ZERO(f) )
-		printf("ERROR: |r_dir|**2 - 1 = %f != 0\n", f);
+	distsq = MAGSQ(rayp->r_dir) - 1.0;
+	if( !NEAR_ZERO(distsq) )
+		printf("ERROR: |r_dir|**2 - 1 = %f != 0\n", distsq);
 
-	HeadSeg = 0;	/* Should check, actually */
+	HeadSeg = SEG_NULL;	/* Should check, actually */
 
 	/* For now, shoot at all solids in model */
 	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
+		register struct seg *newseg;		/* XXX */
+
 		if(debug&DEBUG_ALLRAYS)
 			printf("Shooting at %s -- ", stp->st_name);
 
 		/* Consider bounding sphere */
 		VSUB2( diff, stp->st_center, rayp->r_pt );
 		distsq = VDOT(rayp->r_dir, diff);
-		distsq = MAGSQ(diff) - distsq*distsq;
-		if( distsq < 0.0 )  {
+		if( (distsq=MAGSQ(diff) - distsq*distsq) > stp->st_radsq )  {
+			if(debug&DEBUG_ALLRAYS)  printf("(Not close)\n");
+			continue;
+		}
+		if( distsq < -EPSILON )  {
 			printf("ERROR in %s:  dist**2 = %f -- skipped\n",
 				stp->st_name, distsq );
 			continue;
 		}
-		if( distsq > stp->st_radsq )  {
-			if(debug&DEBUG_ALLRAYS)  printf("(Not close)\n");
-			continue;
-		}
 
-		functab[stp->st_id].ft_shot( stp, rayp );
-		/* ret == 0 for HIT */
-		/* Adds results to HeadSeg chain, if it hit */
+		newseg = functab[stp->st_id].ft_shot( stp, rayp );
+		if( newseg == SEG_NULL )
+			continue;
+
+		/* First, some checking */
+		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
+			struct hit temp;	/* XXX */
+			printf("ERROR %s %s: in/out reversal (%f,%f)\n",
+				functab[stp->st_id].ft_name,
+				newseg->seg_stp->st_name,
+				newseg->seg_in.hit_dist,
+				newseg->seg_out.hit_dist );
+			temp = newseg->seg_in;		/* struct copy */
+			newseg->seg_in = newseg->seg_out; /* struct copy */
+			newseg->seg_out = temp;		/* struct copy */
+		}
+		/* Add to list */
+		newseg->seg_next = HeadSeg;
+		HeadSeg = newseg;
 	}
+}
+
+autosize( rot, npts )
+matp_t rot;
+int npts;
+{
+	register struct soltab *stp;
+	static float xmin, xmax;
+	static float ymin, ymax;
+	static float zmin, zmax;
+	static vect_t xlated;
+	static mat_t invrot;
+
+	mat_trn( invrot, rot );		/* Inverse rotation matrix */
+
+	/* init maxima and minima */
+	xmax = ymax = zmax = -100000000.0;
+	xmin = ymin = zmin =  100000000.0;
+
+	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
+		register float rad;
+
+		rad = sqrt(stp->st_radsq);
+		MAT3XVEC( xlated, invrot, stp->st_center );
+#define MIN(v,t) {register float rt=(t); if(rt<v) v = rt;}
+#define MAX(v,t) {register float rt=(t); if(rt>v) v = rt;}
+		MIN( xmin, xlated[0]-rad );
+		MAX( xmax, xlated[0]+rad );
+		MIN( ymin, xlated[1]-rad );
+		MAX( ymax, xlated[1]+rad );
+		MIN( zmin, xlated[2]-rad );
+		MAX( zmax, xlated[2]+rad );
+	}
+	xbase = xmin;
+	ybase = ymin;
+	zbase = zmin;
+
+	deltas = (xmax-xmin)/npts;
+	MAX( deltas, (ymax-ymin)/npts );
+	printf("X(%f,%f), Y(%f,%f), Z(%f,%f)\nDeltas=%f\n",
+		xmin, xmax, ymin, ymax, zmin, zmax, deltas );
 }
 
 bomb(str)
 char *str;
 {
-	fprintf(stderr, "\nrt: %s\nFATAL ERROR\n", str);
+	fflush(stdout);
+	fprintf(stderr,"\nrt: %s.  FATAL ERROR.\n", str);
 	exit(12);
 }
 
-/*
- *  Compute a 4x4 rotation matrix given Azimuth and Elevation.
- *  
- *  Azimuth is +X, Elevation is +Z, both in degrees.
- *
- *  Formula due to Doug Gwyn, BRL.
- */
-ae_mat( m, azimuth, elev )
-register matp_t m;
-float azimuth;
-float elev;
+pr_seg(segp)
+register struct seg *segp;
 {
-	static float sin_az, sin_el;
-	static float cos_az, cos_el;
-	extern double sin(), cos();
-	static double degtorad = 0.0174532925;
-
-	azimuth *= degtorad;
-	elev *= degtorad;
-
-	sin_az = sin(azimuth);
-	cos_az = cos(azimuth);
-	sin_el = sin(elev);
-	cos_el = cos(elev);
-
-	m[0] = cos_el * cos_az;
-	m[1] = -sin_az;
-	m[2] = -sin_el * cos_az;
-	m[3] = 0;
-
-	m[4] = cos_el * sin_az;
-	m[5] = cos_az;
-	m[6] = -sin_el * sin_az;
-	m[7] = 0;
-
-	m[8] = sin_el;
-	m[9] = 0;
-	m[10] = cos_el;
-	m[11] = 0;
-
-	m[12] = m[13] = m[14] = 0;
-	m[15] = 1.0;
+	printf("SEG at %.8x:  flag=%x (%f,%f) solid=%s\n",
+		segp, segp->seg_flag,
+		segp->seg_in.hit_dist,
+		segp->seg_out.hit_dist,
+		segp->seg_stp->st_name );
 }
+
