@@ -795,20 +795,28 @@ static mat_t	rtif_viewrot;
 static struct rt_vlblock	*rtif_vbp;
 static FILE	*rtif_fp;
 static double	rtif_delay;
+static struct mged_variables	rtif_saved_state;	/* saved state variables */
 
 /*
  *  Called on SIGINT from within preview.
  *  Close things down and abort.
+ *
+ *  WARNING:  If the ^C happened when rt_free() had already done a RES_ACQUIRE,
+ *  then any further calls to rt_free() will hang.
+ *  It isn't clear how to handle this.
  */
 static void
 rtif_sigint()
 {
-	if(rtif_fp)  fclose(rtif_fp);
-	rtif_fp = NULL;
+	write( 2, "rtif_sigint\n", 12);
 
-	/* Draw what path was accomplished */
-	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH", 0 );
-	rt_vlblock_free(rtif_vbp);
+	/* Restore state variables */
+	mged_variables = rtif_saved_state;	/* struct copy */
+
+	if(rtif_vbp)  {
+		rt_vlblock_free(rtif_vbp);
+		rtif_vbp = (struct rt_vlblock *)NULL;
+	}
 	db_free_anim(dbip);	/* Forget any anim commands */
 	sig2();			/* Call main SIGINT handler */
 	/* NOTREACHED */
@@ -828,6 +836,10 @@ char	**argv;
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
 		return;
 
+	/* Save any state variables we plan on changing */
+	rtif_saved_state = mged_variables;	/* struct copy */
+	mged_variables.autosize = 0;
+
 	rtif_delay = 0;			/* Full speed, by default */
 
 	/* Parse options */
@@ -845,6 +857,8 @@ char	**argv;
 	argc -= optind-1;
 	argv += optind-1;
 
+	/* If file is still open from last cmd getting SIGINT, close it */
+	if(rtif_fp)  fclose(rtif_fp);
 	if( (rtif_fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
 		return;
@@ -870,8 +884,14 @@ char	**argv;
 	rtif_fp = NULL;
 
 	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH", 0 );
-	rt_vlblock_free(rtif_vbp);
+	if(rtif_vbp)  {
+		rt_vlblock_free(rtif_vbp);
+		rtif_vbp = (struct rt_vlblock *)NULL;
+	}
 	db_free_anim(dbip);	/* Forget any anim commands */
+
+	/* Restore state variables */
+	mged_variables = rtif_saved_state;	/* struct copy */
 }
 
 /*
@@ -1155,7 +1175,7 @@ int	argc;
 
 	/* If new treewalk is needed, get new objects into view. */
 	if( tree_walk_needed )  {
-		f_edit( rt_cmd_vec_len, rt_cmd_vec );
+		edit_com( rt_cmd_vec_len, rt_cmd_vec, 1, 0 );
 	}
 
 	dmaflag = 1;
