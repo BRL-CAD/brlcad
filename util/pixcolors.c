@@ -10,14 +10,16 @@
  *	Options
  *	v	list colors
  */
+#include "conf.h"
+
 #include <stdio.h>
-#include "externs.h"
+
+#include "machine.h"
+#include "externs.h"		/* For getopt */
 
 /* declarations to support use of getopt() system call */
 char *options = "v";
 char verbose = 0;
-extern char *optarg;
-extern int optind, opterr, getopt();
 char *progname = "(noname)";
 
 #define PIXELS 1024

@@ -38,11 +38,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"			/* For getopt */
 
 #define	MAC_HEIGHT	576	/* input height (y), in bits */
 #define	MAC_WIDTH	720	/* input width (x), in bits */

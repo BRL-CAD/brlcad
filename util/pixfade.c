@@ -31,14 +31,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
-#include "externs.h"
-#include "../rt/mathtab.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"		/* For getopt */
+#include "../rt/mathtab.h"
 
 int	max = 255;
 double	multiplier = 1.0;

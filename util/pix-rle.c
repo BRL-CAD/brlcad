@@ -19,8 +19,15 @@
 static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <time.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"		/* For malloc, getenv, strdup, ... */
@@ -171,11 +178,11 @@ char	*argv[];
 			rle_putcom( strdup(comment), &outrle );
 		}
 	}
-#	ifdef BSD
+#ifdef HAVE_GETHOSTNAME
 	gethostname( host, sizeof(host) );
 	sprintf( comment, "converted_host=%s", host);
 	rle_putcom( strdup(comment), &outrle );
-#	endif
+#endif
 
 	rle_put_setup( &outrle );
 	rle_row_alloc( &outrle, &rows );

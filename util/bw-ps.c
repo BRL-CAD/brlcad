@@ -19,17 +19,17 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>	/* for atof() */
 #include <time.h>	/* for ctime() */
-#include "externs.h"
+
+#include "machine.h"
+#include "externs.h"	/* For getopt */
 
 #define	DEFAULT_SIZE	6.75		/* default output size in inches */
 #define	MAX_BYTES	(64*128)	/* max bytes per image chunk */
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 static int	encapsulated = 0;	/* encapsulated postscript */
 static int	inverse = 0;		/* inverse video (RFU) */

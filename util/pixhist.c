@@ -21,7 +21,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
 #include "fb.h"
 
 #define	IBUFSIZE 3*2048		/* Max read size in rgb pixels */

@@ -20,31 +20,33 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/time.h>
+
+#include "machine.h"
+#include "externs.h"
 
 /*
  *  This file will work IFF one of these three flags is set:
- *	_POSIX_SOURCE	use POXIX termios and tcsetattr() call
+ *	HAVE_XOPEN	use POSIX termios and tcsetattr() call with XOPEN flags
  *	SYSV		use SysV Rel3 termio and TCSETA ioctl
  *	BSD		use Version 7 / BSD sgttyb and TIOCSETP ioctl
  */
 
-#if defined(_POSIX_SOURCE)
-#  if !defined(_XOPEN_SOURCE)
-#	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
-#  endif
+#if defined(HAVE_XOPEN)
 #  undef SYSV
 #  undef BSD
 #  include <termios.h>
 
 	static struct termios	tty;
 
-#else	/* !defined(_POSIX_SOURCE) */
+#else	/* !defined(HAVE_XOPEN) */
 
 #  ifdef BSD
-#    include <sys/time.h>
 #    include <sys/ioctl.h>
      struct	sgttyb	tty;
 #    define TCSETA	TIOCSETP
@@ -69,7 +71,7 @@ int fd;
 char cmd;
 unsigned char	status[4];
 unsigned char	values[21];
-int	readfds;
+fd_set	readfds;
 int	polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 
 void
@@ -89,7 +91,7 @@ dunnopen()
 
 	/* open the camera device */
 
-#if _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	if( (fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0 )
 #else
 	if( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 )
@@ -99,7 +101,7 @@ dunnopen()
 		close(fd);
 		exit(10);
 	}
-#if _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	if( tcgetattr( fd, &tty ) < 0 )
 #else
 	if( ioctl(fd, TCGETA, &tty) < 0)
@@ -116,7 +118,7 @@ dunnopen()
 	tty.sg_ispeed = tty.sg_ospeed = B9600;
 	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
 #endif
-#if defined(SYSV) || defined(_POSIX_SOURCE)
+#if defined(SYSV) || defined(HAVE_XOPEN)
 	tty.c_cflag = B9600 | CS8;	/* Character size = 8 bits */
 	tty.c_cflag &= ~CSTOPB;		/* One stop bit */
 	tty.c_cflag |= CREAD;		/* Enable the reader */
@@ -137,7 +139,7 @@ dunnopen()
 	tty.c_lflag &= ~(ECHO|ECHOE|ECHOK);	/* Echo mode OFF */
 #endif
 
-#if _POSIX_SOURCE
+#if HAVE_XOPEN
 	if( tcsetattr( fd, TCSAFLUSH, &tty ) < 0 )
 #else
 	if( ioctl(fd, TCSETA, &tty) < 0 )
@@ -198,27 +200,21 @@ unsigned	n;
 
 goodstatus()
 {
-#ifdef BSD
 	struct timeval waittime, *timeout;
 
 	timeout = &waittime;
 	timeout->tv_sec = 10;
 	timeout->tv_usec = 0;
-#endif
 	
 	cmd = ';';	/* status request cmd */
 	write(fd, &cmd, 1);	
-#ifdef BSD
-	readfds = 1<<fd;
-	select(fd+1, &readfds, (int *)0, (int *)0, timeout);
-	if( (readfds & (1<<fd)) ==0 ) {
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, timeout);
+	if( FD_ISSET(fd, &readfds) ==0 ) {
 		printf("\007dunnsnap: status request timed out\n");
 		return(0);
 	}
-#else
-	/* Set an alarm, and then just hang a read */
-	alarm(10);
-#endif
 
 	mread(fd, status, 4);
 	alarm(0);
@@ -252,21 +248,9 @@ goodstatus()
 void
 hangten()
 {
-#ifdef BSD
 	static struct timeval delaytime = { 0, 10000}; /* set timeout to 10mS*/
 
-	select(0, (int *)0, (int *)0, (int *)0, &delaytime);
-#else
-	register int i;
-	register int a, b;
-	/* On a 10 MIPS machine, do 10,000,000 * 0.010 adds,
-	 * to approximate 10mS
-	 */
-	b = 2;
-	for( i=0; i < 100000; i++ )
-		b = b + i;
-	a = b;
-#endif
+	select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &delaytime);
 }
 
 /*
@@ -282,24 +266,20 @@ int nsecs;
 {
 	register int i;
 
-#ifdef BSD
 	struct timeval waittime, *timeout;
 	timeout = &waittime;
 	timeout->tv_sec = nsecs;
 	timeout->tv_usec = 0;
-#endif
 
 	cmd = ':';	/* ready test command */
 	write(fd, &cmd, 1);
-#ifdef BSD
-	readfds = 1<<fd;
-	select(fd+1, &readfds, (int *)0, (int *)0, timeout);
-	if ((readfds & (1<<fd)) != 0) {
+
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, timeout);
+	if ( FD_ISSET(fd, &readfds) ) {
 		return 0;	/* timeout after n secs */
 	}
-#else
-	alarm(nsecs);
-#endif
 	status[0] = status[1] = '\0';
 	/* This loop is needed to skip leading nulls in input stream */
 	do {
@@ -310,7 +290,6 @@ int nsecs;
 		}
 	} while( status[0] == '\0' );
 	(void)read(fd, &status[1], 1);
-	alarm(0);
 
 	if((status[0]&0x7f) == 'R' && (status[1]&0x7f) == '\r')
 		return 1;	/* camera is ready */
@@ -329,12 +308,10 @@ void
 getexposure(title)
 char *title;
 {
-#ifdef BSD
 	struct timeval waittime;
 
 	waittime.tv_sec = 20;
 	waittime.tv_usec = 0;
-#endif
 
 	if(!ready(20)) {
 		printf("dunncolor: (getexposure) camera not ready\n");
@@ -346,18 +323,15 @@ char *title;
 	else
 		cmd = '=';	/* request AUX exposure values */
 	write(fd, &cmd, 1);
-#ifdef BSD
-	readfds = 1<<fd;
-	select(fd+1, &readfds, (int *)0, (int *)0, &waittime);
-	if( (readfds&(1<<fd)) == 0) {
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, &waittime);
+	if( FD_ISSET(fd, &readfds) ) {
 		printf("dunncolor:\007 %s request exposure value cmd: timed out\n", title);
 		exit(40);
 	}
-#else
-	alarm(20);
-#endif
+
 	mread(fd, values, 20);
-	alarm(0);
 
 	values[20] = '\0';
 	printf("dunncolor: %s = %s\n", title, values);

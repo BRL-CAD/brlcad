@@ -5,6 +5,12 @@
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"		/* For getopt() */
 #include "fb.h"

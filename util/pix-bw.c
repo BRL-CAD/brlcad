@@ -27,8 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-
-double	atof();
+#include <math.h>
 
 unsigned char	ibuf[3*1024], obuf[1024];
 

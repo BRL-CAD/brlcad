@@ -20,12 +20,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
-#include "externs.h"
+#include "conf.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For getopt, etc */
 
 static char	*file_name;
 static FILE	*infp;
@@ -310,7 +310,7 @@ int	num;
 	d = lines[3];
 	e = lines[4];
 
-#if !defined(vax) && !defined(gould) && !defined(sun)
+#ifdef VECTORIZE
 	/* This version vectorizes */
 #	include "noalias.h"
 	for( i=0; i < num; i++ )  {

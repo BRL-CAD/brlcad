@@ -34,13 +34,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
-#include "externs.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"		/* For getopt */
 
 int	arbrot();
 
@@ -303,7 +303,11 @@ reverse_buffer()
  *    dx' = -sin(a)
  *    dy' = cos(a)
  */
+#ifndef M_PI
 #define	PI	3.1415926535898
+#else
+#define PI M_PI
+#endif
 #define	DtoR(x)	((x)*PI/180.0)
 
 arbrot( a )

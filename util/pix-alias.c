@@ -26,13 +26,16 @@
  *	
  *	Run length of 0 seems to be meaningless.
  */
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"			/* For getopt */
 
 /* declarations to support use of getopt() system call */
 char *options = "hs:w:n:";
 char optflags[sizeof(options)];
-extern char *optarg;
-extern int optind, opterr, getopt();
 char *progname = "(noname)";
 
 int x=512;
@@ -50,7 +53,7 @@ struct aliashead {
 void doit()
 {
 	struct aliashead ah;
-	char *image, *malloc();
+	char *image;
 	unsigned bufsize, idx, cpix, cnt;
 	int n;
 

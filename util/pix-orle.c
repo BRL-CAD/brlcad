@@ -19,15 +19,16 @@
 static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
-#include <stdio.h>
-#include "fb.h"
+#include "conf.h"
 
+#include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"			/* For malloc and getopt */
+#include "fb.h"
 #include "orle.h"
 
 static FILE	*outfp;
-
-extern char	*malloc();
-
 static FILE	*infp;
 static char	*infile;
 
@@ -52,8 +53,6 @@ get_args( argc, argv )
 register char	**argv;
 {
 	register int	c;
-	extern int	optind;
-	extern char	*optarg;
 
 	while( (c = getopt( argc, argv, "dhs:w:n:vC:" )) != EOF )  {
 		switch( c )  {

@@ -17,7 +17,11 @@
 static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
 #include "fb.h"		/* For Pixel typedef */
 #include "orle.h"
 
@@ -119,11 +123,7 @@ char	*argv[];
 			static int	touched = 1;
 			register int	pix;
 			if( touched && (get_flags & NO_BOX_SAVE) )  {
-#ifdef BSD
 				bcopy( (char *)bg_scan, (char *)scanbuf, scan_bytes );
-#else
-				memcpy( (char *)scanbuf, (char *)bg_scan, scan_bytes );
-#endif
 			}
 			if( (touched = rle_decode_ln( fp, scanbuf )) == -1 )
 				return	1;

@@ -22,13 +22,13 @@
 static char RCSid[] = "@(#)$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"		/* For getopt and malloc */
 
-unsigned char *malloc();
 static int	org_width = 512;	/* Default file sizes 512x512 */
 static int	org_height = 512;
 static int	new_width = 512;

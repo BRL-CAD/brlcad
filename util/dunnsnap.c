@@ -23,12 +23,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
-#include "fb.h"
+#include "conf.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"			/* For getopt */
+#include "fb.h"
 
 /* Shared with dunncomm.c */
 extern int	fd;

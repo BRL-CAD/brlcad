@@ -20,9 +20,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-char *malloc();
+#include "machine.h"
+#include "externs.h"		/* For malloc */
 
 int	xnum, ynum;		/* Number of pixels in new map */
 int	xorig, yorig;		/* Bottom left corner to extract from */

@@ -14,13 +14,16 @@
  *  Distribution Status -
  *	Public Domain, Distribution Unlimitied.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
+#include "machine.h"
+#include "externs.h"		/* For atoi */
 #include "msr.h"
 struct msr_gauss *gp;
 struct msr_unif *up;
-
-int atoi();
 
 main(argc,argv)
 int argc;

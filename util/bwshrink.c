@@ -21,14 +21,15 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <sys/types.h>
-#ifdef BSD
+#ifdef USE_STRING_H
+#include <string.h>
+#else
 #include <strings.h>
 #endif
-#ifdef SYSV
-#include <string.h>
-#endif
+
 #include "machine.h"
 #include "externs.h"
 

@@ -22,17 +22,18 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
+
+#include "machine.h"
+#include "externs.h"		/* For getopt */
 
 #define	INTERACTIVE	0
 #define	COMMAND_LINE	1
 
 FILE		*ifp, *ofp;		/* input and output file pointers */
-
-extern int	getopt();		/* for command line options */
-extern int	optind;
-extern char	*optarg;
 
 static char	*file_name;
 
@@ -180,7 +181,6 @@ register 	argc;
 
 /* ======================================================================= */
 
-char	*malloc();
 char	*buf;			/* output scanline buffer, malloc'd */
 int	outbytes;
 

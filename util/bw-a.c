@@ -30,11 +30,12 @@
 static char RCSid[] = "$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"			/* For getopt */
 
 static int	file_width = 512;
 static int	file_height= 512;

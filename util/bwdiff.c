@@ -22,11 +22,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef SYSV
-#define bzero(p,cnt)	memset(p,'\0',cnt);
-#endif
+#include "conf.h"
 
 #include <stdio.h>
+
+#include "machine.h"
 
 FILE *fp1, *fp2;
 

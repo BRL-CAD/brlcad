@@ -20,11 +20,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#include "externs.h"
+
 #include "machine.h"
+#include "externs.h"			/* For getopt() */
 #include "vmath.h"
 
 #define	UPPER_CASE(c)	((c)-32)
@@ -33,10 +36,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define LEN 265
 
 #define	putsi(s) {putchar(s); putchar((s)>>8);}
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 double	getdouble();
 

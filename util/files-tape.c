@@ -44,13 +44,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-extern	char	*malloc();
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"		/* For malloc and getopt */
 
 #define	TSIZE	(6144*24*1024)	/* # of bytes on 2400' 6250bpi reel */
 long	byteswritten = 0;	/* Number of bytes written */

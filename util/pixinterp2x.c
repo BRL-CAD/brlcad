@@ -20,7 +20,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For malloc and getopt */
 
 FILE	*infp;
 
@@ -32,8 +37,6 @@ int	outbytes;			/* # bytes of one output scanline */
 int	outsize;			/* size of output buffer */
 unsigned char	*outbuf;		/* ptr to output image buffer */
 void	widen_line();
-
-extern char *malloc();
 
 void	interp_lines();
 
@@ -49,8 +52,6 @@ get_args( argc, argv )
 register char	**argv;
 {
 	register int	c;
-	extern int	optind;
-	extern char	*optarg;
 
 	while( (c = getopt( argc, argv, "hs:w:n:" )) != EOF )  {
 		switch( c )  {

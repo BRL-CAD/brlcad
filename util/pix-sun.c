@@ -16,20 +16,22 @@
  *      This software is Copyright (C) 1986 by the United States Army.
  *      All rights reserved.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
+
+#include "machine.h"
+#include "externs.h"		/* For getopt and isatty */
 
 /* declarations to support use of getopt() system call */
 char *options = "hs:w:n:d";
 char optflags[sizeof(options)];
-extern char *optarg;
-extern int optind, opterr, getopt();
-extern int isatty();
 char *progname = "(noname)";
 int dither = 0;
 
@@ -188,7 +190,7 @@ double *end_table = &table[10];
 void doit()
 {
     int i, cx, cy;
-    unsigned char *pix, *rast, *malloc();
+    unsigned char *pix, *rast;
     register unsigned char red, green, blue;
 
     if ( ((ras.ras_width/2)*2) != ras.ras_width ) {

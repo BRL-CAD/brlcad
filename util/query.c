@@ -28,8 +28,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <signal.h>
+#include <errno.h>
+
+#include "machine.h"
+#include "externs.h"		/* For getopt */
 
 char	Yes_Response[] = "y";
 int	Verbose=0;
@@ -37,12 +43,9 @@ char	*Response= Yes_Response;
 int	Timeout=0;
 int	Loop=0;
 int	Done = 0;
-extern 	int errno;
 
 static char usage[] = "\
 Usage: %s [-v] [-t seconds] [-r response ] [-l]\n";
-
-extern char *optarg;
 
 get_args( argc, argv )
 register char **argv;
@@ -89,15 +92,11 @@ char *argv[];
 		exit( 1 );
 	}
 
-#ifndef	SYSV
 	(void) signal(SIGALRM, handler);
-#endif
 	Done = 0;
 
 	for(;;) {
-#ifdef	SYSV
 		(void) signal(SIGALRM, handler);
-#endif
 		if (Verbose) {
 			if (Timeout) {
 				(void) fprintf(stderr, 

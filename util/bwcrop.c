@@ -29,9 +29,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-unsigned char *malloc();
+#include "machine.h"
+#include "externs.h"		/* For malloc */
 
 #define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
 

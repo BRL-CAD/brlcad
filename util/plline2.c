@@ -19,9 +19,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
+#include "conf.h"
 
-extern double	atof();
+#include <stdio.h>
+#include <math.h>
+
+#include "machine.h"
+#include "externs.h"			/* For atof and atoi */
+
 
 static char usage[] = "Usage: plline2 x1 y1 x2 y2 [r g b]\n";
 

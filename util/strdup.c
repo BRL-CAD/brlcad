@@ -18,9 +18,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
+#if !defined(HAVE_STRDUP)
+
 #include <stdio.h>
 
-extern char	*malloc();
+#include "machine.h"
+#include "externs.h"
 
 /*
  *			S T R D U P
@@ -30,19 +35,17 @@ extern char	*malloc();
  */
 char *
 strdup( cp )
-register char *cp;
+register CONST char *cp;
 {
 	register char	*base;
 	register int	len;
 
 	len = strlen( cp )+2;
-	if( (base = malloc( len )) == (char *)0 )
+	if( (base = (char *)malloc( len )) == (char *)0 )
 		return( (char *)0 );
 
-#ifdef BSD
 	bcopy( cp, base, len );
-#else
-	memcpy( base, cp, len );
-#endif
 	return(base);
 }
+
+#endif

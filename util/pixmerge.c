@@ -26,13 +26,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
-extern char	*malloc();
+#include "machine.h"
+#include "externs.h"			/* For malloc and getopt */
 
 static char	*f1_name;
 static char	*f2_name;

@@ -20,20 +20,22 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<stdio.h>
-#include	<signal.h>
+#include "conf.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include <stdio.h>
+#include <signal.h>
+#include <errno.h>
+
+#include "machine.h"
+#include "externs.h"			/* For getopt and malloc and atoi */
 
 #define	STOP	0170
 #define	GO	0017
 
-struct pipefds {
-	int	p_rd;
-	int	p_wr;
-};
+#define P_RD	0
+#define P_WR	1
+
+typedef int pipefds[2];
 
 static int	pid;
 static long	count;
@@ -41,9 +43,6 @@ static long	count;
 static int	verbose;
 
 static char	errbuf[BUFSIZ];
-
-extern char *malloc();
-extern int errno;
 
 static char	usage[] = "\
 Usage:  dbcp [-v] blocksize < input > output\n\
@@ -65,7 +64,7 @@ char	**argv;
 	int	saverrno;
 	int	waitcode;
 	char	msgchar;
-	struct pipefds par2chld, chld2par;
+	pipefds par2chld, chld2par;
 	int	c;
 
 	while ( (c = getopt( argc, argv, "v" )) != EOF )  {
@@ -90,7 +89,7 @@ char	**argv;
 		fprintf(stderr, "dbcp: Insufficient buffer memory\n");
 		exit (88);
 	}
-	if (pipe (&par2chld) < 0 || pipe (&chld2par) < 0) {
+	if (pipe (par2chld) < 0 || pipe (chld2par) < 0) {
 		perror ("dbcp: Can't pipe");
 		exit (89);
 	}
@@ -108,19 +107,19 @@ char	**argv;
 
 	case 0:
 		/*  Child  */
-		close (par2chld.p_wr);
-		close (chld2par.p_rd);
-		wfd = chld2par.p_wr;
-		rfd = par2chld.p_rd;
+		close (par2chld[P_WR]);
+		close (chld2par[P_RD]);
+		wfd = chld2par[P_WR];
+		rfd = par2chld[P_RD];
 		msgchar = GO;		/* Prime the pump, so to speak */
 		goto childstart;
 
 	default:
 		/*  Parent  */
-		close (par2chld.p_rd);
-		close (chld2par.p_wr);
-		wfd = par2chld.p_wr;
-		rfd = chld2par.p_rd;
+		close (par2chld[P_RD]);
+		close (chld2par[P_WR]);
+		wfd = par2chld[P_WR];
+		rfd = chld2par[P_RD];
 		break;
 	}
 

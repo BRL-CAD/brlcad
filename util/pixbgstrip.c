@@ -22,13 +22,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>	
 #include "machine.h"
-#include "externs.h"
+#include "externs.h"			/* For getopt */
 #include "fb.h"
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */

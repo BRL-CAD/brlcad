@@ -6,7 +6,11 @@
  *  Phil Dykstra
  *  12 Aug 1986
  */
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
 #include "fb.h"
 #include "spm.h"
 

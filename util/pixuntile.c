@@ -21,17 +21,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-#ifdef SYSV
-#define bzero(p,cnt)	memset(p,'\0',cnt);
-#endif
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
-extern char	*malloc();
+#include "machine.h"
+#include "externs.h"			/* For malloc and getopt */
 
 int out_width = 64;	/* width of input sub-images in pixels (64) */
 int out_height = 64;	/* height of input sub-images in scanlines (64) */

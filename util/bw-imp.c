@@ -25,16 +25,16 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#include "externs.h"
+
+#include "machine.h"
+#include "externs.h"		/* For getopt */
 
 typedef int bool;
 #define true 1
 #define false 0
-
-extern char	*optarg;
-extern int	optind;
-extern int	getopt();
 
 static int	halftone[8][8] =	/* halftone pattern */
 {
@@ -243,11 +243,7 @@ int y;
 
 		/* Obtain a single line of 8-bit pixels */
 		if( fread( line, 1, width, infp ) != width )  {
-#ifdef BSD
 			bzero( line, width );
-#else
-			memset( line, '\0', width );
-#endif
 		}
 
 		/* construct im_mag scans of Imagen swath */

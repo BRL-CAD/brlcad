@@ -26,18 +26,17 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
+#include "conf.h"
 
-#ifdef BSD
+#include <stdio.h>
+#ifdef USE_STRING_H
+#include	<string.h>
+#else
 #include	<strings.h>
 #endif
-#ifdef SYSV
-#include	<string.h>
-#endif
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"		/* For getopt */
 
 #define MAXLINE		(8*1024)
 #define DEFAULT_WIDTH	512

@@ -23,16 +23,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>	
+#include <math.h>
 
-#ifdef SYSV
-#define bzero(p,cnt)	memset(p,'\0',cnt);
-#endif
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-extern double	atof();
+#include "machine.h"
+#include "externs.h"		/* For getopt and atof */
 
 double col[3] = {128,128,128};		/* r,g,b */
 double hsv[3];				/* h,s,v */
@@ -273,8 +270,6 @@ register double *hsv;
  * 
  * convert hue saturation and value to red, green, blue
  */
-
-double modf();
 
 void
 hsvrgb(hsv, rgb)

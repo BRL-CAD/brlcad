@@ -18,15 +18,14 @@
 static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"			/* For getopt and malloc and getenv */
 #include "fb.h"
 #include "rle.h"
-
-extern int	optind;
-extern char	*optarg;
-extern char	*getenv();
-
-extern char	*malloc();
 
 static FILE	*infp;
 static char	*infile;
