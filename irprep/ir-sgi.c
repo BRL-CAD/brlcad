@@ -20,6 +20,7 @@
 #if HAS_SGIGL
 
 /*  Include files needed.  */
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -556,6 +557,8 @@ main()
 
 #else	/* !defined(IRIX) */
 #include <stdio.h>
+#include <stdlib.h>
+int
 main()
 {
 	fprintf(stderr,"ir-sgi: This program only works on an SGI workstation\n");

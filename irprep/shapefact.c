@@ -112,7 +112,7 @@ char **argv;
    char idbuf[32];	/*  Contains database name.  */
    struct region *pr;	/*  Used in finding region names.  */
    double rho,phi,theta;/*  Spherical coordinates for starting point.  */
-   double areabs;	/*  Area of bounding sphere (mm**2).  */
+   double areabs=0.0;	/*  Area of bounding sphere (mm**2).  */
    int ians;		/*  Answer of question.  */
    double strtpt[3];	/*  Starting point of ray.  */
    double strtdir[3];	/*  Starting direction.  */
@@ -774,7 +774,7 @@ struct partition *PartHeadp;
    register struct partition *pp;
    register struct hit *hitp;
    register struct soltab *stp;
-   int icur;			/*  Current region hit.  */
+   int icur=0;			/*  Current region hit.  */
    int iprev;			/*  Previous region hit.  */
    int iair;			/*  Type of air or region came from,  */
 				/*  0=>region, 1=>exterior air, 2=>crew  */

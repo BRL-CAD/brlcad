@@ -119,7 +119,7 @@ char *argv[];
 
    FILE *fp;		/*  used in opening file for second pass  */
    char spfile[16];	/*  second pass file name  */
-   FILE *fp1;		/*  conductivity file  */
+   FILE *fp1=NULL;		/*  conductivity file  */
    char confile[16];	/*  conductivity file  */
    FILE *fp2;		/*  conductivity table file  */
    char tblfile[16];	/*  conductivity table file  */
@@ -134,7 +134,7 @@ char *argv[];
 			/*  1 => generic file.  */
    FILE *fp6;		/*  Used in writing generic file.  */
    char genfile[16];	/*  Generic file name.  */
-   FILE *fp3;		/*  used for writing output to file  */
+   FILE *fp3=NULL;		/*  used for writing output to file  */
    char filename[16];	/*  output file name  */
 
    FILE *fp5;		/*  material file  */
