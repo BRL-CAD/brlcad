@@ -1307,6 +1307,34 @@ struct nmgregion	*r;
 }
 
 /*
+ *			N M G _ M O D E L _ V E R T E X _ L I S T
+ *
+ *  Given an nmgmodel, build an nmg_ptbl list which has each vertex
+ *  pointer in the model listed exactly once.
+ */
+void
+nmg_model_vertex_list( tab, m )
+struct nmg_ptbl		*tab;
+struct model		*m;
+{
+	struct vf_state	st;
+	struct nmg_visit_handlers	handlers;
+
+	NMG_CK_MODEL(m);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.tabl = tab;
+
+	(void)nmg_tbl( tab, TBL_INIT, 0 );
+
+	handlers = nmg_visit_handlers_null;		/* struct copy */
+	handlers.vis_vertex = nmg_2rvf_handler;
+	nmg_visit( &m->magic, &handlers, (genptr_t)&st );
+
+	rt_free( (char *)st.visited, "visited[]");
+}
+
+/*
  *			N M G _ 2 R E F _ H A N D L E R
  *
  *  A private support routine for nmg_region_edge_list().
@@ -1328,7 +1356,6 @@ int		first;
 
 	nmg_tbl( sp->tabl, TBL_INS, ep );
 }
-/* End of borrow */
 
 /*
  *                      N M G _ R E G I O N _ E D G E _ L I S T
