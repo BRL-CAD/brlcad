@@ -60,7 +60,7 @@ matp_t mat;
 	 * Convert from vector to point notation IN PLACE
 	 * by rotating vectors and adding base vector.
 	 */
-	MAT4X3VEC( work, mat, vec );			/* 4x4: xlate, too */
+	MAT4X3PNT( work, mat, vec );			/* 4x4: xlate, too */
 	VMOVE( vec, work );				/* base vector */
 	VMOVE( sum, vec );				/* sum=0th element */
 
@@ -328,16 +328,16 @@ register struct ray *rp;
 {
 	register struct plane_specific *plp =
 		(struct plane_specific *)stp->st_specific;
-	register struct seg *segp;
-	static struct hit in, out;
-	static int flags;
-	static vect_t	hit_pt;		/* ray hits solid here */
+#define MAXHITS 12		/* # surfaces hit, must be even */
+	static struct hit hits[MAXHITS];
+	register struct hit *hp;
+	static int	nhits;
 	static vect_t	work;
 	static fastf_t	xt, yt;
 
-	in.hit_dist = out.hit_dist = -INFINITY;	/* 'way back behind eye */
+	nhits = 0;
+	hp = &hits[0];
 
-	flags = 0;
 	/* consider each face */
 	for( ; plp; plp = plp->pl_forw )  {
 		FAST fastf_t dn;		/* Direction dot Normal */
@@ -349,8 +349,7 @@ register struct ray *rp;
 		if( debug & DEBUG_ARB8 )
 			printf("Shooting at face %s.  N.Dir=%f\n", plp->pl_code, dn );
 		/*
-		 *  Unless *exactly* along face, need to compute this anyways,
-		 *  because other (entrance/exit) point is probably worth it.
+		 *  If ray lies directly along the face, drop this face.
 		 */
 		if( dn == 0.0 )
 			continue;
@@ -358,85 +357,91 @@ register struct ray *rp;
 		/* Compute distance along ray of intersection */
 		k = (plp->pl_NdotA - VDOT(plp->pl_N, rp->r_pt)) / dn;
 
-		if( dn < 0 )  {
-			/* Entering solid */
-			if( flags & SEG_IN )  {
-				if( debug & DEBUG_ARB8)printf("skipping nearby entry surface, k=%f\n", k);
-				continue;
-			}
-			/* if( pl_shot( plp, rp, &in, k ) != 0 ) continue; */
-			VJOIN1( hit_pt, rp->r_pt, k, rp->r_dir );
-			VSUB2( work, hit_pt, plp->pl_A );
-			xt = VDOT( work, plp->pl_Xbasis );
-			yt = VDOT( work, plp->pl_Ybasis );
-			if( !inside(
-				&xt, &yt,
-				plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
-				plp->pl_npts )
-			)
-				continue;			/* MISS */
+		/*  If dn < 0, we should be entering the solid.
+		 *  However, we just assume in/out sorting later will work.
+		 *  This code is an inline version of:
+		 *
+		 *	if( pl_shot( plp, rp, &in, k ) != 0 ) continue;
+		 */
+		VJOIN1( hp->hit_point, rp->r_pt, k, rp->r_dir );
+		VSUB2( work, hp->hit_point, plp->pl_A );
+		xt = VDOT( work, plp->pl_Xbasis );
+		yt = VDOT( work, plp->pl_Ybasis );
+		if( !inside(
+			&xt, &yt,
+			plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
+			plp->pl_npts )
+		)
+			continue;			/* MISS */
 
-			/* HIT is within planar face */
-			in.hit_dist = k;
-			VMOVE( in.hit_point, hit_pt );
-			VMOVE( in.hit_normal, plp->pl_N );
-			if(debug&DEBUG_ARB8) printf("arb8: entry dist=%f, dn=%f, k=%f\n", in.hit_dist, dn, k );
-			flags |= SEG_IN;
-		} else {
-			/* Exiting solid */
-			if( flags & SEG_OUT )  {
-				if( debug & DEBUG_ARB8)printf("skipping nearby exit surface, k=%f\n", k);
-				continue;
-			}
-			/* if( pl_shot( plp, rp, &out, k ) != 0 ) continue; */
-			VJOIN1( hit_pt, rp->r_pt, k, rp->r_dir );
-			VSUB2( work, hit_pt, plp->pl_A );
-			xt = VDOT( work, plp->pl_Xbasis );
-			yt = VDOT( work, plp->pl_Ybasis );
-			if( !inside(
-				&xt, &yt,
-				plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
-				plp->pl_npts )
-			)
-				continue;			/* MISS */
-
-			/* HIT is within planar face */
-			out.hit_dist = k;
-			VMOVE( out.hit_point, hit_pt );
-			VMOVE( out.hit_normal, plp->pl_N );
-			if(debug&DEBUG_ARB8) printf("arb8: exit dist=%f, dn=%f, k=%f\n", out.hit_dist, dn, k );
-			flags |= SEG_OUT;
+		/* HIT is within planar face */
+		hp->hit_dist = k;
+		VMOVE( hp->hit_normal, plp->pl_N );
+		if(debug&DEBUG_ARB8) printf("arb8: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
+		if( nhits++ >= MAXHITS )  {
+			printf("arb8(%s): too many hits\n", stp->st_name);
+			break;
 		}
+		hp++;
 	}
-	if( flags == 0 )
+	if( nhits == 0 )
 		return(SEG_NULL);		/* MISS */
 
-	if( flags == SEG_IN )  {
-		/* It can start inside, but it should always leave.
+	/* Sort hits, Near to Far */
+	HitSort( hits, nhits );
+
+	if( nhits&1 )  {
+		/*
 		 * If this condition exists, it is almost certainly due to
-		 * the dn==0 check above.  Thus, we will make the
+		 * the dn==0 check above.  Thus, we will make the last
 		 * surface infinitely thin and just replicate the entry
 		 * point as the exit point.  This at least makes the
 		 * presence of this solid known.  There may be something
 		 * better we can do.
 		 */
-		out.hit_dist = in.hit_dist;
-		VMOVE( out.hit_point, in.hit_point );
-		VREVERSE( out.hit_normal, in.hit_point );
-		flags |= SEG_OUT;
+		hits[nhits] = hits[nhits-1];	/* struct copy */
+		VREVERSE( hp->hit_normal, hits[nhits-1].hit_normal );
+		printf("ERROR: arb8(%s): %d hits, false exit\n",
+			stp->st_name, nhits);
+		nhits++;
 	}
 
-	if( flags == SEG_OUT )  {
-		VSET( in.hit_point, 0, 0, 0 );
-		VSET( in.hit_normal, 0, 0, 0 );
+	/* nhits is even, build segments */
+	{
+		register struct seg *segp;			/* XXX */
+		segp = SEG_NULL;
+		while( nhits > 0 )  {
+			register struct seg *newseg;		/* XXX */
+			GET_SEG(newseg);
+			newseg->seg_next = segp;
+			segp = newseg;
+			segp->seg_stp = stp;
+			segp->seg_flag = SEG_IN|SEG_OUT;
+			segp->seg_in = hits[nhits-2];	/* struct copy */
+			segp->seg_out = hits[nhits-1];	/* struct copy */
+			nhits -= 2;
+		}
+		return(segp);			/* HIT */
 	}
-	/* SEG_OUT, or SEG_IN|SEG_OUT */
-	GET_SEG(segp);
-	segp->seg_stp = stp;
-	segp->seg_flag = flags;
-	segp->seg_in = in;		/* struct copy */
-	segp->seg_out = out;		/* struct copy */
-	return(segp);			/* HIT */
+	/* NOTREACHED */
+}
+
+HitSort( h, nh )
+register struct hit h[];
+register int nh;
+{
+	register int i, j;
+	static struct hit temp;
+
+	for( i=0; i < nh-1; i++ )  {
+		for( j=i+1; j < nh; j++ )  {
+			if( h[i].hit_dist <= h[j].hit_dist )
+				continue;
+			temp = h[j];		/* struct copy */
+			h[j] = h[i];		/* struct copy */
+			h[i] = temp;		/* struct copy */
+		}
+	}
 }
 
 /*
