@@ -9,10 +9,10 @@
 #include "../Cakefile.defs"
 
 #define FILES	\
-	badmagic bomb \
+	badmagic bitv bomb \
 	getopt linebuf \
 	log magic malloc memset \
-	parallel printb semaphore \
+	parallel printb ptbl semaphore \
 	vls
 
 #define VERSION_VARIABLE	bu_version
