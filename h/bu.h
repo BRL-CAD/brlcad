@@ -68,15 +68,15 @@ extern char	*realloc();
 #endif
 
 /* 
- * Macro for getting a concatenated string of the current file and line number
- * produces something of the form:
+ * BU_FLSTR   Macro for getting a concatenated string of the current 
+ * file and line number.  Produces something of the form:
  *   "filename.c"":""1234"
  */
 #define bu_cpp_str(s) # s
 #define bu_cpp_xstr(s)  bu_cpp_str(s)
 #define bu_cpp_glue(a, b) a ## b
 #define bu_cpp_xglue(a, b) bu_cpp_glue(a, b)
-#define BU_FLSTR __FILE__ ## ":" ## bu_cpp_xstr(__LINE__)
+#define BU_FLSTR __FILE__ ":" bu_cpp_xstr(__LINE__)
 #define BU_QFLSTR bu_cpp_xstr(__FILE__ line __LINE__)
 
 /*
