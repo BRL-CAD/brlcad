@@ -30,21 +30,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	In the process, the name was changed to fbzoom from ikzoom.
 	Gary S. Moss, BRL. 03/13/85.
 
-	SCCS id:	@(#) fbzoom.c	1.5
-	Last edit: 	3/14/85 at 17:58:12
-	Retrieved: 	8/13/86 at 03:15:02
+	SCCS id:	@(#) fbzoom.c	1.6
+	Last edit: 	5/29/85 at 16:32:49
+	Retrieved: 	8/13/86 at 03:15:08
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbzoom.c
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbzoom.c	1.5	last edit 3/14/85 at 17:58:12";
+char	sccsTag[] = "@(#) fbzoom.c	1.6	last edit 5/29/85 at 16:32:49";
 #endif
 #include <stdio.h>	
 #include <fb.h>
 
 /* Zoom rate and limits.	*/
-#define	Zfactor		(2)
-#define MaxZoom		(15)
+#define MaxZoom		(16)
 #define MinZoom		(1)
 
 /* Pan limits.	*/
@@ -57,7 +56,7 @@ static int xPan, yPan;			/* Pan Location.		*/
 
 main(argc, argv )
 char **argv;
-{
+	{
 	if( ! pars_Argv( argc, argv ) )
 		{
 		(void) fprintf( stderr, "Usage : fbzoom	[-h]\n" );
@@ -65,28 +64,33 @@ char **argv;
 		}
 	if( fbopen( NULL, APPEND ) == -1 )
 		return	1;
-	zoom = 2;
-	xPan = yPan = 0;
+	zoom = 1;
+	xPan = _fbsize/2;
+	yPan = _fbsize/2 - 1;
 
 	/* Set RAW mode */
 	save_Tty( 0 );
 	set_Raw( 0 );
 	clr_Echo( 0 );
 
-	do {
-		PanFactor = 128 / zoom;
-		(void) fbzoom( zoom-1, zoom-1 );
-		fbwindow( (xPan-1) * 4, 4063+yPan );
-		printf( "zoom=%d, Upper Left Pixel is %d,%d            \r",
-			zoom, xPan, yPan );
-		fflush( stdout );
-	} while( doKeyPad() );
+	do
+		{
+		PanFactor = 40 / zoom;
+		(void) fbzoom( zoom, zoom );
+		fbwindow( xPan, yPan );
+		(void) fprintf( stdout,
+			 "zoom=%d, Upper Left Pixel is %d,%d            \r",
+				zoom, xPan, yPan
+				);
+		(void) fflush( stdout );
+		}
+	while( doKeyPad() );
 
 	reset_Tty( 0 );
-	printf( "\n");		/* Move off of the output line.	*/
-	fbzoom( zoom-1, zoom-1 );
-	fbwindow( (xPan-1) * 4, 4063+yPan );
-}
+	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
+	(void) fbzoom( zoom, zoom );
+	(void) fbwindow( xPan, yPan );
+	}
 
 char help[] = "\r\n\
 b ^V	zoom Bigger\r\n\
@@ -105,100 +109,90 @@ Uppercase takes big steps.\r\n";
 #define ctl(x)	('x'&037)
 
 doKeyPad()
-{ 
+	{ 
 	register ch;	
 
 	if( (ch = getchar()) == EOF )
-		return(0);		/* done */
+		return	0;		/* done */
 
-	switch( ch )  {
-
-	default:
-		printf("\r\n'%c' bad -- Type ? for help\r\n", ch);
-	case '?':
-		printf("\r\n%s", help);
+	switch( ch )
+		{
+	default :
+		(void) fprintf( stdout,
+				"\r\n'%c' bad -- Type ? for help\r\n",
+				ch
+				);
+	case '?' :
+		(void) fprintf( stdout, "\r\n%s", help );
 		break;
-
-	case '\r':    
-	case '\n':				/* Done, return to normal */
-	case 'q':
+	case '\r' :    
+	case '\n' :				/* Done, return to normal */
+	case 'q' :
+		return	0;
+	case 'Q' :				/* Done, leave "as is" */
+		return	0;
+	case 'c' :	
+	case 'C' :				/* Center */
+		xPan = yPan = 0;
+		break;
+	case 'r' :	
+	case 'R' :				/* Reset */
 		zoom = 1;
-		xPan = yPan = 0;
-		return(0);
-	case 'Q':				/* Done, leave "as is" */
-		return(0);
-
-	case 'c':	
-	case 'C':				/* Center */
-		xPan = yPan = 0;
+		xPan = _fbsize/2;
+		yPan = _fbsize/2 - 1;
 		break;
-
-	case 'r':	
-	case 'R':				/* Reset */
-		zoom = 1;
-		xPan = yPan = 0;
-		break;
-
-	case ctl(v):
-	case 'b':				/* zoom BIG.	*/
-		if(  ++zoom > MaxZoom )
+	case ctl(v) :
+	case 'b' :				/* zoom BIG.	*/
+		if(  (zoom *= 2) > MaxZoom )
 			zoom = MaxZoom;
 		break;
-
-	case 's':				/* zoom small.	*/
-		if(  --zoom < MinZoom )
+	case 's' :				/* zoom small.	*/
+		if(  (zoom /= 2) < MinZoom )
 			zoom = MinZoom;
 		break;
-
-	case 'F':
-	case 'l':				/* move LEFT.	*/
+	case 'F' :
+	case 'l' :				/* move LEFT.	*/
 		if( ++xPan > MaxPan )
 			xPan = MaxPan;
 		break;
-
-	case ctl(f):
-	case 'L':
+	case ctl(f) :
+	case 'L' :
 		if( (xPan += PanFactor) > MaxPan )
 			xPan = MaxPan;
 		break;
-
-	case 'N':
-	case 'k':				/* move DOWN.	*/
+	case 'N' :
+	case 'k' :				/* move DOWN.	*/
 		if( ++yPan > MaxPan )
 			yPan = MaxPan;
 		break;
-	case ctl(n):
-	case 'K':
+	case ctl(n) :
+	case 'K' :
 		if( (yPan += PanFactor) > MaxPan )
 			yPan = MaxPan;
 		break;
-
-	case 'P':
-	case 'j':				/* move UP.	*/
+	case 'P' :
+	case 'j' :				/* move UP.	*/
 		if( --yPan < MinPan )
 			yPan = MinPan;
 		break;
-
-	case ctl(p):
-	case 'J':
+	case ctl(p) :
+	case 'J' :
 		if( (yPan -= PanFactor) < MinPan )
 			yPan = MinPan;
 		break;
-
-	case 'B':
-	case 'h':				/* move RIGHT.	*/
+	case 'B' :
+	case 'h' :				/* move RIGHT.	*/
 		if( --xPan < MinPan )
 			xPan = MinPan;
 		break;
-
-	case ctl(b):
-	case 'H':
+	case ctl(b) :
+	case 'H' :
 		if( (xPan -= PanFactor) < MinPan )
 			xPan = MinPan;
 		break;
+		}
+	return	1;		/* keep going */
 	}
-	return(1);		/* keep going */
-}
 
 /*	p a r s _ A r g v ( )
  */
