@@ -144,6 +144,7 @@ register struct rt_i *rtip;
 {
 	register struct animate *anp;
 	register struct directory *dp;
+	register int		i;
 
 	/* Rooted animations */
 	for( anp = rtip->rti_anroot; anp != ANIM_NULL; )  {
@@ -156,14 +157,17 @@ register struct rt_i *rtip;
 	rtip->rti_anroot = ANIM_NULL;
 
 	/* Node animations */
-	for( dp = rtip->rti_DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
-		for( anp = dp->d_animate; anp != ANIM_NULL; )  {
-			register struct animate *nextanp = anp->an_forw;
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		dp = rtip->rti_dbip->dbi_Head[i];
+		for( ; dp != DIR_NULL; dp = dp->d_forw )  {
+			for( anp = dp->d_animate; anp != ANIM_NULL; )  {
+				register struct animate *nextanp = anp->an_forw;
 
-			rt_free( (char *)anp->an_path, "animation path[]");
-			rt_free( (char *)anp, "struct animate");
-			anp = nextanp;
+				rt_free( (char *)anp->an_path, "animation path[]");
+				rt_free( (char *)anp, "struct animate");
+				anp = nextanp;
+			}
+			dp->d_animate = ANIM_NULL;
 		}
-		dp->d_animate = ANIM_NULL;
 	}
 }
