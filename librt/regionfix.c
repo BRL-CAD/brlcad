@@ -85,6 +85,7 @@ struct rt_i	*rtip;
 
 	if( (fp = fopen( file, "r" )) == NULL )	 {
 		if( rtip->rti_region_fix_file ) perror(file);
+		rt_vls_free(&name);
 		return;
 	}
 	rt_log("librt/rt_regionfix(%s):  Modifying instanced region-ids.\n", file);
