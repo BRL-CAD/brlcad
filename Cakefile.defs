@@ -266,7 +266,7 @@ set -S2 "/bin/sh"
 # else
 /*	Carl's test version */
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24 if_ogl
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lXt_s -lXm_s  -lX11_s /usr/lib/libGLw.a  /usr/lib/libGL.so -lgl''SHARED
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lXt_s -lXm -lX11_s -lGLw  -lGL -lgl''SHARED
 # endif
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DBSD=43 -DIF_X -I''XINCDIR
 #	define	MGED_OBJS	dm-4d dm-X
