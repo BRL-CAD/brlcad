@@ -449,6 +449,17 @@ char	**argv;
 	return(0);
 }
 
+/* 
+ *			C M _ A E
+ */
+cm_ae( argc, argv )
+int	argc;
+char	**argv;
+{
+	do_ae( atof(argv[1]), atof(argv[2]) );
+	return(0);
+}
+
 /*
  *			D E F _ T R E E
  *
@@ -893,3 +904,36 @@ res_pr()
 			res->re_bitvlen, res->re_bitvget, res->re_bitvfree );
 	}
 }
+
+/*
+ *  Command table for RT control script language
+ */
+
+struct command_tab rt_cmdtab[] = {
+	"start", "frame number", "start a new frame",
+		cm_start,	2, 2,
+	"viewsize", "size in mm", "set view size",
+		cm_vsize,	2, 2,
+	"eye_pt", "xyz of eye", "set eye point",
+		cm_eyept,	4, 4,
+	"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
+		cm_lookat_pt,	4, 5,
+	"viewrot", "4x4 matrix", "set view direction from matrix",
+		cm_vrot,	17,17,
+	"end", 	"", "end of frame setup, begin raytrace",
+		cm_end,		1, 1,
+	"multiview", "", "produce stock set of views",
+		cm_multiview,	1, 1,
+	"anim", 	"path type args", "specify articulation animation",
+		cm_anim,	4, 999,
+	"tree", 	"treetop(s)", "specify alternate list of tree tops",
+		cm_tree,	1, 999,
+	"clean", "", "clean articulation from previous frame",
+		cm_clean,	1, 1,
+	"set", 	"", "show or set parameters",
+		cm_set,		1, 999,
+	"ae", "azim elev", "specify view as azim and elev, in degrees",
+		cm_ae,		3, 3,
+	(char *)0, (char *)0, (char *)0,
+		0,		0, 0	/* END */
+};
