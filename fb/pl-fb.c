@@ -1106,7 +1106,7 @@ coords		*pt1, *pt2;	/* endpoints */
 
 	/* Thicken by advancing alternating pixels in minor direction */
 	thick = line_thickness;
-	if( thick >= vp->major )  thick = vp->major-1;
+	if( thick >= vp->major && vp->major > 0 )  thick = vp->major-1;
 	for( ; thick >= 0; thick-- )  {
 		register stroke *v2 = Allocate();
 		*v2 = *vp;
