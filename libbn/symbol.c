@@ -18,6 +18,9 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "machine.h"
+#include "vmath.h"
+
 /*
  *	Motion encoding macros
  *
@@ -71,22 +74,48 @@ double	x, y;			/* x,y of lower left corner of 1st char */
 double	scale;			/* scale factor to change 1x1 char sz */
 double	theta;			/* degrees ccw from X-axis */
 {
+	mat_t	mat;
+	vect_t	p;
+
+	mat_angles( mat, 0.0, 0.0, theta );
+	VSET( p, x, y, 0 );
+	tp_3symbol( fp, string, p, mat, scale );
+}
+
+tp_3symbol( fp, string, origin, rot, scale )
+char	*string;		/* string of chars to be plotted */
+vect_t	origin;			/* lower left corner of 1st char */
+mat_t	rot;			/* Transform matrix (WARNING: may xlate) */
+double	scale;			/* scale factor to change 1x1 char sz */
+{
 	register unsigned char *cp;
-	double	xrot, yrot;		/* x and y rotation factors */
 	double	offset;			/* offset of char from given x,y */
-	double	x2, y2;			/* char pos in local coord system */
-	double	x3, y3;			/* char pos after rotation */
 	int	ysign;			/* sign of y motion, either +1 or -1 */
+	vect_t	temp;
+	vect_t	loc;
+	mat_t	xlate_to_origin;
+	mat_t	mtemp;
+	mat_t	mat;
 
 	if( string == NULL || *string == '\0' )
 		return;			/* done before begun! */
 
+	/*
+	 *  The point "origin" will be the center of the axis rotation.
+	 *  The text is located in a local coordinate system with the
+	 *  lower left corner of the first character at (0,0,0), with
+	 *  the text proceeding onward towards +X.
+	 *  We need to rotate the text around it's local (0,0,0),
+	 *  and then translate to the user's designated "origin".
+	 *  If the user provided translation or
+	 *  scaling in his matrix, it will *also* be applied.
+	 */
+	mat_idn( xlate_to_origin );
+	MAT_DELTAS( xlate_to_origin,	origin[X], origin[Y], origin[Z] );
+	mat_mul( mat, xlate_to_origin, rot );
+
 	/* Check to see if initialization is needed */
 	if( ppindex[040] == 0 )  tp_setup();
-
-	/* Apply rotation */
-	xrot = cos( 0.0174533 * theta );
-	yrot = sin( 0.0174533 * theta );
 
 	/* Draw each character in the input string */
 	offset = 0;
@@ -94,7 +123,9 @@ double	theta;			/* degrees ccw from X-axis */
 		register TINY	*p;	/* pointer to stroke table */
 		register int	stroke;
 
-		pd_move( fp, x+offset*xrot, y+offset*yrot );
+		VSET( temp, offset, 0, 0 );
+		MAT4X3PNT( loc, mat, temp );
+		pdv_3move( fp, loc );
 
 		for( p = ppindex[*cp]; ((stroke= *p)&0xFF) != LAST; p++ )  {
 			int	draw;
@@ -113,19 +144,17 @@ double	theta;			/* degrees ccw from X-axis */
 				draw = 1;
 
 			/* stroke co-ordinates in string coord system */
-			x2 = (stroke/11) * 0.1 * scale + offset;
-			y2 = (ysign * (stroke%11)) * 0.1 * scale;
-
-			/* Plot this stroke */
-			x3 = x + x2*xrot - y2*yrot;
-			y3 = y + x2*yrot + y2*xrot;
+			VSET( temp, (stroke/11) * 0.1 * scale + offset,
+				   (ysign * (stroke%11)) * 0.1 * scale, 0 );
+			MAT4X3PNT( loc, mat, temp );
 			if( draw )
-				pd_cont( fp, x3, y3 );
+				pdv_3cont( fp, loc );
 			else
-				pd_move( fp, x3, y3 );
+				pdv_3move( fp, loc );
 		}
 	}
 }
+
 
 /*	tables for markers	*/
 

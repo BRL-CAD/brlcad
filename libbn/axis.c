@@ -19,136 +19,154 @@
 #include <stdio.h>
 #include <math.h>
 
-#define	TICK_YLEN	(cscale)	/* tick is 1 character height */
-#define	NUM_YOFF	(3*cscale)	/* numbers offset from line */
-#define	TITLE_YOFF	(5*cscale)	/* title offset from line */
+#include "machine.h"
+#include "vmath.h"
 
-/* Rotation macros */
-#define	X(a,b)	((a)*xrot - (b)*yrot)
-#define Y(a,b)	((a)*yrot + (b)*xrot)
-#define	ROT(a,b)	temp=X(a-x,b-y) + x;\
-			b=Y(a-x,b-y) + y;\
-			a=temp
+#define	TICK_YLEN	(char_width)	/* tick is 1 character height */
+#define	NUM_YOFF	(3*char_width)	/* numbers offset from line */
+#define	TITLE_YOFF	(5*char_width)	/* title offset from line */
 
 
-tp_axis( fp, string, x, y, length, theta, ndigits, minval, incr, unit, cscale )
-FILE		*fp;
-char		*string;	/* label for axis */
-double		x,y;		/* start coordinates for axis */
-double		length;		/* length of axis */
-double		theta;		/* rotation off X-axis, in degrees */
-int		ndigits;	/* # digits wide */
-double		minval;		/* minimum value on axis */
-double		incr;		/* increment for each tick */
-double		unit;		/* distance between ticks */
-double		cscale;		/* character scale (size) */
+tp_axis( fp, string, origin, rot, length, ccw,
+	ndigits, label_start, label_incr, tick_separation, char_width )
+FILE	*fp;
+char	*string;		/* label for axis */
+point_t	origin;
+mat_t	rot;
+double	length;			/* length of axis */
+int	ccw;			/* 0=clockwise, !0=counter clockwise (ccw) */
+int	ndigits;		/* # digits wide */
+double	label_start;		/* label starting value */
+double	label_incr;		/* label increment between ticks */
+double	tick_separation;	/* plot distance between ticks */
+double	char_width;		/* character scale (size) */
 {
-	register int i;				/* index  variable */
-	double	xrot, yrot;			/* direction & rotation */
-	double	temp;				/* Work area for ROT macro */
-	double	xincr, yincr;			/* increments for rotation */
-	double	xbott, ybott;			/* address of bottom of tick */
-	double	xnum, ynum;			/* addr of ticks number */
-	double	xtitle, ytitle;			/* addr of axis title */
-	double	xlab_end, ylab_end;			/* last number pos */
+	register int i;
 	int	direction;			/* 1=clockwise, -1=counter */
 	int	nticks;
+	point_t	tick_bottom;			/* -Y point of tick */
+	vect_t	axis_incr;			/* +X vect between ticks */
+	vect_t	axis_dir;
+	point_t	title_left;			/* left edge of title */
+	point_t	cur_point;
+	point_t	num_start;
+	point_t	num_center;			/* center point of number */
+	point_t	num_last_end;			/* end of last number */
+	vect_t	temp;
+	vect_t	diff;
+	mat_t	xlate_to_0;
+	mat_t	xlate_to_origin;
+	mat_t	mtemp;
+	mat_t	mat;				/* combined transform */
+	char	fmt[32];
+	char	str[64];
 
 	/* Determine direction for ticks */
-	direction = 1;				/* normal is clockwise ticks */
-	if( length < 0 )  {
-		direction = (-1);		/* he wants counterclockwise */
-		length = (-length);
-	}
+	if( ccw )
+		ccw = -1;			/* counter clockwise */
+	else
+		ccw = 1;			/* clockwise */
 
-	xrot = cos( 0.0174533 * theta );
-	yrot = sin( 0.0174533 * theta );
-
-	/* Compute the bottom of the first tick */
-	xbott = x;
-	ybott = y - TICK_YLEN * direction;
-	ROT( xbott, ybott );
-
-	/* Compute the start of this tick's label */
-	xnum = x;
-	ynum = y - NUM_YOFF * direction;
-	ROT( xnum, ynum );
-
-	/* Center the title */
-	xtitle = x + ( length - strlen( string ) * cscale ) / 2;
-	ytitle = y - TITLE_YOFF * direction;
-	ROT( xtitle, ytitle );
-
-	/* Determine the increment between ticks */
-	xincr = X( unit, 0 );
-	yincr = Y( unit, 0 );
-
-	/* Draw the title */
-	tp_symbol(fp, string, xtitle, ytitle, cscale, theta);
-
-	nticks = length/unit+0.5;		/* number of ticks to do */
+	if( NEAR_ZERO(tick_separation, SMALL) )  tick_separation = 1;
 
 	/*
-	 *  Draw the axis & label as we go.
-	 *  Do left-most tick, then repeat:
-	 *  across, down, label.
+	 *  The point "origin" will be the center of the axis rotation.
+	 *  On the assumption that this origin point is not at (0,0,0),
+	 *  translate origin to (0,0,0) & apply the provided rotation matrix.
+	 *  If the user provides translation or
+	 *  scaling in his matrix, it will also be applied, but in most
+	 *  cases that would not be useful.
 	 */
-	pd_move( fp, xbott, ybott );
-	pd_cont( fp, x, y );
+	mat_idn( xlate_to_0 );
+	MAT_DELTAS( xlate_to_0,	 origin[X],  origin[Y],  origin[Z] );
+	mat_mul( mat, rot, xlate_to_0 );
+	VMOVE( cur_point, origin );
 
-	/* initial label */
-	if( ndigits > 0 )
-		tp_number( fp, minval, xnum, ynum, cscale, theta, ndigits );
+	/* Compute the bottom of the first tick */
+	VSET( temp, 0, -TICK_YLEN * ccw, 0 );
+	MAT4X3PNT( tick_bottom, mat, temp );
 
-	xlab_end = xnum + X( ndigits * cscale, 0 );
-	ylab_end = ynum + Y( ndigits * cscale, 0 );
+	/* Compute the start of this tick's label */
+	VSET( temp, 0, -NUM_YOFF * ccw, 0 );
+	MAT4X3PNT( num_center, mat, temp );
+	temp[X] = -char_width*ndigits;
+	MAT4X3PNT( num_last_end, mat, temp );
 
-	for( i=0; i<nticks; i++) {
-		pd_move( fp, x, y );
+	/* Determine the increment between ticks */
+	VSET( temp, 1, 0, 0 );
+	MAT4X3VEC( axis_dir, mat, temp );
+	VSCALE( axis_incr, axis_dir, tick_separation );
 
-		/* advance x & y for next segment */
-		x += xincr;
-		xbott += xincr;
-		xnum += xincr;
+	/* Center the title, and find left edge */
+	VSET( temp, 0.5*(length - strlen(string)*char_width), -TITLE_YOFF*ccw, 0 );
+	MAT4X3PNT( title_left, mat, temp );
+	tp_3symbol(fp, string, title_left, rot, char_width );
 
-		y += yincr;
-		ybott += yincr;
-		ynum += yincr;
-
-		minval += incr;
-
-		pd_cont( fp, x, y );		/* draw segment */
-		pd_cont( fp, xbott, ybott );	/* draw tick */
-
+	nticks = length/tick_separation+0.5;
+	pdv_3move( fp, cur_point );
+	for( i=0; i<=nticks; i++) {
 		/*
-		 *  Only label this tick if it is beyond
-		 *  the last label.
+		 *  First, draw a tick.
+		 *  Then, if room, draw a numeric label.
+		 *  If last tick, done.
+		 *  Otherwise, advance in axis_dir direction.
 		 */
-		if( ndigits <= 0 )  continue;
-		if( ( (xincr >= 0) ? (x < xlab_end) : (x > xlab_end) ) ||
-		    ( (yincr >= 0) ? (y < ylab_end) : (y > ylab_end) ) )
-			continue;
+		pdv_3cont( fp, tick_bottom );
 
-		tp_number( fp, minval, xnum, ynum, cscale, theta, ndigits );
-		xlab_end = xnum + X( ndigits * cscale, 0 );
-		ylab_end = ynum + Y( ndigits * cscale, 0 );
+		if( ndigits > 0 )  {
+			double f;
+			sprintf( fmt, "%%%dg", ndigits);
+			sprintf( str, fmt, label_start );
+			f = strlen(str) * char_width * 0.5;
+			VJOIN1( num_start, num_center, -f, axis_dir );
+
+			/* Only label this tick if the number will not
+			 * overlap with the previous number.
+			 */
+			VSUB2( diff, num_start, num_last_end );
+			if( VDOT( diff, axis_dir ) >= 0 )  {
+				tp_3symbol( fp, str, num_start, rot, char_width );
+				VJOIN1( num_last_end, num_center, f, axis_dir );
+			}
+		}
+
+		if( i == nticks )  break;
+
+		/* Advance, and draw next axis segment */
+		pdv_3move( fp, cur_point );
+		VADD2( cur_point, cur_point, axis_incr );
+		VADD2( tick_bottom, tick_bottom, axis_incr );
+		VADD2( num_center, num_center, axis_incr );
+
+		label_start += label_incr;
+
+		pdv_3cont( fp, cur_point);		/* draw axis */
 	}
 }
 
-FAXIS(fp, string, x, y, length, theta, ndigits, minval, incr, unit, cscale )
+FAXIS(fp, string, x, y, z, length, theta, ccw,
+	ndigits, label_start, label_incr, tick_separation, char_width )
 FILE		**fp;
 char		*string;	/* label for axis */
-float		*x,*y;		/* start coordinates for axis */
+float		*x,*y,*z;		/* start coordinates for axis */
 float		*length;	/* length of axis */
 float		*theta;		/* rotation off X-axis, in degrees */
+int		*ccw;
 int		*ndigits;	/* # digits wide */
-float		*minval;	/* minimum value on axis */
-float		*incr;		/* increment for each tick */
-float		*unit;		/* distance between ticks */
-float		*cscale;	/* character scale (size) */
+float		*label_start;	/* minimum value on axis */
+float		*label_incr;		/* increment for each tick */
+float		*tick_separation;		/* distance between ticks */
+float		*char_width;	/* character scale (size) */
 {
 	char buf[128];
+	mat_t	mat;
+	vect_t	pnt;
+
+	VSET( pnt, *x, *y, *z );
+	mat_idn(mat);
+	mat_angles( mat, 0.0, 0.0, *theta );
 	tp_strncpy( buf, string, sizeof(buf) );
-	tp_axis( *fp, buf, *x, *y, *length,
-		*theta, *ndigits, *minval, *incr, *unit, *cscale );
+	tp_axis( *fp, buf, pnt, mat, *length, *ccw,
+		*ndigits, *label_start, *label_incr,
+		*tick_separation, *char_width );
 }
