@@ -2136,9 +2136,9 @@ int	y;
  * IRIX 3.2 will basicly implement lrectwrite the same as below 
  */
 
-static unsigned char Red_pixels[1024];
-static unsigned char Green_pixels[1024];
-static unsigned char Blue_pixels[1024];
+static unsigned char Red_pixels[1280];
+static unsigned char Green_pixels[1280];
+static unsigned char Blue_pixels[1280];
 
 fake_rectwrite( x1, y1, x2, y2, pixels)
 short x1,y1, x2, y2;
