@@ -8,7 +8,7 @@
 #include "../Cakefile.defs"
 
 #define IWIDGET_OPTS	--prefix=BASEDIR --with-tcl=[[pwd]]/LIBTCL_DIR --with-tk=[[pwd]]/LIBTK_DIR \
-			--with-itcl=[[pwd]]/LIBITCL_DIR  \
+			--with-itcl=[[pwd]]/../libitcl  \
 			--cache-file cache.MTYPE
 
 /* Rule to see if cake is running with -s flag */
