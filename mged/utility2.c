@@ -101,7 +101,8 @@ char **argv;
 			}
 
 			if( (new_dp=db_diradd( dbip, shell_name, -1, 0, DIR_SOLID)) == DIR_NULL )  {
-			    	ALLOC_ERR_return;
+			    	ALLOC_ERR;
+				return CMD_BAD;
 			}
 
 			/* make sure the geometry/bounding boxes are up to date */
