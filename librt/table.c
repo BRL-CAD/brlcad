@@ -513,7 +513,7 @@ rt_generic_xform(op, mat, ip, free)
 struct rt_db_internal	*op;
 CONST mat_t		mat;
 struct rt_db_internal	*ip;
-CONST int		free;
+int			free;
 {
 	struct rt_external	ext;
 	int			id;
