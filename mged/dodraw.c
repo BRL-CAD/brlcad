@@ -152,12 +152,13 @@ union tree		*curtree;
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *mged_wireframe_leaf( tsp, pathp, rp, id )
+HIDDEN union tree *mged_wireframe_leaf( tsp, pathp, ep, id )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union record		*rp;
+struct rt_external	*ep;
 int			id;
 {
+	struct rt_db_internal	intern;
 	union tree	*curtree;
 	int		dashflag;		/* draw with dashed lines */
 	struct vlhead	vhead;
@@ -173,13 +174,26 @@ int			id;
 
 	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
 
-	if( rt_functab[id].ft_plot( rp, tsp->ts_mat, &vhead,
-	    DB_FULL_PATH_CUR_DIR(pathp),
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat ) < 0 )  {
+		rt_log("%s:  solid import failure\n",
+			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	    	return(TREE_NULL);		/* ERROR */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+	if( rt_functab[id].ft_plot(
+	    &vhead,
+	    &intern,
 	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
 		printf("%s: plot failure\n",
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
+		rt_functab[id].ft_ifree( &intern );
 	    	return(TREE_NULL);		/* ERROR */
 	}
+	rt_functab[id].ft_ifree( &intern );
+
 	drawH_part2( dashflag, vhead.vh_first, pathp, tsp, SOLID_NULL );
 
 	/* Indicate success by returning something other than TREE_NULL */
@@ -192,27 +206,42 @@ int			id;
 /*
  *			M G E D _ N M G _ L E A F
  *
+ *  Tessellate Solid into NMG
+ *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *mged_nmg_leaf( tsp, pathp, rp, id )
+HIDDEN union tree *mged_nmg_leaf( tsp, pathp, ep, id )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union record		*rp;
+struct rt_external	*ep;
 int			id;
 {
+	struct rt_db_internal	intern;
 	struct nmgregion	*r1;
-	union tree	*curtree;
+	union tree		*curtree;
 	struct directory	*dp;
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-	/* Tessellate Solid to NMG */
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat ) < 0 )  {
+		rt_log("%s:  solid import failure\n",
+			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	    	return(TREE_NULL);		/* ERROR */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
 	if( rt_functab[id].ft_tessellate(
-	    &r1, mged_nmg_model, rp, tsp->ts_mat, dp,
+	    &r1, mged_nmg_model, &intern,
 	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
-		rt_log("%s tessellation failure\n", dp->d_namep);
+		rt_log("%s: tessellation failure\n",
+			dp->d_namep);
+		rt_functab[id].ft_ifree( &intern );
 	    	return(TREE_NULL);
 	}
+	rt_functab[id].ft_ifree( &intern );
+
 	/* debug */
 	NMG_CK_REGION( r1 );
 	if( nmg_ck_closed_region( r1 ) != 0 )  {
@@ -698,6 +727,8 @@ mat_t		mat;
 	unsigned	addr, bytes;
 	struct vlhead	vhead;
 	int		id;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
 
 	vhead.vh_first = vhead.vh_last = VL_NULL;
 
@@ -706,7 +737,11 @@ mat_t		mat;
 		return(-1);
 	}
 
-	if( (id = rt_id_solid( recp )) == ID_NULL )  {
+	RT_INIT_EXTERNAL( &ext );
+	ext.ext_buf = (genptr_t)recp;
+	ext.ext_nbytes = sizeof(union record);
+
+	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
 		(void)printf("replot_modified_solid() unable to identify type of solid %s\n",
 			sp->s_path[sp->s_last]->d_namep );
 		return(-1);
@@ -717,12 +752,24 @@ mat_t		mat;
 	bytes = sp->s_bytes;
 
 	/* Draw (plot) a normal solid */
-	if( rt_functab[id].ft_plot( recp, mat, &vhead, sp->s_path[sp->s_last],
-	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
-		(void)printf("%s: plot failure\n",
+
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
+		rt_log("%s:  solid import failure\n",
 			sp->s_path[sp->s_last]->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	    	return(-1);		/* ERROR */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+	if( rt_functab[id].ft_plot( &vhead, &intern,
+	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
+		(void)printf("%s: re-plot failure\n",
+			sp->s_path[sp->s_last]->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 	    	return(-1);
 	}
+	rt_functab[id].ft_ifree( &intern );
 
 	/* Write new displaylist */
 	drawH_part2( sp->s_soldash, vhead.vh_first,

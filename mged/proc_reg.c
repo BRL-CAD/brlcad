@@ -182,6 +182,7 @@ matp_t		old_xlate;
 int		regionid;
 struct mater_info *materp;
 {
+	struct rt_external	ext;
 	union record	*rp;
 	auto mat_t	new_xlate;	/* Accumulated translation matrix */
 	auto int	i;
@@ -198,13 +199,14 @@ struct mater_info *materp;
 	/*
 	 * Load the record into local record buffer
 	 */
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return;
 
+	rp = (union record *)ext.ext_buf;
 	if( rp[0].u_id != ID_COMB )  {
 		register struct solid *sp;
 
-		if( rt_id_solid( rp ) == ID_NULL )  {
+		if( rt_id_solid( &ext ) == ID_NULL )  {
 			(void)printf("Edrawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
 				dp->d_namep,
 				rp[0].u_id, rp[0].u_id, dp->d_addr );
@@ -218,7 +220,7 @@ struct mater_info *materp;
 		GET_SOLID( sp );
 		if( sp == SOLID_NULL )
 			return;		/* ERROR */
-		if( EdrawHsolid( sp, flag, pathpos, old_xlate, rp, regionid, materp ) != 1 ) {
+		if( EdrawHsolid( sp, flag, pathpos, old_xlate, &ext, regionid, materp ) != 1 ) {
 			FREE_SOLID( sp );
 		}
 		goto out;
@@ -334,7 +336,7 @@ struct mater_info *materp;
 		);
 	}
 out:
-	rt_free( (char *)rp, "EdrawHobj recs");
+	db_free_external( &ext );
 }
 
 /*
@@ -346,14 +348,14 @@ out:
  *	 1	if solid was drawn
  */
 int
-EdrawHsolid( sp, flag, pathpos, xform, recordp, regionid, materp )
-register struct solid *sp;
-int		flag;
-int		pathpos;
-matp_t		xform;
-union record	*recordp;
-int		regionid;
-struct mater_info *materp;
+EdrawHsolid( sp, flag, pathpos, xform, ep, regionid, materp )
+register struct solid	*sp;
+int			flag;
+int			pathpos;
+mat_t			xform;
+struct rt_external	*ep;
+int			regionid;
+struct mater_info	*materp;
 {
 	register struct vlist *vp;
 	register int i;
@@ -379,7 +381,7 @@ struct mater_info *materp;
 			flag = 999;
 
 		/* The hard part */
-		i = proc_region( recordp, xform, flag );
+		i = proc_region( (union record *)ep->ext_buf, xform, flag );
 
 		if( i < 0 )  {
 			/* error somwhere */
@@ -407,23 +409,34 @@ struct mater_info *materp;
 		dashflag = 0;
 	}  else  {
 		/* Doing a normal solid */
+		struct rt_db_internal	intern;
 		int id;
 
 		dashflag = (flag != ROOT);
 
-		id = rt_id_solid( recordp );
-		if( id < 0 || id >= rt_nfunctab )  {
+		id = rt_id_solid( ep );
+		if( id <= 0 || id >= rt_nfunctab )  {
 			printf("EdrawHsolid(%s):  unknown database object\n",
 				cur_path[pathpos]->d_namep);
 			return(-1);			/* ERROR */
 		}
 
-		if( rt_functab[id].ft_plot( recordp, xform, &vhead,
-		    cur_path[pathpos],
+	    	RT_INIT_DB_INTERNAL(&intern);
+		if( rt_functab[id].ft_import( &intern, ep, xform ) < 0 )  {
+			rt_log("%s:  solid import failure\n",
+				cur_path[pathpos]->d_namep);
+		    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+			return(-1);			/* FAIL */
+		}
+		RT_CK_DB_INTERNAL( &intern );
+
+		if( rt_functab[id].ft_plot( &vhead,
+		    &intern,
 		    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
 			printf("%s: vector conversion failure\n",
 				cur_path[pathpos]->d_namep);
 		}
+		rt_functab[id].ft_ifree( &intern );
 	}
 
 	/* Take note of the base color */

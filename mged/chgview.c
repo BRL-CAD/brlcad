@@ -476,7 +476,7 @@ int	verbose;
 		goto out;
 	}
 
-	id = rt_id_solid( rp );
+	id = rt_id_solid( &ext );
 	mat_idn( ident );
 	if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
 		printf("database import error\n");

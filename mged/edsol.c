@@ -1597,9 +1597,10 @@ torcom:
 void
 init_objedit()
 {
-	register int i, type;
-	union record trec;
-	int	id;
+	struct rt_external	es_ext;	/* This should be external */
+	register int		i;
+	register int		type;
+	int			id;
 
 	/* for safety sake */
 	es_menu = 0;
@@ -1627,24 +1628,38 @@ init_objedit()
 
 	/* Not an evaluated region - just a regular path ending in a solid */
 	/* XXX should be db_getmrec() */
-	db_get( dbip,  illump->s_path[illump->s_last], &es_rec, 0 , 1);
+	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 )  {
+		(void)printf("init_objedit(%s): db_get_external failure\n",
+			illump->s_path[illump->s_last]->d_namep );
+		button(BE_REJECT);
+		return;
+	}
+	/* XXX hack:  get first granule into es_rec (ugh) */
+	bcopy( (char *)es_ext.ext_buf, (char *)&es_rec, sizeof(es_rec) );
 
 	/* XXX should have an es_keypoint here;
 	 * instead, be certain that es_rec.s.s_values[0] has key point! */
-	switch( id = rt_id_solid( &es_rec ) )  {
+	id = rt_id_solid( &es_ext );
+	switch( id )  {
 	case ID_NULL:
 		(void)printf("init_objedit(%s): bad database record\n",
 			illump->s_path[illump->s_last]->d_namep );
 		button(BE_REJECT);
+		db_free_external( &es_ext );
 		return;
 
 	case ID_ARS_A:
-		/* read the first B-record into trec */
-		db_get( dbip,  illump->s_path[illump->s_last], &trec, 1 , 1);
-		/* only interested in vertex */
-		VMOVE(es_rec.s.s_values, trec.b.b_values);
-		es_rec.s.s_type = ARS;		/* XXX wrong */
-		es_rec.s.s_cgtype = ARS;
+		{
+			register union record *rec =
+				(union record *)es_ext.ext_buf;
+
+			/* XXX should import the ARS! */
+
+			/* only interested in vertex */
+			VMOVE(es_rec.s.s_values, rec[1].b.b_values);
+			es_rec.s.s_type = ARS;		/* XXX wrong */
+			es_rec.s.s_cgtype = ARS;
+		}
 		break;
 
 	case ID_TOR:
@@ -1687,6 +1702,7 @@ init_objedit()
 	/* fill the display array */
 	pr_solid( &es_rec.s );
 
+	db_free_external( &es_ext );
 }
 
 
