@@ -36,6 +36,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
+extern int	rt_pure_boolean_expressions;		/* from tree.c */
+
 struct tree_list {
 	union tree *tl_tree;
 	int	tl_op;
@@ -54,6 +56,9 @@ register struct combined_tree_state	*ctsp;
 	rt_free( (char *)ctsp, "combined_tree_state");
 }
 
+/*
+ *			D B _ P R _ T R E E _ S T A T E
+ */
 void
 db_pr_tree_state( tsp )
 register struct db_tree_state	*tsp;
@@ -73,6 +78,9 @@ register struct db_tree_state	*tsp;
 	rt_log(" ts_mater.ma_matparam=%s\n", tsp->ts_mater.ma_matparm );
 }
 
+/*
+ *			D B _ P R _ C O M B I N E D _ T R E E _ S T A T E
+ */
 void
 db_pr_combined_tree_state( ctsp )
 register struct combined_tree_state	*ctsp;
@@ -84,40 +92,6 @@ register struct combined_tree_state	*ctsp;
 	str = db_path_to_string( &(ctsp->cts_p) );
 	rt_log(" path='%s'\n", str);
 	rt_free( str, "path string" );
-}
-
-/*
- *			R T _ T R E E _ R E G I O N _ A S S I G N
- */
-void
-rt_tree_region_assign( tp, regionp )
-register union tree	*tp;
-register struct region	*regionp;
-{
-	switch( tp->tr_op )  {
-	case OP_SOLID:
-		tp->tr_a.tu_regionp = regionp;
-		return;
-
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-		tp->tr_b.tb_regionp = regionp;
-		rt_tree_region_assign( tp->tr_b.tb_left, regionp );
-		return;
-
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-		tp->tr_b.tb_regionp = regionp;
-		rt_tree_region_assign( tp->tr_b.tb_left, regionp );
-		rt_tree_region_assign( tp->tr_b.tb_right, regionp );
-		return;
-
-	default:
-		rt_bomb("rt_tree_region_assign: bad op\n");
-	}
 }
 
 /*
@@ -258,8 +232,14 @@ struct member		*mp;
 		register int j = pathp->fp_len;
 
 		if (rt_g.debug & DEBUG_ANIM) {
-			rt_log("\t%s\t",rt_path_str(
-			    anp->an_path, anp->an_pathlen-1));
+			struct db_full_path	path;
+			char	*str;
+
+			path.fp_len = anp->an_pathlen;
+			path.fp_names = anp->an_path;
+			str = db_path_to_string( &path );
+			rt_log( "\t%s\t", str );
+			rt_free( str, "path string" );
 		}
 		for( ; i>=0 && j>=0; i--, j-- )  {
 			if( anp->an_path[i] != pathp->fp_names[j] )  {
@@ -272,7 +252,7 @@ struct member		*mp;
 			}
 		}
 		/* Perhaps tsp->ts_mater should be just tsp someday? */
-		rt_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
+		db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
 next_one:	;
 	}
 
@@ -309,7 +289,7 @@ int			noisy;
 	struct directory	*comb_dp;	/* combination's dp */
 	struct directory	*dp;		/* element's dp */
 
-	RT_CHECK_DBIP( tsp->ts_dbip );
+	RT_CHECK_DBI( tsp->ts_dbip );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
@@ -343,7 +323,6 @@ int			noisy;
 		if( pathp->fp_len <= 0 )  {
 			db_add_node_to_full_path( pathp, dp );
 
-			/* XXX rt_do_anim should perhaps be db_do_anim? */
 			/* Process animations located at the root */
 			if( tsp->ts_dbip->dbi_anroot )  {
 				register struct animate *anp;
@@ -354,7 +333,7 @@ int			noisy;
 						continue;
 					mat_copy( old_xlate, tsp->ts_mat );
 					mat_idn( xmat );
-					rt_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
+					db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
 					mat_mul( tsp->ts_mat, old_xlate, xmat );
 				}
 			}
@@ -453,37 +432,86 @@ fail:
 	return(-1);		/* FAIL */
 }
 
-extern union tree *rt_mkbool_tree();
 
 /*
- *			R T _ M K G I F T _ T R E E
+ *			D B _ M K B O O L _ T R E E
+ *
+ *  Given a tree_list array, build a tree of "union tree" nodes
+ *  appropriately connected together.  Every element of the
+ *  tree_list array used is replaced with a TREE_NULL.
+ *  Elements which are already TREE_NULL are ignored.
+ *  Returns a pointer to the top of the tree.
  */
-union tree *
-rt_mkgift_tree( trees, subtreecount, tsp )
+HIDDEN union tree *
+db_mkbool_tree( tree_list, howfar )
+struct tree_list *tree_list;
+int		howfar;
+{
+	register struct tree_list *tlp;
+	register int		i;
+	register struct tree_list *first_tlp = (struct tree_list *)0;
+	register union tree	*xtp;
+	register union tree	*curtree;
+	register int		inuse;
+
+	if( howfar <= 0 )
+		return(TREE_NULL);
+
+	/* Count number of non-null sub-trees to do */
+	for( i=howfar, inuse=0, tlp=tree_list; i>0; i--, tlp++ )  {
+		if( tlp->tl_tree == TREE_NULL )
+			continue;
+		if( inuse++ == 0 )
+			first_tlp = tlp;
+	}
+	if( rt_g.debug & DEBUG_REGIONS && first_tlp->tl_op != OP_UNION )
+		rt_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
+			first_tlp->tl_op );
+
+	/* Handle trivial cases */
+	if( inuse <= 0 )
+		return(TREE_NULL);
+	if( inuse == 1 )  {
+		curtree = first_tlp->tl_tree;
+		first_tlp->tl_tree = TREE_NULL;
+		return( curtree );
+	}
+
+	curtree = first_tlp->tl_tree;
+	first_tlp->tl_tree = TREE_NULL;
+	tlp=first_tlp+1;
+	for( i=howfar-(tlp-tree_list); i>0; i--, tlp++ )  {
+		if( tlp->tl_tree == TREE_NULL )
+			continue;
+
+		GETUNION( xtp, tree );
+		xtp->tr_b.tb_left = curtree;
+		xtp->tr_b.tb_right = tlp->tl_tree;
+		xtp->tr_b.tb_regionp = (struct region *)0;
+		xtp->tr_op = tlp->tl_op;
+		curtree = xtp;
+		tlp->tl_tree = TREE_NULL;	/* empty the input slot */
+	}
+	return(curtree);
+}
+
+/*
+ *			D B _ M K G I F T _ T R E E
+ */
+HIDDEN union tree *
+db_mkgift_tree( trees, subtreecount, tsp )
 struct tree_list	*trees;
 int			subtreecount;
 struct db_tree_state	*tsp;
 {
-	extern int	rt_pure_boolean_expressions;
 	register struct tree_list *tstart;
 	register struct tree_list *tnext;
 	union tree		*curtree;
 	int	i;
 	int	j;
-	struct region	region;
-	struct region	*regionp = &region;
-
-	region.reg_name = "DUMMY from rt_mkgift_tree()";
 
 	/* Build tree representing boolean expression in Member records */
-	if( rt_pure_boolean_expressions )  {
-		curtree = rt_mkbool_tree( trees, subtreecount, regionp );
-		if(rt_g.debug&DEBUG_TREEWALK)  {
-			rt_log("rt_mkgift_tree returns pure tree:\n");
-			rt_pr_tree(curtree, 0);
-		}
-		return( curtree );
-	}
+	if( rt_pure_boolean_expressions )  goto final;
 
 	/*
 	 * This is the way GIFT interpreted equations, so we
@@ -503,15 +531,15 @@ struct db_tree_state	*tsp;
 			continue;
 		if( (j = tnext-tstart) <= 0 )
 			continue;
-		curtree = rt_mkbool_tree( tstart, j, regionp );
-		/* rt_mkbool_tree() has side effect of zapping tree array,
+		curtree = db_mkbool_tree( tstart, j );
+		/* db_mkbool_tree() has side effect of zapping tree array,
 		 * so build new first node in array.
 		 */
 		tstart->tl_op = OP_UNION;
 		tstart->tl_tree = curtree;
 
 		if(rt_g.debug&DEBUG_TREEWALK)  {
-			rt_log("rt_mkgift_tree() intermediate term:\n");
+			rt_log("db_mkgift_tree() intermediate term:\n");
 			rt_pr_tree(tstart->tl_tree, 0);
 		}
 
@@ -519,9 +547,10 @@ struct db_tree_state	*tsp;
 		tstart = tnext;
 	}
 
-	curtree = rt_mkbool_tree( trees, subtreecount, regionp );
+final:
+	curtree = db_mkbool_tree( trees, subtreecount );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
-		rt_log("rt_mkgift_tree() returns:\n");
+		rt_log("db_mkgift_tree() returns:\n");
 		rt_pr_tree(curtree, 0);
 	}
 	return( curtree );
@@ -553,7 +582,7 @@ struct combined_tree_state	**region_start_statepp;
 	struct tree_list	*trees = TREE_LIST_NULL;	/* array */
 	union tree		*curtree = TREE_NULL;
 
-	RT_CHECK_DBIP( tsp->ts_dbip );
+	RT_CHECK_DBI( tsp->ts_dbip );
 	if( pathp->fp_len <= 0 )  {
 		rt_log("db_recurse() null path?\n");
 		return(TREE_NULL);
@@ -668,7 +697,7 @@ struct combined_tree_state	**region_start_statepp;
 			goto fail;
 		}
 
-		curtree = rt_mkgift_tree( trees, tlp-trees, tsp );
+		curtree = db_mkgift_tree( trees, tlp-trees, tsp );
 
 region_end:
 		if( is_region > 0 )  {
@@ -1235,160 +1264,5 @@ union tree *	(*leaf_func)();
 		/* XXX Need to check that RES_INIT()s have been done too! */
 		rt_parallel( db_walk_dispatcher, ncpu );
 	}
-	return(0);	/* OK */
-}
-
-/* ============================== */
-
-static struct db_tree_state	rt_initial_tree_state = {
-	0,			/* ts_dbip */
-	0,			/* ts_sofar */
-	0, 0, 0,		/* region, air, gmater */
-	1.0, 1.0, 1.0,		/* color, RGB */
-	0,			/* override */
-	DB_INH_LOWER,		/* color inherit */
-	DB_INH_LOWER,		/* mater inherit */
-	"",			/* material name */
-	"",			/* material params */
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0,
-};
-
-static struct rt_i	*db_rtip;
-
-HIDDEN int rt_gettree_region_start( tsp, pathp )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-{
-
-	/* Ignore "air" regions unless wanted */
-	if( db_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
-		db_rtip->rti_air_discards++;
-		return(-1);	/* drop this region */
-	}
-	return(0);
-}
-
-HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-{
-	register struct combined_tree_state	*cts;
-	struct region		*rp;
-	struct directory	*dp;
-
-	GETSTRUCT( rp, region );
-	rp->reg_forw = REGION_NULL;
-	rp->reg_regionid = tsp->ts_regionid;
-	rp->reg_aircode = tsp->ts_aircode;
-	rp->reg_gmater = tsp->ts_gmater;
-	rp->reg_mater = tsp->ts_mater;		/* struct copy */
-	rp->reg_name = db_path_to_string( pathp );
-
-	dp = DB_FULL_PATH_CUR_DIR(pathp);
-	/* XXX This should be semaphore protected! */
-	rp->reg_instnum = dp->d_uses++;
-
-	if(rt_g.debug&DEBUG_TREEWALK)  {
-		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
-		rt_pr_tree( curtree, 0 );
-	}
-
-	/* Mark all solids & nodes as belonging to this region */
-	rt_tree_region_assign( curtree, rp );
-
-	rt_add_regtree( db_rtip, rp, curtree );
-	return(curtree);
-}
-
-HIDDEN union tree *rt_gettree_leaf( tsp, pathp, rp, id )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union record		*rp;
-int			id;
-{
-	struct soltab	*stp;
-	union tree	*curtree;
-	struct directory	*dp;
-
-	/* Note:  solid may not be contained by a region (yet) */
-
-	dp = DB_FULL_PATH_CUR_DIR(pathp);
-	if( (stp = rt_add_solid( db_rtip, rp, dp, tsp->ts_mat )) == SOLTAB_NULL )
-		return(TREE_NULL);
-
-	GETUNION( curtree, tree );
-	curtree->tr_op = OP_SOLID;
-	curtree->tr_a.tu_stp = stp;
-	curtree->tr_a.tu_name = db_path_to_string( pathp );
-	/* regionp will be filled in later by rt_tree_region_assign() */
-	curtree->tr_a.tu_regionp = (struct region *)0;
-
-	if(rt_g.debug&DEBUG_TREEWALK)
-		rt_log("rt_gettree_leaf() %s\n", curtree->tr_a.tu_name );
-
-	return(curtree);
-}
-
-/*
- * XXX  NEW NEW NEW
- *  			R T _ G E T T R E E
- *
- *  User-called function to add a tree hierarchy to the displayed set.
- *  
- *  Returns -
- *  	0	Ordinarily
- *	-1	On major error
- */
-int
-NEW_rt_gettree( rtip, node )
-struct rt_i	*rtip;
-char		*node;
-{
-	return( rt_gettrees( rtip, 1, &node ) );
-}
-
-/*
- *  			R T _ G E T T R E E S
- *
- *  User-called function to add a set of tree hierarchies to the active set.
- *  
- *  Returns -
- *  	0	Ordinarily
- *	-1	On major error
- */
-int
-rt_gettrees( rtip, argc, argv )
-struct rt_i	*rtip;
-int		argc;
-char		**argv;
-{
-	int			prev_sol_count;
-	int			i;
-
-	RT_CHECK_RTI(rtip);
-
-	if(!rtip->needprep)
-		rt_bomb("rt_gettree called again after rt_prep!\n");
-
-	if( argc <= 0 )  return(-1);	/* FAIL */
-
-	prev_sol_count = rtip->nsolids;
-	db_rtip = rtip;
-
-	i = db_walk_tree( rtip->rti_dbip, argc, argv,
-		1,	/* # cpus */
-		&rt_initial_tree_state,
-		rt_gettree_region_start,
-		rt_gettree_region_end,
-		rt_gettree_leaf );
-
-	if( i < 0 )  return(-1);
-
-	if( rtip->nsolids <= prev_sol_count )
-		rt_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
 	return(0);	/* OK */
 }
