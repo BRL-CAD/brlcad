@@ -11,7 +11,7 @@
 #include "../Cakefile.defs"
 
 #if defined(RESOLVE_LIBRARIES)
-#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lm -lpthread -brtl -L../.libtcl8.4.sp3 -ltcl
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lm -lpthread -brtl -L../.libtcl8.4.sp3 -ltcl8.4
 #endif
 
 #define FILES	\
