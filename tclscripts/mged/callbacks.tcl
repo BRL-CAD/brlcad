@@ -62,11 +62,11 @@ proc begin_edit_callback {} {
 	    }
 	}
 
-	catch {get_edit_solid} esolint_info
+	catch {get_sed} esolint_info
 	set esolint_type [lindex $esolint_info 1]
 
 	# load solid edit menus
-	set edit_menus [get_edit_solid_menus]
+	set edit_menus [get_sed_menus]
 	init_solid_edit_menus $esolint_type $edit_menus
     } elseif {$mged_display(state) == "OBJ EDIT"} {
 	# load object edit menus

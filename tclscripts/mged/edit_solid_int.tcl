@@ -55,7 +55,7 @@ proc init_edit_solid_int { id } {
 	set esolint_control($id,cflag) 0
     }
 
-    if [catch {get_edit_solid} esolint_info] {
+    if [catch {get_sed} esolint_info] {
 	# a Tcl output routine doesn't exist for this solid type
 	build_edit_info $id
 	return
@@ -65,7 +65,7 @@ proc init_edit_solid_int { id } {
     set esolint_control(type) [lindex $esolint_info 1]
     set esolint_vals [lrange $esolint_info 2 end]
 
-    set esolint_info [get_edit_solid -c]
+    set esolint_info [get_sed -c]
     set esolint_control(pathname) [lindex $esolint_info 0]
     set esolint_cvals [lrange $esolint_info 2 end]
 
@@ -81,7 +81,7 @@ proc init_edit_solid_int { id } {
     incr row
     set esolint_control(form_name) $w.sformF._F
     set esolint_control(form) $row
-    set esolint_control($id,cmd) "put_edit_solid $esolint_control(type)"
+    set esolint_control($id,cmd) "put_sed $esolint_control(type)"
     if $esolint_control($id,cflag) {
 	esolint_build_form $id $w.sformF "** SOLID -- $esolint_control(name): $esolint_control(type)" $esolint_control(type) $esolint_vals disabled 1 1 1 1
     } else {
@@ -93,7 +93,7 @@ proc init_edit_solid_int { id } {
     incr row
     set esolint_control(form_cname) $w.scformF._F
     set esolint_control(cform) $row
-    set esolint_control($id,context_cmd) "put_edit_solid -c $esolint_control(type)"
+    set esolint_control($id,context_cmd) "put_sed -c $esolint_control(type)"
     if $esolint_control($id,cflag) {
 	esolint_build_form $id $w.scformF "** PATH -- $esolint_control(pathname): $esolint_control(type)" $esolint_control(type) $esolint_cvals normal 1 2 1 1
     } else {
@@ -500,13 +500,13 @@ proc esolint_update {} {
     global solid_data
     global esolint_control
 
-    if [catch {get_edit_solid} esolint_info] {
+    if [catch {get_sed} esolint_info] {
 	# a Tcl output routine doesn't exist for this solid type
 	return
     }
     set esolint_vals [lrange $esolint_info 2 end]
 
-    set esolint_cinfo [get_edit_solid -c]
+    set esolint_cinfo [get_sed -c]
     set esolint_cvals [lrange $esolint_cinfo 2 end]
 
     foreach id $mged_players {

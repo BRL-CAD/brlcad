@@ -9,7 +9,7 @@ set mged_helpdevel_data(cmd_win)	{{cmd}	{routine for maintaining command windows
 set mged_helpdevel_data(collaborate)	{{join id | quit id | show}	{routine for maintaining the collaborative session}}
 set mged_helpdevel_data(get_comb)	{{comb_name}	{get information about combination}}
 set mged_helpdevel_data(get_dm_list)	{{}	{returns a list of all display managers}}
-set mged_helpdevel_data(get_edit_solid)	{{[-c]}	{get the solid parameters for the solid currently
+set mged_helpdevel_data(get_sed)	{{[-c]}	{get the solid parameters for the solid currently
         being edited}}
 set mged_helpdevel_data(get_solid_keypoint) {{} {set the solid keypoint using the default rules}}
 set mged_helpdevel_data(get_more_default)	{{}	{get the current default input value}}
@@ -29,7 +29,7 @@ set mged_helpdevel_data(model2view)	{{mx my mz}	{convert point in model coords (
 set mged_helpdevel_data(model2view_lu)	{{mx my mz}	{convert point in model coords (local units) to view coords (local units)}}
 set mged_helpdevel_data(output_hook)	{{[hook_cmd]}	{set up to have output from bu_log sent to hook_cmd}}
 set mged_helpdevel_data(put_comb)	{{comb_name is_Region id air material los color shader inherit boolean_expr} {set combination}}
-set mged_helpdevel_data(put_edit_solid)	{{solid parameters}	{put the solid parameters into the in-memory (i.e. es_int)
+set mged_helpdevel_data(put_sed)	{{solid parameters}	{put the solid parameters into the in-memory (i.e. es_int)
         solid currently being edited.}}
 set mged_helpdevel_data(reset_edit_solid)	{{}	{reset the parameters for the currently edited solid (i.e. es_int)}}
 set mged_helpdevel_data(rset)		{{[res_type [res [vals]]]}	{provides a mechanism to get/set resource values.}}
