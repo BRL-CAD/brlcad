@@ -41,10 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <sys/stat.h>
 #endif
 
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-#endif
-
 #include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -55,33 +51,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifndef SEEK_SET
 # define SEEK_SET	0
-#endif
-
-/*
- *  This constant determines what the maximum size database is that
- *  will be buffered entirely in memory.
- *  Architecture constraints suggest different values for each vendor.
- */
-#ifdef CRAY1
-#	define	INMEM_LIM	1*1024*1024	/* includes XMP */
-#endif
-#ifdef CRAY2
-#	define	INMEM_LIM	32*8*1024*1024
-#endif
-#ifdef sun
-#	define	INMEM_LIM	1*1024*1024
-#endif
-#ifdef gould
-#	define	INMEM_LIM	1*1024*1024
-#endif
-#ifdef vax
-#	define	INMEM_LIM	8*1024*1024
-#endif
-#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
-#	define	INMEM_LIM	8*1024*1024
-#endif
-#if !defined(INMEM_LIM)
-#	define	INMEM_LIM	1*1024*1024	/* default */
 #endif
 
 /*
