@@ -214,7 +214,7 @@ fastf_t		dist_tol;
 				rt_bomb("ptbl_vsort()\n");
 			}
 			if( dist > dist_tol )  {
-				rt_log("WARNING ptbl_vsort() vu=x%x point off line by %e, tol=%e\n", dist, dist_tol);
+				rt_log("WARNING ptbl_vsort() vu=x%x point off line by %e, tol=%e\n", vu[i], dist, dist_tol);
 			}
 		}
 	}
