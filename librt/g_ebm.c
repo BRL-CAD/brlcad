@@ -578,7 +578,7 @@ CONST struct db_i		*dbip;
 	bn_mat_copy( eip->mat, tmat );
 
 	/* Get bit map from .bw(5) file */
-	if( !(mp = bu_open_mapped_file( eip->file, "ebm" )) )  {
+	if( !(mp = bu_open_mapped_file_with_path( dbip->dbi_filepath, eip->file, "ebm" )) )  {
 		bu_log("rt_ebm_import() unable to open '%s'\n", eip->file);
 		bu_free( (char *)eip , "rt_ebm_import: eip" );
 fail:

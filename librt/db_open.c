@@ -59,6 +59,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  Open the named database.
  *  The 'mode' parameter specifies read-only or read-write mode.
  *
+ *  As a convenience, dbi_filepath is a C-style argv array of dirs to search
+ *  when attempting to open related files (such as data files for EBM
+ *  solids or texture-maps).  The default values are "." and the
+ *  directory containing the ".g" file.  They may be overriden by
+ *  setting the environment variable BRLCAD_FILE_PATH.
+ *
  *  Returns:
  *	DBI_NULL	error
  *	db_i *		success
@@ -134,7 +140,15 @@ CONST char	*mode;
 	dbip->dbi_title = (char *)0;
 	dbip->dbi_uses = 1;
 
+	/* Record the filename and file path */
 	dbip->dbi_filename = bu_strdup(name);
+
+	/* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
+	dbip->dbi_filepath = (char **)bu_malloc( 3 * sizeof(char *), "dbi_filepath[3]" );
+	dbip->dbi_filepath[0] = bu_strdup( "." );
+	dbip->dbi_filepath[1] = bu_dirname( name );
+	dbip->dbi_filepath[2] = NULL;
+
 	bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
 	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
