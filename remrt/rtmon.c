@@ -91,40 +91,52 @@ Usage:  rtmon [-d#]\n\
 ";
 
 /*
- *			B U _ S E T _ R E A L T I M E
- *
- *  If possible, mark this process for real-time scheduler priority.
- *  Will often need root privs.
- *
- *  Returns -
- *	1	realtime priority obtained
- *	0	running with non-realtime scheduler behavior
+ *			B U _ G E T _ 1 C P U _ S P E E D
  */
-int
-bu_set_realtime()
+#if defined(IRIX)
+# include <sys/utsname.h>
+#endif
+#define CPU_SPEED_FILE	"./1cpu.speeds"
+fastf_t
+bu_get_1cpu_speed()
 {
-#	if IRIX >= 6
-	{
-		int	policy;
+#if defined(IRIX)
+	struct utsname	ut;
 
-		if( (policy = sched_getscheduler(0)) >= 0 )  {
-			if( policy == SCHED_RR )
-				return 1;
-		}
-
-		sched_getparam( 0, &param );
-
-		if ( sched_setscheduler( 0,
-			SCHED_RR,		/* policy */
-			&param
-		    ) >= 0 )  {
-		    	return 1;		/* realtime */
-		}
-	 	perror("bu_set_realtime(): sched_setscheduler");
-		/* Fall through to return 0 */
+#if 0
+	if( uname(&ut) >= 0 )  {
+		/* Key on type of CPU board, e.g. IP6 */
+		return lookup( CPU_SPEED_FILE, ut.machine );
 	}
-#	endif
-	return 0;
+#endif
+#endif
+	return 1.0;
+}
+
+/*
+ *			S E N D _ S T A T U S
+ */
+void
+send_status(fd)
+int	fd;
+{
+	struct bu_vls	str;
+
+	bu_vls_init(&str);
+
+	our_hostname = get_our_hostname();	/* ihost.c */
+
+	bu_vls_printf( &str, "hostname %s", our_hostname );
+	bu_vls_printf( &str, " ncpu %d", bu_avail_cpus() );
+	bu_vls_printf( &str, " pub_cpu %d", bu_get_public_cpus() );
+	bu_vls_printf( &str, " load %g", bu_get_load_average() );
+	bu_vls_printf( &str, " realt %d", bu_set_realtime() );
+	bu_vls_printf( &str, " 1cpu_speed %g", bu_get_1cpu_speed() );
+
+	bu_vls_putc( &str, '\n' );
+
+	(void)write( fd, bu_vls_addr(&str), bu_vls_strlen(&str) );
+	bu_vls_free( &str );
 }
 
 /*
@@ -138,25 +150,26 @@ server_process(fd)
 int	fd;
 {
 	struct bu_vls	str;
+	FILE		*ifp;
+	FILE		*ofp;
+
+	ifp = fdopen( fd, "r" );
+	ofp = fdopen( fd, "w" );
+	bu_setlinebuf( ifp );
+	bu_setlinebuf( ofp );
 
 	bu_vls_init(&str);
+	while( !feof(ifp ) )  {
+		bu_vls_trunc( &str, 0 );
+		if( bu_vls_gets( &str, ifp ) < 0 )  break;
 
-	our_hostname = get_our_hostname();	/* ihost.c */
+		if( strncmp( bu_vls_addr(&str), "status", 6 ) == 0 )  {
+			send_status(fd);
+			continue;
+		}
+		fprintf( ofp, "ERROR Unknown command: %s\n", bu_vls_addr(&str) );
+	}
 
-	bu_vls_printf( &str, "hostname %s", our_hostname );
-	bu_vls_printf( &str, " ncpu %d realt %d",
-		bu_avail_cpus(),
-		bu_set_realtime()
-		);
-
-#if 0
-	bu_vls_printf( &str, " load %ld", bu_get_load_average() );
-	bu_vls_printf( &str, " pub_cpu %d", bu_get_public_cpus() );
-#endif
-
-	bu_vls_putc( &str, '\n' );
-
-	(void)write( fd, bu_vls_addr(&str), bu_vls_strlen(&str) );
 	close(fd);
 	exit(0);
 }
@@ -203,8 +216,13 @@ char	*argv[];
 
 	close(0);	/* shut stdin */
 
-	/* Set real-time scheduler priority */
+	/* Set real-time scheduler priority.  May need root privs. */
 	bu_set_realtime();
+
+	/* XXX Drop down to normal user privs */
+	/* If "cmike" in /etc/passwd", use that, else use "mike" */
+	setgid(42);
+	setuid(53);
 
 	/* Hang a listen */
 	bzero((char *)&sinme, sizeof(sinme));
