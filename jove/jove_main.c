@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.15  91/08/30  19:28:59  mike
+ * Added BRL-specific identification
+ * 
  * Revision 2.14  91/08/30  18:11:05  mike
  * Made explicit that termcap.h to be used is the local version
  * 
@@ -98,11 +101,11 @@ extern char	*sprint();
 /***** #include <sys/ioctl.h> *****/
 #endif
 
-#ifdef TIOCSLTC
+#if defined(TIOCSLTC) && !defined(SYS5)
 struct ltchars	ls1, ls2;
 #endif 
 
-#ifndef SYS5
+#if !defined(SYS5)
 struct tchars	tc1, tc2;
 #endif
 
@@ -455,7 +458,7 @@ ttsize()
 
 ttinit()
 {
-#ifdef TIOCSLTC
+#if defined(TIOCSLTC) && !defined(SYS5)
 	ioctl(0, TIOCGLTC, (char *) &ls1);
 	ls2 = ls1;
 	ls2.t_suspc = (char) -1;
@@ -465,7 +468,7 @@ ttinit()
 #endif
 
 	/* Change interupt and quit. */
-#ifdef TIOCGETC
+#if defined(TIOCGETC) && !defined(SYS5)
 	ioctl(0, TIOCGETC, (char *) &tc1);
 	tc2 = tc1;
 	tc2.t_intrc = (char) -1;
@@ -512,10 +515,10 @@ ttyset(n)
 		putstr("ioctl error?");
 		byebye(1);
 	}
-#ifdef TIOCSETC
+#if defined(TIOCSETC) && !defined(SYS5)
 	ioctl(0, TIOCSETC, n == 0 ? (char *) &tc1 : (char *) &tc2);
 #endif
-#ifdef TIOCSLTC
+#if defined(TIOCSLTC) && !defined(SYS5)
 	ioctl(0, TIOCSLTC, n == 0 ? (char *) &ls1 : (char *) &ls2);
 #endif
 }
@@ -766,6 +769,8 @@ cont:
 		c = read_ch();
 		if (c == -1)
 			continue;
+		else if (c < -1)
+			break;
 	 	dispatch(c);
 		if (this_cmd == ARG_CMD)
 			goto cont;
