@@ -1,4 +1,6 @@
-Different files are listed with short descriptions of what they are or what they do.  The status of any package that has been checked for correctness is listed, including any useful notes.  Anything that doesn't have a status or description needs to have one added.
+Different files are listed with short descriptions of what they are or what they do.  The status of any package that has been checked for correctness is listed, including any useful notes.  Anything that doesn't have a status or description needs to have one added.  Anything that is broken, incorrect, or dated will have a bad status. 
+
+Items that are presently being tested are noted by the name of the tester after the tool/file/package's name.  (e.g. `gen.sh sean')
 
 ---
 
@@ -123,8 +125,9 @@ vfont
 
 Tools\Binaries
 --------------
-Listed 
-a-d
+Listed below are the binaries that get installed after compilation.  The testing status is listed where relevant.
+
+a-d sean
 alias-pix
 all_sf
 anim_cascade
