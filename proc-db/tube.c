@@ -45,18 +45,19 @@ fastf_t	circle_knots[N_CIRCLE_KNOTS] = {
 	4,	4,	4
 };
 
+#define MPY	100
 #define IRT2	0.70710678	/* 1/sqrt(2) */
 #define NCOLS	9
 fastf_t poly[NCOLS*4] = {
-	0,	1,	0,	1,
-	0,	IRT2,	IRT2,	IRT2,
-	0,	0,	1,	1,
-	0,	-IRT2,	IRT2,	IRT2,
-	0,	-1,	0,	1,
-	0,	-IRT2,	-IRT2,	IRT2,
-	0,	0,	-1,	1,
-	0,	IRT2,	-IRT2,	IRT2,
-	0,	1,	0,	1
+	0,	MPY,		0,		1,
+	0,	IRT2*MPY,	IRT2*MPY,	IRT2,
+	0,	0,		MPY,		1,
+	0,	-IRT2*MPY,	IRT2*MPY,	IRT2,
+	0,	-MPY,		0,		1,
+	0,	-IRT2*MPY,	-IRT2*MPY,	IRT2,
+	0,	0,		-MPY,		1,
+	0,	IRT2*MPY,	-IRT2*MPY,	IRT2,
+	0,	MPY,		0,		1
 };
 
 main(argc, argv)
@@ -97,7 +98,7 @@ char	**argv;
 	for( i=0; i<4; i++ )
 		bp->v_kv->knots[nv++] = cur_kv;
 	cur_kv++;
-	for( i=4; i<(npts+4-1); i++ )
+	for( i=4; i<(npts+4-2); i++ )
 		bp->v_kv->knots[nv++] = cur_kv++;
 	for( i=0; i<4; i++ )
 		bp->v_kv->knots[nv++] = cur_kv;
@@ -123,7 +124,7 @@ char	**argv;
 	/* Rows 1..npts */
 	for( i=0; i<npts; i++ )  {
 		row = i;
-		VSET( point, row, 0, 0 );
+		VSET( point, row * MPY, 0, 0 );
 		for( col=0; col<9; col++ )  {
 			register fastf_t h;
 			h = poly[col*4+H];
@@ -136,7 +137,7 @@ char	**argv;
 
 	/* Row npts+1 */
 	for( col=0; col<9; col++ )  {
-		*meshp++ = row;		/* lastx; */
+		*meshp++ = row * MPY;		/* lastx; */
 		*meshp++ = 0;
 		*meshp++ = 0;
 		*meshp++ = 1;
