@@ -46,7 +46,6 @@ int Vo_Init();
 static int vo_open_tcl();
 #if 0
 static int vo_close_tcl();
-static int vo_scale_tcl();
 #endif
 static int vo_size_tcl();
 static int vo_invSize_tcl();
@@ -60,6 +59,7 @@ static int vo_perspective_tcl();
 static int vo_pmat_tcl();
 static int vo_rot_tcl();
 static int vo_tra_tcl();
+static int vo_sca_tcl();
 static int vo_slew_tcl();
 
 static int vo_eye_tcl();
@@ -75,10 +75,14 @@ static int vo_observer_tcl();
 static int vo_coord_tcl();
 static int vo_rotate_about_tcl();
 static int vo_keypoint_tcl();
+static int vo_setview_tcl();
+static int vo_arot_tcl();
+static int vo_vrot_tcl();
+static int vo_mrot_tcl();
 
 static int vo_cmd();
-static void vo_update();
-static void vo_mat_aet();
+void vo_update();
+void vo_mat_aet();
 static void vo_persp_mat();
 static void vo_mike_persp_mat();
 
@@ -87,6 +91,7 @@ struct view_obj HeadViewObj;		/* head of view object list */
 static struct bu_cmdtab vo_cmds[] = 
 {
 	{"aet",			vo_aet_tcl},
+	{"arot",		vo_arot_tcl},
 	{"base2local",		vo_base2local_tcl},
 	{"center",		vo_center_tcl},
 #if 0
@@ -100,6 +105,7 @@ static struct bu_cmdtab vo_cmds[] =
 	{"local2base",		vo_local2base_tcl},
 	{"lookat",		vo_lookat_tcl},
 	{"model2view",		vo_model2view_tcl},
+	{"mrot",		vo_mrot_tcl},
 	{"observer",		vo_observer_tcl},
 	{"orientation",		vo_orientation_tcl},
 	{"perspective",		vo_perspective_tcl},
@@ -109,31 +115,36 @@ static struct bu_cmdtab vo_cmds[] =
 	{"rmat",		vo_rmat_tcl},
 	{"rot",			vo_rot_tcl},
 	{"rotate_about",	vo_rotate_about_tcl},
-#if 0
-	{"scale",		vo_scale_tcl},
-#endif
+	{"sca",			vo_sca_tcl},
+	{"setview",		vo_setview_tcl},
 	{"size",		vo_size_tcl},
 	{"slew",		vo_slew_tcl},
 	{"tra",			vo_tra_tcl},
 	{"units",		vo_units_tcl},
+	{"vrot",		vo_vrot_tcl},
 	{"view2model",		vo_view2model_tcl},
 	{"zoom",		vo_zoom_tcl},
+#if 0
+	{"knob",		vo_knob_tcl},
+	{"qorot",		vo_qorot_tcl},
+	{"qvrot",		vo_qvrot_tcl},
+	{"status",		vo_status_tcl},
+	{"",		vo__tcl},
+#endif
 	{(char *)0,		(int (*)())0}
 };
 
 static int
-vo_cmd(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int		argc;
-     char		**argv;
+vo_cmd(ClientData	clientData,
+       Tcl_Interp	*interp,
+       int		argc,
+       char		**argv)
 {
 	return bu_cmd(clientData, interp, argc, argv, vo_cmds, 1);
 }
 
 int
-Vo_Init(interp)
-     Tcl_Interp *interp;
+Vo_Init(Tcl_Interp *interp)
 {
 	BU_LIST_INIT(&HeadViewObj.l);
 	(void)Tcl_CreateCommand(interp, "v_open", vo_open_tcl,
@@ -143,8 +154,7 @@ Vo_Init(interp)
 }
 
 static void
-vo_deleteProc(clientData)
-     ClientData clientData;
+vo_deleteProc(ClientData clientData)
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -192,9 +202,9 @@ vo_close_tcl(clientData, interp, argc, argv)
  * Create an command/object named "oname" in "interp".
  */
 struct view_obj *
-vo_open_cmd(Tcl_Interp		*interp,
-	    char		*oname)
+vo_open_cmd(char	*oname)
 {
+	Tcl_Interp	*interp = (Tcl_Interp *)NULL;
 	struct view_obj *vop;
 
 	BU_GETSTRUCT(vop,view_obj);
@@ -215,6 +225,7 @@ vo_open_cmd(Tcl_Interp		*interp,
 	vop->vo_rotate_about = 'v';
 	vo_update(vop, interp, 0);
 	BU_LIST_INIT(&vop->vo_observers.l);
+	vop->vo_callback = (void (*)())0;
 
 	/* append to list of view_obj's */
 	BU_LIST_APPEND(&HeadViewObj.l,&vop->l);
@@ -227,10 +238,11 @@ vo_open_cmd(Tcl_Interp		*interp,
  *
  * USAGE: v_open [name]
  */
-int vo_open_tcl(ClientData	clientData,
-		Tcl_Interp	*interp,
-		int             argc,
-		char            **argv)
+static int
+vo_open_tcl(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
 {
 	struct view_obj *vop;
 
@@ -245,7 +257,7 @@ int vo_open_tcl(ClientData	clientData,
 	/* first, delete any commands by this name */
 	(void)Tcl_DeleteCommand(interp, argv[1]);
 
-	vop = vo_open_cmd(interp, argv[1]);
+	vop = vo_open_cmd(argv[1]);
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&vop->vo_name),
 				vo_cmd,
@@ -259,56 +271,46 @@ int vo_open_tcl(ClientData	clientData,
 	return TCL_OK;
 }
 
+/****************** View Object Methods ********************/
+
 #if 0
+/* skeleton functions for view_obj methods */
+int
+vo__cmd(struct view_obj	*vop,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char 		**argv)
+{
+}
+
 /*
- * Get or set the view scale.
+ * Usage:
+ *        procname 
  */
 static int
-vo_scale_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+vo__tcl(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
-	struct bu_vls vls;
-	fastf_t scale;
 
-	/* get view scale */
-	if (argc == 2) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "%g", vop->vo_scale * vop->vo_base2local);
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
-
-		return TCL_OK;
-	}
-
-	/* set view scale */
-	if (argc == 3) {
-		if (sscanf(argv[2], "%lf", &scale) != 1) {
-			Tcl_AppendResult(interp, "bad scale value - ",
-					 argv[2], (char *)NULL);
-			return TCL_ERROR;
-		}
-
-		vop->vo_scale = vop->vo_local2base * scale;
-		vop->vo_size = 2.0 * scale;
-		vop->vo_invSize = 1.0 / vop->vo_size;
-		vo_update(vop, interp, 1);
-
-		return TCL_OK;
-	}
-
-	/* compose error message */
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_scale");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	return TCL_ERROR;
+	return vo__cmd(vop, interp, argc-1, argv+1);
 }
 #endif
+
+void
+vo_size(struct view_obj	*vop,
+	Tcl_Interp	*interp,
+	fastf_t		size)
+{
+	vop->vo_size = vop->vo_local2base * size;
+	if (vop->vo_size < RT_MINVIEWSIZE)
+		vop->vo_size = RT_MINVIEWSIZE;
+	vop->vo_invSize = 1.0 / size;
+	vop->vo_scale = 0.5 * size;
+	vo_update(vop, interp, 1);
+}
 
 int
 vo_size_cmd(struct view_obj	*vop,
@@ -337,11 +339,7 @@ vo_size_cmd(struct view_obj	*vop,
 			return TCL_ERROR;
 		}
 
-		vop->vo_size = vop->vo_local2base * size;
-		vop->vo_invSize = 1.0 / size;
-		vop->vo_scale = 0.5 * size;
-		vo_update(vop, interp, 1);
-
+		vo_size(vop, interp, size);
 		return TCL_OK;
 	}
 
@@ -524,14 +522,25 @@ vo_rmat_tcl(ClientData	clientData,
 	return vo_rmat_cmd(vop, interp, argc-1, argv+1);
 }
 
+void
+vo_center(struct view_obj	*vop,
+	  Tcl_Interp		*interp,
+	  point_t		center)
+{
+	VSCALE(center, center, vop->vo_local2base);
+	MAT_DELTAS_VEC_NEG(vop->vo_center, center);
+	vo_update(vop, interp, 1);
+}
+
 int
 vo_center_cmd(struct view_obj	*vop,
 	      Tcl_Interp	*interp,
 	      int		argc,
 	      char 		**argv)
 {
-	vect_t center;
-	struct bu_vls vls;
+	point_t		center;
+	struct bu_vls	vls;
+
 
 	/* get view center */
 	if (argc == 1) {
@@ -546,17 +555,24 @@ vo_center_cmd(struct view_obj	*vop,
 	}
 
 	/* set view center */
-	if (argc == 2) {
-		if (bn_decode_vect(center, argv[1]) != 3)
-			return TCL_ERROR;
+	if (argc == 2 || argc == 4) {
+		if (argc == 2) {
+			if (bn_decode_vect(center, argv[1]) != 3)
+				goto bad;
+		} else {
+			if (sscanf(argv[1], "%lf", &center[X]) != 1)
+				goto bad;
+			if (sscanf(argv[2], "%lf", &center[Y]) != 1)
+				goto bad;
+			if (sscanf(argv[3], "%lf", &center[Z]) != 1)
+				goto bad;
+		}
 
-		VSCALE(center, center, vop->vo_local2base);
-		MAT_DELTAS_VEC_NEG(vop->vo_center, center);
-		vo_update(vop, interp, 1);
-
+		vo_center(vop, interp, center);
 		return TCL_OK;
 	}
 
+ bad:
 	/* compose error message */
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib vo_center");
@@ -813,171 +829,11 @@ static int
 vo_pmat_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char		**argv)
+	    char	**argv)
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
 
 	return vo_pmat_cmd(vop, interp, argc-1, argv+1);
-}
-
-static void
-vo_update(struct view_obj	*vop,
-	  Tcl_Interp		*interp,
-	  int			oflag)
-{
-	vect_t work, work1;
-	vect_t temp, temp1;
-
-	bn_mat_mul(vop->vo_model2view,
-		   vop->vo_rotation,
-		   vop->vo_center);
-	vop->vo_model2view[15] = vop->vo_scale;
-	bn_mat_inv(vop->vo_view2model, vop->vo_model2view);
-
-	/* Find current azimuth, elevation, and twist angles */
-	VSET(work, 0.0, 0.0, 1.0);       /* view z-direction */
-	MAT4X3VEC(temp , vop->vo_view2model , work);
-	VSET(work1 , 1.0, 0.0, 0.0);      /* view x-direction */
-	MAT4X3VEC(temp1 , vop->vo_view2model , work1);
-
-	/* calculate angles using accuracy of 0.005, since display
-	 * shows 2 digits right of decimal point */
-	bn_aet_vec(&vop->vo_aet[0],
-		   &vop->vo_aet[1],
-		   &vop->vo_aet[2],
-		   temp, temp1, (fastf_t)0.005);
-
-	/* Force azimuth range to be [0,360] */
-	if ((NEAR_ZERO(vop->vo_aet[1] - 90.0,(fastf_t)0.005) ||
-	     NEAR_ZERO(vop->vo_aet[1] + 90.0,(fastf_t)0.005)) &&
-	    vop->vo_aet[0] < 0 &&
-	    !NEAR_ZERO(vop->vo_aet[0],(fastf_t)0.005))
-		vop->vo_aet[0] += 360.0;
-	else if (NEAR_ZERO(vop->vo_aet[0],(fastf_t)0.005))
-		vop->vo_aet[0] = 0.0;
-
-	/* apply the perspective angle to model2view */
-	bn_mat_mul(vop->vo_pmodel2view, vop->vo_pmat, vop->vo_model2view);
-
-	if (oflag)
-		bu_observer_notify(interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name));
-}
-
-static void
-vo_mat_aet(struct view_obj *vop)
-{
-	mat_t tmat;
-	fastf_t twist;
-	fastf_t c_twist;
-	fastf_t s_twist;
-
-	bn_mat_angles(vop->vo_rotation,
-		      270.0 + vop->vo_aet[1],
-		      0.0,
-		      270.0 - vop->vo_aet[0]);
-
-	twist = -vop->vo_aet[2] * bn_degtorad;
-	c_twist = cos(twist);
-	s_twist = sin(twist);
-	bn_mat_zrot(tmat, s_twist, c_twist);
-	bn_mat_mul2(tmat, vop->vo_rotation);
-}
-
-/*
- *			P E R S P _ M A T
- *
- *  This code came from mged/dozoom.c.
- *  Compute a perspective matrix for a right-handed coordinate system.
- *  Reference: SGI Graphics Reference Appendix C
- *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
- */
-static void
-vo_persp_mat(mat_t	m,
-	     fastf_t	fovy,
-	     fastf_t	aspect,
-	     fastf_t	near,
-	     fastf_t	far,
-	     fastf_t	backoff)
-{
-	mat_t	m2, tran;
-
-	fovy *= 3.1415926535/180.0;
-
-	MAT_IDN(m2);
-	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
-	m2[0] = m2[5]/aspect;
-	m2[10] = (far+near) / (far-near);
-	m2[11] = 2*far*near / (far-near);	/* This should be negative */
-
-	m2[14] = -1;		/* XXX This should be positive */
-	m2[15] = 0;
-
-	/* Move eye to origin, then apply perspective */
-	MAT_IDN(tran);
-	tran[11] = -backoff;
-	bn_mat_mul(m, m2, tran);
-}
-
-/*
- *  This code came from mged/dozoom.c.
- *  Create a perspective matrix that transforms the +/1 viewing cube,
- *  with the acutal eye position (not at Z=+1) specified in viewing coords,
- *  into a related space where the eye has been sheared onto the Z axis
- *  and repositioned at Z=(0,0,1), with the same perspective field of view
- *  as before.
- *
- *  The Zbuffer clips off stuff with negative Z values.
- *
- *  pmat = persp * xlate * shear
- */
-static void
-vo_mike_persp_mat(mat_t		pmat,
-		  const point_t	eye)
-{
-	mat_t	shear;
-	mat_t	persp;
-	mat_t	xlate;
-	mat_t	t1, t2;
-	point_t	sheared_eye;
-
-	if( eye[Z] < SMALL )  {
-		VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
-		return;
-	}
-
-	/* Shear "eye" to +Z axis */
-	MAT_IDN(shear);
-	shear[2] = -eye[X]/eye[Z];
-	shear[6] = -eye[Y]/eye[Z];
-
-	MAT4X3VEC( sheared_eye, shear, eye );
-	if( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
-		VPRINT("ERROR sheared_eye", sheared_eye);
-		return;
-	}
-
-	/* Translate along +Z axis to put sheared_eye at (0,0,1). */
-	MAT_IDN(xlate);
-	/* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
-	MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
-
-	/* Build perspective matrix inline, substituting fov=2*atan(1,Z) */
-	MAT_IDN( persp );
-	/* From page 492 of Graphics Gems */
-	persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
-	persp[5] = sheared_eye[Z];	/* scaling: determines fov */
-
-	/* From page 158 of Rogers Mathematical Elements */
-	/* Z center of projection at Z=+1, r=-1/1 */
-	persp[14] = -1;
-
-	bn_mat_mul( t1, xlate, shear );
-	bn_mat_mul( t2, persp, t1 );
-
-	/* Now, move eye from Z=1 to Z=0, for clipping purposes */
-	MAT_DELTAS( xlate, 0, 0, -1 );
-
-	bn_mat_mul( pmat, xlate, t2 );
 }
 
 int
@@ -990,7 +846,7 @@ vo_eye_cmd(struct view_obj	*vop,
 	vect_t	xlate;
 	vect_t	new_cent;
 
-	if (argc != 2) {
+	if (argc != 2 && argc != 4) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1000,8 +856,17 @@ vo_eye_cmd(struct view_obj	*vop,
 		return TCL_ERROR;
 	}
 
-	if (bn_decode_vect(eye_model, argv[1]) != 3)
-		return TCL_ERROR;
+	if (argc == 2) {
+		if (bn_decode_vect(eye_model, argv[1]) != 3)
+			return TCL_ERROR;
+	} else {
+		if (sscanf(argv[1], "%lf", &eye_model[X]) != 1)
+			return TCL_ERROR;
+		if (sscanf(argv[2], "%lf", &eye_model[Y]) != 1)
+			return TCL_ERROR;
+		if (sscanf(argv[3], "%lf", &eye_model[Z]) != 1)
+			return TCL_ERROR;
+	}
 
 	VSCALE(eye_model, eye_model, vop->vo_local2base);
 
@@ -1099,19 +964,21 @@ vo_lookat_cmd(struct view_obj	*vop,
 	point_t new_center;
 	vect_t dir;
 	fastf_t new_az, new_el;
+	struct bu_vls vls;
 
-	if (argc != 2) {
-		struct bu_vls vls;
+	if (argc != 2 && argc != 4)
+		goto bad;
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_lookat");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	if (bn_decode_vect(look, argv[1]) != 3) {
-		return TCL_ERROR;
+	if (argc == 2) {
+		if (bn_decode_vect(look, argv[1]) != 3)
+			goto bad;
+	} else {
+		if (sscanf(argv[1], "%lf", &look[X]) != 1)
+			goto bad;
+		if (sscanf(argv[2], "%lf", &look[Y]) != 1)
+			goto bad;
+		if (sscanf(argv[3], "%lf", &look[Z]) != 1)
+			goto bad;
 	}
 
 	VSCALE(look, look, vop->vo_local2base);
@@ -1132,6 +999,13 @@ vo_lookat_cmd(struct view_obj	*vop,
 	vo_update(vop, interp, 1);
 
 	return TCL_OK;
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_lookat");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
@@ -1269,6 +1143,26 @@ vo_pov_tcl(ClientData	clientData,
 }
 
 int
+vo_zoom(struct view_obj	*vop,
+	Tcl_Interp	*interp,
+	fastf_t		sf)
+{
+	if (sf < SMALL_FASTF || INFINITY < sf) {
+		Tcl_AppendResult(interp, "vo_zoom - scale factor out of range\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	vop->vo_scale /= sf;
+	if (vop->vo_scale < RT_MINVIEWSCALE)
+		vop->vo_scale = RT_MINVIEWSCALE;
+	vop->vo_size = 2.0 * vop->vo_scale;
+	vop->vo_invSize = 1.0 / vop->vo_size;
+	vo_update(vop, interp, 1);
+
+	return TCL_OK;
+}
+
+int
 vo_zoom_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
@@ -1293,12 +1187,7 @@ vo_zoom_cmd(struct view_obj	*vop,
 		return TCL_ERROR;
 	}
 
-	vop->vo_scale /= sf;
-	vop->vo_size = 2.0 * vop->vo_scale;
-	vop->vo_invSize = 1.0 / vop->vo_size;
-	vo_update(vop, interp, 1);
-
-	return TCL_OK;
+	return vo_zoom(vop, interp, sf);
 }
 
 /*
@@ -1463,14 +1352,88 @@ vo_local2base_tcl(ClientData	clientData,
 }
 
 int
+vo_rot(struct view_obj	*vop,
+       Tcl_Interp	*interp,
+       char		coord,
+       char		rotate_about,
+       mat_t		rmat,
+       int		(*func)())
+{
+	mat_t temp1, temp2;
+
+	if (func != (int (*)())0)
+		return (*func)(vop, coord, rotate_about, rmat);
+
+	switch (coord) {
+	case 'm':
+		/* transform model rotations into view rotations */
+		bn_mat_inv(temp1, vop->vo_rotation);
+		bn_mat_mul(temp2, vop->vo_rotation, rmat);
+		bn_mat_mul(rmat, temp2, temp1);
+		break;
+	case 'v':
+	default:
+		break;
+	}
+
+	/* Calculate new view center */
+	if (rotate_about != 'v') {
+		point_t		rot_pt;
+		point_t		new_origin;
+		mat_t		viewchg, viewchginv;
+		point_t		new_cent_view;
+		point_t		new_cent_model;
+
+		switch (rotate_about) {
+		case 'e':
+			VSET(rot_pt, 0.0, 0.0, 1.0);
+			break;
+		case 'k':
+			MAT4X3PNT(rot_pt, vop->vo_model2view, vop->vo_keypoint);
+			break;
+		case 'm':
+			/* rotate around model center (0,0,0) */
+			VSET(new_origin, 0.0, 0.0, 0.0);
+			MAT4X3PNT(rot_pt, vop->vo_model2view, new_origin);
+			break;
+		default:
+			{
+				struct bu_vls vls;
+
+				bu_vls_init(&vls);
+				bu_vls_printf(&vls, "vo_rot_tcl: bad rotate_about - %c\n", rotate_about);
+				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+				bu_vls_free(&vls);
+				return TCL_ERROR;
+			}
+		}
+
+		bn_mat_xform_about_pt(viewchg, rmat, rot_pt);
+		bn_mat_inv(viewchginv, viewchg);
+
+		/* Convert origin in new (viewchg) coords back to old view coords */
+		VSET(new_origin, 0.0, 0.0, 0.0);
+		MAT4X3PNT(new_cent_view, viewchginv, new_origin);
+		MAT4X3PNT(new_cent_model, vop->vo_view2model, new_cent_view);
+		MAT_DELTAS_VEC_NEG(vop->vo_center, new_cent_model);
+	}
+
+	/* pure rotation */
+	bn_mat_mul2(rmat, vop->vo_rotation);
+	vo_update(vop, interp, 1);
+
+	return TCL_OK;
+}
+
+int
 vo_rot_cmd(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		**argv)
+	   char 		**argv,
+	   int			(*func)())
 {
 	vect_t rvec;
 	mat_t rmat;
-	mat_t temp1, temp2;
 	char coord = vop->vo_coord;
 
 	if (argc < 2 || 3 < argc) {
@@ -1512,65 +1475,7 @@ vo_rot_cmd(struct view_obj	*vop,
 	VSCALE(rvec, rvec, -1.0);
 	bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
 
-	switch (coord) {
-	case 'm':
-		/* transform model rotations into view rotations */
-		bn_mat_inv(temp1, vop->vo_rotation);
-		bn_mat_mul(temp2, vop->vo_rotation, rmat);
-		bn_mat_mul(rmat, temp2, temp1);
-		break;
-	case 'v':
-	default:
-		break;
-	}
-
-	/* Calculate new view center */
-	if (vop->vo_rotate_about != 'v') {
-		point_t		rot_pt;
-		point_t		new_origin;
-		mat_t		viewchg, viewchginv;
-		point_t		new_cent_view;
-		point_t		new_cent_model;
-
-		switch (vop->vo_rotate_about) {
-		case 'e':
-			VSET(rot_pt, 0.0, 0.0, 1.0);
-			break;
-		case 'k':
-			MAT4X3PNT(rot_pt, vop->vo_model2view, vop->vo_keypoint);
-			break;
-		case 'm':
-			/* rotate around model center (0,0,0) */
-			VSET(new_origin, 0.0, 0.0, 0.0);
-			MAT4X3PNT(rot_pt, vop->vo_model2view, new_origin);
-			break;
-		default:
-			{
-				struct bu_vls vls;
-
-				bu_vls_init(&vls);
-				bu_vls_printf(&vls, "vo_rot_tcl: bad rotate_about - %c\n", vop->vo_rotate_about);
-				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
-				bu_vls_free(&vls);
-				return TCL_ERROR;
-			}
-		}
-
-		bn_mat_xform_about_pt(viewchg, rmat, rot_pt);
-		bn_mat_inv(viewchginv, viewchg);
-
-		/* Convert origin in new (viewchg) coords back to old view coords */
-		VSET(new_origin, 0.0, 0.0, 0.0);
-		MAT4X3PNT(new_cent_view, viewchginv, new_origin);
-		MAT4X3PNT(new_cent_model, vop->vo_view2model, new_cent_view);
-		MAT_DELTAS_VEC_NEG(vop->vo_center, new_cent_model);
-	}
-
-	/* pure rotation */
-	bn_mat_mul2(rmat, vop->vo_rotation);
-	vo_update(vop, interp, 1);
-
-	return TCL_OK;
+	return vo_rot(vop, interp, coord, vop->vo_rotate_about, rmat, func);
 }
 
 /*
@@ -1587,19 +1492,51 @@ vo_rot_tcl(ClientData	clientData,
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
 
-	return vo_rot_cmd(vop, interp, argc-1, argv+1);
+	return vo_rot_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
+}
+
+int
+vo_tra(struct view_obj	*vop,
+       Tcl_Interp	*interp,
+       char		coord,
+       vect_t		tvec,
+       int		(*func)())
+{
+	point_t delta;
+	point_t work;
+	point_t vc, nvc;
+
+	if (func != (int (*)())0)
+		return (*func)(vop, coord, tvec);
+
+	switch (coord) {
+	case 'm':
+		VSCALE(delta, tvec, vop->vo_local2base);
+		MAT_DELTAS_GET_NEG(vc, vop->vo_center);
+		break;
+	case 'v':
+		VSCALE(tvec, tvec, -2.0*vop->vo_local2base*vop->vo_invSize);
+		MAT4X3PNT(work, vop->vo_view2model, tvec);
+		MAT_DELTAS_GET_NEG(vc, vop->vo_center);
+		VSUB2(delta, work, vc);
+		break;
+	}
+
+	VSUB2(nvc, vc, delta);
+	MAT_DELTAS_VEC_NEG(vop->vo_center, nvc);
+	vo_update(vop, interp, 1);
+
+	return TCL_OK;
 }
 
 int
 vo_tra_cmd(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		**argv)
+	   char 		**argv,
+	   int			(*func)())
 {
 	vect_t tvec;
-	point_t delta;
-	point_t work;
-	point_t vc, nvc;
 	char coord = vop->vo_coord;
 
 	if (argc < 2 || 3 < argc) {
@@ -1638,24 +1575,7 @@ vo_tra_cmd(struct view_obj	*vop,
 		return TCL_ERROR;
 	}
 
-	switch (coord) {
-	case 'm':
-		VSCALE(delta, tvec, vop->vo_local2base);
-		MAT_DELTAS_GET_NEG(vc, vop->vo_center);
-		break;
-	case 'v':
-		VSCALE(tvec, tvec, -2.0*vop->vo_local2base*vop->vo_invSize);
-		MAT4X3PNT(work, vop->vo_view2model, tvec);
-		MAT_DELTAS_GET_NEG(vc, vop->vo_center);
-		VSUB2(delta, work, vc);
-		break;
-	}
-
-	VSUB2(nvc, vc, delta);
-	MAT_DELTAS_VEC_NEG(vop->vo_center, nvc);
-	vo_update(vop, interp, 1);
-
-	return TCL_OK;
+	return vo_tra(vop, interp, coord, tvec, func);
 }
 
 /*
@@ -1672,7 +1592,21 @@ vo_tra_tcl(ClientData	clientData,
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
 
-	return vo_tra_cmd(vop, interp, argc-1, argv+1);
+	return vo_tra_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
+}
+
+int
+vo_slew(struct view_obj	*vop,
+	Tcl_Interp	*interp,
+	vect_t		svec)
+{
+	point_t model_center;
+
+	MAT4X3PNT(model_center, vop->vo_view2model, svec);
+	MAT_DELTAS_VEC_NEG(vop->vo_center, model_center);
+	vo_update(vop, interp, 1);
+
+	return TCL_OK;
 }
 
 int
@@ -1681,31 +1615,52 @@ vo_slew_cmd(struct view_obj	*vop,
 	    int			argc,
 	    char 		**argv)
 {
-	vect_t slewvec;
-	point_t model_center;
+	struct bu_vls	vls;
+	vect_t		svec;
 
-	if (argc != 2) {
-		struct bu_vls vls;
+	if (argc == 2) {
+		int	n;
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_slew");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
+		if ((n = bn_decode_vect(svec, argv[1])) != 3) {
+			if (n != 2) {
+				Tcl_AppendResult(interp, "vo_slew: bad xyz - ", argv[1], (char *)NULL);
+				return TCL_ERROR;
+			}
 
-		return TCL_ERROR;
+			svec[Z] = 0.0;
+		}
+
+		return vo_slew(vop, interp, svec);
 	}
 
-	if (sscanf(argv[1], "%lf %lf", &slewvec[X], &slewvec[Y]) != 2) {
-		Tcl_AppendResult(interp, "vo_slew: bad xy - ", argv[1], (char *)NULL);
-		return TCL_ERROR;
+	if (argc == 3 || argc == 4) {
+		if (sscanf(argv[1], "%lf", &svec[X]) != 1) {
+			Tcl_AppendResult(interp, "vo_slew: bad x value - %s\n", argv[1]);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[2], "%lf", &svec[Y]) != 1) {
+			Tcl_AppendResult(interp, "vo_slew: bad y value - %s\n", argv[2]);
+			return TCL_ERROR;
+		}
+
+		if (argc == 4) {
+			if (sscanf(argv[3], "%lf", &svec[Z]) != 1) {
+				Tcl_AppendResult(interp, "vo_slew: bad z value - %s\n", argv[3]);
+				return TCL_ERROR;
+			}
+		} else
+			svec[Z] = 0.0;
+
+		return vo_slew(vop, interp, svec);
 	}
 
-	slewvec[Z] = 0.0;
-	MAT4X3PNT(model_center, vop->vo_view2model, slewvec);
-	MAT_DELTAS_VEC_NEG(vop->vo_center, model_center);
-	vo_update(vop, interp, 1);
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_slew");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
-	return TCL_OK;
+	return TCL_ERROR;
 }
 
 /*
@@ -1922,4 +1877,521 @@ vo_keypoint_tcl(ClientData	clientData,
 	struct view_obj *vop = (struct view_obj *)clientData;
 
 	return vo_keypoint_cmd(vop, interp, argc-1, argv+1);
+}
+
+/*
+ *			V O _ S E T V I E W
+ *
+ * Set the view.  Angles are DOUBLES, in degrees.
+ *
+ * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
+ * we just replace the rotation matrix.
+ * (This assumes rotation around the view center).
+ */
+void
+vo_setview(struct view_obj	*vop,
+	   Tcl_Interp		*interp,
+	   double		a1,
+	   double		a2,
+	   double		a3)		/* DOUBLE angles, in degrees */
+{
+	bn_mat_angles(vop->vo_rotation, a1, a2, a3);
+	vo_update(vop, interp, 1);
+}
+
+int
+vo_setview_cmd(struct view_obj	*vop,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char 		**argv)
+{
+	double	x, y, z;
+
+	if (argc < 4 || 4 < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib vo_setview");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[1], "%lf", &x) < 1) {
+		Tcl_AppendResult(interp, "vo_setview_cmd: bad x value - ",
+				 argv[1], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[2], "%lf", &y) < 1) {
+		Tcl_AppendResult(interp, "vo_setview_cmd: bad y value - ",
+				 argv[2], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[3], "%lf", &z) < 1) {
+		Tcl_AppendResult(interp, "vo_setview_cmd: bad z value - ",
+				 argv[3], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	vo_setview(vop, interp, x, y, z);
+	return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname setview x y z
+ */
+static int
+vo_setview_tcl(ClientData	clientData,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char		**argv)
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	return vo_setview_cmd(vop, interp, argc-1, argv+1);
+}
+
+int
+vo_arot_cmd(struct view_obj	*vop,
+	    Tcl_Interp		*interp,
+	    int			argc,
+	    char 		**argv,
+	    int			(*func)())
+{
+	mat_t newrot;
+	point_t pt;
+	vect_t axis;
+	fastf_t angle;
+
+	if (argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib vo_arot");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[1], "%lf", &axis[X]) < 1) {
+		Tcl_AppendResult(interp, "vo_arot: bad x value - %s\n", argv[1]);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[2], "%lf", &axis[Y]) < 1) {
+		Tcl_AppendResult(interp, "vo_arot: bad y value - %s\n", argv[2]);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[3], "%lf", &axis[Z]) < 1) {
+		Tcl_AppendResult(interp, "vo_arot: bad z value - %s\n", argv[3]);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[4], "%lf", &angle) < 1) {
+		Tcl_AppendResult(interp, "vo_arot: bad angle - %s\n", argv[4]);
+		return TCL_ERROR;
+	}
+
+	VSETALL(pt, 0.0);
+	VUNITIZE(axis);
+
+	bn_mat_arb_rot(newrot, pt, axis, angle*bn_degtorad);
+
+	return vo_rot(vop, interp, vop->vo_coord, vop->vo_rotate_about, newrot, func);
+}
+
+/*
+ * Usage:
+ *        procname arot 
+ */
+static int
+vo_arot_tcl(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	return vo_arot_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
+}
+
+int
+vo_vrot_cmd(struct view_obj	*vop,
+	    Tcl_Interp		*interp,
+	    int			argc,
+	    char 		**argv)
+{
+	vect_t rvec;
+	mat_t rmat;
+
+	if (argc != 2 && argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib vo_vrot");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (argc == 2) {
+		if (bn_decode_vect(rvec, argv[1]) != 3) {
+			Tcl_AppendResult(interp, "vo_vrot: bad xyz - ", argv[1], (char *)NULL);
+			return TCL_ERROR;
+		}
+	} else {
+		if (sscanf(argv[1], "%lf", &rvec[X]) < 1) {
+			Tcl_AppendResult(interp, "vo_vrot: bad x value - %s\n", argv[1]);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[2], "%lf", &rvec[Y]) < 1) {
+			Tcl_AppendResult(interp, "vo_vrot: bad y value - %s\n", argv[2]);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[3], "%lf", &rvec[Z]) < 1) {
+			Tcl_AppendResult(interp, "vo_vrot: bad z value - %s\n", argv[3]);
+			return TCL_ERROR;
+		}
+	}
+
+	VSCALE(rvec, rvec, -1.0);
+	bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
+
+	return vo_rot(vop, interp, 'v', vop->vo_rotate_about, rmat, (int (*)())0);
+}
+
+/*
+ * Usage:
+ *        procname vrot x y z
+ */
+static int
+vo_vrot_tcl(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	return vo_vrot_cmd(vop, interp, argc-1, argv+1);
+}
+
+int
+vo_mrot_cmd(struct view_obj	*vop,
+	    Tcl_Interp		*interp,
+	    int			argc,
+	    char 		**argv,
+	    int			(*func)())
+{
+	vect_t rvec;
+	mat_t rmat;
+
+	if (argc != 2 && argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib vo_vrot");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (argc == 2) {
+		if (bn_decode_vect(rvec, argv[1]) != 3) {
+			Tcl_AppendResult(interp, "vo_mrot: bad xyz - ", argv[1], (char *)NULL);
+			return TCL_ERROR;
+		}
+	} else {
+		if (sscanf(argv[1], "%lf", &rvec[X]) < 1) {
+			Tcl_AppendResult(interp, "vo_mrot: bad x value - %s\n", argv[1]);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[2], "%lf", &rvec[Y]) < 1) {
+			Tcl_AppendResult(interp, "vo_mrot: bad y value - %s\n", argv[2]);
+			return TCL_ERROR;
+		}
+
+		if (sscanf(argv[3], "%lf", &rvec[Z]) < 1) {
+			Tcl_AppendResult(interp, "vo_mrot: bad z value - %s\n", argv[3]);
+			return TCL_ERROR;
+		}
+	}
+
+	VSCALE(rvec, rvec, -1.0);
+	bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
+
+	return vo_rot(vop, interp, 'm', vop->vo_rotate_about, rmat, func);
+}
+
+/*
+ * Usage:
+ *        procname mrot x y z
+ */
+static int
+vo_mrot_tcl(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	return vo_mrot_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
+}
+
+int
+vo_sca(struct view_obj	*vop,
+       Tcl_Interp	*interp,
+       fastf_t		sf,
+       int		(*func)())
+{
+	if (func != (int (*)())0)
+		return (*func)(vop, interp, sf);
+
+	if (sf < SMALL_FASTF || INFINITY < sf)
+		return TCL_OK;
+
+	vop->vo_scale *= sf;
+	if (vop->vo_scale < RT_MINVIEWSIZE)
+		vop->vo_scale = RT_MINVIEWSIZE;
+	vop->vo_size = 2.0 * vop->vo_scale;
+	vop->vo_invSize = 1.0 / vop->vo_size;
+	vo_update(vop, interp, 1);
+	return TCL_OK;
+}
+
+int
+vo_sca_cmd(struct view_obj	*vop,
+	   Tcl_Interp		*interp,
+	   int			argc,
+	   char 		**argv,
+	   int			(*func)())
+{
+	fastf_t sf;
+
+	if (argc != 2) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib vo_sca");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[1], "%lf", &sf) != 1) {
+		Tcl_AppendResult(interp, "vo_sca: bad scale factor - ", argv[1], "\n", (char *)0);
+		return TCL_ERROR;
+	}
+
+	return vo_sca(vop, interp, sf, func);
+}
+
+/*
+ * Usage:
+ *        procname sca [sf]
+ */
+static int
+vo_sca_tcl(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	return vo_sca_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
+}
+
+#if 0
+/* skeleton functions for view_obj methods */
+int
+vo__cmd(struct view_obj	*vop,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char 		**argv)
+{
+}
+
+/*
+ * Usage:
+ *        procname 
+ */
+static int
+vo__tcl(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	return vo__cmd(vop, interp, argc-1, argv+1);
+}
+#endif
+
+/****************** Utility Routines ********************/
+void
+vo_update(struct view_obj	*vop,
+	  Tcl_Interp		*interp,
+	  int			oflag)
+{
+	vect_t work, work1;
+	vect_t temp, temp1;
+
+	bn_mat_mul(vop->vo_model2view,
+		   vop->vo_rotation,
+		   vop->vo_center);
+	vop->vo_model2view[15] = vop->vo_scale;
+	bn_mat_inv(vop->vo_view2model, vop->vo_model2view);
+
+	/* Find current azimuth, elevation, and twist angles */
+	VSET(work, 0.0, 0.0, 1.0);       /* view z-direction */
+	MAT4X3VEC(temp , vop->vo_view2model , work);
+	VSET(work1 , 1.0, 0.0, 0.0);      /* view x-direction */
+	MAT4X3VEC(temp1 , vop->vo_view2model , work1);
+
+	/* calculate angles using accuracy of 0.005, since display
+	 * shows 2 digits right of decimal point */
+	bn_aet_vec(&vop->vo_aet[0],
+		   &vop->vo_aet[1],
+		   &vop->vo_aet[2],
+		   temp, temp1, (fastf_t)0.005);
+
+	/* Force azimuth range to be [0,360] */
+	if ((NEAR_ZERO(vop->vo_aet[1] - 90.0,(fastf_t)0.005) ||
+	     NEAR_ZERO(vop->vo_aet[1] + 90.0,(fastf_t)0.005)) &&
+	    vop->vo_aet[0] < 0 &&
+	    !NEAR_ZERO(vop->vo_aet[0],(fastf_t)0.005))
+		vop->vo_aet[0] += 360.0;
+	else if (NEAR_ZERO(vop->vo_aet[0],(fastf_t)0.005))
+		vop->vo_aet[0] = 0.0;
+
+	/* apply the perspective angle to model2view */
+	bn_mat_mul(vop->vo_pmodel2view, vop->vo_pmat, vop->vo_model2view);
+
+	if (vop->vo_callback)
+		(*vop->vo_callback)(vop->vo_clientData, vop);
+	else if (oflag && interp != (Tcl_Interp *)NULL)
+		bu_observer_notify(interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name));
+}
+
+void
+vo_mat_aet(struct view_obj *vop)
+{
+	mat_t tmat;
+	fastf_t twist;
+	fastf_t c_twist;
+	fastf_t s_twist;
+
+	bn_mat_angles(vop->vo_rotation,
+		      270.0 + vop->vo_aet[1],
+		      0.0,
+		      270.0 - vop->vo_aet[0]);
+
+	twist = -vop->vo_aet[2] * bn_degtorad;
+	c_twist = cos(twist);
+	s_twist = sin(twist);
+	bn_mat_zrot(tmat, s_twist, c_twist);
+	bn_mat_mul2(tmat, vop->vo_rotation);
+}
+
+/*
+ *			P E R S P _ M A T
+ *
+ *  This code came from mged/dozoom.c.
+ *  Compute a perspective matrix for a right-handed coordinate system.
+ *  Reference: SGI Graphics Reference Appendix C
+ *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ */
+static void
+vo_persp_mat(mat_t	m,
+	     fastf_t	fovy,
+	     fastf_t	aspect,
+	     fastf_t	near,
+	     fastf_t	far,
+	     fastf_t	backoff)
+{
+	mat_t	m2, tran;
+
+	fovy *= 3.1415926535/180.0;
+
+	MAT_IDN(m2);
+	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
+	m2[0] = m2[5]/aspect;
+	m2[10] = (far+near) / (far-near);
+	m2[11] = 2*far*near / (far-near);	/* This should be negative */
+
+	m2[14] = -1;		/* XXX This should be positive */
+	m2[15] = 0;
+
+	/* Move eye to origin, then apply perspective */
+	MAT_IDN(tran);
+	tran[11] = -backoff;
+	bn_mat_mul(m, m2, tran);
+}
+
+/*
+ *  This code came from mged/dozoom.c.
+ *  Create a perspective matrix that transforms the +/1 viewing cube,
+ *  with the acutal eye position (not at Z=+1) specified in viewing coords,
+ *  into a related space where the eye has been sheared onto the Z axis
+ *  and repositioned at Z=(0,0,1), with the same perspective field of view
+ *  as before.
+ *
+ *  The Zbuffer clips off stuff with negative Z values.
+ *
+ *  pmat = persp * xlate * shear
+ */
+static void
+vo_mike_persp_mat(mat_t		pmat,
+		  const point_t	eye)
+{
+	mat_t	shear;
+	mat_t	persp;
+	mat_t	xlate;
+	mat_t	t1, t2;
+	point_t	sheared_eye;
+
+	if( eye[Z] < SMALL )  {
+		VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
+		return;
+	}
+
+	/* Shear "eye" to +Z axis */
+	MAT_IDN(shear);
+	shear[2] = -eye[X]/eye[Z];
+	shear[6] = -eye[Y]/eye[Z];
+
+	MAT4X3VEC( sheared_eye, shear, eye );
+	if( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
+		VPRINT("ERROR sheared_eye", sheared_eye);
+		return;
+	}
+
+	/* Translate along +Z axis to put sheared_eye at (0,0,1). */
+	MAT_IDN(xlate);
+	/* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
+	MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
+
+	/* Build perspective matrix inline, substituting fov=2*atan(1,Z) */
+	MAT_IDN( persp );
+	/* From page 492 of Graphics Gems */
+	persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
+	persp[5] = sheared_eye[Z];	/* scaling: determines fov */
+
+	/* From page 158 of Rogers Mathematical Elements */
+	/* Z center of projection at Z=+1, r=-1/1 */
+	persp[14] = -1;
+
+	bn_mat_mul( t1, xlate, shear );
+	bn_mat_mul( t2, persp, t1 );
+
+	/* Now, move eye from Z=1 to Z=0, for clipping purposes */
+	MAT_DELTAS( xlate, 0, 0, -1 );
+
+	bn_mat_mul( pmat, xlate, t2 );
 }
