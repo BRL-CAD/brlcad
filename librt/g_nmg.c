@@ -807,6 +807,11 @@ struct nmg_exp_counts	*ecnt;
 	(void)rt_plong( (oo)->elem.forw, rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt) ); \
 	(void)rt_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
 
+/*
+ *			R T _ N M G _ E D I S K
+ *
+ *  Export a given structure from memory to disk format
+ */
 void
 rt_nmg_edisk( op, ip, ecnt, index, local2mm )
 genptr_t	op;		/* base of disk array */
@@ -1125,6 +1130,11 @@ double		local2mm;
 		(ii)->elem.back = &(hd); \
 	else (ii)->elem.back = (struct rt_list *)ptrs[sub]; }
 
+/*
+ *			R T _ N M G _ I D I S K
+ *
+ *  Import a given structure from disk to memory format.
+ */
 void
 rt_nmg_idisk( op, ip, ecnt, index, ptrs, mat )
 genptr_t	op;		/* ptr to in-memory structure */
@@ -1444,83 +1454,23 @@ mat_t		mat;
 }
 
 /*
- *			R T _ N M G _ I M P O R T
+ *			R T _ N M G _ I A L L O C
  *
- *  Import an NMG from the database format to the internal format.
- *  Apply modeling transformations as well.
- *
- *  Special subscripts are used in the disk file:
- *	-1	indicates a pointer to the rt_list structure which
- *		heads a linked list, and is not the first struct element.
- *	 0	indicates that a null pointer should be used.
+ *  Allocate storage for all the in-memory NMG structures,
+ *  using the GET_xxx() macros, so that m->maxindex, etc,
+ *  are all appropriately handled.
  */
-int
-rt_nmg_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-register mat_t		mat;
+struct model *
+rt_nmg_ialloc( ptrs, ecnt, kind_counts )
+long				**ptrs;
+struct nmg_exp_counts		*ecnt;
+int				kind_counts[NMG_N_KINDS];
 {
-	LOCAL struct model		*m = (struct model *)0;
-	union record			*rp;
-	struct nmg_struct_counts	cntbuf;
-	struct rt_external		count_ext;
-	int				kind_counts[NMG_N_KINDS];
-	char				*cp;
-	long				**real_ptrs;
-	long				**ptrs;
-	struct nmg_exp_counts		*ecnt;
-	int				i;
-	int				j;
-	int				maxindex;
-	int				subscript;
-	int				kind;
-	static long			bad_magic = 0x999;
+	struct model		*m = (struct model *)0;
+	int			subscript;
+	int			kind;
+	int			j;
 
-	RT_CK_EXTERNAL( ep );
-	rp = (union record *)ep->ext_buf;
-	/* Check record type */
-	if( rp->u_id != DBID_NMG )  {
-		rt_log("rt_nmg_import: defective record\n");
-		return(-1);
-	}
-
-	bzero( (char *)&cntbuf, sizeof(cntbuf) );
-	RT_INIT_EXTERNAL(&count_ext);
-	count_ext.ext_nbytes = sizeof(rp->nmg.N_structs);
-	count_ext.ext_buf = rp->nmg.N_structs;
-	if( rt_struct_import( (genptr_t)&cntbuf, rt_nmg_structs_fmt, &count_ext ) <= 0 )  {
-		rt_log("rt_struct_import failure\n");
-		return(-1);
-	}
-#if DEBUG
-	nmg_pr_struct_counts( &cntbuf, "After import" );
-#endif
-
-	maxindex = 1;
-	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		kind_counts[kind] = ((long *)&cntbuf)[kind];
-		maxindex += kind_counts[kind];
-	}
-#if DEBUG
-	rt_log("import maxindex=%d\n", maxindex);
-#endif
-
-	/* Collect overall new subscripts, and structure-specific indices */
-	ecnt = (struct nmg_exp_counts *)rt_calloc( maxindex+3,
-		sizeof(struct nmg_exp_counts), "ecnt[]" );
-	real_ptrs = (long **)rt_calloc( maxindex+3,
-		sizeof(long *), "ptrs[]" );
-	/* So that indexing [-1] gives an appropriately bogus magic # */
-	ptrs = real_ptrs+1;
-	ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
-	ptrs[0] = (long *)0;		/* [0] gives NULL */
-	ptrs[maxindex] = &bad_magic;	/* [maxindex] gives bad magic */
-
-	/*
-	 *  Allocate storage for all the in-memory NMG structures,
-	 *  using the GET_xxx() macros, so that m->maxindex, etc,
-	 *  is all appropriately handled.
-	 */
 	subscript = 1;
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
 #if DEBUG
@@ -1727,6 +1677,82 @@ ptrs[subscript], rt_nmg_index_of_struct(ptrs[subscript]) );
 			subscript++;
 		}
 	}
+	return(m);
+}
+
+/*
+ *			R T _ N M G _ I M P O R T
+ *
+ *  Import an NMG from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ *
+ *  Special subscripts are used in the disk file:
+ *	-1	indicates a pointer to the rt_list structure which
+ *		heads a linked list, and is not the first struct element.
+ *	 0	indicates that a null pointer should be used.
+ */
+int
+rt_nmg_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+register mat_t		mat;
+{
+	struct model			*m;
+	union record			*rp;
+	struct nmg_struct_counts	cntbuf;
+	struct rt_external		count_ext;
+	int				kind_counts[NMG_N_KINDS];
+	char				*cp;
+	long				**real_ptrs;
+	long				**ptrs;
+	struct nmg_exp_counts		*ecnt;
+	int				i;
+	int				maxindex;
+	int				kind;
+	static long			bad_magic = 0x999;
+
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	/* Check record type */
+	if( rp->u_id != DBID_NMG )  {
+		rt_log("rt_nmg_import: defective record\n");
+		return(-1);
+	}
+
+	bzero( (char *)&cntbuf, sizeof(cntbuf) );
+	RT_INIT_EXTERNAL(&count_ext);
+	count_ext.ext_nbytes = sizeof(rp->nmg.N_structs);
+	count_ext.ext_buf = rp->nmg.N_structs;
+	if( rt_struct_import( (genptr_t)&cntbuf, rt_nmg_structs_fmt, &count_ext ) <= 0 )  {
+		rt_log("rt_struct_import failure\n");
+		return(-1);
+	}
+#if DEBUG
+	nmg_pr_struct_counts( &cntbuf, "After import" );
+#endif
+
+	maxindex = 1;
+	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+		kind_counts[kind] = ((long *)&cntbuf)[kind];
+		maxindex += kind_counts[kind];
+	}
+#if DEBUG
+	rt_log("import maxindex=%d\n", maxindex);
+#endif
+
+	/* Collect overall new subscripts, and structure-specific indices */
+	ecnt = (struct nmg_exp_counts *)rt_calloc( maxindex+3,
+		sizeof(struct nmg_exp_counts), "ecnt[]" );
+	real_ptrs = (long **)rt_calloc( maxindex+3,
+		sizeof(long *), "ptrs[]" );
+	/* So that indexing [-1] gives an appropriately bogus magic # */
+	ptrs = real_ptrs+1;
+	ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
+	ptrs[0] = (long *)0;		/* [0] gives NULL */
+	ptrs[maxindex] = &bad_magic;	/* [maxindex] gives bad magic */
+
+	/* Allocate storage for all the NMG structs, in ptrs[] */
+	m = rt_nmg_ialloc( ptrs, ecnt, kind_counts );
 
 	/* Import each structure, in turn */
 	cp = (char *)(rp+1);	/* start at first granule in */
