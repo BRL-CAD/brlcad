@@ -189,7 +189,7 @@ set -S2 "/bin/sh"
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lgl -lGL
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lgl -lGL
-#		define  LIBDM_SAMPLER_LIBES 	MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	else
 /*		Static linked executables */
 #		define	GFLAG		
@@ -207,7 +207,7 @@ set -S2 "/bin/sh"
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lgl_s -lGL
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
-#		define  LIBDM_SAMPLER_LIBES	MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	endif
 
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
@@ -289,7 +289,7 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
 #	define	GETHOST	hostname
@@ -363,7 +363,7 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
 #	define	GETHOST	hostname
@@ -431,7 +431,7 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
 #	define	GETHOST	hostname
@@ -493,7 +493,7 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
 #	define	GETHOST	hostname
@@ -558,7 +558,7 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
 #	define	GETHOST	hostname
@@ -616,7 +616,7 @@ set -S2 "/bin/sh"
 #		define	MGED_OBJS	dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
-		define  LIBDM_SAMPLER_LIBES     MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #	else
 /*		Sun with site-provided MIT X11. */
 #		define	XINCDIR		/usr/X11/include
@@ -633,7 +633,7 @@ set -S2 "/bin/sh"
 #			define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
 #			define	MGED_OBJS	dm-X dm-ogl dm-generic
 $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
-#			define  LIBDM_SAMPLER_LIBES	MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #		else
 #			define	LIBDM_OBJS	dm-X
 #			define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
@@ -641,7 +641,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #			define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #			define	MGED_OBJS	dm-X dm-generic
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
-#			define  LIBDM_SAMPLER_LIBES	MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #		endif
 
 #	endif
@@ -730,7 +730,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #else
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
 #endif
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #  else
 /*	Compiling XGL requires SDK (Solaris Developer's Kit) */
 #	define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0
@@ -875,9 +875,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DNO_DLFCN_H=1
 #	define	TK_DEFS		OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DTK_PACKAGE_PATH='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 /*	Use the system-provided TCL and Tk libraries */
 #	define	LIBTCL_DIR	_use_system_tcl_
+#	define	LIBTCL_USE_SYSTEM 
 #	define	LIBTCL		-ltcl8.0
 #	define	LIBTCL_DEP	/**/
 #	define	LIBTCL_LIBES	-ldl
@@ -929,9 +930,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_OBJS	dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 /*	Use the system-provided TCL and Tk libraries */
 #	define	LIBTCL_DIR	_use_system_tcl_
+#	define	LIBTCL_USE_SYSTEM 
 #	define	LIBTCL		-L/usr/local/lib -ltcl80
 #	define	LIBTCL_DEP	/**/
 /* #	define	LIBTCL_LIBES	-ldl */
@@ -972,7 +974,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TM_ZONE=1 -DHAVE_TM_GMTOFF=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	LIBTCL_LIBES	-ldl
 #	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1  -I''XINCDIR
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #endif
 
 #if defined(__CAKE__ibm)
@@ -1003,7 +1005,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_OBJS	dm-X dm-generic
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
-#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #endif
 
 /****************************************************************
