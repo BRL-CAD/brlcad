@@ -77,7 +77,6 @@ static regex_t reg_cmp;		/* compiled regular expression */
 static char *proe_usage="%s [-sdarSn] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -n option is to NMG solids rather than polysolids.\n\
 	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -i option sets the initial region ident number (default is 1000).\n\
@@ -91,14 +90,12 @@ static char *proe_usage="%s [-sdarSn] [-i initial_ident] [-I constant_ident] [-m
 		This is to allow conversion of parts to be included in\n\
 		previously converted Pro/E assemblies.\n\
 	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
-	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
-	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
+	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
 static char *stl_usage="%s [-dsan] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\",... default is \"mm\"\n\
 	The -N option specifies a name to use for the object.\n\
-	The -n option is to NMG solids rather than polysolids.\n\
 	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -i option sets the initial region ident number (default is 1000).\n\
@@ -107,8 +104,7 @@ static char *stl_usage="%s [-dsan] [-N forced_name] [-i initial_ident] [-I const
 	The -u option indicates that portions of object names that match the regular expression\n\
 		'reg_exp' should be ignored.\n\
 	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
-	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
-	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
+	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
 static char *usage;
 static FILE *fd_in;		/* input file (from Pro/E) */
 static FILE *fd_out;		/* Resulting BRL-CAD file */
@@ -120,6 +116,18 @@ static mat_t re_orient;		/* rotation matrix to put model in BRL-CAD orientation
 static int do_air=0;		/* When set, all regions are BRL-CAD "air" regions */
 static int do_reorient=1;	/* When set, reorient entire model to BRL-CAD style */
 static unsigned int obj_count=0; /* Count of parts converted for "stl-g" conversions */
+static fastf_t *bot_verts=NULL;	 /* array of vertices for a bot solid */
+static int *bot_faces=NULL;	 /* array of ints (indices into bot_verts array) three per face */
+static int bot_vsize=0;		/* current size of the bot_verts array */
+static int bot_vcurr=0;		/* current bot vertex */
+static int bot_fsize=0;		/* current size of the bot_faces array */
+static int bot_fcurr=0;		/* current bot face */
+
+/* Size of blocks of vertices to malloc */
+#define	BOT_VBLOCK	128
+
+/* Size of blocks of faces to malloc */
+#define BOT_FBLOCK	128
 
 struct render_verts
 {
@@ -738,7 +746,7 @@ point_t min, max;
 		while( isspace( line1[++(*start)] ) );
 	}
 }
-
+#if 0
 static int
 Unbreak_shell_edges( s_in )
 struct shell *s_in;
@@ -837,6 +845,75 @@ struct model *m;
 
 	bu_ptbl_free( &edges );
 }
+#endif
+int
+Add_vert( x, y, z )
+fastf_t x, y, z;
+{
+	int i;
+	fastf_t *v;
+	point_t new_v;
+	vect_t diff;
+	fastf_t dist_sq;
+
+	VSET( new_v, x, y, z );
+
+	/* first search for this vertex in list */
+	for( i=0 ; i<bot_vsize ; i++ )
+	{
+		v = &bot_verts[i*3];
+		VSUB2( diff, v, new_v );
+		dist_sq = MAGSQ( diff );
+		if( dist_sq <= tol.dist_sq )
+			return( i );
+	}
+
+	/* didn't find it, so add a new vertex to the list */
+	if( !bot_verts )
+	{
+		bot_verts = (fastf_t *)bu_malloc( 3 * BOT_VBLOCK * sizeof( fastf_t ), "bot_verts" );
+		bot_vsize = BOT_VBLOCK;
+		bot_vcurr = 0;
+	}
+	else if( bot_vcurr >= bot_vsize )
+	{
+		/* increase size of vertex array */
+		bot_vsize += BOT_VBLOCK;
+		bot_verts = (fastf_t *)bu_realloc( (void *)bot_verts, bot_vsize * 3 * sizeof( fastf_t ), "bot_verts increase" );
+	}
+
+	VMOVE( &bot_verts[bot_vcurr * 3], new_v );
+	return( bot_vcurr++ );
+}
+
+void
+Add_face( face )
+int face[3];
+{
+	if( !bot_faces )
+	{
+		bot_faces = (int *)bu_malloc( 3 * BOT_FBLOCK * sizeof( int ), "bot_faces" );
+		bot_fsize = BOT_FBLOCK;
+		bot_fcurr = 0;
+	}
+	else if( bot_fcurr >= bot_fsize )
+	{
+		bot_fsize += BOT_FBLOCK;
+		bot_faces = (int *)bu_realloc( (void *)bot_faces, 3 * bot_fsize * sizeof( int ), "bot_faces increase" );
+	}
+
+	VMOVE( &bot_faces[3*bot_fcurr], face );
+	bot_fcurr++;
+}
+
+static void
+Make_bot( solid_name )
+char *solid_name;
+{
+	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_CCW, 0, bot_vcurr, bot_fcurr, bot_verts, bot_faces, NULL, NULL );
+	bot_vcurr = 0;
+	bot_fcurr = 0;
+}
 
 static void
 Convert_part( line )
@@ -852,11 +929,6 @@ char line[MAX_LINE_LEN];
 	int face_count=0;
 	int degenerate_count=0;
 	int small_count=0;
-	struct model *m;
-	struct nmgregion *r;
-	struct shell *s;
-	struct render_verts verts[3];
-	struct vertex   **vts[3];
 	float colr[3]={0.5, 0.5, 0.5};
 	unsigned char color[3]={ 128, 128, 128 };
 	char *brlcad_name;
@@ -882,20 +954,12 @@ char line[MAX_LINE_LEN];
 	VSETALL( part_min, MAX_FASTF );
 	VSETALL( part_max, -MAX_FASTF );
 
-	m = nmg_mm();
-	NMG_CK_MODEL( m );
-	r = nmg_mrsv( m );
-	NMG_CK_REGION( r );
-	s = BU_LIST_FIRST( shell , &r->s_hd );
-	NMG_CK_SHELL( s );
-
 	start = (-1);
 	/* skip leading blanks */
 	while( isspace( line[++start] ) && line[start] != '\0' );
 	if( strncmp( &line[start] , "solid" , 5 ) && strncmp( &line[start] , "SOLID" , 5 ) )
 	{
 		bu_log( "Convert_part: Called for non-part\n%s\n" , line );
-		nmg_km( m );
 		return;
 	}
 
@@ -1013,13 +1077,9 @@ char line[MAX_LINE_LEN];
 		}
 		else if( !strncmp( &line1[start] , "outer loop" , 10 ) || !strncmp( &line1[start] , "OUTER LOOP" , 10 ) )
 		{
-			struct faceuse *fu;
-			fastf_t area;
 			int endloop=0;
 			int vert_no=0;
-			struct loopuse *lu;
-			struct edgeuse *eu;
-			plane_t pl;
+			int tmp_face[3];
 
 			while( !endloop )
 			{
@@ -1049,13 +1109,11 @@ char line[MAX_LINE_LEN];
 
 						bu_log( "Non-triangular loop:\n" );
 						for( n=0 ; n<3 ; n++ )
-							bu_log( "\t( %g %g %g )\n", V3ARGS( verts[n].pt ) );
+							bu_log( "\t( %g %g %g )\n", V3ARGS( &bot_verts[tmp_face[n]] ) );
 
 						bu_log( "\t( %g %g %g )\n", x, y, z );
 					}
-					VSET( verts[vert_no].pt , x , y , z );
-					VMINMAX( part_min, part_max, verts[vert_no].pt );
-					vert_no++;
+					tmp_face[vert_no++] = Add_vert( x, y, z );
 
 				}
 				else
@@ -1063,58 +1121,22 @@ char line[MAX_LINE_LEN];
 			}
 
 			/* check for degenerate faces */
-			if( verts[0].pt[X] == verts[1].pt[X] &&
-			    verts[0].pt[Y] == verts[1].pt[Y] &&
-			    verts[0].pt[Z] == verts[1].pt[Z] )
+			if( tmp_face[0] == tmp_face[1] )
 			{
 				degenerate_count++;
 				continue;
 			}
 
-			if( verts[0].pt[X] == verts[2].pt[X] &&
-			    verts[0].pt[Y] == verts[2].pt[Y] &&
-			    verts[0].pt[Z] == verts[2].pt[Z] )
+			if( tmp_face[0] == tmp_face[2] )
 			{
 				degenerate_count++;
 				continue;
 			}
 
-			if( verts[1].pt[X] == verts[2].pt[X] &&
-			    verts[1].pt[Y] == verts[2].pt[Y] &&
-			    verts[1].pt[Z] == verts[2].pt[Z] )
+			if( tmp_face[1] == tmp_face[2] )
 			{
 				degenerate_count++;
 				continue;
-			}
-
-			if( normal[X] != 0.0 || normal[Y] != 0.0 || normal[Z] != 0.0 )
-			{
-				vect_t v1, v2;
-
-				/* We have some normal info. use it */
-
-				VSUB2( v1, verts[1].pt, verts[0].pt )
-				VSUB2( v2, verts[2].pt, verts[0].pt )
-
-				VCROSS( pl, v1, v2 )
-
-				if( VDOT( pl, normal ) < 0.0 )
-				{
-					point_t tmp;
-
-					VMOVE( tmp, verts[2].pt )
-					VMOVE( verts[2].pt, verts[1].pt )
-					VMOVE( verts[1].pt, tmp )
-				}
-				VREVERSE( pl, pl )
-
-				pl[3] = VDOT( pl, verts[0].pt );
-			}
-
-			for( i=0 ; i<3 ; i++ )
-			{
-				verts[i].v = (struct vertex *)NULL;
-				vts[i] = &verts[i].v;
 			}
 
 			if( debug )
@@ -1123,41 +1145,11 @@ char line[MAX_LINE_LEN];
 
 				bu_log( "Making Face:\n" );
 				for( n=0 ; n<3; n++ )
-					bu_log( "\t( %g %g %g )\n" , V3ARGS( verts[n].pt ) );
+					bu_log( "\t( %g %g %g )\n" , V3ARGS( &bot_verts[tmp_face[n]] ) );
 			}
 
-			fu = nmg_cmface( s , vts , 3 );
-
-			for( i=0 ; i<3 ; i++ )
-				nmg_vertex_gv( verts[i].v , verts[i].pt );
-
-			lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
-			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-				nmg_edge_g( eu );
-
-			area = nmg_loop_plane_area( lu , pl );
-
-			if( area > 0.0 )
-			{
-				if( normal[X] != 0.0 || normal[Y] != 0.0 || normal[Z] != 0.0 )
-				{
-					if( VDOT( normal , pl ) < 0.0 )
-					{
-						HREVERSE( pl , pl );
-					}
-				}
-				nmg_face_g( fu , pl );
-				face_count++;
-			}
-			else
-			{
-				small_count++;
-				bu_log( "Ignoring small face:\n" );
-				bu_log( "\t(%g %g %g)\n", V3ARGS( verts[0].pt ) );
-				bu_log( "\t(%g %g %g)\n", V3ARGS( verts[1].pt ) );
-				bu_log( "\t(%g %g %g)\n", V3ARGS( verts[2].pt ) );
-				(void)nmg_kfu( fu );
-			}
+			Add_face( tmp_face );
+			face_count++;
 		}
 		else if( !strncmp( &line1[start], "modifiers", 9 ) || !strncmp( &line1[start], "MODIFIERS", 9 ) )
 		{
@@ -1194,7 +1186,6 @@ char line[MAX_LINE_LEN];
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
 		strncpy( save_name, brlcad_name, NAMESIZE );
 		bu_ptbl_ins( &null_parts, (long *)save_name );
-		nmg_km( m );
 		return;
 	}
 	else
@@ -1205,126 +1196,7 @@ char line[MAX_LINE_LEN];
 			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
-	if( !polysolid || ( do_simplify && face_count < 13 ) )
-	{
-		/* fuse vertices that are within tolerance of each other */
-		bu_log( "\tFusing vertices for part\n" );
-		(void)nmg_model_vertex_fuse( m , &tol );
-
-		/* Break edges on vertices */
-		if( debug )
-			bu_log( "\tBreak edges\n" );
-		tmp_count = nmg_model_break_e_on_v( m, &tol );
-		if( debug )
-			bu_log( "\t\t%d edges broken\n", tmp_count );
-
-		/* kill zero length edgeuses */
-		if( debug )
-			bu_log( "\tKill zero length edges\n" );
-		if( nmg_kill_zero_length_edgeuses( m ) )
-			goto empty_model;
-
-		/* kill cracks */
-		if( debug )
-			bu_log( "\tKill cracks\n" );
-		if( nmg_kill_cracks( s ) )
-		{
-			if( nmg_ks( s ) )
-				goto empty_model;
-		}
-
-		nmg_rebound( m , &tol );
-
-		/* Glue faceuses together (nmg_model_break_e_on_v may have created some edges to fuse). */
-		if( debug )
-			bu_log( "\tEdge fuse\n" );
-		(void)nmg_model_edge_fuse( m, &tol );
-
-		if( debug )
-			bu_log( "\tJoin touching loops\n" );
-		nmg_s_join_touchingloops( s, &tol );
-
-		/* kill cracks */
-		if( debug )
-			bu_log( "\tKill cracks\n" );
-		r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-		if( nmg_kill_cracks( s ) )
-		{
-			if( nmg_ks( s ) )
-				goto empty_model;
-		}
-
-		if( debug )
-			bu_log( "\tSplit touching loops\n" );
-		nmg_s_split_touchingloops( s, &tol);
-
-		/* kill cracks */
-		if( debug )
-			bu_log( "\tKill cracks\n" );
-			
-		if( nmg_kill_cracks( s ) )
-		{
-			if( nmg_ks( s ) )
-				goto empty_model;
-		}
-
-		/* verify face plane calculations */
-
-#if 1
-		nmg_shell_coplanar_face_merge( s , &tol , 0 );
-
-		nmg_simplify_shell( s );
-
-		if( debug )
-			bu_log( "\tMake faces within tolerance\n" );
-		nmg_make_faces_within_tol( s, &tol );
-#endif
-		nmg_rebound( m , &tol );
-
-	}
-	else
-
-		nmg_rebound( m , &tol );
-
-	if( do_simplify && face_count < 13 )
-	{
-		struct rt_arb_internal arb_int;
-
-		if( solid_is_written = nmg_to_arb( m, &arb_int ) )
-		{
-			if( mk_arb8( fd_out, solid_name, (fastf_t *)arb_int.pt ) )
-			{
-				bu_log( "failed to write ARB8 to database for solid %s\n", solid_name );
-				rt_bomb( "failed to write to database" );
-			}
-			bu_log( "\t%s written as an ARB\n", solid_name );
-		}
-/*		else if( solid_is_written = nmg_to_tgc( m, &tgc_int, &tol ) )
-		{
-			if( mk_tgc( fd_out, solid_name, tgc_int.v, tgc_int.h, tgc_int.a,
-					tgc_int.b, tgc_int.c, tgc_int.d ) )
-			{
-				bu_log( "failed to write TGC to database for solid %s\n", solid_name );
-				rt_bomb( "failed to write to database" );
-			}
-			bu_log( "\t%s written as a TGC\n", solid_name );
-		} */
-	}
-
-	if( polysolid && !solid_is_written )
-	{
-		Unbreak_shell_edges( s );
-		bu_log( "\tWriting polysolid with %d faces\n", face_count );
-		write_shell_as_polysolid( fd_out , solid_name , s );
-	}
-	else if( !solid_is_written )
-	{
-		Check_edge_uses( m );
-		bu_log( "\tWriting NMG\n" );
-		mk_nmg( fd_out , solid_name , m );
-	}
-
-	nmg_km( m );
+	Make_bot( solid_name );
 
 	if( face_count && !solid_in_region )
 	{
@@ -1391,7 +1263,6 @@ empty_model:
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
 		strncpy( save_name, brlcad_name, NAMESIZE );
 		bu_ptbl_ins( &null_parts, (long *)save_name );
-		nmg_km( m );
 		return;
 	}
 
@@ -1613,7 +1484,7 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "Si:I:m:rsdax:X:nu:N:c:")) != EOF) {
+	while ((c = getopt(argc, argv, "Si:I:m:rsdax:u:N:c:")) != EOF) {
 		switch (c) {
 		case 'c':	/* convert from units */
 			conv_factor = bu_units_conversion( optarg );
@@ -1657,14 +1528,6 @@ char	*argv[];
 			sscanf( optarg, "%x", &rt_g.debug );
 			bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
 			bu_log("\n");
-			break;
-		case 'X':
-			sscanf( optarg, "%x", &rt_g.NMG_debug );
-			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-			bu_log("\n");
-			break;
-		case 'n':
-			polysolid = 0;
 			break;
 		case 'u':
 			do_regex = 1;
