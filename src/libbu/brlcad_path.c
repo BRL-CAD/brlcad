@@ -88,7 +88,7 @@ bu_brlcad_path(const char *rhs, int fail_quietly)
 	static char	result[256];
 	char		*lhs;
 
-	lhs = INSTALL_DIRECTORY ;
+	lhs = BRLCAD_ROOT;
 	if( bu_file_exists(lhs) )
 		goto ok;
 
@@ -113,7 +113,7 @@ csh/tcsh users:\n\
 	setenv BRLCAD_ROOT %s\n\
 sh/bash users:\n\
 	BRLCAD_ROOT=%s; export BRLCAD_ROOT\n",
-	       rhs, INSTALL_DIRECTORY , lhs, lhs);
+	       rhs, BRLCAD_ROOT , lhs, lhs);
 	}
 
 	/* Can't find the BRL-CAD root directory, this is fatal! */
@@ -138,7 +138,7 @@ csh/tcsh users:\n\
 	setenv BRLCAD_ROOT /path/to/brlcad\n\
 sh/bash users:\n\
 	BRLCAD_ROOT=/path/to/brlcad; export BRLCAD_ROOT\n",
-	       rhs, INSTALL_DIRECTORY );
+	       rhs, BRLCAD_ROOT );
 
 	bu_bomb("bu_brlcad_path()");
 
