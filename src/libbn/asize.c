@@ -49,9 +49,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
-/* forward declarations */
-int bn_common_name_size(int *, int *, const char *);
-int bn_common_image_size(int *, int *, int);
+#include "machine.h"
+#include "vmath.h"
+#include "bu.h"
+#include "bn.h"
 
 /* This table does not need to include any square sizes */
 struct sizes {
