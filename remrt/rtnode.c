@@ -157,6 +157,7 @@ char		*tcp_port;	/* TCP port on control_host */
 int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
 int test_fb_speed = 0;
+char	*framebuffer_name;
 
 char srv_usage[] = "Usage: rtnode [-d] control-host tcp-port [cmd]\n";
 
@@ -351,8 +352,10 @@ char **argv;
 	/* Initialize the Tcl interpreter */
 	interp = Tcl_CreateInterp();
 	/* This runs the init.tcl script */
-	if( Tcl_Init(interp) == TCL_ERROR )
+	if( Tcl_Init(interp) == TCL_ERROR )  {
 		bu_log("Tcl_Init error %s\n", interp->result);
+		bu_bomb("rtnode: Unable to initialize TCL.  Run 'new_tk'?\n");
+	}
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
 	sh_tcl_setup(interp);
@@ -450,7 +453,9 @@ void
 rtsync_timeout(foo)
 int	foo;
 {
-	bu_bomb("rtnode: unable to open remote framebuffer.  Ensure BRL-CAD Release 5.0 fbserv is running. Aborting.\n");
+	bu_log("rtnode: fb_open(%s) timeout -- unable to open remote framebuffer.\n",
+		framebuffer_name ? framebuffer_name : "NULL" );
+	bu_bomb("rtnode: Ensure BRL-CAD Release 5.0 fbserv is running. Aborting.\n");
 }
 
 /*
@@ -463,26 +468,26 @@ rtsync_ph_openfb(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
-	char	*hp, *fb;
+	char	*hp;
 	int	w, h;
 
 	if( debug )  fprintf(stderr, "rtsync_ph_openfb: %s\n", buf );
 
 	hp = strchr(buf, ' ');
 	*hp++ = '\0';
-	fb = strchr(hp, ' ');
-	*fb++ = '\0';
+	framebuffer_name = strchr(hp, ' ');
+	*framebuffer_name++ = '\0';
 
 	w = atoi(buf);
 	h = atoi(hp);
 
 	if( debug )  fprintf(stderr, "rtsync_ph_openfb: %d %d %s\n",
-		w, h, fb );
+		w, h, framebuffer_name );
 
 	(void)signal( SIGALRM, rtsync_timeout );
 	alarm(7);
-	if( (fbp = fb_open( fb, w, h ) ) == 0 )  {
-		bu_log("rtnode: fb_open(%s, %d, %d) failed\n", fb, w, h );
+	if( (fbp = fb_open( framebuffer_name, w, h ) ) == 0 )  {
+		bu_log("rtnode: fb_open(%s, %d, %d) failed\n", framebuffer_name, w, h );
 		exit(1);
 	}
 	alarm(0);
@@ -510,6 +515,8 @@ char			*buf;
 		grn_line[w*3+1] = 255;
 		blu_line[w*3+2] = 255;
 	}
+
+	/* Do NOT free 'buf', it contains *framebuffer_name string */
 }
 
 /*
