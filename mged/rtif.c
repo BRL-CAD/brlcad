@@ -50,6 +50,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
 
+extern int mged_svbase();
 void		setup_rt();
 
 static int	tree_walk_needed;
@@ -781,8 +782,9 @@ work:
 			}
 		}
 	}
-	dmaflag = 1;
+
 	fclose(fp);
+	(void)mged_svbase();
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
