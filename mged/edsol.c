@@ -77,8 +77,9 @@ fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t	es_m[3];		/* edge(line) slope */
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
-static point_t	es_keypoint;	/* center of editing xforms */
-static char	*es_keytag;	/* string identifying the keypoint */
+
+point_t	es_keypoint;		/* center of editing xforms */
+char	*es_keytag;		/* string identifying the keypoint */
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -786,10 +787,6 @@ init_sedit()
 		rt_log("Experimental:  new_way=1\n");
 		new_way = 1;
 
-		es_keytag = "";
-		get_solid_keypoint( es_keypoint, &es_keytag, &es_int );
-		printf("es_keypoint (%s) (%g, %g, %g)\n", es_keytag,
-			V3ARGS(es_keypoint) );
 	}
 #endif
 
@@ -798,6 +795,11 @@ init_sedit()
 
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
+
+	/* Establish initial keypoint */
+	es_keytag = "";
+	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
+printf("es_keypoint (%s) (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint) );
 
 	sedit_menu();		/* put up menu header */
 
@@ -1423,7 +1425,7 @@ sedit()
 
 	/* If the keypoint changed location, find about it here */
 	if( new_way )  {
-		get_solid_keypoint( es_keypoint, &es_keytag, &es_int );
+		get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 	}
 
 	replot_editing_solid();
@@ -1709,13 +1711,13 @@ register vect_t		unitv;
 #define EPSILON 1.0e-7
 
 /*
- *  The only "solidrec" argument ever used is &es_res.s
+ *			V L S _ S O L I D
  */
 void
-vls_solid( vp, sp, mat )
-register struct rt_vls	*vp;
-register struct solidrec *sp;
-CONST mat_t		mat;
+vls_solid( vp, ip, mat )
+register struct rt_vls		*vp;
+CONST struct rt_db_internal	*ip;
+CONST mat_t			mat;
 {
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
@@ -1724,23 +1726,10 @@ CONST mat_t		mat;
 	int			id;
 
 	RT_VLS_CHECK(vp);
+	RT_CK_DB_INTERNAL(ip);
 
-	if( new_way )  {
-		id = es_int.idb_type;
-		transform_editing_solid( &intern, mat, &es_int, 0 );
-	} else {
-		/* Fake up an external record.  Does not need to be freed */
-		sol = *sp;		/* struct copy */
-		RT_INIT_EXTERNAL(&ext);
-		ext.ext_nbytes = sizeof(sol);
-		ext.ext_buf = (genptr_t)&sol;
-
-		id = rt_id_solid( &ext );
-		if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
-			printf("vls_solid: database import error\n");
-			return;
-		}
-	}
+	id = ip->idb_type;
+	transform_editing_solid( &intern, mat, ip, 0 );
 
 	if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
 	    base2local ) < 0 )
@@ -2256,9 +2245,81 @@ init_objedit()
 
 	/* XXX Zap out es_rec, nobody should look there any further */
 	bzero( (char *)&es_rec, sizeof(es_rec) );
+}
 
-	/* XXX These should move to oedit_accept() and oedit_reject() ! */
+void
+oedit_accept()
+{
+	register struct solid *sp;
+	/* matrices used to accept editing done from a depth
+	 *	>= 2 from the top of the illuminated path
+	 */
+	mat_t topm;	/* accum matrix from pathpos 0 to i-2 */
+	mat_t inv_topm;	/* inverse */
+	mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
+	mat_t tempm;
+
+	switch( ipathpos )  {
+	case 0:
+		moveHobj( illump->s_path[ipathpos], modelchanges );
+		break;
+	case 1:
+		moveHinstance(
+			illump->s_path[ipathpos-1],
+			illump->s_path[ipathpos],
+			modelchanges
+		);
+		break;
+	default:
+		mat_idn( topm );
+		mat_idn( inv_topm );
+		mat_idn( deltam );
+		mat_idn( tempm );
+
+		pathHmat( illump, topm, ipathpos-2 );
+
+		mat_inv( inv_topm, topm );
+
+		mat_mul( tempm, modelchanges, topm );
+		mat_mul( deltam, inv_topm, tempm );
+
+		moveHinstance(
+			illump->s_path[ipathpos-1],
+			illump->s_path[ipathpos],
+			deltam
+		);
+		break;
+	}
+
+	/*
+	 *  Redraw all solids affected by this edit.
+	 *  Regenerate a new control list which does not
+	 *  include the solids about to be replaced,
+	 *  so we can safely fiddle the displaylist.
+	 */
+	modelchanges[15] = 1000000000;	/* => small ratio */
+	dmaflag=1;
+	refresh();
+
+	/* Now, recompute new chunks of displaylist */
+	FOR_ALL_SOLIDS( sp )  {
+		if( sp->s_iflag == DOWN )
+			continue;
+		(void)replot_original_solid( sp );
+		sp->s_iflag = DOWN;
+	}
+	mat_idn( modelchanges );
+
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+	es_int.idb_ptr = (genptr_t)NULL;
+	db_free_external( &es_ext );
+}
+
+void
+oedit_reject()
+{
+    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+	es_int.idb_ptr = (genptr_t)NULL;
 	db_free_external( &es_ext );
 }
 
@@ -2381,6 +2442,7 @@ sedit_accept()
 	new_way = 0;
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+	es_int.idb_ptr = (genptr_t)NULL;
 	db_free_external( &es_ext );
 }
 
@@ -2398,6 +2460,7 @@ sedit_reject()
 	new_way = 0;
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+	es_int.idb_ptr = (genptr_t)NULL;
 	db_free_external( &es_ext );
 }
 
@@ -2676,12 +2739,14 @@ struct rt_db_internal	*ip;
  *  processed as well?
  */
 void
-get_solid_keypoint( pt, strp, ip )
+get_solid_keypoint( pt, strp, ip, mat )
 point_t		pt;
 char		**strp;
 struct rt_db_internal	*ip;
+mat_t		mat;
 {
 	char	*cp = *strp;
+	point_t	mpt;
 
 	RT_CK_DB_INTERNAL( ip );
 
@@ -2693,29 +2758,29 @@ struct rt_db_internal	*ip;
 			RT_ELL_CK_MAGIC(ell);
 
 			if( strcmp( cp, "V" ) == 0 )  {
-				VMOVE( pt, ell->v );
+				VMOVE( mpt, ell->v );
 				*strp = "V";
-				return;
+				break;
 			}
 			if( strcmp( cp, "A" ) == 0 )  {
-				VMOVE( pt, ell->a );
+				VMOVE( mpt, ell->a );
 				*strp = "A";
-				return;
+				break;
 			}
 			if( strcmp( cp, "B" ) == 0 )  {
-				VMOVE( pt, ell->b );
+				VMOVE( mpt, ell->b );
 				*strp = "B";
-				return;
+				break;
 			}
 			if( strcmp( cp, "C" ) == 0 )  {
-				VMOVE( pt, ell->c );
+				VMOVE( mpt, ell->c );
 				*strp = "C";
-				return;
+				break;
 			}
 			/* Default */
-			VMOVE( pt, ell->v );
+			VMOVE( mpt, ell->v );
 			*strp = "V";
-			return;
+			break;
 		}
 	case ID_TGC:
 		{
@@ -2724,43 +2789,44 @@ struct rt_db_internal	*ip;
 			RT_TGC_CK_MAGIC(tgc);
 
 			if( strcmp( cp, "V" ) == 0 )  {
-				VMOVE( pt, tgc->v );
+				VMOVE( mpt, tgc->v );
 				*strp = "V";
-				return;
+				break;
 			}
 			if( strcmp( cp, "H" ) == 0 )  {
-				VMOVE( pt, tgc->h );
+				VMOVE( mpt, tgc->h );
 				*strp = "H";
-				return;
+				break;
 			}
 			if( strcmp( cp, "A" ) == 0 )  {
-				VMOVE( pt, tgc->a );
+				VMOVE( mpt, tgc->a );
 				*strp = "A";
-				return;
+				break;
 			}
 			if( strcmp( cp, "B" ) == 0 )  {
-				VMOVE( pt, tgc->b );
+				VMOVE( mpt, tgc->b );
 				*strp = "B";
-				return;
+				break;
 			}
 			if( strcmp( cp, "C" ) == 0 )  {
-				VMOVE( pt, tgc->c );
+				VMOVE( mpt, tgc->c );
 				*strp = "C";
-				return;
+				break;
 			}
 			if( strcmp( cp, "D" ) == 0 )  {
-				VMOVE( pt, tgc->d );
+				VMOVE( mpt, tgc->d );
 				*strp = "D";
-				return;
+				break;
 			}
 			/* Default */
-			VMOVE( pt, tgc->v );
+			VMOVE( mpt, tgc->v );
 			*strp = "V";
-			return;
+			break;
 		}
 	default:
-		VSETALL( pt, 0 );
+		VSETALL( mpt, 0 );
 		*strp = "(origin)";
 		break;
 	}
+	MAT4X3PNT( pt, mat, mpt );
 }

@@ -64,6 +64,7 @@ create_text_overlay( vp )
 register struct rt_vls	*vp;
 {
 	auto char linebuf[512];
+	struct directory	*dp;
 	register int	i;
 
 	RT_VLS_CHECK(vp);
@@ -76,11 +77,13 @@ register struct rt_vls	*vp;
 
 	/* print solid info at top of screen */
 	if( es_edflag >= 0 ) {
+		dp = illump->s_path[illump->s_last];
+
 		rt_vls_strcat( vp, "** SOLID -- " );
-		rt_vls_strcat( vp, es_name );
+		rt_vls_strcat( vp, dp->d_namep );
 		rt_vls_strcat( vp, ": ");
 
-		vls_solid( vp, &es_rec.s, rt_identity );
+		vls_solid( vp, &es_int, rt_identity );
 
 		if(illump->s_last) {
 			rt_vls_strcat( vp, "\n** PATH --  ");
@@ -91,7 +94,7 @@ register struct rt_vls	*vp;
 			rt_vls_strcat( vp, ": " );
 
 			/* print the evaluated (path) solid parameters */
-			vls_solid( vp, &es_rec.s, es_mat );
+			vls_solid( vp, &es_int, es_mat );
 		}
 	}
 
@@ -105,26 +108,14 @@ register struct rt_vls	*vp;
 		rt_vls_strcat( vp, ": " );
 
 		/* print the evaluated (path) solid parameters */
-		if( state == ST_O_EDIT && illump->s_Eflag == 0 ) {
+		if( illump->s_Eflag == 0 ) {
 			mat_t	new_mat;
 			/* NOT an evaluated region */
 			/* object edit option selected */
 			mat_mul(new_mat, modelchanges, es_mat);
 
-			vls_solid( vp, &es_rec.s, new_mat );
+			vls_solid( vp, &es_int, new_mat );
 		}
-
-		if( state == ST_O_EDIT && illump->s_Eflag ) {
-			point_t	work;
-			/* region has been evaluated */
-			/* XXX should have an es_keypoint for this */
-			MAT4X3PNT(work, modelchanges, es_rec.s.s_values);
-			(void)sprintf( &linebuf[0],
-				"CENTER : %.4f %.4f %.4f\n",
-				work[0]*base2local, work[1]*base2local, work[2]*base2local );
-			rt_vls_strcat( vp, &linebuf[0] );
-		}
-
 	}
 }
 
@@ -227,8 +218,7 @@ dotitles()
 	/* print parameter locations on screen */
 	if( state == ST_O_EDIT && illump->s_Eflag ) {
 		/* region is a processed region */
-		/* XXX should have an es_keypoint for this ??? */
-		MAT4X3PNT(temp, model2objview, es_rec.s.s_values);
+		MAT4X3PNT(temp, model2objview, es_keypoint);
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
 		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY, yloc-TEXT0_DY, 0);
@@ -295,8 +285,8 @@ dotitles()
 
 	/* Priorities for what to display:
 	 *	1.  adc info
-	 *	2.  illuminated path
-	 *	3.  title
+	 *	2.  keypoint
+	 *	3.  illuminated path
 	 *
 	 * This way the adc info will be displayed during editing
 	 */
@@ -322,8 +312,14 @@ dotitles()
 			(curs_x / 2047.0) *Viewscale*base2local,
 			(curs_y / 2047.0) *Viewscale*base2local );
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-	}
-	else if( illump != SOLID_NULL )  {
+	} else if( state == ST_S_EDIT || state == ST_O_EDIT )  {
+		(void)sprintf( &linebuf[0],
+			" Keypoint: %s %s: (%g, %g, %g)\n",
+			rt_functab[es_int.idb_type].ft_name+3,	/* Skip ID_ */
+			es_keytag,
+			V3ARGS(es_keypoint) );
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+	} else if( illump != SOLID_NULL )  {
 		/* Illuminated path */
 		(void)sprintf( linebuf, " Path: ");
 		for( i=0; i <= illump->s_last; i++ )  {

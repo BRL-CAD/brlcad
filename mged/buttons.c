@@ -436,14 +436,6 @@ static void be_o_rotate()  {
 
 static void be_accept()  {
 	register struct solid *sp;
-	/* matrices used to accept editing done from a depth
-	 *	>= 2 from the top of the illuminated path
-	 */
-	mat_t topm;	/* accum matrix from pathpos 0 to i-2 */
-	mat_t inv_topm;	/* inverse */
-	mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
-	mat_t tempm;
-
 
 	menu_array[MENU_L2] = MENU_NULL;
 	if( state == ST_S_EDIT )  {
@@ -473,56 +465,8 @@ static void be_accept()  {
 		dmp->dmr_light( LIGHT_OFF, edobj );
 		edobj = 0;
 		movedir = 0;	/* No edit modes set */
-		switch( ipathpos )  {
-		case 0:
-			moveHobj( illump->s_path[ipathpos], modelchanges );
-			break;
-		case 1:
-			moveHinstance(
-				illump->s_path[ipathpos-1],
-				illump->s_path[ipathpos],
-				modelchanges
-			);
-			break;
-		default:
-			mat_idn( topm );
-			mat_idn( inv_topm );
-			mat_idn( deltam );
-			mat_idn( tempm );
 
-			pathHmat( illump, topm, ipathpos-2 );
-
-			mat_inv( inv_topm, topm );
-
-			mat_mul( tempm, modelchanges, topm );
-			mat_mul( deltam, inv_topm, tempm );
-
-			moveHinstance(
-				illump->s_path[ipathpos-1],
-				illump->s_path[ipathpos],
-				deltam
-			);
-			break;
-		}
-
-		/*
-		 *  Redraw all solids affected by this edit.
-		 *  Regenerate a new control list which does not
-		 *  include the solids about to be replaced,
-		 *  so we can safely fiddle the displaylist.
-		 */
-		modelchanges[15] = 1000000000;	/* => small ratio */
-		dmaflag=1;
-		refresh();
-
-		/* Now, recompute new chunks of displaylist */
-		FOR_ALL_SOLIDS( sp )  {
-			if( sp->s_iflag == DOWN )
-				continue;
-			(void)replot_original_solid( sp );
-			sp->s_iflag = DOWN;
-		}
-		mat_idn( modelchanges );
+		oedit_accept();
 
 		illump = SOLID_NULL;
 		dmp->dmr_colorchange();
@@ -561,6 +505,8 @@ static void be_reject()  {
 			dmp->dmr_light( LIGHT_OFF, edobj );
 		menu_array[MENU_L1] = MENU_NULL;
 		menu_array[MENU_L2] = MENU_NULL;
+
+		oedit_reject();
 		break;
 	case ST_O_PICK:
 		dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
