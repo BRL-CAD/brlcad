@@ -44,9 +44,6 @@
  *		Uses dm-X event processing code. Knob keys (x,y,z,X,Y,Z) were 
  *		 	fixed to perform "knob key .1"). Also, using the
  *			Control key with the knob keys performs "knob key -.1".
- *			Function keys are not currently activated, so that
- *			those can be used in the future for lighting, etc 
- *			similar to the SGI display module.
  *		Polygon surface color-fill support
  *		SunDials support
  *			The dials can be re-set (ie. "knob zero") by pressing 
@@ -130,7 +127,7 @@ static void		init_globals();			/* init globals */
 static int		init_check_buffering();		/* parent setup */
 static void		XGL_object_init();	
 static void		init_sundials(), reset_sundials();
-static void		handle_sundials_event();
+static void		handle_sundials_event(), reposition_light();
 static void		setcolortables();		/* init colortables */
 
 /*
@@ -204,6 +201,8 @@ static Xgl_3d_ctx	ctx_3d;			/* 3d context (for objects) */
 static Xgl_2d_ctx	ctx_2d;			/* 2d context (text & lines) */
 static Xgl_trans	trans;			/* transformation */
 
+static Xgl_trans        itrans;
+
 /*
  * Macro for flushing 3D polylines and polygons.
  */
@@ -218,6 +217,7 @@ static Xgl_color_list	cmap_info_A, cmap_info_B; /* color lists */
 static Xgl_color	color_table_A[256];	/* color tables */
 static Xgl_color	color_table_B[256];
 static Xgl_color_type	color_type;		/* INDEX or RGB */
+static Xgl_color_index	last_color_index = 0xffffffff;
 
 static int		dbuffering;		/* double buffering? */
 static int		maxcolors;		/* max number of colors */
@@ -407,7 +407,6 @@ XGL_epilog()
 }
 
 
-static Xgl_matrix_d3d	xgl_mat;
 static void
 apply_matrix(mat_t mat)
 {
@@ -415,6 +414,7 @@ apply_matrix(mat_t mat)
         Xgl_pt               	pt;
         Xgl_pt_d3d           	pt_d3d;
 	double			w;
+	static Xgl_matrix_d3d	xgl_mat;
 
 	for (i = 0; i < 16; i++)
 		xgl_mat[i/4][i%4] = (fabs(mat[i]) < 1.0e-15) ? 0.0 : mat[i];
@@ -424,9 +424,8 @@ apply_matrix(mat_t mat)
 	 */
 	xgl_transform_write_specific (trans, xgl_mat, NULL);
         xgl_transform_transpose(trans, trans);
-	xgl_object_set(ctx_3d,
-		XGL_CTX_LOCAL_MODEL_TRANS, trans,
-		0);
+
+	reposition_light(); /* reposition light source */
 }
 
 /*
@@ -545,9 +544,8 @@ struct solid *sp;
 mat_t mat;
 double ratio;
 {
-	Xgl_color			solid_color;
+	static Xgl_color		solid_color;
 	Xgl_color_index			color_index;
-	static Xgl_color_index		last_color_index = DM_YELLOW;
 	struct rt_vlist         	*vp;
 	Xgl_pt_flag_f3d			*flag_f3d_ptr;
 	int				num_pts;
@@ -1008,6 +1006,9 @@ XGL_colorchange()
 
 	for(i = slotsused; i < maxcolors; i++)
 		color_table[i].rgb = RED;
+
+	/* Invalidate the last color since the table may have changed */
+	last_color_index = 0xffffffff;
 		
 	if (color_type == XGL_COLOR_RGB) 
 		return;
@@ -1294,6 +1295,14 @@ XGL_setup()
 	}
 
 	bufs = inq_info->maximum_buffer;	/* if double buffering, its 2 */
+	/*
+	 * Check whether the frame buffer supports Z-buffering. If so, turn
+	 * on Z-buffering by default.
+	 */
+	if (inq_info->hlhsr_mode == XGL_HLHSR_Z_BUFFER &&
+	    inq_info->hlhsr == XGL_INQ_HARDWARE)
+		zbuff_on = 1;
+
 	free(inq_info);
 	
     	/* ras MUST be created before init_check_buffering() is called */
@@ -1427,16 +1436,23 @@ XGL_setup()
 	/*
 	 * Initialize the z-buffer by clearing the frame 
 	 * (XGL_CTX_NEW_FRAME_HLHSR_ACTION is already turned on). Then
-	 * Turn z-buffering back off (off is the default).
+	 * turn z-buffering back off if we don't have HLHSR in hardware.
 	 */
 	xgl_context_new_frame(ctx_3d);
 	xgl_context_new_frame(ctx_2d);
-	xgl_object_set (ctx_3d, XGL_3D_CTX_HLHSR_MODE, XGL_HLHSR_NONE, 0);
+	if (!zbuff_on)
+		xgl_object_set(ctx_3d, XGL_3D_CTX_HLHSR_MODE,XGL_HLHSR_NONE,0);
 
-	trans = xgl_object_create(sys_state, XGL_TRANS, NULL,
-			XGL_TRANS_DATA_TYPE, XGL_DATA_DBL,
-			XGL_TRANS_DIMENSION, XGL_TRANS_3D,
-			NULL);
+	/* Get the View transformation */
+
+	xgl_object_get (ctx_3d, XGL_CTX_VIEW_TRANS, &trans);
+	xgl_object_set (trans, XGL_TRANS_DATA_TYPE, XGL_DATA_DBL, NULL); 
+
+	/* Create a transform that we'll use for the inverse of the VIEW */
+	itrans = xgl_object_create(sys_state, XGL_TRANS, NULL,
+		XGL_TRANS_DATA_TYPE, XGL_DATA_DBL,
+		XGL_TRANS_DIMENSION, XGL_TRANS_3D,
+		NULL);
 
 	/*
 	 * Set Backing store if we're not h/w double-bufferred (XGL won't
@@ -2075,19 +2091,6 @@ fk_lighting()
 		return;
 	}
 	if (lighting_on == 0) {
-		Xgl_pt_d3d	pos;
-		double		w;
-
-		/* 
-		 * First, set the light position to the lower-right hand
-		 * position, using the last 'w' value 
-		 */
-		w = xgl_mat[3][3];
-		pos.x = pos.y = -w;
-		pos.z = w;
-		xgl_object_set (lights[1],
-			XGL_LIGHT_POSITION, &pos,
-			NULL);
 		/*
 		 * We specify illumination of per-vertex (gouraud shading) 
 		 * since we now receive vertex normals.
@@ -2109,6 +2112,32 @@ fk_lighting()
 	dmaflag = 1;
 
 }
+static void
+reposition_light()
+{
+	Xgl_pt_d3d      pos;
+	Xgl_pt		pt;
+
+	/*
+	 * Position the light in the lower,left-hand corner. Since the position
+	 * gets the VIEW transform applied to it, we must take it through the
+	 * inverse of the current transform.
+	 */
+	
+	pos.x = -PLOTBOUND;
+	pos.y = -PLOTBOUND;
+	pos.z = PLOTBOUND;
+	pt.pt_type = XGL_PT_D3D;
+	pt.pt.d3d = &pos;
+
+	xgl_transform_invert (itrans, trans);
+	xgl_transform_point(itrans, &pt);
+
+	xgl_object_set (lights[1],
+		XGL_LIGHT_POSITION, &pos,
+		NULL);
+}
+
 static void
 fk_p_angle()
 {
@@ -2187,7 +2216,7 @@ init_lights()
 	xgl_object_set (ctx_3d,
 		XGL_3D_CTX_LIGHT_NUM, NUM_LIGHTS,
 		XGL_3D_CTX_SURF_FACE_DISTINGUISH, FALSE,
-		XGL_3D_CTX_SURF_FRONT_AMBIENT, 0.8,
+		XGL_3D_CTX_SURF_FRONT_AMBIENT, 0.1,
 		XGL_3D_CTX_SURF_FRONT_DIFFUSE, 0.6,
 		XGL_3D_CTX_SURF_FRONT_SPECULAR, 0.5,
 		XGL_3D_CTX_SURF_FRONT_LIGHT_COMPONENT,
@@ -2205,6 +2234,8 @@ init_lights()
 		NULL);
 	xgl_object_set (lights[1],
 		XGL_LIGHT_TYPE, XGL_LIGHT_POSITIONAL,
+		XGL_LIGHT_ATTENUATION_1, 1.0,
+		XGL_LIGHT_ATTENUATION_2, 0.0,
 		XGL_LIGHT_COLOR, &lt_color,
 		NULL);
 	light_switches[0] = FALSE;
