@@ -44,30 +44,35 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 int
 mk_write_color_table( struct rt_wdb *ofp )
 {
-#if 0
-	register struct mater *mp;
-	union record	record;
+	RT_CK_WDB(ofp);
+	if( ofp->dbip->dbi_version <= 4 )  {
+		register struct mater *mp;
+		union record	record;
 
-	BU_ASSERT_LONG( mk_version, ==, 4 );
+		BU_ASSERT_LONG( mk_version, ==, 4 );
 
-	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
-		record.md.md_id = ID_MATERIAL;
-		record.md.md_flags = 0;
-		record.md.md_low = mp->mt_low;
-		record.md.md_hi = mp->mt_high;
-		record.md.md_r = mp->mt_r;
-		record.md.md_g = mp->mt_g;
-		record.md.md_b = mp->mt_b;
+		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+			record.md.md_id = ID_MATERIAL;
+			record.md.md_flags = 0;
+			record.md.md_low = mp->mt_low;
+			record.md.md_hi = mp->mt_high;
+			record.md.md_r = mp->mt_r;
+			record.md.md_g = mp->mt_g;
+			record.md.md_b = mp->mt_b;
 
-		/* This record has no name field! */
+			/* This record has no name field! */
 
 /* XXX examine mged/mater.c: color_putrec() */
 
-		/* Write out the record */
-		(void)fwrite( (char *)&record, sizeof record, 1, ofpxx );
-	}
+#if 0
+			/* Write out the record */
+			(void)fwrite( (char *)&record, sizeof record, 1, ofpxx );
 #else
-	RT_CK_WDB(ofp);
-	return db5_put_color_table( ofp->dbip );
+	bu_log("mk_write_color_table(): not implemented for v4 database yet\n");
 #endif
+		}
+	} else {
+		return db5_put_color_table( ofp->dbip );
+	}
+	return 0;
 }
