@@ -1137,8 +1137,8 @@ struct rt_tol		*tol;
 
 				/* "Right-side-up" triangle */
 				vertp[0] = &(strips[i].vp[j+boff]);
-				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
-				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
+				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
+				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
 				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
@@ -1147,8 +1147,8 @@ struct rt_tol		*tol;
 
 				/* Follow with interior "Up-side-down" triangle */
 				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[1] = &(strips[i-1].vp[(j+toff)%tlim]);
-				vertp[2] = &(strips[i-1].vp[(j+1+toff)%tlim]);
+				vertp[1] = &(strips[i-1].vp[(j+1+toff)%tlim]);
+				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
 				if( (strips[i-1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
@@ -1194,8 +1194,8 @@ struct rt_tol		*tol;
 
 				/* "Right-side-up" triangle */
 				vertp[0] = &(strips[i].vp[j+boff]);
-				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
+				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
+				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
 				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
@@ -1204,8 +1204,8 @@ struct rt_tol		*tol;
 
 				/* Follow with interior "Up-side-down" triangle */
 				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
-				vertp[1] = &(strips[i+1].vp[(j+1+toff)%tlim]);
-				vertp[2] = &(strips[i+1].vp[(j+toff)%tlim]);
+				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
+				vertp[2] = &(strips[i+1].vp[(j+1+toff)%tlim]);
 				if( (strips[i+1].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_part_tess() nmg_cmface failure\n");
 					goto fail;
