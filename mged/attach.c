@@ -36,8 +36,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm-Null.h"
 #include "./ged.h"
-#include "./mged_solid.h"
 #include "./sedit.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 int gui_setup();
@@ -149,6 +149,22 @@ int need_close;
       p = curr_dm_list;
   }
 
+#if 1
+  {
+    struct dm_list *sdm;
+
+    sdm = curr_dm_list;
+
+    curr_dm_list = BU_LIST_LAST(dm_list, &head_dm_list.l);
+    bn_mat_copy(Viewrot, p->s_info->_Viewrot);
+    bn_mat_copy(toViewcenter, p->s_info->_toViewcenter);
+    Viewscale = p->s_info->_Viewscale;
+    new_mats();
+
+    curr_dm_list = sdm;
+  }
+#endif
+
   if(!--p->s_info->_rc){
     if(rate_tran_vls[X].vls_magic == BU_VLS_MAGIC){
       mged_slider_unlink_vars(p);
@@ -179,14 +195,16 @@ int need_close;
     p->aim->aim = (struct dm_list *)NULL;
 
   if(need_close){
-    /* Delete all references to display processor memory */
-    FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-      rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
-      sp->s_bytes = 0;
-      sp->s_addr = 0;
-    }
-    rt_mempurge( &(dmp->dm_map) );
-    
+#ifdef DO_DISPLAY_LISTS
+    if(displaylist && mged_variables.dlist)
+#ifdef DO_SINGLE_DISPLAY_LIST
+    dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist, 1);
+#else
+    dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist,
+		       BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
+		       HeadSolid.s_dlist + 1);
+#endif
+#endif
     dmp->dm_close(dmp);
   }
 	
@@ -390,7 +408,6 @@ char *argv[];
 
   if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
     goto Bad;
-  no_memory = 0;
 
 #if TRY_NEW_MGED_VARS
   mged_variable_setup(curr_dm_list);
@@ -417,17 +434,14 @@ char *argv[];
   Tcl_AppendResult(interp, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
 		   ")\n", (char *)NULL);
 
-  FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-    /* Write vector subs into new display processor */
-    if( (sp->s_bytes = dmp->dm_cvtvecs( dmp, sp )) != 0 )  {
-      sp->s_addr = rt_memalloc( &(dmp->dm_map), sp->s_bytes );
-      if( sp->s_addr == 0 )  break;
-      sp->s_bytes = dmp->dm_load(dmp, sp->s_addr, sp->s_bytes);
-    } else {
-      sp->s_addr = 0;
-      sp->s_bytes = 0;
-    }
-  }
+#ifdef DO_DISPLAY_LISTS
+  if(displaylist && mged_variables.dlist)
+#ifdef DO_SINGLE_DISPLAY_LIST
+    createDList(&HeadSolid);
+#else
+    createDLists(&HeadSolid); 
+#endif
+#endif
 
   color_soltab();
   ++dmaflag;
@@ -822,8 +836,14 @@ struct dm_list *initial_dm_list;
   mged_variables = initial_dm_list->_mged_variables; /* struct copy */
 #endif
 
+#if 1
+  bn_mat_copy(Viewrot, initial_dm_list->s_info->_Viewrot);
+  bn_mat_copy(toViewcenter, initial_dm_list->s_info->_toViewcenter);
+  Viewscale = initial_dm_list->s_info->_Viewscale;
+#else
   bn_mat_copy(Viewrot, bn_mat_identity);
   size_reset();
+#endif
   MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
   new_mats();
 
