@@ -1190,7 +1190,7 @@ CONST struct bn_tol *tol;
 
 		nmg_vmodel( m );
 
-		s_tmp_is_closed = nmg_check_closed_shell( s_tmp , tol );
+		s_tmp_is_closed = !nmg_check_closed_shell( s_tmp , tol );
 		if( s_tmp_is_closed )
 			is = nmg_extrude_cleanup( is , is_void , tol );
 
@@ -1199,7 +1199,7 @@ CONST struct bn_tol *tol;
 		{
 			if( s_tmp_is_closed )
 			{
-				if( !nmg_check_closed_shell( is , tol ) )
+				if( nmg_check_closed_shell( is , tol ) )
 				{
 					bu_log( "nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n" );
 					nmg_close_shell( is );
@@ -1213,7 +1213,7 @@ CONST struct bn_tol *tol;
 			}
 			else
 			{
-				if( nmg_check_closed_shell( is , tol ) )
+				if( !nmg_check_closed_shell( is , tol ) )
 				{
 					bu_log( "nmg_extrude_shell: inside shell is closed, outer isn't!!\n" );
 					nmg_shell_coplanar_face_merge( is , tol , 0 );
