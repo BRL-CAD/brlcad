@@ -263,10 +263,12 @@ f_list()
 #define Mat record.M.m_mat
 		if( Mat[0] != 1.0  || Mat[5] != 1.0 || Mat[10] != 1.0 )
 			(void)printf(" (Rotated)");
-		/* must convert translations to the local unit before printing */
 		if( Mat[MDX] != 0.0 || Mat[MDY] != 0.0 || Mat[MDZ] != 0.0 )
 			(void)printf(" [%f,%f,%f]",
 				Mat[MDX]*base2local, Mat[MDY]*base2local, Mat[MDZ]*base2local);
+		if( Mat[12] != 0.0 || Mat[13] != 0.0 || Mat[14] != 0.0 )
+			printf(" ??Perspective=[%f,%f,%f]??",
+				Mat[12], Mat[13], Mat[14] );
 		(void)putchar('\n');
 	}
 #undef Mat
