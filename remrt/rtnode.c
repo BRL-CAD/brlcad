@@ -455,20 +455,6 @@ bu_log("after Tcl_Init\n");
 }
 
 
-
-void
-ph_cd(pc, buf)
-register struct pkg_conn *pc;
-char *buf;
-{
-	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
-	if( chdir( buf ) < 0 )  {
-		bu_log("ph_cd: chdir(%s) failure\n", buf);
-		exit(1);
-	}
-	(void)free(buf);
-}
-
 void
 ph_restart(pc, buf)
 register struct pkg_conn *pc;
