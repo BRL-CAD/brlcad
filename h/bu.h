@@ -1457,14 +1457,24 @@ BU_EXTERN(void bu_mm_cvt, (register CONST struct bu_structparse	*sdp,
 
 /* xdr.c */
 /* Macro version of library routine bu_glong() */
+/* The argument is expected to be of type "unsigned char" */
+#define BU_GLONGLONG(_cp)	\
+	    ((((long)((_cp)[0])) << 56) |	\
+             (((long)((_cp)[1])) << 48) |	\
+             (((long)((_cp)[2])) << 40) |	\
+             (((long)((_cp)[3])) << 32) |	\
+             (((long)((_cp)[4])) << 24) |	\
+             (((long)((_cp)[5])) << 16) |	\
+             (((long)((_cp)[6])) <<  8) |	\
+              ((long)((_cp)[7])) )
 #define BU_GLONG(_cp)	\
-	    (((_cp)[0] << 24) |	\
-             ((_cp)[1] << 16) |	\
-             ((_cp)[2] <<  8) |	\
-              (_cp)[3] )
+	    ((((long)((_cp)[0])) << 24) |	\
+             (((long)((_cp)[1])) << 16) |	\
+             (((long)((_cp)[2])) <<  8) |	\
+              ((long)((_cp)[3])) )
 #define BU_GSHORT(_cp)	\
-             ((_cp)[0] <<  8) |	\
-              (_cp)[1] )
+            ((((short)((_cp)[0])) << 8) | \
+                       (_cp)[1] )
 
 BU_EXTERN(unsigned short	bu_gshort, (CONST unsigned char *msgp));
 BU_EXTERN(unsigned long		bu_glong, (CONST unsigned char *msgp));
