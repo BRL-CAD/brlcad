@@ -1,4 +1,3 @@
-
 /*
  *			L I G H T . C
  *
@@ -26,7 +25,6 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
-#include "./mathtab.h"
 #include "./light.h"
 #include "./rdebug.h"
 

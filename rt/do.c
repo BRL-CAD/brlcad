@@ -28,7 +28,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "./material.h"
-#include "./mathtab.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
