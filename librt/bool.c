@@ -54,7 +54,9 @@ struct application	*ap;
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
 	FAST fastf_t		diff;
-	FAST CONST fastf_t	tol_dist = rtip->rti_tol.dist;
+	FAST fastf_t	tol_dist;
+
+	tol_dist = rtip->rti_tol.dist;
 
 	RT_CHECK_RTI(ap->a_rt_i);
 	RT_CK_RESOURCE(res);
@@ -163,7 +165,9 @@ struct application	*ap;
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
 	FAST fastf_t		diff;
-	FAST CONST fastf_t	tol_dist = rtip->rti_tol.dist;
+	FAST fastf_t	tol_dist;
+
+	tol_dist = rtip->rti_tol.dist;
 
 	RT_CHECK_RTI(ap->a_rt_i);
 	RT_CK_RESOURCE(res);
