@@ -688,6 +688,7 @@ extern const float bn_sin_table[BN_SINTABSIZE];
 extern void bn_mathtab_constant();
 
 
+
 /*----------------------------------------------------------------------*/
 /* wavelet.c */
 
