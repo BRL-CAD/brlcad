@@ -1,8 +1,5 @@
-/*	SCCSID	%W%	%E%	*/
 /*
- *				G 2 . C
- *
- *			G E D ,   P a r t   I I
+ *				P R O C _ R E G . C
  *
  * This module deals with building an edge description of a region.
  *
@@ -14,15 +11,6 @@
  *
  *	Ballistic Research Laboratory
  *	U. S. Army
- *
- *		R E V I S I O N   H I S T O R Y
- *
- *	06/01/83  MJM	Split ged2.c into g1.c and g2.c
- *
- *	09-Sep-83 DAG	Overhauled.
- *
- *	11/02/83  CMK	Modified to use g3.c module (device independence).
- *			Moved display processor FD to g3.c module
  */
 
 #include	<math.h>
@@ -36,7 +24,7 @@
 extern int	printf();
 
 static void	center(), cpoint(), dwreg(), ellin(), move(), neg(), points(),
-		regin(), ret_error(), solin(), solpl(), tgcin(), tplane(),
+		regin(), solin(), solpl(), tgcin(), tplane(),
 		vectors();
 static int	arb(), cgarbs(), compar(), gap(), plane(), redoarb(),
 		region();
@@ -59,27 +47,26 @@ static int	param_count = 0; 	/* location in m_param[] array */
  *
  * When the last member is processed, dwreg() is executed.
  *
+ * Returns -
+ *	-1	error
+ *	 0	region drawn
+ *	 1	more solids follow, please re-invoke w/next solid.
  */
-
-void
-proc_reg( dp, xform, flag )
-struct directory *dp;
-mat_t xform;
-int flag;
+proc_reg( recordp, xform, flag, more )
+register union record *recordp;
+register mat_t xform;
+int flag, more;
 {
 	register int i;
-	static float *op;	/* Used for scanning vectors */
+	register float *op;	/* Used for scanning vectors */
 	static vect_t	work;		/* Vector addition work area */
-	static vect_t	homog;		/* Vector/Homog.Vector conversion buffer */
-	int length, type;
-	int uvec[8], svec[11];
-	int cgtype;
+	static int length, type;
+	static int uvec[8], svec[11];
+	static int cgtype;
 
- 	db_getrec( dp, &input, 0 );
+	input = *recordp;		/* struct copy */
 
-#define	ip	(&input.s)
-
-	type = ip->s_type;
+	type = recordp->s.s_type;
 	cgtype = type;
 
 	if(type == GENARB8) {
@@ -87,12 +74,12 @@ int flag;
 		if(input.s.s_cgtype >= 0) {
 			points();
 			if( (i = cgarbs(uvec, svec)) == 0 ) {
-				ret_error();
-				return;
+				nmemb = param_count = memb_count = 0;
+				return(-1);	/* ERROR */
 			}
 			if(redoarb(uvec, svec, i) == 0) {
-				ret_error();
-				return;
+				nmemb = param_count = memb_count = 0;
+				return(-1);	/* ERROR */
 			}
 			vectors();
 		}
@@ -101,10 +88,10 @@ int flag;
 	if(cgtype == RPP || cgtype == BOX || cgtype == GENARB8)
 		cgtype = ARB8;
 
-	if(commo.o_flag == ROOT)
+	if(flag == ROOT)
 		m_op[memb_count] = '+';
 	else
-	if(commo.o_flag == 999)
+	if(flag == 999)
 		m_op[memb_count] = 'u';
 	else
 		m_op[memb_count] = '-';
@@ -112,8 +99,8 @@ int flag;
 	m_type[memb_count++] = cgtype;
 	if(memb_count > NMEMB) {
 		(void)printf("proc_reg: region has more than %d members\n", NMEMB);
-		ret_error();
-		return;
+		nmemb = param_count = memb_count = 0;
+		return(-1);	/* ERROR */
 	}
 
 	switch( cgtype )  {
@@ -121,14 +108,14 @@ int flag;
 	case ARB8:
 		length = 8;
 arbcom:		/* common area for arbs */
-		MAT4X3PNT( work, commo.o_mat, ip->s_values );
-		VMOVE( ip->s_values, work );
-		VMOVE(&m_param[param_count], &(ip->s_values[0]));
+		MAT4X3PNT( work, xform, recordp->s.s_values );
+		VMOVE( recordp->s.s_values, work );
+		VMOVE(&m_param[param_count], &(recordp->s.s_values[0]));
 		param_count += 3;
-		op = &ip->s_values[1*3];
+		op = &recordp->s.s_values[1*3];
 		for( i=1; i<length; i++ )  {
-			MAT4X3VEC( work, commo.o_mat, op );
-			VADD2(op, ip->s_values, work);
+			MAT4X3VEC( work, xform, op );
+			VADD2(op, recordp->s.s_values, work);
 			VMOVE(&m_param[param_count], op);
 			param_count += 3;
 			op += 3;
@@ -154,15 +141,15 @@ arbcom:		/* common area for arbs */
 		goto arbcom;
 
 	case GENTGC:
-		op = &ip->s_values[0*3];
-		MAT4X3PNT( work, commo.o_mat, op );
+		op = &recordp->s.s_values[0*3];
+		MAT4X3PNT( work, xform, op );
 		VMOVE( op, work );
 		VMOVE(&m_param[param_count], op);
 		param_count += 3;
 		op += 3;
 
 		for( i=1; i<6; i++ )  {
-			MAT4X3VEC( work, commo.o_mat, op );
+			MAT4X3VEC( work, xform, op );
 			VMOVE( op, work );
 			VMOVE(&m_param[param_count], op);
 			param_count += 3;
@@ -171,15 +158,15 @@ arbcom:		/* common area for arbs */
 		break;
 
 	case GENELL:
-		op = &ip->s_values[0*3];
-		MAT4X3PNT( work, commo.o_mat, op );
+		op = &recordp->s.s_values[0*3];
+		MAT4X3PNT( work, xform, op );
 		VMOVE( op, work );
 		VMOVE(&m_param[param_count], op);
 		param_count += 3;
 		op += 3;
 
 		for( i=1; i<4; i++ )  {
-			MAT4X3VEC( work, commo.o_mat, op );
+			MAT4X3VEC( work, xform, op );
 			VMOVE( op, work );
 			VMOVE(&m_param[param_count], op);
 			param_count += 3;
@@ -191,34 +178,22 @@ arbcom:		/* common area for arbs */
 		(void)printf("proc_reg:  Cannot draw solid type %d (%s)\n",
 			type, type == TOR ? "TOR":
 			 type == ARS ? "ARS" : "UNKNOWN TYPE" );
-		ret_error();
-		return;
+		nmemb = param_count = memb_count = 0;
+		return(-1);	/* ERROR */
 	}
 
-	if(commo.o_more == 0) {
+	if(more == 0) {
 		/* this was the last member solid - draw the region */
 		nmemb = memb_count;
 		param_count = memb_count = 0;
 		if(nmemb == 0) {
-			ret_error();
-			return;
+			nmemb = param_count = memb_count = 0;
+			return(-1);	/* ERROR */
 		}
 		dwreg();
-	} else {
-		commi.i_type = MS_MORE;
+		return(0);	/* OK, region was drawn */
 	}
-}
-
-/*
- *  called to return to ged1 if any errors were
- *  found while processing a region
- */
-static void
-ret_error()
-{
-
-	commi.i_type = MS_ERROR;
-	nmemb = param_count = memb_count = 0;
+	return(1);		/* MORE solids follow */
 }
 
 #define NO	0
@@ -643,7 +618,7 @@ dwreg()
 	xmax = ymax = zmax = -100000000.0;
 
 	/* set up for drawing with VECTOR ABSOLUTE Solid Lines */
-	dl_preamble( 1 );
+	dmp->dmr_Spreamble( 1 );
 
 	/* calculate center and scale for COMPLETE REGION since may have ORs */
 	lmemb = umemb = 0;
@@ -754,8 +729,8 @@ noskip:
 									 pi[k]=xb[k]+wb[k]*regi[n];
 									 po[k]=xb[k]+wb[k]*rego[n];
 								}
-								dl_goto(&pi[0], UP);
-								dl_goto(&po[0], DOWN);
+								dmp->dmr_goto(&pi[0], UP);
+								dmp->dmr_goto(&po[0], DOWN);
 							}
 						}
 					}
@@ -777,7 +752,7 @@ skipid:
 	nmemb = 0;
 
 	/* Finish off the display subroutine */
-	dl_epilogue();
+	dmp->dmr_Sepilogue();
 
 	/* Build output record */
 	commi.i_center[X] = dl_xcent;
@@ -787,7 +762,7 @@ skipid:
 	commi.i_scale = dl_scale;
 
 	/* Determine VG memory requirement */
-	count = dl_size();
+	count = dmp->dmr_size();
 
 	/* Allocate VG storage for object */
 	addr = memalloc( count );
@@ -799,7 +774,7 @@ skipid:
 		(void)printf("dwreg: no more Displaylist memory\n");
 		commi.i_size = 0;	/* FLAG:  error */
 	} else {
-		commi.i_size = dl_load( addr, count );
+		commi.i_size = dmp->dmr_load( addr, count );
 	}
 }
 

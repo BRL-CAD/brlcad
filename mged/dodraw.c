@@ -1,9 +1,9 @@
 /*
- *			D R A W S O L . C
+ *			D O D R A W . C
  *
  * Functions -
- *	drawHsolid	Draw a COMGEOM solid for the VG
- *	freevgcore	De-allocate VG core
+ *	drawHsolid	Manage the drawing of a COMGEOM solid
+ *	freevgcore	De-allocate display processor memory
  *
  *	Ballistic Research Laboratory
  *	U. S. Army
@@ -22,8 +22,6 @@ extern void	perror();
 extern int	printf(), write();
 
 #define MAX(a,b)	if( (b) > (a) )  a = b
-
-struct commo	commo;		/* Structure to be sent to GED2 */
 
 struct commi	commi;		/* Structure to be rcvd from GED2 */
 
@@ -48,6 +46,10 @@ union record *recordp;
 {
 	register int i;
 
+	if( recordp->u_id != ID_SOLID )  {
+		printf("dodraw: non-solid, id=%c\n", recordp->u_id );
+		return(-1);	/* ERROR */
+	}
 	if( regmemb >= 0 ) {
 		/* processing a member of a processed region */
 		/* regmemb  =>  number of members left */
@@ -60,18 +62,13 @@ union record *recordp;
 			}
 			return(-1);		/* ERROR */
 		}
-		commo.o_flag = flag;
-		commo.o_more = regmemb;		/* members left to process */
-		commo.o_pos = memb_loc;		/* disk loc. of this member */
 		if(memb_oper == UNION)
-			commo.o_flag = 999;
-
-		mat_copy( commo.o_mat, xform );
+			flag = 999;
 
 		/* The hard part */
-		proc_reg( path[reg_pathpos], xform, flag );
+		i = proc_reg( recordp, xform, flag, regmemb );
 
-		if(commi.i_type == MS_ERROR) {
+		if( i < 0 )  {
 			/* error somwhere */
 			(void)printf("will skip region: %s\n",
 					path[reg_pathpos]->d_namep);
@@ -85,10 +82,9 @@ union record *recordp;
 		}
 		reg_error = 0;		/* reset error flag */
 
-		/* if type == MS_MORE  then more member solids to be processed
-		 *    so no drawing was done
+		/* if more member solids to be processed, no drawing was done
 		 */
-		if(commi.i_type == MS_MORE)
+		if( i > 0 )
 			return(0);		/* NOP */
 
 		/* See if write to display memory succeeded */
@@ -102,7 +98,7 @@ union record *recordp;
 		sp->s_size = commi.i_scale;
 	}  else  {
 		/* Doing a normal solid */
-		dl_preamble( flag == ROOT );
+		dmp->dmr_Spreamble( flag == ROOT );
 	
 		switch( recordp->u_id )  {
 
@@ -147,7 +143,7 @@ union record *recordp;
 		}
 
 		/* Finish off the display subroutine */
-		dl_epilogue();
+		dmp->dmr_Sepilogue();
 
 		sp->s_center[X] = dl_xcent;
 		sp->s_center[Y] = dl_ycent;
@@ -156,7 +152,7 @@ union record *recordp;
 		sp->s_size = dl_scale;
 
 		/* Determine displaylist memory requirement */
-		sp->s_bytes = dl_size();
+		sp->s_bytes = dmp->dmr_size();
 
 		/* Allocate displaylist storage for object */
 		sp->s_addr = memalloc( sp->s_bytes );
@@ -165,7 +161,7 @@ union record *recordp;
 			(void)printf("draw: out of Displaylist\n");
 			return(-1);		/* ERROR */
 		}
-		sp->s_bytes = dl_load( sp->s_addr, sp->s_bytes );
+		sp->s_bytes = dmp->dmr_load( sp->s_addr, sp->s_bytes );
 	}
 
 	/* set solid/dashed line flag */
