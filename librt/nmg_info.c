@@ -2663,3 +2663,69 @@ CONST long		*magic_p;
 
 	bu_free( (char *)st.visited, "visited[]");
 }
+
+/*
+ *			N M G _ 2 E D G E U S E _ G _ C O I N C I D E N T
+ *
+ *  Given two edgeuses, determine if they share the same edge geometry,
+ *  either topologically, or within tolerance.
+ *
+ *  Returns -
+ *	0	two edge geometries are not coincident
+ *	1	edges geometries are everywhere coincident.
+ *		(For linear edge_g_lseg, the 2 are the same line, within tol.)
+ */
+int
+nmg_2edgeuse_g_coincident( eu1, eu2, tol )
+CONST struct edgeuse	*eu1;
+CONST struct edgeuse	*eu2;
+CONST struct bn_tol	*tol;
+{
+	struct edge_g_lseg	*eg1;
+	struct edge_g_lseg	*eg2;
+
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_EDGEUSE(eu2);
+	BN_CK_TOL(tol);
+
+	eg1 = eu1->g.lseg_p;
+	eg2 = eu2->g.lseg_p;
+	NMG_CK_EDGE_G_LSEG(eg1);
+	NMG_CK_EDGE_G_LSEG(eg2);
+
+	if( eg1 == eg2 )  return 1;
+
+	/* Ensure direction vectors are generally parallel */
+	/* These are not unit vectors */
+	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
+	if( fabs(VDOT(eg1->e_dir, eg2->e_dir)) <
+	    0.9 * MAGNITUDE(eg1->e_dir) * MAGNITUDE(eg2->e_dir)  )  return 0;
+
+	/* Ensure that vertices on edge 2 are within tol of e1 */
+	if( bn_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
+	    eu2->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
+	if( bn_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
+	    eu2->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
+
+	/* Ensure that vertices of both edges are within tol of other eg */
+	if( bn_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
+	    eu1->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
+	if( bn_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
+	    eu1->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
+
+	/* Perhaps check for ultra-short edges (< 10*tol->dist)? */
+
+	/* Do not use bn_isect_line3_line3() -- it's MUCH too strict */
+
+	return 1;
+trouble:
+	if( !bn_2line3_colinear( eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir,
+	     1e5, tol ) )
+		return 0;
+
+	/* XXX debug */
+	nmg_pr_eg( &eg1->l.magic, 0 );
+	nmg_pr_eg( &eg2->l.magic, 0 );
+	bu_log("nmg_2edgeuse_g_coincident() lines colinear, vertex check fails, calling colinear anyway.\n");
+	return 1;
+}
