@@ -27,6 +27,7 @@ set mged_helpdevel_data(model2grid_lu)	{{mx my mz}	{convert point in model coord
         to grid coords (local units)}}
 set mged_helpdevel_data(model2view)	{{mx my mz}	{convert point in model coords (mm) to view coords}}
 set mged_helpdevel_data(model2view_lu)	{{mx my mz}	{convert point in model coords (local units) to view coords (local units)}}
+set mged_helpdevel_data(oed_reset)	{{}	{reset the parameters for the currently edited matrix}}
 set mged_helpdevel_data(output_hook)	{{[hook_cmd]}	{set up to have output from bu_log sent to hook_cmd}}
 set mged_helpdevel_data(put_comb)	{{comb_name is_Region id air material los color shader inherit boolean_expr} {set combination}}
 set mged_helpdevel_data(put_sed)	{{solid parameters}	{put the solid parameters into the in-memory (i.e. es_int)
