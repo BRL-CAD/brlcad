@@ -2562,74 +2562,92 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				/* For each line, convert/copy pixels */
 
 				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
-					for (k = x2 - x1 + 1; k; k--) {
-						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-							if( xi->xi_visual->red_mask & 0xFF)  {
+					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+						if( xi->xi_visual->red_mask & 0xFF)  {
 {static int before=1; if(before) {write(2,"FB1a\n", 5); before=0;} }
+							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = 0;
 								*p++ = line_irgb[BLU];
 								*p++ = line_irgb[GRN];
 								*p++ = line_irgb[RED];
-							} else {
-{static int before=1; if(before) {write(2,"FB1b\n", 5); before=0;} }
-								*p++ = 0;
-								*p++ = line_irgb[RED];
-								*p++ = line_irgb[GRN];
-								*p++ = line_irgb[BLU];
+								line_irgb += sizeof (RGBpixel);
 							}
 						} else {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB1c\n", 5); before=0;} }
+{static int before=1; if(before) {write(2,"FB1b\n", 5); before=0;} }
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = 0;
 								*p++ = line_irgb[RED];
 								*p++ = line_irgb[GRN];
 								*p++ = line_irgb[BLU];
-								*p++ = 0;
-							} else {
-{static int before=1; if(before) {write(2,"FB1d\n", 5); before=0;} }
-								*p++ = line_irgb[BLU];
-								*p++ = line_irgb[GRN];
-								*p++ = line_irgb[RED];
-								*p++ = 0;
+								line_irgb += sizeof (RGBpixel);
 							}
 						}
-						line_irgb += sizeof (RGBpixel);
+					} else {
+						if( xi->xi_visual->red_mask & 0xFF)  {
+{static int before=1; if(before) {write(2,"FB1c\n", 5); before=0;} }
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = line_irgb[RED];
+								*p++ = line_irgb[GRN];
+								*p++ = line_irgb[BLU];
+								*p++ = 0;
+								line_irgb += sizeof (RGBpixel);
+							}
+						} else {
+{static int before=1; if(before) {write(2,"FB1d\n", 5); before=0;} }
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = line_irgb[BLU];
+								*p++ = line_irgb[GRN];
+								*p++ = line_irgb[RED];
+								*p++ = 0;
+								line_irgb += sizeof (RGBpixel);
+							}
+						}
 					}
 				} else {
 					unsigned char *red = xi->xi_redmap;
 					unsigned char *grn = xi->xi_grnmap;
 					unsigned char *blu = xi->xi_blumap;
 
-					for (k = x2 - x1 + 1; k; k--) {
-						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-							if( xi->xi_visual->red_mask & 0xFF)  {
+					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+						if( xi->xi_visual->red_mask & 0xFF)  {
 {static int before=1; if(before) {write(2,"FB2a\n", 5); before=0;} }
+							for (k = x2 - x1 + 1; k; k--) {
 								*p++ = 0;
 								*p++ = blu[line_irgb[BLU]];
 								*p++ = grn[line_irgb[GRN]];
 								*p++ = red[line_irgb[RED]];
-							} else {
-{static int before=1; if(before) {write(2,"FB2b\n", 5); before=0;} }
-								*p++ = 0;
-								*p++ = red[line_irgb[RED]];
-								*p++ = grn[line_irgb[GRN]];
-								*p++ = blu[line_irgb[BLU]];
+								line_irgb += sizeof (RGBpixel);
 							}
 						} else {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-{static int before=1; if(before) {write(2,"FB2c\n", 5); before=0;} }
+{static int before=1; if(before) {write(2,"FB2b\n", 5); before=0;} }
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = 0;
 								*p++ = red[line_irgb[RED]];
 								*p++ = grn[line_irgb[GRN]];
 								*p++ = blu[line_irgb[BLU]];
-								*p++ = 0;
-							} else {
-{static int before=1; if(before) {write(2,"FB2d\n", 5); before=0;} }
-								*p++ = blu[line_irgb[BLU]];
-								*p++ = grn[line_irgb[GRN]];
-								*p++ = red[line_irgb[RED]];
-								*p++ = 0;
+								line_irgb += sizeof (RGBpixel);
 							}
 						}
-						line_irgb += sizeof (RGBpixel);
+					} else {
+						if( xi->xi_visual->red_mask & 0xFF)  {
+{static int before=1; if(before) {write(2,"FB2c\n", 5); before=0;} }
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = red[line_irgb[RED]];
+								*p++ = grn[line_irgb[GRN]];
+								*p++ = blu[line_irgb[BLU]];
+								*p++ = 0;
+								line_irgb += sizeof (RGBpixel);
+							}
+						} else {
+{static int before=1; if(before) {write(2,"FB2d\n", 5); before=0;} }
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = blu[line_irgb[BLU]];
+								*p++ = grn[line_irgb[GRN]];
+								*p++ = red[line_irgb[RED]];
+								*p++ = 0;
+								line_irgb += sizeof (RGBpixel);
+							}
+						}
 					}
 				}
 				irgb += xi->xi_iwidth * sizeof (RGBpixel);
@@ -2677,31 +2695,36 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 							pxwd = ifp->if_xzoom;
 
 						/* Make as many copies as needed */
-						while (pxwd--)   {
-							/* Get/convert pixel */
-							if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-								if( xi->xi_visual->red_mask & 0xFF)  {
+						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+							if( xi->xi_visual->red_mask & 0xFF)  {
 {static int before=1; if(before) {write(2,"FB3a\n", 5); before=0;} }
+								while (pxwd--)   {
 									*p++ = 0;
 									*p++ = line_irgb[BLU];
 									*p++ = line_irgb[GRN];
 									*p++ = line_irgb[RED];
-								} else {
+								}
+							} else {
 {static int before=1; if(before) {write(2,"FB3b\n", 5); before=0;} }
+								while (pxwd--)   {
 									*p++ = 0;
 									*p++ = line_irgb[RED];
 									*p++ = line_irgb[GRN];
 									*p++ = line_irgb[BLU];
 								}
-							} else {
-								if( xi->xi_visual->red_mask & 0xFF)  {
+							}
+						} else {
+							if( xi->xi_visual->red_mask & 0xFF)  {
 {static int before=1; if(before) {write(2,"FB3c\n", 5); before=0;} }
+								while (pxwd--)   {
 									*p++ = line_irgb[RED];
 									*p++ = line_irgb[GRN];
 									*p++ = line_irgb[BLU];
 									*p++ = 0;
-								} else {
+								}
+							} else {
 {static int before=1; if(before) {write(2,"FB3d\n", 5); before=0;} }
+								while (pxwd--)   {
 									*p++ = line_irgb[BLU];
 									*p++ = line_irgb[GRN];
 									*p++ = line_irgb[RED];
@@ -2730,31 +2753,36 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 
 
 						/* Make as many copies as needed */
-						while (pxwd--)  {
-							/* Get/convert pixel */
-							if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-								if( xi->xi_visual->red_mask & 0xFF)  {
+						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+							if( xi->xi_visual->red_mask & 0xFF)  {
 {static int before=1; if(before) {write(2,"FB4a\n", 5); before=0;} }
+								while (pxwd--)  {
 									*p++ = 0;
 									*p++ = blu[line_irgb[BLU]];
 									*p++ = grn[line_irgb[GRN]];
 									*p++ = red[line_irgb[RED]];
-								} else {
+								}
+							} else {
 {static int before=1; if(before) {write(2,"FB4b\n", 5); before=0;} }
+								while (pxwd--)  {
 									*p++ = 0;
 									*p++ = red[line_irgb[RED]];
 									*p++ = grn[line_irgb[GRN]];
 									*p++ = blu[line_irgb[BLU]];
 								}
-							} else {
-								if( xi->xi_visual->red_mask & 0xFF)  {
+							}
+						} else {
+							if( xi->xi_visual->red_mask & 0xFF)  {
 {static int before=1; if(before) {write(2,"FB4c\n", 5); before=0;} }
+								while (pxwd--)  {
 									*p++ = red[line_irgb[RED]];
 									*p++ = grn[line_irgb[GRN]];
 									*p++ = blu[line_irgb[BLU]];
 									*p++ = 0;
-								} else {
+								}
+							} else {
 {static int before=1; if(before) {write(2,"FB4d\n", 5); before=0;} }
+								while (pxwd--)  {
 									*p++ = blu[line_irgb[BLU]];
 									*p++ = grn[line_irgb[GRN]];
 									*p++ = red[line_irgb[RED]];
