@@ -122,7 +122,7 @@ all-local:
 	  @ECHO@ ;\
 	  line1="  BRL-CAD @BRLCAD_VERSION@ is now installed into $(prefix)" ;\
 	  line2="  Be sure to add $(prefix)/bin to your PATH" ;\
-	  length="`@ECHO@ $(prefix)@BRLCAD_VERSION@ | wc | awk '{print $$3}'`" ;\
+	  length="`@ECHO@ $(prefix)@BRLCAD_VERSION@ | wc | sed 's/[ 	]*/ /g' | cut -f 4 -d ' '`" ;\
 	  length="`expr $$length + 34`" ;\
 	  len=$$length ;\
 	  while test $$len -gt 0  ; do \
