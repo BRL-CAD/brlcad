@@ -748,7 +748,13 @@ double		mm2local;
 			comb->aircode,
 			comb->los,
 			comb->GIFTmater );
+
+		if( comb->is_fastgen == REGION_FASTGEN_PLATE )
+			bu_vls_printf( str, "(FASTGEN plate mode) " );
+		else if( comb->is_fastgen == REGION_FASTGEN_VOLUME )
+			bu_vls_printf( str, "(FASTGEN volume mode) " );
 	}
+
 
 	bu_vls_strcat( str, "--\n" );
 	if( bu_vls_strlen(&comb->shader) > 0 ) {
