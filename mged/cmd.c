@@ -87,6 +87,7 @@ void set_e_axis_pos();
 #if 1
 extern int cmd_vdraw();
 extern int cmd_vget();
+extern int cmd_viewset();
 #endif
 
 extern Tcl_CmdProc	cmd_fhelp;
@@ -508,6 +509,8 @@ static struct funtab funtab[] = {
 	cmd_vdraw, 2, 7, TRUE,
 "vget", "center|size|eye|ypr|quat", "Experimental - return high-precision view parameters.",
 	cmd_vget, 2, 2, TRUE,
+"viewset","center|eye|size|ypr|quat|aet","Experimental - set several view parameters at once.",
+	cmd_viewset, 3, MAXARGS, TRUE,
 #endif
 "vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
 	f_vrmgr, 3, MAXARGS,TRUE,
