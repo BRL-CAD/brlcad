@@ -697,6 +697,91 @@ char **argv;
 	
 }
 
+int
+bu_tcl_key_eq_to_key_val( clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char *out;
+	int i=0;
+
+	while( ++i < argc )
+	{
+		out = bu_key_eq_to_key_val( argv[i] );
+
+		if( i < argc - 1 )
+			Tcl_AppendResult(interp, out, " ", NULL );
+		else
+			Tcl_AppendResult(interp, out, NULL );
+
+		bu_free( out, "bu_tcl_key_eq_to_key_val:out" );
+	}
+	return TCL_OK;
+
+}
+
+int
+bu_tcl_shader_to_key_val( clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char *out;
+
+	out = bu_shader_to_key_val( argv[1] );
+
+	Tcl_AppendResult(interp, out, NULL );
+
+	bu_free( out, "bu_tcl_shader_to_key_val:out" );
+
+	return TCL_OK;
+
+}
+
+int
+bu_tcl_key_val_to_key_eq( clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char *out;
+	int i=0;
+
+	for( i=1 ; i<argc ; i += 2 )
+	{
+		if( i+1 < argc-1 )
+			Tcl_AppendResult(interp, argv[i], "=", argv[i+1], " ", NULL );
+		else
+			Tcl_AppendResult(interp, argv[i], "=", argv[i+1], NULL );
+
+	}
+	return TCL_OK;
+
+}
+
+int
+bu_tcl_shader_to_key_eq( clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char *out;
+
+	out = bu_shader_to_key_eq( argv[1] );
+
+	Tcl_AppendResult(interp, out, NULL );
+
+	bu_free( out, "bu_tcl_shader_to_key_eq:out" );
+
+	return TCL_OK;
+
+}
+
 /*
  *			B U _ T C L _ S E T U P
  *
@@ -730,6 +815,18 @@ Tcl_Interp *interp;
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
 		"bu_hsv_to_rgb",	bu_tcl_hsv_to_rgb,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp,
+		"bu_key_eq_to_key_val",	bu_tcl_key_eq_to_key_val,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp,
+		"bu_shader_to_key_val",	bu_tcl_shader_to_key_val,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp,
+		"bu_key_val_to_key_eq",	bu_tcl_key_val_to_key_eq,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp,
+		"bu_shader_to_key_eq",	bu_tcl_shader_to_key_eq,
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_SetVar(interp, "bu_version", (char *)bu_version+5, TCL_GLOBAL_ONLY);	/* from vers.c */
