@@ -53,7 +53,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
+/* defined in mater.c */
 extern void rt_insert_color( struct mater *newp );
+
+#define WDB_READ_ERR { \
+	(void)printf("Database read error, aborting\n"); }
+
+#define WDB_READ_ERR_return		{ \
+	WDB_READ_ERR; \
+	return;  }
 
 /* A verbose message to attempt to soothe and advise the user */
 #define	WDB_TCL_ERROR_RECOVERY_SUGGESTION\
@@ -66,6 +74,17 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 #define WDB_CPEVAL	0
 #define WDB_LISTPATH	1
 #define WDB_LISTEVAL	2
+
+struct wdb_trace_data {
+	Tcl_Interp		*wtd_interp;
+	struct db_i		*wtd_dbip;
+	struct directory	*wtd_path[WDB_MAX_LEVELS];
+	struct directory	*wtd_obj[WDB_MAX_LEVELS];
+	mat_t			wtd_xform;
+	int			wtd_objpos;
+	int			wtd_prflag;
+	int			wtd_flag;
+};
 
 /* from librt/tcl.c */
 extern int rt_tcl_rt();
@@ -82,7 +101,6 @@ extern int wdb_comb_std_tcl();
 
 /* from db5_scan.c */
 HIDDEN int db5_scan();
-
 
 static int wdb_open_tcl();
 static int wdb_close_tcl();
@@ -137,7 +155,8 @@ static int wdb_units_tcl();
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
 
-static int wdb_trace();
+static void wdb_do_trace();
+static void wdb_trace();
 
 int wdb_cmpdirname();
 void wdb_vls_col_item();
@@ -1282,68 +1301,130 @@ wdb_list_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
-/*
- *			W D B _ T R A C E
- *
- *  Follow a given path.  What happens next depends on setting of 'flag'.
- *
- *  Return -
- *	0	path not found
- *	1	OK
- */
-static int
-wdb_trace(interp, dbip, old_xlate, flag, wdb_xform, des_path)
-     Tcl_Interp			*interp;
-     struct db_i		*dbip;
-     mat_t old_xlate;
-     int flag;
-     mat_t wdb_xform;
-     CONST struct db_full_path *des_path;
+static void
+wdb_do_trace(struct db_i		*dbip,
+	     struct rt_comb_internal	*comb,
+	     union tree			*comb_leaf,
+	     genptr_t			user_ptr1,
+	     genptr_t			user_ptr2,
+	     genptr_t			user_ptr3)
 {
-	struct bu_vls str;
-	struct db_tree_state ts;
-	struct db_full_path accumulated_path;
-	struct directory *dp;
-	int ret = 0;
+	int			*pathpos;
+	matp_t			old_xlate;
+	mat_t			new_xlate;
+	struct directory	*nextdp;
+	struct wdb_trace_data	*wtdp;
 
 	RT_CK_DBI(dbip);
-	RT_CK_FULL_PATH(des_path);
+	RT_CK_TREE(comb_leaf);
 
-	db_full_path_init(&accumulated_path);
-	db_init_db_tree_state( &ts, dbip, &rt_uniresource );
-	bn_mat_copy( ts.ts_mat, old_xlate );
-	if( db_follow_path( &ts, &accumulated_path, des_path, LOOKUP_NOISY, 0 ) < 0 )  {
-		ret = 0;
-		goto out;
-	}
-	bn_mat_copy( wdb_xform, ts.ts_mat );
+	if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+		return;
 
-	if (flag == WDB_CPEVAL)  {
-		/* all they wanted was the matrix */
-		ret = 1;
-		goto out;
+	pathpos = (int *)user_ptr1;
+	old_xlate = (matp_t)user_ptr2;
+	wtdp = (struct wdb_trace_data *)user_ptr3;
+
+	if (comb_leaf->tr_l.tl_mat) {
+		bn_mat_mul(new_xlate, old_xlate, comb_leaf->tr_l.tl_mat);
+	} else {
+		bn_mat_copy(new_xlate, old_xlate);
 	}
+
+	wdb_trace(nextdp, (*pathpos)+1, new_xlate, wtdp);
+}
+
+static void
+wdb_trace(register struct directory	*dp,
+	  int				pathpos,
+	  const mat_t			old_xlate,
+	  struct wdb_trace_data		*wtdp)
+{
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	int			i;
+	int			id;
+	struct bu_vls		str;
+
+#if 0
+	if (dbip == DBI_NULL)
+		return;
+#endif
+
+	bu_vls_init(&str);
+
+	if (pathpos >= WDB_MAX_LEVELS) {
+		struct bu_vls tmp_vls;
+
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "nesting exceeds %d levels\n", WDB_MAX_LEVELS);
+		Tcl_AppendResult(wtdp->wtd_interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+
+		for (i=0; i<WDB_MAX_LEVELS; i++)
+			Tcl_AppendResult(wtdp->wtd_interp, "/", wtdp->wtd_path[i]->d_namep, (char *)NULL);
+
+		Tcl_AppendResult(wtdp->wtd_interp, "\n", (char *)NULL);
+		return;
+	}
+
+	if (dp->d_flags & DIR_COMB) {
+		if (rt_db_get_internal(&intern, dp, wtdp->wtd_dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+			WDB_READ_ERR_return;
+
+		wtdp->wtd_path[pathpos] = dp;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		if (comb->tree)
+			db_tree_funcleaf(wtdp->wtd_dbip, comb, comb->tree, wdb_do_trace,
+				(genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)wtdp);
+		rt_comb_ifree(&intern, &rt_uniresource);
+		return;
+	}
+
+	/* not a combination  -  should have a solid */
+
+	/* last (bottom) position */
+	wtdp->wtd_path[pathpos] = dp;
+
+	/* check for desired path */
+	for (i=0; i<wtdp->wtd_objpos; i++) {
+		if (wtdp->wtd_path[i]->d_addr != wtdp->wtd_obj[i]->d_addr) {
+			/* not the desired path */
+			return;
+		}
+	}
+
+	/* have the desired path up to objpos */
+	bn_mat_copy(wtdp->wtd_xform, old_xlate);
+	wtdp->wtd_prflag = 1;
+
+	if (wtdp->wtd_flag == WDB_CPEVAL)
+		return;
 
 	/* print the path */
-	db_full_path_appendresult( interp, &accumulated_path );
+	for (i=0; i<pathpos; i++)
+		Tcl_AppendResult(wtdp->wtd_interp, "/", wtdp->wtd_path[i]->d_namep, (char *)NULL);
 
-	if (flag == WDB_LISTPATH) {
-		ret = 1;
-		goto out;
+	if (wtdp->wtd_flag == WDB_LISTPATH) {
+		bu_vls_printf( &str, "/%s:\n", dp->d_namep );
+		Tcl_AppendResult(wtdp->wtd_interp, bu_vls_addr(&str), (char *)NULL);
+		bu_vls_free(&str);
+		return;
 	}
 
-	BU_ASSERT(flag == WDB_LISTEVAL);
-	bu_vls_init( &str );
-	dp = DB_FULL_PATH_CUR_DIR(&accumulated_path);
-	RT_CK_DIR(dp);
-	wdb_do_list(dbip, interp, &str, dp, 1);
-	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	/* NOTE - only reach here if wtd_flag == WDB_LISTEVAL */
+	Tcl_AppendResult(wtdp->wtd_interp, "/", (char *)NULL);
+	if ((id=rt_db_get_internal(&intern, dp, wtdp->wtd_dbip, wtdp->wtd_xform, &rt_uniresource)) < 0) {
+		Tcl_AppendResult(wtdp->wtd_interp, "rt_db_get_internal(", dp->d_namep,
+				 ") failure", (char *)NULL );
+		return;
+	}
+	bu_vls_printf(&str, "%s:\n", dp->d_namep);
+	if (rt_functab[id].ft_describe(&str, &intern, 1, wtdp->wtd_dbip->dbi_base2local, &rt_uniresource) < 0)
+		Tcl_AppendResult(wtdp->wtd_interp, dp->d_namep, ": describe error\n", (char *)NULL);
+	rt_db_free_internal(&intern, &rt_uniresource);
+	Tcl_AppendResult(wtdp->wtd_interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
-	ret = 1;
-out:
-	db_free_full_path(&accumulated_path);
-	db_free_db_tree_state( &ts );
-	return ret;
 }
 
 /*
@@ -1368,16 +1449,15 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
      int     argc;
      char    **argv;
 {
-	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-	int flag = WDB_CPEVAL;
-	mat_t	wdb_xform;
-	struct db_full_path	desired_path;
+	struct rt_wdb		*wdbp = (struct rt_wdb *)clientData;
+	int			i, pos_in;
+	struct wdb_trace_data	wtd;
 
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help %s%s", "wdb_", argv[1]);
+		bu_vls_printf(&vls, "helplib %s%s", "wdb_", argv[1]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1391,41 +1471,58 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 	 *      ANY path the same up to this point is considered as matching
 	 */
 
+	/* initialize wtd */
+	wtd.wtd_interp = interp;
+	wtd.wtd_dbip = wdbp->dbip;
+	wtd.wtd_flag = WDB_CPEVAL;
+	wtd.wtd_prflag = 0;
+
+	pos_in = 1;
+
 	/* find out which command was entered */
 	if (strcmp(argv[0], "paths") == 0) {
 		/* want to list all matching paths */
-		flag = WDB_LISTPATH;
+		wtd.wtd_flag = WDB_LISTPATH;
 	}
-	if (strcmp(argv[0], "WDB_LISTEVAL") == 0) {
+	if (strcmp(argv[0], "listeval") == 0) {
 		/* want to list evaluated solid[s] */
-		flag = WDB_LISTEVAL;
+		wtd.wtd_flag = WDB_LISTEVAL;
 	}
 
 	if (argc == 2 && strchr(argv[1], '/')) {
-		if( db_string_to_path( &desired_path, wdbp->dbip, argv[1] ) < 0 )
-			goto err;
+		char *tok;
+		wtd.wtd_objpos = 0;
+
+		tok = strtok(argv[1], "/");
+		while (tok) {
+			if ((wtd.wtd_obj[wtd.wtd_objpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
+				return TCL_ERROR;
+			tok = strtok((char *)NULL, "/");
+		}
 	} else {
-		if( db_argv_to_path( &desired_path, wdbp->dbip, argc-1, (const char*const*)(argv+1) ) < 0 )
-			goto err;
+		wtd.wtd_objpos = argc-1;
+
+		/* build directory pointer array for desired path */
+		for (i=0; i<wtd.wtd_objpos; i++) {
+			if ((wtd.wtd_obj[i] = db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
+				return TCL_ERROR;
+		}
 	}
 
-	bn_mat_idn( wdb_xform );
+	bn_mat_idn(wtd.wtd_xform);
 
-	if( wdb_trace(interp, wdbp->dbip,
-	    bn_mat_identity, flag, wdb_xform, &desired_path) != 0
-	)  {
-		db_free_full_path( &desired_path );
-		return TCL_OK;
+	wdb_trace(wtd.wtd_obj[0], 0, bn_mat_identity, &wtd);
+
+	if (wtd.wtd_prflag == 0) {
+		/* path not found */
+		Tcl_AppendResult(interp, "PATH:  ", (char *)NULL);
+		for (i=0; i<wtd.wtd_objpos; i++)
+			Tcl_AppendResult(interp, "/", wtd.wtd_obj[i]->d_namep, (char *)NULL);
+
+		Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
 	}
 
-err:
-	/* path not found */
-	Tcl_AppendResult(interp, "Path:  ", (char *)NULL);
-	db_full_path_appendresult( interp, &desired_path );
-	Tcl_AppendResult(interp, "  not found", (char *)NULL);
-
-	db_free_full_path( &desired_path );
-    	return TCL_ERROR;
+	return TCL_OK;
 }
 
 
@@ -2974,9 +3071,7 @@ wdb_region_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 #else
-	/*XXX This is the way MGED used to do it. But, unfortunately this
-	 * creates a dependency for libwdb.
-	 */ 
+	/*XXX This is the way MGED used to do it. */ 
 	/* Get operation and solid name for each solid */
 	for (i = 2; i < argc; i += 2) {
 		if (argv[i][1] != '\0') {
