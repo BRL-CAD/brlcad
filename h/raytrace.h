@@ -1262,7 +1262,7 @@ extern int rt_isect_ray_plane(fastf_t *dist, point_t pt, vect_t  dir, plane_t pl
 extern int rt_isect_2planes(point_t pt, vect_t  dir, plane_t a, plane_t b, vect_t  rpp_min);
 extern int rt_isect_2lines(fastf_t *t, fastf_t *u, point_t p, vect_t d, point_t a, vect_t c);
 extern int rt_isect_line_lseg(fastf_t *t, point_t p, vect_t d, point_t a, point_t b);
-extern int rt_dist_line_point(point_t pt, vect_t dir, point_t a);
+extern double rt_dist_line_point(point_t pt, vect_t dir, point_t a);
 extern double rt_dist_line_origin(point_t pt, vect_t dir);
 extern double rt_area_of_triangle(point_t a, point_t b, point_t c);
 extern int rt_isect_pt_lseg(fastf_t *dist, point_t a, point_t b, point_t p, fastf_t tolsq);
@@ -1344,7 +1344,7 @@ extern int rt_isect_ray_plane();
 extern int rt_isect_2planes();
 extern int rt_isect_2lines();
 extern int rt_isect_line_lseg();
-extern int rt_dist_line_point();
+extern double rt_dist_line_point();
 extern double rt_dist_line_origin();
 extern double rt_area_of_triangle();
 extern int rt_isect_pt_lseg();
