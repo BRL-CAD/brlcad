@@ -397,6 +397,20 @@ struct rt_sketch_internal
 #define RT_SKETCH_INTERNAL_MAGIC	0x736b6574	/* sket */
 #define RT_SKETCH_CK_MAGIC(_p)	BU_CKMAG(_p,RT_SKETCH_INTERNAL_MAGIC,"rt_sketch_internal")
 
+/*
+ *	ID_SUBMODEL
+ */
+struct rt_submodel_internal {
+	long	magic;
+	char	file[128];	/* .g filename, 0-len --> this database. */
+	char	treetop[128];	/* one treetop only */
+	int	meth;		/* space partitioning method */
+	/* other option flags (lazy prep, etc.)?? */
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+	mat_t	root2leaf;
+};
+#define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/* subm */
+#define RT_SUBMODEL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_INTERNAL_MAGIC,"rt_submodel_internal")
 
 /*
  *	ID_EXTRUDE
