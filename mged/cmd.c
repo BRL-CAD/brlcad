@@ -242,6 +242,7 @@ static struct cmdtab cmdtab[] = {
 	{"matpick", f_matpick},
 	{"memprint", f_memprint},
 	{"mged_update", f_update},
+	{"mged_wait", f_wait},
 	{"mirface", f_mirface},
 	{"mirror", f_mirror},
 	{"mmenu_get", cmd_mmenu_get},
@@ -2055,39 +2056,6 @@ f_pl(clientData, interp, argc, argv)
 	curr_dm_list = dml;
 
 	return status;
-}
-
-void
-mged_update(non_blocking)
-int non_blocking;
-{
-  if(non_blocking >= 0)
-    event_check(non_blocking);
-  refresh();
-}
-
-int
-f_update(clientData, interp, argc, argv)
-	ClientData clientData;
-	Tcl_Interp *interp;
-	int     argc;
-	char    **argv;
-{
-	int non_blocking;
-
-	if(argc != 2 || sscanf(argv[1], "%d", &non_blocking) != 1){
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helpdevel mged_update");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	mged_update(non_blocking);
-
-	return TCL_OK;
 }
 
 int
