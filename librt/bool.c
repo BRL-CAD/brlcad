@@ -451,7 +451,6 @@ struct application *ap;
 	register struct partition *pp;
 	register int	claiming_regions;
 	register int	i;
-	struct soltab	*stp;
 	int		hits_avail = 0;
 
 #define HITS_TODO	(ap->a_onehit - hits_avail)
@@ -543,53 +542,39 @@ struct application *ap;
 			 */
 		}
 
+		/* Start with a clean slate when evaluating this partition */
+		BITZERO( regionbits, ap->a_rt_i->nregions );
+
 		/*
 		 *  For each solid that lies in this partition,
-		 *  set (OR) that solid's region bits into "regionbits".
+		 *  set (OR) that solid's region bit vector into "regionbits".
 		 */
-		bzero( (char *)regionbits, BITS2BYTES(ap->a_rt_i->nregions) );
-		for( stp=ap->a_rt_i->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
+		RT_BITV_LOOP_START( pp->pt_solhit, ap->a_rt_i->nsolids )  {
+			struct soltab	*stp =
+				ap->a_rt_i->rti_Solids[RT_BITV_LOOP_INDEX];
+			register int words=RT_BITV_BITS2WORDS(stp->st_maxreg);
+			register bitv_t *in = stp->st_regions;
+			register bitv_t *out = regionbits;
 
-			if( !BITTEST( pp->pt_solhit, stp->st_bit ) )  continue;
-
-			{
-				register int words;
-				register bitv_t *in = stp->st_regions;
-				register bitv_t *out = regionbits;
-
-				/* BITS2BYTES() / sizeof(bitv_t) */
-				words = (stp->st_maxreg+BITV_MASK)>>BITV_SHIFT;
-
-#				include "noalias.h"
-				while( words-- > 0 )
-					*out++ |= *in++;
-			}
-		}
+#			include "noalias.h"
+			while( words-- > 0 )
+				*out++ |= *in++;
+		} RT_BITV_LOOP_END;
 
 		if(rt_g.debug&DEBUG_PARTITION)
 			rt_pr_bitv( "regionbits", regionbits, ap->a_rt_i->nregions);
 
 		/* Evaluate the boolean trees of any regions involved */
-		for( i=0; i < ap->a_rt_i->nregions; i++ )  {
+		RT_BITV_LOOP_START( regionbits, ap->a_rt_i->nregions )  {
 			register struct region *regp;
 
-/**			if( !BITTEST(regionbits, i) )  continue; **/
-			{
-				register bitv_t j;
-				if( (j = regionbits[i>>BITV_SHIFT])==0 )  {
-					i = ((i+1+BITV_MASK)&(~BITV_MASK))-1;
-					continue;
-				}
-				if( !(j & (((bitv_t)1)<<(i&BITV_MASK))) )
-					continue;
-			}
-			regp = ap->a_rt_i->Regions[i];
+			regp = ap->a_rt_i->Regions[RT_BITV_LOOP_INDEX];
 			if(rt_g.debug&DEBUG_PARTITION)  {
 				rt_pr_tree_val( regp->reg_treetop, pp, 2, 0 );
 				rt_pr_tree_val( regp->reg_treetop, pp, 1, 0 );
 				rt_pr_tree_val( regp->reg_treetop, pp, 0, 0 );
 				rt_log("%.8x=bit%d, %s: ",
-					regp, i, regp->reg_name );
+					regp, RT_BITV_LOOP_INDEX, regp->reg_name );
 			}
 			if( rt_booleval( regp->reg_treetop, pp, TrueRg,
 			    ap->a_resource ) == FALSE )  {
@@ -633,7 +618,7 @@ struct application *ap;
 					lastregion = regp;
 				claiming_regions--;		/* now = 1 */
 			}
-		}
+		} RT_BITV_LOOP_END;
 		if( claiming_regions == 0 )  {
 			pp=pp->pt_forw;			/* onwards! */
 			continue;
