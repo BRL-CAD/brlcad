@@ -187,12 +187,39 @@ struct application	*ap;
 			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(rtip, pp);
 
 			/*
-			 * i < 0,  Seg starts before current partition ends
+			 * i < 0
+			 *  Seg starts before current partition ends
 			 *	PPPPPPPPPPP
 			 *	  SSSS...
 			 */
-
-			if( (i=rt_fdiff(lasthit->hit_dist, pp->pt_inhit->hit_dist)) == 0){
+			i=rt_fdiff(lasthit->hit_dist, pp->pt_inhit->hit_dist);
+			if( i > 0 )  {
+				/*
+				 * i > 0
+				 *
+				 * lasthit->hit_dist > pp->pt_inhit->hit_dist
+				 *
+				 *  Segment starts after partition starts,
+				 *  but before the end of the partition.
+				 *  Note:  pt_solhit will be marked in equal_start.
+				 *	PPPPPPPPPPPP
+				 *	     SSSS...
+				 *	newpp|pp
+				 */
+				GET_PT( rtip, newpp, res );
+				COPY_PT( rtip, newpp, pp );
+				/* new part. is the span before seg joins partition */
+				pp->pt_inseg = segp;
+				pp->pt_inhit = &segp->seg_in;
+				pp->pt_inflip = 0;
+				newpp->pt_outseg = segp;
+				newpp->pt_outhit = &segp->seg_in;
+				newpp->pt_outflip = 1;
+				INSERT_PT( newpp, pp );
+				if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts after p starts, ends after p ends. Split p in two, advance.\n");
+				goto equal_start;
+			}
+			if( i == 0){
 equal_start:
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("equal_start\n");
 				/*
@@ -318,30 +345,6 @@ equal_start:
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("insert seg before p start, ends after p ends\n");
 				goto equal_start;
 			}
-			/*
-			 * i > 0
-			 *
-			 * lasthit->hit_dist > pp->pt_inhit->hit_dist
-			 *
-			 *  Segment starts after partition starts,
-			 *  but before the end of the partition.
-			 *  Note:  pt_solhit will be marked in equal_start.
-			 *	PPPPPPPPPPPP
-			 *	     SSSS...
-			 *	newpp|pp
-			 */
-			GET_PT( rtip, newpp, res );
-			COPY_PT( rtip, newpp, pp );
-			/* new part. is the span before seg joins partition */
-			pp->pt_inseg = segp;
-			pp->pt_inhit = &segp->seg_in;
-			pp->pt_inflip = 0;
-			newpp->pt_outseg = segp;
-			newpp->pt_outhit = &segp->seg_in;
-			newpp->pt_outflip = 1;
-			INSERT_PT( newpp, pp );
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts after p starts, ends after p ends. Split p in two, advance.\n");
-			goto equal_start;
 		}
 
 		/*
@@ -472,6 +475,7 @@ struct application *ap;
 	register struct partition *pp;
 	register int	claiming_regions;
 	int		hits_avail = 0;
+	fastf_t		diff;
 
 #define HITS_TODO	(ap->a_onehit - hits_avail)
 
@@ -504,8 +508,8 @@ struct application *ap;
 		/* Sanity checks on sorting.  Remove later. */
 		RT_CHECK_SEG(pp->pt_inseg);
 		RT_CHECK_SEG(pp->pt_outseg);
-		if( pp->pt_inhit->hit_dist >= pp->pt_outhit->hit_dist )  {
-			rt_log("rt_boolfinal: thin or inverted partition %.8x\n", pp);
+		if( pp->pt_inhit->hit_dist > pp->pt_outhit->hit_dist )  {
+			rt_log("rt_boolfinal: inverted partition %.8x\n", pp);
 			rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
 		}
 		if( pp->pt_forw != InputHdp && pp->pt_outhit->hit_dist > pp->pt_forw->pt_inhit->hit_dist )  {
@@ -544,9 +548,10 @@ struct application *ap;
 		 *  the state of the partition is not fully known yet,
 		 *  so stop now.
 		 */
-		if( rt_fdiff( pp->pt_inhit->hit_dist, enddist) > 0 )  {
+		diff = pp->pt_inhit->hit_dist - enddist;
+		if( diff > ap->a_rt_i->rti_tol.dist )  {
 			if(rt_g.debug&DEBUG_PARTITION)rt_log(
-				"partition begins beyond current box end, returning\n");
+				"partition begins %g beyond current box end, returning\n", diff);
 			return(0);
 		}
 
@@ -555,7 +560,8 @@ struct application *ap;
 		 *  box, the condition of the outhit information is not fully
 		 *  known yet.
 		 */
-		if( rt_fdiff( pp->pt_outhit->hit_dist, enddist) > 0 )  {
+		diff = pp->pt_outhit->hit_dist - enddist;
+		if( diff > ap->a_rt_i->rti_tol.dist )  {
 			if(rt_g.debug&DEBUG_PARTITION)rt_log(
 				"partition ends beyond current box end\n");
 			if( ap->a_onehit <= 0 )
@@ -692,10 +698,12 @@ struct application *ap;
 			/*  See if this new partition extends the previous
 			 *  last partition, "exactly" matching.
 			 */
-			if( (lastpp = FinalHdp->pt_back) != FinalHdp &&
+			lastpp = FinalHdp->pt_back;
+			if( lastpp != FinalHdp &&
 			    lastregion == lastpp->pt_regionp &&
-			    rt_fdiff( newpp->pt_inhit->hit_dist,
-				lastpp->pt_outhit->hit_dist ) == 0
+			    NEAR_ZERO( newpp->pt_inhit->hit_dist -
+				lastpp->pt_outhit->hit_dist,
+				ap->a_rt_i->rti_tol.dist )
 			)  {
 				/* same region, extend last final partition */
 				RT_CHECK_PT(lastpp);
