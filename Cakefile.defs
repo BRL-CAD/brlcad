@@ -119,7 +119,7 @@ set -S2 "/bin/sh"
 
 /* 1==YES, 0==NO */
 
-#define PRODUCTION	0
+#define PRODUCTION	1
 
 #if PRODUCTION
 #	define BUILD_OPTIMIZED	1
@@ -322,7 +322,7 @@ set -S2 "/bin/sh"
 #		define	LDSHARED	ld -o32 -shared
 #		define	BUILD_LIBRARY	LDSHARED -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib
+#		define	STANDARD_LIBES	-lm -rpath LIBDIR:/usr/lib  /* -lmalloc -lc */
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 /*		Warning 84:  library not used for resolving any symbol */
 /*		Warning 85: definition in one library preempts that in another */
@@ -330,7 +330,7 @@ set -S2 "/bin/sh"
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-o32 -lm -lmalloc -lc
+#		define	STANDARD_LIBES	-o32 -lm -lmalloc /* -lc */
 #	endif
 #	define	LD_OPTS		GFLAG 
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
