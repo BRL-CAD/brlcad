@@ -53,7 +53,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "_dm.h"
+#include "dm.h"
 #include "dm-pex.h"
 
 /*XXXX Temporary */
