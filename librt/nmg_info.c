@@ -273,14 +273,14 @@ CONST struct vertexuse *vu;
 	case NMG_LOOPUSE_MAGIC:
 		return nmg_find_fu_of_lu( vu->up.lu_p );
 	case NMG_SHELL_MAGIC:
-		rt_log("nmg_find_fu_of_vu() vertexuse is child of shell, can't find faceuse\n");
+		if (rt_g.NMG_debug & DEBUG_BASIC) rt_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell, can't find faceuse\n", vu);
 		return ((struct faceuse *)NULL);
 	case NMG_EDGEUSE_MAGIC:
 		switch (*vu->up.eu_p->up.magic_p) {
 		case NMG_LOOPUSE_MAGIC:
 			return nmg_find_fu_of_lu( vu->up.eu_p->up.lu_p );
 		case NMG_SHELL_MAGIC:
-			rt_log("nmg_find_fu_of_vu() vertexuse is child of shell/edgeuse, can't find faceuse\n");
+			if (rt_g.NMG_debug & DEBUG_BASIC) rt_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell/edgeuse, can't find faceuse\n", vu);
 			return ((struct faceuse *)NULL);
 		}
 		rt_log("Error at %s %d:\nInvalid loopuse parent magic 0x%x\n",
