@@ -22,7 +22,7 @@
 	pixrect pixrot pixsaturate pixscale pixshrink pixstat \
 	pixtile pixuntile \
 	pl-asc pl-hpgl \
-	pl-pl pl-ps pl-sgi \
+	pl-pl pl-tek pl-ps pl-sgi \
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl
 
@@ -210,6 +210,9 @@ plline2:	plline2.o LIBPLOT
 
 pl-pl:	pl-pl.o LIBPLOT
 	CC LDFLAGS -o pl-pl pl-pl.o LIB_PRE''LIBPLOT LIBES
+
+pl-tek:	pl-tek.o LIBPLOT
+	CC LDFLAGS -o pl-tek pl-tek.o LIB_PRE''LIBPLOT LIBES
 
 buffer:		buffer.o
 	CC LDFLAGS -o buffer buffer.o LIBES
