@@ -5,7 +5,7 @@
 #define PKG_H_SEENYET
 
 struct pkg_switch {
-	char	pks_type;		/* Type code */
+	unsigned short	pks_type;	/* Type code */
 	int	(*pks_handler)();	/* Message Handler */
 	char	*pks_title;		/* Description of message type */
 };
