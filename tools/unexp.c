@@ -167,7 +167,7 @@ char *argv[];
 		    expnt = ldexp( 1/256.0, in_rows[RLE_EXPONENT][x] - 127 );
 		    tmp_max = -1000;
 		    for( chan = 0; chan < RLE_EXPONENT; chan++ )
-			tmp_max = MAX( tmp_max, in_rows[chan][x] );
+			tmp_max = MAX( tmp_max, (int)in_rows[chan][x] );
 
 		    tmp = expnt / maxval * tmp_max;
 		    if (tmp > 255)
