@@ -5,26 +5,78 @@
 
 <h1>BRL-CAD 6.0 Release Notes</h1>
 <ul>
-<li><a href="#summary">Summary</a></li>
-<li><a href="#new_util">New Utilities</a></li>
-<li><a href="#new_lib">New Libraries<br></a></li>
-<li><a href="#deprecated">Deprecated Features</a></li>
-<li><a href="#removed">Unsupported Features</a></li>
+  <li><a href="#summary">Summary</a></li>
+  <li><a href="#new_util">New Utilities</a></li>
+  <li><a href="#new_lib">New Libraries<br></a></li>
+  <li><a href="#dev">Developer Features</a></li>
+  <li><a href="#deprecated">Deprecated Features</a></li>
+  <li><a href="#removed">Unsupported Features & Utilities</a></li>
 </ul>
 <hr>
 <br>
 
 <a name="summary"><h2>Summary</h2></a>
 
-<p>blah blah blah</p>
+<ul>
+  <li>New Macintosh OS X architecture build capability</li>
+  <li>Improved Raytrace performance</li>
+  <li>New database file format and migration tools</li>
+  <li>New ascii database file format</li>
+  <li>Ascii support for extruded bitmap (ebm) and volume (vol) primitives</li>
+  <li>Improved height field (dsp) primitive performance</li>
+  <li>Tesselation support for sketch extrusion (extrude) primitve</li>
+
+  <li>General bug fixes, security enhancements, and speed improvements</li>
+  <ul>MGED
+    <li>New accelerators to automatically generate new primitevs from existing ones</li>
+    <li>Improved menu layout<li>
+    <li>New "Introduction to MGED" user manual</li>
+    <li>'in' command support for kinematics control (grip), sketch extrusion (extrude), and arbitrary regular polyhedron (arbn) primitives</li>
+    <li>'make' command support for rectangular parallelopipeds (rpp), arbitrary faceted (ars), and arbitrary regular polyhedron (arbn) primitives</li>
+    <li>New commands include: attr, attr_rm, copyeval, hide, lt, nmg_collapse, nmg_simplify, pathlist, shells, showmats, summary, unhide, version, xpush, rtedge </li>
+
+  </ul>
+  
+  <li>Supported architectures include Linux, FreeBSD, SGI IRIX, and Sun</li>
+</ul>
 
 <a name="new_util"><h2>New Utilities</h2></a>
+<ul>
+  <li>pixcmp
+    <p>although not technically new (formerly included in source distributions), pixcmp is now installed</p>
+  </li>
+  <li>rtedge
+    <p>Raytraces models, detects edges, and writes BRL-CAD color image (.pix) files</p>
+  <li>
+</ul>
 
 <a name="new_lib"><h2>New Libraries</h2></a>
+<ul>
+  <li>
+</ul>
+
+<a name="dev"><h2>Developer Features</h2></a>
+<ul>
+  <li>New and improved regression test suite</li>
+  <li>Compile-time optimizations that significantly increase raytrace performance (at cost of run-time debugging)</li>
+  <li>Detached dependancy on X (and Tk) during compilation</li>
+  <li>Consolidated configuration options prior to building</li>
+</ul>
+
 
 <a name="deprecated"><h2>Deprecated Features</h2></a>
+<ul>
+  <li>lgt
+     <p>lgt is being replaced by the new 'rtedge' tool</p>
+  </li>
+</ul>
 
-<a name="removed"><h2>Unsupported Features</h2></a>
+<a name="removed"><h2>Unsupported Features and Utilities</h2></a>
+<ul>
+  <li>g4-g5
+    <p>This tool has been superceeded by the more general 'dbupgrade' tool</p>
+  </li>
+  <li>Standard input/output redirection is no longer supported via the command-line tools</li>
 
 <hr>
 <a href="mailto:cad@arl.army.mil">&lt;<code>cad@arl.army.mil</code>&gt;</a>
