@@ -70,7 +70,7 @@ int			ncpu;
 	}
 
 	/* This table is used for discovering the per-cpu resource structures */
-	bu_ptbl_init( &rtip->rti_resources, MAX_PSW );
+	bu_ptbl_init( &rtip->rti_resources, MAX_PSW, "rti_resources ptbl" );
 
 	if( rtip->nsolids <= 0 )  {
 		if( rtip->rti_air_discards > 0 )
@@ -420,6 +420,7 @@ struct resource	*resp;
 		while( RT_LIST_WHILE( tabp, bu_ptbl, &resp->re_region_ptbl ) )  {
 			BU_CK_PTBL(tabp);
 			RT_LIST_DEQUEUE( &tabp->l );
+			bu_ptbl_free( tabp );
 			bu_free( (genptr_t)tabp, "struct bu_ptbl" );
 		}
 	}

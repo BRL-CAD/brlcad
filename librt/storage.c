@@ -55,7 +55,7 @@ register struct resource	*res;
 
 	if( RT_LIST_UNINITIALIZED( &res->re_seg ) )  {
 		RT_LIST_INIT( &(res->re_seg) );
-		bu_ptbl_init( &res->re_seg_blocks, 64 );
+		bu_ptbl_init( &res->re_seg_blocks, 64, "re_seg_blocks ptbl" );
 	}
 	bytes = bu_malloc_len_roundup(64*sizeof(struct seg));
 	sp = (struct seg *)bu_malloc(bytes, "rt_get_seg()");

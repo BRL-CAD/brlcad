@@ -512,7 +512,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		}
 	} RT_VISIT_ALL_SOLTABS_END
 
-	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids );
+	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids, "rti_cuts_waiting ptbl" );
 
 	/*  Dynamic decisions on tree limits.
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
@@ -1154,7 +1154,7 @@ struct rt_i	*rtip;
 	RT_CK_RTI(rtip);
 	RES_ACQUIRE(&rt_g.res_model);
 	if( !rtip->rti_busy_cutter_nodes.l.magic )
-		bu_ptbl_init( &rtip->rti_busy_cutter_nodes, 128 );
+		bu_ptbl_init( &rtip->rti_busy_cutter_nodes, 128, "rti_busy_cutter_nodes" );
 
 	if( rtip->rti_CutFree == CUTTER_NULL )  {
 		register int bytes;

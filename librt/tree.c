@@ -329,7 +329,7 @@ struct rt_i			*rtip;
 		RT_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
 
 		/* Tables of regions using this solid.  Usually small. */
-		bu_ptbl_init( &stp->st_regions, 7 );
+		bu_ptbl_init( &stp->st_regions, 7, "st_regions ptbl" );
 	}
 
 	/* Leave the appropriate critical section */

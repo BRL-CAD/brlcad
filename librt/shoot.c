@@ -653,7 +653,7 @@ register struct application *ap;
 
 	if( RT_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
 		BU_GETSTRUCT( regionbits, bu_ptbl );
-		bu_ptbl_init( regionbits, 7 );
+		bu_ptbl_init( regionbits, 7, "rt_shootray() regionbits ptbl" );
 	} else {
 		regionbits = RT_LIST_FIRST( bu_ptbl, &resp->re_region_ptbl );
 		RT_LIST_DEQUEUE( &regionbits->l );
