@@ -5,7 +5,7 @@
 #define DM_EVENT_HANDLER_NULL (int (*)())NULL
 
 #if IR_KNOBS
-#define NOISE 32		/* Size of dead spot on knob */
+#define NOISE 16		/* Size of dead spot on knob */
 #endif
 
 /* the font used depends on the size of the window opened */
@@ -21,17 +21,17 @@
 #define DM_TYPE_PLOT	1
 #define DM_TYPE_PS	2
 #define DM_TYPE_X	3
-#define DM_TYPE_PEX	4
-#define DM_TYPE_OGL	5
-#define DM_TYPE_GLX	6
+#define DM_TYPE_OGL	4
+#define DM_TYPE_GLX	5
+#define DM_TYPE_PEX	6
 
 #define IS_DM_TYPE_NULL(_t) ((_t) == DM_TYPE_NULL)
 #define IS_DM_TYPE_PLOT(_t) ((_t) == DM_TYPE_PLOT)
 #define IS_DM_TYPE_PS(_t) ((_t) == DM_TYPE_PS)
 #define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
-#define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
 #define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
 #define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
+#define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
 
 #define GET_DM(p,structure,w,hp) { \
 	register struct structure *tp; \
@@ -47,8 +47,8 @@
 }
 
 /*  Colors */
-#define DM_COLOR_HI	(short)230
-#define DM_COLOR_LOW	(short)0
+#define DM_COLOR_HI	((short)230)
+#define DM_COLOR_LOW	((short)0)
 #define DM_BLACK_R	DM_COLOR_LOW
 #define DM_BLACK_G	DM_COLOR_LOW
 #define DM_BLACK_B	DM_COLOR_LOW
@@ -69,14 +69,14 @@
 #define DM_BLUE		DM_BLUE_R,DM_BLUE_G,DM_BLUE_B
 #define DM_YELLOW	DM_YELLOW_R,DM_YELLOW_G,DM_YELLOW_B
 #define DM_WHITE	DM_WHITE_R,DM_WHITE_G,DM_WHITE_B
-#define DM_SET_COLOR(dr,dg,db,sr,sg,sb){\
-	(dr) = (sr);\
-	(dg) = (sg);\
-	(db) = (sb); }
-#define DM_SAME_COLOR(dr,dg,db,sr,sg,sb)(\
-	(dr) == (sr) &&\
-	(dg) == (sg) &&\
-	(db) == (sb))
+#define DM_COPY_COLOR(_dr,_dg,_db,_sr,_sg,_sb){\
+	(_dr) = (_sr);\
+	(_dg) = (_sg);\
+	(_db) = (_sb); }
+#define DM_SAME_COLOR(_dr,_dg,_db,_sr,_sg,_sb)(\
+	(_dr) == (_sr) &&\
+	(_dg) == (_sg) &&\
+	(_db) == (_sb))
 
 /* Command parameter to dmr_viewchange() */
 #define DM_CHGV_REDO	0	/* Display has changed substantially */
@@ -95,7 +95,6 @@
 
 /* Interface to a specific Display Manager */
 struct dm {
-  struct dm *(*dm_open)();
   int (*dm_close)();
   int (*dm_drawBegin)();	/* formerly dmr_prolog */
   int (*dm_drawEnd)();		/* formerly dmr_epilog */
@@ -116,6 +115,7 @@ struct dm {
   double dm_bound;		/* zoom-in limit */
   char *dm_name;		/* short name of device */
   char *dm_lname;		/* long name of device */
+  int dm_type;			/* display manager type */
   int dm_top;                   /* !0 means toplevel window */
   int dm_width;
   int dm_height;
@@ -125,10 +125,29 @@ struct dm {
   struct mem_map *dm_map;	/* displaylist mem map */
   struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
   struct bu_vls dm_tkName;	/* short Tcl/Tk name of drawing window */
-  struct bu_vls dm_initWinProc; /* XXX--Tcl/Tk procedure for initializing the drawing window */
   struct bu_vls dm_dName;	/* Display name */
 };
 
+#define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
+#define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
+#define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
+#define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
+#define DM_NEWROT(_dmp,_mat,_eye) _dmp->dm_newrot(_dmp,_mat,_eye)
+#define DM_DRAW_STRING_2D(_dmp,_str,_x,_y,_size,_use_aspect)\
+     _dmp->dm_drawString2D(_dmp,_str,_x,_y,_size,_use_aspect)
+#define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2)\
+     _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
+#define DM_DRAW_VERTEX_2D(_dmp,_x,_y) _dmp->dm_drawVertex2D(_dmp,_x,_y)
+#define DM_DRAW_VLIST(_dmp,_vlist,_mat) _dmp->dm_drawVList(_dmp,_vlist,_mat)
+#define DM_SET_COLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setColor(_dmp,_r,_g,_b,_strict)
+#define DM_SET_LINE_ATTR(_dmp,_width,_dashed)\
+     _dmp->dm_setLineAttr(_dmp,_width,_dashed)
+#define DM_CVTVECS(_dmp,_sp) _dmp->dm_cvtvecs(_dmp,_sp)
+#define DM_LOAD(_dmp,_saddr,_sbytes) _dmp->dm_load(_dmp,_saddr,_sbytes)
+#define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
+#define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
+
+extern struct dm *dm_open();
 extern int dm_process_options();
 extern int dm_limit();
 extern int dm_unlimit();
