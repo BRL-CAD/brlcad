@@ -71,7 +71,7 @@ struct application	*ap;
 	tol_dist = rtip->rti_tol.dist;
 
 	RT_CK_PT_HD(PartHdp);
-	RT_CHECK_RTI(ap->a_rt_i);
+	RT_CK_RTI(ap->a_rt_i);
 	RT_CK_RESOURCE(res);
 	RT_CK_RTI(rtip);
 
@@ -184,7 +184,7 @@ struct application	*ap;
 
 	tol_dist = rtip->rti_tol.dist;
 
-	RT_CHECK_RTI(ap->a_rt_i);
+	RT_CK_RTI(ap->a_rt_i);
 	RT_CK_RESOURCE(res);
 	RT_CK_RTI(rtip);
 
@@ -649,51 +649,14 @@ struct region			*reg2;
 struct partition		*pheadp;
 register int			verbose;
 {
-	point_t	pt;
-	static long count = 0;		/* Not PARALLEL, shouldn't hurt */
-	register fastf_t depth;
-
-	RT_CHECK_PT(pp);
-
-	if (!verbose)	goto choose;
-	    
-	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
-	if( depth <= 0 )  goto choose;	/* Retain 0-thickness partition */
-
-	/* Attempt to control tremendous error outputs */
-	if( ++count > 100 )  {
-		if( (count%100) != 3 )  goto choose;
-		bu_log("(overlaps omitted)\n");
-	}
-
-	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
-		ap->a_ray.r_dir );
-	/*
-	 * An application program might want to add code here
-	 * to ignore "small" overlap depths.
-	 * Print all verbiage in one call to bu_log(),
-	 * so that messages will be grouped together in parallel runs.
-	 */
-	bu_log( "\n\
-OVERLAP1: %s\n\
-OVERLAP2: %s\n\
-OVERLAP3: dist=(%g,%g) isol=%s osol=%s\n\
-OVERLAP4: depth %.5fmm at (%g,%g,%g) x%d y%d lvl%d\n",
-		reg1->reg_name,
-		reg2->reg_name,
-		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist,
-		pp->pt_inseg->seg_stp->st_name,
-		pp->pt_outseg->seg_stp->st_name,
-		depth, pt[X], pt[Y], pt[Z],
-		ap->a_x, ap->a_y, ap->a_level );
-#if 0
-	rt_pr_partitions( ap->a_rt_i, pheadp, "Entire ray containing overlap");
-#endif
+	RT_CK_AP(ap);
+	RT_CK_PT(pp);
+	RT_CK_REGION(reg1);
+	RT_CK_REGION(reg2);
 
 	/*
 	 *  Apply heuristics as to which region should claim partition.
 	 */
-choose:
 	if( reg1->reg_aircode != 0 )  {
 		/* reg1 was air, replace with reg2 */
 		return 2;
@@ -729,6 +692,9 @@ choose:
  *  An application which knew how to handle multiple overlapping air
  *  regions would provide its own very different version of this routine
  *  as the a_multioverlap() handler.
+ *
+ *  This routine is for resolving overlaps only, and should not print
+ *  any messages in normal operation; a_logoverlap() is for logging.
  */
 void
 rt_default_multioverlap( ap, pp, regiontable, InputHdp )
@@ -842,6 +808,98 @@ code2:
 }
 
 /*
+ *			R T _ S I L E N T _ L O G O V E R L A P
+ *
+ *  If an application doesn't want any logging from LIBRT, it should
+ *  just set ap->a_logoverlap = rt_silent_logoverlap.
+ */
+void
+rt_silent_logoverlap( ap, pp, regiontable, InputHdp )
+struct application	*ap;
+CONST struct partition	*pp;
+CONST struct bu_ptbl	*regiontable;
+CONST struct partition	*InputHdp;
+{
+	RT_CK_AP(ap);
+	RT_CK_PT(pp);
+	BU_CK_PTBL(regiontable);
+	return;
+}
+
+
+/*
+ *			R T _ D E F A U L T _ L O G O V E R L A P
+ *
+ *  Log a multiplicity of overlaps within a single partition.
+ *  This function is intended for logging only, and a_multioverlap()
+ *  is intended for resolving the overlap, only.
+ *  This function can be replaced by an application setting a_logoverlap().
+ */
+void
+rt_default_logoverlap( ap, pp, regiontable, InputHdp )
+struct application	*ap;
+CONST struct partition	*pp;
+CONST struct bu_ptbl	*regiontable;
+CONST struct partition	*InputHdp;
+{
+	point_t	pt;
+	static long count = 0;		/* Not PARALLEL, shouldn't hurt */
+	register fastf_t depth;
+	int		i;
+	struct bu_vls	str;
+
+	RT_CK_AP(ap);
+	RT_CK_PT(pp);
+	BU_CK_PTBL(regiontable);
+
+	/* Attempt to control tremendous error outputs */
+	if( ++count > 100 )  {
+		if( (count%100) != 3 )  return;
+		bu_log("(overlaps omitted)\n");
+	}
+
+	/*
+	 * Print all verbiage in one call to bu_log(),
+	 * so that messages will be grouped together in parallel runs.
+	 */
+	bu_vls_init(&str);
+	bu_vls_extend(&str, 80*8 );
+	bu_vls_putc(&str, '\n' );
+
+	/* List all the regions which evaluated to TRUE in this partition */
+	for( i=0; i < BU_PTBL_LEN(regiontable); i++ )  {
+		struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+
+		if( regp == REGION_NULL )  continue;
+		RT_CK_REGION(regp);
+
+		bu_vls_printf(&str, "OVERLAP%d: %s\n", i+1, regp->reg_name);
+	}
+
+	/* List all the information common to this whole partition */
+	bu_vls_printf(&str, "OVERLAPa: dist=(%g,%g) isol=%s osol=%s\n",
+		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist,
+		pp->pt_inseg->seg_stp->st_name,
+		pp->pt_outseg->seg_stp->st_name);
+
+	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+		ap->a_ray.r_dir );
+
+	bu_vls_printf(&str, "OVERLAPb: depth %.5fmm at (%g, %g, %g) x%d y%d lvl%d\n",
+		depth, pt[X], pt[Y], pt[Z],
+		ap->a_x, ap->a_y, ap->a_level );
+
+	bu_log("%s", bu_vls_addr(&str));
+	bu_vls_free(&str);
+
+#if 0
+	rt_pr_partitions( ap->a_rt_i, pheadp, "Entire ray containing overlap");
+#endif
+
+}
+
+/*
  *			R T _ B O O L F I N A L
  *
  *
@@ -933,7 +991,7 @@ CONST struct bu_bitv	*solidbits;
 	RT_CK_PT_HD(InputHdp);
 	RT_CK_PT_HD(FinalHdp);
 	BU_CK_PTBL(regiontable);
-	RT_CHECK_RTI(ap->a_rt_i);
+	RT_CK_RTI(ap->a_rt_i);
 	BU_CK_BITV(solidbits);
 
 	if(rt_g.debug&DEBUG_PARTITION)  {
@@ -944,6 +1002,9 @@ CONST struct bu_bitv	*solidbits;
 
 	if( !ap->a_multioverlap )
 		ap->a_multioverlap = rt_default_multioverlap;
+
+	if( !ap->a_logoverlap )
+		ap->a_logoverlap = rt_default_logoverlap;
 
 	if( enddist <= 0 )  {
 		reason = "not done, behind start point";
@@ -1198,6 +1259,7 @@ CONST struct bu_bitv	*solidbits;
 			 */
 			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  invoking a_multioverlap() pp=x%x\n", pp);
 			bu_ptbl_rm( regiontable, (long *)NULL );
+			ap->a_logoverlap( ap, pp, regiontable, InputHdp );
 			ap->a_multioverlap( ap, pp, regiontable, InputHdp );
 
 			/* Count number of remaining regions, s/b 0 or 1 */
@@ -1263,7 +1325,7 @@ CONST struct bu_bitv	*solidbits;
 				ap->a_rt_i->rti_tol.dist )
 			)  {
 				/* same region, extend last final partition */
-				RT_CHECK_PT(lastpp);
+				RT_CK_PT(lastpp);
 				RT_CHECK_SEG(lastpp->pt_inseg);	/* sanity */
 				RT_CHECK_SEG(lastpp->pt_outseg);/* sanity */
 				if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal collapsing %x %x\n", lastpp, newpp);
@@ -1635,7 +1697,7 @@ register struct partition	*partheadp;
 	for( ; pp != partheadp; pp = pp->pt_forw )  {
 		if( pp->pt_magic != 0 )  {
 			/* Partitions on the free queue have pt_magic = 0 */
-			RT_CHECK_PT(pp);
+			RT_CK_PT(pp);
 		}
 		if( ++count > 1000000 )  rt_bomb("partition length > 10000000 elements\n");
 	}
@@ -1663,7 +1725,7 @@ register CONST struct partition	*pp;
 	RT_CK_TREE(tp);
 	BU_CK_BITV(solidbits);
 	RT_CK_REGION(regionp);
-	RT_CHECK_PT(pp);
+	RT_CK_PT(pp);
 
 	switch( tp->tr_op )  {
 	case OP_NOP:
@@ -1715,7 +1777,7 @@ register CONST struct partition	*pp;
 
 	BU_CK_PTBL(regiontable);
 	BU_CK_BITV(solidbits);
-	RT_CHECK_PT(pp);
+	RT_CK_PT(pp);
 
 	for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
 		register struct region *regp;
