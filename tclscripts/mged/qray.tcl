@@ -319,9 +319,13 @@ proc qray_reset { id } {
     global use_air
     global mouse_behavior
 
-    winset $mged_active_dm($id)
-
     set top .$id.qray_control
+
+    if ![winfo exists $top] {
+	return
+    }
+
+    winset $mged_active_dm($id)
 
     if {$mouse_behavior == "q"} {
 	set qray_control($id,active) 1
