@@ -667,7 +667,7 @@ bsurfbld()	/* Build d-spline surface description record */
 		(void)sscanf( buf, "%f", vp++);
 	}
 	/* Write out the information */
-	(void)fwrite( (char *)&fp, nbytes, 1, stdout );
+	(void)fwrite( (char *)fp, nbytes, 1, stdout );
 
 	/* Free the knot data memory */
 	(void)free( (char *)fp );
@@ -688,7 +688,7 @@ bsurfbld()	/* Build d-spline surface description record */
 		(void)sscanf( buf, "%f", vp++);
 	}
 	/* Write out the information */
-	(void)fwrite( (char *)&fp, nbytes, 1, stdout );
+	(void)fwrite( (char *)fp, nbytes, 1, stdout );
 
 	/* Free the control mesh memory */
 	(void)free( (char *)fp );
