@@ -159,7 +159,7 @@ struct rt_i		*rtip;
 	argv[0] = sip->treetop;
 	argv[1] = NULL;
 	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
-		bu_free_rti( rtip );
+		rt_free_rti( rtip );
 		return -2;
 	}
 
@@ -443,7 +443,7 @@ register struct soltab *stp;
 	register struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
 
-	bu_free_rti( submodel->rtip );
+	rt_free_rti( submodel->rtip );
 
 	bu_free( (genptr_t)submodel, "submodel_specific" );
 }
