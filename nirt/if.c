@@ -131,13 +131,8 @@ struct region			*reg2;
 {
     overlap	*new_ovlp;
 
-    if ((new_ovlp = (overlap *) rt_malloc(sizeof(overlap), "new_ovlp"))
-        == OVERLAP_NULL)
-    {
-	fflush(stdout);
-	fprintf(stderr, "if_overlap(): Ran out of memory\n");
-	exit(1);
-    }
+    /* N. B. rt_malloc() only returns on successful allocation */
+    new_ovlp = (overlap *) rt_malloc(sizeof(overlap), "new_ovlp");
 
     new_ovlp -> ap = ap;
     new_ovlp -> pp = pp;

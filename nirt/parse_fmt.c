@@ -185,6 +185,8 @@ int	outcom_type;	/* Type of output command */
     outitem	*prev_oip = OUTITEM_NULL;
     outval	*vtp;
 
+    /* N.B. rt_malloc() only returns upon successful allocation */
+
     mycopy = uos = rt_malloc(strlen(uoutspec) + 1, "uos");
     strcpy(uos, uoutspec);
     /* Break up the format specification into pieces,
@@ -204,13 +206,7 @@ int	outcom_type;	/* Type of output command */
     {
 	nm_cs = 0;
 	/* Allocate storage for the next item in the output list */
-	if  ((oip = (outitem *) rt_malloc(sizeof(outitem), "output item"))
-		== OUTITEM_NULL)
-	{
-	    fflush(stdout);
-	    fprintf(stderr, "parse_fmt(): Ran out of memory\n");
-	    exit (1);
-	}
+	oip = (outitem *) rt_malloc(sizeof(outitem), "output item");
 	oip -> next = OUTITEM_NULL;
 
 	for (up = uos; *uos != '"'; ++uos)
@@ -680,7 +676,8 @@ com_table	*ctp;
 
     if (strcmp(buffer + i, "default") == 0)
 	new_name = def_sf_name;
-    else {
+    else
+    {
 	new_name = rt_malloc(strlen(buffer + i)+1, "new_state_filename");
 	sprintf(new_name, "%s", buffer + i);
     }
