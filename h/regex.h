@@ -45,18 +45,20 @@
 #include "conf.h"	/* BRLCAD file */
 
 /* From #include <sys/cdefs.h> */
-#if defined(USE_PROTOTYPES)
-#define __P(args)       args
-#else
-#define __P(args)       ()
-#define const		/**/
+#if !defined(__P)
+#  if defined(USE_PROTOTYPES)
+#	define __P(args)       args
+#  else
+#	define __P(args)       ()
+#	define const		/**/
+#  endif
 #endif
 #ifdef __cplusplus
-#define __BEGIN_DECLS   extern "C" {
-#define __END_DECLS     }
+#  define __BEGIN_DECLS   extern "C" {
+#  define __END_DECLS     }
 #else
-#define __BEGIN_DECLS
-#define __END_DECLS
+#  define __BEGIN_DECLS
+#  define __END_DECLS
 #endif
 
 
