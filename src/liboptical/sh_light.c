@@ -805,6 +805,15 @@ light_maker(int num, mat_t v2m)
 		default:
 			return;
 		}
+#if 0
+		{  /* debugging ascii plot commands drawing from point location to origin */
+		    vect_t tmp;
+		    static vect_t pt = {0.0, 0.0, 0.0};
+		    MAT4X3PNT(tmp, v2m, temp); bu_log("C 0 255 255\nO %g %g %g\n", V3ARGS(tmp));
+		    MAT4X3PNT(tmp, v2m, pt); bu_log("Q %g %g %g\n", V3ARGS(tmp));
+		}
+#endif
+
 		BU_GETSTRUCT( lsp, light_specific );
 		lsp->l.magic = LIGHT_MAGIC;
 #if RT_MULTISPECTRAL
@@ -817,7 +826,7 @@ light_maker(int num, mat_t v2m)
 #else
 		VMOVE( lsp->lt_color, color );
 #endif
-		MAT4X3VEC( lsp->lt_pos, v2m, temp );
+		MAT4X3PNT( lsp->lt_pos, v2m, temp );
 		VMOVE( lsp->lt_vec, lsp->lt_pos );
 		VUNITIZE( lsp->lt_vec );
 
