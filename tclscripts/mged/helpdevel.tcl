@@ -6,6 +6,7 @@
 
 set mged_helpdevel_data(aip)		{{[fb]}	{advance illumination pointer or path position forward or backward}}
 set mged_helpdevel_data(cmd_win)	{{cmd}	{routine for maintaining command windows}}
+set mged_helpdevel_data(collaborate)	{{join id | quit id | show}	{routine for maintaining the collaborative session}}
 set mged_helpdevel_data(get_comb)	{{comb_name}	{get information about combination}}
 set mged_helpdevel_data(get_dm_list)	{{}	{returns a list of all display managers}}
 set mged_helpdevel_data(get_edit_solid)	{{[-c]}	{get the solid parameters for the solid currently
@@ -17,7 +18,6 @@ set mged_helpdevel_data(grid2view_lu)	{{gx gy}	{given a point in grid coordinate
         convert it to view coordinates (local units).}}
 set mged_helpdevel_data(gui_destroy)	{{id}	{destroy display/command window pair}}
 set mged_helpdevel_data(hist)	{{command}	{routine for maintaining command history}}
-set mged_helpdevel_data(jcs)		{{id}	{join collaborative session}}
 set mged_helpdevel_data(make_name)	{{template}	{make an object name not occuring in the database}}
 set mged_helpdevel_data(mged_update)	{{non_blocking}	{handle outstanding events and refresh}}
 set mged_helpdevel_data(mmenu_get)	{{[index]}	{get menu corresponding to index}}
@@ -27,16 +27,13 @@ set mged_helpdevel_data(model2grid_lu)	{{mx my mz}	{convert point in model coord
 set mged_helpdevel_data(model2view)	{{mx my mz}	{convert point in model coords (mm) to view coords}}
 set mged_helpdevel_data(model2view_lu)	{{mx my mz}	{convert point in model coords (local units) to view coords (local units)}}
 set mged_helpdevel_data(output_hook)	{{[hook_cmd]}	{set up to have output from bu_log sent to hook_cmd}}
-set mged_helpdevel_data(pcs)		{{}	{print collaborative participants}}
-set mged_helpdevel_data(pmp)		{{}	{print mged players}}
 set mged_helpdevel_data(put_comb)	{{comb_name is_Region id air material los color shader inherit boolean_expr} {set combination}}
 set mged_helpdevel_data(put_edit_solid)	{{solid parameters}	{put the solid parameters into the in-memory (i.e. es_int)
         solid currently being edited.}}
-set mged_helpdevel_data(qcs)		{{id}	{quit collaborative session}}
 set mged_helpdevel_data(reset_edit_solid)	{{}	{reset the parameters for the currently edited solid (i.e. es_int)}}
 set mged_helpdevel_data(rset)		{{[res_type [res [vals]]]}	{provides a mechanism to get/set resource values.}}
 set mged_helpdevel_data(set_more_default)	{{more_default}	{set the current default input value}}
-set mged_helpdevel_data(share)		{{resource dm1 dm2}	{dm1 (display manager 1) shares its resource with dm2}}
+set mged_helpdevel_data(share)		{{[-u] resource dm1 [dm2]}	{Provides a mechanism to (un)share resources among display managers.}}
 set mged_helpdevel_data(solids_on_ray)	{{h v}	{list all displayed solids along a ray}}
 set mged_helpdevel_data(stuff_str)	{{string}	{sends a string to stdout while leaving the current command-line alone}}
 set mged_helpdevel_data(svb)		{{}	{set view reference base}}
