@@ -26,9 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 
-#ifndef XMGED
 #include "tcl.h"
-#endif
 
 #ifdef XMGED
 extern int update_views;
@@ -100,8 +98,6 @@ struct structparse mged_vparse[] = {
 	{"%s",  MAXLINE, "difference_op",	MV_O(difference_lexeme),	FUNC_NULL },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
-
-#ifndef XMGED
 
 /**
  **            R E A D _ V A R
@@ -219,8 +215,6 @@ Tcl_Interp *interp;
 		      unset_var, (ClientData)sp );
     }
 }
-
-#endif
 
 int
 f_set(ac,av)
