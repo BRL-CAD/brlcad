@@ -968,33 +968,8 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 
 /*
  *			S T R U C T P A R S E
- *
- *  Definitions and data structures needed for routines that assign values
- *  to elements of arbitrary data structures, the layout of which is
- *  described by tables of "structparse" structures.
- *
- *  The general problem of word-addressed hardware
- *  where (int *) and (char *) have different representations
- *  is handled in the parsing routines that use sp_offset,
- *  because of the limitations placed on compile-time initializers.
+ * -- was here
  */
-#if __STDC__ && !defined(ipsc860)
-#	define offsetofarray(_t, _m)	offsetof(_t, _m[0])
-#else
-#	if !defined(offsetof)
-#		define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
-#	endif
-#	define offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
-#endif
-
-struct structparse {
-	char		sp_fmt[4];		/* "i" or "%f", etc */
-	long		sp_count;		/* number of elements */
-	char		*sp_name;		/* Element's symbolic name */
-	long		sp_offset;		/* Byte offset in struct */
-	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
-};
-#define FUNC_NULL	((void (*)())0)
 
 /*
  *			R T _ I M E X P O R T
@@ -1489,7 +1464,10 @@ RT_EXTERN(void rt_pr_partitions, (CONST struct rt_i *rtip,
 					/* Find solid by leaf name */
 RT_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
 	CONST char *name) );
+
+/**********************************************************************/
 					/* Parse arbitrary data structure */
+#if 0	/* Moved to bu.h */
 RT_EXTERN(int rt_structparse, (CONST struct bu_vls *vls,
 	CONST struct structparse *tab, char *base ) );
           /* Print arbitrary data structure for human consumption*/
@@ -1511,6 +1489,9 @@ RT_EXTERN(void rt_structprint, (CONST char *title,
 		/* Print arbitrary data structure to vls for rt_structparse */
 RT_EXTERN(void rt_vls_structprint, (struct bu_vls *vls,
 	CONST struct structparse *tab, CONST char *base ) );
+#endif
+/**********************************************************************/
+
 RT_EXTERN(char *rt_read_cmd, (FILE *fp) );	/* Read semi-colon terminated line */
 					/* do cmd from string via cmd table */
 RT_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) );

@@ -71,6 +71,15 @@ extern "C" {
 #define rt_avail_cpus	bu_avail_cpus
 #define rt_parallel	bu_parallel
 
+/* parse.c */
+#define rt_structparse		bu_structparse
+#define rt_vls_item_print	bu_vls_item_print
+#define rt_vls_item_print_nc	bu_vls_item_print_nc
+#define rt_vls_name_print	bu_vls_name_print
+#define rt_vls_name_print_nc	bu_vls_name_print_nc
+#define rt_structprint		bu_structprint
+#define rt_vls_structprint	bu_vls_structprint
+
 /* printb.c */
 #define rt_printb	bu_printb
 

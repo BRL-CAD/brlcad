@@ -12,7 +12,7 @@
 	badmagic bitv bomb \
 	getopt ispar linebuf \
 	log magic malloc memset \
-	parallel printb ptbl semaphore \
+	parallel parse printb ptbl semaphore \
 	vls
 
 #define VERSION_VARIABLE	bu_version

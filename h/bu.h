@@ -293,6 +293,39 @@ extern int	bu_debug;
 
 /*----------------------------------------------------------------------*/
 /*
+ *	Structure parse/print
+ *
+ *  Definitions and data structures needed for routines that assign values
+ *  to elements of arbitrary data structures, the layout of which is
+ *  described by tables of "structparse" structures.
+ *
+ *  The general problem of word-addressed hardware
+ *  where (int *) and (char *) have different representations
+ *  is handled in the parsing routines that use sp_offset,
+ *  because of the limitations placed on compile-time initializers.
+ */
+#if __STDC__ && !defined(ipsc860)
+#	define offsetofarray(_t, _m)	offsetof(_t, _m[0])
+#else
+#	if !defined(offsetof)
+#		define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
+#	endif
+#	define offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
+#endif
+
+struct bu_structparse {
+	char		sp_fmt[4];		/* "i" or "%f", etc */
+	long		sp_count;		/* number of elements */
+	char		*sp_name;		/* Element's symbolic name */
+	long		sp_offset;		/* Byte offset in struct */
+	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
+};
+#define FUNC_NULL	((void (*)())0)
+
+
+
+/*----------------------------------------------------------------------*/
+/*
  *  Declarations of external functions in LIBBU.
  *  Source file names listed alphabetically.
  */
@@ -374,6 +407,29 @@ BU_EXTERN(void			bu_cpulimit_set, (int sec));
 BU_EXTERN(int			bu_avail_cpus, ());
 BU_EXTERN(void			bu_parallel, (void (*func)(), int ncpu));
 
+/* parse.c */
+BU_EXTERN(int			bu_structparse, (CONST struct bu_vls *in_vls,
+				CONST struct bu_structparse *desc, 
+				char *base));
+BU_EXTERN(void			bu_vls_item_print, (struct bu_vls *vp,
+				CONST struct bu_structparse *sdp,
+				CONST char *base ));
+BU_EXTERN(void			bu_vls_item_print_nc, (struct bu_vls *vp,
+				CONST struct bu_structparse *sdp,
+				CONST char *base ));
+BU_EXTERN(int			bu_vls_name_print, (struct bu_vls *vp,
+				CONST struct bu_structparse *parsetab,
+				CONST char *name, CONST char *base ));
+BU_EXTERN(int			bu_vls_name_print_nc, (struct bu_vls *vp,
+				CONST struct bu_structparse *parsetab,
+				CONST char *name, CONST char *base ));
+BU_EXTERN(void			bu_structprint, (CONST char *title,
+				CONST struct bu_structparse *parsetab,
+				CONST char *base));
+BU_EXTERN(void			bu_vls_structprint, (struct  bu_vls *vls,
+				register CONST struct bu_structparse *sdp,
+				CONST char *base));
+				
 /* printb.c */
 BU_EXTERN(void			bu_vls_printb, (struct bu_vls *vls,
 				CONST char *s, unsigned long v,
