@@ -1270,7 +1270,33 @@ struct shell *s;
 
 }
 
+/*	N M G _ R E G I O N _ A
+ *
+ *	build attributes/extents for all shells in a region
+ */
+void nmg_region_a(r)
+struct nmgregion *r;
+{
+	struct shell *s;
+	struct nmgregion_a *ra;
+	NMG_CK_REGION(r);
+	GET_REGION_A(ra);
 
+	ra->magic = NMG_REGION_A_MAGIC;
+
+	VSETALL(ra->max_pt, -MAX_FASTF);
+	VSETALL(ra->min_pt, MAX_FASTF);
+
+	s = r->s_p;
+	do {
+		nmg_shell_a(s);
+
+		VMIN(ra->min_pt, r->s_p->sa_p->min_pt);
+		VMAX(ra->max_pt, r->s_p->sa_p->max_pt);
+
+		s = s->next;
+	} while (s != r->s_p);
+}
 /*	N M G _ E U S P L I T
  *	Split an edgeuse
  *	Make a new edge, and a vertex.  If v is non-null it is taken as a
@@ -1814,11 +1840,11 @@ struct shell *s;
 struct faceuse *nmg_cface(s, verts, n)
 struct shell *s;
 struct vertex *verts[];
-unsigned n;
+int n;
 {
 	struct faceuse *fu;
 	struct edgeuse *eu;
-	unsigned i;
+	int i;
 
 	NMG_CK_SHELL(s);
 	if (n < 1) {
@@ -1826,7 +1852,7 @@ unsigned n;
 	}
 
 	if (verts) {
-		fu = nmg_mf(nmg_mlv(&s->magic, verts[0], OT_SAME));
+		fu = nmg_mf(nmg_mlv(&s->magic, verts[n-1], OT_SAME));
 		eu = nmg_meonvu(fu->lu_p->down.vu_p);
 
 		if (!verts[n-1])
@@ -2257,10 +2283,6 @@ struct shell *s;
 		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC && 
 		    vu->up.eu_p->eumate_p->vu_p->v_p == v2  &&
 		    vu->up.eu_p->eumate_p == vu->up.eu_p->radial_p) {
-
-			VPRINT("checking ", vu->v_p->vg_p->coord);
-			VPRINT("and ", vu->up.eu_p->eumate_p->vu_p->v_p->vg_p->coord);
-
 			eu = vu->up.eu_p;
 			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
@@ -2344,11 +2366,11 @@ struct shell *s;
 struct faceuse *nmg_cmface(s, verts, n)
 struct shell *s;
 struct vertex **verts[];
-unsigned n;
+int n;
 {
 	struct faceuse *fu;
 	struct edgeuse *eu, *eur, *euold;
-	unsigned i;
+	int i;
 
 	NMG_CK_SHELL(s);
 
@@ -2367,9 +2389,8 @@ unsigned n;
 	for (i=0 ; i < n ; ++i) {
 		if (verts[i]) {
 			if (*verts[i]) {
-				/* validate the structure pointers */
+				/* validate the vertex pointer */
 				NMG_CK_VERTEX(*verts[i]);
-				NMG_CK_VERTEX_G((*verts[i])->vg_p);
 			}
 		} else {
 			rt_log("in %s at %d, null ptr to ptr to struct vertex\n",
@@ -2379,7 +2400,7 @@ unsigned n;
 	}
 
 
-	fu = nmg_mf(nmg_mlv(&s->magic, *verts[0], OT_SAME));
+	fu = nmg_mf(nmg_mlv(&s->magic, *verts[n-1], OT_SAME));
 	eu = nmg_meonvu(fu->lu_p->down.vu_p);
 
 	if (!(*verts[n-1]))
