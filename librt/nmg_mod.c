@@ -1313,7 +1313,8 @@ struct vertexuse	*vu2;
 		/* Make the two new edgeuses share just one edge */
 		nmg_moveeu( second_new_eu, first_new_eu );
 	} else {
-		second_new_eu = RT_LIST_NEXT( edgeuse, &eu1->l );
+		second_new_eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+		NMG_CK_EDGEUSE(second_new_eu);
 	}
 
 	/*
@@ -1478,7 +1479,8 @@ struct loopuse *lu;
 void nmg_simplify_face(fu)
 struct faceuse *fu;
 {
-	struct loopuse *lu;
+	struct loopuse *lu, *lu2;
+	int overlap;
 
 	NMG_CK_FACEUSE(fu);
 
@@ -1488,8 +1490,137 @@ struct faceuse *fu;
 	
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
 		nmg_kill_snakes(lu);
+
+#if 0
+	/* An exterior loop in face that:
+	 *	1) has an extent which does not overlap the extent of another
+	 *		loop in this face.
+	 *	2) does not share a vertex with another loop of this face.
+	 *
+	 * defines the boundary of a separated "face patch" and should 
+	 * become a separate face.
+	 */
+
+	/* a face of one loop cannot be subdivided */
+	if (RT_LIST_NEXT(loopuse, &fu->lu_hd) ==
+	    RT_LIST_LAST(loopuse, &fu->lu_hd))
+	    	return;
+
+
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		overlap = 0;
+		for (RT_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
+			if (lu == lu2) continue;
+			if (NMG_EXTENT_OVERLAP(
+			    lu->lg_p->min_pt, lu->lg_p->max_pt,
+			    lu2->lg_p->min_pt, lu2->lg_p->max_pt) ) {
+				overlap
+			}
+		}
+
+
+	}
+#endif
+
+
 }
 
+
+
+#if 0
+/*XXX	Group sets of loops within a face into overlapping units.
+ *	This will allow us to separate dis-associated groups into separate
+ *	(but equal ;-) faces
+ */
+
+struct groupie {
+	struct rt_list	l;
+	struct loopuse *lu;
+}
+
+struct loopgroup {
+	struct rt_list	l;
+	struct rt_list	groupies;
+} groups;
+
+
+struct loopgroup *
+group(lu, groups)
+struct loopuse *lu;
+struct rt_list *groups;
+{
+	struct loopgroup *group;
+	struct groupie *groupie;
+
+	for (RT_LIST_FOR(group, loopgroup, groups)) {
+		for (RT_LIST_FOR(groupie, groupie, &groupies)) {
+			if (groupie->lu == lu)
+				return(group);
+		}
+	}
+	return NULL;
+}
+
+void
+new_loop_group(lu, groups)
+struct loopuse *lu;
+struct rt_list *groups;
+{
+	struct loopgroup *lg;
+	struct groupie *groupie;
+
+	lg = (struct loopgroup *)rt_calloc(sizeof(struct loopgroup), "loopgroup");
+	groupie = (struct groupie *)rt_calloc(sizeof(struct groupie), "groupie");
+	groupie->lu = lu;
+
+	RT_LIST_INIT(&lg->groupies);
+	RT_LIST_APPEND(&lg->groupies, &groupie->l);
+	RT_LIST_APPEND(groups, &lg.l);
+}
+
+void
+merge_groups(lg1, lg2);
+struct loopgroup *lg1, *lg2;
+{
+	struct groupie *groupie;
+
+	while (RT_LIST_WHILE(groupie, groupie, &lg2->groupies)) {
+		RT_LIST_DEQUEUE(&(groupie->l));
+		RT_LIST_APPEND(&(lg1->groupies), &(groupie->l))
+	}
+	RT_DEQUEUE(&(lg2->l));
+	rt_free((char *)lg2, "free loopgroup 2 of merge");
+}
+void
+free_groups(head)
+struct rt_list *head;
+{
+	while
+}
+
+	RT_LIST_INIT(&groups);
+
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+
+		/* build loops out of exterior loops only */
+		if (lu->orientation == OT_OPPOSITE)
+			continue;
+
+		if (group(lu) == NULL)
+			new_loop_group(lu, &groups);
+
+		for (RT_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
+			if (lu == lu2 ||
+			    group(lu, &groups) == group(lu2, &groups))
+				continue;
+			if (loops_touch_or_overlap(lu, lu2))
+				merge_groups(group(lu), group(lu2));
+		}
+
+
+
+	}
+#endif
 
 /*
  *			N M G _ S I M P L I F Y _ S H E L L
@@ -2086,4 +2217,180 @@ struct shell	*s;
 			nmg_use_edge_g( e, new_eg );
 		}
 	}
+}
+
+
+
+
+
+
+static long **trans_tbl = (long **)NULL;
+
+struct loopuse *
+nmg_dup_loop(lu, parent)
+struct loopuse *lu;
+long *parent;
+{
+	struct loopuse *new_lu = (struct loopuse *)NULL;
+	struct vertexuse *new_vu = (struct vertexuse *)NULL;
+	struct vertexuse *old_vu = (struct vertexuse *)NULL;
+	struct vertex *old_v = (struct vertex *)NULL;
+	struct edgeuse *new_eu = (struct edgeuse *)NULL;
+	struct edgeuse *eu = (struct edgeuse *)NULL;
+	char padstr[32];
+	int i=1;
+
+	NMG_CK_LOOPUSE(lu);
+
+	if (trans_tbl == (long **)NULL)\
+		nmg_start_dup(nmg_find_model( (long *)lu ));
+
+	/* if loop is just a vertex, that's simple to duplicate */
+	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		old_vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		old_v = old_vu->v_p;
+
+
+		if (NMG_INDEX_TEST(trans_tbl, old_v)) {
+			/* this vertex already exists in the new model */
+			new_lu = nmg_mlv(parent,
+				(struct vertex *)NMG_INDEX_VALUE(trans_tbl, old_v->index),
+				lu->orientation);
+			rt_log("vertex in new model\n");
+		} else {
+			/* make a new vertex */
+			rt_log("new vertex in new model\n");
+			new_lu = nmg_mlv(parent,
+				(struct vertex *)NULL,
+				lu->orientation);
+
+			new_vu = RT_LIST_FIRST(vertexuse, &new_lu->down_hd);
+			trans_tbl[old_v->index] = (long *)new_vu->v_p;
+
+			if (old_v->vg_p) {
+				new_vu = RT_LIST_FIRST(vertexuse, &new_lu->down_hd);
+				nmg_vertex_gv(new_vu->v_p, old_vu->v_p->vg_p->coord);
+			}
+		}
+		return;
+	}
+
+	/* This loop is an edge-loop.  This is a little more work
+	 * First order of business is to duplicate the vertex/edge makeup.
+	 */
+	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		NMG_CK_VERTEX(eu->vu_p->v_p);
+		old_v = eu->vu_p->v_p;
+		if (new_lu == (struct loopuse *)NULL) {
+			/* this is the first edge in the new loop */
+			if (NMG_INDEX_VALUE(trans_tbl, old_v->index)) {
+				struct vertex *ck_v;
+				ck_v = (struct vertex *)NMG_INDEX_VALUE(trans_tbl, old_v->index);
+				NMG_CK_VERTEX( ck_v );
+			}
+
+			new_lu = nmg_mlv(parent,
+				(struct vertex *)NMG_INDEX_VALUE(trans_tbl, old_v->index),
+				lu->orientation);
+			new_vu = RT_LIST_FIRST(vertexuse,
+				&new_lu->down_hd);
+
+			NMG_CK_VERTEXUSE(new_vu);
+			NMG_CK_VERTEX(new_vu->v_p);
+
+			if (!trans_tbl[old_v->index])
+				trans_tbl[old_v->index] =
+					(long *)new_vu->v_p;
+
+			new_eu = nmg_meonvu(new_vu);
+
+			if (old_v->vg_p) {
+				NMG_CK_VERTEX_G(old_v->vg_p);
+				nmg_vertex_gv(new_vu->v_p,
+					eu->vu_p->v_p->vg_p->coord);
+			}
+
+		} else {
+			/* not the first edge in new loop */
+			new_eu = RT_LIST_LAST(edgeuse, &new_lu->down_hd);
+			NMG_CK_EDGEUSE(new_eu);
+
+			new_eu = nmg_eusplit(
+				(struct vertex *)trans_tbl[old_v->index],
+				new_eu);
+
+			new_vu = new_eu->vu_p;
+
+			if (!trans_tbl[old_v->index])
+				trans_tbl[old_v->index] = (long *)new_vu->v_p;
+
+			if (old_v->vg_p)
+				nmg_vertex_gv(new_vu->v_p,
+					eu->vu_p->v_p->vg_p->coord);
+
+		}
+		/* XXX ought to do something with edges & trans_tbl here? */
+	}
+
+	/* Now that we've got all the right topology created and the
+	 * vertex geometries are in place we can create the edge geometries.
+	 */
+	for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		nmg_edge_g(eu->e_p);
+		/* XXX ought to do something with edges & trans_tbl here? */
+	}
+	nmg_loop_g(new_lu->l_p);
+	return (new_lu);
+}
+
+struct faceuse *
+nmg_dup_face(fu, s)
+struct faceuse *fu;
+struct shell *s;
+{
+	struct loopuse *new_lu, *lu;
+	struct faceuse *new_fu = (struct faceuse *)NULL;
+	char padstr[32];
+
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE(fu->f_p);
+	NMG_CK_SHELL(s);
+
+	if (!trans_tbl) nmg_start_dup(nmg_find_model( (long *)s ));
+
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		if (new_fu) {
+			nmg_dup_loop(lu, new_fu);
+		} else {
+			new_lu = nmg_dup_loop(lu, s);
+			new_fu = nmg_mf(new_lu);
+		}
+	}
+
+	if (fu->f_p->fg_p) {
+		nmg_face_g(new_fu, fu->f_p->fg_p->N);
+	}
+	new_fu->orientation = fu->orientation;
+	new_fu->fumate_p->orientation = fu->fumate_p->orientation;
+	return(new_fu);
+}
+
+nmg_start_dup(m)
+struct model *m;
+{
+	if (trans_tbl)
+		rt_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
+
+	
+	trans_tbl = (long **)rt_calloc(m->maxindex, sizeof(long *),
+			"nmg_dup_face trans_tbl");
+}
+
+nmg_end_dup()
+{
+	rt_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
+	trans_tbl = (long **)NULL;
 }
