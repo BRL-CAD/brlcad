@@ -126,7 +126,7 @@ struct soltab *stp;
 matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 {
 	register struct ell_specific *ell;
-	static double	magsq_a, magsq_b, magsq_c;
+	static fastf_t	magsq_a, magsq_b, magsq_c;
 	static mat_t	R;
 	static mat_t	Rinv;
 	static mat_t	SS;
@@ -134,13 +134,16 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static vect_t	A, B, C;
 	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
 	static vect_t	work;
-	static double	f;
+	static fastf_t	f;
 
+#define SP_V	&sp->s_values[0]
 #define SP_A	&sp->s_values[3]
 #define SP_B	&sp->s_values[6]
 #define SP_C	&sp->s_values[9]
 
-	/* Apply 3x3 rotation portion of mat to A,B,C */
+	/*
+	 * Apply 3x3 rotation mat only to A,B,C
+	 */
 	MAT3XVEC( A, mat, SP_A );
 	MAT3XVEC( B, mat, SP_B );
 	MAT3XVEC( C, mat, SP_C );
@@ -176,8 +179,9 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	GETSTRUCT( ell, ell_specific );
 	stp->st_specific = (int *)ell;
 
-	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==0. */
+	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==1. */
 	VMOVE( work, &sp->s_values[0] );	/* float to fastf_t */
+	work[3] = 1;
 	matXvec( ell->ell_V, mat, work );
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
