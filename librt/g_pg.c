@@ -790,8 +790,9 @@ const struct bu_external	*ep;
 const mat_t			mat;
 const struct db_i		*dbip;
 {
-	bu_log( "Import of polysolids from a version 5 database is not allowed\n" );
-	bu_log( "\tPolysolids should be converted to BOT solids using the rt_pg_to_bot() routine or g4-g5 utility.\n" );
+	bu_log( "As of release 6.0 the polysolid is superceded by the BOT primitive.\n" );
+	bu_log( "\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
+	/* The rt_pg_to_bot() routine can also be used. */
 	return -1;
 }
 
@@ -802,8 +803,9 @@ const struct rt_db_internal	*ip;
 double				local2mm;
 const struct db_i		*dbip;
 {
-	bu_log( "Export of polysolids to a version 5 database is not allowed\n" );
-	bu_log( "\tPolysolids should be converted to BoT solids using the rt_pg_to_bot() routine or g4-g5 utility.\n" );
+	bu_log( "As of release 6.0 the polysolid is superceded by the BOT primitive.\n" );
+	bu_log( "\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n" );
+	/* The rt_pg_to_bot() routine can also be used. */
 	return -1;
 }
 
