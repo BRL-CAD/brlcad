@@ -19,6 +19,10 @@
 #ifndef MACHINE_H
 #define MACHINE_H seen
 
+#ifdef SYSV
+#	define	USE_STRING_H	1	/* use <string.h>, not <strings.h> */
+#endif
+
 /**********************************
  *                                *
  *  Machine specific definitions  *
@@ -115,7 +119,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define DEFAULT_PSW	1
 #define PARALLEL	1
 
-#define USE_STRING_H
 /**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
 #endif
 
