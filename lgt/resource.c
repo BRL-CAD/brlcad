@@ -19,6 +19,8 @@ static char	*all_title[12] = {
 	"malloc",
 	"worker",
 	"stats",
+	"results",
+	"model refinement",
 	"???"
 };
 
@@ -62,33 +64,29 @@ res_pr()
 RES_INIT(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_syscall);
-/*	if(rdebug&RDEBUG_PARALLEL) 
-		(void) fprintf( stderr, "RES_INIT 0%o, i=%d, rt_g=0%o\n", p, i, &rt_g);*/
+	if( !rt_g.rtg_parallel )  return;
 	LOCKASGN(p);
-/*	if(rdebug&RDEBUG_PARALLEL) 
-		(void) fprintf( stderr, "    start value = 0%o\n", *p );*/
 }
+
 RES_ACQUIRE(p)
 register int *p;
 {
 	register int i = p - (&rt_g.res_syscall);
+	if( !rt_g.rtg_parallel )  return;
 	if( i < 0 || i > 12 )  {
-		(void) fprintf( stderr, "RES_ACQUIRE(0%o)? %d?\n", p, i);
+		(void) fprintf( stderr, "RES_ACQUIRE(0%o)? p-0%o=%d?\n",
+				p, &rt_g.res_syscall, i);
 		abort();
 	}
 	lock_tab[i]++;		/* Not interlocked */
-/*	if(rdebug&RDEBUG_PARALLEL) fputc( 'A'+i, stderr );*/
 	LOCKON(p);
-/*	if(rdebug&RDEBUG_PARALLEL) fputc( '0'+i, stderr );*/
 }
+
 RES_RELEASE(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_syscall);
-/*	if(rdebug&RDEBUG_PARALLEL) fputc( 'a'+i, stderr );*/
+	if( !rt_g.rtg_parallel )  return;
 	LOCKOFF(p);
-/*	if(rdebug&RDEBUG_PARALLEL) fputc( '\n', stderr);*/
 }
 #else
 RES_INIT() {}
@@ -113,7 +111,7 @@ register int *p;		/* known to be a5 */
 {
 	register int i;
 	i = p - (&rt_g.res_syscall);
-#ifdef PARALLEL
+
 	asm("loop:");
 	do  {
 		/* Just wasting time anyways, so log it */
@@ -121,7 +119,6 @@ register int *p;		/* known to be a5 */
 	} while( *p );
 	asm("	tas	a5@");
 	asm("	bne	loop");
-#endif
 }
 
 #ifdef never

@@ -146,7 +146,7 @@ _LOCAL_ void		view_pix(), view_bol(), view_eol(), view_end();
 
 void			cons_Vector();
 void			render_Model();
-#if defined( BSD ) || defined( SYSV )
+#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
 int	abort_RT();
 #else
 void	abort_RT();
@@ -167,7 +167,8 @@ RGBpixel	**pp;
 
 /*	r e n d e r _ M o d e l ( )					*/
 void
-render_Model()
+render_Model( frame )
+int	frame;
 	{
 #ifdef alliant
 	register int	d7;	/* known to be in d7 */
@@ -222,7 +223,7 @@ render_Model()
 	ag.a_diverge = 0.0;
 
 	/* Compute light source positions.				*/
-	if( ! setup_Lgts() )
+	if( ! setup_Lgts( frame ) )
 		{
 		(void) signal( SIGINT, norml_sig );
 		return;
@@ -259,12 +260,17 @@ render_Model()
 	fatal_error = FALSE;
 
 	/* Get starting and ending scan line number.			*/
+	if( grid_x_fin >= fb_getwidth( fbiop ) )
+		grid_x_fin = fb_getwidth( fbiop ) - 1;
+	if( grid_y_fin >= fb_getheight( fbiop ) )
+		grid_y_fin = fb_getheight( fbiop ) - 1;
 	curr_scan = grid_y_org;
 	last_scan = grid_y_fin;
 
 	if( tty )
 		{
 		rt_prep_timer();
+		(void) sprintf( FRAME_NO_PTR, "%04d", frame_no );
 		prnt_Event( "Raytracing..." );
 		SCROLL_DL_MOVE();
 		(void) fflush( stdout );
@@ -1476,7 +1482,7 @@ fastf_t	azim, elev;
 	}
 
 /*	a b o r t _ R T ( )						*/
-#if defined( BSD ) || defined( SYSV )
+#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
 int
 #else
 /*ARGSUSED*/

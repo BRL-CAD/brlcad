@@ -170,15 +170,17 @@ prnt_Status()
 	(void) sprintf( scratchbuf, " LGT %s", version );
 	(void) strncpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf, " %s ", ged_file == NULL ? "(null)" : ged_file );
-	(void) strncpy( F_GED_DB_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) strncpy( F_GED_DB_PTR, scratchbuf, Min( strlen( scratchbuf ), 26 ) );
 	(void) sprintf( scratchbuf, " [%04d-", grid_x_org );
 	(void) strncpy( GRID_PIX_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf, "%04d,", grid_x_fin );
 	(void) strncpy( GRID_SIZ_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf, "%04d-", grid_y_org );
 	(void) strncpy( GRID_SCN_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, "%04d] ", grid_y_fin );
+	(void) sprintf( scratchbuf, "%04d:", grid_y_fin );
 	(void) strncpy( GRID_FIN_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, "%04d] ", frame_no );
+	(void) strncpy( FRAME_NO_PTR, scratchbuf, strlen( scratchbuf ) );
 	update_Screen();
 	return;
 	}
@@ -241,12 +243,14 @@ int	*linesp;
 	set_Raw( 0 );
 	clr_Echo( 0 );
 	SetStandout();
-	prnt_Prompt( "-- More -- " );
+	prnt_Prompt( "More ? [n|<return>|<space>] " );
 	ClrStandout();
 	(void) fflush( stdout );
 	switch( hm_getchar() )
 		{
+	case 'Q' :
 	case 'q' :
+	case 'N' :
 	case 'n' :
 		ret = FALSE;
 		break;
@@ -311,13 +315,26 @@ char	*eventstr;
 void
 prnt_Event( s )
 char	*s;
-	{
+	{	static int	lastlen = 0;
+		register int	i;
 	if( ! tty )
 		return;
-	EVENT_MOVE();
-	(void) ClrEOL();
+	EVENT_MOVE();	
 	if( s != NULL )
+		{	register int len = strlen( s );
 		(void) fputs( s, stdout );
+		/* Erase last message. */
+		for( i = len; i < lastlen; i++ )
+			(void) putchar( ' ' );
+		lastlen = len;
+		}
+	else
+		{
+		/* Erase last message. */
+		for( i = 0; i < lastlen; i++ )
+			(void) putchar( ' ' );
+		lastlen = 0;
+		}
 	IDLE_MOVE();
 	(void) fflush( stdout );
 	return;

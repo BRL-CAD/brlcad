@@ -8,13 +8,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) glob.c	2.2
-		Modified: 	1/30/87 at 17:21:54	G S M
-		Retrieved: 	2/4/87 at 08:53:10
-		SCCS archive:	/vld/moss/src/lgt/s.glob.c
-*/
 
 #include <stdio.h>
 #include "machine.h"
@@ -39,7 +32,19 @@ Octree	ir_octree =
 Lgt_Source	lgts[MAX_LGTS];
 
 /* Animation control structure.						*/
-Movie	movie = { 1, 32, FALSE, FALSE, FALSE, NULL };
+Movie	movie =
+	{
+	FALSE,	/* m_fullscreen */
+	TRUE,	/* m_lgts */
+	FALSE,	/* m_over */
+	FALSE,	/* m_keys */
+	1,	/* m_noframes */
+	0,	/* m_curframe */
+	0,	/* m_endframe */
+	-1,	/* m_frame_sz */
+	NULL,	/* m_keys_fp */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	};
 
 /* Globals for line-buffering pixel I/O.				*/
 RGBpixel	bgpixel;		/* Background color.		*/
@@ -57,6 +62,8 @@ char	fb_file[MAX_LN] = { 0 };     /* Raster image output.		*/
 char	ir_file[MAX_LN] = { 0 };     /* IR input data.			*/
 
 /* Global buffers and pointers.						*/
+char	input_ln[BUFSIZ];
+char	prompt[MAX_LN];
 char	version[] = "$Revision$";
 char	title[TITLE_LEN];
 char	timer[TIMER_LEN];
@@ -95,8 +102,9 @@ fastf_t grid_roll = 0.0;
 fastf_t	bg_coefs[3];		/* Background RGB coefficients.		*/
 fastf_t	rel_perspective = 0.25;	/* Manual perspective adjustment.	*/
 fastf_t	sample_sz;		/* Over-sampling ratio (aperture^2).	*/
-fastf_t	view2model[16];		/* 4x4 matrix for GED saved view.	*/
-fastf_t	view_size;		/* Absolute grid size for GED view.	*/
+fastf_t view_rots[16];		/* Store 4x4 MGED saved view matrix.	*/
+fastf_t	view2model[16];		/* View-to-model matrix from view_rots.	*/
+fastf_t	view_size;		/* Absolute grid size from MGED view.	*/
 fastf_t	cell_sz = 0.0;		/* Cell size of grid in target coords.	*/
 
 int	anti_aliasing = FALSE;	/* Anti-aliasing thru over-sampling.	*/
@@ -120,6 +128,7 @@ int	ir_offset = FALSE;	/* Has user specified auto mapping.	*/
 int	ir_mapx, ir_mapy;	/* Auto mapping offsets for above.	*/
 int	ir_mapping = IR_OFF;	/* IR mapping.				*/
 int	fb_mapping = FALSE;	/* Frame buffer image texture mapping.	*/
+int	frame_no = 0;		/* Current frame being processed.	*/
 int	icon_mapping = FALSE;	/* Icon texture mapping.		*/
 int	user_interrupt = FALSE;	/* User-level interrupt of raytrace.	*/
 int	fatal_error = FALSE;	/* Fatal error, must abort raytrace.	*/
@@ -136,6 +145,8 @@ int	grid_y_org = 0;	/* Grid y position to begin ray-tracing.	*/
 int	grid_y_fin = 32;/* Grid y position to end ray-tracing.		*/
 int	query_region = FALSE;	/* If (true) spit out region info.	*/
 int	report_overlaps = TRUE;	/* If (false) shut-up about overlaps.	*/
+int	sgi_console = FALSE;	/* Logged in to IRIS console.		*/
+int	sgi_usemouse = FALSE;	/* User wants to use the IRIS mouse.	*/
 int	x_fb_origin = 0;/* Display origin left-most pixel to display.	*/
 int	y_fb_origin = 0;/* Display origin top-most pixel to display.	*/
 int	li;		/* Number of lines in window.			*/

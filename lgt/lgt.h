@@ -4,6 +4,8 @@
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
+
+	$Header$ (BRL)
 */
 #ifndef INCL_LGT
 #define INCL_LGT
@@ -89,13 +91,18 @@ typedef struct
 Lgt_Source;
 #define LGT_NULL	(Lgt_Source *) NULL
 
+typedef int	bool;
+
 typedef struct
 	{
+	bool	m_fullscreen;
+	bool	m_lgts;
+	bool	m_over;
+	bool	m_keys;
 	int	m_noframes;
+	int	m_curframe;
+	int	m_endframe;
 	int	m_frame_sz;
-	int	m_lgts_bool;
-	int	m_over_bool;
-	int	m_keys_bool;
 	FILE	*m_keys_fp;
 	fastf_t	m_azim_beg;
 	fastf_t m_azim_end;

@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 int	ready_Output_Device();
 void	close_Output_Device();
-#if defined( BSD ) || defined( SYSV )
+#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
 _LOCAL_ int	intr_sig();
 int		(*norml_sig)(), (*abort_sig)();
 extern int	stop_sig();
@@ -46,6 +46,17 @@ extern void	stop_sig();
 _LOCAL_ void	init_Lgts();
 void		exit_Neatly();
 
+_LOCAL_ int
+substr( str, pattern )
+char	*str, *pattern;
+	{
+	if( *str == '\0' )
+		return	FALSE;
+	if( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
+		return	substr( str+1, pattern );
+	return	TRUE;
+	}
+
 /*	m a i n ( )							*/
 main( argc, argv )
 char	*argv[];
@@ -55,9 +66,19 @@ char	*argv[];
 #endif
 	beginptr = sbrk(0);
 
+#ifdef PARALLEL
+#ifndef alliant
+	if( npsw > 1 )
+		rt_g.rtg_parallel = 1;
+	else
+		rt_g.rtg_parallel = 0;
+#endif
 	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
+#endif
+
 #if 0
 	nicem( C_PROC, 0, NICENESS );
 	rt_log( "Program niced to %d.\n", NICENESS );
@@ -78,8 +99,18 @@ char	*argv[];
 		}
 
 #ifdef sgi
-	if( ismex() & tty )
-		sgi_Init_Popup_Menu();
+	if( ismex() && tty )
+		{
+		sgi_console = substr( getenv( "TERM" ), "iris" );
+		(void) sprintf( prompt,
+				"Do you want to use the mouse ? [y|n](%c) ",
+				sgi_usemouse ? 'y' : 'n'
+				);
+		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+			sgi_usemouse = input_ln[0] != 'n';
+		if( sgi_usemouse )			
+			sgi_Init_Popup_Menu();
+		}
 #endif
 	for( i = 0; i < NSIG; i++ )
 		switch( i )
@@ -133,25 +164,27 @@ tty_sig:
 int
 interpolate_Frame( frame )
 int	frame;
-	{	register int	frames_across;
-		register int	size;
-		fastf_t		rel_frame = (fastf_t) frame / movie.m_noframes;
+	{	fastf_t	rel_frame = (fastf_t) frame / movie.m_noframes;
 	if( movie.m_noframes == 1 )
-		return	1;
-	size = (int) sqrt( (double) movie.m_noframes + 0.5 ) * movie.m_frame_sz;
-	frames_across = size / movie.m_frame_sz;
-	x_fb_origin = (frame % frames_across) * movie.m_frame_sz;
-	y_fb_origin = (frame / frames_across) * movie.m_frame_sz;
+		return	TRUE;
+	if( ! movie.m_fullscreen )
+		{	register int	frames_across;
+			register int	size;
+		size = (int) sqrt( (double) movie.m_noframes + 0.5 ) * movie.m_frame_sz;
+		frames_across = size / movie.m_frame_sz;
+		x_fb_origin = (frame % frames_across) * movie.m_frame_sz;
+		y_fb_origin = (frame / frames_across) * movie.m_frame_sz;
+		}
 	rt_log( "Frame %d:\n", frame );
-	if( movie.m_keys_bool )
-		return	key_Frame() == -1 ? 0 : 1;
+	if( movie.m_keys )
+		return	key_Frame() == -1 ? FALSE : TRUE;
 	lgts[0].azim = movie.m_azim_beg +
 				rel_frame * (movie.m_azim_end - movie.m_azim_beg);
 	lgts[0].elev = movie.m_elev_beg +
 				rel_frame * (movie.m_elev_end - movie.m_elev_beg);
 	grid_roll = movie.m_roll_beg +
 				rel_frame * (movie.m_roll_end - movie.m_roll_beg);
-	if( movie.m_over_bool )
+	if( movie.m_over )
 		{
 		lgts[0].over = TRUE;
 		lgts[0].dist = movie.m_dist_beg +
@@ -169,14 +202,14 @@ int	frame;
 	rt_log( "\tview azimuth\t%g\n", lgts[0].azim*DEGRAD );
 	rt_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
 	rt_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
-	if( movie.m_over_bool )
+	if( movie.m_over )
 		{
 		rt_log( "\teye distance\t%g\n", lgts[0].dist );
 		rt_log( "\tgrid distance\t%g\n", grid_dist );
 		}
 	else
 		rt_log( "\tperspective\t%g\n", rel_perspective );
-	return	1;
+	return	TRUE;
 	}
 
 /*	e x i t _ N e a t l y ( )					*/
@@ -184,21 +217,29 @@ void
 exit_Neatly( status )
 int	status;
 	{
-	if( tty )
-		prnt_Event( "Quitting...\n" );
+	prnt_Event( "Quitting...\n" );
 	exit( status );
 	}
 
 /*	r e a d y _ O u t p u t _ D e v i c e ( )			*/
 int
-ready_Output_Device()
+ready_Output_Device( frame )
+int	frame;
 	{	int	size =
 		(int) sqrt( (double) movie.m_noframes + 0.5 ) * grid_sz;
-	if( tty )
-		prnt_Event( "Opening device..." );
-	if( ! fb_Setup( fb_file, size ) )
-		return	0;
-	fb_Zoom_Window();
+	if( movie.m_noframes > 1 && movie.m_fullscreen )
+		{	char	frame_file[MAX_LN];
+		/* We must be doing full-screen frames. */
+		(void) sprintf( frame_file, "%s.%04d", fb_file, frame );
+		if( ! fb_Setup( frame_file, grid_sz ) )
+			return	0;
+		}
+	else
+		{
+		if( ! fb_Setup( fb_file, size ) )
+			return	0;
+		fb_Zoom_Window();
+		}
 	return	1;
 	}
 
@@ -211,7 +252,7 @@ close_Output_Device()
 	return;
 	}
 
-#if defined( BSD ) || defined( SYSV )
+#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
 _LOCAL_ int
 #else
 _LOCAL_ void

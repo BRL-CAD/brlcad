@@ -21,7 +21,11 @@ static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #endif
 
 #include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#else
 #include <string.h>
+#endif
 #include "./hmenu.h"
 extern char	*malloc();
 extern int	LI, CO;
@@ -68,39 +72,6 @@ extern int	LI, CO;
 int		hm_dirty = 0;
 static HWindow	*windows = 0;
 
-_LOCAL_ int
-get_Args( args, prompt, x, y )
-char	*args[], *prompt;
-int	x, y;
-	{	static char	inbuf[MAXLINE];
-		register int	i;
-	if( prompt == NULL )
-		{
-		args[0] = NULL;
-		args[1] = NULL;
-		return	1;
-		}
-	args[0] = "#";
-	MvCursor( x, y );
-	(void) printf( "%s: ", prompt );
-	(void) fflush( stdout );
-	if(	fgets( inbuf, MAXLINE, stdin ) == NULL
-	    ||	inbuf[0] == '\n'
-		)
-		{
-		MvCursor( x, y );
-		ClrEOL();
-		return	0;
-		}
-	inbuf[strlen(inbuf)-1] = '\0';	/* Clobber new-line. */
-	args[1] = strtok( inbuf, " \t" );
-	for( i = 2; args[i-1] != NULL; ++i )
-		args[i] = strtok( (char *) NULL, " \t," );
-	MvCursor( x, y );
-	ClrEOL();
-	return	1;
-	}
-
 #define ENTRY	(itemp-win->menup->item)
 typedef struct nmllist HMllist;
 struct nmllist
@@ -117,7 +88,6 @@ HMitem	*itemp;
 		return;
 	(void) fprintf( stderr, "text=\"%s\"\n", itemp->text );
 	(void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
-	(void) fprintf( stderr, "prompt=\"%s\"\n", itemp->prompt == NULL ? "(null)" : itemp->prompt );
 	(void) fprintf( stderr, "next=0x%x\n", (int) itemp->next );
 #ifndef sgi
 	(void) fprintf( stderr, "dfn=0x%x\n", (int) itemp->dfn );
@@ -148,8 +118,6 @@ HMitem	*itemp;
 		free( citemp->text );
 		if( citemp->help != NULL )
 			free( citemp->help );
-		if( citemp->prompt != NULL )
-			free( citemp->prompt );
 		}
 	free( (char *) itemp );
 	return;
@@ -478,13 +446,6 @@ int	menux, menuy;
 				}
 			else
 				itemp->help = NULL;
-			if( gitemp->prompt != NULL )
-				{
-				Alloc( itemp->prompt, char, strlen( gitemp->prompt ) + 1 );
-				(void) strcpy( itemp->prompt, gitemp->prompt );
-				}
-			else
-				itemp->prompt = NULL;
 			itemp->next = gitemp->next;
 			itemp->dfn = gitemp->dfn;
 			itemp->bfn = gitemp->bfn;
@@ -532,13 +493,10 @@ int	menux, menuy;
 
 	/* Determine origin (top-left corner) of menu.			*/
 	if( win->next != (HWindow *) 0 )
-		{	register int	max_prompt = 0;
+		{
 		win->menux = win->next->menux + win->next->width + 2;
 		win->menuy = win->next->menuy;
-		for( itemp = menup->item; itemp->text != NULL; itemp++ )
-			if( itemp->prompt != NULL )
-				max_prompt = MAX_PROMPT;
-		if( win->menux + win->width + 2 + max_prompt > CO )
+		if( win->menux + win->width + 2 > CO )
 			{ /* Wrap-around screen. */
 			win->menux = menux += 2;
 			win->menuy = menuy += 2;
@@ -631,8 +589,7 @@ int	menux, menuy;
 					{	static char	*locargv[MAXARGS];
 					reset_Tty( 0 );
 					hmlevel = 0;
-					if( get_Args( locargv, itemp->prompt, win->menux+win->width+2, win->menuy+ENTRY+1 ) )
-						retitemp->data = (*itemp->hfn)( itemp, locargv );
+					retitemp->data = (*itemp->hfn)( itemp, (char **) NULL );
 					hmlevel = level;
 					set_Cbreak( 0 );
 					clr_Echo( 0 );

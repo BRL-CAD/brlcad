@@ -16,10 +16,120 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "./lgt.h"
 #include "./vecmath.h"
 #undef RED
 #include "./extern.h"
+
+#define WINBORDER	4  /* Thickness of window border. */
+#define WINBANNER	16 /* Thickness of window title bar. */
+#define MAXSTRS		6
+#define CHARHGT		WINBANNER
+#define PUPWID		(375+WINBORDER*2)
+#define PUPHGT		(WINBANNER*MAXSTRS+WINBORDER*2)
+static char	**pupstr;
+static char	*menupupstr[] =
+			{
+			"Pop-up menus are available in this or the",
+			"frame buffer window by holding down the",
+			"right mouse button.",
+			(char *) NULL
+			};
+static char	*sweepupstr[] =
+			{
+			"Hold down the middle button to sweep",
+			"a rectangle.",
+			"Click the right mouse button to quit.",
+			(char *) NULL
+			};
+static char	*tagpupstr[] =
+			{
+			"Click the middle mouse button to tag",
+			"the screen position under the cursor.",
+			"Click the right mouse button to quit.",
+			(char *) NULL
+			};
+static char	*winpupstr[] =
+			{
+			"Hold down the middle button to adjust",
+			"the window frame.",
+			"Click the right mouse button to quit.",
+			(char *) NULL
+			};
+
+_LOCAL_ void
+sgi_Rect( x0, y0, x1, y1 )
+int	x0, y0, x1, y1;
+	{
+#ifndef mips
+	cursoff();
+#endif
+	recti( (Icoord) x0, (Icoord) y0, (Icoord) x1, (Icoord) y1 );
+#ifndef mips
+	curson();
+#endif
+	return;
+	}
+
+_LOCAL_ void
+sgi_OL_Transparent()
+	{
+#ifdef mips
+	color( 0 );
+#else
+	pupcolor( PUP_CLEAR );
+#endif
+	return;
+	}
+
+_LOCAL_ void
+sgi_OL_Opaque()
+	{
+#ifdef mips
+	color( 1 );
+#else
+	pupcolor( PUP_WHITE );
+#endif
+	return;
+	}
+
+_LOCAL_ void
+sgi_OL_Start()
+	{
+#ifdef mips
+	drawmode( OVERDRAW );
+#else
+	pupmode();
+#endif
+	return;
+	}
+
+_LOCAL_ void
+sgi_OL_End()
+	{
+#ifdef mips
+	drawmode( NORMALDRAW );
+#else
+	endpupmode();
+#endif
+	return;
+	}
+
+_LOCAL_ void
+sgi_OL_Erase()
+	{
+#ifndef mips
+	cursoff();
+#endif
+	sgi_OL_Transparent();
+	clear();
+#ifndef mips
+	curson();
+#endif
+	return;
+	}
+
 extern char	*get_Input();
 extern void	sgi_Pt_Select();
 long		main_menu;
@@ -32,11 +142,413 @@ long		grid_size_menu;
 long		lgts_edit_menu;
 long		lgts_prnt_menu;
 long		mat_index_menu;
+long		mat_pindex_menu;
+long		mat_eindex_menu;
+long		max_ray_menu;
 long		movie_fps_menu;
 long		two_digit_menu;
 static long	popup_gid = -1;
 
+void		sgi_Animate();
 _LOCAL_ void	sgi_Read_Keyboard();
+
+_LOCAL_ int
+mips_Animate( fps )
+int	fps;
+	{
+	sgi_Animate( fps < 0 ? 1 : (fps > 64 ? 64 : fps) );
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_IR_Flags( flag )
+int	flag;
+	{
+	set_IRmapping( flag );
+	note_IRmapping();
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_IR_Paint( flag )
+int	flag;
+	{
+	ir_doing_paint = flag;
+	if( ir_doing_paint )
+		{	char	input_ln[MAX_LN];
+		get_Input( input_ln, MAX_LN, "Enter temperature : " );
+		if( sscanf( input_ln, "%d", &ir_paint ) != 1 )
+			ir_doing_paint = FALSE;
+		}
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_Mat_Print( flag )
+int	flag;
+	{
+	if( flag != -1 )
+		(void) mat_Print_Db( flag );
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_Max_Ray( flag )
+int	flag;
+	{
+	if( ir_mapping )
+		rt_log( "Multiple bounces disallowed during IR mapping.\n" );
+	else
+		max_bounce = flag;	
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_Mat_Edit( flag )
+int	flag;
+	{
+	(void) mat_Edit_Db_Entry( flag );
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_Lgt_Print( flag )
+int	flag;
+	{
+	(void) lgt_Print_Db( flag );
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_Lgt_Edit( flag )
+int	flag;
+	{
+	(void) lgt_Edit_Db_Entry( flag );
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_Buffering( flag )
+int	flag;
+	{
+	pix_buffered = flag;
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_Debugging( flag )
+int	flag;
+	{
+	if( flag > 0 )
+		rt_g.debug |= flag;
+	else
+	if( flag == 0 )
+		rt_g.debug = 0;
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ int
+mips_Size_Grid( size )
+int	size;
+	{
+	grid_sz = size;
+	set_Size_Grid( grid_sz );	
+	return	'#'; /* For backward compatibility with SGI menu interface. */
+	}
+
+_LOCAL_ void
+sgi_Pup_Strs()
+	{	register int	i, ypos = PUPHGT-WINBANNER-WINBORDER;
+		long	gid = winget();
+	winset( popup_gid );
+	color( CYAN );
+	clear();
+	color( BLACK );
+	for( i = 0; i < MAXSTRS && pupstr[i] != NULL; i++, ypos -= CHARHGT )
+		{
+		cmov2i( 10, ypos );
+		charstr( pupstr[i] );
+		}
+	winset( gid );
+	}
+
+_LOCAL_ void
+sgi_Pup_Redraw()
+	{	long	gid = winget();
+	winset( popup_gid );
+	reshapeviewport();
+	sgi_Pup_Strs();
+	winset( gid );
+	return;
+	}
+
+_LOCAL_ int
+sgi_Tag_Pixel( origin, x, y, x0, y0 )
+int	origin, x, y, x0, y0;
+	{	short	val;
+		long	xwin, ywin;
+		int	flag = tracking_cursor;
+	tracking_cursor = FALSE; /* Disable tracking cursor.		*/
+	qdevice( MOUSEX );
+	qdevice( MOUSEY );
+	qdevice( MIDDLEMOUSE );
+	getorigin( &xwin, &ywin );
+	(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
+	(void) fb_cursor( fbiop, 1, x, y );
+	pupstr = tagpupstr;
+	sgi_Pup_Strs();
+	for( ; ; )
+		{
+		if( ! qtest() )
+			continue;
+		switch( qread( &val ) )
+			{
+		case MENUBUTTON :
+			/* Wait for user to let go.			*/
+			for( ; ! qtest() || qread( &val ) != MENUBUTTON; )
+				;
+			unqdevice( MOUSEX );
+			unqdevice( MOUSEY );
+			unqdevice( MIDDLEMOUSE );
+			qreset();
+			tracking_cursor = flag;
+			return	1;
+		case MIDDLEMOUSE :
+			/* Wait for user to let go.			*/
+			for( ; ! qtest() || qread( &val ) != MIDDLEMOUSE; )
+				;
+			sgi_Pt_Select( x, y, &x0, &y0, &origin );
+			sgi_Pt_Select( x, y, &x0, &y0, &origin );
+			user_interrupt = FALSE;
+			render_Model( 0 );
+			prnt_Event( (char *) NULL );
+			qreset();
+			break;
+		case MOUSEX :
+			x = val;
+			break;
+		case MOUSEY :
+			y = val;
+			break;
+		case KEYBD :
+			qenter( KEYBD, val );
+			unqdevice( MOUSEX );
+			unqdevice( MOUSEY );
+			unqdevice( MIDDLEMOUSE );
+			tracking_cursor = flag;
+			return	0;
+		case REDRAW :
+			sgi_Pup_Redraw();
+		case INPUTCHANGE :
+			break;
+			}
+		}
+	}
+
+_LOCAL_ int
+sgi_Sweep_Rect( origin, x, y, x0, y0 )
+int	origin, x, y, x0, y0;
+	{	short	val;
+		long	xwin, ywin;
+	getorigin( &xwin, &ywin );
+	qdevice( MOUSEX );
+	qdevice( MOUSEY );
+	qdevice( MIDDLEMOUSE );
+#ifdef mips
+	overlay( 2 );
+	gconfig();
+#endif
+	(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
+	(void) fb_cursor( fbiop, 1, x, y );
+	pupstr = sweepupstr;
+	sgi_Pup_Strs();
+	sgi_OL_Start();
+	for( ; ; )
+		{
+		if( ! qtest() )
+			continue;
+		switch( qread( &val ) )
+			{
+		case MENUBUTTON :
+			/* Wait for user to let go.	*/
+			for(	;
+			      !	qtest()
+			    ||	qread( &val ) != MENUBUTTON;
+				)
+				;
+			sgi_OL_End();
+			unqdevice( MOUSEX );
+			unqdevice( MOUSEY );
+			unqdevice( MIDDLEMOUSE );
+			qreset();
+			return	1;
+		case MIDDLEMOUSE :
+			sgi_Pt_Select( x, y, &x0, &y0, &origin );
+			if( origin )
+				/* Done sweeping.	*/
+				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
+			else
+				{ /* Sweeping a rectangle.*/
+				sgi_OL_Erase();
+				(void) fb_setcursor( fbiop, sweeportrack, 16, 16, 0, 15 );
+				}
+			break;
+		case MOUSEX :
+			if( ! origin )
+				{
+				sgi_OL_Erase();
+				x = val;
+				sgi_OL_Opaque();
+				sgi_Rect( x0-xwin, y0-ywin, x-xwin, y-ywin );
+				}
+			else
+				x = val;
+			break;
+		case MOUSEY :
+			if( ! origin )
+				{
+				sgi_OL_Erase();
+				y = val;
+				sgi_OL_Opaque();
+				sgi_Rect( x0-xwin, y0-ywin, x-xwin, y-ywin );
+				}
+			else
+				y = val;
+			break;
+		case KEYBD :
+			sgi_OL_End();
+			qenter( KEYBD, val );
+			unqdevice( MOUSEX );
+			unqdevice( MOUSEY );
+			unqdevice( MIDDLEMOUSE );
+			return	0;
+		case REDRAW :
+			sgi_Pup_Redraw();
+		case INPUTCHANGE :
+			break;
+			}
+		}
+	}
+
+_LOCAL_ int
+sgi_Window_In( origin, x, y, x0, y0, out_flag )
+int	origin, x, y, x0, y0, out_flag;
+	{	short		val;
+		register long	dx = 0, dy = 0, dw = 0;
+		double		relscale;
+		double		x_translate, y_translate;
+		long		xwin, ywin;
+	getorigin( &xwin, &ywin );
+	qdevice( MOUSEX );
+	qdevice( MOUSEY );
+	qdevice( MIDDLEMOUSE );
+#ifdef mips
+	overlay( 2 );
+	gconfig();
+#endif
+	(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
+	(void) fb_cursor( fbiop, 1, x, y );
+	pupstr = winpupstr;
+	sgi_Pup_Strs();
+	sgi_OL_Start();
+	for( ; ; )
+		{
+		if( ! qtest() )
+			continue;
+		switch( qread( &val ) )
+			{
+		case MENUBUTTON :
+			/* Wait for user to let go.	*/
+			for(	;
+			      !	qtest()
+			    ||	qread( &val ) != MENUBUTTON;
+				)
+				;
+#define Pixel2Grid(x_) ((x_)/((double)fbiop->if_width/grid_sz))
+#define Grid2Model(x_) ((x_)*cell_sz)
+			relscale = Pixel2Grid( dw*2.0 )/ (double)(grid_sz);
+			if( out_flag )
+				relscale = 1.0 / relscale;
+			x_translate = (x0-xwin) - (fbiop->if_width/2);
+			x_translate = Pixel2Grid( x_translate );
+			x_translate = Grid2Model( x_translate );
+			y_translate = (y0-ywin) - (fbiop->if_height/2);
+			y_translate = Pixel2Grid( y_translate );
+			y_translate = Grid2Model( y_translate );
+			if( out_flag )
+				{
+				x_grid_offset -= x_translate;
+				y_grid_offset -= y_translate;
+				}
+			else
+				{
+				x_grid_offset += x_translate;
+				y_grid_offset += y_translate;
+				}
+			grid_scale *= relscale;	/* Scale down grid.	*/
+			sgi_OL_Erase();
+			sgi_OL_End();
+			unqdevice( MOUSEX );
+			unqdevice( MOUSEY );
+			unqdevice( MIDDLEMOUSE );
+			qreset();
+			return	1;
+		case MIDDLEMOUSE :
+			Toggle( origin );
+			if( origin )
+				{ /* Done framing window.	*/
+				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
+				}
+			else
+				{ /* Framing a window.		*/
+				x0 = x;
+				y0 = y;
+				sgi_OL_Erase();
+				(void) fb_setcursor( fbiop, sweeportrack, 16, 16, 0, 16 );
+				}
+			break;
+		case MOUSEX :
+			if( ! origin )
+				{
+				sgi_OL_Erase();
+				x = val;
+				dx = x - x0;
+				dx = Abs( dx );
+				dw = Max( dx, dy );
+				sgi_OL_Opaque();
+				sgi_Rect( x0+dw-xwin, y0+dw-ywin, x0-dw-xwin, y0-dw-ywin );
+				}
+			else
+				x = val;
+			break;
+		case MOUSEY :
+			if( ! origin )
+				{
+				sgi_OL_Erase();
+				y = val;
+				dy = y - y0;
+				dy = Abs( dy );
+				dw = Max( dx, dy );
+				sgi_OL_Opaque();
+				sgi_Rect( x0+dw-xwin, y0+dw-ywin, x0-dw-xwin, y0-dw-ywin );
+				}
+			else
+				y = val;
+			break;
+		case KEYBD :
+			sgi_OL_End();
+			qenter( KEYBD, val );
+			unqdevice( MOUSEX );
+			unqdevice( MOUSEY );
+			unqdevice( MIDDLEMOUSE );
+			return	0;
+		case REDRAW :
+			sgi_Pup_Redraw();
+		case INPUTCHANGE :
+			break;
+			}
+		}
+	}
 
 int
 sgi_User_Input( args )
@@ -76,12 +588,120 @@ char	**args;
 			case INPUTCHANGE :
 				break;
 			case REDRAW :
+				sgi_Pup_Redraw();
 				break;
 			default :
 				fb_log( "dev=%d val=%d\n", (int) dev, (int) val );
 				break;
 				}
 			prnt_Status();
+			}
+		}
+	}
+
+int
+sgi_Cursor_Input( x, y, mxp, myp, xx0, yy0, origin )
+register int	x, y, *mxp, *myp;
+int	xx0, yy0;
+int	origin;
+	{
+	winset( (long) fbiop->if_fd );
+	(void) winattach();
+	for( ; ; )
+		{
+		(void) fb_setcursor( fbiop, menucursor, 16, 16, 0, 0 );
+		if( qtest() )
+			{	short	val;
+				long	dev = qread( &val );
+				int	ret;
+			switch( dev )
+				{
+			case MENUBUTTON :
+				(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
+				switch( dopup( cursorect_menu ) )
+					{
+				case C_TAGPIXEL : /* Tag pixel. */
+					*mxp = XSCR2MEM( x );
+					*myp = YSCR2MEM( y );
+					if( sgi_Tag_Pixel( origin, *mxp, *myp, xx0, yy0 ) )
+						goto	hit_menubutton;
+					else
+						ret = 2;
+					break;
+				case C_SWEEPREC : /* Sweep rectangle. */
+					*mxp = XSCR2MEM( x );
+					*myp = YSCR2MEM( y );
+					if( sgi_Sweep_Rect( origin, *mxp, *myp, xx0, yy0 ) )
+						goto	hit_menubutton;
+					else
+						ret = 2;
+					break;
+				case C_I_WINDOW : /* Window in. */
+					*mxp = XSCR2MEM( x );
+					*myp = YSCR2MEM( y );
+					if( rel_perspective > 0.0 )
+						{
+						prnt_Scroll( "Windowing does not yet work WITH perspective.\n" );
+						prnt_Scroll( "Set perspective to zero or negative.\n" );
+						}
+					else
+					if( sgi_Window_In( origin, *mxp, *myp, xx0, yy0, 0 ) )
+						goto	hit_menubutton;
+					else
+						ret = 2;
+					break;
+				case C_O_WINDOW : /* Window out. */
+					*mxp = XSCR2MEM( x );
+					*myp = YSCR2MEM( y );
+					if( rel_perspective > 0.0 )
+						{
+						prnt_Scroll( "Windowing does not yet work WITH perspective.\n" );
+						prnt_Scroll( "Set perspective to zero or negative.\n" );
+						}
+					else
+					if( sgi_Window_In( origin, *mxp, *myp, xx0, yy0, 1 ) )
+						goto	hit_menubutton;
+					else
+						ret = 2;
+					break;
+				case C_QUERYREG : /* Query region. */
+					*mxp = XSCR2MEM( x );
+					*myp = YSCR2MEM( y );
+					Toggle( query_region );
+					if( sgi_Tag_Pixel( origin, *mxp, *myp, xx0, yy0 ) )
+						goto	hit_menubutton;
+					else
+						ret = 2;
+					break;
+				default :
+				hit_menubutton :
+					ret = 3;
+					break;
+					}
+				pupstr = menupupstr;
+				sgi_Pup_Strs();
+				qreset();
+				(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
+				(void) fb_cursor( fbiop, 1, grid_sz/2, grid_sz/2 );
+				return	ret;
+			case MOUSEX :
+				fb_log( "Mouse x = %d\n", (int) val );
+				break;
+			case MOUSEY :
+				fb_log( "Mouse y = %d\n", (int) val );
+				break;
+			case KEYBD :
+				qenter( KEYBD, val );
+				return	2;
+			case INPUTCHANGE :
+				break;
+			case REDRAW :
+				sgi_Pup_Redraw();
+				break;
+			default :
+				fb_log( "dev=%d val=%d\n", (int) dev, (int) val );
+				break;
+				}
 			}
 		}
 	}
@@ -124,9 +744,7 @@ sgi_Init_Popup_Menu()
 		long	seventies_menu;
 		long	eighties_menu;
 		long	nineties_menu;
-#define MARGIN	4
-#define PUPSZ	(140+MARGIN)
-	prefposition( 1024-PUPSZ, 1023-MARGIN, 768-PUPSZ, 768-MARGIN-20 );
+	prefsize( PUPWID, PUPHGT );
 	foreground();
 	if( (popup_gid = winopen( "pop up menus" )) == -1 )
 		{
@@ -135,18 +753,11 @@ sgi_Init_Popup_Menu()
 		}
 	wintitle( "pop up menus" );
 	winconstraints(); /* Free window of constraints.		*/
+	singlebuffer();
+	pupstr = menupupstr;
+	sgi_Pup_Strs();
 	winattach();
-	buffering_menu = defpup( "buffering %t|unbuffered %x0|paged buffering %x1|scan line buffered%x2" );
 	cursorect_menu = defpup( "cursor input %t|tag pixel %x0|sweep rectangle %x1|window in %x2|window out %x3|query region %x4" );
-	debugging_menu = defpup( "debugging %t|reset all flags %x0|all rays %x1|shoot %x2|db %x16|solids %x32|regions %x64|arb8 %x128|spline %x256|roots %x4096|partitioning %x8192|cut %x16384|boxing %x32768|memory allocation %x65536|testing %x131072|fdiff %x262144|RGB %x524288|refraction %x1048576|normals %x2097152|shadows %x4194304|cell size %x8388608|octree %x16777216" );
-	irpaint_menu = defpup( "temperature painting from cursor module %t|ON %x1|OFF %x0" );
-	irflags_menu = defpup( "infrared module flags %t|read only %x1|edit %x2|octree rendering %x4|reset all flags %x0" );
-	grid_cntl_menu = defpup( "gridding parameters %t|resolution %x71|distance to model centroid %x102|perspective %x112|roll %x97|field of view %x103|image translation %x68|grid translation %x116|over sampling factor %x65|key frame input %x106|movie setup %x74|animate %x70" );
-	grid_size_menu = defpup( "resolution %t|16-by-16 %x16|32-by-32 %x32|64-by-64 %x64|128-by-128 %x128|256-by-256 %x256|512-by-512 %x512|1024-by-1024 %x1024" );
-	file_name_menu = defpup( "files %t|frame buffer %x111|error/debug log %x79|write script %x83|save image %x72|read image %x104|texture map %x84" );
-	light_src_menu = defpup( "light sources %t|print entry %x108|modify entry %x76|read database %x118|write database %x86" );
-	lgts_edit_menu = defpup( "light index %t|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
-	lgts_prnt_menu = defpup( "light index %t|all %x-1|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
 	one_digit_menu = defpup( "0..9 %t|0 %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
 	tens_menu =      defpup( "10..19 %t|10 %x10|11 %x11|12 %x12|13 %x13|14 %x14|15 %x15|16 %x16|17 %x17|18 %x18|19 %x19" );
 	twenties_menu =  defpup( "20..29 %t|20 %x20|21 %x21|22 %x22|23 %x23|24 %x24|25 %x25|26 %x26|27 %x27|28 %x28|29 %x29" );
@@ -158,6 +769,86 @@ sgi_Init_Popup_Menu()
 	seventies_menu = defpup( "70..79 %t|70 %x70|71 %x71|72 %x72|73 %x73|74 %x74|75 %x75|76 %x76|77 %x77|78 %x78|79 %x79" );
 	eighties_menu =  defpup( "80..89 %t|80 %x80|81 %x81|82 %x82|83 %x83|84 %x84|85 %x85|86 %x86|87 %x87|88 %x88|89 %x89" );
 	nineties_menu =  defpup( "90..99 %t|90 %x90|91 %x91|92 %x92|93 %x93|94 %x94|95 %x95|96 %x96|97 %x97|98 %x98|99 %x99" );
+#ifdef mips
+	movie_fps_menu = defpup( "fps %t %F|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..64 %m %x-1",
+				mips_Animate,
+				one_digit_menu,
+				tens_menu,
+				twenties_menu,
+				thirties_menu,
+				forties_menu,
+				fifties_menu,
+				sixties_partial_menu
+				);
+	irflags_menu = defpup( "infrared module flags %t %F|read only %x1|edit %x2|octree rendering %x4|reset all flags %x0", mips_IR_Flags );
+	irpaint_menu = defpup( "temperature painting from cursor module %t %F|ON %x1|OFF %x0", mips_IR_Paint );
+	debugging_menu = defpup( "debugging %t %F|reset all flags %x0|all rays %x1|shoot %x2|db %x16|solids %x32|regions %x64|arb8 %x128|spline %x256|roots %x4096|partitioning %x8192|cut %x16384|boxing %x32768|memory allocation %x65536|testing %x131072|fdiff %x262144|RGB %x524288|refraction %x1048576|normals %x2097152|shadows %x4194304|cell size %x8388608|octree %x16777216", mips_Debugging );
+	buffering_menu = defpup( "buffering %t %F|unbuffered %x0|paged buffering %x1|scan line buffered%x2", mips_Buffering );
+	grid_size_menu = defpup( "resolution %t %F|16-by-16 %x16|32-by-32 %x32|64-by-64 %x64|128-by-128 %x128|256-by-256 %x256|512-by-512 %x512|1024-by-1024 %x1024", mips_Size_Grid );
+	grid_cntl_menu = defpup( "gridding parameters %t|resolution %m %x71|distance to model centroid %x102|perspective %x112|roll %x97|field of view %x103|image translation %x68|grid translation %x116|anti-aliasing %x65|key-frame input %x106|movie set up %x74", grid_size_menu );
+	lgts_prnt_menu = defpup( "light index %t %F|all %x-1|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9", mips_Lgt_Print );
+	lgts_edit_menu = defpup( "light index %t %F|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9", mips_Lgt_Edit );
+	light_src_menu = defpup( "light sources %t|print entry %m %x108|modify entry %m %x76|read database %x118|write database %x86", lgts_prnt_menu, lgts_edit_menu );
+	mat_eindex_menu = defpup( "0..99 %t %F|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..69 %m %x-1|70..79 %m %x-1|80..89 %m %x-1|90..99 %m %x-1",
+				mips_Mat_Edit,
+				one_digit_menu,
+				tens_menu,
+				twenties_menu,
+				thirties_menu,
+				forties_menu,
+				fifties_menu,
+				sixties_menu,
+				seventies_menu,
+				eighties_menu,
+				nineties_menu
+				);
+	mat_pindex_menu = defpup( "0..99 %t %F|all %x-2|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..69 %m %x-1|70..79 %m %x-1|80..89 %m %x-1|90..99 %m %x-1",
+				mips_Mat_Print,
+				one_digit_menu,
+				tens_menu,
+				twenties_menu,
+				thirties_menu,
+				forties_menu,
+				fifties_menu,
+				sixties_menu,
+				seventies_menu,
+				eighties_menu,
+				nineties_menu
+				);
+	materials_menu = defpup( "material attributes %t|print entry %m %x109|modify entry %m %x77|read database %x119|write database %x87", mat_pindex_menu, mat_eindex_menu );
+	max_ray_menu = defpup( "0..99 %t %F|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..69 %m %x-1|70..79 %m %x-1|80..89 %m %x-1|90..99 %m %x-1",
+				mips_Max_Ray,
+				one_digit_menu,
+				tens_menu,
+				twenties_menu,
+				thirties_menu,
+				forties_menu,
+				fifties_menu,
+				sixties_menu,
+				seventies_menu,
+				eighties_menu,
+				nineties_menu
+				);
+	infrared_menu = defpup( "infrared module %t|set flags %m %x115|read real IR data %x73|read IR data base %x117|write IR data base %x85|disable automatic mapping offsets %x100|specify noise threshold %x105|set temperature %m %x78|assign temperature by region %x81|print temperatures by region %x80|display color assignment legend %x90", irflags_menu, irpaint_menu );
+#else
+	movie_fps_menu = defpup( "fps %t|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..64 %m %x-1",
+				one_digit_menu,
+				tens_menu,
+				twenties_menu,
+				thirties_menu,
+				forties_menu,
+				fifties_menu,
+				sixties_partial_menu
+				);
+	irflags_menu = defpup( "infrared module flags %t|read only %x1|edit %x2|octree rendering %x4|reset all flags %x0" );
+	irpaint_menu = defpup( "temperature painting from cursor module %t|ON %x1|OFF %x0" );
+	debugging_menu = defpup( "debugging %t|reset all flags %x0|all rays %x1|shoot %x2|db %x16|solids %x32|regions %x64|arb8 %x128|spline %x256|roots %x4096|partitioning %x8192|cut %x16384|boxing %x32768|memory allocation %x65536|testing %x131072|fdiff %x262144|RGB %x524288|refraction %x1048576|normals %x2097152|shadows %x4194304|cell size %x8388608|octree %x16777216" );
+	buffering_menu = defpup( "buffering %t|unbuffered %x0|paged buffering %x1|scan line buffered%x2" );
+	grid_size_menu = defpup( "resolution %t|16-by-16 %x16|32-by-32 %x32|64-by-64 %x64|128-by-128 %x128|256-by-256 %x256|512-by-512 %x512|1024-by-1024 %x1024" );
+	grid_cntl_menu = defpup( "gridding parameters %t|resolution %x71|distance to model centroid %x102|perspective %x112|roll %x97|field of view %x103|image translation %x68|grid translation %x116|anti-aliasing %x65|key-frame input %x106|movie set up %x74" );
+	lgts_prnt_menu = defpup( "light index %t|all %x-1|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
+	lgts_edit_menu = defpup( "light index %t|eye (ambient) %x0|1 %x1|2 %x2|3 %x3|4 %x4|5 %x5|6 %x6|7 %x7|8 %x8|9 %x9" );
+	light_src_menu = defpup( "light sources %t|print entry %x108|modify entry %x76|read database %x118|write database %x86" );
 	two_digit_menu = defpup( "0..99 %t|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..69 %m %x-1|70..79 %m %x-1|80..89 %m %x-1|90..99 %m %x-1",
 				one_digit_menu,
 				tens_menu,
@@ -182,22 +873,28 @@ sgi_Init_Popup_Menu()
 				eighties_menu,
 				nineties_menu
 				);
-	movie_fps_menu = defpup( "fps %t|0..9 %m %x-1|10..19 %m %x-1|20..29 %m %x-1|30..39 %m %x-1|40..49 %m %x-1|50..59 %m %x-1|60..64 %m %x-1",
-				one_digit_menu,
-				tens_menu,
-				twenties_menu,
-				thirties_menu,
-				forties_menu,
-				fifties_menu,
-				sixties_partial_menu
-				);
-	infrared_menu = defpup( "infrared module %t|set flags %x115|read real IR data %x73|read IR data base %x117|write IR data base %x85|automatic mapping offsets %x100|specify noise threshold %x105|set temperature %x78|assign temperature by region %x81|print temperatures by region %x80|display color assignment legend %x90" );
-	raytracer_menu = defpup( "raytrace %t|go %x82|submit batch run %x66" );
 	materials_menu = defpup( "material attributes %t|print entry %x109|modify entry %x77|read database %x119|write database %x87" );
+	infrared_menu = defpup( "infrared module %t|set flags %x115|read real IR data %x73|read IR data base %x117|write IR data base %x85|automatic mapping offsets %x100|specify noise threshold %x105|set temperature %x78|assign temperature by region %x81|print temperatures by region %x80|display color assignment legend %x90" );
+#endif
+	file_name_menu = defpup( "files %t|frame buffer %x111|error/debug log %x79|write script %x83|save image %x72|read image %x104|texture map %x84" );
+	raytracer_menu = defpup( "raytrace %t|go %x82|submit batch run %x66" );
 	special_menu = defpup( "special applications %t|infrared modeling %m %x35|hidden-line drawing %x107",
 				infrared_menu
 				);
-	main_menu = defpup( "main menu %t|raytrace %m %x35|gridding parameters %m %x35|buffering %x46|debugging %x101|shell escape %x33|background color %x98|maximum ray bounces %x75|tracking cursor (on/off) %x99|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|special applications %m %x35|quit %x113",
+#ifdef mips
+	main_menu = defpup( "main menu %t|raytrace %m %x35|animate %x70|gridding parameters %m %x35|buffering %m %x46|debugging %m %x101|shell escape %x33|background color %x98|maximum ray bounces %m %x75|tracking cursor (on/off) %x99|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|special applications %m %x35|quit %x113",
+				raytracer_menu,
+				grid_cntl_menu,
+				buffering_menu,
+				debugging_menu,
+				max_ray_menu,
+				light_src_menu,
+				materials_menu,
+				file_name_menu,
+				special_menu
+				);
+#else
+	main_menu = defpup( "main menu %t|raytrace %m %x35|animate %x70|gridding parameters %m %x35|buffering %x46|debugging %x101|shell escape %x33|background color %x98|maximum ray bounces %x75|tracking cursor (on/off) %x99|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|special applications %m %x35|quit %x113",
 				raytracer_menu,
 				grid_cntl_menu,
 				light_src_menu,
@@ -205,315 +902,52 @@ sgi_Init_Popup_Menu()
 				file_name_menu,
 				special_menu
 				);
+#endif
 	qdevice(MENUBUTTON);
 	qdevice(KEYBD);
 	qdevice(INPUTCHANGE);
 	return	1;
 	}
 
-int
-sgi_Sweep_Rect( origin, x, y, x0, y0 )
-int	origin, x, y, x0, y0;
-	{	short	val;
-		long	xwin, ywin;
-	getorigin( &xwin, &ywin );
-	qdevice( MOUSEX );
-	qdevice( MOUSEY );
-	qdevice( MIDDLEMOUSE );
-	(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
-	(void) fb_cursor( fbiop, 1, x, y );
-	for( ; ; )
-		{
-		if( ! qtest() )
-			continue;
-		switch( qread( &val ) )
-			{
-		case MENUBUTTON :
-			/* Wait for user to let go.	*/
-			for(	;
-			      !	qtest()
-			    ||	qread( &val ) != MENUBUTTON;
-				)
-				;
-			unqdevice( MOUSEX );
-			unqdevice( MOUSEY );
-			unqdevice( MIDDLEMOUSE );
-			qreset();
-			(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
-			(void) fb_cursor( fbiop, tracking_cursor, grid_sz/2, grid_sz/2 );
-			return	1;
-		case MIDDLEMOUSE :
-			sgi_Pt_Select( x, y, &x0, &y0, &origin );
-			if( origin )
-				/* Done sweeping.	*/
-				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
-			else
-				{ /* Sweeping a rectangle.*/
-				cursoff();
-				pupmode();
-				pupcolor( PUP_CLEAR );
-				clear();
-				endpupmode();
-				curson();
-				(void) fb_setcursor( fbiop, sweeportrack, 16, 16, 0, 15 );
-				}
-			break;
-		case MOUSEX :
-			if( ! origin )
-				{
-				cursoff();
-				pupmode();
-				pupcolor( PUP_CLEAR );
-				recti( x0-xwin, y0-ywin, x-xwin, y-ywin );
-				x = val;
-				pupcolor( PUP_WHITE );
-				recti( x0-xwin, y0-ywin, x-xwin, y-ywin );
-				endpupmode();
-				curson();
-				}
-			else
-				x = val;
-			break;
-		case MOUSEY :
-			if( ! origin )
-				{
-				cursoff();
-				pupmode();
-				pupcolor( PUP_CLEAR );
-				recti( x0-xwin, y0-ywin, x-xwin, y-ywin );
-				y = val;
-				pupcolor( PUP_WHITE );
-				recti( x0-xwin, y0-ywin, x-xwin, y-ywin );
-				endpupmode();
-				curson();
-				}
-			else
-				y = val;
-			break;
-		case KEYBD :
-			qenter( KEYBD, val );
-			unqdevice( MOUSEX );
-			unqdevice( MOUSEY );
-			unqdevice( MIDDLEMOUSE );
-			return	0;
-		case INPUTCHANGE :
-			break;
-			}
-		}
-	}
-
-
-int
-sgi_Tag_Pixel( origin, x, y, x0, y0 )
-int	origin, x, y, x0, y0;
-	{	short	val;
-		long	xwin, ywin;
-		int	flag = tracking_cursor;
-	tracking_cursor = FALSE; /* Disable tracking cursor.		*/
-	qdevice( MOUSEX );
-	qdevice( MOUSEY );
-	qdevice( MIDDLEMOUSE );
-	getorigin( &xwin, &ywin );
-	(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
-	(void) fb_cursor( fbiop, 1, x, y );
-	for( ; ; )
-		{
-		if( ! qtest() )
-			continue;
-		switch( qread( &val ) )
-			{
-		case MENUBUTTON :
-			/* Wait for user to let go.			*/
-			for( ; ! qtest() || qread( &val ) != MENUBUTTON; )
-				;
-			unqdevice( MOUSEX );
-			unqdevice( MOUSEY );
-			unqdevice( MIDDLEMOUSE );
-			qreset();
-			tracking_cursor = flag;
-			(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
-			(void) fb_cursor( fbiop, tracking_cursor, grid_sz/2, grid_sz/2 );
-			return	1;
-		case MIDDLEMOUSE :
-			/* Wait for user to let go.			*/
-			for( ; ! qtest() || qread( &val ) != MIDDLEMOUSE; )
-				;
-			sgi_Pt_Select( x, y, &x0, &y0, &origin );
-			sgi_Pt_Select( x, y, &x0, &y0, &origin );
-			user_interrupt = FALSE;
-			render_Model();
-			qreset();
-			break;
-		case MOUSEX :
-			x = val;
-			break;
-		case MOUSEY :
-			y = val;
-			break;
-		case KEYBD :
-			qenter( KEYBD, val );
-			unqdevice( MOUSEX );
-			unqdevice( MOUSEY );
-			unqdevice( MIDDLEMOUSE );
-			tracking_cursor = flag;
-			return	0;
-		case INPUTCHANGE :
-			break;
-			}
-		}
-	}
-
-int
-sgi_Window_In( origin, x, y, x0, y0, out_flag )
-int	origin, x, y, x0, y0, out_flag;
-	{	short		val;
-		register int	dx = 0, dy = 0, dw = 0;
-		double		scale;
-		double		x_translate, y_translate;
-		long		xwin, ywin;
-	getorigin( &xwin, &ywin );
-	qdevice( MOUSEX );
-	qdevice( MOUSEY );
-	qdevice( MIDDLEMOUSE );
-	(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
-	(void) fb_cursor( fbiop, 1, x, y );
-	for( ; ; )
-		{
-		if( ! qtest() )
-			continue;
-		switch( qread( &val ) )
-			{
-		case MENUBUTTON :
-			/* Wait for user to let go.	*/
-			for(	;
-			      !	qtest()
-			    ||	qread( &val ) != MENUBUTTON;
-				)
-				;
-#define Pixel2Grid(x_) ((x_)/((double)fbiop->if_width/grid_sz))
-#define Grid2Model(x_) ((x_)*cell_sz)
-			scale = Pixel2Grid( dw*2.0 )/ (double)(grid_sz);
-			if( out_flag )
-				scale = 1.0 / scale;
-			x_translate = (x0-xwin) - (fbiop->if_width/2);
-			x_translate = Pixel2Grid( x_translate );
-			x_translate = Grid2Model( x_translate );
-			y_translate = (y0-ywin) - (fbiop->if_height/2);
-			y_translate = Pixel2Grid( y_translate );
-			y_translate = Grid2Model( y_translate );
-			if( out_flag )
-				{
-				x_grid_offset -= x_translate;
-				y_grid_offset -= y_translate;
-				}
-			else
-				{
-				x_grid_offset += x_translate;
-				y_grid_offset += y_translate;
-				}
-			grid_scale *= scale;	/* Scale down grid.	*/
-			cursoff();
-			pupmode();
-			pupcolor( PUP_CLEAR );
-			clear();
-			endpupmode();
-			curson();
-			unqdevice( MOUSEX );
-			unqdevice( MOUSEY );
-			unqdevice( MIDDLEMOUSE );
-			qreset();
-			(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
-			(void) fb_cursor( fbiop, tracking_cursor, grid_sz/2, grid_sz/2 );
-			return	1;
-		case MIDDLEMOUSE :
-			Toggle( origin );
-			if( origin )
-				{ /* Done framing window.	*/
-				(void) fb_setcursor( fbiop, target1, 16, 16, 8, 8 );
-				}
-			else
-				{ /* Framing a window.		*/
-				x0 = x;
-				y0 = y;
-				cursoff();
-				pupmode();
-				pupcolor( PUP_CLEAR );
-				clear();
-				endpupmode();
-				curson();
-				(void) fb_setcursor( fbiop, sweeportrack, 16, 16, 0, 16 );
-				}
-			break;
-		case MOUSEX :
-			if( ! origin )
-				{
-				cursoff();
-				pupmode();
-				pupcolor( PUP_CLEAR );
-				recti( x0-dw-xwin, y0-dw-ywin, x0+dw-xwin, y0+dw-ywin );
-				x = val;
-				dx = x - x0;
-				dx = Abs( dx );
-				dw = Max( dx, dy );
-				pupcolor( PUP_WHITE );
-				recti( x0-dw-xwin, y0-dw-ywin, x0+dw-xwin, y0+dw-ywin );
-				endpupmode();
-				curson();
-				}
-			else
-				x = val;
-			break;
-		case MOUSEY :
-			if( ! origin )
-				{
-				cursoff();
-				pupmode();
-				pupcolor( PUP_CLEAR );
-				recti( x0-dw-xwin, y0-dw-ywin, x0+dw-xwin, y0+dw-ywin );
-				y = val;
-				dy = y - y0;
-				dy = Abs( dy );
-				dw = Max( dx, dy );
-				pupcolor( PUP_WHITE );
-				recti( x0-dw-xwin, y0-dw-ywin, x0+dw-xwin, y0+dw-ywin );
-				endpupmode();
-				curson();
-				}
-			else
-				y = val;
-			break;
-		case KEYBD :
-			qenter( KEYBD, val );
-			unqdevice( MOUSEX );
-			unqdevice( MOUSEY );
-			unqdevice( MIDDLEMOUSE );
-			return	0;
-		case INPUTCHANGE :
-			break;
-			}
-		}
-	}
-
+#ifdef mips
+#include <sys/param.h>
+#else
 #include <machine/param.h>
+#endif
 void
-sgi_Animate( fps )
+sgi_Animate( framesz, fps )
+int	framesz;
 int	fps;
 	{	register int	i, j;
 		register int	wid;
+		register int	xpos, ypos;
 		static long	movie_gid = -1;
-		long		xwin, ywin;
+		long		xwin, ywin, xsiz, ysiz;
 		long		movie_xwin, movie_ywin;
 	if( fps < 1 )
 		fps = 1;
 	if( fps > HZ )
 		fps = HZ;
-	wid = 512 / grid_sz;
 
 	/* Get origin of frame buffer window (source).			*/
 	getorigin( &xwin, &ywin );
 
+	/* Get size of frame buffer window (source).			*/
+	getsize( &xsiz, &ysiz );
+	wid = xsiz / framesz;
+	xpos = ypos = xsiz / 2;
+	zoom = 1;
+	if( fb_zoom( fbiop, zoom, zoom ) == -1 )
+		rt_log( "Can not set zoom <%d,%d>.\n", zoom, zoom );
+	if( fb_viewport( fbiop, 0, 0, xsiz, ysiz ) == -1 )
+		rt_log( "Can not set viewport {<%d,%d>,<%d,%d>}.\n",
+			0, 0, xsiz, ysiz
+			);
+	if( fb_window( fbiop, xpos, ypos ) == -1 )
+		rt_log( "Can not set window <%d,%d>.\n", xpos, ypos );
+
 	/* Create destination window for movie, with user positioning.	*/
-	prefsize( grid_sz, grid_sz );
+	prefsize( framesz, framesz );
 	if( (movie_gid = winopen( "movie" )) == -1 )
 		{
 		fb_log( "No more graphics ports available.\n" );
@@ -523,7 +957,7 @@ int	fps;
 	getorigin( &movie_xwin, &movie_ywin );
 	if( ((xwin - movie_xwin) % 16) != 0 )
 		movie_xwin += (xwin - movie_xwin) % 16;
-	while( movie_xwin > XMAXSCREEN - grid_sz )
+	while( movie_xwin > XMAXSCREEN - framesz )
 		movie_xwin -= 16;
 	winmove( movie_xwin, movie_ywin );
 
@@ -561,10 +995,10 @@ int	fps;
 					return;
 					}
 				}
-			rectcopy((Screencoord)(xwin+j*grid_sz),
-				 (Screencoord)(ywin+i*grid_sz),
-				 (Screencoord)(xwin+(j+1)*grid_sz)-1,
-				 (Screencoord)(ywin+(i+1)*grid_sz)-1,
+			rectcopy((Screencoord)(xwin+j*framesz),
+				 (Screencoord)(ywin+i*framesz),
+				 (Screencoord)(xwin+(j+1)*framesz)-1,
+				 (Screencoord)(ywin+(i+1)*framesz)-1,
 				 (Screencoord) movie_xwin,
 				 (Screencoord) movie_ywin
 				 );
@@ -593,7 +1027,7 @@ char	**args;
 int
 sgi_Getchar()
 	{	short	val;
-	winattach();
+	(void) winattach();
 	while( ! qtest() || qread( &val ) != KEYBD )
 		;
 	return	(int) val;

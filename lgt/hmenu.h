@@ -29,7 +29,6 @@ typedef struct HMitem
 	{
 	char		*text;	/* menu item string			*/
 	char		*help;	/* help string				*/
-	char		*prompt;/* prompt string for "hfn()".		*/
 	struct HMenu	*next;	/* sub-menu pointer or NULL		*/
 	void		(*dfn)(), (*bfn)();
 	int		(*hfn)();

@@ -8,13 +8,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) lgt_db.c	2.2
-		Modified: 	1/30/87 at 17:22:29	G S M
-		Retrieved: 	2/4/87 at 08:53:39
-		SCCS archive:	/vld/moss/src/lgt/s.lgt_db.c
-*/
 
 #include <stdio.h>
 #include "machine.h"
@@ -147,85 +140,87 @@ char	*file;
 lgt_Edit_Db_Entry( id )
 int	id;
 	{	register Lgt_Source	*entry;
-		static char		input_buf[BUFSIZ];
+		char			input_buf[MAX_LN];
+		char			prompt[MAX_LN];
 		int			red, grn, blu;
 	if( id < 0 || id >= MAX_LGTS )
 		return	-1;
 	lgt_db_size = Max( lgt_db_size, id+1 );
 	entry = &lgts[id];
-	if( get_Input( input_buf, BUFSIZ, "light source name : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
+	(void) sprintf( prompt, "light source name ? (%s) ", entry->name );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) strncpy( entry->name, input_buf, MAX_LGT_NM-1 );
-	if( get_Input( input_buf, BUFSIZ, "manual overide : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
-		(void) sscanf( input_buf, "%d", &entry->over );
+	(void) sprintf( prompt, "manual overide ? [y|n](%c) ",
+			entry->over ? 'y' : 'n' );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		entry->over = input_buf[0] != 'n';
 	if( entry->over || entry->stp == SOLTAB_NULL )
 		{
-		if( get_Input( input_buf, BUFSIZ, "azimuth : " ) == NULL )
-			return	0;
-		if( input_buf[0] != '\0' )
+		(void) sprintf( prompt, "azimuth ? (%g) ",
+				entry->azim*DEGRAD );
+		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 			{
-#ifdef sgi
+#if defined( sgi ) && ! defined( mips )
 			(void) sscanf( input_buf, "%f", &entry->azim );
 #else
 			(void) sscanf( input_buf, "%lf", &entry->azim );
 #endif
 			entry->azim /= DEGRAD;
 			}
-		if( get_Input( input_buf, BUFSIZ, "elevation : " ) == NULL )
-			return	0;
-		if( input_buf[0] != '\0' )
+		(void) sprintf( prompt, "elevation ? (%g) ",
+				entry->elev*DEGRAD );
+		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 			{
-#ifdef sgi
+#if defined( sgi ) && ! defined( mips )
 			(void) sscanf( input_buf, "%f", &entry->elev );
 #else
 			(void) sscanf( input_buf, "%lf", &entry->elev );
 #endif
 			entry->elev /= DEGRAD;
 			}
-		if( get_Input( input_buf, BUFSIZ, "distance : " ) == NULL )
-			return	0;
-		if( input_buf[0] != '\0' )
-#ifdef sgi
+		(void) sprintf( prompt, "distance ? (%g) ", entry->dist );
+		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+#if defined( sgi ) && ! defined( mips )
 			(void) sscanf( input_buf, "%f", &entry->dist );
 #else
 			(void) sscanf( input_buf, "%lf", &entry->dist );
 #endif
 		}
-	if( get_Input( input_buf, BUFSIZ, "gaussian beam : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
-		(void) sscanf( input_buf, "%d", &entry->beam );
+	(void) sprintf( prompt, "gaussian beam ? [y|n](%c) ",
+			entry->beam ? 'y' : 'n' );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+		entry->beam = input_buf[0] != 'n';
 	if( entry->beam )
 		{
-		if( get_Input( input_buf, BUFSIZ, "radius of beam : " ) == NULL )
-			return	0;
-		if( input_buf[0] != '\0' )
-#ifdef sgi
+		(void) sprintf( prompt, "radius of beam ? (%g) ",
+				entry->radius );
+		if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+#if defined( sgi ) && ! defined( mips )
 			(void) sscanf( input_buf, "%f", &entry->radius );
 #else
 			(void) sscanf( input_buf, "%lf", &entry->radius );
 #endif
 		}
-	if( get_Input( input_buf, BUFSIZ, "intensity : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
-#ifdef sgi
+	(void) sprintf( prompt, "intensity ? [0.0 to 1.0](%g) ",
+			entry->energy );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+#if defined( sgi ) && ! defined( mips )
 		(void) sscanf( input_buf, "%f", &entry->energy );
 #else
 		(void) sscanf( input_buf, "%lf", &entry->energy );
 #endif
-	if( get_Input( input_buf, BUFSIZ, "color : " ) == NULL )
-		return	0;
-	if(	input_buf[0] != '\0'
+	(void) sprintf( prompt, "color ? [0 to 255](%d %d %d) ",
+			entry->rgb[RED],
+			entry->rgb[GRN],
+			entry->rgb[BLU]
+			);
+	if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
 	     &&	sscanf( input_buf, "%d %d %d", &red, &grn, &blu ) == 3
 		)
 		{
-		entry->rgb[0] = red;
-		entry->rgb[1] = grn;
-		entry->rgb[2] = blu;
+		entry->rgb[RED] = red;
+		entry->rgb[GRN] = grn;
+		entry->rgb[BLU] = blu;
 		}
 	return	1;
 	}
@@ -253,7 +248,7 @@ FILE			*fp;
 	entry->rgb[1] = grn;
 	entry->rgb[2] = blu;
 	if(	fscanf(	fp,
-#ifdef sgi
+#if defined( sgi ) && ! defined( mips )
 			"%f %f %f %f %f",
 #else
 			"%lf %lf %lf %lf %lf",

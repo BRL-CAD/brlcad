@@ -4,13 +4,8 @@
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
-*/
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) screen.h	2.2
-		Modified: 	1/30/87 at 17:22:15	G S M
-		Retrieved: 	2/4/87 at 08:53:28
-		SCCS archive:	/vld/moss/src/lgt/s.screen.h
+
+	$Header$ (BRL)
 */
 
 #define TITLE_PTR		&template[ 0][ 7]
@@ -34,10 +29,11 @@
 #define IR_PAINT_PTR		&template[ 8][72]
 #define PROGRAM_NM_PTR		&template[ 9][ 2]
 #define F_GED_DB_PTR		&template[ 9][23]
-#define GRID_PIX_PTR		&template[ 9][52]
-#define GRID_SIZ_PTR		&template[ 9][59]
-#define GRID_SCN_PTR		&template[ 9][64]
-#define GRID_FIN_PTR		&template[ 9][69]
+#define GRID_PIX_PTR		&template[ 9][49]
+#define GRID_SIZ_PTR		&template[ 9][56]
+#define GRID_SCN_PTR		&template[ 9][61]
+#define GRID_FIN_PTR		&template[ 9][66]
+#define FRAME_NO_PTR		&template[ 9][71]
 #define TOP_SCROLL_WIN		11		/* Next available line.	*/
 #define TOP_MOVE()		MvCursor( 1, 1 )
 #define SCROLL_DL_MOVE()	MvCursor( 1, TOP_SCROLL_WIN )

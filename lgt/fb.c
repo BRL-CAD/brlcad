@@ -29,19 +29,28 @@ int	size;
 	{
 #ifdef sgi
 		static int	sgi_open = FALSE;
+		static int	sgi_size;
 		static FBIO	*sgi_iop;
+#endif
+	prnt_Event( "Opening device..." );
+	size = size > 512 ? 1024 : 512;
+#ifdef sgi
 	if( sgi_open )
 		{
 		if( file[0] == '\0' || strncmp( file, "/dev/sgi", 8 ) == 0 )
 			{
-			fbiop = sgi_iop;
-			return	1; /* Only open SGI once.		*/
+#ifndef mips	/* XXX -- SGI BUG prohibits closing windows. */
+			if( size != sgi_size )
+				(void) fb_close( fbiop );
+			else
+#endif
+				{
+				fbiop = sgi_iop;
+				return	1; /* Only open SGI once.	*/
+				}
 			}
 		}
 #endif
-	if( tty )
-		prnt_Event( "Opening device..." );
-	size = size > 512 ? 1024 : 512;
 	if(	(fbiop = fb_open(	file[0] == '\0' ? NULL : file,
 					size, size
 					)
@@ -52,15 +61,15 @@ int	size;
 		return	0;
 	(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
 	(void) fb_cursor( fbiop, 1, size/2, size/2 );
-	if( tty )
-		prnt_Event( (char *) NULL );
 #ifdef sgi
 	if( strncmp( fbiop->if_name, "/dev/sgi", 8 ) == 0 )
 		{
 		sgi_open = TRUE;
 		sgi_iop = fbiop;
+		sgi_size = size;
 		}
 #endif
+	prnt_Event( (char *) NULL );
 	return	1;
 	}
 

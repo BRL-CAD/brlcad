@@ -8,19 +8,13 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) mat_db.c	1.10
-		Last edit: 	2/4/87 at 12:18:02
-		Retrieved: 	2/4/87 at 12:18:20
-		SCCS archive:	/vld/moss/src/libmatdb/s.mat_db.c
-*/
 
 #include <stdio.h>
 #include "./vecmath.h"
 #include "./mat_db.h"
 #include "./screen.h"
 #include "./extern.h"
+#include "./lgt.h"
 static Mat_Db_Entry	mat_db_table[MAX_MAT_DB];
 static int		mat_db_size = 0;
 Mat_Db_Entry		mat_dfl_entry =
@@ -174,7 +168,8 @@ char	*file;
 mat_Edit_Db_Entry( id )
 int	id;
 	{	register Mat_Db_Entry	*entry;
-		static char		input_buf[BUFSIZ];
+		char			input_buf[MAX_LN];
+		char			prompt[MAX_LN];
 		int			red, grn, blu;
 	if( id < 0 )
 		return	-1;
@@ -185,62 +180,61 @@ int	id;
 		}
 	else
 		{
-		(void) fprintf( stderr,
-			"Material table full, MAX_DB_ENTRY too small.\n"
-				);
+		rt_log( "Material table full, MAX_DB_ENTRY too small.\n" );
 		return	0;
 		}
-	if( get_Input( input_buf, BUFSIZ, "material name : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
+	(void) sprintf( prompt, "material name ? (%s) ", entry->name );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) strncpy( entry->name, input_buf, MAX_MAT_NM );
-	if( get_Input( input_buf, BUFSIZ, "shine : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
+	(void) sprintf( prompt, "shine ? [1 to n](%d) ", entry->shine );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) sscanf( input_buf, "%d", &entry->shine );
-	if( get_Input( input_buf, BUFSIZ, "specular weighting [0.0 .. 1.0] : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
-#ifdef sgi
+	(void) sprintf( prompt, "specular weighting ? [0.0 to 1.0](%g) ",
+			entry->wgt_specular );
+	if( get_Input( input_buf, MAX_LN, prompt  ) != NULL )
+#if defined( sgi ) && ! defined( mips )
 		(void) sscanf( input_buf, "%f", &entry->wgt_specular );
 #else
 		(void) sscanf( input_buf, "%lf", &entry->wgt_specular );
 #endif
-	if( get_Input( input_buf, BUFSIZ, "diffuse weighting [0.0 .. 1.0] : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
-#ifdef sgi
+	(void) sprintf( prompt, "diffuse weighting ? [0.0 to 1.0](%g) ",
+			entry->wgt_diffuse );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+#if defined( sgi ) && ! defined( mips )
 		(void) sscanf( input_buf, "%f", &entry->wgt_diffuse );
 #else
 		(void) sscanf( input_buf, "%lf", &entry->wgt_diffuse );
 #endif
-	if( get_Input( input_buf, BUFSIZ, "transparency [0.0 .. 1.0] : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
-#ifdef sgi
+	(void) sprintf( prompt, "transparency ? [0.0 to 1.0](%g) ",
+			entry->transparency );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+#if defined( sgi ) && ! defined( mips )
 		(void) sscanf( input_buf, "%f", &entry->transparency );
 #else	
 		(void) sscanf( input_buf, "%lf", &entry->transparency );
 #endif
-	if( get_Input( input_buf, BUFSIZ, "reflectivity [0.0 .. 1.0] : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
-#ifdef sgi
+	(void) sprintf( prompt, "reflectivity ? [0.0 to 1.0](%g) ",
+			entry->reflectivity );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+#if defined( sgi ) && ! defined( mips )
 		(void) sscanf( input_buf, "%f", &entry->reflectivity );
 #else
 		(void) sscanf( input_buf, "%lf", &entry->reflectivity );
 #endif
-	if( get_Input( input_buf, BUFSIZ, "refractive index [0.9 .. 5.0] : " ) == NULL )
-		return	0;
-	if( input_buf[0] != '\0' )
-#ifdef sgi
+	(void) sprintf( prompt, "refractive index ? [0.9 to 5.0](%g) ",
+			entry->refrac_index );
+	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
+#if defined( sgi ) && ! defined( mips )
 		(void) sscanf( input_buf, "%f", &entry->refrac_index );
 #else
 		(void) sscanf( input_buf, "%lf", &entry->refrac_index );
 #endif
-	if( get_Input( input_buf, BUFSIZ, "diffuse RGB values [0 .. 255] : " ) == NULL )
-		return	0;
-	if(	input_buf[0] != '\0'
+	(void) sprintf( prompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
+			entry->df_rgb[RED],
+			entry->df_rgb[GRN],
+			entry->df_rgb[BLU]
+			);
+	if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
 	     &&	sscanf( input_buf, "%d %d %d", &red, &grn, &blu ) == 3
 		)
 		{
@@ -290,7 +284,7 @@ FILE	*fp;
 		return	0;
 		}
 	if(	fscanf(	fp,
-#ifdef sgi
+#if defined( sgi ) && ! defined( mips )
 			"%f %f %f %f %f",
 #else
 			"%lf %lf %lf %lf %lf",

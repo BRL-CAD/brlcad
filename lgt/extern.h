@@ -103,10 +103,12 @@ extern char		**template;
 
 extern char		err_file[];
 extern char		fb_file[];
+extern char		input_ln[];
 extern char		ir_file[];
 extern char		ir_db_file[];
 extern char		lgt_db_file[];
 extern char		mat_db_file[];
+extern char		prompt[];
 extern char		script_file[];
 extern char		txtr_file[];
 extern char		title[];
@@ -128,6 +130,7 @@ extern fastf_t		x_grid_offset, y_grid_offset;
 extern fastf_t		rel_perspective;
 extern fastf_t		sample_sz;
 extern fastf_t		view2model[];
+extern fastf_t		view_rots[];
 extern fastf_t		view_size;
 extern int		LI, CO;
 extern int		anti_aliasing;
@@ -140,6 +143,7 @@ extern int		fatal_error;
 extern int		fb_mapping;
 extern int		fb_width;
 extern int		fb_ulen, fb_vlen;
+extern int		frame_no;
 extern int		grid_sz;
 extern int		grid_position;
 extern int		grid_x_org, grid_y_org;
@@ -155,7 +159,6 @@ extern int		ir_doing_paint;
 extern int		ir_mapx, ir_mapy;
 extern int		ir_noise;
 extern int		ir_mapping;
-extern int		isiris;
 extern int		lgt_db_size;
 extern int		li;
 extern int		max_bounce;
@@ -166,6 +169,8 @@ extern int		pix_buffered;
 extern int		query_region;
 extern int		report_overlaps;
 extern int		save_view_flag;
+extern int		sgi_console;
+extern int		sgi_usemouse;
 extern int		tracking_cursor;
 extern int		tty;
 extern int		user_interrupt;
@@ -193,10 +198,6 @@ extern struct rt_i	*rt_ip;
 #ifdef sgi
 extern int	win_active;
 extern long	defpup(), qtest();
-#define WIN_L	(1023-511-4)
-#define WIN_R	(1023-4)
-#define WIN_B	4
-#define WIN_T	(511+4)
 #define	SGI_XCVT( v_ ) (((v_) - xwin) / (fbiop->if_width/grid_sz))
 #define SGI_YCVT( v_ ) (((v_) - ywin) / (fbiop->if_width/grid_sz))
 #else
