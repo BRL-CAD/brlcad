@@ -47,9 +47,6 @@ extern int	verbose;
 extern double	getdouble();
 extern int	sol_total, sol_work;
 
-#define PI		3.14159265358979323846264	/* Approx */
-#define	DEG2RAD		0.0174532925199433
-
 char	scard[132];			/* Solid card buffer area */
 
 /*
@@ -364,9 +361,9 @@ getsolid()
 		phi = dd[5];
 		h2 = dd[6];		/* height in +Z */
 
-		angle1 = (phi+theta-90) * DEG2RAD;
-		angle2 = (phi+theta) * DEG2RAD;
-		a2theta = a2 * tan(theta * DEG2RAD);
+		angle1 = (phi+theta-90) * rt_degtorad;
+		angle2 = (phi+theta) * rt_degtorad;
+		a2theta = a2 * tan(theta * rt_degtorad);
 
 		VSET( a, a2theta*cos(angle1), a2theta*sin(angle1), 0 );
 		VSET( b, -a2*cos(angle2), -a2*sin(angle2), 0 );
@@ -627,9 +624,9 @@ getsolid()
 ell1:
 		r1 = dd[6];		/* R */
 		VMOVE( work, D(0) );
-		work[0] += PI;
-		work[1] += PI;
-		work[2] += PI;
+		work[0] += rt_pi;
+		work[1] += rt_pi;
+		work[2] += rt_pi;
 		VCROSS( D(2), work, D(1) );
 		m1 = r1/MAGNITUDE( D(2) );
 		VSCALE( D(2), D(2), m1 );
@@ -830,8 +827,8 @@ bad:
 			double	cos_el;
 			point_t	pt;
 
-			az = getdouble( scard, 10+j*30+0*10, 10 ) * DEG2RAD;
-			el = getdouble( scard, 10+j*30+1*10, 10 ) * DEG2RAD;
+			az = getdouble( scard, 10+j*30+0*10, 10 ) * rt_degtorad;
+			el = getdouble( scard, 10+j*30+1*10, 10 ) * rt_degtorad;
 			vert_no = getint( scard, 10+j*30+2*10, 10 );
 			if( vert_no == 0 )  break;
 			cos_el = cos(el);
