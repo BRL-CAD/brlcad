@@ -1248,7 +1248,13 @@ struct nmgregion *r;
 	struct nmgregion_a	*ra;
 
 	NMG_CK_REGION(r);
-	GET_REGION_A(ra);
+	if( r->ra_p )  {
+		ra = r->ra_p;
+		NMG_CK_REGION_A(ra);
+	} else {
+		GET_REGION_A(ra);
+		r->ra_p = ra;
+	}
 
 	ra->magic = NMG_REGION_A_MAGIC;
 
