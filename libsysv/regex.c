@@ -24,6 +24,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+#include "machine.h"
+
 #if defined(HAVE_REGEX)
 #ifndef lint
 char	regex_dummy;      /* some systems can't handle empty object modules */
@@ -129,11 +131,15 @@ re_exec( s )				/* returns 1 if s matches, else 0 */
 #include <sys/types.h>
 #include <regex.h>
 
+#if !defined(REG_BASIC)
+#	define REG_BASIC	0
+#endif
+
 static regex_t reg;
 
 char *
 re_comp(s)
-char *s;
+CONST char *s;
 {
 	int i;
 	static char errbuf[1024];
@@ -148,7 +154,7 @@ char *s;
 
 int
 re_exec(s)
-char *s;
+CONST char *s;
 {
 	int i;
 
