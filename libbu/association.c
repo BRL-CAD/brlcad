@@ -46,7 +46,7 @@ struct rt_vls *rt_assoc (fname, value, field_sep)
 
 char	*fname;
 char	*value;
-char	field_sep;
+int	field_sep;
 
 {
     char		*cp;
