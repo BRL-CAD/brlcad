@@ -863,6 +863,23 @@ vo_eye_cmd(struct view_obj	*vop,
 	vect_t		new_cent;
 	struct bu_vls 	vls;
 
+	/* get eye */
+	if (argc == 1) {
+	  point_t eye;
+
+	  /* calculate eye point */
+	  VSET(xlate, 0.0, 0.0, 1.0);
+	  MAT4X3PNT(eye, vop->vo_view2model, xlate);
+	  VSCALE(eye, eye, vop->vo_base2local);
+
+	  bu_vls_init(&vls);
+	  bn_encode_vect(&vls, eye);
+	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	  bu_vls_free(&vls);
+
+	  return TCL_OK;
+	}
+
 	if (argc != 2 && argc != 4)
 		goto bad;
 
@@ -911,10 +928,10 @@ vo_eye_cmd(struct view_obj	*vop,
 }
 
 /*
- * Set the eye point.
+ * Get/set the eye point.
  *
  * Usage:
- *	procname eye eye_point
+ *	procname eye [eye_point]
  */
 static int
 vo_eye_tcl(ClientData	clientData,
@@ -2482,3 +2499,5 @@ vo_mike_persp_mat(mat_t		pmat,
 
 	bn_mat_mul( pmat, xlate, t2 );
 }
+
+
