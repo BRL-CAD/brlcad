@@ -1355,11 +1355,15 @@ register struct edgeuse *eu1;
 		eu1->radial_p->radial_p = eu2->radial_p;
 		eu2->radial_p->radial_p = eu1->radial_p;
 
+		NMG_CK_EDGEUSE(eu1->radial_p);
+		NMG_CK_EDGEUSE(eu2->radial_p);
+
 		/* since there is a use of this edge left, make sure the edge
 		 * structure points to a remaining edgeuse
 		 */
 		if (e->eu_p == eu1 || e->eu_p == eu2)
 			e->eu_p = eu1->radial_p;
+		NMG_CK_EDGEUSE( e->eu_p );
 	} else {
 		/* since these two edgeuses are the only use of this edge,
 		 * we need to free the edge (since all uses are about 
@@ -1367,6 +1371,7 @@ register struct edgeuse *eu1;
 		 */
 		if (e->eg_p) FREE_EDGE_G(e->eg_p);
 		FREE_EDGE(e);
+		e = (struct edge *)NULL;
 	}
 
 	/* remove the edgeuses from their parents */
@@ -1426,6 +1431,13 @@ register struct edgeuse *eu1;
 
 	FREE_EDGEUSE(eu1);
 	FREE_EDGEUSE(eu2);
+
+	if( e )
+	{
+		NMG_CK_EDGE( e );
+		NMG_CK_EDGEUSE( e->eu_p );
+	}
+
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_keu(eu1=x%x) eu2=x%x ret=%d\n", eu1, eu2, ret);
 	}
