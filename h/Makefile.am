@@ -87,11 +87,23 @@ brlcadinclude_wanted = \
 	zconf.h \
 	zlib.h
 
-if ONLYRTS
-brlcadinclude_HEADERS = \
-	$(brlcadinclude_required)
+if ONLY_BENCHMARK
+brlcadinclude_HEADERS = $(brlcadinclude_required)
+
 else
+# else !ONLY_BENCHMARK
+
+if ONLY_RTS
+brlcadinclude_HEADERS = $(brlcadinclude_required)
+
+else
+# else !ONLY_RTS
 brlcadinclude_HEADERS = \
 	$(brlcadinclude_required) \
 	$(brlcadinclude_wanted)
+
 endif
+# end ONLY_RTS
+
+endif
+# end ONLY_BENCHMARK

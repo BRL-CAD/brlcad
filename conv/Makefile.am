@@ -1,5 +1,12 @@
 # $Id$
 
+if ONLY_BENCHMARK
+bin_PROGRAMS = \
+	asc2g \
+	asc2pix \
+	g2asc \
+	pix2asc
+else
 bin_PROGRAMS = \
 	asc-nmg \
 	asc2g \
@@ -37,6 +44,7 @@ bin_PROGRAMS = \
 	stl-g \
 	tankill-g \
 	viewpoint-g
+endif
 
 asc2g_LDADD = @WDB@ @RT@ 
 asc_nmg_LDADD = @WDB@ @RT@ 

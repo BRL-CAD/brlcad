@@ -1,24 +1,50 @@
 # $Id$
 
-if ONLYRTS
-SUBDIRS = \
+required_files = \
 	h \
 	libtcl8.4 \
 	libbn \
 	libbu \
-	librt \
-	librtserver
+	librt
+
+if ONLY_BENCHMARK
+bench_files = \
+	libpkg \
+	libfb \
+	libwdb \
+	libsysv \
+	bench \
+	conv \
+	db \
+	fbserv \
+	rt	
 else
-SUBDIRS = \
-	h \
+bench_files =
+endif
+
+if ONLY_RTS
+rts_files = librtserver
+else
+rts_files = 
+endif
+
+if ONLY_BENCHMARK
+kitchensink_files =
+
+else
+# else !ONLY_BENCHMARK
+
+if ONLY_RTS
+kitchensink_files =
+
+else
+# else !ONLY_RTS
+kitchensink_files = \
 	libpng \
-	libtcl8.4 \
 	libtk8.4 \
 	libitcl \
 	iwidgets4.0.1 \
 	libz \
-	libbn \
-	libbu \
 	libcursor \
 	libdm \
 	libpkg \
@@ -26,9 +52,7 @@ SUBDIRS = \
 	libfft \
 	liboptical \
 	liborle \
-	librt \
 	librtserver \
-	libsysv \
 	libtclcad \
 	libtermio \
 	libutahrle \
@@ -73,6 +97,18 @@ SUBDIRS = \
 	vdeck \
 	vfont
 endif
+# end ONLY_RTS
+
+endif
+# end ONLY_BENCHMARK
+
+
+SUBDIRS = \
+	$(required_files) \
+	$(bench_files) \
+	$(rts_files) \
+	$(kitchensink_files)
+
 
 DIST_SUBDIRS = $(SUBDIRS)
 

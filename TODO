@@ -37,6 +37,8 @@ THESE ARE LOWER PRIORITY
 * make benchmarks scale over time by performing multi-resolution
   raytrace iterations of increasing size
 
+* add nfs support and ability to safely interrupt benchmark
+
 
 THESE BREAK PROTOCOL AND ARE BACKWARDS INCOMPATIBLE
 
