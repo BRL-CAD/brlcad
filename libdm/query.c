@@ -15,19 +15,23 @@ int *dm_types();
 int
 dm_best_type()
 {
-#ifdef DM_OGL
-  return DM_TYPE_OGL;
-#endif  
+	int t;
 
-#ifdef DM_GLX
-  return DM_TYPE_GLX;
-#endif
+	t = DM_TYPE_NULL;
 
 #ifdef DM_X
-  return DM_TYPE_X;
+	t = DM_TYPE_X;
 #endif
 
-  return DM_TYPE_NULL;
+#ifdef DM_GLX
+	t = DM_TYPE_GLX;
+#endif
+
+#ifdef DM_OGL
+	t = DM_TYPE_OGL;
+#endif  
+
+	returnt;
 }
 
 char *
