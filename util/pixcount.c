@@ -142,11 +142,11 @@ void	*v2;
  */
 struct pixel *lookup_pixel(palette, color)
 
-rb_tree	*palette;
+bu_rb_tree	*palette;
 char	*color;
 
 {
-    int			rc;	/* Return code from rb_insert() */
+    int			rc;	/* Return code from bu_rb_insert() */
     struct pixel	*qpp;	/* The query */
     struct pixel	*pp;	/* Value to return */
     int			i;
@@ -169,13 +169,13 @@ char	*color;
      *	then we have our pixel.
      *	Otherwise, we must create a new pixel.
      */
-    switch (rc = rb_insert(palette, (void *) qpp))
+    switch (rc = bu_rb_insert(palette, (void *) qpp))
     {
 	case -1:
 #if 0
 	    bu_log(" already existed\n");
 #endif
-	    pp = (struct pixel *) rb_curr1(palette);
+	    pp = (struct pixel *) bu_rb_curr1(palette);
 	    free_pixel(qpp);
 	    break;
 	case 0:
@@ -185,7 +185,7 @@ char	*color;
 	    pp = qpp;
 	    break;
 	default:
-	    bu_log("rb_insert() returns %d:  This should not happen\n", rc);
+	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
 	    exit (1);
     }
 
@@ -198,7 +198,7 @@ int	argc;
 char	*argv[];
 
 {
-    rb_tree		*palette;	/* Pixel palette */
+    bu_rb_tree		*palette;	/* Pixel palette */
     char		*inf_name;	/* name of input stream */
     char		*outf_name;	/*  "   "  output   "   */
     unsigned char	*buf;		/* the current input pixel */
@@ -281,8 +281,8 @@ char	*argv[];
 	}
     }
 
-    palette = rb_create1("Pixel palette", compare_pixels);
-    rb_uniq_on1(palette);
+    palette = bu_rb_create1("Pixel palette", compare_pixels);
+    bu_rb_uniq_on1(palette);
 
     /*
      *	Read the input stream into the palette
@@ -300,5 +300,5 @@ char	*argv[];
     }
     bu_free((genptr_t) buf, "pixel buffer");
 
-    rb_walk1(palette, print_pixel, INORDER);
+    bu_rb_walk1(palette, print_pixel, INORDER);
 }
