@@ -24,19 +24,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-FBIO	*fbp;
 int	fbsize = 512;
 
 main( argc, argv )
 int	argc;
 char	**argv;
 	{
+	register FBIO	*fbp;
 	register int	x, y;
-	register int	fb_sz;
 	register int	middle;
+	register int	mask;
+	register int	fb_sz;
 	static RGBpixel	black, white, red;
 	static int	val;
-	static int	mask;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
@@ -59,20 +59,20 @@ char	**argv;
 		mask = 0xf;
 
 	for( y = fb_sz-1; y >= 0; y-- )  {
-		for( x = 0; x < fb_sz; x++ )
-			{
-			if( x == y || x == fb_sz - y )
-				(void) fb_wpixel( fbp, white );
-			else
-			if( x == middle || y == middle )
-				(void) fb_wpixel( fbp, red );
-			else
-			if( (x & mask) && (y & mask) )
-				(void) fb_wpixel( fbp, black );
-			else
-				(void) fb_wpixel( fbp, white );
+		for( x = 0; x < fb_sz; x++ ) {
+			if( x == y || x == fb_sz - y ) {
+				FB_WPIXEL( fbp, white );
+			} else
+			if( x == middle || y == middle ) {
+				FB_WPIXEL( fbp, red );
+			} else
+			if( (x & mask) && (y & mask) ) {
+				FB_WPIXEL( fbp, black );
+			} else {
+				FB_WPIXEL( fbp, white );
 			}
 		}
+	}
 	fb_close( fbp );
 	return	0;
 	}
