@@ -224,7 +224,6 @@ int			flags;
 	register struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	union record		*rec;
 	char			local[NAMESIZE+2+2];
 
 	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_add:  bad dbip\n");
