@@ -11,7 +11,7 @@
  *	bn_mat_mul2( &i, &o )
  *	bn_matXvec( &ov, &m, &iv )	Multiply m by vector iv, store in ov
  *	bn_mat_inv( &om, &im )		Invert matrix im, store result in om
- *	bn_mat_print( &title, &m )	Print matrix (with title) on stdout.
+ *	bn_mat_print( &title, &m )	Print matrix (with title) on stderr.
  *	bn_mat_trn( &o, &i )		Transpose matrix i into matrix o
  *	bn_mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
  *	bn_ae_vec( &az, &el, v )	Find az/elev from dir vector
