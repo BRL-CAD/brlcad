@@ -250,18 +250,19 @@ f_extrude()
 		(void)printf("Extrude: solid type must be ARB\n");
 		return;
 	}
-	face = atoi( cmd_args[1] );
-	if( face < 1000 || face > 9999 ) {
-		(void)printf("ERROR: face must be 4 points\n");
+
+	if(es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
+		(void)printf("ARB%d: extrusion of faces not allowed\n",es_type);
 		return;
 	}
+
+	face = atoi( cmd_args[1] );
+
 	/* get distance to project face */
 	dist = atof( cmd_args[2] );
 	/* apply es_mat[15] to get to real model space */
 	/* convert from the local unit (as input) to the base unit */
 	dist = dist * es_mat[15] * local2base;
-
-	newedge = 1;
 
 	/* convert to point notation in temporary buffer */
 	VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
@@ -269,125 +270,187 @@ f_extrude()
 		VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
 	}
 
-	pt[0] = face / 1000;
-	i = face - (pt[0]*1000);
-	pt[1] = i / 100;
-	i = i - (pt[1]*100);
-	pt[2] = i / 10;
-	pt[3] = i - (pt[2]*10);
+	if( (es_type == ARB6 || es_type == ARB4) && face < 1000 ) {
+		/* 3 point face */
+		pt[0] = face / 100;
+		i = face - (pt[0]*100);
+		pt[1] = i / 10;
+		pt[2] = i - (pt[1]*10);
+		pt[3] = 1;
+	}
+	else {
+		pt[0] = face / 1000;
+		i = face - (pt[0]*1000);
+		pt[1] = i / 100;
+		i = i - (pt[1]*100);
+		pt[2] = i / 10;
+		pt[3] = i - (pt[2]*10);
+	}
 
 	/* user can input face in any order - will use product of
 	 * face points to distinguish faces:
 	 *    product       face
-	 *       24         1234
-	 *     1680         5678
-	 *      252         2367
-	 *      160         1548
-	 *      672         4378
-	 *       60         1256
+	 *       24         1234 for ARB8
+	 *     1680         5678 for ARB8
+	 *      252         2367 for ARB8
+	 *      160         1548 for ARB8
+	 *      672         4378 for ARB8
+	 *       60         1256 for ARB8
+	 *	 10	    125 for ARB6
+	 *	 72	    346 for ARB6
+	 * --- special case to make ARB6 from ARB4
+	 * ---   provides easy way to build ARB6's
+	 *        6	    123 for ARB4
+	 *	  8	    124 for ARB4
+ 	 *	 12	    134 for ARB4
+	 *	 24	    234 for ARB4
 	 */
 	prod = 1;
 	for( i = 0; i <= 3; i++ )  {
 		prod *= pt[i];
-		--pt[i];
+		if(es_type == ARB6 && pt[i] == 6)
+			pt[i]++;
+		if(es_type == ARB4 && pt[i] == 4)
+			pt[i]++;
+		pt[i]--;
 		if( pt[i] > 7 )  {
 			(void)printf("bad face: %d\n",face);
 			return;
 		}
 	}
+
 	/* find plane containing this face */
-	if( (j = plane( pt[0], pt[1], pt[2], pt[3], &lsolid )) >= 0 )  {
+	if( planeqn(6, pt[0], pt[1], pt[2], &lsolid) ) {
 		(void)printf("face: %d is not a plane\n",face);
 		return;
 	}
 	/* get normal vector of length == dist */
 	for( i = 0; i < 3; i++ )
-		es_plant[i] *= dist;
+		es_peqn[6][i] *= dist;
 
 	/* protrude the selected face */
 	switch( prod )  {
 
 	case 24:   /* protrude face 1234 */
+		if(es_type == ARB6) {
+			(void)printf("ARB6: extrusion of face %d not allowed\n",face);
+			return;
+		}
+		if(es_type == ARB4)
+			goto a4toa6;	/* extrude face 234 of ARB4 to make ARB6 */
+
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
 			VADD2( &lsolid.s_values[j*3],
 				&lsolid.s_values[i*3],
-				&es_plant[0]);
+				&es_peqn[6][0]);
 		}
 		break;
+
+	case 6:		/* extrude ARB4 face 123 to make ARB6 */
+	case 8:		/* extrude ARB4 face 124 to make ARB6 */
+	case 12:	/* extrude ARB4 face 134 to Make ARB6 */
+a4toa6:
+		ext4to6(pt[0], pt[1], pt[2], dist, &lsolid);
+		es_rec.s.s_cgtype = ARB6;
+		es_edflag = IDLE;
+		es_menu = 0;
+		sedit_menu();
+	break;
 
 	case 1680:   /* protrude face 5678 */
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
 			VADD2( &lsolid.s_values[i*3],
 				&lsolid.s_values[j*3],
-				&es_plant[0] );
+				&es_peqn[6][0] );
 		}
 		break;
 
 	case 60:   /* protrude face 1256 */
+	case 10:   /* extrude face 125 of ARB6 */
 		VADD2( &lsolid.s_values[9],
 			&lsolid.s_values[0],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[6],
 			&lsolid.s_values[3],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[21],
 			&lsolid.s_values[12],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[18],
 			&lsolid.s_values[15],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		break;
 
 	case 672:   /* protrude face 4378 */
+	case 72:	/* extrude face 346 of ARB6 */
 		VADD2( &lsolid.s_values[0],
 			&lsolid.s_values[9],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[3],
 			&lsolid.s_values[6],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[15],
 			&lsolid.s_values[18],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[12],
 			&lsolid.s_values[21],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		break;
 
 	case 252:   /* protrude face 2367 */
 		VADD2( &lsolid.s_values[0],
 			&lsolid.s_values[3],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[9],
 			&lsolid.s_values[6],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[12],
 			&lsolid.s_values[15],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[21],
 			&lsolid.s_values[18],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		break;
 
 	case 160:   /* protrude face 1548 */
 		VADD2( &lsolid.s_values[3],
 			&lsolid.s_values[0],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[15],
 			&lsolid.s_values[12],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[6],
 			&lsolid.s_values[9],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		VADD2( &lsolid.s_values[18],
 			&lsolid.s_values[21],
-			&es_plant[0] );
+			&es_peqn[6][0] );
 		break;
+
+	case 120:
+	case 180:
+		(void)printf("ARB6: extrusion of face %d not allowed\n",face);
+		return;
 
 	default:
 		(void)printf("bad face: %d\n", face );
 		return;
+	}
+
+	/* redo the plane equations */
+	for(i=0; i<6; i++) {
+		if(faces[es_type-4][i*4] == -1)
+			break;
+		pt[0] = faces[es_type-4][i*4];
+		pt[1] = faces[es_type-4][i*4+1];
+		pt[2] = faces[es_type-4][i*4+2];
+		if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
+			(void)printf("No equation for face %d%d%d%d\n",
+				pt[0]+1,pt[1]+1,pt[2]+1,faces[es_type-4][i*4+3]);
+			return;
+		}
 	}
 
 	/* Convert back to point&vector notation */
@@ -426,24 +489,23 @@ f_arbdef()
 	/* get fallback angle */
 	fb = atof( cmd_args[3] ) * degtorad;
 
-	/* copy arb8 to the new name */
-	if( (dp = lookup( "arb8", LOOKUP_NOISY )) == DIR_NULL )
-		return;
-	db_getrec( dp, &record, 0 );
 	if( (dp = dir_add( cmd_args[1], -1, DIR_SOLID, 1 )) == DIR_NULL )
 		return;
 	db_alloc( dp, 1 );
 	NAMEMOVE( cmd_args[1], record.s.s_name );
+	record.s.s_id = ID_SOLID;
+	record.s.s_type = GENARB8;
+	record.s.s_cgtype = ARB8;
 
 	/* put vertex of new solid at center of screen */
 	record.s.s_values[0] = -toViewcenter[MDX];
 	record.s.s_values[1] = -toViewcenter[MDY];
 	record.s.s_values[2] = -toViewcenter[MDZ];
 
-	/* calculate normal vector (length = .5) defined by rot,fb */
-	norm[0] = cos(fb) * cos(rota) * -0.5;
-	norm[1] = cos(fb) * sin(rota) * -0.5;
-	norm[2] = sin(fb) * -0.5;
+	/* calculate normal vector (length = 2) defined by rot,fb */
+	norm[0] = cos(fb) * cos(rota) * -50.8;
+	norm[1] = cos(fb) * sin(rota) * -50.8;
+	norm[2] = sin(fb) * -50.8;
 
 	for( i = 3; i < 24; i++ )
 		record.s.s_values[i] = 0.0;
@@ -458,10 +520,12 @@ f_arbdef()
 	VCROSS( &record.s.s_values[9], &record.s.s_values[3], norm );
 	VCROSS( &record.s.s_values[3], &record.s.s_values[9], norm );
 
-	/* create new rpp 5x5x.5 */
-	/* the 5x5 faces are in rot,fb plane */
+	/* create new rpp 20x20x2 */
+	/* the 20x20 faces are in rot,fb plane */
 	VUNITIZE( &record.s.s_values[3] );
 	VUNITIZE( &record.s.s_values[9] );
+	VSCALE(&record.s.s_values[3], &record.s.s_values[3], 508.0);
+	VSCALE(&record.s.s_values[9], &record.s.s_values[9], 508.0);
 	VADD2( &record.s.s_values[6],
 		&record.s.s_values[3],
 		&record.s.s_values[9] );
@@ -538,6 +602,11 @@ f_mirface()
 		(void)printf("Mirface: solid type must be ARB\n");
 		return;
 	}
+
+	if(es_type != ARB8 && es_type != ARB6) {
+		(void)printf("ARB%d: mirroring of faces not allowed\n",es_type);
+		return;
+	}
 	face = atoi( cmd_args[1] );
 	if( face < 1000 || face > 9999 ) {
 		(void)printf("ERROR: face must be 4 points\n");
@@ -565,27 +634,38 @@ f_mirface()
 		VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
 	}
 
-	pt[0] = face / 1000;
-	i = face - (pt[0]*1000);
-	pt[1] = i / 100;
-	i = i - (pt[1]*100);
-	pt[2] = i / 10;
-	pt[3] = i - (pt[2]*10);
+	if(es_type == ARB6 && face < 1000) { 	/* 3 point face */
+		pt[0] = face / 100;
+		i = face - (pt[0]*100);
+		pt[1] = i / 10;
+		pt[2] = i - (pt[1]*10);
+		pt[3] = 1;
+	}
+	else {
+		pt[0] = face / 1000;
+		i = face - (pt[0]*1000);
+		pt[1] = i / 100;
+		i = i - (pt[1]*100);
+		pt[2] = i / 10;
+		pt[3] = i - (pt[2]*10);
+	}
 
 	/* user can input face in any order - will use product of
 	 * face points to distinguish faces:
 	 *    product       face
-	 *       24         1234
-	 *     1680         5678
-	 *      252         2367
-	 *      160         1548
-	 *      672         4378
-	 *       60         1256
+	 *       24         1234 for ARB8
+	 *     1680         5678 for ARB8
+	 *      252         2367 for ARB8
+	 *      160         1548 for ARB8
+	 *      672         4378 for ARB8
+	 *       60         1256 for ARB8
+	 *	 10	    125 for ARB6
+	 *	 72	    346 for ARB6
 	 */
 	prod = 1;
 	for( i = 0; i <= 3; i++ )  {
 		prod *= pt[i];
-		--pt[i];
+		pt[i]--;
 		if( pt[i] > 7 )  {
 			(void)printf("bad face: %d\n",face);
 			return;
@@ -596,6 +676,10 @@ f_mirface()
 	switch( prod )  {
 
 	case 24:   /* mirror face 1234 */
+		if(es_type == ARB6) {
+			(void)printf("ARB6: mirroring of face %d not allowed\n",face);
+			return;
+		}
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
 			VELMUL( &lsolid.s_values[j*3],
@@ -614,6 +698,7 @@ f_mirface()
 		break;
 
 	case 60:   /* mirror face 1256 */
+	case 10:	/* mirror face 125 of ARB6 */
 		VELMUL( &lsolid.s_values[9],
 			&lsolid.s_values[0],
 			work );
@@ -629,6 +714,7 @@ f_mirface()
 		break;
 
 	case 672:   /* mirror face 4378 */
+	case 72:	/* mirror face 346 of ARB6 */
 		VELMUL( &lsolid.s_values[0],
 			&lsolid.s_values[9],
 			work );
@@ -673,9 +759,28 @@ f_mirface()
 			work );
 		break;
 
+	case 120:
+	case 180:
+		(void)printf("ARB6: mirroring of face %d not allowed\n",face);
+		return;
+
 	default:
 		(void)printf("bad face: %d\n", face );
 		return;
+	}
+
+	/* redo the plane equations */
+	for(i=0; i<6; i++) {
+		if(faces[es_type-4][i*4] == -1)
+			break;
+		pt[0] = faces[es_type-4][i*4];
+		pt[1] = faces[es_type-4][i*4+1];
+		pt[2] = faces[es_type-4][i*4+2];
+		if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
+			(void)printf("No equation for face %d%d%d%d\n",
+				pt[0]+1,pt[1]+1,pt[2]+1,faces[es_type-4][i*4+3]);
+			return;
+		}
 	}
 
 	/* Convert back to point&vector notation */
@@ -1091,17 +1196,9 @@ f_edgedir()
 	}
 
 	if( es_gentype != GENARB8 ) {
-		(void)printf("Edgeslope: solid type must be an ARB\n");
+		(void)printf("Edgedir: solid type must be an ARB\n");
 		return;
 	}
-
-	VMOVE(work, &es_rec.s.s_values[0]);
-	if( (point = es_menu / 10 - 1) ) {
-		VADD2(work, &es_rec.s.s_values[0], &es_rec.s.s_values[point*3]);
-	}
-
-	newedge = 1;
-	editarb( work );
 
 	/* set up slope -
 	 *	if 2 values input assume rot, fb used
@@ -1127,9 +1224,44 @@ f_edgedir()
 	}
 
 	/* get it done */
+	newedge = 1;
 	editarb( work );
 	sedraw++;
 
 }
+
+
+/*	EXT4TO6():	extrudes face pt1 pt2 pt3 of an ARB4 "distance"
+ *			to produce ARB6 using solid record "sp"
+ */
+ext4to6(pt1, pt2, pt3, distance, sp)
+int pt1, pt2, pt3;
+float distance;
+struct solidrec *sp;
+{
+
+	static struct solidrec tmp;
+	int i;
+
+	VMOVE(&tmp.s_values[0], &sp->s_values[pt1*3]);
+	VMOVE(&tmp.s_values[3], &sp->s_values[pt2*3]);
+	VMOVE(&tmp.s_values[12], &sp->s_values[pt3*3]);
+	VMOVE(&tmp.s_values[15], &sp->s_values[pt3*3]);
+
+	/* extrude "distance" to get remaining points */
+	VADD2(&tmp.s_values[6], &tmp.s_values[3], &es_peqn[6][0]);
+	VADD2(&tmp.s_values[9], &tmp.s_values[0], &es_peqn[6][0]);
+	VADD2(&tmp.s_values[18], &tmp.s_values[12], &es_peqn[6][0]);
+	VMOVE(&tmp.s_values[21], &tmp.s_values[18]);
+
+	/* copy to the original record */
+	for(i=0; i<=21; i+=3) {
+		VMOVE(&sp->s_values[i], &tmp.s_values[i]);
+	}
+
+	return;
+}
+
+
 
 

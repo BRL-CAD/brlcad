@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static void	center(), cpoint(), dwreg(), ellin(), move(), neg(), points(),
 		regin(), solin(), solpl(), tgcin(), tplane(),
 		vectors();
-static int	arb(), cgarbs(), comparvec(), gap(), planeeq(), redoarb(),
+static int	arb(), cgarbs(), comparvec(), gap(), planeeq(), redoarb(), 
 		region();
 
 static union record input;		/* Holds an object file record */
@@ -78,19 +78,17 @@ int flag, more;
 
 	if(type == GENARB8) {
 		/* check for arb8, arb7, arb6, arb5, arb4 */
-		if(input.s.s_cgtype >= 0) {
-			points();
-			if( (i = cgarbs(uvec, svec)) == 0 ) {
-				nmemb = param_count = memb_count = 0;
-				return(-1);	/* ERROR */
-			}
-			if(redoarb(uvec, svec, i) == 0) {
-				nmemb = param_count = memb_count = 0;
-				return(-1);	/* ERROR */
-			}
-			vectors();
+		points();
+		if( (i = cgarbs(uvec, svec)) == 0 ) {
+			nmemb = param_count = memb_count = 0;
+			return(-1);	/* ERROR */
 		}
-		cgtype = input.s.s_cgtype * -1;
+		if(redoarb(uvec, svec, i) == 0) {
+			nmemb = param_count = memb_count = 0;
+			return(-1);	/* ERROR */
+		}
+		vectors();
+		cgtype = input.s.s_cgtype;
 	}
 	if(cgtype == RPP || cgtype == BOX || cgtype == GENARB8)
 		cgtype = ARB8;
@@ -272,22 +270,22 @@ register int *svec;	/* array of like points */
 	switch( numuvec ) {
 
 	case 8:
-		input.s.s_cgtype = -8;  /* ARB8 */
+		input.s.s_cgtype = ARB8;  /* ARB8 */
 		break;
 
 	case 6:
-		input.s.s_cgtype = -7;	/* ARB7 */
+		input.s.s_cgtype = ARB7;	/* ARB7 */
 		break;
 
 	case 4:
 		if(svec[0] == 2)
-			input.s.s_cgtype = -6;	/* ARB6 */
+			input.s.s_cgtype = ARB6;	/* ARB6 */
 		else
-			input.s.s_cgtype = -5;	/* ARB5 */
+			input.s.s_cgtype = ARB5;	/* ARB5 */
 		break;
 
 	case 2:
-		input.s.s_cgtype = -4;	/* ARB4 */
+		input.s.s_cgtype = ARB4;	/* ARB4 */
 		break;
 
 	default:
@@ -306,11 +304,9 @@ register int *uvec, *svec;
 int numvec;
 {
 	register int i, j;
-	static int prod, cgtype;
+	static int prod;
 
-	cgtype = input.s.s_cgtype * -1;
-
-	switch( cgtype ) {
+	switch( input.s.s_cgtype ) {
 
 	case ARB8:
 		/* do nothing */
@@ -1347,3 +1343,40 @@ float *p1, *p2, *p3;
 	peq[(lc*4)+3] = VDOT(&peq[lc*4], p1);
 	return(1);
 }
+
+
+
+/* TYPE_ARB()	returns specific ARB type of record rec.  The record rec
+ *		is also rearranged to "standard" form.
+ */
+type_arb( rec )
+union record *rec;
+{
+	int i;
+	static int uvec[8], svec[11];
+
+	if( rec->s.s_type != GENARB8 )
+		return( 0 );
+
+	input = *rec;		/* copy */
+
+	/* convert input record to points */
+	points();
+
+	if( (i = cgarbs(uvec, svec)) == 0 )
+		return(0);
+
+	if( redoarb(uvec, svec, i) == 0 )
+		return( 0 );
+
+	/* convert to vectors in the rec record */
+	VMOVE(&rec->s.s_values[0], &input.s.s_values[0]);
+	for(i=3; i<=21; i+=3) {
+		VSUB2(&rec->s.s_values[i], &input.s.s_values[i], &input.s.s_values[0]);
+	}
+
+	return( input.s.s_cgtype );
+
+}
+
+

@@ -251,10 +251,19 @@ do_list( dp )
 	db_getrec( dp, &record, 0 );
 
 	if( record.u_id == ID_SOLID )  {
-		(void)printf("%s:  %s\n",
+		(void)printf("%s:  %s",
 			dp->d_namep,record.s.s_type==GENARB8 ? "GENARB8" :
 			record.s.s_type==GENTGC ? "GENTGC" :
 			record.s.s_type==GENELL ? "GENELL": "TOR" );
+
+		if(record.s.s_type == GENARB8) {
+			if( (i=record.s.s_cgtype) < 0 )
+				i *= -1;
+			(void)printf(" (%s)",i==ARB4 ? "ARB4" :
+				i==ARB5 ? "ARB5" : i==ARB6 ? "ARB6" :
+				i==ARB7 ? "ARB7" : i==RAW ? "ARB6" : "ARB8");
+		}
+		(void)printf("\n");
 
 		pr_solid( &record.s );
 

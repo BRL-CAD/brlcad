@@ -41,24 +41,80 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int	printf();
 
-static void	arb_ed(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
+static void	arb8_ed(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
+static void	arb7_ed(), arb6_ed(), arb5_ed(), arb4_ed();
 
 void pscale();
 
-struct menu_item  arb_menu[] = {
-	{ "ARB MENU", (void (*)())NULL, 0 },
-	{ "move edge 12", arb_ed, 12 },
-	{ "move edge 23", arb_ed, 23 },
-	{ "move edge 34", arb_ed, 43 },
-	{ "move edge 14", arb_ed, 14 },
-	{ "move edge 15", arb_ed, 15 },
-	{ "move edge 26", arb_ed, 26 },
-	{ "move edge 56", arb_ed, 56 },
-	{ "move edge 67", arb_ed, 67 },
-	{ "move edge 78", arb_ed, 87 },
-	{ "move edge 58", arb_ed, 58 },
-	{ "move edge 37", arb_ed, 37 },
-	{ "move edge 48", arb_ed, 48 },
+struct menu_item  arb8_menu[] = {
+	{ "ARB8 MENU", (void (*)())NULL, 0 },
+	{ "move edge 12", arb8_ed, 0 },
+	{ "move edge 23", arb8_ed, 1 },
+	{ "move edge 34", arb8_ed, 2 },
+	{ "move edge 14", arb8_ed, 3 },
+	{ "move edge 15", arb8_ed, 4 },
+	{ "move edge 26", arb8_ed, 5 },
+	{ "move edge 56", arb8_ed, 6 },
+	{ "move edge 67", arb8_ed, 7 },
+	{ "move edge 78", arb8_ed, 8 },
+	{ "move edge 58", arb8_ed, 9 },
+	{ "move edge 37", arb8_ed, 10 },
+	{ "move edge 48", arb8_ed, 11 },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  arb7_menu[] = {
+	{ "ARB7 MENU", (void (*)())NULL, 0 },
+	{ "move edge 12", arb7_ed, 0 },
+	{ "move edge 23", arb7_ed, 1 },
+	{ "move edge 34", arb7_ed, 2 },
+	{ "move edge 14", arb7_ed, 3 },
+	{ "move edge 15", arb7_ed, 4 },
+	{ "move edge 26", arb7_ed, 5 },
+	{ "move edge 56", arb7_ed, 6 },
+	{ "move edge 67", arb7_ed, 7 },
+	{ "move edge 37", arb7_ed, 8 },
+	{ "move edge 57", arb7_ed, 9 },
+	{ "move edge 45", arb7_ed, 10 },
+	{ "move point 5", arb7_ed, 11 },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  arb6_menu[] = {
+	{ "ARB6 MENU", (void (*)())NULL, 0 },
+	{ "move edge 12", arb6_ed, 0 },
+	{ "move edge 23", arb6_ed, 1 },
+	{ "move edge 34", arb6_ed, 2 },
+	{ "move edge 14", arb6_ed, 3 },
+	{ "move edge 15", arb6_ed, 4 },
+	{ "move edge 25", arb6_ed, 5 },
+	{ "move edge 36", arb6_ed, 6 },
+	{ "move edge 46", arb6_ed, 7 },
+	{ "move point 5", arb6_ed, 8 },
+	{ "move point 6", arb6_ed, 9 },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  arb5_menu[] = {
+	{ "ARB5 MENU", (void (*)())NULL, 0 },
+	{ "move edge 12", arb5_ed, 0 },
+	{ "move edge 23", arb5_ed, 1 },
+	{ "move edge 34", arb5_ed, 2 },
+	{ "move edge 14", arb5_ed, 3 },
+	{ "move edge 15", arb5_ed, 4 },
+	{ "move edge 25", arb5_ed, 5 },
+	{ "move edge 35", arb5_ed, 6 },
+	{ "move edge 45", arb5_ed, 7 },
+	{ "move point 5", arb5_ed, 8 },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  arb4_menu[] = {
+	{ "ARB4 MENU", (void (*)())NULL, 0 },
+	{ "move point 1", arb4_ed, 0 },
+	{ "move point 2", arb4_ed, 1 },
+	{ "move point 3", arb4_ed, 2 },
+	{ "move point 4", arb4_ed, 4 },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -71,7 +127,7 @@ struct menu_item  tgc_menu[] = {
 	{ "scale d",	tgc_ed, MENUP2 },
 	{ "rotate H",	tgc_ed, MENURH },
 	{ "rotate AxB",	tgc_ed, MENURAB },
-	{ "move end H (rt)", tgc_ed, MENUMH },
+	{ "move end H(rt)", tgc_ed, MENUMH },
 	{ "move end H", tgc_ed, MENUMHH },
 	{ "", (void (*)())NULL, 0 }
 };
@@ -105,14 +161,65 @@ struct menu_item  spline_menu[] = {
 
 
 static void
-arb_ed( arg )
+arb8_ed( arg )
 int arg;
 {
 	es_menu = arg;
 	es_edflag = EARB;
-	newedge = 1;
 }
 
+
+static void
+arb7_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = EARB;
+	if(arg == 11) {
+		/* move point 5 */
+		es_edflag = PTARB;
+		es_menu = 4;	/* location of point */
+	}
+}
+
+static void
+arb6_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = EARB;
+	if(arg == 8) {
+		/* move point 5   location = 4 */
+		es_edflag = PTARB;
+		es_menu = 4;
+	}
+	if(arg == 9) {
+		/* move point 6   location = 6 */
+		es_edflag = PTARB;
+		es_menu = 6;
+	}
+}
+
+static void
+arb5_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = EARB;
+	if(arg == 8) {
+		/* move point 5 at loaction 4 */
+		es_edflag = PTARB;
+		es_menu = 4;
+	}
+}
+
+static void
+arb4_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = PTARB;
+}
 
 static void
 tgc_ed( arg )
@@ -136,7 +243,6 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 }
-
 
 static void
 ell_ed( arg )
@@ -209,6 +315,10 @@ union record *recp;
 void
 init_sedit()
 {
+	union record temprec;	/* copy of solid record to determine type */
+	register int i, type, p1, p2, p3;
+	float *op;
+
 	/*
 	 * Check for a processed region or other illegal solid.
 	 */
@@ -229,8 +339,63 @@ init_sedit()
 	}
 
 	es_menu = 0;
-	if(es_rec.s.s_cgtype < 0)
-		es_rec.s.s_cgtype *= -1;
+
+	temprec = es_rec;
+
+	if( (type = es_rec.s.s_cgtype) < 0 )
+		type *= -1;
+	if(type == BOX || type == RPP)
+		type = ARB8;
+	if(type == RAW) {
+		/* rearrange vectors to correspond to the
+		 *  	"standard" ARB6
+		 */
+		VMOVE(&temprec.s.s_values[3], &es_rec.s.s_values[9]);
+		VMOVE(&temprec.s.s_values[6], &es_rec.s.s_values[21]);
+		VMOVE(&temprec.s.s_values[9], &es_rec.s.s_values[12]);
+		VMOVE(&temprec.s.s_values[12], &es_rec.s.s_values[3]);
+		VMOVE(&temprec.s.s_values[15], &es_rec.s.s_values[6]);
+		VMOVE(&temprec.s.s_values[18], &es_rec.s.s_values[18]);
+		VMOVE(&temprec.s.s_values[21], &es_rec.s.s_values[15]);
+		es_rec = temprec;
+		type = ARB6;
+	}
+	es_rec.s.s_cgtype = type;
+
+	if( es_rec.s.s_type == GENARB8 ) {
+		/* find the comgeom arb type */
+		if( (type = type_arb( &es_rec )) == 0 ) {
+			(void)printf("%s: BAD ARB\n",es_rec.s.s_name);
+			return;
+		}
+
+		temprec = es_rec;
+		es_rec.s.s_cgtype = type;
+
+		/* find the plane equations */
+		/* point notation - use temprec record */
+		for(i=3; i<=21; i+=3) {
+			op = &temprec.s.s_values[i];
+			VADD2(op, op, &es_rec.s.s_values[0]);
+		}
+		type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
+		for(i=0; i<6; i++) {
+			if(faces[type][i*4] == -1)
+				break;	/* faces are done */
+			p1 = faces[type][i*4];
+			p2 = faces[type][i*4+1];
+			p3 = faces[type][i*4+2];
+			if(planeqn(i, p1, p2, p3, &temprec.s)) {
+				(void)printf("No eqn for face %d%d%d%d\n",
+					p1+1,p2+1,p3+1,faces[type][i*4+3]+1);
+				return;
+			}
+/*
+printf("peqn[%d][]: %.4f %.4f %.4f %.4f\n",i,es_peqn[i][0],es_peqn[i][1],es_peqn[i][2],es_peqn[i][3]);
+*/
+		}
+	}
+
 
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat );
@@ -265,7 +430,25 @@ sedit_menu()  {
 	switch( es_gentype ) {
 
 	case GENARB8:
-		menu_array[MENU_L1] = arb_menu;
+		switch( es_type ) {
+
+			case ARB8:
+				menu_array[MENU_L1] = arb8_menu;
+			break;
+
+		 	case ARB7:
+				menu_array[MENU_L1] = arb7_menu;
+			break;
+		 	case ARB6:
+				menu_array[MENU_L1] = arb6_menu;
+			break;
+		 	case ARB5:
+				menu_array[MENU_L1] = arb5_menu;
+			break;
+		 	case ARB4:
+				menu_array[MENU_L1] = arb4_menu;
+			break;
+		}
 		break;
 	case GENTGC:
 		menu_array[MENU_L1] = tgc_menu;
@@ -409,6 +592,7 @@ sedit()
 		pscale();
 		break;
 
+	case PTARB:	/* move an ARB point */
 	case EARB:   /* edit an ARB edge */
 		if( inpara ) { 
 			/* apply es_invmat to convert to real model space */
@@ -554,12 +738,16 @@ register struct solidrec *sp;
 	static vect_t unitv;
 	static float ang[5];
 	static struct solidrec local;
+	register int length;
+	int cgtype;
 
 	/* make a private copy in local units */
 	for(i=0; i<24; i+=3) {
 		VSCALE(work, &sp->s_values[i], base2local);
 		VMOVE(&local.s_values[i], work);
 	}
+	if( (cgtype = sp->s_cgtype) < 0 )
+		cgtype *= -1;
 
 	switch( sp->s_type ) {
 
@@ -589,11 +777,46 @@ register struct solidrec *sp;
 
 	case GENARB8:
 		PR_PT( 0, '1', &local.s_values[0] );
-		for(i=3; i<=21; i+=3) {
-			VADD2( work, &local.s_values[i], &local.s_values[0] );
-			PR_PT( i/3, '1'+(i/3), work );
+		switch( cgtype ) {
+			case ARB8:
+				es_nlines = length = 8;
+/* common area for arbs */
+arbcommon:
+				for(i=3; i<=3*length; i+=3) {
+					VADD2( work, &local.s_values[i], &local.s_values[0] );
+					PR_PT( i/3, '1'+(i/3), work );
+				}
+			break;
+
+			case ARB7:
+				es_nlines = length = 7;
+				goto arbcommon;
+			break;
+
+			case ARB6:
+				es_nlines = length = 6;
+				VMOVE(&local.s_values[15], &local.s_values[18]);
+				goto arbcommon;
+			break;
+
+			case ARB5:
+				es_nlines = length = 5;
+				goto arbcommon;
+			break;
+
+			case ARB4:
+				es_nlines = length = 4;
+				VMOVE(&local.s_values[9], &local.s_values[12]);
+				goto arbcommon;
+			break;
+
+			default:
+				/* use ARB8 */
+				es_nlines = length = 8;
+				goto arbcommon;
+			break;
+
 		}
-		es_nlines = 8;
 		break;
 
 	case GENELL:

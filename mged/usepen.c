@@ -206,6 +206,19 @@ usepen()
 			VSUB2( &es_rec.s.s_tgc_H, tr_temp, &es_rec.s.s_tgc_V );
 			sedraw = 1;
 			return;
+		case PTARB:
+			/* move an arb point to indicated point */
+			/* point is located at es_values[es_menu*3] */
+			VADD2(temp, es_rec.s.s_values, &es_rec.s.s_values[es_menu*3]);
+			MAT4X3PNT(pos_model, es_mat, temp);
+			MAT4X3PNT(pos_view, model2view, pos_model);
+			pos_view[X] = dm_values.dv_xpen / 2047.0;
+			pos_view[Y] = dm_values.dv_ypen / 2047.0;
+			MAT4X3PNT(temp, view2model, pos_view);
+			MAT4X3PNT(pos_model, es_invmat, temp);
+			editarb( pos_model );
+			sedraw = 1;
+			return;
 		case EARB:
 			/* move arb edge, through indicated point */
 			tabvec[X] = dm_values.dv_xpen / 2047.0;

@@ -2,10 +2,10 @@
  *			E D A R B . C
  *
  * Functions -
- *	editarb		edit ARB edge
- *	do_new_edge	internal routine for editarb()
- *	plane		attempts to find equation of plane
- *	planeqn		?
+ *	editarb		edit ARB edge (and move points)
+ *	planeqn		finds plane equation given 3 points
+ *	intersect	finds intersection point of three planes
+ *	mv_edge		moves an arb edge
  *
  *  Author -
  *	Keith A. Applin
@@ -36,29 +36,183 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int	printf();
 
-static void	findsam();
-static int	compar(), special();
+static int	compar();
 
 /*
  *  			E D I T A R B
  *  
- *  An ARB edge is moved by finding the slope of the
- *  line containing the edge, moving this line to the
- *  desired location, and intersecting the new line
- *  with the 2 bounding planes to define the new edge.
+ *  An ARB edge is moved by finding the direction of
+ *  the line containing the edge and the 2 "bounding"
+ *  planes.  The new edge is found by intersecting the
+ *  new line location with the bounding planes.  The
+ *  two "new" planes thus defined are calculated and the
+ *  affected points are calculated by intersecting planes.
+ *  This keeps ALL faces planar.
  *
- *  If es_menu = (a*10)+b then moving edge ab.
  */
+
+/*  The storage for the "specific" ARB types is :
+ *
+ *	ARB4	0 1 2 0 3 3 3 3
+ *	ARB5	0 1 2 3 4 4 4 4
+ *	ARB6	0 1 2 3 4 4 5 5
+ *	ARB7	0 1 2 3 4 5 6 4
+ *	ARB8	0 1 2 3 4 5 6 7
+ */
+
+/* Another summary of how the vertices of ARBs are stored:
+ *
+ * Vertices:	1	2	3	4	5	6	7	8
+ * Location----------------------------------------------------------------
+ *	ARB8	0	1	2	3	4	5	6	7
+ *	ARB7	0	1	2	3	4,7	5	6
+ *	ARB6	0	1	2	3	4,5	6,7
+ * 	ARB5	0	1	2	3	4,5,6,7
+ *	ARB4	0,3	1	2	4,5,6,7
+ */
+
+/* The following arb editing arrays generally contain the following:
+ *
+ *	location 	comments
+ *------------------------------------------------------------------------
+ *	0,1		edge end points
+ * 	2,3		bounding planes 1 and 2
+ *	4, 5,6,7	plane 1 to recalculate, using next 3 points
+ *	8, 9,10,11	plane 2 to recalculate, using next 3 points
+ *	12, 13,14,15	plane 3 to recalculate, using next 3 points
+ *	16,17		points (vertices) to recalculate
+ *
+ *
+ * Each line is repeated for each edge (or point) to move
+*/
+
+/* edit array for arb8's */
+static short earb8[12][18] = {
+	{0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
+	{1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
+	{2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,7},	/* edge 34 */
+	{0,3, 4,5, 0,0,1,3, 2,0,3,4, -1,0,0,0, 2,7},	/* edge 41 */
+	{0,4, 0,1, 2,0,4,3, 4,0,1,4, -1,0,0,0, 7,5},	/* edge 15 */
+	{1,5, 0,1, 4,0,1,5, 3,1,2,5, -1,0,0,0, 4,6},	/* edge 26 */
+	{4,5, 2,3, 4,0,5,4, 1,4,5,6, -1,0,0,0, 1,7},	/* edge 56 */
+	{5,6, 4,5, 3,1,5,6, 1,4,5,6, -1,0,0,0, 2,7},	/* edge 67 */
+	{6,7, 3,2, 5,2,7,6, 1,4,6,7, -1,0,0,0, 3,4},	/* edge 78 */
+	{4,7, 4,5, 2,0,7,4, 1,4,5,7, -1,0,0,0, 3,6},	/* edge 58 */
+	{2,6, 0,1, 3,1,2,6, 5,2,3,6, -1,0,0,0, 5,7},	/* edge 37 */
+	{3,7, 0,1, 2,0,3,7, 5,2,3,7, -1,0,0,0, 4,6},	/* edge 48 */
+};
+
+/* edit array for arb7's */
+static short earb7[12][18] = {
+	{0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
+	{1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
+	{2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,4},	/* edge 34 */
+	{0,3, 4,5, 0,0,1,3, 2,0,3,4, -1,0,0,0, 2,-1},	/* edge 41 */
+	{0,4, 0,5, 4,0,5,4, 2,0,3,4, 1,4,5,6, 1,-1},	/* edge 15 */
+	{1,5, 0,1, 4,0,1,5, 3,1,2,5, -1,0,0,0, 4,6},	/* edge 26 */
+	{4,5, 5,3, 2,0,3,4, 4,0,5,4, 1,4,5,6, 1,-1},	/* edge 56 */
+	{5,6, 4,5, 3,1,6,5, 1,4,5,6, -1,0,0,0, 2, -1},	/* edge 67 */
+	{2,6, 0,1, 5,2,3,6, 3,1,2,6, -1,0,0,0, 4,5},	/* edge 37 */
+	{4,6, 4,3, 2,0,3,4, 5,3,4,6, 1,4,5,6, 2,-1},	/* edge 57 */
+	{3,4, 0,1, 4,0,1,4, 2,0,3,4, 5,2,3,4, 5,6},	/* edge 45 */
+	{-1,-1, -1,-1, 5,2,3,4, 4,0,1,4, 8,2,1,-1, 6,5},	/* point 5 */
+};
+
+/* edit array for arb6's */
+static short earb6[10][18] = {
+	{0,1, 2,1, 3,0,1,4, 0,0,1,2, -1,0,0,0, 3,-1},	/* edge 12 */
+	{1,2, 3,4, 1,1,2,5, 0,0,1,2, -1,0,0,0, 3,4},	/* edge 23 */
+	{2,3, 1,2, 4,2,3,5, 0,0,2,3, -1,0,0,0, 1,-1},	/* edge 34 */
+	{0,3, 3,4, 2,0,3,5, 0,0,1,3, -1,0,0,0, 4,2},	/* edge 14 */
+	{0,4, 0,1, 3,0,1,4, 2,0,3,4, -1,0,0,0, 6,-1},	/* edge 15 */
+	{1,4, 0,2, 3,0,1,4, 1,1,2,4, -1,0,0,0, 6,-1},	/* edge 25 */
+	{2,6, 0,2, 4,6,2,3, 1,1,2,6, -1,0,0,0, 4,-1},	/* edge 36 */
+	{3,6, 0,1, 4,6,2,3, 2,0,3,6, -1,0,0,0, 4,-1},	/* edge 46 */
+	{-1,-1, -1,-1, 2,0,3,4, 1,1,2,4, 3,0,1,4, 6,-1},/* point 5 */
+	{-1,-1, -1,-1, 2,0,3,6, 1,1,2,6, 4,2,3,6, 4,-1},/* point 6 */
+};
+
+/* edit array for arb5's */
+static short earb5[9][18] = {
+	{0,1, 4,2, 0,0,1,2, 1,0,1,4, -1,0,0,0, 3,-1},	/* edge 12 */
+	{1,2, 1,3, 0,0,1,2, 2,1,2,4, -1,0,0,0, 3,-1},	/* edge 23 */
+	{2,3, 2,4, 0,0,2,3, 3,2,3,4, -1,0,0,0, 1,-1},	/* edge 34 */
+	{0,3, 1,3, 0,0,1,3, 4,0,3,4, -1,0,0,0, 2,-1},	/* edge 14 */
+	{0,4, 0,2, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 15 */
+	{1,4, 0,3, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 25 */
+	{2,4, 0,4, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1}, 	/* edge 35 */
+	{3,4, 0,1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 45 */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 5 */
+};
+
+/* edit array for arb4's */
+static short earb4[5][18] = {
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 1 */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 2 */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 3 */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* dummy */
+	{-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 4 */
+};
+
+
 int
 editarb( pos_model )
 vect_t pos_model;
 {
-	register float *op;
-	register float *opp;
 	static double t;
-	register int i;
-	static int j, k;
-	static int pt1, pt2;
+	static int pt1, pt2, bp1, bp2, newp, p1, p2, p3, p4;
+	short *edptr;		/* pointer to arb edit array */
+	short *final;		/* location of points to redo */
+	register float *op;
+	static int i, *iptr;
+
+	/* set the pointer */
+	switch( es_type ) {
+
+		case ARB4:
+			edptr = &earb4[es_menu][0];
+			final = &earb4[es_menu][16];
+		break;
+
+		case ARB5:
+			edptr = &earb5[es_menu][0];
+			final = &earb5[es_menu][16];
+			if(es_edflag == PTARB) {
+				edptr = &earb5[8][0];
+				final = &earb5[8][16];
+			}
+		break;
+
+		case ARB6:
+			edptr = &earb6[es_menu][0];
+			final = &earb6[es_menu][16];
+			if(es_edflag == PTARB) {
+				i = 9;
+				if(es_menu == 4)
+					i = 8;
+				edptr = &earb6[i][0];
+				final = &earb6[i][16];
+			}
+		break;
+
+		case ARB7:
+			edptr = &earb7[es_menu][0];
+			final = &earb7[es_menu][16];
+			if(es_edflag == PTARB) {
+				edptr = &earb7[11][0];
+				final = &earb7[11][16];
+			}
+		break;
+
+		case ARB8:
+			edptr = &earb8[es_menu][0];
+			final = &earb8[es_menu][16];
+		break;
+
+		default:
+			(void)printf("edarb: unknown ARB type\n");
+		return(1);
+	}
 
 	/* convert to point notation (in place ----- DANGEROUS) */
 	for(i=3; i<=21; i+=3) {
@@ -66,270 +220,167 @@ vect_t pos_model;
 		VADD2( op, op, &es_rec.s.s_values[0] );
 	}
 
-	if( newedge > 0 ) {
-		newedge = 0;
-		if( do_new_edge() < 0 )
+	/* do the arb editing */
+
+	if( es_edflag == PTARB ) {
+		/* moving a point - not an edge */
+		VMOVE(&es_rec.s.s_values[es_menu*3], &pos_model[0]);
+		edptr += 4;
+	}
+
+	if( es_edflag == EARB ) {
+		/* moving an edge */
+		pt1 = *edptr++;
+		pt2 = *edptr++;
+		/* direction of this edge */
+		if( newedge ) {
+			/* edge direction comes from edgedir() */
+			VMOVE(pos_model, &es_rec.s.s_values[pt1*3]);
+			newedge = 0;
+		}
+		else {
+			/* must calculate edge direction */
+			VSUB2(es_m, &es_rec.s.s_values[3*pt2], &es_rec.s.s_values[3*pt1]);
+		}
+		if(MAGNITUDE(es_m) == 0.0) 
+			goto err;
+		/* bounding planes bp1,bp2 */
+		bp1 = *edptr++;
+		bp2 = *edptr++;
+
+		/* move the edge */
+/*
+printf("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
+*/
+		if( mv_edge(pos_model, bp1, bp2, pt1, pt2) )
 			goto err;
 	}
 
-	/* Now we have line and planes data - move the edge */
-
-	pt1 = (es_menu / 10) - 1;
-	pt2 = (es_menu % 10) - 1;
-
-	/* 
-	 * Line containing edge must now go throug
-	 * point contained in pos_model[] array
-	 */
-
-	if( VDOT(es_plano, es_m) == 0 ||
-	    VDOT(es_plant, es_m) == 0 ) {
-		(void)printf("edge (slope) parallel to face\n");
-		goto err;
-	}
-	t = (es_plano[3] - VDOT(es_plano, pos_model)) / VDOT(es_plano, es_m);
-	op = &es_rec.s.s_values[pt1*3];
-	VCOMP1( op, pos_model, t, es_m );
-
-	t = (es_plant[3] - VDOT(es_plant, pos_model)) / VDOT(es_plant, es_m);
-	op = &es_rec.s.s_values[pt2*3];
-	VCOMP1( op, pos_model, t, es_m );
-
-	/* move along any like points */
-	k = pt1;
-	for(i=0; i<6; i++) {
-		if(i >= 3)
-			k = pt2;
-		if( (j = es_same[i]) > -1 ) {
-			op = &es_rec.s.s_values[j*3];
-			opp = &es_rec.s.s_values[k*3];
-			VMOVE(op, opp);
+	/* editing is done - insure planar faces */
+	/* redo plane eqns that changed */
+	newp = *edptr++; 	/* plane to redo */
+	if( newp == 9 ) {
+		/* special flag --> redo all the planes */
+		iptr = &faces[es_type-4][0];
+		for(i=0; i<6; i++) {
+			p1 = *iptr++;
+			p2 = *iptr++;
+			p3 = *iptr++;
+			p4 = *iptr++;
+/*
+printf("REDO plane %d with points %d %d %d\n",i+1,p1+1,p2+1,p3+1);
+*/
+			if( planeqn(i, p1, p2, p3, &es_rec.s) )
+				goto err;
+			if( *iptr == -1 )
+				break;		/* finished */
 		}
+	}
+	if(newp >= 0 && newp < 6) {
+		for(i=0; i<3; i++) {
+			/* redo this plane (newp), use points p1,p2,p3 */
+			p1 = *edptr++;
+			p2 = *edptr++;
+			p3 = *edptr++;
+/*
+printf("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
+*/
+			if( planeqn(newp, p1, p2, p3, &es_rec.s) )
+				goto err;
+			/* next plane */
+			if( (newp = *edptr++) == -1 || newp == 8 )
+				break;
+		}
+	}
+	if(newp == 8) {
+		/* special...redo next planes using pts defined in faces */
+		for(i=0; i<3; i++) {
+			if( (newp = *edptr++) == -1 )
+				break;
+			iptr = &faces[es_type-4][4*newp];
+			p1 = *iptr++;
+			p2 = *iptr++;
+			p3 = *iptr++;
+/*
+printf("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
+*/
+			if( planeqn(newp, p1, p2, p3, &es_rec.s) )
+				goto err;
+		}
+	}
+
+	/* the changed planes are all redone
+	 *	push necessary points back into the planes
+	 */
+	edptr = final;	/* point to the correct location */
+	for(i=0; i<2; i++) {
+		if( (p1 = *edptr++) == -1 )
+			break;
+		/* intersect proper planes to define vertex p1 */
+/*
+printf("intersect: type=%d   point = %d\n",es_type,p1+1);
+*/
+		if( intersect( es_type, p1*3, p1, &es_rec.s ) )
+			goto err;
+	}
+
+	/* Special case for ARB7: move point 5 .... must
+	 *	recalculate plane 2 = 456
+	 */
+	if(es_type == ARB7 && es_edflag == PTARB) {
+/*
+printf("redo plane 2 == 5,6,7 for ARB7\n");
+*/
+		if( planeqn(2, 4, 5, 6, &es_rec.s) )
+			goto err;
+	}
+
+	/* carry along any like points */
+	switch( es_type ) {
+		case ARB8:
+		break;
+
+		case ARB7:
+			VMOVE(&es_rec.s.s_values[21], &es_rec.s.s_values[12]);
+		break;
+
+		case ARB6:
+			VMOVE(&es_rec.s.s_values[15], &es_rec.s.s_values[12]);
+			VMOVE(&es_rec.s.s_values[21], &es_rec.s.s_values[18]);
+		break;
+
+		case ARB5:
+			for(i=15; i<=21; i+=3) {
+				VMOVE(&es_rec.s.s_values[i], &es_rec.s.s_values[12]);
+			}
+		break;
+
+		case ARB4:
+			VMOVE(&es_rec.s.s_values[9], &es_rec.s.s_values[0]);
+			for(i=15; i<=21; i+=3) {
+				VMOVE(&es_rec.s.s_values[i], &es_rec.s.s_values[12]);
+			}
+		break;
 	}
 
 	/* back to vector notation */
 	for(i=3; i<=21; i+=3) {
-		opp = &es_rec.s.s_values[i];
-		VSUB2( opp, opp, &es_rec.s.s_values[0] );
+		op = &es_rec.s.s_values[i];
+		VSUB2( op, op, &es_rec.s.s_values[0] );
 	}
 	return(0);		/* OK */
 
 err:
 	/* Error handling */
-	(void)printf("cannot move edge: %d\n", es_menu);
+	(void)printf("cannot move edge: %d%d\n", pt1+1,pt2+1);
 	es_edflag = IDLE;
 
 	/* back to vector notation */
 	for(i=3; i<=21; i+=3) {
-		opp = &es_rec.s.s_values[i];
-		VSUB2(opp, opp, &es_rec.s.s_values[0]);
+		op = &es_rec.s.s_values[i];
+		VSUB2(op, op, &es_rec.s.s_values[0]);
 	}
 	return(1);		/* BAD */
-}
-
-/*
- *  			D O _ N E W _ E D G E
- *  
- *  Internal routine for editarb(), called whenever a new
- *  edge has been selected for editing.
- *  
- *  Find the line equation, and the equations of the bounding planes.
- */
-int
-do_new_edge()
-{
-	register float *op;
-	register float *opp;
-	static int i, j;
-	static int pt1,pt2;
-
-	/* find line data */
-	pt1 = (es_menu / 10) - 1;
-	pt2 = (es_menu % 10) - 1;
-
-	for(i=0; i<6; i++)
-		es_same[i] = -1;
-
-	/* find any equal points to move along with the edge */
-	findsam(0, pt1, &es_rec.s);
-	findsam(3, pt2, &es_rec.s);
-	pt1*=3;
-	pt2*=3;
-
-	/* find slope of line containing edge pt1, pt2 */
-	op = &es_rec.s.s_values[pt2];
-	opp = &es_rec.s.s_values[pt1];
-	VSUB2(es_m, op, opp);
-	if(MAGNITUDE(es_m) == 0.0)
-		return(-1);
-
-	/* find bounding planes and equations */
-	/* put equation coefficients in plano[] and plant[] arrays */
-	if( es_menu == 15 ||
-	    es_menu == 26 ||
-	    es_menu == 37 ||
-	    es_menu == 48) {
-		/*
-		 * plane() returns:
-		 *  -1  if successful
-		 *   0  if unsuccessful
-		 *  >0  if degenerate plane (special case)
-		 */
-		if( (j = plane(0, 1, 2, 3, &es_rec.s)) > 0 ) { 
-			/* special case */
-			i = 2;
-			if( j == 3 )
-				i = 1;
-			/* try to find a substitute
-			   plane for the degenerate plane */
-			if((j = special(i, pt1, &es_rec.s))>0)
-				return(-1);
-		}
-		if(j == 0)
-			return(-1);
-
-		VMOVE(&es_plano[0], &es_plant[0]);
-		es_plano[3] = es_plant[3];
-
-		if( (j = plane(4, 5, 6, 7, &es_rec.s)) > 0 ) {
-			i = 2;
-			if(j == 47)
-				i = 1;
-			if( (j = special(i, pt1, &es_rec.s)) > 0)
-				return(-1);
-		}
-		if(j == 0)
-			return(-1);
-	} else if(
-	    es_menu == 12 ||
-	    es_menu == 56 ||
-	    es_menu == 87 ||
-	    es_menu == 43
-	) {
-		if( (j = plane(0, 3, 7, 4, &es_rec.s)) > 0 ) {
-			i = 3;
-			if(j == 3)
-				i = 1;
-			if( (j =special(i, pt1, &es_rec.s)) > 0 )
-				return(-1);
-		}
-		if(j == 0)
-			return(-1);
-
-		VMOVE(&es_plano[0], &es_plant[0]);
-		es_plano[3] = es_plant[3];
-
-		if( (j = plane(1, 2, 6, 5, &es_rec.s)) > 0 ) {
-			i = 3;
-			if(j == 12)
-				i = 1;
-			if( (j = special(i, pt1, &es_rec.s)) > 0 ) {
-				return(-1);
-			}
-		}
-		if(j == 0)
-			return(-1);
-	} else {
-		if( (j = plane(0, 1, 5, 4, &es_rec.s)) > 0 ) {
-			i = 3;
-			if(j == 1)
-				i = 2;
-			if( (j = special(i, pt1, &es_rec.s)) > 0)
-				return(-1);
-		}
-		if(j == 0)
-			return(-1);
-
-		VMOVE(&es_plano[0], &es_plant[0]);
-		es_plano[3] = es_plant[3];
-
-		if( (j = plane(2, 3, 7, 6, &es_rec.s)) > 0 ) {
-			i = 3;
-			if(j == 23)
-				i = 2;
-			if( (j = special(i, pt1, &es_rec.s)) > 0 ) {
-				return(-1);
-			}
-		}
-		if(j == 0)
-			return(-1);
-	}
-	return(0);		/* OK */
-}
-
-/*
- * 			P L A N E
- * 
- * Attempts to find equation of plane abcd
- *
- *   returns  >0 if plane abcd is degenerate
- *	    -1 if equation of plane abcd is found
- *	     0 if cannot find equation of plane abcd
- *		  yet plane is NOT degenerate
- */
-int
-plane( a, b, c, d, sp )
-struct solidrec *sp;
-int a,b,c,d;
-{
-
-	/* check for special case (degenerate plane) */
-	if(compar(&sp->s_values[a*3],&sp->s_values[b*3]) && 
-	   compar(&sp->s_values[c*3],&sp->s_values[d*3])) 
-		return((a*10 + b));
-	if(compar(&sp->s_values[a*3],&sp->s_values[c*3]) && 
-	   compar(&sp->s_values[b*3],&sp->s_values[d*3])) 
-		return((a*10 + c));
-	if(compar(&sp->s_values[a*3],&sp->s_values[d*3]) &&
-	   compar(&sp->s_values[b*3],&sp->s_values[c*3])) 
-		return((a*10 + d));
-
-	/* find equation of plane abcd */
-	if( planeqn(a,b,c,sp) )
-		return(-1);
-	if( planeqn(a,b,d,sp) )
-		return(-1);
-	if( planeqn(a,c,d,sp) )
-		return(-1);
-	if( planeqn(b,c,d,sp) )
-		return(-1);
-	return(0);
-}
-
-/*
- *  			S P E C I A L
- */
-static int
-special( a , b, sp )
-struct solidrec *sp;
-int a,b;
-{
-	b /= 3;
-	switch( a ) {
-
-	case 1:
-		if( b == 0 || b == 1 || b == 4 )
-			return( plane(2,3,6,7,sp) );
-		else
-			return( plane(0,1,5,4,sp) );
-
-	case 2:
-		if( b == 1 || b == 2 || b == 5 )
-			return( plane(0,4,3,7,sp) );
-		else
-			return( plane(1,2,6,5,sp) );
-
-	case 3:
-		if( b == 4 || b == 5 || b == 7 )
-			return( plane(0,1,2,3,sp) );
-		else
-			return( plane(4,5,6,7,sp) );
-
-	default:
-		(void)printf("subroutine special: edge input error\n");
-		return(0);
-	}
-	/*NOTREACHED*/
 }
 
 
@@ -348,42 +399,102 @@ float *x,*y;
 }
 
 
-static void
-findsam( flag, pt, sp )
-int flag,pt;
-struct solidrec *sp;
-{
-	int i;
-
-	for(i=0; i<8; i++) {
-		if( (compar(&sp->s_values[i*3],&sp->s_values[pt*3])) &&
-								(i != pt) ) 
-			es_same[flag++] = i;
-	}
-}
-
-
+/*   PLANEQN:
+ *	finds equation of a plane defined by 3 points use1,use2,use3
+ *	of solid record sp.  Equation is stored at "loc" of es_peqn
+ *	array.
+ */
 int
-planeqn( a, b, c, sp )
-int a,b,c;
+planeqn(loc, use1, use2, use3, sp)
+int loc, use1, use2, use3;
 struct solidrec *sp;
 {
-	int i;
 	float work[3],worc[3],mag;
 
-	if( compar(&sp->s_values[a*3],&sp->s_values[b*3]) )
-		return(0);
-	if( compar(&sp->s_values[b*3],&sp->s_values[c*3]) )
-		return(0);
-	if( compar(&sp->s_values[a*3],&sp->s_values[c*3]) )
-		return(0);
-	VSUB2(work,&sp->s_values[b*3],&sp->s_values[a*3]);
-	VSUB2(worc,&sp->s_values[c*3],&sp->s_values[a*3]);
-	VCROSS(es_plant,work,worc);
-	if( (mag = MAGNITUDE(es_plant)) == 0.0 )  
-		return(0);
-	VSCALE(es_plant,es_plant,1.0/mag);
-	i = a*3;
-	es_plant[3] = VDOT(es_plant,&sp->s_values[i]);
-	return(1);
+	if( compar(&sp->s_values[use1*3],&sp->s_values[use2*3]) )
+		return(1);
+	if( compar(&sp->s_values[use2*3],&sp->s_values[use3*3]) )
+		return(1);
+	if( compar(&sp->s_values[use1*3],&sp->s_values[use3*3]) )
+		return(1);
+	VSUB2(work,&sp->s_values[use2*3],&sp->s_values[use1*3]);
+	VSUB2(worc,&sp->s_values[use3*3],&sp->s_values[use1*3]);
+	VCROSS(&es_peqn[loc][0],work,worc);
+	if( (mag = MAGNITUDE(&es_peqn[loc][0])) == 0.0 )  
+		return(1);
+	VSCALE(&es_peqn[loc][0],&es_peqn[loc][0],1.0/mag);
+	es_peqn[loc][3] = VDOT(&es_peqn[loc][0],&sp->s_values[use1*3]);
+	return(0);
 }
+
+/*	INTERSECT:
+ *	Finds intersection point of three planes.
+ *		The planes are at es_planes[type][loc] and
+ *		the result is stored at "pos" in solid struct sp.
+ */
+int
+intersect( type, loc, pos, sp )
+int type, loc, pos;
+struct solidrec *sp;
+{
+	float vec1[3], vec2[3], vec3[3];
+	float d;
+	int i, j, i1, i2, i3;
+
+	j = type - 4;
+
+	i1 = planes[j][loc];
+	i2 = planes[j][loc+1];
+	i3 = planes[j][loc+2];
+/*
+printf("intersect planes are %d %d %d\n",i1+1,i2+1,i3+1);
+*/
+
+	VCROSS(vec1, &es_peqn[i2][0], &es_peqn[i3][0]);
+	if( (d = VDOT(&es_peqn[i1][0], vec1)) == 0.0 ) 
+		return( 1 );
+	d = 1.0 / d;
+	VCROSS(vec2, &es_peqn[i1][0], &es_peqn[i3][0]);
+	VCROSS(vec3, &es_peqn[i1][0], &es_peqn[i2][0]);
+	for(i=0; i<3; i++) {
+		j = pos * 3 + i;
+		es_rec.s.s_values[j] = d * ((es_peqn[i1][3] * vec1[i])
+					  - (es_peqn[i2][3] * vec2[i])
+					  + (es_peqn[i3][3] * vec3[i]));
+	}
+
+	return( 0 );
+
+}
+
+
+/*  MV_EDGE:
+ *	Moves an arb edge (end1,end2) with bounding
+ *	planes bp1 and bp2 through point "thru"
+ */
+int
+mv_edge(thru, bp1, bp2, end1, end2)
+vect_t thru;
+int bp1, bp2, end1, end2;
+{
+	float *op;
+	double t;
+
+	if( VDOT(&es_peqn[bp1][0], es_m) == 0 ||
+	    VDOT(&es_peqn[bp2][0], es_m) == 0 ) {
+		(void)printf("edge (direction) parallel to face\n");
+		return( 1 );
+	}
+	t = (es_peqn[bp1][3] - VDOT(&es_peqn[bp1][0], thru)) / VDOT(&es_peqn[bp1][0], es_m);
+	op = &es_rec.s.s_values[end1*3];
+	VCOMP1( op, thru, t, es_m );
+
+	t = (es_peqn[bp2][3] - VDOT(&es_peqn[bp2][0], thru)) / VDOT(&es_peqn[bp2][0], es_m);
+	op = &es_rec.s.s_values[end2*3];
+	VCOMP1( op, thru, t, es_m );
+
+	return( 0 );
+}
+
+
+

@@ -134,9 +134,16 @@ dotitles()
 		MAT4X3PNT( work, es_mat, es_rec.s.s_values );
 		MAT4X3PNT( pos_view, model2objview, work );
 		dmp->dmr_puts( "1", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
-		for(i=1; i<8; i++) {
+		temp_rec.s = es_rec.s;
+		if(es_type == ARB4) {
+			VMOVE(&temp_rec.s.s_values[9], &temp_rec.s.s_values[12]);
+		}
+		if(es_type == ARB6) {
+			VMOVE(&temp_rec.s.s_values[15], &temp_rec.s.s_values[18]);
+		}
+		for(i=1; i<es_type; i++) {
 			static char kvt[4] = "X\0";/* Cvts chars to strings */
-			VADD2( work, es_rec.s.s_values, &es_rec.s.s_values[i*3] );
+			VADD2( work, es_rec.s.s_values, &temp_rec.s.s_values[i*3] );
 			MAT4X3PNT(temp, es_mat, work);
 			MAT4X3PNT( pos_view, model2objview, temp );
 			kvt[0] = i + '1';

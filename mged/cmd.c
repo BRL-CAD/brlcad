@@ -363,6 +363,7 @@ f_param()
 		case EARB:
 		case MOVEH:
 		case MOVEHH:
+		case PTARB:
 			/* must convert to base units */
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;
