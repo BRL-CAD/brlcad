@@ -15,14 +15,21 @@ static
 char	sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
 #endif
 #if defined( BSD ) || defined( CRAY ) || defined( sun )
-#include <sys/types.h>
-#include <sys/time.h>
+#	include <sys/types.h>
+#	include <sys/time.h>
 #endif
 
-#if defined( sgi )
-#include <bsd/sys/types.h>
-#include <bsd/sys/time.h>
-#include "fb.h"
+#if defined(sgi)
+#	if !defined(mips) || defined(SGI4D_Rel2)
+		/* 3D systems, and Rel2 4D systems. */
+#		include <bsd/sys/types.h>
+#		include <bsd/sys/time.h>
+#	else
+		/* Rel3 4D systems got it right */
+#		include <sys/types.h>
+#		include <sys/time.h>
+#	endif
+#	include "fb.h"
 #endif
 
 #ifdef VLDSYSV
