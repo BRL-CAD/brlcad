@@ -611,7 +611,7 @@ int		nm_objects;
 	prev_names = object_name;
 	prev_nm = nm_objects;
     }
-    if (rt_gettrees_and_attrs(rtip, attrib, nm_objects, (const char **) object_name, 1))
+    if (rt_gettrees_and_attrs(rtip, (const char **)attrib, nm_objects, (const char **) object_name, 1))
     {
 	fflush(stdout);
 	fprintf(stderr, "rt_gettrees() failed\n");
