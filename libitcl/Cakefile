@@ -31,8 +31,8 @@
 			sharedliblink.sh libitcl''ITCL_VERS.ARCH_SUF''[[LIBVERS]] ; \
 			sharedliblink.sh libitk''ITCL_VERS.ARCH_SUF''[[LIBVERS]] ; */ \
 			rm -f libitcl.ARCH_SUF libitk.ARCH_SUF ; \
-			cp [[pwd]]/itcl/libitcl''ITCL_VERS.[[echo ARCH_SUF]] [[pwd]] ; \
-			cp [[pwd]]/itk/libitk''ITCL_VERS.[[echo ARCH_SUF]] [[pwd]] ; \
+			cp [[pwd]]/itcl/libitcl''ITCL_VERS.[[echo ARCH_SUF]] . ; \
+			cp [[pwd]]/itk/libitk''ITCL_VERS.[[echo ARCH_SUF]] . ; \
 			ln -s libitcl''ITCL_VERS.[[echo ARCH_SUF]] libitcl.ARCH_SUF ; \
 			ln -s libitk''ITCL_VERS.[[echo ARCH_SUF]] libitk.ARCH_SUF
 #endif
