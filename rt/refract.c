@@ -138,10 +138,6 @@ do_inside:
 			rt_drawvec( stdout, ap->a_rt_i,
 				sub_ap.a_ray.r_pt,
 				sub_ap.a_uvec );
-			if( rdebug&RDEBUG_HITS )  {
-				VPRINT("R", sub_ap.a_ray.r_pt);
-				VPRINT("S", sub_ap.a_uvec);
-			}
 		}
 		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
 
