@@ -52,19 +52,18 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
-RT_EXTERN( union tree *db_mkbool_tree , (struct rt_tree_array *rt_tree_array , int howfar ) );
-RT_EXTERN( union tree *db_mkgift_tree , (struct rt_tree_array *rt_tree_array , int howfar , struct db_tree_state *tsp ) );
-
 #define STAT_ROT	1
 #define STAT_XLATE	2
 #define STAT_PERSP	4
 #define STAT_SCALE	8
+
 /*
  *			M A T _ C A T E G O R I Z E
  *
  *  Describe with a bit vector the effects this matrix will have.
+XXX Should have different name prefix.
  */
-int
+static int
 mat_categorize( matp )
 CONST mat_t	matp;
 {
@@ -96,8 +95,7 @@ CONST mat_t	matp;
  *  Return count of number of leaf nodes in this tree.
  */
 int
-db_tree_nleaves( tp )
-CONST union tree	*tp;
+db_tree_nleaves( const union tree *tp )
 {
 	if( tp == TREE_NULL )  return 0;
 
@@ -146,11 +144,11 @@ CONST union tree	*tp;
  *  In this case, the caller's copy of 'tp' will be invalid upon return.
  */
 struct rt_tree_array *
-db_flatten_tree( rt_tree_array, tp, op, free )
-struct rt_tree_array	*rt_tree_array;
-union tree		*tp;
-int			op;
-int			free;
+db_flatten_tree(
+	struct rt_tree_array	*rt_tree_array,
+	union tree		*tp,
+	int			op,
+	int			free)
 {
 
 	RT_CK_TREE(tp);
@@ -189,11 +187,11 @@ int			free;
  *  Import a combination record from a V4 database into internal form.
  */
 int
-rt_comb_import4( ip, ep, matrix, dbip )
-struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST matp_t			matrix;		/* NULL if identity */
-CONST struct db_i		*dbip;
+rt_comb_import4(
+	struct rt_db_internal		*ip,
+	const struct bu_external	*ep,
+	const matp_t			matrix,		/* NULL if identity */
+	const struct db_i		*dbip)
 {
 	union record		*rp;
 	struct rt_tree_array	*rt_tree_array;
@@ -396,11 +394,11 @@ CONST struct db_i		*dbip;
  *			R T _ C O M B _ E X P O R T 4
  */
 int
-rt_comb_export4( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
-double				local2mm;
-CONST struct db_i		*dbip;
+rt_comb_export4(
+	struct bu_external		*ep,
+	const struct rt_db_internal	*ip,
+	double				local2mm,
+	const struct db_i		*dbip)
 {
 	struct rt_comb_internal	*comb;
 	int			node_count;
@@ -548,12 +546,12 @@ CONST struct db_i		*dbip;
  *			D B _ T R E E _ F L A T T E N _ D E S C R I B E
  */
 void
-db_tree_flatten_describe( vls, tp, indented, lvl, mm2local )
-struct bu_vls		*vls;
-CONST union tree	*tp;
-int			indented;
-int			lvl;
-double			mm2local;
+db_tree_flatten_describe(
+	struct bu_vls		*vls,
+	const union tree	*tp,
+	int			indented,
+	int			lvl,
+	double			mm2local)
 {
 	int node_count;
 	struct rt_tree_array	*rt_tree_array;
@@ -642,12 +640,12 @@ double			mm2local;
  *			D B _ T R E E _ D E S C R I B E
  */
 void
-db_tree_describe( vls, tp, indented, lvl, mm2local )
-struct bu_vls		*vls;
-CONST union tree	*tp;
-int			indented;
-int			lvl;
-double			mm2local;
+db_tree_describe( 
+	struct bu_vls		*vls,
+	const union tree	*tp,
+	int			indented,
+	int			lvl,
+	double			mm2local)
 {
 	int	status;
 
@@ -748,11 +746,11 @@ unary:
  *			D B _ C O M B _ D E S C R I B E
  */
 void
-db_comb_describe(str, comb, verbose, mm2local)
-struct bu_vls	*str;
-CONST struct rt_comb_internal	*comb;
-int		verbose;
-double		mm2local;
+db_comb_describe(
+	struct bu_vls	*str,
+	const struct rt_comb_internal	*comb,
+	int		verbose,
+	double		mm2local)
 {
 	RT_CK_COMB(comb);
 
@@ -810,8 +808,7 @@ double		mm2local;
  *  Free the storage associated with the rt_db_internal version of this combination.
  */
 void
-rt_comb_ifree( ip )
-struct rt_db_internal	*ip;
+rt_comb_ifree( struct rt_db_internal *ip )
 {
 	register struct rt_comb_internal	*comb;
 
@@ -835,11 +832,11 @@ struct rt_db_internal	*ip;
  *			R T _ C O M B _ D E S C R I B E
  */
 int
-rt_comb_describe(str, ip, verbose, mm2local)
-struct bu_vls	*str;
-CONST struct rt_db_internal *ip;
-int		verbose;
-double		mm2local;
+rt_comb_describe(
+	struct bu_vls	*str,
+	const struct rt_db_internal *ip,
+	int		verbose,
+	double		mm2local)
 {
 	CONST struct rt_comb_internal	*comb;
 
@@ -861,7 +858,7 @@ double		mm2local;
  *  proper place (a standard location in all granules).
  */
 void
-db_wrap_v4_external( struct bu_external	*op, const char *name )
+db_wrap_v4_external( struct bu_external *op, const char *name )
 {
 	union record	*rec;
 
@@ -885,9 +882,9 @@ db_wrap_v4_external( struct bu_external	*op, const char *name )
  *	 0	OK
  */
 int
-db_ck_left_heavy_tree( tp, no_unions )
-CONST union tree	*tp;
-int			no_unions;
+db_ck_left_heavy_tree(
+	const union tree	*tp,
+	int			no_unions)
 {
 	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {
@@ -929,7 +926,7 @@ int			no_unions;
  *	 0	OK
  */
 int
-db_ck_v4gift_tree( CONST union tree	*tp)
+db_ck_v4gift_tree( CONST union tree *tp )
 {
 	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {
@@ -964,10 +961,10 @@ db_ck_v4gift_tree( CONST union tree	*tp)
  *  Elements which are already TREE_NULL are ignored.
  *  Returns a pointer to the top of the tree.
  */
-HIDDEN union tree *
-db_mkbool_tree( rt_tree_array, howfar )
-struct rt_tree_array *rt_tree_array;
-int		howfar;
+union tree *
+db_mkbool_tree( 
+	struct rt_tree_array *rt_tree_array,
+	int		howfar)
 {
 	register struct rt_tree_array *tlp;
 	register int		i;
@@ -1026,11 +1023,11 @@ int		howfar;
 /*
  *			D B _ M K G I F T _ T R E E
  */
-HIDDEN union tree *
-db_mkgift_tree( trees, subtreecount, tsp )
-struct rt_tree_array	*trees;
-int			subtreecount;
-struct db_tree_state	*tsp;
+union tree *
+db_mkgift_tree(
+	struct rt_tree_array	*trees,
+	int			subtreecount,
+	struct db_tree_state	*tsp)
 {
 	register struct rt_tree_array *tstart;
 	register struct rt_tree_array *tnext;

@@ -2458,14 +2458,57 @@ extern int db5_update_ident( struct db_i *dbip, const char *title, double local2
 extern int db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip);
 
 /* db_comb.c */
-
-struct rt_tree_array *db_flatten_tree(struct rt_tree_array	*rt_tree_array,
-				      union tree		*tp,
-				      int			op,
-				      int			free);
-extern int db_tree_nleaves( const union tree *tp );
-extern void db_wrap_v4_external( struct bu_external *op, const char *name );
-extern int db_ck_v4gift_tree( const union tree	*tp);
+int db_tree_nleaves( const union tree *tp );
+struct rt_tree_array *db_flatten_tree(
+	struct rt_tree_array	*rt_tree_array,
+	union tree		*tp,
+	int			op,
+	int			free);
+int rt_comb_import4(
+	struct rt_db_internal		*ip,
+	const struct bu_external	*ep,
+	const matp_t			matrix,		/* NULL if identity */
+	const struct db_i		*dbip);
+int rt_comb_export4(
+	struct bu_external		*ep,
+	const struct rt_db_internal	*ip,
+	double				local2mm,
+	const struct db_i		*dbip);
+void db_tree_flatten_describe(
+	struct bu_vls		*vls,
+	const union tree	*tp,
+	int			indented,
+	int			lvl,
+	double			mm2local);
+void db_tree_describe( 
+	struct bu_vls		*vls,
+	const union tree	*tp,
+	int			indented,
+	int			lvl,
+	double			mm2local);
+void db_comb_describe(
+	struct bu_vls	*str,
+	const struct rt_comb_internal	*comb,
+	int		verbose,
+	double		mm2local);
+void rt_comb_ifree( struct rt_db_internal *ip );
+int rt_comb_describe(
+	struct bu_vls	*str,
+	const struct rt_db_internal *ip,
+	int		verbose,
+	double		mm2local);
+void db_wrap_v4_external( struct bu_external *op, const char *name );
+int db_ck_left_heavy_tree(
+	const union tree	*tp,
+	int			no_unions);
+int db_ck_v4gift_tree( CONST union tree *tp );
+union tree *db_mkbool_tree(
+	struct rt_tree_array *rt_tree_array,
+	int		howfar);
+union tree *db_mkgift_tree(
+	struct rt_tree_array	*trees,
+	int			subtreecount,
+	struct db_tree_state	*tsp);
 
 /* g_tgc.c */
 extern void rt_pt_sort(register fastf_t t[], int npts);
