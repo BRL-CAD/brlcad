@@ -43,7 +43,6 @@ extern point_t	eye_model;	/* model-space location of eye */
 extern point_t	viewbase_model;	/* model-space location of viewplane corner */
 extern int npts;	/* # of points to shoot: x,y */
 extern mat_t Viewrotscale;
-extern mat_t toEye;
 extern fastf_t viewsize;
 extern fastf_t zoomout;
 extern int npsw;
@@ -75,7 +74,8 @@ struct taskcontrol {
 void
 grid_setup()
 {
-	static vect_t temp;
+	vect_t temp;
+	mat_t toEye;
 
 	/* model2view takes us to eye_model location & orientation */
 	mat_idn( toEye );
