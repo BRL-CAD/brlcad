@@ -115,32 +115,6 @@ int	r, g, b;
 }
 
 /*
- *			R T _ P L O T _ V L B L O C K
- *
- *  Output a rt_vlblock object in extended UNIX-plot format,
- *  including color.
- */
-void
-rt_plot_vlblock( fp, vbp )
-FILE			*fp;
-CONST struct rt_vlblock	*vbp;
-{
-	int	i;
-
-	RT_CK_VLBLOCK(vbp);
-
-	for( i=0; i < vbp->nused; i++ )  {
-		if( vbp->rgb[i] == 0 )  continue;
-		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
-		pl_color( fp,
-			(vbp->rgb[i]>>16) & 0xFF,
-			(vbp->rgb[i]>> 8) & 0xFF,
-			(vbp->rgb[i]    ) & 0xFF );
-		rt_vlist_to_uplot( fp, &(vbp->head[i]) );
-	}
-}
-
-/*
  *			R T _ V L I S T _ C L E A N U P
  *
  *  The macro RT_FREE_VLIST() simply appends to the list &rt_g.rtg_vlfree.
@@ -281,6 +255,32 @@ CONST unsigned char	*buf;
  ************************************************************************/
 
 /*
+ *			R T _ P L O T _ V L B L O C K
+ *
+ *  Output a rt_vlblock object in extended UNIX-plot format,
+ *  including color.
+ */
+void
+rt_plot_vlblock( fp, vbp )
+FILE			*fp;
+CONST struct rt_vlblock	*vbp;
+{
+	int	i;
+
+	RT_CK_VLBLOCK(vbp);
+
+	for( i=0; i < vbp->nused; i++ )  {
+		if( vbp->rgb[i] == 0 )  continue;
+		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		pl_color( fp,
+			(vbp->rgb[i]>>16) & 0xFF,
+			(vbp->rgb[i]>> 8) & 0xFF,
+			(vbp->rgb[i]    ) & 0xFF );
+		rt_vlist_to_uplot( fp, &(vbp->head[i]) );
+	}
+}
+
+/*
  *			R T _ V L I S T _ T O _ U P L O T
  *
  *  Output a vlist as an extended 3-D floating point UNIX-Plot file.
@@ -289,8 +289,8 @@ CONST unsigned char	*buf;
  */
 void
 rt_vlist_to_uplot( fp, vhead )
-FILE		*fp;
-struct rt_list	*vhead;
+FILE			*fp;
+CONST struct rt_list	*vhead;
 {
 	register struct rt_vlist	*vp;
 
