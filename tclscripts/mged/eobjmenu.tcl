@@ -14,9 +14,6 @@
 #
 check_externs "_mged_x _mged_press _mged_aip _mged_M"
 
-#	XXX	kludge for edit-test cycle
-proc ll {} { source /m/cad/tclscripts/eobjmenu.tcl }
-
 proc eobjmenu {} {
 
     if {![llength [_mged_x -1]]} {
