@@ -1268,13 +1268,17 @@ struct vertexuse	*vu2;
 		/*
 		 *  Start by taking a jaunt from vu1 to vu2 and back.
 		 */
+
 		/* insert 0 length edge, before eu1 */
 		first_new_eu = nmg_eins(eu1);
+
 		/* split the new edge, and connect it to vertex 2 */
 		second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
 		first_new_eu = RT_LIST_PPREV_CIRC(edgeuse, second_new_eu);
+
 		/* Make the two new edgeuses share just one edge */
 		nmg_moveeu( second_new_eu, first_new_eu );
+
 		/* first_new_eu is eu that enters shared vertex */
 		vu1 = second_new_eu->vu_p;
 	} else {
