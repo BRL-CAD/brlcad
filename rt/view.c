@@ -405,7 +405,7 @@ struct rt_i	*rtip;
 		mlib_free( regp );
 	}
 	if( env_region.reg_mfuncs )  {
-		rt_free( env_region.reg_name, "env_region.reg_name" );
+		rt_free( (char *)env_region.reg_name, "env_region.reg_name" );
 		env_region.reg_name = (char *)0;
 		mlib_free( &env_region );
 	}

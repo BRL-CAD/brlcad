@@ -83,7 +83,7 @@ char			*file;
 		
 		rp = ap->a_rt_i->HeadRegion;
 		for( ; rp != REGION_NULL; rp = rp->reg_forw )  {
-			ret = re_exec(rp->reg_name);
+			ret = re_exec((char *)rp->reg_name);
 			if(rdebug&RDEBUG_INSTANCE)  {
 				rt_log("'%s' %s '%s'\n", line,
 					ret==1 ? "==" : "!=",
