@@ -786,8 +786,11 @@ struct directory	*dp;
 					record.c.c_material = mat;
 					record.c.c_los = los;
 					/* write out all changes */
-					if( db_put( dbip, dp, &record, 0, 1 ) < 0 )
-						WRITE_ERR_return;
+					if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  {
+						(void)printf("Database write error, aborting.\n");
+						ERROR_RECOVERY_SUGGESTION;
+						return(1);
+					}
 				}
 				/* get out of loop */
 				return(0);
