@@ -1,0 +1,289 @@
+<HTML>
+<HEAD>
+<TITLE>Database Object Documentation</TITLE>
+</HEAD>
+<BODY>
+<A HREF="#toc">Table of Contents</A><P>
+_________________________________________________________________
+<P>
+
+<H2><A NAME="sect1" HREF="#toc1"><B>NAME</B></A></H2>
+wdb_open - create and manipulate a database object.
+<P>
+
+<H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
+<B>wdb_open</B> [<I>dbName file dbFile</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName disk dbip</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName disk_append dbip</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName inmem dbip</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName inmem_append dbip</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName db dbFile</I>]
+<P>
+
+<H2><A NAME="sect8" HREF="#toc8"><B>DESCRIPTION</B></A></H2>
+The <B>wdb_open</B> command creates a new database object
+(given by the <I>dbName</I> argument) and is associated with
+the database file (given by the <I>dbFile</I> argument).
+The <B>wdb_open</B> command returns its <I>dbName</I> argument.
+At the time this command is invoked, there must not exist a
+database object named <I>dbName</I>.
+<P>
+
+<H2><A NAME="sect9" HREF="#toc9"><B>METHODS</B></A></H2>
+The <B>wdb_open</B> command creates a new Tcl command whose name
+is <I>dbName</I>. This command may be used to invoke various
+operations on the database object. It has the following general
+form: 
+<P>
+<I>dbName</I> <I>option</I> ?<I>arg</I> <I>arg</I> ...?
+<P>
+<I>Option</I> and the <I>arg</I>s determine the exact behavior of the command.
+The following commands are possible for database objects:
+<P>
+<DL>
+<DT><I>dbName</I> <A NAME="adjust"><B>adjust</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="c"><B>c</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="cat"><B>cat</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="close"><B>close</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="color"><B>color</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="comb"><B>comb</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="concat"><B>concat</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="cp"><B>cp</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="dbip"><B>dbip</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="dump"><B>dump</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="dup"><B>dup</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="expand"><B>expand</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="find"><B>find</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="form"><B>form</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="g"><B>g</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="get"><B>get</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="i"><B>i</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="keep"><B>keep</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="kill"><B>kill</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="killall"><B>killall</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="killtree"><B>killtree</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="l"><B>l</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="listeval"><B>listeval</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="ls"><B>ls</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="match"><B>match</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="mv"><B>mv</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="mvall"><B>mvall</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="observer"><B>observer</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="open"><B>open</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="paths"><B>paths</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="prcolor"><B>prcolor</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="push"><B>push</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="put"><B>put</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="r"><B></B>r</A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="rm"><B>rm</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="rt_gettrees"><B>rt_gettrees</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="title"><B>title</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="tol"><B>tol</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="tops"><B>tops</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="tree"><B>tree</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="whatid"><B>whatid</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="whichair"><B>whichair</B></A></DT>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="whichid"><B>whichid</B></A></DT>
+<DD>
+</DD>
+<P>
+</DL>
+
+<H2><A NAME="sect16" HREF="#toc16"><B>EXAMPLE</B></A></H2>
+The following sequence creates a database object and
+uses it to query the database.
+<P>
+cwish> wdb_open db moss moss.g
+<BR>
+moss
+<BR>
+cwish> moss ls
+<PRE>
+LIGHT               cone.r/R            light.r/R           tor.r/R
+all.g/              cone.s              platform.r/R
+box.r/R             ellipse.r/R         platform.s
+box.s               ellipse.s           tor
+</PRE>
+cwish> moss tops
+<BR>
+all.g
+<BR>
+cwish> moss l all.g
+<PRE>
+all.g:  --
+   u platform.r
+   u box.r [-23.6989,13.41,8.02399]
+   u cone.r [22.0492,12.2349,2.11125e-07]
+   u ellipse.r [14.6793,-41.6077,38.7988]
+   u tor.r
+   u light.r
+</PRE>
+cwish> moss l tor.r
+<PRE>
+tor.r:  REGION id=6000  (air=0, los=0, GIFTmater=0) --
+Color 240 240 0
+   u tor
+</PRE>
+cwish> moss get tor
+<BR>
+tor V {4.91623592376708984375 -32.8022308349609375 31.7117767333984375}
+H {0 1 0} r_a 25.399997711181640625 r_h 5.0799999237060546875
+<BR>
+cwish> moss adjust tor H {0 2 0}
+<P>
+
+<H2><A NAME="sect17" HREF="#toc17"><B>ACKNOWLEDGEMENTS:</B></A></H2>
+
+Mark L. Ulferts &lt;mulferts@austin.dsccc.com&gt;
+<PRE>        Basic layout for documenting classes.</PRE>
+<P>
+
+<H2><A NAME="sect18" HREF="#toc18"><B>AUTHOR</B></A></H2>
+<P>
+Robert G. Parker
+<P>
+
+<HR><P>
+<A NAME="toc"><B>Table of Contents</B></A><P>
+<UL>
+<LI><A NAME="toc1" HREF="#sect1">NAME</A></LI>
+<LI><A NAME="toc2" HREF="#sect2">SYNOPSIS</A></LI>
+<LI><A NAME="toc8" HREF="#sect8">DESCRIPTION</A></LI>
+<LI><A NAME="toc9" HREF="#sect9">METHODS</A></LI>
+<LI><A NAME="toc16" HREF="#sect16">EXAMPLE</A></LI>
+<LI><A NAME="toc17" HREF="#sect17">ACKNOWLEDGEMENTS</A></LI>
+<LI><A NAME="toc18" HREF="#sect18">AUTHOR</A></LI>
+</UL>
+</BODY>
+</HTML>
