@@ -13,9 +13,12 @@
  * chars from delim.  Writes NULs into s to end tokens.  delim need not
  * remain constant from call to call.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$";
+#endif
 
 #define	NULL	0
-
+#define CONST
 static char *scanpoint = NULL;
 
 char *				/* NULL if no token left */
