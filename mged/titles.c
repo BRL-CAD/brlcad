@@ -21,6 +21,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#define USE_OLD_MENUS 0
+
 #include "conf.h"
 
 #include <stdio.h>
@@ -175,7 +177,7 @@ dotitles(call_dm)
 int call_dm;
 {
 	register int    i;
-	register int    y;			/* for menu computations */
+	register int    x, y;			/* for menu computations */
 	static vect_t   work, work1;		/* work vector */
 	static vect_t   temp, temp1;
 	register int    yloc, xloc;
@@ -286,7 +288,8 @@ int call_dm;
 	    rt_vls_free(&vls);
 	    return;
 	}
-	
+
+#if USE_OLD_MENUS	
 #ifdef XMGED
 	if(dotitles_hook){
 	    (*dotitles_hook)();
@@ -299,14 +302,17 @@ int call_dm;
 	dmp->dmr_2d_line( XMAX, YMIN, XMAX, YMAX, 0 );
 	dmp->dmr_2d_line( XMAX, YMAX, XMIN, YMAX, 0 );
 	dmp->dmr_2d_line( XMIN, YMAX, XMIN, YMIN, 0 );
+#endif
 
 	/* Line across the bottom, above two bottom status lines */
 	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
 			  TITLE_YBASE-TEXT1_DY, 0 );
 
+#if USE_OLD_MENUS
 	/* Display scroll bars */
 	scroll_ybot = scroll_display( SCROLLY ); 
 	y = MENUY;
+	x = MENUX;
 
 	/* Display state and local unit in upper right corner, boxed */
 
@@ -314,6 +320,11 @@ int call_dm;
 #define YPOS	(MENUY - MENU_DY - 75 )
 	dmp->dmr_2d_line(MENUXLIM, YPOS, MENUXLIM, YMAX, 0);	/* vert. */
 #undef YPOS
+#else
+	scroll_ybot = SCROLLY;
+	x = XMIN + 20;
+	y = YMAX+TEXT0_DY;
+#endif
 
 	/*
 	 * Print information about object illuminated
@@ -322,16 +333,17 @@ int call_dm;
 	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
 		for( i=0; i <= illump->s_last; i++ )  {
 			if( i == ipathpos  &&  state == ST_O_PATH )  {
-				dmp->dmr_puts( "[MATRIX]", MENUX, y, 0,
+				dmp->dmr_puts( "[MATRIX]", x, y, 0,
 					       DM_WHITE );
 				y += MENU_DY;
 			}
-			dmp->dmr_puts( illump->s_path[i]->d_namep, MENUX, y, 0,
+			dmp->dmr_puts( illump->s_path[i]->d_namep, x, y, 0,
 				       DM_YELLOW );
 			y += MENU_DY;
 		}
 	}
 
+#if USE_OLD_MENUS
 	/*
 	 * The top of the menu (if any) begins at the Y value specified.
 	 */
@@ -356,12 +368,18 @@ int call_dm;
 		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
 				 yloc-TEXT0_DY, 0);
 	}
+#endif
 
 	/*
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
 	create_text_overlay( &vls );
+
+#if USE_OLD_MENUS
 	screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, &vls );
+#else
+	screen_vls( x, y, &vls );
+#endif
 
 	/*
 	 * General status information on the next to last line
