@@ -215,7 +215,7 @@ pipe_dump()	/* Print out Pipe record information */
 	struct pipe_internal	pipe;		/* want a struct for the head, not a ptr. */
 	struct wdb_pipeseg	head;		/* actual head, not a ptr. */
 
-	ngranules = record.pw.pw_count;
+	ngranules = rt_glong(record.pw.pw_count)+1;
 	name = record.pw.pw_name;
 	id = record.pw.pw_id;
 
@@ -358,7 +358,6 @@ arbn_dump()
 
 	int		ngranules;	/* number of granules to be read */
 	int		count;
-	int		neqn;		/* number of plane equations */
 	int		ret;		/* return code catcher */
 	int		i;		/* a counter */
 	char		*name;
@@ -366,13 +365,12 @@ arbn_dump()
 	union record	*rp;
 	struct arbn_internal	arbn;
 
-	ngranules = record.n.n_grans;
+	ngranules = rt_glong(record.n.n_grans)+1;
 	name = record.n.n_name;
 	id = record.n.n_id;
-	neqn = record.n.n_neqn;
 
-	/* malloc space for ngranules + 1 */
-	if( (rp = (union record *) malloc( (ngranules + 1) * sizeof(union record)) ) == 0)  {
+	/* malloc space for ngranules */
+	if( (rp = (union record *) malloc( ngranules * sizeof(union record)) ) == 0)  {
 		fprintf( stderr, "g2asc: malloc failure\n");
 		exit(-1);
 	}
@@ -391,7 +389,7 @@ arbn_dump()
 		exit(-1);
 	}
 
-	fprintf(stdout, "%c %.16s %d\n", id, name, neqn);
+	fprintf(stdout, "%c %.16s %d\n", id, name, arbn.neqn);
 	for( i = 0; i < arbn.neqn; i++ )  {
 		printf("n %26.20e %20.26e %26.20e %26.20e\n", arbn.eqn[i][X], arbn.eqn[i][Y],
 			arbn.eqn[i][Z], arbn.eqn[i][3]);
@@ -855,7 +853,7 @@ register mat_t		mat;
 		return(-1);
 	}
 
-	aip->neqn = rp->n.n_neqn;
+	aip->neqn = rt_glong(rp->n.n_neqn);
 	if( aip->neqn <= 0 )
 		return( -1 );
 	aip->eqn = (plane_t *)rt_malloc( aip->neqn * sizeof(plane_t), "_rt_arbn_import() planes");
