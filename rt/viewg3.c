@@ -62,7 +62,7 @@ int		use_air = 1;		/* Handling of air in librt */
 
 extern int 	 rpt_overlap;
 
-struct bu_vls	ray_data_file;	/* file name for ray data output */
+extern struct bu_vls	ray_data_file;	/* file name for ray data output (declared in do.c) */
 FILE	*shot_fp;		/* FILE pointer for ray data output */
 
 /* Viewing module specific "set" variables */

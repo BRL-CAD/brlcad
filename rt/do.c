@@ -93,7 +93,7 @@ extern int	max_ireflect;		/* max internal reflection level */
 /***** end variables shared with refract.c *****/
 
 /***** variables shared with viewg3.c *****/
-extern struct bu_vls	ray_data_file;	/* file name for ray data output */
+struct bu_vls	ray_data_file;	/* file name for ray data output */
 /***** end variables shared with viewg3.c *****/
 
 void		def_tree();
