@@ -84,7 +84,7 @@ extern "C" {
  *
  */
 struct bn_tol {
-	long		magic;
+	unsigned long	magic;
 	double		dist;			/* >= 0 */
 	double		dist_sq;		/* dist * dist */
 	double		perp;			/* nearly 0 */
