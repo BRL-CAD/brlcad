@@ -969,14 +969,15 @@ union tree	*tp;
 	case OP_NMG_TESS:
 		{
 			struct nmgregion *r = tp->tr_d.td_r;
-			struct model	*m;
+			/* Disposing of the nmg model structue is
+			 * left to someone else.
+			 * It would be rude to zap all the other regions here.
+			 */
 			if( r->l.magic == (-1L) )  {
 				rt_log("db_free_tree: OP_NMG_TESS, r = -1, skipping\n");
 			} else {
 				NMG_CK_REGION(r);
-				m = r->m_p;
-				NMG_CK_MODEL(m);
-				nmg_km(m);
+				nmg_kr(r);
 			}
 			tp->tr_d.td_r = (struct nmgregion *)NULL;
 		}
