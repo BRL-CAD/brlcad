@@ -2969,7 +2969,36 @@ BU_EXTERN(int			nmg_class_pt_fu_except, (CONST point_t pt,
 				CONST struct bn_tol *tol) );
 
 /* From nmg_plot.c */
-/* add nmg_xxx_to_vlist routines here */
+BU_EXTERN(void			nmg_vu_to_vlist, (struct bu_list *vhead,
+				CONST struct vertexuse	*vu));
+BU_EXTERN(void			nmg_eu_to_vlist, (struct bu_list *vhead,
+				CONST struct bu_list	*eu_hd));
+BU_EXTERN(void			nmg_lu_to_vlist, (struct bu_list *vhead,
+				CONST struct loopuse	*lu,
+				int			poly_markers,
+				CONST vectp_t		normal));
+BU_EXTERN(void			nmg_snurb_fu_to_vlist,
+				(struct bu_list		*vhead,
+				CONST struct faceuse	*fu,
+				int			poly_markers));
+BU_EXTERN(void			nmg_s_to_vlist,
+				(struct bu_list		*vhead,
+				CONST struct shell	*s,
+				int			poly_markers));
+BU_EXTERN(void			nmg_r_to_vlist,
+				(struct bu_list		*vhead,
+				CONST struct nmgregion	*r,
+				int			poly_markers));
+BU_EXTERN(void			nmg_m_to_vlist,
+				(struct bu_list	*vhead,
+				struct model	*m,
+				int		poly_markers));
+BU_EXTERN(void			nmg_offset_eu_vert,
+				(point_t			base,
+				CONST struct edgeuse	*eu,
+				CONST vect_t		face_normal,
+				int			tip));
+	/* plot */
 BU_EXTERN(void			nmg_pl_v, (FILE	*fp, CONST struct vertex *v,
 				long *b) );
 BU_EXTERN(void			nmg_pl_e, (FILE *fp, CONST struct edge *e,
@@ -2992,6 +3021,21 @@ BU_EXTERN(void			nmg_vlblock_eu, (struct bn_vlblock *vbp,
 				CONST struct edgeuse *eu, long *tab,
 				int red, int green, int blue,
 				int fancy, int loopnum) );
+BU_EXTERN(void			nmg_vlblock_euleft,
+				(struct bu_list			*vh,
+				CONST struct edgeuse		*eu,
+				CONST point_t			center,
+				CONST mat_t			mat,
+				CONST vect_t			xvec,
+				CONST vect_t			yvec,
+				double				len,
+				CONST struct bn_tol		*tol));
+BU_EXTERN(void			nmg_vlblock_around_eu,
+				(struct bn_vlblock		*vbp,
+				CONST struct edgeuse		*arg_eu,
+				long				*tab,
+				int				fancy,
+				CONST struct bn_tol		*tol));
 BU_EXTERN(void			nmg_vlblock_lu, (struct bn_vlblock *vbp,
 				CONST struct loopuse *lu, long *tab,
 				int red, int green, int blue,
@@ -3004,24 +3048,55 @@ BU_EXTERN(void			nmg_vlblock_r, (struct bn_vlblock *vbp,
 				CONST struct nmgregion *r, int fancy) );
 BU_EXTERN(void			nmg_vlblock_m, (struct bn_vlblock *vbp,
 				CONST struct model *m, int fancy) );
-BU_EXTERN(void			nmg_pl_around_edge, (FILE *fd,
-				long *b, CONST struct edgeuse *eu) );
-BU_EXTERN(void			nmg_pl_isect, (CONST char *filename,
-				CONST struct shell *s, CONST struct bn_tol *tol) );
+	/* visualization helper routines */
+BU_EXTERN(void			nmg_pl_edges_in_2_shells,
+				(struct bn_vlblock	*vbp,
+				long			*b,
+				CONST struct edgeuse	*eu,
+				int			fancy,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_pl_isect,
+				(CONST char		*filename,
+				CONST struct shell	*s,
+				CONST struct bn_tol	*tol));
 BU_EXTERN(void			nmg_pl_comb_fu, (int num1, int num2,
 				CONST struct faceuse *fu1) );
 BU_EXTERN(void			nmg_pl_2fu, (CONST char *str, int num,
 				CONST struct faceuse *fu1, CONST struct faceuse *fu2,
 				int show_mates) );
+	/* graphical display of classifier results */
+BU_EXTERN(void			nmg_show_broken_classifier_stuff,
+				(long	*p,
+				long	*classlist[4],
+				int	all_new,
+				int	fancy,
+				CONST char	*a_string));
 BU_EXTERN(void			nmg_face_plot, (CONST struct faceuse *fu) );
 BU_EXTERN(void			nmg_2face_plot, (CONST struct faceuse *fu1,
 				CONST struct faceuse *fu2) );
 BU_EXTERN(void			nmg_face_lu_plot, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu1, CONST struct vertexuse *vu2) );
+BU_EXTERN(void			nmg_plot_lu_ray,
+				(CONST struct loopuse		*lu,
+				CONST struct vertexuse		*vu1,
+				CONST struct vertexuse		*vu2,
+				CONST vect_t			left));
+BU_EXTERN(void			nmg_plot_ray_face,
+				(CONST char *fname,
+				point_t pt,
+				CONST vect_t dir,
+				CONST struct faceuse *fu));
+BU_EXTERN(void			nmg_plot_lu_around_eu,
+				(CONST char		*prefix,
+				CONST struct edgeuse	*eu,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(int			nmg_snurb_to_vlist,
+				(struct bu_list			*vhead,
+				CONST struct face_g_snurb	*fg,
+				int				n_interior));
 BU_EXTERN(void			nmg_cnurb_to_vlist, (struct bu_list *vhead,
 				CONST struct edgeuse *eu,int n_interior,
 				int cmd) );
-
 
 /* from nmg_mesh.c */
 BU_EXTERN(void			nmg_radial_join_eu, (struct edgeuse *eu1,

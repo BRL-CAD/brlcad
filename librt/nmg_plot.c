@@ -1963,9 +1963,10 @@ int i;
  */
 void
 nmg_show_broken_classifier_stuff(p, classlist, all_new, fancy, a_string)
-long	*classlist[4];
 long	*p;
+long	*classlist[4];
 int	all_new;
+int	fancy;
 CONST char	*a_string;
 {
 	struct model *m;
@@ -2266,7 +2267,8 @@ CONST struct vertexuse		*vu1, *vu2;
 void
 nmg_plot_lu_ray( lu, vu1, vu2, left )
 CONST struct loopuse		*lu;
-CONST struct vertexuse		*vu1, *vu2;
+CONST struct vertexuse		*vu1;
+CONST struct vertexuse		*vu2;
 CONST vect_t			left;
 {
 	FILE	*fp;
