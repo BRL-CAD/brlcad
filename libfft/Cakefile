@@ -18,11 +18,16 @@
 #include "../Cakefile.defs"
 #include "../Cakefile.lib"
 
+/* Don't use LIBES here, we don't want to tangle with the
+ * shared libraries still being prepared at this point.
+ * Go straight to the system libraries.  We don't need much.
+ */
+
 fftc: fftc.o splitditc.o
-	CC LDFLAGS -o fftc fftc.o splitditc.o LIBES
+	CC LDFLAGS -o fftc fftc.o splitditc.o -lm
 
 ifftc: ifftc.o ditsplitc.o
-	CC LDFLAGS -o ifftc ifftc.o ditsplitc.o LIBES
+	CC LDFLAGS -o ifftc ifftc.o ditsplitc.o -lm
 
 rfft%.o:	fftc
 	./fftc % > rfft%.c
