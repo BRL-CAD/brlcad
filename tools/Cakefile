@@ -24,173 +24,173 @@
 
 /* Explicit composition of each product */
 
-applymap:	applymap.o LIBRLE
-	CC LDFLAGS applymap.o LIB_PRE''LIBRLE LIBES -o applymap
+applymap:	applymap.o
+	CC LDFLAGS applymap.o LIBRLE LIBES -o applymap
 
-avg4:	avg4.o LIBRLE
-	CC LDFLAGS avg4.o LIB_PRE''LIBRLE LIBES -o avg4
+avg4:	avg4.o
+	CC LDFLAGS avg4.o LIBRLE LIBES -o avg4
 
-comp:	comp.o LIBRLE
-	CC LDFLAGS comp.o LIB_PRE''LIBRLE LIBES -o comp
+comp:	comp.o
+	CC LDFLAGS comp.o LIBRLE LIBES -o comp
 
-crop:	crop.o LIBRLE rle_box.o
-	CC LDFLAGS crop.o rle_box.o LIB_PRE''LIBRLE LIBES -o crop
+crop:	crop.o rle_box.o
+	CC LDFLAGS crop.o rle_box.o LIBRLE LIBES -o crop
 
-fant:	fant.o LIBRLE
-	CC LDFLAGS fant.o LIB_PRE''LIBRLE LIBES -o fant
+fant:	fant.o
+	CC LDFLAGS fant.o LIBRLE LIBES -o fant
 
-into:	into.o LIBRLE
-	CC LDFLAGS into.o LIB_PRE''LIBRLE LIBES -o into
+into:	into.o
+	CC LDFLAGS into.o LIBRLE LIBES -o into
 
-mcut:	mcut.o LIBRLE
-	CC LDFLAGS mcut.o LIB_PRE''LIBRLE LIBES -o mcut
+mcut:	mcut.o
+	CC LDFLAGS mcut.o LIBRLE LIBES -o mcut
 
-mergechan:	mergechan.o LIBRLE
-	CC LDFLAGS mergechan.o LIB_PRE''LIBRLE LIBES -o mergechan
+mergechan:	mergechan.o
+	CC LDFLAGS mergechan.o LIBRLE LIBES -o mergechan
 
-pyrmask:	pyrmask.o pyrlib.o LIBRLE
-	CC LDFLAGS pyrmask.o pyrlib.o LIB_PRE''LIBRLE LIBES -o pyrmask
+pyrmask:	pyrmask.o pyrlib.o
+	CC LDFLAGS pyrmask.o pyrlib.o LIBRLE LIBES -o pyrmask
 
-repos:	repos.o LIBRLE
-	CC LDFLAGS repos.o LIB_PRE''LIBRLE LIBES -o repos
+repos:	repos.o
+	CC LDFLAGS repos.o LIBRLE LIBES -o repos
 
-rlebg:	rlebg.o LIBRLE
-	CC LDFLAGS rlebg.o LIB_PRE''LIBRLE LIBES -o rlebg
+rlebg:	rlebg.o
+	CC LDFLAGS rlebg.o LIBRLE LIBES -o rlebg
 
-rleflip:	rleflip.o LIBRLE
-	CC LDFLAGS rleflip.o LIB_PRE''LIBRLE LIBES -o rleflip
+rleflip:	rleflip.o
+	CC LDFLAGS rleflip.o LIBRLE LIBES -o rleflip
 
-rlehdr:	rlehdr.o LIBRLE
-	CC LDFLAGS rlehdr.o LIB_PRE''LIBRLE LIBES -o rlehdr
+rlehdr:	rlehdr.o
+	CC LDFLAGS rlehdr.o LIBRLE LIBES -o rlehdr
 
-rleldmap:	rleldmap.o LIBRLE
-	CC LDFLAGS rleldmap.o LIB_PRE''LIBRLE LIBES -o rleldmap
+rleldmap:	rleldmap.o
+	CC LDFLAGS rleldmap.o LIBRLE LIBES -o rleldmap
 
-rlesetbg:	rlesetbg.o LIBRLE
-	CC LDFLAGS rlesetbg.o LIB_PRE''LIBRLE LIBES -o rlesetbg
+rlesetbg:	rlesetbg.o
+	CC LDFLAGS rlesetbg.o LIBRLE LIBES -o rlesetbg
 
-rleaddcom:	rleaddcom.o LIBRLE
-	CC LDFLAGS rleaddcom.o LIB_PRE''LIBRLE LIBES -o rleaddcom
+rleaddcom:	rleaddcom.o
+	CC LDFLAGS rleaddcom.o LIBRLE LIBES -o rleaddcom
 
-rlehisto:	rlehisto.o LIBRLE
-	CC LDFLAGS rlehisto.o LIB_PRE''LIBRLE LIBES -o rlehisto
+rlehisto:	rlehisto.o
+	CC LDFLAGS rlehisto.o LIBRLE LIBES -o rlehisto
 
-smush:	smush.o LIBRLE
-	CC LDFLAGS smush.o LIB_PRE''LIBRLE LIBES -o smush
+smush:	smush.o
+	CC LDFLAGS smush.o LIBRLE LIBES -o smush
 
-rlebox:	rlebox.o LIBRLE rle_box.o
-	CC LDFLAGS rlebox.o rle_box.o LIB_PRE''LIBRLE LIBES -o rlebox
+rlebox:	rlebox.o rle_box.o
+	CC LDFLAGS rlebox.o rle_box.o LIBRLE LIBES -o rlebox
 
-rlecat:	rlecat.o LIBRLE
-	CC LDFLAGS rlecat.o LIB_PRE''LIBRLE LIBES -o rlecat
+rlecat:	rlecat.o
+	CC LDFLAGS rlecat.o LIBRLE LIBES -o rlecat
 
-rlecomp: rlecomp.o LIBRLE
-	CC LDFLAGS rlecomp.o LIB_PRE''LIBRLE LIBES -o rlecomp
+rlecomp: rlecomp.o
+	CC LDFLAGS rlecomp.o LIBRLE LIBES -o rlecomp
 
-rledither: rledither.o LIBRLE
-	CC LDFLAGS rledither.o LIB_PRE''LIBRLE LIBES -o rledither
+rledither: rledither.o
+	CC LDFLAGS rledither.o LIBRLE LIBES -o rledither
 
-rlestereo: rlestereo.o LIBRLE
-	CC LDFLAGS rlestereo.o LIB_PRE''LIBRLE LIBES -o rlestereo
+rlestereo: rlestereo.o
+	CC LDFLAGS rlestereo.o LIBRLE LIBES -o rlestereo
 
-rlesplice: rlesplice.o LIBRLE
-	CC LDFLAGS rlesplice.o LIB_PRE''LIBRLE LIBES -o rlesplice
+rlesplice: rlesplice.o
+	CC LDFLAGS rlesplice.o LIBRLE LIBES -o rlesplice
 
-rlespiff: rlespiff.o LIBRLE
-	CC LDFLAGS rlespiff.o LIB_PRE''LIBRLE LIBES -o rlespiff
+rlespiff: rlespiff.o
+	CC LDFLAGS rlespiff.o LIBRLE LIBES -o rlespiff
 
-rlenoise: rlenoise.o LIBRLE
-	CC LDFLAGS rlenoise.o LIB_PRE''LIBRLE LIBES -o rlenoise
+rlenoise: rlenoise.o
+	CC LDFLAGS rlenoise.o LIBRLE LIBES -o rlenoise
 
-rleselect: rleselect.o LIBRLE
-	CC LDFLAGS rleselect.o LIB_PRE''LIBRLE LIBES -o rleselect
+rleselect: rleselect.o
+	CC LDFLAGS rleselect.o LIBRLE LIBES -o rleselect
 
-rlescale: rlescale.o LIBRLE
-	CC LDFLAGS rlescale.o LIB_PRE''LIBRLE LIBES -o rlescale
+rlescale: rlescale.o
+	CC LDFLAGS rlescale.o LIBRLE LIBES -o rlescale
 
-rlequant: rlequant.o LIBRLE
-	CC LDFLAGS rlequant.o LIB_PRE''LIBRLE LIBES -o rlequant
+rlequant: rlequant.o
+	CC LDFLAGS rlequant.o LIBRLE LIBES -o rlequant
 
-rleprint: rleprint.o LIBRLE
-	CC LDFLAGS rleprint.o LIB_PRE''LIBRLE LIBES -o rleprint
+rleprint: rleprint.o
+	CC LDFLAGS rleprint.o LIBRLE LIBES -o rleprint
 
-rlezoom:	rlezoom.o LIBRLE
-	CC LDFLAGS rlezoom.o LIB_PRE''LIBRLE LIBES -o rlezoom
+rlezoom:	rlezoom.o
+	CC LDFLAGS rlezoom.o LIBRLE LIBES -o rlezoom
 
-rlesplit:	rlesplit.o LIBRLE
-	CC LDFLAGS rlesplit.o LIB_PRE''LIBRLE LIBES -o rlesplit
+rlesplit:	rlesplit.o
+	CC LDFLAGS rlesplit.o LIBRLE LIBES -o rlesplit
 
-rleswap:	rleswap.o LIBRLE
-	CC LDFLAGS rleswap.o LIB_PRE''LIBRLE LIBES -o rleswap
+rleswap:	rleswap.o
+	CC LDFLAGS rleswap.o LIBRLE LIBES -o rleswap
 
-to8:	to8.o LIBRLE
-	CC LDFLAGS to8.o LIB_PRE''LIBRLE LIBES -o to8
+to8:	to8.o
+	CC LDFLAGS to8.o LIBRLE LIBES -o to8
 
-tobw:	tobw.o LIBRLE
-	CC LDFLAGS tobw.o LIB_PRE''LIBRLE LIBES -o tobw
+tobw:	tobw.o
+	CC LDFLAGS tobw.o LIBRLE LIBES -o tobw
 
-unexp:	unexp.o LIBRLE
-	CC LDFLAGS unexp.o LIB_PRE''LIBRLE LIBES -o unexp
+unexp:	unexp.o
+	CC LDFLAGS unexp.o LIBRLE LIBES -o unexp
 
-unslice:	unslice.o LIBRLE
-	CC LDFLAGS unslice.o LIB_PRE''LIBRLE LIBES -o unslice
+unslice:	unslice.o
+	CC LDFLAGS unslice.o LIBRLE LIBES -o unslice
 
-rlemandl:	rlemandl.o LIBRLE
-	CC LDFLAGS rlemandl.o LIB_PRE''LIBRLE LIBES -o rlemandl
+rlemandl:	rlemandl.o
+	CC LDFLAGS rlemandl.o LIBRLE LIBES -o rlemandl
 
-rlepatch:	rlepatch.o LIBRLE
-	CC LDFLAGS rlepatch.o LIB_PRE''LIBRLE LIBES -o rlepatch
+rlepatch:	rlepatch.o
+	CC LDFLAGS rlepatch.o LIBRLE LIBES -o rlepatch
 
 font.c:	../SRCDIR/font.src
 	rm -f font.c
 	sh ../SRCDIR/makeFont.sh ../SRCDIR/font.src > font.c
 
-rleClock:	rleClock.o font.c LIBRLE
-	CC LDFLAGS rleClock.o font.c LIB_PRE''LIBRLE LIBES -o rleClock
+rleClock:	rleClock.o font.c
+	CC LDFLAGS rleClock.o font.c LIBRLE LIBES -o rleClock
 
 cubitorle:	cubitorle.o
-	CC LDFLAGS -o cubitorle cubitorle.o LIB_PRE''LIBRLE LIBES
+	CC LDFLAGS -o cubitorle cubitorle.o LIBRLE LIBES
 
 giftorle:	giftorle.o
-	CC LDFLAGS giftorle.o LIB_PRE''LIBRLE LIBES -o giftorle
+	CC LDFLAGS giftorle.o LIBRLE LIBES -o giftorle
 
 graytorle:	graytorle.o
-	CC LDFLAGS graytorle.o LIB_PRE''LIBRLE LIBES -o graytorle
+	CC LDFLAGS graytorle.o LIBRLE LIBES -o graytorle
 
 painttorle:	painttorle.o
-	CC LDFLAGS painttorle.o LIB_PRE''LIBRLE LIBES -o painttorle
+	CC LDFLAGS painttorle.o LIBRLE LIBES -o painttorle
 
 rawtorle:	rawtorle.o
-	CC LDFLAGS rawtorle.o LIB_PRE''LIBRLE LIBES -o rawtorle
+	CC LDFLAGS rawtorle.o LIBRLE LIBES -o rawtorle
 
 rletoabA60:	rletoabA60.o
-	CC LDFLAGS rletoabA60.o LIB_PRE''LIBRLE LIBES -o rletoabA60
+	CC LDFLAGS rletoabA60.o LIBRLE LIBES -o rletoabA60
 
 rletoascii:	rletoascii.o
-	CC LDFLAGS rletoascii.o LIB_PRE''LIBRLE LIBES -o rletoascii
+	CC LDFLAGS rletoascii.o LIBRLE LIBES -o rletoascii
 
 rletogray:	rletogray.o
-	CC LDFLAGS rletogray.o LIB_PRE''LIBRLE LIBES -o rletogray
+	CC LDFLAGS rletogray.o LIBRLE LIBES -o rletogray
 
 rletopaint:	rletopaint.o
-	CC LDFLAGS rletopaint.o LIB_PRE''LIBRLE LIBES -o rletopaint
+	CC LDFLAGS rletopaint.o LIBRLE LIBES -o rletopaint
 
 rletops:	rletops.o
-	CC LDFLAGS rletops.o LIB_PRE''LIBRLE LIBES -o rletops
+	CC LDFLAGS rletops.o LIBRLE LIBES -o rletops
 
 rletoraw:	rletoraw.o
-	CC LDFLAGS rletoraw.o LIB_PRE''LIBRLE LIBES -o rletoraw
+	CC LDFLAGS rletoraw.o LIBRLE LIBES -o rletoraw
 
 targatorle:	targatorle.o
-	CC LDFLAGS targatorle.o LIB_PRE''LIBRLE LIBES -o targatorle
+	CC LDFLAGS targatorle.o LIBRLE LIBES -o targatorle
 
 wasatchrle:	wasatchrle.o
-	CC LDFLAGS wasatchrle.o LIB_PRE''LIBRLE LIBES -o wasatchrle
+	CC LDFLAGS wasatchrle.o LIBRLE LIBES -o wasatchrle
 
 rletogif:	rletogif.o gifencod.o compgif.o
-	CC LDFLAGS rletogif.o gifencod.o compgif.o LIB_PRE''LIBRLE LIBES -o rletogif
+	CC LDFLAGS rletogif.o gifencod.o compgif.o LIBRLE LIBES -o rletogif
 
 rletoabA62:	rletoabA62.o rle.o
-	CC LDFLAGS rletoabA62.o rle.o LIB_PRE''LIBRLE LIBES -o rletoabA62
+	CC LDFLAGS rletoabA62.o rle.o LIBRLE LIBES -o rletoabA62
 
 #include "../Cakefile.rules"
