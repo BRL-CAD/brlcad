@@ -515,6 +515,7 @@ menu .$id.menubar.edit -tearoff $do_tearoffs
 	-command "winset \$mged_active_dm($id); build_edit_menu_all s"
 .$id.menubar.edit add command -label "Matrix Selection..." -underline 0 \
 	-command "winset \$mged_active_dm($id); build_edit_menu_all o"
+.$id.menubar.edit add separator
 .$id.menubar.edit add command -label "Solid Editor..." -underline 6 \
 	-command "init_edit_solid $id"
 .$id.menubar.edit add command -label "Combination Editor..." -underline 0 \
@@ -522,18 +523,18 @@ menu .$id.menubar.edit -tearoff $do_tearoffs
 
 menu .$id.menubar.create -tearoff $do_tearoffs
 .$id.menubar.create add cascade\
-	-label "Solid" -underline 0 -menu .$id.menubar.create.solid
-.$id.menubar.create add command\
-	-label "Instance Creation Panel..." -underline 0 -command "icreate $id"
-.$id.menubar.create add command -label "Solid Editor..." -underline 6 \
+	-label "Make a Solid" -underline 0 -menu .$id.menubar.create.solid
+#.$id.menubar.create add command\
+#	-label "Instance Creation Panel..." -underline 0 -command "icreate $id"
+.$id.menubar.create add command -label "Solid Editor..." -underline 0 \
 	-command "init_edit_solid $id"
 .$id.menubar.create add command -label "Combination Editor..." -underline 0 \
 	-command "init_comb $id"
 
 menu .$id.menubar.create.solid -tearoff $do_tearoffs
-.$id.menubar.create.solid add command\
-	-label "Solid Creation Panel..." -underline 0 -command "solcreate $id"
-.$id.menubar.create.solid add separator
+#.$id.menubar.create.solid add command\
+#	-label "Solid Creation Panel..." -underline 0 -command "solcreate $id"
+#.$id.menubar.create.solid add separator
 set make_solid_types [_mged_make -t]
 foreach solid_type $make_solid_types {
     .$id.menubar.create.solid add command -label "$solid_type..."\
@@ -930,10 +931,10 @@ menu .$id.menubar.tools -tearoff $do_tearoffs
 	-command "cadColorWidget tool .$id colorEditTool\
 	-title \"Color Editor\"\
 	-initialcolor black"
-.$id.menubar.tools add separator
-.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
-	-label "Classic Menu Tool..." -underline 0\
-	-command "toggle_button_menu $id"
+#.$id.menubar.tools add separator
+#.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
+#	-label "Classic Menu Tool..." -underline 0\
+#	-command "toggle_button_menu $id"
 
 menu .$id.menubar.help -tearoff $do_tearoffs
 .$id.menubar.help add command -label "About" -underline 0\
