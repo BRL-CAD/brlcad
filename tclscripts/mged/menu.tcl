@@ -1,8 +1,9 @@
 #
 # Modifications -
-#        (Bob Parker):
-#             Generalized the code to accommodate multiple instances of the
-#             user interface.
+#	Bob Parker:
+#		*- Generalized the code to accommodate multiple instances of the
+#		   classic MGED "Button Menu" interface.
+#		*- Added procs to implement edit menus
 #
 
 proc mmenu_set { w id i menu } {
@@ -119,7 +120,7 @@ proc reconfig_mmenu { id } {
     }
 }
 
-proc do_arb_edit_menu { menu1 menu2 menu3 } {
+proc do_arb_edit_menu { type menu1 menu2 menu3 } {
     global mged_players
     global mged_top
     global edit_type
@@ -134,7 +135,7 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 
     set edit_type "none of above"
     foreach id $mged_players {
-	build_edit_info $id
+	post_edit_info $id $type
 
 	.$id.menubar.settings.transform entryconfigure 2 -state normal
 	set mged_transform($id) "e"
@@ -208,7 +209,7 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
     }
 }
 
-proc do_edit_menu { menu1 } {
+proc do_edit_menu { type menu1 } {
     global mged_display
     global mged_players
     global mged_top
@@ -223,7 +224,7 @@ proc do_edit_menu { menu1 } {
 
     set edit_type "none of above"
     foreach id $mged_players {
-	build_edit_info $id
+	post_edit_info $id $type
 
 	.$id.menubar.settings.transform entryconfigure 2 -state normal
 	set mged_transform($id) "e"
@@ -386,3 +387,22 @@ proc undo_edit_menu {} {
 	}
     }
 }
+
+proc post_edit_info { id type } {
+    global debug_edit_info_type
+    global debug_edit_info_form
+
+    set result [catch { db form $type } form]
+
+    set debug_edit_info_type $type
+    set debug_edit_info_form $form
+
+    if $result {
+	# form does not exist for this type, so just display info
+	build_edit_info $id
+    } else {
+	# eventually allow edits -- for now just display info
+	build_edit_info $id
+    }
+}
+
