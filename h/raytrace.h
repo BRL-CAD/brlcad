@@ -964,6 +964,8 @@ struct resource {
 	long		re_shot_miss;	/* ft_shot() returned a hit */
 	/* Optimizations.  Rays not shot at solids */
 	long		re_prune_solrpp;/* shot missed solid RPP, ft_shot skipped */
+	long		re_ndup;	/* ft_shot() calls skipped for already-ft_shot() solids */
+	long		re_nempty_cells; /* number of empty NUgrid cells passed through */
 };
 extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RESOURCE_NULL	((struct resource *)0)
@@ -1115,6 +1117,8 @@ struct rt_i {
 	long		nhits;		/* solid ft_shot() returned a hit */
 	long		nmiss_tree;	/* shots missed sub-tree RPP */
 	long		nmiss_solid;	/* shots missed solid RPP */
+	long		ndup;		/* duplicate shots at a given solid */
+	long		nempty_cells;	/* number of empty NUgrid cells */
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
 	union cutter	*rti_CutFree;	/* cut Freelist */
