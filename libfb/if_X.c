@@ -21,16 +21,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
+#include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
 
 extern int	fb_sim_readrect(), fb_sim_writerect();
 
 static	int	linger();
+static	int	xsetup();
 
 _LOCAL_ int	X_dopen(),
 		X_dclose(),
@@ -107,8 +110,23 @@ struct	xinfo {
 #define	XI(ptr) ((struct xinfo *)((ptr)->u1.p))
 #define	XIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
-unsigned char	*bytebuf = NULL;	/*XXXXXX*/
-char	*bitbuf = NULL;		/*XXXXXX*/
+static unsigned char	*bytebuf = NULL;	/*XXXXXX*/
+static char		*bitbuf = NULL;		/*XXXXXX*/
+
+#define MODE_1MASK	(1<<1)
+#define MODE_1TRANSIENT	(0<<1)
+#define MODE_1LINGERING (1<<1)
+
+struct modeflags {
+	char	c;
+	long	mask;
+	long	value;
+	char	*help;
+} modeflags[] = {
+	{ 'l',	MODE_1MASK, MODE_1LINGERING,
+		"Lingering window - else transient" },
+	{ '\0', 0, 0, "" }
+};
 
 _LOCAL_ int
 X_dopen( ifp, file, width, height )
@@ -117,6 +135,55 @@ char	*file;
 int	width, height;
 {
 	char	*display_name = NULL;
+	int	mode;
+
+	/*
+	 *  First, attempt to determine operating mode for this open,
+	 *  based upon the "unit number" or flags.
+	 *  file = "/dev/X###"
+	 *  The default mode is zero.
+	 */
+	mode = 0;
+
+	if( file != NULL )  {
+		register char *cp;
+		char	modebuf[80];
+		char	*mp;
+		int	alpha;
+		struct	modeflags *mfp;
+
+		if( strncmp(file, "/dev/X", 6) ) {
+			/* How did this happen?? */
+			mode = 0;
+		}
+		else {
+			/* Parse the options */
+			alpha = 0;
+			mp = &modebuf[0];
+			cp = &file[6];
+			while( *cp != '\0' && !isspace(*cp) ) {
+				*mp++ = *cp;	/* copy it to buffer */
+				if( isdigit(*cp) ) {
+					cp++;
+					continue;
+				}
+				alpha++;
+				for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+					if( mfp->c == *cp ) {
+						mode = (mode&~mfp->mask)|mfp->value;
+						break;
+					}
+				}
+				if( mfp->c == '\0' && *cp != '-' ) {
+					fb_log( "if_X: unknown option '%c' ignored\n", *cp );
+				}
+				cp++;
+			}
+			*mp = '\0';
+			if( !alpha )
+				mode = atoi( modebuf );
+		}
+	}
 
 	if( width <= 0 )
 		width = ifp->if_width;
@@ -137,9 +204,7 @@ int	width, height;
 		fb_log("X_dopen: xinfo malloc failed\n");
 		return(-1);
 	}
-
-	if( file[strlen("/dev/X")] != NULL )
-		XI(ifp)->mode = 1;
+	XI(ifp)->mode = mode;
 
 	/* set up an X window, graphics context, etc. */
 	if( xsetup( ifp, width, height ) < 0 ) {
@@ -149,20 +214,9 @@ int	width, height;
 #ifdef notes
 	/* monochrome */
         colormap = XDefaultColormap(dpy,screen);
-        image = XCreateImage(dpy, visual, 1, XYBitmap, 0,
-                (char *)buffer, buf_width, buf_height, 8, 0);
 	/* color */
         colormap = GetColormap(colors, ncolors, &newmap_flag, buffer,
             buffer_size);
-        image = XCreateImage(dpy, visual, 8, ZPixmap, 0, (char *)buffer,
-            buf_width, buf_height, 8, 0);
-	/* expose event */
-	XPutImage(dpy, image_win, gc, image,
-		expose->x, expose->y, expose->x, expose->y,
-		expose->width, expose->height);
-	/* normal draw */
-	XPutImage(dpy, image_win, gc, image, 0, 0, 0, 0,
-		image->width, image->height);
 #endif
 
 	/* an image data buffer */
@@ -203,7 +257,7 @@ X_dclose( ifp )
 FBIO	*ifp;
 {
 	XFlush( XI(ifp)->dpy );
-	if( XI(ifp)->mode ) {
+	if( (XI(ifp)->mode & MODE_1MASK) == MODE_1LINGERING ) {
 		if( linger(ifp) )
 			return(0);	/* parent leaves the display */
 	}
@@ -226,6 +280,8 @@ FBIO	*ifp;
 RGBpixel	*pp;
 {
 	XClearWindow( XI(ifp)->dpy, XI(ifp)->win );
+	bzero( bitbuf, (ifp->if_width * ifp->if_height)/8 );
+	bzero( bytebuf, (ifp->if_width * ifp->if_height) );
 	return(0);
 }
 
@@ -236,26 +292,39 @@ int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
+	register unsigned char	*cp;
+	register int	i;
+
+	/* 1st -> 4th quadrant */
+	y = ifp->if_height - 1 - y;
+
+	cp = &bytebuf[y*ifp->if_width + x];
+	for( i = 0; i < count; i++ ) {
+		(*pixelp)[RED] = *cp;
+		(*pixelp)[GRN] = *cp;
+		(*pixelp++)[BLU] = *cp++;
+	}
+	return( count );
 }
 
-/*************************
-* code for dithering     *
-*************************/
+/*
+ * Dithering
+ */
 int dm4[4][4] = {
-     0,  8,  2, 10,
-    12,  4, 14,  6,
-     3, 11,  1,  9,
-    15,  7, 13,  5
+	 0,  8,  2, 10,
+	12,  4, 14,  6,
+	 3, 11,  1,  9,
+	15,  7, 13,  5
 };
 int dm8[8][8] = {
-     0, 32,  8, 40,  2, 34, 10, 42,
-    48, 16, 56, 24, 50, 18, 58, 26,
-    12, 44,  4, 36, 14, 46,  6, 38,
-    60, 28, 52, 20, 62, 30, 54, 22,
-     3, 35, 11, 43,  1, 33,  9, 41,
-    51, 19, 59, 27, 49, 17, 57, 25,
-    15, 47,  7, 39, 13, 45,  5, 37,
-    63, 31, 55, 23, 61, 29, 53, 21
+	 0, 32,  8, 40,  2, 34, 10, 42,
+	48, 16, 56, 24, 50, 18, 58, 26,
+	12, 44,  4, 36, 14, 46,  6, 38,
+	60, 28, 52, 20, 62, 30, 54, 22,
+	 3, 35, 11, 43,  1, 33,  9, 41,
+	51, 19, 59, 27, 49, 17, 57, 25,
+	15, 47,  7, 39, 13, 45,  5, 37,
+	63, 31, 55, 23, 61, 29, 53, 21
 };
 int ditherPeriod = 8;
 int *dm = &(dm8[0][0]);
@@ -264,81 +333,81 @@ int *error1, *error2;
 int dither_bw(pixel,count,line)
 unsigned int pixel;
 register count, line;
-{   
-    if( pixel > dm[((line%ditherPeriod)*ditherPeriod) +
-            (count%ditherPeriod)])
-        return(1);
-    else
-        return(0);
+{
+	if( pixel > dm[((line%ditherPeriod)*ditherPeriod) +
+	    (count%ditherPeriod)])
+		return(1);
+	else
+		return(0);
 }
-/***************************************
-* code for modified floyd steinberg    *
-****************************************/
-int mfs_bw(pixel,count,line)
+
+/*
+ * Floyd Steinberg error distribution algorithm
+ */
+int
+fs_bw(pixel, count, line)
 unsigned int pixel;
 register count, line;
 {
-    int  onoff, *te;
-    long  intensity, pixerr;
+	int  onoff;
+	int  intensity, error;
 
-    if (count == 0) {
-        te = error1;
-        error1 = error2;
-        error2 = te;
-        error2[0] = 0;
-    }  
-    intensity = pixel + error1[count];
-    if (intensity > 255)
-        intensity = 255;
-    else if (intensity < 0)
-        intensity = 0;
+	if( count == 0 ) {
+		int *tmp;
+		tmp = error1;
+		error1 = error2;
+		error2 = tmp;
+		error2[0] = 0;
+	}
 
-    if (intensity < 128) {
-        onoff = 0;
-        pixerr = 128 - intensity;
-    }
-    else {
-        onoff = 1;
-        pixerr = 128 - intensity;
-    }
-    error1[count+1] += (int)(3*pixerr)/8;
-    error2[count+1] = (int)pixerr/4;
-    error2[count] += (int)(3*pixerr)/8;
-    return(onoff);
+	intensity = pixel + error1[count];
+	if( intensity < 128 ) {
+		onoff = 0;
+		error = intensity;
+	} else {
+		onoff = 1;
+		error = intensity - 255;
+	}
+
+	error1[count+1] += (int)(3*error)/8;	/* right */
+	error2[count+1] = (int)error/4;		/* down */
+	error2[count] += (int)(3*error)/8;	/* diagonal */
+	return(onoff);
 }
-/*****************************
-* code for floyd steinberg   *
-*****************************/
-int fs_bw(pixel, count, line)
+
+/*
+ * Modified Floyd Steinberg algorithm
+ */
+int
+mfs_bw(pixel,count,line)
 unsigned int pixel;
 register count, line;
 {
-    int  onoff, *te; 
-    long  intensity, pixerr;
+	int  onoff;
+	int  intensity, error;
 
-    if (count == 0) {
-        te = error1;
-        error1 = error2;
-        error2 = te;
-        error2[0] = 0;
-    }  
-    intensity = pixel + error1[count];
-    if (intensity > 255)
-        intensity = 255;
-    else if (intensity < 0)
-            intensity = 0;
+	if (count == 0) {
+		int *tmp;
+		tmp = error1;
+		error1 = error2;
+		error2 = tmp;
+		error2[0] = 0;
+	}
 
-    if (intensity < 128) {
-        onoff = 0;
-        pixerr = intensity;
-    } else {
-        onoff = 1;
-        pixerr = intensity - 255;
-    }
-    error1[count+1] += (int)(3*pixerr)/8;
-    error2[count+1] = (int)pixerr/4;
-    error2[count] += (int)(3*pixerr)/8;
-    return(onoff);
+	intensity = pixel + error1[count];
+
+	if (intensity < 128) {
+		onoff = 0;
+		error = 128 - intensity;
+	} else {
+		onoff = 1;
+		error = 128 - intensity;
+	}
+
+	error1[count+1] += (int)(3*error)/8;	/* right */
+	error2[count+1] = (int)error/4;		/* down */
+	error2[count] += (int)(3*error)/8;	/* diagonal */
+	return(onoff);
 }
 
 /*
@@ -396,12 +465,15 @@ int	count;
 	/* save the 8bit black and white version of it */
 	cp = &bytebuf[y*ifp->if_width + x];
 	for( i = 0; i < count; i++ ) {
-		cp[i] = (30*pixelp[i][RED] + 59*pixelp[i][GRN]
-			+ 11*pixelp[i][BLU]) / 100;
+		/* Best possible 8-bit NTSC weights */
+		/* Use three tables if this gets to be a bottleneck */
+		cp[i] = (77*pixelp[i][RED] + 150*pixelp[i][GRN]
+			+ 29*pixelp[i][BLU]) >> 8;
 	}
 
 	/* Convert the monochrome data to a bitmap */
     if (XBitmapBitOrder(XI(ifp)->dpy) == LSBFirst) {
+    	fb_log("if_X: can't do LSBFirst machines yet\n");
 #ifdef LATER
         for (row=0; row < height; row++)
             for (col=0; col < width; ) {
@@ -509,7 +581,7 @@ int	x, y;
 {
 }
 
-XWMHints xwmh = {
+static XWMHints xwmh = {
 	(InputHint|StateHint),		/* flags */
 	False,				/* input */
 	NormalState,			/* initial_state */
@@ -520,6 +592,7 @@ XWMHints xwmh = {
 	0				/* Window group */
 };
 
+static
 xsetup( ifp, width, height )
 FBIO	*ifp;
 int	width, height;
@@ -612,12 +685,6 @@ default:
 	xswa.cursor = XCreateFontCursor(dpy, XC_gumby);
 #endif
 
-#ifdef OLD
-	win = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy),
-		xsh.x, xsh.y, xsh.width, xsh.height,
-		bw, bd, bg );
-#endif /* OLD */
-
 	/*
 	 *  Note: all Windows, Colormaps and XImages have
 	 *  a Visual attribute which determines how pixel
@@ -630,9 +697,8 @@ printf("Creating window\n");
 		0, 0, xsh.width, xsh.height,
 		3, XDefaultDepth(dpy, screen),
 		InputOutput, visual,
-/*CURSOR	CWBackPixel |CWEventMask |CWCursor |CWBorderPixel,*/
 		CWBackPixel |CWEventMask |CWBorderPixel,
-		/* |CWColormap */
+		/* |CWColormap |CWCursor */
 		&xswa );
 
 XI(ifp)->win = win;
@@ -740,7 +806,15 @@ FBIO	*ifp;
 					512, 512 );
 				break;
 			case Button2:
-				fb_log("(%d,%d)\n", event.xbutton.x, event.xbutton.y );
+				{
+				int	x, y;
+				unsigned char	*cp;
+				x = event.xbutton.x;
+				y = ifp->if_height - 1 - event.xbutton.y;
+				cp = &bytebuf[y*ifp->if_width + x];
+				fb_log("(%4d,%4d) %3d %3d %3d\n",
+					x, y, *cp, *cp, *cp );
+				}
 				break;
 			case Button3:
 				alive = 0;
@@ -767,7 +841,6 @@ int width, height;
 	register unsigned char *mbuffer, mvalue;   /* monochrome bitmap buffer */
 	register unsigned char *mpbuffer;          /* monochrome byte buffer */
 	register row, col, bit;
-	char  *malloc(), *calloc();
 
 	error1 = (int *)malloc((unsigned)(width+1) * sizeof(int));
 	error2 = (int *)malloc((unsigned)(width+1) * sizeof(int));
@@ -820,6 +893,8 @@ _LOCAL_ int
 X_help( ifp )
 FBIO	*ifp;
 {
+	struct	modeflags *mfp;
+
 	fb_log( "Description: %s\n", X_interface.if_type );
 	fb_log( "Device: %s\n", ifp->if_name );
 	fb_log( "Max width/height: %d %d\n",
@@ -828,5 +903,9 @@ FBIO	*ifp;
 	fb_log( "Default width/height: %d %d\n",
 		X_interface.if_width,
 		X_interface.if_height );
+	fb_log( "Usage: /dev/X[options]\n" );
+	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+		fb_log( "   %c   %s\n", mfp->c, mfp->help );
+	}
 	return(0);
 }
