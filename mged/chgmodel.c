@@ -2195,45 +2195,47 @@ char	**argv;
 
 	update_views = 1;
 
+#if 0
 	if(movedir != SARROW) {
 		/* Put in global object scale mode */
 		if( edobj == 0 )
 			edobj = BE_O_SCALE;	/* default is global scaling */
 		movedir = SARROW;
 	}
+#endif
 
 	bn_mat_idn(incr);
 
 	/* switch depending on type of scaling to do */
 	switch( edobj ) {
-
-		case BE_O_SCALE:
-			/* global scaling */
-			incr[15] = 1.0 / (atof(argv[1]) * modelchanges[15]);
+	default:
+	case BE_O_SCALE:
+		/* global scaling */
+		incr[15] = 1.0 / (atof(argv[1]) * modelchanges[15]);
 		break;
-
-		case BE_O_XSCALE:
-			/* local scaling ... X-axis */
-			incr[0] = atof(argv[1]) / acc_sc[0];
-			acc_sc[0] = atof(argv[1]);
+	case BE_O_XSCALE:
+		/* local scaling ... X-axis */
+		incr[0] = atof(argv[1]) / acc_sc[0];
+		acc_sc[0] = atof(argv[1]);
 		break;
-
-		case BE_O_YSCALE:
-			/* local scaling ... Y-axis */
-			incr[5] = atof(argv[1]) / acc_sc[1];
-			acc_sc[1] = atof(argv[1]);
+	case BE_O_YSCALE:
+		/* local scaling ... Y-axis */
+		incr[5] = atof(argv[1]) / acc_sc[1];
+		acc_sc[1] = atof(argv[1]);
 		break;
-
-		case BE_O_ZSCALE:
-			/* local scaling ... Z-axis */
-			incr[10] = atof(argv[1]) / acc_sc[2];
-			acc_sc[2] = atof(argv[1]);
+	case BE_O_ZSCALE:
+		/* local scaling ... Z-axis */
+		incr[10] = atof(argv[1]) / acc_sc[2];
+		acc_sc[2] = atof(argv[1]);
 		break;
-
 	}
 
 	/* find point the scaling is to take place wrt */
+#if 0
 	MAT4X3PNT(temp, es_mat, es_keypoint);
+#else
+	VMOVE(temp, es_keypoint);
+#endif
 	MAT4X3PNT(point, modelchanges, temp);
 
 	wrt_point(modelchanges, incr, modelchanges, point);
