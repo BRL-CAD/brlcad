@@ -229,7 +229,7 @@ proc init_Raytrace { id } {
     set x [lindex $pxy 0]
     set y [lindex $pxy 1]
     wm geometry $top +$x+$y
-    wm title $top "Raytrace..."
+    wm title $top "Raytrace ($id)"
 }
 
 proc do_Raytrace { id } {
@@ -616,7 +616,7 @@ proc do_Advanced_Settings { id } {
     set x [lindex $pxy 0]
     set y [lindex $pxy 1]
     wm geometry $top +$x+$y
-    wm title $top "Advanced Settings..."
+    wm title $top "Advanced Settings ($id)"
 }
 
 proc update_Raytrace { id } {

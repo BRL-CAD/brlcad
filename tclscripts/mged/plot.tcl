@@ -106,7 +106,7 @@ proc init_plotTool { id } {
     set x [lindex $pxy 0]
     set y [lindex $pxy 1]
     wm geometry $top +$x+$y
-    wm title $top "Unix Plot Tool..."
+    wm title $top "Unix Plot Tool ($id)"
 }
 
 proc do_plot { id } {
