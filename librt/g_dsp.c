@@ -575,62 +575,6 @@ int *inside;
 	NdotD = VDOT( N, isect->r.r_dir);
 	NdotPt = VDOT(N, isect->r.r_pt);
 
-	if (rt_g.debug & DEBUG_HF) {
-		FILE *fd;
-		static int n=0;
-		short h, i;
-		char buf[32];
-		short cell_min = CELL_MIN(cell);
-		short cell_max = CELL_MAX(cell);
-
-		/* plot out the scenario */
-		RES_ACQUIRE( &rt_g.res_model);
-
-		sprintf(buf, "dsp%d_1.pl", n++);
-		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
-			/* plot the box */
-			pl_color(fd, 180, 180, 255);
-			pl_3move(fd, cell[X], cell[Y], cell_min);
-			pl_3cont(fd, cell[X]+1, cell[Y], cell_min);
-			pl_3cont(fd, cell[X]+1, cell[Y]+1, cell_min);
-			pl_3cont(fd, cell[X], cell[Y]+1, cell_min);
-			pl_3cont(fd, cell[X], cell[Y], cell_min);
-			pl_3cont(fd, cell[X], cell[Y], cell_max);
-			pl_3cont(fd, cell[X]+1, cell[Y], cell_max);
-			pl_3cont(fd, cell[X]+1, cell[Y]+1, cell_max);
-			pl_3cont(fd, cell[X], cell[Y]+1, cell_max);
-			pl_3cont(fd, cell[X], cell[Y], cell_max);
-			pl_3line(fd, cell[X]+1, cell[Y], cell_min,
-				     cell[X]+1, cell[Y], cell_max);
-			pl_3line(fd, cell[X]+1, cell[Y]+1, cell_min,
-				     cell[X]+1, cell[Y]+1, cell_max);
-			pl_3line(fd, cell[X], cell[Y]+1, cell_min,
-				     cell[X], cell[Y]+1, cell_max);
-
-			/* plot the ray */
-			pl_color(fd, 255, 140, 140);
-			pdv_3line(fd, curr_pt, next_pt);
-
-			/* plot the triangles */
-			pl_color(fd, 140, 255, 140);
-			pl_3move(fd, cell[X], cell[Y], DSP(isect->dsp,
-				     cell[X], cell[Y]) );
-			pl_3cont(fd, cell[X]+1, cell[Y], DSP(isect->dsp,
-				     cell[X]+1, cell[Y]) );
-			pl_3cont(fd, cell[X]+1, cell[Y]+1, DSP(isect->dsp,
-				     cell[X]+1, cell[Y]+1) );
-			pl_3cont(fd, cell[X], cell[Y]+1, DSP(isect->dsp,
-				     cell[X], cell[Y]+1) );
-			pl_3cont(fd, cell[X], cell[Y], DSP(isect->dsp,
-				     cell[X], cell[Y]) );
-			pl_3cont(fd, cell[X]+1, cell[Y]+1, DSP(isect->dsp,
-				     cell[X]+1, cell[Y]+1) );
-
-
-			fclose(fd);
-		}
-		RES_RELEASE( &rt_g.res_model);
-	}
 
 	abs_NdotD = NdotD >= 0.0 ? NdotD : (-NdotD);
 	if (BN_VECT_ARE_PERP(NdotD, isect->tol)) {
@@ -856,7 +800,7 @@ tri2:
 	/* determine if we are starting out "under/inside" the surface      \
 	 * or "above/outside" the surface.                                  \
 	 */                                     			    \
-	switch (curr_pt_surf) {                                     	    \
+	switch (curr_surf) {                                     	    \
 	case BBSURF(XMIN):                                     		    \
 		h = grid_cell[X];                                     	    \
                                      					    \
@@ -872,7 +816,7 @@ tri2:
 					bu_log("entering XMIN wall\n"); \
 				RT_GET_SEG( isect->segp, isect->ap->a_resource ); \
 				isect->segp->seg_stp = isect->stp; \
-				isect->segp->seg_in.hit_dist = curr_pt_dist; \
+				isect->segp->seg_in.hit_dist = curr_dist; \
 					                                     \
 				isect->segp->seg_in.hit_surfno = BBSURF(XMIN); \
 				isect->segp->seg_in.hit_vpriv[X] = grid_cell[X]; \
@@ -897,7 +841,7 @@ tri2:
 					bu_log("entering XMAX wall\n"); \
 				RT_GET_SEG( isect->segp, isect->ap->a_resource ); \
 				isect->segp->seg_stp = isect->stp; \
-				isect->segp->seg_in.hit_dist = curr_pt_dist; \
+				isect->segp->seg_in.hit_dist = curr_dist; \
                                 					    \
 				isect->segp->seg_in.hit_surfno = BBSURF(XMAX); \
 				isect->segp->seg_in.hit_vpriv[X] = grid_cell[X]; \
@@ -922,7 +866,7 @@ tri2:
 					bu_log("entering @ YMIN wall\n"); \
 				RT_GET_SEG( isect->segp, isect->ap->a_resource ); \
 				isect->segp->seg_stp = isect->stp;          \
-				isect->segp->seg_in.hit_dist = curr_pt_dist; \
+				isect->segp->seg_in.hit_dist = curr_dist; \
 					                                    \
 				isect->segp->seg_in.hit_surfno = BBSURF(YMIN); \
 				isect->segp->seg_in.hit_vpriv[X] = grid_cell[X]; \
@@ -947,7 +891,7 @@ tri2:
 					bu_log("entering @ YMIN wall\n"); \
 				RT_GET_SEG( isect->segp, isect->ap->a_resource );                                     \
 				isect->segp->seg_stp = isect->stp;          \
-				isect->segp->seg_in.hit_dist = curr_pt_dist;\
+				isect->segp->seg_in.hit_dist = curr_dist;\
                                  					    \
 				isect->segp->seg_in.hit_surfno = BBSURF(YMAX);  \
 				isect->segp->seg_in.hit_vpriv[X] = grid_cell[X]; \
@@ -969,7 +913,7 @@ tri2:
 				bu_log("hit bottom risinging\n"); \
 			RT_GET_SEG( isect->segp, isect->ap->a_resource ); \
 			isect->segp->seg_stp = isect->stp;          \
-			isect->segp->seg_in.hit_dist = curr_pt_dist;\
+			isect->segp->seg_in.hit_dist = curr_dist;\
                                 					    \
 			isect->segp->seg_in.hit_surfno = BBSURF(ZMIN); \
 			isect->segp->seg_in.hit_vpriv[X] = grid_cell[X]; \
@@ -998,7 +942,7 @@ tri2:
 {	register short h, i;                                 		    \
 	register double slope;                                  	    \
                                  					    \
-	if (next_pt_surf == BBSURF(XMIN) ) h = grid_cell[X];                \
+	if (next_surf == BBSURF(XMIN) ) h = grid_cell[X];                \
 	else h = grid_cell[X]+1;                                	    \
                                 					    \
 	i = DSP(isect->dsp, h, grid_cell[Y]);                               \
@@ -1024,7 +968,7 @@ tri2:
 {	register short h, i;                                 		    \
 	register double slope;                                 		    \
                                  					    \
-	if (next_pt_surf == BBSURF(YMIN) ) h = grid_cell[Y];                \
+	if (next_surf == BBSURF(YMIN) ) h = grid_cell[Y];                \
 	else h = grid_cell[Y]+1;                                 	    \
                                  					    \
 	i = DSP(isect->dsp, grid_cell[X], h);                               \
@@ -1051,16 +995,21 @@ static void
 isect_ray_dsp(isect)
 struct isect_stuff *isect;
 {
+	point_t	bbin_pt;	/* DSP Bounding Box entry point */
+	int	bbin_surf;
+	double	bbin_dist;
+	point_t	bbout_pt;	/* DSP Bounding Box exit point */
+	int	bbout_cell[3];	/* grid cell of last point in bbox */
+
+
 	point_t curr_pt;
-	int	curr_pt_surf;
-	double	curr_pt_dist;
+	int	curr_surf;
+	double	curr_dist;
 	point_t next_pt;
-	int	next_pt_surf;
+	int	next_surf;
 	int	inside = 0;	/* currently have a valid seg we're building */
 	int	grid_cell[3];	/* grid cell of current point */
 
-	point_t out_pt;
-	int	out_cell[3];	/* grid cell of last point in bbox */
 	int	rising;		/* boolean:  Ray Z dir sign is positive */
 	int	stepX, stepY;	/* signed step delta for grid cell marching */
 	int	outX, outY;	/* cell index which idicates we're outside */
@@ -1088,14 +1037,17 @@ struct isect_stuff *isect;
 
 
 	/* compute BBox entry point and starting grid cell */
-	curr_pt_dist = isect->bbox.in_dist;
-	VJOIN1(curr_pt, isect->r.r_pt, curr_pt_dist, isect->r.r_dir);
-	curr_pt_surf = isect->bbox.in_surf;
+	bbin_dist = isect->bbox.in_dist;
+	VJOIN1(bbin_pt, isect->r.r_pt, bbin_dist, isect->r.r_dir);
+	bbin_surf = isect->bbox.in_surf;
 
-	VMOVE(grid_cell, curr_pt);	/* int/float conversion */
+	VMOVE(grid_cell, bbin_pt);	/* int/float conversion */
 
-	VJOIN1(out_pt, isect->r.r_pt, isect->bbox.out_dist, isect->r.r_dir);
-	VMOVE(out_cell, out_pt);	/* int/float conversion */
+	VJOIN1(bbout_pt, isect->r.r_pt, isect->bbox.out_dist, isect->r.r_dir);
+	VMOVE(bbout_cell, bbout_pt);	/* int/float conversion */
+
+	VMOVE(curr_pt, bbin_pt);
+	curr_dist = bbin_dist;
 
 	rising = (isect->r.r_dir[Z] > 0.); /* compute Z direction */
 
@@ -1116,7 +1068,7 @@ struct isect_stuff *isect;
 		 * to the first cell boundary in the X direction
 		 */
 		tX = (grid_cell[X] - curr_pt[X]) / isect->r.r_dir[X];
-/*		if (tX == 0.0) tX = tDX; */
+
 	} else {
 		stepX = 1;
 		outX = isect->dsp->dsp_i.dsp_xcnt;
@@ -1127,7 +1079,6 @@ struct isect_stuff *isect;
 
 		if (isect->r.r_dir[X] > 0.0) {
 			tX = ((grid_cell[X]+1) - curr_pt[X]) / isect->r.r_dir[X];
-/*			if (tX == 0.0) tX = tDX; */
 		} else
 			tX = MAX_FASTF;
 	}
@@ -1140,8 +1091,6 @@ struct isect_stuff *isect;
 		tDY = -1.0 / isect->r.r_dir[Y];
 
 		tY = (grid_cell[Y] - curr_pt[Y]) / isect->r.r_dir[Y];
-/*		if (tY == 0.0) tX = tDY; */
-
 	} else {
 		stepY = 1;
 		outY = isect->dsp->dsp_i.dsp_ycnt;
@@ -1152,29 +1101,23 @@ struct isect_stuff *isect;
 
 		if (isect->r.r_dir[Y] > 0.0) {
 			tY = ((grid_cell[Y]+1) - curr_pt[Y]) / isect->r.r_dir[Y];
-/*			if (tY == 0.0) tX = tDY; */
 		} else
 			tY = MAX_FASTF;
 	}
 
-	VSCALE(pDX, isect->r.r_dir, tDX);	/* vect for going tDX dist */
-	VSCALE(pDY, isect->r.r_dir, tDY);
 
-	
+
 	if (rt_g.debug & DEBUG_HF) {
 		bu_log(" in cell(%d,%d)  pt(%g %g %g)\n",
 			grid_cell[X], grid_cell[Y], V3ARGS(curr_pt));
 		bu_log("out cell(%d,%d)  pt(%g %g %g)\n",
-			out_cell[X], out_cell[Y], V3ARGS(out_pt));
+			bbout_cell[X], bbout_cell[Y], V3ARGS(bbout_pt));
 
 		bu_log("stepX:%d outX:%d  tDX:%g tX:%g\n",
 			stepX, outX, tDX, tX);
 		bu_log("stepY:%d outY:%d  tDY:%g tY:%g\n",
 			stepY, outY, tDY, tY);
 	}
-
-
-
 
 
 	do {
@@ -1186,13 +1129,14 @@ struct isect_stuff *isect;
 			/* dist along ray to next X cell boundary is closer
 			 * than dist to next Y cell boundary
 			 */
-			VJOIN1(next_pt, curr_pt, tX, isect->r.r_dir);
-			next_pt_surf = outsurfX;
+			VJOIN1(next_pt, bbin_pt, tX, isect->r.r_dir);
+			next_surf = outsurfX;
 
 
 			if (rt_g.debug & DEBUG_HF) {
 				VPRINT("X next_pt", next_pt);
 			}
+
 			if (rising) {
 				if (next_pt[Z] < CELL_MIN(grid_cell)) {
 					/* in base */
@@ -1211,7 +1155,7 @@ struct isect_stuff *isect;
 					ISECT_ENTRY_WALL();
 					isect_ray_triangles(isect, grid_cell,
 						curr_pt, next_pt,
-						curr_pt_surf, next_pt_surf,
+						curr_surf, next_surf,
 						&inside);
 
 					ISECT_X_EXIT_WALL(isect, grid_cell);
@@ -1232,7 +1176,7 @@ struct isect_stuff *isect;
 					ISECT_ENTRY_WALL();
 					isect_ray_triangles(isect, grid_cell,
 						curr_pt, next_pt,
-						curr_pt_surf, next_pt_surf,
+						curr_surf, next_surf,
 						&inside);
 
 					ISECT_X_EXIT_WALL(isect, grid_cell);
@@ -1242,8 +1186,8 @@ struct isect_stuff *isect;
 			/* step to next cell in X direction */
 			VMOVE(curr_pt, next_pt);
 			grid_cell[X] += stepX;
-			curr_pt_surf = insurfX;
-			curr_pt_dist = tX;
+			curr_surf = insurfX;
+			curr_dist = tX;
 			
 			/* update dist along ray to next X cell boundary */
 			tX += tDX;
@@ -1251,8 +1195,8 @@ struct isect_stuff *isect;
 			/* dist along ray to next Y cell boundary is closer
 			 * than dist to next X cell boundary
 			 */
-			VJOIN1(next_pt, curr_pt, tY, isect->r.r_dir);
-			next_pt_surf = outsurfY;
+			VJOIN1(next_pt, bbin_pt, tY, isect->r.r_dir);
+			next_surf = outsurfY;
 
 			if (rt_g.debug & DEBUG_HF) {
 				VPRINT("Y next_pt", next_pt);
@@ -1274,7 +1218,7 @@ struct isect_stuff *isect;
 					ISECT_ENTRY_WALL();
 					isect_ray_triangles(isect, grid_cell,
 						curr_pt, next_pt,
-						curr_pt_surf, next_pt_surf,
+						curr_surf, next_surf,
 						&inside);
 					ISECT_Y_EXIT_WALL(isect, grid_cell);
 				}
@@ -1297,7 +1241,7 @@ struct isect_stuff *isect;
 					ISECT_ENTRY_WALL();
 					isect_ray_triangles(isect, grid_cell,
 						curr_pt, next_pt,
-						curr_pt_surf, next_pt_surf,
+						curr_surf, next_surf,
 						&inside);
 					ISECT_Y_EXIT_WALL(isect, grid_cell);
 				}
@@ -1306,8 +1250,8 @@ struct isect_stuff *isect;
 			/* step to next cell in Y direction */
 			VMOVE(curr_pt, next_pt);
 			grid_cell[Y] += stepY;
-			curr_pt_surf = insurfY;
-			curr_pt_dist = tY;
+			curr_surf = insurfY;
+			curr_dist = tY;
 			
 			/* update dist along ray to next Y cell boundary */
 			tY += tDY;
