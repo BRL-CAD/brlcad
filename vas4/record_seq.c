@@ -22,8 +22,6 @@
 #define SYSTEM(c)	fprintf(stderr,"system(%s);\n",c); system(c)
 #endif
 
-#define SECONDS(x)	(x * 30)    /* 30 frames/sec */
-
 #define CBARS_TIME	10		/* Normal */
 /*#define CBARS_TIME	2		/* Testing mode */
 
@@ -43,14 +41,15 @@ int start_seq_number;
 		number_of_images,number_of_frames);
 
 	
-	SYSTEM("ikcolorbars");	/* Start out with color bars */
+	SYSTEM("cbars-fb");	/* Start out with color bars */
 
 	/* Make initial scene title matte recording */
 	SYSTEM("vas4 new");
+	SYSTEM("vas4 reset_time");
 
 	/* Handle the color bars specially. It is the first recording */
 	fprintf(stderr,"Record color bars for %d seconds\n",CBARS_TIME);
-	sprintf(cmd,"vas4 record %d", SECONDS(CBARS_TIME));
+	sprintf(cmd,"vas4 record %dsec", CBARS_TIME);
 	SYSTEM(cmd);
 
 	/* Now record the user files */
@@ -63,11 +62,10 @@ int start_seq_number;
 
 	/* Record last frame for 30 more seconds */
 	fprintf(stderr,"Last image\n");
-	SYSTEM("vas4 record 900\n");
+	SYSTEM("vas4 record 30sec\n");
 
 	/* Wrap up by stopping the controller and rewind */
-	fprintf(stderr,"Init and Rewind\n");
-	SYSTEM("vas4 init\n");
-	SYSTEM("vas4 rewind\n");
+	SYSTEM("vas4 time0\n");
+	SYSTEM("vas4 stop\n");
 
 }
