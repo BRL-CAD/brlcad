@@ -283,6 +283,10 @@ char	**argv;
 
   (void)mged_svbase();
 
+#ifdef DO_SCROLL_UPDATES
+  set_scroll();
+#endif
+
   return TCL_OK;
 }
 
@@ -314,6 +318,15 @@ char	**argv;
   if( f < 0.0001 ) f = 0.0001;
   Viewscale = f * 0.5 * local2base;
   new_mats();
+
+  absolute_scale = 1.0 - Viewscale / i_Viewscale;
+  if(absolute_scale < 0.0)
+    absolute_scale /= 9.0;
+
+  if(absolute_tran[X] != 0.0 ||
+     absolute_tran[Y] != 0.0 ||
+     absolute_tran[Z] != 0.0)
+    set_absolute_tran();
 
   return TCL_OK;
 }
@@ -542,6 +555,10 @@ int	catch_sigint;
       size_reset();
       new_mats();
       (void)mged_svbase();
+
+#ifdef DO_SCROLL_UPDATES
+      set_scroll();
+#endif
 
       for(BU_LIST_FOR(vlp, view_list, &headView.l))
 	vlp->vscale = Viewscale;
@@ -1647,7 +1664,7 @@ knob_update_rate_vars()
     return;
 
 #ifdef UPDATE_TCL_SLIDERS
-  if(scroll_edit == EDIT_CLASS_ROTATE){
+  if(es_edclass == EDIT_CLASS_ROTATE && mged_variables->transform == 'e'){
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[X]));
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Y]));
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Z]));
@@ -1657,12 +1674,12 @@ knob_update_rate_vars()
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[Z]));
   }
 
-  if(scroll_edit == EDIT_CLASS_SCALE)
+  if(es_edclass == EDIT_CLASS_SCALE && mged_variables->transform == 'e')
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_scale_vls));
   else
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_scale_vls));
 
-  if(es_edclass == EDIT_CLASS_TRAN){
+  if(es_edclass == EDIT_CLASS_TRAN && mged_variables->transform == 'e'){
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[X]));
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Y]));
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Z]));
@@ -1683,7 +1700,7 @@ Tcl_Interp *interp;
   bu_vls_init(&vls);
 
   if(mged_variables->rateknobs){
-    if(scroll_edit == EDIT_CLASS_ROTATE){
+    if(es_edclass == EDIT_CLASS_ROTATE && mged_variables->transform == 'e'){
       bu_vls_printf(&vls, "x = %f\n", edit_rate_model_rotate[X]);
       bu_vls_printf(&vls, "y = %f\n", edit_rate_model_rotate[Y]);
       bu_vls_printf(&vls, "z = %f\n", edit_rate_model_rotate[Z]);
@@ -1693,12 +1710,12 @@ Tcl_Interp *interp;
       bu_vls_printf(&vls, "z = %f\n", rate_rotate[Z]);
     }
 
-    if(scroll_edit == EDIT_CLASS_SCALE)
+    if(es_edclass == EDIT_CLASS_SCALE && mged_variables->transform == 'e')
       bu_vls_printf(&vls, "S = %f\n", edit_rate_scale);
     else
       bu_vls_printf(&vls, "S = %f\n", rate_scale);
 
-    if(es_edclass == EDIT_CLASS_TRAN){
+    if(es_edclass == EDIT_CLASS_TRAN && mged_variables->transform == 'e'){
       bu_vls_printf(&vls, "X = %f\n", edit_rate_model_tran[X]);
       bu_vls_printf(&vls, "Y = %f\n", edit_rate_model_tran[Y]);
       bu_vls_printf(&vls, "Z = %f\n", edit_rate_model_tran[Z]);
@@ -1708,7 +1725,7 @@ Tcl_Interp *interp;
       bu_vls_printf(&vls, "Z = %f\n", rate_tran[Z]);
     }
   }else{
-    if(scroll_edit == EDIT_CLASS_ROTATE){
+    if(es_edclass == EDIT_CLASS_ROTATE && mged_variables->transform == 'e'){
       bu_vls_printf(&vls, "ax = %f\n", edit_absolute_model_rotate[X]);
       bu_vls_printf(&vls, "ay = %f\n", edit_absolute_model_rotate[Y]);
       bu_vls_printf(&vls, "az = %f\n", edit_absolute_model_rotate[Z]);
@@ -1718,12 +1735,12 @@ Tcl_Interp *interp;
       bu_vls_printf(&vls, "az = %f\n", absolute_rotate[Z]);
     }
 
-    if(scroll_edit == EDIT_CLASS_SCALE)
+    if(es_edclass == EDIT_CLASS_SCALE && mged_variables->transform == 'e')
       bu_vls_printf(&vls, "aS = %f\n", edit_absolute_scale);
     else
       bu_vls_printf(&vls, "aS = %f\n", absolute_scale);
 
-    if(es_edclass == EDIT_CLASS_TRAN){
+    if(es_edclass == EDIT_CLASS_TRAN && mged_variables->transform == 'e'){
       bu_vls_printf(&vls, "aX = %f\n", edit_absolute_model_tran[X]);
       bu_vls_printf(&vls, "aY = %f\n", edit_absolute_model_tran[Y]);
       bu_vls_printf(&vls, "aZ = %f\n", edit_absolute_model_tran[Z]);
@@ -1860,6 +1877,10 @@ char	**argv;
 	knob_hook();
 
       (void)mged_svbase();
+
+#ifdef DO_SCROLL_UPDATES
+      set_scroll();
+#endif
     } else if( strcmp( cmd, "calibrate" ) == 0 ) {
       VSETALL( absolute_tran, 0.0 );
     }else{
@@ -3581,10 +3602,13 @@ mged_svbase()
   VSETALL(absolute_model_rotate, 0.0);
   VSETALL(last_absolute_model_rotate, 0.0);
   VSETALL(absolute_tran, 0.0);
+  VSETALL(last_absolute_tran, 0.0);
   VSETALL(absolute_model_tran, 0.0);
+  VSETALL(last_absolute_model_tran, 0.0);
   absolute_scale = 0.0;
 
-  set_scroll();
+  if(mged_variables->faceplate && mged_variables->orig_gui)
+    curr_dm_list->_dirty = 1;
 
   return TCL_OK;
 }
@@ -3597,6 +3621,9 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
+  int status;
+  struct dm_list *dmlp;
+
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;
 
@@ -3607,7 +3634,16 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  return mged_svbase();
+  status = mged_svbase();
+
+  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+    /* if sharing view while faceplate and original gui (i.e. button menu, sliders) are on */
+    if(dmlp->s_info == curr_dm_list->s_info &&
+       dmlp->_mged_variables->faceplate &&
+       dmlp->_mged_variables->orig_gui)
+      dmlp->_dirty = 1;
+
+  return status;
 }
 
 /*
@@ -3998,6 +4034,10 @@ char	**argv;
   current_view = vlp;
   (void)mged_svbase();
 
+#ifdef DO_SCROLL_UPDATES
+  set_scroll();
+#endif
+
   return TCL_OK;
 }
 
@@ -4053,6 +4093,10 @@ char	**argv;
     Viewscale = current_view->vscale;
     new_mats();
     (void)mged_svbase();
+
+#ifdef DO_SCROLL_UPDATES
+    set_scroll();
+#endif
   }else if(vlp == last_view)
     last_view = current_view;
 
@@ -4160,6 +4204,10 @@ char	**argv;
   new_mats();
   (void)mged_svbase();
 
+#ifdef DO_SCROLL_UPDATES
+  set_scroll();
+#endif
+
   return TCL_OK;
 }
 
@@ -4201,6 +4249,10 @@ char	**argv;
 
   new_mats();
   (void)mged_svbase();
+
+#ifdef DO_SCROLL_UPDATES
+  set_scroll();
+#endif
 
   return TCL_OK;
 }
@@ -4244,6 +4296,10 @@ char	**argv;
   new_mats();
   (void)mged_svbase();
 
+#ifdef DO_SCROLL_UPDATES
+  set_scroll();
+#endif
+
   return TCL_OK;
 }
 
@@ -4280,6 +4336,10 @@ char	**argv;
 
   new_mats();
   (void)mged_svbase();
+
+#ifdef DO_SCROLL_UPDATES
+  set_scroll();
+#endif
 
   return TCL_OK;
 }

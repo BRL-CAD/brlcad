@@ -1187,6 +1187,10 @@ char	**argv;
 	    new_mats();
 	    (void)mged_svbase();
 
+#ifdef DO_SCROLL_UPDATES
+	    set_scroll();
+#endif
+
 	    for(BU_LIST_FOR(vlp, view_list, &headView.l))
 	      vlp->vscale = Viewscale;
 	  }

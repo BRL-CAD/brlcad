@@ -51,6 +51,7 @@ char *argv[];
   if((dmp = dm_open(DM_TYPE_PS, argc, argv)) == DM_NULL)
     return TCL_ERROR;
 
+  zclip_ptr = &((struct ps_vars *)dmp->dm_vars)->zclip;
   curr_dm_list->s_info->opp = &pathName;
   return TCL_OK;
 }

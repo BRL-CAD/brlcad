@@ -244,8 +244,11 @@ char	**argv;
 	    mged_variables->adcflag = 0;
 	  else
 	    mged_variables->adcflag = 1;
-	  
+
+#ifdef DO_SCROLL_UPDATES
 	  set_scroll();
+#endif
+
 	  dmaflag = 1;
 	  return TCL_OK;
 	}

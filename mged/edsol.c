@@ -2073,7 +2073,9 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
       dmlp->_mged_variables->transform = 'e';
 
+#ifdef DO_SCROLL_UPDATES
     set_scroll();
+#endif
   }
 }
 
@@ -6284,8 +6286,10 @@ oedit_accept()
 	bn_mat_idn( modelchanges );
 	bn_mat_idn( acc_rot_sol );
 	es_edclass = EDIT_CLASS_NULL;
-	scroll_edit = EDIT_CLASS_NULL;
+
+#ifdef DO_SCROLL_UPDATES
 	set_scroll();
+#endif
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
@@ -6296,8 +6300,10 @@ void
 oedit_reject()
 {
   es_edclass = EDIT_CLASS_NULL;
-  scroll_edit = EDIT_CLASS_NULL;
+
+#ifdef DO_SCROLL_UPDATES
   set_scroll();
+#endif
 
   if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
   es_int.idb_ptr = (genptr_t)NULL;
@@ -6447,8 +6453,10 @@ sedit_accept()
 	movedir = 0;
 	es_edflag = -1;
 	es_edclass = EDIT_CLASS_NULL;
-	scroll_edit = EDIT_CLASS_NULL;
+
+#ifdef DO_SCROLL_UPDATES
 	set_scroll();
+#endif
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
@@ -6505,8 +6513,10 @@ sedit_reject()
 	movedir = 0;
 	es_edflag = -1;
 	es_edclass = EDIT_CLASS_NULL;
-	scroll_edit = EDIT_CLASS_NULL;
+
+#ifdef DO_SCROLL_UPDATES
 	set_scroll();
+#endif
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
