@@ -173,7 +173,9 @@ int wdb_attr_rm_tcl();
 int wdb_pathsum_cmd();
 
 static int wdb_open_tcl();
+#if 0
 static int wdb_close_tcl();
+#endif
 static int wdb_decode_dbip();
 static struct db_i *wdb_prep_dbip();
 
@@ -261,7 +263,9 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"binary",	wdb_binary_tcl},
 	{"c",		wdb_comb_std_tcl},
 	{"cat",		wdb_cat_tcl},
+#if 0
 	{"close",	wdb_close_tcl},
+#endif
 	{"color",	wdb_color_tcl},
 	{"comb",	wdb_comb_tcl},
 	{"concat",	wdb_concat_tcl},
@@ -612,6 +616,7 @@ wdb_prep_dbip(interp, filename)
 }
 
 /****************** Database Object Methods ********************/
+#if 0
 int
 wdb_close_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
@@ -654,6 +659,7 @@ wdb_close_tcl(ClientData	clientData,
 
 	return wdb_close_cmd(wdbp, interp, argc-1, argv+1);
 }
+#endif
 
 int
 wdb_reopen_cmd(struct rt_wdb	*wdbp,
@@ -773,9 +779,12 @@ wdb_get_cmd(struct rt_wdb	*wdbp,
 	struct rt_db_internal	intern;
 
 	if (argc < 2 || argc > 3) {
-		Tcl_AppendResult(interp,
-				 "wrong # args: should be \"", argv[0],
-				 " objName ?attr?\"", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_get %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -833,9 +842,12 @@ wdb_put_cmd(struct rt_wdb	*wdbp,
 	char				        type[16];
 
 	if (argc < 3) {
-		Tcl_AppendResult(interp,
-				 "wrong # args: should be db put objName objType attrs",
-				 (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_put %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -927,9 +939,12 @@ wdb_adjust_cmd(struct rt_wdb	*wdbp,
 	struct rt_db_internal		 intern;
 
 	if (argc < 4) {
-		Tcl_AppendResult(interp,
-				 "wrong # args: should be \"db adjust objName attr value ?attr? ?value?...\"",
-				 (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_adjust %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 	name = argv[1];
@@ -1004,8 +1019,12 @@ wdb_form_cmd(struct rt_wdb	*wdbp,
 	const struct rt_functab		*ftp;
 
 	if (argc != 2) {
-		Tcl_AppendResult(interp, "wrong # args: should be \"db form objType\"",
-				 (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_form %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -1158,10 +1177,12 @@ wdb_rt_gettrees_cmd(struct rt_wdb	*wdbp,
 	RT_CK_DBI_TCL(interp, wdbp->dbip);
 
 	if (argc < 3) {
-		Tcl_AppendResult(interp,
-				 "rt_gettrees: wrong # args: should be \"",
-				 argv[0],
-				 " newprocname [-i] [-u] treetops...\"", (char *)NULL );
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_rt_gettrees %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -1499,9 +1520,12 @@ wdb_dump_cmd(struct rt_wdb	*wdbp,
 	RT_CK_DBI_TCL(interp, wdbp->dbip);
 
 	if (argc != 2) {
-		Tcl_AppendResult(interp,
-				 "dump: wrong # args: should be \"",
-				 "dump filename.g", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_dump %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -2088,7 +2112,7 @@ wdb_expand_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help wdb_expand");
+		bu_vls_printf(&vls, "helplib_alias wdb_expand %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3216,7 +3240,7 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help wdb_copyeval");
+		bu_vls_printf(&vls, "helplib_alias wdb_copyeval %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -6811,9 +6835,12 @@ int wdb_attr_rm_cmd(struct rt_wdb	*wdbp,
 	}
 
 	if (argc < 2 ) {
-		Tcl_AppendResult(interp,
-				 "wrong # args: should be \"", argv[0],
-				 " objName [attribute] [[attribute] [attribute]...]\"", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_attr_rm %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 	/* Verify that this wdb supports lookup operations
@@ -6868,9 +6895,12 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	}
 
 	if (argc < 2 ) {
-		Tcl_AppendResult(interp,
-				 "wrong # args: should be \"", argv[0],
-				 " objName [attribute] [value] [[attribute] [value]...]\"", (char *)NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_attr %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
@@ -7003,9 +7033,12 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 		else if (!strncmp(argv[1], "poly", 4))
 			do_poly = 1;
 		else {
-			Tcl_AppendResult(interp,
-					 "Usage: nmg_simplify [arb|ell|tgc|poly] new_solid_name nmg_solid\n",
-					 (char *)NULL);
+			struct bu_vls vls;
+
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib_alias wdb_nmg_simplify %s", argv[0]);
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
 			return TCL_ERROR;
 		}
 
