@@ -7282,7 +7282,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 
 	if (dp->d_flags & DIR_COMB) {
-		Tcl_AppendResult(interp, argv[1], " is a combination, only NMG solids are allowed here\n", (char *)NULL );
+		Tcl_AppendResult(interp, argv[1], " is a combination, only NMG primitives are allowed here\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 

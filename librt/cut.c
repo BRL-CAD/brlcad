@@ -1670,7 +1670,7 @@ int lvl;			/* recursion level */
 		return;
 
 	case CUT_BOXNODE:
-		bu_log("BOX Contains %d solids (%d alloc), %d solids with pieces:\n",
+		bu_log("BOX Contains %d prims (%d alloc), %d prims with pieces:\n",
 			cutp->bn.bn_len, cutp->bn.bn_maxlen,
 			cutp->bn.bn_piecelen );
 		bu_log("        ");
@@ -2044,9 +2044,9 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 		((double)rtip->rti_cut_totobj) /
 		rtip->rti_ncut_by_type[CUT_BOXNODE] );
 	bu_hist_pr( &rtip->rti_hist_cellsize,
-		    "cut_tree: Number of solids per leaf cell");
+		    "cut_tree: Number of prims per leaf cell");
 	bu_hist_pr( &rtip->rti_hist_cell_pieces,
-		    "cut_tree: Number of solid pieces per leaf cell");
+		    "cut_tree: Number of prim pieces per leaf cell");
 	bu_hist_pr( &rtip->rti_hist_cutdepth,
 		    "cut_tree: Depth (height)");
 

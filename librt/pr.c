@@ -595,10 +595,10 @@ int			lvl;		/* Recursion level */
 			bu_log("tree val: ");
 			break;
 		case 1:
-			bu_log("tree solids: ");
+			bu_log("tree primitives: ");
 			break;
 		case 2:
-			bu_log("tree solid bits: ");
+			bu_log("tree primitive bits: ");
 			break;
 		}
 	}

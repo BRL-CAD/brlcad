@@ -211,20 +211,20 @@ int			ncpu;
 
 	if( rtip->nsolids <= 0 )  {
 		if( rtip->rti_air_discards > 0 )
-			bu_log("rt_prep_parallel(%s,%d): %d solids discarded due to air regions\n",
+			bu_log("rt_prep_parallel(%s,%d): %d primitives discarded due to air regions\n",
 				rtip->rti_dbip->dbi_filename,
 				rtip->rti_dbip->dbi_uses,
 				rtip->rti_air_discards );
-		rt_bomb("rt_prep_parallel:  no solids left to prep");
+		rt_bomb("rt_prep_parallel:  no primitives left to prep");
 	}
 
 	/* In case everything is a halfspace, set a minimum space */
 	if( rtip->mdl_min[X] >= INFINITY )  {
-		bu_log("All solids are halfspaces, setting minimum\n");
+		bu_log("All primitives are halfspaces, setting minimum\n");
 		VSETALL( rtip->mdl_min, -1 );
 	}
 	if( rtip->mdl_max[X] <= -INFINITY )  {
-		bu_log("All solids are halfspaces, setting maximum\n");
+		bu_log("All primitives are halfspaces, setting maximum\n");
 		VSETALL( rtip->mdl_max, 1 );
 	}
 
@@ -271,7 +271,7 @@ int			ncpu;
 		}
 	}
 	if(RT_G_DEBUG&DEBUG_REGIONS)  {
-		bu_log("rt_prep_parallel() printing solids' region pointers\n");
+		bu_log("rt_prep_parallel() printing primitives' region pointers\n");
 		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 			bu_log("solid %s ", stp->st_name);
 			bu_pr_ptbl( "st_regions", &stp->st_regions, 1 );
@@ -327,7 +327,7 @@ int			ncpu;
 		rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
 	} RT_VISIT_ALL_SOLTABS_END
 	if( RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS) )  {
-		bu_log("rt_prep_parallel(%s,%d) printing number of solids by type\n",
+		bu_log("rt_prep_parallel(%s,%d) printing number of prims by type\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses);
 		for( i=1; i <= ID_MAX_SOLID; i++ )  {

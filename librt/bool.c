@@ -1435,7 +1435,7 @@ const struct bu_bitv	*solidbits;
 		diff = pp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
 		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
 			if(RT_G_DEBUG&DEBUG_PARTITION)  bu_log(
-				"rt_boolfinal:  Zero thickness partition, solids %s %s (%.18e,%.18e) x%d y%d lvl%d\n",
+				"rt_boolfinal:  Zero thickness partition, prims %s %s (%.18e,%.18e) x%d y%d lvl%d\n",
 				pp->pt_inseg->seg_stp->st_name,
 				pp->pt_outseg->seg_stp->st_name,
 				pp->pt_inhit->hit_dist,

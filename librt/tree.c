@@ -849,7 +849,7 @@ again:
 	if( i < 0 )  return(i);
 
 	if( rtip->nsolids <= prev_sol_count )
-		bu_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
+		bu_log("rt_gettrees(%s) warning:  no primitives found\n", argv[0]);
 	return(0);	/* OK */
 }
 

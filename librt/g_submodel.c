@@ -198,7 +198,7 @@ struct rt_i		*rtip;
 	}
 
 	if( sub_rtip->nsolids <= 0 )  {
-		bu_log("rt_submodel_prep(%s): %s No solids found\n",
+		bu_log("rt_submodel_prep(%s): %s No primitives found\n",
 			stp->st_dp->d_namep, bu_vls_addr( &sip->file ) );
 		/* Can't call rt_free_rti( sub_rtip ) because it may have
 		 * already been instanced!

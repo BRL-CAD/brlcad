@@ -243,7 +243,7 @@ register struct application *ap;
 	 */
 	if( InitialPart.pt_forw == &InitialPart )  {
 		ret = ap->a_miss( ap );
-		status = "MISSed all solids";
+		status = "MISSed all primitives";
 		goto freeup;
 	}
 

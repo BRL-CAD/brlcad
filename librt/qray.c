@@ -54,7 +54,7 @@ static struct dg_qray_fmt_data def_qray_fmt_data[] = {
 
 static char qray_syntax[] = "\
  qray vars			print a list of all variables (i.e. var = val)\n\
- qray basename [str]		set or get basename for query ray solids\n\
+ qray basename [str]		set or get basename for query ray prims\n\
  qray effects [t|g|b]		set or get effects (i.e. text, graphical or both)\n\
  qray echo [0|1]		set or get command echo\n\
  qray oddcolor [r g b]		set or get color of odd partitions\n\

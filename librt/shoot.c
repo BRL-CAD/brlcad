@@ -1214,7 +1214,7 @@ weave:
 	/* finished_segs chain now has all segments hit by this ray */
 	if( BU_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
 		ap->a_return = ap->a_miss( ap );
-		status = "MISS solids";
+		status = "MISS prims";
 		goto out;
 	}
 
