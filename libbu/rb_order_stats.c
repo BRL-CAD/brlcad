@@ -24,9 +24,8 @@ static char RCSid[] = "@(#) $Header$";
  *
  *	This function has three parameters: the root of the tree to search,
  *	the order on which to do the searching, and the rank of interest.
- *	On success, _rb_select() returns a pointer to the data block in
- *	the discovered node.  Otherwise, it returns NULL.  _rb_select() is
- *	an implementation of the routine OS-SELECT on p. 282 of Cormen et al.
+ *	_rb_select() returns the discovered node.  It is an implemenation
+ *	of the routine OS-SELECT on p. 282 of Cormen et al.
  */
 static struct rb_node *_rb_select (root, order, k)
 

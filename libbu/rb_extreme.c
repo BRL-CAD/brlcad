@@ -171,7 +171,7 @@ int	sense;
 	exit (0);
     }
 
-    /* Wade throught the tree */
+    /* Wade through the tree */
     node = _rb_neighbor(rb_current(tree), order, sense);
 
     if (node == rb_null(tree))
