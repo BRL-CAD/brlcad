@@ -335,9 +335,10 @@ union record  {
 		unsigned char	p_vrad[8];	/* radius at vertex */
 		unsigned char	p_hrad[8];	/* radius at end of height */
 	}  part;
+	/* Version 0 is Release 4.0 to 4.2, Version 1 is Release 4.4 */
 	struct nmg_rec  {
 		char	N_id;			/* DBID_NMG */
-		char	N_pad;
+		char	N_version;		/* Version indicator */
 		char	N_name[NAMESIZE];
 		char	N_pad2[2];		/* neatness */
 		unsigned char	N_count[4];	/* # additional granules */
