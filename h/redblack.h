@@ -4,9 +4,8 @@
  *	to LIBREDBLACK(3), the BRL-CAD red-black tree library.
  *
  *	Many of the routines in LIBREDBLACK(3) are based on the algorithms
- *	in chapter 13 of Cormen, T. H., Leiserson, C. E., and Rivest, R. L.
- *	1990.  _Introduction to Algorithms_.  Cambridge, MA: MIT Press.
- *	pp. 263-80.
+ *	in chapter 13 of T. H. Cormen, C. E. Leiserson, and R. L. Rivest,
+ *	_Introduction to algorithms_, MIT Press, Cambridge, MA, 1990.
  *
  *	Author:	Paul Tanenbaum
  *
@@ -37,22 +36,43 @@
  *	This is the only data structure used in LIBREDBLACK
  *	to which application software need make any explicit
  *	reference.
+ *
+ *	The members of this structure are grouped into three
+ *	classes:
+ *	    Class I:	Reading is appropriate, when necessary,
+ *			but applications should not modify.
+ *	    Class II:	Reading and modifying are both appropriate,
+ *			when necessary.
+ *	    Class III:	All access should be through routines
+ *			provided in LIBREDBLACK.  Touch these
+ *			at your own risk!
  */
 typedef struct
 {
+    /* CLASS I - Applications may read directly... */
     long	 	rbt_magic;	  /* Magic no. for integrity check */
-    char		*rbt_description; /* Comment for diagnostics */
-    int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
     int			rbt_nm_nodes;	  /* Number of nodes */
-    int			(**rbt_order)();  /* Comparison functions */
+    /* CLASS II - Applications may read/write directly... */
     void		(*rbt_print)();	  /* Data pretty-print function */
+    int			rbt_debug;	  /* Debug bits */
+    char		*rbt_description; /* Comment for diagnostics */
+    /* CLASS III - Applications should not manipulate directly... */
+    int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
+    int			(**rbt_order)();  /* Comparison functions */
     struct rb_node	**rbt_root;	  /* The actual trees */
     char		*rbt_unique;	  /* Uniqueness flags */
     struct rb_node	*rbt_current;	  /* Current node */
-    int			rbt_debug;	  /* Debug bits */
     struct rb_node	*rbt_empty_node;  /* Sentinel representing nil */
 }	rb_tree;
 #define	RB_TREE_NULL	((rb_tree *) 0)
+#define	RB_TREE_MAGIC	0x72627472
+
+/*
+ *	Debug bit flags for member rbt_debug
+ */
+#define RB_DEBUG_INSERT	0x00000001	/* Insertion process */
+#define RB_DEBUG_UNIQ	0x00000002	/* Uniqueness of inserts */
+#define RB_DEBUG_ROTATE	0x00000004	/* Rotation process */
 
 /*
  *			R B _ P A C K A G E
@@ -180,12 +200,5 @@ RB_EXTERN(void rb_walk,		(rb_tree	*tree,
 				 int		trav_type
 				));
 #define		rb_walk1(t,v,d)	rb_walk((t), 0, (v), (d))
-
-/*
- *	Debug bit flags
- */
-#define RB_DEBUG_INSERT	0x00000001	/* Insertion process */
-#define RB_DEBUG_UNIQ	0x00000002	/* Uniqueness of inserts */
-#define RB_DEBUG_ROTATE	0x00000004	/* Rotation process */
 
 #endif /* REDBLACK_H */
