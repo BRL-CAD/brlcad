@@ -24,8 +24,10 @@
 
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
 #include "db.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./ged.h"
 #include "./sedit.h"
 #include "../librt/debug.h"	/* XXX */
@@ -36,6 +38,95 @@ void		identitize();
 void		trace();
 void		matrix_print();
 void		push();
+
+extern struct rt_tol	mged_tol;	/* from ged.c */
+
+RT_EXTERN( struct shell *nmg_dup_shell, ( struct shell *s, long ***trans_tbl ) );
+
+int
+f_shells( argc, argv )
+int argc;
+char **argv;
+{
+	struct directory *old_dp,*new_dp;
+	struct rt_db_internal old_intern,new_intern;
+	struct model *m_tmp,*m;
+	struct nmgregion *r_tmp,*r;
+	struct shell *s_tmp,*s;
+	int shell_count=0;
+	char shell_name[NAMESIZE];
+	long **trans_tbl;
+
+	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+		return CMD_BAD;
+
+	if( rt_db_get_internal( &old_intern, old_dp, dbip, rt_identity ) < 0 )
+	{
+		rt_log("rt_db_get_internal() error\n");
+		return CMD_BAD;
+	}
+
+	if( old_intern.idb_type != ID_NMG )
+	{
+		rt_log( "Object is not an NMG!!!\n" );
+		return( CMD_BAD );
+	}
+
+	m = (struct model *)old_intern.idb_ptr;
+	NMG_CK_MODEL(m);
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			s_tmp = nmg_dup_shell( s, &trans_tbl );
+			rt_free( (char *)trans_tbl, "trans_tbl" );
+
+			m_tmp = nmg_mmr();
+			r_tmp = RT_LIST_FIRST( nmgregion, &m_tmp->r_hd );
+
+			RT_LIST_DEQUEUE( &s_tmp->l );
+			RT_LIST_APPEND( &r_tmp->s_hd, &s_tmp->l );
+			s_tmp->r_p = r_tmp;
+			nmg_m_reindex( m_tmp, 0 );
+			nmg_m_reindex( m, 0 );
+
+			(void)nmg_model_fuse( m_tmp, &mged_tol );
+
+			sprintf( shell_name, "shell.%d", shell_count );
+			while( db_lookup( dbip, shell_name, 0 ) != DIR_NULL )
+			{
+				shell_count++;
+				sprintf( shell_name, "shell.%d", shell_count );
+			}
+
+			if( (new_dp=db_diradd( dbip, shell_name, -1, 0, DIR_SOLID)) == DIR_NULL )  {
+			    	ALLOC_ERR_return;
+			}
+
+			/* make sure the geometry/bounding boxes are up to date */
+			nmg_rebound(m_tmp, &mged_tol);
+
+
+			/* Export NMG as a new solid */
+			RT_INIT_DB_INTERNAL(&new_intern);
+			new_intern.idb_type = ID_NMG;
+			new_intern.idb_ptr = (genptr_t)m_tmp;
+
+			if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {
+				/* Free memory */
+				nmg_km(m_tmp);
+				rt_log("rt_db_put_internal() failure\n");
+				return( CMD_BAD );
+			}
+			/* Internal representation has been freed by rt_db_put_internal */
+			new_intern.idb_ptr = (genptr_t)NULL;
+
+		}
+	}
+
+	return( CMD_OK );
+}
 
 /*  	F _ T A B O B J :   tabs objects as they appear in data file
  */

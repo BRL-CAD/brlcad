@@ -158,6 +158,7 @@ extern int	cmd_glob();
 int	f_matpick();
 int	mged_cmd();
 int	f_sync();
+int	f_shells();
 
 #ifdef MGED_TCL
 int	f_gui();
@@ -495,6 +496,8 @@ static struct funtab funtab[] = {
 "set",	"[var=opt]", "assign/display mged variables",
 	f_set,1,2,
 #endif
+"shells", "nmg_model", "breaks model into seperate shells",
+	f_shells, 2,2,
 "shader", "comb material [arg(s)]", "assign materials (like 'mater')",
 	f_shader, 3,MAXARGS,
 "size", "size", "set view size",
