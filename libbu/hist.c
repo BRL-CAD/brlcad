@@ -100,7 +100,8 @@ fastf_t				high;
 		b = hp->hg_nbins-1;
 	else
 		b = (high - hp->hg_min) / hp->hg_clumpsize;
-	if( a < 0 || b >= hp->hg_nbins )  bu_bomb("bu_hist_range() out of range\n");
+	if( b >= hp->hg_nbins )  b = hp->hg_nbins-1;
+
 	for( i=a; i <= b; i++ )  {
 		hp->hg_bins[i]++;
 	}
