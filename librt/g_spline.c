@@ -535,6 +535,14 @@ register struct xray *rp;
 	fastf_t *u_eval, * v_eval;
 	vect_t norm;
 	
+	/* if the object is linear in one of the directions
+	 * for now just use the existing normal from the polygon
+         * else calculate it from the derivatives
+         */
+
+	if ( h_ptr->root->order[0] == 2 || h_ptr->root->order[1] == 2 )
+		return;
+
 	if( h_ptr->root->ctl_mesh->pt_type == P3)
 	{
 		u_eval = (fastf_t *) 
@@ -597,7 +605,6 @@ register struct xray *rp;
 
 	rt_free( u_eval, "ray_poly: u_eval" );
 	rt_free( v_eval, "ray_poly: v_eval" );
-
 
 	return;
 }
@@ -886,7 +893,7 @@ struct spl_poly * p1;
 	point_t itr_point;
 	vect_t b_minus_a, c_minus_b, a_minus_c, itr_cross;
 	struct local_hit * h0;
-	fastf_t uv[2];
+	fastf_t uv[2], tmp;
 	struct plane plane_form(), pln;
 
 	float denom, t;
@@ -932,8 +939,21 @@ struct spl_poly * p1;
 	interp_uv( p1, itr_point, uv );
 
 	h0->hit_dist = t;
+
+	/* This is a hack */
+	/* If a surface is linear in either direction than
+	 * the normal must be approximated since the dirivatives
+	 * can't be used to calculate the normal.
+         */
+
+	VMOVE(h0->hit_normal, pln.nrm );
+	VUNITIZE(h0->hit_normal);
+	if( VDOT( rp->r_dir, h0->hit_normal ) > 0 )
+		VREVERSE( h0->hit_normal );
+	
 	VMOVE(h0->hit_point, itr_point);
 	h0->hit_vpriv[0] = uv[0];
+
 	h0->hit_vpriv[1] = uv[1];
 	h0->hit_vpriv[2] = 0;			/* if set flip normal */
 	h0->hit_private = (char *) curr_tree;
