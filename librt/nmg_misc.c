@@ -128,7 +128,7 @@ char *h;
 	rt_log("%s%f %f %f Max\n", h, fg->max_pt[X], fg->max_pt[Y],
 		fg->max_pt[Z]);
 
-	rt_log("%s%fx + %fy + %fz + %f = 0.0\n", h, fg->N[0], fg->N[1],
+	rt_log("%s%fX + %fY + %fZ = %f\n", h, fg->N[0], fg->N[1],
 		fg->N[2], fg->N[3]);
 
 	Return;
@@ -425,14 +425,18 @@ char *h;
 
 
 
-static nmg_pl_lu(fp, lu)
+static nmg_pl_lu(fp, lu, b, R, G, B)
 FILE *fp;
 struct loopuse *lu;
+struct nmg_ptbl *b;
+unsigned char R, G, B;
 {
 	struct edgeuse *eu;	
 	struct vertex_g *vg;
 
 	NMG_CK_LOOPUSE(lu);
+	if (nmg_tbl(b, TBL_LOC, &lu->l_p->magic) >= 0) return;
+	(void)nmg_tbl(b, TBL_INS, &lu->l_p->magic);
 
 	if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
 		vg = lu->down.vu_p->v_p->vg_p;
@@ -441,40 +445,89 @@ struct loopuse *lu;
 
 	} else if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
 		eu = lu->down.eu_p;
-		NMG_CK_EDGEUSE(eu);
-		NMG_CK_VERTEXUSE(eu->vu_p);
-		NMG_CK_VERTEX(eu->vu_p->v_p);
-		vg = eu->vu_p->v_p->vg_p;
-		NMG_CK_VERTEX_G(vg);
-		pd_3move(fp, vg->coord[X], vg->coord[Y], vg->coord[Z]);
+
+		pl_color(fp, R, G, B);
+#if 1
 		do {
-			vg = eu->next->vu_p->v_p->vg_p;
+			NMG_CK_EDGEUSE(eu);
+			NMG_CK_EDGE(eu->e_p);
+			NMG_CK_VERTEXUSE(eu->vu_p);
+			NMG_CK_VERTEX(eu->vu_p->v_p);
+			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
-			pd_3cont(fp, vg->coord[X], vg->coord[Y], vg->coord[Z]);
+
+			if (nmg_tbl(b, TBL_LOC, &eu->e_p->magic) < 0) {
+				struct vertex_g *vg2;
+				pl_color(fp, R, G, B);
+				vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+				pd_3line(fp,
+				vg->coord[X], vg->coord[Y], vg->coord[Z],
+				vg2->coord[X], vg2->coord[Y], vg2->coord[Z]);
+
+				pl_color(fp, 255, 255, 255);
+				pd_3point(fp, vg->coord[X], vg->coord[Y],
+					vg->coord[Z]);
+				pd_3point(fp, vg2->coord[X], vg2->coord[Y],
+					vg2->coord[Z]);
+			}
 			eu = eu->next;
 		} while (eu != lu->down.eu_p);
+#else
+		{int cont = 0;
+		do {
+			NMG_CK_EDGEUSE(eu);
+			NMG_CK_EDGE(eu->e_p);
+			NMG_CK_VERTEXUSE(eu->vu_p);
+			NMG_CK_VERTEX(eu->vu_p->v_p);
+			vg = eu->vu_p->v_p->vg_p;
+			NMG_CK_VERTEX_G(vg);
+
+			if (nmg_tbl(b, TBL_LOC, &eu->e_p->magic) < 0) {
+				if (!cont) {
+					vg = eu->vu_p->v_p->vg_p;
+					NMG_CK_VERTEX_G(vg);
+					pd_3move(fp, vg->coord[X],
+						vg->coord[Y], vg->coord[Z]);
+				}
+				vg = eu->eumate_p->vu_p->v_p->vg_p;
+				NMG_CK_VERTEX_G(vg);
+				pd_3cont(fp, vg->coord[X], vg->coord[Y],
+					vg->coord[Z]);
+
+				cont = 1;
+				(void)nmg_tbl(b, TBL_INS, &eu->e_p->magic);
+			} else {
+				cont = 0;
+			}
+			eu = eu->next;
+		} while (eu != lu->down.eu_p);
+		}
+#endif
+
+
 	}
 }
 
-static nmg_pl_fu(fp, fu)
+static nmg_pl_fu(fp, fu, b, R, G, B)
 FILE *fp;
 struct faceuse *fu;
+struct nmg_ptbl *b;
+unsigned char R, G, B;
 {
 	struct loopuse *lu;
-	static unsigned char R=100, G=100, B=100;
-	NMG_CK_FACEUSE(fu);
 
-	G += 20;
-	pl_color(R, G, B);
-	
+	NMG_CK_FACEUSE(fu);
+	if (nmg_tbl(b, TBL_LOC, &fu->f_p->magic) >= 0) return;
+	(void)nmg_tbl(b, TBL_INS, &fu->f_p->magic);
+
 	lu = fu->lu_p;
 	do {
-		nmg_pl_lu(fp, lu);
+		nmg_pl_lu(fp, lu, b, R, G, B);
 		lu = lu->next;
 	} while (lu != fu->lu_p);
 }
 
-nmg_pl_s(fp, s)
+void nmg_pl_s(fp, s)
 FILE *fp;
 struct shell *s;
 {
@@ -491,13 +544,18 @@ struct shell *s;
 
 	if (s->fu_p) {
 		NMG_CK_FACEUSE(s->fu_p);
-		pl_color(fp, 100, 150, 100);
 		fu = s->fu_p;
 		do {
-			if (nmg_tbl(&b, TBL_LOC, &fu->f_p->magic) < 0) {
-				nmg_pl_fu(fp, fu);
-				(void)nmg_tbl(&b, TBL_INS, &fu->f_p->magic);
-			}
+#if 0
+			static unsigned color = 0xff;
+#define Rcolor(_i)	(((_i&0x01)<<7)+32)
+#define Gcolor(_i)	(((_i&0x02)<<6)+32)
+#define Bcolor(_i)	(((_i&0x04)<<5)+32)
+			nmg_pl_fu(fp, fu, &b, Rcolor(color), Gcolor(color), Bcolor(color));
+			--color;
+#else
+			nmg_pl_fu(fp, fu, &b, 100, 100, 170);
+#endif
 			if (fu->next != s->fu_p &&
 			    fu->next->f_p == fu->f_p)
 			    	fu = fu->next->next;
@@ -508,13 +566,9 @@ struct shell *s;
 
 	if (s->lu_p) {
 		NMG_CK_LOOPUSE(s->lu_p);
-		pl_color(fp, 255, 0, 0);
 		lu = s->fu_p->lu_p;
 		do {
-			if (nmg_tbl(&b, TBL_LOC, &lu->l_p->magic) < 0) {
-				nmg_pl_lu(fp, lu);
-				(void)nmg_tbl(&b, TBL_INS, &lu->l_p->magic);
-			}
+			nmg_pl_lu(fp, lu, &b, 255, 0, 0);
 
 			if (lu->next != s->lu_p &&
 			    lu->next->l_p == lu->l_p)
@@ -555,7 +609,7 @@ struct shell *s;
 		} while (eu != s->eu_p);
 	}
 	if (s->vu_p) {
-		pl_color(fp, 170, 170, 0);
+		pl_color(fp, 255, 255, 0);
 		NMG_CK_VERTEXUSE(s->vu_p);
 		NMG_CK_VERTEX(s->vu_p->v_p);
 		NMG_CK_VERTEX_G(s->vu_p->v_p->vg_p);
