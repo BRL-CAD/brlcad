@@ -553,9 +553,12 @@ fail:
 	}
 
 	nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
-	mp->apbuf = (genptr_t)rt_calloc(
-		1, nbytes, "rt_ebm_import bitmap" );
-	mp->apbuflen = nbytes;
+	if( !mp->apbuf )
+	{
+		mp->apbuf = (genptr_t)rt_calloc(
+			1, nbytes, "rt_ebm_import bitmap" );
+		mp->apbuflen = nbytes;
+	}
 
 	/* Because of in-memory padding, read each scanline separately */
 	cp = (unsigned char *)mp->buf;
