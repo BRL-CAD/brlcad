@@ -46,10 +46,6 @@ matp_t mat;
 	LOCAL int	faces;		/* # of faces produced */
 	LOCAL int	i;
 
-	/* init maxima and minima */
-	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
-	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
-
 	/*
 	 * Process an ARB8, which is represented as a vector
 	 * from the origin to the first point, and 7 vectors
@@ -307,7 +303,7 @@ register struct soltab *stp;
 				plp->pl_2d_x[i],
 				plp->pl_2d_y[i] );
 		}
-		putchar('\n');
+		putc('\n',stderr);
 	} while( plp = plp->pl_forw );
 }
 
