@@ -44,6 +44,8 @@ static char tp_RCSid[] = "@(#)$Header$ (ARL)";
 #include "plot3.h"
 #include "vectfont.h"
 
+TINY		*tp_cindex[256];	/* index to stroke tokens */
+
 /*
  *  Once-only setup routine
  */
