@@ -157,6 +157,7 @@ static CONST char *action_names[] = {
 
 /* The "ray" here is the intersection line between two faces */
 struct nmg_ray_state {
+	/* XXX could use a magic number */
 	struct vertexuse	**vu;		/* ptr to vu array */
 	int			nvu;		/* len of vu[] */
 	point_t			pt;		/* The ray */
@@ -450,6 +451,8 @@ int			pos;
 	int			ret;
 	register int		i;
 
+	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(rs->tol);
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
 	othereu = eu;
@@ -1627,6 +1630,11 @@ struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
 {
+	RT_CK_TOL(rs->tol);
+	NMG_CK_PTBL(b);
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_FACEUSE(fu2);
+
 	bzero( (char *)rs, sizeof(*rs) );
 	rs->vu = (struct vertexuse **)b->buffer;
 	rs->nvu = b->end;
@@ -1917,14 +1925,17 @@ CONST struct rt_tol	*tol;
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x)\n", fu1, fu2);
 	}
+
+	RT_CK_TOL(tol);
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_FACEUSE(fu2);
+
 	/* Perhaps this should only happen when debugging is on? */
 	if( b1->end <= 0 || b2->end <= 0 )  {
 		rt_log("nmg_face_cutjoin(fu1=x%x, fu2=x%x): WARNING empty list %d %d\n",
 			fu1, fu2, b1->end, b2->end );
 		return;
 	}
-
-	RT_CK_TOL(tol);
 
 	mag1 = (fastf_t *)rt_calloc(b1->end+1, sizeof(fastf_t),
 		"vector magnitudes along ray, for sort");
