@@ -191,6 +191,8 @@ int			flags;
 		char		loc2[NAMESIZE+2+2];
 
 		/* This object already exists under the (prefixed) name */
+		/* Protect the database against duplicate names! */
+		/* Change object names, but NOT any references made by combinations. */
 		(void)strncpy( loc2, local, NAMESIZE );
 		/* Shift name right two characters, and further prefix */
 		strncpy( local+2, loc2, NAMESIZE-2 );
@@ -207,7 +209,7 @@ int			flags;
 				local );
 			return 0;
 		}
-		rt_log("mged_dir_add: Duplicate of '%s' given new name '%s'\n",
+		rt_log("mged_dir_add: Duplicate of '%s' given new name '%s'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'concat' command.\n",
 			loc2, local );
 	}
 
