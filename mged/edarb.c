@@ -1189,7 +1189,7 @@ char	**argv;
 
       bu_vls_init(&tmp_vls);
       bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' too short to disambiguate ARB%d face\n",
-		    es_type);
+		    argv[1], es_type);
       bu_vls_printf(&tmp_vls, "Need at least %d vertices\n", min_tuple_size[es_type]);
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
       bu_vls_free(&tmp_vls);
@@ -1203,7 +1203,7 @@ char	**argv;
 
       bu_vls_init(&tmp_vls);
       bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' length exceeds ARB%d face size of %d\n",
-		    es_type, face_size);
+		    argv[1], es_type, face_size);
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
       bu_vls_free(&tmp_vls);
       
