@@ -412,7 +412,7 @@ extern struct structparse view_parse[];
 #if CRAY
 #	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
-#    if sgi
+#    if sgi || __convexc__
 	/* "Lazy" way.  Works on reasonable machines with byte addressing */
 #	define byteoffset(_i)	((int)((char *)&(_i)))
 #    else
