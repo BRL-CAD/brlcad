@@ -1192,7 +1192,6 @@ struct rt_functab {
 	void	(*ft_free) RT_ARGS((struct soltab * /*stp*/));
 	int	(*ft_plot) RT_ARGS((
 			struct vlhead * /*vhead*/,
-			mat_t /*mat*/,
 			struct rt_db_internal * /*ip*/,
 			double /*abs*/, double /*rel*/, double /*norm*/));
 	void	(*ft_vshot) RT_ARGS((struct soltab * /*stp*/[],
@@ -1204,14 +1203,12 @@ struct rt_functab {
 			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
 			struct rt_db_internal * /*ip*/,
-			mat_t /*mat*/,
 			double /*abs*/, double /*rel*/, double /*norm*/));
 #else
 	int	(*ft_tessellate) RT_ARGS((
 			genptr_t * /*r*/,
 			genptr_t /*m*/,
 			struct rt_db_internal * /*ip*/,
-			mat_t /*mat*/,
 			double /*abs*/, double /*rel*/, double /*norm*/));
 #endif
 	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
