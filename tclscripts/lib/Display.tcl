@@ -45,6 +45,7 @@ class Display {
     public variable listen -1
     public variable fb_active 0
     public variable fb_update 1
+    public variable bg "0 0 0"
 
     constructor {args} {
 	# process options
@@ -100,30 +101,6 @@ class Display {
 	set dlist [lreplace $dlist $index $index]
     }
 
-    method refresh {}
-    method clear {}
-
-    # methods for controlling the view object
-    method aet {args}
-    method center {args}
-    method rot {args}
-    method slew {args}
-    method tra {args}
-    method size {args}
-    method scale {args}
-    method zoom {sf}
-    method autoview {}
-
-    # methods for maintaining the list of geometry objects
-    method add {glist}
-    method remove {glist}
-    method contents {}
-
-    method listen {args}
-    method fb_active {args}
-    method fb_update {args}
-    method rt {args}
-
     private method toggle_zclip {}
     private method toggle_zbuffer {}
     private method toggle_light {}
@@ -142,8 +119,34 @@ class Display {
     private method handle_expose {}
     private method doBindings {}
 
-    method dm_size {args}
-    method dm_name {}
+    # methods for controlling the display manager object
+    public method refresh {}
+    public method clear {}
+    public method bg {args}
+    public method dm_size {args}
+    public method dm_name {}
+
+    # methods for controlling the view object
+    public method aet {args}
+    public method center {args}
+    public method rot {args}
+    public method slew {args}
+    public method tra {args}
+    public method size {args}
+    public method scale {args}
+    public method zoom {sf}
+    public method autoview {}
+
+    # methods for maintaining the list of geometry objects
+    public method add {glist}
+    public method remove {glist}
+    public method contents {}
+
+    # methods for interacting with the framebuffer
+    public method listen {args}
+    public method fb_active {args}
+    public method fb_update {args}
+    public method rt {args}
 }
 
 configbody Display::dm_name {
@@ -218,6 +221,12 @@ configbody Display::size {
     }
 }
 
+configbody Display::bg {
+    if {!$initializing} {
+	bg $bg
+    }
+}
+
 body Display::refresh {} {
     $dm drawBegin
     $dm loadmat [$view model2view] 0
@@ -240,6 +249,16 @@ body Display::refresh {} {
 # Clear the display manager window
 body Display::clear {} {
     $dm clear
+}
+
+# Get/set the background color
+body Display::bg {args} {
+    if {$args == ""} {
+	$dm bg
+    } else {
+	$dm bg $args
+	refresh
+    }
 }
 
 body Display::aet {args} {
