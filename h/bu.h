@@ -308,9 +308,13 @@ struct bu_list {
  */
 #define BU_LIST_LAST(structure,hp)	\
 	((struct structure *)((hp)->back))
+#define BU_LIST_BACK(structure,hp)	\
+	((struct structure *)((hp)->back))
 #define BU_LIST_PREV(structure,hp)	\
 	((struct structure *)((hp)->back))
 #define BU_LIST_FIRST(structure,hp)	\
+	((struct structure *)((hp)->forw))
+#define BU_LIST_FORW(structure,hp)	\
 	((struct structure *)((hp)->forw))
 #define BU_LIST_NEXT(structure,hp)	\
 	((struct structure *)((hp)->forw))
@@ -796,6 +800,7 @@ BU_EXTERN(void			bu_setlinebuf, (FILE *fp) );
 /* list.c */
 BU_EXTERN(int			bu_list_len, (CONST struct bu_list *hd));
 BU_EXTERN(void			bu_list_reverse, (struct bu_list *hd));
+BU_EXTERN(void			bu_list_free, (struct bu_list *hd));
 
 /* log.c */
 BU_EXTERN(void			bu_log_indent_delta, (int delta) );
