@@ -1,14 +1,20 @@
 /*
  *			V M A T H . H
  *
- * This header file defines many commonly used 3D vector math macros.
+ *  This header file defines many commonly used 3D vector math macros.
  *
- * Author -
+ *  Author -
  *	Michael John Muuss
  *
- *	Ballistic Research Laboratory
- *	U. S. Army
- *	March, 1980
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Distribution Status -
+ *	This file is public domain, distribution unlimited.
+ *
+ *  $Header$
  */
 
 /* Element names in homogeneous vector (4-tuple) */
@@ -95,14 +101,14 @@ extern double sqrt();
 #define VDOT(a,b)	( (a)[0]*(b)[0] + (a)[1]*(b)[1] + (a)[2]*(b)[2] )
 
 /* Print vector name and components on stdout */
-#define VPRINT(a,b)	printf("%s (%f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a,b)	printf("%s (%f, %f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
+#define VPRINT(a,b)	(void)printf("%s (%f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2])
+#define HPRINT(a,b)	(void)printf("%s (%f, %f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #define GETSTRUCT(p,str) \
-	p = (struct str *)malloc(sizeof(struct str)); \
+	p = (struct str *)malloc((unsigned)sizeof(struct str)); \
 	if( p == (struct str *)0 ) \
-		printf("getstruct( p, str ): malloc failed\n");/* cpp magic */
+		(void)printf("getstruct( p, str ): malloc failed\n");/* cpp magic */
 
 /* Vector element multiplication.  Really: diagonal matrix X vect */
 #define VELMUL(a,b,c) \
