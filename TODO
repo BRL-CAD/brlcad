@@ -19,6 +19,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY
 
+* recheck AquaTk useability so we can decouple mac build from X11
+
 * converter support for common simple formats like nff and bzw
 
 * write up the history of brlcad
