@@ -19,6 +19,45 @@
  *	USE_STRING_H -
  *		When defined, use <string.h>, not <strings.h>
  *
+ *	HAVE_STDLIB_H		Most __STDC__ systems have
+ *	HAVE_STDARG_H		these.
+ *
+ *	HAVE_VARARGS_H		Most systems have this.  (!CRAY)?
+ *	
+ *	HAVE_STRING_H		Usually the preferred include (for strdup and
+ *				strtok).  Historically, SYSV territory, but
+ *				nowadays it looks like everyone's got it.
+ *	HAVE_GETOPT_H
+ *
+ *	HAVE_XOSDEFS_H		Has <X11/Xosdefs.h> and <X11/Xfuncproto.h>
+ *
+ *	USE_SYS_TIME_H		XXX Unnecessary
+ *
+ *	USE_STRING_H		If your string.h is sufficient
+ *
+ *	HAVE_DRAND48		Most everyone? except Convex
+ *
+ *	HAVE_GETHOSTNAME	A BSD thang.
+ *
+ *	HAVE_GETOPT
+ *
+ *	HAVE_MATHERR		XXX ?
+ *
+ *	HAVE_REGEX
+ *
+ *	HAVE_STRCHR		Usually for folks who have strings.h
+ *
+ *	HAVE_VFORK		BSD, non-SYSV systems.
+ *
+ *	HAVE_VPRINTF		Modern (ANSI) systems.
+ *
+ *	HAVE_WRITEV
+ *
+ *	HAVE_SHELL_ESCAPE	Typically UNIX-only functions.
+ *	HAVE_UNIX_IO
+ *	HAVE_SBRK		Set if unistd.h declares sbrk().
+ *	HAVE_UNIX_DOMAIN_SOCKETS
+ *
  *  $Header$
  */
 
@@ -41,6 +80,20 @@
 #	define HAVE_UNISTD_H	1
 #endif
 
+#if IRIX == 5
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#	define _BSD_TYPES		1
+#	define _BSD_TIME		1	/* for good timeval */
+#	define HAVE_SBRK_DECL		1
+#	define HAVE_REGEX_DECL	1
+#endif
+
+#if IRIX == 6
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#	define _BSD_TYPES		1
+#	define _BSD_TIME		1	/* for good timeval */
+#endif
+
 #if defined(__convex__)
 #	define HAVE_STRING_H	1
 #	define HAVE_STDLIB_H	1
@@ -53,20 +106,23 @@
 #	define HAVE_MEMORY_H	1				/* XXX */
 #endif
 
+#if defined(sparc) && !defined(SUNOS)
+	/* SunOS 4.X */
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+	/* Does not have <X11/Xosdefs.h> */
+#endif
 
-/*
- *	Include handling
- *
- *	HAVE_STDLIB_H		Most __STDC__ systems have
- *	HAVE_STDARG_H		these.
- *
- *	HAVE_VARARGS_H		Most systems have this.  (!CRAY)?
- *	
- *	HAVE_STRING_H		Usually the preferred include (for strdup and
- *				strtok).  Historically, SYSV territory, but
- *				nowadays it looks like everyone's got it.
- *	HAVE_GETOPT_H
- */
+#if SUNOS >= 52
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_XOSDEFS_H	1
+#endif
+
+#if defined(linux)
+#	define HAVE_GETOPT_H	1
+#	define HAVE_XOSDEFS_H	1
+#endif
 
 #if defined(__STDC__)
 #	define HAVE_STDLIB_H	1
@@ -79,14 +135,6 @@
 #endif
 
 #if defined(_POSIX_SOURCE)
-#	define HAVE_UNISTD_H	1
-#endif
-
-/*
- * XXX SunOS 4.X also has <unistd.h> but I am not sure if including it
- * works since I am only working on SunOS 5.X
- */
-#if SUNOS >= 52
 #	define HAVE_UNISTD_H	1
 #endif
 
@@ -106,12 +154,6 @@
 #	define HAVE_SYS_SOCKET_H	1
 #endif
 
-/*
- *	USE_SYS_TIME_H		XXX Unnecessary
- *
- *	USE_STRING_H		If your string.h is sufficient
- */
-
 #if (defined(BSD) && !defined(SYSV)) || defined(CRAY)
 #	define USE_SYS_TIME_H	1
 #endif
@@ -120,42 +162,12 @@
 #	define USE_STRING_H	1
 #endif
 
-
-
-/*	HAVE_DRAND48		Most everyone? except Convex
- *
- *	HAVE_GETHOSTNAME	A BSD thang.
- *
- *	HAVE_GETOPT
- *
- *	HAVE_MATHERR		XXX ?
- *
- *	HAVE_REGEX
- *
- *	HAVE_STRCHR		Usually for folks who have strings.h
- *
- *	HAVE_VFORK		BSD, non-SYSV systems.
- *
- *	HAVE_VPRINTF		Modern (ANSI) systems.
- *
- *	HAVE_WRITEV
- *
- *	HAVE_SHELL_ESCAPE	Typically UNIX-only functions.
- *	HAVE_UNIX_IO
- *	HAVE_SBRK		Set if unistd.h declares sbrk().
- *	HAVE_UNIX_DOMAIN_SOCKETS
- */
-
 #if !defined(__convex__) && !defined(__bsdi__)
 #	define HAVE_DRAND48	1
 #endif
 
 #if defined(BSD) || defined(linux) || defined(sgi) || defined(_BSD_SOURCE)
 #	define HAVE_GETHOSTNAME	1
-#endif
-
-#if defined(linux)
-#	define HAVE_GETOPT_H	1
 #endif
 
 #if defined(SYSV) || defined(__NetBSD__) || defined(__bsdi__) || defined(__stardent)
@@ -260,20 +272,6 @@
 #	define HAVE_CALTECH_MALLOC 1   /* XXX Bleh. See librt/storage.c */
 #endif
 
-#if IRIX == 5
-#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
-#	define _BSD_TYPES		1
-#	define _BSD_TIME		1	/* for good timeval */
-#	define HAVE_SBRK_DECL		1
-#	define HAVE_REGEX_DECL	1
-#endif
-
-#if IRIX == 6
-#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
-#	define _BSD_TYPES		1
-#	define _BSD_TIME		1	/* for good timeval */
-#endif
-
 #ifdef SYSV
 #	define SPRINTF_NOT_PARALLEL	1
 #endif
@@ -309,10 +307,6 @@
 
 #if 1
 #	define HAVE_OFF_T	1
-#endif
-
-#if !defined(vax) && !defined(gould) && !defined(sun)
-#	define VECTORIZE	1
 #endif
 
 #if 1
