@@ -37,11 +37,11 @@ struct spm_specific {
 };
 #define SP_NULL	((struct spm_specific *)0)
 
-struct matparse spm_parse[] = {
-	"file",		(mp_off_ty)(SP_NULL->sp_file),	"%s",
-	"w",		(mp_off_ty)&(SP_NULL->sp_w),	"%d",
-	"n",		(mp_off_ty)&(SP_NULL->sp_w),	"%d",	/*compat*/
-	(char *)0,	(mp_off_ty)0,			(char *)0
+struct structparse spm_parse[] = {
+	"%s",	"file",		(stroff_t)(SP_NULL->sp_file),	FUNC_NULL,
+	"%d",	"w",		(stroff_t)&(SP_NULL->sp_w),	FUNC_NULL,
+	"%d",	"n",		(stroff_t)&(SP_NULL->sp_w),	FUNC_NULL,	/*compat*/
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 HIDDEN int	spm_setup(), spm_render();
@@ -102,7 +102,7 @@ char	**dpp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_w = -1;
-	mlib_parse( matparm, spm_parse, (mp_off_ty)spp );
+	rt_structparse( matparm, spm_parse, (stroff_t)spp );
 	if( spp->sp_w < 0 )  spp->sp_w = 512;
 	if( spp->sp_file[0] == '\0' )
 		goto fail;
@@ -124,7 +124,7 @@ spm_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	mlib_print("spm_setup", spm_parse, (mp_off_ty)dp);
+	rt_structprint("spm_setup", spm_parse, (stroff_t)dp);
 	/* Should be more here */
 }
 

@@ -376,15 +376,21 @@ char	**argv;
 	return(0);
 }
 
-/* generic settable parameters */
-struct matparse set_parse[] = {
-	"width",	(mp_off_ty)&width,			"%d",
-	"height",	(mp_off_ty)&height,			"%d",
-	"angle",	(mp_off_ty)&rt_perspective,		"%f",
-	(char *)0,	(mp_off_ty)0,				(char *)0
-};
 /* viewing module specific variables */
-extern struct matparse view_parse[];
+extern struct structparse view_parse[];
+
+/*
+ *  Generic settable parameters.
+ *  By setting the "base address" to zero in the rt_structparse call,
+ *  the actual memory address is given here as the structure offset.
+ */
+struct structparse set_parse[] = {
+	"%d",	"width",	(stroff_t)&width,		FUNC_NULL,
+	"%d",	"height",	(stroff_t)&height,		FUNC_NULL,
+	"%f",	"angle",	(stroff_t)&rt_perspective,	FUNC_NULL,
+	"indir", "View Module",	(stroff_t)view_parse,		FUNC_NULL,
+	(char *)0,(char *)0,	(stroff_t)0,			FUNC_NULL
+};
 
 /*
  *			C M _ S E T
@@ -396,12 +402,12 @@ int	argc;
 char	**argv;
 {
 	if( argc <= 1 ) {
-		mlib_print( "Application Values:", view_parse, (mp_off_ty)0 );
-		mlib_print( "Generic Values:", set_parse, (mp_off_ty)0 );
+		rt_structprint( "Generic and Application-Specific Parameter Values",
+			set_parse, (stroff_t)0 );
 		return(0);
 	}
 	while( argc > 1 ) {
-		mlib_parse2( argv[1], view_parse, set_parse, (mp_off_ty)0 );
+		rt_structparse( argv[1], set_parse, (stroff_t)0 );
 		argc--;
 		argv++;
 	}

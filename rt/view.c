@@ -102,11 +102,11 @@ static int	*npix_left;	/* only used in buf_mode=2 */
 void	shade_inputs();
 
 /* Viewing module specific "set" variables */
-struct matparse view_parse[] = {
-	"bounces",	(mp_off_ty)&max_bounces,		"%d",
-	"ireflect",	(mp_off_ty)&max_ireflect,		"%d",
-	"background",	(mp_off_ty)background,			"%V",
-	(char *)0,	(mp_off_ty)0,				(char *)0
+struct structparse view_parse[] = {
+	"%d",	"bounces",	(stroff_t)&max_bounces,			FUNC_NULL,
+	"%d",	"ireflect",	(stroff_t)&max_ireflect,		FUNC_NULL,
+	"%V",	"background",	(stroff_t)background,			FUNC_NULL,
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 /*

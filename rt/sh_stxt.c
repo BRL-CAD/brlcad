@@ -42,19 +42,19 @@ struct	stxt_specific  {
 };
 #define SOL_NULL ((struct stxt_specific *)0)
 
-struct	matparse stxt_parse[] = {
+struct	structparse stxt_parse[] = {
 #ifndef CRAY
-	"transp",	(mp_off_ty)(SOL_NULL->stx_transp),"%C",
-	"file",		(mp_off_ty)(SOL_NULL->stx_file),	"%s",
+	"%C",	"transp",	(stroff_t)(SOL_NULL->stx_transp),	FUNC_NULL,
+	"%s",	"file",		(stroff_t)(SOL_NULL->stx_file),		FUNC_NULL,
 #else
-	"transp",	(mp_off_ty)0,			"%C",
-	"file",		(mp_off_ty)1,			"%s",
+	"%C",	"transp",	(stroff_t)0,				FUNC_NULL,
+	"%s",	"file",		(stroff_t)1,				FUNC_NULL,
 #endif
-	"w",		(mp_off_ty)&(SOL_NULL->stx_w),	"%d",
-	"n",		(mp_off_ty)&(SOL_NULL->stx_n),	"%d",
-	"d",		(mp_off_ty)&(SOL_NULL->stx_d),	"%d",
-	"fw",		(mp_off_ty)&(SOL_NULL->stx_fw),	"%d",
-	(char *)0,	(mp_off_ty)0,		(char *)0
+	"%d",	"w",		(stroff_t)&(SOL_NULL->stx_w),		FUNC_NULL,
+	"%d",	"n",		(stroff_t)&(SOL_NULL->stx_n),		FUNC_NULL,
+	"%d",	"d",		(stroff_t)&(SOL_NULL->stx_d),		FUNC_NULL,
+	"%d",	"fw",		(stroff_t)&(SOL_NULL->stx_fw),		FUNC_NULL,
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
@@ -153,7 +153,7 @@ char	**dpp;
 	rt_rpp_tree(rp->reg_treetop,stp->stx_min,stp->stx_max);
 
 	/**	Get input values  **/
-	mlib_parse( matparm, stxt_parse, (mp_off_ty)stp );
+	rt_structparse( matparm, stxt_parse, (stroff_t)stp );
 	/*** DEFAULT SIZE OF STXT FILES ***/
 	if( stp->stx_w < 0 )  stp->stx_w = 512;
 	if( stp->stx_n < 0 )  stp->stx_n = stp->stx_w;

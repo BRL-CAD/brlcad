@@ -50,9 +50,9 @@ extern	int	height;
 int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
-struct matparse view_parse[] = {
-	"maxreflect",	(mp_off_ty)&numreflect,			"%d",
-	(char *)0,	(mp_off_ty)0,				(char *)0
+struct structparse view_parse[] = {
+	"%d",	"maxreflect",	(stroff_t)&numreflect,			FUNC_NULL,
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 void		dumpray();

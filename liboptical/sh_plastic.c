@@ -48,21 +48,21 @@ struct phong_specific {
 };
 #define PL_NULL	((struct phong_specific *)0)
 
-struct matparse phong_parse[] = {
-	"shine",	(mp_off_ty)&(PL_NULL->shine),		"%d",
-	"sh",		(mp_off_ty)&(PL_NULL->shine),		"%d",
-	"specular",	(mp_off_ty)&(PL_NULL->wgt_specular),	"%f",
-	"sp",		(mp_off_ty)&(PL_NULL->wgt_specular),	"%f",
-	"diffuse",	(mp_off_ty)&(PL_NULL->wgt_diffuse),	"%f",
-	"di",		(mp_off_ty)&(PL_NULL->wgt_diffuse),	"%f",
-	"transmit",	(mp_off_ty)&(PL_NULL->transmit),	"%f",
-	"tr",		(mp_off_ty)&(PL_NULL->transmit),	"%f",
-	"reflect",	(mp_off_ty)&(PL_NULL->reflect),		"%f",
-	"re",		(mp_off_ty)&(PL_NULL->reflect),		"%f",
-	"ri",		(mp_off_ty)&(PL_NULL->refrac_index),	"%f",
-	"extinction",	(mp_off_ty)&(PL_NULL->extinction),	"%f",
-	"ex",		(mp_off_ty)&(PL_NULL->extinction),	"%f",
-	(char *)0,	(mp_off_ty)0,				(char *)0
+struct structparse phong_parse[] = {
+	"%d",	"shine",	(stroff_t)&(PL_NULL->shine),		FUNC_NULL,
+	"%d",	"sh",		(stroff_t)&(PL_NULL->shine),		FUNC_NULL,
+	"%f",	"specular",	(stroff_t)&(PL_NULL->wgt_specular),	FUNC_NULL,
+	"%f",	"sp",		(stroff_t)&(PL_NULL->wgt_specular),	FUNC_NULL,
+	"%f",	"diffuse",	(stroff_t)&(PL_NULL->wgt_diffuse),	FUNC_NULL,
+	"%f",	"di",		(stroff_t)&(PL_NULL->wgt_diffuse),	FUNC_NULL,
+	"%f",	"transmit",	(stroff_t)&(PL_NULL->transmit),		FUNC_NULL,
+	"%f",	"tr",		(stroff_t)&(PL_NULL->transmit),		FUNC_NULL,
+	"%f",	"reflect",	(stroff_t)&(PL_NULL->reflect),		FUNC_NULL,
+	"%f",	"re",		(stroff_t)&(PL_NULL->reflect),		FUNC_NULL,
+	"%f",	"ri",		(stroff_t)&(PL_NULL->refrac_index),	FUNC_NULL,
+	"%f",	"extinction",	(stroff_t)&(PL_NULL->extinction),	FUNC_NULL,
+	"%f",	"ex",		(stroff_t)&(PL_NULL->extinction),	FUNC_NULL,
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 HIDDEN int phong_setup(), mirror_setup(), glass_setup();
@@ -113,7 +113,7 @@ char	**dpp;
 	pp->refrac_index = RI_AIR;
 	pp->extinction = 0.0;
 
-	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
+	rt_structparse( matparm, phong_parse, (stroff_t)pp );
 
 	if( pp->transmit > 0 )
 		rp->reg_transmit = 1;
@@ -142,7 +142,7 @@ char	**dpp;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
 
-	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
+	rt_structparse( matparm, phong_parse, (stroff_t)pp );
 
 	if( pp->transmit > 0 )
 		rp->reg_transmit = 1;
@@ -172,7 +172,7 @@ char	**dpp;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
 
-	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
+	rt_structparse( matparm, phong_parse, (stroff_t)pp );
 
 	if( pp->transmit > 0 )
 		rp->reg_transmit = 1;
@@ -187,7 +187,7 @@ phong_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	mlib_print(rp->reg_name, phong_parse, (mp_off_ty)dp);
+	rt_structprint(rp->reg_name, phong_parse, (stroff_t)dp);
 }
 
 /*

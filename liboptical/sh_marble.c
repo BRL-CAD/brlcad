@@ -35,8 +35,8 @@ struct	marble_specific  {
 #define MARB_NULL ((struct marble_specific *)0)
 
 
-struct	matparse marble_parse[] = {
-	(char *)0,	(mp_off_ty)0,				(char *)0
+struct	structparse marble_parse[] = {
+	(char *)0,(char *)0,	(stroff_t)0,			FUNC_NULL
 };
 
 

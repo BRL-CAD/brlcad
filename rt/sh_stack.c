@@ -44,9 +44,9 @@ struct stk_specific {
 };
 #define STK_NULL	((struct stk_specific *)0)
 
-struct matparse stk_parse[] = {
-	"file",		(mp_off_ty)(STK_NULL->st_file),	"%s",
-	(char *)0,	(mp_off_ty)0,			(char *)0
+struct structparse stk_parse[] = {
+	"%s",	"file",		(stroff_t)(STK_NULL->st_file),		FUNC_NULL,
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 /*
@@ -70,7 +70,7 @@ char	**dpp;		/* pointer to user data pointer */
 	*dpp = (char *)sp;
 
 	sp->st_file[0] = '\0';
-	/*mlib_parse( matparm, stk_parse, (mp_off_ty)sp );*/
+	/*rt_structparse( matparm, stk_parse, (stroff_t)sp );*/
 
 	if(rdebug&RDEBUG_MATERIAL)
 		rt_log( "stk_setup called with \"%s\"\n", matparm );
@@ -89,6 +89,7 @@ char	**dpp;		/* pointer to user data pointer */
 				i++;
 			} else {
 				/* XXX else clear entry? */
+				rt_log("stk_setup problem\n");
 			}
 			start = ++cp;
 		} else {
@@ -147,7 +148,7 @@ stk_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	mlib_print(rp->reg_name, stk_parse, (mp_off_ty)dp);
+	rt_structprint(rp->reg_name, stk_parse, (stroff_t)dp);
 }
 
 /*

@@ -74,19 +74,19 @@ struct txt_specific {
 };
 #define TX_NULL	((struct txt_specific *)0)
 
-struct matparse txt_parse[] = {
+struct structparse txt_parse[] = {
 #ifndef CRAY
-	"transp",	(mp_off_ty)(TX_NULL->tx_transp),"%C",
-	"file",		(mp_off_ty)(TX_NULL->tx_file),	"%s",
+	"%C",	"transp",	(stroff_t)(TX_NULL->tx_transp),		FUNC_NULL,
+	"%s",	"file",		(stroff_t)(TX_NULL->tx_file),		FUNC_NULL,
 #else
-	"transp",	(mp_off_ty)0,			"%C",
-	"file",		(mp_off_ty)1,			"%s",
+	"%C",	"transp",	(stroff_t)0,				FUNC_NULL,
+	"%s",	"file",		(stroff_t)1,				FUNC_NULL,
 #endif
-	"w",		(mp_off_ty)&(TX_NULL->tx_w),	"%d",
-	"n",		(mp_off_ty)&(TX_NULL->tx_n),	"%d",
-	"l",		(mp_off_ty)&(TX_NULL->tx_n),	"%d",	/*compat*/
-	"fw",		(mp_off_ty)&(TX_NULL->tx_fw),	"%d",
-	(char *)0,	(mp_off_ty)0,			(char *)0
+	"%d",	"w",		(stroff_t)&(TX_NULL->tx_w),		FUNC_NULL,
+	"%d",	"n",		(stroff_t)&(TX_NULL->tx_n),		FUNC_NULL,
+	"%d",	"l",		(stroff_t)&(TX_NULL->tx_n),		FUNC_NULL,	/*compat*/
+	"%d",	"fw",		(stroff_t)&(TX_NULL->tx_fw),		FUNC_NULL,
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 /*
@@ -247,7 +247,7 @@ char	**dpp;
 
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_fw = tp->tx_n = -1;
-	mlib_parse( matparm, txt_parse, (mp_off_ty)tp );
+	rt_structparse( matparm, txt_parse, (stroff_t)tp );
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
 	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
@@ -267,7 +267,7 @@ HIDDEN void
 txt_print( rp )
 register struct region *rp;
 {
-	mlib_print(rp->reg_name, txt_parse, (mp_off_ty)rp->reg_udata);
+	rt_structprint(rp->reg_name, txt_parse, (stroff_t)rp->reg_udata);
 }
 
 /*
@@ -289,15 +289,15 @@ struct ckr_specific  {
 };
 #define CKR_NULL ((struct ckr_specific *)0)
 
-struct matparse ckr_parse[] = {
+struct structparse ckr_parse[] = {
 #ifndef CRAY
-	"a",		(mp_off_ty)(CKR_NULL->ckr_a),	"%C",
-	"b",		(mp_off_ty)(CKR_NULL->ckr_b),	"%C",
+	"%C",	"a",		(stroff_t)(CKR_NULL->ckr_a),		FUNC_NULL,
+	"%C",	"b",		(stroff_t)(CKR_NULL->ckr_b),		FUNC_NULL,
 #else
-	"a",		(mp_off_ty)0,			"%C",
-	"b",		(mp_off_ty)1,			"%C",
+	"%C",	"a",		(stroff_t)0,				FUNC_NULL,
+	"%C",	"b",		(stroff_t)1,				FUNC_NULL,
 #endif
-	(char *)0,	(mp_off_ty)0,			(char *)0
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 /*
@@ -342,7 +342,7 @@ char	**dpp;
 	GETSTRUCT( ckp, ckr_specific );
 	*dpp = (char *)ckp;
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
-	mlib_parse( matparm, ckr_parse, (mp_off_ty)ckp );
+	rt_structparse( matparm, ckr_parse, (stroff_t)ckp );
 	return(1);
 }
 
@@ -353,7 +353,7 @@ HIDDEN void
 ckr_print( rp )
 register struct region *rp;
 {
-	mlib_print(rp->reg_name, ckr_parse, (mp_off_ty)rp->reg_udata);
+	rt_structprint(rp->reg_name, ckr_parse, (stroff_t)rp->reg_udata);
 }
 
 /*

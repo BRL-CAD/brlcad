@@ -50,8 +50,8 @@ extern int	height;
 int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
-struct matparse view_parse[] = {
-	(char *)0,	(mp_off_ty)0,				(char *)0
+struct structparse view_parse[] = {
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 /* Stuff for pretty-picture output format */
