@@ -1,4 +1,4 @@
-##                 C O M M A N D . T C L
+#                 C O M M A N D . T C L
 #
 # Author -
 #	Bob Parker
@@ -28,6 +28,7 @@ class Command {
 
     itk_option define -edit_style edit_style Edit_style emacs
     itk_option define -prompt prompt Prompt "> "
+    itk_option define -prompt2 prompt2 Prompt ""
     itk_option define -cmd_prefix cmd_prefix Cmd_prefix ""
     itk_option define -selection_color selection_color TextColor #fefe8e
     itk_option define -prompt_color prompt_color TextColor red1
@@ -77,6 +78,7 @@ class Command {
     private method selection_modify {x y}
     private method print {str}
     private method print_prompt {}
+    private method print_prompt2 {}
     private method print_tag {str tag}
     private method cursor_highlight {}
 
@@ -232,17 +234,25 @@ body Command::putstring {str} {
 }
 
 ############################## Protected/Private Methods  ##############################
+
 body Command::invoke {} {
     set w $itk_component(text)
 
     set cmd [$w get promptEnd insert]
+
+    # remove any instances of prompt2 from the beginning of each secondary line
+    regsub -all "\n$itk_option(-prompt2)" $cmd "" cmd
+    
     set hcmd $cmd
 
     if {$itk_option(-cmd_prefix) != ""} {
-	set cname [lindex $cmd 0]
-	set cindex [lsearch -exact $cmdlist $cname]
-	if {$cindex != -1} {
-	    set cmd [concat $itk_option(-cmd_prefix) $cmd]
+	# get command name
+	if {[regexp {^[ \t]*([^\]\[ \t\n\r{}]+)} $cmd match cname]} {
+	    set cindex [lsearch -exact $cmdlist $cname]
+	    if {$cindex != -1} {
+		# found command name in cmdlist, so prepend cmd_prefix to cmd
+		set cmd [concat $itk_option(-cmd_prefix) $cmd]
+	    }
 	}
     }
 
@@ -268,6 +278,8 @@ body Command::invoke {} {
 	if {$nlines > $itk_option(-maxlines)} {
 	    $w delete 1.0 [expr $nlines - $itk_option(-maxlines)].end
 	}
+    } else {
+	print_prompt2
     }
     $w see insert
 }
@@ -989,6 +1001,11 @@ body Command::print_prompt {} {
     print_tag $itk_option(-prompt) prompt
     $w mark set promptEnd insert
     $w mark gravity promptEnd left
+}
+
+body Command::print_prompt2 {} {
+    set w $itk_component(text)
+    $w insert insert $itk_option(-prompt2)
 }
 
 body Command::print_tag {str tag} {
