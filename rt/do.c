@@ -103,7 +103,7 @@ extern fastf_t rt_cline_radius;
 /***** end variables shared with g_cline.c ******/
 
 /***** variables for frame buffer black pixel rendering *****/
-extern unsigned	char	*pixmap;		/* pixel map for rerendering of black pixels */
+unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
 
 
 void		def_tree();
@@ -592,7 +592,7 @@ int framenumber;
 	double	utime;			/* CPU time used */
 	double	nutime;			/* CPU time used, normalized by ncpu */
 	double	wallclock;		/* # seconds of wall clock time */
-	int	npix;			/* # of pixel values to be done */
+	int	npix,i;			/* # of pixel values to be done */
 	int	lim;
 	vect_t	work, temp;
 	quat_t	quat;
@@ -722,6 +722,11 @@ int framenumber;
 	if( (lim = bu_cpulimit_get()) > 0 )  {
 		bu_cpulimit_set( lim + npix / MINRATE + 100 );
 	}
+
+	/* Allocate data for pixel map for rerendering of black pixels */
+	pixmap= (unsigned char*)malloc(sizeof(RGBpixel)*width*height);
+	for (i= 0; i < width*height*sizeof(RGBpixel); i++)
+		pixmap[i]= 0;
 
 	/*
 	 *  If this image is unlikely to be for debugging,
@@ -950,6 +955,7 @@ int framenumber;
 	}
 
 	bu_log("\n");
+        free(pixmap);
 	return(0);		/* OK */
 }
 
