@@ -31,7 +31,6 @@ static char RCSmagic[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "externs.h"
-#include "rtlist.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -41,6 +40,7 @@ static char RCSmagic[] = "@(#)$Header$ (BRL)";
 #include "redblack.h"
 #include "../libredblack/rb_internals.h"
 #include "bu.h"
+#include "bn.h"
 
 /*
  *			B U _ I D E N T I F Y _ M A G I C
@@ -69,6 +69,20 @@ register long	magic;
 		return "bu_ptbl";
 	case BU_BITV_MAGIC:
 		return "bu_bitv";
+	case BU_LIST_HEAD_MAGIC:
+		return "bu_list";
+	case BU_HIST_MAGIC:
+		return "bu_hist";
+	case BU_MAPPED_FILE_MAGIC:
+		return "bu_mapped_file";
+	case BU_EXTERNAL_MAGIC:
+		return "bu_external";
+
+	/*
+	 *  bn.h
+	 */
+	case BN_POLY_MAGIC:
+		return "bn_poly";
 
 	/*
 	 *  nmg.h:  NMG magic numbers
@@ -120,19 +134,12 @@ register long	magic;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
 		return("vertexuse_a_cnurb");
 	/*
-	 *  rtlist.h
-	 */
-	case RT_LIST_HEAD_MAGIC:
-		return("rt_list");
-	/*
 	 *  raytrace.h
 	 */
 	case RT_TOL_MAGIC:
 		return("rt_tol");
 	case RT_TESS_TOL_MAGIC:
 		return("rt_tess_tol");
-	case RT_EXTERNAL_MAGIC:
-		return("rt_external");
 	case RT_DB_INTERNAL_MAGIC:
 		return("rt_db_internal");
 	case RT_SEG_MAGIC:
