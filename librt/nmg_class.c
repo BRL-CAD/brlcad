@@ -462,6 +462,7 @@ long		*novote;
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		VPRINT("nmg_pt_hitmis_f\tProjected Pt:", pt);
 	}
+	/* XXX Should validate distance from point to plane */
 
 	/* find the closest approach in this face to the projected point */
 	closest.dist = MAX_FASTF;
@@ -645,24 +646,22 @@ CONST struct rt_tol	*tol;
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		rt_log("class_vu_vs_s(vu=x%x) pt=(%g,%g,%g)\n", vu, V3ARGS(pt) );
 
-    if( !(rt_g.NMG_debug & DEBUG_CLASSIFY) )  {
-	/* As an efficiency & consistency measure, check for vertex in class list */
-	reason = "of classlist";
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )  {
-		status = INSIDE;
-		goto out;
+	if( !(rt_g.NMG_debug & DEBUG_CLASSIFY) )  {
+		/* As an efficiency & consistency measure, check for vertex in class list */
+		reason = "of classlist";
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )  {
+			status = INSIDE;
+			goto out;
+		}
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], vu->v_p) )  {
+			status = ON_SURF;
+			goto out;
+		}
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], vu->v_p) )  {
+			status = OUTSIDE;
+			goto out;
+		}
 	}
-
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], vu->v_p) )  {
-		status = ON_SURF;
-		goto out;
-	}
-
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], vu->v_p) )  {
-		status = OUTSIDE;
-		goto out;
-	}
-    }
 
 	/* we use topology to determing if the vertex is "ON" the
 	 * other shell.
@@ -728,27 +727,36 @@ struct shell	*s;
 long		*classlist[4];
 CONST struct rt_tol	*tol;
 {
-	int euv_cl, matev_cl, status;
+	int euv_cl, matev_cl;
+	int	status;
 	struct edgeuse *eup;
 	point_t pt;
 	pointp_t eupt, matept;
+	char	*reason;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		EUPRINT("class_eu_vs_s\t\t", eu);
+		EUPRINT("class_eu_vs_s\t", eu);
 
 	NMG_CK_EDGEUSE(eu);	
 	NMG_CK_SHELL(s);	
+	RT_CK_TOL(tol);
 	
-	/* check to see if edge is already in one of the lists */
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )
-		return(INSIDE);
-
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p) )
-		return(ON_SURF);
-
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p) )
-		return(OUTSIDE);
-
+	if( !(rt_g.NMG_debug & DEBUG_CLASSIFY) )  {
+		/* check to see if edge is already in one of the lists */
+		reason = "of classlist";
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )  {
+			status = INSIDE;
+			goto out;
+		}
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p) )  {
+			status = ON_SURF;
+			goto out;
+		}
+		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p) )  {
+			status = OUTSIDE;
+			goto out;
+		}
+	}
 	euv_cl = class_vu_vs_s(eu->vu_p, s, classlist, tol);
 	matev_cl = class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
 	
@@ -786,18 +794,16 @@ CONST struct rt_tol	*tol;
 
 	if (euv_cl == ON_SURF && matev_cl == ON_SURF) {
 		/* check for radial uses of this edge by the shell */
-
 		eup = eu->radial_p->eumate_p;
 		do {
 			NMG_CK_EDGEUSE(eup);
 			if (nmg_eups(eup) == s) {
 				NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 					eu->e_p );
-				if (rt_g.NMG_debug & DEBUG_GRAPHCL)
-					show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
-				return(ON_SURF);
+				reason = "a radial edgeuse is on shell";
+				status = ON_SURF;
+				goto out;
 			}
-
 			eup = eup->radial_p->eumate_p;
 		} while (eup != eu->radial_p->eumate_p);
 
@@ -807,41 +813,42 @@ CONST struct rt_tol	*tol;
 		 *
 		 * So we classify the midpoint of the line WRT the shell.
 		 */
-		
 		eupt = eu->vu_p->v_p->vg_p->coord;
 		matept = eu->eumate_p->vu_p->v_p->vg_p->coord;
-
 		VADD2SCALE(pt, eupt, matept, 0.5);
 
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			VPRINT("Classifying midpoint of edge", pt);
+			VPRINT("class_eu_vs_s: midpoint of edge", pt);
 
 		status = pt_inout_s(pt, s, tol);
-	
+		reason = "midpoint classification (both verts ON)";
 		if (status == OUTSIDE)  {
 			NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
 		}  else if (status == INSIDE)  {
 			NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
 		}  else  {
 			EUPRINT("Why wasn't this edge in or out?", eu);
-			rt_bomb("class_eu_vs_s");
+			rt_bomb("class_eu_vs_s\n");
 		}
-
-		if (rt_g.NMG_debug & DEBUG_GRAPHCL)
-			show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
-		return(status);
+		goto out;
 	}
 
 	if (euv_cl == OUTSIDE || matev_cl == OUTSIDE) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
-		if (rt_g.NMG_debug & DEBUG_GRAPHCL)
-			show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
-		return(OUTSIDE);
+		reason = "at least one vert OUT";
+		status = OUTSIDE;
+		goto out;
 	}
 	NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
+	status = INSIDE;
+out:
 	if (rt_g.NMG_debug & DEBUG_GRAPHCL)
 		show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
-	return(INSIDE);
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		rt_log("class_eu_vs_s(eu=x%x) return %s because %s\n",
+			eu, nmg_class_status(status), reason );
+	}
+	return(status);
 }
 
 /*
@@ -859,9 +866,11 @@ CONST struct rt_tol	*tol;
 	struct loopuse *q_lu;
 	struct vertexuse *vu;
 	long		magic1;
+	int		seen_error = 0;
 
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
 
 	/* check to see if loop is already in one of the lists */
 	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], lu->l_p) )
@@ -875,6 +884,7 @@ CONST struct rt_tol	*tol;
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
+		/* Loop of a single vertex */
 		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
 		class = class_vu_vs_s(vu, s, classlist, tol);
@@ -897,22 +907,17 @@ CONST struct rt_tol	*tol;
 	}
 
 	/* loop is collection of edgeuses */
+retry:
 	in = out = on = 0;
 	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-
+		/* Classify each edgeuse */
 		class = class_eu_vs_s(eu, s, classlist, tol);
 		switch (class) {
 		case INSIDE	: ++in; 
-				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-					EUPRINT("Edge is INSIDE", eu);
 				break;
 		case OUTSIDE	: ++out;
-				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-					EUPRINT("Edge is OUTSIDE", eu);
 				break;
 		case ON_SURF	: ++on;
-				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-					EUPRINT("Edge is ON_SURF", eu);
 				break;
 		default		: rt_bomb("class_lu_vs_s: bad class for edgeuse\n");
 		}
@@ -922,36 +927,44 @@ CONST struct rt_tol	*tol;
 		rt_log("Loopuse edges in:%d on:%d out:%d\n", in, on, out);
 
 	if (in > 0 && out > 0) {
-		FILE *fd;
+		FILE *fp;
 		rt_log("Loopuse edges in:%d on:%d out:%d\n", in, on, out);
-		if( rt_g.NMG_debug )  {
+		if( rt_g.NMG_debug & DEBUG_CLASSIFY )  {
+			char		buf[128];
+			static int	num;
+			long		*b;
+			struct model	*m;
+
+			m = nmg_find_model(lu->up.magic_p);
+			b = (long *)rt_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+
 			for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
-					fprintf(stderr, "In:  ");
+					EUPRINT("In:  edgeuse", eu);
 				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
-					fprintf(stderr, "Out: ");
+					EUPRINT("Out: edgeuse", eu);
 				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
-					fprintf(stderr, "On:  ");
+					EUPRINT("On:  edgeuse", eu);
 				else
-					fprintf(stderr, "Unknown edge class? ");
-				EUPRINT("edgeuse", eu);
+					EUPRINT("BAD: edgeuse", eu);
 			}
 
-			if ((fd=fopen("badloop.pl", "w")) != NULL) {
-				long *b;
-				struct model *m;
-
-				m = nmg_find_model(lu->up.magic_p);
-			
-				b = (long *)rt_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
-
-				nmg_pl_lu(fd, lu, b, 255, 255, 255);
-				fclose(fd);
+			sprintf(buf, "badloop%d.pl", num++);
+			if ((fp=fopen(buf, "w")) != NULL) {
+				nmg_pl_lu(fp, lu, b, 255, 255, 255);
+				nmg_pl_s(fp, s);
+				fclose(fp);
+				rt_log("wrote %s\n", buf);
 			}
 			nmg_pr_lu(lu, "");
 			nmg_stash_model_to_file( "class.g", nmg_find_model((long *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
+			rt_free( (char *)b, "nmg_pl_lu flag[]" );
 		}
-		rt_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
+		rt_g.NMG_debug |= DEBUG_CLASSIFY;
+		if(seen_error)
+			rt_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
+		seen_error = 1;
+		goto retry;
 	}
 	if (out > 0) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);
