@@ -40,12 +40,15 @@ struct  frame {
 	int	tp;
 	int	tl;
 };
-#define MAGIC	0xDeadBeef
+#define MAGIC	0xdeadbeefL
 #define FLAG_CLEAN	0x1
 #define FLAG_SCRIPT	0x2
 
 struct rt_list head = {MAGIC, &head, &head};
 struct frame globals;
+
+void squirtframes();
+void sf();
 
 void addtext(fp, tp)
 struct frame *fp;
@@ -233,6 +236,9 @@ void merge()
 	}
 }
 			
+/* 
+ *			M A I N
+ */
 main(argc, argv)
 int argc;
 char **argv;
@@ -293,7 +299,13 @@ fprintf(stderr,"left=0x%x, right=0x%x, mask=0x%x, bits=%d\n",left,right,mask,
 
 	return 0;
 }
-yywrap(){return 1;}
+
+int
+yywrap(){
+	return 1;
+}
+
+void
 squirtframes(base)
 int base;
 {
@@ -305,6 +317,8 @@ int base;
 		base /= 2;
 	}
 }
+
+void
 sf(start, skip)
 int start;
 int skip;
