@@ -60,6 +60,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <signal.h>
@@ -539,7 +540,7 @@ char *str;
  *  it serves to highlight the the grossness of the varargs package
  *  requiring the size of a parameter to be known at compile time.
  */
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 void
 fb_log( char *fmt, ... )
 {
@@ -569,8 +570,10 @@ fb_log( char *fmt, ... )
 		fflush(stderr);
 	}
 }
-#else
+
 /* VARARGS */
+#elif !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
+
 void
 fb_log( va_alist )
 va_dcl
@@ -687,4 +690,8 @@ va_dcl
 		fflush(stderr);
 	}
 }
-#endif /* !__STDC__ */
+#else
+
+#error /* no stdarg and no vararg */
+
+#endif /* !have_stdarg_h */
