@@ -1566,7 +1566,7 @@ struct bu_vls *vls;
 				{
 					if( *iptr == '"' && *prev != '\\' )
 					{
-						bu_vls_strcat( vls, "} " );
+						bu_vls_putc( vls, '}' );
 						iptr++;
 						break;
 					}
@@ -1644,7 +1644,7 @@ struct bu_vls *vls;
 			if( bu_key_eq_to_key_val( iptr, &next, vls ) )
 				return( 1 );
 			if( bu_vls_strlen( vls ) > len )
-				bu_vls_strcat( vls, "} " );
+				bu_vls_putc( vls, '}' );
 			else
 				bu_vls_trunc( vls, len-2 );
 		}
@@ -1654,13 +1654,11 @@ struct bu_vls *vls;
 			next = (char *)NULL;
 
 		if( is_stack )
-			bu_vls_strcat( vls, "} " );
+			bu_vls_putc( vls, '}' );
 	}
 
 	if( is_stack )
-		bu_vls_strcat( vls, "} " );
-
-	bu_vls_trimspace( vls );
+		bu_vls_putc( vls, '}' );
 
 	return( 0 );
 }
