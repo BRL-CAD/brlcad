@@ -20,8 +20,7 @@
  *
  *  Copyright Notice -
  *	This software is Copyright (C) 2001 by the United States Army.
- *	All rights reserved.
- */
+ * All rights reserved.  */
 #ifndef lint
 static const char RCSviewedge[] = "@(#)$Header$ (BRL)";
 #endif
@@ -89,6 +88,7 @@ int	detect_ids = 1;
 int	detect_regions = 0;
 int	detect_distance = 1;
 int	detect_normals = 1;
+int     detect_attributes = 0; /* unsupported yet */
 
 RGBpixel bg_color;
 
@@ -108,13 +108,34 @@ int    overlay = 0;
  * pixels are blended (using some HSV manipulations) with the 
  * original framebuffer pixels. The intent is to produce an effect
  * similar to the "bugs" on TV networks.
+ *
+ * Doesn't work worth beans!
  */
 int    blend = 0;
 
 /*
- *
+ * Region Colors Mode
+ * 
+ * If set, the color of edge pixels is set to the region colors.
+ * If the edge is determined because of a change from one region 
+ * to another, the color selected is the one from the region with
+ * the lowest hit distance.
  */
 int    region_colors = 0;
+
+/*
+ * Interlay Mode
+ *
+ * This is really cool! Interlay allows the user to specify a second
+ * set of objects (from the same .g) that can be used to separate fore-
+ * ground from background.
+ */
+struct bu_vls interlay_objects;
+int interlay = 0;
+struct rt_i *inter_rtip = NULL;
+struct application **inter_apps;
+static int inter_hit (struct application *, struct partition *, struct seg *);
+static int inter_miss (struct application *);
 
 /*
  * Prototypes for the viewedge edge detection functions
@@ -170,14 +191,19 @@ struct bu_structparse view_parse[] = {
   {"%d", 1, "di", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 3, "foreground", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 3, "fg", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "background", byteoffset(background),	BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "bg", byteoffset(background),	BU_STRUCTPARSE_FUNC_NULL},	
+  {"%d", 3, "background", byteoffset(background), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "bg", byteoffset(background), BU_STRUCTPARSE_FUNC_NULL},	
   {"%d", 1, "overlay", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "ov", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "blend", byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "bl", byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 1, "regcol", byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 1, "region_color", byteoffset(region_colors), 
+   BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "rc", byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
+  {"%S", 1, "interlay", byteoffset(interlay_objects), 
+   BU_STRUCTPARSE_FUNC_NULL},
+  {"%S", 1, "in", byteoffset(interlay_objects), 
+   BU_STRUCTPARSE_FUNC_NULL},
   {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -215,7 +241,84 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
   ap->a_hit = rayhit;
   ap->a_miss = raymiss;
   ap->a_onehit = 1;
-  
+
+  /*
+   * Does the user want interlay?
+   * 
+   * If so, load and prep.
+   */
+  if (bu_vls_strlen(&interlay_objects) != 0) {
+    /*    char idbuf[512]; */
+    struct db_i *dbip;
+    int nObjs;
+    char **objs;
+    int i;
+
+    bu_log ("rtedge: loading occlusion geometry from %s.\n", file);
+
+    if (Tcl_SplitList (NULL, bu_vls_addr (&interlay_objects), &nObjs, 
+		       &objs) == TCL_ERROR) {
+      bu_bomb ("rtedge: could not parse interlay objects list.\n");
+    }
+
+
+    for (i=0; i<nObjs; ++i) {
+      bu_log ("object %d = %s\n", i, objs[i]);
+    }
+    
+
+    if( (dbip = db_open( file, "r" )) == DBI_NULL ) {
+      bu_bomb ("rtedge: could not open database.\n");
+    }
+    RT_CK_DBI(dbip);
+
+    
+    inter_rtip = rt_new_rti( dbip );		/* clones dbip */
+    db_close(dbip);				/* releases original dbip */
+
+    /*
+     *if ((inter_rtip = rt_dirbuild(file, idbuf, sizeof(idbuf))) == RTI_NULL) {
+     *bu_log ("rtedge: dirbuild failed for auxillary file %s.\n",
+     *ap->a_rt_i->rti_dbip->dbi_filename);
+     *bu_bomb ("rtedge: goodbye!\n");
+     *}
+    */
+
+    bu_log ("rtedge: occlusion rt_dirbuild done.\n");
+
+    for (i=0; i<nObjs; ++i) {
+      if (rt_gettree (inter_rtip, objs[i]) < 0) {
+	bu_log ("rtedge: gettree failed for %s\n", objs[i]);
+      }
+    }
+
+    bu_log ("rtedge: occlusion rt_gettrees done.\n");
+
+    rt_prep (inter_rtip);
+
+    bu_log ("rtedge: occlustion prep done.\n");
+
+    /*
+     * Create a set of application structures for the interlay
+     * geometry. Need one per cpu, the upper half does the per-
+     * thread allocation in worker, but that's off limits.
+     */
+    inter_apps = bu_calloc (npsw, sizeof(struct application *), 
+			    "interlay application structure array");
+    for (i=0; i<npsw; ++i) {
+      inter_apps[i] = bu_calloc (1, sizeof(struct application), 
+				 "inter application structure");
+
+      inter_apps[i]->a_rt_i = inter_rtip;
+      inter_apps[i]->a_onehit = 1;
+      inter_apps[i]->a_hit = inter_hit;
+      inter_apps[i]->a_miss = inter_miss;
+
+    }    		       
+    interlay = 1;
+    bu_log ("rtedge: will perform occlusion testing.\n");
+  }
+ 
   if( minus_o ) {
     /*
      * Output is to a file stream.
@@ -224,13 +327,16 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
      */
     rt_g.rtg_parallel = 0;
     bu_log ("view_init: deactivating parallelism due to minus_o.\n");
+    /*
+     * The overlay and blend cannot be used in -o mode.
+     * Note that the overlay directive takes precendence, they
+     * can't be used together.
+     */
+    overlay = 0;
+    blend = 0;
+    bu_log ("view_init: deactivating overlay and blending due to minus_o.\n");
     return(0);
   }
-  /*
-   * The overlay and blend cannot be used in -o mode.
-   * Note that the overlay directive takes precendence, they
-   * can't be used together.
-   */
   else if (overlay) {      
     bu_log ("view_init: will perform simple overlay.\n");
   }
@@ -579,7 +685,10 @@ int raymiss2( register struct application *ap )
 int is_edge(struct application *ap, struct cell *here,
 	    struct cell *left, struct cell *below)
 {
-  
+  int could_be = 0;
+  int cpu = ap->a_resource->re_cpu;	
+
+
   if( here->c_id == -1 && left->c_id == -1 && below->c_id == -1) {
     /*
      * All misses - catches condtions that would be bad later.
@@ -590,7 +699,7 @@ int is_edge(struct application *ap, struct cell *here,
   if (detect_ids) {
     if (here->c_id != -1 &&
 	(here->c_id != left->c_id || here->c_id != below->c_id)) {
-      return 1;
+      could_be = 1;
     }
   }
   
@@ -598,25 +707,47 @@ int is_edge(struct application *ap, struct cell *here,
     if (here->c_region != 0 &&
 	(here->c_region != left->c_region
 	 || here->c_region != below->c_region)) {
-      return 1;
+      could_be = 1;
     }
   }
   
   if (detect_distance) {
     if (Abs(here->c_dist - left->c_dist) > max_dist ||
 	Abs(here->c_dist - below->c_dist) > max_dist) {
-      return 1;
+      could_be = 1;
     }
   }
 
   if (detect_normals) {
     if ((VDOT(here->c_normal, left->c_normal) < COSTOL) ||
 	(VDOT(here->c_normal, below->c_normal)< COSTOL)) {
-      return 1;	
+      could_be = 1;	
     }
   }
   
-  return 0;
+  if (could_be && interlay) {
+    /*
+     * Test the hit distance on the second geometry.
+     * If the second geometry is closer, do not
+     * color pixel
+     */
+
+    //    configure ray/ap;
+    inter_apps[cpu]->a_resource = ap->a_resource;
+    VMOVE (inter_apps[cpu]->a_ray.r_dir, ap->a_ray.r_dir);
+    //    shoot;
+    rt_shootray (inter_apps[cpu]);
+    //    compare;
+    if (inter_apps[cpu]->a_dist <= here->c_dist) {
+      /* 
+       * The second geometry is close than the edge, therefore it
+       * is 'foreground'. Do not draw the edge.
+       */
+      could_be = 0; 
+    }    
+  }
+
+  return could_be;
 }
 
 
@@ -639,6 +770,8 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   LOCAL int			edge;
   LOCAL int			cpu;	
   
+  static struct cell            saved[MAX_PSW];
+
   memset(&a2, 0, sizeof(struct application));
   memset(&me, 0, sizeof(struct cell));
   memset(&below, 0, sizeof(struct cell));
@@ -670,11 +803,11 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     VMOVE(me.c_rdir, ap->a_ray.r_dir);
     VJOIN1(me.c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
     RT_HIT_NORMAL(me.c_normal, hitp,
-		  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);	    		
+		  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);	       
   }
   
   /*
-   * Now, fire a ray for both the cell below and the
+   * Now, fire a ray for both the cell below and if necessary, the
    * cell to the left.
    */
   a2.a_hit = rayhit2;
@@ -688,10 +821,26 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   a2.a_uptr = (genptr_t)&below;
   rt_shootray(&a2);
   
-  VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
-  VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-  a2.a_uptr = (genptr_t)&left;
-  rt_shootray(&a2);
+  if (ap->a_x == 0) {
+    /*
+     * For the first pixel in a scanline, we have to shoot to the left.
+     * For each pixel afterword, we save the current cell info to be used
+     * as the left side cell info for the following pixel
+     */
+    VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
+    VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+    a2.a_uptr = (genptr_t)&left;
+    rt_shootray(&a2);
+  }
+  else {
+    left.c_ishit    = saved[cpu].c_ishit;
+    left.c_id = saved[cpu].c_id;
+    left.c_dist = saved[cpu].c_dist;
+    left.c_region = saved[cpu].c_region;
+    VMOVE (left.c_rdir, saved[cpu].c_rdir);
+    VMOVE (left.c_hit, saved[cpu].c_hit);
+    VMOVE (left.c_normal, saved[cpu].c_normal);
+  }
   
   /*
    * Finally, compare the values. If they differ, record this
@@ -699,9 +848,12 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
    */
   if (is_edge (ap, &me, &left, &below)) {
     RGBpixel col;
-
+    
+    /*
+     * Don't test.
+     */
     edges[cpu][ap->a_x] = 1;
-
+    
     choose_color (col, &me, &left, &below);
     
     scanline[cpu][ap->a_x*3+RED] = col[RED];
@@ -717,10 +869,25 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 
     edge = 0;
   }
+
+  /*
+   * Save the cell info for the next pixel.
+   */
+  saved[cpu].c_ishit = me.c_ishit;
+  saved[cpu].c_id = me.c_id;
+  saved[cpu].c_dist = me.c_dist;
+  saved[cpu].c_region = me.c_region;
+  VMOVE (saved[cpu].c_rdir, me.c_rdir);
+  VMOVE (saved[cpu].c_hit, me.c_hit);
+  VMOVE (saved[cpu].c_normal, me.c_normal);
+
   return edge;
 }
 
-void application_init () { }
+void application_init () { 
+  bu_vls_init(&interlay_objects);
+  RT_G_DEBUG |= DEBUG_DB;
+}
 
 
 int diffpixel (RGBpixel a, RGBpixel b)
@@ -765,17 +932,18 @@ void choose_color (RGBpixel col, struct cell *me,
   return;
 }
 
+static int inter_hit (struct application *ap, struct partition *pt, 
+		      struct seg *segp)
+{
+  struct hit		*hitp = pt->pt_forw->pt_inhit;
+  
+  ap->a_dist = hitp->hit_dist;
+  return(1);		
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
+static int inter_miss (struct application *ap)
+{
+  ap->a_dist = MAX_FASTF;
+  return(1);		
+}
 
