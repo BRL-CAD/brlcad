@@ -30,5 +30,5 @@ core
 .fbserv.* .canon.* .anim.* .bench.* .conv.* .remrt.* .tools.* .comgeom-g.*
 .tab.* .sig.* .irprep.* .vdeck.* .fbed.* .jack.* .vas4.* .off.* .jove.*
 .lgt.* .nirt.* .mk.* .db.* .fb.* .rt.* .halftone.* .gtools.*
-.cake*.* .bwish.* .cwish.* .tk.* .btclsh.* vers.c
+.cake*.* .bwish.* .cwish.* .tk.* .btclsh.*
 
