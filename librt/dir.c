@@ -66,8 +66,8 @@ int len;
 	rt_i.file = rt_strdup( filename );
 
 	/* In case everything is a halfspace, set a minimum space */
-	VSET( rt_i.mdl_min, -10, -10, -10 );
-	VSET( rt_i.mdl_max,  10,  10,  10 );
+	VSETALL( rt_i.mdl_min, -10 );
+	VSETALL( rt_i.mdl_max,  10 );
 	VMOVE( rt_i.rti_inf_box.bn.bn_min, rt_i.mdl_min );
 	VMOVE( rt_i.rti_inf_box.bn.bn_max, rt_i.mdl_max );
 	rt_i.rti_inf_box.bn.bn_type = CUT_BOXNODE;
