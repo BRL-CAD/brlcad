@@ -915,7 +915,11 @@ hitit:
 	 */
 	RT_FREE_PT_LIST( &InitialPart, resp );
 
-	ap->a_return = ap->a_hit( ap, &FinalPart );
+	/*
+	 *  finished_segs is only used by special hit routines
+	 *  which don't follow the traditional solid modeling paradigm.
+	 */
+	ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
 	status = "HIT";
 
 	RT_FREE_SEG_LIST( &finished_segs, resp );
