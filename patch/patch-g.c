@@ -55,9 +55,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 #include "./patch-g.h"
 
-RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***trans_tbl, struct bn_tol *tol ) );
-RT_EXTERN( fastf_t mat_determinant, ( CONST mat_t m ) );
-
 #define ABS( _x )	(( _x > 0.0 )? _x : (-_x))
 
 void	proc_plate();
@@ -1566,7 +1563,7 @@ struct rt_tol *tol;
 	/* Close shell */
 	if( debug )
 		rt_log( "Close shell\n" );
-	if( nmg_open_shells_connect( s , is , copy_tbl , tol ) )
+	if( nmg_open_shells_connect( s , is , (CONST long **)copy_tbl , tol ) )
 	{
 		/* debugging: write an NMG of the outer shell named "name.BAD" */
 		char *bad;
@@ -1920,7 +1917,7 @@ fastf_t *x,*y,*z;
 
 
 	/* Check that we don't have a singular matrix */
-	det = mat_determinant( matrix );
+	det = bn_mat_determinant( matrix );
 
 	if( !NEAR_ZERO( det , SMALL_FASTF ) )
 	{
