@@ -166,7 +166,9 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 	register long	**pp = b->buffer;
 
 	BU_CK_PTBL(b);
+
 #	include "noalias.h"
+
 	for( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) return(k);
 
