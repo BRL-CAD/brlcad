@@ -56,6 +56,7 @@ int		combbld();
 void		membbld(), arsabld(), arsbbld();
 void		materbld(), bsplbld(), bsurfbld(), zap_nl();
 char		*nxt_spc();
+void		strsolbld(), nmgbld();
 
 static union record	record;			/* GED database record */
 static char 		buf[BUFSIZE];		/* Record input buffer */
