@@ -42,6 +42,10 @@
 #include <string.h>
 #endif
 
+#ifdef __convex__
+#define tempnam(x, y) tmpnam(x)		/* No tempnam()! */
+#endif
+
 /* The following is tailorable */
 #if !defined(pdp11)
 
