@@ -30,6 +30,13 @@ libredblack \- red-black tree subroutines
 .B int sense;
 .\"
 .PP
+.B void rb_neighbor (order, sense)
+.br
+.B int order;
+.br
+.B int sense;
+.\"
+.PP
 .B int rb_insert (tree, data)
 .br
 .B rb_tree *tree;
@@ -57,7 +64,16 @@ libredblack \- red-black tree subroutines
 .\"
 .SH DESCRIPTION
 These subroutines implement red-black trees,
-a form of balanced binary trees.
+a form of balanced binary trees,
+in such a way that all the basic dynamic set operations
+(e.g., insertion, deletion, search, minimum, maximum,
+predecessor, and successor)
+require no more than
+.IR "O(" "log " "n)"
+time,
+where
+.I n
+is the number of nodes.
 They allow storage of arbitrary data structures
 at tree nodes
 and also support multiple simultaneous orders (trees)
@@ -123,6 +139,15 @@ and
 specifies which order to search.
 .I rb_extreme
 returns a pointer to the extreme data.
+The macros
+.I rb_min(tree, order)
+and
+.I rb_max(tree, order),
+available in
+\fI"redblack.h"\fR,
+are implemented in terms of
+.I rb_extreme
+in the obvious way.
 .PP
 .I rb_search
 traverses
@@ -149,6 +174,36 @@ and applies a specified funtion.
 is called for each node in turn,
 with one argument that points
 to the data at that node.
+.PP
+Libredblack maintains an internal pointer called
+.I current_node
+that points to the node most recently inserted, accessed, etc.
+The following commands make use of
+.I current_node
+for various relative-addressing purposes.
+.PP
+.I rb_neighbor
+finds the node adjacent to
+.I current_node
+in one of the orders.
+.I Order
+specifies the order
+and
+.I sense,
+one of
+.I SENSE_MIN
+and
+.I SENSE_MAX,
+specifies either predecessor or successor, respectively.
+The macros
+.I rb_pred(order)
+and
+.I rb_succ(order),
+available in
+\fI"redblack.h"\fR,
+are implemented in terms of
+.I rb_neighbor
+in the obvious way.
 .\"
 .SH SEE ALSO
 qsort(3)
