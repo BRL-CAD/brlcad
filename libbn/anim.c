@@ -25,6 +25,7 @@
  *
  *	anim_v_permute()	apply camera animation permutation
  *	anim_v_unpermute()	undo camera animation permutation
+ *	anim_tran()		transpose matrix in place
  *		
  *	anim_mat2zyx()		extract angles from rotation matrix
  *	anim_mat2ypr()		extract yaw,pitch,roll from rotation matrix
@@ -115,6 +116,22 @@ mat_t m;
 		m[i+2] = m[i+1];
 		m[i+1] = -m[i];
 		m[i] = -store;
+	}
+}
+
+/* Transpose matrix in place */
+void anim_tran(m)
+mat_t m;
+{
+	int i;
+	fastf_t store;
+	int src[] = { 1, 2, 3, 6, 7, 11 };
+	int dst[] = { 4, 8, 12, 9, 13, 14};
+
+	for (i=0; i<6; i++) {
+		store = m[dst[i]];
+		m[dst[i]] = m[src[i]];
+		m[src[i]] = store;
 	}
 }
 
