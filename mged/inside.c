@@ -193,7 +193,7 @@ char **argv;
 	  transform_editing_solid( &intern, es_mat, &es_int, 0 );
 	  outdp = illump->s_path[illump->s_last];
 
-	  Tcl_AppendResult(interp, "You are in Solid Edit mode, using edited solid as outside solid: ", (char *)NULL);
+	  Tcl_AppendResult(interp, "You are in Prim Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
 	  for(i=0; i <= illump->s_last; i++) {
 	    Tcl_AppendResult(interp, "/", illump->s_path[i]->d_namep, (char *)NULL);
 	  }

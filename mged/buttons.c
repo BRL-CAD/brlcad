@@ -45,14 +45,14 @@ extern void set_scroll_private();	/* defined in set.c */
 extern void adc_set_scroll();		/* defined in adc.c */
 
 /*
- * This flag indicates that SOLID editing is in effect.
+ * This flag indicates that Primitive editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function
  * that is currently in effect (eg, BE_S_SCALE).
  */
 static int	edsol;
 
-/* This flag indicates that OBJECT editing is in effect.
+/* This flag indicates that Matrix editing is in effect.
  * edsol may not be set at the same time.
  * Value is 0 if off, or the value of the button function currently
  * in effect (eg, BE_O_XY).
@@ -152,12 +152,12 @@ struct menu_item second_menu[] = {
 	{ "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
 	{ "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
 	{ "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
-	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
-	{ "Object Illum", btn_item_hit, BE_O_ILLUMINATE },
+	{ "Prim Illum", btn_item_hit, BE_S_ILLUMINATE },
+	{ "Matrix Illum", btn_item_hit, BE_O_ILLUMINATE },
 	{ "", (void (*)())NULL, 0 }
 };
 struct menu_item sed_menu[] = {
-	{ "*SOLID EDIT*", btn_head_menu, 2 },
+	{ "*PRIM EDIT*", btn_head_menu, 2 },
 	{ "Edit Menu", btn_item_hit, BE_S_EDIT },
 	{ "Rotate", btn_item_hit, BE_S_ROTATE },
 	{ "Translate", btn_item_hit, BE_S_TRANS },
@@ -166,7 +166,7 @@ struct menu_item sed_menu[] = {
 };
 
 struct menu_item oed_menu[] = {
-	{ "*OBJ EDIT*", btn_head_menu, 2 },
+	{ "*MATRIX EDIT*", btn_head_menu, 2 },
 	{ "Scale", btn_item_hit, BE_O_SCALE },
 	{ "X Move", btn_item_hit, BE_O_X },
 	{ "Y Move", btn_item_hit, BE_O_Y },
@@ -439,11 +439,11 @@ ill_common()  {
 
 static void
 be_o_illuminate()  {
-	if( not_state( ST_VIEW, "Object Illuminate" ) )
+	if( not_state( ST_VIEW, "Matrix Illuminate" ) )
 		return;
 
 	if( ill_common() )  {
-		(void)chg_state( ST_VIEW, ST_O_PICK, "Object Illuminate" );
+		(void)chg_state( ST_VIEW, ST_O_PICK, "Matrix Illuminate" );
 	}
 	/* reset accumulation local scale factors */
 	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
@@ -454,17 +454,17 @@ be_o_illuminate()  {
 
 static void
 be_s_illuminate()  {
-	if( not_state( ST_VIEW, "Solid Illuminate" ) )
+	if( not_state( ST_VIEW, "Prim Illuminate" ) )
 		return;
 
 	if( ill_common() )  {
-		(void)chg_state( ST_VIEW, ST_S_PICK, "Solid Illuminate" );
+		(void)chg_state( ST_VIEW, ST_S_PICK, "Prim Illuminate" );
 	}
 }
 
 static void
 be_o_scale()  {
-	if( not_state( ST_O_EDIT, "Object Scale" ) )
+	if( not_state( ST_O_EDIT, "Matrix Scale" ) )
 		return;
 
 	edobj = BE_O_SCALE;
@@ -479,7 +479,7 @@ be_o_scale()  {
 
 static void
 be_o_xscale()  {
-	if( not_state( ST_O_EDIT, "Object Local X Scale" ) )
+	if( not_state( ST_O_EDIT, "Matrix Local X Scale" ) )
 		return;
 
 	edobj = BE_O_XSCALE;
@@ -494,7 +494,7 @@ be_o_xscale()  {
 
 static void
 be_o_yscale()  {
-	if( not_state( ST_O_EDIT, "Object Local Y Scale" ) )
+	if( not_state( ST_O_EDIT, "Matrix Local Y Scale" ) )
 		return;
 
 	edobj = BE_O_YSCALE;
@@ -509,7 +509,7 @@ be_o_yscale()  {
 
 static void
 be_o_zscale()  {
-	if( not_state( ST_O_EDIT, "Object Local Z Scale" ) )
+	if( not_state( ST_O_EDIT, "Matrix Local Z Scale" ) )
 		return;
 
 	edobj = BE_O_ZSCALE;
@@ -524,7 +524,7 @@ be_o_zscale()  {
 
 static void
 be_o_x()  {
-	if( not_state( ST_O_EDIT, "Object X Motion" ) )
+	if( not_state( ST_O_EDIT, "Matrix X Motion" ) )
 		return;
 
 	edobj = BE_O_X;
@@ -535,7 +535,7 @@ be_o_x()  {
 
 static void
 be_o_y()  {
-	if( not_state( ST_O_EDIT, "Object Y Motion" ) )
+	if( not_state( ST_O_EDIT, "Matrix Y Motion" ) )
 		return;
 
 	edobj = BE_O_Y;
@@ -547,7 +547,7 @@ be_o_y()  {
 
 static void
 be_o_xy()  {
-	if( not_state( ST_O_EDIT, "Object XY Motion" ) )
+	if( not_state( ST_O_EDIT, "Matrix XY Motion" ) )
 		return;
 
 	edobj = BE_O_XY;
@@ -558,7 +558,7 @@ be_o_xy()  {
 
 static void
 be_o_rotate()  {
-	if( not_state( ST_O_EDIT, "Object Rotation" ) )
+	if( not_state( ST_O_EDIT, "Matrix Rotation" ) )
 		return;
 
 	edobj = BE_O_ROTATE;
@@ -687,7 +687,7 @@ bv_slicemode() {
 static void
 be_s_edit()  {
 	/* solid editing */
-	if( not_state( ST_S_EDIT, "Solid Edit (Menu)" ) )
+	if( not_state( ST_S_EDIT, "Prim Edit (Menu)" ) )
 		return;
 
 	edsol = BE_S_EDIT;
@@ -697,7 +697,7 @@ be_s_edit()  {
 static void
 be_s_rotate()  {
 	/* rotate solid */
-	if( not_state( ST_S_EDIT, "Solid Rotate" ) )
+	if( not_state( ST_S_EDIT, "Prim Rotate" ) )
 		return;
 
 	es_edflag = SROT;
@@ -710,7 +710,7 @@ be_s_rotate()  {
 static void
 be_s_trans()  {
 	/* translate solid */
-	if( not_state( ST_S_EDIT, "Solid Translate" ) )
+	if( not_state( ST_S_EDIT, "Prim Translate" ) )
 		return;
 
 	edsol = BE_S_TRANS;
@@ -724,7 +724,7 @@ be_s_trans()  {
 static void
 be_s_scale()  {
 	/* scale solid */
-	if( not_state( ST_S_EDIT, "Solid Scale" ) )
+	if( not_state( ST_S_EDIT, "Prim Scale" ) )
 		return;
 
 	edsol = BE_S_SCALE;
