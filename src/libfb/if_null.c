@@ -22,28 +22,27 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
 #include "fb.h"
 #include "./fblocal.h"
 
+
 _LOCAL_ int	null_open(FBIO *ifp, char *file, int width, int height),
 		null_close(FBIO *ifp),
-		null_clear(FBIO *ifp, RGBpixel (*pp)),
-		null_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count),
-		null_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count),
+		null_clear(FBIO *ifp, unsigned char *pp),
+		null_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
+		null_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
 		null_rmap(FBIO *ifp, ColorMap *cmp),
-		null_wmap(FBIO *ifp, ColorMap *cmp),
+		null_wmap(FBIO *ifp, const ColorMap *cmp),
 		null_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
 		null_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-		null_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
+		null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
 		null_cursor(FBIO *ifp, int mode, int x, int y),
 		null_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-		null_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp)),
-		null_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp)),
+		null_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
+		null_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
 		null_poll(FBIO *ifp),
 		null_flush(FBIO *ifp),
 		null_free(FBIO *ifp),
@@ -93,6 +92,7 @@ FBIO null_interface =  {
 	0			/* debug		*/
 };
 
+
 _LOCAL_ int
 null_open(FBIO *ifp, char *file, int width, int height)
 {
@@ -112,19 +112,19 @@ null_close(FBIO *ifp)
 }
 
 _LOCAL_ int
-null_clear(FBIO *ifp, RGBpixel (*pp))
+null_clear(FBIO *ifp, unsigned char *pp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-null_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
+null_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	return(count);
 }
 
 _LOCAL_ int
-null_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
+null_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	return(count);
 }
@@ -136,7 +136,7 @@ null_rmap(FBIO *ifp, ColorMap *cmp)
 }
 
 _LOCAL_ int
-null_wmap(FBIO *ifp, ColorMap *cmp)
+null_wmap(FBIO *ifp, const ColorMap *cmp)
 {
 	return(0);
 }
@@ -156,7 +156,7 @@ null_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 _LOCAL_ int
-null_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	return(0);
 }
@@ -176,13 +176,13 @@ null_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 }
 
 _LOCAL_ int
-null_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp))
+null_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	return( width*height );
 }
 
 _LOCAL_ int
-null_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel (*pp))
+null_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	return( width*height );
 }
