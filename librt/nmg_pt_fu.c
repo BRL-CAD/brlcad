@@ -37,8 +37,7 @@
 struct ve_dist {
 	struct bu_list	l;
 	long		*magic_p;/* pointer to edge/vertex structure */
-	double		dist;	/* distance from point to edge */
-	point_t		pca;	/* point of closest approach */
+	double		dist;	/* distance squared from point to edge */
 	struct vertex	*v1;
 	struct vertex	*v2;
 	int		status;	/* return code from bn_dist_pt3_lseg3 */
@@ -90,10 +89,10 @@ int		nmg_class_pt_fu_except(CONST point_t pt, CONST struct faceuse *fu, CONST st
 #endif
 
 /*
- *			R T _ D I S T _ P T 3 _ L S E G 3 _ J R A
+ *			B N _ D I S T S Q _ P T 3 _ L S E G 3 _ J R A
  *
- *  Find the distance from a point P to a line segment described
- *  by the two endpoints A and B, and the point of closest approach (PCA).
+ *  Find the square of the distance from a point P to a line segment described
+ *  by the two endpoints A and B.
  *
  *			P
  *		       *
@@ -107,23 +106,21 @@ int		nmg_class_pt_fu_except(CONST point_t pt, CONST struct faceuse *fu, CONST st
  *		A      PCA	B
  *
  *  There are six distinct cases, with these return codes -
- *	0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
- *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
- *	1	P is within tolerance of point A.  *dist = 0, pca=A.
- *	2	P is within tolerance of point B.  *dist = 0, pca=B.
- *	3	PCA is within tolerance of A. *dist = |P-A|, pca=A.
- *	4	PCA is within tolerance of B. *dist = |P-B|, pca=B.
- *	5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
+ *	0	P is within tolerance of lseg AB.  *dist =  0.
+ *	1	P is within tolerance of point A.  *dist = 0.
+ *	2	P is within tolerance of point B.  *dist = 0.
+ *	3	PCA is within tolerance of A. *dist = |P-A|**2.
+ *	4	PCA is within tolerance of B. *dist = |P-B|**2.
+ *	5	P is "above/below" lseg AB.  *dist=|PCA-P|**2.
  *
  * This routine was formerly called bn_dist_pt_lseg().
+ * This is a special version that returns the square of the distance
+ * and does not actually calculate PCA.
  *
- * XXX For efficiency, a version of this routine that provides the
- * XXX distance squared would be faster.
  */
 int
-bn_dist_pt3_lseg3_jra( dist, pca, a, b, p, tol )
+bn_distsq_pt3_lseg3( dist, a, b, p, tol )
 fastf_t		*dist;
-point_t		pca;
 CONST point_t	a, b, p;
 CONST struct bn_tol *tol;
 {
@@ -132,13 +129,14 @@ CONST struct bn_tol *tol;
 	vect_t	AtoB;		/* B-A */
 	fastf_t	P_A_sq;		/* |P-A|**2 */
 	fastf_t	P_B_sq;		/* |P-B|**2 */
-	fastf_t	B_A;		/* |B-A| */
-	fastf_t	t;		/* distance along ray of projection of P */
+	fastf_t B_A_sq;		/* |B-A|**2 */
+	fastf_t	t;		/* distance squared along ray of projection of P */
+	fastf_t	dot;
 
 	BN_CK_TOL(tol);
 #if 0
 	if( rt_g.debug & DEBUG_MATH )  {
-		bu_log("bn_dist_pt3_lseg3_jra() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
+		bu_log("bn_distsq_pt3_lseg3() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
 			V3ARGS(a),
 			V3ARGS(b),
 			V3ARGS(p),
@@ -150,7 +148,6 @@ CONST struct bn_tol *tol;
 	VSUB2(PtoA, p, a);
 	if( (P_A_sq = MAGSQ(PtoA)) < tol->dist_sq )  {
 		/* P is within the tol->dist radius circle around A */
-		VMOVE( pca, a );
 		*dist = 0.0;
 		return 1;
 	}
@@ -159,47 +156,43 @@ CONST struct bn_tol *tol;
 	VSUB2(PtoB, p, b);
 	if( (P_B_sq = MAGSQ(PtoB)) < tol->dist_sq )  {
 		/* P is within the tol->dist radius circle around B */
-		VMOVE( pca, b );
 		*dist = 0.0;
 		return 2;
 	}
 
 	VSUB2(AtoB, b, a);
-	B_A = sqrt( MAGSQ(AtoB) );
+	B_A_sq = MAGSQ(AtoB);
 
-	/* compute distance (in actual units) along line to PROJECTION of
+	/* compute distance squared (in actual units) along line to PROJECTION of
 	 * point p onto the line: point pca
 	 */
-	t = VDOT(PtoA, AtoB) / B_A;
+	dot = VDOT(PtoA, AtoB);
+	t = dot * dot / B_A_sq;
 
-	if( t <= tol->dist )  {
+	if( t <= tol->dist_sq )  {
 		/* P is "left" of A */
-		VMOVE( pca, a );
-		*dist = sqrt(P_A_sq);
+		*dist = P_A_sq;
 		return 3;
 	}
-	if( t < B_A - tol->dist )  {
+	if( t < B_A_sq - tol->dist_sq )  {
 		/* PCA falls between A and B */
 		register fastf_t	dsq;
 		fastf_t			param_dist;	/* parametric dist */
 
-		/* Find PCA */
-		param_dist = t / B_A;		/* Range 0..1 */
-		VJOIN1(pca, a, param_dist, AtoB);
-
 		/* Find distance from PCA to line segment (Pythagorus) */
-		if( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
-			/* Distance from PCA to lseg is zero, give param instead */
-			*dist = param_dist;	/* special! */
+		if( (dsq = P_A_sq - t ) <= tol->dist_sq )  {
+			/* PCA is on lseg */
+			*dist = 0.0;
 			return 0;
 		}
-		*dist = sqrt(dsq);
+
+		/* P is above or below lseg */
+		*dist = dsq;
 		return 5;
 	}
 
 	/* P is "right" of B */
-	VMOVE(pca, b);
-	*dist = sqrt(P_B_sq);
+	*dist = P_B_sq;
 	return 4;
 }
 
@@ -236,13 +229,13 @@ struct vertexuse *vu;
 	ved = (struct ve_dist *) rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
 	ved->magic_p = &vu->v_p->magic;
 	ved->dist = MAGNITUDE(delta);
-	if (ved->dist < fpi->tol->dist ) {
+	if (ved->dist < fpi->tol->dist_sq ) {
 		ved->status = NMG_FPI_TOUCHED;
 		if (fpi->hits == NMG_FPI_PERGEOM)
 			fpi->vu_func(vu, fpi->pt, fpi->priv);
 	}
 	else ved->status = NMG_FPI_MISSED;
-	VMOVE(ved->pca, vu->v_p->vg_p->coord);
+
 	ved->v1 = ved->v2 = vu->v_p;
 
 	BU_LIST_MAGIC_SET(&ved->l, NMG_VE_DIST_MAGIC);
@@ -265,7 +258,10 @@ struct edge_info *ei;
 	FILE *fd;
 	char name[25];
 	long *b;
+	point_t pca;
+	fastf_t dist;
 	static int plot_file_number=0;
+	struct bn_tol tmp_tol;
 
 	NMG_CK_FPI(fpi);	
 	NMG_CK_FACEUSE(fpi->fu_p);
@@ -292,8 +288,16 @@ struct edge_info *ei;
 	
 	nmg_pl_eu(fd, ei->eu_p, b, 255, 255, 255);
 
+        tmp_tol.magic = RT_TOL_MAGIC;
+        tmp_tol.dist = 0.005;
+        tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+        tmp_tol.perp = 1e-6;
+        tmp_tol.para = 1 - tmp_tol.perp;
+
+	(void)bn_dist_pt3_lseg3( &dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
+		ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord, fpi->pt, &tmp_tol );
 	pl_color(fd, 255, 255, 50);
-	pdv_3line(fd, ei->ved_p->pca, fpi->pt);
+	pdv_3line(fd, pca, fpi->pt);
 
 	rt_free((char *)b, "bit vec");
 	fclose(fd);
@@ -615,6 +619,7 @@ CONST int		in_or_out_only;
 	struct ve_dist	*ved, *ed;
 	struct edge_info	*ei_p;
 	struct edge_info	*ei;
+	pointp_t		eu_pt;
 	vect_t		left;
 	vect_t		pt_vec;
 	vect_t		v_to_pt;
@@ -645,7 +650,7 @@ CONST int		in_or_out_only;
 			goto found;
 		}
 
-		if (ed->dist <= fpi->tol->dist &&
+		if (ed->dist <= fpi->tol->dist_sq &&
 		    (ed->magic_p == &eu->vu_p->v_p->magic ||
 		     ed->magic_p == &eu->eumate_p->vu_p->v_p->magic) ) {
 			/* The point is within tolerance of an endpoint
@@ -676,7 +681,7 @@ CONST int		in_or_out_only;
 
 	ved = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
 	ved->magic_p = &eu->e_p->magic;
-	ved->status = bn_dist_pt3_lseg3_jra(&ved->dist, ved->pca,
+	ved->status = bn_distsq_pt3_lseg3(&ved->dist,
 					eu->vu_p->v_p->vg_p->coord,
 					eu->eumate_p->vu_p->v_p->vg_p->coord,
 					fpi->pt,
@@ -685,6 +690,7 @@ CONST int		in_or_out_only;
 	ved->v2 = eu->eumate_p->vu_p->v_p;
 	BU_LIST_MAGIC_SET(&ved->l, NMG_VE_DIST_MAGIC);
 	BU_LIST_APPEND(&fpi->ve_dh, &ved->l);
+	eu_pt = ved->v1->vg_p->coord;
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU )
 	{
@@ -709,7 +715,6 @@ found:
 
 	switch (ved->status) {
 	case 0: /* pt is on the edge(use) */
-		ved->dist = 0.0; /* bn_dist_pt3_lseg3_jra() doesn't set this to dist in this case */
 		ei->class = NMG_CLASS_AonBshared;
 		if (fpi->eu_func &&
 		    (fpi->hits == NMG_FPI_PERUSE ||
@@ -776,7 +781,7 @@ found:
 		/* take dot product of v->pt vector with left to determine
 		 * if pt is inside/left of edge
 		 */
-		VSUB2(v_to_pt, fpi->pt, ved->pca);
+		VSUB2(v_to_pt, fpi->pt, eu_pt);
 		if (VDOT(v_to_pt, left) >= 0.0)
 			ei->class = NMG_CLASS_AinB;
 		else
@@ -896,10 +901,9 @@ struct bu_list *near;
 			bu_log("\t(%g %g %g) -> (%g %g %g)\n",
 				V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
 				V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
-			bu_log("\tdist:%g class:%s status:%d pca(%g %g %g)\n\t\tv1(%g %g %g) v2(%g %g %g)\n",
+			bu_log("\tdist:%g class:%s status:%d\n\t\tv1(%g %g %g) v2(%g %g %g)\n",
 			ei->ved_p->dist, nmg_class_name(ei->class),
 			ei->ved_p->status,
-			V3ARGS(ei->ved_p->pca),
 			V3ARGS(ei->ved_p->v1->vg_p->coord),
 			V3ARGS(ei->ved_p->v2->vg_p->coord));
 			bu_log( "\tei->ved_p->magic_p=x%x, ei->eu_p->vu_p=x%x, ei->eu_p->eumate_p->vu_p=x%x\n",
@@ -924,6 +928,9 @@ struct edge_info *ei;
 	static int plot_file_number=0;
 	int i;
 	point_t p1, p2;
+	point_t pca;
+	fastf_t dist;
+	struct bn_tol tmp_tol;
 
 	NMG_CK_FPI(fpi);	
 	NMG_CK_FACEUSE(fpi->fu_p);
@@ -951,8 +958,17 @@ struct edge_info *ei;
 	
 	nmg_pl_lu(fd, lu, b, 255, 255, 255);
 
+        tmp_tol.magic = RT_TOL_MAGIC;
+        tmp_tol.dist = 0.005;
+        tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+        tmp_tol.perp = 1e-6;
+        tmp_tol.para = 1 - tmp_tol.perp;
+
+	(void)bn_dist_pt3_lseg3( &dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
+		ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord, fpi->pt, &tmp_tol );
+
 	pl_color(fd, 255, 255, 50);
-	pdv_3line(fd, ei->ved_p->pca, fpi->pt);
+	pdv_3line(fd, pca, fpi->pt);
 
 	pl_color(fd, 255, 64, 255);
 
@@ -1000,10 +1016,9 @@ struct edge_info *edge_list;
 	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
 		bu_log("compute_loop_class()\n");
 		for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
-bu_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n",
+bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 				ei->ved_p->dist, nmg_class_name(ei->class),
 				ei->ved_p->status,
-				V3ARGS(ei->ved_p->pca),
 				V3ARGS(ei->ved_p->v1->vg_p->coord),
 				V3ARGS(ei->ved_p->v2->vg_p->coord));
 		}
@@ -1189,7 +1204,7 @@ CONST int	in_or_out_only;
 			ei = nmg_class_pt_eu(fpi, eu, &edge_list, in_or_out_only);
 			NMG_CK_EI(ei);
 			NMG_CK_VED(ei->ved_p);
-			if ( !in_or_out_only && ei->ved_p->dist < fpi->tol->dist) {
+			if ( !in_or_out_only && ei->ved_p->dist < fpi->tol->dist_sq) {
 				lu_class = NMG_CLASS_AinB;
 				break;
 			}
@@ -1588,7 +1603,7 @@ struct bn_tol	*tol;
 		ei = nmg_class_pt_eu(&fpi, eu, &edge_list, 0);
 		NMG_CK_EI(ei);
 		NMG_CK_VED(ei->ved_p);
-		if (ei->ved_p->dist < tol->dist) {
+		if (ei->ved_p->dist < tol->dist_sq) {
 			lu_class = NMG_CLASS_AonBshared;
 			break;
 		}
