@@ -580,13 +580,12 @@ int	catch_sigint;
 	vlp->vscale = Viewscale;
     }
 
-    color_soltab();
-
 #ifdef DO_SINGLE_DISPLAY_LIST
     createDList(&HeadSolid);
 #endif
   }
 
+  color_soltab();
   curr_dm_list = save_dmlp;
   curr_cmd_list = save_cmd_list;
 
