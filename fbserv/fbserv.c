@@ -107,6 +107,15 @@ int argc; char **argv;
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
 	}
 #endif
+#if BSD >= 43
+	{
+		int	n;
+		int	val = 32767;
+		n = setsockopt( rem_pcp->pkc_fd, SOL_SOCKET,
+			SO_RCVBUF, (char *)&val, sizeof(val) );
+		if( n < 0 )  perror("setsockopt: SO_RCVBUF");
+	}
+#endif
 
 	while( pkg_block(rem_pcp) > 0 )
 		;
