@@ -120,7 +120,8 @@ int			id;
 	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
 
 	if( rt_functab[id].ft_plot( rp, tsp->ts_mat, &vhead,
-	    DB_FULL_PATH_CUR_DIR(pathp), mged_abs_tol, mged_rel_tol ) < 0 )  {
+	    DB_FULL_PATH_CUR_DIR(pathp),
+	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
 		printf("%s: plot failure\n",
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 	    	return(TREE_NULL);		/* ERROR */
@@ -232,7 +233,7 @@ int			id;
 	/* Tessellate Solid to NMG */
 	if( rt_functab[id].ft_tessellate(
 	    &r1, mged_nmg_model, rp, tsp->ts_mat, dp,
-	    mged_abs_tol, mged_rel_tol ) < 0 )  {
+	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
 		rt_log("%s tessellation failure\n", dp->d_namep);
 	    	return(TREE_NULL);
 	}
@@ -262,10 +263,14 @@ int			id;
  */
 HIDDEN struct nmgregion *
 mged_nmg_doit( tp )
-union tree	*tp;
+register union tree	*tp;
 {
-	struct nmgregion	*l, *r;
-	int	op;
+	register struct nmgregion	*l;
+	register struct nmgregion	*r;
+	vect_t			diag;
+	fastf_t			tol;
+	fastf_t			rel;
+	int			op;
 
 	switch( tp->tr_op )  {
 	case OP_NOP:
@@ -314,8 +319,30 @@ com:
 		return(0);
 	}
 
+	/*
+	 *  Compute appropriate tolerance for the boolean routine.
+	 *  This tolerance is an absolute distance metric.
+	 *  The geometry is guaranteed to contain no errors larger than
+	 *  this tolerance value.
+	 */
+	tol = mged_abs_tol;
+	if( mged_rel_tol > 0.0 )  {
+		if( l->ra_p )  {
+			VSUB2( diag, l->ra_p->max_pt, l->ra_p->min_pt );
+			rel = MAGNITUDE(diag) * mged_rel_tol;
+			if( tol <= 0.0 || rel < tol )  tol = rel;
+		}
+		if( r->ra_p )  {
+			VSUB2( diag, r->ra_p->max_pt, r->ra_p->min_pt );
+			rel = MAGNITUDE(diag) * mged_rel_tol;
+			if( tol <= 0.0 || rel < tol )  tol = rel;
+		}
+	}
+	if( tol <= 0.0 )  tol = 0.1;		/* mm */
+
 	/* input r1 and r2 are destroyed, output is new r1 */
-	r = nmg_do_bool( l, r, op );
+	r = nmg_do_bool( l, r, op, tol );
+
 	/* debug */
 	NMG_CK_REGION( r );
 	(void)nmg_ck_closed_surf( r->s_p );
@@ -661,8 +688,8 @@ mat_t		mat;
 	bytes = sp->s_bytes;
 
 	/* Draw (plot) a normal solid */
-	if( rt_functab[id].ft_plot( recp, mat, &vhead,
-	    sp->s_path[sp->s_last], mged_abs_tol, mged_rel_tol ) < 0 )  {
+	if( rt_functab[id].ft_plot( recp, mat, &vhead, sp->s_path[sp->s_last],
+	    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
 		(void)printf("%s: plot failure\n",
 			sp->s_path[sp->s_last]->d_namep );
 	    	return(-1);
