@@ -431,7 +431,7 @@ struct _mged_variables {
 	int	autosize;
 	int	rateknobs;
         int     adcflag;
-        int     scroll_enabled;
+        int     slidersflag;
     	int	sgi_win_size;
 	int	sgi_win_origin[2];
 	int	faceplate;

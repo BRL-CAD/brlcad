@@ -37,7 +37,7 @@ struct _mged_variables default_mged_variables = {
 /* autosize */			1,
 /* rateknobs */			1,
 /* adcflag */                   0,
-/* scroll_enabled */            0,
+/* slidersflag */            0,
 /* sgi_win_size */		0,
 /* sgi_win_origin */		{ 0, 0 },
 /* faceplate */			1,
@@ -103,7 +103,7 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(rateknobs),	set_rateknobs },
 	{"%d",	1, "adcflag",		MV_O(adcflag),          set_adcflag },
-	{"%d",	1, "scroll_enabled",	MV_O(scroll_enabled),   set_scroll },
+	{"%d",	1, "slidersflag",	MV_O(slidersflag),   set_scroll },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	dirty_hook },
@@ -442,7 +442,7 @@ set_scroll()
 
   bu_vls_init(&vls);
 
-  if( mged_variables.scroll_enabled )
+  if( mged_variables.slidersflag )
     bu_vls_printf(&vls, "sliders on");
   else
     bu_vls_printf(&vls, "sliders off");
