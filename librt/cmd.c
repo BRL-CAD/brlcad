@@ -22,12 +22,14 @@
 static char RCScmd[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 #include "machine.h"
 #include "vmath.h"
@@ -168,7 +170,7 @@ register char	*lp;
 	if( *lp == '\0' )
 		return(0);		/* No words */
 
-#if defined(unix) || defined(__unix)
+#ifdef HAVE_SHELL_ESCAPE
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
 		int	ret;
