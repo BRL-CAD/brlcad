@@ -104,7 +104,7 @@ files="`find $findgen -type f -and \( \
                                      -name '*.java' -or \
                                      -name '*.el' -or \
                                      -name '*.f' -or \
-                                     -name '*.m4' -or \
+                                     -name '*.m4' \
                                    \) | \
         grep -v 'other/' | \
         grep -v 'doc/' | \
