@@ -542,9 +542,6 @@ man_MANS = \
 	terrain.1 \
 	wavelet.1
 
-pl-X10.1: $(srcdir)/pl-X.1
-	cp $? $(srcdir)/$@
-
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
 sample_applications_DATA = pl-dm.c
@@ -562,7 +559,6 @@ EXTRA_DIST = \
 	pix-ikr.c \
 	pix-lowp-ik.c \
 	pixt-ik.c \
-	pl-X10.1.stub \
 	pl-X10.c \
 	pl-starbase.c \
 	strchr.c
