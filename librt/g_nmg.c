@@ -1614,11 +1614,14 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			NMG_CK_EDGEUSE(eu->radial_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
-			NMG_CK_EDGE_G_EITHER(eu->g.magic_p);
+			if( eu->g.magic_p != NULL )
+			{
+				NMG_CK_EDGE_G_EITHER(eu->g.magic_p);
 
-			/* Note that l2 subscripts will be for edgeuse, not l2 */
-			/* g.lseg_p->eu_hd2 is a pun for g.cnurb_p->eu_hd2 also */
-			INDEXL_HD2( d, eu, l2, eu->g.lseg_p->eu_hd2 );
+				/* Note that l2 subscripts will be for edgeuse, not l2 */
+				/* g.lseg_p->eu_hd2 is a pun for g.cnurb_p->eu_hd2 also */
+				INDEXL_HD2( d, eu, l2, eu->g.lseg_p->eu_hd2 );
+			}
 		}
 		return 0;
 	case NMG_KIND_EDGE:
