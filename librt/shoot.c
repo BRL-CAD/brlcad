@@ -643,7 +643,7 @@ done_return_cutp:	ssp->lastcut = cutp;
 		/* Continue with the current space partitioning algorithm. */
 	}
 	/* NOTREACHED */
-	bu_bomb("rt_advance_to_next_cell: escaped for(;;) loop: impossible!");
+	/*	bu_bomb("rt_advance_to_next_cell: escaped for(;;) loop: impossible!"); */
 
 	/*
 	 *  If ray has escaped from model RPP, and there are infinite solids
