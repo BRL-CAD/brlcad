@@ -54,7 +54,6 @@ CONST fastf_t v;
 point_t pt_on_srf;
 {
 	struct face *f;
-	struct snurb srf;
 	hpoint_t tmp_pt;
 
 	NMG_CK_FACEUSE( fu );
@@ -72,11 +71,10 @@ point_t pt_on_srf;
 		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
 	}
 
-	nmg_hack_snurb( &srf, f->g.snurb_p );
 	VSETALLN( tmp_pt, 0.0, 4 );
-	rt_nurb_s_eval( &srf, u, v, tmp_pt );
+	rt_nurb_s_eval( f->g.snurb_p, u, v, tmp_pt );
 
-	if( RT_NURB_IS_PT_RATIONAL(srf.pt_type) )
+	if( RT_NURB_IS_PT_RATIONAL(f->g.snurb_p->pt_type) )
 	{
 		double f;
 
@@ -95,7 +93,6 @@ CONST fastf_t v;
 vect_t norm;
 {
 	struct face *f;
-	struct snurb srf;
 
 	NMG_CK_FACEUSE( fu );
 
@@ -112,8 +109,7 @@ vect_t norm;
 		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
 	}
 
-	nmg_hack_snurb( &srf, f->g.snurb_p );
-	rt_nurb_s_norm( &srf, u, v, norm );
+	rt_nurb_s_norm( f->g.snurb_p, u, v, norm );
 
 	if( (fu->orientation != OT_SAME) != (f->flip != 0 ) )
 		VREVERSE( norm, norm )
@@ -126,7 +122,6 @@ CONST struct vertexuse *vu;
 vect_t norm;
 {
 	struct face *f;
-	struct snurb srf;
 	struct vertexuse_a_cnurb *va;
 	point_t uvw;
 
@@ -9196,13 +9191,13 @@ top:
  *	A single cnurb structure that joins all the
  *	cnurbs on the list.
  */
-struct cnurb *
+struct edge_g_cnurb *
 rt_join_cnurbs( crv_head )
 struct rt_list	*crv_head;
 {
-	struct cnurb *crv,*next_crv;
-	struct cnurb *new_crv=(struct cnurb *)NULL;
-	struct cnurb *linear_crv;
+	struct edge_g_cnurb *crv,*next_crv;
+	struct edge_g_cnurb *new_crv=(struct edge_g_cnurb *)NULL;
+	struct edge_g_cnurb *linear_crv;
 	fastf_t knot_delta=0.0;
 	fastf_t last_knot;
 	int ncoords;
@@ -9220,7 +9215,7 @@ struct rt_list	*crv_head;
 	/* Check that all curves are the same pt_type and
 	 * have mutliplicity equal to order at endpoints.
 	 */
-	for( RT_LIST_FOR( crv, cnurb, crv_head ) )
+	for( RT_LIST_FOR( crv, edge_g_cnurb, crv_head ) )
 	{
 		curve_count++;
 		rt_nurb_c_print( crv);
@@ -9228,7 +9223,7 @@ struct rt_list	*crv_head;
 			max_order = crv->order;
 
 		i = 0;
-		while( crv->knot.knots[++i] == crv->knot.knots[0] );
+		while( crv->k.knots[++i] == crv->k.knots[0] );
 		if( i != crv->order )
 		{
 			rt_log( "Curve does not have multiplicity equal to order at start:\n" );
@@ -9236,9 +9231,9 @@ struct rt_list	*crv_head;
 			return( new_crv );
 		}
 
-		i = crv->knot.k_size - 1;
-		while( crv->knot.knots[--i] == crv->knot.knots[crv->knot.k_size - 1] );
-		if( crv->knot.k_size - i - 1 != crv->order )
+		i = crv->k.k_size - 1;
+		while( crv->k.knots[--i] == crv->k.knots[crv->k.k_size - 1] );
+		if( crv->k.k_size - i - 1 != crv->order )
 		{
 			rt_log( "Curve does not have multiplicity equal to order at end:\n" );
 			rt_nurb_c_print( crv);
@@ -9261,13 +9256,13 @@ struct rt_list	*crv_head;
 	/* If there is only one entry on list, just return it */
 	if( curve_count < 2 )
 	{
-		crv = RT_LIST_FIRST( cnurb, crv_head );
+		crv = RT_LIST_FIRST( edge_g_cnurb, crv_head );
 		RT_LIST_DEQUEUE( &crv->l );
 		return( crv );
 	}
 
 	/* Raise each curve to order max_order */
-	for( RT_LIST_FOR( crv, cnurb, crv_head ) )
+	for( RT_LIST_FOR( crv, edge_g_cnurb, crv_head ) )
 	{
 		if( crv->order == max_order )
 			continue;
@@ -9278,9 +9273,9 @@ struct rt_list	*crv_head;
 	}
 
 	/* Check that endponts match */
-	crv = RT_LIST_FIRST( cnurb, crv_head );
+	crv = RT_LIST_FIRST( edge_g_cnurb, crv_head );
 	ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
-	next_crv = RT_LIST_NEXT( cnurb, &crv->l );
+	next_crv = RT_LIST_NEXT( edge_g_cnurb, &crv->l );
 	while( RT_LIST_NOT_HEAD( &next_crv->l, crv_head ) )
 	{
 		int endpoints_equal;
@@ -9304,7 +9299,7 @@ struct rt_list	*crv_head;
 		{
 			/* Nothing needed here, go to next curve */
 			crv = next_crv;
-			next_crv = RT_LIST_NEXT( cnurb, &crv->l );
+			next_crv = RT_LIST_NEXT( edge_g_cnurb, &crv->l );
 			continue;
 		}
 
@@ -9315,46 +9310,46 @@ struct rt_list	*crv_head;
 	}
 
 	/* Get new knot size and polygon size */
-	crv = RT_LIST_FIRST( cnurb, crv_head );
+	crv = RT_LIST_FIRST( edge_g_cnurb, crv_head );
 	knot_length = crv->order;
-	for( RT_LIST_FOR( crv, cnurb, crv_head ) )
+	for( RT_LIST_FOR( crv, edge_g_cnurb, crv_head ) )
 	{
 		ctl_points += (crv->c_size - 1);
-		knot_length += (crv->knot.k_size - crv->order - 1);
+		knot_length += (crv->k.k_size - crv->order - 1);
 
 	}
 	knot_length++;
 
 	new_crv = rt_nurb_new_cnurb( max_order, knot_length, ctl_points, pt_type );
 
-	crv = RT_LIST_FIRST( cnurb, crv_head );
+	crv = RT_LIST_FIRST( edge_g_cnurb, crv_head );
 
 	/* copy first knot values from first curve */
 	for( i=0 ; i<crv->order ; i++ )
-		new_crv->knot.knots[++knot_index] = crv->knot.knots[i];
+		new_crv->k.knots[++knot_index] = crv->k.knots[i];
 
 	/* copy first control point from first curve */
 	for( j=0 ; j<ncoords ; j++ )
 		new_crv->ctl_points[j] = crv->ctl_points[j];
 
 	ctl_index = 0;
-	knot_delta = new_crv->knot.knots[knot_index];
+	knot_delta = new_crv->k.knots[knot_index];
 
 	/* copy each curve to the new combined curve */
-	for( RT_LIST_FOR( crv, cnurb, crv_head ) )
+	for( RT_LIST_FOR( crv, edge_g_cnurb, crv_head ) )
 	{
 		/* copy interior knots */
-		for( i=crv->order ; i<crv->knot.k_size-crv->order ; i++ )
+		for( i=crv->order ; i<crv->k.k_size-crv->order ; i++ )
 		{
-			new_crv->knot.knots[++knot_index] = crv->knot.knots[i] + knot_delta;
+			new_crv->k.knots[++knot_index] = crv->k.knots[i] + knot_delta;
 		}
 
 		/* copy endpoint knots (reduce multiplicity by one) */
 		for( i=0 ; i<crv->order-1 ; i++ )
-			new_crv->knot.knots[++knot_index] = crv->knot.knots[crv->knot.k_size-1] + knot_delta;
+			new_crv->k.knots[++knot_index] = crv->k.knots[crv->k.k_size-1] + knot_delta;
 
-		knot_delta += crv->knot.knots[crv->knot.k_size-1];
-		last_knot = new_crv->knot.knots[knot_index];
+		knot_delta += crv->k.knots[crv->k.k_size-1];
+		last_knot = new_crv->k.knots[knot_index];
 
 		/* copy control points (skip duplicate initial point) */
 		for( i=1 ; i<crv->c_size ; i++ )
@@ -9363,7 +9358,7 @@ struct rt_list	*crv_head;
 			VMOVEN( &new_crv->ctl_points[ctl_index*ncoords], &crv->ctl_points[i*ncoords], ncoords );
 		}
 	}
-	new_crv->knot.knots[++knot_index] = last_knot;
+	new_crv->k.knots[++knot_index] = last_knot;
 
 	return( new_crv );
 }
@@ -9379,7 +9374,7 @@ struct rt_list	*crv_head;
  *	defined in nurb.h). The arc is constructed counter-clockwise
  *	(as viewed from the +Z direction).
  */
-struct cnurb *
+struct edge_g_cnurb *
 rt_arc2d_to_cnurb( i_center, i_start, i_end, point_type, tol )
 point_t i_center;
 point_t i_start;
@@ -9387,7 +9382,7 @@ point_t i_end;
 int point_type;
 struct rt_tol *tol;
 {
-	struct cnurb *crv;
+	struct edge_g_cnurb *crv;
 	struct rt_list crv_head;
 	point_t center;
 	point_t start;
@@ -9434,21 +9429,21 @@ struct rt_tol *tol;
 		{
 			rt_log( "rt_arc2d_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
 					center[Z], start[Z] );
-			return( (struct cnurb *)NULL );
+			return( (struct edge_g_cnurb *)NULL );
 		}
 
 		if( end[Z] - start[Z] > tol->dist )
 		{
 			rt_log( "rt_arc2d_to_cnurb: end and start points not at same Z value (%g vs %g)\n",
 					end[Z], start[Z] );
-			return( (struct cnurb *)NULL );
+			return( (struct edge_g_cnurb *)NULL );
 		}
 
 		if( end[Z] - center[Z] > tol->dist )
 		{
 			rt_log( "rt_arc2d_to_cnurb: end and center points not at same Z value (%g vs %g)\n",
 					end[Z], center[Z] );
-			return( (struct cnurb *)NULL );
+			return( (struct edge_g_cnurb *)NULL );
 		}
 	}
 
@@ -9476,7 +9471,7 @@ struct rt_tol *tol;
 	{
 		rt_log( "rt_arc2d_to_cnurb: distances from center to start and center to end are different\n" );
 		rt_log( "                        (%g and %g)\n", radius, tmp_radius );
-		return( (struct cnurb *)NULL );
+		return( (struct edge_g_cnurb *)NULL );
 	}
 
 	/* construct coord system ref1,ref2,norm */
@@ -9508,7 +9503,7 @@ struct rt_tol *tol;
 		{
 			rt_log( "rt_arc2d_to_cnurb: Cannot calculate second control point\n" );
 			rt_log( "                   rt_isect_line3_line3 returns %d\n" , ret_val );
-			return( (struct cnurb *)NULL );
+			return( (struct edge_g_cnurb *)NULL );
 		}
 
 		/* Get memory for this curve (order=3, 6 knot values, 3 control points) */
@@ -9516,9 +9511,9 @@ struct rt_tol *tol;
 
 		/* Set knot values */
 		for( i=0 ; i<3 ; i++ )
-			crv->knot.knots[i] = 0.0;
+			crv->k.knots[i] = 0.0;
 		for( i=3 ; i<6 ; i++ )
-			crv->knot.knots[i] = 1.0;
+			crv->k.knots[i] = 1.0;
 
 		/* First and third control points are start and end */
 		VMOVEN( crv->ctl_points, start, ncoords-1 )
@@ -9577,7 +9572,7 @@ struct rt_tol *tol;
 		RT_LIST_INSERT( &crv_head, &crv->l );
 	}
 
-	/* join the arc segments into one cnurb */
+	/* join the arc segments into one edge_g_cnurb */
 	crv = rt_join_cnurbs( &crv_head );
 
 	return( crv );

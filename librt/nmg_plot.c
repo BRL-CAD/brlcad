@@ -2446,64 +2446,6 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *			N M G _ H A C K _ S N U R B
- *
- *  Convert a new NMG format snurb to the older LIBNURB format,
- *  by copying data and pointers.
- *  Under no circumstances should the output of this routine be freed,
- *  or it will corrupt the NMG original!  Just discard it.
- *
- *  XXX Temporary hack until LIBNURB is updated to new data structures.
- */
-void
-nmg_hack_snurb( old, fg )
-struct snurb	*old;
-CONST struct face_g_snurb	*fg;
-{
-	bzero( (char *)old, sizeof(struct snurb) );
-
-	RT_LIST_INIT( &old->l );
-	old->l.magic = RT_SNURB_MAGIC;
-
-	old->order[0] = fg->order[0];
-	old->order[1] = fg->order[1];
-	old->u_knots = fg->u;		/* struct copy, including pointers! */
-	old->v_knots = fg->v;
-	old->s_size[0] = fg->s_size[0];
-	old->s_size[1] = fg->s_size[1];
-	old->pt_type = fg->pt_type;
-	old->ctl_points = fg->ctl_points;	/* pointer */
-}
-
-/*
- *			N M G _ H A C K _ C N U R B
- *
- *  Convert a new NMG format cnurb to the older LIBNURB format,
- *  by copying data and pointers.
- *  Under no circumstances should the output of this routine be freed,
- *  or it will corrupt the NMG original!  Just discard it.
- *
- *  XXX Temporary hack until LIBNURB is updated to new data structures.
- */
-void
-nmg_hack_cnurb( old, eg )
-struct cnurb	*old;
-CONST struct edge_g_cnurb	*eg;
-{
-	NMG_CK_EDGE_G_CNURB(eg);
-	bzero( (char *)old, sizeof(struct cnurb) );
-
-	RT_LIST_INIT( &old->l );
-	old->l.magic = RT_CNURB_MAGIC;
-
-	old->order = eg->order;
-	old->knot = eg->k;			/* struct copy, including pointers! */
-	old->c_size = eg->c_size;
-	old->pt_type = eg->pt_type;
-	old->ctl_points = eg->ctl_points;	/* pointer */
-}
-
-/*
  *			N M G _ S N U R B _ T O _ V L I S T
  *
  *  A routine to draw the entire surface of a face_g_snurb.
@@ -2522,8 +2464,7 @@ int				n_interior;	/* typ. 10 */
 				tkv2,
 				tau1,
 				tau2;
-	struct snurb		n;	/* XXX hack, don't free! */
-	struct snurb 	*r, *c;
+	struct face_g_snurb	*r, *c;
 	int 		coords;
 
 	RT_CK_LIST_HEAD( vhead );
@@ -2540,9 +2481,9 @@ int				n_interior;	/* typ. 10 */
 	rt_nurb_kvmerge(&tau1, &tkv1, &fg->u);
 	rt_nurb_kvmerge(&tau2, &tkv2, &fg->v);
 
-	nmg_hack_snurb( &n, fg );	/* XXX */
-	NMG_CK_SNURB(&n);
-	r = rt_nurb_s_refine( &n, RT_NURB_SPLIT_COL, &tau2);
+/**	nmg_hack_snurb( &n, fg );	/* XXX */
+
+	r = rt_nurb_s_refine( fg, RT_NURB_SPLIT_COL, &tau2);
 	NMG_CK_SNURB(r);
 	c = rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tau1);
 	NMG_CK_SNURB(c);
@@ -2625,8 +2566,8 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 	CONST struct faceuse	*fu;
 	register int		i;
 	register fastf_t	*vp;
-	struct cnurb		n;		/* XXX hack, don't free */
-	struct cnurb		*c;
+	struct edge_g_cnurb	n;
+	CONST struct edge_g_cnurb	*c;
 	int 			coords;
 
 	RT_CK_LIST_HEAD( vhead );
@@ -2649,7 +2590,7 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		/* linear cnurb on snurb face -- cnurb ctl pts are UV */
 		n.order = 2;
 		n.l.magic = RT_CNURB_MAGIC;
-		rt_nurb_gen_knot_vector( &n.knot, n.order, 0.0, 1.0 );
+		rt_nurb_gen_knot_vector( &n.k, n.order, 0.0, 1.0 );
 		n.c_size = 2;
 		n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT );
 		n.ctl_points = (fastf_t *)rt_malloc(
@@ -2661,11 +2602,14 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		n.ctl_points[1] = eu->vu_p->a.cnurb_p->param[1];
 		n.ctl_points[2] = eu->eumate_p->vu_p->a.cnurb_p->param[0];
 		n.ctl_points[3] = eu->eumate_p->vu_p->a.cnurb_p->param[1];
-	} else
-		nmg_hack_cnurb( &n, eg );	/* don't free it! */
+		c = &n;
+	} else {
+		/* Just use eg */
+		c = eg;
+	}
 
-	NMG_CK_CNURB( &n );
-	c = &n;
+	NMG_CK_CNURB( c );
+rt_nurb_c_print(c);
 
 	coords = RT_NURB_EXTRACT_COORDS( c->pt_type );
 	
@@ -2679,7 +2623,7 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 			vp += coords;
 		}
 	} else {
-		struct snurb	s;	/* XXX hack, don't free! */
+		CONST struct face_g_snurb	*s;
 		fastf_t		final[4];
 		fastf_t		inv_homo;
 		fastf_t		param_delta;
@@ -2687,30 +2631,39 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 
 		/* cnurb on spline face -- ctl points are UV or UVW */
 		if( coords != 2 && !RT_NURB_IS_PT_RATIONAL(c->pt_type) ) rt_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
-		nmg_hack_snurb( &s, fu->f_p->g.snurb_p );
+		s = fu->f_p->g.snurb_p;
+rt_nurb_s_print("srf", s);
 
 		/* This section uses rt_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
 		 * XXXX Need a way to selectively and recursively refine curve to avoid
 		 * feeding rt_nurb_s_eval() parameters outside domain of surface.
 		 */
-		param_delta = (c->knot.knots[c->knot.k_size-1] - c->knot.knots[0])/(fastf_t)(n_interior+1);
-		crv_param = c->knot.knots[0];
+		param_delta = (c->k.knots[c->k.k_size-1] - c->k.knots[0])/(fastf_t)(n_interior+1);
+		crv_param = c->k.knots[0];
 		for( i = 0; i < n_interior; i++)  {
 			point_t uvw;
 
 			/* evaluate curve at parameter values */
 			crv_param += param_delta; 
+VSETALL(uvw,0);
 			rt_nurb_c_eval( c, crv_param, uvw );
 
+rt_log("%g \n", crv_param);
+VPRINT("uvw1", uvw);
 			if( RT_NURB_IS_PT_RATIONAL( c->pt_type ) )
 			{
 				uvw[0] = uvw[0]/uvw[2];
 				uvw[1] = uvw[1]/uvw[2];
+VPRINT("uvw2", uvw);
 			}
+if(uvw[0] >= 1 || uvw[1] >= 1 )  {
+	nmg_pr_eg( (CONST long *) eg, 0 );
+	continue;
+}
 
 			/* convert 'uvw' from UV coord to XYZ coord via surf! */
-			rt_nurb_s_eval( &s, uvw[0], uvw[1], final );
-			if( RT_NURB_IS_PT_RATIONAL( s.pt_type ) )
+			rt_nurb_s_eval( s, uvw[0], uvw[1], final );
+			if( RT_NURB_IS_PT_RATIONAL( s->pt_type ) )
 			{
 				/* divide out homogeneous coordinate */
 				inv_homo = 1.0/final[3];
@@ -2723,7 +2676,7 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 	}
 
 	if( eg->order <= 0 )  {
-		rt_free( (char *)n.knot.knots, "nmg_cnurb_to_vlist() n.knot.knots");
+		rt_free( (char *)n.k.knots, "nmg_cnurb_to_vlist() n.knot.knots");
 		rt_free( (char *)n.ctl_points, "nmg_cnurb_to_vlist() ctl_points");
 	}
 }

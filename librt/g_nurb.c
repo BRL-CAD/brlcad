@@ -37,8 +37,8 @@ static char RCSnurb[] = "@(#)$Header$ (BRL)";
 
 struct nurb_specific {
 	struct nurb_specific *  next;	/* next surface in the the solid */
-	struct snurb *		srf;	/* Original surface description */
-	struct rt_list		bez_hd;	/* List of Bezier snurbs */
+	struct face_g_snurb *	srf;	/* Original surface description */
+	struct rt_list		bez_hd;	/* List of Bezier face_g_snurbs */
 };
 
 struct nurb_hit {
@@ -53,7 +53,7 @@ struct nurb_hit {
 
 #define NULL_HIT  (struct nurb_hit *)0
 
-RT_EXTERN(int rt_nurb_grans, (struct snurb * srf));
+RT_EXTERN(int rt_nurb_grans, (struct face_g_snurb * srf));
 RT_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
 	struct xray *r, struct rt_nurb_uv_hit *h));
 RT_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
@@ -86,12 +86,12 @@ struct rt_i		*rtip;
 
 	for( i = 0; i < sip->nsrf; i++)
 	{
-		struct snurb * s;
+		struct face_g_snurb * s;
 		struct nurb_specific * n;
 
 		GETSTRUCT( n, nurb_specific);
 
-		/* Store off the original snurb */
+		/* Store off the original face_g_snurb */
 		s = rt_nurb_scopy (sip->srfs[i]);
 		NMG_CK_SNURB(s);
 		rt_nurb_s_bound(s, s->min_pt, s->max_pt);
@@ -99,11 +99,11 @@ struct rt_i		*rtip;
 		n->srf = s;
 		RT_LIST_INIT( &n->bez_hd );
 
-		/* Grind up the original surf into a list of Bezier snurbs */
+		/* Grind up the original surf into a list of Bezier face_g_snurbs */
 		(void)rt_nurb_bezier( &n->bez_hd, sip->srfs[i] );
 		
-		/* Compute bounds of each Bezier snurb */
-		for( RT_LIST_FOR( s, snurb, &n->bez_hd ) )  {
+		/* Compute bounds of each Bezier face_g_snurb */
+		for( RT_LIST_FOR( s, face_g_snurb, &n->bez_hd ) )  {
 			NMG_CK_SNURB(s);
 			rt_nurb_s_bound( s, s->min_pt, s->max_pt );
 			VMINMAX( stp->st_min, stp->st_max, s->min_pt);
@@ -224,10 +224,10 @@ struct seg		*seghead;
 
 	while( nurb != (struct nurb_specific *) 0 )
 	{
-		struct snurb * s;
+		struct face_g_snurb * s;
 		struct rt_nurb_uv_hit *hp;
 
-		for( RT_LIST_FOR( s, snurb, &nurb->bez_hd ) )  {
+		for( RT_LIST_FOR( s, face_g_snurb, &nurb->bez_hd ) )  {
 			if( !rt_in_rpp( rp, invdir, s->min_pt, s->max_pt))
 				continue;
 
@@ -341,7 +341,7 @@ register struct xray	*rp;
 /*	register struct nurb_specific *nurb =
 		(struct nurb_specific *)stp->st_specific; */
 
-	struct snurb * n  = (struct snurb *) hitp->hit_private;
+	struct face_g_snurb * n  = (struct face_g_snurb *) hitp->hit_private;
 	fastf_t u = hitp->hit_vpriv[0];
 	fastf_t v = hitp->hit_vpriv[1];
 	fastf_t norm[4];
@@ -371,7 +371,7 @@ struct soltab		*stp;
 {
 /*	register struct nurb_specific *nurb =
 		(struct nurb_specific *)stp->st_specific; */
-	struct snurb * srf = (struct snurb *) hitp->hit_private;
+	struct face_g_snurb * srf = (struct face_g_snurb *) hitp->hit_private;
         fastf_t         u, v;
 
 	if( srf->order[0] <= 2 && srf->order[1] <= 2)
@@ -426,12 +426,12 @@ register struct soltab *stp;
 		rt_bomb("rt_nurb_free: no surfaces\n");
 
 	for( ; nurb != (struct nurb_specific *)0; nurb = next)  {
-		register struct snurb	*s;
+		register struct face_g_snurb	*s;
 
 		next = nurb->next;
 
 		/* There is a linked list of surfaces to free for each nurb */
-		while( RT_LIST_WHILE( s, snurb, &nurb->bez_hd ) )  {
+		while( RT_LIST_WHILE( s, face_g_snurb, &nurb->bez_hd ) )  {
 			NMG_CK_SNURB( s );
 			RT_LIST_DEQUEUE( &(s->l) );
 			rt_nurb_free_snurb( s );
@@ -473,7 +473,7 @@ struct rt_tol		*tol;
 	
 	for( s=0; s < sip->nsrf; s++)
 	{
-		struct snurb 	* n, *r, *c;
+		struct face_g_snurb 	* n, *r, *c;
 		int 		coords;
 		fastf_t 	bound;
 		point_t		tmp_pt;
@@ -483,7 +483,7 @@ struct rt_tol		*tol;
 		fastf_t		tess, num_knots;
 		fastf_t		rt_nurb_par_edge();
 
-		n = (struct snurb *) sip->srfs[s];
+		n = (struct face_g_snurb *) sip->srfs[s];
 
                 VSUB2(tmp_pt, n->min_pt, n->max_pt);
                 bound =         MAGNITUDE( tmp_pt)/ 2.0;
@@ -517,16 +517,16 @@ struct rt_tol		*tol;
                 if( num_knots < 2.0) num_knots = 2.0;
 
                 rt_nurb_kvknot( &tkv1, n->order[0],
-                        n->u_knots.knots[0],
-                        n->u_knots.knots[n->u_knots.k_size-1], num_knots);
+                        n->u.knots[0],
+                        n->u.knots[n->u.k_size-1], num_knots);
 
                 rt_nurb_kvknot( &tkv2, n->order[1],
-                        n->v_knots.knots[0],
-                        n->v_knots.knots[n->v_knots.k_size-1], num_knots);
+                        n->v.knots[0],
+                        n->v.knots[n->v.k_size-1], num_knots);
 
 
-		r = (struct snurb *) rt_nurb_s_refine( n, RT_NURB_SPLIT_COL, &tkv2);
-		c = (struct snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tkv1);
+		r = (struct face_g_snurb *) rt_nurb_s_refine( n, RT_NURB_SPLIT_COL, &tkv2);
+		c = (struct face_g_snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tkv1);
 
 		coords = RT_NURB_EXTRACT_COORDS(n->pt_type);
 	
@@ -625,8 +625,8 @@ register CONST mat_t		mat;
 
 
 	sip->nsrf = rp->B.B_nsurf;
-	sip->srfs = (struct snurb **) rt_malloc(
-		sip->nsrf * sizeof( struct snurb), "nurb srfs[]");
+	sip->srfs = (struct face_g_snurb **) rt_malloc(
+		sip->nsrf * sizeof( struct face_g_snurb), "nurb srfs[]");
 	rp++;
 
 	for( s = 0; s < sip->nsrf; s++)
@@ -646,7 +646,7 @@ register CONST mat_t		mat;
 		else
 			pt_type = RT_NURB_MAKE_PT_TYPE(4,RT_NURB_PT_XYZ,RT_NURB_PT_RATIONAL);
 
-		sip->srfs[s] = (struct snurb *) rt_nurb_new_snurb(
+		sip->srfs[s] = (struct face_g_snurb *) rt_nurb_new_snurb(
 			rp->d.d_order[0],rp->d.d_order[1],
 			rp->d.d_kv_size[0],rp->d.d_kv_size[1],
 			rp->d.d_ctl_size[0],rp->d.d_ctl_size[1],
@@ -655,13 +655,13 @@ register CONST mat_t		mat;
 		vp = (dbfloat_t *) &rp[1];
 		
 		for( i = 0; i < rp->d.d_kv_size[0]; i++)
-			sip->srfs[s]->u_knots.knots[i] = (fastf_t) *vp++;
+			sip->srfs[s]->u.knots[i] = (fastf_t) *vp++;
 
 		for( i = 0; i < rp->d.d_kv_size[1]; i++)
-			sip->srfs[s]->v_knots.knots[i] = (fastf_t) *vp++;
+			sip->srfs[s]->v.knots[i] = (fastf_t) *vp++;
 
-		rt_nurb_kvnorm( &sip->srfs[s]->u_knots);
-		rt_nurb_kvnorm( &sip->srfs[s]->v_knots);
+		rt_nurb_kvnorm( &sip->srfs[s]->u);
+		rt_nurb_kvnorm( &sip->srfs[s]->v);
 
 		vp = (dbfloat_t *) &rp[rp->d.d_nknots+1];
 		m = sip->srfs[s]->ctl_points;
@@ -867,13 +867,13 @@ double				local2mm;
 
 	for( s = 0; s < sip->nsrf; s++)
 	{
-		register struct snurb	*srf = sip->srfs[s];
+		register struct face_g_snurb	*srf = sip->srfs[s];
 		NMG_CK_SNURB(srf);
 
 		grans = rt_nurb_grans( srf);
 
 		rec[rec_ptr].d.d_id = ID_BSURF;
-		rec[rec_ptr].d.d_nknots = (((srf->u_knots.k_size + srf->v_knots.k_size) 
+		rec[rec_ptr].d.d_nknots = (((srf->u.k_size + srf->v.k_size) 
 			* sizeof(dbfloat_t)) + sizeof(union record)-1)/ sizeof(union record);
 		rec[rec_ptr].d.d_nctls = ((
 			RT_NURB_EXTRACT_COORDS(srf->pt_type)
@@ -883,8 +883,8 @@ double				local2mm;
 
 		rec[rec_ptr].d.d_order[0] = srf->order[0];
 		rec[rec_ptr].d.d_order[1] = srf->order[1];
-		rec[rec_ptr].d.d_kv_size[0] = srf->u_knots.k_size;
-		rec[rec_ptr].d.d_kv_size[1] = srf->v_knots.k_size;
+		rec[rec_ptr].d.d_kv_size[0] = srf->u.k_size;
+		rec[rec_ptr].d.d_kv_size[1] = srf->v.k_size;
 		rec[rec_ptr].d.d_ctl_size[0] = 	srf->s_size[0];
 		rec[rec_ptr].d.d_ctl_size[1] = 	srf->s_size[1];
 		rec[rec_ptr].d.d_geom_type = 
@@ -893,12 +893,12 @@ double				local2mm;
 		vp = (dbfloat_t *) &rec[rec_ptr +1];
 		for(n = 0; n < rec[rec_ptr].d.d_kv_size[0]; n++)
 		{
-			*vp++ = srf->u_knots.knots[n];
+			*vp++ = srf->u.knots[n];
 		}
 
 		for(n = 0; n < rec[rec_ptr].d.d_kv_size[1]; n++)
 		{
-			*vp++ = srf->v_knots.knots[n];
+			*vp++ = srf->v.knots[n];
 		}
 		
 		vp = (dbfloat_t *) &rec[rec_ptr + 1 +
@@ -916,13 +916,13 @@ double				local2mm;
 
 int 
 rt_nurb_grans( srf )
-struct snurb * srf;
+struct face_g_snurb * srf;
 {
 	int total_knots, total_points;
 	int	k_gran;
 	int	p_gran;
 
-	total_knots = srf->u_knots.k_size + srf->v_knots.k_size;
+	total_knots = srf->u.k_size + srf->v.k_size;
 	k_gran = ((total_knots * sizeof(dbfloat_t)) + sizeof(union record)-1)
 		/ sizeof(union record);
 
@@ -984,7 +984,7 @@ double			mm2local;
 
 	for( surf = 0; surf < sip->nsrf; surf++)
 	{
-		register struct snurb 	* np;
+		register struct face_g_snurb 	* np;
 		register fastf_t 	* mp;
 		int			ncoord;
 
@@ -1007,11 +1007,11 @@ double			mm2local;
 
 		/* Print out the knot vectors */
 		rt_vls_printf( str, "\tU: ");
-		for( i=0; i < np->u_knots.k_size; i++ )
-			rt_vls_printf( str, "%g, ", np->u_knots.knots[i] );
+		for( i=0; i < np->u.k_size; i++ )
+			rt_vls_printf( str, "%g, ", np->u.knots[i] );
 		rt_vls_printf( str, "\n\tV: ");
-		for( i=0; i < np->v_knots.k_size; i++ )
-			rt_vls_printf( str, "%g, ", np->v_knots.knots[i] );
+		for( i=0; i < np->v.k_size; i++ )
+			rt_vls_printf( str, "%g, ", np->v.knots[i] );
 		rt_vls_printf( str, "\n");
 		
 		/* print out all the points */

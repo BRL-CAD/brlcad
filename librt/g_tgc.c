@@ -2411,13 +2411,13 @@ nmg_pr_eg( (CONST long *) bot_eu->g.cnurb_p, 0 );
 
 fastf_t nmg_tgc_unitcircle[36] = {
 	1.0, 0.0, 0.0, 1.0,
-	RAT, RAT, 0.0, RAT,
-	0.0, 1.0, 0.0, 1.0,
-	-RAT, RAT, 0.0, RAT,
-	-1.0, 0.0, 0.0, 1.0,
-	-RAT, -RAT, 0.0, RAT,
-	0.0, -1.0, 0.0, 1.0,
 	RAT, -RAT, 0.0, RAT,
+	0.0, -1.0, 0.0, 1.0,
+	-RAT, -RAT, 0.0, RAT,
+	-1.0, 0.0, 0.0, 1.0,
+	-RAT, RAT, 0.0, RAT,
+	0.0, 1.0, 0.0, 1.0,
+	RAT, RAT, 0.0, RAT,
 	1.0, 0.0, 0.0, 1.0
 };
 
@@ -2444,7 +2444,6 @@ int	flip;
 	struct edgeuse		* eu;
 	struct edge_g_cnurb	* eg;
 	fastf_t	*mptr;
-	struct snurb	s;	/* XXX hack, don't free! */
 	int coords;
 	int i;
 	vect_t	vect;
@@ -2477,12 +2476,12 @@ int	flip;
 		fg->ctl_points[1] = -1.;
 		fg->ctl_points[2] = height;
 
-		fg->ctl_points[3] = -1;
-		fg->ctl_points[4] = -1.;
+		fg->ctl_points[3] = 1;
+		fg->ctl_points[4] = 1.;
 		fg->ctl_points[5] = height;
 
-		fg->ctl_points[6] = 1.;
-		fg->ctl_points[7] = 1.;
+		fg->ctl_points[6] = -1.;
+		fg->ctl_points[7] = -1.;
 		fg->ctl_points[8] = height;
 
 		fg->ctl_points[9] = -1.;
@@ -2528,8 +2527,7 @@ int	flip;
 	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
-	nmg_hack_snurb( &s, fu->f_p->g.snurb_p );
-	rt_nurb_s_eval( &s, nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point );
+	rt_nurb_s_eval( fu->f_p->g.snurb_p, nmg_uv_unitcircle[0], nmg_uv_unitcircle[1], point );
 	nmg_vertex_gv( eu->vu_p->v_p, point );
 
 	nmg_edge_g_cnurb(eu, 3, 12, NULL, 9, RT_NURB_MAKE_PT_TYPE(3,3,1),
@@ -2636,7 +2634,7 @@ mat_t	bot_mat;
 	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
-	/* March around the fu's loop assignin uv parameter values */
+	/* March around the fu's loop assigning uv parameter values */
 	HDIVIDE( point, fg->ctl_points );
 	nmg_vertex_gv( eu->vu_p->v_p, point );	/* 0,0 vertex */
 

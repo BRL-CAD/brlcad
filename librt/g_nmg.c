@@ -1876,7 +1876,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				{
 					struct face_g_snurb	*fg;
 					GET_FACE_G_SNURB( fg, m );
-					fg->magic = NMG_FACE_G_SNURB_MAGIC;
+					fg->l.magic = NMG_FACE_G_SNURB_MAGIC;
 					RT_LIST_INIT( &fg->f_hd );
 					ptrs[subscript] = (long *)fg;
 				}
@@ -1936,7 +1936,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				{
 					struct edge_g_cnurb	*eg;
 					GET_EDGE_G_CNURB( eg, m );
-					eg->magic = NMG_EDGE_G_CNURB_MAGIC;
+					eg->l.magic = NMG_EDGE_G_CNURB_MAGIC;
 					RT_LIST_INIT( &eg->eu_hd2 );
 					ptrs[subscript] = (long *)eg;
 				}
