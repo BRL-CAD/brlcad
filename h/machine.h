@@ -315,6 +315,15 @@ typedef long	bitv_t;		/* largest integer type */
 # endif
 #endif
 
+/* A portable way of dealing with pre-ANSI C.  Assume signed variables */
+#if !defined(SIGNED)
+# if __STDC__
+#	define SIGNED	signed
+# else
+#	define SIGNED	/**/
+# endif
+#endif
+
 /*
  *  Some very common BSD --> SYSV conversion aids
  */
