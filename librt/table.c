@@ -188,8 +188,8 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_spl_prep,	rt_spl_shot,	rt_spl_print,	rt_spl_norm,
 		rt_spl_uv,	rt_spl_curve,	rt_spl_class,	rt_spl_free,
 		rt_spl_plot,	rt_vstub,	rt_spl_tess,
-		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
-		rt_nul_describe,
+		rt_spl_import,	rt_spl_export,	rt_spl_ifree,
+		rt_spl_describe,
 
 	"ID_SPH",	1,
 		rt_sph_prep,	rt_sph_shot,	rt_sph_print,	rt_sph_norm,
