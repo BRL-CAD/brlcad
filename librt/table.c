@@ -59,20 +59,35 @@ extern void	ebm_print(), ebm_norm(), ebm_uv();
 extern void	vol_print(), vol_norm(), vol_uv();
 extern void	arbn_print(), arbn_norm(), arbn_uv();
 
-extern void	nul_curve(), nul_free(), nul_plot();
-extern void	tor_curve(), tor_free(), tor_plot();
-extern void	tgc_curve(), tgc_free(), tgc_plot();
-extern void	ell_curve(), ell_free(), ell_plot();
-extern void	arb_curve(), arb_free(), arb_plot();
-extern void	hlf_curve(), hlf_free(), hlf_plot();
-extern void	ars_curve(), ars_free(), ars_plot();
-extern void	rec_curve(), rec_free(), rec_plot();
-extern void	pg_curve(),  pg_free(),  pg_plot();
-extern void	spl_curve(), spl_free(), spl_plot();
-extern void	sph_curve(), sph_free(), sph_plot();
-extern void	ebm_curve(), ebm_free(), ebm_plot();
-extern void	vol_curve(), vol_free(), vol_plot();
-extern void	arbn_curve(), arbn_free(), arbn_plot();
+extern void	nul_curve(), nul_free();
+extern void	tor_curve(), tor_free();
+extern void	tgc_curve(), tgc_free();
+extern void	ell_curve(), ell_free();
+extern void	arb_curve(), arb_free();
+extern void	hlf_curve(), hlf_free();
+extern void	ars_curve(), ars_free();
+extern void	rec_curve(), rec_free();
+extern void	pg_curve(),  pg_free();
+extern void	spl_curve(), spl_free();
+extern void	sph_curve(), sph_free();
+extern void	ebm_curve(), ebm_free();
+extern void	vol_curve(), vol_free();
+extern void	arbn_curve(), arbn_free();
+
+extern int	nul_plot();
+extern int	tor_plot();
+extern int	tgc_plot();
+extern int	ell_plot();
+extern int	arb_plot();
+extern int	hlf_plot();
+extern int	ars_plot();
+extern int	rec_plot();
+extern int	pg_plot();
+extern int	spl_plot();
+extern int	sph_plot();
+extern int	ebm_plot();
+extern int	vol_plot();
+extern int	arbn_plot();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -100,21 +115,21 @@ extern void	tor_vshot();
 extern void	arbn_vshot();
 extern void	rt_vstub();	/* XXX vshoot.c */
 
-extern void	nul_tess();
-extern void	ell_tess();
-extern void	sph_tess();
+extern int	nul_tess();
+extern int	ell_tess();
+extern int	sph_tess();
 #if 0
-extern void	hlf_tess();
-extern void	rec_tess();
+extern int	hlf_tess();
+extern int	rec_tess();
 #endif
-extern void	arb_tess();
-extern void	tgc_tess();
+extern int	arb_tess();
+extern int	tgc_tess();
 #if 0
-extern void	tor_tess();
-extern void	ebm_tess();
-extern void	vol_tess();
+extern int	tor_tess();
+extern int	ebm_tess();
+extern int	vol_tess();
 #endif
-extern void	arbn_tess();
+extern int	arbn_tess();
 
 struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_NULL",	0,
@@ -213,9 +228,9 @@ void DEF(nul_uv)
 void DEF(nul_curve)
 int IDEF(nul_class)
 void DEF(nul_free)
-void DEF(nul_plot)
+int IDEF(nul_plot)
 void DEF(nul_vshot)
-void DEF(nul_tess)
+int IDEF(nul_tess)
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
