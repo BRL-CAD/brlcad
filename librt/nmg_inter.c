@@ -1,12 +1,25 @@
 /*
  *			N M G _ I N T E R . C
  *
- *	Routines to intersect two NMG regions.
+ *  Routines to intersect two NMG regions.  When complete, all loops
+ *  in each region have a single classification w.r.t. the other region,
+ *  i.e. all geometric intersections of the two regions have explicit
+ *  topological representations.
+ *
+ *  Method -
+ *
+ *	Find all the points of intersection between the two regions, and
+ *	insert vertices at those points, breaking edges on those new
+ *	vertices as appropriate.
+ *
+ *	Call the face cutter to construct and delete edges and loops
+ *	along the line of intersection, as appropriate.
+ *
  *	There are no "user interface" routines in here.
  *
  *  Authors -
- *	Lee A. Butler
  *	Michael John Muuss
+ *	Lee A. Butler
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
