@@ -1560,7 +1560,7 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 	}
 
 	bu_optind = 1;	/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, argv, "acrsl")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "acrslp")) != EOF) {
 		switch (c) {
 		case 'a':
 			aflag = 1;
@@ -1572,6 +1572,7 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 			rflag = 1;
 			break;
 		case 's':
+		case 'p':
 			sflag = 1;
 			break;
 		case 'l':
@@ -7609,9 +7610,9 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 		 int			sflag)		/* print solids */
 {
 	int i;
-	int isComb, isRegion;
-	int isSolid;
-	const char *type;
+	int isComb=0, isRegion=0;
+	int isSolid=0;
+	const char *type=NULL;
 	int max_nam_len = 0;
 	int max_type_len = 0;
 	struct directory *dp;
@@ -7632,10 +7633,24 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 			len = 6;
 		else if (dp->d_flags & DIR_COMB)
 			len = 4;
-		else if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
-			len = 6;
-		else
+		else if( dp->d_flags & DIR_SOLID )
 			len = strlen(rt_functab[dp->d_minor_type].ft_label);
+		else {
+			switch(list_of_names[i]->d_major_type) {
+			case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
+				len = 6;
+				break;
+			case DB5_MAJORTYPE_BINARY_MIME:
+				len = strlen( "binary (mime)" );
+				break;
+			case DB5_MAJORTYPE_BINARY_UNIF:
+				len = strlen( binu_types[list_of_names[i]->d_minor_type] );
+				break;
+			case DB5_MAJORTYPE_BINARY_EXPM:
+				len = strlen( "binary(expm)" );
+				break;
+			}
+		}
 
 		if (len > max_type_len)
 			max_type_len = len;
@@ -7655,15 +7670,32 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 				type = "region";
 			} else
 				isRegion = 0;
-		} else {
+		} else if( list_of_names[i]->d_flags & DIR_SOLID )  {
 			isComb = isRegion = 0;
 			isSolid = 1;
 			type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
-		}
-
-		if (list_of_names[i]->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-			isSolid = 0;
-			type = "global";
+		} else {
+			switch(list_of_names[i]->d_major_type) { 
+			case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
+				isSolid = 0;
+				type = "global";
+				break;
+			case DB5_MAJORTYPE_BINARY_EXPM:
+				isSolid = 0;
+				isRegion = 0;
+				type = "binary(expm)";
+				break;
+			case DB5_MAJORTYPE_BINARY_MIME:
+				isSolid = 0;
+				isRegion = 0;
+				type = "binary(mime)";
+				break;	
+			case DB5_MAJORTYPE_BINARY_UNIF:
+				isSolid = 0;
+				isRegion = 0;
+				type = binu_types[list_of_names[i]->d_minor_type];
+				break;	
+			}
 		}
 
 		/* print list item i */
