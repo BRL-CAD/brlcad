@@ -1715,7 +1715,7 @@ char	*argv[];
 	/* Create re-orient matrix */
 	bn_mat_angles( re_orient, 0.0, 90.0, 90.0 );
 
-	RT_LIST_INIT( &all_head.l );
+	BU_LIST_INIT( &all_head.l );
 
 	Convert_input();
 
