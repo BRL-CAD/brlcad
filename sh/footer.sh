@@ -165,12 +165,12 @@ done
 
 comment_block="${comment_block}`echo "${prefixspace}${commentchar} End:"`
 "
-comment_block="${comment_block}`echo "${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"`
-"
+comment_block="${comment_block}`echo "${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"`"
 
 if [ "x$wrap" = "x1" ] ; then
-  comment_block="${comment_block}`echo " ${commentchar}/"`
+  comment_block="${comment_block}
 "
+  comment_block="${comment_block}`echo " ${commentchar}/"`"
 fi
 
 
