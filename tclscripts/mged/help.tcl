@@ -141,7 +141,7 @@ set mged_help_data(pov)		{{args}	{experimental:  set point-of-view}}
 set mged_help_data(prcolor)	{{}	{print color&material table}}
 set mged_help_data(prefix)	{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
 set mged_help_data(press)	{{button_label}	{emulate button press}}
-set mged_help_data(prj_add)	{{shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
+set mged_help_data(prj_add)	{{[-t] [-n] [-b] shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
 set mged_help_data(preview)	{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set mged_help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
 set mged_help_data(push)	{{object[s]}	{pushes object's path transformations to solids}}
