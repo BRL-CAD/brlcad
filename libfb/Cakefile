@@ -24,7 +24,13 @@
 
 #include "../Cakefile.lib"
 
-pkg.o:	../libpkg.MTYPE/pkg.o
-	cp ../libpkg.MTYPE/pkg.o pkg.o
+#if defined(NFS)
+pkg.o:	../.libpkg.MTYPE/pkg.o
+	cp ../.libpkg.MTYPE/pkg.o pkg.o
+#else
+pkg.o:	../libpkg/pkg.o
+	cp ../libpkg/pkg.o pkg.o
+
+#endif
 
 #include "../Cakefile.rules"
