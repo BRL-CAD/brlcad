@@ -29,8 +29,9 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=4.4;	RCS_REVISION=11;	REL_DATE=Today
-RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=11-Oct-94	# Alpha3
+#RELEASE=4.8;	RCS_REVISION=11;	REL_DATE=Today
+RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=18-Oct-94	# Alpha4
+#RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=11-Oct-94	# Alpha3
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=30-Sept-94	# Alpha2
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=23-Sept-94	# Alpha
 #RELEASE=4.2;	RCS_REVISION=10;	REL_DATE=12-Nov-93	# Bugfix2
@@ -459,30 +460,35 @@ arch)
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-a.Z
 	chmod 444 ${FTP_ARCHIVE}-a.Z
 	echo "${FTP_ARCHIVE}-a.Z created (doc)"
-	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} [A-Z]* [a-l]* zzzEND |\
+
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} [A-Z]* [a-k]* zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-b.Z
 	chmod 444 ${FTP_ARCHIVE}-b.Z
 	echo "${FTP_ARCHIVE}-b.Z created (core 1)"
-	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [m-z]* zzzEND |\
+
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [l]* zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-c.Z
 	chmod 444 ${FTP_ARCHIVE}-c.Z
 	echo "${FTP_ARCHIVE}-c.Z created (core 2)"
-	/usr/gnu/bin/tar cfv - Copy* README pix zzzEND |\
+	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [m-z]* zzzEND |\
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [m-t]* zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-d.Z
-	echo "${FTP_ARCHIVE}-d.Z created (pix)"
+	chmod 444 ${FTP_ARCHIVE}-d.Z
 	echo "${FTP_ARCHIVE}-d.Z created (core 3)"
-	/usr/gnu/bin/tar cfv - Copy* README vfont zzzEND |\
+	/usr/gnu/bin/tar cfv - Copy* README pix zzzEND |\
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [u-z]* zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-e.Z
-	echo "${FTP_ARCHIVE}-e.Z created (vfont)"
+	echo "${FTP_ARCHIVE}-e.Z created (pix)"
 	echo "${FTP_ARCHIVE}-e.Z created (core 4)"
-	/usr/gnu/bin/tar cfv - Copy* README contributed zzzEND |\
+	/usr/gnu/bin/tar cfv - Copy* README vfont zzzEND |\
 	/usr/gnu/bin/tar cfv - Copy* README pix zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-f.Z
-	echo "${FTP_ARCHIVE}-f.Z created (contrib)"
+	echo "${FTP_ARCHIVE}-f.Z created (vfont)"
+	echo "${FTP_ARCHIVE}-f.Z created (pix)"
+
+##		compress | crypt ${KEY} > ${FTP_ARCHIVE}-g.Z
+##	chmod 444 ${FTP_ARCHIVE}-g.Z
+##	echo "${FTP_ARCHIVE}-g.Z created (contrib)"
 ##	echo "${FTP_ARCHIVE}-h.Z created (contrib)"
 
 	rm -f ${EXCLUDE}
