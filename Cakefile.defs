@@ -334,7 +334,6 @@ set -S2 "/bin/sh"
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	else
 /*		Static linked executables */
-#		define	BUILD_LIBRARY	ld -B static -mips4 -o
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
