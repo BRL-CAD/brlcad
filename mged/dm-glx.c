@@ -106,7 +106,7 @@ void	Glx_statechange(), Glx_viewchange(), Glx_colorchange();
 void	Glx_window(), Glx_debug();
 int	Glx_dm();
 
-static int glx_setup();
+static int Glx_setup();
 static void set_knob_offset();
 static int   Glx_load_startup();
 static struct dm_list *get_dm_list();
@@ -215,6 +215,7 @@ static unsigned long lights;
 
 #ifdef IR_KNOBS
 static int irlimit();			/* provides knob dead spot */
+static int Glx_add_tol();
 #define NOISE 32		/* Size of dead spot on knob */
 /*
  *  Labels for knobs in help mode.
@@ -395,11 +396,11 @@ Glx_open()
   ogl_sgi_used = 1;
 #endif /* DM_OGL */
   glx_var_init();
-  return glx_setup(dname);
+  return Glx_setup(dname);
 }
 
 static int
-glx_setup( name )
+Glx_setup( name )
 char *name;
 {
   register int	i;
@@ -1327,6 +1328,256 @@ XEvent *eventPtr;
       goto end;
     }
 
+#if 1
+    switch(DIAL0 + M->first_axis){
+    case DIAL0:
+      if(mged_variables.adcflag) {
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	                !dv_1adc )
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol(dv_1adc) +
+	                  M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd, "knob ang1 %d\n",
+		      setting );
+      }
+      break;
+    case DIAL1:
+      if(mged_variables.rateknobs){
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	   !rate_zoom )
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_zoom)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob S %f\n",
+		       setting / 512.0 );
+      }else{
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	   !absolute_zoom )
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_zoom)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob aS %f\n",
+		       setting / 512.0 );
+      }
+      break;
+    case DIAL2:
+      if(mged_variables.adcflag){
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	                !dv_2adc )
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol(dv_2adc) +
+	                  M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob ang2 %d\n",
+		      setting );
+      }else {
+	if(mged_variables.rateknobs){
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !rate_rotate[Z] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_rotate[Z])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	  rt_vls_printf( &cmd , "knob z %f\n",
+		      setting / 512.0 );
+	}else{
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !absolute_rotate[Z] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_rotate[Z])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	  rt_vls_printf( &cmd , "knob az %f\n",
+			 setting / 512.0 );
+	}
+      }
+      break;
+    case DIAL3:
+      if(mged_variables.adcflag){
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	   !dv_distadc)
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol(dv_distadc) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob distadc %d\n",
+		      setting );
+      }else {
+	if(mged_variables.rateknobs){
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !rate_slew[Z] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_slew[Z])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	  rt_vls_printf( &cmd , "knob Z %f\n",
+			 setting / 512.0 );
+	}else{
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !absolute_slew[Z] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_slew[Z])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	  rt_vls_printf( &cmd , "knob aZ %f\n",
+			 setting / 512.0 );
+	}
+      }
+      break;
+    case DIAL4:
+      if(mged_variables.adcflag){
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	   !dv_yadc)
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol(dv_yadc) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob yadc %d\n",
+		      setting );
+      }else{
+	if(mged_variables.rateknobs){
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !rate_rotate[Y] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_rotate[Y])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	  rt_vls_printf( &cmd , "knob y %f\n",
+			 setting / 512.0 );
+	}else{
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !absolute_rotate[Y] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_rotate[Y])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	  rt_vls_printf( &cmd , "knob ay %f\n",
+			 setting / 512.0 );
+	}
+      }
+      break;
+    case DIAL5:
+      if(mged_variables.rateknobs){
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !rate_slew[Y] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_slew[Y])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob Y %f\n",
+		       setting / 512.0 );
+      }else{
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !absolute_slew[Y] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_slew[Y])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob aY %f\n",
+		       setting / 512.0 );
+      }
+      break;
+    case DIAL6:
+      if(mged_variables.adcflag){
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	   !dv_xadc)
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol(dv_xadc) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob xadc %d\n",
+		      setting );
+      }else{
+	if(mged_variables.rateknobs){
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !rate_rotate[X] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_rotate[X])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	  rt_vls_printf( &cmd , "knob x %f\n",
+			 setting / 512.0 );
+	}else{
+	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	     !absolute_rotate[X] )
+	    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	  else
+	    knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_rotate[X])) +
+	      M->axis_data[0] - knob_values[M->first_axis];
+
+	  setting = irlimit(knobs[M->first_axis]);
+	  rt_vls_printf( &cmd , "knob ax %f\n",
+			 setting / 512.0 );
+	}
+      }
+      break;
+    case DIAL7:
+      if(mged_variables.rateknobs){
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	   !rate_slew[X] )
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol((int)(512.5 * rate_slew[X])) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob X %f\n",
+		       setting / 512.0 );
+      }else{
+	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
+	   !absolute_slew[X] )
+	  knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	else
+	  knobs[M->first_axis] = Glx_add_tol((int)(512.5 * absolute_slew[X])) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = irlimit(knobs[M->first_axis]);
+	rt_vls_printf( &cmd , "knob aX %f\n",
+		       setting / 512.0 );
+      }
+      break;
+    default:
+      break;
+    }
+
+    /* Keep track of the knob values */
+    knob_values[M->first_axis] = M->axis_data[0];
+#else
     setting = M->axis_data[0] - knob_values[M->first_axis];
     knob_values[M->first_axis] = M->axis_data[0];
 
@@ -1412,7 +1663,7 @@ XEvent *eventPtr;
     default:
       break;
     }
-
+#endif
   }else if( eventPtr->type == devbuttonpress ){
     XDeviceButtonEvent *B;
 
@@ -1766,8 +2017,8 @@ register char *str;
  * zero is very difficult.  This function can be used to extend the
  * location of "zero" into "the dead zone".
  */
-static 
-int irlimit(i)
+static int
+irlimit(i)
 int i;
 {
 	if( i > NOISE )
@@ -1775,6 +2026,17 @@ int i;
 	if( i < -NOISE )
 		return( i+NOISE );
 	return(0);
+}
+
+static int
+Glx_add_tol(i)
+int i;
+{
+  if( i > 0 )
+    return( i + NOISE );
+  if( i < 0 )
+    return( i - NOISE );
+  return(0);
 }
 #endif
 
