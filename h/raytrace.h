@@ -21,7 +21,11 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
-#define INFINITY	(1.0e20)
+#ifdef vax
+#	define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
+#else
+#	define INFINITY	(1.0e40)	/* IBM limit is 10**75 */
+#endif
 
 /*
  * Handy memory allocator
