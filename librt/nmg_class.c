@@ -2749,3 +2749,132 @@ CONST struct bn_tol *tol;
 
 	return( -1); /* to make the compilers happy */
 }
+
+/*		N M G _ C L A S S I F Y _ S _ V S _S
+ *
+ *	Classify one shell (s2) with respect to another (s).
+ *
+ *	returns:
+ *		NMG_CLASS_AinB if s2 is inside s
+ *		NMG_CLASS_AoutB is s2 is outside s
+ *		NMG_CLASS_Unknown if we can't tell
+ *
+ *	Assumes (but does not verify) that these two shells do not
+ *	overlap, but are either entirely separate or entirely within
+ *	one or the other.
+ */
+int
+nmg_classify_s_vs_s( s2, s, tol )
+struct shell *s;
+struct shell *s2;
+struct bn_tol *tol;
+{
+	int i;
+	int class;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	point_t pt_in_s2;
+	struct bu_ptbl verts;
+
+	if( !V3RPP1_IN_RPP2( s2->sa_p->min_pt, s2->sa_p->max_pt, s->sa_p->min_pt, s->sa_p->max_pt ) )
+		return( NMG_CLASS_AoutB );
+
+	/* shell s2 may be inside shell s
+	   Get a point from s2 to classify vs s */
+
+	if( RT_LIST_NON_EMPTY( &s2->fu_hd ) )
+	{
+		fu = RT_LIST_FIRST( faceuse, &s2->fu_hd );
+		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		VMOVE( pt_in_s2, eu->vu_p->v_p->vg_p->coord );
+		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
+		if( class == NMG_CLASS_AinB )
+			return( NMG_CLASS_AinB );		/* shell s2 is inside shell s */
+		else if( class == NMG_CLASS_AoutB )
+			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
+
+		/* try other end of this EU */
+		VMOVE( pt_in_s2, eu->eumate_p->vu_p->v_p->vg_p->coord );
+		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
+		if( class == NMG_CLASS_AinB )
+			return( NMG_CLASS_AinB );		/* shell s2 is inside shell s */
+		else if( class == NMG_CLASS_AoutB )
+			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
+	}
+
+	if( RT_LIST_NON_EMPTY( &s2->lu_hd ) )
+	{
+		lu = RT_LIST_FIRST( loopuse, &s2->lu_hd );
+		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		VMOVE( pt_in_s2, eu->vu_p->v_p->vg_p->coord );
+		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
+		if( class == NMG_CLASS_AinB )
+			return( NMG_CLASS_AinB );		/* shell s2 is inside shell s */
+		else if( class == NMG_CLASS_AoutB )
+			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
+
+		/* try other end of this EU */
+		VMOVE( pt_in_s2, eu->eumate_p->vu_p->v_p->vg_p->coord );
+		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
+		if( class == NMG_CLASS_AinB )
+			return( NMG_CLASS_AinB );		/* shell s2 is inside shell s */
+		else if( class == NMG_CLASS_AoutB )
+			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
+	}
+
+	if( RT_LIST_NON_EMPTY( &s2->eu_hd ) )
+	{
+		eu = RT_LIST_FIRST( edgeuse, &s2->eu_hd );
+		VMOVE( pt_in_s2, eu->vu_p->v_p->vg_p->coord );
+		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
+		if( class == NMG_CLASS_AinB )
+			return( NMG_CLASS_AinB );		/* shell s2 is inside shell s */
+		else if( class == NMG_CLASS_AoutB )
+			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
+
+		/* try other end of this EU */
+		VMOVE( pt_in_s2, eu->eumate_p->vu_p->v_p->vg_p->coord );
+		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
+		if( class == NMG_CLASS_AinB )
+			return( NMG_CLASS_AinB );		/* shell s2 is inside shell s */
+		else if( class == NMG_CLASS_AoutB )
+			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
+	}
+
+	if( s2->vu_p && s2->vu_p->v_p->vg_p )
+	{
+		VMOVE( pt_in_s2, s2->vu_p->v_p->vg_p->coord );
+		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
+		if( class == NMG_CLASS_AinB )
+			return( NMG_CLASS_AinB );		/* shell s2 is inside shell s */
+		else if( class == NMG_CLASS_AoutB )
+			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
+	}
+
+	/* classification returned NMG_CLASS_AonB, so need to try other points */
+	nmg_vertex_tabulate( &verts, &s2->l.magic );
+	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
+	{
+		struct vertex *v;
+
+		v = (struct vertex *)BU_PTBL_GET( &verts, i );
+
+		VMOVE( pt_in_s2, v->vg_p->coord );
+		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
+		if( class == NMG_CLASS_AinB )
+		{
+			bu_ptbl_free( &verts );
+			return( NMG_CLASS_AinB );	/* shell s2 is inside shell s */
+		}
+		else if( class == NMG_CLASS_AoutB )
+		{
+			bu_ptbl_free( &verts );
+			return( NMG_CLASS_AoutB );	/* shell s2 is not inside shell s */
+		}
+	}
+
+	/* every point of s2 is on s !!!!!!! */
+	return( NMG_CLASS_Unknown );
+}
