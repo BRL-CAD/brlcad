@@ -151,10 +151,13 @@ int ident;				/* "Region ID" */
 int air;				/* Air code */
 {
 	register struct directory *dp;
-	union record record;
-#if 0
-	mat_t	identity;
-#endif
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	union tree *tp;
+	struct rt_tree_array *tree_list;
+	int node_count;
+	int actual_count;
+
 	/*
 	 * Check to see if we have to create a new combination
 	 */
@@ -169,105 +172,131 @@ int air;				/* Air code */
 		  return DIR_NULL;
 		}
 
-		/* Generate the disk record */
-		record.c.c_id = ID_COMB;
-		record.c.c_flags = record.c.c_aircode = 0;
-		record.c.c_regionid = -1;
-		record.c.c_material = 0;
-		record.c.c_los = 0;
-		record.c.c_override = 0;
-		record.c.c_matname[0] = '\0';
-		record.c.c_matparm[0] = '\0';
-		NAMEMOVE( combname, record.c.c_name );
-		if( region_flag ) {       /* creating a region */
-		  struct bu_vls tmp_vls;
+		BU_GETSTRUCT( comb, rt_comb_internal );
+		comb->magic = RT_COMB_MAGIC;
+		bu_vls_init( &comb->shader );
+		bu_vls_init( &comb->material );
+		comb->region_id = -1;
+		comb->tree = TREE_NULL;
 
-		  
-		  record.c.c_flags = 'R';
-		  record.c.c_regionid = ident;
-		  record.c.c_aircode = air;
-		  record.c.c_los = los_default;
-		  record.c.c_material = mat_default;
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls,
+		RT_INIT_DB_INTERNAL( &intern );
+		intern.idb_type = ID_COMBINATION;
+		intern.idb_ptr = (genptr_t)comb;
+
+		if( region_flag )
+		{
+			struct bu_vls tmp_vls;
+
+			comb->region_flag = 1;
+			comb->region_id = ident;
+			comb->aircode = air;
+			comb->los = los_default;
+			comb->GIFTmater = mat_default;
+			bu_vls_init(&tmp_vls);
+			bu_vls_printf(&tmp_vls,
 				"Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
 				ident, air, los_default, mat_default );
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
+			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
 		}
 
-		/* finished with combination record - write it out */
-		if( db_put( dbip,  dp, &record, 0, 1 ) < 0 )  {
-		  Tcl_AppendResult(interp, "write error, aborting\n", (char *)NULL);
-		  TCL_ERROR_RECOVERY_SUGGESTION;
-		  return DIR_NULL;
-		}
+		BU_GETUNION( tp, tree );
+		tp->magic = RT_TREE_MAGIC;
+		tp->tr_l.tl_op = OP_DB_LEAF;
+		tp->tr_l.tl_name = bu_strdup( objp->d_namep );
+		tp->tr_l.tl_mat = (matp_t)NULL;
+		comb->tree = tp;
 
-		/* create first member record */
-		if( db_get( dbip,  dp, &record, 1, 1) < 0 )  {
-		  Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
-		  TCL_ERROR_RECOVERY_SUGGESTION;
-		  return DIR_NULL;
-		}
-		(void)strcpy( record.M.m_instname, objp->d_namep );
-
-		record.M.m_id = ID_MEMB;
-		record.M.m_relation = relation;
-#if 0
-		bn_mat_idn( identity );
-#endif
-		rt_dbmat_mat( record.M.m_mat, identity );
-		if( db_put( dbip,  dp, &record, 1, 1 ) < 0 )  {
-		  Tcl_AppendResult(interp, "write error, aborting\n", (char *)NULL);
-		  TCL_ERROR_RECOVERY_SUGGESTION;
-		  return DIR_NULL;
+		if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+		{
+			Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL );
+			return( DIR_NULL );
 		}
 		return( dp );
 	}
 
-	/*
-	 * The named combination already exists.  Fetch the header record,
-	 * and verify that this is a combination.
-	 */
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
-	  Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
-	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return DIR_NULL;
-	}
-	if( record.u_id != ID_COMB )  {
-	  Tcl_AppendResult(interp, combname, ":  not a combination\n", (char *)NULL);
-	  return DIR_NULL;
+	/* combination exists, add a new member */
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	{
+		Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
+		TCL_ERROR_RECOVERY_SUGGESTION;
+		return DIR_NULL;
 	}
 
-	if( region_flag ) {
-	  if( record.c.c_flags != 'R' ) {
-	    Tcl_AppendResult(interp, combname, ": not a region\n", (char *)NULL);
-	    return DIR_NULL;
-	  }
-	}
-	if( db_grow( dbip, dp, 1 ) < 0 )  {
-	  Tcl_AppendResult(interp, "db_grow error, aborting\n", (char *)NULL);
-	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return DIR_NULL;
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB( comb );
+
+	if( region_flag && !comb->region_flag )
+	{
+		Tcl_AppendResult(interp, combname, ": not a region\n", (char *)NULL);
+		return DIR_NULL;
 	}
 
-	/* Fill in new Member record */
-	if( db_get( dbip,  dp, &record, dp->d_len-1, 1) < 0 )  {
-	  Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
-	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return DIR_NULL;
+	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
+	{
+		db_non_union_push( comb->tree );
+		if( db_ck_v4gift_tree( comb->tree ) < 0 )
+		{
+			Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL );
+			rt_comb_ifree( comb );
+			return DIR_NULL;
+		}
 	}
-	record.M.m_id = ID_MEMB;
-	record.M.m_relation = relation;
-	(void)strcpy( record.M.m_instname, objp->d_namep );
-#if 0
-	bn_mat_idn( identity );
-#endif
-	rt_dbmat_mat( record.M.m_mat, identity );
-	if( db_put( dbip,  dp, &record, dp->d_len-1, 1 ) < 0 )  {
-	  Tcl_AppendResult(interp, "write error, aborting\n", (char *)NULL);
-	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return DIR_NULL;
+
+	/* make space for an extra leaf */
+	node_count = db_tree_nleaves( comb->tree ) + 1;
+	tree_list = (struct rt_tree_array *)bu_calloc( node_count,
+		sizeof( struct rt_tree_array ), "tree list" );
+
+	/* flatten tree */
+	actual_count = 1 + (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+	if( actual_count > node_count )  bu_bomb("combadd() array overflow!");
+	if( actual_count < node_count )  bu_log("WARNING combadd() array underflow! %d", actual_count, node_count);
+
+	/* insert new member at end */
+	switch( relation )
+	{
+		case '+':
+			tree_list[node_count - 1].tl_op = OP_INTERSECT;
+			break;
+		case '-':
+			tree_list[node_count - 1].tl_op = OP_SUBTRACT;
+			break;
+		default:
+			Tcl_AppendResult(interp, "unrecognized relation (assume UNION)\n",
+				(char *)NULL );
+		case 'u':
+			tree_list[node_count - 1].tl_op = OP_UNION;
+			break;
 	}
+
+	/* make new leaf node, and insert at end of list */
+	BU_GETUNION( tp, tree );
+	tree_list[node_count-1].tl_tree = tp;
+	tp->tr_l.magic = RT_TREE_MAGIC;
+	tp->tr_l.tl_op = OP_DB_LEAF;
+	tp->tr_l.tl_name = bu_strdup( objp->d_namep );
+	tp->tr_l.tl_mat = (matp_t)NULL;
+
+	/* rebuild the tree */
+	comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, (struct db_tree_state *)NULL );
+
+	/* increase the length of this record */
+	if( db_grow( dbip, dp, 1 ) < 0 )
+	{
+		Tcl_AppendResult(interp, "db_grow error, aborting\n", (char *)NULL);
+		TCL_ERROR_RECOVERY_SUGGESTION;
+		return DIR_NULL;
+	}
+
+	/* and finally, write it out */
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	{
+		Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL );
+		return( DIR_NULL );
+	}
+
+	bu_free( (char *)tree_list, "combadd: tree_list" );
+
 	return( dp );
 }
