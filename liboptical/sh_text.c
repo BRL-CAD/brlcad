@@ -181,7 +181,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 
 	RT_CK_DBI(dbInstance);
 
-	if (texture==NULL) {
+	if (texture == (struct txt_specific *)NULL) {
 		bu_bomb("ERROR: txt_load_datasource() received NULL arg (struct txt_specific *)\n");
 	}
 
@@ -228,8 +228,8 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 		}
 	}
 
-	/* if we are auto and we couldn't find a database object match, or if source is explicitly a file 
-	 * then we load the file.
+	/* if we are auto and we couldn't find a database object match, or if source
+	 * is explicitly a file then we load the file.
 	 */
 	if ( ( (texture->tx_datasrc==TXT_SRC_AUTO) && (texture->tx_binunifp==NULL) ) || (texture->tx_datasrc==TXT_SRC_FILE) ) {
 
@@ -708,7 +708,7 @@ txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const
 
 	/* load the texture from its datasource */
 	if (txt_load_datasource(tp, rtip->rti_dbip, tp->tx_w * tp->tx_n * pixelbytes)<0) {
-		bu_log("\ntxt_setup() ERROR %s %s could not be loaded [source was %s]\n", rp->reg_name, tp->tx_name, tp->tx_datasrc==TXT_SRC_OBJECT?"object":tp->tx_datasrc==TXT_SRC_FILE?"file":"auto");
+		bu_log("\ntxt_setup() ERROR %s %s could not be loaded [source was %s]\n", rp->reg_name, bu_vls_addr(&tp->tx_name), tp->tx_datasrc==TXT_SRC_OBJECT?"object":tp->tx_datasrc==TXT_SRC_FILE?"file":"auto");
 		return -1;
 	}
 
