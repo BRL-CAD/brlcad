@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:08:33  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -17,10 +20,13 @@ static char RCSid[] = "@(#)$Header$";
 #include "jove.h"
 #include "termcap.h"
 
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-int	BackupFiles;
+extern	int errno;
+
+int	BackupFiles = SAVE_NO;
 
 char	*WERROR	= "Write error";
 long	count = 0;
@@ -160,6 +166,8 @@ char	*file;
 	SetDot(&save);
 	getDOT();
 	IOclose();
+	if (access (file, 02))
+		SetReadOnly(curbuf);
 }
 
 FileMess(file, lines, chars)
@@ -241,7 +249,9 @@ char	*fname;
 
 	if (stat(fname, &stbuf))
 		return;
-	if (stbuf.st_ino != curbuf->b_ino && (stbuf.st_mode & S_IFMT) != S_IFCHR) 
+	if ((stbuf.st_ino != curbuf->b_ino
+	   || stbuf.st_dev != curbuf->b_dev)
+	  && (stbuf.st_mode & S_IFMT) != S_IFCHR) 
 		confirm("\"%s\" already exist; are you sure? ", fname);
 }
 
@@ -268,11 +278,11 @@ DoWriteReg(app)
 	if (app) {
 		io = open(fname, 1);	/* Writing */
 		if (io == -1)
-			io = creat(fname, 0644);
+			io = creat(fname, DFLTMODE);
 		else
 			dolseek(io, 0L, 2);
 	} else 
-		io = creat(fname, 0644);
+		io = creat(fname, DFLTMODE);
 	if (io == -1)
 		complain(IOerr("create", fname));
 
@@ -308,6 +318,7 @@ char	*fname;
 	register int	exists;
 	register int	linked;
 	int		saveit = 0;
+	int		overwrite = 0;
 
 	if (fname == 0 || *fname == '\0')
 		complain("I need a file name");
@@ -315,8 +326,20 @@ char	*fname;
 	io = -1;
 	inode.st_mode = DFLTMODE;
 	inode.st_nlink = 1;
+	inode.st_uid = getuid();
+	inode.st_gid = getgid();
 	exists = !stat(fname, &inode);
 	linked = (inode.st_nlink > 1);
+
+	if (access (fname, 02) != 0 && errno == EPERM) {
+		register char *yorn;
+
+		yorn = ask ("Y", "%s is read-only, recreate? (yes) ", fname);
+		if (*yorn == 'N' || *yorn == 'n')
+			complain ("File save aborted.");
+		if (unlink(fname) != 0)
+			complain ("Cannot unlink %s", fname);
+	}
 
 	if (app) {
 		/*  Appending to a file  */
@@ -330,13 +353,11 @@ char	*fname;
 
 		if (linked) {
 			yorn = ask("Y", "%s has links, overwrite? (yes) ", fname);
-			if (*yorn == 'N' || *yorn == 'n')
-				linked = 0;
+			overwrite = (*yorn == 'Y' || *yorn == 'y');
 		}
-		if (BackupFiles == SAVE_ASK) {
+		if (exists && BackupFiles == SAVE_ASK) {
 			yorn = ask("N", "Create backup file %s~ (no) ", fname);
-			if (*yorn == 'Y' || *yorn == 'y')
-				saveit++;
+			saveit = (*yorn == 'Y' || *yorn == 'y');
 		}
 
 		/* Write in a whole new file */
@@ -344,20 +365,25 @@ char	*fname;
 		if (exists && (saveit || BackupFiles == SAVE_ALWAYS)) {
 			register char *savefile;
 
-			savefile = malloc(strlen(fname) + 2);
+			if ((savefile = malloc(strlen(fname) + 2)) == NULL)
+				complain ("savefile malloc error");
 		 	sprintf (savefile, "%s~", fname);
 		 	unlink (savefile);
-		   	if (linked) {
+		   	if (linked && overwrite) {
 		   		/*  We need to "cp" the file  */
 		   		s_mess("\"%s\" [No backup with overwrite]", fname);
 		   	} else {
 			 	if (link (fname, savefile))
-			   		s_mess("\"%s\" [No backup made]", fname);
+			   		s_mess("\"%s\" [No backup possible]", fname);
 			 	else
 		 			unlink (fname);
 		 	}
+			free (savefile);
 		}
-		io = creat(fname, DFLTMODE);
+		io = creat(fname, inode.st_mode&07777);
+
+		/*  This will fail on all but USG systems, ignore it  */
+		chown (fname, inode.st_uid, inode.st_gid);
 	}
 	if (io == -1)
 		complain(IOerr("create", fname));
@@ -534,7 +560,7 @@ disk_line	atl;
 			off;
 
 	if (atl == 0)
-		complain("Free line in list!!!");
+		finish (1);			/* Panic */
 	bno = (atl >> OFFBTS) & BLKMSK;
 	off = (atl << SHFT) & LBTMSK;
 	if (bno >= NMBLKS)
