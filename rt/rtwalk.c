@@ -134,11 +134,11 @@ char **argv;
 	vect_t	first_dir;		/* First dir chosen on a step */
 	int	i;
 
-	RES_INIT( &rt_g.res_syscall );
-	RES_INIT( &rt_g.res_worker );
-	RES_INIT( &rt_g.res_stats );
-	RES_INIT( &rt_g.res_results );
-	RES_INIT( &rt_g.res_model );
+	RES_INIT( BU_SEM_SYSCALL );
+	RES_INIT( RT_SEM_WORKER );
+	RES_INIT( RT_SEM_STATS );
+	RES_INIT( RT_SEM_RESULTS );
+	RES_INIT( RT_SEM_MODEL );
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
