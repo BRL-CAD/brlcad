@@ -1,4 +1,7 @@
 /*	STR_MANIP.C	*/
+#ifndef lint
+static char RCSid[] = "$Header$";
+#endif
 
 /*	INCLUDES	*/
 #include "nirt.h"
