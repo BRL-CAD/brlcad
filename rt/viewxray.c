@@ -1,129 +1,185 @@
 /*
- *			V I E W G R I D . C
+ *			V I E W X R A Y . C
  *
- *  Ray Tracing program RTGRID bottom half.
+ *  Ray Tracing program RTXRAY bottom half.
+ *
+ *  This module produces pseudo XRAY images of models by adding
+ *  up ray path lengths.  By default it will scale these lengths
+ *  by the max model RPP length and write a grey scale BW file.
+ *  The alternate lighting model outputs "doubles" containing the
+ *  actual lengths for post processing.
+ *
+ *  A better version of this would know something about material
+ *  densities.
+ *
+ *  Author -
+ *	Phillip Dykstra
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSviewxray[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "../rt/rdebug.h"
-#include <brlcad/fb.h>
+#include "./rdebug.h"
+#include "fb.h"
+
+int	use_air = 0;			/* Handling of air in librt */
+int	using_mlib = 0;			/* Material routines NOT used */
 
 extern	FBIO	*fbp;
 extern	FILE	*outfp;
-extern	mat_t	view2model;
 extern	fastf_t	viewsize;
 extern	int	lightmodel;
-extern	double	AmbientIntensity;	/* XXX - temp hack for max ref! */
-
-/* firing grid model */
-extern	point_t	viewbase_model;		/* lower_left of viewing plane */
-extern	vect_t	dx_model;
-extern	vect_t	dy_model;
-extern	point_t	eye_model;		/* ray origin for perspective */
-
+extern	double	AmbientIntensity;	/* XXX - temp hack for contrast! */
 extern	int	width, height;
-extern	double	azimuth, elevation;
 
-static	unsigned char scanbuf[1024*3];	/* CRAY hack */
-static	int	gridline[1024];
-static	double	volume;
+static	unsigned char *scanbuf;
+static	int pixsize = 0;		/* bytes per pixel in scanbuf */
+static	double	contrast_boost = 2.0;
 
-/* Pacify RT */
-mlib_setup() { return(1); }
-mlib_free() {}
+static int xrayhit();
+static int xraymiss();
+
+/* Viewing module specific "set" variables */
+struct structparse view_parse[] = {
+	(char *)0,(char *)0,	0,			FUNC_NULL
+};
 
 char usage[] = "\
-Usage: rtgrid [options] model.g objects... >stuff\n\
+Usage: rtxray [options] model.g objects... >stuff\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o file.rad	Output file name, else stdout\n\
+ -o file.bw	Output file name, else frame buffer\n\
+ -A #		Contrast boost (default 2.0), may clip if > 1\n\
  -x #		Set librt debug flags\n\
- -l 0		line buffered B&W X-rays (default)\n\
- -l 1		Uniform grid output (LOTS of data!)\n\
- -l 2		Floating point X-rays\n\
- -l ?		Center of Mass, Moments of Inertia?\n\
+ -l 0		line buffered B&W X-Rays (default)\n\
+ -l 1		Floating point X-Rays (path lengths in doubles)\n\
 ";
 
 /* lighting models */
-#define	LBWXRAY	0
-#define	LCUBES	1
-#define	LFXRAY	2
+#define	LGT_BW		0
+#define	LGT_FLOAT	1
 
 /*
  *  Called at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
+int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
+int minus_o;
 {
-	if( lightmodel == LBWXRAY )
-		return(1);		/* we need a framebuffer */
-	else
-		return(0);		/* no framebuffer needed */
+	/*
+	 *  We need to work to get the output pixels and scanlines
+	 *  in order before we can run in parallel.  Something like
+	 *  view.c does in its dynamic buffering mode.
+	 */
+	if (rt_g.rtg_parallel) {
+		rt_g.rtg_parallel = 0;
+		rt_log("rtxray: Can't do parallel yet, using one CPU\n");
+	}
+
+	if( lightmodel == LGT_BW ) {
+		if( minus_o )
+			pixsize = 1;		/* BW file */
+		else
+			pixsize = 3;		/* Frame buffer */
+	} else {
+		/* XXX - Floating output uses no buffer */
+		pixsize = 0;
+	}
+	if( pixsize ) {
+		scanbuf = rt_malloc( width*pixsize, "scanline buffer" );
+	}
+
+	if( minus_o ) {
+		/* output is to a file */
+		return(0);		/* don't open frame buffer */
+	}
+
+	if( lightmodel == LGT_FLOAT ) {
+		rt_log("rtxray: Can't do floating point mode to frame buffer, use -o\n");
+		exit(1);
+	}
+	return(1);		/* we need a framebuffer */
 }
 
-static int gridhit();
-static int gridmiss();
-
 /* beginning of a frame */
-view_2init( ap )
+void
+view_2init( ap, framename )
 struct application *ap;
+char *framename;
 {
-#ifdef save_model_rpp
-	struct rt_i *rtip = ap.a_rt_i;
-	if( lightmodel == LGRID ) {
-		rtip->mdl_min[X], rtip->mdl_max[X], etc.
-	}
-#endif
+	/*
+	 *  This is a dangerous hack to allow us to use -A #
+	 *  as a way of passing in a contrast_boost factor.
+	 *  We need a way for view modules to add their own
+	 *  flags to the command line arguments.
+	 */
+	if (AmbientIntensity > 1.0)
+		contrast_boost = AmbientIntensity;
+	rt_log("Contrast Boost = %5.2f\n", contrast_boost);
 
-	rt_log( "Cube size: %f x %f x ? mm\n",
-		viewsize/width, viewsize/height );
-
-	ap->a_hit = gridhit;
-	ap->a_miss = gridmiss;
+	ap->a_hit = xrayhit;
+	ap->a_miss = xraymiss;
 	ap->a_onehit = 0;
 }
 
 /* end of each pixel */
-view_pixel()
+void
+view_pixel( ap )
+register struct application *ap;
 {
-	if( lightmodel == LCUBES )
-		fwrite( gridline, sizeof(*gridline), width, outfp );
 }
 
 /* end of each line */
+void
 view_eol( ap )
 register struct application *ap;
 {
-	if( lightmodel == LBWXRAY ) {
-		fb_write( fbp, 0, ap->a_y, scanbuf, width );
+	if( lightmodel == LGT_BW ) {
+		RES_ACQUIRE( &rt_g.res_syscall );
+		if( outfp != NULL )
+			fwrite( scanbuf, pixsize, width, outfp );
+		else if( fbp != FBIO_NULL )
+			fb_write( fbp, 0, ap->a_y, scanbuf, width );
+		RES_RELEASE( &rt_g.res_syscall );
 	}
 }
 
+/* end of a frame, called after rt_clean() */
+void view_cleanup() {}
+
 /* end of each frame */
+int
 view_end()
 {
-	volume *= (viewsize/width)*(viewsize/height);
-	volume *= 1.0e-9;
-	rt_log( "Volume = %f m^3\n", volume );
-	volume = 0;
+	return	0;		/* OK */
 }
 
 static int
-gridhit( ap, PartHeadp )
+xrayhit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	static RGBpixel color = { 255, 255, 255 };
 	fastf_t	totdist;
 	fastf_t	fvalue;
 	unsigned char value;
@@ -131,7 +187,7 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("radhit:  no hit out front?\n");
+		rt_log("xrayhit:  no hit out front?\n");
 		return(0);
 	}
 
@@ -141,22 +197,19 @@ struct partition *PartHeadp;
 
 	hitp = pp->pt_inhit;
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("radhit:  entry beyond infinity\n");
+		rt_log("xrayhit:  entry beyond infinity\n");
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
 		/* XXX */
-		rt_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
+		rt_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
 		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 			rt_pr_pt( ap->a_rt_i, pp );
 		return(0);
 	}
 
 	/* Finally! We are ready to walk the partition chain */
-	if( lightmodel == LCUBES ) {
-		cubeout( pp, PartHeadp );
-	}
 
 	/* Compute the total thickness */
 	totdist = 0;
@@ -170,94 +223,59 @@ struct partition *PartHeadp;
 	}
 
 	switch( lightmodel ) {
-	case LFXRAY:
+	case LGT_FLOAT:
+		RES_ACQUIRE( &rt_g.res_syscall );
 		fwrite( &totdist, sizeof(totdist), 1, outfp );
+		RES_RELEASE( &rt_g.res_syscall );
 		break;
-	case LBWXRAY:
-		fvalue = 255.0 * (1.0 - 1.4*totdist/viewsize);
-		if( fvalue > 255 ) value == 255;
-		else if( fvalue < 0 ) value = 0;
-		else value = fvalue;
-		scanbuf[ap->a_x*3+RED] = value;
-		scanbuf[ap->a_x*3+GRN] = value;
-		scanbuf[ap->a_x*3+BLU] = value;
+	case LGT_BW:
+		fvalue = 1.0 - contrast_boost*totdist/viewsize;
+		if( fvalue > 1.0 ) fvalue == 1.0;
+		else if( fvalue <= 0.0 ) fvalue = 0.0;
+		value = 1.0 + 254.99 * fvalue;
+		RES_ACQUIRE( &rt_g.res_results );
+		if( pixsize == 1 ) {
+			scanbuf[ap->a_x] = value;
+		} else {
+			scanbuf[ap->a_x*3+RED] = value;
+			scanbuf[ap->a_x*3+GRN] = value;
+			scanbuf[ap->a_x*3+BLU] = value;
+		}
+		RES_RELEASE( &rt_g.res_results );
 		break;
 	}
-
-	/*
-	 *  Mass = SUM density(x,y,z)
-	 *
-	 *  C.G. = SUM(x * density(x,y,z))/Mass,  etc.
-	 *
-	 *  M.I. = SUM(y^2+z^2 * density(x,y,z))/Mass,  etc.
-	 */
-	volume += totdist;
 
 	return(1);	/* report hit to main routine */
 }
 
 static int
-gridmiss( ap, PartHeadp )
+xraymiss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
 	static	double	zero = 0;
 
 	switch( lightmodel ) {
-	case LCUBES:
-		cubeout( ap, ap );	/* XXX - HACK! */
+	case LGT_BW:
+		RES_ACQUIRE( &rt_g.res_results );
+		if( pixsize == 1 ) {
+			scanbuf[ap->a_x] = 0;
+		} else {
+			scanbuf[ap->a_x*3+RED] = 0;
+			scanbuf[ap->a_x*3+GRN] = 0;
+			scanbuf[ap->a_x*3+BLU] = 0;
+		}
+		RES_RELEASE( &rt_g.res_results );
 		break;
-	case LBWXRAY:
-		scanbuf[ap->a_x*3+RED] = 0;
-		scanbuf[ap->a_x*3+GRN] = 0;
-		scanbuf[ap->a_x*3+BLU] = 0;
-		break;
-	case LFXRAY:
+	case LGT_FLOAT:
+		RES_ACQUIRE( &rt_g.res_syscall );
 		fwrite( &zero, sizeof(zero), 1, outfp );
+		RES_RELEASE( &rt_g.res_syscall );
 		break;
 	default:
-		rt_log( "gridmiss: Bad lighting model %d\n", lightmodel );
+		rt_log( "xraymiss: Bad lighting model %d\n", lightmodel );
 		break;
 	}
 
 	return(0);	/* report miss to main routine */
-}
-
-cubeout( pp, PartHeadp )
-register struct partition *pp;
-struct partition *PartHeadp;
-{
-	int	i;
-	double	z1, z2;
-	double	DELTA;
-
-	DELTA = viewsize/width;
-
-	for( i = 0; i < width; i++ ) {
-		gridline[i] = 0;
-	}
-
-	if( pp == PartHeadp )
-		return;
-
-	for( i = 0; i < width; i++ ) {
-		z1 = i * DELTA;		/* start of cell */
-		z2 = (i+1) * DELTA;	/* end of cell */
-checkagain:
-		if( z2 < pp->pt_inhit->hit_dist ) {
-			/* haven't gotten there yet */
-			continue;
-		} else if( z1 < pp->pt_outhit->hit_dist ) {
-			/* inside region */
-			gridline[i] = pp->pt_regionp->reg_regionid;
-		} else {
-			/* we are beyond the current partition */
-			while( pp->pt_inhit->hit_dist < z1 ) {
-				pp = pp->pt_forw;
-				if( pp == PartHeadp )
-					return;
-			}
-			goto checkagain;
-		}
-	}
 }
