@@ -5193,7 +5193,11 @@ CONST struct rt_tol *tol;
 					prev_eu = RT_LIST_PPREV_CIRC( edgeuse , &eu->l );
 					NMG_CK_EDGEUSE( prev_eu );
 
+					/* XXX This is wrong, it's a comparison!! */
 					prev_eu->eumate_p->vu_p->v_p == eu->eumate_p->vu_p->v_p;
+
+					/* XXX Keep compiler happy, this is wrong too */
+					eu_next = NULL;
 
 					while( (vu_next == eu->vu_p || vu_next == eu->eumate_p->vu_p ) &&
 						RT_LIST_NOT_HEAD( vu_next , &new_v->vu_hd ) )
