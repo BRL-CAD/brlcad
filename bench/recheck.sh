@@ -9,12 +9,12 @@ eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, HAS_TCP
 if test -f ../.util.$MACHINE/pixdiff
 then
 	PIXDIFF=../.util.$MACHINE/pixdiff
-	PIX_FB=../.util.$MACHINE/pix-fb
+	PIX_FB=../.fb.$MACHINE/pix-fb
 else
 	if test -f ../util/pixdiff
 	then
 		PIXDIFF=../util/pixdiff
-		PIX_FB=../util/pix-fb
+		PIX_FB=../fb/pix-fb
 	else
 		echo "Can't find pixdiff"
 		exit 1
