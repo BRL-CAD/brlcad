@@ -216,7 +216,7 @@ int
 xxx_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
-struct shadework	*swp;	/* defined in material.h */
+struct shadework	*swp;	/* defined in ../h/shadework.h */
 char			*dp;	/* ptr to the shader-specific struct */
 {
 	register struct xxx_specific *xxx_sp =
