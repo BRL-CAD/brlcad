@@ -94,12 +94,12 @@ char	**argv;
 	/* Build the V knots */
 	cur_kv = 0;		/* current knot value */
 	nv = 0;			/* current knot subscript */
-	for( i=0; i<3; i++ )
+	for( i=0; i<4; i++ )
 		bp->v_kv->knots[nv++] = cur_kv;
 	cur_kv++;
-	for( i=0; i<npts; i++ )
+	for( i=4; i<(npts+4-1); i++ )
 		bp->v_kv->knots[nv++] = cur_kv++;
-	for( i=0; i<3; i++ )
+	for( i=0; i<4; i++ )
 		bp->v_kv->knots[nv++] = cur_kv;
 
 	/*
