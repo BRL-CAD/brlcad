@@ -1,10 +1,8 @@
-/*			N M G _ B O O L . C
+/*
+ *			N M G _ I N T E R . C
  *
- *	Support for boolean operations on NMG objects.  Most of the routines
- *	in here are static/local to this file.  The interfaces here are the
- *	functions "nmg_do_bool" and "nmg_mesh_faces".  The former does boolean
- *	operations on a pair of shells.  The latter is a function to make
- *	edges shared between two faces whenever possible.
+ *	Routines to intersect two NMG regions.
+ *	There are no "user interface" routines in here.
  *
  *  Author -
  *	Lee A. Butler
@@ -36,8 +34,6 @@ struct nmg_boolstruct {
 };
 
 
-/********************** isects ***************************************/
-
 
 /*
  *	T B L _ V S O R T
@@ -48,7 +44,7 @@ struct nmg_boolstruct {
  *	and structure of an nmg_ptbl list!  If I could figure a way of folding
  *	this into the nmg_tbl routine, I would do it.
  */
-void tbl_vsort(b, fu1, fu2)
+static void tbl_vsort(b, fu1, fu2)
 struct nmg_ptbl *b;		/* table of vertexuses on intercept line */
 struct faceuse *fu1, *fu2;
 {
@@ -601,138 +597,132 @@ fastf_t tol;
 	NMG_CK_FACE(fu2->f_p);
 	NMG_CK_FACE_G(fu2->f_p->fg_p);
 
-	if (NMG_EXTENT_OVERLAP(fu2->f_p->fg_p->min_pt,fu2->f_p->fg_p->max_pt,
-	    fu1->f_p->fg_p->min_pt,fu1->f_p->fg_p->max_pt) ) {
+	if ( !NMG_EXTENT_OVERLAP(fu2->f_p->fg_p->min_pt,fu2->f_p->fg_p->max_pt,
+	    fu1->f_p->fg_p->min_pt,fu1->f_p->fg_p->max_pt) )  return;
 
-		/* poly1 overlaps poly2 */
-		(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
-		(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
+	/* Extents of face1 overlap face2 */
+	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
+	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
 
-	    	bs.l1 = &vert_list1;
-	    	bs.l2 = &vert_list2;
-	    	bs.tol = tol/50.0;
+    	bs.l1 = &vert_list1;
+    	bs.l2 = &vert_list2;
+    	bs.tol = tol/50.0;
 
+    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_COMBINE|DEBUG_MESH)
+    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
+    		FILE *fd, *fopen();
+    		static char name[32];
+    		static struct nmg_ptbl b;
+    		static int fno=1;
 
-	    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_COMBINE|DEBUG_MESH)
-	    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
-	    		FILE *fd, *fopen();
-	    		static char name[32];
-	    		static struct nmg_ptbl b;
-	    		static int fno=1;
+    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
+    		(void)sprintf(name, "Isect_faces%d.pl", fno++);
+    		rt_log("plotting to %s\n", name);
+    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
+    			rt_bomb(name);
 
-	    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-	    		(void)sprintf(name, "Isect_faces%d.pl", fno++);
-	    		rt_log("plotting to %s\n", name);
-	    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
-	    			rt_bomb(name);
-
-	    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
-/*	    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
+    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
+/*    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
 */
-	    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
-/*	    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
+    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
+/*    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
 */
-	    		(void)fclose(fd);
-	    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
-	    	}
+    		(void)fclose(fd);
+    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+    	}
 
-		isect_loops(&bs, fu1, fu2);
+	isect_loops(&bs, fu1, fu2);
 
-	    	if (rt_g.NMG_debug & DEBUG_COMBINE) {
-		    	p.magic_p = vert_list1.buffer;
-		    	rt_log("vert_list1\n");
-			for (i=0 ; i < vert_list1.end ; ++i) {
+    	if (rt_g.NMG_debug & DEBUG_COMBINE) {
+	    	p.magic_p = vert_list1.buffer;
+	    	rt_log("vert_list1\n");
+		for (i=0 ; i < vert_list1.end ; ++i) {
+			rt_log("%d\t%g, %g, %g\t", i,
+				p.vu[i]->v_p->vg_p->coord[X],
+				p.vu[i]->v_p->vg_p->coord[Y],
+				p.vu[i]->v_p->vg_p->coord[Z]);
+			if (*p.vu[i]->up.magic_p == NMG_EDGEUSE_MAGIC) {
+				rt_log("EDGEUSE\n");
+			} else if (*p.vu[i]->up.magic_p == NMG_LOOPUSE_MAGIC){
+				rt_log("LOOPUSE\n");
+			} else
+				rt_log("UNKNOWN\n");
+		}
+    	}
 
-				rt_log("%d\t%g, %g, %g\t", i,
-					p.vu[i]->v_p->vg_p->coord[X],
-					p.vu[i]->v_p->vg_p->coord[Y],
-					p.vu[i]->v_p->vg_p->coord[Z]);
-				if (*p.vu[i]->up.magic_p == NMG_EDGEUSE_MAGIC) {
-					rt_log("EDGEUSE\n");
-				} else if (*p.vu[i]->up.magic_p == NMG_LOOPUSE_MAGIC){
-					rt_log("LOOPUSE\n");
-				} else
-					rt_log("UNKNOWN\n");
-			}
-	    	}
+    	bs.l2 = &vert_list1;
+    	bs.l1 = &vert_list2;
+	isect_loops(&bs, fu2, fu1);
 
-
-	    	bs.l2 = &vert_list1;
-	    	bs.l1 = &vert_list2;
-		isect_loops(&bs, fu2, fu1);
-
-	    	if (vert_list1.end == 0) {
-	    		/* there were no intersections */
-			(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
-			(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
-	    		return;
-	    	}
-		tbl_vsort(&vert_list1, fu1, fu2);
-		nmg_face_combine(&vert_list1, fu1, fu2);
-
-		tbl_vsort(&vert_list2, fu2, fu1);
-		nmg_face_combine(&vert_list2, fu2, fu1);
-
-		/* When two faces are intersected
-		 * with each other, they should
-		 * share the same edge(s) of
-		 * intersection. 
-		 */
-
-
-	    	if (rt_g.NMG_debug & DEBUG_MESH &&
-	    	    rt_g.NMG_debug & DEBUG_PLOTEM) {
-	    		FILE *fd, *fopen();
-	    		static char name[32];
-	    		static struct nmg_ptbl b;
-	    		static int fnum=1;
-
-	    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-	    		(void)sprintf(name, "Before_mesh%d.pl", fnum++);
-	    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
-	    			rt_bomb(name);
-
-	    		rt_log("plotting %s\n", name);
-	    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
-	    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
-
-	    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
-	    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
-
-	    		(void)fclose(fd);
-	    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
-	    	}
-
- 		nmg_mesh_faces(fu1, fu2);
-
-
-	    	if (rt_g.NMG_debug & DEBUG_MESH &&
-	    	    rt_g.NMG_debug & DEBUG_PLOTEM) {
-	    		FILE *fd, *fopen();
-	    		static char name[32];
-	    		static struct nmg_ptbl b;
-	    		static int fno=1;
-
-	    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-	    		(void)sprintf(name, "After_mesh%d.pl", fno++);
-	    		rt_log("plotting to %s\n", name);
-	    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
-	    			rt_bomb(name);
-
-	    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
-	    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
-
-	    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
-	    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
-
-	    		(void)fclose(fd);
-	    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
-	    	}
-
+    	if (vert_list1.end == 0) {
+    		/* there were no intersections */
 		(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
 		(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
-	}
+    		return;
+    	}
+	tbl_vsort(&vert_list1, fu1, fu2);
+	nmg_face_combine(&vert_list1, fu1, fu2);
+
+	tbl_vsort(&vert_list2, fu2, fu1);
+	nmg_face_combine(&vert_list2, fu2, fu1);
+
+	/* When two faces are intersected
+	 * with each other, they should
+	 * share the same edge(s) of
+	 * intersection. 
+	 */
+    	if (rt_g.NMG_debug & DEBUG_MESH &&
+    	    rt_g.NMG_debug & DEBUG_PLOTEM) {
+    		FILE *fd, *fopen();
+    		static char name[32];
+    		static struct nmg_ptbl b;
+    		static int fnum=1;
+
+    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
+    		(void)sprintf(name, "Before_mesh%d.pl", fnum++);
+    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
+    			rt_bomb(name);
+
+    		rt_log("plotting %s\n", name);
+    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
+    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
+
+    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
+    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
+
+    		(void)fclose(fd);
+    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+    	}
+
+	nmg_mesh_faces(fu1, fu2);
+
+    	if (rt_g.NMG_debug & DEBUG_MESH &&
+    	    rt_g.NMG_debug & DEBUG_PLOTEM) {
+    		FILE *fd, *fopen();
+    		static char name[32];
+    		static struct nmg_ptbl b;
+    		static int fno=1;
+
+    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
+    		(void)sprintf(name, "After_mesh%d.pl", fno++);
+    		rt_log("plotting to %s\n", name);
+    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
+    			rt_bomb(name);
+
+    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
+    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
+
+    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
+    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
+
+    		(void)fclose(fd);
+    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+    	}
+
+	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
+	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
 }
+
 /*	C R A C K S H E L L S
  *
  *	split the faces of two shells in preparation for performing boolean
