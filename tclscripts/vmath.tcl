@@ -52,7 +52,7 @@ proc dist_pt_pt { a b } {
     return [magnitude [vsub2 $a $b]]
 }
 
-proc mat_deltas { m } {
+proc mat_deltas_get { m } {
     return [list [lindex $m 3] [lindex $m 7] [lindex $m 11]]
 }
 
