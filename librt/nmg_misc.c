@@ -606,7 +606,7 @@ static void eu_coord(eu, base)
 struct edgeuse *eu;
 point_t base;
 {
-	fastf_t dist1, rt_dist_line_point();
+	fastf_t dist1;
 	struct edgeuse *peu;
 	struct loopuse *lu;
 	vect_t v_eu,		/* vector of edgeuse */
