@@ -1096,6 +1096,7 @@ struct rt_i		*rtip;
 {
 	register int	i;
 	int success = 0;
+	CONST struct bn_tol *tol = &rtip->rti_tol;
 
 	/* Examine the solids */
 	outp->bn.bn_len = 0;
@@ -1143,8 +1144,9 @@ struct rt_i		*rtip;
 		for( j = plp->npieces-1; j >= 0; j-- )  {
 			long indx = plp->pieces[j];
 			struct bound_rpp *rpp = &stp->st_piece_rpps[indx];
-			if( V3RPP_DISJOINT(outp->bn.bn_min, outp->bn.bn_max,
-			    rpp->min, rpp->max) )
+			if( !V3RPP_OVERLAP_TOL(
+			    outp->bn.bn_min, outp->bn.bn_max,
+			    rpp->min, rpp->max, tol) )
 				continue;
 			olp->pieces[olp->npieces++] = indx;
 		}
