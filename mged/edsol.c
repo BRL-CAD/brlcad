@@ -44,6 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nurb.h"
 #include "rtgeom.h"
+#include "wdb.h"
 
 #include "./ged.h"
 #include "./solid.h"
@@ -896,6 +897,89 @@ mat_t		mat;
 	RT_CK_DB_INTERNAL( ip );
 
 	switch( ip->idb_type )  {
+	case ID_PARTICLE:
+		{
+			struct rt_part_internal *part =
+				(struct rt_part_internal *)ip->idb_ptr;
+
+			RT_PART_CK_MAGIC( part );
+
+			if( strcmp( cp , "V" ) )
+			{
+				VMOVE( mpt , part->part_V );
+				*strp = "V";
+			}
+			else if( strcmp( cp , "H" ) )
+			{
+				VADD2( mpt , part->part_V , part->part_H );
+				*strp = "H";	
+			}
+			else	/* default */
+			{
+				VMOVE( mpt , part->part_V );
+				*strp = "V";
+			}
+		}
+	case ID_PIPE:
+		{
+			struct rt_pipe_internal *pipe =
+				(struct rt_pipe_internal *)ip->idb_ptr;
+			struct wdb_pipeseg *pipe_seg;
+
+			RT_PIPE_CK_MAGIC( pipe );
+
+			pipe_seg = RT_LIST_FIRST( wdb_pipeseg , &pipe->pipe_segs_head );
+			VMOVE( mpt , pipe_seg->ps_start );
+			*strp = "V";
+			break;
+		}
+	case ID_ARBN:
+		{
+			struct rt_arbn_internal *arbn =
+				(struct rt_arbn_internal *)ip->idb_ptr;
+			int i,j,k;
+			int good_vert=0;
+
+			RT_ARBN_CK_MAGIC( arbn );
+			for( i=0 ; i<arbn->neqn ; i++ )
+			{
+				for( j=i+1 ; j<arbn->neqn ; j++ )
+				{
+					for( k=j+1 ; k<arbn->neqn ; k++ )
+					{
+						if( !rt_mkpoint_3planes( mpt , arbn->eqn[i] , arbn->eqn[j] , arbn->eqn[k] ) )
+						{
+							int l;
+
+							good_vert = 1;
+							for( l=0 ; l<arbn->neqn ; l++ )
+							{
+								if( l == i || l == j || l == k )
+									continue;
+
+								if( DIST_PT_PLANE( mpt , arbn->eqn[l] ) > mged_tol.dist )
+								{
+									good_vert = 0;
+									break;
+								}
+							}
+
+							if( good_vert )
+								break;
+						}
+						if( good_vert )
+							break;
+					}
+					if( good_vert )
+						break;
+				}
+				if( good_vert )
+					break;
+			}
+
+			*strp = "V";
+			break;
+		}
 	case ID_EBM:
 		{
 			struct rt_ebm_internal *ebm =
@@ -1249,6 +1333,7 @@ mat_t		mat;
 			}
 		}
 	default:
+		rt_log( "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n" );
 		VSETALL( mpt, 0 );
 		*strp = "(origin)";
 		break;
@@ -1998,7 +2083,7 @@ sedit()
 	}
 
 	/* must re-calculate the face plane equations for arbs */
-	if( es_int.idb_type == GENARB8 )
+	if( es_int.idb_type == ID_ARB8 )
 		(void)rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol );
 
 	/* If the keypoint changed location, find about it here */
