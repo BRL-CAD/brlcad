@@ -38,7 +38,6 @@ static char RCSid[] = "$Header$";
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
-#include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -265,13 +264,21 @@ csg_comb_func( dbip , dp )
 struct db_i *dbip;
 struct directory *dp;
 {
-	union record *rp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	struct rt_tree_array *tree_list;
+	int node_count;
+	int actual_count;
 	int comb_len;
 	int i,j;
 	int region_flag;
 	struct wmember headp;
 	struct wmember *wm;
 	unsigned char *color;
+	char *endp;
+	int len;
+	char matname[33];
+	char matparm[61];
 
 	if( dp->d_uses < 0 )
 		return;
@@ -305,46 +312,105 @@ struct directory *dp;
 		return;
 	}
 
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-                return;
+	/* have a combination that is not a region */
+
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	{
+		bu_log( "Cannot get internal form of combination (%s)\n", dp->d_namep );
+		return;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB( comb );
 
 	if( verbose )
 		rt_log( "Combination - %s\n" , dp->d_namep );
 
-	comb_len = dp->d_len - 1;
-	if( comb_len == 0 )
+	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
+	{
+		db_non_union_push( comb->tree );
+		if( db_ck_v4gift_tree( comb->tree ) < 0 )
+		{
+			bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
+			return;
+		}
+	}
+	node_count = db_tree_nleaves( comb->tree );
+	if( node_count > 0 )
+	{
+		tree_list = (struct rt_tree_array *)bu_calloc( node_count,
+			sizeof( struct rt_tree_array ), "tree list" );
+		actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+		if( actual_count > node_count )  bu_bomb("csg_comb_func() array overflow!");
+		if( actual_count < node_count )  bu_log("WARNING csg_comb_func() array underflow! %d < %d", actual_count, node_count);
+	}
+	else
+	{
+		tree_list = (struct rt_tree_array *)NULL;
+		actual_count = 0;
+	}
+
+	if( actual_count < 1 )
 	{
 		rt_log( "Warning: empty combination (%s)\n" , dp->d_namep );
 		dp->d_uses = 0;
+		rt_db_free_internal( &intern );
 		return;
 	}
 
 	RT_LIST_INIT( &headp.l );
 
-	for( i=1 ; i<dp->d_len ; i++ )
+	for( i=0 ; i<actual_count ; i++ )
 	{
-		wm = mk_addmember( rp[i].M.m_instname , &headp , rp[i].M.m_relation );
-		for( j=0 ; j<16 ; j++ )
-			wm->wm_mat[j] = rp[i].M.m_mat[j];
+		char op;
+
+		switch( tree_list[i].tl_op )
+		{
+			case OP_UNION:
+				op = 'u';
+				break;
+			case OP_INTERSECT:
+				op = '+';
+				break;
+			case OP_SUBTRACT:
+				op = '-';
+				break;
+			default:
+				bu_log( "Unrecognized Boolean operator in combination (%s)\n", dp->d_namep );
+				bu_free( (char *)tree_list, "tree_list" );
+				rt_db_free_internal( &intern );
+				return;
+		}
+		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name , &headp , op );
+		if( tree_list[i].tl_tree->tr_l.tl_mat )
+			bn_mat_copy( wm->wm_mat, tree_list[i].tl_tree->tr_l.tl_mat );
 	}
 
-	if( rp[0].c.c_flags == 'R' )
-		region_flag = 1;
-	else
-		region_flag = 0;
-
-	if( rp[0].c.c_override )
-		color = rp[0].c.c_rgb;
+	if( comb->rgb_valid  )
+		color = comb->rgb;
 	else
 		color = (unsigned char *)NULL;
 
-	if( mk_lrcomb( fp_out, rp[0].c.c_name, &headp, region_flag,
-	    rp[0].c.c_matname, rp[0].c.c_matparm,
-	    color, rp[0].c.c_regionid,
-	    rp[0].c.c_aircode, rp[0].c.c_material,rp[0].c.c_los,
-	    rp[0].c.c_inherit ) )
+	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
+	if( endp )
+	{
+		len = endp - bu_vls_addr(&comb->shader);
+		if( len > 32 ) len = 32;
+		strncpy( matname, bu_vls_addr(&comb->shader), len );
+		strncpy( matparm, endp+1, 60 );
+	}
+	else
+	{
+		strncpy( matname, bu_vls_addr(&comb->shader), 32 );
+		matparm[0] = '\0';
+	}
+
+	if( mk_lrcomb( fp_out, dp->d_namep, &headp, comb->region_flag,
+	    matname, matparm,
+	    color, comb->region_id,
+	    comb->aircode, comb->GIFTmater,comb->los,
+	    comb->inherit ) )
 		{
-			rt_log( "G-nmg: error in making region (%s)\n" , rp[0].c.c_name );
+			rt_log( "G-nmg: error in making region (%s)\n" , dp->d_namep );
 		}
 }
 
