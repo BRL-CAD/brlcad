@@ -1501,6 +1501,7 @@ struct rt_i {
 	int		rti_maxsol_by_type;
 	int		rti_air_discards;/* # of air regions discarded */
 	struct bu_hist rti_hist_cellsize; /* occupancy of cut cells */
+	struct bu_hist rti_hist_cell_pieces; /* solid pieces per cell */
 	struct bu_hist rti_hist_cutdepth; /* depth of cut tree */
 	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
 	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
