@@ -2742,15 +2742,15 @@ char	**argv;
 	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    rvec[X] = f - last_edit_absolute_model_rotate[X];
-	    edit_absolute_model_rotate[X] += f;
+	    edit_absolute_model_rotate[X] = f;
 	    break;
 	  case 'o':
 	    rvec[X] = f - last_edit_absolute_object_rotate[X];
-	    edit_absolute_object_rotate[X] += f;
+	    edit_absolute_object_rotate[X] = f;
 	    break;
 	  case 'v':
 	    rvec[X] = f - last_edit_absolute_view_rotate[X];
-	    edit_absolute_view_rotate[X] += f;
+	    edit_absolute_view_rotate[X] = f;
 	    break;
 	  }
 	}else{
@@ -2763,7 +2763,7 @@ char	**argv;
 	  }
 	}
       }
-	  
+
       /* wrap around */
       if(EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
@@ -2843,15 +2843,15 @@ char	**argv;
 	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    rvec[Y] = f - last_edit_absolute_model_rotate[Y];
-	    edit_absolute_model_rotate[Y] += f;
+	    edit_absolute_model_rotate[Y] = f;
 	    break;
 	  case 'o':
 	    rvec[Y] = f - last_edit_absolute_object_rotate[Y];
-	    edit_absolute_object_rotate[Y] += f;
+	    edit_absolute_object_rotate[Y] = f;
 	    break;
 	  case 'v':
 	    rvec[Y] = f - last_edit_absolute_view_rotate[Y];
-	    edit_absolute_view_rotate[Y] += f;
+	    edit_absolute_view_rotate[Y] = f;
 	    break;
 	  }
 	}else{
@@ -2864,7 +2864,7 @@ char	**argv;
 	  }
 	}
       }
-	  
+
       /* wrap around */
       if(EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
@@ -2944,15 +2944,15 @@ char	**argv;
 	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    rvec[Z] = f - last_edit_absolute_model_rotate[Z];
-	    edit_absolute_model_rotate[Z] += f;
+	    edit_absolute_model_rotate[Z] = f;
 	    break;
 	  case 'o':
 	    rvec[Z] = f - last_edit_absolute_object_rotate[Z];
-	    edit_absolute_object_rotate[Z] += f;
+	    edit_absolute_object_rotate[Z] = f;
 	    break;
 	  case 'v':
 	    rvec[Z] = f - last_edit_absolute_view_rotate[Z];
-	    edit_absolute_view_rotate[Z] += f;
+	    edit_absolute_view_rotate[Z] = f;
 	    break;
 	  }
 	}else{
@@ -2965,7 +2965,7 @@ char	**argv;
 	  }
 	}
       }
-	  
+
       /* wrap around */
       if(EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
